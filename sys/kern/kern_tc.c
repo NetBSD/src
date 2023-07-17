@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.72 2023/07/17 21:51:30 riastradh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.73 2023/07/17 21:51:45 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.72 2023/07/17 21:51:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.73 2023/07/17 21:51:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -457,6 +457,10 @@ binuptime(struct bintime *bt)
 	 * updating timecounter_removals will issue a broadcast cross call
 	 * before inspecting our l_tcgen value (this elides memory ordering
 	 * issues).
+	 *
+	 * XXX If the author of the above comment knows how to make it
+	 * safe to avoid memory barriers around the access to
+	 * th->th_generation, I'm all ears.
 	 */
 	l = curlwp;
 	lgen = l->l_tcgen;
@@ -468,8 +472,10 @@ binuptime(struct bintime *bt)
 	do {
 		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
+		membar_consumer();
 		*bt = th->th_offset;
 		bintime_addx(bt, th->th_scale * tc_delta(th));
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 
 	__insn_barrier();
@@ -537,7 +543,9 @@ getbinuptime(struct bintime *bt)
 	do {
 		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
+		membar_consumer();
 		*bt = th->th_offset;
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -551,7 +559,9 @@ getnanouptime(struct timespec *tsp)
 	do {
 		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
+		membar_consumer();
 		bintime2timespec(&th->th_offset, tsp);
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -565,7 +575,9 @@ getmicrouptime(struct timeval *tvp)
 	do {
 		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
+		membar_consumer();
 		bintime2timeval(&th->th_offset, tvp);
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -580,7 +592,9 @@ getbintime(struct bintime *bt)
 	do {
 		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
+		membar_consumer();
 		*bt = th->th_offset;
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 	getbinboottime(&boottime);
 	bintime_add(bt, &boottime);
@@ -596,7 +610,9 @@ dogetnanotime(struct timespec *tsp)
 	do {
 		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
+		membar_consumer();
 		*tsp = th->th_nanotime;
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -626,7 +642,9 @@ getmicrotime(struct timeval *tvp)
 	do {
 		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
+		membar_consumer();
 		*tvp = th->th_microtime;
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
