@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.70 2023/07/17 15:41:05 riastradh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.71 2023/07/17 21:51:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.70 2023/07/17 15:41:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.71 2023/07/17 21:51:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -146,7 +146,10 @@ static volatile struct {
 };
 #endif
 
-static struct bintime timebasebin;
+static struct {
+	struct bintime bin;
+	volatile unsigned gen;	/* even when stable, odd when changing */
+} timebase __cacheline_aligned;
 
 static int timestepwarnings;
 
@@ -496,10 +499,12 @@ microuptime(struct timeval *tvp)
 void
 bintime(struct bintime *bt)
 {
+	struct bintime boottime;
 
 	TC_COUNT(nbintime);
 	binuptime(bt);
-	bintime_add(bt, &timebasebin);
+	getbinboottime(&boottime);
+	bintime_add(bt, &boottime);
 }
 
 void
@@ -568,6 +573,7 @@ void
 getbintime(struct bintime *bt)
 {
 	struct timehands *th;
+	struct bintime boottime;
 	u_int gen;
 
 	TC_COUNT(ngetbintime);
@@ -576,7 +582,8 @@ getbintime(struct bintime *bt)
 		gen = th->th_generation;
 		*bt = th->th_offset;
 	} while (gen == 0 || gen != th->th_generation);
-	bintime_add(bt, &timebasebin);
+	getbinboottime(&boottime);
+	bintime_add(bt, &boottime);
 }
 
 static inline void
@@ -642,14 +649,25 @@ getmicroboottime(struct timeval *tvp)
 }
 
 void
-getbinboottime(struct bintime *bt)
+getbinboottime(struct bintime *basep)
 {
+	struct bintime base;
+	unsigned gen;
 
-	/*
-	 * XXX Need lockless read synchronization around timebasebin
-	 * (and not just here).
-	 */
-	*bt = timebasebin;
+	do {
+		/* Spin until the timebase isn't changing.  */
+		while ((gen = atomic_load_relaxed(&timebase.gen)) & 1)
+			SPINLOCK_BACKOFF_HOOK;
+
+		/* Read out a snapshot of the timebase.  */
+		membar_consumer();
+		base = timebase.bin;
+		membar_consumer();
+
+		/* Restart if it changed while we were reading.  */
+	} while (gen != atomic_load_relaxed(&timebase.gen));
+
+	*basep = base;
 }
 
 /*
@@ -839,8 +857,12 @@ tc_setclock(const struct timespec *ts)
 	binuptime(&bt2);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &bt2);
-	bintime_add(&bt2, &timebasebin);
-	timebasebin = bt;
+	bintime_add(&bt2, &timebase.bin);
+	timebase.gen |= 1;	/* change in progress */
+	membar_producer();
+	timebase.bin = bt;
+	membar_producer();
+	timebase.gen++;		/* commit change */
 	tc_windup();
 	mutex_spin_exit(&timecounter_lock);
 
@@ -921,7 +943,7 @@ tc_windup(void)
 	 * the adjustment resulting from adjtime() calls.
 	 */
 	bt = th->th_offset;
-	bintime_add(&bt, &timebasebin);
+	bintime_add(&bt, &timebase.bin);
 	i = bt.sec - tho->th_microtime.tv_sec;
 	if (i > LARGE_STEP)
 		i = 2;
@@ -929,8 +951,13 @@ tc_windup(void)
 		t = bt.sec;
 		ntp_update_second(&th->th_adjustment, &bt.sec);
 		s_update = 1;
-		if (bt.sec != t)
-			timebasebin.sec += bt.sec - t;
+		if (bt.sec != t) {
+			timebase.gen |= 1;	/* change in progress */
+			membar_producer();
+			timebase.bin.sec += bt.sec - t;
+			membar_producer();
+			timebase.gen++;		/* commit change */
+		}
 	}
 
 	/* Update the UTC timestamps used by the get*() functions. */
@@ -1273,7 +1300,7 @@ pps_ref_event(struct pps_state *pps,
 	/* Convert the count to a bintime. */
 	bt = pps->capth->th_offset;
 	bintime_addx(&bt, pps->capth->th_scale * (acount - pps->capth->th_offset_count));
-	bintime_add(&bt, &timebasebin);
+	bintime_add(&bt, &timebase.bin);
 
 	if ((refmode & PPS_REFEVNT_PPS) == 0) {
 		/* determine difference to reference time stamp */
