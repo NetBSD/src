@@ -1,4 +1,4 @@
-.\" $NetBSD: time_second.9,v 1.9 2020/04/18 18:55:20 wiz Exp $
+.\" $NetBSD: time_second.9,v 1.10 2023/07/17 12:55:20 riastradh Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,23 +32,27 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd April 17, 2020
+.Dd July 16, 2023
 .Dt TIME_SECOND 9
 .Os
 .Sh NAME
 .Nm time_second ,
-.Nm time_uptime
+.Nm time_uptime ,
+.Nm time_uptime32
 .Nd system time variables
 .Sh SYNOPSIS
 .In sys/time.h
-.Vt extern time_t time_second;
-.Vt extern time_t time_uptime;
+.Vt extern const time_t time_second;
+.Vt extern const time_t time_uptime;
+.Vt extern const uint32_t time_uptime32;
 .Sh DESCRIPTION
 The
 .Va time_second
 variable is the system's
-.Dq wall time
-clock.
+.Dq wall clock ,
+giving the number of seconds since midnight (0 hour),
+January 1, 1970, (proleptic) UTC,
+minus the number of leap seconds.
 It is set at boot by
 .Xr inittodr 9 ,
 and is updated periodically via
@@ -64,9 +68,19 @@ It is set at boot, and is updated periodically.
 (It is not updated by
 .Xr settimeofday 2 . )
 .Pp
-All of these variables contain times
-expressed in seconds since midnight (0 hour),
-January 1, 1970, UTC.
+The
+.Va time_uptime32
+variable is the low-order 32 bits of
+.Va time_uptime ,
+which is cheaper to read on 32-bit platforms.
+.Pp
+You must only read the variables
+.Va time_second ,
+.Va time_uptime ,
+and
+.Va time_uptime32 ;
+you may not write to them or take their addresses.
+They may be implemented as macros.
 .Pp
 The
 .Xr bintime 9 ,

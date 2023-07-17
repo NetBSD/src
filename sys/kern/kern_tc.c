@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.62 2021/06/02 21:34:58 riastradh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.63 2023/07/17 12:55:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,17 +40,19 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.62 2021/06/02 21:34:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.63 2023/07/17 12:55:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
 #endif
 
 #include <sys/param.h>
+
 #include <sys/atomic.h>
 #include <sys/evcnt.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
+#include <sys/lock.h>
 #include <sys/mutex.h>
 #include <sys/reboot.h>	/* XXX just to get AB_VERBOSE */
 #include <sys/sysctl.h>
@@ -131,8 +133,18 @@ static struct timehands *volatile timehands = &th0;
 struct timecounter *timecounter = &dummy_timecounter;
 static struct timecounter *timecounters = &dummy_timecounter;
 
-volatile time_t time_second __cacheline_aligned = 1;
-volatile time_t time_uptime __cacheline_aligned = 1;
+volatile time_t time__second __cacheline_aligned = 1;
+volatile time_t time__uptime __cacheline_aligned = 1;
+
+#ifndef __HAVE_ATOMIC64_LOADSTORE
+static volatile struct {
+	uint32_t lo, hi;
+} time__uptime32 __cacheline_aligned = {
+	.lo = 1,
+}, time__second32 __cacheline_aligned = {
+	.lo = 1,
+};
+#endif
 
 static struct bintime timebasebin;
 
@@ -142,6 +154,103 @@ kmutex_t timecounter_lock;
 static u_int timecounter_mods;
 static volatile int timecounter_removals = 1;
 static u_int timecounter_bad;
+
+#ifdef __HAVE_ATOMIC64_LOADSTORE
+
+static inline void
+setrealuptime(time_t second, time_t uptime)
+{
+
+	atomic_store_relaxed(&time__second, second);
+	atomic_store_relaxed(&time__uptime, uptime);
+}
+
+#else
+
+static inline void
+setrealuptime(time_t second, time_t uptime)
+{
+	uint32_t seclo = second & 0xffffffff, sechi = second >> 32;
+	uint32_t uplo = uptime & 0xffffffff, uphi = uptime >> 32;
+
+	KDASSERT(mutex_owned(&timecounter_lock));
+
+	/*
+	 * Fast path -- no wraparound, just updating the low bits, so
+	 * no need for seqlocked access.
+	 */
+	if (__predict_true(sechi == time__second32.hi) &&
+	    __predict_true(uphi == time__uptime32.hi)) {
+		atomic_store_relaxed(&time__second32.lo, seclo);
+		atomic_store_relaxed(&time__uptime32.lo, uplo);
+		return;
+	}
+
+	atomic_store_relaxed(&time__second32.hi, 0xffffffff);
+	atomic_store_relaxed(&time__uptime32.hi, 0xffffffff);
+	membar_producer();
+	atomic_store_relaxed(&time__second32.lo, seclo);
+	atomic_store_relaxed(&time__uptime32.lo, uplo);
+	membar_producer();
+	atomic_store_relaxed(&time__second32.hi, sechi);
+	atomic_store_relaxed(&time__second32.lo, seclo);
+}
+
+time_t
+getrealtime(void)
+{
+	uint32_t lo, hi;
+
+	do {
+		for (;;) {
+			hi = atomic_load_relaxed(&time__second32.hi);
+			if (__predict_true(hi != 0xffffffff))
+				break;
+			SPINLOCK_BACKOFF_HOOK;
+		}
+		membar_consumer();
+		lo = atomic_load_relaxed(&time__second32.lo);
+		membar_consumer();
+	} while (hi != atomic_load_relaxed(&time__second32.hi));
+
+	return ((time_t)hi << 32) | lo;
+}
+
+time_t
+getuptime(void)
+{
+	uint32_t lo, hi;
+
+	do {
+		for (;;) {
+			hi = atomic_load_relaxed(&time__uptime32.hi);
+			if (__predict_true(hi != 0xffffffff))
+				break;
+			SPINLOCK_BACKOFF_HOOK;
+		}
+		membar_consumer();
+		lo = atomic_load_relaxed(&time__uptime32.lo);
+		membar_consumer();
+	} while (hi != atomic_load_relaxed(&time__uptime32.hi));
+
+	return ((time_t)hi << 32) | lo;
+}
+
+time_t
+getboottime(void)
+{
+
+	return getrealtime() - getuptime();
+}
+
+uint32_t
+getuptime32(void)
+{
+
+	return atomic_load_relaxed(&time__uptime32.lo);
+}
+
+#endif	/* !defined(__HAVE_ATOMIC64_LOADSTORE) */
 
 /*
  * sysctl helper routine for kern.timercounter.hardware
@@ -878,8 +987,7 @@ tc_windup(void)
 	 * Go live with the new struct timehands.  Ensure changes are
 	 * globally visible before changing.
 	 */
-	time_second = th->th_microtime.tv_sec;
-	time_uptime = th->th_offset.sec;
+	setrealuptime(th->th_microtime.tv_sec, th->th_offset.sec);
 	membar_producer();
 	timehands = th;
 
