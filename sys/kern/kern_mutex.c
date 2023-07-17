@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.107 2023/05/01 12:18:08 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.108 2023/07/17 12:54:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.107 2023/05/01 12:18:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.108 2023/07/17 12:54:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -296,6 +296,7 @@ lockops_t mutex_adaptive_lockops = {
 };
 
 syncobj_t mutex_syncobj = {
+	.sobj_name	= "mutex",
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
 	.sobj_unsleep	= turnstile_unsleep,
 	.sobj_changepri	= turnstile_changepri,
