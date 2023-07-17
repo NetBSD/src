@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.184 2023/07/11 11:03:31 riastradh Exp $	*/
+/*	$NetBSD: db_command.c,v 1.185 2023/07/17 12:55:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.184 2023/07/11 11:03:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.185 2023/07/17 12:55:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -1376,8 +1376,8 @@ db_show_all_tstiles(db_expr_t addr, bool have_addr,
 	if (modif[0] == 't')
 		trace = true;
 
-	db_printf("%5s %5s %16s %16s %16s\n",
-	    "PID", "LID", "COMMAND", "WAITING-FOR", "WAIT-CHANNEL");
+	db_printf("%5s %5s %16s %16s %8s %16s\n",
+	    "PID", "LID", "COMMAND", "WAITING-FOR", "TYPE", "WAIT-CHANNEL");
 	for (p = db_proc_first(); p != NULL; p = db_proc_next(p)) {
 		pid_t pid = -1;
 		char comm[MAXCOMLEN + 1] = "";
@@ -1395,6 +1395,7 @@ db_show_all_tstiles(db_expr_t addr, bool have_addr,
 			lwpid_t lid = -1;
 			struct syncobj *sobj = NULL;
 			struct lwp *owner = NULL;
+			char sobjname[sizeof(sobj->sobj_name)] = "";
 
 			db_read_bytes((db_addr_t)&l->l_wchan, sizeof(wchan),
 			    (char *)&wchan);
@@ -1417,22 +1418,26 @@ db_show_all_tstiles(db_expr_t addr, bool have_addr,
 			db_read_bytes((db_addr_t)&l->l_syncobj, sizeof(sobj),
 			    (char *)&sobj);
 			if (sobj == NULL) {
-				db_printf("%5ld %5ld %16s %16s %16s\n",
+				db_printf("%5ld %5ld %16s %16s %8s %16s\n",
 				    (long)pid,
 				    (long)lid,
 				    comm,
 				    "(unknown)",
+				    "",
 				    wchanname);
 				goto next;
 			}
+			db_read_bytes((db_addr_t)&sobj->sobj_name,
+			    sizeof(sobjname), sobjname);
 
 			owner = db_syncobj_owner(sobj, wchan);
 
-			db_printf("%5ld %5ld %16s %16lx %16s\n",
+			db_printf("%5ld %5ld %16s %16lx %8s %16s\n",
 			    (long)pid,
 			    (long)lid,
 			    comm,
 			    (long)owner,
+			    sobjname,
 			    wchanname);
 
 			if (trace && owner != NULL) {
