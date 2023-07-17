@@ -1,3 +1,0 @@
-MULTILIB_OSDIRNAMES    = march.c674x=!c674x
-MULTILIB_OSDIRNAMES   += mbig-endian=!be
-MULTILIB_OSDIRNAMES   += mbig-endian/march.c674x=!be/c674x
