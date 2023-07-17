@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.77 2020/05/17 15:11:57 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.78 2023/07/17 12:55:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -63,7 +63,6 @@
 #ifdef _KERNEL
 
 #include <uvm/uvm_physseg.h>
-#include <sys/rndsource.h>
 
 /*
  * pull in VM_NFREELIST
@@ -84,9 +83,6 @@ struct uvm_cpu {
 	size_t		pgflcachememsz;		/* size of allocated memory */
 	u_int		pgflcolor;		/* next color to allocate */
 	u_int		pgflbucket;		/* where to send our pages */
-
-	/* entropy */
-	krndsource_t 	rs;			/* entropy source */
 
 	/* uvmpdpol: queue of intended page status changes. */
 	struct vm_page	**pdq;			/* queue entries */

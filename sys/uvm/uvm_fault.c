@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.232 2023/04/09 09:00:56 riastradh Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.233 2023/07/17 12:55:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.232 2023/04/09 09:00:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.233 2023/07/17 12:55:37 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.232 2023/04/09 09:00:56 riastradh Ex
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
+#include <uvm/uvm_rndsource.h>
 
 /*
  *
@@ -865,7 +866,7 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 		/* Don't flood RNG subsystem with samples. */
 		if (++(ci->ci_faultrng) == 503) {
 			ci->ci_faultrng = 0;
-			rnd_add_uint32(&curcpu()->ci_data.cpu_uvm->rs,
+			rnd_add_uint32(&uvm_fault_rndsource,
 			    sizeof(vaddr_t) == sizeof(uint32_t) ?
 			    (uint32_t)vaddr : sizeof(vaddr_t) ==
 			    sizeof(uint64_t) ?

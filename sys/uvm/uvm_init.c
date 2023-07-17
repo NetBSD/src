@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.55 2020/11/04 01:30:19 chs Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.56 2023/07/17 12:55:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.55 2020/11/04 01:30:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.56 2023/07/17 12:55:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,11 +43,13 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.55 2020/11/04 01:30:19 chs Exp $");
 #include <sys/kmem.h>
 #include <sys/mman.h>
 #include <sys/vnode.h>
+#include <sys/rndsource.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
 #include <uvm/uvm_physseg.h>
 #include <uvm/uvm_readahead.h>
+#include <uvm/uvm_rndsource.h>
 
 /*
  * struct uvm: we store most global vars in this structure to make them
@@ -65,6 +67,8 @@ const int * const uvmexp_pageshift = &uvmexp.pageshift;
 #endif
 
 kmutex_t uvm_kentry_lock __cacheline_aligned;
+
+struct krndsource uvm_fault_rndsource;
 
 /*
  * uvm_md_init: Init dependant on the MD boot context.
@@ -189,4 +193,12 @@ uvm_init(void)
 	 */
 
 	uvm_ra_init();
+
+	/*
+	 * Initialize random source for page fault events.
+	 */
+
+	rnd_attach_source(&uvm_fault_rndsource, "uvmfault", RND_TYPE_VM,
+	    RND_FLAG_COLLECT_TIME|RND_FLAG_COLLECT_VALUE|
+	    RND_FLAG_ESTIMATE_VALUE);
 }

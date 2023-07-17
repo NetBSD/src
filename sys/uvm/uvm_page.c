@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.252 2023/04/09 09:00:56 riastradh Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.253 2023/07/17 12:55:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.252 2023/04/09 09:00:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.253 2023/07/17 12:55:37 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -980,13 +980,6 @@ uvm_cpu_attach(struct cpu_info *ci)
 	}
 
 	uvmpdpol_init_cpu(ucpu);
-
-	/*
-	 * Attach RNG source for this CPU's VM events
-	 */
-        rnd_attach_source(&ucpu->rs, ci->ci_data.cpu_name, RND_TYPE_VM,
-	    RND_FLAG_COLLECT_TIME|RND_FLAG_COLLECT_VALUE|
-	    RND_FLAG_ESTIMATE_VALUE);
 }
 
 /*
