@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.87 2023/07/18 10:02:09 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.88 2023/07/18 10:02:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.87 2023/07/18 10:02:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.88 2023/07/18 10:02:25 riastradh Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_acpi_ec.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -101,22 +105,38 @@ ACPI_MODULE_NAME            ("acpi_ec")
 #define	EC_STATUS_SCI		0x20
 #define	EC_STATUS_SMI		0x40
 
+#define	EC_STATUS_FMT							      \
+	"\x10\10IGN7\7SMI\6SCI\5BURST\4CMD\3IGN2\2IBF\1OBF"
+
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "PNP0C09" },
 	DEVICE_COMPAT_EOL
 };
 
+#define	EC_STATE_ENUM(F)						      \
+	F(EC_STATE_QUERY, "QUERY")					      \
+	F(EC_STATE_QUERY_VAL, "QUERY_VAL")				      \
+	F(EC_STATE_READ, "READ")					      \
+	F(EC_STATE_READ_ADDR, "READ_ADDR")				      \
+	F(EC_STATE_READ_VAL, "READ_VAL")				      \
+	F(EC_STATE_WRITE, "WRITE")					      \
+	F(EC_STATE_WRITE_ADDR, "WRITE_ADDR")				      \
+	F(EC_STATE_WRITE_VAL, "WRITE_VAL")				      \
+	F(EC_STATE_FREE, "FREE")					      \
+
 enum ec_state_t {
-	EC_STATE_QUERY,
-	EC_STATE_QUERY_VAL,
-	EC_STATE_READ,
-	EC_STATE_READ_ADDR,
-	EC_STATE_READ_VAL,
-	EC_STATE_WRITE,
-	EC_STATE_WRITE_ADDR,
-	EC_STATE_WRITE_VAL,
-	EC_STATE_FREE
+#define	F(N, S)	N,
+	EC_STATE_ENUM(F)
+#undef F
 };
+
+#ifdef ACPIEC_DEBUG
+static const char *const acpiec_state_names[] = {
+#define F(N, S)	[N] = S,
+	EC_STATE_ENUM(F)
+#undef F
+};
+#endif
 
 struct acpiec_softc {
 	device_t sc_dev;
@@ -143,6 +163,55 @@ struct acpiec_softc {
 
 	uint8_t sc_cur_addr, sc_cur_val;
 };
+
+#ifdef ACPIEC_DEBUG
+
+#define	ACPIEC_DEBUG_ENUM(F)						      \
+	F(ACPIEC_DEBUG_REG, "REG")					      \
+	F(ACPIEC_DEBUG_RW, "RW")					      \
+	F(ACPIEC_DEBUG_QUERY, "QUERY")					      \
+	F(ACPIEC_DEBUG_TRANSITION, "TRANSITION")			      \
+	F(ACPIEC_DEBUG_INTR, "INTR")					      \
+
+enum {
+#define	F(N, S)	N,
+	ACPIEC_DEBUG_ENUM(F)
+#undef F
+};
+
+static const char *const acpiec_debug_names[] = {
+#define	F(N, S)	[N] = S,
+	ACPIEC_DEBUG_ENUM(F)
+#undef F
+};
+
+int acpiec_debug = ACPIEC_DEBUG;
+
+#define	DPRINTF(n, sc, fmt, ...) do					      \
+{									      \
+	if (acpiec_debug & __BIT(n)) {					      \
+		char dprintbuf[16];					      \
+		const char *state;					      \
+									      \
+		/* paranoia */						      \
+		if ((sc)->sc_state < __arraycount(acpiec_state_names)) {      \
+			state = acpiec_state_names[(sc)->sc_state];	      \
+		} else {						      \
+			snprintf(dprintbuf, sizeof(dprintbuf), "0x%x",	      \
+			    (sc)->sc_state);				      \
+			state = dprintbuf;				      \
+		}							      \
+									      \
+		device_printf((sc)->sc_dev, "(%s) [%s] "fmt,		      \
+		    acpiec_debug_names[n], state, ##__VA_ARGS__);	      \
+	}								      \
+} while (0)
+
+#else
+
+#define	DPRINTF(n, sc, fmt, ...)	__nothing
+
+#endif
 
 static int acpiecdt_match(device_t, cfdata_t, void *);
 static void acpiecdt_attach(device_t, device_t, void *);
@@ -495,24 +564,38 @@ acpiec_parse_gpe_package(device_t self, ACPI_HANDLE ec_handle,
 static uint8_t
 acpiec_read_data(struct acpiec_softc *sc)
 {
-	return bus_space_read_1(sc->sc_data_st, sc->sc_data_sh, 0);
+	uint8_t x;
+
+	x = bus_space_read_1(sc->sc_data_st, sc->sc_data_sh, 0);
+	DPRINTF(ACPIEC_DEBUG_REG, sc, "read data=0x%"PRIx8"\n", x);
+
+	return x;
 }
 
 static void
 acpiec_write_data(struct acpiec_softc *sc, uint8_t val)
 {
+
+	DPRINTF(ACPIEC_DEBUG_REG, sc, "write data=0x%"PRIx8"\n", val);
 	bus_space_write_1(sc->sc_data_st, sc->sc_data_sh, 0, val);
 }
 
 static uint8_t
 acpiec_read_status(struct acpiec_softc *sc)
 {
-	return bus_space_read_1(sc->sc_csr_st, sc->sc_csr_sh, 0);
+	uint8_t x;
+
+	x = bus_space_read_1(sc->sc_csr_st, sc->sc_csr_sh, 0);
+	DPRINTF(ACPIEC_DEBUG_REG, sc, "read status=0x%"PRIx8"\n", x);
+
+	return x;
 }
 
 static void
 acpiec_write_command(struct acpiec_softc *sc, uint8_t cmd)
 {
+
+	DPRINTF(ACPIEC_DEBUG_REG, sc, "write command=0x%"PRIx8"\n", cmd);
 	bus_space_write_1(sc->sc_csr_st, sc->sc_csr_sh, 0, cmd);
 }
 
@@ -575,6 +658,13 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
 
+	DPRINTF(ACPIEC_DEBUG_RW, sc,
+	    "pid %ld %s, lid %ld%s%s: read addr 0x%"PRIx8"\n",
+	    (long)curproc->p_pid, curproc->p_comm,
+	    (long)curlwp->l_lid, curlwp->l_name ? " " : "",
+	    curlwp->l_name ? curlwp->l_name : "",
+	    addr);
+
 	sc->sc_cur_addr = addr;
 	sc->sc_state = EC_STATE_READ;
 
@@ -606,6 +696,13 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 	}
 
 done:
+	DPRINTF(ACPIEC_DEBUG_RW, sc,
+	    "pid %ld %s, lid %ld%s%s: read addr 0x%"PRIx8": 0x%"PRIx8"\n",
+	    (long)curproc->p_pid, curproc->p_comm,
+	    (long)curlwp->l_lid, curlwp->l_name ? " " : "",
+	    curlwp->l_name ? curlwp->l_name : "",
+	    addr, sc->sc_cur_val);
+
 	*val = sc->sc_cur_val;
 
 	mutex_exit(&sc->sc_mtx);
@@ -621,6 +718,13 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
+
+	DPRINTF(ACPIEC_DEBUG_RW, sc,
+	    "pid %ld %s, lid %ld%s%s write addr 0x%"PRIx8": 0x%"PRIx8"\n",
+	    (long)curproc->p_pid, curproc->p_comm,
+	    (long)curlwp->l_lid, curlwp->l_name ? " " : "",
+	    curlwp->l_name ? curlwp->l_name : "",
+	    addr, val);
 
 	sc->sc_cur_addr = addr;
 	sc->sc_cur_val = val;
@@ -654,6 +758,14 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 	}
 
 done:
+	DPRINTF(ACPIEC_DEBUG_RW, sc,
+	    "pid %ld %s, lid %ld%s%s: write addr 0x%"PRIx8": 0x%"PRIx8
+	    " done\n",
+	    (long)curproc->p_pid, curproc->p_comm,
+	    (long)curlwp->l_lid, curlwp->l_name ? " " : "",
+	    curlwp->l_name ? curlwp->l_name : "",
+	    addr, val);
+
 	mutex_exit(&sc->sc_mtx);
 	acpiec_unlock(dv);
 	return AE_OK;
@@ -755,10 +867,13 @@ loop:
 
 	if (sc->sc_got_sci == false)
 		cv_wait(&sc->sc_cv_sci, &sc->sc_mtx);
+	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query requested\n");
 	mutex_exit(&sc->sc_mtx);
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
+
+	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query\n");
 
 	/* The Query command can always be issued, so be defensive here. */
 	sc->sc_got_sci = false;
@@ -771,10 +886,12 @@ loop:
 		delay(1);
 	}
 
+	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI polling timeout\n");
 	cv_wait(&sc->sc_cv, &sc->sc_mtx);
 
 done:
 	reg = sc->sc_cur_val;
+	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query: 0x%"PRIx8"\n", reg);
 
 	mutex_exit(&sc->sc_mtx);
 	acpiec_unlock(dv);
@@ -802,6 +919,15 @@ acpiec_gpe_state_machine(device_t dv)
 	uint8_t reg;
 
 	reg = acpiec_read_status(sc);
+
+#ifdef ACPIEC_DEBUG
+	if (acpiec_debug & __BIT(ACPIEC_DEBUG_TRANSITION)) {
+		char buf[128];
+
+		snprintb(buf, sizeof(buf), EC_STATUS_FMT, reg);
+		DPRINTF(ACPIEC_DEBUG_TRANSITION, sc, "%s\n", buf);
+	}
+#endif
 
 	if (reg & EC_STATUS_SCI)
 		sc->sc_got_sci = true;
@@ -874,15 +1000,22 @@ acpiec_gpe_state_machine(device_t dv)
 		break;
 
 	case EC_STATE_FREE:
-		if (sc->sc_got_sci)
+		if (sc->sc_got_sci) {
+			DPRINTF(ACPIEC_DEBUG_TRANSITION, sc,
+			    "wake SCI thread\n");
 			cv_signal(&sc->sc_cv_sci);
+		}
 		break;
 	default:
 		panic("invalid state");
 	}
 
-	if (sc->sc_state != EC_STATE_FREE)
+	if (sc->sc_state != EC_STATE_FREE) {
+		DPRINTF(ACPIEC_DEBUG_INTR, sc, "schedule callout\n");
 		callout_schedule(&sc->sc_pseudo_intr, 1);
+	}
+
+	DPRINTF(ACPIEC_DEBUG_TRANSITION, sc, "return\n");
 }
 
 static void
@@ -892,6 +1025,7 @@ acpiec_callout(void *arg)
 	struct acpiec_softc *sc = device_private(dv);
 
 	mutex_enter(&sc->sc_mtx);
+	DPRINTF(ACPIEC_DEBUG_INTR, sc, "callout\n");
 	acpiec_gpe_state_machine(dv);
 	mutex_exit(&sc->sc_mtx);
 }
@@ -903,6 +1037,7 @@ acpiec_gpe_handler(ACPI_HANDLE hdl, uint32_t gpebit, void *arg)
 	struct acpiec_softc *sc = device_private(dv);
 
 	mutex_enter(&sc->sc_mtx);
+	DPRINTF(ACPIEC_DEBUG_INTR, sc, "GPE\n");
 	acpiec_gpe_state_machine(dv);
 	mutex_exit(&sc->sc_mtx);
 
