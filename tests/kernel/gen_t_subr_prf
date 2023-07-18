@@ -25,6 +25,16 @@ cat << _EOF > $2
 
 #define kmem_alloc(n, f)	malloc(n)
 
+#define kprintf_lock()		__nothing
+#define kprintf_unlock()	__nothing
+
+/* Arbitrary */
+#define TOCONS	1
+#define TOLOG	2
+
+#define kprintf_internal(f, i1, i2, i3, ...) \
+	printf(f, __VA_ARGS__)
+
 static int putchar(char c, int foo, void *b)
 {
 	return fputc(c, stderr);
