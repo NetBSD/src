@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.95 2023/07/18 10:04:50 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.96 2023/07/18 10:05:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.95 2023/07/18 10:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.96 2023/07/18 10:05:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -689,10 +689,10 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 			acpiec_gpe_state_machine(dv);
 		}
 		if (sc->sc_state != EC_STATE_FREE) {
-			mutex_exit(&sc->sc_mtx);
-			acpiec_unlock(dv);
 			aprint_error_dev(dv, "command timed out, state %d\n",
 			    sc->sc_state);
+			mutex_exit(&sc->sc_mtx);
+			acpiec_unlock(dv);
 			return AE_ERROR;
 		}
 	} else {
@@ -762,10 +762,10 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 			acpiec_gpe_state_machine(dv);
 		}
 		if (sc->sc_state != EC_STATE_FREE) {
-			mutex_exit(&sc->sc_mtx);
-			acpiec_unlock(dv);
 			aprint_error_dev(dv, "command timed out, state %d\n",
 			    sc->sc_state);
+			mutex_exit(&sc->sc_mtx);
+			acpiec_unlock(dv);
 			return AE_ERROR;
 		}
 	} else {
