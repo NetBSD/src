@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.372 2023/06/13 16:56:00 christos Exp $
+#	$NetBSD: build.sh,v 1.373 2023/07/18 16:59:57 lukem Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1768,11 +1768,25 @@ rebuildmake()
 #
 validatemakeparams()
 {
-	# MAKECONF (which defaults to /etc/mk.conf in share/mk/bsd.own.mk)
-	# can affect many things, so mention it in an early status message.
+	# Determine MAKECONF first, and set in the makewrapper.
+	# If set in the environment, then use that.
+	# else if ./mk.conf exists, then set MAKECONF to that,
+	# else use the default from share/mk/bsd.own.mk (/etc/mk.conf).
 	#
-	MAKECONF=$(getmakevar MAKECONF)
-	if [ -e "${MAKECONF}" ]; then
+	if [ -n "${MAKECONF+1}" ]; then
+		setmakeenv MAKECONF "${MAKECONF}"
+		statusmsg2 "getenv MAKECONF:" "${MAKECONF}"
+	elif [ -f "${TOP}/mk.conf" ]; then
+		setmakeenv MAKECONF "${TOP}/mk.conf"
+		statusmsg2 "mk.conf MAKECONF:" "${MAKECONF}"
+	else
+		MAKECONF=$(getmakevar MAKECONF)
+		setmakeenv MAKECONF "${MAKECONF}"
+		statusmsg2 "share/mk MAKECONF:" "${MAKECONF}"
+	fi
+	if [ -z "${MAKECONF}" ]; then
+		bomb "MAKECONF must not be empty"
+	elif [ -e "${MAKECONF}" ]; then
 		statusmsg2 "MAKECONF file:" "${MAKECONF}"
 	else
 		statusmsg2 "MAKECONF file:" "${MAKECONF} (File not found)"
@@ -2016,7 +2030,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.372 2023/06/13 16:56:00 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.373 2023/07/18 16:59:57 lukem Exp $
 # with these arguments: ${_args}
 #
 
@@ -2451,6 +2465,10 @@ main()
 			[ -s "${line}" ] && continue
 			statusmsg2 "BUILDINFO:"  "${line}"
 		done
+	fi
+
+	if [ -n "${MAKECONF+1}" ] && [ -z "${MAKECONF}" ]; then
+		bomb "MAKECONF must not be empty"
 	fi
 
 	rebuildmake
