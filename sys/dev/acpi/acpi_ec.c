@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.86 2021/12/31 17:22:25 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.87 2023/07/18 10:02:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.86 2021/12/31 17:22:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.87 2023/07/18 10:02:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -119,6 +119,8 @@ enum ec_state_t {
 };
 
 struct acpiec_softc {
+	device_t sc_dev;
+
 	ACPI_HANDLE sc_ech;
 
 	ACPI_HANDLE sc_gpeh;
@@ -312,6 +314,8 @@ acpiec_common_attach(device_t parent, device_t self,
 	struct acpiec_softc *sc = device_private(self);
 	ACPI_STATUS rv;
 	ACPI_INTEGER val;
+
+	sc->sc_dev = self;
 
 	sc->sc_csr_st = cmdt;
 	sc->sc_data_st = datat;
