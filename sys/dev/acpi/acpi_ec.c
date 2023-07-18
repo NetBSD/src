@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.94 2023/07/18 10:04:40 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.95 2023/07/18 10:04:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.94 2023/07/18 10:04:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.95 2023/07/18 10:04:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -695,17 +695,21 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 			    sc->sc_state);
 			return AE_ERROR;
 		}
-	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
-		/*
-		 * XXX while (sc->sc_state != EC_STATE_FREE)
-		 *	cv_timedwait(...),
-		 * plus deadline
-		 */
-		mutex_exit(&sc->sc_mtx);
-		acpiec_unlock(dv);
-		aprint_error_dev(dv,
-		    "command takes over %d sec...\n", EC_CMD_TIMEOUT);
-		return AE_ERROR;
+	} else {
+		const unsigned deadline = getticks() + EC_CMD_TIMEOUT*hz;
+		unsigned delta;
+
+		while (sc->sc_state != EC_STATE_FREE &&
+		    (delta = deadline - getticks()) < INT_MAX)
+			(void)cv_timedwait(&sc->sc_cv, &sc->sc_mtx, delta);
+		if (sc->sc_state != EC_STATE_FREE) {
+			mutex_exit(&sc->sc_mtx);
+			acpiec_unlock(dv);
+			aprint_error_dev(dv,
+			    "command takes over %d sec...\n",
+			    EC_CMD_TIMEOUT);
+			return AE_ERROR;
+		}
 	}
 
 done:
@@ -764,17 +768,21 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 			    sc->sc_state);
 			return AE_ERROR;
 		}
-	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
-		/*
-		 * XXX while (sc->sc_state != EC_STATE_FREE)
-		 *	cv_timedwait(...),
-		 * plus deadline
-		 */
-		mutex_exit(&sc->sc_mtx);
-		acpiec_unlock(dv);
-		aprint_error_dev(dv,
-		    "command takes over %d sec...\n", EC_CMD_TIMEOUT);
-		return AE_ERROR;
+	} else {
+		const unsigned deadline = getticks() + EC_CMD_TIMEOUT*hz;
+		unsigned delta;
+
+		while (sc->sc_state != EC_STATE_FREE &&
+		    (delta = deadline - getticks()) < INT_MAX)
+			(void)cv_timedwait(&sc->sc_cv, &sc->sc_mtx, delta);
+		if (sc->sc_state != EC_STATE_FREE) {
+			mutex_exit(&sc->sc_mtx);
+			acpiec_unlock(dv);
+			aprint_error_dev(dv,
+			    "command takes over %d sec...\n",
+			    EC_CMD_TIMEOUT);
+			return AE_ERROR;
+		}
 	}
 
 done:
