@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.107 2023/07/18 10:17:02 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.108 2023/07/18 10:17:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.107 2023/07/18 10:17:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.108 2023/07/18 10:17:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -688,6 +688,7 @@ acpiec_wait_timeout(struct acpiec_softc *sc)
 		delay(1);
 	}
 
+	DPRINTF(ACPIEC_DEBUG_RW, sc, "SCI polling timeout\n");
 	if (cold || acpiec_cold) {
 		int timeo = 1000 * EC_CMD_TIMEOUT;
 
