@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.98 2023/07/18 10:05:24 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.99 2023/07/18 10:05:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.98 2023/07/18 10:05:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.99 2023/07/18 10:05:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -235,7 +235,7 @@ static ACPI_STATUS acpiec_space_setup(ACPI_HANDLE, uint32_t, void *, void **);
 static ACPI_STATUS acpiec_space_handler(uint32_t, ACPI_PHYSICAL_ADDRESS,
     uint32_t, ACPI_INTEGER *, void *, void *);
 
-static void acpiec_gpe_state_machine(device_t);
+static void acpiec_gpe_state_machine(struct acpiec_softc *);
 
 CFATTACH_DECL_NEW(acpiec, sizeof(struct acpiec_softc),
     acpiec_match, acpiec_attach, NULL, NULL);
@@ -662,7 +662,7 @@ acpiec_wait_timeout(struct acpiec_softc *sc)
 	int i;
 
 	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
-		acpiec_gpe_state_machine(dv);
+		acpiec_gpe_state_machine(sc);
 		if (sc->sc_state == EC_STATE_FREE)
 			return AE_OK;
 		delay(1);
@@ -673,7 +673,7 @@ acpiec_wait_timeout(struct acpiec_softc *sc)
 
 		while (sc->sc_state != EC_STATE_FREE && timeo-- > 0) {
 			delay(1000);
-			acpiec_gpe_state_machine(dv);
+			acpiec_gpe_state_machine(sc);
 		}
 		if (sc->sc_state != EC_STATE_FREE) {
 			aprint_error_dev(dv, "command timed out, state %d\n",
@@ -860,14 +860,13 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
 static void
 acpiec_wait(struct acpiec_softc *sc)
 {
-	device_t dv = sc->sc_dev;
 	int i;
 
 	/*
 	 * First, attempt to get the query by polling.
 	 */
 	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
-		acpiec_gpe_state_machine(dv);
+		acpiec_gpe_state_machine(sc);
 		if (sc->sc_state == EC_STATE_FREE)
 			return;
 		delay(1);
@@ -943,9 +942,8 @@ loop:
 }
 
 static void
-acpiec_gpe_state_machine(device_t dv)
+acpiec_gpe_state_machine(struct acpiec_softc *sc)
 {
-	struct acpiec_softc *sc = device_private(dv);
 	uint8_t reg;
 
 	KASSERT(mutex_owned(&sc->sc_mtx));
@@ -1061,7 +1059,7 @@ acpiec_callout(void *arg)
 
 	mutex_enter(&sc->sc_mtx);
 	DPRINTF(ACPIEC_DEBUG_INTR, sc, "callout\n");
-	acpiec_gpe_state_machine(dv);
+	acpiec_gpe_state_machine(sc);
 	mutex_exit(&sc->sc_mtx);
 }
 
@@ -1073,7 +1071,7 @@ acpiec_gpe_handler(ACPI_HANDLE hdl, uint32_t gpebit, void *arg)
 
 	mutex_enter(&sc->sc_mtx);
 	DPRINTF(ACPIEC_DEBUG_INTR, sc, "GPE\n");
-	acpiec_gpe_state_machine(dv);
+	acpiec_gpe_state_machine(sc);
 	mutex_exit(&sc->sc_mtx);
 
 	return ACPI_INTERRUPT_HANDLED | ACPI_REENABLE_GPE;
