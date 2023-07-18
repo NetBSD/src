@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.103 2023/07/18 10:06:33 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.104 2023/07/18 10:06:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.103 2023/07/18 10:06:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.104 2023/07/18 10:06:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -449,7 +449,7 @@ acpiec_common_attach(device_t parent, device_t self,
 	}
 
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, acpiec_gpe_query,
-		           self, NULL, "acpiec sci thread")) {
+		sc, NULL, "acpiec sci thread")) {
 		aprint_error_dev(self, "unable to create query kthread\n");
 		goto post_csr_map;
 	}
@@ -882,8 +882,7 @@ acpiec_wait(struct acpiec_softc *sc)
 static void
 acpiec_gpe_query(void *arg)
 {
-	device_t dv = arg;
-	struct acpiec_softc *sc = device_private(dv);
+	struct acpiec_softc *sc = arg;
 	uint8_t reg;
 	char qxx[5];
 	ACPI_STATUS rv;
@@ -931,7 +930,7 @@ loop:
 	snprintf(qxx, sizeof(qxx), "_Q%02X", (unsigned int)reg);
 	rv = AcpiEvaluateObject(sc->sc_ech, qxx, NULL, NULL);
 	if (rv != AE_OK && rv != AE_NOT_FOUND) {
-		aprint_error_dev(dv, "GPE query method %s failed: %s",
+		aprint_error_dev(sc->sc_dev, "GPE query method %s failed: %s",
 		    qxx, AcpiFormatException(rv));
 	}
 
