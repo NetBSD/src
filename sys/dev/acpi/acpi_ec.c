@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.101 2023/07/18 10:06:11 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.102 2023/07/18 10:06:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.101 2023/07/18 10:06:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.102 2023/07/18 10:06:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -619,9 +619,8 @@ acpiec_space_setup(ACPI_HANDLE region, uint32_t func, void *arg,
 }
 
 static void
-acpiec_lock(device_t dv)
+acpiec_lock(struct acpiec_softc *sc)
 {
-	struct acpiec_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
 
 	mutex_enter(&sc->sc_access_mtx);
@@ -630,7 +629,7 @@ acpiec_lock(device_t dv)
 		rv = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT,
 		    &sc->sc_global_lock);
 		if (rv != AE_OK) {
-			aprint_error_dev(dv,
+			aprint_error_dev(sc->sc_dev,
 			    "failed to acquire global lock: %s\n",
 			    AcpiFormatException(rv));
 			return;
@@ -639,15 +638,14 @@ acpiec_lock(device_t dv)
 }
 
 static void
-acpiec_unlock(device_t dv)
+acpiec_unlock(struct acpiec_softc *sc)
 {
-	struct acpiec_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
 
 	if (sc->sc_need_global_lock) {
 		rv = AcpiReleaseGlobalLock(sc->sc_global_lock);
 		if (rv != AE_OK) {
-			aprint_error_dev(dv,
+			aprint_error_dev(sc->sc_dev,
 			    "failed to release global lock: %s\n",
 			    AcpiFormatException(rv));
 		}
@@ -704,7 +702,7 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 	struct acpiec_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
 
-	acpiec_lock(dv);
+	acpiec_lock(sc);
 	mutex_enter(&sc->sc_mtx);
 
 	DPRINTF(ACPIEC_DEBUG_RW, sc,
@@ -733,7 +731,7 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 	*val = sc->sc_cur_val;
 
 out:	mutex_exit(&sc->sc_mtx);
-	acpiec_unlock(dv);
+	acpiec_unlock(sc);
 	return rv;
 }
 
@@ -743,7 +741,7 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 	struct acpiec_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
 
-	acpiec_lock(dv);
+	acpiec_lock(sc);
 	mutex_enter(&sc->sc_mtx);
 
 	DPRINTF(ACPIEC_DEBUG_RW, sc,
@@ -772,7 +770,7 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 	    addr, val);
 
 out:	mutex_exit(&sc->sc_mtx);
-	acpiec_unlock(dv);
+	acpiec_unlock(sc);
 	return rv;
 }
 
@@ -905,7 +903,7 @@ loop:
 	 * EC wants to submit a query to us.  Exclude concurrent reads
 	 * and writes while we handle it.
 	 */
-	acpiec_lock(dv);
+	acpiec_lock(sc);
 	mutex_enter(&sc->sc_mtx);
 
 	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query\n");
@@ -923,7 +921,7 @@ loop:
 	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query: 0x%"PRIx8"\n", reg);
 
 	mutex_exit(&sc->sc_mtx);
-	acpiec_unlock(dv);
+	acpiec_unlock(sc);
 
 	if (reg == 0)
 		goto loop; /* Spurious query result */
