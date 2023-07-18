@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.96 2023/07/18 10:05:01 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.97 2023/07/18 10:05:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.96 2023/07/18 10:05:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.97 2023/07/18 10:05:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -660,6 +660,7 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 {
 	struct acpiec_softc *sc = device_private(dv);
 	int i, timeo = 1000 * EC_CMD_TIMEOUT;
+	ACPI_STATUS rv;
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
@@ -691,9 +692,8 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 		if (sc->sc_state != EC_STATE_FREE) {
 			aprint_error_dev(dv, "command timed out, state %d\n",
 			    sc->sc_state);
-			mutex_exit(&sc->sc_mtx);
-			acpiec_unlock(dv);
-			return AE_ERROR;
+			rv = AE_ERROR;
+			goto out;
 		}
 	} else {
 		const unsigned deadline = getticks() + EC_CMD_TIMEOUT*hz;
@@ -703,12 +703,11 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 		    (delta = deadline - getticks()) < INT_MAX)
 			(void)cv_timedwait(&sc->sc_cv, &sc->sc_mtx, delta);
 		if (sc->sc_state != EC_STATE_FREE) {
-			mutex_exit(&sc->sc_mtx);
-			acpiec_unlock(dv);
 			aprint_error_dev(dv,
 			    "command takes over %d sec...\n",
 			    EC_CMD_TIMEOUT);
-			return AE_ERROR;
+			rv = AE_ERROR;
+			goto out;
 		}
 	}
 
@@ -721,10 +720,11 @@ done:
 	    addr, sc->sc_cur_val);
 
 	*val = sc->sc_cur_val;
-
+	rv = AE_OK;
+out:
 	mutex_exit(&sc->sc_mtx);
 	acpiec_unlock(dv);
-	return AE_OK;
+	return rv;
 }
 
 static ACPI_STATUS
@@ -732,6 +732,7 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 {
 	struct acpiec_softc *sc = device_private(dv);
 	int i, timeo = 1000 * EC_CMD_TIMEOUT;
+	ACPI_STATUS rv;
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
@@ -764,9 +765,8 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 		if (sc->sc_state != EC_STATE_FREE) {
 			aprint_error_dev(dv, "command timed out, state %d\n",
 			    sc->sc_state);
-			mutex_exit(&sc->sc_mtx);
-			acpiec_unlock(dv);
-			return AE_ERROR;
+			rv = AE_ERROR;
+			goto out;
 		}
 	} else {
 		const unsigned deadline = getticks() + EC_CMD_TIMEOUT*hz;
@@ -776,12 +776,11 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 		    (delta = deadline - getticks()) < INT_MAX)
 			(void)cv_timedwait(&sc->sc_cv, &sc->sc_mtx, delta);
 		if (sc->sc_state != EC_STATE_FREE) {
-			mutex_exit(&sc->sc_mtx);
-			acpiec_unlock(dv);
 			aprint_error_dev(dv,
 			    "command takes over %d sec...\n",
 			    EC_CMD_TIMEOUT);
-			return AE_ERROR;
+			rv = AE_ERROR;
+			goto out;
 		}
 	}
 
@@ -793,10 +792,11 @@ done:
 	    (long)curlwp->l_lid, curlwp->l_name ? " " : "",
 	    curlwp->l_name ? curlwp->l_name : "",
 	    addr, val);
-
+	rv = AE_OK;
+out:
 	mutex_exit(&sc->sc_mtx);
 	acpiec_unlock(dv);
-	return AE_OK;
+	return rv;
 }
 
 /*
