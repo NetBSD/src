@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.88 2023/07/18 10:02:25 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.89 2023/07/18 10:03:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -34,14 +34,12 @@
  * - read and write access from ASL, e.g. to read battery state
  * - notification of ASL of System Control Interrupts.
  *
- * Access to the EC is serialised by sc_access_mtx and optionally the
- * ACPI global mutex.  Both locks are held until the request is fulfilled.
- * All access to the softc has to hold sc_mtx to serialise against the GPE
- * handler and the callout.  sc_mtx is also used for wakeup conditions.
+ * Lock order:
+ *	sc_access_mtx (serializes EC transactions -- read, write, or SCI)
+ *	-> ACPI global lock (excludes other ACPI access during EC transaction)
+ *	-> sc_mtx (serializes state machine transitions and waits)
  *
- * SCIs are processed in a kernel thread. Handling gets a bit complicated
- * by the lock order (sc_mtx must be acquired after sc_access_mtx and the
- * ACPI global mutex).
+ * SCIs are processed in a kernel thread.
  *
  * Read and write requests spin around for a short time as many requests
  * can be handled instantly by the EC.  During normal processing interrupt
@@ -59,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.88 2023/07/18 10:02:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.89 2023/07/18 10:03:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -566,6 +564,8 @@ acpiec_read_data(struct acpiec_softc *sc)
 {
 	uint8_t x;
 
+	KASSERT(mutex_owned(&sc->sc_mtx));
+
 	x = bus_space_read_1(sc->sc_data_st, sc->sc_data_sh, 0);
 	DPRINTF(ACPIEC_DEBUG_REG, sc, "read data=0x%"PRIx8"\n", x);
 
@@ -576,6 +576,8 @@ static void
 acpiec_write_data(struct acpiec_softc *sc, uint8_t val)
 {
 
+	KASSERT(mutex_owned(&sc->sc_mtx));
+
 	DPRINTF(ACPIEC_DEBUG_REG, sc, "write data=0x%"PRIx8"\n", val);
 	bus_space_write_1(sc->sc_data_st, sc->sc_data_sh, 0, val);
 }
@@ -584,6 +586,8 @@ static uint8_t
 acpiec_read_status(struct acpiec_softc *sc)
 {
 	uint8_t x;
+
+	KASSERT(mutex_owned(&sc->sc_mtx));
 
 	x = bus_space_read_1(sc->sc_csr_st, sc->sc_csr_sh, 0);
 	DPRINTF(ACPIEC_DEBUG_REG, sc, "read status=0x%"PRIx8"\n", x);
@@ -594,6 +598,8 @@ acpiec_read_status(struct acpiec_softc *sc)
 static void
 acpiec_write_command(struct acpiec_softc *sc, uint8_t cmd)
 {
+
+	KASSERT(mutex_owned(&sc->sc_mtx));
 
 	DPRINTF(ACPIEC_DEBUG_REG, sc, "write command=0x%"PRIx8"\n", cmd);
 	bus_space_write_1(sc->sc_csr_st, sc->sc_csr_sh, 0, cmd);
@@ -917,6 +923,8 @@ acpiec_gpe_state_machine(device_t dv)
 {
 	struct acpiec_softc *sc = device_private(dv);
 	uint8_t reg;
+
+	KASSERT(mutex_owned(&sc->sc_mtx));
 
 	reg = acpiec_read_status(sc);
 
