@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.106 2023/07/18 10:10:49 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.107 2023/07/18 10:17:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.106 2023/07/18 10:10:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.107 2023/07/18 10:17:02 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -477,8 +477,23 @@ post_data_map:
 static bool
 acpiec_suspend(device_t dv, const pmf_qual_t *qual)
 {
+	struct acpiec_softc *sc = device_private(dv);
 
+	/*
+	 * XXX This looks bad because acpiec_cold is global and
+	 * sc->sc_mtx doesn't look like it's global, but we can have
+	 * only one acpiec(4) device anyway.  Maybe acpiec_cold should
+	 * live in the softc to make this look less bad?
+	 *
+	 * XXX Should this block read/write/query transactions until
+	 * resume?
+	 *
+	 * XXX Should this interrupt existing transactions to make them
+	 * fail promptly or restart on resume?
+	 */
+	mutex_enter(&sc->sc_mtx);
 	acpiec_cold = true;
+	mutex_exit(&sc->sc_mtx);
 
 	return true;
 }
@@ -486,8 +501,11 @@ acpiec_suspend(device_t dv, const pmf_qual_t *qual)
 static bool
 acpiec_resume(device_t dv, const pmf_qual_t *qual)
 {
+	struct acpiec_softc *sc = device_private(dv);
 
+	mutex_enter(&sc->sc_mtx);
 	acpiec_cold = false;
+	mutex_exit(&sc->sc_mtx);
 
 	return true;
 }
@@ -495,8 +513,12 @@ acpiec_resume(device_t dv, const pmf_qual_t *qual)
 static bool
 acpiec_shutdown(device_t dv, int how)
 {
+	struct acpiec_softc *sc = device_private(dv);
 
+	mutex_enter(&sc->sc_mtx);
 	acpiec_cold = true;
+	mutex_exit(&sc->sc_mtx);
+
 	return true;
 }
 
