@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.105 2023/07/18 10:06:55 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.106 2023/07/18 10:10:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.105 2023/07/18 10:06:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.106 2023/07/18 10:10:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -967,7 +967,6 @@ acpiec_gpe_state_machine(struct acpiec_softc *sc)
 			break; /* Nothing of interest here. */
 		sc->sc_cur_val = acpiec_read_data(sc);
 		sc->sc_state = EC_STATE_FREE;
-		cv_signal(&sc->sc_cv);
 		break;
 
 	case EC_STATE_READ:
@@ -989,7 +988,6 @@ acpiec_gpe_state_machine(struct acpiec_softc *sc)
 			break; /* Nothing of interest here. */
 		sc->sc_cur_val = acpiec_read_data(sc);
 		sc->sc_state = EC_STATE_FREE;
-		cv_signal(&sc->sc_cv);
 		break;
 
 	case EC_STATE_WRITE:
@@ -1009,9 +1007,8 @@ acpiec_gpe_state_machine(struct acpiec_softc *sc)
 	case EC_STATE_WRITE_VAL:
 		if ((reg & EC_STATUS_IBF) != 0)
 			break; /* Nothing of interest here. */
-		sc->sc_state = EC_STATE_FREE;
-		cv_signal(&sc->sc_cv);
 		acpiec_write_data(sc, sc->sc_cur_val);
+		sc->sc_state = EC_STATE_FREE;
 		break;
 
 	case EC_STATE_FREE:
@@ -1022,10 +1019,12 @@ acpiec_gpe_state_machine(struct acpiec_softc *sc)
 	}
 
 	/*
-	 * If we just ended a transaction, and an SCI was requested,
-	 * notify the SCI thread.
+	 * If we are not in a transaction, wake anyone waiting to start
+	 * one.  If an SCI was requested, notify the SCI thread that it
+	 * needs to handle the SCI.
 	 */
 	if (sc->sc_state == EC_STATE_FREE) {
+		cv_signal(&sc->sc_cv);
 		if (reg & EC_STATUS_SCI) {
 			DPRINTF(ACPIEC_DEBUG_TRANSITION, sc,
 			    "wake SCI thread\n");
