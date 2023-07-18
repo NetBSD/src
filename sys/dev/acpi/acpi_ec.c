@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.97 2023/07/18 10:05:13 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.98 2023/07/18 10:05:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.97 2023/07/18 10:05:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.98 2023/07/18 10:05:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -656,10 +656,52 @@ acpiec_unlock(device_t dv)
 }
 
 static ACPI_STATUS
+acpiec_wait_timeout(struct acpiec_softc *sc)
+{
+	device_t dv = sc->sc_dev;
+	int i;
+
+	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
+		acpiec_gpe_state_machine(dv);
+		if (sc->sc_state == EC_STATE_FREE)
+			return AE_OK;
+		delay(1);
+	}
+
+	if (cold || acpiec_cold) {
+		int timeo = 1000 * EC_CMD_TIMEOUT;
+
+		while (sc->sc_state != EC_STATE_FREE && timeo-- > 0) {
+			delay(1000);
+			acpiec_gpe_state_machine(dv);
+		}
+		if (sc->sc_state != EC_STATE_FREE) {
+			aprint_error_dev(dv, "command timed out, state %d\n",
+			    sc->sc_state);
+			return AE_ERROR;
+		}
+	} else {
+		const unsigned deadline = getticks() + EC_CMD_TIMEOUT*hz;
+		unsigned delta;
+
+		while (sc->sc_state != EC_STATE_FREE &&
+		    (delta = deadline - getticks()) < INT_MAX)
+			(void)cv_timedwait(&sc->sc_cv, &sc->sc_mtx, delta);
+		if (sc->sc_state != EC_STATE_FREE) {
+			aprint_error_dev(dv,
+			    "command takes over %d sec...\n",
+			    EC_CMD_TIMEOUT);
+			return AE_ERROR;
+		}
+	}
+
+	return AE_OK;
+}
+
+static ACPI_STATUS
 acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 {
 	struct acpiec_softc *sc = device_private(dv);
-	int i, timeo = 1000 * EC_CMD_TIMEOUT;
 	ACPI_STATUS rv;
 
 	acpiec_lock(dv);
@@ -677,41 +719,10 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 	sc->sc_cur_addr = addr;
 	sc->sc_state = EC_STATE_READ;
 
-	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
-		acpiec_gpe_state_machine(dv);
-		if (sc->sc_state == EC_STATE_FREE)
-			goto done;
-		delay(1);
-	}
+	rv = acpiec_wait_timeout(sc);
+	if (ACPI_FAILURE(rv))
+		goto out;
 
-	if (cold || acpiec_cold) {
-		while (sc->sc_state != EC_STATE_FREE && timeo-- > 0) {
-			delay(1000);
-			acpiec_gpe_state_machine(dv);
-		}
-		if (sc->sc_state != EC_STATE_FREE) {
-			aprint_error_dev(dv, "command timed out, state %d\n",
-			    sc->sc_state);
-			rv = AE_ERROR;
-			goto out;
-		}
-	} else {
-		const unsigned deadline = getticks() + EC_CMD_TIMEOUT*hz;
-		unsigned delta;
-
-		while (sc->sc_state != EC_STATE_FREE &&
-		    (delta = deadline - getticks()) < INT_MAX)
-			(void)cv_timedwait(&sc->sc_cv, &sc->sc_mtx, delta);
-		if (sc->sc_state != EC_STATE_FREE) {
-			aprint_error_dev(dv,
-			    "command takes over %d sec...\n",
-			    EC_CMD_TIMEOUT);
-			rv = AE_ERROR;
-			goto out;
-		}
-	}
-
-done:
 	DPRINTF(ACPIEC_DEBUG_RW, sc,
 	    "pid %ld %s, lid %ld%s%s: read addr 0x%"PRIx8": 0x%"PRIx8"\n",
 	    (long)curproc->p_pid, curproc->p_comm,
@@ -720,9 +731,8 @@ done:
 	    addr, sc->sc_cur_val);
 
 	*val = sc->sc_cur_val;
-	rv = AE_OK;
-out:
-	mutex_exit(&sc->sc_mtx);
+
+out:	mutex_exit(&sc->sc_mtx);
 	acpiec_unlock(dv);
 	return rv;
 }
@@ -731,7 +741,6 @@ static ACPI_STATUS
 acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 {
 	struct acpiec_softc *sc = device_private(dv);
-	int i, timeo = 1000 * EC_CMD_TIMEOUT;
 	ACPI_STATUS rv;
 
 	acpiec_lock(dv);
@@ -750,41 +759,10 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 	sc->sc_cur_val = val;
 	sc->sc_state = EC_STATE_WRITE;
 
-	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
-		acpiec_gpe_state_machine(dv);
-		if (sc->sc_state == EC_STATE_FREE)
-			goto done;
-		delay(1);
-	}
+	rv = acpiec_wait_timeout(sc);
+	if (ACPI_FAILURE(rv))
+		goto out;
 
-	if (cold || acpiec_cold) {
-		while (sc->sc_state != EC_STATE_FREE && timeo-- > 0) {
-			delay(1000);
-			acpiec_gpe_state_machine(dv);
-		}
-		if (sc->sc_state != EC_STATE_FREE) {
-			aprint_error_dev(dv, "command timed out, state %d\n",
-			    sc->sc_state);
-			rv = AE_ERROR;
-			goto out;
-		}
-	} else {
-		const unsigned deadline = getticks() + EC_CMD_TIMEOUT*hz;
-		unsigned delta;
-
-		while (sc->sc_state != EC_STATE_FREE &&
-		    (delta = deadline - getticks()) < INT_MAX)
-			(void)cv_timedwait(&sc->sc_cv, &sc->sc_mtx, delta);
-		if (sc->sc_state != EC_STATE_FREE) {
-			aprint_error_dev(dv,
-			    "command takes over %d sec...\n",
-			    EC_CMD_TIMEOUT);
-			rv = AE_ERROR;
-			goto out;
-		}
-	}
-
-done:
 	DPRINTF(ACPIEC_DEBUG_RW, sc,
 	    "pid %ld %s, lid %ld%s%s: write addr 0x%"PRIx8": 0x%"PRIx8
 	    " done\n",
@@ -792,9 +770,8 @@ done:
 	    (long)curlwp->l_lid, curlwp->l_name ? " " : "",
 	    curlwp->l_name ? curlwp->l_name : "",
 	    addr, val);
-	rv = AE_OK;
-out:
-	mutex_exit(&sc->sc_mtx);
+
+out:	mutex_exit(&sc->sc_mtx);
 	acpiec_unlock(dv);
 	return rv;
 }
@@ -881,6 +858,32 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
 }
 
 static void
+acpiec_wait(struct acpiec_softc *sc)
+{
+	device_t dv = sc->sc_dev;
+	int i;
+
+	/*
+	 * First, attempt to get the query by polling.
+	 */
+	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
+		acpiec_gpe_state_machine(dv);
+		if (sc->sc_state == EC_STATE_FREE)
+			return;
+		delay(1);
+	}
+
+	/*
+	 * Polling timed out.  Try waiting for interrupts -- either GPE
+	 * interrupts, or periodic callouts in case GPE interrupts are
+	 * broken.
+	 */
+	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI polling timeout\n");
+	while (sc->sc_state != EC_STATE_FREE)
+		cv_wait(&sc->sc_cv, &sc->sc_mtx);
+}
+
+static void
 acpiec_gpe_query(void *arg)
 {
 	device_t dv = arg;
@@ -888,7 +891,6 @@ acpiec_gpe_query(void *arg)
 	uint8_t reg;
 	char qxx[5];
 	ACPI_STATUS rv;
-	int i;
 
 loop:
 	/*
@@ -916,26 +918,8 @@ loop:
 	sc->sc_got_sci = false;
 	sc->sc_state = EC_STATE_QUERY;
 
-	/*
-	 * First, attempt to get the query by polling.
-	 */
-	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
-		acpiec_gpe_state_machine(dv);
-		if (sc->sc_state == EC_STATE_FREE)
-			goto done;
-		delay(1);
-	}
+	acpiec_wait(sc);
 
-	/*
-	 * Polling timed out.  Try waiting for interrupts -- either GPE
-	 * interrupts, or periodic callouts in case GPE interrupts are
-	 * broken.
-	 */
-	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI polling timeout\n");
-	while (sc->sc_state != EC_STATE_FREE)
-		cv_wait(&sc->sc_cv, &sc->sc_mtx);
-
-done:
 	reg = sc->sc_cur_val;
 	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query: 0x%"PRIx8"\n", reg);
 
