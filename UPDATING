@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.340 2023/07/11 15:05:17 martin Exp $
+$NetBSD: UPDATING,v 1.341 2023/07/18 16:59:57 lukem Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20230718:
+	build.sh will use mk.conf in the same directory as build.sh instead
+	of /etc/mk.conf, unless MAKECONF is already defined in the environment.
 
 20230604:
 	Building native kernels with the installed make(1) instead of
