@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.92 2023/07/18 10:04:14 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.93 2023/07/18 10:04:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.92 2023/07/18 10:04:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.93 2023/07/18 10:04:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -885,11 +885,9 @@ acpiec_gpe_query(void *arg)
 loop:
 	/*
 	 * Wait until the EC sends an SCI requesting a query.
-	 *
-	 * XXX This needs to be `while', not `if'.
 	 */
 	mutex_enter(&sc->sc_mtx);
-	if (sc->sc_got_sci == false)
+	while (!sc->sc_got_sci)
 		cv_wait(&sc->sc_cv_sci, &sc->sc_mtx);
 	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query requested\n");
 	mutex_exit(&sc->sc_mtx);
@@ -906,6 +904,7 @@ loop:
 	KASSERT(sc->sc_state == EC_STATE_FREE);
 
 	/* The Query command can always be issued, so be defensive here. */
+	KASSERT(sc->sc_got_sci);
 	sc->sc_got_sci = false;
 	sc->sc_state = EC_STATE_QUERY;
 
