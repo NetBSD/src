@@ -9,12 +9,16 @@ REQUIREMENTS
      same NetBSD architecture) or cross compiling (on another architecture or
      OS).
 
+     This source tree contains the build.sh shell script which supports both
+     native and cross builds of NetBSD.
+
      This source tree contains a special subtree, "tools", which uses the host
      system to create a build toolchain for the target architecture.  The host
      system must have at least C and C++ compilers in order to create the
-     toolchain (make is not required); all other tools are created as part of
-     the NetBSD build process.  (See the Environment variables section below
-     if you need to override or manually select your compilers.)
+     toolchain (make(1) is not required); all other tools (including make(1)
+     as nbmake) are created as part of the NetBSD build process.  (See the
+     Environment variables section below if you need to override or manually
+     select your compilers.)
 
      Note: Within this document, cross-references to manual pages are to the
      NetBSD manual pages, not the host system manual pages.  The mdoc(7)
@@ -70,6 +74,12 @@ FILES
      external/mit/xorg/
                     "Reachover" build structure for modular Xorg; the source
                     is in X11SRCDIR.
+
+     mk.conf        Optional source tree specific mk.conf(5), used (if
+                    present) instead of /etc/mk.conf unless MAKECONF is
+                    defined.
+
+                    Note: Not part of the NetBSD source repository.
 
      regress/, tests/
                     Regression test harness.  Can be cross-compiled, but only
@@ -164,7 +174,9 @@ CONFIGURATION
 
                      Note: Only settable in the process environment.
 
-                     Default: "/etc/mk.conf".
+                     Default: "/etc/mk.conf", although build.sh will set the
+                     default to the full path to mk.conf if the latter is
+                     present in the same directory as build.sh.
 
      MAKEFLAGS       Flags to invoke make(1) with.
 
@@ -819,4 +831,4 @@ CAVEATS
      in object directories.  Instead, one may have to manually remove the
      files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                           July 5, 2023                           NetBSD
+NetBSD                           July 18, 2023                          NetBSD

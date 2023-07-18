@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.145 2023/07/05 16:41:12 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.146 2023/07/18 16:59:57 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd July 5, 2023
+.Dd July 18, 2023
 .Dt BUILDING 8
 .Os NetBSD
 .\" turn off hyphenation
@@ -68,14 +68,24 @@ architecture) or
 .Em cross compiling
 (on another architecture or OS).
 .Pp
+This source tree contains the
+.Sy build.sh
+shell script which supports both native and cross builds of
+.Nx .
+.Pp
 This source tree contains a special subtree,
 .Dq tools ,
 which uses the host system to create a build toolchain for the target
 architecture.
 The host system must have at least C and C++
 compilers in order to create the toolchain
-.Nm ( make
-is not required); all other tools are created as part of the
+.Xr ( make 1
+is not required); all other tools
+(including
+.Xr make 1
+as
+.Sy \*[toolprefix]make )
+are created as part of the
 .Nx
 build process.
 (See the
@@ -123,7 +133,7 @@ version of
 .Xr make 1 .
 Intended for expert use with knowledge of its shortcomings,
 it has been superseded by the
-.Nm build.sh
+.Sy build.sh
 shell script as the recommended means for building
 .Nx .
 .
@@ -148,9 +158,9 @@ as building with an outdated version of
 Sources imported verbatim from third parties, without mangling the
 existing build structure.
 Other source trees in
-.Sy bin
+.Pa bin
 through
-.Sy usr.sbin
+.Pa usr.sbin
 use the
 .Nx
 .Xr make 1
@@ -184,6 +194,20 @@ directories.
 .Dq Reachover
 build structure for modular Xorg; the source is in
 .Sy X11SRCDIR .
+.
+.It Pa mk.conf
+Optional source tree specific
+.Xr mk.conf 5 ,
+used (if present) instead of
+.Pa /etc/mk.conf
+unless
+.Sy MAKECONF
+is defined.
+.Pp
+.Em Note :
+Not part of the
+.Nx
+source repository.
 .
 .It Pa regress/ , tests/
 Regression test harness.
@@ -338,7 +362,7 @@ or
 Most parts of the build require
 .Sy HOST_SH
 to be an absolute path; however,
-.Nm build.sh
+.Sy build.sh
 allows it to be a simple command name, which will be converted
 to an absolute path by searching the
 .Ev PATH .
@@ -380,7 +404,13 @@ and
 .Em Note :
 Only settable in the process environment.
 .DFLT
-.Dq Pa /etc/mk.conf .
+.Dq Pa /etc/mk.conf ,
+although
+.Sy build.sh
+will set the default to the full path to
+.Pa mk.conf
+if the latter is present in the same directory as
+.Sy build.sh .
 .
 .It Sy MAKEFLAGS
 Flags to invoke
@@ -426,7 +456,7 @@ is not defined.
 can be provided only in the environment or via the
 .Fl O
 flag of
-.Nm build.sh ;
+.Sy build.sh ;
 it cannot usefully be set inside a Makefile, including in
 .Xr mk.conf 5
 or
@@ -461,7 +491,7 @@ The current directory may be read only.
 can be provided only in the environment or via the
 .Fl M
 flag of
-.Nm build.sh ;
+.Sy build.sh ;
 it cannot usefully be set inside a Makefile, including in
 .Xr mk.conf 5
 or
@@ -480,7 +510,7 @@ Must support execution of binaries.
 I.e., without
 .Xr mount 8 Ns 's
 .Fl o
-.Sy noexec
+.Cm noexec
 option.
 .DFLT
 .Dq Pa /tmp .
@@ -593,7 +623,7 @@ and any other files known to be created at build time.
 .
 .It Sy depend
 Create dependency files
-.Sy ( .depend )
+.Pa ( .depend )
 containing more detailed information about the dependencies of source
 code on header files.
 Allows programs to be recompiled automatically when a dependency changes.
@@ -948,7 +978,7 @@ a suitable shell using a command like
 .Ed
 .Pp
 The above command will usually enable
-.Nm build.sh
+.Sy build.sh
 to automatically set
 .Sy HOST_SH Ns Cm = Ns Pa /path/to/suitable/shell ,
 but if that fails, then the following set of commands may be used instead:
@@ -965,10 +995,10 @@ to exec a suitable shell instead, or shows an error message.
 If
 .Sy HOST_SH
 is not set explicitly, then
-.Nm build.sh
+.Sy build.sh
 sets a default using heuristics dependent on the host platform,
 or from the shell under which
-.Nm build.sh
+.Sy build.sh
 is executed (if that can be determined),
 or using the first copy of
 .Pa sh
@@ -1726,7 +1756,7 @@ manual pages are also available at
 .Sh HISTORY
 .
 The
-.Nm build.sh
+.Sy build.sh
 based build scheme was introduced for
 .Nx 1.6
 as
