@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.100 2023/07/18 10:06:00 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.101 2023/07/18 10:06:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.100 2023/07/18 10:06:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.101 2023/07/18 10:06:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -434,7 +434,7 @@ acpiec_common_attach(device_t parent, device_t self,
 	}
 
 	rv = AcpiInstallGpeHandler(sc->sc_gpeh, sc->sc_gpebit,
-	    ACPI_GPE_EDGE_TRIGGERED, acpiec_gpe_handler, self);
+	    ACPI_GPE_EDGE_TRIGGERED, acpiec_gpe_handler, sc);
 	if (rv != AE_OK) {
 		aprint_error_dev(self, "unable to install GPE handler: %s\n",
 		    AcpiFormatException(rv));
@@ -1065,8 +1065,7 @@ acpiec_callout(void *arg)
 static uint32_t
 acpiec_gpe_handler(ACPI_HANDLE hdl, uint32_t gpebit, void *arg)
 {
-	device_t dv = arg;
-	struct acpiec_softc *sc = device_private(dv);
+	struct acpiec_softc *sc = arg;
 
 	mutex_enter(&sc->sc_mtx);
 	DPRINTF(ACPIEC_DEBUG_INTR, sc, "GPE\n");
