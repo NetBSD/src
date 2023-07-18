@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.91 2023/07/18 10:03:59 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.92 2023/07/18 10:04:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.91 2023/07/18 10:03:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.92 2023/07/18 10:04:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -962,9 +962,6 @@ acpiec_gpe_state_machine(device_t dv)
 	}
 #endif
 
-	if (reg & EC_STATUS_SCI)
-		sc->sc_got_sci = true;
-
 	switch (sc->sc_state) {
 	case EC_STATE_QUERY:
 		if ((reg & EC_STATUS_IBF) != 0)
@@ -1026,15 +1023,23 @@ acpiec_gpe_state_machine(device_t dv)
 		break;
 
 	case EC_STATE_FREE:
-		if (sc->sc_got_sci) {
-			DPRINTF(ACPIEC_DEBUG_TRANSITION, sc,
-			    "wake SCI thread\n");
-			cv_signal(&sc->sc_cv_sci);
-		}
 		break;
 
 	default:
 		panic("invalid state");
+	}
+
+	/*
+	 * If we just ended a transaction, and an SCI was requested,
+	 * notify the SCI thread.
+	 */
+	if (sc->sc_state == EC_STATE_FREE) {
+		if (reg & EC_STATUS_SCI) {
+			DPRINTF(ACPIEC_DEBUG_TRANSITION, sc,
+			    "wake SCI thread\n");
+			sc->sc_got_sci = true;
+			cv_signal(&sc->sc_cv_sci);
+		}
 	}
 
 	/*
