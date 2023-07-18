@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.360 2023/07/15 16:17:37 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.361 2023/07/18 03:00:42 rin Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.360 2023/07/15 16:17:37 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.361 2023/07/18 03:00:42 rin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -86,10 +86,6 @@ static	void	check_global_variable_size(const sym_t *);
  * initializes all global vars used in declarations
  */
 void
-#ifdef __sh3__
-/* XXX port-sh3/56311 */
-__attribute__((optimize("O0")))
-#endif
 initdecl(void)
 {
 
