@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.5 2019/03/07 14:39:21 roy Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.6 2023/07/18 11:43:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -125,12 +125,17 @@ TAILQ_HEAD(rb_node_qh, rb_node);
 #define	RB_TAILQ_INSERT_HEAD(a, b, c)		TAILQ_INSERT_HEAD(a, b, c)
 #define	RB_TAILQ_INSERT_BEFORE(a, b, c)		TAILQ_INSERT_BEFORE(a, b, c)
 #define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	TAILQ_INSERT_AFTER(a, b, c, d)
+
+#define	RBDEBUG_TREE_INITIALIZER(t)					      \
+	.rbt_nodes = TAILQ_INITIALIZER((t).rbt_nodes),
 #else
 #define	RB_TAILQ_REMOVE(a, b, c)		do { } while (/*CONSTCOND*/0)
 #define	RB_TAILQ_INIT(a)			do { } while (/*CONSTCOND*/0)
 #define	RB_TAILQ_INSERT_HEAD(a, b, c)		do { } while (/*CONSTCOND*/0)
 #define	RB_TAILQ_INSERT_BEFORE(a, b, c)		do { } while (/*CONSTCOND*/0)
 #define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	do { } while (/*CONSTCOND*/0)
+
+#define	RBDEBUG_TREE_INITIALIZER(t)		/* nothing */
 #endif /* RBDEBUG */
 
 /*
@@ -180,6 +185,15 @@ typedef struct rb_tree {
 #define	RBSTAT_INC(v)	do { } while (/*CONSTCOND*/0)
 #define	RBSTAT_DEC(v)	do { } while (/*CONSTCOND*/0)
 #endif
+
+#define	RB_TREE_INIT_TYPECHECK(t)					      \
+	0*sizeof(&(t) - (struct rb_tree *)0)
+
+#define	RB_TREE_INITIALIZER(t, ops) (rb_tree_t)				      \
+{									      \
+	.rbt_ops = (ops) + RB_TREE_INIT_TYPECHECK(t),			      \
+	RBDEBUG_TREE_INITIALIZER(t)					      \
+}
 
 void	rb_tree_init(rb_tree_t *, const rb_tree_ops_t *);
 void *	rb_tree_insert_node(rb_tree_t *, void *);
