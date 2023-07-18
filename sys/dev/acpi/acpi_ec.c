@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.104 2023/07/18 10:06:44 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.105 2023/07/18 10:06:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.104 2023/07/18 10:06:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.105 2023/07/18 10:06:55 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -425,7 +425,7 @@ acpiec_common_attach(device_t parent, device_t self,
 	callout_setfunc(&sc->sc_pseudo_intr, acpiec_callout, sc);
 
 	rv = AcpiInstallAddressSpaceHandler(sc->sc_ech, ACPI_ADR_SPACE_EC,
-	    acpiec_space_handler, acpiec_space_setup, self);
+	    acpiec_space_handler, acpiec_space_setup, sc);
 	if (rv != AE_OK) {
 		aprint_error_dev(self,
 		    "unable to install address space handler: %s\n",
@@ -777,8 +777,8 @@ out:	mutex_exit(&sc->sc_mtx);
  *
  *	Transfer bitwidth/8 bytes of data between paddr and *value:
  *	from paddr to *value when func is ACPI_READ, and the other way
- *	when func is ACPI_WRITE.  arg is the acpiec(4) or acpiecdt(4)
- *	device.  region_arg is ignored (XXX why? determined by
+ *	when func is ACPI_WRITE.  arg is the acpiec_softc pointer.
+ *	region_arg is ignored (XXX why? determined by
  *	acpiec_space_setup but never used by anything that I can see).
  *
  *	The caller always provides storage at *value large enough for
@@ -808,8 +808,7 @@ static ACPI_STATUS
 acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
     uint32_t width, ACPI_INTEGER *value, void *arg, void *region_arg)
 {
-	device_t dv = arg;
-	struct acpiec_softc *sc = device_private(dv);
+	struct acpiec_softc *sc = arg;
 	ACPI_STATUS rv;
 	uint8_t addr, *buf;
 	unsigned int i;
@@ -1074,13 +1073,17 @@ acpiec_gpe_handler(ACPI_HANDLE hdl, uint32_t gpebit, void *arg)
 ACPI_STATUS
 acpiec_bus_read(device_t dv, u_int addr, ACPI_INTEGER *val, int width)
 {
-	return acpiec_space_handler(ACPI_READ, addr, width * 8, val, dv, NULL);
+	struct acpiec_softc *sc = device_private(dv);
+
+	return acpiec_space_handler(ACPI_READ, addr, width * 8, val, sc, NULL);
 }
 
 ACPI_STATUS
 acpiec_bus_write(device_t dv, u_int addr, ACPI_INTEGER val, int width)
 {
-	return acpiec_space_handler(ACPI_WRITE, addr, width * 8, &val, dv,
+	struct acpiec_softc *sc = device_private(dv);
+
+	return acpiec_space_handler(ACPI_WRITE, addr, width * 8, &val, sc,
 	    NULL);
 }
 
