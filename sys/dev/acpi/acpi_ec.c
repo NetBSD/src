@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.90 2023/07/18 10:03:46 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.91 2023/07/18 10:03:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.90 2023/07/18 10:03:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.91 2023/07/18 10:03:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -671,6 +671,8 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 	    curlwp->l_name ? curlwp->l_name : "",
 	    addr);
 
+	KASSERT(sc->sc_state == EC_STATE_FREE);
+
 	sc->sc_cur_addr = addr;
 	sc->sc_state = EC_STATE_READ;
 
@@ -736,6 +738,8 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 	    (long)curlwp->l_lid, curlwp->l_name ? " " : "",
 	    curlwp->l_name ? curlwp->l_name : "",
 	    addr, val);
+
+	KASSERT(sc->sc_state == EC_STATE_FREE);
 
 	sc->sc_cur_addr = addr;
 	sc->sc_cur_val = val;
@@ -898,6 +902,8 @@ loop:
 	mutex_enter(&sc->sc_mtx);
 
 	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query\n");
+
+	KASSERT(sc->sc_state == EC_STATE_FREE);
 
 	/* The Query command can always be issued, so be defensive here. */
 	sc->sc_got_sci = false;
