@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.99 2023/07/18 10:05:49 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.100 2023/07/18 10:06:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.99 2023/07/18 10:05:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.100 2023/07/18 10:06:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -422,7 +422,7 @@ acpiec_common_attach(device_t parent, device_t self,
 		aprint_normal_dev(self, "using global ACPI lock\n");
 
 	callout_init(&sc->sc_pseudo_intr, CALLOUT_MPSAFE);
-	callout_setfunc(&sc->sc_pseudo_intr, acpiec_callout, self);
+	callout_setfunc(&sc->sc_pseudo_intr, acpiec_callout, sc);
 
 	rv = AcpiInstallAddressSpaceHandler(sc->sc_ech, ACPI_ADR_SPACE_EC,
 	    acpiec_space_handler, acpiec_space_setup, self);
@@ -1054,8 +1054,7 @@ acpiec_gpe_state_machine(struct acpiec_softc *sc)
 static void
 acpiec_callout(void *arg)
 {
-	device_t dv = arg;
-	struct acpiec_softc *sc = device_private(dv);
+	struct acpiec_softc *sc = arg;
 
 	mutex_enter(&sc->sc_mtx);
 	DPRINTF(ACPIEC_DEBUG_INTR, sc, "callout\n");
