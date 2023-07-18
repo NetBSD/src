@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.6 2023/07/18 11:43:21 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.7 2023/07/18 11:46:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ TAILQ_HEAD(rb_node_qh, rb_node);
 #define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	TAILQ_INSERT_AFTER(a, b, c, d)
 
 #define	RBDEBUG_TREE_INITIALIZER(t)					      \
-	.rbt_nodes = TAILQ_INITIALIZER((t).rbt_nodes),
+	.rbt_nodes = TAILQ_HEAD_INITIALIZER((t).rbt_nodes),
 #else
 #define	RB_TAILQ_REMOVE(a, b, c)		do { } while (/*CONSTCOND*/0)
 #define	RB_TAILQ_INIT(a)			do { } while (/*CONSTCOND*/0)
