@@ -1,4 +1,4 @@
-/* 	$NetBSD: initfini.c,v 1.15 2021/04/20 21:42:32 christos Exp $	 */
+/* 	$NetBSD: initfini.c,v 1.16 2023/07/18 11:44:32 riastradh Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: initfini.c,v 1.15 2021/04/20 21:42:32 christos Exp $");
+__RCSID("$NetBSD: initfini.c,v 1.16 2023/07/18 11:44:32 riastradh Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -132,7 +132,4 @@ _libc_init(void)
 
 	/* Initialize the atexit mutexes */
 	__libc_atexit_init();
-
-	/* Initialize environment memory RB tree. */
-	__libc_env_init();
 }
