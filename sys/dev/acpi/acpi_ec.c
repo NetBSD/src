@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.93 2023/07/18 10:04:28 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.94 2023/07/18 10:04:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.93 2023/07/18 10:04:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.94 2023/07/18 10:04:40 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -908,6 +908,9 @@ loop:
 	sc->sc_got_sci = false;
 	sc->sc_state = EC_STATE_QUERY;
 
+	/*
+	 * First, attempt to get the query by polling.
+	 */
 	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
 		acpiec_gpe_state_machine(dv);
 		if (sc->sc_state == EC_STATE_FREE)
@@ -915,9 +918,14 @@ loop:
 		delay(1);
 	}
 
+	/*
+	 * Polling timed out.  Try waiting for interrupts -- either GPE
+	 * interrupts, or periodic callouts in case GPE interrupts are
+	 * broken.
+	 */
 	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI polling timeout\n");
-	/* XXX while (sc->sc_state != EC_STATE_FREE) cv_wait(...) */
-	cv_wait(&sc->sc_cv, &sc->sc_mtx);
+	while (sc->sc_state != EC_STATE_FREE)
+		cv_wait(&sc->sc_cv, &sc->sc_mtx);
 
 done:
 	reg = sc->sc_cur_val;
