@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.89 2023/07/18 10:03:35 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.90 2023/07/18 10:03:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.89 2023/07/18 10:03:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.90 2023/07/18 10:03:46 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_acpi_ec.h"
@@ -694,6 +694,11 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 			return AE_ERROR;
 		}
 	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
+		/*
+		 * XXX while (sc->sc_state != EC_STATE_FREE)
+		 *	cv_timedwait(...),
+		 * plus deadline
+		 */
 		mutex_exit(&sc->sc_mtx);
 		acpiec_unlock(dv);
 		aprint_error_dev(dv,
@@ -756,6 +761,11 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 			return AE_ERROR;
 		}
 	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
+		/*
+		 * XXX while (sc->sc_state != EC_STATE_FREE)
+		 *	cv_timedwait(...),
+		 * plus deadline
+		 */
 		mutex_exit(&sc->sc_mtx);
 		acpiec_unlock(dv);
 		aprint_error_dev(dv,
@@ -869,13 +879,21 @@ acpiec_gpe_query(void *arg)
 	int i;
 
 loop:
+	/*
+	 * Wait until the EC sends an SCI requesting a query.
+	 *
+	 * XXX This needs to be `while', not `if'.
+	 */
 	mutex_enter(&sc->sc_mtx);
-
 	if (sc->sc_got_sci == false)
 		cv_wait(&sc->sc_cv_sci, &sc->sc_mtx);
 	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query requested\n");
 	mutex_exit(&sc->sc_mtx);
 
+	/*
+	 * EC wants to submit a query to us.  Exclude concurrent reads
+	 * and writes while we handle it.
+	 */
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
 
@@ -893,6 +911,7 @@ loop:
 	}
 
 	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI polling timeout\n");
+	/* XXX while (sc->sc_state != EC_STATE_FREE) cv_wait(...) */
 	cv_wait(&sc->sc_cv, &sc->sc_mtx);
 
 done:
@@ -951,17 +970,14 @@ acpiec_gpe_state_machine(device_t dv)
 	case EC_STATE_QUERY_VAL:
 		if ((reg & EC_STATUS_OBF) == 0)
 			break; /* Nothing of interest here. */
-
 		sc->sc_cur_val = acpiec_read_data(sc);
 		sc->sc_state = EC_STATE_FREE;
-
 		cv_signal(&sc->sc_cv);
 		break;
 
 	case EC_STATE_READ:
 		if ((reg & EC_STATUS_IBF) != 0)
 			break; /* Nothing of interest here. */
-
 		acpiec_write_command(sc, EC_COMMAND_READ);
 		sc->sc_state = EC_STATE_READ_ADDR;
 		break;
@@ -969,7 +985,6 @@ acpiec_gpe_state_machine(device_t dv)
 	case EC_STATE_READ_ADDR:
 		if ((reg & EC_STATUS_IBF) != 0)
 			break; /* Nothing of interest here. */
-
 		acpiec_write_data(sc, sc->sc_cur_addr);
 		sc->sc_state = EC_STATE_READ_VAL;
 		break;
@@ -979,14 +994,12 @@ acpiec_gpe_state_machine(device_t dv)
 			break; /* Nothing of interest here. */
 		sc->sc_cur_val = acpiec_read_data(sc);
 		sc->sc_state = EC_STATE_FREE;
-
 		cv_signal(&sc->sc_cv);
 		break;
 
 	case EC_STATE_WRITE:
 		if ((reg & EC_STATUS_IBF) != 0)
 			break; /* Nothing of interest here. */
-
 		acpiec_write_command(sc, EC_COMMAND_WRITE);
 		sc->sc_state = EC_STATE_WRITE_ADDR;
 		break;
@@ -1003,7 +1016,6 @@ acpiec_gpe_state_machine(device_t dv)
 			break; /* Nothing of interest here. */
 		sc->sc_state = EC_STATE_FREE;
 		cv_signal(&sc->sc_cv);
-
 		acpiec_write_data(sc, sc->sc_cur_val);
 		break;
 
@@ -1014,10 +1026,15 @@ acpiec_gpe_state_machine(device_t dv)
 			cv_signal(&sc->sc_cv_sci);
 		}
 		break;
+
 	default:
 		panic("invalid state");
 	}
 
+	/*
+	 * In case GPE interrupts are broken, poll once per tick for EC
+	 * status updates while a transaction is still pending.
+	 */
 	if (sc->sc_state != EC_STATE_FREE) {
 		DPRINTF(ACPIEC_DEBUG_INTR, sc, "schedule callout\n");
 		callout_schedule(&sc->sc_pseudo_intr, 1);
