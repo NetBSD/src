@@ -3436,8 +3436,8 @@ is_packet_udp_bootp(void *packet, size_t plen)
 	if (ip_hlen + ntohs(udp.uh_ulen) > plen)
 		return false;
 
-	/* Check it's to and from the right ports. */
-	if (udp.uh_dport != htons(BOOTPC) || udp.uh_sport != htons(BOOTPS))
+	/* Check it's to the right port. */
+	if (udp.uh_dport != htons(BOOTPC))
 		return false;
 
 	return true;
