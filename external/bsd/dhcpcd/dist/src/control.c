@@ -94,22 +94,28 @@ control_free(struct fd_list *fd)
 }
 
 static void
+control_hangup(struct fd_list *fd)
+{
+
+#ifdef PRIVSEP
+	if (IN_PRIVSEP(fd->ctx)) {
+		if (ps_ctl_sendeof(fd) == -1)
+			logerr(__func__);
+	}
+#endif
+	control_free(fd);
+}
+
+static void
 control_handle_read(struct fd_list *fd)
 {
 	char buffer[1024];
 	ssize_t bytes;
 
 	bytes = read(fd->fd, buffer, sizeof(buffer) - 1);
-	if (bytes == -1)
+	if (bytes == -1) {
 		logerr(__func__);
-	if (bytes == -1 || bytes == 0) {
-#ifdef PRIVSEP
-		if (IN_PRIVSEP(fd->ctx)) {
-			if (ps_ctl_sendeof(fd) == -1)
-				logerr(__func__);
-		}
-#endif
-		control_free(fd);
+		control_hangup(fd);
 		return;
 	}
 
@@ -158,8 +164,11 @@ control_handle_write(struct fd_list *fd)
 	}
 
 	if (writev(fd->fd, iov, iov_len) == -1) {
-		logerr("%s: write", __func__);
-		control_free(fd);
+		if (errno != EPIPE && errno != ENOTCONN) {
+			// We don't get ELE_HANGUP for some reason
+			logerr("%s: write", __func__);
+		}
+		control_hangup(fd);
 		return;
 	}
 
@@ -194,13 +203,15 @@ control_handle_data(void *arg, unsigned short events)
 {
 	struct fd_list *fd = arg;
 
-	if (!(events & (ELE_READ | ELE_WRITE)))
+	if (!(events & (ELE_READ | ELE_WRITE | ELE_HANGUP)))
 		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
 	if (events & ELE_WRITE && !(events & ELE_HANGUP))
 		control_handle_write(fd);
 	if (events & ELE_READ)
 		control_handle_read(fd);
+	if (events & ELE_HANGUP)
+		control_hangup(fd);
 }
 
 void
@@ -487,9 +498,11 @@ control_stop(struct dhcpcd_ctx *ctx)
 
 #ifdef PRIVSEP
 	if (IN_PRIVSEP_SE(ctx)) {
-		if (ps_root_unlink(ctx, ctx->control_sock) == -1)
+		if (ctx->control_sock[0] != '\0' &&
+		    ps_root_unlink(ctx, ctx->control_sock) == -1)
 			retval = -1;
-		if (ps_root_unlink(ctx, ctx->control_sock_unpriv) == -1)
+		if (ctx->control_sock_unpriv[0] != '\0' &&
+		    ps_root_unlink(ctx, ctx->control_sock_unpriv) == -1)
 			retval = -1;
 		return retval;
 	} else if (ctx->options & DHCPCD_FORKED)

@@ -53,7 +53,7 @@ ps_inet_recvbootp(void *arg, unsigned short events)
 {
 	struct dhcpcd_ctx *ctx = arg;
 
-	if (ps_recvmsg(ctx, ctx->udp_rfd, events,
+	if (ps_recvmsg(ctx->udp_rfd, events,
 	    PS_BOOTP, ctx->ps_inet->psp_fd) == -1)
 		logerr(__func__);
 }
@@ -68,13 +68,13 @@ ps_inet_recvra(void *arg, unsigned short events)
 	struct rs_state *state = RS_STATE(ifp);
 	struct dhcpcd_ctx *ctx = ifp->ctx;
 
-	if (ps_recvmsg(ctx, state->nd_fd, events,
+	if (ps_recvmsg(state->nd_fd, events,
 	    PS_ND, ctx->ps_inet->psp_fd) == -1)
 		logerr(__func__);
 #else
 	struct dhcpcd_ctx *ctx = arg;
 
-	if (ps_recvmsg(ctx, ctx->nd_fd, events,
+	if (ps_recvmsg(ctx->nd_fd, events,
 	    PS_ND, ctx->ps_inet->psp_fd) == -1)
 		logerr(__func__);
 #endif
@@ -87,7 +87,7 @@ ps_inet_recvdhcp6(void *arg, unsigned short events)
 {
 	struct dhcpcd_ctx *ctx = arg;
 
-	if (ps_recvmsg(ctx, ctx->dhcp6_rfd, events,
+	if (ps_recvmsg(ctx->dhcp6_rfd, events,
 	    PS_DHCP6, ctx->ps_inet->psp_fd) == -1)
 		logerr(__func__);
 }
@@ -387,7 +387,7 @@ ps_inet_recvinbootp(void *arg, unsigned short events)
 {
 	struct ps_process *psp = arg;
 
-	if (ps_recvmsg(psp->psp_ctx, psp->psp_work_fd, events,
+	if (ps_recvmsg(psp->psp_work_fd, events,
 	    PS_BOOTP, psp->psp_ctx->ps_data_fd) == -1)
 		logerr(__func__);
 }
@@ -430,7 +430,7 @@ ps_inet_recvin6nd(void *arg)
 {
 	struct ps_process *psp = arg;
 
-	if (ps_recvmsg(psp->psp_ctx, psp->psp_work_fd,
+	if (ps_recvmsg(psp->psp_work_fd,
 	    PS_ND, psp->psp_ctx->ps_data_fd) == -1)
 		logerr(__func__);
 }
@@ -470,7 +470,7 @@ ps_inet_recvin6dhcp6(void *arg, unsigned short events)
 {
 	struct ps_process *psp = arg;
 
-	if (ps_recvmsg(psp->psp_ctx, psp->psp_work_fd, events,
+	if (ps_recvmsg(psp->psp_work_fd, events,
 	    PS_DHCP6, psp->psp_ctx->ps_data_fd) == -1)
 		logerr(__func__);
 }
@@ -622,7 +622,7 @@ ps_inet_in_docmd(struct ipv4_addr *ia, uint16_t cmd, const struct msghdr *msg)
 		},
 	};
 
-	return ps_sendpsmmsg(ctx, ctx->ps_root->psp_fd, &psm, msg);
+	return ps_sendpsmmsg(ctx, PS_ROOT_FD(ctx), &psm, msg);
 }
 
 ssize_t
@@ -644,7 +644,7 @@ ps_inet_sendbootp(struct interface *ifp, const struct msghdr *msg)
 {
 	struct dhcpcd_ctx *ctx = ifp->ctx;
 
-	return ps_sendmsg(ctx, ctx->ps_root->psp_fd, PS_BOOTP, 0, msg);
+	return ps_sendmsg(ctx, PS_ROOT_FD(ctx), PS_BOOTP, 0, msg);
 }
 #endif /* INET */
 
@@ -663,7 +663,7 @@ ps_inet_ifp_docmd(struct interface *ifp, uint16_t cmd, const struct msghdr *msg)
 		},
 	};
 
-	return ps_sendpsmmsg(ctx, ctx->ps_root->psp_fd, &psm, msg);
+	return ps_sendpsmmsg(ctx, PS_ROOT_FD(ctx), &psm, msg);
 }
 
 ssize_t
@@ -692,7 +692,7 @@ ps_inet_sendnd(struct interface *ifp, const struct msghdr *msg)
 {
 	struct dhcpcd_ctx *ctx = ifp->ctx;
 
-	return ps_sendmsg(ctx, ctx->ps_root->psp_fd, PS_ND, 0, msg);
+	return ps_sendmsg(ctx, PS_ROOT_FD(ctx), PS_ND, 0, msg);
 }
 #endif
 
@@ -711,7 +711,7 @@ ps_inet_in6_docmd(struct ipv6_addr *ia, uint16_t cmd, const struct msghdr *msg)
 		},
 	};
 
-	return ps_sendpsmmsg(ctx, ctx->ps_root->psp_fd, &psm, msg);
+	return ps_sendpsmmsg(ctx, PS_ROOT_FD(ctx), &psm, msg);
 }
 
 ssize_t
@@ -733,7 +733,7 @@ ps_inet_senddhcp6(struct interface *ifp, const struct msghdr *msg)
 {
 	struct dhcpcd_ctx *ctx = ifp->ctx;
 
-	return ps_sendmsg(ctx, ctx->ps_root->psp_fd, PS_DHCP6, 0, msg);
+	return ps_sendmsg(ctx, PS_ROOT_FD(ctx), PS_DHCP6, 0, msg);
 }
 #endif /* DHCP6 */
 #endif /* INET6 */

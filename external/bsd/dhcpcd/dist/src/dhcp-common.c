@@ -413,26 +413,23 @@ decode_rfc1035(char *out, size_t len, const uint8_t *p, size_t pl)
 }
 
 /* Check for a valid name as per RFC952 and RFC1123 section 2.1 */
-static int
+static ssize_t
 valid_domainname(char *lbl, int type)
 {
-	char *slbl, *lst;
+	char *slbl = lbl, *lst = NULL;
 	unsigned char c;
-	int start, len, errset;
+	int len = 0;
+	bool start = true, errset = false;
 
 	if (lbl == NULL || *lbl == '\0') {
 		errno = EINVAL;
 		return 0;
 	}
 
-	slbl = lbl;
-	lst = NULL;
-	start = 1;
-	len = errset = 0;
 	for (;;) {
 		c = (unsigned char)*lbl++;
 		if (c == '\0')
-			return 1;
+			return lbl - slbl - 1;
 		if (c == ' ') {
 			if (lbl - 1 == slbl) /* No space at start */
 				break;
@@ -440,7 +437,7 @@ valid_domainname(char *lbl, int type)
 				break;
 			/* Skip to the next label */
 			if (!start) {
-				start = 1;
+				start = true;
 				lst = lbl - 1;
 			}
 			if (len)
@@ -459,13 +456,13 @@ valid_domainname(char *lbl, int type)
 		{
 			if (++len > NS_MAXLABEL) {
 				errno = ERANGE;
-				errset = 1;
+				errset = true;
 				break;
 			}
 		} else
 			break;
 		if (start)
-			start = 0;
+			start = false;
 	}
 
 	if (!errset)
@@ -473,7 +470,7 @@ valid_domainname(char *lbl, int type)
 	if (lst) {
 		/* At least one valid domain, return it */
 		*lst = '\0';
-		return 1;
+		return lst - slbl;
 	}
 	return 0;
 }
@@ -665,7 +662,7 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 			goto err;
 		if (sl == 0)
 			goto done;
-		if (valid_domainname(domain, opt->type) == -1)
+		if (!valid_domainname(domain, opt->type))
 			goto err;
 		return efprintf(fp, "%s", domain);
 	}
