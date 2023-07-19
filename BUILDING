@@ -65,7 +65,7 @@ FILES
                     The source to this document, in mdoc(7) format.  Used to
                     generate BUILDING.
 
-     external, sys/external
+     external/, sys/external/
                     Sources and build infrastructure for components imported
                     (mostly) unchanged from upstream maintainers, sorted by
                     applicable license.  This is (slowly) replacing the
