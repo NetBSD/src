@@ -154,6 +154,9 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 #ifdef RTM_CHGADDR
 	    RTM_CHGADDR,
 #endif
+#ifdef RTM_DESYNC
+	    RTM_DESYNC,
+#endif
 	    RTM_NEWADDR, RTM_DELADDR
 	};
 #ifdef ROUTE_MSGFILTER
@@ -167,15 +170,13 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 
 #ifdef INET6
 	priv->pf_inet6_fd = xsocket(PF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0);
-#ifdef PRIVSEP_RIGHTS
-	if (IN_PRIVSEP(ctx))
-		ps_rights_limit_ioctl(priv->pf_inet6_fd);
-#endif
 	/* Don't return an error so we at least work on kernels witout INET6
 	 * even though we expect INET6 support.
 	 * We will fail noisily elsewhere anyway. */
-#else
-	priv->pf_inet6_fd = -1;
+#ifdef PRIVSEP_RIGHTS
+	if (priv->pf_inet6_fd != -1 && IN_PRIVSEP(ctx))
+		ps_rights_limit_ioctl(priv->pf_inet6_fd);
+#endif
 #endif
 
 	ctx->link_fd = xsocket(PF_ROUTE, SOCK_RAW | SOCK_CXNB, AF_UNSPEC);
@@ -234,8 +235,10 @@ if_closesockets_os(struct dhcpcd_ctx *ctx)
 	struct priv *priv;
 
 	priv = (struct priv *)ctx->priv;
+#ifdef INET6
 	if (priv->pf_inet6_fd != -1)
 		close(priv->pf_inet6_fd);
+#endif
 #if defined(SIOCALIFADDR) && defined(IFLR_ACTIVE) /*NetBSD */
 	if (priv->pf_link_fd != -1)
 		close(priv->pf_link_fd);
@@ -1332,6 +1335,11 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		      ifam->ifam_msglen - sizeof(*ifam), rti_info) == -1)
 		return -1;
 
+	/* All BSD's set IFF_UP on the interface when adding an address.
+	 * But not all BSD's emit this via RTM_IFINFO when they do this ... */
+	if (ifam->ifam_type == RTM_NEWADDR && !(ifp->flags & IFF_UP))
+		dhcpcd_handlecarrier(ifp, ifp->carrier, ifp->flags | IFF_UP);
+
 	switch (rti_info[RTAX_IFA]->sa_family) {
 	case AF_LINK:
 	{
@@ -1755,10 +1763,9 @@ ip6_forwarding(__unused const char *ifname)
 static int
 if_af_attach(const struct interface *ifp, int af)
 {
-	struct if_afreq ifar;
+	struct if_afreq ifar = { .ifar_af = af };
 
 	strlcpy(ifar.ifar_name, ifp->name, sizeof(ifar.ifar_name));
-	ifar.ifar_af = af;
 	return if_ioctl6(ifp->ctx, SIOCIFAFATTACH, &ifar, sizeof(ifar));
 }
 #endif
@@ -1832,23 +1839,20 @@ if_disable_rtadv(void)
 void
 if_setup_inet6(const struct interface *ifp)
 {
+#ifdef ND6_NDI_FLAGS
 	struct priv *priv;
 	int s;
-#ifdef ND6_NDI_FLAGS
 	struct in6_ndireq nd;
 	int flags;
-#endif
 
 	priv = (struct priv *)ifp->ctx->priv;
 	s = priv->pf_inet6_fd;
 
-#ifdef ND6_NDI_FLAGS
 	memset(&nd, 0, sizeof(nd));
 	strlcpy(nd.ifname, ifp->name, sizeof(nd.ifname));
 	if (ioctl(s, SIOCGIFINFO_IN6, &nd) == -1)
 		logerr("%s: SIOCGIFINFO_FLAGS", ifp->name);
 	flags = (int)nd.ndi.flags;
-#endif
 
 #ifdef ND6_IFF_AUTO_LINKLOCAL
 	/* Unlike the kernel, dhcpcd make make a stable private address. */
@@ -1878,14 +1882,13 @@ if_setup_inet6(const struct interface *ifp)
 #endif
 #endif
 
-#ifdef ND6_NDI_FLAGS
 	if (nd.ndi.flags != (uint32_t)flags) {
 		nd.ndi.flags = (uint32_t)flags;
 		if (if_ioctl6(ifp->ctx, SIOCSIFINFO_FLAGS,
 		    &nd, sizeof(nd)) == -1)
 			logerr("%s: SIOCSIFINFO_FLAGS", ifp->name);
 	}
-#endif
+#endif /* ND6_NDI_FLAGS */
 
 	/* Enabling IPv6 by whatever means must be the
 	 * last action undertaken to ensure kernel RS and

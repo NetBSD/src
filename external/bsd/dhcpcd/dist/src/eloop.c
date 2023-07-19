@@ -153,6 +153,10 @@
 #include <stdio.h>
 #endif
 
+#ifndef __arraycount
+#  define __arraycount(__x)       (sizeof(__x) / sizeof(__x[0]))
+#endif
+
 /*
  * Allow a backlog of signals.
  * If you use many eloops in the same process, they should all

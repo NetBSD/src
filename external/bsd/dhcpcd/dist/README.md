@@ -92,5 +92,5 @@ dhcpcd-9 defaults the run directory to `/var/run/dhcpcd` instead of
 ## ChangeLog
 We no longer supply a ChangeLog.
 However, you're more than welcome to read the
-[commit log](https://roy.marples.name/git/dhcpcd/log) and
-[archived release announcements](https://roy.marples.name/archives/dhcpcd-discuss/).
+[commit log](https://github.com/NetworkConfiguration/dhcpcd/commits) and
+[release announcements](https://github.com/NetworkConfiguration/dhcpcd/releases).
