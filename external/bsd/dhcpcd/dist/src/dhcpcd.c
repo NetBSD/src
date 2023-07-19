@@ -256,7 +256,7 @@ dhcpcd_ifafwaiting(const struct interface *ifp)
 		bool foundaddr = ipv6_hasaddr(ifp);
 
 		if (opts & DHCPCD_WAITIP6 && !foundaddr)
-			return AF_INET;
+			return AF_INET6;
 		if (foundaddr)
 			foundany = true;
 	}
@@ -1816,8 +1816,11 @@ dhcpcd_stderr_cb(void *arg, unsigned short events)
 	char log[BUFSIZ];
 	ssize_t len;
 
-	if (events != ELE_READ)
-		logerrx("%s: unexpected event 0x%04x", __func__, events);
+	if (events & ELE_HANGUP)
+		eloop_exit(ctx->eloop, EXIT_SUCCESS);
+
+	if (!(events & ELE_READ))
+		return;
 
 	len = read(ctx->stderr_fd, log, sizeof(log));
 	if (len == -1) {

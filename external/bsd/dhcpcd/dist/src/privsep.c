@@ -1069,8 +1069,7 @@ nobufs:
 }
 
 ssize_t
-ps_recvmsg(struct dhcpcd_ctx *ctx, int rfd, unsigned short events,
-    uint16_t cmd, int wfd)
+ps_recvmsg(int rfd, unsigned short events, uint16_t cmd, int wfd)
 {
 	struct sockaddr_storage ss = { .ss_family = AF_UNSPEC };
 	uint8_t controlbuf[sizeof(struct sockaddr_storage)] = { 0 };
@@ -1089,22 +1088,15 @@ ps_recvmsg(struct dhcpcd_ctx *ctx, int rfd, unsigned short events,
 		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
 	len = recvmsg(rfd, &msg, 0);
-	if (len == -1)
+	if (len == -1) {
 		logerr("%s: recvmsg", __func__);
-	if (len == -1 || len == 0) {
-		if (ctx->options & DHCPCD_FORKED)
-			eloop_exit(ctx->eloop,
-			    len != -1 ? EXIT_SUCCESS : EXIT_FAILURE);
 		return len;
 	}
 
 	iov[0].iov_len = (size_t)len;
 	len = ps_sendcmdmsg(wfd, cmd, &msg);
-	if (len == -1) {
+	if (len == -1)
 		logerr("%s: ps_sendcmdmsg", __func__);
-		if (ctx->options & DHCPCD_FORKED)
-			eloop_exit(ctx->eloop, EXIT_FAILURE);
-	}
 	return len;
 }
 
