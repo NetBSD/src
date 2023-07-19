@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.82 2023/07/14 08:34:20 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.83 2023/07/19 14:34:14 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2999,4 +2999,21 @@ external/bsd/jemalloc/lib/Makefile		1.4
 
 	Fix (optional) build with jemalloc 1.0.
 	[mrg, ticket #235]
+
+external/gpl3/gcc/dist/gcc/config/sh/sh.md	1.3
+
+	gcc: PR port-sh3/56311: fix peephole optimization bug for sh3.
+	[rin, ticket #236]
+
+doc/HACKS					1.239
+usr.bin/xlint/lint1/decl.c			1.361
+
+	PR 56311: remove workaround and documentation for (now fixed) gcc bug.
+	[rin, ticket #237]
+
+sys/arch/xen/xen/xen_clock.c			1.10,1.12
+
+	xen: avoid a possible race around ci->ci_xen_hardclock_systime_ns at
+	boot up, which could cause a hardclock() storm.
+	[bouyer, ticket #238]
 
