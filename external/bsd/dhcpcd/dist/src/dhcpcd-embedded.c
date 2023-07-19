@@ -235,6 +235,7 @@ const char dhcpcd_embedded_conf[] =
 "define 100 string posix_timezone\n"
 "define 101 string tzdb_timezone\n"
 "define 108 uint32 ipv6_only_preferred\n"
+"define 114 string captive_portal_uri\n"
 "define 116 byte auto_configure\n"
 "define 117 array uint16 name_service_search\n"
 "define 118 ipaddress subnet_selection\n"
@@ -280,6 +281,8 @@ const char dhcpcd_embedded_conf[] =
 "embed ipaddress primary\n"
 "embed ipaddress secondary\n"
 "embed array domain domains\n"
+"define 147 domain dots_ri\n"
+"define 148 array ipaddress dots_address\n"
 "define 150 array ipaddress tftp_servers\n"
 "define 161 string mudurl\n"
 "define 208 binhex pxelinux_magic\n"
@@ -490,6 +493,9 @@ const char dhcpcd_embedded_conf[] =
 "encap 90 option\n"
 "encap 92 option\n"
 "define6 112 string mudurl\n"
+"define6 103 string captive_portal_uri\n"
+"define6 141 domain dots_ri\n"
+"define6 142 array ip6address dots_address\n"
 #endif
 "\0";
 

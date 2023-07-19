@@ -328,7 +328,7 @@ ps_bpf_send(const struct interface *ifp, const struct in_addr *ia,
 	if (ia != NULL)
 		psm.ps_id.psi_addr.psa_in_addr = *ia;
 
-	return ps_sendpsmdata(ctx, ctx->ps_root->psp_fd, &psm, data, len);
+	return ps_sendpsmdata(ctx, PS_ROOT_FD(ctx), &psm, data, len);
 }
 
 #ifdef ARP
