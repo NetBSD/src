@@ -764,7 +764,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 #ifdef PRIVSEP
 	if (ctx->options & DHCPCD_PRIVSEP) {
 		if (ps_root_script(ctx,
-		    ctx->script_buf, ctx->script_buflen) == -1)
+		    ctx->script_buf, (size_t)buflen) == -1)
 			logerr(__func__);
 		goto send_listeners;
 	}

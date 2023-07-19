@@ -610,16 +610,19 @@ static const struct bpf_insn bpf_bootp_base[] = {
 #define BPF_BOOTP_BASE_LEN	__arraycount(bpf_bootp_base)
 
 static const struct bpf_insn bpf_bootp_read[] = {
-	/* Make sure it's from and to the right port. */
-	BPF_STMT(BPF_LD + BPF_W + BPF_IND, 0),
-	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, (BOOTPS << 16) + BOOTPC, 1, 0),
+	/* Make sure it's to the right port.
+	 * RFC2131 makes no mention of enforcing a source port. */
+	BPF_STMT(BPF_LD + BPF_H + BPF_IND, offsetof(struct udphdr, uh_dport)),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, BOOTPC, 1, 0),
 	BPF_STMT(BPF_RET + BPF_K, 0),
 };
 #define BPF_BOOTP_READ_LEN	__arraycount(bpf_bootp_read)
 
 #ifdef BIOCSETWF
 static const struct bpf_insn bpf_bootp_write[] = {
-	/* Make sure it's from and to the right port. */
+	/* Make sure it's from and to the right port.
+	 * RFC2131 makes no mention of encforcing a source port,
+	 * but dhcpcd does enforce it for sending. */
 	BPF_STMT(BPF_LD + BPF_W + BPF_IND, 0),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, (BOOTPC << 16) + BOOTPS, 1, 0),
 	BPF_STMT(BPF_RET + BPF_K, 0),

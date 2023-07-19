@@ -958,11 +958,16 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'w':
 		ifo->options |= DHCPCD_WAITIP;
-		if (arg != NULL && arg[0] != '\0') {
-			if (arg[0] == '4' || arg[1] == '4')
+		p = UNCONST(arg);
+		// Generally it's --waitip=46, but some expect
+		// --waitip="4 6" to work as well.
+		// It's easier to allow it rather than have confusing docs.
+		while (p != NULL && p[0] != '\0') {
+			if (p[0] == '4' || p[1] == '4')
 				ifo->options |= DHCPCD_WAITIP4;
-			if (arg[0] == '6' || arg[1] == '6')
+			if (p[0] == '6' || p[1] == '6')
 				ifo->options |= DHCPCD_WAITIP6;
+			p = strskipwhite(++p);
 		}
 		break;
 	case 'y':
