@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.23 2023/06/28 11:08:47 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.24 2023/07/19 10:22:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.23 2023/06/28 11:08:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.24 2023/07/19 10:22:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1055,7 +1055,7 @@ mgx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					mgx_init_palette(sc);
 					vcons_redraw_screen(ms);
 				} else {
-					mgx_setup(sc, 32);
+					mgx_setup(sc, MGX_X_DEPTH);
 					mgx_init_palette(sc);
 				}
 			}
@@ -1068,6 +1068,32 @@ mgx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case WSDISPLAYIO_PUTCMAP:
 		return mgx_putcmap(sc, (struct wsdisplay_cmap *)data);
 
+	case FBIOGETCMAP:
+#define	p ((struct fbcmap *)data)
+		{
+			struct wsdisplay_cmap c = {
+				.index = p->index,
+				.count = p->count,
+				.red = p->red,
+				.green = p->green,
+				.blue = p->blue
+			};
+			return mgx_getcmap(sc, &c);
+		}
+		break;
+	case FBIOPUTCMAP:
+		{
+			struct wsdisplay_cmap c = {
+				.index = p->index,
+				.count = p->count,
+				.red = p->red,
+				.green = p->green,
+				.blue = p->blue
+			};
+			return mgx_putcmap(sc, &c);
+		}
+		break;
+#undef p		
 	case WSDISPLAYIO_GCURPOS:
 		{
 			struct wsdisplay_curpos *cp = (void *)data;
@@ -1336,7 +1362,7 @@ mgxopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (sc->sc_mode == WSDISPLAYIO_MODE_MAPPED)
 		return 0;
 	sc->sc_mode = WSDISPLAYIO_MODE_MAPPED;
-	mgx_setup(sc, 32);
+	mgx_setup(sc, MGX_X_DEPTH);
 	mgx_init_palette(sc);
 	return 0;
 }
