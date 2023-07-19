@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.194 2023/07/15 13:35:24 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.195 2023/07/19 22:24:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -85,11 +85,22 @@ typedef	struct strg {
 	void	*st_mem;	/* char[] for st_char, or wchar_t[] */
 } strg_t;
 
+// TODO: Use bit-fields instead of plain bool, but keep an eye on arm and
+// powerpc, on which GCC 10.5.0 generates code that leads to extra 327
+// warnings, even in msg_327.c, which does not contain any type qualifier at
+// all.  A possible starting point for continuing the investigation is that
+// type_qualifiers is a very small struct that contains only bool bit-fields,
+// and this struct is a member of the parser's union.
+//
+// Instead of using plain bool instead of bit-fields, an alternative workaround
+// is to compile cgram.c with -Os or -O1 instead of -O2.  The generated code
+// between -Os and -O2 differs too much though to give a hint at the root
+// cause.
 typedef struct {
-	bool tq_const:1;
-	bool tq_restrict:1;
-	bool tq_volatile:1;
-	bool tq_atomic:1;
+	bool tq_const;
+	bool tq_restrict;
+	bool tq_volatile;
+	bool tq_atomic;
 } type_qualifiers;
 
 /* A bool, integer or floating-point value. */
