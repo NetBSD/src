@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.9 2007/10/14 20:26:47 apb Exp $
+#	$NetBSD: configure.ac,v 1.10 2023/07/20 15:12:36 lukem Exp $
 #
 # Autoconf definition file for make.
 #
@@ -23,28 +23,36 @@
 #
 
 AC_INIT([make], [noversion], [bin-bug-people@NetBSD.org])
-AC_CONFIG_FILES(buildmake.sh)
+AC_CONFIG_FILES([buildmake.sh])
 
-AC_PATH_PROG(BSHELL, sh)
+AC_PATH_PROG([BSHELL], [sh])
 if test x"$BSHELL" = x; then
     AC_MSG_ERROR([sh must be somewhere on \$PATH, or BSHELL must be defined])
 fi
-AC_DEFINE_UNQUOTED(DEFSHELL_CUSTOM, "${BSHELL}")
+AC_DEFINE_UNQUOTED([DEFSHELL_CUSTOM], "${BSHELL}")
 
 # Make sure we have POSIX regex ability.
-AC_CHECK_HEADER(regex.h,, AC_MSG_ERROR([POSIX regex.h is required]))
+AC_CHECK_HEADER([regex.h],, AC_MSG_ERROR([POSIX regex.h is required]))
 
 # If we don't have <poll.h>, we need to use select(2).
-AC_CHECK_HEADER(poll.h,, AC_DEFINE(USE_SELECT))
+AC_CHECK_HEADER([poll.h],, AC_DEFINE(USE_SELECT))
 
 # regcomp() and regexec() are also names of functions in the old V8
 # regexp package.  To avoid them, we need to find out who has regfree().
 
 dnl # Cygwin: We *MUST* look at -lregex *before* the "no libs" condition.
 dnl # Thus AC_CHECK_LIB(regex...) comes first, and AC_SEARCHLIBS next.
-AC_CHECK_LIB(regex, regfree)
-AC_SEARCH_LIBS(regfree, rx posix)
+AC_CHECK_LIB([regex], [regfree])
+AC_SEARCH_LIBS([regfree], [rx posix])
 
-AC_CHECK_FUNCS(setenv strdup strerror strftime vsnprintf)
+AC_CHECK_FUNCS([setenv strdup strerror strftime vsnprintf])
 
-AC_OUTPUT
+AC_OUTPUT()
+
+dnl Display results
+dnl
+AC_MSG_NOTICE([========== configure results for make ===========])
+m4_foreach_w([NB_VAR], [CC CFLAGS CPPFLAGS DEFS LDFLAGS LIBS], [dnl
+AC_MSG_NOTICE(m4_format([%-32s],NB_VAR)[$NB_VAR])
+])
+AC_MSG_NOTICE([================================================])
