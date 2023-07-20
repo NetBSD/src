@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.15 2022/01/15 10:55:53 msaitoh Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.16 2023/06/27 09:58:50 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.15 2022/01/15 10:55:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.16 2023/06/27 09:58:50 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -116,7 +116,7 @@ udf_wr_nodedscr_callback(struct buf *buf)
 	if (udf_node->outstanding_nodedscr == 0) {
 		/* unlock the node */
 		UDF_UNLOCK_NODE(udf_node, 0);
-		wakeup(&udf_node->outstanding_nodedscr);
+		cv_broadcast(&udf_node->node_lock);
 	}
 
 	putiobuf(buf);
@@ -223,7 +223,7 @@ out:
 	udf_node->outstanding_nodedscr--;
 	if (udf_node->outstanding_nodedscr == 0) {
 		UDF_UNLOCK_NODE(udf_node, 0);
-		wakeup(&udf_node->outstanding_nodedscr);
+		cv_broadcast(&udf_node->node_lock);
 	}
 
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_long.c,v 1.2 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_long.c,v 1.4 2023/07/08 15:26:25 rillig Exp $	*/
 # 3 "platform_ilp32_long.c"
 
 /*
@@ -22,12 +22,15 @@ void
 convert_between_int_and_long(void)
 {
 	/*
-	 * Even though 'long' and 'int' have the same size on this platform,
-	 * the option '-p' enables additional portability checks that assume
-	 * a 24-bit int and a 32-bit long type, to proactively detect loss of
-	 * accuracy on potential other platforms.
+	 * The '-p' option enables checks that apply independently of the
+	 * current platform, assuming that 'long' is always wider than 'int'.
+	 * This assumption, when applied on its own, leads to wrong warnings
+	 * that a 32-bit 'long' may lose accuracy when converted to a 32-bit
+	 * 'int'.
+	 *
+	 * To avoid these, take a look at the actually possible values of the
+	 * right-hand side, and if they fit in the left-hand side, don't warn.
 	 */
-	/* expect+1: warning: conversion from 'long' to 'int' may lose accuracy [132] */
 	s32 = sl32;
 	sl32 = s32;
 	u32 = ul32;

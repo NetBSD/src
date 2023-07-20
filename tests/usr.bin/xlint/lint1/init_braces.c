@@ -1,4 +1,4 @@
-/*	$NetBSD: init_braces.c,v 1.2 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: init_braces.c,v 1.8 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "init_braces.c"
 
 /*
@@ -9,11 +9,13 @@
  *	C11 6.7.9
  */
 
+/* lint1-extra-flags: -X 351 */
+
 void
 init_int(void)
 {
-	/* gcc-expect+2: error: invalid initializer */
-	/* clang-expect+1: error: array initializer must be an initializer list */
+	/* gcc-expect+4: error: invalid initializer */
+	/* clang-expect+3: error: array initializer must be an initializer list */
 	/* expect+2: error: {}-enclosed initializer required [181] */
 	/* expect+1: error: empty array declaration for 'num0' [190] */
 	int num0[] = 0;
@@ -60,4 +62,73 @@ init_string(void)
 	/* clang-expect+2: warning: incompatible pointer to integer conversion initializing 'char' with an expression of type 'char [1]' */
 	/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to char' [183] */
 	char name4[] = {{{{ "" }}}};
+}
+
+/* C11 6.7.2.1p13 */
+unsigned long
+init_anonymous_struct_and_union(void)
+{
+	struct time {
+		unsigned long ns;
+	};
+
+	struct times {
+		struct time t0;
+		struct time t1;
+	};
+
+	struct outer {
+		union {
+			struct {
+				struct times times;
+			};
+		};
+	};
+
+	struct outer var = {	/* struct outer */
+		{		/* anonymous union */
+			{	/* anonymous struct */
+				.times = {
+					.t0 = { .ns = 0, },
+					.t1 = { .ns = 0, },
+				},
+			},
+		},
+	};
+
+	return var.times.t0.ns;
+}
+
+// Initializers may designate members from unnamed struct/union members.
+// Example code adapted from jemalloc 5.1.0, jemalloc.c, init_lock.
+unsigned char
+init_unnamed_union(void)
+{
+	struct init_unnamed_union {
+		union {
+			struct {
+				struct padded_union {
+					unsigned char pad1[3];
+					union {
+						unsigned char u1;
+						unsigned char u2;
+					};
+					unsigned char pad2[3];
+				} padded_union;
+			};
+		};
+	};
+
+	struct init_unnamed_union var = {
+		{
+			{
+				.padded_union = {
+					.pad1 = { 0, 0, 0 },
+					.u1 = 0,
+					.pad2 = { 0, 0, 0 },
+				},
+			}
+		},
+	};
+	return var.padded_union.u1;
 }

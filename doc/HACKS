@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.236 2023/05/07 12:43:32 martin Exp $
+# $NetBSD: HACKS,v 1.239 2023/07/18 03:01:35 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1034,19 +1034,6 @@ port	sh3
 		https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101177
 kcah
 
-port	sh3
-hack	compile lint1/initdecl() with -O0 for sh3 (port-sh3/56311)
-cdate	Thu Jul 15 07:58:05 UTC 2021
-mdate	Fri Jul 16 10:00:00 UTC 2021
-who	rin
-file	src/usr.bin/xlint/lint1/decl.c: 1.200
-descr	GCC 9 and 10 miscompile initdecl() due to mischoice of register,
-	as described in the PR. Compiling this function with -O0 works
-	around the problem.
-	The problem has been reported to upstream as GCC Bug 101469:
-	https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101469
-kcah
-
 port	vax
 hack	compile blake2b.c with -O0 for vax
 cdate	Wed Oct 13 14:28:32 UTC 2021
@@ -1089,4 +1076,27 @@ file	sys/arch/powerpc/ibm4xx/trap.c: 1.99
 descr
 	clang 13.0.0 miscompiles copy{in,out}() with -O[12]. As a result,
 	kernel cannot execute /sbin/init.
+kcah
+
+hack	Disable secure PLT for alpha
+cdate	Fri Jul  7 08:33:25 UTC 2023
+who	rin
+port	alpha
+file	src/external/gpl3/binutils/dist/bfd/elf64-alpha.c: 1.11
+pr	port-alpha/57511
+descr
+	Temporally disable secure PLT support, introduced by
+	binutils 2.39 for us. We need its support to ld.elf_so(1).
+kcah
+
+hack	openssl: Disable ec_nistp_64_gcc_128 on aarch64eb
+cdate	Sat Jul  8 23:54:27 UTC 2023
+who	rin
+port	aarch64eb
+file	src/crypto/external/bsd/openssl/lib/libcrypto/arch/aarch64/ec.inc : 1.4
+descr
+	As described in upstream document:
+	https://github.com/openssl/openssl/blob/master/INSTALL.md#enable-ec_nistp_64_gcc_128
+	This feature (for LP64) does not support big-endian machines.
+	Note that sparc64 does not use this (port-sparc64/57472).
 kcah

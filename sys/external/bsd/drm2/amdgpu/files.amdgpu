@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.29 2022/07/24 20:05:00 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.30 2023/07/14 13:05:59 riastradh Exp $
 
 version	20180827
 
@@ -33,6 +33,7 @@ makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/displ
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/dmub/inc"
 
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-DCONFIG_DRM_AMD_ACP=1"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-DCONFIG_DRM_AMD_DC=1"
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-DCONFIG_DRM_AMD_DC_DCN=1"
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-DCONFIG_DRM_AMD_DC_HDCP=1"
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-DCONFIG_PERF_EVENTS=0"

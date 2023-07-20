@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2022/07/30 03:29:52 tnn Exp $
+# $NetBSD: Makefile,v 1.6 2023/07/14 13:05:59 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -35,6 +35,7 @@ CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/drm/amd/display/modules/hdcp
 CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/drm/amd/display/amdgpu_dm
 CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/drm/amd/display/dmub/inc
 CPPFLAGS+=	-DCONFIG_DRM_AMD_ACP=1
+CPPFLAGS+=	-DCONFIG_DRM_AMD_DC=1
 CPPFLAGS+=	-DCONFIG_DRM_AMD_DC_DCN=1
 CPPFLAGS+=	-DCONFIG_DRM_AMD_DC_HDCP=1
 CPPFLAGS+=	-DCONFIG_PERF_EVENTS=0

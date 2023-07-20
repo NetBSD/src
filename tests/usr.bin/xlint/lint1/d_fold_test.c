@@ -5,6 +5,8 @@
  * truthiness, such as in the condition of an if statement.
  */
 
+/* lint1-extra-flags: -X 351 */
+
 struct s {
 	int member;
 };
@@ -57,28 +59,28 @@ void if_enum(enum e e)			{ if (e) return; }
 /* C99 6.2.5p20 */
 void if_array(struct arr arr)		{ if (arr.arr) return; }
 /* expect+2: error: controlling expressions must have scalar type [204] */
-/* expect+1: warning: argument 's' unused in function 'if_struct' [231] */
+/* expect+1: warning: parameter 's' unused in function 'if_struct' [231] */
 void if_struct(struct s s)		{ if (s) return; }
 /* expect+2: error: controlling expressions must have scalar type [204] */
-/* expect+1: warning: argument 'u' unused in function 'if_union' [231] */
+/* expect+1: warning: parameter 'u' unused in function 'if_union' [231] */
 void if_union(union u u)		{ if (u) return; }
 void if_function(void)			{ if (if_function) return; }
 void if_pointer(void *p)		{ if (p) return; }
 
 /* C99 6.8.5 */
 /* expect+2: error: controlling expressions must have scalar type [204] */
-/* expect+1: warning: argument 's' unused in function 'while_struct' [231] */
+/* expect+1: warning: parameter 's' unused in function 'while_struct' [231] */
 void while_struct(struct s s)		{ while (s) return; }
 /* expect+3: error: controlling expressions must have scalar type [204] */
 /* expect+2: warning: end-of-loop code not reached [223] */
-/* expect+1: warning: argument 's' unused in function 'for_struct' [231] */
+/* expect+1: warning: parameter 's' unused in function 'for_struct' [231] */
 void for_struct(struct s s)		{ for (;s;) return; }
 /* expect+2: error: controlling expressions must have scalar type [204] */
-/* expect+1: warning: argument 's' unused in function 'do_while_struct' [231] */
+/* expect+1: warning: parameter 's' unused in function 'do_while_struct' [231] */
 void do_while_struct(struct s s)	{ do { return; } while (s); }
 
 /* C99 6.5.15 does not require a scalar type, curiously. */
-/* expect+3: error: first operand must have scalar type, op ? : [170] */
+/* expect+3: error: first operand of '?' must have scalar type [170] */
 /* expect+2: warning: function 'conditional_struct' expects to return value [214] */
-/* expect+1: warning: argument 's' unused in function 'conditional_struct' [231] */
+/* expect+1: warning: parameter 's' unused in function 'conditional_struct' [231] */
 int conditional_struct(struct s s)	{ return s ? 1 : 2; }

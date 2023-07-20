@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2023/06/03 09:09:05 lukem Exp $
+# $NetBSD: Makefile,v 1.31 2023/06/28 22:47:39 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -67,12 +67,14 @@ cmd-select-layout.c \
 cmd-select-pane.c \
 cmd-select-window.c \
 cmd-send-keys.c \
+cmd-server-access.c \
 cmd-set-buffer.c \
 cmd-set-environment.c \
 cmd-set-option.c \
 cmd-show-environment.c \
 cmd-show-messages.c \
 cmd-show-options.c \
+cmd-show-prompt-history.c \
 cmd-source-file.c \
 cmd-split-window.c \
 cmd-swap-pane.c \
@@ -115,6 +117,7 @@ resize.c \
 screen-redraw.c \
 screen-write.c \
 screen.c \
+server-acl.c \
 server-client.c \
 server-fn.c \
 server.c \
@@ -160,13 +163,13 @@ CPPFLAGS+=	-I${SRCDIR} -I${.CURDIR}
 # Would be nicer to stick this in a config.h file, but the upstream code
 # does not use one at this moment.
 
+# HAVE_REALLOCARRAY, HAVE_TREE_H, HAVE_VIS added manually; HAVE_BSD_GETOPT_H necessary due to local patches
 CPPFLAGS+=	\
 -DHAVE_ASPRINTF=1 \
 -DHAVE_B64_NTOP=1 \
 -DHAVE_BITSTRING_H=1 \
 -DHAVE_BSD_GETOPT=1 \
 -DHAVE_CFMAKERAW=1 \
--DHAVE_CFMAKERAWEP=1 \
 -DHAVE_CLOCK_GETTIME=1 \
 -DHAVE_CLOSEFROM=1 \
 -DHAVE_CURSES_H=1 \
@@ -178,10 +181,9 @@ CPPFLAGS+=	\
 -DHAVE_FGETLN=1 \
 -DHAVE_FLOCK=1 \
 -DHAVE_FORKPTY=1 \
--DHAVE_FPARSELN=1 \
 -DHAVE_GETDTABLESIZE=1 \
 -DHAVE_GETLINE=1 \
--DHAVE_GETOPT=1 \
+-DHAVE_GETPEEREID=1 \
 -DHAVE_GETPROGNAME=1 \
 -DHAVE_INTTYPES_H=1 \
 -DHAVE_LIBM=1 \
@@ -212,35 +214,37 @@ CPPFLAGS+=	\
 -DHAVE_SYS_TYPES_H=1 \
 -DHAVE_TREE_H=1 \
 -DHAVE_UNISTD_H=1 \
--DHAVE_UTEMPTER=1 \
 -DHAVE_UTIL_H=1 \
 -DHAVE_VIS=1 \
 -DHAVE___PROGNAME=1 \
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 3.2a\" \
+-DPACKAGE_STRING=\"tmux\ 3.3a\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"3.2a\" \
+-DPACKAGE_VERSION=\"3.3a\" \
 -DSTDC_HEADERS=1 \
--DTMUX_CONF="\"/etc/tmux.conf:~/.tmux.conf:~/.config/tmux/tmux.conf\"" \
--DTMUX_VERSION='"3.2a"' \
--DVERSION=\"3.2a\" \
+-DTMUX_CONF='"/etc/tmux.conf:~/.tmux.conf:$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
+-DTMUX_TERM='"tmux-256color"' \
+-DTMUX_VERSION='"3.3a"' \
+-DVERSION=\"3.3a\" \
 -D_ALL_SOURCE=1 \
+-D_FORTIFY_SOURCE=2 \
 -D_GNU_SOURCE=1 \
--D_NETBSD_SOURCE \
 -D_OPENBSD_SOURCE \
 -D_POSIX_PTHREAD_SEMANTICS=1 \
 -D_TANDEM_SOURCE=1 \
--D_XOPEN_SOURCE=500 \
 -D__EXTENSIONS__=1
 
 LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
 
 COPTS.format.c += -Wno-format-nonliteral
+COPTS.input.c += -Wno-sign-compare -Wno-pointer-sign
+COPTS.notify.c += -Wno-sign-compare
+COPTS.tty.c += -Wno-pointer-sign
 COPTS.utempter.c+=	${CC_WNO_STRINGOP_TRUNCATION}
-COPTS.window-copy.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
+COPTS.window-copy.c+=	${CC_WNO_MAYBE_UNINITIALIZED} -Wno-pointer-sign
 
 .include <bsd.prog.mk>

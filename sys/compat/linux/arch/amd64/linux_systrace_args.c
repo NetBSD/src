@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.20 2021/12/02 04:39:44 ryo Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.21 2023/07/10 02:37:46 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1915,8 +1915,25 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 4;
 		break;
 	}
+	/* sys_getrandom */
+	case 318: {
+		const struct sys_getrandom_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, buf); /* void * */
+		uarg[1] = SCARG(p, buflen); /* size_t */
+		uarg[2] = SCARG(p, flags); /* unsigned int */
+		*n_args = 3;
+		break;
+	}
+	/* linux_sys_memfd_create */
+	case 319: {
+		const struct linux_sys_memfd_create_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, name); /* const char * */
+		uarg[1] = SCARG(p, flags); /* unsigned int */
+		*n_args = 2;
+		break;
+	}
 	/* linux_sys_nosys */
-	case 314: {
+	case 451: {
 		*n_args = 0;
 		break;
 	}
@@ -5118,8 +5135,37 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* sys_getrandom */
+	case 318:
+		switch(ndx) {
+		case 0:
+			p = "void *";
+			break;
+		case 1:
+			p = "size_t";
+			break;
+		case 2:
+			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_memfd_create */
+	case 319:
+		switch(ndx) {
+		case 0:
+			p = "const char *";
+			break;
+		case 1:
+			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_nosys */
-	case 314:
+	case 451:
 		break;
 	default:
 		break;
@@ -6224,8 +6270,18 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* sys_getrandom */
+	case 318:
+		if (ndx == 0 || ndx == 1)
+			p = "ssize_t";
+		break;
+	/* linux_sys_memfd_create */
+	case 319:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux_sys_nosys */
-	case 314:
+	case 451:
 	default:
 		break;
 	};

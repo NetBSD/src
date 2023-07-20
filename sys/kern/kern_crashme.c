@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_crashme.c,v 1.10 2022/09/22 14:39:24 riastradh Exp $	*/
+/*	$NetBSD: kern_crashme.c,v 1.11 2023/07/07 12:34:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -47,6 +47,7 @@
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/crashme.h>
+#include <sys/intr.h>
 
 #ifdef DDB
 #include <ddb/ddb.h>
@@ -67,6 +68,8 @@ static int crashme_ddb(int);
 static int crashme_kernel_lock_spinout(int);
 #endif
 static int crashme_mutex_recursion(int);
+static int crashme_spl_spinout(int);
+static int crashme_kpreempt_spinout(int);
 
 #define CMNODE(name, lname, func)	\
     {					\
@@ -88,6 +91,10 @@ static crashme_node nodes[] = {
 #endif
     CMNODE("mutex_recursion", "enter the same mutex twice",
 	crashme_mutex_recursion),
+    CMNODE("spl_spinout", "infinite loop at raised spl",
+	crashme_spl_spinout),
+    CMNODE("kpreempt_spinout", "infinite loop with kpreempt disabled",
+	crashme_kpreempt_spinout),
 };
 static crashme_node *first_node;
 static kmutex_t crashme_lock;
@@ -331,4 +338,36 @@ crashme_mutex_recursion(int flags)
 		printf("%s: locked twice\n", __func__);
 		return -1;
 	}
+}
+
+static int
+crashme_spl_spinout(int flags)
+{
+	int s;
+
+	printf("%s: raising ipl to %d\n", __func__, flags);
+	s = splraiseipl(makeiplcookie(flags));
+	printf("%s: raised ipl to %d, s=%d\n", __func__, flags, s);
+	for (;;)
+		__insn_barrier();
+	printf("%s: exited infinite loop!?\n", __func__);
+	splx(s);
+	printf("%s: lowered ipl to s=%d\n", __func__, s);
+
+	return 0;
+}
+
+static int
+crashme_kpreempt_spinout(int flags)
+{
+
+	kpreempt_disable();
+	printf("%s: disabled kpreemption\n", __func__);
+	for (;;)
+		__insn_barrier();
+	printf("%s: exited infinite loop!?\n", __func__);
+	kpreempt_enable();
+	printf("%s: re-enabled kpreemption\n", __func__);
+
+	return 0;
 }

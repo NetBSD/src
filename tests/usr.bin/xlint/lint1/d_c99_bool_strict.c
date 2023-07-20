@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.40 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.43 2023/07/09 11:18:55 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -124,11 +124,11 @@ strict_bool_constant(void)
 {
 	accept_bool(__lint_false);
 	accept_bool(__lint_true);
-	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
 	accept_bool(0);
-	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
 	accept_bool(1);
-	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
 	accept_bool(2);
 }
 
@@ -297,7 +297,7 @@ strict_bool_conversion_return_2(void)
 	return 2;
 }
 
-/* expect+2: warning: argument 'p' unused in function 'strict_bool_conversion_return_pointer' [231] */
+/* expect+2: warning: parameter 'p' unused in function 'strict_bool_conversion_return_pointer' [231] */
 bool
 strict_bool_conversion_return_pointer(const void *p)
 {
@@ -334,17 +334,17 @@ strict_bool_conversion_function_argument_pass(bool b, int i, const char *p)
 	take_arguments(b, i, p);
 
 	/* Implicitly converting bool to other scalar types. */
-	/* expect+2: error: argument #2 expects 'int', gets passed '_Bool' [334] */
-	/* expect+1: error: argument #3 expects 'pointer', gets passed '_Bool' [334] */
+	/* expect+2: error: argument 2 expects 'int', gets passed '_Bool' [334] */
+	/* expect+1: error: argument 3 expects 'pointer', gets passed '_Bool' [334] */
 	take_arguments(b, b, b);
 
 	/* Implicitly converting int to bool (arg #1). */
-	/* expect+2: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+2: error: argument 1 expects '_Bool', gets passed 'int' [334] */
 	/* expect+1: warning: illegal combination of pointer 'pointer to const char' and integer 'int', arg #3 [154] */
 	take_arguments(i, i, i);
 
 	/* Implicitly converting pointer to bool (arg #1). */
-	/* expect+2: error: argument #1 expects '_Bool', gets passed 'pointer' [334] */
+	/* expect+2: error: argument 1 expects '_Bool', gets passed 'pointer' [334] */
 	/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to const char', arg #2 [154] */
 	take_arguments(p, p, p);
 
@@ -359,11 +359,11 @@ strict_bool_conversion_function_argument_pass(bool b, int i, const char *p)
 	take_arguments(__lint_true, i, p);
 
 	/* Trying to pass integer constants. */
-	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
 	take_arguments(0, i, p);
-	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
 	take_arguments(1, i, p);
-	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
 	take_arguments(2, i, p);
 }
 
@@ -393,7 +393,7 @@ strict_bool_conversion_between_bool_and_int(void)
 	b = i;
 }
 
-/* expect+2: warning: argument 'b' unused in function 'strict_bool_conversion_from_bool_to_scalar' [231] */
+/* expect+2: warning: parameter 'b' unused in function 'strict_bool_conversion_from_bool_to_scalar' [231] */
 void
 strict_bool_conversion_from_bool_to_scalar(bool b)
 {
@@ -815,7 +815,7 @@ enum Flags {
 	FLAG28 = 1 << 28
 };
 
-/* expect+2: warning: argument 'flags' unused in function 'strict_bool_bitwise_and_enum' [231] */
+/* expect+2: warning: parameter 'flags' unused in function 'strict_bool_bitwise_and_enum' [231] */
 void
 strict_bool_bitwise_and_enum(enum Flags flags)
 {
@@ -1065,3 +1065,8 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	    ))
 		return;
 }
+
+// In strict bool mode, the identifiers '__lint_false' and '__lint_true' are
+// predefined, but not any others.
+/* expect+1: error: '__lint_unknown' undefined [99] */
+int unknown = sizeof __lint_unknown;

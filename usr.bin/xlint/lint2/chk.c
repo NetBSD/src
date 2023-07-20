@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.55 2023/06/09 13:03:49 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.60 2023/07/13 08:40:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.55 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.60 2023/07/13 08:40:38 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -78,7 +78,7 @@ mark_main_as_used(void)
 {
 	hte_t *hte;
 
-	if ((hte = hsearch("main", false)) != NULL)
+	if ((hte = htab_search("main", false)) != NULL)
 		hte->h_used = true;
 }
 
@@ -90,7 +90,7 @@ check_name(const hte_t *hte)
 {
 	sym_t *sym, *def, *pdecl, *decl;
 
-	if (uflag) {
+	if (!uflag) {
 		check_used_not_defined(hte);
 		check_defined_not_used(hte);
 		if (xflag)
@@ -198,7 +198,6 @@ static void
 check_multiple_definitions(const hte_t *hte)
 {
 	sym_t *sym, *def1;
-	char *pos1;
 
 	if (!hte->h_def)
 		return;
@@ -217,10 +216,8 @@ check_multiple_definitions(const hte_t *hte)
 			def1 = sym;
 			continue;
 		}
-		pos1 = xstrdup(mkpos(&def1->s_pos));
 		/* %s multiply defined  \t%s  ::  %s */
-		msg(3, hte->h_name, pos1, mkpos(&sym->s_pos));
-		free(pos1);
+		msg(3, hte->h_name, mkpos(&def1->s_pos), mkpos(&sym->s_pos));
 	}
 }
 
@@ -237,7 +234,6 @@ static void
 chkvtui(const hte_t *hte, sym_t *def, sym_t *decl)
 {
 	fcall_t *call;
-	char *pos1;
 	type_t *tp1, *tp2;
 	bool dowarn, eq;
 	tspec_t t1;
@@ -273,19 +269,16 @@ chkvtui(const hte_t *hte, sym_t *def, sym_t *decl)
 				 * behavior matches pcc-based lint, so it is
 				 * accepted for now.
 				 */
-				pos1 = xstrdup(mkpos(&def->s_pos));
 				/* %s function value must be declared ... */
 				msg(17, hte->h_name,
-				    pos1, mkpos(&call->f_pos));
-				free(pos1);
+				    mkpos(&def->s_pos), mkpos(&call->f_pos));
 			}
 			continue;
 		}
 		if (!eq || (sflag && dowarn)) {
-			pos1 = xstrdup(mkpos(&def->s_pos));
 			/* %s value used inconsistently  \t%s  ::  %s */
-			msg(4, hte->h_name, pos1, mkpos(&call->f_pos));
-			free(pos1);
+			msg(4, hte->h_name,
+			    mkpos(&def->s_pos), mkpos(&call->f_pos));
 		}
 	}
 }
@@ -301,7 +294,6 @@ chkvtdi(const hte_t *hte, sym_t *def, sym_t *decl)
 	sym_t *sym;
 	type_t *tp1, *tp2;
 	bool eq, dowarn;
-	char *pos1;
 
 	if (def == NULL)
 		def = decl;
@@ -323,11 +315,9 @@ chkvtdi(const hte_t *hte, sym_t *def, sym_t *decl)
 			    false, false, false, &dowarn);
 		}
 		if (!eq || (sflag && dowarn)) {
-			pos1 = xstrdup(mkpos(&def->s_pos));
 			/* %s value declared inconsistently (%s != %s) \t... */
 			msg(5, hte->h_name, type_name(xt1), type_name(xt2),
-			    pos1, mkpos(&sym->s_pos));
-			free(pos1);
+			    mkpos(&def->s_pos), mkpos(&sym->s_pos));
 		}
 	}
 }
@@ -344,7 +334,6 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 	pos_t *pos1p = NULL;
 	fcall_t *calls, *call, *call1;
 	int n, as;
-	char *pos1;
 	arginf_t *ai;
 
 	if ((calls = hte->h_calls) == NULL)
@@ -408,10 +397,8 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 			 * in the prototype.
 			 */
 		} else {
-			pos1 = xstrdup(mkpos(pos1p));
 			/* %s: variable # of args  \t%s  ::  %s */
-			msg(7, hte->h_name, pos1, mkpos(&call->f_pos));
-			free(pos1);
+			msg(7, hte->h_name, mkpos(pos1p), mkpos(&call->f_pos));
 			continue;
 		}
 
@@ -456,7 +443,6 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	bool promote, asgn, dowarn;
 	tspec_t t1, t2;
 	arginf_t *ai, *ai1;
-	char *pos1;
 
 	/*
 	 * If a function definition is available (def != NULL), we compare the
@@ -593,11 +579,9 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 			return;
 	}
 
-	pos1 = xstrdup(mkpos(pos1p));
 	/* %s, arg %d used inconsistently  \t%s[%s]  ::  %s[%s] */
-	msg(6, hte->h_name, n, pos1, type_name(arg1),
+	msg(6, hte->h_name, n, mkpos(pos1p), type_name(arg1),
 	    mkpos(&call->f_pos), type_name(arg2));
-	free(pos1);
 }
 
 /*
@@ -700,7 +684,7 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		} else if (fc == 'l') {
 			sz = LONG;
 		} else if (fc == 'q') {
-			sz = QUAD;
+			sz = LLONG;
 		} else if (fc == 'L') {
 			sz = LDOUBLE;
 		}
@@ -738,8 +722,8 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			if (sz == LONG) {
 				if (t1 != LONG && (hflag || t1 != ULONG))
 					inconsistent_arguments(hte, call, n);
-			} else if (sz == QUAD) {
-				if (t1 != QUAD && (hflag || t1 != UQUAD))
+			} else if (sz == LLONG) {
+				if (t1 != LLONG && (hflag || t1 != ULLONG))
 					inconsistent_arguments(hte, call, n);
 			} else {
 				/*
@@ -756,8 +740,8 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			if (sz == LONG) {
 				if (t1 != ULONG && (hflag || t1 != LONG))
 					inconsistent_arguments(hte, call, n);
-			} else if (sz == QUAD) {
-				if (t1 != UQUAD && (hflag || t1 != QUAD))
+			} else if (sz == LLONG) {
+				if (t1 != ULLONG && (hflag || t1 != LLONG))
 					inconsistent_arguments(hte, call, n);
 			} else if (sz == SHORT) {
 				/* USHORT was promoted to INT or UINT */
@@ -871,7 +855,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		} else if (fc == 'l') {
 			sz = LONG;
 		} else if (fc == 'q') {
-			sz = QUAD;
+			sz = LLONG;
 		} else if (fc == 'L') {
 			sz = LDOUBLE;
 		}
@@ -898,7 +882,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		if (fc == 'd' || fc == 'i' || fc == 'n') {
 			if (sz == LDOUBLE)
 				bad_format_string(hte, call);
-			if (sz != SHORT && sz != LONG && sz != QUAD)
+			if (sz != SHORT && sz != LONG && sz != LLONG)
 				sz = INT;
 		conv:
 			if (!noasgn) {
@@ -919,8 +903,8 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 				sz = USHORT;
 			} else if (sz == LONG) {
 				sz = ULONG;
-			} else if (sz == QUAD) {
-				sz = UQUAD;
+			} else if (sz == LLONG) {
+				sz = ULLONG;
 			} else {
 				sz = UINT;
 			}
@@ -1131,8 +1115,6 @@ check_argument_declarations(const hte_t *hte, sym_t *def, sym_t *decl)
 	int n;
 	sym_t *sym1, *sym;
 	type_t **ap1, **ap2, *tp1, *tp2;
-	char *pos1;
-	const char *pos2;
 
 	osdef = false;
 	if (def != NULL) {
@@ -1163,12 +1145,10 @@ check_argument_declarations(const hte_t *hte, sym_t *def, sym_t *decl)
 			eq = types_compatible(xt1 = *ap1, xt2 = *ap2,
 			    true, osdef, false, &dowarn);
 			if (!eq || dowarn) {
-				pos1 = xstrdup(mkpos(&sym1->s_pos));
-				pos2 = mkpos(&sym->s_pos);
 				/* %s, arg %d declared inconsistently ... */
 				msg(11, hte->h_name, n + 1,
-				    type_name(xt1), type_name(xt2), pos1, pos2);
-				free(pos1);
+				    type_name(xt1), type_name(xt2),
+				    mkpos(&sym1->s_pos), mkpos(&sym->s_pos));
 			}
 			n++;
 			ap1++;
@@ -1184,10 +1164,8 @@ check_argument_declarations(const hte_t *hte, sym_t *def, sym_t *decl)
 				continue;
 			}
 		}
-		pos1 = xstrdup(mkpos(&sym1->s_pos));
 		/* %s: variable # of args declared  \t%s  ::  %s */
-		msg(12, hte->h_name, pos1, mkpos(&sym->s_pos));
-		free(pos1);
+		msg(12, hte->h_name, mkpos(&sym1->s_pos), mkpos(&sym->s_pos));
 	}
 }
 

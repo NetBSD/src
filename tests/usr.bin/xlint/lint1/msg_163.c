@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_163.c,v 1.4 2021/07/04 12:24:39 rillig Exp $	*/
+/*	$NetBSD: msg_163.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_163.c"
 
 // Test for message: a cast does not yield an lvalue [163]
+
+/* lint1-extra-flags: -X 351 */
 
 void
 example(char *p, int i)

@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.31 2023/06/09 13:03:49 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.33 2023/07/13 08:40:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit2.c,v 1.31 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.33 2023/07/13 08:40:38 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -51,11 +51,11 @@ static void
 outtype(type_t *tp)
 {
 #ifdef INT128_SIZE
-	static const char tt[NTSPEC] = "???BCCCSSIILLQQJJDDDVTTTPAF?XXX";
-	static const char ss[NTSPEC] = "???  su u u u u us l sue   ?s l";
+	static const char tt[NTSPEC] = "???BCCCSSIILLQQJJDDD?XXXVTTTPAF";
+	static const char ss[NTSPEC] = "???  su u u u u us l?s l sue   ";
 #else
-	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDDVTTTPAF?XXX";
-	static const char ss[NTSPEC] = "???  su u u u us l sue   ?s l";
+	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDD?XXXVTTTPAF";
+	static const char ss[NTSPEC] = "???  su u u u us l?s l sue   ";
 #endif
 
 	while (tp != NULL) {

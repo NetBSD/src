@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_cred.h,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: openpam_cred.h,v 1.4 2023/06/30 21:46:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -33,8 +33,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $OpenPAM: openpam_cred.h 938 2017-04-30 21:34:42Z des $
  */
 
 #ifndef OPENPAM_CRED_H_INCLUDED

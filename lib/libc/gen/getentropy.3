@@ -1,4 +1,4 @@
-.\"	$NetBSD: getentropy.3,v 1.4 2022/05/31 13:42:59 riastradh Exp $ $
+.\"	$NetBSD: getentropy.3,v 1.6 2023/06/30 22:15:14 uwe Exp $ $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,12 +27,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 1, 2020
+.Dd February 28, 2023
 .Dt GETENTROPY 3
 .Os
 .Sh NAME
 .Nm getentropy
-.Nd fill a buffer with high quality random data
+.Nd generate uniform random seeds from system entropy for cryptography
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -40,29 +40,34 @@
 .Ft int
 .Fn getentropy "void *buf" "size_t buflen"
 .In limits.h
+.Pp
 .Li #define GETENTROPY_MAX	256
 .Sh DESCRIPTION
 .Pp
 The
-.Fn getentropy
-function fills a buffer with high quality random data, suitable for seeding
-cryptographically secure psuedorandom number generators.
+.Nm
+function fills
+.Fa buf
+with exactly
+.Fa buflen
+independent uniform random bytes derived from the system's entropy
+pool.
 .Pp
-.Fn getentropy
-is only intended for seeding random number generators and is not intended
-for use by regular code which simply needs secure random data.
-For this purpose, please use
+The output of
+.Nm
+is meant to be unpredictable to an adversary and fit for use in
+cryptography.
+See
+.Sx CAVEATS
+below.
+.Pp
+.Nm
+is meant for seeding random number generators, not for direct use by
+applications; most applications should use
 .Xr arc4random 3 .
 .Pp
-The maximum value for
-.Li buflen
-is 256 bytes.
-.Sh IMPLEMENTATION NOTES
-.Fn getentropy
-reads from the
-.Xr sysctl 7
-variable
-.Li kern.arandom .
+.Fa buflen
+must be at most 256.
 .Sh RETURN VALUES
 .Rv -std getentropy
 .Sh ERRORS
@@ -75,13 +80,33 @@ The
 argument points to an invalid memory address.
 .It Bq Er EINVAL
 More than 256 bytes were requested.
+.El
+.Sh CAVEATS
+Security can only be guaranteed relative to whatever unpredictable
+physical processes or secret seed material are available to the system;
+see
+.Xr entropy 7 .
+.Pp
+On systems which have no hardware random number generator and which
+have not had secret seed material loaded,
+.Nx
+makes a reasonable effort to incorporate samples from various physical
+processes available to it that might be unpredictable from random
+jitter in timing.
+.Pp
+However, the
+.Nm
+interface alone can make no security guarantees without a physical
+system configuration that includes random number generation hardware or
+secret seed material from such hardware on another machine.
 .Sh SEE ALSO
 .Xr arc4random 3 ,
-.Xr rnd 4
+.Xr rnd 4 ,
+.Xr entropy 7
 .Sh STANDARDS
 The
 .Fn getentropy
-function is non-standard.
+function is nonstandard.
 However, it is likely to be included in the next revision of POSIX.
 .Sh HISTORY
 The
@@ -90,5 +115,5 @@ function first appeared in
 .Ox 5.6 ,
 then in
 .Fx 12.0 ,
-and
-.Nx 10 .
+and in
+.Nx 10.0 .

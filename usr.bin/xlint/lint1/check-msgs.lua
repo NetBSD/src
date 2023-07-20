@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.17 2022/07/05 22:50:41 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.19 2023/07/10 11:46:14 rillig Exp $
 
 --[[
 
@@ -69,6 +69,7 @@ local message_prefix = {
   query_message = "Q",
   c99ism = "",
   c11ism = "",
+  c23ism = "",
   gnuism = "",
 }
 
@@ -127,10 +128,40 @@ local function check_test_files(msgs)
   filenames:close()
 end
 
+local function check_yacc_file(filename)
+  local decl = {}
+  local f = assert(io.open(filename, "r"))
+  local lineno = 0
+  for line in f:lines() do
+    lineno = lineno + 1
+    local type = line:match("^%%type%s+<[%w_]+>%s+(%S+)$") or
+      line:match("^/%* No type for ([%w_]+)%. %*/$")
+    if type then
+      decl[type] = lineno
+    end
+    local rule = line:match("^([%w_]+):")
+    if rule then
+      if decl[rule] then
+        decl[rule] = nil
+      else
+        print_error("%s:%d: missing type declaration for rule %q",
+          filename, lineno, rule)
+      end
+    end
+  end
+  for rule, decl_lineno in pairs(decl) do
+    print_error("%s:%d: missing rule %q", filename, decl_lineno, rule)
+  end
+  f:close()
+end
+
 local function main(arg)
   local msgs = load_messages()
   for _, fname in ipairs(arg) do
     check_file(fname, msgs)
+    if fname:match("%.y$") then
+      check_yacc_file(fname)
+    end
   end
   check_test_files(msgs)
 end

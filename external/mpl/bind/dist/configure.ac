@@ -707,9 +707,9 @@ AC_CHECK_FUNCS([pthread_setname_np pthread_set_name_np])
 AC_CHECK_HEADERS([pthread_np.h], [], [], [#include <pthread.h>])
 
 # libuv
-AC_MSG_CHECKING(for libuv)
-PKG_CHECK_MODULES([LIBUV], [libuv >= 1.0.0], [],
-		  [AC_MSG_ERROR([libuv not found])])
+PKG_CHECK_MODULES([LIBUV], [libuv >= 1.37.0], [],
+		  [PKG_CHECK_MODULES([LIBUV], [libuv >= 1.0.0 libuv < 1.35.0], [],
+				     [AC_MSG_ERROR([libuv >= 1.0.0 (except 1.35.0 and 1.36.0) not found])])])
 
 AX_SAVE_FLAGS([libuv])
 CFLAGS="$CFLAGS $LIBUV_CFLAGS"
@@ -939,7 +939,12 @@ PKCS11_MANS=
 #
 # was --enable-native-pkcs11 specified?
 #
-# [pairwise: --enable-native-pkcs11 --with-dlopen, --disable-native-pkcs11 --with-dlopen, --disable-native-pkcs11 --without-dlopen]
+# DNSRPS builds are included in pairwise testing here and not later because both
+# --enable-native-pkcs11 and --enable-dnsrps-dl require --with-dlopen and the
+# ordering of the set of ./configure arguments generated during pairwise testing
+# is random.
+#
+# [pairwise: --enable-native-pkcs11 --enable-dnsrps --enable-dnsrps-dl --with-dlopen, --disable-native-pkcs11 --enable-dnsrps --enable-dnsrps-dl --with-dlopen, --disable-native-pkcs11 --enable-dnsrps --enable-dnsrps-dl --with-dlopen, --disable-native-pkcs11 --disable-dnsrps --without-dlopen]
 AC_ARG_ENABLE(native-pkcs11,
 	      AS_HELP_STRING([--enable-native-pkcs11],
 			     [use native PKCS11 for public-key crypto [default=no]]),
@@ -2154,6 +2159,14 @@ AC_PATH_PROG([LATEXMK], [latexmk], [:])
 AM_CONDITIONAL([HAVE_XELATEX], [test "$XELATEX" != ":" && test "$LATEXMK" != ":"])
 
 #
+# Build the man pages only if we have prebuilt manpages or we can build them from RST sources
+#
+BUILD_MANPAGES=
+AS_IF([test -e doc/man/named.conf.5in || test "$SPHINX_BUILD" != ":"],
+      [BUILD_MANPAGES=man])
+AC_SUBST([BUILD_MANPAGES])
+
+#
 # Pull release date from CHANGES file last modification date
 # for reproducible builds
 #
@@ -2583,8 +2596,9 @@ AC_COMPILE_IFELSE(
     AC_MSG_RESULT([no])
   ])
 
-# DNSRPS is not included in pairwise testing as the librpz library is not
-# present in the relevant Docker image.
+# DNSRPS builds are included in pairwise testing along --enable-native-pkcs11
+# tests above as both of these features require --with-dlopen (see also the
+# relevant comment there).
 #
 # [pairwise: skip]
 AC_ARG_ENABLE([dnsrps-dl],

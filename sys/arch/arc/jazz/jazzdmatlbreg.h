@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlbreg.h,v 1.4 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: jazzdmatlbreg.h,v 1.5 2023/06/25 15:36:11 andvar Exp $	*/
 /*	$OpenBSD: dma.h,v 1.3 1997/04/19 17:19:51 pefo Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  *	The R4030 system has four DMA channels capable of scatter/gather
  *	and full memory addressing. The maximum transfer length is 1Mb.
  *	DMA snopes the L2 cache so no precaution is required. However
- *	if L1 cache is cached 'write back' the processor is responible
+ *	if L1 cache is cached 'write back' the processor is responsible
  *	for flushing/invalidating it.
  *
  *	The DMA mapper has up to 4096 page descriptors.

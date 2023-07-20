@@ -1,22 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2011/03/31 23:34:48 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2023/07/05 22:42:47 riastradh Exp $
 
-.include <bsd.own.mk>
+LIB=		h_helper_dso2
+SRCS=		h_helper_dso2.c
 
-LIB=			h_helper_dso2
-SRCS=			h_helper_dso2.c
-
-DSO1DIR!=	cd ${.CURDIR}/../helper_dso1 && ${PRINTOBJDIR}
+DSO1DIR_cmd=	cd ${.CURDIR}/../helper_dso1 && ${PRINTOBJDIR}
+DSO1DIR=	${DSO1DIR_cmd:sh}
 LDADD+=		-Wl,-rpath,${TESTSDIR} -L${DSO1DIR} -lh_helper_dso1
 
-LIBDIR=		${TESTSBASE}/libexec/ld.elf_so
-SHLIBDIR=	${TESTSBASE}/libexec/ld.elf_so
-SHLIB_MAJOR=	1
-
-MKSTATICLIB=	no
-MKPROFILE=	no
-MKPICINSTALL=	no
-MKLINT=		no
-
-NOMAN=		# defined
-
-.include <bsd.lib.mk>
+.include "../helper.mk"

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2433 2023/06/20 23:09:13 wiz Exp $
+#	$NetBSD: mi,v 1.2437 2023/07/10 02:31:54 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4826,6 +4826,7 @@
 ./usr/share/man/cat2/lutimes.0			comp-c-catman		.cat
 ./usr/share/man/cat2/m68k_sync_icache.0		comp-c-catman		.cat
 ./usr/share/man/cat2/madvise.0			comp-c-catman		.cat
+./usr/share/man/cat2/memfd_create.0		comp-c-catman		.cat
 ./usr/share/man/cat2/mincore.0			comp-c-catman		.cat
 ./usr/share/man/cat2/minherit.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mkdir.0			comp-c-catman		.cat
@@ -6657,6 +6658,7 @@
 ./usr/share/man/cat3/bottom_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/box.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bsd_signal.0		comp-c-catman		.cat
+./usr/share/man/cat3/bsdmalloc.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bsearch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bstring.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bswap.0			comp-c-catman		.cat
@@ -12907,6 +12909,7 @@
 ./usr/share/man/cat9/vdead_check.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vdevgone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/veriexec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/versioningsyscalls.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/vfinddev.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vflush.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vflushbuf.0		comp-sys-catman		.cat
@@ -13313,6 +13316,7 @@
 ./usr/share/man/html2/lutimes.html		comp-c-htmlman		html
 ./usr/share/man/html2/m68k_sync_icache.html	comp-c-htmlman		html
 ./usr/share/man/html2/madvise.html		comp-c-htmlman		html
+./usr/share/man/html2/memfd_create.html		comp-c-htmlman		html
 ./usr/share/man/html2/mincore.html		comp-c-htmlman		html
 ./usr/share/man/html2/minherit.html		comp-c-htmlman		html
 ./usr/share/man/html2/mkdir.html		comp-c-htmlman		html
@@ -15142,6 +15146,7 @@
 ./usr/share/man/html3/bottom_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/box.html			comp-c-htmlman		html
 ./usr/share/man/html3/bsd_signal.html		comp-c-htmlman		html
+./usr/share/man/html3/bsdmalloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/bsearch.html		comp-c-htmlman		html
 ./usr/share/man/html3/bstring.html		comp-c-htmlman		html
 ./usr/share/man/html3/bswap.html		comp-c-htmlman		html
@@ -21212,6 +21217,7 @@
 ./usr/share/man/html9/vdead_check.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vdevgone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/veriexec.html		comp-sys-htmlman	html
+./usr/share/man/html9/versioningsyscalls.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfinddev.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vflush.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vflushbuf.html		comp-sys-htmlman	html
@@ -21628,6 +21634,7 @@
 ./usr/share/man/man2/lutimes.2			comp-c-man		.man
 ./usr/share/man/man2/m68k_sync_icache.2		comp-c-man		.man
 ./usr/share/man/man2/madvise.2			comp-c-man		.man
+./usr/share/man/man2/memfd_create.2		comp-c-man		.man
 ./usr/share/man/man2/mincore.2			comp-c-man		.man
 ./usr/share/man/man2/minherit.2			comp-c-man		.man
 ./usr/share/man/man2/mkdir.2			comp-c-man		.man
@@ -23470,6 +23477,7 @@
 ./usr/share/man/man3/bottom_panel.3		comp-c-man		.man
 ./usr/share/man/man3/box.3			comp-c-man		.man
 ./usr/share/man/man3/bsd_signal.3		comp-c-man		.man
+./usr/share/man/man3/bsdmalloc.3		comp-c-man		.man
 ./usr/share/man/man3/bsearch.3			comp-c-man		.man
 ./usr/share/man/man3/bstring.3			comp-c-man		.man
 ./usr/share/man/man3/bswap.3			comp-c-man		.man
@@ -29750,6 +29758,7 @@
 ./usr/share/man/man9/vdead_check.9		comp-sys-man		.man
 ./usr/share/man/man9/vdevgone.9			comp-sys-man		.man
 ./usr/share/man/man9/veriexec.9			comp-sys-man		.man
+./usr/share/man/man9/versioningsyscalls.9	comp-sys-man		.man
 ./usr/share/man/man9/vfinddev.9			comp-sys-man		.man
 ./usr/share/man/man9/vflush.9			comp-sys-man		.man
 ./usr/share/man/man9/vflushbuf.9		comp-sys-man		.man

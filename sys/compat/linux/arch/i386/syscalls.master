@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.129 2021/12/02 04:29:48 ryo Exp $
+	$NetBSD: syscalls.master,v 1.130 2023/07/10 13:05:27 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -569,3 +569,95 @@
 348	UNIMPL		process_vm_writev
 349	UNIMPL		kcmp
 350	UNIMPL		finit_module
+351	UNIMPL		sched_setattr
+352	UNIMPL		sched_getattr
+353	UNIMPL		renameat2
+354	UNIMPL		seccomp
+355	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
+			    unsigned int flags); }
+356	STD		{ int|linux_sys||memfd_create(const char *name, \
+			    unsigned int flags); }
+357	UNIMPL		bpf
+358	UNIMPL		execveat
+359	UNIMPL		socket
+360	UNIMPL		socketpair
+361	UNIMPL		bind
+362	UNIMPL		connect
+363	UNIMPL		listen
+364	UNIMPL		accept4
+365	UNIMPL		getsockopt
+366	UNIMPL		setsockopt
+367	UNIMPL		getsockname
+368	UNIMPL		getpeername
+369	UNIMPL		sendto
+370	UNIMPL		sendmsg
+371	UNIMPL		recvfrom
+372	UNIMPL		recvmsg
+373	UNIMPL		shutdown
+374	UNIMPL		userfaultfd
+375	UNIMPL		membarrier
+376	UNIMPL		mlock2
+377	UNIMPL		copy_file_range
+378	UNIMPL		preadv2
+379	UNIMPL		pwritev2
+380	UNIMPL		pkey_mprotect
+381	UNIMPL		pkey_alloc
+382	UNIMPL		pkey_free
+383	UNIMPL		statx
+384	UNIMPL		arch_prctl
+385	UNIMPL		io_pgetevents
+386	UNIMPL		rseq
+387	UNIMPL
+388	UNIMPL
+389	UNIMPL
+390	UNIMPL
+391	UNIMPL
+392	UNIMPL
+393	UNIMPL		semget
+394	UNIMPL		semctl
+395	UNIMPL		shmget
+396	UNIMPL		shmctl
+397	UNIMPL		shmat
+398	UNIMPL		shmdt
+399	UNIMPL		msgget
+400	UNIMPL		msgsnd
+401	UNIMPL		msgrcv
+402	UNIMPL		msgctl
+403	UNIMPL		clock_gettime64
+404	UNIMPL		clock_settime64
+405	UNIMPL		clock_adjtime64
+406	UNIMPL		clock_getres_time64
+407	UNIMPL		clock_nanosleep_time64
+408	UNIMPL		timer_gettime64
+409	UNIMPL		timer_settime64
+410	UNIMPL		timerfd_gettime64
+411	UNIMPL		timerfd_settime64
+412	UNIMPL		utimensat_time64
+413	UNIMPL		pselect6_time64
+414	UNIMPL		ppoll_time64
+415	UNIMPL
+416	UNIMPL		io_pgetevents_time64
+417	UNIMPL		recvmmsg_time64
+418	UNIMPL		mq_timedsend_time64
+419	UNIMPL		mq_timedreceive_time64
+420	UNIMPL		semtimedop_time64
+421	UNIMPL		rt_sigtimedwait_time64
+422	UNIMPL		futex_time64
+423	UNIMPL		sched_rr_get_interval_time64
+424	UNIMPL		pidfd_send_signal
+425	UNIMPL		io_uring_setup
+426	UNIMPL		io_uring_enter
+427	UNIMPL		io_uring_register
+428	UNIMPL		open_tree
+429	UNIMPL		move_mount
+430	UNIMPL		fsopen
+431	UNIMPL		fsconfig
+432	UNIMPL		fsmount
+433	UNIMPL		fspick
+434	UNIMPL		pidfd_open
+435	UNIMPL		clone3
+436	UNIMPL		close_range
+437	UNIMPL		openat2
+438	UNIMPL		pidfd_getfd
+439	UNIMPL		faccessat2
+440	UNIMPL		process_madvise

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.20 2023/06/09 13:03:49 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.24 2023/07/13 08:40:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: msg.c,v 1.20 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.24 2023/07/13 08:40:38 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -102,35 +102,38 @@ lbasename(const char *path)
  * Create a string which describes a position in a source file.
  */
 const char *
-mkpos(pos_t *posp)
+mkpos(const pos_t *posp)
 {
-	size_t len;
-	const char *fn;
-	static char *buf;
-	static size_t blen = 0;
-	bool qm;
-	int src, line;
+	static struct buffer {
+		char *buf;
+		size_t cap;
+	} buffers[2];
+	static unsigned int buf_index;
 
+	struct buffer *buf = buffers + buf_index;
+	buf_index ^= 1;
+
+	int filename;
+	int lineno;
 	if (Hflag && posp->p_src != posp->p_isrc) {
-		src = posp->p_isrc;
-		line = posp->p_iline;
+		filename = posp->p_isrc;
+		lineno = posp->p_iline;
 	} else {
-		src = posp->p_src;
-		line = posp->p_line;
-	}
-	qm = !Hflag && posp->p_src != posp->p_isrc;
-
-	len = strlen(fn = lbasename(fnames[src]));
-	len += 3 * sizeof(unsigned short) + 4;
-
-	if (len > blen)
-		buf = xrealloc(buf, blen = len);
-	if (line != 0) {
-		(void)sprintf(buf, "%s%s(%d)",
-			      fn, qm ? "?" : "", line);
-	} else {
-		(void)sprintf(buf, "%s", fn);
+		filename = posp->p_src;
+		lineno = posp->p_line;
 	}
 
-	return buf;
+	bool qm = !Hflag && posp->p_src != posp->p_isrc;
+	const char *fn = lbasename(fnames[filename]);
+	size_t len = strlen(fn) + 1 + 1 + 3 * sizeof(int) + 1 + 1;
+
+	if (len > buf->cap)
+		buf->buf = xrealloc(buf->buf, buf->cap = len);
+	if (lineno != 0)
+		(void)snprintf(buf->buf, buf->cap, "%s%s(%d)",
+		    fn, qm ? "?" : "", lineno);
+	else
+		(void)snprintf(buf->buf, buf->cap, "%s", fn);
+
+	return buf->buf;
 }

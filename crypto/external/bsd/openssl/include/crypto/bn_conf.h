@@ -22,12 +22,15 @@
 /* Should we define BN_DIV2W here? */
 
 /* Only one for the following should be defined */
-#ifdef _LP64
+#if defined(_LP64) && !defined(__sparc64__)	/* sparc64 asm needs 32bit BN limbs */
 #define SIXTY_FOUR_BIT_LONG
 #elif _ILP64
 #define SIXTY_FOUR_BIT
 #else
 #define THIRTY_TWO_BIT
+#endif
+#ifdef __sparc64__
+#define BN_LLONG
 #endif
 
 #endif

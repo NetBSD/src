@@ -1,4 +1,4 @@
-/*	$NetBSD: bdes.c,v 1.10 2016/02/01 17:41:37 christos Exp $	*/
+/*	$NetBSD: bdes.c,v 1.11 2023/06/27 19:30:27 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: bdes.c,v 1.10 2016/02/01 17:41:37 christos Exp $");
+__RCSID("$NetBSD: bdes.c,v 1.11 2023/06/27 19:30:27 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ main(int ac, char *av[])
 	register int i;			/* counter in a for loop */
 	register char *p;		/* used to obtain the key */
 	Desbuf msgbuf;			/* I/O buffer */
-	int kflag;			/* command-line encryptiooon key */
+	int kflag;			/* command-line encryption key */
 	int argc;			/* the real arg count */
 	char **argv;			/* the real argument vector */
 

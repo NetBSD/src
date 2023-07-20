@@ -148,3 +148,13 @@ zone "static-stub-nomatch." {
 	type static-stub;
 	server-addresses { 10.53.0.10; };
 };
+
+# A faulty dlz configuration to check if named with response policy zones
+# survives a certain class of failed configuration attempts (see GL #3880).
+# "dlz" is used because the dlz processing code is located in an ideal place in
+# the view configuration function for the test to cover the view reverting code.
+# The "BAD" comments below are necessary, because they will be removed using
+# 'sed' by tests.sh in order to activate the faulty configuration.
+#BAD	dlz "bad-dlz" {
+#BAD		database "dlopen bad-dlz.so example.org";
+#BAD	};

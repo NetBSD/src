@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.26 2023/06/24 07:15:08 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.29 2023/07/13 08:40:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -32,15 +32,12 @@
  */
 
 /*
- * inittyp.c
- */
-void	inittyp(void);
-
-/*
  * tyname.c
  */
+#if defined(IS_LINT1) || defined(IS_LINT2)
 const char *type_name(const type_t *);
-const	char *tspec_name(tspec_t);
+const char *tspec_name(tspec_t);
+#endif
 
 /*
  * mem.c

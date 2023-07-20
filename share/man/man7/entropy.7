@@ -1,4 +1,4 @@
-.\"	$NetBSD: entropy.7,v 1.8 2023/03/23 12:41:43 uwe Exp $
+.\"	$NetBSD: entropy.7,v 1.10 2023/07/20 04:16:14 gutteridge Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 4, 2021
+.Dd June 30, 2023
 .Dt ENTROPY 7
 .Os
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -111,13 +111,8 @@ for security, thanks to modern cryptography.
 .Pp
 To detect potentially insecure systems,
 .Nx
-records how many bits it needs to achieve the full 256 bits, exposed
-via the
-.Xr sysctl 7
-variable
-.Li kern.entropy.needed ,
-and takes measures to alert the operator if there isn't definitely
-enough for security:
+takes measures to alert the operator if there isn't definitely enough
+for security:
 .Bl -bullet
 .It
 .Nx
@@ -125,29 +120,41 @@ issues warnings on the console if there's not enough entropy when
 programs need it; see
 .Xr rnd 4 .
 .It
-The daily security report includes an alert if there's not enough
+The
+.Xr motd 5
+has a warning if there was not enough entropy when network daemons such as
+.Xr sshd 8
+first generated keys.
+.It
+The daily security report includes an alert if there's still not enough
 entropy; see
 .Xr security.conf 5 .
-.It
-The operator can set
-.Ql entropy=check
-in
-.Xr rc.conf 5
-so that
-.Nx
-will refuse to boot to multiuser unless there is enough entropy, or set
-.Ql entropy=wait
-so that
-.Nx
-will wait for entropy before booting to multiuser (with the caveat that
-it may cause boot to hang forever).
 .El
 .Pp
-Since it is difficult to confidently model the unpredictability of most
-physical systems, only devices specifically designed to be hardware
-random number generators count toward
-.Nx Ns 's
-estimate of the entropy.
+Since it is hard to know how unpredictable most physical systems are,
+only devices specifically designed to be hardware random number
+generators, or a seed file stored on disk, count toward these alerts.
+.Pp
+At boot,
+.Nx
+will wait, when
+.Ql entropy=wait
+is set in
+.Xr rc.conf 5 ,
+or fail to single-user mode, when
+.Ql entropy=check
+is set, if there is not enough entropy from
+.Em any
+sources, including devices not designed to be unpredictable, such as
+the CPU cycle counter sampled by a periodic timer, provided the samples
+pass a simple filter called the
+.Sq entropy estimator ,
+like other operating systems.
+Sources known to be predictable, which could give a false sense of
+security, can be disabled from unblocking boot by setting
+.Li rndctl_flags
+in
+.Xr rc.conf 5 .
 .Pp
 Many new computers have hardware random number generators, such as
 RDRAND/RDSEED in Intel/AMD CPUs, or ARMv8.5-RNDRRS;

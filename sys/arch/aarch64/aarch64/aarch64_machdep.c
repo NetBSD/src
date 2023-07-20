@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.69 2023/04/18 07:53:31 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.70 2023/07/16 21:36:40 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.69 2023/04/18 07:53:31 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.70 2023/07/16 21:36:40 riastradh Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -454,18 +454,17 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 /*
  * machine dependent system variables.
  */
-static xcfunc_t
+static void
 set_user_tagged_address(void *arg1, void *arg2)
 {
 	uint64_t enable = PTRTOUINT64(arg1);
 	uint64_t tcr = reg_tcr_el1_read();
+
 	if (enable)
 		tcr |= TCR_TBI0;
 	else
 		tcr &= ~TCR_TBI0;
 	reg_tcr_el1_write(tcr);
-
-	return 0;
 }
 
 static int
@@ -487,8 +486,8 @@ sysctl_machdep_tagged_address(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	if (cur != val) {
-		uint64_t where = xc_broadcast(0,
-		    (xcfunc_t)set_user_tagged_address, UINT64TOPTR(val), NULL);
+		uint64_t where = xc_broadcast(0, set_user_tagged_address,
+		    UINT64TOPTR(val), NULL);
 		xc_wait(where);
 	}
 

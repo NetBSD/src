@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.2 2003/08/07 16:42:01 agc Exp $	*/
+/*	$NetBSD: malloc.c,v 1.10 2023/07/08 04:09:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.2 2003/08/07 16:42:01 agc Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.10 2023/07/08 04:09:26 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -42,9 +42,9 @@ __RCSID("$NetBSD: malloc.c,v 1.2 2003/08/07 16:42:01 agc Exp $");
  * malloc.c (Caltech) 2/21/82
  * Chris Kingsley, kingsley@cit-20.
  *
- * This is a very fast storage allocator.  It allocates blocks of a small 
+ * This is a very fast storage allocator.  It allocates blocks of a small
  * number of different sizes, and keeps free lists of each size.  Blocks that
- * don't exactly fit are passed up to the next larger size.  In this 
+ * don't exactly fit are passed up to the next larger size.  In this
  * implementation, the available sizes are 2^n-4 (or 2^n-10) bytes long.
  * This is designed for use in a virtual memory environment.
  */
@@ -53,12 +53,18 @@ __RCSID("$NetBSD: malloc.c,v 1.2 2003/08/07 16:42:01 agc Exp $");
 #if defined(DEBUG) || defined(RCHECK)
 #include <sys/uio.h>
 #endif
+
+#include <errno.h>
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
 #if defined(RCHECK) || defined(MSTATS)
 #include <stdio.h>
 #endif
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "reentrant.h"
 
 
@@ -122,32 +128,31 @@ static	u_int nmalloc[NBUCKETS];
 static	mutex_t malloc_mutex = MUTEX_INITIALIZER;
 #endif
 
-static void morecore __P((int));
-static int findbucket __P((union overhead *, int));
+static void morecore(int);
+static int findbucket(union overhead *, int);
 #ifdef MSTATS
-void mstats __P((const char *));
+void mstats(const char *);
 #endif
 
 #if defined(DEBUG) || defined(RCHECK)
 #define	ASSERT(p)   if (!(p)) botch(__STRING(p))
 
-static void botch __P((const char *));
+static void botch(const char *);
 
 /*
  * NOTE: since this may be called while malloc_mutex is locked, stdio must not
  *       be used in this function.
  */
 static void
-botch(s)
-	const char *s;
+botch(const char *s)
 {
 	struct iovec iov[3];
 
-	iov[0].iov_base	= "\nassertion botched: ";
+	iov[0].iov_base	= __UNCONST("\nassertion botched: ");
 	iov[0].iov_len	= 20;
-	iov[1].iov_base	= (void *)s;
+	iov[1].iov_base	= __UNCONST(s);
 	iov[1].iov_len	= strlen(s);
-	iov[2].iov_base	= "\n";
+	iov[2].iov_base	= __UNCONST("\n");
 	iov[2].iov_len	= 1;
 
 	/*
@@ -158,7 +163,7 @@ botch(s)
 	 * might, depending on the implementation, result in another malloc()
 	 * to be executed, and ii) it is really not desirable to let execution
 	 * continue.  `Fix me.'
-	 * 
+	 *
 	 * Note that holding mutex_lock during abort() is safe.
 	 */
 
@@ -166,12 +171,11 @@ botch(s)
 	abort();
 }
 #else
-#define	ASSERT(p)
+#define	ASSERT(p)	((void)sizeof((long)(p)))
 #endif
 
 void *
-malloc(nbytes)
-	size_t nbytes;
+malloc(size_t nbytes)
 {
   	union overhead *op;
 	int bucket;
@@ -264,8 +268,7 @@ malloc(nbytes)
  * Allocate more memory to the indicated bucket.
  */
 static void
-morecore(bucket)
-	int bucket;
+morecore(int bucket)
 {
   	union overhead *op;
 	long sz;		/* size of desired block */
@@ -307,9 +310,8 @@ morecore(bucket)
 }
 
 void
-free(cp)
-	void *cp;
-{   
+free(void *cp)
+{
 	long size;
 	union overhead *op;
 
@@ -351,10 +353,8 @@ free(cp)
 int __realloc_srchlen = 4;	/* 4 should be plenty, -1 =>'s whole list */
 
 void *
-realloc(cp, nbytes)
-	void *cp; 
-	size_t nbytes;
-{   
+realloc(void *cp, size_t nbytes)
+{
   	u_long onb;
 	long i;
 	union overhead *op;
@@ -412,7 +412,7 @@ realloc(cp, nbytes)
 #endif
 			mutex_unlock(&malloc_mutex);
 			return (cp);
-			
+
 		}
 #ifndef _REENT
 		else
@@ -442,9 +442,7 @@ realloc(cp, nbytes)
  * Return bucket number, or -1 if not found.
  */
 static int
-findbucket(freep, srchlen)
-	union overhead *freep;
-	int srchlen;
+findbucket(union overhead *freep, int srchlen)
 {
 	union overhead *p;
 	int i, j;
@@ -463,14 +461,13 @@ findbucket(freep, srchlen)
 #ifdef MSTATS
 /*
  * mstats - print out statistics about malloc
- * 
+ *
  * Prints two lines of numbers, one showing the length of the free list
  * for each size category, the second showing the number of mallocs -
  * frees for each size category.
  */
 void
-mstats(s)
-	char *s;
+mstats(const char *s)
 {
   	int i, j;
   	union overhead *p;
@@ -493,3 +490,113 @@ mstats(s)
 	    totused, totfree);
 }
 #endif
+
+/*
+ * Additional front ends:
+ * - aligned_alloc (C11)
+ * - calloc(n,m) = malloc(n*m) without overflow
+ * - posix_memalign (POSIX)
+ *
+ * These must all be in the same compilation unit as malloc, realloc,
+ * and free (or -lbsdmalloc must be surrounded by -Wl,--whole-archive
+ * -lbsdmalloc -Wl,--no-whole-archive) in order to override the libc
+ * built-in malloc implementation.
+ *
+ * Allocations of size n, up to and including the page size, are
+ * already aligned by malloc on multiples of n.  Larger alignment is
+ * not supported.
+ */
+
+static long __constfunc
+cachedpagesize(void)
+{
+	long n;
+
+	/* XXX atomic_load_relaxed, but that's not defined in userland atm */
+	if (__predict_false((n = pagesz) == 0)) {
+		mutex_lock(&malloc_mutex);
+		if ((n = pagesz) == 0)
+			n = pagesz = getpagesize();
+		mutex_unlock(&malloc_mutex);
+	}
+
+	return n;
+}
+
+void *
+aligned_alloc(size_t alignment, size_t size)
+{
+	char *p;
+
+	if (alignment == 0 ||
+	    (alignment & (alignment - 1)) != 0 ||
+	    alignment > cachedpagesize()) {
+		errno = EINVAL;
+		return NULL;
+	}
+	p = malloc(size < alignment ? alignment : size);
+	if (__predict_false(p == NULL))
+		ASSERT((uintptr_t)p % alignment == 0);
+	return p;
+}
+
+void *
+calloc(size_t nmemb, size_t size)
+{
+	void *p;
+	size_t n;
+
+	if (__builtin_mul_overflow(nmemb, size, &n)) {
+		errno = ENOMEM;
+		return NULL;
+	}
+	p = malloc(n);
+	if (__predict_false(p == NULL))
+		return NULL;
+	memset(p, 0, n);
+	return p;
+}
+
+int
+posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+	char *p;
+
+	if (alignment < sizeof(void *) ||
+	    (alignment & (alignment - 1)) != 0 ||
+	    alignment > cachedpagesize())
+		return EINVAL;
+	p = malloc(size < alignment ? alignment : size);
+	if (__predict_false(p == NULL))
+		return ENOMEM;
+	ASSERT((uintptr_t)p % alignment == 0);
+	*memptr = p;
+	return 0;
+}
+
+/*
+ * libc hooks required by fork
+ */
+
+#include "../libc/include/extern.h"
+
+void
+_malloc_prefork(void)
+{
+
+	mutex_lock(&malloc_mutex);
+}
+
+void
+_malloc_postfork(void)
+{
+
+	mutex_unlock(&malloc_mutex);
+}
+
+void
+_malloc_postfork_child(void)
+{
+
+	mutex_unlock(&malloc_mutex);
+}

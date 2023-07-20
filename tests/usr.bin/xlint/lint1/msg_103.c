@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_103.c,v 1.4 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_103.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_103.c"
 
 // Test for message: left operand of '.' must be struct or union, not '%s' [103]
+
+/* lint1-extra-flags: -X 351 */
 
 struct point {
 	int x, y;

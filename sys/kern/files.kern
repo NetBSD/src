@@ -1,13 +1,15 @@
-#	$NetBSD: files.kern,v 1.57 2021/09/19 15:51:27 thorpej Exp $
+#	$NetBSD: files.kern,v 1.59 2023/07/10 06:42:33 mrg Exp $
 
 #
 # kernel sources
 #
 define	kern:	cprng_fast, machdep, uvm
+defflag	opt_heartbeat.h			HEARTBEAT
 defflag	opt_kern.h			KERN
 defflag	opt_script.h			SETUIDSCRIPTS FDSCRIPTS
 defflag					KASLR
 defparam opt_cnmagic.h			CNMAGIC
+defparam heartbeat.h			HEARTBEAT_MAX_PERIOD_DEFAULT
 
 file	conf/debugsyms.c		kern
 file	conf/param.c			kern
@@ -48,6 +50,7 @@ file	kern/kern_exec.c		kern
 file	kern/kern_exit.c		kern
 file	kern/kern_fork.c		kern
 file	kern/kern_idle.c		kern
+file	kern/kern_heartbeat.c		kern & heartbeat
 file	kern/kern_hook.c		kern
 file	kern/kern_kthread.c		kern
 file	kern/kern_ktrace.c		ktrace
@@ -162,6 +165,7 @@ file	kern/sys_eventfd.c		kern
 file	kern/sys_futex.c		kern
 file	kern/sys_generic.c		kern
 file	kern/sys_getrandom.c		kern
+file	kern/sys_memfd.c		kern
 file	kern/sys_module.c		kern
 file	kern/sys_mqueue.c		mqueue
 file	kern/sys_lwp.c			kern

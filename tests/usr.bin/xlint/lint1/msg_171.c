@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_171.c,v 1.8 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_171.c,v 1.9 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_171.c"
 
 // Test for message: cannot assign to '%s' from '%s' [171]
+
+/* lint1-extra-flags: -X 351 */
 
 struct s {
 	int member;

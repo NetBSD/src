@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.17 2023/01/25 21:43:31 christos Exp $	*/
+/*	$NetBSD: task.c,v 1.18 2023/06/26 22:03:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -622,12 +622,10 @@ isc_task_purge(isc_task_t *task, void *sender, isc_eventtype_t type,
 
 bool
 isc_task_purgeevent(isc_task_t *task, isc_event_t *event) {
-	isc_event_t *curr_event, *next_event;
+	bool found = false;
 
 	/*
 	 * Purge 'event' from a task's event queue.
-	 *
-	 * XXXRTH:  WARNING:  This method may be removed before beta.
 	 */
 
 	REQUIRE(VALID_TASK(task));
@@ -643,23 +641,18 @@ isc_task_purgeevent(isc_task_t *task, isc_event_t *event) {
 	 */
 
 	LOCK(&task->lock);
-	for (curr_event = HEAD(task->events); curr_event != NULL;
-	     curr_event = next_event)
-	{
-		next_event = NEXT(curr_event, ev_link);
-		if (curr_event == event && PURGE_OK(event)) {
-			DEQUEUE(task->events, curr_event, ev_link);
-			task->nevents--;
-			break;
-		}
+	if (ISC_LINK_LINKED(event, ev_link)) {
+		DEQUEUE(task->events, event, ev_link);
+		task->nevents--;
+		found = true;
 	}
 	UNLOCK(&task->lock);
 
-	if (curr_event == NULL) {
+	if (!found) {
 		return (false);
 	}
 
-	isc_event_free(&curr_event);
+	isc_event_free(&event);
 
 	return (true);
 }
@@ -809,6 +802,16 @@ isc_task_getnetmgr(isc_task_t *task) {
 	return (task->manager->netmgr);
 }
 
+void
+isc_task_setquantum(isc_task_t *task, unsigned int quantum) {
+	REQUIRE(VALID_TASK(task));
+
+	LOCK(&task->lock);
+	task->quantum = (quantum > 0) ? quantum
+				      : task->manager->default_quantum;
+	UNLOCK(&task->lock);
+}
+
 /***
  *** Task Manager.
  ***/
@@ -819,10 +822,13 @@ task_run(isc_task_t *task) {
 	bool finished = false;
 	isc_event_t *event = NULL;
 	isc_result_t result = ISC_R_SUCCESS;
+	uint32_t quantum;
 
 	REQUIRE(VALID_TASK(task));
 
 	LOCK(&task->lock);
+	quantum = task->quantum;
+
 	/*
 	 * It is possible because that we have a paused task in the queue - it
 	 * might have been paused in the meantime and we never hold both queue
@@ -914,7 +920,7 @@ task_run(isc_task_t *task) {
 			XTRACE("pausing");
 			task->state = task_state_paused;
 			break;
-		} else if (dispatch_count >= task->quantum) {
+		} else if (dispatch_count >= quantum) {
 			/*
 			 * Our quantum has expired, but there is more work to be
 			 * done.  We'll requeue it to the ready queue later.

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.15 2014/03/22 16:52:07 tsutsui Exp $ */
+/* $NetBSD: intr.h,v 1.16 2023/07/11 11:06:04 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,6 +32,12 @@
 #ifndef _MACHINE_INTR_H
 #define _MACHINE_INTR_H
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+typedef struct {
+	uint16_t _psl;
+} ipl_cookie_t;
+#endif
+
 #ifdef _KERNEL
 
 /*
@@ -62,9 +68,6 @@
 extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
-typedef struct {
-	uint16_t _psl;
-} ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)

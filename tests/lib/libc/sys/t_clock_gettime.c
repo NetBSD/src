@@ -1,4 +1,4 @@
-/* $NetBSD: t_clock_gettime.c,v 1.3 2017/01/13 21:30:41 christos Exp $ */
+/* $NetBSD: t_clock_gettime.c,v 1.6 2023/07/09 19:19:40 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,17 +58,19 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clock_gettime.c,v 1.3 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_clock_gettime.c,v 1.6 2023/07/09 19:19:40 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/sysctl.h>
 
+#include <sys/ioctl.h>
+#include <sys/sysctl.h>
 
 #include <atf-c.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -204,10 +206,91 @@ ATF_TC_BODY(clock_gettime_real, tc)
 	RL(sysctlbyname(TC_HARDWARE, NULL, 0, save, strlen(save)));
 }
 
+static void
+waste_user_time(void)
+{
+	static char buf[4*4096];
+
+	arc4random_buf(buf, sizeof(buf));
+}
+
+static void __unused
+waste_system_time(void)
+{
+	static char buf[4*4096];
+	int fd[2];
+	int i, n;
+
+	RL(pipe2(fd, O_NONBLOCK));
+	RL(n = ioctl(fd[1], FIONSPACE));
+	n = MIN((unsigned)MAX(0, n), sizeof(buf));
+	for (i = 0; i < 16; i++) {
+		RL(write(fd[1], buf, n));
+		RL(read(fd[0], buf, n));
+	}
+	RL(close(fd[0]));
+	RL(close(fd[1]));
+}
+
+static void
+check_monotonicity(const char *clockname, clockid_t clockid,
+    void (*waste_time)(void))
+{
+	static const struct timespec maxtime = {5, 0};
+	struct timespec mono_t0, t0, mono_d;
+
+	RL(clock_gettime(CLOCK_MONOTONIC, &mono_t0));
+	RL(clock_gettime(clockid, &t0));
+
+	do {
+		struct timespec t1, mono_t1;
+
+		(*waste_time)();
+
+		RL(clock_gettime(clockid, &t1));
+		ATF_CHECK_MSG(timespeccmp(&t0, &t1, <=),
+		    "clock %s=0x%jx went backwards t0=%jd.%09ld t1=%jd.%09ld",
+		    clockname, (uintmax_t)clockid,
+		    (intmax_t)t0.tv_sec, t0.tv_nsec,
+		    (intmax_t)t1.tv_sec, t1.tv_nsec);
+
+		t0 = t1;
+
+		RL(clock_gettime(CLOCK_MONOTONIC, &mono_t1));
+		timespecsub(&mono_t1, &mono_t0, &mono_d);
+	} while (timespeccmp(&mono_d, &maxtime, <));
+}
+
+ATF_TC(clock_gettime_process_cputime_is_monotonic);
+ATF_TC_HEAD(clock_gettime_process_cputime_is_monotonic, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks that CLOCK_PROCESS_CPUTIME_ID is monotonic");
+}
+ATF_TC_BODY(clock_gettime_process_cputime_is_monotonic, tc)
+{
+	check_monotonicity("CLOCK_PROCESS_CPUTIME_ID",
+	    CLOCK_PROCESS_CPUTIME_ID, &waste_user_time);
+}
+
+ATF_TC(clock_gettime_thread_cputime_is_monotonic);
+ATF_TC_HEAD(clock_gettime_thread_cputime_is_monotonic, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks that CLOCK_THREAD_CPUTIME_ID is monotonic");
+}
+ATF_TC_BODY(clock_gettime_thread_cputime_is_monotonic, tc)
+{
+	check_monotonicity("CLOCK_THREAD_CPUTIME_ID",
+	    CLOCK_THREAD_CPUTIME_ID, &waste_user_time);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, clock_gettime_real);
+	ATF_TP_ADD_TC(tp, clock_gettime_process_cputime_is_monotonic);
+	ATF_TP_ADD_TC(tp, clock_gettime_thread_cputime_is_monotonic);
 
 	return atf_no_error();
 }

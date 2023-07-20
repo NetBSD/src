@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.339 2023/06/04 16:14:59 martin Exp $
+$NetBSD: UPDATING,v 1.342 2023/07/19 17:49:40 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,6 +19,16 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+20230718:
+	build.sh will use mk.conf in the same directory as build.sh instead
+	of /etc/mk.conf, unless MAKECONF is already defined in the environment.
+
+20230714:
+	Import of gcc 10.5 requires a clean build of at least tools/gcc
+	and external/gpl3/gcc* object directories. An update build
+	without cleaning will result in obscure failures in rare corner
+	cases.
+
 20230604:
 	Building native kernels with the installed make(1) instead of
 	the $TOOLDIR/bin/nbmake-${arch} wrapper will fail if userland
@@ -28,6 +38,12 @@ Recent changes:
 20230523:
 	ctfmerge was fixed as macOS host tool. This may require a clean tools
 	rebuild to detect the update to tools/compat/configure.
+
+20230515:
+	New openssl build requires removal of the crypto/external/bsd/openssl
+	and tests/crypto/libcrypto subdirectories in the ${OBJDIR} hierachy.
+	Otherwise test results may be wrong due to wrong "golden" output
+	files being installed.
 
 20230322:
 	Fixes for moved /lib/libisns* mean that builds will complain about

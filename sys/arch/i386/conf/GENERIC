@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1247 2023/05/22 16:28:34 riastradh Exp $
+# $NetBSD: GENERIC,v 1.1250 2023/07/16 10:20:07 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1247 $"
+#ident		"GENERIC-$Revision: 1.1250 $"
 
 maxusers	64		# estimated number of users
 
@@ -139,6 +139,10 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 # Kernel Code Coverage Driver.
 #makeoptions	KCOV=1
 #options 	KCOV
+
+# Heartbeat checks
+options 	HEARTBEAT
+options 	HEARTBEAT_MAX_PERIOD_DEFAULT=15
 
 # Compatibility options
 include 	"conf/compat_netbsd09.config"

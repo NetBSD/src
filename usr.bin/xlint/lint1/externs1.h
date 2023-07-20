@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.178 2023/06/24 07:15:08 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.198 2023/07/15 15:51:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -56,6 +56,7 @@ extern	bool	allow_trad;
 extern	bool	allow_c90;
 extern	bool	allow_c99;
 extern	bool	allow_c11;
+extern	bool	allow_c23;
 extern	bool	allow_gcc;
 
 extern sig_atomic_t fpe;
@@ -90,7 +91,7 @@ void	clean_up_after_error(void);
 sym_t	*pushdown(const sym_t *);
 sym_t	*mktempsym(type_t *);
 void	rmsym(sym_t *);
-void	rmsyms(sym_t *);
+void	symtab_remove_level(sym_t *);
 void	inssym(int, sym_t *);
 void	freeyyv(void *, int);
 int	yylex(void);
@@ -103,11 +104,23 @@ int	get_filename_id(const char *);
 void	add_directory_replacement(char *);
 const char *transform_filename(const char *, size_t);
 
+#ifdef DEBUG_MEM
+void	*block_zero_alloc(size_t, const char *);
+void	*level_zero_alloc(size_t, size_t, const char *);
+#else
 void	*block_zero_alloc(size_t);
 void	*level_zero_alloc(size_t, size_t);
+#define block_zero_alloc(size, descr) (block_zero_alloc)(size)
+#define level_zero_alloc(level, size, descr) (level_zero_alloc)(level, size)
+#endif
 void	level_free_all(size_t);
 
+#ifdef DEBUG_MEM
+void	*expr_zero_alloc(size_t, const char *);
+#else
 void	*expr_zero_alloc(size_t);
+#define expr_zero_alloc(size, descr) (expr_zero_alloc)(size)
+#endif
 tnode_t	*expr_alloc_tnode(void);
 void	expr_free_all(void);
 memory_pool expr_save_memory(void);
@@ -118,11 +131,12 @@ void	expr_restore_memory(memory_pool);
  */
 
 #ifdef DEBUG
-const char *declaration_kind_name(declaration_kind);
+const char *decl_level_kind_name(decl_level_kind);
 const char *scl_name(scl_t);
 const char *symt_name(symt_t);
-const char *tqual_name(tqual_t);
-void	debug_dinfo(const dinfo_t *);
+const char *type_qualifiers_string(type_qualifiers);
+const char *function_specifier_name(function_specifier);
+void	debug_dcs(bool);
 void	debug_node(const tnode_t *);
 void	debug_type(const type_t *);
 void	debug_sym(const char *, const sym_t *, const char *);
@@ -138,7 +152,7 @@ void	debug_leave_func(const char *);
 #define	debug_leave()		debug_leave_func(__func__)
 #else
 #define	debug_noop()		do { } while (false)
-#define	debug_dinfo(d)		debug_noop()
+#define	debug_dcs(all)		debug_noop()
 #define	debug_sym(p, sym, s)	debug_noop()
 #define	debug_symtab()		debug_noop()
 #define	debug_node(tn)		debug_noop()
@@ -155,7 +169,8 @@ void	debug_leave_func(const char *);
 /*
  * err.c
  */
-extern	int	nerr;
+extern	bool	seen_error;
+extern	bool	seen_warning;
 extern	int	sytxerr;
 extern	bool	any_query_enabled;
 
@@ -168,6 +183,7 @@ void	warning(int, ...);
 bool	gnuism(int, ...);
 void	c99ism(int, ...);
 void	c11ism(int, ...);
+void	c23ism(int, ...);
 void	assert_failed(const char *, int, const char *, const char *)
 		__attribute__((__noreturn__));
 void	update_location(const char *, int, bool, bool);
@@ -179,7 +195,7 @@ void	enable_queries(const char *);
 /*
  * decl.c
  */
-extern	dinfo_t	*dcs;
+extern	decl_level *dcs;
 extern	const char unnamed[];
 extern	int	enumval;
 
@@ -189,33 +205,37 @@ type_t	*block_dup_type(const type_t *);
 type_t	*expr_dup_type(const type_t *);
 type_t	*expr_unqualified_type(const type_t *);
 bool	is_incomplete(const type_t *);
+void	dcs_add_function_specifier(function_specifier);
 void	dcs_add_storage_class(scl_t);
 void	dcs_add_type(type_t *);
-void	dcs_add_qualifier(tqual_t);
+void	dcs_add_qualifiers(type_qualifiers);
 void	dcs_add_packed(void);
 void	dcs_set_used(void);
-void	begin_declaration_level(declaration_kind);
+void	begin_declaration_level(decl_level_kind);
 void	end_declaration_level(void);
 void	dcs_set_asm(void);
 void	dcs_begin_type(void);
 void	dcs_end_type(void);
 int	length_in_bits(const type_t *, const char *);
 unsigned int alignment_in_bits(const type_t *);
-sym_t	*concat_lists(sym_t *, sym_t *);
+sym_t	*concat_symbols(sym_t *, sym_t *);
 void	check_type(sym_t *);
-sym_t	*declarator_1_struct_union(sym_t *);
+sym_t	*declare_unnamed_member(void);
+sym_t	*declare_member(sym_t *);
 sym_t	*set_bit_field_width(sym_t *, int);
-qual_ptr *merge_qualified_pointer(qual_ptr *, qual_ptr *);
+void	add_type_qualifiers(type_qualifiers *, type_qualifiers);
+qual_ptr *append_qualified_pointer(qual_ptr *, qual_ptr *);
 sym_t	*add_pointer(sym_t *, qual_ptr *);
 sym_t	*add_array(sym_t *, bool, int);
 sym_t	*add_function(sym_t *, sym_t *);
+void	check_extern_declaration(const sym_t *);
 void	check_function_definition(sym_t *, bool);
 sym_t	*declarator_name(sym_t *);
-sym_t	*old_style_function_name(sym_t *);
+sym_t	*old_style_function_parameter_name(sym_t *);
 type_t	*make_tag_type(sym_t *, tspec_t, bool, bool);
 const	char *storage_class_name(scl_t);
-type_t	*complete_tag_struct_or_union(type_t *, sym_t *);
-type_t	*complete_tag_enum(type_t *, sym_t *);
+type_t	*complete_struct_or_union(sym_t *);
+type_t	*complete_enum(sym_t *);
 sym_t	*enumeration_constant(sym_t *, int, bool);
 void	declare(sym_t *, bool, sbuf_t *);
 void	copy_usage_info(sym_t *, sym_t *);
@@ -230,11 +250,11 @@ void	check_func_old_style_arguments(void);
 void	declare_local(sym_t *, bool);
 sym_t	*abstract_name(void);
 void	global_clean_up(void);
-sym_t	*declare_1_abstract(sym_t *);
+sym_t	*declare_abstract_type(sym_t *);
 void	check_size(sym_t *);
 void	mark_as_set(sym_t *);
 void	mark_as_used(sym_t *, bool, bool);
-void	check_usage(dinfo_t *);
+void	check_usage(decl_level *);
 void	check_usage_sym(bool, sym_t *);
 void	check_global_symbols(void);
 void	print_previous_declaration(const sym_t *);
@@ -268,16 +288,18 @@ tnode_t	*build_alignof(const type_t *);
 tnode_t	*cast(tnode_t *, type_t *);
 tnode_t	*build_function_argument(tnode_t *, tnode_t *);
 tnode_t	*build_function_call(tnode_t *, bool, tnode_t *);
-val_t	*constant(tnode_t *, bool);
+val_t	*integer_constant(tnode_t *, bool);
 void	expr(tnode_t *, bool, bool, bool, bool);
 void	check_expr_misc(const tnode_t *, bool, bool, bool, bool, bool, bool);
 bool	constant_addr(const tnode_t *, const sym_t **, ptrdiff_t *);
 strg_t	*cat_strings(strg_t *, strg_t *);
 unsigned int type_size_in_bits(const type_t *);
+sym_t	*find_member(const struct_or_union *, const char *);
 
 void begin_statement_expr(void);
 void do_statement_expr(tnode_t *);
 tnode_t *end_statement_expr(void);
+bool in_statement_expr(void);
 
 /*
  * func.c
@@ -285,7 +307,7 @@ tnode_t *end_statement_expr(void);
 extern	sym_t	*funcsym;
 extern	bool	reached;
 extern	bool	warn_about_unreachable;
-extern	bool	seen_fallthrough;
+extern	bool	suppress_fallthrough;
 extern	int	nargusg;
 extern	pos_t	argsused_pos;
 extern	int	nvararg;
@@ -294,12 +316,12 @@ extern	int	printflike_argnum;
 extern	pos_t	printflike_pos;
 extern	int	scanflike_argnum;
 extern	pos_t	scanflike_pos;
-extern	bool	constcond_flag;
+extern	bool	suppress_constcond;
 extern	bool	llibflg;
 extern	int	lwarn;
-extern	bool	bitfieldtype_ok;
+extern	bool	suppress_bitfieldtype;
 extern	bool	plibflg;
-extern	bool	quadflg;
+extern	bool	suppress_longlong;
 
 void	begin_control_statement(control_statement_kind);
 void	end_control_statement(control_statement_kind);
@@ -309,34 +331,23 @@ void	end_function(void);
 void	named_label(sym_t *);
 void	case_label(tnode_t *);
 void	default_label(void);
-void	if1(tnode_t *);
-void	if2(void);
-void	if3(bool);
-void	switch1(tnode_t *);
-void	switch2(void);
-void	while1(tnode_t *);
-void	while2(void);
-void	do1(void);
-void	do2(tnode_t *);
-void	for1(tnode_t *, tnode_t *, tnode_t *);
-void	for2(void);
-void	do_goto(sym_t *);
-void	do_continue(void);
-void	do_break(void);
-void	do_return(bool, tnode_t *);
+void	stmt_if_expr(tnode_t *);
+void	stmt_if_then_stmt(void);
+void	stmt_if_else_stmt(bool);
+void	stmt_switch_expr(tnode_t *);
+void	stmt_switch_expr_stmt(void);
+void	stmt_while_expr(tnode_t *);
+void	stmt_while_expr_stmt(void);
+void	stmt_do(void);
+void	stmt_do_while_expr(tnode_t *);
+void	stmt_for_exprs(tnode_t *, tnode_t *, tnode_t *);
+void	stmt_for_exprs_stmt(void);
+void	stmt_goto(sym_t *);
+void	stmt_continue(void);
+void	stmt_break(void);
+void	stmt_return(bool, tnode_t *);
 void	global_clean_up_decl(bool);
-void	argsused(int);
-void	constcond(int);
-void	fallthru(int);
-void	not_reached(int);
-void	lintlib(int);
-void	linted(int);
-void	varargs(int);
-void	printflike(int);
-void	scanflike(int);
-void	protolib(int);
-void	longlong(int);
-void	bitfieldtype(int);
+void	handle_lint_comment(lint_comment, int);
 
 /*
  * init.c

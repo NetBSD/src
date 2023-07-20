@@ -64,27 +64,13 @@ ps_ctl_startcb(struct ps_process *psp)
 	    ctx->options & DHCPCD_MANAGER ? NULL : *ctx->ifv, af);
 }
 
-static ssize_t
-ps_ctl_recvmsgcb(void *arg, struct ps_msghdr *psm, __unused struct msghdr *msg)
-{
-	struct dhcpcd_ctx *ctx = arg;
-
-	if (psm->ps_cmd != PS_CTL_EOF) {
-		errno = ENOTSUP;
-		return -1;
-	}
-
-	ctx->ps_control_client = NULL;
-	return 0;
-}
-
 static void
 ps_ctl_recvmsg(void *arg, unsigned short events)
 {
 	struct ps_process *psp = arg;
 
 	if (ps_recvpsmsg(psp->psp_ctx, psp->psp_fd, events,
-	    ps_ctl_recvmsgcb, psp->psp_ctx) == -1)
+	    NULL, psp->psp_ctx) == -1)
 		logerr(__func__);
 }
 
@@ -175,22 +161,26 @@ ps_ctl_recv(void *arg, unsigned short events)
 	char buf[BUFSIZ];
 	ssize_t len;
 
-	if (!(events & ELE_READ))
+	if (!(events & (ELE_READ | ELE_HANGUP)))
 		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
-	len = read(ctx->ps_ctl->psp_work_fd, buf, sizeof(buf));
-	if (len == 0)
-		return;
-	if (len == -1) {
-		logerr("%s: read", __func__);
-		eloop_exit(ctx->eloop, EXIT_FAILURE);
-		return;
+	if (events & ELE_READ) {
+		len = read(ctx->ps_ctl->psp_work_fd, buf, sizeof(buf));
+		if (len == -1)
+			logerr("%s: read", __func__);
+		else if (len == 0)
+			// FIXME: Why does this happen?
+			;
+		else if (ctx->ps_control_client == NULL)
+			logerrx("%s: clientfd #%d disconnected (len=%zd)",
+			    __func__, ctx->ps_ctl->psp_work_fd, len);
+		else {
+			errno = 0;
+			if (control_queue(ctx->ps_control_client,
+			    buf, (size_t)len) == -1)
+				logerr("%s: control_queue", __func__);
+		}
 	}
-	if (ctx->ps_control_client == NULL) /* client disconnected */
-		return;
-	errno = 0;
-	if (control_queue(ctx->ps_control_client, buf, (size_t)len) == -1)
-		logerr("%s: control_queue", __func__);
 }
 
 static void
@@ -205,8 +195,6 @@ ps_ctl_listen(void *arg, unsigned short events)
 		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
 	len = read(ctx->ps_control->fd, buf, sizeof(buf));
-	if (len == 0)
-		return;
 	if (len == -1) {
 		logerr("%s: read", __func__);
 		eloop_exit(ctx->eloop, EXIT_FAILURE);

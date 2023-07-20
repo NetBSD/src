@@ -1,4 +1,4 @@
-/*	$NetBSD: ksem.h,v 1.15 2019/02/03 03:20:24 thorpej Exp $	*/
+/*	$NetBSD: ksem.h,v 1.17 2023/07/11 11:37:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -31,9 +31,23 @@
 
 #include <sys/cdefs.h>
 
+#include <sys/types.h>
+
 struct timespec;
 
 #ifdef _KERNEL
+
+#include <sys/condvar.h>
+#include <sys/mutex.h>
+#include <sys/queue.h>
+
+#ifndef _KMEMUSER		/* XXX hack for fstat(8) */
+#include <sys/systm.h>
+#endif
+
+struct lwp;
+struct proc;
+
 #define	KSEM_MAX	128
 
 typedef struct ksem {

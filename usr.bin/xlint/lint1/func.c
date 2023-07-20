@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.157 2023/06/24 20:50:54 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.171 2023/07/15 13:35:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.157 2023/06/24 20:50:54 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.171 2023/07/15 13:35:24 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -64,16 +64,17 @@ bool	warn_about_unreachable;
 /*
  * In conjunction with 'reached', controls printing of "fallthrough on ..."
  * warnings.
- * Reset by each statement and set by FALLTHROUGH, switch (switch1())
- * and case (label()).
+ * Reset by each statement and set by FALLTHROUGH, stmt_switch_expr and
+ * case_label.
  *
- * Control statements if, for, while and switch do not reset seen_fallthrough
- * because this must be done by the controlled statement. At least for if this
- * is important because ** FALLTHROUGH ** after "if (expr) statement" is
- * evaluated before the following token, which causes reduction of above.
- * This means that ** FALLTHROUGH ** after "if ..." would always be ignored.
+ * The control statements 'if', 'for', 'while' and 'switch' do not reset
+ * suppress_fallthrough because this must be done by the controlled statement.
+ * At least for 'if', this is important because ** FALLTHROUGH ** after "if
+ * (expr) statement" is evaluated before the following token, which causes
+ * reduction of above. This means that ** FALLTHROUGH ** after "if ..." would
+ * always be ignored.
  */
-bool	seen_fallthrough;
+bool	suppress_fallthrough;
 
 /* The innermost control statement */
 static control_statement *cstmt;
@@ -115,11 +116,8 @@ pos_t	scanflike_pos;
  */
 bool	plibflg;
 
-/*
- * True means that no warnings about constants in conditional
- * context are printed.
- */
-bool	constcond_flag;
+/* Temporarily suppress warnings about constants in conditional context. */
+bool	suppress_constcond;
 
 /*
  * Whether a lint library shall be created. The effect of this flag is that
@@ -138,17 +136,11 @@ bool	llibflg;
  */
 int	lwarn = LWARN_ALL;
 
-/*
- * Whether bitfield type errors are suppressed by a BITFIELDTYPE
- * directive.
- */
-bool	bitfieldtype_ok;
+/* Temporarily suppress warnings about wrong types for bit-fields. */
+bool	suppress_bitfieldtype;
 
-/*
- * Whether complaints about use of "long long" are suppressed in
- * the next statement or declaration.
- */
-bool	quadflg;
+/* Temporarily suppress warnings about use of 'long long'. */
+bool	suppress_longlong;
 
 void
 begin_control_statement(control_statement_kind kind)
@@ -341,7 +333,7 @@ begin_function(sym_t *fsym)
 			warning(286);
 	}
 
-	if (dcs->d_notyp)
+	if (dcs->d_no_type_specifier)
 		fsym->s_return_type_implicit_int = true;
 
 	set_reached(true);
@@ -420,8 +412,8 @@ end_function(void)
 	 * the symbol table
 	 */
 	lint_assert(dcs->d_enclosing == NULL);
-	lint_assert(dcs->d_kind == DK_EXTERN);
-	rmsyms(dcs->d_func_proto_syms);
+	lint_assert(dcs->d_kind == DLK_EXTERN);
+	symtab_remove_level(dcs->d_func_proto_syms);
 
 	/* must be set on level 0 */
 	set_reached(true);
@@ -447,15 +439,14 @@ named_label(sym_t *sym)
 static void
 check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
 {
-	uint64_t case_value, mask;
 
 	if (switch_expr->tn_op != BITAND ||
 	    switch_expr->tn_right->tn_op != CON)
 		return;
 
 	lint_assert(case_expr->tn_op == CON);
-	case_value = case_expr->tn_val.v_quad;
-	mask = switch_expr->tn_right->tn_val.v_quad;
+	uint64_t case_value = (uint64_t)case_expr->tn_val.u.integer;
+	uint64_t mask = (uint64_t)switch_expr->tn_right->tn_val.u.integer;
 
 	if ((case_value & ~mask) != 0) {
 		/* statement not reached */
@@ -515,7 +506,7 @@ check_case_label(tnode_t *tn, control_statement *cs)
 
 	lint_assert(cs->c_switch_type != NULL);
 
-	if (reached && !seen_fallthrough) {
+	if (reached && !suppress_fallthrough) {
 		if (hflag)
 			/* fallthrough on case statement */
 			warning(220);
@@ -523,7 +514,7 @@ check_case_label(tnode_t *tn, control_statement *cs)
 
 	t = tn->tn_type->t_tspec;
 	if (t == LONG || t == ULONG ||
-	    t == QUAD || t == UQUAD) {
+	    t == LLONG || t == ULLONG) {
 		if (!allow_c90)
 			/* case label must be of type 'int' in traditional C */
 			warning(203);
@@ -533,24 +524,24 @@ check_case_label(tnode_t *tn, control_statement *cs)
 	 * get the value of the expression and convert it
 	 * to the type of the switch expression
 	 */
-	v = constant(tn, true);
+	v = integer_constant(tn, true);
 	(void)memset(&nv, 0, sizeof(nv));
 	convert_constant(CASE, 0, cs->c_switch_type, &nv, v);
 	free(v);
 
 	/* look if we had this value already */
 	for (cl = cs->c_case_labels; cl != NULL; cl = cl->cl_next) {
-		if (cl->cl_val.v_quad == nv.v_quad)
+		if (cl->cl_val.u.integer == nv.u.integer)
 			break;
 	}
 	if (cl != NULL && is_uinteger(nv.v_tspec)) {
-		/* duplicate case in switch: %lu */
-		error(200, (unsigned long)nv.v_quad);
+		/* duplicate case '%lu' in switch */
+		error(200, (unsigned long)nv.u.integer);
 	} else if (cl != NULL) {
-		/* duplicate case in switch: %ld */
-		error(199, (long)nv.v_quad);
+		/* duplicate case '%ld' in switch */
+		error(199, (long)nv.u.integer);
 	} else {
-		check_getopt_case_label(nv.v_quad);
+		check_getopt_case_label(nv.u.integer);
 
 		/* append the value to the list of case values */
 		cl = xcalloc(1, sizeof(*cl));
@@ -592,7 +583,7 @@ default_label(void)
 		/* duplicate default in switch */
 		error(202);
 	} else {
-		if (reached && !seen_fallthrough) {
+		if (reached && !suppress_fallthrough) {
 			if (hflag)
 				/* fallthrough on default statement */
 				warning(284);
@@ -629,11 +620,8 @@ check_controlling_expression(tnode_t *tn)
 	return tn;
 }
 
-/*
- * T_IF T_LPAREN expr T_RPAREN
- */
 void
-if1(tnode_t *tn)
+stmt_if_expr(tnode_t *tn)
 {
 
 	if (tn != NULL)
@@ -650,12 +638,8 @@ if1(tnode_t *tn)
 	}
 }
 
-/*
- * if_without_else
- * if_without_else T_ELSE
- */
 void
-if2(void)
+stmt_if_then_stmt(void)
 {
 
 	cstmt->c_reached_end_of_then = reached;
@@ -663,12 +647,8 @@ if2(void)
 	set_reached(!cstmt->c_always_then);
 }
 
-/*
- * if_without_else
- * if_without_else T_ELSE statement
- */
 void
-if3(bool els)
+stmt_if_else_stmt(bool els)
 {
 	if (cstmt->c_reached_end_of_then)
 		set_reached(true);
@@ -680,11 +660,8 @@ if3(bool els)
 	end_control_statement(CS_IF);
 }
 
-/*
- * T_SWITCH T_LPAREN expr T_RPAREN
- */
 void
-switch1(tnode_t *tn)
+stmt_switch_expr(tnode_t *tn)
 {
 	tspec_t t;
 	type_t *tp;
@@ -700,7 +677,7 @@ switch1(tnode_t *tn)
 	}
 	if (tn != NULL && !allow_c90) {
 		t = tn->tn_type->t_tspec;
-		if (t == LONG || t == ULONG || t == QUAD || t == UQUAD) {
+		if (t == LONG || t == ULONG || t == LLONG || t == ULLONG) {
 			/* switch expression must be of type 'int' in ... */
 			warning(271);
 		}
@@ -733,14 +710,11 @@ switch1(tnode_t *tn)
 	cstmt->c_switch_expr = tn;
 
 	set_reached(false);
-	seen_fallthrough = true;
+	suppress_fallthrough = true;
 }
 
-/*
- * switch_expr statement
- */
 void
-switch2(void)
+stmt_switch_expr_stmt(void)
 {
 	int nenum = 0, nclab = 0;
 	sym_t *esym;
@@ -794,11 +768,8 @@ switch2(void)
 	end_control_statement(CS_SWITCH);
 }
 
-/*
- * T_WHILE T_LPAREN expr T_RPAREN
- */
 void
-while1(tnode_t *tn)
+stmt_while_expr(tnode_t *tn)
 {
 	bool body_reached;
 
@@ -823,12 +794,8 @@ while1(tnode_t *tn)
 	set_reached(body_reached);
 }
 
-/*
- * while_expr statement
- * while_expr error
- */
 void
-while2(void)
+stmt_while_expr_stmt(void)
 {
 
 	/*
@@ -841,11 +808,8 @@ while2(void)
 	end_control_statement(CS_WHILE);
 }
 
-/*
- * T_DO
- */
 void
-do1(void)
+stmt_do(void)
 {
 
 	if (!reached) {
@@ -858,12 +822,8 @@ do1(void)
 	cstmt->c_loop = true;
 }
 
-/*
- * do statement do_while_expr
- * do error
- */
 void
-do2(tnode_t *tn)
+stmt_do_while_expr(tnode_t *tn)
 {
 
 	/*
@@ -893,11 +853,8 @@ do2(tnode_t *tn)
 	end_control_statement(CS_DO_WHILE);
 }
 
-/*
- * T_FOR T_LPAREN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPAREN
- */
 void
-for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
+stmt_for_exprs(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 {
 
 	/*
@@ -933,17 +890,13 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 
 	cstmt->c_maybe_endless = tn2 == NULL || is_nonzero(tn2);
 
-	/* Checking the reinitialization expression is done in for2() */
+	/* The tn3 expression is checked in stmt_for_exprs_stmt. */
 
 	set_reached(!is_zero(tn2));
 }
 
-/*
- * for_exprs statement
- * for_exprs error
- */
 void
-for2(void)
+stmt_for_exprs_stmt(void)
 {
 	pos_t cpos, cspos;
 	tnode_t *tn3;
@@ -983,11 +936,8 @@ for2(void)
 	end_control_statement(CS_FOR);
 }
 
-/*
- * T_GOTO identifier T_SEMI
- */
 void
-do_goto(sym_t *lab)
+stmt_goto(sym_t *lab)
 {
 
 	mark_as_used(lab, false, false);
@@ -997,11 +947,8 @@ do_goto(sym_t *lab)
 	set_reached(false);
 }
 
-/*
- * T_BREAK T_SEMI
- */
 void
-do_break(void)
+stmt_break(void)
 {
 	control_statement *cs;
 
@@ -1023,11 +970,8 @@ do_break(void)
 	set_reached(false);
 }
 
-/*
- * T_CONTINUE T_SEMI
- */
 void
-do_continue(void)
+stmt_continue(void)
 {
 	control_statement *cs;
 
@@ -1066,7 +1010,7 @@ check_return_value(bool sys, tnode_t *tn)
 	}
 
 	/* Create a temporary node for the left side */
-	tnode_t *ln = expr_zero_alloc(sizeof(*ln));
+	tnode_t *ln = expr_zero_alloc(sizeof(*ln), "tnode");
 	ln->tn_op = NAME;
 	ln->tn_type = expr_unqualified_type(funcsym->s_type->t_subt);
 	ln->tn_lvalue = true;
@@ -1088,12 +1032,8 @@ check_return_value(bool sys, tnode_t *tn)
 	expr(retn, true, false, true, false);
 }
 
-/*
- * T_RETURN T_SEMI
- * T_RETURN expr T_SEMI
- */
 void
-do_return(bool sys, tnode_t *tn)
+stmt_return(bool sys, tnode_t *tn)
 {
 	control_statement *cs = cstmt;
 
@@ -1183,19 +1123,17 @@ global_clean_up_decl(bool silent)
 }
 
 /*
- * ARGSUSED comment
- *
- * Only the first n arguments of the following function are checked
- * for usage. A missing argument is taken to be 0.
+ * Only the first n arguments of the following function are checked for usage.
+ * A missing argument is taken to be 0.
  */
-void
+static void
 argsused(int n)
 {
 
 	if (n == -1)
 		n = 0;
 
-	if (dcs->d_kind != DK_EXTERN) {
+	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "ARGSUSED");
 		return;
@@ -1208,20 +1146,14 @@ argsused(int n)
 	argsused_pos = curr_pos;
 }
 
-/*
- * VARARGS comment
- *
- * Causes lint2 to check only the first n arguments for compatibility
- * with the function definition. A missing argument is taken to be 0.
- */
-void
+static void
 varargs(int n)
 {
 
 	if (n == -1)
 		n = 0;
 
-	if (dcs->d_kind != DK_EXTERN) {
+	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "VARARGS");
 		return;
@@ -1235,19 +1167,17 @@ varargs(int n)
 }
 
 /*
- * PRINTFLIKE comment
- *
  * Check all arguments until the (n-1)-th as usual. The n-th argument is
  * used the check the types of remaining arguments.
  */
-void
+static void
 printflike(int n)
 {
 
 	if (n == -1)
 		n = 0;
 
-	if (dcs->d_kind != DK_EXTERN) {
+	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "PRINTFLIKE");
 		return;
@@ -1261,19 +1191,17 @@ printflike(int n)
 }
 
 /*
- * SCANFLIKE comment
- *
  * Check all arguments until the (n-1)-th as usual. The n-th argument is
  * used the check the types of remaining arguments.
  */
-void
+static void
 scanflike(int n)
 {
 
 	if (n == -1)
 		n = 0;
 
-	if (dcs->d_kind != DK_EXTERN) {
+	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "SCANFLIKE");
 		return;
@@ -1286,77 +1214,17 @@ scanflike(int n)
 	scanflike_pos = curr_pos;
 }
 
-/*
- * Set the line number for a CONSTCOND comment. At this and the following
- * line no warnings about constants in conditional contexts are printed.
- */
-/* ARGSUSED */
-void
-constcond(int n)
+static void
+lintlib(void)
 {
 
-	constcond_flag = true;
-}
-
-/*
- * Suppress printing of "fallthrough on ..." warnings until next
- * statement.
- */
-/* ARGSUSED */
-void
-fallthru(int n)
-{
-
-	seen_fallthrough = true;
-}
-
-/*
- * Stop warnings about statements which cannot be reached. Also tells lint
- * that the following statements cannot be reached (e.g. after exit()).
- */
-/* ARGSUSED */
-void
-not_reached(int n)
-{
-
-	set_reached(false);
-	warn_about_unreachable = false;
-}
-
-/* ARGSUSED */
-void
-lintlib(int n)
-{
-
-	if (dcs->d_kind != DK_EXTERN) {
+	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "LINTLIBRARY");
 		return;
 	}
 	llibflg = true;
-	vflag = false;
-}
-
-/* Suppress one or most warnings at the current and the following line. */
-void
-linted(int n)
-{
-
-	debug_step("set lwarn %d", n);
-	lwarn = n;
-}
-
-/*
- * Suppress bitfield type errors on the current line.
- */
-/* ARGSUSED */
-void
-bitfieldtype(int n)
-{
-
-	debug_step("%s, %d: bitfieldtype_ok = true",
-	    curr_pos.p_file, curr_pos.p_line);
-	bitfieldtype_ok = true;
+	vflag = true;
 }
 
 /*
@@ -1364,11 +1232,11 @@ bitfieldtype(int n)
  * prototypes like function definitions. This is done if the argument
  * to PROTOLIB is nonzero. Otherwise, prototypes are handled normally.
  */
-void
+static void
 protolib(int n)
 {
 
-	if (dcs->d_kind != DK_EXTERN) {
+	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "PROTOLIB");
 		return;
@@ -1376,11 +1244,23 @@ protolib(int n)
 	plibflg = n != 0;
 }
 
-/* The next statement/declaration may use "long long" without a diagnostic. */
-/* ARGSUSED */
 void
-longlong(int n)
+handle_lint_comment(lint_comment comment, int arg)
 {
-
-	quadflg = true;
+	switch (comment) {
+	case LC_ARGSUSED:	argsused(arg);			break;
+	case LC_BITFIELDTYPE:	suppress_bitfieldtype = true;	break;
+	case LC_CONSTCOND:	suppress_constcond = true;	break;
+	case LC_FALLTHROUGH:	suppress_fallthrough = true;	break;
+	case LC_LINTLIBRARY:	lintlib();			break;
+	case LC_LINTED:		debug_step("set lwarn %d", arg);
+				lwarn = arg;			break;
+	case LC_LONGLONG:	suppress_longlong = true;	break;
+	case LC_NOTREACHED:	set_reached(false);
+				warn_about_unreachable = false;	break;
+	case LC_PRINTFLIKE:	printflike(arg);		break;
+	case LC_PROTOLIB:	protolib(arg);			break;
+	case LC_SCANFLIKE:	scanflike(arg);			break;
+	case LC_VARARGS:	varargs(arg);			break;
+	}
 }

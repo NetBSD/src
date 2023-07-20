@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_206.c,v 1.6 2022/05/22 13:58:59 rillig Exp $	*/
+/*	$NetBSD: msg_206.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_206.c"
 
 // Test for message: enumeration value(s) not handled in switch [206]
 
-/* lint1-extra-flags: -eh */
+/* lint1-extra-flags: -eh -X 351 */
 
 enum number {
 	ONE, TWO, THREE

@@ -57,7 +57,7 @@ DNS domain name of a zone master file, which can be read from
 \fBfilename\fP\&. If the domain name is the same as \fBfilename\fP, then it may be
 omitted.
 .sp
-If \fBfilename\fP is set to \fB"\-"\fP, then the zone data is read from the
+If \fBfilename\fP is set to \fB\(dq\-\(dq\fP, then the zone data is read from the
 standard input.
 .TP
 .B \fB\-K directory\fP

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.312 2023/06/08 21:14:09 nikita Exp $
+# $NetBSD: shl.mi,v 1.314 2023/07/05 22:42:46 riastradh Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -84,7 +84,7 @@
 ./usr/libdata/debug/usr/lib/libblocklist.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbozohttpd.so.0.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libc++.so.1.0.debug			comp-sys-debug	debug,compatfile,libcxx
 ./usr/libdata/debug/usr/lib/libc.so.12.220.debug		comp-sys-debug	debug,compatfile
@@ -377,10 +377,10 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_onlyuse_static.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_use_dynamic.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_use_static.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_helper_dso1_g.a			comp-c-debuglib	atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_helper_dso2_g.a			comp-c-debuglib	atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_helper_dso3_g.a			comp-c-debuglib	atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso_g.a			comp-c-debuglib	atf,debuglib,compattestfile
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso_g.a	comp-obsolete	atf,debuglib,compattestfile,obsolete
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso_g.a	comp-obsolete	atf,debuglib,compattestfile,obsolete
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso_g.a	comp-obsolete	atf,debuglib,compattestfile,obsolete
+./usr/tests/libexec/ld.elf_so/libh_helper_dso1_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete
+./usr/tests/libexec/ld.elf_so/libh_helper_dso2_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete
+./usr/tests/libexec/ld.elf_so/libh_helper_dso3_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete
+./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete

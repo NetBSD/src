@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.19 2023/06/09 13:03:49 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.22 2023/07/13 08:40:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit.c,v 1.19 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: emit.c,v 1.22 2023/07/13 08:40:38 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -91,12 +91,12 @@ outclose(void)
 static void
 outxbuf(void)
 {
-	ptrdiff_t coffs;
 
-	coffs = ob.o_next - ob.o_buf;
+	size_t next = (size_t)(ob.o_next - ob.o_buf);
 	ob.o_len *= 2;
-	ob.o_end = (ob.o_buf = xrealloc(ob.o_buf, ob.o_len)) + ob.o_len;
-	ob.o_next = ob.o_buf + coffs;
+	ob.o_buf = xrealloc(ob.o_buf, ob.o_len);
+	ob.o_end = ob.o_buf + ob.o_len;
+	ob.o_next = ob.o_buf + next;
 }
 
 /*
@@ -106,11 +106,10 @@ outxbuf(void)
 void
 outclr(void)
 {
-	size_t sz;
 
 	if (ob.o_buf != ob.o_next) {
 		outchar('\n');
-		sz = ob.o_next - ob.o_buf;
+		size_t sz = (size_t)(ob.o_next - ob.o_buf);
 		if (sz > ob.o_len)
 			errx(1, "internal error: outclr");
 		if (fwrite(ob.o_buf, sz, 1, lout) != 1)
@@ -154,7 +153,7 @@ outint(int i)
 
 	if ((size_t)(ob.o_end - ob.o_next) < 3 * sizeof(int))
 		outxbuf();
-	ob.o_next += sprintf(ob.o_next, "%d", i);
+	ob.o_next += snprintf(ob.o_next, ob.o_end - ob.o_next, "%d", i);
 }
 
 /* write a name to the output buffer, preceded by its length */

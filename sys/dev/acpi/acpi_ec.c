@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.86 2021/12/31 17:22:25 riastradh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.108 2023/07/18 10:17:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -34,14 +34,12 @@
  * - read and write access from ASL, e.g. to read battery state
  * - notification of ASL of System Control Interrupts.
  *
- * Access to the EC is serialised by sc_access_mtx and optionally the
- * ACPI global mutex.  Both locks are held until the request is fulfilled.
- * All access to the softc has to hold sc_mtx to serialise against the GPE
- * handler and the callout.  sc_mtx is also used for wakeup conditions.
+ * Lock order:
+ *	sc_access_mtx (serializes EC transactions -- read, write, or SCI)
+ *	-> ACPI global lock (excludes other ACPI access during EC transaction)
+ *	-> sc_mtx (serializes state machine transitions and waits)
  *
- * SCIs are processed in a kernel thread. Handling gets a bit complicated
- * by the lock order (sc_mtx must be acquired after sc_access_mtx and the
- * ACPI global mutex).
+ * SCIs are processed in a kernel thread.
  *
  * Read and write requests spin around for a short time as many requests
  * can be handled instantly by the EC.  During normal processing interrupt
@@ -59,7 +57,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.86 2021/12/31 17:22:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.108 2023/07/18 10:17:12 riastradh Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_acpi_ec.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -101,24 +103,42 @@ ACPI_MODULE_NAME            ("acpi_ec")
 #define	EC_STATUS_SCI		0x20
 #define	EC_STATUS_SMI		0x40
 
+#define	EC_STATUS_FMT							      \
+	"\x10\10IGN7\7SMI\6SCI\5BURST\4CMD\3IGN2\2IBF\1OBF"
+
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "PNP0C09" },
 	DEVICE_COMPAT_EOL
 };
 
+#define	EC_STATE_ENUM(F)						      \
+	F(EC_STATE_QUERY, "QUERY")					      \
+	F(EC_STATE_QUERY_VAL, "QUERY_VAL")				      \
+	F(EC_STATE_READ, "READ")					      \
+	F(EC_STATE_READ_ADDR, "READ_ADDR")				      \
+	F(EC_STATE_READ_VAL, "READ_VAL")				      \
+	F(EC_STATE_WRITE, "WRITE")					      \
+	F(EC_STATE_WRITE_ADDR, "WRITE_ADDR")				      \
+	F(EC_STATE_WRITE_VAL, "WRITE_VAL")				      \
+	F(EC_STATE_FREE, "FREE")					      \
+
 enum ec_state_t {
-	EC_STATE_QUERY,
-	EC_STATE_QUERY_VAL,
-	EC_STATE_READ,
-	EC_STATE_READ_ADDR,
-	EC_STATE_READ_VAL,
-	EC_STATE_WRITE,
-	EC_STATE_WRITE_ADDR,
-	EC_STATE_WRITE_VAL,
-	EC_STATE_FREE
+#define	F(N, S)	N,
+	EC_STATE_ENUM(F)
+#undef F
 };
 
+#ifdef ACPIEC_DEBUG
+static const char *const acpiec_state_names[] = {
+#define F(N, S)	[N] = S,
+	EC_STATE_ENUM(F)
+#undef F
+};
+#endif
+
 struct acpiec_softc {
+	device_t sc_dev;
+
 	ACPI_HANDLE sc_ech;
 
 	ACPI_HANDLE sc_gpeh;
@@ -141,6 +161,55 @@ struct acpiec_softc {
 
 	uint8_t sc_cur_addr, sc_cur_val;
 };
+
+#ifdef ACPIEC_DEBUG
+
+#define	ACPIEC_DEBUG_ENUM(F)						      \
+	F(ACPIEC_DEBUG_REG, "REG")					      \
+	F(ACPIEC_DEBUG_RW, "RW")					      \
+	F(ACPIEC_DEBUG_QUERY, "QUERY")					      \
+	F(ACPIEC_DEBUG_TRANSITION, "TRANSITION")			      \
+	F(ACPIEC_DEBUG_INTR, "INTR")					      \
+
+enum {
+#define	F(N, S)	N,
+	ACPIEC_DEBUG_ENUM(F)
+#undef F
+};
+
+static const char *const acpiec_debug_names[] = {
+#define	F(N, S)	[N] = S,
+	ACPIEC_DEBUG_ENUM(F)
+#undef F
+};
+
+int acpiec_debug = ACPIEC_DEBUG;
+
+#define	DPRINTF(n, sc, fmt, ...) do					      \
+{									      \
+	if (acpiec_debug & __BIT(n)) {					      \
+		char dprintbuf[16];					      \
+		const char *state;					      \
+									      \
+		/* paranoia */						      \
+		if ((sc)->sc_state < __arraycount(acpiec_state_names)) {      \
+			state = acpiec_state_names[(sc)->sc_state];	      \
+		} else {						      \
+			snprintf(dprintbuf, sizeof(dprintbuf), "0x%x",	      \
+			    (sc)->sc_state);				      \
+			state = dprintbuf;				      \
+		}							      \
+									      \
+		device_printf((sc)->sc_dev, "(%s) [%s] "fmt,		      \
+		    acpiec_debug_names[n], state, ##__VA_ARGS__);	      \
+	}								      \
+} while (0)
+
+#else
+
+#define	DPRINTF(n, sc, fmt, ...)	__nothing
+
+#endif
 
 static int acpiecdt_match(device_t, cfdata_t, void *);
 static void acpiecdt_attach(device_t, device_t, void *);
@@ -166,7 +235,7 @@ static ACPI_STATUS acpiec_space_setup(ACPI_HANDLE, uint32_t, void *, void **);
 static ACPI_STATUS acpiec_space_handler(uint32_t, ACPI_PHYSICAL_ADDRESS,
     uint32_t, ACPI_INTEGER *, void *, void *);
 
-static void acpiec_gpe_state_machine(device_t);
+static void acpiec_gpe_state_machine(struct acpiec_softc *);
 
 CFATTACH_DECL_NEW(acpiec, sizeof(struct acpiec_softc),
     acpiec_match, acpiec_attach, NULL, NULL);
@@ -313,6 +382,8 @@ acpiec_common_attach(device_t parent, device_t self,
 	ACPI_STATUS rv;
 	ACPI_INTEGER val;
 
+	sc->sc_dev = self;
+
 	sc->sc_csr_st = cmdt;
 	sc->sc_data_st = datat;
 
@@ -351,10 +422,10 @@ acpiec_common_attach(device_t parent, device_t self,
 		aprint_normal_dev(self, "using global ACPI lock\n");
 
 	callout_init(&sc->sc_pseudo_intr, CALLOUT_MPSAFE);
-	callout_setfunc(&sc->sc_pseudo_intr, acpiec_callout, self);
+	callout_setfunc(&sc->sc_pseudo_intr, acpiec_callout, sc);
 
 	rv = AcpiInstallAddressSpaceHandler(sc->sc_ech, ACPI_ADR_SPACE_EC,
-	    acpiec_space_handler, acpiec_space_setup, self);
+	    acpiec_space_handler, acpiec_space_setup, sc);
 	if (rv != AE_OK) {
 		aprint_error_dev(self,
 		    "unable to install address space handler: %s\n",
@@ -363,7 +434,7 @@ acpiec_common_attach(device_t parent, device_t self,
 	}
 
 	rv = AcpiInstallGpeHandler(sc->sc_gpeh, sc->sc_gpebit,
-	    ACPI_GPE_EDGE_TRIGGERED, acpiec_gpe_handler, self);
+	    ACPI_GPE_EDGE_TRIGGERED, acpiec_gpe_handler, sc);
 	if (rv != AE_OK) {
 		aprint_error_dev(self, "unable to install GPE handler: %s\n",
 		    AcpiFormatException(rv));
@@ -378,7 +449,7 @@ acpiec_common_attach(device_t parent, device_t self,
 	}
 
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, acpiec_gpe_query,
-		           self, NULL, "acpiec sci thread")) {
+		sc, NULL, "acpiec sci thread")) {
 		aprint_error_dev(self, "unable to create query kthread\n");
 		goto post_csr_map;
 	}
@@ -406,8 +477,23 @@ post_data_map:
 static bool
 acpiec_suspend(device_t dv, const pmf_qual_t *qual)
 {
+	struct acpiec_softc *sc = device_private(dv);
 
+	/*
+	 * XXX This looks bad because acpiec_cold is global and
+	 * sc->sc_mtx doesn't look like it's global, but we can have
+	 * only one acpiec(4) device anyway.  Maybe acpiec_cold should
+	 * live in the softc to make this look less bad?
+	 *
+	 * XXX Should this block read/write/query transactions until
+	 * resume?
+	 *
+	 * XXX Should this interrupt existing transactions to make them
+	 * fail promptly or restart on resume?
+	 */
+	mutex_enter(&sc->sc_mtx);
 	acpiec_cold = true;
+	mutex_exit(&sc->sc_mtx);
 
 	return true;
 }
@@ -415,8 +501,11 @@ acpiec_suspend(device_t dv, const pmf_qual_t *qual)
 static bool
 acpiec_resume(device_t dv, const pmf_qual_t *qual)
 {
+	struct acpiec_softc *sc = device_private(dv);
 
+	mutex_enter(&sc->sc_mtx);
 	acpiec_cold = false;
+	mutex_exit(&sc->sc_mtx);
 
 	return true;
 }
@@ -424,8 +513,12 @@ acpiec_resume(device_t dv, const pmf_qual_t *qual)
 static bool
 acpiec_shutdown(device_t dv, int how)
 {
+	struct acpiec_softc *sc = device_private(dv);
 
+	mutex_enter(&sc->sc_mtx);
 	acpiec_cold = true;
+	mutex_exit(&sc->sc_mtx);
+
 	return true;
 }
 
@@ -491,24 +584,46 @@ acpiec_parse_gpe_package(device_t self, ACPI_HANDLE ec_handle,
 static uint8_t
 acpiec_read_data(struct acpiec_softc *sc)
 {
-	return bus_space_read_1(sc->sc_data_st, sc->sc_data_sh, 0);
+	uint8_t x;
+
+	KASSERT(mutex_owned(&sc->sc_mtx));
+
+	x = bus_space_read_1(sc->sc_data_st, sc->sc_data_sh, 0);
+	DPRINTF(ACPIEC_DEBUG_REG, sc, "read data=0x%"PRIx8"\n", x);
+
+	return x;
 }
 
 static void
 acpiec_write_data(struct acpiec_softc *sc, uint8_t val)
 {
+
+	KASSERT(mutex_owned(&sc->sc_mtx));
+
+	DPRINTF(ACPIEC_DEBUG_REG, sc, "write data=0x%"PRIx8"\n", val);
 	bus_space_write_1(sc->sc_data_st, sc->sc_data_sh, 0, val);
 }
 
 static uint8_t
 acpiec_read_status(struct acpiec_softc *sc)
 {
-	return bus_space_read_1(sc->sc_csr_st, sc->sc_csr_sh, 0);
+	uint8_t x;
+
+	KASSERT(mutex_owned(&sc->sc_mtx));
+
+	x = bus_space_read_1(sc->sc_csr_st, sc->sc_csr_sh, 0);
+	DPRINTF(ACPIEC_DEBUG_REG, sc, "read status=0x%"PRIx8"\n", x);
+
+	return x;
 }
 
 static void
 acpiec_write_command(struct acpiec_softc *sc, uint8_t cmd)
 {
+
+	KASSERT(mutex_owned(&sc->sc_mtx));
+
+	DPRINTF(ACPIEC_DEBUG_REG, sc, "write command=0x%"PRIx8"\n", cmd);
 	bus_space_write_1(sc->sc_csr_st, sc->sc_csr_sh, 0, cmd);
 }
 
@@ -526,9 +641,8 @@ acpiec_space_setup(ACPI_HANDLE region, uint32_t func, void *arg,
 }
 
 static void
-acpiec_lock(device_t dv)
+acpiec_lock(struct acpiec_softc *sc)
 {
-	struct acpiec_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
 
 	mutex_enter(&sc->sc_access_mtx);
@@ -537,7 +651,7 @@ acpiec_lock(device_t dv)
 		rv = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT,
 		    &sc->sc_global_lock);
 		if (rv != AE_OK) {
-			aprint_error_dev(dv,
+			aprint_error_dev(sc->sc_dev,
 			    "failed to acquire global lock: %s\n",
 			    AcpiFormatException(rv));
 			return;
@@ -546,15 +660,14 @@ acpiec_lock(device_t dv)
 }
 
 static void
-acpiec_unlock(device_t dv)
+acpiec_unlock(struct acpiec_softc *sc)
 {
-	struct acpiec_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
 
 	if (sc->sc_need_global_lock) {
 		rv = AcpiReleaseGlobalLock(sc->sc_global_lock);
 		if (rv != AE_OK) {
-			aprint_error_dev(dv,
+			aprint_error_dev(sc->sc_dev,
 			    "failed to release global lock: %s\n",
 			    AcpiFormatException(rv));
 		}
@@ -563,96 +676,123 @@ acpiec_unlock(device_t dv)
 }
 
 static ACPI_STATUS
-acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
+acpiec_wait_timeout(struct acpiec_softc *sc)
 {
-	struct acpiec_softc *sc = device_private(dv);
-	int i, timeo = 1000 * EC_CMD_TIMEOUT;
-
-	acpiec_lock(dv);
-	mutex_enter(&sc->sc_mtx);
-
-	sc->sc_cur_addr = addr;
-	sc->sc_state = EC_STATE_READ;
+	device_t dv = sc->sc_dev;
+	int i;
 
 	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
-		acpiec_gpe_state_machine(dv);
+		acpiec_gpe_state_machine(sc);
 		if (sc->sc_state == EC_STATE_FREE)
-			goto done;
+			return AE_OK;
 		delay(1);
 	}
 
+	DPRINTF(ACPIEC_DEBUG_RW, sc, "SCI polling timeout\n");
 	if (cold || acpiec_cold) {
+		int timeo = 1000 * EC_CMD_TIMEOUT;
+
 		while (sc->sc_state != EC_STATE_FREE && timeo-- > 0) {
 			delay(1000);
-			acpiec_gpe_state_machine(dv);
+			acpiec_gpe_state_machine(sc);
 		}
 		if (sc->sc_state != EC_STATE_FREE) {
-			mutex_exit(&sc->sc_mtx);
-			acpiec_unlock(dv);
 			aprint_error_dev(dv, "command timed out, state %d\n",
 			    sc->sc_state);
 			return AE_ERROR;
 		}
-	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
-		mutex_exit(&sc->sc_mtx);
-		acpiec_unlock(dv);
-		aprint_error_dev(dv,
-		    "command takes over %d sec...\n", EC_CMD_TIMEOUT);
-		return AE_ERROR;
+	} else {
+		const unsigned deadline = getticks() + EC_CMD_TIMEOUT*hz;
+		unsigned delta;
+
+		while (sc->sc_state != EC_STATE_FREE &&
+		    (delta = deadline - getticks()) < INT_MAX)
+			(void)cv_timedwait(&sc->sc_cv, &sc->sc_mtx, delta);
+		if (sc->sc_state != EC_STATE_FREE) {
+			aprint_error_dev(dv,
+			    "command takes over %d sec...\n",
+			    EC_CMD_TIMEOUT);
+			return AE_ERROR;
+		}
 	}
 
-done:
-	*val = sc->sc_cur_val;
-
-	mutex_exit(&sc->sc_mtx);
-	acpiec_unlock(dv);
 	return AE_OK;
 }
 
 static ACPI_STATUS
-acpiec_write(device_t dv, uint8_t addr, uint8_t val)
+acpiec_read(struct acpiec_softc *sc, uint8_t addr, uint8_t *val)
 {
-	struct acpiec_softc *sc = device_private(dv);
-	int i, timeo = 1000 * EC_CMD_TIMEOUT;
+	ACPI_STATUS rv;
 
-	acpiec_lock(dv);
+	acpiec_lock(sc);
 	mutex_enter(&sc->sc_mtx);
+
+	DPRINTF(ACPIEC_DEBUG_RW, sc,
+	    "pid %ld %s, lid %ld%s%s: read addr 0x%"PRIx8"\n",
+	    (long)curproc->p_pid, curproc->p_comm,
+	    (long)curlwp->l_lid, curlwp->l_name ? " " : "",
+	    curlwp->l_name ? curlwp->l_name : "",
+	    addr);
+
+	KASSERT(sc->sc_state == EC_STATE_FREE);
+
+	sc->sc_cur_addr = addr;
+	sc->sc_state = EC_STATE_READ;
+
+	rv = acpiec_wait_timeout(sc);
+	if (ACPI_FAILURE(rv))
+		goto out;
+
+	DPRINTF(ACPIEC_DEBUG_RW, sc,
+	    "pid %ld %s, lid %ld%s%s: read addr 0x%"PRIx8": 0x%"PRIx8"\n",
+	    (long)curproc->p_pid, curproc->p_comm,
+	    (long)curlwp->l_lid, curlwp->l_name ? " " : "",
+	    curlwp->l_name ? curlwp->l_name : "",
+	    addr, sc->sc_cur_val);
+
+	*val = sc->sc_cur_val;
+
+out:	mutex_exit(&sc->sc_mtx);
+	acpiec_unlock(sc);
+	return rv;
+}
+
+static ACPI_STATUS
+acpiec_write(struct acpiec_softc *sc, uint8_t addr, uint8_t val)
+{
+	ACPI_STATUS rv;
+
+	acpiec_lock(sc);
+	mutex_enter(&sc->sc_mtx);
+
+	DPRINTF(ACPIEC_DEBUG_RW, sc,
+	    "pid %ld %s, lid %ld%s%s write addr 0x%"PRIx8": 0x%"PRIx8"\n",
+	    (long)curproc->p_pid, curproc->p_comm,
+	    (long)curlwp->l_lid, curlwp->l_name ? " " : "",
+	    curlwp->l_name ? curlwp->l_name : "",
+	    addr, val);
+
+	KASSERT(sc->sc_state == EC_STATE_FREE);
 
 	sc->sc_cur_addr = addr;
 	sc->sc_cur_val = val;
 	sc->sc_state = EC_STATE_WRITE;
 
-	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
-		acpiec_gpe_state_machine(dv);
-		if (sc->sc_state == EC_STATE_FREE)
-			goto done;
-		delay(1);
-	}
+	rv = acpiec_wait_timeout(sc);
+	if (ACPI_FAILURE(rv))
+		goto out;
 
-	if (cold || acpiec_cold) {
-		while (sc->sc_state != EC_STATE_FREE && timeo-- > 0) {
-			delay(1000);
-			acpiec_gpe_state_machine(dv);
-		}
-		if (sc->sc_state != EC_STATE_FREE) {
-			mutex_exit(&sc->sc_mtx);
-			acpiec_unlock(dv);
-			aprint_error_dev(dv, "command timed out, state %d\n",
-			    sc->sc_state);
-			return AE_ERROR;
-		}
-	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
-		mutex_exit(&sc->sc_mtx);
-		acpiec_unlock(dv);
-		aprint_error_dev(dv,
-		    "command takes over %d sec...\n", EC_CMD_TIMEOUT);
-		return AE_ERROR;
-	}
+	DPRINTF(ACPIEC_DEBUG_RW, sc,
+	    "pid %ld %s, lid %ld%s%s: write addr 0x%"PRIx8": 0x%"PRIx8
+	    " done\n",
+	    (long)curproc->p_pid, curproc->p_comm,
+	    (long)curlwp->l_lid, curlwp->l_name ? " " : "",
+	    curlwp->l_name ? curlwp->l_name : "",
+	    addr, val);
 
-done:
-	mutex_exit(&sc->sc_mtx);
-	acpiec_unlock(dv);
-	return AE_OK;
+out:	mutex_exit(&sc->sc_mtx);
+	acpiec_unlock(sc);
+	return rv;
 }
 
 /*
@@ -660,8 +800,8 @@ done:
  *
  *	Transfer bitwidth/8 bytes of data between paddr and *value:
  *	from paddr to *value when func is ACPI_READ, and the other way
- *	when func is ACPI_WRITE.  arg is the acpiec(4) or acpiecdt(4)
- *	device.  region_arg is ignored (XXX why? determined by
+ *	when func is ACPI_WRITE.  arg is the acpiec_softc pointer.
+ *	region_arg is ignored (XXX why? determined by
  *	acpiec_space_setup but never used by anything that I can see).
  *
  *	The caller always provides storage at *value large enough for
@@ -691,7 +831,7 @@ static ACPI_STATUS
 acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
     uint32_t width, ACPI_INTEGER *value, void *arg, void *region_arg)
 {
-	device_t dv;
+	struct acpiec_softc *sc = arg;
 	ACPI_STATUS rv;
 	uint8_t addr, *buf;
 	unsigned int i;
@@ -701,7 +841,6 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
 		return AE_BAD_PARAMETER;
 
 	addr = paddr;
-	dv = arg;
 	buf = (uint8_t *)value;
 
 	rv = AE_OK;
@@ -709,7 +848,7 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
 	switch (func) {
 	case ACPI_READ:
 		for (i = 0; i < width; i += 8, ++addr, ++buf) {
-			rv = acpiec_read(dv, addr, buf);
+			rv = acpiec_read(sc, addr, buf);
 			if (rv != AE_OK)
 				break;
 		}
@@ -722,14 +861,15 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
 		break;
 	case ACPI_WRITE:
 		for (i = 0; i < width; i += 8, ++addr, ++buf) {
-			rv = acpiec_write(dv, addr, *buf);
+			rv = acpiec_write(sc, addr, *buf);
 			if (rv != AE_OK)
 				break;
 		}
 		break;
 	default:
-		aprint_error("%s: invalid Address Space function called: %x\n",
-		    device_xname(dv), (unsigned int)func);
+		aprint_error_dev(sc->sc_dev,
+		    "invalid Address Space function called: %x\n",
+		    (unsigned int)func);
 		return AE_BAD_PARAMETER;
 	}
 
@@ -737,43 +877,71 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
 }
 
 static void
-acpiec_gpe_query(void *arg)
+acpiec_wait(struct acpiec_softc *sc)
 {
-	device_t dv = arg;
-	struct acpiec_softc *sc = device_private(dv);
-	uint8_t reg;
-	char qxx[5];
-	ACPI_STATUS rv;
 	int i;
 
-loop:
-	mutex_enter(&sc->sc_mtx);
-
-	if (sc->sc_got_sci == false)
-		cv_wait(&sc->sc_cv_sci, &sc->sc_mtx);
-	mutex_exit(&sc->sc_mtx);
-
-	acpiec_lock(dv);
-	mutex_enter(&sc->sc_mtx);
-
-	/* The Query command can always be issued, so be defensive here. */
-	sc->sc_got_sci = false;
-	sc->sc_state = EC_STATE_QUERY;
-
+	/*
+	 * First, attempt to get the query by polling.
+	 */
 	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
-		acpiec_gpe_state_machine(dv);
+		acpiec_gpe_state_machine(sc);
 		if (sc->sc_state == EC_STATE_FREE)
-			goto done;
+			return;
 		delay(1);
 	}
 
-	cv_wait(&sc->sc_cv, &sc->sc_mtx);
+	/*
+	 * Polling timed out.  Try waiting for interrupts -- either GPE
+	 * interrupts, or periodic callouts in case GPE interrupts are
+	 * broken.
+	 */
+	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI polling timeout\n");
+	while (sc->sc_state != EC_STATE_FREE)
+		cv_wait(&sc->sc_cv, &sc->sc_mtx);
+}
 
-done:
+static void
+acpiec_gpe_query(void *arg)
+{
+	struct acpiec_softc *sc = arg;
+	uint8_t reg;
+	char qxx[5];
+	ACPI_STATUS rv;
+
+loop:
+	/*
+	 * Wait until the EC sends an SCI requesting a query.
+	 */
+	mutex_enter(&sc->sc_mtx);
+	while (!sc->sc_got_sci)
+		cv_wait(&sc->sc_cv_sci, &sc->sc_mtx);
+	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query requested\n");
+	mutex_exit(&sc->sc_mtx);
+
+	/*
+	 * EC wants to submit a query to us.  Exclude concurrent reads
+	 * and writes while we handle it.
+	 */
+	acpiec_lock(sc);
+	mutex_enter(&sc->sc_mtx);
+
+	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query\n");
+
+	KASSERT(sc->sc_state == EC_STATE_FREE);
+
+	/* The Query command can always be issued, so be defensive here. */
+	KASSERT(sc->sc_got_sci);
+	sc->sc_got_sci = false;
+	sc->sc_state = EC_STATE_QUERY;
+
+	acpiec_wait(sc);
+
 	reg = sc->sc_cur_val;
+	DPRINTF(ACPIEC_DEBUG_QUERY, sc, "SCI query: 0x%"PRIx8"\n", reg);
 
 	mutex_exit(&sc->sc_mtx);
-	acpiec_unlock(dv);
+	acpiec_unlock(sc);
 
 	if (reg == 0)
 		goto loop; /* Spurious query result */
@@ -784,7 +952,7 @@ done:
 	snprintf(qxx, sizeof(qxx), "_Q%02X", (unsigned int)reg);
 	rv = AcpiEvaluateObject(sc->sc_ech, qxx, NULL, NULL);
 	if (rv != AE_OK && rv != AE_NOT_FOUND) {
-		aprint_error_dev(dv, "GPE query method %s failed: %s",
+		aprint_error_dev(sc->sc_dev, "GPE query method %s failed: %s",
 		    qxx, AcpiFormatException(rv));
 	}
 
@@ -792,15 +960,22 @@ done:
 }
 
 static void
-acpiec_gpe_state_machine(device_t dv)
+acpiec_gpe_state_machine(struct acpiec_softc *sc)
 {
-	struct acpiec_softc *sc = device_private(dv);
 	uint8_t reg;
+
+	KASSERT(mutex_owned(&sc->sc_mtx));
 
 	reg = acpiec_read_status(sc);
 
-	if (reg & EC_STATUS_SCI)
-		sc->sc_got_sci = true;
+#ifdef ACPIEC_DEBUG
+	if (acpiec_debug & __BIT(ACPIEC_DEBUG_TRANSITION)) {
+		char buf[128];
+
+		snprintb(buf, sizeof(buf), EC_STATUS_FMT, reg);
+		DPRINTF(ACPIEC_DEBUG_TRANSITION, sc, "%s\n", buf);
+	}
+#endif
 
 	switch (sc->sc_state) {
 	case EC_STATE_QUERY:
@@ -813,17 +988,13 @@ acpiec_gpe_state_machine(device_t dv)
 	case EC_STATE_QUERY_VAL:
 		if ((reg & EC_STATUS_OBF) == 0)
 			break; /* Nothing of interest here. */
-
 		sc->sc_cur_val = acpiec_read_data(sc);
 		sc->sc_state = EC_STATE_FREE;
-
-		cv_signal(&sc->sc_cv);
 		break;
 
 	case EC_STATE_READ:
 		if ((reg & EC_STATUS_IBF) != 0)
 			break; /* Nothing of interest here. */
-
 		acpiec_write_command(sc, EC_COMMAND_READ);
 		sc->sc_state = EC_STATE_READ_ADDR;
 		break;
@@ -831,7 +1002,6 @@ acpiec_gpe_state_machine(device_t dv)
 	case EC_STATE_READ_ADDR:
 		if ((reg & EC_STATUS_IBF) != 0)
 			break; /* Nothing of interest here. */
-
 		acpiec_write_data(sc, sc->sc_cur_addr);
 		sc->sc_state = EC_STATE_READ_VAL;
 		break;
@@ -841,14 +1011,11 @@ acpiec_gpe_state_machine(device_t dv)
 			break; /* Nothing of interest here. */
 		sc->sc_cur_val = acpiec_read_data(sc);
 		sc->sc_state = EC_STATE_FREE;
-
-		cv_signal(&sc->sc_cv);
 		break;
 
 	case EC_STATE_WRITE:
 		if ((reg & EC_STATUS_IBF) != 0)
 			break; /* Nothing of interest here. */
-
 		acpiec_write_command(sc, EC_COMMAND_WRITE);
 		sc->sc_state = EC_STATE_WRITE_ADDR;
 		break;
@@ -863,43 +1030,63 @@ acpiec_gpe_state_machine(device_t dv)
 	case EC_STATE_WRITE_VAL:
 		if ((reg & EC_STATUS_IBF) != 0)
 			break; /* Nothing of interest here. */
-		sc->sc_state = EC_STATE_FREE;
-		cv_signal(&sc->sc_cv);
-
 		acpiec_write_data(sc, sc->sc_cur_val);
+		sc->sc_state = EC_STATE_FREE;
 		break;
 
 	case EC_STATE_FREE:
-		if (sc->sc_got_sci)
-			cv_signal(&sc->sc_cv_sci);
 		break;
+
 	default:
 		panic("invalid state");
 	}
 
-	if (sc->sc_state != EC_STATE_FREE)
+	/*
+	 * If we are not in a transaction, wake anyone waiting to start
+	 * one.  If an SCI was requested, notify the SCI thread that it
+	 * needs to handle the SCI.
+	 */
+	if (sc->sc_state == EC_STATE_FREE) {
+		cv_signal(&sc->sc_cv);
+		if (reg & EC_STATUS_SCI) {
+			DPRINTF(ACPIEC_DEBUG_TRANSITION, sc,
+			    "wake SCI thread\n");
+			sc->sc_got_sci = true;
+			cv_signal(&sc->sc_cv_sci);
+		}
+	}
+
+	/*
+	 * In case GPE interrupts are broken, poll once per tick for EC
+	 * status updates while a transaction is still pending.
+	 */
+	if (sc->sc_state != EC_STATE_FREE) {
+		DPRINTF(ACPIEC_DEBUG_INTR, sc, "schedule callout\n");
 		callout_schedule(&sc->sc_pseudo_intr, 1);
+	}
+
+	DPRINTF(ACPIEC_DEBUG_TRANSITION, sc, "return\n");
 }
 
 static void
 acpiec_callout(void *arg)
 {
-	device_t dv = arg;
-	struct acpiec_softc *sc = device_private(dv);
+	struct acpiec_softc *sc = arg;
 
 	mutex_enter(&sc->sc_mtx);
-	acpiec_gpe_state_machine(dv);
+	DPRINTF(ACPIEC_DEBUG_INTR, sc, "callout\n");
+	acpiec_gpe_state_machine(sc);
 	mutex_exit(&sc->sc_mtx);
 }
 
 static uint32_t
 acpiec_gpe_handler(ACPI_HANDLE hdl, uint32_t gpebit, void *arg)
 {
-	device_t dv = arg;
-	struct acpiec_softc *sc = device_private(dv);
+	struct acpiec_softc *sc = arg;
 
 	mutex_enter(&sc->sc_mtx);
-	acpiec_gpe_state_machine(dv);
+	DPRINTF(ACPIEC_DEBUG_INTR, sc, "GPE\n");
+	acpiec_gpe_state_machine(sc);
 	mutex_exit(&sc->sc_mtx);
 
 	return ACPI_INTERRUPT_HANDLED | ACPI_REENABLE_GPE;
@@ -908,13 +1095,17 @@ acpiec_gpe_handler(ACPI_HANDLE hdl, uint32_t gpebit, void *arg)
 ACPI_STATUS
 acpiec_bus_read(device_t dv, u_int addr, ACPI_INTEGER *val, int width)
 {
-	return acpiec_space_handler(ACPI_READ, addr, width * 8, val, dv, NULL);
+	struct acpiec_softc *sc = device_private(dv);
+
+	return acpiec_space_handler(ACPI_READ, addr, width * 8, val, sc, NULL);
 }
 
 ACPI_STATUS
 acpiec_bus_write(device_t dv, u_int addr, ACPI_INTEGER val, int width)
 {
-	return acpiec_space_handler(ACPI_WRITE, addr, width * 8, &val, dv,
+	struct acpiec_softc *sc = device_private(dv);
+
+	return acpiec_space_handler(ACPI_WRITE, addr, width * 8, &val, sc,
 	    NULL);
 }
 

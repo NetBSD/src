@@ -34,19 +34,19 @@ struct {								\
 	(a_phn->a_field.phn_lchild)
 #define phn_lchild_set(a_type, a_field, a_phn, a_lchild) do {		\
 	a_phn->a_field.phn_lchild = a_lchild;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define phn_next_get(a_type, a_field, a_phn)				\
 	(a_phn->a_field.phn_next)
 #define phn_prev_set(a_type, a_field, a_phn, a_prev) do {		\
 	a_phn->a_field.phn_prev = a_prev;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define phn_prev_get(a_type, a_field, a_phn)				\
 	(a_phn->a_field.phn_prev)
 #define phn_next_set(a_type, a_field, a_phn, a_next) do {		\
 	a_phn->a_field.phn_next = a_next;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define phn_merge_ordered(a_type, a_field, a_phn0, a_phn1, a_cmp) do {	\
 	a_type *phn0child;						\
@@ -62,7 +62,7 @@ struct {								\
 		phn_prev_set(a_type, a_field, phn0child, a_phn1);	\
 	}								\
 	phn_lchild_set(a_type, a_field, a_phn0, a_phn1);		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define phn_merge(a_type, a_field, a_phn0, a_phn1, a_cmp, r_phn) do {	\
 	if (a_phn0 == NULL) {						\
@@ -78,7 +78,7 @@ struct {								\
 		    a_cmp);						\
 		r_phn = a_phn1;						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ph_merge_siblings(a_type, a_field, a_phn, a_cmp, r_phn) do {	\
 	a_type *head = NULL;						\
@@ -165,7 +165,7 @@ struct {								\
 		}							\
 	}								\
 	r_phn = phn0;							\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ph_merge_aux(a_type, a_field, a_ph, a_cmp) do {			\
 	a_type *_phn = phn_next_get(a_type, a_field, a_ph->ph_root);	\
@@ -178,7 +178,7 @@ struct {								\
 		phn_merge(a_type, a_field, a_ph->ph_root, _phn, a_cmp,	\
 		    a_ph->ph_root);					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ph_merge_children(a_type, a_field, a_phn, a_cmp, r_phn) do {	\
 	a_type *lchild = phn_lchild_get(a_type, a_field, a_phn);	\
@@ -188,7 +188,7 @@ struct {								\
 		ph_merge_siblings(a_type, a_field, lchild, a_cmp,	\
 		    r_phn);						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * The ph_proto() macro generates function prototypes that correspond to the

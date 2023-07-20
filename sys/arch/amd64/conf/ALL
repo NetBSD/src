@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.177 2023/02/09 14:09:48 abs Exp $
+# $NetBSD: ALL,v 1.179 2023/07/18 10:02:25 riastradh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.177 $"
+#ident		"ALL-$Revision: 1.179 $"
 
 maxusers	64		# estimated number of users
 
@@ -141,6 +141,10 @@ options		KCOV
 
 # Fault Injection Driver.
 options 	FAULT
+
+# Heartbeat checks
+options 	HEARTBEAT
+options 	HEARTBEAT_MAX_PERIOD_DEFAULT=15
 
 # Compatibility options
 options 	EXEC_AOUT	# required by binaries from before 1.5
@@ -366,6 +370,7 @@ acpibut*	at acpi?		# ACPI Button
 acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late)
 acpiecdt*	at acpi?		# ACPI Embedded Controller (early)
+options 	ACPIEC_DEBUG=-1
 acpifan*	at acpi?		# ACPI Fan
 acpilid*	at acpi?		# ACPI Lid Switch
 acpipmtr*	at acpi?		# ACPI Power Meter (experimental)

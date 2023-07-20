@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.129 2021/11/04 12:40:00 nia Exp $
+#	$NetBSD: security,v 1.131 2023/07/05 12:07:21 martin Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -195,8 +195,7 @@ done | mtree -CM -k all > $SPECIALSPEC || exit 1
 # Check for enough entropy.
 #
 if checkyesno check_entropy; then
-	if ! dd if=/dev/random iflag=nonblock of=/dev/null bs=1 count=1 \
-	    msgfmt=quiet 2>/dev/null; then
+	if [ "$(sysctl -n kern.entropy.needed)" != 0 ]; then
 		printf '\n'
 		printf 'Entropy:\n'
 		printf 'System may need more entropy for cryptography.\n'

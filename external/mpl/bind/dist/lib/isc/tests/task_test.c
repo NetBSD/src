@@ -1,4 +1,4 @@
-/*	$NetBSD: task_test.c,v 1.11 2023/01/25 21:43:31 christos Exp $	*/
+/*	$NetBSD: task_test.c,v 1.12 2023/06/26 22:03:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -633,8 +633,8 @@ basic(void **state) {
 #else  /* ifndef WIN32 */
 	Sleep(10000);
 #endif /* ifndef WIN32 */
-	isc_timer_detach(&ti1);
-	isc_timer_detach(&ti2);
+	isc_timer_destroy(&ti1);
+	isc_timer_destroy(&ti2);
 }
 
 /*
@@ -1521,20 +1521,6 @@ purgeevent(void **state) {
 	try_purgeevent(true);
 }
 
-/*
- * Purge event not purgeable test:
- * When the event is not marked as purgable, a call to
- * isc_task_purgeevent(task, event) does not purge the event
- * 'event' from the task's queue and returns false.
- */
-
-static void
-purgeevent_notpurge(void **state) {
-	UNUSED(state);
-
-	try_purgeevent(false);
-}
-
 int
 main(int argc, char **argv) {
 	const struct CMUnitTest tests[] = {
@@ -1552,8 +1538,6 @@ main(int argc, char **argv) {
 						_teardown),
 		cmocka_unit_test_setup_teardown(purge, _setup2, _teardown),
 		cmocka_unit_test_setup_teardown(purgeevent, _setup2, _teardown),
-		cmocka_unit_test_setup_teardown(purgeevent_notpurge, _setup,
-						_teardown),
 		cmocka_unit_test_setup_teardown(purgerange, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(task_shutdown, _setup4,
 						_teardown),

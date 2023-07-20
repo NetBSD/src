@@ -125,11 +125,38 @@ mDNSlocal void ParseCmdLinArgs(int argc, char **argv)
     }
 }
 
-mDNSlocal void DumpStateLog()
+mDNSlocal void DumpStateLog(mDNS *const m)
 // Dump a little log of what we've been up to.
 {
-	LogMsg("---- BEGIN STATE LOG ----");
+    DNSServer *s;
+    PosixNetworkInterface *i;
+
+    LogMsg("---- BEGIN STATE LOG ----");
     udsserver_info();
+
+    LogMsgNoIdent("----- Network Interfaces -------");
+    for (i = (PosixNetworkInterface*)(m->HostInterfaces);
+         i; i = (PosixNetworkInterface *)(i->coreIntf.next))
+    {
+        LogMsg("%p %p %d %s%s%s%s%s %-8s %#a", i,
+               (void *)(i->coreIntf.InterfaceID), i->index,
+               i->coreIntf.InterfaceActive ? "-" : "D",
+               i->coreIntf.IPv4Available ? "4" : "-",
+               i->coreIntf.IPv6Available ? "6" : "-",
+               i->coreIntf.Advertise ? "A" : "-",
+               i->coreIntf.McastTxRx ? "M" : "-",
+               i->intfName, &(i->coreIntf.ip));
+    }
+
+    LogMsgNoIdent("--------- DNS Servers ----------");
+    if (!m->DNSServers) LogMsgNoIdent("<None>");
+    else
+    {
+        for (s = m->DNSServers; s; s = s->next)
+            LogMsgNoIdent("DNS Server %##s %#a:%d",
+                          s->domain.c, &s->addr, mDNSVal16(s->port));
+    }
+
     LogMsg("----  END STATE LOG  ----");
 }
 
@@ -167,7 +194,7 @@ mDNSlocal mStatus MainLoop(mDNS *m) // Loop until we quit.
         (void) mDNSPosixRunEventLoopOnce(m, &timeout, &signals, &gotData);
 
         if (sigismember(&signals, SIGHUP )) Reconfigure(m);
-        if (sigismember(&signals, SIGUSR1)) DumpStateLog();
+        if (sigismember(&signals, SIGUSR1)) DumpStateLog(m);
         // SIGPIPE happens when we try to write to a dead client; death should be detected soon in request_callback() and cleaned up.
         if (sigismember(&signals, SIGPIPE)) LogMsg("Received SIGPIPE - ignoring");
         if (sigismember(&signals, SIGINT) || sigismember(&signals, SIGTERM)) break;
@@ -196,10 +223,10 @@ int main(int argc, char **argv)
     {
         const struct passwd *pw = getpwnam(MDNSD_USER);
         if (pw != NULL)
-	{
+        {
             setgid(pw->pw_gid);
             setuid(pw->pw_uid);
-	}
+        }
         else
 #ifdef MDNSD_NOROOT
         {

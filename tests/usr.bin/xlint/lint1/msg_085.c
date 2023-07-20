@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_085.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: msg_085.c,v 1.7 2023/06/30 19:10:49 rillig Exp $	*/
 # 3 "msg_085.c"
 
 // Test for message: dubious tag declaration '%s %s' [85]
+
+/*
+ * Declarations of structs/unions/enums in parameter lists are allowed
+ * but useless.
+ */
 
 /* lint1-extra-flags: -X 351 */
 

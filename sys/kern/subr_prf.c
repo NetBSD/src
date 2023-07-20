@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.200 2023/04/12 06:35:26 riastradh Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.201 2023/07/17 22:57:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.200 2023/04/12 06:35:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.201 2023/07/17 22:57:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1241,11 +1241,12 @@ device_printf(device_t dev, const char *fmt, ...)
 {
 	va_list ap;
 
+	kprintf_lock();
+	kprintf_internal("%s: ", TOCONS|TOLOG, NULL, NULL, device_xname(dev));
 	va_start(ap, fmt);
-	printf("%s: ", device_xname(dev));
-	vprintf(fmt, ap);
+	kprintf(fmt, TOCONS|TOLOG, NULL, NULL, ap);
 	va_end(ap);
-	return;
+	kprintf_unlock();
 }
 
 /*

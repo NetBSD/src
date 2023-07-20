@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2023/02/07 06:19:03 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2023/07/15 21:24:46 rjs Exp $
 
 # Transparent struct/union broken
 NOLINT=yes
@@ -1133,7 +1133,7 @@ CPPFLAGS+=	${CPPFLAGS.${XORG_MACHINE_ARCH:U${MACHINE_ARCH}}}
 CPPFLAGS.r600_pipe_common.c+=	-DMESA_LLVM_VERSION_STRING=\"${LLVM_VERSION}\"
 CPPFLAGS.si_get.c+=	-DMESA_LLVM_VERSION_STRING=\"${LLVM_VERSION}\"
 
-.include "../driver.mk"
+.include "../driver${OLD_SUFFIX}.mk"
 
 
 .PATH: ${X11SRCDIR.Mesa}/src/gallium/targets/dri

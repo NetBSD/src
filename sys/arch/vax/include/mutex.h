@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.17 2022/04/06 22:47:57 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.20 2023/07/12 12:50:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
  * and (if MP) using BBSSI/BBCCI to lock out the other processors.
  */
 
+#include <sys/types.h>
+
 #ifndef __MUTEX_PRIVATE
 
 struct kmutex {
@@ -47,6 +49,8 @@ struct kmutex {
 };
 
 #else	/* __MUTEX_PRIVATE */
+
+#include <machine/intr.h>
 
 struct kmutex {
 	union {

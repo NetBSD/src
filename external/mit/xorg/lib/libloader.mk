@@ -1,4 +1,4 @@
-#	$NetBSD: libloader.mk,v 1.6 2020/03/29 21:06:03 maya Exp $
+#	$NetBSD: libloader.mk,v 1.7 2023/07/16 22:20:54 rjs Exp $
 
 # makefile fragment for mesa src/loader
 
@@ -7,6 +7,7 @@
 .PATH:		${X11SRCDIR.Mesa}/src/util
 SRCS.loader += \
 	loader.c \
+	loader_dri_helper.c \
 	pci_id_driver_map.c \
 	xmlconfig.c
 

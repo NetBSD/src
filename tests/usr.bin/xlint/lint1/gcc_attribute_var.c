@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_var.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_var.c,v 1.11 2023/07/15 21:47:35 rillig Exp $	*/
 # 3 "gcc_attribute_var.c"
 
 /*
@@ -52,6 +52,7 @@ void println(void);
 void
 ambiguity_for_attribute(void)
 {
+	/* expect+1: warning: 'var1' unused in function 'ambiguity_for_attribute' [192] */
 	__attribute__((unused)) _Bool var1;
 
 	switch (1) {
@@ -71,3 +72,14 @@ attribute_after_array_brackets(
 )
 {
 }
+
+struct attribute_in_member_declaration {
+	int __attribute__(())
+	    x __attribute__(()),
+	    y __attribute__(());
+
+	unsigned int __attribute__(())
+	    bit1:1 __attribute__(()),
+	    bit2:2 __attribute__(()),
+	    bit3:3 __attribute__(());
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.184 2023/04/09 08:17:36 riastradh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.186 2023/07/07 18:02:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.184 2023/04/09 08:17:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.186 2023/07/07 18:02:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"

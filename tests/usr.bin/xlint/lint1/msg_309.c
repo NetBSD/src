@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_309.c,v 1.6 2022/10/15 21:19:15 rillig Exp $	*/
+/*	$NetBSD: msg_309.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_309.c"
 
 // Test for message: extra bits set to 0 in conversion of '%s' to '%s', op '%s' [309]
+
+/* lint1-extra-flags: -X 351 */
 
 int
 scale(unsigned long long x) {

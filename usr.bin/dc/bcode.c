@@ -1,4 +1,4 @@
-/*	$NetBSD: bcode.c,v 1.3 2018/02/06 17:58:19 christos Exp $	*/
+/*	$NetBSD: bcode.c,v 1.4 2023/06/26 17:47:04 martin Exp $	*/
 /*	$OpenBSD: bcode.c,v 1.51 2017/02/26 11:29:55 otto Exp $	*/
 
 /*
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcode.c,v 1.3 2018/02/06 17:58:19 christos Exp $");
+__RCSID("$NetBSD: bcode.c,v 1.4 2023/06/26 17:47:04 martin Exp $");
 
 #include <err.h>
 #include <limits.h>
@@ -338,7 +338,7 @@ max(u_int a, u_int b)
 	return a > b ? a : b;
 }
 
-static unsigned long factors[] = {
+static BN_ULONG factors[] = {
 	0, 10, 100, 1000, 10000, 100000, 1000000, 10000000,
 	100000000, 1000000000
 };
@@ -370,7 +370,7 @@ scale_number(BIGNUM *n, int s)
 		bn_checkp(ctx);
 
 		bn_check(BN_set_word(a, 10));
-		bn_check(BN_set_word(p, abs_scale));
+		bn_check(BN_set_word(p, (BN_ULONG)abs_scale));
 		bn_check(BN_exp(a, a, p, ctx));
 		if (s > 0)
 			bn_check(BN_mul(n, n, a, ctx));
@@ -394,7 +394,7 @@ split_number(const struct number *n, BIGNUM *i, BIGNUM *f)
 	else if (n->scale < sizeof(factors)/sizeof(factors[0])) {
 		rem = BN_div_word(i, factors[n->scale]);
 		if (f != NULL)
-			bn_check(BN_set_word(f, rem));
+			bn_check(BN_set_word(f, (BN_ULONG)rem));
 	} else {
 		BIGNUM *a, *p;
 		BN_CTX *ctx;
@@ -663,7 +663,7 @@ stackdepth(void)
 
 	i = stack_size(&bmachine.stack);
 	n = new_number();
-	bn_check(BN_set_word(n->number, i));
+	bn_check(BN_set_word(n->number, (BN_ULONG)i));
 	push_number(n);
 }
 
@@ -732,12 +732,12 @@ num_digits(void)
 		case BCODE_NUMBER:
 			digits = count_digits(value->u.num);
 			n = new_number();
-			bn_check(BN_set_word(n->number, digits));
+			bn_check(BN_set_word(n->number, (BN_ULONG)digits));
 			break;
 		case BCODE_STRING:
 			digits = strlen(value->u.string);
 			n = new_number();
-			bn_check(BN_set_word(n->number, digits));
+			bn_check(BN_set_word(n->number, (BN_ULONG)digits));
 			break;
 		}
 		stack_free_value(value);

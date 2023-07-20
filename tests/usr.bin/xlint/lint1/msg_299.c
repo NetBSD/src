@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_299.c,v 1.4 2022/10/01 09:42:40 rillig Exp $	*/
+/*	$NetBSD: msg_299.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_299.c"
 
 /* Test for message: prototype does not match old-style definition, arg #%d [299] */
 
-/* lint1-flags: -w */
+/* lint1-flags: -w -X 351 */
 
 old_style(x)
 	double x;

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ldbl128.c,v 1.5 2023/04/05 20:17:30 rillig Exp $	*/
+/*	$NetBSD: platform_ldbl128.c,v 1.6 2023/07/05 11:42:14 rillig Exp $	*/
 # 3 "platform_ldbl128.c"
 
 /*
@@ -6,7 +6,7 @@
  */
 
 /* lint1-extra-flags: -c -h -a -p -b -r -z -X 351 */
-/* lint1-only-if: ldbl-128 */
+/* lint1-only-if: ldbl128 */
 
 /* CONSTCOND */
 typedef int bits_per_byte[((unsigned char)-1) == 255 ? 1 : -1];

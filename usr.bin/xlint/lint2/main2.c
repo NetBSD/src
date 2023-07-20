@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.29 2023/06/09 13:03:49 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.34 2023/07/13 08:40:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main2.c,v 1.29 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.34 2023/07/13 08:40:38 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -47,37 +47,15 @@ __RCSID("$NetBSD: main2.c,v 1.29 2023/06/09 13:03:49 rillig Exp $");
 
 #include "lint2.h"
 
-/* warnings for symbols which are declared but not defined or used */
-bool	xflag;
-
-/*
- * warnings for symbols which are used and not defined or defined
- * and not used
- */
-bool	uflag = true;
-
-/* Create a lint library in the current directory with name libname. */
 bool	Cflag;
-const char *libname;
-
-/*
- * warnings for (tentative) definitions of the same name in more than
- * one translation unit
- */
-bool	sflag;
-
-bool	tflag;
-
-/*
- * If a complaint stems from a included file, print the name of the included
- * file instead of the name specified at the command line followed by '?'
- */
-bool	Hflag;
-
-bool	hflag;
-
-/* Print full path names, not only the last component */
 bool	Fflag;
+bool	Hflag;
+bool	hflag;
+bool	sflag;
+bool	tflag;
+bool	uflag;
+bool	xflag;
+const char *libname;
 
 /*
  * List of libraries (from -l flag). These libraries are read after all
@@ -104,7 +82,7 @@ main(int argc, char *argv[])
 	libs = xcalloc(1, sizeof(*libs));
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "hstxuC:HFl:")) != -1) {
+	while ((c = getopt(argc, argv, "hl:stuxC:HF")) != -1) {
 		switch (c) {
 		case 's':
 			sflag = true;
@@ -113,7 +91,7 @@ main(int argc, char *argv[])
 			tflag = true;
 			break;
 		case 'u':
-			uflag = false;
+			uflag = true;
 			break;
 		case 'x':
 			xflag = true;
@@ -121,10 +99,10 @@ main(int argc, char *argv[])
 		case 'C':
 			len = strlen(optarg);
 			lname = xmalloc(len + 10);
-			(void)sprintf(lname, "llib-l%s.ln", optarg);
+			(void)snprintf(lname, len + 10, "llib-l%s.ln", optarg);
 			libname = lname;
 			Cflag = true;
-			uflag = false;
+			uflag = true;
 			break;
 		case 'H':
 			Hflag = true;
@@ -182,6 +160,6 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		      "usage: lint2 -hpstxuHFT -Clib -l lib ... src1 ...\n");
+	    "usage: %s [-hstuxHF] -Clib -l lib ... src1 ...\n", getprogname());
 	exit(1);
 }

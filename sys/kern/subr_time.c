@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.37 2023/04/29 03:36:55 isaki Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.38 2023/07/08 20:02:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.37 2023/04/29 03:36:55 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.38 2023/07/08 20:02:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -44,12 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.37 2023/04/29 03:36:55 isaki Exp $")
 #include <sys/time.h>
 #include <sys/timetc.h>
 #include <sys/intr.h>
-
-#ifdef DEBUG_STICKS
-#define DPRINTF(a) uprintf a
-#else
-#define DPRINTF(a) 
-#endif
 
 /*
  * Compute number of hz until specified time.  Used to compute second
@@ -248,32 +242,16 @@ clock_timeleft(clockid_t clockid, struct timespec *ts, struct timespec *sleepts)
 	*sleepts = sleptts;
 }
 
-static void
-ticks2ts(uint64_t ticks, struct timespec *ts)
-{
-	ts->tv_sec = ticks / hz;
-	uint64_t sticks = ticks - ts->tv_sec * hz;
-	if (sticks > BINTIME_SCALE_MS)	/* floor(2^64 / 1000) */
-		ts->tv_nsec = sticks / hz * 1000000000LL;
-	else if (sticks > BINTIME_SCALE_US)	/* floor(2^64 / 1000000) */
-		ts->tv_nsec = sticks * 1000LL / hz * 1000000LL;
-	else
-		ts->tv_nsec = sticks * 1000000000LL / hz;
-	DPRINTF(("%s: %ju/%ju -> %ju.%ju\n", __func__,
-	    (uintmax_t)ticks, (uintmax_t)sticks,
-	    (uintmax_t)ts->tv_sec, (uintmax_t)ts->tv_nsec));
-}
-
 int
 clock_gettime1(clockid_t clock_id, struct timespec *ts)
 {
 	int error;
-	uint64_t ticks;
 	struct proc *p;
 
 #define CPUCLOCK_ID_MASK (~(CLOCK_THREAD_CPUTIME_ID|CLOCK_PROCESS_CPUTIME_ID))
 	if (clock_id & CLOCK_PROCESS_CPUTIME_ID) {
 		pid_t pid = clock_id & CPUCLOCK_ID_MASK;
+		struct timeval cputime;
 
 		mutex_enter(&proc_lock);
 		p = pid == 0 ? curproc : proc_find(pid);
@@ -281,10 +259,10 @@ clock_gettime1(clockid_t clock_id, struct timespec *ts)
 			mutex_exit(&proc_lock);
 			return ESRCH;
 		}
-		ticks = p->p_uticks + p->p_sticks + p->p_iticks;
-		DPRINTF(("%s: u=%ju, s=%ju, i=%ju\n", __func__,
-		    (uintmax_t)p->p_uticks, (uintmax_t)p->p_sticks,
-		    (uintmax_t)p->p_iticks));
+		mutex_enter(p->p_lock);
+		calcru(p, /*usertime*/NULL, /*systime*/NULL, /*intrtime*/NULL,
+		    &cputime);
+		mutex_exit(p->p_lock);
 		mutex_exit(&proc_lock);
 
 		// XXX: Perhaps create a special kauth type
@@ -293,9 +271,14 @@ clock_gettime1(clockid_t clock_id, struct timespec *ts)
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 		if (error)
 			return error;
+
+		TIMEVAL_TO_TIMESPEC(&cputime, ts);
+		return 0;
 	} else if (clock_id & CLOCK_THREAD_CPUTIME_ID) {
 		struct lwp *l;
 		lwpid_t lid = clock_id & CPUCLOCK_ID_MASK;
+		struct bintime tm = {0, 0};
+
 		p = curproc;
 		mutex_enter(p->p_lock);
 		l = lid == 0 ? curlwp : lwp_find(p, lid);
@@ -303,15 +286,10 @@ clock_gettime1(clockid_t clock_id, struct timespec *ts)
 			mutex_exit(p->p_lock);
 			return ESRCH;
 		}
-		ticks = l->l_rticksum + l->l_slpticksum;
-		DPRINTF(("%s: r=%ju, s=%ju\n", __func__,
-		    (uintmax_t)l->l_rticksum, (uintmax_t)l->l_slpticksum));
+		addrulwp(l, &tm);
 		mutex_exit(p->p_lock);
-	} else
-		ticks = (uint64_t)-1;
 
-	if (ticks != (uint64_t)-1) {
-		ticks2ts(ticks, ts);
+		bintime2timespec(&tm, ts);
 		return 0;
 	}
 

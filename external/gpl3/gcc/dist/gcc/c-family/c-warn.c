@@ -2340,42 +2340,63 @@ warn_for_sign_compare (location_t location,
      have all bits set that are set in the ~ operand when it is
      extended.  */
 
-  op0 = c_common_get_narrower (op0, &unsignedp0);
-  op1 = c_common_get_narrower (op1, &unsignedp1);
+  /* bits0 is the bit index of op0 extended to result_type, which will
+     be always 0 and so all bits above it.  If there is a BIT_NOT_EXPR
+     in that operand possibly sign or zero extended to op0 and then
+     possibly further sign or zero extended to result_type, bits0 will
+     be the precision of result type if all the extensions involved
+     if any are sign extensions, and will be the place of the innermost
+     zero extension otherwise.  We warn only if BIT_NOT_EXPR's operand is
+     zero extended from some even smaller precision, in that case after
+     BIT_NOT_EXPR some bits below bits0 will be guaranteed to be set.
+     Similarly for bits1.  */
+  int bits0 = TYPE_PRECISION (result_type);
+  if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+    bits0 = TYPE_PRECISION (TREE_TYPE (op0));
+  tree arg0 = c_common_get_narrower (op0, &unsignedp0);
+  if (TYPE_PRECISION (TREE_TYPE (arg0)) == TYPE_PRECISION (TREE_TYPE (op0)))
+    unsignedp0 = TYPE_UNSIGNED (TREE_TYPE (op0));
+  else if (unsignedp0)
+    bits0 = TYPE_PRECISION (TREE_TYPE (arg0));
+  op0 = arg0;
+  int bits1 = TYPE_PRECISION (result_type);
+  if (TYPE_UNSIGNED (TREE_TYPE (op1)))
+    bits1 = TYPE_PRECISION (TREE_TYPE (op1));
+  tree arg1 = c_common_get_narrower (op1, &unsignedp1);
+  if (TYPE_PRECISION (TREE_TYPE (arg1)) == TYPE_PRECISION (TREE_TYPE (op1)))
+    unsignedp1 = TYPE_UNSIGNED (TREE_TYPE (op1));
+  else if (unsignedp1)
+    bits1 = TYPE_PRECISION (TREE_TYPE (arg1));
+  op1 = arg1;
 
   if ((TREE_CODE (op0) == BIT_NOT_EXPR)
       ^ (TREE_CODE (op1) == BIT_NOT_EXPR))
     {
-      if (TREE_CODE (op0) == BIT_NOT_EXPR)
-	op0 = c_common_get_narrower (TREE_OPERAND (op0, 0), &unsignedp0);
       if (TREE_CODE (op1) == BIT_NOT_EXPR)
-	op1 = c_common_get_narrower (TREE_OPERAND (op1, 0), &unsignedp1);
-
-      if (tree_fits_shwi_p (op0) || tree_fits_shwi_p (op1))
 	{
-	  tree primop;
-	  HOST_WIDE_INT constant, mask;
-	  int unsignedp;
-	  unsigned int bits;
+	  std::swap (op0, op1);
+	  std::swap (unsignedp0, unsignedp1);
+	  std::swap (bits0, bits1);
+	}
 
-	  if (tree_fits_shwi_p (op0))
-	    {
-	      primop = op1;
-	      unsignedp = unsignedp1;
-	      constant = tree_to_shwi (op0);
-	    }
-	  else
-	    {
-	      primop = op0;
-	      unsignedp = unsignedp0;
-	      constant = tree_to_shwi (op1);
-	    }
+      int unsignedp;
+      arg0 = c_common_get_narrower (TREE_OPERAND (op0, 0), &unsignedp);
 
-	  bits = TYPE_PRECISION (TREE_TYPE (primop));
-	  if (bits < TYPE_PRECISION (result_type)
-	      && bits < HOST_BITS_PER_LONG && unsignedp)
+      /* For these warnings, we need BIT_NOT_EXPR operand to be
+	 zero extended from narrower type to BIT_NOT_EXPR's type.
+	 In that case, all those bits above the narrower's type
+	 are after BIT_NOT_EXPR set to 1.  */
+      if (tree_fits_shwi_p (op1))
+	{
+	  HOST_WIDE_INT constant = tree_to_shwi (op1);
+	  unsigned int bits = TYPE_PRECISION (TREE_TYPE (arg0));
+	  if (unsignedp
+	      && bits < TYPE_PRECISION (TREE_TYPE (op0))
+	      && bits < HOST_BITS_PER_WIDE_INT)
 	    {
-	      mask = HOST_WIDE_INT_M1U << bits;
+	      HOST_WIDE_INT mask = HOST_WIDE_INT_M1U << bits;
+	      if (bits0 < HOST_BITS_PER_WIDE_INT)
+		mask &= ~(HOST_WIDE_INT_M1U << bits0);
 	      if ((mask & constant) != mask)
 		{
 		  if (constant == 0)
@@ -2389,11 +2410,11 @@ warn_for_sign_compare (location_t location,
 		}
 	    }
 	}
-      else if (unsignedp0 && unsignedp1
-	       && (TYPE_PRECISION (TREE_TYPE (op0))
-		   < TYPE_PRECISION (result_type))
-	       && (TYPE_PRECISION (TREE_TYPE (op1))
-		   < TYPE_PRECISION (result_type)))
+      else if ((TYPE_PRECISION (TREE_TYPE (arg0))
+		< TYPE_PRECISION (TREE_TYPE (op0)))
+	       && unsignedp
+	       && unsignedp1
+	       && TYPE_PRECISION (TREE_TYPE (op1)) < bits0)
 	warning_at (location, OPT_Wsign_compare,
 		    "comparison of promoted bitwise complement "
 		    "of an unsigned value with unsigned");

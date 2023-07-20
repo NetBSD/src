@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2014/03/22 21:49:18 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.22 2023/07/11 11:50:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,8 @@ typedef struct {
 	uint16_t _psl;
 } ipl_cookie_t;
 
+#ifdef _KERNEL
+
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
@@ -84,4 +86,7 @@ splx(int sr)
 
 	__asm volatile("movew %0,%%sr" : : "di" (sr));
 }
+
+#endif	/* _KERNEL */
+
 #endif /* !_X68K_INTR_H_ */

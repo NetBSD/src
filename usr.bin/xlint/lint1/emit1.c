@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.69 2023/06/24 20:50:54 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.72 2023/07/13 08:40:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.69 2023/06/24 20:50:54 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.72 2023/07/13 08:40:38 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -94,11 +94,11 @@ outtype(const type_t *tp)
 {
 	/* Available letters: ------GH--K-MNO--R--U-W-YZ */
 #ifdef INT128_SIZE
-	static const char tt[NTSPEC] = "???BCCCSSIILLQQJJDDDVTTTPAF?XXX";
-	static const char ss[NTSPEC] = "???  su u u u u us l sue   ?s l";
+	static const char tt[NTSPEC] = "???BCCCSSIILLQQJJDDD?XXXVTTTPAF";
+	static const char ss[NTSPEC] = "???  su u u u u us l?s l sue   ";
 #else
-	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDDVTTTPAF?XXX";
-	static const char ss[NTSPEC] = "???  su u u u us l sue   ?s l";
+	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDD?XXXVTTTPAF";
+	static const char ss[NTSPEC] = "???  su u u u us l?s l sue   ";
 #endif
 	int na;
 	sym_t *arg;
@@ -339,7 +339,6 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 {
 	tnode_t *args, *arg;
 	int narg, n, i;
-	int64_t q;
 	tspec_t t;
 
 	/* reset buffer */
@@ -372,10 +371,11 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 				 * XXX it would probably be better to
 				 * explicitly test the sign
 				 */
-				if ((q = arg->tn_val.v_quad) == 0) {
+				int64_t si = arg->tn_val.u.integer;
+				if (si == 0) {
 					/* zero constant */
 					outchar('z');
-				} else if (!msb(q, t)) {
+				} else if (!msb(si, t)) {
 					/* positive if cast to signed */
 					outchar('p');
 				} else {

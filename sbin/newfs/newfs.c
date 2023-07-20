@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.118 2022/11/17 06:40:39 chs Exp $	*/
+/*	$NetBSD: newfs.c,v 1.120 2023/07/05 10:58:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.118 2022/11/17 06:40:39 chs Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.120 2023/07/05 10:58:58 riastradh Exp $");
 #endif
 #endif /* not lint */
 

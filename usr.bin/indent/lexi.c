@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.232 2023/06/17 23:03:20 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.239 2023/06/26 20:23:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.232 2023/06/17 23:03:20 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.239 2023/06/26 20:23:40 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -51,14 +51,14 @@ static const struct keyword {
 	lexer_symbol lsym;
 } keywords[] = {
 	{"_Bool", lsym_type},
-	{"_Complex", lsym_type},
-	{"_Imaginary", lsym_type},
+	{"_Complex", lsym_modifier},
+	{"_Imaginary", lsym_modifier},
 	{"auto", lsym_modifier},
 	{"bool", lsym_type},
 	{"break", lsym_word},
 	{"case", lsym_case},
 	{"char", lsym_type},
-	{"complex", lsym_type},
+	{"complex", lsym_modifier},
 	{"const", lsym_modifier},
 	{"continue", lsym_word},
 	{"default", lsym_default},
@@ -71,7 +71,7 @@ static const struct keyword {
 	{"for", lsym_for},
 	{"goto", lsym_word},
 	{"if", lsym_if},
-	{"imaginary", lsym_type},
+	{"imaginary", lsym_modifier},
 	{"inline", lsym_modifier},
 	{"int", lsym_type},
 	{"long", lsym_type},
@@ -207,8 +207,8 @@ lex_number(void)
 
 		unsigned char row = lex_number_row[ch];
 		if (lex_number_state[row][s - 'A'] == ' ') {
-		        // lex_number_state[0][s - 'A'] now indicates the type:
-		        // f = floating, i = integer, u = unknown
+			// lex_number_state[0][s - 'A'] now indicates the type:
+			// f = floating, i = integer, u = unknown
 			return;
 		}
 
@@ -296,6 +296,8 @@ bsearch_typenames(const char *key)
 static bool
 is_typename(void)
 {
+	if (ps.prev_lsym == lsym_tag)
+		return true;
 	if (opt.auto_typedefs &&
 	    token.len >= 2 && memcmp(token.s + token.len - 2, "_t", 2) == 0)
 		return true;
@@ -333,10 +335,11 @@ cmp_keyword_by_name(const void *key, const void *elem)
  * function declaration.
  */
 static bool
-probably_function_definition(void)
+probably_function_definition(const char *p)
 {
+	// TODO: Don't look at characters in comments, see lsym_funcname.c.
 	int paren_level = 0;
-	for (const char *p = inp_p; *p != '\n'; p++) {
+	for (; *p != '\n'; p++) {
 		if (*p == '(')
 			paren_level++;
 		if (*p == ')' && --paren_level == 0) {
@@ -398,50 +401,55 @@ lexi_alnum(void)
 		inp_p++;
 
 	ps.next_unary = ps.prev_lsym == lsym_tag
-	    || ps.prev_lsym == lsym_typedef;
+	    || ps.prev_lsym == lsym_typedef
+	    || (ps.prev_lsym == lsym_modifier && *inp_p == '*');
 
 	if (ps.prev_lsym == lsym_tag && ps.paren.len == 0)
 		return lsym_type;
+	if (ps.spaced_expr_psym == psym_for_exprs
+	    && ps.prev_lsym == lsym_lparen && ps.paren.len == 1
+	    && *inp_p == '*') {
+		ps.next_unary = true;
+		return lsym_type;
+	}
 
-	token_add_char('\0');		// Terminate in non-debug mode as well.
+	token_add_char('\0');	// Terminate in non-debug mode as well.
 	token.len--;
 	const struct keyword *kw = bsearch(token.s, keywords,
 	    array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
 	lexer_symbol lsym = lsym_word;
 	if (kw != NULL) {
-		if (kw->lsym == lsym_type)
-			lsym = lsym_type;
+		lsym = kw->lsym;
 		ps.next_unary = true;
-		if (kw->lsym == lsym_tag || kw->lsym == lsym_type)
+		if (lsym == lsym_tag || lsym == lsym_type)
 			goto found_typename;
-		return kw->lsym;
+		return lsym;
 	}
 
 	if (is_typename()) {
 		lsym = lsym_type;
 		ps.next_unary = true;
 found_typename:
-		if (ps.paren.len > 0) {
-			/* inside parentheses: cast, param list, offsetof or
-			 * sizeof */
-			struct paren_level *paren_level =
-			    ps.paren.item + ps.paren.len - 1;
-			if (paren_level->cast == cast_unknown)
-				paren_level->cast = cast_maybe;
-		}
 		if (ps.prev_lsym != lsym_period
 		    && ps.prev_lsym != lsym_unary_op) {
-			if (kw != NULL && kw->lsym == lsym_tag)
+			if (lsym == lsym_tag)
 				return lsym_tag;
 			if (ps.paren.len == 0)
 				return lsym_type;
 		}
 	}
 
-	if (*inp_p == '(' && ps.psyms.len < 3 && ps.ind_level == 0 &&
+	const char *p = inp_p;
+	if (*p == ')')
+		p++;
+	if (*p == '(' && ps.psyms.len < 3 && ps.ind_level == 0 &&
 	    !ps.in_func_def_params && !ps.in_init) {
 
-		if (ps.paren.len == 0 && probably_function_definition()) {
+		bool maybe_function_definition = *inp_p == ')'
+		    ? ps.paren.len == 1 && ps.prev_lsym != lsym_unary_op
+		    : ps.paren.len == 0;
+		if (maybe_function_definition
+		    && probably_function_definition(p)) {
 			ps.line_has_func_def = true;
 			if (ps.in_decl)
 				ps.in_func_def_params = true;
@@ -456,10 +464,33 @@ found_typename:
 	return lsym;
 }
 
-static bool
-is_asterisk_pointer(void)
+static void
+check_parenthesized_function_definition(void)
 {
-	if (inp_p[strspn(inp_p, "* \t")] == ')')
+	const char *p = inp_p;
+	while (ch_isblank(*p))
+		p++;
+	if (is_identifier_start(*p))
+		while (is_identifier_part(*p))
+			p++;
+	while (ch_isblank(*p))
+		p++;
+	if (*p == ')') {
+		p++;
+		while (ch_isblank(*p))
+			p++;
+		if (*p == '(' && probably_function_definition(p))
+			ps.line_has_func_def = true;
+	}
+}
+
+static bool
+is_asterisk_unary(void)
+{
+	const char *p = inp_p;
+	while (*p == '*' || ch_isblank(*p))
+		p++;
+	if (*p == ')')
 		return true;
 	if (ps.next_unary || ps.in_func_def_params)
 		return true;
@@ -487,7 +518,7 @@ probably_in_function_definition(void)
 }
 
 static void
-lex_asterisk_pointer(void)
+lex_asterisk_unary(void)
 {
 	while (*inp_p == '*' || ch_isspace(*inp_p)) {
 		if (*inp_p == '*')
@@ -572,7 +603,6 @@ lexi(void)
 		break;
 
 	/* INDENT OFF */
-	case '(':	lsym = lsym_lparen;	next_unary = true;	break;
 	case ')':	lsym = lsym_rparen;	next_unary = false;	break;
 	case '[':	lsym = lsym_lbracket;	next_unary = true;	break;
 	case ']':	lsym = lsym_rbracket;	next_unary = false;	break;
@@ -583,6 +613,13 @@ lexi(void)
 	case ',':	lsym = lsym_comma;	next_unary = true;	break;
 	case ';':	lsym = lsym_semicolon;	next_unary = true;	break;
 	/* INDENT ON */
+
+	case '(':
+		if (inp_p == inp.s + 1)
+			check_parenthesized_function_definition();
+		lsym = lsym_lparen;
+		next_unary = true;
+		break;
 
 	case '+':
 	case '-':
@@ -622,8 +659,8 @@ lexi(void)
 		if (*inp_p == '=') {
 			token_add_char(*inp_p++);
 			lsym = lsym_binary_op;
-		} else if (is_asterisk_pointer()) {
-			lex_asterisk_pointer();
+		} else if (is_asterisk_unary()) {
+			lex_asterisk_unary();
 			lsym = lsym_unary_op;
 		} else
 			lsym = lsym_binary_op;

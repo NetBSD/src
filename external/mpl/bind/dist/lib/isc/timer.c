@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.11 2023/01/25 21:43:31 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.12 2023/06/26 22:03:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -64,9 +64,9 @@ struct isc_timer {
 	unsigned int magic;
 	isc_timermgr_t *manager;
 	isc_mutex_t lock;
-	isc_refcount_t references;
 	/*! Locked by timer lock. */
 	isc_time_t idle;
+	ISC_LIST(isc_timerevent_t) active;
 	/*! Locked by manager lock. */
 	isc_timertype_t type;
 	isc_time_t expires;
@@ -210,26 +210,36 @@ deschedule(isc_timer_t *timer) {
 }
 
 static void
-destroy(isc_timer_t *timer) {
-	isc_timermgr_t *manager = timer->manager;
+timerevent_unlink(isc_timer_t *timer, isc_timerevent_t *event) {
+	REQUIRE(ISC_LINK_LINKED(event, ev_timerlink));
+	ISC_LIST_UNLINK(timer->active, event, ev_timerlink);
+}
 
-	/*
-	 * The caller must ensure it is safe to destroy the timer.
-	 */
+static void
+timerevent_destroy(isc_event_t *event0) {
+	isc_timer_t *timer = event0->ev_destroy_arg;
+	isc_timerevent_t *event = (isc_timerevent_t *)event0;
 
-	LOCK(&manager->lock);
+	LOCK(&timer->lock);
+	if (ISC_LINK_LINKED(event, ev_timerlink)) {
+		/* The event was unlinked via timer_purge() */
+		timerevent_unlink(timer, event);
+	}
+	UNLOCK(&timer->lock);
 
-	(void)isc_task_purgerange(timer->task, timer, ISC_TIMEREVENT_FIRSTEVENT,
-				  ISC_TIMEREVENT_LASTEVENT, NULL);
-	deschedule(timer);
-	UNLINK(manager->timers, timer, link);
+	isc_mem_put(timer->manager->mctx, event, event0->ev_size);
+}
 
-	UNLOCK(&manager->lock);
+static void
+timer_purge(isc_timer_t *timer) {
+	isc_timerevent_t *event = NULL;
 
-	isc_task_detach(&timer->task);
-	isc_mutex_destroy(&timer->lock);
-	timer->magic = 0;
-	isc_mem_put(manager->mctx, timer, sizeof(*timer));
+	while ((event = ISC_LIST_HEAD(timer->active)) != NULL) {
+		timerevent_unlink(timer, event);
+		UNLOCK(&timer->lock);
+		(void)isc_task_purgeevent(timer->task, (isc_event_t *)event);
+		LOCK(&timer->lock);
+	}
 }
 
 isc_result_t
@@ -281,7 +291,6 @@ isc_timer_create(isc_timermgr_t *manager, isc_timertype_t type,
 	timer = isc_mem_get(manager->mctx, sizeof(*timer));
 
 	timer->manager = manager;
-	isc_refcount_init(&timer->references, 1);
 
 	if (type == isc_timertype_once && !isc_interval_iszero(interval)) {
 		result = isc_time_add(&now, interval, &timer->idle);
@@ -313,6 +322,9 @@ isc_timer_create(isc_timermgr_t *manager, isc_timertype_t type,
 	timer->index = 0;
 	isc_mutex_init(&timer->lock);
 	ISC_LINK_INIT(timer, link);
+
+	ISC_LIST_INIT(timer->active);
+
 	timer->magic = TIMER_MAGIC;
 
 	LOCK(&manager->lock);
@@ -392,9 +404,7 @@ isc_timer_reset(isc_timer_t *timer, isc_timertype_t type,
 	LOCK(&timer->lock);
 
 	if (purge) {
-		(void)isc_task_purgerange(timer->task, timer,
-					  ISC_TIMEREVENT_FIRSTEVENT,
-					  ISC_TIMEREVENT_LASTEVENT, NULL);
+		timer_purge(timer);
 	}
 	timer->type = type;
 	timer->expires = *expires;
@@ -465,41 +475,60 @@ isc_timer_touch(isc_timer_t *timer) {
 }
 
 void
-isc_timer_attach(isc_timer_t *timer, isc_timer_t **timerp) {
-	/*
-	 * Attach *timerp to timer.
-	 */
+isc_timer_destroy(isc_timer_t **timerp) {
+	isc_timer_t *timer = NULL;
+	isc_timermgr_t *manager = NULL;
 
-	REQUIRE(VALID_TIMER(timer));
-	REQUIRE(timerp != NULL && *timerp == NULL);
-	isc_refcount_increment(&timer->references);
+	REQUIRE(timerp != NULL && VALID_TIMER(*timerp));
 
-	*timerp = timer;
+	timer = *timerp;
+	*timerp = NULL;
+
+	manager = timer->manager;
+
+	LOCK(&manager->lock);
+
+	LOCK(&timer->lock);
+	timer_purge(timer);
+	deschedule(timer);
+	UNLOCK(&timer->lock);
+
+	UNLINK(manager->timers, timer, link);
+
+	UNLOCK(&manager->lock);
+
+	isc_task_detach(&timer->task);
+	isc_mutex_destroy(&timer->lock);
+	timer->magic = 0;
+	isc_mem_put(manager->mctx, timer, sizeof(*timer));
 }
 
-void
-isc_timer_detach(isc_timer_t **timerp) {
-	isc_timer_t *timer;
+static void
+timer_post_event(isc_timermgr_t *manager, isc_timer_t *timer,
+		 isc_eventtype_t type) {
+	isc_timerevent_t *event;
+	XTRACEID("posting", timer);
 
-	/*
-	 * Detach *timerp from its timer.
-	 */
+	event = (isc_timerevent_t *)isc_event_allocate(
+		manager->mctx, timer, type, timer->action, timer->arg,
+		sizeof(*event));
 
-	REQUIRE(timerp != NULL);
-	timer = *timerp;
-	REQUIRE(VALID_TIMER(timer));
+	ISC_LINK_INIT(event, ev_timerlink);
+	((isc_event_t *)event)->ev_destroy = timerevent_destroy;
+	((isc_event_t *)event)->ev_destroy_arg = timer;
 
-	if (isc_refcount_decrement(&timer->references) == 1) {
-		destroy(timer);
-	}
+	event->due = timer->due;
 
-	*timerp = NULL;
+	LOCK(&timer->lock);
+	ISC_LIST_APPEND(timer->active, event, ev_timerlink);
+	UNLOCK(&timer->lock);
+
+	isc_task_send(timer->task, ISC_EVENT_PTR(&event));
 }
 
 static void
 dispatch(isc_timermgr_t *manager, isc_time_t *now) {
 	bool done = false, post_event, need_schedule;
-	isc_timerevent_t *event;
 	isc_eventtype_t type = 0;
 	isc_timer_t *timer;
 	isc_result_t result;
@@ -561,25 +590,7 @@ dispatch(isc_timermgr_t *manager, isc_time_t *now) {
 			}
 
 			if (post_event) {
-				XTRACEID("posting", timer);
-				/*
-				 * XXX We could preallocate this event.
-				 */
-				event = (isc_timerevent_t *)isc_event_allocate(
-					manager->mctx, timer, type,
-					timer->action, timer->arg,
-					sizeof(*event));
-
-				if (event != NULL) {
-					event->due = timer->due;
-					isc_task_send(timer->task,
-						      ISC_EVENT_PTR(&event));
-				} else {
-					UNEXPECTED_ERROR(__FILE__, __LINE__,
-							 "%s",
-							 "couldn't allocate "
-							 "event");
-				}
+				timer_post_event(manager, timer, type);
 			}
 
 			timer->index = 0;

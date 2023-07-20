@@ -1,4 +1,4 @@
-/*	$NetBSD: syncobj.h,v 1.13 2020/03/26 21:15:14 ad Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.15 2023/07/17 12:54:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -36,12 +36,13 @@ struct lwp;
 
 typedef volatile const void *wchan_t;
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 /*
  * Synchronisation object operations set.
  */
 typedef struct syncobj {
+	char	sobj_name[16];
 	u_int	sobj_flag;
 	void	(*sobj_unsleep)(struct lwp *, bool);
 	void	(*sobj_changepri)(struct lwp *, pri_t);

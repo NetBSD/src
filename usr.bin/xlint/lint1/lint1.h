@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.167 2023/06/24 20:50:54 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.195 2023/07/19 22:24:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -43,7 +43,13 @@
  * - the end of the translation unit.
  */
 typedef struct memory_pool {
-	void	**items;
+	struct memory_pool_item {
+		void *p;
+#ifdef DEBUG_MEM
+		size_t size;
+		const char *descr;
+#endif
+	} *items;
 	size_t	len;
 	size_t	cap;
 } memory_pool;
@@ -66,15 +72,6 @@ typedef struct {
 	int	p_uniq;			/* uniquifier */
 } pos_t;
 
-/* Copies curr_pos, keeping things unique. */
-#define	UNIQUE_CURR_POS(pos)						\
-	do {								\
-		(pos) = curr_pos;					\
-		curr_pos.p_uniq++;					\
-		if (curr_pos.p_file == csrc_pos.p_file)			\
-			csrc_pos.p_uniq++;				\
-	} while (false)
-
 /*
  * Strings cannot be referenced simply by a pointer to their first
  * char. This is because strings can contain NUL characters other than the
@@ -88,18 +85,25 @@ typedef	struct strg {
 	void	*st_mem;	/* char[] for st_char, or wchar_t[] */
 } strg_t;
 
-/*
- * qualifiers (only for lex/yacc interface)
- */
-typedef enum {
-	CONST,
-	VOLATILE,
-	RESTRICT,
-	THREAD,			/* XXX: storage-class-qualifier */
-	ATOMIC,
-} tqual_t;
+// TODO: Use bit-fields instead of plain bool, but keep an eye on arm and
+// powerpc, on which GCC 10.5.0 generates code that leads to extra 327
+// warnings, even in msg_327.c, which does not contain any type qualifier at
+// all.  A possible starting point for continuing the investigation is that
+// type_qualifiers is a very small struct that contains only bool bit-fields,
+// and this struct is a member of the parser's union.
+//
+// Instead of using plain bool instead of bit-fields, an alternative workaround
+// is to compile cgram.c with -Os or -O1 instead of -O2.  The generated code
+// between -Os and -O2 differs too much though to give a hint at the root
+// cause.
+typedef struct {
+	bool tq_const;
+	bool tq_restrict;
+	bool tq_volatile;
+	bool tq_atomic;
+} type_qualifiers;
 
-/* An integer or floating-point value. */
+/* A bool, integer or floating-point value. */
 typedef struct {
 	tspec_t	v_tspec;
 	/*
@@ -111,27 +115,23 @@ typedef struct {
 	bool	v_unsigned_since_c90;
 	bool	v_char_constant;
 	union {
-		int64_t		_v_quad;	/* integers */
-		long double	_v_ldbl;	/* floats */
-	} v_u;
+		int64_t		integer;
+		long double	floating;
+	} u;
 } val_t;
-
-#define v_quad	v_u._v_quad
-#define v_ldbl	v_u._v_ldbl
 
 /*
  * Structures of type struct_or_union uniquely identify structures. This can't
- * be done in structures of type type_t, because these are copied
- * if they must be modified. So it would not be possible to check
- * if two structures are identical by comparing the pointers to
- * the type structures.
+ * be done in structures of type type_t, because these are copied if they must
+ * be modified. So it would not be possible to check if two structures are
+ * identical by comparing the pointers to the type structures.
  *
- * The typename is used if the structure is unnamed to identify
- * the structure type in pass 2.
+ * If the structure has no tag name, its first typedef name is used to identify
+ * the structure in lint2.
  */
 typedef	struct {
 	unsigned int sou_size_in_bits;
-	unsigned short sou_align_in_bits;
+	unsigned int sou_align_in_bits;
 	bool	sou_incomplete:1;
 	struct	sym *sou_first_member;
 	struct	sym *sou_tag;
@@ -179,21 +179,17 @@ struct lint1_type {
 		enumeration	*_t_enum;
 		struct	sym *_t_args;	/* arguments (if t_proto) */
 	} t_u;
-	struct {
-		unsigned int	_t_flen:8;	/* length of bit-field */
-		unsigned int	_t_foffs:24;	/* offset of bit-field */
-	} t_b;
-	struct	lint1_type *t_subt; /* element type (if ARRAY),
-				 * return value (if FUNC),
-				 * target type (if PTR) */
+	unsigned int	t_bit_field_width:8;
+	unsigned int	t_bit_field_offset:24;
+	struct	lint1_type *t_subt;	/* element type (if ARRAY),
+					 * return value (if FUNC),
+					 * target type (if PTR) */
 };
 
 #define	t_dim	t_u._t_dim
 #define	t_sou	t_u._t_sou
 #define	t_enum	t_u._t_enum
 #define	t_args	t_u._t_args
-#define	t_flen	t_b._t_flen
-#define	t_foffs	t_b._t_foffs
 
 /*
  * types of symbols
@@ -215,6 +211,7 @@ typedef enum {
 	AUTO,		/* automatic symbols (except register) */
 	REG,		/* register */
 	TYPEDEF,	/* typedef */
+	THREAD_LOCAL,
 	STRUCT_TAG,
 	UNION_TAG,
 	ENUM_TAG,
@@ -223,8 +220,13 @@ typedef enum {
 	BOOL_CONST,
 	ENUM_CONST,
 	ABSTRACT,	/* abstract symbol (sizeof, casts, unnamed argument) */
-	INLINE		/* only used by the parser */
 } scl_t;
+
+/* C23 6.7.4 */
+typedef enum {
+	FS_INLINE,		/* since C99 */
+	FS_NORETURN,		/* since C11 */
+} function_specifier;
 
 /*
  * symbol table entry
@@ -254,7 +256,7 @@ typedef	struct sym {
 				 * pointer to the external symbol with the
 				 * same name */
 	def_t	s_def;		/* declared, tentative defined, defined */
-	scl_t	s_scl;		/* storage class */
+	scl_t	s_scl;		/* storage class, more or less */
 	int	s_block_level;	/* level of declaration, -1 if not in symbol
 				   table */
 	type_t	*s_type;
@@ -262,14 +264,19 @@ typedef	struct sym {
 		bool s_bool_constant;
 		int s_enum_constant;	/* XXX: should be TARG_INT */
 		struct {
-			/* XXX: what is the difference to s_type->t_sou? */
-			struct_or_union	*sm_sou_type;
+			struct_or_union	*sm_containing_type;
 			unsigned int sm_offset_in_bits;
 		} s_member;
 		struct {
 			int sk_token;
-			tspec_t	sk_tspec;	/* only for types */
-			tqual_t	sk_qualifier;	/* only for qualifiers */
+			union {
+				/* if T_TYPE or T_STRUCT_OR_UNION */
+				tspec_t sk_tspec;
+				/* if T_QUAL */
+				type_qualifiers sk_type_qualifier;
+				/* if T_FUNCTION_SPECIFIER */
+				function_specifier function_specifier;
+			} u;
 		} s_keyword;
 		struct	sym *s_old_style_args;	/* arguments in an old-style
 						 * function definition */
@@ -303,11 +310,10 @@ typedef	struct tnode {
 	bool	tn_lvalue:1;	/* node is lvalue */
 	bool	tn_cast:1;	/* if tn_op == CVT, it's an explicit cast */
 	bool	tn_parenthesized:1;
-	bool	tn_sys:1;	/* in strict bool mode, allow mixture between
-				 * bool and scalar, for code from system
-				 * headers that may be a mixture between
-				 * scalar types and bool
-				 */
+	bool	tn_sys:1;	/* the operator comes from a system header;
+				 * used in strict bool mode to allow mixing
+				 * bool and scalar, as these places are not
+				 * considered fixable */
 	bool	tn_system_dependent:1; /* depends on sizeof or offsetof */
 	union {
 		struct {
@@ -337,65 +343,75 @@ struct array_size {
 	int dim;
 };
 
-typedef enum declaration_kind {
-	DK_EXTERN,		/* global variable or function */
-	DK_STRUCT_MEMBER,
-	DK_UNION_MEMBER,
-	DK_ENUM_CONSTANT,
-	DK_OLD_STYLE_ARG,	/* argument in an old-style function
+typedef enum decl_level_kind {
+	DLK_EXTERN,		/* global types, variables or functions */
+	DLK_STRUCT,		/* members */
+	DLK_UNION,		/* members */
+	DLK_ENUM,		/* constants */
+	DLK_OLD_STYLE_ARGS,	/* arguments in an old-style function
 				 * definition */
-	DK_PROTO_ARG,		/* argument in a prototype function
+	DLK_PROTO_PARAMS,	/* parameters in a prototype function
 				 * definition */
-	DK_AUTO,		/* local symbol */
-	DK_ABSTRACT		/* abstract declaration; type name */
-} declaration_kind;
+	DLK_AUTO,		/* local types or variables */
+	DLK_ABSTRACT		/* abstract (unnamed) declaration; type name;
+				 * used in casts and sizeof */
+} decl_level_kind;
 
 /*
- * For nested declarations there is a stack that holds all information
- * needed for the current level. dcs points to the innermost element of this
- * stack.
+ * A declaration level describes a struct, union, enum, block, argument
+ * declaration list or an abstract (unnamed) type.
+ *
+ * For nested declarations, the global 'dcs' holds all information needed for
+ * the current level, the outer levels are available via 'd_enclosing'.
  */
-typedef	struct dinfo {
-	declaration_kind d_kind;
+typedef	struct decl_level {
+	decl_level_kind d_kind;
 	tspec_t	d_abstract_type;/* VOID, BOOL, CHAR, INT or COMPLEX */
 	tspec_t	d_complex_mod;	/* FLOAT or DOUBLE */
 	tspec_t	d_sign_mod;	/* SIGNED or UNSIGN */
-	tspec_t	d_rank_mod;	/* SHORT, LONG or QUAD */
+	tspec_t	d_rank_mod;	/* SHORT, LONG or LLONG */
 	scl_t	d_scl;		/* storage class */
-	type_t	*d_type;	/* after dcs_end_type pointer to the type used
-				   for all declarators */
+	type_t	*d_type;	/* after dcs_end_type, the pointer to the type
+				 * used for all declarators */
 	sym_t	*d_redeclared_symbol;
-	unsigned int d_offset_in_bits; /* offset of next structure member */
-	unsigned short d_sou_align_in_bits; /* alignment required for current
-				 * structure */
-	bool	d_const:1;	/* const in declaration specifiers */
-	bool	d_volatile:1;	/* volatile in declaration specifiers */
+	unsigned int d_sou_size_in_bits;	/* size of the structure or
+						 * union being built, without
+						 * trailing padding */
+	unsigned int d_sou_align_in_bits;	/* alignment of the structure
+						 * or union being built */
+	type_qualifiers d_qual;	/* in declaration specifiers */
 	bool	d_inline:1;	/* inline in declaration specifiers */
 	bool	d_multiple_storage_classes:1; /* reported in dcs_end_type */
 	bool	d_invalid_type_combination:1;
-	bool	d_nonempty_decl:1; /* if at least one tag is declared
-				 * ... in the current function decl. */
+	bool	d_nonempty_decl:1; /* in a function declaration, whether at
+				 * least one tag was declared */
 	bool	d_vararg:1;
-	bool	d_proto:1;	/* current function decl. is a prototype */
-	bool	d_notyp:1;	/* set if no type specifier was present */
+	bool	d_prototype:1;	/* in a function declaration, whether the
+				 * function has a prototype */
+	bool	d_no_type_specifier:1;
 	bool	d_asm:1;	/* set if d_ctx == AUTO and asm() present */
 	bool	d_packed:1;
 	bool	d_used:1;
-	type_t	*d_tagtyp;	/* tag during member declaration */
-	sym_t	*d_func_args;	/* list of arguments during function def. */
-	pos_t	d_func_def_pos;	/* position of function definition */
-	sym_t	*d_dlsyms;	/* first symbol declared at this level */
-	sym_t	**d_ldlsym;	/* points to s_level_next in the last symbol
+	type_t	*d_tag_type;	/* during a member declaration, the tag type to
+				 * which the member belongs */
+	sym_t	*d_func_args;	/* during a function declaration, the list of
+				 * arguments */
+	pos_t	d_func_def_pos;	/* position of the function definition */
+	sym_t	*d_first_dlsym;	/* first symbol declared at this level */
+	sym_t	**d_last_dlsym;	/* points to s_level_next in the last symbol
 				   declaration at this level */
 	sym_t	*d_func_proto_syms; /* symbols defined in prototype */
-	struct dinfo *d_enclosing; /* the enclosing declaration level */
-} dinfo_t;
+	struct decl_level *d_enclosing; /* the enclosing declaration level */
+} decl_level;
 
-/* One level of pointer indirection in declarators, including qualifiers. */
+/*
+ * A sequence of asterisks and qualifiers, from right to left.  For example,
+ * 'const ***volatile **const volatile' results in [c-v-, ----, --v-, ----,
+ * ----].  The leftmost 'const' is not included in this list, it is stored in
+ * dcs->d_qual instead.
+ */
 typedef	struct qual_ptr {
-	bool	p_const: 1;
-	bool	p_volatile: 1;
-	bool	p_pointer: 1;
+	type_qualifiers qualifiers;
 	struct	qual_ptr *p_next;
 } qual_ptr;
 
@@ -456,6 +472,21 @@ typedef struct {
 	size_t hi;			/* inclusive */
 } range_t;
 
+typedef enum {
+	LC_ARGSUSED,
+	LC_BITFIELDTYPE,
+	LC_CONSTCOND,
+	LC_FALLTHROUGH,
+	LC_LINTLIBRARY,
+	LC_LINTED,
+	LC_LONGLONG,
+	LC_NOTREACHED,
+	LC_PRINTFLIKE,
+	LC_PROTOLIB,
+	LC_SCANFLIKE,
+	LC_VARARGS,
+} lint_comment;
+
 #include "externs1.h"
 
 #define lint_assert(cond)						\
@@ -486,25 +517,37 @@ check_printf(const char *fmt, ...)
 #  define message_at(msgid, pos, args...) \
 	wrap_check_printf_at(message_at, msgid, pos, ##args)
 
-#  define wrap_check_printf(func, msgid, args...)			\
+#  define wrap_check_printf(func, cond, msgid, args...)			\
 	({								\
-		debug_step("%s:%d: %s", __FILE__, __LINE__, __func__);	\
+		if (/* CONSTCOND */cond)				\
+			debug_step("%s:%d: %s %d '%s' in %s",		\
+			    __FILE__, __LINE__,	#func, msgid,		\
+			    __CONCAT(MSG_, msgid), __func__);		\
 		check_printf(__CONCAT(MSG_, msgid), ##args);		\
 		(func)(msgid, ##args);					\
 		/* LINTED 129 */					\
 	})
 
-#  define error(msgid, args...) wrap_check_printf(error, msgid, ##args)
-#  define warning(msgid, args...) wrap_check_printf(warning, msgid, ##args)
-#  define gnuism(msgid, args...) wrap_check_printf(gnuism, msgid, ##args)
-#  define c99ism(msgid, args...) wrap_check_printf(c99ism, msgid, ##args)
-#  define c11ism(msgid, args...) wrap_check_printf(c11ism, msgid, ##args)
+#  define error(msgid, args...) wrap_check_printf(error, \
+    true, msgid, ##args)
+#  define warning(msgid, args...) wrap_check_printf(warning, \
+    true, msgid, ##args)
+#  define gnuism(msgid, args...) wrap_check_printf(gnuism, \
+    !allow_gcc || (!allow_trad && !allow_c99), msgid, ##args)
+#  define c99ism(msgid, args...) wrap_check_printf(c99ism, \
+    !allow_c99 && (!allow_gcc || !allow_trad), msgid, ##args)
+#  define c11ism(msgid, args...) wrap_check_printf(c11ism, \
+    !allow_c11 && !allow_gcc, msgid, ##args)
+#  define c23ism(msgid, args...) wrap_check_printf(c23ism, \
+    !allow_c23, msgid, ##args)
 #endif
 
 #ifdef DEBUG
 #  define query_message(query_id, args...)				\
 	do {								\
-		debug_step("%s:%d: %s", __FILE__, __LINE__, __func__);	\
+		debug_step("%s:%d: query %d '%s' in %s",		\
+		    __FILE__, __LINE__,					\
+		    query_id, __CONCAT(MSG_Q, query_id), __func__);	\
 		check_printf(__CONCAT(MSG_Q, query_id), ##args);	\
 		(query_message)(query_id, ##args);			\
 	} while (false)
@@ -516,12 +559,23 @@ check_printf(const char *fmt, ...)
 	} while (false)
 #endif
 
+/* Copies curr_pos, keeping things unique. */
+static inline pos_t
+unique_curr_pos(void)
+{
+	pos_t curr = curr_pos;
+	curr_pos.p_uniq++;
+	if (curr_pos.p_file == csrc_pos.p_file)
+		csrc_pos.p_uniq++;
+	return curr;
+}
+
 static inline bool
 is_nonzero_val(const val_t *val)
 {
 	return is_floating(val->v_tspec)
-	    ? val->v_ldbl != 0.0
-	    : val->v_quad != 0;
+	    ? val->u.floating != 0.0
+	    : val->u.integer != 0;
 }
 
 static inline bool
@@ -542,6 +596,12 @@ static inline bool
 is_nonzero(const tnode_t *tn)
 {
 	return tn != NULL && tn->tn_op == CON && is_nonzero_val(&tn->tn_val);
+}
+
+static inline const char *
+op_name(op_t op)
+{
+	return modtab[op].m_name;
 }
 
 static inline bool
@@ -565,9 +625,9 @@ bit(unsigned i)
 }
 
 static inline bool
-msb(int64_t q, tspec_t t)
+msb(int64_t si, tspec_t t)
 {
-	return (q & bit((unsigned int)size_in_bits(t) - 1)) != 0;
+	return ((uint64_t)si & bit(size_in_bits(t) - 1)) != 0;
 }
 
 static inline uint64_t
@@ -598,4 +658,13 @@ static inline bool
 is_member(const sym_t *sym)
 {
 	return sym->s_scl == STRUCT_MEMBER || sym->s_scl == UNION_MEMBER;
+}
+
+static inline void
+set_symtyp(symt_t symt)
+{
+	if (yflag)
+		debug_step("%s: %s -> %s", __func__,
+		    symt_name(symtyp), symt_name(symt));
+	symtyp = symt;
 }

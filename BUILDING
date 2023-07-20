@@ -9,12 +9,16 @@ REQUIREMENTS
      same NetBSD architecture) or cross compiling (on another architecture or
      OS).
 
+     This source tree contains the build.sh shell script which supports both
+     native and cross builds of NetBSD.
+
      This source tree contains a special subtree, "tools", which uses the host
      system to create a build toolchain for the target architecture.  The host
      system must have at least C and C++ compilers in order to create the
-     toolchain (make is not required); all other tools are created as part of
-     the NetBSD build process.  (See the Environment variables section below
-     if you need to override or manually select your compilers.)
+     toolchain (make(1) is not required); all other tools (including make(1)
+     as nbmake) are created as part of the NetBSD build process.  (See the
+     Environment variables section below if you need to override or manually
+     select your compilers.)
 
      Note: Within this document, cross-references to manual pages are to the
      NetBSD manual pages, not the host system manual pages.  The mdoc(7)
@@ -61,7 +65,7 @@ FILES
                     The source to this document, in mdoc(7) format.  Used to
                     generate BUILDING.
 
-     external, sys/external
+     external/, sys/external/
                     Sources and build infrastructure for components imported
                     (mostly) unchanged from upstream maintainers, sorted by
                     applicable license.  This is (slowly) replacing the
@@ -70,6 +74,12 @@ FILES
      external/mit/xorg/
                     "Reachover" build structure for modular Xorg; the source
                     is in X11SRCDIR.
+
+     mk.conf        Optional source tree specific mk.conf(5), used (if
+                    present) instead of /etc/mk.conf unless MAKECONF is
+                    defined.
+
+                    Note: Not part of the NetBSD source repository.
 
      regress/, tests/
                     Regression test harness.  Can be cross-compiled, but only
@@ -93,9 +103,9 @@ FILES
                     during the build.
 
    Build tree layout
-     The NetBSD build tree is described in hier(7) (mdoc(7) source in
+     The NetBSD build tree is described in hier(7) (whose mdoc(7) source is in
      share/man/man7/hier.7), and the release layout is described in release(7)
-     (mdoc(7) source in share/man/man7/release.7).
+     (whose mdoc(7) source is in share/man/man7/release.7).
 
 CONFIGURATION
    Environment variables
@@ -164,7 +174,9 @@ CONFIGURATION
 
                      Note: Only settable in the process environment.
 
-                     Default: "/etc/mk.conf".
+                     Default: "/etc/mk.conf", although build.sh will set the
+                     default to the full path to mk.conf if the latter is
+                     present in the same directory as build.sh.
 
      MAKEFLAGS       Flags to invoke make(1) with.
 
@@ -218,8 +230,8 @@ CONFIGURATION
                      Default: "/tmp".
 
    "make" variables
-     Variables control the behavior of NetBSD builds are documented in
-     mk.conf(5) (mdoc(7) source in share/man/man5/mk.conf.5).
+     Variables that control the behavior of NetBSD builds are documented in
+     mk.conf(5) (whose mdoc(7) source is in share/man/man5/mk.conf.5).
 
      Unless otherwise specified, these variables may be set in either the
      process environment or the make(1) configuration file mk.conf(5)
@@ -819,4 +831,4 @@ CAVEATS
      in object directories.  Instead, one may have to manually remove the
      files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                           June 11, 2023                          NetBSD
+NetBSD                           July 18, 2023                          NetBSD

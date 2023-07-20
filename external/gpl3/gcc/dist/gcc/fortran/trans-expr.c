@@ -1084,8 +1084,10 @@ gfc_conv_class_to_class (gfc_se *parmse, gfc_expr *e, gfc_typespec class_ts,
     return;
 
   /* Test for FULL_ARRAY.  */
-  if (e->rank == 0 && gfc_expr_attr (e).codimension
-      && gfc_expr_attr (e).dimension)
+  if (e->rank == 0
+      && ((gfc_expr_attr (e).codimension && gfc_expr_attr (e).dimension)
+	  || (class_ts.u.derived->components->as
+	      && class_ts.u.derived->components->as->type == AS_ASSUMED_RANK)))
     full_array = true;
   else
     gfc_is_class_array_ref (e, &full_array);
@@ -1133,8 +1135,12 @@ gfc_conv_class_to_class (gfc_se *parmse, gfc_expr *e, gfc_typespec class_ts,
 	  && e->rank != class_ts.u.derived->components->as->rank)
 	{
 	  if (e->rank == 0)
-	    gfc_add_modify (&parmse->post, gfc_class_data_get (parmse->expr),
-			    gfc_conv_descriptor_data_get (ctree));
+	    {
+	      tmp = gfc_class_data_get (parmse->expr);
+	      gfc_add_modify (&parmse->post, tmp,
+			      fold_convert (TREE_TYPE (tmp),
+					 gfc_conv_descriptor_data_get (ctree)));
+	    }
 	  else
 	    class_array_data_assign (&parmse->post, parmse->expr, ctree, true);
 	}
@@ -1431,6 +1437,7 @@ gfc_copy_class_to_class (tree from, tree to, tree nelems, bool unlimited)
 	    name = (const char *)(DECL_NAME (to)->identifier.id.str);
 
 	  from_len = gfc_conv_descriptor_size (from_data, 1);
+	  from_len = fold_convert (TREE_TYPE (orig_nelems), from_len);
 	  tmp = fold_build2_loc (input_location, NE_EXPR,
 				  logical_type_node, from_len, orig_nelems);
 	  msg = xasprintf ("Array bound mismatch for dimension %d "
@@ -5586,7 +5593,6 @@ gfc_conv_procedure_call (gfc_se * se, gfc_symbol * sym,
   gfc_charlen cl;
   gfc_expr *e;
   gfc_symbol *fsym;
-  stmtblock_t post;
   enum {MISSING = 0, ELEMENTAL, SCALAR, SCALAR_POINTER, ARRAY};
   gfc_component *comp = NULL;
   int arglen;
@@ -5630,7 +5636,9 @@ gfc_conv_procedure_call (gfc_se * se, gfc_symbol * sym,
   else
     info = NULL;
 
+  stmtblock_t post, clobbers;
   gfc_init_block (&post);
+  gfc_init_block (&clobbers);
   gfc_init_interface_mapping (&mapping);
   if (!comp)
     {
@@ -5965,7 +5973,7 @@ gfc_conv_procedure_call (gfc_se * se, gfc_symbol * sym,
 				&& e->symtree->n.sym->attr.pointer))
 			&& fsym && fsym->attr.target)
 		/* Make sure the function only gets called once.  */
-		gfc_conv_expr_reference (&parmse, e, false);
+		gfc_conv_expr_reference (&parmse, e);
 	      else if (e->expr_type == EXPR_FUNCTION
 		       && e->symtree->n.sym->result
 		       && e->symtree->n.sym->result != e->symtree->n.sym
@@ -6072,22 +6080,37 @@ gfc_conv_procedure_call (gfc_se * se, gfc_symbol * sym,
 		    }
 		  else
 		    {
-		      bool add_clobber;
-		      add_clobber = fsym && fsym->attr.intent == INTENT_OUT
-			&& !fsym->attr.allocatable && !fsym->attr.pointer
-			&& e->symtree && e->symtree->n.sym
-			&& !e->symtree->n.sym->attr.dimension
-			&& !e->symtree->n.sym->attr.pointer
-			&& !e->symtree->n.sym->attr.allocatable
-			/* See PR 41453.  */
-			&& !e->symtree->n.sym->attr.dummy
-			/* FIXME - PR 87395 and PR 41453  */
-			&& e->symtree->n.sym->attr.save == SAVE_NONE
-			&& !e->symtree->n.sym->attr.associate_var
-			&& e->ts.type != BT_CHARACTER && e->ts.type != BT_DERIVED
-			&& e->ts.type != BT_CLASS && !sym->attr.elemental;
+		      gfc_conv_expr_reference (&parmse, e);
 
-		      gfc_conv_expr_reference (&parmse, e, add_clobber);
+		      if (fsym
+			  && fsym->attr.intent == INTENT_OUT
+			  && !fsym->attr.allocatable
+			  && !fsym->attr.pointer
+			  && e->expr_type == EXPR_VARIABLE
+			  && e->ref == NULL
+			  && e->symtree
+			  && e->symtree->n.sym
+			  && !e->symtree->n.sym->attr.dimension
+			  && !e->symtree->n.sym->attr.pointer
+			  && !e->symtree->n.sym->attr.allocatable
+			  /* See PR 41453.  */
+			  && !e->symtree->n.sym->attr.dummy
+			  /* FIXME - PR 87395 and PR 41453  */
+			  && e->symtree->n.sym->attr.save == SAVE_NONE
+			  && !e->symtree->n.sym->attr.associate_var
+			  && e->ts.type != BT_CHARACTER
+			  && e->ts.type != BT_DERIVED
+			  && e->ts.type != BT_CLASS
+			  && !sym->attr.elemental)
+			{
+			  tree var;
+			  /* FIXME: This fails if var is passed by reference, see PR
+			     41453.  */
+			  var = build_fold_indirect_ref_loc (input_location,
+							     parmse.expr);
+			  tree clobber = build_clobber (TREE_TYPE (var));
+			  gfc_add_modify (&clobbers, var, clobber);
+			}
 		    }
 		  /* Catch base objects that are not variables.  */
 		  if (e->ts.type == BT_CLASS
@@ -6095,23 +6118,6 @@ gfc_conv_procedure_call (gfc_se * se, gfc_symbol * sym,
 			&& expr && e == expr->base_expr)
 		    base_object = build_fold_indirect_ref_loc (input_location,
 							       parmse.expr);
-
-		  /* A class array element needs converting back to be a
-		     class object, if the formal argument is a class object.  */
-		  if (fsym && fsym->ts.type == BT_CLASS
-			&& e->ts.type == BT_CLASS
-			&& ((CLASS_DATA (fsym)->as
-			     && CLASS_DATA (fsym)->as->type == AS_ASSUMED_RANK)
-			    || CLASS_DATA (e)->attr.dimension))
-		    gfc_conv_class_to_class (&parmse, e, fsym->ts, false,
-				     fsym->attr.intent != INTENT_IN
-				     && (CLASS_DATA (fsym)->attr.class_pointer
-					 || CLASS_DATA (fsym)->attr.allocatable),
-				     fsym->attr.optional
-				     && e->expr_type == EXPR_VARIABLE
-				     && e->symtree->n.sym->attr.optional,
-				     CLASS_DATA (fsym)->attr.class_pointer
-				     || CLASS_DATA (fsym)->attr.allocatable);
 
 		  /* If an ALLOCATABLE dummy argument has INTENT(OUT) and is
 		     allocated on entry, it must be deallocated.  */
@@ -6171,6 +6177,23 @@ gfc_conv_procedure_call (gfc_se * se, gfc_symbol * sym,
 
 		      gfc_add_expr_to_block (&se->pre, tmp);
 		    }
+
+		  /* A class array element needs converting back to be a
+		     class object, if the formal argument is a class object.  */
+		  if (fsym && fsym->ts.type == BT_CLASS
+			&& e->ts.type == BT_CLASS
+			&& ((CLASS_DATA (fsym)->as
+			     && CLASS_DATA (fsym)->as->type == AS_ASSUMED_RANK)
+			    || CLASS_DATA (e)->attr.dimension))
+		    gfc_conv_class_to_class (&parmse, e, fsym->ts, false,
+				     fsym->attr.intent != INTENT_IN
+				     && (CLASS_DATA (fsym)->attr.class_pointer
+					 || CLASS_DATA (fsym)->attr.allocatable),
+				     fsym->attr.optional
+				     && e->expr_type == EXPR_VARIABLE
+				     && e->symtree->n.sym->attr.optional,
+				     CLASS_DATA (fsym)->attr.class_pointer
+				     || CLASS_DATA (fsym)->attr.allocatable);
 
 		  if (fsym && (fsym->ts.type == BT_DERIVED
 			       || fsym->ts.type == BT_ASSUMED)
@@ -6855,6 +6878,7 @@ gfc_conv_procedure_call (gfc_se * se, gfc_symbol * sym,
 
       vec_safe_push (arglist, parmse.expr);
     }
+  gfc_add_block_to_block (&se->pre, &clobbers);
   gfc_finish_interface_mapping (&mapping, &se->pre, &se->post);
 
   if (comp)
@@ -8948,7 +8972,7 @@ gfc_conv_expr_type (gfc_se * se, gfc_expr * expr, tree type)
    values only.  */
 
 void
-gfc_conv_expr_reference (gfc_se * se, gfc_expr * expr, bool add_clobber)
+gfc_conv_expr_reference (gfc_se * se, gfc_expr * expr)
 {
   gfc_ss *ss;
   tree var;
@@ -8987,16 +9011,6 @@ gfc_conv_expr_reference (gfc_se * se, gfc_expr * expr, bool add_clobber)
 	  gfc_add_modify (&se->pre, var, se->expr);
 	  gfc_add_block_to_block (&se->pre, &se->post);
 	  se->expr = var;
-	}
-      else if (add_clobber && expr->ref == NULL)
-	{
-	  tree clobber;
-	  tree var;
-	  /* FIXME: This fails if var is passed by reference, see PR
-	     41453.  */
-	  var = expr->symtree->n.sym->backend_decl;
-	  clobber = build_clobber (TREE_TYPE (var));
-	  gfc_add_modify (&se->pre, var, clobber);
 	}
       return;
     }
@@ -10903,6 +10917,9 @@ trans_class_assignment (stmtblock_t *block, gfc_expr *lhs, gfc_expr *rhs,
       size = gfc_vptr_size_get (vptr);
       class_han = GFC_CLASS_TYPE_P (TREE_TYPE (lse->expr))
 	  ? gfc_class_data_get (lse->expr) : lse->expr;
+
+      if (!POINTER_TYPE_P (TREE_TYPE (class_han)))
+	class_han = gfc_build_addr_expr (NULL_TREE, class_han);
 
       /* Allocate block.  */
       gfc_init_block (&alloc);

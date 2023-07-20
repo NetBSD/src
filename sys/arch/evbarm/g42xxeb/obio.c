@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.13 2021/08/07 16:18:49 thorpej Exp $ */
+/*	$NetBSD: obio.c,v 1.16 2023/07/14 12:57:10 riastradh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec corp.  All rights reserved.
@@ -35,6 +35,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
+#include <sys/bitops.h>
 
 #include <machine/cpu.h>
 #include <sys/bus.h>
@@ -98,7 +99,7 @@ obio_intr(void *arg)
 #endif
 
 	for (pending = get_pending(sc);
-	     (irqno = find_first_bit(pending)) >= 0;
+	     (irqno = fls32(pending) - 1) >= 0;
 	     pending = get_pending(sc)) {
 
 		/* reset pending bit */
@@ -155,7 +156,7 @@ obio_softint(void *arg)
 	int psw;
 
 	psw = disable_interrupts(I32_bit);
-	while ((irqno = find_first_bit(sc->sc_intr_pending)) >= 0) {
+	while ((irqno = fls32(sc->sc_intr_pending) - 1) >= 0) {
 		sc->sc_intr_pending &= ~(1U<<irqno);
 
 		restore_interrupts(psw);

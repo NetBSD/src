@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.58 2023/05/22 19:36:13 rillig Exp $
+.\" $NetBSD: lint.1,v 1.62 2023/07/03 11:16:32 rillig Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 22, 2023
+.Dd July 3, 2023
 .Dt LINT 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nm
 .Op Fl abceFgHhPprTVvwxz
 .Op Fl i | Fl nu
-.Op Fl S | Fl s | Fl t | Fl Ac11
+.Op Fl S | Fl s | Fl t | Fl Ac11 | Fl Ac23
 .Op Fl B Ar directory
 .Op Fl D Ar name Ns Op =def
 .Op Fl d Ar directory
@@ -49,15 +49,15 @@
 .Op Fl MD
 .Op Fl l Ar library
 .Op Fl o Ar outputfile
-.Op Fl q Ar id Ns Op ,id ...
+.Op Fl q Ar id Ns Oo Ic , Ns Ar id Oc Ns ...
 .Op Fl U Ar name
 .Op Fl W Ar cppwarnarg
-.Op Fl X Ar id Ns Op ,id ...
+.Op Fl X Ar id Ns Oo Ic , Ns Ar id Oc Ns ...
 .Op Fl Z Ar cpparg
 .Ar
 .Nm lint
 .Op Fl abceFgHhprTVvwz
-.Op Fl S | Fl s | Fl t | Fl Ac11
+.Op Fl S | Fl s | Fl t | Fl Ac11 | Fl Ac23
 .Fl C Ar library
 .Op Fl B Ar directory
 .Op Fl D Ar name Ns Op =def
@@ -67,7 +67,7 @@
 .Op Fl R Ar old=new
 .Op Fl U Ar name
 .Op Fl W Ar cppwarnarg
-.Op Fl X Ar id Ns Op ,id ...
+.Op Fl X Ar id Ns Oo Ic , Ns Ar id Oc Ns ...
 .Op Fl Z Ar cpparg
 .Ar
 .Sh DESCRIPTION
@@ -182,6 +182,8 @@ printed followed by a question mark.
 .Bl -tag -width XXoutputfile
 .It Fl Ac11
 Allow features from C11, C99 and C90.
+.It Fl Ac23
+Allow features from C23, C17, C11, C99 and C90.
 .It Fl a
 Report assignments of
 .Sy long
@@ -249,7 +251,7 @@ types and combinations of
 .Sy enum
 and integer types.
 .It Fl F
-Print pathnames of files.
+Print pathnames of files, not only the basenames.
 .Nm
 normally prints the filename without the path.
 .It Fl g
@@ -343,7 +345,7 @@ when assigning to wider integer types, overflow warnings when assigning
 to wider types.
 .It Fl p
 Attempt to check portability of code to other platforms of C.
-.It Fl q Ar id Ns Op ,id ...
+.It Fl q Ar id Ns Oo Ic , Ns Ar id Oc Ns ...
 In addition to the usual warnings and errors, run the selected queries,
 which are listed in
 .Xr lint 7 Ns .
@@ -424,7 +426,7 @@ Pass the warning directive to
 .Xr cpp 1 .
 .It Fl w
 Treat warnings as errors.
-.It Fl X Ar id Ns Op ,id ...
+.It Fl X Ar id Ns Oo Ic , Ns Ar id Oc Ns ...
 Suppress error messages identified by the list of ids.
 A list of messages and ids can be found in
 .Xr lint 7 .
@@ -594,8 +596,12 @@ option must exist.
 If this environment variable is undefined, then the default path
 .Pa /usr/libdata/lint
 will be used to search for the libraries.
-.It Ev LINT_KEEP_CPPOUT_ON_ERROR
-If
+.It Ev LINT_KEEP_CPPOUT
+If set to
+.Sq Li yes ,
+or if set to
+.Sq Li on-error
+and
 .Nm
 exits unsuccessfully, do no delete the output from the C preprocessor,
 allowing for manual inspection.
@@ -651,7 +657,7 @@ and strict bool mode.
 .An Jochen Pohl
 (1995)
 .An Roland Illig
-(2021)
+(2021 to 2023)
 .\" .Sh CAVEATS
 .Sh BUGS
 The routines

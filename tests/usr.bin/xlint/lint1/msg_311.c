@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_311.c,v 1.3 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_311.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_311.c"
 
 // Test for message: symbol renaming can't be used on automatic variables [311]
+
+/* lint1-extra-flags: -X 351 */
 
 typedef int (*callback)(void);
 

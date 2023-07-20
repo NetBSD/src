@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.42 2023/04/19 00:23:45 yamaguchi Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.43 2023/07/07 07:19:36 rin Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.42 2023/04/19 00:23:45 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.43 2023/07/07 07:19:36 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,15 +138,16 @@ static bool	virtio_pci_msix_enabled(struct virtio_pci_softc *);
 #define VIRTIO_MSIX_QUEUE_VECTOR_INDEX	1
 
 /*
- * When using PCI attached virtio on aarch64-eb under Qemu, the IO space
- * suddenly read BIG_ENDIAN where it should stay LITTLE_ENDIAN. The data read
- * 1 byte at a time seem OK but reading bigger lengths result in swapped
- * endian. This is most notable on reading 8 byters since we can't use
- * bus_space_{read,write}_8().
+ * For big-endian aarch64/armv7 on QEMU (and most real HW), only CPU cores
+ * are running in big-endian mode, with all peripheral being configured to
+ * little-endian mode. Their default bus_space(9) functions forcibly swap
+ * byte-order. This guarantees that PIO'ed data from pci(4), e.g., are
+ * correctly handled by bus_space(9), while DMA'ed ones should be swapped
+ * by hand, in violation of virtio(4) specifications.
  */
 
-#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
-#	define READ_ENDIAN_09	BIG_ENDIAN	/* should be LITTLE_ENDIAN */
+#if (defined(__aarch64__) || defined(__arm__)) && BYTE_ORDER == BIG_ENDIAN
+#	define READ_ENDIAN_09	BIG_ENDIAN
 #	define READ_ENDIAN_10	BIG_ENDIAN
 #	define STRUCT_ENDIAN_09	BIG_ENDIAN
 #	define STRUCT_ENDIAN_10	LITTLE_ENDIAN

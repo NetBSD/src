@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.356 2023/06/15 13:11:20 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.357 2023/07/06 21:10:15 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -206,6 +206,7 @@ BW	bandwidth
 BWM	block-write mode
 BUAG	big ugly ASCII graphic
 CA	certificate authority
+CAC	cryptographic access control
 CACLS	change access control lists
 CAD	computer-aided design
 CAM	computer assisted manufacturing

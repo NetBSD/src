@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.602 2023/04/12 06:39:15 riastradh Exp $
+# $NetBSD: GENERIC,v 1.604 2023/07/15 22:16:00 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.602 $"
+#ident		"GENERIC-$Revision: 1.604 $"
 
 maxusers	64		# estimated number of users
 
@@ -170,6 +170,10 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 # Fault Injection Driver.
 #options 	FAULT
+
+# Heartbeat checks
+options 	HEARTBEAT
+options 	HEARTBEAT_MAX_PERIOD_DEFAULT=15
 
 # Compatibility options
 # x86_64 never shipped with a.out binaries; the two options below are

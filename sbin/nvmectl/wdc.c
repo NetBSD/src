@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.4 2018/04/18 10:11:44 nonaka Exp $	*/
+/*	$NetBSD: wdc.c,v 1.6 2023/07/05 10:58:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 Netflix, Inc
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: wdc.c,v 1.4 2018/04/18 10:11:44 nonaka Exp $");
+__RCSID("$NetBSD: wdc.c,v 1.6 2023/07/05 10:58:46 riastradh Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/wdc.c 329824 2018-02-22 13:32:31Z wma $");
 #endif

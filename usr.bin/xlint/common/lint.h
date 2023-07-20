@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.36 2023/05/22 12:55:04 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.42 2023/07/13 08:40:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -47,6 +47,7 @@
 
 #include "param.h"
 
+#if defined(IS_LINT1) || defined(IS_LINT2)
 /*
  * Type specifiers, used in type structures (type_t) and elsewhere.
  */
@@ -64,8 +65,8 @@ typedef enum {
 	UINT,		/* unsigned int */
 	LONG,		/* (signed) long */
 	ULONG,		/* unsigned long */
-	QUAD,		/* (signed) long long */
-	UQUAD,		/* unsigned long long */
+	LLONG,		/* (signed) long long */
+	ULLONG,		/* unsigned long long */
 #ifdef INT128_SIZE
 	INT128,		/* (signed) __int128_t */
 	UINT128,	/* __uint128_t */
@@ -73,6 +74,10 @@ typedef enum {
 	FLOAT,		/* float */
 	DOUBLE,		/* double or, with tflag, long float */
 	LDOUBLE,	/* long double */
+	COMPLEX,	/* keyword "_Complex", only used in the parser */
+	FCOMPLEX,	/* float _Complex */
+	DCOMPLEX,	/* double _Complex */
+	LCOMPLEX,	/* long double _Complex */
 	VOID,		/* void */
 	STRUCT,		/* structure tag */
 	UNION,		/* union tag */
@@ -80,11 +85,7 @@ typedef enum {
 	PTR,		/* pointer */
 	ARRAY,		/* array */
 	FUNC,		/* function */
-	COMPLEX,	/* keyword "_Complex", only used in the parser */
-	FCOMPLEX,	/* float _Complex */
-	DCOMPLEX,	/* double _Complex */
-	LCOMPLEX	/* long double _Complex */
-#define NTSPEC (LCOMPLEX + 1)
+#define NTSPEC ((int)FUNC + 1)
 } tspec_t;
 
 
@@ -94,8 +95,14 @@ typedef enum {
 typedef	struct {
 #ifdef IS_LINT1
 	unsigned int tt_size_in_bits;
-	unsigned int tt_portable_size_in_bits; /* different from
-					 * tt_size_in_bits if pflag is set */
+	enum rank_kind {
+		RK_NONE,
+		RK_INTEGER,
+		RK_FLOATING,
+		RK_COMPLEX,
+	} tt_rank_kind;
+	unsigned int tt_rank_value;	/* relative size of the type; depends
+					 * on pflag and PTRDIFF_TSPEC */
 #endif
 	tspec_t	tt_signed_counterpart;
 	tspec_t	tt_unsigned_counterpart;
@@ -110,20 +117,22 @@ typedef	struct {
 	const char *tt_name;		/* name of the type */
 } ttab_t;
 
-#define size_in_bits(t)		(ttab[t].tt_size_in_bits)
-#define portable_size_in_bits(t) (ttab[t].tt_portable_size_in_bits)
-#define signed_type(t)		(ttab[t].tt_signed_counterpart)
-#define unsigned_type(t)	(ttab[t].tt_unsigned_counterpart)
-#define is_integer(t)		(ttab[t].tt_is_integer)
-#define is_uinteger(t)		(ttab[t].tt_is_uinteger)
-#define is_floating(t)		(ttab[t].tt_is_floating)
-#define is_arithmetic(t)	(ttab[t].tt_is_arithmetic)
-#define is_complex(t)		(ttab[t].tt_is_complex)
-#define is_scalar(t)		(ttab[t].tt_is_scalar)
-
-#if defined(IS_LINT1) || defined(IS_LINT2)
 extern	ttab_t	ttab[];
-#endif
+
+static inline const ttab_t *
+type_properties(tspec_t t) {
+	return ttab + t;
+}
+
+#define size_in_bits(t)		(type_properties(t)->tt_size_in_bits)
+#define signed_type(t)		(type_properties(t)->tt_signed_counterpart)
+#define unsigned_type(t)	(type_properties(t)->tt_unsigned_counterpart)
+#define is_integer(t)		(type_properties(t)->tt_is_integer)
+#define is_uinteger(t)		(type_properties(t)->tt_is_uinteger)
+#define is_floating(t)		(type_properties(t)->tt_is_floating)
+#define is_arithmetic(t)	(type_properties(t)->tt_is_arithmetic)
+#define is_complex(t)		(type_properties(t)->tt_is_complex)
+#define is_scalar(t)		(type_properties(t)->tt_is_scalar)
 
 
 typedef	enum {
@@ -145,6 +154,7 @@ typedef	struct	ob {
 typedef struct lint1_type type_t;
 #else
 typedef struct lint2_type type_t;
+#endif
 #endif
 
 #include "externs.h"

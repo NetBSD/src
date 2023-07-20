@@ -40,7 +40,7 @@ make_key () {
             sed 's/allow { 10.53.0.4/allow { any/' >> ns4/named.conf
 }
 
-make_key 1 ${EXTRAPORT1} hmac-md5
+$FEATURETEST --md5 && make_key 1 ${EXTRAPORT1} hmac-md5
 make_key 2 ${EXTRAPORT2} hmac-sha1
 make_key 3 ${EXTRAPORT3} hmac-sha224
 make_key 4 ${EXTRAPORT4} hmac-sha256

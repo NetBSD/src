@@ -70,7 +70,6 @@ def do_work(named_proc, resolver, rndc_cmd, kill_method, n_workers, n_queries):
     # We're going to execute queries in parallel by means of a thread pool.
     # dnspython functions block, so we need to circunvent that.
     with ThreadPoolExecutor(n_workers + 1) as executor:
-
         # Helper dict, where keys=Future objects and values are tags used
         # to process results later.
         futures = {}
@@ -132,6 +131,31 @@ def do_work(named_proc, resolver, rndc_cmd, kill_method, n_workers, n_queries):
             assert ret_code == 0
 
 
+def wait_for_named_loaded(resolver, retries=10):
+    for _ in range(retries):
+        try:
+            resolver.query("version.bind", "TXT", "CH")
+            return True
+        except (dns.resolver.NoNameservers, dns.exception.Timeout):
+            time.sleep(1)
+    return False
+
+
+def wait_for_proc_termination(proc, max_timeout=10):
+    for _ in range(max_timeout):
+        if proc.poll() is not None:
+            return True
+        time.sleep(1)
+
+    proc.send_signal(signal.SIGABRT)
+    for _ in range(max_timeout):
+        if proc.poll() is not None:
+            return True
+        time.sleep(1)
+
+    return False
+
+
 def test_named_shutdown(named_port, control_port):
     # pylint: disable-msg=too-many-locals
     cfg_dir = os.path.join(os.getcwd(), "resolver")
@@ -168,40 +192,18 @@ def test_named_shutdown(named_port, control_port):
     for kill_method in ("rndc", "sigterm"):
         named_cmdline = [named, "-c", cfg_file, "-f"]
         with subprocess.Popen(named_cmdline, cwd=cfg_dir) as named_proc:
-            # Ensure named is running
-            assert named_proc.poll() is None
-            # wait for named to finish loading
-            for _ in range(10):
-                try:
-                    resolver.query("version.bind", "TXT", "CH")
-                    break
-                except (dns.resolver.NoNameservers, dns.exception.Timeout):
-                    time.sleep(1)
-
-            do_work(
-                named_proc, resolver, rndc_cmd, kill_method, n_workers=12, n_queries=16
-            )
-
-            # Wait named to exit for a maximum of MAX_TIMEOUT seconds.
-            MAX_TIMEOUT = 10
-            is_dead = False
-            for _ in range(MAX_TIMEOUT):
-                if named_proc.poll() is not None:
-                    is_dead = True
-                    break
-                time.sleep(1)
-
-            if not is_dead:
-                named_proc.send_signal(signal.SIGABRT)
-                for _ in range(MAX_TIMEOUT):
-                    if named_proc.poll() is not None:
-                        is_dead = True
-                        break
-                    time.sleep(1)
-                if not is_dead:
-                    named_proc.kill()
-
-            assert is_dead
-            # Ensures that named exited gracefully.
-            # If it crashed (abort()) exitcode will be non zero.
-            assert named_proc.returncode == 0
+            try:
+                assert named_proc.poll() is None, "named isn't running"
+                assert wait_for_named_loaded(resolver)
+                do_work(
+                    named_proc,
+                    resolver,
+                    rndc_cmd,
+                    kill_method,
+                    n_workers=12,
+                    n_queries=16,
+                )
+                assert wait_for_proc_termination(named_proc)
+                assert named_proc.returncode == 0, "named crashed"
+            finally:  # Ensure named is terminated in case of an exception
+                named_proc.kill()

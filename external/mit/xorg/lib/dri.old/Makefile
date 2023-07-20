@@ -1,9 +1,20 @@
-# $NetBSD: Makefile,v 1.4 2022/09/29 18:58:04 rjs Exp $
+# $NetBSD: Makefile,v 1.7 2023/07/15 21:24:46 rjs Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
-# XXX: anonymous structs inside anonymous unions don't work.
-NOLINT=yes
+# Uses 'assert(cond)' in a comma expression, leading to a syntax error because
+# in lint mode, 'assert(cond)' expands to an empty string, and '(, expr)' is
+# not an expression.
+NOLINT=
+
+LINTFLAGS+=	-X 213		# void function '%s' cannot return value
+LINTFLAGS+=	-Ac23		# allow C23, for empty initializer braces
+
+# When build_id.c expands the macro invocation 'ElfW(Nhdr)', the result is
+# 'Elf64 /* MD native binary size */ _Nhdr'. The comment prevents the two
+# identifiers from being concatenated.
+build_id.ln:
+	touch $@
 
 .include <bsd.own.mk>
 
@@ -438,8 +449,8 @@ LIBDPLIBS+= 	drm_intel	${.CURDIR}/../libdrm_intel
 LIBDPLIBS+= 	drm_radeon	${.CURDIR}/../libdrm_radeon
 
 MESA_SRC_MODULES=  main math math_xform vbo tnl swrast ss common asm_c program asm_s
-.include "../libmesa.old.mk"
-.include "../libglsl.old.mk"
+.include "../libmesa${OLD_SUFFIX}.mk"
+.include "../libglsl${OLD_SUFFIX}.mk"
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS+=	streaming-load-memcpy.c
@@ -449,7 +460,7 @@ CPPFLAGS.isl_tiled_memcpy_sse41.c+=	-msse4.1
 
 CFLAGS+= ${${ACTIVE_CC} == "clang":? -Wno-error=atomic-alignment :}
 
-.include "../driver.mk"
+.include "../driver${OLD_SUFFIX}.mk"
 
 .for _d in ${DRIVERS}
 SYMLINKS+= mesa_dri_drivers.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so.${SHLIB_MAJOR} 
@@ -463,7 +474,7 @@ SYMLINKS+= mesa_dri_drivers.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.
 
 PKGCONFIG=	dri
 PKGDIST.dri=	${X11SRCDIR.Mesa}/../src/pkgconfig
-.include "${.CURDIR}/../libGL/mesa-ver.mk"
+.include "${.CURDIR}/../libGL${OLD_SUFFIX}/mesa-ver.mk"
 PKGCONFIG_VERSION.dri=	${MESA_VER}
 
 # XXX remove these from bsd.x11.mk

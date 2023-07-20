@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11 2023/06/09 15:36:31 rillig Exp $	*/
+/*	$NetBSD: param.h,v 1.13 2023/07/13 08:40:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -32,19 +32,6 @@
  */
 
 /*
- * Sizes of hash tables
- * Should be primes. Possible primes are
- * 307, 401, 503, 601, 701, 809, 907, 1009, 1103, 1201, 1301, 1409, 1511.
- *
- * HSHSIZ1	symbol table 1st pass
- * HSHSIZ2	symbol table 2nd pass
- * THSHSIZ2	type table 2nd pass
- */
-#define	HSHSIZ1		503
-#define HSHSIZ2		1009
-#define	THSHSIZ2	1009
-
-/*
  * Pull in target-specific parameters.
  */
 #include "targparam.h"
@@ -52,4 +39,4 @@
 /*
  * Make sure this matches wchar_t.
  */
-#define WCHAR	INT
+#define WCHAR_TSPEC	INT

@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.2 2022/06/19 11:50:42 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.7 2023/07/08 11:03:00 rillig Exp $
 
 --[[
 
@@ -37,8 +37,8 @@ end
 local function load_lines(fname)
   local lines = {}
 
-  local f = io.open(fname, "r")
-  if f == nil then return nil end
+  local f, err, errno = io.open(fname, "r")
+  if f == nil then return nil, err, errno end
 
   for line in f:lines() do
     table.insert(lines, line)
@@ -46,6 +46,15 @@ local function load_lines(fname)
   f:close()
 
   return lines
+end
+
+
+local function save_lines(fname, lines)
+  local f = io.open(fname, "w")
+  for _, line in ipairs(lines) do
+    f:write(line .. "\n")
+  end
+  f:close()
 end
 
 
@@ -58,7 +67,7 @@ end
 --   },
 --   { "file.c(18)", "file.c(23)" }
 local function load_c(fname)
-
+  local basename = fname:match("([^/]+)$")
   local lines = load_lines(fname)
   if lines == nil then return nil, nil end
 
@@ -87,9 +96,13 @@ local function load_c(fname)
 
     local ppl_lineno, ppl_fname = line:match("^#%s*(%d+)%s+\"([^\"]+)\"")
     if ppl_lineno ~= nil then
-      if ppl_fname == fname and tonumber(ppl_lineno) ~= phys_lineno + 1 then
+      if ppl_fname == basename and tonumber(ppl_lineno) ~= phys_lineno + 1 then
         print_error("error: %s:%d: preprocessor line number must be %d",
           fname, phys_lineno, phys_lineno + 1)
+      end
+      if ppl_fname:match("%.c$") and ppl_fname ~= basename then
+        print_error("error: %s:%d: preprocessor filename must be '%s'",
+          fname, phys_lineno, basename)
       end
       pp_fname = ppl_fname
       pp_lineno = ppl_lineno
@@ -104,7 +117,7 @@ end
 --
 -- example return value: {
 --   {
---     exp_lineno = "18",
+--     exp_lineno = 18,
 --     location = "file.c(18)",
 --     message = "not a constant expression [123]",
 --   }
@@ -132,9 +145,6 @@ local function load_exp(exp_fname)
 end
 
 
----@param comment string
----@param pattern string
----@return boolean
 local function matches(comment, pattern)
   if comment == "" then return false end
 
@@ -178,13 +188,32 @@ test(function()
 end)
 
 
-local function check_test(c_fname)
+-- Inserts the '/* expect */' lines to the .c file, so that the .c file matches
+-- the .exp file.  Multiple 'expect' comments for a single line of code are not
+-- handled correctly, but it's still better than doing the same work manually.
+local function insert_missing(missing)
+  for fname, items in pairs(missing) do
+    table.sort(items, function(a, b) return a.lineno > b.lineno end)
+    local lines = assert(load_lines(fname))
+    for _, item in ipairs(items) do
+      local lineno, message = item.lineno, item.message
+      local indent = (lines[lineno] or ""):match("^([ \t]*)")
+      local line = ("%s/* expect+1: %s */"):format(indent, message)
+      table.insert(lines, lineno, line)
+    end
+    save_lines(fname, lines)
+  end
+end
+
+
+local function check_test(c_fname, update)
   local exp_fname = c_fname:gsub("%.c$", ".exp"):gsub(".+/", "")
 
   local c_comment_locations, c_comments_by_location = load_c(c_fname)
   if c_comment_locations == nil then return end
 
   local exp_messages = load_exp(exp_fname) or {}
+  local missing = {}
 
   for _, exp_message in ipairs(exp_messages) do
     local c_comments = c_comments_by_location[exp_message.location] or {}
@@ -203,6 +232,16 @@ local function check_test(c_fname)
     if not found then
       print_error("error: %s: missing /* expect+1: %s */",
         exp_message.location, expected_message)
+
+      if update then
+        local fname = exp_message.location:match("^([^(]+)")
+        local lineno = tonumber(exp_message.location:match("%((%d+)%)$"))
+        if not missing[fname] then missing[fname] = {} end
+        table.insert(missing[fname], {
+          lineno = lineno,
+          message = expected_message,
+        })
+      end
     end
   end
 
@@ -215,12 +254,21 @@ local function check_test(c_fname)
       end
     end
   end
+
+  if missing then
+    insert_missing(missing)
+  end
 end
 
 
 local function main(args)
+  local update = args[1] == "-u"
+  if update then
+    table.remove(args, 1)
+  end
+
   for _, name in ipairs(args) do
-    check_test(name)
+    check_test(name, update)
   end
 end
 

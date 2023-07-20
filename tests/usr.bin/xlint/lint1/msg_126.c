@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_126.c,v 1.6 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_126.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_126.c"
 
 // Test for message: incompatible types '%s' and '%s' in conditional [126]
+
+/* lint1-extra-flags: -X 351 */
 
 /* ARGSUSED */
 int

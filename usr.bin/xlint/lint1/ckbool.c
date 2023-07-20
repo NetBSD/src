@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.22 2023/06/24 20:50:54 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.25 2023/07/10 19:47:12 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.22 2023/06/24 20:50:54 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.25 2023/07/10 19:47:12 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -49,12 +49,6 @@ __RCSID("$NetBSD: ckbool.c,v 1.22 2023/06/24 20:50:54 rillig Exp $");
  * See d_c99_bool_strict.c for the exact rules and for examples.
  */
 
-
-static const char *
-op_name(op_t op)
-{
-	return modtab[op].m_name;
-}
 
 /*
  * See if in strict bool mode, the operator takes either two bool operands
@@ -79,7 +73,7 @@ is_symmetric_bool_or_other(op_t op)
 static bool
 is_int_constant_zero(const tnode_t *tn, tspec_t t)
 {
-	return t == INT && tn->tn_op == CON && tn->tn_val.v_quad == 0;
+	return t == INT && tn->tn_op == CON && tn->tn_val.u.integer == 0;
 }
 
 static bool
@@ -120,7 +114,7 @@ typeok_strict_bool_binary_compatible(op_t op, int arg,
 		return true;
 
 	if (op == FARG) {
-		/* argument #%d expects '%s', gets passed '%s' */
+		/* argument %d expects '%s', gets passed '%s' */
 		error(334, arg, tspec_name(lt), tspec_name(rt));
 	} else if (op == RETURN) {
 		/* function has return type '%s' but returns '%s' */

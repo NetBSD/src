@@ -24,6 +24,7 @@ prog = "dnssec-coverage"
 
 from isc import dnskey, eventlist, keydict, keyevent, keyzone, utils
 
+
 ############################################################################
 # print a fatal error and exit
 ############################################################################

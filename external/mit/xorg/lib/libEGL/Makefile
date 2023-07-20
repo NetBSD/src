@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2021/07/13 05:22:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2023/07/16 22:20:54 rjs Exp $
 
 .include <bsd.own.mk>
 
@@ -22,8 +22,6 @@ SRCS.egl= \
 	eglcurrent.c \
 	egldevice.c \
 	egldisplay.c \
-	egldriver.c \
-	eglfallbacks.c \
 	eglglobals.c \
 	eglimage.c \
 	egllog.c \
@@ -44,6 +42,7 @@ SRCS.drivers/dri2= \
 BUILDSYMLINKS+= ${X11SRCDIR.Mesa}/src/util/debug.c UTILdebug.c
 SRCS.util=      \
 	UTILdebug.c \
+	os_file.c \
 	u_process.c
 
 .for file in ${SRCS.util}

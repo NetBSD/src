@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.49 2022/10/26 23:23:52 riastradh Exp $	*/
+/*	$NetBSD: timevar.h,v 1.51 2023/07/17 13:44:24 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008, 2020 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #ifndef _SYS_TIMEVAR_H_
 #define _SYS_TIMEVAR_H_
 
+#include <sys/atomic.h>
 #include <sys/callout.h>
 #include <sys/queue.h>
 #include <sys/signal.h>
@@ -234,8 +235,47 @@ void	itimer_gettime(const struct itimer *, struct itimerspec *);
 void	ptimer_tick(struct lwp *, bool);
 void	ptimers_free(struct proc *, int);
 
-extern volatile time_t time_second;	/* current second in the epoch */
-extern volatile time_t time_uptime;	/* system uptime in seconds */
+#define	time_second	getrealtime()
+#define	time_uptime	getuptime()
+#define	time_uptime32	getuptime32()
+
+#ifdef __HAVE_ATOMIC64_LOADSTORE
+
+extern volatile time_t time__second;	/* current second in the epoch */
+extern volatile time_t time__uptime;	/* system uptime in seconds */
+
+static inline time_t
+getrealtime(void)
+{
+	return atomic_load_relaxed(&time__second);
+}
+
+static inline time_t
+getuptime(void)
+{
+	return atomic_load_relaxed(&time__uptime);
+}
+
+static inline time_t
+getboottime(void)
+{
+	return getrealtime() - getuptime();
+}
+
+static inline uint32_t
+getuptime32(void)
+{
+	return getuptime() & 0xffffffff;
+}
+
+#else
+
+time_t		getrealtime(void);
+time_t		getuptime(void);
+time_t		getboottime(void);
+uint32_t	getuptime32(void);
+
+#endif
 
 extern int time_adjusted;
 
@@ -248,13 +288,13 @@ extern int time_adjusted;
 static __inline time_t time_mono_to_wall(time_t t)
 {
 
-	return t - time_uptime + time_second;
+	return t + getboottime();
 }
 
 static __inline time_t time_wall_to_mono(time_t t)
 {
 
-	return t - time_second + time_uptime;
+	return t - getboottime();
 }
 
 #endif /* !_SYS_TIMEVAR_H_ */

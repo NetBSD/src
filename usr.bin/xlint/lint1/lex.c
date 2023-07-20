@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.161 2023/06/24 08:11:12 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.188 2023/07/15 13:35:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -15,8 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
- *      The NetBSD Project.
+ *	This product includes software developed by Jochen Pohl for
+ *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.161 2023/06/24 08:11:12 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.188 2023/07/15 13:35:24 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -68,49 +68,62 @@ bool in_gcc_attribute;
 bool in_system_header;
 
 /*
- * Valid values for 'since' are 78, 90, 99, 11.
+ * Valid values for 'since' are 78, 90, 99, 11, 23.
  *
- * The C11 keywords are added in C99 mode as well, to provide good error
- * messages instead of a simple parse error.  If the keyword '_Generic' were
- * not defined, it would be interpreted as an implicit function call, leading
- * to a parse error.
+ * The C11 keywords are all taken from the reserved namespace.  They are added
+ * in C99 mode as well, to make the parse error messages more useful.  For
+ * example, if the keyword '_Generic' were not defined, it would be interpreted
+ * as an implicit function call, leading to a parse error.
+ *
+ * The C23 keywords are not made available in earlier modes, as they may
+ * conflict with user-defined identifiers.
  */
-#define kwdef(name, token, scl, tspec, tqual,	since, gcc, deco) \
-	{ \
-		name, token, scl, tspec, tqual, \
+#define kwdef(name, token, detail,	since, gcc, deco) \
+	{ /* CONSTCOND */ \
+		name, token, detail, \
 		(since) == 90, \
-		/* CONSTCOND */ (since) == 99 || (since) == 11, \
+		(since) == 99 || (since) == 11, \
+		(since) == 23, \
 		(gcc) > 0, \
 		((deco) & 1) != 0, ((deco) & 2) != 0, ((deco) & 4) != 0, \
 	}
 #define kwdef_token(name, token,		since, gcc, deco) \
-	kwdef(name, token, 0, 0, 0,		since, gcc, deco)
+	kwdef(name, token, {false},		since, gcc, deco)
 #define kwdef_sclass(name, sclass,		since, gcc, deco) \
-	kwdef(name, T_SCLASS, sclass, 0, 0,	since, gcc, deco)
+	kwdef(name, T_SCLASS, .u.kw_scl = (sclass), since, gcc, deco)
 #define kwdef_type(name, tspec,			since) \
-	kwdef(name, T_TYPE, 0, tspec, 0,	since, 0, 1)
+	kwdef(name, T_TYPE, .u.kw_tspec = (tspec), since, 0, 1)
 #define kwdef_tqual(name, tqual,		since, gcc, deco) \
-	kwdef(name, T_QUAL, 0, 0, tqual,	since, gcc, deco)
+	kwdef(name, T_QUAL, .u.kw_tqual = {.tqual = true}, since, gcc, deco)
 #define kwdef_keyword(name, token) \
-	kwdef(name, token, 0, 0, 0,		78, 0, 1)
+	kwdef(name, token, {false},		78, 0, 1)
 
 /* During initialization, these keywords are written to the symbol table. */
 static const struct keyword {
-	const	char *kw_name;
-	int	kw_token;	/* token returned by yylex() */
-	scl_t	kw_scl;		/* storage class if kw_token is T_SCLASS */
-	tspec_t	kw_tspec;	/* type specifier if kw_token is T_TYPE or
-				 * T_STRUCT_OR_UNION */
-	tqual_t	kw_tqual;	/* type qualifier if kw_token is T_QUAL */
-	bool	kw_c90:1;	/* available in C90 mode */
-	bool	kw_c99_or_c11:1; /* available in C99 or C11 mode */
+	const	char kw_name[20];
+	int	kw_token;	/* token to be returned by yylex() */
+	union {
+		bool kw_dummy;
+		scl_t kw_scl;		/* if kw_token is T_SCLASS */
+		tspec_t kw_tspec;	/* if kw_token is T_TYPE or
+					 * T_STRUCT_OR_UNION */
+		type_qualifiers kw_tqual;	/* if kw_token is T_QUAL */
+		function_specifier kw_fs;	/* if kw_token is
+						 * T_FUNCTION_SPECIFIER */
+	} u;
+	bool	kw_added_in_c90:1;
+	bool	kw_added_in_c99_or_c11:1;
+	bool	kw_added_in_c23:1;
 	bool	kw_gcc:1;	/* available in GCC mode */
 	bool	kw_plain:1;	/* 'name' */
 	bool	kw_leading:1;	/* '__name' */
 	bool	kw_both:1;	/* '__name__' */
 } keywords[] = {
+	// TODO: _Alignas is not available in C99.
 	kwdef_keyword(	"_Alignas",	T_ALIGNAS),
+	// TODO: _Alignof is not available in C99.
 	kwdef_keyword(	"_Alignof",	T_ALIGNOF),
+	// TODO: alignof is not available in C99.
 	kwdef_token(	"alignof",	T_ALIGNOF,		78,0,6),
 	kwdef_token(	"asm",		T_ASM,			78,1,7),
 	kwdef_token(	"_Atomic",	T_ATOMIC,		11,0,1),
@@ -122,12 +135,13 @@ static const struct keyword {
 	kwdef_keyword(	"case",		T_CASE),
 	kwdef_type(	"char",		CHAR,			78),
 	kwdef_type(	"_Complex",	COMPLEX,		99),
-	kwdef_tqual(	"const",	CONST,			90,0,7),
+	kwdef_tqual(	"const",	tq_const,		90,0,7),
 	kwdef_keyword(	"continue",	T_CONTINUE),
 	kwdef_keyword(	"default",	T_DEFAULT),
 	kwdef_keyword(	"do",		T_DO),
 	kwdef_type(	"double",	DOUBLE,			78),
 	kwdef_keyword(	"else",		T_ELSE),
+	// XXX: enum is not available in traditional C.
 	kwdef_keyword(	"enum",		T_ENUM),
 	kwdef_token(	"__extension__",T_EXTENSION,		78,1,1),
 	kwdef_sclass(	"extern",	EXTERN,			78,0,1),
@@ -137,38 +151,41 @@ static const struct keyword {
 	kwdef_keyword(	"goto",		T_GOTO),
 	kwdef_keyword(	"if",		T_IF),
 	kwdef_token(	"__imag__",	T_IMAG,			78,1,1),
-	kwdef_sclass(	"inline",	INLINE,			99,0,7),
+	kwdef("inline",	T_FUNCTION_SPECIFIER, .u.kw_fs = FS_INLINE, 99,0,7),
 	kwdef_type(	"int",		INT,			78),
 #ifdef INT128_SIZE
 	kwdef_type(	"__int128_t",	INT128,			99),
 #endif
 	kwdef_type(	"long",		LONG,			78),
-	kwdef_token(	"_Noreturn",	T_NORETURN,		11,0,1),
+	kwdef("_Noreturn", T_FUNCTION_SPECIFIER, .u.kw_fs = FS_NORETURN, 11,0,1),
+	// XXX: __packed is GCC-specific.
 	kwdef_token(	"__packed",	T_PACKED,		78,0,1),
 	kwdef_token(	"__real__",	T_REAL,			78,1,1),
 	kwdef_sclass(	"register",	REG,			78,0,1),
-	kwdef_tqual(	"restrict",	RESTRICT,		99,0,7),
+	kwdef_tqual(	"restrict",	tq_restrict,		99,0,7),
 	kwdef_keyword(	"return",	T_RETURN),
 	kwdef_type(	"short",	SHORT,			78),
-	kwdef(		"signed",	T_TYPE, 0, SIGNED, 0,	90,0,3),
+	kwdef(		"signed", T_TYPE, .u.kw_tspec = SIGNED,	90,0,3),
 	kwdef_keyword(	"sizeof",	T_SIZEOF),
 	kwdef_sclass(	"static",	STATIC,			78,0,1),
+	// XXX: _Static_assert was added in C11.
 	kwdef_keyword(	"_Static_assert",	T_STATIC_ASSERT),
-	kwdef("struct",	T_STRUCT_OR_UNION, 0,	STRUCT,	0,	78,0,1),
+	kwdef("struct",	T_STRUCT_OR_UNION, .u.kw_tspec = STRUCT, 78,0,1),
 	kwdef_keyword(	"switch",	T_SWITCH),
 	kwdef_token(	"__symbolrename",	T_SYMBOLRENAME,	78,0,1),
-	kwdef_tqual(	"__thread",	THREAD,			78,1,1),
-	/* XXX: _Thread_local is a storage-class-specifier, not tqual. */
-	kwdef_tqual(	"_Thread_local", THREAD,		11,0,1),
+	kwdef_sclass(	"__thread",	THREAD_LOCAL,		78,1,1),
+	kwdef_sclass(	"_Thread_local", THREAD_LOCAL,		11,0,1),
+	kwdef_sclass(	"thread_local", THREAD_LOCAL,		23,0,1),
 	kwdef_sclass(	"typedef",	TYPEDEF,		78,0,1),
 	kwdef_token(	"typeof",	T_TYPEOF,		78,1,7),
 #ifdef INT128_SIZE
 	kwdef_type(	"__uint128_t",	UINT128,		99),
 #endif
-	kwdef("union",	T_STRUCT_OR_UNION, 0,	UNION,	0,	78,0,1),
+	kwdef("union",	T_STRUCT_OR_UNION, .u.kw_tspec = UNION,	78,0,1),
 	kwdef_type(	"unsigned",	UNSIGN,			78),
+	// XXX: void is not available in traditional C.
 	kwdef_type(	"void",		VOID,			78),
-	kwdef_tqual(	"volatile",	VOLATILE,		90,0,7),
+	kwdef_tqual(	"volatile",	tq_volatile,		90,0,7),
 	kwdef_keyword(	"while",	T_WHILE),
 #undef kwdef
 #undef kwdef_token
@@ -182,7 +199,7 @@ static const struct keyword {
  * The symbol table containing all keywords, identifiers and labels. The hash
  * entries are linked via sym_t.s_symtab_next.
  */
-static sym_t *symtab[HSHSIZ1];
+static sym_t *symtab[503];
 
 /*
  * The kind of the next expected symbol, to distinguish the namespaces of
@@ -202,7 +219,7 @@ hash(const char *s)
 		v = (v << 4) + (unsigned char)*p;
 		v ^= v >> 28;
 	}
-	return v % HSHSIZ1;
+	return v % (sizeof(symtab) / sizeof(symtab[0]));
 }
 
 static void
@@ -247,7 +264,7 @@ static void
 symtab_remove_locals(void)
 {
 
-	for (size_t i = 0; i < HSHSIZ1; i++) {
+	for (size_t i = 0; i < sizeof(symtab) / sizeof(symtab[0]); i++) {
 		for (sym_t *sym = symtab[i]; sym != NULL; ) {
 			sym_t *next = sym->s_symtab_next;
 			if (sym->s_block_level >= 1)
@@ -289,6 +306,7 @@ debug_symtab(void)
 {
 	struct syms syms = { xcalloc(64, sizeof(syms.items[0])), 0, 64 };
 
+	debug_enter();
 	for (int level = -1;; level++) {
 		bool more = false;
 		size_t n = sizeof(symtab) / sizeof(symtab[0]);
@@ -306,7 +324,7 @@ debug_symtab(void)
 		}
 
 		if (syms.len > 0) {
-			debug_printf("symbol table level %d\n", level);
+			debug_step("symbol table level %d", level);
 			debug_indent_inc();
 			qsort(syms.items, syms.len, sizeof(syms.items[0]),
 			    sym_by_name);
@@ -320,6 +338,7 @@ debug_symtab(void)
 		if (!more)
 			break;
 	}
+	debug_leave();
 
 	free(syms.items);
 }
@@ -339,17 +358,19 @@ add_keyword(const struct keyword *kw, bool leading, bool trailing)
 		name = xstrdup(buf);
 	}
 
-	sym_t *sym = block_zero_alloc(sizeof(*sym));
+	sym_t *sym = block_zero_alloc(sizeof(*sym), "sym");
 	sym->s_name = name;
 	sym->s_keyword = kw;
 	int tok = kw->kw_token;
 	sym->u.s_keyword.sk_token = tok;
 	if (tok == T_TYPE || tok == T_STRUCT_OR_UNION)
-		sym->u.s_keyword.sk_tspec = kw->kw_tspec;
+		sym->u.s_keyword.u.sk_tspec = kw->u.kw_tspec;
 	if (tok == T_SCLASS)
-		sym->s_scl = kw->kw_scl;
+		sym->s_scl = kw->u.kw_scl;
 	if (tok == T_QUAL)
-		sym->u.s_keyword.sk_qualifier = kw->kw_tqual;
+		sym->u.s_keyword.u.sk_type_qualifier = kw->u.kw_tqual;
+	if (tok == T_FUNCTION_SPECIFIER)
+		sym->u.s_keyword.u.function_specifier = kw->u.kw_fs;
 
 	symtab_add(sym);
 }
@@ -358,7 +379,9 @@ static bool
 is_keyword_known(const struct keyword *kw)
 {
 
-	if ((kw->kw_c90 || kw->kw_c99_or_c11) && !allow_c90)
+	if (kw->kw_added_in_c23 && !allow_c23)
+		return false;
+	if ((kw->kw_added_in_c90 || kw->kw_added_in_c99_or_c11) && !allow_c90)
 		return false;
 
 	/*
@@ -372,7 +395,7 @@ is_keyword_known(const struct keyword *kw)
 	if (kw->kw_gcc)
 		return false;
 
-	if (kw->kw_c99_or_c11 && !allow_c99)
+	if (kw->kw_added_in_c99_or_c11 && !allow_c99)
 		return false;
 	return true;
 }
@@ -424,9 +447,13 @@ lex_keyword(sym_t *sym)
 	if (tok == T_SCLASS)
 		yylval.y_scl = sym->s_scl;
 	if (tok == T_TYPE || tok == T_STRUCT_OR_UNION)
-		yylval.y_tspec = sym->u.s_keyword.sk_tspec;
+		yylval.y_tspec = sym->u.s_keyword.u.sk_tspec;
 	if (tok == T_QUAL)
-		yylval.y_tqual = sym->u.s_keyword.sk_qualifier;
+		yylval.y_type_qualifiers =
+		    sym->u.s_keyword.u.sk_type_qualifier;
+	if (tok == T_FUNCTION_SPECIFIER)
+		yylval.y_function_specifier =
+		    sym->u.s_keyword.u.function_specifier;
 	return tok;
 }
 
@@ -454,7 +481,7 @@ lex_name(const char *yytext, size_t yyleng)
 		return sym->s_scl == TYPEDEF ? T_TYPENAME : T_NAME;
 	}
 
-	char *name = block_zero_alloc(yyleng + 1);
+	char *name = block_zero_alloc(yyleng + 1, "string");
 	(void)memcpy(name, yytext, yyleng + 1);
 	sb->sb_name = name;
 	return T_NAME;
@@ -465,8 +492,8 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 {
 	/* C11 6.4.4.1p5 */
 	static const tspec_t suffix_type[2][3] = {
-		{ INT,  LONG,  QUAD, },
-		{ UINT, ULONG, UQUAD, }
+		{ INT,  LONG,  LLONG, },
+		{ UINT, ULONG, ULLONG, }
 	};
 
 	const char *cp = yytext;
@@ -498,7 +525,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 			u_suffix = 1;
 	}
 	if (!allow_c90 && u_suffix > 0) {
-		/* suffix U is illegal in traditional C */
+		/* suffix 'U' is illegal in traditional C */
 		warning(97);
 	}
 	tspec_t typ = suffix_type[u_suffix][l_suffix];
@@ -506,7 +533,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	bool warned = false;
 	errno = 0;
 	char *eptr;
-	uint64_t uq = (uint64_t)strtoull(cp, &eptr, base);
+	uint64_t ui = (uint64_t)strtoull(cp, &eptr, base);
 	lint_assert(eptr == cp + len);
 	if (errno != 0) {
 		/* integer constant out of range */
@@ -514,7 +541,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		warned = true;
 	}
 
-	if (any_query_enabled && base == 8 && uq != 0) {
+	if (any_query_enabled && base == 8 && ui != 0) {
 		/* octal number '%.*s' */
 		query_message(8, (int)len, cp);
 	}
@@ -526,15 +553,15 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	bool ansiu = false;
 	switch (typ) {
 	case INT:
-		if (uq <= TARG_INT_MAX) {
+		if (ui <= TARG_INT_MAX) {
 			/* ok */
-		} else if (uq <= TARG_UINT_MAX && base != 10) {
+		} else if (ui <= TARG_UINT_MAX && base != 10) {
 			typ = UINT;
-		} else if (uq <= TARG_LONG_MAX) {
+		} else if (ui <= TARG_LONG_MAX) {
 			typ = LONG;
 		} else {
 			typ = ULONG;
-			if (uq > TARG_ULONG_MAX && !warned) {
+			if (ui > TARG_ULONG_MAX && !warned) {
 				/* integer constant out of range */
 				warning(252);
 			}
@@ -552,37 +579,37 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		}
 		break;
 	case UINT:
-		if (uq > TARG_UINT_MAX) {
+		if (ui > TARG_UINT_MAX) {
 			typ = ULONG;
-			if (uq > TARG_ULONG_MAX && !warned) {
+			if (ui > TARG_ULONG_MAX && !warned) {
 				/* integer constant out of range */
 				warning(252);
 			}
 		}
 		break;
 	case LONG:
-		if (uq > TARG_LONG_MAX && allow_c90) {
+		if (ui > TARG_LONG_MAX && allow_c90) {
 			typ = ULONG;
 			if (allow_trad)
 				ansiu = true;
-			if (uq > TARG_ULONG_MAX && !warned) {
+			if (ui > TARG_ULONG_MAX && !warned) {
 				/* integer constant out of range */
 				warning(252);
 			}
 		}
 		break;
 	case ULONG:
-		if (uq > TARG_ULONG_MAX && !warned) {
+		if (ui > TARG_ULONG_MAX && !warned) {
 			/* integer constant out of range */
 			warning(252);
 		}
 		break;
-	case QUAD:
-		if (uq > TARG_QUAD_MAX && allow_c90)
-			typ = UQUAD;
+	case LLONG:
+		if (ui > TARG_LLONG_MAX && allow_c90)
+			typ = ULLONG;
 		break;
-	case UQUAD:
-		if (uq > TARG_UQUAD_MAX && !warned) {
+	case ULLONG:
+		if (ui > TARG_ULLONG_MAX && !warned) {
 			/* integer constant out of range */
 			warning(252);
 		}
@@ -591,33 +618,34 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		break;
 	}
 
-	uq = (uint64_t)convert_integer((int64_t)uq, typ, 0);
+	ui = (uint64_t)convert_integer((int64_t)ui, typ, 0);
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = typ;
 	yylval.y_val->v_unsigned_since_c90 = ansiu;
-	yylval.y_val->v_quad = (int64_t)uq;
+	yylval.y_val->u.integer = (int64_t)ui;
 
 	return T_CON;
 }
 
 /*
- * Extend or truncate q to match t.  If t is signed, sign-extend.
+ * Extend or truncate si to match t.  If t is signed, sign-extend.
  *
  * len is the number of significant bits. If len is 0, len is set
  * to the width of type t.
  */
 int64_t
-convert_integer(int64_t q, tspec_t t, unsigned int len)
+convert_integer(int64_t si, tspec_t t, unsigned int len)
 {
 
 	if (len == 0)
 		len = size_in_bits(t);
 
 	uint64_t vbits = value_bits(len);
-	return t == PTR || is_uinteger(t) || ((q & bit(len - 1)) == 0)
-	    ? (int64_t)(q & vbits)
-	    : (int64_t)(q | ~vbits);
+	uint64_t ui = (uint64_t)si;
+	return t == PTR || is_uinteger(t) || ((ui & bit(len - 1)) == 0)
+	    ? (int64_t)(ui & vbits)
+	    : (int64_t)(ui | ~vbits);
 }
 
 int
@@ -642,7 +670,7 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 		typ = imaginary ? DCOMPLEX : DOUBLE;
 
 	if (!allow_c90 && typ != DOUBLE) {
-		/* suffixes F and L are illegal in traditional C */
+		/* suffixes 'F' and 'L' are illegal in traditional C */
 		warning(98);
 	}
 
@@ -660,7 +688,8 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 			warning(248);
 			ld = ld > 0 ? FLT_MAX : -FLT_MAX;
 		}
-	} else if (typ == DOUBLE) {
+	} else if (typ == DOUBLE
+	    || /* CONSTCOND */LDOUBLE_SIZE == DOUBLE_SIZE) {
 		ld = (double)ld;
 		if (isfinite(ld) == 0) {
 			/* floating-point constant out of range */
@@ -671,7 +700,7 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = typ;
-	yylval.y_val->v_ldbl = ld;
+	yylval.y_val->u.floating = ld;
 
 	return T_CON;
 }
@@ -776,7 +805,7 @@ read_escaped_backslash(int delim)
 			warning(264);
 		return '\v';
 	case '8': case '9':
-		/* bad octal digit %c */
+		/* bad octal digit '%c' */
 		warning(77, c);
 		/* FALLTHROUGH */
 	case '0': case '1': case '2': case '3':
@@ -879,7 +908,7 @@ lex_character_constant(void)
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = INT;
 	yylval.y_val->v_char_constant = true;
-	yylval.y_val->v_quad = val;
+	yylval.y_val->u.integer = val;
 
 	return T_CON;
 }
@@ -925,9 +954,9 @@ lex_wide_character_constant(void)
 	}
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
-	yylval.y_val->v_tspec = WCHAR;
+	yylval.y_val->v_tspec = WCHAR_TSPEC;
 	yylval.y_val->v_char_constant = true;
-	yylval.y_val->v_quad = wc;
+	yylval.y_val->u.integer = wc;
 
 	return T_CON;
 }
@@ -987,7 +1016,7 @@ lex_directive(const char *yytext)
 		if (strncmp(cp, "pragma", 6) == 0 && ch_isspace(cp[6]))
 			return;
 	error:
-		/* undefined or invalid # directive */
+		/* undefined or invalid '#' directive */
 		warning(255);
 		return;
 	}
@@ -1038,39 +1067,34 @@ lex_directive(const char *yytext)
 	}
 }
 
-/*
- * Handle lint comments such as ARGSUSED.
- *
- * If one of these comments is recognized, the argument, if any, is
- * parsed and a function which handles this comment is called.
- */
+/* Handle lint comments such as ARGSUSED. */
 void
 lex_comment(void)
 {
 	int c;
 	static const struct {
-		const	char *keywd;
+		const	char name[18];
 		bool	arg;
-		void	(*func)(int);
+		lint_comment comment;
 	} keywtab[] = {
-		{ "ARGSUSED",		true,	argsused	},
-		{ "BITFIELDTYPE",	false,	bitfieldtype	},
-		{ "CONSTCOND",		false,	constcond	},
-		{ "CONSTANTCOND",	false,	constcond	},
-		{ "CONSTANTCONDITION",	false,	constcond	},
-		{ "FALLTHRU",		false,	fallthru	},
-		{ "FALLTHROUGH",	false,	fallthru	},
-		{ "FALL THROUGH",	false,	fallthru	},
-		{ "fallthrough",	false,	fallthru	},
-		{ "LINTLIBRARY",	false,	lintlib		},
-		{ "LINTED",		true,	linted		},
-		{ "LONGLONG",		false,	longlong	},
-		{ "NOSTRICT",		true,	linted		},
-		{ "NOTREACHED",		false,	not_reached	},
-		{ "PRINTFLIKE",		true,	printflike	},
-		{ "PROTOLIB",		true,	protolib	},
-		{ "SCANFLIKE",		true,	scanflike	},
-		{ "VARARGS",		true,	varargs		},
+		{ "ARGSUSED",		true,	LC_ARGSUSED	},
+		{ "BITFIELDTYPE",	false,	LC_BITFIELDTYPE	},
+		{ "CONSTCOND",		false,	LC_CONSTCOND	},
+		{ "CONSTANTCOND",	false,	LC_CONSTCOND	},
+		{ "CONSTANTCONDITION",	false,	LC_CONSTCOND	},
+		{ "FALLTHRU",		false,	LC_FALLTHROUGH	},
+		{ "FALLTHROUGH",	false,	LC_FALLTHROUGH	},
+		{ "FALL THROUGH",	false,	LC_FALLTHROUGH	},
+		{ "fallthrough",	false,	LC_FALLTHROUGH	},
+		{ "LINTLIBRARY",	false,	LC_LINTLIBRARY	},
+		{ "LINTED",		true,	LC_LINTED	},
+		{ "LONGLONG",		false,	LC_LONGLONG	},
+		{ "NOSTRICT",		true,	LC_LINTED	},
+		{ "NOTREACHED",		false,	LC_NOTREACHED	},
+		{ "PRINTFLIKE",		true,	LC_PRINTFLIKE	},
+		{ "PROTOLIB",		true,	LC_PROTOLIB	},
+		{ "SCANFLIKE",		true,	LC_SCANFLIKE	},
+		{ "VARARGS",		true,	LC_VARARGS	},
 	};
 	char keywd[32];
 	char arg[32];
@@ -1079,7 +1103,6 @@ lex_comment(void)
 
 	bool seen_end_of_comment = false;
 
-	/* Skip whitespace after the start of the comment */
 	while (c = read_byte(), isspace(c))
 		continue;
 
@@ -1097,14 +1120,12 @@ lex_comment(void)
 	keywd[l] = '\0';
 
 	/* look for the keyword */
-	for (i = 0; i < sizeof(keywtab) / sizeof(keywtab[0]); i++) {
-		if (strcmp(keywtab[i].keywd, keywd) == 0)
-			break;
-	}
-	if (i == sizeof(keywtab) / sizeof(keywtab[0]))
-		goto skip_rest;
+	for (i = 0; i < sizeof(keywtab) / sizeof(keywtab[0]); i++)
+		if (strcmp(keywtab[i].name, keywd) == 0)
+			goto found_keyword;
+	goto skip_rest;
 
-	/* skip whitespace after the keyword */
+found_keyword:
 	while (isspace(c))
 		c = read_byte();
 
@@ -1117,19 +1138,17 @@ lex_comment(void)
 		}
 	}
 	arg[l] = '\0';
-	a = l != 0 ? (int)atoi(arg) : -1;
+	a = l != 0 ? atoi(arg) : -1;
 
-	/* skip whitespace after the argument */
 	while (isspace(c))
 		c = read_byte();
 
 	seen_end_of_comment = c == '*' && (c = read_byte()) == '/';
-	if (!seen_end_of_comment && keywtab[i].func != linted)
+	if (!seen_end_of_comment && keywtab[i].comment != LC_LINTED)
 		/* extra characters in lint comment */
 		warning(257);
 
-	if (keywtab[i].func != NULL)
-		keywtab[i].func(a);
+	handle_lint_comment(keywtab[i].comment, a);
 
 skip_rest:
 	while (!seen_end_of_comment) {
@@ -1150,7 +1169,7 @@ lex_slash_slash_comment(void)
 	int c;
 
 	if (!allow_c99 && !allow_gcc)
-		/* %s does not support // comments */
+		/* %s does not support '//' comments */
 		gnuism(312, allow_c90 ? "C90" : "traditional C");
 
 	while ((c = read_byte()) != EOF && c != '\n')
@@ -1169,8 +1188,8 @@ clear_warn_flags(void)
 {
 
 	lwarn = LWARN_ALL;
-	quadflg = false;
-	constcond_flag = false;
+	suppress_longlong = false;
+	suppress_constcond = false;
 }
 
 int
@@ -1261,7 +1280,7 @@ lex_next_line(void)
 {
 	curr_pos.p_line++;
 	curr_pos.p_uniq = 0;
-	debug_step("parsing %s:%d", curr_pos.p_file, curr_pos.p_line);
+	debug_printf("parsing %s:%d\n", curr_pos.p_file, curr_pos.p_line);
 	if (curr_pos.p_file == csrc_pos.p_file) {
 		csrc_pos.p_line++;
 		csrc_pos.p_uniq = 0;
@@ -1307,7 +1326,7 @@ getsym(sbuf_t *sb)
 
 	if (sym != NULL) {
 		lint_assert(sym->s_kind == symtyp);
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 		free(sb);
 		return sym;
 	}
@@ -1315,36 +1334,36 @@ getsym(sbuf_t *sb)
 	/* create a new symbol table entry */
 
 	/* labels must always be allocated at level 1 (outermost block) */
-	dinfo_t *di;
+	decl_level *dl;
 	if (symtyp == FLABEL) {
-		sym = level_zero_alloc(1, sizeof(*sym));
-		char *s = level_zero_alloc(1, sb->sb_len + 1);
+		sym = level_zero_alloc(1, sizeof(*sym), "sym");
+		char *s = level_zero_alloc(1, sb->sb_len + 1, "string");
 		(void)memcpy(s, sb->sb_name, sb->sb_len + 1);
 		sym->s_name = s;
 		sym->s_block_level = 1;
-		di = dcs;
-		while (di->d_enclosing != NULL &&
-		    di->d_enclosing->d_enclosing != NULL)
-			di = di->d_enclosing;
-		lint_assert(di->d_kind == DK_AUTO);
+		dl = dcs;
+		while (dl->d_enclosing != NULL &&
+		    dl->d_enclosing->d_enclosing != NULL)
+			dl = dl->d_enclosing;
+		lint_assert(dl->d_kind == DLK_AUTO);
 	} else {
-		sym = block_zero_alloc(sizeof(*sym));
+		sym = block_zero_alloc(sizeof(*sym), "sym");
 		sym->s_name = sb->sb_name;
 		sym->s_block_level = block_level;
-		di = dcs;
+		dl = dcs;
 	}
 
-	UNIQUE_CURR_POS(sym->s_def_pos);
+	sym->s_def_pos = unique_curr_pos();
 	if ((sym->s_kind = symtyp) != FLABEL)
 		sym->s_type = gettyp(INT);
 
-	symtyp = FVFT;
+	set_symtyp(FVFT);
 
 	if (!in_gcc_attribute) {
 		symtab_add(sym);
 
-		*di->d_ldlsym = sym;
-		di->d_ldlsym = &sym->s_level_next;
+		*dl->d_last_dlsym = sym;
+		dl->d_last_dlsym = &sym->s_level_next;
 	}
 
 	free(sb);
@@ -1359,8 +1378,8 @@ sym_t *
 mktempsym(type_t *tp)
 {
 	static unsigned n = 0;
-	char *s = level_zero_alloc((size_t)block_level, 64);
-	sym_t *sym = block_zero_alloc(sizeof(*sym));
+	char *s = level_zero_alloc((size_t)block_level, 64, "string");
+	sym_t *sym = block_zero_alloc(sizeof(*sym), "sym");
 	scl_t scl;
 
 	(void)snprintf(s, 64, "%.8u_tmp", n++);
@@ -1379,8 +1398,8 @@ mktempsym(type_t *tp)
 
 	symtab_add(sym);
 
-	*dcs->d_ldlsym = sym;
-	dcs->d_ldlsym = &sym->s_level_next;
+	*dcs->d_last_dlsym = sym;
+	dcs->d_last_dlsym = &sym->s_level_next;
 
 	return sym;
 }
@@ -1403,16 +1422,19 @@ rmsym(sym_t *sym)
  * given symbol.
  */
 void
-rmsyms(sym_t *syms)
+symtab_remove_level(sym_t *syms)
 {
-	sym_t *sym;
+
+	if (syms != NULL)
+		debug_step("%s %d", __func__, syms->s_block_level);
 
 	/* Note the use of s_level_next instead of s_symtab_next. */
-	for (sym = syms; sym != NULL; sym = sym->s_level_next) {
+	for (sym_t *sym = syms; sym != NULL; sym = sym->s_level_next) {
 		if (sym->s_block_level != -1) {
-			debug_step("rmsyms '%s' %s '%s'",
+			debug_step("%s '%s' %s '%s' %d", __func__,
 			    sym->s_name, symt_name(sym->s_kind),
-			    type_name(sym->s_type));
+			    type_name(sym->s_type),
+			    sym->s_block_level);
 			symtab_remove(sym);
 			sym->s_symtab_ref = NULL;
 		}
@@ -1424,10 +1446,11 @@ void
 inssym(int level, sym_t *sym)
 {
 
-	debug_step("inssym '%s' %s '%s'",
-	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
-	symtab_add(sym);
+	debug_step("%s '%s' %s '%s' %d", __func__,
+	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type),
+	    level);
 	sym->s_block_level = level;
+	symtab_add(sym);
 
 	/*
 	 * Placing the inner symbols to the beginning of the list ensures
@@ -1458,17 +1481,17 @@ pushdown(const sym_t *sym)
 
 	debug_step("pushdown '%s' %s '%s'",
 	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
-	nsym = block_zero_alloc(sizeof(*nsym));
+	nsym = block_zero_alloc(sizeof(*nsym), "sym");
 	lint_assert(sym->s_block_level <= block_level);
 	nsym->s_name = sym->s_name;
-	UNIQUE_CURR_POS(nsym->s_def_pos);
+	nsym->s_def_pos = unique_curr_pos();
 	nsym->s_kind = sym->s_kind;
 	nsym->s_block_level = block_level;
 
 	symtab_add(nsym);
 
-	*dcs->d_ldlsym = nsym;
-	dcs->d_ldlsym = &nsym->s_level_next;
+	*dcs->d_last_dlsym = nsym;
+	dcs->d_last_dlsym = &nsym->s_level_next;
 
 	return nsym;
 }

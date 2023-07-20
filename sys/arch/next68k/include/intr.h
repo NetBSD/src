@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2023/07/11 11:13:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -35,6 +35,12 @@
 
 /* Probably want to dealwith IPL's here @@@ */
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+typedef struct {
+	uint16_t _psl;
+} ipl_cookie_t;
+#endif
+
 #ifdef _KERNEL
 
 /* spl0 requires checking for software interrupts */
@@ -67,9 +73,6 @@
 extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
-typedef struct {
-	uint16_t _psl;
-} ipl_cookie_t;
 
 static __inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)

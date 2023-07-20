@@ -1,0 +1,86 @@
+.\"	$NetBSD: bsdmalloc.3,v 1.3 2023/07/06 01:32:52 uwe Exp $
+.\"
+.\" Copyright (c) 2023 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 4, 2023
+.Dt BSDMALLOC 3
+.Os
+.Sh NAME
+.Nm bsdmalloc
+.Nd lightweight historic BSD memory allocator replacement
+.Sh LIBRARY
+.Lb libbsdmalloc
+.Sh SYNOPSIS
+.In stdlib.h
+.Ft void *
+.Fn malloc "size_t size"
+.Ft void *
+.Fn calloc "size_t nmemb" "size_t size"
+.Ft void *
+.Fn realloc "void *ptr" "size_t size"
+.Ft void *
+.Fn aligned_alloc "size_t alignment" "size_t size"
+.Ft int
+.Fn posix_memalign "void **memptr" "size_t alignment" "size_t size"
+.Ft void
+.Fn free "void *ptr"
+.Ft void
+.Fn _malloc_prefork "void"
+.Ft void
+.Fn _malloc_postfork "void"
+.Ft void
+.Fn _malloc_postfork_child "void"
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.Nm
+library provides a lower-performance but smaller-size drop-in
+replacement for the standard
+.Xr malloc 3
+family of functions provided by
+.Lb libc ,
+as well as internal hooks for
+.Xr fork 2
+safety in multithreaded programs.
+.Pp
+Programs can be statically linked with
+.Li -lbsdmalloc
+for smaller code footprint, at a higher cost to run-time performance
+and scalability and limited diagnostics.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr malloc 3 ,
+.Xr posix_memalign 3
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh BUGS
+.Nm Ns No 's
+implementation of
+.Fn malloc ,
+.Fn calloc ,
+and
+.Fn realloc
+doesn't correctly set
+.Xr errno 2
+on failure.

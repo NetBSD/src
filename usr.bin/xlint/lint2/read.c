@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.81 2023/06/09 13:03:49 rillig Exp $ */
+/* $NetBSD: read.c,v 1.87 2023/07/13 08:40:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.81 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.87 2023/07/13 08:40:38 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -81,7 +81,7 @@ typedef struct thtab {
 	unsigned short th_idx;
 	struct thtab *th_next;
 } thtab_t;
-static	thtab_t	**thtab;		/* hash table */
+static	thtab_t	*thtab[1009];		/* hash table */
 type_t	**tlst;				/* array for indexed access */
 static	size_t	tlstlen;		/* length of tlst */
 
@@ -226,8 +226,6 @@ readfile(const char *name)
 		flines = xcalloc(nfnames, sizeof(*flines));
 	if (tlstlen == 0)
 		tlst = xcalloc(tlstlen = 256, sizeof(*tlst));
-	if (thtab == NULL)
-		thtab = xcalloc(THSHSIZ2, sizeof(*thtab));
 
 	renametab = htab_new();
 
@@ -248,7 +246,7 @@ readfile(const char *name)
 		readfile_line = NULL;
 	}
 
-	_destroyhash(renametab);
+	hash_free(renametab);
 
 	if (ferror(inp) != 0)
 		err(1, "read error on %s", name);
@@ -376,11 +374,11 @@ again:
 	name = inpname(cp, &cp);
 
 	/* first look it up in the renaming table, then in the normal table */
-	hte = _hsearch(renametab, name, false);
+	hte = hash_search(renametab, name, false);
 	if (hte != NULL)
 		hte = hte->h_hte;
 	else
-		hte = hsearch(name, true);
+		hte = htab_search(name, true);
 	hte->h_used = true;
 
 	fcall->f_type = inptype(cp, &cp);
@@ -469,7 +467,7 @@ static void
 decldef(pos_t pos, const char *cp)
 {
 	sym_t *symp, sym;
-	char *pos1, *tname;
+	char *tname;
 	bool used, renamed;
 	hte_t *hte, *renamehte = NULL;
 	const char *name, *newname;
@@ -492,26 +490,25 @@ decldef(pos_t pos, const char *cp)
 		newname = inpname(cp, &cp);
 
 		/* enter it and see if it's already been renamed */
-		renamehte = _hsearch(renametab, tname, true);
+		renamehte = hash_search(renametab, tname, true);
 		if (renamehte->h_hte == NULL) {
-			hte = hsearch(newname, true);
+			hte = htab_search(newname, true);
 			renamehte->h_hte = hte;
 			renamed = true;
 		} else if (hte = renamehte->h_hte,
 		    strcmp(hte->h_name, newname) != 0) {
-			pos1 = xstrdup(mkpos(&renamehte->h_syms->s_pos));
 			/* %s renamed multiple times  \t%s  ::  %s */
-			msg(18, tname, pos1, mkpos(&sym.s_pos));
-			free(pos1);
+			msg(18, tname, mkpos(&renamehte->h_syms->s_pos),
+			    mkpos(&sym.s_pos));
 		}
 		free(tname);
 	} else {
 		/* it might be a previously-done rename */
-		hte = _hsearch(renametab, name, false);
+		hte = hash_search(renametab, name, false);
 		if (hte != NULL)
 			hte = hte->h_hte;
 		else
-			hte = hsearch(name, true);
+			hte = htab_search(name, true);
 	}
 	hte->h_used |= used;
 	if (sym.s_def == DEF || sym.s_def == TDEF)
@@ -576,11 +573,11 @@ usedsym(pos_t pos, const char *cp)
 		inperr("bad delim %c", cp[-1]);
 
 	name = inpname(cp, &cp);
-	hte = _hsearch(renametab, name, false);
+	hte = hash_search(renametab, name, false);
 	if (hte != NULL)
 		hte = hte->h_hte;
 	else
-		hte = hsearch(name, true);
+		hte = htab_search(name, true);
 	hte->h_used = true;
 
 	*hte->h_lusym = usym;
@@ -617,7 +614,7 @@ parse_tspec(const char **pp, char c, bool *osdef)
 	case 'L':
 		return s == 'u' ? ULONG : LONG;
 	case 'Q':
-		return s == 'u' ? UQUAD : QUAD;
+		return s == 'u' ? ULLONG : LLONG;
 #ifdef INT128_SIZE
 	case 'J':
 		return s == 'u' ? UINT128 : INT128;
@@ -721,18 +718,18 @@ inptype(const char *cp, const char **epp)
 		switch (*cp++) {
 		case '1':
 			tp->t_istag = true;
-			tp->t_tag = hsearch(inpname(cp, &cp), true);
+			tp->t_tag = htab_search(inpname(cp, &cp), true);
 			break;
 		case '2':
 			tp->t_istynam = true;
-			tp->t_tynam = hsearch(inpname(cp, &cp), true);
+			tp->t_tynam = htab_search(inpname(cp, &cp), true);
 			break;
 		case '3':
 			tp->t_isuniqpos = true;
 			tp->t_uniqpos.p_line = parse_int(&cp);
 			cp++;
 			/* xlate to 'global' file name. */
-			tp->t_uniqpos.p_file =
+			tp->t_uniqpos.p_file = (short)
 			    addoutfile(inpfns[parse_int(&cp)]);
 			cp++;
 			tp->t_uniqpos.p_uniq = parse_int(&cp);
@@ -815,9 +812,9 @@ gettlen(const char *cp, const char **epp)
 		break;
 	case 'Q':
 		if (s == 'u')
-			t = UQUAD;
+			t = ULLONG;
 		else if (s == '\0')
-			t = QUAD;
+			t = LLONG;
 		break;
 #ifdef INT128_SIZE
 	case 'J':
@@ -973,7 +970,7 @@ storetyp(type_t *tp, const char *cp, size_t len, int h)
 
 	thte = xalloc(sizeof(*thte));
 	thte->th_name = name;
-	thte->th_idx = tidx;
+	thte->th_idx = (unsigned short)tidx;
 	thte->th_next = thtab[h];
 	thtab[h] = thte;
 
@@ -993,7 +990,7 @@ thash(const char *s, size_t len)
 		v = (v << sizeof(v)) + (unsigned char)*s++;
 		v ^= v >> (sizeof(v) * CHAR_BIT - sizeof(v));
 	}
-	return v % THSHSIZ2;
+	return v % (sizeof(thtab) / sizeof(thtab[0]));
 }
 
 /*

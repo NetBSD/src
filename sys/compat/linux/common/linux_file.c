@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.122 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.123 2023/07/10 02:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.122 2021/11/25 03:08:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.123 2023/07/10 02:31:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,6 +438,14 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 
 	case LINUX_F_DUPFD_CLOEXEC:
 		cmd = F_DUPFD_CLOEXEC;
+		break;
+
+	case LINUX_F_ADD_SEALS:
+		cmd = F_ADD_SEALS;
+		break;
+
+	case LINUX_F_GET_SEALS:
+		cmd = F_GET_SEALS;
 		break;
 
 	default:

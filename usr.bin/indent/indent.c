@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.382 2023/06/23 20:43:21 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.387 2023/06/27 04:41:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.382 2023/06/23 20:43:21 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.387 2023/06/27 04:41:23 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -349,6 +349,22 @@ update_ps_lbrace_kind(lexer_symbol lsym)
 		/* Keep the current '{' kind. */
 	} else
 		ps.lbrace_kind = psym_lbrace_block;
+}
+
+static void
+update_ps_badp(lexer_symbol lsym)
+{
+	if (lsym == lsym_lbrace && ps.lbrace_kind == psym_lbrace_block
+	    && ps.psyms.len == 3)
+		ps.badp = badp_seen_lbrace;
+	if (lsym == lsym_rbrace && !ps.in_decl)
+		ps.badp = badp_none;
+	if (lsym == lsym_type && ps.paren.len == 0
+	    && (ps.badp == badp_seen_lbrace || ps.badp == badp_yes))
+		ps.badp = badp_decl;
+	if (lsym == lsym_semicolon && ps.badp == badp_decl
+	    && ps.decl_level == 0)
+		ps.badp = badp_seen_decl;
 }
 
 static void
@@ -767,6 +783,8 @@ process_rbrace(void)
 	}
 
 	ps.declaration = decl_no;
+	if (ps.decl_level == 0)
+		ps.blank_line_after_decl = false;
 	if (ps.init_level > 0)
 		ps.init_level--;
 
@@ -958,10 +976,15 @@ process_type_outside_parentheses(void)
 static void
 process_word(lexer_symbol lsym)
 {
+	if (lsym == lsym_type	/* in parentheses */
+	    && ps.paren.item[ps.paren.len - 1].cast == cast_unknown)
+		ps.paren.item[ps.paren.len - 1].cast = cast_maybe;
+
 	if (ps.in_decl) {
 		if (lsym == lsym_funcname) {
 			ps.in_decl = false;
-			if (opt.procnames_start_line && code.len > 0)
+			if (opt.procnames_start_line
+			    && code.len > (*inp_p == ')' ? 1 : 0))
 				output_line();
 			else if (ps.want_blank)
 				buf_add_char(&code, ' ');
@@ -1115,6 +1138,8 @@ indent(void)
 
 		process_lsym(lsym);
 
+		if (opt.blank_line_after_decl_at_top)
+			update_ps_badp(lsym);
 		if (lsym != lsym_preprocessing
 		    && lsym != lsym_newline
 		    && lsym != lsym_comment)

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.313 2023/05/23 08:16:43 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.314 2023/07/18 11:57:37 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.313 2023/05/23 08:16:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.314 2023/07/18 11:57:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2690,6 +2690,7 @@ config_finalize(void)
 	struct finalize_hook *f;
 	struct pdevinit *pdev;
 	extern struct pdevinit pdevinit[];
+	unsigned t0 = getticks();
 	int errcnt, rv;
 
 	/*
@@ -2698,17 +2699,27 @@ config_finalize(void)
 	 */
 	mutex_enter(&config_misc_lock);
 	while (!TAILQ_EMPTY(&config_pending)) {
-		device_t dev;
-		int error;
+		const unsigned t1 = getticks();
 
-		error = cv_timedwait(&config_misc_cv, &config_misc_lock,
-		    mstohz(1000));
-		if (error == EWOULDBLOCK) {
-			aprint_debug("waiting for devices:");
+		if (t1 - t0 >= hz) {
+			void (*pr)(const char *, ...) __printflike(1,2);
+			device_t dev;
+
+			if (t1 - t0 >= 60*hz) {
+				pr = aprint_normal;
+				t0 = t1;
+			} else {
+				pr = aprint_debug;
+			}
+
+			(*pr)("waiting for devices:");
 			TAILQ_FOREACH(dev, &config_pending, dv_pending_list)
-				aprint_debug(" %s", device_xname(dev));
-			aprint_debug("\n");
+				(*pr)(" %s", device_xname(dev));
+			(*pr)("\n");
 		}
+
+		(void)cv_timedwait(&config_misc_cv, &config_misc_lock,
+		    mstohz(1000));
 	}
 	mutex_exit(&config_misc_lock);
 

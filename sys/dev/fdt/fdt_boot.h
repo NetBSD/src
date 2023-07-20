@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_boot.h,v 1.1 2023/04/22 09:53:45 skrll Exp $ */
+/* $NetBSD: fdt_boot.h,v 1.3 2023/07/10 07:01:48 rin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,6 +31,24 @@
 
 #ifndef _DEV_FDT_FDT_BOOT_H_
 #define _DEV_FDT_FDT_BOOT_H_
+
+#ifdef EFI_RUNTIME
+#include <machine/efirt.h>
+
+void fdt_map_efi_runtime(const char *prop, enum cpu_efirt_mem_type type);
+#endif
+
+char *fdt_get_bootargs(void);
+
+void fdt_probe_initrd(void);
+void fdt_setup_initrd(void);
+void fdt_reserve_initrd(void);
+void fdt_probe_rndseed(void);
+void fdt_setup_rndseed(void);
+void fdt_reserve_rndseed(void);
+void fdt_probe_efirng(void);
+void fdt_setup_efirng(void);
+void fdt_reserve_efirng(void);
 
 void fdt_update_stdout_path(void *, const char *);
 

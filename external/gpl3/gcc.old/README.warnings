@@ -1,4 +1,4 @@
-$NetBSD: README.warnings,v 1.4 2023/06/03 09:09:06 lukem Exp $
+$NetBSD: README.warnings,v 1.5 2023/07/14 19:46:25 mrg Exp $
 
 What to do about GCC warnings and NetBSD.
 

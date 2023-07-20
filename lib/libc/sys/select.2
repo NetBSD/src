@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.43 2017/10/25 17:39:47 abhinav Exp $
+.\"	$NetBSD: select.2,v 1.44 2023/07/07 01:31:25 riastradh Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -155,7 +155,9 @@ interface instead, which tends to be more portable and efficient.
 .Fn select
 returns the number of ready descriptors that are contained in
 the descriptor sets,
-or \-1 if an error occurred.
+or returns \-1 and sets
+.Dv errno
+if an error occurred.
 If the time limit expires,
 .Fn select
 returns 0.

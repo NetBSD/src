@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.12 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.13 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1399,26 +1399,50 @@ selfsigned_dnskey(dns_validator_t *val) {
 				continue;
 			}
 
+			/*
+			 * If the REVOKE bit is not set we have a
+			 * theoretically self signed DNSKEY RRset.
+			 * This will be verified later.
+			 */
+			if ((key.flags & DNS_KEYFLAG_REVOKE) == 0) {
+				answer = true;
+				continue;
+			}
+
 			result = dns_dnssec_keyfromrdata(name, &keyrdata, mctx,
 							 &dstkey);
 			if (result != ISC_R_SUCCESS) {
 				continue;
 			}
 
-			result = dns_dnssec_verify(name, rdataset, dstkey, true,
-						   val->view->maxbits, mctx,
-						   &sigrdata, NULL);
+			/*
+			 * If this RRset is pending and it is trusted,
+			 * see if it was self signed by this DNSKEY.
+			 */
+			if (DNS_TRUST_PENDING(rdataset->trust) &&
+			    dns_view_istrusted(val->view, name, &key))
+			{
+				result = dns_dnssec_verify(
+					name, rdataset, dstkey, true,
+					val->view->maxbits, mctx, &sigrdata,
+					NULL);
+				if (result == ISC_R_SUCCESS) {
+					/*
+					 * The key with the REVOKE flag has
+					 * self signed the RRset so it is no
+					 * good.
+					 */
+					dns_view_untrust(val->view, name, &key);
+				}
+			} else if (rdataset->trust >= dns_trust_secure) {
+				/*
+				 * We trust this RRset so if the key is
+				 * marked revoked remove it.
+				 */
+				dns_view_untrust(val->view, name, &key);
+			}
+
 			dst_key_free(&dstkey);
-			if (result != ISC_R_SUCCESS) {
-				continue;
-			}
-
-			if ((key.flags & DNS_KEYFLAG_REVOKE) == 0) {
-				answer = true;
-				continue;
-			}
-
-			dns_view_untrust(val->view, name, &key);
 		}
 	}
 

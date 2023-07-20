@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.9 2022/12/17 11:51:52 kim Exp $
+.\" $NetBSD: mdoc.local,v 1.11 2023/07/04 23:52:44 uwe Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -152,6 +152,7 @@
 .\" Local libraries not in groff
 .ds doc-str-Lb-libarchive       Reading and Writing Streaming Archives Library (libarchive, \-larchive)
 .ds doc-str-Lb-libbluetooth     Bluetooth Library (libbluetooth, \-lbluetooth)
+.ds doc-str-Lb-libbsdmalloc     Historic BSD allocator (libbsdmalloc, \-lbsdmalloc)
 .ds doc-str-Lb-libdm            Device-mapper Library (libdm, \-ldm)
 .ds doc-str-Lb-libexecinfo	Backtrace Access Library (libexecinfo, \-lexecinfo)
 .ds doc-str-Lb-libfetch         File Transfer Library for URLs (libfetch, \-lfetch)

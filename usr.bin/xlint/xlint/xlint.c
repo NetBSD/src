@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.111 2023/06/09 13:31:11 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.114 2023/07/13 08:40:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.111 2023/06/09 13:31:11 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.114 2023/07/13 08:40:38 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -211,7 +211,10 @@ terminate(int signo)
 	if (cpp.outfd != -1)
 		(void)close(cpp.outfd);
 	if (cpp.outfile != NULL) {
-		if (signo != 0 && getenv("LINT_KEEP_CPPOUT_ON_ERROR") != NULL)
+		const char *keep_env = getenv("LINT_KEEP_CPPOUT");
+		bool keep = keep_env != NULL && (strcmp(keep_env, "yes") == 0
+		    || (strcmp(keep_env, "on-error") == 0 && signo != 0));
+		if (keep)
 			(void)printf("lint: preprocessor output kept in %s\n",
 			    cpp.outfile);
 		else
@@ -235,30 +238,27 @@ terminate(int signo)
 static void __attribute__((__noreturn__, __format__(__printf__, 1, 2)))
 usage(const char *fmt, ...)
 {
-	const char *name;
-	int indent;
 	va_list ap;
 
-	name = getprogname();
-	(void)fprintf(stderr, "%s: ", name);
 	va_start(ap, fmt);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (fmt[0] != '\0')
 		(void)fprintf(stderr, "\n");
 
-	indent = (int)(strlen("usage: ") + strlen(name));
+	const char *name = getprogname();
+	int indent = (int)(strlen("usage: ") + strlen(name));
 	(void)fprintf(stderr,
-	    "usage: %s [-abceghprvwxzHFST] [-s|-t] [-i|-nu]\n"
-	    "%*s [-Dname[=def]] [-Uname] [-Idirectory] [-Z <cpparg>]\n"
-	    "%*s [-Ldirectory] [-llibrary] [-ooutputfile]\n"
-	    "%*s [-X <id>[,<id>]...] [-Ac11] file ...\n",
+	    "usage: %s [-abceghprstvwxzFHPSTV] [-Alevel] [-i|-nu]\n"
+	    "%*s [-Dname[=def]] [-Uname] [-Idirectory] "
+	    "[-M...] [-W...] [-Z ...]\n"
+	    "%*s [-ddirectory] [-Ldirectory] [-llibrary] [-ooutputfile]\n"
+	    "%*s [-Bpath] [-X id,...] [-q id,...] [-R old=new] file ...\n",
 	    name, indent, "", indent, "", indent, "");
 	(void)fprintf(stderr,
-	    "       %s [-abceghprvwzHFST] [-s|-t] -Clibrary\n"
-	    "%*s [-Dname[=def]] [-Uname] [-Idirectory] [-Z <cpparg>]\n"
-	    "%*s [-Bpath] [-X <id>[,<id>]...] [-R old=new] file ...\n",
-	    name, indent, "", indent, "");
+	    "       %s [-abceghprstvwzFHPSTV] [-Alevel] -Clibrary\n"
+	    "%*s [-Bpath] [-R old=new] file ...\n",
+	    name, indent, "");
 	terminate(-1);
 }
 

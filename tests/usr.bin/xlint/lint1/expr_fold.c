@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.10 2023/07/09 11:01:27 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -59,10 +59,10 @@ fold_uminus(void)
 	/* The '-' is an operator, it is not part of the integer constant. */
 	take_int(-2147483648);
 
-	/* expect+2: warning: integer overflow detected, op '+' [141] */
-	/* expect+1: warning: integer overflow detected, op '-' [141] */
+	/* expect+2: warning: operator '+' produces integer overflow [141] */
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	take_int(-(2147483647 + 1));
-	/* expect+1: warning: integer overflow detected, op '-' [141] */
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	take_int(-(-2147483647 - 1));
 	/* expect+1: warning: conversion of 'long' to 'int' is out of range, arg #1 [295] */
 	take_int(-(4294967295));
@@ -100,14 +100,14 @@ void
 fold_mult(void)
 {
 	take_int(32767 * 65536);
-	/* expect+1: warning: integer overflow detected, op '*' [141] */
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
 	take_int(32768 * 65536);
-	/* expect+1: warning: integer overflow detected, op '*' [141] */
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
 	take_int(65536 * 65536);
 
 	take_uint(32767 * 65536U);
 	take_uint(32768 * 65536U);
-	/* expect+1: warning: integer overflow detected, op '*' [141] */
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
 	take_uint(65536 * 65536U);
 }
 
@@ -116,7 +116,7 @@ fold_div(void)
 {
 	/* expect+3: error: division by 0 [139] */
 	/* XXX: The following message is redundant. */
-	/* expect+1: warning: integer overflow detected, op '/' [141] */
+	/* expect+1: warning: operator '/' produces integer overflow [141] */
 	take_int(0 / 0);
 
 	/* expect+1: warning: conversion of 'long' to 'int' is out of range, arg #1 [295] */
@@ -141,13 +141,13 @@ fold_mod(void)
 void
 fold_plus(void)
 {
-	/* expect+1: warning: integer overflow detected, op '+' [141] */
+	/* expect+1: warning: operator '+' produces integer overflow [141] */
 	take_int(2147483647 + 1);
 
 	/* Assume two's complement, so no overflow. */
 	take_int(-2147483647 + -1);
 
-	/* expect+1: warning: integer overflow detected, op '+' [141] */
+	/* expect+1: warning: operator '+' produces integer overflow [141] */
 	take_int(-2147483647 + -2);
 
 	/*
@@ -164,25 +164,25 @@ fold_plus(void)
 void
 fold_minus(void)
 {
-	/* expect+1: warning: integer overflow detected, op '-' [141] */
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	take_int(2147483647 - -1);
 	/* Assume two's complement. */
 	take_int(-2147483647 - 1);
-	/* expect+1: warning: integer overflow detected, op '-' [141] */
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	take_int(-2147483647 - 2);
 
 	take_int(0 - 2147483648);
-	/* expect+1: warning: integer overflow detected, op '-' [141] */
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	take_uint(0 - 2147483648U);
 }
 
 void
 fold_shl(void)
 {
-	/* expect+1: warning: integer overflow detected, op '<<' [141] */
+	/* expect+1: warning: operator '<<' produces integer overflow [141] */
 	take_int(1 << 24 << 24);
 
-	/* expect+1: warning: integer overflow detected, op '<<' [141] */
+	/* expect+1: warning: operator '<<' produces integer overflow [141] */
 	take_uint(1U << 24 << 24);
 
 	/* FIXME: undefined behavior in 'fold' at 'uint64_t << 104'. */
@@ -291,12 +291,12 @@ struct ctassert5_struct {
 /*
  * Since Makefile.inc 1.21 from 2022-04-08 (which added -ftrapv) and before
  * tree.c 1.436 from 2022-04-20, lint crashed with an integer overflow when
- * calculating '-(uint64_t)INT64_MIN' in val_t.v_quad.
+ * calculating '-(uint64_t)INT64_MIN' in val_t.u.integer.
  */
 void
 unary_minus_overflow(unsigned long long val)
 {
-	/* expect+1: warning: integer overflow detected, op '-' [141] */
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	if (val > -(unsigned long long)(-0x7fffffffffffffffL - 1))
 		return;
 }

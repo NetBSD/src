@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1271 2023/06/16 23:51:31 rillig Exp $
+# $NetBSD: mi,v 1.1277 2023/07/15 12:24:57 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6506,12 +6506,14 @@
 ./usr/tests/usr.bin/xlint/lint1				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/Atffile				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/xlint/lint1/c11.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c11_atomic.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c11_generic_expression.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c11_generic_expression.exp	tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/c23.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c90.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c90.exp				tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/xlint/lint1/c99_atomic.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/c99_atomic.c			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/c99_bool_strict_suppressed.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c99_bool_strict_suppressed.exp	tests-obsolete		obsolete
 ./usr/tests/usr.bin/xlint/lint1/c99_init_array.c		tests-obsolete		obsolete,atf
@@ -6679,6 +6681,7 @@
 ./usr/tests/usr.bin/xlint/lint1/gcc_cast_union.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_init_compound_literal.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_init_compound_literal.exp	tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/gcc_statement_expression.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_stmt_asm.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_stmt_asm.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_typeof.c			tests-usr.bin-tests	compattestfile,atf
@@ -7219,6 +7222,9 @@
 ./usr/tests/usr.bin/xlint/lint1/msg_246.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_247.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_247.exp			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/msg_247_ilp32_ldbl64.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/msg_247_lp64_ldbl128.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/msg_247_portable.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_248.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_248.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_249.c			tests-usr.bin-tests	compattestfile,atf
@@ -7432,6 +7438,7 @@
 ./usr/tests/usr.bin/xlint/lint1/msg_350.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_351.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_352.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/msg_353.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/op_colon.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/op_colon.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/op_shl_lp64.c			tests-usr.bin-tests	compattestfile,atf
@@ -7465,6 +7472,8 @@
 ./usr/tests/usr.bin/xlint/lint1/platform_uchar.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_uchar.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/queries.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/queries_schar.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/queries_uchar.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/stmt_for.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/stmt_for.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/stmt_goto.c			tests-usr.bin-tests	compattestfile,atf

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_posix_memalign.c,v 1.5 2018/07/29 01:45:25 maya Exp $ */
+/*	$NetBSD: t_posix_memalign.c,v 1.8 2023/07/05 12:09:39 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_memalign.c,v 1.5 2018/07/29 01:45:25 maya Exp $");
+__RCSID("$NetBSD: t_posix_memalign.c,v 1.8 2023/07/05 12:09:39 riastradh Exp $");
 
 #include <atf-c.h>
 
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: t_posix_memalign.c,v 1.5 2018/07/29 01:45:25 maya Exp $");
 #include <stdlib.h>
 #include <string.h>
 
+#define	rounddown(x, n)	(((x) / (n)) * (n))
+
 ATF_TC(posix_memalign_basic);
 ATF_TC_HEAD(posix_memalign_basic, tc)
 {
@@ -50,32 +52,77 @@ ATF_TC_HEAD(posix_memalign_basic, tc)
 }
 ATF_TC_BODY(posix_memalign_basic, tc)
 {
-	static const size_t size[] = {
-		1, 2, 3, 4, 10, 100, 16384, 32768, 65536
-	};
+	enum { maxaligntest = 16384 };
 	static const size_t align[] = {
-		512, 1024, 16, 32, 64, 4, 2048, 16, 2
+		0, 1, 2, 3, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096,
+		8192, maxaligntest,
 	};
+	static const size_t size[] = {
+		0, 1, 2, 3, 4, 10, 100, 10000, 16384, 32768, 65536,
+		rounddown(SIZE_MAX, maxaligntest),
+	};
+	size_t i, j;
 
-	size_t i;
-	void *p;
+	for (i = 0; i < __arraycount(align); i++) {
+		for (j = 0; j < __arraycount(size); j++) {
+			void *p = (void *)0x1;
+			const int ret = posix_memalign(&p, align[i], size[j]);
 
-	for (i = 0; i < __arraycount(size); i++) {
-		int ret;
-		p = (void*)0x1;
+			if (align[i] == 0 ||
+			    (align[i] & (align[i] - 1)) != 0 ||
+			    align[i] < sizeof(void *)) {
+				ATF_CHECK_EQ_MSG(ret, EINVAL,
+				    "posix_memalign(&p, %zu, %zu): %s",
+				    align[i], size[j], strerror(ret));
+				continue;
+			}
+			if (size[j] == rounddown(SIZE_MAX, maxaligntest) &&
+			    ret != EINVAL) {
+				/*
+				 * If obscenely large alignment isn't
+				 * rejected as EINVAL, we can't
+				 * allocate that much memory anyway.
+				 */
+				ATF_CHECK_EQ_MSG(ret, ENOMEM,
+				    "posix_memalign(&p, %zu, %zu): %s",
+				    align[i], size[j], strerror(ret));
+				continue;
+			}
 
-		(void)printf("Checking posix_memalign(&p, %zu, %zu)...\n",
-			align[i], size[i]);
-		ret = posix_memalign(&p, align[i], size[i]);
+			/*
+			 * Allocation should fail only if the alignment
+			 * isn't supported, in which case it will fail
+			 * with EINVAL.  No standard criterion for what
+			 * alignments are supported, so just stop here
+			 * on EINVAL.
+			 */
+			if (ret == EINVAL)
+				continue;
 
-		if ( align[i] < sizeof(void *))
-			ATF_REQUIRE_EQ_MSG(ret, EINVAL,
-			    "posix_memalign: %s", strerror(ret));
-		else {
-			ATF_REQUIRE_EQ_MSG(ret, 0,
-			    "posix_memalign: %s", strerror(ret));
-			ATF_REQUIRE_EQ_MSG(((intptr_t)p) & (align[i] - 1), 0,
-			    "p = %p", p);
+			ATF_CHECK_EQ_MSG(ret, 0,
+			    "posix_memalign(&p, %zu, %zu): %s",
+			    align[i], size[j], strerror(ret));
+			ATF_CHECK_EQ_MSG((intptr_t)p & (align[i] - 1), 0,
+			    "posix_memalign(&p, %zu, %zu): %p",
+			    align[i], size[j], p);
+
+			if (size[j] != 0) {
+				if (p == NULL) {
+					atf_tc_fail_nonfatal(
+					    "%s:%d:"
+					    "posix_memalign(&p, %zu, %zu):"
+					    " %p",
+					    __FILE__, __LINE__,
+					    align[i], size[j], p);
+				}
+			} else {
+				/*
+				 * No guarantees about whether
+				 * zero-size allocation yields null
+				 * pointer or something else.
+				 */
+			}
+
 			free(p);
 		}
 	}
@@ -89,40 +136,93 @@ ATF_TC_HEAD(aligned_alloc_basic, tc)
 }
 ATF_TC_BODY(aligned_alloc_basic, tc)
 {
-	static const size_t size[] = {
-		1, 2, 3, 4, 10, 100, 16384, 32768, 65536, 10000, 0
-	};
+	enum { maxaligntest = 16384 };
 	static const size_t align[] = {
-		512, 1024, 16, 32, 64, 4, 2048, 16, 2, 2048, 0
+		0, 1, 2, 3, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096,
+		8192, maxaligntest,
 	};
+	static const size_t size[] = {
+		0, 1, 2, 3, 4, 10, 100, 10000, 16384, 32768, 65536,
+		rounddown(SIZE_MAX, maxaligntest),
+	};
+	size_t i, j;
 
-	size_t i;
-	void *p;
+	for (i = 0; i < __arraycount(align); i++) {
+		for (j = 0; j < __arraycount(size); j++) {
+			void *const p = aligned_alloc(align[i], size[j]);
 
-	for (i = 0; i < __arraycount(size); i++) {
-		(void)printf("Checking aligned_alloc(%zu, %zu)...\n",
-		    align[i], size[i]);
-		p = aligned_alloc(align[i], size[i]);
-                if (p == NULL) {
-			if (align[i] == 0 || ((align[i] - 1) & align[i]) != 0 ||
-			    size[i] % align[i] != 0) {
-				ATF_REQUIRE_EQ_MSG(errno, EINVAL,
-				    "aligned_alloc: %s", strerror(errno));
+			/*
+			 * C17, 6.2.8 Alignment of objects, paragraph
+			 * 4, p. 37:
+			 *
+			 *	Every valid alignment value shall be a
+			 *	nonnegative integral power of two.
+			 *
+			 * C17, 7.22.3.1 The aligned_alloc function,
+			 * paragraph 2, p. 348:
+			 *
+			 *	If the value of alignment is not a
+			 *	valid alignment supported by the
+			 *	implementation the function shall fail
+			 *	by returning a null pointer.
+			 *
+			 * Setting errno to EINVAL is a NetBSD
+			 * extension.  The last clause appears to rule
+			 * out aligned_alloc(n, 0) for any n, but it's
+			 * not clear.
+			 */
+			if (align[i] == 0 ||
+			    (align[i] & (align[i] - 1)) != 0) {
+				if (p != NULL) {
+					ATF_CHECK_EQ_MSG(p, NULL,
+					    "aligned_alloc(%zu, %zu): %p",
+					    align[i], size[j], p);
+					continue;
+				}
+				ATF_CHECK_EQ_MSG(errno, EINVAL,
+				    "aligned_alloc(%zu, %zu): %s",
+				    align[i], size[j], strerror(errno));
+				continue;
 			}
-			else {
-				ATF_REQUIRE_EQ_MSG(errno, ENOMEM,
-				    "aligned_alloc: %s", strerror(errno));
+
+			if (size[j] == rounddown(SIZE_MAX, maxaligntest)) {
+				ATF_CHECK_EQ_MSG(p, NULL,
+				    "aligned_alloc(%zu, %zu): %p, %s",
+				    align[i], size[j], p, strerror(errno));
+				ATF_CHECK_MSG((errno == EINVAL ||
+					errno == ENOMEM),
+				    "aligned_alloc(%zu, %zu): %s",
+				    align[i], size[j],
+				    strerror(errno));
+				continue;
 			}
-                }
-		else {
-			ATF_REQUIRE_EQ_MSG(align[i] == 0, false,
-			    "aligned_alloc: success when alignment was not "
-			    "a power of 2");
-			ATF_REQUIRE_EQ_MSG((align[i] - 1) & align[i], 0,
-			    "aligned_alloc: success when alignment was not "
-			    "a power of 2");
-			ATF_REQUIRE_EQ_MSG(((intptr_t)p) & (align[i] - 1), 0,
-			    "p = %p", p);
+
+			/*
+			 * Allocation should fail only if the alignment
+			 * isn't supported, in which case it will fail
+			 * with EINVAL.  No standard criterion for what
+			 * alignments are supported, so just stop here
+			 * on EINVAL.
+			 */
+			if (p == NULL && errno == EINVAL)
+				continue;
+
+			ATF_CHECK_EQ_MSG((intptr_t)p & (align[i] - 1), 0,
+			    "aligned_alloc(%zu, %zu): %p",
+			    align[i], size[j], p);
+			if (size[j] != 0) {
+				ATF_CHECK_MSG(p != NULL,
+				    "aligned_alloc(&p, %zu, %zu): %p, %s",
+				    align[i], size[j], p,
+				    strerror(errno));
+			} else {
+				/*
+				 * No guarantees about whether
+				 * zero-size allocation yields null
+				 * pointer or something else.
+				 */
+			}
+
 			free(p);
 		}
 	}
@@ -131,8 +231,9 @@ ATF_TC_BODY(aligned_alloc_basic, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
+
 	ATF_TP_ADD_TC(tp, posix_memalign_basic);
-        ATF_TP_ADD_TC(tp, aligned_alloc_basic);
-	
+	ATF_TP_ADD_TC(tp, aligned_alloc_basic);
+
 	return atf_no_error();
 }

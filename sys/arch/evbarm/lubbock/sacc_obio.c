@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.15 2021/08/07 16:18:50 thorpej Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.17 2023/07/13 21:29:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.15 2021/08/07 16:18:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.17 2023/07/13 21:29:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.15 2021/08/07 16:18:50 thorpej Exp $
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
+#include <sys/bitops.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -197,7 +198,7 @@ sacc_obio_intr(void *arg)
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTSTATCLR1);
 	DPRINTF(("sacc_obio_intr_dispatch: %x %x\n", intstat.lo, intstat.hi));
 
-	while ((i = find_first_bit(intstat.lo)) >= 0) {
+	while ((i = fls32(intstat.lo) - 1) >= 0) {
 
 		/*
 		 * Clear intr status before calling intr handlers.
@@ -213,7 +214,7 @@ sacc_obio_intr(void *arg)
 		intstat.lo &= ~(1U<<i);
 	}
 
-	while ((i = find_first_bit(intstat.hi)) >= 0) {
+	while ((i = fls32(intstat.hi) - 1) >= 0) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 				  SACCIC_INTSTATCLR1, 1U<<i);
 

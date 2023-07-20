@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1932 2023/06/21 22:30:52 gutteridge Exp $
+#	$NetBSD: 3RDPARTY,v 1.1940 2023/07/19 14:44:14 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -120,12 +120,12 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.16.37/MPL
-Current Vers:	9.16.37/MPL 9.19.9/MPL
+Version:	9.16.42/MPL
+Current Vers:	9.16.342/MPL 9.19.14/MPL
 Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
-Date:		2023-01-25
+Date:		2023-06-26
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
 Responsible:	christos
@@ -352,13 +352,13 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	10.0.1
-Current Vers:	10.0.1
+Version:	10.0.2
+Current Vers:	10.0.2
 Maintainer:	roy
 Archive Site:	https://github.com/NetworkConfiguration/dhcpcd/releases
 Home Page:	https://roy.marples.name/projects/dhcpcd/
 Home Page:	https://github.com/NetworkConfiguration/dhcpcd
-Date:		2023-04-21
+Date:		2023-07-19
 License:	BSD (2-clause)
 Location:	external/bsd/dhcpcd/dist
 Notes:
@@ -450,12 +450,12 @@ Notes:
 There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
-Version:	10.4.0
-Current Vers:	10.4.0/11.4.0/12.3.0/13.1.0
+Version:	10.5.0
+Current Vers:	10.5.0/11.4.0/12.3.0/13.1.0
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	https://www.gnu.org/software/gcc/
-Date:		2022-06-28
+Date:		2023-07-03
 Mailing List:	gcc-bugs@gnu.org
 Responsible:	mrg, christos, skrll
 License:	GPLv3, LGPLv3.1
@@ -878,11 +878,11 @@ Uses libc's ohash
 
 Package:	mDNSResponder
 Version:	878.30.4
-Current Vers:	1096.0.2
+Current Vers:	1790.80.10
 Maintainer:	Apple
 Archive Site:	https://www.opensource.apple.com/tarballs/mDNSResponder/
 Home Page:	https://developer.apple.com/bonjour/
-Date:		2020-06-13
+Date:		2023-06-29
 Mailing List:	bonjour-dev@lists.apple.com
 License:	Apache2 (mdnsd), BSD 3-clause (libdns_sd),
 		BSD 3-clause like (dns-sd)
@@ -1034,12 +1034,12 @@ Location:	external/bsd/openldap/dist
 Notes:
 
 Package:	OpenPAM
-Version:	20190224 (Tabebuia)
-Current Vers:	20190224 (Tabebuia)
+Version:	20230627 (Ximenia)
+Current Vers:	20230627 (Ximenia)
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
-Date:		2021-03-01
+Date:		2023-06-30
 Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
@@ -1047,13 +1047,12 @@ Location:	external/bsd/openpam/dist
 Notes:
 
 Package:	openresolv
-Version:	3.12.0
-Current Vers:	3.12.0
+Version:	3.13.2
+Current Vers:	3.13.2
 Maintainer:	roy
-Archive Site:	ftp://roy.marples.name/pub/openresolv/
+Archive Site:	https://github.com/NetworkConfiguration/openresolv/releases
 Home Page:	http://roy.marples.name/projects/openresolv/
-Date:		2020-12-27
-Mailing List: 	openresolv-discuss@marples.name
+Date:		2023-06-27
 License:	BSD (2-clause)
 Location:	external/bsd/openresolv/dist
 Notes:
@@ -1075,7 +1074,7 @@ Patch applied after OpenSSH import.
 
 Package:	OpenSSH
 Version:	9.1
-Current Vers:	9.3 / portable 9.3p1
+Current Vers:	9.3 / portable 9.3p2
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
@@ -1375,7 +1374,7 @@ perhaps this implementation should be kept anyway for historical
 purposes.
 
 Package:	tmux
-Version:	3.2a
+Version:	3.3a
 Current Vers:	3.3a
 Maintainer:	Nicholas Marriott <nicholas.marriott@gmail.com>
 Archive site:	https://github.com/tmux/tmux

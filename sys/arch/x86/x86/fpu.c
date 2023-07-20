@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.86 2023/03/03 14:40:16 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.87 2023/07/18 12:34:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,8 +96,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.86 2023/03/03 14:40:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.87 2023/07/18 12:34:25 riastradh Exp $");
 
+#include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -120,6 +121,10 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.86 2023/03/03 14:40:16 riastradh Exp $");
 #include <machine/specialreg.h>
 #include <x86/cpu.h>
 #include <x86/fpu.h>
+
+#ifdef DDB
+#include <ddb/ddb.h>
+#endif
 
 #ifdef XENPV
 #define clts() HYPERVISOR_fpu_taskswitch(0)
@@ -560,7 +565,16 @@ fputrap(struct trapframe *frame)
 	ksiginfo_t ksi;
 
 	if (__predict_false(!USERMODE(frame->tf_cs))) {
-		panic("fpu trap from kernel, trapframe %p\n", frame);
+		register_t ip = X86_TF_RIP(frame);
+		char where[128];
+
+#ifdef DDB
+		db_symstr(where, sizeof(where), (db_expr_t)ip, DB_STGY_PROC);
+#else
+		snprintf(where, sizeof(where), "%p", (void *)ip);
+#endif
+		panic("fpu trap from kernel at %s, trapframe %p\n", where,
+		    frame);
 	}
 
 	KASSERT(curlwp->l_md.md_flags & MDL_FPU_IN_CPU);

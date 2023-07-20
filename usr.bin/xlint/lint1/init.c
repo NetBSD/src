@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.242 2023/05/22 17:53:27 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.248 2023/07/15 15:51:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.242 2023/05/22 17:53:27 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.248 2023/07/15 15:51:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -206,15 +206,22 @@ can_init_character_array(const type_t *ltp, const tnode_t *rn)
 
 	return rst == CHAR
 	    ? lst == CHAR || lst == UCHAR || lst == SCHAR
-	    : lst == WCHAR;
+	    : lst == WCHAR_TSPEC;
 }
 
-/* C99 6.7.8p9 */
+/*
+ * C11 6.7.9p9 seems to say that all unnamed members are skipped. C11 6.7.2.1p8
+ * suggests an exception to that rule, and together with C11 6.7.2.1p13, it
+ * says that the members from an anonymous struct/union member are "considered
+ * to be members of the containing structure or union", thereby preventing that
+ * the containing structure or union has only unnamed members.
+ */
 static const sym_t *
 skip_unnamed(const sym_t *m)
 {
 
-	while (m != NULL && m->s_name == unnamed)
+	while (m != NULL && m->s_name == unnamed
+	    && !is_struct_or_union(m->s_type->t_tspec))
 		m = m->s_next;
 	return m;
 }
@@ -225,18 +232,6 @@ first_named_member(const type_t *tp)
 
 	lint_assert(is_struct_or_union(tp->t_tspec));
 	return skip_unnamed(tp->t_sou->sou_first_member);
-}
-
-static const sym_t *
-look_up_member(const type_t *tp, const char *name)
-{
-	const sym_t *m;
-
-	lint_assert(is_struct_or_union(tp->t_tspec));
-	for (m = tp->t_sou->sou_first_member; m != NULL; m = m->s_next)
-		if (strcmp(m->s_name, name) == 0)
-			return m;
-	return NULL;
 }
 
 /*
@@ -309,7 +304,7 @@ check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 	type_t *lutp = expr_unqualified_type(ltp);
 
 	/* Create a temporary node for the left side. */
-	tnode_t *ln = expr_zero_alloc(sizeof(*ln));
+	tnode_t *ln = expr_zero_alloc(sizeof(*ln), "tnode");
 	ln->tn_op = NAME;
 	ln->tn_type = lutp;
 	ln->tn_lvalue = true;
@@ -842,20 +837,17 @@ initialization_add_designator_member(initialization *in, const char *name)
 	const type_t *tp = brace_level_sub_type(bl);
 	if (is_struct_or_union(tp->t_tspec))
 		goto proceed;
-	else if (tp->t_tspec == ARRAY) {
+	else if (tp->t_tspec == ARRAY)
 		/* syntax error '%s' */
 		error(249, "designator '.member' is only for struct/union");
-		in->in_err = true;
-		return;
-	} else {
+	else
 		/* syntax error '%s' */
 		error(249, "scalar type cannot use designator");
-		in->in_err = true;
-		return;
-	}
+	in->in_err = true;
+	return;
 
 proceed:;
-	const sym_t *member = look_up_member(tp, name);
+	const sym_t *member = find_member(tp->t_sou, name);
 	if (member == NULL) {
 		/* type '%s' does not have member '%s' */
 		error(101, type_name(tp), name);

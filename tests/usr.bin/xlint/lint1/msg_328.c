@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_328.c,v 1.3 2021/08/03 20:57:06 rillig Exp $	*/
+/*	$NetBSD: msg_328.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_328.c"
 
 // Test for message: union cast is a GCC extension [328]
 
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 union target {
 	int b;

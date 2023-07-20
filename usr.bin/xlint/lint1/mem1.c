@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.65 2023/04/11 19:02:19 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.71 2023/07/15 15:56:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.65 2023/04/11 19:02:19 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.71 2023/07/15 15:56:17 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -93,7 +93,7 @@ add_directory_replacement(char *arg)
 	*sep = '\0';
 
 	r->orig = arg;
-	r->orig_len = sep - arg;
+	r->orig_len = (size_t)(sep - arg);
 	r->repl = sep + 1;
 	r->next = filename_replacements;
 	filename_replacements = r;
@@ -170,7 +170,7 @@ static memory_pools mpools;
 static memory_pool expr_pool;
 
 static void
-mpool_add(memory_pool *pool, void *item)
+mpool_add(memory_pool *pool, struct memory_pool_item item)
 {
 
 	if (pool->len >= pool->cap) {
@@ -185,17 +185,46 @@ static void
 mpool_free(memory_pool *pool)
 {
 
-	for (; pool->len > 0; pool->len--)
-		free(pool->items[pool->len - 1]);
+	for (; pool->len > 0; pool->len--) {
+		struct memory_pool_item *item = pool->items + pool->len - 1;
+		void *p = item->p;
+#ifdef DEBUG_MEM
+		if (strcmp(item->descr, "string") == 0)
+			debug_step("%s: freeing string '%s'",
+			    __func__, (const char *)p);
+		else if (strcmp(item->descr, "sym") == 0)
+			debug_step("%s: freeing symbol '%s'",
+			    __func__, ((const sym_t *)p)->s_name);
+		else if (strcmp(item->descr, "type") == 0)
+			debug_step("%s: freeing type '%s'",
+			    __func__, type_name(p));
+		else if (strcmp(item->descr, "tnode") == 0)
+			debug_step("%s: freeing node '%s' with type '%s'",
+			    __func__, op_name(((const tnode_t *)p)->tn_op),
+			    type_name(((const tnode_t *)p)->tn_type));
+		else
+			debug_step("%s: freeing '%s' with %zu bytes",
+			    __func__, item->descr, item->size);
+#endif
+		free(p);
+	}
 }
 
 static void *
+#ifdef DEBUG_MEM
+mpool_zero_alloc(memory_pool *pool, size_t size, const char *descr)
+#else
 mpool_zero_alloc(memory_pool *pool, size_t size)
+#endif
 {
 
 	void *mem = xmalloc(size);
 	memset(mem, 0, size);
-	mpool_add(pool, mem);
+#if DEBUG_MEM
+	mpool_add(pool, (struct memory_pool_item){ mem, size, descr });
+#else
+	mpool_add(pool, (struct memory_pool_item){ mem });
+#endif
 	return mem;
 }
 
@@ -215,39 +244,68 @@ mpool_at(size_t level)
 }
 
 
-/* Allocate memory associated with level l, initialized with zero. */
+/* Allocate memory associated with the level, initialized with zero. */
+#ifdef DEBUG_MEM
 void *
-level_zero_alloc(size_t l, size_t s)
+level_zero_alloc(size_t level, size_t size, const char *descr)
 {
 
-	return mpool_zero_alloc(mpool_at(l), s);
+	debug_step("%s: %s at level %zu", __func__, descr, level);
+	return mpool_zero_alloc(mpool_at(level), size, descr);
 }
+#else
+void *
+(level_zero_alloc)(size_t level, size_t size)
+{
+
+	return mpool_zero_alloc(mpool_at(level), size);
+}
+#endif
 
 /* Allocate memory that is freed at the end of the current block. */
+#ifdef DEBUG_MEM
 void *
-block_zero_alloc(size_t s)
+block_zero_alloc(size_t size, const char *descr)
 {
 
-	return level_zero_alloc(mem_block_level, s);
+	return level_zero_alloc(mem_block_level, size, descr);
 }
+#else
+void *
+(block_zero_alloc)(size_t size)
+{
+
+	return (level_zero_alloc)(mem_block_level, size);
+}
+#endif
 
 void
 level_free_all(size_t level)
 {
 
+	debug_step("%s %zu", __func__, level);
 	mpool_free(mpool_at(level));
 }
 
 /* Allocate memory that is freed at the end of the current expression. */
+#if DEBUG_MEM
 void *
-expr_zero_alloc(size_t s)
+expr_zero_alloc(size_t s, const char *descr)
 {
 
-	return mpool_zero_alloc(&expr_pool, s);
+	return mpool_zero_alloc(&expr_pool, s, descr);
 }
+#else
+void *
+(expr_zero_alloc)(size_t size)
+{
+
+	return mpool_zero_alloc(&expr_pool, size);
+}
+#endif
 
 static bool
-str_endswith(const char *haystack, const char *needle)
+str_ends_with(const char *haystack, const char *needle)
 {
 	size_t hlen = strlen(haystack);
 	size_t nlen = strlen(needle);
@@ -266,7 +324,7 @@ str_endswith(const char *haystack, const char *needle)
 tnode_t *
 expr_alloc_tnode(void)
 {
-	tnode_t *tn = expr_zero_alloc(sizeof(*tn));
+	tnode_t *tn = expr_zero_alloc(sizeof(*tn), "tnode");
 	/*
 	 * files named *.c that are different from the main translation unit
 	 * typically contain generated code that cannot be influenced, such
@@ -274,7 +332,7 @@ expr_alloc_tnode(void)
 	 */
 	tn->tn_sys = in_system_header ||
 		     (curr_pos.p_file != csrc_pos.p_file &&
-		      str_endswith(curr_pos.p_file, ".c"));
+		      str_ends_with(curr_pos.p_file, ".c"));
 	return tn;
 }
 
@@ -283,6 +341,7 @@ void
 expr_free_all(void)
 {
 
+	debug_step("%s", __func__);
 	mpool_free(&expr_pool);
 }
 

@@ -25,6 +25,7 @@ from dns.rdataclass import *
 from dns.rcode import *
 from dns.name import *
 
+
 # Log query to file
 def logquery(type, qname):
     with open("qlog", "a") as f:

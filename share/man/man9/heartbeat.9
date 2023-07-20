@@ -1,0 +1,172 @@
+.\"	$NetBSD: heartbeat.9,v 1.5 2023/07/07 15:56:31 uwe Exp $
+.\"
+.\" Copyright (c) 2023 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 6, 2023
+.Dt HEARTBEAT 9
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm heartbeat
+.Nd periodic checks to ensure CPUs are making progress
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.Cd "options HEARTBEAT"
+.Cd "options HEARTBEAT_MAX_PERIOD_DEFAULT=15"
+.Pp
+.\"
+.In sys/heartbeat.h
+.\"
+.Ft void
+.Fn heartbeat_start void
+.Ft void
+.Fn heartbeat void
+.Ft void
+.Fn heartbeat_suspend void
+.Ft void
+.Fn heartbeat_resume void
+.Fd "#ifdef DDB"
+.Ft void
+.Fn heartbeat_dump void
+.Fd "#endif"
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.Nm
+subsystem verifies that soft interrupts
+.Pq Xr softint 9
+and the system
+.Xr timecounter 9
+are making progress over time, and panics if they appear stuck.
+.Pp
+The number of seconds before
+.Nm
+panics without progress is controlled by the sysctl knob
+.Li kern.heartbeat.max_period ,
+which defaults to 15.
+If set to zero, heartbeat checks are disabled.
+.Pp
+The periodic hardware timer interrupt handler calls
+.Fn heartbeat
+every tick on each CPU.
+Once per second
+.Po
+i.e., every
+.Xr hz 9
+ticks
+.Pc ,
+.Fn heartbeat
+schedules a soft interrupt at priority
+.Dv SOFTINT_CLOCK
+to advance the current CPU's view of
+.Xr time_uptime 9 .
+.Pp
+.Fn heartbeat
+checks whether
+.Xr time_uptime 9
+has changed, to see if either the
+.Xr timecounter 9
+or soft intrrupts on the current CPU are stuck.
+If it hasn't advanced within
+.Li kern.heartbeat.max_period
+seconds worth of ticks, or if it has updated and the current CPU's view
+of it hasn't been updated by more than
+.Li kern.heartbeat.max_period
+seconds, then
+.Fn heartbeat
+panics.
+.Pp
+.Fn heartbeat
+also checks whether the next online CPU has advanced its view of
+.Xr time_uptime 9 ,
+to see if soft interrupts
+.Pq including Xr callout 9
+on that CPU are stuck.
+If it hasn't updated within
+.Li kern.heartbeat.max_period
+seconds,
+.Fn heartbeat
+sends an
+.Xr ipi 9
+to panic on that CPU.
+If that CPU has not acknowledged the
+.Xr ipi 9
+within one second,
+.Fn heartbeat
+panics on the current CPU instead.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh FUNCTIONS
+.Bl -tag -width Fn
+.It Fn heartbeat
+Check for timecounter and soft interrupt progress on this CPU and on
+another CPU, and schedule a soft interrupt to advance this CPU's view
+of timecounter progress.
+.Pp
+Called by
+.Xr hardclock 9
+periodically.
+.It Fn heartbeat_dump
+Print each CPU's heartbeat counter, uptime cache, and uptime cache
+timestamp (in units of heartbeats) to the console.
+.Pp
+Can be invoked from
+.Xr ddb 9
+by
+.Ql call heartbeat_dump .
+.It Fn heartbeat_resume
+Resume heartbeat monitoring of the current CPU.
+.Pp
+Called after a CPU has started running but before it has been
+marked online.
+.It Fn heartbeat_start
+Start monitoring heartbeats systemwide.
+.Pp
+Called by
+.Fn main
+in
+.Pa sys/kern/init_main.c
+as soon as soft interrupts can be established.
+.It Fn heartbeat_suspend
+Suspend heartbeat monitoring of the current CPU.
+.Pp
+Called after the current CPU has been marked offline but before it has
+stopped running.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh CODE REFERENCES
+The
+.Nm
+subsystem is implemented in
+.Pa sys/kern/kern_heartbeat.c .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr swwdog 4 ,
+.Xr wdogctl 8
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+The
+.Nm
+subsystem first appeared in
+.Nx 11.0 .

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_267.c,v 1.6 2022/08/19 19:40:39 rillig Exp $	*/
+/*	$NetBSD: msg_267.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_267.c"
 
 // Test for message: shift amount %u equals bit-size of '%s' [267]
+
+/* lint1-extra-flags: -X 351 */
 
 int
 shr32(unsigned int x)

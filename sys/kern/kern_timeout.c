@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.73 2022/10/29 00:19:21 riastradh Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.76 2023/06/27 01:19:44 pho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.73 2022/10/29 00:19:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.76 2023/06/27 01:19:44 pho Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -174,7 +174,6 @@ struct callout_cpu {
 	u_int		cc_ticks;
 	lwp_t		*cc_lwp;
 	callout_impl_t	*cc_active;
-	callout_impl_t	*cc_cancel;
 	struct evcnt	cc_ev_late;
 	struct evcnt	cc_ev_block;
 	struct callout_circq cc_todo;		/* Worklist */
@@ -260,6 +259,17 @@ callout_lock(callout_impl_t *c)
 			return lock;
 		mutex_spin_exit(lock);
 	}
+}
+
+/*
+ * Check if the callout is currently running on an LWP that isn't curlwp.
+ */
+static inline bool
+callout_running_somewhere_else(callout_impl_t *c, struct callout_cpu *cc)
+{
+	KASSERT(c->c_cpu == cc);
+
+	return cc->cc_active == c && cc->cc_lwp != curlwp;
 }
 
 /*
@@ -378,7 +388,7 @@ callout_destroy(callout_t *cs)
 	KASSERTMSG((c->c_flags & CALLOUT_PENDING) == 0,
 	    "pending callout %p: c_func (%p) c_flags (%#x) destroyed from %p",
 	    c, c->c_func, c->c_flags, __builtin_return_address(0));
-	KASSERTMSG(c->c_cpu->cc_lwp == curlwp || c->c_cpu->cc_active != c,
+	KASSERTMSG(!callout_running_somewhere_else(c, c->c_cpu),
 	    "running callout %p: c_func (%p) c_flags (%#x) destroyed from %p",
 	    c, c->c_func, c->c_flags, __builtin_return_address(0));
 	c->c_magic = 0;
@@ -496,7 +506,6 @@ bool
 callout_stop(callout_t *cs)
 {
 	callout_impl_t *c = (callout_impl_t *)cs;
-	struct callout_cpu *cc;
 	kmutex_t *lock;
 	bool expired;
 
@@ -508,16 +517,6 @@ callout_stop(callout_t *cs)
 		CIRCQ_REMOVE(&c->c_list);
 	expired = ((c->c_flags & CALLOUT_FIRED) != 0);
 	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
-
-	cc = c->c_cpu;
-	if (cc->cc_active == c) {
-		/*
-		 * This is for non-MPSAFE callouts only.  To synchronize
-		 * effectively we must be called with kernel_lock held.
-		 * It's also taken in callout_softclock.
-		 */
-		cc->cc_cancel = c;
-	}
 
 	SDT_PROBE5(sdt, kernel, callout, stop,
 	    c, c->c_func, c->c_arg, c->c_flags, expired);
@@ -542,7 +541,6 @@ callout_halt(callout_t *cs, void *interlock)
 {
 	callout_impl_t *c = (callout_impl_t *)cs;
 	kmutex_t *lock;
-	int flags;
 
 	KASSERT(c->c_magic == CALLOUT_MAGIC);
 	KASSERT(!cpu_intr_p());
@@ -552,11 +550,10 @@ callout_halt(callout_t *cs, void *interlock)
 	lock = callout_lock(c);
 	SDT_PROBE4(sdt, kernel, callout, halt,
 	    c, c->c_func, c->c_arg, c->c_flags);
-	flags = c->c_flags;
-	if ((flags & CALLOUT_PENDING) != 0)
+	if ((c->c_flags & CALLOUT_PENDING) != 0)
 		CIRCQ_REMOVE(&c->c_list);
-	c->c_flags = flags & ~(CALLOUT_PENDING|CALLOUT_FIRED);
-	if (__predict_false(flags & CALLOUT_FIRED)) {
+	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
+	if (__predict_false(callout_running_somewhere_else(c, c->c_cpu))) {
 		callout_wait(c, interlock, lock);
 		return true;
 	}
@@ -592,7 +589,7 @@ callout_wait(callout_impl_t *c, void *interlock, kmutex_t *lock)
 		 * - the callout itself has called callout_halt() (nice!)
 		 */
 		cc = c->c_cpu;
-		if (__predict_true(cc->cc_active != c || cc->cc_lwp == l))
+		if (__predict_true(!callout_running_somewhere_else(c, cc)))
 			break;
 
 		/* It's running - need to wait for it to complete. */

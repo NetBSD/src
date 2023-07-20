@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_125.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_125.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_125.c"
 
 // Test for message: ANSI C forbids ordered comparisons of pointers to functions [125]
 
-/* lint1-extra-flags: -s */
+/* lint1-extra-flags: -s -X 351 */
 
 typedef void (*action)(void);
 

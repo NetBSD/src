@@ -277,6 +277,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_SMUL] = { TTYCODE_STRING, "smul" },
 	[TTYC_SMXX] =  { TTYCODE_STRING, "smxx" },
 	[TTYC_SS] = { TTYCODE_STRING, "Ss" },
+	[TTYC_SWD] = { TTYCODE_STRING, "Swd" },
 	[TTYC_SYNC] = { TTYCODE_STRING, "Sync" },
 	[TTYC_TC] = { TTYCODE_FLAG, "Tc" },
 	[TTYC_TSL] = { TTYCODE_STRING, "tsl" },
@@ -670,7 +671,7 @@ tty_term_read_list(const char *name, int fd, char ***caps, u_int *ncaps,
 	const char				*s;
 	char					 tmp[11];
 
-	if (setupterm(name, fd, &error) != OK) {
+	if (setupterm(__UNCONST(name), fd, &error) != OK) {
 		switch (error) {
 		case 1:
 			xasprintf(cause, "can't use hardcopy terminal: %s",

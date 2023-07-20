@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.17 2023/04/12 02:15:51 msaitoh Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.19 2023/07/07 04:43:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -529,11 +529,276 @@ init_intel_skylake_kabylake(void)
 	return &intel_skylake_kabylake;
 }
 
+/*
+ * Intel Skylake-X (and Cascade Lake).
+ */
+static struct name_to_event intel_skylake_x_names[] = {
+	{ "INST_RETIRED.ANY",				0x00, 0x01, true },
+	{ "CPU_CLK_UNHALTED.THREAD",			0x00, 0x02, true },
+	{ "CPU_CLK_UNHALTED.REF_TSC",			0x00, 0x03, true },
+	{ "LD_BLOCKS.STORE_FORWARD",			0x03, 0x02, true },
+	{ "LD_BLOCKS.NO_SR",				0x03, 0x08, true },
+	{ "LD_BLOCKS_PARTIAL.ADDRESS_ALIAS",		0x07, 0x01, true },
+	{ "DTLB_LOAD_MISSES.MISS_CAUSES_A_WALK",	0x08, 0x01, true },
+	{ "DTLB_LOAD_MISSES.WALK_COMPLETED_4K",		0x08, 0x02, true },
+	{ "DTLB_LOAD_MISSES.WALK_COMPLETED_2M_4M",	0x08, 0x04, true },
+	{ "DTLB_LOAD_MISSES.WALK_COMPLETED_1G",		0x08, 0x08, true },
+	{ "DTLB_LOAD_MISSES.WALK_COMPLETED",		0x08, 0x0E, true },
+	{ "DTLB_LOAD_MISSES.WALK_PENDING",		0x08, 0x10, true },
+	{ "DTLB_LOAD_MISSES.STLB_HIT",			0x08, 0x20, true },
+	{ "INT_MISC.RECOVERY_CYCLES",			0x0D, 0x01, true },
+	{ "INT_MISC.CLEAR_RESTEER_CYCLES",		0x0D, 0x80, true },
+	{ "UOPS_ISSUED.ANY",				0x0E, 0x01, true },
+	{ "UOPS_ISSUED.VECTOR_WIDTH_MISMATCH",		0x0E, 0x02, true },
+	{ "UOPS_ISSUED.SLOW_LEA",			0x0E, 0x20, true },
+	{ "ARITH.DIVIDER_ACTIVE",			0x14, 0x01, true },
+	{ "L2_RQSTS.DEMAND_DATA_RD_MISS",		0x24, 0x21, true },
+	{ "L2_RQSTS.RFO_MISS",				0x24, 0x22, true },
+	{ "L2_RQSTS.CODE_RD_MISS",			0x24, 0x24, true },
+	{ "L2_RQSTS.ALL_DEMAND_MISS",			0x24, 0x27, true },
+	{ "L2_RQSTS.PF_MISS",				0x24, 0x38, true },
+	{ "L2_RQSTS.MISS",				0x24, 0x3F, true },
+	{ "L2_RQSTS.DEMAND_DATA_RD_HIT",		0x24, 0x41, true },
+	{ "L2_RQSTS.RFO_HIT",				0x24, 0x42, true },
+	{ "L2_RQSTS.CODE_RD_HIT",			0x24, 0x44, true },
+	{ "L2_RQSTS.PF_HIT",				0x24, 0xD8, true },
+	{ "L2_RQSTS.ALL_DEMAND_DATA_RD",		0x24, 0xE1, true },
+	{ "L2_RQSTS.ALL_RFO",				0x24, 0xE2, true },
+	{ "L2_RQSTS.ALL_CODE_RD",			0x24, 0xE4, true },
+	{ "L2_RQSTS.ALL_DEMAND_REFERENCES",		0x24, 0xE7, true },
+	{ "L2_RQSTS.ALL_PF",				0x24, 0xF8, true },
+	{ "L2_RQSTS.REFERENCES All L2",			0x24, 0xFF, true },
+	{ "CORE_POWER.LVL0_TURBO_LICENSE",		0x28, 0x07, true },
+	{ "CORE_POWER.LVL1_TURBO_LICENSE",		0x28, 0x18, true },
+	{ "CORE_POWER.LVL2_TURBO_LICENSE",		0x28, 0x20, true },
+	{ "CORE_POWER.THROTTLE",			0x28, 0x40, true },
+	{ "LONGEST_LAT_CACHE.MISS",			0x2E, 0x41, true },
+	{ "LONGEST_LAT_CACHE.REFERENCE",		0x2E, 0x4F, true },
+	{ "CPU_CLK_UNHALTED.THREAD_P",			0x3C, 0x00, true },
+	{ "CPU_CLK_THREAD_UNHALTED.REF_XCLK",		0x3C, 0x01, true },
+	{ "CPU_CLK_THREAD_UNHALTED.ONE_THREAD_ACTIVE",	0x3C, 0x02, true },
+	{ "L1D_PEND_MISS.PENDING",			0x48, 0x01, true },
+	{ "L1D_PEND_MISS.FB_FULL",			0x48, 0x02, true },
+	{ "DTLB_STORE_MISSES.MISS_CAUSES_A_WALK",	0x49, 0x01, true },
+	{ "DTLB_STORE_MISSES.WALK_COMPLETED_4K",	0x49, 0x02, true },
+	{ "DTLB_STORE_MISSES.WALK_COMPLETED_2M_4M",	0x49, 0x04, true },
+	{ "DTLB_STORE_MISSES.WALK_COMPLETED_1G",	0x49, 0x08, true },
+	{ "DTLB_STORE_MISSES.WALK_COMPLETED",		0x49, 0x0E, true },
+	{ "DTLB_STORE_MISSES.WALK_PENDING",		0x49, 0x10, true },
+	{ "DTLB_STORE_MISSES.STLB_HIT",			0x49, 0x20, true },
+	{ "LOAD_HIT_PRE.SW_PF",				0x4C, 0x01, true },
+	{ "EPT.WALK_PENDING",				0x4F, 0x10, true },
+	{ "L1D.REPLACEMENT",				0x51, 0x01, true },
+	{ "TX_MEM.ABORT_CONFLICT",			0x54, 0x01, true },
+	{ "TX_MEM.ABORT_CAPACITY",			0x54, 0x02, true },
+	{ "TX_MEM.ABORT_HLE_STORE_TO_ELIDED_LOCK",	0x54, 0x04, true },
+	{ "TX_MEM.ABORT_HLE_ELISION_BUFFER_NOT_EMPTY",	0x54, 0x08, true },
+	{ "TX_MEM.ABORT_HLE_ELISION_BUFFER_MISMATCH",	0x54, 0x10, true },
+	{ "TX_MEM.ABORT_HLE_ELISION_BUFFER_UNSUPPORTED_ALIGNMENT",
+							0x54, 0x20, true },
+	{ "TX_MEM.HLE_ELISION_BUFFER_FULL",		0x54, 0x40, true },
+	{ "TX_EXEC.MISC1",				0x5D, 0x01, true },
+	{ "TX_EXEC.MISC2",				0x5D, 0x02, true },
+	{ "TX_EXEC.MISC3",				0x5D, 0x04, true },
+	{ "TX_EXEC.MISC4",				0x5D, 0x08, true },
+	{ "TX_EXEC.MISC5",				0x5D, 0x10, true },
+	{ "RS_EVENTS.EMPTY_CYCLES",			0x5E, 0x01, true },
+	{ "OFFCORE_REQUESTS_OUTSTANDING.DEMAND_DATA_RD",
+							0x60, 0x01, true },
+	{ "OFFCORE_REQUESTS_OUTSTANDING.DEMAND_CODE_RD",
+							0x60, 0x02, true },
+	{ "OFFCORE_REQUESTS_OUTSTANDING.DEMAND_RFO",	0x60, 0x04, true },
+	{ "OFFCORE_REQUESTS_OUTSTANDING.ALL_DATA_RD",	0x60, 0x08, true },
+	{ "OFFCORE_REQUESTS_OUTSTANDING.L3_MISS_DEMAND_DATA_RD",
+							0x60, 0x10, true },
+	{ "IDQ.MITE_UOPS",				0x79, 0x04, true },
+	{ "IDQ.DSB_UOPS",				0x79, 0x08, true },
+	{ "IDQ.MS_DSB_CYCLES",				0x79, 0x10, true },
+	{ "IDQ.ALL_DSB_CYCLES_4_UOPS",			0x79, 0x18, true },
+	{ "IDQ.MS_MITE_UOPS",				0x79, 0x20, true },
+	{ "IDQ.ALL_MITE_CYCLES_4_UOPS",			0x79, 0x24, true },
+	{ "IDQ.MS_CYCLES",				0x79, 0x30, true },
+	{ "ICACHE_16B.IFDATA_STALL",			0x80, 0x04, true },
+	{ "ICACHE_64B.IFTAG_HIT",			0x83, 0x01, true },
+	{ "ICACHE_64B.IFTAG_MISS",			0x83, 0x02, true },
+	{ "ICACHE_64B.IFTAG_STALL",			0x83, 0x04, true },
+	{ "ITLB_MISSES.MISS_CAUSES_A_WALK",		0x85, 0x01, true },
+	{ "ITLB_MISSES.WALK_COMPLETED_4K",		0x85, 0x02, true },
+	{ "ITLB_MISSES.WALK_COMPLETED_2M_4M",		0x85, 0x04, true },
+	{ "ITLB_MISSES.WALK_COMPLETED_1G",		0x85, 0x08, true },
+	{ "ITLB_MISSES.WALK_COMPLETED",			0x85, 0x0E, true },
+	{ "ITLB_MISSES.WALK_PENDING",			0x85, 0x10, true },
+	{ "ITLB_MISSES.STLB_HIT",			0x85, 0x20, true },
+	{ "ILD_STALL.LCP",				0x87, 0x01, true },
+	{ "IDQ_UOPS_NOT_DELIVERED.CORE",		0x9C, 0x01, true },
+	{ "UOPS_DISPATCHED_PORT.PORT_0",		0xa1, 0x01, true },
+	{ "UOPS_DISPATCHED_PORT.PORT_1",		0xa1, 0x02, true },
+	{ "UOPS_DISPATCHED_PORT.PORT_2",		0xa1, 0x04, true },
+	{ "UOPS_DISPATCHED_PORT.PORT_3",		0xa1, 0x08, true },
+	{ "UOPS_DISPATCHED_PORT.PORT_4",		0xa1, 0x10, true },
+	{ "UOPS_DISPATCHED_PORT.PORT_5",		0xa1, 0x20, true },
+	{ "UOPS_DISPATCHED_PORT.PORT_6",		0xa1, 0x40, true },
+	{ "UOPS_DISPATCHED_PORT.PORT_7",		0xa1, 0x80, true },
+	{ "RESOURCE_STALLS.ANY",			0xa2, 0x01, true },
+	{ "RESOURCE_STALLS.SB",				0xa2, 0x08, true },
+	{ "CYCLE_ACTIVITY.CYCLES_L2_MISS",		0xa3, 0x01, true },
+	{ "CYCLE_ACTIVITY.CYCLES_L3_MISS",		0xa3, 0x02, true },
+	{ "CYCLE_ACTIVITY.STALLS_TOTAL",		0xa3, 0x04, true },
+	{ "CYCLE_ACTIVITY.STALLS_L2_MISS",		0xa3, 0x05, true },
+	{ "CYCLE_ACTIVITY.STALLS_L3_MISS",		0xa3, 0x06, true },
+	{ "CYCLE_ACTIVITY.CYCLES_L1D_MISS",		0xa3, 0x08, true },
+	{ "CYCLE_ACTIVITY.STALLS_L1D_MISS",		0xa3, 0x0C, true },
+	{ "CYCLE_ACTIVITY.CYCLES_MEM_ANY",		0xa3, 0x10, true },
+	{ "CYCLE_ACTIVITY.STALLS_MEM_ANY",		0xa3, 0x14, true },
+	{ "EXE_ACTIVITY.EXE_BOUND_0_PORTS",		0xa6, 0x01, true },
+	{ "EXE_ACTIVITY.1_PORTS_UTIL",			0xa6, 0x02, true },
+	{ "EXE_ACTIVITY.2_PORTS_UTIL",			0xa6, 0x04, true },
+	{ "EXE_ACTIVITY.3_PORTS_UTIL",			0xa6, 0x08, true },
+	{ "EXE_ACTIVITY.4_PORTS_UTIL",			0xa6, 0x10, true },
+	{ "EXE_ACTIVITY.BOUND_ON_STORES",		0xa6, 0x40, true },
+	{ "LSD.UOPS",					0xa8, 0x01, true },
+	{ "DSB2MITE_SWITCHES.PENALTY_CYCLES",		0xaB, 0x02, true },
+	{ "ITLB.ITLB_FLUSH",				0xaE, 0x01, true },
+	{ "OFFCORE_REQUESTS.DEMAND_DATA_RD",		0xb0, 0x01, true },
+	{ "OFFCORE_REQUESTS.DEMAND_CODE_RD",		0xb0, 0x02, true },
+	{ "OFFCORE_REQUESTS.DEMAND_RFO",		0xb0, 0x04, true },
+	{ "OFFCORE_REQUESTS.ALL_DATA_RD",		0xb0, 0x08, true },
+	{ "OFFCORE_REQUESTS.L3_MISS_DEMAND_DATA_RD",	0xb0, 0x10, true },
+	{ "OFFCORE_REQUESTS.ALL_REQUESTS",		0xb0, 0x80, true },
+	{ "UOPS_EXECUTED.THREAD",			0xb1, 0x01, true },
+	{ "UOPS_EXECUTED.CORE",				0xb1, 0x02, true },
+	{ "UOPS_EXECUTED.X87",				0xb1, 0x10, true },
+	{ "OFFCORE_REQUESTS_BUFFER.SQ_FULL",		0xb2, 0x01, true },
+	{ "TLB_FLUSH.DTLB_THREAD",			0xbD, 0x01, true },
+	{ "TLB_FLUSH.STLB_ANY",				0xbD, 0x20, true },
+	{ "INST_RETIRED.ANY_P",				0xc0, 0x00, true },
+	{ "INST_RETIRED.PREC_DIST",			0xc0, 0x01, true },
+	{ "OTHER_ASSISTS.ANY",				0xc1, 0x3F, true },
+	{ "UOPS_RETIRED.STALL_CYCLES",			0xc2, 0x01, true },
+	{ "UOPS_RETIRED.RETIRE_SLOTS",			0xc2, 0x02, true },
+	{ "MACHINE_CLEARS.COUNT",			0xc3, 0x01, true },
+	{ "MACHINE_CLEARS.MEMORY_ORDERING",		0xc3, 0x02, true },
+	{ "MACHINE_CLEARS.SMC",				0xc3, 0x04, true },
+	{ "BR_INST_RETIRED.ALL_BRANCHES",		0xc4, 0x00, true },
+	{ "BR_INST_RETIRED.CONDITIONAL",		0xc4, 0x01, true },
+	{ "BR_INST_RETIRED.NEAR_CALL",			0xc4, 0x02, true },
+	{ "BR_INST_RETIRED.NEAR_RETURN",		0xc4, 0x08, true },
+	{ "BR_INST_RETIRED.NOT_TAKEN",			0xc4, 0x10, true },
+	{ "BR_INST_RETIRED.NEAR_TAKEN",			0xc4, 0x20, true },
+	{ "BR_INST_RETIRED.FAR_BRANCH",			0xc4, 0x40, true },
+	{ "BR_MISP_RETIRED.ALL_BRANCHES",		0xc5, 0x00, true },
+	{ "BR_MISP_RETIRED.CONDITIONAL",		0xc5, 0x01, true },
+	{ "BR_MISP_RETIRED.NEAR_CALL",			0xc5, 0x02, true },
+	{ "BR_MISP_RETIRED.NEAR_TAKEN",			0xc5, 0x20, true },
+	{ "FRONTEND_RETIRED.DSB_MISS",			0xc6, 0x01, true },
+	{ "FP_ARITH_INST_RETIRED.SCALAR_DOUBLE",	0xc7, 0x01, true },
+	{ "FP_ARITH_INST_RETIRED.SCALAR_SINGLE",	0xc7, 0x02, true },
+	{ "FP_ARITH_INST_RETIRED.128B_PACKED_DOUBLE",	0xc7, 0x04, true },
+	{ "FP_ARITH_INST_RETIRED.128B_PACKED_SINGLE",	0xc7, 0x08, true },
+	{ "FP_ARITH_INST_RETIRED.256B_PACKED_DOUBLE",	0xc7, 0x10, true },
+	{ "FP_ARITH_INST_RETIRED.256B_PACKED_SINGLE",	0xc7, 0x20, true },
+	{ "FP_ARITH_INST_RETIRED.512B_PACKED_DOUBLE",	0xc7, 0x40, true },
+	{ "FP_ARITH_INST_RETIRED.512B_PACKED_SINGLE",	0xc7, 0x80, true },
+	{ "HLE_RETIRED.START",				0xc8, 0x01, true },
+	{ "HLE_RETIRED.COMMIT",				0xc8, 0x02, true },
+	{ "HLE_RETIRED.ABORTED",			0xc8, 0x04, true },
+	{ "HLE_RETIRED.ABORTED_MEM",			0xc8, 0x08, true },
+	{ "HLE_RETIRED.ABORTED_TIMER",			0xc8, 0x10, true },
+	{ "HLE_RETIRED.ABORTED_UNFRIENDLY",		0xc8, 0x20, true },
+	{ "HLE_RETIRED.ABORTED_MEMTYPE",		0xc8, 0x40, true },
+	{ "HLE_RETIRED.ABORTED_EVENTS",			0xc8, 0x80, true },
+	{ "RTM_RETIRED.START",				0xc9, 0x01, true },
+	{ "RTM_RETIRED.COMMIT",				0xc9, 0x02, true },
+	{ "RTM_RETIRED.ABORTED",			0xc9, 0x04, true },
+	{ "RTM_RETIRED.ABORTED_MEM",			0xc9, 0x08, true },
+	{ "RTM_RETIRED.ABORTED_TIMER",			0xc9, 0x10, true },
+	{ "RTM_RETIRED.ABORTED_UNFRIENDLY",		0xc9, 0x20, true },
+	{ "RTM_RETIRED.ABORTED_MEMTYPE",		0xc9, 0x40, true },
+	{ "RTM_RETIRED.ABORTED_EVENTS",			0xc9, 0x80, true },
+	{ "FP_ASSIST.ANY",				0xca, 0x1e, true },
+	{ "HW_INTERRUPTS.RECEIVED",			0xcb, 0x01, true },
+	{ "ROB_MISC_EVENTS.LBR_INSERTS",		0xcc, 0x20, true },
+	{ "MEM_TRANS_RETIRED.LOAD_LATENCY_GT_4",	0xcd, 0x01, true },
+	{ "MEM_INST_RETIRED.STLB_MISS_LOADS",		0xd0, 0x11, true },
+	{ "MEM_INST_RETIRED.STLB_MISS_STORES",		0xd0, 0x12, true },
+	{ "MEM_INST_RETIRED.LOCK_LOADS",		0xd0, 0x21, true },
+	{ "MEM_INST_RETIRED.SPLIT_LOADS",		0xd0, 0x41, true },
+	{ "MEM_INST_RETIRED.SPLIT_STORES",		0xd0, 0x42, true },
+	{ "MEM_INST_RETIRED.ALL_LOADS",			0xd0, 0x81, true },
+	{ "MEM_INST_RETIRED.ALL_STORES",		0xd0, 0x82, true },
+	{ "MEM_LOAD_RETIRED.L1_HIT",			0xd1, 0x01, true },
+	{ "MEM_LOAD_RETIRED.L2_HIT",			0xd1, 0x02, true },
+	{ "MEM_LOAD_RETIRED.L3_HIT",			0xd1, 0x04, true },
+	{ "MEM_LOAD_RETIRED.L1_MISS",			0xd1, 0x08, true },
+	{ "MEM_LOAD_RETIRED.L2_MISS",			0xd1, 0x10, true },
+	{ "MEM_LOAD_RETIRED.L3_MISS",			0xd1, 0x20, true },
+	{ "MEM_LOAD_RETIRED.FB_HIT",			0xd1, 0x40, true },
+	{ "MEM_LOAD_L3_HIT_RETIRED.XSNP_MISS",		0xd2, 0x01, true },
+	{ "MEM_LOAD_L3_HIT_RETIRED.XSNP_HIT",		0xd2, 0x02, true },
+	{ "MEM_LOAD_L3_HIT_RETIRED.XSNP_HITM",		0xd2, 0x04, true },
+	{ "MEM_LOAD_L3_HIT_RETIRED.XSNP_NONE",		0xd2, 0x08, true },
+	{ "MEM_LOAD_L3_MISS_RETIRED.LOCAL_DRAM",	0xd3, 0x01, true },
+	{ "MEM_LOAD_L3_MISS_RETIRED.REMOTE_DRAM",	0xd3, 0x02, true },
+	{ "MEM_LOAD_L3_MISS_RETIRED.REMOTE_HITM",	0xd3, 0x04, true },
+	{ "MEM_LOAD_L3_MISS_RETIRED.REMOTE_FWD",	0xd3, 0x08, true },
+	{ "MEM_LOAD_MISC_RETIRED.UC",			0xd4, 0x04, true },
+	{ "BACLEARS.ANY",				0xe6, 0x01, true },
+	{ "L2_TRANS.L2_WB",				0xf0, 0x40, true },
+	{ "L2_LINES_IN.ALL",				0xf1, 0x1f, true },
+	{ "L2_LINES_OUT.SILENT",			0xf2, 0x01, true },
+	{ "L2_LINES_OUT.NON_SILENT",			0xf2, 0x02, true },
+	{ "L2_LINES_OUT.USELESS_PREF",			0xf2, 0x04, true },
+	{ "SQ_MISC.SPLIT_LOCK",				0xf4, 0x10, true },
+	{ "IDI_MISC.WB_UPGRADE",			0xfe, 0x02, true },
+	{ "IDI_MISC.WB_DOWNGRADE",			0xfe, 0x04, true },
+};
+
+static struct event_table intel_skylake_x = {
+	.tablename = "Intel Skylake-X",
+	.names = intel_skylake_x_names,
+	.nevents = sizeof(intel_skylake_x_names) /
+	    sizeof(struct name_to_event),
+	.next = NULL
+};
+
+static struct event_table *
+init_intel_skylake_x(void)
+{
+
+	return &intel_skylake_x;
+}
+
+/*
+ * Intel Cascade Lake.
+ */
+static struct name_to_event intel_cascadelake_names[] = {
+	{ "MEM_LOAD_RETIRED.LOCAL_PMM",			0xd1, 0x80, true },
+	{ "MEM_LOAD_L3_MISS_RETIRED.REMOTE_PMM",	0xd3, 0x10, true },
+};
+
+static struct event_table intel_cascadelake = {
+	.tablename = "Intel Cascade Lake",
+	.names = intel_cascadelake_names,
+	.nevents = sizeof(intel_cascadelake_names) /
+	    sizeof(struct name_to_event),
+	.next = NULL
+};
+
+static struct event_table *
+init_intel_cascadelake(void)
+{
+
+	intel_skylake_x.next = &intel_cascadelake;
+
+	return &intel_skylake_x;
+}
+
 static struct event_table *
 init_intel_generic(void)
 {
 	unsigned int eax, ebx, ecx, edx;
 	struct event_table *table;
+	uint8_t stepping;
 
 	/*
 	 * The kernel made sure the Architectural Version 1 PMCs were
@@ -570,12 +835,21 @@ init_intel_generic(void)
 			break;
 		case 0x4e: /* Skylake */
 		case 0x5e: /* Skylake */
-		case 0x8e: /* Kabylake */
-		case 0x9e: /* Kabylake */
-		case 0xa5: /* Cometlake */
-		case 0xa6: /* Cometlake */
+		case 0x8e: /* Kaby Lake */
+		case 0x9e: /* Kaby Lake */
+		case 0xa5: /* Comet Lake */
+		case 0xa6: /* Comet Lake */
 			table->next = init_intel_skylake_kabylake();
 			break;
+
+		case 0x55: /* Skylake-X, Cascade Lake */
+			stepping = CPUID_TO_STEPPING(eax);
+			if (stepping <= 4)
+				table->next = init_intel_skylake_x();
+			else
+				table->next = init_intel_cascadelake();
+			break;
+
 		}
 	}
 

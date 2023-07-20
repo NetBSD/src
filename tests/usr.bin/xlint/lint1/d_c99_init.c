@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.45 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.46 2023/07/09 11:01:27 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -407,7 +407,7 @@ ensure_array_type_is_not_modified_during_initialization(void)
 
 	switch (4) {
 	case sizeof(array_of_unknown_size):
-	/* expect+1: error: duplicate case in switch: 0 [199] */
+	/* expect+1: error: duplicate case '0' in switch [199] */
 	case 0:
 	case 3:
 	case 4:

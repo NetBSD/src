@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_159.c,v 1.6 2023/04/22 17:30:35 rillig Exp $	*/
+/*	$NetBSD: msg_159.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_159.c"
 
 // Test for message: assignment in conditional context [159]
 
-/* lint1-extra-flags: -h */
+/* lint1-extra-flags: -h -X 351 */
 
 const char *
 example(int a, int b)

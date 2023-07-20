@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_108.c,v 1.8 2023/05/22 12:55:04 rillig Exp $	*/
+/*	$NetBSD: msg_108.c,v 1.9 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_108.c"
 
 // Test for message: operand of '%s' has invalid type '%s' [108]
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * Before tree.c 1.137 from 2021-01-19, taking the complement of a struct

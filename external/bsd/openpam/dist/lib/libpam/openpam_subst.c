@@ -1,7 +1,7 @@
-/*	$NetBSD: openpam_subst.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: openpam_subst.c,v 1.4 2023/06/30 21:46:21 christos Exp $	*/
 
 /*-
- * Copyright (c) 2011 Dag-Erling Smørgrav
+ * Copyright (c) 2011-2023 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $OpenPAM: openpam_subst.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -36,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_subst.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
+__RCSID("$NetBSD: openpam_subst.c,v 1.4 2023/06/30 21:46:21 christos Exp $");
 
 #include <security/pam_appl.h>
 
@@ -111,7 +109,8 @@ openpam_subst(const pam_handle_t *pamh,
 				subst_char('%');
 				subst_char(*template);
 			}
-			++template;
+			if (*template)
+				++template;
 		} else {
 			subst_char(*template++);
 		}

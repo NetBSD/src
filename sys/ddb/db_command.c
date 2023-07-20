@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.182 2023/05/25 21:46:55 uwe Exp $	*/
+/*	$NetBSD: db_command.c,v 1.185 2023/07/17 12:55:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.182 2023/05/25 21:46:55 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.185 2023/07/17 12:55:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.182 2023/05/25 21:46:55 uwe Exp $")
 #include <sys/kernhist.h>
 #include <sys/socketvar.h>
 #include <sys/queue.h>
+#include <sys/syncobj.h>
 
 #include <dev/cons.h>
 
@@ -200,6 +201,7 @@ static void	db_fncall(db_expr_t, bool, db_expr_t, const char *);
 static void     db_help_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_lock_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_show_all_locks(db_expr_t, bool, db_expr_t, const char *);
+static void	db_show_all_tstiles(db_expr_t, bool, db_expr_t, const char *);
 static void	db_show_lockstats(db_expr_t, bool, db_expr_t, const char *);
 static void	db_show_all_freelists(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -316,6 +318,8 @@ static const struct db_command db_show_cmds[] = {
 	    "Print the state of the scheduler's run queues.",
 	    NULL,NULL) },
 	{ DDB_ADD_CMD("socket",	db_socket_print_cmd,	0,NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("tstiles", db_show_all_tstiles,
+	    0, "Show who's holding up tstiles", "[/t]", NULL) },
 	{ DDB_ADD_CMD("uvmexp",	db_uvmexp_print_cmd, 0,
 	    "Print a selection of UVM counters and statistics.",
 	    NULL,NULL) },
@@ -1360,6 +1364,93 @@ db_show_all_locks(db_expr_t addr, bool have_addr,
 #else
 	db_kernelonly();
 #endif
+}
+
+static void
+db_show_all_tstiles(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+	struct proc *p;
+	bool trace = false;
+
+	if (modif[0] == 't')
+		trace = true;
+
+	db_printf("%5s %5s %16s %16s %8s %16s\n",
+	    "PID", "LID", "COMMAND", "WAITING-FOR", "TYPE", "WAIT-CHANNEL");
+	for (p = db_proc_first(); p != NULL; p = db_proc_next(p)) {
+		pid_t pid = -1;
+		char comm[MAXCOMLEN + 1] = "";
+		struct lwp *l = NULL;
+
+		db_read_bytes((db_addr_t)&p->p_pid, sizeof(pid), (char *)&pid);
+		db_read_bytes((db_addr_t)p->p_comm, sizeof(comm), comm);
+		db_read_bytes((db_addr_t)&p->p_lwps.lh_first, sizeof(l),
+		    (char *)&l);
+		while (l != NULL) {
+			wchan_t wchan = NULL;
+			char wchanname[128] = "";
+			const char *wmesg = NULL;
+			char wmesgbuf[sizeof("tstile")] = "";
+			lwpid_t lid = -1;
+			struct syncobj *sobj = NULL;
+			struct lwp *owner = NULL;
+			char sobjname[sizeof(sobj->sobj_name)] = "";
+
+			db_read_bytes((db_addr_t)&l->l_wchan, sizeof(wchan),
+			    (char *)&wchan);
+			if (wchan == NULL)
+				goto next;
+			db_symstr(wchanname, sizeof(wchanname),
+			    (db_expr_t)(uintptr_t)wchan, DB_STGY_ANY);
+			db_read_bytes((db_addr_t)&l->l_wmesg, sizeof(wmesg),
+			    (char *)&wmesg);
+			if (wmesg != NULL) {
+				db_read_bytes((db_addr_t)wmesg,
+				    sizeof(wmesgbuf), wmesgbuf);
+			}
+
+			if (strncmp(wmesgbuf, "tstile", sizeof("tstile")) != 0)
+				goto next;
+
+			db_read_bytes((db_addr_t)&l->l_lid, sizeof(lid),
+			    (char *)&lid);
+			db_read_bytes((db_addr_t)&l->l_syncobj, sizeof(sobj),
+			    (char *)&sobj);
+			if (sobj == NULL) {
+				db_printf("%5ld %5ld %16s %16s %8s %16s\n",
+				    (long)pid,
+				    (long)lid,
+				    comm,
+				    "(unknown)",
+				    "",
+				    wchanname);
+				goto next;
+			}
+			db_read_bytes((db_addr_t)&sobj->sobj_name,
+			    sizeof(sobjname), sobjname);
+
+			owner = db_syncobj_owner(sobj, wchan);
+
+			db_printf("%5ld %5ld %16s %16lx %8s %16s\n",
+			    (long)pid,
+			    (long)lid,
+			    comm,
+			    (long)owner,
+			    sobjname,
+			    wchanname);
+
+			if (trace && owner != NULL) {
+				db_stack_trace_print(
+				    (db_expr_t)(uintptr_t)owner,
+				    /*have_addr*/true, /*count*/-1,
+				    /*modif(lwp)*/"a", db_printf);
+			}
+
+next:			db_read_bytes((db_addr_t)&l->l_sibling.le_next,
+			    sizeof(l), (char *)&l);
+		}
+	}
 }
 
 static void

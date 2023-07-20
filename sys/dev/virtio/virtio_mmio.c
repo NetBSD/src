@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mmio.c,v 1.10 2023/04/19 00:23:45 yamaguchi Exp $	*/
+/*	$NetBSD: virtio_mmio.c,v 1.11 2023/07/07 07:19:36 rin Exp $	*/
 /*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.10 2023/04/19 00:23:45 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.11 2023/07/07 07:19:36 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,12 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.10 2023/04/19 00:23:45 yamaguchi E
 /*
  * MMIO configuration space for virtio-mmio v1 is in guest byte order.
  *
- * XXX Note that aarch64eb pretends to be little endian. the MMIO registers
- * are in little endian but the device config registers and data structures
- * are in big endian; this is due to a bug in current Qemu.
+ * XXX For big-endian aarch64 and arm, see note in virtio_pci.c.
  */
 
-#if defined(__aarch64__) && BYTE_ORDER == BIG_ENDIAN
+#if (defined(__aarch64__) || defined(__arm__)) && BYTE_ORDER == BIG_ENDIAN
 #	define READ_ENDIAN	LITTLE_ENDIAN
 #	define STRUCT_ENDIAN	BIG_ENDIAN
 #elif BYTE_ORDER == BIG_ENDIAN

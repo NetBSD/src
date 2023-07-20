@@ -28,7 +28,6 @@ def create_msg(qname, qtype):
 
 
 def udp_query(ip, port, msg):
-
     ans = dns.query.udp(msg, ip, TIMEOUT, port=port)
     assert ans.rcode() == dns.rcode.NOERROR
 
@@ -36,7 +35,6 @@ def udp_query(ip, port, msg):
 
 
 def tcp_query(ip, port, msg):
-
     ans = dns.query.tcp(msg, ip, TIMEOUT, port=port)
     assert ans.rcode() == dns.rcode.NOERROR
 
@@ -90,7 +88,6 @@ def check_traffic(data, expected):
 
 
 def test_traffic(fetch_traffic, **kwargs):
-
     statsip = kwargs["statsip"]
     statsport = kwargs["statsport"]
     port = kwargs["port"]

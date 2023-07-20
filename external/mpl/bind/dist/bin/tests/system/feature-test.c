@@ -1,4 +1,4 @@
-/*	$NetBSD: feature-test.c,v 1.10 2023/01/25 21:43:24 christos Exp $	*/
+/*	$NetBSD: feature-test.c,v 1.11 2023/06/26 22:02:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <isc/md.h>
 #include <isc/net.h>
 #include <isc/print.h>
 #include <isc/util.h>
@@ -47,6 +48,7 @@ usage() {
 	fprintf(stderr, "\t--have-json-c\n");
 	fprintf(stderr, "\t--have-libxml2\n");
 	fprintf(stderr, "\t--ipv6only=no\n");
+	fprintf(stderr, "\t--md5\n");
 	fprintf(stderr, "\t--tsan\n");
 	fprintf(stderr, "\t--with-dlz-filesystem\n");
 	fprintf(stderr, "\t--with-idn\n");
@@ -174,6 +176,20 @@ main(int argc, char **argv) {
 #else  /* ifdef WIN32 */
 		return (1);
 #endif /* ifdef WIN32 */
+	}
+
+	if (strcmp(argv[1], "--md5") == 0) {
+		unsigned char digest[ISC_MAX_MD_SIZE];
+		const unsigned char test[] = "test";
+		unsigned int size = sizeof(digest);
+
+		if (isc_md(ISC_MD_MD5, test, sizeof(test), digest, &size) ==
+		    ISC_R_SUCCESS)
+		{
+			return (0);
+		} else {
+			return (1);
+		}
 	}
 
 	if (strcmp(argv[1], "--tsan") == 0) {

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_114.c,v 1.6 2022/06/21 21:18:30 rillig Exp $	*/
+/*	$NetBSD: msg_114.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_114.c"
 
 // Test for message: %soperand of '%s' must be lvalue [114]
+
+/* lint1-extra-flags: -X 351 */
 
 /* ARGSUSED */
 void

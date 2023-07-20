@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.50 2021/11/02 11:26:04 ryo Exp $ */
+/*	$NetBSD: psl.h,v 1.52 2023/07/11 13:10:08 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -227,6 +227,13 @@
 #define SPARC64_BLOCK_SIZE	64
 #define SPARC64_BLOCK_ALIGN	0x3f
 
+#if (defined(_KERNEL) || defined(_KMEMUSER)) && !defined(_LOCORE)
+typedef uint8_t ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+#endif	/* _KERNEL|_KMEMUSER & !_LOCORE */
+
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 /*
@@ -295,11 +302,6 @@ static __inline __attribute__((__always_inline__)) void name(void) \
 }
 
 _SPLSET(spllowerschedclock, IPL_SCHED)
-
-typedef uint8_t ipl_t;
-typedef struct {
-	ipl_t _ipl;
-} ipl_cookie_t;
 
 static inline __always_inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)

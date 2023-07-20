@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.10 2023/07/09 11:18:55 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -23,15 +23,15 @@ void type_qualifier_pointer(const number *const);
 /*
  * Just some unrealistic coverage for the grammar rule 'arg_declaration'.
  */
-/* expect+6: warning: argument 'an_int' unused in function 'old_style' [231] */
-/* expect+5: warning: argument 'a_const_int' unused in function 'old_style' [231] */
-/* expect+4: warning: argument 'a_number' unused in function 'old_style' [231] */
-/* expect+3: warning: argument 'a_function' unused in function 'old_style' [231] */
-/* expect+2: warning: argument 'a_struct' unused in function 'old_style' [231] */
+/* expect+6: warning: parameter 'an_int' unused in function 'old_style' [231] */
+/* expect+5: warning: parameter 'a_const_int' unused in function 'old_style' [231] */
+/* expect+4: warning: parameter 'a_number' unused in function 'old_style' [231] */
+/* expect+3: warning: parameter 'a_function' unused in function 'old_style' [231] */
+/* expect+2: warning: parameter 'a_struct' unused in function 'old_style' [231] */
 extern void
 old_style(an_int, a_const_int, a_number, a_function, a_struct)
 /* expect+2: warning: empty declaration [2] */
-/* expect+1: error: only register valid as formal parameter storage class [9] */
+/* expect+1: error: only 'register' is valid as storage class in parameter [9] */
 static;
 /* expect+1: error: syntax error '"' [249] */
 static "error";
@@ -115,7 +115,7 @@ void cover_direct_notype_param_decl(
 /*
  * Just some unrealistic code to cover the grammar rule parameter_declaration.
  */
-/* expect+4: error: only register valid as formal parameter storage class [9] */
+/* expect+4: error: only 'register' is valid as storage class in parameter [9] */
 void cover_parameter_declaration(
     volatile,			/* 1 */
     double,			/* 2 */

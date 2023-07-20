@@ -5,15 +5,15 @@
 #   1) autoreconf -iv
 #   2) edit rumpuser_port.h (search for RUMPUSER_CONFIG for instructions)
 #   3) rm -rf autom4te.cache
-#   4) commit to NetBSD, pullup to repo.rumpkernel.org
+#   4) commit to NetBSD, pullup to https://github.com/rumpkernel/
 #
 
 AC_PREREQ([2.66])
-AC_INIT([rumpuser-posix], [999], [http://rumpkernel.org/])
+AC_INIT([rumpuser-posix], [999], [https://github.com/rumpkernel/])
 
 AC_CONFIG_HEADERS([rumpuser_config.h])
 AC_CONFIG_AUX_DIR([build-aux])
-AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_MACRO_DIR([build-aux])
 
 AC_LANG([C])
 

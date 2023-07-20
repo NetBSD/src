@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_pop_member.c,v 1.9 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: d_init_pop_member.c,v 1.10 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "d_init_pop_member.c"
 
 /*
@@ -7,6 +7,8 @@
  * "undefined struct/union member: capital [101]" in the second and third
  * named initializer.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 struct rgb {
 	unsigned red;
