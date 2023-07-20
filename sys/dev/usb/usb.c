@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.200 2022/03/13 11:28:52 riastradh Exp $	*/
+/*	$NetBSD: usb.c,v 1.201 2023/07/20 20:00:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.200 2022/03/13 11:28:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.201 2023/07/20 20:00:34 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -100,7 +100,11 @@ USBHIST_DEFINE(usbhist) = KERNHIST_INITIALIZER(usbhist, usbhistbuf);
  */
 int	usb_noexplore = 0;
 
-int	usbdebug = 0;
+#ifndef USB_DEBUG_DEFAULT
+#define USB_DEBUG_DEFAULT 0
+#endif
+
+int	usbdebug = USB_DEBUG_DEFAULT;
 SYSCTL_SETUP(sysctl_hw_usb_setup, "sysctl hw.usb setup")
 {
 	int err;

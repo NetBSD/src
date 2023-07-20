@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.171 2022/10/23 11:06:37 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.172 2023/07/20 20:00:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.171 2022/10/23 11:06:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.172 2023/07/20 20:00:34 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -72,7 +72,12 @@ __KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.171 2022/10/23 11:06:37 riastradh Exp $")
 #ifndef UGEN_DEBUG
 #define ugendebug 0
 #else
-int	ugendebug = 0;
+
+#ifndef UGEN_DEBUG_DEFAULT
+#define UGEN_DEBUG_DEFAULT 0
+#endif
+
+int	ugendebug = UGEN_DEBUG_DEFAULT;
 
 SYSCTL_SETUP(sysctl_hw_ugen_setup, "sysctl hw.ugen setup")
 {
@@ -108,6 +113,10 @@ fail:
 #define DPRINTFN(N,FMT,A,B,C,D) USBHIST_LOGN(ugendebug,N,FMT,A,B,C,D)
 #define UGENHIST_FUNC()         USBHIST_FUNC()
 #define UGENHIST_CALLED(name)   USBHIST_CALLED(ugendebug)
+#define UGENHIST_CALLARGS(FMT,A,B,C,D) \
+				USBHIST_CALLARGS(ugendebug,FMT,A,B,C,D)
+#define UGENHIST_CALLARGSN(N,FMT,A,B,C,D) \
+				USBHIST_CALLARGSN(ugendebug,N,FMT,A,B,C,D)
 
 #define	UGEN_CHUNK	128	/* chunk size for read */
 #define	UGEN_IBSIZE	1020	/* buffer size */
@@ -471,10 +480,9 @@ ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 	usbd_status err;
 	int dir;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
-
-	DPRINTFN(1, "ugen%jd: to configno %jd, sc=%jx",
-		    device_unit(sc->sc_dev), configno, (uintptr_t)sc, 0);
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGSN(1, "ugen%jd: to configno %jd, sc=%jx",
+	    device_unit(sc->sc_dev), configno, (uintptr_t)sc, 0);
 
 	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
 
@@ -564,15 +572,14 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int error;
 	int opened = 0;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGS("flag=%jd, mode=%jd, unit=%jd endpt=%jd",
+	    flag, mode, unit, endpt);
 
 	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
 
 	if ((sc = ugenif_acquire(unit)) == NULL)
 		return ENXIO;
-
-	DPRINTFN(5, "flag=%jd, mode=%jd, unit=%jd endpt=%jd",
-		     flag, mode, unit, endpt);
 
 	/* The control endpoint allows multiple opens. */
 	if (endpt == USB_CONTROL_ENDPOINT) {
@@ -735,7 +742,8 @@ ugen_do_close(struct ugen_softc *sc, int flag, int endpt)
 	int dir;
 	int i;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGS("flag=%jd endpt=%jd", flag, endpt, 0, 0);
 
 	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
 
@@ -809,10 +817,9 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_softc *sc;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
-
-	DPRINTFN(5, "flag=%jd, mode=%jd, unit=%jd, endpt=%jd",
-		     flag, mode, UGENUNIT(dev), endpt);
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGS("flag=%jd, mode=%jd, unit=%jd, endpt=%jd",
+	    flag, mode, UGENUNIT(dev), endpt);
 
 	KASSERT(KERNEL_LOCKED_P()); /* ugen_do_close */
 
@@ -837,9 +844,8 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	usbd_status err;
 	int error = 0;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
-
-	DPRINTFN(5, "ugen%d: %jd", device_unit(sc->sc_dev), endpt, 0, 0);
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGS("ugen%d: %jd", device_unit(sc->sc_dev), endpt, 0, 0);
 
 	if (endpt == USB_CONTROL_ENDPOINT)
 		return ENODEV;
@@ -1050,9 +1056,9 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 	struct usbd_xfer *xfer;
 	usbd_status err;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
-
-	DPRINTFN(5, "ugen%jd: %jd", device_unit(sc->sc_dev), endpt, 0, 0);
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGSN(5, "ugen%jd: %jd",
+	    device_unit(sc->sc_dev), endpt, 0, 0);
 
 	if (endpt == USB_CONTROL_ENDPOINT)
 		return ENODEV;
@@ -1229,9 +1235,8 @@ ugen_detach(device_t self, int flags)
 	int i, dir;
 	int maj, mn;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
-
-	DPRINTF("sc=%ju flags=%ju", (uintptr_t)sc, flags, 0, 0);
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGS("sc=%ju flags=%ju", (uintptr_t)sc, flags, 0, 0);
 
 	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
 
@@ -1325,7 +1330,8 @@ ugenintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	uint32_t count;
 	u_char *ibuf;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGS("xfer %jx status %d", (uintptr_t)xfer, status, 0, 0);
 
 	if (status == USBD_CANCELLED)
 		return;
@@ -1362,7 +1368,8 @@ ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr,
 	uint32_t count, n;
 	int i, isize;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGS("xfer=%jx status=%jd", (uintptr_t)xfer, status, 0, 0);
 
 	/* Return if we are aborting. */
 	if (status == USBD_CANCELLED)
@@ -1423,7 +1430,8 @@ ugen_bulkra_intr(struct usbd_xfer *xfer, void *addr,
 	char const *tbuf;
 	usbd_status err;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGS("xfer=%jx status=%jd", (uintptr_t)xfer, status, 0, 0);
 
 	/* Return if we are aborting. */
 	if (status == USBD_CANCELLED)
@@ -1491,7 +1499,8 @@ ugen_bulkwb_intr(struct usbd_xfer *xfer, void *addr,
 	char *tbuf;
 	usbd_status err;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGS("xfer=%jx status=%jd", (uintptr_t)xfer, status, 0, 0);
 
 	/* Return if we are aborting. */
 	if (status == USBD_CANCELLED)
@@ -1558,9 +1567,8 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 	uint8_t niface, nendpt, endptno, endpt;
 	int dir;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
-
-	DPRINTFN(15, "%d %d", ifaceidx, altno, 0, 0);
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGSN(15, "ifaceidx=%jd altno=%jd", ifaceidx, altno, 0, 0);
 
 	err = usbd_interface_count(sc->sc_udev, &niface);
 	if (err)
@@ -1603,37 +1611,37 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 Static usb_config_descriptor_t *
 ugen_get_cdesc(struct ugen_softc *sc, int index, int *lenp)
 {
-	usb_config_descriptor_t *cdesc, *tdesc, cdescr;
-	int len;
+	usb_config_descriptor_t *cdesc = NULL, *tdesc, cdescr;
+	int len = 0;
 	usbd_status err;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
+	UGENHIST_FUNC(); UGENHIST_CALLARGS("index=%jd", index, 0, 0, 0);
 
-	if (index == USB_CURRENT_CONFIG_INDEX) {
+	switch (index) {
+	case USB_CURRENT_CONFIG_INDEX:
 		tdesc = usbd_get_config_descriptor(sc->sc_udev);
 		if (tdesc == NULL)
-			return NULL;
+			break;
 		len = UGETW(tdesc->wTotalLength);
-		if (lenp)
-			*lenp = len;
 		cdesc = kmem_alloc(len, KM_SLEEP);
 		memcpy(cdesc, tdesc, len);
-		DPRINTFN(5, "current, len=%jd", len, 0, 0, 0);
-	} else {
+		break;
+	default:
 		err = usbd_get_config_desc(sc->sc_udev, index, &cdescr);
 		if (err)
-			return 0;
+			break;
 		len = UGETW(cdescr.wTotalLength);
-		DPRINTFN(5, "index=%jd, len=%jd", index, len, 0, 0);
-		if (lenp)
-			*lenp = len;
 		cdesc = kmem_alloc(len, KM_SLEEP);
 		err = usbd_get_config_desc_full(sc->sc_udev, index, cdesc, len);
 		if (err) {
 			kmem_free(cdesc, len);
-			return 0;
+			cdesc = NULL;
 		}
+		break;
 	}
+	DPRINTFN(5, "req len=%jd cdesc=%jx", len, (uintptr_t)cdesc, 0, 0);
+	if (cdesc && lenp)
+		*lenp = len;
 	return cdesc;
 }
 
@@ -1669,11 +1677,11 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	int error;
 	int dir;
 
-	UGENHIST_FUNC(); UGENHIST_CALLED();
+	UGENHIST_FUNC();
+	UGENHIST_CALLARGS("ugen%d: endpt=%ju cmd=%08jx flag=%jx",
+	    device_unit(sc->sc_dev), endpt, cmd, flag);
 
 	KASSERT(KERNEL_LOCKED_P()); /* ugen_set_config */
-
-	DPRINTFN(5, "cmd=%08jx", cmd, 0, 0, 0);
 
 	switch (cmd) {
 	case FIONBIO:
@@ -1690,6 +1698,8 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			sce->state |= UGEN_SHORT_OK;
 		else
 			sce->state &= ~UGEN_SHORT_OK;
+		DPRINTFN(5, "pipe=%jx short xfer=%ju",
+		    (uintptr_t)sce->pipeh, sce->state & UGEN_SHORT_OK, 0, 0);
 		return 0;
 	case USB_SET_TIMEOUT:
 		for (dir = OUT; dir <= IN; dir++) {
@@ -1698,6 +1708,8 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 				return EINVAL;
 
 			sce->timeout = *(int *)addr;
+			DPRINTFN(5, "pipe=%jx timeout[dir=%ju] timeout=%ju",
+			    (uintptr_t)sce->pipeh, dir, sce->timeout, 0);
 		}
 		return 0;
 	case USB_SET_BULK_RA:

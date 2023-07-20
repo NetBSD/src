@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.105 2022/07/31 12:59:26 mlelstv Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.106 2023/07/20 20:00:34 mrg Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.105 2022/07/31 12:59:26 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.106 2023/07/20 20:00:34 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -95,7 +95,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.105 2022/07/31 12:59:26 mlelstv Exp $
 #define	DBG_RF		__BIT(5)
 #define	DBG_REG		__BIT(6)
 #define	DBG_ALL		0xffffffffU
-u_int urtwn_debug = 0;
+
+#ifndef URTWN_DEBUG_DEFAULT
+#define URTWN_DEBUG_DEFAULT 0
+#endif
+
+u_int urtwn_debug = URTWN_DEBUG_DEFAULT;
+
 #define DPRINTFN(n, fmt, a, b, c, d) do {			\
 	if (urtwn_debug & (n)) {				\
 		KERNHIST_LOG(usbhist, fmt, a, b, c, d);		\

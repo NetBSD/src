@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.178 2022/06/30 06:30:44 macallan Exp $
+#	$NetBSD: files.usb,v 1.179 2023/07/20 20:00:34 mrg Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -6,9 +6,11 @@
 
 defflag	USBVERBOSE
 defflag	opt_usb.h	USB_FRAG_DMA_WORKAROUND
+defparam opt_usb.h	USB_DEBUG_DEFAULT: USB_DEBUG
 
 # HC controllers
 defflag	opt_usb.h	EHCI_DEBUG: USB_DEBUG
+defparam opt_usb.h	EHCI_DEBUG_DEFAULT: EHCI_DEBUG
 defflag	opt_usb.h	OHCI_DEBUG: USB_DEBUG
 defflag	opt_usb.h	UHCI_DEBUG: USB_DEBUG
 defflag	opt_usb.h	DWC2_DEBUG: USB_DEBUG
@@ -46,6 +48,7 @@ defflag opt_usb.h	UDSBR_DEBUG: USB_DEBUG
 defflag opt_usb.h	UFTDI_DEBUG: USB_DEBUG
 defflag opt_usb.h	UGENSA_DEBUG: USB_DEBUG
 defflag opt_usb.h	UGEN_DEBUG: USB_DEBUG
+defparam opt_usb.h	UGEN_DEBUG_DEFAULT: UGEN_DEBUG
 defflag opt_usb.h	UHIDEV_DEBUG: USB_DEBUG
 defflag opt_usb.h	UHID_DEBUG: USB_DEBUG
 defflag opt_usb.h	UHMODEM_DEBUG: USB_DEBUG
@@ -62,6 +65,7 @@ defflag opt_usb.h	UMIDIQUIRK_DEBUG: USB_DEBUG
 defflag opt_usb.h	UMIDI_DEBUG: USB_DEBUG
 defflag opt_usb.h	UMODEM_DEBUG: USB_DEBUG
 defflag opt_usb.h	UMS_DEBUG: USB_DEBUG
+defparam opt_usb.h	UMS_DEBUG_DEFAULT: UMS_DEBUG
 defflag opt_usb.h	UPGT_DEBUG: USB_DEBUG
 defflag opt_usb.h	UPLCOM_DEBUG: USB_DEBUG
 defflag opt_usb.h	UPL_DEBUG: USB_DEBUG
@@ -69,6 +73,7 @@ defflag opt_usb.h	URAL_DEBUG: USB_DEBUG
 defflag opt_usb.h	URL_DEBUG: USB_DEBUG
 defflag opt_usb.h	URNDIS_DEBUG: USB_DEBUG
 defflag opt_usb.h	URTWN_DEBUG: USB_DEBUG
+defparam opt_usb.h	URTWN_DEBUG_DEFAULT: URTWN_DEBUG
 defflag opt_usb.h	URTW_DEBUG: USB_DEBUG
 defflag opt_usb.h	USBNET_DEBUG: USB_DEBUG
 defflag opt_usb.h	USCANNER_DEBUG: USB_DEBUG
