@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.179 2023/06/05 03:44:47 mlelstv Exp $	*/
+/*	$NetBSD: xhci.c,v 1.180 2023/07/20 11:59:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.179 2023/06/05 03:44:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.180 2023/07/20 11:59:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -700,7 +700,6 @@ xhci_suspend(device_t self, const pmf_qual_t *qual)
 	 */
 	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_suspender == NULL);
-	KASSERT(!sc->sc_suspendresume_failed);
 	sc->sc_suspender = curlwp;
 	while (sc->sc_command_addr != 0)
 		cv_wait(&sc->sc_cmdbusy_cv, &sc->sc_lock);
