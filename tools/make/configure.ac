@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.10 2023/07/20 15:12:36 lukem Exp $
+#	$NetBSD: configure.ac,v 1.11 2023/07/20 15:16:44 lukem Exp $
 #
 # Autoconf definition file for make.
 #
@@ -25,6 +25,9 @@
 AC_INIT([make], [noversion], [bin-bug-people@NetBSD.org])
 AC_CONFIG_FILES([buildmake.sh])
 
+m4_pattern_forbid([^AX_])
+m4_pattern_forbid([^NB_])
+
 AC_PATH_PROG([BSHELL], [sh])
 if test x"$BSHELL" = x; then
     AC_MSG_ERROR([sh must be somewhere on \$PATH, or BSHELL must be defined])
@@ -47,12 +50,17 @@ AC_SEARCH_LIBS([regfree], [rx posix])
 
 AC_CHECK_FUNCS([setenv strdup strerror strftime vsnprintf])
 
+dnl NOWARNFLAGS: compiler flags to suppress unnecessary warnings:
+dnl   -Wno-deprecated-declarations
+dnl
+NB_CHECK_CC_FLAG([-Wno-deprecated-declarations], [NOWARNFLAGS])
+
 AC_OUTPUT()
 
 dnl Display results
 dnl
 AC_MSG_NOTICE([========== configure results for make ===========])
-m4_foreach_w([NB_VAR], [CC CFLAGS CPPFLAGS DEFS LDFLAGS LIBS], [dnl
+m4_foreach_w([NB_VAR], [CC CFLAGS CPPFLAGS DEFS LDFLAGS LIBS NOWARNFLAGS], [dnl
 AC_MSG_NOTICE(m4_format([%-32s],NB_VAR)[$NB_VAR])
 ])
 AC_MSG_NOTICE([================================================])
