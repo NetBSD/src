@@ -20573,6 +20573,8 @@ basis|BASIS108 computer with terminal translation table active,
 # luna's BMC terminal emulator
 luna|luna68k|LUNA68K Bitmap console,
 	cols#88, lines#46, use=ansi-mini,
+soft|soft68k|SOFT68K Bitmap console,
+	cols#88, lines#46, use=ansi-mini,
 megatek|pegasus workstation terminal emulator,
 	am, os,
 	cols#83, lines#60,
