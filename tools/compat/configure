@@ -5306,7 +5306,7 @@ for ac_func in atoll asprintf asnprintf basename devname dirfd dirname \
 	dprintf esetfunc fgetln flock fpurge __fpurge futimes getline \
 	getopt getopt_long group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
-	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb \
+	mkdtemp poll posix_spawn pread putc_unlocked pwcache_userdb pwcache_groupdb \
 	pwrite raise_default_signal random reallocarr reallocarray setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
