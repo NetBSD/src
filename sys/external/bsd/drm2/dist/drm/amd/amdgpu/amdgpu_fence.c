@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fence.c,v 1.10 2021/12/19 12:02:39 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fence.c,v 1.11 2023/07/20 18:02:45 mrg Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,7 +31,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.10 2021/12/19 12:02:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.11 2023/07/20 18:02:45 mrg Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/atomic.h>
@@ -541,7 +541,9 @@ void amdgpu_fence_driver_fini(struct amdgpu_device *adev)
 		}
 		amdgpu_irq_put(adev, ring->fence_drv.irq_src,
 			       ring->fence_drv.irq_type);
-		drm_sched_fini(&ring->sched);
+		if (ring->funcs->type != AMDGPU_RING_TYPE_KIQ) {
+			drm_sched_fini(&ring->sched);
+		}
 		del_timer_sync(&ring->fence_drv.fallback_timer);
 		for (j = 0; j <= ring->fence_drv.num_fences_mask; ++j)
 			dma_fence_put(ring->fence_drv.fences[j]);
