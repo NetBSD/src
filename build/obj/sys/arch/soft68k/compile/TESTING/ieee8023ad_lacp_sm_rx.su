@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_sm_rx.c:78:1:lacp_sm_rx	316	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_sm_rx.c:121:1:lacp_sm_rx_set_expired	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_sm_rx.c:131:1:lacp_sm_rx_timer	20	dynamic,bounded

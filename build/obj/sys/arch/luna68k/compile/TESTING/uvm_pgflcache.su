@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pgflcache.c:418:1:uvm_pgflcache_alloc	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pgflcache.c:425:1:uvm_pgflcache_free	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pgflcache.c:432:1:uvm_pgflcache_fill	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pgflcache.c:438:1:uvm_pgflcache_pause	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pgflcache.c:444:1:uvm_pgflcache_resume	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pgflcache.c:450:1:uvm_pgflcache_start	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pgflcache.c:456:1:uvm_pgflcache_init	0	static

@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_unix.c:68:1:sys_obreak	72	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_unix.c:134:1:uvm_grow	24	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_unix.c:179:1:sys_ovadvise	0	static

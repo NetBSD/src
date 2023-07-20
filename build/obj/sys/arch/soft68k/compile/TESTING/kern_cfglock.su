@@ -1,4 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cfglock.c:54:1:kernconfig_lock_init	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cfglock.c:63:1:kernconfig_lock	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cfglock.c:85:1:kernconfig_unlock	4	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cfglock.c:97:1:kernconfig_is_held	4	dynamic,bounded

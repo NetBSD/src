@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_once.c:43:1:once_init	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_once.c:51:1:_init_once	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_once.c:80:1:_fini_once	28	dynamic,bounded

@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/toeplitz.c:148:1:stoeplitz_cache_init	28	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/toeplitz.c:128:1:stoeplitz_init	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/toeplitz.c:173:1:stoeplitz_hash_ip4	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/toeplitz.c:180:1:stoeplitz_hash_ip4port	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/toeplitz.c:188:1:stoeplitz_hash_ip6	12	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/toeplitz.c:201:1:stoeplitz_hash_ip6port	20	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/toeplitz.c:218:1:stoeplitz_to_key	8	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/toeplitz.c:261:1:toeplitz_vhash	52	static

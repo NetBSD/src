@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_anon.c:61:1:uvm_anon_ctor	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_anon.c:52:1:uvm_anon_init	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_anon.c:80:1:uvm_analloc	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_anon.c:210:1:uvm_anon_lockloanpg	72	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_anon.c:105:1:uvm_anfree	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_anon.c:275:1:uvm_anon_pagein	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_anon.c:337:1:uvm_anon_dropswap	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_anon.c:360:1:uvm_anon_release	20	dynamic,bounded

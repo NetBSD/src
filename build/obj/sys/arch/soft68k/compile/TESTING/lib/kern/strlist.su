@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/strlist.c:114:1:strlist_next	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/strlist.c:140:1:strlist_count	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/strlist.c:164:1:strlist_string	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/strlist.c:257:1:strlist_match	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/strlist.c:278:1:strlist_pmatch	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/strlist.c:302:1:strlist_index	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/strlist.c:321:1:strlist_append	72	dynamic,bounded

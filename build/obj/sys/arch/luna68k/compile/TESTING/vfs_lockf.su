@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_lockf.c:193:1:lf_alloc	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_lockf.c:251:1:lf_findoverlap	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_lockf.c:498:1:lf_getblock	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_lockf.c:235:1:lf_dtor	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_lockf.c:357:1:lf_split	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_lockf.c:224:1:lf_ctor	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_lockf.c:429:1:lf_clearlock	64	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_lockf.c:809:1:lf_advlock	100	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_lockf.c:983:1:lf_init	40	dynamic,bounded

@@ -1,2 +1,0 @@
-regsub.o: \
-  /Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/gcc/../../external/gpl3/gcc.old/dist/gcc/regsub.c

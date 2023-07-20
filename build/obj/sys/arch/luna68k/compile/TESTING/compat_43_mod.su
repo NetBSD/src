@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_43_mod.c:50:1:compat_43_init.part.0	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_43_mod.c:113:1:compat_43_fini.part.0	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_43_mod.c:183:1:compat_43_modcmd	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_43_mod.c:50:1:compat_43_init	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_43_mod.c:113:1:compat_43_fini	0	static

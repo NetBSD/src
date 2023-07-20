@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/entpool.c:104:1:stir	36	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/entpool.c:131:1:entpool_enter	36	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/entpool.c:178:1:entpool_enter_nostir	28	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/entpool.c:215:1:entpool_stir	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/entpool.c:236:1:entpool_extract	56	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/entpool.c:413:1:entpool_selftest	648	dynamic,bounded

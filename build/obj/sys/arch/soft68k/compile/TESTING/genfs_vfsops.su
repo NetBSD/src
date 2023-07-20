@@ -1,4 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_vfsops.c:42:1:genfs_statvfs	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_vfsops.c:62:1:genfs_renamelock_enter	4	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_vfsops.c:70:1:genfs_renamelock_exit	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_vfsops.c:76:1:genfs_suspendctl	16	dynamic,bounded

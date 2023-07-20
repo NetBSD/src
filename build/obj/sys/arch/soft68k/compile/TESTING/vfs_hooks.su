@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_hooks.c:50:1:vfs_hooks_init	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_hooks.c:57:1:vfs_hooks_attach	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_hooks.c:68:1:vfs_hooks_detach	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_hooks.c:137:1:vfs_hooks_unmount	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_hooks.c:138:1:vfs_hooks_reexport	32	dynamic,bounded

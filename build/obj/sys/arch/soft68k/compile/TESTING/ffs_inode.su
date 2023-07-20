@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_inode.c:626:1:ffs_indirtrunc	180	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_inode.c:803:1:ffs_itimes.part.0	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_inode.c:111:1:ffs_update.part.0	108	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_inode.c:111:1:ffs_update	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_inode.c:207:1:ffs_truncate	508	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_inode.c:803:1:ffs_itimes	0	static

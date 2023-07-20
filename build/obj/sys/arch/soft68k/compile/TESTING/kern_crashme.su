@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_crashme.c:263:1:crashme_null_deref	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_crashme.c:271:1:crashme_null_jump	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_crashme.c:178:1:crashme_sysctl_forwarder	164	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_crashme.c:255:1:crashme_panic	4	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_crashme.c:282:1:crashme_ddb	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_crashme.c:304:1:crashme_mutex_recursion	48	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_crashme.c:101:1:crashme_add	96	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_crashme.c:210:1:selfdebug_crashme	100	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_crashme.c:144:1:crashme_remove	28	dynamic,bounded

@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/frag6.c:553:1:frag6_freef	60	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/frag6.c:116:1:frag6_init	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/frag6.c:157:1:frag6_input	156	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/frag6.c:538:1:ip6_reass_packet	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/frag6.c:671:1:frag6_slowtimo	36	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/frag6.c:718:1:frag6_drainstub	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/frag6.c:727:1:frag6_drain	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/frag6.c:652:1:frag6_fasttimo	12	dynamic,bounded

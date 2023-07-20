@@ -1,1 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/gmp/../../external/lgpl3/gmp/dist/mpn/x86_64/sqr_diag_addlsh1.asm

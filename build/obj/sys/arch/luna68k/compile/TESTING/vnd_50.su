@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vnd_50.c:102:1:compat_50_vndioctl	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vnd_50.c:122:1:vnd_50_init	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vnd_50.c:129:1:vnd_50_fini	8	dynamic,bounded

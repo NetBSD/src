@@ -1,4 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/cnmagic.c:43:1:cn_init_magic	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/cnmagic.c:53:1:cn_destroy_magic	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/cnmagic.c:64:1:cn_set_magic	280	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/cnmagic.c:120:1:cn_get_magic	12	static

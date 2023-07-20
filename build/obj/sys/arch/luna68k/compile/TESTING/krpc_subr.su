@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/krpc_subr.c:186:12:krpccheck	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/krpc_subr.c:217:1:krpc_call.part.0	84	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/krpc_subr.c:134:1:krpc_portmap	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/krpc_subr.c:217:1:krpc_call	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/krpc_subr.c:404:1:xdr_string_encode	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/krpc_subr.c:433:1:xdr_string_decode	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/krpc_subr.c:471:1:xdr_inaddr_encode	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/krpc_subr.c:494:1:xdr_inaddr_decode	16	dynamic,bounded

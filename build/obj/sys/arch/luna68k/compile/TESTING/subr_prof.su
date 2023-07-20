@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_prof.c:482:1:sys_profil	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_prof.c:540:1:addupc_intr	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_prof.c:570:1:addupc_task	44	dynamic,bounded

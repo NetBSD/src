@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rb.c:328:1:rb_tree_reparent_nodes.constprop	20	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rb.c:813:1:rb_tree_removal_rebalance	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rb.c:101:1:rb_tree_init	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rb.c:123:1:rb_tree_find_node	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rb.c:142:1:rb_tree_find_node_geq	36	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rb.c:163:1:rb_tree_find_node_leq	36	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rb.c:184:1:rb_tree_insert_node	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rb.c:964:1:rb_tree_iterate	12	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rb.c:748:1:rb_tree_remove_node	40	dynamic,bounded

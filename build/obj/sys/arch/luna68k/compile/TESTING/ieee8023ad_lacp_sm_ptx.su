@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_sm_ptx.c:50:1:lacp_sm_ptx_update_timeout	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_sm_ptx.c:80:1:lacp_sm_ptx_tx_schedule	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_sm_ptx.c:106:1:lacp_sm_ptx_timer	0	static

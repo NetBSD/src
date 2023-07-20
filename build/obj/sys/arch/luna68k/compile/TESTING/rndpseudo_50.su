@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/rndpseudo_50.c:67:1:compat_50_rnd_ioctl	344	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/rndpseudo_50.c:123:1:rndpseudo_50_init	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/rndpseudo_50.c:130:1:rndpseudo_50_fini	8	dynamic,bounded

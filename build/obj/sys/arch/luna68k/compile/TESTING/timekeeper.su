@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/timekeeper.c:119:1:mkclock_get	16	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/timekeeper.c:143:1:mkclock_set	16	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/timekeeper.c:192:1:dsclock_get	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/timekeeper.c:217:1:dsclock_set	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/timekeeper.c:72:1:clock_match	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/timekeeper.c:82:1:clock_attach	16	dynamic,bounded

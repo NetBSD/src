@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/raw_usrreq.c:67:1:raw_input	64	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/raw_usrreq.c:122:1:raw_ctlinput	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/raw_usrreq.c:132:1:raw_setsockaddr	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/raw_usrreq.c:139:1:raw_setpeeraddr	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/raw_usrreq.c:146:1:raw_send	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/raw_usrreq.c:189:1:raw_usrreq	4	dynamic,bounded

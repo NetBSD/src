@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_page_array.c:45:1:uvm_page_array_init	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_page_array.c:60:1:uvm_page_array_fini	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_page_array.c:81:1:uvm_page_array_clear	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_page_array.c:94:1:uvm_page_array_peek	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_page_array.c:109:1:uvm_page_array_advance	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_page_array.c:132:1:uvm_page_array_fill	60	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_page_array.c:222:1:uvm_page_array_fill_and_peek	28	dynamic,bounded

@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/xp.c:264:1:xp_read	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/xp.c:241:1:xp_mmap	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/xp.c:192:1:xp_ioctl	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/xp.c:174:1:xp_close	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/xp.c:137:1:xp_open	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/xp.c:123:1:xp_attach	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/xp.c:107:1:xp_match	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/xp.c:271:1:xp_write	0	static

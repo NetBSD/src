@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrtimer.c:84:1:agrtimer_tick	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrtimer.c:92:1:agrtimer_work	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrtimer.c:111:1:agrtimer_port_tick	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrtimer.c:47:1:agrtimer_init	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrtimer.c:62:1:agrtimer_destroy	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrtimer.c:70:1:agrtimer_start	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrtimer.c:77:1:agrtimer_stop	0	static

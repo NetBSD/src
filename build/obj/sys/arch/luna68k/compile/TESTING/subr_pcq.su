@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pcq.c:179:1:pcq_put	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pcq.c:217:1:pcq_peek	8	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pcq.c:234:1:pcq_get	48	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pcq.c:287:1:pcq_create	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pcq.c:302:1:pcq_destroy	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pcq.c:309:1:pcq_maxitems	0	static

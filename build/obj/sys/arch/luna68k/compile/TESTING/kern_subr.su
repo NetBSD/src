@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_subr.c:719:1:getwedgename	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_subr.c:736:1:parsedisk	68	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_subr.c:678:1:getdisk	80	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_subr.c:578:1:setroot_dump	460	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_subr.c:193:1:setroot	272	dynamic,bounded

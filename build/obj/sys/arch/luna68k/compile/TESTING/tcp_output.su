@@ -1,2 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_output.c:1662:1:tcp_setpersist	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_output.c:505:1:tcp_output	212	dynamic,bounded

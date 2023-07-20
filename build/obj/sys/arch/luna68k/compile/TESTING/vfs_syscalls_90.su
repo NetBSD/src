@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_90.c:72:1:compat_90_sys_getvfsstat	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/sys/statvfs.h:116:1:statvfs_to_statvfs90_copy	56	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_90.c:87:1:compat_90_sys_statvfs1	64	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_90.c:108:1:compat_90_sys_fstatvfs1	64	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_90.c:129:1:compat_90_sys_fhstatvfs1	64	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_90.c:152:1:vfs_syscalls_90_init	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_90.c:159:1:vfs_syscalls_90_fini	8	dynamic,bounded

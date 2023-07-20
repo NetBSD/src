@@ -1,4 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_stats.c:74:1:if_stats_to_if_data_cb	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_stats.c:49:1:if_stats_init	4	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_stats.c:59:1:if_stats_fini	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_stats.c:109:1:if_stats_to_if_data	40	dynamic,bounded

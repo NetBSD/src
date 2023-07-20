@@ -1,2 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/procfs/procfs_auxv.c:42:1:procfs_doauxv	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/procfs/procfs_auxv.c:66:1:procfs_validauxv	0	static

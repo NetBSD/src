@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/sys/mount.h:101:1:statvfs_to_statfs12	76	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/sys/mount.h:140:1:statvfs_to_statfs12_copy	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_20.c:147:1:compat_20_sys_getfsstat	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_20.c:117:1:compat_20_sys_fstatfs	64	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_20.c:83:1:compat_20_sys_statfs	60	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_20.c:160:1:compat_20_sys_fhstatfs	96	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_20.c:200:1:vfs_syscalls_20_init	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_20.c:207:1:vfs_syscalls_20_fini	8	dynamic,bounded

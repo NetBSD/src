@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_selftest.c:84:1:aes_selftest_encdec	648	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_selftest.c:143:1:aes_selftest_encdec_cbc	972	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_selftest.c:448:1:aes_selftest_ccm	404	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_selftest.c:276:1:aes_selftest_encdec_xts	1000	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_selftest.c:543:1:aes_selftest	336	dynamic,bounded

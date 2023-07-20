@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cpu.c:383:1:cpu_xc_online	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cpu.c:308:1:cpu_xc_offline	56	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cpu.c:127:1:mi_cpu_attach	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cpu.c:184:1:cpuctlattach	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cpu.c:285:1:cpu_lookup	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cpu.c:395:1:cpu_setstate	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cpu.c:191:1:cpuctl_ioctl	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cpu.c:530:1:cpu_setintr	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_cpu.c:537:1:cpu_intr_count	0	static

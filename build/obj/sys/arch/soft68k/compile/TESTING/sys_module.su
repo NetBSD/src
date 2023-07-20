@@ -1,2 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_module.c:58:1:handle_modctl_load	48	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_module.c:262:1:sys_modctl	132	dynamic,bounded

@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/autoconf.c:60:1:cpu_configure	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/autoconf.c:79:1:device_register	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/autoconf.c:132:1:cpu_rootconf	8	dynamic,bounded

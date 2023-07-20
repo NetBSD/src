@@ -1,2 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/db_memrw.c:89:1:db_read_bytes	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/db_memrw.c:184:1:db_write_bytes	36	dynamic,bounded

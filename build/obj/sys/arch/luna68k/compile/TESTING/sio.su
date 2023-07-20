@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/sio.c:109:1:xsiointr	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/sio.c:123:1:nullintr	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/sio.c:95:1:sio_print	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/sio.c:72:1:sio_attach	60	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/sio.c:60:1:sio_match	12	dynamic,bounded

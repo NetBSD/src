@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/m68k_syscall.c:153:1:syscall_plain	108	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/m68k_syscall.c:281:1:syscall_fancy	116	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/m68k_syscall.c:108:1:syscall	56	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/m68k_syscall.c:130:1:syscall_intern	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/m68k_syscall.c:143:1:aoutm68k_syscall_intern	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/m68k_syscall.c:406:1:md_child_return	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/m68k_syscall.c:422:1:startlwp	56	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/m68k_syscall.c:444:1:cpu_spawn_return	24	dynamic,bounded

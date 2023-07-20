@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_info_43.c:98:1:compat_43_sys_gethostid	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_info_43.c:85:1:compat_43_sys_getdtablesize	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_info_43.c:108:1:compat_43_sys_gethostname	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_info_43.c:322:1:compat_43_sys_sethostid	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_info_43.c:337:1:compat_43_sys_sethostname	36	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_info_43.c:166:1:compat_43_sys_getkerninfo	192	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_info_43.c:348:1:kern_info_43_init	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_info_43.c:355:1:kern_info_43_fini	8	dynamic,bounded

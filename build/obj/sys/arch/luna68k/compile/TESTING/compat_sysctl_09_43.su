@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_sysctl_09_43.c:157:1:compat_sysctl_09_43_modcmd	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_sysctl_09_43.c:104:1:compat_sysctl_vfs	84	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_sysctl_09_43.c:70:1:sysctl_vfs_generic_conf	224	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_sysctl_09_43.c:141:1:compat_sysctl_09_43_init	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_sysctl_09_43.c:148:1:compat_sysctl_09_43_fini	0	static

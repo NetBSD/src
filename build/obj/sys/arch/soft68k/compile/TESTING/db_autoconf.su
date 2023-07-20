@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_autoconf.c:48:1:db_device_first	4	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_autoconf.c:55:1:db_device_next	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_autoconf.c:64:1:db_show_all_devices	488	dynamic,bounded

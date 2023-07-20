@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_subr.c:323:1:vmcmd_map_zero	48	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_subr.c:106:1:vmcmdset_extend	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_subr.c:81:1:new_vmcmd	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_subr.c:136:1:kill_vmcmds	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_subr.c:175:1:vmcmd_map_pagedvn	64	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_subr.c:265:1:vmcmd_readvn	68	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_subr.c:238:1:vmcmd_map_readvn	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_subr.c:353:1:exec_read	56	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_subr.c:386:1:exec_setup_stack	44	dynamic,bounded

@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_mutex_obj.c:72:1:mutex_obj_ctor	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_mutex_obj.c:58:1:mutex_obj_init	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_mutex_obj.c:87:1:mutex_obj_alloc	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_mutex_obj.c:105:1:mutex_obj_tryalloc	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_mutex_obj.c:126:1:mutex_obj_hold	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_mutex_obj.c:147:1:mutex_obj_free	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_mutex_obj.c:174:1:mutex_obj_refcnt	0	static

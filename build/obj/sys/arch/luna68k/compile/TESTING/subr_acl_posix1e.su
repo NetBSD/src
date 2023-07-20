@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_posix1e.c:61:1:acl_posix1e_mode_to_perm	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_posix1e.c:104:1:acl_posix1e_mode_to_entry	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_posix1e.c:137:1:acl_posix1e_perms_to_mode	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_posix1e.c:171:1:acl_posix1e_acl_to_mode	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_posix1e.c:229:1:acl_posix1e_check	32	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_posix1e.c:323:1:acl_posix1e_newfilemode	8	dynamic,bounded

@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_interrupt.c:63:1:interrupt_shield_xcall	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_interrupt.c:462:1:sysctl_interrupt_setup	88	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_interrupt.c:209:1:interrupt_intrio_list	348	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_interrupt.c:287:1:interrupt_intrio_list_sysctl	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_interrupt.c:329:1:interrupt_set_affinity_sysctl	180	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_interrupt.c:85:1:interrupt_shield	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_interrupt.c:370:1:interrupt_intr_sysctl	180	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_interrupt.c:416:1:interrupt_nointr_sysctl	192	dynamic,bounded

@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_break.c:154:1:db_find_breakpoint_here	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_break.c:162:1:db_set_breakpoints	36	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_break.c:183:1:db_clear_breakpoints	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_break.c:227:1:db_delete_cmd	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_break.c:237:1:db_breakpoint_cmd	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_break.c:250:1:db_listbreak_cmd	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_break.c:266:1:db_map_equal	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_break.c:275:1:db_map_current	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_break.c:291:1:db_map_addr	0	static

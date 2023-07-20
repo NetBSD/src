@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_input.c:105:1:db_delete	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_input.c:351:1:db_readline	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_input.c:371:1:db_check_interrupt	0	static

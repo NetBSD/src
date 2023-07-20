@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_kernel.c:53:1:db_alloc	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_kernel.c:60:1:db_zalloc	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_kernel.c:67:1:db_free	0	static

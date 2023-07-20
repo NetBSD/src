@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_output.c:86:1:db_force_whitespace	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_output.c:158:1:db_putchar	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_output.c:198:1:db_print_position	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_output.c:208:1:db_end_line	4	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_output.c:219:1:db_format_radix	20	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_output.c:245:1:db_format_hex	16	static

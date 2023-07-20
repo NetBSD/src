@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/sysmon_power_40.c:81:1:compat_40_sysmon_power	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/sysmon_power_40.c:96:1:sysmon_power_40_init	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/sysmon_power_40.c:103:1:sysmon_power_40_fini	8	dynamic,bounded

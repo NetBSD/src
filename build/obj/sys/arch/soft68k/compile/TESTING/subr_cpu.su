@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cpu.c:101:1:mi_cpu_init	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cpu.c:116:1:cpu_setmodel	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cpu.c:128:1:cpu_getmodel	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cpu.c:134:1:cpu_softintr_p	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cpu.c:145:1:cpu_topology_set	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cpu.c:165:1:cpu_topology_setspeed	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cpu.c:281:1:cpu_topology_init	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cpu.c:442:1:cpu_count	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cpu.c:463:1:cpu_count_sync	440	dynamic,bounded

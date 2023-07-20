@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rss_config.c:81:1:rss_getkey	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rss_config.c:92:1:rss_toeplitz_hash_from_mbuf_ipv4	96	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rss_config.c:193:1:rss_toeplitz_hash_from_mbuf_ipv6	96	dynamic,bounded

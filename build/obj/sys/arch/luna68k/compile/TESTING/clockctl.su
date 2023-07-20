@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/clockctl.c:85:1:clockctl_listener_cb	8	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/clockctl.c:128:1:clockctlopen	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/clockctl.c:139:1:clockctlclose	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/clockctl.c:202:1:clockctlioctl	176	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/clockctl.c:152:1:clockctl_modcmd	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/clockctl.c:110:1:clockctlattach	0	static

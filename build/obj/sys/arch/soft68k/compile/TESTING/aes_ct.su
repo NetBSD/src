@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ct.c:42:1:br_aes_ct_bitslice_Sbox	104	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ct.c:219:1:br_aes_ct_ortho	36	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ct.c:270:1:br_aes_ct_keysched	564	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ct.c:326:1:br_aes_ct_skey_expand	8	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ct.c:346:1:br_aes_ct_keysched_stdenc	88	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ct.c:391:1:br_aes_ct_keysched_stddec	336	dynamic,bounded

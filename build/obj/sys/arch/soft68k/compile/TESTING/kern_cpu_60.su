@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_cpu_60.c:56:1:compat6_cpuctl_ioctl	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_cpu_60.c:81:1:kern_cpu_60_init	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_cpu_60.c:88:1:kern_cpu_60_fini	0	static

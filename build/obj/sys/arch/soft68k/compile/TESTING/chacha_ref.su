@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/chacha/chacha_ref.c:450:1:chacha_probe_ref	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/chacha/chacha_ref.c:373:1:hchacha_ref	84	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/chacha/chacha_ref.c:67:1:chacha_core_ref	144	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/chacha/chacha_ref.c:122:1:chacha_stream_ref	220	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/chacha/chacha_ref.c:421:1:xchacha_stream_ref	100	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/chacha/chacha_ref.c:245:1:chacha_stream_xor_ref	220	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/chacha/chacha_ref.c:434:1:xchacha_stream_xor_ref	104	dynamic,bounded

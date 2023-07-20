@@ -1,4 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemulconf.c:67:1:wsemul_pick	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemulconf.c:95:1:wsemul_drop	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemulconf.c:107:1:wsemul_add	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemulconf.c:119:1:wsemul_remove	0	static

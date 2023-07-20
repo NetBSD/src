@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/random.c:111:1:random_open	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/random.c:127:1:random_close	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/random.c:167:1:random_kqfilter	8	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/random.c:152:1:random_poll	8	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/random.c:135:1:random_ioctl	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/random.c:248:1:random_write	84	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/random.c:210:1:random_read	8	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/random.c:103:1:rndattach	16	dynamic,bounded

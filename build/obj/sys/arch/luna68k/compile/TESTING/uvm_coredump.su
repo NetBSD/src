@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_coredump.c:203:1:count_segs	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_coredump.c:87:1:uvm_coredump_walkmap	80	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_coredump.c:211:1:uvm_coredump_count_segs	16	dynamic,bounded

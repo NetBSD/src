@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/raw_cb.c:67:1:raw_attach	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/raw_cb.c:98:1:raw_detach	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/raw_cb.c:124:1:raw_disconnect	0	static

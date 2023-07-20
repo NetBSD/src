@@ -1,1 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/crypto/external/bsd/heimdal/dist/lib/roken/getarg.h

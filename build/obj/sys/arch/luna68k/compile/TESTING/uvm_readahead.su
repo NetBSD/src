@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_readahead.c:122:1:ra_startio	88	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_readahead.c:93:1:uvm_ra_init	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_readahead.c:191:1:uvm_ra_allocctx	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_readahead.c:208:1:uvm_ra_freectx	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_readahead.c:223:1:uvm_ra_request	68	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_readahead.c:354:1:uvm_readahead	56	dynamic,bounded

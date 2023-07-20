@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/cprng_fast/cprng_fast.c:80:1:cprng_fast_init_cpu	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/cprng_fast/cprng_fast.c:180:1:cprng_fast_buf_short	136	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/cprng_fast/cprng_fast.c:72:1:cprng_fast_init	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/cprng_fast/cprng_fast.c:212:1:cprng_fast32	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/cprng_fast/cprng_fast.c:222:1:cprng_fast64	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/cprng_fast/cprng_fast.c:232:1:cprng_fast	84	dynamic,bounded

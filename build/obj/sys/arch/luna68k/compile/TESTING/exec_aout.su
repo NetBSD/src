@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_aout.c:65:1:exec_aout_modcmd	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_aout.c:142:1:exec_aout_prep_zmagic	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_aout.c:180:1:exec_aout_prep_nmagic	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_aout.c:216:1:exec_aout_prep_omagic	56	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/exec_aout.c:93:1:exec_aout_makecmds	16	dynamic,bounded

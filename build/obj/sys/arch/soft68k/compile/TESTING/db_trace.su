@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/db_trace.c:76:1:db_var_short	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/db_trace.c:234:1:findentry.constprop	48	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/db_trace.c:387:1:db_stack_trace_print	192	dynamic,bounded

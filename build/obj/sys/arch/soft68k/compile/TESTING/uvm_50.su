@@ -1,4 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uvm_50.c:73:1:compat_uvm_swap_stats50	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uvm_50.c:58:1:swapent50_cvt	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uvm_50.c:81:1:uvm_50_init	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uvm_50.c:87:1:uvm_50_fini	0	static

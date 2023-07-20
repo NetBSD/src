@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_run.c:82:1:db_stop_at_pc	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_run.c:190:1:db_restart_at_pc	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_run.c:243:1:db_single_step	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_run.c:255:1:db_single_step_cmd	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_run.c:279:1:db_trace_until_call_cmd	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_run.c:298:1:db_trace_until_matching_cmd	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_run.c:319:1:db_continue_cmd	0	static

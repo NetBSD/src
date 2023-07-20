@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/ccd_60.c:50:1:compat_60_ccdioctl	96	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/ccd_60.c:95:1:ccd_60_init	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/ccd_60.c:102:1:ccd_60_fini	8	dynamic,bounded

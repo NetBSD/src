@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vnops.c:200:1:mfs_bmap	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vnops.c:116:1:mfs_open	4	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vnops.c:320:1:mfs_print	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vnops.c:274:1:mfs_inactive	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vnops.c:293:1:mfs_reclaim	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vnops.c:183:1:mfs_doio	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vnops.c:135:1:mfs_strategy	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vnops.c:224:1:mfs_close	56	dynamic,bounded

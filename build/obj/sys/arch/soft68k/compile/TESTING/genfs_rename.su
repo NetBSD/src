@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_rename.c:763:1:genfs_rename_lock.constprop	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_rename.c:161:1:genfs_insane_rename	64	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_rename.c:391:1:genfs_rename_knote	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_rename.c:243:1:genfs_sane_rename	116	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_rename.c:443:1:genfs_rename_cache_purge	36	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_rename.c:1055:1:genfs_ufslike_rename_check_possible	8	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_rename.c:1083:1:genfs_ufslike_rename_check_permitted	68	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_rename.c:1150:1:genfs_ufslike_remove_check_possible	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_rename.c:1177:1:genfs_ufslike_remove_check_permitted	32	dynamic,bounded

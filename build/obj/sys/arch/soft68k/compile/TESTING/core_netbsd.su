@@ -1,2 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/core_netbsd.c:119:1:coredump_writesegs_netbsd	56	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/core_netbsd.c:77:1:real_coredump_netbsd	112	dynamic,bounded

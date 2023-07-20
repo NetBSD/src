@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_getcwd.c:271:1:getcwd_common	356	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_getcwd.c:428:1:vn_isunder	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_getcwd.c:448:1:proc_isunder	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_getcwd.c:469:1:sys___getcwd	80	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_getcwd.c:522:1:vnode_to_path	64	dynamic,bounded

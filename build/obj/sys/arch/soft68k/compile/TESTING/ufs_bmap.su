@@ -1,4 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_bmap.c:59:1:ufs_issequential	16	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_bmap.c:336:1:ufs_getlbns	80	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_bmap.c:115:1:ufs_bmaparray	228	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_bmap.c:75:1:ufs_bmap	36	dynamic,bounded

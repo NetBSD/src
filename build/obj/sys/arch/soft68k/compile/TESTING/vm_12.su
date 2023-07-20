@@ -1,4 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vm_12.c:54:1:compat_12_sys_swapon	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vm_12.c:70:1:compat_12_sys_msync	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vm_12.c:86:1:vm_12_init	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vm_12.c:93:1:vm_12_fini	8	dynamic,bounded

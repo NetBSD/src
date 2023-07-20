@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_50.c:59:1:compat_50_sys__lwp_park	56	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_50.c:116:1:compat_50_sys___sigtimedwait	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_50.c:106:1:tscopyout	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_50.c:130:1:compat_50_sys_wait4	208	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_50.c:92:1:tscopyin	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_50.c:162:1:kern_50_init	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_50.c:169:1:kern_50_fini	8	dynamic,bounded

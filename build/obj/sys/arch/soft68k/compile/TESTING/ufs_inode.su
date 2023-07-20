@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_inode.c:168:1:ufs_reclaim	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_inode.c:200:1:ufs_balloc_range	168	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_inode.c:295:1:ufs_truncate_retry	68	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_inode.c:325:1:ufs_truncate_all	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_inode.c:81:1:ufs_inactive	88	dynamic,bounded

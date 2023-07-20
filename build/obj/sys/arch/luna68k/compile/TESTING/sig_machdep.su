@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/sig_machdep.c:100:1:fpsr2siginfocode	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/sig_machdep.c:116:1:getframe	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/sig_machdep.c:137:1:buildcontext	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/sig_machdep.c:196:1:cpu_getmcontext	48	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/sig_machdep.c:150:1:sendsig_siginfo	1248	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/sig_machdep.c:282:1:cpu_mcontext_validate	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/sig_machdep.c:292:1:cpu_setmcontext	56	dynamic,bounded

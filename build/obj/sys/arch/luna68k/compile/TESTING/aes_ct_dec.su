@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ct_dec.c:106:1:inv_shift_rows	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ct_dec.c:128:1:inv_mix_columns	72	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ct_dec.c:36:1:br_aes_ct_bitslice_invSbox	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ct_dec.c:162:1:br_aes_ct_bitslice_decrypt	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ct_dec.c:181:1:br_aes_ct_inv_mix_columns	0	static

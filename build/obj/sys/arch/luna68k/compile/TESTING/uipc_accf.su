@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_accf.c:178:1:accept_filter_init0	80	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_accf.c:109:1:accept_filt_add	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_accf.c:129:1:accept_filt_del	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_accf.c:144:1:accept_filt_get	88	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_accf.c:193:1:accept_filter_init	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_accf.c:201:1:accept_filt_getopt	288	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_accf.c:230:1:accept_filt_clear	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_accf.c:277:1:accept_filt_setopt	324	dynamic,bounded

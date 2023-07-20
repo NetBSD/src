@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/if_43.c:94:1:compat_cvtcmd.part.0	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/if_43.c:86:1:do_compat_cvtcmd	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/if_43.c:224:1:compat_ifioctl	228	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/if_43.c:94:1:compat_cvtcmd	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/if_43.c:304:1:if_43_init	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/if_43.c:313:1:if_43_fini	20	dynamic,bounded

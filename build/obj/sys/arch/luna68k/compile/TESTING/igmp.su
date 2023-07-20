@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/igmp.c:666:1:sysctl_net_inet_igmp_stats	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/igmp.c:594:1:igmp_sendpkt	140	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/igmp.c:175:1:igmp_init	84	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/igmp.c:185:1:igmp_input	108	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/igmp.c:488:1:igmp_joingroup	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/igmp.c:513:1:igmp_leavegroup	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/igmp.c:533:1:igmp_fasttimo	36	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/igmp.c:575:1:igmp_slowtimo	4	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/igmp.c:658:1:igmp_purgeif	16	dynamic,bounded

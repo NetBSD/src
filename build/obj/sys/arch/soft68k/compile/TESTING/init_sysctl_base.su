@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/init_sysctl_base.c:140:1:sysctl_kernbase_setup	80	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/init_sysctl_base.c:188:1:sysctl_hw_machine_arch	156	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/init_sysctl_base.c:200:1:sysctl_hwbase_setup	84	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/init_sysctl_base.c:278:1:sysctl_setlen	48	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/init_sysctl_base.c:49:1:sysctl_basenode_init	72	dynamic,bounded

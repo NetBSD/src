@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_debug.c:50:1:lacp_format_mac	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_debug.c:65:1:lacp_format_systemid	72	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_debug.c:78:1:lacp_format_portid	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_debug.c:89:1:lacp_format_partner	88	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_debug.c:103:1:lacp_format_lagid	136	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_debug.c:132:1:lacp_format_lagid_aggregator	140	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_debug.c:144:1:lacp_format_state	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_debug.c:154:1:lacp_dump_lacpdu	376	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_debug.c:175:1:lacp_dprintf	8	dynamic,bounded

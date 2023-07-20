@@ -1,4 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/hash/sha1/sha1.c:150:6:SHA1Transform	184	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/hash/sha1/sha1.c:220:6:SHA1Init	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/hash/sha1/sha1.c:238:6:SHA1Update	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/hash/sha1/sha1.c:265:6:SHA1Final	40	dynamic,bounded

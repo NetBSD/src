@@ -1,5 +1,0 @@
-@set version-GCC 10.4.0
-@clear DEVELOPMENT
-@set srcdir /Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/gcc/../../external/gpl3/gcc.old/dist/gcc
-@set VERSION_PACKAGE (NetBSD nb1 20220722) 
-@set BUGURL @uref{http://www.NetBSD.org/support/send-pr.html}

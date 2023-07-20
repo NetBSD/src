@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wskbdutil.c:362:1:ksym_upcase	4	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wskbdutil.c:375:1:fillmapentry	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wskbdutil.c:292:1:wskbd_compose_value	40	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wskbdutil.c:417:1:wskbd_get_mapentry	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wskbdutil.c:467:1:wskbd_init_keymap	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wskbdutil.c:489:1:wskbd_load_keymap	92	dynamic,bounded

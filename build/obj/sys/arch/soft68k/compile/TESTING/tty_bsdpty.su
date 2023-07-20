@@ -1,4 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_bsdpty.c:158:1:pty__getmp	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_bsdpty.c:148:1:pty_getvattr	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_bsdpty.c:88:1:pty_makename	44	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_bsdpty.c:118:1:pty_allocvp	120	dynamic,bounded

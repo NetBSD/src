@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bio.c:585:1:nfs_getcacheblk	68	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bio.c:607:1:nfs_vinvalbuf	76	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bio.c:682:1:nfs_flushstalebuf	220	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bio.c:440:1:nfs_write	148	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bio.c:733:1:nfs_asyncio	60	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bio.c:1195:1:nfs_doio	220	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bio.c:81:1:nfs_bioread	160	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bio.c:1233:1:nfs_getpages	140	dynamic,bounded

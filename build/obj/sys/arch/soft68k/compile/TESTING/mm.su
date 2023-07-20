@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/mm.c:95:1:mm_open	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/mm.c:425:1:mm_ioctl	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/mm.c:382:1:mm_mmap	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/mm.c:314:1:mm_readwrite	108	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/mm.c:110:1:mm_init	52	dynamic,bounded

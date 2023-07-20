@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrether.c:248:1:agrether_configmulti_ifreq	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrether.c:239:1:agrether_configmulti_port	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrether.c:259:1:agrether_select_tx_port	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrether.c:201:1:agrether_portfini	192	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrether.c:137:1:agrether_portinit	192	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrether.c:122:1:agrether_dtor	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agrether.c:88:1:agrether_ctor	40	dynamic,bounded

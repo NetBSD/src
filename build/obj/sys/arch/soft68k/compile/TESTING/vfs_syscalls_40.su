@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_40.c:87:1:compat_40_sys_mount	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_40.c:102:1:vfs_syscalls_40_init	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_40.c:109:1:vfs_syscalls_40_fini	8	dynamic,bounded

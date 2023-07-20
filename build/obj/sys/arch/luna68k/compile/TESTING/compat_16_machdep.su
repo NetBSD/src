@@ -1,2 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/compat_16_machdep.c:85:1:sendsig_sigcontext	624	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/compat_16_machdep.c:247:1:compat_16_sys___sigreturn14	580	dynamic,bounded

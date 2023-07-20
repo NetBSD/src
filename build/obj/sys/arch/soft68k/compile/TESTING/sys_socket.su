@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_socket.c:105:1:soo_read	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_socket.c:118:1:soo_write	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_socket.c:273:1:soo_fpathconf	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_socket.c:286:1:soo_posix_fadvise	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_socket.c:230:1:soo_poll	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_socket.c:254:1:soo_close	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_socket.c:266:1:soo_restart	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_socket.c:237:1:soo_stat	36	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_socket.c:130:1:soo_ioctl	76	dynamic,bounded

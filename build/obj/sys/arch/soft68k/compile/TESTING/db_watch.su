@@ -1,5 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_watch.c:173:1:db_deletewatch_cmd	28	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_watch.c:183:1:db_watchpoint_cmd	36	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_watch.c:201:1:db_listwatch_cmd	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_watch.c:209:1:db_set_watchpoints	24	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_watch.c:229:1:db_clear_watchpoints	0	static

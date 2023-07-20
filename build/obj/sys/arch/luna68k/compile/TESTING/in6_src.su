@@ -1,9 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_src.c:898:1:lookup_addrsel_policy	32	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_src.c:608:1:in6_selectroute	68	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_src.c:465:1:in6_selectsrc	204	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_src.c:812:1:in6pcb_selecthlim	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_src.c:823:1:in6pcb_selecthlim_rt	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_src.c:843:1:in6pcb_set_port	56	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_src.c:885:1:addrsel_policy_init	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_src.c:924:1:sysctl_net_inet6_addrctlpolicy	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_src.c:963:1:in6_src_ioctl	124	dynamic,bounded

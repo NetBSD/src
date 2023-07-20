@@ -1,7 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_reass.c:444:1:ip_freef	32	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_reass.c:472:1:ip_reass_ttl_decr	52	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_reass.c:169:1:sysctl_ip_reass_setup	84	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_reass.c:150:1:ip_reass_init	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_reass.c:533:1:ip_reass_drain	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_reass.c:556:1:ip_reass_slowtimo	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_reass.c:616:1:ip_reass_packet	76	dynamic,bounded

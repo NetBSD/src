@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_nfs4.c:383:1:acl_nfs4_compute_inherited_acl_psarc.isra	48	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_nfs4.c:131:1:acl_nfs4_sync_acl_from_mode	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_nfs4.c:140:1:__acl_nfs4_sync_mode_from_acl	32	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_nfs4.c:442:1:acl_nfs4_compute_inherited_acl	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_nfs4.c:510:1:acl_nfs4_is_trivial	48	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_acl_nfs4.c:548:1:acl_nfs4_check	4	static

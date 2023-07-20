@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kobj_vfs.c:81:1:kobj_close_vfs	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kobj_vfs.c:94:1:kobj_read_vfs	88	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kobj_vfs.c:151:1:kobj_load_vfs	56	dynamic,bounded

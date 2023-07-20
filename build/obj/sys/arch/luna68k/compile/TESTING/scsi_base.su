@@ -1,6 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsi_base.c:56:1:scsi_change_def	48	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsi_base.c:75:1:scsi_scsipi_cmd	0	static
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsi_base.c:99:1:scsi_print_addr	48	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsi_base.c:117:1:scsi_kill_pending	48	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsi_base.c:195:1:scsi_async_event_xfer_mode	68	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsi_base.c:246:1:scsi_fc_sas_async_event_xfer_mode	36	dynamic,bounded

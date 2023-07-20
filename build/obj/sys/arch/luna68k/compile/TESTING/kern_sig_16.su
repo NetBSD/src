@@ -1,3 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_16.c:114:1:compat_16_sys___sigaction14	80	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_16.c:144:1:kern_sig_16_init	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_16.c:173:1:kern_sig_16_fini	32	dynamic,bounded

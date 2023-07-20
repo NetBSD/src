@@ -1,8 +1,0 @@
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipiconf.c:73:1:scsipi_print_sense_stub	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipiconf.c:83:1:scsipi_print_sense_data_stub	16	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipiconf.c:91:1:scsipi_command	40	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipiconf.c:117:1:scsipi_load_verbose	8	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipiconf.c:127:1:scsipi_alloc_periph	20	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipiconf.c:160:1:scsipi_free_periph	12	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipiconf.c:172:1:scsipi_inqmatch	60	dynamic,bounded
-/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipiconf.c:219:1:scsipi_dtype	4	dynamic,bounded
