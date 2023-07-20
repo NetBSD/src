@@ -6278,7 +6278,7 @@ done
 
 
 
-cc_fail_unknown=
+nb_cv_check_cc_flags=
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror=unknown-warning-option" >&5
 $as_echo_n "checking whether C compiler accepts -Werror=unknown-warning-option... " >&6; }
 if ${ax_cv_check_cflags___Werror_unknown_warning_option+:} false; then :
@@ -6309,17 +6309,13 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror_unknown_warning_option" >&5
 $as_echo "$ax_cv_check_cflags___Werror_unknown_warning_option" >&6; }
 if test "x$ax_cv_check_cflags___Werror_unknown_warning_option" = xyes; then :
-  as_fn_append cc_fail_unknown -Werror=unknown-warning-option
+  nb_cv_check_cc_flags=-Werror=unknown-warning-option
 else
   :
 fi
 
 
-
-
-
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-no-cpp-precomp" | $as_tr_sh`
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$nb_cv_check_cc_flags_-no-cpp-precomp" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -no-cpp-precomp" >&5
 $as_echo_n "checking whether C compiler accepts -no-cpp-precomp... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
@@ -6327,7 +6323,7 @@ if eval \${$as_CACHEVAR+:} false; then :
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS $cc_fail_unknown -no-cpp-precomp"
+  CFLAGS="$CFLAGS $nb_cv_check_cc_flags -no-cpp-precomp"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6359,14 +6355,7 @@ fi
 
 
 
-
-
-
-
-
-
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Waddress-of-packed-member" | $as_tr_sh`
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$nb_cv_check_cc_flags_-Waddress-of-packed-member" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Waddress-of-packed-member" >&5
 $as_echo_n "checking whether C compiler accepts -Waddress-of-packed-member... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
@@ -6374,7 +6363,7 @@ if eval \${$as_CACHEVAR+:} false; then :
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS $cc_fail_unknown -Waddress-of-packed-member"
+  CFLAGS="$CFLAGS $nb_cv_check_cc_flags -Waddress-of-packed-member"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6405,14 +6394,7 @@ fi
 
 
 
-
-
-
-
-
-
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wcast-function-type" | $as_tr_sh`
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$nb_cv_check_cc_flags_-Wcast-function-type" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wcast-function-type" >&5
 $as_echo_n "checking whether C compiler accepts -Wcast-function-type... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
@@ -6420,7 +6402,7 @@ if eval \${$as_CACHEVAR+:} false; then :
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS $cc_fail_unknown -Wcast-function-type"
+  CFLAGS="$CFLAGS $nb_cv_check_cc_flags -Wcast-function-type"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6451,14 +6433,7 @@ fi
 
 
 
-
-
-
-
-
-
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Werror=address-of-packed-member" | $as_tr_sh`
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$nb_cv_check_cc_flags_-Werror=address-of-packed-member" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror=address-of-packed-member" >&5
 $as_echo_n "checking whether C compiler accepts -Werror=address-of-packed-member... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
@@ -6466,7 +6441,7 @@ if eval \${$as_CACHEVAR+:} false; then :
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS $cc_fail_unknown -Werror=address-of-packed-member"
+  CFLAGS="$CFLAGS $nb_cv_check_cc_flags -Werror=address-of-packed-member"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6497,14 +6472,7 @@ fi
 
 
 
-
-
-
-
-
-
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wformat-overflow" | $as_tr_sh`
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$nb_cv_check_cc_flags_-Wformat-overflow" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wformat-overflow" >&5
 $as_echo_n "checking whether C compiler accepts -Wformat-overflow... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
@@ -6512,7 +6480,7 @@ if eval \${$as_CACHEVAR+:} false; then :
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS $cc_fail_unknown -Wformat-overflow"
+  CFLAGS="$CFLAGS $nb_cv_check_cc_flags -Wformat-overflow"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6543,14 +6511,7 @@ fi
 
 
 
-
-
-
-
-
-
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wformat-truncation" | $as_tr_sh`
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$nb_cv_check_cc_flags_-Wformat-truncation" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wformat-truncation" >&5
 $as_echo_n "checking whether C compiler accepts -Wformat-truncation... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
@@ -6558,7 +6519,7 @@ if eval \${$as_CACHEVAR+:} false; then :
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS $cc_fail_unknown -Wformat-truncation"
+  CFLAGS="$CFLAGS $nb_cv_check_cc_flags -Wformat-truncation"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6589,14 +6550,7 @@ fi
 
 
 
-
-
-
-
-
-
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wimplicit-fallthrough" | $as_tr_sh`
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$nb_cv_check_cc_flags_-Wimplicit-fallthrough" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wimplicit-fallthrough" >&5
 $as_echo_n "checking whether C compiler accepts -Wimplicit-fallthrough... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
@@ -6604,7 +6558,7 @@ if eval \${$as_CACHEVAR+:} false; then :
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS $cc_fail_unknown -Wimplicit-fallthrough"
+  CFLAGS="$CFLAGS $nb_cv_check_cc_flags -Wimplicit-fallthrough"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6635,14 +6589,7 @@ fi
 
 
 
-
-
-
-
-
-
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wmaybe-uninitialized" | $as_tr_sh`
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$nb_cv_check_cc_flags_-Wmaybe-uninitialized" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wmaybe-uninitialized" >&5
 $as_echo_n "checking whether C compiler accepts -Wmaybe-uninitialized... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
@@ -6650,7 +6597,7 @@ if eval \${$as_CACHEVAR+:} false; then :
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS $cc_fail_unknown -Wmaybe-uninitialized"
+  CFLAGS="$CFLAGS $nb_cv_check_cc_flags -Wmaybe-uninitialized"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6681,14 +6628,7 @@ fi
 
 
 
-
-
-
-
-
-
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wreturn-local-addr" | $as_tr_sh`
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$nb_cv_check_cc_flags_-Wreturn-local-addr" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wreturn-local-addr" >&5
 $as_echo_n "checking whether C compiler accepts -Wreturn-local-addr... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
@@ -6696,7 +6636,7 @@ if eval \${$as_CACHEVAR+:} false; then :
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS $cc_fail_unknown -Wreturn-local-addr"
+  CFLAGS="$CFLAGS $nb_cv_check_cc_flags -Wreturn-local-addr"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6727,14 +6667,7 @@ fi
 
 
 
-
-
-
-
-
-
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wstringop-overflow" | $as_tr_sh`
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$nb_cv_check_cc_flags_-Wstringop-overflow" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wstringop-overflow" >&5
 $as_echo_n "checking whether C compiler accepts -Wstringop-overflow... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
@@ -6742,7 +6675,7 @@ if eval \${$as_CACHEVAR+:} false; then :
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS $cc_fail_unknown -Wstringop-overflow"
+  CFLAGS="$CFLAGS $nb_cv_check_cc_flags -Wstringop-overflow"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6773,14 +6706,7 @@ fi
 
 
 
-
-
-
-
-
-
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wstringop-truncation" | $as_tr_sh`
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$nb_cv_check_cc_flags_-Wstringop-truncation" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wstringop-truncation" >&5
 $as_echo_n "checking whether C compiler accepts -Wstringop-truncation... " >&6; }
 if eval \${$as_CACHEVAR+:} false; then :
@@ -6788,7 +6714,7 @@ if eval \${$as_CACHEVAR+:} false; then :
 else
 
   ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS $cc_fail_unknown -Wstringop-truncation"
+  CFLAGS="$CFLAGS $nb_cv_check_cc_flags -Wstringop-truncation"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6816,10 +6742,6 @@ if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
 else
   :
 fi
-
-
-
-
 
 
 
@@ -8098,8 +8020,8 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: ============= Configuration results =============" >&5
-$as_echo "$as_me: ============= Configuration results =============" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: ========= configure results for compat ==========" >&5
+$as_echo "$as_me: ========= configure results for compat ==========" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: CC                                      $CC" >&5
 $as_echo "$as_me: CC                                      $CC" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: LIBS                                    $LIBS" >&5
