@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2023/06/03 09:09:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.31 2023/07/20 16:21:23 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -11,7 +11,6 @@ MAN=	install.1
 CPPFLAGS+=	-I${NETBSDSRCDIR}/usr.sbin/mtree
 
 .if (${HOSTPROG:U} == "")
-CPPFLAGS+=	-DHAVE_POSIX_SPAWN
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.106 2023/07/20 15:15:23 lukem Exp $
+#	$NetBSD: configure.ac,v 1.107 2023/07/20 16:21:23 lukem Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -228,7 +228,7 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	dprintf esetfunc fgetln flock fpurge __fpurge futimes getline \
 	getopt getopt_long group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
-	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb \
+	mkdtemp poll posix_spawn pread putc_unlocked pwcache_userdb pwcache_groupdb \
 	pwrite raise_default_signal random reallocarr reallocarray setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
