@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.22 2022/06/03 12:10:50 andvar Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.23 2023/07/20 23:31:27 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.22 2022/06/03 12:10:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.23 2023/07/20 23:31:27 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -585,10 +585,10 @@ octgmx_set_filter(struct octgmx_port_softc *sc)
 		SET(ctl, RXN_ADR_CTL_BCST);
 	}
 	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
-		dprintf("promiscas(reject cam)\n");
+		dprintf("promiscuous (reject cam)\n");
 		CLR(ctl, RXN_ADR_CTL_CAM_MODE);
 	} else {
-		dprintf("not promiscas(accept cam)\n");
+		dprintf("not promiscuous (accept cam)\n");
 		SET(ctl, RXN_ADR_CTL_CAM_MODE);
 	}
 
