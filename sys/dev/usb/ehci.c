@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.315 2022/12/13 21:29:04 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.316 2023/07/20 20:00:34 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.315 2022/12/13 21:29:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.316 2023/07/20 20:00:34 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -95,7 +95,12 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.315 2022/12/13 21:29:04 jakllsch Exp $");
 #ifndef EHCI_DEBUG
 #define ehcidebug 0
 #else
-static int ehcidebug = 0;
+
+#ifndef EHCI_DEBUG_DEFAULT
+#define EHCI_DEBUG_DEFAULT 0
+#endif
+
+static int ehcidebug = EHCI_DEBUG_DEFAULT;
 
 SYSCTL_SETUP(sysctl_hw_ehci_setup, "sysctl hw.ehci setup")
 {
