@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dcn_calcs.c,v 1.3 2021/12/19 11:35:07 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dcn_calcs.c,v 1.4 2023/07/20 21:48:49 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn_calcs.c,v 1.3 2021/12/19 11:35:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn_calcs.c,v 1.4 2023/07/20 21:48:49 riastradh Exp $");
 
 #include "dm_services.h"
 #include "dc.h"
@@ -626,7 +626,7 @@ static void calc_wm_sets_and_perf_params(
 
 static bool dcn_bw_apply_registry_override(struct dc *dc)
 {
-	bool updated = false;
+	volatile bool updated = false;
 
 	DC_FP_START();
 	if ((int)(dc->dcn_soc->sr_exit_time * 1000) != dc->debug.sr_exit_time_ns
@@ -733,7 +733,7 @@ bool dcn_validate_bandwidth(
 	struct dcn_bw_internal_vars *v = &context->dcn_bw_vars;
 	int i, input_idx, k;
 	int vesa_sync_start, asic_blank_end, asic_blank_start;
-	bool bw_limit_pass;
+	volatile bool bw_limit_pass;
 	float bw_limit;
 
 	PERFORMANCE_TRACE_START();
@@ -1502,7 +1502,7 @@ void dcn_bw_notify_pplib_of_wm_ranges(struct dc *dc)
 {
 	struct pp_smu_funcs_rv *pp = NULL;
 	struct pp_smu_wm_range_sets ranges = {0};
-	int min_fclk_khz, min_dcfclk_khz, socclk_khz;
+	volatile int min_fclk_khz, min_dcfclk_khz, socclk_khz;
 	const int overdrive = 5000000; /* 5 GHz to cover Overdrive */
 
 	if (dc->res_pool->pp_smu)
