@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dcn20_resource.c,v 1.4 2021/12/19 11:59:31 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dcn20_resource.c,v 1.5 2023/07/20 21:48:49 riastradh Exp $	*/
 
 /*
 * Copyright 2016 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn20_resource.c,v 1.4 2021/12/19 11:59:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn20_resource.c,v 1.5 2023/07/20 21:48:49 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -2932,7 +2932,7 @@ validate_out:
 bool dcn20_validate_bandwidth(struct dc *dc, struct dc_state *context,
 		bool fast_validate)
 {
-	bool voltage_supported = false;
+	volatile bool voltage_supported = false;
 	bool full_pstate_supported = false;
 	bool dummy_pstate_supported = false;
 	double p_state_latency_us;
