@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.49 2023/06/08 00:27:34 uwe Exp $
+.\"	$NetBSD: socket.2,v 1.50 2023/07/20 23:28:44 gutteridge Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,9 +89,8 @@ system call.
 Not implemented.
 .El
 .Pp
-The following flags can be or'ed to the type to condition the returned
-file descriptor:
-The following flags are valid:
+The following flags can be or'ed to the socket type to add conditions to
+the returned file descriptor:
 .Pp
 .Bl -tag -offset indent -width Dv
 .It Dv SOCK_CLOEXEC
