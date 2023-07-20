@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.59 2019/02/04 04:36:41 mrg Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.60 2023/07/20 20:10:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.59 2019/02/04 04:36:41 mrg Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.60 2023/07/20 20:10:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -457,7 +457,7 @@ ar_close(void)
 	/* mimic cpio's block count first */
 	if (frmt && strcmp(NM_CPIO, argv0) == 0) {
 		(void)fprintf(listf, OFFT_F " blocks\n",
-		    (rdcnt ? rdcnt : wrcnt) / 5120);
+		    (OFFT_T)((rdcnt ? rdcnt : wrcnt) / 5120));
 	}
 
 	ar_summary(0);
