@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: buildmake.sh.in,v 1.17 2023/07/20 15:13:27 lukem Exp $
+#	$NetBSD: buildmake.sh.in,v 1.18 2023/07/20 15:16:44 lukem Exp $
 #
 # buildmake.sh.in - Autoconf-processed shell script for building make(1).
 #
@@ -24,7 +24,7 @@ docmd()
 }
 
 for f in $MKSRCDIR/*.c; do
-	docmd "compile " "$f" @CC@ @CPPFLAGS@ @DEFS@ @CFLAGS@ \
+	docmd "compile " "$f" @CC@ @CPPFLAGS@ @DEFS@ @CFLAGS@ @NOWARNFLAGS@ \
 		-D_PATH_DEFSYSPATH=\"${NETBSDSRCDIR}/share/mk\" -c "$f"
 done
 
