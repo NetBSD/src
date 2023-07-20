@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.c,v 1.13 2019/02/03 03:19:29 mrg Exp $	*/
+/*	$NetBSD: ctags.c,v 1.14 2023/07/20 20:00:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-__RCSID("$NetBSD: ctags.c,v 1.13 2019/02/03 03:19:29 mrg Exp $");
+__RCSID("$NetBSD: ctags.c,v 1.14 2023/07/20 20:00:07 lukem Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -194,7 +194,7 @@ void
 init(void)
 {
 	int		i;
-	unsigned const char	*sp;
+	const char	*sp;
 
 	for (i = 0; i < 256; i++) {
 		_wht[i] = _etk[i] = _itk[i] = _btk[i] = NO;
@@ -202,19 +202,19 @@ init(void)
 	}
 #define	CWHITE	" \f\t\n"
 	for (sp = CWHITE; *sp; sp++)	/* white space chars */
-		_wht[*sp] = YES;
+		_wht[(unsigned)*sp] = YES;
 #define	CTOKEN	" \t\n\"'#()[]{}=-+%*/&|^~!<>;,.:?"
 	for (sp = CTOKEN; *sp; sp++)	/* token ending chars */
-		_etk[*sp] = YES;
+		_etk[(unsigned)*sp] = YES;
 #define	CINTOK	"ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz0123456789"
 	for (sp = CINTOK; *sp; sp++)	/* valid in-token chars */
-		_itk[*sp] = YES;
+		_itk[(unsigned)*sp] = YES;
 #define	CBEGIN	"ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz"
 	for (sp = CBEGIN; *sp; sp++)	/* token starting chars */
-		_btk[*sp] = YES;
+		_btk[(unsigned)*sp] = YES;
 #define	CNOTGD	",;"
 	for (sp = CNOTGD; *sp; sp++)	/* invalid after-function chars */
-		_gd[*sp] = NO;
+		_gd[(unsigned)*sp] = NO;
 }
 
 /*
