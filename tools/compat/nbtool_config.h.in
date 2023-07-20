@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.55 2023/05/30 19:04:42 lukem Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.56 2023/07/20 16:22:30 lukem Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -580,6 +580,9 @@
 
 /* Define to 1 if you have the `poll' function. */
 #undef HAVE_POLL
+
+/* Define to 1 if you have the `posix_spawn' function. */
+#undef HAVE_POSIX_SPAWN
 
 /* Define to 1 if you have the `pread' function. */
 #undef HAVE_PREAD
