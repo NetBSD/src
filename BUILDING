@@ -237,6 +237,15 @@ CONFIGURATION
      process environment or the make(1) configuration file mk.conf(5)
      specified by MAKECONF.
 
+     Note: Variables set in the environment, either directly or via build.sh
+     options to set specific values in the nbmake-MACHINE wrapper script do
+     not override variables set in the mk.conf(5) file.  To allow variables in
+     mk.conf(5) to be overridden by the environment or build.sh options,
+     define the variables using the "?=" make(1) variable assignment operator.
+     For example,
+
+           MAKEVERBOSE?=1
+
 BUILDING
    "make" command line options
      This is not a summary of all the options available to make(1); only the
@@ -510,8 +519,8 @@ BUILDING
 
      help          Show a help message, and exit.
 
-     makewrapper   Create the nbmake-MACHINE wrapper.  This operation is
-                   automatically performed for any of the other operations.
+     makewrapper   Create the nbmake-MACHINE wrapper script.  This operation
+                   is automatically performed for any of the other operations.
 
      cleandir      Perform "make cleandir".
 
@@ -601,8 +610,8 @@ BUILDING
 
      -B buildid
                Set the value of BUILDID to buildid.  This will also append the
-               build identifier to the name of the "make" wrapper script so
-               that the resulting name is of the form
+               build identifier to the name of the nbmake-MACHINE wrapper
+               script so that the resulting name is of the form
                "nbmake-MACHINE-BUILDID".
 
      -C cdextras
@@ -749,12 +758,12 @@ BUILDING
 
      -V var=[value]
                Set the environment variable var to an optional value.  This is
-               propagated to the nbmake wrapper.
+               propagated to the nbmake-MACHINE wrapper script.
 
      -w wrapper
-               Create the nbmake wrapper script (see below) in a custom
-               location, specified by wrapper.  This allows, for instance, to
-               place the wrapper in PATH automatically.
+               Create the nbmake-MACHINE wrapper script (see below) in a
+               custom location, specified by wrapper.  This allows, for
+               instance, to place the wrapper script in PATH automatically.
 
                Note: wrapper is the full name of the file, not just a
                directory name.  If a relative path is specified, it will be
@@ -768,23 +777,25 @@ BUILDING
      -x        Set MKX11=yes.
 
      -Z var    Unset ("zap") the environment variable var.  This is propagated
-               to the nbmake wrapper.
+               to the nbmake-MACHINE wrapper script.
 
      -?        Show a help message, and exit.
 
    The "nbmake-MACHINE" wrapper script
-     If using the build.sh script to build NetBSD, a nbmake-MACHINE script
-     will be created in TOOLDIR/bin upon the first build to assist in building
-     subtrees on a cross-compile host.
+     If using the build.sh script to build NetBSD, a nbmake-MACHINE wrapper
+     script will be created in TOOLDIR/bin upon the first build to assist in
+     building subtrees on a cross-compile host.
 
-     nbmake-MACHINE can be invoked in lieu of make(1), and will instead call
-     the up-to-date version of "nbmake" installed into TOOLDIR/bin with
-     several key variables pre-set, including MACHINE, MACHINE_ARCH, and
-     TOOLDIR.  nbmake-MACHINE will also set variables specified with -V, and
-     unset variables specified with -Z.
+     The nbmake-MACHINE wrapper script can be invoked in lieu of make(1), and
+     will instead call the up-to-date version of "nbmake" installed into
+     TOOLDIR/bin with several key variables pre-set, including MACHINE,
+     MACHINE_ARCH, and TOOLDIR.  nbmake-MACHINE will also set variables
+     specified with -V, and unset variables specified with -Z.  Note that by
+     default these variables will not override mk.conf(5); see "make"
+     variables for more details.
 
-     This script can be symlinked into a directory listed in PATH, or called
-     with an absolute path.
+     This wrapper script can be symlinked into a directory listed in PATH, or
+     called with an absolute path.
 
 EXAMPLES
      1.   % ./build.sh [OPTIONS] tools kernel=GENERIC
@@ -831,4 +842,4 @@ CAVEATS
      in object directories.  Instead, one may have to manually remove the
      files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                           July 18, 2023                          NetBSD
+NetBSD                           July 21, 2023                          NetBSD
