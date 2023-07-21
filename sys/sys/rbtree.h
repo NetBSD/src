@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.7 2023/07/18 11:46:47 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.8 2023/07/21 11:26:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ typedef struct rb_tree {
 #define	RB_TREE_INIT_TYPECHECK(t)					      \
 	0*sizeof(&(t) - (struct rb_tree *)0)
 
-#define	RB_TREE_INITIALIZER(t, ops) (rb_tree_t)				      \
+#define	RB_TREE_INITIALIZER(t, ops)					      \
 {									      \
 	.rbt_ops = (ops) + RB_TREE_INIT_TYPECHECK(t),			      \
 	RBDEBUG_TREE_INITIALIZER(t)					      \
