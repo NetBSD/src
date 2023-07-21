@@ -1,4 +1,4 @@
-/*	$NetBSD: init_braces.c,v 1.8 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: init_braces.c,v 1.9 2023/07/21 06:02:07 rillig Exp $	*/
 # 3 "init_braces.c"
 
 /*
@@ -16,7 +16,7 @@ init_int(void)
 {
 	/* gcc-expect+4: error: invalid initializer */
 	/* clang-expect+3: error: array initializer must be an initializer list */
-	/* expect+2: error: {}-enclosed initializer required [181] */
+	/* expect+2: error: {}-enclosed or constant initializer of type 'array[unknown_size] of int' required [181] */
 	/* expect+1: error: empty array declaration for 'num0' [190] */
 	int num0[] = 0;
 	int num1[] = { 1 };

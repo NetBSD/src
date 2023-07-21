@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_319.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_319.c,v 1.6 2023/07/21 06:02:07 rillig Exp $	*/
 # 3 "msg_319.c"
 
 /* Test for message: compound literals are a C99/GCC extension [319] */
@@ -17,4 +17,4 @@ struct point {
 	4,
 };
 /* expect-1: error: compound literals are a C99/GCC extension [319] */
-/* expect-2: error: {}-enclosed initializer required [181] */
+/* expect-2: error: {}-enclosed or constant initializer of type 'struct point' required [181] */

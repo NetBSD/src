@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.212 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.213 2023/07/21 06:02:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.212 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.213 2023/07/21 06:02:07 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -236,7 +236,7 @@ static const char *const msgs[] = {
 	"initializer does not fit",				      /* 178 */
 	"cannot initialize struct/union with no named member",	      /* 179 */
 	"bit-field initializer does not fit",			      /* 180 */
-	"{}-enclosed initializer required",			      /* 181 */
+	"{}-enclosed or constant initializer of type '%s' required",  /* 181 */
 	"incompatible pointer types to '%s' and '%s'",		      /* 182 */
 	"illegal combination of %s '%s' and %s '%s'",		      /* 183 */
 	"illegal combination of '%s' and '%s'",			      /* 184 */
