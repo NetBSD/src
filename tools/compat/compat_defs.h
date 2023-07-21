@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.121 2023/07/08 19:10:00 palle Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.122 2023/07/21 22:05:04 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -29,17 +29,6 @@
 #undef _POSIX_C_SOURCE
 #define __USE_ISOC99 1
 #endif	/* __linux__ && HAVE_FEATURES_H */
-
-/*
- * Solaris:
- * No NAME_MAX define is available (as documented in the Solaris
- * limits.h file), so use the XOPEN defined constant.
- */
-
-#if defined(__sun__)
-#define NAME_MAX _XOPEN_NAME_MAX
-#endif
-
 
 /*
  * Type substitutes.
@@ -1007,6 +996,15 @@ void *setmode(const char *);
 #ifndef MAXPATHLEN
 #define MAXPATHLEN	4096
 #endif
+
+#ifndef NAME_MAX
+#ifdef _XOPEN_NAME_MAX
+#define NAME_MAX _XOPEN_NAME_MAX
+#else
+#error "Both NAME_MAX and _XOPEN_NAME_MAX are not defined"
+#endif
+#endif
+
 #ifndef PATH_MAX
 #define PATH_MAX	MAXPATHLEN
 #endif
