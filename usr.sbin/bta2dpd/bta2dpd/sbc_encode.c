@@ -1,4 +1,4 @@
-/* $NetBSD: sbc_encode.c,v 1.12 2023/07/20 12:33:27 nat Exp $ */
+/* $NetBSD: sbc_encode.c,v 1.13 2023/07/21 02:11:18 nat Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -952,8 +952,6 @@ stream(int in, int outfd, uint8_t mode, uint8_t freq, uint8_t bands, uint8_t
 	memcpy(whole + offset, frameData, (size_t)next_pkt);
 	free(frameData);
 
-	tries = 1;
-
 	/* Wait if necessary to avoid rapid playback. */
 	gettimeofday(&myTime, NULL);
 	timeNow = myTime.tv_sec * 1000000 + myTime.tv_usec;
@@ -967,6 +965,7 @@ stream(int in, int outfd, uint8_t mode, uint8_t freq, uint8_t bands, uint8_t
 	}
 	prevTime = timeNow;
 
+	tries = 1;
 send_again:
 	len = write(outfd, whole, totalSize);
 
