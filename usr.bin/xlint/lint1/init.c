@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.248 2023/07/15 15:51:22 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.249 2023/07/21 06:02:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.248 2023/07/15 15:51:22 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.249 2023/07/21 06:02:07 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -976,8 +976,8 @@ initialization_expr(initialization *in, tnode_t *tn)
 		goto done;
 
 	if (bl == NULL && !is_scalar(tp->t_tspec)) {
-		/* {}-enclosed initializer required */
-		error(181);
+		/* {}-enclosed or constant initializer of type '%s' required */
+		error(181, type_name(in->in_sym->s_type));
 		goto done;
 	}
 
