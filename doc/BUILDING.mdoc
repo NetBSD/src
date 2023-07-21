@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.147 2023/07/19 15:40:38 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.148 2023/07/21 22:07:59 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd July 18, 2023
+.Dd July 21, 2023
 .Dt BUILDING 8
 .Os NetBSD
 .\" turn off hyphenation
@@ -535,6 +535,27 @@ configuration file
 .Xr mk.conf 5
 specified by
 .Sy MAKECONF .
+.Pp
+.Em Note :
+Variables set in the environment, either directly or via
+.Sy build.sh
+options to set specific values in the
+.Sy \*[toolprefix]make- Ns Sy MACHINE
+wrapper script do not override variables set in the
+.Xr mk.conf 5
+file.
+To allow variables in
+.Xr mk.conf 5
+to be overridden by the environment or
+.Sy build.sh
+options, define the variables using the
+.Dq Li ?=
+.Xr make 1
+variable assignment operator.
+For example,
+.Bd -unfilled -offset indent
+.Li MAKEVERBOSE?=1
+.Ed
 .
 .Sh BUILDING
 .
@@ -1069,7 +1090,7 @@ Show a help message, and exit.
 .It Sy makewrapper
 Create the
 .Sy \*[toolprefix]make- Ns Sy MACHINE
-wrapper.
+wrapper script.
 This operation is automatically performed for any of the other
 operations.
 .
@@ -1272,7 +1293,7 @@ Set the value of
 to
 .Ar buildid .
 This will also append the build identifier to the name of the
-.Dq make
+.Sy \*[toolprefix]make- Ns Sy MACHINE
 wrapper script so that the resulting name is of the form
 .Dq Sy \*[toolprefix]make- Ns Sy MACHINE Ns Sy -BUILDID .
 .
@@ -1594,16 +1615,16 @@ Set the environment variable
 to an optional
 .Ar value .
 This is propagated to the
-.Sy \*[toolprefix]make
-wrapper.
+.Sy \*[toolprefix]make- Ns Sy MACHINE
+wrapper script.
 .
 .It Fl w Ar wrapper
 Create the
-.Sy \*[toolprefix]make
+.Sy \*[toolprefix]make- Ns Sy MACHINE
 wrapper script (see below) in a custom location,
 specified by
 .Ar wrapper .
-This allows, for instance, to place the wrapper in
+This allows, for instance, to place the wrapper script in
 .Ev PATH
 automatically.
 .Pp
@@ -1629,8 +1650,8 @@ Set
 Unset ("zap") the environment variable
 .Ar var .
 This is propagated to the
-.Sy \*[toolprefix]make
-wrapper.
+.Sy \*[toolprefix]make- Ns Sy MACHINE
+wrapper script.
 .
 .It Fl ?
 Show a help message, and exit.
@@ -1645,13 +1666,14 @@ script to build
 .Nx ,
 a
 .Sy \*[toolprefix]make-MACHINE
-script will be created in
+wrapper script will be created in
 .Sy TOOLDIR Ns Pa /bin
 upon the first build to assist in building subtrees on a cross-compile
 host.
 .Pp
+The
 .Sy \*[toolprefix]make-MACHINE
-can be invoked in lieu of
+wrapper script can be invoked in lieu of
 .Xr make 1 ,
 and will instead call the up-to-date version of
 .Dq \*[toolprefix]make
@@ -1666,8 +1688,13 @@ will also set variables specified with
 .Fl V ,
 and unset variables specified with
 .Fl Z .
+Note that by default these variables will not override
+.Xr mk.conf 5 ;
+see
+.Sx \*qmake\*q variables
+for more details.
 .Pp
-This script can be symlinked into a directory listed in
+This wrapper script can be symlinked into a directory listed in
 .Ev PATH ,
 or called with an absolute path.
 .
