@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 2023/07/15 13:51:36 rillig Exp $
+#	$NetBSD: Makefile,v 1.100 2023/07/21 15:00:32 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -41,7 +41,8 @@ LINT1=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-lint1
 LINT1?=		./${PROG}
 
 ${MAN}.date:	err.c
-	sed -E \
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -E \
 	    -e 's,.*(....)/([0-9]{2})/0?([0-9]+).*,\2 \3\, \1,' \
 	    -e 's,^01,January,' \
 	    -e 's,^02,February,' \
@@ -67,7 +68,7 @@ cgram.ln: cgram.c
 
 ${MAN}:		makeman err.c Makefile ${MAN}.date
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${.ALLSRC:M*makeman} \
+	SED=${TOOL_SED:Q} ${HOST_SH} ${.ALLSRC:M*makeman} \
 	    "$$(cat ${.ALLSRC:M*.date})" ${.ALLSRC:M*err.c} \
 	    >${.TARGET}
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: makeman,v 1.6 2022/07/05 22:50:41 rillig Exp $
+#	$NetBSD: makeman,v 1.7 2023/07/21 15:00:32 lukem Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,14 +28,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+: ${SED:=sed}
+
 tab='	'
 
 list_messages() {
-	sed -E -n \
+	${SED} -E -n \
 	    -e 's|^'"$tab"'"(.+)",.*/\* '"$2"'([0-9]+) \*/$|\2'"$tab"'\1|p' \
 	    -e 's|^'"$tab"'"",.*/\* '"$2"'[0-9]+ \*/$|---'"$tab"'(no longer used)|p' \
 	    "$1" \
-	| sed -E \
+	| ${SED} -E \
 	    -e 's|\\"|"|g' \
 	    -e 's|\\\\|\\e|g' \
 	    -e "s|'|\\'|g" \
@@ -43,7 +45,7 @@ list_messages() {
 }
 
 # shellcheck disable=SC2016
-cvsid='$NetBSD: makeman,v 1.6 2022/07/05 22:50:41 rillig Exp $'
+cvsid='$NetBSD: makeman,v 1.7 2023/07/21 15:00:32 lukem Exp $'
 date="$1"
 year="${date##* }"
 messages="$(list_messages "$2" "")"
