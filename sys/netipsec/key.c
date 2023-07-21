@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.280 2022/12/08 08:07:07 knakahara Exp $	*/
+/*	$NetBSD: key.c,v 1.281 2023/07/21 00:44:38 knakahara Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.280 2022/12/08 08:07:07 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.281 2023/07/21 00:44:38 knakahara Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -3589,21 +3589,21 @@ key_freesaval(struct secasvar *sav)
 	    key_sa_refcnt(sav));
 
 	if (sav->replay != NULL)
-		kmem_intr_free(sav->replay, sav->replay_len);
+		kmem_free(sav->replay, sav->replay_len);
 	if (sav->key_auth != NULL)
-		kmem_intr_free(sav->key_auth, sav->key_auth_len);
+		kmem_free(sav->key_auth, sav->key_auth_len);
 	if (sav->key_enc != NULL)
-		kmem_intr_free(sav->key_enc, sav->key_enc_len);
+		kmem_free(sav->key_enc, sav->key_enc_len);
 	if (sav->lft_c_counters_percpu != NULL) {
 		percpu_free(sav->lft_c_counters_percpu,
 		    sizeof(lifetime_counters_t));
 	}
 	if (sav->lft_c != NULL)
-		kmem_intr_free(sav->lft_c, sizeof(*(sav->lft_c)));
+		kmem_free(sav->lft_c, sizeof(*(sav->lft_c)));
 	if (sav->lft_h != NULL)
-		kmem_intr_free(sav->lft_h, sizeof(*(sav->lft_h)));
+		kmem_free(sav->lft_h, sizeof(*(sav->lft_h)));
 	if (sav->lft_s != NULL)
-		kmem_intr_free(sav->lft_s, sizeof(*(sav->lft_s)));
+		kmem_free(sav->lft_s, sizeof(*(sav->lft_s)));
 }
 
 /*
