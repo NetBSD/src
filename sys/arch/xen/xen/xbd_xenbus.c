@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.131 2023/02/25 00:35:15 riastradh Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.132 2023/07/21 11:21:55 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.131 2023/02/25 00:35:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.132 2023/07/21 11:21:55 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -674,7 +674,7 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 		xbd_connect(sc);
 		sc->sc_shutdown = BLKIF_SHUTDOWN_RUN;
 		sc->sc_xbdsize =
-		    sc->sc_sectors * (uint64_t)sc->sc_secsize / DEV_BSIZE;
+		    sc->sc_sectors * (uint64_t)XEN_BSIZE / DEV_BSIZE;
 		dg = &sc->sc_dksc.sc_dkdev.dk_geom;
 		memset(dg, 0, sizeof(*dg));
 
