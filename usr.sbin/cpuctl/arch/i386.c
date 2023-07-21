@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.138 2023/07/06 02:43:44 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.139 2023/07/21 10:26:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.138 2023/07/06 02:43:44 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.139 2023/07/21 10:26:36 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -361,8 +361,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0xa6] = "10th gen Core (Comet Lake)",
 				[0xa7] = "11th gen Core (Rocket Lake)",
 				[0xa8] = "11th gen Core (Rocket Lake)",
-				[0xba] = "13th gen Core (Raptor Lake)",
 				[0xb7] = "13th gen Core (Raptor Lake)",
+				[0xba] = "13th gen Core (Raptor Lake)",
 				[0xbe] = "Core i3-N3xx N[12]xx Nxx Atom x7xxxE (Alder Lake-N)",
 				[0xbf] = "13th gen Core (Raptor Lake)",
 			},
