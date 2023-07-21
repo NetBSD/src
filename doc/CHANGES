@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2982 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2983 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -162,4 +162,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	openpam(3): update to 20230627 (ximenia) [christos 20230630]
 	gcc(1): Import GCC 10.5.  [mrg 20230710]
 	dhcpcd: Import version 10.0.2. [roy 20230719]
-	bta2dpd(8): Add throttle when playing from file [nat 20230720]
+	bta2dpd(8): Add throttle when playing from file. [nat 20230720]
