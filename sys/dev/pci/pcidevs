@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1480 2023/04/06 04:43:43 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1481 2023/07/22 09:25:30 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5870,8 +5870,11 @@ product INTEL ADL_U9_2_4_HOST	0x460a	Alder Lake (U9,2+4) Host
 product INTEL ADL_PCIE_RP_0	0x460d	Alder Lake PCIe G5 Root Port 0 (x16)
 product INTEL ADL_XDCI		0x460e	Alder Lake USB-C Device (xDCI)
 product INTEL ADL_S_2_0_HOST	0x4610	Alder Lake (S,2+0) Host
+product INTEL ADL_N_8_HOST	0x4617	Alder Lake-N (0+8) Host
 product INTEL ADL_U15_1_4_HOST	0x4619	Alder Lake (U15,1+4) Host
 product INTEL ADL_U9_1_4_HOST	0x461a	Alder Lake (U9,1+4) Host
+product INTEL ADL_N_4_N2_HOST	0x461b	Alder Lake-N (0+4, N200) Host
+product INTEL ADL_N_4_N1_HOST	0x461c	Alder Lake-N (0+4, N100) Host
 product INTEL ADL_DTT		0x461d	Alder Lake Dynamic Tuning Technology
 product INTEL ADL_XHCI		0x461e	Alder Lake USB-C Host (xHCI)
 product INTEL ADL_TBT_PCIE_3	0x461f	Alder Lake Thunderbolt PCIe 3
@@ -5880,6 +5883,7 @@ product INTEL ADL_HX_4_8_HOST	0x4623	Alder Lake (HX,4+8) Host
 product INTEL ADL_H_4_4_HOST	0x4629	Alder Lake (H,4+4) Host
 product INTEL ADL_HX_4_4_HOST	0x462b	Alder Lake (HX,4+4) Host
 product INTEL ADL_PCIE_RP_1	0x462d	Alder Lake PCIe G5 Root Port 1 (x8)
+product INTEL ADL_N_IPU		0x462e	Alder Lake-N Image Processing Unit
 product INTEL ADL_TBT_PCIE_2	0x462f	Alder Lake Thunderbolt PCIe 2
 product INTEL ADL_S_4_0_HOST	0x4630	Alder Lake (S,4+0) Host
 product INTEL ADL_HX_8_8_HOST	0x4637	Alder Lake (HX,8+8) Host
@@ -5891,15 +5895,18 @@ product INTEL ADL_H_6_8_HOST	0x4641	Alder Lake (H,6+8) Host
 product INTEL ADL_S_6_4_HOST	0x4648	Alder Lake (S,6+4) Host
 product INTEL ADL_H_6_4_HOST	0x4649	Alder Lake (H,6+4) Host
 product INTEL ADL_PCIE_RP_2	0x464d	Alder Lake PCIe G4 Root Port 2 (x4)
+product INTEL ADL_N_XHCI	0x464e	Alder Lake-N USB Host (xHCI)
 product INTEL ADL_GNA		0x464f	Alder Lake Gauss Newton Algorithm
 product INTEL ADL_S_6_0_HOST	0x4650	Alder Lake (S,6+0) Host
 product INTEL ADL_IPU		0x465d	Alder Lake Image Processing Unit
+product INTEL ADL_N_XDCI	0x465e	Alder Lake-N USB Device (xDCI)
 product INTEL ADL_S_8_8_HOST	0x4660	Alder Lake (S,8+8) Host
 product INTEL ADL_S_8_4_HOST	0x4668	Alder Lake (S,8+4) Host
 product INTEL ADL_TBTDMA_1	0x466d	Alder Lake Thunderbolt DMA 1
 product INTEL ADL_TBT_PCIE_0	0x466e	Alder Lake Thunderbolt PCIe 0
-product INTEL ADL_TRACE		0x466f	Alder Lake Trace Hub (Compute Die?XXX)
+product INTEL ADL_TRACE		0x466f	Alder Lake Trace Hub (Compute Die)
 product INTEL ADL_CLSRAM	0x467d	Alder Lake Crash Log & Telemetry
+product INTEL ADL_N_GNA		0x467e	Alder Lake-N Gauss Newton Algorithm
 product INTEL ADL_VMD		0x467f	Alder Lake Volume Management Device
 product INTEL ADL_IGD_1		0x4680	Alder Lake Graphics (32EU)
 product INTEL ADL_IGD_2		0x4682	Alder Lake Graphics (24EU)
@@ -5914,6 +5921,8 @@ product INTEL ADL_IGD_10	0x46a8	Alder Lake Graphics
 product INTEL ADL_IGD_11	0x46aa	Alder Lake Graphics
 product INTEL ADL_IGD_12	0x46b3	Alder Lake Graphics
 product INTEL ADL_IGD_13	0x46c3	Alder Lake Graphics
+product INTEL ADL_N_IGD_1	0x46d0	Alder Lake Graphics (32EU)
+product INTEL ADL_N_IGD_2	0x46d1	Alder Lake Graphics (24EU)
 product INTEL EHL_ESPI		0x4b00	Elkhart Lake eSPI
 product INTEL EHL_P2SB		0x4b20	Elkhart Lake P2SB
 product INTEL EHL_PMC		0x4b21	Elkhart Lake PMC
@@ -6098,6 +6107,7 @@ product INTEL EP80579_LAN_1	0x5040	EP80579 LAN
 product INTEL EP80579_LAN_2	0x5044	EP80579 LAN
 product INTEL EP80579_LAN_3	0x5048	EP80579 LAN
 product INTEL 6HS_LP_ESPI	0x5182	600 Series PCH-LP eSPI
+product INTEL 7HS_P_ESPI	0x519d	700 Series PCH-P eSPI
 product INTEL 6HS_LP_P2SB	0x51a0	600 Series PCH-LP P2SB
 product INTEL 6HS_LP_PMC	0x51a1	600 Series PCH-LP PMC
 product INTEL 6HS_LP_SMB	0x51a3	600 Series PCH-LP SMBus
@@ -6123,6 +6133,7 @@ product INTEL 6HS_LP_I2C_4	0x51c5	600 Series PCH-LP I2C 4
 product INTEL 6HS_LP_I2C_5	0x51c6	600 Series PCH-LP I2C 5
 product INTEL 6HS_LP_UART_2	0x51c7	600 Series PCH-LP UART 2
 product INTEL 6HS_LP_HDA	0x51c8	600 Series PCH-LP HD Audio
+product INTEL 7HS_HDA		0x51ca	700 Series PCH HD Audio
 product INTEL 6HS_LP_THC_0	0x51d0	600 Series PCH-LP THC 0
 product INTEL 6HS_LP_THC_1	0x51d1	600 Series PCH-LP THC 1
 product INTEL 6HS_LP_AHCI	0x51d3	600 Series PCH-LP SATA (AHCI)
@@ -6148,6 +6159,52 @@ product INTEL 6HS_LP_GSPI_2	0x51fb	600 Series PCH-LP GSPI 2
 product INTEL 6HS_LP_ISH	0x51fc	600 Series PCH-LP Integrated Sensor Hub
 product INTEL 6HS_LP_UFS	0x51ff	600 Series PCH-LP UFS
 product INTEL 80312_ATU		0x530d	80310 ATU
+product INTEL ADL_N_ESPI	0x5481	Alder Lake-N eSPI
+product INTEL ADL_N_P2SB	0x54a0	Alder Lake-N P2SB
+product INTEL ADL_N_PMC		0x54a1	Alder Lake-N PMC
+product INTEL ADL_N_SMB		0x54a3	Alder Lake-N SMBus
+product INTEL ADL_N_SPI_FLASH	0x54a4	Alder Lake-N SPI (FLASH)
+product INTEL ADL_N_TRACE_1	0x54a6	Alder Lake-N Trace Hub (PCH)
+product INTEL ADL_N_UART_0	0x54a8	Alder Lake-N UART 0
+product INTEL ADL_N_UART_1	0x54a9	Alder Lake-N UART 1
+product INTEL ADL_N_GSPI_0	0x54aa	Alder Lake-N GSPI 0
+product INTEL ADL_N_GSPI_1	0x54ab	Alder Lake-N GSPI 1
+product INTEL ADL_N_PCIE_RP_9	0x54b0	Alder Lake-N PCIe Root Port 9
+product INTEL ADL_N_PCIE_RP_10	0x54b1	Alder Lake-N PCIe Root Port 10
+product INTEL ADL_N_PCIE_RP_11	0x54b2	Alder Lake-N PCIe Root Port 11
+product INTEL ADL_N_PCIE_RP_12	0x54b3	Alder Lake-N PCIe Root Port 12
+product INTEL ADL_N_PCIE_RP_1	0x54b8	Alder Lake-N PCIe Root Port 1
+product INTEL ADL_N_PCIE_RP_2	0x54b9	Alder Lake-N PCIe Root Port 2
+product INTEL ADL_N_PCIE_RP_3	0x54ba	Alder Lake-N PCIe Root Port 3
+product INTEL ADL_N_PCIE_RP_4	0x54bb	Alder Lake-N PCIe Root Port 4
+product INTEL ADL_N_PCIE_RP_7	0x54be	Alder Lake-N PCIe Root Port 7
+product INTEL ADL_N_SCS_EMMC	0x54c4	Alder Lake-N eMMC
+product INTEL ADL_N_I2C_4	0x54c5	Alder Lake-N I2C 4
+product INTEL ADL_N_I2C_5	0x54c6	Alder Lake-N I2C 5
+product INTEL ADL_N_UART_2	0x54c7	Alder Lake-N UART 2
+product INTEL ADL_N_HDA_1	0x54c8	Alder Lake-N HD Audio
+product INTEL ADL_N_THC_0	0x54d0	Alder Lake-N Touch Host Controller 0
+product INTEL ADL_N_THC_1	0x54d1	Alder Lake-N Touch Host Controller 1
+product INTEL ADL_N_AHCI	0x54d3	Alder Lake-N SATA (AHCI)
+product INTEL ADL_N_UART_3	0x54da	Alder Lake-N UART 3
+product INTEL ADL_N_HECI_1	0x54e0	Alder Lake-N HECI 1
+product INTEL ADL_N_HECI_2	0x54e1	Alder Lake-N HECI 2
+product INTEL ADL_N_HECI_3	0x54e4	Alder Lake-N HECI 3
+product INTEL ADL_N_HECI_4	0x54e5	Alder Lake-N HECI 4
+product INTEL ADL_N_I2C_0	0x54e8	Alder Lake-N I2C 0
+product INTEL ADL_N_I2C_1	0x54e9	Alder Lake-N I2C 1
+product INTEL ADL_N_I2C_2	0x54ea	Alder Lake-N I2C 2
+product INTEL ADL_N_I2C_3	0x54eb	Alder Lake-N I2C 3
+product INTEL ADL_N_PCH_XHCI	0x54ed	Alder Lake-N PCH USB 3.2 Gen 2x1 xHCI
+product INTEL ADL_N_PCH_XDCI	0x54ee	Alder Lake-N PCH USB 3.2 Gen 1x1 xDCI
+product INTEL ADL_N_SSRAM	0x54ef	Alder Lake-N Shared SRAM
+product INTEL ADL_N_CNVI_1	0x54f0	Alder Lake-N CNVi WiFi
+product INTEL ADL_N_CNVI_2	0x54f1	Alder Lake-N CNVi WiFi
+product INTEL ADL_N_CNVI_3	0x54f2	Alder Lake-N CNVi WiFi
+product INTEL ADL_N_CNVI_4	0x54f3	Alder Lake-N CNVi WiFi
+product INTEL ADL_N_GSPI_2	0x54fb	Alder Lake-N GSPI 2
+product INTEL ADL_N_ISH		0x54fc	Alder Lake-N Integrated Sensor Hub
+product INTEL ADL_N_SCS_UFS	0x54ff	Alder Lake-N UFS
 product INTEL I219_LM18		0x550a	I219-LM (18) Ethernet Connection
 product INTEL I219_V18		0x550b	I219-V (18) Ethernet Connection
 product INTEL I219_LM19		0x550c	I219-LM (19) Ethernet Connection
@@ -7205,6 +7262,41 @@ product INTEL 4HS_V_PCIE_22	0xa3ec	400 Series PCH-V PCIe Root Port 22
 product INTEL 4HS_V_PCIE_23	0xa3ed	400 Series PCH-V PCIe Root Port 23
 product INTEL 4HS_V_PCIE_24	0xa3ee	400 Series PCH-V PCIe Root Port 24
 product INTEL 4HS_V_CAVS	0xa3f0	400 Series PCH-V cAVS
+product INTEL RPL_S_8_16_HOST	0xa700	Raptor Lake (S,8+16) Host
+product INTEL RPL_HX_8_16_HOST	0xa702	Raptor Lake (HX,8+16) Host
+product INTEL RPL_S_8_8_HOST	0xa703	Raptor Lake (S,8+8) Host
+product INTEL RPL_S_6_8_HOST	0xa704	Raptor Lake (S,6+8) Host
+product INTEL RPL_S_6_4_HOST	0xa705	Raptor Lake (S,6+4) Host
+product INTEL RPL_H_6_8_HOST	0xa706	Raptor Lake (H,6+8) Host
+product INTEL RPL_H_4_8_HOST	0xa707	Raptor Lake (H,4+8) Host
+product INTEL RPL_U_2_8_HOST	0xa708	Raptor Lake (U,2+8) Host
+product INTEL RPL_PCIE_RP_0	0xa70d	Raptor Lake PCIe G5 Root Port 0 (x16)
+product INTEL RPL_H_4_4_HOST	0xa716	Raptor Lake (H,4+4) Host
+product INTEL RPL_HX_6_4_HOST	0xa719	Raptor Lake (HX,6+4) Host
+product INTEL RPL_U_2_4_HOST	0xa71b	Raptor Lake (U,2+4) Host
+product INTEL RPL_U_1_4_HOST	0xa71c	Raptor Lake (U,1+4) Host
+product INTEL RPL_DTT		0xa71d	Raptor Lake Dynamic Tuning Technology
+product INTEL RPL_XHCI		0xa71e	Raptor Lake USB-C Host (xHCI)
+product INTEL RPL_HX_8_8_HOST	0xa728	Raptor Lake (HX,8+8) Host
+product INTEL RPL_HX_8_12_HOST	0xa729	Raptor Lake (HX,8+12) Host
+product INTEL RPL_HX_6_8_HOST	0xa72a	Raptor Lake (HX,6+8) Host
+product INTEL RPL_PCIE_RP_1	0xa72d	Raptor Lake PCIe G5 Root Port 1 (x8)
+product INTEL RPL_TBTDMA_0	0xa73e	Raptor Lake Thunderbolt DMA 0
+product INTEL RPL_PCIE_RP_2	0xa74d	Raptor Lake PCIe G4 Root Port 2 (x4)
+product INTEL RPL_GNA		0xa74f	Raptor Lake Gauss Newton Algorithm
+product INTEL RPL_TBTDMA_1	0xa76d	Raptor Lake Thunderbolt DMA 1
+product INTEL RPL_TRACE		0xa76f	Raptor Lake Trace Hub (Compute Die)
+product INTEL RPL_CLSRAM	0xa77d	Raptor Lake Crash Log & Telemetry
+product INTEL RPL_VMD		0xa77f	Raptor Lake Volume Management Device
+product INTEL RPL_IGD_1		0xa780	Raptor Lake Graphics (32EU)
+product INTEL RPL_IGD_2		0xa782	Raptor Lake Graphics (24EU)
+product INTEL RPL_IGD_3		0xa783	Raptor Lake Graphics (16EU)
+product INTEL RPL_IGD_4		0xa788	Raptor Lake Graphics (32EU)
+product INTEL RPL_IGD_5		0xa78b	Raptor Lake Graphics (16EU)
+product INTEL RPL_IGD_6		0xa7a0	Raptor Lake Graphics (96 or 80EU)
+product INTEL RPL_IGD_7		0xa7a1	Raptor Lake Graphics (96 or 80EU)
+product INTEL RPL_IGD_8		0xa7a8	Raptor Lake Graphics (64 or 48EU)
+product INTEL RPL_IGD_9		0xa7a9	Raptor Lake Graphics (64 or 48EU)
 product INTEL 21152		0xb152	S21152BB PCI-PCI Bridge
 product INTEL 21154		0xb154	S21152BA,S21154AE/BE PCI-PCI Bridge
 product INTEL 21555		0xb555	21555 Non-Transparent PCI-PCI Bridge
