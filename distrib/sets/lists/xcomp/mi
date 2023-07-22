@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.239 2022/10/29 21:06:48 mrg Exp $
+#	 $NetBSD: mi,v 1.240 2023/07/22 23:35:23 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -15,7 +15,7 @@
 ./usr/X11R7/include/GL/GLwMDrawA.h			xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/GLwMDrawAP.h			xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/gl.h				xcomp-xorgproto-include	xorg
-./usr/X11R7/include/GL/gl_mangle.h			xcomp-xorgproto-include	xorg
+./usr/X11R7/include/GL/gl_mangle.h			xcomp-xorgproto-include	xorg,mesa_ver=19
 ./usr/X11R7/include/GL/glcorearb.h			xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/glext.h				xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/glu.h				xcomp-xorgproto-include	xorg
@@ -23,7 +23,7 @@
 ./usr/X11R7/include/GL/glut.h				xcomp-obsolete	obsolete
 ./usr/X11R7/include/GL/glutf90.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/GL/glx.h				xcomp-xorgproto-include	xorg
-./usr/X11R7/include/GL/glx_mangle.h			xcomp-xorgproto-include	xorg
+./usr/X11R7/include/GL/glx_mangle.h			xcomp-xorgproto-include	xorg,mesa_ver=19
 ./usr/X11R7/include/GL/glxext.h				xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/glxint.h				xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/glxmd.h				xcomp-xorgproto-include	xorg
