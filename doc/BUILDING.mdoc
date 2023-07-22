@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.148 2023/07/21 22:07:59 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.149 2023/07/22 18:50:04 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -397,7 +397,7 @@ The name of the
 .Xr make 1
 configuration file.
 See
-.Sx \*qmake\*q variables
+.Sx make variables
 and
 .Xr mk.conf 5 .
 .Pp
@@ -517,7 +517,7 @@ option.
 .
 .El
 .
-.Ss \*qmake\*q variables
+.Ss make variables
 .
 Variables that control the behavior of
 .Nx
@@ -556,10 +556,197 @@ For example,
 .Bd -unfilled -offset indent
 .Li MAKEVERBOSE?=1
 .Ed
+.Pp
+The supported
+.Xr mk.conf 5
+make variables are:
+.\" Keep in sync with share/man/man5/mk.conf.5 section NETBSD SYSTEM VARIABLES
+.Bd -ragged -offset indent
+.Sy BSDOBJDIR ,
+.Sy BSDSRCDIR ,
+.Sy BUILD ,
+.Sy BUILDID ,
+.Sy BUILDINFO ,
+.Sy BUILDSEED ,
+.Sy CDEXTRA ,
+.Sy CONFIGOPTS ,
+.Sy COPTS ,
+.Sy CPUFLAGS ,
+.Sy DESTDIR ,
+.Sy EXTERNAL_TOOLCHAIN ,
+.Sy INSTALLBOOT_BOARDS ,
+.Sy INSTALLWORLDDIR ,
+.Sy KERNARCHDIR ,
+.Sy KERNCONFDIR ,
+.Sy KERNEL_DIR ,
+.Sy KERNOBJDIR ,
+.Sy KERNSRCDIR ,
+.Sy LOCALTIME ,
+.Sy MAKEVERBOSE ,
+.Sy MKAMDGPUFIRMWARE ,
+.Sy MKARGON2 ,
+.Sy MKARZERO ,
+.Sy MKATF ,
+.Sy MKBINUTILS ,
+.Sy MKBSDGREP ,
+.Sy MKBSDTAR ,
+.Sy MKCATPAGES ,
+.Sy MKCLEANSRC ,
+.Sy MKCLEANVERIFY ,
+.Sy MKCOMPAT ,
+.Sy MKCOMPATMODULES ,
+.Sy MKCOMPATTESTS ,
+.Sy MKCOMPATX11 ,
+.Sy MKCOMPLEX ,
+.Sy MKCROSSGDB ,
+.Sy MKCTF ,
+.Sy MKCVS ,
+.Sy MKCXX ,
+.Sy MKDEBUG ,
+.Sy MKDEBUGKERNEL ,
+.Sy MKDEBUGLIB ,
+.Sy MKDEBUGTOOLS ,
+.Sy MKDEPINCLUDES ,
+.Sy MKDOC ,
+.Sy MKDTB ,
+.Sy MKDTC ,
+.Sy MKDTRACE ,
+.Sy MKDYNAMICROOT ,
+.Sy MKFIRMWARE ,
+.Sy MKGCC ,
+.Sy MKGCCCMDS ,
+.Sy MKGDB ,
+.Sy MKGROFF ,
+.Sy MKGROFFHTMLDOC ,
+.Sy MKHESIOD ,
+.Sy MKHOSTOBJ ,
+.Sy MKHTML ,
+.Sy MKIEEEFP ,
+.Sy MKINET6 ,
+.Sy MKINFO ,
+.Sy MKIPFILTER ,
+.Sy MKISCSI ,
+.Sy MKKERBEROS ,
+.Sy MKKMOD ,
+.Sy MKKYUA ,
+.Sy MKLDAP ,
+.Sy MKLIBCSANITIZER ,
+.Sy MKLIBCXX ,
+.Sy MKLIBSTDCXX ,
+.Sy MKLINKLIB ,
+.Sy MKLINT ,
+.Sy MKLLVM ,
+.Sy MKLLVMRT ,
+.Sy MKLVM ,
+.Sy MKMAKEMANDB ,
+.Sy MKMAN ,
+.Sy MKMANDOC ,
+.Sy MKMANZ ,
+.Sy MKMDNS ,
+.Sy MKNLS ,
+.Sy MKNOUVEAUFIRMWARE ,
+.Sy MKNPF ,
+.Sy MKNSD ,
+.Sy MKOBJ ,
+.Sy MKOBJDIRS ,
+.Sy MKPAM ,
+.Sy MKPCC ,
+.Sy MKPF ,
+.Sy MKPIC ,
+.Sy MKPICINSTALL ,
+.Sy MKPICLIB ,
+.Sy MKPIE ,
+.Sy MKPIGZGZIP ,
+.Sy MKPOSTFIX ,
+.Sy MKPROFILE ,
+.Sy MKRADEONFIRMWARE ,
+.Sy MKRELRO ,
+.Sy MKREPRO ,
+.Sy MKREPRO_TIMESTAMP ,
+.Sy MKRUMP ,
+.Sy MKSANITIZER ,
+.Sy MKSHARE ,
+.Sy MKSKEY ,
+.Sy MKSLJIT ,
+.Sy MKSOFTFLOAT ,
+.Sy MKSTATICLIB ,
+.Sy MKSTATICPIE ,
+.Sy MKSTRIPIDENT ,
+.Sy MKSTRIPSYM ,
+.Sy MKTEGRAFIRMWARE ,
+.Sy MKTPM ,
+.Sy MKUNBOUND ,
+.Sy MKUNPRIVED ,
+.Sy MKUPDATE ,
+.Sy MKX11 ,
+.Sy MKX11FONTS ,
+.Sy MKX11MOTIF ,
+.Sy MKXORG_SERVER ,
+.Sy MKYP ,
+.Sy MKZFS ,
+.Sy NETBSDSRCDIR ,
+.Sy NETBSD_OFFICIAL_RELEASE ,
+.Sy NOCLEANDIR ,
+.Sy NODISTRIBDIRS ,
+.Sy NOINCLUDES ,
+.Sy OBJMACHINE ,
+.Sy RELEASEDIR ,
+.Sy RUMPUSER_THREADS ,
+.Sy RUMP_CURLWP ,
+.Sy RUMP_DEBUG ,
+.Sy RUMP_DIAGNOSTIC ,
+.Sy RUMP_KTRACE ,
+.Sy RUMP_LOCKDEBUG ,
+.Sy RUMP_LOCKS_UP ,
+.Sy RUMP_NBCOMPAT ,
+.Sy RUMP_VIRTIF ,
+.Sy RUMP_VNODE_LOCKDEBUG ,
+.Sy TOOLCHAIN_MISSING ,
+.Sy TOOLDIR ,
+.Sy USETOOLS ,
+.Sy USE_FORT ,
+.Sy USE_HESIOD ,
+.Sy USE_INET6 ,
+.Sy USE_JEMALLOC ,
+.Sy USE_KERBEROS ,
+.Sy USE_LDAP ,
+.Sy USE_LIBCSANITIZER ,
+.Sy USE_PAM ,
+.Sy USE_PIGZGZIP ,
+.Sy USE_SANITIZER ,
+.Sy USE_SKEY ,
+.Sy USE_SSP ,
+.Sy USE_XZ_SETS ,
+.Sy USE_YP ,
+.Sy X11MOTIFPATH ,
+.Sy X11SRCDIR .
+.Ed
+.Pp
+The obsolete
+.Xr mk.conf 5
+make variables are:
+.\" Keep in sync with share/man/man5/mk.conf.5 section OBSOLETE VARIABLES
+.Bd -ragged -offset indent
+.Sy EXTSRCSRCDIR ,
+.Sy MKBFD ,
+.Sy MKCRYPTO ,
+.Sy MKEXTSRC ,
+.Sy MKKDEBUG ,
+.Sy MKKERBEROS4 ,
+.Sy MKLLD ,
+.Sy MKLLDB ,
+.Sy MKMCLINKER ,
+.Sy MKPERFUSE ,
+.Sy MKTOOLSDEBUG ,
+.Sy NBUILDJOBS ,
+.Sy SHAREDSTRINGS ,
+.Sy USE_COMBINE ,
+.Sy USE_NEW_TOOLCHAIN .
+.Ed
 .
 .Sh BUILDING
 .
-.Ss \*qmake\*q command line options
+.Ss make command line options
 This is not a summary of all the options available to
 .Xr make 1 ;
 only the options used most frequently with
@@ -612,7 +799,7 @@ configuration file, or the system Makefile segments.
 .
 .El
 .
-.Ss \*qmake\*q targets
+.Ss make targets
 .
 These default targets may be built by running
 .Xr make 1
@@ -696,7 +883,7 @@ text editors.
 .
 .El
 .
-.Ss \*qmake\*q targets for the top level
+.Ss make targets for the top level
 .
 Additional
 .Xr make 1
@@ -980,7 +1167,7 @@ this target should probably run those as well but currently does not.
 .
 .El
 .
-.Ss The \*qbuild.sh\*q script
+.Ss The build.sh script
 .
 This script file is a shell script designed to build the
 entire
@@ -1658,7 +1845,7 @@ Show a help message, and exit.
 .
 .El
 .
-.Ss The \*q\*[toolprefix]make-MACHINE\*q wrapper script
+.Ss The \*[toolprefix]make-MACHINE wrapper script
 .
 If using the
 .Sy build.sh
@@ -1691,7 +1878,7 @@ and unset variables specified with
 Note that by default these variables will not override
 .Xr mk.conf 5 ;
 see
-.Sx \*qmake\*q variables
+.Sx make variables
 for more details.
 .Pp
 This wrapper script can be symlinked into a directory listed in

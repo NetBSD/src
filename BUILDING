@@ -169,7 +169,7 @@ CONFIGURATION
 
                      Default: "make".
 
-     MAKECONF        The name of the make(1) configuration file.  See "make"
+     MAKECONF        The name of the make(1) configuration file.  See make
                      variables and mk.conf(5).
 
                      Note: Only settable in the process environment.
@@ -229,7 +229,7 @@ CONFIGURATION
 
                      Default: "/tmp".
 
-   "make" variables
+   make variables
      Variables that control the behavior of NetBSD builds are documented in
      mk.conf(5) (whose mdoc(7) source is in share/man/man5/mk.conf.5).
 
@@ -246,8 +246,46 @@ CONFIGURATION
 
            MAKEVERBOSE?=1
 
+     The supported mk.conf(5) make variables are:
+
+           BSDOBJDIR, BSDSRCDIR, BUILD, BUILDID, BUILDINFO, BUILDSEED,
+           CDEXTRA, CONFIGOPTS, COPTS, CPUFLAGS, DESTDIR, EXTERNAL_TOOLCHAIN,
+           INSTALLBOOT_BOARDS, INSTALLWORLDDIR, KERNARCHDIR, KERNCONFDIR,
+           KERNEL_DIR, KERNOBJDIR, KERNSRCDIR, LOCALTIME, MAKEVERBOSE,
+           MKAMDGPUFIRMWARE, MKARGON2, MKARZERO, MKATF, MKBINUTILS, MKBSDGREP,
+           MKBSDTAR, MKCATPAGES, MKCLEANSRC, MKCLEANVERIFY, MKCOMPAT,
+           MKCOMPATMODULES, MKCOMPATTESTS, MKCOMPATX11, MKCOMPLEX, MKCROSSGDB,
+           MKCTF, MKCVS, MKCXX, MKDEBUG, MKDEBUGKERNEL, MKDEBUGLIB,
+           MKDEBUGTOOLS, MKDEPINCLUDES, MKDOC, MKDTB, MKDTC, MKDTRACE,
+           MKDYNAMICROOT, MKFIRMWARE, MKGCC, MKGCCCMDS, MKGDB, MKGROFF,
+           MKGROFFHTMLDOC, MKHESIOD, MKHOSTOBJ, MKHTML, MKIEEEFP, MKINET6,
+           MKINFO, MKIPFILTER, MKISCSI, MKKERBEROS, MKKMOD, MKKYUA, MKLDAP,
+           MKLIBCSANITIZER, MKLIBCXX, MKLIBSTDCXX, MKLINKLIB, MKLINT, MKLLVM,
+           MKLLVMRT, MKLVM, MKMAKEMANDB, MKMAN, MKMANDOC, MKMANZ, MKMDNS,
+           MKNLS, MKNOUVEAUFIRMWARE, MKNPF, MKNSD, MKOBJ, MKOBJDIRS, MKPAM,
+           MKPCC, MKPF, MKPIC, MKPICINSTALL, MKPICLIB, MKPIE, MKPIGZGZIP,
+           MKPOSTFIX, MKPROFILE, MKRADEONFIRMWARE, MKRELRO, MKREPRO,
+           MKREPRO_TIMESTAMP, MKRUMP, MKSANITIZER, MKSHARE, MKSKEY, MKSLJIT,
+           MKSOFTFLOAT, MKSTATICLIB, MKSTATICPIE, MKSTRIPIDENT, MKSTRIPSYM,
+           MKTEGRAFIRMWARE, MKTPM, MKUNBOUND, MKUNPRIVED, MKUPDATE, MKX11,
+           MKX11FONTS, MKX11MOTIF, MKXORG_SERVER, MKYP, MKZFS, NETBSDSRCDIR,
+           NETBSD_OFFICIAL_RELEASE, NOCLEANDIR, NODISTRIBDIRS, NOINCLUDES,
+           OBJMACHINE, RELEASEDIR, RUMPUSER_THREADS, RUMP_CURLWP, RUMP_DEBUG,
+           RUMP_DIAGNOSTIC, RUMP_KTRACE, RUMP_LOCKDEBUG, RUMP_LOCKS_UP,
+           RUMP_NBCOMPAT, RUMP_VIRTIF, RUMP_VNODE_LOCKDEBUG,
+           TOOLCHAIN_MISSING, TOOLDIR, USETOOLS, USE_FORT, USE_HESIOD,
+           USE_INET6, USE_JEMALLOC, USE_KERBEROS, USE_LDAP, USE_LIBCSANITIZER,
+           USE_PAM, USE_PIGZGZIP, USE_SANITIZER, USE_SKEY, USE_SSP,
+           USE_XZ_SETS, USE_YP, X11MOTIFPATH, X11SRCDIR.
+
+     The obsolete mk.conf(5) make variables are:
+
+           EXTSRCSRCDIR, MKBFD, MKCRYPTO, MKEXTSRC, MKKDEBUG, MKKERBEROS4,
+           MKLLD, MKLLDB, MKMCLINKER, MKPERFUSE, MKTOOLSDEBUG, NBUILDJOBS,
+           SHAREDSTRINGS, USE_COMBINE, USE_NEW_TOOLCHAIN.
+
 BUILDING
-   "make" command line options
+   make command line options
      This is not a summary of all the options available to make(1); only the
      options used most frequently with NetBSD builds are listed here.
 
@@ -273,7 +311,7 @@ BUILDING
                 specified by the process environment, the MAKECONF
                 configuration file, or the system Makefile segments.
 
-   "make" targets
+   make targets
      These default targets may be built by running make(1) in any subtree of
      the NetBSD source code.  It is recommended that none of these be used
      from the top level Makefile; as a specific exception, "make obj" and
@@ -315,7 +353,7 @@ BUILDING
      tags       Create ctags(1) searchable function lists usable by the ex(1)
                 and vi(1) text editors.
 
-   "make" targets for the top level
+   make targets for the top level
      Additional make(1) targets are usable specifically from the top source
      level to facilitate building the entire NetBSD source tree.
 
@@ -467,7 +505,7 @@ BUILDING
                    target should probably run those as well but currently does
                    not.
 
-   The "build.sh" script
+   The build.sh script
      This script file is a shell script designed to build the entire NetBSD
      system on any host with a suitable modern shell and some common
      utilities.  The required shell features are described under the HOST_SH
@@ -781,7 +819,7 @@ BUILDING
 
      -?        Show a help message, and exit.
 
-   The "nbmake-MACHINE" wrapper script
+   The nbmake-MACHINE wrapper script
      If using the build.sh script to build NetBSD, a nbmake-MACHINE wrapper
      script will be created in TOOLDIR/bin upon the first build to assist in
      building subtrees on a cross-compile host.
@@ -791,8 +829,8 @@ BUILDING
      TOOLDIR/bin with several key variables pre-set, including MACHINE,
      MACHINE_ARCH, and TOOLDIR.  nbmake-MACHINE will also set variables
      specified with -V, and unset variables specified with -Z.  Note that by
-     default these variables will not override mk.conf(5); see "make"
-     variables for more details.
+     default these variables will not override mk.conf(5); see make variables
+     for more details.
 
      This wrapper script can be symlinked into a directory listed in PATH, or
      called with an absolute path.
