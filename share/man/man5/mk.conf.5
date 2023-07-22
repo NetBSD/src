@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.106 2023/07/05 16:40:34 lukem Exp $
+.\"	$NetBSD: mk.conf.5,v 1.107 2023/07/22 18:49:40 lukem Exp $
 .\"
 .\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 5, 2023
+.Dd July 22, 2023
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -134,12 +134,13 @@ targets.
 Identifier for the build.
 If set, this should be a short string that is suitable for use as
 part of a file or directory name.
-The identifier will be appended to
-object directory names, and can be consulted in the
-.Xr make 1
-configuration file in order to set additional build parameters,
-such as compiler flags.
-It will also be used as part of the kernel version string,
+The identifier will be appended to object directory names; if
+.Sy OBJMACHINE
+is also set, then
+.Pa \&. Ns Sy BUILDID
+is appended after
+.Pa \&. Ns Sy MACHINE .
+The identifier will also be used as part of the kernel version string,
 which can be shown by
 .Dq Li uname \-v .
 .DFLTu
@@ -203,7 +204,7 @@ space-separated paths.
 .DFLTu
 .
 .It Sy CONFIGOPTS
-Additional flags to
+Additional options to
 .Xr config 1
 when building kernels.
 .DFLTu
@@ -219,7 +220,7 @@ rather than explicitly set.
 not
 .Sy COPTS ,
 should be used for
-compiler flags that select CPU-related options.
+compiler options that select CPU-related options.
 .Pp
 .Em Note :
 .Sy CFLAGS
@@ -293,7 +294,7 @@ This variable should be used in conjunction with an appropriate
 .Sy HAVE_GCC
 or
 .Sy HAVE_LLVM
-setting to control the compiler flags.
+setting to control the compiler options.
 .Pp
 .Em Note :
 This variable is not yet used in as many places as it should be.
@@ -2422,12 +2423,12 @@ Obsolete.
 .It Sy MKEXTSRC
 Obsolete.
 .
-.It Sy MKKERBEROS4
-Obsolete.
-.
 .It Sy MKKDEBUG
 Use
 .Sy MKDEBUGKERNEL .
+.
+.It Sy MKKERBEROS4
+Obsolete.
 .
 .It Sy MKLLD
 Obsolete.
