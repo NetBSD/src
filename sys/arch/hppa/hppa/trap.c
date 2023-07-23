@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.121 2022/09/02 23:48:10 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.122 2023/07/23 10:09:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2022/09/02 23:48:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2023/07/23 10:09:36 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1249,6 +1249,12 @@ process_sstep(struct lwp *l, int sstep)
 }
 #endif
 
+
+void
+syscall_intern(struct proc *p)
+{
+	p->p_md.md_syscall = syscall;
+}
 
 /*
  * call actual syscall routine
