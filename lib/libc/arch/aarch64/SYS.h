@@ -1,4 +1,4 @@
-/* $NetBSD: SYS.h,v 1.3 2019/03/09 02:50:07 christos Exp $ */
+/* $NetBSD: SYS.h,v 1.4 2023/07/23 07:25:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define SYSTRAP(x)	svc #(SYS_ ## x)
 
 #define _SYSCALL_NOERROR(x,y)						\
-	ENTRY(x);							\
+ENTRY(x);								\
 	SYSTRAP(y)
 
 #define _INVOKE_CERROR()						\
@@ -60,12 +60,12 @@
 #define PSEUDO_NOERROR(x,y)						\
 	_SYSCALL_NOERROR(x,y);						\
 	ret;								\
-	END(x)
+END(x)
 
 #define PSEUDO(x,y)							\
 	_SYSCALL(x,y);							\
 	ret;								\
-	END(x)
+END(x)
 
 #define RSYSCALL_NOERROR(x)						\
 	PSEUDO_NOERROR(x,x)
