@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.107 2023/07/22 18:49:40 lukem Exp $
+.\"	$NetBSD: mk.conf.5,v 1.108 2023/07/23 16:52:37 lukem Exp $
 .\"
 .\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 22, 2023
+.Dd July 23, 2023
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -691,6 +691,12 @@ and
 set and installed in
 .Sy DESTDIR Ns Pa /usr/libdata/debug .
 .NODEF NODEBUG
+.Pp
+If
+.Dq yes ,
+acts as
+.Sy MKSTRIPSYM=no .
+.
 .DFLTn
 .
 .It Sy MKDEBUGKERNEL
@@ -1649,6 +1655,7 @@ userland libraries and getting a backtrace from a
 .Xr rumpkernel 7
 kernel
 loading shared libraries.
+.NOVAR MKDEBUG=yes
 .DFLTy
 .
 .It Sy MKTEGRAFIRMWARE

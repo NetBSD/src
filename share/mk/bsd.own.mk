@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1344 2023/07/23 16:49:29 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.1345 2023/07/23 16:52:37 lukem Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1495,6 +1495,13 @@ _NEEDS_LIBCXX.x86_64=		yes
 
 .if ${MKLLVM} == "yes" && ${_NEEDS_LIBCXX.${MACHINE_ARCH}:Uno} == "yes"
 MKLIBCXX:=	yes
+.endif
+
+#
+# Disable MKSTRIPSYM if MKDEBUG is enabled.
+#
+.if ${MKDEBUG} != "no"
+MKSTRIPSYM:=	no
 .endif
 
 #
