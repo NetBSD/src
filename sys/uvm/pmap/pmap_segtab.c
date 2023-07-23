@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.32 2023/07/01 07:10:13 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.33 2023/07/23 07:25:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.32 2023/07/01 07:10:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.33 2023/07/23 07:25:36 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -282,7 +282,10 @@ pmap_ptpage(struct pmap *pmap, vaddr_t va)
 
 //	UVMHIST_LOG(pmaphist, "pm_pdetab %#jx", ptb, 0, 0, 0);
 
-	KASSERT(pmap != pmap_kernel() || !pmap_md_direct_mapped_vaddr_p(va));
+	KASSERTMSG(pmap != pmap_kernel() || !pmap_md_direct_mapped_vaddr_p(va),
+	    "pmap_kernel: %s, va %#" PRIxVADDR,
+	    pmap == pmap_kernel() ? "true" : "false",
+	    pmap == pmap_kernel() ? va : 0);
 
 #ifdef _LP64
 	for (size_t segshift = XSEGSHIFT;
