@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.20 2017/02/25 21:16:50 joerg Exp $ */
+/*	$NetBSD: SYS.h,v 1.21 2023/07/23 07:24:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan Stone
@@ -128,7 +128,7 @@
 LEAF(x);								\
 	SYSTRAP(y);							\
 	j ra;								\
-	END(x)
+END(x)
 
 #define PSEUDO(x,y)							\
 LEAF(x);								\
