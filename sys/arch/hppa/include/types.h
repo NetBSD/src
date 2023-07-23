@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.31 2021/04/01 04:35:46 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.32 2023/07/23 10:09:36 skrll Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -83,10 +83,10 @@ typedef int			__register_t;
 #define	__SIMPLELOCK_LOCKED	{ { 0, 0, 0, 0} }
 #define	__SIMPLELOCK_UNLOCKED	{ { 1, 1, 1, 1} }
 
-
 #define	__MACHINE_STACK_GROWS_UP	/* stack grows to higher addresses */
 #define	__HAVE_FUNCTION_DESCRIPTORS	/* function ptrs may be descriptors */
 #define	__HAVE_RAS
+#define	__HAVE_SYSCALL_INTERN
 
 /*
  * On hppa, declaring RAS labels as functions doesn't work, since the toolchain

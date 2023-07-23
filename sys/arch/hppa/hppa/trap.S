@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.74 2021/09/06 21:56:03 andvar Exp $	*/
+/*	$NetBSD: trap.S,v 1.75 2023/07/23 10:09:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -373,13 +373,17 @@ syscall_entry:
 	ldil	L%$global$,%dp
 	ldo	R%$global$(%dp),%dp
 
-	/* do a syscall */
-	.import	syscall,code
-	CALL(syscall, %r1)
+	GET_CURLWP(%r3)
+	ldw	L_PROC(%r3), %r1
+	ldw	P_MD_SYSCALL(%r1), %r1
+
+	.call
+ 	blr	%r0, %rp
+ 	bv,n	%r0(%r1)
+ 	nop
 
 	/* load curlwp's trapframe pointer */
-	GET_CURLWP(%r1)
-	ldw	L_MD(%r1), %t3
+	ldw	L_MD(%r3), %t3
 
 	.exit
 	.procend

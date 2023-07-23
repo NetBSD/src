@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.14 2023/07/23 08:04:29 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.15 2023/07/23 10:09:36 skrll Exp $	*/
 
 /*	$OpenBSD: proc.h,v 1.4 2009/12/29 13:11:40 jsing Exp $ */
 
@@ -49,6 +49,8 @@ struct mdlwp {
 };
 
 struct mdproc {
+	void	      (*md_syscall)(struct trapframe *, int *);
+
 	int		md_flags;		/* machine-dependent flags */
 #define MDP_OLDSPACE	__BIT(0)
 };
