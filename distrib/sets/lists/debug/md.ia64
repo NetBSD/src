@@ -1,8 +1,8 @@
-# $NetBSD: md.ia64,v 1.1 2016/08/06 20:08:00 martin Exp $
+# $NetBSD: md.ia64,v 1.2 2023/07/23 21:06:52 andvar Exp $
 #
 # XXX add skiload for now
 #
-# XXX loader.sym probaby not necessary
+# XXX loader.sym probably not necessary
 #
 ./usr/libdata/debug/usr/mdec/loader.sym.debug	comp-sys-debug		debug
 ./usr/libdata/debug/usr/mdec/skiload.debug	comp-sys-debug		debug
