@@ -1,4 +1,4 @@
-/* $NetBSD: bcopy.S,v 1.2 2020/04/11 05:12:52 ryo Exp $ */
+/* $NetBSD: bcopy.S,v 1.3 2023/07/23 07:54:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-RCSID("$NetBSD: bcopy.S,v 1.2 2020/04/11 05:12:52 ryo Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.3 2023/07/23 07:54:37 skrll Exp $")
 #endif
 
 #if defined(MEMCOPY)
@@ -306,7 +306,7 @@ backward_tiny:
 	ret
 9:
 	/* length is small(<32), and src or dst may be unaligned */
-	eor	TMP_X, SRC0, DST0
+	eor	TMP_X, SRC0, DST
 	ands	TMP_X, TMP_X, #7
 	bne	notaligned_backward_small
 
