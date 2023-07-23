@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1343 2023/07/21 20:03:13 riastradh Exp $
+#	$NetBSD: bsd.own.mk,v 1.1344 2023/07/23 16:49:29 lukem Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -70,7 +70,7 @@ TOOLCHAIN_MISSING?=	no
 #
 # GCC Using platforms.
 #
-.if ${MKGCC:Uyes} != "no"
+.if ${MKGCC:Uyes} != "no"						# {
 
 #
 # What GCC is used?
@@ -94,9 +94,10 @@ EXTERNAL_GCC_SUBDIR?=	gcc
 .else
 EXTERNAL_GCC_SUBDIR?=	/does/not/exist
 .endif
-.else
+
+.else	# MKGCC == no							# } {
 MKGCCCMDS?=	no
-.endif
+.endif	# MKGCC == no							# }
 
 #
 # What binutils is used?
@@ -670,6 +671,32 @@ CXX=		${TOOL_CXX.${ACTIVE_CXX}}
 FC=		${TOOL_FC.${ACTIVE_FC}}
 OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
 
+#
+# Clang and GCC compiler-specific options, usually to disable warnings.
+# The naming convention is "CC" + the compiler flag converted
+# to upper case, with '-' and '=' changed to '_' a la `tr -=a-z __A-Z`.
+# For variable naming purposes, treat -Werror=FLAG as -WFLAG,
+# and -Wno-error=FLAG as -Wno-FLAG (usually from Clang).
+#
+# E.g., CC_WNO_ADDRESS_OF_PACKED_MEMBER contains
+# both -Wno-error=address-of-packed-member for Clang,
+# and -Wno-address-of-packed-member for GCC 9+.
+#
+# Use these with e.g.
+#	COPTS.foo.c+= ${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+#
+CC_WNO_ADDRESS_OF_PACKED_MEMBER=${${ACTIVE_CC} == "clang" :? -Wno-error=address-of-packed-member :} \
+				${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-address-of-packed-member :}
+
+CC_WNO_CAST_FUNCTION_TYPE=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-cast-function-type :}
+CC_WNO_FORMAT_OVERFLOW=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-overflow :}
+CC_WNO_FORMAT_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-truncation :}
+CC_WNO_IMPLICIT_FALLTHROUGH=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}
+CC_WNO_MAYBE_UNINITIALIZED=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-maybe-uninitialized :}
+CC_WNO_RETURN_LOCAL_ADDR=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-return-local-addr :}
+CC_WNO_STRINGOP_OVERFLOW=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-stringop-overflow :}
+CC_WNO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
+
 # For each ${MACHINE_CPU}, list the ports that use it.
 MACHINES.aarch64=	evbarm
 MACHINES.alpha=		alpha
@@ -870,32 +897,6 @@ MKISCSI=	no
 NOPROFILE=	# defined
 .endif
 .endif
-
-#
-# Clang and GCC compiler-specific options, usually to disable warnings.
-# The naming convention is "CC" + the compiler flag converted
-# to upper case, with '-' and '=' changed to '_' a la `tr -=a-z __A-Z`.
-# For variable naming purposes, treat -Werror=FLAG as -WFLAG,
-# and -Wno-error=FLAG as -Wno-FLAG (usually from Clang).
-#
-# E.g., CC_WNO_ADDRESS_OF_PACKED_MEMBER contains
-# both -Wno-error=address-of-packed-member for Clang,
-# and -Wno-address-of-packed-member for GCC 9+.
-#
-# Use these with e.g.
-#	COPTS.foo.c+= ${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
-#
-CC_WNO_ADDRESS_OF_PACKED_MEMBER=${${ACTIVE_CC} == "clang" :? -Wno-error=address-of-packed-member :} \
-				${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-address-of-packed-member :}
-
-CC_WNO_CAST_FUNCTION_TYPE=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-cast-function-type :}
-CC_WNO_FORMAT_OVERFLOW=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-overflow :}
-CC_WNO_FORMAT_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-truncation :}
-CC_WNO_IMPLICIT_FALLTHROUGH=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}
-CC_WNO_MAYBE_UNINITIALIZED=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-maybe-uninitialized :}
-CC_WNO_RETURN_LOCAL_ADDR=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-return-local-addr :}
-CC_WNO_STRINGOP_OVERFLOW=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-stringop-overflow :}
-CC_WNO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
 
 #
 # The ia64 port is incomplete.
