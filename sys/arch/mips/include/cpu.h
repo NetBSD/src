@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.134 2023/01/31 21:11:24 andvar Exp $	*/
+/*	$NetBSD: cpu.h,v 1.135 2023/07/23 07:20:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -150,11 +150,11 @@ struct cpu_info {
 	struct evcnt ci_evcnt_synci_deferred_rqst;
 	struct evcnt ci_evcnt_synci_ipi_rqst;
 
-#define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
-#define	CPUF_PRESENT	0x02		/* CPU is present */
-#define	CPUF_RUNNING	0x04		/* CPU is running */
-#define	CPUF_PAUSED	0x08		/* CPU is paused */
-#define	CPUF_USERPMAP	0x20		/* CPU has a user pmap activated */
+#define	CPUF_PRIMARY	__BIT(0)	/* CPU is primary CPU */
+#define	CPUF_PRESENT	__BIT(1)	/* CPU is present */
+#define	CPUF_RUNNING	__BIT(2)	/* CPU is running */
+#define	CPUF_PAUSED	__BIT(3)	/* CPU is paused */
+#define	CPUF_USERPMAP	__BIT(5)	/* CPU has a user pmap activated */
 	kcpuset_t *ci_shootdowncpus;
 	kcpuset_t *ci_multicastcpus;
 	kcpuset_t *ci_watchcpus;
