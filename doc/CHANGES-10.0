@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.84 2023/07/20 10:13:10 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.85 2023/07/24 17:17:00 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -3096,4 +3096,23 @@ usr.bin/libdecnumber/arch/or1k/config.h			(delete)
 
 	Finish mknative/regen and remove unused configurations.
 	[mrg, ticket #239]
+
+usr.sbin/bta2dpd/bta2dpd/sbc_encode.c		1.12,1.13
+
+	bta2dpd(8): Add throttle when playing from file.
+	[nat, ticket #240]
+
+usr.sbin/bta2dpd/bta2dpd/bta2dpd.8		1.8-1.10
+
+	bta2dpd(8): manual page fixes.
+	[nat, ticket #241]
+
+lib/libc/time/NEWS				1.41
+lib/libc/time/localtime.c			1.137
+lib/libc/time/private.h				1.65
+lib/libc/time/zdump.c				1.61
+lib/libc/time/zic.c				1.88,1.89
+
+	Make libc/time tools compilable with a C23 compiler.
+	[riastradh, ticket #242]
 
