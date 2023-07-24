@@ -1,4 +1,4 @@
-.\"	$NetBSD: bta2dpd.8,v 1.6 2021/12/02 21:59:22 andvar Exp $
+.\"	$NetBSD: bta2dpd.8,v 1.6.2.1 2023/07/24 17:08:01 martin Exp $
 .\"
 .\" Copyright (c) 2015 - 2016  Nathanial Sloss <nathanialsloss@yahoo.com.au>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 27, 2019
+.Dd July 20, 2023
 .Dt BTA2DPD 8
 .Os
 .Sh NAME
@@ -116,7 +116,7 @@ Local device address.
 May be given as BDADDR or device name.
 .It Fl I
 Initiate a Discover command.
- Useful when used as an audio sink as some devices need this to pair.
+Useful when used as an audio sink as some devices need this to pair.
 .It Fl K
 Allows registering as an audio sink receiving an incoming connection.
 .It Fl M Ar mtu
@@ -267,7 +267,7 @@ Encode and send audio
 to address
 .Sq spkr .
 .Pp
-.Dl bta2dpd -a spkr /dev/pad
+.Dl bta2dpd -n -a spkr /dev/pad
 Encode and send audio from
 .Xr pad 4
 to address
@@ -278,7 +278,7 @@ Decode stream from any connected address
 and write it to
 .Pa out.pcm .
 .Pp
-.Dl bta2dpd -K -a phone | audioplay -f -e linear -P 16 -s 44100 -c 2 --
+.Dl bta2dpd -K -a phone | audioplay -f -e slinear_le -P 16 -s 44100 -c 2 --
 Decode stream from address
 .Sq phone
 and send to speakers.
@@ -289,3 +289,8 @@ and send to speakers.
 .Xr btconfig 8
 .Sh AUTHORS
 .An Nathanial Sloss
+.Sh BUGS
+For some devices playback from file results in rapid playback or playback with
+stutter.
+For best results use with
+.Xr pad 4 .
