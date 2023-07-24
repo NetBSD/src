@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.28 2023/07/24 22:20:53 riastradh Exp $	*/
+/*	$NetBSD: errata.c,v 1.29 2023/07/24 22:21:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.28 2023/07/24 22:20:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.29 2023/07/24 22:21:08 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -416,6 +416,8 @@ x86_errata(void)
 	ci = curcpu();
 
 	x86_cpuid(0x80000001, descs);
+	aprint_verbose_dev(ci->ci_dev, "searching errata for cpu revision"
+	    " 0x%08"PRIx32"\n", descs[0]);
 
 	for (i = 0;; i += 2) {
 		if ((rev = cpurevs[i]) == OINK)
