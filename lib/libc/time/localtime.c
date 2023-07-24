@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.136 2022/12/11 17:57:23 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.136.2.1 2023/07/24 17:15:59 martin Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.136 2022/12/11 17:57:23 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.136.2.1 2023/07/24 17:15:59 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -894,7 +894,7 @@ is_digit(char c)
 ** Return a pointer to that character.
 */
 
-static ATTRIBUTE_REPRODUCIBLE const char *
+ATTRIBUTE_REPRODUCIBLE static const char *
 getzname(register const char *strp)
 {
 	register char	c;
@@ -915,7 +915,7 @@ getzname(register const char *strp)
 ** We don't do any checking here; checking is done later in common-case code.
 */
 
-static ATTRIBUTE_REPRODUCIBLE const char *
+ATTRIBUTE_REPRODUCIBLE static const char *
 getqzname(register const char *strp, const int delim)
 {
 	register int	c;
