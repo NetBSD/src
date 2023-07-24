@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2021/05/25 10:58:41 martin Exp $
+#	$NetBSD: Makefile,v 1.54 2023/07/24 08:21:09 rin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -21,6 +21,8 @@ LDFLAGS+=	-m32 -Wl,-melf32ppc_nbsd
 
 CRUNCHBIN=	ramdiskbin
 CRUNCHENV+=	LDFLAGS=${LDFLAGS:Q}
+# Enable Apple UFS support for x_fsck_ffs and x_newfs
+CRUNCHENV+=	APPLE_UFS=1
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
