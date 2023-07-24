@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.27 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: errata.c,v 1.28 2023/07/24 22:20:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,11 +41,13 @@
  * AMD Opteron Processors, Publication #25759, Revision: 3.69,
  * Issue Date: September 2006
  *
+ * https://www.amd.com/system/files/TechDocs/25759.pdf
+ *
  * XXX This should perhaps be integrated with the identcpu code.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.27 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.28 2023/07/24 22:20:53 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
