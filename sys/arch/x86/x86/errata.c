@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.26 2019/05/18 07:49:31 maxv Exp $	*/
+/*	$NetBSD: errata.c,v 1.26.2.1 2023/07/25 09:12:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.26 2019/05/18 07:49:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.26.2.1 2023/07/25 09:12:36 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -71,9 +71,12 @@ typedef enum cpurev {
 	JH_E6, SH_B0, SH_B3, SH_C0, SH_CG, SH_D0, SH_E4, SH_E5,
 	DR_BA, DR_B2, DR_B3, RB_C2, RB_C3, BL_C2, BL_C3, DA_C2,
 	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0, LN_B0, KB_A1,
-	ML_A1, ZP_B1, ZP_B2, PiR_B2, OINK
+	ML_A1, ZP_B1, ZP_B2, PiR_B2, Rome_B0, Z2_XB, Z2_Ren,
+	Z2_Luc, Z2_Mat, Z2_VG, Z2_Men, Milan_B1, Milan_B2, Genoa_B1,
+	OINK
 } cpurev_t;
 
+/* These names match names from various AMD Errata/Revision Guides. */
 static const u_int cpurevs[] = {
 	BH_E4, 0x0020fb1, CH_CG, 0x0000f82, CH_CG, 0x0000fb2,
 	CH_D0, 0x0010f80, CH_D0, 0x0010fb0, DH_CG, 0x0000fc0,
@@ -91,7 +94,12 @@ static const u_int cpurevs[] = {
 	HY_D0, 0x0100f80, HY_D1, 0x0100f81, HY_D1_G34R1, 0x0100f91,
 	PH_E0, 0x0100fa0, LN_B0, 0x0300f10, KB_A1, 0x0700F01,
 	ML_A1, 0x0730F01, ZP_B1, 0x0800F11, ZP_B2, 0x0800F12,
-	PiR_B2, 0x0800F82,
+	PiR_B2, 0x0800F82, Rome_B0, 0x0830F10,
+	/* XXX client Zen2 names aren't known yet. */
+	Z2_XB, 0x0840F70, Z2_Ren, 0x0860F80, Z2_Luc, 0x0870F10,
+	Z2_Mat, 0x0890F70, Z2_VG, 0x0890F80, Z2_Men, 0x08A0F10,
+	Milan_B1, 0x0A00F11, Milan_B2, 0x0A00F12,
+	Genoa_B1, 0x0A10F11,
 	OINK
 };
 
@@ -158,6 +166,10 @@ static const uint8_t x86_errata_set14[] = {
 
 static const uint8_t x86_errata_set15[] = {
 	KB_A1, ML_A1, OINK
+};
+
+static const uint8_t x86_errata_set16[] = {
+	Rome_B0, Z2_XB, Z2_Ren, Z2_Luc, Z2_Mat, Z2_VG, Z2_Men, OINK
 };
 
 static bool x86_errata_setmsr(struct cpu_info *, errata_t *);
@@ -358,6 +370,16 @@ static errata_t errata[] = {
 	{
 		1095, FALSE, MSR_LS_CFG, x86_errata_set13,
 		x86_errata_setmsr, LS_CFG_ERRATA_1095
+	},
+	/*
+	 * Zenbleed:
+	 * https://www.amd.com/en/resources/product-security/bulletin/amd-sb-7008.html
+	 * https://github.com/google/security-research/security/advisories/GHSA-v6wh-rxpg-cmm8
+	 * https://lock.cmpxchg8b.com/zenbleed.html
+	 */
+	{
+		-1, FALSE, MSR_DE_CFG, x86_errata_set16,
+		x86_errata_setmsr, DE_CFG_ERRATA_ZENBLEED,
 	},
 };
 
