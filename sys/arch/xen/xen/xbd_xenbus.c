@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.133 2023/07/21 11:28:50 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.134 2023/07/25 16:15:50 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.133 2023/07/21 11:28:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.134 2023/07/25 16:15:50 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -169,7 +169,7 @@ struct xbd_xenbus_softc {
 #define BLKIF_SHUTDOWN_REMOTE 1 /* backend-initiated shutdown in progress */
 #define BLKIF_SHUTDOWN_LOCAL  2 /* locally-initiated shutdown in progress */
 
-	uint64_t sc_sectors; /* number of XEN_BSIZE sectors for this device */
+	uint64_t sc_sectors; /* number of sc_secsize sectors for this device */
 	u_long sc_secsize; /* sector size */
 	uint64_t sc_xbdsize; /* size of disk in DEV_BSIZE */
 	u_long sc_info; /* VDISK_* */
@@ -674,15 +674,14 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 		xbd_connect(sc);
 		sc->sc_shutdown = BLKIF_SHUTDOWN_RUN;
 		sc->sc_xbdsize =
-		    sc->sc_sectors * (uint64_t)XEN_BSIZE / DEV_BSIZE;
+		    sc->sc_sectors * (uint64_t)sc->sc_secsize / DEV_BSIZE;
 		dg = &sc->sc_dksc.sc_dkdev.dk_geom;
 		memset(dg, 0, sizeof(*dg));
 
-		dg->dg_secperunit = sc->sc_xbdsize;
-		dg->dg_secsize = DEV_BSIZE;
+		dg->dg_secperunit = sc->sc_sectors;
+		dg->dg_secsize = sc->sc_secsize;
 		dg->dg_ntracks = 1;
-		// XXX: Ok to hard-code DEV_BSIZE?
-		dg->dg_nsectors = 1024 * (1024 / dg->dg_secsize);
+		dg->dg_nsectors = (1024 * 1024) / dg->dg_secsize;
 		dg->dg_ncylinders = dg->dg_secperunit / dg->dg_nsectors;
 
 		bufq_alloc(&sc->sc_dksc.sc_bufq, "fcfs", 0);
@@ -693,10 +692,10 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 		hypervisor_unmask_event(sc->sc_evtchn);
 
 		format_bytes(buf, uimin(9, sizeof(buf)),
-		    sc->sc_sectors * XEN_BSIZE);
+		    sc->sc_sectors * dg->dg_secsize);
 		aprint_normal_dev(sc->sc_dksc.sc_dev,
 				"%s, %d bytes/sect x %" PRIu64 " sectors\n",
-				buf, (int)dg->dg_secsize, sc->sc_xbdsize);
+				buf, (int)dg->dg_secsize, sc->sc_sectors);
 		snprintb(buf, sizeof(buf), BLKIF_FEATURE_BITS,
 		    sc->sc_features);
 		aprint_normal_dev(sc->sc_dksc.sc_dev,
@@ -739,14 +738,6 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 		panic("%s: can't read number from %s/virtual-device\n",
 		    device_xname(sc->sc_dksc.sc_dev),
 		    sc->sc_xbusd->xbusd_otherend);
-	err = xenbus_read_ull(NULL,
-	    sc->sc_xbusd->xbusd_otherend, "sectors", &sectors, 10);
-	if (err)
-		panic("%s: can't read number from %s/sectors\n",
-		    device_xname(sc->sc_dksc.sc_dev),
-		    sc->sc_xbusd->xbusd_otherend);
-	sc->sc_sectors = sectors;
-
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_otherend, "info", &sc->sc_info, 10);
 	if (err)
@@ -759,6 +750,14 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 		panic("%s: can't read number from %s/sector-size\n",
 		    device_xname(sc->sc_dksc.sc_dev),
 		    sc->sc_xbusd->xbusd_otherend);
+
+	err = xenbus_read_ull(NULL,
+	    sc->sc_xbusd->xbusd_otherend, "sectors", &sectors, 10);
+	if (err)
+		panic("%s: can't read number from %s/sectors\n",
+		    device_xname(sc->sc_dksc.sc_dev),
+		    sc->sc_xbusd->xbusd_otherend);
+	sc->sc_sectors = sectors * (uint64_t)XEN_BSIZE / sc->sc_secsize;
 
 	xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
 }
@@ -839,6 +838,8 @@ again:
 		    bp, (long)bp->b_bcount));
 
 		if (bp->b_error != 0 || rep->status != BLKIF_RSP_OKAY) {
+			DPRINTF(("%s: error %d status %d\n", __func__,
+			    bp->b_error, rep->status));
 			bp->b_error = EIO;
 			bp->b_resid = bp->b_bcount;
 		}
@@ -1137,7 +1138,7 @@ xbd_diskstart(device_t self, struct buf *bp)
 		goto out;
 	}
 
-	if (bp->b_rawblkno < 0 || bp->b_rawblkno > sc->sc_xbdsize) {
+	if (bp->b_rawblkno < 0 || bp->b_rawblkno > sc->sc_sectors) {
 		/* invalid block number */
 		error = EINVAL;
 		goto out;
@@ -1173,7 +1174,7 @@ xbd_diskstart(device_t self, struct buf *bp)
 	bp->b_resid = bp->b_bcount;
 	xbdreq->req_bp = bp;
 	xbdreq->req_data = bp->b_data;
-	if (__predict_false((vaddr_t)bp->b_data & (XEN_BSIZE - 1))) {
+	if (__predict_false((vaddr_t)bp->b_data & (sc->sc_secsize - 1))) {
 		if (__predict_false(xbd_map_align(sc, xbdreq) != 0)) {
 			DPRINTF(("xbd_diskstart: no align\n"));
 			error = EAGAIN;
@@ -1274,8 +1275,12 @@ xbd_diskstart_submit(struct xbd_xenbus_softc *sc,
 	req->id = req_id;
 	req->operation =
 	    bp->b_flags & B_READ ? BLKIF_OP_READ : BLKIF_OP_WRITE;
-	req->sector_number = bp->b_rawblkno + (start >> XEN_BSHIFT);
+	req->sector_number = (bp->b_rawblkno * sc->sc_secsize / XEN_BSIZE) +
+	    (start >> XEN_BSHIFT);
 	req->handle = sc->sc_handle;
+	DPRINTF(("%s: id %" PRIu64 " op %d sn %" PRIu64 " handle %d\n",
+	    __func__, req->id, req->operation, req->sector_number,
+	    req->handle));
 
 	size = uimin(bp->b_bcount - start, XBD_MAX_CHUNK);
 	for (dmaseg = 0; dmaseg < dmamap->dm_nsegs && size > 0; dmaseg++) {
@@ -1295,9 +1300,9 @@ xbd_diskstart_submit(struct xbd_xenbus_softc *sc,
 		}
 		size -= nbytes;
 
-		KASSERT(((ma & PAGE_MASK) & (XEN_BSIZE - 1)) == 0);
-		KASSERT((nbytes & (XEN_BSIZE - 1)) == 0);
-		KASSERT((size & (XEN_BSIZE - 1)) == 0);
+		KASSERT(((ma & PAGE_MASK) & (sc->sc_secsize - 1)) == 0);
+		KASSERT((nbytes & (sc->sc_secsize - 1)) == 0);
+		KASSERT((size & (sc->sc_secsize - 1)) == 0);
 		first_sect = (ma & PAGE_MASK) >> XEN_BSHIFT;
 		nsects = nbytes >> XEN_BSHIFT;
 
@@ -1306,6 +1311,8 @@ xbd_diskstart_submit(struct xbd_xenbus_softc *sc,
 		reqseg->last_sect = first_sect + nsects - 1;
 		KASSERT(reqseg->first_sect <= reqseg->last_sect);
 		KASSERT(reqseg->last_sect < (PAGE_SIZE / XEN_BSIZE));
+		DPRINTF(("%s: seg %d fs %d ls %d\n", __func__, segidx,
+		    reqseg->first_sect, reqseg->last_sect));
 
 		reqseg->gref = gntref[dmaseg];
 	}
@@ -1331,8 +1338,11 @@ xbd_diskstart_submit_indirect(struct xbd_xenbus_softc *sc,
 	req->operation = BLKIF_OP_INDIRECT;
 	req->indirect_op =
 	    bp->b_flags & B_READ ? BLKIF_OP_READ : BLKIF_OP_WRITE;
-	req->sector_number = bp->b_rawblkno;
+	req->sector_number = bp->b_rawblkno * sc->sc_secsize / XEN_BSIZE;
 	req->handle = sc->sc_handle;
+	DPRINTF(("%s: id %" PRIu64 " op %d sn %" PRIu64 " handle %d\n",
+	    __func__, req->id, req->indirect_op, req->sector_number,
+	    req->handle));
 
 	xbdreq->req_indirect = SLIST_FIRST(&sc->sc_indirect_head);
 	KASSERT(xbdreq->req_indirect != NULL);	/* always as many as reqs */
@@ -1346,12 +1356,17 @@ xbd_diskstart_submit_indirect(struct xbd_xenbus_softc *sc,
 		ma = ds->ds_addr;
 		nbytes = ds->ds_len;
 
+		KASSERT(((ma & PAGE_MASK) & (sc->sc_secsize - 1)) == 0);
+		KASSERT((nbytes & (sc->sc_secsize - 1)) == 0);
+
 		first_sect = (ma & PAGE_MASK) >> XEN_BSHIFT;
 		nsects = nbytes >> XEN_BSHIFT;
 
 		reqseg->first_sect = first_sect;
 		reqseg->last_sect = first_sect + nsects - 1;
 		reqseg->gref = xbdreq->req_gntref[dmaseg];
+		DPRINTF(("%s: seg %d fs %d ls %d\n", __func__, dmaseg,
+		    reqseg->first_sect, reqseg->last_sect));
 
 		KASSERT(reqseg->first_sect <= reqseg->last_sect);
 		KASSERT(reqseg->last_sect < (PAGE_SIZE / XEN_BSIZE));
@@ -1367,12 +1382,6 @@ xbd_diskstart_submit_indirect(struct xbd_xenbus_softc *sc,
 static int
 xbd_map_align(struct xbd_xenbus_softc *sc, struct xbd_req *req)
 {
-	/*
-	 * Only can get here if this is physio() request, block I/O
-	 * uses DEV_BSIZE-aligned buffers.
-	 */
-	KASSERT((req->req_bp->b_flags & B_PHYS) != 0);
-
 	sc->sc_cnt_map_unalign.ev_count++;
 
 	if (sc->sc_unalign_used) {
