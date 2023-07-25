@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.206 2023/04/11 06:42:30 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.207 2023/07/25 01:09:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -1394,6 +1394,7 @@
 #define MSR_DE_CFG	0xc0011029
 #define 	DE_CFG_ERRATA_721	0x00000001
 #define 	DE_CFG_LFENCE_SERIALIZE	__BIT(1)
+#define 	DE_CFG_ERRATA_ZENBLEED	__BIT(9)
 #define 	DE_CFG_ERRATA_1021	__BIT(13)
 
 #define MSR_BU_CFG2	0xc001102a
