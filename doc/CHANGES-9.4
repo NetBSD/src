@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.76 2023/07/07 18:47:48 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.77 2023/07/25 09:14:06 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1642,4 +1642,10 @@ external/bsd/dhcpcd/examples/conf/Makefile	1.1
 
 	PR 57487: install a copy of dhcpcd.conf under /usr/share/examples.
 	[gutteridge, ticket #1663]
+
+sys/arch/x86/include/specialreg.h		1.207
+sys/arch/x86/x86/errata.c			1.31
+
+	x86: turn off zenbleed chicken bit on Zen2 cpus.
+	[mrg, ticket #1664]
 
