@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.86 2023/07/25 09:11:51 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.87 2023/07/25 11:30:43 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -3121,4 +3121,9 @@ sys/arch/x86/x86/errata.c			1.31
 
 	x86: turn off zenbleed chicken bit on Zen2 cpus.
 	[mrg, ticket #243]
+
+sys/arch/x86/x86/fpu.c				1.86
+
+	x86/fpu: align savefpu to 64 bytes in fpuinit_mxcsr_mask.
+	[riastradh, ticket #245]
 
