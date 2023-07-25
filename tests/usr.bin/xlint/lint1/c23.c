@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.5 2023/07/15 16:17:38 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.6 2023/07/25 16:56:35 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -40,7 +40,11 @@ function(void)
 	thread_local int function_scoped_thread_local;
 }
 
-// 'extern' and 'thread_local' can be combined.  The other storage classes
-// cannot be combined.
+// 'thread_local' can be combined with 'extern' and 'static', but with no other
+// storage classes.  The other storage classes cannot be combined.
 extern thread_local int extern_thread_local_1;
 thread_local extern int extern_thread_local_2;
+static thread_local int static_thread_local_1;
+thread_local static int static_thread_local_2;
+/* expect-2: warning: static variable 'static_thread_local_1' unused [226] */
+/* expect-2: warning: static variable 'static_thread_local_2' unused [226] */

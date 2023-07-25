@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.361 2023/07/18 03:00:42 rin Exp $ */
+/* $NetBSD: decl.c,v 1.362 2023/07/25 16:56:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.361 2023/07/18 03:00:42 rin Exp $");
+__RCSID("$NetBSD: decl.c,v 1.362 2023/07/25 16:56:35 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -226,6 +226,9 @@ dcs_add_storage_class(scl_t sc)
 	else if ((dcs->d_scl == EXTERN && sc == THREAD_LOCAL)
 	    || (dcs->d_scl == THREAD_LOCAL && sc == EXTERN))
 		dcs->d_scl = EXTERN;	/* ignore thread_local */
+	else if ((dcs->d_scl == STATIC && sc == THREAD_LOCAL)
+	    || (dcs->d_scl == THREAD_LOCAL && sc == STATIC))
+		dcs->d_scl = STATIC;	/* ignore thread_local */
 	else
 		dcs->d_multiple_storage_classes = true;
 }
