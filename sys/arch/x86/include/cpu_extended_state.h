@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.17 2019/06/26 12:30:13 mgorny Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.17.28.1 2023/07/25 11:41:42 martin Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -306,8 +306,15 @@ union savefpu {
  * Bits 13 and 14 are rounding control.
  * Bit 15 is 'flush to zero' - affects underflow.
  * Bits 16-31 must be zero.
+ *
+ * The safe MXCSR is fit for constant-time use, e.g. in crypto.  Some
+ * CPU instructions take input- dependent time if an exception status
+ * bit is not set; __SAFE_MXCSR__ has the exception status bits all set
+ * already to mitigate this.  See:
+ * https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/best-practices/mxcsr-configuration-dependent-timing.html
  */
 #define	__INITIAL_MXCSR__	0x1f80
 #define	__INITIAL_MXCSR_MASK__	0xffbf
+#define	__SAFE_MXCSR__		0x1fbf
 
 #endif /* _X86_CPU_EXTENDED_STATE_H_ */

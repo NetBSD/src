@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.79.4.1 2023/07/25 11:29:23 martin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.79.4.2 2023/07/25 11:41:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.79.4.1 2023/07/25 11:29:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.79.4.2 2023/07/25 11:41:42 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -373,6 +373,11 @@ fpu_lwp_abandon(struct lwp *l)
 void
 fpu_kern_enter(void)
 {
+	static const union savefpu safe_fpu __aligned(64) = {
+		.sv_xmm = {
+			.fx_mxcsr = __SAFE_MXCSR__,
+		},
+	};
 	struct lwp *l = curlwp;
 	struct cpu_info *ci;
 	int s;
@@ -407,6 +412,11 @@ fpu_kern_enter(void)
 	 * the last FPU usage requiring that we save the FPU state.
 	 */
 	clts();
+
+	/*
+	 * Zero the FPU registers and install safe control words.
+	 */
+	fpu_area_restore(&safe_fpu, x86_xsave_features, false);
 }
 
 /*
