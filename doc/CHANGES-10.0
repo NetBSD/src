@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.88 2023/07/25 11:42:57 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.89 2023/07/25 15:32:14 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -3132,4 +3132,9 @@ sys/arch/x86/x86/fpu.c				1.86
 
 	x86/fpu: align savefpu to 64 bytes in fpuinit_mxcsr_mask.
 	[riastradh, ticket #245]
+
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.85
+
+	nvmm(4): filter CR4 bits on x86 SVM (AMD).
+	[riastradh, ticket #246]
 
