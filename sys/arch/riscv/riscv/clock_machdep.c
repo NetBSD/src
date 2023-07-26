@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.5 2023/06/12 19:04:14 skrll Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.6 2023/07/26 06:13:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: clock_machdep.c,v 1.5 2023/06/12 19:04:14 skrll Exp $");
+__RCSID("$NetBSD: clock_machdep.c,v 1.6 2023/07/26 06:13:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
 
@@ -89,6 +90,9 @@ void
 riscv_timer_init(void)
 {
 	struct cpu_info * const ci = curcpu();
+
+	evcnt_attach_dynamic(&ci->ci_ev_timer, EVCNT_TYPE_INTR,
+	    NULL, device_xname(ci->ci_dev), "timer");
 
 	ci->ci_lastintr = csr_time_read();
 	uint64_t next = ci->ci_lastintr + timer_ticks_per_hz;
