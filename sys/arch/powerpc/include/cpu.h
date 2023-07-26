@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.123 2022/11/15 12:43:14 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.124 2023/07/26 06:36:20 skrll Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -134,7 +134,7 @@ struct cpu_info {
 #define	ci_pmap_user_segtab	ci_pmap_segtabs[1]
 	struct pmap_tlb_info *ci_tlb_info;
 #endif /* PPC_BOOKE || ((MODULAR || _MODULE) && !_LP64) */
-	struct cache_info ci_ci;		
+	struct cache_info ci_ci;
 	void *ci_sysmon_cookie;
 	void (*ci_idlespin)(void);
 	uint32_t ci_khz;
@@ -341,7 +341,7 @@ mfrtc(uint32_t *rtcp)
 static __inline uint64_t
 rtc_nanosecs(void)
 {
-    /* 
+    /*
      * 601 RTC/DEC registers share clock of 7.8125 MHz, 128 ns per tick.
      * DEC has max of 25 bits, FFFFFF => 2.14748352 seconds.
      * RTCU is seconds, 32 bits.
