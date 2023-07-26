@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.23 2021/05/27 06:19:38 ryo Exp $
+#	$NetBSD: Makefile.aarch64,v 1.24 2023/07/26 03:39:55 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -95,13 +95,14 @@ LOADADDRESS?=	0xffffc00000000000
 LINKFLAGS_NORMAL=	-X
 
 # Strip AArch64 mapping symbols from the kernel image, as they interfere
-# with ddb. Do it differently if 'makeoptions DEBUG="-g"' was specified.
-.if !defined(DEBUG) || empty(DEBUG:M-g*)
-SYSTEM_LD_TAIL?=	${OBJCOPY} -w --strip-symbol='[$$][dx]'	\
-				   --strip-symbol='[$$][dx]\.*' $@ ;\
-			${SIZE} $@; chmod 755 $@
+# with ddb, but don't strip them in netbsd.gdb.
+AA64_STRIP_SYMBOLS=	--strip-symbol='[$$][dx]' \
+			--strip-symbol='[$$][dx]\.*'
+.if (defined(DEBUG) && !empty(DEBUG:M-g*)) || (!defined(DEBUG) && \
+	(${MKDEBUGKERNEL:Uno} == "yes" || ${MKDEBUG:Uno} == "yes"))
+OBJCOPY_STRIPFLAGS=	-g -w ${AA64_STRIP_SYMBOLS}
 .else
-STRIPFLAGS=-g --strip-symbol='$$x' --strip-symbol='$$d'
+SYSTEM_LD_TAIL=		@${OBJCOPY} -w ${AA64_STRIP_SYMBOLS} $@
 .endif
 
 ##
