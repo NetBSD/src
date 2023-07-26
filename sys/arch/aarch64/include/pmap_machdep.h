@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.4 2023/07/26 06:43:53 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.5 2023/07/26 06:45:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -321,11 +321,11 @@ pte_set(pt_entry_t *ptep, pt_entry_t pte)
 	*ptep = pte;
 	dsb(ishst);
 	/*
-	 * if this mapping is going to be used by userland then the eret *can* act
-	 * as the isb, but might not (apple m1).
+	 * if this mapping is going to be used by userland then the eret *can*
+	 * act as the isb, but might not (apple m1).
 	 *
-	 * if this mapping is kernel then the isb is always needed (for some micro-
-	 * architectures)
+	 * if this mapping is kernel then the isb is always needed (for some
+	 * micro-architectures)
 	 */
 
 	isb();
