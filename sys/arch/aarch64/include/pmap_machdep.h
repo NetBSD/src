@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.5 2023/07/26 06:45:41 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.6 2023/07/26 06:47:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -204,9 +204,7 @@ pmap_md_nptep(pt_entry_t *ptep)
 	return ptep + 1;
 }
 
-#endif	/* __PMAP_PRIVATE */
 
-#ifdef __PMAP_PRIVATE
 static __inline paddr_t
 pte_to_paddr(pt_entry_t pte)
 {
