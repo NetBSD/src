@@ -1,4 +1,4 @@
-/*	$NetBSD: clint_fdt.c,v 1.1 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: clint_fdt.c,v 1.2 2023/07/26 06:36:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clint_fdt.c,v 1.1 2023/05/07 12:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clint_fdt.c,v 1.2 2023/07/26 06:36:34 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -122,8 +122,6 @@ clint_timer_intr(void *arg)
 	struct clockframe * const cf = arg;
 	struct clint_fdt_softc * const sc = clint_sc;
 
-printf_nolog("%s: sip %#" PRIxPTR "\n", __func__, csr_sip_read());
-
 	csr_sip_clear(SIP_STIP);	/* clean pending interrupt status */
 
 	clint_timer_set(sc, ci);
@@ -142,9 +140,6 @@ clint_cpu_initclocks(void)
 	clint_timer_set(sc, ci);
 
 	csr_sie_set(SIE_STIE);		/* enable supervisor timer intr */
-
-	printf("init clocks at time %"PRId64"\n",
-	    ci->ci_lastintr);
 }
 
 static int
