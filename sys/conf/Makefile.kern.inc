@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.297 2023/06/03 21:26:29 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.298 2023/07/26 03:39:55 rin Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -245,14 +245,17 @@ LINKFLAGS?=	${LINKFORMAT} ${LINKSCRIPT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
 LINKFLAGS_DEBUG?=	-X
 KERNEL_CONFIG?=	${KERNEL_BUILD:T}
 
-SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c && \
+SYSTEM_LD_TAIL?= @${_MKSHECHO}
+SYSTEM_LD_TAIL+= && ${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c && \
 		${SIZE} $@ && ${SYSTEM_CTFMERGE} && chmod 755 $@
 SYSTEM_LD_TAIL+= && runit() { echo $$@; $$@; }
+
+OBJCOPY_STRIPFLAGS?= -g
 
 SYSTEM_LD_TAIL_DEBUG?=&& \
 	runit mv -f $@ $@.gdb && \
 	runit ${OBJCOPY} --only-keep-debug $@.gdb $@-${KERNEL_CONFIG}.debug && \
-	runit ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+	runit ${OBJCOPY} ${OBJCOPY_STRIPFLAGS} -p -R .gnu_debuglink \
 	    --add-gnu-debuglink=$@-${KERNEL_CONFIG}.debug $@.gdb $@ && \
 	runit chmod 755 $@ $@.gdb $@-${KERNEL_CONFIG}.debug
 
