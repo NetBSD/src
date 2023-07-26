@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.7 2023/07/26 06:58:34 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.8 2023/07/26 07:00:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -388,7 +388,6 @@ pte_pde_set(pd_entry_t *pdep, pd_entry_t npde)
 }
 
 
-
 static inline pt_entry_t
 pte_memattr(u_int flags)
 {
@@ -439,6 +438,7 @@ pte_make_kenter_pa(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 	return pte;
 }
 
+
 static inline pt_entry_t
 pte_make_enter_efirt(paddr_t pa, vm_prot_t prot, u_int flags)
 {
@@ -463,6 +463,7 @@ pte_make_enter_efirt(paddr_t pa, vm_prot_t prot, u_int flags)
 
 	return npte;
 }
+
 
 static inline pt_entry_t
 pte_make_enter(paddr_t pa, const struct vm_page_md *mdpg, vm_prot_t prot,
