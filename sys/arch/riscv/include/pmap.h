@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.18 2023/06/12 19:04:14 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.19 2023/07/26 06:58:34 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -225,20 +225,6 @@ static inline pt_entry_t *
 pmap_md_nptep(pt_entry_t *ptep)
 {
 	return ptep + 1;
-}
-
-static inline bool
-pmap_md_kernel_vaddr_p(vaddr_t va)
-{
-	return false;
-}
-
-static inline paddr_t
-pmap_md_kernel_vaddr_to_paddr(vaddr_t vax)
-{
-	/* Not used due to false from pmap_md_kernel_vaddr_p */
-
-	return 0;
 }
 
 #endif /* __PMAP_PRIVATE */
