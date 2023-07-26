@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-sk-helper.c,v 1.6 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: ssh-sk-helper.c,v 1.13 2022/04/29 03:16:48 dtucker Exp $ */
-
+/*	$NetBSD: ssh-sk-helper.c,v 1.7 2023/07/26 17:58:16 christos Exp $	*/
+/* $OpenBSD: ssh-sk-helper.c,v 1.14 2022/12/04 11:03:11 dtucker Exp $ */
 /*
  * Copyright (c) 2019 Google LLC
  *
@@ -27,7 +26,7 @@
  * protocol changes.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-sk-helper.c,v 1.6 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: ssh-sk-helper.c,v 1.7 2023/07/26 17:58:16 christos Exp $");
 
 #include <limits.h>
 #include <stdarg.h>
@@ -45,7 +44,6 @@ __RCSID("$NetBSD: ssh-sk-helper.c,v 1.6 2022/10/05 22:39:36 christos Exp $");
 #include "sshbuf.h"
 #include "msg.h"
 #include "uidswap.h"
-#include "sshkey.h"
 #include "ssherr.h"
 #include "ssh-sk.h"
 

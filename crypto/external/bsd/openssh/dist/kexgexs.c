@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgexs.c,v 1.21 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: kexgexs.c,v 1.44 2021/12/19 22:08:06 djm Exp $ */
+/*	$NetBSD: kexgexs.c,v 1.22 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: kexgexs.c,v 1.45 2023/03/05 05:34:09 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexs.c,v 1.21 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: kexgexs.c,v 1.22 2023/07/26 17:58:15 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <stdio.h>
@@ -43,7 +43,6 @@ __RCSID("$NetBSD: kexgexs.c,v 1.21 2022/02/23 19:07:20 christos Exp $");
 #include "packet.h"
 #include "dh.h"
 #include "ssh2.h"
-#include "compat.h"
 #ifdef GSSAPI
 #include "ssh-gss.h"
 #endif

@@ -1,6 +1,5 @@
-/*	$NetBSD: packet.c,v 1.47 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: packet.c,v 1.308 2022/08/31 02:56:40 djm Exp $ */
-
+/*	$NetBSD: packet.c,v 1.48 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: packet.c,v 1.309 2023/03/03 10:23:42 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.47 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.48 2023/07/26 17:58:15 christos Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>

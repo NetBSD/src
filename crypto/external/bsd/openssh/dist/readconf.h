@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.30 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.148 2022/09/17 10:33:18 djm Exp $ */
+/*	$NetBSD: readconf.h,v 1.31 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: readconf.h,v 1.150 2023/01/13 02:58:20 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -29,6 +29,7 @@ struct allowed_cname {
 };
 
 typedef struct {
+	char   *host_arg;	/* Host arg as specified on command line. */
 	int     forward_agent;	/* Forward authentication agent. */
 	char   *forward_agent_sock_path; /* Optional path of the agent. */
 	int     forward_x11;	/* Forward X11 display. */
@@ -196,6 +197,7 @@ typedef struct {
 	char   *known_hosts_command;
 
 	int	required_rsa_size;	/* minimum size of RSA keys */
+	int	enable_escape_commandline;	/* ~C commandline */
 
 	char	*ignored_unknown; /* Pattern list of unknown tokens to ignore */
 }       Options;

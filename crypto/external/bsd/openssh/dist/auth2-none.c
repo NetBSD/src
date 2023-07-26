@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-none.c,v 1.13 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: auth2-none.c,v 1.24 2021/12/19 22:12:07 djm Exp $ */
+/*	$NetBSD: auth2-none.c,v 1.14 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: auth2-none.c,v 1.25 2023/03/05 05:34:09 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-none.c,v 1.13 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: auth2-none.c,v 1.14 2023/07/26 17:58:15 christos Exp $");
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -38,7 +38,6 @@ __RCSID("$NetBSD: auth2-none.c,v 1.13 2022/02/23 19:07:20 christos Exp $");
 #include "log.h"
 #include "misc.h"
 #include "servconf.h"
-#include "compat.h"
 #include "ssh2.h"
 #include "ssherr.h"
 #ifdef GSSAPI

@@ -1,5 +1,5 @@
-/*	$NetBSD: umac.c,v 1.21 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: umac.c,v 1.22 2022/01/01 05:55:06 jsg Exp $ */
+/*	$NetBSD: umac.c,v 1.22 2023/07/26 17:58:16 christos Exp $	*/
+/* $OpenBSD: umac.c,v 1.23 2023/03/07 01:30:52 djm Exp $ */
 /* -----------------------------------------------------------------------
  *
  * umac.c -- C Implementation UMAC Message Authentication
@@ -67,7 +67,7 @@
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
-__RCSID("$NetBSD: umac.c,v 1.21 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: umac.c,v 1.22 2023/07/26 17:58:16 christos Exp $");
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <string.h>
@@ -253,7 +253,8 @@ xor32(uint8_t *dp, int di, uint8_t *sp, int si)
     memcpy(dp + sizeof(dst) * di, &dst, sizeof(dst));
 }
 
-static void pdf_gen_xor(pdf_ctx *pc, const UINT8 nonce[8], UINT8 buf[8])
+static void pdf_gen_xor(pdf_ctx *pc, const UINT8 nonce[8],
+    UINT8 buf[UMAC_OUTPUT_LEN])
 {
     /* 'ndx' indicates that we'll be using the 0th or 1st eight bytes
      * of the AES output. If last time around we returned the ndx-1st

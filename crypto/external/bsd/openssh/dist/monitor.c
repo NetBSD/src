@@ -1,6 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.41 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: monitor.c,v 1.234 2022/06/15 16:08:25 djm Exp $ */
-
+/*	$NetBSD: monitor.c,v 1.42 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: monitor.c,v 1.235 2023/02/17 04:22:50 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -28,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.41 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.42 2023/07/26 17:58:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -1156,11 +1155,6 @@ mm_answer_keyallowed(struct ssh *ssh, int sock, struct sshbuf *m)
 		fatal_fr(r, "parse");
 
 	if (key != NULL && authctxt->valid) {
-		/* These should not make it past the privsep child */
-		if (sshkey_type_plain(key->type) == KEY_RSA &&
-		    (ssh->compat & SSH_BUG_RSASIGMD5) != 0)
-			fatal_f("passed a SSH_BUG_RSASIGMD5 key");
-
 		switch (type) {
 		case MM_USERKEY:
 			auth_method = "publickey";

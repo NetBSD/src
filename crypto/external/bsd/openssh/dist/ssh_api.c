@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh_api.c,v 1.13 2021/04/19 14:40:15 christos Exp $	*/
+/*	$NetBSD: ssh_api.c,v 1.14 2023/07/26 17:58:16 christos Exp $	*/
 /* $OpenBSD: ssh_api.c,v 1.27 2021/04/03 06:18:41 djm Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh_api.c,v 1.13 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: ssh_api.c,v 1.14 2023/07/26 17:58:16 christos Exp $");
 
 #include <sys/types.h>
 
@@ -102,7 +102,7 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 
 	/* Initialize key exchange */
 	proposal = kex_params ? __UNCONST(kex_params->proposal) : myproposal;
-	if ((r = kex_ready(ssh, proposal)) != 0) {
+	if ((r = kex_ready(ssh, __UNCONST(proposal))) != 0) {
 		ssh_free(ssh);
 		return r;
 	}
@@ -550,7 +550,7 @@ _ssh_order_hostkeyalgs(struct ssh *ssh)
 		free(orig);
 		proposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = replace;
 		replace = NULL;	/* owned by proposal */
-		r = kex_prop2buf(ssh->kex->my, (const char **)(void *)proposal);
+		r = kex_prop2buf(ssh->kex->my, proposal);
 	}
  out:
 	free(oavail);
