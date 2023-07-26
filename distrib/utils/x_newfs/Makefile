@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2020/04/18 12:56:38 jdolecek Exp $
+# $NetBSD: Makefile,v 1.3 2023/07/26 02:26:11 rin Exp $
 # Build a smaller newfs (i.e. for boot media).
 # Support for Endian-Independent FFS and Apple UFS is dropped unless FFS_EI=1
 # and APPLE_UFS=1 are added to CRUNCHENV, respectively.
@@ -17,6 +17,7 @@ CPPFLAGS+=	-DNO_FFS_EI
 
 .ifdef APPLE_UFS
 SRCS+=		ffs_appleufs.c
+COPTS.ffs_appleufs.c+=	-Wno-error=address-of-packed-member
 .else
 CPPFLAGS+=	-DNO_APPLE_UFS
 .endif
