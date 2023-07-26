@@ -1,6 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.27 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.143 2022/06/21 14:52:13 tobhe Exp $ */
-
+/*	$NetBSD: authfile.c,v 1.28 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.144 2023/03/14 07:26:25 dtucker Exp $ */
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.27 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.28 2023/07/26 17:58:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -209,6 +208,8 @@ sshkey_try_load_public(struct sshkey **kp, const char *filename,
 	int r;
 	struct sshkey *k = NULL;
 
+	if (kp == NULL)
+		return SSH_ERR_INVALID_ARGUMENT;
 	*kp = NULL;
 	if (commentp != NULL)
 		*commentp = NULL;

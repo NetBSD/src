@@ -1,6 +1,5 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.32 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: auth2-pubkey.c,v 1.117 2022/09/17 10:34:29 djm Exp $ */
-
+/*	$NetBSD: auth2-pubkey.c,v 1.33 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: auth2-pubkey.c,v 1.118 2023/02/17 04:22:50 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -27,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.32 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.33 2023/07/26 17:58:15 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -157,12 +156,6 @@ userauth_pubkey(struct ssh *ssh, const char *method)
 	if (key->type != pktype) {
 		error_f("type mismatch for decoded key "
 		    "(received %d, expected %d)", key->type, pktype);
-		goto done;
-	}
-	if (sshkey_type_plain(key->type) == KEY_RSA &&
-	    (ssh->compat & SSH_BUG_RSASIGMD5) != 0) {
-		logit("Refusing RSA key because client uses unsafe "
-		    "signature scheme");
 		goto done;
 	}
 	if (auth2_key_already_used(authctxt, key)) {

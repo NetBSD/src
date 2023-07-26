@@ -1,6 +1,5 @@
-/*	$NetBSD: sshd.c,v 1.47 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: sshd.c,v 1.591 2022/09/17 10:34:29 djm Exp $ */
-
+/*	$NetBSD: sshd.c,v 1.48 2023/07/26 17:58:16 christos Exp $	*/
+/* $OpenBSD: sshd.c,v 1.600 2023/03/08 04:43:12 guenther Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -45,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.47 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.48 2023/07/26 17:58:16 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -90,7 +89,6 @@ __RCSID("$NetBSD: sshd.c,v 1.47 2022/10/05 22:39:36 christos Exp $");
 #include "digest.h"
 #include "sshkey.h"
 #include "kex.h"
-#include "myproposal.h"
 #include "authfile.h"
 #include "pathnames.h"
 #include "atomicio.h"
@@ -294,7 +292,6 @@ close_startup_pipes(void)
  * the server key).
  */
 
-/*ARGSUSED*/
 static void
 sighup_handler(int sig)
 {
@@ -323,7 +320,6 @@ sighup_restart(void)
 /*
  * Generic signal handler for terminating signals in the master daemon.
  */
-/*ARGSUSED*/
 static void
 sigterm_handler(int sig)
 {
@@ -334,7 +330,6 @@ sigterm_handler(int sig)
  * SIGCHLD handler.  This is called whenever a child dies.  This will then
  * reap any zombies left by exited children.
  */
-/*ARGSUSED*/
 static void
 main_sigchld_handler(int sig)
 {
@@ -883,7 +878,7 @@ usage(void)
 {
 	fprintf(stderr, "%s, %s\n", SSH_VERSION, SSH_OPENSSL_VERSION);
 	fprintf(stderr,
-"usage: sshd [-46DdeiqTt] [-C connection_spec] [-c host_cert_file]\n"
+"usage: sshd [-46DdeGiqTtV] [-C connection_spec] [-c host_cert_file]\n"
 "            [-E log_file] [-f config_file] [-g login_grace_time]\n"
 "            [-h host_key_file] [-o option] [-p port] [-u len]\n"
 	);
@@ -1471,7 +1466,7 @@ accumulate_host_timing_secret(struct sshbuf *server_cfg,
 	if ((buf = sshbuf_new()) == NULL)
 		fatal_f("could not allocate buffer");
 	if ((r = sshkey_private_serialize(key, buf)) != 0)
-		fatal_fr(r, "decode key");
+		fatal_fr(r, "encode %s key", sshkey_ssh_name(key));
 	if (ssh_digest_update(ctx, sshbuf_ptr(buf), sshbuf_len(buf)) != 0)
 		fatal_f("ssh_digest_update");
 	sshbuf_reset(buf);
@@ -1489,6 +1484,21 @@ prepare_proctitle(int ac, char **av)
 	return ret;
 }
 
+static void
+print_config(struct ssh *ssh, struct connection_info *connection_info)
+{
+	/*
+	 * If no connection info was provided by -C then use
+	 * use a blank one that will cause no predicate to match.
+	 */
+	if (connection_info == NULL)
+		connection_info = get_connection_info(ssh, 0, 0);
+	connection_info->test = 1;
+	parse_server_match_config(&options, &includes, connection_info);
+	dump_config(&options);
+	exit(0);
+}
+
 /*
  * Main program for the daemon.
  */
@@ -1498,7 +1508,7 @@ main(int ac, char **av)
 	struct ssh *ssh = NULL;
 	extern char *optarg;
 	extern int optind;
-	int r, opt, on = 1, already_daemon, remote_port;
+	int r, opt, on = 1, do_dump_cfg = 0, already_daemon, remote_port;
 	int sock_in = -1, sock_out = -1, newsock = -1;
 	const char *remote_ip, *rdomain;
 	char *fp, *line, *laddr, *logfile = NULL;
@@ -1511,6 +1521,10 @@ main(int ac, char **av)
 	int keytype;
 	Authctxt *authctxt;
 	struct connection_info *connection_info = NULL;
+	sigset_t sigmask;
+
+	sigemptyset(&sigmask);
+	sigprocmask(SIG_SETMASK, &sigmask, NULL);
 
 	/* Save argv. */
 	saved_argv = av;
@@ -1524,7 +1538,7 @@ main(int ac, char **av)
 
 	/* Parse command-line arguments. */
 	while ((opt = getopt(ac, av,
-	    "C:E:b:c:f:g:h:k:o:p:u:46DQRTdeiqrt")) != -1) {
+	    "C:E:b:c:f:g:h:k:o:p:u:46DGQRTdeiqrtV")) != -1) {
 		switch (opt) {
 		case '4':
 			options.address_family = AF_INET;
@@ -1548,6 +1562,9 @@ main(int ac, char **av)
 			break;
 		case 'D':
 			no_daemon_flag = 1;
+			break;
+		case 'G':
+			do_dump_cfg = 1;
 			break;
 		case 'E':
 			logfile = optarg;
@@ -1625,7 +1642,10 @@ main(int ac, char **av)
 				exit(1);
 			free(line);
 			break;
-		case '?':
+		case 'V':
+			fprintf(stderr, "%s, %s\n",
+			    SSH_VERSION, SSH_OPENSSL_VERSION);
+			exit(0);
 		default:
 			usage();
 			break;
@@ -1633,7 +1653,7 @@ main(int ac, char **av)
 	}
 	if (rexeced_flag || inetd_flag)
 		rexec_flag = 0;
-	if (!test_flag && rexec_flag && !path_absolute(av[0]))
+	if (!test_flag && !do_dump_cfg && rexec_flag && !path_absolute(av[0]))
 		fatal("sshd re-exec requires execution with an absolute path");
 	if (rexeced_flag)
 		r = closefrom(REEXEC_MIN_FREE_FD);
@@ -1744,14 +1764,11 @@ main(int ac, char **av)
 		error("[LDAP] could not initialize ldap connection");
 	}
 #endif
-	debug("sshd version %s, %s", SSH_VERSION,
-#ifdef WITH_OPENSSL
-	    OpenSSL_version(OPENSSL_VERSION)
-#else
-	    "without OpenSSL"
-#endif
-	);
- 
+	debug("sshd version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
+
+	if (do_dump_cfg)
+		print_config(ssh, connection_info);
+
 	/* load host keys */
 	sensitive_data.host_keys = xcalloc(options.num_host_key_files,
 	    sizeof(struct sshkey *));
@@ -1918,17 +1935,8 @@ main(int ac, char **av)
 			    "world-writable.", _PATH_PRIVSEP_CHROOT_DIR);
 	}
 
-	if (test_flag > 1) {
-		/*
-		 * If no connection info was provided by -C then use
-		 * use a blank one that will cause no predicate to match.
-		 */
-		if (connection_info == NULL)
-			connection_info = get_connection_info(ssh, 0, 0);
-		connection_info->test = 1;
-		parse_server_match_config(&options, &includes, connection_info);
-		dump_config(&options);
-	}
+	if (test_flag > 1)
+		print_config(ssh, connection_info);
 
 	/* Configuration looks good, so exit if in test mode. */
 	if (test_flag)
@@ -2031,17 +2039,21 @@ main(int ac, char **av)
 	if (rexec_flag) {
 		debug("rexec start in %d out %d newsock %d pipe %d sock %d",
 		    sock_in, sock_out, newsock, startup_pipe, config_s[0]);
-		dup2(newsock, STDIN_FILENO);
-		dup2(STDIN_FILENO, STDOUT_FILENO);
+		if (dup2(newsock, STDIN_FILENO) == -1)
+			debug3_f("dup2 stdin: %s", strerror(errno));
+		if (dup2(STDIN_FILENO, STDOUT_FILENO) == -1)
+			debug3_f("dup2 stdout: %s", strerror(errno));
 		if (startup_pipe == -1)
 			close(REEXEC_STARTUP_PIPE_FD);
 		else if (startup_pipe != REEXEC_STARTUP_PIPE_FD) {
- 			dup2(startup_pipe, REEXEC_STARTUP_PIPE_FD);
+			if (dup2(startup_pipe, REEXEC_STARTUP_PIPE_FD) == -1)
+				debug3_f("dup2 startup_p: %s", strerror(errno));
 			close(startup_pipe);
 			startup_pipe = REEXEC_STARTUP_PIPE_FD;
 		}
 
-		dup2(config_s[1], REEXEC_CONFIG_PASS_FD);
+		if (dup2(config_s[1], REEXEC_CONFIG_PASS_FD) == -1)
+			debug3_f("dup2 config_s: %s", strerror(errno));
 		close(config_s[1]);
 
 		ssh_signal(SIGHUP, SIG_IGN); /* avoid reset to SIG_DFL */
@@ -2087,6 +2099,7 @@ main(int ac, char **av)
 	/* Prepare the channels layer */
 	channel_init_channels(ssh);
 	channel_set_af(ssh, options.address_family);
+	process_channel_timeouts(ssh, &options);
 	process_permitopen(ssh, &options);
 
 	/* Set SO_KEEPALIVE if requested. */
@@ -2295,30 +2308,23 @@ sshd_hostkey_sign(struct ssh *ssh, struct sshkey *privkey,
 static void
 do_ssh2_kex(struct ssh *ssh)
 {
-	const char *myproposal[PROPOSAL_MAX] = { KEX_SERVER };
+	char *hkalgs = NULL, *myproposal[PROPOSAL_MAX];
+	const char *compression = NULL;
 	struct kex *kex;
-	char *prop_kex = NULL, *prop_enc = NULL, *prop_hostkey = NULL;
 	int r;
-
-	myproposal[PROPOSAL_KEX_ALGS] = prop_kex = compat_kex_proposal(ssh,
-	    options.kex_algorithms);
-	myproposal[PROPOSAL_ENC_ALGS_CTOS] =
-	    myproposal[PROPOSAL_ENC_ALGS_STOC] = prop_enc =
-	    compat_cipher_proposal(ssh, options.ciphers);
-	myproposal[PROPOSAL_MAC_ALGS_CTOS] =
-	    myproposal[PROPOSAL_MAC_ALGS_STOC] = options.macs;
-
-	if (options.compression == COMP_NONE) {
-		myproposal[PROPOSAL_COMP_ALGS_CTOS] =
-		    myproposal[PROPOSAL_COMP_ALGS_STOC] = "none";
-	}
 
 	if (options.rekey_limit || options.rekey_interval)
 		ssh_packet_set_rekey_limits(ssh, options.rekey_limit,
 		    options.rekey_interval);
 
-	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = prop_hostkey =
-	   compat_pkalg_proposal(ssh, list_hostkey_types());
+	if (options.compression == COMP_NONE)
+		compression = "none";
+	hkalgs = list_hostkey_types();
+
+	kex_proposal_populate_entries(ssh, myproposal, options.kex_algorithms,
+	    options.ciphers, options.macs, compression, hkalgs);
+
+	free(hkalgs);
 
 	/* start key exchange */
 	if ((r = kex_setup(ssh, myproposal)) != 0)
@@ -2351,9 +2357,7 @@ do_ssh2_kex(struct ssh *ssh)
 	    (r = ssh_packet_write_wait(ssh)) != 0)
 		fatal_fr(r, "send test");
 #endif
-	free(prop_kex);
-	free(prop_enc);
-	free(prop_hostkey);
+	kex_proposal_free_entries(myproposal);
 	debug("KEX done");
 }
 

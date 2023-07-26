@@ -1,6 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.31 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.125 2022/06/15 16:08:25 djm Exp $ */
-
+/*	$NetBSD: monitor_wrap.c,v 1.32 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.126 2023/01/06 02:47:18 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -28,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.31 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.32 2023/07/26 17:58:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -335,6 +334,7 @@ out:
 	for (i = 0; i < options.num_log_verbose; i++)
 		log_verbose_add(options.log_verbose[i]);
 	process_permitopen(ssh, &options);
+	process_channel_timeouts(ssh, &options);
 	free(newopts);
 
 	sshbuf_free(m);

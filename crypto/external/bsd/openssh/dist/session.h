@@ -1,5 +1,5 @@
-/*	$NetBSD: session.h,v 1.9 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: session.h,v 1.36 2018/10/02 12:40:07 djm Exp $ */
+/*	$NetBSD: session.h,v 1.10 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: session.h,v 1.37 2023/01/06 02:39:59 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -73,7 +73,7 @@ int	 session_open(Authctxt *, int);
 void	 session_unused(int);
 int	 session_input_channel_req(struct ssh *, Channel *, const char *);
 void	 session_close_by_pid(struct ssh *ssh, pid_t, int);
-void	 session_close_by_channel(struct ssh *, int, void *);
+void	 session_close_by_channel(struct ssh *, int, int, void *);
 void	 session_destroy_all(struct ssh *, void (*)(Session *));
 void	 session_pty_cleanup2(Session *);
 

@@ -1,6 +1,5 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.22 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: auth2-hostbased.c,v 1.50 2022/09/17 10:34:29 djm Exp $ */
-
+/*	$NetBSD: auth2-hostbased.c,v 1.23 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: auth2-hostbased.c,v 1.52 2023/03/05 05:34:09 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.22 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.23 2023/07/26 17:58:15 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -42,7 +41,6 @@ __RCSID("$NetBSD: auth2-hostbased.c,v 1.22 2022/10/05 22:39:36 christos Exp $");
 #include "log.h"
 #include "misc.h"
 #include "servconf.h"
-#include "compat.h"
 #include "sshkey.h"
 #include "hostfile.h"
 #include "auth.h"
@@ -101,12 +99,6 @@ userauth_hostbased(struct ssh *ssh, const char *method)
 	if (key->type != pktype) {
 		error_f("type mismatch for decoded key "
 		    "(received %d, expected %d)", key->type, pktype);
-		goto done;
-	}
-	if (sshkey_type_plain(key->type) == KEY_RSA &&
-	    (ssh->compat & SSH_BUG_RSASIGMD5) != 0) {
-		error("Refusing RSA key because peer uses unsafe "
-		    "signature format");
 		goto done;
 	}
 	if (match_pattern_list(pkalg, options.hostbased_accepted_algos, 0) != 1) {

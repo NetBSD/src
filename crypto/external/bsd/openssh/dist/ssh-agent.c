@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.34 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.292 2022/09/17 10:11:29 djm Exp $ */
-
+/*	$NetBSD: ssh-agent.c,v 1.35 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.297 2023/03/09 21:06:24 jcs Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.34 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.35 2023/07/26 17:58:15 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -73,7 +72,6 @@ __RCSID("$NetBSD: ssh-agent.c,v 1.34 2022/10/05 22:39:36 christos Exp $");
 #include "sshbuf.h"
 #include "sshkey.h"
 #include "authfd.h"
-#include "compat.h"
 #include "log.h"
 #include "misc.h"
 #include "getpeereid.h"
@@ -81,7 +79,6 @@ __RCSID("$NetBSD: ssh-agent.c,v 1.34 2022/10/05 22:39:36 christos Exp $");
 #include "ssherr.h"
 #include "match.h"
 #include "msg.h"
-#include "ssherr.h"
 #include "pathnames.h"
 #include "ssh-pkcs11.h"
 #include "sk-api.h"
@@ -164,6 +161,12 @@ char socket_dir[PATH_MAX];
 
 /* Pattern-list of allowed PKCS#11/Security key paths */
 static char *allowed_providers;
+
+/*
+ * Allows PKCS11 providers or SK keys that use non-internal providers to
+ * be added over a remote connection (identified by session-bind@openssh.com).
+ */
+static int remote_add_provider;
 
 /* locking */
 #define LOCK_SIZE	32
@@ -1019,8 +1022,8 @@ parse_dest_constraint(struct sshbuf *m, struct dest_constraint *dc)
 		error_fr(r, "parse");
 		goto out;
 	}
-	if ((r = parse_dest_constraint_hop(frombuf, &dc->from) != 0) ||
-	    (r = parse_dest_constraint_hop(tobuf, &dc->to) != 0))
+	if ((r = parse_dest_constraint_hop(frombuf, &dc->from)) != 0 ||
+	    (r = parse_dest_constraint_hop(tobuf, &dc->to)) != 0)
 		goto out; /* already logged */
 	if (elen != 0) {
 		error_f("unsupported extensions (len %zu)", elen);
@@ -1224,6 +1227,12 @@ process_add_identity(SocketEntry *e)
 		if (strcasecmp(sk_provider, "internal") == 0) {
 			debug_f("internal provider");
 		} else {
+			if (e->nsession_ids != 0 && !remote_add_provider) {
+				verbose("failed add of SK provider \"%.100s\": "
+				    "remote addition of providers is disabled",
+				    sk_provider);
+				goto out;
+			}
 			if (realpath(sk_provider, canonical_provider) == NULL) {
 				verbose("failed provider \"%.100s\": "
 				    "realpath: %s", sk_provider,
@@ -1385,6 +1394,11 @@ process_add_smartcard_key(SocketEntry *e)
 	if (parse_key_constraints(e->request, NULL, &death, &seconds, &confirm,
 	    NULL, &dest_constraints, &ndest_constraints) != 0) {
 		error_f("failed to parse constraints");
+		goto send;
+	}
+	if (e->nsession_ids != 0 && !remote_add_provider) {
+		verbose("failed PKCS#11 add of \"%.100s\": remote addition of "
+		    "providers is disabled", provider);
 		goto send;
 	}
 	if (realpath(provider, canonical_provider) == NULL) {
@@ -1986,9 +2000,9 @@ usage(void)
 {
 	fprintf(stderr,
 	    "usage: ssh-agent [-c | -s] [-Dd] [-a bind_address] [-E fingerprint_hash]\n"
-	    "                 [-P allowed_providers] [-t life]\n"
-	    "       ssh-agent [-a bind_address] [-E fingerprint_hash] [-P allowed_providers]\n"
-	    "                 [-t life] command [arg ...]\n"
+	    "                 [-O option] [-P allowed_providers] [-t life]\n"
+	    "       ssh-agent [-a bind_address] [-E fingerprint_hash] [-O option]\n"
+	    "                 [-P allowed_providers] [-t life] command [arg ...]\n"
 	    "       ssh-agent [-c | -s] -k\n");
 	exit(1);
 }
@@ -2067,7 +2081,9 @@ main(int ac, char **av)
 			break;
 		case 'O':
 			if (strcmp(optarg, "no-restrict-websafe") == 0)
-				restrict_websafe  = 0;
+				restrict_websafe = 0;
+			else if (strcmp(optarg, "allow-remote-pkcs11") == 0)
+				remote_add_provider = 1;
 			else
 				fatal("Unknown -O option");
 			break;

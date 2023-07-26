@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2023/06/03 09:09:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.37 2023/07/26 17:58:16 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -28,9 +28,7 @@ dispatch.c \
 dns.c \
 ed25519.c \
 fatal.c \
-fe25519.c \
 freezero.c \
-ge25519.c \
 hash.c \
 hmac.c \
 hostfile.c \
@@ -54,7 +52,6 @@ poly1305.c \
 progressmeter.c \
 readpass.c \
 recallocarray.c \
-sc25519.c \
 smult_curve25519_ref.c \
 sntrup761.c \
 ssh-ed25519.c \
@@ -75,7 +72,6 @@ uidswap.c \
 umac.c \
 umac128.c \
 utf8.c \
-verify.c \
 xmalloc.c \
 xmss_commons.c \
 xmss_fast.c \

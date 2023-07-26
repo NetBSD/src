@@ -1,6 +1,5 @@
-/*	$NetBSD: auth.c,v 1.33 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.158 2022/06/03 04:47:21 djm Exp $ */
-
+/*	$NetBSD: auth.c,v 1.34 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.160 2023/03/05 05:34:09 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.33 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.34 2023/07/26 17:58:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -66,7 +65,6 @@ __RCSID("$NetBSD: auth.c,v 1.33 2022/10/05 22:39:36 christos Exp $");
 #include "authfile.h"
 #include "monitor_wrap.h"
 #include "ssherr.h"
-#include "compat.h"
 #include "channels.h"
 #include "pfilter.h"
 
@@ -639,14 +637,13 @@ auth_debug_add(const char *fmt,...)
 	va_list args;
 	int r;
 
-	if (auth_debug == NULL)
-		return;
-
 	va_start(args, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
-	if ((r = sshbuf_put_cstring(auth_debug, buf)) != 0)
-		fatal_fr(r, "sshbuf_put_cstring");
+	debug3("%s", buf);
+	if (auth_debug != NULL)
+		if ((r = sshbuf_put_cstring(auth_debug, buf)) != 0)
+			fatal_fr(r, "sshbuf_put_cstring");
 }
 
 void

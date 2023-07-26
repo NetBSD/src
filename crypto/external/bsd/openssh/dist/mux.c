@@ -1,6 +1,5 @@
-/*	$NetBSD: mux.c,v 1.32 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: mux.c,v 1.94 2022/06/03 04:30:47 djm Exp $ */
-
+/*	$NetBSD: mux.c,v 1.33 2023/07/26 17:58:15 christos Exp $	*/
+/* $OpenBSD: mux.c,v 1.96 2023/03/08 04:43:12 guenther Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -20,7 +19,7 @@
 /* ssh session multiplexing support */
 
 #include "includes.h"
-__RCSID("$NetBSD: mux.c,v 1.32 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: mux.c,v 1.33 2023/07/26 17:58:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -177,9 +176,8 @@ static const struct {
 };
 
 /* Cleanup callback fired on closure of mux client _session_ channel */
-/* ARGSUSED */
 static void
-mux_master_session_cleanup_cb(struct ssh *ssh, int cid, void *unused)
+mux_master_session_cleanup_cb(struct ssh *ssh, int cid, int force, void *unused)
 {
 	Channel *cc, *c = channel_by_id(ssh, cid);
 
@@ -199,9 +197,8 @@ mux_master_session_cleanup_cb(struct ssh *ssh, int cid, void *unused)
 }
 
 /* Cleanup callback fired on closure of mux client _control_ channel */
-/* ARGSUSED */
 static void
-mux_master_control_cleanup_cb(struct ssh *ssh, int cid, void *unused)
+mux_master_control_cleanup_cb(struct ssh *ssh, int cid, int force, void *unused)
 {
 	Channel *sc, *c = channel_by_id(ssh, cid);
 

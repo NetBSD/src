@@ -1,6 +1,5 @@
-/*	$NetBSD: sshkey-xmss.c,v 1.8 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: sshkey-xmss.c,v 1.11 2021/04/03 06:18:41 djm Exp $ */
-
+/*	$NetBSD: sshkey-xmss.c,v 1.9 2023/07/26 17:58:16 christos Exp $	*/
+/* $OpenBSD: sshkey-xmss.c,v 1.12 2022/10/28 00:39:29 djm Exp $ */
 /*
  * Copyright (c) 2017 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey-xmss.c,v 1.8 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: sshkey-xmss.c,v 1.9 2023/07/26 17:58:16 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -363,7 +362,7 @@ sshkey_xmss_deserialize_pk_info(struct sshkey *k, struct sshbuf *b)
 }
 
 int
-sshkey_xmss_generate_private_key(struct sshkey *k, u_int bits)
+sshkey_xmss_generate_private_key(struct sshkey *k, int bits)
 {
 	int r;
 	const char *name;

@@ -1,5 +1,5 @@
-/*	$NetBSD: sntrup761.c,v 1.2 2021/09/03 10:30:33 christos Exp $	*/
-/*  $OpenBSD: sntrup761.c,v 1.5 2021/01/08 02:33:13 dtucker Exp $ */
+/*	$NetBSD: sntrup761.c,v 1.3 2023/07/26 17:58:15 christos Exp $	*/
+/*  $OpenBSD: sntrup761.c,v 1.6 2023/01/11 02:13:52 djm Exp $ */
 
 /*
  * Public Domain, Authors:
@@ -9,7 +9,7 @@
  * - Christine van Vredendaal
  */
 #include "includes.h"
-__RCSID("$NetBSD: sntrup761.c,v 1.2 2021/09/03 10:30:33 christos Exp $");
+__RCSID("$NetBSD: sntrup761.c,v 1.3 2023/07/26 17:58:15 christos Exp $");
 
 #include <string.h>
 #include "crypto_api.h"
@@ -118,7 +118,7 @@ This software is designed to take time independent of x.
 Time still varies depending on m; user must ensure that m is constant.
 Time also varies on CPUs where multiplication is variable-time.
 There could be more CPU issues.
-There could also be compiler issues. 
+There could also be compiler issues.
 */
 
 static void uint32_divmod_uint14(uint32 *q,uint16 *r,uint32 x,uint16 m)
@@ -446,7 +446,7 @@ static Fq Fq_freeze(int32 x)
 #ifndef LPR
 
 static Fq Fq_recip(Fq a1)
-{ 
+{
   int i = 1;
   Fq ai = a1;
 
@@ -455,7 +455,7 @@ static Fq Fq_recip(Fq a1)
     i += 1;
   }
   return ai;
-} 
+}
 
 #endif
 
@@ -524,11 +524,11 @@ static void R3_mult(small *h,const small *f,const small *g)
 
 /* returns 0 if recip succeeded; else -1 */
 static int R3_recip(small *out,const small *in)
-{ 
+{
   small f[p+1],g[p+1],v[p+1],r[p+1];
   int i,loop,delta;
   int sign,swap,t;
-  
+
   for (i = 0;i < p+1;++i) v[i] = 0;
   for (i = 0;i < p+1;++i) r[i] = 0;
   r[0] = 1;
@@ -536,35 +536,35 @@ static int R3_recip(small *out,const small *in)
   f[0] = 1; f[p-1] = f[p] = -1;
   for (i = 0;i < p;++i) g[p-1-i] = in[i];
   g[p] = 0;
-    
-  delta = 1; 
+
+  delta = 1;
 
   for (loop = 0;loop < 2*p-1;++loop) {
     for (i = p;i > 0;--i) v[i] = v[i-1];
     v[0] = 0;
-    
+
     sign = -g[0]*f[0];
     swap = int16_negative_mask(-delta) & int16_nonzero_mask(g[0]);
     delta ^= swap&(delta^-delta);
     delta += 1;
-    
+
     for (i = 0;i < p+1;++i) {
       t = swap&(f[i]^g[i]); f[i] ^= t; g[i] ^= t;
       t = swap&(v[i]^r[i]); v[i] ^= t; r[i] ^= t;
     }
-  
+
     for (i = 0;i < p+1;++i) g[i] = F3_freeze(g[i]+sign*f[i]);
     for (i = 0;i < p+1;++i) r[i] = F3_freeze(r[i]+sign*v[i]);
 
     for (i = 0;i < p;++i) g[i] = g[i+1];
     g[p] = 0;
   }
-  
+
   sign = f[0];
   for (i = 0;i < p;++i) out[i] = sign*v[p-1-i];
-  
+
   return int16_nonzero_mask(delta);
-} 
+}
 
 #endif
 
@@ -602,14 +602,14 @@ static void Rq_mult_small(Fq *h,const Fq *f,const small *g)
 static void Rq_mult3(Fq *h,const Fq *f)
 {
   int i;
-  
+
   for (i = 0;i < p;++i) h[i] = Fq_freeze(3*f[i]);
 }
 
 /* out = 1/(3*in) in Rq */
 /* returns 0 if recip succeeded; else -1 */
 static int Rq_recip3(Fq *out,const small *in)
-{ 
+{
   Fq f[p+1],g[p+1],v[p+1],r[p+1];
   int i,loop,delta;
   int swap,t;
@@ -738,7 +738,7 @@ static void KeyGen(Fq *h,small *f,small *ginv)
 {
   small g[p];
   Fq finv[p];
-  
+
   for (;;) {
     Small_random(g);
     if (R3_recip(ginv,g) == 0) break;
@@ -776,7 +776,7 @@ static void Decrypt(small *r,const Fq *c,const small *f,const small *ginv)
   for (i = 0;i < w;++i) r[i] = ((ev[i]^1)&~mask)^1;
   for (i = w;i < p;++i) r[i] = ev[i]&~mask;
 }
-  
+
 #endif
 
 /* ----- NTRU LPRime Core */
@@ -816,7 +816,7 @@ static void Decrypt(int8 *r,const Fq *B,const int8 *T,const small *a)
   for (i = 0;i < I;++i)
     r[i] = -int16_negative_mask(Fq_freeze(Right(T[i])-aB[i]+4*w+1));
 }
-    
+
 #endif
 
 /* ----- encoding I-bit inputs */
@@ -897,7 +897,7 @@ static void HashShort(small *out,const Inputs r)
 }
 
 #endif
-  
+
 /* ----- NTRU LPRime Expand */
 
 #ifdef LPR
@@ -973,7 +973,7 @@ static void Rq_encode(unsigned char *s,const Fq *r)
 {
   uint16 R[p],M[p];
   int i;
-  
+
   for (i = 0;i < p;++i) R[i] = r[i]+q12;
   for (i = 0;i < p;++i) M[i] = q;
   Encode(s,R,M,p);
@@ -988,7 +988,7 @@ static void Rq_decode(Fq *r,const unsigned char *s)
   Decode(R,s,M,p);
   for (i = 0;i < p;++i) r[i] = ((Fq)R[i])-q12;
 }
-  
+
 #endif
 
 /* ----- encoding rounded polynomials */
