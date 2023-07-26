@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2984 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2985 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -164,3 +164,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	dhcpcd: Import version 10.0.2. [roy 20230719]
 	bta2dpd(8): Add throttle when playing from file. [nat 20230720]
 	build: Force MKSTRIPSYM=no if MKDEBUG=yes.
+	OpenSSH: Import 9.3. [christos 20230726]
