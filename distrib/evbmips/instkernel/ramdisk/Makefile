@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2021/04/25 23:40:05 christos Exp $
+#	$NetBSD: Makefile,v 1.15.6.1 2023/07/27 18:01:37 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,14 +18,15 @@ IMAGEENDIAN=	le
 .else
 IMAGEENDIAN=	be
 .endif
-MAKEDEVTARGETS=	ramdisk
+
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
 		${DISTRIBDIR}/common/services
 
-MAKEDEVTARGETS= std md0 wd0 wd1 wd2 wd3 cd0 cd1 sd0 sd1 sd2 sd3 st0 ipty
+MAKEDEVTARGETS= std md0 wd0 wd1 wd2 wd3 cd0 cd1 sd0 sd1 sd2 sd3 st0 ipty \
+		bpf dk0 dk1 dk2 dk3
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
