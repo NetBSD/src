@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.207 2023/07/25 01:09:05 mrg Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.208 2023/07/27 00:34:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -890,6 +890,7 @@
 #define CPUID_CAPEX_CPPC	   __BIT(27) /* Collaborative Processor Perf. Control */
 #define CPUID_CAPEX_PSFD	   __BIT(28) /* Predictive Store Forward Dis */
 #define CPUID_CAPEX_BTC_NO	   __BIT(29) /* Branch Type Confusion NO */
+#define CPUID_CAPEX_IBPB_RET	   __BIT(30) /* Clear RET address predictor */
 
 #define CPUID_CAPEX_FLAGS	"\20"					   \
 	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"	"\4INVLPGB"	   \
@@ -900,7 +901,7 @@
 							"\24IBRS_SAMEMODE" \
 	"\25EFER_LSMSLE_UN"				"\30PPIN"	   \
 	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"	"\34CPPC"	   \
-	"\35PSFD"	"\36BTC_NO"
+	"\35PSFD"	"\36BTC_NO"	"\37IBPB_RET"
 
 /* %ecx */
 #define CPUID_CAPEX_PerfTscSize	__BITS(17,16)	/* Perf. tstamp counter size */
@@ -940,6 +941,7 @@
 #define CPUID_AMD_SVM_IBSVIRT	      __BIT(26) /* IBS Virtualization */
 #define CPUID_AMD_SVM_XLVTOFFFLTCHG   __BIT(27) /* Ext LVToffset FLT changed */
 #define CPUID_AMD_SVM_VMCBADRCHKCHG   __BIT(28) /* VMCB addr check changed */
+#define CPUID_AMD_SVM_BUSLOCKTHRESH   __BIT(29) /* Bus Lock Threshold */
 
 
 #define CPUID_AMD_SVM_FLAGS	 "\20"					\
@@ -952,7 +954,7 @@
 	"\21" "VGIF"	"\22" "GMET"	"\23x2AVIC"	"\24SSSCHECK"	\
 	"\25" "SPEC_CTRL" "\26" "ROGPT"		"\30HOST_MCE_OVERRIDE"	\
 	"\31" "TLBICTL"	"\32VNMI" "\33IBSVIRT" "\34ExtLvtOffsetFaultChg" \
-	"\35VmcbAddrChkChg"
+	"\35VmcbAddrChkChg" "\36BusLockThreshold"
 
 /*
  * AMD Instruction-Based Sampling Capabilities.
