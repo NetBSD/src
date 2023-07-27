@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.79 2023/07/25 15:39:36 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.80 2023/07/27 18:11:16 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1658,4 +1658,16 @@ sys/dev/nvmm/x86/nvmm_x86_svm.c			1.85
 
 	nvmm(4): filter CR4 bits on x86 SVM (AMD).
 	[riastradh, ticket #1666]
+
+sys/arch/x86/x86/errata.c			1.32
+
+	x86: fix the cpuids for the zen2 client CPUs.
+	[mrg, ticket #1667]
+
+sys/arch/xen/xen/xen_clock.c			1.10,1.12
+	(file name changed, applied to sys/arch/xen/xen/clock.c)
+
+	Avoid a possible race around ci->ci_xen_hardclock_systime_ns at boot
+	up, which could cause a hardclock() storm.
+	[bouyer, ticket #1668]
 
