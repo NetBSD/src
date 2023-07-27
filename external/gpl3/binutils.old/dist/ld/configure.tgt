@@ -473,7 +473,7 @@ m68hc11-*-*|m6811-*-*)	targ_emul=m68hc11elf
 m68hc12-*-*|m6812-*-*)	targ_emul=m68hc12elf
 			targ_extra_emuls="m68hc12elfb m68hc11elf m68hc11elfb"
 			;;
-m68*-*-netbsdelf*)	targ_emul=m68kelfnbsd
+m68*-*-netbsdelf*|m5407*-*-netbsdelf)	targ_emul=m68kelfnbsd
 			;;
 m68*-*-*)		targ_emul=m68kelf
 			;;
