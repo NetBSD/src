@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.89 2023/07/25 15:32:14 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.90 2023/07/27 18:10:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -3137,4 +3137,20 @@ sys/dev/nvmm/x86/nvmm_x86_svm.c			1.85
 
 	nvmm(4): filter CR4 bits on x86 SVM (AMD).
 	[riastradh, ticket #246]
+
+sys/arch/x86/x86/errata.c			1.32
+
+	x86: fix the cpuids for the zen2 client CPUs.
+	[mrg, ticket #247]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.132-1.134 (via patch)
+
+	xbd(4): properly handle virtual drives with 4kb sector size.
+	[bouyer, ticket #248]
+
+distrib/evbmips/instkernel/ramdisk/Makefile	1.16-1.18
+distrib/evbmips/instkernel/ramdisk/list		1.19
+
+	Add some device nodes and utilities to the evbmips installer.
+	[gutteridge, ticket #249]
 
