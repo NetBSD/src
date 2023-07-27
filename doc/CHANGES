@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2985 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2986 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -160,8 +160,44 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	aiomixer(1): Support for the NO_COLOR environment variable.
 		[nia 20230629]
 	openpam(3): update to 20230627 (ximenia) [christos 20230630]
+	entropy(9): Reintroduce netbsd<=9 time-delta estimator for unblocking.
+		[riastradh 20230630]
+	mdnsd(8): Restore NetBSD logging additions lost in merges.
+		[gutteridge 20230630]
+	tetris(6): Support the informal standard of allowing setting NO_COLOR
+		in the environment to disable the use of color. [nia 20230701]
+	lint(1): Initial support for C23. [rilling 20230702]
+	heartbeat(9): New mechanism to check progress of kernel.  This uses
+		hard interrupts to check progress of low-priority soft
+		interrupts, and one CPU to check progress of another CPU.
+		[riastradh 20230707].
+	crashme(9): New crash methods with raised ipl or kpreempt disabled.
+		[riastradh 20230707].
+	versioningsyscalls(9): Document how system call versioning is done.
+		From this summer's compat-linux GSoC, by Theodore Preduta.
+		[christos 20230708].
+	clock_gettime(2): Take greater care to ensure
+		CLOCK_PROCESS/THREAD_CPUTIME_ID do not go backwards.
+		[riastradh 20230708].
+	riscv: Add FDT-based initrd, rndseed, and efirng support.
+		[rin 20230710]
+	kern: Add memfd_create(2) system call from GSoC 2023 by
+		Theodore Preduta.  [christos 20230710]
 	gcc(1): Import GCC 10.5.  [mrg 20230710]
+	coretemp(4): Change limits of Tjmax. Upper limit is now 120, lower
+		limit is now 60. [msaitoh 20230713]
+	refuse(3): Allow programs using the 3.5, 3.6, and 3.7 FUSE APIs
+		to function at runtime. [pho 20230714]
+	amdgpu(4): Enable display core logic. [riastradh 20230714]
+	pckbd(4): Work around buggy Chromebook PS/2 keyboard firmware.
+		(from Vladimir 'phcoder' Serbinenko). [christos 20230716]
+	acpiec(4): New ACPIEC_DEBUG option. [riastradh 20230718]
 	dhcpcd: Import version 10.0.2. [roy 20230719]
 	bta2dpd(8): Add throttle when playing from file. [nat 20230720]
-	build: Force MKSTRIPSYM=no if MKDEBUG=yes.
+	xen: Enable MKCTF=yes by default. [riastradh 20230721]
+	build: Force MKSTRIPSYM=no if MKDEBUG=yes. [lukem 20230723]
+	x86: Add serial console support via raw I/O port access. [rin 20230724]
+	x86: Turn off Zenbleed chicken bit on Zen2 CPUs. [mrg 20230725]
+	evbmips: Add /dev/dk[0-3], dkctl(8), and gpt(8) to the ramdisk.
+		[gutterridge 20230725]
 	OpenSSH: Import 9.3. [christos 20230726]
