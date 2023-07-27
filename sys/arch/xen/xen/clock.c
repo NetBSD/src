@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.78 2019/03/09 09:51:29 kre Exp $	*/
+/*	$NetBSD: clock.c,v 1.78.4.1 2023/07/27 16:55:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.78 2019/03/09 09:51:29 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.78.4.1 2023/07/27 16:55:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -769,7 +769,6 @@ xen_resumeclocks(struct cpu_info *ci)
 	if (ci->ci_xen_timer_intrhand == NULL)
 		panic("failed to establish timer interrupt handler");
 
-	hypervisor_unmask_event(evtch);
 
 	aprint_verbose("Xen %s: using event channel %d\n", intr_xname, evtch);
 
@@ -783,10 +782,12 @@ xen_resumeclocks(struct cpu_info *ci)
 	/* Pretend the last hardclock happened right now.  */
 	ci->ci_xen_hardclock_systime_ns = xen_vcputime_systime_ns();
 
+
 	/* Arm the one-shot timer.  */
 	error = HYPERVISOR_set_timer_op(ci->ci_xen_hardclock_systime_ns +
 	    NS_PER_TICK);
 	KASSERT(error == 0);
+	hypervisor_unmask_event(evtch);
 
 	/* We'd better not have switched CPUs.  */
 	KASSERT(ci == curcpu());
