@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.73 2023/07/17 21:51:45 riastradh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.74 2023/07/27 01:48:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.73 2023/07/17 21:51:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.74 2023/07/27 01:48:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -133,6 +133,9 @@ static struct timehands *volatile timehands = &th0;
 struct timecounter *timecounter = &dummy_timecounter;
 static struct timecounter *timecounters = &dummy_timecounter;
 
+/* used by savecore(8) */
+time_t time_second_legacy asm("time_second");
+
 #ifdef __HAVE_ATOMIC64_LOADSTORE
 volatile time_t time__second __cacheline_aligned = 1;
 volatile time_t time__uptime __cacheline_aligned = 1;
@@ -164,6 +167,8 @@ static inline void
 setrealuptime(time_t second, time_t uptime)
 {
 
+	time_second_legacy = second;
+
 	atomic_store_relaxed(&time__second, second);
 	atomic_store_relaxed(&time__uptime, uptime);
 }
@@ -177,6 +182,8 @@ setrealuptime(time_t second, time_t uptime)
 	uint32_t uplo = uptime & 0xffffffff, uphi = uptime >> 32;
 
 	KDASSERT(mutex_owned(&timecounter_lock));
+
+	time_second_legacy = second;
 
 	/*
 	 * Fast path -- no wraparound, just updating the low bits, so
