@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.27.4.1 2023/07/25 09:10:32 martin Exp $	*/
+/*	$NetBSD: errata.c,v 1.27.4.2 2023/07/27 16:39:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.27.4.1 2023/07/25 09:10:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.27.4.2 2023/07/27 16:39:40 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -96,8 +96,8 @@ static const u_int cpurevs[] = {
 	ML_A1, 0x0730F01, ZP_B1, 0x0800F11, ZP_B2, 0x0800F12,
 	PiR_B2, 0x0800F82, Rome_B0, 0x0830F10,
 	/* XXX client Zen2 names aren't known yet. */
-	Z2_XB, 0x0840F70, Z2_Ren, 0x0860F80, Z2_Luc, 0x0870F10,
-	Z2_Mat, 0x0890F70, Z2_VG, 0x0890F80, Z2_Men, 0x08A0F10,
+	Z2_XB, 0x0840F70, Z2_Ren, 0x0860F01, Z2_Luc, 0x0860F81,
+	Z2_Mat, 0x0870F10, Z2_VG, 0x0890F02, Z2_Men, 0x08A0F00,
 	Milan_B1, 0x0A00F11, Milan_B2, 0x0A00F12,
 	Genoa_B1, 0x0A10F11,
 	OINK
