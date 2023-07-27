@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.4 2023/06/27 09:10:25 martin Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.5 2023/07/27 10:32:25 tnn Exp $	*/
 
 /* dispatch.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dispatch.c,v 1.4 2023/06/27 09:10:25 martin Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.5 2023/07/27 10:32:25 tnn Exp $");
 
 #include "dhcpd.h"
 
@@ -183,6 +183,7 @@ isclib_timer_callback(isc_task_t  *taskp,
 			(*q->unref) (&q->what, MDL);
 		}
 		q->next = free_timeouts;
+		isc_event_free(&eventp);
 		isc_timer_destroy(&q->isc_timeout);
 		free_timeouts = q;
 	} else {
@@ -192,9 +193,9 @@ isclib_timer_callback(isc_task_t  *taskp,
 		 * don't try to - may change this to a log_fatal
 		 */
 		log_error("Error finding timer structure");
+		isc_event_free(&eventp);
 	}
 
-	isc_event_free(&eventp);
 	return;
 }
 
