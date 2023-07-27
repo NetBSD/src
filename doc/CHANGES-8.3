@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.183 2023/07/25 09:16:23 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.184 2023/07/27 18:12:07 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3579,4 +3579,9 @@ sys/arch/x86/x86/errata.c			1.31
 
 	x86: turn off zenbleed chicken bit on Zen2 cpus.
 	[mrg, ticket #1851]
+
+sys/arch/x86/x86/errata.c			1.32
+
+	x86: fix the cpuids for the zen2 client CPUs.
+	[mrg, ticket #1852]
 
