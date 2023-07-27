@@ -1,6 +1,10 @@
-#	$NetBSD: Makefile,v 1.24 2023/02/24 17:08:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 2023/07/27 21:58:51 christos Exp $
 
 USE_FORT?=	yes # data-driven bugs?
+
+.if !empty(MACHINE:M*arm*)
+NOLINT=yes	# We don't have the neon/simd builtins
+.endif
 
 .include <bsd.own.mk>
 
