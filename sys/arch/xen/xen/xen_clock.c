@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.12 2023/07/17 10:12:54 bouyer Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.13 2023/07/28 10:38:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.12 2023/07/17 10:12:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.13 2023/07/28 10:38:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -673,11 +673,31 @@ xen_suspendclocks(struct cpu_info *ci)
 	KASSERT(ci == curcpu());
 	KASSERT(kpreempt_disabled());
 
+	/*
+	 * Find the VIRQ_TIMER event channel and close it so new timer
+	 * interrupt events stop getting delivered to it.
+	 *
+	 * XXX Should this happen later?  This is not the reverse order
+	 * of xen_resumeclocks.  It is apparently necessary in this
+	 * order only because we don't stash evtchn anywhere, but we
+	 * could stash it.
+	 */
 	evtch = unbind_virq_from_evtch(VIRQ_TIMER);
 	KASSERT(evtch != -1);
 
+	/*
+	 * Mask the event channel so we stop getting new interrupts on
+	 * it.
+	 */
 	hypervisor_mask_event(evtch);
-	event_remove_handler(evtch, 
+
+	/*
+	 * Now that we are no longer getting new interrupts, remove the
+	 * handler and wait for any existing calls to the handler to
+	 * complete.  After this point, there can be no concurrent
+	 * calls to xen_timer_handler.
+	 */
+	event_remove_handler(evtch,
 	    __FPTRCAST(int (*)(void *), xen_timer_handler), ci);
 
 	aprint_verbose("Xen clock: removed event channel %d\n", evtch);
@@ -705,9 +725,16 @@ xen_resumeclocks(struct cpu_info *ci)
 	KASSERT(ci == curcpu());
 	KASSERT(kpreempt_disabled());
 
+	/*
+	 * Allocate an event channel to receive VIRQ_TIMER events.
+	 */
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	KASSERT(evtch != -1);
 
+	/*
+	 * Set an event handler for VIRQ_TIMER events to call
+	 * xen_timer_handler.
+	 */
 	snprintf(intr_xname, sizeof(intr_xname), "%s clock",
 	    device_xname(ci->ci_dev));
 	/* XXX sketchy function pointer cast -- fix the API, please */
@@ -715,7 +742,6 @@ xen_resumeclocks(struct cpu_info *ci)
 	    __FPTRCAST(int (*)(void *), xen_timer_handler),
 	    ci, IPL_CLOCK, NULL, intr_xname, true, ci) == NULL)
 		panic("failed to establish timer interrupt handler");
-
 
 	aprint_verbose("Xen %s: using event channel %d\n", intr_xname, evtch);
 
@@ -729,11 +755,15 @@ xen_resumeclocks(struct cpu_info *ci)
 	/* Pretend the last hardclock happened right now.  */
 	ci->ci_xen_hardclock_systime_ns = xen_vcputime_systime_ns();
 
-
 	/* Arm the one-shot timer.  */
 	error = HYPERVISOR_set_timer_op(ci->ci_xen_hardclock_systime_ns +
 	    NS_PER_TICK);
 	KASSERT(error == 0);
+
+	/*
+	 * Ready to go.  Unmask the event.  After this point, Xen may
+	 * start calling xen_timer_handler.
+	 */
 	hypervisor_unmask_event(evtch);
 
 	/* We'd better not have switched CPUs.  */
