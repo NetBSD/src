@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.37 2023/07/26 17:58:15 christos Exp $	*/
+/*	$NetBSD: scp.c,v 1.38 2023/07/28 04:40:54 rin Exp $	*/
 /* $OpenBSD: scp.c,v 1.253 2023/03/03 03:12:24 dtucker Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.37 2023/07/26 17:58:15 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.38 2023/07/28 04:40:54 rin Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -1111,6 +1111,7 @@ toremote(int argc, char **argv, enum scp_mode_e mode, char *sftp_direct)
 				addargs(&alist, "%s",
 				    remote_remote_args.list[j]);
 			}
+
 			if (sport != -1) {
 				addargs(&alist, "-p");
 				addargs(&alist, "%d", sport);
