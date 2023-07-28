@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.7 2014/03/16 11:41:30 joerg Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.8 2023/07/28 07:04:41 rin Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <vax/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.7 2014/03/16 11:41:30 joerg Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.8 2023/07/28 07:04:41 rin Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
@@ -132,7 +132,7 @@ END(__do_global_dtors_aux)
 
 	.hidden __do_global_ctors_aux
 
-_ENTRY(__do_global_ctors_aux, 0x0800)
+_ENTRY(__do_global_ctors_aux, 0x0100)		/* save r8 */
 	tstb	__initialized
 	bneq	4f
 	movb	$1, __initialized
