@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh_api.c,v 1.14 2023/07/26 17:58:16 christos Exp $	*/
+/*	$NetBSD: ssh_api.c,v 1.15 2023/07/28 04:58:27 rin Exp $	*/
 /* $OpenBSD: ssh_api.c,v 1.27 2021/04/03 06:18:41 djm Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh_api.c,v 1.14 2023/07/26 17:58:16 christos Exp $");
+__RCSID("$NetBSD: ssh_api.c,v 1.15 2023/07/28 04:58:27 rin Exp $");
 
 #include <sys/types.h>
 
@@ -82,7 +82,7 @@ mm_choose_dh(int min, int nbits, int max)
 int
 ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 {
-        const char *myproposal[PROPOSAL_MAX] = { KEX_CLIENT };
+	const char *myproposal[PROPOSAL_MAX] = { KEX_CLIENT };
 	struct ssh *ssh;
 	const char **proposal;
 	static int called;
