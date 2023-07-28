@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.h,v 1.12 2019/04/28 14:45:13 christos Exp $	*/
+/*	$NetBSD: monitor.h,v 1.13 2023/07/28 04:37:37 rin Exp $	*/
 /* $OpenBSD: monitor.h,v 1.23 2019/01/19 21:43:56 djm Exp $ */
 
 /*
@@ -71,7 +71,7 @@ enum monitor_reqtype {
 	MONITOR_REQ_PAM_FREE_CTX = 110, MONITOR_ANS_PAM_FREE_CTX = 111,
 	MONITOR_REQ_AUDIT_EVENT = 112, MONITOR_REQ_AUDIT_COMMAND = 113,
 
-        MONITOR_REQ_KRB4 = 200, MONITOR_ANS_KRB4 = 201,
+	MONITOR_REQ_KRB4 = 200, MONITOR_ANS_KRB4 = 201,
 	MONITOR_REQ_KRB5 = 202, MONITOR_ANS_KRB5 = 203,
 
 };
