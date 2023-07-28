@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.13 2023/07/28 10:38:44 riastradh Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.14 2023/07/28 10:39:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.13 2023/07/28 10:38:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.14 2023/07/28 10:39:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -782,6 +782,7 @@ xen_resumeclocks(struct cpu_info *ci)
 static int
 xen_timer_handler(void *cookie, struct clockframe *frame)
 {
+	const uint64_t ns_per_tick = NS_PER_TICK;
 	struct cpu_info *ci = curcpu();
 	uint64_t last, now, delta, next;
 	int error;
@@ -817,11 +818,11 @@ again:
 	 * times as appears necessary based on how much time has
 	 * passed.
 	 */
-	while (delta >= NS_PER_TICK) {
-		ci->ci_xen_hardclock_systime_ns += NS_PER_TICK;
-		delta -= NS_PER_TICK;
+	while (delta >= ns_per_tick) {
+		ci->ci_xen_hardclock_systime_ns += ns_per_tick;
+		delta -= ns_per_tick;
 		hardclock(frame);
-		if (__predict_false(delta >= NS_PER_TICK)) {
+		if (__predict_false(delta >= ns_per_tick)) {
 			SDT_PROBE3(sdt, xen, hardclock, missed,
 			    last, now, delta);
 			ci->ci_xen_missed_hardclock_evcnt.ev_count++;
@@ -833,7 +834,7 @@ again:
 	 * time is in the past, so update our idea of what the Xen
 	 * system time is and try again.
 	 */
-	next = ci->ci_xen_hardclock_systime_ns + NS_PER_TICK;
+	next = ci->ci_xen_hardclock_systime_ns + ns_per_tick;
 	error = HYPERVISOR_set_timer_op(next);
 	if (error)
 		goto again;
