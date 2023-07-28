@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.105 2021/09/18 01:47:10 christos Exp $
+#	$NetBSD: Makefile,v 1.106 2023/07/28 08:05:29 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -8,7 +8,7 @@ MODULE=		${EXTERNAL_GCC_SUBDIR}
 GCCDIST=	${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
 GNUHOSTDIST=	${GCCDIST}
 
-.if ${HAVE_GCC} == 9
+.if ${HAVE_GCC} == 10
 MKNATIVE=		${.CURDIR}/mknative-gcc.old
 .endif
 
