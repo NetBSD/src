@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.18 2023/01/28 12:36:52 msaitoh Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.19 2023/07/28 00:11:15 msaitoh Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.18 2023/01/28 12:36:52 msaitoh Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.19 2023/07/28 00:11:15 msaitoh Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -403,6 +403,7 @@ amdzentemp_probe_ccd_sensors19h(struct amdzentemp_softc *sc, int model)
 		maxreg = 8;
 		break;
 	case 0x60 ... 0x6f: /* Zen4 Ryzen "Raphael" */
+	case 0x70 ... 0x7f: /* Zen4 Ryzen "Phoenix" */
 		sc->sc_ccd_offset = 0x308;
 		maxreg = 8;
 		break;
