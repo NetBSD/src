@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.74 2023/07/27 01:48:49 riastradh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.75 2023/07/28 10:37:28 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,9 +38,13 @@
  * ---------------------------------------------------------------------------
  */
 
+/*
+ * https://papers.freebsd.org/2002/phk-timecounters.files/timecounter.pdf
+ */
+
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.74 2023/07/27 01:48:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.75 2023/07/28 10:37:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
