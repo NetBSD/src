@@ -1,10 +1,11 @@
-/*	$NetBSD: c23.c,v 1.6 2023/07/25 16:56:35 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.7 2023/07/28 22:05:44 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
 // ISO standards, but none of the GNU extensions.
 //
 // See also:
+//	c11.c
 //	msg_353.c		for empty initializer braces
 
 /* lint1-flags: -Ac23 -w -X 351 */
@@ -21,6 +22,11 @@ empty_initializer_braces(void)
 	s = (struct s){s.member};
 	return s.member;
 }
+
+
+_Static_assert(1 > 0, "string");
+_Static_assert(1 > 0);
+
 
 // The keyword 'thread_local' was introduced in C23.
 thread_local int globally_visible;
