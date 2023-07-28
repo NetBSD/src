@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.34 2023/07/26 17:58:16 christos Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.35 2023/07/28 05:02:46 rin Exp $	*/
 /* $OpenBSD: sshconnect.c,v 1.363 2023/03/10 07:17:08 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.34 2023/07/26 17:58:16 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.35 2023/07/28 05:02:46 rin Exp $");
 
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
@@ -292,14 +292,17 @@ ssh_set_socket_recvbuf(int sock)
 	int socksize;
 	socklen_t socksizelen = sizeof(int);
 
-	debug("setsockopt Attempting to set SO_RCVBUF to %d", options.tcp_rcv_buf);
+	debug("setsockopt Attempting to set SO_RCVBUF to %d",
+	    options.tcp_rcv_buf);
 	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, buf, sz) >= 0) {
-	  getsockopt(sock, SOL_SOCKET, SO_RCVBUF, &socksize, &socksizelen);
-	  debug("setsockopt SO_RCVBUF: %.100s %d", strerror(errno), socksize);
-	}
-	else
+		getsockopt(sock, SOL_SOCKET, SO_RCVBUF, &socksize,
+		    &socksizelen);
+		debug("setsockopt SO_RCVBUF: %.100s %d", strerror(errno),
+		    socksize);
+	} else {
 		error("Couldn't set socket receive buffer to %d: %.100s",
 		    options.tcp_rcv_buf, strerror(errno));
+	}
 }
 
 /*
