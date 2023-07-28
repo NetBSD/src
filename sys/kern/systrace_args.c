@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.50 2023/07/10 02:37:05 christos Exp $ */
+/* $NetBSD: systrace_args.c,v 1.51 2023/07/28 18:20:28 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -2518,9 +2518,9 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	case 345: {
 		const struct compat_50_sys_kevent_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
-		uarg[1] = (intptr_t) SCARG(p, changelist); /* const struct kevent * */
+		uarg[1] = (intptr_t) SCARG(p, changelist); /* const struct kevent100 * */
 		uarg[2] = SCARG(p, nchanges); /* size_t */
-		uarg[3] = (intptr_t) SCARG(p, eventlist); /* struct kevent * */
+		uarg[3] = (intptr_t) SCARG(p, eventlist); /* struct kevent100 * */
 		uarg[4] = SCARG(p, nevents); /* size_t */
 		uarg[5] = (intptr_t) SCARG(p, timeout); /* const struct timespec50 * */
 		*n_args = 6;
@@ -3285,11 +3285,11 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys___kevent50 */
 	case 435: {
-		const struct sys___kevent50_args *p = params;
+		const struct compat_100_sys___kevent50_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
-		uarg[1] = (intptr_t) SCARG(p, changelist); /* const struct kevent * */
+		uarg[1] = (intptr_t) SCARG(p, changelist); /* const struct kevent100 * */
 		uarg[2] = SCARG(p, nchanges); /* size_t */
-		uarg[3] = (intptr_t) SCARG(p, eventlist); /* struct kevent * */
+		uarg[3] = (intptr_t) SCARG(p, eventlist); /* struct kevent100 * */
 		uarg[4] = SCARG(p, nevents); /* size_t */
 		uarg[5] = (intptr_t) SCARG(p, timeout); /* const struct timespec * */
 		*n_args = 6;
@@ -3893,6 +3893,46 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[0] = (intptr_t) SCARG(p, name); /* const char * */
 		uarg[1] = SCARG(p, flags); /* unsigned int */
 		*n_args = 2;
+		break;
+	}
+	/* sys___kevent100 */
+	case 501: {
+		const struct sys___kevent100_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, changelist); /* const struct kevent * */
+		uarg[2] = SCARG(p, nchanges); /* size_t */
+		uarg[3] = (intptr_t) SCARG(p, eventlist); /* struct kevent * */
+		uarg[4] = SCARG(p, nevents); /* size_t */
+		uarg[5] = (intptr_t) SCARG(p, timeout); /* const struct timespec * */
+		*n_args = 6;
+		break;
+	}
+	/* sys_epoll_create1 */
+	case 502: {
+		const struct sys_epoll_create1_args *p = params;
+		iarg[0] = SCARG(p, flags); /* int */
+		*n_args = 1;
+		break;
+	}
+	/* sys_epoll_ctl */
+	case 503: {
+		const struct sys_epoll_ctl_args *p = params;
+		iarg[0] = SCARG(p, epfd); /* int */
+		iarg[1] = SCARG(p, op); /* int */
+		iarg[2] = SCARG(p, fd); /* int */
+		uarg[3] = (intptr_t) SCARG(p, event); /* struct epoll_event * */
+		*n_args = 4;
+		break;
+	}
+	/* sys_epoll_pwait2 */
+	case 504: {
+		const struct sys_epoll_pwait2_args *p = params;
+		iarg[0] = SCARG(p, epfd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, events); /* struct epoll_event * */
+		iarg[2] = SCARG(p, maxevents); /* int */
+		uarg[3] = (intptr_t) SCARG(p, timeout); /* const struct timespec * */
+		uarg[4] = (intptr_t) SCARG(p, sigmask); /* const sigset_t * */
+		*n_args = 5;
 		break;
 	}
 	default:
@@ -8023,13 +8063,13 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "int";
 			break;
 		case 1:
-			p = "const struct kevent *";
+			p = "const struct kevent100 *";
 			break;
 		case 2:
 			p = "size_t";
 			break;
 		case 3:
-			p = "struct kevent *";
+			p = "struct kevent100 *";
 			break;
 		case 4:
 			p = "size_t";
@@ -9405,13 +9445,13 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "int";
 			break;
 		case 1:
-			p = "const struct kevent *";
+			p = "const struct kevent100 *";
 			break;
 		case 2:
 			p = "size_t";
 			break;
 		case 3:
-			p = "struct kevent *";
+			p = "struct kevent100 *";
 			break;
 		case 4:
 			p = "size_t";
@@ -10508,6 +10548,82 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 1:
 			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys___kevent100 */
+	case 501:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "const struct kevent *";
+			break;
+		case 2:
+			p = "size_t";
+			break;
+		case 3:
+			p = "struct kevent *";
+			break;
+		case 4:
+			p = "size_t";
+			break;
+		case 5:
+			p = "const struct timespec *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys_epoll_create1 */
+	case 502:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys_epoll_ctl */
+	case 503:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "struct epoll_event *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys_epoll_pwait2 */
+	case 504:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct epoll_event *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "const struct timespec *";
+			break;
+		case 4:
+			p = "const sigset_t *";
 			break;
 		default:
 			break;
@@ -12717,6 +12833,26 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys_memfd_create */
 	case 500:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys___kevent100 */
+	case 501:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys_epoll_create1 */
+	case 502:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys_epoll_ctl */
+	case 503:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys_epoll_pwait2 */
+	case 504:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

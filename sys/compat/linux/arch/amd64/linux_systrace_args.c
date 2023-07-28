@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.21 2023/07/10 02:37:46 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.22 2023/07/28 18:20:52 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1493,6 +1493,13 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
+	/* linux_sys_epoll_create */
+	case 213: {
+		const struct linux_sys_epoll_create_args *p = params;
+		iarg[0] = SCARG(p, size); /* int */
+		*n_args = 1;
+		break;
+	}
 	/* linux_sys_getdents64 */
 	case 217: {
 		const struct linux_sys_getdents64_args *p = params;
@@ -1599,6 +1606,26 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		const struct linux_sys_exit_group_args *p = params;
 		iarg[0] = SCARG(p, error_code); /* int */
 		*n_args = 1;
+		break;
+	}
+	/* linux_sys_epoll_wait */
+	case 232: {
+		const struct linux_sys_epoll_wait_args *p = params;
+		iarg[0] = SCARG(p, epfd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, events); /* struct linux_epoll_event * */
+		iarg[2] = SCARG(p, maxevents); /* int */
+		iarg[3] = SCARG(p, timeout); /* int */
+		*n_args = 4;
+		break;
+	}
+	/* linux_sys_epoll_ctl */
+	case 233: {
+		const struct linux_sys_epoll_ctl_args *p = params;
+		iarg[0] = SCARG(p, epfd); /* int */
+		iarg[1] = SCARG(p, op); /* int */
+		iarg[2] = SCARG(p, fd); /* int */
+		uarg[3] = (intptr_t) SCARG(p, event); /* struct linux_epoll_event * */
+		*n_args = 4;
 		break;
 	}
 	/* linux_sys_tgkill */
@@ -1784,6 +1811,17 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 4;
 		break;
 	}
+	/* linux_sys_epoll_pwait */
+	case 281: {
+		const struct linux_sys_epoll_pwait_args *p = params;
+		iarg[0] = SCARG(p, epfd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, events); /* struct linux_epoll_event * */
+		iarg[2] = SCARG(p, maxevents); /* int */
+		iarg[3] = SCARG(p, timeout); /* int */
+		uarg[4] = (intptr_t) SCARG(p, sigmask); /* const linux_sigset_t * */
+		*n_args = 5;
+		break;
+	}
 	/* linux_sys_timerfd_create */
 	case 283: {
 		const struct linux_sys_timerfd_create_args *p = params;
@@ -1843,6 +1881,13 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[0] = SCARG(p, initval); /* unsigned int */
 		iarg[1] = SCARG(p, flags); /* int */
 		*n_args = 2;
+		break;
+	}
+	/* linux_sys_epoll_create1 */
+	case 291: {
+		const struct linux_sys_epoll_create1_args *p = params;
+		iarg[0] = SCARG(p, flags); /* int */
+		*n_args = 1;
 		break;
 	}
 	/* linux_sys_dup3 */
@@ -1930,6 +1975,17 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[0] = (intptr_t) SCARG(p, name); /* const char * */
 		uarg[1] = SCARG(p, flags); /* unsigned int */
 		*n_args = 2;
+		break;
+	}
+	/* linux_sys_epoll_pwait2 */
+	case 441: {
+		const struct linux_sys_epoll_pwait2_args *p = params;
+		iarg[0] = SCARG(p, epfd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, events); /* struct linux_epoll_event * */
+		iarg[2] = SCARG(p, maxevents); /* int */
+		uarg[3] = (intptr_t) SCARG(p, timeout); /* const struct linux_timespec * */
+		uarg[4] = (intptr_t) SCARG(p, sigmask); /* const linux_sigset_t * */
+		*n_args = 5;
 		break;
 	}
 	/* linux_sys_nosys */
@@ -4375,6 +4431,16 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_epoll_create */
+	case 213:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_getdents64 */
 	case 217:
 		switch(ndx) {
@@ -4551,6 +4617,44 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		switch(ndx) {
 		case 0:
 			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_epoll_wait */
+	case 232:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct linux_epoll_event *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_epoll_ctl */
+	case 233:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "struct linux_epoll_event *";
 			break;
 		default:
 			break;
@@ -4896,6 +5000,28 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_epoll_pwait */
+	case 281:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct linux_epoll_event *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "int";
+			break;
+		case 4:
+			p = "const linux_sigset_t *";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_timerfd_create */
 	case 283:
 		switch(ndx) {
@@ -4996,6 +5122,16 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "unsigned int";
 			break;
 		case 1:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_epoll_create1 */
+	case 291:
+		switch(ndx) {
+		case 0:
 			p = "int";
 			break;
 		default:
@@ -5159,6 +5295,28 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 1:
 			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_epoll_pwait2 */
+	case 441:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct linux_epoll_event *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "const struct linux_timespec *";
+			break;
+		case 4:
+			p = "const linux_sigset_t *";
 			break;
 		default:
 			break;
@@ -6040,6 +6198,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux_sys_epoll_create */
+	case 213:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux_sys_getdents64 */
 	case 217:
 		if (ndx == 0 || ndx == 1)
@@ -6102,6 +6265,16 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_exit_group */
 	case 231:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_epoll_wait */
+	case 232:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_epoll_ctl */
+	case 233:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
@@ -6200,6 +6373,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux_sys_epoll_pwait */
+	case 281:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux_sys_timerfd_create */
 	case 283:
 		if (ndx == 0 || ndx == 1)
@@ -6232,6 +6410,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_eventfd2 */
 	case 290:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_epoll_create1 */
+	case 291:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
@@ -6277,6 +6460,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_memfd_create */
 	case 319:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_epoll_pwait2 */
+	case 441:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
