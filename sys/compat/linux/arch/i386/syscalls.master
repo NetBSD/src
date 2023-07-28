@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.130 2023/07/10 13:05:27 christos Exp $
+	$NetBSD: syscalls.master,v 1.131 2023/07/28 19:01:11 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -428,9 +428,12 @@
 251	UNIMPL		/* unused */
 252	STD		{ int|linux_sys||exit_group(int error_code); }
 253	UNIMPL		lookup_dcookie
-254	UNIMPL		epoll_create
-255	UNIMPL		epoll_ctl
-256	UNIMPL		epoll_wait
+254	STD		{ int|linux_sys||epoll_create(int size); }
+255	STD		{ int|linux_sys||epoll_ctl(int epfd, int op, int fd, \
+			    struct linux_epoll_event *event); }
+256	STD		{ int|linux_sys||epoll_wait(int epfd, \
+			    struct linux_epoll_event *events, int maxevents, \
+			    int timeout); }
 257	UNIMPL		remap_file_pages
 258	STD		{ int|linux_sys||set_tid_address(int *tid); }
 259	STD		{ int|linux_sys||timer_create(clockid_t clockid, \
@@ -525,7 +528,9 @@
 316	UNIMPL		vmsplice
 317	UNIMPL		move_pages
 318	UNIMPL		getcpu
-319	UNIMPL		epoll_wait
+319	STD		{ int|linux_sys||epoll_pwait(int epfd, \
+			    struct linux_epoll_event *events, int maxevents, \
+			    int timeout, const linux_sigset_t *sigmask); }
 320	STD		{ int|linux_sys||utimensat(int fd, const char *path, \
 			    struct linux_timespec *times, int flag); }
 321	UNIMPL		signalfd
@@ -542,7 +547,7 @@
 327	UNIMPL		signalfd4
 328	STD		{ int|linux_sys||eventfd2(unsigned int initval, \
 			    int flags); }
-329	UNIMPL		epoll_create1
+329	STD		{ int|linux_sys||epoll_create1(int flags); }
 330     STD             { int|linux_sys||dup3(int from, int to, int flags); }
 331     STD             { int|linux_sys||pipe2( int *pfds, int flags); }
 332	UNIMPL		inotify_init1
@@ -661,3 +666,7 @@
 438	UNIMPL		pidfd_getfd
 439	UNIMPL		faccessat2
 440	UNIMPL		process_madvise
+441	STD		{ int|linux_sys||epoll_pwait2(int epfd, \
+			    struct linux_epoll_event *events, int maxevents, \
+			    const struct linux_timespec *timeout, \
+			    const linux_sigset_t *sigmask); }
