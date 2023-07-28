@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 2023/07/10 21:08:26 christos Exp $
+	$NetBSD: syscalls.master,v 1.6 2023/07/28 19:01:10 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -97,9 +97,12 @@
 18	UNIMPL		lookup_dcookie
 19	STD		{ int|linux_sys||eventfd2(unsigned int initval, \
 			    int flags); }
-20	UNIMPL		epoll_create1
-21	UNIMPL		epoll_ctl
-22	UNIMPL		epoll_pwait
+20	STD		{ int|linux_sys||epoll_create1(int flags); }
+21	STD		{ int|linux_sys||epoll_ctl(int epfd, int op, int fd, \
+			    struct linux_epoll_event *event); }
+22	STD		{ int|linux_sys||epoll_pwait(int epfd, \
+			    struct linux_epoll_event *events, int maxevents, \
+			    int timeout, const linux_sigset_t *sigmask); }
 23	NOARGS		{ int|sys||dup(int fd); }
 24	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 25	STD		{ int|linux_sys||fcntl(int fd, int cmd, void *arg); }
@@ -679,3 +682,7 @@
 
 ; we want a "nosys" syscall, we'll just add an extra entry for it.
 440	STD		{ int|linux_sys||nosys(void); }
+441	STD		{ int|linux_sys||epoll_pwait2(int epfd, \
+			    struct linux_epoll_event *events, int maxevents, \
+			    const struct linux_timespec *timeout, \
+			    const linux_sigset_t *sigmask); }

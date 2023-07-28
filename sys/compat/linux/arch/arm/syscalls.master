@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.75 2021/12/02 04:29:48 ryo Exp $
+	$NetBSD: syscalls.master,v 1.76 2023/07/28 19:01:11 christos Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -424,9 +424,12 @@
 247	UNIMPL		io_cancel
 248	STD		{ int|linux_sys||exit_group(int error_code); }
 249	UNIMPL		lookup_dcookie
-250	UNIMPL		epoll_create
-251	UNIMPL		epoll_ctl
-252	UNIMPL		epoll_wait
+250	STD		{ int|linux_sys||epoll_create(int size); }
+251	STD		{ int|linux_sys||epoll_ctl(int epfd, int op, int fd, \
+			    struct linux_epoll_event *event); }
+252	STD		{ int|linux_sys||epoll_wait(int epfd, \
+			    struct linux_epoll_event *events, int maxevents, \
+			    int timeout); }
 253	UNIMPL		remap_file_pages
 254	UNIMPL		set_thread_area
 255	UNIMPL		get_thread_area
@@ -557,7 +560,9 @@
 343	UNIMPL		vmsplice
 344	UNIMPL		move_pages
 345	UNIMPL		getcpu
-346	UNIMPL		epoll_wait
+346	STD		{ int|linux_sys||epoll_pwait(int epfd, \
+			    struct linux_epoll_event *events, int maxevents, \
+			    int timeout, const linux_sigset_t *sigmask); }
 347	UNIMPL		kexec_load
 348	STD		{ int|linux_sys||utimensat(int fd, const char *path, \
 			    struct linux_timespec *times, int flag); }
@@ -575,7 +580,7 @@
 355	UNIMPL		signalfd4
 356	STD		{ int|linux_sys||eventfd2(unsigned int initval, \
 			    int flags); }
-357	UNIMPL		epoll_create1
+357	STD		{ int|linux_sys||epoll_create1(int flags); }
 358	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 359	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
 360	UNIMPL		inotify_init1
@@ -632,3 +637,58 @@
 387	UNIMPL		usr26
 388	UNIMPL		usr32
 389	STD		{ int|linux_sys||set_tls(void *tls); }
+390	UNIMPL
+391	UNIMPL
+392	UNIMPL
+393	UNIMPL
+394	UNIMPL
+395	UNIMPL
+396	UNIMPL
+397	UNIMPL
+398	UNIMPL
+399	UNIMPL
+400	UNIMPL
+401	UNIMPL
+402	UNIMPL
+403	UNIMPL
+404	UNIMPL
+405	UNIMPL
+406	UNIMPL
+407	UNIMPL
+408	UNIMPL
+409	UNIMPL
+410	UNIMPL
+411	UNIMPL
+412	UNIMPL
+413	UNIMPL
+414	UNIMPL
+415	UNIMPL
+416	UNIMPL
+417	UNIMPL
+418	UNIMPL
+419	UNIMPL
+420	UNIMPL
+421	UNIMPL
+422	UNIMPL
+423	UNIMPL
+424	UNIMPL
+425	UNIMPL
+426	UNIMPL
+427	UNIMPL
+428	UNIMPL
+429	UNIMPL
+430	UNIMPL
+431	UNIMPL
+432	UNIMPL
+433	UNIMPL
+434	UNIMPL
+435	UNIMPL
+436	UNIMPL
+437	UNIMPL
+438	UNIMPL
+439	UNIMPL
+440	UNIMPL
+441	STD		{ int|linux_sys||epoll_pwait2(int epfd, \
+			    struct linux_epoll_event *events, int maxevents, \
+			    const struct linux_timespec *timeout, \
+			    const linux_sigset_t *sigmask); }
