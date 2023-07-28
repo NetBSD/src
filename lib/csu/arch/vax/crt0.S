@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.4 2018/11/26 17:37:46 joerg Exp $ */
+/* $NetBSD: crt0.S,v 1.5 2023/07/28 11:22:43 rin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,11 +31,11 @@
 
 #include <vax/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.4 2018/11/26 17:37:46 joerg Exp $")
+RCSID("$NetBSD: crt0.S,v 1.5 2023/07/28 11:22:43 rin Exp $")
 
 STRONG_ALIAS(_start,__start)
 
-_ENTRY(__start, 0x0101)
+_ENTRY(__start, 0x0000)
 	pushl	%r9		/* ps_strings */
 	pushl	%r7		/* cleanup */
 	calls	$2,___start
