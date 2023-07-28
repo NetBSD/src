@@ -1,4 +1,4 @@
-.\"	$NetBSD: iostat.8,v 1.29 2023/07/28 09:18:58 mrg Exp $
+.\"	$NetBSD: iostat.8,v 1.30 2023/07/28 12:03:33 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd report I/O statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl CdDITxXyz
+.Op Fl CDdITXxyz
 .Op Fl c Ar count
 .Op Fl H Ar height
 .Op Fl W Ar width
@@ -65,14 +65,25 @@ to print raw, unaveraged values (totals).
 Only the last disk option specified
 .Fl ( d ,
 .Fl D ,
-.Fl x ,
 .Fl X ,
+.Fl x ,
 or
 .Fl y )
 is used.
 .Pp
 The options are as follows:
 .Bl -tag -width XNXsystemX
+.It Fl C
+Show CPU statistics.
+This is enabled by default unless any of the
+.Fl D ,
+.Fl d ,
+.Fl T ,
+.Fl X ,
+.Fl x ,
+or
+.Fl y
+flags are used.
 .It Fl c Ar count
 Repeat the display
 .Ar count
@@ -84,26 +95,6 @@ each subsequent report is for the time period since the last display.
 If no
 .Ar wait
 interval is specified, the default is 1 second.
-.It Fl C
-Show CPU statistics.
-This is enabled by default unless any of the
-.Fl d ,
-.Fl D ,
-.Fl T ,
-.Fl x ,
-.Fl X ,
-or
-.Fl y
-flags are used.
-.It Fl d
-Show disk statistics.
-This is the default.
-Displays
-number of transfers per second,
-kilobytes per transfer,
-and
-megabytes transferred per second.
-Use of this flag disables the default display of CPU and tty statistics.
 .It Fl D
 Show alternative disk statistics.
 Displays
@@ -116,6 +107,15 @@ during the
 period (or since boot with
 .Fl I ) .
 Use of this flag disables the default display.
+.It Fl d
+Show disk statistics.
+This is the default.
+Displays
+number of transfers per second,
+kilobytes per transfer,
+and
+megabytes transferred per second.
+Use of this flag disables the default display of CPU and tty statistics.
 .It Fl H Ar height
 Set the page size (length, or height) explicitly, as the number of lines,
 .Ar height .
@@ -140,19 +140,19 @@ started running, rather than since the system booted.
 In this case the first output would necessarily be zero,
 so is suppressed.
 Consequently this option produces no output if neither
-.Fl w
-nor
 .Fl c
+nor
+.Fl w
 is given.
 .ii
 .It Fl T
 Show tty statistics.
 This is enabled by default unless one, or more, of the
 .Fl C ,
-.Fl d ,
 .Fl D ,
-.Fl x ,
+.Fl d ,
 .Fl X ,
+.Fl x ,
 or
 .Fl y
 flags are used.
@@ -168,13 +168,6 @@ include a column after each relevant output column
 showing the difference between this output and the previous.
 These added columns will be blank in the first displayed output.
 .uu
-.It Fl w Ar wait
-Pause
-.Ar wait
-seconds between each display.
-If no repeat
-.Ar count
-is specified, the default is infinity.
 .It Fl W Ar width
 Set the page width explicitly, as the number of columns of characters,
 .Ar width .
@@ -188,6 +181,20 @@ This width is used only to determine the number of drives to display
 by default when no drive list is given.
 In other cases output will be as wide as needed to display the
 data requested.
+.It Fl w Ar wait
+Pause
+.Ar wait
+seconds between each display.
+If no repeat
+.Ar count
+is specified, the default is infinity.
+.It Fl X
+Show limited alternative disk statistics.
+Displays megabytes transferred, and time spent in transfers, during the
+.Ar wait
+period (or since boot with
+.Fl I ) .
+Use of this flag disables the default display.
 .It Fl x
 Show extended disk statistics.
 Each disk is displayed on a line of its own with all available
@@ -201,13 +208,6 @@ The
 and
 .Fl T
 options are ignored with this output format.
-.It Fl X
-Show limited alternative disk statistics.
-Displays megabytes transferred, and time spent in transfers, during the
-.Ar wait
-period (or since boot with
-.Fl I ) .
-Use of this flag disables the default display.
 .It Fl y
 Shows the extended statistics (as with
 .Fl x )
@@ -354,7 +354,7 @@ The archaic option format:
 .ti +3n
 .Nm
 .Op Ar drives ...
-.Oo Ar wait Op Ar count Oc
+.Oo Ar wait Oo Ar count Oc Oc
 .br
 remains supported (the first
 .Ar drive
