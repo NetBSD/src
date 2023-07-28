@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.69 2022/06/18 11:33:13 kre Exp $	*/
+/*	$NetBSD: iostat.c,v 1.70 2023/07/28 09:18:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.69 2022/06/18 11:33:13 kre Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.70 2023/07/28 09:18:58 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,19 +107,20 @@ static char Line_Marker[] = "________________________________________________";
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 
 #define	ISSET(x, a)	((x) & (a))
-#define	SHOW_CPU	(1<<0)
-#define	SHOW_TTY	(1<<1)
-#define	SHOW_STATS_1	(1<<2)
-#define	SHOW_STATS_2	(1<<3)
-#define	SHOW_STATS_X	(1<<4)
-#define	SHOW_STATS_Y	(1<<5)
-#define	SHOW_UPDATES	(1<<6)
-#define	SHOW_TOTALS	(1<<7)
-#define	SHOW_NEW_TOTALS	(1<<8)
-#define	SUPPRESS_ZERO	(1<<9)
+#define	SHOW_CPU	(1u<<0)
+#define	SHOW_TTY	(1u<<1)
+#define	SHOW_STATS_1	(1u<<2)
+#define	SHOW_STATS_2	(1u<<3)
+#define	SHOW_STATS_3	(1u<<4)
+#define	SHOW_STATS_X	(1u<<5)
+#define	SHOW_STATS_Y	(1u<<6)
+#define	SHOW_UPDATES	(1u<<7)
+#define	SHOW_TOTALS	(1u<<8)
+#define	SHOW_NEW_TOTALS	(1u<<9)
+#define	SUPPRESS_ZERO	(1u<<10)
 
 #define	SHOW_STATS_ALL	(SHOW_STATS_1 | SHOW_STATS_2 |	\
-			    SHOW_STATS_X | SHOW_STATS_Y)
+			 SHOW_STATS_3 | SHOW_STATS_X | SHOW_STATS_Y)
 
 /*
  * Decide how many screen columns each output statistic is given
@@ -165,6 +166,8 @@ static char Line_Marker[] = "________________________________________________";
 #define	LAYOUT_DRIVE_2_TBUSY	9	/*		time	*/
 #define	LAYOUT_DRIVE_2_BUSY	5	/*	time		*/
 
+/* Layout 3 uses same sizes as 2, but with MB. */
+
 #define	LAYOUT_DRIVE_1	(LAYOUT_DRIVE_1_XSIZE + ((todo & SHOW_TOTALS) ?	       \
 			    (LAYOUT_DRIVE_1_XFER + LAYOUT_DRIVE_1_VOLUME +     \
 			    ((todo&SHOW_UPDATES)? 2*LAYOUT_DRIVE_1_INCR+2 :0)) \
@@ -174,6 +177,10 @@ static char Line_Marker[] = "________________________________________________";
 			    ((todo&SHOW_UPDATES)? 2*LAYOUT_DRIVE_2_INCR+2 : 0))\
 			  : (LAYOUT_DRIVE_2_XSIZE + LAYOUT_DRIVE_2_XFR +       \
 			     LAYOUT_DRIVE_2_BUSY)) + 3)
+#define	LAYOUT_DRIVE_3	(((todo & SHOW_TOTALS) ? (LAYOUT_DRIVE_2_VOLUME +      \
+			    LAYOUT_DRIVE_2_TBUSY +			       \
+			    ((todo&SHOW_UPDATES)? 2*LAYOUT_DRIVE_2_INCR+1 : 0))\
+			  : (LAYOUT_DRIVE_2_XSIZE + LAYOUT_DRIVE_2_BUSY)) + 2)
 
 #define	LAYOUT_DRIVE_GAP 0	/* Gap included in column, always present */
 
@@ -204,9 +211,9 @@ main(int argc, char *argv[])
 	char *ep;
 
 #if 0		/* -i and -u are not currently (sanely) implementable */
-	while ((ch = getopt(argc, argv, "Cc:dDH:iITuw:W:xyz")) != -1)
+	while ((ch = getopt(argc, argv, "Cc:dDH:iITuw:W:xXyz")) != -1)
 #else
-	while ((ch = getopt(argc, argv, "Cc:dDH:ITw:W:xyz")) != -1)
+	while ((ch = getopt(argc, argv, "Cc:dDH:ITw:W:xXyz")) != -1)
 #endif
 		switch (ch) {
 		case 'c':
@@ -259,6 +266,10 @@ main(int argc, char *argv[])
 			todo &= ~SHOW_STATS_ALL;
 			todo |= SHOW_STATS_X;
 			break;
+		case 'X':
+			todo &= ~SHOW_STATS_ALL;
+			todo |= SHOW_STATS_3;
+			break;
 		case 'y':
 			todo &= ~SHOW_STATS_ALL;
 			todo |= SHOW_STATS_Y;
@@ -278,6 +289,10 @@ main(int argc, char *argv[])
 	if (ISSET(todo, SHOW_STATS_X)) {
 		todo &= ~(SHOW_CPU | SHOW_TTY | SHOW_STATS_ALL);
 		todo |= SHOW_STATS_X;
+	}
+	if (ISSET(todo, SHOW_STATS_3)) {
+		todo &= ~(SHOW_CPU | SHOW_TTY | SHOW_STATS_ALL);
+		todo |= SHOW_STATS_3;
 	}
 	if (ISSET(todo, SHOW_STATS_Y)) {
 		todo &= ~(SHOW_CPU | SHOW_TTY | SHOW_STATS_ALL | SHOW_TOTALS);
@@ -317,6 +332,8 @@ main(int argc, char *argv[])
 			defdrives -= LAYOUT_TTY + LAYOUT_TTY_GAP;
 		if (ISSET(todo, SHOW_STATS_2))
 			defdrives /= LAYOUT_DRIVE_2 + LAYOUT_DRIVE_GAP;
+		if (ISSET(todo, SHOW_STATS_3))
+			defdrives /= LAYOUT_DRIVE_3 + LAYOUT_DRIVE_GAP;
 		else
 			defdrives /= LAYOUT_DRIVE_1 + LAYOUT_DRIVE_GAP;
 	}
@@ -340,7 +357,7 @@ main(int argc, char *argv[])
 	do_header = 1;
 
 	for (hdrcnt = 1;;) {
-		if (ISSET(todo, SHOW_STATS_X | SHOW_STATS_Y)) {
+		if (ISSET(todo, SHOW_STATS_X | SHOW_STATS_3 | SHOW_STATS_Y)) {
 			lines = ndrives;
 			hdroffset = 3;
 		} else {
@@ -455,6 +472,29 @@ header(int ndrives)
 		}
 	}
 
+	if (ISSET(todo, SHOW_STATS_3)) {
+		for (i = 0; i < ndrives; i++) {
+			char *dname = cur.name[order[i]];
+			int dnlen = (int)strlen(dname);
+
+			printf(" ");	/* always a 1 column gap */
+			if (dnlen < LAYOUT_DRIVE_3 - 6)
+				printf("|%-*.*s ",
+				    (LAYOUT_DRIVE_3 - 1 - dnlen - 1) / 2 - 1,
+				    (LAYOUT_DRIVE_3 - 1 - dnlen - 1) / 2 - 1,
+				    Line_Marker);
+			printf("%*.*s", ((dnlen >= LAYOUT_DRIVE_1 - 6) ?
+			    MIN(MAX((LAYOUT_DRIVE_3 - dnlen) / 2, 0),
+				LAYOUT_DRIVE_3) : 0),
+			    LAYOUT_DRIVE_1, dname);
+			if (dnlen < LAYOUT_DRIVE_3 - 6)
+				printf(" %*.*s|",
+				    (LAYOUT_DRIVE_3 - 1 - dnlen - 2) / 2 - 1,
+				    (LAYOUT_DRIVE_3 - 1 - dnlen - 2) / 2 - 1,
+				    Line_Marker);
+		}
+	}
+
 	if (ISSET(todo, SHOW_CPU))
 		(void)printf("%*s", LAYOUT_CPU + LAYOUT_CPU_GAP, "CPU");
 
@@ -494,6 +534,20 @@ header(int ndrives)
 				(void)printf(" %*s %*s %*s",
 				    LAYOUT_DRIVE_2_XFR, "xfr",
 				    LAYOUT_DRIVE_2_XSIZE, "KB",
+				    LAYOUT_DRIVE_2_BUSY, "time");
+			}
+		}
+	}
+
+	if (ISSET(todo, SHOW_STATS_3)) {
+		for (i = 0; i < ndrives; i++) {
+			if (ISSET(todo, SHOW_TOTALS)) {
+				(void)printf(" %*s %*s",
+				    LAYOUT_DRIVE_2_VOLUME, "MB/s",
+				    LAYOUT_DRIVE_2_TBUSY, "time");
+			} else {
+				(void)printf(" %*s %*s",
+				    LAYOUT_DRIVE_2_XSIZE, "MB/s",
 				    LAYOUT_DRIVE_2_BUSY, "time");
 			}
 		}
@@ -619,12 +673,15 @@ drive_stats2(int ndrives, double etime)
 		dtime = drive_time(etime, dn);
 
 					/* average transfers per second. */
-		(void)printf(" %*.0f", c1,
-		    (cur.rxfer[dn] + cur.wxfer[dn]) / dtime);
+		if (ISSET(todo, SHOW_STATS_2)) {
+			(void)printf(" %*.0f", c1,
+			    (cur.rxfer[dn] + cur.wxfer[dn]) / dtime);
+		}
 
-					/* average kbytes per second. */
+					/* average mbytes per second. */
 		(void)printf(" %*.0f", c2,
-		    (cur.rbytes[dn] + cur.wbytes[dn]) / 1024.0 / dtime);
+		    (cur.rbytes[dn] + cur.wbytes[dn]) /
+		    (double)(1024 * 1024) / dtime);
 
 					/* average time busy in dn activity */
 		atime = (double)cur.time[dn].tv_sec +
@@ -819,7 +876,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: iostat [-CdDITxyz] [-c count] "
+	(void)fprintf(stderr, "usage: iostat [-CdDITxXyz] [-c count] "
 	    "[-H height] [-W width] [-w wait] [drives]\n");
 	exit(1);
 }
@@ -860,11 +917,9 @@ display(int ndrives)
 		drive_stats(ndrives, etime);
 	}
 
-
-	if (ISSET(todo, SHOW_STATS_2)) {
+	if (ISSET(todo, SHOW_STATS_2) || ISSET(todo, SHOW_STATS_3)) {
 		drive_stats2(ndrives, etime);
 	}
-
 
 	if (ISSET(todo, SHOW_CPU))
 		cpustats();

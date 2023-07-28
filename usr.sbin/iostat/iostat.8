@@ -1,4 +1,4 @@
-.\"	$NetBSD: iostat.8,v 1.28 2022/06/18 11:33:13 kre Exp $
+.\"	$NetBSD: iostat.8,v 1.29 2023/07/28 09:18:58 mrg Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)iostat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 18, 2022
+.Dd July 28, 2023
 .Dt IOSTAT 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd report I/O statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl CdDITxyz
+.Op Fl CdDITxXyz
 .Op Fl c Ar count
 .Op Fl H Ar height
 .Op Fl W Ar width
@@ -66,6 +66,7 @@ Only the last disk option specified
 .Fl ( d ,
 .Fl D ,
 .Fl x ,
+.Fl X ,
 or
 .Fl y )
 is used.
@@ -90,6 +91,7 @@ This is enabled by default unless any of the
 .Fl D ,
 .Fl T ,
 .Fl x ,
+.Fl X ,
 or
 .Fl y
 flags are used.
@@ -150,6 +152,7 @@ This is enabled by default unless one, or more, of the
 .Fl d ,
 .Fl D ,
 .Fl x ,
+.Fl X ,
 or
 .Fl y
 flags are used.
@@ -198,6 +201,13 @@ The
 and
 .Fl T
 options are ignored with this output format.
+.It Fl X
+Show limited alternative disk statistics.
+Displays megabytes transferred, and time spent in transfers, during the
+.Ar wait
+period (or since boot with
+.Fl I ) .
+Use of this flag disables the default display.
 .It Fl y
 Shows the extended statistics (as with
 .Fl x )
@@ -255,6 +265,7 @@ Megabytes transferred per second
 The alternative display format, (selected with
 .Fl D ) ,
 presents the following values:
+.Pp
 .Bl -tag -width indent -compact
 .It xfr
 Disk transfers
@@ -267,6 +278,7 @@ Seconds spent in disk activity
 With the
 .Fl y
 flag, the following queuing measurements are added:
+.Pp
 .Bl -tag -width indent -compact
 .It wait
 Number of I/O requests queued up
@@ -280,6 +292,17 @@ Average duration of an I/O request in milliseconds
 Seconds spent in the waiting queue.
 Queuing data might not be available from all drivers
 and is then shown as zeros.
+.El
+.Pp
+With the
+.Fl X
+flag, the following queuing measurements are added:
+.Pp
+.Bl -tag -width indent -compact
+.It MB/s
+Megabytes transferred per second
+.It time
+Seconds spent in disk activity
 .El
 .It cpu
 .Bl -tag -width indent -compact
@@ -322,6 +345,10 @@ Collection of queuing values and the
 .Fl y
 option were added in
 .Nx 8.0 .
+The
+.Fl X
+option was added in
+.Nx 11.0 .
 The archaic option format:
 .br
 .ti +3n
