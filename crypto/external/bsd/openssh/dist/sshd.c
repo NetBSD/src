@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.48 2023/07/26 17:58:16 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.49 2023/07/28 09:47:37 rin Exp $	*/
 /* $OpenBSD: sshd.c,v 1.600 2023/03/08 04:43:12 guenther Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.48 2023/07/26 17:58:16 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.49 2023/07/28 09:47:37 rin Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1484,7 +1484,7 @@ prepare_proctitle(int ac, char **av)
 	return ret;
 }
 
-static void
+__dead static void
 print_config(struct ssh *ssh, struct connection_info *connection_info)
 {
 	/*
