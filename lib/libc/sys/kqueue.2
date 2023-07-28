@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.59 2023/07/28 18:19:00 christos Exp $
+.\"	$NetBSD: kqueue.2,v 1.60 2023/07/28 23:41:16 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -571,7 +571,7 @@ contains the number of times the timeout has expired since the last call to
 This filter automatically sets
 .Dv EV_CLEAR
 in
-.va flags
+.Va flags
 for periodic timers.
 Timers created with
 .Dv NOTE_ABSTIME
@@ -582,7 +582,7 @@ or
 are also specified.
 .Dv CLOCK_REALTIME
 is the reference clock for timers created with
-.Dv NOTE_ABSTIME.
+.Dv NOTE_ABSTIME .
 .Pp
 The filter accepts the following flags in the
 .Va fflags

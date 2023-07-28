@@ -1,4 +1,4 @@
-.\"	$NetBSD: epoll.2,v 1.1 2023/07/28 18:19:00 christos Exp $
+.\"	$NetBSD: epoll.2,v 1.2 2023/07/28 23:41:16 wiz Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,16 +94,16 @@ The
 field is passed through the kernel and is intended to be used to identify the
 event.
 When used with
-.Fa epoll_ctl ,
+.Fn epoll_ctl ,
 the
 .Va events
 field consists of a mask of the events that the
 .Nm
 instance should watch for, and when being used with
-.Fa epoll_wait ,
-.Fa epoll_pwait ,
+.Fn epoll_wait ,
+.Fn epoll_pwait ,
 and
-.Fa epoll_pwait2
+.Fn epoll_pwait2
 consists of a mask of the events that occurred.
 The following are possible values for
 .Va events :
@@ -155,7 +155,7 @@ of
 to set the
 .Xr close 2
 on
-.Xr exec 2
+.Xr exec 3
 flag.
 .Pp
 .Fn epoll_ctl
@@ -216,9 +216,9 @@ should be specified as
 .Dv NULL .
 Additionally,
 a sigmask may be specified to
-.Fa epoll_pwait
+.Fn epoll_pwait
 and
-.Fa epoll_pwait2
+.Fn epoll_pwait2
 in
 .Fa sigmask
 to set the sigmask while
