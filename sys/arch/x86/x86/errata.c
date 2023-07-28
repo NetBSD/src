@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.32 2023/07/26 00:19:04 mrg Exp $	*/
+/*	$NetBSD: errata.c,v 1.33 2023/07/28 05:02:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.32 2023/07/26 00:19:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.33 2023/07/28 05:02:13 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -68,40 +68,118 @@ typedef struct errata {
 	uint64_t	e_data2;
 } errata_t;
 
+/* These names match names from various AMD Errata/Revision Guides. */
 typedef enum cpurev {
+	/* K8 / Family 0Fh */
 	BH_E4, CH_CG, CH_D0, DH_CG, DH_D0, DH_E3, DH_E6, JH_E1,
 	JH_E6, SH_B0, SH_B3, SH_C0, SH_CG, SH_D0, SH_E4, SH_E5,
+
+	/* K10 / Family 10h */
 	DR_BA, DR_B2, DR_B3, RB_C2, RB_C3, BL_C2, BL_C3, DA_C2,
-	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0, LN_B0, KB_A1,
-	ML_A1, ZP_B1, ZP_B2, PiR_B2, Rome_B0, Z2_XB, Z2_Ren,
-	Z2_Luc, Z2_Mat, Z2_VG, Z2_Men, Milan_B1, Milan_B2, Genoa_B1,
+	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0,
+
+	/* Llano / Family 12h */
+	LN_B0,
+
+	/* Jaguar / Family 16h */
+	KB_A1, ML_A1,
+
+	/* Zen/Zen+/Zen2 / Family 17h */
+	ZP_B1, ZP_B2, PiR_B2, Rome_B0,
+
+	/* XXX client Zen2 names aren't known yet. */
+	Z2_XB, Z2_Ren, Z2_Luc, Z2_Mat, Z2_VG, Z2_Men,
+
+	/* Zen3/Zen4 / Family 19h */
+	Milan_B1, Milan_B2, Genoa_B1,
 	OINK
 } cpurev_t;
 
-/* These names match names from various AMD Errata/Revision Guides. */
+/*
+ * The bit-layout in the 0x80000001 CPUID result is, with bit-size
+ * as the final number here:
+ *
+ *    resv1_4 extfam_8 extmodel_4 resv2_4 fam_4 model_4 stepping_4
+ *
+ * The CPUREV(family,model,stepping) macro handles the mapping for
+ * family 6 and family 15 in the "fam_4" nybble, if 6 or 15, the
+ * extended model is present and is bit-concatenated, and if 15,
+ * the extended family is additional (ie, family 0x10 is 0xF in
+ * fam_4 and 0x01 in extfam_8.)
+ */
+#define CPUREV(fam,mod,step)				\
+	(((fam) > 0xf ?					\
+	  (0xf << 8) | ((fam) - 0xf) << 20 :		\
+	  (fam) << 8) |					\
+	 (((mod) & 0xf) << 4) |				\
+	 (((fam) == 6 || ((fam) >= 0xf)) ?		\
+	  ((mod) & 0xf0) << 12 : 0) |			\
+	 ((step) & 0xf))
 static const u_int cpurevs[] = {
-	BH_E4, 0x0020fb1, CH_CG, 0x0000f82, CH_CG, 0x0000fb2,
-	CH_D0, 0x0010f80, CH_D0, 0x0010fb0, DH_CG, 0x0000fc0,
-	DH_CG, 0x0000fe0, DH_CG, 0x0000ff0, DH_D0, 0x0010fc0,
-	DH_D0, 0x0010ff0, DH_E3, 0x0020fc0, DH_E3, 0x0020ff0,
-	DH_E6, 0x0020fc2, DH_E6, 0x0020ff2, JH_E1, 0x0020f10,
-	JH_E6, 0x0020f12, JH_E6, 0x0020f32, SH_B0, 0x0000f40,
-	SH_B3, 0x0000f51, SH_C0, 0x0000f48, SH_C0, 0x0000f58,
-	SH_CG, 0x0000f4a, SH_CG, 0x0000f5a, SH_CG, 0x0000f7a,
-	SH_D0, 0x0010f40, SH_D0, 0x0010f50, SH_D0, 0x0010f70,
-	SH_E4, 0x0020f51, SH_E4, 0x0020f71, SH_E5, 0x0020f42,
-	DR_BA, 0x0100f2a, DR_B2, 0x0100f22, DR_B3, 0x0100f23,
-	RB_C2, 0x0100f42, RB_C3, 0x0100f43, BL_C2, 0x0100f52,
-	BL_C3, 0x0100f53, DA_C2, 0x0100f62, DA_C3, 0x0100f63,
-	HY_D0, 0x0100f80, HY_D1, 0x0100f81, HY_D1_G34R1, 0x0100f91,
-	PH_E0, 0x0100fa0, LN_B0, 0x0300f10, KB_A1, 0x0700F01,
-	ML_A1, 0x0730F01, ZP_B1, 0x0800F11, ZP_B2, 0x0800F12,
-	PiR_B2, 0x0800F82, Rome_B0, 0x0830F10,
-	/* XXX client Zen2 names aren't known yet. */
-	Z2_XB, 0x0840F70, Z2_Ren, 0x0860F01, Z2_Luc, 0x0860F81,
-	Z2_Mat, 0x0870F10, Z2_VG, 0x0890F02, Z2_Men, 0x08A0F00,
-	Milan_B1, 0x0A00F11, Milan_B2, 0x0A00F12,
-	Genoa_B1, 0x0A10F11,
+	BH_E4,		CPUREV(0x0F, 0x2B, 0x1),
+	CH_CG,		CPUREV(0x0F, 0x08, 0x2),
+	CH_CG,		CPUREV(0x0F, 0x0B, 0x2),
+	CH_D0,		CPUREV(0x0F, 0x18, 0x0),
+	CH_D0,		CPUREV(0x0F, 0x1B, 0x0),
+	DH_CG,		CPUREV(0x0F, 0x0C, 0x0),
+	DH_CG,		CPUREV(0x0F, 0x0E, 0x0),
+	DH_CG,		CPUREV(0x0F, 0x0F, 0x0),
+	DH_D0,		CPUREV(0x0F, 0x1C, 0x0),
+	DH_D0,		CPUREV(0x0F, 0x1F, 0x0),
+	DH_E3,		CPUREV(0x0F, 0x2C, 0x0),
+	DH_E3,		CPUREV(0x0F, 0x2F, 0x0),
+	DH_E6,		CPUREV(0x0F, 0x2C, 0x2),
+	DH_E6,		CPUREV(0x0F, 0x2F, 0x2),
+	JH_E1,		CPUREV(0x0F, 0x21, 0x0),
+	JH_E6,		CPUREV(0x0F, 0x21, 0x2),
+	JH_E6,		CPUREV(0x0F, 0x23, 0x2),
+	SH_B0,		CPUREV(0x0F, 0x04, 0x0),
+	SH_B3,		CPUREV(0x0F, 0x05, 0x1),
+	SH_C0,		CPUREV(0x0F, 0x04, 0x8),
+	SH_C0,		CPUREV(0x0F, 0x05, 0x8),
+	SH_CG,		CPUREV(0x0F, 0x04, 0xA),
+	SH_CG,		CPUREV(0x0F, 0x05, 0xA),
+	SH_CG,		CPUREV(0x0F, 0x07, 0xA),
+	SH_D0,		CPUREV(0x0F, 0x14, 0x0),
+	SH_D0,		CPUREV(0x0F, 0x15, 0x0),
+	SH_D0,		CPUREV(0x0F, 0x17, 0x0),
+	SH_E4,		CPUREV(0x0F, 0x25, 0x1),
+	SH_E4,		CPUREV(0x0F, 0x27, 0x1),
+	SH_E5,		CPUREV(0x0F, 0x24, 0x2),
+
+	DR_BA,		CPUREV(0x10, 0x02, 0xA),
+	DR_B2,		CPUREV(0x10, 0x02, 0x2),
+	DR_B3,		CPUREV(0x10, 0x02, 0x3),
+	RB_C2,		CPUREV(0x10, 0x04, 0x2),
+	RB_C3,		CPUREV(0x10, 0x04, 0x3),
+	BL_C2,		CPUREV(0x10, 0x05, 0x2),
+	BL_C3,		CPUREV(0x10, 0x05, 0x3),
+	DA_C2,		CPUREV(0x10, 0x06, 0x2),
+	DA_C3,		CPUREV(0x10, 0x06, 0x3),
+	HY_D0,		CPUREV(0x10, 0x08, 0x0),
+	HY_D1,		CPUREV(0x10, 0x08, 0x1),
+	HY_D1_G34R1,	CPUREV(0x10, 0x09, 0x1),
+	PH_E0,		CPUREV(0x10, 0x0A, 0x0),
+
+	LN_B0,		CPUREV(0x12, 0x01, 0x0),
+
+	KB_A1,		CPUREV(0x16, 0x00, 0x1),
+	ML_A1,		CPUREV(0x16, 0x30, 0x1),
+
+	ZP_B1,		CPUREV(0x17, 0x01, 0x1),
+	ZP_B2,		CPUREV(0x17, 0x01, 0x2),
+	PiR_B2,		CPUREV(0x17, 0x08, 0x2),
+	Rome_B0,	CPUREV(0x17, 0x31, 0x0),
+	Z2_XB,		CPUREV(0x17, 0x47, 0x0),
+	Z2_Ren,		CPUREV(0x17, 0x60, 0x1),
+	Z2_Luc,		CPUREV(0x17, 0x68, 0x1),
+	Z2_Mat,		CPUREV(0x17, 0x71, 0x0),
+	Z2_VG,		CPUREV(0x17, 0x90, 0x2),
+	Z2_Men,		CPUREV(0x17, 0xA0, 0x0),
+
+	Milan_B1,	CPUREV(0x19, 0x01, 0x1),
+	Milan_B2,	CPUREV(0x19, 0x01, 0x2),
+	Genoa_B1,	CPUREV(0x19, 0x11, 0x1),
 	OINK
 };
 
