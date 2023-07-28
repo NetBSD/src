@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.148 2023/04/22 13:52:54 riastradh Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.149 2023/07/28 18:19:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.148 2023/04/22 13:52:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.149 2023/07/28 18:19:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1785,7 +1785,7 @@ static const struct kevent_ops kevent_native_ops = {
 };
 
 int
-sys___kevent50(struct lwp *l, const struct sys___kevent50_args *uap,
+sys___kevent100(struct lwp *l, const struct sys___kevent100_args *uap,
     register_t *retval)
 {
 	/* {

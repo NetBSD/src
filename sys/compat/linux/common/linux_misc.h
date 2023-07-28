@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.26 2020/05/03 01:06:56 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.27 2023/07/28 18:19:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,6 +140,15 @@ extern const int linux_fstypes_cnt;
  * (it's f(x)=x everywhere except S390)
  */
 #define linux_to_bsd_posix_fadv(advice) (advice)
+
+struct linux_epoll_event {
+	uint32_t	events;
+	uint64_t	data;
+}
+#if defined(__amd64__)
+__packed
+#endif
+;
 
 #ifdef _KERNEL
 __BEGIN_DECLS

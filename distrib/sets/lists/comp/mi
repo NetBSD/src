@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2437 2023/07/10 02:31:54 christos Exp $
+#	$NetBSD: mi,v 1.2438 2023/07/28 18:18:59 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3328,6 +3328,7 @@
 ./usr/include/sys/elfdefinitions.h		comp-c-include
 ./usr/include/sys/endian.h			comp-c-include
 ./usr/include/sys/envsys.h			comp-c-include
+./usr/include/sys/epoll.h			comp-c-include
 ./usr/include/sys/errno.h			comp-c-include
 ./usr/include/sys/evcnt.h			comp-c-include
 ./usr/include/sys/event.h			comp-c-include
@@ -13211,6 +13212,16 @@
 ./usr/share/man/html2/dup.html			comp-c-htmlman		html
 ./usr/share/man/html2/dup2.html			comp-c-htmlman		html
 ./usr/share/man/html2/dup3.html			comp-c-htmlman		html
+./usr/share/man/html2/epoll.html		comp-c-htmlman		html
+./usr/share/man/html2/epoll_create.html		comp-c-htmlman		html
+./usr/share/man/html2/epoll_create1.html	comp-c-htmlman		html
+./usr/share/man/html2/epoll_ctl.html		comp-c-htmlman		html
+./usr/share/man/html2/epoll_data.html		comp-c-htmlman		html
+./usr/share/man/html2/epoll_data_t.html		comp-c-htmlman		html
+./usr/share/man/html2/epoll_event.html		comp-c-htmlman		html
+./usr/share/man/html2/epoll_pwait.html		comp-c-htmlman		html
+./usr/share/man/html2/epoll_pwait2.html		comp-c-htmlman		html
+./usr/share/man/html2/epoll_wait.html		comp-c-htmlman		html
 ./usr/share/man/html2/errno.html		comp-c-htmlman		html
 ./usr/share/man/html2/eventfd.html		comp-c-htmlman		html
 ./usr/share/man/html2/eventfd_read.html		comp-c-htmlman		html
@@ -21524,6 +21535,16 @@
 ./usr/share/man/man2/dup.2			comp-c-man		.man
 ./usr/share/man/man2/dup2.2			comp-c-man		.man
 ./usr/share/man/man2/dup3.2			comp-c-man		.man
+./usr/share/man/man2/epoll.2			comp-c-man		.man
+./usr/share/man/man2/epoll_create.2		comp-c-man		.man
+./usr/share/man/man2/epoll_create1.2		comp-c-man		.man
+./usr/share/man/man2/epoll_ctl.2		comp-c-man		.man
+./usr/share/man/man2/epoll_data.2		comp-c-man		.man
+./usr/share/man/man2/epoll_data_t.2		comp-c-man		.man
+./usr/share/man/man2/epoll_event.2		comp-c-man		.man
+./usr/share/man/man2/epoll_pwait.2		comp-c-man		.man
+./usr/share/man/man2/epoll_pwait2.2		comp-c-man		.man
+./usr/share/man/man2/epoll_wait.2		comp-c-man		.man
 ./usr/share/man/man2/errno.2			comp-c-man		.man
 ./usr/share/man/man2/eventfd.2			comp-c-man		.man
 ./usr/share/man/man2/eventfd_read.2		comp-c-man		.man

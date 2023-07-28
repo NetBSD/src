@@ -1,11 +1,8 @@
-/*	$NetBSD: compat_100_mod.c,v 1.2 2023/07/28 18:19:00 christos Exp $ */
+/*	$NetBSD: epoll.c,v 1.1 2023/07/28 18:19:00 christos Exp $	*/
 
 /*-
- * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software developed for The NetBSD Foundation
- * by Paul Goyette
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,52 +25,45 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- * Linkage for the compat module: spaghetti.
- */
-
-#if defined(_KERNEL_OPT)
-#include "opt_compat_netbsd.h"
-#endif
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_100_mod.c,v 1.2 2023/07/28 18:19:00 christos Exp $");
+__RCSID("$NetBSD: epoll.c,v 1.1 2023/07/28 18:19:00 christos Exp $");
 
-#include <sys/systm.h>
-#include <sys/module.h>
+#include <sys/epoll.h>
+#include <sys/sigtypes.h>
+#include <sys/time.h>
 
-#include <compat/common/compat_util.h>
-#include <compat/common/compat_mod.h>
-
-int
-compat_100_init(void)
-{
-
-	return kern_event_100_init();
-}
+#include <errno.h>
+#include <stddef.h>
 
 int
-compat_100_fini(void)
+epoll_create(int size)
 {
-
-	return kern_event_100_fini();
-}
-
-MODULE(MODULE_CLASS_EXEC, compat_100, NULL);
-
-static int
-compat_100_modcmd(modcmd_t cmd, void *arg)
-{
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		return compat_100_init();
-
-	case MODULE_CMD_FINI:
-		return compat_100_fini();
-
-	default:
-		return ENOTTY;
+	if (size <= 0) {
+		errno = EINVAL;
+		return -1;
 	}
+
+	return epoll_create1(0);
+}
+
+int
+epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
+{
+	return epoll_pwait(epfd, events, maxevents, timeout, NULL);
+}
+
+int
+epoll_pwait(int epfd, struct epoll_event *events, int maxevents, int timeout,
+    const sigset_t *sigmask)
+{
+	struct timespec ts, *tsp;
+
+	if (timeout >= 0) {
+		ts.tv_sec = timeout / 1000;
+		ts.tv_nsec = (timeout % 1000) * 1000000;
+		tsp = &ts;
+	} else
+		tsp = NULL;
+
+	return epoll_pwait2(epfd, events, maxevents, tsp, sigmask);
 }

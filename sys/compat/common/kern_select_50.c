@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_select_50.c,v 1.3 2019/09/20 15:05:22 kamil Exp $	*/
+/*	$NetBSD: kern_select_50.c,v 1.4 2023/07/28 18:19:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_select_50.c,v 1.3 2019/09/20 15:05:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_select_50.c,v 1.4 2023/07/28 18:19:00 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_select_50.c,v 1.3 2019/09/20 15:05:22 kamil Exp
 #include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
+#include <compat/sys/event.h>
 #include <compat/sys/time.h>
 #include <compat/common/compat_mod.h>
 
@@ -76,21 +77,22 @@ compat_50_sys_kevent(struct lwp *l, const struct compat_50_sys_kevent_args *uap,
 {
 	/* {
 		syscallarg(int) fd;
-		syscallarg(keventp_t) changelist;
+		syscallarg(struct kevent100 *) changelist;
 		syscallarg(size_t) nchanges;
-		syscallarg(keventp_t) eventlist;
+		syscallarg(struct kevent100 *) eventlist;
 		syscallarg(size_t) nevents;
 		syscallarg(struct timespec50) timeout;
 	} */
 	static const struct kevent_ops compat_50_kevent_ops = {
 		.keo_private = NULL,
 		.keo_fetch_timeout = compat_50_kevent_fetch_timeout,
-		.keo_fetch_changes = kevent_fetch_changes,
-		.keo_put_events = kevent_put_events,
+		.keo_fetch_changes = compat_100___kevent50_fetch_changes,
+		.keo_put_events = compat_100___kevent50_put_events,
 	};
 
-	return kevent1(retval, SCARG(uap, fd), SCARG(uap, changelist),
-	    SCARG(uap, nchanges), SCARG(uap, eventlist), SCARG(uap, nevents),
+	return kevent1(retval, SCARG(uap, fd),
+	    (const struct kevent *)(const void *)SCARG(uap, changelist), SCARG(uap, nchanges),
+	    (struct kevent *)(void *)SCARG(uap, eventlist), SCARG(uap, nevents),
 	    (const struct timespec *)(const void *)SCARG(uap, timeout),
 	    &compat_50_kevent_ops);
 }

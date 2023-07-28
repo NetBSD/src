@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.322 2023/07/10 02:37:05 christos Exp $ */
+/* $NetBSD: syscall.h,v 1.323 2023/07/28 18:19:01 christos Exp $ */
 
 /*
  * System call numbers.
@@ -954,7 +954,7 @@
 /* syscall: "kqueue" ret: "int" args: */
 #define	SYS_kqueue	344
 
-/* syscall: "compat_50_kevent" ret: "int" args: "int" "const struct kevent *" "size_t" "struct kevent *" "size_t" "const struct timespec50 *" */
+/* syscall: "compat_50_kevent" ret: "int" args: "int" "const struct kevent100 *" "size_t" "struct kevent100 *" "size_t" "const struct timespec50 *" */
 #define	SYS_compat_50_kevent	345
 
 /* syscall: "_sched_setparam" ret: "int" args: "pid_t" "lwpid_t" "int" "const struct sched_param *" */
@@ -1207,8 +1207,8 @@
 /* syscall: "compat_60__lwp_park" ret: "int" args: "const struct timespec *" "lwpid_t" "const void *" "const void *" */
 #define	SYS_compat_60__lwp_park	434
 
-/* syscall: "__kevent50" ret: "int" args: "int" "const struct kevent *" "size_t" "struct kevent *" "size_t" "const struct timespec *" */
-#define	SYS___kevent50	435
+/* syscall: "compat_100___kevent50" ret: "int" args: "int" "const struct kevent100 *" "size_t" "struct kevent100 *" "size_t" "const struct timespec *" */
+#define	SYS_compat_100___kevent50	435
 
 /* syscall: "__pselect50" ret: "int" args: "int" "fd_set *" "fd_set *" "fd_set *" "const struct timespec *" "const sigset_t *" */
 #define	SYS___pselect50	436
@@ -1407,6 +1407,18 @@
 /* syscall: "memfd_create" ret: "int" args: "const char *" "unsigned int" */
 #define	SYS_memfd_create	500
 
-#define	SYS_MAXSYSCALL	501
+/* syscall: "__kevent100" ret: "int" args: "int" "const struct kevent *" "size_t" "struct kevent *" "size_t" "const struct timespec *" */
+#define	SYS___kevent100	501
+
+/* syscall: "epoll_create1" ret: "int" args: "int" */
+#define	SYS_epoll_create1	502
+
+/* syscall: "epoll_ctl" ret: "int" args: "int" "int" "int" "struct epoll_event *" */
+#define	SYS_epoll_ctl	503
+
+/* syscall: "epoll_pwait2" ret: "int" args: "int" "struct epoll_event *" "int" "const struct timespec *" "const sigset_t *" */
+#define	SYS_epoll_pwait2	504
+
+#define	SYS_MAXSYSCALL	505
 #define	SYS_NSYSENT	512
 #endif /* _SYS_SYSCALL_H_ */

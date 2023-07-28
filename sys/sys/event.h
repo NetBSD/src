@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.54 2022/07/19 00:46:00 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.55 2023/07/28 18:19:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -70,6 +70,7 @@ struct kevent {
 	uint32_t	fflags;		/* filter flag value */
 	int64_t		data;		/* filter data value */
 	void		*udata;		/* opaque user data identifier */
+	uint64_t	ext[4];		/* extensions */
 };
 
 static __inline void
@@ -349,7 +350,7 @@ int	kqueue(void);
 int	kqueue1(int);
 #ifndef __LIBC12_SOURCE__
 int	kevent(int, const struct kevent *, size_t, struct kevent *, size_t,
-		    const struct timespec *) __RENAME(__kevent50);
+		    const struct timespec *) __RENAME(__kevent100);
 #endif
 #endif /* !_POSIX_C_SOURCE */
 __END_DECLS
