@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.37 2023/07/26 17:58:15 christos Exp $	*/
+/*	$NetBSD: sftp.c,v 1.38 2023/07/28 04:52:23 rin Exp $	*/
 /* $OpenBSD: sftp.c,v 1.229 2023/03/12 09:41:18 dtucker Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.37 2023/07/26 17:58:15 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.38 2023/07/28 04:52:23 rin Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -2019,7 +2019,7 @@ complete_match(EditLine *el, struct sftp_conn *conn, char *remote_path,
 		remote_glob(conn, tmp, GLOB_DOOFFS|GLOB_MARK, NULL, &g);
 	} else
 		glob(tmp, GLOB_LIMIT|GLOB_DOOFFS|GLOB_MARK, NULL, &g);
-	
+
 	/* Determine length of pwd so we can trim completion display */
 	for (hadglob = tmplen = pwdlen = 0; tmp[tmplen] != 0; tmplen++) {
 		/* Terminate counting on first unescaped glob metacharacter */
