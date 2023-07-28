@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.195 2023/07/19 22:24:28 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.196 2023/07/28 21:50:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -385,9 +385,6 @@ typedef	struct decl_level {
 	bool	d_invalid_type_combination:1;
 	bool	d_nonempty_decl:1; /* in a function declaration, whether at
 				 * least one tag was declared */
-	bool	d_vararg:1;
-	bool	d_prototype:1;	/* in a function declaration, whether the
-				 * function has a prototype */
 	bool	d_no_type_specifier:1;
 	bool	d_asm:1;	/* set if d_ctx == AUTO and asm() present */
 	bool	d_packed:1;
@@ -403,6 +400,12 @@ typedef	struct decl_level {
 	sym_t	*d_func_proto_syms; /* symbols defined in prototype */
 	struct decl_level *d_enclosing; /* the enclosing declaration level */
 } decl_level;
+
+struct parameter_list {
+	sym_t	*first;
+	bool	vararg:1;
+	bool	prototype:1;
+};
 
 /*
  * A sequence of asterisks and qualifiers, from right to left.  For example,

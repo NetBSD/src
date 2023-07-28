@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.465 2023/07/15 21:47:35 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.466 2023/07/28 21:50:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.465 2023/07/15 21:47:35 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.466 2023/07/28 21:50:03 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -143,6 +143,7 @@ is_either(const char *s, const char *a, const char *b)
 	tspec_t	y_tspec;
 	type_qualifiers y_type_qualifiers;
 	function_specifier y_function_specifier;
+	struct parameter_list y_parameter_list;
 	type_t	*y_type;
 	tnode_t	*y_tnode;
 	range_t	y_range;
@@ -351,7 +352,7 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_sym>		notype_param_declarator
 %type	<y_sym>		direct_param_declarator
 %type	<y_sym>		direct_notype_param_declarator
-%type	<y_sym>		param_list
+%type	<y_parameter_list>	param_list
 /* No type for id_list_lparen. */
 /* No type for abstract_decl_lparen. */
 %type	<y_array_size>	array_size_opt
@@ -361,10 +362,10 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_sym>		abstract_declaration
 %type	<y_sym>		abstract_declarator
 %type	<y_sym>		direct_abstract_declarator
-%type	<y_sym>		abstract_decl_param_list
+%type	<y_parameter_list>	abstract_decl_param_list
 /* No type for abstract_decl_lparen. */
-%type	<y_sym>		vararg_parameter_type_list
-%type	<y_sym>		parameter_type_list
+%type	<y_parameter_list>	vararg_parameter_type_list
+%type	<y_parameter_list>	parameter_type_list
 %type	<y_sym>		parameter_declaration
 /* No type for braced_initializer. */
 /* No type for initializer. */
@@ -1411,7 +1412,7 @@ direct_notype_param_declarator:
 
 param_list:
 	id_list_lparen identifier_list T_RPAREN {
-		$$ = $2;
+		$$ = (struct parameter_list){ .first = $2 };
 	}
 |	abstract_decl_param_list
 ;
@@ -1539,15 +1540,15 @@ direct_abstract_declarator:
 
 abstract_decl_param_list:	/* specific to lint */
 	abstract_decl_lparen T_RPAREN type_attribute_opt {
-		$$ = NULL;
+		$$ = (struct parameter_list){ .first = NULL };
 	}
 |	abstract_decl_lparen vararg_parameter_type_list T_RPAREN
 	    type_attribute_opt {
-		dcs->d_prototype = true;
 		$$ = $2;
+		$$.prototype = true;
 	}
 |	abstract_decl_lparen error T_RPAREN type_attribute_opt {
-		$$ = NULL;
+		$$ = (struct parameter_list){ .first = NULL };
 	}
 ;
 
@@ -1561,8 +1562,8 @@ abstract_decl_lparen:		/* specific to lint */
 vararg_parameter_type_list:	/* specific to lint */
 	parameter_type_list
 |	parameter_type_list T_COMMA T_ELLIPSIS {
-		dcs->d_vararg = true;
 		$$ = $1;
+		$$.vararg = true;
 	}
 |	T_ELLIPSIS {
 		/* TODO: C99 6.7.5 makes this an error as well. */
@@ -1573,16 +1574,18 @@ vararg_parameter_type_list:	/* specific to lint */
 			/* ANSI C requires formal parameter before '...' */
 			warning(84);
 		}
-		dcs->d_vararg = true;
-		$$ = NULL;
+		$$ = (struct parameter_list){ .vararg = true };
 	}
 ;
 
 /* XXX: C99 6.7.5 defines the same name, but it looks different. */
 parameter_type_list:
-	parameter_declaration
+	parameter_declaration {
+		$$ = (struct parameter_list){ .first = $1 };
+	}
 |	parameter_type_list T_COMMA parameter_declaration {
-		$$ = concat_symbols($1, $3);
+		$$ = $1;
+		$$.first = concat_symbols($1.first, $3);
 	}
 ;
 

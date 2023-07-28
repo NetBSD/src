@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.55 2023/07/13 23:27:20 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.56 2023/07/28 21:50:03 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.55 2023/07/13 23:27:20 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.56 2023/07/28 21:50:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -440,8 +440,6 @@ debug_decl_level(const decl_level *dl)
 	debug_word(dl->d_multiple_storage_classes, "multiple_storage_classes");
 	debug_word(dl->d_invalid_type_combination, "invalid_type_combination");
 	debug_word(dl->d_nonempty_decl, "nonempty_decl");
-	debug_word(dl->d_vararg, "vararg");
-	debug_word(dl->d_prototype, "prototype");
 	debug_word(dl->d_no_type_specifier, "no_type_specifier");
 	debug_word(dl->d_asm, "asm");
 	debug_word(dl->d_packed, "packed");

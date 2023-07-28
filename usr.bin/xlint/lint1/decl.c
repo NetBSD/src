@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.362 2023/07/25 16:56:35 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.363 2023/07/28 21:50:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.362 2023/07/25 16:56:35 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.363 2023/07/28 21:50:03 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1290,26 +1290,27 @@ block_derive_function(type_t *ret, bool proto, sym_t *args, bool vararg)
 }
 
 sym_t *
-add_function(sym_t *decl, sym_t *args)
+add_function(sym_t *decl, struct parameter_list params)
 {
 
 	debug_enter();
 	debug_dcs(true);
 	debug_sym("decl: ", decl, "\n");
 #ifdef DEBUG
-	for (const sym_t *arg = args; arg != NULL; arg = arg->s_next)
+	for (const sym_t *arg = params.first; arg != NULL; arg = arg->s_next)
 		debug_sym("arg: ", arg, "\n");
 #endif
 
-	if (dcs->d_prototype) {
+	if (params.prototype) {
 		if (!allow_c90)
 			/* function prototypes are illegal in traditional C */
 			warning(270);
-		check_prototype_parameters(args);
-		if (args != NULL && args->s_type->t_tspec == VOID)
-			args = NULL;
+		check_prototype_parameters(params.first);
+		if (params.first != NULL
+		    && params.first->s_type->t_tspec == VOID)
+			params.first = NULL;
 	} else
-		old_style_function(decl, args);
+		old_style_function(decl, params.first);
 
 	/*
 	 * The symbols are removed from the symbol table by
@@ -1324,7 +1325,7 @@ add_function(sym_t *decl, sym_t *args)
 	if (dcs->d_enclosing->d_kind == DLK_EXTERN &&
 	    decl->s_type == dcs->d_enclosing->d_type) {
 		dcs->d_enclosing->d_func_proto_syms = dcs->d_first_dlsym;
-		dcs->d_enclosing->d_func_args = args;
+		dcs->d_enclosing->d_func_args = params.first;
 	}
 
 	/*
@@ -1348,7 +1349,7 @@ add_function(sym_t *decl, sym_t *args)
 	}
 
 	*tpp = block_derive_function(dcs->d_enclosing->d_type,
-	    dcs->d_prototype, args, dcs->d_vararg);
+	    params.prototype, params.first, params.vararg);
 
 	debug_step("add_function: '%s'", type_name(decl->s_type));
 	debug_dcs(true);
@@ -2779,7 +2780,6 @@ abstract_name(void)
 	 */
 	sym->s_type = dcs->d_type;
 	dcs->d_redeclared_symbol = NULL;
-	dcs->d_vararg = false;
 
 	return sym;
 }
