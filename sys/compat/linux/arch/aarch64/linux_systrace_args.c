@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.5 2023/07/10 21:08:37 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.6 2023/07/28 19:01:44 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -140,6 +140,34 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[0] = SCARG(p, initval); /* unsigned int */
 		iarg[1] = SCARG(p, flags); /* int */
 		*n_args = 2;
+		break;
+	}
+	/* linux_sys_epoll_create1 */
+	case 20: {
+		const struct linux_sys_epoll_create1_args *p = params;
+		iarg[0] = SCARG(p, flags); /* int */
+		*n_args = 1;
+		break;
+	}
+	/* linux_sys_epoll_ctl */
+	case 21: {
+		const struct linux_sys_epoll_ctl_args *p = params;
+		iarg[0] = SCARG(p, epfd); /* int */
+		iarg[1] = SCARG(p, op); /* int */
+		iarg[2] = SCARG(p, fd); /* int */
+		uarg[3] = (intptr_t) SCARG(p, event); /* struct linux_epoll_event * */
+		*n_args = 4;
+		break;
+	}
+	/* linux_sys_epoll_pwait */
+	case 22: {
+		const struct linux_sys_epoll_pwait_args *p = params;
+		iarg[0] = SCARG(p, epfd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, events); /* struct linux_epoll_event * */
+		iarg[2] = SCARG(p, maxevents); /* int */
+		iarg[3] = SCARG(p, timeout); /* int */
+		uarg[4] = (intptr_t) SCARG(p, sigmask); /* const linux_sigset_t * */
+		*n_args = 5;
 		break;
 	}
 	/* sys_dup */
@@ -1654,6 +1682,17 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 0;
 		break;
 	}
+	/* linux_sys_epoll_pwait2 */
+	case 441: {
+		const struct linux_sys_epoll_pwait2_args *p = params;
+		iarg[0] = SCARG(p, epfd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, events); /* struct linux_epoll_event * */
+		iarg[2] = SCARG(p, maxevents); /* int */
+		uarg[3] = (intptr_t) SCARG(p, timeout); /* const struct linux_timespec * */
+		uarg[4] = (intptr_t) SCARG(p, sigmask); /* const linux_sigset_t * */
+		*n_args = 5;
+		break;
+	}
 	default:
 		*n_args = 0;
 		break;
@@ -1895,6 +1934,57 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 1:
 			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_epoll_create1 */
+	case 20:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_epoll_ctl */
+	case 21:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "struct linux_epoll_event *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_epoll_pwait */
+	case 22:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct linux_epoll_event *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "int";
+			break;
+		case 4:
+			p = "const linux_sigset_t *";
 			break;
 		default:
 			break;
@@ -4447,6 +4537,28 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	/* linux_sys_nosys */
 	case 440:
 		break;
+	/* linux_sys_epoll_pwait2 */
+	case 441:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct linux_epoll_event *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "const struct linux_timespec *";
+			break;
+		case 4:
+			p = "const linux_sigset_t *";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -4525,6 +4637,21 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_eventfd2 */
 	case 19:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_epoll_create1 */
+	case 20:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_epoll_ctl */
+	case 21:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_epoll_pwait */
+	case 22:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
@@ -5388,6 +5515,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_nosys */
 	case 440:
+	/* linux_sys_epoll_pwait2 */
+	case 441:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	default:
 		break;
 	};
