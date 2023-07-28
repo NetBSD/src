@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.24 2023/07/26 03:39:55 rin Exp $
+#	$NetBSD: Makefile.aarch64,v 1.25 2023/07/28 02:41:30 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -95,15 +95,9 @@ LOADADDRESS?=	0xffffc00000000000
 LINKFLAGS_NORMAL=	-X
 
 # Strip AArch64 mapping symbols from the kernel image, as they interfere
-# with ddb, but don't strip them in netbsd.gdb.
-AA64_STRIP_SYMBOLS=	--strip-symbol='[$$][dx]' \
+# with ddb, but don't strip them in netbsd.gdb. See Makefile.kern.inc.
+ARCH_STRIP_SYMBOLS=	--strip-symbol='[$$][dx]' \
 			--strip-symbol='[$$][dx]\.*'
-.if (defined(DEBUG) && !empty(DEBUG:M-g*)) || (!defined(DEBUG) && \
-	(${MKDEBUGKERNEL:Uno} == "yes" || ${MKDEBUG:Uno} == "yes"))
-OBJCOPY_STRIPFLAGS=	-g -w ${AA64_STRIP_SYMBOLS}
-.else
-SYSTEM_LD_TAIL=		@${OBJCOPY} -w ${AA64_STRIP_SYMBOLS} $@
-.endif
 
 ##
 ## (6) port specific target dependencies

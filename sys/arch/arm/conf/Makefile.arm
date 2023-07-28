@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.56 2023/07/26 03:39:55 rin Exp $
+#	$NetBSD: Makefile.arm,v 1.57 2023/07/28 02:41:30 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -106,15 +106,9 @@ locore.o: ${ARM}/arm32/locore.S assym.h
 LOADADDRESS?=	0xF0000000
 LINKFLAGS_NORMAL=	-X
 # Strip ARM mapping symbols from the kernel image, as they interfere
-# with ddb, but don't strip them in netbsd.gdb.
-ARM_STRIP_SYMBOLS=	--strip-symbol='[$$][atd]' \
+# with ddb, but don't strip them in netbsd.gdb. See Makefile.kern.inc.
+ARCH_STRIP_SYMBOLS=	--strip-symbol='[$$][atd]' \
 			--strip-symbol='[$$][atd]\.*'
-.if (defined(DEBUG) && !empty(DEBUG:M-g*)) || (!defined(DEBUG) && \
-	(${MKDEBUGKERNEL:Uno} == "yes" || ${MKDEBUG:Uno} == "yes"))
-OBJCOPY_STRIPFLAGS=	-g -w ${ARM_STRIP_SYMBOLS}
-.else
-SYSTEM_LD_TAIL=		@${OBJCOPY} -w ${ARM_STRIP_SYMBOLS} $@
-.endif
 
 ##
 ## (6) port specific target dependencies
