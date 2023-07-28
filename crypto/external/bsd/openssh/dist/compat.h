@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.h,v 1.17 2023/07/26 17:58:15 christos Exp $	*/
+/*	$NetBSD: compat.h,v 1.18 2023/07/28 04:27:30 rin Exp $	*/
 /* $OpenBSD: compat.h,v 1.62 2023/03/06 12:14:48 dtucker Exp $ */
 
 /*
@@ -58,7 +58,7 @@
 #define SSH_BUG_CURVE25519PAD	0x10000000
 #define SSH_BUG_HOSTKEYS	0x20000000
 #define SSH_BUG_DHGEX_LARGE	0x40000000
-#define SSH_BUG_LARGEWINDOW     0x80000000
+#define SSH_BUG_LARGEWINDOW	0x80000000
 
 struct ssh;
 
