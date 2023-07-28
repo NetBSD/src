@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.50 2023/07/20 23:28:44 gutteridge Exp $
+.\"	$NetBSD: socket.2,v 1.51 2023/07/28 23:41:02 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,6 @@ which should be used.
 These families are defined in the include file
 .Ao Pa sys/socket.h Ac .
 The currently understood formats are:
-.Pp
 .Bl -column -offset indent ".Dv PF_APPLETALK"
 .It Dv PF_LOCAL Ta local domain Po previously Tn UNIX domain Pc protocols
 .It Dv PF_INET Ta Tn ARPA Internet protocols
@@ -68,7 +67,6 @@ The socket has the indicated
 .Fa type ,
 which specifies the semantics of communication.
 Currently defined types are:
-.Pp
 .Bl -tag -offset indent -width Dv
 .It Dv SOCK_STREAM
 Provides sequenced, reliable, two-way connection based byte streams.
@@ -91,7 +89,6 @@ Not implemented.
 .Pp
 The following flags can be or'ed to the socket type to add conditions to
 the returned file descriptor:
-.Pp
 .Bl -tag -offset indent -width Dv
 .It Dv SOCK_CLOEXEC
 Set the close on exec property.
