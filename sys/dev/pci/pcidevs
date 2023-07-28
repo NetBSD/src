@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1482 2023/07/23 05:52:00 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1483 2023/07/28 02:26:58 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1100,6 +1100,7 @@ product AMD F19_6X_DF_4		0x14e4	19h/6xh Data Fabric 4
 product AMD F19_6X_DF_5		0x14e5	19h/6xh Data Fabric 5
 product AMD F19_6X_DF_6		0x14e6	19h/6xh Data Fabric 6
 product AMD F19_6X_DF_7		0x14e7	19h/6xh Data Fabric 7
+product AMD F19_7X_RC		0x14e8	19h/7xh Root Complex
 product AMD F17_AX_XHCI_0	0x1503	17h/Axh USB 3.1 xHCI
 product AMD F17_AX_XHCI_1	0x1504	17h/Axh USB 3.1 xHCI
 product AMD F17_AX_USB_BIOM	0x1505	17h/Axh Secure USB BIOmetric
