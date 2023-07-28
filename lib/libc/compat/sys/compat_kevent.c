@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_kevent.c,v 1.2 2009/01/11 02:46:26 christos Exp $ */
+/*	$NetBSD: compat_kevent.c,v 1.3 2023/07/28 18:19:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_kevent.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
+__RCSID("$NetBSD: compat_kevent.c,v 1.3 2023/07/28 18:19:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,13 +46,16 @@ __RCSID("$NetBSD: compat_kevent.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
 #include <compat/sys/time.h>
 #include <sys/event.h>
 #include <compat/sys/event.h>
+#include <stdlib.h>
 
 __warn_references(kevent,
     "warning: reference to compatibility kevent(); include <sys/event.h> to generate correct reference")
+__warn_references(kevent,
+    "warning: reference to compatibility __kevent50(); use kevent()")
 
 int
-kevent(int kq, const struct kevent *changelist, size_t nchanges,
-    struct kevent *eventlist, size_t nevents, const struct timespec50 *ts50)
+kevent(int kq, const struct kevent100 *changelist, size_t nchanges,
+    struct kevent100 *eventlist, size_t nevents, const struct timespec50 *ts50)
 {
 	struct timespec ts, *tsp;
 
@@ -60,5 +63,41 @@ kevent(int kq, const struct kevent *changelist, size_t nchanges,
 		timespec50_to_timespec(ts50, tsp = &ts);
 	else
 		tsp = NULL;
-	return __kevent50(kq, changelist, nchanges, eventlist, nevents, tsp);
+        return __kevent50(kq, changelist, nchanges, eventlist, nevents, tsp);
+}
+
+int
+__kevent50(int kq, const struct kevent100 *changelist100, size_t nchanges,
+    struct kevent100 *eventlist100, size_t nevents, const struct timespec *tsp)
+{
+	int retval;
+	struct kevent *changelist;
+	struct kevent *eventlist;
+
+	changelist = malloc(sizeof(*changelist) * nchanges);
+	if (changelist == NULL) {
+		return -1;
+	}
+
+	eventlist = malloc(sizeof(*eventlist) * nevents);
+        if (eventlist == NULL) {
+		retval = -1;
+		goto leave0;
+	}
+
+	for (size_t i = 0; i < nchanges; i++)
+		kevent100_to_kevent(changelist100 + i, changelist + i);
+
+	retval = __kevent100(kq, changelist, nchanges, eventlist, nevents, tsp);
+	if (retval == -1)
+		goto leave1;
+
+	for (int i = 0; i < retval; i++)
+		kevent_to_kevent100(eventlist + i, eventlist100 + i);
+
+leave1:
+	free(eventlist);
+leave0:
+	free(changelist);
+	return retval;
 }

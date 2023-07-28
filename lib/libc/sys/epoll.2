@@ -1,0 +1,388 @@
+.\"	$NetBSD: epoll.2,v 1.1 2023/07/28 18:19:00 christos Exp $
+.\"
+.\" Copyright (c) 2023 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Theodore Preduta.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 19, 2023
+.Dt EPOLL 2
+.Os
+.Sh NAME
+.Nm epoll ,
+.Nm epoll_event ,
+.Nm epoll_data ,
+.Nm epoll_data_t ,
+.Nm epoll_create ,
+.Nm epoll_create1 ,
+.Nm epoll_ctl ,
+.Nm epoll_wait ,
+.Nm epoll_pwait ,
+.Nm epoll_pwait2
+.Nd event notification mechanism
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/epoll.h
+.Bd -literal
+union epoll_data {
+	void		*ptr;
+	int		fd;
+	uint32_t	u32;
+	uint64_t	u64;
+};
+
+typedef union epoll_data	epoll_data_t;
+
+struct epoll_event {
+	uint32_t	events;
+	epoll_data_t	data;
+};
+.Ed
+.Pp
+.Ft int
+.Fn epoll_create "int size"
+.Ft int
+.Fn epoll_create1 "int flags"
+.Ft int
+.Fn epoll_ctl "int epfd" "int op" "int fd" "struct epoll_event *event"
+.Ft int
+.Fn epoll_wait "int epfd" "struct epoll_event *events" "int maxevents" "int timeout"
+.Ft int
+.Fn epoll_pwait "int epfd" "struct epoll_event *events" "int maxevents" "int timeout" "const sigset_t *sigmask"
+.Ft int
+.Fn epoll_pwait2 "int epfd" "struct epoll_event *events" "int maxevents" "const struct timespec *timeout" "const sigset_t *sigmask"
+.Sh DESCRIPTION
+.Nm
+provides a similar facility to both
+.Xr select 2
+and
+.Xr kqueue 2 :
+it allows for the examination of file descriptors to see if they are available
+for reading/writing.
+.Pp
+The
+.Va epoll_event
+structure consists of two fields,
+.Va events
+and
+.Va data .
+The
+.Va data
+field is passed through the kernel and is intended to be used to identify the
+event.
+When used with
+.Fa epoll_ctl ,
+the
+.Va events
+field consists of a mask of the events that the
+.Nm
+instance should watch for, and when being used with
+.Fa epoll_wait ,
+.Fa epoll_pwait ,
+and
+.Fa epoll_pwait2
+consists of a mask of the events that occurred.
+The following are possible values for
+.Va events :
+.Bl -tag -width EPOLLONESHOT
+.It Dv EPOLLIN
+Watch for
+.Xr read 2
+operations.
+.It Dv EPOLLOUT
+Watch for
+.Xr write 2
+operations.
+.It Dv EPOLLRDHUP
+Watch for a peer closed connection.
+.It Dv EPOLLERR
+Watch for error conditions.
+.It Dv EPOLLET
+This option modifies the other set bits of
+.Va events .
+When set, the events described by other bits in
+.Va events
+are only triggered when the state change.
+Otherwise the events are considered triggered whenever the condition is true.
+.It Dv EPOLLONESHOT
+Remove this event once it is retrieved once.
+.El
+.Pp
+.Fn epoll_create
+and
+.Fn epoll_create1
+both create an
+.Nm
+instance.
+The
+.Fa size
+argument specified for
+.Fn epoll_create
+exists so that the
+.Nx
+function has the same signature as the Linux system call of the same name.
+.Fa size
+must be positive, but is otherwise unused.
+Additionally, optionally,
+.Dv EPOLL_CLOEXEC
+may be specified in the
+.Fa flags
+of
+.Fn epoll_create1
+to set the
+.Xr close 2
+on
+.Xr exec 2
+flag.
+.Pp
+.Fn epoll_ctl
+is used to make changes to the given
+.Nm
+instance based on the provided
+.Fa op .
+Possible values for
+.Fa op
+are:
+.Bl -tag -width EPOLL_CTL_ADD
+.It Dv EPOLL_CTL_ADD
+Register interest of
+.Fa fd
+on the
+.Fa epfd
+for the events specified in
+.Fa event .
+.It Dv EPOLL_CTL_MOD
+Modify the events registered for
+.Fa fd
+to those specified in
+.Fa event .
+.It Dv EPOLL_CTL_DEL
+Deregister
+.Fa fd
+from the
+.Nm
+instance specified in
+.Fa epfd .
+Note that
+.Fa event
+is completely ignored in this case.
+.El
+.Pp
+.Fn epoll_wait ,
+.Fn epoll_pwait ,
+and
+.Fn epoll_pwait2
+provide the ability to wait for up to
+.Fa maxevents
+which are stored in the buffer pointed to by
+.Fa events .
+For
+.Fn epoll_wait
+and
+.Fn epoll_pwait ,
+a timeout may be specified in
+.Fa timeout
+in milliseconds.
+If no timeout is desired, -1 should be specified in
+.Fa timeout .
+For
+.Fn epoll_pwait2
+if no timeout is desired
+.Fa timeout
+should be specified as
+.Dv NULL .
+Additionally,
+a sigmask may be specified to
+.Fa epoll_pwait
+and
+.Fa epoll_pwait2
+in
+.Fa sigmask
+to set the sigmask while
+.Nm
+waits for events.
+.Pp
+Note that
+.Nm
+is not intended to be used by native
+.Nx
+applications.
+Instead it is only intended to used as a means to help port software originally
+written for Linux to
+.Nx .
+.Sh RETURN VALUES
+.Fn epoll_create
+and
+.Fn epoll_create1
+both return a file descriptor when successful.
+.Pp
+.Fn epoll_ctl
+returns zero when successful.
+.Pp
+.Fn epoll_wait ,
+.Fn epoll_pwait ,
+and
+.Fn epoll_pwait2
+return the number of events written to
+.Fa events
+when successful.
+Note that zero is written to when
+.Fa timeout
+expires and no events were available.
+.Pp
+When any of the above fail, -1 is returned and
+.Fa errno
+is set.
+.Sh ERRORS
+The
+.Fn epoll_create
+and
+.Fn epoll_create1
+functions fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+.Fa size
+is not positive.
+.Pp
+Bits other than
+.Dv EPOLL_CLOEXEC
+are provided in
+.Fa flags .
+.It Bq Er EMFILE
+The per-process descriptor table is full.
+.It Bq Er ENFILE
+The system file table is full.
+.It Bq Er ENOMEM
+The kernel failed to allocate enough memory for a
+.Nm
+instance.
+.El
+.Pp
+The
+.Fn epoll_ctl
+function fails if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa epfd
+or
+.Fa fd
+is not a valid file descriptor.
+.It Bq Er EEXIST
+.Fa op
+is
+.Dv EPOLL_CTL_ADD
+and
+.Fa fd
+was already previously added via
+.Dv EPOLL_CTL_ADD .
+.It Bq Er EINVAL
+.Fa epfd
+is not a file descriptor for an
+.Nm
+instance.
+.Pp
+.Fa epfd
+and
+.Fa fd
+represent the same
+.Nm
+instance.
+.It Bq Er ELOOP
+.Fa op
+is
+.Dv EPOLL_CTL_ADD
+and adding
+.Fa fd
+would result in a circular loop of
+.Nm
+instances.
+.It Bq Er ENOENT
+.Fa op
+is
+.Dv EPOLL_CTL_MOD
+or
+.Dv EPOLL_CTL_DEL
+and
+.Fa fd
+was not previously added with
+.Dv EPOLL_CTL_ADD .
+.It Bq Er ENOMEM
+The kernel failed to allocate enough memory for
+.Fa op .
+.It Bq Er EPERM
+.Fa fd
+does not support
+.Nm epoll .
+.El
+.Pp
+The
+.Fn epoll_wait ,
+.Fn epoll_pwait ,
+and
+.Fn epoll_pwait2
+functions fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa epfd
+is not a valid file descriptor.
+.It Bq Er EFAULT
+The area provided in
+.Fa events
+failed to be written to.
+.It Bq Er EINTR
+A signal was delivered before any events became available and
+.Fa timeout
+expired.
+.It Bq Er EINVAL
+.Fa epfd
+is not a valid
+.Nm
+file descriptor.
+.Pp
+.Fa maxevents
+is less than or equal to zero.
+.El
+.Sh SEE ALSO
+.Xr kqueue 2 ,
+.Xr poll 2 ,
+.Xr select 2
+.Sh HISTORY
+The
+.Nm
+functions and types are designed to be compatible with the Linux system calls of
+the same name.
+.Sh CAVEATS
+The
+.Nm
+facility is not intended to be used in conjunction with
+.Xr kqueue 2 .
+.Pp
+Unlike Linux's
+.Nm ,
+the
+.Nx
+version does not survive a
+.Xr fork 2 .

@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.186 2021/10/21 11:01:03 andvar Exp $
+#	$NetBSD: makesyscalls.sh,v 1.187 2023/07/28 18:19:01 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -419,6 +419,7 @@ NR == 1 {
 	uncompattypes["struct timeval50"] = "struct timeval";
 	uncompattypes["struct timespec50"] = "struct timespec";
 	uncompattypes["struct stat30"] = "struct stat";
+	uncompattypes["struct kevent100"] = "struct kevent";
 
 	next
 }

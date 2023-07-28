@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.59 2023/07/10 06:42:33 mrg Exp $
+#	$NetBSD: files.kern,v 1.60 2023/07/28 18:19:01 christos Exp $
 
 #
 # kernel sources
@@ -161,6 +161,7 @@ file	kern/subr_workqueue.c		kern
 file	kern/subr_xcall.c		kern
 file	kern/sys_aio.c			aio
 file	kern/sys_descrip.c		kern
+file	kern/sys_epoll.c		kern
 file	kern/sys_eventfd.c		kern
 file	kern/sys_futex.c		kern
 file	kern/sys_generic.c		kern

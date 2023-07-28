@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.68 2023/07/10 02:31:55 christos Exp $
+	$NetBSD: syscalls.master,v 1.69 2023/07/28 18:19:00 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -51,6 +51,7 @@
 #include <compat/sys/time.h>
 
 #include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_msg.h>
@@ -412,7 +413,7 @@
 210	UNIMPL		io_cancel
 211	UNIMPL		get_thread_area
 212	UNIMPL		lookup_dcookie
-213	UNIMPL		epoll_create
+213	STD		{ int|linux_sys||epoll_create(int size); }
 214	UNIMPL		epoll_ctl_old
 215	UNIMPL		epoll_wait_old
 216	UNIMPL		remap_file_pages
@@ -442,8 +443,11 @@
 			    int flags, struct linux_timespec *rqtp, \
 			    struct linux_timespec *rmtp); }
 231	STD		{ int|linux_sys||exit_group(int error_code); }
-232	UNIMPL		epoll_wait
-233	UNIMPL		epoll_ctl
+232	STD		{ int|linux_sys||epoll_wait(int epfd, \
+			    struct linux_epoll_event *events, int maxevents, \
+			    int timeout); }
+233	STD		{ int|linux_sys||epoll_ctl(int epfd, int op, int fd, \
+			    struct linux_epoll_event *event); }
 234	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
 235	NOARGS		{ int|compat_50_sys||utimes(const char *path, \
 			    const struct timeval50 *tptr); }
@@ -517,7 +521,9 @@
 279	UNIMPL		move_pages
 280	STD		{ int|linux_sys||utimensat(int fd, const char *path, \
 			    struct linux_timespec *times, int flag); }
-281	UNIMPL		epoll_pwait
+281	STD		{ int|linux_sys||epoll_pwait(int epfd, \
+			    struct linux_epoll_event *events, int maxevents, \
+			    int timeout, const linux_sigset_t *sigmask); }
 282	UNIMPL		signalfd
 283	STD		{ int|linux_sys||timerfd_create(clockid_t clock_id, \
 			    int flags); }
@@ -535,7 +541,7 @@
 289	UNIMPL		signalfd4
 290	STD		{ int|linux_sys||eventfd2(unsigned int initval, \
 			    int flags); }
-291	UNIMPL		epoll_create1
+291	STD		{ int|linux_sys||epoll_create1(int flags); }
 292	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 293	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
 294	UNIMPL		inotify_init1
@@ -696,7 +702,10 @@
 438	UNIMPL		pidfd_getfd
 439	UNIMPL		faccessat2
 440	UNIMPL		process_madvise
-441	UNIMPL		epoll_pwait2
+441	STD		{ int|linux_sys||epoll_pwait2(int epfd, \
+			    struct linux_epoll_event *events, int maxevents, \
+			    const struct linux_timespec *timeout, \
+			    const linux_sigset_t *sigmask); }
 442	UNIMPL		mount_setattr
 443	UNIMPL		quotactl_fd
 444	UNIMPL		landlock_create_ruleset

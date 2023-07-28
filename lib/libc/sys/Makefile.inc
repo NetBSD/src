@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.251 2023/07/10 02:31:54 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.252 2023/07/28 18:19:00 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -7,10 +7,10 @@
 # other sources shared with the kernel, used in syscalls
 SRCS+=	cpuset.c
 # glue to offer userland wrappers for some syscalls
-SRCS+=	accept4.c clock_getcpuclockid.c eventfd_read.c eventfd_write.c \
-	posix_fadvise.c posix_madvise.c ppoll.c sched.c sigqueue.c \
-	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c \
-	vadvise.c
+SRCS+=	accept4.c clock_getcpuclockid.c epoll.c eventfd_read.c \
+	eventfd_write.c posix_fadvise.c posix_madvise.c ppoll.c sched.c \
+	sigqueue.c sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c swapon.c \
+	semctl.c vadvise.c
 
 .if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:
@@ -103,6 +103,7 @@ ASM=\
 		clock_getcpuclockid2.S \
 		__clock_getres50.S __clock_gettime50.S \
 	dup.S dup2.S dup3.S \
+	epoll_create1.S epoll_ctl.S epoll_pwait2.S \
 	eventfd.S \
 	extattrctl.S \
 		extattr_delete_fd.S extattr_delete_file.S \
@@ -180,7 +181,7 @@ ASM_MD=	_lwp_getprivate.S mremap.S
 WEAKASM= accept.S __aio_suspend50.S clock_nanosleep.S close.S connect.S \
 	execve.S \
 	fcntl.S fdatasync.S fsync.S \
-	fsync_range.S __kevent50.S \
+	fsync_range.S __kevent100.S \
 	kill.S mq_receive.S mq_send.S __mq_timedreceive50.S __mq_timedsend50.S \
 	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S openat.S \
 	paccept.S poll.S \
@@ -260,7 +261,7 @@ LintSysPseudoNoerr.c: ${LIBCDIR}/sys/makelintstub \
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 clock_getcpuclockid2.2 \
 	clock_settime.2 clone.2 close.2 \
-	connect.2 dup.2 eventfd.2 execve.2 _exit.2 extattr_get_file.2 \
+	connect.2 dup.2 epoll.2 eventfd.2 execve.2 _exit.2 extattr_get_file.2 \
 	fcntl.2 fdatasync.2 fdiscard.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 \
 	getfh.2 getvfsstat.2 getgid.2 getgroups.2 \
@@ -308,6 +309,15 @@ MLINKS+=chown.2 fchown.2 chown.2 lchown.2
 MLINKS+=chroot.2 fchroot.2
 MLINKS+=clock_settime.2 clock_gettime.2
 MLINKS+=clock_settime.2 clock_getres.2
+MLINKS+=epoll.2 epoll_event.2 \
+	epoll.2 epoll_data.2 \
+	epoll.2 epoll_data_t.2 \
+	epoll.2 epoll_create.2 \
+	epoll.2 epoll_create1.2 \
+	epoll.2 epoll_ctl.2 \
+	epoll.2 epoll_wait.2 \
+	epoll.2 epoll_pwait.2 \
+	epoll.2 epoll_pwait2.2
 MLINKS+=eventfd.2 eventfd_read.2 \
 	eventfd.2 eventfd_write.2
 MLINKS+=extattr_get_file.2 extattr_set_file.2 \

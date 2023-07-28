@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.58 2022/02/13 16:51:56 pgoyette Exp $
+.\"	$NetBSD: kqueue.2,v 1.59 2023/07/28 18:19:00 christos Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd February 13, 2022
+.Dd June 19, 2023
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -192,6 +192,7 @@ struct kevent {
 	uint32_t  fflags;	/* filter flag value */
 	int64_t   data;		/* filter data value */
 	void     *udata;	/* opaque user data identifier */
+	uint64_t  ext[4];	/* extensions */
 };
 .Ed
 .Pp
@@ -215,6 +216,20 @@ Filter-specific flags.
 Filter-specific data value.
 .It Fa udata
 Opaque user-defined value passed through the kernel unchanged.
+.It Fa ext
+Extended data passed to and from kernel.
+The
+.Fa ext[0]
+and
+.Fa ext[1]
+members use is defined by the filter.
+If the filter does not use them, the members are copied unchanged.
+The
+.Fa ext[2]
+and
+.Fa ext[3]
+members are always passed through the kernel as-is,
+making additional context available to application.
 .El
 .Pp
 The

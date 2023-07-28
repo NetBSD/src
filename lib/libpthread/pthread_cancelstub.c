@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.43 2022/04/19 20:32:17 rillig Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.44 2023/07/28 18:19:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.43 2022/04/19 20:32:17 rillig Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.44 2023/07/28 18:19:00 christos Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -101,7 +101,7 @@ int	_sys_fcntl(int, int, ...);
 int	_sys_fdatasync(int);
 int	_sys_fsync(int);
 int	_sys_fsync_range(int, int, off_t, off_t);
-int	_sys___kevent50(int, const struct kevent *, size_t, struct kevent *,
+int	_sys___kevent100(int, const struct kevent *, size_t, struct kevent *,
 	    size_t, const struct timespec *);
 int	_sys_mq_send(mqd_t, const char *, size_t, unsigned);
 ssize_t	_sys_mq_receive(mqd_t, char *, size_t, unsigned *);
@@ -180,7 +180,7 @@ __aio_suspend50(const struct aiocb * const list[], int nent,
 }
 
 int
-__kevent50(int fd, const struct kevent *ev, size_t nev, struct kevent *rev,
+__kevent100(int fd, const struct kevent *ev, size_t nev, struct kevent *rev,
     size_t nrev, const struct timespec *ts)
 {
 	int retval;
@@ -188,7 +188,7 @@ __kevent50(int fd, const struct kevent *ev, size_t nev, struct kevent *rev,
 
 	self = pthread__self();
 	TESTCANCEL(self);
-	retval = _sys___kevent50(fd, ev, nev, rev, nrev, ts);
+	retval = _sys___kevent100(fd, ev, nev, rev, nrev, ts);
 	TESTCANCEL(self);
 
 	return retval;
