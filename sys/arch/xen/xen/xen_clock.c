@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.14 2023/07/28 10:39:01 riastradh Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.15 2023/07/28 10:39:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.14 2023/07/28 10:39:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.15 2023/07/28 10:39:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -120,6 +120,13 @@ SDT_PROBE_DEFINE3(sdt, xen, timecounter, backward,
 SDT_PROBE_DEFINE2(sdt, xen, hardclock, systime__backward,
     "uint64_t"/*last_systime_ns*/,
     "uint64_t"/*this_systime_ns*/);
+SDT_PROBE_DEFINE2(sdt, xen, hardclock, tick,
+    "uint64_t"/*last_systime_ns*/,
+    "uint64_t"/*this_systime_ns*/);
+SDT_PROBE_DEFINE3(sdt, xen, hardclock, jump,
+    "uint64_t"/*last_systime_ns*/,
+    "uint64_t"/*this_systime_ns*/,
+    "uint64_t"/*nticks*/);
 SDT_PROBE_DEFINE3(sdt, xen, hardclock, missed,
     "uint64_t"/*last_systime_ns*/,
     "uint64_t"/*this_systime_ns*/,
@@ -800,7 +807,8 @@ again:
 	 */
 	last = ci->ci_xen_hardclock_systime_ns;
 	now = xen_vcputime_systime_ns();
-	if (now < last) {
+	SDT_PROBE2(sdt, xen, hardclock, tick,  last, now);
+	if (__predict_false(now < last)) {
 		SDT_PROBE2(sdt, xen, hardclock, systime__backward,
 		    last, now);
 #if XEN_CLOCK_DEBUG
@@ -818,6 +826,10 @@ again:
 	 * times as appears necessary based on how much time has
 	 * passed.
 	 */
+	if (__predict_false(delta >= 2*ns_per_tick)) {
+		SDT_PROBE3(sdt, xen, hardclock, jump,
+		    last, now, delta/ns_per_tick);
+	}
 	while (delta >= ns_per_tick) {
 		ci->ci_xen_hardclock_systime_ns += ns_per_tick;
 		delta -= ns_per_tick;
