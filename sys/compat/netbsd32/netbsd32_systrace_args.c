@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.49 2021/09/20 01:07:56 thorpej Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.50 2023/07/29 12:39:20 rin Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -2415,9 +2415,9 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	case 345: {
 		const struct compat_50_netbsd32_kevent_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
-		uarg[1] = (intptr_t) SCARG(p, changelist).i32; /* netbsd32_keventp_t */
+		uarg[1] = (intptr_t) SCARG(p, changelist).i32; /* netbsd32_kevent100p_t */
 		iarg[2] = SCARG(p, nchanges); /* netbsd32_size_t */
-		uarg[3] = (intptr_t) SCARG(p, eventlist).i32; /* netbsd32_keventp_t */
+		uarg[3] = (intptr_t) SCARG(p, eventlist).i32; /* netbsd32_kevent100p_t */
 		iarg[4] = SCARG(p, nevents); /* netbsd32_size_t */
 		uarg[5] = (intptr_t) SCARG(p, timeout).i32; /* netbsd32_timespec50p_t */
 		*n_args = 6;
@@ -3111,11 +3111,11 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32___kevent50 */
 	case 435: {
-		const struct netbsd32___kevent50_args *p = params;
+		const struct compat_100_netbsd32___kevent50_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
-		uarg[1] = (intptr_t) SCARG(p, changelist).i32; /* const netbsd32_keventp_t */
+		uarg[1] = (intptr_t) SCARG(p, changelist).i32; /* const netbsd32_kevent100p_t */
 		iarg[2] = SCARG(p, nchanges); /* netbsd32_size_t */
-		uarg[3] = (intptr_t) SCARG(p, eventlist).i32; /* netbsd32_keventp_t */
+		uarg[3] = (intptr_t) SCARG(p, eventlist).i32; /* netbsd32_kevent100p_t */
 		iarg[4] = SCARG(p, nevents); /* netbsd32_size_t */
 		uarg[5] = (intptr_t) SCARG(p, timeout).i32; /* const netbsd32_timespecp_t */
 		*n_args = 6;
@@ -3702,6 +3702,18 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* const netbsd32_charp */
 		iarg[1] = SCARG(p, name); /* int */
 		*n_args = 2;
+		break;
+	}
+	/* netbsd32___kevent100 */
+	case 501: {
+		const struct netbsd32___kevent100_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, changelist).i32; /* const netbsd32_keventp_t */
+		iarg[2] = SCARG(p, nchanges); /* netbsd32_size_t */
+		uarg[3] = (intptr_t) SCARG(p, eventlist).i32; /* netbsd32_keventp_t */
+		iarg[4] = SCARG(p, nevents); /* netbsd32_size_t */
+		uarg[5] = (intptr_t) SCARG(p, timeout).i32; /* const netbsd32_timespecp_t */
+		*n_args = 6;
 		break;
 	}
 	default:
@@ -7676,13 +7688,13 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "int";
 			break;
 		case 1:
-			p = "netbsd32_keventp_t";
+			p = "netbsd32_kevent100p_t";
 			break;
 		case 2:
 			p = "netbsd32_size_t";
 			break;
 		case 3:
-			p = "netbsd32_keventp_t";
+			p = "netbsd32_kevent100p_t";
 			break;
 		case 4:
 			p = "netbsd32_size_t";
@@ -8944,13 +8956,13 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "int";
 			break;
 		case 1:
-			p = "const netbsd32_keventp_t";
+			p = "const netbsd32_kevent100p_t";
 			break;
 		case 2:
 			p = "netbsd32_size_t";
 			break;
 		case 3:
-			p = "netbsd32_keventp_t";
+			p = "netbsd32_kevent100p_t";
 			break;
 		case 4:
 			p = "netbsd32_size_t";
@@ -10018,6 +10030,31 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 1:
 			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32___kevent100 */
+	case 501:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "const netbsd32_keventp_t";
+			break;
+		case 2:
+			p = "netbsd32_size_t";
+			break;
+		case 3:
+			p = "netbsd32_keventp_t";
+			break;
+		case 4:
+			p = "netbsd32_size_t";
+			break;
+		case 5:
+			p = "const netbsd32_timespecp_t";
 			break;
 		default:
 			break;
@@ -12114,6 +12151,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 499:
 		if (ndx == 0 || ndx == 1)
 			p = "long";
+		break;
+	/* netbsd32___kevent100 */
+	case 501:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
 		break;
 	default:
 		break;
