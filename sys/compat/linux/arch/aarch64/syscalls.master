@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8 2023/07/29 06:47:26 rin Exp $
+	$NetBSD: syscalls.master,v 1.9 2023/07/29 15:04:28 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -433,7 +433,8 @@
 			    const struct linux_msghdr *msg, int flags); }
 212	STD		{ ssize_t|linux_sys||recvmsg(int s, \
 			    struct linux_msghdr *msg, int flags); }
-213	UNIMPL		readahead
+213	STD		{ ssize_t|linux_sys||readahead(int fd, off_t offset, \
+			    size_t count); }
 214	STD		{ int|linux_sys||brk(char *nsize); }
 215	NOARGS		{ int|sys||munmap(void *addr, size_t len); }
 216	STD		{ void *|linux_sys||mremap(void *old_address, \
@@ -675,7 +676,8 @@
 433	UNIMPL		fspick
 434	UNIMPL		pidfd_open
 435	UNIMPL		clone3
-436	UNIMPL
+436	STD		{ int|linux_sys||close_range(unsigned int first, \
+			    unsigned int last, unsigned int flags); }
 437	UNIMPL		openat2
 438	UNIMPL		pidfd_getfd
 439	UNIMPL		faccessat2

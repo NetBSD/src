@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69 2023/07/28 18:19:00 christos Exp $
+	$NetBSD: syscalls.master,v 1.70 2023/07/29 15:04:28 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -374,7 +374,8 @@
 184	UNIMPL		tuxcall
 185	UNIMPL		security
 186	STD		{ pid_t|linux_sys||gettid(void); }
-187	UNIMPL		readahead
+187	STD		{ ssize_t|linux_sys||readahead(int fd, off_t offset, \
+			    size_t count); }
 188	STD		{ int|linux_sys||setxattr(char *path, char *name, \
 			    void *value, size_t size, int flags); }
 189	STD		{ int|linux_sys||lsetxattr(char *path, char *name, \
@@ -593,7 +594,9 @@
 329	UNIMPL		pkey_mprotect
 330	UNIMPL		pkey_alloc
 331	UNIMPL		pkey_free
-332	UNIMPL		statx
+332     STD		{ int|linux_sys||statx(int fd, const char *path, \
+			    int flag, unsigned int mask, \
+			    struct linux_statx *sp); }
 333	UNIMPL		io_pgetevents
 334	UNIMPL		rseq
 335	UNIMPL
@@ -697,7 +700,8 @@
 433	UNIMPL		fspick
 434	UNIMPL		pidfd_open
 435	UNIMPL		clone3
-436	UNIMPL		close_range
+436	STD		{ int|linux_sys||close_range(unsigned int first, \
+			    unsigned int last, unsigned int flags); }
 437	UNIMPL		openat2
 438	UNIMPL		pidfd_getfd
 439	UNIMPL		faccessat2

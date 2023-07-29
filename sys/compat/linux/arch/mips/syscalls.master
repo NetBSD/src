@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.75 2023/07/28 19:01:11 christos Exp $  
+	$NetBSD: syscalls.master,v 1.76 2023/07/29 15:04:29 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -389,7 +389,8 @@
 			    int cmd, void *arg); }
 221	UNIMPL		/* reserved */
 222	NOARGS		{ pid_t|linux_sys||gettid(void); }
-223	UNIMPL		readahead
+223	STD		{ ssize_t|linux_sys||readahead(int fd, off_t offset, \
+			    size_t count); }
 224	STD		{ int|linux_sys||setxattr(char *path, char *name, \
 			    void *value, size_t size, int flags); }
 225	STD		{ int|linux_sys||lsetxattr(char *path, char *name, \
@@ -592,21 +593,24 @@
 350	UNIMPL		sched_setattr
 351	UNIMPL		sched_getattr
 352	UNIMPL		renameat2
-353	UNIMPL		seccomp
-354	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
+353	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
 			    unsigned int flags); }
-355	UNIMPL		memfd_create
-356	UNIMPL		bpf
-357	UNIMPL		execveat
-358	UNIMPL		userfaultfd
-359	UNIMPL		membarrier
-360	UNIMPL		mlock2
-361	UNIMPL		copy_file_range
-362	UNIMPL		preadv2
-363	UNIMPL		pwritev2
-364	UNIMPL		pkey_mprotect
-365	UNIMPL		pkey_alloc
-366	UNIMPL		pkey_free
+354	STD		{ int|linux_sys||memfd_create(const char *name, \
+			    unsigned int flags); }
+355	UNIMPL		bpf
+356	UNIMPL		execveat
+357	UNIMPL		userfaultfd
+358	UNIMPL		membarrier
+369	UNIMPL		mlock2
+360	UNIMPL		copy_file_range
+361	UNIMPL		preadv2
+362	UNIMPL		pwritev2
+363	UNIMPL		pkey_mprotect
+364	UNIMPL		pkey_alloc
+365	UNIMPL		pkey_free
+366     STD		{ int|linux_sys||statx(int fd, const char *path, \
+			    int flag, unsigned int mask, \
+			    struct linux_statx *sp); }
 367	UNIMPL
 368	UNIMPL
 369	UNIMPL
@@ -676,7 +680,8 @@
 433	UNIMPL
 434	UNIMPL
 435	UNIMPL
-436	UNIMPL
+436	STD		{ int|linux_sys||close_range(unsigned int first, \
+			    unsigned int last, unsigned int flags); }
 437	UNIMPL
 438	UNIMPL
 439	UNIMPL

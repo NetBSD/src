@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.67 2021/11/25 02:27:08 ryo Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.68 2023/07/29 15:04:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.67 2021/11/25 02:27:08 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.68 2023/07/29 15:04:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,6 +251,10 @@ linux_statat(struct lwp *l, int fd, const char *path, int lflag,
 	struct vnode *vp;
 	int error, nd_flag;
 	uint8_t c;
+
+	if (lflag & ~(LINUX_AT_EMPTY_PATH|LINUX_AT_NO_AUTOMOUNT
+            |LINUX_AT_SYMLINK_NOFOLLOW))
+		return EINVAL;
 
 	if (lflag & LINUX_AT_EMPTY_PATH) {
 		/*
