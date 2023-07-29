@@ -1,4 +1,4 @@
-/*	$NetBSD: memfd.h,v 1.3 2023/07/29 14:54:02 riastradh Exp $	*/
+/*	$NetBSD: memfd.h,v 1.4 2023/07/29 17:54:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@ struct memfd {
 	struct uvm_object	*mfd_uobj;
 	size_t			mfd_size;
 	int			mfd_seals;
-	kmutex_t		mfd_lock;	/* for truncate */
 
 	struct timespec		mfd_btime;
 	struct timespec		mfd_atime;
