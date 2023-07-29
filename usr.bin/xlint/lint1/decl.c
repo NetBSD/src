@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.366 2023/07/29 07:49:14 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.367 2023/07/29 11:03:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.366 2023/07/29 07:49:14 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.367 2023/07/29 11:03:18 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -264,26 +264,27 @@ typedef_error(type_t *td, tspec_t t)
 	if (t != LONG)
 		goto invalid;
 
+	tspec_t lt;
 	if (t2 == INT)
-		td = gettyp(LONG);
+		lt = LONG;
 	else if (t2 == UINT)
-		td = gettyp(ULONG);
+		lt = ULONG;
 	else if (t2 == LONG)
-		td = gettyp(LLONG);
+		lt = LLONG;
 	else if (t2 == ULONG)
-		td = gettyp(ULLONG);
+		lt = ULLONG;
 	else if (t2 == FLOAT)
-		td = gettyp(DOUBLE);
+		lt = DOUBLE;
 	else if (t2 == DOUBLE)
-		td = gettyp(LDOUBLE);
+		lt = LDOUBLE;
 	else if (t2 == DCOMPLEX)
-		td = gettyp(LCOMPLEX);
+		lt = LCOMPLEX;
 	else
 		goto invalid;
 
 	/* modifying typedef with '%s'; only qualifiers allowed */
 	warning(5, "long");
-	td = block_dup_type(td);
+	td = block_dup_type(gettyp(lt));
 	td->t_typedef = true;
 	return td;
 
