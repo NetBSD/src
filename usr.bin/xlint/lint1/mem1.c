@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.71 2023/07/15 15:56:17 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.72 2023/07/29 10:22:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.71 2023/07/15 15:56:17 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.72 2023/07/29 10:22:50 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -199,12 +199,13 @@ mpool_free(memory_pool *pool)
 			debug_step("%s: freeing type '%s'",
 			    __func__, type_name(p));
 		else if (strcmp(item->descr, "tnode") == 0)
-			debug_step("%s: freeing node '%s' with type '%s'",
-			    __func__, op_name(((const tnode_t *)p)->tn_op),
-			    type_name(((const tnode_t *)p)->tn_type));
+			debug_step("%s: freeing node '%s'",
+			    __func__, op_name(((const tnode_t *)p)->tn_op));
 		else
 			debug_step("%s: freeing '%s' with %zu bytes",
 			    __func__, item->descr, item->size);
+		static void *(*volatile memset_ptr)(void *, int, size_t) = memset;
+		memset_ptr(p, 'Z', item->size);
 #endif
 		free(p);
 	}
