@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.15 2023/07/29 22:43:56 riastradh Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.16 2023/07/29 23:50:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.15 2023/07/29 22:43:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.16 2023/07/29 23:50:03 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -62,7 +62,7 @@ ww_acquire_ctx_compare(void *cookie __unused, const void *va, const void *vb)
 	if (ctx_a->wwx_ticket < ctx_b->wwx_ticket)
 		return -1;
 	if (ctx_a->wwx_ticket > ctx_b->wwx_ticket)
-		return -1;
+		return +1;
 	return 0;
 }
 
@@ -76,7 +76,7 @@ ww_acquire_ctx_compare_key(void *cookie __unused, const void *vn,
 	if (ctx->wwx_ticket < ticket)
 		return -1;
 	if (ctx->wwx_ticket > ticket)
-		return -1;
+		return +1;
 	return 0;
 }
 
