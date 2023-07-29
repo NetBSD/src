@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.76 2023/07/29 15:04:29 christos Exp $  
+	$NetBSD: syscalls.master,v 1.77 2023/07/29 15:05:31 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -601,7 +601,7 @@
 356	UNIMPL		execveat
 357	UNIMPL		userfaultfd
 358	UNIMPL		membarrier
-369	UNIMPL		mlock2
+359	UNIMPL		mlock2
 360	UNIMPL		copy_file_range
 361	UNIMPL		preadv2
 362	UNIMPL		pwritev2
