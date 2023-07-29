@@ -1,4 +1,4 @@
-/*	$NetBSD: memfd.h,v 1.1 2023/07/29 08:46:47 riastradh Exp $	*/
+/*	$NetBSD: memfd.h,v 1.2 2023/07/29 08:46:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -25,12 +25,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _SYS_MISCFD_H_
 #define _SYS_MISCFD_H_
 
+#include <sys/types.h>
+
+#include <sys/mutex.h>		/* for kmutex_t */
 #include <sys/syslimits.h>	/* for NAME_MAX */
 #include <sys/timespec.h>	/* for struct timespec */
-#include <sys/mutex.h>		/* for kmutex_t */
 
 struct memfd {
 	char			mfd_name[NAME_MAX+1];
@@ -44,4 +47,4 @@ struct memfd {
 	struct timespec		mfd_mtime;
 };
 
-#endif /* _SYS_MISCFD_H_ */
+#endif	/* _SYS_MISCFD_H_ */
