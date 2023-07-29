@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.75 2023/07/29 06:44:44 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.76 2023/07/29 07:49:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.75 2023/07/29 06:44:44 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.76 2023/07/29 07:49:14 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -254,7 +254,7 @@ main(int argc, char *argv[])
 	lwarn = LWARN_ALL;
 	debug_step("main lwarn = %d", lwarn);
 
-	check_global_symbols();
+	end_translation_unit();
 
 	outclose();
 
