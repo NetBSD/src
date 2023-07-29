@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.133.2.2 2023/06/21 19:02:18 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.133.2.3 2023/07/29 10:07:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.133.2.2 2023/06/21 19:02:18 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.133.2.3 2023/07/29 10:07:59 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -335,7 +335,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x55] = "Xeon Scalable (Skylake, Cascade Lake, Copper Lake)",
 				[0x56] = "Xeon D-1500 (Broadwell)",
 				[0x57] = "Xeon Phi [357]200 (Knights Landing)",
-				[0x5a] = "Atom E3500",
+				[0x5a] = "Atom Z3500",
 				[0x5c] = "Atom (Goldmont)",
 				[0x5d] = "Atom X3-C3000 (Silvermont)",
 				[0x5e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
@@ -361,8 +361,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0xa6] = "10th gen Core (Comet Lake)",
 				[0xa7] = "11th gen Core (Rocket Lake)",
 				[0xa8] = "11th gen Core (Rocket Lake)",
-				[0xba] = "13th gen Core (Raptor Lake)",
 				[0xb7] = "13th gen Core (Raptor Lake)",
+				[0xba] = "13th gen Core (Raptor Lake)",
+				[0xbe] = "Core i3-N3xx N[12]xx Nxx Atom x7xxxE (Alder Lake-N)",
 				[0xbf] = "13th gen Core (Raptor Lake)",
 			},
 			"Pentium Pro, II or III",	/* Default */
