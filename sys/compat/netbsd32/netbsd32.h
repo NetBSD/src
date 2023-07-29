@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.141 2023/02/12 16:28:32 andvar Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.142 2023/07/29 12:38:25 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1018,6 +1018,19 @@ typedef netbsd32_pointer_t netbsd32_uuidp_t;
 typedef netbsd32_pointer_t netbsd32_keventp_t;
 
 struct netbsd32_kevent {
+	netbsd32_uintptr_t	ident;
+	uint32_t		filter;
+	uint32_t		flags;
+	uint32_t		fflags;
+	netbsd32_int64		data;
+	netbsd32_pointer_t	udata;
+	netbsd32_uint64		ext[4];
+};
+
+/* from <compat/sys/event.h> */
+typedef netbsd32_pointer_t netbsd32_kevent100p_t;
+
+struct netbsd32_kevent100 {
 	netbsd32_uintptr_t	ident;
 	uint32_t		filter;
 	uint32_t		flags;
