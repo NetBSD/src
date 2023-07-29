@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 2023/07/21 15:00:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.101 2023/07/29 10:34:24 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -90,9 +90,6 @@ err-msgs.h: err.c
 CLEANFILES+=	err-msgs.h
 DPSRCS+=	err-msgs.h
 CPPFLAGS+=	-I.
-
-externs1.h: err-msgs.h
-${SRCS:Nerr.c}: err-msgs.h
 
 add-test: .PHONY
 	@set -eu; \

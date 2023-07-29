@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.196 2023/07/28 21:50:03 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.197 2023/07/29 10:34:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,7 +33,6 @@
  */
 
 #include "lint.h"
-#include "err-msgs.h"
 #include "op.h"
 
 /*
