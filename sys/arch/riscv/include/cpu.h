@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.12 2023/06/12 19:04:14 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.13 2023/07/29 06:59:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -86,23 +86,23 @@ struct cpu_info {
 	struct pmap_tlb_info *ci_tlb_info;
 
 #ifdef MULTIPROCESSOR
-
 	volatile u_long ci_flags;
-	volatile u_long ci_request_ipis;
-					/* bitmask of IPIs requested */
-	u_long ci_active_ipis;	/* bitmask of IPIs being serviced */
-
-	struct evcnt ci_evcnt_all_ipis;	/* aggregated IPI counter */
-	struct evcnt ci_evcnt_per_ipi[NIPIS];	/* individual IPI counters */
-	struct evcnt ci_evcnt_synci_onproc_rqst;
-	struct evcnt ci_evcnt_synci_deferred_rqst;
-	struct evcnt ci_evcnt_synci_ipi_rqst;
-
 #define	CPUF_PRIMARY	__BIT(0)		/* CPU is primary CPU */
 #define	CPUF_PRESENT	__BIT(1)		/* CPU is present */
 #define	CPUF_RUNNING	__BIT(2)		/* CPU is running */
 #define	CPUF_PAUSED	__BIT(3)		/* CPU is paused */
 #define	CPUF_USERPMAP	__BIT(4)		/* CPU has a user pmap activated */
+
+	volatile u_long ci_request_ipis;
+						/* bitmask of IPIs requested */
+	u_long ci_active_ipis;			/* bitmask of IPIs being serviced */
+
+	struct evcnt ci_evcnt_all_ipis;		/* aggregated IPI counter */
+	struct evcnt ci_evcnt_per_ipi[NIPIS];	/* individual IPI counters */
+	struct evcnt ci_evcnt_synci_onproc_rqst;
+	struct evcnt ci_evcnt_synci_deferred_rqst;
+	struct evcnt ci_evcnt_synci_ipi_rqst;
+
 	kcpuset_t *ci_shootdowncpus;
 	kcpuset_t *ci_multicastcpus;
 	kcpuset_t *ci_watchcpus;
