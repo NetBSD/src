@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.25 2023/06/21 22:26:57 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.26 2023/07/29 10:43:36 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.25 2023/06/21 22:25:32 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.26 2023/07/29 10:42:39 martin Exp
  */
 
 /*
@@ -5875,8 +5875,11 @@
 #define	PCI_PRODUCT_INTEL_ADL_PCIE_RP_0	0x460d		/* Alder Lake PCIe G5 Root Port 0 (x16) */
 #define	PCI_PRODUCT_INTEL_ADL_XDCI	0x460e		/* Alder Lake USB-C Device (xDCI) */
 #define	PCI_PRODUCT_INTEL_ADL_S_2_0_HOST	0x4610		/* Alder Lake (S,2+0) Host */
+#define	PCI_PRODUCT_INTEL_ADL_N_8_HOST	0x4617		/* Alder Lake-N (0+8) Host */
 #define	PCI_PRODUCT_INTEL_ADL_U15_1_4_HOST	0x4619		/* Alder Lake (U15,1+4) Host */
 #define	PCI_PRODUCT_INTEL_ADL_U9_1_4_HOST	0x461a		/* Alder Lake (U9,1+4) Host */
+#define	PCI_PRODUCT_INTEL_ADL_N_4_N2_HOST	0x461b		/* Alder Lake-N (0+4, N200) Host */
+#define	PCI_PRODUCT_INTEL_ADL_N_4_N1_HOST	0x461c		/* Alder Lake-N (0+4, N100) Host */
 #define	PCI_PRODUCT_INTEL_ADL_DTT	0x461d		/* Alder Lake Dynamic Tuning Technology */
 #define	PCI_PRODUCT_INTEL_ADL_XHCI	0x461e		/* Alder Lake USB-C Host (xHCI) */
 #define	PCI_PRODUCT_INTEL_ADL_TBT_PCIE_3	0x461f		/* Alder Lake Thunderbolt PCIe 3 */
@@ -5885,6 +5888,7 @@
 #define	PCI_PRODUCT_INTEL_ADL_H_4_4_HOST	0x4629		/* Alder Lake (H,4+4) Host */
 #define	PCI_PRODUCT_INTEL_ADL_HX_4_4_HOST	0x462b		/* Alder Lake (HX,4+4) Host */
 #define	PCI_PRODUCT_INTEL_ADL_PCIE_RP_1	0x462d		/* Alder Lake PCIe G5 Root Port 1 (x8) */
+#define	PCI_PRODUCT_INTEL_ADL_N_IPU	0x462e		/* Alder Lake-N Image Processing Unit */
 #define	PCI_PRODUCT_INTEL_ADL_TBT_PCIE_2	0x462f		/* Alder Lake Thunderbolt PCIe 2 */
 #define	PCI_PRODUCT_INTEL_ADL_S_4_0_HOST	0x4630		/* Alder Lake (S,4+0) Host */
 #define	PCI_PRODUCT_INTEL_ADL_HX_8_8_HOST	0x4637		/* Alder Lake (HX,8+8) Host */
@@ -5896,15 +5900,18 @@
 #define	PCI_PRODUCT_INTEL_ADL_S_6_4_HOST	0x4648		/* Alder Lake (S,6+4) Host */
 #define	PCI_PRODUCT_INTEL_ADL_H_6_4_HOST	0x4649		/* Alder Lake (H,6+4) Host */
 #define	PCI_PRODUCT_INTEL_ADL_PCIE_RP_2	0x464d		/* Alder Lake PCIe G4 Root Port 2 (x4) */
+#define	PCI_PRODUCT_INTEL_ADL_N_XHCI	0x464e		/* Alder Lake-N USB Host (xHCI) */
 #define	PCI_PRODUCT_INTEL_ADL_GNA	0x464f		/* Alder Lake Gauss Newton Algorithm */
 #define	PCI_PRODUCT_INTEL_ADL_S_6_0_HOST	0x4650		/* Alder Lake (S,6+0) Host */
 #define	PCI_PRODUCT_INTEL_ADL_IPU	0x465d		/* Alder Lake Image Processing Unit */
+#define	PCI_PRODUCT_INTEL_ADL_N_XDCI	0x465e		/* Alder Lake-N USB Device (xDCI) */
 #define	PCI_PRODUCT_INTEL_ADL_S_8_8_HOST	0x4660		/* Alder Lake (S,8+8) Host */
 #define	PCI_PRODUCT_INTEL_ADL_S_8_4_HOST	0x4668		/* Alder Lake (S,8+4) Host */
 #define	PCI_PRODUCT_INTEL_ADL_TBTDMA_1	0x466d		/* Alder Lake Thunderbolt DMA 1 */
 #define	PCI_PRODUCT_INTEL_ADL_TBT_PCIE_0	0x466e		/* Alder Lake Thunderbolt PCIe 0 */
-#define	PCI_PRODUCT_INTEL_ADL_TRACE	0x466f		/* Alder Lake Trace Hub (Compute Die?XXX) */
+#define	PCI_PRODUCT_INTEL_ADL_TRACE	0x466f		/* Alder Lake Trace Hub (Compute Die) */
 #define	PCI_PRODUCT_INTEL_ADL_CLSRAM	0x467d		/* Alder Lake Crash Log & Telemetry */
+#define	PCI_PRODUCT_INTEL_ADL_N_GNA	0x467e		/* Alder Lake-N Gauss Newton Algorithm */
 #define	PCI_PRODUCT_INTEL_ADL_VMD	0x467f		/* Alder Lake Volume Management Device */
 #define	PCI_PRODUCT_INTEL_ADL_IGD_1	0x4680		/* Alder Lake Graphics (32EU) */
 #define	PCI_PRODUCT_INTEL_ADL_IGD_2	0x4682		/* Alder Lake Graphics (24EU) */
@@ -5919,6 +5926,8 @@
 #define	PCI_PRODUCT_INTEL_ADL_IGD_11	0x46aa		/* Alder Lake Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_IGD_12	0x46b3		/* Alder Lake Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_IGD_13	0x46c3		/* Alder Lake Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_N_IGD_1	0x46d0		/* Alder Lake Graphics (32EU) */
+#define	PCI_PRODUCT_INTEL_ADL_N_IGD_2	0x46d1		/* Alder Lake Graphics (24EU) */
 #define	PCI_PRODUCT_INTEL_EHL_ESPI	0x4b00		/* Elkhart Lake eSPI */
 #define	PCI_PRODUCT_INTEL_EHL_P2SB	0x4b20		/* Elkhart Lake P2SB */
 #define	PCI_PRODUCT_INTEL_EHL_PMC	0x4b21		/* Elkhart Lake PMC */
@@ -6103,6 +6112,7 @@
 #define	PCI_PRODUCT_INTEL_EP80579_LAN_2	0x5044		/* EP80579 LAN */
 #define	PCI_PRODUCT_INTEL_EP80579_LAN_3	0x5048		/* EP80579 LAN */
 #define	PCI_PRODUCT_INTEL_6HS_LP_ESPI	0x5182		/* 600 Series PCH-LP eSPI */
+#define	PCI_PRODUCT_INTEL_7HS_P_ESPI	0x519d		/* 700 Series PCH-P eSPI */
 #define	PCI_PRODUCT_INTEL_6HS_LP_P2SB	0x51a0		/* 600 Series PCH-LP P2SB */
 #define	PCI_PRODUCT_INTEL_6HS_LP_PMC	0x51a1		/* 600 Series PCH-LP PMC */
 #define	PCI_PRODUCT_INTEL_6HS_LP_SMB	0x51a3		/* 600 Series PCH-LP SMBus */
@@ -6128,6 +6138,7 @@
 #define	PCI_PRODUCT_INTEL_6HS_LP_I2C_5	0x51c6		/* 600 Series PCH-LP I2C 5 */
 #define	PCI_PRODUCT_INTEL_6HS_LP_UART_2	0x51c7		/* 600 Series PCH-LP UART 2 */
 #define	PCI_PRODUCT_INTEL_6HS_LP_HDA	0x51c8		/* 600 Series PCH-LP HD Audio */
+#define	PCI_PRODUCT_INTEL_7HS_P_HDA	0x51ca		/* 700 Series PCH HD Audio */
 #define	PCI_PRODUCT_INTEL_6HS_LP_THC_0	0x51d0		/* 600 Series PCH-LP THC 0 */
 #define	PCI_PRODUCT_INTEL_6HS_LP_THC_1	0x51d1		/* 600 Series PCH-LP THC 1 */
 #define	PCI_PRODUCT_INTEL_6HS_LP_AHCI	0x51d3		/* 600 Series PCH-LP SATA (AHCI) */
@@ -6153,6 +6164,52 @@
 #define	PCI_PRODUCT_INTEL_6HS_LP_ISH	0x51fc		/* 600 Series PCH-LP Integrated Sensor Hub */
 #define	PCI_PRODUCT_INTEL_6HS_LP_UFS	0x51ff		/* 600 Series PCH-LP UFS */
 #define	PCI_PRODUCT_INTEL_80312_ATU	0x530d		/* 80310 ATU */
+#define	PCI_PRODUCT_INTEL_ADL_N_ESPI	0x5481		/* Alder Lake-N eSPI */
+#define	PCI_PRODUCT_INTEL_ADL_N_P2SB	0x54a0		/* Alder Lake-N P2SB */
+#define	PCI_PRODUCT_INTEL_ADL_N_PMC	0x54a1		/* Alder Lake-N PMC */
+#define	PCI_PRODUCT_INTEL_ADL_N_SMB	0x54a3		/* Alder Lake-N SMBus */
+#define	PCI_PRODUCT_INTEL_ADL_N_SPI_FLASH	0x54a4		/* Alder Lake-N SPI (FLASH) */
+#define	PCI_PRODUCT_INTEL_ADL_N_TRACE_1	0x54a6		/* Alder Lake-N Trace Hub (PCH) */
+#define	PCI_PRODUCT_INTEL_ADL_N_UART_0	0x54a8		/* Alder Lake-N UART 0 */
+#define	PCI_PRODUCT_INTEL_ADL_N_UART_1	0x54a9		/* Alder Lake-N UART 1 */
+#define	PCI_PRODUCT_INTEL_ADL_N_GSPI_0	0x54aa		/* Alder Lake-N GSPI 0 */
+#define	PCI_PRODUCT_INTEL_ADL_N_GSPI_1	0x54ab		/* Alder Lake-N GSPI 1 */
+#define	PCI_PRODUCT_INTEL_ADL_N_PCIE_RP_9	0x54b0		/* Alder Lake-N PCIe Root Port 9 */
+#define	PCI_PRODUCT_INTEL_ADL_N_PCIE_RP_10	0x54b1		/* Alder Lake-N PCIe Root Port 10 */
+#define	PCI_PRODUCT_INTEL_ADL_N_PCIE_RP_11	0x54b2		/* Alder Lake-N PCIe Root Port 11 */
+#define	PCI_PRODUCT_INTEL_ADL_N_PCIE_RP_12	0x54b3		/* Alder Lake-N PCIe Root Port 12 */
+#define	PCI_PRODUCT_INTEL_ADL_N_PCIE_RP_1	0x54b8		/* Alder Lake-N PCIe Root Port 1 */
+#define	PCI_PRODUCT_INTEL_ADL_N_PCIE_RP_2	0x54b9		/* Alder Lake-N PCIe Root Port 2 */
+#define	PCI_PRODUCT_INTEL_ADL_N_PCIE_RP_3	0x54ba		/* Alder Lake-N PCIe Root Port 3 */
+#define	PCI_PRODUCT_INTEL_ADL_N_PCIE_RP_4	0x54bb		/* Alder Lake-N PCIe Root Port 4 */
+#define	PCI_PRODUCT_INTEL_ADL_N_PCIE_RP_7	0x54be		/* Alder Lake-N PCIe Root Port 7 */
+#define	PCI_PRODUCT_INTEL_ADL_N_SCS_EMMC	0x54c4		/* Alder Lake-N eMMC */
+#define	PCI_PRODUCT_INTEL_ADL_N_I2C_4	0x54c5		/* Alder Lake-N I2C 4 */
+#define	PCI_PRODUCT_INTEL_ADL_N_I2C_5	0x54c6		/* Alder Lake-N I2C 5 */
+#define	PCI_PRODUCT_INTEL_ADL_N_UART_2	0x54c7		/* Alder Lake-N UART 2 */
+#define	PCI_PRODUCT_INTEL_ADL_N_HDA_1	0x54c8		/* Alder Lake-N HD Audio */
+#define	PCI_PRODUCT_INTEL_ADL_N_THC_0	0x54d0		/* Alder Lake-N Touch Host Controller 0 */
+#define	PCI_PRODUCT_INTEL_ADL_N_THC_1	0x54d1		/* Alder Lake-N Touch Host Controller 1 */
+#define	PCI_PRODUCT_INTEL_ADL_N_AHCI	0x54d3		/* Alder Lake-N SATA (AHCI) */
+#define	PCI_PRODUCT_INTEL_ADL_N_UART_3	0x54da		/* Alder Lake-N UART 3 */
+#define	PCI_PRODUCT_INTEL_ADL_N_HECI_1	0x54e0		/* Alder Lake-N HECI 1 */
+#define	PCI_PRODUCT_INTEL_ADL_N_HECI_2	0x54e1		/* Alder Lake-N HECI 2 */
+#define	PCI_PRODUCT_INTEL_ADL_N_HECI_3	0x54e4		/* Alder Lake-N HECI 3 */
+#define	PCI_PRODUCT_INTEL_ADL_N_HECI_4	0x54e5		/* Alder Lake-N HECI 4 */
+#define	PCI_PRODUCT_INTEL_ADL_N_I2C_0	0x54e8		/* Alder Lake-N I2C 0 */
+#define	PCI_PRODUCT_INTEL_ADL_N_I2C_1	0x54e9		/* Alder Lake-N I2C 1 */
+#define	PCI_PRODUCT_INTEL_ADL_N_I2C_2	0x54ea		/* Alder Lake-N I2C 2 */
+#define	PCI_PRODUCT_INTEL_ADL_N_I2C_3	0x54eb		/* Alder Lake-N I2C 3 */
+#define	PCI_PRODUCT_INTEL_ADL_N_PCH_XHCI	0x54ed		/* Alder Lake-N PCH USB 3.2 Gen 2x1 xHCI */
+#define	PCI_PRODUCT_INTEL_ADL_N_PCH_XDCI	0x54ee		/* Alder Lake-N PCH USB 3.2 Gen 1x1 xDCI */
+#define	PCI_PRODUCT_INTEL_ADL_N_SSRAM	0x54ef		/* Alder Lake-N Shared SRAM */
+#define	PCI_PRODUCT_INTEL_ADL_N_CNVI_1	0x54f0		/* Alder Lake-N CNVi WiFi */
+#define	PCI_PRODUCT_INTEL_ADL_N_CNVI_2	0x54f1		/* Alder Lake-N CNVi WiFi */
+#define	PCI_PRODUCT_INTEL_ADL_N_CNVI_3	0x54f2		/* Alder Lake-N CNVi WiFi */
+#define	PCI_PRODUCT_INTEL_ADL_N_CNVI_4	0x54f3		/* Alder Lake-N CNVi WiFi */
+#define	PCI_PRODUCT_INTEL_ADL_N_GSPI_2	0x54fb		/* Alder Lake-N GSPI 2 */
+#define	PCI_PRODUCT_INTEL_ADL_N_ISH	0x54fc		/* Alder Lake-N Integrated Sensor Hub */
+#define	PCI_PRODUCT_INTEL_ADL_N_SCS_UFS	0x54ff		/* Alder Lake-N UFS */
 #define	PCI_PRODUCT_INTEL_I219_LM18	0x550a		/* I219-LM (18) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V18	0x550b		/* I219-V (18) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM19	0x550c		/* I219-LM (19) Ethernet Connection */
@@ -6357,6 +6414,68 @@
 #define	PCI_PRODUCT_INTEL_82443GX_NOAGP	0x71a2		/* 82443GX Host Bridge/Controller (AGP disabled) */
 #define	PCI_PRODUCT_INTEL_XMM7360	0x7360		/* XMM 7360 LTE Modem */
 #define	PCI_PRODUCT_INTEL_I740	0x7800		/* i740 Graphics Accelerator */
+#define	PCI_PRODUCT_INTEL_7HS_Z790_ESPI	0x7a04		/* Z790 eSPI */
+#define	PCI_PRODUCT_INTEL_7HS_H770_ESPI	0x7a05		/* H770 eSPI */
+#define	PCI_PRODUCT_INTEL_7HS_B760_ESPI	0x7a06		/* B760 eSPI */
+#define	PCI_PRODUCT_INTEL_7HS_P2SB	0x7a20		/* 700 Series PCH P2SB */
+#define	PCI_PRODUCT_INTEL_7HS_PMC	0x7a21		/* 700 Series PCH PMC */
+#define	PCI_PRODUCT_INTEL_7HS_SMB	0x7a23		/* 700 Series PCH SMBus */
+#define	PCI_PRODUCT_INTEL_7HS_SPI	0x7a24		/* 700 Series PCH SPI (FLASH) */
+#define	PCI_PRODUCT_INTEL_7HS_TRACE	0x7a26		/* 700 Series PCH Trace Hub */
+#define	PCI_PRODUCT_INTEL_7HS_SSRAM	0x7a27		/* 700 Series PCH Shared SRAM */
+#define	PCI_PRODUCT_INTEL_7HS_UART_0	0x7a28		/* 700 Series PCH UART 0 */
+#define	PCI_PRODUCT_INTEL_7HS_UART_1	0x7a29		/* 700 Series PCH UART 1 */
+#define	PCI_PRODUCT_INTEL_7HS_GSPI_0	0x7a2a		/* 700 Series PCH GSPI 0 */
+#define	PCI_PRODUCT_INTEL_7HS_GSPI_1	0x7a2b		/* 700 Series PCH GSPI 1 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_9	0x7a30		/* 700 Series PCH PCIe RP 9 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_10	0x7a31		/* 700 Series PCH PCIe RP 10 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_11	0x7a32		/* 700 Series PCH PCIe RP 11 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_12	0x7a33		/* 700 Series PCH PCIe RP 12 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_13	0x7a34		/* 700 Series PCH PCIe RP 13 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_14	0x7a35		/* 700 Series PCH PCIe RP 14 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_15	0x7a36		/* 700 Series PCH PCIe RP 15 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_16	0x7a37		/* 700 Series PCH PCIe RP 16 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_1	0x7a38		/* 700 Series PCH PCIe RP 1 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_2	0x7a39		/* 700 Series PCH PCIe RP 2 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_3	0x7a3a		/* 700 Series PCH PCIe RP 3 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_4	0x7a3b		/* 700 Series PCH PCIe RP 4 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_5	0x7a3c		/* 700 Series PCH PCIe RP 5 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_6	0x7a3d		/* 700 Series PCH PCIe RP 6 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_7	0x7a3e		/* 700 Series PCH PCIe RP 7 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_8	0x7a3f		/* 700 Series PCH PCIe RP 8 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_17	0x7a40		/* 700 Series PCH PCIe RP 17 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_18	0x7a41		/* 700 Series PCH PCIe RP 18 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_19	0x7a42		/* 700 Series PCH PCIe RP 19 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_20	0x7a43		/* 700 Series PCH PCIe RP 20 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_21	0x7a44		/* 700 Series PCH PCIe RP 21 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_22	0x7a45		/* 700 Series PCH PCIe RP 22 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_23	0x7a46		/* 700 Series PCH PCIe RP 23 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_24	0x7a47		/* 700 Series PCH PCIe RP 24 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_25	0x7a48		/* 700 Series PCH PCIe RP 25 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_26	0x7a49		/* 700 Series PCH PCIe RP 26 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_27	0x7a4a		/* 700 Series PCH PCIe RP 27 */
+#define	PCI_PRODUCT_INTEL_7HS_PCIE_28	0x7a4b		/* 700 Series PCH PCIe RP 28 */
+#define	PCI_PRODUCT_INTEL_7HS_I2C_0	0x7a4c		/* 700 Series PCH I2C 0 */
+#define	PCI_PRODUCT_INTEL_7HS_I2C_1	0x7a4d		/* 700 Series PCH I2C 1 */
+#define	PCI_PRODUCT_INTEL_7HS_I2C_2	0x7a4e		/* 700 Series PCH I2C 2 */
+#define	PCI_PRODUCT_INTEL_7HS_I2C_3	0x7a4f		/* 700 Series PCH I2C 3 */
+#define	PCI_PRODUCT_INTEL_7HS_HDA	0x7a50		/* 700 Series PCH HD Audio */
+#define	PCI_PRODUCT_INTEL_7HS_UART_3	0x7a5c		/* 700 Series PCH UART 3 */
+#define	PCI_PRODUCT_INTEL_7HS_XHCI	0x7a60		/* 700 Series PCH USB 3.2 Gen 2x2 xHCI */
+#define	PCI_PRODUCT_INTEL_7HS_XDCI	0x7a61		/* 700 Series PCH USB 3.2 Gen 1x1 xDCI */
+#define	PCI_PRODUCT_INTEL_7HS_D_AHCI	0x7a62		/* 700 Series PCH SATA (AHCI) */
+#define	PCI_PRODUCT_INTEL_7HS_HECI_1	0x7a68		/* 700 Series PCH HECI 1 */
+#define	PCI_PRODUCT_INTEL_7HS_HECI_2	0x7a69		/* 700 Series PCH HECI 2 */
+#define	PCI_PRODUCT_INTEL_7HS_IDER	0x7a6a		/* 700 Series PCH IDE-R */
+#define	PCI_PRODUCT_INTEL_7HS_KT	0x7a6b		/* 700 Series PCH KT */
+#define	PCI_PRODUCT_INTEL_7HS_HECI_3	0x7a6c		/* 700 Series PCH HECI 3 */
+#define	PCI_PRODUCT_INTEL_7HS_HECI_4	0x7a6d		/* 700 Series PCH HECI 4 */
+#define	PCI_PRODUCT_INTEL_7HS_ISH	0x7a78		/* 700 Series PCH Integrated Sensor Hub */
+#define	PCI_PRODUCT_INTEL_7HS_GSPI_3	0x7a79		/* 700 Series PCH GSPI 3 */
+#define	PCI_PRODUCT_INTEL_7HS_GSPI_2	0x7a7b		/* 700 Series PCH GSPI 2 */
+#define	PCI_PRODUCT_INTEL_7HS_I2C_4	0x7a7c		/* 700 Series PCH I2C 4 */
+#define	PCI_PRODUCT_INTEL_7HS_I2C_5	0x7a7d		/* 700 Series PCH I2C 5 */
+#define	PCI_PRODUCT_INTEL_7HS_UART_2	0x7a7e		/* 700 Series PCH UART 2 */
 #define	PCI_PRODUCT_INTEL_6HS_Q670_ESPI	0x7a83		/* Q670 eSPI */
 #define	PCI_PRODUCT_INTEL_6HS_Z690_ESPI	0x7a84		/* Z690 eSPI */
 #define	PCI_PRODUCT_INTEL_6HS_H670_ESPI	0x7a85		/* H670 eSPI */
@@ -7210,6 +7329,41 @@
 #define	PCI_PRODUCT_INTEL_4HS_V_PCIE_23	0xa3ed		/* 400 Series PCH-V PCIe Root Port 23 */
 #define	PCI_PRODUCT_INTEL_4HS_V_PCIE_24	0xa3ee		/* 400 Series PCH-V PCIe Root Port 24 */
 #define	PCI_PRODUCT_INTEL_4HS_V_CAVS	0xa3f0		/* 400 Series PCH-V cAVS */
+#define	PCI_PRODUCT_INTEL_RPL_S_8_16_HOST	0xa700		/* Raptor Lake (S,8+16) Host */
+#define	PCI_PRODUCT_INTEL_RPL_HX_8_16_HOST	0xa702		/* Raptor Lake (HX,8+16) Host */
+#define	PCI_PRODUCT_INTEL_RPL_S_8_8_HOST	0xa703		/* Raptor Lake (S,8+8) Host */
+#define	PCI_PRODUCT_INTEL_RPL_S_6_8_HOST	0xa704		/* Raptor Lake (S,6+8) Host */
+#define	PCI_PRODUCT_INTEL_RPL_S_6_4_HOST	0xa705		/* Raptor Lake (S,6+4) Host */
+#define	PCI_PRODUCT_INTEL_RPL_H_6_8_HOST	0xa706		/* Raptor Lake (H,6+8) Host */
+#define	PCI_PRODUCT_INTEL_RPL_H_4_8_HOST	0xa707		/* Raptor Lake (H,4+8) Host */
+#define	PCI_PRODUCT_INTEL_RPL_U_2_8_HOST	0xa708		/* Raptor Lake (U,2+8) Host */
+#define	PCI_PRODUCT_INTEL_RPL_PCIE_RP_0	0xa70d		/* Raptor Lake PCIe G5 Root Port 0 (x16) */
+#define	PCI_PRODUCT_INTEL_RPL_H_4_4_HOST	0xa716		/* Raptor Lake (H,4+4) Host */
+#define	PCI_PRODUCT_INTEL_RPL_HX_6_4_HOST	0xa719		/* Raptor Lake (HX,6+4) Host */
+#define	PCI_PRODUCT_INTEL_RPL_U_2_4_HOST	0xa71b		/* Raptor Lake (U,2+4) Host */
+#define	PCI_PRODUCT_INTEL_RPL_U_1_4_HOST	0xa71c		/* Raptor Lake (U,1+4) Host */
+#define	PCI_PRODUCT_INTEL_RPL_DTT	0xa71d		/* Raptor Lake Dynamic Tuning Technology */
+#define	PCI_PRODUCT_INTEL_RPL_XHCI	0xa71e		/* Raptor Lake USB-C Host (xHCI) */
+#define	PCI_PRODUCT_INTEL_RPL_HX_8_8_HOST	0xa728		/* Raptor Lake (HX,8+8) Host */
+#define	PCI_PRODUCT_INTEL_RPL_HX_8_12_HOST	0xa729		/* Raptor Lake (HX,8+12) Host */
+#define	PCI_PRODUCT_INTEL_RPL_HX_6_8_HOST	0xa72a		/* Raptor Lake (HX,6+8) Host */
+#define	PCI_PRODUCT_INTEL_RPL_PCIE_RP_1	0xa72d		/* Raptor Lake PCIe G5 Root Port 1 (x8) */
+#define	PCI_PRODUCT_INTEL_RPL_TBTDMA_0	0xa73e		/* Raptor Lake Thunderbolt DMA 0 */
+#define	PCI_PRODUCT_INTEL_RPL_PCIE_RP_2	0xa74d		/* Raptor Lake PCIe G4 Root Port 2 (x4) */
+#define	PCI_PRODUCT_INTEL_RPL_GNA	0xa74f		/* Raptor Lake Gauss Newton Algorithm */
+#define	PCI_PRODUCT_INTEL_RPL_TBTDMA_1	0xa76d		/* Raptor Lake Thunderbolt DMA 1 */
+#define	PCI_PRODUCT_INTEL_RPL_TRACE	0xa76f		/* Raptor Lake Trace Hub (Compute Die) */
+#define	PCI_PRODUCT_INTEL_RPL_CLSRAM	0xa77d		/* Raptor Lake Crash Log & Telemetry */
+#define	PCI_PRODUCT_INTEL_RPL_VMD	0xa77f		/* Raptor Lake Volume Management Device */
+#define	PCI_PRODUCT_INTEL_RPL_IGD_1	0xa780		/* Raptor Lake Graphics (32EU) */
+#define	PCI_PRODUCT_INTEL_RPL_IGD_2	0xa782		/* Raptor Lake Graphics (24EU) */
+#define	PCI_PRODUCT_INTEL_RPL_IGD_3	0xa783		/* Raptor Lake Graphics (16EU) */
+#define	PCI_PRODUCT_INTEL_RPL_IGD_4	0xa788		/* Raptor Lake Graphics (32EU) */
+#define	PCI_PRODUCT_INTEL_RPL_IGD_5	0xa78b		/* Raptor Lake Graphics (16EU) */
+#define	PCI_PRODUCT_INTEL_RPL_IGD_6	0xa7a0		/* Raptor Lake Graphics (96 or 80EU) */
+#define	PCI_PRODUCT_INTEL_RPL_IGD_7	0xa7a1		/* Raptor Lake Graphics (96 or 80EU) */
+#define	PCI_PRODUCT_INTEL_RPL_IGD_8	0xa7a8		/* Raptor Lake Graphics (64 or 48EU) */
+#define	PCI_PRODUCT_INTEL_RPL_IGD_9	0xa7a9		/* Raptor Lake Graphics (64 or 48EU) */
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* S21152BA,S21154AE/BE PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_21555	0xb555		/* 21555 Non-Transparent PCI-PCI Bridge */
