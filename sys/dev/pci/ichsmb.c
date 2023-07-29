@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.81 2022/09/22 14:45:33 riastradh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.81.4.1 2023/07/29 10:50:05 martin Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.44 2020/10/07 11:23:05 jsg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.81 2022/09/22 14:45:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.81.4.1 2023/07/29 10:50:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,6 +138,7 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_GLK_SMB:
 		case PCI_PRODUCT_INTEL_EHL_SMB:
 		case PCI_PRODUCT_INTEL_JSL_SMB:
+		case PCI_PRODUCT_INTEL_ADL_N_SMB:
 		case PCI_PRODUCT_INTEL_C600_SMBUS:
 		case PCI_PRODUCT_INTEL_C600_SMB_0:
 		case PCI_PRODUCT_INTEL_C600_SMB_1:
@@ -155,6 +156,7 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_5HS_LP_SMB:
 		case PCI_PRODUCT_INTEL_6HS_H_SMB:
 		case PCI_PRODUCT_INTEL_6HS_LP_SMB:
+		case PCI_PRODUCT_INTEL_7HS_SMB:
 			return 1;
 		}
 	}
@@ -423,7 +425,7 @@ timeout:
 	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, SMB_HS);
 	if ((st & SMB_HS_FAILED) == 0) {
 		snprintb(fbuf, sizeof(fbuf), SMB_HS_BITS, st);
-		aprint_error_dev(sc->sc_dev, "abort failed, status %s\n",
+		device_printf(sc->sc_dev, "abort failed, status %s\n",
 		    fbuf);
 	}
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SMB_HS, st);
