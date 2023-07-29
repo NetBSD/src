@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_event.c,v 1.12 2014/09/05 05:26:26 matt Exp $	*/
+/*	$NetBSD: netbsd32_event.c,v 1.13 2023/07/29 12:38:25 rin Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.12 2014/09/05 05:26:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.13 2023/07/29 12:38:25 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.12 2014/09/05 05:26:26 matt Exp
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+#include <compat/netbsd32/netbsd32_event.h>
 
 static int
 netbsd32_kevent_fetch_timeout(const void *src, void *dest, size_t length)
@@ -91,38 +92,44 @@ netbsd32_kevent_put_events(void *ctx, struct kevent *events,
 }
 
 int
-netbsd32___kevent50(struct lwp *l,
-    const struct netbsd32___kevent50_args *uap, register_t *retval)
+netbsd32_kevent1(register_t *retval, int fd,
+    const netbsd32_keventp_t changelist, netbsd32_size_t nchanges,
+    netbsd32_keventp_t eventlist, netbsd32_size_t nevents,
+    netbsd32_timespecp_t timeout, struct kevent_ops *kops)
+{
+	const size_t maxalloc = KQ_NEVENTS;
+	int error;
+
+	kops->keo_private =
+	    kmem_alloc(maxalloc * sizeof(struct netbsd32_kevent), KM_SLEEP);
+
+	error = kevent1(retval, fd, NETBSD32PTR64(changelist), nchanges,
+	    NETBSD32PTR64(eventlist), nevents, NETBSD32PTR64(timeout), kops);
+
+	kmem_free(kops->keo_private, maxalloc * sizeof(struct netbsd32_kevent));
+	return error;
+}
+
+int
+netbsd32___kevent100(struct lwp *l,
+    const struct netbsd32___kevent100_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
-		syscallarg(netbsd32_keventp_t) changelist;
+		syscallarg(const netbsd32_keventp_t) changelist;
 		syscallarg(netbsd32_size_t) nchanges;
 		syscallarg(netbsd32_keventp_t) eventlist;
 		syscallarg(netbsd32_size_t) nevents;
 		syscallarg(netbsd32_timespecp_t) timeout;
 	} */
-	int error;
-	size_t maxalloc, nchanges, nevents;
-	struct kevent_ops netbsd32_kevent_ops = {
+	struct kevent_ops kops = {
 		.keo_fetch_timeout = netbsd32_kevent_fetch_timeout,
 		.keo_fetch_changes = netbsd32_kevent_fetch_changes,
 		.keo_put_events = netbsd32_kevent_put_events,
 	};
 
-	nchanges = SCARG(uap, nchanges);
-	nevents = SCARG(uap, nevents);
-	maxalloc = KQ_NEVENTS;
-
-	netbsd32_kevent_ops.keo_private =
-	    kmem_alloc(maxalloc * sizeof(struct netbsd32_kevent), KM_SLEEP);
-
-	error = kevent1(retval, SCARG(uap, fd),
-	    NETBSD32PTR64(SCARG(uap, changelist)), nchanges,
-	    NETBSD32PTR64(SCARG(uap, eventlist)), nevents,
-	    NETBSD32PTR64(SCARG(uap, timeout)), &netbsd32_kevent_ops);
-
-	kmem_free(netbsd32_kevent_ops.keo_private,
-	    maxalloc * sizeof(struct netbsd32_kevent));
-	return error;
+	return netbsd32_kevent1(retval, SCARG(uap, fd),
+	    SCARG(uap, changelist), SCARG(uap, nchanges),
+	    SCARG(uap, eventlist), SCARG(uap, nevents),
+	    SCARG(uap, timeout), &kops);
 }

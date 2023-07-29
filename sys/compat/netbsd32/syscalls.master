@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.141 2021/09/20 01:07:45 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.142 2023/07/29 12:38:25 rin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -783,9 +783,9 @@
 344	NOARGS		{ int|sys||kqueue(void); }
 345	COMPAT_50 MODULAR compat_netbsd32_50	\
 			{ int|netbsd32||kevent(int fd, \
-			    netbsd32_keventp_t changelist, \
+			    netbsd32_kevent100p_t changelist, \
 			    netbsd32_size_t nchanges, \
-			    netbsd32_keventp_t eventlist, \
+			    netbsd32_kevent100p_t eventlist, \
 			    netbsd32_size_t nevents, \
 			    netbsd32_timespec50p_t timeout); }
 ; Scheduling system calls.
@@ -1016,10 +1016,11 @@
 			    const netbsd32_timespecp_t ts, \
 			    lwpid_t unpark, const netbsd32_voidp hint, \
 			    const netbsd32_voidp unparkhint); }
-435	STD 		{ int|netbsd32|50|kevent(int fd, \
-			    const netbsd32_keventp_t changelist, \
+435	COMPAT_100 MODULAR compat_netbsd32_100	\
+			{ int|netbsd32|50|kevent(int fd, \
+			    const netbsd32_kevent100p_t changelist, \
 			    netbsd32_size_t nchanges, \
-			    netbsd32_keventp_t eventlist, \
+			    netbsd32_kevent100p_t eventlist, \
 			    netbsd32_size_t nevents, \
 			    const netbsd32_timespecp_t timeout); }
 436	STD 		{ int|netbsd32|50|pselect(int nd, \
@@ -1213,3 +1214,13 @@
 			    acl_type_t type, netbsd32_aclp_t aclp); }
 499	STD		{ long|netbsd32||lpathconf(const netbsd32_charp path, \
 			    int name); }
+500	UNIMPL		memfd_create
+501	STD		{ int|netbsd32|100|kevent(int fd, \
+			    const netbsd32_keventp_t changelist, \
+			    netbsd32_size_t nchanges, \
+			    netbsd32_keventp_t eventlist, \
+			    netbsd32_size_t nevents, \
+			    const netbsd32_timespecp_t timeout); }
+502	UNIMPL		epoll_create1
+503	UNIMPL		epoll_ctl
+504	UNIMPL		epoll_pwait2
