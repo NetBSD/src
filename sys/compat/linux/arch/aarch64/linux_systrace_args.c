@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.6 2023/07/28 19:01:44 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.7 2023/07/29 06:50:47 rin Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
