@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_90.c,v 1.1 2019/09/22 22:59:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_90.c,v 1.2 2023/07/29 13:57:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_90.c,v 1.1 2019/09/22 22:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_90.c,v 1.2 2023/07/29 13:57:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -152,7 +152,8 @@ static struct syscall_package compat_netbsd32_90_syscalls[] = {
 	{ 0, 0, NULL }
 }; 
 
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32_90, "compat_netbsd32,compat_90");
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_90, "compat_netbsd32_100,compat_90");
+
 
 static int
 compat_netbsd32_90_modcmd(modcmd_t cmd, void *arg)
