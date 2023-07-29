@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.213 2023/07/21 06:02:07 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.214 2023/07/29 10:45:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.213 2023/07/21 06:02:07 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.214 2023/07/29 10:45:00 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -481,22 +481,6 @@ print_stack_trace(void)
 	 */
 	for (top = top->by; top != NULL; top = top->by)
 		printf("\tincluded from %s(%d)\n", top->filename, top->lineno);
-}
-
-/*
- * print a list of the messages with their ids
- */
-void
-msglist(void)
-{
-	size_t i;
-
-	for (i = 0; i < sizeof(msgs) / sizeof(msgs[0]); i++) {
-		if (msgs[i][0] != '\0')
-			printf("%zu\t%s\n", i, msgs[i]);
-		else
-			printf("---\t(no longer used)\n");
-	}
 }
 
 /*
