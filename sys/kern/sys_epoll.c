@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_epoll.c,v 1.1 2023/07/28 18:19:01 christos Exp $	*/
+/*	$NetBSD: sys_epoll.c,v 1.2 2023/07/29 04:06:32 pgoyette Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_epoll.c,v 1.1 2023/07/28 18:19:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_epoll.c,v 1.2 2023/07/29 04:06:32 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -325,7 +325,7 @@ epoll_ctl_common(struct lwp *l, register_t *retval, int epfd, int op, int fd,
 		return epoll_delete_all_events(retval, epfd, fd);
 
 	default:
-		DPRINTF(("%s: invalid op %d\n", ___func__, op));
+		DPRINTF(("%s: invalid op %d\n", __func__, op));
 		return EINVAL;
 	}
 
