@@ -1,4 +1,4 @@
-/*	$NetBSD: t_memfd_create.c,v 1.1 2023/07/29 12:16:34 christos Exp $	*/
+/*	$NetBSD: t_memfd_create.c,v 1.2 2023/07/29 16:24:35 rin Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_memfd_create.c,v 1.1 2023/07/29 12:16:34 christos Exp $");
+__RCSID("$NetBSD: t_memfd_create.c,v 1.2 2023/07/29 16:24:35 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -106,7 +106,7 @@ ATF_TC_BODY(read_write, tc)
 	RL(write(fd, write_buf, sizeof(write_buf)));
 	offset = lseek(fd, 0, SEEK_CUR);
 	ATF_REQUIRE_EQ_MSG(offset, sizeof(write_buf),
-	    "File offset not set after write (%ld != %ld)", offset,
+	    "File offset not set after write (%jd != %zu)", (intmax_t)offset,
 	    sizeof(write_buf));
 
 	RZ(lseek(fd, 0, SEEK_SET));
@@ -114,7 +114,7 @@ ATF_TC_BODY(read_write, tc)
 	RL(read(fd, read_buf, sizeof(read_buf)));
 	offset = lseek(fd, 0, SEEK_CUR);
 	ATF_REQUIRE_EQ_MSG(offset, sizeof(read_buf),
-	    "File offset not set after read (%ld != %ld)", offset,
+	    "File offset not set after read (%jd != %zu)", (intmax_t)offset,
 	    sizeof(read_buf));
 
 	for (size_t i = 0; i < sizeof(read_buf); i++)
@@ -143,20 +143,20 @@ ATF_TC_BODY(truncate, tc)
 
 	RL(fstat(fd, &st));
 	ATF_REQUIRE_EQ_MSG(st.st_size, sizeof(write_buf),
-	    "Write did not grow size to %ld (is %ld)", sizeof(write_buf),
-	    st.st_size);
+	    "Write did not grow size to %zu (is %jd)", sizeof(write_buf),
+	    (intmax_t)st.st_size);
 
 	RL(ftruncate(fd, sizeof(write_buf)/2));
 	RL(fstat(fd, &st));
 	ATF_REQUIRE_EQ_MSG(st.st_size, sizeof(write_buf)/2,
-	    "Truncate did not shrink size to %ld (is %ld)",
-	    sizeof(write_buf)/2, st.st_size);
+	    "Truncate did not shrink size to %zu (is %jd)",
+	    sizeof(write_buf)/2, (intmax_t)st.st_size);
 
 	RL(ftruncate(fd, sizeof(read_buf)));
 	RL(fstat(fd, &st));
 	ATF_REQUIRE_EQ_MSG(st.st_size, sizeof(read_buf),
-	    "Truncate did not grow size to %ld (is %ld)", sizeof(read_buf),
-	    st.st_size);
+	    "Truncate did not grow size to %zu (is %jd)", sizeof(read_buf),
+	    (intmax_t)st.st_size);
 
 	RZ(lseek(fd, 0, SEEK_SET));
 	RL(read(fd, read_buf, sizeof(read_buf)));
