@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.365 2023/07/29 07:26:53 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.366 2023/07/29 07:49:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.365 2023/07/29 07:26:53 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.366 2023/07/29 07:49:14 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3095,23 +3095,15 @@ check_global_variable(const sym_t *sym)
 		check_static_global_variable(sym);
 }
 
-/*
- * Called after the entire translation unit has been parsed.
- * Changes tentative definitions into definitions.
- * Performs some tests on global symbols. Detected problems are:
- * - defined variables of incomplete type
- * - constant variables which are not initialized
- * - static symbols which are never used
- */
 void
-check_global_symbols(void)
+end_translation_unit(void)
 {
-	sym_t *sym;
 
 	if (block_level != 0 || dcs->d_enclosing != NULL)
 		norecover();
 
-	for (sym = dcs->d_first_dlsym; sym != NULL; sym = sym->s_level_next) {
+	for (const sym_t *sym = dcs->d_first_dlsym;
+	     sym != NULL; sym = sym->s_level_next) {
 		if (sym->s_block_level == -1)
 			continue;
 		if (sym->s_kind == FVFT)

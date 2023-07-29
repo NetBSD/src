@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.171 2023/07/15 13:35:24 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.172 2023/07/29 07:49:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.171 2023/07/15 13:35:24 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.172 2023/07/29 07:49:14 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -361,8 +361,6 @@ check_missing_return_value(void)
 void
 end_function(void)
 {
-	sym_t *arg;
-	int n;
 
 	if (reached) {
 		cstmt->c_had_return_noval = true;
@@ -379,15 +377,12 @@ end_function(void)
 		/* function '%s' has 'return expr' and 'return' */
 		warning(216, funcsym->s_name);
 
-	/* Print warnings for unused arguments */
-	arg = dcs->d_func_args;
-	n = 0;
-	while (arg != NULL && (nargusg == -1 || n < nargusg)) {
-		check_usage_sym(dcs->d_asm, arg);
-		arg = arg->s_next;
-		n++;
-	}
+	/* Warn about unused parameters. */
+	int n = nargusg;
 	nargusg = -1;
+	for (sym_t *arg = dcs->d_func_args;
+	     arg != NULL && n != 0; arg = arg->s_next, n--)
+		check_usage_sym(dcs->d_asm, arg);
 
 	/*
 	 * write the information about the function definition to the

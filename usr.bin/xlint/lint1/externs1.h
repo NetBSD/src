@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.201 2023/07/29 07:26:53 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.202 2023/07/29 07:49:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -255,7 +255,7 @@ void	mark_as_set(sym_t *);
 void	mark_as_used(sym_t *, bool, bool);
 void	check_usage(const decl_level *);
 void	check_usage_sym(bool, const sym_t *);
-void	check_global_symbols(void);
+void	end_translation_unit(void);
 void	print_previous_declaration(const sym_t *);
 int	to_int_constant(tnode_t *, bool);
 
