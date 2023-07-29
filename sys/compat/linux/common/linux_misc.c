@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.258 2023/07/28 18:19:01 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.259 2023/07/29 07:00:00 rin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.258 2023/07/28 18:19:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.259 2023/07/29 07:00:00 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1683,6 +1683,7 @@ linux_sys_eventfd2(struct lwp *l, const struct linux_sys_eventfd2_args *uap,
 				 retval);
 }
 
+#ifndef __aarch64__
 /*
  * epoll_create(2).  Check size and call sys_epoll_create1.
  */
@@ -1705,6 +1706,7 @@ linux_sys_epoll_create(struct lwp *l,
 	SCARG(&ca, flags) = 0;
 	return sys_epoll_create1(l, &ca, retval);
 }
+#endif /* !__aarch64__ */
 
 /*
  * epoll_create1(2).  Translate the flags and call sys_epoll_create1.
@@ -1768,6 +1770,7 @@ linux_sys_epoll_ctl(struct lwp *l, const struct linux_sys_epoll_ctl_args *uap,
 	    SCARG(uap, fd), eep);
 }
 
+#ifndef __aarch64__
 /*
  * epoll_wait(2).  Call sys_epoll_pwait().
  */
@@ -1791,6 +1794,7 @@ linux_sys_epoll_wait(struct lwp *l,
 
 	return linux_sys_epoll_pwait(l, &ea, retval);
 }
+#endif /* !__aarch64__ */
 
 /*
  * Main body of epoll_pwait2(2).  Translate timeout and sigmask and
