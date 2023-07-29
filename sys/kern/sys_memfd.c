@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_memfd.c,v 1.4 2023/07/29 08:46:47 riastradh Exp $	*/
+/*	$NetBSD: sys_memfd.c,v 1.5 2023/07/29 12:16:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.4 2023/07/29 08:46:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.5 2023/07/29 12:16:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -165,6 +165,7 @@ memfd_read(file_t *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	todo = MIN(uio->uio_resid, mfd->mfd_size - *offp);
 	error = ubc_uiomove(mfd->mfd_uobj, uio, todo, UVM_ADV_SEQUENTIAL,
 	    UBC_READ|UBC_PARTIALOK);
+	*offp = uio->uio_offset;
 
 leave:
 	if (offp == &fp->f_offset)
@@ -215,6 +216,7 @@ memfd_write(file_t *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 
 	error = ubc_uiomove(mfd->mfd_uobj, uio, todo, UVM_ADV_SEQUENTIAL,
 	    UBC_WRITE|UBC_PARTIALOK);
+	*offp = uio->uio_offset;
 
 	getnanotime(&mfd->mfd_mtime);
 

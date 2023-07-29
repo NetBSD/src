@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fcntl.c,v 1.2 2019/10/20 16:02:11 christos Exp $	*/
+/*	$NetBSD: t_fcntl.c,v 1.3 2023/07/29 12:16:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <atf-c.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -38,11 +39,11 @@
 #include <string.h>
 #include <unistd.h>
 
-ATF_TC(getpath);
-ATF_TC_HEAD(getpath, tc)
+ATF_TC(getpath_vnode);
+ATF_TC_HEAD(getpath_vnode, tc)
 {  
 
-	atf_tc_set_md_var(tc, "descr", "Checks fcntl(2) F_GETPATH");
+	atf_tc_set_md_var(tc, "descr", "Checks fcntl(2) F_GETPATH for vnodes");
 }
 
 static const struct {
@@ -57,7 +58,7 @@ static const struct {
 	{ "/", ENOENT },
 };
 
-ATF_TC_BODY(getpath, tc)
+ATF_TC_BODY(getpath_vnode, tc)
 {
 	char path[MAXPATHLEN];
 	int fd, rv;
@@ -81,9 +82,47 @@ ATF_TC_BODY(getpath, tc)
 	}
 }
 
+ATF_TC(getpath_memfd);
+ATF_TC_HEAD(getpath_memfd, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks fcntl(2) F_GETPATH for fds created by memfd_create");
+}
+
+#define	MEMFD_NAME(name)	{ name, "memfd:" name }
+static const struct {
+	const char *bare;
+	const char *prefixed;
+} memfd_names[] = {
+	MEMFD_NAME(""),
+	MEMFD_NAME("some text"),
+	MEMFD_NAME("memfd:"),
+	MEMFD_NAME("../\\"),
+};
+
+ATF_TC_BODY(getpath_memfd, tc)
+{
+	char path[MAXPATHLEN];
+	int fd, rv;
+
+	for (size_t i = 0; i < __arraycount(memfd_names); i++) {
+		fd = memfd_create(memfd_names[i].bare, 0);
+		ATF_REQUIRE_MSG(fd != -1, "Failed to create memfd (%s)",
+		    strerror(errno));
+		rv = fcntl(fd, F_GETPATH, path);
+		ATF_REQUIRE_MSG(rv != -1, "Can't get path `%s' (%s)",
+		    memfd_names[i].bare, strerror(errno));
+		ATF_REQUIRE_MSG(strcmp(memfd_names[i].prefixed, path) == 0,
+		    "Bad name `%s' != `%s'", path, memfd_names[i].prefixed);
+		close(fd);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, getpath); 
+	ATF_TP_ADD_TC(tp, getpath_vnode);
+	ATF_TP_ADD_TC(tp, getpath_memfd);
 
 	return atf_no_error();
 }
