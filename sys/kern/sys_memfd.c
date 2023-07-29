@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_memfd.c,v 1.3 2023/07/29 08:46:27 riastradh Exp $	*/
+/*	$NetBSD: sys_memfd.c,v 1.4 2023/07/29 08:46:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,15 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.3 2023/07/29 08:46:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.4 2023/07/29 08:46:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/memfd.h>
 #include <sys/mman.h>
-#include <sys/miscfd.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: miscfd.h,v 1.1 2023/07/10 15:49:19 christos Exp $	*/
+/*	$NetBSD: memfd.h,v 1.1 2023/07/29 08:46:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
