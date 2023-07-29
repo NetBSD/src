@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_kevent.c,v 1.3 2023/07/28 18:19:00 christos Exp $ */
+/*	$NetBSD: compat_kevent.c,v 1.4 2023/07/29 10:01:24 rin Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_kevent.c,v 1.3 2023/07/28 18:19:00 christos Exp $");
+__RCSID("$NetBSD: compat_kevent.c,v 1.4 2023/07/29 10:01:24 rin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: compat_kevent.c,v 1.3 2023/07/28 18:19:00 christos Exp $");
 
 __warn_references(kevent,
     "warning: reference to compatibility kevent(); include <sys/event.h> to generate correct reference")
-__warn_references(kevent,
+__warn_references(__kevent50,
     "warning: reference to compatibility __kevent50(); use kevent()")
 
 int
