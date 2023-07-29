@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2019/12/29 18:26:17 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2023/07/29 17:33:50 rin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -11,6 +11,8 @@ WARNS=		1
 DBG=		-Os -mmemcpy -fno-unwind-tables
 
 CRUNCHBIN=	ramdiskbin
+# Drop IEEE 802.11 support from x_ifconfig.
+CRUNCHENV+=	NOIEEE80211=1
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst.en
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
