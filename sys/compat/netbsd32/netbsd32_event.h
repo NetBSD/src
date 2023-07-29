@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_event.h,v 1.1 2023/07/29 12:38:25 rin Exp $	*/
+/*	$NetBSD: netbsd32_event.h,v 1.2 2023/07/29 12:48:15 rin Exp $	*/
 
 /*
  * Copyright (c) 2023 NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <compat/netbsd32/netbsd32.h>
 
 /* netbsd32_event.c */
+int netbsd32_kevent_fetch_timeout(const void *, void *, size_t);
 int netbsd32_kevent1(register_t *, int, const netbsd32_kevent100p_t,
     netbsd32_size_t, netbsd32_kevent100p_t, netbsd32_size_t,
     netbsd32_timespecp_t, struct kevent_ops *);
