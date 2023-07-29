@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.3 2023/07/28 18:19:01 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.4 2023/07/29 11:58:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -63,7 +63,7 @@ kevent_to_kevent100(const struct kevent *kev, struct kevent100 *kev100)
 }
 
 #ifdef _KERNEL
-static int
+static __inline int
 compat_100___kevent50_fetch_changes(void *ctx, const struct kevent *changelist,
     struct kevent *changes, size_t index, int n)
 {
@@ -88,7 +88,7 @@ leave:
 	return error;
 }
 
-static int
+static __inline int
 compat_100___kevent50_put_events(void *ctx, struct kevent *events,
     struct kevent *eventlist, size_t index, int n)
 {
