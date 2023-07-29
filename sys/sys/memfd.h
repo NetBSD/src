@@ -1,4 +1,4 @@
-/*	$NetBSD: memfd.h,v 1.2 2023/07/29 08:46:58 riastradh Exp $	*/
+/*	$NetBSD: memfd.h,v 1.3 2023/07/29 14:54:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_MISCFD_H_
-#define _SYS_MISCFD_H_
+#ifndef _SYS_MEMFD_H_
+#define _SYS_MEMFD_H_
 
 #include <sys/types.h>
 
@@ -47,4 +47,4 @@ struct memfd {
 	struct timespec		mfd_mtime;
 };
 
-#endif	/* _SYS_MISCFD_H_ */
+#endif	/* _SYS_MEMFD_H_ */
