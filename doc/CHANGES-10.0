@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.90 2023/07/27 18:10:25 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.91 2023/07/29 11:42:32 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -3153,4 +3153,44 @@ distrib/evbmips/instkernel/ramdisk/list		1.19
 
 	Add some device nodes and utilities to the evbmips installer.
 	[gutteridge, ticket #249]
+
+sys/arch/x86/include/specialreg.h		1.204-1.206, 1.208
+						(via patch)
+
+	- Add Intel CPUID 0x07 %ecx bit 24 BUS_LOCK_DETECT.
+	- Add AMD CPUID 0x80000008 %ebx bit 30 IBPB_RET and CPUID 0x8000000a
+	  %edx bit 29 BusLockThreshold.
+	- Fix typo in comment.
+	[msaitoh, ticket #250]
+
+usr.sbin/cpuctl/arch/i386.c			1.137-1.139
+						(via patch)
+
+	- CPU model 0x5a is not Atom E3500 but Atom Z3500.
+	- Add Alder Lake-N.
+	[msaitoh, ticket #251]
+
+sys/dev/pci/pcidevs				1.1481-1.1482 (patch)
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add Intel Alder Lake-N, Raptor Lake and 700 series chipset devices.
+	[msaitoh, ticket #252]
+
+sys/dev/pci/ichsmb.c				1.83-1.84 (patch)
+
+	- Add support Intel 700 series chipset and Alder Lake-N devices.
+	- Use device_printf() instead of aprint_error_dev() in
+	  ichsmb_i2c_exec().
+	[msaitoh, ticket #253]
+
+sys/arch/x86/x86/coretemp.c			1.39
+
+	coretemp(4): change limits of Tjmax.
+	[msaitoh, ticket #254]
+
+usr.sbin/tprof/arch/tprof_x86.c			1.18,1.19
+
+	tprof(8): add support for Skylake-X and Cascade Lake.
+	[msaitoh, ticket #255]
 
