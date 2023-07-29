@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.64 2022/12/30 09:08:47 andvar Exp $
+#	$NetBSD: install.sub,v 1.65 2023/07/29 15:46:45 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1163,28 +1163,17 @@ install_nfs() {
 	done
 	_nfs_server_path=$resp
 
-	# Determine use of TCP
-	echo -n "Use TCP transport (only works with capable NFS server)? [n] "
+	# Check mount_nfs(8) options
+	echo "Use small NFS transfers (needed when server or client"
+	echo -n "has a slow network card)? [n] "
 	getresp "n"
 	case "$resp" in
 		y*|Y*)
-			_nfs_tcp="-T"
+			_nfs_tcp="-r 1024 -w 1024"
 			;;
 
 		*)
-			echo -n "Use small NFS transfers (needed when server "
-			echo "or client"
-			echo -n "has a slow network card)? [n] "
-			getresp "n"
-			case "$resp" in
-			y*|Y*)
-				_nfs_tcp="-r 1024 -w 1024"
-				;;
-
-			*)
-				_nfs_tcp=""
-				;;
-			esac
+			_nfs_tcp=""
 			;;
 	esac
 
