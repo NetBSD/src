@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.76 2023/07/28 19:01:11 christos Exp $
+	$NetBSD: syscalls.master,v 1.77 2023/07/29 15:04:28 christos Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -386,7 +386,8 @@
 222	UNIMPL		/* for tux */
 223	UNIMPL		/* unused */
 224	NOARGS		{ pid_t|linux_sys||gettid(void); }
-225	UNIMPL		readahead
+225	STD		{ ssize_t|linux_sys||readahead(int fd, off_t offset, \
+			    size_t count); }
 226	STD		{ int|linux_sys||setxattr(char *path, char *name, \
 			    void *value, size_t size, int flags); }
 227	STD		{ int|linux_sys||lsetxattr(char *path, char *name, \
@@ -644,7 +645,9 @@
 394	UNIMPL
 395	UNIMPL
 396	UNIMPL
-397	UNIMPL
+397     STD		{ int|linux_sys||statx(int fd, const char *path, \
+			    int flag, unsigned int mask, \
+			    struct linux_statx *sp); }
 398	UNIMPL
 399	UNIMPL
 400	UNIMPL
@@ -683,7 +686,8 @@
 433	UNIMPL
 434	UNIMPL
 435	UNIMPL
-436	UNIMPL
+436	STD		{ int|linux_sys||close_range(unsigned int first, \
+			    unsigned int last, unsigned int flags); }
 437	UNIMPL
 438	UNIMPL
 439	UNIMPL

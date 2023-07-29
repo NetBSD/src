@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.131 2023/07/28 19:01:11 christos Exp $
+	$NetBSD: syscalls.master,v 1.132 2023/07/29 15:04:28 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -383,7 +383,8 @@
 222	UNIMPL		/* unused */
 223	UNIMPL		/* unused */
 224	NOARGS		{ pid_t|linux_sys||gettid(void); }
-225	UNIMPL		readahead
+225	STD		{ ssize_t|linux_sys||readahead(int fd, off_t offset, \
+			    size_t count); }
 226	STD		{ int|linux_sys||setxattr(char *path, char *name, \
 			    void *value, size_t size, int flags); }
 227	STD		{ int|linux_sys||lsetxattr(char *path, char *name, \
@@ -622,7 +623,9 @@
 394	UNIMPL		semctl
 395	UNIMPL		shmget
 396	UNIMPL		shmctl
-397	UNIMPL		shmat
+397     STD		{ int|linux_sys||statx(int fd, const char *path, \
+			    int flag, unsigned int mask, \
+			    struct linux_statx *sp); }
 398	UNIMPL		shmdt
 399	UNIMPL		msgget
 400	UNIMPL		msgsnd
@@ -661,7 +664,8 @@
 433	UNIMPL		fspick
 434	UNIMPL		pidfd_open
 435	UNIMPL		clone3
-436	UNIMPL		close_range
+436	STD		{ int|linux_sys||close_range(unsigned int first, \
+			    unsigned int last, unsigned int flags); }
 437	UNIMPL		openat2
 438	UNIMPL		pidfd_getfd
 439	UNIMPL		faccessat2

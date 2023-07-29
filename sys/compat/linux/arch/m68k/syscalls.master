@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.102 2023/07/28 19:01:11 christos Exp $
+	$NetBSD: syscalls.master,v 1.103 2023/07/29 15:04:29 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -428,7 +428,8 @@
 237	NOARGS		{ int|sys||mincore(void *addr, size_t len, char *vec); }
 238	NOARGS		{ int|sys||madvise(void *addr, size_t len, int behav); }
 239	STD		{ int|linux_sys||fcntl64(int fd, int cmd, void *arg); }
-240	UNIMPL		readahead
+240	STD		{ ssize_t|linux_sys||readahead(int fd, off_t offset, \
+			    size_t count); }
 241	UNIMPL		io_setup
 242	UNIMPL		io_destroy
 243	UNIMPL		io_getevents
@@ -631,7 +632,9 @@
 376	UNIMPL		copy_file_range
 377	UNIMPL		preadv2
 378	UNIMPL		pwritev2
-379	UNIMPL
+379     STD		{ int|linux_sys||statx(int fd, const char *path, \
+			    int flag, unsigned int mask, \
+			    struct linux_statx *sp); }
 380	UNIMPL
 381	UNIMPL
 382	UNIMPL
@@ -688,7 +691,8 @@
 433	UNIMPL
 434	UNIMPL
 435	UNIMPL
-436	UNIMPL
+436	STD		{ int|linux_sys||close_range(unsigned int first, \
+			    unsigned int last, unsigned int flags); }
 437	UNIMPL
 438	UNIMPL
 439	UNIMPL

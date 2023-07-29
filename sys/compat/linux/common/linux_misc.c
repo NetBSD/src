@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.259 2023/07/29 07:00:00 rin Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.260 2023/07/29 15:04:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.259 2023/07/29 07:00:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.260 2023/07/29 15:04:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1976,4 +1976,84 @@ linux_sys_memfd_create(struct lwp *l,
 	SCARG(&muap, flags) = lflags & LINUX_MFD_KNOWN_FLAGS;
 
 	return sys_memfd_create(l, &muap, retval);
+}
+
+#define	LINUX_CLOSE_RANGE_UNSHARE	0x02U
+#define	LINUX_CLOSE_RANGE_CLOEXEC	0x04U
+
+/*
+ * close_range(2).
+ */
+int
+linux_sys_close_range(struct lwp *l,
+    const struct linux_sys_close_range_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(unsigned int) first;
+		syscallarg(unsigned int) last;
+		syscallarg(unsigned int) flags;
+	} */
+	unsigned int fd, last;
+	file_t *fp;
+	filedesc_t *fdp;
+	const unsigned int flags = SCARG(uap, flags);
+
+	if (flags & ~(LINUX_CLOSE_RANGE_CLOEXEC|LINUX_CLOSE_RANGE_UNSHARE))
+		return EINVAL;
+	if (SCARG(uap, first) > SCARG(uap, last))
+		return EINVAL;
+
+	if (flags & LINUX_CLOSE_RANGE_UNSHARE) {
+		fdp = fd_copy();
+		fd_free();
+	        l->l_proc->p_fd = fdp;
+	        l->l_fd = fdp;
+	}
+
+	last = MIN(SCARG(uap, last), l->l_proc->p_fd->fd_lastfile);
+	for (fd = SCARG(uap, first); fd <= last; fd++) {
+		fp = fd_getfile(fd);
+		if (fp == NULL)
+			continue;
+
+		if (flags & LINUX_CLOSE_RANGE_CLOEXEC) {
+			fd_set_exclose(l, fd, true);
+			fd_putfile(fd);
+		} else
+			fd_close(fd);
+	}
+
+	return 0;
+}
+
+/*
+ * readahead(2).  Call posix_fadvise with POSIX_FADV_WILLNEED with some extra
+ * error checking.
+ */
+int
+linux_sys_readahead(struct lwp *l, const struct linux_sys_readahead_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(off_t) offset;
+		syscallarg(size_t) count;
+	} */
+	file_t *fp;
+	int error = 0;
+	const int fd = SCARG(uap, fd);
+
+	fp = fd_getfile(fd);
+	if (fp == NULL)
+		return EBADF;
+	if ((fp->f_flag & FREAD) == 0)
+		error = EBADF;
+	else if (fp->f_type != DTYPE_VNODE || fp->f_vnode->v_type != VREG)
+		error = EINVAL;
+	fd_putfile(fd);
+	if (error != 0)
+		return error;
+
+	return do_posix_fadvise(fd, SCARG(uap, offset), SCARG(uap, count),
+	    POSIX_FADV_WILLNEED);
 }

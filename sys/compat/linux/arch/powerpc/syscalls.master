@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.81 2023/07/28 19:01:11 christos Exp $  
+	$NetBSD: syscalls.master,v 1.82 2023/07/29 15:04:29 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -357,7 +357,8 @@
 189	NOARGS		{ int|sys|14|vfork(void); }
 190	STD		{ int|linux_sys||ugetrlimit(int which, \
 			    struct rlimit *rlp); }
-191	UNIMPL		/* unused */
+191	STD		{ ssize_t|linux_sys||readahead(int fd, off_t offset, \
+			    size_t count); }
 #define linux_sys_mmap2_args linux_sys_mmap_args
 192	NOARGS		{ linux_off_t|linux_sys||mmap2(unsigned long addr, \
 			    size_t len, int prot, int flags, int fd, \
@@ -633,7 +634,9 @@
 380	UNIMPL		preadv2
 381	UNIMPL		pwritev2
 382	UNIMPL		kexec_file_load
-383	UNIMPL
+383     STD		{ int|linux_sys||statx(int fd, const char *path, \
+			    int flag, unsigned int mask, \
+			    struct linux_statx *sp); }
 384	UNIMPL
 385	UNIMPL
 386	UNIMPL
@@ -686,7 +689,8 @@
 433	UNIMPL
 434	UNIMPL
 435	UNIMPL
-436	UNIMPL
+436	STD		{ int|linux_sys||close_range(unsigned int first, \
+			    unsigned int last, unsigned int flags); }
 437	UNIMPL
 438	UNIMPL
 439	UNIMPL

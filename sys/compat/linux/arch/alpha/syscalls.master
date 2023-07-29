@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.103 2023/07/28 19:01:11 christos Exp $
+	$NetBSD: syscalls.master,v 1.104 2023/07/29 15:04:28 christos Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -614,7 +614,8 @@
 377	STD		{ int|linux_sys||getdents64(int fd, \
 			    struct linux_dirent64 *dent, unsigned int count); }
 378	NOARGS		{ pid_t|linux_sys||gettid(void); }
-379	UNIMPL		readahead
+379	STD		{ ssize_t|linux_sys||readahead(int fd, off_t offset, \
+			    size_t count); }
 380	UNIMPL		/* unused */
 381	STD		{ int|linux_sys||tkill(int tid, int sig); }
 382	STD		{ int|linux_sys||setxattr(char *path, char *name, \
@@ -830,7 +831,9 @@
 519	UNIMPL
 520	UNIMPL
 521	UNIMPL
-522	UNIMPL
+522     STD		{ int|linux_sys||statx(int fd, const char *path, \
+			    int flag, unsigned int mask, \
+			    struct linux_statx *sp); }
 523	UNIMPL
 524	UNIMPL
 525	UNIMPL
@@ -854,7 +857,8 @@
 543	UNIMPL
 544	UNIMPL
 545	UNIMPL
-546	UNIMPL
+546	STD		{ int|linux_sys||close_range(unsigned int first, \
+			    unsigned int last, unsigned int flags); }
 547	UNIMPL
 548	UNIMPL
 549	UNIMPL
