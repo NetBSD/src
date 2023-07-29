@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.74 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.75 2023/07/29 06:44:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.74 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.75 2023/07/29 06:44:44 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -261,7 +261,7 @@ main(int argc, char *argv[])
 	return seen_error || (wflag && seen_warning) ? 1 : 0;
 }
 
-static void __attribute__((noreturn))
+static void __dead
 usage(void)
 {
 	(void)fprintf(stderr,
@@ -272,7 +272,7 @@ usage(void)
 	exit(1);
 }
 
-void __attribute__((noreturn))
+void __dead
 norecover(void)
 {
 	/* cannot recover from previous errors */

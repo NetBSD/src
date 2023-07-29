@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.199 2023/07/28 21:50:03 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.200 2023/07/29 06:44:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -184,8 +184,7 @@ bool	gnuism(int, ...);
 void	c99ism(int, ...);
 void	c11ism(int, ...);
 void	c23ism(int, ...);
-void	assert_failed(const char *, int, const char *, const char *)
-		__attribute__((__noreturn__));
+void	assert_failed(const char *, int, const char *, const char *) __dead;
 void	update_location(const char *, int, bool, bool);
 void	suppress_messages(const char *);
 
