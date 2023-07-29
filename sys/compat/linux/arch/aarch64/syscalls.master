@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 2023/07/28 19:01:10 christos Exp $
+	$NetBSD: syscalls.master,v 1.7 2023/07/29 06:45:49 rin Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -53,6 +53,7 @@
 #include <compat/sys/time.h>
 
 #include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_ipc.h>
