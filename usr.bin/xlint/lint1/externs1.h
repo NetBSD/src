@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.200 2023/07/29 06:44:44 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.201 2023/07/29 07:26:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -250,11 +250,11 @@ void	declare_local(sym_t *, bool);
 sym_t	*abstract_name(void);
 void	global_clean_up(void);
 sym_t	*declare_abstract_type(sym_t *);
-void	check_size(sym_t *);
+void	check_size(const sym_t *);
 void	mark_as_set(sym_t *);
 void	mark_as_used(sym_t *, bool, bool);
-void	check_usage(decl_level *);
-void	check_usage_sym(bool, sym_t *);
+void	check_usage(const decl_level *);
+void	check_usage_sym(bool, const sym_t *);
 void	check_global_symbols(void);
 void	print_previous_declaration(const sym_t *);
 int	to_int_constant(tnode_t *, bool);

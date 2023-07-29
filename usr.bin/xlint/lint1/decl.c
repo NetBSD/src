@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.364 2023/07/29 07:03:19 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.365 2023/07/29 07:26:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.364 2023/07/29 07:03:19 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.365 2023/07/29 07:26:53 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2792,7 +2792,7 @@ declare_abstract_type(sym_t *sym)
 
 /* Checks size after declarations of variables and their initialization. */
 void
-check_size(sym_t *dsym)
+check_size(const sym_t *dsym)
 {
 
 	if (dsym->s_def == DEF &&
@@ -2843,7 +2843,7 @@ mark_as_used(sym_t *sym, bool fcall, bool szof)
 
 /* Warns about variables and labels that are not used or only set. */
 void
-check_usage(decl_level *dl)
+check_usage(const decl_level *dl)
 {
 	/* for this warning LINTED has no effect */
 	int saved_lwarn = lwarn;
@@ -2858,7 +2858,7 @@ check_usage(decl_level *dl)
 }
 
 static void
-check_argument_usage(bool novar, sym_t *arg)
+check_argument_usage(bool novar, const sym_t *arg)
 {
 
 	lint_assert(arg->s_set);
@@ -2873,7 +2873,7 @@ check_argument_usage(bool novar, sym_t *arg)
 }
 
 static void
-check_variable_usage(bool novar, sym_t *sym)
+check_variable_usage(bool novar, const sym_t *sym)
 {
 
 	lint_assert(block_level != 0);
@@ -2941,7 +2941,7 @@ check_variable_usage(bool novar, sym_t *sym)
 }
 
 static void
-check_label_usage(sym_t *lab)
+check_label_usage(const sym_t *lab)
 {
 
 	lint_assert(block_level == 1);
@@ -2959,7 +2959,7 @@ check_label_usage(sym_t *lab)
 }
 
 static void
-check_tag_usage(sym_t *sym)
+check_tag_usage(const sym_t *sym)
 {
 
 	if (!is_incomplete(sym->s_type))
@@ -2988,7 +2988,7 @@ check_tag_usage(sym_t *sym)
 
 /* Warns about a variable or a label that is not used or only set. */
 void
-check_usage_sym(bool novar, sym_t *sym)
+check_usage_sym(bool novar, const sym_t *sym)
 {
 
 	if (sym->s_block_level == -1)
