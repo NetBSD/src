@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2988 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2989 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -199,6 +199,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	x86: Add serial console support to efiboot via raw I/O port
 		access. [rin 20230724]
 	x86: Turn off Zenbleed chicken bit on Zen2 CPUs. [mrg 20230725]
-	evbmips: Add /dev/dk[0-3], dkctl(8), and gpt(8) to the ramdisk.
-		[gutteridge 20230725]
 	OpenSSH: Import 9.3. [christos 20230726]
