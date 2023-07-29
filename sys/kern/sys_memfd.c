@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_memfd.c,v 1.7 2023/07/29 23:51:29 rin Exp $	*/
+/*	$NetBSD: sys_memfd.c,v 1.8 2023/07/29 23:59:59 rin Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.7 2023/07/29 23:51:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.8 2023/07/29 23:59:59 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,7 +60,7 @@ static int memfd_close(file_t *);
 static int memfd_mmap(file_t *, off_t *, size_t, int, int *, int *,
     struct uvm_object **, int *);
 static int memfd_seek(file_t *, off_t, int, off_t *, int);
-static int do_memfd_truncate(file_t *, off_t);
+static int memfd_truncate_locked(file_t *, off_t);
 static int memfd_truncate(file_t *, off_t);
 
 static const struct fileops memfd_fileops = {
@@ -210,7 +210,7 @@ memfd_write(file_t *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 			todo = mfd->mfd_size - *offp;
 	} else if (*offp + uio->uio_resid >= mfd->mfd_size) {
 		/* Grow to accommodate the write request. */
-		error = do_memfd_truncate(fp, *offp + uio->uio_resid);
+		error = memfd_truncate_locked(fp, *offp + uio->uio_resid);
 		if (error != 0)
 			goto leave;
 	}
@@ -406,7 +406,7 @@ leave:
 }
 
 static int
-do_memfd_truncate(file_t *fp, off_t length)
+memfd_truncate_locked(file_t *fp, off_t length)
 {
 	struct memfd *mfd = fp->f_memfd;
 	voff_t start, end;
@@ -452,7 +452,7 @@ memfd_truncate(file_t *fp, off_t length)
 	int error;
 
 	mutex_enter(&fp->f_lock);
-	error = do_memfd_truncate(fp, length);
+	error = memfd_truncate_locked(fp, length);
 	mutex_exit(&fp->f_lock);
 	return error;
 }
