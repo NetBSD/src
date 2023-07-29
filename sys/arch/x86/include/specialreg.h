@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.198.2.3 2023/07/25 09:10:32 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.198.2.4 2023/07/29 09:44:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -466,6 +466,7 @@
 #define CPUID_SEF_MAWAU		__BITS(21, 17) /* MAWAU for BND{LD,ST}X */
 #define CPUID_SEF_RDPID		__BIT(22) /* RDPID and IA32_TSC_AUX */
 #define CPUID_SEF_KL		__BIT(23) /* Key Locker */
+#define CPUID_SEF_BUS_LOCK_DETECT __BIT(24) /* OS bus-lock detection */
 #define CPUID_SEF_CLDEMOTE	__BIT(25) /* Cache line demote */
 #define CPUID_SEF_MOVDIRI	__BIT(27) /* MOVDIRI instruction */
 #define CPUID_SEF_MOVDIR64B	__BIT(28) /* MOVDIR64B instruction */
@@ -480,7 +481,7 @@
 	"b\14AVX512_BITALG\0" "b\15TME_EN\0" "b\16AVX512_VPOPCNTDQ\0"	      \
 	"b\20LA57\0"							      \
 	"f\21\5MAWAU\0"			"b\26RDPID\0"	"b\27KL\0"	      \
-			"b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	      \
+	"b\30BUS_LOCK_DETECT" "b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	      \
 	"b\34MOVDIR64B\0" "b\35ENQCMD\0" "b\36SGXLC\0"	"b\37PKS\0"
 
 /* %ecx = 0, %edx */
@@ -889,6 +890,7 @@
 #define CPUID_CAPEX_CPPC	   __BIT(27) /* Collaborative Processor Perf. Control */
 #define CPUID_CAPEX_PSFD	   __BIT(28) /* Predictive Store Forward Dis */
 #define CPUID_CAPEX_BTC_NO	   __BIT(29) /* Branch Type Confusion NO */
+#define CPUID_CAPEX_IBPB_RET	   __BIT(30) /* Clear RET address predictor */
 
 #define CPUID_CAPEX_FLAGS	"\20"					   \
 	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"	"\4INVLPGB"	   \
@@ -899,7 +901,7 @@
 							"\24IBRS_SAMEMODE" \
 	"\25EFER_LSMSLE_UN"				"\30PPIN"	   \
 	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"	"\34CPPC"	   \
-	"\35PSFD"	"\36BTC_NO"
+	"\35PSFD"	"\36BTC_NO"	"\37IBPB_RET"
 
 /* %ecx */
 #define CPUID_CAPEX_PerfTscSize	__BITS(17,16)	/* Perf. tstamp counter size */
@@ -939,6 +941,7 @@
 #define CPUID_AMD_SVM_IBSVIRT	      __BIT(26) /* IBS Virtualization */
 #define CPUID_AMD_SVM_XLVTOFFFLTCHG   __BIT(27) /* Ext LVToffset FLT changed */
 #define CPUID_AMD_SVM_VMCBADRCHKCHG   __BIT(28) /* VMCB addr check changed */
+#define CPUID_AMD_SVM_BUSLOCKTHRESH   __BIT(29) /* Bus Lock Threshold */
 
 
 #define CPUID_AMD_SVM_FLAGS	 "\20"					\
@@ -951,7 +954,7 @@
 	"\21" "VGIF"	"\22" "GMET"	"\23x2AVIC"	"\24SSSCHECK"	\
 	"\25" "SPEC_CTRL" "\26" "ROGPT"		"\30HOST_MCE_OVERRIDE"	\
 	"\31" "TLBICTL"	"\32VNMI" "\33IBSVIRT" "\34ExtLvtOffsetFaultChg" \
-	"\35VmcbAddrChkChg"
+	"\35VmcbAddrChkChg" "\36BusLockThreshold"
 
 /*
  * AMD Instruction-Based Sampling Capabilities.
@@ -1065,7 +1068,7 @@
 #define CPUID_AMDEXT2_FSRC	  __BIT(11) /* Fast Short Rep Cmpsb */
 #define CPUID_AMDEXT2_PREFETCHCTL __BIT(13) /* Prefetch control MSR */
 #define CPUID_AMDEXT2_CPUIDUSRDIS __BIT(17) /* CPUID dis. for non-priv. soft */
-#define CPUID_AMDEXT2_EPSF	  __BIT(18) /* Enhanced Predective Store Fwd */
+#define CPUID_AMDEXT2_EPSF	  __BIT(18) /* Enhanced Predictive Store Fwd */
 
 #define CPUID_AMDEXT2_FLAGS	 "\20"					      \
 	"\1NoNestedDataBp" "\2FsGsKernelGsBaseNonSerializing"		      \
