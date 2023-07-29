@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.14 2022/03/18 23:33:41 riastradh Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.15 2023/07/29 22:43:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.14 2022/03/18 23:33:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.15 2023/07/29 22:43:56 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -286,8 +286,14 @@ ww_mutex_state_wait(struct ww_mutex *mutex, enum ww_mutex_state state)
 
 	KASSERT(mutex_owned(&mutex->wwm_lock));
 	KASSERT(mutex->wwm_state == state);
-	do cv_wait(&mutex->wwm_cv, &mutex->wwm_lock);
-	while (mutex->wwm_state == state);
+
+	for (;;) {
+		cv_wait(&mutex->wwm_cv, &mutex->wwm_lock);
+		if (mutex->wwm_state != state)
+			break;
+	}
+
+	KASSERT(mutex->wwm_state != state);
 }
 
 /*
@@ -310,18 +316,26 @@ ww_mutex_state_wait_sig(struct ww_mutex *mutex, enum ww_mutex_state state)
 
 	KASSERT(mutex_owned(&mutex->wwm_lock));
 	KASSERT(mutex->wwm_state == state);
-	do {
+
+	for (;;) {
 		/* XXX errno NetBSD->Linux */
 		ret = -cv_wait_sig(&mutex->wwm_cv, &mutex->wwm_lock);
+		if (mutex->wwm_state != state) {
+			ret = 0;
+			break;
+		}
 		if (ret) {
 			KASSERTMSG((ret == -EINTR || ret == -ERESTART),
 			    "ret=%d", ret);
 			ret = -EINTR;
 			break;
 		}
-	} while (mutex->wwm_state == state);
+	}
 
 	KASSERTMSG((ret == 0 || ret == -EINTR), "ret=%d", ret);
+	KASSERTMSG(ret != 0 || mutex->wwm_state != state,
+	    "ret=%d mutex=%p mutex->wwm_state=%d state=%d",
+	    ret, mutex, mutex->wwm_state, state);
 	return ret;
 }
 
@@ -363,12 +377,18 @@ ww_mutex_lock_wait(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	    "ticket number reused: %"PRId64" (%p) %"PRId64" (%p)",
 	    ctx->wwx_ticket, ctx, collision->wwx_ticket, collision);
 
-	do cv_wait(&mutex->wwm_cv, &mutex->wwm_lock);
-	while (!(((mutex->wwm_state == WW_CTX) ||
-		    (mutex->wwm_state == WW_WANTOWN)) &&
-		 (mutex->wwm_u.ctx == ctx)));
+	for (;;) {
+		cv_wait(&mutex->wwm_cv, &mutex->wwm_lock);
+		if ((mutex->wwm_state == WW_CTX ||
+			mutex->wwm_state == WW_WANTOWN) &&
+		    mutex->wwm_u.ctx == ctx)
+			break;
+	}
 
 	rb_tree_remove_node(&mutex->wwm_waiters, ctx);
+
+	KASSERT(mutex->wwm_state == WW_CTX || mutex->wwm_state == WW_WANTOWN);
+	KASSERT(mutex->wwm_u.ctx == ctx);
 }
 
 /*
@@ -411,21 +431,29 @@ ww_mutex_lock_wait_sig(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	    "ticket number reused: %"PRId64" (%p) %"PRId64" (%p)",
 	    ctx->wwx_ticket, ctx, collision->wwx_ticket, collision);
 
-	do {
+	for (;;) {
 		/* XXX errno NetBSD->Linux */
 		ret = -cv_wait_sig(&mutex->wwm_cv, &mutex->wwm_lock);
+		if ((mutex->wwm_state == WW_CTX ||
+			mutex->wwm_state == WW_WANTOWN) &&
+		    mutex->wwm_u.ctx == ctx) {
+			ret = 0;
+			break;
+		}
 		if (ret) {
 			KASSERTMSG((ret == -EINTR || ret == -ERESTART),
 			    "ret=%d", ret);
 			ret = -EINTR;
-			goto out;
+			break;
 		}
-	} while (!(((mutex->wwm_state == WW_CTX) ||
-		    (mutex->wwm_state == WW_WANTOWN)) &&
-		(mutex->wwm_u.ctx == ctx)));
+	}
 
-out:	rb_tree_remove_node(&mutex->wwm_waiters, ctx);
+	rb_tree_remove_node(&mutex->wwm_waiters, ctx);
+
 	KASSERTMSG((ret == 0 || ret == -EINTR), "ret=%d", ret);
+	KASSERT(ret != 0 ||
+	    mutex->wwm_state == WW_CTX || mutex->wwm_state == WW_WANTOWN);
+	KASSERT(ret != 0 || mutex->wwm_u.ctx == ctx);
 	return ret;
 }
 
