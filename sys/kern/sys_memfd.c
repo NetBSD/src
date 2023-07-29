@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_memfd.c,v 1.2 2023/07/10 15:49:18 christos Exp $	*/
+/*	$NetBSD: sys_memfd.c,v 1.3 2023/07/29 08:46:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.2 2023/07/10 15:49:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.3 2023/07/29 08:46:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -97,8 +97,6 @@ sys_memfd_create(struct lwp *l, const struct sys_memfd_create_args *uap,
 	struct proc *p = l->l_proc;
 	const unsigned int flags = SCARG(uap, flags);
 
-	KASSERT(NAME_MAX - sizeof(memfd_prefix) > 0); /* sanity check */
-
 	if (flags & ~(MFD_CLOEXEC|MFD_ALLOW_SEALING))
 		return EINVAL;
 
@@ -107,6 +105,7 @@ sys_memfd_create(struct lwp *l, const struct sys_memfd_create_args *uap,
 	mfd->mfd_uobj = uao_create(INT64_MAX - PAGE_SIZE, 0); /* same as tmpfs */
 	mutex_init(&mfd->mfd_lock, MUTEX_DEFAULT, IPL_NONE);
 
+	CTASSERT(sizeof(memfd_prefix) < NAME_MAX); /* sanity check */
 	strcpy(mfd->mfd_name, memfd_prefix);
 	error = copyinstr(SCARG(uap, name),
 	    &mfd->mfd_name[sizeof(memfd_prefix) - 1],
