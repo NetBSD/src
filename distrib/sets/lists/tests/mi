@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1278 2023/07/28 18:19:00 christos Exp $
+# $NetBSD: mi,v 1.1279 2023/07/29 12:16:34 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2310,6 +2310,7 @@
 ./usr/tests/kernel/t_lockf				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_lwpctl				tests-obsolete		obsolete
 ./usr/tests/kernel/t_magic_symlinks			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_memfd_create			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_mkdir				tests-obsolete		obsolete
 ./usr/tests/kernel/t_mqueue				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_nointerpreter			tests-kernel-tests	atf
