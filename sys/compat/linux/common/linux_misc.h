@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.27 2023/07/28 18:19:01 christos Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.28 2023/07/29 12:58:51 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -146,6 +146,7 @@ struct linux_epoll_event {
 	uint64_t	data;
 }
 #if defined(__amd64__)
+/* Only for x86_64. See include/uapi/linux/eventpoll.h. */
 __packed
 #endif
 ;
