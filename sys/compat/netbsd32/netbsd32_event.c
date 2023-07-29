@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_event.c,v 1.13 2023/07/29 12:38:25 rin Exp $	*/
+/*	$NetBSD: netbsd32_event.c,v 1.14 2023/07/29 12:48:15 rin Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.13 2023/07/29 12:38:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.14 2023/07/29 12:48:15 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.13 2023/07/29 12:38:25 rin Exp 
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_event.h>
 
-static int
+int
 netbsd32_kevent_fetch_timeout(const void *src, void *dest, size_t length)
 {
 	struct netbsd32_timespec ts32;

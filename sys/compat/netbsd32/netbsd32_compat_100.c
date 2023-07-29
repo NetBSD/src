@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_100.c,v 1.2 2023/07/29 12:38:25 rin Exp $ */
+/*	$NetBSD: netbsd32_compat_100.c,v 1.3 2023/07/29 12:48:15 rin Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_100.c,v 1.2 2023/07/29 12:38:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_100.c,v 1.3 2023/07/29 12:48:15 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -45,22 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_100.c,v 1.2 2023/07/29 12:38:25 rin 
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_event.h>
-
-static int
-compat_100_netbsd32_kevent_fetch_timeout(const void *src, void *dest,
-    size_t length)
-{
-	struct netbsd32_timespec ts32;
-	int error;
-
-	KASSERT(length == sizeof(struct timespec));
-
-	error = copyin(src, &ts32, sizeof(ts32));
-	if (error)
-		return error;
-	netbsd32_to_timespec(&ts32, (struct timespec *)dest);
-	return 0;
-}
 
 static void
 compat_100_netbsd32_to_kevent(const struct netbsd32_kevent100 *ke32,
@@ -134,7 +118,7 @@ compat_100_netbsd32___kevent50(struct lwp *l,
 		syscallarg(netbsd32_timespecp_t) timeout;
 	} */
 	struct kevent_ops netbsd32_kevent_ops = {
-		.keo_fetch_timeout = compat_100_netbsd32_kevent_fetch_timeout,
+		.keo_fetch_timeout = netbsd32_kevent_fetch_timeout,
 		.keo_fetch_changes = compat_100_netbsd32_kevent_fetch_changes,
 		.keo_put_events = compat_100_netbsd32_kevent_put_events,
 	};
