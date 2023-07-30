@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.81 2023/07/29 11:44:09 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.82 2023/07/30 12:15:40 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1705,4 +1705,14 @@ sys/arch/x86/x86/coretemp.c			1.38-1.39 (patch)
 
 	coretemp(4): change limits of Tjmax.
 	[msaitoh, ticket #1673]
+
+sys/arch/mips/cavium/dev/octeon_rnm.c		1.16 (patch)
+
+	octrnm(4): PR 57280: raise delay on startup.
+	[gutteridge, ticket #1674]
+
+lib/csu/arch/vax/crtbegin.S			1.8,1.9
+
+	vax/csu: fix register preservation.
+	[rin, ticket #1675]
 
