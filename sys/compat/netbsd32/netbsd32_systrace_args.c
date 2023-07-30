@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.51 2023/07/30 05:31:30 rin Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.52 2023/07/30 06:53:13 rin Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -3722,6 +3722,34 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[4] = SCARG(p, nevents); /* netbsd32_size_t */
 		uarg[5] = (intptr_t) SCARG(p, timeout).i32; /* const netbsd32_timespecp_t */
 		*n_args = 6;
+		break;
+	}
+	/* netbsd32_epoll_create1 */
+	case 502: {
+		const struct netbsd32_epoll_create1_args *p = params;
+		iarg[0] = SCARG(p, flags); /* int */
+		*n_args = 1;
+		break;
+	}
+	/* netbsd32_epoll_ctl */
+	case 503: {
+		const struct netbsd32_epoll_ctl_args *p = params;
+		iarg[0] = SCARG(p, epfd); /* int */
+		iarg[1] = SCARG(p, op); /* int */
+		iarg[2] = SCARG(p, fd); /* int */
+		uarg[3] = (intptr_t) SCARG(p, event).i32; /* netbsd32_epoll_eventp_t */
+		*n_args = 4;
+		break;
+	}
+	/* netbsd32_epoll_pwait2 */
+	case 504: {
+		const struct netbsd32_epoll_pwait2_args *p = params;
+		iarg[0] = SCARG(p, epfd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, events).i32; /* netbsd32_epoll_eventp_t */
+		iarg[2] = SCARG(p, maxevents); /* int */
+		uarg[3] = (intptr_t) SCARG(p, timeout).i32; /* netbsd32_timespecp_t */
+		uarg[4] = (intptr_t) SCARG(p, sigmask).i32; /* netbsd32_sigsetp_t */
+		*n_args = 5;
 		break;
 	}
 	default:
@@ -10081,6 +10109,57 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* netbsd32_epoll_create1 */
+	case 502:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_epoll_ctl */
+	case 503:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "netbsd32_epoll_eventp_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_epoll_pwait2 */
+	case 504:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "netbsd32_epoll_eventp_t";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "netbsd32_timespecp_t";
+			break;
+		case 4:
+			p = "netbsd32_sigsetp_t";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -12180,6 +12259,21 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* netbsd32___kevent100 */
 	case 501:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_epoll_create1 */
+	case 502:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_epoll_ctl */
+	case 503:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_epoll_pwait2 */
+	case 504:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
