@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2013-2020 Free Software Foundation, Inc.
+// Copyright (C) 2013-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -46,7 +46,7 @@ namespace __detail
    */
 
   typedef long _StateIdT;
-  static const _StateIdT _S_invalid_state_id  = -1;
+  _GLIBCXX17_INLINE constexpr _StateIdT _S_invalid_state_id  = -1;
 
   template<typename _CharT>
     using _Matcher = std::function<bool (_CharT)>;
@@ -183,7 +183,6 @@ namespace __detail
 
   struct _NFA_base
   {
-    typedef size_t                              _SizeT;
     typedef regex_constants::syntax_option_type _FlagT;
 
     explicit
@@ -206,14 +205,14 @@ namespace __detail
     _M_start() const noexcept
     { return _M_start_state; }
 
-    _SizeT
+    size_t
     _M_sub_count() const noexcept
     { return _M_subexpr_count; }
 
     _GLIBCXX_STD_C::vector<size_t> _M_paren_stack;
     _FlagT                    _M_flags;
     _StateIdT                 _M_start_state;
-    _SizeT                    _M_subexpr_count;
+    size_t                    _M_subexpr_count;
     bool                      _M_has_backref;
   };
 

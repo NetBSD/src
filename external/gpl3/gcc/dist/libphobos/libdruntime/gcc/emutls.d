@@ -1,5 +1,5 @@
 // GNU D Compiler emulated TLS routines.
-// Copyright (C) 2019-2020 Free Software Foundation, Inc.
+// Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
 // GCC is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -25,7 +25,8 @@
 module gcc.emutls;
 
 import core.atomic, core.stdc.stdlib, core.stdc.string, core.sync.mutex;
-import rt.util.container.array, rt.util.container.hashtab;
+import core.internal.container.array;
+import core.internal.container.hashtab;
 import core.internal.traits : classInstanceAlignment;
 import gcc.builtins, gcc.gthread;
 

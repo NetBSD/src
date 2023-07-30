@@ -1,6 +1,6 @@
 /* Get common system includes and various definitions and declarations based
    on autoconf macros.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -422,25 +422,17 @@ extern void fancy_abort (const char *, int, const char *) ATTRIBUTE_NORETURN;
 #define gcc_checking_assert(EXPR) ((void)(0 && (EXPR)))
 #endif
 
-/* Provide a fake boolean type.  We make no attempt to use the
-   C99 _Bool, as it may not be available in the bootstrap compiler,
-   and even if it is, it is liable to be buggy.  
-   This must be after all inclusion of system headers, as some of
-   them will mess us up.  */
-#undef bool
-#undef true
-#undef false
-#undef TRUE
-#undef FALSE
-
-#ifndef __cplusplus
-#define bool unsigned char
+#ifdef __has_cpp_attribute
+# if __has_cpp_attribute(likely)
+#  define ATTR_LIKELY [[likely]]
+# elif __has_cpp_attribute(__likely__)
+#  define ATTR_LIKELY [[__likely__]]
+# else
+#  define ATTR_LIKELY
+# endif
+#else
+# define ATTR_LIKELY
 #endif
-#define true 1
-#define false 0
-
-/* Some compilers do not allow the use of unsigned char in bitfields.  */
-#define BOOL_BITFIELD unsigned int
 
 /* Poison identifiers we do not want to use.  */
 #if (GCC_VERSION >= 3000)

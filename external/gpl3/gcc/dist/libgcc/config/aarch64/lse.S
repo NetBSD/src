@@ -1,5 +1,5 @@
 /* Out-of-line LSE atomics for AArch64 architecture.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by Linaro Ltd.
 
 This file is part of GCC.
@@ -317,6 +317,19 @@ ENDFN	NAME(LDNM)
 #define FEATURE_1_BTI 1
 #define FEATURE_1_PAC 2
 
+/* Supported features based on the code generation options.  */
+#if defined(__ARM_FEATURE_BTI_DEFAULT)
+# define BTI_FLAG FEATURE_1_BTI
+#else
+# define BTI_FLAG 0
+#endif
+
+#if __ARM_FEATURE_PAC_DEFAULT & 3
+# define PAC_FLAG FEATURE_1_PAC
+#else
+# define PAC_FLAG 0
+#endif
+
 /* Add a NT_GNU_PROPERTY_TYPE_0 note.  */
 #define GNU_PROPERTY(type, value)	\
   .section .note.gnu.property, "a";	\
@@ -334,7 +347,7 @@ ENDFN	NAME(LDNM)
 .section .note.GNU-stack, "", %progbits
 
 /* Add GNU property note if built with branch protection.  */
-# ifdef __ARM_FEATURE_BTI_DEFAULT
-GNU_PROPERTY (FEATURE_1_AND, FEATURE_1_BTI)
+# if (BTI_FLAG|PAC_FLAG) != 0
+GNU_PROPERTY (FEATURE_1_AND, BTI_FLAG|PAC_FLAG)
 # endif
 #endif

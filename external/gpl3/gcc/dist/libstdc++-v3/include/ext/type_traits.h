@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005-2020 Free Software Foundation, Inc.
+// Copyright (C) 2005-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -148,17 +148,19 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // For use in string and vstring.
   template<typename _Type>
+    _GLIBCXX_CONSTEXPR
     inline bool
     __is_null_pointer(_Type* __ptr)
     { return __ptr == 0; }
 
   template<typename _Type>
+    _GLIBCXX_CONSTEXPR
     inline bool
     __is_null_pointer(_Type)
     { return false; }
 
 #if __cplusplus >= 201103L
-  inline bool
+  constexpr bool
   __is_null_pointer(std::nullptr_t)
   { return true; }
 #endif
@@ -189,9 +191,22 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     { typedef float __type; };
 
 #if __cpp_fold_expressions
+
   template<typename... _Tp>
     using __promoted_t = decltype((typename __promote<_Tp>::__type(0) + ...));
-#endif
+
+  // Deducing the promoted type is done by __promoted_t<_Tp...>,
+  // then __promote is used to provide the nested __type member.
+  template<typename _Tp, typename _Up>
+    using __promote_2 = __promote<__promoted_t<_Tp, _Up>>;
+
+  template<typename _Tp, typename _Up, typename _Vp>
+    using __promote_3 = __promote<__promoted_t<_Tp, _Up, _Vp>>;
+
+  template<typename _Tp, typename _Up, typename _Vp, typename _Wp>
+    using __promote_4 = __promote<__promoted_t<_Tp, _Up, _Vp, _Wp>>;
+
+#else
 
   template<typename _Tp, typename _Up,
            typename _Tp2 = typename __promote<_Tp>::__type,
@@ -219,6 +234,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     {
       typedef __typeof__(_Tp2() + _Up2() + _Vp2() + _Wp2()) __type;
     };
+#endif
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace

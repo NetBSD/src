@@ -1,5 +1,5 @@
 /* Support for suggestions about missing #include directives.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,7 +18,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
-#define INCLUDE_UNIQUE_PTR
+#define INCLUDE_MEMORY
 #include "system.h"
 #include "coretypes.h"
 #include "c-family/c-common.h"
@@ -45,6 +45,49 @@ struct stdlib_hint
   const char *name;
   const char *header[NUM_STDLIBS];
 };
+
+/* Given non-NULL NAME, return the header name defining it (as literal
+   string) within either the standard library (with '<' and '>'), or
+   NULL.
+
+   Only handle string macros, so that this can be used for
+   get_stdlib_header_for_name and
+   get_c_stdlib_header_for_string_macro_name.  */
+
+static const char *
+get_string_macro_hint (const char *name, enum stdlib lib)
+{
+  /* <inttypes.h> and <cinttypes>.  */
+  static const char *c99_cxx11_macros[] =
+    { "PRId8", "PRId16", "PRId32", "PRId64",
+      "PRIi8", "PRIi16", "PRIi32", "PRIi64",
+      "PRIo8", "PRIo16", "PRIo32", "PRIo64",
+      "PRIu8", "PRIu16", "PRIu32", "PRIu64",
+      "PRIx8", "PRIx16", "PRIx32", "PRIx64",
+      "PRIX8", "PRIX16", "PRIX32", "PRIX64",
+
+      "PRIdPTR", "PRIiPTR", "PRIoPTR", "PRIuPTR", "PRIxPTR", "PRIXPTR",
+
+      "SCNd8", "SCNd16", "SCNd32", "SCNd64",
+      "SCNi8", "SCNi16", "SCNi32", "SCNi64",
+      "SCNo8", "SCNo16", "SCNo32", "SCNo64",
+      "SCNu8", "SCNu16", "SCNu32", "SCNu64",
+      "SCNx8", "SCNx16", "SCNx32", "SCNx64",
+
+      "SCNdPTR", "SCNiPTR", "SCNoPTR", "SCNuPTR", "SCNxPTR" };
+
+  if ((lib == STDLIB_C && flag_isoc99)
+      || (lib == STDLIB_CPLUSPLUS && cxx_dialect >= cxx11 ))
+    {
+      const size_t num_c99_cxx11_macros
+	= sizeof (c99_cxx11_macros) / sizeof (c99_cxx11_macros[0]);
+      for (size_t i = 0; i < num_c99_cxx11_macros; i++)
+	if (strcmp (name, c99_cxx11_macros[i]) == 0)
+	  return lib == STDLIB_C ? "<inttypes.h>" : "<cinttypes>";
+    }
+
+  return NULL;
+}
 
 /* Given non-NULL NAME, return the header name defining it within either
    the standard library (with '<' and '>'), or NULL.
@@ -119,7 +162,14 @@ get_stdlib_header_for_name (const char *name, enum stdlib lib)
     {"stdout", {"<stdio.h>", "<cstdio>"} },
 
     /* <stdlib.h> and <cstdlib>.  */
+    {"EXIT_FAILURE", {"<stdlib.h>", "<cstdlib>"} },
+    {"EXIT_SUCCESS", {"<stdlib.h>", "<cstdlib>"} },
+    {"abort", {"<stdlib.h>", "<cstdlib>"} },
+    {"atexit", {"<stdlib.h>", "<cstdlib>"} },
+    {"calloc", {"<stdlib.h>", "<cstdlib>"} },
+    {"exit", {"<stdlib.h>", "<cstdlib>"} },
     {"free", {"<stdlib.h>", "<cstdlib>"} },
+    {"getenv", {"<stdlib.h>", "<cstdlib>"} },
     {"malloc", {"<stdlib.h>", "<cstdlib>"} },
     {"realloc", {"<stdlib.h>", "<cstdlib>"} },
 
@@ -150,6 +200,20 @@ get_stdlib_header_for_name (const char *name, enum stdlib lib)
     {"WINT_MAX", {"<stdint.h>", "<cstdint>"} },
     {"WINT_MIN", {"<stdint.h>", "<cstdint>"} },
 
+    /* <time.h>.  */
+    {"asctime", {"<time.h>", "<ctime>"} },
+    {"clock", {"<time.h>", "<ctime>"} },
+    {"clock_t", {"<time.h>", "<ctime>"} },
+    {"ctime", {"<time.h>", "<ctime>"} },
+    {"difftime", {"<time.h>", "<ctime>"} },
+    {"gmtime", {"<time.h>", "<ctime>"} },
+    {"localtime", {"<time.h>", "<ctime>"} },
+    {"mktime", {"<time.h>", "<ctime>"} },
+    {"strftime", {"<time.h>", "<ctime>"} },
+    {"time", {"<time.h>", "<ctime>"} },
+    {"time_t", {"<time.h>", "<ctime>"} },
+    {"tm", {"<time.h>", "<ctime>"} },
+
     /* <wchar.h>.  */
     {"WCHAR_MAX", {"<wchar.h>", "<cwchar>"} },
     {"WCHAR_MIN", {"<wchar.h>", "<cwchar>"} }
@@ -158,7 +222,45 @@ get_stdlib_header_for_name (const char *name, enum stdlib lib)
   for (size_t i = 0; i < num_hints; i++)
     if (strcmp (name, hints[i].name) == 0)
       return hints[i].header[lib];
-  return NULL;
+
+  static const stdlib_hint c99_cxx11_hints[] = {
+    /* <stdbool.h>.  Defined natively in C++.  */
+    {"bool", {"<stdbool.h>", NULL} },
+    {"true", {"<stdbool.h>", NULL} },
+    {"false", {"<stdbool.h>", NULL} },
+
+    /* <stdint.h> and <cstdint>.  */
+    {"int8_t", {"<stdint.h>", "<cstdint>"} },
+    {"uint8_t", {"<stdint.h>", "<cstdint>"} },
+    {"int16_t", {"<stdint.h>", "<cstdint>"} },
+    {"uint16_t", {"<stdint.h>", "<cstdint>"} },
+    {"int32_t", {"<stdint.h>", "<cstdint>"} },
+    {"uint32_t", {"<stdint.h>", "<cstdint>"} },
+    {"int64_t", {"<stdint.h>", "<cstdint>"} },
+    {"uint64_t", {"<stdint.h>", "<cstdint>"} },
+    {"intptr_t", {"<stdint.h>", "<cstdint>"} },
+    {"uintptr_t", {"<stdint.h>", "<cstdint>"} },
+    {"INT8_MAX", {"<stdint.h>", "<cstdint>"} },
+    {"INT16_MAX", {"<stdint.h>", "<cstdint>"} },
+    {"INT32_MAX", {"<stdint.h>", "<cstdint>"} },
+    {"INT64_MAX", {"<stdint.h>", "<cstdint>"} },
+    {"UINT8_MAX", {"<stdint.h>", "<cstdint>"} },
+    {"UINT16_MAX", {"<stdint.h>", "<cstdint>"} },
+    {"UINT32_MAX", {"<stdint.h>", "<cstdint>"} },
+    {"UINT64_MAX", {"<stdint.h>", "<cstdint>"} },
+    {"INTPTR_MAX", {"<stdint.h>", "<cstdint>"} },
+    {"UINTPTR_MAX", {"<stdint.h>", "<cstdint>"} }
+  };
+
+  const size_t num_c99_cxx11_hints = sizeof (c99_cxx11_hints)
+					     / sizeof (c99_cxx11_hints[0]);
+  if ((lib == STDLIB_C && flag_isoc99)
+      || (lib == STDLIB_CPLUSPLUS && cxx_dialect >= cxx11 ))
+    for (size_t i = 0; i < num_c99_cxx11_hints; i++)
+      if (strcmp (name, c99_cxx11_hints[i].name) == 0)
+	return c99_cxx11_hints[i].header[lib];
+
+  return get_string_macro_hint (name, lib);
 }
 
 /* Given non-NULL NAME, return the header name defining it within the C
@@ -177,6 +279,22 @@ const char *
 get_cp_stdlib_header_for_name (const char *name)
 {
   return get_stdlib_header_for_name (name, STDLIB_CPLUSPLUS);
+}
+
+/* Given non-NULL NAME, return the header name defining a string macro
+   within the C standard library (with '<' and '>'), or NULL.  */
+const char *
+get_c_stdlib_header_for_string_macro_name (const char *name)
+{
+  return get_string_macro_hint (name, STDLIB_C);
+}
+
+/* Given non-NULL NAME, return the header name defining a string macro
+   within the C++ standard library (with '<' and '>'), or NULL.  */
+const char *
+get_cp_stdlib_header_for_string_macro_name (const char *name)
+{
+  return get_string_macro_hint (name, STDLIB_CPLUSPLUS);
 }
 
 /* Implementation of class suggest_missing_header.  */

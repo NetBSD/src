@@ -1,6 +1,6 @@
-/* XCOFF definitions.  These are needed in dbxout.c, final.c,
+/* XCOFF definitions.  These are needed in dbxout.cc, final.cc,
    and xcoffout.h.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -103,8 +103,8 @@ along with GCC; see the file COPYING3.  If not see
   fputs (",0\n", asm_out_file);						\
 } while (0)
 
-/* These are IBM XCOFF extensions we need to reference in dbxout.c
-   and xcoffout.c.  */
+/* These are IBM XCOFF extensions we need to reference in dbxout.cc
+   and xcoffout.cc.  */
 
 /* AIX XCOFF uses this for typedefs.  This can have any value, since it is
    only used for translation into a C_DECL storage class.  */
@@ -129,7 +129,6 @@ extern char *xcoff_bss_section_name;
 extern char *xcoff_private_data_section_name;
 extern char *xcoff_private_rodata_section_name;
 extern char *xcoff_tls_data_section_name;
-extern char *xcoff_tbss_section_name;
 extern char *xcoff_read_only_section_name;
 
 /* Last source file name mentioned in a NOTE insn.  */
@@ -179,7 +178,7 @@ do {							\
 
 #define DEBUG_SYMS_TEXT
 
-/* Prototype functions in xcoffout.c.  */
+/* Prototype functions in xcoffout.cc.  */
 
 extern int stab_to_sclass (int);
 extern void xcoffout_begin_prologue (unsigned int, unsigned int, const char *);

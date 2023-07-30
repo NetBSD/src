@@ -1,4 +1,4 @@
-;   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+;   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 ;   Contributed by Red Hat.
 ; 
 ; This file is free software; you can redistribute it and/or modify it
@@ -63,6 +63,21 @@ __mspabi_srai:
 #else
 	RET
 #endif
+
+#ifdef __MSP430X__
+	.section	.text.__gnu_mspabi_srap
+1:	ADDA	#-1,R13
+	RRAX.A	R12,R12
+	.global	__gnu_mspabi_srap
+__gnu_mspabi_srap:
+	CMP	#0,R13
+	JNZ	1b
+#ifdef __MSP430X_LARGE__
+	RETA
+#else
+	RET
+#endif /* __MSP430X_LARGE__ */
+#endif /* __MSP430X__ */
 
 /* Arithmetic Right Shift - R12:R13 -> R12:R13.  */
 

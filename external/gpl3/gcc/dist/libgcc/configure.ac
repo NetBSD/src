@@ -68,11 +68,6 @@ AC_ARG_ENABLE(shared,
 ], [enable_shared=yes])
 AC_SUBST(enable_shared)
 
-AC_ARG_ENABLE(gcov,
-[  --disable-gcov          don't provide libgcov and related host tools],
-[], [enable_gcov=yes])
-AC_SUBST(enable_gcov)
-
 AC_ARG_ENABLE(vtable-verify,
 [  --enable-vtable-verify    Enable vtable verification feature ],
 [case "$enableval" in
@@ -163,6 +158,18 @@ ACX_NONCANONICAL_HOST
 ACX_NONCANONICAL_TARGET
 GCC_TOPLEV_SUBDIRS
 
+AC_ARG_ENABLE(gcov,
+[  --disable-gcov          don't provide libgcov and related host tools],
+[], [case $target in
+       bpf-*-*)
+         enable_gcov=no
+       ;;
+       *)
+         enable_gcov=yes
+       ;;
+     esac])
+AC_SUBST(enable_gcov)
+
 # Calculate toolexeclibdir
 # Also toolexecdir, though it's only used in toolexeclibdir
 case ${version_specific_libs} in
@@ -224,7 +231,7 @@ AC_SUBST(long_double_type_size)
 
 AC_CHECK_HEADERS(inttypes.h stdint.h stdlib.h ftw.h \
 	unistd.h sys/stat.h sys/types.h \
-	string.h strings.h memory.h sys/auxv.h)
+	string.h strings.h memory.h sys/auxv.h sys/mman.h)
 AC_HEADER_STDC
 
 # Check for decimal float support.
@@ -317,7 +324,7 @@ AC_CACHE_CHECK([whether assembler supports CFI directives], [libgcc_cv_cfi],
 # word size rather than the address size.
 cat > conftest.c <<EOF
 #if defined(__x86_64__) || (!defined(__i386__) && defined(__LP64__)) \
-    || defined(__mips64)
+    || defined(__mips64) || defined(__loongarch64)
 host_address=64
 #else
 host_address=32
@@ -383,11 +390,11 @@ AC_COMPUTE_INT([glibc_version_minor], [__GLIBC_MINOR__],
 				      [glibc_version_minor=0])])
 AC_MSG_RESULT([$glibc_version_major.$glibc_version_minor])
 
-# Determine floating-point type for powerpc*-*-linux*.
+# Determine floating-point type for powerpc*-*-linux* or vxworks7*.
 # Single-precision-only FPRs are not a supported configuration for
 # this target, so are not allowed for in this test.
 case ${host} in
-powerpc*-*-linux*)
+powerpc*-*-linux* | powerpc*-*-vxworks7*)
   cat > conftest.c <<EOF
 #ifdef __powerpc64__
 ppc_fp_type=64
@@ -458,6 +465,31 @@ powerpc*-*-linux*)
     [libgcc_cv_powerpc_float128_hw=yes],
     [libgcc_cv_powerpc_float128_hw=no])])
   CFLAGS="$saved_CFLAGS"
+
+  saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -mcpu=power10 -mfloat128-hardware"
+  AC_CACHE_CHECK([for PowerPC ISA 3.1 to build hardware __float128 libraries],
+		 [libgcc_cv_powerpc_3_1_float128_hw],
+		 [AC_COMPILE_IFELSE(
+    [AC_LANG_SOURCE([#include <sys/auxv.h>
+     #ifndef AT_PLATFORM
+     #error "AT_PLATFORM is not defined"
+     #endif
+     #ifndef __BUILTIN_CPU_SUPPORTS__
+     #error "__builtin_cpu_supports is not available"
+     #endif
+     vector unsigned char conv (vector unsigned char qs)
+     {
+       vector unsigned char ret;
+       __asm__ ("xscvsqqp %0,%1" : "=v" (ret) : "v" (qs));
+       return ret;
+     }
+     void *conv_resolver (void) { return (void *) conv; }
+     __float128 conv_ifunc (__float128)
+	__attribute__ ((__ifunc__ ("conv_resolver")));])],
+    [libgcc_cv_powerpc_3_1_float128_hw=yes],
+    [libgcc_cv_powerpc_3_1_float128_hw=no])])
+  CFLAGS="$saved_CFLAGS"
 esac
 
 # Collect host-machine-specific information.
@@ -515,14 +547,12 @@ AC_SUBST(solaris_ld_v2_maps)
 # This is after config.host so we can augment tmake_file.
 case ${host} in
 xtensa*-*)
-  cat > conftest.c <<EOF
-	#ifdef __XTENSA_CALL0_ABI__
-	#error
-	#endif
-EOF
-  if AC_TRY_COMMAND(${CC-cc} -E -o conftest.i conftest.c 1>&AS_MESSAGE_LOG_FD); then
-      tmake_file="${tmake_file} xtensa/t-windowed"
-  fi
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+		     [#ifdef __XTENSA_CALL0_ABI__
+		      #error
+		      #endif
+		      ])],
+		      [tmake_file="${tmake_file} xtensa/t-windowed"])
   ;;
 esac
 

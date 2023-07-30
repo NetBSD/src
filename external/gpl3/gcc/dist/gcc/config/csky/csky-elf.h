@@ -1,5 +1,5 @@
 /* Declarations for bare-metal C-SKY targets.
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2022 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of GCC.
@@ -47,6 +47,8 @@
   %{mcpu=*:-mcpu=%*}		\
   %{march=*:-march=%*}		\
   %{mhard-float:-mhard-float}	\
+  %{mfloat-abi=softfp:-mhard-float} \
+  %{mfloat-abi=hard:-mhard-float}   \
   %{melrw:-melrw}		\
   %{mno-elrw:-mno-elrw}		\
   %{mistack:-mistack}		\
@@ -68,8 +70,14 @@
  %{EL:-EL} -X"
 
 #undef	LIB_SPEC
-#define LIB_SPEC \
-  "%{pthread:-lpthread} -lc %{mccrt:-lcc-rt}"
+#define LIB_SPEC "\
+%{pthread:-lpthread} \
+--start-group \
+-lc \
+%{msim:-lsemi}%{!msim:-lnosys} \
+--end-group \
+%{mccrt:-lcc-rt} \
+"
 /* FIXME add this to LIB_SPEC when need */
 /*   %{!shared:%{profile:-lc_p}%{!profile:-lc}}" */
 

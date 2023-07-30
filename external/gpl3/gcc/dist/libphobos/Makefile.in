@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 # Makefile for the toplevel directory of the D Standard library.
-# Copyright (C) 2006-2020 Free Software Foundation, Inc.
+# Copyright (C) 2006-2022 Free Software Foundation, Inc.
 #
 # GCC is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -108,6 +108,8 @@ target_triplet = @target@
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
+	$(top_srcdir)/../config/cet.m4 \
+	$(top_srcdir)/../config/enable.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
 	$(top_srcdir)/../config/multi.m4 \
 	$(top_srcdir)/../config/override.m4 \
@@ -205,6 +207,8 @@ CC = @CC@
 CCAS = @CCAS@
 CCASFLAGS = @CCASFLAGS@
 CC_FOR_BUILD = @CC_FOR_BUILD@
+CET_DFLAGS = @CET_DFLAGS@
+CET_FLAGS = @CET_FLAGS@
 CFLAGS = @CFLAGS@
 CFLAGS_FOR_BUILD = @CFLAGS_FOR_BUILD@
 CHECKING_DFLAGS = @CHECKING_DFLAGS@
@@ -213,6 +217,7 @@ CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DCFG_ARM_EABI_UNWINDER = @DCFG_ARM_EABI_UNWINDER@
 DCFG_DLPI_TLS_MODID = @DCFG_DLPI_TLS_MODID@
+DCFG_ENABLE_CET = @DCFG_ENABLE_CET@
 DCFG_HAVE_64BIT_ATOMICS = @DCFG_HAVE_64BIT_ATOMICS@
 DCFG_HAVE_ATOMIC_BUILTINS = @DCFG_HAVE_ATOMIC_BUILTINS@
 DCFG_HAVE_LIBATOMIC = @DCFG_HAVE_LIBATOMIC@
@@ -266,6 +271,7 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
+SECTION_FLAGS = @SECTION_FLAGS@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -293,6 +299,8 @@ datadir = @datadir@
 datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
+enable_shared = @enable_shared@
+enable_static = @enable_static@
 exec_prefix = @exec_prefix@
 gcc_version = @gcc_version@
 gdc_include_dir = @gdc_include_dir@
@@ -322,6 +330,7 @@ oldincludedir = @oldincludedir@
 pdfdir = @pdfdir@
 phobos_compiler_pic_flag = @phobos_compiler_pic_flag@
 phobos_compiler_shared_flag = @phobos_compiler_shared_flag@
+phobos_lt_pic_flag = @phobos_lt_pic_flag@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@

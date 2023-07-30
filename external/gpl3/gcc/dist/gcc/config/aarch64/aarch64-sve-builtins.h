@@ -1,5 +1,5 @@
 /* ACLE support for AArch64 SVE
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -651,15 +651,14 @@ public:
 
 /* RAII class for enabling enough SVE features to define the built-in
    types and implement the arm_sve.h pragma.  */
-class sve_switcher
+class sve_switcher : public aarch64_simd_switcher
 {
 public:
   sve_switcher ();
   ~sve_switcher ();
 
 private:
-  unsigned long m_old_isa_flags;
-  bool m_old_general_regs_only;
+  unsigned int m_old_maximum_field_alignment;
   bool m_old_have_regs_of_mode[MAX_MACHINE_MODE];
 };
 

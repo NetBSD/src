@@ -1,5 +1,5 @@
 /* Machine description for AArch64 architecture.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -177,6 +177,8 @@ struct cpu_addrcost_table
   const struct scale_addr_mode_cost addr_scale_costs;
   const int pre_modify;
   const int post_modify;
+  const int post_modify_ld3_st3;
+  const int post_modify_ld4_st4;
   const int register_offset;
   const int register_sextend;
   const int register_zextend;
@@ -192,33 +194,275 @@ struct cpu_regmove_cost
   const int FP2FP;
 };
 
+struct simd_vec_cost
+{
+  /* Cost of any integer vector operation, excluding the ones handled
+     specially below.  */
+  const int int_stmt_cost;
+
+  /* Cost of any fp vector operation, excluding the ones handled
+     specially below.  */
+  const int fp_stmt_cost;
+
+  /* Per-vector cost of permuting vectors after an LD2, LD3 or LD4,
+     as well as the per-vector cost of permuting vectors before
+     an ST2, ST3 or ST4.  */
+  const int ld2_st2_permute_cost;
+  const int ld3_st3_permute_cost;
+  const int ld4_st4_permute_cost;
+
+  /* Cost of a permute operation.  */
+  const int permute_cost;
+
+  /* Cost of reductions for various vector types: iN is for N-bit
+     integer elements and fN is for N-bit floating-point elements.
+     We need to single out the element type because it affects the
+     depth of the reduction.  */
+  const int reduc_i8_cost;
+  const int reduc_i16_cost;
+  const int reduc_i32_cost;
+  const int reduc_i64_cost;
+  const int reduc_f16_cost;
+  const int reduc_f32_cost;
+  const int reduc_f64_cost;
+
+  /* Additional cost of storing a single vector element, on top of the
+     normal cost of a scalar store.  */
+  const int store_elt_extra_cost;
+
+  /* Cost of a vector-to-scalar operation.  */
+  const int vec_to_scalar_cost;
+
+  /* Cost of a scalar-to-vector operation.  */
+  const int scalar_to_vec_cost;
+
+  /* Cost of an aligned vector load.  */
+  const int align_load_cost;
+
+  /* Cost of an unaligned vector load.  */
+  const int unalign_load_cost;
+
+  /* Cost of an unaligned vector store.  */
+  const int unalign_store_cost;
+
+  /* Cost of a vector store.  */
+  const int store_cost;
+};
+
+typedef struct simd_vec_cost advsimd_vec_cost;
+
+/* SVE-specific extensions to the information provided by simd_vec_cost.  */
+struct sve_vec_cost : simd_vec_cost
+{
+  constexpr sve_vec_cost (const simd_vec_cost &base,
+			  unsigned int clast_cost,
+			  unsigned int fadda_f16_cost,
+			  unsigned int fadda_f32_cost,
+			  unsigned int fadda_f64_cost,
+			  unsigned int gather_load_x32_cost,
+			  unsigned int gather_load_x64_cost,
+			  unsigned int scatter_store_elt_cost)
+    : simd_vec_cost (base),
+      clast_cost (clast_cost),
+      fadda_f16_cost (fadda_f16_cost),
+      fadda_f32_cost (fadda_f32_cost),
+      fadda_f64_cost (fadda_f64_cost),
+      gather_load_x32_cost (gather_load_x32_cost),
+      gather_load_x64_cost (gather_load_x64_cost),
+      scatter_store_elt_cost (scatter_store_elt_cost)
+  {}
+
+  /* The cost of a vector-to-scalar CLASTA or CLASTB instruction,
+     with the scalar being stored in FP registers.  This cost is
+     assumed to be a cycle latency.  */
+  const int clast_cost;
+
+  /* The costs of FADDA for the three data types that it supports.
+     These costs are assumed to be cycle latencies.  */
+  const int fadda_f16_cost;
+  const int fadda_f32_cost;
+  const int fadda_f64_cost;
+
+  /* The cost of a gather load instruction.  The x32 value is for loads
+     of 32-bit elements and the x64 value is for loads of 64-bit elements.  */
+  const int gather_load_x32_cost;
+  const int gather_load_x64_cost;
+
+  /* The per-element cost of a scatter store.  */
+  const int scatter_store_elt_cost;
+};
+
+/* Base information about how the CPU issues code, containing
+   information that is relevant to scalar, Advanced SIMD and SVE
+   operations.
+
+   The structure uses the general term "operation" to refer to
+   whichever subdivision of an instruction makes sense for the CPU.
+   These operations would typically be micro operations or macro
+   operations.
+
+   Note that this structure and the ones derived from it are only
+   as general as they need to be for the CPUs that currently use them.
+   They will probably need to be extended or refined as more CPUs are
+   added.  */
+struct aarch64_base_vec_issue_info
+{
+  /* How many loads and stores can be issued per cycle.  */
+  const unsigned int loads_stores_per_cycle;
+
+  /* How many stores can be issued per cycle.  */
+  const unsigned int stores_per_cycle;
+
+  /* How many integer or FP/SIMD operations can be issued per cycle.
+
+     Currently we don't try to distinguish the two.  For vector code,
+     we only really track FP/SIMD operations during vector costing;
+     we don't for example try to cost arithmetic operations like
+     address calculations, which are only decided later during ivopts.
+
+     For scalar code, we effectively assume that code operates entirely
+     on integers or entirely on floating-point values.  Again, we don't
+     try to take address calculations into account.
+
+     This is not very precise, but it's only meant to be a heuristic.
+     We could certainly try to do better in future if there's an example
+     of something that would benefit.  */
+  const unsigned int general_ops_per_cycle;
+
+  /* How many FP/SIMD operations to count for a floating-point or
+     vector load operation.
+
+     When constructing an Advanced SIMD vector from elements that have
+     been loaded from memory, these values apply to each individual load.
+     When using an SVE gather load, the values apply to each element of
+     the gather.  */
+  const unsigned int fp_simd_load_general_ops;
+
+  /* How many FP/SIMD operations to count for a floating-point or
+     vector store operation.
+
+     When storing individual elements of an Advanced SIMD vector out to
+     memory, these values apply to each individual store.  When using an
+     SVE scatter store, these values apply to each element of the scatter.  */
+  const unsigned int fp_simd_store_general_ops;
+};
+
+using aarch64_scalar_vec_issue_info = aarch64_base_vec_issue_info;
+
+/* Base information about the issue stage for vector operations.
+   This structure contains information that is relevant to both
+   Advanced SIMD and SVE.  */
+struct aarch64_simd_vec_issue_info : aarch64_base_vec_issue_info
+{
+  constexpr aarch64_simd_vec_issue_info (aarch64_base_vec_issue_info base,
+					 unsigned int ld2_st2_general_ops,
+					 unsigned int ld3_st3_general_ops,
+					 unsigned int ld4_st4_general_ops)
+    : aarch64_base_vec_issue_info (base),
+      ld2_st2_general_ops (ld2_st2_general_ops),
+      ld3_st3_general_ops (ld3_st3_general_ops),
+      ld4_st4_general_ops (ld4_st4_general_ops)
+  {}
+
+  /* How many FP/SIMD operations to count for each vector loaded or
+     stored by an LD[234] or ST[234] operation, in addition to the
+     base costs given in the parent class.  For example, the full
+     number of operations for an LD3 would be:
+
+       load ops:    3
+       general ops: 3 * (fp_simd_load_general_ops + ld3_st3_general_ops).  */
+  const unsigned int ld2_st2_general_ops;
+  const unsigned int ld3_st3_general_ops;
+  const unsigned int ld4_st4_general_ops;
+};
+
+using aarch64_advsimd_vec_issue_info = aarch64_simd_vec_issue_info;
+
+/* Information about the issue stage for SVE.  The main thing this adds
+   is a concept of "predicate operations".  */
+struct aarch64_sve_vec_issue_info : aarch64_simd_vec_issue_info
+{
+  constexpr aarch64_sve_vec_issue_info
+    (aarch64_simd_vec_issue_info base,
+     unsigned int pred_ops_per_cycle,
+     unsigned int while_pred_ops,
+     unsigned int int_cmp_pred_ops,
+     unsigned int fp_cmp_pred_ops,
+     unsigned int gather_scatter_pair_general_ops,
+     unsigned int gather_scatter_pair_pred_ops)
+    : aarch64_simd_vec_issue_info (base),
+      pred_ops_per_cycle (pred_ops_per_cycle),
+      while_pred_ops (while_pred_ops),
+      int_cmp_pred_ops (int_cmp_pred_ops),
+      fp_cmp_pred_ops (fp_cmp_pred_ops),
+      gather_scatter_pair_general_ops (gather_scatter_pair_general_ops),
+      gather_scatter_pair_pred_ops (gather_scatter_pair_pred_ops)
+  {}
+
+  /* How many predicate operations can be issued per cycle.  */
+  const unsigned int pred_ops_per_cycle;
+
+  /* How many predicate operations are generated by a WHILExx
+     instruction.  */
+  const unsigned int while_pred_ops;
+
+  /* How many predicate operations are generated by an integer
+     comparison instruction.  */
+  const unsigned int int_cmp_pred_ops;
+
+  /* How many predicate operations are generated by a floating-point
+     comparison instruction.  */
+  const unsigned int fp_cmp_pred_ops;
+
+  /* How many general and predicate operations are generated by each pair
+     of elements in a gather load or scatter store.  These values apply
+     on top of the per-element counts recorded in fp_simd_load_general_ops
+     and fp_simd_store_general_ops.
+
+     The reason for using pairs is that that is the largest possible
+     granule size for 128-bit SVE, which can load and store 2 64-bit
+     elements or 4 32-bit elements.  */
+  const unsigned int gather_scatter_pair_general_ops;
+  const unsigned int gather_scatter_pair_pred_ops;
+};
+
+/* Information related to instruction issue for a particular CPU.  */
+struct aarch64_vec_issue_info
+{
+  const aarch64_base_vec_issue_info *const scalar;
+  const aarch64_simd_vec_issue_info *const advsimd;
+  const aarch64_sve_vec_issue_info *const sve;
+};
+
 /* Cost for vector insn classes.  */
 struct cpu_vector_cost
 {
-  const int scalar_int_stmt_cost;	 /* Cost of any int scalar operation,
-					    excluding load and store.  */
-  const int scalar_fp_stmt_cost;	 /* Cost of any fp scalar operation,
-					    excluding load and store.  */
-  const int scalar_load_cost;		 /* Cost of scalar load.  */
-  const int scalar_store_cost;		 /* Cost of scalar store.  */
-  const int vec_int_stmt_cost;		 /* Cost of any int vector operation,
-					    excluding load, store, permute,
-					    vector-to-scalar and
-					    scalar-to-vector operation.  */
-  const int vec_fp_stmt_cost;		 /* Cost of any fp vector operation,
-					    excluding load, store, permute,
-					    vector-to-scalar and
-					    scalar-to-vector operation.  */
-  const int vec_permute_cost;		 /* Cost of permute operation.  */
-  const int vec_to_scalar_cost;		 /* Cost of vec-to-scalar operation.  */
-  const int scalar_to_vec_cost;		 /* Cost of scalar-to-vector
-					    operation.  */
-  const int vec_align_load_cost;	 /* Cost of aligned vector load.  */
-  const int vec_unalign_load_cost;	 /* Cost of unaligned vector load.  */
-  const int vec_unalign_store_cost;	 /* Cost of unaligned vector store.  */
-  const int vec_store_cost;		 /* Cost of vector store.  */
-  const int cond_taken_branch_cost;	 /* Cost of taken branch.  */
-  const int cond_not_taken_branch_cost;  /* Cost of not taken branch.  */
+  /* Cost of any integer scalar operation, excluding load and store.  */
+  const int scalar_int_stmt_cost;
+
+  /* Cost of any fp scalar operation, excluding load and store.  */
+  const int scalar_fp_stmt_cost;
+
+  /* Cost of a scalar load.  */
+  const int scalar_load_cost;
+
+  /* Cost of a scalar store.  */
+  const int scalar_store_cost;
+
+  /* Cost of a taken branch.  */
+  const int cond_taken_branch_cost;
+
+  /* Cost of a not-taken branch.  */
+  const int cond_not_taken_branch_cost;
+
+  /* Cost of an Advanced SIMD operations.  */
+  const advsimd_vec_cost *advsimd;
+
+  /* Cost of an SVE operations, or null if SVE is not implemented.  */
+  const sve_vec_cost *sve;
+
+  /* Issue information, or null if none is provided.  */
+  const aarch64_vec_issue_info *const issue_info;
 };
 
 /* Branch costs.  */
@@ -263,6 +507,18 @@ struct cpu_prefetch_tune
   const int default_opt_level;
 };
 
+/* Model the costs for loads/stores for the register allocators so that it can
+   do more accurate spill heuristics.  */
+struct cpu_memmov_cost
+{
+  int load_int;
+  int store_int;
+  int load_fp;
+  int store_fp;
+  int load_pred;
+  int store_pred;
+};
+
 struct tune_params
 {
   const struct cpu_cost_table *insn_extra_cost;
@@ -271,11 +527,12 @@ struct tune_params
   const struct cpu_vector_cost *vec_costs;
   const struct cpu_branch_cost *branch_costs;
   const struct cpu_approx_modes *approx_modes;
-  /* Width of the SVE registers or SVE_NOT_IMPLEMENTED if not applicable.
-     Only used for tuning decisions, does not disable VLA
-     vectorization.  */
-  enum aarch64_sve_vector_bits_enum sve_width;
-  int memmov_cost;
+  /* A bitmask of the possible SVE register widths in bits,
+     or SVE_NOT_IMPLEMENTED if not applicable.  Only used for tuning
+     decisions, does not disable VLA vectorization.  */
+  unsigned int sve_width;
+  /* Structure used by reload to cost spills.  */
+  struct cpu_memmov_cost memmov_cost;
   int issue_rate;
   unsigned int fusible_ops;
   const char *function_align;
@@ -489,6 +746,19 @@ const unsigned int AARCH64_BUILTIN_SHIFT = 1;
 /* Mask that selects the aarch64_builtin_class part of a function code.  */
 const unsigned int AARCH64_BUILTIN_CLASS = (1 << AARCH64_BUILTIN_SHIFT) - 1;
 
+/* RAII class for enabling enough features to define built-in types
+   and implement the arm_neon.h pragma.  */
+class aarch64_simd_switcher
+{
+public:
+  aarch64_simd_switcher (unsigned int extra_flags = 0);
+  ~aarch64_simd_switcher ();
+
+private:
+  unsigned long m_old_isa_flags;
+  bool m_old_general_regs_only;
+};
+
 void aarch64_post_cfi_startproc (void);
 poly_int64 aarch64_initial_elimination_offset (unsigned, unsigned);
 int aarch64_get_condition_code (rtx);
@@ -499,6 +769,7 @@ unsigned HOST_WIDE_INT aarch64_and_split_imm2 (HOST_WIDE_INT val_in);
 bool aarch64_and_bitmask_imm (unsigned HOST_WIDE_INT val_in, machine_mode mode);
 int aarch64_branch_cost (bool, bool);
 enum aarch64_symbol_type aarch64_classify_symbolic_expression (rtx);
+bool aarch64_advsimd_struct_mode_p (machine_mode mode);
 opt_machine_mode aarch64_vq_mode (scalar_mode);
 opt_machine_mode aarch64_full_sve_mode (scalar_mode);
 bool aarch64_can_const_movi_rtx_p (rtx x, machine_mode mode);
@@ -508,8 +779,10 @@ bool aarch64_const_vec_all_same_in_range_p (rtx, HOST_WIDE_INT,
 bool aarch64_constant_address_p (rtx);
 bool aarch64_emit_approx_div (rtx, rtx, rtx);
 bool aarch64_emit_approx_sqrt (rtx, rtx, bool);
+tree aarch64_vector_load_decl (tree);
 void aarch64_expand_call (rtx, rtx, rtx, bool);
 bool aarch64_expand_cpymem (rtx *);
+bool aarch64_expand_setmem (rtx *);
 bool aarch64_float_const_zero_rtx_p (rtx);
 bool aarch64_float_const_rtx_p (rtx);
 bool aarch64_function_arg_regno_p (unsigned);
@@ -600,6 +873,7 @@ const char *aarch64_output_move_struct (rtx *operands);
 rtx aarch64_return_addr_rtx (void);
 rtx aarch64_return_addr (int, rtx);
 rtx aarch64_simd_gen_const_vector_dup (machine_mode, HOST_WIDE_INT);
+rtx aarch64_gen_shareable_zero (machine_mode);
 bool aarch64_simd_mem_operand_p (rtx);
 bool aarch64_sve_ld1r_operand_p (rtx);
 bool aarch64_sve_ld1rq_operand_p (rtx);
@@ -678,8 +952,6 @@ bool aarch64_split_128bit_move_p (rtx, rtx);
 
 bool aarch64_mov128_immediate (rtx);
 
-void aarch64_split_simd_combine (rtx, rtx, rtx);
-
 void aarch64_split_simd_move (rtx, rtx);
 
 /* Check for a legitimate floating point constant for FMOV.  */
@@ -694,6 +966,7 @@ bool aarch64_legitimate_address_p (machine_mode, rtx, bool,
 				   aarch64_addr_query_type = ADDR_QUERY_M);
 machine_mode aarch64_select_cc_mode (RTX_CODE, rtx, rtx);
 rtx aarch64_gen_compare_reg (RTX_CODE, rtx, rtx);
+bool aarch64_maxmin_plus_const (rtx_code, rtx *, bool);
 rtx aarch64_load_tp (rtx);
 
 void aarch64_expand_compare_and_swap (rtx op[]);
@@ -701,7 +974,7 @@ void aarch64_split_compare_and_swap (rtx op[]);
 
 void aarch64_split_atomic_op (enum rtx_code, rtx, rtx, rtx, rtx, rtx, rtx);
 
-bool aarch64_gen_adjusted_ldpstp (rtx *, bool, scalar_mode, RTX_CODE);
+bool aarch64_gen_adjusted_ldpstp (rtx *, bool, machine_mode, RTX_CODE);
 
 void aarch64_expand_sve_vec_cmp_int (rtx, rtx_code, rtx, rtx);
 bool aarch64_expand_sve_vec_cmp_float (rtx, rtx_code, rtx, rtx, bool);
@@ -717,11 +990,14 @@ void aarch64_override_options_internal (struct gcc_options *);
 const char *aarch64_general_mangle_builtin_type (const_tree);
 void aarch64_general_init_builtins (void);
 tree aarch64_general_fold_builtin (unsigned int, tree, unsigned int, tree *);
-gimple *aarch64_general_gimple_fold_builtin (unsigned int, gcall *);
+gimple *aarch64_general_gimple_fold_builtin (unsigned int, gcall *,
+					     gimple_stmt_iterator *);
 rtx aarch64_general_expand_builtin (unsigned int, tree, rtx, int);
 tree aarch64_general_builtin_decl (unsigned, bool);
 tree aarch64_general_builtin_rsqrt (unsigned int);
 tree aarch64_builtin_vectorized_function (unsigned int, tree, tree);
+void handle_arm_acle_h (void);
+void handle_arm_neon_h (void);
 
 namespace aarch64_sve {
   void init_builtins ();
@@ -751,8 +1027,9 @@ void aarch64_atomic_assign_expand_fenv (tree *, tree *, tree *);
 int aarch64_ccmp_mode_to_code (machine_mode mode);
 
 bool extract_base_offset_in_addr (rtx mem, rtx *base, rtx *offset);
+bool aarch64_mergeable_load_pair_p (machine_mode, rtx, rtx);
 bool aarch64_operands_ok_for_ldpstp (rtx *, bool, machine_mode);
-bool aarch64_operands_adjust_ok_for_ldpstp (rtx *, bool, scalar_mode);
+bool aarch64_operands_adjust_ok_for_ldpstp (rtx *, bool, machine_mode);
 void aarch64_swap_ldrstr_operands (rtx *, bool);
 
 extern void aarch64_asm_output_pool_epilogue (FILE *, const char *,
@@ -763,7 +1040,7 @@ extern bool aarch64_classify_address (struct aarch64_address_info *, rtx,
 				      machine_mode, bool,
 				      aarch64_addr_query_type = ADDR_QUERY_M);
 
-/* Defined in common/config/aarch64-common.c.  */
+/* Defined in common/config/aarch64-common.cc.  */
 bool aarch64_handle_option (struct gcc_options *, struct gcc_options *,
 			     const struct cl_decoded_option *, location_t);
 const char *aarch64_rewrite_selected_cpu (const char *name);
@@ -773,13 +1050,11 @@ enum aarch64_parse_opt_result aarch64_parse_extension (const char *,
 void aarch64_get_all_extension_candidates (auto_vec<const char *> *candidates);
 std::string aarch64_get_extension_string_for_isa_flags (uint64_t, uint64_t);
 
-/* Defined in aarch64-d.c  */
-extern void aarch64_d_target_versions (void);
-
 rtl_opt_pass *make_pass_fma_steering (gcc::context *);
 rtl_opt_pass *make_pass_track_speculation (gcc::context *);
 rtl_opt_pass *make_pass_tag_collision_avoidance (gcc::context *);
 rtl_opt_pass *make_pass_insert_bti (gcc::context *ctxt);
+rtl_opt_pass *make_pass_cc_fusion (gcc::context *ctxt);
 
 poly_uint64 aarch64_regmode_natural_size (machine_mode);
 

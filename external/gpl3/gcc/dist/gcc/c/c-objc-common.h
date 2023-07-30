@@ -1,5 +1,5 @@
 /* Language hooks common to C and ObjC front ends.
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2022 Free Software Foundation, Inc.
    Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 This file is part of GCC.
@@ -22,7 +22,7 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_C_OBJC_COMMON
 
 /* Lang hooks that are shared between C and ObjC are defined here.  Hooks
-   specific to C or ObjC go in c-lang.c and objc/objc-lang.c, respectively.  */
+   specific to C or ObjC go in c-lang.cc and objc/objc-lang.cc, respectively.  */
 
 #undef LANG_HOOKS_IDENTIFIER_SIZE
 #define LANG_HOOKS_IDENTIFIER_SIZE C_SIZEOF_STRUCT_LANG_IDENTIFIER
@@ -56,6 +56,8 @@ along with GCC; see the file COPYING3.  If not see
 #define LANG_HOOKS_TYPES_COMPATIBLE_P c_types_compatible_p
 #undef LANG_HOOKS_MISSING_NORETURN_OK_P
 #define LANG_HOOKS_MISSING_NORETURN_OK_P c_missing_noreturn_ok_p
+#undef LANG_HOOKS_BLOCK_MAY_FALLTHRU
+#define LANG_HOOKS_BLOCK_MAY_FALLTHRU c_block_may_fallthru
 #undef  LANG_HOOKS_BUILTIN_FUNCTION
 #define LANG_HOOKS_BUILTIN_FUNCTION c_builtin_function
 #undef  LANG_HOOKS_BUILTIN_FUNCTION_EXT_SCOPE
@@ -65,6 +67,8 @@ along with GCC; see the file COPYING3.  If not see
   c_simulate_builtin_function_decl
 #undef LANG_HOOKS_EMITS_BEGIN_STMT
 #define LANG_HOOKS_EMITS_BEGIN_STMT true
+#undef LANG_HOOKS_FINALIZE_EARLY_DEBUG
+#define LANG_HOOKS_FINALIZE_EARLY_DEBUG c_common_finalize_early_debug
 
 /* Attribute hooks.  */
 #undef LANG_HOOKS_COMMON_ATTRIBUTE_TABLE
@@ -77,6 +81,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef LANG_HOOKS_SIMULATE_ENUM_DECL
 #define LANG_HOOKS_SIMULATE_ENUM_DECL c_simulate_enum_decl
+#undef LANG_HOOKS_SIMULATE_RECORD_DECL
+#define LANG_HOOKS_SIMULATE_RECORD_DECL c_simulate_record_decl
 #undef LANG_HOOKS_TYPE_FOR_MODE
 #define LANG_HOOKS_TYPE_FOR_MODE c_common_type_for_mode
 #undef LANG_HOOKS_TYPE_FOR_SIZE
@@ -106,6 +112,9 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef LANG_HOOKS_OMP_PREDETERMINED_SHARING
 #define LANG_HOOKS_OMP_PREDETERMINED_SHARING c_omp_predetermined_sharing
+
+#undef LANG_HOOKS_OMP_PREDETERMINED_MAPPING
+#define LANG_HOOKS_OMP_PREDETERMINED_MAPPING c_omp_predetermined_mapping
 
 #undef LANG_HOOKS_OMP_CLAUSE_COPY_CTOR
 #define LANG_HOOKS_OMP_CLAUSE_COPY_CTOR c_omp_clause_copy_ctor

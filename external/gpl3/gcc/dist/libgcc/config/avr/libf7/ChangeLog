@@ -1,6 +1,6 @@
-2023-07-07  Release Manager
+2023-05-08  Release Manager
 
-	* GCC 10.5.0 released.
+	* GCC 12.3.0 released.
 
 2022-09-19  Georg-Johann Lay  <avr@gjlay.de>
 
@@ -11,21 +11,17 @@
 	* libf7-asm.sx (to_integer, to_unsigned): Don't round 16-bit
 	and 32-bit integers.
 
-2022-06-28  Release Manager
+2022-08-19  Release Manager
 
-	* GCC 10.4.0 released.
+	* GCC 12.2.0 released.
 
-2021-04-08  Release Manager
+2022-05-06  Release Manager
 
-	* GCC 10.3.0 released.
+	* GCC 12.1.0 released.
 
-2020-07-23  Release Manager
+2020-06-23  David Edelsohn  <dje.gcc@gmail.com>
 
-	* GCC 10.2.0 released.
-
-2020-05-07  Release Manager
-
-	* GCC 10.1.0 released.
+	* t-libf7: Use -include.
 
 2020-01-08  Georg-Johann Lay  <avr@gjlay.de>
 

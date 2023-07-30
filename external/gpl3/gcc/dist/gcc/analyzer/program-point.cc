@@ -1,5 +1,5 @@
 /* Classes for representing locations within the program.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -24,6 +24,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "gimple-pretty-print.h"
 #include "gcc-rich-location.h"
+#include "json.h"
 #include "analyzer/call-string.h"
 #include "ordered-hash-map.h"
 #include "options.h"
@@ -42,6 +43,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "bitmap.h"
 #include "tristate.h"
 #include "selftest.h"
+#include "analyzer/store.h"
 #include "analyzer/region-model.h"
 #include "analyzer/sm.h"
 #include "analyzer/program-state.h"
@@ -84,6 +86,22 @@ point_kind_to_string (enum point_kind pk)
 
 /* class function_point.  */
 
+function_point::function_point (const supernode *supernode,
+				const superedge *from_edge,
+				unsigned stmt_idx,
+				enum point_kind kind)
+: m_supernode (supernode), m_from_edge (from_edge),
+  m_stmt_idx (stmt_idx), m_kind (kind)
+{
+  if (from_edge)
+    {
+      gcc_checking_assert (m_kind == PK_BEFORE_SUPERNODE);
+      gcc_checking_assert (from_edge->get_kind () == SUPEREDGE_CFG_EDGE);
+    }
+  if (stmt_idx)
+    gcc_checking_assert (m_kind == PK_BEFORE_STMT);
+}
+
 /* Print this function_point to PP.  */
 
 void
@@ -96,13 +114,22 @@ function_point::print (pretty_printer *pp, const format &f) const
 
     case PK_ORIGIN:
       pp_printf (pp, "origin");
+      if (f.m_newlines)
+	pp_newline (pp);
       break;
 
     case PK_BEFORE_SUPERNODE:
       {
 	if (m_from_edge)
-	  pp_printf (pp, "before SN: %i (from SN: %i)",
-		     m_supernode->m_index, m_from_edge->m_src->m_index);
+	  {
+	    if (basic_block bb = m_from_edge->m_src->m_bb)
+	      pp_printf (pp, "before SN: %i (from SN: %i (bb: %i))",
+			 m_supernode->m_index, m_from_edge->m_src->m_index,
+			 bb->index);
+	    else
+	      pp_printf (pp, "before SN: %i (from SN: %i)",
+			 m_supernode->m_index, m_from_edge->m_src->m_index);
+	  }
 	else
 	  pp_printf (pp, "before SN: %i (NULL from-edge)",
 		     m_supernode->m_index);
@@ -131,6 +158,8 @@ function_point::print (pretty_printer *pp, const format &f) const
 
     case PK_AFTER_SUPERNODE:
       pp_printf (pp, "after SN: %i", m_supernode->m_index);
+      if (f.m_newlines)
+	pp_newline (pp);
       break;
     }
 }
@@ -147,6 +176,17 @@ function_point::hash () const
   hstate.add_int (m_stmt_idx);
   hstate.add_int (m_kind);
   return hstate.end ();
+}
+
+/* Get the function at this point, if any.  */
+
+function *
+function_point::get_function () const
+{
+  if (m_supernode)
+    return m_supernode->m_fun;
+  else
+    return NULL;
 }
 
 /* Get the gimple stmt for this function_point, if any.  */
@@ -170,8 +210,43 @@ function_point::get_location () const
   const gimple *stmt = get_stmt ();
   if (stmt)
     return stmt->location;
+  if (m_kind == PK_BEFORE_SUPERNODE)
+    return m_supernode->get_start_location ();
+  else if (m_kind == PK_AFTER_SUPERNODE)
+    return m_supernode->get_end_location ();
+  else
+    return UNKNOWN_LOCATION;
+}
 
-  return UNKNOWN_LOCATION;
+/* Return true if this function_point is a before_stmt for
+   the final stmt in its supernode.  */
+
+bool
+function_point::final_stmt_p () const
+{
+  if (m_kind != PK_BEFORE_STMT)
+    return false;
+  return m_stmt_idx == get_supernode ()->m_stmts.length () - 1;
+}
+
+/* Create a function_point representing the entrypoint of function FUN.  */
+
+function_point
+function_point::from_function_entry (const supergraph &sg, function *fun)
+{
+  return before_supernode (sg.get_node_for_function_entry (fun), NULL);
+}
+
+/* Create a function_point representing entering supernode SUPERNODE,
+   having reached it via FROM_EDGE (which could be NULL).  */
+
+function_point
+function_point::before_supernode (const supernode *supernode,
+				  const superedge *from_edge)
+{
+  if (from_edge && from_edge->get_kind () != SUPEREDGE_CFG_EDGE)
+    from_edge = NULL;
+  return function_point (supernode, from_edge, 0, PK_BEFORE_SUPERNODE);
 }
 
 /* A subclass of diagnostic_context for use by
@@ -233,6 +308,61 @@ program_point::dump () const
   pp_flush (&pp);
 }
 
+/* Return a new json::object of the form
+   {"kind"  : str,
+    "snode_idx" : int (optional), the index of the supernode,
+    "from_edge_snode_idx" : int (only for kind=='PK_BEFORE_SUPERNODE'),
+    "stmt_idx": int (only for kind=='PK_BEFORE_STMT',
+    "call_string": object for the call_string}.  */
+
+json::object *
+program_point::to_json () const
+{
+  json::object *point_obj = new json::object ();
+
+  point_obj->set ("kind",
+		  new json::string (point_kind_to_string (get_kind ())));
+
+  if (get_supernode ())
+    point_obj->set ("snode_idx",
+		    new json::integer_number (get_supernode ()->m_index));
+
+  switch (get_kind ())
+    {
+    default: break;
+    case PK_BEFORE_SUPERNODE:
+      if (const superedge *sedge = get_from_edge ())
+	point_obj->set ("from_edge_snode_idx",
+			new json::integer_number (sedge->m_src->m_index));
+      break;
+    case PK_BEFORE_STMT:
+      point_obj->set ("stmt_idx", new json::integer_number (get_stmt_idx ()));
+      break;
+    }
+
+  point_obj->set ("call_string", m_call_string.to_json ());
+
+  return point_obj;
+}
+
+/* Update the callstack to represent a call from caller to callee.
+
+   Generally used to push a custom call to a perticular program point 
+   where we don't have a superedge representing the call.  */
+void
+program_point::push_to_call_stack (const supernode *caller,
+				   const supernode *callee)
+{
+  m_call_string.push_call (callee, caller);
+}
+
+/* Pop the topmost call from the current callstack.  */
+void
+program_point::pop_from_call_stack ()
+{
+  m_call_string.pop ();
+}
+
 /* Generate a hash value for this program_point.  */
 
 hashval_t
@@ -253,7 +383,7 @@ program_point::get_function_at_depth (unsigned depth) const
   if (depth == m_call_string.length ())
     return m_function_point.get_function ();
   else
-    return m_call_string[depth]->get_caller_function ();
+    return m_call_string[depth].get_caller_function ();
 }
 
 /* Assert that this object is sane.  */
@@ -270,7 +400,7 @@ program_point::validate () const
   /* The "callee" of the final entry in the callstring should be the
      function of the m_function_point.  */
   if (m_call_string.length () > 0)
-    gcc_assert (m_call_string[m_call_string.length () - 1]->get_callee_function ()
+    gcc_assert (m_call_string[m_call_string.length () - 1].get_callee_function ()
 		== get_function ());
 }
 
@@ -341,8 +471,10 @@ program_point::on_edge (exploded_graph &eg,
 	      logger->log ("rejecting return edge: empty call string");
 	    return false;
 	  }
-	const return_superedge *top_of_stack = m_call_string.pop ();
-	if (top_of_stack != succ)
+	const call_string::element_t top_of_stack = m_call_string.pop ();
+	call_string::element_t current_call_string_element (succ->m_dest,
+							    succ->m_src);
+	if (top_of_stack != current_call_string_element)
 	  {
 	    if (logger)
 	      logger->log ("rejecting return edge: return to wrong callsite");
@@ -466,6 +598,104 @@ function_point::cmp_within_supernode (const function_point &point_a,
 #endif
 
   return result;
+}
+
+/* Comparator for imposing an order on function_points.  */
+
+int
+function_point::cmp (const function_point &point_a,
+		     const function_point &point_b)
+{
+  int idx_a = point_a.m_supernode ? point_a.m_supernode->m_index : -1;
+  int idx_b = point_b.m_supernode ? point_b.m_supernode->m_index : -1;
+  if (int cmp_idx = idx_a - idx_b)
+    return cmp_idx;
+  gcc_assert (point_a.m_supernode == point_b.m_supernode);
+  if (point_a.m_supernode)
+    return cmp_within_supernode (point_a, point_b);
+  else
+    return 0;
+}
+
+/* Comparator for use by vec<function_point>::qsort.  */
+
+int
+function_point::cmp_ptr (const void *p1, const void *p2)
+{
+  const function_point *fp1 = (const function_point *)p1;
+  const function_point *fp2 = (const function_point *)p2;
+  return cmp (*fp1, *fp2);
+}
+
+/* For PK_BEFORE_STMT, go to next stmt (or to PK_AFTER_SUPERNODE).  */
+
+void
+function_point::next_stmt ()
+{
+  gcc_assert (m_kind == PK_BEFORE_STMT);
+  if (++m_stmt_idx == m_supernode->m_stmts.length ())
+    {
+      m_kind = PK_AFTER_SUPERNODE;
+      m_stmt_idx = 0;
+    }
+}
+
+/* For those function points for which there is a uniquely-defined
+   successor, return it.  */
+
+function_point
+function_point::get_next () const
+{
+  switch (get_kind ())
+    {
+    default:
+      gcc_unreachable ();
+    case PK_ORIGIN:
+    case PK_AFTER_SUPERNODE:
+      gcc_unreachable (); /* Not uniquely defined.  */
+    case PK_BEFORE_SUPERNODE:
+      if (get_supernode ()->m_stmts.length () > 0)
+	return before_stmt (get_supernode (), 0);
+      else
+	return after_supernode (get_supernode ());
+    case PK_BEFORE_STMT:
+      {
+	unsigned next_idx = get_stmt_idx () + 1;
+	if (next_idx < get_supernode ()->m_stmts.length ())
+	  return before_stmt (get_supernode (), next_idx);
+	else
+	  return after_supernode (get_supernode ());
+      }
+    }
+}
+
+/* For those program points for which there is a uniquely-defined
+   successor, return it.  */
+
+program_point
+program_point::get_next () const
+{
+  switch (m_function_point.get_kind ())
+    {
+    default:
+      gcc_unreachable ();
+    case PK_ORIGIN:
+    case PK_AFTER_SUPERNODE:
+      gcc_unreachable (); /* Not uniquely defined.  */
+    case PK_BEFORE_SUPERNODE:
+      if (get_supernode ()->m_stmts.length () > 0)
+	return before_stmt (get_supernode (), 0, get_call_string ());
+      else
+	return after_supernode (get_supernode (), get_call_string ());
+    case PK_BEFORE_STMT:
+      {
+	unsigned next_idx = get_stmt_idx () + 1;
+	if (next_idx < get_supernode ()->m_stmts.length ())
+	  return before_stmt (get_supernode (), next_idx, get_call_string ());
+	else
+	  return after_supernode (get_supernode (), get_call_string ());
+      }
+    }
 }
 
 #if CHECKING_P

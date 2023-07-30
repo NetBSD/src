@@ -1,5 +1,5 @@
 /* ACLE support for AArch64 SVE
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -875,16 +875,13 @@ registered_function_hasher::equal (value_type value, const compare_type &key)
 }
 
 sve_switcher::sve_switcher ()
-  : m_old_isa_flags (aarch64_isa_flags)
+  : aarch64_simd_switcher (AARCH64_FL_F16 | AARCH64_FL_SVE)
 {
   /* Changing the ISA flags and have_regs_of_mode should be enough here.
      We shouldn't need to pay the compile-time cost of a full target
      switch.  */
-  aarch64_isa_flags = (AARCH64_FL_FP | AARCH64_FL_SIMD | AARCH64_FL_F16
-		       | AARCH64_FL_SVE);
-
-  m_old_general_regs_only = TARGET_GENERAL_REGS_ONLY;
-  global_options.x_target_flags &= ~MASK_GENERAL_REGS_ONLY;
+  m_old_maximum_field_alignment = maximum_field_alignment;
+  maximum_field_alignment = 0;
 
   memcpy (m_old_have_regs_of_mode, have_regs_of_mode,
 	  sizeof (have_regs_of_mode));
@@ -897,9 +894,7 @@ sve_switcher::~sve_switcher ()
 {
   memcpy (have_regs_of_mode, m_old_have_regs_of_mode,
 	  sizeof (have_regs_of_mode));
-  if (m_old_general_regs_only)
-    global_options.x_target_flags |= MASK_GENERAL_REGS_ONLY;
-  aarch64_isa_flags = m_old_isa_flags;
+  maximum_field_alignment = m_old_maximum_field_alignment;
 }
 
 function_builder::function_builder ()
@@ -1009,7 +1004,7 @@ function_builder::add_function (const function_instance &instance,
      consistent numbering scheme for function codes between the C and C++
      frontends, so that everything ties up in LTO.
 
-     Currently, tree-streamer-in.c:unpack_ts_function_decl_value_fields
+     Currently, tree-streamer-in.cc:unpack_ts_function_decl_value_fields
      validates that tree nodes returned by TARGET_BUILTIN_DECL are non-NULL and
      some node other than error_mark_node. This is a holdover from when builtin
      decls were streamed by code rather than by value.
@@ -1352,13 +1347,17 @@ function_resolver::infer_vector_or_tuple_type (unsigned int argno,
 			" expects a single SVE vector rather than a tuple",
 			actual, argno + 1, fndecl);
 	    else if (size_i == 0 && type_i != VECTOR_TYPE_svbool_t)
-	      error_at (location, "passing single vector %qT to argument %d"
-			" of %qE, which expects a tuple of %d vectors",
-			actual, argno + 1, fndecl, num_vectors);
+	      /* num_vectors is always != 1, so the singular isn't needed.  */
+	      error_n (location, num_vectors, "%qT%d%qE%d",
+		       "passing single vector %qT to argument %d"
+		       " of %qE, which expects a tuple of %d vectors",
+		       actual, argno + 1, fndecl, num_vectors);
 	    else
-	      error_at (location, "passing %qT to argument %d of %qE, which"
-			" expects a tuple of %d vectors", actual, argno + 1,
-			fndecl, num_vectors);
+	      /* num_vectors is always != 1, so the singular isn't needed.  */
+	      error_n (location, num_vectors, "%qT%d%qE%d",
+		       "passing %qT to argument %d of %qE, which"
+		       " expects a tuple of %d vectors", actual, argno + 1,
+		       fndecl, num_vectors);
 	    return NUM_TYPE_SUFFIXES;
 	  }
       }
@@ -2809,7 +2808,7 @@ function_expander::add_output_operand (insn_code icode)
 {
   unsigned int opno = m_ops.length ();
   machine_mode mode = insn_data[icode].operand[opno].mode;
-  m_ops.safe_grow (opno + 1);
+  m_ops.safe_grow (opno + 1, true);
   create_output_operand (&m_ops.last (), possible_target, mode);
 }
 
@@ -2846,7 +2845,7 @@ function_expander::add_input_operand (insn_code icode, rtx x)
       gcc_assert (GET_MODE (x) == VNx16BImode);
       x = gen_lowpart (mode, x);
     }
-  m_ops.safe_grow (m_ops.length () + 1);
+  m_ops.safe_grow (m_ops.length () + 1, true);
   create_input_operand (&m_ops.last (), x, mode);
 }
 
@@ -2854,7 +2853,7 @@ function_expander::add_input_operand (insn_code icode, rtx x)
 void
 function_expander::add_integer_operand (HOST_WIDE_INT x)
 {
-  m_ops.safe_grow (m_ops.length () + 1);
+  m_ops.safe_grow (m_ops.length () + 1, true);
   create_integer_operand (&m_ops.last (), x);
 }
 
@@ -2878,7 +2877,7 @@ function_expander::add_mem_operand (machine_mode mode, rtx addr)
 void
 function_expander::add_address_operand (rtx x)
 {
-  m_ops.safe_grow (m_ops.length () + 1);
+  m_ops.safe_grow (m_ops.length () + 1, true);
   create_address_operand (&m_ops.last (), x);
 }
 
@@ -2887,7 +2886,7 @@ function_expander::add_address_operand (rtx x)
 void
 function_expander::add_fixed_operand (rtx x)
 {
-  m_ops.safe_grow (m_ops.length () + 1);
+  m_ops.safe_grow (m_ops.length () + 1, true);
   create_fixed_operand (&m_ops.last (), x);
 }
 
@@ -3416,6 +3415,7 @@ register_vector_type (vector_type_index type)
      installing an incorrect type.  */
   if (decl
       && TREE_CODE (decl) == TYPE_DECL
+      && TREE_TYPE (decl) != error_mark_node
       && TYPE_MAIN_VARIANT (TREE_TYPE (decl)) == vectype)
     vectype = TREE_TYPE (decl);
   acle_vector_types[0][type] = vectype;
@@ -3499,7 +3499,7 @@ register_svpattern ()
 #undef PUSH
 
   acle_svpattern = lang_hooks.types.simulate_enum_decl (input_location,
-							"svpattern", values);
+							"svpattern", &values);
 }
 
 /* Register the svprfop enum.  */
@@ -3513,7 +3513,7 @@ register_svprfop ()
 #undef PUSH
 
   acle_svprfop = lang_hooks.types.simulate_enum_decl (input_location,
-						      "svprfop", values);
+						      "svprfop", &values);
 }
 
 /* Implement #pragma GCC aarch64 "arm_sve.h".  */
@@ -3912,7 +3912,7 @@ gt_pch_nx (function_instance *)
 }
 
 inline void
-gt_pch_nx (function_instance *, void (*) (void *, void *), void *)
+gt_pch_nx (function_instance *, gt_pointer_operator, void *)
 {
 }
 

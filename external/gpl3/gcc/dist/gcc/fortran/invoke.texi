@@ -1,10 +1,10 @@
-@c Copyright (C) 2004-2020 Free Software Foundation, Inc.
+@c Copyright (C) 2004-2022 Free Software Foundation, Inc.
 @c This is part of the GNU Fortran manual.   
 @c For copying conditions, see the file gfortran.texi.
 
 @ignore
 @c man begin COPYRIGHT
-Copyright @copyright{} 2004-2020 Free Software Foundation, Inc.
+Copyright @copyright{} 2004-2022 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -160,7 +160,7 @@ and warnings}.
 @item Debugging Options
 @xref{Debugging Options,,Options for debugging your program or GNU Fortran}.
 @gccoptlist{-fbacktrace -fdump-fortran-optimized -fdump-fortran-original @gol
--fdump-fortran-global -fdump-parse-tree -ffpe-trap=@var{list} @gol
+-fdebug-aux-vars -fdump-fortran-global -fdump-parse-tree -ffpe-trap=@var{list} @gol
 -ffpe-summary=@var{list}
 }
 
@@ -227,7 +227,7 @@ form is determined by the file extension.
 @item -fall-intrinsics
 @opindex @code{fall-intrinsics}
 This option causes all intrinsic procedures (including the GNU-specific
-extensions) to be accepted.  This can be useful with @option{-std=f95} to
+extensions) to be accepted.  This can be useful with @option{-std=} to
 force standard-compliance but get access to the full range of intrinsics
 available with @command{gfortran}.  As a consequence, @option{-Wintrinsics-std}
 will be ignored and no user-defined procedure with the same name as any
@@ -235,11 +235,11 @@ intrinsic will be called except when it is explicitly declared @code{EXTERNAL}.
 
 @item -fallow-argument-mismatch
 @opindex @code{fallow-argument-mismatch}
-Some code contains calls to external procedures whith mismatches
+Some code contains calls to external procedures with mismatches
 between the calls and the procedure definition, or with mismatches
 between different calls. Such code is non-conforming, and will usually
-be flagged wi1th an error.  This options degrades the error to a
-warning, which can only be disabled by disabling all warnings vial
+be flagged with an error.  This options degrades the error to a
+warning, which can only be disabled by disabling all warnings via
 @option{-w}.  Only a single occurrence per argument is flagged by this
 warning.  @option{-fallow-argument-mismatch} is implied by
 @option{-std=legacy}.
@@ -397,7 +397,7 @@ lines in the source file. The default value is 132.
 @item -fmax-identifier-length=@var{n}
 @opindex @code{fmax-identifier-length=}@var{n}
 Specify the maximum allowed identifier length. Typical values are
-31 (Fortran 95) and 63 (Fortran 2003 and Fortran 2008).
+31 (Fortran 95) and 63 (Fortran 2003 and later).
 
 @item -fimplicit-none
 @opindex @code{fimplicit-none}
@@ -520,13 +520,24 @@ representation of the translated Fortran code, produced by
 @cindex options, real kind type promotion
 Promote all @code{REAL(KIND=M)} entities to @code{REAL(KIND=N)} entities.
 If @code{REAL(KIND=N)} is unavailable, then an error will be issued.
-All other real kind types are unaffected by this option.
+The @code{-freal-4-} flags also affect the default real kind and the
+@code{-freal-8-} flags also the double-precision real kind.  All other
+real-kind types are unaffected by this option.  The promotion is also
+applied to real literal constants of default and double-precision kind
+and a specified kind number of 4 or 8, respectively.
+However, @code{-fdefault-real-8}, @code{-fdefault-real-10},
+@code{-fdefault-real-10}, and @code{-fdefault-double-8} take precedence
+for the default and double-precision real kinds, both for real literal
+constants and for declarations without a kind number.
+Note that for @code{REAL(KIND=KIND(1.0))} the literal may get promoted and
+then the result may get promoted again.
 These options should be used with care and may not be suitable for your
 codes.  Areas of possible concern include calls to external procedures,
 alignment in @code{EQUIVALENCE} and/or @code{COMMON}, generic interfaces,
-BOZ literal constant conversion, and I/O.  Inspection of the intermediate
-representation of the translated Fortran code, produced by
-@option{-fdump-tree-original}, is suggested.
+BOZ literal constant conversion, and I/O and calls to intrinsic procedures
+when passing a value to the @code{kind=} dummy argument.  Inspection of the
+intermediate representation of the translated Fortran code, produced by
+@option{-fdump-fortran-original} or @option{-fdump-tree-original}, is suggested.
 
 @item -std=@var{std}
 @opindex @code{std=}@var{std} option
@@ -559,10 +570,46 @@ Enhance test coverage by forcing most forall assignments to use temporary.
 @cindex preprocessor
 @cindex options, preprocessor
 @cindex CPP
+@cindex FPP
+@cindex Conditional compilation
+@cindex Preprocessing
+@cindex preprocessor, include file handling
 
-Preprocessor related options. See section 
-@ref{Preprocessing and conditional compilation} for more detailed
-information on preprocessing in @command{gfortran}.
+Many Fortran compilers including GNU Fortran allow passing the source code
+through a C preprocessor (CPP; sometimes also called the Fortran preprocessor,
+FPP) to allow for conditional compilation.  In the case of GNU Fortran,
+this is the GNU C Preprocessor in the traditional mode.  On systems with
+case-preserving file names, the preprocessor is automatically invoked if the
+filename extension is @file{.F}, @file{.FOR}, @file{.FTN}, @file{.fpp},
+@file{.FPP}, @file{.F90}, @file{.F95}, @file{.F03} or @file{.F08}.  To manually
+invoke the preprocessor on any file, use @option{-cpp}, to disable
+preprocessing on files where the preprocessor is run automatically, use
+@option{-nocpp}.
+
+If a preprocessed file includes another file with the Fortran @code{INCLUDE}
+statement, the included file is not preprocessed.  To preprocess included
+files, use the equivalent preprocessor statement @code{#include}.
+
+If GNU Fortran invokes the preprocessor, @code{__GFORTRAN__}
+is defined.  The macros @code{__GNUC__}, @code{__GNUC_MINOR__} and
+@code{__GNUC_PATCHLEVEL__} can be used to determine the version of the
+compiler.  See @ref{Top,,Overview,cpp,The C Preprocessor} for details.
+
+GNU Fortran supports a number of @code{INTEGER} and @code{REAL} kind types
+in additional to the kind types required by the Fortran standard.
+The availability of any given kind type is architecture dependent.  The
+following pre-defined preprocessor macros can be used to conditionally
+include code for these additional kind types: @code{__GFC_INT_1__},
+@code{__GFC_INT_2__}, @code{__GFC_INT_8__}, @code{__GFC_INT_16__},
+@code{__GFC_REAL_10__}, and @code{__GFC_REAL_16__}.
+
+While CPP is the de-facto standard for preprocessing Fortran code,
+Part 3 of the Fortran 95 standard (ISO/IEC 1539-3:1998) defines
+Conditional Compilation, which is not widely used and not directly
+supported by the GNU Fortran compiler.  You can use the program coco
+to preprocess such files (@uref{http://www.daniellnagle.com/coco.html}).
+
+The following options control preprocessing of Fortran code:
 
 @table @gcctabopt
 @item -cpp
@@ -1219,6 +1266,15 @@ change between releases. This option may also generate internal
 compiler errors for features which have only recently been added. This
 option is deprecated; use @code{-fdump-fortran-original} instead.
 
+@item -fdebug-aux-vars
+@opindex @code{fdebug-aux-vars}
+Renames internal variables created by the gfortran front end and makes
+them accessible to a debugger.  The name of the internal variables then
+start with upper-case letters followed by an underscore.  This option is
+useful for debugging the compiler's code generation together with
+@code{-fdump-tree-original} and enabling debugging of the executable
+program by using @code{-g} or @code{-ggdb3}.
+
 @item -fdump-fortran-global
 @opindex @code{fdump-fortran-global}
 Output a list of the global identifiers after translating into
@@ -1379,10 +1435,20 @@ These options affect the runtime behavior of programs compiled with GNU Fortran.
 @item -fconvert=@var{conversion}
 @opindex @code{fconvert=}@var{conversion}
 Specify the representation of data for unformatted files.  Valid
-values for conversion are: @samp{native}, the default; @samp{swap},
-swap between big- and little-endian; @samp{big-endian}, use big-endian
-representation for unformatted files; @samp{little-endian}, use little-endian
-representation for unformatted files.
+values for conversion on most systems are: @samp{native}, the default;
+@samp{swap}, swap between big- and little-endian; @samp{big-endian}, use
+big-endian representation for unformatted files; @samp{little-endian}, use
+little-endian representation for unformatted files.
+
+On POWER systems which suppport @option{-mabi=ieeelongdouble},
+there are additional options, which can be combined with others with
+commas.  Those are
+@itemize @w{}
+@item @option{-fconvert=r16_ieee} Use IEEE 128-bit format for
+@code{REAL(KIND=16)}.
+@item @option{-fconvert=r16_ibm} Use IBM long double format for
+@code{REAL(KIND=16)}.
+@end itemize
 
 @emph{This option has an effect only when used in the main program.
 The @code{CONVERT} specifier and the GFORTRAN_CONVERT_UNIT environment
@@ -1802,7 +1868,7 @@ except when optimizing for size via @option{-Os}.  If the code
 contains a very large number of argument that have to be packed, code
 size and also compilation time may become excessive.  If that is the
 case, it may be better to disable this option.  Instances of packing
-can be found by using by using @option{-Warray-temporaries}.
+can be found by using @option{-Warray-temporaries}.
 
 @item -fexternal-blas
 @opindex @code{fexternal-blas}
@@ -1826,7 +1892,7 @@ The default value for @var{n} is 30.
 
 @item -finline-matmul-limit=@var{n}
 @opindex @code{finline-matmul-limit}
-When front-end optimiztion is active, some calls to the @code{MATMUL}
+When front-end optimization is active, some calls to the @code{MATMUL}
 intrinsic function will be inlined.  This may result in code size
 increase if the size of the matrix cannot be determined at compile
 time, as code for both cases is generated.  Setting
@@ -2012,7 +2078,7 @@ does not generate prototypes for @code{BIND(C)} procedures, use
 @option{-fc-prototypes} for that.
 
 The generated prototypes may need inclusion of an appropriate
-header, such as as @code{<stdint.h>} or @code{<stdlib.h>}.
+header, such as @code{<stdint.h>} or @code{<stdlib.h>}.
 
 This is primarily meant for legacy code to ensure that existing C
 bindings match what @command{gfortran} emits.  The generated C

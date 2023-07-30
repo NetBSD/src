@@ -1,6 +1,6 @@
 /* RTX cost tables shared between arm and aarch64.
 
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2022 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -121,7 +121,11 @@ const struct cpu_cost_table generic_extra_costs =
   },
   /* Vector */
   {
-    COSTS_N_INSNS (1)	/* alu.  */
+    COSTS_N_INSNS (1),	/* alu.  */
+    COSTS_N_INSNS (4),  /* mult.  */
+    COSTS_N_INSNS (1),  /* movi.  */
+    COSTS_N_INSNS (2),  /* dup.  */
+    COSTS_N_INSNS (2)   /* extract.  */
   }
 };
 
@@ -224,7 +228,11 @@ const struct cpu_cost_table cortexa53_extra_costs =
   },
   /* Vector */
   {
-    COSTS_N_INSNS (1)	/* alu.  */
+    COSTS_N_INSNS (1),	/* alu.  */
+    COSTS_N_INSNS (4),  /* mult.  */
+    COSTS_N_INSNS (1),  /* movi.  */
+    COSTS_N_INSNS (2),  /* dup.  */
+    COSTS_N_INSNS (2)   /* extract.  */
   }
 };
 
@@ -327,7 +335,118 @@ const struct cpu_cost_table cortexa57_extra_costs =
   },
   /* Vector */
   {
-    COSTS_N_INSNS (1)  /* alu.  */
+    COSTS_N_INSNS (1),  /* alu.  */
+    COSTS_N_INSNS (4),  /* mult.  */
+    COSTS_N_INSNS (1),  /* movi.  */
+    COSTS_N_INSNS (2),  /* dup.  */
+    COSTS_N_INSNS (2)   /* extract.  */
+  }
+};
+
+const struct cpu_cost_table cortexa76_extra_costs =
+{
+  /* ALU */
+  {
+    0,                 /* arith.  */
+    0,                 /* logical.  */
+    0,                 /* shift.  */
+    0,                  /* shift_reg.  */
+    COSTS_N_INSNS (1), /* arith_shift.  */
+    COSTS_N_INSNS (1), /* arith_shift_reg.  */
+    0,		       /* log_shift.  */
+    COSTS_N_INSNS (1), /* log_shift_reg.  */
+    0,                 /* extend.  */
+    COSTS_N_INSNS (1), /* extend_arith.  */
+    COSTS_N_INSNS (1), /* bfi.  */
+    0,                 /* bfx.  */
+    0,                 /* clz.  */
+    0,                  /* rev.  */
+    0,                 /* non_exec.  */
+    true               /* non_exec_costs_exec.  */
+  },
+  {
+    /* MULT SImode */
+    {
+      COSTS_N_INSNS (1),       /* simple.  */
+      COSTS_N_INSNS (2),       /* flag_setting.  */
+      COSTS_N_INSNS (1),       /* extend.  */
+      COSTS_N_INSNS (1),       /* add.  */
+      COSTS_N_INSNS (1),       /* extend_add.  */
+      COSTS_N_INSNS (6)	       /* idiv.  */
+    },
+    /* MULT DImode */
+    {
+      COSTS_N_INSNS (3),       /* simple.  */
+      0,                       /* flag_setting (N/A).  */
+      COSTS_N_INSNS (1),       /* extend.  */
+      COSTS_N_INSNS (3),       /* add.  */
+      COSTS_N_INSNS (1),       /* extend_add.  */
+      COSTS_N_INSNS (10)       /* idiv.  */
+    }
+  },
+  /* LD/ST */
+  {
+    COSTS_N_INSNS (3),         /* load.  */
+    COSTS_N_INSNS (3),         /* load_sign_extend.  */
+    COSTS_N_INSNS (3),         /* ldrd.  */
+    COSTS_N_INSNS (2),         /* ldm_1st.  */
+    1,                         /* ldm_regs_per_insn_1st.  */
+    2,                         /* ldm_regs_per_insn_subsequent.  */
+    COSTS_N_INSNS (4),         /* loadf.  */
+    COSTS_N_INSNS (4),         /* loadd.  */
+    COSTS_N_INSNS (5),         /* load_unaligned.  */
+    0,                         /* store.  */
+    0,                         /* strd.  */
+    0,                         /* stm_1st.  */
+    1,                         /* stm_regs_per_insn_1st.  */
+    2,                         /* stm_regs_per_insn_subsequent.  */
+    0,                         /* storef.  */
+    0,                         /* stored.  */
+    COSTS_N_INSNS (1),         /* store_unaligned.  */
+    COSTS_N_INSNS (1),         /* loadv.  */
+    COSTS_N_INSNS (1)          /* storev.  */
+  },
+  {
+    /* FP SFmode */
+    {
+      COSTS_N_INSNS (10),      /* div.  */
+      COSTS_N_INSNS (2),       /* mult.  */
+      COSTS_N_INSNS (3),       /* mult_addsub.  */
+      COSTS_N_INSNS (3),       /* fma.  */
+      COSTS_N_INSNS (1),       /* addsub.  */
+      0,                       /* fpconst.  */
+      0,                       /* neg.  */
+      0,                       /* compare.  */
+      COSTS_N_INSNS (1),       /* widen.  */
+      COSTS_N_INSNS (1),       /* narrow.  */
+      COSTS_N_INSNS (1),       /* toint.  */
+      COSTS_N_INSNS (1),       /* fromint.  */
+      COSTS_N_INSNS (1)        /* roundint.  */
+    },
+    /* FP DFmode */
+    {
+      COSTS_N_INSNS (15),      /* div.  */
+      COSTS_N_INSNS (2),       /* mult.  */
+      COSTS_N_INSNS (3),       /* mult_addsub.  */
+      COSTS_N_INSNS (3),       /* fma.  */
+      COSTS_N_INSNS (1),       /* addsub.  */
+      0,                       /* fpconst.  */
+      0,                       /* neg.  */
+      0,                       /* compare.  */
+      COSTS_N_INSNS (1),       /* widen.  */
+      COSTS_N_INSNS (1),       /* narrow.  */
+      COSTS_N_INSNS (1),       /* toint.  */
+      COSTS_N_INSNS (1),       /* fromint.  */
+      COSTS_N_INSNS (1)        /* roundint.  */
+    }
+  },
+  /* Vector */
+  {
+    COSTS_N_INSNS (1),  /* alu.  */
+    COSTS_N_INSNS (4),  /* mult.  */
+    COSTS_N_INSNS (1),  /* movi.  */
+    COSTS_N_INSNS (2),  /* dup.  */
+    COSTS_N_INSNS (2)   /* extract.  */
   }
 };
 
@@ -430,7 +549,11 @@ const struct cpu_cost_table exynosm1_extra_costs =
   },
   /* Vector */
   {
-    COSTS_N_INSNS (0)  /* alu.  */
+    COSTS_N_INSNS (0),  /* alu.  */
+    COSTS_N_INSNS (4),  /* mult.  */
+    COSTS_N_INSNS (1),  /* movi.  */
+    COSTS_N_INSNS (2),  /* dup.  */
+    COSTS_N_INSNS (2)   /* extract.  */
   }
 };
 
@@ -533,7 +656,11 @@ const struct cpu_cost_table xgene1_extra_costs =
   },
   /* Vector */
   {
-    COSTS_N_INSNS (2)  /* alu.  */
+    COSTS_N_INSNS (2),  /* alu.  */
+    COSTS_N_INSNS (8),  /* mult.  */
+    COSTS_N_INSNS (1),  /* movi.  */
+    COSTS_N_INSNS (2),  /* dup.  */
+    COSTS_N_INSNS (2)   /* extract.  */
   }
 };
 

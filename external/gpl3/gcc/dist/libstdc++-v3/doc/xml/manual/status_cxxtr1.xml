@@ -1,4 +1,4 @@
-<section xmlns="http://docbook.org/ns/docbook" version="5.0" 
+<section xmlns="http://docbook.org/ns/docbook" version="5.0"
 	 xml:id="status.iso.tr1" xreflabel="Status C++ TR1">
 <?dbhtml filename="status_iso_cxxtr1.html"?>
 
@@ -10,9 +10,9 @@
 </info>
 
 <para>
-This table is based on the table of contents of ISO/IEC DTR 19768
-Doc No: N1836=05-0096 Date: 2005-06-24
-Draft Technical Report on C++ Library Extensions
+This table is based on the table of contents of ISO/IEC DTR 19768,
+Doc No: N1836=05-0096, Date: 2005-06-24,
+"Draft Technical Report on C++ Library Extensions".
 </para>
 
 <para>
@@ -22,7 +22,8 @@ In this implementation the header names are prefixed by
 </para>
 
 <para>
-This page describes the TR1 support in the GCC 10 release series.
+This page describes the TR1 support in the GCC 12 release series,
+not in any particular release.
 </para>
 
 <!-- Status is Yes or No, Broken/Partial-->

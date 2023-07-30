@@ -1,32 +1,35 @@
-2023-07-07  Release Manager
+2023-05-08  Release Manager
 
-	* GCC 10.5.0 released.
+	* GCC 12.3.0 released.
 
-2022-06-28  Release Manager
+2022-08-19  Release Manager
 
-	* GCC 10.4.0 released.
+	* GCC 12.2.0 released.
 
-2021-04-20  Jakub Jelinek  <jakub@redhat.com>
+2022-05-06  Release Manager
 
-	Backported from master:
-	2021-04-16  Jakub Jelinek  <jakub@redhat.com>
+	* GCC 12.1.0 released.
+
+2021-11-29  Eric Gallager  <egallager@gcc.gnu.org>
+
+	PR other/103021
+	* Makefile.in: Use ETAGS variable in TAGS target,
+	CTAGS variable in CTAGS target, and MKID variable
+	in ID target.
+	* configure: Regenerate.
+	* configure.ac: Allow CTAGS, ETAGS, and MKID
+	variables to be overridden.
+
+2021-06-14  Michael Forney  <mforney@mforney.org>
+
+	* configure: Regenerated.
+
+2021-04-16  Jakub Jelinek  <jakub@redhat.com>
 
 	PR jit/100096
 	* configure.ac: Add --enable-host-shared support.
 	* Makefile.in: Update copyright.  Add @PICFLAG@ to CFLAGS.
 	* configure: Regenerated.
-
-2021-04-08  Release Manager
-
-	* GCC 10.3.0 released.
-
-2020-07-23  Release Manager
-
-	* GCC 10.2.0 released.
-
-2020-05-07  Release Manager
-
-	* GCC 10.1.0 released.
 
 2020-04-16  Jakub Jelinek  <jakub@redhat.com>
 

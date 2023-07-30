@@ -1,5 +1,5 @@
 /* Hierarchical log messages for the analyzer.
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -52,6 +52,8 @@ class logger
   void enter_scope (const char *scope_name, const char *fmt, va_list *ap)
     ATTRIBUTE_GCC_DIAG(3, 0);
   void exit_scope (const char *scope_name);
+  void inc_indent () { m_indent_level++; }
+  void dec_indent () { m_indent_level--; }
 
   pretty_printer *get_printer () const { return m_pp; }
   FILE *get_file () const { return m_f_out; }

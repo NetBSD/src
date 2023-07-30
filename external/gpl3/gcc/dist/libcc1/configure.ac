@@ -1,4 +1,4 @@
-dnl   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+dnl   Copyright (C) 2014-2022 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GCC.
 dnl
@@ -44,6 +44,9 @@ if test "$GXX" = yes; then
   visibility=-fvisibility=hidden
 fi
 AC_SUBST(visibility)
+
+GCC_CET_HOST_FLAGS(CET_HOST_FLAGS)
+AC_SUBST(CET_HOST_FLAGS)
 
 AC_CHECK_DECLS([basename])
 

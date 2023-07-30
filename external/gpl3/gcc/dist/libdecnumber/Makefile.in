@@ -1,7 +1,7 @@
 # @configure_input@
 # Makefile for libdecnumber.  Run 'configure' to generate Makefile from Makefile.in
 
-# Copyright (C) 2005-2020 Free Software Foundation, Inc.
+# Copyright (C) 2005-2022 Free Software Foundation, Inc.
 
 #This file is part of GCC.
 
@@ -25,7 +25,7 @@ srcdir = @srcdir@
 top_builddir = .
 VPATH = @srcdir@
 INSTALL = @INSTALL@
-AR = ar
+AR = @AR@
 ARFLAGS = cru
 ACLOCAL = @ACLOCAL@
 AUTOCONF = @AUTOCONF@
@@ -41,6 +41,7 @@ LDFLAGS = @LDFLAGS@
 LIBICONV = @LIBICONV@
 PACKAGE = @PACKAGE@
 PICFLAG = @PICFLAG@
+CET_HOST_FLAGS = @CET_HOST_FLAGS@
 RANLIB = @RANLIB@
 SHELL = @SHELL@
 objext = @OBJEXT@
@@ -60,7 +61,7 @@ enable_decimal_float= @enable_decimal_float@
 INCLUDES = -I$(srcdir) -I.
 
 ALL_CFLAGS = $(CFLAGS) $(WARN_CFLAGS) $(NOLTO_FLAGS) $(INCLUDES) $(CPPFLAGS) \
-	     $(PICFLAG)
+	     $(PICFLAG) $(CET_HOST_FLAGS)
 
 bid_OBJS = bid2dpd_dpd2bid.$(objext) host-ieee32.$(objext) \
 	host-ieee64.$(objext) host-ieee128.$(objext)
@@ -177,13 +178,14 @@ html:
 info:
 install-info:
 install-pdf:
+install-dvi:
 install-man:
 install-html:
 install:
 
 .PHONY: installdirs install install-strip mostlyclean clean distclean \
   maintainer-clean check installcheck dvi pdf html info install-info \
-  install-pdf install-man update-po install-html
+  install-pdf install-dvi install-man update-po install-html
 
 COMPILE = source='$<' object='$@' libtool=no $(CC) $(DEFS) $(INCLUDES) $(CPPFLAGS) $(ALL_CFLAGS) -c
 

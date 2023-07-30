@@ -1,47 +1,921 @@
-2023-07-07  Release Manager
+2023-05-08  Release Manager
 
-	* GCC 10.5.0 released.
+	* GCC 12.3.0 released.
 
-2022-06-28  Release Manager
+2023-03-29  David Malcolm  <dmalcolm@redhat.com>
 
-	* GCC 10.4.0 released.
+	* docs/internals/index.rst: Remove reference to ".c" extensions
+	of source files.
 
-2022-06-09  Iain Sandoe  <iain@sandoe.co.uk>
+2022-08-19  Release Manager
+
+	* GCC 12.2.0 released.
+
+2022-08-09  Vibhav Pant  <vibhavp@gmail.com>
+
+	* libgccjit.h (LIBGCCJIT_HAVE_gcc_jit_context_new_bitcast): Move
+	definition out of comment.
+
+2022-07-02  Sergei Trofimovich  <siarheit@google.com>
 
 	Backported from master:
-	2021-08-19  Iain Sandoe  <iain@sandoe.co.uk>
+	2022-06-29  Sergei Trofimovich  <siarheit@google.com>
+
+	PR c++/106102
+	* jit-playback.cc: Include <pthread.h> via "system.h" to avoid calloc()
+	poisoning.
+	* jit-recording.cc: Ditto.
+	* libgccjit.cc: Ditto.
+
+2022-05-06  Release Manager
+
+	* GCC 12.1.0 released.
+
+2022-04-14  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* jit-playback.cc (new_bitcast): Cast values returned by tree_to_uhwi
+	to 'long' to match the print format.
+
+2022-04-12  Antoni Boucher  <bouanto@zoho.com>
+
+	PR jit/104293
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_24): New ABI tag.
+	* docs/topics/expressions.rst: Add documentation for the
+	functions gcc_jit_lvalue_set_alignment and
+	gcc_jit_lvalue_get_alignment.
+	* jit-playback.h: New function (set_alignment).
+	* jit-recording.cc: New function (set_alignment).
+	* jit-recording.h: New functions (set_alignment, get_alignment)
+	and new field (m_alignment).
+	* libgccjit.cc: New functions (gcc_jit_lvalue_get_alignment,
+	gcc_jit_lvalue_set_alignment)
+	* libgccjit.h: New functions (gcc_jit_lvalue_get_alignment,
+	gcc_jit_lvalue_set_alignment)
+	* libgccjit.map (LIBGCCJIT_ABI_24): New ABI tag.
+
+2022-04-12  Antoni Boucher  <bouanto@zoho.com>
+
+	PR jit/104073
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_23): New ABI tag.
+	* docs/topics/contexts.rst: Add documentation for the new
+	function gcc_jit_context_set_bool_print_errors_to_stderr.
+	* jit-common.h: New enum value
+	(INNER_BOOL_OPTION_PRINT_ERRORS_TO_STDERR).
+	* jit-recording.cc: Handle the new option
+	INNER_BOOL_OPTION_PRINT_ERRORS_TO_STDERR.
+	* libgccjit.cc: New function
+	(gcc_jit_context_set_bool_print_errors_to_stderr).
+	* libgccjit.h: New function
+	(gcc_jit_context_set_bool_print_errors_to_stderr).
+	* libgccjit.map (LIBGCCJIT_ABI_23): New ABI tag.
+
+2022-04-12  Antoni Boucher  <bouanto@zoho.com>
+
+	PR jit/104072
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_22): New ABI tag.
+	* docs/topics/expressions.rst: Add documentation for the
+	function gcc_jit_lvalue_set_register_name.
+	* jit-playback.h: New function (set_register_name).
+	* jit-recording.cc: New function (set_register_name) and add
+	support for register variables.
+	* jit-recording.h: New field (m_reg_name) and new function
+	(set_register_name).
+	* libgccjit.cc: New function (gcc_jit_lvalue_set_register_name).
+	* libgccjit.h: New function (gcc_jit_lvalue_set_register_name).
+	* libgccjit.map (LIBGCCJIT_ABI_22): New ABI tag.
+
+2022-04-12  Antoni Boucher  <bouanto@zoho.com>
+
+	PR jit/104071
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_21): New ABI tag.
+	* docs/topics/expressions.rst: Add documentation for the
+	function gcc_jit_context_new_bitcast.
+	* jit-playback.cc: New function (new_bitcast).
+	* jit-playback.h: New function (new_bitcast).
+	* jit-recording.cc: New functions (new_bitcast,
+	bitcast::replay_into, bitcast::visit_children,
+	bitcast::make_debug_string, bitcast::write_reproducer).
+	* jit-recording.h: New class (bitcast) and new function
+	(new_bitcast, bitcast::replay_into, bitcast::visit_children,
+	bitcast::make_debug_string, bitcast::write_reproducer,
+	bitcast::get_precedence).
+	* libgccjit.cc: New function (gcc_jit_context_new_bitcast)
+	* libgccjit.h: New function (gcc_jit_context_new_bitcast)
+	* libgccjit.map (LIBGCCJIT_ABI_21): New ABI tag.
+
+2022-04-12  Antoni Boucher  <bouanto@zoho.com>
+
+	PR target/95325
+	* docs/_build/texinfo/libgccjit.texi: Regenerate
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_20): New ABI tag.
+	* docs/topics/types.rst: Add documentation for the new types
+	GCC_JIT_TYPE_UINT8_T, GCC_JIT_TYPE_UINT16_T,
+	GCC_JIT_TYPE_UINT32_T, GCC_JIT_TYPE_UINT64_T,
+	GCC_JIT_TYPE_UINT128_T, GCC_JIT_TYPE_INT8_T, GCC_JIT_TYPE_INT16_T,
+	GCC_JIT_TYPE_INT32_T, GCC_JIT_TYPE_INT64_T, GCC_JIT_TYPE_INT128_T and
+	new functions (gcc_jit_compatible_types, gcc_jit_type_get_size).
+	* jit-builtins.cc: Add support for BT_UINT128.
+	* jit-common.h: Update the value of NUM_GCC_JIT_TYPES.
+	* jit-playback.cc: Add support for the sized integer types.
+	* jit-recording.cc: Add support for the sized integer types.
+	* jit-recording.h: Add support for comparing integer types
+	and new function (is_signed).
+	* libgccjit.cc (gcc_jit_compatible_types): New.
+	(gcc_jit_type_get_size) New.
+	* libgccjit.h: New enum variants for gcc_jit_types
+	(GCC_JIT_TYPE_UINT8_T, GCC_JIT_TYPE_UINT16_T,
+	GCC_JIT_TYPE_UINT32_T, GCC_JIT_TYPE_UINT64_T,
+	GCC_JIT_TYPE_UINT128_T, GCC_JIT_TYPE_INT8_T,
+	GCC_JIT_TYPE_INT16_T, GCC_JIT_TYPE_INT32_T,
+	GCC_JIT_TYPE_INT64_T, GCC_JIT_TYPE_INT128_T) and new functions
+	(gcc_jit_compatible_types, gcc_jit_type_get_size).
+	* libgccjit.map (LIBGCCJIT_ABI_20): New ABI tag.
+
+2022-04-06  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/102824
+	* docs/_build/texinfo/factorial.png: Move to...
+	* docs/_build/texinfo/libgccjit-figures/factorial.png: ...here.
+	* docs/_build/texinfo/factorial1.png: Move to...
+	* docs/_build/texinfo/libgccjit-figures/factorial1.png: ...here.
+	* docs/_build/texinfo/sum-of-squares.png: Move to...
+	* docs/_build/texinfo/libgccjit-figures/sum-of-squares.png: ...here.
+	* docs/_build/texinfo/sum-of-squares1.png: Move to...
+	* docs/_build/texinfo/libgccjit-figures/sum-of-squares1.png: ...here.
+
+2022-04-01  David Malcolm  <dmalcolm@redhat.com>
+
+	* docs/topics/expressions.rst: Fix formatting.
+	* docs/topics/types.rst: Likewise.
+	* docs/_build/texinfo/libgccjit.texi: Regenerate
+
+2022-04-01  Petter Tomner  <tomner@kth.se>
+
+	* docs/topics/compatibility.rst: Add 19 tag
+	* docs/topics/compilation.rst: Linking
+	* docs/topics/contexts.rst: Linking example
+	* docs/topics/expressions.rst: Fix formatting and dropped 's'
+
+2022-03-07  Jakub Jelinek  <jakub@redhat.com>
+
+	* libgccjit.h: Fix up duplicated word issue in a comment.
+
+2022-01-17  Martin Liska  <mliska@suse.cz>
+
+	* config-lang.in: Rename .c names to .cc.
+	* docs/_build/texinfo/libgccjit.texi: Likewise.
+	* docs/internals/index.rst: Likewise.
+	* jit-builtins.cc (builtins_manager::make_builtin_function): Likewise.
+	* jit-playback.cc (fold_const_var): Likewise.
+	(playback::context::~context): Likewise.
+	(new_field): Likewise.
+	(new_bitfield): Likewise.
+	(new_compound_type): Likewise.
+	(playback::compound_type::set_fields): Likewise.
+	(global_set_init_rvalue): Likewise.
+	(load_blob_in_ctor): Likewise.
+	(new_global_initialized): Likewise.
+	(double>): Likewise.
+	(new_string_literal): Likewise.
+	(as_truth_value): Likewise.
+	(build_call): Likewise.
+	(playback::context::build_cast): Likewise.
+	(new_array_access): Likewise.
+	(new_field_access): Likewise.
+	(dereference): Likewise.
+	(postprocess): Likewise.
+	(add_jump): Likewise.
+	(add_switch): Likewise.
+	(build_goto_operands): Likewise.
+	(playback::context::read_dump_file): Likewise.
+	(init_types): Likewise.
+	* jit-recording.cc (recording::context::get_int_type): Likewise.
+	* jit-recording.h: Likewise.
+	* libgccjit.cc (compatible_types): Likewise.
+	(gcc_jit_context_acquire): Likewise.
+	(gcc_jit_context_release): Likewise.
+	(gcc_jit_context_new_child_context): Likewise.
+	(gcc_jit_type_as_object): Likewise.
+	(gcc_jit_context_get_type): Likewise.
+	(gcc_jit_context_get_int_type): Likewise.
+	(gcc_jit_type_get_pointer): Likewise.
+	(gcc_jit_type_get_const): Likewise.
+	(gcc_jit_type_get_volatile): Likewise.
+	(gcc_jit_type_dyncast_array): Likewise.
+	(gcc_jit_type_is_bool): Likewise.
+	(gcc_jit_type_is_pointer): Likewise.
+	(gcc_jit_type_is_integral): Likewise.
+	(gcc_jit_type_dyncast_vector): Likewise.
+	(gcc_jit_type_is_struct): Likewise.
+	(gcc_jit_vector_type_get_num_units): Likewise.
+	(gcc_jit_vector_type_get_element_type): Likewise.
+	(gcc_jit_type_unqualified): Likewise.
+	(gcc_jit_type_dyncast_function_ptr_type): Likewise.
+	(gcc_jit_function_type_get_return_type): Likewise.
+	(gcc_jit_function_type_get_param_count): Likewise.
+	(gcc_jit_function_type_get_param_type): Likewise.
+	(gcc_jit_context_new_array_type): Likewise.
+	(gcc_jit_context_new_field): Likewise.
+	(gcc_jit_field_as_object): Likewise.
+	(gcc_jit_context_new_struct_type): Likewise.
+	(gcc_jit_struct_as_type): Likewise.
+	(gcc_jit_struct_set_fields): Likewise.
+	(gcc_jit_struct_get_field_count): Likewise.
+	(gcc_jit_context_new_union_type): Likewise.
+	(gcc_jit_context_new_function_ptr_type): Likewise.
+	(gcc_jit_param_as_rvalue): Likewise.
+	(gcc_jit_context_new_function): Likewise.
+	(gcc_jit_function_get_return_type): Likewise.
+	(gcc_jit_function_dump_to_dot): Likewise.
+	(gcc_jit_block_get_function): Likewise.
+	(gcc_jit_global_set_initializer_rvalue): Likewise.
+	(gcc_jit_rvalue_get_type): Likewise.
+	(gcc_jit_context_new_rvalue_from_int): Likewise.
+	(gcc_jit_context_one): Likewise.
+	(gcc_jit_context_new_rvalue_from_double): Likewise.
+	(gcc_jit_context_null): Likewise.
+	(gcc_jit_context_new_string_literal): Likewise.
+	(valid_binary_op_p): Likewise.
+	(gcc_jit_context_new_binary_op): Likewise.
+	(gcc_jit_context_new_comparison): Likewise.
+	(gcc_jit_context_new_call): Likewise.
+	(is_valid_cast): Likewise.
+	(gcc_jit_context_new_cast): Likewise.
+	(gcc_jit_object_get_context): Likewise.
+	(gcc_jit_object_get_debug_string): Likewise.
+	(gcc_jit_lvalue_access_field): Likewise.
+	(gcc_jit_rvalue_access_field): Likewise.
+	(gcc_jit_rvalue_dereference_field): Likewise.
+	(gcc_jit_rvalue_dereference): Likewise.
+	(gcc_jit_lvalue_get_address): Likewise.
+	(gcc_jit_lvalue_set_tls_model): Likewise.
+	(gcc_jit_lvalue_set_link_section): Likewise.
+	(gcc_jit_function_new_local): Likewise.
+	(gcc_jit_block_add_eval): Likewise.
+	(gcc_jit_block_add_assignment): Likewise.
+	(is_bool): Likewise.
+	(gcc_jit_block_end_with_conditional): Likewise.
+	(gcc_jit_block_add_comment): Likewise.
+	(gcc_jit_block_end_with_jump): Likewise.
+	(gcc_jit_block_end_with_return): Likewise.
+	(gcc_jit_block_end_with_void_return): Likewise.
+	(case_range_validator::case_range_validator): Likewise.
+	(case_range_validator::validate): Likewise.
+	(case_range_validator::get_wide_int): Likewise.
+	(gcc_jit_block_end_with_switch): Likewise.
+	(gcc_jit_context_set_str_option): Likewise.
+	(gcc_jit_context_set_int_option): Likewise.
+	(gcc_jit_context_set_bool_option): Likewise.
+	(gcc_jit_context_set_bool_allow_unreachable_blocks): Likewise.
+	(gcc_jit_context_set_bool_use_external_driver): Likewise.
+	(gcc_jit_context_add_command_line_option): Likewise.
+	(gcc_jit_context_add_driver_option): Likewise.
+	(gcc_jit_context_enable_dump): Likewise.
+	(gcc_jit_context_compile): Likewise.
+	(gcc_jit_context_compile_to_file): Likewise.
+	(gcc_jit_context_set_logfile): Likewise.
+	(gcc_jit_context_dump_reproducer_to_file): Likewise.
+	(gcc_jit_context_get_first_error): Likewise.
+	(gcc_jit_context_get_last_error): Likewise.
+	(gcc_jit_result_get_code): Likewise.
+	(gcc_jit_result_get_global): Likewise.
+	(gcc_jit_rvalue_set_bool_require_tail_call): Likewise.
+	(gcc_jit_type_get_aligned): Likewise.
+	(gcc_jit_type_get_vector): Likewise.
+	(gcc_jit_function_get_address): Likewise.
+	(gcc_jit_version_patchlevel): Likewise.
+	(gcc_jit_block_add_extended_asm): Likewise.
+	(gcc_jit_extended_asm_as_object): Likewise.
+	(gcc_jit_extended_asm_set_volatile_flag): Likewise.
+	(gcc_jit_extended_asm_set_inline_flag): Likewise.
+	(gcc_jit_extended_asm_add_output_operand): Likewise.
+	(gcc_jit_extended_asm_add_input_operand): Likewise.
+	(gcc_jit_extended_asm_add_clobber): Likewise.
+	* notes.txt: Likewise.
+
+2022-01-17  Martin Liska  <mliska@suse.cz>
+
+	* dummy-frontend.c: Moved to...
+	* dummy-frontend.cc: ...here.
+	* jit-builtins.c: Moved to...
+	* jit-builtins.cc: ...here.
+	* jit-logging.c: Moved to...
+	* jit-logging.cc: ...here.
+	* jit-playback.c: Moved to...
+	* jit-playback.cc: ...here.
+	* jit-recording.c: Moved to...
+	* jit-recording.cc: ...here.
+	* jit-result.c: Moved to...
+	* jit-result.cc: ...here.
+	* jit-spec.c: Moved to...
+	* jit-spec.cc: ...here.
+	* jit-tempdir.c: Moved to...
+	* jit-tempdir.cc: ...here.
+	* jit-w32.c: Moved to...
+	* jit-w32.cc: ...here.
+	* libgccjit.c: Moved to...
+	* libgccjit.cc: ...here.
+
+2021-12-28  Martin Liska  <mliska@suse.cz>
+
+	* docs/_build/texinfo/libgccjit.texi: Replace http:// with https.
+	* docs/cp/index.rst: Likewise.
+	* docs/cp/intro/index.rst: Likewise.
+	* docs/cp/intro/tutorial01.rst: Likewise.
+	* docs/cp/intro/tutorial02.rst: Likewise.
+	* docs/cp/intro/tutorial03.rst: Likewise.
+	* docs/cp/intro/tutorial04.rst: Likewise.
+	* docs/cp/topics/asm.rst: Likewise.
+	* docs/cp/topics/compilation.rst: Likewise.
+	* docs/cp/topics/contexts.rst: Likewise.
+	* docs/cp/topics/expressions.rst: Likewise.
+	* docs/cp/topics/functions.rst: Likewise.
+	* docs/cp/topics/index.rst: Likewise.
+	* docs/cp/topics/locations.rst: Likewise.
+	* docs/cp/topics/objects.rst: Likewise.
+	* docs/cp/topics/types.rst: Likewise.
+	* docs/index.rst: Likewise.
+	* docs/internals/index.rst: Likewise.
+	* docs/intro/index.rst: Likewise.
+	* docs/intro/tutorial01.rst: Likewise.
+	* docs/intro/tutorial02.rst: Likewise.
+	* docs/intro/tutorial03.rst: Likewise.
+	* docs/intro/tutorial04.rst: Likewise.
+	* docs/intro/tutorial05.rst: Likewise.
+	* docs/topics/asm.rst: Likewise.
+	* docs/topics/compatibility.rst: Likewise.
+	* docs/topics/compilation.rst: Likewise.
+	* docs/topics/contexts.rst: Likewise.
+	* docs/topics/expressions.rst: Likewise.
+	* docs/topics/function-pointers.rst: Likewise.
+	* docs/topics/functions.rst: Likewise.
+	* docs/topics/index.rst: Likewise.
+	* docs/topics/locations.rst: Likewise.
+	* docs/topics/objects.rst: Likewise.
+	* docs/topics/performance.rst: Likewise.
+	* docs/topics/types.rst: Likewise.
+
+2021-12-20  Martin Liska  <mliska@suse.cz>
+
+	* libgccjit.c (struct version_info): Rename to jit_version_info.
+	(struct jit_version_info): Likewise.
+	(gcc_jit_version_major): Likewise.
+	(gcc_jit_version_minor): Likewise.
+	(gcc_jit_version_patchlevel): Likewise.
+
+2021-12-14  Petter Tomner  <tomner@kth.se>
+
+	* jit-common.h: New enum
+	* jit-playback.c : Folding an setting intitial
+	(global_new_decl) : Handle const global generation
+	(new_global) : New flag
+	(global_set_init_rvalue) : New
+	(new_ctor) : New
+	(new_global_initialized) : Flag
+	(as_truth_value) : Fold
+	(new_unary_op) : Fold
+	(new_binary_op) : Fold
+	(new_comparison) : Fold
+	(new_array_access) : Fold
+	(new_dereference) : Fold
+	(get_address) : Fold
+	* jit-playback.h :
+	(global_set_init_rvalue) : New
+	(new_ctor) : New
+	* jit-recording.c :
+	* jit-recording.h :
+	(new_global_init_rvalue) : New
+	(new_ctor) : New
+	(ctor) : New, inherits rvalue
+	(global_init_rvalue) : New, inherits memento
+	(type::is_union) : New
+	* libgccjit++.h : New entrypoints, see C-header
+	* libgccjit.c : See .h
+	* libgccjit.h : New entrypoints
+	(gcc_jit_context_new_array_constructor) : New
+	(gcc_jit_context_new_struct_constructor) : New
+	(gcc_jit_context_new_union_constructor) : New
+	(gcc_jit_global_set_initializer_rvalue) : New
+	(LIBGCCJIT_HAVE_CTORS) : New feuture macro
+	* libgccjit.map : New entrypoints added to ABI 19
+	* docs/topics/expressions.rst : Updated docs
+
+2021-12-12  Antoni Boucher  <bouanto@zoho.com>
+
+	PR target/100688
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_18): New ABI
+	tag.
+	* docs/topics/expressions.rst: Add documentation for the
+	function gcc_jit_lvalue_set_link_section.
+	* jit-playback.h: New function (set_link_section).
+	* jit-recording.c: New function (set_link_section) and
+	support for setting the link section.
+	* jit-recording.h: New function (set_link_section) and new
+	field m_link_section.
+	* libgccjit.c: New function (gcc_jit_lvalue_set_link_section).
+	* libgccjit.h: New function (gcc_jit_lvalue_set_link_section).
+	* libgccjit.map (LIBGCCJIT_ABI_18): New ABI tag.
+
+2021-12-12  Antoni Boucher  <bouanto@zoho.com>
+
+	PR target/95415
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_17): New ABI
+	tag.
+	* docs/topics/expressions.rst: Add document for the function
+	gcc_jit_lvalue_set_tls_model.
+	* jit-playback.h: New function (set_tls_model).
+	* jit-recording.c: New function (set_tls_model), new
+	variables (tls_models and tls_model_enum_strings) and support
+	for setting the tls model.
+	* jit-recording.h: New function (set_tls_model) and new
+	field m_tls_model.
+	* libgccjit.c: New function (gcc_jit_lvalue_set_tls_model).
+	* libgccjit.h: New function (gcc_jit_lvalue_set_tls_model)
+	and new enum (gcc_jit_tls_model).
+	* libgccjit.map (LIBGCCJIT_ABI_17): New ABI tag.
+
+2021-12-11  Antoni Boucher  <bouanto@zoho.com>
+
+	PR target/96066
+	PR target/96067
+	* jit-builtins.c: Implement missing types for builtins.
+	* jit-recording.c:: Allow sending a volatile const void * as
+	argument.
+	* jit-recording.h: New functions (is_volatile, is_const) and
+	allow comparing qualified types.
+
+2021-12-10  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/103562
+	* jit-playback.c (gcc::jit::playback::context::new_function): Set
+	DECL_CONTEXT of the result_decl.
+
+2021-11-27  Petter Tomner  <tomner@kth.se>
+
+	* libgccjit.c: %ld -> %zu
+
+2021-11-24  Martin Liska  <mliska@suse.cz>
+
+	* jit-playback.c (function): Initialize m_blocks vector.
+
+2021-11-20  Antoni Boucher  <bouanto@zoho.com>
+
+	PR target/96889
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_16): New ABI tag.
+	* docs/topics/functions.rst: Add documentation for the
+	functions gcc_jit_function_get_return_type and
+	gcc_jit_function_get_param_count
+	* docs/topics/types.rst: Add documentation for the functions
+	gcc_jit_function_type_get_return_type,
+	gcc_jit_function_type_get_param_count,
+	gcc_jit_function_type_get_param_type,
+	gcc_jit_type_unqualified, gcc_jit_type_dyncast_array,
+	gcc_jit_type_is_bool,
+	gcc_jit_type_dyncast_function_ptr_type,
+	gcc_jit_type_is_integral, gcc_jit_type_is_pointer,
+	gcc_jit_type_dyncast_vector,
+	gcc_jit_vector_type_get_element_type,
+	gcc_jit_vector_type_get_num_units,
+	gcc_jit_struct_get_field, gcc_jit_type_is_struct,
+	and gcc_jit_struct_get_field_count
+	* libgccjit.c:
+	(gcc_jit_function_get_return_type, gcc_jit_function_get_param_count,
+	gcc_jit_function_type_get_return_type,
+	gcc_jit_function_type_get_param_count,
+	gcc_jit_function_type_get_param_type, gcc_jit_type_unqualified,
+	gcc_jit_type_dyncast_array, gcc_jit_type_is_bool,
+	gcc_jit_type_dyncast_function_ptr_type, gcc_jit_type_is_integral,
+	gcc_jit_type_is_pointer, gcc_jit_type_dyncast_vector,
+	gcc_jit_vector_type_get_element_type,
+	gcc_jit_vector_type_get_num_units, gcc_jit_struct_get_field,
+	gcc_jit_type_is_struct, gcc_jit_struct_get_field_count): New
+	functions.
+	(struct gcc_jit_function_type, struct gcc_jit_vector_type):
+	New types.
+	* libgccjit.h:
+	(gcc_jit_function_get_return_type, gcc_jit_function_get_param_count,
+	gcc_jit_function_type_get_return_type,
+	gcc_jit_function_type_get_param_count,
+	gcc_jit_function_type_get_param_type, gcc_jit_type_unqualified,
+	gcc_jit_type_dyncast_array, gcc_jit_type_is_bool,
+	gcc_jit_type_dyncast_function_ptr_type, gcc_jit_type_is_integral,
+	gcc_jit_type_is_pointer, gcc_jit_type_dyncast_vector,
+	gcc_jit_vector_type_get_element_type,
+	gcc_jit_vector_type_get_num_units, gcc_jit_struct_get_field,
+	gcc_jit_type_is_struct, gcc_jit_struct_get_field_count): New
+	function declarations.
+	(struct gcc_jit_function_type, struct gcc_jit_vector_type):
+	New types.
+	* jit-recording.h: New functions (is_struct and is_vector)
+	* libgccjit.map (LIBGCCJIT_ABI_16): New ABI tag.
+
+2021-11-12  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/103199
+	* docs/examples/tut04-toyvm/toyvm.c (toyvm_function_compile):
+	Increase size of buffer.
+	* docs/examples/tut04-toyvm/toyvm.cc
+	(compilation_state::create_function): Likewise.
+
+2021-09-10  Petter Tomner  <tomner@kth.se>
+
+	* jit-playback.c: Moved global var processing to after loc handling.
+	  Setting TYPE_NAME for fundamental types.
+	  Using common functions for finalizing globals.
+	* jit-playback.h: New method init_types().
+	  Changed get_tree_node_for_type() to method.
+
+2021-08-19  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* docs/examples/tut04-toyvm/toyvm.c: Include jit-dejagnu.h.
 	* docs/examples/tut04-toyvm/toyvm.cc: Likewise.
 	* jit-dejagnu.h: New file, imported from dejagnu-1.6.2 and
 	patched for this application.
 
-2022-06-09  Iain Sandoe  <iain@sandoe.co.uk>
-
-	Backported from master:
-	2021-08-18  Iain Sandoe  <iain@sandoe.co.uk>
+2021-08-18  Iain Sandoe  <iain@sandoe.co.uk>
 
 	PR jit/100613
 	* Make-lang.in: Provide clauses for Darwin hosts.
 
-2021-11-24  Martin Liska  <mliska@suse.cz>
+2021-07-18  Antoni Boucher  <bouanto@zoho.com>
 
-	Backported from master:
-	2021-11-24  Martin Liska  <mliska@suse.cz>
+	PR target/95498
+	* jit-playback.c (convert): Add support to handle truncation and
+	extension in the convert function.
 
-	* jit-playback.c (function): Initialize m_blocks vector.
+2021-05-19  Martin Liska  <mliska@suse.cz>
 
-2021-04-08  Release Manager
+	PR testsuite/100658
+	* libgccjit.c (gcc_jit_context_new_function): Fix typos.
 
-	* GCC 10.3.0 released.
+2021-03-24  Matthias Klose  <doko@ubuntu.com>
 
-2020-07-23  Release Manager
+	* Make-lang.in (jit.sphinx.html, jit.sphinx.pdf): Use $(mkinstalldirs),
+	(jit.install-headers): Depend on installdirs.
 
-	* GCC 10.2.0 released.
+2021-02-19  David Malcolm  <dmalcolm@redhat.com>
 
-2020-05-07  Release Manager
+	PR jit/99126
+	* jit-builtins.c
+	(gcc::jit::builtins_manager::get_builtin_function_by_id):
+	Update assertion to reject BUILT_IN_NONE.
+	(gcc::jit::builtins_manager::ensure_optimization_builtins_exist):
+	New.
+	* jit-builtins.h
+	(gcc::jit::builtins_manager::ensure_optimization_builtins_exist):
+	New decl.
+	* jit-playback.c (gcc::jit::playback::context::replay): Call it.
+	Remove redundant conditional on bm.
 
-	* GCC 10.1.0 released.
+2021-01-14  David Malcolm  <dmalcolm@redhat.com>
+
+	* docs/cp/index.rst: Remove "Alpha" warning.
+	* docs/index.rst: Likewise.
+	* docs/_build/texinfo/libgccjit.texi: Regenerate
+
+2020-11-25  Martin Sebor  <msebor@redhat.com>
+
+	PR bootstrap/94982
+	* jit-recording.c (recording::function::dump_to_dot): Avoid
+	-Wformat-diag.
+	(recording::block::dump_to_dot): Same.
+
+2020-11-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR other/97911
+	* Make-lang.in (jit.serial): Change from goal to a
+	variable.
+	(.PHONY): Drop jit.serial and jit.prev.
+	($(LIBGCCJIT_FILENAME)): Depend on $(jit.serial) rather than
+	jit.serial.
+
+2020-11-18  Jakub Jelinek  <jakub@redhat.com>
+
+	* Make-lang.in (jit.serial): New goal.
+	(.PHONY): Add jit.serial jit.prev.
+	($(LIBGCCJIT_FILENAME)): Depend on jit.prev.  Call LINK_PROGRESS.
+
+2020-11-12  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/87291
+	* docs/cp/topics/asm.rst: New file.
+	* docs/cp/topics/index.rst (Topic Reference): Add it.
+	* docs/topics/asm.rst: New file.
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_15): New.
+	* docs/topics/functions.rst (Statements): Add link to extended
+	asm.
+	* docs/topics/index.rst (Topic Reference): Add asm.rst.
+	* docs/topics/objects.rst: Add gcc_jit_extended_asm to ASCII art.
+	* docs/_build/texinfo/Makefile: Regenerate.
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+	* jit-common.h (gcc::jit::recording::extended_asm): New forward
+	decl.
+	(gcc::jit::recording::top_level_asm): Likewise.
+	* jit-playback.c: Include "stmt.h".
+	(build_string): New.
+	(gcc::jit::playback::context::new_string_literal): Disambiguate
+	build_string call.
+	(gcc::jit::playback::context::add_top_level_asm): New.
+	(build_operand_chain): New.
+	(build_clobbers): New.
+	(build_goto_operands): New.
+	(gcc::jit::playback::block::add_extended_asm): New.
+	* jit-playback.h (gcc::jit::playback::context::add_top_level_asm):
+	New decl.
+	(struct gcc::jit::playback::asm_operand): New struct.
+	(gcc::jit::playback::block::add_extended_asm): New decl.
+	* jit-recording.c (gcc::jit::recording::context::dump_to_file):
+	Dump top-level asms.
+	(gcc::jit::recording::context::add_top_level_asm): New.
+	(gcc::jit::recording::block::add_extended_asm): New.
+	(gcc::jit::recording::block::end_with_extended_asm_goto): New.
+	(gcc::jit::recording::asm_operand::asm_operand): New.
+	(gcc::jit::recording::asm_operand::print): New.
+	(gcc::jit::recording::asm_operand::make_debug_string): New.
+	(gcc::jit::recording::output_asm_operand::write_reproducer): New.
+	(gcc::jit::recording::output_asm_operand::print): New.
+	(gcc::jit::recording::input_asm_operand::write_reproducer): New.
+	(gcc::jit::recording::input_asm_operand::print): New.
+	(gcc::jit::recording::extended_asm::add_output_operand): New.
+	(gcc::jit::recording::extended_asm::add_input_operand): New.
+	(gcc::jit::recording::extended_asm::add_clobber): New.
+	(gcc::jit::recording::extended_asm::replay_into): New.
+	(gcc::jit::recording::extended_asm::make_debug_string): New.
+	(gcc::jit::recording::extended_asm::write_flags): New.
+	(gcc::jit::recording::extended_asm::write_clobbers): New.
+	(gcc::jit::recording::extended_asm_simple::write_reproducer): New.
+	(gcc::jit::recording::extended_asm::maybe_populate_playback_blocks):
+	New.
+	(gcc::jit::recording::extended_asm_goto::extended_asm_goto): New.
+	(gcc::jit::recording::extended_asm_goto::replay_into): New.
+	(gcc::jit::recording::extended_asm_goto::write_reproducer): New.
+	(gcc::jit::recording::extended_asm_goto::get_successor_blocks):
+	New.
+	(gcc::jit::recording::extended_asm_goto::maybe_print_gotos): New.
+	(gcc::jit::recording::extended_asm_goto::maybe_populate_playback_blocks):
+	New.
+	(gcc::jit::recording::top_level_asm::top_level_asm): New.
+	(gcc::jit::recording::top_level_asm::replay_into): New.
+	(gcc::jit::recording::top_level_asm::make_debug_string): New.
+	(gcc::jit::recording::top_level_asm::write_to_dump): New.
+	(gcc::jit::recording::top_level_asm::write_reproducer): New.
+	* jit-recording.h
+	(gcc::jit::recording::context::add_top_level_asm): New decl.
+	(gcc::jit::recording::context::m_top_level_asms): New field.
+	(gcc::jit::recording::block::add_extended_asm): New decl.
+	(gcc::jit::recording::block::end_with_extended_asm_goto): New
+	decl.
+	(gcc::jit::recording::asm_operand): New class.
+	(gcc::jit::recording::output_asm_operand): New class.
+	(gcc::jit::recording::input_asm_operand): New class.
+	(gcc::jit::recording::extended_asm): New class.
+	(gcc::jit::recording::extended_asm_simple): New class.
+	(gcc::jit::recording::extended_asm_goto): New class.
+	(gcc::jit::recording::top_level_asm): New class.
+	* libgccjit++.h (gccjit::extended_asm): New forward decl.
+	(gccjit::context::add_top_level_asm): New.
+	(gccjit::block::add_extended_asm): New.
+	(gccjit::block::end_with_extended_asm_goto): New.
+	(gccjit::extended_asm): New class.
+	(gccjit::extended_asm::extended_asm): New ctors.
+	(gccjit::extended_asm::set_volatile_flag): New.
+	(gccjit::extended_asm::set_inline_flag): New.
+	(gccjit::extended_asm::add_output_operand): New.
+	(gccjit::extended_asm::add_input_operand): New.
+	(gccjit::extended_asm::add_clobber): New.
+	(gccjit::extended_asm::get_inner_extended_asm): New.
+	* libgccjit.c (struct gcc_jit_extended_asm): New.
+	(jit_error): Make "loc" param take a gcc::jit::recording::location *
+	rather than a gcc_jit_location *.
+	(gcc_jit_block_add_extended_asm): New entrypoint.
+	(gcc_jit_block_end_with_extended_asm_goto): New entrypoint.
+	(gcc_jit_extended_asm_as_object): New entrypoint.
+	(gcc_jit_extended_asm_set_volatile_flag): New entrypoint.
+	(gcc_jit_extended_asm_set_inline_flag): New entrypoint.
+	(gcc_jit_extended_asm_add_output_operand): New entrypoint.
+	(gcc_jit_extended_asm_add_clobber): New entrypoint.
+	(gcc_jit_context_add_top_level_asm): New entrypoint.
+	* libgccjit.h: Add gcc_jit_extended_asm to ASCII art.
+	(gcc_jit_extended_asm): New typedef.
+	(LIBGCCJIT_HAVE_ASM_STATEMENTS): New define.
+	(gcc_jit_block_add_extended_asm): New entrypoint.
+	(gcc_jit_block_end_with_extended_asm_goto): New entrypoint.
+	(gcc_jit_extended_asm_as_object): New entrypoint.
+	(gcc_jit_extended_asm_set_volatile_flag): New entrypoint.
+	(gcc_jit_extended_asm_set_inline_flag): New entrypoint.
+	(gcc_jit_extended_asm_add_output_operand): New entrypoint.
+	(gcc_jit_extended_asm_add_input_operand): New entrypoint.
+	(gcc_jit_extended_asm_add_clobber): New entrypoint.
+	(gcc_jit_context_add_top_level_asm): New entrypoint.
+	* libgccjit.map (LIBGCCJIT_ABI_15): New.
+
+2020-11-12  David Malcolm  <dmalcolm@redhat.com>
+
+	* jit-recording.c (recording::context::new_string): Add "escaped"
+	param and use it when creating the new recording::string instance.
+	(recording::string::string): Add "escaped" param and use it to
+	initialize m_escaped.
+	(recording::string::make_debug_string): Replace check that first
+	char is double-quote with use of m_escaped.  Fix escaping of
+	'\t' and '\n'.  Set "escaped" on the result.
+	* jit-recording.h (recording::context::new_string): Add "escaped"
+	param.
+	(recording::string::string): Add "escaped" param.
+	(recording::string::m_escaped): New field.
+
+2020-11-12  David Malcolm  <dmalcolm@redhat.com>
+
+	* libgccjit.h: Fix typo in comment.
+
+2020-09-14  Andrea Corallo  <andrea.corallo@arm.com>
+
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+
+2020-09-11  Andrea Corallo  <andrea.corallo@arm.com>
+
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_14): New ABI tag.
+	* docs/topics/expressions.rst (gcc_jit_global_set_initializer):
+	Document new entry point in section 'Global variables'.
+	* jit-playback.c (global_new_decl, global_finalize_lvalue): New
+	method.
+	(playback::context::new_global): Make use of global_new_decl,
+	global_finalize_lvalue.
+	(load_blob_in_ctor): New template function in use by the
+	following.
+	(playback::context::new_global_initialized): New method.
+	* jit-playback.h (class context): Decl 'new_global_initialized',
+	'global_new_decl', 'global_finalize_lvalue'.
+	(lvalue::set_initializer): Add implementation.
+	* jit-recording.c (recording::memento_of_get_pointer::get_size)
+	(recording::memento_of_get_type::get_size): Add implementation.
+	(recording::global::write_initializer_reproducer): New function in
+	use by 'recording::global::write_reproducer'.
+	(recording::global::replay_into)
+	(recording::global::write_to_dump)
+	(recording::global::write_reproducer): Handle
+	initialized case.
+	* jit-recording.h (class type): Decl 'get_size' and
+	'num_elements'.
+	* libgccjit++.h (class lvalue): Declare new 'set_initializer'
+	method.
+	(class lvalue): Decl 'is_global' and 'set_initializer'.
+	(class global) Decl 'write_initializer_reproducer'. Add
+	'm_initializer', 'm_initializer_num_bytes' fields.  Implement
+	'set_initializer'. Add a destructor to free 'm_initializer'.
+	* libgccjit.c (gcc_jit_global_set_initializer): New function.
+	* libgccjit.h (gcc_jit_global_set_initializer): New function
+	declaration.
+	* libgccjit.map (LIBGCCJIT_ABI_14): New ABI tag.
+
+2020-08-28  Martin Sebor  <msebor@redhat.com>
+
+	* jit-recording.c (recording::switch_::make_debug_string): Add argument
+	to a call.
+
+2020-08-22  Andrea Corallo  <andrea.corallo@arm.com>
+
+	* libgccjit.c:
+	(gcc_jit_context_new_rvalue_from_int)
+	(gcc_jit_context_new_rvalue_from_long)
+	(gcc_jit_context_new_rvalue_from_double)
+	(gcc_jit_context_new_rvalue_from_ptr): Update function heading
+	comments.
+
+2020-06-16  Nicolas Bértolo  <nicolasbertolo@gmail.com>
+
+	* Make-lang.in: Always define version, minor and release
+	numbers. Create the Windows shared library as
+	libgccjit-$(LIBGCCJIT_VERSION_NUM).dll.
+
+2020-06-03  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/95306
+	* jit-builtins.c (builtins_manager::make_primitive_type):
+	Implement BT_CONST_VOLATILE_PTR.
+
+2020-06-02  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/95426
+	* dummy-frontend.c: Include "options.h", "stringpool.h", and
+	"attribs.h".
+	(ATTR_EXCL): New, copied from lto/lto-lang.c.
+	(attr_noreturn_exclusions): Likewise.
+	(attr_returns_twice_exclusions): Likewise.
+	(attr_const_pure_exclusions): Likewise.
+	(jit_attribute_table): Likewise, copied from lto_attribute_table.
+	(jit_format_attribute_table): Likewise, copied from
+	lto_format_attribute_table.
+	(handle_noreturn_attribute): New, copied from lto/lto-lang.c.
+	(handle_leaf_attribute): Likewise.
+	(handle_const_attribute): Likewise.
+	(handle_malloc_attribute): Likewise.
+	(handle_pure_attribute): Likewise.
+	(handle_novops_attribute): Likewise.
+	(get_nonnull_operand): Likewise.
+	(handle_nonnull_attribute): Likewise.
+	(handle_nothrow_attribute): Likewise.
+	(handle_sentinel_attribute): Likewise.
+	(handle_type_generic_attribute): Likewise.
+	(handle_transaction_pure_attribute): Likewise.
+	(handle_returns_twice_attribute): Likewise.
+	(handle_patchable_function_entry_attribute): Likewise.
+	(ignore_attribute): Likewise.
+	(handle_format_attribute): Likewise.
+	(handle_format_arg_attribute): Likewise.
+	(handle_fnspec_attribute): Likewise.
+	(LANG_HOOKS_COMMON_ATTRIBUTE_TABLE): Define.
+	(LANG_HOOKS_FORMAT_ATTRIBUTE_TABLE): Define.
+
+2020-05-28  Nicolas Bértolo  <nicolasbertolo@gmail.com>
+
+	* Make-lang.in: Remove extra slash. Build libgccjit.dll and its
+	import library in Windows.
+	* config-lang.in: Update comment about --enable-host-shared.
+	* jit-w32.h: New file.
+	* jit-w32.c: New file.
+	(print_last_error): New function that prints the error
+	string corresponding to GetLastError().
+	(get_TOKEN_USER_current_user): Helper function used for getting
+	the SID belonging to the current user.
+	(create_directory_for_current_user): Helper function to create
+	a directory with permissions such that only the current user can
+	access it.
+	(win_mkdtemp): Create a temporary directory using Windows APIs.
+	* jit-playback.c: Do not chmod files in Windows. Use LoadLibrary,
+	FreeLibrary and GetProcAddress instead of libdl.
+	* jit-result.h, jit-result.c: Introduce result::handle_t to
+	abstract over the types used for dynamic library handles.
+	* jit-tempdir.c: Do not use mkdtemp() in Windows, use
+	win_mkdtemp().
+
+2020-05-27  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/95314
+	* dummy-frontend.c (LANG_HOOKS_DEEP_UNSHARING): Define to be true.
+	* jit-playback.h (gcc::jit::playback::rvalue): Mark tree node with
+	TREE_VISITED.
+
+2020-05-27  Tom Tromey  <tromey@gcc.gnu.org>
+
+	PR jit/91330
+	* docs/conf.py (texinfo_documents): Set description.
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+
+2020-05-26  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/95306
+	* docs/topics/functions.rst
+	(gcc_jit_context_get_builtin_function): Document.
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+	* dummy-frontend.c (jit_langhook_global_bindings_p): Remove
+	gcc_unreachable.
+	* jit-builtins.c (type_names): New array.
+	(get_string_for_type_id): New function.
+	(gcc::jit::builtins_manager::make_primitive_type): Show name of
+	type in error messages.  Update cases to reflect the order in
+	builtin-types.def.  Implement cases for BT_INT8, BT_INT16,
+	BT_UINT8, BT_CONST_PTR, BT_VOLATILE_PTR, BT_INT_PTR, BT_FLOAT_PTR,
+	BT_CONST_DOUBLE_PTR, BT_SIZE, BT_CONST_SIZE.
+
+2020-05-26  David Malcolm  <dmalcolm@redhat.com>
+
+	* docs/topics/compatibility.rst: Fix underline.
+	Fix missing labels.
+	* docs/topics/types.rst: Fix missing blank line.
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+
+2020-05-26  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/95296
+	* docs/topics/expressions.rst (Unary Operations): Document that
+	result_type of gcc_jit_context_new_unary_op must be a numeric type.
+	(Binary Operations): Likewise for gcc_jit_context_new_binary_op.
+	(Global variables): Document that "type" of
+	gcc_jit_context_new_global must be non-`void`.
+	* docs/topics/function-pointers.rst
+	(gcc_jit_context_new_function_ptr_type): Document that the
+	param_types must be non-void, but that return_type may be.
+	* docs/topics/functions.rst (Params): Document that
+	gcc_jit_context_new_param's type must be non-void.
+	(Functions): Likewise for gcc_jit_function_new_local.
+	* docs/topics/types.rst (gcc_jit_context_new_array_type): Document
+	that the type must be non-void.
+	(gcc_jit_context_new_field): Likewise.
+	* docs/_build/texinfo/Makefile: Regenerate.
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+	* libgccjit.c (gcc_jit_context_new_array_type): Fail if
+	element_type is void.
+	(gcc_jit_context_new_field): Likewise for "type".
+	(gcc_jit_context_new_function_ptr_type): Likewise for each
+	element of param_types.
+	(gcc_jit_context_new_param): Likewise for "type".
+	(gcc_jit_context_new_global): Likewise.
+	(gcc_jit_function_new_local): Likewise.
+	(gcc_jit_type_get_aligned): Likewise.
 
 2020-03-31  Andrea Corallo  <andrea.corallo@arm.com>
 	    David Malcolm  <dmalcolm@redhat.com>
@@ -2787,7 +3661,7 @@
 
 	* Initial creation
 
-Copyright (C) 2013-2020 Free Software Foundation, Inc.
+Copyright (C) 2013-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

@@ -1,6 +1,6 @@
 // Components for manipulating non-owning sequences of objects -*- C++ -*-
 
-// Copyright (C) 2019-2020 Free Software Foundation, Inc.
+// Copyright (C) 2019-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -38,10 +38,10 @@
 
 #if __cplusplus > 201703L
 
-#include <type_traits>
 #include <array>
+#include <cstddef>
 #include <bits/stl_iterator.h>
-#include <bits/range_access.h>
+#include <bits/ranges_base.h>
 
 #if __cpp_lib_concepts
 namespace std _GLIBCXX_VISIBILITY(default)
@@ -58,21 +58,16 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   namespace __detail
   {
     template<typename _Tp>
-      struct __is_std_span : false_type { };
+      inline constexpr bool __is_span = false;
 
     template<typename _Tp, size_t _Num>
-      struct __is_std_span<span<_Tp, _Num>> : true_type { };
+      inline constexpr bool __is_span<span<_Tp, _Num>> = true;
 
     template<typename _Tp>
-      struct __is_std_array : false_type { };
+      inline constexpr bool __is_std_array = false;
 
     template<typename _Tp, size_t _Num>
-      struct __is_std_array<_GLIBCXX_STD_C::array<_Tp, _Num>> : true_type { };
-
-#ifdef _GLIBCXX_DEBUG
-    template<typename _Tp, size_t _Num>
-      struct __is_std_array<__debug::array<_Tp, _Num>> : true_type { };
-#endif
+      inline constexpr bool __is_std_array<std::array<_Tp, _Num>> = true;
 
     template<size_t _Extent>
       class __extent_storage
@@ -151,7 +146,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       constexpr
       span() noexcept
       requires ((_Extent + 1u) <= 1u)
-      : _M_extent(0), _M_ptr(nullptr)
+      : _M_ptr(nullptr), _M_extent(0)
       { }
 
       template<contiguous_iterator _It>
@@ -159,7 +154,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	constexpr explicit(extent != dynamic_extent)
 	span(_It __first, size_type __count)
 	noexcept
-	: _M_extent(__count), _M_ptr(std::to_address(__first))
+	: _M_ptr(std::to_address(__first)), _M_extent(__count)
 	{
 	  if constexpr (_Extent != dynamic_extent)
 	    {
@@ -174,8 +169,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	constexpr explicit(extent != dynamic_extent)
 	span(_It __first, _End __last)
 	noexcept(noexcept(__last - __first))
-	: _M_extent(static_cast<size_type>(__last - __first)),
-	  _M_ptr(std::to_address(__first))
+	: _M_ptr(std::to_address(__first)),
+	  _M_extent(static_cast<size_type>(__last - __first))
 	{
 	  if constexpr (_Extent != dynamic_extent)
 	    {
@@ -206,8 +201,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	{ }
 
       template<typename _Range>
-	requires (!__detail::__is_std_span<remove_cvref_t<_Range>>::value)
-	  && (!__detail::__is_std_array<remove_cvref_t<_Range>>::value)
+	requires (!__detail::__is_span<remove_cvref_t<_Range>>)
+	  && (!__detail::__is_std_array<remove_cvref_t<_Range>>)
 	  && (!is_array_v<remove_cvref_t<_Range>>)
 	  && ranges::contiguous_range<_Range> && ranges::sized_range<_Range>
 	  && (ranges::borrowed_range<_Range> || is_const_v<element_type>)
@@ -394,8 +389,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
 
     private:
-      [[no_unique_address]] __detail::__extent_storage<extent> _M_extent;
       pointer _M_ptr;
+      [[no_unique_address]] __detail::__extent_storage<extent> _M_extent;
     };
 
   // deduction guides

@@ -1,5 +1,5 @@
 /* Command line option handling.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -24,8 +24,8 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Specifies how a switch's VAR_VALUE relates to its FLAG_VAR.  */
 enum cl_var_type {
-  /* The switch is enabled when FLAG_VAR is nonzero.  */
-  CLVC_BOOLEAN,
+  /* The switch is an integer value.  */
+  CLVC_INTEGER,
 
   /* The switch is enabled when FLAG_VAR == VAR_VALUE.  */
   CLVC_EQUAL,
@@ -50,6 +50,18 @@ enum cl_var_type {
   /* The switch should be stored in the VEC pointed to by FLAG_VAR for
      later processing.  */
   CLVC_DEFER
+};
+
+/* Values for var_value member of CLVC_ENUM.  */
+enum cl_enum_var_value {
+  /* Enum without EnumSet or EnumBitSet.  */
+  CLEV_NORMAL,
+
+  /* EnumSet.  */
+  CLEV_SET,
+
+  /* EnumBitSet.  */
+  CLEV_BITSET
 };
 
 struct cl_option
@@ -104,8 +116,6 @@ struct cl_option
   BOOL_BITFIELD cl_host_wide_int : 1;
   /* Argument should be converted to lowercase.  */
   BOOL_BITFIELD cl_tolower : 1;
-  /* Report argument with -fverbose-asm  */
-  BOOL_BITFIELD cl_report : 1;
   /* Argument is an unsigned integer with an optional byte suffix.  */
   BOOL_BITFIELD cl_byte_size: 1;
   /* Offset of field for this option in struct gcc_options, or
@@ -124,6 +134,14 @@ struct cl_option
   int range_max;
 };
 
+struct cl_var
+{
+  /* Name of the variable.  */
+  const char *var_name;
+  /* Offset of field for this var in struct gcc_options.  */
+  unsigned short var_offset;
+};
+
 /* Records that the state of an option consists of SIZE bytes starting
    at DATA.  DATA might point to CH in some cases.  */
 struct cl_option_state {
@@ -134,6 +152,9 @@ struct cl_option_state {
 
 extern const struct cl_option cl_options[];
 extern const unsigned int cl_options_count;
+#ifdef ENABLE_PLUGIN
+extern const struct cl_var cl_vars[];
+#endif
 extern const char *const lang_names[];
 extern const unsigned int cl_lang_count;
 
@@ -161,6 +182,7 @@ extern const unsigned int cl_lang_count;
 /* Flags for an enumerated option argument.  */
 #define CL_ENUM_CANONICAL	(1 << 0) /* Canonical for this value.  */
 #define CL_ENUM_DRIVER_ONLY	(1 << 1) /* Only accepted in the driver.  */
+#define CL_ENUM_SET_SHIFT	2	 /* Shift for enum set.  */
 
 /* Structure describing an enumerated option argument.  */
 
@@ -217,6 +239,7 @@ extern const unsigned int cl_enums_count;
 #define CL_ERR_NEGATIVE		(1 << 6) /* Negative form of option
 					    not permitted (together
 					    with OPT_SPECIAL_unknown).  */
+#define CL_ERR_ENUM_SET_ARG	(1 << 7) /* Bad argument of enumerated set.  */
 
 /* Structure describing the result of decoding an option.  */
 
@@ -251,8 +274,13 @@ struct cl_decoded_option
 
   /* For a boolean option, 1 for the true case and 0 for the "no-"
      case.  For an unsigned integer option, the value of the
-     argument.  1 in all other cases.  */
+     argument.  For enum the value of the enumerator corresponding
+     to argument string.  1 in all other cases.  */
   HOST_WIDE_INT value;
+
+  /* For EnumSet the value mask.  Variable should be changed to
+     value | (prev_value & ~mask).  */
+  HOST_WIDE_INT mask;
 
   /* Any flags describing errors detected in this option.  */
   int errors;
@@ -365,7 +393,8 @@ extern bool get_option_state (struct gcc_options *, int,
 extern void set_option (struct gcc_options *opts,
 			struct gcc_options *opts_set,
 			int opt_index, HOST_WIDE_INT value, const char *arg,
-			int kind, location_t loc, diagnostic_context *dc);
+			int kind, location_t loc, diagnostic_context *dc,
+			HOST_WIDE_INT = 0);
 extern void *option_flag_var (int opt_index, struct gcc_options *opts);
 bool handle_generated_option (struct gcc_options *opts,
 			      struct gcc_options *opts_set,
@@ -419,6 +448,8 @@ extern bool target_handle_option (struct gcc_options *opts,
 extern void finish_options (struct gcc_options *opts,
 			    struct gcc_options *opts_set,
 			    location_t loc);
+extern void diagnose_options (gcc_options *opts, gcc_options *opts_set,
+			      location_t loc);
 extern void print_help (struct gcc_options *opts, unsigned int lang_mask, const
 			char *help_option_argument);
 extern void default_options_optimization (struct gcc_options *opts,
@@ -444,6 +475,12 @@ extern const struct sanitizer_opts_s
   bool can_recover;
 } sanitizer_opts[];
 
+extern const struct zero_call_used_regs_opts_s
+{
+  const char *const name;
+  unsigned int flag;
+} zero_call_used_regs_opts[];
+
 extern vec<const char *> help_option_arguments;
 
 extern void add_misspelling_candidates (auto_vec<char *> *candidates,
@@ -460,10 +497,20 @@ extern bool parse_and_check_align_values (const char *flag,
 					  bool report_error,
 					  location_t loc);
 
+extern void parse_and_check_patch_area (const char *arg, bool report_error,
+					HOST_WIDE_INT *patch_area_size,
+					HOST_WIDE_INT *patch_area_start);
+
 extern void parse_options_from_collect_gcc_options (const char *, obstack *,
 						    int *);
 
 extern void prepend_xassembler_to_collect_as_options (const char *, obstack *);
+
+extern char *gen_command_line_string (cl_decoded_option *options,
+				      unsigned int options_count);
+extern char *gen_producer_string (const char *language_string,
+				  cl_decoded_option *options,
+				  unsigned int options_count);
 
 /* Set OPTION in OPTS to VALUE if the option is not set in OPTS_SET.  */
 
@@ -474,5 +521,9 @@ extern void prepend_xassembler_to_collect_as_options (const char *, obstack *);
       (OPTS)->x_ ## OPTION = VALUE; \
   } \
   while (false)
+
+/* Return true if OPTION is set by user in global options.  */
+
+#define OPTION_SET_P(OPTION) global_options_set.x_ ## OPTION
 
 #endif

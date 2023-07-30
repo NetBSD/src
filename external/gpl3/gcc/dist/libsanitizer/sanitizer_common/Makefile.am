@@ -6,7 +6,7 @@ gcc_version := $(shell @get_gcc_base_ver@ $(top_srcdir)/../gcc/BASE-VER)
 DEFS = -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS @RPC_DEFS@
 AM_CXXFLAGS = -Wall -W -Wno-unused-parameter -Wwrite-strings -pedantic -Wno-long-long  -fPIC -fno-builtin -fno-exceptions -fno-rtti -fomit-frame-pointer -funwind-tables -fvisibility=hidden -Wno-variadic-macros
 AM_CXXFLAGS += $(LIBSTDCXX_RAW_CXX_CXXFLAGS)
-AM_CXXFLAGS += -std=gnu++11
+AM_CXXFLAGS += -std=gnu++14
 AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
 if LIBBACKTRACE_SUPPORTED
 AM_CXXFLAGS += -DSANITIZER_LIBBACKTRACE -DSANITIZER_CP_DEMANGLE \
@@ -17,6 +17,7 @@ AM_CXXFLAGS += -DSANITIZER_LIBBACKTRACE -DSANITIZER_CP_DEMANGLE \
 endif
 AM_CCASFLAGS = $(EXTRA_ASFLAGS)
 ACLOCAL_AMFLAGS = -I m4
+sanitizer_platform_limits_freebsd.lo: AM_CXXFLAGS += -DUSE_SYSTEM_MD5
 
 noinst_LTLIBRARIES = libsanitizer_common.la
 
@@ -41,9 +42,10 @@ sanitizer_common_files = \
 	sanitizer_linux_s390.cpp \
 	sanitizer_mac.cpp \
 	sanitizer_mac_libcdep.cpp \
+	sanitizer_mutex.cpp \
 	sanitizer_netbsd.cpp \
 	sanitizer_openbsd.cpp \
-	sanitizer_persistent_allocator.cpp \
+	sanitizer_platform_limits_freebsd.cpp \
 	sanitizer_platform_limits_linux.cpp \
 	sanitizer_platform_limits_openbsd.cpp \
 	sanitizer_platform_limits_posix.cpp \
@@ -56,7 +58,6 @@ sanitizer_common_files = \
 	sanitizer_procmaps_linux.cpp \
 	sanitizer_procmaps_mac.cpp \
 	sanitizer_procmaps_solaris.cpp \
-	sanitizer_rtems.cpp \
 	sanitizer_solaris.cpp \
 	sanitizer_stackdepot.cpp \
 	sanitizer_stacktrace.cpp \

@@ -1,5 +1,5 @@
 /* Definitions of Tensilica's Xtensa target machine for GNU compiler.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
    Contributed by Bob Wilson (bwilson@tensilica.com) at Tensilica.
 
 This file is part of GCC.
@@ -21,7 +21,7 @@ along with GCC; see the file COPYING3.  If not see
 /* Get Xtensa configuration settings */
 #include "xtensa-config.h"
 
-/* External variables defined in xtensa.c.  */
+/* External variables defined in xtensa.cc.  */
 
 /* Macros used in the machine description to select various Xtensa
    configuration options.  */
@@ -64,7 +64,8 @@ along with GCC; see the file COPYING3.  If not see
 #define TARGET_ABSOLUTE_LITERALS XSHAL_USE_ABSOLUTE_LITERALS
 #define TARGET_THREADPTR	XCHAL_HAVE_THREADPTR
 #define TARGET_LOOPS	        XCHAL_HAVE_LOOPS
-#define TARGET_WINDOWED_ABI	(XSHAL_ABI == XTHAL_ABI_WINDOWED)
+#define TARGET_WINDOWED_ABI_DEFAULT (XSHAL_ABI == XTHAL_ABI_WINDOWED)
+#define TARGET_WINDOWED_ABI	xtensa_windowed_abi
 #define TARGET_DEBUG		XCHAL_HAVE_DEBUG
 #define TARGET_L32R		XCHAL_HAVE_L32R
 
@@ -278,7 +279,7 @@ extern const char xtensa_leaf_regs[FIRST_PSEUDO_REGISTER];
 
 /* For Xtensa, no remapping is necessary, but this macro must be
    defined if LEAF_REGISTERS is defined.  */
-#define LEAF_REG_REMAP(REGNO) (REGNO)
+#define LEAF_REG_REMAP(REGNO) ((int) (REGNO))
 
 /* This must be declared if LEAF_REGISTERS is set.  */
 extern int leaf_function;
@@ -314,8 +315,13 @@ extern int leaf_function;
 #define STACK_POINTER_REGNUM (GP_REG_FIRST + 1)
 
 /* Base register for access to local variables of the function.  */
-#define HARD_FRAME_POINTER_REGNUM (GP_REG_FIRST + \
-				   (TARGET_WINDOWED_ABI ? 7 : 15))
+#define HARD_FRAME_POINTER_REGNUM \
+  (TARGET_WINDOWED_ABI \
+   ? XTENSA_WINDOWED_HARD_FRAME_POINTER_REGNUM \
+   : XTENSA_CALL0_HARD_FRAME_POINTER_REGNUM)
+
+#define XTENSA_WINDOWED_HARD_FRAME_POINTER_REGNUM (GP_REG_FIRST + 7)
+#define XTENSA_CALL0_HARD_FRAME_POINTER_REGNUM (GP_REG_FIRST + 15)
 
 /* The register number of the frame pointer register, which is used to
    access automatic variables in the stack frame.  For Xtensa, this
@@ -434,12 +440,17 @@ enum reg_class
 			      || (flag_sanitize & SANITIZE_ADDRESS) != 0)
 
 /* The ARG_POINTER and FRAME_POINTER are not real Xtensa registers, so
-   they are eliminated to either the stack pointer or hard frame pointer.  */
-#define ELIMINABLE_REGS							\
-{{ ARG_POINTER_REGNUM,		STACK_POINTER_REGNUM},			\
- { ARG_POINTER_REGNUM,		HARD_FRAME_POINTER_REGNUM},		\
- { FRAME_POINTER_REGNUM,	STACK_POINTER_REGNUM},			\
- { FRAME_POINTER_REGNUM,	HARD_FRAME_POINTER_REGNUM}}
+   they are eliminated to either the stack pointer or hard frame pointer.
+   Since hard frame pointer is different register in windowed and call0
+   ABIs list them both and only allow real HARD_FRAME_POINTER_REGNUM in
+   TARGET_CAN_ELIMINATE.  */
+#define ELIMINABLE_REGS							    \
+{{ ARG_POINTER_REGNUM,		STACK_POINTER_REGNUM},			    \
+ { ARG_POINTER_REGNUM,		XTENSA_WINDOWED_HARD_FRAME_POINTER_REGNUM}, \
+ { ARG_POINTER_REGNUM,		XTENSA_CALL0_HARD_FRAME_POINTER_REGNUM},    \
+ { FRAME_POINTER_REGNUM,	STACK_POINTER_REGNUM},			    \
+ { FRAME_POINTER_REGNUM,	XTENSA_WINDOWED_HARD_FRAME_POINTER_REGNUM}, \
+ { FRAME_POINTER_REGNUM,	XTENSA_CALL0_HARD_FRAME_POINTER_REGNUM}}
 
 /* Specify the initial difference between the specified pair of registers.  */
 #define INITIAL_ELIMINATION_OFFSET(FROM, TO, OFFSET)			\
@@ -764,8 +775,9 @@ typedef struct xtensa_args
 #define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (Pmode, 0)
 #define DWARF_FRAME_RETURN_COLUMN DWARF_FRAME_REGNUM (0)
 #define DWARF_ALT_FRAME_RETURN_COLUMN 16
-#define DWARF_FRAME_REGISTERS (DWARF_ALT_FRAME_RETURN_COLUMN		\
-			       + (TARGET_WINDOWED_ABI ? 0 : 1))
+#define DWARF_FRAME_REGISTERS (TARGET_WINDOWED_ABI \
+			       ? DWARF_ALT_FRAME_RETURN_COLUMN		\
+			       : DWARF_ALT_FRAME_RETURN_COLUMN + 1)
 #define EH_RETURN_DATA_REGNO(N) ((N) < 2 ? (N) + 2 : INVALID_REGNUM)
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE, GLOBAL)			\
   (flag_pic								\

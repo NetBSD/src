@@ -1,22 +1,89 @@
-2023-07-07  Release Manager
+2023-05-08  Release Manager
 
-	* GCC 10.5.0 released.
+	* GCC 12.3.0 released.
 
-2022-06-28  Release Manager
+2022-08-19  Release Manager
 
-	* GCC 10.4.0 released.
+	* GCC 12.2.0 released.
 
-2021-04-08  Release Manager
+2022-05-06  Release Manager
 
-	* GCC 10.3.0 released.
+	* GCC 12.1.0 released.
 
-2020-07-23  Release Manager
+2022-01-17  Martin Liska  <mliska@suse.cz>
 
-	* GCC 10.2.0 released.
+	* Make-lang.in: Rename .c names to .cc.
+	* config-lang.in: Likewise.
+	* lang-specs.h: Likewise.
+	* objcp-decl.cc (objcp_end_compound_stmt): Likewise.
+	* objcp-lang.cc (struct lang_hooks): Likewise.
 
-2020-05-07  Release Manager
+2022-01-17  Martin Liska  <mliska@suse.cz>
 
-	* GCC 10.1.0 released.
+	* objcp-decl.c: Moved to...
+	* objcp-decl.cc: ...here.
+	* objcp-lang.c: Moved to...
+	* objcp-lang.cc: ...here.
+
+2021-11-29  Eric Gallager  <egallager@gcc.gnu.org>
+
+	PR other/103021
+	* Make-lang.in: Use ETAGS variable in TAGS target.
+
+2021-10-22  Eric Gallager  <egallager@gcc.gnu.org>
+
+	PR other/102663
+	* Make-lang.in: Add dummy objc++.install-dvi target.
+
+2021-10-11  Eric Gallager  <egallager@gcc.gnu.org>
+
+	PR objc++/56604
+	* Make-lang.in: Add obj-c++.srcman: line.
+
+2021-06-08  Bernd Edlinger  <bernd.edlinger@hotmail.de>
+
+	* Make-lang.in (cc1objplus-checksum.c): Check previous
+	stage checksum exists.
+
+2021-06-07  Bernd Edlinger  <bernd.edlinger@hotmai.de>
+
+	* Make-lang.in (cc1objplus-checksum.c): For stage-final re-use
+	the checksum from the previous stage.
+
+2021-01-05  Jakub Jelinek  <jakub@redhat.com>
+
+	* Make-lang.in (cc1objplus-checksum, cc1objplus$(exeext): Add
+	$(CODYLIB) after $(BACKEND).
+
+2021-01-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR c++/98316
+	* Make-lang.in (cc1objplus$(exeext)): Add $(CODYLIB), $(NETLIBS).
+
+2020-11-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR other/97911
+	* Make-lang.in (obj-c++.serial): Change from goal to a variable.
+	(.PHONY): Drop obj-c++.serial and obj-c++.prev.
+	(cc1objplus$(exeext)): Depend on $(obj-c++.serial) rather than
+	obj-c++.serial.
+
+2020-11-18  Jakub Jelinek  <jakub@redhat.com>
+
+	* Make-lang.in (obj-c++.serial): New goal.
+	(.PHONY): Add obj-c++.serial obj-c++.prev.
+	(cc1objplus$(exeext)): Depend on obj-c++.prev.  Call LINK_PROGRESS.
+
+2020-09-25  Nathan Sidwell  <nathan@acm.org>
+
+	* objcp-decl.c (objcp_start_struct): Use TAG_how not tag_scope.
+	(objcp_xref_tag): Likewise.
+
+2020-09-24  Nathan Sidwell  <nathan@acm.org>
+
+	* objcp-decl.c (objcp_start_struct): Drop default args to
+	xref_tag.
+	(objcp_xref_tag): Likewise.
 
 2020-01-01  Jakub Jelinek  <jakub@redhat.com>
 
@@ -575,7 +642,7 @@
 	* objcp-lang.c: Likewise.
 
 
-Copyright (C) 2005-2020 Free Software Foundation, Inc.
+Copyright (C) 2005-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

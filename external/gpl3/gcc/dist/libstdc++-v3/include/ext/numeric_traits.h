@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2007-2020 Free Software Foundation, Inc.
+// Copyright (C) 2007-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -93,12 +93,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   // Enable __numeric_traits_integer for types where the __is_integer_nonstrict
   // primary template doesn't give the right answer.
 #define _GLIBCXX_INT_N_TRAITS(T, WIDTH)			\
+  __extension__						\
   template<> struct __is_integer_nonstrict<T>		\
   {							\
     enum { __value = 1 };				\
     typedef std::__true_type __type;			\
     enum { __width = WIDTH };				\
   };							\
+  __extension__						\
   template<> struct __is_integer_nonstrict<unsigned T>	\
   {							\
     enum { __value = 1 };				\
@@ -176,19 +178,64 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Value>
     const int __numeric_traits_floating<_Value>::__max_exponent10;
 
-  template<typename _Value>
-    struct __numeric_traits
-    : public __conditional_type<__is_integer_nonstrict<_Value>::__value,
-				__numeric_traits_integer<_Value>,
-				__numeric_traits_floating<_Value> >::__type
-    { };
-
-_GLIBCXX_END_NAMESPACE_VERSION
-} // namespace
-
 #undef __glibcxx_floating
 #undef __glibcxx_max_digits10
 #undef __glibcxx_digits10
 #undef __glibcxx_max_exponent10
+
+  template<typename _Value>
+    struct __numeric_traits
+    : public __numeric_traits_integer<_Value>
+    { };
+
+  template<>
+    struct __numeric_traits<float>
+    : public __numeric_traits_floating<float>
+    { };
+
+  template<>
+    struct __numeric_traits<double>
+    : public __numeric_traits_floating<double>
+    { };
+
+  template<>
+    struct __numeric_traits<long double>
+    : public __numeric_traits_floating<long double>
+    { };
+
+#ifdef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
+# if defined __LONG_DOUBLE_IEEE128__
+  // long double is __ieee128, define traits for __ibm128
+  template<>
+    struct __numeric_traits_floating<__ibm128>
+    {
+      static const int __max_digits10 = 33;
+      static const bool __is_signed = true;
+      static const int __digits10 = 31;
+      static const int __max_exponent10 = 308;
+    };
+  template<>
+    struct __numeric_traits<__ibm128>
+    : public __numeric_traits_floating<__ibm128>
+    { };
+# elif defined __LONG_DOUBLE_IBM128__
+  // long double is __ibm128, define traits for __ieee128
+  template<>
+    struct __numeric_traits_floating<__ieee128>
+    {
+      static const int __max_digits10 = 36;
+      static const bool __is_signed = true;
+      static const int __digits10 = 33;
+      static const int __max_exponent10 = 4932;
+    };
+  template<>
+    struct __numeric_traits<__ieee128>
+    : public __numeric_traits_floating<__ieee128>
+    { };
+# endif
+#endif
+
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif

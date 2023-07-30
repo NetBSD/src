@@ -1,5 +1,5 @@
 ;; Decimal Floating Point (DFP) patterns.
-;; Copyright (C) 2007-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2022 Free Software Foundation, Inc.
 ;; Contributed by Ben Elliston (bje@au.ibm.com) and Peter Bergner
 ;; (bergner@vnet.ibm.com).
 
@@ -139,7 +139,8 @@
 	(float_extend:TD (match_operand:DD 1 "gpc_reg_operand" "d")))]
   "TARGET_DFP"
   "dctqpq %0,%1"
-  [(set_attr "type" "dfp")])
+  [(set_attr "type" "dfp")
+   (set_attr "size" "128")])
 
 ;; The result of drdpq is an even/odd register pair with the converted
 ;; value in the even register and zero in the odd register.
@@ -153,7 +154,21 @@
   "TARGET_DFP"
   "drdpq %2,%1\;fmr %0,%2"
   [(set_attr "type" "dfp")
+   (set_attr "size" "128")
    (set_attr "length" "8")])
+
+(define_insn "trunctdsd2"
+  [(set (match_operand:SD 0 "gpc_reg_operand" "=d,d")
+	(float_truncate:SD (match_operand:TD 1 "gpc_reg_operand" "d,d")))
+   (clobber (match_scratch:TD 2 "=&d,&d"))
+   (clobber (match_scratch:DF 3 "=&d,&d"))]
+  "TARGET_DFP"
+  "@
+   mffscdrni %3,7\;drdpq %2,%1\;mffscdrn %3,%3\;drsp %0,%2
+   mffs %3\;mtfsfi 7,7,1\;drdpq %2,%1\;mtfsf 0xff,%3,1,0\;drsp %0,%2"
+  [(set_attr "type" "dfp")
+   (set_attr "isa" "p9,*")
+   (set_attr "length" "16,20")])
 
 (define_insn "add<mode>3"
   [(set (match_operand:DDTD 0 "gpc_reg_operand" "=d")
@@ -193,7 +208,8 @@
 		      (match_operand:DDTD 2 "gpc_reg_operand" "d")))]
   "TARGET_DFP"
   "dcmpu<q> %0,%1,%2"
-  [(set_attr "type" "dfp")])
+  [(set_attr "type" "dfp")
+   (set_attr "size" "<bits>")])
 
 (define_insn "floatdidd2"
   [(set (match_operand:DD 0 "gpc_reg_operand" "=d")
@@ -207,6 +223,14 @@
 	(float:TD (match_operand:DI 1 "gpc_reg_operand" "d")))]
   "TARGET_DFP"
   "dcffixq %0,%1"
+  [(set_attr "type" "dfp")
+   (set_attr "size" "128")])
+
+(define_insn "floattitd2"
+  [(set (match_operand:TD 0 "gpc_reg_operand" "=d")
+	(float:TD (match_operand:TI 1 "gpc_reg_operand" "v")))]
+  "TARGET_POWER10"
+  "dcffixqq %0,%1"
   [(set_attr "type" "dfp")])
 
 ;; Convert a decimal64/128 to a decimal64/128 whose value is an integer.
@@ -217,7 +241,8 @@
 	(fix:DDTD (match_operand:DDTD 1 "gpc_reg_operand" "d")))]
   "TARGET_DFP"
   "drintn<q>. 0,%0,%1,1"
-  [(set_attr "type" "dfp")])
+  [(set_attr "type" "dfp")
+   (set_attr "size" "<bits>")])
 
 ;; Convert a decimal64/128 whose value is an integer to an actual integer.
 ;; This is the second stage of converting decimal float to integer type.
@@ -227,6 +252,14 @@
 	(fix:DI (match_operand:DDTD 1 "gpc_reg_operand" "d")))]
   "TARGET_DFP"
   "dctfix<q> %0,%1"
+  [(set_attr "type" "dfp")
+   (set_attr "size" "<bits>")])
+
+(define_insn "fixtdti2"
+  [(set (match_operand:TI 0 "gpc_reg_operand" "=v")
+	(fix:TI (match_operand:TD 1 "gpc_reg_operand" "d")))]
+  "TARGET_POWER10"
+  "dctfixqq %0,%1"
   [(set_attr "type" "dfp")])
 
 ;; Decimal builtin support
@@ -249,7 +282,8 @@
 		     UNSPEC_DDEDPD))]
   "TARGET_DFP"
   "ddedpd<q> %1,%0,%2"
-  [(set_attr "type" "dfp")])
+  [(set_attr "type" "dfp")
+   (set_attr "size" "<bits>")])
 
 (define_insn "dfp_denbcd_<mode>"
   [(set (match_operand:DDTD 0 "gpc_reg_operand" "=d")
@@ -258,7 +292,30 @@
 		     UNSPEC_DENBCD))]
   "TARGET_DFP"
   "denbcd<q> %1,%0,%2"
+  [(set_attr "type" "dfp")
+   (set_attr "size" "<bits>")])
+
+(define_insn "dfp_denbcd_v16qi_inst"
+  [(set (match_operand:TD 0 "gpc_reg_operand" "=d")
+	(unspec:TD [(match_operand:QI 1 "const_0_to_1_operand" "i")
+		    (match_operand:V16QI 2 "register_operand" "d")]
+		   UNSPEC_DENBCD))]
+  "TARGET_DFP"
+  "denbcdq %1,%0,%2"
   [(set_attr "type" "dfp")])
+
+(define_expand "dfp_denbcd_v16qi"
+  [(set (match_operand:TD 0 "gpc_reg_operand" "=d")
+	(unspec:TD [(match_operand:V16QI 1 "register_operand" "v")]
+		   UNSPEC_DENBCD))]
+  "TARGET_DFP"
+ {
+   // Move vs128 upper 64-bits and lower 64-bits to fp register pair
+   convert_move (operands[0], operands[1], true);
+   emit_insn (gen_dfp_denbcd_v16qi_inst (operands[0], GEN_INT(1),
+					 operands[0]));
+   DONE;
+ })
 
 (define_insn "dfp_dxex_<mode>"
   [(set (match_operand:DI 0 "gpc_reg_operand" "=d")
@@ -266,7 +323,8 @@
 		   UNSPEC_DXEX))]
   "TARGET_DFP"
   "dxex<q> %0,%1"
-  [(set_attr "type" "dfp")])
+  [(set_attr "type" "dfp")
+   (set_attr "size" "<bits>")])
 
 (define_insn "dfp_diex_<mode>"
   [(set (match_operand:DDTD 0 "gpc_reg_operand" "=d")
@@ -275,7 +333,8 @@
 		     UNSPEC_DXEX))]
   "TARGET_DFP"
   "diex<q> %0,%1,%2"
-  [(set_attr "type" "dfp")])
+  [(set_attr "type" "dfp")
+   (set_attr "size" "<bits>")])
 
 (define_expand "dfptstsfi_<code>_<mode>"
   [(set (match_dup 3)
@@ -314,7 +373,8 @@
     operands[1] = GEN_INT (63);
   return "dtstsfi<q> %0,%1,%2";
 }
-  [(set_attr "type" "fp")])
+  [(set_attr "type" "fp")
+   (set_attr "size" "<bits>")])
 
 (define_insn "dfp_dscli_<mode>"
   [(set (match_operand:DDTD 0 "gpc_reg_operand" "=d")
@@ -323,7 +383,8 @@
 		     UNSPEC_DSCLI))]
   "TARGET_DFP"
   "dscli<q> %0,%1,%2"
-  [(set_attr "type" "dfp")])
+  [(set_attr "type" "dfp")
+   (set_attr "size" "<bits>")])
 
 (define_insn "dfp_dscri_<mode>"
   [(set (match_operand:DDTD 0 "gpc_reg_operand" "=d")
@@ -332,4 +393,5 @@
 		     UNSPEC_DSCRI))]
   "TARGET_DFP"
   "dscri<q> %0,%1,%2"
-  [(set_attr "type" "dfp")])
+  [(set_attr "type" "dfp")
+   (set_attr "size" "<bits>")])

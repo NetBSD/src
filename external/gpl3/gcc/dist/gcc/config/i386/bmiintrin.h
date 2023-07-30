@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -21,8 +21,8 @@
    see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
-#if !defined _X86INTRIN_H_INCLUDED && !defined _IMMINTRIN_H_INCLUDED
-# error "Never use <bmiintrin.h> directly; include <x86intrin.h> instead."
+#ifndef _X86GPRINTRIN_H_INCLUDED
+# error "Never use <bmiintrin.h> directly; include <x86gprintrin.h> instead."
 #endif
 
 #ifndef _BMIINTRIN_H_INCLUDED
@@ -40,10 +40,22 @@ __tzcnt_u16 (unsigned short __X)
   return __builtin_ia32_tzcnt_u16 (__X);
 }
 
+extern __inline unsigned short __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_tzcnt_u16 (unsigned short __X)
+{
+  return __builtin_ia32_tzcnt_u16 (__X);
+}
+
 extern __inline unsigned int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 __andn_u32 (unsigned int __X, unsigned int __Y)
 {
   return ~__X & __Y;
+}
+
+extern __inline unsigned int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_andn_u32 (unsigned int __X, unsigned int __Y)
+{
+  return __andn_u32 (__X, __Y);
 }
 
 extern __inline unsigned int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -112,6 +124,12 @@ extern __inline unsigned long long __attribute__((__gnu_inline__, __always_inlin
 __andn_u64 (unsigned long long __X, unsigned long long __Y)
 {
   return ~__X & __Y;
+}
+
+extern __inline unsigned long long __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_andn_u64 (unsigned long long __X, unsigned long long __Y)
+{
+  return __andn_u64 (__X, __Y);
 }
 
 extern __inline unsigned long long __attribute__((__gnu_inline__, __always_inline__, __artificial__))

@@ -1,6 +1,6 @@
 // Move, forward and identity for C++11 + swap -*- C++ -*-
 
-// Copyright (C) 2007-2020 Free Software Foundation, Inc.
+// Copyright (C) 2007-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -72,6 +72,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  This function is used to implement "perfect forwarding".
    */
   template<typename _Tp>
+    _GLIBCXX_NODISCARD
     constexpr _Tp&&
     forward(typename std::remove_reference<_Tp>::type& __t) noexcept
     { return static_cast<_Tp&&>(__t); }
@@ -83,6 +84,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  This function is used to implement "perfect forwarding".
    */
   template<typename _Tp>
+    _GLIBCXX_NODISCARD
     constexpr _Tp&&
     forward(typename std::remove_reference<_Tp>::type&& __t) noexcept
     {
@@ -97,6 +99,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  @return The parameter cast to an rvalue-reference to allow moving it.
   */
   template<typename _Tp>
+    _GLIBCXX_NODISCARD
     constexpr typename std::remove_reference<_Tp>::type&&
     move(_Tp&& __t) noexcept
     { return static_cast<typename std::remove_reference<_Tp>::type&&>(__t); }
@@ -116,8 +119,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  type is copyable, in which case an lvalue-reference is returned instead.
    */
   template<typename _Tp>
-    constexpr typename
-    conditional<__move_if_noexcept_cond<_Tp>::value, const _Tp&, _Tp&&>::type
+    _GLIBCXX_NODISCARD
+    constexpr
+    __conditional_t<__move_if_noexcept_cond<_Tp>::value, const _Tp&, _Tp&&>
     move_if_noexcept(_Tp& __x) noexcept
     { return std::move(__x); }
 
@@ -126,7 +130,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #if __cplusplus > 201402L
   // _GLIBCXX_RESOLVE_LIB_DEFECTS
   // 2296. std::addressof should be constexpr
-# define __cpp_lib_addressof_constexpr 201603
+# define __cpp_lib_addressof_constexpr 201603L
 #endif
   /**
    *  @brief Returns the actual address of the object or function
@@ -136,6 +140,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  @return   The actual address.
   */
   template<typename _Tp>
+    _GLIBCXX_NODISCARD
     inline _GLIBCXX17_CONSTEXPR _Tp*
     addressof(_Tp& __r) noexcept
     { return std::__addressof(__r); }
@@ -158,9 +163,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /// @} group utilities
 
+#define _GLIBCXX_FWDREF(_Tp) _Tp&&
 #define _GLIBCXX_MOVE(__val) std::move(__val)
 #define _GLIBCXX_FORWARD(_Tp, __val) std::forward<_Tp>(__val)
 #else
+#define _GLIBCXX_FWDREF(_Tp) const _Tp&
 #define _GLIBCXX_MOVE(__val) (__val)
 #define _GLIBCXX_FORWARD(_Tp, __val) (__val)
 #endif

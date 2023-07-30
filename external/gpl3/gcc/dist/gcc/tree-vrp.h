@@ -1,5 +1,5 @@
 /* Support routines for Value Range Propagation (VRP).
-   Copyright (C) 2016-2020 Free Software Foundation, Inc.
+   Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,76 +21,6 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_TREE_VRP_H
 
 #include "value-range.h"
-
-/* Note value_range_equiv cannot currently be used with GC memory,
-   only value_range is fully set up for this.  */
-class GTY((user)) value_range_equiv : public value_range
-{
- public:
-  value_range_equiv ();
-  value_range_equiv (const value_range &);
-  /* Deep-copies equiv bitmap argument.  */
-  value_range_equiv (tree, tree, bitmap = NULL, value_range_kind = VR_RANGE);
-
-  /* Shallow-copies equiv bitmap.  */
-  value_range_equiv (const value_range_equiv &) /* = delete */;
-  /* Shallow-copies equiv bitmap.  */
-  value_range_equiv& operator=(const value_range_equiv &) /* = delete */;
-
-  /* Move equiv bitmap from source range.  */
-  void move (value_range_equiv *);
-
-  /* Leaves equiv bitmap alone.  */
-  void update (tree, tree, value_range_kind = VR_RANGE);
-  /* Deep-copies equiv bitmap argument.  */
-  void set (tree, tree, bitmap = NULL, value_range_kind = VR_RANGE);
-  void set (tree);
-
-  bool operator== (const value_range_equiv &) const /* = delete */;
-  bool operator!= (const value_range_equiv &) const /* = delete */;
-  void intersect (const value_range_equiv *);
-  void union_ (const value_range_equiv *);
-  bool equal_p (const value_range_equiv &, bool ignore_equivs) const;
-
-  /* Types of value ranges.  */
-  void set_undefined ();
-  void set_varying (tree);
-
-  /* Equivalence bitmap methods.  */
-  bitmap equiv () const;
-  void equiv_clear ();
-  void equiv_add (const_tree, const value_range_equiv *,
-		  bitmap_obstack * = NULL);
-
-  /* Misc methods.  */
-  void deep_copy (const value_range_equiv *);
-  void dump (FILE *) const;
-  void dump () const;
-
- private:
-  /* Deep-copies bitmap argument.  */
-  void set_equiv (bitmap);
-  void check ();
-
-  /* Set of SSA names whose value ranges are equivalent to this one.
-     This set is only valid when TYPE is VR_RANGE or VR_ANTI_RANGE.  */
-  bitmap m_equiv;
-};
-
-inline
-value_range_equiv::value_range_equiv ()
-  : value_range ()
-{
-  m_equiv = NULL;
-}
-
-inline bitmap
-value_range_equiv::equiv () const
-{
-  return m_equiv;
-}
-
-extern void dump_value_range (FILE *, const value_range_equiv *);
 
 struct assert_info
 {
@@ -127,10 +57,14 @@ extern enum value_range_kind intersect_range_with_nonzero_bits
   (enum value_range_kind, wide_int *, wide_int *, const wide_int &, signop);
 
 extern bool find_case_label_range (gswitch *, tree, tree, size_t *, size_t *);
+extern tree find_case_label_range (gswitch *, const irange *vr);
 extern bool find_case_label_index (gswitch *, size_t, tree, size_t *);
 extern bool overflow_comparison_p (tree_code, tree, tree, bool, tree *);
 extern tree get_single_symbol (tree, bool *, tree *);
 extern void maybe_set_nonzero_bits (edge, tree);
-extern value_range_kind determine_value_range (tree, wide_int *, wide_int *);
+extern wide_int masked_increment (const wide_int &val_in, const wide_int &mask,
+				  const wide_int &sgnbit, unsigned int prec);
 
+extern unsigned int execute_ranger_vrp (struct function *fun,
+					bool warn_array_bounds_p = false);
 #endif /* GCC_TREE_VRP_H */

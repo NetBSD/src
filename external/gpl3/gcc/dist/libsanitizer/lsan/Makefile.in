@@ -101,6 +101,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
 	$(top_srcdir)/../config/override.m4 \
 	$(top_srcdir)/../config/stdint.m4 \
 	$(top_srcdir)/../config/toolexeclibdir.m4 \
+	$(top_srcdir)/../config/warnings.m4 \
 	$(top_srcdir)/../ltoptions.m4 $(top_srcdir)/../ltsugar.m4 \
 	$(top_srcdir)/../ltversion.m4 $(top_srcdir)/../lt~obsolete.m4 \
 	$(top_srcdir)/acinclude.m4 $(top_srcdir)/../libtool.m4 \
@@ -151,7 +152,7 @@ liblsan_la_DEPENDENCIES =  \
 am__objects_1 = lsan_common.lo lsan_common_linux.lo lsan_common_mac.lo
 am__objects_2 = $(am__objects_1) lsan.lo lsan_linux.lo lsan_mac.lo \
 	lsan_malloc_mac.lo lsan_allocator.lo lsan_interceptors.lo \
-	lsan_thread.lo
+	lsan_thread.lo lsan_posix.lo
 am_liblsan_la_OBJECTS = $(am__objects_2)
 liblsan_la_OBJECTS = $(am_liblsan_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -307,6 +308,7 @@ STRIP = @STRIP@
 TSAN_TARGET_DEPENDENT_OBJECTS = @TSAN_TARGET_DEPENDENT_OBJECTS@
 VERSION = @VERSION@
 VIEW_FILE = @VIEW_FILE@
+WARN_FLAGS = @WARN_FLAGS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -346,6 +348,7 @@ install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
 link_libasan = @link_libasan@
+link_libhwasan = @link_libhwasan@
 link_liblsan = @link_liblsan@
 link_libtsan = @link_libtsan@
 link_libubsan = @link_libubsan@
@@ -359,6 +362,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -382,7 +386,8 @@ AM_CXXFLAGS = -Wall -W -Wno-unused-parameter -Wwrite-strings -pedantic \
 	-Wno-long-long -fPIC -fno-builtin -fno-exceptions -fno-rtti \
 	-fomit-frame-pointer -funwind-tables -fvisibility=hidden \
 	-Wno-variadic-macros $(LIBSTDCXX_RAW_CXX_CXXFLAGS) \
-	-std=gnu++11 $(EXTRA_CXXFLAGS)
+	-std=gnu++14 $(EXTRA_CXXFLAGS)
+AM_CCASFLAGS = $(EXTRA_ASFLAGS)
 ACLOCAL_AMFLAGS = -I m4
 noinst_LTLIBRARIES = libsanitizer_lsan.la
 @LSAN_SUPPORTED_TRUE@toolexeclib_LTLIBRARIES = liblsan.la
@@ -400,7 +405,8 @@ lsan_files = \
 	lsan_malloc_mac.cpp \
 	lsan_allocator.cpp \
 	lsan_interceptors.cpp \
-	lsan_thread.cpp
+	lsan_thread.cpp \
+	lsan_posix.cpp
 
 libsanitizer_lsan_la_SOURCES = $(sanitizer_lsan_files)
 liblsan_la_SOURCES = $(lsan_files)
@@ -550,6 +556,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lsan_linux.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lsan_mac.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lsan_malloc_mac.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lsan_posix.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lsan_thread.Plo@am__quote@
 
 .cpp.o:

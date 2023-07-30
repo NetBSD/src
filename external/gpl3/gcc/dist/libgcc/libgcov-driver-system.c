@@ -1,6 +1,6 @@
 /* Routines required for instrumenting a program.  */
 /* Compile this one with gcc.  */
-/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -115,7 +115,7 @@ create_file_directory (char *filename)
         /* Try to make directory if it doesn't already exist.  */
         if (access (filename, F_OK) == -1
 #ifdef TARGET_POSIX_IO
-            && mkdir (filename, 0755) == -1
+	    && mkdir (filename, 0777) == -1
 #else
 #ifdef mkdir
 #undef mkdir

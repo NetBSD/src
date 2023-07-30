@@ -1,5 +1,5 @@
 /* Profile counter container type.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -609,6 +609,9 @@ public:
   /* Output THIS to F.  */
   void dump (FILE *f) const;
 
+  /* Output THIS to BUFFER.  */
+  void dump (char *buffer) const;
+
   /* Print THIS to stderr.  */
   void debug () const;
 
@@ -804,7 +807,7 @@ public:
     }
 
   /* Get the value of the count.  */
-  uint32_t value () const { return m_val; }
+  uint64_t value () const { return m_val; }
 
   /* Get the quality of the count.  */
   enum profile_quality quality () const { return m_quality; }
@@ -1207,6 +1210,9 @@ public:
 
   /* Output THIS to F.  */
   void dump (FILE *f) const;
+
+  /* Output THIS to BUFFER.  */
+  void dump (char *buffer) const;
 
   /* Print THIS to stderr.  */
   void debug () const;
