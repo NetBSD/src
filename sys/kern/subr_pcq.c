@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcq.c,v 1.13 2021/02/08 09:31:05 wiz Exp $	*/
+/*	$NetBSD: subr_pcq.c,v 1.13.18.1 2023/07/30 12:13:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2019 The NetBSD Foundation, Inc.
@@ -31,10 +31,94 @@
 
 /*
  * Lockless producer/consumer queue.
+ *
+ * Summary of the producer algorithm in pcq_put (may run many in
+ * parallel with each other and with a consumer):
+ *
+ *	P1. initialize an item
+ *
+ *	P2. atomic_cas(&pcq->pcq_pc) loop to advance the producer
+ *	    pointer, reserving a space at c (fails if not enough space)
+ *
+ *	P3. atomic_store_release(&pcq->pcq_items[c], item) to publish
+ *	    the item in the space it reserved
+ *
+ * Summary of the consumer algorithm in pcq_get (must be serialized by
+ * caller with other consumers, may run in parallel with any number of
+ * producers):
+ *
+ *	C1. atomic_load_relaxed(&pcq->pcq_pc) to get the consumer
+ *	    pointer and a snapshot of the producer pointer, which may
+ *	    point to null items or point to initialized items (fails if
+ *	    no space reserved for published items yet)
+ *
+ *	C2. atomic_load_consume(&pcq->pcq_items[c]) to get the next
+ *	    unconsumed but potentially published item (fails if item
+ *	    not published yet)
+ *
+ *	C3. pcq->pcq_items[c] = NULL to consume the next unconsumed but
+ *	    published item
+ *
+ *	C4. membar_producer
+ *
+ *	C5. atomic_cas(&pcq->pcq_pc) loop to advance the consumer
+ *	    pointer
+ *
+ *	C6. use the item
+ *
+ * Note that there is a weird bare membar_producer which is not matched
+ * by membar_consumer.  This is one of the rare cases of a memory
+ * barrier on one side that is not matched by a memory barrier on
+ * another side, but the ordering works out, with a somewhat more
+ * involved proof.
+ *
+ * Some properties that need to be proved:
+ *
+ *	Theorem 1.  For pcq_put call that leads into pcq_get:
+ *	Initializing item at P1 is dependency-ordered before usage of
+ *	item at C6, so items placed by pcq_put can be safely used by
+ *	the caller of pcq_get.
+ *
+ *	Proof sketch.
+ *
+ *		Assume load/store P2 synchronizes with load/store C1
+ *		(if not, pcq_get fails in `if (p == c) return NULL').
+ *
+ *		Assume store-release P3 synchronizes with load-consume
+ *		C2 (if not, pcq_get fails in `if (item == NULL) return
+ *		NULL').
+ *
+ *		Then:
+ *
+ *		- P1 is sequenced before store-release P3
+ *		- store-release P3 synchronizes with load-consume C2
+ *		- load-consume C2 is dependency-ordered before C6
+ *
+ *		Hence transitively, P1 is dependency-ordered before C6,
+ *		QED.
+ *
+ *	Theorem 2.  For pcq_get call followed by pcq_put: Nulling out
+ *	location at store C3 happens before placing a new item in the
+ *	same location at store P3, so items are not lost.
+ *
+ *	Proof sketch.
+ *
+ *		Assume load/store C5 synchronizes with load/store P2
+ *		(otherwise pcq_peek starts over the CAS loop or fails).
+ *
+ *		Then:
+ *
+ *		- store C3 is sequenced before membar_producer C4
+ *		- membar_producer C4 is sequenced before load/store C5
+ *		- load/store C5 synchronizes with load/store P2 at &pcq->pcq_pc
+ *		- P2 is sequenced before store-release P3
+ *
+ *		Hence transitively, store C3 happens before
+ *		store-release P3, QED.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.13 2021/02/08 09:31:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.13.18.1 2023/07/30 12:13:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -100,7 +184,7 @@ pcq_put(pcq_t *pcq, void *item)
 	KASSERT(item != NULL);
 
 	do {
-		v = pcq->pcq_pc;
+		v = atomic_load_relaxed(&pcq->pcq_pc);
 		pcq_split(v, &op, &c);
 		p = pcq_advance(pcq, op);
 		if (p == c) {
@@ -116,10 +200,7 @@ pcq_put(pcq_t *pcq, void *item)
 	 * that the caller made to the data item are globally visible
 	 * before we put it onto the list.
 	 */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_producer();
-#endif
-	pcq->pcq_items[op] = item;
+	atomic_store_release(&pcq->pcq_items[op], item);
 
 	/*
 	 * Synchronization activity to wake up the consumer will ensure
@@ -135,14 +216,13 @@ pcq_put(pcq_t *pcq, void *item)
 void *
 pcq_peek(pcq_t *pcq)
 {
-	const uint32_t v = pcq->pcq_pc;
+	const uint32_t v = atomic_load_relaxed(&pcq->pcq_pc);
 	u_int p, c;
 
 	pcq_split(v, &p, &c);
 
 	/* See comment on race below in pcq_get(). */
-	return (p == c) ? NULL :
-	    (membar_datadep_consumer(), pcq->pcq_items[c]);
+	return (p == c) ? NULL : atomic_load_consume(&pcq->pcq_items[c]);
 }
 
 /*
@@ -157,15 +237,13 @@ pcq_get(pcq_t *pcq)
 	u_int p, c;
 	void *item;
 
-	v = pcq->pcq_pc;
+	v = atomic_load_relaxed(&pcq->pcq_pc);
 	pcq_split(v, &p, &c);
 	if (p == c) {
 		/* Queue is empty: nothing to return. */
 		return NULL;
 	}
-	/* Make sure we read pcq->pcq_pc before pcq->pcq_items[c].  */
-	membar_datadep_consumer();
-	item = pcq->pcq_items[c];
+	item = atomic_load_consume(&pcq->pcq_items[c]);
 	if (item == NULL) {
 		/*
 		 * Raced with sender: we rely on a notification (e.g. softint
@@ -174,21 +252,32 @@ pcq_get(pcq_t *pcq)
 		 */
 		return NULL;
 	}
+	/*
+	 * We have exclusive access to this slot, so no need for
+	 * atomic_store_*.
+	 */
 	pcq->pcq_items[c] = NULL;
 	c = pcq_advance(pcq, c);
 	nv = pcq_combine(p, c);
 
 	/*
-	 * Ensure that update to pcq_items[] becomes globally visible
+	 * Ensure that update to pcq_items[c] becomes globally visible
 	 * before the update to pcq_pc.  If it were reordered to occur
 	 * after it, we could in theory wipe out a modification made
-	 * to pcq_items[] by pcq_put().
+	 * to pcq_items[c] by pcq_put().
+	 *
+	 * No need for load-before-store ordering of membar_release
+	 * because the only load we need to ensure happens first is the
+	 * load of pcq->pcq_items[c], but that necessarily happens
+	 * before the store to pcq->pcq_items[c] to null it out because
+	 * it is at the same memory location.  Yes, this is a bare
+	 * membar_producer with no matching membar_consumer.
 	 */
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_producer();
 #endif
 	while (__predict_false(atomic_cas_32(&pcq->pcq_pc, v, nv) != v)) {
-		v = pcq->pcq_pc;
+		v = atomic_load_relaxed(&pcq->pcq_pc);
 		pcq_split(v, &p, &c);
 		c = pcq_advance(pcq, c);
 		nv = pcq_combine(p, c);
@@ -201,7 +290,8 @@ pcq_create(size_t nitems, km_flag_t kmflags)
 {
 	pcq_t *pcq;
 
-	KASSERT(nitems > 0 && nitems <= PCQ_MAXLEN);
+	KASSERT(nitems > 0);
+	KASSERT(nitems <= PCQ_MAXLEN);
 
 	pcq = kmem_zalloc(offsetof(pcq_t, pcq_items[nitems]), kmflags);
 	if (pcq != NULL) {
