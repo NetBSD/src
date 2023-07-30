@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.146 2023/07/30 09:19:19 riastradh Exp $
+#	$NetBSD: Makefile,v 1.147 2023/07/30 09:20:14 riastradh Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -76,6 +76,7 @@ SRCS+=		compat.c
 SRCS+=		debug.c
 SRCS+=		diagassert.c
 SRCS+=		expand.c
+SRCS+=		hash.c
 SRCS+=		headers.c
 SRCS+=		load.c
 SRCS+=		map_object.c

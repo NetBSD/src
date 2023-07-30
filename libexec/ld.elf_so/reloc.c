@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.117 2021/12/04 08:53:34 skrll Exp $	 */
+/*	$NetBSD: reloc.c,v 1.118 2023/07/30 09:20:14 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.117 2021/12/04 08:53:34 skrll Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.118 2023/07/30 09:20:14 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: reloc.c,v 1.117 2021/12/04 08:53:34 skrll Exp $");
 #include <dirent.h>
 
 #include "debug.h"
+#include "hash.h"
 #include "rtld.h"
 
 #ifndef RTLD_INHIBIT_COPY_RELOCS
