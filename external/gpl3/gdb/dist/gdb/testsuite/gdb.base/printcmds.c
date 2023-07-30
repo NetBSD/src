@@ -108,7 +108,7 @@ enum flag_enum
   FE_TWO_LEGACY = 0x02,
 };
 
-enum flag_enum three = FE_ONE | FE_TWO;
+enum flag_enum three = (enum flag_enum) (FE_ONE | FE_TWO);
 
 /* Another enum considered as a "flag enum", but with no enumerator with value
    0.  */
@@ -118,7 +118,7 @@ enum flag_enum_without_zero
   FEWZ_TWO = 0x02,
 };
 
-enum flag_enum_without_zero flag_enum_without_zero = 0;
+enum flag_enum_without_zero flag_enum_without_zero = (enum flag_enum_without_zero) 0;
 
 /* Not a flag enum, an enumerator value has multiple bits sets.  */
 enum not_flag_enum
@@ -128,7 +128,7 @@ enum not_flag_enum
   NFE_F0  = 0xf0,
 };
 
-enum not_flag_enum three_not_flag = NFE_ONE | NFE_TWO;
+enum not_flag_enum three_not_flag = (enum not_flag_enum) (NFE_ONE | NFE_TWO);
 
 /* A structure with an embedded array at an offset > 0.  The array has
    all elements with the same repeating value, which must not be the
@@ -245,6 +245,8 @@ char invalid_RRR[] = "aaaaaaaaaaaaaaaaaaaa"
   "\240\240\240\240\240\240\240\240\240\240cccccccccccccccccccc";
 
 /* -- */
+
+float f_var = 65.0f;
 
 int main ()
 {

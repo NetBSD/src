@@ -2,7 +2,7 @@
    This does not include symbol information, found in sym.h and
    symconst.h.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -407,7 +407,7 @@ struct ecoff_debug_swap
   /* Function to read symbol data and set up pointers in
      ecoff_debug_info structure.  The section argument is used for
      ELF, not straight ECOFF.  */
-  bfd_boolean (*read_debug_info) (bfd *, asection *, struct ecoff_debug_info *);
+  bool (*read_debug_info) (bfd *, asection *, struct ecoff_debug_info *);
 };
 
 #endif /* ! defined (ECOFF_H) */

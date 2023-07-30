@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <christian.himpel@intel.com>
 #
@@ -28,7 +28,6 @@ if [prepare_for_testing "failed to prepare" $testfile "$srcfile $srcfile2" {debu
 }
 
 if ![runto_main] {
-    untested "failed to run to main"
     return -1
 }
 

@@ -1,5 +1,5 @@
 /* Target-dependent code for GNU/Linux on Nios II.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
    Contributed by Mentor Graphics, Inc.
 
    This file is part of GDB.
@@ -134,7 +134,7 @@ nios2_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static void
 nios2_linux_rt_sigreturn_init (const struct tramp_frame *self,
-			       struct frame_info *next_frame,
+			       frame_info_ptr next_frame,
 			       struct trad_frame_cache *this_cache,
 			       CORE_ADDR func)
 {
@@ -187,7 +187,7 @@ static struct tramp_frame nios2_r2_linux_rt_sigreturn_tramp_frame =
    instruction to be executed.  */
 
 static CORE_ADDR
-nios2_linux_syscall_next_pc (struct frame_info *frame,
+nios2_linux_syscall_next_pc (frame_info_ptr frame,
 			     const struct nios2_opcode *op)
 {
   CORE_ADDR pc = get_frame_pc (frame);
@@ -217,19 +217,19 @@ nios2_linux_is_kernel_helper (CORE_ADDR pc)
 static void
 nios2_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nios2_gdbarch_tdep *tdep = gdbarch_tdep<nios2_gdbarch_tdep> (gdbarch);
 
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 0);
 
   /* Shared library handling.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 svr4_ilp32_fetch_link_map_offsets);
+					 linux_ilp32_fetch_link_map_offsets);
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-                                             svr4_fetch_objfile_link_map);
+					     svr4_fetch_objfile_link_map);
   /* Core file support.  */
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, nios2_iterate_over_regset_sections);

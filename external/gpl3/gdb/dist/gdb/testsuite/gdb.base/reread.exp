@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Build programs in PIE mode, to reproduce PR 21555.
-foreach_with_prefix opts {
-    { "" "" }
-    { "-fPIE" "ldflags=-pie" } } {
+foreach_with_prefix opts { "" "pie" } {
 
 	# build the first test case
 
@@ -25,9 +23,7 @@ foreach_with_prefix opts {
 	# Cygwin needs $EXEEXT.
 	set binfile1 [standard_output_file ${testfile1}$EXEEXT]
 
-	set testfile1_opt [list debug nowarnings \
-			       additional_flags=[lindex $opts 0] \
-			       [lindex $opts 1] ]
+	set testfile1_opt [list debug nowarnings $opts]
 	if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile1}" \
 		   executable ${testfile1_opt}] != "" } {
 	    untested "failed to compile first testcase"
@@ -40,12 +36,9 @@ foreach_with_prefix opts {
 	set srcfile2 ${testfile2}.c
 	set binfile2 [standard_output_file ${testfile2}$EXEEXT]
 
-	set testfile2_opt1 [list debug nowarnings \
-				additional_flags=[lindex $opts 0] \
-				[lindex $opts 1]]
-	set testfile2_op2 [list debug nowarnings \
-			       "additional_flags=-DNO_SECTIONS [lindex $opts 0]" \
-			       [lindex $opts 1]]
+	set testfile2_opt1 [list debug nowarnings $opts]
+	set testfile2_op2 [list debug nowarnings $opts \
+			       "additional_flags=-DNO_SECTIONS"]
 	if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" \
 		   executable ${testfile2_opt1}] != ""
 	      && [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" \

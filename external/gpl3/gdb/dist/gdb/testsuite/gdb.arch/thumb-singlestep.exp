@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # Test single-stepping into incorrectly marked Thumb routine
 
-if {![is_aarch32_target]} then {
+if {![is_aarch32_target]} {
     verbose "Skipping ARM tests."
     return
 }
@@ -28,8 +28,7 @@ if [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} [list debug $
     return -1
 }
 
-if ![runto_main] then {
-    untested "could not run to main"
+if {![runto_main]} {
     return -1
 }
 

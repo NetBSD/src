@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Free Software Foundation, Inc.
+# Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -59,8 +59,6 @@ gdb_test_no_output "python uu = gdb.parse_and_eval('uu')" "init uu"
 gdb_test_no_output "python uu_fields = uu.type.fields()" "init uu_fields"
 gdb_test_no_output "python x_ptr = gdb.parse_and_eval('x_ptr')" "init x_ptr"
 gdb_test_no_output "python xtd = gdb.parse_and_eval('xtd')" "init xtd"
-
-gdb_test "python print(b\[b_fields\[1\]\])" "97 'a'" "b.a via field"
 
 gdb_test "python print(b\[b_fields\[1\]\])" "97 'a'" "b.a via field"
 gdb_test "python print(b\[b_fields\[0\]\].type)" "A" \

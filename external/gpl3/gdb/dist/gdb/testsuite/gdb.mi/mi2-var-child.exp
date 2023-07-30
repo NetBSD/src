@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ set MIFLAGS "-i=mi2"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 standard_testfile var-cmd.c
@@ -839,7 +839,7 @@ mi_gdb_test "-var-info-num-children psnp->char_ptr.*psnp->char_ptr.**psnp->char_
 mi_list_varobj_children "psnp->char_ptr.*psnp->char_ptr.**psnp->char_ptr.***psnp->char_ptr" {
     {{psnp->char_ptr.\*psnp->char_ptr.\*\*psnp->char_ptr.\*\*\*psnp->char_ptr.\*\*\*\*psnp->char_ptr} \
          {\*\*\*\*psnp->char_ptr} 0 char}
-} "get children of psnp->char_ptr.*psnp->char_ptr.**psnp->char_ptr.***psnp->char_ptr"
+} "get children of psnp->char_ptr.*psnp->char_ptr.**psnp->char_ptr.***psnp->char_ptr after counting children"
 
 # Test: c_variable-5.18
 # Desc: number of children of *(*(*(psnp->char_ptr)))
@@ -1018,7 +1018,7 @@ mi_list_varobj_children "psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr" {
 mi_list_varobj_children "psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr.***char_ptr" {
     {{psnp->ptrs.0.next.char_ptr.\*char_ptr.\*\*char_ptr.\*\*\*char_ptr.\*\*\*\*char_ptr} \
          {\*\*\*\*char_ptr} 0 char}
-} "get children of psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr"
+} "get children of psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr.***char_ptr"
 
 # Test: c_variable-5.42
 # Desc: number of children of **psnp->ptrs[0]->next->char_ptr
@@ -1031,7 +1031,7 @@ mi_gdb_test "-var-info-num-children psnp->ptrs.0.next.char_ptr.*char_ptr.**char_
 mi_list_varobj_children "psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr.***char_ptr" {
     {{psnp->ptrs.0.next.char_ptr.\*char_ptr.\*\*char_ptr.\*\*\*char_ptr.\*\*\*\*char_ptr} \
          {\*\*\*\*char_ptr} 0 char}
-} "get children of psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr.***char_ptr"
+} "get children of psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr.***char_ptr after counting children"
 
 # Test: c_variable-5.44
 # Desc: number of children of ***psnp->ptrs[0]->next->char_ptr
@@ -1042,13 +1042,13 @@ mi_gdb_test "-var-info-num-children psnp->ptrs.0.next.char_ptr.*char_ptr.**char_
 # Test: c_variable-5.43B
 # Desc: children of ****psnp->ptrs[0]->next->char_ptr
 mi_list_varobj_children "psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr.***char_ptr.****char_ptr" {} \
-	"get children of psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr.***char_ptr"
+	"get children of psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr.***char_ptr.****char_ptr"
 
 # Test: c_variable-5.44B
 # Desc: number of children of ****psnp->ptrs[0]->next->char_ptr
 mi_gdb_test "-var-info-num-children psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr.***char_ptr.****char_ptr" \
 	"\\^done,numchild=\"0\"" \
-	"get number of children of psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr.***char_ptr"
+	"get number of children of psnp->ptrs.0.next.char_ptr.*char_ptr.**char_ptr.***char_ptr.****char_ptr"
 
 # Test: c_variable-5.45
 # Desc: children of psnp->ptrs[0]->next->next

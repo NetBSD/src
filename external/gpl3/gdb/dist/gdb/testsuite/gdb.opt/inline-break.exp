@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -190,8 +190,7 @@ foreach_with_prefix cmd [list "break" "tbreak"] {
 
     # Start with a clean state.
     delete_breakpoints
-    if {![runto main]} {
-	untested "could not run to main"
+    if {![runto_main]} {
 	return -1
     }
 
@@ -246,8 +245,7 @@ foreach_with_prefix func {
 } {
     clean_restart $binfile
 
-    if {![runto main]} {
-	untested "could not run to main"
+    if {![runto_main]} {
 	continue
     }
 
@@ -264,8 +262,7 @@ set line [gdb_get_line_number "break here"]
 with_test_prefix "line number" {
     clean_restart $binfile
 
-    if {![runto main]} {
-	untested "could not run to main"
+    if {![runto_main]} {
 	continue
     }
 
@@ -289,14 +286,15 @@ with_test_prefix "address" {
 
     clean_restart $binfile
 
-    if {![runto main]} {
-	untested "could not run to main"
+    if {![runto_main]} {
 	continue
     }
 
     # Set the breakpoint by address, and check that GDB reports the
     # breakpoint location being the inline function.
-    gdb_test "break *$address" ".*Breakpoint .* at $address: file .*$srcfile, line $line."
+    gdb_test "break *$address" \
+	".*Breakpoint .* at $address: file .*$srcfile, line $line." \
+	"set breakpoint on address"
 
     gdb_test "info break \$bpnum" "in func1 at .*$srcfile:$line"
 
@@ -308,8 +306,7 @@ with_test_prefix "check alignment" {
 
     clean_restart $binfile
 
-    if {![runto main]} {
-	untested "could not run to main"
+    if {![runto_main]} {
 	continue
     }
 

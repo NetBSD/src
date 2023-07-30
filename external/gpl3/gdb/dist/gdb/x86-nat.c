@@ -1,6 +1,6 @@
 /* Native-dependent code for x86 (i386 and x86-64).
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,8 @@
 #include "gdbcmd.h"
 #include "inferior.h"
 
+#include <unordered_map>
+
 /* Support for hardware watchpoints and breakpoints using the x86
    debug registers.
 
@@ -36,67 +38,24 @@
 /* Low-level function vector.  */
 struct x86_dr_low_type x86_dr_low;
 
-/* Per-process data.  We don't bind this to a per-inferior registry
-   because of targets like x86 GNU/Linux that need to keep track of
-   processes that aren't bound to any inferior (e.g., fork children,
-   checkpoints).  */
+/* Hash table storing per-process data.  We don't bind this to a
+   per-inferior registry because of targets like x86 GNU/Linux that
+   need to keep track of processes that aren't bound to any inferior
+   (e.g., fork children, checkpoints).  */
 
-struct x86_process_info
+static std::unordered_map<pid_t,
+			  struct x86_debug_reg_state> x86_debug_process_state;
+
+/* See x86-nat.h.  */
+
+struct x86_debug_reg_state *
+x86_lookup_debug_reg_state (pid_t pid)
 {
-  /* Linked list.  */
-  struct x86_process_info *next;
+  auto it = x86_debug_process_state.find (pid);
+  if (it != x86_debug_process_state.end ())
+    return &it->second;
 
-  /* The process identifier.  */
-  pid_t pid;
-
-  /* Copy of x86 hardware debug registers.  */
-  struct x86_debug_reg_state state;
-};
-
-static struct x86_process_info *x86_process_list = NULL;
-
-/* Find process data for process PID.  */
-
-static struct x86_process_info *
-x86_find_process_pid (pid_t pid)
-{
-  struct x86_process_info *proc;
-
-  for (proc = x86_process_list; proc; proc = proc->next)
-    if (proc->pid == pid)
-      return proc;
-
-  return NULL;
-}
-
-/* Add process data for process PID.  Returns newly allocated info
-   object.  */
-
-static struct x86_process_info *
-x86_add_process (pid_t pid)
-{
-  struct x86_process_info *proc = XCNEW (struct x86_process_info);
-
-  proc->pid = pid;
-  proc->next = x86_process_list;
-  x86_process_list = proc;
-
-  return proc;
-}
-
-/* Get data specific info for process PID, creating it if necessary.
-   Never returns NULL.  */
-
-static struct x86_process_info *
-x86_process_info_get (pid_t pid)
-{
-  struct x86_process_info *proc;
-
-  proc = x86_find_process_pid (pid);
-  if (proc == NULL)
-    proc = x86_add_process (pid);
-
-  return proc;
+  return nullptr;
 }
 
 /* Get debug registers state for process PID.  */
@@ -104,7 +63,7 @@ x86_process_info_get (pid_t pid)
 struct x86_debug_reg_state *
 x86_debug_reg_state (pid_t pid)
 {
-  return &x86_process_info_get (pid)->state;
+  return &x86_debug_process_state[pid];
 }
 
 /* See declaration in x86-nat.h.  */
@@ -112,24 +71,7 @@ x86_debug_reg_state (pid_t pid)
 void
 x86_forget_process (pid_t pid)
 {
-  struct x86_process_info *proc, **proc_link;
-
-  proc = x86_process_list;
-  proc_link = &x86_process_list;
-
-  while (proc != NULL)
-    {
-      if (proc->pid == pid)
-	{
-	  *proc_link = proc->next;
-
-	  xfree (proc);
-	  return;
-	}
-
-      proc_link = &proc->next;
-      proc = *proc_link;
-    }
+  x86_debug_process_state.erase (pid);
 }
 
 /* Clear the reference counts and forget everything we knew about the

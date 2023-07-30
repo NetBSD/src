@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,6 @@ proc_with_prefix test_tilde_expansion { } {
     gdb_test_no_output "set cwd ~/" "set inferior cwd to ~/ dir"
 
     if { ![runto_main] } {
-	untested "could not run to main"
 	return -1
     }
 
@@ -44,15 +43,15 @@ proc_with_prefix test_tilde_expansion { } {
     set home ""
     set test "print home var"
     gdb_test_multiple "print home" $test {
-    	-re "\\\$$decimal = $hex \"\(.+\)\"\r\n$gdb_prompt $" {
-    	    set home $expect_out(1,string)
-    	    pass $test
-    	}
+	-re "\\\$$decimal = $hex \"\(.+\)\"\r\n$gdb_prompt $" {
+	    set home $expect_out(1,string)
+	    pass $test
+	}
     }
 
     if { $home == "" } {
-    	untested "could not retrieve home var"
-    	return
+	untested "could not retrieve home var"
+	return
     }
 
     set curdir ""
@@ -105,7 +104,6 @@ proc_with_prefix test_cd_into_dir { } {
     gdb_test_no_output "set cwd $tmpdir" "set inferior cwd to temp dir"
 
     if { ![runto_main] } {
-	untested "could not run to main"
 	return -1
     }
 
@@ -162,7 +160,6 @@ proc_with_prefix test_cwd_reset { } {
 
     with_test_prefix "running with set cwd" {
 	if { ![runto_main] } {
-	    untested "could not run to main"
 	    return -1
 	}
     }
@@ -178,16 +175,15 @@ proc_with_prefix test_cwd_reset { } {
 
     with_test_prefix "running without set cwd" {
 	if { ![runto_main] } {
-	    untested "could not run to main"
 	    return -1
 	}
+
+	gdb_breakpoint [gdb_get_line_number "break-here"]
+	gdb_continue_to_breakpoint "break-here" ".* break-here .*"
+
+	gdb_test "print dir" "\\\$$decimal = \"$gdb_cwd\", .*" \
+	    "inferior cwd got reset correctly"
     }
-
-    gdb_breakpoint [gdb_get_line_number "break-here"]
-    gdb_continue_to_breakpoint "break-here" ".* break-here .*"
-
-    gdb_test "print dir" "\\\$$decimal = \"$gdb_cwd\", .*" \
-	"inferior cwd got reset correctly"
 }
 
 test_cd_into_dir

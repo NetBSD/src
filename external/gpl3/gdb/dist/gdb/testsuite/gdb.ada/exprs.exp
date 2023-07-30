@@ -1,4 +1,4 @@
-# Copyright 2005-2020 Free Software Foundation, Inc.
+# Copyright 2005-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,14 +28,34 @@ clean_restart ${testfile}
 set bp_location [gdb_get_line_number "START" ${testdir}/p.adb]
 runto "p.adb:$bp_location"
 
-gdb_test "print X ** Y = Z" \
-         "= true" \
-         "Long_Long_Integer ** Y"
+set kfail_int128support_re \
+    "That operation is not available on integers of more than 8 bytes\\."
 
-gdb_test "print long_float'min (long_float (X), 8.0)" \
-         "= 7.0" \
-         "long_float'min"
+gdb_test_multiple "print X ** Y = Z" "Long_Long_Integer ** Y" {
+    -re -wrap "= true" {
+	pass $gdb_test_name
+    }
+    -re -wrap $kfail_int128support_re {
+	kfail gdb/20991 $gdb_test_name
+    }
+}
 
-gdb_test "print long_float'max (long_float (X), 8.0)" \
-         "= 8.0" \
-         "long_float'max"
+set cmd "print long_float'min (long_float (X), 8.0)"
+gdb_test_multiple $cmd "long_float'min" {
+    -re -wrap "= 7.0" {
+	pass $gdb_test_name
+    }
+    -re -wrap $kfail_int128support_re {
+	kfail gdb/20991 $gdb_test_name
+    }
+}
+
+set cmd "print long_float'max (long_float (X), 8.0)"
+gdb_test_multiple $cmd "long_float'max" {
+    -re -wrap "= 8.0" {
+	pass $gdb_test_name
+    }
+    -re -wrap $kfail_int128support_re {
+	kfail gdb/20991 $gdb_test_name
+    }
+}

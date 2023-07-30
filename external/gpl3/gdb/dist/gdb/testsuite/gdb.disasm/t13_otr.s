@@ -157,3 +157,4 @@ _start:
     nop                        ;0000
 
 	.end
+	.section	.note.GNU-stack,"",@progbits

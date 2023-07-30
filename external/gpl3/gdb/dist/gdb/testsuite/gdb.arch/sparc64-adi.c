@@ -1,6 +1,6 @@
 /* Application Data Integrity (ADI) test in sparc64.
 
-   Copyright 2017-2020 Free Software Foundation, Inc.
+   Copyright 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2020 Free Software Foundation, Inc.
+# Copyright (C) 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -122,43 +122,63 @@ proc test_dfp_arithmetic_expressions {} {
     gdb_test "p 1.2df + 1.2f" "Mixing decimal floating types with other floating types is not allowed."
 
     # Test other operations with DFP operands
-    gdb_test "p !0.df" " = 1"
-    gdb_test "p !0.dd" " = 1"
-    gdb_test "p !0.dl" " = 1"
-    gdb_test "p !0.5df" " = 0"
-    gdb_test "p !0.5dd" " = 0"
-    gdb_test "p !0.5dl" " = 0"
 
-    gdb_test "p 1.2df == 1.2df" " = 1"
-    gdb_test "p 1.2df == 1.2dd" " = 1"
-    gdb_test "p 1.2df == 1.2dl" " = 1"
-    gdb_test "p 1.2dd == 1.2df" " = 1"
-    gdb_test "p 1.2dd == 1.2dl" " = 1"
-    gdb_test "p 1.2dl == 1.2df" " = 1"
-    gdb_test "p 1.2dl == 1.2dd" " = 1"
-    gdb_test "p 1.2df == 1.3df" " = 0"
-    gdb_test "p 1.2df == 1.3dd" " = 0"
-    gdb_test "p 1.2df == 1.3dl" " = 0"
-    gdb_test "p 1.2dd == 1.3df" " = 0"
-    gdb_test "p 1.2dd == 1.3dl" " = 0"
-    gdb_test "p 1.2dl == 1.3df" " = 0"
-    gdb_test "p 1.2dl == 1.3dd" " = 0"
+    set dsuffix {"dd" "df" "dl"}
 
-    gdb_test "p +1.2df" " = 1.2"
-    gdb_test "p +1.2dd" " = 1.2"
-    gdb_test "p +1.2dl" " = 1.2"
+    foreach l $dsuffix {
+        foreach r $dsuffix {
+	    gdb_test "p 1.2${l} == 1.2${r}" " = 1"
+	    gdb_test "p 1.2${l} == 1.3${r}" " = 0"
 
-    gdb_test "p 1.2df < 1.3df" " = 1"
-    gdb_test "p 1.2df < 1.3dd" " = 1"
-    gdb_test "p 1.2dl < 1.3df" " = 1"
-    gdb_test "p 1.2dd < 1.3dd" " = 1"
-    gdb_test "p 1.2dd < 1.3dl" " = 1"
-    gdb_test "p 1.2dl < 1.3dl" " = 1"
-    gdb_test "p 1.2dl < 1.3df" " = 1"
-    gdb_test "p 1.2df > 1" " = 1"
-    gdb_test "p 1.2dl > 2" " = 0"
-    gdb_test "p 2 > 1.2dd" " = 1"
-    gdb_test "p 2 > 3.1dl" " = 0"
+	    gdb_test "p 1.2${l} < 1.2${r}" " = 0"
+	    gdb_test "p 1.2${l} < 1.3${r}" " = 1"
+	    gdb_test "p 1.3${l} < 1.2${r}" " = 0"
+
+	    gdb_test "p 1.2${l} > 1.2${r}" " = 0"
+	    gdb_test "p 1.2${l} > 1.3${r}" " = 0"
+	    gdb_test "p 1.3${l} > 1.2${r}" " = 1"
+
+	    gdb_test "p 1.2${l} <= 1.2${r}" " = 1"
+	    gdb_test "p 1.2${l} <= 1.3${r}" " = 1"
+	    gdb_test "p 1.3${l} <= 1.2${r}" " = 0"
+
+	    gdb_test "p 1.2${l} >= 1.2${r}" " = 1"
+	    gdb_test "p 1.2${l} >= 1.3${r}" " = 0"
+	    gdb_test "p 1.3${l} >= 1.2${r}" " = 1"
+	}
+
+	gdb_test "p !0.${l}" " = 1"
+	gdb_test "p !0.5${l}" " = 0"
+
+	gdb_test "p +1.2${l}" " = 1.2"
+
+	# This checks GDB doesn't convert to int and rounds up/down.
+	gdb_test "p 1.2${l} == 1" " = 0"
+	gdb_test "p 1.2${l} == 2" " = 0"
+
+	gdb_test "p 1.2${l} == 1.2" \
+	    "Mixing decimal floating types with other floating types is not allowed\\."
+
+	gdb_test "p 1.2${l} > 1" " = 1"
+	gdb_test "p 1.2${l} > 2" " = 0"
+	gdb_test "p 1.2${l} >= 1" " = 1"
+	gdb_test "p 1.2${l} >= 2" " = 0"
+
+	gdb_test "p 1.2${l} < 1" " = 0"
+	gdb_test "p 1.2${l} < 2" " = 1"
+	gdb_test "p 1.2${l} <= 1" " = 0"
+	gdb_test "p 1.2${l} <= 2" " = 1"
+
+	gdb_test "p 1 < 1.2${l}" " = 1"
+	gdb_test "p 2 < 1.2${l}" " = 0"
+	gdb_test "p 1 <= 1.2${l}" " = 1"
+	gdb_test "p 2 <= 1.2${l}" " = 0"
+
+	gdb_test "p 1 > 1.2${l}" " = 0"
+	gdb_test "p 2 > 1.2${l}" " = 1"
+	gdb_test "p 1 >= 1.2${l}" " = 0"
+	gdb_test "p 2 >= 1.2${l}" " = 1"
+    }
 }
 
 proc test_dfp_conversions {} {

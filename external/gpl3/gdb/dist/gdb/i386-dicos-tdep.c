@@ -1,6 +1,6 @@
 /* Target-dependent code for DICOS running on i386's, for GDB.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,8 +46,8 @@ void
 _initialize_i386_dicos_tdep ()
 {
   gdbarch_register_osabi_sniffer (bfd_arch_i386, bfd_target_elf_flavour,
-                                  i386_dicos_osabi_sniffer);
+				  i386_dicos_osabi_sniffer);
 
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_DICOS,
-                          i386_dicos_init_abi);
+			  i386_dicos_init_abi);
 }

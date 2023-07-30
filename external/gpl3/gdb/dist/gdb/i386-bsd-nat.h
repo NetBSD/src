@@ -1,6 +1,6 @@
 /* Native-dependent code for modern i386 BSD's.
 
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 
 #ifndef I386_BSD_NAT_H
 #define I386_BSD_NAT_H
+
+#include "x86-bsd-nat.h"
 
 /* Helper functions.  See definitions.  */
 extern void i386bsd_fetch_inferior_registers (struct regcache *regcache,

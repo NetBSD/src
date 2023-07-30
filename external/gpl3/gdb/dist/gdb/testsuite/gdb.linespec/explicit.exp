@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -405,6 +405,7 @@ namespace eval $testfile {
 	# completion matches both the explicit location options and
 	# the linespec keywords.
 	set completions_list {
+	    "-force-condition"
 	    "-function"
 	    "-label"
 	    "-line"
@@ -465,6 +466,20 @@ namespace eval $testfile {
 		    test_gdb_complete_none "b $prefix$what thr"
 		    test_gdb_complete_none "b $prefix$what -fun"
 		}
+	    }
+	}
+
+	# Test that after a seemingly finished option argument,
+	# completion for "-" matches both the explicit location
+	# options and the linespec keywords that start with "-".
+	with_test_prefix "complete '-' after options" {
+	    test_gdb_complete_multiple "b -function myfunction " "-" "" {
+		"-force-condition"
+		"-function"
+		"-label"
+		"-line"
+		"-qualified"
+		"-source"
 	    }
 	}
 
@@ -584,7 +599,7 @@ namespace eval $testfile {
     gdb_load [standard_output_file $exefile]
 
     set tst "condition_command overrides explicit linespec condition"
-    if {![runto main]} {
+    if {![runto_main]} {
 	fail $tst
     } else {
 	if {![gdb_breakpoint "-func myfunction if arg == 1"]} {
@@ -611,15 +626,15 @@ namespace eval $testfile {
 
     # Test explicit "ranges."  Make sure that using explicit
     # locations doesn't alter the expected outcome.
-    gdb_test "list main" ".*" "list main 1"
+    gdb_test "list -q main" ".*" "list main 1"
     set list_result [capture_command_output "list -,+" ""]
-    gdb_test "list main" ".*" "list main 2"
+    gdb_test "list -q main" ".*" "list main 2"
     gdb_test "list -line -,-line +" [string_to_regexp $list_result]
 
     # Ditto for the reverse (except that no output is expected).
-    gdb_test "list myfunction" ".*" "list myfunction 1"
+    gdb_test "list -q myfunction" ".*" "list myfunction 1"
     gdb_test_no_output "list +,-"
-    gdb_test "list myfunction" ".*" "list myfunction 2"
+    gdb_test "list -q myfunction" ".*" "list myfunction 2"
     gdb_test_no_output "list -line +, -line -"
 }
 

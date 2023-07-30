@@ -1,6 +1,6 @@
 /* Target-dependent code for the i387.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #define I387_TDEP_H
 
 struct gdbarch;
-struct frame_info;
+class frame_info_ptr;
 struct regcache;
 struct type;
 struct ui_file;
@@ -88,7 +88,7 @@ struct ui_file;
 
 extern void i387_print_float_info (struct gdbarch *gdbarch,
 				   struct ui_file *file,
-				   struct frame_info *frame,
+				   frame_info_ptr frame,
 				   const char *args);
 
 /* Return nonzero if a value of type TYPE stored in register REGNUM
@@ -100,14 +100,14 @@ extern int i387_convert_register_p (struct gdbarch *gdbarch, int regnum,
 /* Read a value of type TYPE from register REGNUM in frame FRAME, and
    return its contents in TO.  */
 
-extern int i387_register_to_value (struct frame_info *frame, int regnum,
+extern int i387_register_to_value (frame_info_ptr frame, int regnum,
 				   struct type *type, gdb_byte *to,
 				   int *optimizedp, int *unavailablep);
 
 /* Write the contents FROM of a value of type TYPE into register
    REGNUM in frame FRAME.  */
 
-extern void i387_value_to_register (struct frame_info *frame, int regnum,
+extern void i387_value_to_register (frame_info_ptr frame, int regnum,
 				    struct type *type, const gdb_byte *from);
 
 
@@ -170,5 +170,5 @@ extern void i387_return_value (struct gdbarch *gdbarch,
 /* Set all bnd registers to the INIT state.  INIT state means
    all memory range can be accessed.  */
 extern void i387_reset_bnd_regs (struct gdbarch *gdbarch,
-			         struct regcache *regcache);
+				 struct regcache *regcache);
 #endif /* i387-tdep.h */

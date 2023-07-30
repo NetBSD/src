@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,8 +42,7 @@ proc run_lang_tests {exefile lang} {
     gdb_reinitialize_dir $srcdir/$subdir
     gdb_load ${exefile}
 
-    if ![runto_main ] then {
-	perror "couldn't run to breakpoint"
+    if {![runto_main]} {
 	return
     }
 
@@ -112,7 +111,36 @@ proc run_lang_tests {exefile lang} {
     gdb_test "print c" " = container \"container\" with 2 elements = {$nl *.0. = 23,$nl *.1. = 72$nl}" \
 	"print c, pretty printing on, default display hint"
 
+    gdb_test_no_output "set variable c.is_array_p=1"
+    gdb_test "print c" " = container \"container\" with 2 elements = \\{23, 72\\}" \
+	"print c, pretty printing on, display hint is now array"
+
+    # Setting is_map_p while _is_array_p is also set will cause the
+    # display_hint method to raise an exception (see py-prettyprint.py).
     gdb_test_no_output "set variable c.is_map_p=1"
+
+    # This test checks what happens when the display hint throws an
+    # error.  GDB just treats this as though the display hint was
+    # None.
+    set py_exception \
+	[multi_line \
+	     "Traceback\[^\r\n\]+" \
+	     "\\s+File \"\[^\r\n\]+/py-prettyprint.py\", line \[0-9\]+, in display_hint" \
+	     "\\s+raise Exception\[^\r\n\]+" \
+	     "Exception: invalid object state found in display_hint"]
+    gdb_test "print c" \
+	[multi_line \
+	     " = ${py_exception}" \
+	     "container \"container\" with 2 elements = {" \
+	     "\\s+\\\[0\\\] = 23," \
+	     "\\s+\\\[1\\\] = 72" \
+	     "}"] \
+	"print c, pretty printing on, exception raised from display_hint"
+
+    # Unset is_array_p so that display_hint no longer raises an
+    # exception.
+    gdb_test_no_output "set variable c.is_array_p=0"
+
     gdb_test "print c" " = container \"container\" with 2 elements = \{$nl  \\\[23\\\] = 72$nl\}" \
 	"print c, pretty printing on, display hint is now map"
 
@@ -169,8 +197,7 @@ gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
 
-if ![runto_main ] then {
-    perror "couldn't run to breakpoint"
+if {![runto_main]} {
     return
 }
 

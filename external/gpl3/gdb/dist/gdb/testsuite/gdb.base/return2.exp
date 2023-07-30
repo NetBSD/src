@@ -1,4 +1,4 @@
-# Copyright 2000-2020 Free Software Foundation, Inc.
+# Copyright 2000-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,8 +81,7 @@ proc return_void { } {
 proc return2_tests { } {
     global gdb_prompt skip_float_test
 
-    if { ! [ runto_main ] } then {
-	untested "couldn't run to main"
+    if {![runto_main]} {
 	return -1
     }
 
@@ -91,12 +90,12 @@ proc return2_tests { } {
     return_1 "short"
     return_1 "int"
     return_1 "long"
-    if { ! [istarget "m6811-*-*"] && ![istarget "h8300*-*"] } then {
+    if {![istarget "m6811-*-*"] && ![istarget "h8300*-*"]} {
         return_1 "long_long"
     }
     if {!$skip_float_test} {
 	return_1 "float"
-	if { ! [istarget "m6811-*-*"] } then {
+	if {![istarget "m6811-*-*"]} {
 	    return_1 "double"
 	}
     }

@@ -38,7 +38,7 @@ INLINE_PSIM_ENDIAN\
 (unsigned_N)
 endian_t2h_N(unsigned_N raw_in)
 {
-  if (CURRENT_TARGET_BYTE_ORDER == CURRENT_HOST_BYTE_ORDER) {
+  if (CURRENT_TARGET_BYTE_ORDER == HOST_BYTE_ORDER) {
     return raw_in;
   }
   else {
@@ -51,7 +51,7 @@ INLINE_PSIM_ENDIAN\
 (unsigned_N)
 endian_h2t_N(unsigned_N raw_in)
 {
-  if (CURRENT_TARGET_BYTE_ORDER == CURRENT_HOST_BYTE_ORDER) {
+  if (CURRENT_TARGET_BYTE_ORDER == HOST_BYTE_ORDER) {
     return raw_in;
   }
   else {
@@ -73,7 +73,7 @@ INLINE_PSIM_ENDIAN\
 (unsigned_N)
 endian_h2be_N(unsigned_N raw_in)
 {
-  if (CURRENT_HOST_BYTE_ORDER == BIG_ENDIAN) {
+  if (HOST_BYTE_ORDER == BFD_ENDIAN_BIG) {
     return raw_in;
   }
   else {
@@ -86,7 +86,7 @@ INLINE_PSIM_ENDIAN\
 (unsigned_N)
 endian_be2h_N(unsigned_N raw_in)
 {
-  if (CURRENT_HOST_BYTE_ORDER == BIG_ENDIAN) {
+  if (HOST_BYTE_ORDER == BFD_ENDIAN_BIG) {
     return raw_in;
   }
   else {
@@ -99,7 +99,7 @@ INLINE_PSIM_ENDIAN\
 (unsigned_N)
 endian_h2le_N(unsigned_N raw_in)
 {
-  if (CURRENT_HOST_BYTE_ORDER == LITTLE_ENDIAN) {
+  if (HOST_BYTE_ORDER == BFD_ENDIAN_LITTLE) {
     return raw_in;
   }
   else {
@@ -112,7 +112,7 @@ INLINE_PSIM_ENDIAN\
 (unsigned_N)
 endian_le2h_N(unsigned_N raw_in)
 {
-  if (CURRENT_HOST_BYTE_ORDER == LITTLE_ENDIAN) {
+  if (HOST_BYTE_ORDER == BFD_ENDIAN_LITTLE) {
     return raw_in;
   }
   else {

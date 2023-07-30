@@ -119,7 +119,7 @@
 *am33
 *am33_2
 {
-  unsigned32 sp, next_pc;
+  uint32_t sp, next_pc;
 
   PC = cia;
   sp = State.regs[REG_SP];
@@ -207,8 +207,8 @@
 *am33
 *am33_2
 {
-  unsigned32 usp = State.regs[REG_USP];
-  unsigned32 mask;
+  uint32_t usp = State.regs[REG_USP];
+  uint32_t mask;
 
   PC = cia;
   mask = REGS;
@@ -301,8 +301,8 @@
 *am33
 *am33_2
 {
-  unsigned32 usp = State.regs[REG_USP];
-  unsigned32 mask;
+  uint32_t usp = State.regs[REG_USP];
+  uint32_t mask;
 
   PC = cia;
   mask = REGS;
@@ -533,7 +533,7 @@
 {
   int srcreg, dstreg;
   int z, c, n, v;
-  unsigned32 reg1, reg2, sum;
+  uint32_t reg1, reg2, sum;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RM2);
@@ -577,7 +577,7 @@
 {
   int srcreg, dstreg;
   int z, c, n, v;
-  unsigned32 reg1, reg2, difference;
+  uint32_t reg1, reg2, difference;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RM2);
@@ -756,7 +756,7 @@
 *am33_2
 {
   int srcreg, dstreg;
-  signed32 temp;
+  int32_t temp;
   int c, z, n;
 
   PC = cia;
@@ -842,7 +842,7 @@
 {
   int dstreg;
   int c, n, z;
-  unsigned32 value;
+  uint32_t value;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
@@ -867,7 +867,7 @@
 {
   int dstreg;
   int c, n, z;
-  unsigned32 value;
+  uint32_t value;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
@@ -891,15 +891,15 @@
 *am33_2
 {
   int srcreg, dstreg;
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RM2);
   dstreg = translate_rreg (SD_, RN0);
 
-  temp = ((signed64)(signed32)State.regs[dstreg]
-          *  (signed64)(signed32)State.regs[srcreg]);
+  temp = ((int64_t)(int32_t)State.regs[dstreg]
+          *  (int64_t)(int32_t)State.regs[srcreg]);
   State.regs[dstreg] = temp & 0xffffffff;
   State.regs[REG_MDR] = (temp & 0xffffffff00000000LL) >> 32;
   z = (State.regs[dstreg] == 0);
@@ -915,15 +915,15 @@
 *am33_2
 {
   int srcreg, dstreg;
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RM2);
   dstreg = translate_rreg (SD_, RN0);
 
-  temp = ((unsigned64)State.regs[dstreg]
-          * (unsigned64)State.regs[srcreg]);
+  temp = ((uint64_t)State.regs[dstreg]
+          * (uint64_t)State.regs[srcreg]);
   State.regs[dstreg] = temp & 0xffffffff;
   State.regs[REG_MDR] = (temp & 0xffffffff00000000LL) >> 32;
   z = (State.regs[dstreg] == 0);
@@ -939,7 +939,7 @@
 *am33_2
 {
   int srcreg, dstreg;
-  signed64 temp;
+  int64_t temp;
   int n, z;
 
   PC = cia;
@@ -949,8 +949,8 @@
   temp = State.regs[REG_MDR];
   temp <<= 32;
   temp |= State.regs[dstreg];
-  State.regs[REG_MDR] = temp % (signed32)State.regs[srcreg];
-  temp /= (signed32)State.regs[srcreg];
+  State.regs[REG_MDR] = temp % (int32_t)State.regs[srcreg];
+  temp /= (int32_t)State.regs[srcreg];
   State.regs[dstreg] = temp & 0xffffffff;
   z = (State.regs[dstreg] == 0);
   n = (State.regs[dstreg] & 0x80000000) != 0;
@@ -965,7 +965,7 @@
 *am33_2
 {
   int srcreg, dstreg;
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
@@ -1215,15 +1215,15 @@
 *am33_2
 {
   int srcreg1, srcreg2;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM2);
   srcreg2 = translate_rreg (SD_, RN0);
 
-  temp = ((signed64)(signed32)State.regs[srcreg2]
-          * (signed64)(signed32)State.regs[srcreg1]);
+  temp = ((int64_t)(int32_t)State.regs[srcreg2]
+          * (int64_t)(int32_t)State.regs[srcreg1]);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -1244,15 +1244,15 @@
 *am33_2
 {
   int srcreg1, srcreg2;
-  unsigned64 temp, sum;
+  uint64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM2);
   srcreg2 = translate_rreg (SD_, RN0);
 
-  temp = ((unsigned64)State.regs[srcreg2]
-          * (unsigned64)State.regs[srcreg1]);
+  temp = ((uint64_t)State.regs[srcreg2]
+          * (uint64_t)State.regs[srcreg1]);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -1273,15 +1273,15 @@
 *am33_2
 {
   int srcreg1, srcreg2;
-  signed32 temp, sum;
+  int32_t temp, sum;
   int v;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM2);
   srcreg2 = translate_rreg (SD_, RN0);
 
-  temp = ((signed32)(signed8)(State.regs[srcreg2] & 0xff)
-          * (signed32)(signed8)(State.regs[srcreg1] & 0xff));
+  temp = ((int32_t)(int8_t)(State.regs[srcreg2] & 0xff)
+          * (int32_t)(int8_t)(State.regs[srcreg1] & 0xff));
   sum = State.regs[REG_MCRL] + temp;
   v = ((State.regs[REG_MCRL] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -1297,15 +1297,15 @@
 *am33_2
 {
   int srcreg1, srcreg2;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int v;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM2);
   srcreg2 = translate_rreg (SD_, RN0);
 
-  temp = ((unsigned32)(State.regs[srcreg2] & 0xff)
-          * (unsigned32)(State.regs[srcreg1] & 0xff));
+  temp = ((uint32_t)(State.regs[srcreg2] & 0xff)
+          * (uint32_t)(State.regs[srcreg1] & 0xff));
   sum = State.regs[REG_MCRL] + temp;
   v = ((State.regs[REG_MCRL] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -1321,15 +1321,15 @@
 *am33_2
 {
   int srcreg1, srcreg2;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM2);
   srcreg2 = translate_rreg (SD_, RN0);
 
-  temp = ((unsigned64)(signed16)(State.regs[srcreg2] & 0xffff)
-          * (unsigned64)(signed16)(State.regs[srcreg1] & 0xffff));
+  temp = ((uint64_t)(int16_t)(State.regs[srcreg2] & 0xffff)
+          * (uint64_t)(int16_t)(State.regs[srcreg1] & 0xffff));
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -1350,15 +1350,15 @@
 *am33_2
 {
   int srcreg1, srcreg2;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM2);
   srcreg2 = translate_rreg (SD_, RN0);
 
-  temp = ((unsigned64)(State.regs[srcreg2] & 0xffff)
-          * (unsigned64)(State.regs[srcreg1] & 0xffff));
+  temp = ((uint64_t)(State.regs[srcreg2] & 0xffff)
+          * (uint64_t)(State.regs[srcreg1] & 0xffff));
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -1379,17 +1379,17 @@
 *am33_2
 {
   int srcreg1, srcreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
   int v;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM2);
   srcreg2 = translate_rreg (SD_, RN0);
 
-  temp = ((signed32)(signed16)(State.regs[srcreg2] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-	   * (signed32)(signed16)((State.regs[srcreg2] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[srcreg2] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+	   * (int32_t)(int16_t)((State.regs[srcreg2] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
   v = ((State.regs[REG_MCRL] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -1405,17 +1405,17 @@
 *am33_2
 {
   int srcreg1, srcreg2;
-  unsigned32 temp, temp2, sum;
+  uint32_t temp, temp2, sum;
   int v;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM2);
   srcreg2 = translate_rreg (SD_, RN0);
 
-  temp = ((unsigned32)(State.regs[srcreg2] & 0xffff)
-          * (unsigned32)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((unsigned32)((State.regs[srcreg1] >> 16) & 0xffff)
-	   * (unsigned32)((State.regs[srcreg2] >> 16) & 0xffff));
+  temp = ((uint32_t)(State.regs[srcreg2] & 0xffff)
+          * (uint32_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((uint32_t)((State.regs[srcreg1] >> 16) & 0xffff)
+	   * (uint32_t)((State.regs[srcreg2] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
   v = ((State.regs[REG_MCRL] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -1431,17 +1431,17 @@
 *am33_2
 {
   int srcreg, dstreg;
-  signed32 temp;
+  int32_t temp;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RM2);
   dstreg = translate_rreg (SD_, RN0);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg] & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg] & 0xffff));
   State.regs[REG_MDRQ] = temp;
-  temp = ((signed32)(signed16)((State.regs[dstreg] >> 16) & 0xffff)
-          * (signed32)(signed16)((State.regs[srcreg] >>16) & 0xffff));
+  temp = ((int32_t)(int16_t)((State.regs[dstreg] >> 16) & 0xffff)
+          * (int32_t)(int16_t)((State.regs[srcreg] >>16) & 0xffff));
   State.regs[dstreg] = temp;
 }
 
@@ -1452,17 +1452,17 @@
 *am33_2
 {
   int srcreg, dstreg;
-  unsigned32 temp;
+  uint32_t temp;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RM2);
   dstreg = translate_rreg (SD_, RN0);
 
-  temp = ((unsigned32)(State.regs[dstreg] & 0xffff)
-          * (unsigned32)(State.regs[srcreg] & 0xffff));
+  temp = ((uint32_t)(State.regs[dstreg] & 0xffff)
+          * (uint32_t)(State.regs[srcreg] & 0xffff));
   State.regs[REG_MDRQ] = temp;
-  temp = ((unsigned32)((State.regs[dstreg] >> 16) & 0xffff)
-          * (unsigned32)((State.regs[srcreg] >>16) & 0xffff));
+  temp = ((uint32_t)((State.regs[dstreg] >> 16) & 0xffff)
+          * (uint32_t)((State.regs[srcreg] >>16) & 0xffff));
   State.regs[dstreg] = temp;
 }
 
@@ -1512,7 +1512,7 @@
   /* 32bit saturation.  */
   if (State.regs[srcreg] == 0x20)
     {
-      signed64 tmp;
+      int64_t tmp;
 
       tmp = State.regs[REG_MCRH];
       tmp <<= 32;
@@ -1528,7 +1528,7 @@
   /* 16bit saturation */
   else if (State.regs[srcreg] == 0x10)
     {
-      signed64 tmp;
+      int64_t tmp;
 
       tmp = State.regs[REG_MCRH];
       tmp <<= 32;
@@ -1544,7 +1544,7 @@
   /* 8 bit saturation */
   else if (State.regs[srcreg] == 0x8)
     {
-      signed64 tmp;
+      int64_t tmp;
 
       tmp = State.regs[REG_MCRH];
       tmp <<= 32;
@@ -1560,7 +1560,7 @@
   /* 9 bit saturation */
   else if (State.regs[srcreg] == 0x9)
     {
-      signed64 tmp;
+      int64_t tmp;
 
       tmp = State.regs[REG_MCRH];
       tmp <<= 32;
@@ -1576,7 +1576,7 @@
   /* 9 bit saturation */
   else if (State.regs[srcreg] == 0x30)
     {
-      signed64 tmp;
+      int64_t tmp;
 
       tmp = State.regs[REG_MCRH];
       tmp <<= 32;
@@ -1731,7 +1731,7 @@
 {
   int dstreg, imm;
   int z, c, n, v;
-  unsigned32 reg2, sum;
+  uint32_t reg2, sum;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
@@ -1774,7 +1774,7 @@
 {
   int imm, dstreg;
   int z, c, n, v;
-  unsigned32 reg2, difference;
+  uint32_t reg2, difference;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
@@ -1886,7 +1886,7 @@
 *am33_2
 {
   int dstreg;
-  signed32 temp;
+  int32_t temp;
   int c, z, n;
 
   PC = cia;
@@ -1948,14 +1948,14 @@
 *am33_2
 {
   int dstreg;
-  unsigned64 temp;
+  uint64_t temp;
   int z, n;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
 
-  temp = ((signed64)(signed32)State.regs[dstreg]
-          *  (signed64)(signed32)EXTEND8 (IMM8));
+  temp = ((int64_t)(int32_t)State.regs[dstreg]
+          *  (int64_t)(int32_t)EXTEND8 (IMM8));
   State.regs[dstreg] = temp & 0xffffffff;
   State.regs[REG_MDR] = (temp & 0xffffffff00000000LL) >> 32;
   z = (State.regs[dstreg] == 0);
@@ -1971,14 +1971,14 @@
 *am33_2
 {
   int dstreg;
-  unsigned64 temp;
+  uint64_t temp;
   int z, n;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
 
-  temp = ((unsigned64)State.regs[dstreg]
-          * (unsigned64)(IMM8 & 0xff));
+  temp = ((uint64_t)State.regs[dstreg]
+          * (uint64_t)(IMM8 & 0xff));
   State.regs[dstreg] = temp & 0xffffffff;
   State.regs[REG_MDR] = (temp & 0xffffffff00000000LL) >> 32;
   z = (State.regs[dstreg] == 0);
@@ -2231,14 +2231,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((signed64)(signed32)EXTEND8 (IMM8)
-          * (signed64)(signed32)State.regs[srcreg]);
+  temp = ((int64_t)(int32_t)EXTEND8 (IMM8)
+          * (int64_t)(int32_t)State.regs[srcreg]);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -2259,14 +2259,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((unsigned64) (IMM8)
-          * (unsigned64)State.regs[srcreg]);
+  temp = ((uint64_t) (IMM8)
+          * (uint64_t)State.regs[srcreg]);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -2287,14 +2287,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((signed64)(signed8)EXTEND8 (IMM8)
-          * (signed64)(signed8)State.regs[srcreg] & 0xff);
+  temp = ((int64_t)(int8_t)EXTEND8 (IMM8)
+          * (int64_t)(int8_t)State.regs[srcreg] & 0xff);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -2315,14 +2315,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((unsigned64) (IMM8)
-          * (unsigned64)State.regs[srcreg] & 0xff);
+  temp = ((uint64_t) (IMM8)
+          * (uint64_t)State.regs[srcreg] & 0xff);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -2343,14 +2343,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((signed64)(signed16)EXTEND8 (IMM8)
-          * (signed64)(signed16)State.regs[srcreg] & 0xffff);
+  temp = ((int64_t)(int16_t)EXTEND8 (IMM8)
+          * (int64_t)(int16_t)State.regs[srcreg] & 0xffff);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -2371,14 +2371,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((unsigned64) (IMM8)
-          * (unsigned64)State.regs[srcreg] & 0xffff);
+  temp = ((uint64_t) (IMM8)
+          * (uint64_t)State.regs[srcreg] & 0xffff);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -2409,7 +2409,7 @@
   /* 32bit saturation.  */
   if (IMM8 == 0x20)
     {
-      signed64 tmp;
+      int64_t tmp;
 
       tmp = State.regs[REG_MCRH];
       tmp <<= 32;
@@ -2425,7 +2425,7 @@
   /* 16bit saturation */
   else if (IMM8 == 0x10)
     {
-      signed64 tmp;
+      int64_t tmp;
 
       tmp = State.regs[REG_MCRH];
       tmp <<= 32;
@@ -2441,7 +2441,7 @@
   /* 8 bit saturation */
   else if (IMM8 == 0x8)
     {
-      signed64 tmp;
+      int64_t tmp;
 
       tmp = State.regs[REG_MCRH];
       tmp <<= 32;
@@ -2457,7 +2457,7 @@
   /* 9 bit saturation */
   else if (IMM8 == 0x9)
     {
-      signed64 tmp;
+      int64_t tmp;
 
       tmp = State.regs[REG_MCRH];
       tmp <<= 32;
@@ -2473,7 +2473,7 @@
   /* 9 bit saturation */
   else if (IMM8 == 0x30)
     {
-      signed64 tmp;
+      int64_t tmp;
 
       tmp = State.regs[REG_MCRH];
       tmp <<= 32;
@@ -2496,7 +2496,7 @@
 *am33_2
 {
   int z, c, n, v;
-  unsigned32 sum, source1, source2;
+  uint32_t sum, source1, source2;
   int srcreg1, srcreg2, dstreg;
 
   PC = cia;
@@ -2527,7 +2527,7 @@
 *am33_2
 {
   int z, c, n, v;
-  unsigned32 sum, source1, source2;
+  uint32_t sum, source1, source2;
   int srcreg1, srcreg2, dstreg;
 
   PC = cia;
@@ -2558,7 +2558,7 @@
 *am33_2
 {
   int z, c, n, v;
-  unsigned32 difference, source1, source2;
+  uint32_t difference, source1, source2;
   int srcreg1, srcreg2, dstreg;
 
   PC = cia;
@@ -2589,7 +2589,7 @@
 *am33_2
 {
   int z, c, n, v;
-  unsigned32 difference, source1, source2;
+  uint32_t difference, source1, source2;
   int srcreg1, srcreg2, dstreg;
 
   PC = cia;
@@ -2689,7 +2689,7 @@
 *am33_2
 {
   int z, c, n;
-  signed32 temp;
+  int32_t temp;
   int srcreg1, srcreg2, dstreg;
 
   PC = cia;
@@ -2763,7 +2763,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed64 temp;
+  int64_t temp;
   int n, z;
 
   PC = cia;
@@ -2772,8 +2772,8 @@
   dstreg1 = translate_rreg (SD_, RD0);
   dstreg2 = translate_rreg (SD_, RD2);
 
-  temp = ((signed64)(signed32)State.regs[srcreg1]
-          *  (signed64)(signed32)State.regs[srcreg2]);
+  temp = ((int64_t)(int32_t)State.regs[srcreg1]
+          *  (int64_t)(int32_t)State.regs[srcreg2]);
   State.regs[dstreg2] = temp & 0xffffffff;
   State.regs[dstreg1] = (temp & 0xffffffff00000000LL) >> 32;
 
@@ -2791,7 +2791,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed64 temp;
+  int64_t temp;
   int n, z;
 
   PC = cia;
@@ -2800,8 +2800,8 @@
   dstreg1 = translate_rreg (SD_, RD0);
   dstreg2 = translate_rreg (SD_, RD2);
 
-  temp = ((unsigned64)State.regs[srcreg1]
-          *  (unsigned64)State.regs[srcreg2]);
+  temp = ((uint64_t)State.regs[srcreg1]
+          *  (uint64_t)State.regs[srcreg2]);
   State.regs[dstreg2] = temp & 0xffffffff;
   State.regs[dstreg1] = (temp & 0xffffffff00000000LL) >> 32;
 
@@ -2987,8 +2987,8 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed64 temp;
-  unsigned32 sum;
+  int64_t temp;
+  uint32_t sum;
   int c, v;
 
   PC = cia;
@@ -2997,8 +2997,8 @@
   dstreg1 = translate_rreg (SD_, RD0);
   dstreg2 = translate_rreg (SD_, RD2);
 
-  temp = ((signed64)(signed32)State.regs[srcreg1]
-          *  (signed64)(signed32)State.regs[srcreg2]);
+  temp = ((int64_t)(int32_t)State.regs[srcreg1]
+          *  (int64_t)(int32_t)State.regs[srcreg2]);
 
   sum = State.regs[dstreg2] + (temp & 0xffffffff);
   c = (sum < State.regs[dstreg2]) || (sum < (temp & 0xffffffff));
@@ -3024,8 +3024,8 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed64 temp;
-  unsigned32 sum;
+  int64_t temp;
+  uint32_t sum;
   int c, v;
 
   PC = cia;
@@ -3034,8 +3034,8 @@
   dstreg1 = translate_rreg (SD_, RD0);
   dstreg2 = translate_rreg (SD_, RD2);
 
-  temp = ((unsigned64)State.regs[srcreg1]
-          * (unsigned64)State.regs[srcreg2]);
+  temp = ((uint64_t)State.regs[srcreg1]
+          * (uint64_t)State.regs[srcreg2]);
 
   sum = State.regs[dstreg2] + (temp & 0xffffffff);
   c = (sum < State.regs[dstreg2]) || (sum < (temp & 0xffffffff));
@@ -3061,7 +3061,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg;
-  signed32 temp, sum;
+  int32_t temp, sum;
   int v;
 
   PC = cia;
@@ -3069,8 +3069,8 @@
   srcreg2 = translate_rreg (SD_, RN0);
   dstreg = translate_rreg (SD_, RD0);
 
-  temp = ((signed32)(State.regs[srcreg2] & 0xff)
-          * (signed32)(State.regs[srcreg1] & 0xff));
+  temp = ((int32_t)(State.regs[srcreg2] & 0xff)
+          * (int32_t)(State.regs[srcreg1] & 0xff));
   sum = State.regs[dstreg] + temp;
   v = ((State.regs[dstreg] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -3090,7 +3090,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg;
-  signed32 temp, sum;
+  int32_t temp, sum;
   int v;
 
   PC = cia;
@@ -3098,8 +3098,8 @@
   srcreg2 = translate_rreg (SD_, RN0);
   dstreg = translate_rreg (SD_, RD0);
 
-  temp = ((unsigned32)(State.regs[srcreg2] & 0xff)
-          * (unsigned32)(State.regs[srcreg1] & 0xff));
+  temp = ((uint32_t)(State.regs[srcreg2] & 0xff)
+          * (uint32_t)(State.regs[srcreg1] & 0xff));
   sum = State.regs[dstreg] + temp;
   v = ((State.regs[dstreg] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -3119,7 +3119,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int v;
 
   PC = cia;
@@ -3128,8 +3128,8 @@
   dstreg1 = translate_rreg (SD_, RD0);
   dstreg2 = translate_rreg (SD_, RD0);
 
-  temp = ((signed32)(State.regs[srcreg2] & 0xffff)
-          * (signed32)(State.regs[srcreg1] & 0xffff));
+  temp = ((int32_t)(State.regs[srcreg2] & 0xffff)
+          * (int32_t)(State.regs[srcreg1] & 0xffff));
   State.regs[dstreg2] += (temp & 0xffffffff);
   sum = State.regs[dstreg1] + ((temp >> 32) & 0xffffffff);
   v = ((State.regs[dstreg1] & 0x80000000) == (temp & 0x80000000)
@@ -3150,7 +3150,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int v;
 
   PC = cia;
@@ -3159,8 +3159,8 @@
   dstreg1 = translate_rreg (SD_, RD0);
   dstreg2 = translate_rreg (SD_, RD0);
 
-  temp = ((unsigned32)(State.regs[srcreg2] & 0xffff)
-          * (unsigned32)(State.regs[srcreg1] & 0xffff));
+  temp = ((uint32_t)(State.regs[srcreg2] & 0xffff)
+          * (uint32_t)(State.regs[srcreg1] & 0xffff));
   State.regs[dstreg2] += (temp & 0xffffffff);
   sum = State.regs[dstreg1] + ((temp >> 32) & 0xffffffff);
   v = ((State.regs[dstreg1] & 0x80000000) == (temp & 0x80000000)
@@ -3181,7 +3181,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
   int v;
 
   PC = cia;
@@ -3189,10 +3189,10 @@
   srcreg2 = translate_rreg (SD_, RN0);
   dstreg = translate_rreg (SD_, RD0);
 
-  temp = ((signed32)(State.regs[srcreg2] & 0xffff)
-          * (signed32)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)((State.regs[srcreg1] >> 16) & 0xffff)
-	   * (signed32)((State.regs[srcreg2] >> 16) & 0xffff));
+  temp = ((int32_t)(State.regs[srcreg2] & 0xffff)
+          * (int32_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)((State.regs[srcreg1] >> 16) & 0xffff)
+	   * (int32_t)((State.regs[srcreg2] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[dstreg];
   v = ((State.regs[dstreg] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -3212,7 +3212,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
   int v;
 
   PC = cia;
@@ -3220,10 +3220,10 @@
   srcreg2 = translate_rreg (SD_, RN0);
   dstreg = translate_rreg (SD_, RD0);
 
-  temp = ((unsigned32)(State.regs[srcreg2] & 0xffff)
-          * (unsigned32)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((unsigned32)((State.regs[srcreg1] >> 16) & 0xffff)
-	   * (unsigned32)((State.regs[srcreg2] >> 16) & 0xffff));
+  temp = ((uint32_t)(State.regs[srcreg2] & 0xffff)
+          * (uint32_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((uint32_t)((State.regs[srcreg1] >> 16) & 0xffff)
+	   * (uint32_t)((State.regs[srcreg2] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[dstreg];
   v = ((State.regs[dstreg] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -3243,7 +3243,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed64 temp;
+  int64_t temp;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM2);
@@ -3251,11 +3251,11 @@
   dstreg1 = translate_rreg (SD_, RD0);
   dstreg2 = translate_rreg (SD_, RD2);
 
-  temp = ((signed32)(State.regs[srcreg1] & 0xffff)
-          * (signed32)(State.regs[srcreg1] & 0xffff));
+  temp = ((int32_t)(State.regs[srcreg1] & 0xffff)
+          * (int32_t)(State.regs[srcreg1] & 0xffff));
   State.regs[dstreg2] = temp;
-  temp = ((signed32)((State.regs[srcreg1] >> 16) & 0xffff)
-          * (signed32)((State.regs[srcreg1] >>16) & 0xffff));
+  temp = ((int32_t)((State.regs[srcreg1] >> 16) & 0xffff)
+          * (int32_t)((State.regs[srcreg1] >>16) & 0xffff));
   State.regs[dstreg1] = temp;
 }
 
@@ -3266,7 +3266,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed64 temp;
+  int64_t temp;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM2);
@@ -3274,11 +3274,11 @@
   dstreg1 = translate_rreg (SD_, RD0);
   dstreg2 = translate_rreg (SD_, RD2);
 
-  temp = ((unsigned32)(State.regs[srcreg1] & 0xffff)
-          * (unsigned32)(State.regs[srcreg1] & 0xffff));
+  temp = ((uint32_t)(State.regs[srcreg1] & 0xffff)
+          * (uint32_t)(State.regs[srcreg1] & 0xffff));
   State.regs[dstreg2] = temp;
-  temp = ((unsigned32)((State.regs[srcreg1] >> 16) & 0xffff)
-          * (unsigned32)((State.regs[srcreg1] >>16) & 0xffff));
+  temp = ((uint32_t)((State.regs[srcreg1] >> 16) & 0xffff)
+          * (uint32_t)((State.regs[srcreg1] >>16) & 0xffff));
   State.regs[dstreg1] = temp;
 }
 
@@ -3396,7 +3396,7 @@
 *am33_2
 {
   int dstreg, z, n, c, v;
-  unsigned32 sum, imm, reg2;
+  uint32_t sum, imm, reg2;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
@@ -3437,7 +3437,7 @@
 *am33_2
 {
   int dstreg, z, n, c, v;
-  unsigned32 difference, imm, reg2;
+  uint32_t difference, imm, reg2;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
@@ -3549,7 +3549,7 @@
 *am33_2
 {
   int dstreg;
-  signed32 temp;
+  int32_t temp;
   int c, z, n;
 
   PC = cia;
@@ -3612,14 +3612,14 @@
 *am33_2
 {
   int dstreg;
-  unsigned64 temp;
+  uint64_t temp;
   int z, n;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
 
-  temp = ((signed64)(signed32)State.regs[dstreg]
-          *  (signed64)(signed32)EXTEND24 (FETCH24 (IMM24A, IMM24B, IMM24C)));
+  temp = ((int64_t)(int32_t)State.regs[dstreg]
+          *  (int64_t)(int32_t)EXTEND24 (FETCH24 (IMM24A, IMM24B, IMM24C)));
   State.regs[dstreg] = temp & 0xffffffff;
   State.regs[REG_MDR] = (temp & 0xffffffff00000000LL) >> 32;
   z = (State.regs[dstreg] == 0);
@@ -3635,14 +3635,14 @@
 *am33_2
 {
   int dstreg;
-  unsigned64 temp;
+  uint64_t temp;
   int z, n;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
 
-  temp = ((unsigned64)State.regs[dstreg]
-          *  (unsigned64)EXTEND24 (FETCH24 (IMM24A, IMM24B, IMM24C)));
+  temp = ((uint64_t)State.regs[dstreg]
+          *  (uint64_t)EXTEND24 (FETCH24 (IMM24A, IMM24B, IMM24C)));
   State.regs[dstreg] = temp & 0xffffffff;
   State.regs[REG_MDR] = (temp & 0xffffffff00000000LL) >> 32;
   z = (State.regs[dstreg] == 0);
@@ -3909,14 +3909,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((signed64)EXTEND24 (FETCH24 (IMM24A, IMM24B, IMM24C))
-          * (signed64)State.regs[srcreg]);
+  temp = ((int64_t)EXTEND24 (FETCH24 (IMM24A, IMM24B, IMM24C))
+          * (int64_t)State.regs[srcreg]);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -3937,14 +3937,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((unsigned64) (FETCH24 (IMM24A, IMM24B, IMM24C))
-          * (unsigned64)State.regs[srcreg]);
+  temp = ((uint64_t) (FETCH24 (IMM24A, IMM24B, IMM24C))
+          * (uint64_t)State.regs[srcreg]);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -3965,14 +3965,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((signed64)EXTEND8 (FETCH24 (IMM24A, IMM24B, IMM24C))
-          * (signed64)State.regs[srcreg] & 0xff);
+  temp = ((int64_t)EXTEND8 (FETCH24 (IMM24A, IMM24B, IMM24C))
+          * (int64_t)State.regs[srcreg] & 0xff);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -3993,14 +3993,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((unsigned64) (FETCH24 (IMM24A, IMM24B, IMM24C))
-          * (unsigned64)State.regs[srcreg] & 0xff);
+  temp = ((uint64_t) (FETCH24 (IMM24A, IMM24B, IMM24C))
+          * (uint64_t)State.regs[srcreg] & 0xff);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -4021,14 +4021,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((signed64)EXTEND16 (FETCH24 (IMM24A, IMM24B, IMM24C))
-          * (signed64)State.regs[srcreg] & 0xffff);
+  temp = ((int64_t)EXTEND16 (FETCH24 (IMM24A, IMM24B, IMM24C))
+          * (int64_t)State.regs[srcreg] & 0xffff);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -4049,14 +4049,14 @@
 *am33_2
 {
   int srcreg;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN2);
 
-  temp = ((unsigned64) (FETCH24 (IMM24A, IMM24B, IMM24C) & 0xffff)
-          * (unsigned64)State.regs[srcreg] & 0xffff);
+  temp = ((uint64_t) (FETCH24 (IMM24A, IMM24B, IMM24C) & 0xffff)
+          * (uint64_t)State.regs[srcreg] & 0xffff);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -4197,7 +4197,7 @@
 *am33_2
 {
   int dstreg;
-  unsigned32 imm, reg2, sum;
+  uint32_t imm, reg2, sum;
   int z, n, c, v;
 
   PC = cia;
@@ -4239,7 +4239,7 @@
 *am33_2
 {
   int dstreg;
-  unsigned32 imm, reg2, difference;
+  uint32_t imm, reg2, difference;
   int z, n, c, v;
 
   PC = cia;
@@ -4352,7 +4352,7 @@
 *am33_2
 {
   int dstreg;
-  signed32 temp;
+  int32_t temp;
   int c, z, n;
 
   PC = cia;
@@ -4414,14 +4414,14 @@
 *am33_2
 {
   int dstreg;
-  unsigned64 temp;
+  uint64_t temp;
   int z, n;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
 
-  temp = ((signed64)(signed32)State.regs[dstreg]
-          *  (signed64)(signed32)(FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D)));
+  temp = ((int64_t)(int32_t)State.regs[dstreg]
+          *  (int64_t)(int32_t)(FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D)));
   State.regs[dstreg] = temp & 0xffffffff;
   State.regs[REG_MDR] = (temp & 0xffffffff00000000LL) >> 32;
   z = (State.regs[dstreg] == 0);
@@ -4437,14 +4437,14 @@
 *am33_2
 {
   int dstreg;
-  unsigned64 temp;
+  uint64_t temp;
   int z, n;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
 
-  temp = ((unsigned64)State.regs[dstreg]
-          *  (unsigned64) (FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D)));
+  temp = ((uint64_t)State.regs[dstreg]
+          *  (uint64_t) (FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D)));
   State.regs[dstreg] = temp & 0xffffffff;
   State.regs[REG_MDR] = (temp & 0xffffffff00000000LL) >> 32;
   z = (State.regs[dstreg] == 0);
@@ -4710,15 +4710,15 @@
 *am33_2
 {
   int srcreg, imm;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN0);
   imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
-  temp = ((signed64)(signed32)State.regs[srcreg]
-          * (signed64)(signed32)imm);
+  temp = ((int64_t)(int32_t)State.regs[srcreg]
+          * (int64_t)(int32_t)imm);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -4739,15 +4739,15 @@
 *am33_2
 {
   int srcreg, imm;
-  signed64 temp, sum;
+  int64_t temp, sum;
   int c, v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN0);
   imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
-  temp = ((unsigned64)State.regs[srcreg]
-          * (unsigned64)imm);
+  temp = ((uint64_t)State.regs[srcreg]
+          * (uint64_t)imm);
   sum = State.regs[REG_MCRL] + (temp & 0xffffffff);
   c = (sum < State.regs[REG_MCRL]) || (sum < (temp & 0xffffffff));
   State.regs[REG_MCRL] = sum;
@@ -4768,15 +4768,15 @@
 *am33_2
 {
   int srcreg, imm;
-  signed32 temp, sum;
+  int32_t temp, sum;
   int v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN0);
   imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
-  temp = ((signed32)(signed8)(State.regs[srcreg] & 0xff)
-          * (signed32)(signed8)(imm & 0xff));
+  temp = ((int32_t)(int8_t)(State.regs[srcreg] & 0xff)
+          * (int32_t)(int8_t)(imm & 0xff));
   sum = State.regs[REG_MCRL] + temp;
   v = ((State.regs[REG_MCRL] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -4792,15 +4792,15 @@
 *am33_2
 {
   int srcreg, imm;
-  signed32 temp, sum;
+  int32_t temp, sum;
   int v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN0);
   imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
-  temp = ((unsigned32)(State.regs[srcreg] & 0xff)
-          * (unsigned32)(imm & 0xff));
+  temp = ((uint32_t)(State.regs[srcreg] & 0xff)
+          * (uint32_t)(imm & 0xff));
   sum = State.regs[REG_MCRL] + temp;
   v = ((State.regs[REG_MCRL] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -4816,15 +4816,15 @@
 *am33_2
 {
   int srcreg, imm;
-  signed32 temp, sum;
+  int32_t temp, sum;
   int v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN0);
   imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
-  temp = ((signed32)(signed16)(State.regs[srcreg] & 0xffff)
-          * (signed32)(signed16)(imm & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[srcreg] & 0xffff)
+          * (int32_t)(int16_t)(imm & 0xffff));
   sum = State.regs[REG_MCRL] + temp;
   v = ((State.regs[REG_MCRL] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -4840,15 +4840,15 @@
 *am33_2
 {
   int srcreg, imm;
-  signed32 temp, sum;
+  int32_t temp, sum;
   int v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN0);
   imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
-  temp = ((unsigned32)(State.regs[srcreg] & 0xffff)
-          * (unsigned32)(imm & 0xffff));
+  temp = ((uint32_t)(State.regs[srcreg] & 0xffff)
+          * (uint32_t)(imm & 0xffff));
   sum = State.regs[REG_MCRL] + temp;
   v = ((State.regs[REG_MCRL] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -4864,17 +4864,17 @@
 *am33_2
 {
   int srcreg, imm;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
   int v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN0);
   imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
-  temp = ((signed32)(signed16)(State.regs[srcreg] & 0xffff)
-          * (signed32)(signed16)(imm & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg] >> 16) & 0xffff)
-	   * (signed32)(signed16)((imm >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[srcreg] & 0xffff)
+          * (int32_t)(int16_t)(imm & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg] >> 16) & 0xffff)
+	   * (int32_t)(int16_t)((imm >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
   v = ((State.regs[REG_MCRL] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -4890,17 +4890,17 @@
 *am33_2
 {
   int srcreg, imm;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
   int v;
 
   PC = cia;
   srcreg = translate_rreg (SD_, RN0);
   imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
-  temp = ((unsigned32)(State.regs[srcreg] & 0xffff)
-          * (unsigned32)(imm & 0xffff));
-  temp2 = ((unsigned32)((State.regs[srcreg] >> 16) & 0xffff)
-	   * (unsigned32)((imm >> 16) & 0xffff));
+  temp = ((uint32_t)(State.regs[srcreg] & 0xffff)
+          * (uint32_t)(imm & 0xffff));
+  temp2 = ((uint32_t)((State.regs[srcreg] >> 16) & 0xffff)
+	   * (uint32_t)((imm >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
   v = ((State.regs[REG_MCRL] & 0x80000000) == (temp & 0x80000000)
         && (temp & 0x80000000) != (sum & 0x80000000));
@@ -4916,17 +4916,17 @@
 *am33_2
 {
   int imm, dstreg;
-  signed32 temp;
+  int32_t temp;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
   imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg] & 0xffff)
-          * (signed32)(signed16)(imm & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg] & 0xffff)
+          * (int32_t)(int16_t)(imm & 0xffff));
   State.regs[REG_MDRQ] = temp;
-  temp = ((signed32)(signed16)((State.regs[dstreg] >> 16) & 0xffff)
-          * (signed32)(signed16)((imm>>16) & 0xffff));
+  temp = ((int32_t)(int16_t)((State.regs[dstreg] >> 16) & 0xffff)
+          * (int32_t)(int16_t)((imm>>16) & 0xffff));
   State.regs[dstreg] = temp;
 }
 
@@ -4937,17 +4937,17 @@
 *am33_2
 {
   int imm, dstreg;
-  signed32 temp;
+  int32_t temp;
 
   PC = cia;
   dstreg = translate_rreg (SD_, RN0);
   imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
-  temp = ((unsigned32)(State.regs[dstreg] & 0xffff)
-          * (unsigned32)(imm & 0xffff));
+  temp = ((uint32_t)(State.regs[dstreg] & 0xffff)
+          * (uint32_t)(imm & 0xffff));
   State.regs[REG_MDRQ] = temp;
-  temp = ((unsigned32)((State.regs[dstreg] >> 16) & 0xffff)
-          * (unsigned32)((imm >>16) & 0xffff));
+  temp = ((uint32_t)((State.regs[dstreg] >> 16) & 0xffff)
+          * (uint32_t)((imm >>16) & 0xffff));
   State.regs[dstreg] = temp;
 }
 
@@ -7348,7 +7348,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
@@ -7356,10 +7356,10 @@
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   State.regs[dstreg2] += State.regs[srcreg2];
@@ -7373,17 +7373,17 @@
 *am33_2
 {
   int srcreg1, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   State.regs[dstreg2] += EXTEND4 (IMM4);
@@ -7397,7 +7397,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
@@ -7405,10 +7405,10 @@
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   State.regs[dstreg2] -= State.regs[srcreg2];
@@ -7422,17 +7422,17 @@
 *am33_2
 {
   int srcreg1, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   State.regs[dstreg2] -= EXTEND4 (IMM4);
@@ -7446,7 +7446,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
@@ -7454,10 +7454,10 @@
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   genericCmp (State.regs[srcreg2], State.regs[dstreg2]);
@@ -7471,17 +7471,17 @@
 *am33_2
 {
   int srcreg1, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   genericCmp (EXTEND4 (IMM4), State.regs[dstreg2]);
@@ -7495,7 +7495,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
@@ -7503,10 +7503,10 @@
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   State.regs[dstreg2] = State.regs[srcreg2];
@@ -7520,17 +7520,17 @@
 *am33_2
 {
   int srcreg1, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   State.regs[dstreg2] = EXTEND4 (IMM4);
@@ -7544,7 +7544,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
@@ -7552,10 +7552,10 @@
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   temp = State.regs[dstreg2];
@@ -7571,17 +7571,17 @@
 *am33_2
 {
   int srcreg1, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   temp = State.regs[dstreg2];
@@ -7597,7 +7597,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
@@ -7605,10 +7605,10 @@
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   State.regs[dstreg2] >>= State.regs[srcreg2];
@@ -7622,17 +7622,17 @@
 *am33_2
 {
   int srcreg1, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   State.regs[dstreg2] >>= IMM4;
@@ -7647,7 +7647,7 @@
 *am33_2
 {
   int srcreg1, srcreg2, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
@@ -7655,10 +7655,10 @@
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   State.regs[dstreg2] <<= State.regs[srcreg2];
@@ -7672,17 +7672,17 @@
 *am33_2
 {
   int srcreg1, dstreg1, dstreg2;
-  signed32 temp, temp2, sum;
+  int32_t temp, temp2, sum;
 
   PC = cia;
   srcreg1 = translate_rreg (SD_, RM1);
   dstreg1 = translate_rreg (SD_, RN1);
   dstreg2 = translate_rreg (SD_, RN2);
 
-  temp = ((signed32)(signed16)(State.regs[dstreg1] & 0xffff)
-          * (signed32)(signed16)(State.regs[srcreg1] & 0xffff));
-  temp2 = ((signed32)(signed16)((State.regs[srcreg1] >> 16) & 0xffff)
-           * (signed32)(signed16)((State.regs[dstreg1] >> 16) & 0xffff));
+  temp = ((int32_t)(int16_t)(State.regs[dstreg1] & 0xffff)
+          * (int32_t)(int16_t)(State.regs[srcreg1] & 0xffff));
+  temp2 = ((int32_t)(int16_t)((State.regs[srcreg1] >> 16) & 0xffff)
+           * (int32_t)(int16_t)((State.regs[dstreg1] >> 16) & 0xffff));
   sum = temp + temp2 + State.regs[REG_MCRL];
 
   State.regs[dstreg2] <<= IMM4;

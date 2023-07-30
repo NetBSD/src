@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -82,3 +82,21 @@ gdb_test_no_output "guile (define a (execute \"help\" #:to-string #t))" \
 
 gdb_test "guile (print a)" "= .*aliases -- User-defined aliases of other commands.*" \
     "verify help to uiout"
+
+# Verify that we can source a guile script using ~ for the HOME directory.
+save_vars { env(HOME) } {
+    # Create a new directory to act as a temporary HOME directory.
+    set tmp_home [standard_output_file tmp_home]
+    file mkdir $tmp_home
+
+    # Copy the file we want to source into the new HOME directory.
+    gdb_remote_download host ${srcdir}/${subdir}/source2.scm \
+	${tmp_home}/source2.scm
+
+    # Arrange to use the new HOME directory.
+    set env(HOME) $tmp_home
+    clean_restart
+
+    # Finally, source the file out of our new HOME directory.
+    gdb_test "source ~/source2.scm" "yes"
+}

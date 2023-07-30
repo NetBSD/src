@@ -1,7 +1,7 @@
 /* Machine independent support for QNX Neutrino /proc (process file system)
    for GDB.  Written by Colin Burgess at QNX Software Systems Limited.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -69,7 +69,7 @@ struct nto_procfs_target : public inf_child_target
 
   void resume (ptid_t, int, enum gdb_signal) override;
 
-  ptid_t wait (ptid_t, struct target_waitstatus *, int) override;
+  ptid_t wait (ptid_t, struct target_waitstatus *, target_wait_flags) override;
 
   void fetch_registers (struct regcache *, int) override;
   void store_registers (struct regcache *, int) override;
@@ -121,7 +121,7 @@ struct nto_procfs_target : public inf_child_target
 
   const char *extra_thread_info (struct thread_info *) override;
 
-  char *pid_to_exec_file (int pid) override;
+  const char *pid_to_exec_file (int pid) override;
 };
 
 /* For "target native".  */
@@ -220,9 +220,9 @@ nto_procfs_target::open (const char *arg, int from_tty)
       if (nto_procfs_node == -1)
 	{
 	  if (errno == ENOTSUP)
-	    printf_filtered ("QNX Net Manager not found.\n");
-	  printf_filtered ("Invalid QNX node %s: error %d (%s).\n", nodestr,
-			   errno, safe_strerror (errno));
+	    gdb_printf ("QNX Net Manager not found.\n");
+	  gdb_printf ("Invalid QNX node %s: error %d (%s).\n", nodestr,
+		      errno, safe_strerror (errno));
 	  xfree (nodestr);
 	  nodestr = NULL;
 	  nto_procfs_node = ND_LOCAL_NODE;
@@ -241,16 +241,16 @@ nto_procfs_target::open (const char *arg, int from_tty)
   scoped_fd fd (open (nto_procfs_path, O_RDONLY));
   if (fd.get () == -1)
     {
-      printf_filtered ("Error opening %s : %d (%s)\n", nto_procfs_path, errno,
-		       safe_strerror (errno));
+      gdb_printf ("Error opening %s : %d (%s)\n", nto_procfs_path, errno,
+		  safe_strerror (errno));
       error (_("Invalid procfs arg"));
     }
 
   sysinfo = (void *) buffer;
   if (devctl (fd.get (), DCMD_PROC_SYSINFO, sysinfo, sizeof buffer, 0) != EOK)
     {
-      printf_filtered ("Error getting size: %d (%s)\n", errno,
-		       safe_strerror (errno));
+      gdb_printf ("Error getting size: %d (%s)\n", errno,
+		  safe_strerror (errno));
       error (_("Devctl failed."));
     }
   else
@@ -259,8 +259,8 @@ nto_procfs_target::open (const char *arg, int from_tty)
       sysinfo = alloca (total_size);
       if (sysinfo == NULL)
 	{
-	  printf_filtered ("Memory error: %d (%s)\n", errno,
-			   safe_strerror (errno));
+	  gdb_printf ("Memory error: %d (%s)\n", errno,
+		      safe_strerror (errno));
 	  error (_("alloca failed."));
 	}
       else
@@ -268,8 +268,8 @@ nto_procfs_target::open (const char *arg, int from_tty)
 	  if (devctl (fd.get (), DCMD_PROC_SYSINFO, sysinfo, total_size, 0)
 	      != EOK)
 	    {
-	      printf_filtered ("Error getting sysinfo: %d (%s)\n", errno,
-			       safe_strerror (errno));
+	      gdb_printf ("Error getting sysinfo: %d (%s)\n", errno,
+			  safe_strerror (errno));
 	      error (_("Devctl failed."));
 	    }
 	  else
@@ -283,7 +283,7 @@ nto_procfs_target::open (const char *arg, int from_tty)
     }
 
   inf_child_target::open (arg, from_tty);
-  printf_filtered ("Debugging using %s\n", nto_procfs_path);
+  gdb_printf ("Debugging using %s\n", nto_procfs_path);
 }
 
 static void
@@ -437,8 +437,8 @@ procfs_pidlist (const char *args, int from_tty)
   gdb_dir_up dp (opendir (procfs_dir));
   if (dp == NULL)
     {
-      fprintf_unfiltered (gdb_stderr, "failed to opendir \"%s\" - %d (%s)",
-			  procfs_dir, errno, safe_strerror (errno));
+      gdb_printf (gdb_stderr, "failed to opendir \"%s\" - %d (%s)",
+		  procfs_dir, errno, safe_strerror (errno));
       return;
     }
 
@@ -464,17 +464,17 @@ procfs_pidlist (const char *args, int from_tty)
       scoped_fd fd (open (buf, O_RDONLY));
       if (fd.get () == -1)
 	{
-	  fprintf_unfiltered (gdb_stderr, "failed to open %s - %d (%s)\n",
-			      buf, errno, safe_strerror (errno));
+	  gdb_printf (gdb_stderr, "failed to open %s - %d (%s)\n",
+		      buf, errno, safe_strerror (errno));
 	  continue;
 	}
 
       pidinfo = (procfs_info *) buf;
       if (devctl (fd.get (), DCMD_PROC_INFO, pidinfo, sizeof (buf), 0) != EOK)
 	{
-	  fprintf_unfiltered (gdb_stderr,
-			      "devctl DCMD_PROC_INFO failed - %d (%s)\n",
-			      errno, safe_strerror (errno));
+	  gdb_printf (gdb_stderr,
+		      "devctl DCMD_PROC_INFO failed - %d (%s)\n",
+		      errno, safe_strerror (errno));
 	  break;
 	}
       num_threads = pidinfo->num_threads;
@@ -492,12 +492,12 @@ procfs_pidlist (const char *args, int from_tty)
 	{
 	  const int err
 	    = devctl (fd.get (), DCMD_PROC_TIDSTATUS, status, sizeof (buf), 0);
-	  printf_filtered ("%s - %d", name, pid);
+	  gdb_printf ("%s - %d", name, pid);
 	  if (err == EOK && status->tid != 0)
-	    printf_filtered ("/%d\n", status->tid);
+	    gdb_printf ("/%d\n", status->tid);
 	  else
 	    {
-	      printf_filtered ("\n");
+	      gdb_printf ("\n");
 	      break;
 	    }
 	}
@@ -629,22 +629,22 @@ procfs_meminfo (const char *args, int from_tty)
 	}
       mapinfo_p->ino = 0;
 
-      printf_filtered ("%s\n", printme.name);
-      printf_filtered ("\ttext=%08x bytes @ 0x%08x\n", printme.text.size,
-		       printme.text.addr);
-      printf_filtered ("\t\tflags=%08x\n", printme.text.flags);
-      printf_filtered ("\t\tdebug=%08x\n", printme.text.debug_vaddr);
-      printf_filtered ("\t\toffset=%s\n", phex (printme.text.offset, 8));
+      gdb_printf ("%s\n", printme.name);
+      gdb_printf ("\ttext=%08x bytes @ 0x%08x\n", printme.text.size,
+		  printme.text.addr);
+      gdb_printf ("\t\tflags=%08x\n", printme.text.flags);
+      gdb_printf ("\t\tdebug=%08x\n", printme.text.debug_vaddr);
+      gdb_printf ("\t\toffset=%s\n", phex (printme.text.offset, 8));
       if (printme.data.size)
 	{
-	  printf_filtered ("\tdata=%08x bytes @ 0x%08x\n", printme.data.size,
-			   printme.data.addr);
-	  printf_filtered ("\t\tflags=%08x\n", printme.data.flags);
-	  printf_filtered ("\t\tdebug=%08x\n", printme.data.debug_vaddr);
-	  printf_filtered ("\t\toffset=%s\n", phex (printme.data.offset, 8));
+	  gdb_printf ("\tdata=%08x bytes @ 0x%08x\n", printme.data.size,
+		      printme.data.addr);
+	  gdb_printf ("\t\tflags=%08x\n", printme.data.flags);
+	  gdb_printf ("\t\tdebug=%08x\n", printme.data.debug_vaddr);
+	  gdb_printf ("\t\toffset=%s\n", phex (printme.data.offset, 8));
 	}
-      printf_filtered ("\tdev=0x%x\n", printme.dev);
-      printf_filtered ("\tino=0x%x\n", (unsigned int) printme.ino);
+      gdb_printf ("\tdev=0x%x\n", printme.dev);
+      gdb_printf ("\tino=0x%x\n", (unsigned int) printme.ino);
     }
   xfree (mapinfos);
   return;
@@ -656,15 +656,15 @@ nto_procfs_target::files_info ()
 {
   struct inferior *inf = current_inferior ();
 
-  printf_unfiltered ("\tUsing the running image of %s %s via %s.\n",
-		     inf->attach_flag ? "attached" : "child",
-		     target_pid_to_str (inferior_ptid).c_str (),
-		     (nodestr != NULL) ? nodestr : "local node");
+  gdb_printf ("\tUsing the running image of %s %s via %s.\n",
+	      inf->attach_flag ? "attached" : "child",
+	      target_pid_to_str (inferior_ptid).c_str (),
+	      (nodestr != NULL) ? nodestr : "local node");
 }
 
 /* Target to_pid_to_exec_file implementation.  */
 
-char *
+const char *
 nto_procfs_target::pid_to_exec_file (const int pid)
 {
   int proc_fd;
@@ -701,24 +701,15 @@ nto_procfs_target::attach (const char *args, int from_tty)
   if (pid == getpid ())
     error (_("Attaching GDB to itself is not a good idea..."));
 
-  if (from_tty)
-    {
-      const char *exec_file = get_exec_file (0);
+  target_announce_attach (from_tty, pid);
 
-      if (exec_file)
-	printf_unfiltered ("Attaching to program `%s', %s\n", exec_file,
-			   target_pid_to_str (ptid_t (pid)).c_str ());
-      else
-	printf_unfiltered ("Attaching to %s\n",
-			   target_pid_to_str (ptid_t (pid)).c_str ());
-    }
   ptid_t ptid = do_attach (ptid_t (pid));
   inf = current_inferior ();
   inferior_appeared (inf, pid);
-  inf->attach_flag = 1;
+  inf->attach_flag = true;
 
-  if (!target_is_pushed (ops))
-    push_target (ops);
+  if (!inf->target_is_pushed (ops))
+    inf->push_target (ops);
 
   update_thread_list ();
 
@@ -728,7 +719,7 @@ nto_procfs_target::attach (const char *args, int from_tty)
 void
 nto_procfs_target::post_attach (pid_t pid)
 {
-  if (exec_bfd)
+  if (current_program_space->exec_bfd ())
     solib_create_inferior_hook (0);
 }
 
@@ -795,19 +786,18 @@ nto_handle_sigint (int signo)
 
 sptid_t
 nto_procfs_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
-			 int options)
+			 target_wait_flags options)
 {
   sigset_t set;
   siginfo_t info;
   procfs_status status;
   static int exit_signo = 0;	/* To track signals that cause termination.  */
 
-  ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
+  ourstatus->set_spurious ();
 
   if (inferior_ptid == null_ptid)
     {
-      ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = GDB_SIGNAL_0;
+      ourstatus->set_stopped (GDB_SIGNAL_0);
       exit_signo = 0;
       return null_ptid;
     }
@@ -828,38 +818,29 @@ nto_procfs_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
   nto_inferior_data (NULL)->stopped_pc = status.ip;
 
   if (status.flags & _DEBUG_FLAG_SSTEP)
-    {
-      ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = GDB_SIGNAL_TRAP;
-    }
+    ourstatus->set_stopped (GDB_SIGNAL_TRAP);
   /* Was it a breakpoint?  */
   else if (status.flags & _DEBUG_FLAG_TRACE)
-    {
-      ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = GDB_SIGNAL_TRAP;
-    }
+    ourstatus->set_stopped (GDB_SIGNAL_TRAP);
   else if (status.flags & _DEBUG_FLAG_ISTOP)
     {
       switch (status.why)
 	{
 	case _DEBUG_WHY_SIGNALLED:
-	  ourstatus->kind = TARGET_WAITKIND_STOPPED;
-	  ourstatus->value.sig =
-	    gdb_signal_from_host (status.info.si_signo);
+	  ourstatus->set_stopped (gdb_signal_from_host (status.info.si_signo));
 	  exit_signo = 0;
 	  break;
 	case _DEBUG_WHY_FAULTED:
-	  ourstatus->kind = TARGET_WAITKIND_STOPPED;
 	  if (status.info.si_signo == SIGTRAP)
 	    {
-	      ourstatus->value.sig = 0;
+	      ourstatus->set_stopped (0);
 	      exit_signo = 0;
 	    }
 	  else
 	    {
-	      ourstatus->value.sig =
-		gdb_signal_from_host (status.info.si_signo);
-	      exit_signo = ourstatus->value.sig;
+	      ourstatus->set_stopped
+		(gdb_signal_from_host (status.info.si_signo));
+	      exit_signo = ourstatus->sig ();
 	    }
 	  break;
 
@@ -871,14 +852,12 @@ nto_procfs_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	    if (exit_signo)
 	      {
 		/* Abnormal death.  */
-		ourstatus->kind = TARGET_WAITKIND_SIGNALLED;
-		ourstatus->value.sig = exit_signo;
+		ourstatus->set_signalled (exit_signo);
 	      }
 	    else
 	      {
 		/* Normal death.  */
-		ourstatus->kind = TARGET_WAITKIND_EXITED;
-		ourstatus->value.integer = WEXITSTATUS (waitval);
+		ourstatus->set_exited (WEXITSTATUS (waitval));
 	      }
 	    exit_signo = 0;
 	    break;
@@ -886,8 +865,7 @@ nto_procfs_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 
 	case _DEBUG_WHY_REQUESTED:
 	  /* We are assuming a requested stop is due to a SIGINT.  */
-	  ourstatus->kind = TARGET_WAITKIND_STOPPED;
-	  ourstatus->value.sig = GDB_SIGNAL_INT;
+	  ourstatus->set_stopped (GDB_SIGNAL_INT);
 	  exit_signo = 0;
 	  break;
 	}
@@ -972,7 +950,7 @@ nto_procfs_target::xfer_partial (enum target_object object,
 	    return TARGET_XFER_E_IO;
 
 	  err = devctl (ctl_fd, DCMD_PROC_INFO, &procinfo,
-		        sizeof procinfo, 0);
+			sizeof procinfo, 0);
 	  if (err != EOK)
 	    return TARGET_XFER_E_IO;
 
@@ -1142,7 +1120,7 @@ nto_procfs_target::mourn_inferior ()
    the string "a b c d", and as output it would fill in argv with
    the four arguments "a", "b", "c", "d".  The only additional
    functionality is simple quoting.  The gdb command:
-  	run a "b c d" f
+	run a "b c d" f
    will fill in argv with the three args "a", "b c d", "e".  */
 static void
 breakup_args (char *scratch, char **argv)
@@ -1308,7 +1286,7 @@ nto_procfs_target::create_inferior (const char *exec_file,
 
   inf = current_inferior ();
   inferior_appeared (inf, pid);
-  inf->attach_flag = 0;
+  inf->attach_flag = false;
 
   flags = _DEBUG_FLAG_KLC;	/* Kill-on-Last-Close flag.  */
   errn = devctl (ctl_fd, DCMD_PROC_SET_FLAG, &flags, sizeof (flags), 0);
@@ -1316,14 +1294,15 @@ nto_procfs_target::create_inferior (const char *exec_file,
     {
       /* FIXME: expected warning?  */
       /* warning( "Failed to set Kill-on-Last-Close flag: errno = %d(%s)\n",
-         errn, safe_strerror(errn) ); */
+	 errn, safe_strerror(errn) ); */
     }
-  if (!target_is_pushed (ops))
-    push_target (ops);
+  if (!inf->target_is_pushed (ops))
+    inf->push_target (ops);
   target_terminal::init ();
 
-  if (exec_bfd != NULL
-      || (symfile_objfile != NULL && symfile_objfile->obfd != NULL))
+  if (current_program_space->exec_bfd () != NULL
+      || (current_program_space->symfile_object_file != NULL
+	  && current_program_space->symfile_object_file->obfd != NULL))
     solib_create_inferior_hook (0);
 }
 
@@ -1405,9 +1384,9 @@ nto_procfs_target::store_registers (struct regcache *regcache, int regno)
 
 	  err = devctl (ctl_fd, dev_set, &reg, regsize, 0);
 	  if (err != EOK)
-	    fprintf_unfiltered (gdb_stderr,
-				"Warning unable to write regset %d: %s\n",
-				regno, safe_strerror (err));
+	    gdb_printf (gdb_stderr,
+			"Warning unable to write regset %d: %s\n",
+			regno, safe_strerror (err));
 	}
     }
   else
@@ -1430,9 +1409,9 @@ nto_procfs_target::store_registers (struct regcache *regcache, int regno)
 
       err = devctl (ctl_fd, dev_set, &reg, regsize, 0);
       if (err != EOK)
-	fprintf_unfiltered (gdb_stderr,
-			    "Warning unable to write regset %d: %s\n", regno,
-			    safe_strerror (err));
+	gdb_printf (gdb_stderr,
+		    "Warning unable to write regset %d: %s\n", regno,
+		    safe_strerror (err));
     }
 }
 
@@ -1450,7 +1429,7 @@ nto_procfs_target::pass_signals
     {
       int target_signo = gdb_signal_from_host (signo);
       if (target_signo < pass_signals.size () && pass_signals[target_signo])
-        sigdelset (&run.trace, signo);
+	sigdelset (&run.trace, signo);
     }
 }
 

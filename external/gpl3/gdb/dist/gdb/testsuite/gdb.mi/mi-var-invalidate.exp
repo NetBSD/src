@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ set MIFLAGS "-i=mi"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 standard_testfile var-cmd.c
@@ -70,13 +70,13 @@ mi_create_floating_varobj float_simple array "create floating variable"
 #
 mi_delete_breakpoints
 mi_gdb_load ${binfile_bis}
-mi_runto main
+mi_runto_main
 
 # Change format of floating variable immediately after reload reveals a
 # bug where gdb still uses a free'd pointer.
 mi_gdb_test "-var-set-format float_simple hexadecimal" \
-        "\\^done,format=\"hexadecimal\",value=\"\\\[-1\\\]\"" \
-       "set format variable float_simple"
+	"\\^done,format=\"hexadecimal\",value=\"\\\[3\\\]\"" \
+	"set format variable float_simple"
 
 # Check local variable is "invalid".
 mi_gdb_test "-var-update linteger" \

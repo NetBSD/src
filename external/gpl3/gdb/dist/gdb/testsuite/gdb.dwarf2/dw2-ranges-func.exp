@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,10 +22,7 @@ if {![dwarf2_support]} {
     return 0
 }
 
-if [get_compiler_info] {
-    return -1
-}
-if !$gcc_compiled {
+if ![is_c_compiler_gcc] {
     unsupported "gcc required for this test"
     return 0
 }
@@ -133,81 +130,81 @@ proc do_test {suffix} {
 	    # Generate a line table program.  An attempt was made to make it
 	    # reasonably accurate as it made debugging the test case easier.
 	    program {
-		{DW_LNE_set_address $main_start}
-		{line [gdb_get_line_number "main prologue"]}
-		{DW_LNS_copy}
-		{DW_LNE_set_address main_label}
-		{line [gdb_get_line_number "main foo call"]}
-		{DW_LNS_copy}
-		{DW_LNE_set_address main_label2}
-		{line [gdb_get_line_number "main return"]}
-		{DW_LNS_copy}
-		{DW_LNE_set_address $main_end}
-		{line [expr [gdb_get_line_number "main end"] + 1]}
-		{DW_LNS_copy}
-		{DW_LNE_end_sequence}
+		DW_LNE_set_address $main_start
+		line [gdb_get_line_number "main prologue"]
+		DW_LNS_copy
+		DW_LNE_set_address main_label
+		line [gdb_get_line_number "main foo call"]
+		DW_LNS_copy
+		DW_LNE_set_address main_label2
+		line [gdb_get_line_number "main return"]
+		DW_LNS_copy
+		DW_LNE_set_address $main_end
+		line [expr [gdb_get_line_number "main end"] + 1]
+		DW_LNS_copy
+		DW_LNE_end_sequence
 
-		{DW_LNE_set_address $foo_start}
-		{line [gdb_get_line_number "foo prologue"]}
-		{DW_LNS_copy}
-		{DW_LNE_set_address foo_label}
-		{line [gdb_get_line_number "foo bar call"]}
-		{DW_LNS_copy}
-		{DW_LNE_set_address foo_label2}
-		{line [gdb_get_line_number "foo foo_cold call"]}
-		{DW_LNS_copy}
-		{DW_LNE_set_address foo_label3}
-		{line [gdb_get_line_number "foo end"]}
-		{DW_LNS_copy}
-		{DW_LNE_set_address $foo_end}
-		{DW_LNS_advance_line 1}
-		{DW_LNS_copy}
-		{DW_LNE_end_sequence}
+		DW_LNE_set_address $foo_start
+		line [gdb_get_line_number "foo prologue"]
+		DW_LNS_copy
+		DW_LNE_set_address foo_label
+		line [gdb_get_line_number "foo bar call"]
+		DW_LNS_copy
+		DW_LNE_set_address foo_label2
+		line [gdb_get_line_number "foo foo_cold call"]
+		DW_LNS_copy
+		DW_LNE_set_address foo_label3
+		line [gdb_get_line_number "foo end"]
+		DW_LNS_copy
+		DW_LNE_set_address $foo_end
+		DW_LNS_advance_line 1
+		DW_LNS_copy
+		DW_LNE_end_sequence
 
-		{DW_LNE_set_address $bar_start}
-		{line [gdb_get_line_number "bar end"]}
-		{DW_LNS_copy}
-		{DW_LNS_advance_pc $bar_len}
-		{DW_LNS_advance_line 1}
-		{DW_LNS_copy}
-		{DW_LNE_end_sequence}
+		DW_LNE_set_address $bar_start
+		line [gdb_get_line_number "bar end"]
+		DW_LNS_copy
+		DW_LNS_advance_pc $bar_len
+		DW_LNS_advance_line 1
+		DW_LNS_copy
+		DW_LNE_end_sequence
 
-		{DW_LNE_set_address $baz_start}
-		{line [gdb_get_line_number "baz end"]}
-		{DW_LNS_copy}
-		{DW_LNS_advance_pc $baz_len}
-		{DW_LNS_advance_line 1}
-		{DW_LNS_copy}
-		{DW_LNE_end_sequence}
+		DW_LNE_set_address $baz_start
+		line [gdb_get_line_number "baz end"]
+		DW_LNS_copy
+		DW_LNS_advance_pc $baz_len
+		DW_LNS_advance_line 1
+		DW_LNS_copy
+		DW_LNE_end_sequence
 
-		{DW_LNE_set_address $foo_cold_start}
-	        {line [gdb_get_line_number "foo_cold prologue"]}
-		{DW_LNS_copy}
-		{DW_LNE_set_address foo_cold_label}
-		{line [gdb_get_line_number "foo_cold baz call"]}
-		{DW_LNS_copy}
-		{DW_LNE_set_address foo_cold_label2}
-		{line [gdb_get_line_number "foo_cold end"]}
-		{DW_LNS_copy}
-		{DW_LNE_set_address $foo_cold_end}
-		{DW_LNS_advance_line 1}
-		{DW_LNS_copy}
-		{DW_LNE_end_sequence}
+		DW_LNE_set_address $foo_cold_start
+	        line [gdb_get_line_number "foo_cold prologue"]
+		DW_LNS_copy
+		DW_LNE_set_address foo_cold_label
+		line [gdb_get_line_number "foo_cold baz call"]
+		DW_LNS_copy
+		DW_LNE_set_address foo_cold_label2
+		line [gdb_get_line_number "foo_cold end"]
+		DW_LNS_copy
+		DW_LNE_set_address $foo_cold_end
+		DW_LNS_advance_line 1
+		DW_LNS_copy
+		DW_LNE_end_sequence
 	    }
 	}
 
 	# Generate ranges data.
 	ranges {is_64 [is_64_target]} {
 	    func_ranges_label: sequence {
-		{range {$foo_start } $foo_end}
-		{range {$foo_cold_start} $foo_cold_end}
+		range $foo_start $foo_end
+		range $foo_cold_start $foo_cold_end
 	    }
 	    cu_ranges_label: sequence {
-		{range {$foo_start } $foo_end}
-		{range {$foo_cold_start} $foo_cold_end}
-		{range {$main_start} $main_end}
-		{range {$bar_start} $bar_end}
-		{range {$baz_start} $baz_end}
+		range $foo_start $foo_end
+		range $foo_cold_start $foo_cold_end
+		range $main_start $main_end
+		range $bar_start $bar_end
+		range $baz_start $baz_end
 	    }
 	}
     }

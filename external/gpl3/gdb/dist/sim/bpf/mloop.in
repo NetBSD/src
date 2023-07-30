@@ -1,6 +1,6 @@
 # Simulator main loop for eBPF. -*- C -*-
 #
-# Copyright (C) 2020 Free Software Foundation, Inc.
+# Copyright (C) 2020-2023 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Simulators.
 #
@@ -121,23 +121,26 @@ cat <<EOF
 
   UDI insn = GETIMEMUDI (current_cpu, vpc);
 
-  if (current_target_byte_order == BFD_ENDIAN_BIG)
+  if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
     {
+      UHI off16;
+      USI imm32;
+
       /* eBPF instructions are little-endian, but GETIMEMUDI reads according
          to target byte order. Swap to little-endian. */
       insn = SWAP_8 (insn);
 
       /* But, the imm32 and offset16 fields within instructions follow target
          byte order. Swap those fields back. */
-      UHI off16 = (UHI) ((insn & 0x00000000ffff0000) >> 16);
-      USI imm32 = (USI) ((insn & 0xffffffff00000000) >> 32);
+      off16 = (UHI) ((insn & 0x00000000ffff0000) >> 16);
+      imm32 = (USI) ((insn & 0xffffffff00000000) >> 32);
       off16 = SWAP_2 (off16);
       imm32 = SWAP_4 (imm32);
 
       insn = (((UDI) imm32) << 32) | (((UDI) off16) << 16) | (insn & 0xffff);
     }
 
-  extract (current_cpu, vpc, insn, sc, FAST_P);
+  extract (current_cpu, vpc, insn, SEM_ARGBUF (sc), FAST_P);
 
   //XXX  SEM_SKIP_COMPILE (current_cpu, sc, 1);
 }

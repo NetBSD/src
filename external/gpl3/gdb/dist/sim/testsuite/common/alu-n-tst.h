@@ -5,7 +5,7 @@
 #include "symcat.h"
 
 /* NOTE: see end of file for #undef of these macros */
-#define unsignedN    XCONCAT2(unsigned,N)
+#define unsignedN    XCONCAT3(uint,N,_t)
 #define MAX_INT      XCONCAT2(MAX_INT,N)
 #define MIN_INT      XCONCAT2(MIN_INT,N)
 #define alu_N_tests     XCONCAT3(alu_,N,_tests)

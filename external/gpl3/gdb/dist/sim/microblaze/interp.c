@@ -1,5 +1,5 @@
 /* Simulator for Xilinx MicroBlaze processor
-   Copyright 2009-2020 Free Software Foundation, Inc.
+   Copyright 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -16,25 +16,29 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "bfd.h"
-#include "gdb/callback.h"
+#include "sim/callback.h"
 #include "libiberty.h"
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 
 #include "sim-main.h"
 #include "sim-options.h"
+#include "sim-signal.h"
+#include "sim-syscall.h"
 
 #include "microblaze-dis.h"
 
 #define target_big_endian (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 
 static unsigned long
-microblaze_extract_unsigned_integer (unsigned char *addr, int len)
+microblaze_extract_unsigned_integer (const unsigned char *addr, int len)
 {
   unsigned long retval;
   unsigned char *p;
@@ -117,19 +121,19 @@ sim_engine_run (SIM_DESC sd,
 {
   SIM_CPU *cpu = STATE_CPU (sd, 0);
   int needfetch;
-  word inst;
+  signed_4 inst;
   enum microblaze_instr op;
   int memops;
   int bonus_cycles;
   int insts;
   int w;
   int cycs;
-  word WLhash;
-  ubyte carry;
-  int imm_unsigned;
+  signed_4 WLhash;
+  unsigned_1 carry;
+  bool imm_unsigned;
   short ra, rb, rd;
   long immword;
-  uword oldpc, newpc;
+  unsigned_4 oldpc, newpc;
   short delay_slot_enable;
   short branch_taken;
   short num_delay_slot; /* UNUSED except as reqd parameter */
@@ -167,6 +171,7 @@ sim_engine_run (SIM_DESC sd,
 	{
 	  insts += 1;
 	  bonus_cycles++;
+	  TRACE_INSN (cpu, "HALT (%i)", RETREG);
 	  sim_engine_halt (sd, NULL, NULL, NULL_CIA, sim_exited, RETREG);
 	}
       else
@@ -175,6 +180,7 @@ sim_engine_run (SIM_DESC sd,
 	    {
 #define INSTRUCTION(NAME, OPCODE, TYPE, ACTION)		\
 	    case NAME:					\
+	      TRACE_INSN (cpu, #NAME);			\
 	      ACTION;					\
 	      break;
 #include "microblaze.isa"
@@ -284,8 +290,18 @@ sim_engine_run (SIM_DESC sd,
 		    IMM_ENABLE = 0;
 	        }
 	      else
-		/* no delay slot: increment cycle count */
-		bonus_cycles++;
+		{
+		  if (op == brki && IMM == 8)
+		    {
+		      RETREG = sim_syscall (cpu, CPU.regs[12], CPU.regs[5],
+					    CPU.regs[6], CPU.regs[7],
+					    CPU.regs[8]);
+		      PC = RD + INST_SIZE;
+		    }
+
+		  /* no delay slot: increment cycle count */
+		  bonus_cycles++;
+		}
 	    }
 	}
 
@@ -305,7 +321,7 @@ sim_engine_run (SIM_DESC sd,
 }
 
 static int
-microblaze_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+microblaze_reg_store (SIM_CPU *cpu, int rn, const void *memory, int length)
 {
   if (rn < NUM_REGS + NUM_SPECIAL && rn >= 0)
     {
@@ -327,7 +343,7 @@ microblaze_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
 }
 
 static int
-microblaze_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+microblaze_reg_fetch (SIM_CPU *cpu, int rn, void *memory, int length)
 {
   long ival;
 
@@ -393,7 +409,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -413,10 +429,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
     }
 
   /* Check for/establish the a reference program image.  */
-  if (sim_analyze_program (sd,
-			   (STATE_PROG_ARGV (sd) != NULL
-			    ? *STATE_PROG_ARGV (sd)
-			    : NULL), abfd) != SIM_RC_OK)
+  if (sim_analyze_program (sd, STATE_PROG_FILE (sd), abfd) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;

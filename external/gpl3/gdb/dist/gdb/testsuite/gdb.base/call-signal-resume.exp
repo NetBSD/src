@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 if [target_info exists gdb,nosignals] {
     verbose "Skipping call-signal-resume.exp because of nosignals."
-    continue
+    return
 }
 
 
@@ -37,7 +37,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 # test.
 if [target_info exists gdb,cannot_call_functions] {
     unsupported "this target can not call functions"
-    continue
+    return
 }
 
 proc get_dummy_frame_number { } {
@@ -56,7 +56,6 @@ proc get_dummy_frame_number { } {
 clean_restart ${binfile}
 
 if { ![runto_main] } {
-    fail "can't run to main"
     return 0
 }
 
@@ -117,18 +116,17 @@ gdb_test "call null_hand_call ()" "Breakpoint \[0-9\]*, null_hand_call.*" \
 
 set frame_number [get_dummy_frame_number]
 if { "$frame_number" == "" } {
-    fail "dummy stack frame number"
+    fail "dummy stack frame number, two"
     setup_xfail "*-*-*"
     # Need something.
     set frame_number 0
 } else {
-    pass "dummy stack frame number"
+    pass "dummy stack frame number, two"
 }
 
 # Pop the dummy frame.
 gdb_test "frame $frame_number" ".*"
-gdb_test_no_output "set confirm off"
-gdb_test "return" ""
+gdb_test "return" "" "return, two"
 
 # Continue again, this time we should get to the signal handler.
 

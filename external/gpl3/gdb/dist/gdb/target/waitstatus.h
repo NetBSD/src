@@ -1,6 +1,6 @@
 /* Target waitstatus definitions and prototypes.
 
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #ifndef TARGET_WAITSTATUS_H
 #define TARGET_WAITSTATUS_H
 
+#include "diagnostics.h"
 #include "gdbsupport/gdb_signals.h"
 
 /* Stuff for target_wait.  */
@@ -101,24 +102,323 @@ enum target_waitkind
   TARGET_WAITKIND_THREAD_EXITED,
 };
 
+/* Return KIND as a string.  */
+
+static inline const char *
+target_waitkind_str (target_waitkind kind)
+{
+/* Make sure the compiler warns if a new TARGET_WAITKIND enumerator is added
+   but not handled here.  */
+DIAGNOSTIC_PUSH
+DIAGNOSTIC_ERROR_SWITCH
+  switch (kind)
+  {
+    case TARGET_WAITKIND_EXITED:
+      return "EXITED";
+    case TARGET_WAITKIND_STOPPED:
+      return "STOPPED";
+    case TARGET_WAITKIND_SIGNALLED:
+      return "SIGNALLED";
+    case TARGET_WAITKIND_LOADED:
+      return "LOADED";
+    case TARGET_WAITKIND_FORKED:
+      return "FORKED";
+    case TARGET_WAITKIND_VFORKED:
+      return "VFORKED";
+    case TARGET_WAITKIND_EXECD:
+      return "EXECD";
+    case TARGET_WAITKIND_VFORK_DONE:
+      return "VFORK_DONE";
+    case TARGET_WAITKIND_SYSCALL_ENTRY:
+      return "SYSCALL_ENTRY";
+    case TARGET_WAITKIND_SYSCALL_RETURN:
+      return "SYSCALL_RETURN";
+    case TARGET_WAITKIND_SPURIOUS:
+      return "SPURIOUS";
+    case TARGET_WAITKIND_IGNORE:
+      return "IGNORE";
+    case TARGET_WAITKIND_NO_HISTORY:
+      return "NO_HISTORY";
+    case TARGET_WAITKIND_NO_RESUMED:
+      return "NO_RESUMED";
+    case TARGET_WAITKIND_THREAD_CREATED:
+      return "THREAD_CREATED";
+    case TARGET_WAITKIND_THREAD_EXITED:
+      return "THREAD_EXITED";
+  };
+DIAGNOSTIC_POP
+
+  gdb_assert_not_reached ("invalid target_waitkind value: %d\n", (int) kind);
+}
+
 struct target_waitstatus
 {
-  enum target_waitkind kind;
+  /* Default constructor.  */
+  target_waitstatus () = default;
+
+  /* Copy constructor.  */
+
+  target_waitstatus (const target_waitstatus &other)
+  {
+    m_kind = other.m_kind;
+    m_value = other.m_value;
+
+    if (m_kind == TARGET_WAITKIND_EXECD)
+      m_value.execd_pathname = xstrdup (m_value.execd_pathname);
+  }
+
+  /* Move constructor.  */
+
+  target_waitstatus (target_waitstatus &&other)
+  {
+    m_kind = other.m_kind;
+    m_value = other.m_value;
+
+    if (m_kind == TARGET_WAITKIND_EXECD)
+      other.m_value.execd_pathname = nullptr;
+
+    other.reset ();
+  }
+
+  /* Copy assignment operator.  */
+
+  target_waitstatus &operator= (const target_waitstatus &rhs)
+  {
+    this->reset ();
+    m_kind = rhs.m_kind;
+    m_value = rhs.m_value;
+
+    if (m_kind == TARGET_WAITKIND_EXECD)
+      m_value.execd_pathname = xstrdup (m_value.execd_pathname);
+
+    return *this;
+  }
+
+  /* Move assignment operator.  */
+
+  target_waitstatus &operator= (target_waitstatus &&rhs)
+  {
+    this->reset ();
+    m_kind = rhs.m_kind;
+    m_value = rhs.m_value;
+
+    if (m_kind == TARGET_WAITKIND_EXECD)
+      rhs.m_value.execd_pathname = nullptr;
+
+    rhs.reset ();
+
+    return *this;
+  }
+
+  /* Destructor.  */
+
+  ~target_waitstatus ()
+  {
+    this->reset ();
+  }
+
+  /* Setters: set the wait status kind plus any associated data.  */
+
+  target_waitstatus &set_exited (int exit_status)
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_EXITED;
+    m_value.exit_status = exit_status;
+    return *this;
+  }
+
+  target_waitstatus &set_stopped (gdb_signal sig)
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_STOPPED;
+    m_value.sig = sig;
+    return *this;
+  }
+
+  target_waitstatus &set_signalled (gdb_signal sig)
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_SIGNALLED;
+    m_value.sig = sig;
+    return *this;
+  }
+
+  target_waitstatus &set_loaded ()
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_LOADED;
+    return *this;
+  }
+
+  target_waitstatus &set_forked (ptid_t child_ptid)
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_FORKED;
+    m_value.child_ptid = child_ptid;
+    return *this;
+  }
+
+  target_waitstatus &set_vforked (ptid_t child_ptid)
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_VFORKED;
+    m_value.child_ptid = child_ptid;
+    return *this;
+  }
+
+  target_waitstatus &set_execd (gdb::unique_xmalloc_ptr<char> execd_pathname)
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_EXECD;
+    m_value.execd_pathname = execd_pathname.release ();
+    return *this;
+  }
+
+  target_waitstatus &set_vfork_done ()
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_VFORK_DONE;
+    return *this;
+  }
+
+  target_waitstatus &set_syscall_entry (int syscall_number)
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_SYSCALL_ENTRY;
+    m_value.syscall_number = syscall_number;
+    return *this;
+  }
+
+  target_waitstatus &set_syscall_return (int syscall_number)
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_SYSCALL_RETURN;
+    m_value.syscall_number = syscall_number;
+    return *this;
+  }
+
+  target_waitstatus &set_spurious ()
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_SPURIOUS;
+    return *this;
+  }
+
+  target_waitstatus &set_ignore ()
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_IGNORE;
+    return *this;
+  }
+
+  target_waitstatus &set_no_history ()
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_NO_HISTORY;
+    return *this;
+  }
+
+  target_waitstatus &set_no_resumed ()
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_NO_RESUMED;
+    return *this;
+  }
+
+  target_waitstatus &set_thread_created ()
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_THREAD_CREATED;
+    return *this;
+  }
+
+  target_waitstatus &set_thread_exited (int exit_status)
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_THREAD_EXITED;
+    m_value.exit_status = exit_status;
+    return *this;
+  }
+
+  /* Get the kind of this wait status.  */
+
+  target_waitkind kind () const
+  {
+    return m_kind;
+  }
+
+  /* Getters for the associated data.
+
+     Getters can only be used if the wait status is of the appropriate kind.
+     See the setters above or the assertions below to know which data is
+     associated to which kind.  */
+
+  int exit_status () const
+  {
+    gdb_assert (m_kind == TARGET_WAITKIND_EXITED
+		|| m_kind == TARGET_WAITKIND_THREAD_EXITED);
+    return m_value.exit_status;
+  }
+
+  gdb_signal sig () const
+  {
+    gdb_assert (m_kind == TARGET_WAITKIND_STOPPED
+		|| m_kind == TARGET_WAITKIND_SIGNALLED);
+    return m_value.sig;
+  }
+
+  ptid_t child_ptid () const
+  {
+    gdb_assert (m_kind == TARGET_WAITKIND_FORKED
+		|| m_kind == TARGET_WAITKIND_VFORKED);
+    return m_value.child_ptid;
+  }
+
+  const char *execd_pathname () const
+  {
+    gdb_assert (m_kind == TARGET_WAITKIND_EXECD);
+    return m_value.execd_pathname;
+  }
+
+  int syscall_number () const
+  {
+    gdb_assert (m_kind == TARGET_WAITKIND_SYSCALL_ENTRY
+		|| m_kind == TARGET_WAITKIND_SYSCALL_RETURN);
+    return m_value.syscall_number;
+  }
+
+  /* Return a pretty printed form of target_waitstatus.
+
+     This is only meant to be used in debug messages, not for user-visible
+     messages.  */
+  std::string to_string () const;
+
+private:
+  /* Reset the wait status to its original state.  */
+  void reset ()
+  {
+    if (m_kind == TARGET_WAITKIND_EXECD)
+      xfree (m_value.execd_pathname);
+
+    m_kind = TARGET_WAITKIND_IGNORE;
+  }
+
+  target_waitkind m_kind = TARGET_WAITKIND_IGNORE;
 
   /* Additional information about the event.  */
   union
     {
       /* Exit status */
-      int integer;
+      int exit_status;
       /* Signal number */
       enum gdb_signal sig;
       /* Forked child pid */
-      ptid_t related_pid;
+      ptid_t child_ptid;
       /* execd pathname */
       char *execd_pathname;
       /* Syscall number */
       int syscall_number;
-    } value;
+    } m_value {};
 };
 
 /* Extended reasons that can explain why a target/thread stopped for a
@@ -142,10 +442,5 @@ enum target_stop_reason
   /* Stopped by a single step finishing.  */
   TARGET_STOPPED_BY_SINGLE_STEP
 };
-
-/* Prototypes */
-
-/* Return a pretty printed form of target_waitstatus.  */
-std::string target_waitstatus_to_string (const struct target_waitstatus *);
 
 #endif /* TARGET_WAITSTATUS_H */

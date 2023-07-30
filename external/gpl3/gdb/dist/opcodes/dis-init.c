@@ -1,6 +1,6 @@
 /* Initialize "struct disassemble_info".
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -25,7 +25,8 @@
 
 void
 init_disassemble_info (struct disassemble_info *info, void *stream,
-		       fprintf_ftype fprintf_func)
+		       fprintf_ftype fprintf_func,
+		       fprintf_styled_ftype fprintf_styled_func)
 {
   memset (info, 0, sizeof (*info));
 
@@ -35,6 +36,7 @@ init_disassemble_info (struct disassemble_info *info, void *stream,
   info->endian_code = info->endian;
   info->octets_per_byte = 1;
   info->fprintf_func = fprintf_func;
+  info->fprintf_styled_func = fprintf_styled_func;
   info->stream = stream;
   info->read_memory_func = buffer_read_memory;
   info->memory_error_func = perror_memory;
@@ -42,5 +44,6 @@ init_disassemble_info (struct disassemble_info *info, void *stream,
   info->symbol_at_address_func = generic_symbol_at_address;
   info->symbol_is_valid = generic_symbol_is_valid;
   info->display_endian = BFD_ENDIAN_UNKNOWN;
+  info->created_styled_output = false;
 }
 

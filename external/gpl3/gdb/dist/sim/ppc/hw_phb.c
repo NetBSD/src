@@ -27,10 +27,7 @@
 
 #include "corefile.h"
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
 #include <ctype.h>
 
 
@@ -315,8 +312,8 @@ hw_phb_attach_address(device *me,
       || addr < pci_space->my_base)
     device_error(me, "attach addr (0x%lx) specified by %s outside of bus address range",
 		 (unsigned long)addr, device_path(client));
-  if (type != hw_phb_normal_decode
-      && type != hw_phb_subtractive_decode)
+  if ((hw_phb_decode)type != hw_phb_normal_decode
+      && (hw_phb_decode)type != hw_phb_subtractive_decode)
     device_error(me, "attach type (%d) specified by %s invalid",
 		 type, device_path(client));
   /* attach it to the relevent bus */
@@ -970,7 +967,7 @@ hw_phb_dma_read_buffer(device *me,
     device_error(me, "Do not support DMA into own bus");
   /* do it */
   DTRACE(phb, ("dma read - %s:0x%lx (%d bytes)\n",
-	       pci_space->name, addr, nr_bytes));
+	       pci_space->name, (unsigned long)addr, nr_bytes));
   return device_dma_read_buffer(device_parent(me),
 				dest, pci_space->parent_space,
 				addr, nr_bytes);
@@ -999,7 +996,7 @@ hw_phb_dma_write_buffer(device *me,
     device_error(me, "Do not support DMA into own bus");
   /* do it */
   DTRACE(phb, ("dma write - %s:0x%lx (%d bytes)\n",
-	       pci_space->name, addr, nr_bytes));
+	       pci_space->name, (unsigned long)addr, nr_bytes));
   return device_dma_write_buffer(device_parent(me),
 				 source, pci_space->parent_space,
 				 addr, nr_bytes,

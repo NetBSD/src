@@ -1,5 +1,5 @@
 /* Functions for manipulating expressions designed to be executed on the agent
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -244,7 +244,7 @@ ax_const_l (struct agent_expr *x, LONGEST l)
       LONGEST lim = ((LONGEST) 1) << (size - 1);
 
       if (-lim <= l && l <= lim - 1)
-        break;
+	break;
     }
 
   /* Emit the right opcode...  */
@@ -292,7 +292,7 @@ ax_reg (struct agent_expr *x, int reg)
 
       /* Make sure the register number is in range.  */
       if (reg < 0 || reg > 0xffff)
-        error (_("GDB bug: ax-general.c (ax_reg): "
+	error (_("GDB bug: ax-general.c (ax_reg): "
 		 "register number out of range"));
       grow_expr (x, 3);
       x->buf[x->len] = aop_reg;
@@ -309,8 +309,7 @@ ax_tsv (struct agent_expr *x, enum agent_op op, int num)
 {
   /* Make sure the tsv number is in range.  */
   if (num < 0 || num > 0xffff)
-    internal_error (__FILE__, __LINE__, 
-		    _("ax-general.c (ax_tsv): variable "
+    internal_error (_("ax-general.c (ax_tsv): variable "
 		      "number is %d, out of range"), num);
 
   grow_expr (x, 3);
@@ -332,8 +331,7 @@ ax_string (struct agent_expr *x, const char *str, int slen)
 
   /* Make sure the string length is reasonable.  */
   if (slen < 0 || slen > 0xffff)
-    internal_error (__FILE__, __LINE__, 
-		    _("ax-general.c (ax_string): string "
+    internal_error (_("ax-general.c (ax_string): string "
 		      "length is %d, out of allowed range"), slen);
 
   grow_expr (x, 2 + slen + 1);
@@ -365,11 +363,11 @@ ax_print (struct ui_file *f, struct agent_expr *x)
 {
   int i;
 
-  fprintf_filtered (f, _("Scope: %s\n"), paddress (x->gdbarch, x->scope));
-  fprintf_filtered (f, _("Reg mask:"));
+  gdb_printf (f, _("Scope: %s\n"), paddress (x->gdbarch, x->scope));
+  gdb_printf (f, _("Reg mask:"));
   for (i = 0; i < x->reg_mask_len; ++i)
-    fprintf_filtered (f, _(" %02x"), x->reg_mask[i]);
-  fprintf_filtered (f, _("\n"));
+    gdb_printf (f, _(" %02x"), x->reg_mask[i]);
+  gdb_printf (f, _("\n"));
 
   /* Check the size of the name array against the number of entries in
      the enum, to catch additions that people didn't sync.  */
@@ -384,21 +382,21 @@ ax_print (struct ui_file *f, struct agent_expr *x)
       if (op >= (sizeof (aop_map) / sizeof (aop_map[0]))
 	  || !aop_map[op].name)
 	{
-	  fprintf_filtered (f, _("%3d  <bad opcode %02x>\n"), i, op);
+	  gdb_printf (f, _("%3d  <bad opcode %02x>\n"), i, op);
 	  i++;
 	  continue;
 	}
       if (i + 1 + aop_map[op].op_size > x->len)
 	{
-	  fprintf_filtered (f, _("%3d  <incomplete opcode %s>\n"),
-			    i, aop_map[op].name);
+	  gdb_printf (f, _("%3d  <incomplete opcode %s>\n"),
+		      i, aop_map[op].name);
 	  break;
 	}
 
-      fprintf_filtered (f, "%3d  %s", i, aop_map[op].name);
+      gdb_printf (f, "%3d  %s", i, aop_map[op].name);
       if (aop_map[op].op_size > 0)
 	{
-	  fputs_filtered (" ", f);
+	  gdb_puts (" ", f);
 
 	  print_longest (f, 'd', 0,
 			 read_const (x, i + 1, aop_map[op].op_size));
@@ -412,11 +410,11 @@ ax_print (struct ui_file *f, struct agent_expr *x)
 	  nargs = x->buf[i++];
 	  slen = x->buf[i++];
 	  slen = slen * 256 + x->buf[i++];
-	  fprintf_filtered (f, _(" \"%s\", %d args"),
-			    &(x->buf[i]), nargs);
+	  gdb_printf (f, _(" \"%s\", %d args"),
+		      &(x->buf[i]), nargs);
 	  i += slen - 1;
 	}
-      fprintf_filtered (f, "\n");
+      gdb_printf (f, "\n");
       i += 1 + aop_map[op].op_size;
     }
 }
@@ -446,18 +444,18 @@ ax_reg_mask (struct agent_expr *ax, int reg)
 
       /* Grow the bit mask if necessary.  */
       if (byte >= ax->reg_mask_len)
-        {
-          /* It's not appropriate to double here.  This isn't a
+	{
+	  /* It's not appropriate to double here.  This isn't a
 	     string buffer.  */
-          int new_len = byte + 1;
-          unsigned char *new_reg_mask
+	  int new_len = byte + 1;
+	  unsigned char *new_reg_mask
 	    = XRESIZEVEC (unsigned char, ax->reg_mask, new_len);
 
-          memset (new_reg_mask + ax->reg_mask_len, 0,
-	          (new_len - ax->reg_mask_len) * sizeof (ax->reg_mask[0]));
-          ax->reg_mask_len = new_len;
-          ax->reg_mask = new_reg_mask;
-        }
+	  memset (new_reg_mask + ax->reg_mask_len, 0,
+		  (new_len - ax->reg_mask_len) * sizeof (ax->reg_mask[0]));
+	  ax->reg_mask_len = new_len;
+	  ax->reg_mask = new_reg_mask;
+	}
 
       ax->reg_mask[byte] |= 1 << (reg % 8);
     }
@@ -517,8 +515,8 @@ ax_reqs (struct agent_expr *ax)
 	}
 
       /* If this instruction is a forward jump target, does the
-         current stack height match the stack height at the jump
-         source?  */
+	 current stack height match the stack height at the jump
+	 source?  */
       if (targets[i] && (heights[i] != height))
 	{
 	  ax->flaw = agent_flaw_height_mismatch;
@@ -539,8 +537,8 @@ ax_reqs (struct agent_expr *ax)
 	ax->max_data_size = op->data_size;
 
       /* For jump instructions, check that the target is a valid
-         offset.  If it is, record the fact that that location is a
-         jump target, and record the height we expect there.  */
+	 offset.  If it is, record the fact that that location is a
+	 jump target, and record the height we expect there.  */
       if (aop_goto == op - aop_map
 	  || aop_if_goto == op - aop_map)
 	{
@@ -552,7 +550,7 @@ ax_reqs (struct agent_expr *ax)
 	    }
 
 	  /* Do we have any information about what the stack height
-             should be at the target?  */
+	     should be at the target?  */
 	  if (targets[target] || boundary[target])
 	    {
 	      if (heights[target] != height)
@@ -562,13 +560,13 @@ ax_reqs (struct agent_expr *ax)
 		}
 	    }
 
-          /* Record the target, along with the stack height we expect.  */
-          targets[target] = 1;
-          heights[target] = height;
+	  /* Record the target, along with the stack height we expect.  */
+	  targets[target] = 1;
+	  heights[target] = height;
 	}
 
       /* For unconditional jumps with a successor, check that the
-         successor is a target, and pick up its stack height.  */
+	 successor is a target, and pick up its stack height.  */
       if (aop_goto == op - aop_map
 	  && i + 3 < ax->len)
 	{

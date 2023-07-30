@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include <new>
 #include <memory>
 #include <string>
+#include <functional>
 
 /* Reasons for calling throw_exceptions().  NOTE: all reason values
    must be different from zero.  enum value 0 is reserved for internal
@@ -165,10 +166,45 @@ struct gdb_exception
     return message->c_str ();
   }
 
+  /* Compare two exceptions.  */
+  bool operator== (const gdb_exception &other) const
+  {
+    const char *msg1 = message == nullptr ? "" : what ();
+    const char *msg2 = other.message == nullptr ? "" : other.what ();
+
+    return (reason == other.reason
+	    && error == other.error
+	    && strcmp (msg1, msg2) == 0);
+  }
+
+  /* Compare two exceptions.  */
+  bool operator!= (const gdb_exception &other) const
+  {
+    return !(*this == other);
+  }
+
   enum return_reason reason;
   enum errors error;
   std::shared_ptr<std::string> message;
 };
+
+namespace std
+{
+
+/* Specialization of std::hash for gdb_exception.  */
+template<>
+struct hash<gdb_exception>
+{
+  size_t operator() (const gdb_exception &exc) const
+  {
+    size_t result = exc.reason + exc.error;
+    if (exc.message != nullptr)
+      result += std::hash<std::string> {} (*exc.message);
+    return result;
+  }
+};
+
+}
 
 /* Functions to drive the sjlj-based exceptions state machine.  Though
    declared here by necessity, these functions should be considered
@@ -197,9 +233,9 @@ extern int exceptions_state_mc_catch (struct gdb_exception *, int);
    CATCH_SJLJ (e, RETURN_MASK_ERROR)
      {
        switch (e.reason)
-         {
-           case RETURN_ERROR: ...
-         }
+	 {
+	   case RETURN_ERROR: ...
+	 }
      }
    END_CATCH_SJLJ
 

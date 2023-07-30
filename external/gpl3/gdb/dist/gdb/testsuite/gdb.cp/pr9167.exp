@@ -1,4 +1,4 @@
-#Copyright 2010-2020 Free Software Foundation, Inc.
+#Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,12 +15,17 @@
 
 standard_testfile .cc
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
+set flags [list debug c++]
+if { [test_compiler_info gcc-*] && [gcc_major_version] >= 10 } {
+    # Work around PR gcc/101452.
+    lappend flags additional_flags=-fno-eliminate-unused-debug-types
+}
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile $flags]} {
     return -1
 }
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return
 }
 

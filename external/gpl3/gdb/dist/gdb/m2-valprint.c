@@ -1,6 +1,6 @@
 /* Support for printing Modula 2 values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,7 +42,7 @@ m2_print_array_contents (struct value *val,
 
 
 /* get_long_set_bounds - assigns the bounds of the long set to low and
-                         high.  */
+			 high.  */
 
 int
 get_long_set_bounds (struct type *type, LONGEST *low, LONGEST *high)
@@ -81,7 +81,7 @@ m2_print_long_set (struct type *type, const gdb_byte *valaddr,
 
   type = check_typedef (type);
 
-  fprintf_filtered (stream, "{");
+  gdb_printf (stream, "{");
   len = type->num_fields ();
   if (get_long_set_bounds (type, &low_bound, &high_bound))
     {
@@ -95,14 +95,14 @@ m2_print_long_set (struct type *type, const gdb_byte *valaddr,
       return;
     }
 
-  target = TYPE_TARGET_TYPE (range);
+  target = range->target_type ();
 
-  if (get_discrete_bounds (range, &field_low, &field_high) >= 0)
+  if (get_discrete_bounds (range, &field_low, &field_high))
     {
       for (i = low_bound; i <= high_bound; i++)
 	{
 	  bitval = value_bit_index (type->field (field).type (),
-				    (TYPE_FIELD_BITPOS (type, field) / 8) +
+				    (type->field (field).loc_bitpos () / 8) +
 				    valaddr + embedded_offset, i);
 	  if (bitval < 0)
 	    error (_("bit test is out of range"));
@@ -112,7 +112,7 @@ m2_print_long_set (struct type *type, const gdb_byte *valaddr,
 	      if (! element_seen)
 		{
 		  if (! empty_set)
-		    fprintf_filtered (stream, ", ");
+		    gdb_printf (stream, ", ");
 		  print_type_scalar (target, i, stream);
 		  empty_set    = 0;
 		  element_seen = 1;
@@ -125,7 +125,7 @@ m2_print_long_set (struct type *type, const gdb_byte *valaddr,
 	      if (element_seen)
 		{
 		  if (previous_low+1 < previous_high)
-		    fprintf_filtered (stream, "..");
+		    gdb_printf (stream, "..");
 		  if (previous_low+1 < previous_high)
 		    print_type_scalar (target, previous_high, stream);
 		  element_seen = 0;
@@ -137,21 +137,21 @@ m2_print_long_set (struct type *type, const gdb_byte *valaddr,
 	      if (field == len)
 		break;
 	      range = type->field (field).type ()->index_type ();
-	      if (get_discrete_bounds (range, &field_low, &field_high) < 0)
+	      if (!get_discrete_bounds (range, &field_low, &field_high))
 		break;
-	      target = TYPE_TARGET_TYPE (range);
+	      target = range->target_type ();
 	    }
 	}
       if (element_seen)
 	{
 	  if (previous_low+1 < previous_high)
 	    {
-	      fprintf_filtered (stream, "..");
+	      gdb_printf (stream, "..");
 	      print_type_scalar (target, previous_high, stream);
 	    }
 	  element_seen = 0;
 	}
-      fprintf_filtered (stream, "}");
+      gdb_printf (stream, "}");
     }
 }
 
@@ -165,19 +165,19 @@ m2_print_unbounded_array (struct value *value,
   struct value *val;
 
   struct type *type = check_typedef (value_type (value));
-  const gdb_byte *valaddr = value_contents_for_printing (value);
+  const gdb_byte *valaddr = value_contents_for_printing (value).data ();
 
   addr = unpack_pointer (type->field (0).type (),
-			 (TYPE_FIELD_BITPOS (type, 0) / 8) +
+			 (type->field (0).loc_bitpos () / 8) +
 			 valaddr);
 
-  val = value_at_lazy (TYPE_TARGET_TYPE (type->field (0).type ()),
+  val = value_at_lazy (type->field (0).type ()->target_type (),
 		       addr);
   len = unpack_field_as_long (type, valaddr, 1);
 
-  fprintf_filtered (stream, "{");  
+  gdb_printf (stream, "{");  
   m2_print_array_contents (val, stream, recurse, options, len);
-  fprintf_filtered (stream, ", HIGH = %d}", (int) len);
+  gdb_printf (stream, ", HIGH = %d}", (int) len);
 }
 
 static int
@@ -186,8 +186,8 @@ print_unpacked_pointer (struct type *type,
 			const struct value_print_options *options,
 			struct ui_file *stream)
 {
-  struct gdbarch *gdbarch = get_type_arch (type);
-  struct type *elttype = check_typedef (TYPE_TARGET_TYPE (type));
+  struct gdbarch *gdbarch = type->arch ();
+  struct type *elttype = check_typedef (type->target_type ());
   int want_space = 0;
 
   if (elttype->code () == TYPE_CODE_FUNC)
@@ -200,21 +200,21 @@ print_unpacked_pointer (struct type *type,
 
   if (options->addressprint && options->format != 's')
     {
-      fputs_filtered (paddress (gdbarch, address), stream);
+      gdb_puts (paddress (gdbarch, address), stream);
       want_space = 1;
     }
 
   /* For a pointer to char or unsigned char, also print the string
      pointed to, unless pointer is null.  */
 
-  if (TYPE_LENGTH (elttype) == 1
+  if (elttype->length () == 1
       && elttype->code () == TYPE_CODE_INT
       && (options->format == 0 || options->format == 's')
       && addr != 0)
     {
       if (want_space)
-	fputs_filtered (" ", stream);
-      return val_print_string (TYPE_TARGET_TYPE (type), NULL, addr, -1,
+	gdb_puts (" ", stream);
+      return val_print_string (type->target_type (), NULL, addr, -1,
 			       stream, options);
     }
   
@@ -228,31 +228,31 @@ print_variable_at_address (struct type *type,
 			   int recurse,
 			   const struct value_print_options *options)
 {
-  struct gdbarch *gdbarch = get_type_arch (type);
+  struct gdbarch *gdbarch = type->arch ();
   CORE_ADDR addr = unpack_pointer (type, valaddr);
-  struct type *elttype = check_typedef (TYPE_TARGET_TYPE (type));
+  struct type *elttype = check_typedef (type->target_type ());
 
-  fprintf_filtered (stream, "[");
-  fputs_filtered (paddress (gdbarch, addr), stream);
-  fprintf_filtered (stream, "] : ");
+  gdb_printf (stream, "[");
+  gdb_puts (paddress (gdbarch, addr), stream);
+  gdb_printf (stream, "] : ");
   
   if (elttype->code () != TYPE_CODE_UNDEF)
     {
       struct value *deref_val =
-	value_at (TYPE_TARGET_TYPE (type), unpack_pointer (type, valaddr));
+	value_at (type->target_type (), unpack_pointer (type, valaddr));
 
       common_val_print (deref_val, stream, recurse, options, current_language);
     }
   else
-    fputs_filtered ("???", stream);
+    gdb_puts ("???", stream);
 }
 
 
 /* m2_print_array_contents - prints out the contents of an
-                             array up to a max_print values.
-                             It prints arrays of char as a string
-                             and all other data types as comma
-                             separated values.  */
+			     array up to a max_print values.
+			     It prints arrays of char as a string
+			     and all other data types as comma
+			     separated values.  */
 
 static void
 m2_print_array_contents (struct value *val,
@@ -262,10 +262,10 @@ m2_print_array_contents (struct value *val,
 {
   struct type *type = check_typedef (value_type (val));
 
-  if (TYPE_LENGTH (type) > 0)
+  if (type->length () > 0)
     {
       /* For an array of chars, print with string syntax.  */
-      if (TYPE_LENGTH (type) == 1 &&
+      if (type->length () == 1 &&
 	  ((type->code () == TYPE_CODE_INT)
 	   || ((current_language->la_language == language_m2)
 	       && (type->code () == TYPE_CODE_CHAR)))
@@ -274,9 +274,9 @@ m2_print_array_contents (struct value *val,
 			  options);
       else
 	{
-	  fprintf_filtered (stream, "{");
+	  gdb_printf (stream, "{");
 	  value_print_array_elements (val, stream, recurse, options, 0);
-	  fprintf_filtered (stream, "}");
+	  gdb_printf (stream, "}");
 	}
     }
 }
@@ -298,32 +298,33 @@ static const struct generic_val_print_decorations m2_decorations =
 /* See m2-lang.h.  */
 
 void
-m2_value_print_inner (struct value *val, struct ui_file *stream, int recurse,
-		      const struct value_print_options *options)
+m2_language::value_print_inner (struct value *val, struct ui_file *stream,
+				int recurse,
+				const struct value_print_options *options) const
 {
   unsigned len;
   struct type *elttype;
   CORE_ADDR addr;
-  const gdb_byte *valaddr = value_contents_for_printing (val);
+  const gdb_byte *valaddr = value_contents_for_printing (val).data ();
   const CORE_ADDR address = value_address (val);
 
   struct type *type = check_typedef (value_type (val));
   switch (type->code ())
     {
     case TYPE_CODE_ARRAY:
-      if (TYPE_LENGTH (type) > 0 && TYPE_LENGTH (TYPE_TARGET_TYPE (type)) > 0)
+      if (type->length () > 0 && type->target_type ()->length () > 0)
 	{
-	  elttype = check_typedef (TYPE_TARGET_TYPE (type));
-	  len = TYPE_LENGTH (type) / TYPE_LENGTH (elttype);
+	  elttype = check_typedef (type->target_type ());
+	  len = type->length () / elttype->length ();
 	  /* For an array of chars, print with string syntax.  */
-	  if (TYPE_LENGTH (elttype) == 1 &&
+	  if (elttype->length () == 1 &&
 	      ((elttype->code () == TYPE_CODE_INT)
 	       || ((current_language->la_language == language_m2)
 		   && (elttype->code () == TYPE_CODE_CHAR)))
 	      && (options->format == 0 || options->format == 's'))
 	    {
 	      /* If requested, look for the first null char and only print
-	         elements up to it.  */
+		 elements up to it.  */
 	      if (options->stop_print_at_null)
 		{
 		  unsigned int temp_len;
@@ -336,15 +337,15 @@ m2_value_print_inner (struct value *val, struct ui_file *stream, int recurse,
 		  len = temp_len;
 		}
 
-	      LA_PRINT_STRING (stream, TYPE_TARGET_TYPE (type),
-			       valaddr, len, NULL, 0, options);
+	      printstr (stream, type->target_type (), valaddr, len,
+			NULL, 0, options);
 	    }
 	  else
 	    {
-	      fprintf_filtered (stream, "{");
+	      gdb_printf (stream, "{");
 	      value_print_array_elements (val, stream, recurse,
 					  options, 0);
-	      fprintf_filtered (stream, "}");
+	      gdb_printf (stream, "}");
 	    }
 	  break;
 	}
@@ -367,7 +368,7 @@ m2_value_print_inner (struct value *val, struct ui_file *stream, int recurse,
     case TYPE_CODE_UNION:
       if (recurse && !options->unionprint)
 	{
-	  fprintf_filtered (stream, "{...}");
+	  gdb_printf (stream, "{...}");
 	  break;
 	}
       /* Fall through.  */
@@ -383,7 +384,7 @@ m2_value_print_inner (struct value *val, struct ui_file *stream, int recurse,
     case TYPE_CODE_SET:
       elttype = type->index_type ();
       elttype = check_typedef (elttype);
-      if (TYPE_STUB (elttype))
+      if (elttype->is_stub ())
 	{
 	  fprintf_styled (stream, metadata_style.style (),
 			  _("<incomplete type>"));
@@ -396,9 +397,9 @@ m2_value_print_inner (struct value *val, struct ui_file *stream, int recurse,
 	  int i;
 	  int need_comma = 0;
 
-	  fputs_filtered ("{", stream);
+	  gdb_puts ("{", stream);
 
-	  i = get_discrete_bounds (range, &low_bound, &high_bound);
+	  i = get_discrete_bounds (range, &low_bound, &high_bound) ? 0 : -1;
 	maybe_bad_bstring:
 	  if (i < 0)
 	    {
@@ -419,7 +420,7 @@ m2_value_print_inner (struct value *val, struct ui_file *stream, int recurse,
 	      if (element)
 		{
 		  if (need_comma)
-		    fputs_filtered (", ", stream);
+		    gdb_puts (", ", stream);
 		  print_type_scalar (range, i, stream);
 		  need_comma = 1;
 
@@ -428,7 +429,7 @@ m2_value_print_inner (struct value *val, struct ui_file *stream, int recurse,
 		    {
 		      int j = i;
 
-		      fputs_filtered ("..", stream);
+		      gdb_puts ("..", stream);
 		      while (i + 1 <= high_bound
 			     && value_bit_index (type, valaddr, ++i))
 			j = i;
@@ -437,24 +438,17 @@ m2_value_print_inner (struct value *val, struct ui_file *stream, int recurse,
 		}
 	    }
 	done:
-	  fputs_filtered ("}", stream);
+	  gdb_puts ("}", stream);
 	}
       break;
 
     case TYPE_CODE_RANGE:
-      if (TYPE_LENGTH (type) == TYPE_LENGTH (TYPE_TARGET_TYPE (type)))
+      if (type->length () == type->target_type ()->length ())
 	{
-	  struct value *v = value_cast (TYPE_TARGET_TYPE (type), val);
-	  m2_value_print_inner (v, stream, recurse, options);
+	  struct value *v = value_cast (type->target_type (), val);
+	  value_print_inner (v, stream, recurse, options);
 	  break;
 	}
-      /* FIXME: create_static_range_type does not set the unsigned bit in a
-         range type (I think it probably should copy it from the target
-         type), so we won't print values which are too large to
-         fit in a signed integer correctly.  */
-      /* FIXME: Doesn't handle ranges of enums correctly.  (Can't just
-         print with the target type, though, because the size of our type
-         and the target type might differ).  */
       /* FALLTHROUGH */
 
     case TYPE_CODE_REF:

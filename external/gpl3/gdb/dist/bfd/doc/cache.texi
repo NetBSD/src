@@ -17,7 +17,7 @@ handle.
 @subsubsection @code{bfd_cache_init}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_cache_init (bfd *abfd);
+bool bfd_cache_init (bfd *abfd);
 @end example
 @strong{Description}@*
 Add a newly opened BFD to the cache.
@@ -26,7 +26,7 @@ Add a newly opened BFD to the cache.
 @subsubsection @code{bfd_cache_close}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_cache_close (bfd *abfd);
+bool bfd_cache_close (bfd *abfd);
 @end example
 @strong{Description}@*
 Remove the BFD @var{abfd} from the cache. If the attached file is open,
@@ -40,7 +40,7 @@ returned if all is well.
 @subsubsection @code{bfd_cache_close_all}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_cache_close_all (void);
+bool bfd_cache_close_all (void);
 @end example
 @strong{Description}@*
 Remove all BFDs from the cache. If the attached file is open,

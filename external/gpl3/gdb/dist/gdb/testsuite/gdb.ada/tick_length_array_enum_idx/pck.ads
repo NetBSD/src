@@ -1,4 +1,4 @@
---  Copyright 2014-2020 Free Software Foundation, Inc.
+--  Copyright 2014-2023 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,9 @@ package Pck is
    type Full_Table is array (Color) of Boolean;
    type Primary_Table is array (Color range Red .. Blue) of Boolean;
    type Variable_Table is array (Color range <>) of Boolean;
+
+   type Full_PT is array (Color) of Boolean;
+   pragma Pack (Full_PT);
 
    function New_Variable_Table (Low: Color; High: Color) return Variable_Table;
 

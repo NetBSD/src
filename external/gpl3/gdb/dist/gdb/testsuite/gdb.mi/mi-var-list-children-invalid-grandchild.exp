@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ set MIFLAGS "-i=mi"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 standard_testfile
@@ -43,7 +43,7 @@ mi_gdb_test "-interpreter-exec console \"set print object on\"" \
     "(.*=cmd-param-changed,param=\"print object\",value=\"on\".*|)\\^done" \
     "set print object on"
 
-mi_runto main
+mi_runto_main
 
 mi_continue_to_line $line_invalid_pointer_value "continue to invalid pointer value"
 

@@ -1,6 +1,6 @@
 /* MI Console code.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -48,16 +48,6 @@ mi_console_file::write (const char *buf, long length_buf)
     this->flush ();
 }
 
-/* Write C to STREAM's in an async-safe way.  */
-
-static int
-do_fputc_async_safe (int c, ui_file *stream)
-{
-  char ch = c;
-  stream->write_async_safe (&ch, 1);
-  return c;
-}
-
 void
 mi_console_file::write_async_safe (const char *buf, long length_buf)
 {
@@ -65,12 +55,11 @@ mi_console_file::write_async_safe (const char *buf, long length_buf)
   if (m_quote)
     {
       m_raw->write_async_safe (&m_quote, 1);
-      fputstrn_unfiltered (buf, length_buf, m_quote, do_fputc_async_safe,
-			   m_raw);
+      m_raw->putstrn (buf, length_buf, m_quote, true);
       m_raw->write_async_safe (&m_quote, 1);
     }
   else
-    fputstrn_unfiltered (buf, length_buf, 0, do_fputc_async_safe, m_raw);
+    m_raw->putstrn (buf, length_buf, 0, true);
 
   char nl = '\n';
   m_raw->write_async_safe (&nl, 1);
@@ -87,19 +76,18 @@ mi_console_file::flush ()
       size_t length_buf = str.size ();
       const char *buf = str.data ();
 
-      fputs_unfiltered (m_prefix, m_raw);
+      gdb_puts (m_prefix, m_raw);
       if (m_quote)
 	{
-	  fputc_unfiltered (m_quote, m_raw);
-	  fputstrn_unfiltered (buf, length_buf, m_quote, fputc_unfiltered,
-			       m_raw);
-	  fputc_unfiltered (m_quote, m_raw);
-	  fputc_unfiltered ('\n', m_raw);
+	  gdb_putc (m_quote, m_raw);
+	  m_raw->putstrn (buf, length_buf, m_quote);
+	  gdb_putc (m_quote, m_raw);
+	  gdb_putc ('\n', m_raw);
 	}
       else
 	{
-	  fputstrn_unfiltered (buf, length_buf, 0, fputc_unfiltered, m_raw);
-	  fputc_unfiltered ('\n', m_raw);
+	  m_raw->putstrn (buf, length_buf, 0);
+	  gdb_putc ('\n', m_raw);
 	}
       gdb_flush (m_raw);
     }

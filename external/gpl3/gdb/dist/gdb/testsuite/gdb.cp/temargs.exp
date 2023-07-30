@@ -1,6 +1,6 @@
 # temargs.exp - Template argument tests
 #
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 # This file is part of the gdb testsuite.
 
 if {[skip_cplus_tests]} {
-    continue
+    return
 }
 
 standard_testfile .cc
@@ -32,8 +32,6 @@ if {![runto_main]} {
     return -1
 }
 
-# NOTE: prepare_for_testing calls get_compiler_info, which we need
-# for the test_compiler_info calls.
 # gcc 4.4 and earlier don't emit enough info for some of our template tests.
 set have_older_template_gcc 0
 set have_pr_41736_fixed 1
@@ -47,6 +45,8 @@ if {[test_compiler_info {gcc-[0-3]-*}]
     set have_pr_41736_fixed 0
     set have_pr_45024_fixed 0
 }
+
+set using_gcc [test_compiler_info gcc-*-*]
 
 set line [gdb_get_line_number "Breakpoint 1" $srcfile]
 gdb_test "break $srcfile:$line" "Breakpoint 2.*" \
@@ -136,7 +136,7 @@ gdb_test "print I" " = 91" "test value of I in func"
 
 # PR symtab/16842 - gdb used to crash here.
 if $have_older_template_gcc { setup_xfail "*-*-*" }
-gdb_test "info addr I" "Symbol \"I\" is constant." "test address of I in templ_m"
+gdb_test "info addr I" "Symbol \"I\" is constant." "test address of I in func"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
 gdb_test "print P == &a_global" " = true" "test value of P in func"
@@ -192,10 +192,10 @@ gdb_test "print F" "&S::somefunc" "test value of F in k2_m"
 gdb_continue_to_breakpoint "continue to sixth breakpoint for temargs"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"
-} else { setup_xfail gcc/49546 "*-*-*" }
+} elseif { $using_gcc } { setup_xfail gcc/49546 "*-*-*" }
 gdb_test "ptype F" {type = void \(\*\)\(int\)} "test type of F in k3_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"
-} else { setup_xfail gcc/49546 "*-*-*" }
+} elseif { $using_gcc } { setup_xfail gcc/49546 "*-*-*" }
 gdb_test "print F" { = \(void \(\*\)\(int\)\) 0x[0-9a-f]+ <S3::m\(int\)>} \
 	 "test value of F in k3_m"

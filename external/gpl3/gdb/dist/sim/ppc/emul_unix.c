@@ -25,17 +25,9 @@
 /* Note: this module is called via a table.  There is no benefit in
    making it inline */
 
-#include "emul_generic.h"
-#include "emul_unix.h"
+#include "defs.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -60,9 +52,7 @@
 #include <sys/param.h>
 #endif
 
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
 
 #ifndef HAVE_TERMIOS_STRUCTURE
 #undef HAVE_SYS_TERMIOS_H
@@ -130,13 +120,11 @@ int getrusage();
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
+#include <time.h>
 
-#if defined(BSD) && !defined(errno) && (BSD < 199306)	/* here BSD as just a bug */
-extern int errno;
-#endif
+#include "emul_generic.h"
+#include "emul_unix.h"
 
 #ifndef STATIC_INLINE_EMUL_UNIX
 #define STATIC_INLINE_EMUL_UNIX STATIC_INLINE
@@ -162,13 +150,13 @@ struct _os_emul_data {
 
 /* Structures that are common agmonst the UNIX varients */
 struct unix_timeval {
-  signed32 tv_sec;		/* seconds */
-  signed32 tv_usec;		/* microseconds */
+  int32_t tv_sec;		/* seconds */
+  int32_t tv_usec;		/* microseconds */
 };
 
 struct unix_timezone {
-  signed32 tz_minuteswest;	/* minutes west of Greenwich */
-  signed32 tz_dsttime;		/* type of dst correction */
+  int32_t tz_minuteswest;	/* minutes west of Greenwich */
+  int32_t tz_dsttime;		/* type of dst correction */
 };
 
 #define	UNIX_RUSAGE_SELF	0
@@ -178,20 +166,20 @@ struct unix_timezone {
 struct	unix_rusage {
 	struct unix_timeval ru_utime;	/* user time used */
 	struct unix_timeval ru_stime;	/* system time used */
-	signed32 ru_maxrss;		/* maximum resident set size */
-	signed32 ru_ixrss;		/* integral shared memory size */
-	signed32 ru_idrss;		/* integral unshared data size */
-	signed32 ru_isrss;		/* integral unshared stack size */
-	signed32 ru_minflt;		/* any page faults not requiring I/O */
-	signed32 ru_majflt;		/* any page faults requiring I/O */
-	signed32 ru_nswap;		/* swaps */
-	signed32 ru_inblock;		/* block input operations */
-	signed32 ru_oublock;		/* block output operations */
-	signed32 ru_msgsnd;		/* messages sent */
-	signed32 ru_msgrcv;		/* messages received */
-	signed32 ru_nsignals;		/* signals received */
-	signed32 ru_nvcsw;		/* voluntary context switches */
-	signed32 ru_nivcsw;		/* involuntary " */
+	int32_t ru_maxrss;		/* maximum resident set size */
+	int32_t ru_ixrss;		/* integral shared memory size */
+	int32_t ru_idrss;		/* integral unshared data size */
+	int32_t ru_isrss;		/* integral unshared stack size */
+	int32_t ru_minflt;		/* any page faults not requiring I/O */
+	int32_t ru_majflt;		/* any page faults requiring I/O */
+	int32_t ru_nswap;		/* swaps */
+	int32_t ru_inblock;		/* block input operations */
+	int32_t ru_oublock;		/* block output operations */
+	int32_t ru_msgsnd;		/* messages sent */
+	int32_t ru_msgrcv;		/* messages received */
+	int32_t ru_nsignals;		/* signals received */
+	int32_t ru_nvcsw;		/* voluntary context switches */
+	int32_t ru_nivcsw;		/* involuntary " */
 };
 
 
@@ -772,11 +760,7 @@ do_unix_mkdir(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("0x%lx [%s], 0%3o", (long)path_addr, path, mode);
 
-#ifdef USE_WIN32API
-  status = mkdir(path);
-#else
   status = mkdir(path, mode);
-#endif
   emul_write_status(processor, status, errno);
 }
 #endif
@@ -828,7 +812,7 @@ do_unix_time(os_emul_data *emul,
 }
 #endif
 
-#if !defined(HAVE_GETTIMEOFDAY) || !defined(HAVE_SYS_TIME_H)
+#if !defined(HAVE_GETTIMEOFDAY)
 #define do_unix_gettimeofday 0
 #else
 static void
@@ -1063,15 +1047,15 @@ emul_unix_create(device *root,
 
 /* Solaris specific implementation */
 
-typedef	signed32	solaris_uid_t;
-typedef	signed32	solaris_gid_t;
-typedef signed32	solaris_off_t;
-typedef signed32	solaris_pid_t;
-typedef signed32	solaris_time_t;
-typedef unsigned32	solaris_dev_t;
-typedef unsigned32	solaris_ino_t;
-typedef unsigned32	solaris_mode_t;
-typedef	unsigned32	solaris_nlink_t;
+typedef	int32_t	solaris_uid_t;
+typedef	int32_t	solaris_gid_t;
+typedef int32_t	solaris_off_t;
+typedef int32_t	solaris_pid_t;
+typedef int32_t	solaris_time_t;
+typedef uint32_t	solaris_dev_t;
+typedef uint32_t	solaris_ino_t;
+typedef uint32_t	solaris_mode_t;
+typedef	uint32_t	solaris_nlink_t;
 
 #ifdef HAVE_SYS_STAT_H
 #define	SOLARIS_ST_FSTYPSZ 16		/* array size for file system type name */
@@ -1083,23 +1067,23 @@ typedef	unsigned32	solaris_nlink_t;
 
 struct solaris_stat {
   solaris_dev_t		st_dev;
-  signed32		st_pad1[3];	/* reserved for network id */
+  int32_t		st_pad1[3];	/* reserved for network id */
   solaris_ino_t		st_ino;
   solaris_mode_t	st_mode;
   solaris_nlink_t 	st_nlink;
   solaris_uid_t 	st_uid;
   solaris_gid_t 	st_gid;
   solaris_dev_t		st_rdev;
-  signed32		st_pad2[2];
+  int32_t		st_pad2[2];
   solaris_off_t		st_size;
-  signed32		st_pad3;	/* future off_t expansion */
+  int32_t		st_pad3;	/* future off_t expansion */
   struct unix_timeval	st_atim;
   struct unix_timeval	st_mtim;
   struct unix_timeval	st_ctim;
-  signed32		st_blksize;
-  signed32		st_blocks;
+  int32_t		st_blksize;
+  int32_t		st_blocks;
   char			st_fstype[SOLARIS_ST_FSTYPSZ];
-  signed32		st_pad4[8];	/* expansion area */
+  int32_t		st_pad4[8];	/* expansion area */
 };
 
 /* Convert from host stat structure to solaris stat structure */
@@ -1276,12 +1260,12 @@ do_solaris_fstat(os_emul_data *emul,
 /* Convert to/from host termio structure */
 
 struct solaris_termio {
-	unsigned16	c_iflag;		/* input modes */
-	unsigned16	c_oflag;		/* output modes */
-	unsigned16	c_cflag;		/* control modes */
-	unsigned16	c_lflag;		/* line discipline modes */
-	unsigned8	c_line;			/* line discipline */
-	unsigned8	c_cc[SOLARIS_NCC];	/* control chars */
+	uint16_t	c_iflag;		/* input modes */
+	uint16_t	c_oflag;		/* output modes */
+	uint16_t	c_cflag;		/* control modes */
+	uint16_t	c_lflag;		/* line discipline modes */
+	uint8_t	c_line;			/* line discipline */
+	uint8_t	c_cc[SOLARIS_NCC];	/* control chars */
 };
 
 STATIC_INLINE_EMUL_UNIX void
@@ -1351,9 +1335,9 @@ convert_to_solaris_termio(unsigned_word addr,
 #ifdef HAVE_TERMIOS_STRUCTURE
 /* Convert to/from host termios structure */
 
-typedef unsigned32 solaris_tcflag_t;
-typedef unsigned8  solaris_cc_t;
-typedef unsigned32 solaris_speed_t;
+typedef uint32_t solaris_tcflag_t;
+typedef uint8_t  solaris_cc_t;
+typedef uint32_t solaris_speed_t;
 
 struct solaris_termios {
   solaris_tcflag_t	c_iflag;
@@ -2014,20 +1998,20 @@ const os_emul emul_solaris = {
 
 /* Linux specific implementation */
 
-typedef unsigned32	linux_dev_t;
-typedef unsigned32	linux_ino_t;
-typedef unsigned32	linux_mode_t;
-typedef unsigned16	linux_nlink_t;
-typedef signed32	linux_off_t;
-typedef signed32	linux_pid_t;
-typedef unsigned32	linux_uid_t;
-typedef unsigned32	linux_gid_t;
-typedef unsigned32	linux_size_t;
-typedef signed32	linux_ssize_t;
-typedef signed32	linux_ptrdiff_t;
-typedef signed32	linux_time_t;
-typedef signed32	linux_clock_t;
-typedef signed32	linux_daddr_t;
+typedef uint32_t	linux_dev_t;
+typedef uint32_t	linux_ino_t;
+typedef uint32_t	linux_mode_t;
+typedef uint16_t	linux_nlink_t;
+typedef int32_t	linux_off_t;
+typedef int32_t	linux_pid_t;
+typedef uint32_t	linux_uid_t;
+typedef uint32_t	linux_gid_t;
+typedef uint32_t	linux_size_t;
+typedef int32_t	linux_ssize_t;
+typedef int32_t	linux_ptrdiff_t;
+typedef int32_t	linux_time_t;
+typedef int32_t	linux_clock_t;
+typedef int32_t	linux_daddr_t;
 
 #ifdef HAVE_SYS_STAT_H
 /* For the PowerPC, don't both with the 'old' stat structure, since there
@@ -2042,16 +2026,16 @@ struct linux_stat {
 	linux_gid_t 	st_gid;
 	linux_dev_t	st_rdev;
 	linux_off_t	st_size;
-	unsigned32  	st_blksize;
-	unsigned32  	st_blocks;
-	unsigned32  	st_atimx;	/* don't use st_{a,c,m}time, that might a macro */
-	unsigned32  	__unused1;	/* defined by the host's stat.h */
-	unsigned32  	st_mtimx;
-	unsigned32  	__unused2;
-	unsigned32  	st_ctimx;
-	unsigned32  	__unused3;
-	unsigned32  	__unused4;
-	unsigned32  	__unused5;
+	uint32_t  	st_blksize;
+	uint32_t  	st_blocks;
+	uint32_t  	st_atimx;	/* don't use st_{a,c,m}time, that might a macro */
+	uint32_t  	__unused1;	/* defined by the host's stat.h */
+	uint32_t  	st_mtimx;
+	uint32_t  	__unused2;
+	uint32_t  	st_ctimx;
+	uint32_t  	__unused3;
+	uint32_t  	__unused4;
+	uint32_t  	__unused5;
 };
 
 /* Convert from host stat structure to solaris stat structure */
@@ -2249,12 +2233,12 @@ do_linux_fstat(os_emul_data *emul,
 /* Convert to/from host termio structure */
 
 struct linux_termio {
-	unsigned16	c_iflag;		/* input modes */
-	unsigned16	c_oflag;		/* output modes */
-	unsigned16	c_cflag;		/* control modes */
-	unsigned16	c_lflag;		/* line discipline modes */
-	unsigned8	c_line;			/* line discipline */
-	unsigned8	c_cc[LINUX_NCC];	/* control chars */
+	uint16_t	c_iflag;		/* input modes */
+	uint16_t	c_oflag;		/* output modes */
+	uint16_t	c_cflag;		/* control modes */
+	uint16_t	c_lflag;		/* line discipline modes */
+	uint8_t	c_line;			/* line discipline */
+	uint8_t	c_cc[LINUX_NCC];	/* control chars */
 };
 
 STATIC_INLINE_EMUL_UNIX void
@@ -2331,9 +2315,9 @@ convert_to_linux_termio(unsigned_word addr,
 #ifdef HAVE_TERMIOS_STRUCTURE
 /* Convert to/from host termios structure */
 
-typedef unsigned32 linux_tcflag_t;
-typedef unsigned8  linux_cc_t;
-typedef unsigned32 linux_speed_t;
+typedef uint32_t linux_tcflag_t;
+typedef uint8_t  linux_cc_t;
+typedef uint32_t linux_speed_t;
 
 struct linux_termios {
   linux_tcflag_t	c_iflag;
@@ -2342,8 +2326,8 @@ struct linux_termios {
   linux_tcflag_t	c_lflag;
   linux_cc_t		c_cc[LINUX_NCCS];
   linux_cc_t		c_line;
-  signed32		c_ispeed;
-  signed32		c_ospeed;
+  int32_t		c_ispeed;
+  int32_t		c_ospeed;
 };
 
 STATIC_INLINE_EMUL_UNIX void

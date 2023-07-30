@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -52,7 +52,6 @@ gdb_load_shlib $lib_sl1
 gdb_load_shlib $lib_sl2
 
 if ![runto_main] {
-    fail "can't run to main to check for trace support"
     return -1
 }
 
@@ -90,7 +89,7 @@ proc pending_tracepoint_resolved { trace_type } {
 
 	gdb_load ${binfile}
 
-	gdb_test "break main" "Breakpoint.*at.* file .*$srcfile, line.*" \
+	gdb_test "break -q main" "Breakpoint.*at.* file .*$srcfile, line.*" \
 	    "breakpoint function"
 
 	gdb_run_cmd
@@ -132,7 +131,7 @@ proc pending_tracepoint_works { trace_type } {
 	    "single pending tracepoint info"
 
 	# Run to main which should resolve a pending tracepoint
-	gdb_test "break main" "Breakpoint.*at.* file .*$srcfile, line.*" \
+	gdb_test "break -q main" "Breakpoint.*at.* file .*$srcfile, line.*" \
 	    "breakpoint function"
 	gdb_run_cmd
 	gdb_test "" "Breakpoint 2, main.*"
@@ -188,7 +187,6 @@ proc pending_tracepoint_resolved_during_trace { trace_type } \
     # Start with a fresh gdb.
     clean_restart $executable
     if ![runto_main] {
-	fail "can't run to main"
 	return -1
     }
 
@@ -257,7 +255,6 @@ proc pending_tracepoint_installed_during_trace { trace_type } \
     # Start with a fresh gdb.
     clean_restart $executable
     if ![runto_main] {
-	fail "can't run to main"
 	return -1
     }
 
@@ -331,7 +328,6 @@ proc pending_tracepoint_disconnect_during_trace { trace_type } \
     # Start with a fresh gdb.
     clean_restart $executable
     if ![runto_main] {
-	fail "can't run to main"
 	return -1
     }
 
@@ -379,7 +375,6 @@ proc pending_tracepoint_disconnect_after_resolved { trace_type } \
     # Start with a fresh gdb.
     clean_restart $executable
     if ![runto_main] {
-	fail "can't run to main"
 	return -1
     }
 
@@ -432,7 +427,6 @@ proc pending_tracepoint_with_action_resolved { trace_type } \
     # Start with a fresh gdb.
     clean_restart $executable
     if ![runto_main] {
-	fail "can't run to main"
 	return -1
     }
 

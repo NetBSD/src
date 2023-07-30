@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,11 +27,11 @@ set shell_prompt_re [string_to_regexp $shell_prompt]
 
 # Point HOME nowhere to avoid the shell sourcing the user's init
 # scripts.
-set shell_cmd "HOME=/dev/null PS1=\"$shell_prompt\" /bin/sh"
+set shell_cmd "HOME=/dev/null /bin/sh"
 
 set test "spawn subshell from multi-line"
-gdb_test_multiple "if 1\nshell ${shell_cmd}\nend" $test {
-    -re "$shell_prompt_re$" {
+gdb_test_multiple "if 1\nshell ${shell_cmd}\nend\nPS1=\"$shell_prompt\"" $test {
+    -re "PS1=\[^\r\n\]*\r\n$shell_prompt_re$" {
 	pass $test
 
 	# Now check that shell input works and that echo is enabled.

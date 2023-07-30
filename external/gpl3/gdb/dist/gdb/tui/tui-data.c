@@ -1,6 +1,6 @@
 /* TUI data manipulation routines.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -113,9 +113,18 @@ tui_next_win (struct tui_win_info *cur_win)
   auto iter = std::find (tui_windows.begin (), tui_windows.end (), cur_win);
   gdb_assert (iter != tui_windows.end ());
 
-  ++iter;
-  if (iter == tui_windows.end ())
-    return tui_windows[0];
+  gdb_assert (cur_win->can_focus ());
+  /* This won't loop forever since we can't have just an un-focusable
+     window.  */
+  while (true)
+    {
+      ++iter;
+      if (iter == tui_windows.end ())
+	iter = tui_windows.begin ();
+      if ((*iter)->can_focus ())
+	break;
+    }
+
   return *iter;
 }
 
@@ -125,12 +134,21 @@ tui_next_win (struct tui_win_info *cur_win)
 struct tui_win_info *
 tui_prev_win (struct tui_win_info *cur_win)
 {
-  auto iter = std::find (tui_windows.begin (), tui_windows.end (), cur_win);
-  gdb_assert (iter != tui_windows.end ());
+  auto iter = std::find (tui_windows.rbegin (), tui_windows.rend (), cur_win);
+  gdb_assert (iter != tui_windows.rend ());
 
-  if (iter == tui_windows.begin ())
-    return tui_windows.back ();
-  --iter;
+  gdb_assert (cur_win->can_focus ());
+  /* This won't loop forever since we can't have just an un-focusable
+     window.  */
+  while (true)
+    {
+      ++iter;
+      if (iter == tui_windows.rend ())
+	iter = tui_windows.rbegin ();
+      if ((*iter)->can_focus ())
+	break;
+    }
+
   return *iter;
 }
 

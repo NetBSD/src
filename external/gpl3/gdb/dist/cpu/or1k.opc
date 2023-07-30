@@ -193,7 +193,7 @@ static const bfd_reloc_code_real_type or1k_imm16_relocs[][6] = {
     BFD_RELOC_OR1K_GOT_LO13,
     BFD_RELOC_UNUSED,
     BFD_RELOC_UNUSED,
-    BFD_RELOC_UNUSED },
+    BFD_RELOC_OR1K_GOT_AHI16 },
   { BFD_RELOC_OR1K_GOTPC_LO16,
     BFD_RELOC_UNUSED,
     BFD_RELOC_UNUSED,
@@ -295,6 +295,11 @@ parse_reloc (const char **strp)
       {
 	str += 5;
 	cls = RCLASS_TPOFF;
+      }
+    else if (strncasecmp (str, "got", 3) == 0)
+      {
+	str += 3;
+	cls = RCLASS_GOT;
       }
 
     if (strncasecmp (str, "hi(", 3) == 0)

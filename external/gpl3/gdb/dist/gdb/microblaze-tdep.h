@@ -1,6 +1,6 @@
 /* Target-dependent code for Xilinx MicroBlaze.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,10 @@
 #ifndef MICROBLAZE_TDEP_H
 #define MICROBLAZE_TDEP_H 1
 
+#include "gdbarch.h"
 
 /* Microblaze architecture-specific information.  */
-struct gdbarch_tdep
+struct microblaze_gdbarch_tdep : gdbarch_tdep_base
 {
 };
 

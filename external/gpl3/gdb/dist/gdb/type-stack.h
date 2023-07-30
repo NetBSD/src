@@ -1,6 +1,6 @@
 /* Type stack for GDB parser.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -157,11 +157,11 @@ public:
 
   /* Insert a tp_space_identifier and the corresponding address space
      value into the stack.  STRING is the name of an address space, as
-     recognized by address_space_name_to_int.  If the stack is empty,
-     the new elements are simply pushed.  If the stack is not empty,
-     this function assumes that the first item on the stack is a
-     tp_pointer, and the new values are inserted above the first
-     item.  */
+     recognized by address_space_name_to_type_instance_flags.  If the
+     stack is empty, the new elements are simply pushed.  If the stack
+     is not empty, this function assumes that the first item on the
+     stack is a tp_pointer, and the new values are inserted above the
+     first item.  */
 
   void insert (struct expr_builder *pstate, const char *string);
 

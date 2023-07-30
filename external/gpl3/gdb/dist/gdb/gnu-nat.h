@@ -1,5 +1,5 @@
 /* Common things used by the various *gnu-nat.c files
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2023 Free Software Foundation, Inc.
 
    Written by Miles Bader <miles@gnu.ai.mit.edu>
 
@@ -109,8 +109,8 @@ extern bool gnu_debug_flag;
 
 #define debug(msg, args...) \
  do { if (gnu_debug_flag) \
-        fprintf_unfiltered (gdb_stdlog, "%s:%d: " msg "\r\n", \
-			    __FILE__ , __LINE__ , ##args); } while (0)
+     gdb_printf (gdb_stdlog, "%s:%d: " msg "\r\n",		\
+		 __FILE__ , __LINE__ , ##args); } while (0)
 
 /* A prototype generic GNU/Hurd target.  The client can override it
    with local methods.  */
@@ -124,7 +124,7 @@ struct gnu_nat_target : public inf_child_target
   void detach (inferior *, int) override;
   void resume (ptid_t, int, enum gdb_signal) override;
 
-  ptid_t wait (ptid_t, struct target_waitstatus *, int) override;
+  ptid_t wait (ptid_t, struct target_waitstatus *, target_wait_flags) override;
   enum target_xfer_status xfer_partial (enum target_object object,
 					const char *annex,
 					gdb_byte *readbuf,
@@ -165,8 +165,8 @@ private:
   void inf_validate_task_sc (struct inf *inf);
   void inf_restore_exc_ports (struct inf *inf);
   void inf_set_threads_resume_sc (struct inf *inf,
-  				struct proc *run_thread,
-  				int run_others);
+				  struct proc *run_thread,
+				  int run_others);
   int inf_set_threads_resume_sc_for_signal_thread (struct inf *inf);
   void inf_resume (struct inf *inf);
   void inf_set_step_thread (struct inf *inf, struct proc *proc);

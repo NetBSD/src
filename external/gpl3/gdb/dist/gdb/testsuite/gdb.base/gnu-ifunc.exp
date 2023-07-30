@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2020 Free Software Foundation, Inc.
+# Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,10 +31,6 @@ set libsrc ${libfile}.c
 set final_file "${testfile}-final"
 set final_src ${final_file}.c
 
-if [get_compiler_info] {
-    return -1
-}
-
 # Return the binary suffix appended to program and library names to
 # make each testcase variant unique.
 proc make_binsuffix {resolver_attr resolver_debug final_debug} {
@@ -63,6 +59,10 @@ proc build {resolver_attr resolver_debug final_debug} {
 
     set lib_opts {}
     set final_opts {}
+
+    # Force lazy binding so we don't resolve everything at process startup.
+    lappend exec_opts "ldflags=-Wl,-z,lazy"
+    lappend lib_opts "ldflags=-Wl,-z,lazy"
 
     if {$resolver_attr} {
 	lappend lib_opts "additional_flags=-DIFUNC_RESOLVER_ATTR"
@@ -105,8 +105,7 @@ proc_with_prefix set-break {resolver_attr resolver_debug final_debug} {
     clean_restart $binfile-$suffix
     gdb_load_shlib ${lib_so}
 
-    if ![runto_main] then {
-	fail "can't run to main"
+    if {![runto_main]} {
 	return 1
     }
 
@@ -228,8 +227,7 @@ proc misc_tests {resolver_attr resolver_debug final_debug} {
     clean_restart $binfile-$suffix
     gdb_load_shlib ${lib_so}
 
-    if ![runto_main] then {
-	fail "can't run to main"
+    if {![runto_main]} {
 	return 1
     }
 
@@ -242,14 +240,19 @@ proc misc_tests {resolver_attr resolver_debug final_debug} {
     # Test GDB will automatically indirect the call.
 
     if {!$resolver_debug && !$final_debug} {
+	# Do the test that is supposed to succeed first, to make sure
+	# elf_gnu_ifunc_record_cache is empty.  This excercises PR28224.
+	gdb_test "p (int) gnu_ifunc (3)" " = 4"
+
 	gdb_test "p gnu_ifunc()" \
 	    "'${dot}final' has unknown return type; cast the call to its declared return type"
 	gdb_test "p gnu_ifunc (3)" \
 	    "'${dot}final' has unknown return type; cast the call to its declared return type"
-	gdb_test "p (int) gnu_ifunc (3)" " = 4"
     } else {
-	gdb_test "p gnu_ifunc()" "Too few arguments in function call\\."
+	# Do the test that is supposed to succeed first, see above.
 	gdb_test "p gnu_ifunc (3)" " = 4"
+
+	gdb_test "p gnu_ifunc()" "Too few arguments in function call\\."
     }
 
     # Test that the resolver received its argument.

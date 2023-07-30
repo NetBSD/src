@@ -30,10 +30,6 @@
 
 #include "gen-model.h"
 
-#ifndef NULL
-#define NULL 0
-#endif
-
 
 static void
 model_c_or_h_data(insn_table *table,
@@ -52,7 +48,7 @@ static void
 model_c_or_h_function(insn_table *entry,
 		      lf *file,
 		      table_entry *function,
-		      char *prefix)
+		      const char *prefix)
 {
   if (function->fields[function_type] == NULL
       || function->fields[function_type][0] == '\0') {
@@ -72,7 +68,7 @@ gen_model_h(insn_table *table, lf *file)
   insn *insn_ptr;
   model *model_ptr;
   insn *macro;
-  char *name;
+  const char *name;
   int model_create_p = 0;
   int model_init_p = 0;
   int model_halt_p = 0;
@@ -178,7 +174,7 @@ model_c_insn(insn_table *entry,
 {
   model_c_passed_data *data_ptr = (model_c_passed_data *)data;
   lf *file = data_ptr->file;
-  char *current_name = data_ptr->model_ptr->printable_name;
+  const char *current_name = data_ptr->model_ptr->printable_name;
   table_model_entry *model_ptr = instruction->file_entry->model_first;
 
   while (model_ptr) {
@@ -233,7 +229,7 @@ gen_model_c(insn_table *table, lf *file)
 {
   insn *insn_ptr;
   model *model_ptr;
-  char *name;
+  const char *name;
   int model_create_p = 0;
   int model_init_p = 0;
   int model_halt_p = 0;
@@ -244,9 +240,7 @@ gen_model_c(insn_table *table, lf *file)
   lf_printf(file, "#include \"cpu.h\"\n");
   lf_printf(file, "#include \"mon.h\"\n");
   lf_printf(file, "\n");
-  lf_printf(file, "#ifdef HAVE_STDLIB_H\n");
   lf_printf(file, "#include <stdlib.h>\n");
-  lf_printf(file, "#endif\n");
   lf_printf(file, "\n");
 
   for(insn_ptr = model_data; insn_ptr; insn_ptr = insn_ptr->next) {

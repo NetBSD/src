@@ -1,166 +1,33 @@
-  /* EVEX_W_0F10_P_1 */
-  {
-    { "vmovss",	{ XMScalar, VexScalarR, EXxmm_md }, 0 },
-  },
-  /* EVEX_W_0F10_P_3 */
-  {
-    { Bad_Opcode },
-    { "vmovsd",	{ XMScalar, VexScalarR, EXxmm_mq }, 0 },
-  },
-  /* EVEX_W_0F11_P_1 */
-  {
-    { "vmovss",	{ EXdS, VexScalarR, XMScalar }, 0 },
-  },
-  /* EVEX_W_0F11_P_3 */
-  {
-    { Bad_Opcode },
-    { "vmovsd",	{ EXqS, VexScalarR, XMScalar }, 0 },
-  },
-  /* EVEX_W_0F12_P_0_M_1 */
-  {
-    { "vmovhlps",	{ XMM, Vex, EXxmm_mq }, 0 },
-  },
-  /* EVEX_W_0F12_P_1 */
-  {
-    { "vmovsldup",	{ XM, EXEvexXNoBcst }, 0 },
-  },
-  /* EVEX_W_0F12_P_3 */
-  {
-    { Bad_Opcode },
-    { "vmovddup",	{ XM, EXymmq }, 0 },
-  },
-  /* EVEX_W_0F16_P_0_M_1 */
-  {
-    { "vmovlhps",	{ XMM, Vex, EXx }, 0 },
-  },
-  /* EVEX_W_0F16_P_1 */
-  {
-    { "vmovshdup",	{ XM, EXx }, 0 },
-  },
-  /* EVEX_W_0F2A_P_3 */
-  {
-    { "vcvtsi2sd{%LQ|}",	{ XMScalar, VexScalar, Ed }, 0 },
-    { "vcvtsi2sd{%LQ|}",	{ XMScalar, VexScalar, EXxEVexR64, Edq }, 0 },
-  },
-  /* EVEX_W_0F51_P_1 */
-  {
-    { "vsqrtss",	{ XMScalar, VexScalar, EXxmm_md, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F51_P_3 */
-  {
-    { Bad_Opcode },
-    { "vsqrtsd",	{ XMScalar, VexScalar, EXxmm_mq, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F58_P_1 */
-  {
-    { "vaddss",	{ XMScalar, VexScalar, EXxmm_md, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F58_P_3 */
-  {
-    { Bad_Opcode },
-    { "vaddsd",	{ XMScalar, VexScalar, EXxmm_mq, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F59_P_1 */
-  {
-    { "vmulss",	{ XMScalar, VexScalar, EXxmm_md, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F59_P_3 */
-  {
-    { Bad_Opcode },
-    { "vmulsd",	{ XMScalar, VexScalar, EXxmm_mq, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F5A_P_0 */
-  {
-    { "vcvtps2pd",   { XM, EXEvexHalfBcstXmmq, EXxEVexS }, 0 },
-  },
-  /* EVEX_W_0F5A_P_1 */
-  {
-    { "vcvtss2sd",	{ XMScalar, VexScalar, EXxmm_md, EXxEVexS }, 0 },
-  },
-  /* EVEX_W_0F5A_P_2 */
-  {
-    { Bad_Opcode },
-    { "vcvtpd2ps%XY",	{ XMxmmq, EXx, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F5A_P_3 */
-  {
-    { Bad_Opcode },
-    { "vcvtsd2ss",	{ XMScalar, VexScalar, EXxmm_mq, EXxEVexR }, 0 },
-  },
   /* EVEX_W_0F5B_P_0 */
   {
-    { "vcvtdq2ps",	{ XM, EXx, EXxEVexR }, 0 },
+    { "%XEvcvtdq2ps",	{ XM, EXx, EXxEVexR }, 0 },
     { "vcvtqq2ps%XY",	{ XMxmmq, EXx, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F5B_P_1 */
-  {
-    { "vcvttps2dq",	{ XM, EXx, EXxEVexS }, 0 },
-  },
-  /* EVEX_W_0F5B_P_2 */
-  {
-    { "vcvtps2dq",	{ XM, EXx, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F5C_P_1 */
-  {
-    { "vsubss",	{ XMScalar, VexScalar, EXxmm_md, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F5C_P_3 */
-  {
-    { Bad_Opcode },
-    { "vsubsd",	{ XMScalar, VexScalar, EXxmm_mq, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F5D_P_1 */
-  {
-    { "vminss",	{ XMScalar, VexScalar, EXxmm_md, EXxEVexS }, 0 },
-  },
-  /* EVEX_W_0F5D_P_3 */
-  {
-    { Bad_Opcode },
-    { "vminsd",	{ XMScalar, VexScalar, EXxmm_mq, EXxEVexS }, 0 },
-  },
-  /* EVEX_W_0F5E_P_1 */
-  {
-    { "vdivss",	{ XMScalar, VexScalar, EXxmm_md, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F5E_P_3 */
-  {
-    { Bad_Opcode },
-    { "vdivsd",	{ XMScalar, VexScalar, EXxmm_mq, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0F5F_P_1 */
-  {
-    { "vmaxss",	{ XMScalar, VexScalar, EXxmm_md, EXxEVexS }, 0 },
-  },
-  /* EVEX_W_0F5F_P_3 */
-  {
-    { Bad_Opcode },
-    { "vmaxsd",	{ XMScalar, VexScalar, EXxmm_mq, EXxEVexS }, 0 },
   },
   /* EVEX_W_0F62 */
   {
-    { "vpunpckldq",	{ XM, Vex, EXx }, PREFIX_DATA },
+    { "%XEvpunpckldq",	{ XM, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0F66 */
   {
-    { "vpcmpgtd",	{ XMask, Vex, EXx }, PREFIX_DATA },
+    { "vpcmpgtd",	{ MaskG, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0F6A */
   {
-    { "vpunpckhdq",	{ XM, Vex, EXx }, PREFIX_DATA },
+    { "%XEvpunpckhdq",	{ XM, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0F6B */
   {
-    { "vpackssdw",	{ XM, Vex, EXx }, PREFIX_DATA },
+    { "%XEvpackssdw",	{ XM, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0F6C */
   {
     { Bad_Opcode },
-    { "vpunpcklqdq",	{ XM, Vex, EXx }, PREFIX_DATA },
+    { "%XEvpunpcklqdq",	{ XM, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0F6D */
   {
     { Bad_Opcode },
-    { "vpunpckhqdq",	{ XM, Vex, EXx }, PREFIX_DATA },
+    { "%XEvpunpckhqdq",	{ XM, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0F6F_P_1 */
   {
@@ -179,29 +46,29 @@
   },
   /* EVEX_W_0F70_P_2 */
   {
-    { "vpshufd",	{ XM, EXx, Ib }, 0 },
+    { "%XEvpshufd",	{ XM, EXx, Ib }, 0 },
   },
   /* EVEX_W_0F72_R_2 */
   {
-    { "vpsrld",	{ Vex, EXx, Ib }, PREFIX_DATA },
+    { "%XEvpsrld",	{ Vex, EXx, Ib }, PREFIX_DATA },
   },
   /* EVEX_W_0F72_R_6 */
   {
-    { "vpslld",	{ Vex, EXx, Ib }, PREFIX_DATA },
+    { "%XEvpslld",	{ Vex, EXx, Ib }, PREFIX_DATA },
   },
   /* EVEX_W_0F73_R_2 */
   {
     { Bad_Opcode },
-    { "vpsrlq",	{ Vex, EXx, Ib }, PREFIX_DATA },
+    { "%XEvpsrlq",	{ Vex, EXx, Ib }, PREFIX_DATA },
   },
   /* EVEX_W_0F73_R_6 */
   {
     { Bad_Opcode },
-    { "vpsllq",	{ Vex, EXx, Ib }, PREFIX_DATA },
+    { "%XEvpsllq",	{ Vex, EXx, Ib }, PREFIX_DATA },
   },
   /* EVEX_W_0F76 */
   {
-    { "vpcmpeqd",	{ XMask, Vex, EXx }, PREFIX_DATA },
+    { "vpcmpeqd",	{ MaskG, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0F78_P_0 */
   {
@@ -243,15 +110,10 @@
     { "vcvtps2qq",	{ XM, EXEvexHalfBcstXmmq, EXxEVexR }, 0 },
     { "vcvtpd2qq",	{ XM, EXx, EXxEVexR }, 0 },
   },
-  /* EVEX_W_0F7B_P_3 */
-  {
-    { "vcvtusi2sd{%LQ|}",	{ XMScalar, VexScalar, Ed }, 0 },
-    { "vcvtusi2sd{%LQ|}",	{ XMScalar, VexScalar, EXxEVexR64, Edq }, 0 },
-  },
   /* EVEX_W_0F7E_P_1 */
   {
     { Bad_Opcode },
-    { "vmovq",	{ XMScalar, EXxmm_mq }, 0 },
+    { VEX_LEN_TABLE (VEX_LEN_0F7E_P_1) },
   },
   /* EVEX_W_0F7F_P_1 */
   {
@@ -268,84 +130,60 @@
     { "vmovdqu8",	{ EXxS, XM }, 0 },
     { "vmovdqu16",	{ EXxS, XM }, 0 },
   },
-  /* EVEX_W_0FC2_P_1 */
-  {
-    { "vcmpss",	{ XMask, VexScalar, EXxmm_md, EXxEVexS, CMP }, 0 },
-  },
-  /* EVEX_W_0FC2_P_3 */
-  {
-    { Bad_Opcode },
-    { "vcmpsd",	{ XMask, VexScalar, EXxmm_mq, EXxEVexS, CMP }, 0 },
-  },
   /* EVEX_W_0FD2 */
   {
-    { "vpsrld",		{ XM, Vex, EXxmm }, PREFIX_DATA },
+    { "%XEvpsrld",	{ XM, Vex, EXxmm }, PREFIX_DATA },
   },
   /* EVEX_W_0FD3 */
   {
     { Bad_Opcode },
-    { "vpsrlq",		{ XM, Vex, EXxmm }, PREFIX_DATA },
+    { "%XEvpsrlq",	{ XM, Vex, EXxmm }, PREFIX_DATA },
   },
   /* EVEX_W_0FD4 */
   {
     { Bad_Opcode },
-    { "vpaddq",		{ XM, Vex, EXx }, PREFIX_DATA },
+    { "%XEvpaddq",	{ XM, Vex, EXx }, PREFIX_DATA },
   },
-  /* EVEX_W_0FD6_L_0 */
+  /* EVEX_W_0FD6 */
   {
     { Bad_Opcode },
-    { "vmovq",	{ EXqS, XMScalar }, PREFIX_DATA },
+    { VEX_LEN_TABLE (VEX_LEN_0FD6) },
   },
   /* EVEX_W_0FE6_P_1 */
   {
-    { "vcvtdq2pd",	{ XM, EXEvexHalfBcstXmmq }, 0 },
+    { "%XEvcvtdq2pd",	{ XM, EXEvexHalfBcstXmmq }, 0 },
     { "vcvtqq2pd",	{ XM, EXx, EXxEVexR }, 0 },
-  },
-  /* EVEX_W_0FE6_P_2 */
-  {
-    { Bad_Opcode },
-    { "vcvttpd2dq%XY",	{ XMxmmq, EXx, EXxEVexS }, 0 },
-  },
-  /* EVEX_W_0FE6_P_3 */
-  {
-    { Bad_Opcode },
-    { "vcvtpd2dq%XY",	{ XMxmmq, EXx, EXxEVexR }, 0 },
   },
   /* EVEX_W_0FE7 */
   {
-    { "vmovntdq",	{ EXEvexXNoBcst, XM }, PREFIX_DATA },
+    { "%XEvmovntdq",	{ EXEvexXNoBcst, XM }, PREFIX_DATA },
   },
   /* EVEX_W_0FF2 */
   {
-    { "vpslld",		{ XM, Vex, EXxmm }, PREFIX_DATA },
+    { "%XEvpslld",		{ XM, Vex, EXxmm }, PREFIX_DATA },
   },
   /* EVEX_W_0FF3 */
   {
     { Bad_Opcode },
-    { "vpsllq",		{ XM, Vex, EXxmm }, PREFIX_DATA },
+    { "%XEvpsllq",		{ XM, Vex, EXxmm }, PREFIX_DATA },
   },
   /* EVEX_W_0FF4 */
   {
     { Bad_Opcode },
-    { "vpmuludq",	{ XM, Vex, EXx }, PREFIX_DATA },
+    { "%XEvpmuludq",	{ XM, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0FFA */
   {
-    { "vpsubd",		{ XM, Vex, EXx }, PREFIX_DATA },
+    { "%XEvpsubd",		{ XM, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0FFB */
   {
     { Bad_Opcode },
-    { "vpsubq",		{ XM, Vex, EXx }, PREFIX_DATA },
+    { "%XEvpsubq",		{ XM, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0FFE */
   {
-    { "vpaddd",		{ XM, Vex, EXx }, PREFIX_DATA },
-  },
-  /* EVEX_W_0F380D */
-  {
-    { Bad_Opcode },
-    { "vpermilpd",	{ XM, Vex, EXx }, PREFIX_DATA },
+    { "%XEvpaddd",		{ XM, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0F3810_P_1 */
   {
@@ -378,10 +216,6 @@
   {
     { "vpmovusdw",	{ EXxmmq, XM }, 0 },
   },
-  /* EVEX_W_0F3813_P_2 */
-  {
-    { "vcvtph2ps",	{ XM, EXxmmq, EXxEVexS }, 0 },
-  },
   /* EVEX_W_0F3814_P_1 */
   {
     { "vpmovusqw",	{ EXxmmqd, XM }, 0 },
@@ -390,24 +224,24 @@
   {
     { "vpmovusqd",	{ EXxmmq, XM }, 0 },
   },
-  /* EVEX_W_0F3819 */
+  /* EVEX_W_0F3819_L_n */
   {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3819_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3819_W_1) },
+    { "vbroadcastf32x2",	{ XM, EXq }, PREFIX_DATA },
+    { "%XEvbroadcastsd",	{ XM, EXq }, PREFIX_DATA },
   },
-  /* EVEX_W_0F381A */
+  /* EVEX_W_0F381A_M_0_L_n */
   {
-    { MOD_TABLE (MOD_EVEX_0F381A_W_0) },
-    { MOD_TABLE (MOD_EVEX_0F381A_W_1) },
+    { "vbroadcastf32x4",	{ XM, EXxmm }, PREFIX_DATA },
+    { "vbroadcastf64x2",	{ XM, EXxmm }, PREFIX_DATA },
   },
-  /* EVEX_W_0F381B */
+  /* EVEX_W_0F381B_M_0_L_2 */
   {
-    { MOD_TABLE (MOD_EVEX_0F381B_W_0) },
-    { MOD_TABLE (MOD_EVEX_0F381B_W_1) },
+    { "vbroadcastf32x8",	{ XM, EXymm }, PREFIX_DATA },
+    { "vbroadcastf64x4",	{ XM, EXymm }, PREFIX_DATA },
   },
   /* EVEX_W_0F381E */
   {
-    { "vpabsd",	{ XM, EXx }, PREFIX_DATA },
+    { "%XEvpabsd",	{ XM, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0F381F */
   {
@@ -440,17 +274,17 @@
   },
   /* EVEX_W_0F3825_P_2 */
   {
-    { "vpmovsxdq",	{ XM, EXxmmq }, 0 },
+    { "%XEvpmovsxdq",	{ XM, EXxmmq }, 0 },
   },
   /* EVEX_W_0F3828_P_2 */
   {
     { Bad_Opcode },
-    { "vpmuldq",	{ XM, Vex, EXx }, 0 },
+    { "%XEvpmuldq",	{ XM, Vex, EXx }, 0 },
   },
   /* EVEX_W_0F3829_P_2 */
   {
     { Bad_Opcode },
-    { "vpcmpeqq",	{ XMask, Vex, EXx }, 0 },
+    { "vpcmpeqq",	{ MaskG, Vex, EXx }, 0 },
   },
   /* EVEX_W_0F382A_P_1 */
   {
@@ -459,11 +293,11 @@
   },
   /* EVEX_W_0F382A_P_2 */
   {
-    { "vmovntdqa",	{ XM, EXEvexXNoBcst }, 0 },
+    { "%XEvmovntdqa",	{ XM, EXEvexXNoBcst }, 0 },
   },
   /* EVEX_W_0F382B */
   {
-    { "vpackusdw",	{ XM, Vex, EXx }, PREFIX_DATA },
+    { "%XEvpackusdw",	{ XM, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0F3830_P_1 */
   {
@@ -491,56 +325,41 @@
   },
   /* EVEX_W_0F3835_P_2 */
   {
-    { "vpmovzxdq",	{ XM, EXxmmq }, 0 },
+    { "%XEvpmovzxdq",	{ XM, EXxmmq }, 0 },
   },
   /* EVEX_W_0F3837 */
   {
     { Bad_Opcode },
-    { "vpcmpgtq",	{ XMask, Vex, EXx }, PREFIX_DATA },
+    { "vpcmpgtq",	{ MaskG, Vex, EXx }, PREFIX_DATA },
   },
   /* EVEX_W_0F383A_P_1 */
   {
     { MOD_TABLE (MOD_EVEX_0F383A_P_1_W_0) },
   },
-  /* EVEX_W_0F3852_P_1 */
-  {
-    { "vdpbf16ps",	{ XM, Vex, EXx }, 0 },
-    { Bad_Opcode },
-  },
   /* EVEX_W_0F3859 */
   {
-    { "vbroadcasti32x2",	{ XM, EXxmm_mq }, PREFIX_DATA },
-    { "vpbroadcastq",	{ XM, EXxmm_mq }, PREFIX_DATA },
+    { "vbroadcasti32x2",	{ XM, EXq }, PREFIX_DATA },
+    { "%XEvpbroadcastq",	{ XM, EXq }, PREFIX_DATA },
   },
-  /* EVEX_W_0F385A */
+  /* EVEX_W_0F385A_M_0_L_n */
   {
-    { MOD_TABLE (MOD_EVEX_0F385A_W_0) },
-    { MOD_TABLE (MOD_EVEX_0F385A_W_1) },
+    { "vbroadcasti32x4",	{ XM, EXxmm }, PREFIX_DATA },
+    { "vbroadcasti64x2",	{ XM, EXxmm }, PREFIX_DATA },
   },
-  /* EVEX_W_0F385B */
+  /* EVEX_W_0F385B_M_0_L_2 */
   {
-    { MOD_TABLE (MOD_EVEX_0F385B_W_0) },
-    { MOD_TABLE (MOD_EVEX_0F385B_W_1) },
+    { "vbroadcasti32x8",	{ XM, EXymm }, PREFIX_DATA },
+    { "vbroadcasti64x4",	{ XM, EXymm }, PREFIX_DATA },
   },
   /* EVEX_W_0F3870 */
   {
     { Bad_Opcode },
     { "vpshldvw",  { XM, Vex, EXx }, PREFIX_DATA },
   },
-  /* EVEX_W_0F3872_P_1 */
-  {
-    { "vcvtneps2bf16%XY", { XMxmmq, EXx }, 0 },
-    { Bad_Opcode },
-  },
   /* EVEX_W_0F3872_P_2 */
   {
     { Bad_Opcode },
     { "vpshrdvw",  { XM, Vex, EXx }, 0 },
-  },
-  /* EVEX_W_0F3872_P_3 */
-  {
-    { "vcvtne2ps2bf16", { XM, Vex, EXx}, 0 },
-    { Bad_Opcode },
   },
   /* EVEX_W_0F387A */
   {
@@ -555,136 +374,63 @@
     { Bad_Opcode },
     { "vpmultishiftqb",	{ XM, Vex, EXx }, PREFIX_DATA },
   },
-  /* EVEX_W_0F3891 */
+  /* EVEX_W_0F3A18_L_n */
   {
-    { "vpgatherqd",	{ XMxmmq, MVexVSIBQDWpX }, PREFIX_DATA },
-    { "vpgatherqq",	{ XM, MVexVSIBQWpX }, 0 },
+    { "vinsertf32x4",	{ XM, Vex, EXxmm, Ib }, PREFIX_DATA },
+    { "vinsertf64x2",	{ XM, Vex, EXxmm, Ib }, PREFIX_DATA },
   },
-  /* EVEX_W_0F3893 */
+  /* EVEX_W_0F3A19_L_n */
   {
-    { "vgatherqps",	{ XMxmmq, MVexVSIBQDWpX }, PREFIX_DATA },
-    { "vgatherqpd",	{ XM, MVexVSIBQWpX }, 0 },
+    { "vextractf32x4",	{ EXxmm, XM, Ib }, PREFIX_DATA },
+    { "vextractf64x2",	{ EXxmm, XM, Ib }, PREFIX_DATA },
   },
-  /* EVEX_W_0F38A1 */
+  /* EVEX_W_0F3A1A_L_2 */
   {
-    { "vpscatterqd",	{ MVexVSIBQDWpX, XMxmmq }, PREFIX_DATA },
-    { "vpscatterqq",	{ MVexVSIBQWpX, XM }, 0 },
+    { "vinsertf32x8",	{ XM, Vex, EXymm, Ib }, PREFIX_DATA },
+    { "vinsertf64x4",	{ XM, Vex, EXymm, Ib }, PREFIX_DATA },
   },
-  /* EVEX_W_0F38A3 */
+  /* EVEX_W_0F3A1B_L_2 */
   {
-    { "vscatterqps",	{ MVexVSIBQDWpX, XMxmmq }, PREFIX_DATA },
-    { "vscatterqpd",	{ MVexVSIBQWpX, XM }, 0 },
-  },
-  /* EVEX_W_0F38C7_R_1_M_0 */
-  {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F38C7_R_1_M_0_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F38C7_R_1_M_0_W_1) },
-  },
-  /* EVEX_W_0F38C7_R_2_M_0 */
-  {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F38C7_R_2_M_0_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F38C7_R_2_M_0_W_1) },
-  },
-  /* EVEX_W_0F38C7_R_5_M_0 */
-  {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F38C7_R_5_M_0_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F38C7_R_5_M_0_W_1) },
-  },
-  /* EVEX_W_0F38C7_R_6_M_0 */
-  {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F38C7_R_6_M_0_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F38C7_R_6_M_0_W_1) },
-  },
-  /* EVEX_W_0F3A00 */
-  {
-    { Bad_Opcode },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A00_W_1) },
-  },
-  /* EVEX_W_0F3A01 */
-  {
-    { Bad_Opcode },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A01_W_1) },
-  },
-  /* EVEX_W_0F3A05 */
-  {
-    { Bad_Opcode },
-    { "vpermilpd",	{ XM, EXx, Ib }, PREFIX_DATA },
-  },
-  /* EVEX_W_0F3A08 */
-  {
-    { "vrndscaleps",	{ XM, EXx, EXxEVexS, Ib }, PREFIX_DATA },
-  },
-  /* EVEX_W_0F3A09 */
-  {
-    { Bad_Opcode },
-    { "vrndscalepd",	{ XM, EXx, EXxEVexS, Ib }, PREFIX_DATA },
-  },
-  /* EVEX_W_0F3A0A */
-  {
-    { "vrndscaless",	{ XMScalar, VexScalar, EXxmm_md, EXxEVexS, Ib }, PREFIX_DATA },
-  },
-  /* EVEX_W_0F3A0B */
-  {
-    { Bad_Opcode },
-    { "vrndscalesd",	{ XMScalar, VexScalar, EXxmm_mq, EXxEVexS, Ib }, PREFIX_DATA },
-  },
-  /* EVEX_W_0F3A18 */
-  {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A18_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A18_W_1) },
-  },
-  /* EVEX_W_0F3A19 */
-  {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A19_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A19_W_1) },
-  },
-  /* EVEX_W_0F3A1A */
-  {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A1A_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A1A_W_1) },
-  },
-  /* EVEX_W_0F3A1B */
-  {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A1B_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A1B_W_1) },
+    { "vextractf32x8",	{ EXymm, XM, Ib }, PREFIX_DATA },
+    { "vextractf64x4",	{ EXymm, XM, Ib }, PREFIX_DATA },
   },
   /* EVEX_W_0F3A21 */
   {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A21_W_0) },
+    { VEX_LEN_TABLE (VEX_LEN_0F3A21) },
   },
-  /* EVEX_W_0F3A23 */
+  /* EVEX_W_0F3A23_L_n */
   {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A23_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A23_W_1) },
+    { "vshuff32x4",	{ XM, Vex, EXx, Ib }, PREFIX_DATA },
+    { "vshuff64x2",	{ XM, Vex, EXx, Ib }, PREFIX_DATA },
   },
-  /* EVEX_W_0F3A38 */
+  /* EVEX_W_0F3A38_L_n */
   {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A38_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A38_W_1) },
+    { "vinserti32x4",	{ XM, Vex, EXxmm, Ib }, PREFIX_DATA },
+    { "vinserti64x2",	{ XM, Vex, EXxmm, Ib }, PREFIX_DATA },
   },
-  /* EVEX_W_0F3A39 */
+  /* EVEX_W_0F3A39_L_n */
   {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A39_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A39_W_1) },
+    { "vextracti32x4",	{ EXxmm, XM, Ib }, PREFIX_DATA },
+    { "vextracti64x2",	{ EXxmm, XM, Ib }, PREFIX_DATA },
   },
-  /* EVEX_W_0F3A3A */
+  /* EVEX_W_0F3A3A_L_2 */
   {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A3A_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A3A_W_1) },
+    { "vinserti32x8",	{ XM, Vex, EXymm, Ib }, PREFIX_DATA },
+    { "vinserti64x4",	{ XM, Vex, EXymm, Ib }, PREFIX_DATA },
   },
-  /* EVEX_W_0F3A3B */
+  /* EVEX_W_0F3A3B_L_2 */
   {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A3B_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A3B_W_1) },
+    { "vextracti32x8",	{ EXymm, XM, Ib }, PREFIX_DATA },
+    { "vextracti64x4",	{ EXymm, XM, Ib }, PREFIX_DATA },
   },
   /* EVEX_W_0F3A42 */
   {
     { "vdbpsadbw",	{ XM, Vex, EXx, Ib }, 0 },
   },
-  /* EVEX_W_0F3A43 */
+  /* EVEX_W_0F3A43_L_n */
   {
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A43_W_0) },
-    { EVEX_LEN_TABLE (EVEX_LEN_0F3A43_W_1) },
+    { "vshufi32x4",	{ XM, Vex, EXx, Ib }, PREFIX_DATA },
+    { "vshufi64x2",	{ XM, Vex, EXx, Ib }, PREFIX_DATA },
   },
   /* EVEX_W_0F3A70 */
   {
@@ -695,4 +441,14 @@
   {
     { Bad_Opcode },
     { "vpshrdw",   { XM, Vex, EXx, Ib }, 0 },
+  },
+  /* EVEX_W_MAP5_5B_P_0 */
+  {
+    { "vcvtdq2ph%XY",	{ XMxmmq, EXx, EXxEVexR }, 0 },
+    { "vcvtqq2ph%XZ",	{ XMM, EXx, EXxEVexR }, 0 },
+  },
+  /* EVEX_W_MAP5_7A_P_3 */
+  {
+    { "vcvtudq2ph%XY",	{ XMxmmq, EXx, EXxEVexR }, 0 },
+    { "vcvtuqq2ph%XZ",	{ XMM, EXx, EXxEVexR }, 0 },
   },

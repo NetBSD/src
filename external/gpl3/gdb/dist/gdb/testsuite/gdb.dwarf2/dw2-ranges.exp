@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,23 +19,19 @@ load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
 if {![dwarf2_support]} {
-    verbose "Skipping DW_AT_ranges test."
+    verbose "Skipping $gdb_test_file_name."
     return 0  
 }
 
 # The .c files use __attribute__.
-if [get_compiler_info] {
-    return -1
-}
-if !$gcc_compiled {
-    verbose "Skipping DW_AT_ranges test."
+if ![is_c_compiler_gcc] {
+    verbose "Skipping $gdb_test_file_name."
     return 0  
 }
 
-standard_testfile dw2-ranges.c dw2-ranges2.c dw2-ranges3.c
+standard_testfile .c -2.c -3.c
 set asmfile [standard_output_file ${testfile}.s]
 set asmfile2 [standard_output_file ${testfile}2.s]
-set asmfile3 [standard_output_file ${testfile}3.s]
 set objfile [standard_output_file ${testfile}.o]
 set objfile2 [standard_output_file ${testfile}2.o]
 set objfile3 [standard_output_file ${testfile}3.o]
@@ -55,8 +51,7 @@ if {[gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${asmfile2}" assembly {}] !=
 # STABS compilation is intentional as it tests the STABS lookup where is no
 # partial_symtab->psymtabs_addrmap supported for that CU (Compilation Unit) in
 # a file containing psymtabs_addrmap-supporting DWARF CUs.
-if {[gdb_compile "${srcdir}/${subdir}/${srcfile3}" "${asmfile3}" assembly {}] != ""
-    || [gdb_compile "${asmfile3}" "${objfile3}" object {additional_flags=-gstabs}] != "" } {
+if {[gdb_compile "${srcdir}/${subdir}/${srcfile3}" "${objfile3}" object {additional_flags=-gstabs quiet}] != "" } {
     return -1
 }
 
@@ -82,12 +77,5 @@ gdb_test "info line func" "Line \[0-9\]* of .* starts at address .* and ends at 
 gdb_test "info line main2" "Line \[0-9\]* of .* starts at address .* and ends at .*"
 gdb_test "info line func2" "Line \[0-9\]* of .* starts at address .* and ends at .*"
 
-set test "info line main3"
-gdb_test_multiple $test $test {
-    -re "Line \[0-9\]* of .* starts at address .* and ends at .*\r\n$gdb_prompt $" {
-	pass $test
-    }
-    -re "Line \[0-9\]* of .* is at address .* but contains no code\\.\r\n$gdb_prompt $" {
-	kfail symtab/12497 $test
-    }
-}
+gdb_test "info line main3" \
+    "Line \[0-9\]* of .* starts at address .* and ends at .*"

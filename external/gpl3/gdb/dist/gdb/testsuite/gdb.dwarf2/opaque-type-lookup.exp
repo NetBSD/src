@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ if {![dwarf2_support]} {
     return 0
 }
 
-standard_testfile opaque-type-lookup.c opaque-type-lookup-1.S opaque-type-lookup-2.c
+standard_testfile main.c -1.S -2.c
 
 # Create the DWARF.
 set asm_file [standard_output_file $srcfile2]

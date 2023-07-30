@@ -1,6 +1,6 @@
 #### Makefile.in --- Makefile template for the RL78 simulator
 
-### Copyright (C) 2008-2020 Free Software Foundation, Inc.
+### Copyright (C) 2008-2023 Free Software Foundation, Inc.
 ### Contributed by Red Hat, Inc.
 ### 
 ### This file is part of the GNU simulators.
@@ -20,8 +20,6 @@
 
 ## COMMON_PRE_CONFIG_FRAG
 
-SIM_EXTRA_CFLAGS = -Wall
-
 SIM_RUN_OBJS = \
 	main.o
 
@@ -34,18 +32,3 @@ SIM_OBJS = \
 	trace.o
 
 ## COMMON_POST_CONFIG_FRAG
-
-arch = rl78
-
-err.o : err.h
-fpu.o : cpu.h fpu.h
-gdb-if.o : cpu.h mem.h load.h \
-           $(srcdir)/../../include/gdb/callback.h \
-	   $(srcdir)/../../include/gdb/remote-sim.h \
-	   $(srcdir)/../../include/gdb/signals.h \
-	   $(srcdir)/../../include/gdb/sim-rl78.h
-load.o : ../../bfd/bfd.h cpu.h mem.h
-main.o : ../../bfd/bfd.h cpu.h mem.h load.h
-mem.o : mem.h cpu.h
-reg.o : cpu.h
-rl78.o : $(srcdir)/../../include/opcode/rl78.h cpu.h mem.h

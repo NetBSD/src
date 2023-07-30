@@ -1,5 +1,5 @@
 /* AArch64-specific support for ELF.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -398,9 +398,9 @@ bfd_vma
 _bfd_aarch64_elf_resolve_relocation (bfd *input_bfd,
 				     bfd_reloc_code_real_type r_type,
 				     bfd_vma place, bfd_vma value,
-				     bfd_vma addend, bfd_boolean weak_undef_p)
+				     bfd_vma addend, bool weak_undef_p)
 {
-  bfd_boolean tls_reloc = TRUE;
+  bool tls_reloc = true;
   switch (r_type)
     {
     case BFD_RELOC_AARCH64_NONE:
@@ -448,7 +448,7 @@ _bfd_aarch64_elf_resolve_relocation (bfd *input_bfd,
     case BFD_RELOC_AARCH64_MOVW_G2_NC:
     case BFD_RELOC_AARCH64_MOVW_G2_S:
     case BFD_RELOC_AARCH64_MOVW_G3:
-      tls_reloc = FALSE;
+      tls_reloc = false;
       /* fall-through.  */
     case BFD_RELOC_AARCH64_TLSDESC_OFF_G0_NC:
     case BFD_RELOC_AARCH64_TLSDESC_OFF_G1:
@@ -575,7 +575,7 @@ _bfd_aarch64_elf_resolve_relocation (bfd *input_bfd,
 
 /* Support for core dump NOTE sections.  */
 
-bfd_boolean
+bool
 _bfd_aarch64_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 {
   int offset;
@@ -584,7 +584,7 @@ _bfd_aarch64_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
   switch (note->descsz)
     {
       default:
-	return FALSE;
+	return false;
 
       case 392:		/* sizeof(struct elf_prstatus) on Linux/arm64.  */
 	/* pr_cursig */
@@ -607,13 +607,13 @@ _bfd_aarch64_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 					  size, note->descpos + offset);
 }
 
-bfd_boolean
+bool
 _bfd_aarch64_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 {
   switch (note->descsz)
     {
     default:
-      return FALSE;
+      return false;
 
     case 136:	     /* This is sizeof(struct elf_prpsinfo) on Linux/aarch64.  */
       elf_tdata (abfd)->core->pid = bfd_get_32 (abfd, note->descdata + 24);
@@ -635,7 +635,7 @@ _bfd_aarch64_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
       command[n - 1] = '\0';
   }
 
-  return TRUE;
+  return true;
 }
 
 char *
@@ -830,7 +830,7 @@ _bfd_aarch64_elf_parse_gnu_properties (bfd *abfd, unsigned int type,
    If APROP isn't NULL, merge it with BPROP and/or PROP.  Vice-versa if BROP
    isn't NULL.  Return TRUE if there is any update to APROP or if BPROP should
    be merge with ABFD.  */
-bfd_boolean
+bool
 _bfd_aarch64_elf_merge_gnu_properties (struct bfd_link_info *info
 				       ATTRIBUTE_UNUSED,
 				       bfd *abfd ATTRIBUTE_UNUSED,
@@ -839,7 +839,7 @@ _bfd_aarch64_elf_merge_gnu_properties (struct bfd_link_info *info
 				       uint32_t prop)
 {
   unsigned int orig_number;
-  bfd_boolean updated = FALSE;
+  bool updated = false;
   unsigned int pr_type = aprop != NULL ? aprop->pr_type : bprop->pr_type;
 
   switch (pr_type)
@@ -869,14 +869,14 @@ _bfd_aarch64_elf_merge_gnu_properties (struct bfd_link_info *info
 	    else
 	      {
 		bprop->u.number = prop;
-		updated = TRUE;
+		updated = true;
 	      }
 	  }
 	/* No PROP and BPROP is NULL, so remove APROP.  */
 	else if (aprop != NULL)
 	  {
 	    aprop->pr_kind = property_remove;
-	    updated = TRUE;
+	    updated = true;
 	  }
       }
       break;

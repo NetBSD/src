@@ -1,5 +1,5 @@
 # tls.exp -- Expect script to test thread-local storage
-# Copyright (C) 1992-2020 Free Software Foundation, Inc.
+# Copyright (C) 1992-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ load_lib gdb-python.exp
 
 standard_testfile tls.c tls2.c
 
-if [istarget "*-*-linux"] then {
+if {[istarget "*-*-linux"]} {
     set target_cflags "-D_MIT_POSIX_THREADS"
 } else {
     set target_cflags ""
@@ -72,7 +72,7 @@ proc check_thread_local {number} {
 	    "= $expected_value" \
 	    "${number} thread local storage"
 
-    if {![skip_python_tests]} {
+    if {!$::has_python_support} {
 	gdb_test_no_output \
 	    "python sym = gdb.lookup_symbol('a_thread_local')\[0\]" \
 	    "${number} look up a_thread_local symbol"
@@ -127,7 +127,9 @@ proc check_thread_stack {number spin_threads spin_threads_level} {
     upvar $spin_threads tarr
     upvar $spin_threads_level tarrl
 
-    select_thread $number
+    with_test_prefix "thread stack" {
+	select_thread $number
+    }
     send_gdb "where\n"
     gdb_expect {
 	-re ".*(\[0-9\]+)\[ \t\]+$hex in spin \\(vp=(0x\[0-9a-f\]+).*\r\n$gdb_prompt $" {
@@ -153,6 +155,9 @@ proc check_thread_stack {number spin_threads spin_threads_level} {
 
 clean_restart ${binfile}
 
+# Set this to avoid calling skip_python_tests repeatedly.
+set has_python_support [skip_python_tests]
+
 gdb_test_multiple "print a_thread_local" "" {
     -re -wrap "Cannot find thread-local variables on this target" {
 	kfail "gdb/25807" $gdb_test_name
@@ -162,8 +167,7 @@ gdb_test_multiple "print a_thread_local" "" {
     }
 }
 
-if ![runto_main] then {
-   fail "can't run to main"
+if {![runto_main]} {
    return 0
 }
 
@@ -257,7 +261,10 @@ set thrs_in_spin 0
 foreach i [array names spin_threads] {
     if {$spin_threads($i) == 1} {
       incr thrs_in_spin
-      select_thread $i
+
+      with_test_prefix "spin_threads" {
+	select_thread $i
+      }
       set level $spin_threads_level($i)
       # We expect to be in sem_wait, but if the thread has not yet
       # been scheduled, we might be in sem_post still.  We could be at

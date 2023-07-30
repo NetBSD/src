@@ -1,6 +1,6 @@
 /* Definitions for BFD wrappers used by GDB.
 
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,9 +23,16 @@
 #include "registry.h"
 #include "gdbsupport/byte-vector.h"
 #include "gdbsupport/gdb_ref_ptr.h"
+#include "gdbsupport/iterator-range.h"
 #include "gdbsupport/next-iterator.h"
 
-DECLARE_REGISTRY (bfd);
+/* A registry adaptor for BFD.  This arranges to store the registry in
+   gdb's per-BFD data, which is stored as the bfd_usrdata.  */
+template<>
+struct registry_accessor<bfd>
+{
+  static registry<bfd> *get (bfd *abfd);
+};
 
 /* If supplied a path starting with this sequence, gdb_bfd_open will
    open BFDs using target fileio operations.  */
@@ -194,6 +201,13 @@ int gdb_bfd_requires_relocations (bfd *abfd);
 bool gdb_bfd_get_full_section_contents (bfd *abfd, asection *section,
 					gdb::byte_vector *contents);
 
+/* Create and initialize a BFD handle from a target in-memory range.  The
+   BFD starts at ADDR and is SIZE bytes long.  TARGET is the BFD target
+   name as used in bfd_find_target.  */
+
+gdb_bfd_ref_ptr gdb_bfd_open_from_target_memory (CORE_ADDR addr, ULONGEST size,
+						 const char *target);
+
 /* Range adapter for a BFD's sections.
 
    To be used as:
@@ -202,13 +216,25 @@ bool gdb_bfd_get_full_section_contents (bfd *abfd, asection *section,
        ... use SECT ...
  */
 
-using gdb_bfd_section_iterator = next_iterator<asection>;
-using gdb_bfd_section_range = next_adapter<asection, gdb_bfd_section_iterator>;
+using gdb_bfd_section_range = next_range<asection>;
 
-static inline
-gdb_bfd_section_range gdb_bfd_sections (bfd *abfd)
+static inline gdb_bfd_section_range
+gdb_bfd_sections (bfd *abfd)
 {
   return gdb_bfd_section_range (abfd->sections);
 }
+
+static inline gdb_bfd_section_range
+gdb_bfd_sections (const gdb_bfd_ref_ptr &abfd)
+{
+  return gdb_bfd_section_range (abfd->sections);
+};
+
+/* A wrapper for bfd_errmsg to produce a more helpful error message
+   in the case of bfd_error_file_ambiguously recognized.
+   MATCHING, if non-NULL, is the corresponding argument to
+   bfd_check_format_matches, and will be freed.  */
+
+extern std::string gdb_bfd_errmsg (bfd_error_type error_tag, char **matching);
 
 #endif /* GDB_BFD_H */

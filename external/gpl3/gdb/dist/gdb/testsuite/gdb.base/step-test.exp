@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,8 +26,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debu
 
 clean_restart ${binfile}
 
-if ![runto_main] then {
-   fail "can't run to main"
+if {![runto_main]} {
    return 0
 }
 
@@ -128,8 +127,10 @@ test_i "stepi into function" "stepi" \
 # Continue to step until we reach the function's body.  This makes it
 # more likely that we've actually completed the prologue, so "finish"
 # will work.
+set alphanum_re "\[a-zA-Z0-9\]"
+set pic_thunk_re  "__$alphanum_re*\\.get_pc_thunk\\.$alphanum_re* \\(\\)"
 test_i "stepi into function's first source line" "stepi" \
-	".*${decimal}.*int callee" \
+	"(${decimal}.*int callee|$pic_thunk_re)" \
 	".*${decimal}.*myglob.*; return 0;"
 
 # Have to be careful here, if the finish does not work, 
@@ -142,12 +143,10 @@ gdb_test_multiple "finish" "$test" {
     }
     -re ".*(Program received|$inferior_exited_re).*$gdb_prompt $" {
 	# Oops... We ran to the end of the program...  Better reset     
-	if {![runto_main]} then {
-	    fail "$test (Can't run to main)"
+	if {![runto_main]} {
 	    return 0
 	}
 	if {![runto step-test.c:45]} {
-	    fail "$test (Can't run to line 45)"
 	    return 0
 	}
 	fail "$test"
@@ -202,6 +201,6 @@ gdb_test_multiple "step" "$test" {
     }
 }
 
-gdb_continue_to_end "step-test.exp"
+gdb_continue_to_end
 
 return 0

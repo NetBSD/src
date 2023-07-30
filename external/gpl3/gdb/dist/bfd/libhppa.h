@@ -1,5 +1,5 @@
 /* HP PA-RISC SOM object file format:  definitions internal to BFD.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -162,7 +162,7 @@ enum hppa_reloc_expr_type_alt
 static inline unsigned ATTRIBUTE_UNUSED
 sign_extend (unsigned x, unsigned len)
 {
-  unsigned signbit = (1 << (len - 1));
+  unsigned signbit = (1u << (len - 1));
   unsigned mask = (signbit << 1) - 1;
   return ((x & mask) ^ signbit) - signbit;
 }

@@ -64,5 +64,11 @@ int main()
      DeeplyDerived's ctor.  */
   DeeplyDerived dd(15);
 
+  Derived *dyn_d = new Derived (24);
+  DeeplyDerived *dyn_dd = new DeeplyDerived (42);
+
+  delete dyn_d;
+  delete dyn_dd;
+
   return 0;
 }

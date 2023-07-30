@@ -1,6 +1,6 @@
-This is stabs.info, produced by makeinfo version 6.5 from stabs.texinfo.
+This is stabs.info, produced by makeinfo version 6.8 from stabs.texinfo.
 
-Copyright (C) 1992-2019 Free Software Foundation, Inc.  Contributed by
+Copyright (C) 1992-2023 Free Software Foundation, Inc.  Contributed by
 Cygnus Support.  Written by Julia Menapace, Jim Kingdon, and David
 MacKenzie.
 
@@ -17,7 +17,7 @@ END-INFO-DIR-ENTRY
 
    This document describes the stabs debugging symbol tables.
 
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.  Contributed
+   Copyright (C) 1992-2023 Free Software Foundation, Inc.  Contributed
 by Cygnus Support.  Written by Julia Menapace, Jim Kingdon, and David
 MacKenzie.
 
@@ -3542,7 +3542,7 @@ File: stabs.info,  Node: N_PC,  Next: N_NSYMS,  Up: Expanded Reference
 D.1 N_PC
 ========
 
- -- '.stabs': N_PC
+ -- .stabs: N_PC
      Global symbol (for Pascal).
 
           "name" -> "symbol_name"  <<?>>
@@ -3559,7 +3559,7 @@ File: stabs.info,  Node: N_NSYMS,  Next: N_NOMAP,  Prev: N_PC,  Up: Expanded Ref
 D.2 N_NSYMS
 ===========
 
- -- '.stabn': N_NSYMS
+ -- .stabn: N_NSYMS
      Number of symbols (according to Ultrix V4.0).
 
                   0, files,,funcs,lines (stab.def)
@@ -3570,7 +3570,7 @@ File: stabs.info,  Node: N_NOMAP,  Next: N_M2C,  Prev: N_NSYMS,  Up: Expanded Re
 D.3 N_NOMAP
 ===========
 
- -- '.stabs': N_NOMAP
+ -- .stabs: N_NOMAP
      No DST map for symbol (according to Ultrix V4.0).  I think this
      means a variable has been optimized out.
 
@@ -3582,7 +3582,7 @@ File: stabs.info,  Node: N_M2C,  Next: N_BROWS,  Prev: N_NOMAP,  Up: Expanded Re
 D.4 N_M2C
 =========
 
- -- '.stabs': N_M2C
+ -- .stabs: N_M2C
      Modula-2 compilation unit.
 
           "string" -> "unit_name,unit_time_stamp[,code_time_stamp]"
@@ -3599,7 +3599,7 @@ File: stabs.info,  Node: N_BROWS,  Next: N_DEFD,  Prev: N_M2C,  Up: Expanded Ref
 D.5 N_BROWS
 ===========
 
- -- '.stabs': N_BROWS
+ -- .stabs: N_BROWS
      Sun source code browser, path to '.cb' file
 
      <<?>> "path to associated '.cb' file"
@@ -3612,7 +3612,7 @@ File: stabs.info,  Node: N_DEFD,  Next: N_EHDECL,  Prev: N_BROWS,  Up: Expanded 
 D.6 N_DEFD
 ==========
 
- -- '.stabn': N_DEFD
+ -- .stabn: N_DEFD
      GNU Modula2 definition module dependency.
 
      GNU Modula-2 definition module dependency.  The value is the
@@ -3626,7 +3626,7 @@ File: stabs.info,  Node: N_EHDECL,  Next: N_MOD2,  Prev: N_DEFD,  Up: Expanded R
 D.7 N_EHDECL
 ============
 
- -- '.stabs': N_EHDECL
+ -- .stabs: N_EHDECL
      GNU C++ exception variable <<?>>.
 
      "STRING is variable name"
@@ -3639,7 +3639,7 @@ File: stabs.info,  Node: N_MOD2,  Next: N_CATCH,  Prev: N_EHDECL,  Up: Expanded 
 D.8 N_MOD2
 ==========
 
- -- '.stab?': N_MOD2
+ -- .stab?: N_MOD2
      Modula2 info "for imc" (according to Ultrix V4.0)
 
      Note: conflicts with 'N_EHDECL' <<?>>
@@ -3650,7 +3650,7 @@ File: stabs.info,  Node: N_CATCH,  Next: N_SSYM,  Prev: N_MOD2,  Up: Expanded Re
 D.9 N_CATCH
 ===========
 
- -- '.stabn': N_CATCH
+ -- .stabn: N_CATCH
      GNU C++ 'catch' clause
 
      GNU C++ 'catch' clause.  The value is its address.  The desc field
@@ -3665,7 +3665,7 @@ File: stabs.info,  Node: N_SSYM,  Next: N_SCOPE,  Prev: N_CATCH,  Up: Expanded R
 D.10 N_SSYM
 ===========
 
- -- '.stabn': N_SSYM
+ -- .stabn: N_SSYM
      Structure or union element.
 
      The value is the offset in the structure.
@@ -3678,7 +3678,7 @@ File: stabs.info,  Node: N_SCOPE,  Next: Gould,  Prev: N_SSYM,  Up: Expanded Ref
 D.11 N_SCOPE
 ============
 
- -- '.stab?': N_SCOPE
+ -- .stab?: N_SCOPE
      Modula2 scope information (Sun linker) <<?>>
 
 
@@ -3687,11 +3687,11 @@ File: stabs.info,  Node: Gould,  Next: N_LENG,  Prev: N_SCOPE,  Up: Expanded Ref
 D.12 Non-base registers on Gould systems
 ========================================
 
- -- '.stab?': N_NBTEXT
- -- '.stab?': N_NBDATA
- -- '.stab?': N_NBBSS
- -- '.stab?': N_NBSTS
- -- '.stab?': N_NBLCS
+ -- .stab?: N_NBTEXT
+ -- .stab?: N_NBDATA
+ -- .stab?: N_NBBSS
+ -- .stab?: N_NBSTS
+ -- .stab?: N_NBLCS
      These are used on Gould systems for non-base registers syms.
 
      However, the following values are not the values used by Gould;
@@ -3714,7 +3714,7 @@ File: stabs.info,  Node: N_LENG,  Prev: Gould,  Up: Expanded Reference
 D.13 N_LENG
 ===========
 
- -- '.stabn': N_LENG
+ -- .stabn: N_LENG
      Second symbol entry containing a length-value for the preceding
      entry.  The value is the length.
 
@@ -4557,23 +4557,28 @@ Node: Symbol Descriptors128902
 Node: Type Descriptors131681
 Node: Expanded Reference134893
 Node: N_PC136311
-Node: N_NSYMS136679
-Node: N_NOMAP136920
-Node: N_M2C137226
-Node: N_BROWS137659
-Node: N_DEFD137942
-Node: N_EHDECL138399
-Node: N_MOD2138650
-Node: N_CATCH138887
-Node: N_SSYM139381
-Node: N_SCOPE139666
-Node: Gould139856
-Node: N_LENG140849
-Node: Questions141077
-Node: Stab Sections142718
-Node: Stab Section Basics143328
-Node: ELF Linker Relocation146670
-Node: GNU Free Documentation License150189
-Node: Symbol Types Index175349
+Node: N_NSYMS136677
+Node: N_NOMAP136916
+Node: N_M2C137220
+Node: N_BROWS137651
+Node: N_DEFD137932
+Node: N_EHDECL138387
+Node: N_MOD2138636
+Node: N_CATCH138871
+Node: N_SSYM139363
+Node: N_SCOPE139646
+Node: Gould139834
+Node: N_LENG140817
+Node: Questions141043
+Node: Stab Sections142684
+Node: Stab Section Basics143294
+Node: ELF Linker Relocation146636
+Node: GNU Free Documentation License150155
+Node: Symbol Types Index175315
 
 End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:

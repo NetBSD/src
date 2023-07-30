@@ -1,5 +1,5 @@
 # Tests for anonymous union support.
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# This test is used to verify GDB's ability to refer to linkage names
+# for types and functions within anonymous structures.
+
 standard_testfile .cc
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} {debug c++}] } {
      return -1
+}
+
+# Clang doesn't add any names for functions within anonymous structures,
+# so there is no way to try and refer to them inside GDB.
+if {[test_compiler_info clang-*-* c++]} {
+    untested "clang does not use linkage name in this case"
+    return
 }
 
 if { [is_aarch32_target] } {

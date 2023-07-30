@@ -118,6 +118,8 @@
 @V@/gdb/ChangeLog-2017 @V@/gdb/ChangeLog.017
 @V@/gdb/ChangeLog-2018 @V@/gdb/ChangeLog.018
 @V@/gdb/ChangeLog-2019 @V@/gdb/ChangeLog.019
+@V@/gdb/ChangeLog-2020 @V@/gdb/ChangeLog.020
+@V@/gdb/ChangeLog-2021 @V@/gdb/ChangeLog.021
 @V@/gdb/ChangeLog-3.x @V@/gdb/ChangeLog.3-x
 @V@/gdb/ada-exp.tab.c @V@/gdb/ada-exp_tab.c
 @V@/gdb/amd64-windows-nat.c @V@/gdb/a64w-nat.c

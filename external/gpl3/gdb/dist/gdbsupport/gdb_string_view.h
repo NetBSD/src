@@ -7,7 +7,7 @@
 // Note: This file has been stolen from the gcc repo
 // (libstdc++-v3/include/experimental/string_view) and has local modifications.
 
-// Copyright (C) 2013-2020 Free Software Foundation, Inc.
+// Copyright (C) 2013-2023 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -99,10 +99,10 @@ namespace gdb {
       constexpr basic_string_view(const basic_string_view&) noexcept = default;
 
       template<typename _Allocator>
-        basic_string_view(const std::basic_string<_CharT, _Traits,
+	basic_string_view(const std::basic_string<_CharT, _Traits,
 			  _Allocator>& __str) noexcept
-        : _M_len{__str.length()}, _M_str{__str.data()}
-        { }
+	: _M_len{__str.length()}, _M_str{__str.data()}
+	{ }
 
       /*constexpr*/ basic_string_view(const _CharT* __str)
       : _M_len{__str == nullptr ? 0 : traits_type::length(__str)},
@@ -111,7 +111,7 @@ namespace gdb {
 
       constexpr basic_string_view(const _CharT* __str, size_type __len)
       : _M_len{__len},
-        _M_str{__str}
+	_M_str{__str}
       { }
 
       basic_string_view&
@@ -240,8 +240,8 @@ namespace gdb {
       // [string.view.ops], string operations:
 
       template<typename _Allocator>
-        explicit operator std::basic_string<_CharT, _Traits, _Allocator>() const
-        {
+	explicit operator std::basic_string<_CharT, _Traits, _Allocator>() const
+	{
 	  return { this->_M_str, this->_M_len };
 	}
 
@@ -439,109 +439,109 @@ namespace gdb {
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator==(basic_string_view<_CharT, _Traits> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return __x.size() == __y.size() && __x.compare(__y) == 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator==(basic_string_view<_CharT, _Traits> __x,
-               __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
+	       __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
     { return __x.size() == __y.size() && __x.compare(__y) == 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator==(__detail::__idt<basic_string_view<_CharT, _Traits>> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return __x.size() == __y.size() && __x.compare(__y) == 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator!=(basic_string_view<_CharT, _Traits> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return !(__x == __y); }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator!=(basic_string_view<_CharT, _Traits> __x,
-               __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
+	       __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
     { return !(__x == __y); }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator!=(__detail::__idt<basic_string_view<_CharT, _Traits>> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return !(__x == __y); }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator< (basic_string_view<_CharT, _Traits> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return __x.compare(__y) < 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator< (basic_string_view<_CharT, _Traits> __x,
-               __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
+	       __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
     { return __x.compare(__y) < 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator< (__detail::__idt<basic_string_view<_CharT, _Traits>> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return __x.compare(__y) < 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator> (basic_string_view<_CharT, _Traits> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return __x.compare(__y) > 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator> (basic_string_view<_CharT, _Traits> __x,
-               __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
+	       __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
     { return __x.compare(__y) > 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator> (__detail::__idt<basic_string_view<_CharT, _Traits>> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return __x.compare(__y) > 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator<=(basic_string_view<_CharT, _Traits> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return __x.compare(__y) <= 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator<=(basic_string_view<_CharT, _Traits> __x,
-               __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
+	       __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
     { return __x.compare(__y) <= 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator<=(__detail::__idt<basic_string_view<_CharT, _Traits>> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return __x.compare(__y) <= 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator>=(basic_string_view<_CharT, _Traits> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return __x.compare(__y) >= 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator>=(basic_string_view<_CharT, _Traits> __x,
-               __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
+	       __detail::__idt<basic_string_view<_CharT, _Traits>> __y) noexcept
     { return __x.compare(__y) >= 0; }
 
   template<typename _CharT, typename _Traits>
     /*constexpr*/ bool
     operator>=(__detail::__idt<basic_string_view<_CharT, _Traits>> __x,
-               basic_string_view<_CharT, _Traits> __y) noexcept
+	       basic_string_view<_CharT, _Traits> __y) noexcept
     { return __x.compare(__y) >= 0; }
 
   // basic_string_view typedef names

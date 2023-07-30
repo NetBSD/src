@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux x86.
 
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,7 +47,7 @@ extern void i386_linux_report_signal_info (struct gdbarch *gdbarch,
 extern const struct target_desc *i386_linux_read_description (uint64_t xcr0);
 
 /* Format of XSAVE extended state is:
- 	struct
+	struct
 	{
 	  fxsave_bytes[0..463]
 	  sw_usable_bytes[464..511]

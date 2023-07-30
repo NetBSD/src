@@ -66,25 +66,25 @@ typedef enum {
 typedef struct _cache_table cache_table;
 struct _cache_table {
   cache_rule_type type;
-  char *field_name;
-  char *derived_name;
-  char *type_def;
-  char *expression;
+  const char *field_name;
+  const char *derived_name;
+  const char *type_def;
+  const char *expression;
   table_entry *file_entry;
   cache_table *next;
 };
 
 
 extern cache_table *load_cache_table
-(char *file_name,
+(const char *file_name,
  int hi_bit_nr);
 
 extern void append_cache_rule
 (cache_table **table,
- char *type,
- char *field_name,
- char *derived_name,
- char *type_def,
- char *expression,
+ const char *type,
+ const char *field_name,
+ const char *derived_name,
+ const char *type_def,
+ const char *expression,
  table_entry *file_entry);
 

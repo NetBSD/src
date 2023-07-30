@@ -1,4 +1,4 @@
-# Copyright 2016-2020 Free Software Foundation, Inc.
+# Copyright 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -307,8 +307,13 @@ proc test_continue_to_start { mode inf } {
 
 	    # Consume MI event output.
 	    with_spawn_id $mi_spawn_id {
-		mi_expect_stop "breakpoint-hit" "main" "" "$srcfile" \
-		    "$decimal" {"" "disp=\"del\""} "stop at breakpoint in main"
+		if { $inf == 1 } {
+		    mi_expect_stop "breakpoint-hit" "main" "" "$srcfile" \
+			"$decimal" {"" "disp=\"del\""} "stop at breakpoint in main"
+		} else {
+		    mi_expect_stop "breakpoint-hit" "main" "" "$srcfile" \
+			"$decimal" {"" "disp=\"del\"" "locno=\"[0-9]+\""} "stop at breakpoint in main"
+		}
 	    }
 
 	    if { $mode == "all-stop" } {
@@ -330,9 +335,15 @@ proc test_continue_to_start { mode inf } {
 
 		    # Consume MI output.
 		    with_spawn_id $mi_spawn_id {
-			mi_expect_stop "breakpoint-hit" "child_sub_function" \
-			    "" "$srcfile" "$decimal" {"" "disp=\"del\""} \
-			    "thread $inf.$thread stops MI"
+			if { $inf == 1} {
+			    mi_expect_stop "breakpoint-hit" "child_sub_function" \
+				"" "$srcfile" "$decimal" {"" "disp=\"del\""} \
+				"thread $inf.$thread stops MI"
+			} else {
+			    mi_expect_stop "breakpoint-hit" "child_sub_function" \
+				"" "$srcfile" "$decimal" {"" "disp=\"del\"" "locno=\"[0-9]+\""} \
+				"thread $inf.$thread stops MI"
+			}
 		    }
 		}
 
@@ -359,9 +370,15 @@ proc test_continue_to_start { mode inf } {
 
 		# Consume MI output.
 		with_spawn_id $mi_spawn_id {
-		    mi_expect_stop "breakpoint-hit" "child_sub_function" \
-			"" "$srcfile" "$decimal" {"" "disp=\"del\""} \
-			"thread $inf.2 stops MI"
+		    if { $inf == 1} {
+			mi_expect_stop "breakpoint-hit" "child_sub_function" \
+			    "" "$srcfile" "$decimal" {"" "disp=\"del\""} \
+			    "thread $inf.2 stops MI"
+		    } else {
+			mi_expect_stop "breakpoint-hit" "child_sub_function" \
+			    "" "$srcfile" "$decimal" {"" "disp=\"del\"" "locno=\"[0-9]+\""} \
+			    "thread $inf.2 stops MI"
+		    }
 		}
 	    }
 	}
@@ -393,7 +410,7 @@ proc_with_prefix test_setup { mode } {
 	}
 
 	if { [mi_gdb_start "separate-mi-tty"] != 0 } {
-	    return
+	    return -1
 	}
     }
 
@@ -401,9 +418,8 @@ proc_with_prefix test_setup { mode } {
     mi_gdb_reinitialize_dir $srcdir/$subdir
     mi_gdb_load $binfile
 
-    if { [mi_runto main] < 0 } {
-	fail "can't run to main"
-	return
+    if { [mi_runto_main] < 0 } {
+	return -1
     }
 
     # When using mi_expect_stop, we don't expect a prompt after the *stopped
@@ -435,7 +451,7 @@ proc_with_prefix test_setup { mode } {
 
 	with_spawn_id $mi_spawn_id {
 	    mi_expect_stop "breakpoint-hit" "main" "" "$srcfile" "$decimal" \
-		{"" "disp=\"del\""} "main stop"
+		{"" "disp=\"del\"" "locno=\"[0-9]+\""} "main stop"
 	}
 
 	# Consume CLI output.
@@ -444,6 +460,8 @@ proc_with_prefix test_setup { mode } {
 	# Prepare the second inferior for the test.
 	test_continue_to_start $mode 2
     }
+
+    return 0
 }
 
 # Reset the selection to frame #0 of thread THREAD.
@@ -512,7 +530,7 @@ proc ensure_no_output { test } {
 # current spawn_id) and pass/fail TEST accordingly.
 # If RE is empty, ensure that the program did not output anything.
 
-proc match_re_or_ensure_not_output { re test } {
+proc match_re_or_ensure_no_output { re test } {
     if { $re != "" } {
 	gdb_expect {
 	    -re "$re" {
@@ -546,7 +564,7 @@ proc_with_prefix test_cli_inferior { mode } {
     }
 
     with_spawn_id $mi_spawn_id {
-	match_re_or_ensure_not_output $mi_re "event on MI"
+	match_re_or_ensure_no_output $mi_re "event on MI"
     }
 
     # Do the 'inferior' command on the currently selected inferior.  For now,
@@ -556,7 +574,7 @@ proc_with_prefix test_cli_inferior { mode } {
     }
 
     with_spawn_id $mi_spawn_id {
-	match_re_or_ensure_not_output $mi_re "event on MI again"
+	match_re_or_ensure_no_output $mi_re "event on MI again"
     }
 }
 
@@ -582,7 +600,7 @@ proc_with_prefix test_cli_thread { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "select thread, event on MI "
+	    match_re_or_ensure_no_output $mi_re "select thread, event on MI "
 	}
 
 	# Do the 'thread' command to select the same thread.  We shouldn't receive
@@ -595,7 +613,7 @@ proc_with_prefix test_cli_thread { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "select thread, event on MI again"
+	    match_re_or_ensure_no_output $mi_re "select thread, event on MI again"
 	}
 
 	# Try the 'thread' command without arguments.
@@ -608,7 +626,7 @@ proc_with_prefix test_cli_thread { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "thread without args, event on MI"
+	    match_re_or_ensure_no_output $mi_re "thread without args, event on MI"
 	}
     }
 
@@ -629,7 +647,7 @@ proc_with_prefix test_cli_thread { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "select thread, event on MI"
+	    match_re_or_ensure_no_output $mi_re "select thread, event on MI"
 	}
 
 	# Do the 'thread' command to select the third thread again.  Again, we
@@ -642,7 +660,7 @@ proc_with_prefix test_cli_thread { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "select thread again, event on MI"
+	    match_re_or_ensure_no_output $mi_re "select thread again, event on MI"
 	}
 
 	# Try the 'thread' command without arguments.
@@ -655,7 +673,7 @@ proc_with_prefix test_cli_thread { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "thread without args, event on MI"
+	    match_re_or_ensure_no_output $mi_re "thread without args, event on MI"
 	}
     }
 
@@ -683,7 +701,7 @@ proc_with_prefix test_cli_frame { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "select frame 1, event on MI"
+	    match_re_or_ensure_no_output $mi_re "select frame 1, event on MI"
 	}
 
 	# Do the 'frame' command to select the same frame.  This time we don't
@@ -696,7 +714,7 @@ proc_with_prefix test_cli_frame { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "select frame 1 again, event on MI"
+	    match_re_or_ensure_no_output $mi_re "select frame 1 again, event on MI"
 	}
 
 	# Do the 'frame' command without arguments.  We shouldn't see anything on MI.
@@ -706,7 +724,7 @@ proc_with_prefix test_cli_frame { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "frame without args, event on MI"
+	    match_re_or_ensure_no_output $mi_re "frame without args, event on MI"
 	}
     }
 
@@ -729,7 +747,7 @@ proc_with_prefix test_cli_frame { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "select frame 1, event on MI"
+	    match_re_or_ensure_no_output $mi_re "select frame 1, event on MI"
 	}
 
 	# Do the 'frame' command without arguments.
@@ -744,7 +762,7 @@ proc_with_prefix test_cli_frame { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "frame without args, event on MI"
+	    match_re_or_ensure_no_output $mi_re "frame without args, event on MI"
 	}
     }
 }
@@ -767,7 +785,7 @@ proc_with_prefix test_cli_select_frame { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "select frame 1, event on MI"
+	    match_re_or_ensure_no_output $mi_re "select frame 1, event on MI"
 	}
 
 	# Do the 'select-frame' command to select the same frame.  This time we expect to
@@ -780,7 +798,7 @@ proc_with_prefix test_cli_select_frame { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "select frame 1 again, event on MI"
+	    match_re_or_ensure_no_output $mi_re "select frame 1 again, event on MI"
 	}
     }
 
@@ -806,7 +824,7 @@ proc_with_prefix test_cli_select_frame { mode } {
 	}
 
 	with_spawn_id $mi_spawn_id {
-	    match_re_or_ensure_not_output $mi_re "select frame 1, event on MI"
+	    match_re_or_ensure_no_output $mi_re "select frame 1, event on MI"
 	}
     }
 }
@@ -829,7 +847,7 @@ proc_with_prefix test_cli_up_down { mode } {
     }
 
     with_spawn_id $mi_spawn_id {
-	match_re_or_ensure_not_output $mi_re "frame up, event on MI"
+	match_re_or_ensure_no_output $mi_re "frame up, event on MI"
     }
 
     # Try doing a 'down'.
@@ -842,7 +860,7 @@ proc_with_prefix test_cli_up_down { mode } {
     }
 
     with_spawn_id $mi_spawn_id {
-	match_re_or_ensure_not_output $mi_re "frame down, event on MI"
+	match_re_or_ensure_no_output $mi_re "frame down, event on MI"
     }
 }
 
@@ -865,7 +883,7 @@ proc_with_prefix test_mi_thread_select { mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output "$cli_re\r\n" "-thread-select, event on CLI"
+	    match_re_or_ensure_no_output "$cli_re\r\n" "-thread-select, event on CLI"
 	}
 
 	# Do the '-thread-select' command to select the same thread.  We
@@ -879,7 +897,7 @@ proc_with_prefix test_mi_thread_select { mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "-thread-select again, event on CLI"
+	    match_re_or_ensure_no_output $cli_re "-thread-select again, event on CLI"
 	}
     }
 
@@ -900,7 +918,7 @@ proc_with_prefix test_mi_thread_select { mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output "$cli_re\r\n" "-thread-select, event on CLI"
+	    match_re_or_ensure_no_output "$cli_re\r\n" "-thread-select, event on CLI"
 	}
 
 	# Do the 'thread' command to select the third thread again.  Again, we
@@ -913,13 +931,13 @@ proc_with_prefix test_mi_thread_select { mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "-thread-select again, event on CLI"
+	    match_re_or_ensure_no_output $cli_re "-thread-select again, event on CLI"
 	}
     }
 
-    with_test_prefix "thread 1.2 with --thread" {
+    with_test_prefix "thread 1.2 with --thread 2" {
 	# Test selecting a thread from MI with a --thread option.  This test
-	# verifies that even if the thread GDB would switch to is the same has
+	# verifies that even if the thread GDB would switch to is the same as
 	# the thread specified with --thread, an event is still sent to CLI.
 	# In this case this is thread 1.2
 
@@ -931,10 +949,28 @@ proc_with_prefix test_mi_thread_select { mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    # This doesn't work as of now, no event is sent on CLI.  It is
-	    # commented out so we don't have to wait for the timeout every time.
-	    # match_re_or_ensure_not_output "$cli_re\r\n" "-thread-select, event on cli"
-	    kfail "gdb/20631" "thread-select, event on cli"
+	    match_re_or_ensure_no_output "$cli_re\r\n" "-thread-select, event on cli"
+	}
+    }
+
+    with_test_prefix "thread 1.2 with --thread 3" {
+	# Test selecting a thread from MI with a --thread option.
+	# This test verifies that when different thread numbers are
+	# passed to the --thread option and the underlying
+	# -thread-select command, the correct thread is selected.
+	# In this case this is thread 1.2
+
+	reset_selection "1.1"
+
+	set mi_re [make_mi_re $mode 2 0 response]
+	set cli_re [make_cli_re $mode -1 1.2 0]
+
+	with_spawn_id $mi_spawn_id {
+	    mi_gdb_test "-thread-select --thread 3 2" $mi_re "-thread-select"
+	}
+
+	with_spawn_id $gdb_main_spawn_id {
+	    match_re_or_ensure_no_output "$cli_re\r\n" "-thread-select, event on cli"
 	}
     }
 
@@ -960,7 +996,7 @@ proc_with_prefix test_mi_stack_select_frame { mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output "$cli_re\r\n" "-stack-select-frame, event on MI"
+	    match_re_or_ensure_no_output "$cli_re\r\n" "-stack-select-frame, event on CLI"
 	}
 
 	# Do the '-stack-select-frame' command to select the same frame.  This time we don't
@@ -973,7 +1009,37 @@ proc_with_prefix test_mi_stack_select_frame { mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "-stack-select-frame again, event on MI"
+	    match_re_or_ensure_no_output $cli_re "-stack-select-frame again, event on CLI"
+	}
+
+	# Now use the '-stack-select-frame' command with the --frame
+	# option, this verifies that even when the frame GDB would
+	# swith to is the same as the frame specified with --frame, an
+	# event is still sent to the CLI.
+
+	set cli_re [make_cli_re $mode -1 -1 0]
+
+	with_spawn_id $mi_spawn_id {
+	    mi_gdb_test "-stack-select-frame --thread 2 --frame 0 0" $mi_re
+	}
+
+	with_spawn_id $gdb_main_spawn_id {
+	    match_re_or_ensure_no_output "$cli_re\r\n" "-stack-select-frame with --frame 0, event on CLI"
+	}
+
+	# Now use the '-stack-select-frame' command with the --frame
+	# option, this verifies that the correct event is sent to the
+	# CLI when the frame specified with --frame is different to
+	# the actual frame selected.
+
+	set cli_re [make_cli_re $mode -1 -1 1]
+
+	with_spawn_id $mi_spawn_id {
+	    mi_gdb_test "-stack-select-frame --thread 2 --frame 2 1" $mi_re
+	}
+
+	with_spawn_id $gdb_main_spawn_id {
+	    match_re_or_ensure_no_output "$cli_re\r\n" "-stack-select-frame with --frame 2, event on CLI"
 	}
     }
 
@@ -997,7 +1063,7 @@ proc_with_prefix test_mi_stack_select_frame { mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "-stack-select-frame, event on MI"
+	    match_re_or_ensure_no_output $cli_re "-stack-select-frame, event on CLI"
 	}
     }
 }
@@ -1030,7 +1096,7 @@ proc_with_prefix test_cli_in_mi_inferior { mode cli_in_mi_mode } {
     }
 
     with_spawn_id $gdb_main_spawn_id {
-	match_re_or_ensure_not_output "$cli_re\r\n" "select inferior, event on CLI"
+	match_re_or_ensure_no_output "$cli_re\r\n" "select inferior, event on CLI"
     }
 
     # Do the 'inferior' command on the currently selected inferior.  For now,
@@ -1040,7 +1106,7 @@ proc_with_prefix test_cli_in_mi_inferior { mode cli_in_mi_mode } {
     }
 
     with_spawn_id $gdb_main_spawn_id {
-	match_re_or_ensure_not_output $cli_re "select inferior again, event on CLI"
+	match_re_or_ensure_no_output $cli_re "select inferior again, event on CLI"
     }
 }
 
@@ -1064,7 +1130,7 @@ proc_with_prefix test_cli_in_mi_thread { mode cli_in_mi_mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output "$cli_re\r\n" "select thread, event on CLI"
+	    match_re_or_ensure_no_output "$cli_re\r\n" "select thread, event on CLI"
 	}
 
 	# Do the 'thread' command to select the same thread.  We shouldn't
@@ -1078,7 +1144,7 @@ proc_with_prefix test_cli_in_mi_thread { mode cli_in_mi_mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "select thread again, event on CLI"
+	    match_re_or_ensure_no_output $cli_re "select thread again, event on CLI"
 	}
 
 	# Try the 'thread' command without arguments.
@@ -1093,7 +1159,7 @@ proc_with_prefix test_cli_in_mi_thread { mode cli_in_mi_mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "thread without args, event on CLI"
+	    match_re_or_ensure_no_output $cli_re "thread without args, event on CLI"
 	}
     }
 
@@ -1115,7 +1181,7 @@ proc_with_prefix test_cli_in_mi_thread { mode cli_in_mi_mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output "$cli_re\r\n" "select thread, event on CLI"
+	    match_re_or_ensure_no_output "$cli_re\r\n" "select thread, event on CLI"
 	}
 
 	# Do the 'thread' command to select the third thread again.  Again, we
@@ -1133,7 +1199,7 @@ proc_with_prefix test_cli_in_mi_thread { mode cli_in_mi_mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "select thread again, event on CLI"
+	    match_re_or_ensure_no_output $cli_re "select thread again, event on CLI"
 	}
 
 	# Try the 'thread' command without arguments.
@@ -1148,7 +1214,7 @@ proc_with_prefix test_cli_in_mi_thread { mode cli_in_mi_mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "thread without args, event on CLI"
+	    match_re_or_ensure_no_output $cli_re "thread without args, event on CLI"
 	}
     }
 
@@ -1177,7 +1243,7 @@ proc_with_prefix test_cli_in_mi_frame { mode cli_in_mi_mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output "$cli_re\r\n" "select frame 1, event on CLI"
+	    match_re_or_ensure_no_output "$cli_re\r\n" "select frame 1, event on CLI"
 	}
 
 	# Do the 'frame' command to select the same frame.  This time we don't
@@ -1191,7 +1257,7 @@ proc_with_prefix test_cli_in_mi_frame { mode cli_in_mi_mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "select frame 1 again, event on CLI"
+	    match_re_or_ensure_no_output $cli_re "select frame 1 again, event on CLI"
 	}
 
 	# Do the 'frame' command without arguments.  We shouldn't see anything on MI.
@@ -1204,7 +1270,7 @@ proc_with_prefix test_cli_in_mi_frame { mode cli_in_mi_mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "frame without args, event on CLI"
+	    match_re_or_ensure_no_output $cli_re "frame without args, event on CLI"
 	}
     }
 
@@ -1229,7 +1295,7 @@ proc_with_prefix test_cli_in_mi_frame { mode cli_in_mi_mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "select frame 1, event on CLI"
+	    match_re_or_ensure_no_output $cli_re "select frame 1, event on CLI"
 	}
 
 	# Do the 'frame' command without arguments.
@@ -1247,13 +1313,18 @@ proc_with_prefix test_cli_in_mi_frame { mode cli_in_mi_mode } {
 	}
 
 	with_spawn_id $gdb_main_spawn_id {
-	    match_re_or_ensure_not_output $cli_re "frame without args, event on CLI"
+	    match_re_or_ensure_no_output $cli_re "frame without args, event on CLI"
 	}
     }
 }
 
 foreach_with_prefix mode { "all-stop" "non-stop" } {
-    test_setup $mode
+    set test "setup done"
+    if { [test_setup $mode] == -1 } {
+	fail $test
+	continue
+    }
+    pass $test
 
     # Test selecting inferior, thread and frame from CLI
 

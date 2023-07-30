@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,9 +25,15 @@ namespace eval PerfTest {
 	set remote_python_file [gdb_remote_download host ${srcdir}/${subdir}/${testfile}.py]
 
 	# Set sys.path for module perftest.
-	gdb_test_no_output "python import os, sys"
-	gdb_test_no_output "python sys.path.insert\(0, os.path.abspath\(\"${srcdir}/${subdir}/lib\"\)\)"
-	gdb_test_no_output "python exec (open ('${remote_python_file}').read ())"
+	with_test_prefix "setup perftest" {
+	    gdb_test_no_output "python import os, sys"
+	    gdb_test_no_output \
+		"python sys.path.insert\(0, os.path.abspath\(\"${srcdir}/${subdir}/lib\"\)\)" \
+		"python sys.path.insert\(0, os.path.abspath\(\"\${srcdir}/${subdir}/lib\"\)\)"
+	    gdb_test_no_output \
+		"python exec (open ('${remote_python_file}').read ())" \
+		"python exec (open ('\${srcdir}/${subdir}/${testfile}.py').read ())"
+	}
     }
 
     # A private method to do some cleanups when performance test is
@@ -154,4 +160,29 @@ proc tcl_string_list_to_python_list { l } {
 	lappend quoted_list [quote $elm]
     }
     return "([join $quoted_list {, }])"
+}
+
+# Helper routine for PerfTest::assemble "run" step implementations.
+# Issues the "python ${OBJ}.run()" command, and consumes GDB output
+# line by line.  Issues a FAIL if the command fails with a Python
+# error.  Issues a PASS on success.  MESSAGE is an optional message to
+# be printed.  If this is omitted, then the pass/fail messages use the
+# command string as the message.
+
+proc gdb_test_python_run {obj {message ""}} {
+    global gdb_prompt
+
+    set saw_error 0
+    gdb_test_multiple "python ${obj}.run()" $message {
+	-re "Error while executing Python code\\." {
+	    set saw_error 1
+	    exp_continue
+	}
+	-re "\[^\r\n\]*\r\n" {
+	    exp_continue
+	}
+	-re "$gdb_prompt $" {
+	    gdb_assert {!$saw_error} $gdb_test_name
+	}
+    }
 }

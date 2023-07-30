@@ -51,7 +51,7 @@ struct {
 static void
 fill (void *buf, long sizeof_buf)
 {
-  char *p = buf;
+  char *p = (char *) buf;
   int i;
   for (i = 0; i < sizeof_buf; i++)
     p[i] = "The quick brown dingo jumped over the layzy dog."[i];

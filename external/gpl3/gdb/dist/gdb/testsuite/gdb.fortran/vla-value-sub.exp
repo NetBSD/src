@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,11 +24,12 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
 }
 
 if ![fortran_runto_main] {
-    untested "could not run to main"
     return -1
 }
 
 # Check the values of VLA's in subroutine can be evaluated correctly
+
+gdb_test_no_output "set print repeats unlimited"
 
 # Try to access values from a fixed array handled as VLA in subroutine.
 gdb_breakpoint [gdb_get_line_number "not-filled"]

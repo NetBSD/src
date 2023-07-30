@@ -5,7 +5,7 @@ if !$gdb_init_done
 
   set complaints 1
 
-  b internal_error
+  b internal_error_loc
 
   # This provides an easy way to break into the top-level GDB by
   # typing "info".

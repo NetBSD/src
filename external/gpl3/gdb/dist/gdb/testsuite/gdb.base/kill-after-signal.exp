@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ if { ![can_single_step_to_signal_handler] } {
 
 if [target_info exists gdb,nosignals] {
     verbose "Skipping kill-after-signal.exp because of nosignals."
-    continue
+    return
 }
 
 if [prepare_for_testing "failed to prepare" ${testfile}] {
@@ -36,7 +36,41 @@ if ![runto_main] {
 }
 
 gdb_test "continue" "Program received signal SIGUSR1, .*"
-gdb_test "stepi" "\r\nhandler .*"
+
+set test "handler"
+gdb_test_multiple "stepi" $test {
+    -re -wrap "\r\nhandler .*" {
+	pass $test
+    }
+    -re "signal handler called.*$gdb_prompt $" {
+	# After PowerPC Linux kernel commit:
+	#
+	#   commit: 0138ba5783ae0dcc799ad401a1e8ac8333790df9
+	#   powerpc/64/signal: Balance return predictor
+	#   stack in signal trampoline.
+	#
+	# The kernel places an additional brctl instruction
+	# in the vdso to call the user handler.
+	#
+	# And then this commit:
+	#
+	#   commit 24321ac668e452a4942598533d267805f291fdc9
+	#   powerpc/64/signal: Fix regression in
+	#   __kernel_sigtramp_rt64() semantics
+	#
+	# updates the semantics of __kernel_sigtramp_rt64().
+	# It added a new symbol to serve as a jump target from
+	# the kernel to the trampoline.
+	#
+	# The net result of these changes is that gdb stops
+	# at  __kernel_start_sigtramp_rt64.  Need to do one
+	# more stepi to reach the expected location in the user
+	# signal handler.
+	gdb_test "p \$pc" ".*__kernel_start_sigtramp_rt64.*" "in kernel code"
+	gdb_test "stepi" "\r\nhandler .*" $test
+    }
+}
+
 gdb_test_multiple "kill" "kill" {
     -re "Kill the program being debugged\\? \\(y or n\\) $" {
        gdb_test "y" "\\\[Inferior $decimal \\(.*\\) killed\\\]" "kill"

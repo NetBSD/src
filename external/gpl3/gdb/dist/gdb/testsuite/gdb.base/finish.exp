@@ -1,4 +1,4 @@
-# Copyright 2000-2020 Free Software Foundation, Inc.
+# Copyright 2000-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -76,8 +76,7 @@ proc finish_void { } {
 
 proc finish_abbreviation { abbrev } {
 
-    if { ! [ runto "int_func" ] } then {
-        fail "running to int_func"
+    if {![runto "int_func"]} {
         return -1
     }
 
@@ -91,7 +90,6 @@ proc finish_no_print {} {
     global decimal
 
     if {![runto "int_func"]} {
-	untested "couldn't run to main"
 	return
     }
     gdb_test_no_output "set print finish off"
@@ -104,8 +102,7 @@ proc finish_no_print {} {
 proc finish_tests { } {
     global gdb_prompt skip_float_test
 
-    if { ! [ runto_main ] } then {
-	untested "couldn't run to main"
+    if {![runto_main]} {
 	return -1
     }
 

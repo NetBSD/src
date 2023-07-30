@@ -1,5 +1,5 @@
 /* Simulation code for the CR16 processor.
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
    Contributed by M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 
    This file is part of GDB, the GNU debugger.
@@ -17,8 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program. If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
-#include "config.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <limits.h>
@@ -67,6 +68,7 @@ write_template (void)
 {
   int i = 0,j, k, flags;
 
+  printf ("#include \"defs.h\"\n");
   printf ("#include \"sim-main.h\"\n");
   printf ("#include \"simops.h\"\n\n");
 
@@ -131,6 +133,7 @@ write_opcodes (void)
   int i = 0, j = 0, k;
   
   /* write out opcode table.  */
+  printf ("#include \"defs.h\"\n");
   printf ("#include \"sim-main.h\"\n");
   printf ("#include \"simops.h\"\n\n");
   printf ("struct simops Simops[] = {\n");

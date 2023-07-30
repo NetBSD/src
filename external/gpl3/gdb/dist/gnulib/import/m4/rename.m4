@@ -1,6 +1,6 @@
-# serial 32
+# serial 33
 
-# Copyright (C) 2001, 2003, 2005-2006, 2009-2020 Free Software Foundation, Inc.
+# Copyright (C) 2001, 2003, 2005-2006, 2009-2022 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -150,7 +150,7 @@ AC_DEFUN([gl_FUNC_RENAME],
 #               include <stdio.h>
 #               include <stdlib.h>
 #               include <unistd.h>
-                ]],
+                ]GL_MDA_DEFINES],
                 [[int result = 0;
                   if (rename ("conftest.f", "conftest.f1"))
                     result |= 1;

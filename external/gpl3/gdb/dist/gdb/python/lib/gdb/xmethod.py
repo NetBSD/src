@@ -1,5 +1,5 @@
 # Python side of the support for xmethods.
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,12 +19,6 @@
 import gdb
 import re
 import sys
-
-
-if sys.version_info[0] > 2:
-    # Python 3 removed basestring and long
-    basestring = str
-    long = int
 
 
 class XMethod(object):
@@ -172,9 +166,9 @@ class SimpleXMethodMatcher(XMethodMatcher):
         def __call__(self, *args):
             return self._method_function(*args)
 
-
-    def __init__(self, name, class_matcher, method_matcher, method_function,
-                 *arg_types):
+    def __init__(
+        self, name, class_matcher, method_matcher, method_function, *arg_types
+    ):
         """
         Args:
             name: Name of the xmethod matcher.
@@ -195,7 +189,8 @@ class SimpleXMethodMatcher(XMethodMatcher):
         XMethodMatcher.__init__(self, name)
         assert callable(method_function), (
             "The 'method_function' argument to 'SimpleXMethodMatcher' "
-            "__init__ method should be a callable.")
+            "__init__ method should be a callable."
+        )
         self._method_function = method_function
         self._class_matcher = class_matcher
         self._method_matcher = method_matcher
@@ -206,12 +201,14 @@ class SimpleXMethodMatcher(XMethodMatcher):
         mm = re.match(self._method_matcher, method_name)
         if cm and mm:
             return SimpleXMethodMatcher.SimpleXMethodWorker(
-                self._method_function, self._arg_types)
+                self._method_function, self._arg_types
+            )
 
 
 # A helper function for register_xmethod_matcher which returns an error
 # object if MATCHER is not having the requisite attributes in the proper
 # format.
+
 
 def _validate_xmethod_matcher(matcher):
     if not hasattr(matcher, "match"):
@@ -220,17 +217,17 @@ def _validate_xmethod_matcher(matcher):
         return TypeError("Xmethod matcher is missing attribute: name")
     if not hasattr(matcher, "enabled"):
         return TypeError("Xmethod matcher is missing attribute: enabled")
-    if not isinstance(matcher.name, basestring):
-        return TypeError("Attribute 'name' of xmethod matcher is not a "
-                         "string")
+    if not isinstance(matcher.name, str):
+        return TypeError("Attribute 'name' of xmethod matcher is not a " "string")
     if matcher.name.find(";") >= 0:
         return ValueError("Xmethod matcher name cannot contain ';' in it")
 
 
-# A helper function for register_xmethod_matcher which looks up an 
+# A helper function for register_xmethod_matcher which looks up an
 # xmethod matcher with NAME in LOCUS.  Returns the index of the xmethod
 # matcher in 'xmethods' sequence attribute of the LOCUS.  If NAME is not
 # found in LOCUS, then -1 is returned.
+
 
 def _lookup_xmethod_matcher(locus, name):
     for i in range(0, len(locus.xmethods)):
@@ -268,8 +265,10 @@ def register_xmethod_matcher(locus, matcher, replace=False):
         if replace:
             del locus.xmethods[index]
         else:
-            raise RuntimeError("Xmethod matcher already registered with "
-                               "%s: %s" % (locus_name, matcher.name))
+            raise RuntimeError(
+                "Xmethod matcher already registered with "
+                "%s: %s" % (locus_name, matcher.name)
+            )
     if gdb.parameter("verbose"):
         gdb.write("Registering xmethod matcher '%s' with %s' ...\n")
     locus.xmethods.insert(0, matcher)

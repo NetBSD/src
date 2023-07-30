@@ -108,6 +108,43 @@ AC_DEFUN([AM_AUX_DIR_EXPAND],
 am_aux_dir=`cd "$ac_aux_dir" && pwd`
 ])
 
+# AM_COND_IF                                            -*- Autoconf -*-
+
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
+#
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# _AM_COND_IF
+# _AM_COND_ELSE
+# _AM_COND_ENDIF
+# --------------
+# These macros are only used for tracing.
+m4_define([_AM_COND_IF])
+m4_define([_AM_COND_ELSE])
+m4_define([_AM_COND_ENDIF])
+
+# AM_COND_IF(COND, [IF-TRUE], [IF-FALSE])
+# ---------------------------------------
+# If the shell condition COND is true, execute IF-TRUE, otherwise execute
+# IF-FALSE.  Allow automake to learn about conditional instantiating macros
+# (the AC_CONFIG_FOOS).
+AC_DEFUN([AM_COND_IF],
+[m4_ifndef([_AM_COND_VALUE_$1],
+	   [m4_fatal([$0: no such condition "$1"])])dnl
+_AM_COND_IF([$1])dnl
+if test -z "$$1_TRUE"; then :
+  m4_n([$2])[]dnl
+m4_ifval([$3],
+[_AM_COND_ELSE([$1])dnl
+else
+  $3
+])dnl
+_AM_COND_ENDIF([$1])dnl
+fi[]dnl
+])
+
 # AM_CONDITIONAL                                            -*- Autoconf -*-
 
 # Copyright (C) 1997-2017 Free Software Foundation, Inc.
@@ -811,53 +848,6 @@ AC_DEFUN([_AM_SET_OPTIONS],
 AC_DEFUN([_AM_IF_OPTION],
 [m4_ifset(_AM_MANGLE_OPTION([$1]), [$2], [$3])])
 
-# Copyright (C) 1999-2017 Free Software Foundation, Inc.
-#
-# This file is free software; the Free Software Foundation
-# gives unlimited permission to copy and/or distribute it,
-# with or without modifications, as long as this notice is preserved.
-
-# _AM_PROG_CC_C_O
-# ---------------
-# Like AC_PROG_CC_C_O, but changed for automake.  We rewrite AC_PROG_CC
-# to automatically call this.
-AC_DEFUN([_AM_PROG_CC_C_O],
-[AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
-AC_REQUIRE_AUX_FILE([compile])dnl
-AC_LANG_PUSH([C])dnl
-AC_CACHE_CHECK(
-  [whether $CC understands -c and -o together],
-  [am_cv_prog_cc_c_o],
-  [AC_LANG_CONFTEST([AC_LANG_PROGRAM([])])
-  # Make sure it works both with $CC and with simple cc.
-  # Following AC_PROG_CC_C_O, we do the test twice because some
-  # compilers refuse to overwrite an existing .o file with -o,
-  # though they will create one.
-  am_cv_prog_cc_c_o=yes
-  for am_i in 1 2; do
-    if AM_RUN_LOG([$CC -c conftest.$ac_ext -o conftest2.$ac_objext]) \
-         && test -f conftest2.$ac_objext; then
-      : OK
-    else
-      am_cv_prog_cc_c_o=no
-      break
-    fi
-  done
-  rm -f core conftest*
-  unset am_i])
-if test "$am_cv_prog_cc_c_o" != yes; then
-   # Losing compiler, so override with the script.
-   # FIXME: It is wrong to rewrite CC.
-   # But if we don't then we get into trouble of one sort or another.
-   # A longer-term fix would be to have automake use am__CC in this case,
-   # and then we could set am__CC="\$(top_srcdir)/compile \$(CC)"
-   CC="$am_aux_dir/compile $CC"
-fi
-AC_LANG_POP([C])])
-
-# For backward compatibility.
-AC_DEFUN_ONCE([AM_PROG_CC_C_O], [AC_REQUIRE([AC_PROG_CC])])
-
 # Check to make sure that the build environment is sane.    -*- Autoconf -*-
 
 # Copyright (C) 1996-2017 Free Software Foundation, Inc.
@@ -1193,15 +1183,16 @@ m4_include([import/m4/btowc.m4])
 m4_include([import/m4/builtin-expect.m4])
 m4_include([import/m4/canonicalize.m4])
 m4_include([import/m4/chdir-long.m4])
+m4_include([import/m4/chown.m4])
+m4_include([import/m4/clock_time.m4])
 m4_include([import/m4/close.m4])
 m4_include([import/m4/closedir.m4])
 m4_include([import/m4/codeset.m4])
-m4_include([import/m4/ctype.m4])
+m4_include([import/m4/ctype_h.m4])
 m4_include([import/m4/d-ino.m4])
 m4_include([import/m4/d-type.m4])
 m4_include([import/m4/dirent_h.m4])
 m4_include([import/m4/dirfd.m4])
-m4_include([import/m4/dirname.m4])
 m4_include([import/m4/double-slash-root.m4])
 m4_include([import/m4/dup.m4])
 m4_include([import/m4/dup2.m4])
@@ -1218,12 +1209,14 @@ m4_include([import/m4/fcntl-o.m4])
 m4_include([import/m4/fcntl.m4])
 m4_include([import/m4/fcntl_h.m4])
 m4_include([import/m4/fdopendir.m4])
+m4_include([import/m4/ffs.m4])
 m4_include([import/m4/filenamecat.m4])
 m4_include([import/m4/flexmember.m4])
 m4_include([import/m4/float_h.m4])
 m4_include([import/m4/fnmatch.m4])
 m4_include([import/m4/fnmatch_h.m4])
 m4_include([import/m4/fpieee.m4])
+m4_include([import/m4/free.m4])
 m4_include([import/m4/frexp.m4])
 m4_include([import/m4/frexpl.m4])
 m4_include([import/m4/fstat.m4])
@@ -1231,7 +1224,9 @@ m4_include([import/m4/fstatat.m4])
 m4_include([import/m4/getcwd-abort-bug.m4])
 m4_include([import/m4/getcwd-path-max.m4])
 m4_include([import/m4/getcwd.m4])
+m4_include([import/m4/getdelim.m4])
 m4_include([import/m4/getdtablesize.m4])
+m4_include([import/m4/getline.m4])
 m4_include([import/m4/getlogin.m4])
 m4_include([import/m4/getlogin_r.m4])
 m4_include([import/m4/getpagesize.m4])
@@ -1244,7 +1239,6 @@ m4_include([import/m4/gnulib-common.m4])
 m4_include([import/m4/gnulib-comp.m4])
 m4_include([import/m4/include_next.m4])
 m4_include([import/m4/inet_ntop.m4])
-m4_include([import/m4/inttypes-pri.m4])
 m4_include([import/m4/inttypes.m4])
 m4_include([import/m4/isblank.m4])
 m4_include([import/m4/isnand.m4])
@@ -1256,7 +1250,6 @@ m4_include([import/m4/locale-fr.m4])
 m4_include([import/m4/locale-ja.m4])
 m4_include([import/m4/locale-zh.m4])
 m4_include([import/m4/locale_h.m4])
-m4_include([import/m4/localtime-buffer.m4])
 m4_include([import/m4/lock.m4])
 m4_include([import/m4/lstat.m4])
 m4_include([import/m4/malloc.m4])
@@ -1280,6 +1273,7 @@ m4_include([import/m4/mode_t.m4])
 m4_include([import/m4/msvc-inval.m4])
 m4_include([import/m4/msvc-nothrow.m4])
 m4_include([import/m4/multiarch.m4])
+m4_include([import/m4/netdb_h.m4])
 m4_include([import/m4/netinet_in_h.m4])
 m4_include([import/m4/nocrash.m4])
 m4_include([import/m4/off_t.m4])
@@ -1289,6 +1283,8 @@ m4_include([import/m4/open.m4])
 m4_include([import/m4/openat.m4])
 m4_include([import/m4/opendir.m4])
 m4_include([import/m4/pathmax.m4])
+m4_include([import/m4/pid_t.m4])
+m4_include([import/m4/pipe.m4])
 m4_include([import/m4/pthread_rwlock_rdlock.m4])
 m4_include([import/m4/rawmemchr.m4])
 m4_include([import/m4/readdir.m4])
@@ -1298,9 +1294,12 @@ m4_include([import/m4/rename.m4])
 m4_include([import/m4/rewinddir.m4])
 m4_include([import/m4/rmdir.m4])
 m4_include([import/m4/save-cwd.m4])
+m4_include([import/m4/select.m4])
 m4_include([import/m4/setenv.m4])
 m4_include([import/m4/setlocale_null.m4])
 m4_include([import/m4/signal_h.m4])
+m4_include([import/m4/socketlib.m4])
+m4_include([import/m4/sockets.m4])
 m4_include([import/m4/socklen.m4])
 m4_include([import/m4/sockpfaf.m4])
 m4_include([import/m4/ssize_t.m4])
@@ -1318,21 +1317,25 @@ m4_include([import/m4/strdup.m4])
 m4_include([import/m4/strerror.m4])
 m4_include([import/m4/strerror_r.m4])
 m4_include([import/m4/string_h.m4])
+m4_include([import/m4/strings_h.m4])
 m4_include([import/m4/strnlen.m4])
 m4_include([import/m4/strstr.m4])
 m4_include([import/m4/strtok_r.m4])
 m4_include([import/m4/sys_random_h.m4])
+m4_include([import/m4/sys_select_h.m4])
 m4_include([import/m4/sys_socket_h.m4])
 m4_include([import/m4/sys_stat_h.m4])
 m4_include([import/m4/sys_time_h.m4])
 m4_include([import/m4/sys_types_h.m4])
 m4_include([import/m4/sys_uio_h.m4])
+m4_include([import/m4/sys_wait_h.m4])
 m4_include([import/m4/tempname.m4])
 m4_include([import/m4/threadlib.m4])
 m4_include([import/m4/time_h.m4])
 m4_include([import/m4/time_r.m4])
 m4_include([import/m4/unistd-safer.m4])
 m4_include([import/m4/unistd_h.m4])
+m4_include([import/m4/vararrays.m4])
 m4_include([import/m4/visibility.m4])
 m4_include([import/m4/warn-on-use.m4])
 m4_include([import/m4/wchar_h.m4])
@@ -1341,4 +1344,5 @@ m4_include([import/m4/wctype_h.m4])
 m4_include([import/m4/wint_t.m4])
 m4_include([import/m4/wmemchr.m4])
 m4_include([import/m4/wmempcpy.m4])
+m4_include([import/m4/year2038.m4])
 m4_include([import/m4/zzgnulib.m4])

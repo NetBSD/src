@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -257,30 +257,30 @@ proc do_corefile_buildid_tests {args} {
 	lappend suffix "sepdebug"
     }
 
-    # Find the core file.
-    set corefile [core_find $program_to_run]
-    if {$corefile == ""} {
-	untested "could not generate core file"
-	return
-    }
-    verbose -log "corefile is $corefile"
+    with_test_prefix "[join $suffix \ ]" {
+	# Find the core file.
+	set corefile [core_find $program_to_run]
+	if {$corefile == ""} {
+	    untested "could not generate core file"
+	    return
+	}
+	verbose -log "corefile is $corefile"
 
-    # Grab the build-id from the binary, removing ".debug" from the end.
-    set buildid [build_id_debug_filename_get $program_to_run]
-    if {$buildid == ""} {
-	untested "binary for [join $suffix \ ] has no build-id"
-    }
-    regsub {\.debug$} $buildid {} buildid
-    verbose -log "build-id is $buildid"
+	# Grab the build-id from the binary, removing ".debug" from the end.
+	set buildid [build_id_debug_filename_get $program_to_run]
+	if {$buildid == ""} {
+	    untested "binary has no build-id"
+	}
+	regsub {\.debug$} $buildid {} buildid
+	verbose -log "build-id is $buildid"
 
-    with_test_prefix "[join $suffix \ ]"  {
 	locate_exec_from_core_build_id $corefile $buildid \
 	    [join $suffix -] $sepdebug false $shared
-    }
 
-    with_test_prefix "symlink [join $suffix \ ]" {
-	locate_exec_from_core_build_id $corefile $buildid \
-	    [join $suffix -] $sepdebug true $shared
+	with_test_prefix "symlink" {
+	    locate_exec_from_core_build_id $corefile $buildid \
+		[join $suffix -] $sepdebug true $shared
+	}
     }
 }
 

@@ -5,14 +5,14 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_powerpc_860;
+const struct target_desc *tdesc_powerpc_860;
 static void
 initialize_tdesc_powerpc_860 (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  target_desc_up result = allocate_target_description ();
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.core");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.core");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "r1", 1, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "r2", 2, 1, NULL, 32, "uint32");
@@ -52,7 +52,7 @@ initialize_tdesc_powerpc_860 (void)
   tdesc_create_reg (feature, "ctr", 68, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "xer", 69, 1, NULL, 32, "uint32");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.fpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.fpu");
   tdesc_create_reg (feature, "f0", 32, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "f1", 33, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "f2", 34, 1, NULL, 64, "ieee_double");
@@ -87,7 +87,7 @@ initialize_tdesc_powerpc_860 (void)
   tdesc_create_reg (feature, "f31", 63, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "fpscr", 70, 1, "float", 32, "int");
 
-  feature = tdesc_create_feature (result, "OEA");
+  feature = tdesc_create_feature (result.get (), "OEA");
   tdesc_create_reg (feature, "sr0", 71, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "sr1", 72, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "sr2", 73, 1, NULL, 32, "int");
@@ -137,7 +137,7 @@ initialize_tdesc_powerpc_860 (void)
   tdesc_create_reg (feature, "dabr", 117, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "ear", 118, 1, NULL, 32, "int");
 
-  feature = tdesc_create_feature (result, "860");
+  feature = tdesc_create_feature (result.get (), "860");
   tdesc_create_reg (feature, "eie", 119, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "eid", 120, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "nri", 121, 1, NULL, 32, "int");
@@ -186,5 +186,5 @@ initialize_tdesc_powerpc_860 (void)
   tdesc_create_reg (feature, "md_dbram0", 164, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "md_dbram1", 165, 1, NULL, 32, "int");
 
-  tdesc_powerpc_860 = result;
+  tdesc_powerpc_860 = result.release ();
 }

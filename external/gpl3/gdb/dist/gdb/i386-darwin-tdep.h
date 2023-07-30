@@ -1,6 +1,6 @@
 /* Target-dependent code for Darwin x86.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,6 @@
 extern int i386_darwin_thread_state_reg_offset[];
 extern const int i386_darwin_thread_state_num_regs;
 
-int darwin_dwarf_signal_frame_p (struct gdbarch *, struct frame_info *);
+int darwin_dwarf_signal_frame_p (struct gdbarch *, frame_info_ptr);
 
 #endif /* I386_DARWIN_TDEP_H */

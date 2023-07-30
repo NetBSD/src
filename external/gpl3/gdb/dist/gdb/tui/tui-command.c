@@ -1,6 +1,6 @@
 /* Specific command window processing.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -30,12 +30,6 @@
 #include "gdb_curses.h"
 
 /* See tui-command.h.  */
-
-int
-tui_cmd_window::max_height () const
-{
-  return tui_term_height () - 4;
-}
 
 void
 tui_cmd_window::resize (int height_, int width_, int origin_x, int origin_y)

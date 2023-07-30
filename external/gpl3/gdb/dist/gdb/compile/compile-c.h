@@ -1,5 +1,5 @@
 /* Header file for GDB compile C-language support.
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ private:
    register number, where each element indicates if the corresponding
    register is needed to compute a local variable.  */
 
-extern gdb::unique_xmalloc_ptr<unsigned char>
+extern std::vector<bool>
   generate_c_for_variable_locations
      (compile_instance *compiler,
       string_file *stream,

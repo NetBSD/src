@@ -1,5 +1,5 @@
 /* Main header for the CRIS simulator, based on the m32r header.
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -203,16 +203,6 @@ struct _sim_cpu {
      that).  */
   union { void *dummy[16]; } cpu_data_placeholder;
 #endif
-};
-
-/* The sim_state struct.  */
-
-struct sim_state {
-  sim_cpu *cpu[MAX_NR_PROCESSORS];
-
-  CGEN_STATE cgen_state;
-
-  sim_state_base base;
 };
 
 /* Misc.  */

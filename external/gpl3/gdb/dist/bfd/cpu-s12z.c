@@ -1,5 +1,5 @@
 /* BFD support for the Freescale 9S12Z processor
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -32,7 +32,7 @@ const bfd_arch_info_type bfd_s12z_arch =
   "s12z",
   "s12z",
   4,    /* Section alignment power.  */
-  TRUE,
+  true,
   bfd_default_compatible,
   bfd_default_scan,
   bfd_arch_default_fill,

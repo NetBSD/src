@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,11 +84,11 @@ if [skip_hw_watchpoint_multi_tests] {
 	"Hardware access \\(read/write\\) watchpoint \[0-9\]+: c\r\n\r\nOld value = 0\r\nNew value = 3\r\n.*" \
 	"catch c on inferior 2"
 
-    gdb_test "continue" "Breakpoint \[0-9\]+, marker_exit .*" "catch marker_exit in inferior 2"
+    gdb_test "continue" "Breakpoint $bkptno_numopt_re, marker_exit .*" "catch marker_exit in inferior 2"
 
     gdb_test "inferior 1" "witching to inferior 1 .*" "switch back to inferior 1 again"
 
     gdb_test "continue" "Hardware access \\(read/write\\) watchpoint \[0-9\]+: b\r\n\r\nOld value = 0\r\nNew value = 2\r\n.*" "catch b on inferior 1"
 }
 
-gdb_test "continue" "Breakpoint \[0-9\]+, marker_exit .*" "catch marker_exit in inferior 1"
+gdb_test "continue" "Breakpoint $bkptno_numopt_re, marker_exit .*" "catch marker_exit in inferior 1"

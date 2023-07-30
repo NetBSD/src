@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,15 +32,20 @@ proc run_test { lang } {
 	     "${testfile}" $srcfile "debug $lang"]} {
 	return -1
     }
+    gdb_test_no_output "set auto-solib-add off"
 
     if ![runto_main] then {
-	fail "can't run to main"
 	return 0
     }
 
+    set file_re "File .*[string_to_regexp $srcfile]:"
+
     if { $lang == "c++" } {
-	set output_re \
-	    [multi_line \
+	set output_lines \
+	    [list \
+		 "^All defined types:" \
+		 ".*" \
+		 $file_re \
 		 "98:\[\t \]+CL;" \
 		 "42:\[\t \]+anon_struct_t;" \
 		 "65:\[\t \]+anon_union_t;" \
@@ -70,10 +75,14 @@ proc run_test { lang } {
 		 "19:\[\t \]+typedef float nested_float_t;" \
 		 "18:\[\t \]+typedef int nested_int_t;" \
 		 "62:\[\t \]+typedef union_t nested_union_t;(" \
-		 "\[\t \]+unsigned int)?"]
+		 "\[\t \]+unsigned int)?" \
+		 "($|\r\n.*)"]
     } else {
-	set output_re \
-	    [multi_line \
+	set output_lines \
+	    [list \
+		 "^All defined types:" \
+		 ".*" \
+		 $file_re \
 		 "52:\[\t \]+typedef enum {\\.\\.\\.} anon_enum_t;" \
 		 "45:\[\t \]+typedef struct {\\.\\.\\.} anon_struct_t;" \
 		 "68:\[\t \]+typedef union {\\.\\.\\.} anon_union_t;" \
@@ -97,34 +106,11 @@ proc run_test { lang } {
 		 "18:\[\t \]+typedef int nested_int_t;" \
 		 "62:\[\t \]+typedef union union_t nested_union_t;" \
 		 "56:\[\t \]+union union_t;(" \
-		 "\[\t \]+unsigned int)?"]
+		 "\[\t \]+unsigned int)?" \
+		 "($|\r\n.*)"]
     }
 
-    set state 0
-    gdb_test_multiple "info types" "" {
-	-re "\r\nAll defined types:" {
-	    if { $state == 0 } { set state 1 }
-	    exp_continue
-	}
-	-re "\r\n\r\nFile .*[string_to_regexp $srcfile]:" {
-	    if { $state == 1 } { set state 2 }
-	    exp_continue
-	}
-	-re $output_re {
-	    if { $state == 2 } { set state 3 }
-	    exp_continue
-	}
-	-re "\r\n\r\nFile \[^\r\n\]*:" {
-	    exp_continue
-	}
-	-re -wrap "" {
-	    if { $state == 3} {
-		pass $gdb_test_name
-	    } else {
-		fail $gdb_test_name
-	    }
-	}
-    }
+    gdb_test_lines "info types" "" [multi_line {*}$output_lines]
 }
 
 run_test $lang

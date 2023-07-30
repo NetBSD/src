@@ -1,6 +1,6 @@
 /* Routines for name->symbol lookups in GDB.
    
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    Contributed by David Carlton <carlton@bactrian.org> and by Kealia,
    Inc.
@@ -22,7 +22,7 @@
 
 #include "defs.h"
 #include <ctype.h>
-#include "gdb_obstack.h"
+#include "gdbsupport/gdb_obstack.h"
 #include "symtab.h"
 #include "buildsym.h"
 #include "dictionary.h"
@@ -522,8 +522,7 @@ free_obstack (struct dictionary *dict)
 static void
 add_symbol_nonexpandable (struct dictionary *dict, struct symbol *sym)
 {
-  internal_error (__FILE__, __LINE__,
-		  _("dict_add_symbol: non-expandable dictionary"));
+  internal_error (_("dict_add_symbol: non-expandable dictionary"));
 }
 
 /* Functions for DICT_HASHED and DICT_HASHED_EXPANDABLE.  */
@@ -760,6 +759,13 @@ language_defn::search_name_hash (const char *string0) const
 	  if (string[1] == '_' && string != string0)
 	    {
 	      int c = string[2];
+
+	      if (c == 'B' && string[3] == '_')
+		{
+		  for (string += 4; ISDIGIT (*string); ++string)
+		    ;
+		  continue;
+		}
 
 	      if ((c < 'a' || c > 'z') && c != 'O')
 		return hash;
@@ -1087,8 +1093,7 @@ create_new_language_dictionary (struct multidictionary *mdict,
     {
     case DICT_HASHED:
     case DICT_LINEAR:
-      internal_error (__FILE__, __LINE__,
-		      _("create_new_language_dictionary: attempted to expand "
+      internal_error (_("create_new_language_dictionary: attempted to expand "
 			"non-expandable multidictionary"));
 
     case DICT_HASHED_EXPANDABLE:

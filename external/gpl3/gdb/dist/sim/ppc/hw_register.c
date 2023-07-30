@@ -80,7 +80,7 @@ do_register_init(device *me,
   psim *system = device_system(me);
   if (prop != NULL) {
     const char *name = prop->name;
-    unsigned32 value = device_find_integer_property(me, name);
+    uint32_t value = device_find_integer_property(me, name);
     int processor;
 
     do_register_init(me, device_next_property(prop));

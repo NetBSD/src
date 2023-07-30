@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2020 Free Software Foundation, Inc.
+   Copyright 2010-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,34 +15,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-asm (".globl cu_text_start");
-asm ("cu_text_start:");
-
-asm (".globl func_nofb_start");
-asm (".p2align 4");
-asm ("func_nofb_start:");
-
 void
 func_nofb (void)
 {
+asm ("func_nofb_label: .globl func_nofb_label\n");
   /* int func_nofb_var; */
 }
-
-asm (".globl func_nofb_end");
-asm ("func_nofb_end:");
-
-asm (".globl func_loopfb_start");
-asm (".p2align 4");
-asm ("func_loopfb_start:");
 
 void
 func_loopfb (void)
 {
+asm ("func_loopfb_label: .globl func_loopfb_label\n");
   /* int func_loopfb_var; */
 }
-
-asm (".globl func_loopfb_end");
-asm ("func_loopfb_end:");
-
-asm (".globl cu_text_end");
-asm ("cu_text_end:");

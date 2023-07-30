@@ -1,5 +1,5 @@
 /* BFD library support routines for the Z80 architecture.
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -106,16 +106,16 @@ compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (bfd_mach_z80,	 "z80",        16, TRUE,  M(1)),
-  N (bfd_mach_z80strict, "z80-strict", 16, FALSE, M(2)),
-  N (bfd_mach_z80full,	 "z80-full",   16, FALSE, M(3)),
-  N (bfd_mach_r800,	 "r800",       16, FALSE, M(4)),
-  N (bfd_mach_gbz80,	 "gbz80",      16, FALSE, M(5)),
-  N (bfd_mach_z180,	 "z180",       16, FALSE, M(6)),
-  N (bfd_mach_z80n,	 "z80n",       16, FALSE, M(7)),
-  N (bfd_mach_ez80_z80,	 "ez80-z80",   16, FALSE, M(8)),
-  N (bfd_mach_ez80_adl,	 "ez80-adl",   24, FALSE, NULL)
+  N (bfd_mach_z80,	 "z80",        16, true,  M(1)),
+  N (bfd_mach_z80strict, "z80-strict", 16, false, M(2)),
+  N (bfd_mach_z80full,	 "z80-full",   16, false, M(3)),
+  N (bfd_mach_r800,	 "r800",       16, false, M(4)),
+  N (bfd_mach_gbz80,	 "gbz80",      16, false, M(5)),
+  N (bfd_mach_z180,	 "z180",       16, false, M(6)),
+  N (bfd_mach_z80n,	 "z80n",       16, false, M(7)),
+  N (bfd_mach_ez80_z80,	 "ez80-z80",   16, false, M(8)),
+  N (bfd_mach_ez80_adl,	 "ez80-adl",   24, false, NULL)
 };
 
 const bfd_arch_info_type bfd_z80_arch =
-  N (bfd_mach_z80,   "z80",   16, TRUE,  M(1));
+  N (bfd_mach_z80,   "z80",   16, true,  M(1));

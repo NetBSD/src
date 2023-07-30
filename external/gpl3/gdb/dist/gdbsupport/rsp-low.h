@@ -1,6 +1,6 @@
 /* Low-level RSP routines for GDB, the GNU debugger.
 
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,12 +20,6 @@
 #ifndef COMMON_RSP_LOW_H
 #define COMMON_RSP_LOW_H
 
-#include "gdbsupport/byte-vector.h"
-
-/* Convert hex digit A to a number, or throw an exception.  */
-
-extern int fromhex (int a);
-
 /* Convert number NIB to a hex digit.  */
 
 extern int tohex (int nib);
@@ -44,19 +38,6 @@ extern char *pack_hex_byte (char *pkt, int byte);
    to the terminating character.  */
 
 extern const char *unpack_varlen_hex (const char *buff, ULONGEST *result);
-
-/* HEX is a string of characters representing hexadecimal digits.
-   Convert pairs of hex digits to bytes and store sequentially into
-   BIN.  COUNT is the maximum number of characters to convert.  This
-   will convert fewer characters if the number of hex characters
-   actually seen is odd, or if HEX terminates before COUNT characters.
-   Returns the number of characters actually converted.  */
-
-extern int hex2bin (const char *hex, gdb_byte *bin, int count);
-
-/* Like the above, but return a gdb::byte_vector.  */
-
-gdb::byte_vector hex2bin (const char *hex);
 
 /* Like hex2bin, but return a std::string.  */
 

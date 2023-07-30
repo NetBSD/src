@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ clean_restart ${testfile}
 set bp_location [gdb_get_line_number "STOP" ${testdir}/bias.adb]
 runto "bias.adb:$bp_location"
 
-gdb_test "print x" " = 64"
+gdb_test "print x" " = 60"
 gdb_test "print y" " = -5"
 
 gdb_test "print cval" " = 65"
@@ -44,11 +44,11 @@ gdb_test "print y = y" " = true"
 gdb_test "print y /= y" " = false"
 gdb_test "print y /= y1" " = true"
 
-gdb_test "print x + x1" " = 65"
+gdb_test "print x + x1" " = 61"
 gdb_test "ptype x + x1" "type = range 1 \\.\\. 64"
-gdb_test "print x / x1" " = 64"
-gdb_test "print x * x1" " = 64"
-gdb_test "print x - x1" " = 63"
+gdb_test "print x / x1" " = 60"
+gdb_test "print x * x1" " = 60"
+gdb_test "print x - x1" " = 59"
 
 # Test that storing un-biases.
 gdb_test "print x := 5" " = 5"

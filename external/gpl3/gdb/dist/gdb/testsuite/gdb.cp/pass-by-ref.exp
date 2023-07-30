@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@
 
 if {[skip_cplus_tests]} {
     untested "c++ test skipped"
-    continue
+    return
 }
 
 # The program source is generated in the output directory.
@@ -343,7 +343,6 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile $options]} {
 }
 
 if {![runto_main]} {
-    untested "failed to run to main"
     return -1
 }
 

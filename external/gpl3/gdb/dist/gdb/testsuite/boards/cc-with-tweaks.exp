@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,7 +44,6 @@ set found_gcc [find_gcc]
 set found_gxx [find_g++]
 set found_gnatmake [find_gnatmake]
 set found_f90 [find_gfortran]
-set found_f77 [find_g77]
 set_board_info compiler "$found_gcc"
 
 set contrib_dir [file normalize $srcdir/../contrib]
@@ -64,10 +63,6 @@ if ![info exists F90_FOR_TARGET] {
     set F90_FOR_TARGET "$found_f90"
 }
 set F90_FOR_TARGET "$contrib_dir/cc-with-tweaks.sh $CC_WITH_TWEAKS_FLAGS $F90_FOR_TARGET"
-if ![info exists F77_FOR_TARGET] {
-    set F77_FOR_TARGET "$found_f77"
-}
-set F77_FOR_TARGET "$contrib_dir/cc-with-tweaks.sh $CC_WITH_TWEAKS_FLAGS $F77_FOR_TARGET"
 
 set env(GDB) \
     [cached_file gdb.sh "$GDB $INTERNAL_GDBFLAGS $GDBFLAGS \"\$@\"" 1]

@@ -1,6 +1,6 @@
 /* Traditional frame unwind support, for GDB the GNU Debugger.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,17 +25,18 @@
 #include "target.h"
 #include "value.h"
 #include "gdbarch.h"
+#include "gdbsupport/traits.h"
 
 struct trad_frame_cache
 {
-  struct frame_info *this_frame;
+  frame_info_ptr this_frame;
   CORE_ADDR this_base;
-  struct trad_frame_saved_reg *prev_regs;
+  trad_frame_saved_reg *prev_regs;
   struct frame_id this_id;
 };
 
 struct trad_frame_cache *
-trad_frame_cache_zalloc (struct frame_info *this_frame)
+trad_frame_cache_zalloc (frame_info_ptr this_frame)
 {
   struct trad_frame_cache *this_trad_cache;
 
@@ -49,24 +50,30 @@ trad_frame_cache_zalloc (struct frame_info *this_frame)
 
 void
 trad_frame_reset_saved_regs (struct gdbarch *gdbarch,
-			     struct trad_frame_saved_reg *regs)
+			     trad_frame_saved_reg *regs)
 {
   int numregs = gdbarch_num_cooked_regs (gdbarch);
+
   for (int regnum = 0; regnum < numregs; regnum++)
-    {
-      regs[regnum].realreg = regnum;
-      regs[regnum].addr = -1;
-    }
+    regs[regnum].set_realreg (regnum);
 }
 
-struct trad_frame_saved_reg *
+trad_frame_saved_reg *
 trad_frame_alloc_saved_regs (struct gdbarch *gdbarch)
 {
-  int numregs = gdbarch_num_cooked_regs (gdbarch);
-  struct trad_frame_saved_reg *this_saved_regs
-    = FRAME_OBSTACK_CALLOC (numregs, struct trad_frame_saved_reg);
+#ifdef HAVE_IS_TRIVIALLY_CONSTRUCTIBLE
+  gdb_static_assert (std::is_trivially_constructible<trad_frame_saved_reg>::value);
+#endif
 
+  int numregs = gdbarch_num_cooked_regs (gdbarch);
+  trad_frame_saved_reg *this_saved_regs
+    = FRAME_OBSTACK_CALLOC (numregs, trad_frame_saved_reg);
+
+  /* For backwards compatibility, initialize all the register values to
+     REALREG, with register 0 stored in 0, register 1 stored in 1 and so
+     on.  */
   trad_frame_reset_saved_regs (gdbarch, this_saved_regs);
+
   return this_saved_regs;
 }
 
@@ -75,65 +82,12 @@ trad_frame_alloc_saved_regs (struct gdbarch *gdbarch)
    non-optimized frames, the technique is reliable (just need to check
    for all potential instruction sequences).  */
 
-struct trad_frame_saved_reg *
-trad_frame_alloc_saved_regs (struct frame_info *this_frame)
+trad_frame_saved_reg *
+trad_frame_alloc_saved_regs (frame_info_ptr this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
 
   return trad_frame_alloc_saved_regs (gdbarch);
-}
-
-enum { TF_REG_VALUE = -1, TF_REG_UNKNOWN = -2 };
-
-int
-trad_frame_value_p (struct trad_frame_saved_reg this_saved_regs[], int regnum)
-{
-  return (this_saved_regs[regnum].realreg == TF_REG_VALUE);
-}
-
-int
-trad_frame_addr_p (struct trad_frame_saved_reg this_saved_regs[], int regnum)
-{
-  return (this_saved_regs[regnum].realreg >= 0
-	  && this_saved_regs[regnum].addr != -1);
-}
-
-int
-trad_frame_realreg_p (struct trad_frame_saved_reg this_saved_regs[],
-		      int regnum)
-{
-  return (this_saved_regs[regnum].realreg >= 0
-	  && this_saved_regs[regnum].addr == -1);
-}
-
-void
-trad_frame_set_value (struct trad_frame_saved_reg this_saved_regs[],
-		      int regnum, LONGEST val)
-{
-  /* Make the REALREG invalid, indicating that the ADDR contains the
-     register's value.  */
-  this_saved_regs[regnum].realreg = TF_REG_VALUE;
-  this_saved_regs[regnum].addr = val;
-}
-
-/* See trad-frame.h.  */
-
-void
-trad_frame_set_realreg (struct trad_frame_saved_reg this_saved_regs[],
-			int regnum, int realreg)
-{
-  this_saved_regs[regnum].realreg = realreg;
-  this_saved_regs[regnum].addr = -1;
-}
-
-/* See trad-frame.h.  */
-
-void
-trad_frame_set_addr (struct trad_frame_saved_reg this_saved_regs[],
-		     int regnum, CORE_ADDR addr)
-{
-  this_saved_regs[regnum].realreg = regnum;
-  this_saved_regs[regnum].addr = addr;
 }
 
 void
@@ -142,21 +96,21 @@ trad_frame_set_reg_value (struct trad_frame_cache *this_trad_cache,
 {
   /* External interface for users of trad_frame_cache
      (who cannot access the prev_regs object directly).  */
-  trad_frame_set_value (this_trad_cache->prev_regs, regnum, val);
+  this_trad_cache->prev_regs[regnum].set_value (val);
 }
 
 void
 trad_frame_set_reg_realreg (struct trad_frame_cache *this_trad_cache,
 			    int regnum, int realreg)
 {
-  trad_frame_set_realreg (this_trad_cache->prev_regs, regnum, realreg);
+  this_trad_cache->prev_regs[regnum].set_realreg (realreg);
 }
 
 void
 trad_frame_set_reg_addr (struct trad_frame_cache *this_trad_cache,
 			 int regnum, CORE_ADDR addr)
 {
-  trad_frame_set_addr (this_trad_cache->prev_regs, regnum, addr);
+  this_trad_cache->prev_regs[regnum].set_addr (addr);
 }
 
 void
@@ -215,38 +169,47 @@ trad_frame_set_reg_regmap (struct trad_frame_cache *this_trad_cache,
     }
 }
 
+/* See trad-frame.h.  */
+
 void
-trad_frame_set_unknown (struct trad_frame_saved_reg this_saved_regs[],
-			int regnum)
+trad_frame_set_reg_value_bytes (struct trad_frame_cache *this_trad_cache,
+				int regnum,
+				gdb::array_view<const gdb_byte> bytes)
 {
-  /* Make the REALREG invalid, indicating that the value is not known.  */
-  this_saved_regs[regnum].realreg = TF_REG_UNKNOWN;
-  this_saved_regs[regnum].addr = -1;
+  /* External interface for users of trad_frame_cache
+     (who cannot access the prev_regs object directly).  */
+  this_trad_cache->prev_regs[regnum].set_value_bytes (bytes);
 }
 
+
+
 struct value *
-trad_frame_get_prev_register (struct frame_info *this_frame,
-			      struct trad_frame_saved_reg this_saved_regs[],
+trad_frame_get_prev_register (frame_info_ptr this_frame,
+			      trad_frame_saved_reg this_saved_regs[],
 			      int regnum)
 {
-  if (trad_frame_addr_p (this_saved_regs, regnum))
+  if (this_saved_regs[regnum].is_addr ())
     /* The register was saved in memory.  */
     return frame_unwind_got_memory (this_frame, regnum,
-				    this_saved_regs[regnum].addr);
-  else if (trad_frame_realreg_p (this_saved_regs, regnum))
+				    this_saved_regs[regnum].addr ());
+  else if (this_saved_regs[regnum].is_realreg ())
     return frame_unwind_got_register (this_frame, regnum,
-				      this_saved_regs[regnum].realreg);
-  else if (trad_frame_value_p (this_saved_regs, regnum))
+				      this_saved_regs[regnum].realreg ());
+  else if (this_saved_regs[regnum].is_value ())
     /* The register's value is available.  */
     return frame_unwind_got_constant (this_frame, regnum,
-				      this_saved_regs[regnum].addr);
+				      this_saved_regs[regnum].value ());
+  else if (this_saved_regs[regnum].is_value_bytes ())
+    /* The register's value is available as a sequence of bytes.  */
+    return frame_unwind_got_bytes (this_frame, regnum,
+				   this_saved_regs[regnum].value_bytes ());
   else
     return frame_unwind_got_optimized (this_frame, regnum);
 }
 
 struct value *
 trad_frame_get_register (struct trad_frame_cache *this_trad_cache,
-			 struct frame_info *this_frame,
+			 frame_info_ptr this_frame,
 			 int regnum)
 {
   return trad_frame_get_prev_register (this_frame, this_trad_cache->prev_regs,

@@ -1,6 +1,6 @@
 /* Blackfin Core Timer model.
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -18,7 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "devices.h"
@@ -29,7 +30,7 @@ struct bfin_ctimer
 {
   bu32 base;
   struct hw_event *handler;
-  signed64 timeout;
+  int64_t timeout;
 
   /* Order after here is important -- matches hardware MMR layout.  */
   bu32 tcntl, tperiod, tscale, tcount;
@@ -83,7 +84,7 @@ static void
 bfin_ctimer_update_count (struct hw *me, struct bfin_ctimer *ctimer)
 {
   bu32 scale, ticks;
-  signed64 timeout;
+  int64_t timeout;
 
   /* If the timer was enabled w/out autoreload and has expired, then
      there's nothing to calculate here.  */
@@ -133,7 +134,7 @@ bfin_ctimer_io_write_buffer (struct hw *me, const void *source,
 
   value = dv_load_4 (source);
   mmr_off = addr - ctimer->base;
-  valuep = (void *)((unsigned long)ctimer + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)ctimer + mmr_base() + mmr_off);
 
   HW_TRACE_WRITE ();
 
@@ -201,7 +202,7 @@ bfin_ctimer_io_read_buffer (struct hw *me, void *dest,
     return 0;
 
   mmr_off = addr - ctimer->base;
-  valuep = (void *)((unsigned long)ctimer + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)ctimer + mmr_base() + mmr_off);
 
   HW_TRACE_READ ();
 

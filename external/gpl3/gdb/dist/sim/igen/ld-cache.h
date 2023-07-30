@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -63,4 +63,4 @@
    new name had better be the same. */
 
 
-extern cache_entry *load_cache_table (char *file_name);
+extern cache_entry *load_cache_table (const char *file_name);

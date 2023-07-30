@@ -1,6 +1,6 @@
 /* Self tests for function_view for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,7 +61,7 @@ struct plus_one_int_func_obj
 };
 
 static void
-run_tests ()
+test_function_view ()
 {
   /* A simple lambda.  */
   auto plus_one_lambda = [] (int val) { return ++val; };
@@ -166,6 +166,86 @@ run_tests ()
   SELF_CHECK (check_op_eq_null);
   check_op_eq_null = nullptr;
   SELF_CHECK (!check_op_eq_null);
+}
+
+/* A template function where the function_view type is dependent on a
+   template parameter.  */
+
+template<typename T>
+static int
+tmpl_func (T val, gdb::function_view<T (T)> callback)
+{
+  return callback (val) + 1;
+}
+
+static int
+make_fv_test_func (int val)
+{
+  return val + 1;
+}
+
+/* A function object with const operator().  */
+
+struct func_obj_const_op
+{
+  int operator() (int val) const
+  {
+    return val + 1;
+  }
+};
+
+/* A function object with non-const operator().  */
+
+struct func_obj_non_const_op
+{
+  int operator() (int val)
+  {
+    return val + 1;
+  }
+};
+
+static void
+test_make_function_view ()
+{
+  /* Function reference.  */
+  SELF_CHECK (3 == tmpl_func (1, gdb::make_function_view (make_fv_test_func)));
+
+  /* Function pointer.  */
+  SELF_CHECK (3 == tmpl_func (1, gdb::make_function_view (&make_fv_test_func)));
+
+  /* Reference to const and non-const function pointers.  */
+  typedef int (*func_ptr) (int);
+  func_ptr ptr = make_fv_test_func;
+  const func_ptr cptr = make_fv_test_func;
+  SELF_CHECK (3 == tmpl_func (1, gdb::make_function_view (ptr)));
+  SELF_CHECK (3 == tmpl_func (1, gdb::make_function_view (cptr)));
+
+  /* Lambdas.  */
+
+  auto lambda = [] (int val) -> int { return val + 1; };
+
+  /* This wouldn't compile, since tmpl_func is a template and its
+     function_view argument's callable type is a dependent type.  The
+     passed argument must be of the exact type of the function's
+     parameter.  */
+  // SELF_CHECK (3 == tmpl_func (1, lambda));
+
+  SELF_CHECK (3 == tmpl_func (1, gdb::make_function_view (lambda)));
+
+  /* Regular function objects.  */
+
+  func_obj_non_const_op fobj;
+  SELF_CHECK (3 == tmpl_func (1, gdb::make_function_view (fobj)));
+
+  func_obj_const_op cfobj;
+  SELF_CHECK (3 == tmpl_func (1, gdb::make_function_view (cfobj)));
+}
+
+static void
+run_tests ()
+{
+  test_function_view ();
+  test_make_function_view ();
 }
 
 } /* namespace function_view */

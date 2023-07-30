@@ -40,12 +40,38 @@ LIBINTL_DEP=
 INCINTL=
 case $USE_INCLUDED_LIBINTL in
   yes)
-    LIBINTL=`echo $LIBINTL | sed 's,${top_builddir},&/..,' `
-    LTLIBINTL=`echo $LTLIBINTL | sed 's,${top_builddir},&/..,' `
+    LIBINTL=`echo $LIBINTL | sed 's,${top_builddir},-L&/..,; s,\.\./intl/libintl\.a,../intl -lintl,' `
     LIBINTL_DEP='${top_builddir}/../intl/libintl.a'
     INCINTL='-I${top_builddir}/../intl'
     ;;
 esac
+
+# intl is sometimes linked into shared libraries even without --enable-shared
+# (e.g. gdbsupport's inprocess agent): so always PICify, just in case.
+GCC_PICFLAG
+AC_SUBST(PICFLAG)
+
+BISON3_YES='#'
+BISON3_NO=
+if test "$INTLBISON" != :; then
+  ac_bison3=no
+  AC_MSG_CHECKING([bison 3 or later])
+changequote(<<,>>)dnl
+  ac_prog_version=`$INTLBISON --version 2>&1 | sed -n 's/^.*GNU Bison.* \([0-9]*\.[0-9.]*\).*$/\1/p'`
+  case $ac_prog_version in
+    [3-9].*)
+changequote([,])dnl
+      ac_prog_version="$ac_prog_version, bison3"; ac_bison3=yes;;
+    *) ac_prog_version="$ac_prog_version, old";;
+  esac
+  AC_MSG_RESULT([$ac_prog_version])
+  if test $ac_bison3 = yes; then
+    BISON3_YES=
+    BISON3_NO='#'
+  fi
+fi
+AC_SUBST(BISON3_YES)
+AC_SUBST(BISON3_NO)
 
 AC_CONFIG_FILES(Makefile config.intl)
 AC_OUTPUT

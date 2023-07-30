@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,6 @@ if  { [gdb_compile "${srcdir}/${subdir}/${testfile}1.go ${binfile}2.o" "${binfil
 clean_restart $testfile
 
 if { [go_runto_main] < 0 } {
-    untested methods
     return -1
 }
 

@@ -1,5 +1,5 @@
 /* tic54x.h -- Header file for TI TMS320C54X opcode table
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
    Written by Timothy Wall (twall@cygnus.com)
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -152,10 +152,10 @@ typedef struct _template
 extern const insn_template tic54x_unknown_opcode;
 extern const insn_template tic54x_optab[];
 extern const insn_template tic54x_paroptab[];
-extern const tic54x_symbol mmregs[], regs[];
-extern const tic54x_symbol condition_codes[], cc2_codes[], status_bits[];
-extern const tic54x_symbol cc3_codes[];
-extern const char *misc_symbols[];
+extern const tic54x_symbol tic54x_mmregs[], tic54x_regs[];
+extern const tic54x_symbol tic54x_condition_codes[], tic54x_cc2_codes[];
+extern const tic54x_symbol tic54x_status_bits[], tic54x_cc3_codes[];
+extern const char *tic54x_misc_symbols[];
 struct disassemble_info;
 extern const insn_template* tic54x_get_insn (struct disassemble_info *, 
                                         bfd_vma, unsigned short, int *);

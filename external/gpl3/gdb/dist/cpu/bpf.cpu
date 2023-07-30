@@ -249,6 +249,8 @@
    (ADD #x0) (SUB #x1) (MUL #x2) (DIV #x3) (OR #x4) (AND #x5)
    (LSH #x6) (RSH #x7) (NEG #x8) (MOD #x9) (XOR #xa) (MOV #xb)
    (ARSH #xc) (END #xd)
+   ;; xBPF-only: signed div, signed mod
+   (SDIV #xe) (SMOD #xf)
    ;; Codes for OP_CLASS_JMP
    (JA #x0) (JEQ #x1) (JGT #x2) (JGE #x3) (JSET #x4)
    (JNE #x5) (JSGT #x6) (JSGE #x7) (CALL #x8) (EXIT #x9)
@@ -420,12 +422,12 @@
        ()))
 
 (define-pmacro (define-alu-insn-bin x-basename x-suffix x-op-class x-op-code
-                 x-endian x-mode x-semop)
+                 x-endian x-mode x-semop x-isas)
   (begin
     ;; dst = dst OP immediate
     (dni (.sym x-basename x-suffix "i" x-endian)
          (.str x-basename x-suffix " immediate")
-         (endian-isas x-endian)
+         (.splice (.unsplice x-isas))
          (.str x-basename x-suffix " $dst" x-endian ",$imm32")
          (+ imm32 (f-offset16 0) ((.sym f-src x-endian) 0) (.sym dst x-endian)
             x-op-class OP_SRC_K x-op-code)
@@ -434,7 +436,7 @@
     ;; dst = dst OP src
     (dni (.sym x-basename x-suffix "r" x-endian)
          (.str x-basename x-suffix " register")
-         (endian-isas x-endian)
+         (.splice (.unsplice x-isas))
          (.str x-basename x-suffix " $dst" x-endian ",$src" x-endian)
          (+ (f-imm32 0) (f-offset16 0) (.sym src x-endian) (.sym dst x-endian)
             x-op-class OP_SRC_X x-op-code)
@@ -471,10 +473,10 @@
 
 ;; Binary ALU instructions (all the others)
 ;; For ALU32: DST = (u32) DST OP (u32) SRC is correct semantics
-(define-pmacro (daib x-basename x-op-code x-endian x-semop)
+(define-pmacro (daib x-basename x-op-code x-endian x-semop x-isas)
   (begin
-    (define-alu-insn-bin x-basename "" OP_CLASS_ALU64 x-op-code x-endian DI x-semop)
-    (define-alu-insn-bin x-basename "32" OP_CLASS_ALU x-op-code x-endian USI x-semop)))
+    (define-alu-insn-bin x-basename "" OP_CLASS_ALU64 x-op-code x-endian DI x-semop x-isas)
+    (define-alu-insn-bin x-basename "32" OP_CLASS_ALU x-op-code x-endian USI x-semop x-isas)))
 
 ;; Move ALU instructions (mov)
 (define-pmacro (daim x-basename x-op-code x-endian)
@@ -484,17 +486,19 @@
 
 (define-pmacro (define-alu-instructions x-endian)
   (begin
-    (daib add OP_CODE_ADD x-endian add)
-    (daib sub OP_CODE_SUB x-endian sub)
-    (daib mul OP_CODE_MUL x-endian mul)
-    (daib div OP_CODE_DIV x-endian udiv)
-    (daib or  OP_CODE_OR x-endian or)
-    (daib and OP_CODE_AND x-endian and)
-    (daib lsh OP_CODE_LSH x-endian sll)
-    (daib rsh OP_CODE_RSH x-endian srl)
-    (daib mod OP_CODE_MOD x-endian umod)
-    (daib xor OP_CODE_XOR x-endian xor)
-    (daib arsh OP_CODE_ARSH x-endian sra)
+    (daib add OP_CODE_ADD x-endian add (endian-isas x-endian))
+    (daib sub OP_CODE_SUB x-endian sub (endian-isas x-endian))
+    (daib mul OP_CODE_MUL x-endian mul (endian-isas x-endian))
+    (daib div OP_CODE_DIV x-endian udiv (endian-isas x-endian))
+    (daib or  OP_CODE_OR x-endian or (endian-isas x-endian))
+    (daib and OP_CODE_AND x-endian and (endian-isas x-endian))
+    (daib lsh OP_CODE_LSH x-endian sll (endian-isas x-endian))
+    (daib rsh OP_CODE_RSH x-endian srl (endian-isas x-endian))
+    (daib mod OP_CODE_MOD x-endian umod (endian-isas x-endian))
+    (daib xor OP_CODE_XOR x-endian xor (endian-isas x-endian))
+    (daib arsh OP_CODE_ARSH x-endian sra (endian-isas x-endian))
+    (daib sdiv OP_CODE_SDIV x-endian div ((ISA (.sym xbpf x-endian))))
+    (daib smod OP_CODE_SMOD x-endian mod ((ISA (.sym xbpf x-endian))))
     (daiu neg OP_CODE_NEG x-endian neg)
     (daim mov OP_CODE_MOV x-endian)))
 

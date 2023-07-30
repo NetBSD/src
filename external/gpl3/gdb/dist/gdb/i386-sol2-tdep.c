@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris x86.
 
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -50,7 +50,7 @@ static int i386_sol2_gregset_reg_offset[] =
    `mcontext_t' that contains the saved set of machine registers.  */
 
 static CORE_ADDR
-i386_sol2_mcontext_addr (struct frame_info *this_frame)
+i386_sol2_mcontext_addr (frame_info_ptr this_frame)
 {
   CORE_ADDR sp, ucontext_addr;
 
@@ -65,7 +65,7 @@ i386_sol2_mcontext_addr (struct frame_info *this_frame)
 static void
 i386_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
   /* Solaris is SVR4-based.  */
   i386_svr4_init_abi (info, gdbarch);

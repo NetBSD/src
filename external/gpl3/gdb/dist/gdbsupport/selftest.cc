@@ -1,5 +1,5 @@
 /* GDB self-testing.
-   Copyright (C) 2016-2020 Free Software Foundation, Inc.
+   Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,62 +20,63 @@
 #include "common-exceptions.h"
 #include "common-debug.h"
 #include "selftest.h"
-#include <map>
+#include <functional>
 
 namespace selftests
 {
-/* All the tests that have been registered.  Using an std::map allows keeping
+/* All the tests that have been registered.  Using an std::set allows keeping
    the order of tests stable and easily looking up whether a test name
    exists.  */
 
-static std::map<std::string, std::unique_ptr<selftest>> tests;
+static selftests_registry tests;
 
-/* A selftest that calls the test function without arguments.  */
+/* Set of callback functions used to register selftests after GDB is fully
+   initialized.  */
 
-struct simple_selftest : public selftest
-{
-  simple_selftest (self_test_function *function_)
-  : function (function_)
-  {}
-
-  void operator() () const override
-  {
-    function ();
-  }
-
-  self_test_function *function;
-};
+static std::vector<selftests_generator> lazy_generators;
 
 /* See selftest.h.  */
 
 void
-register_test (const std::string &name, selftest *test)
+register_test (const std::string &name,
+	       std::function<void(void)> function)
 {
   /* Check that no test with this name already exist.  */
-  gdb_assert (tests.find (name) == tests.end ());
-
-  tests[name] = std::unique_ptr<selftest> (test);
+  auto status = tests.emplace (name, std::move (function));
+  if (!status.second)
+    gdb_assert_not_reached ("Test already registered");
 }
 
 /* See selftest.h.  */
 
 void
-register_test (const std::string &name, self_test_function *function)
+add_lazy_generator (selftests_generator generator)
 {
-  register_test (name, new simple_selftest (function));
+  lazy_generators.push_back (std::move (generator));
+}
+
+/* See selftest.h.  */
+
+static bool run_verbose_ = false;
+
+/* See selftest.h.  */
+
+bool
+run_verbose ()
+{
+  return run_verbose_;
 }
 
 /* See selftest.h.  */
 
 void
-run_tests (gdb::array_view<const char *const> filters)
+run_tests (gdb::array_view<const char *const> filters, bool verbose)
 {
   int ran = 0, failed = 0;
+  run_verbose_ = verbose;
 
-  for (const auto &pair : tests)
+  for (const auto &test : all_selftests ())
     {
-      const std::string &name = pair.first;
-      const std::unique_ptr<selftest> &test = pair.second;
       bool run = false;
 
       if (filters.empty ())
@@ -84,7 +85,7 @@ run_tests (gdb::array_view<const char *const> filters)
 	{
 	  for (const char *filter : filters)
 	    {
-	      if (name.find (filter) != std::string::npos)
+	      if (test.name.find (filter) != std::string::npos)
 		run = true;
 	    }
 	}
@@ -94,9 +95,9 @@ run_tests (gdb::array_view<const char *const> filters)
 
       try
 	{
-	  debug_printf (_("Running selftest %s.\n"), name.c_str ());
+	  debug_printf (_("Running selftest %s.\n"), test.name.c_str ());
 	  ++ran;
-	  (*test) ();
+	  test.test ();
 	}
       catch (const gdb_exception_error &ex)
 	{
@@ -113,10 +114,18 @@ run_tests (gdb::array_view<const char *const> filters)
 
 /* See selftest.h.  */
 
-void for_each_selftest (for_each_selftest_ftype func)
+selftests_range
+all_selftests ()
 {
-  for (const auto &pair : tests)
-    func (pair.first);
+  /* Execute any function which might still want to register tests.  Once each
+     function has been executed, clear lazy_generators to ensure that
+     callback functions are only executed once.  */
+  for (const auto &generator : lazy_generators)
+    for (selftest &test : generator ())
+      register_test (std::move (test.name), std::move (test.test));
+  lazy_generators.clear ();
+
+  return selftests_range (tests.cbegin (), tests.cend ());
 }
 
 } // namespace selftests

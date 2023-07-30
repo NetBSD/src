@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,8 +34,7 @@ set sp "\[ \t\]*"
 
 clean_restart ${testfile}
 
-if ![runto_main] then {
-   fail "cannot run to main, testcase aborted"
+if {![runto_main]} {
    return 0
 }
 
@@ -58,14 +57,7 @@ gdb_test_multiple "catch exception" $msg {
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    continue
-}
-
-mi_delete_breakpoints
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
+mi_clean_restart $binfile
 
 ###################################################
 # 2. Try catching conditionnal failed assertion.  #
@@ -77,8 +69,7 @@ mi_gdb_load ${binfile}
 #  - continue, we should see the second failed assertion
 #  - continue, the program exits.
 
-if ![mi_run_to_main] then {
-   fail "cannot run to main, testcase aborted"
+if {[mi_runto_main] < 0} {
    return 0
 }
 

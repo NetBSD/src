@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,20 +28,20 @@
 target_desc *
 tic6x_create_target_description (enum c6x_feature feature)
 {
-  target_desc *tdesc = allocate_target_description ();
+  target_desc_up tdesc = allocate_target_description ();
 
-  set_tdesc_architecture (tdesc, "tic6x");
-  set_tdesc_osabi (tdesc, "GNU/Linux");
+  set_tdesc_architecture (tdesc.get (), "tic6x");
+  set_tdesc_osabi (tdesc.get (), "GNU/Linux");
 
   long regnum = 0;
 
-  regnum = create_feature_tic6x_core (tdesc, regnum);
+  regnum = create_feature_tic6x_core (tdesc.get (), regnum);
 
   if (feature == C6X_GP || feature == C6X_C6XP)
-    regnum = create_feature_tic6x_gp (tdesc, regnum);
+    regnum = create_feature_tic6x_gp (tdesc.get (), regnum);
 
   if (feature == C6X_C6XP)
-    regnum = create_feature_tic6x_c6xp (tdesc, regnum);
+    regnum = create_feature_tic6x_c6xp (tdesc.get (), regnum);
 
-  return tdesc;
+  return tdesc.release ();
 }

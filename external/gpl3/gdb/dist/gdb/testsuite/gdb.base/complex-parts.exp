@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
-if { ![runto_main] } then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -31,8 +30,13 @@ gdb_test "p z1" " = 1.5 \\+ 4.5i"
 gdb_test "p z2" " = 2.5 \\+ -5.5i"
 gdb_test "p z3" " = 3.5 \\+ 6.5i"
 
+# The following 3 tests are broken for Clang.
+# More info at https://github.com/llvm/llvm-project/issues/52996.
+if {[test_compiler_info clang-*-*]} { setup_xfail *-*-* }
 gdb_test "ptype z1" " = complex double"
+if {[test_compiler_info clang-*-*]} { setup_xfail *-*-* }
 gdb_test "ptype z2" " = complex float"
+if {[test_compiler_info clang-*-*]} { setup_xfail *-*-* }
 gdb_test "ptype z3" " = complex long double"
 
 with_test_prefix "double imaginary" {
@@ -103,3 +107,14 @@ gdb_test "print (_Complex int) 4" " = 4 \\+ 0i"
 gdb_test "print (_Complex float) 4.5" " = 4.5 \\+ 0i"
 gdb_test "ptype __complex__ short" " = _Complex short"
 gdb_test "print (_Complex int) (23.75 + 8.88i)" " = 23 \\+ 8i"
+
+set re_reject_arg "Argument to complex arithmetic operation not supported\\."
+gdb_test "print (void *)0 + 5i" $re_reject_arg
+gdb_test "print (_Decimal32)0 + 5i" $re_reject_arg
+
+# Set language to c++.  Avoid warning by not having current frame.
+clean_restart
+gdb_test_no_output "set language c++"
+
+# C++ type tests.
+gdb_test "print (bool)1 + 1i" " = 1 \\+ 1i"

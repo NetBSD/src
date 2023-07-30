@@ -1,5 +1,5 @@
 /* Header file for GDB compile command and supporting functions.
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 #define COMPILE_COMPILE_INTERNAL_H
 
 #include "gcc-c-interface.h"
+#include "gdbsupport/gdb-hashtab.h"
 
 /* Debugging flag for the "compile" family of commands.  */
 
@@ -96,7 +97,8 @@ public:
 
   /* Set compilation arguments.  REGEXP is only used for protocol
      version GCC_FE_VERSION_0.  */
-  char *set_arguments (int argc, char **argv, const char *regexp = NULL);
+  gdb::unique_xmalloc_ptr<char> set_arguments (int argc, char **argv,
+					       const char *regexp = NULL);
 
   /* Set the filename of the program to compile.  Nop for GCC_FE_VERSION_0.  */
   void set_source_file (const char *filename);

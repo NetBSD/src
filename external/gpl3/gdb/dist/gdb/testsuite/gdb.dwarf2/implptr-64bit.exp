@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +21,8 @@ if {![dwarf2_support]} {
 
 standard_testfile main.c
 
-proc test { dwarf_version offset_size addr_size ref_addr_size two_cu } {
+proc test_1 { name dwarf_version offset_size addr_size ref_addr_size two_cu } {
     global testfile srcfile
-
-    set name "d${dwarf_version}o${offset_size}a${addr_size}r${ref_addr_size}t${two_cu}"
 
     # Make some DWARF for the test.
     set asm_file [standard_output_file ${testfile}-${name}.S]
@@ -137,7 +135,23 @@ proc test { dwarf_version offset_size addr_size ref_addr_size two_cu } {
 	return -1
     }
 
-    gdb_test "p/x p->f" " = 0x1010101" $name
+    gdb_test "p/x p->f" " = 0x1010101"
+}
+
+proc test { dwarf_version offset_size addr_size ref_addr_size two_cu } {
+
+    set name \
+	[list \
+	     "d${dwarf_version}" \
+	     "o${offset_size}" \
+	     "a${addr_size}" \
+	     "r${ref_addr_size}" \
+	     "t${two_cu}"]
+    set name [join $name "-"]
+    with_test_prefix $name {
+	test_1 $name \
+	    $dwarf_version $offset_size $addr_size $ref_addr_size $two_cu
+    }
 }
 
 #    DWARF_VERSION OFFSET_SIZE ADDR_SIZE REF_ADDR_SIZE TWO_CU

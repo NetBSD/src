@@ -1,6 +1,6 @@
 /* Generic static probe support for GDB.
 
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,7 @@
 #include "progspace.h"
 #include "filenames.h"
 #include "linespec.h"
-#include "gdb_regex.h"
+#include "gdbsupport/gdb_regex.h"
 #include "frame.h"
 #include "arch-utils.h"
 #include "value.h"
@@ -114,7 +114,7 @@ parse_probes_in_pspace (const static_probe_ops *spops,
 /* See definition in probe.h.  */
 
 std::vector<symtab_and_line>
-parse_probes (const struct event_location *location,
+parse_probes (const location_spec *locspec,
 	      struct program_space *search_pspace,
 	      struct linespec_result *canonical)
 {
@@ -122,8 +122,8 @@ parse_probes (const struct event_location *location,
   char *objfile_namestr = NULL, *provider = NULL, *name, *p;
   const char *arg_start, *cs;
 
-  gdb_assert (event_location_type (location) == PROBE_LOCATION);
-  arg_start = get_probe_location (location);
+  gdb_assert (locspec->type () == PROBE_LOCATION_SPEC);
+  arg_start = locspec->to_string ();
 
   cs = arg_start;
   const static_probe_ops *spops = probe_linespec_to_static_ops (&cs);
@@ -204,7 +204,7 @@ parse_probes (const struct event_location *location,
       std::string canon (arg_start, arg_end - arg_start);
       canonical->special_display = 1;
       canonical->pre_expanded = 1;
-      canonical->location = new_probe_location (canon.c_str ());
+      canonical->locspec = new_probe_location_spec (std::move (canon));
     }
 
   return result;
@@ -571,9 +571,8 @@ info_probes_for_spops (const char *arg, int from_tty,
 	ui_out_emit_tuple tuple_emitter (current_uiout, "probe");
 
 	current_uiout->field_string ("type", probe_type);
-	current_uiout->field_string ("provider",
-				     probe.prob->get_provider ().c_str ());
-	current_uiout->field_string ("name", probe.prob->get_name ().c_str ());
+	current_uiout->field_string ("provider", probe.prob->get_provider ());
+	current_uiout->field_string ("name", probe.prob->get_name ());
 	current_uiout->field_core_addr ("addr", probe.prob->get_gdbarch (),
 					probe.prob->get_relocated_address
 					(probe.objfile));
@@ -618,7 +617,7 @@ enable_probes_command (const char *arg, int from_tty)
 {
   std::string provider, probe_name, objname;
 
-  parse_probe_linespec ((const char *) arg, &provider, &probe_name, &objname);
+  parse_probe_linespec (arg, &provider, &probe_name, &objname);
 
   std::vector<bound_probe> probes
     = collect_probes (objname, provider, probe_name, &any_static_probe_ops);
@@ -653,7 +652,7 @@ disable_probes_command (const char *arg, int from_tty)
 {
   std::string provider, probe_name, objname;
 
-  parse_probe_linespec ((const char *) arg, &provider, &probe_name, &objname);
+  parse_probe_linespec (arg, &provider, &probe_name, &objname);
 
   std::vector<bound_probe> probes
     = collect_probes (objname, provider, probe_name, &any_static_probe_ops);
@@ -684,7 +683,7 @@ disable_probes_command (const char *arg, int from_tty)
 /* See comments in probe.h.  */
 
 struct value *
-probe_safe_evaluate_at_pc (struct frame_info *frame, unsigned n)
+probe_safe_evaluate_at_pc (frame_info_ptr frame, unsigned n)
 {
   struct bound_probe probe;
   unsigned n_args;
@@ -788,8 +787,7 @@ If you specify TYPE, there may be additional arguments needed by the\n\
 subcommand.\n\
 If you do not specify any argument, or specify `all', then the command\n\
 will show information about all types of probes."),
-		    &info_probes_cmdlist, "info probes ",
-		    0/*allow-unknown*/, &infolist);
+		    &info_probes_cmdlist, 0/*allow-unknown*/, &infolist);
 
   return &info_probes_cmdlist;
 }
@@ -803,7 +801,7 @@ static struct value *
 compute_probe_arg (struct gdbarch *arch, struct internalvar *ivar,
 		   void *data)
 {
-  struct frame_info *frame = get_selected_frame (_("No frame selected"));
+  frame_info_ptr frame = get_selected_frame (_("No frame selected"));
   CORE_ADDR pc = get_frame_pc (frame);
   int sel = (int) (uintptr_t) data;
   struct bound_probe pc_probe;
@@ -868,7 +866,6 @@ static const struct internalvar_funcs probe_funcs =
 {
   compute_probe_arg,
   compile_probe_arg,
-  NULL
 };
 
 

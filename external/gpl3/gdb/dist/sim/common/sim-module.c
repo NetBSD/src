@@ -1,6 +1,6 @@
 /* Module support.
 
-   Copyright 1996-2020 Free Software Foundation, Inc.
+   Copyright 1996-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -19,52 +19,33 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
+#include <stdlib.h>
+
+#include "libiberty.h"
+
 #include "sim-main.h"
 #include "sim-io.h"
 #include "sim-options.h"
 #include "sim-assert.h"
 
-#if WITH_HW
-#include "sim-hw.h"
-#endif
-
-#ifdef HAVE_DV_SOCKSER
-/* TODO: Shouldn't have device models here.  */
-#include "dv-sockser.h"
-#endif
-
-#include "libiberty.h"
-
-#include <stdlib.h>
-
-/* List of all modules.  */
-static MODULE_INSTALL_FN * const modules[] = {
+/* List of all early/core modules.
+   TODO: Should trim this list by converting to sim_install_* framework.  */
+static MODULE_INSTALL_FN * const early_modules[] = {
   standard_install,
   sim_events_install,
   sim_model_install,
-  sim_engine_install,
-#if WITH_TRACE_ANY_P
-  trace_install,
-#endif
-#if WITH_PROFILE
-  profile_install,
-#endif
   sim_core_install,
   sim_memopt_install,
   sim_watchpoint_install,
-#if WITH_SCACHE
-  scache_install,
-#endif
-#if WITH_HW
-  sim_hw_install,
-#endif
-#ifdef HAVE_DV_SOCKSER
-  /* TODO: Shouldn't have device models here.  */
-  dv_sockser_install,
-#endif
-  0
 };
+static int early_modules_len = ARRAY_SIZE (early_modules);
+
+/* List of dynamically detected modules.  Declared in generated modules.c.  */
+extern MODULE_INSTALL_FN * const sim_modules_detected[];
+extern const int sim_modules_detected_len;
 
 /* Functions called from sim_open.  */
 
@@ -92,11 +73,13 @@ sim_pre_argv_init (SIM_DESC sd, const char *myname)
 
   sim_config_default (sd);
 
-  /* Install all configured in modules.  */
+  /* Install all early configured-in modules.  */
   if (sim_module_install (sd) != SIM_RC_OK)
     return SIM_RC_FAIL;
 
-  return SIM_RC_OK;
+  /* Install all remaining dynamically detected modules.  */
+  return sim_module_install_list (sd, sim_modules_detected,
+				  sim_modules_detected_len);
 }
 
 /* Initialize common parts after argument processing.  */
@@ -121,6 +104,29 @@ sim_post_argv_init (SIM_DESC sd)
   return SIM_RC_OK;
 }
 
+/* Install a list of modules.
+   If this fails, no modules are left installed.  */
+SIM_RC
+sim_module_install_list (SIM_DESC sd, MODULE_INSTALL_FN * const *modules,
+			 size_t modules_len)
+{
+  size_t i;
+
+  for (i = 0; i < modules_len; ++i)
+    {
+      MODULE_INSTALL_FN *modp = modules[i];
+
+      if (modp != NULL && modp (sd) != SIM_RC_OK)
+	{
+	  sim_module_uninstall (sd);
+	  SIM_ASSERT (STATE_MODULES (sd) == NULL);
+	  return SIM_RC_FAIL;
+	}
+    }
+
+  return SIM_RC_OK;
+}
+
 /* Install all modules.
    If this fails, no modules are left installed.  */
 
@@ -133,16 +139,7 @@ sim_module_install (SIM_DESC sd)
   SIM_ASSERT (STATE_MODULES (sd) == NULL);
 
   STATE_MODULES (sd) = ZALLOC (struct module_list);
-  for (modp = modules; *modp != NULL; ++modp)
-    {
-      if ((*modp) (sd) != SIM_RC_OK)
-	{
-	  sim_module_uninstall (sd);
-	  SIM_ASSERT (STATE_MODULES (sd) == NULL);
-	  return SIM_RC_FAIL;
-	}
-    }
-  return SIM_RC_OK;
+  return sim_module_install_list (sd, early_modules, early_modules_len);
 }
 
 /* Called after all modules have been installed and after argv

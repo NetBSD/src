@@ -1,0 +1,80 @@
+# Copyright 2021-2023 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test running into vfork while "detach-on-fork" is off and "follow-fork-mode"
+# is parent.  This shows a "Can not resume the parent process..." message.  If
+# the user wants to resume execution, they have to use either "set
+# schedule-multiple on" or "set detach-on-fork on".  Test these two resolution
+# methods.
+
+standard_testfile
+
+if { [build_executable "failed to prepare" \
+	${testfile} ${srcfile}] } {
+    return
+}
+
+# Test running to the "Can not resume the parent..." message.  Then, resolve
+# the situation using the method in RESOLUTION_METHOD, either "detach-on-fork"
+# or "schedule-multiple" (the two alternatives the message suggests to the
+# user).
+
+proc do_test { resolution_method } {
+    clean_restart $::binfile
+
+    gdb_test_no_output "set detach-on-fork off"
+
+    if { ![runto_main] } {
+	return
+    }
+
+    gdb_test "break break_parent"
+
+    gdb_test "continue" \
+	"Can not resume the parent process over vfork .*" \
+	"continue to vfork"
+
+    # Try to continue again from there, expecting the same message.  It
+    # exercises a different code path in GDB.
+    gdb_test "continue" \
+	"Can not resume the parent process over vfork .*" \
+	"try to continue from vfork"
+
+    # Unblock the execution using the specified resolution method.
+    if { $resolution_method == "detach-on-fork" } {
+	# Make GDB detach the child.
+	gdb_test "set detach-on-fork on"
+	gdb_test "print unblock_parent = 1" " = 1"
+    } elseif { $resolution_method == "schedule-multiple" } {
+	# Make GDB resume both inferiors.  The parent is blocked while the
+	# children executes, so the continue will make the child reach the
+	# end.
+	gdb_test "set schedule-multiple on"
+	gdb_test "continue" "$::inferior_exited_re normally.*" \
+	    "continue to end of inferior 2"
+	gdb_test "inferior 1" ".*Switching to inferior 1.*"
+	gdb_test "print unblock_parent = 1" " = 1"
+    } else {
+	error "invalid resolution method: $resolution_method"
+    }
+
+    # Continue from the vfork call to the breakpoint.
+    gdb_test "continue" "Breakpoint $::decimal, break_parent .*" \
+	"continue to break_parent"
+}
+
+foreach_with_prefix resolution_method {detach-on-fork schedule-multiple} {
+    do_test $resolution_method
+}

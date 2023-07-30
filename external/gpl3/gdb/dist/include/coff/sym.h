@@ -76,8 +76,8 @@ typedef struct {
 	bfd_vma	cbSymOffset;	/* offset to start of local symbols*/
 	long	ioptMax;	/* max index into optimization symbol entries */
 	bfd_vma	cbOptOffset;	/* offset to optimization symbol entries */
-	long	iauxMax;	/* number of auxillary symbol entries */
-	bfd_vma	cbAuxOffset;	/* offset to start of auxillary symbol entries*/
+	long	iauxMax;	/* number of auxiliary symbol entries */
+	bfd_vma	cbAuxOffset;	/* offset to start of auxiliary symbol entries*/
 	long	issMax;		/* max index into local strings */
 	bfd_vma	cbSsOffset;	/* offset to start of local strings */
 	long	issExtMax;	/* max index into external strings */

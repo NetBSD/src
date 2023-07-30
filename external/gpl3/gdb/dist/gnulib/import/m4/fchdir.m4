@@ -1,5 +1,5 @@
-# fchdir.m4 serial 25
-dnl Copyright (C) 2006-2020 Free Software Foundation, Inc.
+# fchdir.m4 serial 27
+dnl Copyright (C) 2006-2022 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -17,8 +17,6 @@ AC_DEFUN([gl_FUNC_FCHDIR],
 
   AC_REQUIRE([gl_TEST_FCHDIR])
   if test $HAVE_FCHDIR = 0; then
-    AC_LIBOBJ([fchdir])
-    gl_PREREQ_FCHDIR
     AC_DEFINE([REPLACE_FCHDIR], [1],
       [Define to 1 if gnulib's fchdir() replacement is used.])
     dnl We must also replace anything that can manipulate a directory fd,
@@ -26,21 +24,24 @@ AC_DEFUN([gl_FUNC_FCHDIR],
     dnl fstatat, since no platform has fstatat but lacks fchdir.
     AC_CACHE_CHECK([whether open can visit directories],
       [gl_cv_func_open_directory_works],
-      [AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <fcntl.h>
-]], [return open(".", O_RDONLY) < 0;])],
-        [gl_cv_func_open_directory_works=yes],
-        [gl_cv_func_open_directory_works=no],
-        [case "$host_os" in
-                            # Guess yes on Linux systems.
-           linux-* | linux) gl_cv_func_open_directory_works="guessing yes" ;;
-                            # Guess yes on glibc systems.
-           *-gnu* | gnu*)   gl_cv_func_open_directory_works="guessing yes" ;;
-                            # Guess no on native Windows.
-           mingw*)          gl_cv_func_open_directory_works="guessing no" ;;
-                            # If we don't know, obey --enable-cross-guesses.
-           *)               gl_cv_func_open_directory_works="$gl_cross_guess_normal" ;;
-         esac
-        ])])
+      [AC_RUN_IFELSE(
+         [AC_LANG_PROGRAM(
+            [[#include <fcntl.h>
+            ]GL_MDA_DEFINES],
+            [[return open(".", O_RDONLY) < 0;]])],
+         [gl_cv_func_open_directory_works=yes],
+         [gl_cv_func_open_directory_works=no],
+         [case "$host_os" in
+                             # Guess yes on Linux systems.
+            linux-* | linux) gl_cv_func_open_directory_works="guessing yes" ;;
+                             # Guess yes on glibc systems.
+            *-gnu* | gnu*)   gl_cv_func_open_directory_works="guessing yes" ;;
+                             # Guess no on native Windows.
+            mingw*)          gl_cv_func_open_directory_works="guessing no" ;;
+                             # If we don't know, obey --enable-cross-guesses.
+            *)               gl_cv_func_open_directory_works="$gl_cross_guess_normal" ;;
+          esac
+         ])])
     case "$gl_cv_func_open_directory_works" in
       *yes) ;;
       *)

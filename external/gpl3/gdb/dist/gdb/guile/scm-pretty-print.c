@@ -1,6 +1,6 @@
 /* GDB/Scheme pretty-printing.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,7 @@
 
 /* Return type of print_string_repr.  */
 
-enum string_repr_result
+enum guile_string_repr_result
 {
   /* The string method returned None.  */
   STRING_REPR_NONE,
@@ -59,7 +59,7 @@ enum display_hint
 
 /* The <gdb:pretty-printer> smob.  */
 
-typedef struct
+struct pretty_printer_smob
 {
   /* This must appear first.  */
   gdb_smob base;
@@ -77,11 +77,11 @@ typedef struct
   SCM lookup;
 
   /* Note: Attaching subprinters to this smob is left to Scheme.  */
-} pretty_printer_smob;
+};
 
 /* The <gdb:pretty-printer-worker> smob.  */
 
-typedef struct
+struct pretty_printer_worker_smob
 {
   /* This must appear first.  */
   gdb_smob base;
@@ -99,7 +99,7 @@ typedef struct
      The iterator returns a pair for each iteration: (name . value),
      where "value" can have the same types as to_string.  */
   SCM children;
-} pretty_printer_worker_smob;
+};
 
 static const char pretty_printer_smob_name[] =
   "gdb:pretty-printer";
@@ -617,7 +617,7 @@ ppscm_print_exception_unless_memory_error (SCM exception,
 
       /* This "shouldn't happen", but play it safe.  */
       if (msg == NULL || msg.get ()[0] == '\0')
-	fprintf_filtered (stream, _("<error reading variable>"));
+	gdb_printf (stream, _("<error reading variable>"));
       else
 	{
 	  /* Remove the trailing newline.  We could instead call a special
@@ -628,7 +628,7 @@ ppscm_print_exception_unless_memory_error (SCM exception,
 
 	  if (msg_text[len - 1] == '\n')
 	    msg_text[len - 1] = '\0';
-	  fprintf_filtered (stream, _("<error reading variable: %s>"), msg_text);
+	  gdb_printf (stream, _("<error reading variable: %s>"), msg_text);
 	}
     }
   else
@@ -638,7 +638,7 @@ ppscm_print_exception_unless_memory_error (SCM exception,
 /* Helper for gdbscm_apply_val_pretty_printer which calls to_string and
    formats the result.  */
 
-static enum string_repr_result
+static enum guile_string_repr_result
 ppscm_print_string_repr (SCM printer, enum display_hint hint,
 			 struct ui_file *stream, int recurse,
 			 const struct value_print_options *options,
@@ -647,7 +647,7 @@ ppscm_print_string_repr (SCM printer, enum display_hint hint,
 {
   struct value *replacement = NULL;
   SCM str_scm;
-  enum string_repr_result result = STRING_REPR_ERROR;
+  enum guile_string_repr_result result = STRING_REPR_ERROR;
 
   str_scm = ppscm_pretty_print_one_value (printer, &replacement,
 					  gdbarch, language);
@@ -675,8 +675,8 @@ ppscm_print_string_repr (SCM printer, enum display_hint hint,
 	{
 	  struct type *type = builtin_type (gdbarch)->builtin_char;
 	  
-	  LA_PRINT_STRING (stream, type, (gdb_byte *) string.get (),
-			   length, NULL, 0, options);
+	  language->printstr (stream, type, (gdb_byte *) string.get (),
+			      length, NULL, 0, options);
 	}
       else
 	{
@@ -687,9 +687,9 @@ ppscm_print_string_repr (SCM printer, enum display_hint hint,
 	  for (i = 0; i < length; ++i)
 	    {
 	      if (string.get ()[i] == '\0')
-		fputs_filtered ("\\000", stream);
+		gdb_puts ("\\000", stream);
 	      else
-		fputc_filtered (string.get ()[i], stream);
+		gdb_putc (string.get ()[i], stream);
 	    }
 	}
       result = STRING_REPR_OK;
@@ -818,20 +818,28 @@ ppscm_print_children (SCM printer, enum display_hint hint,
       gdb::unique_xmalloc_ptr<char> name
 	= gdbscm_scm_to_c_string (scm_name);
 
-      /* Print initial "{".  For other elements, there are three cases:
+      /* Print initial "=" to separate print_string_repr output and
+	 children.  For other elements, there are three cases:
 	 1. Maps.  Print a "," after each value element.
 	 2. Arrays.  Always print a ",".
 	 3. Other.  Always print a ",".  */
       if (i == 0)
 	{
-         if (printed_nothing)
-           fputs_filtered ("{", stream);
-         else
-           fputs_filtered (" = {", stream);
-       }
-
+	  if (!printed_nothing)
+	    gdb_puts (" = ", stream);
+	}
       else if (! is_map || i % 2 == 0)
-	fputs_filtered (pretty ? "," : ", ", stream);
+	gdb_puts (pretty ? "," : ", ", stream);
+
+      /* Skip printing children if max_depth has been reached.  This check
+	 is performed after print_string_repr and the "=" separator so that
+	 these steps are not skipped if the variable is located within the
+	 permitted depth.  */
+      if (val_print_check_max_depth (stream, recurse, options, language))
+	goto done;
+      else if (i == 0)
+	/* Print initial "{" to bookend children.  */
+	gdb_puts ("{", stream);
 
       /* In summary mode, we just want to print "= {...}" if there is
 	 a value.  */
@@ -849,26 +857,26 @@ ppscm_print_children (SCM printer, enum display_hint hint,
 	{
 	  if (pretty)
 	    {
-	      fputs_filtered ("\n", stream);
-	      print_spaces_filtered (2 + 2 * recurse, stream);
+	      gdb_puts ("\n", stream);
+	      print_spaces (2 + 2 * recurse, stream);
 	    }
 	  else
-	    wrap_here (n_spaces (2 + 2 *recurse));
+	    stream->wrap_here (2 + 2 *recurse);
 	}
 
       if (is_map && i % 2 == 0)
-	fputs_filtered ("[", stream);
+	gdb_puts ("[", stream);
       else if (is_array)
 	{
 	  /* We print the index, not whatever the child method
 	     returned as the name.  */
 	  if (options->print_array_indexes)
-	    fprintf_filtered (stream, "[%d] = ", i);
+	    gdb_printf (stream, "[%d] = ", i);
 	}
       else if (! is_map)
 	{
-	  fputs_filtered (name.get (), stream);
-	  fputs_filtered (" = ", stream);
+	  gdb_puts (name.get (), stream);
+	  gdb_puts (" = ", stream);
 	}
 
       if (lsscm_is_lazy_string (v_scm))
@@ -882,7 +890,7 @@ ppscm_print_children (SCM printer, enum display_hint hint,
 	{
 	  gdb::unique_xmalloc_ptr<char> output
 	    = gdbscm_scm_to_c_string (v_scm);
-	  fputs_filtered (output.get (), stream);
+	  gdb_puts (output.get (), stream);
 	}
       else
 	{
@@ -912,7 +920,7 @@ ppscm_print_children (SCM printer, enum display_hint hint,
 	}
 
       if (is_map && i % 2 == 0)
-	fputs_filtered ("] = ", stream);
+	gdb_puts ("] = ", stream);
     }
 
   if (i)
@@ -921,17 +929,17 @@ ppscm_print_children (SCM printer, enum display_hint hint,
 	{
 	  if (pretty)
 	    {
-	      fputs_filtered ("\n", stream);
-	      print_spaces_filtered (2 + 2 * recurse, stream);
+	      gdb_puts ("\n", stream);
+	      print_spaces (2 + 2 * recurse, stream);
 	    }
-	  fputs_filtered ("...", stream);
+	  gdb_puts ("...", stream);
 	}
       if (pretty)
 	{
-	  fputs_filtered ("\n", stream);
-	  print_spaces_filtered (2 * recurse, stream);
+	  gdb_puts ("\n", stream);
+	  print_spaces (2 * recurse, stream);
 	}
-      fputs_filtered ("}", stream);
+      gdb_puts ("}", stream);
     }
 
  done:
@@ -949,19 +957,19 @@ gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
 				 const struct language_defn *language)
 {
   struct type *type = value_type (value);
-  struct gdbarch *gdbarch = get_type_arch (type);
+  struct gdbarch *gdbarch = type->arch ();
   SCM exception = SCM_BOOL_F;
   SCM printer = SCM_BOOL_F;
   SCM val_obj = SCM_BOOL_F;
   enum display_hint hint;
   enum ext_lang_rc result = EXT_LANG_RC_NOP;
-  enum string_repr_result print_result;
+  enum guile_string_repr_result print_result;
 
   if (value_lazy (value))
     value_fetch_lazy (value);
 
   /* No pretty-printer support for unavailable values.  */
-  if (!value_bytes_available (value, 0, TYPE_LENGTH (type)))
+  if (!value_bytes_available (value, 0, type->length ()))
     return EXT_LANG_RC_NOP;
 
   if (!gdb_scheme_initialized)
@@ -990,12 +998,6 @@ gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
       goto done;
     }
   gdb_assert (ppscm_is_pretty_printer_worker (printer));
-
-  if (val_print_check_max_depth (stream, recurse, options, language))
-    {
-      result = EXT_LANG_RC_OK;
-      goto done;
-    }
 
   /* If we are printing a map, we want some special formatting.  */
   hint = ppscm_get_display_hint_enum (printer);

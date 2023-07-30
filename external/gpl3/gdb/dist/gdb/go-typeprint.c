@@ -1,6 +1,6 @@
 /* Support for printing Go types for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,9 +42,9 @@
    LEVEL indicates level of recursion (for nested definitions).  */
 
 void
-go_print_type (struct type *type, const char *varstring,
-	       struct ui_file *stream, int show, int level,
-	       const struct type_print_options *flags)
+go_language::print_type (struct type *type, const char *varstring,
+			 struct ui_file *stream, int show, int level,
+			 const struct type_print_options *flags) const
 {
   /* Borrowed from c-typeprint.c.  */
   if (show > 0)
@@ -52,12 +52,12 @@ go_print_type (struct type *type, const char *varstring,
 
   /* Print the type of "abc" as "string", not char[4].  */
   if (type->code () == TYPE_CODE_ARRAY
-      && TYPE_TARGET_TYPE (type)->code () == TYPE_CODE_CHAR)
+      && type->target_type ()->code () == TYPE_CODE_CHAR)
     {
-      fputs_filtered ("string", stream);
+      gdb_puts ("string", stream);
       return;
     }
 
   /* Punt the rest to C for now.  */
-  c_print_type (type, varstring, stream, show, level, flags);
+  c_print_type (type, varstring, stream, show, level, la_language, flags);
 }

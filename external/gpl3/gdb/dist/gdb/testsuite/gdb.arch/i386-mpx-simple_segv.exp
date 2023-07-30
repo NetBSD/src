@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp.  <walfred.tedeschi@intel.com>
 #
@@ -33,6 +33,11 @@ if { ![supports_mpx_check_pointer_bounds] } {
     return -1
 }
 
+if { ![have_mpx] } {
+    unsupported "processor does not support MPX"
+    return -1
+}
+
 set comp_flags "-mmpx -fcheck-pointer-bounds -I${srcdir}/../nat/"
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
@@ -41,18 +46,7 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
 }
 
 if ![runto_main] {
-    untested "could not run to main"
     return -1
-}
-
-gdb_test_multiple "print have_mpx ()" "have mpx" {
-    -re ".. = 1\r\n$gdb_prompt " {
-        pass "check whether processor supports MPX"
-    }
-    -re ".. = 0\r\n$gdb_prompt " {
-        verbose "processor does not support MPX; skipping MPX tests"
-        return
-    }
 }
 
 set violation [multi_line "Program received signal SIGSEGV, Segmentation fault" \
@@ -69,7 +63,6 @@ set segv_with_exit "Program received signal SIGSEGV,\
 set parameters "print pass stop"
 with_test_prefix "$parameters" {
     if ![runto_main] {
-        fail "could not run to main"
         return -1
     }
 
@@ -89,7 +82,6 @@ with_test_prefix "$parameters" {
 set parameters "print pass nostop"
 with_test_prefix "$parameters" {
     if ![runto_main] {
-        fail "could not run to main"
         return -1
     }
 
@@ -108,7 +100,6 @@ with_test_prefix "$parameters" {
 set parameters "print nopass stop"
 with_test_prefix "$parameters" {
     if ![runto_main] {
-        fail "could not run to main"
         return -1
     }
 
@@ -128,7 +119,6 @@ with_test_prefix "$parameters" {
 set parameters "noprint pass nostop"
 with_test_prefix "$parameters" {
     if ![runto_main] {
-        fail "could not run to main"
         return -1
     }
 

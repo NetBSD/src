@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,18 +28,18 @@ if {[prepare_for_testing $testfile.exp $testfile \
 # in the output.  Similarly, EXPECT_SEEN_INFO_SOURCES_BASE indicates that the source file
 # info_sources_base.c must be seen in the output.
 proc test_info_sources {args expect_seen_info_sources expect_seen_info_sources_base} {
-    global gdb_prompt
+    global gdb_prompt srcfile srcfile2
 
     set seen_info_sources 0
     set seen_info_sources_base 0
     set cmd [concat "info sources " $args]
     gdb_test_multiple $cmd $cmd {
-	-re "^\[^,\]*info_sources.c(, |\[\r\n\]+)" {
-	    set seen_info_sources 1
+	-re "^\[^,\]*${srcfile}(, |\[\r\n\]+)" {
+	    incr seen_info_sources
 	    exp_continue
 	}
-	-re "^\[^,\]*info_sources_base.c(, |\[\r\n\]+)" {
-	    set seen_info_sources_base 1
+	-re "^\[^,\]*${srcfile2}(, |\[\r\n\]+)" {
+	    incr seen_info_sources_base 1
 	    exp_continue
 	}
 	-re ", " {
@@ -57,11 +57,15 @@ proc test_info_sources {args expect_seen_info_sources expect_seen_info_sources_b
 }
 
 if ![runto_main] {
-    untested $testfile.exp
     return -1
 }
-gdb_test "break some_other_func" ""
 
+# List both files with no regexp:
+with_test_prefix "in main" {
+    test_info_sources "" 1 1
+}
+
+gdb_test "break some_other_func" ""
 gdb_test "continue"
 
 # List both files with no regexp:

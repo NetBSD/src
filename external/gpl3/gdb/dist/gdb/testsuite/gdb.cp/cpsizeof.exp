@@ -1,5 +1,5 @@
 # sizeof() tests [c++/16675]
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 
 standard_testfile .cc
 
-if {[skip_cplus_tests]} { continue }
+if {[skip_cplus_tests]} { return }
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}] } {
      return -1
@@ -24,7 +24,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}] } {
 
 if {![runto_main]} {
     perror "could not run to main"
-    continue
+    return
 }
 
 gdb_breakpoint [gdb_get_line_number "break here"]

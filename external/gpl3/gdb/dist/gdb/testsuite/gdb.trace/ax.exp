@@ -1,4 +1,4 @@
-#   Copyright 2010-2020 Free Software Foundation, Inc.
+#   Copyright 2010-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ gdb_test "maint agent &gdb_long_test == &gdb_short_test" ""
 
 gdb_test "maint agent &gdb_long_test < &gdb_short_test" ""
 
-gdb_test "maint agent (unsigned char)1L" ".*ext 8.*"
+gdb_test "maint agent (unsigned char)1L" ".*const.* 1.*"
 
 # Now test eval version of agent expressions.
 

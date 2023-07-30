@@ -290,7 +290,11 @@ typedef struct coff_ptr_struct
   @} u;
 
  /* Selector for the union above.  */
- bfd_boolean is_sym;
+ bool is_sym;
+
+ /* An extra pointer which can used by format based on COFF (like XCOFF)
+    to provide extra information to their backend.  */
+ void *extrap;
 @} combined_entry_type;
 
 
@@ -308,7 +312,7 @@ typedef struct coff_symbol_struct
   struct lineno_cache_entry *lineno;
 
   /* Have the line numbers been relocated yet ? */
-  bfd_boolean done_lineno;
+  bool done_lineno;
 @} coff_symbol_type;
 @end example
 @findex bfd_coff_backend_data
@@ -378,14 +382,14 @@ typedef struct
   unsigned int _bfd_relsz;
   unsigned int _bfd_linesz;
   unsigned int _bfd_filnmlen;
-  bfd_boolean _bfd_coff_long_filenames;
+  bool _bfd_coff_long_filenames;
 
-  bfd_boolean _bfd_coff_long_section_names;
-  bfd_boolean (*_bfd_coff_set_long_section_names)
+  bool _bfd_coff_long_section_names;
+  bool (*_bfd_coff_set_long_section_names)
     (bfd *, int);
 
   unsigned int _bfd_coff_default_section_alignment_power;
-  bfd_boolean _bfd_coff_force_symnames_in_strings;
+  bool _bfd_coff_force_symnames_in_strings;
   unsigned int _bfd_coff_debug_string_prefix_length;
   unsigned int _bfd_coff_max_nscns;
 
@@ -401,32 +405,32 @@ typedef struct
   void (*_bfd_coff_swap_reloc_in)
     (bfd *abfd, void *, void *);
 
-  bfd_boolean (*_bfd_coff_bad_format_hook)
+  bool (*_bfd_coff_bad_format_hook)
     (bfd *, void *);
 
-  bfd_boolean (*_bfd_coff_set_arch_mach_hook)
+  bool (*_bfd_coff_set_arch_mach_hook)
     (bfd *, void *);
 
   void * (*_bfd_coff_mkobject_hook)
     (bfd *, void *, void *);
 
-  bfd_boolean (*_bfd_styp_to_sec_flags_hook)
+  bool (*_bfd_styp_to_sec_flags_hook)
     (bfd *, void *, const char *, asection *, flagword *);
 
   void (*_bfd_set_alignment_hook)
     (bfd *, asection *, void *);
 
-  bfd_boolean (*_bfd_coff_slurp_symbol_table)
+  bool (*_bfd_coff_slurp_symbol_table)
     (bfd *);
 
-  bfd_boolean (*_bfd_coff_symname_in_debug)
+  bool (*_bfd_coff_symname_in_debug)
     (bfd *, struct internal_syment *);
 
-  bfd_boolean (*_bfd_coff_pointerize_aux_hook)
+  bool (*_bfd_coff_pointerize_aux_hook)
     (bfd *, combined_entry_type *, combined_entry_type *,
      unsigned int, combined_entry_type *);
 
-  bfd_boolean (*_bfd_coff_print_aux)
+  bool (*_bfd_coff_print_aux)
     (bfd *, FILE *, combined_entry_type *, combined_entry_type *,
      combined_entry_type *, unsigned int);
 
@@ -441,13 +445,13 @@ typedef struct
   enum coff_symbol_classification (*_bfd_coff_classify_symbol)
     (bfd *, struct internal_syment *);
 
-  bfd_boolean (*_bfd_coff_compute_section_file_positions)
+  bool (*_bfd_coff_compute_section_file_positions)
     (bfd *);
 
-  bfd_boolean (*_bfd_coff_start_final_link)
+  bool (*_bfd_coff_start_final_link)
     (bfd *, struct bfd_link_info *);
 
-  bfd_boolean (*_bfd_coff_relocate_section)
+  bool (*_bfd_coff_relocate_section)
     (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
      struct internal_reloc *, struct internal_syment *, asection **);
 
@@ -455,22 +459,22 @@ typedef struct
     (bfd *, asection *, struct internal_reloc *,
      struct coff_link_hash_entry *, struct internal_syment *, bfd_vma *);
 
-  bfd_boolean (*_bfd_coff_adjust_symndx)
+  bool (*_bfd_coff_adjust_symndx)
     (bfd *, struct bfd_link_info *, bfd *, asection *,
-     struct internal_reloc *, bfd_boolean *);
+     struct internal_reloc *, bool *);
 
-  bfd_boolean (*_bfd_coff_link_add_one_symbol)
+  bool (*_bfd_coff_link_add_one_symbol)
     (struct bfd_link_info *, bfd *, const char *, flagword,
-     asection *, bfd_vma, const char *, bfd_boolean, bfd_boolean,
+     asection *, bfd_vma, const char *, bool, bool,
      struct bfd_link_hash_entry **);
 
-  bfd_boolean (*_bfd_coff_link_output_has_begun)
+  bool (*_bfd_coff_link_output_has_begun)
     (bfd *, struct coff_final_link_info *);
 
-  bfd_boolean (*_bfd_coff_final_link_postscript)
+  bool (*_bfd_coff_final_link_postscript)
     (bfd *, struct coff_final_link_info *);
 
-  bfd_boolean (*_bfd_coff_print_pdata)
+  bool (*_bfd_coff_print_pdata)
     (bfd *, void *);
 
 @} bfd_coff_backend_data;
@@ -618,7 +622,7 @@ typedef struct
 /* Macro: Returns true if the bfd is a PE executable as opposed to a
    PE object file.  */
 #define bfd_pei_p(abfd) \
-  (CONST_STRNEQ ((abfd)->xvec->name, "pei-"))
+  (startswith ((abfd)->xvec->name, "pei-"))
 @end example
 @subsubsection Writing relocations
 To write relocations, the back end steps though the

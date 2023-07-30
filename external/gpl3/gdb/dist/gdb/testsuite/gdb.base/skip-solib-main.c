@@ -2,5 +2,6 @@ int square(int num);
 
 int main()
 {
-  return square(0);
+  int s = square(0);
+  return s;
 }

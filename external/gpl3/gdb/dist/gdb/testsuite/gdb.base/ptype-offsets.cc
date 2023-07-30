@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2017-2020 Free Software Foundation, Inc.
+   Copyright 2017-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -185,6 +185,15 @@ struct static_member
   int abc;
 };
 
+/* Work around PR gcc/101452.  */
+static_member static_member::Empty;
+
+struct empty_member
+{
+  struct { } empty;
+  int an_int;
+};
+
 int
 main (int argc, char *argv[])
 {
@@ -196,6 +205,7 @@ main (int argc, char *argv[])
   struct asd f;
   uint8_t i;
   static_member stmember;
+  empty_member emember;
 
   return 0;
 }

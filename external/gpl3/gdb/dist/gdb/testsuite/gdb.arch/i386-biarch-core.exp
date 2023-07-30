@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,33 +21,31 @@
 # #define EM_X86_64       62              /* AMD x86-64 architecture */
 # patch @0x12: 0x3E -> 0x03
 
+if {![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"]} {
+    verbose "Skipping i386 biarch core test."
+    return
+}
+
 standard_testfile
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 
-set test "complete set gnutarget"
-gdb_test_multiple "complete set gnutarget " $test {
-    -re "set gnutarget elf64-little\r\n(.*\r\n)?$gdb_prompt $" {
-	pass $test
-    }
-    -re "\r\n$gdb_prompt $" {
-	pass $test
-	untested ".text is readable"
-	return
-    }
+set gnutargets [get_set_option_choices "set gnutarget"]
+if { [lsearch -exact $gnutargets elf64-little] == -1 } {
+    untested ".text is readable"
+    return
 }
 
 set corebz2file ${srcdir}/${subdir}/${testfile}.core.bz2
-set corefile [standard_output_file ${testfile}.core]
 # Entry point of the original executable.
 set address 0x400078
 
-if {[catch "system \"bzip2 -dc ${corebz2file} >${corefile}\""] != 0} {
+set corefile [decompress_bz2 $corebz2file]
+if { $corefile == "" } {
     untested "failed bzip2"
     return -1
 }
+
 file stat ${corefile} corestat
 if {$corestat(size) != 102400} {
     untested "bzip2 produces invalid result"
@@ -56,15 +54,8 @@ if {$corestat(size) != 102400} {
 
 # First check if this particular GDB supports i386, otherwise we should not
 # expect the i386 core file to be loaded successfully.
-set supports_arch_i386 1
-set test "complete set architecture i386"
-gdb_test_multiple $test $test {
-    -re "\r\nset architecture i386\r\n(.*\r\n)?$gdb_prompt $" {
-    }
-    -re "\r\n$gdb_prompt $" {
-        set supports_arch_i386 0
-    }
-}
+set archs [get_set_option_choices "set architecture" "i386"]
+set supports_arch_i386 [expr [lsearch -exact $archs i386] != -1]
 
 # Wrongly built GDB complains by:
 # "..." is not a core dump: File format not recognized

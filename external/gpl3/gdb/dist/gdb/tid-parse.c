@@ -1,6 +1,6 @@
 /* TID parsing for GDB, the GNU debugger.
 
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -151,7 +151,7 @@ tid_range_parser::finished () const
       return m_range_parser.finished ();
     }
 
-  gdb_assert_not_reached (_("unhandled state"));
+  gdb_assert_not_reached ("unhandled state");
 }
 
 /* See tid-parse.h.  */
@@ -168,7 +168,7 @@ tid_range_parser::cur_tok () const
       return m_range_parser.cur_tok ();
     }
 
-  gdb_assert_not_reached (_("unhandled state"));
+  gdb_assert_not_reached ("unhandled state");
 }
 
 void

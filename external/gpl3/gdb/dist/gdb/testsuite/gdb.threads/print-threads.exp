@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2020 Free Software Foundation, Inc.
+# Copyright (C) 1996-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,38 +45,40 @@ gdb_test "shell stty intr '^C'" ".*"
 proc test_all_threads { name kill } {
     global gdb_prompt inferior_exited_re
 
-    set i 0
-    set j 0
-    gdb_test_multiple "continue" "all threads ran once" {
-	-re "Breakpoint \[0-9\]+, thread_function \\(arg=.*\\) at .*print-threads.c:\[0-9\]+.*$gdb_prompt" {
-	    set i [expr $i + 1]
-	    pass "hit thread_function breakpoint, $i ($name)"
-	    send_gdb "continue\n"
-	    exp_continue
-	}
-	-re "Breakpoint \[0-9\]+, .* kill \\(.*\\) .*$gdb_prompt" {
-	    set j [expr $j + 1]
-	    if { $kill == 1 } {
-		pass "hit kill breakpoint, $j ($name)"
-	    } else {
-		fail "hit kill breakpoint, $j ($name) (unexpected)"
+    with_test_prefix $name {
+	set i 0
+	set j 0
+	gdb_test_multiple "continue" "all threads ran once" {
+	    -re "Breakpoint \[0-9\]+, thread_function \\(arg=.*\\) at .*print-threads.c:\[0-9\]+.*$gdb_prompt" {
+		set i [expr $i + 1]
+		pass "hit thread_function breakpoint, $i"
+		send_gdb "continue\n"
+		exp_continue
 	    }
-	    send_gdb "continue\n"
-	    exp_continue
-	}
-	-re "$inferior_exited_re normally.\[\r\n\]+$gdb_prompt" {
-	    pass "program exited normally"
-	    if {$i == 5} {
-		pass "all threads ran once ($name)"
-	    } else {
-		fail "all threads ran once ($name) (total $i threads ran)"
+	    -re "Breakpoint \[0-9\]+, .* kill \\(.*\\) .*$gdb_prompt" {
+		set j [expr $j + 1]
+		if { $kill == 1 } {
+		    pass "hit kill breakpoint, $j"
+		} else {
+		    fail "hit kill breakpoint, $j (unexpected)"
+		}
+		send_gdb "continue\n"
+		exp_continue
 	    }
-	}
-	-re " received signal SIGTRAP.*(Thread \[-0-9a-fx\]* \\(zombie\\)|0x00000000 in ).*$gdb_prompt $" {
-	    if { $kill == 1 } {
-		kfail "gdb/1265" "Running threads ($name) (zombie thread)"
-	    } else {
-		fail "running threads ($name) (unknown output)"
+	    -re "$inferior_exited_re normally.\[\r\n\]+$gdb_prompt" {
+		pass "program exited normally"
+		if {$i == 5} {
+		    pass "all threads ran once"
+		} else {
+		    fail "all threads ran once (total $i threads ran)"
+		}
+	    }
+	    -re " received signal SIGTRAP.*(Thread \[-0-9a-fx\]* \\(zombie\\)|0x00000000 in ).*$gdb_prompt $" {
+		if { $kill == 1 } {
+		    kfail "gdb/1265" "Running threads (zombie thread)"
+		} else {
+		    fail "running threads (unknown output)"
+		}
 	    }
 	}
     }

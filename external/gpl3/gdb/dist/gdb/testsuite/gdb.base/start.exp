@@ -1,4 +1,4 @@
-# Copyright 2005-2020 Free Software Foundation, Inc.
+# Copyright 2005-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+if { [use_gdb_stub] } {
+    unsupported "test requires running"
+    return
+}
 
 standard_testfile
 
@@ -25,7 +29,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
 
 # For C programs, "start" should stop in main().
 if { [gdb_start_cmd] < 0 } {
-    untested start
+    fail start
     return -1
 }
 

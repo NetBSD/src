@@ -1,3 +1,54 @@
+2022-07-08  Nick Clifton  <nickc@redhat.com>
+
+	* 2.39 branch created.
+
+2022-01-22  Nick Clifton  <nickc@redhat.com>
+
+	* 2.38 release branch created.
+
+2021-07-05  Alan Modra  <amodra@gmail.com>
+
+	* mep.opc (macros): Make static and const.
+	(lookup_macro): Return and use const pointer.
+	(expand_macro): Make mac param const.
+	(expand_string): Make pmacro const.
+
+2021-07-03  Nick Clifton  <nickc@redhat.com>
+
+	* 2.37 release branch created.
+
+2021-05-06  Stafford Horne  <shorne@gmail.com>
+
+	PR 21464
+	* or1k.opc (or1k_imm16_relocs, parse_reloc): Define parse logic
+	for gotha() relocation.
+
+2021-03-31  Alan Modra  <amodra@gmail.com>
+
+	* frv.opc: Replace bfd_boolean with bool, FALSE with false, and
+	TRUE with true throughout.
+
+2021-03-29  Alan Modra  <amodra@gmail.com>
+
+	* frv.opc (frv_is_branch_major, frv_is_float_major),
+	(frv_is_media_major, frv_is_branch_insn, frv_is_float_insn),
+	(frv_is_media_insn, spr_valid): Correct prototypes.
+
+2021-01-09  Nick Clifton  <nickc@redhat.com>
+
+	* 2.36 release branch crated.
+
+2020-10-05  Samanta Navarro  <ferivoz@riseup.net>
+
+	* m32r.cpu: Fix spelling mistakes.
+
+2020-09-18  David Faust  <david.faust@oracle.com>
+
+	* bpf.cpu (insn-op-code-alu): Add SDIV and SMOD.
+	(define-alu-insn-bin, daib): Take ISAs as an argument.
+	(define-alu-instructions): Update calls to daib pmacro with
+	ISAs; add sdiv and smod.
+
 2020-09-08  David Faust  <david.faust@oracle.com>
 
 	* bpf.cpu (define-alu-instructions): Correct semantic operators

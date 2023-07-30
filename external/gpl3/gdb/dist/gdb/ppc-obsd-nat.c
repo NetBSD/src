@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/powerpc.
 
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -54,7 +54,7 @@ static ppc_obsd_nat_target the_ppc_obsd_nat_target;
 static int
 getfpregs_supplies (struct gdbarch *gdbarch, int regnum)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
 
   /* FIXME: jimb/2004-05-05: Some PPC variants don't have floating
      point registers.  Traditionally, GDB's register set has still
@@ -69,7 +69,7 @@ getfpregs_supplies (struct gdbarch *gdbarch, int regnum)
   gdb_assert (ppc_floating_point_unit_p (gdbarch));
 
   return ((regnum >= tdep->ppc_fp0_regnum
-           && regnum < tdep->ppc_fp0_regnum + ppc_num_fprs)
+	   && regnum < tdep->ppc_fp0_regnum + ppc_num_fprs)
 	  || regnum == tdep->ppc_fpscr_regnum);
 }
 
@@ -154,7 +154,7 @@ static int
 ppcobsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
   struct switchframe sf;
   struct callframe cf;
   int i, regnum;

@@ -1,5 +1,5 @@
 /* TI C6X opcode table.
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@
 #define FIX2(a, b) 2, { a, b }
 #define FIX3(a, b, c) 3, { a, b, c }
 #define FIX4(a, b, c, d) 4, { a, b, c, d }
-#define OP0() 0, { { 0, 0, FALSE, 0, 0, 0, 0 } }
+#define OP0() 0, { { 0, 0, false, 0, 0, 0, 0 } }
 #define OP1(a) 1, { a }
 #define OP2(a, b) 2, { a, b }
 #define OP3(a, b, c) 3, { a, b, c }

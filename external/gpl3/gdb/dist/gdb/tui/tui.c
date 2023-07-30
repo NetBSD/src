@@ -1,6 +1,6 @@
 /* General functions for the WDB TUI.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -49,6 +49,19 @@
 
 #include "gdb_curses.h"
 #include "interps.h"
+
+/* See tui.h.  */
+
+bool debug_tui = false;
+
+/* Implement 'show debug tui'.  */
+
+static void
+show_tui_debug (struct ui_file *file, int from_tty,
+		struct cmd_list_element *c, const char *value)
+{
+  gdb_printf (file, _("TUI debugging is \"%s\".\n"), value);
+}
 
 /* This redefines CTRL if it is not already defined, so it must come
    after terminal state releated include files like <term.h> and
@@ -179,10 +192,7 @@ tui_rl_other_window (int count, int key)
 
   win_info = tui_next_win (tui_win_with_focus ());
   if (win_info)
-    {
-      tui_set_win_focus_to (win_info);
-      keypad (TUI_CMD_WIN->handle.get (), win_info != TUI_CMD_WIN);
-    }
+    tui_set_win_focus_to (win_info);
   return 0;
 }
 
@@ -197,20 +207,20 @@ tui_rl_command_key (int count, int key)
   for (i = 0; tui_commands[i].cmd; i++)
     {
       if (tui_commands[i].key == key)
-        {
-          /* Insert the command in the readline buffer.
-             Avoid calling the gdb command here since it creates
-             a possible recursion on readline if prompt_for_continue
-             is called (See PR 9584).  The command will also appear
-             in the readline history which turns out to be better.  */
-          rl_insert_text (tui_commands[i].cmd);
-          rl_newline (1, '\n');
+	{
+	  /* Insert the command in the readline buffer.
+	     Avoid calling the gdb command here since it creates
+	     a possible recursion on readline if prompt_for_continue
+	     is called (See PR 9584).  The command will also appear
+	     in the readline history which turns out to be better.  */
+	  rl_insert_text (tui_commands[i].cmd);
+	  rl_newline (1, '\n');
 
-          /* Switch to gdb command mode while executing the command.
-             This way the gdb's continue prompty will be displayed.  */
-          tui_set_key_mode (TUI_ONE_COMMAND_MODE);
-          return 0;
-        }
+	  /* Switch to gdb command mode while executing the command.
+	     This way the gdb's continue prompty will be displayed.  */
+	  tui_set_key_mode (TUI_ONE_COMMAND_MODE);
+	  return 0;
+	}
     }
   return 0;
 }
@@ -235,7 +245,7 @@ tui_rl_next_keymap (int notused1, int notused2)
     tui_rl_switch_mode (0 /* notused */, 0 /* notused */);
 
   tui_set_key_mode (tui_current_key_mode == TUI_COMMAND_MODE
-                    ? TUI_SINGLE_KEY_MODE : TUI_COMMAND_MODE);
+		    ? TUI_SINGLE_KEY_MODE : TUI_COMMAND_MODE);
   return 0;
 }
 
@@ -261,7 +271,7 @@ tui_set_key_mode (enum tui_key_mode mode)
 {
   tui_current_key_mode = mode;
   rl_set_keymap (mode == TUI_SINGLE_KEY_MODE
-                 ? tui_keymap : tui_readline_standard_keymap);
+		 ? tui_keymap : tui_readline_standard_keymap);
   tui_show_locator_content ();
 }
 
@@ -307,11 +317,11 @@ tui_ensure_readline_initialized ()
       int j;
 
       for (j = 0; tui_commands[j].cmd; j++)
-        if (tui_commands[j].key == i)
-          break;
+	if (tui_commands[j].key == i)
+	  break;
 
       if (tui_commands[j].cmd)
-        continue;
+	continue;
 
       rl_bind_key_in_map (i, tui_rl_command_mode, tui_keymap);
     }
@@ -357,6 +367,8 @@ gdb_getenv_term (void)
 void
 tui_enable (void)
 {
+  TUI_SCOPED_DEBUG_ENTER_EXIT;
+
   if (tui_active)
     return;
 
@@ -420,6 +432,12 @@ tui_enable (void)
 	}
 #endif
 
+      /* We must mark the tui sub-system active before trying to setup the
+	 current layout as tui windows defined by an extension language
+	 rely on this flag being true in order to know that the window
+	 they are creating is currently valid.  */
+      tui_active = true;
+
       cbreak ();
       noecho ();
       /* timeout (1); */
@@ -439,18 +457,20 @@ tui_enable (void)
     }
   else
     {
-     /* Save the current gdb setting of the terminal.
-        Curses will restore this state when endwin() is called.  */
-     def_shell_mode ();
-     clearok (stdscr, TRUE);
-   }
+      /* Save the current gdb setting of the terminal.
+	 Curses will restore this state when endwin() is called.  */
+      def_shell_mode ();
+      clearok (stdscr, TRUE);
+
+      tui_active = true;
+    }
+
+  gdb_assert (tui_active);
 
   if (tui_update_variables ())
     tui_rehighlight_all ();
 
   tui_setup_io (1);
-
-  tui_active = true;
 
   /* Resize windows before anything might display/refresh a
      window.  */
@@ -489,6 +509,8 @@ tui_enable (void)
 void
 tui_disable (void)
 {
+  TUI_SCOPED_DEBUG_ENTER_EXIT;
+
   if (!tui_active)
     return;
 
@@ -499,6 +521,10 @@ tui_disable (void)
   tui_remove_hooks ();
   rl_startup_hook = 0;
   rl_already_prompted = 0;
+
+#ifdef NCURSES_MOUSE_VERSION
+  mousemask (0, NULL);
+#endif
 
   /* Leave curses and restore previous gdb terminal setting.  */
   endwin ();
@@ -544,9 +570,9 @@ tui_is_window_visible (enum tui_win_type type)
   if (!tui_active)
     return false;
 
-  if (tui_win_list[type] == 0)
+  if (tui_win_list[type] == nullptr)
     return false;
-  
+
   return tui_win_list[type]->is_visible ();
 }
 
@@ -578,4 +604,13 @@ Usage: tui enable"),
 	   _("Disable TUI display mode.\n\
 Usage: tui disable"),
 	   tuicmd);
+
+  /* Debug this tui internals.  */
+  add_setshow_boolean_cmd ("tui", class_maintenance, &debug_tui,  _("\
+Set tui debugging."), _("\
+Show tui debugging."), _("\
+When true, tui specific internal debugging is enabled."),
+			   NULL,
+			   show_tui_debug,
+			   &setdebuglist, &showdebuglist);
 }

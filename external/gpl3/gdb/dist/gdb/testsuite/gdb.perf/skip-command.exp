@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -94,16 +94,18 @@ proc run_skip_bench { kind text } {
     global SKIP_STEP_COUNT SKIP_DIRECTIVE_COUNT
 
     if ![runto_main] {
-	fail "can't run to main"
 	return -1
     }
 
     gdb_test_no_output "set variable flag = 1"
 
     for { set i 0 } { $i < 5 } { incr i } {
-	set nr_skips [expr $i * $SKIP_DIRECTIVE_COUNT]
-	install_skips $kind $text $nr_skips
-	gdb_test_no_output "python SkipCommand\(\"skip-$kind-$nr_skips\", ${SKIP_STEP_COUNT}\).run()"
+	with_test_prefix "iter $i" {
+	    set nr_skips [expr $i * $SKIP_DIRECTIVE_COUNT]
+	    install_skips $kind $text $nr_skips
+	    gdb_test_python_run \
+		"SkipCommand\(\"skip-$kind-$nr_skips\", ${SKIP_STEP_COUNT}\)"
+	}
     }
 
     gdb_test "set variable flag = 0"

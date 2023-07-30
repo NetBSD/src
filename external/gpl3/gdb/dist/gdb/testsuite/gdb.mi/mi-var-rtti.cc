@@ -1,4 +1,4 @@
-/* Copyright 2012-2020 Free Software Foundation, Inc.
+/* Copyright 2012-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -218,7 +218,7 @@ void use_rtti_with_multiple_inheritence_test ()
 	} "list children of ptr.First (with RTTI) in $testname"
 	mi_list_varobj_children "VAR.First.public" {
 	    { VAR.First.public.F F 0 int }
-	} "list children of ptr.Base.public (with RTTI) in $testname"
+	} "list children of ptr.First.public (with RTTI) in $testname"
 	mi_list_varobj_children "VAR.Base" {
 	    { VAR.Base.public public 1 }
 	} "list children of ptr.Base (with RTTI) in $testname"
@@ -307,43 +307,49 @@ void skip_type_update_when_not_use_rtti_test ()
   /*: 
 	set testname skip_type_update_when_not_use_rtti
 
-	set_print_object off $testname
-	mi_create_varobj_checked PTR ptr {Base \*} \
+	with_test_prefix "ptr is nullptr" {
+	  set_print_object off $testname
+	  mi_create_varobj_checked PTR ptr {Base \*} \
 		"create varobj for ptr in $testname"
-	check_derived_children_without_rtti PTR ptr $testname
+	  check_derived_children_without_rtti PTR ptr $testname
 
-	mi_create_varobj S s "create varobj for S in $testname"
-	mi_list_varobj_children S {
-	    { S.public public 1 }
-	} "list children of s in $testname"
-	mi_list_varobj_children S.public {
-	    { S.public.ptr ptr 1 {Base \*} }
-	} "list children of s.public in $testname"
-	check_derived_children_without_rtti S.public.ptr s.ptr $testname
+	  mi_create_varobj S s "create varobj for S in $testname"
+	  mi_list_varobj_children S {
+	      { S.public public 1 }
+	  } "list children of s in $testname"
+	  mi_list_varobj_children S.public {
+	      { S.public.ptr ptr 1 {Base \*} }
+	  } "list children of s.public in $testname"
+	  check_derived_children_without_rtti S.public.ptr s.ptr $testname
+	}
   :*/
 
 	ptr = &d;
 	s.ptr = &d;
   /*: 
-	mi_varobj_update PTR {PTR PTR.public.A} \
+        with_test_prefix "ptr points at d" {
+	  mi_varobj_update PTR {PTR PTR.public.A} \
 		"update ptr to derived type in $testname"
-	check_derived_without_rtti PTR ptr $testname
+	  check_derived_without_rtti PTR ptr $testname
 
-	mi_varobj_update S {S.public.ptr S.public.ptr.public.A} \
+	  mi_varobj_update S {S.public.ptr S.public.ptr.public.A} \
 		"update s to derived type in $testname"
-	check_derived_without_rtti S.public.ptr s.ptr $testname
+	  check_derived_without_rtti S.public.ptr s.ptr $testname
+	}
   :*/
 
 	ptr = 0;
 	s.ptr = 0;
   /*:
-	mi_varobj_update PTR {PTR  PTR.public.A} \
+        with_test_prefix "ptr is nullptr again" {
+	  mi_varobj_update PTR {PTR  PTR.public.A} \
 		"update ptr back to base type in $testname"
-	mi_delete_varobj PTR "delete varobj for ptr in $testname"
+	  mi_delete_varobj PTR "delete varobj for ptr in $testname"
 
-	mi_varobj_update S {S.public.ptr S.public.ptr.public.A} \
+	  mi_varobj_update S {S.public.ptr S.public.ptr.public.A} \
 		"update s back to base type in $testname"
-	mi_delete_varobj S "delete varobj for s in $testname"
+	  mi_delete_varobj S "delete varobj for s in $testname"
+	}
   :*/
 	return;
   /*: END: skip_type_update_when_not_use_rtti :*/

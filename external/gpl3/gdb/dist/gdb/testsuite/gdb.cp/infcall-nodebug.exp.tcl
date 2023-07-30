@@ -1,5 +1,5 @@
 # This testcase is part of GDB, the GNU debugger.
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -74,7 +74,6 @@ proc build_and_run_test { lang symbols } {
     clean_restart $binfile
 
     if ![runto_main] then {
-	fail "can't run to main"
 	return
     }
 

@@ -1,6 +1,6 @@
 /* DWARF attributes
 
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2023 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -32,9 +32,11 @@
 /* See attribute.h.  */
 
 CORE_ADDR
-attribute::value_as_address () const
+attribute::as_address () const
 {
   CORE_ADDR addr;
+
+  gdb_assert (!requires_reprocessing);
 
   if (form != DW_FORM_addr && form != DW_FORM_addrx
       && form != DW_FORM_GNU_addr_index)
@@ -51,29 +53,38 @@ attribute::value_as_address () const
 	 as well as update callers to pass in at least the CU's DWARF
 	 version.  This is more overhead than what we're willing to
 	 expand for a pretty rare case.  */
-      addr = DW_UNSND (this);
+      addr = u.unsnd;
     }
   else
-    addr = DW_ADDR (this);
+    addr = u.addr;
 
   return addr;
 }
 
 /* See attribute.h.  */
 
-const char *
-attribute::value_as_string () const
+bool
+attribute::form_is_string () const
 {
-  if (form == DW_FORM_strp || form == DW_FORM_line_strp
-      || form == DW_FORM_string
-      || form == DW_FORM_strx
-      || form == DW_FORM_strx1
-      || form == DW_FORM_strx2
-      || form == DW_FORM_strx3
-      || form == DW_FORM_strx4
-      || form == DW_FORM_GNU_str_index
-      || form == DW_FORM_GNU_strp_alt)
-    return DW_STRING (this);
+  return (form == DW_FORM_strp || form == DW_FORM_line_strp
+	  || form == DW_FORM_string
+	  || form == DW_FORM_strx
+	  || form == DW_FORM_strx1
+	  || form == DW_FORM_strx2
+	  || form == DW_FORM_strx3
+	  || form == DW_FORM_strx4
+	  || form == DW_FORM_GNU_str_index
+	  || form == DW_FORM_GNU_strp_alt);
+}
+
+/* See attribute.h.  */
+
+const char *
+attribute::as_string () const
+{
+  gdb_assert (!requires_reprocessing);
+  if (form_is_string ())
+    return u.str;
   return nullptr;
 }
 
@@ -86,7 +97,8 @@ attribute::form_is_block () const
 	  || form == DW_FORM_block2
 	  || form == DW_FORM_block4
 	  || form == DW_FORM_block
-	  || form == DW_FORM_exprloc);
+	  || form == DW_FORM_exprloc
+	  || form == DW_FORM_data16);
 }
 
 /* See attribute.h.  */
@@ -95,7 +107,7 @@ bool
 attribute::form_is_section_offset () const
 {
   return (form == DW_FORM_data4
-          || form == DW_FORM_data8
+	  || form == DW_FORM_data8
 	  || form == DW_FORM_sec_offset
 	  || form == DW_FORM_loclistx);
 }
@@ -135,13 +147,13 @@ LONGEST
 attribute::constant_value (int default_value) const
 {
   if (form == DW_FORM_sdata || form == DW_FORM_implicit_const)
-    return DW_SND (this);
+    return u.snd;
   else if (form == DW_FORM_udata
 	   || form == DW_FORM_data1
 	   || form == DW_FORM_data2
 	   || form == DW_FORM_data4
 	   || form == DW_FORM_data8)
-    return DW_UNSND (this);
+    return u.unsnd;
   else
     {
       /* For DW_FORM_data16 see attribute::form_is_constant.  */
@@ -149,4 +161,111 @@ attribute::constant_value (int default_value) const
 		 dwarf_form_name (form));
       return default_value;
     }
+}
+
+/* See attribute.h.  */
+
+bool
+attribute::form_is_unsigned () const
+{
+  return (form == DW_FORM_ref_addr
+	  || form == DW_FORM_GNU_ref_alt
+	  || form == DW_FORM_data2
+	  || form == DW_FORM_data4
+	  || form == DW_FORM_data8
+	  || form == DW_FORM_sec_offset
+	  || form == DW_FORM_data1
+	  || form == DW_FORM_flag
+	  || form == DW_FORM_flag_present
+	  || form == DW_FORM_udata
+	  || form == DW_FORM_rnglistx
+	  || form == DW_FORM_loclistx
+	  || form == DW_FORM_ref1
+	  || form == DW_FORM_ref2
+	  || form == DW_FORM_ref4
+	  || form == DW_FORM_ref8
+	  || form == DW_FORM_ref_udata);
+}
+
+/* See attribute.h.  */
+
+bool
+attribute::form_is_signed () const
+{
+  return form == DW_FORM_sdata || form == DW_FORM_implicit_const;
+}
+
+/* See attribute.h.  */
+
+bool
+attribute::form_requires_reprocessing () const
+{
+  return (form == DW_FORM_strx
+	  || form == DW_FORM_strx1
+	  || form == DW_FORM_strx2
+	  || form == DW_FORM_strx3
+	  || form == DW_FORM_strx4
+	  || form == DW_FORM_GNU_str_index
+	  || form == DW_FORM_addrx
+	  || form == DW_FORM_GNU_addr_index
+	  || form == DW_FORM_rnglistx
+	  || form == DW_FORM_loclistx);
+}
+
+/* See attribute.h.  */
+
+dwarf_defaulted_attribute
+attribute::defaulted () const
+{
+  LONGEST value = constant_value (-1);
+
+  switch (value)
+    {
+    case DW_DEFAULTED_no:
+    case DW_DEFAULTED_in_class:
+    case DW_DEFAULTED_out_of_class:
+      return (dwarf_defaulted_attribute) value;
+    }
+
+  /* If the form was not constant, we already complained in
+     constant_value, so there's no need to complain again.  */
+  if (form_is_constant ())
+    complaint (_("unrecognized DW_AT_defaulted value (%s)"),
+	       plongest (value));
+  return DW_DEFAULTED_no;
+}
+
+/* See attribute.h.  */
+
+dwarf_virtuality_attribute
+attribute::as_virtuality () const
+{
+  LONGEST value = constant_value (-1);
+
+  switch (value)
+    {
+    case DW_VIRTUALITY_none:
+    case DW_VIRTUALITY_virtual:
+    case DW_VIRTUALITY_pure_virtual:
+      return (dwarf_virtuality_attribute) value;
+    }
+
+  /* If the form was not constant, we already complained in
+     constant_value, so there's no need to complain again.  */
+  if (form_is_constant ())
+    complaint (_("unrecognized DW_AT_virtuality value (%s)"),
+	       plongest (value));
+  return DW_VIRTUALITY_none;
+}
+
+/* See attribute.h.  */
+
+bool
+attribute::as_boolean () const
+{
+  if (form == DW_FORM_flag_present)
+    return true;
+  else if (form == DW_FORM_flag)
+    return u.unsnd != 0;
+  return constant_value (0) != 0;
 }

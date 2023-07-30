@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ if {[prepare_for_testing "failed to prepare" $testfile [list $srcfile]]} {
 }
 
 # The bug is a regression in the sequence "run; record; run".
-runto main
+runto_main
 gdb_test_no_output "record" "turn on process record"
 
 gdb_run_cmd

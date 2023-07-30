@@ -1,4 +1,4 @@
-#   Copyright 1988-2020 Free Software Foundation, Inc.
+#   Copyright 1988-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,13 +25,16 @@ if { [prepare_for_testing "failed to prepare" "hbreak2" {break.c break1.c} {debu
 set srcfile break.c
 set srcfile1 break1.c
 
-if ![runto_main] then { fail "break tests suppressed" }
+if {![runto_main]} {
+    return
+}
+
 delete_breakpoints
 
 #
 # Test whether the target supports hardware breakpoints at all.
 #
-gdb_test_multiple "hbreak main" "hardware breakpoint support" {
+gdb_test_multiple "hbreak -q main" "hardware breakpoint support" {
     -re "No hardware breakpoint support in the target.*$gdb_prompt $" {
 	unsupported "hardware breakpoints"
 	return
@@ -63,7 +66,7 @@ delete_breakpoints
 #
 # Test break at function.
 #
-gdb_test "hbreak main" \
+gdb_test "hbreak -q main" \
     "Hardware assisted breakpoint.*at.* file .*$srcfile, line.*" \
     "hardware breakpoint function"
 delete_breakpoints
@@ -95,7 +98,7 @@ set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
 # it's wherever the processor was stopped when we connected to the
 # board.  So, to be sure, we do a list command.
 #
-gdb_test "list main" \
+gdb_test "list -q main" \
     ".*main \\(int argc, char ..argv, char ..envp\\).*" \
     "use `list' to establish default source file"
 gdb_test "hbreak $bp_location1" \
@@ -145,7 +148,7 @@ delete_breakpoints
 #
 # Run until the breakpoint at main is hit.  For non-stubs-using targets.
 #
-gdb_test "hbreak main" \
+gdb_test "hbreak -q main" \
     "Hardware assisted breakpoint.*at.* file .*$srcfile, line.*" \
     "hardware breakpoint function (2)"
 gdb_run_cmd
@@ -233,7 +236,7 @@ delete_breakpoints
 # Test temporary breakpoint at function.
 #
 
-gdb_test "thbreak main" \
+gdb_test "thbreak -q main" \
     "Hardware assisted breakpoint.*at.* file .*$srcfile, line.*" \
     "temporary hardware breakpoint function"
 delete_breakpoints
@@ -284,7 +287,9 @@ gdb_test "info break" \
 
 #***********
 
-if ![runto_main] then { fail "break tests suppressed" }
+if {![runto_main]} {
+    return
+}
 
 # Verify that GDB responds gracefully when asked to set a breakpoint
 # on a nonexistent source line.
@@ -310,7 +315,9 @@ gdb_test "hbreak" "Hardware assisted breakpoint \[0-9\]*.*" \
 # Verify that a "silent" breakpoint can be set, and that GDB is indeed
 # "silent" about its triggering.
 #
-if ![runto_main] then { fail "break tests suppressed" }
+if {![runto_main]} {
+    return
+}
 
 gdb_test_multiple "hbreak $bp_location1" \
     "set to-be-silent hardware break bp_location1" {
@@ -439,28 +446,28 @@ proc test_next_with_recursion {} {
     # Run until we call factorial with 6
 
     gdb_run_cmd
-    if [gdb_test "" \
+    gdb_test "" \
 	"Break.* factorial .value=6. .*" \
-	"run to factorial(6)"] then { gdb_suppress_tests }
+	"run to factorial(6)"
 
     # Continue until we call factorial recursively with 5.
 
-    if [gdb_test "continue" \
+    gdb_test "continue" \
 	"Continuing.*Break.* factorial .value=5. .*" \
-	"continue to factorial(5)"] then { gdb_suppress_tests }
+	"continue to factorial(5)"
 
     # Do a backtrace just to confirm how many levels deep we are.
 
-    if [gdb_test "backtrace" \
+    gdb_test "backtrace" \
 	"#0\[ \t\]+ factorial .value=5..*" \
-	"backtrace from factorial(5)"] then { gdb_suppress_tests }
+	"backtrace from factorial(5)"
 
     # Now a "next" should position us at the recursive call, which
     # we will be performing with 4.
 
-    if [gdb_test "next" \
+    gdb_test "next" \
 	".* factorial .value - 1.;.*" \
-	"next to recursive call"] then { gdb_suppress_tests }
+	"next to recursive call"
 
     # Disable the breakpoint at the entry to factorial by deleting them all.
     # The "next" should run until we return to the next line from this
@@ -492,14 +499,13 @@ proc test_next_with_recursion {} {
     # OK, we should be back in the same stack frame we started from.
     # Do a backtrace just to confirm.
 
-    set result [gdb_test "backtrace" \
+    gdb_test "backtrace" \
 	"#0\[ \t\]+ factorial .value=120.*\r\n#1\[ \t\]+ \[0-9a-fx\]+ in factorial .value=6..*" \
-	"backtrace from factorial(5.1)"]
-    if { $result != 0 } { gdb_suppress_tests }
+	"backtrace from factorial(5.1)"
 
-    if [target_info exists gdb,noresults] { gdb_suppress_tests }
-    gdb_continue_to_end "recursive next test"
-    gdb_stop_suppressing_tests
+    if { ![target_info exists gdb,noresults] } {
+	gdb_continue_to_end "recursive next test"
+    }
 }
 
 test_next_with_recursion
@@ -514,13 +520,16 @@ if { [prepare_for_testing "failed to prepare" "hbreak2o2" {break.c break1.c} {de
     return -1
 }
 
-if ![runto_main] then { fail "break tests suppressed" }
+if {![runto_main]} {
+    return
+}
+
 delete_breakpoints
 
 #
 # Test break at function.
 #
-gdb_test "hbreak main" \
+gdb_test "hbreak -q main" \
     "Hardware assisted breakpoint.*at.* file .*, line.*" \
     "hardware breakpoint function, optimized file"
 

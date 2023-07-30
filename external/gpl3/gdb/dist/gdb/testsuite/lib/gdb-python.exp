@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,4 +50,29 @@ proc get_python_valueof { exp default {test ""} } {
 	}
     }
     return ${val}
+}
+
+# Return true if Python module NAME is available, otherwise, return
+# false.
+
+proc gdb_py_module_available { name } {
+    set available "unknown"
+    gdb_test_multiple "python import ${name}" "" {
+	-re -wrap "ModuleNotFoundError: No module named '${name}'.*" {
+	    set available false
+	}
+	-re -wrap "ImportError: No module named '?${name}'?.*" {
+	    set available false
+	}
+	-re -wrap "python import ${name}" {
+	    set available true
+	}
+    }
+
+    if { $available == "unknown" } {
+	perror "unexpected output from python import"
+	set available false
+    }
+
+    return ${available}
 }

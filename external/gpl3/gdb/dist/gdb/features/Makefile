@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2020 Free Software Foundation, Inc.
+# Copyright (C) 2007-2023 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -45,9 +45,9 @@
 
 # List of .dat files to create in ../regformats/
 WHICH = mips-linux mips-dsp-linux \
-	microblaze-with-stack-protect \
 	mips64-linux mips64-dsp-linux \
 	nios2-linux \
+	or1k-linux \
 	rs6000/powerpc-32 \
 	rs6000/powerpc-32l rs6000/powerpc-altivec32l rs6000/powerpc-e500l \
 	rs6000/powerpc-64l rs6000/powerpc-altivec64l rs6000/powerpc-vsx32l \
@@ -69,16 +69,10 @@ WHICH = mips-linux mips-dsp-linux \
 	tic6x-c64xp-linux tic6x-c64x-linux tic6x-c62x-linux
 
 # Record which registers should be sent to GDB by default after stop.
-aarch64-expedite = x29,sp,pc
-arm-expedite = r11,sp,pc
-i386-expedite = ebp,esp,eip
-amd64-expedite = rbp,rsp,rip
-x32-expedite = rbp,rsp,rip
 mips-expedite = r29,pc
 mips-dsp-expedite = r29,pc
 mips64-expedite = r29,pc
 mips64-dsp-expedite = r29,pc
-microblaze-expedite = r1,rpc
 nios2-linux-expedite = sp,pc
 or1k-expedite = r1,npc
 powerpc-expedite = r1,pc
@@ -115,6 +109,7 @@ XMLTOC = \
 	nds32.xml \
 	nios2.xml \
 	or1k.xml \
+	or1k-linux.xml \
 	rs6000/powerpc-32.xml \
 	rs6000/powerpc-32l.xml \
 	rs6000/powerpc-403.xml \
@@ -153,6 +148,7 @@ XMLTOC = \
 	rs6000/powerpc-vsx64.xml \
 	rs6000/powerpc-vsx64l.xml \
 	rs6000/rs6000.xml \
+	rx.xml \
 	s390-linux32.xml \
 	s390-linux32v1.xml \
 	s390-linux32v2.xml \
@@ -169,7 +165,10 @@ XMLTOC = \
 	s390x-tevx-linux64.xml \
 	s390x-vx-linux64.xml \
 	s390-gs-linux64.xml \
-	s390x-gs-linux64.xml
+	s390x-gs-linux64.xml \
+	sparc/sparc32-solaris.xml \
+	sparc/sparc64-solaris.xml \
+	z80.xml
 
 TDESC_CFILES = $(patsubst %.xml,%.c,$(XMLTOC))
 GDB = false
@@ -178,6 +177,7 @@ GDB = false
 aarch64-feature = 1
 arm-feature = 1
 i386-feature = 1
+loongarch-feature = 1
 riscv-feature = 1
 tic6x-feature = 1
 
@@ -201,6 +201,7 @@ $(outdir)/%.dat: %.xml number-regs.xsl sort-regs.xsl gdbserver-regs.xsl
 FEATURE_XMLFILES = aarch64-core.xml \
 	aarch64-fpu.xml \
 	aarch64-pauth.xml \
+	aarch64-mte.xml \
 	arc/v1-core.xml \
 	arc/v1-aux.xml \
 	arc/v2-core.xml \
@@ -208,31 +209,39 @@ FEATURE_XMLFILES = aarch64-core.xml \
 	arm/arm-core.xml \
 	arm/arm-fpa.xml \
 	arm/arm-m-profile.xml \
+	arm/arm-m-profile-mve.xml \
+	arm/arm-m-system.xml \
 	arm/arm-m-profile-with-fpa.xml \
+	arm/arm-secext.xml \
+	arm/arm-tls.xml \
 	arm/arm-vfpv2.xml \
 	arm/arm-vfpv3.xml \
 	arm/xscale-iwmmxt.xml \
+	cskyv2-linux.xml \
 	i386/32bit-core.xml \
 	i386/32bit-sse.xml \
 	i386/32bit-linux.xml \
 	i386/32bit-avx.xml \
 	i386/32bit-mpx.xml \
 	i386/32bit-avx512.xml \
-	i386/32bit-pkeys.xml \
+	i386/32bit-segments.xml \
 	i386/64bit-avx512.xml \
 	i386/64bit-core.xml \
 	i386/64bit-mpx.xml \
 	i386/64bit-segments.xml \
 	i386/64bit-avx.xml \
 	i386/64bit-linux.xml \
-	i386/64bit-pkeys.xml \
 	i386/64bit-sse.xml \
+	i386/pkeys.xml \
 	i386/x32-core.xml \
+	loongarch/base32.xml \
+	loongarch/base64.xml \
+	loongarch/fpu.xml \
+	riscv/rv32e-xregs.xml \
 	riscv/32bit-cpu.xml \
 	riscv/32bit-fpu.xml \
 	riscv/64bit-cpu.xml \
 	riscv/64bit-fpu.xml \
-	rx.xml \
 	tic6x-c6xp.xml \
 	tic6x-core.xml \
 	tic6x-gp.xml
@@ -247,7 +256,7 @@ $(TDESC_CFILES): %.c: %.xml
 
 $(FEATURE_CFILES): %.c: %.xml.tmp
 	$(GDB) -nx -q -batch \
-	  -ex 'maint print c-tdesc $<' > $@.tmp
+	  -ex 'maint print c-tdesc -single-feature $<' > $@.tmp
 	sh ../../move-if-change $@.tmp $@
 	rm $<
 

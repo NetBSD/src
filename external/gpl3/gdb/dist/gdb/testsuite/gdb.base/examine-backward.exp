@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ if { [prepare_for_testing "failed to prepare for examine-backward" \
 }
 
 if ![runto_main] {
-    untested "could not run to main"
     return -1
 }
 
@@ -345,9 +344,12 @@ with_test_prefix "backward disassemble general" {
     set length_to_examine {1 2 3 4 10}
     set disassmbly {}
 
-    gdb_test "x/i main" "0x\[0-9a-fA-F\]+ <main>:\t.*" \
+    gdb_test_no_output "set print asm-demangle on"
+    set main_re "main(\\(\\))?"
+
+    gdb_test "x/i main" "0x\[0-9a-fA-F\]+ <$main_re>:\t.*" \
         "move the current position to main (x/i)"
-    gdb_test "x/-i" "0x\[0-9a-fA-F\]+ <main>:\t.*" \
+    gdb_test "x/-i" "0x\[0-9a-fA-F\]+ <$main_re>:\t.*" \
         "move the current position to main (x/-i)"
     for {set i 0} {$i < [llength $length_to_examine]} {incr i} {
         set len [lindex $length_to_examine $i]

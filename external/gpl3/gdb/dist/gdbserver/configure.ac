@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB server.
-dnl Copyright (C) 2000-2020 Free Software Foundation, Inc.
+dnl Copyright (C) 2000-2023 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -18,18 +18,27 @@ dnl along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(server.cc)
+AC_INIT
+AC_CONFIG_MACRO_DIRS([../config])
+AC_CONFIG_SRCDIR([server.cc])
 AC_CONFIG_HEADERS(config.h:config.in, [echo > stamp-h])
 
 AM_MAINTAINER_MODE
 
 AC_PROG_CC
 AC_PROG_CXX
-AC_GNU_SOURCE
+AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AM_PROG_INSTALL_STRIP
 
-AC_CANONICAL_SYSTEM
+# Set build, build_cpu, build_vendor and build_os.
+AC_CANONICAL_BUILD
+
+# Set host, host_cpu, host_vendor, and host_os.
+AC_CANONICAL_HOST
+
+# Set target, target_cpu, target_vendor, and target_os.
+AC_CANONICAL_TARGET
 
 AC_PROG_INSTALL
 AC_CHECK_TOOL(AR, ar)
@@ -117,12 +126,19 @@ if test "x$with_ust" != "xno"; then
   saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $ustinc"
   AC_MSG_CHECKING([for ust])
-  AC_TRY_COMPILE([
+  AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM(
+       [
 #define CONFIG_UST_GDB_INTEGRATION
 #include <ust/ust.h>
-  ],[],
-  [AC_MSG_RESULT([yes]); AC_DEFINE(HAVE_UST, 1, [Define if UST is available])],
-  [AC_MSG_RESULT([no]); ustlibs= ; ustinc= ])
+       ],
+       []
+     )],
+    [AC_MSG_RESULT([yes]);
+     AC_DEFINE(HAVE_UST, 1, [Define if UST is available])],
+    [AC_MSG_RESULT([no])
+     ustlibs= ; ustinc= ]
+  )
   CFLAGS="$saved_CFLAGS"
 fi
 
@@ -130,6 +146,7 @@ fi
 AC_SUBST(ustlibs)
 AC_SUBST(ustinc)
 
+AM_GDB_COMPILER_TYPE
 AM_GDB_WARNINGS
 
 dnl dladdr is glibc-specific.  It is used by thread-db.c but only for
@@ -242,11 +259,14 @@ if test "${srv_linux_regsets}" = "yes"; then
 	    [Define if the target supports register sets.])
 
   AC_MSG_CHECKING(for PTRACE_GETREGS)
-  AC_CACHE_VAL(gdbsrv_cv_have_ptrace_getregs,
-  [AC_TRY_COMPILE([#include <sys/ptrace.h>],
-		  [PTRACE_GETREGS;],
-		  [gdbsrv_cv_have_ptrace_getregs=yes],
-		  [gdbsrv_cv_have_ptrace_getregs=no])])
+  AC_CACHE_VAL(
+    [gdbsrv_cv_have_ptrace_getregs],
+    [AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([#include <sys/ptrace.h>], [PTRACE_GETREGS;])],
+       [gdbsrv_cv_have_ptrace_getregs=yes],
+       [gdbsrv_cv_have_ptrace_getregs=no]
+     )]
+  )
   AC_MSG_RESULT($gdbsrv_cv_have_ptrace_getregs)
   if test "${gdbsrv_cv_have_ptrace_getregs}" = "yes"; then
     AC_DEFINE(HAVE_PTRACE_GETREGS, 1,
@@ -255,11 +275,14 @@ if test "${srv_linux_regsets}" = "yes"; then
   fi
 
   AC_MSG_CHECKING(for PTRACE_GETFPXREGS)
-  AC_CACHE_VAL(gdbsrv_cv_have_ptrace_getfpxregs,
-  [AC_TRY_COMPILE([#include <sys/ptrace.h>],
-		  [PTRACE_GETFPXREGS;],
-		  [gdbsrv_cv_have_ptrace_getfpxregs=yes],
-		  [gdbsrv_cv_have_ptrace_getfpxregs=no])])
+  AC_CACHE_VAL(
+    [gdbsrv_cv_have_ptrace_getfpxregs],
+    [AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([#include <sys/ptrace.h>], [PTRACE_GETFPXREGS;])],
+       [gdbsrv_cv_have_ptrace_getfpxregs=yes],
+       [gdbsrv_cv_have_ptrace_getfpxregs=no]
+     )]
+  )
   AC_MSG_RESULT($gdbsrv_cv_have_ptrace_getfpxregs)
   if test "${gdbsrv_cv_have_ptrace_getfpxregs}" = "yes"; then
     AC_DEFINE(HAVE_PTRACE_GETFPXREGS, 1,
@@ -301,15 +324,19 @@ if test "$srv_linux_thread_db" = "yes"; then
     # supported there.
     RDYNAMIC="-Wl,--dynamic-list=${srcdir}/proc-service.list"
     LDFLAGS="$LDFLAGS $RDYNAMIC"
-    AC_TRY_LINK([], [],
-		[found="-Wl,--dynamic-list"
-		 RDYNAMIC='-Wl,--dynamic-list=$(srcdir)/proc-service.list'],
-		[RDYNAMIC="-rdynamic"
-		 LDFLAGS="$old_LDFLAGS $RDYNAMIC"
-		 AC_TRY_LINK([], [],
-			     [found="-rdynamic"],
-			     [found="no"
-			      RDYNAMIC=""])])
+    AC_LINK_IFELSE(
+      [AC_LANG_PROGRAM([],[])],
+      [found="-Wl,--dynamic-list"
+       RDYNAMIC='-Wl,--dynamic-list=$(srcdir)/proc-service.list'],
+      [RDYNAMIC="-rdynamic"
+       LDFLAGS="$old_LDFLAGS $RDYNAMIC"
+       AC_LINK_IFELSE(
+	 [AC_LANG_PROGRAM([], [])],
+	 [found="-rdynamic"],
+	 [found="no"
+	  RDYNAMIC=""]
+       )]
+    )
     AC_SUBST(RDYNAMIC)
     LDFLAGS="$old_LDFLAGS"
     AC_MSG_RESULT($found)
@@ -319,10 +346,15 @@ if test "$srv_linux_thread_db" = "yes"; then
 
   srv_thread_depfiles="thread-db.o proc-service.o"
   AC_DEFINE(USE_THREAD_DB, 1, [Define if we should use libthread_db.])
-  AC_CACHE_CHECK([for TD_VERSION], gdbsrv_cv_have_td_version,
-  [AC_TRY_COMPILE([#include <thread_db.h>], [TD_VERSION;],
-		  [gdbsrv_cv_have_td_version=yes],
-		  [gdbsrv_cv_have_td_version=no])])
+  AC_CACHE_CHECK(
+    [for TD_VERSION],
+    [gdbsrv_cv_have_td_version],
+    [AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([#include <thread_db.h>], [TD_VERSION;])],
+       [gdbsrv_cv_have_td_version=yes],
+       [gdbsrv_cv_have_td_version=no]
+     )]
+  )
   if test "$gdbsrv_cv_have_td_version" = yes; then
     AC_DEFINE(HAVE_TD_VERSION, 1, [Define if TD_VERSION is available.])
   fi
@@ -349,15 +381,23 @@ if test "$srv_xmlfiles" != ""; then
   done
 fi
 
-GDBSERVER_DEPFILES="$srv_regobj $srv_tgtobj $srv_hostio_err_objs $srv_thread_depfiles"
+GDBSERVER_DEPFILES="$srv_regobj $srv_tgtobj $srv_thread_depfiles"
 GDBSERVER_LIBS="$srv_libs"
 
 dnl Check whether the target supports __sync_*_compare_and_swap.
-AC_CACHE_CHECK([whether the target supports __sync_*_compare_and_swap],
-		gdbsrv_cv_have_sync_builtins, [
-AC_TRY_LINK([], [int foo, bar; bar = __sync_val_compare_and_swap(&foo, 0, 1);],
-		gdbsrv_cv_have_sync_builtins=yes,
-		gdbsrv_cv_have_sync_builtins=no)])
+AC_CACHE_CHECK(
+  [whether the target supports __sync_*_compare_and_swap],
+  [gdbsrv_cv_have_sync_builtins],
+  [AC_LINK_IFELSE(
+     [AC_LANG_PROGRAM(
+	[],
+	[int foo, bar;
+	 bar = __sync_val_compare_and_swap(&foo, 0, 1);]
+      )],
+     [gdbsrv_cv_have_sync_builtins=yes],
+     [gdbsrv_cv_have_sync_builtins=no]
+   )]
+)
 if test "$gdbsrv_cv_have_sync_builtins" = yes; then
   AC_DEFINE(HAVE_SYNC_BUILTINS, 1,
     [Define to 1 if the target supports __sync_*_compare_and_swap])

@@ -1,6 +1,6 @@
 /* Things needed for both reading and writing DWARF indices.
 
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,27 +29,14 @@
    architecture-independent.  */
 typedef uint32_t offset_type;
 
-#if WORDS_BIGENDIAN
-
-/* Convert VALUE between big- and little-endian.  */
+/* Unpack a 32-bit little-endian value.  */
 
 static inline offset_type
-byte_swap (offset_type value)
+gdb_index_unpack (const gdb_byte *value)
 {
-  offset_type result;
-
-  result = (value & 0xff) << 24;
-  result |= (value & 0xff00) << 8;
-  result |= (value & 0xff0000) >> 8;
-  result |= (value & 0xff000000) >> 24;
-  return result;
+  return (offset_type) extract_unsigned_integer (value, sizeof (offset_type),
+						 BFD_ENDIAN_LITTLE);
 }
-
-#define MAYBE_SWAP(V)  byte_swap (V)
-
-#else
-#define MAYBE_SWAP(V) static_cast<offset_type> (V)
-#endif /* WORDS_BIGENDIAN */
 
 /* The hash function for strings in the mapped index.  This is the same as
    SYMBOL_HASH_NEXT, but we keep a separate copy to maintain control over the
@@ -64,5 +51,9 @@ hashval_t mapped_index_string_hash (int index_version, const void *p);
 /* Symbol name hashing function as specified by DWARF-5.  */
 
 uint32_t dwarf5_djb_hash (const char *str_);
+
+/* Symbol name hashing function as specified by DWARF-5.  */
+
+uint32_t dwarf5_djb_hash (gdb::string_view str_);
 
 #endif /* DWARF_INDEX_COMMON_H */

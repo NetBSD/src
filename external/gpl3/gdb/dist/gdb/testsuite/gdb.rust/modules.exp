@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 load_lib rust-support.exp
 if {[skip_rust_tests]} {
-    continue
+    return
 }
 
 standard_testfile .rs
@@ -91,3 +91,7 @@ foreach mod {mod1::inner::innest mod1::inner mod1 {}} {
 }
 
 gdb_test "print ::TWENTY_THREE" " = 23"
+
+gdb_test "print super TWENTY_THREE" "'::' expected"
+gdb_test "print super::23" "identifier expected"
+gdb_test "ptype ::Generic::<::Generic<self::Type" "'>' expected"

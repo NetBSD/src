@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2020 Free Software Foundation, Inc.
+   Copyright 2010-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -50,7 +50,6 @@
 	.ascii	"GNU C++ 4.4.3 20100127 (Red Hat 4.4.3-4)\0"	/* DW_AT_producer */
 	.byte	0x4	/* DW_AT_language */
 	.ascii	"duplicate-type.cc\0"	/* DW_AT_name */
-	.4byte	.Ldebug_line0	/* DW_AT_stmt_list */
 
 .Ldie_38:
 	.uleb128 0x3	/* (DIE (0x38) DW_TAG_typedef) */
@@ -66,7 +65,6 @@
 .Ldie_4a:
 	.uleb128 0x4	/* (DIE (0x4a) DW_TAG_namespace) */
 	.ascii "std\0"	/* DW_AT_name */
-	.4byte	OFFSET (143)	/* DW_AT_sibling */
 
 .Ldie_70:
 	.uleb128 0x8	/* (DIE (0x70) DW_TAG_class_type) */
@@ -77,7 +75,6 @@
 	.uleb128 0x9	/* (DIE (0x76) DW_TAG_structure_type) */
 	.ascii	"_Vector_base<a::b, std::allocator<a::b> >\0"	/* DW_AT_name */
 	.byte	0x1	/* DW_AT_declaration */
-	.4byte	OFFSET (f7)	/* DW_AT_sibling */
 
 .Ldie_80:
 	.uleb128 0xa	/* (DIE (0x80) DW_TAG_structure_type) */
@@ -132,13 +129,11 @@
 	.uleb128 0x1b	/* (DIE (0x221) DW_TAG_class_type) */
 	.ascii "a\0"	/* DW_AT_name */
 	.byte	0x18	/* DW_AT_byte_size */
-	.4byte	OFFSET (277)	/* DW_AT_sibling */
 
 .Ldie_22b:
 	.uleb128 0x1b	/* (DIE (0x22b) DW_TAG_class_type) */
 	.ascii "b\0"	/* DW_AT_name */
 	.byte	0x1	/* DW_AT_byte_size */
-	.4byte	OFFSET (244)	/* DW_AT_sibling */
 
 .Ldie_235:
 	.uleb128 0x1c	/* (DIE (0x235) DW_TAG_subprogram) */
@@ -166,7 +161,6 @@
 	.ascii "a\0"	/* DW_AT_name */
 	.byte	0x1	/* DW_AT_artificial */
 	.byte	0x1	/* DW_AT_declaration */
-	.4byte	OFFSET (262)	/* DW_AT_sibling */
 
 .Ldie_25b:
 	.uleb128 0xe	/* (DIE (0x25b) DW_TAG_formal_parameter) */
@@ -202,7 +196,6 @@
 	.uleb128 0x20	/* (DIE (0x27d) DW_TAG_class_type) */
 	.4byte	OFFSET (162)	/* DW_AT_specification */
 	.byte	0x1	/* DW_AT_byte_size */
-	.4byte	OFFSET (3b2)	/* DW_AT_sibling */
 
 .Ldie_2d0:
 	.uleb128 0x21	/* (DIE (0x2d0) DW_TAG_subprogram) */
@@ -210,7 +203,6 @@
 	.ascii	"address\0"	/* DW_AT_name */
 	.4byte	OFFSET (277)	/* DW_AT_type */
 	.byte	0x1	/* DW_AT_declaration */
-	.4byte	OFFSET (3b2)	/* DW_AT_sibling */
 
 .Ldie_2e5:
 	.uleb128 0xe	/* (DIE (0x2e5) DW_TAG_formal_parameter) */
@@ -247,10 +239,9 @@
 	.4byte	OFFSET (3d5)	/* DW_AT_type */
 
 .Ldie_3e0:
-	.Uleb128 0x20	/* (DIE (0x3e0) DW_TAG_class_type) */
+	.uleb128 0x20	/* (DIE (0x3e0) DW_TAG_class_type) */
 	.4byte	OFFSET (70)	/* DW_AT_specification */
 	.byte	0x1	/* DW_AT_byte_size */
-	.4byte	OFFSET (44e)	/* DW_AT_sibling */
 
 .Ldie_3ec:
 	.uleb128 0xb	/* (DIE (0x3ec) DW_TAG_inheritance) */
@@ -263,13 +254,11 @@
 	.uleb128 0x1a	/* (DIE (0x44e) DW_TAG_structure_type) */
 	.4byte	OFFSET (76)	/* DW_AT_specification */
 	.byte	0x18	/* DW_AT_byte_size */
-	.4byte	OFFSET (505)	/* DW_AT_sibling */
 
 .Ldie_505:
 	.uleb128 0x11	/* (DIE (0x505) DW_TAG_subprogram) */
 	.ascii	"~_Vector_base\0"	/* DW_AT_name */
 	.byte	0x1	/* DW_AT_declaration */
-	.4byte	OFFSET (51f)	/* DW_AT_sibling */
 
 .Ldie_512:
 	.uleb128 0xe	/* (DIE (0x512) DW_TAG_formal_parameter) */
@@ -287,13 +276,11 @@
 	.ascii	"_M_allocate\0"	/* DW_AT_name */
 	.4byte	OFFSET (277)	/* DW_AT_type */
 	.byte	0x1	/* DW_AT_declaration */
-	.4byte	OFFSET (540)	/* DW_AT_sibling */
 
 .Ldie_540:
 	.uleb128 0x11	/* (DIE (0x540) DW_TAG_subprogram) */
 	.ascii	"_M_deallocate\0"	/* DW_AT_name */
 	.byte	0x1	/* DW_AT_declaration */
-	.4byte	OFFSET (562)	/* DW_AT_sibling */
 
 .Ldie_551:
 	.uleb128 0xe	/* (DIE (0x551) DW_TAG_formal_parameter) */
@@ -328,7 +315,6 @@
 	.uleb128 0x20	/* (DIE (0x59d) DW_TAG_class_type) */
 	.4byte	OFFSET (f7)	/* DW_AT_specification */
 	.byte	0x18	/* DW_AT_byte_size */
-	.4byte	OFFSET (b44)	/* DW_AT_sibling */
 
 .Ldie_5a9:
 	.uleb128 0xb	/* (DIE (0x5a9) DW_TAG_inheritance) */
@@ -351,6 +337,7 @@
 
 /* Abbrev table */
 	.section	.debug_abbrev
+.Labbrev1_begin:
 	.uleb128 0x1	/* (abbrev code) */
 	.uleb128 0x11	/* (TAG: DW_TAG_compile_unit) */
 	.byte	0x1	/* DW_children_yes */
@@ -360,8 +347,6 @@
 	.uleb128 0xb	/* (DW_FORM_data1) */
 	.uleb128 0x3	/* (DW_AT_name) */
 	.uleb128 0x8	/* (DW_FORM_sting) */
-	.uleb128 0x10	/* (DW_AT_stmt_list) */
-	.uleb128 0x6	/* (DW_FORM_data4) */
 	.byte	0x0
 	.byte	0x0
 
@@ -392,8 +377,6 @@
 	.byte	0x1	/* DW_children_yes */
 	.uleb128 0x3	/* (DW_AT_name) */
 	.uleb128 0x8	/* (DW_FORM_string) */
-	.uleb128 0x1	/* (DW_AT_sibling) */
-	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.byte	0x0
 	.byte	0x0
 
@@ -422,8 +405,6 @@
 	.uleb128 0x8	/* (DW_FORM_string) */
 	.uleb128 0x3c	/* (DW_AT_declaration) */
 	.uleb128 0xc	/* (DW_FORM_flag) */
-	.uleb128 0x1	/* (DW_AT_sibling) */
-	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.byte	0x0
 	.byte	0x0
 
@@ -474,8 +455,6 @@
 	.uleb128 0x8	/* (DW_FORM_string) */
 	.uleb128 0x3c	/* (DW_AT_declaration) */
 	.uleb128 0xc	/* (DW_FORM_flag) */
-	.uleb128 0x1	/* (DW_AT_sibling) */
-	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.byte	0x0
 	.byte	0x0
 
@@ -520,8 +499,6 @@
 	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.uleb128 0xb	/* (DW_AT_byte_size) */
 	.uleb128 0xb	/* (DW_FORM_data1) */
-	.uleb128 0x1	/* (DW_AT_sibling) */
-	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.byte	0x0
 	.byte	0x0
 
@@ -532,8 +509,6 @@
 	.uleb128 0x8	/* (DW_FORM_string) */
 	.uleb128 0xb	/* (DW_AT_byte_size) */
 	.uleb128 0xb	/* (DW_FORM_data1) */
-	.uleb128 0x1	/* (DW_AT_sibling) */
-	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.byte	0x0
 	.byte	0x0
 
@@ -574,8 +549,6 @@
 	.uleb128 0xc	/* (DW_FORM_flag) */
 	.uleb128 0x3c	/* (DW_AT_declaration) */
 	.uleb128 0xc	/* (DW_FORM_flag) */
-	.uleb128 0x1	/* (DW_AT_sibling) */
-	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.byte	0x0
 	.byte	0x0
 
@@ -600,8 +573,6 @@
 	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.uleb128 0xb	/* (DW_AT_byte_size) */
 	.uleb128 0xb	/* (DW_FORM_data1) */
-	.uleb128 0x1	/* (DW_AT_sibling) */
-	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.byte	0x0
 	.byte	0x0
 
@@ -616,8 +587,6 @@
 	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.uleb128 0x3c	/* (DW_AT_declaration) */
 	.uleb128 0xc	/* (DW_FORM_flag) */
-	.uleb128 0x1	/* (DW_AT_sibling) */
-	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.byte	0x0
 	.byte	0x0
 
@@ -642,11 +611,10 @@
 	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.uleb128 0x3c	/* (DW_AT_declaration) */
 	.uleb128 0xc	/* (DW_FORM_flag) */
-	.uleb128 0x1	/* (DW_AT_sibling) */
-	.uleb128 0x13	/* (DW_FORM_ref4) */
 	.byte	0x0
 	.byte	0x0
 
 	.byte	0x0
 	.byte	0x0
 
+	.section	.note.GNU-stack,"",@progbits

@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/amd64.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,83 +29,226 @@
 #include <sys/user.h>
 #include <machine/reg.h>
 
-#include "fbsd-nat.h"
 #include "amd64-tdep.h"
+#include "amd64-fbsd-tdep.h"
 #include "amd64-nat.h"
-#include "amd64-bsd-nat.h"
 #include "x86-nat.h"
 #include "gdbsupport/x86-xstate.h"
-
+#include "x86-fbsd-nat.h"
 
-class amd64_fbsd_nat_target final
-  : public amd64_bsd_nat_target<fbsd_nat_target>
+class amd64_fbsd_nat_target final : public x86_fbsd_nat_target
 {
 public:
-  /* Add some extra features to the common *BSD/amd64 target.  */
-  const struct target_desc *read_description () override;
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
 
-#if defined(HAVE_PT_GETDBREGS) && defined(USE_SIGTRAP_SIGINFO)
-  bool supports_stopped_by_hw_breakpoint () override;
-#endif
+  const struct target_desc *read_description () override;
 };
 
 static amd64_fbsd_nat_target the_amd64_fbsd_nat_target;
 
-/* Offset in `struct reg' where MEMBER is stored.  */
-#define REG_OFFSET(member) offsetof (struct reg, member)
+#ifdef PT_GETXSTATE_INFO
+static size_t xsave_len;
+#endif
 
-/* At amd64fbsd64_r_reg_offset[REGNUM] you'll find the offset in
-   `struct reg' location where the GDB register REGNUM is stored.
-   Unsupported registers are marked with `-1'.  */
-static int amd64fbsd64_r_reg_offset[] =
+/* This is a layout of the amd64 'struct reg' but with i386
+   registers.  */
+
+static const struct regcache_map_entry amd64_fbsd32_gregmap[] =
 {
-  REG_OFFSET (r_rax),
-  REG_OFFSET (r_rbx),
-  REG_OFFSET (r_rcx),
-  REG_OFFSET (r_rdx),
-  REG_OFFSET (r_rsi),
-  REG_OFFSET (r_rdi),
-  REG_OFFSET (r_rbp),
-  REG_OFFSET (r_rsp),
-  REG_OFFSET (r_r8),
-  REG_OFFSET (r_r9),
-  REG_OFFSET (r_r10),
-  REG_OFFSET (r_r11),
-  REG_OFFSET (r_r12),
-  REG_OFFSET (r_r13),
-  REG_OFFSET (r_r14),
-  REG_OFFSET (r_r15),
-  REG_OFFSET (r_rip),
-  REG_OFFSET (r_rflags),
-  REG_OFFSET (r_cs),
-  REG_OFFSET (r_ss),
-  -1,
-  -1,
-  -1,
-  -1
+  { 8, REGCACHE_MAP_SKIP, 8 },
+  { 1, I386_EDI_REGNUM, 8 },
+  { 1, I386_ESI_REGNUM, 8 },
+  { 1, I386_EBP_REGNUM, 8 },
+  { 1, I386_EBX_REGNUM, 8 },
+  { 1, I386_EDX_REGNUM, 8 },
+  { 1, I386_ECX_REGNUM, 8 },
+  { 1, I386_EAX_REGNUM, 8 },
+  { 1, REGCACHE_MAP_SKIP, 4 },	/* trapno */
+  { 1, I386_FS_REGNUM, 2 },
+  { 1, I386_GS_REGNUM, 2 },
+  { 1, REGCACHE_MAP_SKIP, 4 },	/* err */
+  { 1, I386_ES_REGNUM, 2 },
+  { 1, I386_DS_REGNUM, 2 },
+  { 1, I386_EIP_REGNUM, 8 },
+  { 1, I386_CS_REGNUM, 8 },
+  { 1, I386_EFLAGS_REGNUM, 8 },
+  { 1, I386_ESP_REGNUM, 0 },
+  { 1, I386_SS_REGNUM, 8 },
+  { 0 }
 };
-
 
-/* Mapping between the general-purpose registers in FreeBSD/amd64
-   `struct reg' format and GDB's register cache layout for
-   FreeBSD/i386.
-
-   Note that most FreeBSD/amd64 registers are 64-bit, while the
-   FreeBSD/i386 registers are all 32-bit, but since we're
-   little-endian we get away with that.  */
-
-/* From <machine/reg.h>.  */
-static int amd64fbsd32_r_reg_offset[I386_NUM_GREGS] =
+static const struct regset amd64_fbsd32_gregset =
 {
-  14 * 8, 13 * 8,		/* %eax, %ecx */
-  12 * 8, 11 * 8,		/* %edx, %ebx */
-  20 * 8, 10 * 8,		/* %esp, %ebp */
-  9 * 8, 8 * 8,			/* %esi, %edi */
-  17 * 8, 19 * 8,		/* %eip, %eflags */
-  18 * 8, 21 * 8,		/* %cs, %ss */
-  -1, -1, -1, -1		/* %ds, %es, %fs, %gs */
+  amd64_fbsd32_gregmap, regcache_supply_regset, regcache_collect_regset
 };
-
+
+/* Return the regset to use for 'struct reg' for the GDBARCH.  */
+
+static const struct regset *
+find_gregset (struct gdbarch *gdbarch)
+{
+  if (gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 32)
+    return &amd64_fbsd32_gregset;
+  else
+    return &amd64_fbsd_gregset;
+}
+
+/* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
+   for all registers.  */
+
+void
+amd64_fbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
+{
+  struct gdbarch *gdbarch = regcache->arch ();
+#if defined(PT_GETFSBASE) || defined(PT_GETGSBASE)
+  const i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
+#endif
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
+  const struct regset *gregset = find_gregset (gdbarch);
+
+  if (fetch_register_set<struct reg> (regcache, regnum, PT_GETREGS, gregset))
+    {
+      if (regnum != -1)
+	return;
+    }
+
+#ifdef PT_GETFSBASE
+  if (regnum == -1 || regnum == tdep->fsbase_regnum)
+    {
+      register_t base;
+
+      if (ptrace (PT_GETFSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't get segment register fs_base"));
+
+      regcache->raw_supply (tdep->fsbase_regnum, &base);
+      if (regnum != -1)
+	return;
+    }
+#endif
+#ifdef PT_GETGSBASE
+  if (regnum == -1 || regnum == tdep->fsbase_regnum + 1)
+    {
+      register_t base;
+
+      if (ptrace (PT_GETGSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't get segment register gs_base"));
+
+      regcache->raw_supply (tdep->fsbase_regnum + 1, &base);
+      if (regnum != -1)
+	return;
+    }
+#endif
+
+  /* There is no amd64_fxsave_supplies or amd64_xsave_supplies.
+     Instead, the earlier register sets return early if the request
+     was for a specific register that was already satisified to avoid
+     fetching the FPU/XSAVE state unnecessarily.  */
+
+#ifdef PT_GETXSTATE_INFO
+  if (xsave_len != 0)
+    {
+      void *xstateregs = alloca (xsave_len);
+
+      if (ptrace (PT_GETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
+	perror_with_name (_("Couldn't get extended state status"));
+
+      amd64_supply_xsave (regcache, regnum, xstateregs);
+      return;
+    }
+#endif
+
+  struct fpreg fpregs;
+
+  if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+    perror_with_name (_("Couldn't get floating point status"));
+
+  amd64_supply_fxsave (regcache, regnum, &fpregs);
+}
+
+/* Store register REGNUM back into the inferior.  If REGNUM is -1, do
+   this for all registers.  */
+
+void
+amd64_fbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
+{
+  struct gdbarch *gdbarch = regcache->arch ();
+#if defined(PT_GETFSBASE) || defined(PT_GETGSBASE)
+  const i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
+#endif
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
+  const struct regset *gregset = find_gregset (gdbarch);
+
+  if (store_register_set<struct reg> (regcache, regnum, PT_GETREGS, PT_SETREGS,
+				      gregset))
+    {
+      if (regnum != -1)
+	return;
+    }
+
+#ifdef PT_SETFSBASE
+  if (regnum == -1 || regnum == tdep->fsbase_regnum)
+    {
+      register_t base;
+
+      /* Clear the full base value to support 32-bit targets.  */
+      base = 0;
+      regcache->raw_collect (tdep->fsbase_regnum, &base);
+
+      if (ptrace (PT_SETFSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't write segment register fs_base"));
+      if (regnum != -1)
+	return;
+    }
+#endif
+#ifdef PT_SETGSBASE
+  if (regnum == -1 || regnum == tdep->fsbase_regnum + 1)
+    {
+      register_t base;
+
+      /* Clear the full base value to support 32-bit targets.  */
+      base = 0;
+      regcache->raw_collect (tdep->fsbase_regnum + 1, &base);
+
+      if (ptrace (PT_SETGSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't write segment register gs_base"));
+      if (regnum != -1)
+	return;
+    }
+#endif
+
+  /* There is no amd64_fxsave_supplies or amd64_xsave_supplies.
+     Instead, the earlier register sets return early if the request
+     was for a specific register that was already satisified to avoid
+     fetching the FPU/XSAVE state unnecessarily.  */
+
+#ifdef PT_GETXSTATE_INFO
+  if (xsave_len != 0)
+    {
+      void *xstateregs = alloca (xsave_len);
+
+      if (ptrace (PT_GETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
+	perror_with_name (_("Couldn't get extended state status"));
+
+      amd64_collect_xsave (regcache, regnum, xstateregs, 0);
+
+      if (ptrace (PT_SETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs,
+		  xsave_len) == -1)
+	perror_with_name (_("Couldn't write extended state status"));
+      return;
+    }
+#endif
+
+  struct fpreg fpregs;
+
+  if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+    perror_with_name (_("Couldn't get floating point status"));
+
+  amd64_collect_fxsave (regcache, regnum, &fpregs);
+
+  if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+    perror_with_name (_("Couldn't write floating point status"));
+}
 
 /* Support for debugging kernel virtual memory images.  */
 
@@ -179,13 +322,13 @@ amd64_fbsd_nat_target::read_description ()
       if (ptrace (PT_GETXSTATE_INFO, inferior_ptid.pid (),
 		  (PTRACE_TYPE_ARG3) &info, sizeof (info)) == 0)
 	{
-	  x86bsd_xsave_len = info.xsave_len;
+	  xsave_len = info.xsave_len;
 	  xcr0 = info.xsave_mask;
 	}
       xsave_probed = 1;
     }
 
-  if (x86bsd_xsave_len != 0)
+  if (xsave_len != 0)
     {
       if (is64)
 	return amd64_target_description (xcr0, true);
@@ -199,111 +342,12 @@ amd64_fbsd_nat_target::read_description ()
     return i386_target_description (X86_XSTATE_SSE_MASK, true);
 }
 
-#if defined(HAVE_PT_GETDBREGS) && defined(USE_SIGTRAP_SIGINFO)
-/* Implement the supports_stopped_by_hw_breakpoints method.  */
-
-bool
-amd64_fbsd_nat_target::supports_stopped_by_hw_breakpoint ()
-{
-  return true;
-}
-#endif
-
 void _initialize_amd64fbsd_nat ();
 void
 _initialize_amd64fbsd_nat ()
 {
-  int offset;
-
-  amd64_native_gregset32_reg_offset = amd64fbsd32_r_reg_offset;
-  amd64_native_gregset64_reg_offset = amd64fbsd64_r_reg_offset;
-
   add_inf_child_target (&the_amd64_fbsd_nat_target);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (amd64fbsd_supply_pcb);
-
-  /* To support the recognition of signal handlers, i386-bsd-tdep.c
-     hardcodes some constants.  Inclusion of this file means that we
-     are compiling a native debugger, which means that we can use the
-     system header files and sysctl(3) to get at the relevant
-     information.  */
-
-#define SC_REG_OFFSET amd64fbsd_sc_reg_offset
-
-  /* We only check the program counter, stack pointer and frame
-     pointer since these members of `struct sigcontext' are essential
-     for providing backtraces.  */
-
-#define SC_RIP_OFFSET SC_REG_OFFSET[AMD64_RIP_REGNUM]
-#define SC_RSP_OFFSET SC_REG_OFFSET[AMD64_RSP_REGNUM]
-#define SC_RBP_OFFSET SC_REG_OFFSET[AMD64_RBP_REGNUM]
-
-  /* Override the default value for the offset of the program counter
-     in the sigcontext structure.  */
-  offset = offsetof (struct sigcontext, sc_rip);
-
-  if (SC_RIP_OFFSET != offset)
-    {
-      warning (_("\
-offsetof (struct sigcontext, sc_rip) yields %d instead of %d.\n\
-Please report this to <bug-gdb@gnu.org>."),
-	       offset, SC_RIP_OFFSET);
-    }
-
-  SC_RIP_OFFSET = offset;
-
-  /* Likewise for the stack pointer.  */
-  offset = offsetof (struct sigcontext, sc_rsp);
-
-  if (SC_RSP_OFFSET != offset)
-    {
-      warning (_("\
-offsetof (struct sigcontext, sc_rsp) yields %d instead of %d.\n\
-Please report this to <bug-gdb@gnu.org>."),
-	       offset, SC_RSP_OFFSET);
-    }
-
-  SC_RSP_OFFSET = offset;
-
-  /* And the frame pointer.  */
-  offset = offsetof (struct sigcontext, sc_rbp);
-
-  if (SC_RBP_OFFSET != offset)
-    {
-      warning (_("\
-offsetof (struct sigcontext, sc_rbp) yields %d instead of %d.\n\
-Please report this to <bug-gdb@gnu.org>."),
-	       offset, SC_RBP_OFFSET);
-    }
-
-  SC_RBP_OFFSET = offset;
-
-#ifdef KERN_PROC_SIGTRAMP
-  /* Normally signal frames are detected via amd64fbsd_sigtramp_p.
-     However, FreeBSD 9.2 through 10.1 do not include the page holding
-     the signal code in core dumps.  These releases do provide a
-     kern.proc.sigtramp.<pid> sysctl that returns the location of the
-     signal trampoline for a running process.  We fetch the location
-     of the current (gdb) process and use this to identify signal
-     frames in core dumps from these releases.  Note that this only
-     works for core dumps of 64-bit (FreeBSD/amd64) processes and does
-     not handle core dumps of 32-bit (FreeBSD/i386) processes.  */
-  {
-    int mib[4];
-    struct kinfo_sigtramp kst;
-    size_t len;
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_SIGTRAMP;
-    mib[3] = getpid ();
-    len = sizeof (kst);
-    if (sysctl (mib, 4, &kst, &len, NULL, 0) == 0)
-      {
-	amd64fbsd_sigtramp_start_addr = (uintptr_t) kst.ksigtramp_start;
-	amd64fbsd_sigtramp_end_addr = (uintptr_t) kst.ksigtramp_end;
-      }
-  }
-#endif
 }

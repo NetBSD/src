@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,10 @@
 
 from perftest import perftest
 
-class SingleStep (perftest.TestCaseWithBasicMeasurements):
+
+class SingleStep(perftest.TestCaseWithBasicMeasurements):
     def __init__(self, step):
-        super (SingleStep, self).__init__ ("single-step")
+        super(SingleStep, self).__init__("single-step")
         self.step = step
 
     def warm_up(self):

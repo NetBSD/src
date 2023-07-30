@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2020 Free Software Foundation, Inc.
+Copyright 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -697,12 +697,4 @@ void
 frvbf_h_cccr_set (SIM_CPU *current_cpu, UINT regno, UQI newval)
 {
   CPU (h_cccr[regno]) = newval;
-}
-
-/* Record trace results for INSN.  */
-
-void
-frvbf_record_trace_results (SIM_CPU *current_cpu, CGEN_INSN *insn,
-			    int *indices, TRACE_RECORD *tr)
-{
 }

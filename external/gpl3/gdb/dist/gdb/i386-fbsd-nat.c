@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/i386.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,30 +27,199 @@
 #include <sys/sysctl.h>
 #include <sys/user.h>
 
-#include "fbsd-nat.h"
 #include "i386-tdep.h"
+#include "i386-fbsd-tdep.h"
+#include "i387-tdep.h"
 #include "x86-nat.h"
 #include "gdbsupport/x86-xstate.h"
-#include "x86-bsd-nat.h"
-#include "i386-bsd-nat.h"
+#include "x86-fbsd-nat.h"
 
-class i386_fbsd_nat_target final
-  : public i386_bsd_nat_target<fbsd_nat_target>
+class i386_fbsd_nat_target final : public x86_fbsd_nat_target
 {
 public:
-  /* Add some extra features to the common *BSD/i386 target.  */
-#ifdef PT_GETXSTATE_INFO
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+
   const struct target_desc *read_description () override;
-#endif
 
   void resume (ptid_t, int, enum gdb_signal) override;
-
-#if defined(HAVE_PT_GETDBREGS) && defined(USE_SIGTRAP_SIGINFO)
-  bool supports_stopped_by_hw_breakpoint () override;
-#endif
 };
 
 static i386_fbsd_nat_target the_i386_fbsd_nat_target;
+
+#ifdef PT_GETXSTATE_INFO
+static size_t xsave_len;
+#endif
+
+static int have_ptrace_xmmregs;
+
+/* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
+   for all registers.  */
+
+void
+i386_fbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
+{
+  struct gdbarch *gdbarch = regcache->arch ();
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
+
+  if (fetch_register_set<struct reg> (regcache, regnum, PT_GETREGS,
+				      &i386_fbsd_gregset))
+    {
+      if (regnum != -1)
+	return;
+    }
+
+#ifdef PT_GETFSBASE
+  if (regnum == -1 || regnum == I386_FSBASE_REGNUM)
+    {
+      register_t base;
+
+      if (ptrace (PT_GETFSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't get segment register fs_base"));
+
+      regcache->raw_supply (I386_FSBASE_REGNUM, &base);
+      if (regnum != -1)
+	return;
+    }
+#endif
+#ifdef PT_GETGSBASE
+  if (regnum == -1 || regnum == I386_GSBASE_REGNUM)
+    {
+      register_t base;
+
+      if (ptrace (PT_GETGSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't get segment register gs_base"));
+
+      regcache->raw_supply (I386_GSBASE_REGNUM, &base);
+      if (regnum != -1)
+	return;
+    }
+#endif
+
+  /* There is no i386_fxsave_supplies or i386_xsave_supplies.
+     Instead, the earlier register sets return early if the request
+     was for a specific register that was already satisified to avoid
+     fetching the FPU/XSAVE state unnecessarily.  */
+
+#ifdef PT_GETXSTATE_INFO
+  if (xsave_len != 0)
+    {
+      void *xstateregs = alloca (xsave_len);
+
+      if (ptrace (PT_GETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
+	perror_with_name (_("Couldn't get extended state status"));
+
+      i387_supply_xsave (regcache, regnum, xstateregs);
+      return;
+    }
+#endif
+  if (have_ptrace_xmmregs != 0)
+    {
+      char xmmregs[I387_SIZEOF_FXSAVE];
+
+      if (ptrace(PT_GETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs, 0) == -1)
+	perror_with_name (_("Couldn't get XMM registers"));
+
+      i387_supply_fxsave (regcache, regnum, xmmregs);
+      return;
+    }
+
+  struct fpreg fpregs;
+
+  if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+    perror_with_name (_("Couldn't get floating point status"));
+
+  i387_supply_fsave (regcache, regnum, &fpregs);
+}
+
+/* Store register REGNUM back into the inferior.  If REGNUM is -1, do
+   this for all registers.  */
+
+void
+i386_fbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
+{
+  struct gdbarch *gdbarch = regcache->arch ();
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
+
+  if (store_register_set<struct reg> (regcache, regnum, PT_GETREGS, PT_SETREGS,
+				      &i386_fbsd_gregset))
+    {
+      if (regnum != -1)
+	return;
+    }
+
+#ifdef PT_SETFSBASE
+  if (regnum == -1 || regnum == I386_FSBASE_REGNUM)
+    {
+      register_t base;
+
+      regcache->raw_collect (I386_FSBASE_REGNUM, &base);
+
+      if (ptrace (PT_SETFSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't write segment register fs_base"));
+      if (regnum != -1)
+	return;
+    }
+#endif
+#ifdef PT_SETGSBASE
+  if (regnum == -1 || regnum == I386_GSBASE_REGNUM)
+    {
+      register_t base;
+
+      regcache->raw_collect (I386_GSBASE_REGNUM, &base);
+
+      if (ptrace (PT_SETGSBASE, pid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
+	perror_with_name (_("Couldn't write segment register gs_base"));
+      if (regnum != -1)
+	return;
+    }
+#endif
+
+  /* There is no i386_fxsave_supplies or i386_xsave_supplies.
+     Instead, the earlier register sets return early if the request
+     was for a specific register that was already satisified to avoid
+     fetching the FPU/XSAVE state unnecessarily.  */
+
+#ifdef PT_GETXSTATE_INFO
+  if (xsave_len != 0)
+    {
+      void *xstateregs = alloca (xsave_len);
+
+      if (ptrace (PT_GETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
+	perror_with_name (_("Couldn't get extended state status"));
+
+      i387_collect_xsave (regcache, regnum, xstateregs, 0);
+
+      if (ptrace (PT_SETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs, xsave_len)
+	  == -1)
+	perror_with_name (_("Couldn't write extended state status"));
+      return;
+    }
+#endif
+  if (have_ptrace_xmmregs != 0)
+    {
+      char xmmregs[I387_SIZEOF_FXSAVE];
+
+      if (ptrace(PT_GETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs, 0) == -1)
+	perror_with_name (_("Couldn't get XMM registers"));
+
+      i387_collect_fxsave (regcache, regnum, xmmregs);
+
+      if (ptrace (PT_SETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs, 0) == -1)
+	perror_with_name (_("Couldn't write XMM registers"));
+      return;
+    }
+
+  struct fpreg fpregs;
+
+  if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+    perror_with_name (_("Couldn't get floating point status"));
+
+  i387_collect_fsave (regcache, regnum, &fpregs);
+
+  if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+    perror_with_name (_("Couldn't write floating point status"));
+}
 
 /* Resume execution of the inferior process.  If STEP is nonzero,
    single-step it.  If SIGNAL is nonzero, give it that signal.  */
@@ -73,14 +242,14 @@ i386_fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
       ULONGEST eflags;
 
       /* Workaround for a bug in FreeBSD.  Make sure that the trace
- 	 flag is off when doing a continue.  There is a code path
- 	 through the kernel which leaves the flag set when it should
- 	 have been cleared.  If a process has a signal pending (such
- 	 as SIGALRM) and we do a PT_STEP, the process never really has
- 	 a chance to run because the kernel needs to notify the
- 	 debugger that a signal is being sent.  Therefore, the process
- 	 never goes through the kernel's trap() function which would
- 	 normally clear it.  */
+	 flag is off when doing a continue.  There is a code path
+	 through the kernel which leaves the flag set when it should
+	 have been cleared.  If a process has a signal pending (such
+	 as SIGALRM) and we do a PT_STEP, the process never really has
+	 a chance to run because the kernel needs to notify the
+	 debugger that a signal is being sent.  Therefore, the process
+	 never goes through the kernel's trap() function which would
+	 normally clear it.  */
 
       regcache_cooked_read_unsigned (regcache, I386_EFLAGS_REGNUM,
 				     &eflags);
@@ -135,15 +304,18 @@ i386fbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 }
 
 
-#ifdef PT_GETXSTATE_INFO
 /* Implement the read_description method.  */
 
 const struct target_desc *
 i386_fbsd_nat_target::read_description ()
 {
+#ifdef PT_GETXSTATE_INFO
   static int xsave_probed;
   static uint64_t xcr0;
+#endif
+  static int xmm_probed;
 
+#ifdef PT_GETXSTATE_INFO
   if (!xsave_probed)
     {
       struct ptrace_xstate_info info;
@@ -151,28 +323,31 @@ i386_fbsd_nat_target::read_description ()
       if (ptrace (PT_GETXSTATE_INFO, inferior_ptid.pid (),
 		  (PTRACE_TYPE_ARG3) &info, sizeof (info)) == 0)
 	{
-	  x86bsd_xsave_len = info.xsave_len;
+	  xsave_len = info.xsave_len;
 	  xcr0 = info.xsave_mask;
 	}
       xsave_probed = 1;
     }
 
-  if (x86bsd_xsave_len == 0)
-    xcr0 = X86_XSTATE_SSE_MASK;
-
-  return i386_target_description (xcr0, true);
-}
+  if (xsave_len != 0)
+    return i386_target_description (xcr0, true);
 #endif
 
-#if defined(HAVE_PT_GETDBREGS) && defined(USE_SIGTRAP_SIGINFO)
-/* Implement the supports_stopped_by_hw_breakpoints method.  */
+  if (!xmm_probed)
+    {
+      char xmmregs[I387_SIZEOF_FXSAVE];
 
-bool
-i386_fbsd_nat_target::supports_stopped_by_hw_breakpoint ()
-{
-  return true;
+      if (ptrace (PT_GETXMMREGS, inferior_ptid.pid (),
+		  (PTRACE_TYPE_ARG3) xmmregs, 0) == 0)
+	have_ptrace_xmmregs = 1;
+      xmm_probed = 1;
+    }
+
+  if (have_ptrace_xmmregs)
+    return i386_target_description (X86_XSTATE_SSE_MASK, true);
+
+  return i386_target_description (X86_XSTATE_X87_MASK, true);
 }
-#endif
 
 void _initialize_i386fbsd_nat ();
 void
@@ -182,30 +357,4 @@ _initialize_i386fbsd_nat ()
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (i386fbsd_supply_pcb);
-
-#ifdef KERN_PROC_SIGTRAMP
-  /* Normally signal frames are detected via i386fbsd_sigtramp_p.
-     However, FreeBSD 9.2 through 10.1 do not include the page holding
-     the signal code in core dumps.  These releases do provide a
-     kern.proc.sigtramp.<pid> sysctl that returns the location of the
-     signal trampoline for a running process.  We fetch the location
-     of the current (gdb) process and use this to identify signal
-     frames in core dumps from these releases.  */
-  {
-    int mib[4];
-    struct kinfo_sigtramp kst;
-    size_t len;
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_SIGTRAMP;
-    mib[3] = getpid ();
-    len = sizeof (kst);
-    if (sysctl (mib, 4, &kst, &len, NULL, 0) == 0)
-      {
-	i386fbsd_sigtramp_start_addr = (uintptr_t) kst.ksigtramp_start;
-	i386fbsd_sigtramp_end_addr = (uintptr_t) kst.ksigtramp_end;
-      }
-  }
-#endif
 }

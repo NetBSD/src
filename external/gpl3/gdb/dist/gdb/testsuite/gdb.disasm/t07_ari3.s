@@ -171,3 +171,4 @@ _start:
     exts.l #2,@0x12345678:32         ;01046b281234567817e0
 
 	.end
+	.section	.note.GNU-stack,"",@progbits

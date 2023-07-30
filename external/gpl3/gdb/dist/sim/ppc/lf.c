@@ -26,17 +26,8 @@
 #include "misc.h"
 #include "lf.h"
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
 
 struct _lf {
   FILE *stream;
@@ -51,8 +42,8 @@ struct _lf {
 
 
 lf *
-lf_open(char *name,
-	char *real_name,
+lf_open(const char *name,
+	const char *real_name,
 	lf_file_references references,
 	lf_file_type type,
 	const char *program)

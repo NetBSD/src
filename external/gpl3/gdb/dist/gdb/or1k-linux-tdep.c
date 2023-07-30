@@ -1,5 +1,5 @@
 /* Target-dependent code for GNU/Linux on OpenRISC processors.
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,9 +27,12 @@
 #include "trad-frame.h"
 #include "gdbarch.h"
 
-/* Define the general register mapping.  The kernel puts the PC at offset 0,
-   gdb puts it at offset 32.  Register x0 is always 0 and can be ignored.
-   Registers x1 to x31 are in the same place.  */
+#include "features/or1k-linux.c"
+
+/* Define the general register mapping.  The kernel and GDB put registers
+   r1 to r31 in the same place.  The NPC register is stored at index 32 in
+   linux and 33 in GDB, in GDB 32 is for PPC which is not popupated from linux.
+   Register r0 is always 0 and can be ignored.  */
 
 static const struct regcache_map_entry or1k_linux_gregmap[] =
 {
@@ -59,7 +62,7 @@ or1k_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 /* Signal trampoline support.  */
 
 static void or1k_linux_sigframe_init (const struct tramp_frame *self,
-				       struct frame_info *this_frame,
+				       frame_info_ptr this_frame,
 				       struct trad_frame_cache *this_cache,
 				       CORE_ADDR func);
 
@@ -113,7 +116,7 @@ static const struct tramp_frame or1k_linux_sigframe = {
 
 static void
 or1k_linux_sigframe_init (const struct tramp_frame *self,
-			   struct frame_info *this_frame,
+			   frame_info_ptr this_frame,
 			   struct trad_frame_cache *this_cache,
 			   CORE_ADDR func)
 {
@@ -140,16 +143,18 @@ or1k_linux_sigframe_init (const struct tramp_frame *self,
 static void
 or1k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 0);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 svr4_ilp32_fetch_link_map_offsets);
+					 linux_ilp32_fetch_link_map_offsets);
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
 
   /* GNU/Linux uses the dynamic linker included in the GNU C Library.  */
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
+
+  set_gdbarch_software_single_step (gdbarch, or1k_software_single_step);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
@@ -169,4 +174,7 @@ _initialize_or1k_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_or1k, 0, GDB_OSABI_LINUX,
 			  or1k_linux_init_abi);
+
+  /* Initialize the standard target descriptions.  */
+  initialize_tdesc_or1k_linux ();
 }

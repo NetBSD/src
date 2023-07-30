@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,19 +31,23 @@ if [skip_ctf_tests] {
 
 standard_testfile .c
 
-# Using `-gt` generates full-fledged CTF debug information.
-set opts "additional_flags=-gt"
+# Using `-gctf` generates full-fledged CTF debug information.
+set opts {}
+lappend opts additional_flags=-gctf
+lappend opts ldflags=-Wl,--strip-debug
+lappend opts ldflags=-Wl,--ctf-variables
+lappend opts nowarnings
+
 if { [prepare_for_testing "failed to prepare" ${testfile} \
-	  [list $srcfile] [list $opts nowarnings]] } {
+	  [list $srcfile] $opts] } {
     return 0
 }
 
 #
 # set it up at a breakpoint so we can play with the variable values
 #
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 # test vars and pointers

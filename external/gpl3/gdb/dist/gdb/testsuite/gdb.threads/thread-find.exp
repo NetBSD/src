@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ gdb_test_multiple "info threads" "collect thread id" {
     }
 }
 
-if { [info exists thread6] } then {
+if {[info exists thread6]} {
     gdb_test "echo $thread6\\n" "$thread6" "got thread ids"
 }
 
@@ -84,7 +84,7 @@ gdb_test_multiple "info threads" "collect thread id" {
     }
 }
 
-if { [info exists process6] } then {
+if {[info exists process6]} {
     gdb_test "echo $process6\\n" "$process6" "got process ids"
 }
 
@@ -101,7 +101,7 @@ gdb_test_multiple "info threads" "collect thread id" {
     }
 }
 
-if { [info exists lwp6] } then {
+if {[info exists lwp6]} {
     gdb_test "echo $lwp6\\n" "$lwp6" "got lwp ids"
 }
 
@@ -126,7 +126,7 @@ gdb_test "thread find threadname_1" \
 # Test 'thread find' with thread ids, if any.
 #
 
-if { [info exists thread6] } then {
+if {[info exists thread6]} {
     gdb_test "thread find $thread6" \
 	"Thread 6 has .*$thread6.*" "find thread id 6"
     gdb_test "thread find $thread5" \
@@ -145,7 +145,7 @@ if { [info exists thread6] } then {
 # Test 'thread find' with process ids, if any.
 #
 
-if { [info exists process6] } then {
+if {[info exists process6]} {
     gdb_test "thread find $process6" \
 	"Thread 6 has .*$process6.*" "find process id 6"
     gdb_test "thread find $process5" \
@@ -164,7 +164,7 @@ if { [info exists process6] } then {
 # Test 'thread find' with lwp ids, if any.
 #
 
-if { [info exists lwp6] } then {
+if {[info exists lwp6]} {
     gdb_test "thread find $lwp6" \
 	"Thread 6 has .*$lwp6.*" "find lwp id 6"
     gdb_test "thread find $lwp5" \
@@ -197,7 +197,7 @@ gdb_test_multiple "thread find threadname_\[345\]" "test regular exp" {
 	exp_continue
     }
     -re ".*$gdb_prompt $" {
-	if { $see3 && $see4 && $see5 && !$see1 && !$see2 && !$see6 } then {
+	if {$see3 && $see4 && $see5 && !$see1 && !$see2 && !$see6} {
 	    pass "test regular exp"
 	} else {
 	    fail "test regular exp"
@@ -219,7 +219,7 @@ gdb_test_multiple "info threads 2 4 6" "info threads 2 4 6" {
 	exp_continue
     }
     -re "$gdb_prompt $" {
-	if { $see2 && $see4 && $see6 && !$see1 && !$see3 && !$see5 } then {
+	if {$see2 && $see4 && $see6 && !$see1 && !$see3 && !$see5} {
 	    pass "info threads 2 4 6"
 	} else {
 	    fail "info threads 2 4 6"
@@ -241,7 +241,7 @@ gdb_test_multiple "info threads 3-5" "info threads 3-5" {
 	exp_continue
     }
     -re "$gdb_prompt $" {
-	if { $see3 && $see4 && $see5 && !$see1 && !$see2 && !$see6 } then {
+	if {$see3 && $see4 && $see5 && !$see1 && !$see2 && !$see6} {
 	    pass "info threads 3-5"
 	} else {
 	    fail "info threads 3-5"
@@ -265,7 +265,7 @@ gdb_test_multiple "info threads 3-3" "info threads 3-3" {
 	exp_continue
     }
     -re ".*$gdb_prompt $" {
-	if { $see3 && !$see1 && !$see2 && !$see4 && !$see5 && !$see6 } then {
+	if {$see3 && !$see1 && !$see2 && !$see4 && !$see5 && !$see6} {
 	    pass "info threads 3-3"
 	} else {
 	    fail "info threads 3-3"

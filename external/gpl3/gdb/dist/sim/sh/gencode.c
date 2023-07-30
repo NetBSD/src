@@ -354,7 +354,7 @@ static op tab[] =
 
   /* sh4a */
   { "", "", "clrdmxy", "0000000010001000",
-    "saved_state.asregs.cregs.named.sr &= ~(SR_MASK_DMX | SR_MASK_DMY);"
+    "saved_state.asregs.sr &= ~(SR_MASK_DMX | SR_MASK_DMY);"
   },
 
   { "", "0", "cmp/eq #<imm>,R0", "10001000i8*1....",
@@ -1239,17 +1239,17 @@ static op tab[] =
   },
 
   { "", "n", "ocbi @<REG_N>", "0000nnnn10010011",
-    "RSBAT (R[n]); /* Take exceptions like byte load, otherwise noop.  */",
+    "(void) RSBAT (R[n]); /* Take exceptions like byte load, otherwise noop.  */",
     "/* FIXME: Cache not implemented */",
   },
 
   { "", "n", "ocbp @<REG_N>", "0000nnnn10100011",
-    "RSBAT (R[n]); /* Take exceptions like byte load, otherwise noop.  */",
+    "(void) RSBAT (R[n]); /* Take exceptions like byte load, otherwise noop.  */",
     "/* FIXME: Cache not implemented */",
   },
 
   { "", "n", "ocbwb @<REG_N>", "0000nnnn10110011",
-    "RSBAT (R[n]); /* Take exceptions like byte load, otherwise noop.  */",
+    "(void) RSBAT (R[n]); /* Take exceptions like byte load, otherwise noop.  */",
     "/* FIXME: Cache not implemented */",
   },
 
@@ -1342,14 +1342,14 @@ static op tab[] =
 
   /* sh4a */
   { "", "", "setdmx", "0000000010011000",
-    "saved_state.asregs.cregs.named.sr |=  SR_MASK_DMX;"
-    "saved_state.asregs.cregs.named.sr &= ~SR_MASK_DMY;"
+    "saved_state.asregs.sr |=  SR_MASK_DMX;"
+    "saved_state.asregs.sr &= ~SR_MASK_DMY;"
   },
 
   /* sh4a */
   { "", "", "setdmy", "0000000011001000",
-    "saved_state.asregs.cregs.named.sr |=  SR_MASK_DMY;"
-    "saved_state.asregs.cregs.named.sr &= ~SR_MASK_DMX;"
+    "saved_state.asregs.sr |=  SR_MASK_DMY;"
+    "saved_state.asregs.sr &= ~SR_MASK_DMX;"
   },
 
   /* sh-dsp */
@@ -1863,7 +1863,7 @@ op ppi_tab[] =
     "if (i <= 16)",
     "  res = Sz << i;",
     "else if (i >= 128 - 16)",
-    "  res = (unsigned) Sz >> 128 - i;	/* no sign extension */",
+    "  res = (unsigned) Sz >> (128 - i);	/* no sign extension */",
     "else",
     "  {",
     "    RAISE_EXCEPTION (SIGILL);",
@@ -1887,7 +1887,7 @@ op ppi_tab[] =
     "    else",
     "      {",
     "        res = Sz << i;",
-    "        res_grd = Sz_grd << i | (unsigned) Sz >> 32 - i;",
+    "        res_grd = Sz_grd << i | (unsigned) Sz >> (32 - i);",
     "      }",
     "    res_grd = SEXT (res_grd);",
     "    carry = res_grd & 1;",
@@ -1902,7 +1902,7 @@ op ppi_tab[] =
     "      }",
     "    else",
     "      {",
-    "        res = Sz >> i | Sz_grd << 32 - i;",
+    "        res = Sz >> i | Sz_grd << (32 - i);",
     "        res_grd = Sz_grd >> i;",
     "      }",
     "    carry = Sz >> (i - 1) & 1;",
@@ -1973,7 +1973,7 @@ op ppi_tab[] =
     "ADD_SUB_GE;",
     "DSR &= ~0xf1;\n",
     "if (res || res_grd)\n",
-    "  DSR |= greater_equal | res_grd >> 2 & DSR_MASK_N | overflow;\n",
+    "  DSR |= greater_equal | (res_grd >> 2 & DSR_MASK_N) | overflow;\n",
     "else\n",
     "  DSR |= DSR_MASK_Z | overflow;\n",
     "DSR |= carry;\n",
@@ -1992,7 +1992,7 @@ op ppi_tab[] =
     "ADD_SUB_GE;",
     "DSR &= ~0xf1;\n",
     "if (res || res_grd)\n",
-    "  DSR |= greater_equal | res_grd >> 2 & DSR_MASK_N | overflow;\n",
+    "  DSR |= greater_equal | (res_grd >> 2 & DSR_MASK_N) | overflow;\n",
     "else\n",
     "  DSR |= DSR_MASK_Z | overflow;\n",
     "DSR |= carry;\n",
@@ -2148,7 +2148,7 @@ op ppi_tab[] =
     "if (Sy <= 16)",
     "  res = Sx << Sy;",
     "else if (Sy >= 128 - 16)",
-    "  res = (unsigned) Sx >> 128 - Sy;	/* no sign extension */",
+    "  res = (unsigned) Sx >> (128 - Sy);	/* no sign extension */",
     "else",
     "  {",
     "    RAISE_EXCEPTION (SIGILL);",
@@ -2171,7 +2171,7 @@ op ppi_tab[] =
     "    else",
     "      {",
     "        res = Sx << Sy;",
-    "        res_grd = Sx_grd << Sy | (unsigned) Sx >> 32 - Sy;",
+    "        res_grd = Sx_grd << Sy | (unsigned) Sx >> (32 - Sy);",
     "      }",
     "    res_grd = SEXT (res_grd);",
     "    carry = res_grd & 1;",
@@ -2186,7 +2186,7 @@ op ppi_tab[] =
     "      }",
     "    else",
     "      {",
-    "        res = Sx >> Sy | Sx_grd << 32 - Sy;",
+    "        res = Sx >> Sy | Sx_grd << (32 - Sy);",
     "        res_grd = Sx_grd >> Sy;",
     "      }",
     "    carry = Sx >> (Sy - 1) & 1;",
@@ -2266,7 +2266,7 @@ op ppi_tab[] =
     "int Sx_grd = GET_DSP_GRD (x);",
     "",
     "res = Sx - 0x10000;",
-    "carry = res > Sx;",
+    "carry = Sx < (INT_MIN + 0x10000);",
     "res_grd = Sx_grd - carry;",
     "COMPUTE_OVERFLOW;",
     "ADD_SUB_GE;",
@@ -2277,7 +2277,7 @@ op ppi_tab[] =
     "int Sx_grd = GET_DSP_GRD (x);",
     "",
     "res = Sx + 0x10000;",
-    "carry = res < Sx;",
+    "carry = Sx > (INT_MAX - 0x10000);",
     "res_grd = Sx_grd + carry;",
     "COMPUTE_OVERFLOW;",
     "ADD_SUB_GE;",
@@ -2288,7 +2288,7 @@ op ppi_tab[] =
     "int Sy_grd = SIGN32 (Sy);",
     "",
     "res = Sy - 0x10000;",
-    "carry = res > Sy;",
+    "carry = Sy < (INT_MIN + 0x10000);",
     "res_grd = Sy_grd - carry;",
     "COMPUTE_OVERFLOW;",
     "ADD_SUB_GE;",
@@ -2299,7 +2299,7 @@ op ppi_tab[] =
     "int Sy_grd = SIGN32 (Sy);",
     "",
     "res = Sy + 0x10000;",
-    "carry = res < Sy;",
+    "carry = Sy > (INT_MAX - 0x10000);",
     "res_grd = Sy_grd + carry;",
     "COMPUTE_OVERFLOW;",
     "ADD_SUB_GE;",
@@ -2363,7 +2363,7 @@ op ppi_tab[] =
   },
   { "","", "(if cc) pdmsb Sy,Dz",	"101111cc..yyzzzz",
     "unsigned Sy = DSP_R (y);",
-    "int i;",
+    "int i = 16;",
     "",
     "if (Sy < 0)",
     "  Sy = ~Sy;",
@@ -3244,17 +3244,17 @@ ppi_gensim (void)
   printf ("ppi_insn (int iword)\n");
   printf ("{\n");
   printf ("  /* 'ee' = [x0, x1, y0, a1] */\n");
-  printf ("  static char e_tab[] = { 8,  9, 10,  5};\n");
+  printf ("  static char const e_tab[] = { 8,  9, 10,  5};\n");
   printf ("  /* 'ff' = [y0, y1, x0, a1] */\n");
-  printf ("  static char f_tab[] = {10, 11,  8,  5};\n");
+  printf ("  static char const f_tab[] = {10, 11,  8,  5};\n");
   printf ("  /* 'xx' = [x0, x1, a0, a1]  */\n");
-  printf ("  static char x_tab[] = { 8,  9,  7,  5};\n");
+  printf ("  static char const x_tab[] = { 8,  9,  7,  5};\n");
   printf ("  /* 'yy' = [y0, y1, m0, m1]  */\n");
-  printf ("  static char y_tab[] = {10, 11, 12, 14};\n");
+  printf ("  static char const y_tab[] = {10, 11, 12, 14};\n");
   printf ("  /* 'gg' = [m0, m1, a0, a1]  */\n");
-  printf ("  static char g_tab[] = {12, 14,  7,  5};\n");
+  printf ("  static char const g_tab[] = {12, 14,  7,  5};\n");
   printf ("  /* 'uu' = [x0, y0, a0, a1]  */\n");
-  printf ("  static char u_tab[] = { 8, 10,  7,  5};\n");
+  printf ("  static char const u_tab[] = { 8, 10,  7,  5};\n");
   printf ("\n");
   printf ("  int z;\n");
   printf ("  int res, res_grd;\n");
@@ -3347,7 +3347,7 @@ ppi_gensim (void)
   printf ("  }\n");
   printf ("  DSR &= ~0xf1;\n");
   printf ("  if (res || res_grd)\n");
-  printf ("    DSR |= greater_equal | res_grd >> 2 & DSR_MASK_N | overflow;\n");
+  printf ("    DSR |= greater_equal | (res_grd >> 2 & DSR_MASK_N) | overflow;\n");
   printf ("  else\n");
   printf ("    DSR |= DSR_MASK_Z | overflow;\n");
   printf (" assign_dc:\n");

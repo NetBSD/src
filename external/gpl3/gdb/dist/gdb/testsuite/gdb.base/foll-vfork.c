@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1997-2020 Free Software Foundation, Inc.
+   Copyright 1997-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -40,12 +40,11 @@ main (int argc, char ** argv)
     memcpy (prog + len - 10, "vforked-prog", 12);
     prog[len + 2] = 0;
 
-    printf ("I'm the child!\n");
     execlp (prog, prog, (char *) 0);
     perror ("exec failed");
     _exit (1);
   }
   else {
-    printf ("I'm the proud parent of child #%d!\n", pid);
+    const char *volatile s = "I'm the proud parent of child";
   }
 }

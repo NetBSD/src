@@ -1,4 +1,4 @@
-/* Copyright 2010-2020 Free Software Foundation, Inc.
+/* Copyright 2010-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -360,3 +360,4 @@ die149:	.uleb128 0x16		/* DW_TAG_variable */
 .LASF4:
 	.string	"GNU C++ 4.4.2"
 	.ident	"GCC: (GNU) 4.4.2"
+	.section	.note.GNU-stack,"",@progbits

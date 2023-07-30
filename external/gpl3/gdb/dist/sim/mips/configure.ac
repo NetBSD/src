@@ -1,13 +1,10 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(Makefile.in)
-sinclude(../common/acinclude.m4)
+AC_CONFIG_MACRO_DIRS([../m4 ../.. ../../config])
 
-SIM_AC_COMMON
-
-dnl Options available in this module
-SIM_AC_OPTION_ALIGNMENT(NONSTRICT_ALIGNMENT)
-SIM_AC_OPTION_WARNINGS
-SIM_AC_OPTION_RESERVED_BITS(1)
+dnl The sim shouldn't be checking $target and changing behavior.  But it is,
+dnl and until we clean that up, we need to expand --target for use below.
+AC_CANONICAL_SYSTEM
 
 # DEPRECATED
 #
@@ -29,28 +26,8 @@ AC_SUBST(SIM_SUBTARGET)
 
 
 #
-# Select the byte order of the target
-#
-mips_endian=
-default_endian=
-case "${target}" in
-  mips64el*-*-*)        mips_endian=LITTLE ;;
-  mips64vr*el-*-*)      default_endian=LITTLE ;;
-  mips64*-*-*)          default_endian=BIG ;;
-  mips16*-*-*)          default_endian=BIG ;;
-  mipsisa32*-*-*)       default_endian=BIG ;;
-  mipsisa64*-*-*)       default_endian=BIG ;;
-  mips*-*-*)            default_endian=BIG ;;
-  *)                    default_endian=BIG ;;
-esac
-SIM_AC_OPTION_ENDIAN($mips_endian,$default_endian)
-
-
-
-#
 # Select the bitsize of the target
 #
-mips_addr_bitsize=
 case "${target}" in
   mips*-sde-elf*)       mips_bitsize=64 ; mips_msb=63 ;;
   mips*-mti-elf*)       mips_bitsize=64 ; mips_msb=63 ;;
@@ -61,27 +38,23 @@ case "${target}" in
   mips*-*-*)            mips_bitsize=32 ; mips_msb=31 ;;
   *)                    mips_bitsize=64 ; mips_msb=63 ;;
 esac
-SIM_AC_OPTION_BITSIZE($mips_bitsize,$mips_msb,$mips_addr_bitsize)
+SIM_AC_OPTION_BITSIZE($mips_bitsize,$mips_msb)
 
 
 
 #
 # Select the floating hardware support of the target
 #
-mips_fpu=HARDWARE_FLOATING_POINT
 mips_fpu_bitsize=
 case "${target}" in
-  mips*tx39*)		mips_fpu=HARD_FLOATING_POINT ; mips_fpu_bitsize=32 ;;
-  mips*-sde-elf*)       mips_fpu=HARD_FLOATING_POINT ; mips_fpu_bitsize=64 ;;
-  mips*-mti-elf*)       mips_fpu=HARD_FLOATING_POINT ; mips_fpu_bitsize=64 ;;
-  mips64*-*-*)          mips_fpu=HARD_FLOATING_POINT ;;
-  mips16*-*-*)          mips_fpu=HARD_FLOATING_POINT ;;
-  mipsisa32*-*-*)       mips_fpu=HARD_FLOATING_POINT ; mips_fpu_bitsize=64 ;;
-  mipsisa64*-*-*)       mips_fpu=HARD_FLOATING_POINT ; mips_fpu_bitsize=64 ;;
-  mips*-*-*)            mips_fpu=HARD_FLOATING_POINT ; mips_fpu_bitsize=32 ;;
-  *)                    mips_fpu=HARD_FLOATING_POINT ;;
+  mips*tx39*)           mips_fpu_bitsize=32 ;;
+  mips*-sde-elf*)       mips_fpu_bitsize=64 ;;
+  mips*-mti-elf*)       mips_fpu_bitsize=64 ;;
+  mipsisa32*-*-*)       mips_fpu_bitsize=64 ;;
+  mipsisa64*-*-*)       mips_fpu_bitsize=64 ;;
+  mips*-*-*)            mips_fpu_bitsize=32 ;;
 esac
-SIM_AC_OPTION_FLOAT($mips_fpu,$mips_fpu_bitsize)
+SIM_AC_OPTION_FLOAT(HARD_FLOATING_POINT,$mips_fpu_bitsize)
 
 
 
@@ -129,7 +102,8 @@ case "${target}" in
 			sim_gen=MULTI
 			sim_multi_configs="\
 			  micromips:micromips64,micromipsdsp:32,64,f:mips_micromips\
-			  mips64r2:mips64r2,mips3d,mips16,mips16e,mdmx,dsp,dsp2,smartmips:32,64,f:mipsisa64r2"
+			  mipsisa64r2:mips64r2,mips16,mips16e,mdmx,dsp,dsp2,mips3d,smartmips:32,64,f:mipsisa32r2,mipsisa64r2,mipsisa32r5,mipsisa64r5\
+			  mipsisa64r6:mips64r6:32,64,f:mipsisa32r6,mipsisa64r6"
 			sim_multi_default=mipsisa64r2
 			;;
   mips64*-*-*)		sim_igen_filter="32,64,f"
@@ -145,6 +119,11 @@ case "${target}" in
 			  mips32r2:mips32r2,mips3d,mips16,mips16e,mdmx,dsp,dsp2,smartmips:32,f:mipsisa32r2"
 			sim_multi_default=mipsisa32r2
 			;;
+  mipsisa32r6*-*-*)	sim_gen=IGEN
+			sim_igen_machine="-M mips32r6"
+			sim_igen_filter="32,f"
+			sim_mach_default="mipsisa32r6"
+			;;
   mipsisa32*-*-*)	sim_gen=M16
 			sim_igen_machine="-M mips32,mips16,mips16e,smartmips"
 			sim_m16_machine="-M mips16,mips16e,mips32"
@@ -156,6 +135,11 @@ case "${target}" in
 			sim_m16_machine="-M mips16,mips16e,mips64r2"
 			sim_igen_filter="32,64,f"
 			sim_mach_default="mipsisa64r2"
+			;;
+  mipsisa64r6*-*-*)	sim_gen=IGEN
+			sim_igen_machine="-M mips64r6"
+			sim_igen_filter="32,64,f"
+			sim_mach_default="mipsisa64r6"
 			;;
   mipsisa64sb1*-*-*)	sim_gen=IGEN
 			sim_igen_machine="-M mips64,mips3d,sb1"
@@ -221,7 +205,7 @@ if test ${sim_gen} = MULTI; then
 
   cat << __EOF__ > multi-run.c
 /* Main entry point for MULTI simulators.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -243,6 +227,7 @@ if test ${sim_gen} = MULTI; then
 #include "sim-main.h"
 #include "multi-include.h"
 #include "elf-bfd.h"
+#include "elfxx-mips.h"
 #include "elf/mips.h"
 
 #define SD sd
@@ -262,7 +247,11 @@ sim_engine_run (SIM_DESC sd,
 	   & EF_MIPS_ARCH_ASE_MICROMIPS)
     mach = bfd_mach_mips_micromips;
   else
-    mach = STATE_ARCHITECTURE (SD)->mach;
+  {
+     mach = _bfd_elf_mips_mach (elf_elfheader (STATE_PROG_BFD (sd))->e_flags);
+     if (!mach)
+       mach = STATE_ARCHITECTURE (SD)->mach;
+  }
 
   switch (mach)
     {
@@ -423,34 +412,5 @@ AC_SUBST(sim_multi_flags)
 AC_SUBST(sim_multi_igen_configs)
 AC_SUBST(sim_multi_src)
 AC_SUBST(sim_multi_obj)
-#
-# Add simulated hardware devices
-#
-hw_enabled=no
-case "${target}" in
-  mips*tx39*)
-	hw_enabled=yes
-	hw_extra_devices="tx3904cpu tx3904irc tx3904tmr tx3904sio" 
-	;;
-  *)
-	;;
-esac
-SIM_AC_OPTION_HARDWARE($hw_enabled,$hw_devices,$hw_extra_devices)
-
-
-# Choose simulator engine
-case "${target}" in
-  *)    mips_igen_engine="engine.o"
-	;;
-esac
-AC_SUBST(mips_igen_engine)
-
-
-AC_PATH_X
-mips_extra_libs=""
-AC_SUBST(mips_extra_libs)
-
-AC_CHECK_LIB(m, fabs)
-AC_CHECK_FUNCS(aint anint sqrt)
 
 SIM_AC_OUTPUT

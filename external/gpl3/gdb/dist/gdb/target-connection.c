@@ -1,6 +1,6 @@
 /* List of target connections for GDB.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 
 #include "inferior.h"
 #include "target.h"
+#include "observable.h"
 
 /* A map between connection number and representative process_stratum
    target.  */
@@ -49,6 +50,9 @@ connection_list_add (process_stratum_target *t)
 void
 connection_list_remove (process_stratum_target *t)
 {
+  /* Notify about the connection being removed before we reset the
+     connection number to zero.  */
+  gdb::observers::connection_removed.notify (t);
   process_targets.erase (t->connection_number);
   t->connection_number = 0;
 }
@@ -87,10 +91,7 @@ print_connection (struct ui_out *uiout, const char *requested_connections)
 
       process_stratum_target *t = it.second;
 
-      size_t l = strlen (t->shortname ());
-      if (t->connection_string () != NULL)
-	l += 1 + strlen (t->connection_string ());
-
+      size_t l = make_target_connection_string (t).length ();
       if (l > what_len)
 	what_len = l;
     }
@@ -133,7 +134,7 @@ print_connection (struct ui_out *uiout, const char *requested_connections)
 
       uiout->field_signed ("number", t->connection_number);
 
-      uiout->field_string ("what", make_target_connection_string (t).c_str ());
+      uiout->field_string ("what", make_target_connection_string (t));
 
       uiout->field_string ("description", t->longname ());
 

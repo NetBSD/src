@@ -1,4 +1,4 @@
-# Copyright 2003-2020 Free Software Foundation, Inc.
+# Copyright 2003-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 # Observe that the until command doesn't go all the way to sub2.
 
 
-if ![istarget "sh-*-*"] then {
+if {![istarget "sh-*-*"]} {
     verbose "Skipping SH backtrace tests."
     return
 }
@@ -48,8 +48,7 @@ gdb_load ${binfile}
 # Run to `main' where we begin our tests.
 #
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 

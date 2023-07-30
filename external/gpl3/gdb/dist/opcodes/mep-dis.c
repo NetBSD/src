@@ -5,7 +5,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-dis.in isn't
 
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -65,11 +65,8 @@ static int read_insn
 
 #define CGEN_VALIDATE_INSN_SUPPORTED
 
-static void print_tpreg (CGEN_CPU_DESC, PTR, CGEN_KEYWORD *, long, unsigned int);
-static void print_spreg (CGEN_CPU_DESC, PTR, CGEN_KEYWORD *, long, unsigned int);
-
 static void
-print_tpreg (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED, PTR dis_info,
+print_tpreg (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED, void *dis_info,
 	     CGEN_KEYWORD *table ATTRIBUTE_UNUSED, long val ATTRIBUTE_UNUSED,
 	     unsigned int flags ATTRIBUTE_UNUSED)
 {
@@ -79,7 +76,7 @@ print_tpreg (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED, PTR dis_info,
 }
 
 static void
-print_spreg (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED, PTR dis_info,
+print_spreg (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED, void *dis_info,
 	     CGEN_KEYWORD *table ATTRIBUTE_UNUSED, long val ATTRIBUTE_UNUSED,
 	     unsigned int flags ATTRIBUTE_UNUSED)
 {
@@ -647,12 +644,15 @@ mep_print_insn (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
   if (info->section && info->section->owner)
     {
       bfd *abfd = info->section->owner;
-      mep_config_index = abfd->tdata.elf_obj_data->elf_header->e_flags & EF_MEP_INDEX_MASK;
-      /* This instantly redefines MEP_CONFIG, MEP_OMASK, .... MEP_VLIW64 */
+      if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
+	{
+	  mep_config_index = abfd->tdata.elf_obj_data->elf_header->e_flags & EF_MEP_INDEX_MASK;
+	  /* This instantly redefines MEP_CONFIG, MEP_OMASK, .... MEP_VLIW64 */
 
-      cop_type = abfd->tdata.elf_obj_data->elf_header->e_flags & EF_MEP_COP_MASK;
-      if (cop_type == EF_MEP_COP_IVC2)
-	ivc2 = 1;
+	  cop_type = abfd->tdata.elf_obj_data->elf_header->e_flags & EF_MEP_COP_MASK;
+	  if (cop_type == EF_MEP_COP_IVC2)
+	    ivc2 = 1;
+	}
     }
 
   /* Picking the right ISA bitmask for the current context is tricky.  */
@@ -719,7 +719,7 @@ mep_print_insn (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
 /* -- opc.c */
 
 void mep_cgen_print_operand
-  (CGEN_CPU_DESC, int, PTR, CGEN_FIELDS *, void const *, bfd_vma, int);
+  (CGEN_CPU_DESC, int, void *, CGEN_FIELDS *, void const *, bfd_vma, int);
 
 /* Main entry point for printing operands.
    XINFO is a `void *' and not a `disassemble_info *' to not put a requirement

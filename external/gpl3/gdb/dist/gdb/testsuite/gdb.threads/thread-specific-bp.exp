@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,7 +50,6 @@ proc check_thread_specific_breakpoint {mode} {
 	global gdb_prompt
 
 	if ![runto_main] {
-	    untested "could not run to main"
 	    return -1
 	}
 
@@ -88,9 +87,24 @@ proc check_thread_specific_breakpoint {mode} {
 	    set cmd "continue"
 	}
 	set test "continue to end"
-	gdb_test_multiple "$cmd" $test {
-	    -re "Breakpoint .* end .* at .*\r\n$gdb_prompt " {
-		pass $test
+	set thread_exited 0
+	set prompt 0
+	gdb_test_multiple "$cmd" $test -lbl {
+	    -re "(^|\r\n)\\\[Thread \[^\r\n\]* exited](?=\r\n)" {
+		if { $prompt } {
+		    pass $gdb_test_name
+		} else {
+		    set thread_exited 1
+		    exp_continue
+		}
+	    }
+	    -re "\r\n$gdb_prompt " {
+		if { $thread_exited } {
+		    pass $gdb_test_name
+		} else {
+		    set prompt 1
+		    exp_continue
+		}
 	    }
 	}
 

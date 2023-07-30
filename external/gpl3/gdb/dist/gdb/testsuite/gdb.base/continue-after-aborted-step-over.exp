@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,16 +41,16 @@ if {[build_executable "failed to prepare" $testfile $srcfile debug]} {
 }
 
 # DISPLACED indicates whether to use displaced-stepping.
-proc do_test {displaced} {
+proc do_test {displaced breakpoint_always_inserted} {
     global gdb_prompt decimal
     global srcfile binfile
 
     clean_restart $binfile
 
     gdb_test_no_output "set displaced-stepping $displaced"
+    gdb_test_no_output "set breakpoint always-inserted $breakpoint_always_inserted"
 
     if ![runto_main] {
-	fail "run to main"
 	return -1
     }
 
@@ -64,7 +64,11 @@ proc do_test {displaced} {
     }
 
     # Set a breakpoint that fails to insert.
-    gdb_test "b *0" "Breakpoint $decimal at 0x0"
+    if { $breakpoint_always_inserted == "on" } {
+	gdb_test "b *0" "Breakpoint $decimal at 0x0.*"
+    } else {
+	gdb_test "b *0" "Breakpoint $decimal at 0x0"
+    }
 
     gdb_test "continue" \
 	"Command aborted\\." \
@@ -83,5 +87,7 @@ proc do_test {displaced} {
 # machinery.  So make sure this runs with displaced stepping disabled,
 # and for good measure, also try with displaced stepping enabled.
 foreach_with_prefix displaced-stepping {"off" "on"} {
-    do_test ${displaced-stepping}
+    foreach_with_prefix breakpoint-always-inserted {"off" "on"} {
+	do_test ${displaced-stepping} ${breakpoint-always-inserted}
+    }
 }

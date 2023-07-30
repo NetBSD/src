@@ -1,5 +1,5 @@
 /* interp.c -- Simulator for Motorola 68HC11/68HC12
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, the GNU debugger.
@@ -16,6 +16,9 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "sim-assert.h"
@@ -100,7 +103,7 @@ sim_get_info (SIM_DESC sd, char *cmd)
 	  sim_io_eprintf (sd, "Valid devices: cpu timer sio eeprom\n");
 	  return;
 	}
-      hw_dev = sim_hw_parse (sd, dev_list[i].device);
+      hw_dev = sim_hw_parse (sd, "%s", dev_list[i].device);
       if (hw_dev == 0)
 	{
 	  sim_io_eprintf (sd, "Device '%s' not found\n", dev_list[i].device);
@@ -138,7 +141,7 @@ sim_board_reset (SIM_DESC sd)
       cpu_type = "/m68hc12";
     }
   
-  hw_cpu = sim_hw_parse (sd, cpu_type);
+  hw_cpu = sim_hw_parse (sd, "%s", cpu_type);
   if (hw_cpu == 0)
     {
       sim_io_eprintf (sd, "%s cpu not found in device tree.", cpu_type);
@@ -172,7 +175,7 @@ sim_hw_configure (SIM_DESC sd)
 	  /* Allocate core managed memory */
 
 	  /* the monitor  */
-	  sim_do_commandf (sd, "memory region 0x%lx@%d,0x%lx",
+	  sim_do_commandf (sd, "memory region 0x%x@%d,0x%x",
 			   /* MONITOR_BASE, MONITOR_SIZE */
 			   0x8000, M6811_RAM_LEVEL, 0x8000);
 	  sim_do_commandf (sd, "memory region 0x000@%d,0x8000",
@@ -180,7 +183,7 @@ sim_hw_configure (SIM_DESC sd)
 	  sim_hw_parse (sd, "/m68hc11/reg 0x1000 0x03F");
           if (cpu->bank_start < cpu->bank_end)
             {
-              sim_do_commandf (sd, "memory region 0x%lx@%d,0x100000",
+              sim_do_commandf (sd, "memory region 0x%x@%d,0x100000",
                                cpu->bank_virtual, M6811_RAM_LEVEL);
               sim_hw_parse (sd, "/m68hc11/use_bank 1");
             }
@@ -234,13 +237,13 @@ sim_hw_configure (SIM_DESC sd)
       if (hw_tree_find_property (device_tree, "/m68hc12/reg") == 0)
 	{
 	  /* Allocate core external memory.  */
-	  sim_do_commandf (sd, "memory region 0x%lx@%d,0x%lx",
+	  sim_do_commandf (sd, "memory region 0x%x@%d,0x%x",
 			   0x8000, M6811_RAM_LEVEL, 0x8000);
 	  sim_do_commandf (sd, "memory region 0x000@%d,0x8000",
 			   M6811_RAM_LEVEL);
           if (cpu->bank_start < cpu->bank_end)
             {
-              sim_do_commandf (sd, "memory region 0x%lx@%d,0x100000",
+              sim_do_commandf (sd, "memory region 0x%x@%d,0x100000",
                                cpu->bank_virtual, M6811_RAM_LEVEL);
               sim_hw_parse (sd, "/m68hc12/use_bank 1");
             }
@@ -388,8 +391,8 @@ m68hc11_pc_set (sim_cpu *cpu, sim_cia pc)
   cpu_set_pc (cpu, pc);
 }
 
-static int m68hc11_reg_fetch (SIM_CPU *, int, unsigned char *, int);
-static int m68hc11_reg_store (SIM_CPU *, int, unsigned char *, int);
+static int m68hc11_reg_fetch (SIM_CPU *, int, void *, int);
+static int m68hc11_reg_store (SIM_CPU *, int, const void *, int);
 
 SIM_DESC
 sim_open (SIM_OPEN_KIND kind, host_callback *callback,
@@ -403,8 +406,11 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback,
 
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
+  /* Set default options before parsing user options.  */
+  current_target_byte_order = BFD_ENDIAN_BIG;
+
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -430,10 +436,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback,
     }
 
   /* Check for/establish the a reference program image.  */
-  if (sim_analyze_program (sd,
-			   (STATE_PROG_ARGV (sd) != NULL
-			    ? *STATE_PROG_ARGV (sd)
-			    : NULL), abfd) != SIM_RC_OK)
+  if (sim_analyze_program (sd, STATE_PROG_FILE (sd), abfd) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -528,9 +531,10 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
 }
 
 static int
-m68hc11_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+m68hc11_reg_fetch (SIM_CPU *cpu, int rn, void *buf, int length)
 {
-  uint16 val;
+  unsigned char *memory = buf;
+  uint16_t val;
   int size = 2;
 
   switch (rn)
@@ -592,9 +596,10 @@ m68hc11_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
 }
 
 static int
-m68hc11_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+m68hc11_reg_store (SIM_CPU *cpu, int rn, const void *buf, int length)
 {
-  uint16 val;
+  const unsigned char *memory = buf;
+  uint16_t val;
 
   val = *memory++;
   if (length == 2)

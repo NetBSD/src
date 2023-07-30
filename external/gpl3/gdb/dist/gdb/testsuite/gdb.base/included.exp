@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+if { [is_remote host] } {
+    gdb_remote_download host $srcdir/$subdir/included.h
+}
+
 standard_testfile
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
@@ -20,9 +24,9 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
 
 gdb_test_no_output "set listsize 1"
 
-gdb_test "list main" ".*"
+gdb_test "list -q main" ".*"
 get_debug_format
-set non_dwarf [expr ! [test_debug_format "DWARF 2"]]
+set non_dwarf [expr ! [test_debug_format "DWARF \[0-9\]"]]
 
 # We should be able to find the source file containing the definition,
 # even though it was an included header.
@@ -33,4 +37,4 @@ gdb_test "ptype integer" "type = int"
 
 # We should report that integer comes from the header file.
 if { $non_dwarf } { setup_xfail *-*-* }
-gdb_test "info variables integer" "\r\nFile \[^\r\n\]*/${subdir}/${testfile}.h:\r\n.*\tint integer;"
+gdb_test "info variables integer" "\r\nFile \[^\r\n\]*${testfile}.h:\r\n.*\tint integer;"

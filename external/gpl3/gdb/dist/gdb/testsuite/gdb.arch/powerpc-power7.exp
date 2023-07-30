@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 standard_testfile .s
 set objfile [standard_output_file ${testfile}.o]
 
-if {![istarget "powerpc*-*-*"]} then {
+if {![istarget "powerpc*-*-*"]} {
     verbose "Skipping PowerPC instructions disassembly."
     return
 }
@@ -69,16 +69,10 @@ func_check "xxmrghd vs3,vs4,vs5"
 func_check "xxmrghd vs43,vs44,vs45"
 func_check "xxmrgld vs3,vs4,vs5"
 func_check "xxmrgld vs43,vs44,vs45"
-func_check "xxmrghd vs3,vs4,vs5"
-func_check "xxmrghd vs43,vs44,vs45"
-func_check "xxmrgld vs3,vs4,vs5"
-func_check "xxmrgld vs43,vs44,vs45"
 func_check "xxpermdi vs3,vs4,vs5,1"
 func_check "xxpermdi vs43,vs44,vs45,1"
 func_check "xxpermdi vs3,vs4,vs5,2"
 func_check "xxpermdi vs43,vs44,vs45,2"
-func_check "xvmovdp vs3,vs4"
-func_check "xvmovdp vs43,vs44"
 func_check "xvmovdp vs3,vs4"
 func_check "xvmovdp vs43,vs44"
 func_check "xvcpsgndp vs3,vs4,vs5"
@@ -146,16 +140,11 @@ func_check "frsqrte f14,f15"
 func_check "frsqrte. f14,f15"
 func_check "frsqrtes f14,f15"
 func_check "frsqrtes. f14,f15"
-func_check "isel    r2,r3,r4,28"
-func_check "yield"
+func_check "isel    r2,r3,r4,4*cr7+lt"
 func_check "yield"
 func_check "ori     r2,r2,0"
 func_check "nop"
-func_check "nop"
-func_check "ori     r2,r2,0"
 func_check "mdoio"
-func_check "mdoio"
-func_check "mdoom"
 func_check "mdoom"
 func_check "mfppr   r10"
 func_check "mfppr32 r11"

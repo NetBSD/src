@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,8 @@
 #
 # To use this file:
 # bash$ cd ${build_dir}/gdb
-# bash$ make check RUNTESTFLAGS="--target_board=remote-gdbserver-on-localhost"
+# bash$ make check RUNTESTFLAGS="--target_board=remote-gdbserver-on-localhost
+#   [ REMOTE_TARGET_USERNAME=<remote_target_username> ]"
 
 load_generic_config "gdbserver"
 load_board_description "gdbserver-base"
@@ -29,8 +30,42 @@ load_board_description "gdbserver-base"
 set_board_info rcp_prog "/usr/bin/scp"
 set_board_info rsh_prog "/usr/bin/ssh"
 set_board_info protocol standard
-set_board_info username $env(USER)
+if { [info exists REMOTE_TARGET_USERNAME] } {
+    set_board_info username $REMOTE_TARGET_USERNAME
+} else {
+    set_board_info username $env(USER)
+}
 set_board_info hostname localhost
+
+# Handle separate test account.
+if { [board_info $board username] != $env(USER) } {
+    # We're pretending that some local user account is remote target.
+    # Make things a bit more realistic by restricting file permissions.
+
+    # Make sure remote target can't see files on build.
+    remote_exec build "chmod go-rx $objdir"
+
+    # Make sure build can't see files on remote target.  We can't use
+    # remote_exec target, because we're in the middle of parsing the
+    # target board.
+    remote_exec build \
+	"[board_info $board rsh_prog] \
+		     -l [board_info $board username] \
+			[board_info $board hostname] \
+	chmod go-rx ."
+}
+
+proc ${board}_spawn { board cmd } {
+    global board_info
+
+    set remote [board_info $board hostname]
+    set username [board_info $board username]
+    set RSH [board_info $board rsh_prog]
+
+    spawn $RSH -t -l $username $remote $cmd
+    set board_info($board,fileid) $spawn_id
+    return $spawn_id
+}
 
 # We will be using the standard GDB remote protocol
 set_board_info gdb_protocol "remote"

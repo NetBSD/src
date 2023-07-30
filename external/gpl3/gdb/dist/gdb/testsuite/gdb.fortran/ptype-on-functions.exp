@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,28 +24,56 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug f90}]} {
     return -1
 }
 
-if ![fortran_runto_main] then {
-    perror "couldn't run to main"
-    continue
+if {![fortran_runto_main]} {
+    return
+}
+
+set integer4 [fortran_int4]
+set logical4 [fortran_logical4]
+set integer8 [fortran_int8]
+
+# A fortran string parameter is passed as a char *, and an additional
+# argument str_ for the string length.  The type used for the string length
+# argument is size_t, but for gcc 7 and earlier, the actual type is int
+# instead ( see
+# https://gcc.gnu.org/onlinedocs/gfortran/Argument-passing-conventions.html ).
+set stringlen ($integer8|$integer4)
+
+if { [test_compiler_info {flang-*} f90] } {
+    set some_module_class_type "Type number"
+    set some_module_aux_info ", $integer8 \\(10\\)"
+} else {
+    set some_module_class_type "Type __class_some_module_Number(_t)?"
+    set some_module_aux_info ""
 }
 
 gdb_test "ptype some_module::get_number" \
-    "type = integer\\(kind=4\\) \\(Type __class_some_module_Number(_t)?\\)"
+    "type = $integer4 \\(${some_module_class_type}${some_module_aux_info}\\)"
 
 gdb_test "ptype some_module::set_number" \
-    "type = void \\(Type __class_some_module_Number(_t)?, integer\\(kind=4\\)\\)"
+    "type = void \\(${some_module_class_type}, $integer4${some_module_aux_info}\\)"
 
 gdb_test "ptype is_bigger" \
-    "type = logical\\(kind=4\\) \\(integer\\(kind=4\\), integer\\(kind=4\\)\\)"
+    "type = $logical4 \\($integer4, $integer4\\)"
 
 gdb_test "ptype say_numbers" \
-    "type = void \\(integer\\(kind=4\\), integer\\(kind=4\\), integer\\(kind=4\\)\\)"
+    "type = void \\($integer4, $integer4, $integer4\\)"
+
+set fun_ptr_arg "$integer4"
+if { [test_compiler_info {gfortran-*} f90] } {
+    set fun_ptr_arg "REF TO -> \\( ${fun_ptr_arg} \\)"
+}
 
 gdb_test "ptype fun_ptr" \
-    "type = PTR TO -> \\( integer\\(kind=4\\) \\(\\) \\(REF TO -> \\( integer\\(kind=4\\) \\)\\) \\)"
+    "type = PTR TO -> \\( $integer4 \\(\\) \\(${fun_ptr_arg}\\) \\)"
 
 gdb_test "ptype say_string" \
-    "type = void \\(character\\*\\(\\*\\), integer\\(kind=\\d+\\)\\)"
+    "type = void \\(character\[^,\]+, $stringlen\\)"
+
+set say_array_artificial_first_arg ""
+if { [test_compiler_info {flang-*} f90] } {
+    set say_array_artificial_first_arg "$integer8, "
+}
 
 gdb_test "ptype say_array" \
-    "type = void \\(integer\\(kind=4\\) \\(:,:\\)\\)"
+    "type = void \\(${say_array_artificial_first_arg}$integer4 \\(:,:\\)\\)"

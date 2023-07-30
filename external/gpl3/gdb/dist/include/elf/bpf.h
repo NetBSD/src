@@ -1,5 +1,5 @@
 /* Linux eBPF support for BFD.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    Contributed by Oracle, Inc.
 

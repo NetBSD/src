@@ -1,6 +1,6 @@
 /* Self tests for scoped_fd for GDB, the GNU debugger.
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@ static void
 test_destroy ()
 {
   char filename[] = "scoped_fd-selftest-XXXXXX";
-  int fd = gdb_mkostemp_cloexec (filename);
+  int fd = gdb_mkostemp_cloexec (filename).release ();
   SELF_CHECK (fd >= 0);
 
   unlink (filename);
@@ -51,7 +51,7 @@ static void
 test_release ()
 {
   char filename[] = "scoped_fd-selftest-XXXXXX";
-  int fd = gdb_mkostemp_cloexec (filename);
+  int fd = gdb_mkostemp_cloexec (filename).release ();
   SELF_CHECK (fd >= 0);
 
   unlink (filename);
@@ -71,7 +71,7 @@ test_to_file ()
 {
   char filename[] = "scoped_fd-selftest-XXXXXX";
 
-  ::scoped_fd sfd (gdb_mkostemp_cloexec (filename));
+  ::scoped_fd sfd = gdb_mkostemp_cloexec (filename);
   SELF_CHECK (sfd.get () >= 0);
 
   unlink (filename);

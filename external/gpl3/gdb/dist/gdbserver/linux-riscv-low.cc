@@ -1,6 +1,6 @@
 /* GNU/Linux/RISC-V specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2020 Free Software Foundation, Inc.
+   Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -88,11 +88,11 @@ riscv_target::low_arch_setup ()
 
   const riscv_gdbarch_features features
     = riscv_linux_read_features (lwpid_of (current_thread));
-  target_desc *tdesc = riscv_create_target_description (features);
+  target_desc_up tdesc = riscv_create_target_description (features);
 
   if (!tdesc->expedite_regs)
-    init_target_desc (tdesc, expedite_regs);
-  current_process ()->tdesc = tdesc;
+    init_target_desc (tdesc.get (), expedite_regs);
+  current_process ()->tdesc = tdesc.release ();
 }
 
 /* Collect GPRs from REGCACHE into BUF.  */

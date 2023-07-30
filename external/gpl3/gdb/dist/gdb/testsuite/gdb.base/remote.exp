@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ if {[target_info gdb_protocol] != "remote"
 standard_testfile .c
 
 set result [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}]
-if {$result != "" } then {
+if {$result != ""} {
     untested "failed to compile"
     return -1
 }
@@ -87,7 +87,7 @@ proc gdb_load_timed {executable class writesize} {
     global test gdb_prompt
     set test "timed download `[file tail $executable]' - $class, $writesize"
 
-    if {$writesize != ""} then {
+    if {$writesize != ""} {
 	gdb_test_no_output "set remote memory-write-packet-size $writesize" \
 	    "$test - set packet size"
 
@@ -121,7 +121,7 @@ proc gdb_load_timed {executable class writesize} {
     set load_begin_time [clock clicks]
     set result [gdb_load $executable]
     set load_end_time [clock clicks]
-    if { $result != 0 } then {
+    if {$result != 0} {
 	fail "$test - loading executable"
 	return
     }
@@ -158,8 +158,7 @@ set sizeof_random_data [get_sizeof "random_data" 48*1024]
 #
 # Part THREE: Check the upload behavour
 #
-if ![runto_main] then {
-    fail "cannot run to main"
+if {![runto_main]} {
     return
 }
 
@@ -172,7 +171,7 @@ gdb_test "x/8ub random_data" \
 gdb_test "x/8ub random_data + 400 - 4" \
 	"<random_data\\+396>:\[ \t\]+185\[ \t\]+255\[ \t\]+50\[ \t\]+140\[ \t\]+237\[ \t\]+172\[ \t\]+143\[ \t\]+93"
 
-if {$sizeof_random_data > 16380 } then {
+if {$sizeof_random_data > 16380} {
     gdb_test "x/8ub random_data + 16384 - 4" \
 	"<random_data\\+16380>:\[ \t\]+178\[ \t\]+180\[ \t\]+135\[ \t\]+93\[ \t\]+70\[ \t\]+62\[ \t\]+205\[ \t\]+76"
 }
@@ -195,5 +194,10 @@ gdb_test_no_output "set remote hardware-breakpoint-limit -1"
 # and make sure 32-bit INT_MAX is accepted by a zinteger command.
 gdb_test_no_output "set remote hardware-watchpoint-limit 2147483647"
 gdb_test_no_output "set remote hardware-breakpoint-limit 2147483647"
+
+# Check the X/P/p alias commands display the correct packet names.
+foreach pkt {X P p} {
+    gdb_test "show remote ${pkt}-packet" "Support for the `${pkt}' packet is.*"
+}
 
 gdb_exit

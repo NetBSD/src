@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -34,8 +34,8 @@
 #endif
 
 /* NOTE: See end of file for #undef */
-#define unsignedN XCONCAT2(unsigned,N)
-#define signedN XCONCAT2(signed,N)
+#define unsignedN XCONCAT3(uint,N,_t)
+#define signedN XCONCAT3(int,N,_t)
 #define LSMASKn XCONCAT2(LSMASK,N)
 #define MSMASKn XCONCAT2(MSMASK,N)
 #define LSMASKEDn XCONCAT2(LSMASKED,N)

@@ -5,16 +5,16 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_rs6000;
+const struct target_desc *tdesc_rs6000;
 static void
 initialize_tdesc_rs6000 (void)
 {
-  struct target_desc *result = allocate_target_description ();
-  set_tdesc_architecture (result, bfd_scan_arch ("rs6000:6000"));
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("rs6000:6000"));
 
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.core");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.core");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "r1", 1, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "r2", 2, 1, NULL, 32, "int");
@@ -55,7 +55,7 @@ initialize_tdesc_rs6000 (void)
   tdesc_create_reg (feature, "xer", 69, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "mq", 70, 1, NULL, 32, "int");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.fpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.fpu");
   tdesc_create_reg (feature, "f0", 32, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "f1", 33, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "f2", 34, 1, NULL, 64, "ieee_double");
@@ -90,5 +90,5 @@ initialize_tdesc_rs6000 (void)
   tdesc_create_reg (feature, "f31", 63, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "fpscr", 71, 1, "float", 32, "int");
 
-  tdesc_rs6000 = result;
+  tdesc_rs6000 = result.release ();
 }

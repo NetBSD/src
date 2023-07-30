@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -99,14 +99,14 @@ ins_immu (const struct ia64_operand *self, ia64_insn value, ia64_insn *code)
 static const char*
 ext_immu (const struct ia64_operand *self, ia64_insn code, ia64_insn *valuep)
 {
-  BFD_HOST_U_64_BIT value = 0;
+  uint64_t value = 0;
   int i, bits = 0, total = 0;
 
   for (i = 0; i < NELEMS (self->field) && self->field[i].bits; ++i)
     {
       bits = self->field[i].bits;
       value |= ((code >> self->field[i].shift)
-		& ((((BFD_HOST_U_64_BIT) 1) << bits) - 1)) << total;
+		& (((uint64_t) 1 << bits) - 1)) << total;
       total += bits;
     }
   *valuep = value;
@@ -161,7 +161,7 @@ static const char*
 ins_imms_scaled (const struct ia64_operand *self, ia64_insn value,
 		 ia64_insn *code, int scale)
 {
-  BFD_HOST_64_BIT svalue = value, sign_bit = 0;
+  int64_t svalue = value, sign_bit = 0;
   ia64_insn new_insn = 0;
   int i;
 
@@ -186,17 +186,17 @@ ext_imms_scaled (const struct ia64_operand *self, ia64_insn code,
 		 ia64_insn *valuep, int scale)
 {
   int i, bits = 0, total = 0;
-  BFD_HOST_U_64_BIT val = 0, sign;
+  uint64_t val = 0, sign;
 
   for (i = 0; i < NELEMS (self->field) && self->field[i].bits; ++i)
     {
       bits = self->field[i].bits;
       val |= ((code >> self->field[i].shift)
-	      & ((((BFD_HOST_U_64_BIT) 1) << bits) - 1)) << total;
+	      & (((uint64_t) 1 << bits) - 1)) << total;
       total += bits;
     }
   /* sign extend: */
-  sign = (BFD_HOST_U_64_BIT) 1 << (total - 1);
+  sign = (uint64_t) 1 << (total - 1);
   val = (val ^ sign) - sign;
 
   *valuep = val << scale;
@@ -312,7 +312,7 @@ static const char*
 ins_cnt (const struct ia64_operand *self, ia64_insn value, ia64_insn *code)
 {
   --value;
-  if (value >= ((BFD_HOST_U_64_BIT) 1) << self->field[0].bits)
+  if (value >= (uint64_t) 1 << self->field[0].bits)
     return "count out of range";
 
   *code |= value << self->field[0].shift;
@@ -323,7 +323,7 @@ static const char*
 ext_cnt (const struct ia64_operand *self, ia64_insn code, ia64_insn *valuep)
 {
   *valuep = ((code >> self->field[0].shift)
-	     & ((((BFD_HOST_U_64_BIT) 1) << self->field[0].bits) - 1)) + 1;
+	     & (((uint64_t) 1 << self->field[0].bits) - 1)) + 1;
   return 0;
 }
 
@@ -421,8 +421,8 @@ ext_strd5b (const struct ia64_operand *self, ia64_insn code,
 static const char*
 ins_inc3 (const struct ia64_operand *self, ia64_insn value, ia64_insn *code)
 {
-  BFD_HOST_64_BIT val = value;
-  BFD_HOST_U_64_BIT sign = 0;
+  int64_t val = value;
+  uint64_t sign = 0;
 
   if (val < 0)
     {
@@ -444,7 +444,7 @@ ins_inc3 (const struct ia64_operand *self, ia64_insn value, ia64_insn *code)
 static const char*
 ext_inc3 (const struct ia64_operand *self, ia64_insn code, ia64_insn *valuep)
 {
-  BFD_HOST_64_BIT val;
+  int64_t val;
   int negate;
 
   val = (code >> self->field[0].shift) & 0x7;

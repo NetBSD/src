@@ -1,4 +1,4 @@
-# Copyright 2009-2020 Free Software Foundation, Inc.
+# Copyright 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,10 +31,15 @@ gdb_test "p modmany::var_i" " = 14" "stopped language detection"
 
 gdb_test "print mod1::var_const" " = 20" "fully qualified name of DW_TAG_constant"
 
-if ![fortran_runto_main] then {
-    perror "couldn't run to main"
-    continue
+# Avoid shared lib symbols.
+gdb_test_no_output "set auto-solib-add off"
+
+if {![fortran_runto_main]} {
+    return
 }
+
+# Avoid libc symbols.
+gdb_test "nosharedlibrary"
 
 set int_type [fortran_int4]
 
@@ -112,9 +117,10 @@ gdb_test "print var_z" " = 31" "print var_x value 31"
 gdb_test "ptype modmany" "type = module modmany"
 
 proc complete {expr list} {
+    set n_lines "\(?:\\r\\n.*\)*"
     set cmd "complete p $expr"
-    set expect [join [concat [list $cmd] $list] "\r\np "]
-    gdb_test $cmd $expect "complete $expr"
+    set expect [join [concat [list $cmd] $list] $n_lines]
+    gdb_test $cmd "$expect$n_lines" "complete $expr"
 }
 set modmany_list {modmany::var_a modmany::var_b modmany::var_c modmany::var_i}
 complete "modm" "modmany $modmany_list"

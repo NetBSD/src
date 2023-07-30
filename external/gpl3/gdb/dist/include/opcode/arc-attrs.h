@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2022 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -58,7 +58,7 @@ const struct feature_type
 #endif
 
 /* A table with conflicting features.  */
-unsigned CONFLICT_LIST [] = {
+const unsigned CONFLICT_LIST [] = {
   NPS400 | SPX,
   NPS400 | DPX,
   DPX | DPA,

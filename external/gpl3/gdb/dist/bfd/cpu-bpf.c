@@ -1,5 +1,5 @@
 /* BFD support for the BPF processor.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by Oracle Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -34,7 +34,7 @@ static const bfd_arch_info_type bfd_xbpf_arch =
   "bpf",			/* Architecture name.  */
   "xbpf",			/* Machine name.  */
   3,				/* Section align power.  */
-  FALSE,			/* The default ?  */
+  false,			/* The default ?  */
   bfd_default_compatible,	/* Architecture comparison fn.  */
   bfd_default_scan,		/* String to architecture convert fn.  */
   bfd_arch_default_fill,	/* Default fill.  */
@@ -53,7 +53,7 @@ const bfd_arch_info_type bfd_bpf_arch =
   "bpf",			/* Architecture name.  */
   "bpf",			/* Machine name.  */
   3,				/* Section align power.  */
-  TRUE,				/* The default ?  */
+  true,				/* The default ?  */
   bfd_default_compatible,	/* Architecture comparison fn.  */
   bfd_default_scan,		/* String to architecture convert fn.  */
   bfd_arch_default_fill,	/* Default fill.  */

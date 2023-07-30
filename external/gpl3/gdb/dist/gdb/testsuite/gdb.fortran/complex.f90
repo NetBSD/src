@@ -1,4 +1,4 @@
-! Copyright 2007-2020 Free Software Foundation, Inc.
+! Copyright 2007-2023 Free Software Foundation, Inc.
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -17,8 +17,9 @@ program test_complex
   real*4 r4a, r4b
   real*8 r8a, r8b
   real*16 r16a, r16b
+  integer ia, ib
 
-  complex c
+  complex c, ci
   complex(kind=4) c4
   complex(kind=8) c8
   double complex dc
@@ -30,15 +31,19 @@ program test_complex
   r8b = -22
   r16a = -874
   r16b = 19
+  ia = -4
+  ib = 12
 
   c = cmplx(r4a,r4b)
   c4 = cmplx(r4a,r4b)
   c8 = cmplx(r8a, r8b)
   dc = cmplx(r8a, r8b)
   c16 = cmplx(r16a, r16b)
+  ci = cmplx(ia, ib)
 
   print *, c, c4, c8, dc, c16	! stop
   print *, r4a, r4b
   print *, r8a, r8b
   print *, r16a, r16b
+  print *, ia, ib
 end program test_complex

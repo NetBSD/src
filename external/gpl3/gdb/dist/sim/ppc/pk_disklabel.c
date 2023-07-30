@@ -29,11 +29,7 @@
 
 #include "pk.h"
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-
 
 /* PACKAGE
 
@@ -56,32 +52,32 @@
 
 /* PPCbug location structure */
 typedef struct ppcboot_location {
-  unsigned8 ind;
-  unsigned8 head;
-  unsigned8 sector;
-  unsigned8 cylinder;
+  uint8_t ind;
+  uint8_t head;
+  uint8_t sector;
+  uint8_t cylinder;
 } ppcboot_location_t;
 
 /* PPCbug partition table layout */
 typedef struct ppcboot_partition {
   ppcboot_location_t partition_begin;	/* partition begin */
   ppcboot_location_t partition_end;	/* partition end */
-  unsigned8 sector_begin[4];		/* 32-bit start RBA (zero-based), little endian */
-  unsigned8 sector_length[4];		/* 32-bit RBA count (one-based), little endian */
+  uint8_t sector_begin[4];		/* 32-bit start RBA (zero-based), little endian */
+  uint8_t sector_length[4];		/* 32-bit RBA count (one-based), little endian */
 } ppcboot_partition_t;
 
 #if 0
 /* PPCbug boot layout.  */
 typedef struct ppcboot_hdr {
-  unsigned8		pc_compatibility[446];	/* x86 instruction field */
+  uint8_t		pc_compatibility[446];	/* x86 instruction field */
   ppcboot_partition_t	partition[4];		/* partition information */
-  unsigned8		signature[2];		/* 0x55 and 0xaa */
-  unsigned8		entry_offset[4];	/* entry point offset, little endian */
-  unsigned8		length[4];		/* load image length, little endian */
-  unsigned8		flags;			/* flag field */
-  unsigned8		os_id;			/* OS_ID */
+  uint8_t		signature[2];		/* 0x55 and 0xaa */
+  uint8_t		entry_offset[4];	/* entry point offset, little endian */
+  uint8_t		length[4];		/* load image length, little endian */
+  uint8_t		flags;			/* flag field */
+  uint8_t		os_id;			/* OS_ID */
   char			partition_name[32];	/* partition name */
-  unsigned8		reserved1[470];		/* reserved */
+  uint8_t		reserved1[470];		/* reserved */
 } ppcboot_hdr_t;
 #endif
 
@@ -96,7 +92,7 @@ typedef struct _disklabel {
 
 
 static unsigned_word
-sector2uw(unsigned8 s[4])
+sector2uw(uint8_t s[4])
 {
   return ((s[3] << 24)
 	  + (s[2] << 16)
@@ -173,7 +169,7 @@ static const device_instance_callbacks package_disklabel_callbacks = {
 /* Reconize different types of boot block */
 
 static int
-block0_is_bpb(const unsigned8 block[])
+block0_is_bpb(const uint8_t block[])
 {
   const char ebdic_ibma[] = { 0xc9, 0xc2, 0xd4, 0xc1 };
   /* ref PowerPC Microprocessor CHRP bindings 1.2b - page 47 */
@@ -200,7 +196,7 @@ static int
 is_iso9660(device_instance *raw_disk)
 {
   /* ref PowerPC Microprocessor CHRP bindings 1.2b - page 47 */
-  unsigned8 block[512];
+  uint8_t block[512];
   if (device_instance_seek(raw_disk, 0, 512 * 64) < 0)
     return 0;
   if (device_instance_read(raw_disk, block, sizeof(block)) != sizeof(block))
@@ -224,7 +220,7 @@ is_iso9660(device_instance *raw_disk)
    Return -1: no active partition */
 
 static int
-block0_is_fdisk(const unsigned8 block[])
+block0_is_fdisk(const uint8_t block[])
 {
   const int partition_type_fields[] = { 0, 0x1c2, 0x1d2, 0x1e2, 0x1f2 };
   const int partition_active_fields[] = { 0, 0x1be, 0x1ce, 0x1de, 0xee };
@@ -283,7 +279,7 @@ block0_is_fdisk(const unsigned8 block[])
 /* Verify that block0 corresponds to a MAC disk */
 
 static int
-block0_is_mac_disk(const unsigned8 block[])
+block0_is_mac_disk(const uint8_t block[])
 {
   /* ref PowerPC Microprocessor CHRP bindings 1.2b - page 47 */
   /* signature - BEx4552 at offset 0 */
@@ -322,7 +318,7 @@ pk_disklabel_create_instance(device_instance *raw_disk,
     return raw_disk;
   }
   else {
-    unsigned8 boot_block[512];
+    uint8_t boot_block[512];
     /* get the boot block for examination */
     if (device_instance_seek(raw_disk, 0, 0) < 0)
       device_error(device_instance_device(raw_disk),

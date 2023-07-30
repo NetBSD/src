@@ -1,6 +1,6 @@
 /* This test program is part of GDB, the GNU debugger.
 
-   Copyright 2020 Free Software Foundation, Inc.
+   Copyright 2020-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -54,8 +54,8 @@ load_symbol (void *addr, const char *sym_name)
   ElfW (Addr) sym_new_addr = 0;
 
   /* Find `func_name` in symbol_table and return its address.  */
-
-  for (int i = 0; i < ehdr->e_shnum; ++i)
+  int i;
+  for (i = 0; i < ehdr->e_shnum; ++i)
     {
       if (shdr[i].sh_type == SHT_SYMTAB)
 	{
@@ -65,7 +65,8 @@ load_symbol (void *addr, const char *sym_name)
 	  char *const strtab
 	      = (char *) (addr + shdr[shdr[i].sh_link].sh_offset);
 
-	  for (ElfW (Sym) *p = symtab; p < symtab_end; ++p)
+	  ElfW (Sym) *p;
+	  for (p = symtab; p < symtab_end; ++p)
 	    {
 	      const char *s = strtab + p->st_name;
 	      if (strcmp (s, sym_name) == 0)

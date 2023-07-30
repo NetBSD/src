@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,7 +56,6 @@ proc test_remove_bp { initial_load } {
 	set GDBFLAGS $saved_gdbflags
 
 	if ![runto start] {
-	    fail "can't run to start"
 	    return
 	}
 
@@ -88,7 +87,9 @@ proc test_remove_bp { initial_load } {
 	# should warn the user about it.
 	set pagesize [get_integer_valueof "pg_size" 0]
 	set align_addr [expr $bp_addr - $bp_addr % $pagesize]
-	set munmap [get_integer_valueof "(int) munmap ($align_addr, $pagesize)" -1]
+	set munmap_prototype "int (*) (void *, size_t)"
+	set munmap_expr "(($munmap_prototype) munmap) ($align_addr, $pagesize)"
+	set munmap [get_integer_valueof $munmap_expr -1]
 
 	if {$munmap != 0} {
 	    unsupported "can't munmap foo's page"

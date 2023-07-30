@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ from perftest import perftest
 from perftest import measure
 from perftest import utils
 
+
 class PervasiveTypedef(perftest.TestCaseWithBasicMeasurements):
     def __init__(self, name, run_names, binfile):
         # We want to measure time in this test.
@@ -37,8 +38,7 @@ class PervasiveTypedef(perftest.TestCaseWithBasicMeasurements):
 
     def execute_test(self):
         for run in self.run_names:
-            self.this_run_binfile = "%s-%s" % (self.binfile,
-                                               utils.convert_spaces(run))
+            self.this_run_binfile = "%s-%s" % (self.binfile, utils.convert_spaces(run))
             iteration = 5
             while iteration > 0:
                 self.measure.measure(self.func, run)

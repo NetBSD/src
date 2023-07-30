@@ -1,6 +1,6 @@
 /* Shared general utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,27 +22,9 @@
 
 #include <string>
 #include <vector>
-
+#include "gdbsupport/byte-vector.h"
+#include "gdbsupport/gdb_unique_ptr.h"
 #include "poison.h"
-
-/* If possible, define FUNCTION_NAME, a macro containing the name of
-   the function being defined.  Since this macro may not always be
-   defined, all uses must be protected by appropriate macro definition
-   checks (Eg: "#ifdef FUNCTION_NAME").
-
-   Version 2.4 and later of GCC define a magical variable `__PRETTY_FUNCTION__'
-   which contains the name of the function currently being defined.
-   This is broken in G++ before version 2.6.
-   C9x has a similar variable called __func__, but prefer the GCC one since
-   it demangles C++ function names.  */
-#if (GCC_VERSION >= 2004)
-#define FUNCTION_NAME		__PRETTY_FUNCTION__
-#else
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
-#define FUNCTION_NAME		__func__  /* ARI: func */
-#endif
-#endif
-
 #include "gdb_string_view.h"
 
 /* xmalloc(), xrealloc() and xcalloc() have already been declared in
@@ -51,22 +33,11 @@
 /* Like xmalloc, but zero the memory.  */
 void *xzalloc (size_t);
 
-template <typename T>
-static void
-xfree (T *ptr)
-{
-  static_assert (IsFreeable<T>::value, "Trying to use xfree with a non-POD \
-data type.  Use operator delete instead.");
-
-  if (ptr != NULL)
-    free (ptr);		/* ARI: free */
-}
-
-
 /* Like asprintf and vasprintf, but return the string, throw an error
    if no memory.  */
-char *xstrprintf (const char *format, ...) ATTRIBUTE_PRINTF (1, 2);
-char *xstrvprintf (const char *format, va_list ap)
+gdb::unique_xmalloc_ptr<char> xstrprintf (const char *format, ...)
+     ATTRIBUTE_PRINTF (1, 2);
+gdb::unique_xmalloc_ptr<char> xstrvprintf (const char *format, va_list ap)
      ATTRIBUTE_PRINTF (1, 0);
 
 /* Like snprintf, but throw an error if the output buffer is too small.  */
@@ -83,11 +54,11 @@ std::string string_vprintf (const char* fmt, va_list args)
 
 /* Like string_printf, but appends to DEST instead of returning a new
    std::string.  */
-void string_appendf (std::string &dest, const char* fmt, ...)
+std::string &string_appendf (std::string &dest, const char* fmt, ...)
   ATTRIBUTE_PRINTF (2, 3);
 
 /* Like string_appendf, but takes a va_list.  */
-void string_vappendf (std::string &dest, const char* fmt, va_list args)
+std::string &string_vappendf (std::string &dest, const char* fmt, va_list args)
   ATTRIBUTE_PRINTF (2, 0);
 
 /* Make a copy of the string at PTR with LEN characters
@@ -112,22 +83,30 @@ std::string extract_string_maybe_quoted (const char **arg);
 
 extern const char *safe_strerror (int);
 
-/* Return true if the start of STRING matches PATTERN, false otherwise.  */
-
-static inline bool
-startswith (const char *string, const char *pattern)
-{
-  return strncmp (string, pattern, strlen (pattern)) == 0;
-}
-
-/* Version of startswith that takes string_view arguments.  See comment
-   above.  */
+/* Version of startswith that takes string_view arguments.  Return
+   true if the start of STRING matches PATTERN, false otherwise.  */
 
 static inline bool
 startswith (gdb::string_view string, gdb::string_view pattern)
 {
   return (string.length () >= pattern.length ()
 	  && strncmp (string.data (), pattern.data (), pattern.length ()) == 0);
+}
+
+/* Return true if the strings are equal.  */
+
+static inline bool
+streq (const char *lhs, const char *rhs)
+{
+  return strcmp (lhs, rhs) == 0;
+}
+
+/* Compare C strings for std::sort.  */
+
+static inline bool
+compare_cstrings (const char *str1, const char *str2)
+{
+  return strcmp (str1, str2) < 0;
 }
 
 ULONGEST strtoulst (const char *num, const char **trailer, int base);
@@ -163,7 +142,7 @@ in_inclusive_range (T value, T low, T high)
   return value >= low && value <= high;
 }
 
-/* Ensure that V is aligned to an N byte boundary (B's assumed to be a
+/* Ensure that V is aligned to an N byte boundary (N's assumed to be a
    power of 2).  Round up/down when necessary.  Examples of correct
    use include:
 
@@ -194,5 +173,19 @@ in_inclusive_range (T value, T low, T high)
 
 extern ULONGEST align_up (ULONGEST v, int n);
 extern ULONGEST align_down (ULONGEST v, int n);
+
+/* Convert hex digit A to a number, or throw an exception.  */
+extern int fromhex (int a);
+
+/* HEX is a string of characters representing hexadecimal digits.
+   Convert pairs of hex digits to bytes and store sequentially into
+   BIN.  COUNT is the maximum number of characters to convert.  This
+   will convert fewer characters if the number of hex characters
+   actually seen is odd, or if HEX terminates before COUNT characters.
+   Returns the number of characters actually converted.  */
+extern int hex2bin (const char *hex, gdb_byte *bin, int count);
+
+/* Like the above, but return a gdb::byte_vector.  */
+gdb::byte_vector hex2bin (const char *hex);
 
 #endif /* COMMON_COMMON_UTILS_H */

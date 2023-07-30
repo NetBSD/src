@@ -1,6 +1,6 @@
 /* C language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +28,6 @@ struct parser_state;
 
 #include "value.h"
 #include "macroexp.h"
-#include "parser-defs.h"
 #include "gdbsupport/enum-flags.h"
 
 
@@ -66,16 +65,17 @@ extern int c_parse (struct parser_state *);
 extern int c_parse_escape (const char **, struct obstack *);
 
 /* Defined in c-typeprint.c */
-extern void c_print_type (struct type *, const char *,
-			  struct ui_file *, int, int,
-			  const struct type_print_options *);
 
-/* Print a type but allow the precise language to be specified.  */
+/* Print TYPE to STREAM using syntax appropriate for LANGUAGE, a
+   C-like language.  The other parameters are like
+   type_language_defn::print_type's.  */
 
-extern void c_print_type (struct type *, const char *,
-			  struct ui_file *, int, int,
-			  enum language,
-			  const struct type_print_options *);
+extern void c_print_type (struct type *type,
+			  const char *varstring,
+			  struct ui_file *stream,
+			  int show, int level,
+			  enum language language,
+			  const struct type_print_options *flags);
 
 extern void c_print_typedef (struct type *,
 			     struct symbol *,
@@ -91,30 +91,10 @@ extern void c_value_print (struct value *, struct ui_file *,
 
 /* These are in c-lang.c: */
 
-extern struct value *evaluate_subexp_c (struct type *expect_type,
-					struct expression *exp,
-					int *pos,
-					enum noside noside);
-
 extern void c_printchar (int, struct type *, struct ui_file *);
-
-extern void c_printstr (struct ui_file * stream,
-			struct type *elttype,
-			const gdb_byte *string,
-			unsigned int length,
-			const char *user_encoding,
-			int force_ellipses,
-			const struct value_print_options *options);
 
 extern void c_language_arch_info (struct gdbarch *gdbarch,
 				  struct language_arch_info *lai);
-
-extern const struct exp_descriptor exp_descriptor_c;
-
-extern void c_emit_char (int c, struct type *type,
-			 struct ui_file *stream, int quoter);
-
-extern const struct op_print c_op_print_tab[];
 
 /* These are in c-typeprint.c: */
 
@@ -150,21 +130,19 @@ extern bool c_is_string_type_p (struct type *type);
 
 extern int c_textual_element_type (struct type *, char);
 
-/* Create a new instance of the C compiler and return it.  The new
-   compiler is owned by the caller and must be freed using the destroy
-   method.  This function never returns NULL, but rather throws an
-   exception on failure.  This is suitable for use as the
+/* Create a new instance of the C compiler and return it.  This
+   function never returns NULL, but rather throws an exception on
+   failure.  This is suitable for use as the
    language_defn::get_compile_instance method.  */
 
-extern compile_instance *c_get_compile_context (void);
+extern std::unique_ptr<compile_instance> c_get_compile_context ();
 
-/* Create a new instance of the C++ compiler and return it.  The new
-   compiler is owned by the caller and must be freed using the destroy
-   method.  This function never returns NULL, but rather throws an
-   exception on failure.  This is suitable for use as the
+/* Create a new instance of the C++ compiler and return it.  This
+   function never returns NULL, but rather throws an exception on
+   failure.  This is suitable for use as the
    language_defn::get_compile_instance method.  */
 
-extern compile_instance *cplus_get_compile_context ();
+extern std::unique_ptr<compile_instance> cplus_get_compile_context ();
 
 /* This takes the user-supplied text and returns a new bit of code to
    compile.
@@ -188,5 +166,10 @@ extern std::string cplus_compute_program (compile_instance *inst,
 					  struct gdbarch *gdbarch,
 					  const struct block *expr_block,
 					  CORE_ADDR expr_pc);
+
+/* Return the canonical form of the C symbol NAME.  If NAME is already
+   canonical, return nullptr.  */
+
+extern gdb::unique_xmalloc_ptr<char> c_canonicalize_name (const char *name);
 
 #endif /* !defined (C_LANG_H) */

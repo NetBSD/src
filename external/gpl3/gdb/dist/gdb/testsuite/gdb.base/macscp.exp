@@ -1,5 +1,5 @@
 # Test macro scoping.
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,17 +18,12 @@
 standard_testfile macscp1.c
 set objfile [standard_output_file ${testfile}.o]
 
-set options { debug additional_flags=-DFROM_COMMANDLINE=ARG}
-
-get_compiler_info
-if { [test_compiler_info "gcc-*"] || [test_compiler_info "clang-*"] } {
-    lappend options additional_flags=-g3
-}
+set options {debug macros additional_flags=-DFROM_COMMANDLINE=ARG}
 
 # Generate the intermediate object file.  This is required by Darwin to
 # have access to the .debug_macinfo section.
 if  {[gdb_compile "${srcdir}/${subdir}/macscp1.c" "${objfile}" \
-	  object $options] != "" 
+	  object $options] != ""
      || [gdb_compile "${objfile}" "${binfile}" executable $options] != "" } {
     untested "failed to compile"
     return -1
@@ -193,7 +188,7 @@ proc list_and_check_macro {func macro expected} {
     return [check_macro $macro $expected "after `list $func'"]
 }
 
-gdb_test "list main" ".*main.*" "list main for support check"
+gdb_test "list -q main" ".*main.*" "list main for support check"
 set macro_support "unknown"
 gdb_test_multiple "info source" "test macro information"  {
     -re "Includes preprocessor macro info\..*$gdb_prompt $" {
@@ -238,8 +233,8 @@ switch -exact -- [info_macro WHERE] {
         pass "info macro WHERE after `list macscp_4_2_from_macscp2'"
     }
     {macscp4.h macscp3.h macscp1.c {before macscp4_2_..., from macscp3.h}} {
-        setup_kfail "gdb/555" *-*-* 
-        fail "info macro WHERE after `list macscp_4_2_from_macscp2' (gdb/555)"
+        setup_kfail "gdb/7660" *-*-* 
+        fail "info macro WHERE after `list macscp_4_2_from_macscp2' (gdb/7660)"
     }
     timeout { 
         fail "info macro WHERE after `list macscp_4_2_from_macscp2' (timeout)"
@@ -253,8 +248,8 @@ switch -exact -- [info_macro WHERE] {
         pass "info macro WHERE after `list macscp_4_2_from_macscp3'"
     }
     {macscp4.h macscp2.h macscp1.c {before macscp4_2_..., from macscp2.h}} {
-        setup_kfail "gdb/555" *-*-* 
-        fail "info macro WHERE after `list macscp_4_2_from_macscp3' (gdb/555)"
+        setup_kfail "gdb/7660" *-*-* 
+        fail "info macro WHERE after `list macscp_4_2_from_macscp3' (gdb/7660)"
     }
     timeout {
         fail "info macro WHERE after `list macscp_4_2_from_macscp3' (timeout)"
@@ -331,7 +326,7 @@ proc maybe_kfail { func test_name } {
     # We can't get the right scope info when we're stopped in
     # the macro4_ functions.
     if {[string match macscp4_* $func]} {
-	kfail gdb/555 "$test_name"
+	kfail gdb/7660 "$test_name"
     } else {
 	fail "$test_name"
     }
@@ -339,7 +334,6 @@ proc maybe_kfail { func test_name } {
 
 # Start the program running.
 if {! [runto_main]} {
-    fail "macro tests suppressed: couldn't run to main"
     return 0
 }
 
@@ -365,8 +359,8 @@ for {set i 0} {$i < [llength $funcs]} {incr i} {
     if {[string compare $result $expected] == 0} {
         pass "info macro WHERE stopped in $func"
     } elseif {[string compare $result $kfail_expected] == 0} {
-        setup_kfail "gdb/555" *-*-* 
-        fail "info macro WHERE stopped in $func (gdb/555)"
+        setup_kfail "gdb/7660" *-*-* 
+        fail "info macro WHERE stopped in $func (gdb/7660)"
     } elseif {[string compare $result timeout] == 0} {
         fail "info macro WHERE stopped in $func (timeout)"
     } else {

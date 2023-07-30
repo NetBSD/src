@@ -1,5 +1,5 @@
 /* Internal interfaces for the GNU/Linux specific target code for gdbserver.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -127,6 +127,9 @@ struct process_info_private
 
   /* &_r_debug.  0 if not yet determined.  -1 if no PT_DYNAMIC in Phdrs.  */
   CORE_ADDR r_debug;
+
+  /* The /proc/pid/mem file used for reading/writing memory.  */
+  int mem_fd;
 };
 
 struct lwp_info;
@@ -157,15 +160,11 @@ public:
   void resume (thread_resume *resume_info, size_t n) override;
 
   ptid_t wait (ptid_t ptid, target_waitstatus *status,
-	       int options) override;
+	       target_wait_flags options) override;
 
   void fetch_registers (regcache *regcache, int regno) override;
 
   void store_registers (regcache *regcache, int regno) override;
-
-  int prepare_to_access_memory () override;
-
-  void done_accessing_memory () override;
 
   int read_memory (CORE_ADDR memaddr, unsigned char *myaddr,
 		   int len) override;
@@ -276,7 +275,9 @@ public:
   bool supports_agent () override;
 
 #ifdef HAVE_LINUX_BTRACE
-  btrace_target_info *enable_btrace (ptid_t ptid,
+  bool supports_btrace () override;
+
+  btrace_target_info *enable_btrace (thread_info *tp,
 				     const btrace_config *conf) override;
 
   int disable_btrace (btrace_target_info *tinfo) override;
@@ -292,7 +293,7 @@ public:
 
   bool supports_pid_to_exec_file () override;
 
-  char *pid_to_exec_file (int pid) override;
+  const char *pid_to_exec_file (int pid) override;
 
   bool supports_multifs () override;
 
@@ -311,6 +312,9 @@ public:
 		      int *handle_len) override;
 #endif
 
+  thread_info *thread_pending_parent (thread_info *thread) override;
+  thread_info *thread_pending_child (thread_info *thread) override;
+
   bool supports_catch_syscall () override;
 
   /* Return the information to access registers.  This has public
@@ -326,10 +330,10 @@ private:
      to a new LWP representing the new program.  */
   int handle_extended_wait (lwp_info **orig_event_lwp, int wstat);
 
-  /* Do low-level handling of the event, and check if we should go on
-     and pass it to caller code.  Return the affected lwp if we are, or
-     NULL otherwise.  */
-  lwp_info *filter_event (int lwpid, int wstat);
+  /* Do low-level handling of the event, and check if this is an event we want
+     to report.  Is so, store it as a pending status in the lwp_info structure
+     corresponding to LWPID.  */
+  void filter_event (int lwpid, int wstat);
 
   /* Wait for an event from child(ren) WAIT_PTID, and return any that
      match FILTER_PTID (leaving others pending).  The PTIDs can be:
@@ -356,7 +360,7 @@ private:
 
   /* Wait for process, returns status.  */
   ptid_t wait_1 (ptid_t ptid, target_waitstatus *ourstatus,
-		 int target_options);
+		 target_wait_flags target_options);
 
   /* Stop all lwps that aren't stopped yet, except EXCEPT, if not NULL.
      If SUSPEND, then also increase the suspend count of every LWP,
@@ -541,6 +545,13 @@ private:
      data.  */
   process_info *add_linux_process (int pid, int attached);
 
+  /* Same as add_linux_process, but don't open the /proc/PID/mem file
+     yet.  */
+  process_info *add_linux_process_no_mem_file (int pid, int attached);
+
+  /* Free resources associated to PROC and remove it.  */
+  void remove_linux_process (process_info *proc); 
+
   /* Add a new thread.  */
   lwp_info *add_lwp (ptid_t ptid);
 
@@ -721,8 +732,61 @@ struct pending_signal
 
 struct lwp_info
 {
+  /* If this LWP is a fork child that wasn't reported to GDB yet, return
+     its parent, else nullptr.  */
+  lwp_info *pending_parent () const
+  {
+    if (this->fork_relative == nullptr)
+      return nullptr;
+
+    gdb_assert (this->fork_relative->fork_relative == this);
+
+    /* In a fork parent/child relationship, the parent has a status pending and
+       the child does not, and a thread can only be in one such relationship
+       at most.  So we can recognize who is the parent based on which one has
+       a pending status.  */
+    gdb_assert (!!this->status_pending_p
+		!= !!this->fork_relative->status_pending_p);
+
+    if (!this->fork_relative->status_pending_p)
+      return nullptr;
+
+    const target_waitstatus &ws
+      = this->fork_relative->waitstatus;
+    gdb_assert (ws.kind () == TARGET_WAITKIND_FORKED
+		|| ws.kind () == TARGET_WAITKIND_VFORKED);
+
+    return this->fork_relative;
+  }
+
+  /* If this LWP is the parent of a fork child we haven't reported to GDB yet,
+     return that child, else nullptr.  */
+  lwp_info *pending_child () const
+  {
+    if (this->fork_relative == nullptr)
+      return nullptr;
+
+    gdb_assert (this->fork_relative->fork_relative == this);
+
+    /* In a fork parent/child relationship, the parent has a status pending and
+       the child does not, and a thread can only be in one such relationship
+       at most.  So we can recognize who is the parent based on which one has
+       a pending status.  */
+    gdb_assert (!!this->status_pending_p
+		!= !!this->fork_relative->status_pending_p);
+
+    if (!this->status_pending_p)
+      return nullptr;
+
+    const target_waitstatus &ws = this->waitstatus;
+    gdb_assert (ws.kind () == TARGET_WAITKIND_FORKED
+		|| ws.kind () == TARGET_WAITKIND_VFORKED);
+
+    return this->fork_relative;
+  }
+
   /* Backlink to the parent object.  */
-  struct thread_info *thread;
+  struct thread_info *thread = nullptr;
 
   /* If this flag is set, the next SIGSTOP will be ignored (the
      process will be immediately resumed).  This means that either we
@@ -730,25 +794,25 @@ struct lwp_info
      (so the SIGSTOP is still pending), or that we stopped the
      inferior implicitly via PTRACE_ATTACH and have not waited for it
      yet.  */
-  int stop_expected;
+  int stop_expected = 0;
 
   /* When this is true, we shall not try to resume this thread, even
      if last_resume_kind isn't resume_stop.  */
-  int suspended;
+  int suspended = 0;
 
   /* If this flag is set, the lwp is known to be stopped right now (stop
      event already received in a wait()).  */
-  int stopped;
+  int stopped = 0;
 
   /* Signal whether we are in a SYSCALL_ENTRY or
      in a SYSCALL_RETURN event.
      Values:
      - TARGET_WAITKIND_SYSCALL_ENTRY
      - TARGET_WAITKIND_SYSCALL_RETURN */
-  enum target_waitkind syscall_state;
+  enum target_waitkind syscall_state = TARGET_WAITKIND_SYSCALL_ENTRY;
 
   /* When stopped is set, the last wait status recorded for this lwp.  */
-  int last_status;
+  int last_status = 0;
 
   /* If WAITSTATUS->KIND != TARGET_WAITKIND_IGNORE, the waitstatus for
      this LWP's last event, to pass to GDB without any further
@@ -760,58 +824,59 @@ struct lwp_info
      the parent fork event is not reported to higher layers.  Used to
      avoid wildcard vCont actions resuming a fork child before GDB is
      notified about the parent's fork event.  */
-  struct lwp_info *fork_relative;
+  struct lwp_info *fork_relative = nullptr;
 
   /* When stopped is set, this is where the lwp last stopped, with
      decr_pc_after_break already accounted for.  If the LWP is
      running, this is the address at which the lwp was resumed.  */
-  CORE_ADDR stop_pc;
+  CORE_ADDR stop_pc = 0;
 
   /* If this flag is set, STATUS_PENDING is a waitstatus that has not yet
      been reported.  */
-  int status_pending_p;
-  int status_pending;
+  int status_pending_p = 0;
+  int status_pending = 0;
 
   /* The reason the LWP last stopped, if we need to track it
      (breakpoint, watchpoint, etc.)  */
-  enum target_stop_reason stop_reason;
+  enum target_stop_reason stop_reason = TARGET_STOPPED_BY_NO_REASON;
 
   /* On architectures where it is possible to know the data address of
      a triggered watchpoint, STOPPED_DATA_ADDRESS is non-zero, and
      contains such data address.  Only valid if STOPPED_BY_WATCHPOINT
      is true.  */
-  CORE_ADDR stopped_data_address;
+  CORE_ADDR stopped_data_address = 0;
 
   /* If this is non-zero, it is a breakpoint to be reinserted at our next
      stop (SIGTRAP stops only).  */
-  CORE_ADDR bp_reinsert;
+  CORE_ADDR bp_reinsert = 0;
 
   /* If this flag is set, the last continue operation at the ptrace
      level on this process was a single-step.  */
-  int stepping;
+  int stepping = 0;
 
   /* Range to single step within.  This is a copy of the step range
      passed along the last resume request.  See 'struct
      thread_resume'.  */
-  CORE_ADDR step_range_start;	/* Inclusive */
-  CORE_ADDR step_range_end;	/* Exclusive */
+  CORE_ADDR step_range_start = 0; /* Inclusive */
+  CORE_ADDR step_range_end = 0; /* Exclusive */
 
   /* If this flag is set, we need to set the event request flags the
      next time we see this LWP stop.  */
-  int must_set_ptrace_flags;
+  int must_set_ptrace_flags = 0;
 
   /* A chain of signals that need to be delivered to this process.  */
   std::list<pending_signal> pending_signals;
 
   /* A link used when resuming.  It is initialized from the resume request,
      and then processed and cleared in linux_resume_one_lwp.  */
-  struct thread_resume *resume;
+  struct thread_resume *resume = nullptr;
 
   /* Information bout this lwp's fast tracepoint collection status (is it
      currently stopped in the jump pad, and if so, before or at/after the
      relocated instruction).  Normally, we won't care about this, but we will
      if a signal arrives to this lwp while it is collecting.  */
-  fast_tpoint_collect_result collecting_fast_tracepoint;
+  fast_tpoint_collect_result collecting_fast_tracepoint
+    = fast_tpoint_collect_result::not_collecting;
 
   /* A chain of signals that need to be reported to GDB.  These were
      deferred because the thread was doing a fast tracepoint collect
@@ -820,20 +885,20 @@ struct lwp_info
 
   /* When collecting_fast_tracepoint is first found to be 1, we insert
      a exit-jump-pad-quickly breakpoint.  This is it.  */
-  struct breakpoint *exit_jump_pad_bkpt;
+  struct breakpoint *exit_jump_pad_bkpt = nullptr;
 
 #ifdef USE_THREAD_DB
-  int thread_known;
+  int thread_known = 0;
   /* The thread handle, used for e.g. TLS access.  Only valid if
      THREAD_KNOWN is set.  */
-  td_thrhandle_t th;
+  td_thrhandle_t th {};
 
   /* The pthread_t handle.  */
-  thread_t thread_handle;
+  thread_t thread_handle {};
 #endif
 
   /* Arch-specific additions.  */
-  struct arch_lwp_info *arch_private;
+  struct arch_lwp_info *arch_private = nullptr;
 };
 
 int linux_pid_exe_is_elf_64_file (int pid, unsigned int *machine);

@@ -2,7 +2,7 @@
    the floating point routines in libgcc1.c for targets without hardware
    floating point.  */
 
-/* Copyright (C) 1994-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2023 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -253,13 +253,13 @@ typedef union
   struct
     {
 #ifndef FLOAT_BIT_ORDER_MISMATCH
-      unsigned int sign:1 __attribute__ ((packed));
-      unsigned int exp:EXPBITS __attribute__ ((packed));
-      fractype fraction:FRACBITS __attribute__ ((packed));
+      unsigned int sign:1 ATTRIBUTE_PACKED;
+      unsigned int exp:EXPBITS ATTRIBUTE_PACKED;
+      fractype fraction:FRACBITS ATTRIBUTE_PACKED;
 #else
-      fractype fraction:FRACBITS __attribute__ ((packed));
-      unsigned int exp:EXPBITS __attribute__ ((packed));
-      unsigned int sign:1 __attribute__ ((packed));
+      fractype fraction:FRACBITS ATTRIBUTE_PACKED;
+      unsigned int exp:EXPBITS ATTRIBUTE_PACKED;
+      unsigned int sign:1 ATTRIBUTE_PACKED;
 #endif
     }
   bits;

@@ -1,7 +1,7 @@
 /* Get info from stack frames; convert between frames, blocks,
    functions and pc values.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,7 +52,7 @@
    slot instruction.  */
 
 const struct block *
-get_frame_block (struct frame_info *frame, CORE_ADDR *addr_in_block)
+get_frame_block (frame_info_ptr frame, CORE_ADDR *addr_in_block)
 {
   CORE_ADDR pc;
   const struct block *bl;
@@ -75,7 +75,7 @@ get_frame_block (struct frame_info *frame, CORE_ADDR *addr_in_block)
       if (block_inlined_p (bl))
 	inline_count--;
 
-      bl = BLOCK_SUPERBLOCK (bl);
+      bl = bl->superblock ();
       gdb_assert (bl != NULL);
     }
 
@@ -95,15 +95,15 @@ get_pc_function_start (CORE_ADDR pc)
 
       if (symbol)
 	{
-	  bl = SYMBOL_BLOCK_VALUE (symbol);
-	  return BLOCK_ENTRY_PC (bl);
+	  bl = symbol->value_block ();
+	  return bl->entry_pc ();
 	}
     }
 
   msymbol = lookup_minimal_symbol_by_pc (pc);
   if (msymbol.minsym)
     {
-      CORE_ADDR fstart = BMSYMBOL_VALUE_ADDRESS (msymbol);
+      CORE_ADDR fstart = msymbol.value_address ();
 
       if (find_pc_section (fstart))
 	return fstart;
@@ -115,17 +115,17 @@ get_pc_function_start (CORE_ADDR pc)
 /* Return the symbol for the function executing in frame FRAME.  */
 
 struct symbol *
-get_frame_function (struct frame_info *frame)
+get_frame_function (frame_info_ptr frame)
 {
   const struct block *bl = get_frame_block (frame, 0);
 
   if (bl == NULL)
     return NULL;
 
-  while (BLOCK_FUNCTION (bl) == NULL && BLOCK_SUPERBLOCK (bl) != NULL)
-    bl = BLOCK_SUPERBLOCK (bl);
+  while (bl->function () == NULL && bl->superblock () != NULL)
+    bl = bl->superblock ();
 
-  return BLOCK_FUNCTION (bl);
+  return bl->function ();
 }
 
 
@@ -254,10 +254,10 @@ find_pc_partial_function_sym (CORE_ADDR pc,
       f = find_pc_sect_function (mapped_pc, section);
       if (f != NULL
 	  && (msymbol.minsym == NULL
-	      || (BLOCK_ENTRY_PC (SYMBOL_BLOCK_VALUE (f))
-		  >= BMSYMBOL_VALUE_ADDRESS (msymbol))))
+	      || (f->value_block ()->entry_pc ()
+		  >= msymbol.value_address ())))
 	{
-	  const struct block *b = SYMBOL_BLOCK_VALUE (f);
+	  const struct block *b = f->value_block ();
 
 	  cache_pc_function_sym = f;
 	  cache_pc_function_section = section;
@@ -276,26 +276,26 @@ find_pc_partial_function_sym (CORE_ADDR pc,
 	     comment preceding declaration of find_pc_partial_function
 	     in symtab.h for more information.  */
 
-	  if (BLOCK_CONTIGUOUS_P (b))
+	  if (b->is_contiguous ())
 	    {
-	      cache_pc_function_low = BLOCK_START (b);
-	      cache_pc_function_high = BLOCK_END (b);
+	      cache_pc_function_low = b->start ();
+	      cache_pc_function_high = b->end ();
 	    }
 	  else
 	    {
-	      int i;
-	      for (i = 0; i < BLOCK_NRANGES (b); i++)
-	        {
-		  if (BLOCK_RANGE_START (b, i) <= mapped_pc
-		      && mapped_pc < BLOCK_RANGE_END (b, i))
+	      bool found = false;
+	      for (const blockrange &range : b->ranges ())
+		{
+		  if (range.start () <= mapped_pc && mapped_pc < range.end ())
 		    {
-		      cache_pc_function_low = BLOCK_RANGE_START (b, i);
-		      cache_pc_function_high = BLOCK_RANGE_END (b, i);
+		      cache_pc_function_low = range.start ();
+		      cache_pc_function_high = range.end ();
+		      found = true;
 		      break;
 		    }
 		}
 	      /* Above loop should exit via the break.  */
-	      gdb_assert (i < BLOCK_NRANGES (b));
+	      gdb_assert (found);
 	    }
 
 
@@ -326,7 +326,7 @@ find_pc_partial_function_sym (CORE_ADDR pc,
       return false;
     }
 
-  cache_pc_function_low = BMSYMBOL_VALUE_ADDRESS (msymbol);
+  cache_pc_function_low = msymbol.value_address ();
   cache_pc_function_sym = msymbol.minsym;
   cache_pc_function_section = section;
   cache_pc_function_high = minimal_symbol_upper_bound (msymbol);
@@ -390,29 +390,27 @@ find_function_entry_range_from_pc (CORE_ADDR pc, const char **name,
   const struct block *block;
   bool status = find_pc_partial_function (pc, name, address, endaddr, &block);
 
-  if (status && block != nullptr && !BLOCK_CONTIGUOUS_P (block))
+  if (status && block != nullptr && !block->is_contiguous ())
     {
-      CORE_ADDR entry_pc = BLOCK_ENTRY_PC (block);
+      CORE_ADDR entry_pc = block->entry_pc ();
 
-      for (int i = 0; i < BLOCK_NRANGES (block); i++)
-        {
-	  if (BLOCK_RANGE_START (block, i) <= entry_pc
-	      && entry_pc < BLOCK_RANGE_END (block, i))
+      for (const blockrange &range : block->ranges ())
+	{
+	  if (range.start () <= entry_pc && entry_pc < range.end ())
 	    {
 	      if (address != nullptr)
-	        *address = BLOCK_RANGE_START (block, i);
+		*address = range.start ();
 
 	      if (endaddr != nullptr)
-	        *endaddr = BLOCK_RANGE_END (block, i);
+		*endaddr = range.end ();
 
 	      return status;
 	    }
 	}
 
       /* It's an internal error if we exit the above loop without finding
-         the range.  */
-      internal_error (__FILE__, __LINE__,
-                      _("Entry block not found in find_function_entry_range_from_pc"));
+	 the range.  */
+      internal_error (_("Entry block not found in find_function_entry_range_from_pc"));
     }
 
   return status;
@@ -425,8 +423,8 @@ find_function_type (CORE_ADDR pc)
 {
   struct symbol *sym = find_pc_function (pc);
 
-  if (sym != NULL && BLOCK_ENTRY_PC (SYMBOL_BLOCK_VALUE (sym)) == pc)
-    return SYMBOL_TYPE (sym);
+  if (sym != NULL && sym->value_block ()->entry_pc () == pc)
+    return sym->type ();
 
   return NULL;
 }
@@ -441,14 +439,14 @@ find_gnu_ifunc_target_type (CORE_ADDR resolver_funaddr)
     {
       /* Get the return type of the resolver.  */
       struct type *resolver_ret_type
-	= check_typedef (TYPE_TARGET_TYPE (resolver_type));
+	= check_typedef (resolver_type->target_type ());
 
       /* If we found a pointer to function, then the resolved type
 	 is the type of the pointed-to function.  */
       if (resolver_ret_type->code () == TYPE_CODE_PTR)
 	{
 	  struct type *resolved_type
-	    = TYPE_TARGET_TYPE (resolver_ret_type);
+	    = resolver_ret_type->target_type ();
 	  if (check_typedef (resolved_type)->code () == TYPE_CODE_FUNC)
 	    return resolved_type;
 	}
@@ -461,17 +459,13 @@ find_gnu_ifunc_target_type (CORE_ADDR resolver_funaddr)
    at least as old as the selected frame. Return NULL if there is no
    such frame.  If BLOCK is NULL, just return NULL.  */
 
-struct frame_info *
+frame_info_ptr
 block_innermost_frame (const struct block *block)
 {
-  struct frame_info *frame;
-
   if (block == NULL)
     return NULL;
 
-  frame = get_selected_frame_if_set ();
-  if (frame == NULL)
-    frame = get_current_frame ();
+  frame_info_ptr frame = get_selected_frame ();
   while (frame != NULL)
     {
       const struct block *frame_block = get_frame_block (frame, NULL);

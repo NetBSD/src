@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2020 Free Software Foundation, Inc.
+   Copyright 2009-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,6 +14,14 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+#ifdef TYPE_NOSPACE_long_long
+#define TYPE long long
+#elif defined TYPE_NOSPACE_signed_char
+#define TYPE signed char
+#else
+#define TYPE TYPE_NOSPACE
+#endif
 
 TYPE
 func (void)

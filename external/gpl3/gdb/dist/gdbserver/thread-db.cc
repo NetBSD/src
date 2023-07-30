@@ -1,5 +1,5 @@
 /* Thread management interface, for the remote server for GDB.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -155,38 +155,42 @@ thread_db_state_str (td_thr_state_e state)
 }
 #endif
 
-/* Get thread info about PTID, accessing memory via the current
-   thread.  */
+/* Get thread info about PTID.  */
 
 static int
 find_one_thread (ptid_t ptid)
 {
-  td_thrhandle_t th;
-  td_thrinfo_t ti;
-  td_err_e err;
-  struct lwp_info *lwp;
-  struct thread_db *thread_db = current_process ()->priv->thread_db;
-  int lwpid = ptid.lwp ();
-
   thread_info *thread = find_thread_ptid (ptid);
-  lwp = get_thread_lwp (thread);
+  lwp_info *lwp = get_thread_lwp (thread);
   if (lwp->thread_known)
     return 1;
 
-  /* Get information about this thread.  */
-  err = thread_db->td_ta_map_lwp2thr_p (thread_db->thread_agent, lwpid, &th);
+  /* Get information about this thread.  libthread_db will need to read some
+     memory, which will be done on the current process, so make PTID's process
+     the current one.  */
+  process_info *proc = find_process_pid (ptid.pid ());
+  gdb_assert (proc != nullptr);
+
+  scoped_restore_current_thread restore_thread;
+  switch_to_process (proc);
+
+  thread_db *thread_db = proc->priv->thread_db;
+  td_thrhandle_t th;
+  int lwpid = ptid.lwp ();
+  td_err_e err = thread_db->td_ta_map_lwp2thr_p (thread_db->thread_agent, lwpid,
+						 &th);
   if (err != TD_OK)
     error ("Cannot get thread handle for LWP %d: %s",
 	   lwpid, thread_db_err_str (err));
 
+  td_thrinfo_t ti;
   err = thread_db->td_thr_get_info_p (&th, &ti);
   if (err != TD_OK)
     error ("Cannot get thread info for LWP %d: %s",
 	   lwpid, thread_db_err_str (err));
 
-  if (debug_threads)
-    debug_printf ("Found thread %ld (LWP %d)\n",
-		  (unsigned long) ti.ti_tid, ti.ti_lid);
+  threads_debug_printf ("Found thread %ld (LWP %d)",
+			(unsigned long) ti.ti_tid, ti.ti_lid);
 
   if (lwpid != ti.ti_lid)
     {
@@ -214,13 +218,12 @@ attach_thread (const td_thrhandle_t *th_p, td_thrinfo_t *ti_p)
 {
   struct process_info *proc = current_process ();
   int pid = pid_of (proc);
-  ptid_t ptid = ptid_t (pid, ti_p->ti_lid, 0);
+  ptid_t ptid = ptid_t (pid, ti_p->ti_lid);
   struct lwp_info *lwp;
   int err;
 
-  if (debug_threads)
-    debug_printf ("Attaching to thread %ld (LWP %d)\n",
-		  (unsigned long) ti_p->ti_tid, ti_p->ti_lid);
+  threads_debug_printf ("Attaching to thread %ld (LWP %d)",
+			(unsigned long) ti_p->ti_tid, ti_p->ti_lid);
   err = the_linux_target->attach_lwp (ptid);
   if (err != 0)
     {
@@ -283,10 +286,9 @@ find_new_threads_callback (const td_thrhandle_t *th_p, void *data)
 	 thread that previously exited and was joined.  (glibc marks
 	 terminated and joined threads with kernel thread ID -1.  See
 	 glibc PR17707.  */
-      if (debug_threads)
-	debug_printf ("thread_db: skipping exited and "
-		      "joined thread (0x%lx)\n",
-		      (unsigned long) ti.ti_tid);
+      threads_debug_printf ("thread_db: skipping exited and "
+			    "joined thread (0x%lx)",
+			    (unsigned long) ti.ti_tid);
       return 0;
     }
 
@@ -333,9 +335,8 @@ thread_db_find_new_threads (void)
 					 TD_THR_ANY_STATE,
 					 TD_THR_LOWEST_PRIORITY,
 					 TD_SIGNO_MASK, TD_THR_ANY_USER_FLAGS);
-      if (debug_threads)
-	debug_printf ("Found %d threads in iteration %d.\n",
-		      new_thread_count, iteration);
+      threads_debug_printf ("Found %d threads in iteration %d.",
+			    new_thread_count, iteration);
 
       if (new_thread_count != 0)
 	{
@@ -388,7 +389,6 @@ thread_db_get_tls_address (struct thread_info *thread, CORE_ADDR offset,
   psaddr_t addr;
   td_err_e err;
   struct lwp_info *lwp;
-  struct thread_info *saved_thread;
   struct process_info *proc;
   struct thread_db *thread_db;
 
@@ -411,8 +411,8 @@ thread_db_get_tls_address (struct thread_info *thread, CORE_ADDR offset,
   if (!lwp->thread_known)
     return TD_NOTHR;
 
-  saved_thread = current_thread;
-  current_thread = thread;
+  scoped_restore_current_thread restore_thread;
+  switch_to_thread (thread);
 
   if (load_module != 0)
     {
@@ -435,7 +435,6 @@ thread_db_get_tls_address (struct thread_info *thread, CORE_ADDR offset,
       addr = (char *) addr + offset;
     }
 
-  current_thread = saved_thread;
   if (err == TD_OK)
     {
       *address = (CORE_ADDR) (uintptr_t) addr;
@@ -494,8 +493,7 @@ thread_db_load_search (void)
   err = tdb->td_ta_new_p (&tdb->proc_handle, &tdb->thread_agent);
   if (err != TD_OK)
     {
-      if (debug_threads)
-	debug_printf ("td_ta_new(): %s\n", thread_db_err_str (err));
+      threads_debug_printf ("td_ta_new(): %s", thread_db_err_str (err));
       free (tdb);
       proc->priv->thread_db = NULL;
       return 0;
@@ -537,8 +535,7 @@ try_thread_db_load_1 (void *handle)
     {								\
       if ((a) == NULL)						\
 	{							\
-	  if (debug_threads)					\
-	    debug_printf ("dlsym: %s\n", dlerror ());		\
+	  threads_debug_printf ("dlsym: %s", dlerror ());	\
 	  if (required)						\
 	    {							\
 	      free (tdb);					\
@@ -558,8 +555,7 @@ try_thread_db_load_1 (void *handle)
   err = tdb->td_ta_new_p (&tdb->proc_handle, &tdb->thread_agent);
   if (err != TD_OK)
     {
-      if (debug_threads)
-	debug_printf ("td_ta_new(): %s\n", thread_db_err_str (err));
+      threads_debug_printf ("td_ta_new(): %s", thread_db_err_str (err));
       free (tdb);
       proc->priv->thread_db = NULL;
       return 0;
@@ -603,14 +599,12 @@ try_thread_db_load (const char *library)
 {
   void *handle;
 
-  if (debug_threads)
-    debug_printf ("Trying host libthread_db library: %s.\n",
-		  library);
+  threads_debug_printf ("Trying host libthread_db library: %s.",
+			library);
   handle = dlopen (library, RTLD_NOW);
   if (handle == NULL)
     {
-      if (debug_threads)
-	debug_printf ("dlopen failed: %s.\n", dlerror ());
+      threads_debug_printf ("dlopen failed: %s.", dlerror ());
       return 0;
     }
 
@@ -625,7 +619,7 @@ try_thread_db_load (const char *library)
 	  const char *const libpath = dladdr_to_soname (td_init);
 
 	  if (libpath != NULL)
-	    debug_printf ("Host %s resolved to: %s.\n", library, libpath);
+	    threads_debug_printf ("Host %s resolved to: %s.", library, libpath);
 	}
     }
 #endif
@@ -724,8 +718,7 @@ thread_db_load_search (void)
 	}
     }
 
-  if (debug_threads)
-    debug_printf ("thread_db_load_search returning %d\n", rc);
+  threads_debug_printf ("thread_db_load_search returning %d", rc);
   return rc;
 }
 
@@ -788,7 +781,7 @@ disable_thread_event_reporting (struct process_info *proc)
 
       if (td_ta_clear_event_p != NULL)
 	{
-	  struct thread_info *saved_thread = current_thread;
+	  scoped_restore_current_thread restore_thread;
 	  td_thr_events_t events;
 
 	  switch_to_process (proc);
@@ -797,8 +790,6 @@ disable_thread_event_reporting (struct process_info *proc)
 	     in any events anymore.  */
 	  td_event_fillset (&events);
 	  (*td_ta_clear_event_p) (thread_db->thread_agent, &events);
-
-	  current_thread = saved_thread;
 	}
     }
 }
@@ -894,8 +885,8 @@ thread_db_notice_clone (struct thread_info *parent_thr, ptid_t child_ptid)
   /* find_one_thread calls into libthread_db which accesses memory via
      the current thread.  Temporarily switch to a thread we know is
      stopped.  */
-  scoped_restore restore_current_thread
-    = make_scoped_restore (&current_thread, parent_thr);
+  scoped_restore_current_thread restore_thread;
+  switch_to_thread (parent_thr);
 
   if (!find_one_thread (child_ptid))
     warning ("Cannot find thread after clone.");

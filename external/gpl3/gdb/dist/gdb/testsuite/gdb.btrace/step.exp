@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -28,21 +28,24 @@ if [prepare_for_testing "failed to prepare" $testfile $srcfile] {
 }
 
 if ![runto_main] {
-    untested "failed to run to main"
     return -1
 }
 
 # trace the call to the test function
-gdb_test_no_output "record btrace"
-gdb_test "next"
+with_test_prefix "record" {
+    gdb_test_no_output "record btrace"
+    gdb_test "next"
+}
 
 # let's step around a bit
-gdb_test "reverse-next" ".*main\.2.*"
-gdb_test "step" ".*fun4\.2.*"
-gdb_test "next" ".*fun4\.3.*"
-gdb_test "step" ".*fun2\.2.*"
-gdb_test "finish" ".*fun4\.4.*"
-gdb_test "reverse-step" ".*fun2\.3.*"
-gdb_test "reverse-finish" ".*fun4\.3.*"
-gdb_test "reverse-next" ".*fun4\.2.*"
-gdb_test "reverse-finish" ".*main\.2.*"
+with_test_prefix "replay" {
+    gdb_test "reverse-next" ".*main\.2.*" "reverse-next.1"
+    gdb_test "step" ".*fun4\.2.*" "step.1"
+    gdb_test "next" ".*fun4\.3.*" "next.1"
+    gdb_test "step" ".*fun2\.2.*" "step.2"
+    gdb_test "finish" ".*fun4\.4.*" "finish.1"
+    gdb_test "reverse-step" ".*fun2\.3.*" "reverse-step.1"
+    gdb_test "reverse-finish" ".*fun4\.3.*" "reverse-finish.1"
+    gdb_test "reverse-next" ".*fun4\.2.*" "reverse-next.2"
+    gdb_test "reverse-finish" ".*main\.2.*" "reverse-finish.2"
+}

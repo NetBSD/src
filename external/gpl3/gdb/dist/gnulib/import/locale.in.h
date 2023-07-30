@@ -1,17 +1,17 @@
 /* A POSIX <locale.h>.
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
+   You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #if __GNUC__ >= 3
@@ -211,7 +211,7 @@ _GL_WARN_ON_USE (setlocale, "setlocale works differently on native Windows - "
 # include "setlocale_null.h"
 #endif
 
-#if /*@GNULIB_NEWLOCALE@ ||*/ (@GNULIB_LOCALENAME@ && @HAVE_NEWLOCALE@)
+#if /*@GNULIB_NEWLOCALE@ ||*/ (@GNULIB_LOCALENAME@ && @LOCALENAME_ENHANCE_LOCALE_FUNCS@ && @HAVE_NEWLOCALE@)
 # if @REPLACE_NEWLOCALE@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef newlocale
@@ -244,7 +244,7 @@ _GL_WARN_ON_USE (newlocale, "newlocale is not portable");
 # endif
 #endif
 
-#if @GNULIB_DUPLOCALE@ || (@GNULIB_LOCALENAME@ && @HAVE_DUPLOCALE@)
+#if @GNULIB_DUPLOCALE@ || (@GNULIB_LOCALENAME@ && @LOCALENAME_ENHANCE_LOCALE_FUNCS@ && @HAVE_DUPLOCALE@)
 # if @REPLACE_DUPLOCALE@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef duplocale
@@ -274,7 +274,7 @@ _GL_WARN_ON_USE (duplocale, "duplocale is buggy on some glibc systems - "
 # endif
 #endif
 
-#if /*@GNULIB_FREELOCALE@ ||*/ (@GNULIB_LOCALENAME@ && @HAVE_FREELOCALE@)
+#if /*@GNULIB_FREELOCALE@ ||*/ (@GNULIB_LOCALENAME@ && @LOCALENAME_ENHANCE_LOCALE_FUNCS@ && @HAVE_FREELOCALE@)
 # if @REPLACE_FREELOCALE@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef freelocale

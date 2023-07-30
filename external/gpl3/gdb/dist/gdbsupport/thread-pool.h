@@ -1,6 +1,6 @@
 /* Thread pool
 
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,16 +21,75 @@
 #define GDBSUPPORT_THREAD_POOL_H
 
 #include <queue>
-#include <thread>
 #include <vector>
 #include <functional>
+#if CXX_STD_THREAD
+#include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <future>
+#endif
 #include "gdbsupport/gdb_optional.h"
 
 namespace gdb
 {
+
+#if CXX_STD_THREAD
+
+/* Simply use the standard future.  */
+template<typename T>
+using future = std::future<T>;
+
+#else /* CXX_STD_THREAD */
+
+/* A compatibility wrapper for std::future.  Once <thread> and
+   <future> are available in all GCC builds -- should that ever happen
+   -- this can be removed.  GCC does not implement threading for
+   MinGW, see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=93687.
+
+   Meanwhile, in this mode, there are no threads.  Tasks submitted to
+   the thread pool are invoked immediately and their result is stored
+   here.  The base template here simply wraps a T and provides some
+   std::future compatibility methods.  The provided methods are chosen
+   based on what GDB needs presently.  */
+
+template<typename T>
+class future
+{
+public:
+
+  explicit future (T value)
+    : m_value (std::move (value))
+  {
+  }
+
+  future () = default;
+  future (future &&other) = default;
+  future (const future &other) = delete;
+  future &operator= (future &&other) = default;
+  future &operator= (const future &other) = delete;
+
+  void wait () const { }
+
+  T get () { return std::move (m_value); }
+
+private:
+
+  T m_value;
+};
+
+/* A specialization for void.  */
+
+template<>
+class future<void>
+{
+public:
+  void wait () const { }
+  void get () { }
+};
+
+#endif /* CXX_STD_THREAD */
+
 
 /* A thread pool.
 
@@ -53,36 +112,72 @@ public:
   /* Return the number of executing threads.  */
   size_t thread_count () const
   {
+#if CXX_STD_THREAD
     return m_thread_count;
+#else
+    return 0;
+#endif
   }
 
   /* Post a task to the thread pool.  A future is returned, which can
      be used to wait for the result.  */
-  std::future<void> post_task (std::function<void ()> func);
+  future<void> post_task (std::function<void ()> &&func)
+  {
+#if CXX_STD_THREAD
+    std::packaged_task<void ()> task (std::move (func));
+    future<void> result = task.get_future ();
+    do_post_task (std::packaged_task<void ()> (std::move (task)));
+    return result;
+#else
+    func ();
+    return {};
+#endif /* CXX_STD_THREAD */
+  }
+
+  /* Post a task to the thread pool.  A future is returned, which can
+     be used to wait for the result.  */
+  template<typename T>
+  future<T> post_task (std::function<T ()> &&func)
+  {
+#if CXX_STD_THREAD
+    std::packaged_task<T ()> task (std::move (func));
+    future<T> result = task.get_future ();
+    do_post_task (std::packaged_task<void ()> (std::move (task)));
+    return result;
+#else
+    return future<T> (func ());
+#endif /* CXX_STD_THREAD */
+  }
 
 private:
 
   thread_pool () = default;
 
+#if CXX_STD_THREAD
   /* The callback for each worker thread.  */
   void thread_function ();
+
+  /* Post a task to the thread pool.  A future is returned, which can
+     be used to wait for the result.  */
+  void do_post_task (std::packaged_task<void ()> &&func);
 
   /* The current thread count.  */
   size_t m_thread_count = 0;
 
   /* A convenience typedef for the type of a task.  */
-  typedef std::packaged_task<void ()> task;
+  typedef std::packaged_task<void ()> task_t;
 
   /* The tasks that have not been processed yet.  An optional is used
      to represent a task.  If the optional is empty, then this means
      that the receiving thread should terminate.  If the optional is
      non-empty, then it is an actual task to evaluate.  */
-  std::queue<optional<task>> m_tasks;
+  std::queue<optional<task_t>> m_tasks;
 
   /* A condition variable and mutex that are used for communication
      between the main thread and the worker threads.  */
   std::condition_variable m_tasks_cv;
   std::mutex m_tasks_mutex;
+#endif /* CXX_STD_THREAD */
 };
 
 }

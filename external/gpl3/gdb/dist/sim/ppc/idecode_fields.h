@@ -26,6 +26,7 @@
    In addition to the below, more will be found in the gen program's
    cache table */
 
+#include "symcat.h"
 
 /* map some statements and variables directly across */
 

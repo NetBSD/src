@@ -1,6 +1,6 @@
 /* Common target dependent for AArch64 systems.
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,12 @@
 
 #include <signal.h>
 #include <sys/utsname.h>
+
+/* The order in which <sys/ptrace.h> and <asm/ptrace.h> are included
+   can be important.  <sys/ptrace.h> often declares various PTRACE_*
+   enums.  <asm/ptrace.h> often defines preprocessor constants for
+   these very same symbols.  When that's the case, build errors will
+   result when <asm/ptrace.h> is included before <sys/ptrace.h>.  */
 #include <sys/ptrace.h>
 #include <asm/ptrace.h>
 

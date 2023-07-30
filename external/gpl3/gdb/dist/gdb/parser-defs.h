@@ -1,6 +1,6 @@
 /* Parser definitions for GDB.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    Modified from expread.y by the Department of Computer Science at the
    State University of New York at Buffalo.
@@ -25,6 +25,7 @@
 
 #include "expression.h"
 #include "symtab.h"
+#include "expop.h"
 
 struct block;
 struct language_defn;
@@ -41,13 +42,19 @@ struct expr_builder
      And GDBARCH is the gdbarch to use during parsing.  */
 
   expr_builder (const struct language_defn *lang,
-		struct gdbarch *gdbarch);
+		struct gdbarch *gdbarch)
+    : expout (new expression (lang, gdbarch))
+  {
+  }
 
   DISABLE_COPY_AND_ASSIGN (expr_builder);
 
   /* Resize the allocated expression to the correct size, and return
      it as an expression_up -- passing ownership to the caller.  */
-  ATTRIBUTE_UNUSED_RESULT expression_up release ();
+  ATTRIBUTE_UNUSED_RESULT expression_up release ()
+  {
+    return std::move (expout);
+  }
 
   /* Return the gdbarch that was passed to the constructor.  */
 
@@ -63,34 +70,67 @@ struct expr_builder
     return expout->language_defn;
   }
 
-  /* The size of the expression above.  */
-
-  size_t expout_size;
+  /* Set the root operation of the expression that is currently being
+     built.  */
+  void set_operation (expr::operation_up &&op)
+  {
+    expout->op = std::move (op);
+  }
 
   /* The expression related to this parser state.  */
 
   expression_up expout;
-
-  /* The number of elements already in the expression.  This is used
-     to know where to put new elements.  */
-
-  size_t expout_ptr;
 };
 
-/* This is used for expression completion.  */
+/* Complete an expression that references a field, like "x->y".  */
 
-struct expr_completion_state
+struct expr_complete_structop : public expr_completion_base
 {
-  /* The index of the last struct expression directly before a '.' or
-     '->'.  This is set when parsing and is only used when completing a
-     field name.  It is -1 if no dereference operation was found.  */
-  int expout_last_struct = -1;
+  explicit expr_complete_structop (expr::structop_base_operation *op)
+    : m_op (op)
+  {
+  }
 
-  /* If we are completing a tagged type name, this will be nonzero.  */
-  enum type_code expout_tag_completion_type = TYPE_CODE_UNDEF;
+  bool complete (struct expression *exp,
+		 completion_tracker &tracker) override
+  {
+    return m_op->complete (exp, tracker);
+  }
+
+private:
+
+  /* The last struct expression directly before a '.' or '->'.  This
+     is set when parsing and is only used when completing a field
+     name.  It is nullptr if no dereference operation was found.  */
+  expr::structop_base_operation *m_op = nullptr;
+};
+
+/* Complete a tag name in an expression.  This is used for something
+   like "enum abc<TAB>".  */
+
+struct expr_complete_tag : public expr_completion_base
+{
+  expr_complete_tag (enum type_code code,
+		     gdb::unique_xmalloc_ptr<char> name)
+    : m_code (code),
+      m_name (std::move (name))
+  {
+    /* Parsers should enforce this statically.  */
+    gdb_assert (code == TYPE_CODE_ENUM
+		|| code == TYPE_CODE_UNION
+		|| code == TYPE_CODE_STRUCT);
+  }
+
+  bool complete (struct expression *exp,
+		 completion_tracker &tracker) override;
+
+private:
+
+  /* The kind of tag to complete.  */
+  enum type_code m_code;
 
   /* The token for tagged type name completion.  */
-  gdb::unique_xmalloc_ptr<char> expout_completion_name;
+  gdb::unique_xmalloc_ptr<char> m_name;
 };
 
 /* An instance of this type is instantiated during expression parsing,
@@ -108,15 +148,17 @@ struct parser_state : public expr_builder
 		CORE_ADDR context_pc,
 		int comma,
 		const char *input,
-		int completion,
-		innermost_block_tracker *tracker)
+		bool completion,
+		innermost_block_tracker *tracker,
+		bool void_p)
     : expr_builder (lang, gdbarch),
       expression_context_block (context_block),
       expression_context_pc (context_pc),
       comma_terminates (comma),
       lexptr (input),
       parse_completion (completion),
-      block_tracker (tracker)
+      block_tracker (tracker),
+      void_context_p (void_p)
   {
   }
 
@@ -142,10 +184,10 @@ struct parser_state : public expr_builder
     return val;
   }
 
-  /* Mark the current index as the starting location of a structure
+  /* Mark the given operation as the starting location of a structure
      expression.  This is used when completing on field names.  */
 
-  void mark_struct_expression ();
+  void mark_struct_expression (expr::structop_base_operation *op);
 
   /* Indicate that the current parser invocation is completing a tag.
      TAG is the type code of the tag, and PTR and LENGTH represent the
@@ -153,6 +195,74 @@ struct parser_state : public expr_builder
 
   void mark_completion_tag (enum type_code tag, const char *ptr, int length);
 
+  /* Mark for completion, using an arbitrary completer.  */
+
+  void mark_completion (std::unique_ptr<expr_completion_base> completer)
+  {
+    gdb_assert (m_completion_state == nullptr);
+    m_completion_state = std::move (completer);
+  }
+
+  /* Push an operation on the stack.  */
+  void push (expr::operation_up &&op)
+  {
+    m_operations.push_back (std::move (op));
+  }
+
+  /* Create a new operation and push it on the stack.  */
+  template<typename T, typename... Arg>
+  void push_new (Arg... args)
+  {
+    m_operations.emplace_back (new T (std::forward<Arg> (args)...));
+  }
+
+  /* Push a new C string operation.  */
+  void push_c_string (int, struct stoken_vector *vec);
+
+  /* Push a symbol reference.  If SYM is nullptr, look for a minimal
+     symbol.  */
+  void push_symbol (const char *name, block_symbol sym);
+
+  /* Push a reference to $mumble.  This may result in a convenience
+     variable, a history reference, or a register.  */
+  void push_dollar (struct stoken str);
+
+  /* Pop an operation from the stack.  */
+  expr::operation_up pop ()
+  {
+    expr::operation_up result = std::move (m_operations.back ());
+    m_operations.pop_back ();
+    return result;
+  }
+
+  /* Pop N elements from the stack and return a vector.  */
+  std::vector<expr::operation_up> pop_vector (int n)
+  {
+    std::vector<expr::operation_up> result (n);
+    for (int i = 1; i <= n; ++i)
+      result[n - i] = pop ();
+    return result;
+  }
+
+  /* A helper that pops an operation, wraps it in some other
+     operation, and pushes it again.  */
+  template<typename T>
+  void wrap ()
+  {
+    using namespace expr;
+    operation_up v = ::expr::make_operation<T> (pop ());
+    push (std::move (v));
+  }
+
+  /* A helper that pops two operations, wraps them in some other
+     operation, and pushes the result.  */
+  template<typename T>
+  void wrap2 ()
+  {
+    expr::operation_up rhs = pop ();
+    expr::operation_up lhs = pop ();
+    push (expr::make_operation<T> (std::move (lhs), std::move (rhs)));
+  }
 
   /* If this is nonzero, this block is used as the lexical context for
      symbol names.  */
@@ -184,13 +294,16 @@ struct parser_state : public expr_builder
   int arglist_len = 0;
 
   /* True if parsing an expression to attempt completion.  */
-  int parse_completion;
+  bool parse_completion;
 
   /* Completion state is updated here.  */
-  expr_completion_state m_completion_state;
+  std::unique_ptr<expr_completion_base> m_completion_state;
 
   /* The innermost block tracker.  */
   innermost_block_tracker *block_tracker;
+
+  /* True if no value is expected from the expression.  */
+  bool void_context_p;
 
 private:
 
@@ -198,6 +311,9 @@ private:
      arguments contain other function calls.  */
 
   std::vector<int> m_funcall_chain;
+
+  /* Stack of operations.  */
+  std::vector<expr::operation_up> m_operations;
 };
 
 /* When parsing expressions we track the innermost block that was
@@ -290,162 +406,22 @@ struct objc_class_str
     int theclass;
   };
 
-/* Reverse an expression from suffix form (in which it is constructed)
-   to prefix form (in which we can conveniently print or execute it).
-   Ordinarily this always returns -1.  However, if LAST_STRUCT
-   is not -1 (i.e., we are trying to complete a field name), it will
-   return the index of the subexpression which is the left-hand-side
-   of the struct operation at LAST_STRUCT.  */
-
-extern int prefixify_expression (struct expression *expr,
-				 int last_struct = -1);
-
-extern void write_exp_elt_opcode (struct expr_builder *, enum exp_opcode);
-
-extern void write_exp_elt_sym (struct expr_builder *, struct symbol *);
-
-extern void write_exp_elt_longcst (struct expr_builder *, LONGEST);
-
-extern void write_exp_elt_floatcst (struct expr_builder *, const gdb_byte *);
-
-extern void write_exp_elt_type (struct expr_builder *, struct type *);
-
-extern void write_exp_elt_intern (struct expr_builder *, struct internalvar *);
-
-extern void write_exp_string (struct expr_builder *, struct stoken);
-
-void write_exp_string_vector (struct expr_builder *, int type,
-			      struct stoken_vector *vec);
-
-extern void write_exp_bitstring (struct expr_builder *, struct stoken);
-
-extern void write_exp_elt_block (struct expr_builder *, const struct block *);
-
-extern void write_exp_elt_objfile (struct expr_builder *,
-				   struct objfile *objfile);
-
-extern void write_exp_msymbol (struct expr_builder *,
-			       struct bound_minimal_symbol);
-
-extern void write_dollar_variable (struct parser_state *, struct stoken str);
-
 extern const char *find_template_name_end (const char *);
 
 extern std::string copy_name (struct stoken);
 
-extern int dump_subexp (struct expression *, struct ui_file *, int);
-
-extern int dump_subexp_body_standard (struct expression *, 
-				      struct ui_file *, int);
-
-extern void operator_length (const struct expression *, int, int *, int *);
-
-extern void operator_length_standard (const struct expression *, int, int *,
-				      int *);
-
-extern int operator_check_standard (struct expression *exp, int pos,
-				    int (*objfile_func)
-				      (struct objfile *objfile, void *data),
-				    void *data);
-
-extern const char *op_name_standard (enum exp_opcode);
-
 extern bool parse_float (const char *p, int len,
 			 const struct type *type, gdb_byte *data);
+extern bool fits_in_type (int n_sign, ULONGEST n, int type_bits,
+			  bool type_signed_p);
 
-/* These codes indicate operator precedences for expression printing,
-   least tightly binding first.  */
-/* Adding 1 to a precedence value is done for binary operators,
-   on the operand which is more tightly bound, so that operators
-   of equal precedence within that operand will get parentheses.  */
-/* PREC_HYPER and PREC_ABOVE_COMMA are not the precedence of any operator;
-   they are used as the "surrounding precedence" to force
-   various kinds of things to be parenthesized.  */
-enum precedence
-  {
-    PREC_NULL, PREC_COMMA, PREC_ABOVE_COMMA, PREC_ASSIGN, PREC_LOGICAL_OR,
-    PREC_LOGICAL_AND, PREC_BITWISE_IOR, PREC_BITWISE_AND, PREC_BITWISE_XOR,
-    PREC_EQUAL, PREC_ORDER, PREC_SHIFT, PREC_ADD, PREC_MUL, PREC_REPEAT,
-    PREC_HYPER, PREC_PREFIX, PREC_SUFFIX, PREC_BUILTIN_FUNCTION
-  };
-
-/* Table mapping opcodes into strings for printing operators
-   and precedences of the operators.  */
-
-struct op_print
-  {
-    const char *string;
-    enum exp_opcode opcode;
-    /* Precedence of operator.  These values are used only by comparisons.  */
-    enum precedence precedence;
-
-    /* For a binary operator:  1 iff right associate.
-       For a unary operator:  1 iff postfix.  */
-    int right_assoc;
-  };
-
-/* Information needed to print, prefixify, and evaluate expressions for 
-   a given language.  */
-
-struct exp_descriptor
-  {
-    /* Print subexpression.  */
-    void (*print_subexp) (struct expression *, int *, struct ui_file *,
-			  enum precedence);
-
-    /* Returns number of exp_elements needed to represent an operator and
-       the number of subexpressions it takes.  */
-    void (*operator_length) (const struct expression*, int, int*, int *);
-
-    /* Call OBJFILE_FUNC for any objfile found being referenced by the
-       single operator of EXP at position POS.  Operator parameters are
-       located at positive (POS + number) offsets in EXP.  OBJFILE_FUNC
-       should never be called with NULL OBJFILE.  OBJFILE_FUNC should
-       get passed an arbitrary caller supplied DATA pointer.  If it
-       returns non-zero value then (any other) non-zero value should be
-       immediately returned to the caller.  Otherwise zero should be
-       returned.  */
-    int (*operator_check) (struct expression *exp, int pos,
-			   int (*objfile_func) (struct objfile *objfile,
-						void *data),
-			   void *data);
-
-    /* Name of this operator for dumping purposes.
-       The returned value should never be NULL, even if EXP_OPCODE is
-       an unknown opcode (a string containing an image of the numeric
-       value of the opcode can be returned, for instance).  */
-    const char *(*op_name) (enum exp_opcode);
-
-    /* Dump the rest of this (prefix) expression after the operator
-       itself has been printed.  See dump_subexp_body_standard in
-       (expprint.c).  */
-    int (*dump_subexp_body) (struct expression *, struct ui_file *, int);
-
-    /* Evaluate an expression.  */
-    struct value *(*evaluate_exp) (struct type *, struct expression *,
-				   int *, enum noside);
-  };
-
-
-/* Default descriptor containing standard definitions of all
-   elements.  */
-extern const struct exp_descriptor exp_descriptor_standard;
-
-/* Functions used by language-specific extended operators to (recursively)
-   print/dump subexpressions.  */
-
-extern void print_subexp (struct expression *, int *, struct ui_file *,
-			  enum precedence);
-
-extern void print_subexp_standard (struct expression *, int *, 
-				   struct ui_file *, enum precedence);
 
 /* Function used to avoid direct calls to fprintf
    in the code generated by the bison parser.  */
 
 extern void parser_fprintf (FILE *, const char *, ...) ATTRIBUTE_PRINTF (2, 3);
 
-extern int exp_uses_objfile (struct expression *exp, struct objfile *objfile);
+extern bool exp_uses_objfile (struct expression *exp, struct objfile *objfile);
 
 #endif /* PARSER_DEFS_H */
 

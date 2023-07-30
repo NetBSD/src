@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux SPARC.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,7 +42,7 @@
 /* Signal trampoline support.  */
 
 static void sparc32_linux_sigframe_init (const struct tramp_frame *self,
-					 struct frame_info *this_frame,
+					 frame_info_ptr this_frame,
 					 struct trad_frame_cache *this_cache,
 					 CORE_ADDR func);
 
@@ -117,7 +117,7 @@ enum
 
 static void
 sparc32_linux_sigframe_init (const struct tramp_frame *self,
-			     struct frame_info *this_frame,
+			     frame_info_ptr this_frame,
 			     struct trad_frame_cache *this_cache,
 			     CORE_ADDR func)
 {
@@ -159,7 +159,7 @@ sparc32_linux_sigframe_init (const struct tramp_frame *self,
    address.  */
 
 static CORE_ADDR
-sparc32_linux_step_trap (struct frame_info *frame, unsigned long insn)
+sparc32_linux_step_trap (frame_info_ptr frame, unsigned long insn)
 {
   if (insn == 0x91d02010)
     {
@@ -253,7 +253,8 @@ sparc32_linux_collect_core_fpregset (const struct regset *regset,
 static void
 sparc_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  gdbarch *arch = regcache->arch ();
+  sparc_gdbarch_tdep *tdep = gdbarch_tdep<sparc_gdbarch_tdep> (arch);
   ULONGEST psr;
 
   regcache_cooked_write_unsigned (regcache, tdep->pc_regnum, pc);
@@ -420,9 +421,9 @@ static const struct regset sparc32_linux_fpregset =
 static void
 sparc32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  sparc_gdbarch_tdep *tdep = gdbarch_tdep<sparc_gdbarch_tdep> (gdbarch);
 
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 0);
 
   tdep->gregset = &sparc32_linux_gregset;
   tdep->sizeof_gregset = 152;
@@ -436,7 +437,7 @@ sparc32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* GNU/Linux has SVR4-style shared libraries...  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
   set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+    (gdbarch, linux_ilp32_fetch_link_map_offsets);
 
   /* ...which means that we need some special handling when doing
      prologue analysis.  */
@@ -444,7 +445,7 @@ sparc32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-                                             svr4_fetch_objfile_link_map);
+					     svr4_fetch_objfile_link_map);
 
   /* Make sure we can single-step over signal return system calls.  */
   tdep->step_trap = sparc32_linux_step_trap;
@@ -457,7 +458,7 @@ sparc32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Functions for 'catch syscall'.  */
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_SPARC32);
   set_gdbarch_get_syscall_number (gdbarch,
-                                  sparc32_linux_get_syscall_number);
+				  sparc32_linux_get_syscall_number);
 
   set_gdbarch_gdb_signal_from_target (gdbarch,
 				      sparc32_linux_gdb_signal_from_target);

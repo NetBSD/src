@@ -1,6 +1,6 @@
 /* Maintenance commands for testing the options framework.
 
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -133,39 +133,32 @@ struct test_options_opts
   const char *enum_opt = test_options_enum_values_xxx;
   unsigned int uint_opt = 0;
   int zuint_unl_opt = 0;
-  char *string_opt = nullptr;
+  std::string string_opt;
 
   test_options_opts () = default;
 
   DISABLE_COPY_AND_ASSIGN (test_options_opts);
 
-  ~test_options_opts ()
-  {
-    xfree (string_opt);
-  }
-
   /* Dump the options to FILE.  ARGS is the remainder unprocessed
      arguments.  */
   void dump (ui_file *file, const char *args) const
   {
-    fprintf_unfiltered (file,
-			_("-flag %d -xx1 %d -xx2 %d -bool %d "
-			  "-enum %s -uint %s -zuint-unl %s -string '%s' -- %s\n"),
-			flag_opt,
-			xx1_opt,
-			xx2_opt,
-			boolean_opt,
-			enum_opt,
-			(uint_opt == UINT_MAX
-			 ? "unlimited"
-			 : pulongest (uint_opt)),
-			(zuint_unl_opt == -1
-			 ? "unlimited"
-			 : plongest (zuint_unl_opt)),
-			(string_opt != nullptr
-			 ? string_opt
-			 : ""),
-			args);
+    gdb_printf (file,
+		_("-flag %d -xx1 %d -xx2 %d -bool %d "
+		  "-enum %s -uint %s -zuint-unl %s -string '%s' -- %s\n"),
+		flag_opt,
+		xx1_opt,
+		xx2_opt,
+		boolean_opt,
+		enum_opt,
+		(uint_opt == UINT_MAX
+		 ? "unlimited"
+		 : pulongest (uint_opt)),
+		(zuint_unl_opt == -1
+		 ? "unlimited"
+		 : plongest (zuint_unl_opt)),
+		string_opt.c_str (),
+		args);
   }
 };
 
@@ -286,7 +279,7 @@ static void
 maintenance_show_test_options_completion_result (const char *args,
 						 int from_tty)
 {
-  puts_filtered (maintenance_test_options_command_completion_text.c_str ());
+  gdb_puts (maintenance_test_options_command_completion_text.c_str ());
 }
 
 /* Save the completion result in the global variables read by the
@@ -302,8 +295,7 @@ save_completion_result (const test_options_opts &opts, bool res,
 
       stream.puts ("1 ");
       opts.dump (&stream, text);
-      maintenance_test_options_command_completion_text
-	= std::move (stream.string ());
+      maintenance_test_options_command_completion_text = stream.release ();
     }
   else
     {
@@ -409,7 +401,7 @@ maintenance_test_options_unknown_is_operand_command_completer
 }
 
 /* Command list for maint test-options.  */
-struct cmd_list_element *maintenance_test_options_list;
+static cmd_list_element *maintenance_test_options_list;
 
 
 void _initialize_maint_test_options ();
@@ -422,8 +414,7 @@ _initialize_maint_test_options ()
 			_("\
 Generic command for testing the options infrastructure."),
 			&maintenance_test_options_list,
-			"maintenance test-options ", 0,
-			&maintenancelist);
+			0, &maintenancelist);
 
   const auto def_group = make_test_options_options_def_group (nullptr);
 

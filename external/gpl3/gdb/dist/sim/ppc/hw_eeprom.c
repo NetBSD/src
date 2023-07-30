@@ -23,13 +23,7 @@
 
 #include "device_table.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
 
 
 /* DEVICE
@@ -184,20 +178,20 @@ state2a(hw_eeprom_states state)
 typedef struct _hw_eeprom_device {
   /* general */
   hw_eeprom_states state;
-  unsigned8 *memory;
+  uint8_t *memory;
   unsigned sizeof_memory;
   unsigned erase_delay;
-  signed64 program_start_time;
-  signed64 program_finish_time;
-  unsigned8 manufacture_code;
-  unsigned8 device_code;
-  unsigned8 toggle_bit;
+  int64_t program_start_time;
+  int64_t program_finish_time;
+  uint8_t manufacture_code;
+  uint8_t device_code;
+  uint8_t toggle_bit;
   /* initialization */
   const char *input_file_name;
   const char *output_file_name;
   /* for sector and sector programming */
   hw_eeprom_states sector_state;
-  unsigned8 *sectors;
+  uint8_t *sectors;
   unsigned nr_sectors;
   unsigned sizeof_sector;
   unsigned sector_start_delay;
@@ -205,12 +199,12 @@ typedef struct _hw_eeprom_device {
   /* byte and byte programming */
   unsigned byte_write_delay;
   unsigned_word byte_program_address;
-  unsigned8 byte_program_byte;
+  uint8_t byte_program_byte;
 } hw_eeprom_device;
 
 typedef struct _hw_eeprom_reg_spec {
-  unsigned32 base;
-  unsigned32 size;
+  uint32_t base;
+  uint32_t size;
 } hw_eeprom_reg_spec;
 
 static void
@@ -281,7 +275,7 @@ static void
 invalid_write(device *me,
 	      hw_eeprom_states state,
 	      unsigned_word address,
-	      unsigned8 data,
+	      uint8_t data,
 	      const char *reason)
 {
   DTRACE(eeprom, ("Invalid write of 0x%lx to 0x%lx while in state %s (%s)\n",
@@ -318,9 +312,9 @@ static void
 start_programming_byte(device *me,
 		       hw_eeprom_device *eeprom,
 		       unsigned_word address,
-		       unsigned8 new_byte)
+		       uint8_t new_byte)
 {
-  unsigned8 old_byte = eeprom->memory[address];
+  uint8_t old_byte = eeprom->memory[address];
   DTRACE(eeprom, ("start-programing-byte - address 0x%lx, new 0x%lx, old 0x%lx\n",
 		  (unsigned long)address,
 		  (unsigned long)new_byte,
@@ -421,15 +415,15 @@ finish_erasing_sector(device *me,
 
 /* eeprom reads */
 
-static unsigned8
+static uint8_t
 toggle(hw_eeprom_device *eeprom,
-       unsigned8 byte)
+       uint8_t byte)
 {
   eeprom->toggle_bit = eeprom->toggle_bit ^ 0x40; /* le-bit 6 */
   return eeprom->toggle_bit ^ byte;
 }
 
-static unsigned8
+static uint8_t
 read_byte(device *me,
 	  hw_eeprom_device *eeprom,
 	  unsigned_word address)
@@ -525,8 +519,8 @@ hw_eeprom_io_read_buffer(device *me,
   int i;
   for (i = 0; i < nr_bytes; i++) {
     unsigned_word address = (addr + i) % eeprom->sizeof_memory;
-    unsigned8 byte = read_byte(me, eeprom, address);
-    ((unsigned8*)dest)[i] = byte;
+    uint8_t byte = read_byte(me, eeprom, address);
+    ((uint8_t*)dest)[i] = byte;
   }
   return nr_bytes;
 }
@@ -538,7 +532,7 @@ static void
 write_byte(device *me,
 	   hw_eeprom_device *eeprom,
 	   unsigned_word address,
-	   unsigned8 data)
+	   uint8_t data)
 {
   /* may need multiple transitions to process a write */
   while (1) {
@@ -715,7 +709,7 @@ hw_eeprom_io_write_buffer(device *me,
   int i;
   for (i = 0; i < nr_bytes; i++) {
     unsigned_word address = (addr + i) % eeprom->sizeof_memory;
-    unsigned8 byte = ((unsigned8*)source)[i];
+    uint8_t byte = ((uint8_t*)source)[i];
     write_byte(me, eeprom, address, byte);
   }
   return nr_bytes;
@@ -747,7 +741,7 @@ hw_eeprom_instance_read(device_instance *instance,
   if (data->eeprom->state != read_reset)
     DITRACE(eeprom, ("eeprom not idle during instance read\n"));
   for (i = 0; i < len; i++) {
-    ((unsigned8*)buf)[i] = data->eeprom->memory[data->pos];
+    ((uint8_t*)buf)[i] = data->eeprom->memory[data->pos];
     data->pos = (data->pos + 1) % data->eeprom->sizeof_memory;
   }
   return len;
@@ -763,7 +757,7 @@ hw_eeprom_instance_write(device_instance *instance,
   if (data->eeprom->state != read_reset)
     DITRACE(eeprom, ("eeprom not idle during instance write\n"));
   for (i = 0; i < len; i++) {
-    data->eeprom->memory[data->pos] = ((unsigned8*)buf)[i];
+    data->eeprom->memory[data->pos] = ((uint8_t*)buf)[i];
     data->pos = (data->pos + 1) % data->eeprom->sizeof_memory;
   }
   dump_eeprom(data->me, data->eeprom);

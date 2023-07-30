@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
 }
 
 if ![fortran_runto_main] {
-    untested "could not run to main"
     return -1
 }
 
@@ -44,7 +43,7 @@ gdb_continue_to_breakpoint "vla1-allocated"
 gdb_test "print sizeof(vla1)" " = 4000" "print sizeof allocated vla1"
 gdb_test "print sizeof(vla1(3,2,1))" "4" \
     "print sizeof element from allocated vla1"
-gdb_test "print sizeof(vla1(3:4,2,1))" "800" \
+gdb_test "print sizeof(vla1(3:4,2,1))" "8" \
     "print sizeof sliced vla1"
 
 # Try to access values in undefined pointer to VLA (dangling)
@@ -61,7 +60,7 @@ gdb_continue_to_breakpoint "pvla-associated"
 gdb_test "print sizeof(pvla)" " = 4000" "print sizeof associated pvla"
 gdb_test "print sizeof(pvla(3,2,1))" "4" \
     "print sizeof element from associated pvla"
-gdb_test "print sizeof(pvla(3:4,2,1))" "800" "print sizeof sliced pvla"
+gdb_test "print sizeof(pvla(3:4,2,1))" "8" "print sizeof sliced pvla"
 
 gdb_breakpoint [gdb_get_line_number "vla1-neg-bounds-v1"]
 gdb_continue_to_breakpoint "vla1-neg-bounds-v1"

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2016-2020 Free Software Foundation, Inc.
+   Copyright 2016-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 #include <sys/wait.h>
 
 /* GDB sets watchpoint here.  */
-static volatile int globalvar;
+static volatile int __attribute__ ((used)) globalvar;
 
 /* Whether it's expected that the child exits with a signal, vs
    exiting normally.  GDB sets this.  */

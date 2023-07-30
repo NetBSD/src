@@ -1,4 +1,4 @@
-# Copyright 2000-2020 Free Software Foundation, Inc.
+# Copyright 2000-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@
 # the connection message in order for the procedure to succeed.
 #
 proc gdb_target_cmd_ext { targetname serialport {additional_text ""} } {
-    global gdb_prompt
+    global gdb_prompt gdb_target_remote_cmd_msg
 
     set serialport_re [string_to_regexp $serialport]
     for {set i 1} {$i <= 3} {incr i} {
@@ -64,28 +64,36 @@ proc gdb_target_cmd_ext { targetname serialport {additional_text ""} } {
 	    -re "Couldn't establish connection to remote.*$gdb_prompt $" {
 		verbose "Connection failed"
 	    }
+	    -re "Cannot assign requested address.*$gdb_prompt $" {
+		verbose "Could not assign requested address"
+	    }
 	    -re "Non-stop mode requested, but remote does not support non-stop.*$gdb_prompt $" {
 		verbose "remote does not support non-stop"
 		return 1
 	    }
 	    -re "Remote MIPS debugging.*$additional_text.*$gdb_prompt" {
 		verbose "Set target to $targetname"
+		set gdb_target_remote_cmd_msg $expect_out(buffer)
 		return 0
 	    }
 	    -re "Remote debugging using .*$serialport_re.*$additional_text.*$gdb_prompt $" {
 		verbose "Set target to $targetname"
+		set gdb_target_remote_cmd_msg $expect_out(buffer)
 		return 0
 	    }
 	    -re "Remote debugging using stdio.*$additional_text.*$gdb_prompt $" {
 		verbose "Set target to $targetname"
+		set gdb_target_remote_cmd_msg $expect_out(buffer)
 		return 0
 	    }
 	    -re "Remote target $targetname connected to.*$additional_text.*$gdb_prompt $" {
 		verbose "Set target to $targetname"
+		set gdb_target_remote_cmd_msg $expect_out(buffer)
 		return 0
 	    }
 	    -re "Connected to.*$additional_text.*$gdb_prompt $" {
 		verbose "Set target to $targetname"
+		set gdb_target_remote_cmd_msg $expect_out(buffer)
 		return 0
 	    }
 	    -re "Ending remote.*$gdb_prompt $" { }
@@ -165,6 +173,7 @@ proc skip_gdbserver_tests { } {
     # after connection.
     if { [gdb_skip_xml_test]
 	 && ([istarget "arm*-*-linux*"]
+	     || [istarget "aarch64*-*-linux*"]
 	     || [istarget "mips*-*-linux*"]
 	     || [istarget "powerpc*-*-linux*"]
 	     || [istarget "s390*-*-linux*"]
@@ -418,7 +427,12 @@ proc close_gdbserver {} {
     verbose "Quitting GDBserver"
 
     catch "close -i $server_spawn_id"
-    catch "wait -i $server_spawn_id"
+
+    # If gdbserver misbehaves, and ignores the close, waiting for it
+    # without the -nowait flag will cause testing to hang.  Passing
+    # -nowait makes expect tell Tcl to wait for the process in the
+    # background.
+    catch "wait -nowait -i $server_spawn_id"
     unset server_spawn_id
 }
 
@@ -451,13 +465,20 @@ proc gdbserver_exit { is_mi } {
 	    # We use expect rather than gdb_expect because
 	    # we want to suppress printing exception messages, otherwise,
 	    # remote_expect, invoked by gdb_expect, prints the exceptions.
+	    set have_prompt 0
 	    expect {
 		-i "$gdb_spawn_id" -re "$gdb_prompt $" {
-		    exp_continue
+		    set have_prompt 1
+		    if { [info exists server_spawn_id] } {
+			exp_continue
+		    }
 		}
 		-i "$server_spawn_id" eof {
 		    wait -i $expect_out(spawn_id)
 		    unset server_spawn_id
+		    if { ! $have_prompt } {
+			exp_continue
+		    }
 		}
                timeout {
                    warning "Timed out waiting for EOF in server after $monitor_exit"

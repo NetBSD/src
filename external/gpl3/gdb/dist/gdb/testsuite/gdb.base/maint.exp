@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@
 #maintenance print unwind -- Print unwind table entry at given address
 #
 #
-#maintenance info sections -- List the BFD sections of the exec and core files
 #maintenance info breakpoints -- Status of all breakpoints
 #
 
@@ -52,6 +51,8 @@ if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2] {debug nowarnings}]} {
     return -1
 }
+
+set readnow_p [readnow]
 
 # The commands we test here produce many lines of output; disable "press
 # <return> to continue" prompts.
@@ -96,7 +97,14 @@ gdb_test_multiple "mt expand-symtabs $subdir/break\[.\]c$" \
 	    # holding "main" will already have been expanded, but if the
 	    # file is compiled with -fdebug-types-section then a second primary
 	    # symtab for break.c will be created for any types.
-	    pass "mt expand-symtabs"
+	    pass "$gdb_test_name"
+	}
+	-re "#compunits: ($decimal) \\(\[+\]0\\),.*$gdb_prompt $" {
+	    if { $readnow_p } {
+		pass "$gdb_test_name"
+	    } else {
+		fail "$gdb_test_name"
+	    }
 	}
     }
 gdb_test "mt set per off" ".*" "mt set per off for expand-symtabs"
@@ -105,25 +113,8 @@ gdb_test "mt set per off" ".*" "mt set per off for expand-symtabs"
 
 gdb_load ${binfile}
 
-if ![runto_main] then {
-        perror "tests suppressed"
-}
-
-# Check that 'maint info sections' output looks correct.  When
-# checking the lines for each section we reject section names starting
-# with a '*' character, the internal *COM*, *UND*, *ABS*, and *IND*
-# sections should not be displayed in this output.
-set test "check maint info sections output"
-gdb_test_multiple "maint info sections" $test {
-    -re "Exec file:\r\n\[\t ]+`\[^'\]+', file type \[^.\]+\.\r\n" {
-	exp_continue
-    }
-    -re "^ \\\[\[0-9\]+\\\]\[\t \]+$hex->$hex at $hex: \[^*\r\]+\r\n" {
-	exp_continue
-    }
-    -re "^$gdb_prompt $" {
-	pass $test
-    }
+if {![runto_main]} {
+    return
 }
 
 # If we're using .gdb_index or .debug_names there will be no psymtabs.
@@ -140,11 +131,11 @@ gdb_test_multiple "show index-cache stats" "check index cache stats" {
 }
 
 set using_index_cache 0
-gdb_test_multiple "show index-cache" "check index cache status" {
-    -re ".*is currently disabled.\r\n$gdb_prompt $" {
+gdb_test_multiple "show index-cache enabled" "check index cache status" {
+    -re ".*is off.\r\n$gdb_prompt $" {
 	set using_index_cache 0
     }
-    -re ".*is currently enabled.\r\n$gdb_prompt $" {
+    -re ".*is on.\r\n$gdb_prompt $" {
 	set using_index_cache 1
     }
 }
@@ -153,27 +144,31 @@ if { $index_cache_misses == 0 && $using_index_cache } {
     set have_gdb_index 1
 }
 
+set have_psyms [expr ! ( $have_gdb_index || $readnow_p )]
+
 #
 # this command does not produce any output
 # unless there is some problem with the symtabs and psymtabs
 # so that branch will really never be covered in this tests here!!
 #
+# When there is a problem, there may be loads of output, which can
+# overwhelm the expect buffer. Splitting it seems to fix those
+# issues.
 
-# guo: on linux this command output is huge.  for some reason splitting up
-# the regexp checks works.
-#
-send_gdb "maint check-psymtabs\n"
-gdb_expect  {
-    -re "^maint check-psymtabs" {
-	gdb_expect {
-	    -re "$gdb_prompt $" {
-		pass "maint check-psymtabs"
-	    }
-	    timeout { fail "(timeout) maint check-psymtabs" }
-	}
+set seen_command false
+gdb_test_multiple "maint check-psymtabs" "" {
+    -re "^maint check-psymtabs\r\n" {
+	set seen_command true
+	exp_continue
     }
-    -re ".*$gdb_prompt $"     { fail "maint check-psymtabs" }
-    timeout         { fail "(timeout) maint check-psymtabs" }
+
+    -re "^$gdb_prompt $" {
+	gdb_assert { $seen_command } $gdb_test_name
+    }
+
+    -re "^\[^\r\n\]+\r\n" {
+	exp_continue
+    }
 }
 
 # This command does not produce any output unless there is some problem
@@ -198,19 +193,27 @@ if [istarget "*-*-cygwin*"] {
 	set timeout [expr $timeout + 500]
 }
 
-send_gdb "maint print statistics\n"
-gdb_expect  {
-    -re "Statistics for\[^\n\r\]*maint\[^\n\r\]*:\r\n  Number of \"minimal\" symbols read: $decimal\r\n(  Number of \"partial\" symbols read: $decimal\r\n)?  Number of \"full\" symbols read: $decimal\r\n  Number of \"types\" defined: $decimal\r\n(  Number of psym tables \\(not yet expanded\\): $decimal\r\n)?(  Number of read CUs: $decimal\r\n  Number of unread CUs: $decimal\r\n)?  Number of symbol tables: $decimal\r\n  Number of symbol tables with line tables: $decimal\r\n  Number of symbol tables with blockvectors: $decimal\r\n  Total memory used for objfile obstack: $decimal\r\n  Total memory used for BFD obstack: $decimal\r\n  Total memory used for psymbol cache: $decimal\r\n  Total memory used for string cache: $decimal\r\n" {
-	gdb_expect {
-	    -re "$gdb_prompt $" {
-		pass "maint print statistics"
-	    }
-	    timeout { fail "(timeout) maint print statistics" }
-	}
-    }
-    -re ".*$gdb_prompt $"     { fail "maint print statistics" }
-    timeout         { fail "(timeout) maint print statistics" }
-}
+set re \
+    [list \
+	 "Statistics for\[^\n\r\]*maint\[^\n\r\]*:" \
+	 "  Number of \"minimal\" symbols read: $decimal" \
+	 "  Number of \"full\" symbols read: $decimal" \
+	 "  Number of \"types\" defined: $decimal" \
+	 "  Number of symbol tables: $decimal" \
+	 "  Number of symbol tables with line tables: $decimal" \
+	 "  Number of symbol tables with blockvectors: $decimal" \
+	 "(  Number of \"partial\" symbols read: $decimal" \
+	 ")?(  Number of psym tables \\(not yet expanded\\): $decimal" \
+	 ")?(  Total memory used for psymbol cache: $decimal" \
+	 ")?(  Number of read CUs: $decimal" \
+	 "  Number of unread CUs: $decimal" \
+	 ")?  Total memory used for objfile obstack: $decimal" \
+	 "  Total memory used for BFD obstack: $decimal" \
+	 "  Total memory used for string cache: $decimal" \
+	 ""]
+
+set re [multi_line {*}$re]
+gdb_test_lines "maint print statistics" "" $re
 
 # There aren't any ...
 gdb_test_no_output "maint print dummy-frames"
@@ -223,10 +226,17 @@ gdb_test_no_output "maint print dummy-frames"
 
 set header 0
 set psymtabs 0
+set cooked_index 0
 set symtabs 0
-gdb_test_multiple "maint print objfiles" "" -lbl {
+set cmd "maint print objfiles"
+set re "maint"
+gdb_test_multiple "$cmd $re" "$cmd" -lbl {
     -re "\r\nObject file.*maint($EXEEXT)?:  Objfile at ${hex}" {
 	set header 1
+	exp_continue
+    }
+    -re "\r\nCooked index" {
+	set cooked_index 1
 	exp_continue
     }
     -re "\r\nPsymtabs:\[\r\t \]+" {
@@ -235,9 +245,6 @@ gdb_test_multiple "maint print objfiles" "" -lbl {
     }
     -re "\r\nSymtabs:\[\r\t \]+\n" {
 	set symtabs 1
-	exp_continue
-    }
-    -re " at $hex," {
 	exp_continue
     }
     -re -wrap "" {
@@ -250,12 +257,15 @@ proc maint_pass_if {val name} {
 }
 
 maint_pass_if $header   "maint print objfiles: header"
-if { ! $have_gdb_index } {
+if {$cooked_index} {
+    set have_psyms 0
+}
+if { $have_psyms } {
     maint_pass_if $psymtabs "maint print objfiles: psymtabs"
 }
 maint_pass_if $symtabs  "maint print objfiles: symtabs"
 
-if { ! $have_gdb_index } {
+if { $have_psyms } {
     set psymbols_output [standard_output_file psymbols_output]
     set psymbols_output_re [string_to_regexp $psymbols_output]
     set test_list [list \
@@ -264,63 +274,29 @@ if { ! $have_gdb_index } {
 		       "maint print psymbols -pc" \
 		       "maint print psymbols -pc main $psymbols_output"]
     foreach { test_name command } $test_list {
-	send_gdb "$command\n"
-	    gdb_expect  {
-		-re "^maint print psymbols \[^\n\]*\r\n$gdb_prompt $" {
-		    send_gdb "shell ls $psymbols_output\n"
-		    gdb_expect {
-			-re "$psymbols_output_re\r\n$gdb_prompt $" {
-			    # We want this grep to be as specific as possible,
-			    # so it's less likely to match symbol file names in
-			    # psymbols_output.  Yes, this actually happened;
-			    # poor expect got tons of output, and timed out
-			    # trying to match it.   --- Jim Blandy <jimb@cygnus.com>
-			    send_gdb "shell grep 'main.*function' $psymbols_output\n"
-			    gdb_expect {
-				-re ".main., function, $hex.*$gdb_prompt $" {
-				    pass "$test_name 1"
-				}
-				-re ".*main.  .., function, $hex.*$gdb_prompt $" {
-				    pass "$test_name 2"
-				}
-				-re ".*$gdb_prompt $" { fail "$test_name" }
-				timeout { fail "$test_name (timeout)" }
-			    }
-			    gdb_test "shell rm -f $psymbols_output" ".*" \
-				"${test_name}: shell rm -f psymbols_output"
-			}
-			-re ".*$gdb_prompt $" { fail "$test_name" }
-			timeout { fail "$test_name (timeout)" }
-		    }
+	gdb_test_no_output "$command" "collecting data for $test_name"
+	gdb_test_multiple "shell grep 'main.*function' $psymbols_output" "" {
+		-re -wrap ".main., function, $hex.*" {
+		    pass "$test_name (pattern 1)"
 		}
-		-re ".*$gdb_prompt $" { fail "$test_name" }
-		timeout { fail "$test_name (timeout)" }
-	    }
+		-re -wrap ".*main.  .., function, $hex.*" {
+		    pass "$test_name (pattern 2)"
+		}
+	}
+	gdb_test "shell rm -f $psymbols_output" ".*" \
+	    "${test_name}: shell rm -f psymbols_output"
     }
 }
 
 
 set msymbols_output [standard_output_file msymbols_output]
 set msymbols_output_re [string_to_regexp $msymbols_output]
-send_gdb "maint print msymbols -objfile ${binfile} $msymbols_output\n"
-gdb_expect  {
-    -re "^maint print msymbols \[^\n\]*\r\n$gdb_prompt $" {
-	send_gdb "shell ls $msymbols_output\n"
-	gdb_expect {
-	    -re "$msymbols_output_re\r\n$gdb_prompt $" {
-		gdb_test "shell grep factorial $msymbols_output" \
-		    "\\\[ *$decimal\\\] \[tT\]\[ \t\]+$hex \\.?factorial.*" \
-		    "maint print msymbols, absolute pathname"
-		gdb_test "shell rm -f $msymbols_output" ".*" \
-		    "shell rm -f msymbols_output"
-	    }
-	    -re ".*$gdb_prompt $" { fail "maint print msymbols" }
-	    timeout { fail "maint print msymbols (timeout)" }
-	}
-    }
-    -re ".*$gdb_prompt $" { fail "maint print msymbols" }
-    timeout { fail "maint print msymbols (timeout)" }
-}
+gdb_test_no_output "maint print msymbols -objfile ${binfile} $msymbols_output" \
+    "print msymbols to file, with absolute path"
+gdb_test "shell grep factorial $msymbols_output" \
+    "\\\[ *$decimal\\\] \[tT\]\[ \t\]+$hex \\.?factorial.*" \
+    "maint print msymbols, absolute pathname"
+gdb_test "shell rm -f $msymbols_output" ".*" "remove absolute path msymbols"
 
 # Check that maint print msymbols allows relative pathnames
 set mydir [pwd]
@@ -328,18 +304,13 @@ gdb_test "cd [standard_output_file {}]" \
     "Working directory .*\..*" \
     "cd to objdir"
 
-gdb_test_multiple "maint print msymbols -objfile ${testfile} msymbols_output2" "maint print msymbols" {
-    -re "^maint print msymbols \[^\n\]*\r\n$gdb_prompt $" {
-    	gdb_test_multiple "shell ls msymbols_output2" "maint print msymbols" {
-	    -re "msymbols_output2\r\n$gdb_prompt $" {
-		gdb_test "shell grep factorial msymbols_output2" \
-		    "\\\[ *$decimal\\\] \[tT\]\[ \t\]+$hex \\.?factorial.*" \
-		    "maint print msymbols, relative pathname"
-		gdb_test "shell rm -f msymbols_output2" ".*"
-	    }
-	}
-    }
-}
+gdb_test_no_output "maint print msymbols -objfile ${testfile} $msymbols_output"\
+    "print msymbols to file, with relative path"
+gdb_test "shell grep factorial $msymbols_output" \
+    "\\\[ *$decimal\\\] \[tT\]\[ \t\]+$hex \\.?factorial.*" \
+    "maint print msymbols, relative pathname"
+gdb_test "shell rm -f msymbols_output" ".*" "remove relative path msymbols"
+
 gdb_test "cd ${mydir}" \
     "Working directory [string_to_regexp ${mydir}]\..*" \
     "cd to mydir"
@@ -357,31 +328,12 @@ set test_list [list \
 		   "maint print symbols -pc" \
 		   "maint print symbols -pc main $symbols_output"]
 foreach { test_name command } $test_list {
-    send_gdb "$command\n"
-    gdb_expect {
-	-re "^maint print symbols \[^\n\]*\r\n$gdb_prompt $" {
-	    send_gdb "shell ls $symbols_output\n"
-	    gdb_expect {
-		-re "$symbols_output_re\r\n$gdb_prompt $" {
-		    # See comments for `maint print psymbols'.
-		    send_gdb "shell grep 'main(.*block' $symbols_output\n"
-		    gdb_expect {
-			-re "int main\\(int, char \\*\\*, char \\*\\*\\); block.*$gdb_prompt $" {
-			    pass "$test_name"
-			}
-			-re ".*$gdb_prompt $" { fail "$test_name" }
-			timeout { fail "$test_name (timeout)" }
-		    }
-		    gdb_test "shell rm -f $symbols_output" ".*" \
-			"$test_name: shell rm -f symbols_output"
-		}
-		-re ".*$gdb_prompt $" { fail "$test_name" }
-		timeout { fail "$test_name (timeout)" }
-	    }
-	}
-	-re ".*$gdb_prompt $" { fail "$test_name" }
-	timeout { fail "$test_name (timeout)" }
-    }
+    gdb_test_no_output "$command" "$test_name generate"
+    gdb_test "shell grep 'main(.*block' $symbols_output"\
+	"int main\\(int, char \\*\\*, char \\*\\*\\); block.*"\
+	"$test_name read"
+    gdb_test "shell rm -f $symbols_output" ".*" \
+	"$test_name: shell rm -f symbols_output"
 }
 
 set msg "maint print type"
@@ -405,75 +357,6 @@ if [istarget "hppa*-*-11*"] {
 
 set oldtimeout $timeout
 set timeout [expr $timeout + 300]
-
-# It'd be nice to check for every possible section.  However, that's
-# problematic, since the relative ordering wanders from release to
-# release of the compilers.  Instead, we'll just check for two
-# sections which appear to always come out in the same relative
-# order.  (If that changes, then we should just check for one
-# section.)
-#
-# And by the way: This testpoint will break for PA64, where a.out's
-# are ELF files.
-
-# Standard GNU names.
-set text_section ".text"
-set data_section ".data"
-
-gdb_test_multiple "maint info sections" "maint info sections" {
-    -re "Exec file:\r\n.*maint($EXEEXT)?., file type.*ER_RO.*$gdb_prompt $" {
-	# Looks like RealView which uses different section names.
-	set text_section ER_RO
-	set data_section ER_RW
-	pass "maint info sections"
-    }
-    -re "Exec file:\r\n.*maint($EXEEXT)?., file type.*neardata.*$gdb_prompt $" {
-	# c6x doesn't have .data section.  It has .neardata and .fardata section.
-	set data_section ".neardata"
-	pass "maint info sections"
-    }
-    -re "Exec file:\r\n.*maint($EXEEXT)?., file type.*$gdb_prompt $" {
-	pass "maint info sections"
-    }
-}
-
-# Test for new option: maint info sections <section name>
-# If you don't have a .text section, this will require tweaking.
-
-gdb_test_multiple "maint info sections $text_section" \
-    "maint info sections .text" {
-	-re ".* \\.bss .*$gdb_prompt $" {
-	    fail "maint info sections .text"
-	}
-	-re ".* $data_section .*$gdb_prompt $" {
-	    fail "maint info sections .text"
-	}
-	-re ".* $text_section .*$gdb_prompt $" {
-	    pass "maint info sections .text"
-	}
-    }
-
-# Test for new option: CODE section flag
-# If your data section is tagged CODE, xfail this test.
-
-gdb_test_multiple "maint info sections CODE" "maint info sections CODE" {
-    -re ".* $data_section .*$gdb_prompt $" { fail "maint info sections CODE" }
-    -re ".* $text_section .*$gdb_prompt $" { pass "maint info sections CODE" }
-}
-
-# Test for new option: DATA section flag
-# If your text section is tagged DATA, xfail this test.
-#
-# The "maint info sections DATA" test is marked for XFAIL on Windows,
-# because Windows has text sections marked DATA.
-setup_xfail "*-*-*cygwin*"
-setup_xfail "*-*-*mingw*"
-
-gdb_test_multiple "maint info sections DATA" "maint info sections DATA" {
-    -re ".* $text_section .*$gdb_prompt $" { fail "maint info sections DATA" }
-    -re ".* $data_section .*$gdb_prompt $" { pass "maint info sections DATA" }
-    -re ".* .rodata .*$gdb_prompt $" { pass "maint info sections DATA" }
-}
 
 set bp_location6 [gdb_get_line_number "set breakpoint 6 here"]
 
@@ -503,11 +386,11 @@ gdb_test "maint" \
 set saw_srcfile 0
 gdb_test_multiple "maint info line-table" \
     "maint info line-table w/o a file name" {
-    -re "symtab: \[^\n\r\]+${srcfile} \\(\\(struct symtab \\*\\) $hex\\)\r\nlinetable: \\(\\(struct linetable \\*\\) $hex\\):\r\nINDEX\[ \t\]+LINE\[ \t\]+ADDRESS" {
+	-re "symtab: \[^\n\r\]+${srcfile} \\(\\(struct symtab \\*\\) $hex\\)\r\nlinetable: \\(\\(struct linetable \\*\\) $hex\\):\r\nINDEX\[ \t\]+LINE\[ \t\]+ADDRESS\[^\r\n\]*" {
 	set saw_srcfile 1
 	exp_continue
     }
-    -re "symtab: \[^\n\r\]+ \\(\\(struct symtab \\*\\) $hex\\)\r\nlinetable: \\(\\(struct linetable \\*\\) $hex\\):\r\nINDEX\[ \t\]+LINE\[ \t\]+ADDRESS" {
+    -re "symtab: \[^\n\r\]+ \\(\\(struct symtab \\*\\) $hex\\)\r\nlinetable: \\(\\(struct linetable \\*\\) $hex\\):\r\nINDEX\[ \t\]+LINE\[ \t\]+ADDRESS\[^\r\n\]*" {
 	# Match each symtab to avoid overflowing expect's buffer.
 	exp_continue
     }
@@ -515,7 +398,7 @@ gdb_test_multiple "maint info line-table" \
 	# For symtabs with no linetable.
 	exp_continue
     }
-    -re "^$decimal\[ \t\]+$decimal\[ \t\]+$hex\r\n" {
+    -re "^$decimal\[ \t\]+$decimal\[ \t\]+$hex\[^\r\n\]*\r\n" {
 	# Line table entries can be long too:
 	#
 	#  INDEX    LINE ADDRESS
@@ -533,8 +416,12 @@ gdb_test_multiple "maint info line-table" \
 	# Match each line to avoid overflowing expect's buffer.
 	exp_continue
     }
-    -re "^$decimal\[ \t\]+END\[ \t\]+$hex\r\n" {
+    -re "^$decimal\[ \t\]+END\[ \t\]+$hex\[^\r\n\]*\r\n" {
 	# Matches an end marker in the above.
+	exp_continue
+    }
+    -re "^\r\n" {
+	# Empty line between tables.
 	exp_continue
     }
     -re "^$gdb_prompt $" {
@@ -546,8 +433,12 @@ gdb_test "maint info line-table ${srcfile}" \
     "symtab: \[^\n\r\]+${srcfile}.*INDEX.*LINE.*ADDRESS.*" \
     "maint info line-table with filename of current symtab"
 
-gdb_test_no_output "maint info line-table ${srcfile2}" \
-    "maint info line-table with filename of symtab that is not currently expanded"
+if { ! $readnow_p } {
+    gdb_test_no_output "maint info line-table ${srcfile2}" \
+	[join \
+	     "maint info line-table with filename of symtab that is not" \
+	     " currently expanded"]
+}
 
 gdb_test_no_output "maint expand-symtabs"
 

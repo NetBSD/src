@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,75 +15,79 @@
 
 # This file is part of the GDB testsuite.  It tests python Finish
 # Breakpoints.
-                
-class MyFinishBreakpoint (gdb.FinishBreakpoint):
-        def __init__(self, val, frame):
-                gdb.FinishBreakpoint.__init__ (self, frame)
-                print ("MyFinishBreakpoint init")
-                self.val = val
-                
-        def stop(self):
-                print ("MyFinishBreakpoint stop with %d" % int (self.val.dereference ()))
-                print ("return_value is: %d" % int (self.return_value))
-                gdb.execute ("where 1")
-                return True
-        
-        def out_of_scope(self):
-                print ("MyFinishBreakpoint out of scope")
+
+
+class MyFinishBreakpoint(gdb.FinishBreakpoint):
+    def __init__(self, val, frame):
+        gdb.FinishBreakpoint.__init__(self, frame)
+        print("MyFinishBreakpoint init")
+        self.val = val
+
+    def stop(self):
+        print("MyFinishBreakpoint stop with %d" % int(self.val.dereference()))
+        print("return_value is: %d" % int(self.return_value))
+        gdb.execute("where 1")
+        return True
+
+    def out_of_scope(self):
+        print("MyFinishBreakpoint out of scope")
+
 
 class TestBreakpoint(gdb.Breakpoint):
     def __init__(self):
-        gdb.Breakpoint.__init__ (self, spec="test_1", internal=1)
+        gdb.Breakpoint.__init__(self, spec="test_1", internal=1)
         self.silent = True
         self.count = 0
-        print ("TestBreakpoint init")
-        
+        print("TestBreakpoint init")
+
     def stop(self):
         self.count += 1
         try:
-                TestFinishBreakpoint (gdb.newest_frame (), self.count)
+            TestFinishBreakpoint(gdb.newest_frame(), self.count)
         except ValueError as e:
-                print (e)
+            print(e)
         return False
 
-class TestFinishBreakpoint (gdb.FinishBreakpoint):
-    def __init__ (self, frame, count):
+
+class TestFinishBreakpoint(gdb.FinishBreakpoint):
+    def __init__(self, frame, count):
         self.count = count
-        gdb.FinishBreakpoint.__init__ (self, frame, internal=1)
-        
-        
+        gdb.FinishBreakpoint.__init__(self, frame, internal=1)
+
     def stop(self):
-        print ("-->", self.number)
-        if (self.count == 3):
-            print ("test stop: %d" % self.count)
+        print("-->", self.number)
+        if self.count == 3:
+            print("test stop: %d" % self.count)
             return True
         else:
-            print ("test don't stop: %d" % self.count)
-            return False 
-        
-    
+            print("test don't stop: %d" % self.count)
+            return False
+
     def out_of_scope(self):
-        print ("test didn't finish: %d" % self.count)
+        print("test didn't finish: %d" % self.count)
+
 
 class TestExplicitBreakpoint(gdb.Breakpoint):
-        def stop(self):
-                try:
-                        SimpleFinishBreakpoint (gdb.newest_frame ())
-                except ValueError as e:
-                        print (e)
-                return False
+    def stop(self):
+        try:
+            SimpleFinishBreakpoint(gdb.newest_frame())
+        except ValueError as e:
+            print(e)
+        return False
+
 
 class SimpleFinishBreakpoint(gdb.FinishBreakpoint):
-        def __init__(self, frame):
-                gdb.FinishBreakpoint.__init__ (self, frame)
-                
-                print ("SimpleFinishBreakpoint init")
-                
-        def stop(self):
-                print ("SimpleFinishBreakpoint stop" )
-                return True
-        
-        def out_of_scope(self):
-                print ("SimpleFinishBreakpoint out of scope")
+    def __init__(self, frame):
+        gdb.FinishBreakpoint.__init__(self, frame)
 
-print ("Python script imported")
+        print("SimpleFinishBreakpoint init")
+
+    def stop(self):
+        print("SimpleFinishBreakpoint stop")
+        return True
+
+    def out_of_scope(self):
+        print("SimpleFinishBreakpoint out of scope")
+
+
+print("Python script imported")

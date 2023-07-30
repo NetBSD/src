@@ -1,6 +1,6 @@
 /* Scheme interface to symbol tables.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,7 @@
 
 /* A <gdb:symtab> smob.  */
 
-typedef struct
+struct symtab_smob
 {
   /* This always appears first.
      eqable_gdb_smob is used so that symtabs are eq?-able.
@@ -42,7 +42,7 @@ typedef struct
      If this is NULL the symtab is invalid.  This can happen when the
      underlying objfile is freed.  */
   struct symtab *symtab;
-} symtab_smob;
+};
 
 /* A <gdb:sal> smob.
    A smob describing a gdb symtab-and-line object.
@@ -50,7 +50,7 @@ typedef struct
    the validity of symtab_scm.
    TODO: Sals are not eq?-able at the moment, or even comparable.  */
 
-typedef struct
+struct sal_smob
 {
   /* This always appears first.  */
   gdb_smob base;
@@ -67,7 +67,7 @@ typedef struct
      this pointer will not be updated.  Use symtab_scm instead to determine
      if this sal is valid.  */
   struct symtab_and_line sal;
-} sal_smob;
+};
 
 static const char symtab_smob_name[] = "gdb:symtab";
 /* "symtab-and-line" is pretty long, and "sal" is short and unique.  */
@@ -77,7 +77,35 @@ static const char sal_smob_name[] = "gdb:sal";
 static scm_t_bits symtab_smob_tag;
 static scm_t_bits sal_smob_tag;
 
-static const struct objfile_data *stscm_objfile_data_key;
+/* This is called when an objfile is about to be freed.
+   Invalidate the symbol table as further actions on the symbol table
+   would result in bad data.  All access to st_smob->symtab should be
+   gated by stscm_get_valid_symtab_smob_arg_unsafe which will raise an
+   exception on invalid symbol tables.  */
+struct stscm_deleter
+{
+  /* Helper function for stscm_del_objfile_symtabs to mark the symtab
+     as invalid.  */
+
+  static int
+  stscm_mark_symtab_invalid (void **slot, void *info)
+  {
+    symtab_smob *st_smob = (symtab_smob *) *slot;
+
+    st_smob->symtab = NULL;
+    return 1;
+  }
+
+  void operator() (htab_t htab)
+  {
+    gdb_assert (htab != nullptr);
+    htab_traverse_noresize (htab, stscm_mark_symtab_invalid, NULL);
+    htab_delete (htab);
+  }
+};
+
+static const registry<objfile>::key<htab, stscm_deleter>
+     stscm_objfile_data_key;
 
 /* Administrivia for symtab smobs.  */
 
@@ -109,14 +137,14 @@ stscm_eq_symtab_smob (const void *ap, const void *bp)
 static htab_t
 stscm_objfile_symtab_map (struct symtab *symtab)
 {
-  struct objfile *objfile = SYMTAB_OBJFILE (symtab);
-  htab_t htab = (htab_t) objfile_data (objfile, stscm_objfile_data_key);
+  struct objfile *objfile = symtab->compunit ()->objfile ();
+  htab_t htab = stscm_objfile_data_key.get (objfile);
 
   if (htab == NULL)
     {
       htab = gdbscm_create_eqable_gsmob_ptr_map (stscm_hash_symtab_smob,
 						 stscm_eq_symtab_smob);
-      set_objfile_data (objfile, stscm_objfile_data_key, htab);
+      stscm_objfile_data_key.set (objfile, htab);
     }
 
   return htab;
@@ -271,35 +299,6 @@ stscm_get_valid_symtab_smob_arg_unsafe (SCM self, int arg_pos,
   return st_smob;
 }
 
-/* Helper function for stscm_del_objfile_symtabs to mark the symtab
-   as invalid.  */
-
-static int
-stscm_mark_symtab_invalid (void **slot, void *info)
-{
-  symtab_smob *st_smob = (symtab_smob *) *slot;
-
-  st_smob->symtab = NULL;
-  return 1;
-}
-
-/* This function is called when an objfile is about to be freed.
-   Invalidate the symbol table as further actions on the symbol table
-   would result in bad data.  All access to st_smob->symtab should be
-   gated by stscm_get_valid_symtab_smob_arg_unsafe which will raise an
-   exception on invalid symbol tables.  */
-
-static void
-stscm_del_objfile_symtabs (struct objfile *objfile, void *datum)
-{
-  htab_t htab = (htab_t) datum;
-
-  if (htab != NULL)
-    {
-      htab_traverse_noresize (htab, stscm_mark_symtab_invalid, NULL);
-      htab_delete (htab);
-    }
-}
 
 /* Symbol table methods.  */
 
@@ -348,7 +347,7 @@ gdbscm_symtab_objfile (SCM self)
     = stscm_get_valid_symtab_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   const struct symtab *symtab = st_smob->symtab;
 
-  return ofscm_scm_from_objfile (SYMTAB_OBJFILE (symtab));
+  return ofscm_scm_from_objfile (symtab->compunit ()->objfile ());
 }
 
 /* (symtab-global-block <gdb:symtab>) -> <gdb:block>
@@ -361,12 +360,11 @@ gdbscm_symtab_global_block (SCM self)
     = stscm_get_valid_symtab_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   const struct symtab *symtab = st_smob->symtab;
   const struct blockvector *blockvector;
-  const struct block *block;
 
-  blockvector = SYMTAB_BLOCKVECTOR (symtab);
-  block = BLOCKVECTOR_BLOCK (blockvector, GLOBAL_BLOCK);
+  blockvector = symtab->compunit ()->blockvector ();
+  const struct block *block = blockvector->global_block ();
 
-  return bkscm_scm_from_block (block, SYMTAB_OBJFILE (symtab));
+  return bkscm_scm_from_block (block, symtab->compunit ()->objfile ());
 }
 
 /* (symtab-static-block <gdb:symtab>) -> <gdb:block>
@@ -379,12 +377,11 @@ gdbscm_symtab_static_block (SCM self)
     = stscm_get_valid_symtab_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   const struct symtab *symtab = st_smob->symtab;
   const struct blockvector *blockvector;
-  const struct block *block;
 
-  blockvector = SYMTAB_BLOCKVECTOR (symtab);
-  block = BLOCKVECTOR_BLOCK (blockvector, STATIC_BLOCK);
+  blockvector = symtab->compunit ()->blockvector ();
+  const struct block *block = blockvector->static_block ();
 
-  return bkscm_scm_from_block (block, SYMTAB_OBJFILE (symtab));
+  return bkscm_scm_from_block (block, symtab->compunit ()->objfile ());
 }
 
 /* Administrivia for sal (symtab-and-line) smobs.  */
@@ -688,10 +685,4 @@ gdbscm_initialize_symtabs (void)
   scm_set_smob_print (sal_smob_tag, stscm_print_sal_smob);
 
   gdbscm_define_functions (symtab_functions, 1);
-
-  /* Register an objfile "free" callback so we can properly
-     invalidate symbol tables, and symbol table and line data
-     structures when an object file that is about to be deleted.  */
-  stscm_objfile_data_key
-    = register_objfile_data_with_cleanup (NULL, stscm_del_objfile_symtabs);
 }

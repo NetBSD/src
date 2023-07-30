@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 COFF files (DJGPP variant with a stub).
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
    Written by Robert Hoehne.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -54,12 +54,12 @@
 #include "coff/msdos.h"
 
 static bfd_cleanup go32exe_check_format (bfd *);
-static bfd_boolean go32exe_write_object_contents (bfd *);
-static bfd_boolean go32exe_mkobject (bfd *);
-static bfd_boolean go32exe_copy_private_bfd_data (bfd *, bfd *);
+static bool go32exe_write_object_contents (bfd *);
+static bool go32exe_mkobject (bfd *);
+static bool go32exe_copy_private_bfd_data (bfd *, bfd *);
 
 /* Defined in coff-go32.c.  */
-bfd_boolean _bfd_go32_mkobject (bfd *);
+bool _bfd_go32_mkobject (bfd *);
 void _bfd_go32_swap_scnhdr_in (bfd *, void *, void *);
 unsigned int _bfd_go32_swap_scnhdr_out (bfd *, void *, void *);
 
@@ -176,7 +176,7 @@ go32exe_create_stub (bfd *abfd)
 	  close (f);
 	  goto stub_end;
 	}
-      if (! CONST_STRNEQ (magic, "go32stub"))
+      if (! startswith (magic, "go32stub"))
 	{
 	  close (f);
 	  goto stub_end;
@@ -217,12 +217,12 @@ go32exe_create_stub (bfd *abfd)
 /* If ibfd was a stubbed coff image, copy the stub from that bfd
    to the new obfd.  */
 
-static bfd_boolean
+static bool
 go32exe_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   /* Check if both are the same targets.  */
   if (ibfd->xvec != obfd->xvec)
-    return TRUE;
+    return true;
 
   /* Make sure we have a source stub.  */
   BFD_ASSERT (coff_data (ibfd)->stub != NULL);
@@ -231,7 +231,7 @@ go32exe_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
   if (coff_data (ibfd)->stub_size > coff_data (obfd)->stub_size)
     coff_data (obfd)->stub = bfd_alloc (obfd, coff_data (ibfd)->stub_size);
   if (coff_data (obfd)->stub == NULL)
-    return FALSE;
+    return false;
 
   /* Now copy the stub.  */
   memcpy (coff_data (obfd)->stub, coff_data (ibfd)->stub,
@@ -239,7 +239,7 @@ go32exe_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
   coff_data (obfd)->stub_size = coff_data (ibfd)->stub_size;
   obfd->origin = coff_data (obfd)->stub_size;
 
-  return TRUE;
+  return true;
 }
 
 /* Cleanup function, returned from check_format hook.  */
@@ -291,6 +291,10 @@ go32exe_check_format (bfd *abfd)
   if (last_page_size != 0)
     stubsize += last_page_size - 512;
 
+  ufile_ptr filesize = bfd_get_file_size (abfd);
+  if (filesize != 0 && stubsize > filesize)
+    goto fail_format;
+
   /* Save now the stub to be used later.  Put the stub data to a temporary
      location first as tdata still does not exist.  It may not even
      be ever created if we are just checking the file format of ABFD.  */
@@ -304,7 +308,9 @@ go32exe_check_format (bfd *abfd)
 
   /* Confirm that this is a go32stub.  */
   header_end = H_GET_16 (abfd, filehdr_dos.e_cparhdr) * 16UL;
-  if (! CONST_STRNEQ (go32exe_temp_stub + header_end, "go32stub"))
+  if (go32exe_temp_stub_size < header_end
+      || go32exe_temp_stub_size - header_end < sizeof "go32stub" - 1
+      || !startswith (go32exe_temp_stub + header_end, "go32stub"))
     goto fail_format;
 
   /* Set origin to where the COFF header starts and seek there.  */
@@ -330,7 +336,7 @@ go32exe_check_format (bfd *abfd)
 
 /* Write the stub to the output file, then call coff_write_object_contents.  */
 
-static bfd_boolean
+static bool
 go32exe_write_object_contents (bfd *abfd)
 {
   const bfd_size_type pos = bfd_tell (abfd);
@@ -343,14 +349,14 @@ go32exe_write_object_contents (bfd *abfd)
   /* Write the stub.  */
   abfd->origin = 0;
   if (bfd_seek (abfd, 0, SEEK_SET) != 0)
-    return FALSE;
+    return false;
   if (bfd_bwrite (coff_data (abfd)->stub, stubsize, abfd) != stubsize)
-    return FALSE;
+    return false;
 
   /* Seek back to where we were.  */
   abfd->origin = stubsize;
   if (bfd_seek (abfd, pos, SEEK_SET) != 0)
-    return FALSE;
+    return false;
 
   return coff_write_object_contents (abfd);
 }
@@ -358,23 +364,23 @@ go32exe_write_object_contents (bfd *abfd)
 /* mkobject hook.  Called directly through bfd_set_format or via
    coff_mkobject_hook etc from bfd_check_format.  */
 
-static bfd_boolean
+static bool
 go32exe_mkobject (bfd *abfd)
 {
   /* Don't output to an archive.  */
   if (abfd->my_archive != NULL)
-    return FALSE;
+    return false;
 
   if (!_bfd_go32_mkobject (abfd))
-    return FALSE;
+    return false;
 
   go32exe_create_stub (abfd);
   if (coff_data (abfd)->stub == NULL)
     {
       bfd_release (abfd, coff_data (abfd));
-      return FALSE;
+      return false;
     }
   abfd->origin = coff_data (abfd)->stub_size;
 
-  return TRUE;
+  return true;
 }

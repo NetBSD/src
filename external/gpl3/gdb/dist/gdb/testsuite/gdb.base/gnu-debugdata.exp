@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -150,10 +150,7 @@ if {$gdb_file_cmd_debug_info == "lzma"} {
 }
 
 # Be sure to test the 'close' method on the MiniDebugInfo BFD.
-if {[gdb_unload]} {
-    fail "unload MiniDebugInfo"
-} else {
-    pass "unload MiniDebugInfo"
-}
+# gdb_unload records a pass/fail.
+gdb_unload
 
 gdb_exit

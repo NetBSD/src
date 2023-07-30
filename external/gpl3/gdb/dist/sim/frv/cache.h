@@ -1,5 +1,5 @@
 /* Cache support for the FRV simulator
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU Simulators.
@@ -233,6 +233,8 @@ int
 frv_cache_write (FRV_CACHE *, SI, char *, unsigned);
 int
 frv_cache_preload (FRV_CACHE *, SI, USI, int);
+int
+frv_cache_unlock (FRV_CACHE *, SI);
 int
 frv_cache_invalidate (FRV_CACHE *, SI, int);
 int

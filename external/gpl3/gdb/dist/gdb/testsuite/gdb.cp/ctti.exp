@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,22 +21,17 @@
 
 # Call to template instantiations.
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 standard_testfile cttiadd.cc cttiadd1.cc cttiadd2.cc cttiadd3.cc
-
-if [get_compiler_info "c++"] {
-    return -1
-}
 
 if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2 $srcfile3 $srcfile4] {debug c++}]} {
     return -1
 }
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 gdb_breakpoint [gdb_get_line_number "marker add1"]
@@ -49,7 +44,7 @@ gdb_test "print i" "\\$\[0-9\]+ = 4"
 # TODO: this needs more work before actually deploying it.
 # So bail out here.
 
-if { [ test_compiler_info gcc-*] } then { continue }
+if {[test_compiler_info gcc-*]} { return }
 
 gdb_test_multiple "print add<int>(2,2)" "print add<int>(2,2)" {
     -re "\\$\[0-9\]+ = 4\r\n$gdb_prompt $" {

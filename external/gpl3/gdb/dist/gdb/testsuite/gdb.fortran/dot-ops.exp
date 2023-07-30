@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ proc test_dot_operations {} {
 	    set not ".NOT."
 	    set eqv ".EQV."
 	    set neqv ".NEQV."
+	    set xor ".XOR."
 	    set eq ".EQ."
 	    set ne ".NE."
 	    set le ".LE."
@@ -45,6 +46,7 @@ proc test_dot_operations {} {
 	    set not ".not."
 	    set eqv ".eqv."
 	    set neqv ".neqv."
+	    set xor ".xor."
 	    set eq ".eq."
 	    set ne ".ne."
 	    set le ".le."
@@ -81,6 +83,12 @@ proc test_dot_operations {} {
 	gdb_test "p $false $neqv $true" " = .TRUE."
 	gdb_test "p $false $neqv $false" " = .FALSE."
 
+	# And the legacy alias for NEQV, XOR
+	gdb_test "p $true $xor $true" " = .FALSE."
+	gdb_test "p $true $xor $false" " = .TRUE."
+	gdb_test "p $false $xor $true" " = .TRUE."
+	gdb_test "p $false $xor $false" " = .FALSE."
+
 	# Arithmetic EQ
 	gdb_test "p 5 $eq 4" " = .FALSE."
 	gdb_test "p 4 $eq 4" " = .TRUE."
@@ -109,13 +117,43 @@ proc test_dot_operations {} {
 	gdb_test "p 4 $gt 4" " = .FALSE."
 	gdb_test "p 3 $gt 4" " = .FALSE."
     }
+
+    # Now test the symbol based comparison operators.
+
+    # Arithmetic EQ
+    gdb_test "p 5 == 4" " = .FALSE."
+    gdb_test "p 4 == 4" " = .TRUE."
+
+    # Arithmetic NE
+    gdb_test "p 5 /= 4" " = .TRUE."
+    gdb_test "p 4 /= 4" " = .FALSE."
+
+    # Arithmetic LE
+    gdb_test "p 5 <= 4" " = .FALSE."
+    gdb_test "p 4 <= 4" " = .TRUE."
+    gdb_test "p 3 <= 4" " = .TRUE."
+
+    # Arithmetic LT
+    gdb_test "p 5 < 4" " = .FALSE."
+    gdb_test "p 4 < 4" " = .FALSE."
+    gdb_test "p 3 < 4" " = .TRUE."
+
+    # Arithmetic GE
+    gdb_test "p 5 >= 4" " = .TRUE."
+    gdb_test "p 4 >= 4" " = .TRUE."
+    gdb_test "p 3 >= 4" " = .FALSE."
+
+    # Arithmetic GT
+    gdb_test "p 5 > 4" " = .TRUE."
+    gdb_test "p 4 > 4" " = .FALSE."
+    gdb_test "p 3 > 4" " = .FALSE."
 }
 
 # Start of test script.
 
 clean_restart
 
-if [set_lang_fortran] then {
+if {[set_lang_fortran]} {
     test_dot_operations
 } else {
     warning "$test_name tests suppressed." 0

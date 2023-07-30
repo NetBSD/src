@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -80,8 +80,19 @@ puts $outfile {
 
     unsigned a_int3 = alignof (int[3]);
 
-#if !defined (__clang__)
-    unsigned a_void = alignof (void);
+#if defined __GNUC__ && !defined __clang__
+    /* As a GNU C extension, GCC allows void pointer arithmetic, with
+       sizeof (void) == 1.
+       Another GNU C extension is __alignof__, which can be used to get
+       __alignof__ (void), which is also 1.  This is unavailabe on clang.
+       GCC used to only warn for alignof (void), but starting with GCC 12.1,
+       as well as GCC 11.3, it will generate an error (note that using
+       -std=gnu++11 does not prevent the error).
+       So we avoid using alignof, and use __alignof__ instead.  */
+    unsigned a_void = __alignof__ (void);
+#else
+    /* No support for __alignof__ (void), hardcode value.  */
+    unsigned a_void = 1;
 #endif
 
     struct base { char c; };
@@ -173,13 +184,5 @@ foreach type $typelist {
 set expected [get_integer_valueof a_int3 0]
 gdb_test "print alignof(int\[3\])" " = $expected"
 
-# As an extension, GCC allows void pointer arithmetic, with
-# sizeof(void) and alignof(void) both 1.  This test checks
-# GDB's support of GCC's extension.
-if [test_compiler_info clang*] {
-    # Clang doesn't support GCC's extension.
-    set expected 1
-} else {
-    set expected [get_integer_valueof a_void 0]
-}
+set expected [get_integer_valueof a_void 0]
 gdb_test "print alignof(void)" " = $expected"

@@ -1,5 +1,5 @@
 /* BFD backend for RISC-V
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target.
@@ -23,89 +23,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 #include "libbfd.h"
-#include "elfxx-riscv.h"
-
-/* Record the priv spec version string and the corresponding class.  */
-
-struct priv_spec_t
-{
-  const char *name;
-  enum riscv_priv_spec_class class;
-};
-
-/* List for all supported privilege versions.  */
-
-static const struct priv_spec_t priv_specs[] =
-{
-  {"1.9.1", PRIV_SPEC_CLASS_1P9P1},
-  {"1.10",  PRIV_SPEC_CLASS_1P10},
-  {"1.11",  PRIV_SPEC_CLASS_1P11},
-
-/* Terminate the list.  */
-  {NULL, 0}
-};
-
-/* Get the corresponding CSR version class by giving a privilege
-   version string.  */
-
-int
-riscv_get_priv_spec_class (const char *s,
-			   enum riscv_priv_spec_class *class)
-{
-  const struct priv_spec_t *version;
-
-  if (s == NULL)
-    return 0;
-
-  for (version = &priv_specs[0]; version->name != NULL; ++version)
-    if (strcmp (version->name, s) == 0)
-      {
-	*class = version->class;
-	return 1;
-      }
-
-  /* Can not find the supported privilege version.  */
-  return 0;
-}
-
-/* Get the corresponding CSR version class by giving privilege
-   version numbers.  It is usually used to convert the priv
-   attribute numbers into the corresponding class.  */
-
-int
-riscv_get_priv_spec_class_from_numbers (unsigned int major,
-					unsigned int minor,
-					unsigned int revision,
-					enum riscv_priv_spec_class *class)
-{
-  char buf[36];
-
-  if (major == 0 && minor == 0 && revision == 0)
-    {
-      *class = PRIV_SPEC_CLASS_NONE;
-      return 1;
-    }
-
-  if (revision != 0)
-    snprintf (buf, sizeof (buf), "%u.%u.%u", major, minor, revision);
-  else
-    snprintf (buf, sizeof (buf), "%u.%u", major, minor);
-
-  return riscv_get_priv_spec_class (buf, class);
-}
-
-/* Get the corresponding privilege version string by giving a CSR
-   version class.  */
-
-const char *
-riscv_get_priv_spec_name (enum riscv_priv_spec_class class)
-{
-  /* The first enum is PRIV_SPEC_CLASS_NONE.  */
-  return priv_specs[class - 1].name;
-}
-
-/* This routine is provided two arch_infos and returns an arch_info
-   that is compatible with both, or NULL if none exists.  */
+#include "cpu-riscv.h"
 
 static const bfd_arch_info_type *
 riscv_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
@@ -121,11 +39,11 @@ riscv_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
 
 /* Return TRUE if STRING matches the architecture described by INFO.  */
 
-static bfd_boolean
+static bool
 riscv_scan (const struct bfd_arch_info *info, const char *string)
 {
   if (bfd_default_scan (info, string))
-    return TRUE;
+    return true;
 
   /* The incoming STRING might take the form of riscv:rvXXzzz, where XX is
      32 or 64, and zzz are one or more extension characters.  As we
@@ -141,9 +59,9 @@ riscv_scan (const struct bfd_arch_info *info, const char *string)
   if (!info->the_default
       && strncasecmp (string, info->printable_name,
                       strlen (info->printable_name)) == 0)
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 #define N(BITS, NUMBER, PRINT, DEFAULT, NEXT)			\
@@ -177,11 +95,58 @@ enum
    and each entry except the last should end with NN (my enum value).  */
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (64, bfd_mach_riscv64, "riscv:rv64", FALSE, NN (I_riscv64)),
-  N (32, bfd_mach_riscv32, "riscv:rv32", FALSE, NULL)
+  N (64, bfd_mach_riscv64, "riscv:rv64", false, NN (I_riscv64)),
+  N (32, bfd_mach_riscv32, "riscv:rv32", false, NULL)
 };
 
 /* The default architecture is riscv:rv64.  */
-
 const bfd_arch_info_type bfd_riscv_arch =
-  N (64, 0, "riscv", TRUE, &arch_info_struct[0]);
+  N (64, 0, "riscv", true, &arch_info_struct[0]);
+
+/* List for all supported ISA spec versions.  */
+const struct riscv_spec riscv_isa_specs[] =
+{
+  {"2.2",      ISA_SPEC_CLASS_2P2},
+  {"20190608", ISA_SPEC_CLASS_20190608},
+  {"20191213", ISA_SPEC_CLASS_20191213},
+};
+
+/* List for all supported privileged spec versions.  */
+const struct riscv_spec riscv_priv_specs[] =
+{
+  {"1.9.1", PRIV_SPEC_CLASS_1P9P1},
+  {"1.10",  PRIV_SPEC_CLASS_1P10},
+  {"1.11",  PRIV_SPEC_CLASS_1P11},
+  {"1.12",  PRIV_SPEC_CLASS_1P12},
+};
+
+/* Get the corresponding CSR version class by giving privilege
+   version numbers.  It is usually used to convert the priv
+   attribute numbers into the corresponding class.  */
+
+void
+riscv_get_priv_spec_class_from_numbers (unsigned int major,
+					unsigned int minor,
+					unsigned int revision,
+					enum riscv_spec_class *class)
+{
+  enum riscv_spec_class class_t = *class;
+  char buf[36];
+
+  if (revision != 0)
+    snprintf (buf, sizeof (buf), "%u.%u.%u", major, minor, revision);
+  else
+    snprintf (buf, sizeof (buf), "%u.%u", major, minor);
+
+  RISCV_GET_PRIV_SPEC_CLASS (buf, class_t);
+  *class = class_t;
+}
+
+/* Define mapping symbols for riscv.  */
+
+bool
+riscv_elf_is_mapping_symbols (const char *name)
+{
+  return (!strncmp (name, "$d", 2)
+	  || !strncmp (name, "$x", 2));
+}

@@ -1,7 +1,6 @@
 #include "sim-basics.h"
-#include "sim-signal.h"
 
-typedef unsigned32 sim_cia;
+typedef uint32_t sim_cia;
 
 #include "sim-base.h"
 

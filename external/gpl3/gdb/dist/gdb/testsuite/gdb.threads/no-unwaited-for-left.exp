@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2020 Free Software Foundation, Inc.
+# Copyright (C) 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ gdb_test "continue" \
     "continue stops when thread 2 exits"
 
 gdb_test "info threads" \
-	 "\r\n\[ \t\]*Id\[ \t\]+Target\[ \t\]+Id\[ \t\]+Frame\[ \t\]*\r\n *1 *Thread \[^\r\n\]* \[^\r\n\]*.*The current thread <Thread ID 2> has terminated.*" \
+	 "\r\n\[ \t\]*Id\[ \t\]+Target\[ \t\]+Id\[ \t\]+Frame\[ \t\]*\r\n *1 *Thread \[^\r\n\]* \[^\r\n\]*\[\r\n\]*The current thread <Thread ID 2> has terminated.*" \
 	 "only main thread left, thread 2 terminated"
 
 # Select the main thread, let the third thread start, and stop at the
@@ -63,7 +63,7 @@ gdb_test "continue" \
     "continue stops when the main thread exits"
 
 gdb_test "info threads" \
-	 "\r\n\[ \t\]*Id\[ \t\]+Target\[ \t\]+Id\[ \t\]+Frame\[ \t\]*\r\n *3 *Thread \[^\r\n\]* \[^\r\n\]*.*The current thread <Thread ID 1> has terminated.*" \
+	 "\r\n\[ \t\]*Id\[ \t\]+Target\[ \t\]+Id\[ \t\]+Frame\[ \t\]*\r\n *3 *Thread \[^\r\n\]* \[^\r\n\]*\[\r\n\]*The current thread <Thread ID 1> has terminated.*" \
 	 "only thread 3 left, main thread terminated"
 
 # Make sure thread apply all works when we have exited threads in the

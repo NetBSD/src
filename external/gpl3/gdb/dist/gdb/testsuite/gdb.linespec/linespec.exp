@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -213,6 +213,6 @@ gdb_test "file $binfile" \
     "Reading symbols from .*" \
     "set the new inferior file for linespec tests"
 
-gdb_test "break main" \
-    "Breakpoint \[0-9\]+ at $hex: main. .2 locations." \
+gdb_test "break -q main" \
+    "Breakpoint \[0-9\]+ at $hex: -qualified main. .2 locations." \
     "set breakpoint at main in both inferiors"

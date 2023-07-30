@@ -1,5 +1,5 @@
 #    Makefile template for Configure for the D10v sim library.
-#    Copyright (C) 1996-2020 Free Software Foundation, Inc.
+#    Copyright (C) 1996-2023 Free Software Foundation, Inc.
 #    Written by Cygnus Support.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -24,32 +24,5 @@ SIM_OBJS = \
 	table.o \
 	simops.o \
 	endian.o
-SIM_EXTRA_CLEAN = clean-extra
-
-INCLUDE = d10v_sim.h $(srcroot)/include/gdb/callback.h targ-vals.h endian.c \
-	$(srcroot)/include/gdb/sim-d10v.h
-
-# This selects the d10v newlib/libgloss syscall definitions.
-NL_TARGET = -DNL_TARGET_d10v
 
 ## COMMON_POST_CONFIG_FRAG
-
-simops.o: simops.h
-
-simops.h: gencode
-	./gencode -h >$@
-
-table.c: gencode simops.h
-	./gencode >$@
-
-gencode.o: gencode.c $(INCLUDE)
-	$(CC_FOR_BUILD) $(BUILD_CFLAGS) $(WARN_CFLAGS) -c $(srcdir)/gencode.c
-
-d10v-opc.o: $(srcdir)/../../opcodes/d10v-opc.c
-	$(CC_FOR_BUILD) $(BUILD_CFLAGS) $(WARN_CFLAGS) -c $(srcdir)/../../opcodes/d10v-opc.c
-
-gencode: gencode.o d10v-opc.o
-	$(CC_FOR_BUILD) $(BUILD_CFLAGS) $(BUILD_LDFLAGS) -o gencode gencode.o d10v-opc.o $(BUILD_LIB)
-
-clean-extra:
-	rm -f table.c simops.h gencode

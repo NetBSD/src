@@ -1,6 +1,6 @@
 /* Utility for handling interrupted syscalls by signals.
 
-   Copyright (C) 2020 Free Software Foundation, Inc.
+   Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,25 +43,29 @@ namespace gdb
 
    You could wrap it by writing the wrapped form:
 
-   ssize_t ret = gdb::handle_eintr<ssize_t> (-1, ::write, pipe[1], "+", 1);
+   ssize_t ret = gdb::handle_eintr (-1, ::write, pipe[1], "+", 1);
 
-   The RET typename specifies the return type of the wrapped system call, which
-   is typically int or ssize_t.  The R argument specifies the failure value
-   indicating the interrupted syscall when calling the F function with
-   the A... arguments.  */
+   ERRVAL specifies the failure value indicating that the call to the
+   F function with ARGS... arguments was possibly interrupted with a
+   signal.  */
 
-template <typename Ret, typename Fun, typename... Args>
-inline Ret handle_eintr (const Ret &R, const Fun &F, const Args &... A)
+template<typename ErrorValType, typename Fun, typename... Args>
+inline auto
+handle_eintr (ErrorValType errval, const Fun &f, const Args &... args)
+  -> decltype (f (args...))
 {
-  Ret ret;
+  decltype (f (args...)) ret;
+
   do
     {
       errno = 0;
-      ret = F (A...);
+      ret = f (args...);
     }
-  while (ret == R && errno == EINTR);
+  while (ret == errval && errno == EINTR);
+
   return ret;
 }
-}
+
+} /* namespace gdb */
 
 #endif /* GDBSUPPORT_EINTR_H */
