@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.142 2023/07/29 12:38:25 rin Exp $
+	$NetBSD: syscalls.master,v 1.143 2023/07/30 05:30:45 rin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1214,7 +1214,8 @@
 			    acl_type_t type, netbsd32_aclp_t aclp); }
 499	STD		{ long|netbsd32||lpathconf(const netbsd32_charp path, \
 			    int name); }
-500	UNIMPL		memfd_create
+500	STD		{ int|netbsd32||memfd_create( \
+			    const netbsd32_charp name, unsigned int flags); }
 501	STD		{ int|netbsd32|100|kevent(int fd, \
 			    const netbsd32_keventp_t changelist, \
 			    netbsd32_size_t nchanges, \
