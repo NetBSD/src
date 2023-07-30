@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.57 2023/07/30 08:58:54 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.58 2023/07/30 22:27:21 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,10 +35,11 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.57 2023/07/30 08:58:54 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.58 2023/07/30 22:27:21 rillig Exp $");
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "lint1.h"
 #include "cgram.h"
@@ -47,6 +48,7 @@ __RCSID("$NetBSD: debug.c,v 1.57 2023/07/30 08:58:54 rillig Exp $");
 #ifdef DEBUG
 
 static int debug_indentation = 0;
+static bool did_indentation;
 
 
 static FILE *
@@ -59,21 +61,36 @@ debug_file(void)
 	return yflag ? stderr : stdout;
 }
 
+static void
+debug_vprintf(const char *fmt, va_list va)
+{
+
+	if (!did_indentation) {
+		did_indentation = true;
+		fprintf(debug_file(), "%s%*s",
+		    yflag ? "| " : "", 2 * debug_indentation, "");
+	}
+
+	(void)vfprintf(debug_file(), fmt, va);
+
+	did_indentation = strchr(fmt, '\n') == NULL;
+}
+
 void
 debug_printf(const char *fmt, ...)
 {
 	va_list va;
 
 	va_start(va, fmt);
-	(void)vfprintf(debug_file(), fmt, va);
+	debug_vprintf(fmt, va);
 	va_end(va);
 }
 
 void
-debug_print_indent(void)
+debug_skip_indent(void)
 {
 
-	debug_printf("%s%*s", yflag ? "| " : "", 2 * debug_indentation, "");
+	did_indentation = true;
 }
 
 void
@@ -96,11 +113,10 @@ debug_step(const char *fmt, ...)
 {
 	va_list va;
 
-	debug_print_indent();
 	va_start(va, fmt);
-	(void)vfprintf(debug_file(), fmt, va);
+	debug_vprintf(fmt, va);
 	va_end(va);
-	fprintf(debug_file(), "\n");
+	debug_printf("\n");
 }
 
 void
@@ -165,7 +181,6 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 	}
 
 	op = tn->tn_op;
-	debug_print_indent();
 	debug_printf("'%s'",
 	    op == CVT && !tn->tn_cast ? "convert" : op_name(op));
 	if (op == NAME)
@@ -339,8 +354,6 @@ void
 debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 {
 
-	if (suffix[0] == '\n')
-		debug_print_indent();
 	debug_printf("%s%s", prefix, sym->s_name);
 	if (sym->s_type != NULL)
 		debug_printf(" type='%s'", type_name(sym->s_type));
@@ -403,14 +416,16 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 	debug_word(sym->s_osdef && sym->u.s_old_style_args != NULL,
 	    "old-style-args");
 
-	debug_printf("%s", suffix);
+	if (strcmp(suffix, "\n") == 0)
+		debug_printf("\n");
+	else
+		debug_printf("%s", suffix);
 }
 
 static void
 debug_decl_level(const decl_level *dl)
 {
 
-	debug_print_indent();
 	debug_printf("decl_level: %s", decl_level_kind_name(dl->d_kind));
 	if (dl->d_scl != NOSCL)
 		debug_printf(" %s", scl_name(dl->d_scl));

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.202 2023/07/29 07:49:14 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.203 2023/07/30 22:27:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -142,7 +142,7 @@ void	debug_type(const type_t *);
 void	debug_sym(const char *, const sym_t *, const char *);
 void	debug_symtab(void);
 void	debug_printf(const char *fmt, ...) __printflike(1, 2);
-void	debug_print_indent(void);
+void	debug_skip_indent(void);
 void	debug_indent_inc(void);
 void	debug_indent_dec(void);
 void	debug_enter_func(const char *);
@@ -158,7 +158,7 @@ void	debug_leave_func(const char *);
 #define	debug_node(tn)		debug_noop()
 #define	debug_type(tp)		debug_noop()
 #define	debug_printf(...)	debug_noop()
-#define	debug_print_indent()	debug_noop()
+#define	debug_skip_indent()	debug_noop()
 #define	debug_indent_inc()	debug_noop()
 #define	debug_indent_dec()	debug_noop()
 #define	debug_enter()		debug_noop()
