@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_epoll.c,v 1.2 2023/07/29 04:06:32 pgoyette Exp $	*/
+/*	$NetBSD: sys_epoll.c,v 1.3 2023/07/30 04:39:00 rin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_epoll.c,v 1.2 2023/07/29 04:06:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_epoll.c,v 1.3 2023/07/30 04:39:00 rin Exp $");
 
 
 #include <sys/param.h>
@@ -251,7 +251,7 @@ epoll_ctl_common(struct lwp *l, register_t *retval, int epfd, int op, int fd,
     struct epoll_event *event)
 {
 	struct kevent kev[2];
-        struct kevent_ops k_ops = {
+	struct kevent_ops k_ops = {
 		.keo_private = NULL,
 		.keo_fetch_timeout = NULL,
 		.keo_fetch_changes = epoll_kev_fetch_changes,
@@ -502,7 +502,7 @@ epoll_register_kevent(register_t *retval, int epfd, int fd, int filter,
 
 	EV_SET(&kev, fd, filter, flags, 0, 0, 0);
 
-        return kevent1(retval, epfd, &kev, 1, NULL, 0, NULL, &k_ops);
+	return kevent1(retval, epfd, &kev, 1, NULL, 0, NULL, &k_ops);
 }
 
 /*
@@ -659,7 +659,7 @@ epoll_check_loop_and_depth(struct lwp *l, int epfd, int fd)
 	 * number of edges, and once to actually fill them in.  We add one
 	 * because we want to include the edge epfd->fd.
 	 */
-        nedges = 1 + epoll_recover_watch_tree(NULL, 0, nfds);
+	nedges = 1 + epoll_recover_watch_tree(NULL, 0, nfds);
 
 	edges = kmem_zalloc(nedges * sizeof(*edges), KM_SLEEP);
 
