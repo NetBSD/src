@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.368 2023/07/30 20:12:35 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.369 2023/07/30 22:38:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.368 2023/07/30 20:12:35 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.369 2023/07/30 22:38:09 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -116,6 +116,7 @@ type_t *
 block_dup_type(const type_t *tp)
 {
 
+	debug_step("%s '%s'", __func__, type_name(tp));
 	type_t *ntp = block_zero_alloc(sizeof(*ntp), "type");
 	*ntp = *tp;
 	return ntp;
@@ -126,6 +127,7 @@ type_t *
 expr_dup_type(const type_t *tp)
 {
 
+	debug_step("%s '%s'", __func__, type_name(tp));
 	type_t *ntp = expr_zero_alloc(sizeof(*ntp), "type");
 	*ntp = *tp;
 	return ntp;
@@ -154,6 +156,7 @@ expr_unqualified_type(const type_t *tp)
 	 * tp1->t_sou == tp2->t_sou.
 	 */
 
+	debug_step("%s '%s'", __func__, type_name(ntp));
 	return ntp;
 }
 
@@ -213,6 +216,8 @@ dcs_add_storage_class(scl_t sc)
 		dcs->d_scl = STATIC;	/* ignore thread_local */
 	else
 		dcs->d_multiple_storage_classes = true;
+	debug_step("%s:", __func__);
+	debug_dcs(false);
 }
 
 /* Merge the signedness into the abstract type. */
@@ -239,6 +244,8 @@ merge_signedness(tspec_t t, tspec_t s)
 static type_t *
 typedef_error(type_t *td, tspec_t t)
 {
+
+	debug_step("%s: '%s' %s", __func__, type_name(td), tspec_name(t));
 
 	tspec_t t2 = td->t_tspec;
 
@@ -308,6 +315,7 @@ dcs_add_type(type_t *tp)
 {
 
 	debug_step("%s: %s", __func__, type_name(tp));
+	debug_dcs(false);
 	if (tp->t_typedef) {
 		/*
 		 * something like "typedef int a; int a b;"
@@ -336,6 +344,7 @@ dcs_add_type(type_t *tp)
 			dcs->d_rank_mod = NO_TSPEC;
 		}
 		dcs->d_type = tp;
+		debug_dcs(false);
 		return;
 	}
 
@@ -403,6 +412,7 @@ dcs_add_type(type_t *tp)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_abstract_type = t;
 	}
+	debug_dcs(false);
 }
 
 static void
@@ -460,6 +470,7 @@ pack_struct_or_union(type_t *tp)
 			bits = mem_bits;
 	}
 	tp->t_sou->sou_size_in_bits = bits;
+	debug_dcs(false);
 }
 
 void
@@ -688,6 +699,7 @@ dcs_merge_declaration_specifiers(void)
 	if (l != NO_TSPEC)
 		t = l;
 	dcs->d_type = gettyp(merge_signedness(t, s));
+	debug_dcs(false);
 }
 
 /* Create a type in 'dcs->d_type' from the information gathered in 'dcs'. */
@@ -727,6 +739,7 @@ dcs_end_type(void)
 		dcs->d_type->t_volatile |= dcs->d_qual.tq_volatile;
 	}
 
+	debug_dcs(false);
 	debug_leave();
 }
 
@@ -1036,6 +1049,8 @@ dcs_add_member(sym_t *mem)
 
 	if (union_size > dcs->d_sou_size_in_bits)
 		dcs->d_sou_size_in_bits = union_size;
+
+	debug_dcs(false);
 }
 
 sym_t *
@@ -1061,14 +1076,16 @@ declare_member(sym_t *dsym)
 
 	lint_assert(is_member(dsym));
 
-	if (dcs->d_redeclared_symbol != NULL) {
-		lint_assert(is_member(dcs->d_redeclared_symbol));
+	sym_t *rdsym = dcs->d_redeclared_symbol;
+	if (rdsym != NULL) {
+		debug_sym("rdsym: ", rdsym, "\n");
+		lint_assert(is_member(rdsym));
 
 		if (dsym->u.s_member.sm_containing_type ==
-		    dcs->d_redeclared_symbol->u.s_member.sm_containing_type) {
+		    rdsym->u.s_member.sm_containing_type) {
 			/* duplicate member name '%s' */
 			error(33, dsym->s_name);
-			rmsym(dcs->d_redeclared_symbol);
+			rmsym(rdsym);
 		}
 	}
 
@@ -1120,6 +1137,7 @@ set_bit_field_width(sym_t *dsym, int bit_field_width)
 	dsym->s_type->t_bitfield = true;
 	dsym->s_type->t_bit_field_width = bit_field_width;
 	dsym->s_bitfield = true;
+	debug_sym("set_bit_field_width: ", dsym, "\n");
 	return dsym;
 }
 
@@ -1138,6 +1156,7 @@ add_type_qualifiers(type_qualifiers *dst, type_qualifiers src)
 	dst->tq_restrict = dst->tq_restrict | src.tq_restrict;
 	dst->tq_volatile = dst->tq_volatile | src.tq_volatile;
 	dst->tq_atomic = dst->tq_atomic | src.tq_atomic;
+	debug_step("%s: '%s'", __func__, type_qualifiers_string(*dst));
 }
 
 qual_ptr *
@@ -1158,6 +1177,7 @@ block_derive_pointer(type_t *stp, bool is_const, bool is_volatile)
 	type_t *tp = block_derive_type(stp, PTR);
 	tp->t_const = is_const;
 	tp->t_volatile = is_volatile;
+	debug_step("%s: '%s'", __func__, type_name(tp));
 	return tp;
 }
 
@@ -1232,6 +1252,7 @@ block_derive_array(type_t *stp, bool dim, int len)
 	} else if (len == 0 && !dim)
 		tp->t_incomplete_array = true;
 
+	debug_step("%s: '%s'", __func__, type_name(tp));
 	return tp;
 }
 
@@ -1256,7 +1277,7 @@ add_array(sym_t *decl, bool dim, int n)
 
 	*tpp = block_derive_array(dcs->d_type, dim, n);
 
-	debug_step("add_array: '%s'", type_name(decl->s_type));
+	debug_step("%s: '%s'", __func__, type_name(decl->s_type));
 	return decl;
 }
 
@@ -1269,6 +1290,7 @@ block_derive_function(type_t *ret, bool proto, sym_t *args, bool vararg)
 	if (proto)
 		tp->t_args = args;
 	tp->t_vararg = vararg;
+	debug_step("%s: '%s'", __func__, type_name(tp));
 	return tp;
 }
 
@@ -1495,6 +1517,7 @@ declarator_name(sym_t *sym)
 
 	dcs->d_func_proto_syms = NULL;
 
+	debug_sym("declarator_name: ", sym, "\n");
 	return sym;
 }
 
@@ -1514,6 +1537,7 @@ old_style_function_parameter_name(sym_t *sym)
 	sym->s_scl = AUTO;
 	sym->s_def = DEF;
 	sym->s_defarg = sym->s_arg = true;
+	debug_sym("old_style_function_parameter_name: ", sym, "\n");
 	return sym;
 }
 
@@ -1575,6 +1599,7 @@ new_tag(sym_t *tag, scl_t scl, bool decl, bool semi)
 		} else if (semi || decl)
 			dcs->d_enclosing->d_nonempty_decl = true;
 	}
+	debug_sym("new_tag: ", tag, "\n");
 	return tag;
 }
 
@@ -1650,6 +1675,8 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 			tp->t_enum->en_incomplete = true;
 		}
 	}
+	debug_printf("%s: '%s'", __func__, type_name(tp));
+	debug_sym(" ", tag, "\n");
 	return tp;
 }
 
@@ -1710,6 +1737,7 @@ complete_struct_or_union(sym_t *first_member)
 		/* '%s' has no named members */
 		warning(65, type_name(tp));
 	}
+	debug_step("%s: '%s'", __func__, type_name(tp));
 	return tp;
 }
 
@@ -1720,6 +1748,7 @@ complete_enum(sym_t *first_enumerator)
 	type_t *tp = dcs->d_tag_type;
 	tp->t_enum->en_incomplete = false;
 	tp->t_enum->en_first_enumerator = first_enumerator;
+	debug_step("%s: '%s'", __func__, type_name(tp));
 	return tp;
 }
 
@@ -1769,6 +1798,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	}
 
 	enumval = val == TARG_INT_MAX ? TARG_INT_MIN : val + 1;
+	debug_sym("enumeration_constant: ", sym, "\n");
 	return sym;
 }
 
@@ -1842,19 +1872,19 @@ check_init(sym_t *sym)
  * old-style function definition.
  */
 static bool
-check_old_style_definition(sym_t *rdsym, sym_t *dsym)
+check_old_style_definition(const sym_t *rdsym, const sym_t *dsym)
 {
 
-	sym_t *args = rdsym->u.s_old_style_args;
-	sym_t *pargs = dsym->s_type->t_args;
+	const sym_t *args = rdsym->u.s_old_style_args;
+	const sym_t *pargs = dsym->s_type->t_args;
 
 	bool msg = false;
 
 	int narg = 0;
-	for (sym_t *arg = args; arg != NULL; arg = arg->s_next)
+	for (const sym_t *arg = args; arg != NULL; arg = arg->s_next)
 		narg++;
 	int nparg = 0;
-	for (sym_t *parg = pargs; parg != NULL; parg = parg->s_next)
+	for (const sym_t *parg = pargs; parg != NULL; parg = parg->s_next)
 		nparg++;
 	if (narg != nparg) {
 		/* prototype does not match old-style definition */
@@ -1863,8 +1893,8 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 		goto end;
 	}
 
-	sym_t *arg = args;
-	sym_t *parg = pargs;
+	const sym_t *arg = args;
+	const sym_t *parg = pargs;
 	int n = 1;
 	while (narg-- > 0) {
 		bool dowarn = false;
@@ -2004,6 +2034,8 @@ declare_extern(sym_t *dsym, bool has_initializer, sbuf_t *renaming)
 		dsym->s_type->t_typedef = true;
 		set_first_typedef(dsym->s_type, dsym);
 	}
+	debug_printf("%s: ", __func__);
+	debug_sym("", dsym, "\n");
 }
 
 void
@@ -2027,6 +2059,8 @@ declare(sym_t *decl, bool has_initializer, sbuf_t *renaming)
 		} else
 			declare_local(decl, has_initializer);
 	}
+	debug_printf("%s: ", __func__);
+	debug_sym("", decl, "\n");
 }
 
 /*
@@ -2292,6 +2326,9 @@ complete_type(sym_t *dsym, sym_t *ssym)
 		dstp = &dst->t_subt;
 		src = src->t_subt;
 	}
+	debug_printf("%s: ", __func__);
+	debug_sym("dsym: ", dsym, "");
+	debug_sym("ssym: ", ssym, "\n");
 }
 
 /*
@@ -2354,6 +2391,8 @@ declare_argument(sym_t *sym, bool has_initializer)
 	sym->s_used = dcs->d_used;
 	mark_as_set(sym);
 
+	debug_printf("%s: ", __func__);
+	debug_sym("", sym, "\n");
 	return sym;
 }
 
@@ -2419,7 +2458,7 @@ check_func_lint_directives(void)
 	if (printflike_argnum != -1 || scanflike_argnum != -1) {
 		narg = printflike_argnum != -1
 		    ? printflike_argnum : scanflike_argnum;
-		sym_t *arg = dcs->d_func_args;
+		const sym_t *arg = dcs->d_func_args;
 		for (int n = 1; n < narg; n++)
 			arg = arg->s_next;
 		if (!is_character_pointer(arg->s_type)) {
@@ -2728,6 +2767,9 @@ declare_local(sym_t *dsym, bool has_initializer)
 		/* static variable '%s' in function */
 		query_message(11, dsym->s_name);
 	}
+
+	debug_printf("%s: ", __func__);
+	debug_sym("", dsym, "\n");
 }
 
 /* Create a symbol for an abstract declaration. */
@@ -2758,6 +2800,8 @@ abstract_name(void)
 	sym->s_type = dcs->d_type;
 	dcs->d_redeclared_symbol = NULL;
 
+	debug_printf("%s: ", __func__);
+	debug_sym("", sym, "\n");
 	return sym;
 }
 
