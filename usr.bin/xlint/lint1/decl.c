@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.367 2023/07/29 11:03:18 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.368 2023/07/30 20:12:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.367 2023/07/29 11:03:18 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.368 2023/07/30 20:12:35 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1868,12 +1868,6 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 	int n = 1;
 	while (narg-- > 0) {
 		bool dowarn = false;
-		/*
-		 * If it does not match due to promotion and lint runs in
-		 * "traditional to C90" migration mode, print only a warning.
-		 *
-		 * XXX: Where is this "only a warning"?
-		 */
 		if (!types_compatible(arg->s_type, parg->s_type,
 		    true, true, &dowarn) ||
 		    dowarn) {
