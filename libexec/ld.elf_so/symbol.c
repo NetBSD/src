@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.75 2023/04/18 22:42:52 christos Exp $	 */
+/*	$NetBSD: symbol.c,v 1.76 2023/07/30 09:20:14 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.75 2023/04/18 22:42:52 christos Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.76 2023/07/30 09:20:14 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: symbol.c,v 1.75 2023/04/18 22:42:52 christos Exp $");
 #include <dirent.h>
 
 #include "debug.h"
+#include "hash.h"
 #include "rtld.h"
 
 /*
@@ -78,39 +79,6 @@ _rtld_donelist_check(DoneList *dlp, const Obj_Entry *obj)
 	if (dlp->num_used < dlp->num_alloc)
 		dlp->objs[dlp->num_used++] = obj;
 	return false;
-}
-
-/*
- * SysV hash function for symbol table lookup.  It is a slightly optimized
- * version of the hash specified by the System V ABI.
- */
-Elf32_Word
-_rtld_sysv_hash(const char *name)
-{
-	const unsigned char *p = (const unsigned char *) name;
-	Elf32_Word h = 0;
-
-	while (__predict_true(*p != '\0')) {
-		h = (h << 4) + *p++;
-		h ^= (h >> 24) & 0xf0;
-	}
-	return (h & 0x0fffffff);
-}
-
-/*
- * Hash function for symbol table lookup.  Don't even think about changing
- * this.  It is specified by the GNU toolchain ABI.
- */
-Elf32_Word
-_rtld_gnu_hash(const char *name)
-{
-	const unsigned char *p = (const unsigned char *) name;
-	uint_fast32_t h = 5381;
-	unsigned char c;
-
-	for (c = *p; c != '\0'; c = *++p)
-		h = h * 33 + c;
-	return (h & 0xffffffff);
 }
 
 const Elf_Sym *
