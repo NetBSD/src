@@ -37,6 +37,7 @@ extern unsigned struct_timezone_sz;
 extern unsigned struct_tms_sz;
 extern unsigned struct_itimerspec_sz;
 extern unsigned struct_sigevent_sz;
+extern unsigned struct_stack_t_sz;
 extern unsigned struct_sched_param_sz;
 extern unsigned struct_statfs64_sz;
 extern unsigned struct_statfs_sz;
@@ -340,6 +341,7 @@ struct __sanitizer_glob_t {
 
 extern int glob_nomatch;
 extern int glob_altdirfunc;
+extern const int wordexp_wrde_dooffs;
 
 extern unsigned path_max;
 

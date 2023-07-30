@@ -323,8 +323,8 @@ static void scanf_common(void *ctx, int n_inputs, bool allowGnuMalloc,
       continue;
     int size = scanf_get_value_size(&dir);
     if (size == FSS_INVALID) {
-      Report("%s: WARNING: unexpected format specifier in scanf interceptor: ",
-             SanitizerToolName, "%.*s\n", dir.end - dir.begin, dir.begin);
+      Report("%s: WARNING: unexpected format specifier in scanf interceptor: %.*s\n",
+             SanitizerToolName, static_cast<int>(dir.end - dir.begin), dir.begin);
       break;
     }
     void *argp = va_arg(aq, void *);
@@ -339,6 +339,12 @@ static void scanf_common(void *ctx, int n_inputs, bool allowGnuMalloc,
       size = 0;
     }
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, argp, size);
+    // For %ms/%mc, write the allocated output buffer as well.
+    if (dir.allocate) {
+      char *buf = *(char **)argp;
+      if (buf)
+        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, internal_strlen(buf) + 1);
+    }
   }
 }
 
@@ -462,7 +468,7 @@ static int printf_get_value_size(PrintfDirective *dir) {
         break;                                                     \
       default:                                                     \
         Report("WARNING: unexpected floating-point arg size"       \
-               " in printf interceptor: %d\n", size);              \
+               " in printf interceptor: %zu\n", static_cast<uptr>(size));             \
         return;                                                    \
       }                                                            \
     } else {                                                       \
@@ -477,7 +483,7 @@ static int printf_get_value_size(PrintfDirective *dir) {
         break;                                                     \
       default:                                                     \
         Report("WARNING: unexpected arg size"                      \
-               " in printf interceptor: %d\n", size);              \
+               " in printf interceptor: %zu\n", static_cast<uptr>(size));             \
         return;                                                    \
       }                                                            \
     }                                                              \
@@ -523,7 +529,7 @@ static void printf_common(void *ctx, const char *format, va_list aq) {
         Report(
             "%s: WARNING: unexpected format specifier in printf "
             "interceptor: %.*s (reported once per process)\n",
-            SanitizerToolName, dir.end - dir.begin, dir.begin);
+            SanitizerToolName, static_cast<int>(dir.end - dir.begin), dir.begin);
       break;
     }
     if (dir.convSpecifier == 'n') {

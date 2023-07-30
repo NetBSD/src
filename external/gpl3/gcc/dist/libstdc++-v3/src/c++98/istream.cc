@@ -1,6 +1,6 @@
 // Input streams -*- C++ -*-
 
-// Copyright (C) 2004-2020 Free Software Foundation, Inc.
+// Copyright (C) 2004-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -168,17 +168,29 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		    break;
 		}
 
-	      if (__large_ignore)
-		_M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
-
-	      if (traits_type::eq_int_type(__c, __eof))
-		__err |= ios_base::eofbit;
-	      else if (traits_type::eq_int_type(__c, __delim))
+	      if (__n == __gnu_cxx::__numeric_traits<streamsize>::__max)
 		{
-		  if (_M_gcount
-		      < __gnu_cxx::__numeric_traits<streamsize>::__max)
-		    ++_M_gcount;
-		  __sb->sbumpc();
+		  if (__large_ignore)
+		    _M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
+
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		  else
+		    {
+		      if (_M_gcount != __n)
+			++_M_gcount;
+		      __sb->sbumpc();
+		    }
+		}
+	      else if (_M_gcount < __n) // implies __c == __delim or EOF
+		{
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		  else
+		    {
+		      ++_M_gcount;
+		      __sb->sbumpc();
+		    }
 		}
 	    }
 	  __catch(__cxxabiv1::__forced_unwind&)
@@ -194,9 +206,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return *this;
     }
 
-  template<>
-    basic_istream<char>&
-    operator>>(basic_istream<char>& __in, char* __s)
+    void
+    __istream_extract(istream& __in, char* __s, streamsize __num)
     {
       typedef basic_istream<char>       	__istream_type;
       typedef __istream_type::int_type		__int_type;
@@ -213,9 +224,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  __try
 	    {
 	      // Figure out how many characters to extract.
-	      streamsize __num = __in.width();
-	      if (__num <= 0)
-		__num = __gnu_cxx::__numeric_traits<streamsize>::__max;
+	      streamsize __width = __in.width();
+	      if (0 < __width && __width < __num)
+		__num = __width;
 
 	      const __ctype_type& __ct = use_facet<__ctype_type>(__in.getloc());
 
@@ -252,7 +263,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		    }
 		}
 
-	      if (__traits_type::eq_int_type(__c, __eof))
+	      if (__extracted < __num - 1
+		  && __traits_type::eq_int_type(__c, __eof))
 		__err |= ios_base::eofbit;
 
 	      // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -272,7 +284,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	__err |= ios_base::failbit;
       if (__err)
 	__in.setstate(__err);
-      return __in;
     }
 
 #ifdef _GLIBCXX_USE_WCHAR_T
@@ -412,17 +423,29 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		    break;
 		}
 
-	      if (__large_ignore)
-		_M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
-
-	      if (traits_type::eq_int_type(__c, __eof))
-		__err |= ios_base::eofbit;
-	      else if (traits_type::eq_int_type(__c, __delim))
+	      if (__n == __gnu_cxx::__numeric_traits<streamsize>::__max)
 		{
-		  if (_M_gcount
-		      < __gnu_cxx::__numeric_traits<streamsize>::__max)
-		    ++_M_gcount;
-		  __sb->sbumpc();
+		  if (__large_ignore)
+		    _M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
+
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		  else
+		    {
+		      if (_M_gcount != __n)
+			++_M_gcount;
+		      __sb->sbumpc();
+		    }
+		}
+	      else if (_M_gcount < __n) // implies __c == __delim or EOF
+		{
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		  else
+		    {
+		      ++_M_gcount;
+		      __sb->sbumpc();
+		    }
 		}
 	    }
 	  __catch(__cxxabiv1::__forced_unwind&)

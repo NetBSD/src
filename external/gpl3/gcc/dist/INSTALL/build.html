@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2020 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2022 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -329,6 +329,12 @@ the build tree.
 accesses within the GCC code.
 </p>
 </dd>
+<dt>&lsquo;<samp>bootstrap-hwasan</samp>&rsquo;</dt>
+<dd><p>Compiles GCC itself using HWAddress Sanitization in order to catch invalid
+memory accesses within the GCC code.  This option is only available on AArch64
+systems that are running Linux kernel version 5.4 or later.
+</p>
+</dd>
 </dl>
 
 <a name="Building-a-cross-compiler"></a>
@@ -425,6 +431,11 @@ and network filesystems.
 
 <p><a href="prerequisites.html#GNAT-prerequisite">GNAT prerequisites</a>.
 </p>
+<a name="Building-the-D-compiler"></a>
+<h3 class="section">Building the D compiler</h3>
+
+<p><a href="prerequisites.html#GDC-prerequisite">GDC prerequisites</a>.
+</p>
 <a name="Building-with-profile-feedback"></a>
 <h3 class="section">Building with profile feedback</h3>
 
@@ -459,7 +470,6 @@ the code quality may be much worse.
 <p>
 <p><a href="./index.html">Return to the GCC Installation page</a>
 </p>
-
 
 
 

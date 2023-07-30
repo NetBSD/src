@@ -1,5 +1,5 @@
 # Top level -*- makefile -*- fragment for GNU Objective-C++
-#   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2005-2022 Free Software Foundation, Inc.
 #   Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 #This file is part of GCC.
@@ -39,6 +39,7 @@
 #
 # Define the names for selecting Objective-C++ in LANGUAGES.
 obj-c++: cc1objplus$(exeext)
+obj-c++.serial = cc1objplus$(exeext)
 
 # Tell GNU make to ignore these if they exist.
 .PHONY: obj-c++
@@ -59,44 +60,56 @@ OBJCXX_OBJS = objcp/objcp-act.o objcp/objcp-lang.o objcp/objcp-decl.o \
 
 obj-c++_OBJS = $(OBJCXX_OBJS) cc1objplus-checksum.o
 
-cc1objplus-checksum.c : build/genchecksum$(build_exeext) checksum-options \
-	$(OBJCXX_OBJS) $(BACKEND) $(LIBDEPS)
-	build/genchecksum$(build_exeext) $(OBJCXX_OBJS) $(BACKEND) \
-		$(LIBDEPS) checksum-options > cc1objplus-checksum.c.tmp && \
-	$(SHELL) $(srcdir)/../move-if-change cc1objplus-checksum.c.tmp \
-	cc1objplus-checksum.c
+# compute checksum over all object files and the options
+# re-use the checksum from the prev-final stage so it passes
+# the bootstrap comparison and allows comparing of the cc1 binary
+cc1objplus-checksum.cc : build/genchecksum$(build_exeext) checksum-options \
+	$(OBJCXX_OBJS) $(BACKEND) $(CODYLIB) $(LIBDEPS)
+	if [ -f ../stage_final ] \
+	   && cmp -s ../stage_current ../stage_final \
+	   && [ -f ../prev-gcc/$@ ]; then \
+	  cp ../prev-gcc/$@ $@; \
+	else \
+	  build/genchecksum$(build_exeext) $(OBJCXX_OBJS) $(BACKEND) \
+		$(CODYLIB) $(LIBDEPS) checksum-options > $@.tmp && \
+	  $(SHELL) $(srcdir)/../move-if-change $@.tmp $@; \
+	fi
 
-cc1objplus$(exeext): $(OBJCXX_OBJS) cc1objplus-checksum.o $(BACKEND) $(LIBDEPS)
+cc1objplus$(exeext): $(OBJCXX_OBJS) cc1objplus-checksum.o $(BACKEND) \
+		     $(CODYLIB) $(LIBDEPS) $(obj-c++.prev)
+	@$(call LINK_PROGRESS,$(INDEX.obj-c++),start)
 	+$(LLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
-		$(OBJCXX_OBJS) cc1objplus-checksum.o $(BACKEND) $(LIBS) $(BACKENDLIBS)
+		$(OBJCXX_OBJS) cc1objplus-checksum.o $(BACKEND) \
+		  $(CODYLIB) $(NETLIBS) $(LIBS) $(BACKENDLIBS)
+	@$(call LINK_PROGRESS,$(INDEX.obj-c++),end)
 
 # Objective C++ language specific files.
 
-objcp/objc-runtime-shared-support.o: objc/objc-runtime-shared-support.c
+objcp/objc-runtime-shared-support.o: objc/objc-runtime-shared-support.cc
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
-objcp/objc-gnu-runtime-abi-01.o: objc/objc-gnu-runtime-abi-01.c
+objcp/objc-gnu-runtime-abi-01.o: objc/objc-gnu-runtime-abi-01.cc
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
-objcp/objc-next-runtime-abi-01.o: objc/objc-next-runtime-abi-01.c
+objcp/objc-next-runtime-abi-01.o: objc/objc-next-runtime-abi-01.cc
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
-objcp/objc-next-runtime-abi-02.o: objc/objc-next-runtime-abi-02.c
+objcp/objc-next-runtime-abi-02.o: objc/objc-next-runtime-abi-02.cc
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
-objcp/objcp-act.o: objc/objc-act.c
+objcp/objcp-act.o: objc/objc-act.cc
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
-objcp/objc-encoding.o: objc/objc-encoding.c
+objcp/objc-encoding.o: objc/objc-encoding.cc
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
-objcp/objc-map.o: objc/objc-map.c
+objcp/objc-map.o: objc/objc-map.cc
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
@@ -111,18 +124,20 @@ obj-c++.rest.encap:
 obj-c++.info:
 obj-c++.install-info:
 obj-c++.dvi:
+obj-c++.install-dvi:
 obj-c++.pdf:
 obj-c++.install-pdf:
 obj-c++.html:
 obj-c++.install-html:
 obj-c++.srcinfo:
+obj-c++.srcman:
 obj-c++.srcextra:
 obj-c++.man:
 obj-c++.install-plugin:
 
 obj-c++.tags: force
-	cd $(srcdir)/objcp; etags -o TAGS.sub *.c *.h; \
-	etags --include TAGS.sub --include ../TAGS.sub
+	cd $(srcdir)/objcp; $(ETAGS) -o TAGS.sub *.c *.h; \
+	$(ETAGS) --include TAGS.sub --include ../TAGS.sub
 
 lang_checks += check-obj-c++
 

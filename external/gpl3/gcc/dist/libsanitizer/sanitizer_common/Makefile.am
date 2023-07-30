@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I $(top_srcdir)/include -isystem $(top_srcdir)/include/system
+AM_CPPFLAGS = -I $(top_srcdir)/include -I $(top_srcdir) -isystem $(top_srcdir)/include/system
 
 # May be used by toolexeclibdir.
 gcc_version := $(shell @get_gcc_base_ver@ $(top_srcdir)/../gcc/BASE-VER)
@@ -6,7 +6,7 @@ gcc_version := $(shell @get_gcc_base_ver@ $(top_srcdir)/../gcc/BASE-VER)
 DEFS = -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS @RPC_DEFS@
 AM_CXXFLAGS = -Wall -W -Wno-unused-parameter -Wwrite-strings -pedantic -Wno-long-long  -fPIC -fno-builtin -fno-exceptions -fno-rtti -fomit-frame-pointer -funwind-tables -fvisibility=hidden -Wno-variadic-macros
 AM_CXXFLAGS += $(LIBSTDCXX_RAW_CXX_CXXFLAGS)
-AM_CXXFLAGS += -std=gnu++11
+AM_CXXFLAGS += -std=gnu++14
 AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
 if LIBBACKTRACE_SUPPORTED
 AM_CXXFLAGS += -DSANITIZER_LIBBACKTRACE -DSANITIZER_CP_DEMANGLE \
@@ -17,73 +17,72 @@ AM_CXXFLAGS += -DSANITIZER_LIBBACKTRACE -DSANITIZER_CP_DEMANGLE \
 endif
 AM_CCASFLAGS = $(EXTRA_ASFLAGS)
 ACLOCAL_AMFLAGS = -I m4
+sanitizer_platform_limits_freebsd.lo: AM_CXXFLAGS += -DUSE_SYSTEM_MD5
 
 noinst_LTLIBRARIES = libsanitizer_common.la
 
 sanitizer_common_files = \
-	sancov_flags.cc \
-	sanitizer_allocator.cc \
-	sanitizer_allocator_checks.cc \
-	sanitizer_allocator_report.cc \
-	sanitizer_common.cc \
-	sanitizer_common_libcdep.cc \
-	sanitizer_coverage_libcdep_new.cc \
-	sanitizer_deadlock_detector1.cc \
-	sanitizer_deadlock_detector2.cc \
-	sanitizer_errno.cc \
-	sanitizer_file.cc \
-	sanitizer_flags.cc \
-	sanitizer_flag_parser.cc \
-	sanitizer_libc.cc \
-	sanitizer_libignore.cc \
-	sanitizer_linux.cc \
-	sanitizer_linux_libcdep.cc \
-	sanitizer_linux_s390.cc \
-	sanitizer_mac.cc \
-	sanitizer_mac_libcdep.cc \
-	sanitizer_netbsd.cc \
-	sanitizer_openbsd.cc \
-	sanitizer_persistent_allocator.cc \
-	sanitizer_platform_limits_linux.cc \
-	sanitizer_platform_limits_openbsd.cc \
-	sanitizer_platform_limits_posix.cc \
-	sanitizer_platform_limits_solaris.cc \
-	sanitizer_posix.cc \
-	sanitizer_posix_libcdep.cc \
-	sanitizer_printf.cc \
-	sanitizer_procmaps_bsd.cc \
-	sanitizer_procmaps_common.cc \
-	sanitizer_procmaps_linux.cc \
-	sanitizer_procmaps_mac.cc \
-	sanitizer_procmaps_solaris.cc \
-	sanitizer_rtems.cc \
-	sanitizer_solaris.cc \
-	sanitizer_stackdepot.cc \
-	sanitizer_stacktrace.cc \
-	sanitizer_stacktrace_libcdep.cc \
-	sanitizer_stacktrace_sparc.cc \
-	sanitizer_symbolizer_mac.cc \
-	sanitizer_symbolizer_report.cc \
-	sanitizer_stacktrace_printer.cc \
-	sanitizer_stoptheworld_linux_libcdep.cc \
-	sanitizer_stoptheworld_netbsd_libcdep.cc \
-	sanitizer_stoptheworld_mac.cc \
-	sanitizer_suppressions.cc \
-	sanitizer_symbolizer.cc \
-	sanitizer_symbolizer_libbacktrace.cc \
-	sanitizer_symbolizer_libcdep.cc \
-	sanitizer_symbolizer_posix_libcdep.cc \
-	sanitizer_symbolizer_win.cc \
-	sanitizer_termination.cc \
-	sanitizer_thread_registry.cc \
-	sanitizer_tls_get_addr.cc \
-	sanitizer_unwind_linux_libcdep.cc \
-	sanitizer_unwind_win.cc \
-	sanitizer_win.cc
+	sancov_flags.cpp \
+	sanitizer_allocator.cpp \
+	sanitizer_allocator_checks.cpp \
+	sanitizer_allocator_report.cpp \
+	sanitizer_common.cpp \
+	sanitizer_common_libcdep.cpp \
+	sanitizer_coverage_libcdep_new.cpp \
+	sanitizer_deadlock_detector1.cpp \
+	sanitizer_deadlock_detector2.cpp \
+	sanitizer_errno.cpp \
+	sanitizer_file.cpp \
+	sanitizer_flags.cpp \
+	sanitizer_flag_parser.cpp \
+	sanitizer_libc.cpp \
+	sanitizer_libignore.cpp \
+	sanitizer_linux.cpp \
+	sanitizer_linux_libcdep.cpp \
+	sanitizer_linux_s390.cpp \
+	sanitizer_mac.cpp \
+	sanitizer_mac_libcdep.cpp \
+	sanitizer_mutex.cpp \
+	sanitizer_netbsd.cpp \
+	sanitizer_openbsd.cpp \
+	sanitizer_platform_limits_freebsd.cpp \
+	sanitizer_platform_limits_linux.cpp \
+	sanitizer_platform_limits_openbsd.cpp \
+	sanitizer_platform_limits_posix.cpp \
+	sanitizer_platform_limits_solaris.cpp \
+	sanitizer_posix.cpp \
+	sanitizer_posix_libcdep.cpp \
+	sanitizer_printf.cpp \
+	sanitizer_procmaps_bsd.cpp \
+	sanitizer_procmaps_common.cpp \
+	sanitizer_procmaps_linux.cpp \
+	sanitizer_procmaps_mac.cpp \
+	sanitizer_procmaps_solaris.cpp \
+	sanitizer_solaris.cpp \
+	sanitizer_stackdepot.cpp \
+	sanitizer_stacktrace.cpp \
+	sanitizer_stacktrace_libcdep.cpp \
+	sanitizer_stacktrace_sparc.cpp \
+	sanitizer_symbolizer_mac.cpp \
+	sanitizer_symbolizer_report.cpp \
+	sanitizer_stacktrace_printer.cpp \
+	sanitizer_stoptheworld_linux_libcdep.cpp \
+	sanitizer_stoptheworld_mac.cpp \
+	sanitizer_suppressions.cpp \
+	sanitizer_symbolizer.cpp \
+	sanitizer_symbolizer_libbacktrace.cpp \
+	sanitizer_symbolizer_libcdep.cpp \
+	sanitizer_symbolizer_posix_libcdep.cpp \
+	sanitizer_symbolizer_win.cpp \
+	sanitizer_termination.cpp \
+	sanitizer_thread_registry.cpp \
+	sanitizer_tls_get_addr.cpp \
+	sanitizer_unwind_linux_libcdep.cpp \
+	sanitizer_unwind_win.cpp \
+	sanitizer_win.cpp
 
 
 libsanitizer_common_la_SOURCES = $(sanitizer_common_files) 
-EXTRA_libsanitizer_common_la_SOURCES = sanitizer_linux_mips64.S sanitizer_linux_x86_64.S
 libsanitizer_common_la_LIBADD = $(SANITIZER_COMMON_TARGET_DEPENDENT_OBJECTS)
 libsanitizer_common_la_DEPENDENCIES =  $(SANITIZER_COMMON_TARGET_DEPENDENT_OBJECTS)
 
@@ -128,3 +127,4 @@ AM_MAKEFLAGS = \
 MAKEOVERRIDES=
 
 ## ################################################################
+

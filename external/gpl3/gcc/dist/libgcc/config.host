@@ -1,5 +1,5 @@
 # libgcc host-specific configuration file.
-# Copyright (C) 1997-2020 Free Software Foundation, Inc.
+# Copyright (C) 1997-2022 Free Software Foundation, Inc.
 
 #This file is part of GCC.
 
@@ -112,9 +112,6 @@ bpf-*-*)
         ;;
 cr16-*-*)
 	;;
-crisv32-*-*)
-	cpu_type=cris
-	;;
 csky*-*-*)
 	cpu_type=csky
 	;;
@@ -140,6 +137,22 @@ hppa*-*-*)
 	;;
 lm32*-*-*)
 	cpu_type=lm32
+	;;
+loongarch*-*-*)
+	cpu_type=loongarch
+	tmake_file="loongarch/t-loongarch"
+	if test "${libgcc_cv_loongarch_hard_float}" = yes; then
+		tmake_file="${tmake_file} t-hardfp-sfdf t-hardfp"
+	else
+		tmake_file="${tmake_file} t-softfp-sfdf"
+	fi
+	if test "${ac_cv_sizeof_long_double}" = 16; then
+		tmake_file="${tmake_file} loongarch/t-softfp-tf"
+	fi
+	if test "${host_address}" = 64; then
+		tmake_file="${tmake_file} loongarch/t-loongarch64"
+	fi
+	tmake_file="${tmake_file} t-softfp"
 	;;
 m32r*-*-*)
         cpu_type=m32r
@@ -228,24 +241,6 @@ case ${host} in
       ;;
   esac
   tmake_file="$tmake_file t-slibgcc-darwin"
-  # newer toolsets produce warnings when building for unsupported versions.
-  case ${host} in
-    *-*-darwin1[89]* | *-*-darwin2* )
-      tmake_file="t-darwin-min-8 $tmake_file"
-      ;;
-    *-*-darwin9* | *-*-darwin1[0-7]*)
-      tmake_file="t-darwin-min-5 $tmake_file"
-      ;;
-    *-*-darwin[4-8]*)
-      tmake_file="t-darwin-min-1 $tmake_file"
-      ;;
-    *)
-      # Fall back to configuring for the oldest system known to work with
-      # all archs and the current sources.
-      tmake_file="t-darwin-min-5 $tmake_file"
-      echo "Warning: libgcc configured to support macOS 10.5" 1>&2
-      ;;
-  esac
   extra_parts="crt3.o libd10-uwfef.a crttms.o crttme.o libemutls_w.a"
   ;;
 *-*-dragonfly*)
@@ -346,9 +341,6 @@ case ${host} in
   tmake_file="vms/t-vms"
   extra_parts="crt0.o crtbegin.o crtbeginS.o crtend.o crtendS.o"
   ;;
-*-*-vxworks7*)
-  tmake_file=t-vxworks7
-  ;;
 *-*-vxworksae*)
   tmake_file=t-vxworksae
   ;;
@@ -360,11 +352,8 @@ case ${host} in
   ;;
 esac
 
-# Except on ARM where we do not use DWARF, table based EH on VxWorks
-# relies on specially crafted crtstuff files
+# VxWorks ports rely on specially crafted crtstuff files
 case ${host} in
-arm-*-vxworks*)
-  ;;
 *-*-vxworks*)
   tmake_file="${tmake_file} t-vxcrtstuff"
   ;;
@@ -425,6 +414,7 @@ aarch64*-*-vxworks7*)
 	extra_parts="$extra_parts crtfastmath.o"
 	md_unwind_header=aarch64/aarch64-unwind.h
 	tmake_file="${tmake_file} ${cpu_type}/t-aarch64"
+	tmake_file="${tmake_file} ${cpu_type}/t-lse t-slibgcc-libgcc"
 	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp t-crtfm"
 	;;
 alpha*-*-linux*)
@@ -607,18 +597,12 @@ cr16-*-elf)
 	tmake_file="${tmake_file} cr16/t-cr16 cr16/t-crtlibid t-fdpbit"
 	extra_parts="$extra_parts crti.o crtn.o crtlibid.o"
         ;;
-crisv32-*-elf)
-	tmake_file="$tmake_file cris/t-cris t-softfp-sfdf t-softfp"
- 	;;
 cris-*-elf)
 	tmake_file="$tmake_file cris/t-cris t-softfp-sfdf t-softfp cris/t-elfmulti"
 	;;
-cris-*-linux* | crisv32-*-linux*)
-	tmake_file="$tmake_file cris/t-cris t-softfp-sfdf t-softfp cris/t-linux"
-	;;
 csky-*-elf*)
 	tmake_file="csky/t-csky t-fdpbit"
-	extra_parts="$extra_parts crti.o crtn.o"
+	extra_parts="crtbegin.o crtend.o crti.o crtn.o"
 	;;
 csky-*-linux*)
 	tmake_file="$tmake_file csky/t-csky t-slibgcc-libgcc t-fdpbit csky/t-linux-csky"
@@ -657,7 +641,8 @@ h8300-*-linux*)
 	tm_file="$tm_file h8300/h8300-lib.h"
 	;;
 hppa*64*-*-linux*)
-	tmake_file="$tmake_file pa/t-linux64"
+	tmake_file="$tmake_file pa/t-linux64 pa/t-dimode"
+	tmake_file="$tmake_file pa/t-softfp-sfdftf t-softfp"
 	extra_parts="crtbegin.o crtbeginS.o crtbeginT.o crtend.o crtendS.o"
 	;;
 hppa*-*-linux*)
@@ -683,7 +668,8 @@ hppa[12]*-*-hpux10*)
 	md_unwind_header=pa/hpux-unwind.h
 	;;
 hppa*64*-*-hpux11*)
-	tmake_file="$tmake_file pa/t-hpux pa/t-pa64 pa/t-stublib t-libgcc-pic t-slibgcc"
+	tmake_file="$tmake_file pa/t-hpux pa/t-pa64 pa/t-dimode"
+	tmake_file="$tmake_file pa/t-stublib t-libgcc-pic t-slibgcc"
 	# Set the libgcc version number
 	if test x$ac_cv_sjlj_exceptions = xyes; then
 	    tmake_file="$tmake_file pa/t-slibgcc-sjlj-ver"
@@ -691,6 +677,7 @@ hppa*64*-*-hpux11*)
 	    tmake_file="$tmake_file pa/t-slibgcc-dwarf-ver"
 	fi
 	tmake_file="$tmake_file pa/t-slibgcc-hpux t-slibgcc-hpux"
+	tmake_file="$tmake_file pa/t-softfp-sfdftf t-softfp"
 	tm_file="$tm_file pa/pa64-hpux-lib.h"
 	extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o crtbeginT.o \
 		     libgcc_stub.a"
@@ -705,7 +692,6 @@ hppa[12]*-*-hpux11*)
 	    tmake_file="$tmake_file pa/t-slibgcc-dwarf-ver"
 	fi
 	tmake_file="$tmake_file pa/t-slibgcc-hpux t-slibgcc-hpux"
-	extra_parts="libgcc_stub.a"
 	md_unwind_header=pa/hpux-unwind.h
 	;;
 hppa*-*-openbsd*)
@@ -813,7 +799,7 @@ i[34567]86-*-solaris2* | x86_64-*-solaris2*)
 	tm_file="${tm_file} i386/elf-lib.h"
 	md_unwind_header=i386/sol2-unwind.h
 	;;
-i[4567]86-wrs-vxworks|i[4567]86-wrs-vxworksae|i[4567]86-wrs-vxworks7|x86_64-wrs-vxworks7)
+i[4567]86-wrs-vxworks*|x86_64-wrs-vxworks*)
 	;;
 i[34567]86-*-cygwin*)
 	extra_parts="crtbegin.o crtbeginS.o crtend.o crtfastmath.o"
@@ -961,19 +947,23 @@ lm32-*-rtems*)
 lm32-*-uclinux*)
         extra_parts="$extra_parts crtbegin.o crtendS.o crtbeginT.o"
         tmake_file="lm32/t-lm32 lm32/t-uclinux t-libgcc-pic t-softfp-sfdf t-softfp"
-	;;	
+	;;
+loongarch*-*-linux*)
+	extra_parts="$extra_parts crtfastmath.o"
+	tmake_file="${tmake_file} t-crtfm loongarch/t-crtstuff"
+	case ${host} in
+	  *)
+	    tmake_file="${tmake_file} t-slibgcc-libgcc"
+	    ;;
+	esac
+	md_unwind_header=loongarch/linux-unwind.h
+	;;
 m32r-*-elf*)
 	tmake_file="$tmake_file m32r/t-m32r t-fdpbit"
 	extra_parts="$extra_parts crtinit.o crtfini.o"
  	;;
 m32rle-*-elf*)
 	tmake_file=t-fdpbit
-	;;
-m32r-*-linux*)
-	tmake_file="$tmake_file m32r/t-linux t-fdpbit"
- 	;;
-m32rle-*-linux*)
-	tmake_file="$tmake_file m32r/t-linux t-fdpbit"
 	;;
 m68k-*-elf* | fido-*-elf)
 	tmake_file="$tmake_file m68k/t-floatlib"
@@ -1175,7 +1165,7 @@ nios2-*-*)
 	extra_parts="$extra_parts crti.o crtn.o"
 	;;
 or1k-*-linux*)
-	tmake_file="$tmake_file or1k/t-or1k"
+	tmake_file="$tmake_file or1k/t-or1k or1k/t-crtstuff"
 	tmake_file="$tmake_file t-softfp-sfdf t-softfp"
 	md_unwind_header=or1k/linux-unwind.h
 	;;
@@ -1184,7 +1174,7 @@ or1k*-*-netbsd*)
 	tmake_file="$tmake_file t-softfp-sfdf t-softfp"
 	;;
 or1k-*-*)
-	tmake_file="$tmake_file or1k/t-or1k"
+	tmake_file="$tmake_file or1k/t-or1k or1k/t-crtstuff"
 	tmake_file="$tmake_file t-softfp-sfdf t-softfp"
 	;;
 pdp11-*-*)
@@ -1288,12 +1278,33 @@ powerpc*-*-linux*)
 		tmake_file="${tmake_file} rs6000/t-float128-hw"
 	fi
 
+	if test $libgcc_cv_powerpc_3_1_float128_hw = yes; then
+		tmake_file="${tmake_file} rs6000/t-float128-p10-hw"
+	fi
+
 	extra_parts="$extra_parts ecrti.o ecrtn.o ncrti.o ncrtn.o"
 	md_unwind_header=rs6000/linux-unwind.h
 	;;
+powerpc*-wrs-vxworks7*)
+        tmake_file="$tmake_file rs6000/t-vxworks rs6000/t-savresfgpr t-dfprules rs6000/t-ppc64-fp"
+        tmake_file="rs6000/t-crtstuff ${tmake_file}"
+        case $ppc_fp_type in
+        64)
+                ;;
+        hard)
+                tmake_file="${tmake_file} t-hardfp-sfdf"
+                ;;
+        soft)
+                tmake_file="${tmake_file} t-softfp-sfdf t-softfp"
+                ;;
+        *)
+                echo "Unknown ppc_fp_type $ppc_fp_type" 1>&2
+                exit 1
+                ;;
+        esac
+        ;;
 powerpc-wrs-vxworks*)
-	tmake_file="$tmake_file rs6000/t-ppccomm rs6000/t-savresfgpr t-fdpbit"
-	extra_parts="$extra_parts crtbegin.o crtend.o"
+	tmake_file="$tmake_file rs6000/t-vxworks rs6000/t-savresfgpr t-fdpbit"
 	;;
 powerpc-*-lynxos*)
 	tmake_file="$tmake_file rs6000/t-lynx t-fdpbit"
@@ -1346,7 +1357,7 @@ rs6000-ibm-aix5.1.* | powerpc-ibm-aix5.1.*)
 rs6000-ibm-aix[56789].* | powerpc-ibm-aix[56789].*)
 	md_unwind_header=rs6000/aix-unwind.h
 	tmake_file="t-fdpbit rs6000/t-ppc64-fp rs6000/t-slibgcc-aix rs6000/t-ibm-ldouble rs6000/t-aix-cxa"
-	extra_parts="crtcxa.o crtcxa_s.o crtdbase.o"
+	extra_parts="crtcxa.o crtcxa_s.o crtdbase.o crtcxa_64.o crtcxa_64_s.o crtdbase_64.o"
 	;;
 rl78-*-elf)
 	tmake_file="$tm_file t-fdpbit rl78/t-rl78"
@@ -1591,10 +1602,7 @@ i[34567]86-*-elfiamcu | i[34567]86-*-rtems*)
 	;;
 i[34567]86-*-* | x86_64-*-*)
   	tmake_file="${tmake_file} t-softfp-tf"
-	if test "${host_address}" = 32; then
-		tmake_file="${tmake_file} i386/${host_address}/t-softfp"
-	fi
-	tmake_file="${tmake_file} i386/t-softfp t-softfp"
+	tmake_file="${tmake_file} i386/${host_address}/t-softfp i386/t-softfp t-softfp"
 	;;
 esac
 

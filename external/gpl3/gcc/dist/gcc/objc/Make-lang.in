@@ -1,5 +1,5 @@
 # Top level -*- makefile -*- fragment for GNU Objective-C
-#   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+#   Copyright (C) 1997-2022 Free Software Foundation, Inc.
 
 #This file is part of GCC.
 
@@ -38,6 +38,7 @@
 #
 # Define the names for selecting Objective-C in LANGUAGES.
 objc: cc1obj$(exeext)
+objc.serial = cc1obj$(exeext)
 
 # Tell GNU make to ignore these if they exist.
 .PHONY: objc
@@ -56,16 +57,28 @@ OBJC_OBJS = objc/objc-lang.o objc/objc-act.o hash-table.o \
 
 objc_OBJS = $(OBJC_OBJS) cc1obj-checksum.o
 
-cc1obj-checksum.c : build/genchecksum$(build_exeext) checksum-options \
+# compute checksum over all object files and the options
+# re-use the checksum from the prev-final stage so it passes
+# the bootstrap comparison and allows comparing of the cc1 binary
+cc1obj-checksum.cc : build/genchecksum$(build_exeext) checksum-options \
         $(OBJC_OBJS) $(C_AND_OBJC_OBJS) $(BACKEND) $(LIBDEPS)
-	build/genchecksum$(build_exeext) $(OBJC_OBJS) $(C_AND_OBJC_OBJS) \
-        $(BACKEND) $(LIBDEPS) checksum-options > cc1obj-checksum.c.tmp && \
-	$(SHELL) $(srcdir)/../move-if-change cc1obj-checksum.c.tmp cc1obj-checksum.c
+	if [ -f ../stage_final ] \
+	   && cmp -s ../stage_current ../stage_final \
+	   && [ -f ../prev-gcc/$@ ]; then \
+	  cp ../prev-gcc/$@ $@; \
+	else \
+	  build/genchecksum$(build_exeext) $(OBJC_OBJS) $(C_AND_OBJC_OBJS) \
+		$(BACKEND) $(LIBDEPS) checksum-options > $@.tmp && \
+	  $(SHELL) $(srcdir)/../move-if-change $@.tmp $@; \
+	fi
 
-cc1obj$(exeext): $(OBJC_OBJS) $(C_AND_OBJC_OBJS) cc1obj-checksum.o $(BACKEND) $(LIBDEPS)
+cc1obj$(exeext): $(OBJC_OBJS) $(C_AND_OBJC_OBJS) cc1obj-checksum.o $(BACKEND) \
+		 $(LIBDEPS) $(objc.prev)
+	@$(call LINK_PROGRESS,$(INDEX.objc),start)
 	+$(LLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
 	      $(OBJC_OBJS) $(C_AND_OBJC_OBJS) cc1obj-checksum.o \
 	      $(BACKEND) $(LIBS) $(BACKENDLIBS)
+	@$(call LINK_PROGRESS,$(INDEX.objc),end)
 
 objc.srcextra:
 
@@ -78,6 +91,7 @@ objc.rest.encap:
 objc.info:
 objc.install-info:
 objc.dvi:
+objc.install-dvi:
 objc.pdf:
 objc.install-pdf:
 objc.html:
@@ -88,8 +102,8 @@ objc.srcman:
 objc.install-plugin:
 
 objc.tags: force
-	cd $(srcdir)/objc; etags -o TAGS.sub *.c *.h; \
-	etags --include TAGS.sub --include ../TAGS.sub
+	cd $(srcdir)/objc; $(ETAGS) -o TAGS.sub *.c *.h; \
+	$(ETAGS) --include TAGS.sub --include ../TAGS.sub
 
 lang_checks += check-objc
 

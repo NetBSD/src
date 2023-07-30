@@ -65,6 +65,9 @@ struct DDCallback {
 
   virtual u32 Unwind() { return 0; }
   virtual int UniqueTid() { return 0; }
+
+ protected:
+  ~DDCallback() {}
 };
 
 struct DDetector {
@@ -84,6 +87,9 @@ struct DDetector {
   virtual void MutexDestroy(DDCallback *cb, DDMutex *m) {}
 
   virtual DDReport *GetReport(DDCallback *cb) { return nullptr; }
+
+ protected:
+  ~DDetector() {}
 };
 
 } // namespace __sanitizer

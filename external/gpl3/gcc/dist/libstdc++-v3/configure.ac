@@ -93,7 +93,9 @@ AC_SYS_LARGEFILE
 GLIBCXX_CONFIGURE
 
 # Libtool setup.
-if test "x${with_newlib}" != "xyes"; then
+if test "x${with_newlib}" != "xyes" &&
+    test "x${with_avrlibc}" != "xyes" &&
+    test "x$with_headers" != "xno"; then
   AC_LIBTOOL_DLOPEN
 fi
 AM_PROG_LIBTOOL
@@ -156,7 +158,7 @@ GLIBCXX_ENABLE_THREADS
 GLIBCXX_ENABLE_ATOMIC_BUILTINS
 GLIBCXX_ENABLE_LOCK_POLICY
 GLIBCXX_ENABLE_DECIMAL_FLOAT
-GLIBCXX_ENABLE_INT128_FLOAT128
+GLIBCXX_ENABLE_FLOAT128
 if test "$enable_float128" = yes; then
   port_specific_symbol_files="$port_specific_symbol_files \$(top_srcdir)/config/abi/pre/float128.ver"
 fi
@@ -173,7 +175,7 @@ GLIBCXX_ENABLE_LONG_LONG([yes])
 GLIBCXX_ENABLE_WCHAR_T([yes])
 GLIBCXX_ENABLE_C99([yes])
 GLIBCXX_ENABLE_CONCEPT_CHECKS([no])
-GLIBCXX_ENABLE_DEBUG_FLAGS(["-gdwarf-4 -g3 -O0 -D_GLIBCXX_ASSERTIONS"])
+GLIBCXX_ENABLE_DEBUG_FLAGS(["-g3 -O0 -D_GLIBCXX_ASSERTIONS"])
 GLIBCXX_ENABLE_DEBUG([no])
 GLIBCXX_ENABLE_PARALLEL([yes])
 GLIBCXX_ENABLE_CXX_FLAGS
@@ -187,9 +189,6 @@ GLIBCXX_ENABLE_VTABLE_VERIFY([no])
 GLIBCXX_CHECK_STDIO_PROTO
 GLIBCXX_CHECK_MATH11_PROTO
 GLIBCXX_CHECK_UCHAR_H
-
-# For the streamoff typedef.
-GLIBCXX_CHECK_INT64_T
 
 # For LFS support.
 GLIBCXX_CHECK_LFS
@@ -258,6 +257,8 @@ AC_CHECK_HEADERS([linux/random.h], [], [],
 #endif
 ]])
 
+AC_CHECK_HEADERS([xlocale.h])
+
 # Only do link tests if native. Else, hardcode.
 if $GLIBCXX_IS_NATIVE; then
 
@@ -277,12 +278,16 @@ if $GLIBCXX_IS_NATIVE; then
   AC_CHECK_FUNCS(__cxa_thread_atexit_impl __cxa_thread_atexit)
   AC_CHECK_FUNCS(aligned_alloc posix_memalign memalign _aligned_malloc)
   AC_CHECK_FUNCS(_wfopen)
+  AC_CHECK_FUNCS(secure_getenv)
 
   # C11 functions for C++17 library
   AC_CHECK_FUNCS(timespec_get)
 
   # For Networking TS.
   AC_CHECK_FUNCS(sockatmark)
+
+  # Non-standard functions used by C++17 std::from_chars
+  AC_CHECK_FUNCS(uselocale)
 
   # For iconv support.
   AM_ICONV
@@ -351,7 +356,7 @@ else
 
     AC_DEFINE(HAVE_ICONV)
     AC_DEFINE(HAVE_MEMALIGN)
-  else
+  elif test "x$with_headers" != "xno"; then
     GLIBCXX_CROSSCONFIG
   fi
 
@@ -390,7 +395,11 @@ GCC_CHECK_UNWIND_GETIPINFO
 
 GCC_LINUX_FUTEX([AC_DEFINE(HAVE_LINUX_FUTEX, 1, [Define if futex syscall is available.])])
 
+if test "$is_hosted" = yes; then
+# TODO: remove this and change src/c++11/compatibility-atomic-c++0x.cc to
+# use <stdint.h> instead of <gstdint.h>.
 GCC_HEADER_STDINT(include/gstdint.h)
+fi
 
 GLIBCXX_ENABLE_SYMVERS([yes])
 AC_SUBST(libtool_VERSION)
@@ -401,7 +410,11 @@ GLIBCXX_ENABLE_LIBSTDCXX_DUAL_ABI([yes])
 GLIBCXX_DEFAULT_ABI
 
 ac_ldbl_compat=no
+ac_ldbl_alt128_compat=no
+ac_ldbl_ieee128_default=no
 LONG_DOUBLE_COMPAT_FLAGS="-mlong-double-64"
+LONG_DOUBLE_128_FLAGS=
+LONG_DOUBLE_ALT128_COMPAT_FLAGS=
 case "$target" in
   powerpc*-*-linux* | \
   sparc*-*-linux* | \
@@ -418,12 +431,43 @@ case "$target" in
     port_specific_symbol_files="\$(top_srcdir)/config/os/gnu-linux/ldbl-extra.ver"
     case "$target" in
       powerpc*-*-linux*)
-	LONG_DOUBLE_COMPAT_FLAGS="$LONG_DOUBLE_COMPAT_FLAGS -mno-gnu-attribute" ;;
+	LONG_DOUBLE_COMPAT_FLAGS="$LONG_DOUBLE_COMPAT_FLAGS -mno-gnu-attribute"
+        # Check for IEEE128 support in libm:
+        AC_CHECK_LIB(m, __frexpieee128,
+                     [ac_ldbl_ieee128_in_libc=yes],
+                     [ac_ldbl_ieee128_in_libc=no])
+        if test $ac_ldbl_ieee128_in_libc = yes; then
+          # Determine which long double format is the compiler's default:
+          AC_TRY_COMPILE(, [
+            #ifndef __LONG_DOUBLE_IEEE128__
+            #error compiler defaults to ibm128
+            #endif
+          ], [ac_ldbl_ieee128_default=yes], [ac_ldbl_ieee128_default=no])
+          # Library objects should use default long double format.
+          if test "$ac_ldbl_ieee128_default" = yes; then
+            LONG_DOUBLE_128_FLAGS="-mno-gnu-attribute"
+            # Except for the ones that explicitly use these flags:
+            LONG_DOUBLE_ALT128_COMPAT_FLAGS="-mabi=ibmlongdouble -mno-gnu-attribute -Wno-psabi"
+          else
+            LONG_DOUBLE_128_FLAGS="-mno-gnu-attribute"
+            LONG_DOUBLE_ALT128_COMPAT_FLAGS="-mabi=ieeelongdouble -mno-gnu-attribute -Wno-psabi"
+          fi
+          AC_DEFINE([_GLIBCXX_LONG_DOUBLE_ALT128_COMPAT],1,
+                [Define if compatibility should be provided for alternative 128-bit long double formats.])
+          port_specific_symbol_files="$port_specific_symbol_files \$(top_srcdir)/config/os/gnu-linux/ldbl-ieee128-extra.ver"
+          ac_ldbl_alt128_compat=yes
+        else
+          ac_ldbl_alt128_compat=no
+        fi
+	;;
     esac
   fi
 esac
 AC_SUBST(LONG_DOUBLE_COMPAT_FLAGS)
+AC_SUBST(LONG_DOUBLE_128_FLAGS)
+AC_SUBST(LONG_DOUBLE_ALT128_COMPAT_FLAGS)
 GLIBCXX_CONDITIONAL(GLIBCXX_LDBL_COMPAT, test $ac_ldbl_compat = yes)
+GLIBCXX_CONDITIONAL(GLIBCXX_LDBL_ALT128_COMPAT, test $ac_ldbl_alt128_compat = yes)
 
 # Check if assembler supports disabling hardware capability support.
 GCC_CHECK_ASSEMBLER_HWCAP
@@ -432,6 +476,10 @@ GCC_CHECK_ASSEMBLER_HWCAP
 GLIBCXX_CHECK_X86_RDRAND
 # Check if assembler supports rdseed opcode.
 GLIBCXX_CHECK_X86_RDSEED
+
+# Check for other random number APIs
+GLIBCXX_CHECK_GETENTROPY
+GLIBCXX_CHECK_ARC4RANDOM
 
 # This depends on GLIBCXX_ENABLE_SYMVERS and GLIBCXX_IS_NATIVE.
 GLIBCXX_CONFIGURE_TESTSUITE
@@ -444,8 +492,15 @@ AC_CHECK_HEADERS([fcntl.h dirent.h sys/statvfs.h utime.h])
 GLIBCXX_ENABLE_FILESYSTEM_TS
 GLIBCXX_CHECK_FILESYSTEM_DEPS
 
+GLIBCXX_ENABLE_BACKTRACE
+
 # For Networking TS.
 AC_CHECK_HEADERS([fcntl.h sys/ioctl.h sys/socket.h sys/uio.h poll.h netdb.h arpa/inet.h netinet/in.h netinet/tcp.h])
+AC_CHECK_DECL(F_GETFL,,,[#include <fcntl.h>])
+AC_CHECK_DECL(F_SETFL,,,[#include <fcntl.h>])
+if test "$ac_cv_have_decl_F_GETFL$ac_cv_have_decl_F_SETFL" = yesyes ; then
+  AC_CHECK_DECL(O_NONBLOCK,,,[#include <fcntl.h>])
+fi
 
 # For Transactional Memory TS
 GLIBCXX_CHECK_SIZE_T_MANGLING
@@ -530,6 +585,17 @@ AC_SUBST(ERROR_CONSTANTS_SRCDIR)
 AC_SUBST(CPU_OPT_EXT_RANDOM)
 AC_SUBST(CPU_OPT_BITS_RANDOM)
 
+# Conditionalize the makefile for this target machine.
+tmake_file_=
+for f in ${tmake_file}
+do
+	if test -f ${srcdir}/config/$f
+	then
+		tmake_file_="${tmake_file_} \$(srcdir)/config/$f"
+	fi
+done
+tmake_file="${tmake_file_}"
+AC_SUBST(tmake_file)
 
 # Add CET specific flags if Intel CET is enabled.
 GCC_CET_FLAGS(CET_FLAGS)
@@ -568,6 +634,7 @@ AC_CONFIG_FILES(Makefile)
 AC_CONFIG_FILES([scripts/testsuite_flags],[chmod +x scripts/testsuite_flags])
 AC_CONFIG_FILES([scripts/extract_symvers],[chmod +x scripts/extract_symvers])
 AC_CONFIG_FILES([doc/xsl/customization.xsl])
+AC_CONFIG_FILES([src/libbacktrace/backtrace-supported.h])
 
 # Multilibs need MULTISUBDIR defined correctly in certain makefiles so
 # that multilib installs will end up installed in the correct place.

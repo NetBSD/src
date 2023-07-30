@@ -87,9 +87,11 @@ fi
 # Get target configury.
 unset TSAN_SUPPORTED
 unset LSAN_SUPPORTED
+unset HWASAN_SUPPORTED
 . ${srcdir}/configure.tgt
 AM_CONDITIONAL(TSAN_SUPPORTED, [test "x$TSAN_SUPPORTED" = "xyes"])
 AM_CONDITIONAL(LSAN_SUPPORTED, [test "x$LSAN_SUPPORTED" = "xyes"])
+AM_CONDITIONAL(HWASAN_SUPPORTED, [test "x$HWASAN_SUPPORTED" = "xyes"])
 
 # Check for functions needed.
 AC_CHECK_FUNCS(clock_getres clock_gettime clock_settime lstat readlink)
@@ -110,6 +112,10 @@ AC_CHECK_LIB(dl, dlsym,
 # Set up the set of additional libraries that we need to link against for libasan.
 link_libasan=$link_sanitizer_common
 AC_SUBST(link_libasan)
+
+# Set up the set of additional libraries that we need to link against for libhwasan.
+link_libhwasan=$link_sanitizer_common
+AC_SUBST(link_libhwasan)
 
 # Set up the set of additional libraries that we need to link against for libtsan.
 link_libtsan=$link_sanitizer_common
@@ -146,7 +152,8 @@ case "$target" in
   *-*-linux*)
     # Some old Linux distributions miss required syscalls.
     sanitizer_supported=no
-    AC_TRY_COMPILE([#include <sys/syscall.h>],[
+    AC_TRY_COMPILE([#include <sys/syscall.h>
+#include <unistd.h>],[
       syscall (__NR_gettid);
       syscall (__NR_futex);
       syscall (__NR_exit_group);
@@ -373,8 +380,33 @@ _EOF
 ])
 fi
 
+if test "x$HWASAN_SUPPORTED" = "xyes"; then
+  AC_CONFIG_FILES(AC_FOREACH([DIR], [hwasan], [DIR/Makefile ]), 
+    [cat > vpsed$$ << \_EOF
+s!`test -f '$<' || echo '$(srcdir)/'`!!
+_EOF
+    sed -f vpsed$$ $ac_file > tmp$$
+    mv tmp$$ $ac_file
+    rm vpsed$$
+    echo 'MULTISUBDIR =' >> $ac_file
+    ml_norecursion=yes
+    . ${multi_basedir}/config-ml.in
+    AS_UNSET([ml_norecursion])
+])
+fi
+
 AC_SUBST([TSAN_TARGET_DEPENDENT_OBJECTS])
 AC_SUBST([SANITIZER_COMMON_TARGET_DEPENDENT_OBJECTS])
+
+AC_ARG_ENABLE([werror],
+  [AS_HELP_STRING([--disable-werror], [disable building with -Werror])])
+
+ACX_PROG_CC_WARNING_OPTS([-Wextra -Wall -Wwrite-strings \
+                          -Wmissing-format-attribute -Wcast-qual],
+                          [WARN_FLAGS])
+AS_IF([test "x$enable_werror" != "xno"],
+  [WARN_FLAGS="$WARN_FLAGS -Werror"])
+AC_SUBST([WARN_FLAGS])
 
 # Determine what GCC version number to use in filesystem paths.
 GCC_BASE_VER
