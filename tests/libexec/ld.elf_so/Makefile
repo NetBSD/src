@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2023/06/03 21:31:47 lukem Exp $
+# $NetBSD: Makefile,v 1.21 2023/07/30 09:22:02 riastradh Exp $
 #
 
 NOMAN=		# defined
@@ -30,6 +30,12 @@ TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
 TESTS_C+=	t_dlerror-cleared t_dlerror-false t_dlinfo t_dlvsym t_ifunc
 TESTS_C+=	t_rtld_r_debug
 TESTS_C+=	t_tls_extern
+TESTS_C+=	t_hash
+
+.PATH:	${NETBSDSRCDIR}/libexec/ld.elf_so
+SRCS.t_hash+=	t_hash.c
+SRCS.t_hash+=	hash.c
+CPPFLAGS.t_hash.c+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so
 
 COPTS.t_rtld_r_debug.c += ${CC_WNO_MAYBE_UNINITIALIZED}
 
