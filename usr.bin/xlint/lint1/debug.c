@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.56 2023/07/28 21:50:03 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.57 2023/07/30 08:58:54 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.56 2023/07/28 21:50:03 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.57 2023/07/30 08:58:54 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -87,6 +87,7 @@ void
 debug_indent_dec(void)
 {
 
+	lint_assert(debug_indentation > 0);
 	debug_indentation--;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.72 2023/07/29 10:22:50 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.73 2023/07/30 08:58:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.72 2023/07/29 10:22:50 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.73 2023/07/30 08:58:54 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -181,34 +181,50 @@ mpool_add(memory_pool *pool, struct memory_pool_item item)
 	pool->items[pool->len++] = item;
 }
 
+#ifdef DEBUG_MEM
+static void
+debug_memory_pool_item(const struct memory_pool_item *item)
+{
+	void *p = item->p;
+	size_t size = item->size;
+	const char *descr = item->descr;
+
+	if (strcmp(descr, "string") == 0) {
+		const char *str = p;
+		debug_step("%s: freeing string '%s'", __func__, str);
+	} else if (strcmp(descr, "sym") == 0) {
+		const sym_t *sym = p;
+		debug_step("%s: freeing symbol '%s'", __func__, sym->s_name);
+	} else if (strcmp(descr, "type") == 0) {
+		const type_t *tp = p;
+		debug_step("%s: freeing type '%s'", __func__, type_name(tp));
+	} else if (strcmp(descr, "tnode") == 0) {
+		const tnode_t *tn = p;
+		debug_step("%s: freeing node '%s' with type '%s'",
+		    __func__, op_name(tn->tn_op), type_name(tn->tn_type));
+	} else
+		debug_step("%s: freeing '%s' with %zu bytes",
+		    __func__, descr, size);
+}
+#endif
+
 static void
 mpool_free(memory_pool *pool)
 {
 
-	for (; pool->len > 0; pool->len--) {
-		struct memory_pool_item *item = pool->items + pool->len - 1;
-		void *p = item->p;
 #ifdef DEBUG_MEM
-		if (strcmp(item->descr, "string") == 0)
-			debug_step("%s: freeing string '%s'",
-			    __func__, (const char *)p);
-		else if (strcmp(item->descr, "sym") == 0)
-			debug_step("%s: freeing symbol '%s'",
-			    __func__, ((const sym_t *)p)->s_name);
-		else if (strcmp(item->descr, "type") == 0)
-			debug_step("%s: freeing type '%s'",
-			    __func__, type_name(p));
-		else if (strcmp(item->descr, "tnode") == 0)
-			debug_step("%s: freeing node '%s'",
-			    __func__, op_name(((const tnode_t *)p)->tn_op));
-		else
-			debug_step("%s: freeing '%s' with %zu bytes",
-			    __func__, item->descr, item->size);
-		static void *(*volatile memset_ptr)(void *, int, size_t) = memset;
-		memset_ptr(p, 'Z', item->size);
+	for (size_t i = pool->len; i-- > 0; )
+		debug_memory_pool_item(pool->items + i);
 #endif
-		free(p);
+
+	for (size_t i = pool->len; i-- > 0;) {
+#ifdef DEBUG_MEM
+		static void *(*volatile set)(void *, int, size_t) = memset;
+		set(pool->items[i].p, 'Z', pool->items[i].size);
+#endif
+		free(pool->items[i].p);
 	}
+	pool->len = 0;
 }
 
 static void *
@@ -284,8 +300,10 @@ void
 level_free_all(size_t level)
 {
 
-	debug_step("%s %zu", __func__, level);
+	debug_step("+ %s %zu", __func__, level);
+	debug_indent_inc();
 	mpool_free(mpool_at(level));
+	debug_leave();
 }
 
 /* Allocate memory that is freed at the end of the current expression. */
