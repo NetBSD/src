@@ -1,4 +1,4 @@
-# $NetBSD: services,v 1.104 2022/11/28 02:48:33 jschauma Exp $
+# $NetBSD: services,v 1.105 2023/07/30 09:09:38 tron Exp $
 # See also: services(5), https://www.iana.org/assignments/service-names-port-numbers/
 #
 #                                              Service Name and Transport Protocol Port Number Registry
@@ -4659,8 +4659,8 @@ dls                2047/tcp
 dls                2047/udp
 dls-monitor        2048/tcp
 dls-monitor        2048/udp
-shilp              2049/tcp                                                                                                                                                                                                                                                # <== NOTE Conflict on 2049 !
-shilp              2049/udp                                                                                                                                                                                                                                                # <== NOTE Conflict on 2049 !
+#shilp              2049/tcp                                                                                                                                                                                                                                                # <== NOTE Conflict on 2049 !
+#shilp              2049/udp                                                                                                                                                                                                                                                # <== NOTE Conflict on 2049 !
 nfs                2049/tcp    # Network File System - Sun    [Brent_Callaghan]                                     [Brent_Callaghan]                                                                                                                                        Defined TXT keys: path=<path to mount point>
 #                                     Microsystems
 nfs                2049/udp    # Network File System - Sun    [Brent_Callaghan]                                     [Brent_Callaghan]                                                                                                                                        Defined TXT keys: path=<path to mount point>
