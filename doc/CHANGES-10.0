@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.91 2023/07/29 11:42:32 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.92 2023/07/30 12:15:04 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -3193,4 +3193,50 @@ usr.sbin/tprof/arch/tprof_x86.c			1.18,1.19
 
 	tprof(8): add support for Skylake-X and Cascade Lake.
 	[msaitoh, ticket #255]
+
+sys/arch/mips/cavium/dev/octeon_rnm.c		1.16
+
+	octrnm(4): PR 57280: raise delay on startup.
+	[gutteridge, ticket #256]
+
+sys/dev/wscons/wsemul_vt100.c			1.50,1.51
+sys/dev/wscons/wsemul_vt100_subr.c		1.25-1.31
+
+	wscons(4): various fixes in VT100 emulation.
+	[uwe, ticket #257]
+
+lib/csu/arch/vax/crtbegin.S			1.8,1.9
+
+	vax/csu: fix register preservation.
+	[rin, ticket #258]
+
+sys/arch/amd64/conf/ALL				1.179
+sys/arch/i386/conf/ALL				1.511
+sys/dev/acpi/acpi_ec.c				1.87-1.108
+sys/dev/acpi/files.acpi				1.128
+
+	acpiec(4): Fix hangs at boot and in envstat with acpibat(4) and
+	other drivers. 
+	[riastradh, ticket #259]
+
+sys/kern/subr_autoconf.c			1.314
+
+	autoconf(9): print `waiting for devices' normally once a minute.
+	[riastradh, ticket #260]
+
+share/mk/bsd.x11.mk				1.147
+
+	Properly prefix ${X11INCDIR} uses with ${DESTDIR}.
+	[mrg, ticket #261]
+
+sys/kern/kern_descrip.c				1.252-1.254
+
+	Fix membars in file descriptor table logic.
+	[riastradh, ticket #262]
+
+share/man/man9/pcq.9				1.9
+sys/kern/subr_pcq.c				1.14-1.19
+
+	pcq(9): fix and document memory ordering semantics.
+	[riastradh, ticket #263]
 
