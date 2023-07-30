@@ -1,5 +1,5 @@
 /* Target operations for the remote server for GDB.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -30,6 +30,7 @@
 #include "gdbsupport/array-view.h"
 #include "gdbsupport/btrace-common.h"
 #include <vector>
+#include "gdbsupport/byte-vector.h"
 
 struct emit_ops;
 struct buffer;
@@ -128,7 +129,7 @@ public:
      no child stop to report, return is
      null_ptid/TARGET_WAITKIND_IGNORE.  */
   virtual ptid_t wait (ptid_t ptid, target_waitstatus *status,
-		       int options) = 0;
+		       target_wait_flags options) = 0;
 
   /* Fetch registers from the inferior process.
 
@@ -139,21 +140,6 @@ public:
 
      If REGNO is -1, store all registers; otherwise, store at least REGNO.  */
   virtual void store_registers (regcache *regcache, int regno) = 0;
-
-  /* Prepare to read or write memory from the inferior process.
-     Targets use this to do what is necessary to get the state of the
-     inferior such that it is possible to access memory.
-
-     This should generally only be called from client facing routines,
-     such as gdb_read_memory/gdb_write_memory, or the GDB breakpoint
-     insertion routine.
-
-     Like `read_memory' and `write_memory' below, returns 0 on success
-     and errno on failure.  */
-  virtual int prepare_to_access_memory ();
-
-  /* Undo the effects of prepare_to_access_memory.  */
-  virtual void done_accessing_memory ();
 
   /* Read memory from the inferior process.  This should generally be
      called through read_inferior_memory, which handles breakpoint shadowing.
@@ -254,10 +240,6 @@ public:
      support the operation.  */
   virtual int get_tls_address (thread_info *thread, CORE_ADDR offset,
 			       CORE_ADDR load_module, CORE_ADDR *address);
-
-  /* Fill BUF with an hostio error packet representing the last hostio
-     error.  */
-  virtual void hostio_last_error (char *buf);
 
   /* Return true if the qxfer_osdata target op is supported.  */
   virtual bool supports_qxfer_osdata ();
@@ -406,9 +388,12 @@ public:
   /* Return true if target supports debugging agent.  */
   virtual bool supports_agent ();
 
-  /* Enable branch tracing for PTID based on CONF and allocate a branch trace
+  /* Return true if target supports btrace.  */
+  virtual bool supports_btrace ();
+
+  /* Enable branch tracing for TP based on CONF and allocate a branch trace
      target information struct for reading and for disabling branch trace.  */
-  virtual btrace_target_info *enable_btrace (ptid_t ptid,
+  virtual btrace_target_info *enable_btrace (thread_info *tp,
 					     const btrace_config *conf);
 
   /* Disable branch tracing.
@@ -439,7 +424,7 @@ public:
      character string containing the pathname is returned.  This
      string should be copied into a buffer by the client if the string
      will not be immediately used, or if it must persist.  */
-  virtual char *pid_to_exec_file (int pid);
+  virtual const char *pid_to_exec_file (int pid);
 
   /* Return true if any of the multifs ops is supported.  */
   virtual bool supports_multifs ();
@@ -491,6 +476,14 @@ public:
   virtual bool thread_handle (ptid_t ptid, gdb_byte **handle,
 			      int *handle_len);
 
+  /* If THREAD is a fork child that was not reported to GDB, return its parent
+     else nullptr.  */
+  virtual thread_info *thread_pending_parent (thread_info *thread);
+
+  /* If THREAD is the parent of a fork child that was not reported to GDB,
+     return this child, else nullptr.  */
+  virtual thread_info *thread_pending_child (thread_info *thread);
+
   /* Returns true if the target can software single step.  */
   virtual bool supports_software_single_step ();
 
@@ -499,6 +492,23 @@ public:
 
   /* Return tdesc index for IPA.  */
   virtual int get_ipa_tdesc_idx ();
+
+  /* Returns true if the target supports memory tagging facilities.  */
+  virtual bool supports_memory_tagging ();
+
+  /* Return the allocated memory tags of type TYPE associated with
+     [ADDRESS, ADDRESS + LEN) in TAGS.
+
+     Returns true if successful and false otherwise.  */
+  virtual bool fetch_memtags (CORE_ADDR address, size_t len,
+			      gdb::byte_vector &tags, int type);
+
+  /* Write the allocation tags of type TYPE contained in TAGS to the
+     memory range [ADDRESS, ADDRESS + LEN).
+
+     Returns true if successful and false otherwise.  */
+  virtual bool store_memtags (CORE_ADDR address, size_t len,
+			      const gdb::byte_vector &tags, int type);
 };
 
 extern process_stratum_target *the_target;
@@ -524,6 +534,9 @@ int kill_inferior (process_info *proc);
 
 #define target_supports_exec_events() \
   the_target->supports_exec_events ()
+
+#define target_supports_memory_tagging() \
+  the_target->supports_memory_tagging ()
 
 #define target_handle_new_gdb_connection()		 \
   the_target->handle_new_gdb_connection ()
@@ -610,9 +623,9 @@ int kill_inferior (process_info *proc);
   the_target->supports_agent ()
 
 static inline struct btrace_target_info *
-target_enable_btrace (ptid_t ptid, const struct btrace_config *conf)
+target_enable_btrace (thread_info *tp, const struct btrace_config *conf)
 {
-  return the_target->enable_btrace (ptid, conf);
+  return the_target->enable_btrace (tp, conf);
 }
 
 static inline int
@@ -663,14 +676,8 @@ target_read_btrace_conf (struct btrace_target_info *tinfo,
 #define target_supports_software_single_step() \
   the_target->supports_software_single_step ()
 
-ptid_t mywait (ptid_t ptid, struct target_waitstatus *ourstatus, int options,
-	       int connected_wait);
-
-/* Prepare to read or write memory from the inferior process.  See the
-   corresponding process_stratum_target methods for more details.  */
-
-int prepare_to_access_memory (void);
-void done_accessing_memory (void);
+ptid_t mywait (ptid_t ptid, struct target_waitstatus *ourstatus,
+	       target_wait_flags options, int connected_wait);
 
 #define target_core_of_thread(ptid)		\
   the_target->core_of_thread (ptid)
@@ -681,10 +688,35 @@ void done_accessing_memory (void);
 #define target_thread_handle(ptid, handle, handle_len) \
   the_target->thread_handle (ptid, handle, handle_len)
 
+static inline thread_info *
+target_thread_pending_parent (thread_info *thread)
+{
+  return the_target->thread_pending_parent (thread);
+}
+
+static inline thread_info *
+target_thread_pending_child (thread_info *thread)
+{
+  return the_target->thread_pending_child (thread);
+}
+
 int read_inferior_memory (CORE_ADDR memaddr, unsigned char *myaddr, int len);
 
-int set_desired_thread ();
+/* Set GDBserver's current thread to the thread the client requested
+   via Hg.  Also switches the current process to the requested
+   process.  If the requested thread is not found in the thread list,
+   then the current thread is set to NULL.  Likewise, if the requested
+   process is not found in the process list, then the current process
+   is set to NULL.  Returns true if the requested thread was found,
+   false otherwise.  */
 
-const char *target_pid_to_str (ptid_t);
+bool set_desired_thread ();
+
+/* Set GDBserver's current process to the process the client requested
+   via Hg.  The current thread is set to NULL.  */
+
+bool set_desired_process ();
+
+std::string target_pid_to_str (ptid_t);
 
 #endif /* GDBSERVER_TARGET_H */

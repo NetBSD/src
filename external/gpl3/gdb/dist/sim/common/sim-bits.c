@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -22,6 +22,9 @@
 
 #ifndef _SIM_BITS_C_
 #define _SIM_BITS_C_
+
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-basics.h"
 #include "sim-assert.h"

@@ -1,6 +1,6 @@
 /* Target-dependent code for the Matsushita MN10300 for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -248,7 +248,7 @@ am33_supply_fpregset_method (const struct regset *regset,
 
       for (i = 0; i < MN10300_ELF_NFPREG; i++)
 	am33_supply_fpregset_method (regset, regcache,
-	                             E_FS0_REGNUM + i, fpregs, len);
+				     E_FS0_REGNUM + i, fpregs, len);
       am33_supply_fpregset_method (regset, regcache, 
 				   E_FPCR_REGNUM, fpregs, len);
     }
@@ -425,14 +425,14 @@ am33_collect_fpregset_method (const struct regset *regset,
       int i;
       for (i = 0; i < MN10300_ELF_NFPREG; i++)
 	am33_collect_fpregset_method (regset, regcache, E_FS0_REGNUM + i,
-	                              fpregs, len);
+				      fpregs, len);
       am33_collect_fpregset_method (regset, regcache, 
 				    E_FPCR_REGNUM, fpregs, len);
     }
   else if (regnum == E_FPCR_REGNUM)
     regcache->raw_collect (E_FPCR_REGNUM, &fpregset->fpcr);
   else if (E_FS0_REGNUM <= regnum
-           && regnum < E_FS0_REGNUM + MN10300_ELF_NFPREG)
+	   && regnum < E_FS0_REGNUM + MN10300_ELF_NFPREG)
     regcache->raw_collect (regnum, &fpregset->fpregs[regnum - E_FS0_REGNUM]);
 
   return;
@@ -464,9 +464,9 @@ am33_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static void
 am33_linux_sigframe_cache_init (const struct tramp_frame *self,
-                                struct frame_info *this_frame,
-			        struct trad_frame_cache *this_cache,
-			        CORE_ADDR func);
+				frame_info_ptr this_frame,
+				struct trad_frame_cache *this_cache,
+				CORE_ADDR func);
 
 static const struct tramp_frame am33_linux_sigframe = {
   SIGTRAMP_FRAME,
@@ -607,9 +607,9 @@ struct sigcontext {
 
 static void
 am33_linux_sigframe_cache_init (const struct tramp_frame *self,
-                                struct frame_info *this_frame,
-			        struct trad_frame_cache *this_cache,
-			        CORE_ADDR func)
+				frame_info_ptr this_frame,
+				struct trad_frame_cache *this_cache,
+				CORE_ADDR func)
 {
   CORE_ADDR sc_base, fpubase;
   int i;
@@ -628,69 +628,69 @@ am33_linux_sigframe_cache_init (const struct tramp_frame *self,
     }
 
   trad_frame_set_reg_addr (this_cache, E_D0_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_D0);
+			   sc_base + AM33_SIGCONTEXT_D0);
   trad_frame_set_reg_addr (this_cache, E_D1_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_D1);
+			   sc_base + AM33_SIGCONTEXT_D1);
   trad_frame_set_reg_addr (this_cache, E_D2_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_D2);
+			   sc_base + AM33_SIGCONTEXT_D2);
   trad_frame_set_reg_addr (this_cache, E_D3_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_D3);
+			   sc_base + AM33_SIGCONTEXT_D3);
 
   trad_frame_set_reg_addr (this_cache, E_A0_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_A0);
+			   sc_base + AM33_SIGCONTEXT_A0);
   trad_frame_set_reg_addr (this_cache, E_A1_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_A1);
+			   sc_base + AM33_SIGCONTEXT_A1);
   trad_frame_set_reg_addr (this_cache, E_A2_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_A2);
+			   sc_base + AM33_SIGCONTEXT_A2);
   trad_frame_set_reg_addr (this_cache, E_A3_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_A3);
+			   sc_base + AM33_SIGCONTEXT_A3);
 
   trad_frame_set_reg_addr (this_cache, E_E0_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_E0);
+			   sc_base + AM33_SIGCONTEXT_E0);
   trad_frame_set_reg_addr (this_cache, E_E1_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_E1);
+			   sc_base + AM33_SIGCONTEXT_E1);
   trad_frame_set_reg_addr (this_cache, E_E2_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_E2);
+			   sc_base + AM33_SIGCONTEXT_E2);
   trad_frame_set_reg_addr (this_cache, E_E3_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_E3);
+			   sc_base + AM33_SIGCONTEXT_E3);
   trad_frame_set_reg_addr (this_cache, E_E4_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_E4);
+			   sc_base + AM33_SIGCONTEXT_E4);
   trad_frame_set_reg_addr (this_cache, E_E5_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_E5);
+			   sc_base + AM33_SIGCONTEXT_E5);
   trad_frame_set_reg_addr (this_cache, E_E6_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_E6);
+			   sc_base + AM33_SIGCONTEXT_E6);
   trad_frame_set_reg_addr (this_cache, E_E7_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_E7);
+			   sc_base + AM33_SIGCONTEXT_E7);
 
   trad_frame_set_reg_addr (this_cache, E_LAR_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_LAR);
+			   sc_base + AM33_SIGCONTEXT_LAR);
   trad_frame_set_reg_addr (this_cache, E_LIR_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_LIR);
+			   sc_base + AM33_SIGCONTEXT_LIR);
   trad_frame_set_reg_addr (this_cache, E_MDR_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_MDR);
+			   sc_base + AM33_SIGCONTEXT_MDR);
   trad_frame_set_reg_addr (this_cache, E_MCVF_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_MCVF);
+			   sc_base + AM33_SIGCONTEXT_MCVF);
   trad_frame_set_reg_addr (this_cache, E_MCRL_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_MCRL);
+			   sc_base + AM33_SIGCONTEXT_MCRL);
   trad_frame_set_reg_addr (this_cache, E_MDRQ_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_MDRQ);
+			   sc_base + AM33_SIGCONTEXT_MDRQ);
 
   trad_frame_set_reg_addr (this_cache, E_SP_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_SP);
+			   sc_base + AM33_SIGCONTEXT_SP);
   trad_frame_set_reg_addr (this_cache, E_PSW_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_EPSW);
+			   sc_base + AM33_SIGCONTEXT_EPSW);
   trad_frame_set_reg_addr (this_cache, E_PC_REGNUM,
-                           sc_base + AM33_SIGCONTEXT_PC);
+			   sc_base + AM33_SIGCONTEXT_PC);
 
   fpubase = get_frame_memory_unsigned (this_frame,
-                                       sc_base + AM33_SIGCONTEXT_FPUCONTEXT,
+				       sc_base + AM33_SIGCONTEXT_FPUCONTEXT,
 				       4);
   if (fpubase)
     {
       for (i = 0; i < 32; i++)
 	{
 	  trad_frame_set_reg_addr (this_cache, E_FS0_REGNUM + i,
-	                           fpubase + 4 * i);
+				   fpubase + 4 * i);
 	}
       trad_frame_set_reg_addr (this_cache, E_FPCR_REGNUM, fpubase + 4 * 32);
     }
@@ -704,12 +704,12 @@ am33_linux_sigframe_cache_init (const struct tramp_frame *self,
 static void
 am33_linux_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 0);
 
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, am33_iterate_over_regset_sections);
   set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+    (gdbarch, linux_ilp32_fetch_link_map_offsets);
 
   tramp_frame_prepend_unwinder (gdbarch, &am33_linux_sigframe);
   tramp_frame_prepend_unwinder (gdbarch, &am33_linux_rt_sigframe);

@@ -1,6 +1,6 @@
 /* Internal interfaces for the NetBSD code.
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -115,7 +115,7 @@ thread_alive (ptid_t ptid)
   auto fn
     = [=] (const struct kinfo_lwp *kl)
       {
-        return kl->l_lid == lwp;
+	return kl->l_lid == lwp;
       };
 
   return netbsd_thread_lister (pid, fn);
@@ -208,6 +208,86 @@ qxfer_siginfo (pid_t pid, const char *annex, unsigned char *readbuf,
 	return -1;
     }
   return len;
+}
+
+/* See netbsd-nat.h.  */
+
+int
+write_memory (pid_t pid, unsigned const char *writebuf, CORE_ADDR offset,
+	      size_t len, size_t *xfered_len)
+{
+  struct ptrace_io_desc io;
+  io.piod_op = PIOD_WRITE_D;
+  io.piod_len = len;
+
+  size_t bytes_written = 0;
+
+  /* Zero length write always succeeds.  */
+  if (len > 0)
+    {
+      do
+	{
+	  io.piod_addr = (void *)(writebuf + bytes_written);
+	  io.piod_offs = (void *)(offset + bytes_written);
+
+	  errno = 0;
+	  int rv = ptrace (PT_IO, pid, &io, 0);
+	  if (rv == -1)
+	    {
+	      gdb_assert (errno != 0);
+	      return errno;
+	    }
+	  if (io.piod_len == 0)
+	    break;
+
+	  bytes_written += io.piod_len;
+	  io.piod_len = len - bytes_written;
+	}
+      while (bytes_written < len);
+    }
+
+  if (xfered_len != nullptr)
+    *xfered_len = bytes_written;
+
+  return 0;
+}
+
+/* See netbsd-nat.h.  */
+
+int
+read_memory (pid_t pid, unsigned char *readbuf, CORE_ADDR offset,
+	      size_t len, size_t *xfered_len)
+{
+  struct ptrace_io_desc io;
+  io.piod_op = PIOD_READ_D;
+  io.piod_len = len;
+
+  size_t bytes_read = 0;
+
+  /* Zero length read always succeeds.  */
+  if (len > 0)
+    {
+      do
+	{
+	  io.piod_offs = (void *)(offset + bytes_read);
+	  io.piod_addr = readbuf + bytes_read;
+
+	  int rv = ptrace (PT_IO, pid, &io, 0);
+	  if (rv == -1)
+	    return errno;
+	  if (io.piod_len == 0)
+	    break;
+
+	  bytes_read += io.piod_len;
+	  io.piod_len = len - bytes_read;
+	}
+      while (bytes_read < len);
+    }
+
+  if (xfered_len != nullptr)
+    *xfered_len = bytes_read;
+
+  return 0;
 }
 
 }

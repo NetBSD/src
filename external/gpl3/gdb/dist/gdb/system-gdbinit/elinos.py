@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import gdb
 
 
 def warn(msg):
-    print "warning: %s" % msg
+    print("warning: %s" % msg)
 
 
 def get_elinos_environment():
@@ -79,9 +79,8 @@ def elinos_init():
     if elinos_env["project"] is None:
         warn("Xenomai libraries may not be loaded")
     else:
-        for dir in elinos_env['xenomai']:
-            solib_dirs += ["%s/%s"
-                           % (dir, "xenomai-build/usr/realtime/lib")]
+        for dir in elinos_env["xenomai"]:
+            solib_dirs += ["%s/%s" % (dir, "xenomai-build/usr/realtime/lib")]
 
     if len(solib_dirs) != 0:
         gdb.execute("set solib-search-path %s" % ":".join(solib_dirs))

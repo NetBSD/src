@@ -1,6 +1,6 @@
 /*  Run function for the micromips simulator
 
-    Copyright (C) 2005-2020 Free Software Foundation, Inc.
+    Copyright (C) 2005-2023 Free Software Foundation, Inc.
     Contributed by Imagination Technologies, Ltd.
     Written by Andrew Bennett <andrew.bennett@imgtec.com>.
 
@@ -18,6 +18,9 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "micromips16_idecode.h"
@@ -77,10 +80,11 @@ void
 sim_engine_run (SIM_DESC sd, int next_cpu_nr, int nr_cpus,
 		int signal)
 {
+  struct mips_sim_state *state = MIPS_SIM_STATE (sd);
   micromips_m32_instruction_word instruction_0;
   sim_cpu *cpu = STATE_CPU (sd, next_cpu_nr);
   micromips32_instruction_address cia = CPU_PC_GET (cpu);
-  sd->isa_mode = ISA_MODE_MIPS32;
+  state->isa_mode = ISA_MODE_MIPS32;
 
   while (1)
     {
@@ -92,17 +96,17 @@ sim_engine_run (SIM_DESC sd, int next_cpu_nr, int nr_cpus,
 	 from the elf header.
 	 2. Setting the correct isa mode after a MIPS32 jump or branch
 	 instruction.  */
-      if ((sd->isa_mode == ISA_MODE_MIPS32)
+      if ((state->isa_mode == ISA_MODE_MIPS32)
 	  && ((cia & 0x1) == ISA_MODE_MICROMIPS))
 	{
-	  sd->isa_mode = ISA_MODE_MICROMIPS;
+	  state->isa_mode = ISA_MODE_MICROMIPS;
 	  cia = cia & ~0x1;
 	}
 
 #if defined (ENGINE_ISSUE_PREFIX_HOOK)
       ENGINE_ISSUE_PREFIX_HOOK ();
 #endif
-      switch (sd->isa_mode)
+      switch (state->isa_mode)
 	{
 	case ISA_MODE_MICROMIPS:
 	  nia =

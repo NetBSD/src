@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -38,7 +38,7 @@ btrace_format_string (enum btrace_format format)
       return _("Intel Processor Trace");
     }
 
-  internal_error (__FILE__, __LINE__, _("Unknown branch trace format"));
+  internal_error (_("Unknown branch trace format"));
 }
 
 /* See btrace-common.h.  */
@@ -58,7 +58,7 @@ btrace_format_short_string (enum btrace_format format)
       return "pt";
     }
 
-  internal_error (__FILE__, __LINE__, _("Unknown branch trace format"));
+  internal_error (_("Unknown branch trace format"));
 }
 
 /* See btrace-common.h.  */
@@ -82,7 +82,7 @@ btrace_data::fini ()
       return;
     }
 
-  internal_error (__FILE__, __LINE__, _("Unkown branch trace format."));
+  internal_error (_("Unkown branch trace format."));
 }
 
 /* See btrace-common.h.  */
@@ -102,7 +102,7 @@ btrace_data::empty () const
       return (variant.pt.size == 0);
     }
 
-  internal_error (__FILE__, __LINE__, _("Unkown branch trace format."));
+  internal_error (_("Unkown branch trace format."));
 }
 
 /* See btrace-common.h.  */
@@ -187,5 +187,5 @@ btrace_data_append (struct btrace_data *dst,
       return 0;
     }
 
-  internal_error (__FILE__, __LINE__, _("Unkown branch trace format."));
+  internal_error (_("Unkown branch trace format."));
 }

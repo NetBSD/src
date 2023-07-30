@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,14 +20,13 @@ standard_testfile
 # Disable generation of position independent executable (PIE).  Otherwise, we
 # would have to manually specify an offset to load.
 
-set opts {debug ldflags=-no-pie}
+set opts {debug nopie}
 
 if [prepare_for_testing "failed to prepare" $testfile $srcfile $opts] {
     return -1
 }
 
 if ![runto_main] {
-    fail "can't run to main"
     return -1
 }
 
@@ -42,8 +41,12 @@ gdb_test "print/x the_variable" " = 0x1234" "check initial value of the_variable
 gdb_test_no_output "set the_variable = 0x5555" "manually change the_variable"
 gdb_test "print/x the_variable" " = 0x5555" "check manually changed value of the_variable"
 
-# Re-load the binary using the load command.
-gdb_test "load ${binfile}" ".*Loading section .data.*Transfer rate:.*" "re-load binary"
+with_test_prefix "reload" {
+    # Re-load the binary using the load command.
+    gdb_test "load ${binfile}" ".*Loading section .data.*Transfer rate:.*" \
+	"re-load binary"
 
-# Re-loading the binary should have reset the variable value.
-gdb_test "print/x the_variable" " = 0x1234" "check initial value of the_variable"
+    # Re-loading the binary should have reset the variable value.
+    gdb_test "print/x the_variable" " = 0x1234" \
+	"check initial value of the_variable"
+}

@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,15 +25,10 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    continue
-}
-
 standard_testfile basics.c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     untested mi-regs.exp
+     untested "failed to compile"
      return -1
 }
 
@@ -48,42 +43,23 @@ proc register_tests_no_exec { } {
 		"no executable"
 }
 
-proc register_tests { } {
-    global hex
-    global decimal
+proc register_test { n arg format } {
     global mi_gdb_prompt
-    set octal "\[0-7\]+"
-    set binary "\[0-1\]+"
-    set float "\\-?((\[0-9\]+(\\.\[0-9\]+)?(e\[-+\]\[0-9\]+)?)|(nan\\($hex\\)))"
+    global decimal
 
-    mi_gdb_test "222-data-list-register-values x" \
-	    "222\\^done,register-values=\\\[\{number=\"$decimal\",value=\"$hex\"\}.*\\\]" \
-	    "register values x"
+    set cmd "$n-data-list-register-values $arg"
+    set test "register values $arg"
 
-    mi_gdb_test "333-data-list-register-values f" \
-	    "333\\^done,register-values=\\\[\{number=\"$decimal\",value=\"$float\"\}.*\\\]" \
-	    "register values f"
-
-    mi_gdb_test "444-data-list-register-values d" \
-	    "444\\^done,register-values=\\\[\{number=\"$decimal\",value=\"-?$decimal\"\}.*\\\]" \
-	    "register values d"
-
-    mi_gdb_test "555-data-list-register-values o" \
-	    "555\\^done,register-values=\\\[\{number=\"$decimal\",value=\"$octal\"\}.*\\\]" \
-	    "register values o"
-
-    set cmd "666-data-list-register-values t"
-    set test "register values t"
     set state 0
     gdb_test_multiple $cmd $test -prompt "$mi_gdb_prompt$" {
-	-re "666\\^done,register-values=\\\[" {
+	-re "$n\\^done,register-values=\\\[" {
 	    if { $state == 0 } {
 		set state 1
 		exp_continue
 	    }
 	    fail $gdb_test_name
 	}
-	-re "\{number=\"$decimal\",value=\"$binary\"\}" {
+	-re "\{number=\"$decimal\",value=\"$format\"\}" {
 	    if { $state != 0 } {
 		set state 2
 		exp_continue
@@ -103,8 +79,27 @@ proc register_tests { } {
     }
 }
 
+proc register_tests { } {
+    global hex
+    global decimal
+    set octal "\[0-7\]+"
+    set binary "\[0-1\]+"
+    set float \
+	"\\-?((\[0-9\]+(\\.\[0-9\]+)?(e\[-+\]\[0-9\]+)?)|(nan\\($hex\\)))"
+
+    register_test 222 x $hex
+    register_test 333 f $float
+    register_test 444 d -?$decimal
+    register_test 555 o $octal
+    register_test 666 t $binary
+}
+
+mi_clean_restart $binfile
+
 register_tests_no_exec
-mi_run_to_main
+
+mi_runto_main
+
 register_tests
 
 mi_gdb_exit

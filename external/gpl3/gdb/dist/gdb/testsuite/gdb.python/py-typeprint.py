@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Free Software Foundation, Inc.
+# Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,21 +15,24 @@
 
 import gdb
 
+
 class Recognizer(object):
     def __init__(self):
         self.enabled = True
 
     def recognize(self, type_obj):
-        if type_obj.tag == 'basic_string':
-            return 'string'
+        if type_obj.tag == "basic_string":
+            return "string"
         return None
+
 
 class StringTypePrinter(object):
     def __init__(self):
-        self.name = 'string'
+        self.name = "string"
         self.enabled = True
 
     def instantiate(self):
         return Recognizer()
+
 
 gdb.type_printers.append(StringTypePrinter())

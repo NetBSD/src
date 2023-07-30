@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2020 Free Software Foundation, Inc.
+   Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -132,7 +132,6 @@ func:
 	.long  0x11c8794c    /* vmrglh  v14,v8,v15         */
 	.long  0x13f5298c    /* vmrglw  v31,v21,v5         */
 	.long  0x13094c84    /* vmr     v24,v9             */
-	.long  0x13094c84    /* vmr     v24,v9             */
 	.long  0x10187de5    /* vmsummbm v0,v24,v15,v23    */
 	.long  0x10243e68    /* vmsumshm v1,v4,v7,v25      */
 	.long  0x11286fe9    /* vmsumshs v9,v8,v13,v31     */
@@ -149,7 +148,6 @@ func:
 	.long  0x13a52048    /* vmulouh v29,v5,v4          */
 	.long  0x110229af    /* vnmsubfp v8,v2,v6,v5       */
 	.long  0x13e95504    /* vnor    v31,v9,v10         */
-	.long  0x133ffd04    /* vnot    v25,v31            */
 	.long  0x133ffd04    /* vnot    v25,v31            */
 	.long  0x12e71484    /* vor     v23,v7,v2          */
 	.long  0x101cb66b    /* vperm   v0,v28,v22,v25     */
@@ -215,3 +213,4 @@ func:
 	.long  0x11e0e28e    /* vupklsb v15,v28            */
 	.long  0x110042ce    /* vupklsh v8,v8              */
 	.long  0x13201cc4    /* vxor    v25,v0,v3          */
+	.section	.note.GNU-stack,"",@progbits

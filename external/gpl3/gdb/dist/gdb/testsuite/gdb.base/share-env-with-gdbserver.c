@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2017-2020 Free Software Foundation, Inc.
+   Copyright 2017-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ int
 main (int argc, char *argv[])
 {
   /* Call malloc to ensure it is linked in.  */
-  char *tmp = malloc (1);
+  char *tmp = (char *) malloc (1);
   /* Similarly call my_getenv instead of getenv directly to make sure
      the former isn't optimized out.  my_getenv is called by GDB.  */
   const char *myvar = my_getenv ("GDB_TEST_VAR");

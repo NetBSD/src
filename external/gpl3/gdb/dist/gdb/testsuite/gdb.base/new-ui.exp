@@ -1,4 +1,4 @@
-# Copyright 2016-2020 Free Software Foundation, Inc.
+# Copyright 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -82,7 +82,6 @@ proc_with_prefix do_test {} {
     clean_restart $testfile
 
     if ![runto_main] {
-	untested "could not run to main"
 	return -1
     }
 
@@ -186,7 +185,7 @@ proc_with_prefix do_test_invalid_args {} {
 
     # Test that we can continue working normally.
     if ![runto_main] {
-	fail "could not run to main"
+	return
     }
 }
 

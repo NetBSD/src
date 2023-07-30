@@ -1,5 +1,5 @@
 /* Types for Cpu tools GENerated simulators.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -31,10 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #define SIM_HAVE_ADDR_RANGE
 
 #ifdef __GNUC__
-#define HAVE_LONGLONG
 #undef DI_FN_SUPPORT
 #else
-#undef HAVE_LONGLONG
 #define DI_FN_SUPPORT
 #endif
 
@@ -56,41 +54,27 @@ typedef enum mode_type {
 #define MAX_TARGET_MODES ((int) MODE_TARGET_MAX)
 #define MAX_MODES ((int) MODE_MAX)
 
-extern const char * const mode_names[];
-#define MODE_NAME(m) (mode_names[m])
+extern const char * const cgen_mode_names[];
+#define MODE_NAME(m) (cgen_mode_names[m])
 
+/* Some system headers define VOID already, so undo it.  */
+#undef VOID
 typedef void VOID;
 typedef unsigned char BI;
-typedef signed8 QI;
-typedef signed16 HI;
-typedef signed32 SI;
-typedef unsigned8 UQI;
-typedef unsigned16 UHI;
-typedef unsigned32 USI;
+typedef int8_t QI;
+typedef int16_t HI;
+typedef int32_t SI;
+typedef uint8_t UQI;
+typedef uint16_t UHI;
+typedef uint32_t USI;
 
-#ifdef HAVE_LONGLONG
-typedef signed64 DI;
-typedef unsigned64 UDI;
+typedef int64_t DI;
+typedef uint64_t UDI;
 #define GETLODI(di) ((SI) (di))
 #define GETHIDI(di) ((SI) ((UDI) (di) >> 32))
 #define SETLODI(di, val) ((di) = (((di) & 0xffffffff00000000LL) | (val)))
 #define SETHIDI(di, val) ((di) = (((di) & 0xffffffffLL) | (((DI) (val)) << 32)))
 #define MAKEDI(hi, lo) ((((DI) (SI) (hi)) << 32) | ((UDI) (USI) (lo)))
-#else
-/* DI mode support if "long long" doesn't exist.
-   At one point CGEN supported K&R C compilers, and ANSI C compilers without
-   "long long".  One can argue the various merits of keeping this in or
-   throwing it out.  I went to the trouble of adding it so for the time being
-   I'm leaving it in.  */
-typedef struct { SI hi,lo; } DI;
-typedef DI UDI;
-#define GETLODI(di) ((di).lo)
-#define GETHIDI(di) ((di).hi)
-#define SETLODI(di, val) ((di).lo = (val))
-#define SETHIDI(di, val) ((di).hi = (val))
-extern DI make_struct_di (SI, SI);
-#define MAKEDI(hi, lo) (make_struct_di ((hi), (lo)))
-#endif
 
 /* These are used to record extracted raw data from an instruction, among other
    things.  It must be a host data type, and not a target one.  */

@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@ load_lib compile-support.exp
 
 standard_testfile .c compile-shlib.c compile-constvar.S compile-nodebug.c
 
-get_compiler_info
 set options {}
 if { [test_compiler_info gcc*] || [test_compiler_info clang*] } {
     lappend options additional_flags=-g3
@@ -53,8 +52,10 @@ if ![runto_main] {
     return -1
 }
 
-if {[skip_compile_feature_tests]} {
-    untested "compile command not supported (could not find libcc1 shared library?)"
+gdb_breakpoint [gdb_get_line_number "break-here"]
+gdb_continue_to_breakpoint "break-here" ".* break-here .*"
+
+if {[skip_compile_feature_untested "var = 0"]} {
     return -1
 }
 
@@ -132,9 +133,6 @@ gdb_test_no_output "set unwindonsignal on"
 gdb_test "compile code *(volatile int *) 0 = 0;" \
     "The program being debugged was signaled while in a function called from GDB\\.\r\nGDB has restored the context to what it was before the call\\.\r\n.*" \
     "compile code segfault second"
-
-gdb_breakpoint [gdb_get_line_number "break-here"]
-gdb_continue_to_breakpoint "break-here" ".* break-here .*"
 
 # C++ Specific tests.
 ## Public methods and members
@@ -313,7 +311,7 @@ gdb_test_no_output "set debug compile off"
 gdb_test "show debug compile" "Compile debugging is .*"
 gdb_test "show compile-args" \
     "Compile command command-line arguments are .*"
-gdb_test "compile code -z" "Unknown argument.*"
+gdb_test "compile code -z" "Unrecognized option at: -z"
 
 gdb_test "set lang rust" \
     "Warning: the current language does not match this frame."
@@ -328,12 +326,11 @@ gdb_test "compile file" \
     "You must provide a filename for this command.*" \
     "Test compile file without a filename"
 gdb_test "compile file -r" \
-    "You must provide a filename with the raw option set.*" \
+    "You must provide a filename for this command.*" \
     "Test compile file and raw option without a filename"
 gdb_test "compile file -z" \
-    "Unknown argument.*" \
-    "Test compile file with unknown argument"
-
+    "Unrecognized option at: -z" \
+    "test compile file with unknown option"
 
 # LOC_CONST tests.
 

@@ -1,5 +1,5 @@
 /*  dv-m68hc11sio.c -- Simulation of the 68HC11 serial device.
-    Copyright (C) 1999-2020 Free Software Foundation, Inc.
+    Copyright (C) 1999-2023 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@worldnet.fr)
     (From a driver model Contributed by Cygnus Solutions.)
 
@@ -20,6 +20,8 @@
     
     */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"
@@ -182,7 +184,7 @@ m68hc11sio_port_event (struct hw *me,
   SIM_DESC sd;
   struct m68hc11sio *controller;
   sim_cpu *cpu;
-  unsigned8 val;
+  uint8_t val;
   
   controller = hw_data (me);
   sd         = hw_system (me);
@@ -340,7 +342,7 @@ m68hc11sio_tx_poll (struct hw *me, void *data)
           break;
 
         case sio_stdio:
-          sim_io_write_stdout (sd, &controller->tx_char, 1);
+          sim_io_write_stdout (sd, (const char *)&controller->tx_char, 1);
           sim_io_flush_stdout (sd);
           break;
 
@@ -419,10 +421,10 @@ static void
 m68hc11sio_info (struct hw *me)
 {
   SIM_DESC sd;
-  uint16 base = 0;
+  uint16_t base = 0;
   sim_cpu *cpu;
   struct m68hc11sio *controller;
-  uint8 val;
+  uint8_t val;
   long clock_cycle;
   
   sd = hw_system (me);
@@ -455,7 +457,7 @@ m68hc11sio_info (struct hw *me)
   
   if (controller->tx_poll_event)
     {
-      signed64 t;
+      int64_t t;
       int n;
 
       t = hw_event_remain_time (me, controller->tx_poll_event);
@@ -467,7 +469,7 @@ m68hc11sio_info (struct hw *me)
     }
   if (controller->rx_poll_event)
     {
-      signed64 t;
+      int64_t t;
 
       t = hw_event_remain_time (me, controller->rx_poll_event);
       sim_io_printf (sd, "  Receive finished in %s\n",
@@ -497,7 +499,7 @@ m68hc11sio_io_read_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11sio *controller;
   sim_cpu *cpu;
-  unsigned8 val;
+  uint8_t val;
   
   HW_TRACE ((me, "read 0x%08lx %d", (long) base, (int) nr_bytes));
 
@@ -528,7 +530,7 @@ m68hc11sio_io_read_buffer (struct hw *me,
     default:
       return 0;
     }
-  *((unsigned8*) dest) = val;
+  *((uint8_t*) dest) = val;
   return 1;
 }
 
@@ -542,7 +544,7 @@ m68hc11sio_io_write_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11sio *controller;
   sim_cpu *cpu;
-  unsigned8 val;
+  uint8_t val;
 
   HW_TRACE ((me, "write 0x%08lx %d", (long) base, (int) nr_bytes));
 
@@ -550,7 +552,7 @@ m68hc11sio_io_write_buffer (struct hw *me,
   cpu = STATE_CPU (sd, 0);
   controller = hw_data (me);
   
-  val = *((const unsigned8*) source);
+  val = *((const uint8_t*) source);
   switch (base)
     {
     case M6811_BAUD:

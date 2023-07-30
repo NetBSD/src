@@ -1,6 +1,6 @@
 typedef char foo;
 
-foo charfoo (afoo)
+foo charfoo (int afoo)
 {
   return (afoo * 2);
 }

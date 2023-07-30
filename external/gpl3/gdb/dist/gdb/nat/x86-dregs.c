@@ -1,6 +1,6 @@
 /* Debug register code for x86 (i386 and x86-64).
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,31 +35,68 @@
 /* Accessor macros for low-level function vector.  */
 
 /* Can we update the inferior's debug registers?  */
-#define x86_dr_low_can_set_addr() (x86_dr_low.set_addr != NULL)
+
+static bool
+x86_dr_low_can_set_addr ()
+{
+  return x86_dr_low.set_addr != nullptr;
+}
 
 /* Update the inferior's debug register REGNUM from STATE.  */
-#define x86_dr_low_set_addr(new_state, i) \
-  (x86_dr_low.set_addr ((i), (new_state)->dr_mirror[(i)]))
+
+static void
+x86_dr_low_set_addr (struct x86_debug_reg_state *new_state, int i)
+{
+  x86_dr_low.set_addr (i, new_state->dr_mirror[i]);
+}
 
 /* Return the inferior's debug register REGNUM.  */
-#define x86_dr_low_get_addr(i) (x86_dr_low.get_addr ((i)))
+
+static CORE_ADDR
+x86_dr_low_get_addr (int i)
+{
+  return x86_dr_low.get_addr (i);
+}
 
 /* Can we update the inferior's DR7 control register?  */
-#define x86_dr_low_can_set_control() (x86_dr_low.set_control != NULL)
+
+static bool
+x86_dr_low_can_set_control ()
+{
+  return x86_dr_low.set_control != nullptr;
+}
 
 /* Update the inferior's DR7 debug control register from STATE.  */
-#define x86_dr_low_set_control(new_state) \
-  (x86_dr_low.set_control ((new_state)->dr_control_mirror))
+
+static void
+x86_dr_low_set_control (struct x86_debug_reg_state *new_state)
+{
+  x86_dr_low.set_control (new_state->dr_control_mirror);
+}
 
 /* Return the value of the inferior's DR7 debug control register.  */
-#define x86_dr_low_get_control() (x86_dr_low.get_control ())
+
+static unsigned long
+x86_dr_low_get_control ()
+{
+  return x86_dr_low.get_control ();
+}
 
 /* Return the value of the inferior's DR6 debug status register.  */
-#define x86_dr_low_get_status() (x86_dr_low.get_status ())
+
+static unsigned long
+x86_dr_low_get_status ()
+{
+  return x86_dr_low.get_status ();
+}
 
 /* Return the debug register size, in bytes.  */
-#define x86_get_debug_register_length() \
-  (x86_dr_low.debug_register_length)
+
+static int
+x86_get_debug_register_length ()
+{
+  return x86_dr_low.debug_register_length;
+}
 
 /* Support for 8-byte wide hw watchpoints.  */
 #define TARGET_HAS_DR_LEN_8 (x86_get_debug_register_length () == 8)
@@ -169,7 +206,7 @@
 #define X86_DR_WATCH_HIT(dr6, i) ((dr6) & (1 << (i)))
 
 /* Types of operations supported by x86_handle_nonaligned_watchpoint.  */
-typedef enum { WP_INSERT, WP_REMOVE, WP_COUNT } x86_wp_op_t;
+enum x86_wp_op_t { WP_INSERT, WP_REMOVE, WP_COUNT };
 
 /* Print the values of the mirrored debug registers.  */
 
@@ -224,8 +261,7 @@ x86_length_and_rw_bits (int len, enum target_hw_bp_type type)
 	rw = DR_RW_WRITE;
 	break;
       case hw_read:
-	internal_error (__FILE__, __LINE__,
-			_("The i386 doesn't support "
+	internal_error (_("The i386 doesn't support "
 			  "data-read watchpoints.\n"));
       case hw_access:
 	rw = DR_RW_READ;
@@ -237,7 +273,7 @@ x86_length_and_rw_bits (int len, enum target_hw_bp_type type)
 	break;
 #endif
       default:
-	internal_error (__FILE__, __LINE__, _("\
+	internal_error (_("\
 Invalid hardware breakpoint type %d in x86_length_and_rw_bits.\n"),
 			(int) type);
     }
@@ -251,11 +287,11 @@ Invalid hardware breakpoint type %d in x86_length_and_rw_bits.\n"),
       case 4:
 	return (DR_LEN_4 | rw);
       case 8:
-        if (TARGET_HAS_DR_LEN_8)
- 	  return (DR_LEN_8 | rw);
+	if (TARGET_HAS_DR_LEN_8)
+	  return (DR_LEN_8 | rw);
 	/* FALL THROUGH */
       default:
-	internal_error (__FILE__, __LINE__, _("\
+	internal_error (_("\
 Invalid hardware breakpoint length %d in x86_length_and_rw_bits.\n"), len);
     }
 }
@@ -425,7 +461,7 @@ x86_handle_nonaligned_watchpoint (struct x86_debug_reg_state *state,
 	  else if (what == WP_REMOVE)
 	    retval = x86_remove_aligned_watchpoint (state, addr, len_rw);
 	  else
-	    internal_error (__FILE__, __LINE__, _("\
+	    internal_error (_("\
 Invalid value %d of operation in x86_handle_nonaligned_watchpoint.\n"),
 			    (int) what);
 	  if (retval)

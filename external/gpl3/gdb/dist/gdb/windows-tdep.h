@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,14 @@ extern void windows_xfer_shared_library (const char* so_name,
 					 CORE_ADDR *text_offset_cached,
 					 struct gdbarch *gdbarch,
 					 struct obstack *obstack);
+
+extern ULONGEST windows_core_xfer_shared_libraries (struct gdbarch *gdbarch,
+						    gdb_byte *readbuf,
+						    ULONGEST offset,
+						    ULONGEST len);
+
+extern std::string windows_core_pid_to_str (struct gdbarch *gdbarch,
+					    ptid_t ptid);
 
 /* To be called from the various GDB_OSABI_WINDOWS handlers for the
    various Windows architectures and machine types.  */

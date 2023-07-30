@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +21,6 @@ if { [skip_stl_tests] } { continue }
 
 standard_testfile .cc
 
-if [get_compiler_info "c++"] {
-    return -1
-}
-
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
@@ -42,7 +38,7 @@ gdb_run_cmd
 
 set test "initial condition: run to breakpoint"
 gdb_test_multiple "" $test {
-    -re "Breakpoint \[0-9\]+,.*foo<int> \\(i=1\\).*$gdb_prompt $" {
+    -re "Breakpoint $bkptno_num_re,.*foo<int> \\(i=1\\).*$gdb_prompt $" {
 	pass $test
 	break
     }
@@ -67,7 +63,7 @@ gdb_test_no_output {condition $bpnum i==1} \
     "separate condition: set condition"
     
 gdb_run_cmd
-gdb_test "" "Breakpoint \[0-9\]+,.*foo<int> \\(i=1\\).*" "separate condition: run to breakpoint"
+gdb_test "" "Breakpoint $bkptno_num_re,.*foo<int> \\(i=1\\).*" "separate condition: run to breakpoint"
 
 gdb_test "continue" \
     ".*Breakpoint.*foo<double> \\(i=1\\).*" \
@@ -79,7 +75,7 @@ gdb_test "continue" \
 gdb_test_no_output {disable $bpnum.1} "disabling location: disable"
 
 gdb_run_cmd
-gdb_test "" "Breakpoint \[0-9\]+,.*foo<double> \\(i=1\\).*" "disabling location: run to breakpoint"
+gdb_test "" "Breakpoint $bkptno_num_re,.*foo<double> \\(i=1\\).*" "disabling location: run to breakpoint"
 
 # Try disabling entire breakpoint
 gdb_test_no_output {enable $bpnum.1} "disabling location: enable"
@@ -112,7 +108,6 @@ delete_breakpoints
 set bp_location [gdb_get_line_number "set multi-line breakpoint here"]
 
 if { ![runto_main] } {
-    fail "can't run to main for multi_line_foo tests."
     return 0
 }
 

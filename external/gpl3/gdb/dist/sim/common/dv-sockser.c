@@ -1,5 +1,5 @@
 /* Serial port emulation using sockets.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This program is free software; you can redistribute it and/or modify
@@ -18,39 +18,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 /* FIXME: will obviously need to evolve.
    - connectionless sockets might be more appropriate.  */
 
-#include "config.h"
-#include "sim-main.h"
+/* This must come before any other includes.  */
+#include "defs.h"
 
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-#include <signal.h>
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
+#include <errno.h>
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#include <netdb.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
-#ifndef __CYGWIN32__
-#include <netinet/tcp.h>
-#endif
-
+#include "sim-main.h"
 #include "sim-assert.h"
 #include "sim-options.h"
 
@@ -59,24 +48,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef HAVE_SOCKLEN_T
 typedef int socklen_t;
 #endif
-
-/* Get definitions for both O_NONBLOCK and O_NDELAY.  */
-
-#ifndef O_NDELAY
-#ifdef FNDELAY
-#define O_NDELAY FNDELAY
-#else /* ! defined (FNDELAY) */
-#define O_NDELAY 0
-#endif /* ! defined (FNDELAY) */
-#endif /* ! defined (O_NDELAY) */
-
-#ifndef O_NONBLOCK
-#ifdef FNBLOCK
-#define O_NONBLOCK FNBLOCK
-#else /* ! defined (FNBLOCK) */
-#define O_NONBLOCK 0
-#endif /* ! defined (FNBLOCK) */
-#endif /* ! defined (O_NONBLOCK) */
 
 
 /* Compromise between eating cpu and properly busy-waiting.
@@ -204,6 +175,7 @@ dv_sockser_init (SIM_DESC sd)
 
   /* Handle writes to missing client -> SIGPIPE.
      ??? Need a central signal management module.  */
+#ifdef SIGPIPE
   {
     RETSIGTYPE (*orig) ();
     orig = signal (SIGPIPE, SIG_IGN);
@@ -211,6 +183,7 @@ dv_sockser_init (SIM_DESC sd)
     if (orig != SIG_DFL && orig != SIG_IGN)
       signal (SIGPIPE, orig);
   }
+#endif
 
   return SIM_RC_OK;
 }
@@ -230,8 +203,11 @@ dv_sockser_uninstall (SIM_DESC sd)
     }
 }
 
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+extern MODULE_INIT_FN sim_install_dv_sockser;
+
 SIM_RC
-dv_sockser_install (SIM_DESC sd)
+sim_install_dv_sockser (SIM_DESC sd)
 {
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
   if (sim_add_option_table (sd, NULL, sockser_options) != SIM_RC_OK)
@@ -279,8 +255,9 @@ connected_p (SIM_DESC sd)
     return 0;
 
   /* Set non-blocking i/o.  */
+#if defined(F_GETFL) && defined(O_NONBLOCK)
   flags = fcntl (sockser_fd, F_GETFL);
-  flags |= O_NONBLOCK | O_NDELAY;
+  flags |= O_NONBLOCK;
   if (fcntl (sockser_fd, F_SETFL, flags) == -1)
     {
       sim_io_eprintf (sd, "unable to set nonblocking i/o");
@@ -288,6 +265,7 @@ connected_p (SIM_DESC sd)
       sockser_fd = -1;
       return 0;
     }
+#endif
   return 1;
 }
 

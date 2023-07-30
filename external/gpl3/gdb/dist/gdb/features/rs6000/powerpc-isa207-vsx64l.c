@@ -5,16 +5,16 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_powerpc_isa207_vsx64l;
+const struct target_desc *tdesc_powerpc_isa207_vsx64l;
 static void
 initialize_tdesc_powerpc_isa207_vsx64l (void)
 {
-  struct target_desc *result = allocate_target_description ();
-  set_tdesc_architecture (result, bfd_scan_arch ("powerpc:common64"));
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("powerpc:common64"));
 
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.core");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.core");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "r1", 1, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "r2", 2, 1, NULL, 64, "uint64");
@@ -54,7 +54,7 @@ initialize_tdesc_powerpc_isa207_vsx64l (void)
   tdesc_create_reg (feature, "ctr", 68, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "xer", 69, 1, NULL, 32, "uint32");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.fpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.fpu");
   tdesc_create_reg (feature, "f0", 32, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "f1", 33, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "f2", 34, 1, NULL, 64, "ieee_double");
@@ -89,11 +89,11 @@ initialize_tdesc_powerpc_isa207_vsx64l (void)
   tdesc_create_reg (feature, "f31", 63, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "fpscr", 70, 1, "float", 64, "int");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.linux");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.linux");
   tdesc_create_reg (feature, "orig_r3", 71, 1, NULL, 64, "int");
   tdesc_create_reg (feature, "trap", 72, 1, NULL, 64, "int");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.altivec");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.altivec");
   tdesc_type *element_type;
   element_type = tdesc_named_type (feature, "ieee_single");
   tdesc_create_vector (feature, "v4f", element_type, 4);
@@ -156,7 +156,7 @@ initialize_tdesc_powerpc_isa207_vsx64l (void)
   tdesc_create_reg (feature, "vscr", 105, 1, "vector", 32, "int");
   tdesc_create_reg (feature, "vrsave", 106, 1, "vector", 32, "int");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.vsx");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.vsx");
   tdesc_create_reg (feature, "vs0h", 107, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "vs1h", 108, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "vs2h", 109, 1, NULL, 64, "uint64");
@@ -190,26 +190,26 @@ initialize_tdesc_powerpc_isa207_vsx64l (void)
   tdesc_create_reg (feature, "vs30h", 137, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "vs31h", 138, 1, NULL, 64, "uint64");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.ppr");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.ppr");
   tdesc_create_reg (feature, "ppr", 139, 1, NULL, 64, "uint64");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.dscr");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.dscr");
   tdesc_create_reg (feature, "dscr", 140, 1, NULL, 64, "uint64");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.tar");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.tar");
   tdesc_create_reg (feature, "tar", 141, 1, NULL, 64, "uint64");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.ebb");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.ebb");
   tdesc_create_reg (feature, "bescr", 142, 0, NULL, 64, "uint64");
   tdesc_create_reg (feature, "ebbhr", 143, 0, NULL, 64, "uint64");
   tdesc_create_reg (feature, "ebbrr", 144, 0, NULL, 64, "uint64");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.linux.pmu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.linux.pmu");
   tdesc_create_reg (feature, "mmcr0", 145, 0, NULL, 64, "uint64");
   tdesc_create_reg (feature, "mmcr2", 146, 0, NULL, 64, "uint64");
   tdesc_create_reg (feature, "siar", 147, 0, NULL, 64, "uint64");
   tdesc_create_reg (feature, "sdar", 148, 0, NULL, 64, "uint64");
   tdesc_create_reg (feature, "sier", 149, 0, NULL, 64, "uint64");
 
-  tdesc_powerpc_isa207_vsx64l = result;
+  tdesc_powerpc_isa207_vsx64l = result.release ();
 }

@@ -1,6 +1,6 @@
 /* Debug printing functions.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,4 +34,32 @@ debug_printf (const char *fmt, ...)
   va_start (ap, fmt);
   debug_vprintf (fmt, ap);
   va_end (ap);
+}
+
+/* See gdbsupport/common-debug.h.  */
+
+void
+debug_prefixed_printf (const char *module, const char *func,
+		       const char *format, ...)
+{
+  va_list ap;
+
+  va_start (ap, format);
+  debug_prefixed_vprintf (module, func, format, ap);
+  va_end (ap);
+}
+
+/* See gdbsupport/common-debug.h.  */
+
+void
+debug_prefixed_vprintf (const char *module, const char *func,
+			const char *format, va_list args)
+{
+  if (func != nullptr)
+    debug_printf ("%*s[%s] %s: ", debug_print_depth * 2, "", module, func);
+  else
+    debug_printf ("%*s[%s] ", debug_print_depth * 2, "", module);
+
+  debug_vprintf (format, args);
+  debug_printf ("\n");
 }

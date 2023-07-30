@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -23,6 +23,9 @@
 #ifndef HW_TREE
 #define HW_TREE
 
+#include <stdarg.h>
+
+#include "ansidecl.h"
 
 struct hw *hw_tree_create
 (SIM_DESC sd,
@@ -34,12 +37,12 @@ void hw_tree_delete
 struct hw *hw_tree_parse
 (struct hw *root,
  const char *fmt,
- ...) __attribute__ ((format (printf, 2, 3)));
+ ...) ATTRIBUTE_PRINTF (2, 3);
 
 struct hw *hw_tree_vparse
 (struct hw *root,
  const char *fmt,
- va_list ap);
+ va_list ap) ATTRIBUTE_PRINTF (2, 0);
 
 
 void hw_tree_finish

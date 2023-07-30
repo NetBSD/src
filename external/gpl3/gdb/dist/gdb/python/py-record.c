@@ -1,6 +1,6 @@
 /* Python interface to record targets.
 
-   Copyright 2016-2020 Free Software Foundation, Inc.
+   Copyright 2016-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,12 +45,12 @@ PyTypeObject recpy_func_type = {
 
 /* Python RecordGap type.  */
 
-PyTypeObject recpy_gap_type = {
+static PyTypeObject recpy_gap_type = {
   PyVarObject_HEAD_INIT (NULL, 0)
 };
 
 /* Python RecordGap object.  */
-typedef struct
+struct recpy_gap_object
 {
   PyObject_HEAD
 
@@ -62,7 +62,7 @@ typedef struct
 
   /* Element number.  */
   Py_ssize_t number;
-} recpy_gap_object;
+};
 
 /* Implementation of record.method.  */
 
@@ -374,7 +374,7 @@ recpy_element_number (PyObject *self, void* closure)
 {
   const recpy_element_object * const obj = (recpy_element_object *) self;
 
-  return PyInt_FromSsize_t (obj->number);
+  return gdb_py_object_from_longest (obj->number).release ();
 }
 
 /* Implementation of RecordInstruction.__hash__ [int] and
@@ -454,7 +454,7 @@ recpy_gap_number (PyObject *self, void *closure)
 {
   const recpy_gap_object * const obj = (const recpy_gap_object *) self;
 
-  return PyInt_FromSsize_t (obj->number);
+  return gdb_py_object_from_longest (obj->number).release ();
 }
 
 /* Implementation of RecordGap.error_code [int].  */
@@ -464,7 +464,7 @@ recpy_gap_reason_code (PyObject *self, void *closure)
 {
   const recpy_gap_object * const obj = (const recpy_gap_object *) self;
 
-  return PyInt_FromLong (obj->reason_code);
+  return gdb_py_object_from_longest (obj->reason_code).release ();
 }
 
 /* Implementation of RecordGap.error_string [str].  */
@@ -474,7 +474,7 @@ recpy_gap_reason_string (PyObject *self, void *closure)
 {
   const recpy_gap_object * const obj = (const recpy_gap_object *) self;
 
-  return PyString_FromString (obj->reason_string);
+  return PyUnicode_FromString (obj->reason_string);
 }
 
 /* Record method list.  */
@@ -563,7 +563,7 @@ gdbpy_initialize_record (void)
   recpy_insn_type.tp_getset = recpy_insn_getset;
   recpy_insn_type.tp_richcompare = recpy_element_richcompare;
   recpy_insn_type.tp_hash = recpy_element_hash;
-  recpy_insn_type.tp_base = &py_insn_type;
+  recpy_insn_type.tp_base = py_insn_get_insn_type ();
 
   recpy_func_type.tp_new = PyType_GenericNew;
   recpy_func_type.tp_flags = Py_TPFLAGS_DEFAULT;

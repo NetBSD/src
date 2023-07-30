@@ -1,5 +1,5 @@
 /* Host file transfer support for gdbserver.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,10 +22,6 @@
 /* Per-connection setup.  */
 extern void hostio_handle_new_gdb_connection (void);
 
-/* Functions from hostio.c.  */
 extern int handle_vFile (char *, int, int *);
-
-/* Functions from hostio-errno.c.  */
-extern void hostio_last_error_from_errno (char *own_buf);
 
 #endif /* GDBSERVER_HOSTIO_H */

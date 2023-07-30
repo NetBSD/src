@@ -59,7 +59,7 @@ vm_data_map_read_N(vm_data_map *map,
 	unsigned_N val;
 	if (vm_data_map_read_buffer(map, &val, ea, sizeof(unsigned_N), processor, cia)
 	    != sizeof(unsigned_N)) {
-	  cpu_error(processor, cia, "misaligned %d byte read to 0x%lx failed",
+	  cpu_error(processor, cia, "misaligned %zu byte read to 0x%lx failed",
 		    sizeof(unsigned_N), (unsigned long)ea);
 	}
 	val = T2H_N(val);
@@ -107,7 +107,7 @@ vm_data_map_write_N(vm_data_map *map,
 	unsigned_N data = H2T_N(val);
 	if (vm_data_map_write_buffer(map, &data, ea, sizeof(unsigned_N), 0, processor, cia)
 	    != sizeof(unsigned_N)) {
-	  cpu_error(processor, cia, "misaligned %d byte write to 0x%lx failed",
+	  cpu_error(processor, cia, "misaligned %zu byte write to 0x%lx failed",
 		    sizeof(unsigned_N), (unsigned long)ea);
 	}
 	if (WITH_MON & MONITOR_LOAD_STORE_UNIT) {

@@ -1,4 +1,4 @@
-# Copyright 2009-2020 Free Software Foundation, Inc.
+# Copyright 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ if ![supports_reverse] {
 }
 
 
-if ![istarget "*86*-*linux*"] then {
+if {![istarget "*86*-*linux*"]} {
     verbose "Skipping i386 reverse tests."
     return
 }
@@ -44,7 +44,7 @@ set end_sse_test         [gdb_get_line_number " end sse_test "]
 set end_ssse3_test       [gdb_get_line_number " end ssse3_test "]
 set end_sse4_test         [gdb_get_line_number " end sse4_test "]
 
-runto main
+runto_main
 
 if [supports_process_record] {
     # Activate process record/replay

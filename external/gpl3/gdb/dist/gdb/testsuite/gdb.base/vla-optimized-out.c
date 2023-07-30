@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2018-2020 Free Software Foundation, Inc.
+   Copyright 2018-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,11 +18,13 @@
 /* The version of this test-case with f1 tagged with noinline only is equivalent
    to gcc/testsuite/gcc.dg/guality/vla-1.c.  */
 
+#include "../lib/attributes.h"
+
 int
 #ifdef NOCLONE
-__attribute__((noinline, noclone))
+__attribute__((noinline,weak)) ATTRIBUTE_NOCLONE
 #else
-__attribute__((noinline))
+__attribute__((noinline,weak))
 #endif
 f1 (int i)
 {

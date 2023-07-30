@@ -1,4 +1,4 @@
-# Copyright 2003-2020 Free Software Foundation, Inc.
+# Copyright 2003-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,18 +29,17 @@ if { [prepare_for_testing "failed to prepare" float float.c] } {
 
 # Set it up at a breakpoint so we have its registers.
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 # Test "info float".
 
-if { [is_aarch64_target] } then {
+if {[is_aarch64_target]} {
     gdb_test "info float" "d0.*d1.*d31.*s0.*s1.*s31.*"
-} elseif { [istarget "alpha*-*-*"] } then {
+} elseif {[istarget "alpha*-*-*"]} {
     gdb_test "info float" "f0.*"
-} elseif { [is_aarch32_target] } then {
+} elseif {[is_aarch32_target]} {
     gdb_test_multiple "info float" "info float" {
 	-re "Software FPU type.*mask:.*flags:.*$gdb_prompt $" {
 	    pass "info float (FPA)"
@@ -54,11 +53,11 @@ if { [is_aarch64_target] } then {
             pass "info float (without FPU)"
 	}
     }
-} elseif { [istarget "i?86-*-*"] || [istarget "x86_64-*-*"] } then {
+} elseif {[istarget "i?86-*-*"] || [istarget "x86_64-*-*"]} {
     gdb_test "info float" "R7:.*Status Word:.*Opcode:.*"
-} elseif [istarget "ia64-*-*"] then {
+} elseif {[istarget "ia64-*-*"]} {
     gdb_test "info float" "f0.*f1.*f127.*"
-} elseif [istarget "m68k-*-*"] then {
+} elseif {[istarget "m68k-*-*"]} {
     gdb_test_multiple "info float" "info_float" {
         -re "fp0.*fp1.*fp7.*$gdb_prompt $" {
             pass "info float (with FPU)"
@@ -67,7 +66,7 @@ if { [is_aarch64_target] } then {
             pass "info float (without FPU)"
 	}
     }
-} elseif [istarget "mips*-*-*"] then {
+} elseif {[istarget "mips*-*-*"]} {
     gdb_test_multiple "info float" "info float" {
 	-re "fpu type: none / unused\r\n$gdb_prompt $" {
 	      pass "info float (without FPU)"
@@ -76,7 +75,7 @@ if { [is_aarch64_target] } then {
 	      pass "info float (with FPU)"
 	  }
     }
-} elseif [istarget "nds32*-*-*"] then {
+} elseif {[istarget "nds32*-*-*"]} {
     gdb_test_multiple "info float" "info_float" {
         -re "fd0.*fd3.*$gdb_prompt $" {
             pass "info float (with FPU)"
@@ -85,7 +84,7 @@ if { [is_aarch64_target] } then {
             pass "info float (without FPU)"
 	}
     }
-} elseif [istarget "powerpc*-*-*"] then {
+} elseif {[istarget "powerpc*-*-*"]} {
     gdb_test_multiple "info float" "info_float" {
         -re "f0.*f1.*f31.*fpscr.*$gdb_prompt $" {
             pass "info float (with FPU)"
@@ -94,9 +93,9 @@ if { [is_aarch64_target] } then {
             pass "info float (without FPU)"
 	}
     }
-} elseif [istarget "s390*-*-*"] then {
+} elseif {[istarget "s390*-*-*"]} {
     gdb_test "info float" "fpc.*f0.*f1.*f15.*" "info float"
-} elseif [istarget "sh*-*"] then {
+} elseif {[istarget "sh*-*"]} {
     # SH may or may not have an FPU
     gdb_test_multiple "info float" "info float" {
 	-re "fpul.*fr0.*fr1.*fr15.*$gdb_prompt $" {
@@ -106,14 +105,21 @@ if { [is_aarch64_target] } then {
 	      pass "info float (without FPU)"
 	}
     }
-} elseif [istarget "hppa*-*"] then {
+} elseif {[istarget "hppa*-*"]} {
     gdb_test "info float" "fr4.*fr4R.*fr31R.*" "info float"
-} elseif [istarget "sparc*-*-*"] then {
+} elseif {[istarget "sparc*-*-*"]} {
     gdb_test "info float" "f0.*f1.*f31.*d0.*d30.*" "info float"
-} elseif [istarget "riscv*-*-*"] then {
-    # RISC-V may or may not have an FPU
+} elseif {[istarget "riscv*-*-*"]} {
+    # RISC-V may or may not have an FPU.  Additionally, the order of
+    # fcsr relative to fflags and frm can change depending on whether
+    # the fflags and frm registers are implemented as real registers
+    # (supplied in the target description) or pseudo-registers
+    # (supplied by GDB as a view into fcsr).
     gdb_test_multiple "info float" "info float" {
 	-re "ft0.*ft1.*ft11.*fflags.*frm.*fcsr.*$gdb_prompt $" {
+	      pass "info float (with FPU)"
+	  }
+	-re "ft0.*ft1.*ft11.*fcsr.*fflags.*frm.*$gdb_prompt $" {
 	      pass "info float (with FPU)"
 	  }
 	-re "No floating.point info available for this processor.*$gdb_prompt $" {

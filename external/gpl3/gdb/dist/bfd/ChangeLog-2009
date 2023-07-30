@@ -3868,15 +3868,15 @@
 	* coffcode.h (coff_pointerize_aux_hook): Update CSECT_SYM_P to
 	check whether a symbol has csect information.
 	(coff_print_aux): Likewise.
-	* coff-rs6000.c (_bfd_xcoff_swap_aux_in): Handle auxillary csect
+	* coff-rs6000.c (_bfd_xcoff_swap_aux_in): Handle auxiliary csect
 	information for C_AIX_WEAKEXT too.
 	(_bfd_xcoff_swap_aux_out): Likewise.
 	(xcoff_reloc_type_br): Handle defweak symbols too.
-	* coff64-rs6000.c (_bfd_xcoff64_swap_aux_in): Handle auxillary csect
+	* coff64-rs6000.c (_bfd_xcoff64_swap_aux_in): Handle auxiliary csect
 	information for C_AIX_WEAKEXT too.
 	(_bfd_xcoff64_swap_aux_out): Likewise.
 	(xcoff64_reloc_type_br): Handle defweak symbols too.
-	* coffgen.c (coff_print_symbol): Handle auxillary function
+	* coffgen.c (coff_print_symbol): Handle auxiliary function
 	information for C_AIX_WEAKEXT too.
 	* xcofflink.c (_bfd_xcoff_canonicalize_dynamic_symtab): Set BSF_WEAK
 	instead of BSF_GLOBAL if the L_WEAK flag is set.
@@ -3942,7 +3942,7 @@
 	objects in a dynamic link, rather than checking whether csectpp
 	is null.  Always allocate debug_index for other objects,
 	and always go through the loop.  Update the type of debug_index
-	after the change above.  Read the auxillary csect information
+	after the change above.  Read the auxiliary csect information
 	and use xcoff_keep_symbol_p to decide whether a symbol should
 	be kept.  Set its debug_index to -2 if not.
 	(xcoff_link_input_bfd): Update the type of debug_index after

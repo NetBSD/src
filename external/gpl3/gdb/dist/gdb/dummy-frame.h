@@ -1,6 +1,6 @@
 /* Code dealing with dummy stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -78,6 +78,6 @@ extern int find_dummy_frame_dtor (dummy_frame_dtor_ftype *dtor,
    for THIS_FRAME assuming that the frame is a dummy frame.  */
 
 extern struct frame_id default_dummy_id (struct gdbarch *gdbarch,
-					 struct frame_info *this_frame);
+					 frame_info_ptr this_frame);
 
 #endif /* !defined (DUMMY_FRAME_H)  */

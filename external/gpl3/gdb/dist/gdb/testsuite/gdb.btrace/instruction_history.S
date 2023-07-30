@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2013-2020 Free Software Foundation, Inc.
+   Copyright 2013-2023 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <christian.himpel@intel.com>
 
@@ -30,3 +30,4 @@ loop:
 	jmp .L1
 .L2:
 	ret /* bp.2 */
+	.section	.note.GNU-stack,"",@progbits

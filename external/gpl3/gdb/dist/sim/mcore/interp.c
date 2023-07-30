@@ -1,5 +1,5 @@
 /* Simulator for Motorola's MCore processor
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of GDB, the GNU debugger.
@@ -17,28 +17,32 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/times.h>
 #include <sys/param.h>
 #include <unistd.h>
 #include "bfd.h"
-#include "gdb/callback.h"
+#include "sim/callback.h"
 #include "libiberty.h"
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 
 #include "sim-main.h"
 #include "sim-base.h"
+#include "sim-signal.h"
 #include "sim-syscall.h"
 #include "sim-options.h"
+
+#include "target-newlib-syscall.h"
 
 #define target_big_endian (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
 
 
 static unsigned long
-mcore_extract_unsigned_integer (unsigned char *addr, int len)
+mcore_extract_unsigned_integer (const unsigned char *addr, int len)
 {
   unsigned long retval;
   unsigned char * p;
@@ -1238,7 +1242,7 @@ sim_engine_run (SIM_DESC sd,
 }
 
 static int
-mcore_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+mcore_reg_store (SIM_CPU *cpu, int rn, const void *memory, int length)
 {
   if (rn < NUM_MCORE_REGS && rn >= 0)
     {
@@ -1258,7 +1262,7 @@ mcore_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
 }
 
 static int
-mcore_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+mcore_reg_fetch (SIM_CPU *cpu, int rn, void *memory, int length)
 {
   if (rn < NUM_MCORE_REGS && rn >= 0)
     {
@@ -1348,8 +1352,11 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   SIM_DESC sd = sim_state_alloc (kind, cb);
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
+  /* Set default options before parsing user options.  */
+  cb->syscall_map = cb_mcore_syscall_map;
+
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -1369,10 +1376,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
     }
 
   /* Check for/establish the a reference program image.  */
-  if (sim_analyze_program (sd,
-			   (STATE_PROG_ARGV (sd) != NULL
-			    ? *STATE_PROG_ARGV (sd)
-			    : NULL), abfd) != SIM_RC_OK)
+  if (sim_analyze_program (sd, STATE_PROG_FILE (sd), abfd) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -1418,7 +1422,7 @@ sim_create_inferior (SIM_DESC sd, struct bfd *prog_bfd,
 		     char * const *argv, char * const *env)
 {
   SIM_CPU *cpu = STATE_CPU (sd, 0);
-  char ** avp;
+  char * const *avp;
   int nargs = 0;
   int nenv = 0;
   int s_length;

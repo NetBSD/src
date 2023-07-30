@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,21 +54,18 @@ gdb_test_no_output "delete 2"
 gdb_test "continue" ".*Breakpoint 1, main.*" \
     "continue across exec"
 
-gdb_test "info threads" ".*" "info threads after exec"
-
-set test "info threads after exec"
-gdb_test_multiple "info threads" "$test" {
+gdb_test_multiple "info threads" "info threads after exec" {
     -re "2 *Thread .*$gdb_prompt $" {
 	# Old threads left behind.
-	fail "$test"
+	fail "$gdb_test_name"
     }
     -re "4 *Thread .*$gdb_prompt $" {
 	# New threads registered.
-	fail "$test"
+	fail "$gdb_test_name"
     }
     -re "$gdb_prompt $" {
 	# Target doesn't register the main thread, pass for now.
-	pass "$test"
+	pass "$gdb_test_name"
     }
 }
 

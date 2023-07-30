@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,10 +55,10 @@ for {set i 0} {$i < 100} {incr i} {
 	    } elseif {$step_at == 1 && $now == 2} {
 		set failed 0
 		# Continue over the re-signalling back to the handle entry.
-		gdb_test_no_output {enable $step1} ""
-		gdb_test "continue" " step-1 .*" ""
+		gdb_test_no_output -nopass {enable $step1}
+		gdb_test -nopass "continue" " step-1 .*"
 		set now 1
-		gdb_test_no_output {disable $step1} ""
+		gdb_test_no_output -nopass {disable $step1}
 	    } else  {
 		fail $test
 	    }

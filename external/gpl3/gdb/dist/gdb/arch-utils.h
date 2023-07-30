@@ -1,6 +1,6 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 
 #include "gdbarch.h"
 
-struct frame_info;
+class frame_info_ptr;
 struct minimal_symbol;
 struct type;
 struct gdbarch_info;
@@ -75,9 +75,7 @@ struct bp_manipulation_endian
   BREAK_INSN_LITTLE, BREAK_INSN_BIG>
 
 /* Default implementation of gdbarch_displaced_hw_singlestep.  */
-extern int
-  default_displaced_step_hw_singlestep (struct gdbarch *,
-					struct displaced_step_closure *);
+extern bool default_displaced_step_hw_singlestep (struct gdbarch *);
 
 /* Possible value for gdbarch_displaced_step_location:
    Place displaced instructions at the program's entry point,
@@ -134,7 +132,33 @@ extern const struct floatformat **
   default_floatformat_for_type (struct gdbarch *gdbarch,
 				const char *name, int len);
 
-extern CORE_ADDR generic_skip_trampoline_code (struct frame_info *frame,
+/* Default implementation of gdbarch_remove_non_address_bits.  */
+CORE_ADDR default_remove_non_address_bits (struct gdbarch *gdbarch,
+					   CORE_ADDR pointer);
+
+/* Default implementation of gdbarch_memtag_to_string.  */
+extern std::string default_memtag_to_string (struct gdbarch *gdbarch,
+					     struct value *tag);
+
+/* Default implementation of gdbarch_tagged_address_p.  */
+bool default_tagged_address_p (struct gdbarch *gdbarch, struct value *address);
+
+/* Default implementation of gdbarch_memtag_matches_p.  */
+extern bool default_memtag_matches_p (struct gdbarch *gdbarch,
+				       struct value *address);
+
+/* Default implementation of gdbarch_set_memtags.  */
+bool default_set_memtags (struct gdbarch *gdbarch,
+			  struct value *address, size_t length,
+			  const gdb::byte_vector &tags,
+			  memtag_type tag_type);
+
+/* Default implementation of gdbarch_get_memtag.  */
+struct value *default_get_memtag (struct gdbarch *gdbarch,
+				  struct value *address,
+				  memtag_type tag_type);
+
+extern CORE_ADDR generic_skip_trampoline_code (frame_info_ptr frame,
 					       CORE_ADDR pc);
 
 extern CORE_ADDR generic_skip_solib_resolver (struct gdbarch *gdbarch,
@@ -147,7 +171,7 @@ extern int generic_stack_frame_destroyed_p (struct gdbarch *gdbarch,
 					    CORE_ADDR pc);
 
 extern int default_code_of_frame_writable (struct gdbarch *gdbarch,
-					   struct frame_info *frame);
+					   frame_info_ptr frame);
 
 /* By default, registers are not convertible.  */
 extern int generic_convert_register_p (struct gdbarch *gdbarch, int regnum,
@@ -175,12 +199,6 @@ extern enum bfd_endian selected_byte_order (void);
 /* Return the selected architecture's name, or NULL if no architecture
    was explicitly selected.  */
 extern const char *selected_architecture_name (void);
-
-/* Initialize a ``struct info''.  Can't use memset(0) since some
-   default values are not zero.  "fill" takes all available
-   information and fills in any unspecified fields.  */
-
-extern void gdbarch_info_init (struct gdbarch_info *info);
 
 /* Similar to init, but this time fill in the blanks.  Information is
    obtained from the global "set ..." options and explicitly
@@ -277,19 +295,17 @@ extern ULONGEST default_type_align (struct gdbarch *gdbarch,
 				    struct type *type);
 
 /* Default implementation of gdbarch get_pc_address_flags method.  */
-extern std::string default_get_pc_address_flags (frame_info *frame,
+extern std::string default_get_pc_address_flags (frame_info_ptr frame,
 						 CORE_ADDR pc);
 
 /* Default implementation of gdbarch read_core_file_mappings method.  */
-extern void default_read_core_file_mappings (struct gdbarch *gdbarch,
-					     struct bfd *cbfd,
-					     gdb::function_view<void (ULONGEST count)>
-					       pre_loop_cb,
-					     gdb::function_view<void (int num,
-								      ULONGEST start,
-								      ULONGEST end,
-								      ULONGEST file_ofs,
-								      const char *filename,
-								      const void *other)>
-					       loop_cb);
+extern void default_read_core_file_mappings
+  (struct gdbarch *gdbarch,
+   struct bfd *cbfd,
+   read_core_file_mappings_pre_loop_ftype pre_loop_cb,
+   read_core_file_mappings_loop_ftype loop_cb);
+
+/* Default implementation of gdbarch default_get_return_buf_addr method.  */
+extern CORE_ADDR default_get_return_buf_addr (struct type *val_typegdbarch,
+					      frame_info_ptr cur_frame);
 #endif /* ARCH_UTILS_H */

@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 Free Software Foundation, Inc.
+# Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 # branch to TAR and check that we stop at the address that we wrote to
 # register.
 
-if {![istarget "powerpc*-*-linux*"]} then {
+if {![istarget "powerpc*-*-linux*"]} {
     verbose "Skipping PowerPC test for the TAR register."
     return
 }

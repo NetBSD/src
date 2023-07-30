@@ -1,5 +1,5 @@
 /* OpenRISC simulator support code
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -16,6 +16,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #define WANT_CPU_OR1K32BF
 #define WANT_CPU
 
@@ -28,8 +31,7 @@
 #include <string.h>
 
 int
-or1k32bf_fetch_register (sim_cpu *current_cpu, int rn, unsigned char *buf,
-			 int len)
+or1k32bf_fetch_register (sim_cpu *current_cpu, int rn, void *buf, int len)
 {
   if (rn < 32)
     SETTWI (buf, GET_H_GPR (rn));
@@ -52,8 +54,7 @@ or1k32bf_fetch_register (sim_cpu *current_cpu, int rn, unsigned char *buf,
 }
 
 int
-or1k32bf_store_register (sim_cpu *current_cpu, int rn, unsigned char *buf,
-			 int len)
+or1k32bf_store_register (sim_cpu *current_cpu, int rn, const void *buf, int len)
 {
   if (rn < 32)
     SET_H_GPR (rn, GETTWI (buf));

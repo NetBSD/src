@@ -1,4 +1,4 @@
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,6 @@
 set testfile weird
 set srcfile [standard_output_file weird.s]
 set binfile [standard_output_file weirdx.o]
-
-if { [ get_compiler_info ] } {
-    return -1
-}
 
 proc do_tests {} {
 	global binfile

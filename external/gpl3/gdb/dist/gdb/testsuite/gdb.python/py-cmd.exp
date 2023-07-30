@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2020 Free Software Foundation, Inc.
+# Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,8 +27,7 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-if ![runto_main] then {
-    fail "cannot run to main."
+if {![runto_main]} {
     return 0
 }
 
@@ -301,3 +300,33 @@ gdb_test_multiple "test_multiline" $test {
 	pass $test
     }
 }
+
+# Test command redefining itself
+
+proc_with_prefix test_command_redefining_itself {} {
+    # Start with a fresh gdb
+    clean_restart
+
+
+    gdb_test_multiline "input command redefining itself" \
+	"python" "" \
+	"class redefine_cmd (gdb.Command):" "" \
+	"  def __init__ (self, msg):" "" \
+	"    super (redefine_cmd, self).__init__ (\"redefine_cmd\", gdb.COMMAND_OBSCURE)" "" \
+	"    self._msg = msg" "" \
+	"  def invoke (self, arg, from_tty):" "" \
+	"    print (\"redefine_cmd output, msg = %s\" % self._msg)" "" \
+	"    redefine_cmd (arg)" "" \
+	"redefine_cmd (\"XXX\")" "" \
+	"end" ""
+
+    gdb_test "redefine_cmd AAA" \
+	"redefine_cmd output, msg = XXX" \
+	"call command redefining itself 1"
+
+    gdb_test "redefine_cmd BBB" \
+	"redefine_cmd output, msg = AAA" \
+	"call command redefining itself 2"
+}
+
+test_command_redefining_itself

@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,10 @@
 
 from perftest import perftest
 
-class SkipCommand (perftest.TestCaseWithBasicMeasurements):
+
+class SkipCommand(perftest.TestCaseWithBasicMeasurements):
     def __init__(self, name, step):
-        super (SkipCommand, self).__init__ (name)
+        super(SkipCommand, self).__init__(name)
         self.step = step
 
     def warm_up(self):

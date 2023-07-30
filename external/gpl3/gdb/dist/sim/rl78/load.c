@@ -1,6 +1,6 @@
 /* load.c --- loading object files into the RL78 simulator.
 
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2023 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.
@@ -19,8 +19,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
-#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -128,13 +129,16 @@ rl78_load (bfd *prog, host_callback *callbacks, const char * const simname)
 
       base = p->p_paddr;
       if (verbose > 1)
-	fprintf (stderr, "[load segment: lma=%08x vma=%08x size=%08x]\n",
-		 (int) base, (int) p->p_vaddr, (int) size);
+	fprintf (stderr,
+		 "[load segment: lma=%08" PRIx64 " vma=%08" PRIx64 " "
+		 "size=%08" PRIx64 "]\n",
+		 (uint64_t) base, (uint64_t) p->p_vaddr, (uint64_t) size);
       if (callbacks)
 	xprintf (callbacks,
-	         "Loading section %s, size %#lx lma %08lx vma %08lx\n",
-	         find_section_name_by_offset (prog, p->p_offset),
-		 size, base, p->p_vaddr);
+		 "Loading section %s, size %#" PRIx64 " "
+		 "lma %08" PRIx64 " vma %08" PRIx64 "\n",
+		 find_section_name_by_offset (prog, p->p_offset),
+		 (uint64_t) size, (uint64_t) base, (uint64_t) p->p_vaddr);
 
       buf = xmalloc (size);
 
@@ -147,14 +151,17 @@ rl78_load (bfd *prog, host_callback *callbacks, const char * const simname)
 
       if (bfd_bread (buf, size, prog) != size)
 	{
-	  fprintf (stderr, "%s: Failed to read %lx bytes\n", simname, size);
+	  fprintf (stderr, "%s: Failed to read %" PRIx64 " bytes\n",
+		   simname, (uint64_t) size);
 	  continue;
 	}
 
       if (base > 0xeffff || base + size > 0xeffff)
 	{
-	  fprintf (stderr, "%s, Can't load image to RAM/SFR space: 0x%lx - 0x%lx\n",
-		   simname, base, base+size);
+	  fprintf (stderr,
+		   "%s, Can't load image to RAM/SFR space: 0x%" PRIx64 " "
+		   "- 0x%" PRIx64 "\n",
+		   simname, (uint64_t) base, (uint64_t) (base + size));
 	  continue;
 	}
       if (max_rom < base + size)

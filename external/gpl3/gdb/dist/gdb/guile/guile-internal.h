@@ -1,6 +1,6 @@
 /* Internal header for GDB/Scheme code.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,7 @@
 #include "extension-priv.h"
 #include "symtab.h"
 #include "libguile.h"
+#include "objfiles.h"
 
 struct block;
 struct frame_info;
@@ -40,12 +41,12 @@ typedef int excp_matcher_func (SCM key);
 
 /* Scheme variables to define during initialization.  */
 
-typedef struct
+struct scheme_variable
 {
   const char *name;
   SCM value;
   const char *doc_string;
-} scheme_variable;
+};
 
 /* End of scheme_variable table mark.  */
 
@@ -89,7 +90,7 @@ as_a_scm_t_subr (SCM (*func) (SCM, SCM, SCM))
 
 /* Scheme functions to define during initialization.  */
 
-typedef struct
+struct scheme_function
 {
   const char *name;
   int required;
@@ -97,7 +98,7 @@ typedef struct
   int rest;
   scm_t_subr func;
   const char *doc_string;
-} scheme_function;
+};
 
 /* End of scheme_function table mark.  */
 
@@ -105,11 +106,11 @@ typedef struct
 
 /* Useful for defining a set of constants.  */
 
-typedef struct
+struct scheme_integer_constant
 {
   const char *name;
   int value;
-} scheme_integer_constant;
+};
 
 #define END_INTEGER_CONSTANTS { NULL, 0 }
 
@@ -239,20 +240,20 @@ extern int gdbscm_guile_version_is_at_least (int major, int minor, int micro);
 #define GDB_SMOB_HEAD \
   int empty_base_class;
 
-typedef struct
+struct gdb_smob
 {
   GDB_SMOB_HEAD
-} gdb_smob;
+};
 
-typedef struct _chained_gdb_smob
+struct chained_gdb_smob
 {
   GDB_SMOB_HEAD
 
-  struct _chained_gdb_smob *prev;
-  struct _chained_gdb_smob *next;
-} chained_gdb_smob;
+  chained_gdb_smob *prev;
+  chained_gdb_smob *next;
+};
 
-typedef struct _eqable_gdb_smob
+struct eqable_gdb_smob
 {
   GDB_SMOB_HEAD
 
@@ -267,12 +268,11 @@ typedef struct _eqable_gdb_smob
      we need to invalidate the objects: we can do that using the same hashtab
      used to record the smob for eq-ability.  */
   SCM containing_scm;
-} eqable_gdb_smob;
+};
 
 #undef GDB_SMOB_HEAD
 
 struct objfile;
-struct objfile_data;
 
 /* A predicate that returns non-zero if an object is a particular kind
    of gsmob.  */
@@ -286,14 +286,6 @@ extern void gdbscm_init_chained_gsmob (chained_gdb_smob *base);
 
 extern void gdbscm_init_eqable_gsmob (eqable_gdb_smob *base,
 				      SCM containing_scm);
-
-extern void gdbscm_add_objfile_ref (struct objfile *objfile,
-				    const struct objfile_data *data_key,
-				    chained_gdb_smob *g_smob);
-
-extern void gdbscm_remove_objfile_ref (struct objfile *objfile,
-				       const struct objfile_data *data_key,
-				       chained_gdb_smob *g_smob);
 
 extern htab_t gdbscm_create_eqable_gsmob_ptr_map (htab_hash hash_fn,
 						  htab_eq eq_fn);
@@ -408,7 +400,8 @@ extern SCM gdbscm_unsafe_call_1 (SCM proc, SCM arg0);
 extern gdb::unique_xmalloc_ptr<char> gdbscm_safe_eval_string
   (const char *string, int display_result);
 
-extern char *gdbscm_safe_source_script (const char *filename);
+extern gdb::unique_xmalloc_ptr<char> gdbscm_safe_source_script
+  (const char *filename);
 
 extern void gdbscm_enter_repl (void);
 
@@ -416,7 +409,7 @@ extern void gdbscm_enter_repl (void);
 
 /* scm-arch.c */
 
-typedef struct _arch_smob arch_smob;
+struct arch_smob;
 
 extern struct gdbarch *arscm_get_gdbarch (arch_smob *a_smob);
 
@@ -447,18 +440,18 @@ extern char *gdbscm_canonicalize_command_name (const char *name,
 
 /* scm-frame.c */
 
-typedef struct _frame_smob frame_smob;
+struct frame_smob;
 
 extern int frscm_is_frame (SCM scm);
 
 extern frame_smob *frscm_get_frame_smob_arg_unsafe (SCM frame_scm, int arg_pos,
 						    const char *func_name);
 
-extern struct frame_info *frscm_frame_smob_to_frame (frame_smob *);
+extern struct frame_info_ptr frscm_frame_smob_to_frame (frame_smob *);
 
 /* scm-iterator.c */
 
-typedef struct _iterator_smob iterator_smob;
+struct iterator_smob;
 
 extern SCM itscm_iterator_smob_object (iterator_smob *i_smob);
 
@@ -500,7 +493,7 @@ extern void lsscm_val_print_lazy_string
 
 /* scm-objfile.c */
 
-typedef struct _objfile_smob objfile_smob;
+struct objfile_smob;
 
 extern SCM ofscm_objfile_smob_pretty_printers (objfile_smob *o_smob);
 
@@ -510,7 +503,7 @@ extern SCM ofscm_scm_from_objfile (struct objfile *objfile);
 
 /* scm-progspace.c */
 
-typedef struct _pspace_smob pspace_smob;
+struct pspace_smob;
 
 extern SCM psscm_pspace_smob_pretty_printers (const pspace_smob *);
 
@@ -557,7 +550,7 @@ extern SCM stscm_scm_from_sal (struct symtab_and_line sal);
 
 /* scm-type.c */
 
-typedef struct _type_smob type_smob;
+struct type_smob;
 
 extern int tyscm_is_type (SCM scm);
 
@@ -595,7 +588,10 @@ extern struct value *vlscm_convert_value_from_scheme
 extern objfile_script_sourcer_func gdbscm_source_objfile_script;
 extern objfile_script_executor_func gdbscm_execute_objfile_script;
 
-extern int gdbscm_auto_load_enabled (const struct extension_language_defn *);
+/* Return true if auto-loading Guile scripts is enabled.
+   This is the extension_language_script_ops.auto_load_enabled "method".  */
+
+extern bool gdbscm_auto_load_enabled (const struct extension_language_defn *);
 
 extern void gdbscm_preserve_values
   (const struct extension_language_defn *,
@@ -684,7 +680,7 @@ unpack (const gdb_exception &exc)
     if (exception.reason < 0)				\
       {							\
 	gdbscm_throw_gdb_exception (exception);		\
-        /*NOTREACHED */					\
+	/*NOTREACHED */					\
       }							\
   } while (0)
 

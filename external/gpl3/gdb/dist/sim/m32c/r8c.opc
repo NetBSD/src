@@ -1,6 +1,6 @@
 /* r8c.opc --- semantics for r8c opcodes.		        -*- mode: c -*-
 
-Copyright (C) 2005-2020 Free Software Foundation, Inc.
+Copyright (C) 2005-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -18,16 +18,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ansidecl.h"
 #include "cpu.h"
 #include "mem.h"
 #include "misc.h"
 #include "int.h"
-
-#define AU  __attribute__((unused))
 
 #define tprintf if (trace) printf
 
@@ -589,6 +590,7 @@ decode_r8c (void)
 
   /* w = width, i = immediate, c = carry, s = subtract */
 
+  {
   int src = i ? IMM(w) : get_reg (w ? r1 : r0h);
   int dest = get_reg (w ? r0 : r0l);
   int res;
@@ -623,6 +625,7 @@ decode_r8c (void)
   set_szc (res, w+1, c);
 
   put_reg (w ? r0 : r0l, res);
+  }
 
   /** 1010 1dst            DEC.B dest */
 
@@ -981,9 +984,11 @@ decode_r8c (void)
 
   /** 1110 1011 0reg 1src  MOVA src,dest */
 
+  {
   static reg_id map[] = { r0, r1, r2, r3, a0, a1, 0, 0 };
   sc = decode_srcdest4 (8 + src, 0);
   put_reg (map[reg], sc.u.addr);
+  }
 
   /** 0111 1100 10hl dest  MOVdir R0L,dest */
 
@@ -1159,6 +1164,7 @@ decode_r8c (void)
 
   /** 1110 1101            POPM dest */
 
+  {
   static int map[] = { r0, r1, r2, r3, a0, a1, sb, fb };
   imm = IMM(0);
   tprintf("popm: %x\n", imm);
@@ -1169,6 +1175,7 @@ decode_r8c (void)
 	put_reg (map[a], v);
 	put_reg (sp, get_reg (sp) + 2);
       }
+  }
 
   /** 0111 110w 1110 0010  PUSH.size:G #IMM */
 
@@ -1234,6 +1241,7 @@ decode_r8c (void)
 
   /** 1110 1100            PUSHM src */
 
+  {
   static int map[] = { fb, sb, a1, a0, r3, r2, r1, r0 };
   imm = IMM(0);
   tprintf("pushm: %x\n", imm);
@@ -1244,6 +1252,7 @@ decode_r8c (void)
 	v = get_reg (map[a]);
 	mem_put_hi (get_reg (sp), v);
       }
+  }
 
   /** 1111 1011            REIT */
 
@@ -1258,6 +1267,7 @@ decode_r8c (void)
 
   /** 0111 110w 1111 0001  RMPA.size */
 
+  {
   int count = get_reg (r3);
   int list1 = get_reg (a0);
   int list2 = get_reg (a1);
@@ -1286,6 +1296,7 @@ decode_r8c (void)
   put_reg (a0, list1);
   put_reg (a1, list2);
   put_reg (w ? r2r0 : r0, sum);
+  }
 
   /** 0111 011w 1010 dest  ROLC.size dest */
 
@@ -1371,6 +1382,7 @@ decode_r8c (void)
 
   /** 0111 110w 1110 100b  SMOVB.size */
 
+  {
   int count = get_reg (r3);
   int s1 = get_reg (a0) + (get_reg (r1h) << 16);
   int s2 = get_reg (a1);
@@ -1396,9 +1408,11 @@ decode_r8c (void)
   put_reg (a0, s1 & 0xffff);
   put_reg (a1, s2);
   put_reg (r1h, s1 >> 16);
+  }
 
   /** 0111 110w 1110 1010  SSTR.size */
 
+  {
   int count = get_reg (r3);
   int s1 = get_reg (a1);
   v = get_reg (w ? r0 : r0l);
@@ -1419,6 +1433,7 @@ decode_r8c (void)
     }
   put_reg (r3, count);
   put_reg (a1, s1);
+  }
 
   /** 0111 1011 1src dest  STC src,dest */
 

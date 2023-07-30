@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Free Software Foundation, Inc.
+# Copyright (C) 2020-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,11 @@ if {[build_executable "failed to prepare" ${testfile} ${srcfile}] == -1} {
     return -1
 }
 
+clean_restart
+if {[skip_tui_tests]} {
+    return
+}
+
 Term::clean_restart 24 80 $testfile
 
 # Skip all tests if Python scripting is not enabled.
@@ -46,6 +51,12 @@ Term::command "layout test"
 Term::check_contents "test title" \
     "This Is The Title"
 Term::check_contents "Window display" "Test: 0"
+
+Term::command "python delete_window_title ()"
+Term::check_contents "error message after trying to delete title" \
+    "TypeError: Cannot delete \"title\" attribute\\."
+Term::check_contents "title is unchanged" \
+    "This Is The Title"
 
 Term::resize 51 51
 # Remember that a resize request actually does two resizes...

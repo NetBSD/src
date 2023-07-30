@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -21,7 +21,7 @@
 
 
 
-typedef unsigned64 insn_uint;
+typedef uint64_t insn_uint;
 
 
 /* Common among most entries:
@@ -219,11 +219,12 @@ struct _function_entry
 
 
 typedef void function_entry_handler
-  (lf *file, function_entry * function, void *data);
+  (lf *file, const function_entry *function, void *data);
 
 extern void function_entry_traverse
   (lf *file,
-   function_entry * functions, function_entry_handler * handler, void *data);
+   const function_entry *functions,
+   function_entry_handler * handler, void *data);
 
 
 /* cache-macro:
@@ -670,37 +671,37 @@ struct _insn_table
   filter *flags;
 };
 
-extern insn_table *load_insn_table (char *file_name, cache_entry *cache);
+extern insn_table *load_insn_table (const char *file_name, cache_entry *cache);
 
 typedef void insn_entry_handler
-  (lf *file, insn_table *isa, insn_entry * insn, void *data);
+  (lf *file, const insn_table *isa, const insn_entry *insn, void *data);
 
 extern void insn_table_traverse_insn
-  (lf *file, insn_table *isa, insn_entry_handler * handler, void *data);
+  (lf *file, const insn_table *isa, insn_entry_handler *handler, void *data);
 
 
 
 /* Printing */
 
-extern void print_insn_words (lf *file, insn_entry * insn);
+extern void print_insn_words (lf *file, const insn_entry *insn);
 
 
 
 /* Debugging */
 
-void
-  dump_insn_field
-  (lf *file, char *prefix, insn_field_entry *field, char *suffix);
+void dump_insn_field
+  (lf *file, const char *prefix, const insn_field_entry *field,
+   const char *suffix);
 
-void
-  dump_insn_word_entry
-  (lf *file, char *prefix, insn_word_entry *word, char *suffix);
+void dump_insn_word_entry
+  (lf *file, const char *prefix, const insn_word_entry *word,
+   const char *suffix);
 
-void
-  dump_insn_entry (lf *file, char *prefix, insn_entry * insn, char *suffix);
+void dump_insn_entry
+  (lf *file, const char *prefix, const insn_entry *insn, const char *suffix);
 
-void
-  dump_cache_entries
-  (lf *file, char *prefix, cache_entry *entry, char *suffix);
+void dump_cache_entries
+  (lf *file, const char *prefix, const cache_entry *entry, const char *suffix);
 
-void dump_insn_table (lf *file, char *prefix, insn_table *isa, char *suffix);
+void dump_insn_table
+  (lf *file, const char *prefix, const insn_table *isa, const char *suffix);

@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,15 +19,17 @@ if {![dwarf2_support]} {
     return 0
 }
 
-standard_testfile main.c enum-type-dw.S
+standard_testfile main.c -dw.S
 
 # Make some DWARF for the test.
 set asm_file [standard_output_file $srcfile2]
 Dwarf::assemble $asm_file {
+    global srcfile
+
     cu {} {
 	DW_TAG_compile_unit {
                 {DW_AT_language @DW_LANG_C}
-                {DW_AT_name     enum-type-dw.c}
+                {DW_AT_name     $srcfile}
                 {DW_AT_comp_dir /tmp}
         } {
 	    declare_labels integer_label uinteger_label
@@ -35,13 +37,13 @@ Dwarf::assemble $asm_file {
             integer_label: DW_TAG_base_type {
                 {DW_AT_byte_size 4 DW_FORM_sdata}
                 {DW_AT_encoding  @DW_ATE_signed}
-                {DW_AT_name      integer}
+                {DW_AT_name      int}
             }
 
             uinteger_label: DW_TAG_base_type {
                 {DW_AT_byte_size 4 DW_FORM_sdata}
                 {DW_AT_encoding  @DW_ATE_unsigned}
-                {DW_AT_name      {unsigned integer}}
+		{DW_AT_name      {unsigned int}}
             }
 
 	    DW_TAG_enumeration_type {
@@ -77,5 +79,5 @@ gdb_test "print sizeof(enum E)" " = 4"
 gdb_test "ptype enum EU" "type = enum EU {TWO = 2}" \
     "ptype EU in enum C"
 gdb_test_no_output "set lang c++"
-gdb_test "ptype enum EU" "type = enum EU : unsigned integer {TWO = 2}" \
+gdb_test "ptype enum EU" "type = enum EU : unsigned int {TWO = 2}" \
     "ptype EU in C++"

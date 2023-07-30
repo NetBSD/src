@@ -1,5 +1,5 @@
 /* s12z-decode.c -- Freescale S12Z disassembly
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

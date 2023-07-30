@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,14 +13,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 standard_testfile .cc
@@ -109,13 +109,21 @@ proc check_new_derived_with_rtti {var_name var_type testname} {
         "delete varobj for ${var_name} (with RTTI) in $testname"
 }
 
-mi_run_inline_test use_rtti_for_ptr
-mi_run_inline_test use_rtti_for_ref
-mi_run_inline_test use_rtti_for_ptr_child
-mi_run_inline_test use_rtti_for_ref_child
-mi_run_inline_test use_rtti_with_multiple_inheritence
-mi_run_inline_test type_update_when_use_rtti
-mi_run_inline_test skip_type_update_when_not_use_rtti
+set inline_tests {
+    use_rtti_for_ptr
+    use_rtti_for_ref
+    use_rtti_for_ptr_child
+    use_rtti_for_ref_child
+    use_rtti_with_multiple_inheritence
+    type_update_when_use_rtti
+    skip_type_update_when_not_use_rtti
+}
+
+foreach_with_prefix inline_test $inline_tests {
+    if { [mi_run_inline_test $inline_test] < 0 } {
+       return -1
+    }
+}
 
 mi_gdb_exit
 return 0

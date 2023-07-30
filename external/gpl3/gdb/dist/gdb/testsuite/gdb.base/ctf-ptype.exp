@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,20 +20,21 @@ if [skip_ctf_tests] {
     return 0
 }
 
+# Some tests require GCC.
+set gcc_compiled [is_c_compiler_gcc]
+
 standard_testfile .c
 
-# Using `-gt` generates full-fledged CTF debug information.
-set opts "additional_flags=-gt"
+# Using `-gctf` generates full-fledged CTF debug information.
+set opts {}
+lappend opts additional_flags=-gctf
+lappend opts ldflags=-Wl,--strip-debug
+lappend opts ldflags=-Wl,--ctf-variables
+lappend opts nowarnings
 
 if { [prepare_for_testing "failed to prepare" ${testfile} \
-	  [list $srcfile] [list $opts nowarnings]] } {
+	  [list $srcfile] $opts] } {
     return 0
-}
-
-# Create and source the file that provides information about the compiler
-# used to compile the test case.
-if [get_compiler_info] {
-    return -1
 }
 
 # Test ptype of unnamed enumeration members before any action causes
@@ -63,18 +64,20 @@ gdb_test "ptype struct t_struct" "type = struct t_struct \{.*\[\r\n\]    (unsign
 
 # Test the equivalence between '.' and '->' for struct member references.
 
-if [gdb_test "ptype v_t_struct_p.v_float_member"	"type = float"]<0 then {
+if {[gdb_test "ptype v_struct1.v_float_member"	"type = float"] < 0} {
     return -1
 }
-if [gdb_test "ptype v_t_struct_p->v_float_member"	"type = float"]<0 then {
+if {[gdb_test "ptype v_struct1->v_float_member"	"type = float"] < 0} {
     return -1
 }
-if [gdb_test "ptype v_t_struct_p.v_float_member"	"type = float"]<0 then {
+if {[gdb_test "ptype v_t_struct_p.v_float_member"	"type = float"] < 0} {
     return -1
 }
-if [gdb_test "ptype v_t_struct_p->v_float_member"	"type = float"]<0 then {
+if {[gdb_test "ptype v_t_struct_p->v_float_member"	"type = float"] < 0} {
     return -1
 }
+
+gdb_test "ptype struct link" "type = struct link \{\[\r\n\]+\[ \t\]+struct link \\*next;\[\r\n\]+\[ \t\]+struct link \\*\\(\\*linkfunc\\)\\((struct link \\*, int|void|)\\);\[\r\n\]+\[ \t\]+struct t_struct stuff.3.;\[\r\n\]+\}.*" "ptype linked list structure"
 
 #
 # test ptype command with unions
@@ -95,7 +98,7 @@ gdb_test "ptype enum colors" "type = enum colors \{yellow, purple, pink\}.*" "pt
 #
 gdb_test "ptype boolean" "type = enum (boolean |)\{FALSE, TRUE\}.*" "ptype unnamed typedef'd enumeration"
 
-gdb_test "list main" ".*"
+gdb_test "list -q main" ".*"
 
 # Same thing with struct and union.
 gdb_test "ptype t_struct3" "type = struct (t_struct3 |)\{.*
@@ -211,7 +214,7 @@ gdb_test "ptype the_highest" \
 
 gdb_test "ptype the_highest.anonymous_level_1" \
          "type = struct \{.*\[\r\n\] *int b;.*\[\r\n\] *struct \{.*\[\r\n\] *int c;.*\[\r\n\] *\} anonymous_level_2;.*\[\r\n\]}.*" \
-         "ptype the_highest"
+         "ptype the_highest.anonymous_level_1"
 
 # Print the type of the identifier ID, and check the response:
 # - Expect to see PROTOTYPED as the type.  PROTOTYPED is not a regular
@@ -255,18 +258,31 @@ proc ptype_maybe_prototyped { id prototyped plain { overprototyped "NO-MATCH" } 
     }
 }
 
+ptype_maybe_prototyped "func_type" "int (*)(int (*)(int, float), float)" \
+                                   "int (*)()"
 ptype_maybe_prototyped "old_fptr" "double (*)()" "double (*)()" \
                                   "double (*)(void)"
+ptype_maybe_prototyped "new_fptr" "double (*)()" "double (*)()"
+ptype_maybe_prototyped "fptr" "int (*)(int, float)" "int (*)()"
+ptype_maybe_prototyped "fptr2" "int *(*)(int (*)(int, float), float)" \
+                               "int *(*)()"
+ptype_maybe_prototyped "xptr" "int (*)(int (*)(), int (*)(), int)" \
+                              "int (*)()" \
+                              "int (*)(int (*)(void), int (*)(void), int)"
+ptype_maybe_prototyped "ffptr" "int (*(*)(char))(short int)" \
+                               "int (*(*)())()"
+ptype_maybe_prototyped "fffptr" "int (*(*(*)(char))(short int))(long int)" \
+                                "int (*(*(*)())())()"
 
 # Test printing type of string constants and array constants, but
 # requires a running process.  These call malloc, and can take a long
 # time to execute over a slow serial link, so increase the timeout.
 
-if [runto_main] then {
+if {[runto_main]} {
 
   if [target_info exists gdb,cannot_call_functions] {
     unsupported "this target can not call functions"
-    continue
+    return
   }
 
   # We need to up this because this can be really slow on some boards.

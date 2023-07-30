@@ -1,4 +1,4 @@
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,10 +46,6 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {d
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile3}" "${binfile3}" executable {debug}] != "" } {
     untested "failed to compile attach exec-file changed test"
-    return -1
-}
-
-if [get_compiler_info] {
     return -1
 }
 
@@ -179,6 +175,10 @@ proc_with_prefix do_attach_failure_tests {} {
     gdb_test "add-inferior" "Added inferior 2.*" "add empty inferior 2"
     gdb_test "inferior 2" "Switching to inferior 2.*" "switch to inferior 2"
 
+    # Probe this before the failing attach: the failed attach against GDBserver
+    # currently leaves the extended-remote target in a bad state.
+    set do_kfail [target_is_gdbserver]
+
     set test "fail to attach again"
     gdb_test_multiple "attach $testpid" "$test" {
 	-re "Attaching to process $testpid.*warning: process .* is already traced by process .*$gdb_prompt $" {
@@ -190,13 +190,24 @@ proc_with_prefix do_attach_failure_tests {} {
 	}
     }
 
+    # To ensure the target is still alive and working after this, try to run
+    # inferior 1.
+    gdb_test_no_output "set confirm off"
     gdb_test "inferior 1" "Switching to inferior 1.*" "switch to inferior 1"
-    set test "exit after attach failures"
-    gdb_test "kill" \
-	"" \
-	"$test" \
-	"Kill the program being debugged.*y or n. $" \
-	"y"
+
+    if { $do_kfail } { setup_kfail "gdb/19558" "*-*-*" }
+    gdb_test "kill" "killed.*" "exit after attach failures"
+
+    # This can probably be replaced with a call to runto or runto_main once
+    # the kfail is removed.
+    gdb_breakpoint "main"
+    gdb_run_cmd
+    if { $do_kfail } { setup_kfail "gdb/19558" "*-*-*" }
+    gdb_test_multiple "" "stop at main" {
+	-wrap -re "Breakpoint $::decimal, main .*" {
+	    pass $gdb_test_name
+	}
+    }
 
     # Another "don't leave a process around"
     kill_wait_spawned_process $test_spawn_id
@@ -442,7 +453,7 @@ proc_with_prefix do_command_attach_tests {} {
     global gdb_prompt
     global binfile
 
-    if ![isnative] then {
+    if {![isnative]} {
 	unsupported "command attach test"
 	return 0
     }
@@ -452,14 +463,9 @@ proc_with_prefix do_command_attach_tests {} {
 
     gdb_exit
 
-    set res [gdb_spawn_with_cmdline_opts \
-		 "-quiet -iex \"set height 0\" -iex \"set width 0\" --pid=$testpid"]
-    set test "starting with --pid"
-    gdb_test_multiple "" $test {
-	-re "Reading symbols from.*$gdb_prompt $" {
-	    pass "$test"
-	}
-    }
+    # gdb_spawn_attach_cmdline records test results.  No need to explicitly
+    # call pass/fail here.
+    gdb_spawn_attach_cmdline $testpid
 
     # Get rid of the process
     kill_wait_spawned_process $test_spawn_id
@@ -468,52 +474,54 @@ proc_with_prefix do_command_attach_tests {} {
 # Test ' gdb --pid PID -ex "run" '.  GDB used to have a bug where
 # "run" would run before the attach finished - PR17347.
 
-proc test_command_line_attach_run {} {
+proc_with_prefix test_command_line_attach_run {} {
     global gdb_prompt
     global binfile
 
-    # Skip test if we cannot attach on the command line and use the run command.
-    # ??? Unclear what condition to use to return here when using gdbserver.
-    # ??? None of the below works.
-    #    ![isnative] || [target_is_gdbserver]
-    #    ![isnative] || [use_gdb_stub]
-    if { ![isnative] || [is_remote target] } then {
+    # The --pid option is used to attach to a process using the native target.
+    # Start GDB and run to main just to see what the execution target is, skip
+    # if it's not the native target.
+    clean_restart $binfile
+
+    if { ![runto_main] } {
+	return
+    }
+
+    if { ![gdb_is_target_native] } {
 	unsupported "commandline attach run test"
-	return 0
+	return
     }
 
-    with_test_prefix "cmdline attach run" {
-	set test_spawn_id [spawn_wait_for_attach $binfile]
-	set testpid [spawn_id_get_pid $test_spawn_id]
+    set test_spawn_id [spawn_wait_for_attach $binfile]
+    set testpid [spawn_id_get_pid $test_spawn_id]
 
-	set test "run to prompt"
-	gdb_exit
+    set test "run to prompt"
+    gdb_exit
 
-	set res [gdb_spawn_with_cmdline_opts \
-		     "-quiet -iex \"set height 0\" -iex \"set width 0\" --pid=$testpid -ex \"start\""]
-	if { $res != 0} {
-	    fail $test
-	    kill_wait_spawned_process $test_spawn_id
-	    return $res
-	}
-	gdb_test_multiple "" $test {
-	    -re {Attaching to.*Start it from the beginning\? \(y or n\) } {
-		pass $test
-	    }
-	}
-
-	send_gdb "y\n"
-
-	set test "run to main"
-	gdb_test_multiple "" $test {
-	    -re "Temporary breakpoint .* main .*$gdb_prompt $" {
-		pass $test
-	    }
-	}
-
-	# Get rid of the process
+    set res [gdb_spawn_with_cmdline_opts \
+		 "-quiet -iex \"set height 0\" -iex \"set width 0\" --pid=$testpid -ex \"start\""]
+    if { $res != 0} {
+	fail $test
 	kill_wait_spawned_process $test_spawn_id
+	return $res
     }
+    gdb_test_multiple "" $test {
+	-re {Attaching to.*Start it from the beginning\? \(y or n\) } {
+	    pass $test
+	}
+    }
+
+    send_gdb "y\n"
+
+    set test "run to main"
+    gdb_test_multiple "" $test {
+	-re "Temporary breakpoint .* main .*$gdb_prompt $" {
+	    pass $test
+	}
+    }
+
+    # Get rid of the process
+    kill_wait_spawned_process $test_spawn_id
 }
 
 

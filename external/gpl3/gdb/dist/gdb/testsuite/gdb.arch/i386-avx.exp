@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,44 +24,32 @@ if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
     return
 }
 
+if { ![have_avx] } {
+    verbose "Skipping x86 AVX tests."
+    return
+}
+
 standard_testfile .c
 
-if [get_compiler_info] {
-    return -1
-}
+set flags { debug }
 
-set additional_flags ""
+# C11 for _Alignas, gnu for asm.
+lappend flags additional_flags=-std=gnu11
+
 if { [test_compiler_info gcc*] || [test_compiler_info clang*] } {
-    set additional_flags "additional_flags=-mavx -I${srcdir}/.."
+    lappend flags "additional_flags=-mavx -I${srcdir}/.."
 }
 
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug $additional_flags]] != "" } {
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
+	  $flags] != "" } {
     unsupported "compiler does not support AVX"
     return
 }
 
 clean_restart ${binfile}
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
-}
-
-send_gdb "print have_avx ()\r"
-gdb_expect {
-    -re ".. = 1\r\n$gdb_prompt " {
-        pass "check whether processor supports AVX"
-    }
-    -re ".. = 0\r\n$gdb_prompt " {
-        verbose "processor does not support AVX; skipping AVX tests"
-        return
-    }
-    -re ".*$gdb_prompt $" {
-        fail "check whether processor supports AVX"
-    }
-    timeout {
-        fail "check whether processor supports AVX (timeout)"
-    }
 }
 
 gdb_test "break [gdb_get_line_number "first breakpoint here"]" \
@@ -112,8 +100,7 @@ with_test_prefix "force-disable xml descriptions" {
 	    clean_restart ${binfile}
 	}
 
-	if ![runto_main] then {
-	    fail "run to main"
+	if {![runto_main]} {
 	    return
 	}
 

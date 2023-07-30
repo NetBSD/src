@@ -1,5 +1,5 @@
 /* Run a function on the main thread
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #include "run-on-main-thread.h"
 #include "ser-event.h"
 #if CXX_STD_THREAD
+#include <thread>
 #include <mutex>
 #endif
 #include "gdbsupport/event-loop.h"
@@ -37,6 +38,10 @@ static std::vector<std::function<void ()>> runnables;
 /* Mutex to hold when handling RUNNABLE_EVENT or RUNNABLES.  */
 
 static std::mutex runnable_mutex;
+
+/* The main thread.  */
+
+static std::thread::id main_thread;
 
 #endif
 
@@ -89,10 +94,26 @@ run_on_main_thread (std::function<void ()> &&func)
   serial_event_set (runnable_event);
 }
 
+/* See run-on-main-thread.h.  */
+
+bool
+is_main_thread ()
+{
+#if CXX_STD_THREAD
+  return std::this_thread::get_id () == main_thread;
+#else
+  return true;
+#endif
+}
+
 void _initialize_run_on_main_thread ();
 void
 _initialize_run_on_main_thread ()
 {
+#if CXX_STD_THREAD
+  main_thread = std::this_thread::get_id ();
+#endif
   runnable_event = make_serial_event ();
-  add_file_handler (serial_event_fd (runnable_event), run_events, nullptr);
+  add_file_handler (serial_event_fd (runnable_event), run_events, nullptr,
+		    "run-on-main-thread");
 }

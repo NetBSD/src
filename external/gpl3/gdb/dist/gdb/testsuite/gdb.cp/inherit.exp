@@ -1,4 +1,4 @@
-# Copyright 1992-2020 Free Software Foundation, Inc.
+# Copyright 1992-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -677,8 +677,7 @@ proc test_print_mvi_classes { } {
 proc do_tests { } {
     gdb_test_no_output "set width 0"
 
-    if { ![runto_main] } then {
-	perror "couldn't run to main"
+    if {![runto_main]} {
 	return
     }
 
@@ -688,8 +687,7 @@ proc do_tests { } {
     test_ptype_vi
     test_ptype_mvi
 
-    if { ![runto 'inheritance2'] } then {
-	perror "couldn't run to inheritance2"
+    if {![runto 'inheritance2']} {
 	return
     }
 
@@ -708,7 +706,6 @@ proc do_tests { } {
     test_print_anon_union
 
     if { ![runto 'inheritance4'] } {
-	perror "couldn't run to inheritance4"
 	return
     }
 

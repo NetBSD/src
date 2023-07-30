@@ -7,8 +7,8 @@ If enabled, the simulator will keep track of how many cycles each
 instruction takes.  While not 100% accurate, it is very close,
 including modelling fetch stalls and register latency.
 
---enable-cycle-stats  (default)
---disable-cycle-stats
+--enable-sim-profile  (default)
+--disable-sim-profile
 
 If enabled, specifying "-v" twice on the simulator command line causes
 the simulator to print statistics on how much time was used by each

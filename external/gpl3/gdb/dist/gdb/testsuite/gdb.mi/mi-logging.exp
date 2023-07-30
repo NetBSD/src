@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,6 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    continue
-}
-
 standard_testfile basics.c
 set opts {debug}
 
@@ -29,23 +24,26 @@ if [build_executable $testfile.exp $testfile $srcfile $opts] {
     return -1
 }
 
-if {[mi_run_to_main] < 0} {
+mi_clean_restart $binfile
+
+if {[mi_runto_main] < 0} {
     return -1
 }
 
 set milogfile [standard_output_file "milog.txt"]
 
-mi_gdb_test "-gdb-set logging file $milogfile" ".*"
+mi_gdb_test "-gdb-set logging file $milogfile" "\\^done" \
+    "-gdb-set logging file"
 
 mi_gdb_test "-gdb-set logging overwrite on" ".*"
 
-mi_gdb_test "-gdb-set logging on" ".*" "logging on"
+mi_gdb_test "-gdb-set logging enabled on" ".*" "logging on"
 
 mi_step "logged step"
 
 mi_next "logged next"
 
-mi_gdb_test "-gdb-set logging off" ".*" "logging off"
+mi_gdb_test "-gdb-set logging enabled off" ".*" "logging off"
 
 set chan [open $milogfile]
 set logcontent [read $chan]
@@ -66,11 +64,11 @@ mi_gdb_test "-gdb-set logging redirect on" ".*" "redirect logging on"
 # Since all output will be going into the file, just keep sending commands
 # and don't expect anything to appear until logging is turned off.
 
-send_gdb "1001-gdb-set logging on\n"
+send_gdb "1001-gdb-set logging enabled on\n"
 send_gdb "1002-exec-step\n"
 send_gdb "1003-exec-next\n"
 
-mi_gdb_test "1004-gdb-set logging off" ".*" "redirect logging off"
+mi_gdb_test "1004-gdb-set logging enabled off" ".*" "redirect logging off"
 
 set chan [open $milogfile]
 set logcontent [read $chan]
@@ -87,12 +85,12 @@ if [regexp "1001\\^done\[\r\n\]+$mi_log_prompt.*1002\\^running\[\r\n\]+\\*runnin
 with_test_prefix "redirect while already logging" {
     mi_gdb_test "-gdb-set logging redirect off" ".*" \
 	"logging redirect off"
-    mi_gdb_test "-gdb-set logging on" ".*" \
+    mi_gdb_test "-gdb-set logging enabled on" ".*" \
 	"logging on"
     mi_gdb_test "-gdb-set logging redirect on" \
 	".*warning: Currently logging .*Turn the logging off and on to make the new setting effective.*" \
 	"logging redirect on"
-    mi_gdb_test "-gdb-set logging off" ".*" \
+    mi_gdb_test "-gdb-set logging enabled off" ".*" \
 	"logging off"
 }
 

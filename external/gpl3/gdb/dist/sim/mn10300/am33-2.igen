@@ -98,7 +98,7 @@
 "bset"
 *am33_2
 {
-  unsigned32 temp;
+  uint32_t temp;
   int z;
   
   PC = cia;
@@ -115,7 +115,7 @@
 "bclr"
 *am33_2
 {
-  unsigned32 temp;
+  uint32_t temp;
   int z;
   
   PC = cia;
@@ -1114,7 +1114,7 @@
   else
     {
       int reg = translate_rreg (SD_, Rm);
-      unsigned32 val = State.regs[reg];
+      uint32_t val = State.regs[reg];
       FPCR = (val & (EC_MASK | EE_MASK | FCC_MASK))
 	| ((FPCR & ~val) & EF_MASK);
     }
@@ -1147,7 +1147,7 @@
     fpu_disabled_exception (SD, CPU, cia);
   else
     {
-      unsigned32 val = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+      uint32_t val = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
       FPCR = (val & (EC_MASK | EE_MASK | FCC_MASK))
 	| ((FPCR & ~val) & EF_MASK);
     }
@@ -1424,7 +1424,7 @@
     fpu_disabled_exception (SD, CPU, cia);
   else
     {
-      uint32 imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+      uint32_t imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
       fpu_cmp (SD, CPU, cia, &XS2FS (Y,Sm), &imm, FP_SINGLE);
     }
@@ -1496,7 +1496,7 @@
     fpu_disabled_exception (SD, CPU, cia);
   else
     {
-      uint32 imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+      uint32_t imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
       fpu_add (SD, CPU, cia,
 	       &XS2FS (Y,Sm), &imm, &XS2FS (X,Sn), FP_SINGLE);
@@ -1569,7 +1569,7 @@
     fpu_disabled_exception (SD, CPU, cia);
   else
     {
-      uint32 imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+      uint32_t imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
       fpu_sub (SD, CPU, cia,
 	       &XS2FS (Y,Sm), &imm, &XS2FS (X,Sn), FP_SINGLE);
@@ -1642,7 +1642,7 @@
     fpu_disabled_exception (SD, CPU, cia);
   else
     {
-      uint32 imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+      uint32_t imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
       fpu_mul (SD, CPU, cia,
 	       &imm, &XS2FS (Y,Sm), &XS2FS (X,Sn), FP_SINGLE);
@@ -1715,7 +1715,7 @@
     fpu_disabled_exception (SD, CPU, cia);
   else
     {
-      uint32 imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
+      uint32_t imm = FETCH32 (IMM32A, IMM32B, IMM32C, IMM32D);
 
       fpu_div (SD, CPU, cia,
 	       &XS2FS (Y,Sm), &imm, &XS2FS (X,Sn), FP_SINGLE);

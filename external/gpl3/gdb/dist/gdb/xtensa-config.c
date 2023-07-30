@@ -1,6 +1,6 @@
 /* Configuration for the Xtensa architecture for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -62,7 +62,7 @@ const xtensa_mask_t xtensa_mask15 = { 1, xtensa_submask15 };
 
 
 /* Register map.  */
-xtensa_register_t rmap[] = 
+static xtensa_register_t rmap[] =
 {
   /*    idx ofs bi sz al targno  flags cp typ group name  */
   XTREG(  0,  0,32, 4, 4,0x0020,0x0006,-2, 9,0x0100,pc,          0,0,0,0,0,0)
@@ -179,43 +179,38 @@ xtensa_register_t rmap[] =
   XTREG(111,444,32, 4, 4,0x000e,0x0006,-2, 8,0x0100,a14,         0,0,0,0,0,0)
   XTREG(112,448,32, 4, 4,0x000f,0x0006,-2, 8,0x0100,a15,         0,0,0,0,0,0)
   XTREG(113,452, 4, 4, 4,0x2008,0x0006,-2, 6,0x1010,psintlevel,
-            0,0,&xtensa_mask0,0,0,0)
+	    0,0,&xtensa_mask0,0,0,0)
   XTREG(114,456, 1, 4, 4,0x2009,0x0006,-2, 6,0x1010,psum,
-            0,0,&xtensa_mask1,0,0,0)
+	    0,0,&xtensa_mask1,0,0,0)
   XTREG(115,460, 1, 4, 4,0x200a,0x0006,-2, 6,0x1010,pswoe,
-            0,0,&xtensa_mask2,0,0,0)
+	    0,0,&xtensa_mask2,0,0,0)
   XTREG(116,464, 2, 4, 4,0x200b,0x0006,-2, 6,0x1010,psring,
-            0,0,&xtensa_mask3,0,0,0)
+	    0,0,&xtensa_mask3,0,0,0)
   XTREG(117,468, 1, 4, 4,0x200c,0x0006,-2, 6,0x1010,psexcm,
-            0,0,&xtensa_mask4,0,0,0)
+	    0,0,&xtensa_mask4,0,0,0)
   XTREG(118,472, 2, 4, 4,0x200d,0x0006,-2, 6,0x1010,pscallinc,
-            0,0,&xtensa_mask5,0,0,0)
+	    0,0,&xtensa_mask5,0,0,0)
   XTREG(119,476, 4, 4, 4,0x200e,0x0006,-2, 6,0x1010,psowb,
-            0,0,&xtensa_mask6,0,0,0)
+	    0,0,&xtensa_mask6,0,0,0)
   XTREG(120,480,20, 4, 4,0x200f,0x0006,-2, 6,0x1010,litbaddr,
-            0,0,&xtensa_mask7,0,0,0)
+	    0,0,&xtensa_mask7,0,0,0)
   XTREG(121,484, 1, 4, 4,0x2010,0x0006,-2, 6,0x1010,litben,
-            0,0,&xtensa_mask8,0,0,0)
+	    0,0,&xtensa_mask8,0,0,0)
   XTREG(122,488, 4, 4, 4,0x2015,0x0006,-2, 6,0x1010,dbnum,
-            0,0,&xtensa_mask9,0,0,0)
+	    0,0,&xtensa_mask9,0,0,0)
   XTREG(123,492, 8, 4, 4,0x2016,0x0006,-2, 6,0x1010,asid3,
-            0,0,&xtensa_mask10,0,0,0)
+	    0,0,&xtensa_mask10,0,0,0)
   XTREG(124,496, 8, 4, 4,0x2017,0x0006,-2, 6,0x1010,asid2,
-            0,0,&xtensa_mask11,0,0,0)
+	    0,0,&xtensa_mask11,0,0,0)
   XTREG(125,500, 8, 4, 4,0x2018,0x0006,-2, 6,0x1010,asid1,
-            0,0,&xtensa_mask12,0,0,0)
+	    0,0,&xtensa_mask12,0,0,0)
   XTREG(126,504, 2, 4, 4,0x2019,0x0006,-2, 6,0x1010,instpgszid4,
-            0,0,&xtensa_mask13,0,0,0)
+	    0,0,&xtensa_mask13,0,0,0)
   XTREG(127,508, 2, 4, 4,0x201a,0x0006,-2, 6,0x1010,datapgszid4,
-            0,0,&xtensa_mask14,0,0,0)
+	    0,0,&xtensa_mask14,0,0,0)
   XTREG(128,512,10, 4, 4,0x201b,0x0006,-2, 6,0x1010,ptbase,
-            0,0,&xtensa_mask15,0,0,0)
+	    0,0,&xtensa_mask15,0,0,0)
   XTREG_END
 };
 
-
-
-#ifdef XTENSA_CONFIG_INSTANTIATE
-XTENSA_CONFIG_INSTANTIATE(rmap,0)
-#endif
-
+xtensa_gdbarch_tdep xtensa_tdep (rmap);

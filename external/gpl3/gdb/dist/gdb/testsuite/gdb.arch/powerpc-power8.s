@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2020 Free Software Foundation, Inc.
+   Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,27 +26,21 @@ func:
 	.long  0x7c00051d    /* tbegin.                    */
 	.long  0x7f80059c    /* tcheck  cr7                */
 	.long  0x7c00055d    /* tend.                      */
-	.long  0x7c00055d    /* tend.                      */
-	.long  0x7e00055d    /* tendall.                   */
 	.long  0x7e00055d    /* tendall.                   */
 	.long  0x7c18075d    /* treclaim. r24              */
 	.long  0x7c0007dd    /* trechkpt.                  */
 	.long  0x7c0005dd    /* tsuspend.                  */
-	.long  0x7c0005dd    /* tsuspend.                  */
-	.long  0x7c2005dd    /* tresume.                   */
 	.long  0x7c2005dd    /* tresume.                   */
 	.long  0x60420000    /* ori     r2,r2,0            */
 	.long  0x60000000    /* nop                        */
-	.long  0x60420000    /* ori     r2,r2,0            */
 	.long  0x4c000124    /* rfebb   0                  */
-	.long  0x4c000924    /* rfebb                      */
 	.long  0x4c000924    /* rfebb                      */
 	.long  0x4d950460    /* bgttar  cr5                */
 	.long  0x4c870461    /* bnstarl cr1                */
 	.long  0x4dec0460    /* blttar+ cr3                */
 	.long  0x4ce20461    /* bnetarl+                   */
-	.long  0x4c880c60    /* bctar   4,4*cr2+lt,1       */
-	.long  0x4c871461    /* bctarl  4,4*cr1+so,2       */
+	.long  0x4c880c60    /* bgetar  cr2,1              */
+	.long  0x4c871461    /* bnstarl cr1,2              */
 	.long  0x7c00003c    /* waitasec                   */
 	.long  0x7c00411c    /* msgsndp r8                 */
 	.long  0x7c200126    /* mtsle   1                  */
@@ -164,35 +158,23 @@ func:
 	.long  0x7c00719c    /* msgsnd  r14                */
 	.long  0x7c00b9dc    /* msgclr  r23                */
 	.long  0x7d002e99    /* lxvd2x  vs40,0,r5          */
-	.long  0x7d002e99    /* lxvd2x  vs40,0,r5          */
-	.long  0x7d543698    /* lxvd2x  vs10,r20,r6        */
 	.long  0x7d543698    /* lxvd2x  vs10,r20,r6        */
 	.long  0x7d203f99    /* stxvd2x vs41,0,r7          */
-	.long  0x7d203f99    /* stxvd2x vs41,0,r7          */
 	.long  0x7d754798    /* stxvd2x vs11,r21,r8        */
-	.long  0x7d754798    /* stxvd2x vs11,r21,r8        */
-	.long  0x7e803868    /* lbarx   r20,0,r7           */
 	.long  0x7e803868    /* lbarx   r20,0,r7           */
 	.long  0x7e803869    /* lbarx   r20,0,r7,1         */
 	.long  0x7e813868    /* lbarx   r20,r1,r7          */
-	.long  0x7e813868    /* lbarx   r20,r1,r7          */
 	.long  0x7e813869    /* lbarx   r20,r1,r7,1        */
-	.long  0x7ea040a8    /* ldarx   r21,0,r8           */
 	.long  0x7ea040a8    /* ldarx   r21,0,r8           */
 	.long  0x7ea040a9    /* ldarx   r21,0,r8,1         */
 	.long  0x7ea140a8    /* ldarx   r21,r1,r8          */
-	.long  0x7ea140a8    /* ldarx   r21,r1,r8          */
 	.long  0x7ea140a9    /* ldarx   r21,r1,r8,1        */
-	.long  0x7ec048e8    /* lharx   r22,0,r9           */
 	.long  0x7ec048e8    /* lharx   r22,0,r9           */
 	.long  0x7ec048e9    /* lharx   r22,0,r9,1         */
 	.long  0x7ec148e8    /* lharx   r22,r1,r9          */
-	.long  0x7ec148e8    /* lharx   r22,r1,r9          */
 	.long  0x7ec148e9    /* lharx   r22,r1,r9,1        */
 	.long  0x7ee05028    /* lwarx   r23,0,r10          */
-	.long  0x7ee05028    /* lwarx   r23,0,r10          */
 	.long  0x7ee05029    /* lwarx   r23,0,r10,1        */
-	.long  0x7ee15028    /* lwarx   r23,r1,r10         */
 	.long  0x7ee15028    /* lwarx   r23,r1,r10         */
 	.long  0x7ee15029    /* lwarx   r23,r1,r10,1       */
 	.long  0x7d403d6d    /* stbcx.  r10,0,r7           */
@@ -203,3 +185,4 @@ func:
 	.long  0x7d81492d    /* stwcx.  r12,r1,r9          */
 	.long  0x7da051ad    /* stdcx.  r13,0,r10          */
 	.long  0x7da151ad    /* stdcx.  r13,r1,r10         */
+	.section	.note.GNU-stack,"",@progbits

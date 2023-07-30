@@ -1,6 +1,6 @@
 /* Python interface to inferior events.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -67,7 +67,7 @@ gdbpy_initialize_event (void)
 
 int
 gdbpy_initialize_event_generic (PyTypeObject *type,
-                                const char *name)
+				const char *name)
 {
   if (PyType_Ready (type) < 0)
     return -1;
@@ -81,7 +81,7 @@ gdbpy_initialize_event_generic (PyTypeObject *type,
 
 int
 evpy_emit_event (PyObject *event,
-                 eventregistry_object *registry)
+		 eventregistry_object *registry)
 {
   Py_ssize_t i;
 

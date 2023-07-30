@@ -27,17 +27,8 @@
 
 #include "device_table.h"
 
-#ifdef HAVE_TIME_H
 #include <time.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
 
 /* DEVICE
 
@@ -71,13 +62,9 @@
    */
 
 typedef struct _hw_nvram_device {
-  unsigned8 *memory;
+  uint8_t *memory;
   unsigned sizeof_memory;
-#ifdef HAVE_TIME_H
   time_t host_time;
-#else
-  long host_time;
-#endif
   unsigned timezone;
   /* useful */
   unsigned addr_year;
@@ -100,8 +87,8 @@ hw_nvram_create(const char *name,
 }
 
 typedef struct _hw_nvram_reg_spec {
-  unsigned32 base;
-  unsigned32 size;
+  uint32_t base;
+  uint32_t size;
 } hw_nvram_reg_spec;
 
 static void
@@ -177,7 +164,6 @@ static void
 hw_nvram_update_clock(hw_nvram_device *nvram,
 		      cpu *processor)
 {
-#ifdef HAVE_TIME_H
   if (!(nvram->memory[nvram->addr_control] & 0xc0)) {
     time_t host_time = time(NULL);
     if (nvram->host_time != host_time) {
@@ -193,9 +179,6 @@ hw_nvram_update_clock(hw_nvram_device *nvram,
       nvram->memory[nvram->addr_seconds] = hw_nvram_bcd(clock->tm_sec);
     }
   }
-#else
-  error("fixme - where do I find out GMT\n");
-#endif
 }
 
 static void
@@ -217,9 +200,9 @@ hw_nvram_io_read_buffer(device *me,
   hw_nvram_device *nvram = (hw_nvram_device*)device_data(me);
   for (i = 0; i < nr_bytes; i++) {
     unsigned address = (addr + i) % nvram->sizeof_memory;
-    unsigned8 data = nvram->memory[address];
+    uint8_t data = nvram->memory[address];
     hw_nvram_update_clock(nvram, processor);
-    ((unsigned8*)dest)[i] = data;
+    ((uint8_t*)dest)[i] = data;
   }
   return nr_bytes;
 }
@@ -237,7 +220,7 @@ hw_nvram_io_write_buffer(device *me,
   hw_nvram_device *nvram = (hw_nvram_device*)device_data(me);
   for (i = 0; i < nr_bytes; i++) {
     unsigned address = (addr + i) % nvram->sizeof_memory;
-    unsigned8 data = ((unsigned8*)source)[i];
+    uint8_t data = ((uint8_t*)source)[i];
     if (address == nvram->addr_control
 	&& (data & 0x80) == 0
 	&& (nvram->memory[address] & 0x80) == 0x80)

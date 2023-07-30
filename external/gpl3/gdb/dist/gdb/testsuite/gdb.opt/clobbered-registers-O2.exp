@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,21 +18,15 @@
 # Test displaying call clobbered registers in optimized binaries.
 # GDB should not show incorrect values.
 
-standard_testfile
+standard_testfile .c -2.c -3.c
 
-# What compiler are we using?
-#
-if [get_compiler_info] {
-    return -1
-}
-
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
+if {[prepare_for_testing "failed to prepare" $testfile \
+	 [list $srcfile $srcfile2 $srcfile3] \
 	 {debug optimize=-O2 nowarnings}]} {
     return -1
 }
 
-if { ![runto start_sequence] } then {
-   fail "run to start_sequence"
+if {![runto start_sequence]} {
    return
 }
 

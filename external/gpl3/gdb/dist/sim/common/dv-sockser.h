@@ -1,5 +1,5 @@
 /* Serial port emulation via sockets.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -33,8 +33,6 @@ extern int dv_sockser_status (SIM_DESC);
 int dv_sockser_write (SIM_DESC, unsigned char);
 int dv_sockser_write_buffer (SIM_DESC, const unsigned char *, unsigned);
 int dv_sockser_read (SIM_DESC);
-
-SIM_RC dv_sockser_install (SIM_DESC);
 
 #else
 

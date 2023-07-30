@@ -1,6 +1,6 @@
 /* Host support routines for MinGW, for GDB, the GNU debugger.
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,10 +21,11 @@
 #include "main.h"
 #include "serial.h"
 #include "gdbsupport/event-loop.h"
-
 #include "gdbsupport/gdb_select.h"
+#include "inferior.h"
 
 #include <windows.h>
+#include <signal.h>
 
 /* Return an absolute file name of the running GDB, if possible, or
    ARGV0 if not.  The return value is in malloc'ed storage.  */
@@ -370,4 +371,70 @@ gdb_console_fputs (const char *linebuf, FILE *fstream)
 
   last_style = style;
   return 1;
+}
+
+/* See inferior.h.  */
+
+tribool
+sharing_input_terminal (int pid)
+{
+  std::vector<DWORD> results (10);
+  DWORD len = 0;
+  while (true)
+    {
+      len = GetConsoleProcessList (results.data (), results.size ());
+      /* Note that LEN == 0 is a failure, but we can treat it the same
+	 as a "no".  */
+      if (len < results.size ())
+	break;
+
+      results.resize (len);
+    }
+  /* In case the vector was too big.  */
+  results.resize (len);
+  if (std::find (results.begin (), results.end (), pid) != results.end ())
+    {
+      /* The pid is in the list sharing the console, so don't
+	 interrupt the inferior -- it will get the signal itself.  */
+      return TRIBOOL_TRUE;
+    }
+
+  return TRIBOOL_FALSE;
+}
+
+/* Current C-c handler.  */
+static c_c_handler_ftype *current_handler;
+
+/* The Windows callback that forwards requests to the C-c handler.  */
+static BOOL WINAPI
+ctrl_c_handler (DWORD event_type)
+{
+  if (event_type == CTRL_BREAK_EVENT || event_type == CTRL_C_EVENT)
+    {
+      if (current_handler != SIG_IGN)
+	current_handler (SIGINT);
+    }
+  else
+    return FALSE;
+  return TRUE;
+}
+
+/* See inferior.h.  */
+
+c_c_handler_ftype *
+install_sigint_handler (c_c_handler_ftype *fn)
+{
+  /* We want to make sure the gdb handler always comes first, so that
+     gdb gets to handle the C-c.  This is why the handler is always
+     removed and reinstalled here.  Note that trying to remove the
+     function without installing it first will cause a crash.  */
+  static bool installed = false;
+  if (installed)
+    SetConsoleCtrlHandler (ctrl_c_handler, FALSE);
+  SetConsoleCtrlHandler (ctrl_c_handler, TRUE);
+  installed = true;
+
+  c_c_handler_ftype *result = current_handler;
+  current_handler = fn;
+  return result;
 }

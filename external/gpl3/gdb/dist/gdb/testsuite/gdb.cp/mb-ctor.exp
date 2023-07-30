@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,22 +16,23 @@
 # Test that breakpoints on C++ constructors work, despite the
 # fact that gcc generates several versions of constructor function.
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 
 standard_testfile .cc
-
-if [get_compiler_info "c++"] {
-    return -1
-}
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {[test_compiler_info {clang-*-*} c++]} {
+    set using_clang true
+} else {
+    set using_clang false
+}
+
+if {![runto_main]} {
+    return
 }
 
 # Set a breakpoint with multiple locations
@@ -51,13 +52,38 @@ gdb_test "continue" \
     ".*Breakpoint.*Derived.*i=7.*" \
     "run to breakpoint 1 v1"
 
-gdb_continue_to_breakpoint "set breakpoint here" ".* breakpoint here"
+gdb_continue_to_breakpoint "set breakpoint here, first time" ".* breakpoint here"
 
 gdb_test "continue" \
     ".*Breakpoint.*Derived.*i=15.*" \
     "run to breakpoint 1 v2"
 
-gdb_continue_to_breakpoint "set breakpoint here" ".* breakpoint here"
+gdb_continue_to_breakpoint "set breakpoint here, second time" ".* breakpoint here"
+
+gdb_test "continue" \
+    ".*Breakpoint.*Derived.*i=24.*" \
+    "run to breakpoint 1 dynamic v1"
+
+gdb_continue_to_breakpoint "set breakpoint here, first dynamic time"\
+    ".* breakpoint here"
+
+gdb_test "continue" \
+    ".*Breakpoint.*Derived.*i=42.*" \
+    "run to breakpoint 1 dynamic v2"
+
+gdb_continue_to_breakpoint "set breakpoint here, second dynamic time"\
+    ".* breakpoint here"
+
+gdb_test "continue" ".*Breakpoint.*~Derived.*" "Run to dynamic destructor v1"
+
+# Clang makes Derived::~Derived(this) call Derived::~Derives(this, vtt)
+# whereas gcc puts all the logic necessary on both functions.
+if {$using_clang} {
+    gdb_test "continue" ".*Breakpoint.*~Derived.*"\
+	"clang's nested dynamic destructor call"
+}
+
+gdb_test "continue" ".*Breakpoint.*~Derived.*" "Run to dynamic destructor v2"
 
 gdb_test "continue" \
     ".*Breakpoint.*~Derived.*" \
@@ -66,6 +92,11 @@ gdb_test "continue" \
 gdb_test "continue" \
     ".*Breakpoint.*~Derived.*" \
     "run to breakpoint 3 v2"
+
+if {$using_clang} {
+    gdb_test "continue" ".*Breakpoint.*~Derived.*"\
+	"clang's nested destructor call"
+}
 
 gdb_test "continue" \
     ".*exited normally.*" \

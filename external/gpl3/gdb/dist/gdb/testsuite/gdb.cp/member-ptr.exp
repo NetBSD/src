@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This file is part of the gdb testsuite
 
@@ -21,22 +21,17 @@
 
 set vhn "\\$\[0-9\]+"
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 
 standard_testfile .cc
-
-if [get_compiler_info "c++"] {
-    return -1
-}
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 gdb_breakpoint [gdb_get_line_number "Breakpoint 1 here"]
@@ -632,3 +627,7 @@ gdb_test "print null_pmi = 0" "$vhn = NULL"
 gdb_test "print null_pmf" "$vhn = NULL"
 gdb_test "print null_pmf = &A::foo" "$vhn = \\(int \\(A::\\*\\)\\(A \\*( const)?, int\\)\\) $hex <A::foo ?\\(int\\)>"
 gdb_test "print null_pmf = 0" "$vhn = NULL"
+
+# Print with a format, bypassing the direct call to the scalar
+# printer.  See PR c++/29243.
+gdb_test "print/x contain" " = {member = $hex}"

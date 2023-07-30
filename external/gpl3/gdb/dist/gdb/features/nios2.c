@@ -5,16 +5,16 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_nios2;
+const struct target_desc *tdesc_nios2;
 static void
 initialize_tdesc_nios2 (void)
 {
-  struct target_desc *result = allocate_target_description ();
-  set_tdesc_architecture (result, bfd_scan_arch ("nios2"));
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("nios2"));
 
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.nios2.cpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.nios2.cpu");
   tdesc_create_reg (feature, "zero", 0, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "at", 1, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "r2", 2, 1, NULL, 32, "uint32");
@@ -65,5 +65,5 @@ initialize_tdesc_nios2 (void)
   tdesc_create_reg (feature, "mpubase", 47, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "mpuacc", 48, 1, NULL, 32, "uint32");
 
-  tdesc_nios2 = result;
+  tdesc_nios2 = result.release ();
 }

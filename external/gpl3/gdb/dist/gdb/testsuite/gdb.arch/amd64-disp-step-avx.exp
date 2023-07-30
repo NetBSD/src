@@ -1,4 +1,4 @@
-# Copyright 2009-2020 Free Software Foundation, Inc.
+# Copyright 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,6 +23,11 @@ if { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
     return
 }
 
+if { ![have_avx] } {
+    verbose "Skipping x86_64 displaced stepping tests."
+    return
+}
+
 standard_testfile .S
 
 set options [list debug \
@@ -37,8 +42,7 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $options] }
 gdb_test "set displaced-stepping on" ""
 gdb_test "show displaced-stepping" ".* displaced stepping .* is on.*"
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -97,7 +101,7 @@ proc disp_step_func { func } {
     gdb_test_no_output "set debug displaced on"
 
     gdb_test "continue" \
-	"Continuing.*displaced: displaced pc to.*Breakpoint.*, ${test_end_label} ().*" \
+	"Continuing.*prepared successfully .*Breakpoint.*, ${test_end_label} ().*" \
 	"continue to ${test_end_label}"
 
     gdb_test_no_output "set debug displaced off"

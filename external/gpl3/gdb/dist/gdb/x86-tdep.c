@@ -1,6 +1,6 @@
 /* Target-dependent code for X86-based targets.
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,8 +26,8 @@
    (exclusive).  */
 
 static bool
-x86_is_thunk_register_name (const char *name, const char **names, int lo,
-			    int hi)
+x86_is_thunk_register_name (const char *name, const char * const *names,
+			    int lo, int hi)
 {
   int reg;
   for (reg = lo; reg < hi; ++reg)
@@ -40,7 +40,7 @@ x86_is_thunk_register_name (const char *name, const char **names, int lo,
 /* See x86-tdep.h.  */
 
 bool
-x86_in_indirect_branch_thunk (CORE_ADDR pc, const char **register_names,
+x86_in_indirect_branch_thunk (CORE_ADDR pc, const char * const *register_names,
 			      int lo, int hi)
 {
   struct bound_minimal_symbol bmfun = lookup_minimal_symbol_by_pc (pc);

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -182,7 +182,7 @@ if ![gdb_guile_runto_main] {
 }
 
 gdb_breakpoint [gdb_get_line_number "Break at end."]
-gdb_continue_to_breakpoint "Break at end."
+gdb_continue_to_breakpoint "Break at end again"
 gdb_scm_test_silent_cmd "guile (define a (car (lookup-symbol \"a\")))" \
     "get variable a for unload"
 gdb_test "guile (print (symbol-valid? a))" \

@@ -1,6 +1,6 @@
 /* cpustate.h -- Prototypes for AArch64 cpu state functions.
 
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -22,12 +22,11 @@
 #ifndef _CPU_STATE_H
 #define _CPU_STATE_H
 
-#include "config.h"
 #include <sys/types.h>
 #include <stdint.h>
 #include <inttypes.h>
 
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 
 /* Symbolic names used to identify general registers which also match
    the registers indices in machine code.
@@ -308,7 +307,7 @@ extern void        aarch64_save_LR (sim_cpu *);
 /* Flag register accessors.  */
 extern uint32_t    aarch64_get_CPSR       (sim_cpu *);
 extern void        aarch64_set_CPSR       (sim_cpu *, uint32_t);
-extern uint32_t    aarch64_get_CPSR_bits  (sim_cpu *, uint32_t);
+extern uint32_t    aarch64_get_CPSR_bits  (sim_cpu *, FlagMask);
 extern void        aarch64_set_CPSR_bits  (sim_cpu *, uint32_t, uint32_t);
 extern uint32_t    aarch64_test_CPSR_bit  (sim_cpu *, FlagMask);
 extern void        aarch64_set_CPSR_bit   (sim_cpu *, FlagMask);

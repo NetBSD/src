@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD, architecture-independent.
 
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,6 +32,7 @@
 
 #include "elf-bfd.h"
 #include "fbsd-tdep.h"
+#include "gcore-elf.h"
 
 /* This enum is derived from FreeBSD's <sys/signal.h>.  */
 
@@ -73,6 +74,63 @@ enum
     FREEBSD_SIGRTMIN = 65,
     FREEBSD_SIGRTMAX = 126,
   };
+
+/* Constants for values of si_code as defined in FreeBSD's
+   <sys/signal.h>.  */
+
+#define	FBSD_SI_USER		0x10001
+#define	FBSD_SI_QUEUE		0x10002
+#define	FBSD_SI_TIMER		0x10003
+#define	FBSD_SI_ASYNCIO		0x10004
+#define	FBSD_SI_MESGQ		0x10005
+#define	FBSD_SI_KERNEL		0x10006
+#define	FBSD_SI_LWP		0x10007
+
+#define	FBSD_ILL_ILLOPC		1
+#define	FBSD_ILL_ILLOPN		2
+#define	FBSD_ILL_ILLADR		3
+#define	FBSD_ILL_ILLTRP		4
+#define	FBSD_ILL_PRVOPC		5
+#define	FBSD_ILL_PRVREG		6
+#define	FBSD_ILL_COPROC		7
+#define	FBSD_ILL_BADSTK		8
+
+#define	FBSD_BUS_ADRALN		1
+#define	FBSD_BUS_ADRERR		2
+#define	FBSD_BUS_OBJERR		3
+#define	FBSD_BUS_OOMERR		100
+
+#define	FBSD_SEGV_MAPERR	1
+#define	FBSD_SEGV_ACCERR	2
+#define	FBSD_SEGV_PKUERR	100
+
+#define	FBSD_FPE_INTOVF		1
+#define	FBSD_FPE_INTDIV		2
+#define	FBSD_FPE_FLTDIV		3
+#define	FBSD_FPE_FLTOVF		4
+#define	FBSD_FPE_FLTUND		5
+#define	FBSD_FPE_FLTRES		6
+#define	FBSD_FPE_FLTINV		7
+#define	FBSD_FPE_FLTSUB		8
+
+#define	FBSD_TRAP_BRKPT		1
+#define	FBSD_TRAP_TRACE		2
+#define	FBSD_TRAP_DTRACE	3
+#define	FBSD_TRAP_CAP		4
+
+#define	FBSD_CLD_EXITED		1
+#define	FBSD_CLD_KILLED		2
+#define	FBSD_CLD_DUMPED		3
+#define	FBSD_CLD_TRAPPED	4
+#define	FBSD_CLD_STOPPED	5
+#define	FBSD_CLD_CONTINUED	6
+
+#define	FBSD_POLL_IN		1
+#define	FBSD_POLL_OUT		2
+#define	FBSD_POLL_MSG		3
+#define	FBSD_POLL_ERR		4
+#define	FBSD_POLL_PRI		5
+#define	FBSD_POLL_HUP		6
 
 /* FreeBSD kernels 12.0 and later include a copy of the
    'ptrace_lwpinfo' structure returned by the PT_LWPINFO ptrace
@@ -426,24 +484,21 @@ const struct kinfo_proc_layout kinfo_proc_layout_64 =
     .ru_majflt = 0x48,
   };
 
-static struct gdbarch_data *fbsd_gdbarch_data_handle;
-
 struct fbsd_gdbarch_data
   {
-    struct type *siginfo_type;
+    struct type *siginfo_type = nullptr;
   };
 
-static void *
-init_fbsd_gdbarch_data (struct gdbarch *gdbarch)
-{
-  return GDBARCH_OBSTACK_ZALLOC (gdbarch, struct fbsd_gdbarch_data);
-}
+static const registry<gdbarch>::key<fbsd_gdbarch_data>
+     fbsd_gdbarch_data_handle;
 
 static struct fbsd_gdbarch_data *
 get_fbsd_gdbarch_data (struct gdbarch *gdbarch)
 {
-  return ((struct fbsd_gdbarch_data *)
-	  gdbarch_data (gdbarch, fbsd_gdbarch_data_handle));
+  struct fbsd_gdbarch_data *result = fbsd_gdbarch_data_handle.get (gdbarch);
+  if (result == nullptr)
+    result = fbsd_gdbarch_data_handle.emplace (gdbarch);
+  return result;
 }
 
 struct fbsd_pspace_data
@@ -452,10 +507,17 @@ struct fbsd_pspace_data
   LONGEST off_linkmap = 0;
   LONGEST off_tlsindex = 0;
   bool rtld_offsets_valid = false;
+
+  /* vDSO mapping range.  */
+  struct mem_range vdso_range {};
+
+  /* Zero if the range hasn't been searched for, > 0 if a range was
+     found, or < 0 if a range was not found.  */
+  int vdso_range_p = 0;
 };
 
 /* Per-program-space data for FreeBSD architectures.  */
-static const struct program_space_key<fbsd_pspace_data>
+static const registry<program_space>::key<fbsd_pspace_data>
   fbsd_pspace_data_handle;
 
 static struct fbsd_pspace_data *
@@ -553,7 +615,7 @@ fbsd_core_xfer_siginfo (struct gdbarch *gdbarch, gdb_byte *readbuf,
 				 LWPINFO_OFFSET + LWPINFO_PL_FLAGS, 4))
     return -1;
 
-  int pl_flags = extract_signed_integer (buf, 4, gdbarch_byte_order (gdbarch));
+  int pl_flags = extract_signed_integer (buf, gdbarch_byte_order (gdbarch));
   if (!(pl_flags & PL_FLAG_SI))
     return -1;
 
@@ -576,112 +638,11 @@ fbsd_core_xfer_siginfo (struct gdbarch *gdbarch, gdb_byte *readbuf,
 static int
 find_signalled_thread (struct thread_info *info, void *data)
 {
-  if (info->suspend.stop_signal != GDB_SIGNAL_0
+  if (info->stop_signal () != GDB_SIGNAL_0
       && info->ptid.pid () == inferior_ptid.pid ())
     return 1;
 
   return 0;
-}
-
-/* Structure for passing information from
-   fbsd_collect_thread_registers via an iterator to
-   fbsd_collect_regset_section_cb. */
-
-struct fbsd_collect_regset_section_cb_data
-{
-  const struct regcache *regcache;
-  bfd *obfd;
-  char *note_data;
-  int *note_size;
-  unsigned long lwp;
-  enum gdb_signal stop_signal;
-  int abort_iteration;
-};
-
-static void
-fbsd_collect_regset_section_cb (const char *sect_name, int supply_size,
-				int collect_size, const struct regset *regset,
-				const char *human_name, void *cb_data)
-{
-  char *buf;
-  struct fbsd_collect_regset_section_cb_data *data
-    = (struct fbsd_collect_regset_section_cb_data *) cb_data;
-
-  if (data->abort_iteration)
-    return;
-
-  gdb_assert (regset->collect_regset);
-
-  buf = (char *) xmalloc (collect_size);
-  regset->collect_regset (regset, data->regcache, -1, buf, collect_size);
-
-  /* PRSTATUS still needs to be treated specially.  */
-  if (strcmp (sect_name, ".reg") == 0)
-    data->note_data = (char *) elfcore_write_prstatus
-      (data->obfd, data->note_data, data->note_size, data->lwp,
-       gdb_signal_to_host (data->stop_signal), buf);
-  else
-    data->note_data = (char *) elfcore_write_register_note
-      (data->obfd, data->note_data, data->note_size,
-       sect_name, buf, collect_size);
-  xfree (buf);
-
-  if (data->note_data == NULL)
-    data->abort_iteration = 1;
-}
-
-/* Records the thread's register state for the corefile note
-   section.  */
-
-static char *
-fbsd_collect_thread_registers (const struct regcache *regcache,
-			       ptid_t ptid, bfd *obfd,
-			       char *note_data, int *note_size,
-			       enum gdb_signal stop_signal)
-{
-  struct gdbarch *gdbarch = regcache->arch ();
-  struct fbsd_collect_regset_section_cb_data data;
-
-  data.regcache = regcache;
-  data.obfd = obfd;
-  data.note_data = note_data;
-  data.note_size = note_size;
-  data.stop_signal = stop_signal;
-  data.abort_iteration = 0;
-  data.lwp = ptid.lwp ();
-
-  gdbarch_iterate_over_regset_sections (gdbarch,
-					fbsd_collect_regset_section_cb,
-					&data, regcache);
-  return data.note_data;
-}
-
-struct fbsd_corefile_thread_data
-{
-  struct gdbarch *gdbarch;
-  bfd *obfd;
-  char *note_data;
-  int *note_size;
-  enum gdb_signal stop_signal;
-};
-
-/* Records the thread's register state for the corefile note
-   section.  */
-
-static void
-fbsd_corefile_thread (struct thread_info *info,
-		      struct fbsd_corefile_thread_data *args)
-{
-  struct regcache *regcache;
-
-  regcache = get_thread_arch_regcache (info->inf->process_target (),
-				       info->ptid, args->gdbarch);
-
-  target_fetch_registers (regcache, -1);
-
-  args->note_data = fbsd_collect_thread_registers
-    (regcache, info->ptid, args->obfd, args->note_data,
-     args->note_size, args->stop_signal);
 }
 
 /* Return a byte_vector containing the contents of a core dump note
@@ -693,7 +654,7 @@ static gdb::optional<gdb::byte_vector>
 fbsd_make_note_desc (enum target_object object, uint32_t structsize)
 {
   gdb::optional<gdb::byte_vector> buf =
-    target_read_alloc (current_top_target (), object, NULL);
+    target_read_alloc (current_inferior ()->top_target (), object, NULL);
   if (!buf || buf->empty ())
     return {};
 
@@ -709,11 +670,10 @@ fbsd_make_note_desc (enum target_object object, uint32_t structsize)
 /* Create appropriate note sections for a corefile, returning them in
    allocated memory.  */
 
-static char *
+static gdb::unique_xmalloc_ptr<char>
 fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
 {
-  struct fbsd_corefile_thread_data thread_args;
-  char *note_data = NULL;
+  gdb::unique_xmalloc_ptr<char> note_data;
   Elf_Internal_Ehdr *i_ehdrp;
   struct thread_info *curr_thr, *signalled_thr;
 
@@ -728,12 +688,13 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
       const char *fname = lbasename (get_exec_file (0));
       std::string psargs = fname;
 
-      const char *infargs = get_inferior_args ();
-      if (infargs != NULL)
-	psargs = psargs + " " + infargs;
+      const std::string &infargs = current_inferior ()->args ();
+      if (!infargs.empty ())
+	psargs += ' ' + infargs;
 
-      note_data = elfcore_write_prpsinfo (obfd, note_data, note_size,
-					  fname, psargs.c_str ());
+      note_data.reset (elfcore_write_prpsinfo (obfd, note_data.release (),
+					       note_size, fname,
+					       psargs.c_str ()));
     }
 
   /* Thread register information.  */
@@ -751,7 +712,7 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
      In case there's more than one signalled thread, prefer the
      current thread, if it is signalled.  */
   curr_thr = inferior_thread ();
-  if (curr_thr->suspend.stop_signal != GDB_SIGNAL_0)
+  if (curr_thr->stop_signal () != GDB_SIGNAL_0)
     signalled_thr = curr_thr;
   else
     {
@@ -760,22 +721,17 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
 	signalled_thr = curr_thr;
     }
 
-  thread_args.gdbarch = gdbarch;
-  thread_args.obfd = obfd;
-  thread_args.note_data = note_data;
-  thread_args.note_size = note_size;
-  thread_args.stop_signal = signalled_thr->suspend.stop_signal;
-
-  fbsd_corefile_thread (signalled_thr, &thread_args);
+  enum gdb_signal stop_signal = signalled_thr->stop_signal ();
+  gcore_elf_build_thread_register_notes (gdbarch, signalled_thr, stop_signal,
+					 obfd, &note_data, note_size);
   for (thread_info *thr : current_inferior ()->non_exited_threads ())
     {
       if (thr == signalled_thr)
 	continue;
 
-      fbsd_corefile_thread (thr, &thread_args);
+      gcore_elf_build_thread_register_notes (gdbarch, thr, stop_signal,
+					     obfd, &note_data, note_size);
     }
-
-  note_data = thread_args.note_data;
 
   /* Auxiliary vector.  */
   uint32_t structsize = gdbarch_ptr_bit (gdbarch) / 4; /* Elf_Auxinfo  */
@@ -783,9 +739,11 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
     fbsd_make_note_desc (TARGET_OBJECT_AUXV, structsize);
   if (note_desc && !note_desc->empty ())
     {
-      note_data = elfcore_write_note (obfd, note_data, note_size, "FreeBSD",
-				      NT_FREEBSD_PROCSTAT_AUXV,
-				      note_desc->data (), note_desc->size ());
+      note_data.reset (elfcore_write_note (obfd, note_data.release (),
+					   note_size, "FreeBSD",
+					   NT_FREEBSD_PROCSTAT_AUXV,
+					   note_desc->data (),
+					   note_desc->size ()));
       if (!note_data)
 	return NULL;
     }
@@ -794,9 +752,11 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
   note_desc = fbsd_make_note_desc (TARGET_OBJECT_FREEBSD_VMMAP, 0);
   if (note_desc && !note_desc->empty ())
     {
-      note_data = elfcore_write_note (obfd, note_data, note_size, "FreeBSD",
-				      NT_FREEBSD_PROCSTAT_VMMAP,
-				      note_desc->data (), note_desc->size ());
+      note_data.reset (elfcore_write_note (obfd, note_data.release (),
+					   note_size, "FreeBSD",
+					   NT_FREEBSD_PROCSTAT_VMMAP,
+					   note_desc->data (),
+					   note_desc->size ()));
       if (!note_data)
 	return NULL;
     }
@@ -804,12 +764,17 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
   note_desc = fbsd_make_note_desc (TARGET_OBJECT_FREEBSD_PS_STRINGS, 0);
   if (note_desc && !note_desc->empty ())
     {
-      note_data = elfcore_write_note (obfd, note_data, note_size, "FreeBSD",
-				      NT_FREEBSD_PROCSTAT_PSSTRINGS,
-				      note_desc->data (), note_desc->size ());
+      note_data.reset (elfcore_write_note (obfd, note_data.release (),
+					   note_size, "FreeBSD",
+					   NT_FREEBSD_PROCSTAT_PSSTRINGS,
+					   note_desc->data (),
+					   note_desc->size ()));
       if (!note_data)
 	return NULL;
     }
+
+  /* Include the target description when possible.  */
+  gcore_elf_make_tdesc_note (obfd, &note_data, note_size);
 
   return note_data;
 }
@@ -953,8 +918,8 @@ fbsd_print_sockaddr_in (const void *sockaddr)
 
   if (inet_ntop (AF_INET, sin->sin_addr, buf, sizeof buf) == nullptr)
     error (_("Failed to format IPv4 address"));
-  printf_filtered ("%s:%u", buf,
-		   (sin->sin_port[0] << 8) | sin->sin_port[1]);
+  gdb_printf ("%s:%u", buf,
+	      (sin->sin_port[0] << 8) | sin->sin_port[1]);
 }
 
 /* Helper function to print out an IPv6 socket address.  */
@@ -968,8 +933,8 @@ fbsd_print_sockaddr_in6 (const void *sockaddr)
 
   if (inet_ntop (AF_INET6, sin6->sin6_addr, buf, sizeof buf) == nullptr)
     error (_("Failed to format IPv6 address"));
-  printf_filtered ("%s.%u", buf,
-		   (sin6->sin6_port[0] << 8) | sin6->sin6_port[1]);
+  gdb_printf ("%s.%u", buf,
+	      (sin6->sin6_port[0] << 8) | sin6->sin6_port[1]);
 }
 
 /* See fbsd-tdep.h.  */
@@ -977,9 +942,9 @@ fbsd_print_sockaddr_in6 (const void *sockaddr)
 void
 fbsd_info_proc_files_header ()
 {
-  printf_filtered (_("Open files:\n\n"));
-  printf_filtered ("  %6s %6s %10s %9s %s\n",
-		   "FD", "Type", "Offset", "Flags  ", "Name");
+  gdb_printf (_("Open files:\n\n"));
+  gdb_printf ("  %6s %6s %10s %9s %s\n",
+	      "FD", "Type", "Offset", "Flags  ", "Name");
 }
 
 /* See fbsd-tdep.h.  */
@@ -991,11 +956,11 @@ fbsd_info_proc_files_entry (int kf_type, int kf_fd, int kf_flags,
 			    int kf_sock_protocol, const void *kf_sa_local,
 			    const void *kf_sa_peer, const void *kf_path)
 {
-  printf_filtered ("  %6s %6s %10s %8s ",
-		   fbsd_file_fd (kf_fd),
-		   fbsd_file_type (kf_type, kf_vnode_type),
-		   kf_offset > -1 ? hex_string (kf_offset) : "-",
-		   fbsd_file_flags (kf_flags));
+  gdb_printf ("  %6s %6s %10s %8s ",
+	      fbsd_file_fd (kf_fd),
+	      fbsd_file_type (kf_type, kf_vnode_type),
+	      kf_offset > -1 ? hex_string (kf_offset) : "-",
+	      fbsd_file_flags (kf_flags));
   if (kf_type == KINFO_FILE_TYPE_SOCKET)
     {
       switch (kf_sock_domain)
@@ -1005,16 +970,16 @@ fbsd_info_proc_files_entry (int kf_type, int kf_fd, int kf_flags,
 	    switch (kf_sock_type)
 	      {
 	      case FBSD_SOCK_STREAM:
-		printf_filtered ("unix stream:");
+		gdb_printf ("unix stream:");
 		break;
 	      case FBSD_SOCK_DGRAM:
-		printf_filtered ("unix dgram:");
+		gdb_printf ("unix dgram:");
 		break;
 	      case FBSD_SOCK_SEQPACKET:
-		printf_filtered ("unix seqpacket:");
+		gdb_printf ("unix seqpacket:");
 		break;
 	      default:
-		printf_filtered ("unix <%d>:", kf_sock_type);
+		gdb_printf ("unix <%d>:", kf_sock_type);
 		break;
 	      }
 
@@ -1025,26 +990,26 @@ fbsd_info_proc_files_entry (int kf_type, int kf_fd, int kf_flags,
 	    if (saddr_un->sun_path[0] == 0)
 	      saddr_un = reinterpret_cast<const struct fbsd_sockaddr_un *>
 		(kf_sa_peer);
-	    printf_filtered ("%s", saddr_un->sun_path);
+	    gdb_printf ("%s", saddr_un->sun_path);
 	    break;
 	  }
 	case FBSD_AF_INET:
-	  printf_filtered ("%s4 ", fbsd_ipproto (kf_sock_protocol));
+	  gdb_printf ("%s4 ", fbsd_ipproto (kf_sock_protocol));
 	  fbsd_print_sockaddr_in (kf_sa_local);
-	  printf_filtered (" -> ");
+	  gdb_printf (" -> ");
 	  fbsd_print_sockaddr_in (kf_sa_peer);
 	  break;
 	case FBSD_AF_INET6:
-	  printf_filtered ("%s6 ", fbsd_ipproto (kf_sock_protocol));
+	  gdb_printf ("%s6 ", fbsd_ipproto (kf_sock_protocol));
 	  fbsd_print_sockaddr_in6 (kf_sa_local);
-	  printf_filtered (" -> ");
+	  gdb_printf (" -> ");
 	  fbsd_print_sockaddr_in6 (kf_sa_peer);
 	  break;
 	}
     }
   else
-    printf_filtered ("%s", reinterpret_cast<const char *> (kf_path));
-  printf_filtered ("\n");
+    gdb_printf ("%s", reinterpret_cast<const char *> (kf_path));
+  gdb_printf ("\n");
 }
 
 /* Implement "info proc files" for a corefile.  */
@@ -1130,20 +1095,20 @@ fbsd_vm_map_entry_flags (int kve_flags, int kve_protection)
 void
 fbsd_info_proc_mappings_header (int addr_bit)
 {
-  printf_filtered (_("Mapped address spaces:\n\n"));
+  gdb_printf (_("Mapped address spaces:\n\n"));
   if (addr_bit == 64)
     {
-      printf_filtered ("  %18s %18s %10s %10s %9s %s\n",
-		       "Start Addr",
-		       "  End Addr",
-		       "      Size", "    Offset", "Flags  ", "File");
+      gdb_printf ("  %18s %18s %10s %10s %9s %s\n",
+		  "Start Addr",
+		  "  End Addr",
+		  "      Size", "    Offset", "Flags  ", "File");
     }
   else
     {
-      printf_filtered ("\t%10s %10s %10s %10s %9s %s\n",
-		       "Start Addr",
-		       "  End Addr",
-		       "      Size", "    Offset", "Flags  ", "File");
+      gdb_printf ("\t%10s %10s %10s %10s %9s %s\n",
+		  "Start Addr",
+		  "  End Addr",
+		  "      Size", "    Offset", "Flags  ", "File");
     }
 }
 
@@ -1157,23 +1122,23 @@ fbsd_info_proc_mappings_entry (int addr_bit, ULONGEST kve_start,
 {
   if (addr_bit == 64)
     {
-      printf_filtered ("  %18s %18s %10s %10s %9s %s\n",
-		       hex_string (kve_start),
-		       hex_string (kve_end),
-		       hex_string (kve_end - kve_start),
-		       hex_string (kve_offset),
-		       fbsd_vm_map_entry_flags (kve_flags, kve_protection),
-		       reinterpret_cast<const char *> (kve_path));
+      gdb_printf ("  %18s %18s %10s %10s %9s %s\n",
+		  hex_string (kve_start),
+		  hex_string (kve_end),
+		  hex_string (kve_end - kve_start),
+		  hex_string (kve_offset),
+		  fbsd_vm_map_entry_flags (kve_flags, kve_protection),
+		  reinterpret_cast<const char *> (kve_path));
     }
   else
     {
-      printf_filtered ("\t%10s %10s %10s %10s %9s %s\n",
-		       hex_string (kve_start),
-		       hex_string (kve_end),
-		       hex_string (kve_end - kve_start),
-		       hex_string (kve_offset),
-		       fbsd_vm_map_entry_flags (kve_flags, kve_protection),
-		       reinterpret_cast<const char *> (kve_path));
+      gdb_printf ("\t%10s %10s %10s %10s %9s %s\n",
+		  hex_string (kve_start),
+		  hex_string (kve_end),
+		  hex_string (kve_end - kve_start),
+		  hex_string (kve_offset),
+		  fbsd_vm_map_entry_flags (kve_flags, kve_protection),
+		  reinterpret_cast<const char *> (kve_path));
     }
 }
 
@@ -1304,11 +1269,11 @@ fbsd_core_fetch_timeval (struct gdbarch *gdbarch, unsigned char *data,
 static void
 fbsd_print_sigset (const char *descr, unsigned char *sigset)
 {
-  printf_filtered ("%s: ", descr);
+  gdb_printf ("%s: ", descr);
   for (int i = 0; i < SIG_WORDS; i++)
-    printf_filtered ("%08x ",
-		     (unsigned int) bfd_get_32 (core_bfd, sigset + i * 4));
-  printf_filtered ("\n");
+    gdb_printf ("%08x ",
+		(unsigned int) bfd_get_32 (core_bfd, sigset + i * 4));
+  gdb_printf ("\n");
 }
 
 /* Implement "info proc status" for a corefile.  */
@@ -1368,15 +1333,15 @@ fbsd_core_info_proc_status (struct gdbarch *gdbarch)
       return;
     }
 
-  printf_filtered ("Name: %.19s\n", descdata + kp->ki_comm);
-  printf_filtered ("Process ID: %s\n",
-		   pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_pid)));
-  printf_filtered ("Parent process: %s\n",
-		   pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_ppid)));
-  printf_filtered ("Process group: %s\n",
-		   pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_pgid)));
-  printf_filtered ("Session id: %s\n",
-		   pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_sid)));
+  gdb_printf ("Name: %.19s\n", descdata + kp->ki_comm);
+  gdb_printf ("Process ID: %s\n",
+	      pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_pid)));
+  gdb_printf ("Parent process: %s\n",
+	      pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_ppid)));
+  gdb_printf ("Process group: %s\n",
+	      pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_pgid)));
+  gdb_printf ("Session id: %s\n",
+	      pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_sid)));
 
   /* FreeBSD 12.0 and later store a 64-bit dev_t at 'ki_tdev'.  Older
      kernels store a 32-bit dev_t at 'ki_tdev_freebsd11'.  In older
@@ -1387,76 +1352,76 @@ fbsd_core_info_proc_status (struct gdbarch *gdbarch)
   value = bfd_get_64 (core_bfd, descdata + kp->ki_tdev);
   if (value == 0)
     value = bfd_get_32 (core_bfd, descdata + kp->ki_tdev_freebsd11);
-  printf_filtered ("TTY: %s\n", pulongest (value));
-  printf_filtered ("TTY owner process group: %s\n",
-		   pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_tpgid)));
-  printf_filtered ("User IDs (real, effective, saved): %s %s %s\n",
-		   pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_ruid)),
-		   pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_uid)),
-		   pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_svuid)));
-  printf_filtered ("Group IDs (real, effective, saved): %s %s %s\n",
-		   pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_rgid)),
-		   pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_groups)),
-		   pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_svgid)));
-  printf_filtered ("Groups: ");
+  gdb_printf ("TTY: %s\n", pulongest (value));
+  gdb_printf ("TTY owner process group: %s\n",
+	      pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_tpgid)));
+  gdb_printf ("User IDs (real, effective, saved): %s %s %s\n",
+	      pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_ruid)),
+	      pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_uid)),
+	      pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_svuid)));
+  gdb_printf ("Group IDs (real, effective, saved): %s %s %s\n",
+	      pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_rgid)),
+	      pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_groups)),
+	      pulongest (bfd_get_32 (core_bfd, descdata + kp->ki_svgid)));
+  gdb_printf ("Groups: ");
   uint16_t ngroups = bfd_get_16 (core_bfd, descdata + kp->ki_ngroups);
   for (int i = 0; i < ngroups; i++)
-    printf_filtered ("%s ",
-		     pulongest (bfd_get_32 (core_bfd,
-					    descdata + kp->ki_groups + i * 4)));
-  printf_filtered ("\n");
+    gdb_printf ("%s ",
+		pulongest (bfd_get_32 (core_bfd,
+				       descdata + kp->ki_groups + i * 4)));
+  gdb_printf ("\n");
   value = bfd_get (long_bit, core_bfd,
 		   descdata + kp->ki_rusage + kp->ru_minflt);
-  printf_filtered ("Minor faults (no memory page): %s\n", pulongest (value));
+  gdb_printf ("Minor faults (no memory page): %s\n", pulongest (value));
   value = bfd_get (long_bit, core_bfd,
 		   descdata + kp->ki_rusage_ch + kp->ru_minflt);
-  printf_filtered ("Minor faults, children: %s\n", pulongest (value));
+  gdb_printf ("Minor faults, children: %s\n", pulongest (value));
   value = bfd_get (long_bit, core_bfd,
 		   descdata + kp->ki_rusage + kp->ru_majflt);
-  printf_filtered ("Major faults (memory page faults): %s\n",
-		   pulongest (value));
+  gdb_printf ("Major faults (memory page faults): %s\n",
+	      pulongest (value));
   value = bfd_get (long_bit, core_bfd,
 		   descdata + kp->ki_rusage_ch + kp->ru_majflt);
-  printf_filtered ("Major faults, children: %s\n", pulongest (value));
+  gdb_printf ("Major faults, children: %s\n", pulongest (value));
   fbsd_core_fetch_timeval (gdbarch,
 			   descdata + kp->ki_rusage + kp->ru_utime,
 			   sec, value);
-  printf_filtered ("utime: %s.%06d\n", plongest (sec), (int) value);
+  gdb_printf ("utime: %s.%06d\n", plongest (sec), (int) value);
   fbsd_core_fetch_timeval (gdbarch,
 			   descdata + kp->ki_rusage + kp->ru_stime,
 			   sec, value);
-  printf_filtered ("stime: %s.%06d\n", plongest (sec), (int) value);
+  gdb_printf ("stime: %s.%06d\n", plongest (sec), (int) value);
   fbsd_core_fetch_timeval (gdbarch,
 			   descdata + kp->ki_rusage_ch + kp->ru_utime,
 			   sec, value);
-  printf_filtered ("utime, children: %s.%06d\n", plongest (sec), (int) value);
+  gdb_printf ("utime, children: %s.%06d\n", plongest (sec), (int) value);
   fbsd_core_fetch_timeval (gdbarch,
 			   descdata + kp->ki_rusage_ch + kp->ru_stime,
 			   sec, value);
-  printf_filtered ("stime, children: %s.%06d\n", plongest (sec), (int) value);
-  printf_filtered ("'nice' value: %d\n",
-		   (int) bfd_get_signed_8 (core_bfd, descdata + kp->ki_nice));
+  gdb_printf ("stime, children: %s.%06d\n", plongest (sec), (int) value);
+  gdb_printf ("'nice' value: %d\n",
+	      (int) bfd_get_signed_8 (core_bfd, descdata + kp->ki_nice));
   fbsd_core_fetch_timeval (gdbarch, descdata + kp->ki_start, sec, value);
-  printf_filtered ("Start time: %s.%06d\n", plongest (sec), (int) value);
-  printf_filtered ("Virtual memory size: %s kB\n",
-		   pulongest (bfd_get (addr_bit, core_bfd,
-				       descdata + kp->ki_size) / 1024));
-  printf_filtered ("Data size: %s pages\n",
-		   pulongest (bfd_get (addr_bit, core_bfd,
-				       descdata + kp->ki_dsize)));
-  printf_filtered ("Stack size: %s pages\n",
-		   pulongest (bfd_get (addr_bit, core_bfd,
-				       descdata + kp->ki_ssize)));
-  printf_filtered ("Text size: %s pages\n",
-		   pulongest (bfd_get (addr_bit, core_bfd,
-				       descdata + kp->ki_tsize)));
-  printf_filtered ("Resident set size: %s pages\n",
-		   pulongest (bfd_get (addr_bit, core_bfd,
-				       descdata + kp->ki_rssize)));
-  printf_filtered ("Maximum RSS: %s pages\n",
-		   pulongest (bfd_get (long_bit, core_bfd,
-				       descdata + kp->ki_rusage
-				       + kp->ru_maxrss)));
+  gdb_printf ("Start time: %s.%06d\n", plongest (sec), (int) value);
+  gdb_printf ("Virtual memory size: %s kB\n",
+	      pulongest (bfd_get (addr_bit, core_bfd,
+				  descdata + kp->ki_size) / 1024));
+  gdb_printf ("Data size: %s pages\n",
+	      pulongest (bfd_get (addr_bit, core_bfd,
+				  descdata + kp->ki_dsize)));
+  gdb_printf ("Stack size: %s pages\n",
+	      pulongest (bfd_get (addr_bit, core_bfd,
+				  descdata + kp->ki_ssize)));
+  gdb_printf ("Text size: %s pages\n",
+	      pulongest (bfd_get (addr_bit, core_bfd,
+				  descdata + kp->ki_tsize)));
+  gdb_printf ("Resident set size: %s pages\n",
+	      pulongest (bfd_get (addr_bit, core_bfd,
+				  descdata + kp->ki_rssize)));
+  gdb_printf ("Maximum RSS: %s pages\n",
+	      pulongest (bfd_get (long_bit, core_bfd,
+				  descdata + kp->ki_rusage
+				  + kp->ru_maxrss)));
   fbsd_print_sigset ("Ignored Signals", descdata + kp->ki_sigignore);
   fbsd_print_sigset ("Caught Signals", descdata + kp->ki_sigcatch);
 }
@@ -1515,7 +1480,7 @@ fbsd_core_info_proc (struct gdbarch *gdbarch, const char *args,
 
   pid = bfd_core_file_pid (core_bfd);
   if (pid != 0)
-    printf_filtered (_("process %d\n"), pid);
+    gdb_printf (_("process %d\n"), pid);
 
   if (do_cmdline)
     {
@@ -1523,7 +1488,7 @@ fbsd_core_info_proc (struct gdbarch *gdbarch, const char *args,
 
       cmdline = bfd_core_file_failing_command (core_bfd);
       if (cmdline)
-	printf_filtered ("cmdline = '%s'\n", cmdline);
+	gdb_printf ("cmdline = '%s'\n", cmdline);
       else
 	warning (_("Command line unavailable"));
     }
@@ -1532,7 +1497,7 @@ fbsd_core_info_proc (struct gdbarch *gdbarch, const char *args,
       gdb::unique_xmalloc_ptr<char> cwd =
 	fbsd_core_vnode_path (gdbarch, KINFO_FILE_FD_TYPE_CWD);
       if (cwd)
-	printf_filtered ("cwd = '%s'\n", cwd.get ());
+	gdb_printf ("cwd = '%s'\n", cwd.get ());
       else
 	warning (_("unable to read current working directory"));
     }
@@ -1541,7 +1506,7 @@ fbsd_core_info_proc (struct gdbarch *gdbarch, const char *args,
       gdb::unique_xmalloc_ptr<char> exe =
 	fbsd_core_vnode_path (gdbarch, KINFO_FILE_FD_TYPE_TEXT);
       if (exe)
-	printf_filtered ("exe = '%s'\n", exe.get ());
+	gdb_printf ("exe = '%s'\n", exe.get ());
       else
 	warning (_("unable to read executable path name"));
     }
@@ -1604,6 +1569,10 @@ fbsd_print_auxv_entry (struct gdbarch *gdbarch, struct ui_file *file,
       TAG (ENVC, _("Environment count"), AUXV_FORMAT_DEC);
       TAG (ENVV, _("Environment vector"), AUXV_FORMAT_HEX);
       TAG (PS_STRINGS, _("Pointer to ps_strings"), AUXV_FORMAT_HEX);
+      TAG (FXRNG, _("Pointer to root RNG seed version"), AUXV_FORMAT_HEX);
+      TAG (KPRELOAD, _("Base address of vDSO"), AUXV_FORMAT_HEX);
+      TAG (USRSTACKBASE, _("Top of user stack"), AUXV_FORMAT_HEX);
+      TAG (USRSTACKLIM, _("Grow limit of user stack"), AUXV_FORMAT_HEX);
     }
 
   fprint_auxv_entry (file, name, description, format, type, val);
@@ -1641,16 +1610,16 @@ fbsd_get_siginfo_type (struct gdbarch *gdbarch)
 
   /* __pid_t */
   pid_type = arch_type (gdbarch, TYPE_CODE_TYPEDEF,
-			TYPE_LENGTH (int32_type) * TARGET_CHAR_BIT, "__pid_t");
-  TYPE_TARGET_TYPE (pid_type) = int32_type;
-  TYPE_TARGET_STUB (pid_type) = 1;
+			int32_type->length () * TARGET_CHAR_BIT, "__pid_t");
+  pid_type->set_target_type (int32_type);
+  pid_type->set_target_is_stub (true);
 
   /* __uid_t */
   uid_type = arch_type (gdbarch, TYPE_CODE_TYPEDEF,
-			TYPE_LENGTH (uint32_type) * TARGET_CHAR_BIT,
+			uint32_type->length () * TARGET_CHAR_BIT,
 			"__uid_t");
-  TYPE_TARGET_TYPE (uid_type) = uint32_type;
-  TYPE_TARGET_STUB (uid_type) = 1;
+  uid_type->set_target_type (uint32_type);
+  pid_type->set_target_is_stub (true);
 
   /* _reason */
   reason_type = arch_composite_type (gdbarch, NULL, TYPE_CODE_UNION);
@@ -1826,7 +1795,7 @@ fbsd_gdb_signal_from_target (struct gdbarch *gdbarch, int signal)
 
 static int
 fbsd_gdb_signal_to_target (struct gdbarch *gdbarch,
-                enum gdb_signal signal)
+		enum gdb_signal signal)
 {
   switch (signal)
     {
@@ -1956,7 +1925,7 @@ fbsd_get_syscall_number (struct gdbarch *gdbarch, thread_info *thread)
      However, system call catching requires this function to be
      set.  */
 
-  internal_error (__FILE__, __LINE__, _("fbsd_get_sycall_number called"));
+  internal_error (_("fbsd_get_sycall_number called"));
 }
 
 /* Read an integer symbol value from the current target.  */
@@ -1969,10 +1938,10 @@ fbsd_read_integer_by_name (struct gdbarch *gdbarch, const char *name)
     error (_("Unable to resolve symbol '%s'"), name);
 
   gdb_byte buf[4];
-  if (target_read_memory (BMSYMBOL_VALUE_ADDRESS (ms), buf, sizeof buf) != 0)
+  if (target_read_memory (ms.value_address (), buf, sizeof buf) != 0)
     error (_("Unable to read value of '%s'"), name);
 
-  return extract_signed_integer (buf, sizeof buf, gdbarch_byte_order (gdbarch));
+  return extract_signed_integer (buf, gdbarch_byte_order (gdbarch));
 }
 
 /* Lookup offsets of fields in the runtime linker's 'Obj_Entry'
@@ -1989,9 +1958,9 @@ fbsd_fetch_rtld_offsets (struct gdbarch *gdbarch, struct fbsd_pspace_data *data)
 				     language_c, NULL).symbol;
       if (obj_entry_sym == NULL)
 	error (_("Unable to find Struct_Obj_Entry symbol"));
-      data->off_linkmap = lookup_struct_elt (SYMBOL_TYPE (obj_entry_sym),
+      data->off_linkmap = lookup_struct_elt (obj_entry_sym->type (),
 					     "linkmap", 0).offset / 8;
-      data->off_tlsindex = lookup_struct_elt (SYMBOL_TYPE (obj_entry_sym),
+      data->off_tlsindex = lookup_struct_elt (obj_entry_sym->type (),
 					      "tlsindex", 0).offset / 8;
       data->rtld_offsets_valid = true;
       return;
@@ -2043,7 +2012,7 @@ fbsd_get_tls_index (struct gdbarch *gdbarch, CORE_ADDR lm_addr)
     throw_error (TLS_GENERIC_ERROR,
 		 _("Cannot find thread-local variables on this target"));
 
-  return extract_signed_integer (buf, sizeof buf, gdbarch_byte_order (gdbarch));
+  return extract_signed_integer (buf, gdbarch_byte_order (gdbarch));
 }
 
 /* See fbsd-tdep.h.  */
@@ -2063,7 +2032,7 @@ fbsd_get_thread_local_address (struct gdbarch *gdbarch, CORE_ADDR dtv_addr,
   CORE_ADDR addr = gdbarch_pointer_to_address (gdbarch,
 					       builtin->builtin_data_ptr, buf);
 
-  addr += (tls_index + 1) * TYPE_LENGTH (builtin->builtin_data_ptr);
+  addr += (tls_index + 1) * builtin->builtin_data_ptr->length ();
   if (target_read_memory (addr, buf, sizeof buf) != 0)
     throw_error (TLS_GENERIC_ERROR,
 		 _("Cannot find thread-local variables on this target"));
@@ -2078,10 +2047,325 @@ CORE_ADDR
 fbsd_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   struct bound_minimal_symbol msym = lookup_bound_minimal_symbol ("_rtld_bind");
-  if (msym.minsym != nullptr && BMSYMBOL_VALUE_ADDRESS (msym) == pc)
+  if (msym.minsym != nullptr && msym.value_address () == pc)
     return frame_unwind_caller_pc (get_current_frame ());
 
   return 0;
+}
+
+/* Return description of signal code or nullptr.  */
+
+static const char *
+fbsd_signal_cause (enum gdb_signal siggnal, int code)
+{
+  /* Signal-independent causes.  */
+  switch (code)
+    {
+    case FBSD_SI_USER:
+      return _("Sent by kill()");
+    case FBSD_SI_QUEUE:
+      return _("Sent by sigqueue()");
+    case FBSD_SI_TIMER:
+      return _("Timer expired");
+    case FBSD_SI_ASYNCIO:
+      return _("Asynchronous I/O request completed");
+    case FBSD_SI_MESGQ:
+      return _("Message arrived on empty message queue");
+    case FBSD_SI_KERNEL:
+      return _("Sent by kernel");
+    case FBSD_SI_LWP:
+      return _("Sent by thr_kill()");
+    }
+
+  switch (siggnal)
+    {
+    case GDB_SIGNAL_ILL:
+      switch (code)
+	{
+	case FBSD_ILL_ILLOPC:
+	  return _("Illegal opcode");
+	case FBSD_ILL_ILLOPN:
+	  return _("Illegal operand");
+	case FBSD_ILL_ILLADR:
+	  return _("Illegal addressing mode");
+	case FBSD_ILL_ILLTRP:
+	  return _("Illegal trap");
+	case FBSD_ILL_PRVOPC:
+	  return _("Privileged opcode");
+	case FBSD_ILL_PRVREG:
+	  return _("Privileged register");
+	case FBSD_ILL_COPROC:
+	  return _("Coprocessor error");
+	case FBSD_ILL_BADSTK:
+	  return _("Internal stack error");
+	}
+      break;
+    case GDB_SIGNAL_BUS:
+      switch (code)
+	{
+	case FBSD_BUS_ADRALN:
+	  return _("Invalid address alignment");
+	case FBSD_BUS_ADRERR:
+	  return _("Address not present");
+	case FBSD_BUS_OBJERR:
+	  return _("Object-specific hardware error");
+	case FBSD_BUS_OOMERR:
+	  return _("Out of memory");
+	}
+      break;
+    case GDB_SIGNAL_SEGV:
+      switch (code)
+	{
+	case FBSD_SEGV_MAPERR:
+	  return _("Address not mapped to object");
+	case FBSD_SEGV_ACCERR:
+	  return _("Invalid permissions for mapped object");
+	case FBSD_SEGV_PKUERR:
+	  return _("PKU violation");
+	}
+      break;
+    case GDB_SIGNAL_FPE:
+      switch (code)
+	{
+	case FBSD_FPE_INTOVF:
+	  return _("Integer overflow");
+	case FBSD_FPE_INTDIV:
+	  return _("Integer divide by zero");
+	case FBSD_FPE_FLTDIV:
+	  return _("Floating point divide by zero");
+	case FBSD_FPE_FLTOVF:
+	  return _("Floating point overflow");
+	case FBSD_FPE_FLTUND:
+	  return _("Floating point underflow");
+	case FBSD_FPE_FLTRES:
+	  return _("Floating point inexact result");
+	case FBSD_FPE_FLTINV:
+	  return _("Invalid floating point operation");
+	case FBSD_FPE_FLTSUB:
+	  return _("Subscript out of range");
+	}
+      break;
+    case GDB_SIGNAL_TRAP:
+      switch (code)
+	{
+	case FBSD_TRAP_BRKPT:
+	  return _("Breakpoint");
+	case FBSD_TRAP_TRACE:
+	  return _("Trace trap");
+	case FBSD_TRAP_DTRACE:
+	  return _("DTrace-induced trap");
+	case FBSD_TRAP_CAP:
+	  return _("Capability violation");
+	}
+      break;
+    case GDB_SIGNAL_CHLD:
+      switch (code)
+	{
+	case FBSD_CLD_EXITED:
+	  return _("Child has exited");
+	case FBSD_CLD_KILLED:
+	  return _("Child has terminated abnormally");
+	case FBSD_CLD_DUMPED:
+	  return _("Child has dumped core");
+	case FBSD_CLD_TRAPPED:
+	  return _("Traced child has trapped");
+	case FBSD_CLD_STOPPED:
+	  return _("Child has stopped");
+	case FBSD_CLD_CONTINUED:
+	  return _("Stopped child has continued");
+	}
+      break;
+    case GDB_SIGNAL_POLL:
+      switch (code)
+	{
+	case FBSD_POLL_IN:
+	  return _("Data input available");
+	case FBSD_POLL_OUT:
+	  return _("Output buffers available");
+	case FBSD_POLL_MSG:
+	  return _("Input message available");
+	case FBSD_POLL_ERR:
+	  return _("I/O error");
+	case FBSD_POLL_PRI:
+	  return _("High priority input available");
+	case FBSD_POLL_HUP:
+	  return _("Device disconnected");
+	}
+      break;
+    }
+
+  return nullptr;
+}
+
+/* Report additional details for a signal stop.  */
+
+static void
+fbsd_report_signal_info (struct gdbarch *gdbarch, struct ui_out *uiout,
+			 enum gdb_signal siggnal)
+{
+  LONGEST code, mqd, pid, status, timerid, uid;
+
+  try
+    {
+      code = parse_and_eval_long ("$_siginfo.si_code");
+      pid = parse_and_eval_long ("$_siginfo.si_pid");
+      uid = parse_and_eval_long ("$_siginfo.si_uid");
+      status = parse_and_eval_long ("$_siginfo.si_status");
+      timerid = parse_and_eval_long ("$_siginfo._reason._timer.si_timerid");
+      mqd = parse_and_eval_long ("$_siginfo._reason._mesgq.si_mqd");
+    }
+  catch (const gdb_exception_error &e)
+    {
+      return;
+    }
+
+  const char *meaning = fbsd_signal_cause (siggnal, code);
+  if (meaning == nullptr)
+    return;
+
+  uiout->text (".\n");
+  uiout->field_string ("sigcode-meaning", meaning);
+
+  switch (code)
+    {
+    case FBSD_SI_USER:
+    case FBSD_SI_QUEUE:
+    case FBSD_SI_LWP:
+      uiout->text (" from pid ");
+      uiout->field_string ("sending-pid", plongest (pid));
+      uiout->text (" and user ");
+      uiout->field_string ("sending-uid", plongest (uid));
+      return;
+    case FBSD_SI_TIMER:
+      uiout->text (": timerid ");
+      uiout->field_string ("timerid", plongest (timerid));
+      return;
+    case FBSD_SI_MESGQ:
+      uiout->text (": message queue ");
+      uiout->field_string ("message-queue", plongest (mqd));
+      return;
+    case FBSD_SI_ASYNCIO:
+      return;
+    }
+
+  if (siggnal == GDB_SIGNAL_CHLD)
+    {
+      uiout->text (": pid ");
+      uiout->field_string ("child-pid", plongest (pid));
+      uiout->text (", uid ");
+      uiout->field_string ("child-uid", plongest (uid));
+      if (code == FBSD_CLD_EXITED)
+	{
+	  uiout->text (", exit status ");
+	  uiout->field_string ("exit-status", plongest (status));
+	}
+      else
+	{
+	  uiout->text (", signal ");
+	  uiout->field_string ("signal", plongest (status));
+	}
+    }
+}
+
+/* Search a list of struct kinfo_vmmap entries in the ENTRIES buffer
+   of LEN bytes to find the length of the entry starting at ADDR.
+   Returns the length of the entry or zero if no entry was found.  */
+
+static ULONGEST
+fbsd_vmmap_length (struct gdbarch *gdbarch, unsigned char *entries, size_t len,
+		   CORE_ADDR addr)
+{
+      enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+      unsigned char *descdata = entries;
+      unsigned char *descend = descdata + len;
+
+      /* Skip over the structure size.  */
+      descdata += 4;
+
+      while (descdata + KVE_PATH < descend)
+	{
+	  ULONGEST structsize = extract_unsigned_integer (descdata
+							  + KVE_STRUCTSIZE, 4,
+							  byte_order);
+	  if (structsize < KVE_PATH)
+	    return false;
+
+	  ULONGEST start = extract_unsigned_integer (descdata + KVE_START, 8,
+						     byte_order);
+	  ULONGEST end = extract_unsigned_integer (descdata + KVE_END, 8,
+						   byte_order);
+	  if (start == addr)
+	    return end - start;
+
+	  descdata += structsize;
+	}
+      return 0;
+}
+
+/* Helper for fbsd_vsyscall_range that does the real work of finding
+   the vDSO's address range.  */
+
+static bool
+fbsd_vdso_range (struct gdbarch *gdbarch, struct mem_range *range)
+{
+  if (target_auxv_search (AT_FREEBSD_KPRELOAD, &range->start) <= 0)
+    return false;
+
+  if (!target_has_execution ())
+    {
+      /* Search for the ending address in the NT_PROCSTAT_VMMAP note. */
+      asection *section = bfd_get_section_by_name (core_bfd,
+						   ".note.freebsdcore.vmmap");
+      if (section == nullptr)
+	return false;
+
+      size_t note_size = bfd_section_size (section);
+      if (note_size < 4)
+	return false;
+
+      gdb::def_vector<unsigned char> contents (note_size);
+      if (!bfd_get_section_contents (core_bfd, section, contents.data (),
+				     0, note_size))
+	return false;
+
+      range->length = fbsd_vmmap_length (gdbarch, contents.data (), note_size,
+					 range->start);
+    }
+  else
+    {
+      /* Fetch the list of address space entries from the running target. */
+      gdb::optional<gdb::byte_vector> buf =
+	target_read_alloc (current_inferior ()->top_target (),
+			   TARGET_OBJECT_FREEBSD_VMMAP, nullptr);
+      if (!buf || buf->empty ())
+	return false;
+
+      range->length = fbsd_vmmap_length (gdbarch, buf->data (), buf->size (),
+					 range->start);
+    }
+  return range->length != 0;
+}
+
+/* Return the address range of the vDSO for the current inferior.  */
+
+static int
+fbsd_vsyscall_range (struct gdbarch *gdbarch, struct mem_range *range)
+{
+  struct fbsd_pspace_data *data = get_fbsd_pspace_data (current_program_space);
+
+  if (data->vdso_range_p == 0)
+    {
+      if (fbsd_vdso_range (gdbarch, &data->vdso_range))
+	data->vdso_range_p = 1;
+      else
+	data->vdso_range_p = -1;
+    }
+
+  if (data->vdso_range_p < 0)
+    return 0;
+
+  *range = data->vdso_range;
+  return 1;
 }
 
 /* To be called from GDB_OSABI_FREEBSD handlers. */
@@ -2098,17 +2382,11 @@ fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_get_siginfo_type (gdbarch, fbsd_get_siginfo_type);
   set_gdbarch_gdb_signal_from_target (gdbarch, fbsd_gdb_signal_from_target);
   set_gdbarch_gdb_signal_to_target (gdbarch, fbsd_gdb_signal_to_target);
+  set_gdbarch_report_signal_info (gdbarch, fbsd_report_signal_info);
   set_gdbarch_skip_solib_resolver (gdbarch, fbsd_skip_solib_resolver);
+  set_gdbarch_vsyscall_range (gdbarch, fbsd_vsyscall_range);
 
   /* `catch syscall' */
   set_xml_syscall_file_name (gdbarch, "syscalls/freebsd.xml");
   set_gdbarch_get_syscall_number (gdbarch, fbsd_get_syscall_number);
-}
-
-void _initialize_fbsd_tdep ();
-void
-_initialize_fbsd_tdep ()
-{
-  fbsd_gdbarch_data_handle =
-    gdbarch_data_register_post_init (init_fbsd_gdbarch_data);
 }

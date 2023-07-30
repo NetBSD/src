@@ -1,4 +1,4 @@
-# Copyright 2005-2020 Free Software Foundation, Inc.
+# Copyright 2005-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -226,7 +226,7 @@ gdb_test_no_output "set max-completions unlimited"
 
 set test "complete break ada"
 gdb_test_multiple "$test" $test {
-    -re "^$test$eol\(break ada\[-a-z0-9._@/\]*$eol\)+$gdb_prompt $" {
+    -re "^$test$eol\(break ada\[\]\[a-z0-9._@/-\]*$eol\)+$gdb_prompt $" {
         pass $test
     }
     -re "\[A-Z\].*$gdb_prompt $" {

@@ -1,5 +1,5 @@
 /* collection of junk waiting time to sort out
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
    Contributed by Red Hat
 
 This file is part of the GNU Simulators.
@@ -641,6 +641,7 @@ void frvbf_media_register_not_aligned (SIM_CPU *);
 void frvbf_media_acc_not_aligned (SIM_CPU *);
 void frvbf_media_cr_not_aligned (SIM_CPU *);
 void frvbf_media_overflow (SIM_CPU *, int);
+SI frvbf_media_average (SIM_CPU *, SI, SI);
 
 /* Functions for queuing and processing interrupts.  */
 struct frv_interrupt_queue_element *
@@ -680,6 +681,9 @@ struct frv_interrupt_queue_element *
 frv_queue_data_access_error_interrupt (SIM_CPU *, USI);
 
 struct frv_interrupt_queue_element *
+frv_queue_data_access_exception_interrupt (SIM_CPU *);
+
+struct frv_interrupt_queue_element *
 frv_queue_instruction_access_error_interrupt (SIM_CPU *);
 
 struct frv_interrupt_queue_element *
@@ -689,6 +693,9 @@ struct frv_interrupt_queue_element *
 frv_queue_fp_exception_interrupt (SIM_CPU *, struct frv_fp_exception_info *);
 
 enum frv_dtt frvbf_division_exception (SIM_CPU *, enum frv_dtt, int, int);
+
+struct frv_interrupt_queue_element *
+frv_queue_division_exception_interrupt (SIM_CPU *, enum frv_dtt);
 
 struct frv_interrupt_queue_element *
 frv_queue_interrupt (SIM_CPU *, enum frv_interrupt_kind);
@@ -845,6 +852,8 @@ USI frv_rett (SIM_CPU *current_cpu, PCADDR pc, BI debug_field);
 
 BI   frvbf_check_non_excepting_load (SIM_CPU *, SI, SI, SI, SI, QI, BI);
 void frvbf_check_recovering_store (SIM_CPU *, PCADDR, SI, int, int);
+SI   frvbf_check_acc_range (SIM_CPU *, SI);
+void frvbf_check_swap_address (SIM_CPU *, SI);
 
 void frvbf_clear_ne_flags (SIM_CPU *, SI, BI);
 void frvbf_commit (SIM_CPU *, SI, BI);
@@ -864,12 +873,12 @@ extern int insns_in_slot[];
 #define INSNS_IN_SLOT(slot) (insns_in_slot[slot])
     
 /* Multiple loads and stores.  */
-void frvbf_load_multiple_GR (SIM_CPU *, PCADDR, SI, SI, int);
-void frvbf_load_multiple_FRint (SIM_CPU *, PCADDR, SI, SI, int);
-void frvbf_load_multiple_CPR (SIM_CPU *, PCADDR, SI, SI, int);
-void frvbf_store_multiple_GR (SIM_CPU *, PCADDR, SI, SI, int);
-void frvbf_store_multiple_FRint (SIM_CPU *, PCADDR, SI, SI, int);
-void frvbf_store_multiple_CPR (SIM_CPU *, PCADDR, SI, SI, int);
+void frvbf_load_quad_GR (SIM_CPU *, PCADDR, SI, SI);
+void frvbf_load_quad_FRint (SIM_CPU *, PCADDR, SI, SI);
+void frvbf_load_quad_CPR (SIM_CPU *, PCADDR, SI, SI);
+void frvbf_store_quad_GR (SIM_CPU *, PCADDR, SI, SI);
+void frvbf_store_quad_FRint (SIM_CPU *, PCADDR, SI, SI);
+void frvbf_store_quad_CPR (SIM_CPU *, PCADDR, SI, SI);
 
 /* Memory and cache support.  */
 QI  frvbf_read_mem_QI  (SIM_CPU *, IADDR, SI);

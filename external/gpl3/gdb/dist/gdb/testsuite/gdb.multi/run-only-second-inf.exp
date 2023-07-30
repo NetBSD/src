@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ if {[use_gdb_stub]} {
     return 0
 }
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug}]} {
+if {[build_executable "failed to prepare" $testfile $srcfile {debug}]} {
     return -1
 }
 
@@ -46,5 +46,5 @@ gdb_load $binfile
 if {[gdb_start_cmd] < 0} {
     fail "start the second inf"
 } else {
-    gdb_test "" ".*reakpoint ., main .*${srcfile}.*" "start the second inf"
+    gdb_test "" ".*reakpoint $bkptno_numopt_re, main .*${srcfile}.*" "start the second inf"
 }

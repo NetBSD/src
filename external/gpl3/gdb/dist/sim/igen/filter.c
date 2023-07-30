@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -21,16 +21,7 @@
 
 
 #include <stdio.h>
-
-#include "config.h"
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
 
 #include "misc.h"
 #include "lf.h"
@@ -84,7 +75,7 @@ filter_parse (filter **filters, const char *filt)
 
 
 void
-filter_add (filter **set, filter *add)
+filter_add (filter **set, const filter *add)
 {
   while (add != NULL)
     {
@@ -118,7 +109,7 @@ filter_add (filter **set, filter *add)
 
 
 int
-filter_is_subset (filter *superset, filter *subset)
+filter_is_subset (const filter *superset, const filter *subset)
 {
   while (1)
     {
@@ -139,7 +130,7 @@ filter_is_subset (filter *superset, filter *subset)
 
 
 int
-filter_is_common (filter *l, filter *r)
+filter_is_common (const filter *l, const filter *r)
 {
   while (1)
     {
@@ -160,7 +151,7 @@ filter_is_common (filter *l, filter *r)
 
 
 int
-filter_is_member (filter *filt, const char *flag)
+filter_is_member (const filter *filt, const char *flag)
 {
   int index = 1;
   while (filt != NULL)
@@ -175,15 +166,15 @@ filter_is_member (filter *filt, const char *flag)
 
 
 int
-is_filtered_out (filter *filters, const char *flags)
+is_filtered_out (const filter *filters, const char *flags)
 {
   while (strlen (flags) > 0)
     {
       int present;
-      filter *filt = filters;
+      const filter *filt = filters;
       /* break the string up */
-      char *end = strchr (flags, ',');
-      char *next;
+      const char *end = strchr (flags, ',');
+      const char *next;
       unsigned /*size_t */ len;
       if (end == NULL)
 	{
@@ -216,8 +207,8 @@ is_filtered_out (filter *filters, const char *flags)
 }
 
 
-char *
-filter_next (filter *set, char *member)
+const char *
+filter_next (const filter *set, const char *member)
 {
   while (set != NULL)
     {
@@ -230,9 +221,12 @@ filter_next (filter *set, char *member)
 
 
 void
-dump_filter (lf *file, char *prefix, filter *set, char *suffix)
+dump_filter (lf *file,
+	     const char *prefix,
+	     const filter *set,
+	     const char *suffix)
 {
-  char *member;
+  const char *member;
   lf_printf (file, "%s", prefix);
   member = filter_next (set, "");
   if (member != NULL)

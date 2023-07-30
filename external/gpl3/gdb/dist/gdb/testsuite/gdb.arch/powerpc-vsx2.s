@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2020 Free Software Foundation, Inc.
+   Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,26 +23,16 @@ func:
 	.long  0x7f20d098    /* lxsiwax vs25,0,r26         */
 	.long  0x7c601898    /* lxsiwax vs3,0,r3           */
 	.long  0x7fcc0066    /* mfvsrd  r12,vs30           */
-	.long  0x7fcc0066    /* mfvsrd  r12,vs30           */
-	.long  0x7fcc0067    /* mfvsrd  r12,vs62           */
 	.long  0x7fcc0067    /* mfvsrd  r12,vs62           */
 	.long  0x7d9400e6    /* mffprwz r20,f12            */
-	.long  0x7d9400e6    /* mffprwz r20,f12            */
-	.long  0x7d9500e7    /* mfvrwz  r21,v12            */
 	.long  0x7d9500e7    /* mfvrwz  r21,v12            */
 	.long  0x7dc97118    /* stxsiwx vs14,r9,r14        */
 	.long  0x7ea04118    /* stxsiwx vs21,0,r8          */
 	.long  0x7d7c0166    /* mtvsrd  vs11,r28           */
-	.long  0x7d7c0166    /* mtvsrd  vs11,r28           */
-	.long  0x7d7d0167    /* mtvsrd  vs43,r29           */
 	.long  0x7d7d0167    /* mtvsrd  vs43,r29           */
 	.long  0x7f1601a6    /* mtfprwa f24,r22            */
-	.long  0x7f1601a6    /* mtfprwa f24,r22            */
-	.long  0x7f3701a7    /* mtvrwa  v25,r23            */
 	.long  0x7f3701a7    /* mtvrwa  v25,r23            */
 	.long  0x7f5b01e6    /* mtfprwz f26,r27            */
-	.long  0x7f5b01e6    /* mtfprwz f26,r27            */
-	.long  0x7f7c01e7    /* mtvrwz  v27,r28            */
 	.long  0x7f7c01e7    /* mtvrwz  v27,r28            */
 	.long  0x7db36c18    /* lxsspx  vs13,r19,r13       */
 	.long  0x7e406c18    /* lxsspx  vs18,0,r13         */
@@ -73,3 +63,4 @@ func:
 	.long  0xf360d52d    /* xscvspdpn vs59,vs26        */
 	.long  0xff0e168c    /* fmrgow  f24,f14,f2         */
 	.long  0xfec72f8c    /* fmrgew  f22,f7,f5          */
+	.section	.note.GNU-stack,"",@progbits

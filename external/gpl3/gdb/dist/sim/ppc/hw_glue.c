@@ -193,13 +193,13 @@ hw_glue_init_address(device *me)
     if (glue->sizeof_output == 0)
       device_error(me, "at least one reg property size must be nonzero");
     if (glue->sizeof_output % sizeof(unsigned_word) != 0)
-      device_error(me, "reg property size must be %d aligned", sizeof(unsigned_word));
+      device_error(me, "reg property size must be %zu aligned", sizeof(unsigned_word));
     /* and the address */
     device_address_to_attach_address(device_parent(me),
 				     &unit.address, &glue->space, &glue->address,
 				     me);
     if (glue->address % (sizeof(unsigned_word) * max_nr_interrupts) != 0)
-      device_error(me, "reg property address must be %d aligned",
+      device_error(me, "reg property address must be %zu aligned",
 		   sizeof(unsigned_word) * max_nr_interrupts);
     glue->nr_outputs = glue->sizeof_output / sizeof(unsigned_word);
     glue->output = zalloc(glue->sizeof_output);

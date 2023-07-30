@@ -1,6 +1,6 @@
 /* Trace file support in GDB.
 
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include "regcache.h"
 #include "gdbsupport/byte-vector.h"
 #include "gdbarch.h"
+#include "gdbsupport/buildargv.h"
 
 /* Helper macros.  */
 
@@ -350,8 +351,8 @@ tsave_command (const char *args, int from_tty)
     trace_save_tfile (filename, target_does_save);
 
   if (from_tty)
-    printf_filtered (_("Trace data saved to %s '%s'.\n"),
-		     generate_ctf ? "directory" : "file", filename);
+    gdb_printf (_("Trace data saved to %s '%s'.\n"),
+		generate_ctf ? "directory" : "file", filename);
 }
 
 /* Save the trace data to file FILENAME of tfile format.  */
@@ -419,7 +420,7 @@ tracefile_fetch_registers (struct regcache *regcache, int regno)
 bool
 tracefile_target::has_all_memory ()
 {
-  return 1;
+  return true;
 }
 
 /* This is the implementation of target_ops method to_has_memory.  */
@@ -427,7 +428,7 @@ tracefile_target::has_all_memory ()
 bool
 tracefile_target::has_memory ()
 {
-  return 1;
+  return true;
 }
 
 /* This is the implementation of target_ops method to_has_stack.
@@ -456,7 +457,7 @@ tracefile_target::has_registers ()
 bool
 tracefile_target::thread_alive (ptid_t ptid)
 {
-  return 1;
+  return true;
 }
 
 /* This is the implementation of target_ops method to_get_trace_status.

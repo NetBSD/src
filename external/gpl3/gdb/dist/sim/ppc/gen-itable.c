@@ -32,11 +32,6 @@
 #include "igen.h"
 #include "gen-itable.h"
 
-#ifndef NULL
-#define NULL 0
-#endif
-
-
 
 static void
 itable_h_insn(insn_table *entry,
@@ -69,12 +64,12 @@ gen_itable_h(insn_table *table, lf *file)
   /* output the table that contains the actual instruction info */
   lf_printf(file, "typedef struct _itable_instruction_info {\n");
   lf_printf(file, "  itable_index nr;\n");
-  lf_printf(file, "  char *format;\n");
-  lf_printf(file, "  char *form;\n");
-  lf_printf(file, "  char *flags;\n");
-  lf_printf(file, "  char *mnemonic;\n");
-  lf_printf(file, "  char *name;\n");
-  lf_printf(file, "  char *file;\n");
+  lf_printf(file, "  const char *format;\n");
+  lf_printf(file, "  const char *form;\n");
+  lf_printf(file, "  const char *flags;\n");
+  lf_printf(file, "  const char *mnemonic;\n");
+  lf_printf(file, "  const char *name;\n");
+  lf_printf(file, "  const char *file;\n");
   lf_printf(file, "  int line_nr;\n");
   lf_printf(file, "} itable_info;\n");
   lf_printf(file, "\n");

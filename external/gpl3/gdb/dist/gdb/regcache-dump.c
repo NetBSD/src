@@ -1,4 +1,4 @@
-/* Copyright (C) 1986-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,9 +43,9 @@ protected:
     if (regnum < 0)
       {
 	if (m_dump_pseudo)
-	  fprintf_unfiltered (file, "Cooked value");
+	  gdb_printf (file, "Cooked value");
 	else
-	  fprintf_unfiltered (file, "Raw value");
+	  gdb_printf (file, "Raw value");
       }
     else
       {
@@ -60,9 +60,9 @@ protected:
 	    auto status = m_regcache->cooked_read (regnum, buf.data ());
 
 	    if (status == REG_UNKNOWN)
-	      fprintf_unfiltered (file, "<invalid>");
+	      gdb_printf (file, "<invalid>");
 	    else if (status == REG_UNAVAILABLE)
-	      fprintf_unfiltered (file, "<unavailable>");
+	      gdb_printf (file, "<unavailable>");
 	    else
 	      {
 		print_hex_chars (file, buf.data (), size,
@@ -73,7 +73,7 @@ protected:
 	  {
 	    /* Just print "<cooked>" for pseudo register when
 	       regcache_dump_raw.  */
-	    fprintf_unfiltered (file, "<cooked>");
+	    gdb_printf (file, "<cooked>");
 	  }
       }
   }
@@ -102,9 +102,9 @@ protected:
     if (regnum < 0)
       {
 	if (m_has_pseudo)
-	  fprintf_unfiltered (file, "Cooked value");
+	  gdb_printf (file, "Cooked value");
 	else
-	  fprintf_unfiltered (file, "Raw value");
+	  gdb_printf (file, "Raw value");
       }
     else
       {
@@ -120,15 +120,15 @@ protected:
 	    gdb_assert (status != REG_VALID);
 
 	    if (status == REG_UNKNOWN)
-	      fprintf_unfiltered (file, "<invalid>");
+	      gdb_printf (file, "<invalid>");
 	    else
-	      fprintf_unfiltered (file, "<unavailable>");
+	      gdb_printf (file, "<unavailable>");
 	  }
 	else
 	  {
 	    /* Just print "<cooked>" for pseudo register when
 	       regcache_dump_raw.  */
-	    fprintf_unfiltered (file, "<cooked>");
+	    gdb_printf (file, "<cooked>");
 	  }
       }
   }
@@ -162,7 +162,7 @@ protected:
   {
     if (regnum < 0)
       {
-	fprintf_unfiltered (file, "Rmt Nr  g/G Offset");
+	gdb_printf (file, "Rmt Nr  g/G Offset");
       }
     else if (regnum < gdbarch_num_regs (m_gdbarch))
       {
@@ -170,7 +170,7 @@ protected:
 
 	if (remote_register_number_and_offset (m_gdbarch, regnum,
 					       &pnum, &poffset))
-	  fprintf_unfiltered (file, "%7d %11d", pnum, poffset);
+	  gdb_printf (file, "%7d %11d", pnum, poffset);
       }
   }
 };
@@ -188,20 +188,15 @@ protected:
   void dump_reg (ui_file *file, int regnum) override
   {
     if (regnum < 0)
-      fprintf_unfiltered (file, "Groups");
+      gdb_printf (file, "Groups");
     else
       {
 	const char *sep = "";
-	struct reggroup *group;
-
-	for (group = reggroup_next (m_gdbarch, NULL);
-	     group != NULL;
-	     group = reggroup_next (m_gdbarch, group))
+	for (const struct reggroup *group : gdbarch_reggroups (m_gdbarch))
 	  {
 	    if (gdbarch_register_reggroup_p (m_gdbarch, regnum, group))
 	      {
-		fprintf_unfiltered (file,
-				    "%s%s", sep, reggroup_name (group));
+		gdb_printf (file, "%s%s", sep, group->name ());
 		sep = ",";
 	      }
 	  }
@@ -236,7 +231,7 @@ regcache_print (const char *args, enum regcache_dump_what what_to_dump)
   std::unique_ptr<regcache> regs;
   gdbarch *gdbarch;
 
-  if (target_has_registers)
+  if (target_has_registers ())
     gdbarch = get_current_regcache ()->arch ();
   else
     gdbarch = target_gdbarch ();
@@ -257,7 +252,7 @@ regcache_print (const char *args, enum regcache_dump_what what_to_dump)
       {
 	auto dump_pseudo = (what_to_dump == regcache_dump_cooked);
 
-	if (target_has_registers)
+	if (target_has_registers ())
 	  dump.reset (new register_dump_regcache (get_current_regcache (),
 						  dump_pseudo));
 	else

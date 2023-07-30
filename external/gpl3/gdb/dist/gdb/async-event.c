@@ -1,5 +1,5 @@
 /* Async events for the GDB event loop.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,6 +46,9 @@ struct async_signal_handler
 
   /* Argument to PROC.  */
   gdb_client_data client_data;
+
+  /* User-friendly name of this handler.  */
+  const char *name;
 };
 
 /* PROC is a function to be invoked when the READY flag is set.  This
@@ -68,6 +71,9 @@ struct async_event_handler
 
   /* Argument to PROC.  */
   gdb_client_data client_data;
+
+  /* User-friendly name of this handler.  */
+  const char *name;
 };
 
 /* All the async_signal_handlers gdb is interested in are kept onto
@@ -114,7 +120,7 @@ initialize_async_signal_handlers (void)
   async_signal_handlers_serial_event = make_serial_event ();
 
   add_file_handler (serial_event_fd (async_signal_handlers_serial_event),
-		    async_signals_handler, NULL);
+		    async_signals_handler, NULL, "async-signals");
 }
 
 
@@ -127,7 +133,8 @@ initialize_async_signal_handlers (void)
    whenever the handler is invoked.  */
 async_signal_handler *
 create_async_signal_handler (sig_handler_func * proc,
-			     gdb_client_data client_data)
+			     gdb_client_data client_data,
+			     const char *name)
 {
   async_signal_handler *async_handler_ptr;
 
@@ -136,6 +143,7 @@ create_async_signal_handler (sig_handler_func * proc,
   async_handler_ptr->next_handler = NULL;
   async_handler_ptr->proc = proc;
   async_handler_ptr->client_data = client_data;
+  async_handler_ptr->name = name;
   if (sighandler_list.first_handler == NULL)
     sighandler_list.first_handler = async_handler_ptr;
   else
@@ -149,8 +157,23 @@ create_async_signal_handler (sig_handler_func * proc,
    for some event.  The caller of this function is the interrupt
    handler associated with a signal.  */
 void
-mark_async_signal_handler (async_signal_handler * async_handler_ptr)
+mark_async_signal_handler (async_signal_handler *async_handler_ptr)
 {
+  if (debug_event_loop != debug_event_loop_kind::OFF)
+    {
+      /* This is called by signal handlers, so we print it "by hand" using
+	 the async-signal-safe methods.  */
+      const char head[] = ("[event-loop] mark_async_signal_handler: marking"
+			   "async signal handler `");
+      gdb_stdlog->write_async_safe (head, strlen (head));
+
+      gdb_stdlog->write_async_safe (async_handler_ptr->name,
+				    strlen (async_handler_ptr->name));
+
+      const char tail[] = "`\n";
+      gdb_stdlog->write_async_safe (tail, strlen (tail));
+    }
+
   async_handler_ptr->ready = 1;
   serial_event_set (async_signal_handlers_serial_event);
 }
@@ -160,6 +183,8 @@ mark_async_signal_handler (async_signal_handler * async_handler_ptr)
 void
 clear_async_signal_handler (async_signal_handler *async_handler_ptr)
 {
+  event_loop_debug_printf ("clearing async signal handler `%s`",
+			   async_handler_ptr->name);
   async_handler_ptr->ready = 0;
 }
 
@@ -203,6 +228,8 @@ invoke_async_signal_handlers (void)
       /* Async signal handlers have no connection to whichever was the
 	 current UI, and thus always run on the main one.  */
       current_ui = main_ui;
+      event_loop_debug_printf ("invoking async signal handler `%s`",
+			       async_handler_ptr->name);
       (*async_handler_ptr->proc) (async_handler_ptr->client_data);
     }
 
@@ -236,13 +263,12 @@ delete_async_signal_handler (async_signal_handler ** async_handler_ptr)
   (*async_handler_ptr) = NULL;
 }
 
-/* Create an asynchronous event handler, allocating memory for it.
-   Return a pointer to the newly created handler.  PROC is the
-   function to call with CLIENT_DATA argument whenever the handler is
-   invoked.  */
+/* See async-event.h.  */
+
 async_event_handler *
 create_async_event_handler (async_event_handler_func *proc,
-			    gdb_client_data client_data)
+			    gdb_client_data client_data,
+			    const char *name)
 {
   async_event_handler *h;
 
@@ -251,6 +277,7 @@ create_async_event_handler (async_event_handler_func *proc,
   h->next_handler = NULL;
   h->proc = proc;
   h->client_data = client_data;
+  h->name = name;
   if (async_event_handler_list.first_handler == NULL)
     async_event_handler_list.first_handler = h;
   else
@@ -266,6 +293,10 @@ create_async_event_handler (async_event_handler_func *proc,
 void
 mark_async_event_handler (async_event_handler *async_handler_ptr)
 {
+  event_loop_debug_printf ("marking async event handler `%s` "
+			   "(previous state was %d)",
+			   async_handler_ptr->name,
+			   async_handler_ptr->ready);
   async_handler_ptr->ready = 1;
 }
 
@@ -274,7 +305,17 @@ mark_async_event_handler (async_event_handler *async_handler_ptr)
 void
 clear_async_event_handler (async_event_handler *async_handler_ptr)
 {
+  event_loop_debug_printf ("clearing async event handler `%s`",
+			   async_handler_ptr->name);
   async_handler_ptr->ready = 0;
+}
+
+/* See event-loop.h.  */
+
+bool
+async_event_handler_marked (async_event_handler *handler)
+{
+  return handler->ready;
 }
 
 /* Check if asynchronous event handlers are ready, and call the
@@ -291,7 +332,8 @@ check_async_event_handlers ()
     {
       if (async_handler_ptr->ready)
 	{
-	  async_handler_ptr->ready = 0;
+	  event_loop_debug_printf ("invoking async event handler `%s`",
+				   async_handler_ptr->name);
 	  (*async_handler_ptr->proc) (async_handler_ptr->client_data);
 	  return 1;
 	}

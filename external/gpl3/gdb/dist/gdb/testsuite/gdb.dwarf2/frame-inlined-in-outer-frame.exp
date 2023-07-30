@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,9 @@
 # Because of (1), the test has to be written in assembly with explicit CFI
 # directives.
 
+# Check if starti command is supported.
+require use_gdb_stub 0
+
 load_lib dwarf.exp
 
 if {![dwarf2_support]} {
@@ -35,15 +38,17 @@ standard_testfile .S
 
 set dwarf_asm [standard_output_file dwarf-asm.S]
 Dwarf::assemble $dwarf_asm {
+    global srcfile
+
     declare_labels foo_subprogram bar_subprogram
     declare_labels stmt_list
 
     # See the comment in the .S file for the equivalent C program this is meant
     # to represent.
 
-    cu { addr_size 4 } {
+    cu { label cu_label addr_size 4 } {
 	DW_TAG_compile_unit {
-	    {DW_AT_name file1.txt}
+	    {DW_AT_name $srcfile}
 	    {DW_AT_stmt_list $stmt_list DW_FORM_sec_offset}
 	    {DW_AT_language @DW_LANG_C99}
 	    {DW_AT_low_pc __cu_low_pc DW_FORM_addr}
@@ -90,6 +95,10 @@ Dwarf::assemble $dwarf_asm {
 
 	include_dir "/some/directory"
 	file_name "/some/directory/file.c" 0
+    }
+
+    aranges {} cu_label {
+	arange {} __cu_low_pc __cu_high_pc
     }
 }
 

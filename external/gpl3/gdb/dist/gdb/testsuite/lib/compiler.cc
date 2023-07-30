@@ -1,6 +1,6 @@
 /* This test file is part of GDB, the GNU debugger.
 
-   Copyright 1995-2020 Free Software Foundation, Inc.
+   Copyright 1995-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -55,4 +55,13 @@ set icc_major [string range __ICL 0 1]
 set icc_minor [format "%d" [string range __ICL 2 [expr {[string length __ICL] -1}]]]
 set icc_update __INTEL_COMPILER_UPDATE
 set compiler_info [join "icc $icc_major $icc_minor $icc_update" -]
+#elif defined(__INTEL_LLVM_COMPILER) && defined(__clang_version__)
+/* Intel Next Gen compiler defines preprocessor __INTEL_LLVM_COMPILER and
+   provides version info in __clang_version__ e.g. value:
+   "12.0.0 (icx 2020.10.0.1113)".  */
+set total_length [string length __clang_version__]
+set version_start_index [string last "(" __clang_version__]
+set version_string [string range __clang_version__ $version_start_index+5 $total_length-2]
+set version_updated_string [string map {. -} $version_string]
+set compiler_info "icx-$version_updated_string"
 #endif

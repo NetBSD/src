@@ -1,5 +1,5 @@
 /* Definitions for decoding the picoJava opcode table.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain of Transmeta (sac@pobox.com).
 
    This program is free software; you can redistribute it and/or modify

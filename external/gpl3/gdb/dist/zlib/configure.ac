@@ -14,6 +14,7 @@ mkinstalldirs="`cd $ac_aux_dir && ${PWDCMD-pwd}`/mkinstalldirs"
 AC_SUBST(mkinstalldirs)
 
 AM_INIT_AUTOMAKE
+AM_SILENT_RULES([yes])
 
 AM_MAINTAINER_MODE
 

@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # This file is part of the gdb testsuite.
+
+if { [is_remote host] } {
+    gdb_remote_download host $srcdir/$subdir/large-frame.h
+}
 
 # This test was added to test GDB's ability to backtrace over a large
 # stack frame for which there is no debug information.  This should
@@ -35,8 +39,7 @@ proc run_test { opt_level } {
 	return
     }
 
-    if { ![runto_main] } then {
-	unsupported "runto main"
+    if {![runto_main]} {
 	return
     }
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Free Software Foundation, Inc.
+# Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,15 +37,16 @@ remote_exec target "kill -9 ${testpid}"
 # Give it some time to die.
 sleep 2
 
-set no_such_process_msg "Couldn't get registers: No such process\."
+set regs_msg "(Couldn't get registers|Unable to fetch general registers)"
+set no_such_process_msg "$regs_msg: No such process\."
 set killed_msg "Program terminated with signal SIGKILL, Killed\."
 set no_longer_exists_msg "The program no longer exists\."
 set not_being_run_msg "The program is not being run\."
 
 gdb_test_multiple "continue" "prompt after first continue" {
-    -re "Continuing\.\r\n$no_such_process_msg\r\n$no_such_process_msg\r\n$gdb_prompt " {
+    -re "Continuing\.\r\n$no_such_process_msg\r\n$gdb_prompt " {
 	pass $gdb_test_name
-	# Two times $no_such_process_msg.  The bug condition was triggered, go
+	# Saw $no_such_process_msg.  The bug condition was triggered, go
 	# check for it.
 	gdb_test_multiple "" "messages" {
 	    -re ".*$killed_msg.*$no_longer_exists_msg\r\n" {
@@ -53,5 +54,8 @@ gdb_test_multiple "continue" "prompt after first continue" {
 		gdb_test "continue" $not_being_run_msg "second continue"
 	    }
 	}
+    }
+    -re -wrap ".*$killed_msg.*$no_longer_exists_msg" {
+	pass $gdb_test_name
     }
 }

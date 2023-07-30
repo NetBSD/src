@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ proc test_d_demangling {} {
     test_demangling "_D8demangle4testFkZv" "demangle.test(uint)"
     test_demangling "_D8demangle4testFlZv" "demangle.test(long)"
     test_demangling "_D8demangle4testFmZv" "demangle.test(ulong)"
-    test_demangling "_D8demangle4testFnZv" "demangle.test(none)"
+    test_demangling "_D8demangle4testFnZv" "demangle.test(typeof(null))"
     test_demangling "_D8demangle4testFoZv" "demangle.test(ifloat)"
     test_demangling "_D8demangle4testFpZv" "demangle.test(idouble)"
     test_demangling "_D8demangle4testFqZv" "demangle.test(cfloat)"

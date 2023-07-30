@@ -1,5 +1,5 @@
 /* BFD support for the Axis CRIS architecture.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson.
 
@@ -66,7 +66,7 @@ get_compatible (const bfd_arch_info_type *a,
 }
 
 #define N(NUMBER, PRINT, NEXT)  \
- { 32, 32, 8, bfd_arch_cris, NUMBER, "cris", PRINT, 1, FALSE, \
+ { 32, 32, 8, bfd_arch_cris, NUMBER, "cris", PRINT, 1, false, \
      get_compatible, bfd_default_scan, bfd_arch_default_fill, NEXT, 0 }
 
 static const bfd_arch_info_type bfd_cris_arch_compat_v10_v32 =
@@ -90,7 +90,7 @@ const bfd_arch_info_type bfd_cris_arch =
   "cris",			/* The printable name is the same.  */
   1,				/* Section alignment power; each section
 				   is aligned to (only) 2^1 bytes.  */
-  TRUE,				/* This is the default "machine".  */
+  true,				/* This is the default "machine".  */
   get_compatible,		/* A function for testing
 				   "machine" compatibility of two
 				   bfd_arch_info_type.  */

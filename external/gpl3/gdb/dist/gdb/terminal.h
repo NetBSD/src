@@ -1,5 +1,5 @@
 /* Terminal interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 
 struct inferior;
 
-extern void new_tty_prefork (const char *);
+extern void new_tty_prefork (std::string ttyname);
 
 extern void new_tty (void);
 

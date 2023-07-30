@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Free Software Foundation, Inc.
+# Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,15 +84,57 @@ if { [gdb_compile "${srcfile}" "${binfile}" executable {debug}] != "" } {
 # Rerun the program.  This should not only force GDB to reload the
 # source cache, but also to break at BP_LINE again, which now has
 # different contents.
-gdb_test_multiple "run" "rerun program" {
-    -re {The program being debugged has been started already\.\r\nStart it from the beginning\? \(y or n\) $} {
-	set binregex [string_to_regexp $binfile]
-	gdb_test "y" "\\`$binregex\\' has changed; re-reading symbols\.\r\nStarting program: ${binregex}.*" \
-	    "rerun program"
-    }
-}
+set q \
+    [multi_line \
+	 "The program being debugged has been started already\\." \
+	 "Start it from the beginning\\? \\(y or n\\) "]
+set binregex [string_to_regexp $binfile]
+set re \
+    [multi_line \
+	 "\\`$binregex\\' has changed; re-reading symbols\\.(" \
+	 "Expanding full symbols from $binfile\\.\\.\\.)?" \
+	 "Starting program: ${binregex}.*"]
+gdb_test "run" $re "rerun program" $q y
 
 # Again, perform the listing and check that the line indeed has
 # changed for GDB.
 gdb_test "list" "${bp_line}\[ \t\]+printf \\(\"foo\\\\n\"\\); /\\\* new-marker \\\*/.*" \
     "verify that the source code is properly reloaded"
+
+# Modify the source file again.  As before, this only works locally
+# because of the TCL commands.
+set bkpsrc [standard_output_file $testfile].c.bkp
+set bkpsrcfd [open $bkpsrc w]
+set srcfd [open $srcfile r]
+
+while { [gets $srcfd line] != -1 } {
+    if { [string first "new-marker" $line] != -1 } {
+	# Modify the printf line that we added previously.
+	puts $bkpsrcfd "  printf (\"foo\\n\"); /* new-marker updated */"
+    } else {
+	puts $bkpsrcfd $line
+    }
+}
+
+close $bkpsrcfd
+close $srcfd
+file rename -force -- $bkpsrc $srcfile
+
+# As before, delay so that at least one second has passed.  GDB still
+# will not spot that the source file has changed, as GDB doesn't do a
+# time check unless the binary has also changed, this delay just
+# allows us to confirm this behaviour.
+sleep 1
+
+# List the printf line again, we should not see the file changes yet
+# as the binary is unchanged, so the cached contents will still be
+# used.
+gdb_test "list ${bp_line}" "${bp_line}\[ \t\]+printf \\(\"foo\\\\n\"\\); /\\\* new-marker \\\*/.*" \
+    "verify that the source code change is not seen yet"
+
+gdb_test "maint flush source-cache" "Source cache flushed\\."
+
+# List the printf line again.  After the cache flush GDB will re-read
+# the source file and we should now see the changes.
+gdb_test "list ${bp_line}" "${bp_line}\[ \t\]+printf \\(\"foo\\\\n\"\\); /\\\* new-marker updated \\\*/.*" \
+    "verify that the updated source code change is not seen"

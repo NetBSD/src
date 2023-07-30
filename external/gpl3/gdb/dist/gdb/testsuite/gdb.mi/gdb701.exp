@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,11 +20,6 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    continue
-}
-
 standard_testfile
 
 if {[gdb_compile $srcdir/$subdir/$srcfile $binfile executable debug] != ""} {
@@ -40,7 +35,8 @@ if {[gdb_compile $srcdir/$subdir/$srcfile $binfile executable debug] != ""} {
 # If it doesn't, Bad Things Happen(TM).
 
 # Run to main
-mi_run_to_main
+mi_clean_restart $binfile
+mi_runto_main
 
 # Step over "foo = 0"
 mi_next "step over \"foo = 0\""

@@ -1,4 +1,4 @@
-# Copyright 1988-2020 Free Software Foundation, Inc.
+# Copyright 1988-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,9 @@ if [target_info exists no_long_long] {
     set exec_opts [list debug]
 }
 
+# Some tests require GCC.
+set gcc_compiled [is_c_compiler_gcc]
+
 standard_testfile .c
 
 # Define a procedure to set up an xfail for all targets that put out a
@@ -50,8 +53,6 @@ proc do_test {dir options} {
 	      [list $srcfile] $options] } {
 	return 0
     }
-
-    clean_restart ${binfile}
 
     #
     # Test whatis command with basic C types
@@ -99,14 +100,14 @@ proc do_test {dir options} {
 
     setup_xfail_on_long_vs_int
     # AIX xlc gets this wrong and unsigned long right.  Go figure.
-    if {!$gcc_compiled} then {setup_xfail "rs6000-*-aix*"}
+    if {!$gcc_compiled} {setup_xfail "rs6000-*-aix*"}
     gdb_test "whatis v_long" \
 	"type = (long|long int)" \
 	"whatis long"
 
     setup_xfail_on_long_vs_int
     # AIX xlc gets this wrong and unsigned long right.  Go figure.
-    if {!$gcc_compiled} then {setup_xfail "rs6000-*-aix*"}
+    if {!$gcc_compiled} {setup_xfail "rs6000-*-aix*"}
     gdb_test "whatis v_signed_long" \
 	"type = (signed |)(long|long int)" \
 	"whatis signed long"
@@ -474,7 +475,7 @@ proc do_test {dir options} {
 	}
 
 	# Sun /bin/cc calls this a function returning double.
-	if {!$gcc_compiled} then {setup_xfail "*-sun-sunos4*"}
+	if {!$gcc_compiled} {setup_xfail "*-sun-sunos4*"}
 	gdb_test "whatis v_float_func" \
 	    "type = float \\($void\\)" \
 	    "whatis float function"
@@ -584,10 +585,15 @@ proc do_test {dir options} {
 	"whatis applied to function with 'void' parameter type"
 }
 
+set ctf_opts {}
+lappend ctf_opts additional_flags=-gctf
+lappend ctf_opts ldflags=-Wl,--strip-debug
+lappend ctf_opts ldflags=-Wl,--ctf-variables
+
 # Build up the set of debug formats for which we will run this test.
 set specs { {dwarf {debug}} }
 if ![skip_ctf_tests] {
-    lappend specs {ctf {"additional_flags=-gt"}}
+    lappend specs [list ctf $ctf_opts]
 }
 
 # Setup and run the test for each debug format.

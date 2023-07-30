@@ -1,7 +1,7 @@
 /* Test proper disassembling of ARM thumb instructions when reloading a symbol
    file.
 
-   Copyright 2012-2020 Free Software Foundation, Inc.
+   Copyright 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,3 +33,4 @@ main:
 	mov	r0, #0
 	bx	lr
 	.size	main, .-main
+	.section	.note.GNU-stack,"",@progbits

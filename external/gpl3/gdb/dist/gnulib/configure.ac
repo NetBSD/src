@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995-2020 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2023 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -55,6 +55,8 @@ AC_CHECK_TOOL(AR, ar)
 # ---------------------- #
 # Checks for libraries.  #
 # ---------------------- #
+
+AC_CONFIG_FILES(Makefile.gnulib.inc)
 
 AC_OUTPUT(Makefile import/Makefile,
 [

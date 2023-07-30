@@ -1,4 +1,4 @@
-/* Copyright 2009-2020 Free Software Foundation, Inc.
+/* Copyright 2009-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -121,3 +121,4 @@ test_call_end:
 	.global test_ret
 test_ret:
 	ret
+	.section	.note.GNU-stack,"",@progbits

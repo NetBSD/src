@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,27 +14,43 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 # This file is part of the GDB testsuite.  It tests reverse stepping.
-# Lots of code borrowed from "step-test.exp".
-
 #
 # reverse-next over a function call sets a step-resume breakpoint at
 # callee's entry point, runs to it, and then does an extra single-step
 # to get at the callee's caller.  Test that a user breakpoint set at
 # the same location as the step-resume breakpoint isn't ignored.
 #
+# The test sets a breakpoint with the command break *callee to set a
+# breakpoint on the first instruction of the function.  The issue is on
+# PowerPC it uses Global Entry Points (GEP) and Local Entry Points (LEP).
+# The GEP is the first instruction in the function.  It sets up register
+# r2 and then reaches the LEP.
+#
+#  <callee>:
+#   lis     r2,4098        <- GEP
+#   addi    r2,r2,32512
+#   mflr    r0             <- LEP
+#   std     r0,16(r1)
+
+#
+# The command break *callee sets the breakpoint on the GEP.  Calling
+# the function with callee() will enter the function via the LEP.  So,
+# this test needs to use a function pointer to call callee() so the
+# function will be entered via the GEP to work as designed on PowerPC in
+# addition to non-PowerPC systems.  On non-PowerPC systems, the GEP and LEP
+# are the same.
 
 if ![supports_reverse] {
     return
 }
 
-standard_testfile step-reverse.c
+standard_testfile
 
 if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
     return -1
 }
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -43,8 +59,10 @@ if [supports_process_record] {
     gdb_test_no_output "record" "turn on process record"
 }
 
-set lineno [gdb_get_line_number "STEP INTO THIS CALL"]
-gdb_test "advance $lineno" ".*STEP INTO THIS CALL.*" "get past callee call"
+# Stop after the function pointer call to test the reverse-next command.
+set lineno [gdb_get_line_number "END OF MAIN"]
+gdb_test "advance $lineno" ".*END OF MAIN.*" \
+    "get past callee call"
 
 gdb_test "b \*callee" "" "set breakpoint at callee's entry"
 
@@ -54,5 +72,5 @@ gdb_test "reverse-next" \
     "reverse-next over call trips user breakpoint at function entry"
 
 gdb_test "up" \
-    ".*NEXT OVER THIS CALL.*" \
+    ".*FUNCTION PTR CALL TO CALLEE.*" \
     "stopped at the right callee call"

@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,3 +35,8 @@ runto "break_me"
 gdb_test "task 2" \
          [join {"\\\[Switching to task 2 \"mit\"\\\].*" \
                 ".*foo\\.t \\(.*\\).*foo\\.adb:.*"} ""]
+
+gdb_test "task apply 1 -q frame" ".*pck\\.break_me.*"
+
+gdb_test "task apply all frame" \
+    "Task ID 1:.*pck\\.break_me.*Task ID 2:.*"

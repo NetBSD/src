@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1998-2020 Free Software Foundation, Inc.
+   Copyright 1998-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -142,6 +142,11 @@ int Diamond::vget_base ()
   return this->Left::x + 2000;
 }
 
+struct Container
+{
+  PMI member;
+};
+
 int
 func (int x)
 {
@@ -204,6 +209,9 @@ int main ()
 
   null_pmi = NULL;
   null_pmf = NULL;
+
+  Container contain;
+  contain.member = &A::j;
 
   pmi = NULL; /* Breakpoint 1 here.  */
 

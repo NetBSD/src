@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2013-2020 Free Software Foundation, Inc.
+   Copyright 2013-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -83,8 +83,8 @@ void funca(void)
   fb.f = 42;
   fb.s = 19;
 
-  bf = malloc (sizeof (foobar));
-  bf->nothing = malloc (128);
+  bf = (foobar *) malloc (sizeof (foobar));
+  bf->nothing = (char *) malloc (128);
   bf->nothing = "Bar Foo";
   bf->f = 24;
   bf->s = 91;

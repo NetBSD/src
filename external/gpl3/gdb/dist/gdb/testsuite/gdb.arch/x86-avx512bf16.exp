@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,6 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
 }
 
 if { ![runto_main] } {
-    unsupported "could not run to main"
     return -1
 }
 
@@ -64,11 +63,11 @@ gdb_test "print \$zmm6.v32_bfloat16\[1\]" "= 68.5"
 # Test setting of bfloat values
 gdb_test_no_output "set var \$xmm0.v8_bfloat16\[0\] = 32.25" \
     "set %xmm0.v8_bfloat16\[0\]"
-gdb_test_no_output "set var \$ymm8.v16_bfloat16\[1\] = 33.5" \
-    "set %ymm8.v16_bfloat16\[1\]"
-gdb_test_no_output "set var \$zmm16.v32_bfloat16\[2\] = 22.75" \
-    "set %zmm16.v32_bfloat16\[2\]"
+gdb_test_no_output "set var \$ymm4.v16_bfloat16\[1\] = 33.5" \
+    "set %ymm4.v16_bfloat16\[1\]"
+gdb_test_no_output "set var \$zmm7.v32_bfloat16\[2\] = 22.75" \
+    "set %zmm7.v32_bfloat16\[2\]"
 
 gdb_test "p \$xmm0.v8_bfloat16\[0\]" "= 32.25"
-gdb_test "p \$ymm8.v16_bfloat16\[1\]" "= 33.5"
-gdb_test "p \$zmm16.v32_bfloat16\[2\]" "= 22.75"
+gdb_test "p \$ymm4.v16_bfloat16\[1\]" "= 33.5"
+gdb_test "p \$zmm7.v32_bfloat16\[2\]" "= 22.75"

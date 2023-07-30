@@ -1,6 +1,6 @@
 /* Remote File-I/O communications
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,7 +61,7 @@ remote_fileio_init_fd_map (void)
       remote_fio_data.fd_map[1] = FIO_FD_CONSOLE_OUT;
       remote_fio_data.fd_map[2] = FIO_FD_CONSOLE_OUT;
       for (i = 3; i < 10; ++i)
-        remote_fio_data.fd_map[i] = FIO_FD_INVALID;
+	remote_fio_data.fd_map[i] = FIO_FD_INVALID;
     }
   return 3;
 }
@@ -199,16 +199,16 @@ remote_fileio_seek_flag_to_host (long num, int *flag)
   switch (num)
     {
       case FILEIO_SEEK_SET:
-        *flag = SEEK_SET;
+	*flag = SEEK_SET;
 	break;
       case FILEIO_SEEK_CUR:
-        *flag =  SEEK_CUR;
+	*flag =  SEEK_CUR;
 	break;
       case FILEIO_SEEK_END:
-        *flag =  SEEK_END;
+	*flag =  SEEK_END;
 	break;
       default:
-        return -1;
+	return -1;
     }
   return 0;
 }
@@ -236,13 +236,13 @@ remote_fileio_extract_long (char **buf, LONGEST *retlong)
     {
       *retlong <<= 4;
       if (**buf >= '0' && **buf <= '9')
-        *retlong += **buf - '0';
+	*retlong += **buf - '0';
       else if (**buf >= 'a' && **buf <= 'f')
-        *retlong += **buf - 'a' + 10;
+	*retlong += **buf - 'a' + 10;
       else if (**buf >= 'A' && **buf <= 'F')
-        *retlong += **buf - 'A' + 10;
+	*retlong += **buf - 'A' + 10;
       else
-        return -1;
+	return -1;
     }
   *retlong *= sign;
   *buf = c;
@@ -328,15 +328,15 @@ remote_fileio_reply (remote_target *remote, int retcode, int error)
   if (error || ctrl_c)
     {
       if (error && ctrl_c)
-        error = FILEIO_EINTR;
+	error = FILEIO_EINTR;
       if (error < 0)
-        {
+	{
 	  strcat (buf, "-");
 	  error = -error;
 	}
       sprintf (buf + strlen (buf), ",%x", error);
       if (ctrl_c)
-        strcat (buf, ",C");
+	strcat (buf, ",C");
     }
   quit_handler = remote_fileio_o_quit_handler;
   putpkt (remote, buf);
@@ -425,7 +425,7 @@ remote_fileio_func_open (remote_target *remote, char *buf)
 	}
     }
 
-  fd = gdb_open_cloexec (pathname, flags, mode);
+  fd = gdb_open_cloexec (pathname, flags, mode).release ();
   if (fd < 0)
     {
       remote_fileio_return_errno (remote, -1);
@@ -769,14 +769,14 @@ remote_fileio_func_rename (remote_target *remote, char *buf)
   if (ret == -1)
     {
       /* Special case: newpath is a non-empty directory.  Some systems
-         return ENOTEMPTY, some return EEXIST.  We coerce that to be
+	 return ENOTEMPTY, some return EEXIST.  We coerce that to be
 	 always EEXIST.  */
       if (errno == ENOTEMPTY)
-        errno = EEXIST;
+	errno = EEXIST;
 #ifdef __CYGWIN__
       /* Workaround some Cygwin problems with correct errnos.  */
       if (errno == EACCES)
-        {
+	{
 	  if (!of && !nf && S_ISDIR (nst.st_mode))
 	    {
 	      if (S_ISREG (ost.st_mode))
@@ -960,7 +960,7 @@ remote_fileio_func_fstat (remote_target *remote, char *buf)
       if (!gettimeofday (&tv, NULL))
 	st.st_atime = st.st_mtime = st.st_ctime = tv.tv_sec;
       else
-        st.st_atime = st.st_mtime = st.st_ctime = (time_t) 0;
+	st.st_atime = st.st_mtime = st.st_ctime = (time_t) 0;
       ret = 0;
     }
   else
@@ -1276,7 +1276,7 @@ set_system_call_allowed (const char *args, int from_tty)
       int val = strtoul (args, &arg_end, 10);
 
       if (*args && *arg_end == '\0')
-        {
+	{
 	  remote_fio_system_call_allowed = !!val;
 	  return;
 	}
@@ -1290,8 +1290,8 @@ show_system_call_allowed (const char *args, int from_tty)
   if (args)
     error (_("Garbage after \"show remote "
 	     "system-call-allowed\" command: `%s'"), args);
-  printf_unfiltered ("Calling host system(3) call from target is %sallowed\n",
-		     remote_fio_system_call_allowed ? "" : "not ");
+  gdb_printf ("Calling host system(3) call from target is %sallowed\n",
+	      remote_fio_system_call_allowed ? "" : "not ");
 }
 
 void

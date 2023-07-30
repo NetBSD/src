@@ -1,6 +1,6 @@
 /* opc2c.c --- generate C simulator code from from .opc file
 
-Copyright (C) 2005-2020 Free Software Foundation, Inc.
+Copyright (C) 2005-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -18,13 +18,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-
-#include "safe-fgets.h"
 
 static int errors = 0;
 
@@ -249,13 +249,14 @@ dump_lines (opcode * op, int level, Indirect * ind)
 	      errors++;
 	    }
 	  else if (shift && (mask != 0xff))
-	    printf ("%*s  int %s AU = (op[%d] >> %d) & 0x%02x;\n",
+	    printf ("%*s  int %s ATTRIBUTE_UNUSED = (op[%d] >> %d) & 0x%02x;\n",
 		    level, "", name, byte, shift, mask);
 	  else if (mask != 0xff)
-	    printf ("%*s  int %s AU = op[%d] & 0x%02x;\n",
+	    printf ("%*s  int %s ATTRIBUTE_UNUSED = op[%d] & 0x%02x;\n",
 		    level, "", name, byte, mask);
 	  else
-	    printf ("%*s  int %s AU = op[%d];\n", level, "", name, byte);
+	    printf ("%*s  int %s ATTRIBUTE_UNUSED = op[%d];\n", level, "", name,
+		    byte);
 	}
       else
 	i++;
@@ -503,16 +504,15 @@ log_indirect (Indirect * ind, int byte)
 int
 main (int argc, char **argv)
 {
-  char *line;
+  char *linebuf;
   FILE *in;
   int lineno = 0;
   int i;
-  VaryRef *vlist;
+  size_t len;
 
   if (argc > 2 && strcmp (argv[1], "-l") == 0)
     {
       sim_log = fopen (argv[2], "w");
-      fprintf (stderr, "sim_log: %s\n", argv[2]);
       argc -= 2;
       argv += 2;
     }
@@ -536,8 +536,12 @@ main (int argc, char **argv)
   opcodes = (opcode **) malloc (sizeof (opcode *));
   op = &prefix_text;
   op->lineno = 1;
-  while ((line = safe_fgets (in)) != 0)
+  linebuf = NULL;
+  len = 0;
+  while (getline (&linebuf, &len, in) >= 0)
     {
+      char *line = linebuf;
+
       lineno++;
       if (strncmp (line, "  /** ", 6) == 0
 	  && (isdigit (line[6]) || memcmp (line + 6, "VARY", 4) == 0))
@@ -629,6 +633,7 @@ main (int argc, char **argv)
 	  op->lines[op->nlines - 1] = strdup (line);
 	}
     }
+  free (linebuf);
 
   {
     int i, j;
@@ -654,8 +659,6 @@ main (int argc, char **argv)
     indirect[i].type = T_unused;
 
   qsort (opcodes, n_opcodes, sizeof (opcodes[0]), op_cmp);
-
-  vlist = (VaryRef *) malloc (n_varies * sizeof (VaryRef));
 
   for (i = 0; i < n_opcodes; i++)
     {

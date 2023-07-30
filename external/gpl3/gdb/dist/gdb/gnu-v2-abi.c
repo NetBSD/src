@@ -1,6 +1,6 @@
 /* Abstraction of GNU v2 abi.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    Contributed by Daniel Berlin <dberlin@redhat.com>
 
@@ -29,7 +29,7 @@
 #include "cp-support.h"
 #include <ctype.h>
 
-struct cp_abi_ops gnu_v2_abi_ops;
+static cp_abi_ops gnu_v2_abi_ops;
 
 static int vb_match (struct type *, int, struct type *);
 
@@ -108,7 +108,7 @@ gnuv2_virtual_fn_field (struct value **arg1p, struct fn_field * f, int j,
     fcontext = TYPE_VPTR_BASETYPE (type);
   context = lookup_pointer_type (fcontext);
   /* Now context is a pointer to the basetype containing the vtbl.  */
-  if (TYPE_TARGET_TYPE (context) != type1)
+  if (context->target_type () != type1)
     {
       struct value *tmp = value_cast (context, value_addr (arg1));
 
@@ -133,16 +133,16 @@ gnuv2_virtual_fn_field (struct value **arg1p, struct fn_field * f, int j,
   /* With older versions of g++, the vtbl field pointed to an array
      of structures.  Nowadays it points directly to the structure.  */
   if (value_type (vtbl)->code () == TYPE_CODE_PTR
-      && TYPE_TARGET_TYPE (value_type (vtbl))->code () == TYPE_CODE_ARRAY)
+      && value_type (vtbl)->target_type ()->code () == TYPE_CODE_ARRAY)
     {
       /* Handle the case where the vtbl field points to an
-         array of structures.  */
+	 array of structures.  */
       vtbl = value_ind (vtbl);
 
       /* Index into the virtual function table.  This is hard-coded because
-         looking up a field is not cheap, and it may be important to save
-         time, e.g. if the user has set a conditional breakpoint calling
-         a virtual function.  */
+	 looking up a field is not cheap, and it may be important to save
+	 time, e.g. if the user has set a conditional breakpoint calling
+	 a virtual function.  */
       entry = value_subscript (vtbl, vi);
     }
   else
@@ -189,7 +189,7 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
   struct type *rtti_type;
   CORE_ADDR vtbl;
   struct bound_minimal_symbol minsym;
-  char *demangled_name, *p;
+  char *p;
   const char *linkage_name;
   struct type *btype;
   struct type *known_type_vptr_basetype;
@@ -230,7 +230,7 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
     {
       v = value_cast (btype, v);
       if (using_enc)
-        *using_enc=1;
+	*using_enc=1;
     }
   /* We can't use value_ind here, because it would want to use RTTI, and
      we'd waste a bunch of time figuring out we already know the type.
@@ -248,40 +248,41 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
     return NULL;
 
   /* If we just skip the prefix, we get screwed by namespaces.  */
-  demangled_name=gdb_demangle(linkage_name,DMGL_PARAMS|DMGL_ANSI);
-  p = strchr (demangled_name, ' ');
+  gdb::unique_xmalloc_ptr<char> demangled_name
+    = gdb_demangle(linkage_name,DMGL_PARAMS|DMGL_ANSI);
+  p = strchr (demangled_name.get (), ' ');
   if (p)
     *p = '\0';
 
   /* Lookup the type for the name.  */
   /* FIXME: chastain/2003-11-26: block=NULL is bogus.  See pr gdb/1465.  */
-  rtti_type = cp_lookup_rtti_type (demangled_name, NULL);
+  rtti_type = cp_lookup_rtti_type (demangled_name.get (), NULL);
   if (rtti_type == NULL)
     return NULL;
 
   if (TYPE_N_BASECLASSES(rtti_type) > 1 &&  full && (*full) != 1)
     {
       if (top)
-        *top = TYPE_BASECLASS_BITPOS (rtti_type,
+	*top = TYPE_BASECLASS_BITPOS (rtti_type,
 				      TYPE_VPTR_FIELDNO(rtti_type)) / 8;
       if (top && ((*top) >0))
-        {
-          if (TYPE_LENGTH(rtti_type) > TYPE_LENGTH(known_type))
-            {
-              if (full)
-                *full=0;
-            }
-          else
-            {
-              if (full)
-                *full=1;
-            }
-        }
+	{
+	  if (rtti_type->length () > known_type->length ())
+	    {
+	      if (full)
+		*full=0;
+	    }
+	  else
+	    {
+	      if (full)
+		*full=1;
+	    }
+	}
     }
   else
     {
       if (full)
-        *full=1;
+	*full=1;
     }
 
   return rtti_type;
@@ -294,7 +295,7 @@ static int
 vb_match (struct type *type, int index, struct type *basetype)
 {
   struct type *fieldtype;
-  const char *name = TYPE_FIELD_NAME (type, index);
+  const char *name = type->field (index).name ();
   const char *field_class_name = NULL;
 
   if (*name != '_')
@@ -322,13 +323,13 @@ vb_match (struct type *type, int index, struct type *basetype)
      nameless types) or have the same name.  This is ugly, and a more
      elegant solution should be devised (which would probably just push
      the ugliness into symbol reading unless we change the stabs format).  */
-  if (TYPE_TARGET_TYPE (fieldtype) == basetype)
+  if (fieldtype->target_type () == basetype)
     return 1;
 
   if (basetype->name () != NULL
-      && TYPE_TARGET_TYPE (fieldtype)->name () != NULL
+      && fieldtype->target_type ()->name () != NULL
       && strcmp (basetype->name (),
-		 TYPE_TARGET_TYPE (fieldtype)->name ()) == 0)
+		 fieldtype->target_type ()->name ()) == 0)
     return 1;
   return 0;
 }
@@ -352,7 +353,7 @@ gnuv2_baseclass_offset (struct type *type, int index,
       int n_baseclasses = TYPE_N_BASECLASSES (type);
 
       /* First look for the virtual baseclass pointer
-         in the fields.  */
+	 in the fields.  */
       for (i = n_baseclasses; i < len; i++)
 	{
 	  if (vb_match (type, i, basetype))
@@ -363,8 +364,8 @@ gnuv2_baseclass_offset (struct type *type, int index,
 	      CORE_ADDR addr;
 
 	      field_type = check_typedef (type->field (i).type ());
-	      field_offset = TYPE_FIELD_BITPOS (type, i) / 8;
-	      field_length = TYPE_LENGTH (field_type);
+	      field_offset = type->field (i).loc_bitpos () / 8;
+	      field_length = field_type->length ();
 
 	      if (!value_bytes_available (val, embedded_offset + field_offset,
 					  field_length))

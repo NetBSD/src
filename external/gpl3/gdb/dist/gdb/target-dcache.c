@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,11 +19,12 @@
 #include "target-dcache.h"
 #include "gdbcmd.h"
 #include "progspace.h"
+#include "cli/cli-cmds.h"
 
 /* The target dcache is kept per-address-space.  This key lets us
    associate the cache with the address space.  */
 
-static const struct address_space_key<DCACHE, dcache_deleter>
+static const registry<address_space>::key<DCACHE, dcache_deleter>
   target_dcache_aspace_key;
 
 /* Target dcache is initialized or not.  */
@@ -101,7 +102,7 @@ static void
 show_stack_cache (struct ui_file *file, int from_tty,
 		  struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, _("Cache use for stack accesses is %s.\n"), value);
+  gdb_printf (file, _("Cache use for stack accesses is %s.\n"), value);
 }
 
 /* Return true if "stack cache" is enabled, otherwise, return false.  */
@@ -141,7 +142,7 @@ static void
 show_code_cache (struct ui_file *file, int from_tty,
 		 struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, _("Cache use for code accesses is %s.\n"), value);
+  gdb_printf (file, _("Cache use for code accesses is %s.\n"), value);
 }
 
 /* Return true if "code cache" is enabled, otherwise, return false.  */
@@ -150,6 +151,16 @@ int
 code_cache_enabled_p (void)
 {
   return code_cache_enabled;
+}
+
+/* Implement the 'maint flush dcache' command.  */
+
+static void
+maint_flush_dcache_command (const char *command, int from_tty)
+{
+  target_dcache_invalidate ();
+  if (from_tty)
+    gdb_printf (_("The dcache was flushed.\n"));
 }
 
 void _initialize_target_dcache ();
@@ -178,4 +189,12 @@ access is on."),
 			   set_code_cache,
 			   show_code_cache,
 			   &setlist, &showlist);
+
+  add_cmd ("dcache", class_maintenance, maint_flush_dcache_command,
+	   _("\
+Force gdb to flush its target memory data cache.\n\
+\n\
+The dcache caches all target memory accesses where possible, this\n\
+includes the stack-cache and the code-cache."),
+	   &maintenanceflushlist);
 }

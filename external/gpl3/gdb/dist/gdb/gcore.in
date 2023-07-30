@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -98,7 +98,7 @@ do
 	# `</dev/null' to avoid touching interactive terminal if it is
 	# available but not accessible as GDB would get stopped on SIGTTIN.
 	"$binary_path/@GDB_TRANSFORM_NAME@" </dev/null \
-	    --nx --batch --readnever \
+	    --nx --batch --readnever -iex 'set debuginfod enabled off' \
 	    -ex "set pagination off" -ex "set height 0" -ex "set width 0" \
 	    "${dump_all_cmds[@]}" \
 	    -ex "attach $pid" -ex "gcore $prefix.$pid" -ex detach -ex quit

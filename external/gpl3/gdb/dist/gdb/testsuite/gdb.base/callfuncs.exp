@@ -1,4 +1,4 @@
-# Copyright 1992-2020 Free Software Foundation, Inc.
+# Copyright 1992-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,9 @@
 
 standard_testfile
 
-set compile_flags {debug}
+# We still want to test non-prototype functions for now, which is why
+# we disable compilers warning about them.
+set compile_flags {debug additional_flags=-Wno-deprecated-non-prototype}
 if [support_complex_tests] {
     lappend compile_flags "additional_flags=-DTEST_COMPLEX"
 }
@@ -27,7 +29,7 @@ if [support_complex_tests] {
 # test.
 if [target_info exists gdb,cannot_call_functions] {
     unsupported "this target can not call functions"
-    continue
+    return
 }
 
 set skip_float_test [gdb_skip_float_test]
@@ -332,7 +334,7 @@ proc rerun_and_prepare {} {
     with_test_prefix "rerun number ${rerun_count}" {
 
 	if { ![runto_main] } {
-	    gdb_suppress_tests
+	    return
 	}
 
 	gdb_test_no_output "set language c"
@@ -366,7 +368,7 @@ proc perform_all_tests {prototypes} {
     # Check if all registers still have the same value.
     set new_reg_content [fetch_all_registers \
 			     "register contents after gdb function calls"]
-    if {$old_reg_content == $new_reg_content} then {
+    if {$old_reg_content == $new_reg_content} {
 	pass "gdb function calls preserve register contents"
     } else {
 	set old_reg_content $new_reg_content
@@ -392,7 +394,7 @@ proc perform_all_tests {prototypes} {
 	     "bt after continuing from call dummy breakpoint"] then {
 		 set new_reg_content [fetch_all_registers \
 					  "register contents after stop in call dummy"]
-		 if {$old_reg_content == $new_reg_content} then {
+		 if {$old_reg_content == $new_reg_content} {
 		     pass "continue after stop in call dummy preserves register contents"
 		 } else {
 		     fail "continue after stop in call dummy preserves register contents"
@@ -418,7 +420,7 @@ proc perform_all_tests {prototypes} {
 	     "bt after finishing from call dummy breakpoint"] then {
 		 set new_reg_content [fetch_all_registers \
 					  "register contents after finish in call dummy"]
-		 if {$old_reg_content == $new_reg_content} then {
+		 if {$old_reg_content == $new_reg_content} {
 		     pass "finish after stop in call dummy preserves register contents"
 		 } else {
 		     fail "finish after stop in call dummy preserves register contents"
@@ -443,7 +445,7 @@ proc perform_all_tests {prototypes} {
 	     "y"] then {
 		 set new_reg_content [fetch_all_registers \
 					  "register contents after return in call dummy"]
-		 if {$old_reg_content == $new_reg_content} then {
+		 if {$old_reg_content == $new_reg_content} {
 		     pass "return after stop in call dummy preserves register contents"
 		 } else {
 		     fail "return after stop in call dummy preserves register contents"
@@ -506,7 +508,7 @@ proc perform_all_tests {prototypes} {
 
     set new_reg_content [fetch_all_registers \
 			     "register contents after nested call dummies"]
-    if {$old_reg_content == $new_reg_content} then {
+    if {$old_reg_content == $new_reg_content} {
 	pass "nested call dummies preserve register contents"
     } else {
 	fail "nested call dummies preserve register contents"

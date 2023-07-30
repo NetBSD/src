@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2023 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -128,5 +128,9 @@ void aarch64_linux_delete_thread (struct arch_lwp_info *arch_lwp);
 ps_err_e aarch64_ps_get_thread_area (struct ps_prochandle *ph,
 				       lwpid_t lwpid, int idx, void **base,
 				       int is_64bit_p);
+
+/* Return the number of TLS registers in the NT_ARM_TLS set.  This is only
+   used for aarch64 state.  */
+int aarch64_tls_register_count (int tid);
 
 #endif /* NAT_AARCH64_LINUX_H */

@@ -1,5 +1,5 @@
 /* d10v.h -- Header file for D10V opcode table
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
    Written by Martin Hunt (hunt@cygnus.com), Cygnus Support
 
    This file is part of GDB, GAS, and the GNU binutils.

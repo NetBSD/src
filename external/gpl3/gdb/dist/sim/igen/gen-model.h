@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -21,6 +21,6 @@
 
 
 
-extern void gen_model_h (lf *file, insn_table *isa);
+extern void gen_model_h (lf *file, const insn_table *isa);
 
-extern void gen_model_c (lf *file, insn_table *isa);
+extern void gen_model_c (lf *file, const insn_table *isa);

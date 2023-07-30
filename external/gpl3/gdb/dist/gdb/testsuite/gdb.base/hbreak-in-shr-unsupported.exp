@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,10 +30,6 @@ set lib_so [standard_output_file ${lib_basename}]
 set lib_opts "debug"
 set exec_opts [list debug shlib=${lib_so}]
 
-if [get_compiler_info] {
-    return -1
-}
-
 if { [gdb_compile_shlib ${srcdir}/${subdir}/${lib_src} ${lib_so} $lib_opts] != ""
      || [gdb_compile ${srcdir}/${subdir}/${main_src} ${binfile} executable $exec_opts] != ""} {
     untested "failed to compile"
@@ -43,8 +39,7 @@ if { [gdb_compile_shlib ${srcdir}/${subdir}/${lib_src} ${lib_so} $lib_opts] != "
 clean_restart $binfile
 gdb_load_shlib $lib_so
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return -1
 }
 
@@ -70,7 +65,7 @@ if {$is_target_remote} {
 set cant_insert_hbreak 0
 set supports_hbreak 0
 set test "probe hbreak support"
-gdb_test_multiple "hbreak main" $test {
+gdb_test_multiple "hbreak -q main" $test {
     -re "No hardware breakpoint support in the target.*$gdb_prompt $" {
 	pass $test
     }

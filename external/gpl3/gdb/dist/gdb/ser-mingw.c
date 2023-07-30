@@ -1,6 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Windows systems
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,7 @@
 #include <sys/types.h>
 
 #include "command.h"
+#include "gdbsupport/buildargv.h"
 
 struct ser_windows_state
 {
@@ -218,8 +219,7 @@ ser_windows_setparity (struct serial *scb, int parity)
       state.fParity = TRUE;
       break;
     default:
-      internal_warning (__FILE__, __LINE__,
-			"Incorrect parity value: %d", parity);
+      internal_warning ("Incorrect parity value: %d", parity);
       return -1;
     }
 
@@ -599,6 +599,11 @@ console_select_thread (void *arg)
 		  break;
 		}
 	    }
+	  else if (record.EventType == MOUSE_EVENT)
+	    {
+	      SetEvent (state->read_event);
+	      break;
+	    }
 
 	  /* Otherwise discard it and wait again.  */
 	  ReadConsoleInput (h, &record, 1, &n_records);
@@ -862,6 +867,12 @@ pipe_windows_open (struct serial *scb, const char *name)
   if (name == NULL)
     error_no_arg (_("child command"));
 
+  if (*name == '|')
+    {
+      name++;
+      name = skip_spaces (name);
+    }
+
   gdb_argv argv (name);
 
   if (! argv[0] || argv[0][0] == '\0')
@@ -881,21 +892,21 @@ pipe_windows_open (struct serial *scb, const char *name)
     const char *err_msg
       = pex_run (ps->pex, PEX_SEARCH | PEX_BINARY_INPUT | PEX_BINARY_OUTPUT
 		 | PEX_STDERR_TO_PIPE,
-                 argv[0], argv.get (), NULL, NULL,
-                 &err);
+		 argv[0], argv.get (), NULL, NULL,
+		 &err);
 
     if (err_msg)
       {
-        /* Our caller expects us to return -1, but all they'll do with
-           it generally is print the message based on errno.  We have
-           all the same information here, plus err_msg provided by
-           pex_run, so we just raise the error here.  */
-        if (err)
-          error (_("error starting child process '%s': %s: %s"),
-                 name, err_msg, safe_strerror (err));
-        else
-          error (_("error starting child process '%s': %s"),
-                 name, err_msg);
+	/* Our caller expects us to return -1, but all they'll do with
+	   it generally is print the message based on errno.  We have
+	   all the same information here, plus err_msg provided by
+	   pex_run, so we just raise the error here.  */
+	if (err)
+	  error (_("error starting child process '%s': %s: %s"),
+		 name, err_msg, safe_strerror (err));
+	else
+	  error (_("error starting child process '%s': %s"),
+		 name, err_msg);
       }
   }
 

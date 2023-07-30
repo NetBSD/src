@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/amd64.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,136 +18,203 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "arch-utils.h"
-#include "frame.h"
-#include "gdbcore.h"
-#include "regcache.h"
 #include "osabi.h"
 #include "regset.h"
+#include "target.h"
+#include "trad-frame.h"
+#include "tramp-frame.h"
 #include "i386-fbsd-tdep.h"
 #include "gdbsupport/x86-xstate.h"
 
 #include "amd64-tdep.h"
+#include "amd64-fbsd-tdep.h"
 #include "fbsd-tdep.h"
 #include "solib-svr4.h"
 #include "inferior.h"
 
+/* The general-purpose regset consists of 22 64-bit slots, most of
+   which contain individual registers, but a few contain multiple
+   16-bit segment registers.  */
+#define AMD64_FBSD_SIZEOF_GREGSET	(22 * 8)
+
+/* The segment base register set consists of 2 64-bit registers.  */
+#define AMD64_FBSD_SIZEOF_SEGBASES_REGSET	(2 * 8)
+
+/* Register maps.  */
+
+static const struct regcache_map_entry amd64_fbsd_gregmap[] =
+{
+  { 1, AMD64_R15_REGNUM, 0 },
+  { 1, AMD64_R14_REGNUM, 0 },
+  { 1, AMD64_R13_REGNUM, 0 },
+  { 1, AMD64_R12_REGNUM, 0 },
+  { 1, AMD64_R11_REGNUM, 0 },
+  { 1, AMD64_R10_REGNUM, 0 },
+  { 1, AMD64_R9_REGNUM, 0 },
+  { 1, AMD64_R8_REGNUM, 0 },
+  { 1, AMD64_RDI_REGNUM, 0 },
+  { 1, AMD64_RSI_REGNUM, 0 },
+  { 1, AMD64_RBP_REGNUM, 0 },
+  { 1, AMD64_RBX_REGNUM, 0 },
+  { 1, AMD64_RDX_REGNUM, 0 },
+  { 1, AMD64_RCX_REGNUM, 0 },
+  { 1, AMD64_RAX_REGNUM, 0 },
+  { 1, REGCACHE_MAP_SKIP, 4 },	/* trapno */
+  { 1, AMD64_FS_REGNUM, 2 },
+  { 1, AMD64_GS_REGNUM, 2 },
+  { 1, REGCACHE_MAP_SKIP, 4 },	/* err */
+  { 1, AMD64_ES_REGNUM, 2 },
+  { 1, AMD64_DS_REGNUM, 2 },
+  { 1, AMD64_RIP_REGNUM, 0 },
+  { 1, AMD64_CS_REGNUM, 8 },
+  { 1, AMD64_EFLAGS_REGNUM, 8 },
+  { 1, AMD64_RSP_REGNUM, 0 },
+  { 1, AMD64_SS_REGNUM, 8 },
+  { 0 }
+};
+
+static const struct regcache_map_entry amd64_fbsd_segbases_regmap[] =
+{
+  { 1, AMD64_FSBASE_REGNUM, 0 },
+  { 1, AMD64_GSBASE_REGNUM, 0 },
+  { 0 }
+};
+
+/* This layout including fsbase and gsbase was adopted in FreeBSD
+   8.0.  */
+
+static const struct regcache_map_entry amd64_fbsd_mcregmap[] =
+{
+  { 1, REGCACHE_MAP_SKIP, 8 },	/* mc_onstack */
+  { 1, AMD64_RDI_REGNUM, 0 },
+  { 1, AMD64_RSI_REGNUM, 0 },
+  { 1, AMD64_RDX_REGNUM, 0 },
+  { 1, AMD64_RCX_REGNUM, 0 },
+  { 1, AMD64_R8_REGNUM, 0 },
+  { 1, AMD64_R9_REGNUM, 0 },
+  { 1, AMD64_RAX_REGNUM, 0 },
+  { 1, AMD64_RBX_REGNUM, 0 },
+  { 1, AMD64_RBP_REGNUM, 0 },
+  { 1, AMD64_R10_REGNUM, 0 },
+  { 1, AMD64_R11_REGNUM, 0 },
+  { 1, AMD64_R12_REGNUM, 0 },
+  { 1, AMD64_R13_REGNUM, 0 },
+  { 1, AMD64_R14_REGNUM, 0 },
+  { 1, AMD64_R15_REGNUM, 0 },
+  { 1, REGCACHE_MAP_SKIP, 4 },	/* mc_trapno */
+  { 1, AMD64_FS_REGNUM, 2 },
+  { 1, AMD64_GS_REGNUM, 2 },
+  { 1, REGCACHE_MAP_SKIP, 8 },	/* mc_addr */
+  { 1, REGCACHE_MAP_SKIP, 4 },	/* mc_flags */
+  { 1, AMD64_ES_REGNUM, 2 },
+  { 1, AMD64_DS_REGNUM, 2 },
+  { 1, REGCACHE_MAP_SKIP, 8 },	/* mc_err */
+  { 1, AMD64_RIP_REGNUM, 0 },
+  { 1, AMD64_CS_REGNUM, 8 },
+  { 1, AMD64_EFLAGS_REGNUM, 8 },
+  { 1, AMD64_RSP_REGNUM, 0 },
+  { 1, AMD64_SS_REGNUM, 8 },
+  { 1, REGCACHE_MAP_SKIP, 8 },	/* mc_len */
+  { 1, REGCACHE_MAP_SKIP, 8 },	/* mc_fpformat */
+  { 1, REGCACHE_MAP_SKIP, 8 },	/* mc_ownedfp */
+  { 64, REGCACHE_MAP_SKIP, 8 },	/* mc_fpstate */
+  { 1, AMD64_FSBASE_REGNUM, 0 },
+  { 1, AMD64_GSBASE_REGNUM, 0 },
+  { 0 }
+};
+
+/* Register set definitions.  */
+
+const struct regset amd64_fbsd_gregset =
+{
+  amd64_fbsd_gregmap, regcache_supply_regset, regcache_collect_regset
+};
+
+const struct regset amd64_fbsd_segbases_regset =
+{
+  amd64_fbsd_segbases_regmap, regcache_supply_regset, regcache_collect_regset
+};
+
 /* Support for signal handlers.  */
 
-/* Return whether THIS_FRAME corresponds to a FreeBSD sigtramp
-   routine.  */
+/* In a signal frame, rsp points to a 'struct sigframe' which is
+   defined as:
 
-static const gdb_byte amd64fbsd_sigtramp_code[] =
+   struct sigframe {
+	union {
+		__siginfohandler_t	*sf_action;
+		__sighandler_t		*sf_handler;
+	} sf_ahu;
+	ucontext_t	sf_uc;
+        ...
+   }
+
+   ucontext_t is defined as:
+
+   struct __ucontext {
+	   sigset_t	uc_sigmask;
+	   mcontext_t	uc_mcontext;
+	   ...
+   };
+
+   The mcontext_t contains the general purpose register set as well
+   as the floating point or XSAVE state.  */
+
+/* NB: There is an 8 byte padding hole between sf_ahu and sf_uc. */
+#define AMD64_SIGFRAME_UCONTEXT_OFFSET 		16
+#define AMD64_UCONTEXT_MCONTEXT_OFFSET		16
+#define AMD64_SIZEOF_MCONTEXT_T			800
+
+/* Implement the "init" method of struct tramp_frame.  */
+
+static void
+amd64_fbsd_sigframe_init (const struct tramp_frame *self,
+			  frame_info_ptr this_frame,
+			  struct trad_frame_cache *this_cache,
+			  CORE_ADDR func)
 {
-  0x48, 0x8d, 0x7c, 0x24, 0x10, /* lea     SIGF_UC(%rsp),%rdi */
-  0x6a, 0x00,			/* pushq   $0 */
-  0x48, 0xc7, 0xc0, 0xa1, 0x01, 0x00, 0x00,
-				/* movq    $SYS_sigreturn,%rax */
-  0x0f, 0x05                    /* syscall */
-};
+  CORE_ADDR sp = get_frame_register_unsigned (this_frame, AMD64_RSP_REGNUM);
+  CORE_ADDR mcontext_addr
+    = (sp
+       + AMD64_SIGFRAME_UCONTEXT_OFFSET
+       + AMD64_UCONTEXT_MCONTEXT_OFFSET);
 
-static int
-amd64fbsd_sigtramp_p (struct frame_info *this_frame)
-{
-  CORE_ADDR pc = get_frame_pc (this_frame);
-  gdb_byte buf[sizeof amd64fbsd_sigtramp_code];
+  trad_frame_set_reg_regmap (this_cache, amd64_fbsd_mcregmap, mcontext_addr,
+			     AMD64_SIZEOF_MCONTEXT_T);
 
-  if (!safe_frame_unwind_memory (this_frame, pc, buf, sizeof buf))
-    return 0;
-  if (memcmp (buf, amd64fbsd_sigtramp_code, sizeof amd64fbsd_sigtramp_code)
-      != 0)
-    return 0;
+  /* Don't bother with floating point or XSAVE state for now.  The
+     current helper routines for parsing FXSAVE and XSAVE state only
+     work with regcaches.  This could perhaps create a temporary
+     regcache, collect the register values from mc_fpstate and
+     mc_xfpustate, and then set register values in the trad_frame.  */
 
-  return 1;
+  trad_frame_set_id (this_cache, frame_id_build (sp, func));
 }
 
-/* Assuming THIS_FRAME is for a BSD sigtramp routine, return the
-   address of the associated sigcontext structure.  */
-
-static CORE_ADDR
-amd64fbsd_sigcontext_addr (struct frame_info *this_frame)
+static const struct tramp_frame amd64_fbsd_sigframe =
 {
-  struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  CORE_ADDR sp;
-  gdb_byte buf[8];
-
-  /* The `struct sigcontext' (which really is an `ucontext_t' on
-     FreeBSD/amd64) lives at a fixed offset in the signal frame.  See
-     <machine/sigframe.h>.  */
-  get_frame_register (this_frame, AMD64_RSP_REGNUM, buf);
-  sp = extract_unsigned_integer (buf, 8, byte_order);
-  return sp + 16;
-}
-
-/* FreeBSD 5.1-RELEASE or later.  */
-
-/* Mapping between the general-purpose registers in `struct reg'
-   format and GDB's register cache layout.
-
-   Note that some registers are 32-bit, but since we're little-endian
-   we get away with that.  */
-
-/* From <machine/reg.h>.  */
-static int amd64fbsd_r_reg_offset[] =
-{
-  14 * 8,			/* %rax */
-  11 * 8,			/* %rbx */
-  13 * 8,			/* %rcx */
-  12 * 8,			/* %rdx */
-  9 * 8,			/* %rsi */
-  8 * 8,			/* %rdi */
-  10 * 8,			/* %rbp */
-  20 * 8,			/* %rsp */
-  7 * 8,			/* %r8 ...  */
-  6 * 8,
-  5 * 8,
-  4 * 8,
-  3 * 8,
-  2 * 8,
-  1 * 8,
-  0 * 8,			/* ... %r15 */
-  17 * 8,			/* %rip */
-  19 * 8,			/* %eflags */
-  18 * 8,			/* %cs */
-  21 * 8,			/* %ss */
-  -1,				/* %ds */
-  -1,				/* %es */
-  -1,				/* %fs */
-  -1				/* %gs */
-};
-
-/* Location of the signal trampoline.  */
-CORE_ADDR amd64fbsd_sigtramp_start_addr;
-CORE_ADDR amd64fbsd_sigtramp_end_addr;
-
-/* From <machine/signal.h>.  */
-int amd64fbsd_sc_reg_offset[] =
-{
-  24 + 6 * 8,			/* %rax */
-  24 + 7 * 8,			/* %rbx */
-  24 + 3 * 8,			/* %rcx */
-  24 + 2 * 8,			/* %rdx */
-  24 + 1 * 8,			/* %rsi */
-  24 + 0 * 8,			/* %rdi */
-  24 + 8 * 8,			/* %rbp */
-  24 + 22 * 8,			/* %rsp */
-  24 + 4 * 8,			/* %r8 ...  */
-  24 + 5 * 8,
-  24 + 9 * 8,
-  24 + 10 * 8,
-  24 + 11 * 8,
-  24 + 12 * 8,
-  24 + 13 * 8,
-  24 + 14 * 8,			/* ... %r15 */
-  24 + 19 * 8,			/* %rip */
-  24 + 21 * 8,			/* %eflags */
-  24 + 20 * 8,			/* %cs */
-  24 + 23 * 8,			/* %ss */
-  -1,				/* %ds */
-  -1,				/* %es */
-  -1,				/* %fs */
-  -1				/* %gs */
+  SIGTRAMP_FRAME,
+  1,
+  {
+    {0x48, ULONGEST_MAX},		/* lea	   SIGF_UC(%rsp),%rdi */
+    {0x8d, ULONGEST_MAX},
+    {0x7c, ULONGEST_MAX},
+    {0x24, ULONGEST_MAX},
+    {0x10, ULONGEST_MAX},
+    {0x6a, ULONGEST_MAX},		/* pushq   $0 */
+    {0x00, ULONGEST_MAX},
+    {0x48, ULONGEST_MAX},		/* movq	   $SYS_sigreturn,%rax */
+    {0xc7, ULONGEST_MAX},
+    {0xc0, ULONGEST_MAX},
+    {0xa1, ULONGEST_MAX},
+    {0x01, ULONGEST_MAX},
+    {0x00, ULONGEST_MAX},
+    {0x00, ULONGEST_MAX},
+    {0x0f, ULONGEST_MAX},		/* syscall */
+    {0x05, ULONGEST_MAX},
+    {TRAMP_SENTINEL_INSN, ULONGEST_MAX}
+  },
+  amd64_fbsd_sigframe_init
 };
 
 /* Implement the core_read_description gdbarch method.  */
@@ -195,12 +262,15 @@ amd64fbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					void *cb_data,
 					const struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
-  cb (".reg", tdep->sizeof_gregset, tdep->sizeof_gregset, &i386_gregset, NULL,
-      cb_data);
+  cb (".reg", AMD64_FBSD_SIZEOF_GREGSET, AMD64_FBSD_SIZEOF_GREGSET,
+      &amd64_fbsd_gregset, NULL, cb_data);
   cb (".reg2", tdep->sizeof_fpregset, tdep->sizeof_fpregset, &amd64_fpregset,
       NULL, cb_data);
+  cb (".reg-x86-segbases", AMD64_FBSD_SIZEOF_SEGBASES_REGSET,
+      AMD64_FBSD_SIZEOF_SEGBASES_REGSET, &amd64_fbsd_segbases_regset,
+      "segment bases", cb_data);
   cb (".reg-xstate", X86_XSTATE_SIZE (tdep->xcr0), X86_XSTATE_SIZE (tdep->xcr0),
       &amd64fbsd_xstateregset, "XSAVE extended state", cb_data);
 }
@@ -229,7 +299,7 @@ amd64fbsd_get_thread_local_address (struct gdbarch *gdbarch, ptid_t ptid,
 static void
 amd64fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
   /* Generic FreeBSD support. */
   fbsd_init_abi (info, gdbarch);
@@ -237,19 +307,10 @@ amd64fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Obviously FreeBSD is BSD-based.  */
   i386bsd_init_abi (info, gdbarch);
 
-  tdep->gregset_reg_offset = amd64fbsd_r_reg_offset;
-  tdep->gregset_num_regs = ARRAY_SIZE (amd64fbsd_r_reg_offset);
-  tdep->sizeof_gregset = 22 * 8;
-
   amd64_init_abi (info, gdbarch,
 		  amd64_target_description (X86_XSTATE_SSE_MASK, true));
 
-  tdep->sigtramp_p = amd64fbsd_sigtramp_p;
-  tdep->sigtramp_start = amd64fbsd_sigtramp_start_addr;
-  tdep->sigtramp_end = amd64fbsd_sigtramp_end_addr;
-  tdep->sigcontext_addr = amd64fbsd_sigcontext_addr;
-  tdep->sc_reg_offset = amd64fbsd_sc_reg_offset;
-  tdep->sc_num_regs = ARRAY_SIZE (amd64fbsd_sc_reg_offset);
+  tramp_frame_prepend_unwinder (gdbarch, &amd64_fbsd_sigframe);
 
   tdep->xsave_xcr0_offset = I386_FBSD_XSAVE_XCR0_OFFSET;
 

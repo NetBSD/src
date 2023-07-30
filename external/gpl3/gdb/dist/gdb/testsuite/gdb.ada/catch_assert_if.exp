@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,8 +32,7 @@ clean_restart ${testfile}
 set eol "\[\r\n\]+"
 set sp "\[ \t\]*"
 
-if ![runto_main] then {
-   fail "cannot run to main, testcase aborted"
+if {![runto_main]} {
    return 0
 }
 
@@ -61,8 +60,7 @@ gdb_test_multiple "catch exception" $msg {
 #  - continue, we should see the second failed assertion
 #  - continue, the program exits.
 
-if ![runto_main] then {
-   fail "cannot run to main, testcase aborted"
+if {![runto_main]} {
    return 0
 }
 

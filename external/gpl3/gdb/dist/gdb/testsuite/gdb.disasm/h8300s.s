@@ -354,3 +354,4 @@ system_control_tests:
 block_data_transfer_tests:
 	eepmov.b
 	eepmov.w
+	.section	.note.GNU-stack,"",@progbits

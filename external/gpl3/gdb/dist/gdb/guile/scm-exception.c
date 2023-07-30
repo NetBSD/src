@@ -1,6 +1,6 @@
 /* GDB/Scheme exception support.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +37,7 @@
    One important invariant is that <gdb:exception> smobs are never a valid
    result of a function, other than to signify an exception occurred.  */
 
-typedef struct
+struct exception_smob
 {
   /* This always appears first.  */
   gdb_smob base;
@@ -45,7 +45,7 @@ typedef struct
   /* The key and args parameters to "throw".  */
   SCM key;
   SCM args;
-} exception_smob;
+};
 
 static const char exception_smob_name[] = "gdb:exception";
 
@@ -234,7 +234,7 @@ SCM
 gdbscm_make_type_error (const char *subr, int arg_pos, SCM bad_value,
 			const char *expected_type)
 {
-  char *msg;
+  gdb::unique_xmalloc_ptr<char> msg;
   SCM result;
 
   if (arg_pos > 0)
@@ -262,9 +262,8 @@ gdbscm_make_type_error (const char *subr, int arg_pos, SCM bad_value,
 	msg = xstrprintf (_("Wrong type argument: ~S"));
     }
 
-  result = gdbscm_make_error (scm_arg_type_key, subr, msg,
+  result = gdbscm_make_error (scm_arg_type_key, subr, msg.get (),
 			      scm_list_1 (bad_value), scm_list_1 (bad_value));
-  xfree (msg);
   return result;
 }
 
@@ -279,7 +278,7 @@ static SCM
 gdbscm_make_arg_error (SCM key, const char *subr, int arg_pos, SCM bad_value,
 		       const char *error_prefix, const char *error)
 {
-  char *msg;
+  gdb::unique_xmalloc_ptr<char> msg;
   SCM result;
 
   if (error_prefix != NULL)
@@ -300,9 +299,8 @@ gdbscm_make_arg_error (SCM key, const char *subr, int arg_pos, SCM bad_value,
 	msg = xstrprintf (_("%s: ~S"), error);
     }
 
-  result = gdbscm_make_error (key, subr, msg,
-			      scm_list_1 (bad_value), scm_list_1 (bad_value));
-  xfree (msg);
+  result = gdbscm_make_error (key, subr, msg.get (), scm_list_1 (bad_value),
+			      scm_list_1 (bad_value));
   return result;
 }
 

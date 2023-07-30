@@ -1,6 +1,6 @@
 /* nto-tdep.c - general QNX Neutrino target functionality.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -51,7 +51,7 @@ static char default_nto_target[] = "";
 
 struct nto_target_ops current_nto_target;
 
-static const struct inferior_key<struct nto_inferior_data>
+static const registry<inferior>::key<struct nto_inferior_data>
   nto_inferior_data_reg;
 
 static char *
@@ -337,7 +337,7 @@ nto_sniff_abi_note_section (bfd *abfd, asection *sect, void *obj)
       if (sectsize >= namelen + sizeof_Elf_Nhdr
 	  && namelen == sizeof (QNX_NOTE_NAME)
 	  && 0 == strcmp (name, QNX_NOTE_NAME))
-        *(enum gdb_osabi *) obj = GDB_OSABI_QNXNTO;
+	*(enum gdb_osabi *) obj = GDB_OSABI_QNXNTO;
 
       XDELETEVEC (note);
     }
@@ -355,7 +355,7 @@ nto_elf_osabi_sniffer (bfd *abfd)
   return osabi;
 }
 
-static const char *nto_thread_state_str[] =
+static const char * const nto_thread_state_str[] =
 {
   "DEAD",		/* 0  0x00 */
   "RUNNING",	/* 1  0x01 */
@@ -419,7 +419,7 @@ nto_initialize_signals (void)
 /* Read AUXV from initial_stack.  */
 LONGEST
 nto_read_auxv_from_initial_stack (CORE_ADDR initial_stack, gdb_byte *readbuf,
-                                  LONGEST len, size_t sizeof_auxv_t)
+				  LONGEST len, size_t sizeof_auxv_t)
 {
   gdb_byte targ32[4]; /* For 32 bit target values.  */
   gdb_byte targ64[8]; /* For 64 bit target values.  */
@@ -461,13 +461,13 @@ nto_read_auxv_from_initial_stack (CORE_ADDR initial_stack, gdb_byte *readbuf,
 
   /* Size of pointer is assumed to be 4 bytes (32 bit arch.) */
   data_ofs += (anint + 2) * ptr_size; /* + 2 comes from argc itself and
-                                                NULL terminating pointer in
-                                                argv.  */
+						NULL terminating pointer in
+						argv.  */
 
   /* Now loop over env table:  */
   anint = 0;
   while (target_read_memory (initial_stack + data_ofs, targ64, ptr_size)
-         == 0)
+	 == 0)
     {
       if (extract_unsigned_integer (targ64, ptr_size, byte_order) == 0)
 	anint = 1; /* Keep looping until non-null entry is found.  */
@@ -483,18 +483,18 @@ nto_read_auxv_from_initial_stack (CORE_ADDR initial_stack, gdb_byte *readbuf,
     {
       if (target_read_memory (initial_stack + len_read, buff, sizeof_auxv_t)
 	  == 0)
-        {
+	{
 	  /* Both 32 and 64 bit structures have int as the first field.  */
-          const ULONGEST a_type
+	  const ULONGEST a_type
 	    = extract_unsigned_integer (buff, sizeof (targ32), byte_order);
 
-          if (a_type == AT_NULL)
+	  if (a_type == AT_NULL)
 	    break;
 	  buff += sizeof_auxv_t;
 	  len_read += sizeof_auxv_t;
-        }
+	}
       else
-        break;
+	break;
     }
   return len_read;
 }

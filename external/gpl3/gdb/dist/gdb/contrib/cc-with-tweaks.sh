@@ -2,7 +2,7 @@
 # Wrapper around gcc to tweak the output in various ways when running
 # the testsuite.
 
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -45,6 +45,7 @@
 # -i make an index (.gdb_index)
 # -n make a dwarf5 index (.debug_names)
 # -p create .dwp files (Fission), you need to also use gcc option -gsplit-dwarf
+# -l creates separate debuginfo files linked to using .gnu_debuglink
 # If nothing is given, no changes are made
 
 myname=cc-with-tweaks.sh
@@ -73,6 +74,11 @@ READELF=${READELF:-readelf}
 DWZ=${DWZ:-dwz}
 DWP=${DWP:-dwp}
 
+# shellcheck disable=SC2206 # Allow word splitting.
+STRIP_ARGS_STRIP_DEBUG=(${STRIP_ARGS_STRIP_DEBUG:---strip-debug})
+# shellcheck disable=SC2206 # Allow word splitting.
+STRIP_ARGS_KEEP_DEBUG=(${STRIP_ARGS_KEEP_DEBUG:---only-keep-debug})
+
 have_link=unknown
 next_is_output_file=no
 output_file=a.out
@@ -83,6 +89,7 @@ want_dwz=false
 want_multi=false
 want_dwp=false
 want_objcopy_compress=false
+want_gnu_debuglink=false
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -92,6 +99,7 @@ while [ $# -gt 0 ]; do
 	-n) want_index=true; index_options=-dwarf-5;;
 	-m) want_multi=true ;;
 	-p) want_dwp=true ;;
+	-l) want_gnu_debuglink=true ;;
 	*) break ;;
     esac
     shift
@@ -158,7 +166,12 @@ fi
 
 get_tmpdir ()
 {
-    tmpdir=$(dirname "$output_file")/.tmp
+    subdir="$1"
+    if [ "$subdir" = "" ]; then
+	subdir=.tmp
+    fi
+
+    tmpdir=$(dirname "$output_file")/"$subdir"
     mkdir -p "$tmpdir"
 }
 
@@ -171,6 +184,19 @@ fi
 if [ "$want_index" = true ]; then
     get_tmpdir
     mv "$output_file" "$tmpdir"
+    output_dir=$(dirname "$output_file")
+
+    # Copy .dwo file alongside, to fix gdb.dwarf2/fission-relative-dwo.exp.
+    # Use copy instead of move to not break
+    # rtf=gdb.dwarf2/fission-absolute-dwo.exp.
+    dwo_pattern="$output_dir/*.dwo"
+    for f in $dwo_pattern; do
+	if [ "$f" = "$dwo_pattern" ]; then
+	    break
+	fi
+	cp "$f" "$tmpdir"
+    done
+
     tmpfile="$tmpdir/$(basename $output_file)"
     # Filter out these messages which would stop dejagnu testcase run:
     # echo "$myname: No index was created for $file" 1>&2
@@ -179,6 +205,7 @@ if [ "$want_index" = true ]; then
 	| grep -v "^${GDB_ADD_INDEX##*/}: " >&2
     rc=${PIPESTATUS[0]}
     mv "$tmpfile" "$output_file"
+    rm -f "$tmpdir"/*.dwo
     [ $rc != 0 ] && exit $rc
 fi
 
@@ -232,6 +259,42 @@ if [ "$want_dwp" = true ]; then
 	[ $rc != 0 ] && exit $rc
 	rm -f ${dwo_files}
     fi
+fi
+
+if [ "$want_gnu_debuglink" = true ]; then
+    # Based on gdb_gnu_strip_debug.
+
+    # Gdb looks for the .gnu_debuglink file in the .debug subdirectory
+    # of the directory of the executable.
+    get_tmpdir .debug
+
+    stripped_file="$tmpdir"/$(basename "$output_file").stripped
+    debug_file="$tmpdir"/$(basename "$output_file").debug
+
+    # Create stripped and debug versions of output_file.
+    strip "${STRIP_ARGS_STRIP_DEBUG[@]}" "${output_file}" \
+	  -o "${stripped_file}"
+    rc=$?
+    [ $rc != 0 ] && exit $rc
+    strip "${STRIP_ARGS_KEEP_DEBUG[@]}" "${output_file}" \
+	  -o "${debug_file}"
+    rc=$?
+    [ $rc != 0 ] && exit $rc
+
+    # The .gnu_debuglink is supposed to contain no leading directories.
+    link=$(basename "${debug_file}")
+
+    (
+	# Temporarily cd to tmpdir to allow objcopy to find $link
+	cd "$tmpdir" || exit 1
+
+	# Overwrite output_file with stripped version containing
+	# .gnu_debuglink to debug_file.
+	$OBJCOPY --add-gnu-debuglink="$link" "${stripped_file}" \
+		"${output_file}"
+	rc=$?
+	[ $rc != 0 ] && exit $rc
+    )
 fi
 
 exit $rc

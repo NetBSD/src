@@ -1,6 +1,6 @@
 /* Support for GDB maintenance commands.
 
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2023 Free Software Foundation, Inc.
 
    Written by Fred Fish at Cygnus Support.
 
@@ -40,15 +40,13 @@
 #include "top.h"
 #include "maint.h"
 #include "gdbsupport/selftest.h"
+#include "inferior.h"
+#include "gdbsupport/thread-pool.h"
 
 #include "cli/cli-decode.h"
 #include "cli/cli-utils.h"
 #include "cli/cli-setshow.h"
 #include "cli/cli-cmds.h"
-
-#if CXX_STD_THREAD
-#include "gdbsupport/thread-pool.h"
-#endif
 
 static void maintenance_do_deprecate (const char *, int);
 
@@ -78,7 +76,7 @@ maintenance_dump_me (const char *args, int from_tty)
 static void
 maintenance_internal_error (const char *args, int from_tty)
 {
-  internal_error (__FILE__, __LINE__, "%s", (args == NULL ? "" : args));
+  internal_error ("%s", (args == NULL ? "" : args));
 }
 
 /* Stimulate the internal error mechanism that GDB uses when an
@@ -89,7 +87,7 @@ maintenance_internal_error (const char *args, int from_tty)
 static void
 maintenance_internal_warning (const char *args, int from_tty)
 {
-  internal_warning (__FILE__, __LINE__, "%s", (args == NULL ? "" : args));
+  internal_warning ("%s", (args == NULL ? "" : args));
 }
 
 /* Stimulate the internal error mechanism that GDB uses when an
@@ -108,14 +106,14 @@ maintenance_demangler_warning (const char *args, int from_tty)
 static void
 maintenance_demangle (const char *args, int from_tty)
 {
-  printf_filtered (_("This command has been moved to \"demangle\".\n"));
+  gdb_printf (_("This command has been moved to \"demangle\".\n"));
 }
 
 static void
 maintenance_time_display (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
-    printf_unfiltered (_("\"maintenance time\" takes a numeric argument.\n"));
+    gdb_printf (_("\"maintenance time\" takes a numeric argument.\n"));
   else
     set_per_command_time (strtol (args, NULL, 10));
 }
@@ -124,17 +122,17 @@ static void
 maintenance_space_display (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
-    printf_unfiltered ("\"maintenance space\" takes a numeric argument.\n");
+    gdb_printf ("\"maintenance space\" takes a numeric argument.\n");
   else
     set_per_command_space (strtol (args, NULL, 10));
 }
 
 /* Mini tokenizing lexer for 'maint info sections' command.  */
 
-static int
+static bool
 match_substring (const char *string, const char *substr)
 {
-  int substr_len = strlen(substr);
+  int substr_len = strlen (substr);
   const char *tok;
 
   while ((tok = strstr (string, substr)) != NULL)
@@ -150,99 +148,91 @@ match_substring (const char *string, const char *substr)
 	    || tok[substr_len] == '\0')
 	{
 	  /* Token is delimited at the rear.  Got a whole-word match.  */
-	  return 1;
+	  return true;
 	}
       }
       /* Token didn't match as a whole word.  Advance and try again.  */
       string = tok + 1;
     }
-  return 0;
+  return false;
 }
 
-static int 
+/* Structure holding information about a single bfd section flag.  This is
+   used by the "maintenance info sections" command to print the sections,
+   and for filtering which sections are printed.  */
+
+struct single_bfd_flag_info
+{
+  /* The name of the section.  This is what is printed for the flag, and
+     what the user enter in order to filter by flag.  */
+  const char *name;
+
+  /* The bfd defined SEC_* flagword value for this flag.  */
+  flagword value;
+};
+
+/* Vector of all the known bfd flags.  */
+
+static const single_bfd_flag_info bfd_flag_info[] =
+  {
+    { "ALLOC", SEC_ALLOC },
+    { "LOAD", SEC_LOAD },
+    { "RELOC", SEC_RELOC },
+    { "READONLY", SEC_READONLY },
+    { "CODE", SEC_CODE },
+    { "DATA", SEC_DATA },
+    { "ROM", SEC_ROM },
+    { "CONSTRUCTOR", SEC_CONSTRUCTOR },
+    { "HAS_CONTENTS", SEC_HAS_CONTENTS },
+    { "NEVER_LOAD", SEC_NEVER_LOAD },
+    { "COFF_SHARED_LIBRARY", SEC_COFF_SHARED_LIBRARY },
+    { "IS_COMMON", SEC_IS_COMMON }
+  };
+
+/* For each flag in the global BFD_FLAG_INFO list, if FLAGS has a flag's
+   flagword value set, and STRING contains the flag's name then return
+   true, otherwise return false.  STRING is never nullptr.  */
+
+static bool
 match_bfd_flags (const char *string, flagword flags)
 {
-  if (flags & SEC_ALLOC)
-    if (match_substring (string, "ALLOC"))
-      return 1;
-  if (flags & SEC_LOAD)
-    if (match_substring (string, "LOAD"))
-      return 1;
-  if (flags & SEC_RELOC)
-    if (match_substring (string, "RELOC"))
-      return 1;
-  if (flags & SEC_READONLY)
-    if (match_substring (string, "READONLY"))
-      return 1;
-  if (flags & SEC_CODE)
-    if (match_substring (string, "CODE"))
-      return 1;
-  if (flags & SEC_DATA)
-    if (match_substring (string, "DATA"))
-      return 1;
-  if (flags & SEC_ROM)
-    if (match_substring (string, "ROM"))
-      return 1;
-  if (flags & SEC_CONSTRUCTOR)
-    if (match_substring (string, "CONSTRUCTOR"))
-      return 1;
-  if (flags & SEC_HAS_CONTENTS)
-    if (match_substring (string, "HAS_CONTENTS"))
-      return 1;
-  if (flags & SEC_NEVER_LOAD)
-    if (match_substring (string, "NEVER_LOAD"))
-      return 1;
-  if (flags & SEC_COFF_SHARED_LIBRARY)
-    if (match_substring (string, "COFF_SHARED_LIBRARY"))
-      return 1;
-  if (flags & SEC_IS_COMMON)
-    if (match_substring (string, "IS_COMMON"))
-      return 1;
+  gdb_assert (string != nullptr);
 
-  return 0;
+  for (const auto &f : bfd_flag_info)
+    {
+      if (flags & f.value
+	  && match_substring (string, f.name))
+	return true;
+    }
+
+  return false;
 }
+
+/* Print the names of all flags set in FLAGS.  The names are taken from the
+   BFD_FLAG_INFO global.  */
 
 static void
 print_bfd_flags (flagword flags)
 {
-  if (flags & SEC_ALLOC)
-    printf_filtered (" ALLOC");
-  if (flags & SEC_LOAD)
-    printf_filtered (" LOAD");
-  if (flags & SEC_RELOC)
-    printf_filtered (" RELOC");
-  if (flags & SEC_READONLY)
-    printf_filtered (" READONLY");
-  if (flags & SEC_CODE)
-    printf_filtered (" CODE");
-  if (flags & SEC_DATA)
-    printf_filtered (" DATA");
-  if (flags & SEC_ROM)
-    printf_filtered (" ROM");
-  if (flags & SEC_CONSTRUCTOR)
-    printf_filtered (" CONSTRUCTOR");
-  if (flags & SEC_HAS_CONTENTS)
-    printf_filtered (" HAS_CONTENTS");
-  if (flags & SEC_NEVER_LOAD)
-    printf_filtered (" NEVER_LOAD");
-  if (flags & SEC_COFF_SHARED_LIBRARY)
-    printf_filtered (" COFF_SHARED_LIBRARY");
-  if (flags & SEC_IS_COMMON)
-    printf_filtered (" IS_COMMON");
+  for (const auto &f : bfd_flag_info)
+    {
+      if (flags & f.value)
+	gdb_printf (" %s", f.name);
+    }
 }
 
 static void
-maint_print_section_info (const char *name, flagword flags, 
-			  CORE_ADDR addr, CORE_ADDR endaddr, 
+maint_print_section_info (const char *name, flagword flags,
+			  CORE_ADDR addr, CORE_ADDR endaddr,
 			  unsigned long filepos, int addr_size)
 {
-  printf_filtered ("    %s", hex_string_custom (addr, addr_size));
-  printf_filtered ("->%s", hex_string_custom (endaddr, addr_size));
-  printf_filtered (" at %s",
-		   hex_string_custom ((unsigned long) filepos, 8));
-  printf_filtered (": %s", name);
+  gdb_printf ("    %s", hex_string_custom (addr, addr_size));
+  gdb_printf ("->%s", hex_string_custom (endaddr, addr_size));
+  gdb_printf (" at %s",
+	      hex_string_custom ((unsigned long) filepos, 8));
+  gdb_printf (": %s", name);
   print_bfd_flags (flags);
-  printf_filtered ("\n");
+  gdb_printf ("\n");
 }
 
 /* Return the number of digits required to display COUNT in decimal.
@@ -268,7 +258,7 @@ print_section_index (bfd *abfd,
   std::string result
     = string_printf (" [%d] ", gdb_bfd_section_index (abfd, asect));
   /* The '+ 4' for the leading and trailing characters.  */
-  printf_filtered ("%-*s", (index_digits + 4), result.c_str ());
+  gdb_printf ("%-*s", (index_digits + 4), result.c_str ());
 }
 
 /* Print information about ASECT from ABFD.  The section will be printed using
@@ -326,8 +316,7 @@ print_objfile_section_info (bfd *abfd, struct obj_section *asect,
 
       print_section_index (abfd, asect->the_bfd_section, index_digits);
       maint_print_section_info (name, flags,
-				obj_section_addr (asect),
-				obj_section_endaddr (asect),
+				asect->addr (), asect->endaddr (),
 				asect->the_bfd_section->filepos,
 				addr_size);
     }
@@ -337,7 +326,7 @@ print_objfile_section_info (bfd *abfd, struct obj_section *asect,
    from ABFD.  It might be that no such wrapper exists (for example debug
    sections don't have such wrappers) in which case nullptr is returned.  */
 
-static obj_section *
+obj_section *
 maint_obj_section_from_bfd_section (bfd *abfd,
 				    asection *asection,
 				    objfile *ofile)
@@ -354,25 +343,99 @@ maint_obj_section_from_bfd_section (bfd *abfd,
   return osect;
 }
 
-/* Print information about ASECT from ABFD.  Where possible the information for
-   ASECT will print the relocated addresses of the section.
+/* Print information about all sections from ABFD, which is the bfd
+   corresponding to OBJFILE.  It is fine for OBJFILE to be nullptr, but
+   ABFD must never be nullptr.  If OBJFILE is provided then the sections of
+   ABFD will (potentially) be displayed relocated (i.e. the object file was
+   loaded with add-symbol-file and custom offsets were provided).
 
-   ARG is the argument string passed by the user to the top level maintenance
-   info sections command.  Used for filtering which sections are printed.  */
+   HEADER is a string that describes this file, e.g. 'Exec file: ', or
+   'Core file: '.
+
+   ARG is a string used for filtering which sections are printed, this can
+   be nullptr for no filtering.  See the top level 'maint info sections'
+   for a fuller description of the possible filtering strings.  */
 
 static void
-print_bfd_section_info_maybe_relocated (bfd *abfd, asection *asect,
-					objfile *objfile, const char *arg,
-					int index_digits)
+maint_print_all_sections (const char *header, bfd *abfd, objfile *objfile,
+			  const char *arg)
 {
-  gdb_assert (objfile->sections != NULL);
-  obj_section *osect
-    = maint_obj_section_from_bfd_section (abfd, asect, objfile);
+  gdb_puts (header);
+  gdb_stdout->wrap_here (8);
+  gdb_printf ("`%s', ", bfd_get_filename (abfd));
+  gdb_stdout->wrap_here (8);
+  gdb_printf (_("file type %s.\n"), bfd_get_target (abfd));
 
-  if (osect->the_bfd_section == NULL)
-    print_bfd_section_info (abfd, asect, arg, index_digits);
-  else
-    print_objfile_section_info (abfd, osect, arg, index_digits);
+  int section_count = gdb_bfd_count_sections (abfd);
+  int digits = index_digits (section_count);
+
+  for (asection *sect : gdb_bfd_sections (abfd))
+    {
+      obj_section *osect = nullptr;
+
+      if (objfile != nullptr)
+	{
+	  gdb_assert (objfile->sections != nullptr);
+	  osect
+	    = maint_obj_section_from_bfd_section (abfd, sect, objfile);
+	  if (osect->the_bfd_section == nullptr)
+	    osect = nullptr;
+	}
+
+      if (osect == nullptr)
+	print_bfd_section_info (abfd, sect, arg, digits);
+      else
+	print_objfile_section_info (abfd, osect, arg, digits);
+    }
+}
+
+/* The options for the "maintenance info sections" command.  */
+
+struct maint_info_sections_opts
+{
+  /* For "-all-objects".  */
+  bool all_objects = false;
+};
+
+static const gdb::option::option_def maint_info_sections_option_defs[] = {
+
+  gdb::option::flag_option_def<maint_info_sections_opts> {
+    "all-objects",
+    [] (maint_info_sections_opts *opts) { return &opts->all_objects; },
+    N_("Display information from all loaded object files."),
+  },
+};
+
+/* Create an option_def_group for the "maintenance info sections" options,
+   with CC_OPTS as context.  */
+
+static inline gdb::option::option_def_group
+make_maint_info_sections_options_def_group (maint_info_sections_opts *cc_opts)
+{
+  return {{maint_info_sections_option_defs}, cc_opts};
+}
+
+/* Completion for the "maintenance info sections" command.  */
+
+static void
+maint_info_sections_completer (struct cmd_list_element *cmd,
+			       completion_tracker &tracker,
+			       const char *text, const char * /* word */)
+{
+  /* Complete command options.  */
+  const auto group = make_maint_info_sections_options_def_group (nullptr);
+  if (gdb::option::complete_options
+      (tracker, &text, gdb::option::PROCESS_OPTIONS_UNKNOWN_IS_ERROR, group))
+    return;
+  const char *word = advance_to_expression_complete_word_point (tracker, text);
+
+  /* Offer completion for section flags, but not section names.  This is
+     only a maintenance command after all, no point going over the top.  */
+  std::vector<const char *> flags;
+  for (const auto &f : bfd_flag_info)
+    flags.push_back (f.name);
+  flags.push_back (nullptr);
+  complete_on_enum (tracker, flags.data (), text, word);
 }
 
 /* Implement the "maintenance info sections" command.  */
@@ -380,53 +443,73 @@ print_bfd_section_info_maybe_relocated (bfd *abfd, asection *asect,
 static void
 maintenance_info_sections (const char *arg, int from_tty)
 {
-  if (exec_bfd)
+  /* Check if the "-all-objects" flag was passed.  */
+  maint_info_sections_opts opts;
+  const auto group = make_maint_info_sections_options_def_group (&opts);
+  gdb::option::process_options
+    (&arg, gdb::option::PROCESS_OPTIONS_UNKNOWN_IS_ERROR, group);
+
+  for (objfile *ofile : current_program_space->objfiles ())
     {
-      bool allobj = false;
-
-      printf_filtered (_("Exec file:\n"));
-      printf_filtered ("    `%s', ", bfd_get_filename (exec_bfd));
-      wrap_here ("        ");
-      printf_filtered (_("file type %s.\n"), bfd_get_target (exec_bfd));
-
-      /* Only this function cares about the 'ALLOBJ' argument;
-	 if 'ALLOBJ' is the only argument, discard it rather than
-	 passing it down to print_objfile_section_info (which
-	 wouldn't know how to handle it).  */
-      if (arg && strcmp (arg, "ALLOBJ") == 0)
-	{
-	  arg = NULL;
-	  allobj = true;
-	}
-
-      for (objfile *ofile : current_program_space->objfiles ())
-	{
-	  if (allobj)
-	    printf_filtered (_("  Object file: %s\n"),
-			     bfd_get_filename (ofile->obfd));
-	  else if (ofile->obfd != exec_bfd)
-	    continue;
-
-	  int section_count = gdb_bfd_count_sections (ofile->obfd);
-
-	  for (asection *sect : gdb_bfd_sections (ofile->obfd))
-	    print_bfd_section_info_maybe_relocated
-	      (ofile->obfd, sect, ofile, arg, index_digits (section_count));
-	}
+      if (ofile->obfd == current_program_space->exec_bfd ())
+	maint_print_all_sections (_("Exec file: "), ofile->obfd.get (),
+				  ofile, arg);
+      else if (opts.all_objects)
+	maint_print_all_sections (_("Object file: "), ofile->obfd.get (),
+				  ofile, arg);
     }
 
   if (core_bfd)
+    maint_print_all_sections (_("Core file: "), core_bfd, nullptr, arg);
+}
+
+/* Implement the "maintenance info target-sections" command.  */
+
+static void
+maintenance_info_target_sections (const char *arg, int from_tty)
+{
+  bfd *abfd = nullptr;
+  int digits = 0;
+  const target_section_table *table
+    = target_get_section_table (current_inferior ()->top_target ());
+  if (table == nullptr)
+    return;
+
+  for (const target_section &sec : *table)
     {
-      printf_filtered (_("Core file:\n"));
-      printf_filtered ("    `%s', ", bfd_get_filename (core_bfd));
-      wrap_here ("        ");
-      printf_filtered (_("file type %s.\n"), bfd_get_target (core_bfd));
+      if (abfd == nullptr || sec.the_bfd_section->owner != abfd)
+	{
+	  abfd = sec.the_bfd_section->owner;
+	  digits = std::max (index_digits (gdb_bfd_count_sections (abfd)),
+			     digits);
+	}
+    }
 
-      int section_count = gdb_bfd_count_sections (core_bfd);
+  struct gdbarch *gdbarch = nullptr;
+  int addr_size = 0;
+  abfd = nullptr;
+  for (const target_section &sec : *table)
+   {
+      if (sec.the_bfd_section->owner != abfd)
+	{
+	  abfd = sec.the_bfd_section->owner;
+	  gdbarch = gdbarch_from_bfd (abfd);
+	  addr_size = gdbarch_addr_bit (gdbarch) / 8;
 
-      for (asection *sect : gdb_bfd_sections (core_bfd))
-	print_bfd_section_info (core_bfd, sect, arg,
-				index_digits (section_count));
+	  gdb_printf (_("From '%s', file type %s:\n"),
+		      bfd_get_filename (abfd), bfd_get_target (abfd));
+	}
+      print_bfd_section_info (abfd,
+			      sec.the_bfd_section,
+			      nullptr,
+			      digits);
+      /* The magic '8 + digits' here ensures that the 'Start' is aligned
+	 with the output of print_bfd_section_info.  */
+      gdb_printf ("%*sStart: %s, End: %s, Owner token: %p\n",
+		  (8 + digits), "",
+		  hex_string_custom (sec.addr, addr_size),
+		  hex_string_custom (sec.endaddr, addr_size),
+		  sec.owner);
     }
 }
 
@@ -434,7 +517,6 @@ static void
 maintenance_print_statistics (const char *args, int from_tty)
 {
   print_objfile_statistics ();
-  print_symbol_bcache_statistics ();
 }
 
 static void
@@ -505,9 +587,9 @@ maintenance_translate_address (const char *arg, int from_tty)
     {
       const char *symbol_name = sym.minsym->print_name ();
       const char *symbol_offset
-	= pulongest (address - BMSYMBOL_VALUE_ADDRESS (sym));
+	= pulongest (address - sym.value_address ());
 
-      sect = MSYMBOL_OBJ_SECTION(sym.objfile, sym.minsym);
+      sect = sym.obj_section ();
       if (sect != NULL)
 	{
 	  const char *section_name;
@@ -520,21 +602,21 @@ maintenance_translate_address (const char *arg, int from_tty)
 	  obj_name = objfile_name (sect->objfile);
 
 	  if (current_program_space->multi_objfile_p ())
-	    printf_filtered (_("%s + %s in section %s of %s\n"),
-			     symbol_name, symbol_offset,
-			     section_name, obj_name);
+	    gdb_printf (_("%s + %s in section %s of %s\n"),
+			symbol_name, symbol_offset,
+			section_name, obj_name);
 	  else
-	    printf_filtered (_("%s + %s in section %s\n"),
-			     symbol_name, symbol_offset, section_name);
+	    gdb_printf (_("%s + %s in section %s\n"),
+			symbol_name, symbol_offset, section_name);
 	}
       else
-	printf_filtered (_("%s + %s\n"), symbol_name, symbol_offset);
+	gdb_printf (_("%s + %s\n"), symbol_name, symbol_offset);
     }
   else if (sect)
-    printf_filtered (_("no symbol at %s:%s\n"),
-		     sect->the_bfd_section->name, hex_string (address));
+    gdb_printf (_("no symbol at %s:%s\n"),
+		sect->the_bfd_section->name, hex_string (address));
   else
-    printf_filtered (_("no symbol at %s\n"), hex_string (address));
+    gdb_printf (_("no symbol at %s\n"), hex_string (address));
 
   return;
 }
@@ -549,7 +631,7 @@ maintenance_deprecate (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
     {
-      printf_unfiltered (_("\"maintenance deprecate\" takes an argument,\n\
+      gdb_printf (_("\"maintenance deprecate\" takes an argument,\n\
 the command you want to deprecate, and optionally the replacement command\n\
 enclosed in quotes.\n"));
     }
@@ -563,7 +645,7 @@ maintenance_undeprecate (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
     {
-      printf_unfiltered (_("\"maintenance undeprecate\" takes an argument, \n\
+      gdb_printf (_("\"maintenance undeprecate\" takes an argument, \n\
 the command you want to undeprecate.\n"));
     }
 
@@ -594,7 +676,7 @@ maintenance_do_deprecate (const char *text, int deprecate)
 
   if (!lookup_cmd_composition (text, &alias, &prefix_cmd, &cmd))
     {
-      printf_filtered (_("Can't find command '%s' to deprecate.\n"), text);
+      gdb_printf (_("Can't find command '%s' to deprecate.\n"), text);
       return;
     }
 
@@ -694,7 +776,7 @@ static void
 show_maintenance_profile_p (struct ui_file *file, int from_tty,
 			    struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, _("Internal profiling is %s.\n"), value);
+  gdb_printf (file, _("Internal profiling is %s.\n"), value);
 }
 
 #ifdef HAVE__ETEXT
@@ -719,7 +801,7 @@ mcleanup_wrapper (void)
 }
 
 EXTERN_C void monstartup (unsigned long, unsigned long);
-extern int main ();
+extern int main (int, char **);
 
 static void
 maintenance_set_profile_cmd (const char *args, int from_tty,
@@ -783,6 +865,30 @@ maintenance_set_worker_threads (const char *args, int from_tty,
   update_thread_pool_size ();
 }
 
+static void
+maintenance_show_worker_threads (struct ui_file *file, int from_tty,
+				 struct cmd_list_element *c,
+				 const char *value)
+{
+#if CXX_STD_THREAD
+  if (n_worker_threads == -1)
+    {
+      gdb_printf (file, _("The number of worker threads GDB "
+			  "can use is unlimited (currently %zu).\n"),
+		  gdb::thread_pool::g_thread_pool->thread_count ());
+      return;
+    }
+#endif
+
+  int report_threads = 0;
+#if CXX_STD_THREAD
+  report_threads = n_worker_threads;
+#endif
+  gdb_printf (file, _("The number of worker threads GDB "
+		      "can use is %d.\n"),
+	      report_threads);
+}
+
 
 /* If true, display time usage both at startup and for each command.  */
 
@@ -839,9 +945,9 @@ count_symtabs_and_blocks (int *nr_symtabs_ptr, int *nr_compunit_symtabs_ptr,
 	  for (compunit_symtab *cu : o->compunits ())
 	    {
 	      ++nr_compunit_symtabs;
-	      nr_blocks += BLOCKVECTOR_NBLOCKS (COMPUNIT_BLOCKVECTOR (cu));
-	      nr_symtabs += std::distance (compunit_filetabs (cu).begin (),
-					   compunit_filetabs (cu).end ());
+	      nr_blocks += cu->blockvector ()->num_blocks ();
+	      nr_symtabs += std::distance (cu->filetabs ().begin (),
+					   cu->filetabs ().end ());
 	    }
 	}
     }
@@ -883,11 +989,12 @@ scoped_command_stats::~scoped_command_stats ()
       /* Subtract time spend in prompt_for_continue from walltime.  */
       wall_time -= get_prompt_for_continue_wait_time ();
 
-      printf_unfiltered (!m_msg_type
-			 ? _("Startup time: %.6f (cpu), %.6f (wall)\n")
-			 : _("Command execution time: %.6f (cpu), %.6f (wall)\n"),
-			 duration<double> (cmd_time).count (),
-			 duration<double> (wall_time).count ());
+      gdb_printf (gdb_stdlog,
+		  !m_msg_type
+		  ? _("Startup time: %.6f (cpu), %.6f (wall)\n")
+		  : _("Command execution time: %.6f (cpu), %.6f (wall)\n"),
+		  duration<double> (cmd_time).count (),
+		  duration<double> (wall_time).count ());
     }
 
   if (m_space_enabled && per_command_space)
@@ -898,12 +1005,13 @@ scoped_command_stats::~scoped_command_stats ()
       long space_now = lim - lim_at_start;
       long space_diff = space_now - m_start_space;
 
-      printf_unfiltered (!m_msg_type
-			 ? _("Space used: %ld (%s%ld during startup)\n")
-			 : _("Space used: %ld (%s%ld for this command)\n"),
-			 space_now,
-			 (space_diff >= 0 ? "+" : ""),
-			 space_diff);
+      gdb_printf (gdb_stdlog,
+		  !m_msg_type
+		  ? _("Space used: %ld (%s%ld during startup)\n")
+		  : _("Space used: %ld (%s%ld for this command)\n"),
+		  space_now,
+		  (space_diff >= 0 ? "+" : ""),
+		  space_diff);
 #endif
     }
 
@@ -912,16 +1020,17 @@ scoped_command_stats::~scoped_command_stats ()
       int nr_symtabs, nr_compunit_symtabs, nr_blocks;
 
       count_symtabs_and_blocks (&nr_symtabs, &nr_compunit_symtabs, &nr_blocks);
-      printf_unfiltered (_("#symtabs: %d (+%d),"
-			   " #compunits: %d (+%d),"
-			   " #blocks: %d (+%d)\n"),
-			 nr_symtabs,
-			 nr_symtabs - m_start_nr_symtabs,
-			 nr_compunit_symtabs,
-			 (nr_compunit_symtabs
-			  - m_start_nr_compunit_symtabs),
-			 nr_blocks,
-			 nr_blocks - m_start_nr_blocks);
+      gdb_printf (gdb_stdlog,
+		  _("#symtabs: %d (+%d),"
+		    " #compunits: %d (+%d),"
+		    " #blocks: %d (+%d)\n"),
+		  nr_symtabs,
+		  nr_symtabs - m_start_nr_symtabs,
+		  nr_compunit_symtabs,
+		  (nr_compunit_symtabs
+		   - m_start_nr_compunit_symtabs),
+		  nr_blocks,
+		  nr_blocks - m_start_nr_blocks);
     }
 }
 
@@ -988,7 +1097,7 @@ scoped_command_stats::print_time (const char *msg)
   char out[100];
   strftime (out, sizeof (out), "%F %H:%M:%S", &tm);
 
-  printf_unfiltered ("%s.%03d - %s\n", out, (int) millis, msg);
+  gdb_printf (gdb_stdlog, "%s.%03d - %s\n", out, (int) millis, msg);
 }
 
 /* Handle unknown "mt set per-command" arguments.
@@ -1005,14 +1114,41 @@ set_per_command_cmd (const char *args, int from_tty)
     error (_("Bad value for 'mt set per-command no'."));
 
   for (list = per_command_setlist; list != NULL; list = list->next)
-    if (list->var_type == var_boolean)
+    if (list->var->type () == var_boolean)
       {
 	gdb_assert (list->type == set_cmd);
 	do_set_command (args, from_tty, list);
       }
 }
 
-
+/* Options affecting the "maintenance selftest" command.  */
+
+struct maintenance_selftest_options
+{
+  bool verbose = false;
+} user_maintenance_selftest_options;
+
+static const gdb::option::option_def maintenance_selftest_option_defs[] = {
+  gdb::option::boolean_option_def<maintenance_selftest_options> {
+    "verbose",
+    [] (maintenance_selftest_options *opt) { return &opt->verbose; },
+    nullptr,
+    N_("Set whether selftests run in verbose mode."),
+    N_("Show whether selftests run in verbose mode."),
+    N_("\
+When on, selftests may print verbose information."),
+  },
+};
+
+/* Make option groups for the "maintenance selftest" command.  */
+
+static std::array<gdb::option::option_def_group, 1>
+make_maintenance_selftest_option_group (maintenance_selftest_options *opts)
+{
+  return {{
+    {{maintenance_selftest_option_defs}, opts},
+  }};
+}
 
 /* The "maintenance selftest" command.  */
 
@@ -1020,11 +1156,38 @@ static void
 maintenance_selftest (const char *args, int from_tty)
 {
 #if GDB_SELF_TEST
-  gdb_argv argv (args);
-  selftests::run_tests (argv.as_array_view ());
+  maintenance_selftest_options opts = user_maintenance_selftest_options;
+  auto grp = make_maintenance_selftest_option_group (&opts);
+  gdb::option::process_options
+    (&args, gdb::option::PROCESS_OPTIONS_UNKNOWN_IS_ERROR, grp);
+  const gdb_argv argv (args);
+  selftests::run_tests (argv.as_array_view (), opts.verbose);
 #else
-  printf_filtered (_("\
+  gdb_printf (_("\
 Selftests have been disabled for this build.\n"));
+#endif
+}
+
+/* Completer for the "maintenance selftest" command.  */
+
+static void
+maintenance_selftest_completer (cmd_list_element *cmd,
+				completion_tracker &tracker,
+				const char *text,
+				const char *word)
+{
+  auto grp = make_maintenance_selftest_option_group (nullptr);
+
+  if (gdb::option::complete_options
+	(tracker, &text, gdb::option::PROCESS_OPTIONS_UNKNOWN_IS_ERROR, grp))
+    return;
+
+#if GDB_SELF_TEST
+  for (const auto &test : selftests::all_selftests ())
+    {
+      if (startswith (test.name.c_str (), text))
+	tracker.add_completion (make_unique_xstrdup (test.name.c_str ()));
+    }
 #endif
 }
 
@@ -1032,12 +1195,11 @@ static void
 maintenance_info_selftests (const char *arg, int from_tty)
 {
 #if GDB_SELF_TEST
-  printf_filtered ("Registered selftests:\n");
-  selftests::for_each_selftest ([] (const std::string &name) {
-    printf_filtered (" - %s\n", name.c_str ());
-  });
+  gdb_printf ("Registered selftests:\n");
+  for (const auto &test : selftests::all_selftests ())
+    gdb_printf (" - %s\n", test.name.c_str ());
 #else
-  printf_filtered (_("\
+  gdb_printf (_("\
 Selftests have been disabled for this build.\n"));
 #endif
 }
@@ -1049,49 +1211,78 @@ _initialize_maint_cmds ()
 {
   struct cmd_list_element *cmd;
 
-  add_basic_prefix_cmd ("maintenance", class_maintenance, _("\
+  cmd_list_element *maintenance_cmd
+    = add_basic_prefix_cmd ("maintenance", class_maintenance, _("\
 Commands for use by GDB maintainers.\n\
 Includes commands to dump specific internal GDB structures in\n\
 a human readable form, to cause GDB to deliberately dump core, etc."),
-			&maintenancelist, "maintenance ", 0,
-			&cmdlist);
+			    &maintenancelist, 0,
+			    &cmdlist);
 
-  add_com_alias ("mt", "maintenance", class_maintenance, 1);
+  add_com_alias ("mt", maintenance_cmd, class_maintenance, 1);
 
-  add_basic_prefix_cmd ("info", class_maintenance, _("\
+  cmd_list_element *maintenance_info_cmd
+    = add_basic_prefix_cmd ("info", class_maintenance, _("\
 Commands for showing internal info about the program being debugged."),
-			&maintenanceinfolist, "maintenance info ", 0,
-			&maintenancelist);
-  add_alias_cmd ("i", "info", class_maintenance, 1, &maintenancelist);
+			    &maintenanceinfolist, 0,
+			    &maintenancelist);
+  add_alias_cmd ("i", maintenance_info_cmd, class_maintenance, 1,
+		 &maintenancelist);
 
-  add_cmd ("sections", class_maintenance, maintenance_info_sections, _("\
+  const auto opts = make_maint_info_sections_options_def_group (nullptr);
+  static std::string maint_info_sections_command_help
+    = gdb::option::build_help (_("\
 List the BFD sections of the exec and core files.\n\
-Arguments may be any combination of:\n\
-	[one or more section names]\n\
-	ALLOC LOAD RELOC READONLY CODE DATA ROM CONSTRUCTOR\n\
-	HAS_CONTENTS NEVER_LOAD COFF_SHARED_LIBRARY IS_COMMON\n\
-Sections matching any argument will be listed (no argument\n\
-implies all sections).  In addition, the special argument\n\
-	ALLOBJ\n\
-lists all sections from all object files, including shared libraries."),
+\n\
+Usage: maintenance info sections [-all-objects] [FILTERS]\n\
+\n\
+FILTERS is a list of words, each word is either:\n\
+  + A section name - any section with this name will be printed, or\n\
+  + A section flag - any section with this flag will be printed.  The\n\
+        known flags are:\n\
+	  ALLOC LOAD RELOC READONLY CODE DATA ROM CONSTRUCTOR\n\
+	  HAS_CONTENTS NEVER_LOAD COFF_SHARED_LIBRARY IS_COMMON\n\
+\n\
+Sections matching any of the FILTERS will be listed (no FILTERS implies\n\
+all sections should be printed).\n\
+\n\
+Options:\n\
+%OPTIONS%"), opts);
+  cmd = add_cmd ("sections", class_maintenance, maintenance_info_sections,
+		 maint_info_sections_command_help.c_str (),
+		 &maintenanceinfolist);
+  set_cmd_completer_handle_brkchars (cmd, maint_info_sections_completer);
+
+  add_cmd ("target-sections", class_maintenance,
+	   maintenance_info_target_sections, _("\
+List GDB's internal section table.\n\
+\n\
+Print the current targets section list.  This is a sub-set of all\n\
+sections, from all objects currently loaded.  Usually the ALLOC\n\
+sectoins."),
 	   &maintenanceinfolist);
 
   add_basic_prefix_cmd ("print", class_maintenance,
 			_("Maintenance command for printing GDB internal state."),
-			&maintenanceprintlist, "maintenance print ", 0,
+			&maintenanceprintlist, 0,
+			&maintenancelist);
+
+  add_basic_prefix_cmd ("flush", class_maintenance,
+			_("Maintenance command for flushing GDB internal caches."),
+			&maintenanceflushlist, 0,
 			&maintenancelist);
 
   add_basic_prefix_cmd ("set", class_maintenance, _("\
 Set GDB internal variables used by the GDB maintainer.\n\
 Configure variables internal to GDB that aid in GDB's maintenance"),
-			&maintenance_set_cmdlist, "maintenance set ",
+			&maintenance_set_cmdlist,
 			0/*allow-unknown*/,
 			&maintenancelist);
 
   add_show_prefix_cmd ("show", class_maintenance, _("\
 Show GDB internal variables used by the GDB maintainer.\n\
 Configure variables internal to GDB that aid in GDB's maintenance"),
-		       &maintenance_show_cmdlist, "maintenance show ",
+		       &maintenance_show_cmdlist,
 		       0/*allow-unknown*/,
 		       &maintenancelist);
 
@@ -1137,12 +1328,12 @@ This command has been moved to \"demangle\"."),
 
   add_prefix_cmd ("per-command", class_maintenance, set_per_command_cmd, _("\
 Per-command statistics settings."),
-		    &per_command_setlist, "maintenance set per-command ",
+		    &per_command_setlist,
 		    1/*allow-unknown*/, &maintenance_set_cmdlist);
 
   add_show_prefix_cmd ("per-command", class_maintenance, _("\
 Show per-command statistics settings."),
-		       &per_command_showlist, "maintenance show per-command ",
+		       &per_command_showlist,
 		       0/*allow-unknown*/, &maintenance_show_cmdlist);
 
   add_setshow_boolean_cmd ("time", class_maintenance,
@@ -1191,11 +1382,12 @@ If nonzero, will cause the execution space for each command to be\n\
 displayed, following the command's output."),
 	   &maintenancelist);
 
-  add_cmd ("type", class_maintenance, maintenance_print_type, _("\
+  cmd = add_cmd ("type", class_maintenance, maintenance_print_type, _("\
 Print a type chain for a given symbol.\n\
 For each node in a type chain, print the raw data for each member of\n\
 the type structure, and the interpretation of the data."),
 	   &maintenanceprintlist);
+  set_cmd_completer (cmd, expression_completer);
 
   add_cmd ("statistics", class_maintenance, maintenance_print_statistics,
 	   _("Print statistics about internal gdb state."),
@@ -1209,7 +1401,7 @@ Takes an optional file parameter."),
 
   add_basic_prefix_cmd ("check", class_maintenance, _("\
 Commands for checking internal gdb state."),
-			&maintenancechecklist, "maintenance check ", 0,
+			&maintenancechecklist, 0,
 			&maintenancelist);
 
   add_cmd ("translate-address", class_maintenance,
@@ -1231,12 +1423,15 @@ This is used by the testsuite to check the command deprecator.\n\
 You probably shouldn't use this."),
 	   &maintenancelist);
 
-  add_cmd ("selftest", class_maintenance, maintenance_selftest, _("\
+  cmd_list_element *maintenance_selftest_cmd
+    = add_cmd ("selftest", class_maintenance, maintenance_selftest, _("\
 Run gdb's unit tests.\n\
 Usage: maintenance selftest [FILTER]\n\
 This will run any unit tests that were built in to gdb.\n\
 If a filter is given, only the tests with that value in their name will ran."),
-	   &maintenancelist);
+	       &maintenancelist);
+  set_cmd_completer_handle_brkchars (maintenance_selftest_cmd,
+				     maintenance_selftest_completer);
 
   add_cmd ("selftests", class_maintenance, maintenance_info_selftests,
 	 _("List the registered selftests."), &maintenanceinfolist);
@@ -1258,9 +1453,27 @@ Set the number of worker threads GDB can use."), _("\
 Show the number of worker threads GDB can use."), _("\
 GDB may use multiple threads to speed up certain CPU-intensive operations,\n\
 such as demangling symbol names."),
-				       maintenance_set_worker_threads, NULL,
+				       maintenance_set_worker_threads,
+				       maintenance_show_worker_threads,
 				       &maintenance_set_cmdlist,
 				       &maintenance_show_cmdlist);
+
+  /* Add the "maint set/show selftest" commands.  */
+  static cmd_list_element *set_selftest_cmdlist = nullptr;
+  static cmd_list_element *show_selftest_cmdlist = nullptr;
+
+  add_setshow_prefix_cmd ("selftest", class_maintenance,
+			  _("Self tests-related settings."),
+			  _("Self tests-related settings."),
+			  &set_selftest_cmdlist, &show_selftest_cmdlist,
+			  &maintenance_set_cmdlist, &maintenance_show_cmdlist);
+
+  /* Add setting commands matching "maintenance selftest" options.  */
+  gdb::option::add_setshow_cmds_for_options (class_maintenance,
+					     &user_maintenance_selftest_options,
+					     maintenance_selftest_option_defs,
+					     &set_selftest_cmdlist,
+					     &show_selftest_cmdlist);
 
   update_thread_pool_size ();
 }

@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ gdb_test "info frame-filter" \
 # Care is taken to put it in the same directory as the binary so that
 # gdb will find it.
 set remote_obj_python_file \
-    [gdb_remote_download host ${srcdir}/${subdir}/${testfile}-gdb.py.in \
+    [gdb_remote_download host ${srcdir}/${subdir}/${testfile}-gdb.py \
 	 ${testfile}-gdb.py]
 
 gdb_reinitialize_dir $srcdir/$subdir
@@ -52,8 +52,7 @@ gdb_load ${binfile}
 gdb_test "info auto-load python-scripts" "Yes.*${testfile}-gdb.py.*" \
     "Test auto-load had loaded python scripts"
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
+if {![runto_main]} {
     return
 }
 gdb_test_no_output "set python print-stack full" \
@@ -269,7 +268,7 @@ gdb_test_no_output  "enable frame-filter global Error" \
     "enable frame-filter global Error"
 set test "bt 1 with Error filter"
 gdb_test_multiple "bt 1" $test {
-    -re "Python Exception .*whoops:.*$gdb_prompt $" {
+    -re "Python Exception .*: whoops\r\n.*$gdb_prompt $" {
 	pass $test
     }
 }
@@ -299,7 +298,7 @@ if { [skip_python_tests] } { continue }
 # Care is taken to put it in the same directory as the binary so that
 # gdb will find it.
 set remote_obj_python_file \
-    [gdb_remote_download host ${srcdir}/${subdir}/${testfile}-gdb.py.in \
+    [gdb_remote_download host ${srcdir}/${subdir}/${testfile}-gdb.py \
 	 ${testfile}-gdb.py]
 
 gdb_reinitialize_dir $srcdir/$subdir
@@ -310,8 +309,7 @@ gdb_load ${binfile}
 # Verify gdb loaded the script.
 gdb_test "info auto-load python-scripts" "Yes.*${testfile}-gdb.py.*" \
     "Set autoload path for no debug info tests"
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
+if {![runto_main]} {
     return
 }
 

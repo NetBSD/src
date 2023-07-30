@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,15 +22,6 @@ if { ![support_displaced_stepping] } {
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-
-save_vars { GDBFLAGS } {
-    append GDBFLAGS " -ex \"set non-stop on\""
-    if {[mi_gdb_start]} {
-	continue
-    }
-}
-
 proc mi_nonstop_resume { command test } {
     if { [mi_send_resuming_command $command $test] != 0 } {
 	# If a resume fails, assume non-stop is broken or unsupported
@@ -50,14 +41,17 @@ if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable $option
     return -1
 }
 
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load $binfile
+
+save_vars { GDBFLAGS } {
+    append GDBFLAGS " -ex \"set non-stop on\""
+    mi_clean_restart $binfile
+}
 
 mi_gdb_test "-gdb-set mi-async 1" ".*"
 mi_detect_async
 
-if { [mi_run_to_main] < 0 } {
-    continue
+if { [mi_runto_main] < 0 } {
+    return
 }
 
 mi_create_breakpoint break_at_me "breakpoint at marker" \
@@ -118,7 +112,7 @@ mi_check_thread_states {"running" "running" "stopped"} "thread state, stop on co
 # Check that when we update all varobj, we don't get no error about varobj
 # bound to running thread.
 mi_varobj_update * {I_W1} "update varobj, 2"
-mi_check_varobj_value I_W1 3 "check varobj, w1, 1"
+mi_check_varobj_value I_W1 3 "check varobj, w1, 2"
 
 
 # Check that stack commands are allowed on a stopped thread, even if some other threads
@@ -153,6 +147,6 @@ if { [mi_is_target_remote] } {
 # See that we can still poke other threads.
 mi_gdb_test "-stack-list-frames --thread 3" \
     "\\^done,stack=\\\[frame={level=\"0\",addr=\".*\",func=\"break_at_me\".*" \
-    "stacktrace of stopped thread"
+    "stacktrace of stopped thread, 2"
 
 mi_gdb_exit

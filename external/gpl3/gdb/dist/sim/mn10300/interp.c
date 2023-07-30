@@ -1,4 +1,6 @@
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <signal.h>
 
 #include "sim-main.h"
@@ -7,19 +9,10 @@
 
 #include "bfd.h"
 #include "sim-assert.h"
+#include "sim-signal.h"
 
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
 
 #include "bfd.h"
 
@@ -86,8 +79,8 @@ mn10300_pc_set (sim_cpu *cpu, sim_cia pc)
   PC = pc;
 }
 
-static int mn10300_reg_fetch (SIM_CPU *, int, unsigned char *, int);
-static int mn10300_reg_store (SIM_CPU *, int, unsigned char *, int);
+static int mn10300_reg_fetch (SIM_CPU *, int, void *, int);
+static int mn10300_reg_store (SIM_CPU *, int, const void *, int);
 
 /* These default values correspond to expected usage for the chip.  */
 
@@ -102,8 +95,11 @@ sim_open (SIM_OPEN_KIND kind,
 
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
+  /* Set default options before parsing user options.  */
+  current_target_byte_order = BFD_ENDIAN_LITTLE;
+
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
     return 0;
 
   /* for compatibility */
@@ -112,8 +108,6 @@ sim_open (SIM_OPEN_KIND kind,
   /* FIXME: should be better way of setting up interrupts.  For
      moment, only support watchpoints causing a breakpoint (gdb
      halt). */
-  STATE_WATCHPOINTS (sd)->pc = &(PC);
-  STATE_WATCHPOINTS (sd)->sizeof_pc = sizeof (PC);
   STATE_WATCHPOINTS (sd)->interrupt_handler = NULL;
   STATE_WATCHPOINTS (sd)->interrupt_names = NULL;
 
@@ -274,11 +268,7 @@ sim_open (SIM_OPEN_KIND kind,
   
 
   /* check for/establish the a reference program image */
-  if (sim_analyze_program (sd,
-			   (STATE_PROG_ARGV (sd) != NULL
-			    ? *STATE_PROG_ARGV (sd)
-			    : NULL),
-			   abfd) != SIM_RC_OK)
+  if (sim_analyze_program (sd, STATE_PROG_FILE (sd), abfd) != SIM_RC_OK)
     {
       sim_module_uninstall (sd);
       return 0;
@@ -330,7 +320,7 @@ sim_create_inferior (SIM_DESC sd,
   } else {
     PC = 0;
   }
-  CPU_PC_SET (STATE_CPU (sd, 0), (unsigned64) PC);
+  CPU_PC_SET (STATE_CPU (sd, 0), (uint64_t) PC);
 
   if (STATE_ARCHITECTURE (sd)->mach == bfd_mach_am33_2)
     PSW |= PSW_FE;
@@ -342,10 +332,10 @@ sim_create_inferior (SIM_DESC sd,
    but need to be changed to use the memory map.  */
 
 static int
-mn10300_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+mn10300_reg_fetch (SIM_CPU *cpu, int rn, void *memory, int length)
 {
   reg_t reg = State.regs[rn];
-  uint8 *a = memory;
+  uint8_t *a = memory;
   a[0] = reg;
   a[1] = reg >> 8;
   a[2] = reg >> 16;
@@ -354,9 +344,9 @@ mn10300_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
 }
  
 static int
-mn10300_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+mn10300_reg_store (SIM_CPU *cpu, int rn, const void *memory, int length)
 {
-  uint8 *a = memory;
+  const uint8_t *a = memory;
   State.regs[rn] = (a[3] << 24) + (a[2] << 16) + (a[1] << 8) + a[0];
   return length;
 }
@@ -474,6 +464,9 @@ mn10300_cpu_exception_resume(SIM_DESC sd, sim_cpu* cpu, int exception)
 
   if(exception == 0 && State.exc_suspended > 0)
     {
+#ifndef SIGTRAP
+# define SIGTRAP 5
+#endif
       if(State.exc_suspended != SIGTRAP) /* warn not for breakpoints */
          sim_io_eprintf(sd, "Warning, resuming but ignoring pending exception signal (%d)\n",
   		       State.exc_suspended); 

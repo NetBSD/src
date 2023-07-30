@@ -1,0 +1,76 @@
+## Fragment to pass common settings into arch subdir builds.
+## NB: This should eventually be merged into sim/Makefile.am once there are no
+## subdir configure scripts.
+#
+#   Copyright (C) 1993-2023 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+AM_V = @AM_V@
+
+EXEEXT = @EXEEXT@
+
+LN_S = @LN_S@
+
+CC = @CC@
+C_DIALECT = @C_DIALECT@
+CC_FOR_BUILD = @CC_FOR_BUILD@
+CFLAGS_FOR_BUILD = @CFLAGS_FOR_BUILD@
+CPPFLAGS_FOR_BUILD = @CPPFLAGS_FOR_BUILD@
+CFLAGS = @CFLAGS@
+CPPFLAGS = @CPPFLAGS@
+LDFLAGS = @LDFLAGS@
+
+AR = @AR@
+AR_FLAGS = rc
+RANLIB = @RANLIB@
+DTC = @DTC@
+
+LIBTOOL = @LIBTOOL@
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
+
+DEPMODE = @CCDEPMODE@
+DEPDIR = @DEPDIR@
+
+SDL_CFLAGS = @SDL_CFLAGS@
+TERMCAP_LIB = @TERMCAP_LIB@
+READLINE_LIB = @READLINE_LIB@
+READLINE_CFLAGS = @READLINE_CFLAGS@
+
+COMMON_LIBS = @LIBS@
+WARN_CFLAGS = @WARN_CFLAGS@
+WERROR_CFLAGS = @WERROR_CFLAGS@
+
+# Maintainer support, enable with --enable-maintainer-mode.
+# Once all subdirs are moved to automake, we can drop this custom logic and
+# switch back to using @MAINTAINER_MODE_TRUE@ directly.
+MAINT = ; @true
+# The following line is commented depending upon --enable-maintainer-mode.
+@MAINTAINER_MODE_TRUE@MAINT =
+
+# cgen support, enable with --enable-cgen-maint
+CGEN_MAINT = ; @true
+# The following line is commented in or out depending upon --enable-cgen-maint.
+@CGEN_MAINT@CGEN_MAINT =
+CGENDIR = @cgendir@
+
+SIM_INLINE = @SIM_INLINE@
+
+SIM_HW_CFLAGS = @SIM_HW_CFLAGS@
+SIM_HW_SOCKSER = @SIM_HW_SOCKSER@
+SIM_HW_OBJS = $(SIM_COMMON_HW_OBJS) $(SIM_HW_DEVICES:%=dv-%.o) $(SIM_HW_SOCKSER)
+@SIM_ENABLE_HW_FALSE@SIM_HW_OBJS =

@@ -1,6 +1,6 @@
 /* Self tests for scoped_mmap for GDB, the GNU debugger.
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -89,11 +89,12 @@ static void
 test_normal ()
 {
   char filename[] = "scoped_mmapped_file-selftest-XXXXXX";
-  int fd = gdb_mkostemp_cloexec (filename);
-  SELF_CHECK (fd >= 0);
+  {
+    scoped_fd fd = gdb_mkostemp_cloexec (filename);
+    SELF_CHECK (fd.get () >= 0);
 
-  SELF_CHECK (write (fd, "Hello!", 7) == 7);
-  close (fd);
+    SELF_CHECK (write (fd.get (), "Hello!", 7) == 7);
+  }
 
   gdb::unlinker unlink_test_file (filename);
 

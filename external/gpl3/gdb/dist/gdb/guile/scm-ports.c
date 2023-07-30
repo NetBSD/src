@@ -1,7 +1,7 @@
 /* Support for connecting Guile's stdio to GDB's.
    as well as r/w memory via ports.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -59,7 +59,7 @@ private:
 
 /* Data for a memory port.  */
 
-typedef struct
+struct ioscm_memory_port
 {
   /* Bounds of memory range this port is allowed to access: [start, end).
      This means that 0xff..ff is not accessible.  I can live with that.  */
@@ -80,7 +80,7 @@ typedef struct
      the user to specify these values to help get something similar.  */
   unsigned read_buf_size, write_buf_size;
 #endif
-} ioscm_memory_port;
+};
 
 /* Copies of the original system input/output/error ports.
    These are recorded for debugging purposes.  */
@@ -139,7 +139,7 @@ static const unsigned min_memory_port_buf_size = 1;
 static const unsigned max_memory_port_buf_size = 4096;
 
 /* "out of range" error message for buf sizes.  */
-static char *out_of_range_buf_size;
+static gdb::unique_xmalloc_ptr<char> out_of_range_buf_size;
 
 #else
 
@@ -191,8 +191,8 @@ ioscm_open_port (scm_t_port_type *port_type, long mode_bits, scm_t_bits stream)
 
 /* Support for connecting Guile's stdio ports to GDB's stdio ports.  */
 
-/* Like fputstrn_filtered, but don't escape characters, except nul.
-   Also like fputs_filtered, but a length is specified.  */
+/* Print a string S, length SIZE, but don't escape characters, except
+   nul.  */
 
 static void
 fputsn_filtered (const char *s, size_t size, struct ui_file *stream)
@@ -202,9 +202,9 @@ fputsn_filtered (const char *s, size_t size, struct ui_file *stream)
   for (i = 0; i < size; ++i)
     {
       if (s[i] == '\0')
-	fputs_filtered ("\\000", stream);
+	gdb_puts ("\\000", stream);
       else
-	fputc_filtered (s[i], stream);
+	gdb_putc (s[i], stream);
     }
 }
 
@@ -269,7 +269,7 @@ ioscm_input_waiting (SCM port)
       {
 	/* Guile doesn't export SIGINT hooks like Python does.
 	   For now pass EINTR to scm_syserror, that's what fports.c does.  */
-        scm_syserror (FUNC_NAME);
+	scm_syserror (FUNC_NAME);
       }
     return num_found > 0 && FD_ISSET (fdes, &input_fds);
   }
@@ -607,8 +607,7 @@ ioscm_with_output_to_port_worker (SCM port, SCM thunk, enum oport oport,
       gdb_stderr = port_file.get ();
     else
       {
-	current_uiout->redirect (port_file.get ());
-	redirect_popper.emplace (current_uiout);
+	redirect_popper.emplace (current_uiout, port_file.get ());
 
 	gdb_stdout = port_file.get ();
       }
@@ -1447,7 +1446,7 @@ gdbscm_set_memory_port_read_buffer_size_x (SCM port, SCM size)
 				max_memory_port_buf_size))
     {
       gdbscm_out_of_range_error (FUNC_NAME, SCM_ARG2, size,
-				 out_of_range_buf_size);
+				 out_of_range_buf_size.get ());
     }
 
   iomem = (ioscm_memory_port *) SCM_STREAM (port);
@@ -1497,7 +1496,7 @@ gdbscm_set_memory_port_write_buffer_size_x (SCM port, SCM size)
 				max_memory_port_buf_size))
     {
       gdbscm_out_of_range_error (FUNC_NAME, SCM_ARG2, size,
-				 out_of_range_buf_size);
+				 out_of_range_buf_size.get ());
     }
 
   iomem = (ioscm_memory_port *) SCM_STREAM (port);

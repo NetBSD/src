@@ -1,6 +1,6 @@
 /* YACC parser for C++ names, for GDB.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    Parts of the lexer are based on c-exp.y from GDB.
 
@@ -346,7 +346,12 @@ static void yyerror (cpname_state *, const char *);
 %%
 
 result		:	start
-			{ state->global_result = $1; }
+			{
+			  state->global_result = $1;
+
+			  /* Avoid warning about "yynerrs" being unused.  */
+			  (void) yynerrs;
+			}
 		;
 
 start		:	type
@@ -1337,8 +1342,8 @@ cpname_state::parse_number (const char *p, int len, int parsed_float,
       char c;
 
       /* The GDB lexer checks the result of scanf at this point.  Not doing
-         this leaves our error checking slightly weaker but only for invalid
-         data.  */
+	 this leaves our error checking slightly weaker but only for invalid
+	 data.  */
 
       /* See if it has `f' or `l' suffix (float or long double).  */
 
@@ -1511,7 +1516,7 @@ cp_parse_escape (const char **string_ptr)
 }
 
 #define HANDLE_SPECIAL(string, comp)				\
-  if (strncmp (tokstart, string, sizeof (string) - 1) == 0)	\
+  if (startswith (tokstart, string))				\
     {								\
       state->lexptr = tokstart + sizeof (string) - 1;			\
       lvalp->lval = comp;					\
@@ -1592,7 +1597,7 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
       return INT;
 
     case '(':
-      if (strncmp (tokstart, "(anonymous namespace)", 21) == 0)
+      if (startswith (tokstart, "(anonymous namespace)"))
 	{
 	  state->lexptr += 21;
 	  lvalp->comp = state->make_name ("(anonymous namespace)",
@@ -1625,7 +1630,7 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
       HANDLE_TOKEN2 ("->", ARROW);
 
       /* For construction vtables.  This is kind of hokey.  */
-      if (strncmp (tokstart, "-in-", 4) == 0)
+      if (startswith (tokstart, "-in-"))
 	{
 	  state->lexptr += 4;
 	  return CONSTRUCTION_IN;
@@ -1696,7 +1701,7 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
 	  }
 	toktype = state->parse_number (tokstart, p - tokstart, got_dot|got_e,
 				       lvalp);
-        if (toktype == ERROR)
+	if (toktype == ERROR)
 	  {
 	    char *err_copy = (char *) alloca (p - tokstart + 1);
 
@@ -1803,21 +1808,21 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
   switch (namelen)
     {
     case 16:
-      if (strncmp (tokstart, "reinterpret_cast", 16) == 0)
-        return REINTERPRET_CAST;
+      if (startswith (tokstart, "reinterpret_cast"))
+	return REINTERPRET_CAST;
       break;
     case 12:
-      if (strncmp (tokstart, "construction vtable for ", 24) == 0)
+      if (startswith (tokstart, "construction vtable for "))
 	{
 	  state->lexptr = tokstart + 24;
 	  return CONSTRUCTION_VTABLE;
 	}
-      if (strncmp (tokstart, "dynamic_cast", 12) == 0)
-        return DYNAMIC_CAST;
+      if (startswith (tokstart, "dynamic_cast"))
+	return DYNAMIC_CAST;
       break;
     case 11:
-      if (strncmp (tokstart, "static_cast", 11) == 0)
-        return STATIC_CAST;
+      if (startswith (tokstart, "static_cast"))
+	return STATIC_CAST;
       break;
     case 9:
       HANDLE_SPECIAL ("covariant return thunk to ", DEMANGLE_COMPONENT_COVARIANT_THUNK);
@@ -1827,24 +1832,24 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
       HANDLE_SPECIAL ("typeinfo for ", DEMANGLE_COMPONENT_TYPEINFO);
       HANDLE_SPECIAL ("typeinfo fn for ", DEMANGLE_COMPONENT_TYPEINFO_FN);
       HANDLE_SPECIAL ("typeinfo name for ", DEMANGLE_COMPONENT_TYPEINFO_NAME);
-      if (strncmp (tokstart, "operator", 8) == 0)
+      if (startswith (tokstart, "operator"))
 	return OPERATOR;
-      if (strncmp (tokstart, "restrict", 8) == 0)
+      if (startswith (tokstart, "restrict"))
 	return RESTRICT;
-      if (strncmp (tokstart, "unsigned", 8) == 0)
+      if (startswith (tokstart, "unsigned"))
 	return UNSIGNED;
-      if (strncmp (tokstart, "template", 8) == 0)
+      if (startswith (tokstart, "template"))
 	return TEMPLATE;
-      if (strncmp (tokstart, "volatile", 8) == 0)
+      if (startswith (tokstart, "volatile"))
 	return VOLATILE_KEYWORD;
       break;
     case 7:
       HANDLE_SPECIAL ("virtual thunk to ", DEMANGLE_COMPONENT_VIRTUAL_THUNK);
-      if (strncmp (tokstart, "wchar_t", 7) == 0)
+      if (startswith (tokstart, "wchar_t"))
 	return WCHAR_T;
       break;
     case 6:
-      if (strncmp (tokstart, "global constructors keyed to ", 29) == 0)
+      if (startswith (tokstart, "global constructors keyed to "))
 	{
 	  const char *p;
 	  state->lexptr = tokstart + 29;
@@ -1855,7 +1860,7 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
 	  state->lexptr = p;
 	  return DEMANGLER_SPECIAL;
 	}
-      if (strncmp (tokstart, "global destructors keyed to ", 28) == 0)
+      if (startswith (tokstart, "global destructors keyed to "))
 	{
 	  const char *p;
 	  state->lexptr = tokstart + 28;
@@ -1868,52 +1873,52 @@ yylex (YYSTYPE *lvalp, cpname_state *state)
 	}
 
       HANDLE_SPECIAL ("vtable for ", DEMANGLE_COMPONENT_VTABLE);
-      if (strncmp (tokstart, "delete", 6) == 0)
+      if (startswith (tokstart, "delete"))
 	return DELETE;
-      if (strncmp (tokstart, "struct", 6) == 0)
+      if (startswith (tokstart, "struct"))
 	return STRUCT;
-      if (strncmp (tokstart, "signed", 6) == 0)
+      if (startswith (tokstart, "signed"))
 	return SIGNED_KEYWORD;
-      if (strncmp (tokstart, "sizeof", 6) == 0)
+      if (startswith (tokstart, "sizeof"))
 	return SIZEOF;
-      if (strncmp (tokstart, "double", 6) == 0)
+      if (startswith (tokstart, "double"))
 	return DOUBLE_KEYWORD;
       break;
     case 5:
       HANDLE_SPECIAL ("guard variable for ", DEMANGLE_COMPONENT_GUARD);
-      if (strncmp (tokstart, "false", 5) == 0)
+      if (startswith (tokstart, "false"))
 	return FALSEKEYWORD;
-      if (strncmp (tokstart, "class", 5) == 0)
+      if (startswith (tokstart, "class"))
 	return CLASS;
-      if (strncmp (tokstart, "union", 5) == 0)
+      if (startswith (tokstart, "union"))
 	return UNION;
-      if (strncmp (tokstart, "float", 5) == 0)
+      if (startswith (tokstart, "float"))
 	return FLOAT_KEYWORD;
-      if (strncmp (tokstart, "short", 5) == 0)
+      if (startswith (tokstart, "short"))
 	return SHORT;
-      if (strncmp (tokstart, "const", 5) == 0)
+      if (startswith (tokstart, "const"))
 	return CONST_KEYWORD;
       break;
     case 4:
-      if (strncmp (tokstart, "void", 4) == 0)
+      if (startswith (tokstart, "void"))
 	return VOID;
-      if (strncmp (tokstart, "bool", 4) == 0)
+      if (startswith (tokstart, "bool"))
 	return BOOL;
-      if (strncmp (tokstart, "char", 4) == 0)
+      if (startswith (tokstart, "char"))
 	return CHAR;
-      if (strncmp (tokstart, "enum", 4) == 0)
+      if (startswith (tokstart, "enum"))
 	return ENUM;
-      if (strncmp (tokstart, "long", 4) == 0)
+      if (startswith (tokstart, "long"))
 	return LONG;
-      if (strncmp (tokstart, "true", 4) == 0)
+      if (startswith (tokstart, "true"))
 	return TRUEKEYWORD;
       break;
     case 3:
       HANDLE_SPECIAL ("VTT for ", DEMANGLE_COMPONENT_VTT);
       HANDLE_SPECIAL ("non-virtual thunk to ", DEMANGLE_COMPONENT_THUNK);
-      if (strncmp (tokstart, "new", 3) == 0)
+      if (startswith (tokstart, "new"))
 	return NEW;
-      if (strncmp (tokstart, "int", 3) == 0)
+      if (startswith (tokstart, "int"))
 	return INT_KEYWORD;
       break;
     default:
@@ -1948,19 +1953,15 @@ allocate_info (void)
   return info;
 }
 
-/* Convert RESULT to a string.  The return value is allocated
-   using xmalloc.  ESTIMATED_LEN is used only as a guide to the
-   length of the result.  This functions handles a few cases that
-   cplus_demangle_print does not, specifically the global destructor
-   and constructor labels.  */
+/* See cp-support.h.  */
 
 gdb::unique_xmalloc_ptr<char>
 cp_comp_to_string (struct demangle_component *result, int estimated_len)
 {
   size_t err;
 
-  char *res = cplus_demangle_print (DMGL_PARAMS | DMGL_ANSI,
-				    result, estimated_len, &err);
+  char *res = gdb_cplus_demangle_print (DMGL_PARAMS | DMGL_ANSI,
+					result, estimated_len, &err);
   return gdb::unique_xmalloc_ptr<char> (res);
 }
 
@@ -2060,7 +2061,7 @@ cp_print (struct demangle_component *result)
   char *str;
   size_t err = 0;
 
-  str = cplus_demangle_print (DMGL_PARAMS | DMGL_ANSI, result, 64, &err);
+  str = gdb_cplus_demangle_print (DMGL_PARAMS | DMGL_ANSI, result, 64, &err);
   if (str == NULL)
     return;
 

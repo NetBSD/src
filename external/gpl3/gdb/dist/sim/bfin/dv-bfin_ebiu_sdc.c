@@ -1,6 +1,6 @@
 /* Blackfin External Bus Interface Unit (EBIU) SDRAM Controller (SDC) Model.
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -18,7 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "devices.h"
@@ -66,7 +67,7 @@ bfin_ebiu_sdc_io_write_buffer (struct hw *me, const void *source,
     value = dv_load_2 (source);
 
   mmr_off = addr - sdc->base;
-  valuep = (void *)((unsigned long)sdc + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)sdc + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 
@@ -122,7 +123,7 @@ bfin_ebiu_sdc_io_read_buffer (struct hw *me, void *dest,
     return 0;
 
   mmr_off = addr - sdc->base;
-  valuep = (void *)((unsigned long)sdc + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)sdc + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 

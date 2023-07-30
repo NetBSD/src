@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2023 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -18,11 +18,15 @@
 
 /* The control space devices */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_TERMIOS_H
 #include <termios.h>
+#endif
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <unistd.h>
@@ -30,8 +34,8 @@
 #include "sim-config.h"
 
 extern int      ctrl_c;
-extern int32    sis_verbose;
-extern int32    sparclite, sparclite_board;
+extern int32_t    sis_verbose;
+extern int32_t    sparclite, sparclite_board;
 extern int      rom8,wrp,uben;
 extern char     uart_dev1[], uart_dev2[];
 
@@ -143,45 +147,45 @@ extern int errmec;
 /* MEC registers */
 
 static char     fname[256];
-static int32    find = 0;
-static uint32   mec_ssa[2];	/* Write protection start address */
-static uint32   mec_sea[2];	/* Write protection end address */
-static uint32   mec_wpr[2];	/* Write protection control fields */
-static uint32   mec_sfsr;
-static uint32   mec_ffar;
-static uint32   mec_ipr;
-static uint32   mec_imr;
-static uint32   mec_isr;
-static uint32   mec_icr;
-static uint32   mec_ifr;
-static uint32   mec_mcr;	/* MEC control register */
-static uint32   mec_memcfg;	/* Memory control register */
-static uint32   mec_wcr;	/* MEC waitstate register */
-static uint32   mec_iocr;	/* MEC IO control register */
-static uint32   posted_irq;
-static uint32   mec_ersr;	/* MEC error and status register */
-static uint32   mec_tcr;	/* MEC test comtrol register */
+static int32_t    find = 0;
+static uint32_t   mec_ssa[2];	/* Write protection start address */
+static uint32_t   mec_sea[2];	/* Write protection end address */
+static uint32_t   mec_wpr[2];	/* Write protection control fields */
+static uint32_t   mec_sfsr;
+static uint32_t   mec_ffar;
+static uint32_t   mec_ipr;
+static uint32_t   mec_imr;
+static uint32_t   mec_isr;
+static uint32_t   mec_icr;
+static uint32_t   mec_ifr;
+static uint32_t   mec_mcr;	/* MEC control register */
+static uint32_t   mec_memcfg;	/* Memory control register */
+static uint32_t   mec_wcr;	/* MEC waitstate register */
+static uint32_t   mec_iocr;	/* MEC IO control register */
+static uint32_t   posted_irq;
+static uint32_t   mec_ersr;	/* MEC error and status register */
+static uint32_t   mec_tcr;	/* MEC test comtrol register */
 
-static uint32   rtc_counter;
-static uint32   rtc_reload;
-static uint32   rtc_scaler;
-static uint32   rtc_scaler_start;
-static uint32   rtc_enabled;
-static uint32   rtc_cr;
-static uint32   rtc_se;
+static uint32_t   rtc_counter;
+static uint32_t   rtc_reload;
+static uint32_t   rtc_scaler;
+static uint32_t   rtc_scaler_start;
+static uint32_t   rtc_enabled;
+static uint32_t   rtc_cr;
+static uint32_t   rtc_se;
 
-static uint32   gpt_counter;
-static uint32   gpt_reload;
-static uint32   gpt_scaler;
-static uint32   gpt_scaler_start;
-static uint32   gpt_enabled;
-static uint32   gpt_cr;
-static uint32   gpt_se;
+static uint32_t   gpt_counter;
+static uint32_t   gpt_reload;
+static uint32_t   gpt_scaler;
+static uint32_t   gpt_scaler_start;
+static uint32_t   gpt_enabled;
+static uint32_t   gpt_cr;
+static uint32_t   gpt_se;
 
-static uint32   wdog_scaler;
-static uint32   wdog_counter;
-static uint32   wdog_rst_delay;
-static uint32   wdog_rston;
+static uint32_t   wdog_scaler;
+static uint32_t   wdog_counter;
+static uint32_t   wdog_rst_delay;
+static uint32_t   wdog_rston;
 
 enum wdog_type {
     init, disabled, enabled, stopped
@@ -206,17 +210,17 @@ static enum wdog_type wdog_status;
 
 /* Memory support variables */
 
-static uint32   mem_ramr_ws;	/* RAM read waitstates */
-static uint32   mem_ramw_ws;	/* RAM write waitstates */
-static uint32   mem_romr_ws;	/* ROM read waitstates */
-static uint32   mem_romw_ws;	/* ROM write waitstates */
-static uint32	mem_ramstart;	/* RAM start */
-static uint32	mem_ramend;	/* RAM end */
-static uint32	mem_rammask;	/* RAM address mask */
-static uint32   mem_ramsz;	/* RAM size */
-static uint32   mem_romsz;	/* ROM size */
-static uint32   mem_accprot;	/* RAM write protection enabled */
-static uint32   mem_blockprot;	/* RAM block write protection enabled */
+static uint32_t   mem_ramr_ws;	/* RAM read waitstates */
+static uint32_t   mem_ramw_ws;	/* RAM write waitstates */
+static uint32_t   mem_romr_ws;	/* ROM read waitstates */
+static uint32_t   mem_romw_ws;	/* ROM write waitstates */
+static uint32_t	mem_ramstart;	/* RAM start */
+static uint32_t	mem_ramend;	/* RAM end */
+static uint32_t	mem_rammask;	/* RAM address mask */
+static uint32_t   mem_ramsz;	/* RAM size */
+static uint32_t   mem_romsz;	/* ROM size */
+static uint32_t   mem_accprot;	/* RAM write protection enabled */
+static uint32_t   mem_blockprot;	/* RAM block write protection enabled */
 
 static unsigned char	romb[ROM_SZ];
 static unsigned char	ramb[RAM_END - RAM_START];
@@ -224,21 +228,23 @@ static unsigned char	ramb[RAM_END - RAM_START];
 
 /* UART support variables */
 
-static int32    fd1, fd2;	/* file descriptor for input file */
-static int32    Ucontrol;	/* UART status register */
+static int32_t    fd1, fd2;	/* file descriptor for input file */
+static int32_t    Ucontrol;	/* UART status register */
 static unsigned char aq[UARTBUF], bq[UARTBUF];
-static int32    anum, aind = 0;
-static int32    bnum, bind = 0;
+static int32_t    anum, aind = 0;
+static int32_t    bnum, bind = 0;
 static char     wbufa[UARTBUF], wbufb[UARTBUF];
 static unsigned wnuma;
 static unsigned wnumb;
 static FILE    *f1in, *f1out, *f2in, *f2out;
+#ifdef HAVE_TERMIOS_H
 static struct termios ioc1, ioc2, iocold1, iocold2;
+#endif
 static int      f1open = 0, f2open = 0;
 
 static char     uarta_sreg, uarta_hreg, uartb_sreg, uartb_hreg;
-static uint32   uart_stat_reg;
-static uint32   uarta_data, uartb_data;
+static uint32_t   uart_stat_reg;
+static uint32_t   uarta_data, uartb_data;
 
 #ifdef ERA
 int era = 0;
@@ -257,39 +263,38 @@ static void	decode_wcr (void);
 static void	decode_mcr (void);
 static void	close_port (void);
 static void	mec_reset (void);
-static void	mec_intack (int32 level);
+static void	mec_intack (int32_t level);
 static void	chk_irq (void);
-static void	mec_irq (int32 level);
-static void	set_sfsr (uint32 fault, uint32 addr,
-			  uint32 asi, uint32 read);
-static int32	mec_read (uint32 addr, uint32 asi, uint32 *data);
-static int	mec_write (uint32 addr, uint32 data);
+static void	mec_irq (int32_t level);
+static void	set_sfsr (uint32_t fault, uint32_t addr,
+			  uint32_t asi, uint32_t read);
+static int32_t	mec_read (uint32_t addr, uint32_t asi, uint32_t *data);
+static int	mec_write (uint32_t addr, uint32_t data);
 static void	port_init (void);
-static uint32	read_uart (uint32 addr);
-static void	write_uart (uint32 addr, uint32 data);
+static uint32_t	read_uart (uint32_t addr);
+static void	write_uart (uint32_t addr, uint32_t data);
 static void	flush_uart (void);
-static void	uarta_tx (void);
-static void	uartb_tx (void);
-static void	uart_rx (caddr_t arg);
-static void	uart_intr (caddr_t arg);
+static void	uarta_tx (int32_t);
+static void	uartb_tx (int32_t);
+static void	uart_rx (int32_t);
+static void	uart_intr (int32_t);
 static void	uart_irq_start (void);
-static void	wdog_intr (caddr_t arg);
+static void	wdog_intr (int32_t);
 static void	wdog_start (void);
-static void	rtc_intr (caddr_t arg);
+static void	rtc_intr (int32_t);
 static void	rtc_start (void);
-static uint32	rtc_counter_read (void);
-static void	rtc_scaler_set (uint32 val);
-static void	rtc_reload_set (uint32 val);
-static void	gpt_intr (caddr_t arg);
+static uint32_t	rtc_counter_read (void);
+static void	rtc_scaler_set (uint32_t val);
+static void	rtc_reload_set (uint32_t val);
+static void	gpt_intr (int32_t);
 static void	gpt_start (void);
-static uint32	gpt_counter_read (void);
-static void	gpt_scaler_set (uint32 val);
-static void	gpt_reload_set (uint32 val);
-static void	timer_ctrl (uint32 val);
-static unsigned char *
-		get_mem_ptr (uint32 addr, uint32 size);
-static void	store_bytes (unsigned char *mem, uint32 waddr,
-			uint32 *data, int sz, int32 *ws);
+static uint32_t	gpt_counter_read (void);
+static void	gpt_scaler_set (uint32_t val);
+static void	gpt_reload_set (uint32_t val);
+static void	timer_ctrl (uint32_t val);
+static void *	get_mem_ptr (uint32_t addr, uint32_t size);
+static void	store_bytes (unsigned char *mem, uint32_t waddr,
+			uint32_t *data, int sz, int32_t *ws);
 
 extern int	ext_irl;
 
@@ -297,7 +302,7 @@ extern int	ext_irl;
 /* One-time init */
 
 void
-init_sim()
+init_sim(void)
 {
     port_init();
 }
@@ -305,7 +310,7 @@ init_sim()
 /* Power-on reset init */
 
 void
-reset()
+reset(void)
 {
     mec_reset();
     uart_irq_start();
@@ -313,7 +318,7 @@ reset()
 }
 
 static void
-decode_ersr()
+decode_ersr(void)
 {
     if (mec_ersr & 0x01) {
 	if (!(mec_mcr & 0x20)) {
@@ -375,7 +380,7 @@ iucomperr()
 #endif
 
 static void
-mecparerror()
+mecparerror(void)
 {
     mec_ersr |= 0x20;
     decode_ersr();
@@ -385,8 +390,7 @@ mecparerror()
 /* IU error mode manager */
 
 void
-error_mode(pc)
-    uint32          pc;
+error_mode(uint32_t pc)
 {
 
     mec_ersr |= 0x1;
@@ -397,7 +401,7 @@ error_mode(pc)
 /* Check memory settings */
 
 static void
-decode_memcfg()
+decode_memcfg(void)
 {
     if (rom8) mec_memcfg &= ~0x20000;
     else mec_memcfg |= 0x20000;
@@ -421,7 +425,7 @@ decode_memcfg()
 }
 
 static void
-decode_wcr()
+decode_wcr(void)
 {
     mem_ramr_ws = mec_wcr & 3;
     mem_ramw_ws = (mec_wcr >> 2) & 3;
@@ -437,7 +441,7 @@ decode_wcr()
 }
 
 static void
-decode_mcr()
+decode_mcr(void)
 {
     mem_accprot = (mec_wpr[0] | mec_wpr[1]);
     mem_blockprot = (mec_mcr >> 3) & 1;
@@ -456,7 +460,7 @@ decode_mcr()
 /* Flush ports when simulator stops */
 
 void
-sim_halt()
+sim_halt(void)
 {
 #ifdef FAST_UART
     flush_uart();
@@ -471,7 +475,7 @@ sim_stop(SIM_DESC sd)
 }
 
 static void
-close_port()
+close_port(void)
 {
     if (f1open && f1in != stdin)
 	fclose(f1in);
@@ -480,13 +484,13 @@ close_port()
 }
 
 void
-exit_sim()
+exit_sim(void)
 {
     close_port();
 }
 
 static void
-mec_reset()
+mec_reset(void)
 {
     int             i;
 
@@ -547,8 +551,7 @@ mec_reset()
 
 
 static void
-mec_intack(level)
-    int32           level;
+mec_intack(int32_t level)
 {
     int             irq_test;
 
@@ -563,10 +566,10 @@ mec_intack(level)
 }
 
 static void
-chk_irq()
+chk_irq(void)
 {
-    int32           i;
-    uint32          itmp;
+    int32_t           i;
+    uint32_t          itmp;
     int		    old_irl;
 
     old_irl = ext_irl;
@@ -588,19 +591,14 @@ chk_irq()
 }
 
 static void
-mec_irq(level)
-    int32           level;
+mec_irq(int32_t level)
 {
     mec_ipr |= (1 << level);
     chk_irq();
 }
 
 static void
-set_sfsr(fault, addr, asi, read)
-    uint32          fault;
-    uint32          addr;
-    uint32          asi;
-    uint32          read;
+set_sfsr(uint32_t fault, uint32_t addr, uint32_t asi, uint32_t read)
 {
     if ((asi == 0xa) || (asi == 0xb)) {
 	mec_ffar = addr;
@@ -617,11 +615,8 @@ set_sfsr(fault, addr, asi, read)
     }
 }
 
-static int32
-mec_read(addr, asi, data)
-    uint32          addr;
-    uint32          asi;
-    uint32         *data;
+static int32_t
+mec_read(uint32_t addr, uint32_t asi, uint32_t *data)
 {
 
     switch (addr & 0x0ff) {
@@ -748,9 +743,7 @@ mec_read(addr, asi, data)
 }
 
 static int
-mec_write(addr, data)
-    uint32          addr;
-    uint32          data;
+mec_write(uint32_t addr, uint32_t data)
 {
     if (sis_verbose > 1)
 	printf("MEC write a: %08x, d: %08x\n",addr,data);
@@ -886,7 +879,7 @@ mec_write(addr, data)
 
     case MEC_ERSR:		/* 0xB0 */
 	if (mec_tcr & 0x100000)
-            if (data & 0xFFFFEFC0) mecparerror();
+	  if (data & 0xFFFFEFC0) mecparerror();
 	    mec_ersr = data & 0x103f;
 	break;
 
@@ -932,25 +925,29 @@ mec_write(addr, data)
 static int      ifd1 = -1, ifd2 = -1, ofd1 = -1, ofd2 = -1;
 
 void
-init_stdio()
+init_stdio(void)
 {
     if (dumbio)
         return; /* do nothing */
+#ifdef HAVE_TERMIOS_H
     if (!ifd1)
 	tcsetattr(0, TCSANOW, &ioc1);
     if (!ifd2)
 	tcsetattr(0, TCSANOW, &ioc2);
+#endif
 }
 
 void
-restore_stdio()
+restore_stdio(void)
 {
     if (dumbio)
         return; /* do nothing */
+#ifdef HAVE_TERMIOS_H
     if (!ifd1)
 	tcsetattr(0, TCSANOW, &iocold1);
     if (!ifd2)
 	tcsetattr(0, TCSANOW, &iocold2);
+#endif
 }
 
 #define DO_STDIO_READ( _fd_, _buf_, _len_ )          \
@@ -960,7 +957,7 @@ restore_stdio()
 
 
 static void
-port_init()
+port_init(void)
 {
 
     if (uben) {
@@ -974,7 +971,7 @@ port_init()
     f1out = stdout;
     f2out = NULL;
     }
-    if (uart_dev1[0] != 0)
+    if (uart_dev1[0] != 0) {
 	if ((fd1 = open(uart_dev1, O_RDWR | O_NONBLOCK)) < 0) {
 	    printf("Warning, couldn't open output device %s\n", uart_dev1);
 	} else {
@@ -984,16 +981,19 @@ port_init()
 	    setbuf(f1out, NULL);
 	    f1open = 1;
 	}
+    }
     if (f1in) ifd1 = fileno(f1in);
     if (ifd1 == 0) {
 	if (sis_verbose)
 	    printf("serial port A on stdin/stdout\n");
         if (!dumbio) {
+#ifdef HAVE_TERMIOS_H
             tcgetattr(ifd1, &ioc1);
             iocold1 = ioc1;
             ioc1.c_lflag &= ~(ICANON | ECHO);
             ioc1.c_cc[VMIN] = 0;
             ioc1.c_cc[VTIME] = 0;
+#endif
         }
 	f1open = 1;
     }
@@ -1003,7 +1003,7 @@ port_init()
     	if (!dumbio && ofd1 == 1) setbuf(f1out, NULL);
     }
 
-    if (uart_dev2[0] != 0)
+    if (uart_dev2[0] != 0) {
 	if ((fd2 = open(uart_dev2, O_RDWR | O_NONBLOCK)) < 0) {
 	    printf("Warning, couldn't open output device %s\n", uart_dev2);
 	} else {
@@ -1013,16 +1013,19 @@ port_init()
 	    setbuf(f2out, NULL);
 	    f2open = 1;
 	}
+    }
     if (f2in)  ifd2 = fileno(f2in);
     if (ifd2 == 0) {
 	if (sis_verbose)
 	    printf("serial port B on stdin/stdout\n");
         if (!dumbio) {
+#ifdef HAVE_TERMIOS_H
             tcgetattr(ifd2, &ioc2);
             iocold2 = ioc2;
             ioc2.c_lflag &= ~(ICANON | ECHO);
             ioc2.c_cc[VMIN] = 0;
             ioc2.c_cc[VTIME] = 0;
+#endif
         }
 	f2open = 1;
     }
@@ -1036,9 +1039,8 @@ port_init()
 
 }
 
-static uint32
-read_uart(addr)
-    uint32          addr;
+static uint32_t
+read_uart(uint32_t addr)
 {
 
     unsigned        tmp;
@@ -1053,7 +1055,7 @@ read_uart(addr)
 	if (aind < anum) {
 	    if ((aind + 1) < anum)
 		mec_irq(4);
-	    return (0x700 | (uint32) aq[aind++]);
+	    return (0x700 | (uint32_t) aq[aind++]);
 	} else {
 	    if (f1open) {
 	        anum = DO_STDIO_READ(ifd1, aq, UARTBUF);
@@ -1062,9 +1064,9 @@ read_uart(addr)
 		aind = 0;
 		if ((aind + 1) < anum)
 		    mec_irq(4);
-		return (0x700 | (uint32) aq[aind++]);
+		return (0x700 | (uint32_t) aq[aind++]);
 	    } else {
-		return (0x600 | (uint32) aq[aind]);
+		return (0x600 | (uint32_t) aq[aind]);
 	    }
 
 	}
@@ -1085,7 +1087,7 @@ read_uart(addr)
 	if (bind < bnum) {
 	    if ((bind + 1) < bnum)
 		mec_irq(5);
-	    return (0x700 | (uint32) bq[bind++]);
+	    return (0x700 | (uint32_t) bq[bind++]);
 	} else {
 	    if (f2open) {
 		bnum = DO_STDIO_READ(ifd2, bq, UARTBUF);
@@ -1094,9 +1096,9 @@ read_uart(addr)
 		bind = 0;
 		if ((bind + 1) < bnum)
 		    mec_irq(5);
-		return (0x700 | (uint32) bq[bind++]);
+		return (0x700 | (uint32_t) bq[bind++]);
 	    } else {
-		return (0x600 | (uint32) bq[bind]);
+		return (0x600 | (uint32_t) bq[bind]);
 	    }
 
 	}
@@ -1159,9 +1161,7 @@ read_uart(addr)
 }
 
 static void
-write_uart(addr, data)
-    uint32          addr;
-    uint32          data;
+write_uart(uint32_t addr, uint32_t data)
 {
     unsigned char   c;
 
@@ -1235,7 +1235,7 @@ write_uart(addr, data)
 }
 
 static void
-flush_uart()
+flush_uart(void)
 {
     while (wnuma && f1open)
 	wnuma -= fwrite(wbufa, 1, wnuma, f1out);
@@ -1243,10 +1243,9 @@ flush_uart()
 	wnumb -= fwrite(wbufb, 1, wnumb, f2out);
 }
 
-
-
+ATTRIBUTE_UNUSED
 static void
-uarta_tx()
+uarta_tx(int32_t arg ATTRIBUTE_UNUSED)
 {
 
     while (f1open && fwrite(&uarta_sreg, 1, 1, f1out) != 1);
@@ -1260,8 +1259,9 @@ uarta_tx()
     mec_irq(4);
 }
 
+ATTRIBUTE_UNUSED
 static void
-uartb_tx()
+uartb_tx(int32_t arg ATTRIBUTE_UNUSED)
 {
     while (f2open && fwrite(&uartb_sreg, 1, 1, f2out) != 1);
     if (uart_stat_reg & UARTB_HRE) {
@@ -1274,11 +1274,11 @@ uartb_tx()
     mec_irq(5);
 }
 
+ATTRIBUTE_UNUSED
 static void
-uart_rx(arg)
-    caddr_t         arg;
+uart_rx(int32_t arg ATTRIBUTE_UNUSED)
 {
-    int32           rsize;
+    int32_t           rsize;
     char            rxd;
 
 
@@ -1318,8 +1318,7 @@ uart_rx(arg)
 }
 
 static void
-uart_intr(arg)
-    caddr_t         arg;
+uart_intr(int32_t arg ATTRIBUTE_UNUSED)
 {
     read_uart(0xE8);		/* Check for UART interrupts every 1000 clk */
     flush_uart();		/* Flush UART ports      */
@@ -1328,7 +1327,7 @@ uart_intr(arg)
 
 
 static void
-uart_irq_start()
+uart_irq_start(void)
 {
 #ifdef FAST_UART
     event(uart_intr, 0, UART_FLUSH_TIME);
@@ -1342,8 +1341,7 @@ uart_irq_start()
 /* Watch-dog */
 
 static void
-wdog_intr(arg)
-    caddr_t         arg;
+wdog_intr(int32_t arg ATTRIBUTE_UNUSED)
 {
     if (wdog_status == disabled) {
 	wdog_status = stopped;
@@ -1368,7 +1366,7 @@ wdog_intr(arg)
 }
 
 static void
-wdog_start()
+wdog_start(void)
 {
     event(wdog_intr, 0, wdog_scaler + 1);
     if (sis_verbose)
@@ -1381,8 +1379,7 @@ wdog_start()
 
 
 static void
-rtc_intr(arg)
-    caddr_t         arg;
+rtc_intr(int32_t arg ATTRIBUTE_UNUSED)
 {
     if (rtc_counter == 0) {
 
@@ -1405,7 +1402,7 @@ rtc_intr(arg)
 }
 
 static void
-rtc_start()
+rtc_start(void)
 {
     if (sis_verbose)
 	printf("RTC started (period %d)\n\r", rtc_scaler + 1);
@@ -1414,29 +1411,26 @@ rtc_start()
     rtc_enabled = 1;
 }
 
-static uint32
-rtc_counter_read()
+static uint32_t
+rtc_counter_read(void)
 {
     return rtc_counter;
 }
 
 static void
-rtc_scaler_set(val)
-    uint32          val;
+rtc_scaler_set(uint32_t val)
 {
     rtc_scaler = val & 0x0ff;	/* eight-bit scaler only */
 }
 
 static void
-rtc_reload_set(val)
-    uint32          val;
+rtc_reload_set(uint32_t val)
 {
     rtc_reload = val;
 }
 
 static void
-gpt_intr(arg)
-    caddr_t         arg;
+gpt_intr(int32_t arg ATTRIBUTE_UNUSED)
 {
     if (gpt_counter == 0) {
 	mec_irq(12);
@@ -1458,7 +1452,7 @@ gpt_intr(arg)
 }
 
 static void
-gpt_start()
+gpt_start(void)
 {
     if (sis_verbose)
 	printf("GPT started (period %d)\n\r", gpt_scaler + 1);
@@ -1467,29 +1461,26 @@ gpt_start()
     gpt_enabled = 1;
 }
 
-static uint32
-gpt_counter_read()
+static uint32_t
+gpt_counter_read(void)
 {
     return gpt_counter;
 }
 
 static void
-gpt_scaler_set(val)
-    uint32          val;
+gpt_scaler_set(uint32_t val)
 {
     gpt_scaler = val & 0x0ffff;	/* 16-bit scaler */
 }
 
 static void
-gpt_reload_set(val)
-    uint32          val;
+gpt_reload_set(uint32_t val)
 {
     gpt_reload = val;
 }
 
 static void
-timer_ctrl(val)
-    uint32          val;
+timer_ctrl(uint32_t val)
 {
 
     rtc_cr = ((val & TCR_TCRCR) != 0);
@@ -1521,8 +1512,8 @@ timer_ctrl(val)
    wait-states.  */
 
 static void
-store_bytes (unsigned char *mem, uint32 waddr, uint32 *data, int32 sz,
-	     int32 *ws)
+store_bytes (unsigned char *mem, uint32_t waddr, uint32_t *data, int32_t sz,
+	     int32_t *ws)
 {
     switch (sz) {
 	case 0:
@@ -1552,9 +1543,9 @@ store_bytes (unsigned char *mem, uint32 waddr, uint32 *data, int32 sz,
 /* Memory emulation */
 
 int
-memory_iread (uint32 addr, uint32 *data, int32 *ws)
+memory_iread (uint32_t addr, uint32_t *data, uint32_t *ws)
 {
-    uint32          asi;
+    uint32_t          asi;
     if ((addr >= mem_ramstart) && (addr < (mem_ramstart + mem_ramsz))) {
 	memcpy (data, &ramb[addr & mem_rammask & ~3], 4);
 	*ws = mem_ramr_ws;
@@ -1577,14 +1568,9 @@ memory_iread (uint32 addr, uint32 *data, int32 *ws)
 }
 
 int
-memory_read(asi, addr, data, sz, ws)
-    int32           asi;
-    uint32          addr;
-    uint32         *data;
-    int32           sz;
-    int32          *ws;
+memory_read(int32_t asi, uint32_t addr, void *data, int32_t sz, int32_t *ws)
 {
-    int32           mexc;
+    int32_t           mexc;
 
 #ifdef ERRINJ
     if (errmec) {
@@ -1623,7 +1609,7 @@ memory_read(asi, addr, data, sz, ws)
 	} else if ((addr >= 0x10000000) && 
 		   (addr < (0x10000000 + (512 << (mec_iocr & 0x0f)))) &&
 		   (mec_iocr & 0x10))  {
-	    *data = erareg;
+	    memcpy (data, &erareg, 4);
 	    return 0;
 	}
 	
@@ -1648,18 +1634,13 @@ memory_read(asi, addr, data, sz, ws)
 }
 
 int
-memory_write(asi, addr, data, sz, ws)
-    int32           asi;
-    uint32          addr;
-    uint32         *data;
-    int32           sz;
-    int32          *ws;
+memory_write(int32_t asi, uint32_t addr, uint32_t *data, int32_t sz, int32_t *ws)
 {
-    uint32          byte_addr;
-    uint32          byte_mask;
-    uint32          waddr;
-    uint32         *ram;
-    int32           mexc;
+    uint32_t          byte_addr;
+    uint32_t          byte_mask;
+    uint32_t          waddr;
+    uint32_t         *ram;
+    int32_t           mexc;
     int             i;
     int             wphit[2];
 
@@ -1760,10 +1741,8 @@ memory_write(asi, addr, data, sz, ws)
     return 1;
 }
 
-static unsigned char  *
-get_mem_ptr(addr, size)
-    uint32          addr;
-    uint32          size;
+static void  *
+get_mem_ptr(uint32_t addr, uint32_t size)
 {
     if ((addr + size) < ROM_SZ) {
 	return &romb[addr];
@@ -1778,18 +1757,15 @@ get_mem_ptr(addr, size)
     }
 #endif
 
-    return (char *) -1;
+    return (void *) -1;
 }
 
 int
-sis_memory_write(addr, data, length)
-    uint32               addr;
-    const unsigned char *data;
-    uint32               length;
+sis_memory_write(uint32_t addr, const void *data, uint32_t length)
 {
-    char           *mem;
+    void           *mem;
 
-    if ((mem = get_mem_ptr(addr, length)) == ((char *) -1))
+    if ((mem = get_mem_ptr(addr, length)) == ((void *) -1))
 	return 0;
 
     memcpy(mem, data, length);
@@ -1797,14 +1773,11 @@ sis_memory_write(addr, data, length)
 }
 
 int
-sis_memory_read(addr, data, length)
-    uint32          addr;
-    char           *data;
-    uint32          length;
+sis_memory_read(uint32_t addr, void *data, uint32_t length)
 {
     char           *mem;
 
-    if ((mem = get_mem_ptr(addr, length)) == ((char *) -1))
+    if ((mem = get_mem_ptr(addr, length)) == ((void *) -1))
 	return 0;
 
     memcpy(data, mem, length);

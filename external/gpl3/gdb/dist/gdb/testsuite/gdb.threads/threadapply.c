@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ void *thread_function(void *arg); /* Pointer to function executed by each thread
 #define NUM 5
 
 unsigned int args[NUM+1];
+pthread_barrier_t mybarrier;
 
 int main() {
     int res;
@@ -34,6 +35,8 @@ int main() {
     pthread_t threads[NUM];
     void *thread_result;
     long i;
+
+    pthread_barrier_init(&mybarrier, NULL, NUM + 1);
 
     for (i = 0; i < NUM; i++)
       {
@@ -69,12 +72,7 @@ void *thread_function(void *arg) {
     int my_number =  (long) arg;
     int *myp = (int *) &args[my_number];
 
-    /* Don't run forever.  Run just short of it :)  */
-    while (*myp > 0)
-      {
-	(*myp) ++;  /* Loop increment.  */
-      }
-
-    pthread_exit(NULL);
+    (*myp) ++;  /* Increment so parent knows child started.  */
+    pthread_barrier_wait(&mybarrier);
 }
 

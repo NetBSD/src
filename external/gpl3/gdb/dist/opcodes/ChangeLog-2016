@@ -1898,7 +1898,7 @@
 	(create_map): Zero initialize instruction fields.
 	(arcExtMap_instName): Remove.
 	(arcExtMap_insn): New function.
-	(dump_ARC_extmap): More info while debuging.
+	(dump_ARC_extmap): More info while debugging.
 	(arcExtMap_genOpcode): New function.
 	* arc-dis.c (find_format): New function.
 	(print_insn_arc): Use find_format.

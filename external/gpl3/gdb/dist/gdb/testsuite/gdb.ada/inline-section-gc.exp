@@ -1,0 +1,41 @@
+# Copyright 2022-2023 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib "ada.exp"
+
+if { [skip_ada_tests] } { return -1 }
+
+standard_ada_testfile caller
+
+set options {
+    debug
+    optimize=-O2
+    additional_flags=-ffunction-sections
+    ldflags=-largs
+    ldflags=-Wl,--gc-sections
+    ldflags=-margs
+    additional_flags=-gnatn
+}
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable $options] != ""} {
+    return -1
+}
+
+clean_restart ${testfile}
+
+set bp_location [gdb_get_line_number "BREAK" ${testdir}/callee.adb]
+# The bug here was that gdb would set a breakpoint with two locations,
+# one of them at 0x0.
+gdb_test "break callee.adb:$bp_location" \
+    "Breakpoint $decimal at $hex: file .*callee.adb, line $bp_location."

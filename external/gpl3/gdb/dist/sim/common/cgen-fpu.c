@@ -1,6 +1,9 @@
 /* CGEN fpu support
    Copyright (C) 1999 Cygnus Solutions.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include "sim-main.h"
 #include "sim-fpu.h"
 

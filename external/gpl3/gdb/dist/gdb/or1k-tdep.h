@@ -1,5 +1,5 @@
 /* Definitions to target GDB to OpenRISC 1000 32-bit targets.
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -51,5 +51,10 @@
 #define OR1K_INSTBITLEN             (OR1K_INSTLEN * 8)
 #define OR1K_NUM_TAP_RECORDS         8
 #define OR1K_FRAME_RED_ZONE_SIZE     2536
+
+/* Single step based on where the current instruction will take us.  */
+extern std::vector<CORE_ADDR> or1k_software_single_step
+  (struct regcache *regcache);
+
 
 #endif /* OR1K_TDEP_H */

@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,12 +34,19 @@ if {![dwarf2_support]} {
     return 0
 }
 
-standard_testfile dw2-bad-elf.c dw2-bad-elf-other.S dw2-bad-elf-dwarf.S
+standard_testfile main.c -other.S -dwarf.S
+
+if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
+    untested "failed to compile"
+    return -1
+}
+
+set int_size [get_sizeof "int" 4]
 
 # Make some DWARF for the test.
 set asm_file [standard_output_file $srcfile3]
 Dwarf::assemble $asm_file {
-    global srcdir subdir srcfile
+    global srcdir subdir srcfile srcfile2 int_size
 
     declare_labels ranges_label_1 ranges_label_2 L1 L2
 
@@ -47,12 +54,10 @@ Dwarf::assemble $asm_file {
     set main_start [lindex $main_result 0]
     set main_length [lindex $main_result 1]
 
-    set int_size [get_sizeof "int" 4]
-
     cu {} {
 	DW_TAG_compile_unit {
 	    {DW_AT_language @DW_LANG_C}
-	    {DW_AT_name     dw2-bad-elf.c}
+	    {DW_AT_name     $srcfile}
 	    {DW_AT_comp_dir ${srcdir}/${subdir}}
 	    {stmt_list $L1 DW_FORM_sec_offset}
 	    {ranges ${ranges_label_1} DW_FORM_sec_offset}
@@ -80,7 +85,7 @@ Dwarf::assemble $asm_file {
     cu {} {
 	DW_TAG_compile_unit {
 	    {DW_AT_language @DW_LANG_C}
-	    {DW_AT_name     dw2-bad-elf-other.c}
+	    {DW_AT_name     $srcfile2}
 	    {DW_AT_comp_dir ${srcdir}/${subdir}}
 	    {stmt_list $L2 DW_FORM_sec_offset}
 	    {ranges ${ranges_label_2} DW_FORM_sec_offset}
@@ -107,12 +112,12 @@ Dwarf::assemble $asm_file {
 
     ranges {is_64 [is_64_target]} {
 	ranges_label_1: sequence {
-	    {base [lindex $main_result 0]}
-	    {range 0 [lindex $main_result 1]}
+	    base [lindex $main_result 0]
+	    range 0 [lindex $main_result 1]
 	}
 	ranges_label_2: sequence {
-	    {base some_func}
-	    {range 0 64}
+	    base some_func
+	    range 0 64
 	}
     }
 
@@ -122,13 +127,13 @@ Dwarf::assemble $asm_file {
 
 	# Line data doens't need to be correct, just present.
 	program {
-	    {DW_LNE_set_address [lindex $main_result 0]}
-	    {DW_LNS_advance_line 10}
-	    {DW_LNS_copy}
-	    {DW_LNS_advance_pc [lindex $main_result 1]}
-	    {DW_LNS_advance_line 19}
-	    {DW_LNS_copy}
-	    {DW_LNE_end_sequence}
+	    DW_LNE_set_address [lindex $main_result 0]
+	    DW_LNS_advance_line 10
+	    DW_LNS_copy
+	    DW_LNS_advance_pc [lindex $main_result 1]
+	    DW_LNS_advance_line 19
+	    DW_LNS_copy
+	    DW_LNE_end_sequence
 	}
     }
 
@@ -138,13 +143,13 @@ Dwarf::assemble $asm_file {
 
 	# Line data doens't need to be correct, just present.
 	program {
-	    {DW_LNE_set_address some_func}
-	    {DW_LNS_advance_line 5}
-	    {DW_LNS_copy}
-	    {DW_LNS_advance_pc 64}
-	    {DW_LNS_advance_line 8}
-	    {DW_LNS_copy}
-	    {DW_LNE_end_sequence}
+	    DW_LNE_set_address some_func
+	    DW_LNS_advance_line 5
+	    DW_LNS_copy
+	    DW_LNS_advance_pc 64
+	    DW_LNS_advance_line 8
+	    DW_LNS_copy
+	    DW_LNE_end_sequence
 	}
     }
 }

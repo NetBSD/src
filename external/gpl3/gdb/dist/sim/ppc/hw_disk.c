@@ -412,9 +412,9 @@ hw_disk_instance_seek(device_instance *instance,
 static int
 hw_disk_max_transfer(device_instance *instance,
 		     int n_stack_args,
-		     unsigned32 stack_args[/*n_stack_args*/],
+		     uint32_t stack_args[/*n_stack_args*/],
 		     int n_stack_returns,
-		     unsigned32 stack_returns[/*n_stack_returns*/])
+		     uint32_t stack_returns[/*n_stack_returns*/])
 {
   device *me = device_instance_device(instance);
   if ((n_stack_args != 0)
@@ -439,9 +439,9 @@ hw_disk_max_transfer(device_instance *instance,
 static int
 hw_disk_block_size(device_instance *instance,
 		   int n_stack_args,
-		   unsigned32 stack_args[/*n_stack_args*/],
+		   uint32_t stack_args[/*n_stack_args*/],
 		   int n_stack_returns,
-		   unsigned32 stack_returns[/*n_stack_returns*/])
+		   uint32_t stack_returns[/*n_stack_returns*/])
 {
   device *me = device_instance_device(instance);
   if ((n_stack_args != 0)
@@ -466,9 +466,9 @@ hw_disk_block_size(device_instance *instance,
 static int
 hw_disk_nr_blocks(device_instance *instance,
 		  int n_stack_args,
-		  unsigned32 stack_args[/*n_stack_args*/],
+		  uint32_t stack_args[/*n_stack_args*/],
 		  int n_stack_returns,
-		  unsigned32 stack_returns[/*n_stack_returns*/])
+		  uint32_t stack_returns[/*n_stack_returns*/])
 {
   device *me = device_instance_device(instance);
   if ((n_stack_args != 0)

@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,19 +23,18 @@ if { [have_fuse_ld_gold] == 0} {
 
 if {[prepare_for_testing "failed to prepare" $testfile "$srcfile $srcfile2" \
 	 {debug c++ additional_flags=-fuse-ld=gold \
-	      additional_flags=-Wl,--gdb-index \
+	      ldflags=-Wl,--gdb-index \
 	      additional_flags=-ggnu-pubnames}]} {
     return -1
 }
 
-if { [readnow] } {
+if { [have_index $binfile] != "gdb_index" } {
     return -1
 }
 
 gdb_test_no_output "set auto-solib-add off"
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 

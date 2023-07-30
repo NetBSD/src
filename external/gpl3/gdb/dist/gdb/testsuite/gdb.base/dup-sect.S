@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2020 Free Software Foundation, Inc.
+   Copyright 2010-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,3 +20,4 @@ var1:	.byte	1
 
 	.section	sect2, "a"
 var2:	.byte	2
+	.section	.note.GNU-stack,"",@progbits

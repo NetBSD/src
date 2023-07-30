@@ -215,3 +215,4 @@ sub_tests:
 	sub 32767,a2
 	sub 131071,a2
 	subc d1,d2
+	.section	.note.GNU-stack,"",@progbits

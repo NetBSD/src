@@ -1,5 +1,5 @@
 /* Serial interface for a selectable event.
-   Copyright (C) 2016-2020 Free Software Foundation, Inc.
+   Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,8 +61,7 @@ serial_event_open (struct serial *scb, const char *name)
     int fds[2];
 
     if (gdb_pipe_cloexec (fds) == -1)
-      internal_error (__FILE__, __LINE__,
-		      "creating serial event pipe failed.");
+      internal_error ("creating serial event pipe failed.");
 
     fcntl (fds[0], F_SETFL, O_NONBLOCK);
     fcntl (fds[1], F_SETFL, O_NONBLOCK);

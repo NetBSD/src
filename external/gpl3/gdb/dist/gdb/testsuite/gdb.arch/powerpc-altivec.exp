@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 standard_testfile .s
 set objfile [standard_output_file ${testfile}.o]
 
-if {![istarget "powerpc*-*-*"]} then {
+if {![istarget "powerpc*-*-*"]} {
     verbose "Skipping PowerPC instructions disassembly."
     return
 }
@@ -176,7 +176,6 @@ func_check "vmrglb  v1,v17,v16"
 func_check "vmrglh  v14,v8,v15"
 func_check "vmrglw  v31,v21,v5"
 func_check "vmr     v24,v9"
-func_check "vmr     v24,v9"
 func_check "vmsummbm v0,v24,v15,v23"
 func_check "vmsumshm v1,v4,v7,v25"
 func_check "vmsumshs v9,v8,v13,v31"
@@ -193,7 +192,6 @@ func_check "vmuloub v2,v9,v19"
 func_check "vmulouh v29,v5,v4"
 func_check "vnmsubfp v8,v2,v6,v5"
 func_check "vnor    v31,v9,v10"
-func_check "vnot    v25,v31"
 func_check "vnot    v25,v31"
 func_check "vor     v23,v7,v2"
 func_check "vperm   v0,v28,v22,v25"

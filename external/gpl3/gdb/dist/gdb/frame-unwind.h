@@ -1,6 +1,6 @@
 /* Definitions for a frame unwinder, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #define FRAME_UNWIND_H 1
 
 struct frame_data;
-struct frame_info;
+class frame_info_ptr;
 struct frame_id;
 struct frame_unwind;
 struct gdbarch;
@@ -50,37 +50,37 @@ struct value;
    to set *THIS_PROLOGUE_CACHE to NULL.  */
 
 typedef int (frame_sniffer_ftype) (const struct frame_unwind *self,
-				   struct frame_info *this_frame,
+				   frame_info_ptr this_frame,
 				   void **this_prologue_cache);
 
 typedef enum unwind_stop_reason (frame_unwind_stop_reason_ftype)
-  (struct frame_info *this_frame, void **this_prologue_cache);
+  (frame_info_ptr this_frame, void **this_prologue_cache);
 
 /* A default frame sniffer which always accepts the frame.  Used by
    fallback prologue unwinders.  */
 
 int default_frame_sniffer (const struct frame_unwind *self,
-			   struct frame_info *this_frame,
+			   frame_info_ptr this_frame,
 			   void **this_prologue_cache);
 
 /* A default stop_reason callback which always claims the frame is
    unwindable.  */
 
 enum unwind_stop_reason
-  default_frame_unwind_stop_reason (struct frame_info *this_frame,
+  default_frame_unwind_stop_reason (frame_info_ptr this_frame,
 				    void **this_cache);
 
 /* A default unwind_pc callback that simply unwinds the register identified
    by GDBARCH_PC_REGNUM.  */
 
 extern CORE_ADDR default_unwind_pc (struct gdbarch *gdbarch,
-				    struct frame_info *next_frame);
+				    frame_info_ptr next_frame);
 
 /* A default unwind_sp callback that simply unwinds the register identified
    by GDBARCH_SP_REGNUM.  */
 
 extern CORE_ADDR default_unwind_sp (struct gdbarch *gdbarch,
-				    struct frame_info *next_frame);
+				    frame_info_ptr next_frame);
 
 /* Assuming the frame chain: (outer) prev <-> this <-> next (inner);
    use THIS frame, and through it the NEXT frame's register unwind
@@ -105,7 +105,7 @@ extern CORE_ADDR default_unwind_sp (struct gdbarch *gdbarch,
    with the other unwind methods.  Memory for that cache should be
    allocated using FRAME_OBSTACK_ZALLOC().  */
 
-typedef void (frame_this_id_ftype) (struct frame_info *this_frame,
+typedef void (frame_this_id_ftype) (frame_info_ptr this_frame,
 				    void **this_prologue_cache,
 				    struct frame_id *this_id);
 
@@ -141,23 +141,24 @@ typedef void (frame_this_id_ftype) (struct frame_info *this_frame,
    allocated using FRAME_OBSTACK_ZALLOC().  */
 
 typedef struct value * (frame_prev_register_ftype)
-  (struct frame_info *this_frame, void **this_prologue_cache,
+  (frame_info_ptr this_frame, void **this_prologue_cache,
    int regnum);
 
 /* Deallocate extra memory associated with the frame cache if any.  */
 
-typedef void (frame_dealloc_cache_ftype) (struct frame_info *self,
+typedef void (frame_dealloc_cache_ftype) (frame_info *self,
 					  void *this_cache);
 
 /* Assuming the frame chain: (outer) prev <-> this <-> next (inner);
    use THIS frame, and implicitly the NEXT frame's register unwind
    method, return PREV frame's architecture.  */
 
-typedef struct gdbarch *(frame_prev_arch_ftype) (struct frame_info *this_frame,
+typedef struct gdbarch *(frame_prev_arch_ftype) (frame_info_ptr this_frame,
 						 void **this_prologue_cache);
 
 struct frame_unwind
 {
+  const char *name;
   /* The frame's type.  Should this instead be a collection of
      predicates that test the frame for various attributes?  */
   enum frame_type type;
@@ -192,7 +193,7 @@ extern void frame_unwind_append_unwinder (struct gdbarch *gdbarch,
    unwinder implementation.  THIS_FRAME->UNWIND must be NULL, it will get set
    by this function.  Possibly initialize THIS_CACHE.  */
 
-extern void frame_unwind_find_by_frame (struct frame_info *this_frame,
+extern void frame_unwind_find_by_frame (frame_info_ptr this_frame,
 					void **this_cache);
 
 /* Helper functions for value-based register unwinding.  These return
@@ -200,39 +201,39 @@ extern void frame_unwind_find_by_frame (struct frame_info *this_frame,
 
 /* Return a value which indicates that FRAME did not save REGNUM.  */
 
-struct value *frame_unwind_got_optimized (struct frame_info *frame,
+struct value *frame_unwind_got_optimized (frame_info_ptr frame,
 					  int regnum);
 
 /* Return a value which indicates that FRAME copied REGNUM into
    register NEW_REGNUM.  */
 
-struct value *frame_unwind_got_register (struct frame_info *frame, int regnum,
+struct value *frame_unwind_got_register (frame_info_ptr frame, int regnum,
 					 int new_regnum);
 
 /* Return a value which indicates that FRAME saved REGNUM in memory at
    ADDR.  */
 
-struct value *frame_unwind_got_memory (struct frame_info *frame, int regnum,
+struct value *frame_unwind_got_memory (frame_info_ptr frame, int regnum,
 				       CORE_ADDR addr);
 
 /* Return a value which indicates that FRAME's saved version of
    REGNUM has a known constant (computed) value of VAL.  */
 
-struct value *frame_unwind_got_constant (struct frame_info *frame, int regnum,
+struct value *frame_unwind_got_constant (frame_info_ptr frame, int regnum,
 					 ULONGEST val);
 
 /* Return a value which indicates that FRAME's saved version of
    REGNUM has a known constant (computed) value which is stored
    inside BUF.  */
 
-struct value *frame_unwind_got_bytes (struct frame_info *frame, int regnum,
-                                      gdb_byte *buf);
+struct value *frame_unwind_got_bytes (frame_info_ptr frame, int regnum,
+				      const gdb_byte *buf);
 
 /* Return a value which indicates that FRAME's saved version of REGNUM
    has a known constant (computed) value of ADDR.  Convert the
    CORE_ADDR to a target address if necessary.  */
 
-struct value *frame_unwind_got_address (struct frame_info *frame, int regnum,
+struct value *frame_unwind_got_address (frame_info_ptr frame, int regnum,
 					CORE_ADDR addr);
 
 #endif

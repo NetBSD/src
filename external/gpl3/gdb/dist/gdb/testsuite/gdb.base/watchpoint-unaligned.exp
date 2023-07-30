@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
 }
 
 if ![runto_main] {
-    untested "could not run to main"
     return -1
 }
 
@@ -68,8 +67,8 @@ foreach wpsize $sizes {
 			fail $test
 		    }
 		}
-		gdb_test_no_output "set variable size = $rdsize" ""
-		gdb_test_no_output "set variable offset = $rdoffset" ""
+		gdb_test_no_output -nopass "set variable size = $rdsize"
+		gdb_test_no_output -nopass "set variable offset = $rdoffset"
 		set test "continue"
 		set got_hit 0
 		gdb_test_multiple $test $test {
@@ -81,7 +80,7 @@ foreach wpsize $sizes {
 		    -re " start_again .*\r\n$gdb_prompt $" {
 		    }
 		}
-		gdb_test_no_output "delete $wpnum" ""
+		gdb_test_no_output -nopass "delete $wpnum"
 		set test "wp(size=$wpsize offset=$wpoffset) rd(size=$rdsize offset=$rdoffset) expect=$expect_hit"
 		if {$expect_hit == $got_hit} {
 		    pass $test
@@ -120,8 +119,8 @@ foreach wpcount {4 7} {
 	    }
 	}
     }
-    gdb_test_no_output "set variable size = 1" ""
-    gdb_test_no_output "set variable offset = 1" ""
+    gdb_test_no_output -nopass "set variable size = 1"
+    gdb_test_no_output -nopass "set variable offset = 1"
     set test "continue"
     set got_hit 0
     gdb_test_multiple $test $test {
@@ -158,15 +157,17 @@ if ![runto_main] {
 }
 gdb_breakpoint [gdb_get_line_number "final_return"] "Breakpoint $decimal at $hex" "final_return"
 set test {watch data.u.size8twice[1]}
-set wpnum ""
+set wpnum 0
 gdb_test_multiple $test $test {
     -re "Hardware watchpoint (\[0-9\]+): .*\r\n$gdb_prompt $" {
 	set wpnum $expect_out(1,string)
+	pass $gdb_test_name
     }
     -re "Watchpoint (\[0-9\]+): .*\r\n$gdb_prompt $" {
 	if {[istarget "arm*-*-*"]} {
-	    untested $test
-	    set wpnum 0
+	    untested $gdb_test_name
+	} else {
+	    fail $gdb_test_name
 	}
     }
 }

@@ -1,4 +1,4 @@
-# Copyright 1992-2020 Free Software Foundation, Inc.
+# Copyright 1992-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,14 +15,10 @@
 
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
-
-# Create and source the file that provides information about the compiler
-# used to compile the test case.
-if [get_compiler_info] {
-    return -1
-}
-
 standard_testfile opaque0.c opaque1.c
+
+# Some tests require GCC.
+set gcc_compiled [is_c_compiler_gcc]
 
 if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2] debug]} {
@@ -55,7 +51,7 @@ proc setup_xfail_on_opaque_pointer {} {
 	global gcc_compiled
 
 	setup_xfail "vax-*-*" "i*86-sequent-bsd*"
-       if {!$gcc_compiled} then {
+       if {!$gcc_compiled} {
                setup_xfail "alpha-*-*"
        }
 }
@@ -63,7 +59,7 @@ proc setup_xfail_on_opaque_pointer {} {
 # This seems easier than trying to track different versions of xlc; I'm
 # not sure there is much rhyme or reason regarding which tests it fails
 # and which ones it passes.
-if {[istarget "rs6000-*-aix*"] && !$gcc_compiled} then {
+if {[istarget "rs6000-*-aix*"] && !$gcc_compiled} {
     warning "xfails in opaque.exp may not be set up correctly for xlc"
 }
 
@@ -76,7 +72,7 @@ gdb_test "whatis foop" \
 # Ensure that we know the form of the structure that foop points to.
 
 setup_xfail_on_opaque_pointer
-if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
 gdb_test "ptype foop" \
     "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\} \[*\]+" \
     "ptype on opaque struct pointer (statically)"
@@ -115,7 +111,7 @@ gdb_load ${binfile}
 
 # Run to main, where struct foo is incomplete.
 if ![runto_main] {
-    perror "cannot run to breakpoint at main"
+    return
 }
 
 
@@ -132,7 +128,7 @@ gdb_test "whatis foop" \
 # Ensure that we know the form of the thing foop points to.
 
 setup_xfail_on_opaque_pointer
-if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
 gdb_test "ptype foop" \
     "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\} \[*\]+" \
     "ptype on opaque struct pointer (dynamically) 1"
@@ -151,7 +147,7 @@ gdb_test "ptype afoo" \
 
 # Ensure that we know the form of an explicit struct foo.
 
-if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+if {!$gcc_compiled} { setup_xfail "rs6000-*-*" }
 gdb_test "ptype struct foo" \
     "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\}" \
     "ptype on opaque struct tagname (dynamically) 1"

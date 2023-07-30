@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2020 Free Software Foundation, Inc.
+Copyright 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -30,6 +30,7 @@ extern const IDESC *crisv10f_decode (SIM_CPU *, IADDR,
 extern void crisv10f_init_idesc_table (SIM_CPU *);
 extern void crisv10f_sem_init_idesc_table (SIM_CPU *);
 extern void crisv10f_semf_init_idesc_table (SIM_CPU *);
+extern void crisv10f_specific_init (SIM_CPU *);
 
 /* Enum declaration for instructions in cpu family crisv10f.  */
 typedef enum crisv10f_insn_type {

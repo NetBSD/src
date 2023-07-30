@@ -1,6 +1,6 @@
 /* sim-aarch64.h --- interface between AArch64 simulator and GDB.
 
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 

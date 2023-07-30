@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 standard_testfile .s
 set objfile [standard_output_file ${testfile}.o]
 
-if {![istarget "powerpc*-*-*"]} then {
+if {![istarget "powerpc*-*-*"]} {
     verbose "Skipping PowerPC instructions disassembly."
     return
 }
@@ -194,7 +194,6 @@ func_check "xxextractuw vs40,vs50,15"
 func_check "xxspltib vs4,0"
 func_check "xxspltib vs4,128"
 func_check "xxspltib vs41,255"
-func_check "xxspltib vs41,255"
 func_check "xxinsertw vs5,vs6,0"
 func_check "xxinsertw vs50,vs60,15"
 func_check "xxbrh   vs6,vs7"
@@ -365,39 +364,26 @@ func_check "xscvdphp vs41,vs51"
 func_check "xvcvhpsp vs42,vs52"
 func_check "xvcvsphp vs43,vs53"
 func_check "lnia    r3"
-func_check "lnia    r3"
-func_check "addpcis r4,1"
 func_check "addpcis r4,1"
 func_check "addpcis r5,-2"
-func_check "addpcis r5,-2"
 func_check "addpcis r6,32767"
-func_check "addpcis r6,32767"
-func_check "addpcis r7,-32768"
 func_check "addpcis r7,-32768"
 func_check "slbsync"
 func_check "slbiag  r10"
 func_check "slbieg  r10,r11"
 func_check "slbmfee r3,r4"
-func_check "slbmfee r3,r4"
 func_check "slbmfee r3,r4,1"
-func_check "slbmfev r4,r5"
 func_check "slbmfev r4,r5"
 func_check "slbmfev r4,r5,1"
 func_check "tlbie   r3,r4"
-func_check "tlbie   r3,r4"
 func_check "tlbie   r3,r4,3,1,1"
-func_check "tlbiel  r3"
 func_check "tlbiel  r3"
 func_check "tlbiel  r3,r4,3,1,1"
 func_check "copy    r12,r13"
 func_check "paste.  r10,r11"
 func_check "cpabort"
 func_check "hwsync"
-func_check "hwsync"
-func_check "hwsync"
 func_check "lwsync"
-func_check "lwsync"
-func_check "ptesync"
 func_check "ptesync"
 func_check "ldat    r20,0,0"
 func_check "ldat    r20,r10,28"
@@ -410,7 +396,6 @@ func_check "stwat   r23,r13,28"
 func_check "urfid"
 func_check "rmieg   r30"
 func_check "stop"
-func_check "wait"
 func_check "wait"
 func_check "darn    r3,0"
 func_check "darn    r3,1"

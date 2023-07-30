@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # Test MIPS Floating Point General Register handling in core files.
 
-if { ![istarget "mips*-*-*"] } then {
+if {![istarget "mips*-*-*"]} {
     verbose "Skipping MIPS Floating Point General Register tests."
     return
 }
@@ -133,7 +133,7 @@ proc mips_fpregset_core_test { supported corefile } {
 	set test "core file FGR register contents"
 	set core_fgr_contents \
 	    [mips_fpregset_core_fetch_float_registers "retrieve $test"]
-	if { $core_fgr_contents == $live_fgr_contents } then {
+	if {$core_fgr_contents == $live_fgr_contents} {
 	    pass $test
 	} else {
 	    fail $test

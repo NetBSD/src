@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,14 @@
 import time
 import os
 import gc
+import sys
+
+# time.perf_counter() and time.process_time() were added in Python
+# 3.3, time.clock() was removed in Python 3.8.
+if sys.version_info < (3, 3, 0):
+    time.perf_counter = time.clock
+    time.process_time = time.clock
+
 
 class Measure(object):
     """A class that measure and collect the interesting data for a given testcase.
@@ -55,6 +63,7 @@ class Measure(object):
         for m in self.measurements:
             m.report(reporter, name)
 
+
 class Measurement(object):
     """A measurement for a certain aspect."""
 
@@ -63,7 +72,7 @@ class Measurement(object):
 
         Attribute result is the TestResult associated with measurement.
         """
-        self.name = name;
+        self.name = name
         self.result = result
 
     def start(self, id):
@@ -82,27 +91,45 @@ class Measurement(object):
         """Report the measured data by argument reporter."""
         self.result.report(reporter, name + " " + self.name)
 
-class MeasurementCpuTime(Measurement):
-    """Measurement on CPU time."""
-    # On UNIX, time.clock() measures the amount of CPU time that has
-    # been used by the current process.  On Windows it will measure
-    # wall-clock seconds elapsed since the first call to the function.
-    # Something other than time.clock() should be used to measure CPU
-    # time on Windows.
+
+class MeasurementPerfCounter(Measurement):
+    """Measurement on performance counter."""
+
+    # Measures time in fractional seconds, using a performance
+    # counter, i.e. a clock with the highest available resolution to
+    # measure a short duration.  It includes time elapsed during sleep
+    # and is system-wide.
 
     def __init__(self, result):
-        super(MeasurementCpuTime, self).__init__("cpu_time", result)
+        super(MeasurementPerfCounter, self).__init__("perf_counter", result)
         self.start_time = 0
 
     def start(self, id):
-        self.start_time = time.clock()
+        self.start_time = time.perf_counter()
 
     def stop(self, id):
-        if os.name == 'nt':
-            cpu_time = 0
-        else:
-            cpu_time = time.clock() - self.start_time
-        self.result.record (id, cpu_time)
+        perf_counter = time.perf_counter() - self.start_time
+        self.result.record(id, perf_counter)
+
+
+class MeasurementProcessTime(Measurement):
+    """Measurement on process time."""
+
+    # Measures the sum of the system and user CPU time of the current
+    # process.  Does not include time elapsed during sleep.  It is
+    # process-wide by definition.
+
+    def __init__(self, result):
+        super(MeasurementProcessTime, self).__init__("process_time", result)
+        self.start_time = 0
+
+    def start(self, id):
+        self.start_time = time.process_time()
+
+    def stop(self, id):
+        process_time = time.process_time() - self.start_time
+        self.result.record(id, process_time)
+
 
 class MeasurementWallTime(Measurement):
     """Measurement on Wall time."""
@@ -116,7 +143,8 @@ class MeasurementWallTime(Measurement):
 
     def stop(self, id):
         wall_time = time.time() - self.start_time
-        self.result.record (id, wall_time)
+        self.result.record(id, wall_time)
+
 
 class MeasurementVmSize(Measurement):
     """Measurement on memory usage represented by VmSize."""
@@ -143,4 +171,4 @@ class MeasurementVmSize(Measurement):
 
     def stop(self, id):
         memory_used = self._compute_process_memory_usage("VmSize:")
-        self.result.record (id, memory_used)
+        self.result.record(id, memory_used)

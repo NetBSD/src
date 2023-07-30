@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -27,18 +27,12 @@
 #include <fcntl.h>
 #include <ctype.h>
 
-#include "config.h"
 #include "misc.h"
 #include "lf.h"
 #include "table.h"
 
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 
 typedef struct _open_table open_table;
 struct _open_table
@@ -86,7 +80,9 @@ set_nr_table_entry_fields (table_entry *entry, int nr_fields)
 
 void
 table_push (table *root,
-	    line_ref *line, table_include *includes, const char *file_name)
+	    const line_ref *line,
+	    table_include *includes,
+	    const char *file_name)
 {
   FILE *ff;
   open_table *file;
@@ -491,7 +487,7 @@ table_read (table *root)
 }
 
 extern void
-table_print_code (lf *file, table_entry *entry)
+table_print_code (lf *file, const table_entry *entry)
 {
   int field_nr;
   int nr = 0;
@@ -534,11 +530,13 @@ table_print_code (lf *file, table_entry *entry)
 }
 
 
-
 void
-dump_line_ref (lf *file, char *prefix, const line_ref *line, char *suffix)
+dump_line_ref (lf *file,
+	       const char *prefix,
+	       const line_ref *line,
+	       const char *suffix)
 {
-  lf_printf (file, "%s(line_ref*) 0x%lx", prefix, (long) line);
+  lf_printf (file, "%s(line_ref*) %p", prefix, line);
   if (line != NULL)
     {
       lf_indent (file, +1);
@@ -565,9 +563,11 @@ table_entry_type_to_str (table_entry_type type)
 
 void
 dump_table_entry (lf *file,
-		  char *prefix, const table_entry *entry, char *suffix)
+		  const char *prefix,
+		  const table_entry *entry,
+		  const char *suffix)
 {
-  lf_printf (file, "%s(table_entry*) 0x%lx", prefix, (long) entry);
+  lf_printf (file, "%s(table_entry*) %p", prefix, entry);
   if (entry != NULL)
     {
       int field;

@@ -1,16 +1,16 @@
-# serial 11
+# serial 16
 # Determine whether getcwd aborts when the length of the working directory
 # name is unusually large.  Any length between 4k and 16k trigger the bug
 # when using glibc-2.4.90-9 or older.
 
-# Copyright (C) 2006, 2009-2020 Free Software Foundation, Inc.
+# Copyright (C) 2006, 2009-2022 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
 # From Jim Meyering
 
-# gl_FUNC_GETCWD_ABORT_BUG([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
+# gl_FUNC_GETCWD_ABORT_BUG([ACTION-IF-BUGGY[, ACTION-IF-WORKS]])
 AC_DEFUN([gl_FUNC_GETCWD_ABORT_BUG],
 [
   AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
@@ -24,8 +24,8 @@ AC_DEFUN([gl_FUNC_GETCWD_ABORT_BUG],
       [Define to 1 if the system has the 'getpagesize' function.])
   fi
 
-  AC_CACHE_CHECK([whether getcwd aborts when 4k < cwd_length < 16k],
-    [gl_cv_func_getcwd_abort_bug],
+  AC_CACHE_CHECK([whether getcwd succeeds when 4k < cwd_length < 16k],
+    [gl_cv_func_getcwd_succeeds_beyond_4k],
     [# Remove any remnants of a previous test.
      rm -rf confdir-14B---
      # Arrange for deletion of the temporary directory this test creates.
@@ -45,9 +45,7 @@ AC_DEFUN([gl_FUNC_GETCWD_ABORT_BUG],
 #include <sys/stat.h>
 
 ]gl_PATHMAX_SNIPPET[
-
-/* Don't get link errors because mkdir is redefined to rpl_mkdir.  */
-#undef mkdir
+]GL_MDA_DEFINES[
 
 #ifndef S_IRWXU
 # define S_IRWXU 0700
@@ -128,30 +126,29 @@ main ()
   return fail;
 }
           ]])],
-       [gl_cv_func_getcwd_abort_bug=no],
+       [gl_cv_func_getcwd_succeeds_beyond_4k=yes],
        [dnl An abort will provoke an exit code of something like 134 (128 + 6).
-        dnl An exit code of 4 can also occur (in OpenBSD 4.9, NetBSD 5.1 for
-        dnl example): getcwd (NULL, 0) fails rather than returning a string
-        dnl longer than PATH_MAX.  This may be POSIX compliant (in some
-        dnl interpretations of POSIX).  But gnulib's getcwd module wants to
-        dnl provide a non-NULL value in this case.
+        dnl An exit code of 4 can also occur (for example in
+        dnl musl libc 1.2.2/powerpc64le, NetBSD 9.0, OpenBSD 6.7:
+        dnl getcwd (NULL, 0) fails rather than returning a string longer than
+        dnl PATH_MAX.  This may be POSIX compliant (in some interpretations of
+        dnl POSIX).  But gnulib's getcwd module wants to provide a non-NULL
+        dnl value in this case.
         ret=$?
         if test $ret -ge 128 || test $ret = 4; then
-          gl_cv_func_getcwd_abort_bug=yes
+          gl_cv_func_getcwd_succeeds_beyond_4k=no
         else
-          gl_cv_func_getcwd_abort_bug=no
+          gl_cv_func_getcwd_succeeds_beyond_4k=yes
         fi
        ],
        [case "$host_os" in
-                   # Guess no on musl systems.
-          *-musl*) gl_cv_func_getcwd_abort_bug="guessing no" ;;
-                   # Guess yes otherwise, even on glibc systems.
-          *)       gl_cv_func_getcwd_abort_bug="guessing yes"
+             # Guess no otherwise, even on glibc systems and musl systems.
+          *) gl_cv_func_getcwd_succeeds_beyond_4k="guessing no"
         esac
        ])
     ])
-  case "$gl_cv_func_getcwd_abort_bug" in
-    *yes)
+  case "$gl_cv_func_getcwd_succeeds_beyond_4k" in
+    *no)
       $1
       ;;
     *)

@@ -1,5 +1,5 @@
 /* Prologue value handling for GDB.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -90,7 +90,7 @@ pv_add (pv_t a, pv_t b)
 
   /* We can add a constant to another constant.  */
   else if (a.kind == pvk_constant
-           && b.kind == pvk_constant)
+	   && b.kind == pvk_constant)
     return pv_constant (a.k + b.k);
 
   /* Anything else we don't know how to add.  We don't have a
@@ -134,13 +134,13 @@ pv_subtract (pv_t a, pv_t b)
 
   /* We can subtract a constant from a register.  */
   else if (a.kind == pvk_register
-           && b.kind == pvk_constant)
+	   && b.kind == pvk_constant)
     return pv_register (a.reg, a.k - b.k);
 
   /* We can subtract a register from itself, yielding a constant.  */
   else if (a.kind == pvk_register
-           && b.kind == pvk_register
-           && a.reg == b.reg)
+	   && b.kind == pvk_register
+	   && a.reg == b.reg)
     return pv_constant (a.k - b.k);
 
   /* We don't know how to subtract anything else.  */
@@ -161,19 +161,19 @@ pv_logical_and (pv_t a, pv_t b)
 
   /* We can 'and' anything with the constant zero.  */
   else if (b.kind == pvk_constant
-           && b.k == 0)
+	   && b.k == 0)
     return pv_constant (0);
 
   /* We can 'and' anything with ~0.  */
   else if (b.kind == pvk_constant
-           && b.k == ~ (CORE_ADDR) 0)
+	   && b.k == ~ (CORE_ADDR) 0)
     return a;
 
   /* We can 'and' a register with itself.  */
   else if (a.kind == pvk_register
-           && b.kind == pvk_register
-           && a.reg == b.reg
-           && a.k == b.k)
+	   && b.kind == pvk_register
+	   && a.reg == b.reg
+	   && a.k == b.k)
     return a;
 
   /* Otherwise, we don't know.  */
@@ -216,7 +216,7 @@ int
 pv_is_register (pv_t a, int r)
 {
   return (a.kind == pvk_register
-          && a.reg == r);
+	  && a.reg == r);
 }
 
 
@@ -224,16 +224,16 @@ int
 pv_is_register_k (pv_t a, int r, CORE_ADDR k)
 {
   return (a.kind == pvk_register
-          && a.reg == r
-          && a.k == k);
+	  && a.reg == r
+	  && a.k == k);
 }
 
 
 enum pv_boolean
 pv_is_array_ref (pv_t addr, CORE_ADDR size,
-                 pv_t array_addr, CORE_ADDR array_len,
-                 CORE_ADDR elt_size,
-                 int *i)
+		 pv_t array_addr, CORE_ADDR array_len,
+		 CORE_ADDR elt_size,
+		 int *i)
 {
   /* Note that, since .k is a CORE_ADDR, and CORE_ADDR is unsigned, if
      addr is *before* the start of the array, then this isn't going to
@@ -243,22 +243,22 @@ pv_is_array_ref (pv_t addr, CORE_ADDR size,
   if (offset.kind == pvk_constant)
     {
       /* This is a rather odd test.  We want to know if the SIZE bytes
-         at ADDR don't overlap the array at all, so you'd expect it to
-         be an || expression: "if we're completely before || we're
-         completely after".  But with unsigned arithmetic, things are
-         different: since it's a number circle, not a number line, the
-         right values for offset.k are actually one contiguous range.  */
+	 at ADDR don't overlap the array at all, so you'd expect it to
+	 be an || expression: "if we're completely before || we're
+	 completely after".  But with unsigned arithmetic, things are
+	 different: since it's a number circle, not a number line, the
+	 right values for offset.k are actually one contiguous range.  */
       if (offset.k <= -size
-          && offset.k >= array_len * elt_size)
-        return pv_definite_no;
+	  && offset.k >= array_len * elt_size)
+	return pv_definite_no;
       else if (offset.k % elt_size != 0
-               || size != elt_size)
-        return pv_maybe;
+	       || size != elt_size)
+	return pv_maybe;
       else
-        {
-          *i = offset.k / elt_size;
-          return pv_definite_yes;
-        }
+	{
+	  *i = offset.k / elt_size;
+	  return pv_definite_yes;
+	}
     }
   else
     return pv_maybe;
@@ -317,15 +317,15 @@ pv_area::clear_entries ()
   if (e)
     {
       /* This needs to be a do-while loop, in order to actually
-         process the node being checked for in the terminating
-         condition.  */
+	 process the node being checked for in the terminating
+	 condition.  */
       do
-        {
-          struct area_entry *next = e->next;
+	{
+	  struct area_entry *next = e->next;
 
-          xfree (e);
-          e = next;
-        }
+	  xfree (e);
+	  e = next;
+	}
       while (e != m_entry);
 
       m_entry = 0;
@@ -350,8 +350,8 @@ pv_area::store_would_trash (pv_t addr)
      value of the register, so we can't compare entry addresses to
      constants.  */
   return (addr.kind == pvk_unknown
-          || addr.kind == pvk_constant
-          || (addr.kind == pvk_register && addr.reg != m_base_reg));
+	  || addr.kind == pvk_constant
+	  || (addr.kind == pvk_register && addr.reg != m_base_reg));
 }
 
 
@@ -375,13 +375,13 @@ pv_area::find_entry (CORE_ADDR offset)
      make sure both things we're comparing are on the same side of the
      discontinuity.  */
   while (((e->next->offset - offset) & m_addr_mask)
-         < ((e->offset - offset) & m_addr_mask))
+	 < ((e->offset - offset) & m_addr_mask))
     e = e->next;
 
   /* If the previous entry would be better than the current one, then
      scan backwards.  */
   while (((e->prev->offset - offset) & m_addr_mask)
-         < ((e->offset - offset) & m_addr_mask))
+	 < ((e->offset - offset) & m_addr_mask))
     e = e->prev;
 
   /* In case there's some locality to the searches, set the area's
@@ -399,7 +399,7 @@ pv_area::overlaps (struct area_entry *entry, CORE_ADDR offset, CORE_ADDR size)
 {
   /* Think carefully about wrap-around before simplifying this.  */
   return (((entry->offset - offset) & m_addr_mask) < size
-          || ((offset - entry->offset) & m_addr_mask) < entry->size);
+	  || ((offset - entry->offset) & m_addr_mask) < entry->size);
 }
 
 
@@ -418,18 +418,18 @@ pv_area::store (pv_t addr, CORE_ADDR size, pv_t value)
 
       /* Delete all entries that we would overlap.  */
       while (e && overlaps (e, offset, size))
-        {
-          struct area_entry *next = (e->next == e) ? 0 : e->next;
+	{
+	  struct area_entry *next = (e->next == e) ? 0 : e->next;
 
-          e->prev->next = e->next;
-          e->next->prev = e->prev;
+	  e->prev->next = e->next;
+	  e->next->prev = e->prev;
 
-          xfree (e);
-          e = next;
-        }
+	  xfree (e);
+	  e = next;
+	}
 
       /* Move the area's pointer to the next remaining entry.  This
-         will also zero the pointer if we've deleted all the entries.  */
+	 will also zero the pointer if we've deleted all the entries.  */
       m_entry = e;
     }
 
@@ -451,16 +451,16 @@ pv_area::store (pv_t addr, CORE_ADDR size, pv_t value)
       e->value = value;
 
       if (m_entry)
-        {
-          e->prev = m_entry->prev;
-          e->next = m_entry;
-          e->prev->next = e->next->prev = e;
-        }
+	{
+	  e->prev = m_entry->prev;
+	  e->next = m_entry;
+	  e->prev->next = e->next->prev = e;
+	}
       else
-        {
-          e->prev = e->next = e;
-          m_entry = e;
-        }
+	{
+	  e->prev = e->next = e;
+	  m_entry = e;
+	}
     }
 }
 
@@ -481,11 +481,11 @@ pv_area::fetch (pv_t addr, CORE_ADDR size)
       struct area_entry *e = find_entry (offset);
 
       /* If this entry exactly matches what we're looking for, then
-         we're set.  Otherwise, say it's unknown.  */
+	 we're set.  Otherwise, say it's unknown.  */
       if (e->offset == offset && e->size == size)
-        return e->value;
+	return e->value;
       else
-        return pv_unknown ();
+	return pv_unknown ();
     }
 }
 
@@ -500,17 +500,17 @@ pv_area::find_reg (struct gdbarch *gdbarch, int reg, CORE_ADDR *offset_p)
   if (e)
     do
       {
-        if (e->value.kind == pvk_register
-            && e->value.reg == reg
-            && e->value.k == 0
-            && e->size == register_size (gdbarch, reg))
-          {
-            if (offset_p)
-              *offset_p = e->offset;
-            return true;
-          }
+	if (e->value.kind == pvk_register
+	    && e->value.reg == reg
+	    && e->value.k == 0
+	    && e->size == register_size (gdbarch, reg))
+	  {
+	    if (offset_p)
+	      *offset_p = e->offset;
+	    return true;
+	  }
 
-        e = e->next;
+	e = e->next;
       }
     while (e != m_entry);
 
@@ -536,9 +536,9 @@ pv_area::scan (void (*func) (void *closure,
   if (e)
     do
       {
-        addr.k = e->offset;
-        func (closure, addr, e->size, e->value);
-        e = e->next;
+	addr.k = e->offset;
+	func (closure, addr, e->size, e->value);
+	e = e->next;
       }
     while (e != m_entry);
 }

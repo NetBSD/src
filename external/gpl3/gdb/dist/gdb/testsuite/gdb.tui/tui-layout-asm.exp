@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,15 +24,23 @@ if {[build_executable "failed to prepare" ${testfile} ${srcfile}] == -1} {
     return -1
 }
 
-Term::clean_restart 24 80 $testfile
+# PPC currently needs a minimum window width of 90 to work correctly.
+set tui_asm_window_width 90
+
+Term::clean_restart 24 ${tui_asm_window_width} $testfile
 if {![Term::prepare_for_tui]} {
     unsupported "TUI not supported"
     return
 }
 
+# Helper proc, returns a count of the ' ' characters in STRING.
+proc count_whitespace { string } {
+    return [expr {[llength [split $string { }]] - 1}]
+}
+
 # This puts us into TUI mode, and should display the ASM window.
 Term::command_no_prompt_prefix "layout asm"
-Term::check_box_contents "check asm box contents" 0 0 80 15 "<main>"
+Term::check_box_contents "check asm box contents" 0 0 ${tui_asm_window_width} 15 "<main>"
 
 # Scroll the ASM window down using the down arrow key.  In an ideal
 # world we'd like to use PageDown here, but currently our terminal
@@ -58,10 +66,33 @@ while (1) {
     # Send the down key to GDB.
     send_gdb "\033\[B"
     incr down_count
-    if {[Term::wait_for [string_to_regexp $line]] \
-	    && [Term::get_line 1] == $line} {
+    set re_line [string_to_regexp $line]
+    # Ignore whitespace mismatches.
+    regsub -all {\s+} $re_line {\s+} re_line
+    if {[Term::wait_for $re_line] \
+	    && [regexp $re_line [Term::get_line 1]]} {
 	# We scrolled successfully.
     } else {
+	if {[count_whitespace ${line}] != \
+		[count_whitespace [Term::get_line 1]]} {
+	    # GDB's TUI assembler display will widen columns based on
+	    # the longest item that appears in a column on any line.
+	    # As we have just scrolled, and so revealed a new line, it
+	    # is possible that the width of some columns has changed.
+	    #
+	    # As a result it is possible that part of the line we were
+	    # expected to see in the output is now off the screen. And
+	    # this test will fail.
+	    #
+	    # This is unfortunate, but, right now, there's no easy way
+	    # to "lock" the format of the TUI assembler window.  The
+	    # only option appears to be making the window width wider,
+	    # this can be done by adjusting TUI_ASM_WINDOW_WIDTH.
+	    verbose -log "WARNING: The following failure is probably due to the TUI window"
+	    verbose -log "         width.  See the comments in the test script for more"
+	    verbose -log "         details."
+	}
+
 	fail "$testname (scroll failed)"
 	Term::dump_screen
 	break

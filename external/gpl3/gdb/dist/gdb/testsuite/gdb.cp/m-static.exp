@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 # This file is part of the gdb testsuite
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 #
 # test running programs
@@ -27,22 +27,23 @@ if { [skip_cplus_tests] } { continue }
 
 standard_testfile .cc m-static1.cc
 
-if [get_compiler_info] {
-    return -1
+set flags [list debug c++]
+if { [test_compiler_info gcc-*] && [gcc_major_version] >= 10 } {
+    # Work around PR gcc/101452.
+    lappend flags additional_flags=-fno-eliminate-unused-debug-types
 }
 
 if {[prepare_for_testing "failed to prepare" $testfile \
-	 [list $srcfile $srcfile2] {debug c++}]} {
+	 [list $srcfile $srcfile2] $flags]} {
     return -1
 }
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 get_debug_format
-set non_dwarf [expr ! [test_debug_format "DWARF 2"]]
+set non_dwarf [expr ! [test_debug_format "DWARF \[0-9\]"]]
 
 # First, run to after we've constructed all the objects:
 
@@ -100,15 +101,16 @@ if { [is_aarch32_target] } {
 	{type = void \(single_constructor \* const\)} \
 	"simple object class, ptype constructor"
 
-    gdb_test "print test1.~gnu_obj_1" \
-	{ = {void \(gnu_obj_1 \* const, int\)} 0x[0-9a-f]+ <gnu_obj_1::~gnu_obj_1\(\)>} \
+    gdb_test "print test1.~gnu_obj_1"\
+	{ = {void \(gnu_obj_1 \* const(?:, int)?\)} 0x[0-9a-f]+ <gnu_obj_1::~gnu_obj_1\(\)>}\
 	"simple object instance, print destructor"
-    gdb_test "ptype test1.~gnu_obj_1" \
-	{type = void \(gnu_obj_1 \* const, int\)} \
+
+    gdb_test "ptype test1.~gnu_obj_1"\
+	{type = void \(gnu_obj_1 \* const(?:, int)?\)}\
 	"simple object instance, ptype destructor"
 
     gdb_test "print test1.'~gnu_obj_1'" \
-	{ = {void \(gnu_obj_1 \*( const)?, int\)} 0x[0-9a-f]+ <gnu_obj_1::~gnu_obj_1\(\)>} \
+	{ = {void \(gnu_obj_1 \*( const)?(?:, int)?\)} 0x[0-9a-f]+ <gnu_obj_1::~gnu_obj_1\(\)>} \
 	"simple object instance, print quoted destructor"
 
     gdb_test "ptype gnu_obj_1::'~gnu_obj_1'" \

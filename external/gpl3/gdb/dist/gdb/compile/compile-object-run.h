@@ -1,5 +1,5 @@
 /* Header file to call module for 'compile' command.
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,6 +19,6 @@
 
 #include "compile-object-load.h"
 
-extern void compile_object_run (struct compile_module *module);
+extern void compile_object_run (compile_module_up &&module);
 
 #endif /* COMPILE_COMPILE_OBJECT_RUN_H */

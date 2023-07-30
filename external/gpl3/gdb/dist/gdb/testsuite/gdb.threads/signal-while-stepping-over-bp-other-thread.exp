@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 # Test relies on checking gdb debug output. Do not run if gdb debug is
 # enabled as any debug will be redirected to the log.
 if [gdb_debug_enabled] {
-    continue
+    return
 }
 
 standard_testfile
@@ -102,7 +102,7 @@ gdb_test "set scheduler-locking off"
 gdb_test "set debug infrun 1"
 
 set test "step"
-gdb_test_sequence $test $test {
+gdb_test_sequence $test $test -prompt "$gdb_prompt \\\[infrun\\\] fetch_inferior_event: exit\r\n$"  {
     "need to step-over"
     "resume_1: step=1,"
     "signal arrived while stepping over breakpoint"

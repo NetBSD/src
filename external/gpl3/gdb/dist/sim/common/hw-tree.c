@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -19,6 +19,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
+#include <ctype.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "hw-main.h"
 #include "hw-base.h"
@@ -26,20 +33,6 @@
 
 #include "sim-io.h"
 #include "sim-assert.h"
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
-#include <ctype.h>
 
 /* manipulate/lookup device names */
 
@@ -342,7 +335,6 @@ split_find_device (struct hw *current,
       else if (strncmp (spec->path, "./", strlen ("./")) == 0)
 	{
 	  /* cd ./... */
-	  current = current;
 	  spec->path += strlen ("./");
 	}
       else if (strncmp (spec->path, "../", strlen ("../")) == 0)
@@ -355,7 +347,6 @@ split_find_device (struct hw *current,
       else if (strcmp (spec->path, ".") == 0)
 	{
 	  /* cd . */
-	  current = current;
 	  spec->path += strlen (".");
 	}
       else if (strcmp (spec->path, "..") == 0)
@@ -888,7 +879,7 @@ hw_tree_vparse (struct hw *current,
 #endif
 	    case '[':
 	      {
-		unsigned8 words[1024];
+		uint8_t words[1024];
 		char *curr = spec.value + 1;
 		int nr_words = 0;
 		while (1)
@@ -1134,7 +1125,7 @@ print_properties (struct hw *me,
 		  }
 		else
 		  {
-		    unsigned8 *w = (unsigned8*)property->array;
+		    uint8_t *w = (uint8_t*)property->array;
 		    p->print (p->file, " [");
 		    while ((char*)w - (char*)property->array < property->sizeof_array)
 		      {

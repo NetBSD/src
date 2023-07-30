@@ -1,6 +1,6 @@
 /* MI Command Set - MI parser.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -57,7 +57,7 @@ mi_parse_escape (const char **string_ptr)
       case '6':
       case '7':
 	{
-	  int i = host_hex_value (c);
+	  int i = fromhex (c);
 	  int count = 0;
 
 	  while (++count < 3)
@@ -67,7 +67,7 @@ mi_parse_escape (const char **string_ptr)
 		{
 		  (*string_ptr)++;
 		  i *= 8;
-		  i += host_hex_value (c);
+		  i += fromhex (c);
 		}
 	      else
 		{
@@ -106,7 +106,7 @@ mi_parse_escape (const char **string_ptr)
   return c;
 }
 
-static void
+void
 mi_parse_argv (const char *args, struct mi_parse *parse)
 {
   const char *chp = args;
@@ -272,7 +272,7 @@ mi_parse (const char *cmd, char **token)
   }
 
   /* Find the command in the MI table.  */
-  parse->cmd = mi_lookup (parse->command);
+  parse->cmd = mi_cmd_lookup (parse->command);
   if (parse->cmd == NULL)
     throw_error (UNDEFINED_COMMAND_ERROR,
 		 _("Undefined MI command: %s"), parse->command);
@@ -305,9 +305,9 @@ mi_parse (const char *cmd, char **token)
       /* See if --all is the last token in the input.  */
       if (strcmp (chp, "--all") == 0)
 	{
-          parse->all = 1;
-          chp += strlen (chp);
-        }
+	  parse->all = 1;
+	  chp += strlen (chp);
+	}
       if (strncmp (chp, "--thread-group ", tgs) == 0)
 	{
 	  char *endp;
@@ -363,20 +363,8 @@ mi_parse (const char *cmd, char **token)
       chp = skip_spaces (chp);
     }
 
-  /* For new argv commands, attempt to return the parsed argument
-     list.  */
-  if (parse->cmd->argv_func != NULL)
-    {
-      mi_parse_argv (chp, parse.get ());
-      if (parse->argv == NULL)
-	error (_("Problem parsing arguments: %s %s"), parse->command, chp);
-    }
-
-  /* FIXME: DELETE THIS */
-  /* For CLI commands, also return the remainder of the
-     command line as a single string. */
-  if (parse->cmd->cli.cmd != NULL)
-    parse->args = xstrdup (chp);
+  /* Save the rest of the arguments for the command.  */
+  parse->args = xstrdup (chp);
 
   /* Fully parsed, flag as an MI command.  */
   parse->op = MI_COMMAND;

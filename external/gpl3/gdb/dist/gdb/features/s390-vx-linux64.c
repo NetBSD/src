@@ -5,16 +5,16 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_s390_vx_linux64;
+const struct target_desc *tdesc_s390_vx_linux64;
 static void
 initialize_tdesc_s390_vx_linux64 (void)
 {
-  struct target_desc *result = allocate_target_description ();
-  set_tdesc_architecture (result, bfd_scan_arch ("s390:31-bit"));
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("s390:31-bit"));
 
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.s390.core");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.s390.core");
   tdesc_create_reg (feature, "pswm", 0, 1, "psw", 32, "uint32");
   tdesc_create_reg (feature, "pswa", 1, 1, "psw", 32, "uint32");
   tdesc_create_reg (feature, "r0h", 2, 1, "upper", 32, "uint32");
@@ -50,7 +50,7 @@ initialize_tdesc_s390_vx_linux64 (void)
   tdesc_create_reg (feature, "r15h", 32, 1, "upper", 32, "uint32");
   tdesc_create_reg (feature, "r15l", 33, 1, "lower", 32, "uint32");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.s390.acr");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.s390.acr");
   tdesc_create_reg (feature, "acr0", 34, 1, "access", 32, "uint32");
   tdesc_create_reg (feature, "acr1", 35, 1, "access", 32, "uint32");
   tdesc_create_reg (feature, "acr2", 36, 1, "access", 32, "uint32");
@@ -68,7 +68,7 @@ initialize_tdesc_s390_vx_linux64 (void)
   tdesc_create_reg (feature, "acr14", 48, 1, "access", 32, "uint32");
   tdesc_create_reg (feature, "acr15", 49, 1, "access", 32, "uint32");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.s390.fpr");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.s390.fpr");
   tdesc_create_reg (feature, "fpc", 50, 1, "float", 32, "uint32");
   tdesc_create_reg (feature, "f0", 51, 1, "float", 64, "ieee_double");
   tdesc_create_reg (feature, "f1", 52, 1, "float", 64, "ieee_double");
@@ -87,12 +87,12 @@ initialize_tdesc_s390_vx_linux64 (void)
   tdesc_create_reg (feature, "f14", 65, 1, "float", 64, "ieee_double");
   tdesc_create_reg (feature, "f15", 66, 1, "float", 64, "ieee_double");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.s390.linux");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.s390.linux");
   tdesc_create_reg (feature, "orig_r2", 67, 1, "system", 32, "uint32");
   tdesc_create_reg (feature, "last_break", 68, 0, "system", 32, "code_ptr");
   tdesc_create_reg (feature, "system_call", 69, 1, "system", 32, "uint32");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.s390.vx");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.s390.vx");
   tdesc_type *element_type;
   element_type = tdesc_named_type (feature, "ieee_single");
   tdesc_create_vector (feature, "v4f", element_type, 4);
@@ -163,5 +163,5 @@ initialize_tdesc_s390_vx_linux64 (void)
   tdesc_create_reg (feature, "v30", 100, 1, NULL, 128, "vec128");
   tdesc_create_reg (feature, "v31", 101, 1, NULL, 128, "vec128");
 
-  tdesc_s390_vx_linux64 = result;
+  tdesc_s390_vx_linux64 = result.release ();
 }

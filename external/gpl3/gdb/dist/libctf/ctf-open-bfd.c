@@ -1,5 +1,5 @@
 /* Opening CTF files with BFD.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -97,15 +97,42 @@ ctf_bfdopen_ctfsect (struct bfd *abfd _libctf_unused_,
   ctf_sect_t *strsectp = NULL;
   const char *bfderrstr = NULL;
   char *strtab_alloc = NULL;
+  int symsect_endianness = -1;
+
+  libctf_init_debug();
 
 #ifdef HAVE_BFD_ELF
   ctf_sect_t symsect, strsect;
-  Elf_Internal_Shdr *symhdr = &elf_symtab_hdr (abfd);
+  Elf_Internal_Shdr *symhdr;
   size_t symcount;
   Elf_Internal_Sym *isymbuf;
   bfd_byte *symtab = NULL;
+  const char *symtab_name;
   const char *strtab = NULL;
+  const char *strtab_name;
   size_t strsize;
+  const ctf_preamble_t *preamble;
+
+  if (ctfsect->cts_data == NULL)
+    {
+      bfderrstr = N_("CTF section is NULL");
+      goto err;
+    }
+  preamble = ctf_arc_bufpreamble (ctfsect);
+
+  if (preamble->ctp_flags & CTF_F_DYNSTR)
+    {
+      symhdr = &elf_tdata (abfd)->dynsymtab_hdr;
+      strtab_name = ".dynstr";
+      symtab_name = ".dynsym";
+    }
+  else
+    {
+      symhdr = &elf_tdata (abfd)->symtab_hdr;
+      strtab_name = ".strtab";
+      symtab_name = ".symtab";
+    }
+
   /* TODO: handle SYMTAB_SHNDX.  */
 
   /* Get the symtab, and the strtab associated with it.  */
@@ -145,12 +172,12 @@ ctf_bfdopen_ctfsect (struct bfd *abfd _libctf_unused_,
 	    strtab = (const char *) strhdr->contents;
 	}
     }
-  else		/* No symtab: just try getting .strtab by name.  */
+  else		/* No symtab: just try getting .strtab or .dynstr by name.  */
     {
       bfd_byte *str_bcontents;
       asection *str_asect;
 
-      if ((str_asect = bfd_get_section_by_name (abfd, ".strtab")) != NULL)
+      if ((str_asect = bfd_get_section_by_name (abfd, strtab_name)) != NULL)
 	{
 	  if (bfd_malloc_and_get_section (abfd, str_asect, &str_bcontents))
 	    {
@@ -168,7 +195,7 @@ ctf_bfdopen_ctfsect (struct bfd *abfd _libctf_unused_,
 	 use it for anything but debugging.  */
 
       strsect.cts_data = strtab;
-      strsect.cts_name = ".strtab";
+      strsect.cts_name = strtab_name;
       strsect.cts_size = strsize;
       strsectp = &strsect;
     }
@@ -176,12 +203,14 @@ ctf_bfdopen_ctfsect (struct bfd *abfd _libctf_unused_,
   if (symtab)
     {
       assert (symhdr->sh_entsize == get_elf_backend_data (abfd)->s->sizeof_sym);
-      symsect.cts_name = ".symtab";
+      symsect.cts_name = symtab_name;
       symsect.cts_entsize = symhdr->sh_entsize;
       symsect.cts_size = symhdr->sh_size;
       symsect.cts_data = symtab;
       symsectp = &symsect;
     }
+
+  symsect_endianness = bfd_little_endian (abfd);
 #endif
 
   arci = ctf_arc_bufopen (ctfsect, symsectp, strsectp, errp);
@@ -191,6 +220,10 @@ ctf_bfdopen_ctfsect (struct bfd *abfd _libctf_unused_,
       arci->ctfi_free_symsect = 1;
       if (strtab_alloc)
 	arci->ctfi_free_strsect = 1;
+
+      /* Get the endianness right.  */
+      if (symsect_endianness > -1)
+	ctf_arc_symsect_endianness (arci, symsect_endianness);
       return arci;
     }
 #ifdef HAVE_BFD_ELF
@@ -209,10 +242,10 @@ err: _libctf_unused_;
 }
 
 /* Open the specified file descriptor and return a pointer to a CTF archive that
-   contains one or more CTF containers.  The file can be an ELF file, a raw CTF
-   file, or a CTF archive.  The caller is responsible for closing the file
-   descriptor when it is no longer needed.  If this is an ELF file, TARGET, if
-   non-NULL, should be the name of a suitable BFD target.  */
+   contains one or more CTF dicts.  The file can be an ELF file, a file
+   containing raw CTF, or a CTF archive.  The caller is responsible for closing
+   the file descriptor when it is no longer needed.  If this is an ELF file,
+   TARGET, if non-NULL, should be the name of a suitable BFD target.  */
 
 ctf_archive_t *
 ctf_fdopen (int fd, const char *filename, const char *target, int *errp)
@@ -245,7 +278,7 @@ ctf_fdopen (int fd, const char *filename, const char *target, int *errp)
       && (ctfhdr.ctp_magic == CTF_MAGIC
 	  || ctfhdr.ctp_magic == bswap_16 (CTF_MAGIC)))
     {
-      ctf_file_t *fp = NULL;
+      ctf_dict_t *fp = NULL;
       void *data;
 
       if ((data = ctf_mmap (st.st_size, 0, fd)) == NULL)
@@ -316,7 +349,7 @@ ctf_fdopen (int fd, const char *filename, const char *target, int *errp)
   return arci;
 }
 
-/* Open the specified file and return a pointer to a CTF container.  The file
+/* Open the specified file and return a pointer to a CTF dict.  The file
    can be either an ELF file or raw CTF file.  This is just a convenient
    wrapper around ctf_fdopen() for callers.  */
 

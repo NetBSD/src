@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ proc do_test {displaced command} {
 	clean_restart $executable
 
 	if ![runto_main] {
-	    continue
+	    return
 	}
 
 	gdb_test_no_output "set displaced-stepping $displaced"

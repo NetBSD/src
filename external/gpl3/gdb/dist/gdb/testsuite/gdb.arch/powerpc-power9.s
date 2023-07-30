@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2020 Free Software Foundation, Inc.
+   Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -150,7 +150,6 @@ func:
 	.long  0xf10f9297    /* xxextractuw vs40,vs50,15   */
 	.long  0xf08002d0    /* xxspltib vs4,0             */
 	.long  0xf08402d0    /* xxspltib vs4,128           */
-	.long  0xf127fad1    /* xxspltib vs41,255          */
 	.long  0xf127fad1    /* xxspltib vs41,255          */
 	.long  0xf0a032d4    /* xxinsertw vs5,vs6,0        */
 	.long  0xf24fe2d7    /* xxinsertw vs50,vs60,15     */
@@ -324,37 +323,25 @@ func:
 	.long  0x4c600004    /* lnia r3                    */
 	.long  0x4c600004    /* addpcis r3,0               */
 	.long  0x4c800005    /* addpcis r4,1               */
-	.long  0x4c800005    /* addpcis r4,1               */
-	.long  0x4cbfffc4    /* addpcis r5,-2              */
 	.long  0x4cbfffc4    /* addpcis r5,-2              */
 	.long  0x4cdf7fc5    /* addpcis r6,32767           */
-	.long  0x4cdf7fc5    /* addpcis r6,32767           */
-	.long  0x4ce08004    /* addpcis r7,-32768          */
 	.long  0x4ce08004    /* addpcis r7,-32768          */
 	.long  0x7c0002a4    /* slbsync                    */
 	.long  0x7d4006a4    /* slbiag  r10                */
 	.long  0x7d405ba4    /* slbieg  r10,r11            */
 	.long  0x7c602726    /* slbmfee r3,r4              */
-	.long  0x7c602726    /* slbmfee r3,r4              */
 	.long  0x7c612726    /* slbmfee r3,r4,1            */
-	.long  0x7c802ea6    /* slbmfev r4,r5              */
 	.long  0x7c802ea6    /* slbmfev r4,r5              */
 	.long  0x7c812ea6    /* slbmfev r4,r5,1            */
 	.long  0x7c801a64    /* tlbie   r3,r4              */
-	.long  0x7c801a64    /* tlbie   r3,r4              */
 	.long  0x7c8f1a64    /* tlbie   r3,r4,3,1,1        */
-	.long  0x7c001a24    /* tlbiel  r3                 */
 	.long  0x7c001a24    /* tlbiel  r3                 */
 	.long  0x7c8f1a24    /* tlbiel  r3,r4,3,1,1        */
 	.long  0x7c2c6e0c    /* copy    r12,r13            */
 	.long  0x7c2a5f0d    /* paste.  r10,r11            */
 	.long  0x7c00068c    /* cpabort                    */
 	.long  0x7c0004ac    /* hwsync                     */
-	.long  0x7c0004ac    /* hwsync                     */
-	.long  0x7c0004ac    /* hwsync                     */
 	.long  0x7c2004ac    /* lwsync                     */
-	.long  0x7c2004ac    /* lwsync                     */
-	.long  0x7c4004ac    /* ptesync                    */
 	.long  0x7c4004ac    /* ptesync                    */
 	.long  0x7e8004cc    /* ldat    r20,0,0            */
 	.long  0x7e8ae4cc    /* ldat    r20,r10,28         */
@@ -367,7 +354,6 @@ func:
 	.long  0x4c000264    /* urfid                      */
 	.long  0x7c00f6e4    /* rmieg   r30                */
 	.long  0x4c0002e4    /* stop                       */
-	.long  0x7c00003c    /* wait                       */
 	.long  0x7c00003c    /* wait                       */
 	.long  0x7c6005e6    /* darn    r3,0               */
 	.long  0x7c6105e6    /* darn    r3,1               */
@@ -398,3 +384,4 @@ func:
 	.long  0xffd7048e    /* mffscrni f30,0             */
 	.long  0xffd71c8e    /* mffscrni f30,3             */
 	.long  0xfff8048e    /* mffsl   f31                */
+	.section	.note.GNU-stack,"",@progbits

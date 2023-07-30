@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -148,9 +148,51 @@
 
     iterate_over_foos (process_one_foo);
 
+  There's also a gdb::make_function_view function that you can use to
+  automatically create a function_view from a callable without having
+  to specify the function_view's template parameter.  E.g.:
+
+    auto lambda = [&] (int) { ... };
+    auto fv = gdb::make_function_view (lambda);
+
+  This can be useful for example when calling a template function
+  whose function_view parameter type depends on the function's
+  template parameters.  In such case, you can't rely on implicit
+  callable->function_view conversion for the function_view argument.
+  You must pass a function_view argument already of the right type to
+  the template function.  E.g., with this:
+
+    template<typename T>
+    void my_function (T v, gdb::function_view<void(T)> callback = nullptr);
+
+  this wouldn't compile:
+
+    auto lambda = [&] (int) { ... };
+    my_function (1, lambda);
+
+  Note that this immediately dangles the temporary lambda object:
+
+    gdb::function_view<void(int)> fv = [&] (int) { ... };  // dangles
+    my_function (fv);
+
+  To avoid the dangling you'd have to use a named temporary for the
+  lambda:
+
+    auto lambda = [&] (int) { ... };
+    gdb::function_view<void(int)> fv = lambda;
+    my_function (fv);
+
+  Using gdb::make_function_view instead automatically deduces the
+  function_view's full type, and, avoids worrying about dangling.  For
+  the example above, we could write instead:
+
+    auto lambda = [&] (int) { ... };
+    my_function (1, gdb::make_function_view (lambda));
+
   You can find unit tests covering the whole API in
   unittests/function-view-selftests.c.  */
 
+#include "invoke-result.h"
 namespace gdb {
 
 namespace fv_detail {
@@ -188,7 +230,7 @@ class function_view<Res (Args...)>
   /* True if Func can be called with Args, and either the result is
      Res, convertible to Res or Res is void.  */
   template<typename Callable,
-	   typename Res2 = typename std::result_of<Callable &(Args...)>::type>
+	   typename Res2 = typename gdb::invoke_result<Callable &, Args...>::type>
   struct IsCompatibleCallable : CompatibleReturnType<Res2, Res>
   {};
 
@@ -317,6 +359,92 @@ template<typename Res, typename... Args>
 constexpr inline bool
 operator!= (std::nullptr_t, const function_view<Res (Args...)> &f) noexcept
 { return static_cast<bool> (f); }
+
+namespace fv_detail {
+
+/* Helper traits type to automatically find the right function_view
+   type for a callable.  */
+
+/* Use partial specialization to get access to the callable's
+   signature, for all the different callable variants.  */
+
+template<typename>
+struct function_view_traits;
+
+/* Main partial specialization with plain function signature type.
+   All others end up redirected here.  */
+template<typename Res, typename... Args>
+struct function_view_traits<Res (Args...)>
+{
+  using type = gdb::function_view<Res (Args...)>;
+};
+
+/* Function pointers.  */
+template<typename Res, typename... Args>
+struct function_view_traits<Res (*) (Args...)>
+  : function_view_traits<Res (Args...)>
+{
+};
+
+/* Function references.  */
+template<typename Res, typename... Args>
+struct function_view_traits<Res (&) (Args...)>
+  : function_view_traits<Res (Args...)>
+{
+};
+
+/* Reference to function pointers.  */
+template<typename Res, typename... Args>
+struct function_view_traits<Res (*&) (Args...)>
+  : function_view_traits<Res (Args...)>
+{
+};
+
+/* Reference to const function pointers.  */
+template<typename Res, typename... Args>
+struct function_view_traits<Res (* const &) (Args...)>
+  : function_view_traits<Res (Args...)>
+{
+};
+
+/* Const member functions.  function_view doesn't support these, but
+   we need this in order to extract the type of function objects.
+   Lambdas pass here, after starting at the operator() case,
+   below.  */
+template<typename Res, typename Class, typename... Args>
+struct function_view_traits<Res (Class::*) (Args...) const>
+  : function_view_traits<Res (Args...)>
+{
+};
+
+/* Member functions.  Ditto, for function objects with non-const
+   operator().  */
+template<typename Res, typename Class, typename... Args>
+struct function_view_traits<Res (Class::*) (Args...)>
+  : function_view_traits<Res (Args...)>
+{
+};
+
+/* Function objects, lambdas, std::function, any type that defines
+   operator().  */
+template<typename FuncObj>
+struct function_view_traits
+  : function_view_traits <decltype
+			  (&std::remove_reference<FuncObj>::type::operator())>
+{
+};
+
+} /* namespace fv_detail */
+
+/* Make a function_view from a callable.  Useful to automatically
+   deduce the function_view's template argument type.  */
+template<typename Callable>
+auto make_function_view (Callable &&callable)
+  -> typename fv_detail::function_view_traits<Callable>::type
+{
+  using fv = typename fv_detail::function_view_traits<Callable>::type;
+  return fv (std::forward<Callable> (callable));
+}
 
 } /* namespace gdb */
 

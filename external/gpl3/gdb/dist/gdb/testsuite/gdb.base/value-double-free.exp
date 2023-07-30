@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# processor.  On PowerPC, the check runs a small test program under gdb
+# to determine if the Power processor supports HW watchpoints.  The check
+# must be done before starting the test so as to not disrupt the execution
+# of the actual test.
+
+set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+
 standard_testfile
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
@@ -24,7 +32,7 @@ if ![runto_main] {
 }
 
 # Disable hardware watchpoints if necessary.
-if [target_info exists gdb,no_hardware_watchpoints] {
+if {$skip_hw_watchpoint_tests_p} {
     gdb_test_no_output "set can-use-hw-watchpoints 0" ""
 }
 

@@ -1,6 +1,6 @@
 /* GDB CLI command scripting.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 
 #include "defs.h"
 #include "value.h"
-#include "language.h"		/* For value_true */
 #include <ctype.h>
 
 #include "ui-out.h"
@@ -30,6 +29,7 @@
 #include "cli/cli-decode.h"
 #include "cli/cli-script.h"
 #include "cli/cli-style.h"
+#include "gdbcmd.h"
 
 #include "extension.h"
 #include "interps.h"
@@ -44,14 +44,17 @@
 
 static enum command_control_type
 recurse_read_control_structure
-    (gdb::function_view<const char * ()> read_next_line_func,
+    (read_next_line_ftype read_next_line_func,
      struct command_line *current_cmd,
      gdb::function_view<void (const char *)> validator);
 
 static void do_define_command (const char *comname, int from_tty,
 			       const counted_command_line *commands);
 
-static const char *read_next_line ();
+static void do_document_command (const char *comname, int from_tty,
+                                 const counted_command_line *commands);
+
+static const char *read_next_line (std::string &buffer);
 
 /* Level of control structure when reading.  */
 static int control_level;
@@ -70,6 +73,9 @@ static cmd_list_element *if_cmd_element = nullptr;
 
 /* Command element for the 'define' command.  */
 static cmd_list_element *define_cmd_element = nullptr;
+
+/* Command element for the 'document' command.  */
+static cmd_list_element *document_cmd_element = nullptr;
 
 /* Structure for arguments to user defined functions.  */
 
@@ -139,6 +145,7 @@ multi_line_command_p (enum command_control_type type)
     case python_control:
     case guile_control:
     case define_control:
+    case document_control:
       return 1;
     default:
       return 0;
@@ -148,7 +155,7 @@ multi_line_command_p (enum command_control_type type)
 /* Allocate, initialize a new command line structure for one of the
    control commands (if/while).  */
 
-static struct command_line *
+static command_line_up
 build_command_line (enum command_control_type type, const char *args)
 {
   if (args == NULL || *args == '\0')
@@ -159,10 +166,12 @@ build_command_line (enum command_control_type type, const char *args)
 	error (_("while command requires an argument."));
       else if (type == define_control)
 	error (_("define command requires an argument."));
+      else if (type == document_control)
+	error (_("document command requires an argument."));
     }
   gdb_assert (args != NULL);
 
-  return new struct command_line (type, xstrdup (args));
+  return command_line_up (new command_line (type, xstrdup (args)));
 }
 
 /* Build and return a new command structure for the control commands
@@ -172,7 +181,7 @@ counted_command_line
 get_command_line (enum command_control_type type, const char *arg)
 {
   /* Allocate and build a new command line structure.  */
-  counted_command_line cmd (build_command_line (type, arg),
+  counted_command_line cmd (build_command_line (type, arg).release (),
 			    command_lines_deleter ());
 
   /* Read in the body of this command.  */
@@ -210,7 +219,7 @@ print_command_lines (struct ui_out *uiout, struct command_line *cmd,
 	}
 
       /* loop_continue to jump to the start of a while loop, print it
-         and continue. */
+	 and continue. */
       if (list->control_type == continue_control)
 	{
 	  uiout->field_string (NULL, "loop_continue");
@@ -392,10 +401,6 @@ execute_cmd_post_hook (struct cmd_list_element *c)
 void
 execute_control_commands (struct command_line *cmdlines, int from_tty)
 {
-  /* Set the instream to 0, indicating execution of a
-     user-defined function.  */
-  scoped_restore restore_instream
-    = make_scoped_restore (&current_ui->instream, nullptr);
   scoped_restore save_async = make_scoped_restore (&current_ui->async, 0);
   scoped_restore save_nesting
     = make_scoped_restore (&command_nest_depth, command_nest_depth + 1);
@@ -419,31 +424,14 @@ std::string
 execute_control_commands_to_string (struct command_line *commands,
 				    int from_tty)
 {
-  /* GDB_STDOUT should be better already restored during these
-     restoration callbacks.  */
-  set_batch_flag_and_restore_page_info save_page_info;
+  std::string result;
 
-  string_file str_file;
+  execute_fn_to_string (result, [&] ()
+    {
+      execute_control_commands (commands, from_tty);
+    }, false);
 
-  {
-    current_uiout->redirect (&str_file);
-    ui_out_redirect_pop redirect_popper (current_uiout);
-
-    scoped_restore save_stdout
-      = make_scoped_restore (&gdb_stdout, &str_file);
-    scoped_restore save_stderr
-      = make_scoped_restore (&gdb_stderr, &str_file);
-    scoped_restore save_stdlog
-      = make_scoped_restore (&gdb_stdlog, &str_file);
-    scoped_restore save_stdtarg
-      = make_scoped_restore (&gdb_stdtarg, &str_file);
-    scoped_restore save_stdtargerr
-      = make_scoped_restore (&gdb_stdtargerr, &str_file);
-
-    execute_control_commands (commands, from_tty);
-  }
-
-  return std::move (str_file.string ());
+  return result;
 }
 
 void
@@ -463,6 +451,11 @@ execute_user_command (struct cmd_list_element *c, const char *args)
 
   if (user_args_stack.size () > max_user_call_depth)
     error (_("Max user call depth exceeded -- command aborted."));
+
+  /* Set the instream to nullptr, indicating execution of a
+     user-defined function.  */
+  scoped_restore restore_instream
+    = make_scoped_restore (&current_ui->instream, nullptr);
 
   execute_control_commands (cmdlines, 0);
 }
@@ -503,14 +496,14 @@ print_command_trace (const char *fmt, ...)
     return;
 
   for (i=0; i < command_nest_depth; i++)
-    printf_filtered ("+");
+    gdb_printf ("+");
 
   va_list args;
 
   va_start (args, fmt);
-  vprintf_filtered (fmt, args);
+  gdb_vprintf (fmt, args);
   va_end (args);
-  puts_filtered ("\n");
+  gdb_puts ("\n");
 }
 
 /* Helper for execute_control_command.  */
@@ -519,8 +512,6 @@ static enum command_control_type
 execute_control_command_1 (struct command_line *cmd, int from_tty)
 {
   struct command_line *current;
-  struct value *val;
-  struct value *val_mark;
   int loop;
   enum command_control_type ret;
 
@@ -543,7 +534,7 @@ execute_control_command_1 (struct command_line *cmd, int from_tty)
       print_command_trace ("loop_continue");
 
       /* Return for "continue", and "break" so we can either
-         continue the loop at the top, or break out.  */
+	 continue the loop at the top, or break out.  */
       ret = cmd->control_type;
       break;
 
@@ -551,7 +542,7 @@ execute_control_command_1 (struct command_line *cmd, int from_tty)
       print_command_trace ("loop_break");
 
       /* Return for "continue", and "break" so we can either
-         continue the loop at the top, or break out.  */
+	 continue the loop at the top, or break out.  */
       ret = cmd->control_type;
       break;
 
@@ -569,15 +560,16 @@ execute_control_command_1 (struct command_line *cmd, int from_tty)
 	/* Keep iterating so long as the expression is true.  */
 	while (loop == 1)
 	  {
-	    int cond_result;
+	    bool cond_result;
 
 	    QUIT;
 
 	    /* Evaluate the expression.  */
-	    val_mark = value_mark ();
-	    val = evaluate_expression (expr.get ());
-	    cond_result = value_true (val);
-	    value_free_to_mark (val_mark);
+	    {
+	      scoped_value_mark mark;
+	      value *val = evaluate_expression (expr.get ());
+	      cond_result = value_true (val);
+	    }
 
 	    /* If the value is false, then break out of the loop.  */
 	    if (!cond_result)
@@ -628,16 +620,17 @@ execute_control_command_1 (struct command_line *cmd, int from_tty)
 	ret = simple_control;
 
 	/* Evaluate the conditional.  */
-	val_mark = value_mark ();
-	val = evaluate_expression (expr.get ());
+	{
+	  scoped_value_mark mark;
+	  value *val = evaluate_expression (expr.get ());
 
-	/* Choose which arm to take commands from based on the value
-	   of the conditional expression.  */
-	if (value_true (val))
-	  current = cmd->body_list_0.get ();
-	else if (cmd->body_list_1 != nullptr)
-	  current = cmd->body_list_1.get ();
-	value_free_to_mark (val_mark);
+	  /* Choose which arm to take commands from based on the value
+	     of the conditional expression.  */
+	  if (value_true (val))
+	    current = cmd->body_list_0.get ();
+	  else if (cmd->body_list_1 != nullptr)
+	    current = cmd->body_list_1.get ();
+	}
 
 	/* Execute commands in the given arm.  */
 	while (current)
@@ -675,6 +668,12 @@ execute_control_command_1 (struct command_line *cmd, int from_tty)
     case define_control:
       print_command_trace ("define %s", cmd->line);
       do_define_command (cmd->line, 0, &cmd->body_list_0);
+      ret = simple_control;
+      break;
+
+    case document_control:
+      print_command_trace ("document %s", cmd->line);
+      do_document_command (cmd->line, 0, &cmd->body_list_0);
       ret = simple_control;
       break;
 
@@ -895,7 +894,7 @@ user_args::insert_args (const char *line) const
    from stdin.  */
 
 static const char *
-read_next_line ()
+read_next_line (std::string &buffer)
 {
   struct ui *ui = current_ui;
   char *prompt_ptr, control_prompt[256];
@@ -918,7 +917,7 @@ read_next_line ()
   else
     prompt_ptr = NULL;
 
-  return command_line_input (prompt_ptr, "commands");
+  return command_line_input (buffer, prompt_ptr, "commands");
 }
 
 /* Given an input line P, skip the command and return a pointer to the
@@ -941,7 +940,7 @@ line_first_arg (const char *p)
    Otherwise, only "end" is recognized.  */
 
 static enum misc_command_type
-process_next_line (const char *p, struct command_line **command,
+process_next_line (const char *p, command_line_up *command,
 		   int parse_commands,
 		   gdb::function_view<void (const char *)> validator)
 
@@ -1018,6 +1017,8 @@ process_next_line (const char *p, struct command_line **command,
 	*command = build_command_line (commands_control, line_first_arg (p));
       else if (cmd == define_cmd_element)
 	*command = build_command_line (define_control, line_first_arg (p));
+      else if (cmd == document_cmd_element)
+	*command = build_command_line (document_control, line_first_arg (p));
       else if (cmd == python_cmd_element && !inline_cmd)
 	{
 	  /* Note that we ignore the inline "python command" form
@@ -1037,9 +1038,9 @@ process_next_line (const char *p, struct command_line **command,
 	  *command = build_command_line (guile_control, "");
 	}
       else if (p_end - p == 10 && startswith (p, "loop_break"))
-	*command = new struct command_line (break_control);
+	*command = command_line_up (new command_line (break_control));
       else if (p_end - p == 13 && startswith (p, "loop_continue"))
-	*command = new struct command_line (continue_control);
+	*command = command_line_up (new command_line (continue_control));
       else
 	not_handled = 1;
     }
@@ -1047,22 +1048,12 @@ process_next_line (const char *p, struct command_line **command,
   if (!parse_commands || not_handled)
     {
       /* A normal command.  */
-      *command = new struct command_line (simple_control,
-					  savestring (p, p_end - p));
+      *command = command_line_up (new command_line (simple_control,
+						    savestring (p, p_end - p)));
     }
 
   if (validator)
-    {
-      try
-	{
-	  validator ((*command)->line);
-	}
-      catch (const gdb_exception &ex)
-	{
-	  free_command_lines (command);
-	  throw;
-	}
-    }
+    validator ((*command)->line);
 
   /* Nothing special.  */
   return ok_command;
@@ -1073,16 +1064,17 @@ process_next_line (const char *p, struct command_line **command,
    obtain lines of the command.  */
 
 static enum command_control_type
-recurse_read_control_structure (gdb::function_view<const char * ()> read_next_line_func,
+recurse_read_control_structure (read_next_line_ftype read_next_line_func,
 				struct command_line *current_cmd,
 				gdb::function_view<void (const char *)> validator)
 {
   enum misc_command_type val;
   enum command_control_type ret;
-  struct command_line *child_tail, *next;
+  struct command_line *child_tail;
   counted_command_line *current_body = &current_cmd->body_list_0;
+  command_line_up next;
 
-  child_tail = NULL;
+  child_tail = nullptr;
 
   /* Sanity checks.  */
   if (current_cmd->control_type == simple_control)
@@ -1093,8 +1085,9 @@ recurse_read_control_structure (gdb::function_view<const char * ()> read_next_li
     {
       dont_repeat ();
 
-      next = NULL;
-      val = process_next_line (read_next_line_func (), &next, 
+      std::string buffer;
+      next = nullptr;
+      val = process_next_line (read_next_line_func (buffer), &next,
 			       current_cmd->control_type != python_control
 			       && current_cmd->control_type != guile_control
 			       && current_cmd->control_type != compile_control,
@@ -1126,7 +1119,7 @@ recurse_read_control_structure (gdb::function_view<const char * ()> read_next_li
 	      && current_body == &current_cmd->body_list_0)
 	    {
 	      current_body = &current_cmd->body_list_1;
-	      child_tail = NULL;
+	      child_tail = nullptr;
 	      continue;
 	    }
 	  else
@@ -1136,21 +1129,26 @@ recurse_read_control_structure (gdb::function_view<const char * ()> read_next_li
 	    }
 	}
 
-      if (child_tail)
+      /* Transfer ownership of NEXT to the command's body list.  */
+      if (child_tail != nullptr)
 	{
-	  child_tail->next = next;
+	  child_tail->next = next.release ();
+	  child_tail = child_tail->next;
 	}
       else
-	*current_body = counted_command_line (next, command_lines_deleter ());
-
-      child_tail = next;
+	{
+	  child_tail = next.get ();
+	  *current_body = counted_command_line (next.release (),
+						command_lines_deleter ());
+	}
 
       /* If the latest line is another control structure, then recurse
-         on it.  */
-      if (multi_line_command_p (next->control_type))
+	 on it.  */
+      if (multi_line_command_p (child_tail->control_type))
 	{
 	  control_level++;
-	  ret = recurse_read_control_structure (read_next_line_func, next,
+	  ret = recurse_read_control_structure (read_next_line_func,
+						child_tail,
 						validator);
 	  control_level--;
 
@@ -1179,7 +1177,7 @@ counted_command_line
 read_command_lines (const char *prompt_arg, int from_tty, int parse_commands,
 		    gdb::function_view<void (const char *)> validator)
 {
-  if (from_tty && input_interactive_p (current_ui))
+  if (from_tty && current_ui->input_interactive_p ())
     {
       if (deprecated_readline_begin_hook)
 	{
@@ -1206,7 +1204,7 @@ read_command_lines (const char *prompt_arg, int from_tty, int parse_commands,
 				   validator);
     }
 
-  if (from_tty && input_interactive_p (current_ui)
+  if (from_tty && current_ui->input_interactive_p ()
       && deprecated_readline_end_hook)
     {
       (*deprecated_readline_end_hook) ();
@@ -1218,14 +1216,15 @@ read_command_lines (const char *prompt_arg, int from_tty, int parse_commands,
    obtained using READ_NEXT_LINE_FUNC.  */
 
 counted_command_line
-read_command_lines_1 (gdb::function_view<const char * ()> read_next_line_func,
+read_command_lines_1 (read_next_line_ftype read_next_line_func,
 		      int parse_commands,
 		      gdb::function_view<void (const char *)> validator)
 {
-  struct command_line *tail, *next;
+  struct command_line *tail;
   counted_command_line head (nullptr, command_lines_deleter ());
   enum command_control_type ret;
   enum misc_command_type val;
+  command_line_up next;
 
   control_level = 0;
   tail = NULL;
@@ -1233,7 +1232,9 @@ read_command_lines_1 (gdb::function_view<const char * ()> read_next_line_func,
   while (1)
     {
       dont_repeat ();
-      val = process_next_line (read_next_line_func (), &next, parse_commands,
+
+      std::string buffer;
+      val = process_next_line (read_next_line_func (buffer), &next, parse_commands,
 			       validator);
 
       /* Ignore blank lines or comments.  */
@@ -1255,7 +1256,7 @@ read_command_lines_1 (gdb::function_view<const char * ()> read_next_line_func,
       if (multi_line_command_p (next->control_type))
 	{
 	  control_level++;
-	  ret = recurse_read_control_structure (read_next_line_func, next,
+	  ret = recurse_read_control_structure (read_next_line_func, next.get (),
 						validator);
 	  control_level--;
 
@@ -1263,15 +1264,18 @@ read_command_lines_1 (gdb::function_view<const char * ()> read_next_line_func,
 	    break;
 	}
 
+      /* Transfer ownership of NEXT to the HEAD list.  */
       if (tail)
 	{
-	  tail->next = next;
+	  tail->next = next.release ();
+	  tail = tail->next;
 	}
       else
 	{
-	  head = counted_command_line (next, command_lines_deleter ());
+	  tail = next.get ();
+	  head = counted_command_line (next.release (),
+				       command_lines_deleter ());
 	}
-      tail = next;
     }
 
   dont_repeat ();
@@ -1332,10 +1336,10 @@ validate_comname (const char **comname)
       const char *tem = prefix.c_str ();
 
       c = lookup_cmd (&tem, cmdlist, "", NULL, 0, 1);
-      if (c->prefixlist == NULL)
+      if (!c->is_prefix ())
 	error (_("\"%s\" is not a prefix command."), prefix.c_str ());
 
-      list = c->prefixlist;
+      list = c->subcommands;
       *comname = last_word;
     }
 
@@ -1373,7 +1377,7 @@ do_define_command (const char *comname, int from_tty,
       CMD_POST_HOOK
     };
   struct cmd_list_element *c, *newc, *hookc = 0, **list;
-  const char *tem, *comfull;
+  const char *comfull;
   int  hook_type      = CMD_NO_HOOK;
   int  hook_name_size = 0;
    
@@ -1385,11 +1389,7 @@ do_define_command (const char *comname, int from_tty,
   comfull = comname;
   list = validate_comname (&comname);
 
-  /* Look it up, and verify that we got an exact match.  */
-  tem = comname;
-  c = lookup_cmd (&tem, *list, "", NULL, -1, 1);
-  if (c && strcmp (comname, c->name) != 0)
-    c = 0;
+  c = lookup_cmd_exact (comname, *list);
 
   if (c && commands == nullptr)
     {
@@ -1400,7 +1400,7 @@ do_define_command (const char *comname, int from_tty,
 	  /* if C is a prefix command that was previously defined,
 	     tell the user its subcommands will be kept, and ask
 	     if ok to redefine the command.  */
-	  if (c->prefixlist != nullptr)
+	  if (c->is_prefix ())
 	    q = (c->user_commands.get () == nullptr
 		 || query (_("Keeping subcommands of prefix command \"%s\".\n"
 			     "Redefine command \"%s\"? "), c->name, c->name));
@@ -1430,11 +1430,9 @@ do_define_command (const char *comname, int from_tty,
 
   if (hook_type != CMD_NO_HOOK)
     {
-      /* Look up cmd it hooks, and verify that we got an exact match.  */
-      tem = comname + hook_name_size;
-      hookc = lookup_cmd (&tem, *list, "", NULL, -1, 0);
-      if (hookc && strcmp (comname + hook_name_size, hookc->name) != 0)
-	hookc = 0;
+      /* Look up cmd it hooks.  */
+      hookc = lookup_cmd_exact (comname + hook_name_size, *list,
+				/* ignore_help_classes = */ false);
       if (!hookc && commands == nullptr)
 	{
 	  warning (_("Your new `%s' command does not "
@@ -1458,9 +1456,8 @@ do_define_command (const char *comname, int from_tty,
     cmds = *commands;
 
   {
-    struct cmd_list_element **c_prefixlist
-      = c == nullptr ? nullptr : c->prefixlist;
-    const char *c_prefixname = c == nullptr ? nullptr : c->prefixname;
+    struct cmd_list_element **c_subcommands
+      = c == nullptr ? nullptr : c->subcommands;
 
     newc = add_cmd (comname, class_user, user_defined_command,
 		    (c != nullptr && c->theclass == class_user)
@@ -1469,10 +1466,9 @@ do_define_command (const char *comname, int from_tty,
 
     /* If we define or re-define a command that was previously defined
        as a prefix, keep the prefix information.  */
-    if (c_prefixlist != nullptr)
+    if (c_subcommands != nullptr)
       {
-	newc->prefixlist = c_prefixlist;
-	newc->prefixname = c_prefixname;
+	newc->subcommands = c_subcommands;
 	/* allow_unknown: see explanation in equivalent logic in
 	   define_prefix_command ().  */
 	newc->allow_unknown = newc->user_commands.get () != nullptr;
@@ -1484,20 +1480,20 @@ do_define_command (const char *comname, int from_tty,
   if (hookc)
     {
       switch (hook_type)
-        {
-        case CMD_PRE_HOOK:
-          hookc->hook_pre  = newc;  /* Target gets hooked.  */
-          newc->hookee_pre = hookc; /* We are marked as hooking target cmd.  */
-          break;
-        case CMD_POST_HOOK:
-          hookc->hook_post  = newc;  /* Target gets hooked.  */
-          newc->hookee_post = hookc; /* We are marked as hooking
+	{
+	case CMD_PRE_HOOK:
+	  hookc->hook_pre  = newc;  /* Target gets hooked.  */
+	  newc->hookee_pre = hookc; /* We are marked as hooking target cmd.  */
+	  break;
+	case CMD_POST_HOOK:
+	  hookc->hook_post  = newc;  /* Target gets hooked.  */
+	  newc->hookee_post = hookc; /* We are marked as hooking
 					target cmd.  */
-          break;
-        default:
-          /* Should never come here as hookc would be 0.  */
-	  internal_error (__FILE__, __LINE__, _("bad switch"));
-        }
+	  break;
+	default:
+	  /* Should never come here as hookc would be 0.  */
+	  internal_error (_("bad switch"));
+	}
     }
 }
 
@@ -1507,28 +1503,51 @@ define_command (const char *comname, int from_tty)
   do_define_command (comname, from_tty, nullptr);
 }
 
+/* Document a user-defined command or user defined alias.  If COMMANDS is NULL,
+   then this is a top-level call and the document will be read using
+   read_command_lines.  Otherwise, it is a "document" command in an existing
+   command and the commands are provided.  */
 static void
-document_command (const char *comname, int from_tty)
+do_document_command (const char *comname, int from_tty,
+                     const counted_command_line *commands)
 {
-  struct cmd_list_element *c, **list;
-  const char *tem;
+  struct cmd_list_element *alias, *prefix_cmd, *c;
   const char *comfull;
 
   comfull = comname;
-  list = validate_comname (&comname);
+  validate_comname (&comname);
 
-  tem = comname;
-  c = lookup_cmd (&tem, *list, "", NULL, 0, 1);
+  lookup_cmd_composition (comfull, &alias, &prefix_cmd, &c);
+  if (c == nullptr)
+    error (_("Undefined command: \"%s\"."), comfull);
 
-  if (c->theclass != class_user)
-    error (_("Command \"%s\" is built-in."), comfull);
+  if (c->theclass != class_user
+      && (alias == nullptr || alias->theclass != class_alias))
+    {
+      if (alias == nullptr)
+	error (_("Command \"%s\" is built-in."), comfull);
+      else
+	error (_("Alias \"%s\" is built-in."), comfull);
+    }
 
-  std::string prompt = string_printf ("Type documentation for \"%s\".",
-				      comfull);
-  counted_command_line doclines = read_command_lines (prompt.c_str (),
-						      from_tty, 0, 0);
+  /* If we found an alias of class_alias, the user is documenting this
+     user-defined alias.  */
+  if (alias != nullptr)
+    c = alias;
 
-  xfree ((char *) c->doc);
+  counted_command_line doclines;
+
+  if (commands == nullptr)
+    {
+      std::string prompt
+        = string_printf ("Type documentation for \"%s\".", comfull);
+      doclines = read_command_lines (prompt.c_str (), from_tty, 0, 0);
+    }
+  else
+    doclines = *commands;
+
+  if (c->doc_allocated)
+    xfree ((char *) c->doc);
 
   {
     struct command_line *cl1;
@@ -1549,7 +1568,14 @@ document_command (const char *comname, int from_tty)
       }
 
     c->doc = doc;
+    c->doc_allocated = 1;
   }
+}
+
+static void
+document_command (const char *comname, int from_tty)
+{
+  do_document_command (comname, from_tty, nullptr);
 }
 
 /* Implementation of the "define-prefix" command.  */
@@ -1558,22 +1584,17 @@ static void
 define_prefix_command (const char *comname, int from_tty)
 {
   struct cmd_list_element *c, **list;
-  const char *tem;
   const char *comfull;
 
   comfull = comname;
   list = validate_comname (&comname);
 
-  /* Look it up, and verify that we got an exact match.  */
-  tem = comname;
-  c = lookup_cmd (&tem, *list, "", NULL, -1, 1);
-  if (c != nullptr && strcmp (comname, c->name) != 0)
-    c = nullptr;
+  c = lookup_cmd_exact (comname, *list);
 
   if (c != nullptr && c->theclass != class_user)
     error (_("Command \"%s\" is built-in."), comfull);
 
-  if (c != nullptr && c->prefixlist != nullptr)
+  if (c != nullptr && c->is_prefix ())
     {
       /* c is already a user defined prefix command.  */
       return;
@@ -1587,11 +1608,10 @@ define_prefix_command (const char *comname, int from_tty)
 		   xstrdup ("User-defined."), list);
     }
 
-  /* Allocate the c->prefixlist, which marks the command as a prefix
+  /* Allocate the c->subcommands, which marks the command as a prefix
      command.  */
-  c->prefixlist = new struct cmd_list_element*;
-  *(c->prefixlist) = nullptr;
-  c->prefixname = xstrprintf ("%s ", comfull);
+  c->subcommands = new struct cmd_list_element*;
+  *(c->subcommands) = nullptr;
   /* If the prefix command C is not a command, then it must be followed
      by known subcommands.  Otherwise, if C is also a normal command,
      it can be followed by C args that must not cause a 'subcommand'
@@ -1606,7 +1626,7 @@ void
 script_from_file (FILE *stream, const char *file)
 {
   if (stream == NULL)
-    internal_error (__FILE__, __LINE__, _("called with NULL file pointer!"));
+    internal_error (_("called with NULL file pointer!"));
 
   scoped_restore restore_line_number
     = make_scoped_restore (&source_line_number, 0);
@@ -1643,25 +1663,25 @@ show_user_1 (struct cmd_list_element *c, const char *prefix, const char *name,
     {
       struct command_line *cmdlines = c->user_commands.get ();
 
-      fprintf_filtered (stream, "User %scommand \"",
-			c->prefixlist == NULL ? "" : "prefix ");
+      gdb_printf (stream, "User %scommand \"",
+		  c->is_prefix () ? "prefix" : "");
       fprintf_styled (stream, title_style.style (), "%s%s",
 		      prefix, name);
-      fprintf_filtered (stream, "\":\n");
+      gdb_printf (stream, "\":\n");
       if (cmdlines)
 	{
 	  print_command_lines (current_uiout, cmdlines, 1);
-	  fputs_filtered ("\n", stream);
+	  gdb_puts ("\n", stream);
 	}
     }
 
-  if (c->prefixlist != NULL)
+  if (c->is_prefix ())
     {
-      const char *prefixname = c->prefixname;
+      const std::string prefixname = c->prefixname ();
 
-      for (c = *c->prefixlist; c != NULL; c = c->next)
-	if (c->theclass == class_user || c->prefixlist != NULL)
-	  show_user_1 (c, prefixname, c->name, gdb_stdout);
+      for (c = *c->subcommands; c != NULL; c = c->next)
+	if (c->theclass == class_user || c->is_prefix ())
+	  show_user_1 (c, prefixname.c_str (), c->name, gdb_stdout);
     }
 
 }
@@ -1675,11 +1695,12 @@ _initialize_cli_script ()
   /* "document", "define" and "define-prefix" use command_completer,
      as this helps the user to either type the command name and/or
      its prefixes.  */
-  c = add_com ("document", class_support, document_command, _("\
-Document a user-defined command.\n\
-Give command name as argument.  Give documentation on following lines.\n\
+  document_cmd_element = add_com ("document", class_support, document_command,
+                                  _("\
+Document a user-defined command or user-defined alias.\n\
+Give command or alias name as argument.  Give documentation on following lines.\n\
 End with a line of just \"end\"."));
-  set_cmd_completer (c, command_completer);
+  set_cmd_completer (document_cmd_element, command_completer);
   define_cmd_element = add_com ("define", class_support, define_command, _("\
 Define a new command name.  Command name is argument.\n\
 Definition appears on following lines, one command per line.\n\

@@ -1,19 +1,19 @@
 /* A substitute for ISO C99 <wctype.h>, for platforms that lack it.
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3, or (at your option)
-   any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, see <https://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Written by Bruno Haible and Paul Eggert.  */
 
@@ -45,14 +45,7 @@
 #ifndef _@GUARD_PREFIX@_WCTYPE_H
 
 #if @HAVE_WINT_T@
-/* Solaris 2.5 has a bug: <wchar.h> must be included before <wctype.h>.
-   Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
-   <wchar.h>.
-   BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
-   included before <wchar.h>.  */
-# include <stddef.h>
-# include <stdio.h>
-# include <time.h>
+/* Solaris 2.5 has a bug: <wchar.h> must be included before <wctype.h>.  */
 # include <wchar.h>
 #endif
 
@@ -110,7 +103,7 @@ _GL_INLINE_HEADER_BEGIN
 /* mingw and MSVC define wint_t as 'unsigned short' in <crtdefs.h> or
    <stddef.h>.  This is too small: ISO C 99 section 7.24.1.(2) says that
    wint_t must be "unchanged by default argument promotions".  Override it.  */
-# if @GNULIB_OVERRIDES_WINT_T@
+# if @GNULIBHEADERS_OVERRIDE_WINT_T@
 #  if !GNULIB_defined_wint_t
 #   if @HAVE_CRTDEFS_H@
 #    include <crtdefs.h>
@@ -139,7 +132,7 @@ typedef unsigned int rpl_wint_t;
    same way, or not at all.  */
 # if ! @HAVE_ISWCNTRL@ || @REPLACE_ISWCNTRL@
 
-#  if @GNULIB_OVERRIDES_WINT_T@ /* implies @REPLACE_ISWCNTRL@ */
+#  if @GNULIBHEADERS_OVERRIDE_WINT_T@ /* implies @REPLACE_ISWCNTRL@ */
 
 _GL_WCTYPE_INLINE int
 rpl_iswalnum (wint_t wc)
@@ -503,7 +496,7 @@ _GL_FUNCDECL_RPL (iswxdigit, int, (wint_t wc));
 
 # endif
 
-# if defined __MINGW32__ && !@GNULIB_OVERRIDES_WINT_T@
+# if defined __MINGW32__ && !@GNULIBHEADERS_OVERRIDE_WINT_T@
 
 /* On native Windows, wchar_t is uint16_t, and wint_t is uint32_t.
    The functions towlower and towupper are implemented in the MSVCRT library
@@ -536,7 +529,7 @@ rpl_towupper (wint_t wc)
 #   define towupper rpl_towupper
 #  endif
 
-# endif /* __MINGW32__ && !@GNULIB_OVERRIDES_WINT_T@ */
+# endif /* __MINGW32__ && !@GNULIBHEADERS_OVERRIDE_WINT_T@ */
 
 # define GNULIB_defined_wctype_functions 1
 #endif
@@ -653,7 +646,7 @@ _GL_WARN_ON_USE (wctype, "wctype is unportable - "
    The argument WC must be either a wchar_t value or WEOF.
    The argument DESC must have been returned by the wctype() function.  */
 #if @GNULIB_ISWCTYPE@
-# if @GNULIB_OVERRIDES_WINT_T@
+# if @GNULIBHEADERS_OVERRIDE_WINT_T@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef iswctype
 #   define iswctype rpl_iswctype

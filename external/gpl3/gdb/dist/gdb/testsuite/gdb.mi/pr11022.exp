@@ -1,4 +1,4 @@
-# Copyright 2009-2020 Free Software Foundation, Inc.
+# Copyright 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,12 +29,10 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 
 proc test_memory_changed_observer { mi_command } {
     with_test_prefix "${mi_command}" {
-	global srcfile
+	global srcfile binfile
 
-	if [mi_gdb_start] {
-	    return
-	}
-	mi_run_to_main
+	mi_clean_restart $binfile
+	mi_runto_main
 
 	set line_number [gdb_get_line_number "break here"]
 	mi_gdb_test "-break-insert ${srcfile}:${line_number}" \

@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -183,6 +183,16 @@ save_vars { env(TERM) } {
 	    }
 	}
 
+	# Use the up arrow to select a previous command.  Check that
+	# no unexpected output is added between the previously
+	# selected command, and the output of that command.
+	gdb_test "print 123" "\\\$\[0-9\]* = 123"
+	gdb_test_multiple "\033\[A" "use up arrow" {
+	    -re -wrap "print 123\r\n\\\$\[0-9\]* = 123" {
+		pass $gdb_test_name
+	    }
+	}
+
 	# Now repeat the first test with a history file that fills the entire
 	# history list.
 
@@ -193,7 +203,7 @@ save_vars { env(TERM) } {
 	gdb_start
 	gdb_reinitialize_dir $srcdir/$subdir
 
-	operate_and_get_next "Simple operate-and-get-next" \
+	operate_and_get_next "Simple operate-and-get-next, two" \
 	    "p 7" ".* = 7" \
 	    "p 8" ".* = 8" \
 	    "p 9" ".* = 9"

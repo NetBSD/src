@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,9 +24,23 @@ if {[prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug f90}]} {
     return -1
 }
 
-if {![runto [gdb_get_line_number "post_init"]]} then {
-    perror "couldn't run to breakpoint post_init"
-    continue
+with_complaints 5 {
+    set cmd "maint expand-symtabs $srcfile"
+    set cmd_regexp [string_to_regexp $cmd]
+    set re_kfail [concat "During symbol reading:" \
+		      " unable to find array range"]
+    gdb_test_multiple $cmd "no complaints in srcfile" {
+	-re -wrap "$re_kfail.*" {
+	    kfail symtab/27388 $gdb_test_name
+	}
+        -re "^$cmd_regexp\r\n$gdb_prompt $" {
+	    pass $gdb_test_name
+	}
+    }
+}
+
+if {![runto [gdb_get_line_number "post_init"]]} {
+    return
 }
 
 # Use inspired by gdb.base/callfuncs.exp.

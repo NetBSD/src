@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,9 +27,7 @@ if { [prepare_for_testing "failed to prepare" "${testfile}" \
     return -1
 }
 
-if { [ensure_gdb_index $binfile] == -1 } {
-    return -1
-}
+require {ensure_gdb_index $binfile} != -1
 
 # Ok, we have a copy of $binfile with an index.
 # Restart gdb and verify the index was used.

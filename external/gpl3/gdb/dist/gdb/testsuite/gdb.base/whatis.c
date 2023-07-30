@@ -1,6 +1,6 @@
 /* This test program is part of GDB, the GNU debugger.
 
-   Copyright 1992-2020 Free Software Foundation, Inc.
+   Copyright 1992-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -207,7 +207,7 @@ double		v_double_func () { return (0.0); }
 struct link {
 	struct link *next;
 #ifdef __STDC__
-	struct link *(*linkfunc) (struct link *this, int flags);
+	struct link *(*linkfunc) (struct link *self, int flags);
 #else
 	struct link *(*linkfunc) ();
 #endif
@@ -217,7 +217,7 @@ struct link {
 union tu_link {
 	struct link *next;
 #ifdef __STDC__
-	struct link *(*linkfunc) (struct link *this, int flags);
+	struct link *(*linkfunc) (struct link *self, int flags);
 #else
 	struct link *(*linkfunc) ();
 #endif

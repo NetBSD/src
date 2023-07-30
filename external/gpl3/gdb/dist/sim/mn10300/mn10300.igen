@@ -21,7 +21,7 @@
 *am33_2
 {
   /*  OP_8000 (); */
-  signed32 immed = EXTEND8 (IMM8);
+  int32_t immed = EXTEND8 (IMM8);
   State.regs[REG_D0+DN0] = immed;
   PC = cia;
 }
@@ -776,7 +776,7 @@
 
 {
   /* OP_2C0000 (); */
-  unsigned32 value;
+  uint32_t value;
 
   PC = cia;
   value = EXTEND16 (FETCH16(IMM16A, IMM16B));
@@ -794,7 +794,7 @@
 
 {
   /* OP_FCCC0000 (); */
-  unsigned32 value;
+  uint32_t value;
 
   PC = cia;
   value = FETCH32(IMM32A, IMM32B, IMM32C, IMM32D);
@@ -812,7 +812,7 @@
 
 {
   /* OP_240000 (); */
-  unsigned32 value;
+  uint32_t value;
 
   PC = cia;
   value = FETCH16(IMM16A, IMM16B);
@@ -1734,7 +1734,7 @@
 
 {
   /* OP_F8FE00 (); */
-  unsigned32 imm;
+  uint32_t imm;
 
   /* Note: no PSW changes. */
   PC = cia;
@@ -1753,7 +1753,7 @@
 
 {
   /* OP_FAFE0000 (); */
-  unsigned32 imm;
+  uint32_t imm;
 
   /* Note: no PSW changes. */
   PC = cia;
@@ -1772,7 +1772,7 @@
 
 {
   /* OP_FCFE0000 (); */
-  unsigned32 imm;
+  uint32_t imm;
 
   /* Note: no PSW changes. */
   PC = cia;
@@ -1792,7 +1792,7 @@
 {
   /* OP_F140 (); */
   int z, c, n, v;
-  unsigned32 reg1, reg2, sum;
+  uint32_t reg1, reg2, sum;
 
   PC = cia;
   reg1 = State.regs[REG_D0 + DM1];
@@ -1912,7 +1912,7 @@
 {
   /* OP_F180 (); */
   int z, c, n, v;
-  unsigned32 reg1, reg2, difference;
+  uint32_t reg1, reg2, difference;
 
   PC = cia;
   reg1 = State.regs[REG_D0 + DM1];
@@ -1942,12 +1942,12 @@
 
 {
   /* OP_F240 (); */
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
-  temp = ((signed64)(signed32)State.regs[REG_D0 + DN0]
-          *  (signed64)(signed32)State.regs[REG_D0 + DM1]);
+  temp = ((int64_t)(int32_t)State.regs[REG_D0 + DN0]
+          *  (int64_t)(int32_t)State.regs[REG_D0 + DM1]);
   State.regs[REG_D0 + DN0] = temp & 0xffffffff;
   State.regs[REG_MDR] = (temp & 0xffffffff00000000LL) >> 32;;
   z = (State.regs[REG_D0 + DN0] == 0);
@@ -1967,12 +1967,12 @@
 
 {
   /* OP_F250 (); */
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
-  temp = ((unsigned64)State.regs[REG_D0 + DN0]
-          * (unsigned64)State.regs[REG_D0 + DM1]);
+  temp = ((uint64_t)State.regs[REG_D0 + DN0]
+          * (uint64_t)State.regs[REG_D0 + DM1]);
   State.regs[REG_D0 + DN0] = temp & 0xffffffff;
   State.regs[REG_MDR] = (temp & 0xffffffff00000000LL) >> 32;
   z = (State.regs[REG_D0 + DN0] == 0);
@@ -1992,20 +1992,20 @@
 
 {
   /* OP_F260 (); */
-  signed64 temp;
-  signed32 denom;
+  int64_t temp;
+  int32_t denom;
   int n, z, v;
 
   PC = cia;
-  denom = (signed32)State.regs[REG_D0 + DM1];
+  denom = (int32_t)State.regs[REG_D0 + DM1];
 
   temp = State.regs[REG_MDR];
   temp <<= 32;
   temp |= State.regs[REG_D0 + DN0];
   if ( !(v = (0 == denom)) )
     {
-      State.regs[REG_MDR] = temp % (signed32)State.regs[REG_D0 + DM1];
-      temp /= (signed32)State.regs[REG_D0 + DM1];
+      State.regs[REG_MDR] = temp % (int32_t)State.regs[REG_D0 + DM1];
+      temp /= (int32_t)State.regs[REG_D0 + DM1];
       State.regs[REG_D0 + DN0] = temp & 0xffffffff;
     }
   else
@@ -2030,12 +2030,12 @@
 
 {
   /* OP_F270 (); */
-  unsigned64 temp;
-  unsigned32 denom;
+  uint64_t temp;
+  uint32_t denom;
   int n, z, v;
 
   PC = cia;
-  denom = (unsigned32)State.regs[REG_D0 + DM1];
+  denom = (uint32_t)State.regs[REG_D0 + DM1];
   temp = State.regs[REG_MDR];
   temp <<= 32;
   temp |= State.regs[REG_D0 + DN0];
@@ -2067,7 +2067,7 @@
 
 {
   /* OP_40 (); */
-  unsigned32 imm;
+  uint32_t imm;
 
   PC = cia;
   imm = 1;
@@ -2591,7 +2591,7 @@
 
 {
   /* OP_F080 (); */
-  unsigned32 temp;
+  uint32_t temp;
   int z;
 
   PC = cia;
@@ -2615,7 +2615,7 @@
 
 {
   /* OP_FE000000 (); */
-  unsigned32 temp;
+  uint32_t temp;
   int z;
 
   PC = cia;
@@ -2639,7 +2639,7 @@
 
 {
   /* OP_FAF00000 (); */
-  unsigned32 temp;
+  uint32_t temp;
   int z;
 
   PC = cia;
@@ -2662,7 +2662,7 @@
 
 {
   /* OP_F090 (); */
-  unsigned32 temp;
+  uint32_t temp;
   int z;
 
   PC = cia;
@@ -2686,7 +2686,7 @@
 
 {
   /* OP_FE010000 (); */
-  unsigned32 temp;
+  uint32_t temp;
   int z;
 
   PC = cia;
@@ -2710,7 +2710,7 @@
 
 {
   /* OP_FAF40000 (); */
-  unsigned32 temp;
+  uint32_t temp;
   int z;
 
   PC = cia;
@@ -2733,7 +2733,7 @@
 
 {
   /* OP_F2B0 (); */
-  signed32 temp;
+  int32_t temp;
   int z, n, c;
 
   PC = cia;
@@ -2758,7 +2758,7 @@
 
 {
   /* OP_F8C800 (); */
-  signed32 temp;
+  int32_t temp;
   int z, n, c;
 
   PC = cia;
@@ -2892,7 +2892,7 @@
 
 {
   /* OP_F284 (); */
-  unsigned32 value;
+  uint32_t value;
   int c,n,z;
 
   PC = cia;
@@ -2919,7 +2919,7 @@
 
 {
   /* OP_F280 (); */
-  unsigned32 value;
+  uint32_t value;
   int c,n,z;
 
   PC = cia;
@@ -3499,7 +3499,7 @@
 
 {
   /* OP_F0F0 (); */
-  unsigned32 next_pc, sp;
+  uint32_t next_pc, sp;
 
   PC = cia;
   sp = State.regs[REG_SP];
@@ -3521,7 +3521,7 @@
 
 {
   /* OP_FAFF0000 (); */
-  unsigned32 next_pc, sp;
+  uint32_t next_pc, sp;
 
   PC = cia;
   sp = State.regs[REG_SP];
@@ -3543,7 +3543,7 @@
 
 {
   /* OP_FCFF0000 (); */
-  unsigned32 next_pc, sp;
+  uint32_t next_pc, sp;
 
   PC = cia;
   sp = State.regs[REG_SP];
@@ -3565,7 +3565,7 @@
 
 {
   /* OP_F0FC (); */
-  unsigned32 sp;
+  uint32_t sp;
 
   sp = State.regs[REG_SP];
   State.regs[REG_PC] = load_word(sp);
@@ -3583,7 +3583,7 @@
 
 {
   /* OP_F0FD (); */
-  unsigned32 sp;
+  uint32_t sp;
 
   sp = State.regs[REG_SP];
   PSW = load_half(sp);
@@ -3603,7 +3603,7 @@
 
 {
   /* OP_F0FE (); */
-  unsigned32 sp, next_pc;
+  uint32_t sp, next_pc;
 
   PC = cia;
   sp = State.regs[REG_SP];
@@ -3624,7 +3624,7 @@
 {
   /* OP_F0FF (); */
   PC = cia;
-  abort ();
+  sim_engine_abort (SD, CPU, cia, "F0FF");
 }
 
 
@@ -3685,12 +3685,12 @@
 
 {
   /* OP_F600 (); */
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
-  temp = ((signed64)(signed32)State.regs[REG_D0 + DN0]
-          *  (signed64)(signed32)State.regs[REG_D0 + DM1]);
+  temp = ((int64_t)(int32_t)State.regs[REG_D0 + DN0]
+          *  (int64_t)(int32_t)State.regs[REG_D0 + DM1]);
   State.regs[REG_D0 + DN0] = temp & 0xffffffff;
   State.regs[REG_MDRQ] = (temp & 0xffffffff00000000LL) >> 32;;
   z = (State.regs[REG_D0 + DN0] == 0);
@@ -3710,12 +3710,12 @@
 
 {
   /* OP_F90000 (); */
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
-  temp = ((signed64)(signed32)State.regs[REG_D0 + DN0]
-          * (signed64)(signed32)EXTEND8 (IMM8));
+  temp = ((int64_t)(int32_t)State.regs[REG_D0 + DN0]
+          * (int64_t)(int32_t)EXTEND8 (IMM8));
   State.regs[REG_D0 + DN0] = temp & 0xffffffff;
   State.regs[REG_MDRQ] = (temp & 0xffffffff00000000LL) >> 32;;
   z = (State.regs[REG_D0 + DN0] == 0);
@@ -3735,12 +3735,12 @@
 
 {
   /* OP_FB000000 (); */
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
-  temp = ((signed64)(signed32)State.regs[REG_D0 + DN0]
-          * (signed64)(signed32)EXTEND16 (FETCH16(IMM16A, IMM16B)));
+  temp = ((int64_t)(int32_t)State.regs[REG_D0 + DN0]
+          * (int64_t)(int32_t)EXTEND16 (FETCH16(IMM16A, IMM16B)));
   State.regs[REG_D0 + DN0] = temp & 0xffffffff;
   State.regs[REG_MDRQ] = (temp & 0xffffffff00000000LL) >> 32;;
   z = (State.regs[REG_D0 + DN0] == 0);
@@ -3760,12 +3760,12 @@
 
 {
   /* OP_FD000000 (); */
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
-  temp = ((signed64)(signed32)State.regs[REG_D0 + DN0]
-          * (signed64)(signed32)(FETCH32(IMM32A, IMM32B, IMM32C, IMM32D)));
+  temp = ((int64_t)(int32_t)State.regs[REG_D0 + DN0]
+          * (int64_t)(int32_t)(FETCH32(IMM32A, IMM32B, IMM32C, IMM32D)));
   State.regs[REG_D0 + DN0] = temp & 0xffffffff;
   State.regs[REG_MDRQ] = (temp & 0xffffffff00000000LL) >> 32;;
   z = (State.regs[REG_D0 + DN0] == 0);
@@ -3785,12 +3785,12 @@
 
 {
   /* OP_F610 (); */
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
-  temp = ((unsigned64) State.regs[REG_D0 + DN0]
-	  * (unsigned64) State.regs[REG_D0 + DM1]);
+  temp = ((uint64_t) State.regs[REG_D0 + DN0]
+	  * (uint64_t) State.regs[REG_D0 + DM1]);
   State.regs[REG_D0 + DN0] = temp & 0xffffffff;
   State.regs[REG_MDRQ] = (temp & 0xffffffff00000000LL) >> 32;;
   z = (State.regs[REG_D0 + DN0] == 0);
@@ -3810,12 +3810,12 @@
 
 {
   /* OP_F91400 (); */
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
-  temp = ((unsigned64)State.regs[REG_D0 + DN0]
-	  * (unsigned64)EXTEND8 (IMM8));
+  temp = ((uint64_t)State.regs[REG_D0 + DN0]
+	  * (uint64_t)EXTEND8 (IMM8));
   State.regs[REG_D0 + DN0] = temp & 0xffffffff;
   State.regs[REG_MDRQ] = (temp & 0xffffffff00000000LL) >> 32;;
   z = (State.regs[REG_D0 + DN0] == 0);
@@ -3835,12 +3835,12 @@
 
 {
   /* OP_FB140000 (); */
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
-  temp = ((unsigned64)State.regs[REG_D0 + DN0]
-	  * (unsigned64) EXTEND16 (FETCH16(IMM16A, IMM16B)));
+  temp = ((uint64_t)State.regs[REG_D0 + DN0]
+	  * (uint64_t) EXTEND16 (FETCH16(IMM16A, IMM16B)));
   State.regs[REG_D0 + DN0] = temp & 0xffffffff;
   State.regs[REG_MDRQ] = (temp & 0xffffffff00000000LL) >> 32;;
   z = (State.regs[REG_D0 + DN0] == 0);
@@ -3860,12 +3860,12 @@
 
 {
   /* OP_FD140000 (); */
-  unsigned64 temp;
+  uint64_t temp;
   int n, z;
 
   PC = cia;
-  temp = ((unsigned64)State.regs[REG_D0 + DN0]
-          * (unsigned64)(FETCH32(IMM32A, IMM32B, IMM32C, IMM32D)));
+  temp = ((uint64_t)State.regs[REG_D0 + DN0]
+          * (uint64_t)(FETCH32(IMM32A, IMM32B, IMM32C, IMM32D)));
   State.regs[REG_D0 + DN0] = temp & 0xffffffff;
   State.regs[REG_MDRQ] = (temp & 0xffffffff00000000LL) >> 32;;
   z = (State.regs[REG_D0 + DN0] == 0);
@@ -3947,7 +3947,7 @@
 {
   /* OP_F0C0 (); */
   PC = cia;
-  do_syscall ();
+  do_syscall (SD);
 }
 
 
@@ -3975,8 +3975,8 @@
 
 {
   /* OP_CE00 (); */
-  unsigned32 sp = State.regs[REG_SP];
-  unsigned32 mask;
+  uint32_t sp = State.regs[REG_SP];
+  uint32_t mask;
 
   PC = cia;
   mask = REGS;
@@ -4074,8 +4074,8 @@
 
 {
   /* OP_CF00 (); */
-  unsigned32 sp = State.regs[REG_SP];
-  unsigned32 mask;
+  uint32_t sp = State.regs[REG_SP];
+  uint32_t mask;
 
   PC = cia;
   mask = REGS;
@@ -4173,8 +4173,8 @@
 
 {
   /* OP_CD000000 (); */
-  unsigned32 next_pc, sp;
-  unsigned32 mask;
+  uint32_t next_pc, sp;
+  uint32_t mask;
 
   PC = cia;
   sp = State.regs[REG_SP];
@@ -4282,8 +4282,8 @@
 
 {
   /* OP_DD000000 (); */
-  unsigned32 next_pc, sp;
-  unsigned32 mask;
+  uint32_t next_pc, sp;
+  uint32_t mask;
 
   PC = cia;
   sp = State.regs[REG_SP];
@@ -4391,8 +4391,8 @@
 
 {
   /* OP_DF0000 (); */
-  unsigned32 sp, offset;
-  unsigned32 mask;
+  uint32_t sp, offset;
+  uint32_t mask;
 
   PC = cia;
   State.regs[REG_SP] += IMM8;
@@ -4496,8 +4496,8 @@
 
 {
   /* OP_DE0000 (); */
-  unsigned32 sp, offset;
-  unsigned32 mask;
+  uint32_t sp, offset;
+  uint32_t mask;
 
   PC = cia;
   State.regs[REG_SP] += IMM8;
@@ -4590,4 +4590,5 @@
 
 
 :include::am33:am33.igen
+:include::am33-2:am33-2.igen
 

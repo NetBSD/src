@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -187,7 +187,7 @@ mips64_linux_register_addr (struct gdbarch *gdbarch, int regno, int store)
 
 ps_err_e
 ps_get_thread_area (struct ps_prochandle *ph,
-                    lwpid_t lwpid, int idx, void **base)
+		    lwpid_t lwpid, int idx, void **base)
 {
   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
     return PS_ERR;
@@ -508,25 +508,26 @@ mips_show_dr (const char *func, CORE_ADDR addr,
 {
   int i;
 
-  puts_unfiltered (func);
+  gdb_puts (func, gdb_stdlog);
   if (addr || len)
-    printf_unfiltered (" (addr=%s, len=%d, type=%s)",
-		       paddress (target_gdbarch (), addr), len,
-		       type == hw_write ? "data-write"
-		       : (type == hw_read ? "data-read"
-			  : (type == hw_access ? "data-read/write"
-			     : (type == hw_execute ? "instruction-execute"
-				: "??unknown??"))));
-  puts_unfiltered (":\n");
+    gdb_printf (gdb_stdlog,
+		" (addr=%s, len=%d, type=%s)",
+		paddress (target_gdbarch (), addr), len,
+		type == hw_write ? "data-write"
+		: (type == hw_read ? "data-read"
+		   : (type == hw_access ? "data-read/write"
+		      : (type == hw_execute ? "instruction-execute"
+			 : "??unknown??"))));
+  gdb_puts (":\n", gdb_stdlog);
 
   for (i = 0; i < MAX_DEBUG_REGISTER; i++)
-    printf_unfiltered ("\tDR%d: lo=%s, hi=%s\n", i,
-		       paddress (target_gdbarch (),
-				 mips_linux_watch_get_watchlo (&watch_mirror,
-							       i)),
-		       paddress (target_gdbarch (),
-				 mips_linux_watch_get_watchhi (&watch_mirror,
-							       i)));
+    gdb_printf (gdb_stdlog, "\tDR%d: lo=%s, hi=%s\n", i,
+		paddress (target_gdbarch (),
+			  mips_linux_watch_get_watchlo (&watch_mirror,
+							i)),
+		paddress (target_gdbarch (),
+			  mips_linux_watch_get_watchhi (&watch_mirror,
+							i)));
 }
 
 /* Target to_can_use_hw_breakpoint implementation.  Return 1 if we can
@@ -632,12 +633,9 @@ mips_linux_nat_target::region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
 static int
 write_watchpoint_regs (void)
 {
-  struct lwp_info *lp;
-  int tid;
-
-  ALL_LWPS (lp)
+  for (const lwp_info *lp : all_lwps ())
     {
-      tid = lp->ptid.lwp ();
+      int tid = lp->ptid.lwp ();
       if (ptrace (PTRACE_SET_WATCH_REGS, tid, &watch_mirror, NULL) == -1)
 	perror_with_name (_("Couldn't write debug register"));
     }

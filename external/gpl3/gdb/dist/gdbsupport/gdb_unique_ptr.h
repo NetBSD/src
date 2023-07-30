@@ -1,6 +1,6 @@
 /* std::unique_ptr specializations for GDB.
 
-   Copyright (C) 2016-2020 Free Software Foundation, Inc.
+   Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,8 @@
 #define COMMON_GDB_UNIQUE_PTR_H
 
 #include <memory>
+#include <string>
+#include "gdbsupport/gdb-xfree.h"
 
 namespace gdb
 {
@@ -62,6 +64,33 @@ static inline gdb::unique_xmalloc_ptr<char>
 make_unique_xstrdup (const char *str)
 {
   return gdb::unique_xmalloc_ptr<char> (xstrdup (str));
+}
+
+/* Dup the first N characters of STR and return a unique_xmalloc_ptr
+   for the result.  The result is always \0-terminated.  */
+
+static inline gdb::unique_xmalloc_ptr<char>
+make_unique_xstrndup (const char *str, size_t n)
+{
+  return gdb::unique_xmalloc_ptr<char> (xstrndup (str, n));
+}
+
+/* An overload of operator+= fo adding gdb::unique_xmalloc_ptr<char> to a
+   std::string.  */
+
+static inline std::string &
+operator+= (std::string &lhs, const gdb::unique_xmalloc_ptr<char> &rhs)
+{
+  return lhs += rhs.get ();
+}
+
+/* An overload of operator+ for adding gdb::unique_xmalloc_ptr<char> to a
+   std::string.  */
+
+static inline std::string
+operator+ (const std::string &lhs, const gdb::unique_xmalloc_ptr<char> &rhs)
+{
+  return lhs + rhs.get ();
 }
 
 #endif /* COMMON_GDB_UNIQUE_PTR_H */

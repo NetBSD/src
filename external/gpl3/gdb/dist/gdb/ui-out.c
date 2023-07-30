@@ -1,6 +1,6 @@
 /* Output generating routines for GDB.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -212,16 +212,14 @@ class ui_out_table
 void ui_out_table::start_body ()
 {
   if (m_state != state::HEADERS)
-    internal_error (__FILE__, __LINE__,
-		    _("extra table_body call not allowed; there must be only "
+    internal_error (_("extra table_body call not allowed; there must be only "
 		      "one table_body after a table_begin and before a "
 		      "table_end."));
 
   /* Check if the number of defined headers matches the number of expected
      columns.  */
   if (m_headers.size () != m_nr_cols)
-    internal_error (__FILE__, __LINE__,
-		    _("number of headers differ from number of table "
+    internal_error (_("number of headers differ from number of table "
 		      "columns."));
 
   m_state = state::BODY;
@@ -235,8 +233,7 @@ void ui_out_table::append_header (int width, ui_align alignment,
 				  const std::string &col_hdr)
 {
   if (m_state != state::HEADERS)
-    internal_error (__FILE__, __LINE__,
-		    _("table header must be specified after table_begin and "
+    internal_error (_("table header must be specified after table_begin and "
 		      "before table_body."));
 
   std::unique_ptr<ui_out_hdr> header (new ui_out_hdr (m_headers.size () + 1,
@@ -354,8 +351,7 @@ void
 ui_out::table_begin (int nr_cols, int nr_rows, const std::string &tblid)
 {
   if (m_table_up != nullptr)
-    internal_error (__FILE__, __LINE__,
-		    _("tables cannot be nested; table_begin found before \
+    internal_error (_("tables cannot be nested; table_begin found before \
 previous table_end."));
 
   m_table_up.reset (new ui_out_table (level () + 1, nr_cols, tblid));
@@ -368,8 +364,7 @@ ui_out::table_header (int width, ui_align alignment,
 		      const std::string &col_name, const std::string &col_hdr)
 {
   if (m_table_up == nullptr)
-    internal_error (__FILE__, __LINE__,
-		    _("table_header outside a table is not valid; it must be \
+    internal_error (_("table_header outside a table is not valid; it must be \
 after a table_begin and before a table_body."));
 
   m_table_up->append_header (width, alignment, col_name, col_hdr);
@@ -381,8 +376,7 @@ void
 ui_out::table_body ()
 {
   if (m_table_up == nullptr)
-    internal_error (__FILE__, __LINE__,
-		    _("table_body outside a table is not valid; it must be "
+    internal_error (_("table_body outside a table is not valid; it must be "
 		      "after a table_begin and before a table_end."));
 
   m_table_up->start_body ();
@@ -394,8 +388,7 @@ void
 ui_out::table_end ()
 {
   if (m_table_up == nullptr)
-    internal_error (__FILE__, __LINE__,
-		    _("misplaced table_end or missing table_begin."));
+    internal_error (_("misplaced table_end or missing table_begin."));
 
   do_table_end ();
 
@@ -527,12 +520,6 @@ ui_out::field_string (const char *fldname, const char *string,
   do_field_string (fldno, width, align, fldname, string, style);
 }
 
-void
-ui_out::field_string (const char *fldname, const std::string &string)
-{
-  field_string (fldname, string.c_str ());
-}
-
 /* VARARGS */
 void
 ui_out::field_fmt (const char *fldname, const char *format, ...)
@@ -644,10 +631,10 @@ ui_out::vmessage (const ui_file_style &in_style, const char *format,
 	  }
 	  break;
 	case wide_string_arg:
-	  gdb_assert_not_reached (_("wide_string_arg not supported in vmessage"));
+	  gdb_assert_not_reached ("wide_string_arg not supported in vmessage");
 	  break;
 	case wide_char_arg:
-	  gdb_assert_not_reached (_("wide_char_arg not supported in vmessage"));
+	  gdb_assert_not_reached ("wide_char_arg not supported in vmessage");
 	  break;
 	case long_long_arg:
 	  call_do_message (style, current_substring, va_arg (args, long long));
@@ -710,16 +697,16 @@ ui_out::vmessage (const ui_file_style &in_style, const char *format,
 	  call_do_message (style, current_substring, va_arg (args, double));
 	  break;
 	case long_double_arg:
-	  gdb_assert_not_reached (_("long_double_arg not supported in vmessage"));
+	  gdb_assert_not_reached ("long_double_arg not supported in vmessage");
 	  break;
 	case dec32float_arg:
-	  gdb_assert_not_reached (_("dec32float_arg not supported in vmessage"));
+	  gdb_assert_not_reached ("dec32float_arg not supported in vmessage");
 	  break;
 	case dec64float_arg:
-	  gdb_assert_not_reached (_("dec64float_arg not supported in vmessage"));
+	  gdb_assert_not_reached ("dec64float_arg not supported in vmessage");
 	  break;
 	case dec128float_arg:
-	  gdb_assert_not_reached (_("dec128float_arg not supported in vmessage"));
+	  gdb_assert_not_reached ("dec128float_arg not supported in vmessage");
 	  break;
 	case ptr_arg:
 	  switch (current_substring[2])
@@ -778,8 +765,7 @@ ui_out::vmessage (const ui_file_style &in_style, const char *format,
 	  call_do_message (style, current_substring, 0);
 	  break;
 	default:
-	  internal_error (__FILE__, __LINE__,
-			  _("failed internal consistency check"));
+	  internal_error (_("failed internal consistency check"));
 	}
     }
 }
@@ -796,9 +782,9 @@ ui_out::message (const char *format, ...)
 }
 
 void
-ui_out::wrap_hint (const char *identstring)
+ui_out::wrap_hint (int indent)
 {
-  do_wrap_hint (identstring);
+  do_wrap_hint (indent);
 }
 
 void
@@ -839,8 +825,7 @@ ui_out::verify_field (int *fldno, int *width, ui_align *align)
   if (m_table_up != nullptr
       && m_table_up->current_state () != ui_out_table::state::BODY)
     {
-      internal_error (__FILE__, __LINE__,
-		      _("table_body missing; table fields must be \
+      internal_error (_("table_body missing; table fields must be \
 specified after table_body and inside a list."));
     }
 
@@ -852,8 +837,7 @@ specified after table_body and inside a list."));
       && m_table_up->get_next_header (fldno, width, align, &text))
     {
       if (*fldno != current->field_count ())
-	internal_error (__FILE__, __LINE__,
-			_("ui-out internal error in handling headers."));
+	internal_error (_("ui-out internal error in handling headers."));
     }
   else
     {

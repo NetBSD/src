@@ -1,4 +1,4 @@
-# Copyright 2006-2020 Free Software Foundation, Inc.
+# Copyright 2006-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ gdb_test_no_output "unset substitute-path" \
 
 gdb_test "unset substitute-path from" \
          "No substitution rule defined for `from'" \
-         "unset substitute-path from, no rule entered yet"
+         "unset substitute-path from, after unset substitute-path"
 
 gdb_test "unset substitute-path from to" \
          "Incorrect usage, too many arguments in command" \

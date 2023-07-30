@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2020 Free Software Foundation, Inc.
+   Copyright 2012-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ static pthread_barrier_t barrier;
 static void *
 thread_start (void *arg)
 {
+  pthread_barrier_wait (&barrier);
+  pthread_barrier_wait (&barrier);
   pthread_barrier_wait (&barrier);
 
   while (1)
@@ -59,6 +61,11 @@ main (int argc, char ** argv)
 
   pthread_barrier_wait (&barrier);
   all_started ();
+
+  /* Avoid races with GDB ptrace-resuming the threads and the exec: ensure
+     both threads were resumed by GDB before going into the exec.  */
+  pthread_barrier_wait (&barrier);
+  pthread_barrier_wait (&barrier);
 
   execl (prog,
          prog,

@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,14 +25,16 @@ if [use_gdb_stub] {
     return 0
 }
 
-if { [prepare_for_testing "failed to prepare" ${testfile} $srcfile] } {
-    return -1
+save_vars { GDBFLAGS } {
+    set GDBFLAGS "$GDBFLAGS -ex \"set non-stop on\""
+    if { [prepare_for_testing "failed to prepare" ${testfile} $srcfile] } {
+	return -1
+    }
 }
 
 set gdbindex_warning_re "warning: Skipping \[^\r\n\]+ \\.gdb_index section \[^\r\n\]*\r\nDo \"set use-deprecated-index-sections on\" before the file is read\r\nto use the section anyway\\."
 
-gdb_test_no_output "set non-stop on"
-gdb_test "run &" "Starting program: \[^\r\n\]*(\r\n$gdbindex_warning_re)?"
+gdb_test -no-prompt-anchor "run &" "Starting program: \[^\r\n\]*(\r\n$gdbindex_warning_re)?"
 
 # `sleep 5' here would workaround the bug, do not sleep here.
 # "shell" could eat waitpid event from the asynchronous inferior process.

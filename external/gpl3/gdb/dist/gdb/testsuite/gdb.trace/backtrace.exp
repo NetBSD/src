@@ -1,4 +1,4 @@
-#   Copyright 1998-2020 Free Software Foundation, Inc.
+#   Copyright 1998-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,11 +32,10 @@ if [prepare_for_testing "failed to prepare" $executable $srcfile \
 }
 
 if ![runto_main] {
-    fail "can't run to main to check for trace support"
     return -1
 }
 
-if { ![gdb_target_supports_trace] } then {
+if {![gdb_target_supports_trace]} {
     unsupported "current target does not support trace"
     return 1
 
@@ -107,7 +106,7 @@ all tests in this module will fail."
     }
 }
 
-if { $return_me == 1 } then {
+if {$return_me == 1} {
     return -1
 }
 
@@ -264,86 +263,86 @@ gdb_tfind_test "init: make sure not debugging any trace frame" "none" "-1"
 
 gdb_tfind_test "8.6: find start frame" "start" "0"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp2:" ""
+	"TDP $tdp2:" "printf TDP start"
 gdb_backtrace_tdp_1 "8.6: Backtrace, depth == 1, collect nothing"
 
 gdb_tfind_test "8.6: find frame 1"     "1" "1"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp3:" ""
+	"TDP $tdp3:" "printf TDP frame 1"
 gdb_backtrace_tdp_2 "8.6: Backtrace, depth == 1, collect regs"
 
 gdb_tfind_test "8.6: find frame 2"     "2" "2"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp4:" ""
+	"TDP $tdp4:" "printf TDP frame 2"
 gdb_backtrace_tdp_3 "8.6: Backtrace, depth == 1, collect args and locals"
 
 
 gdb_tfind_test "8.6: find frame 4"     "4" "4"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp6:" ""
+	"TDP $tdp6:" "printf TDP frame 4"
 gdb_backtrace_tdp_4 "8.6: Backtrace, depth == 1, collect stack mem expr" "0" 4
 
 gdb_tfind_test "8.6: find frame 5"     "5" "5"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp2:" ""
+	"TDP $tdp2:" "printf TDP frame 5"
 gdb_backtrace_tdp_1 "8.6: Backtrace, depth == 2, collect nothing"
 
 gdb_tfind_test "8.6: find frame 6"     "6" "6"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp3:" ""
+	"TDP $tdp3:" "printf TDP frame 6"
 gdb_backtrace_tdp_2 "8.6: Backtrace, depth == 2, collect regs"
 
 gdb_tfind_test "8.6: find frame 7"     "7" "7"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp4:" ""
+	"TDP $tdp4:" "printf TDP frame 7"
 gdb_backtrace_tdp_3 "8.6: Backtrace, depth == 2, collect args and locals"
 
 
 gdb_tfind_test "8.6: find frame 9"     "9" "9"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp6:" ""
+	"TDP $tdp6:" "printf TDP frame 9"
 gdb_backtrace_tdp_4 "8.6: Backtrace, depth == 1, collect stack mem expr" "0" 9
 
 gdb_tfind_test "8.6: find frame 10"    "10" "10"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp2:" ""
+	"TDP $tdp2:" "printf TDP frame 10"
 gdb_backtrace_tdp_1 "8.6: Backtrace, depth == 3, collect nothing"
 
 gdb_tfind_test "8.6: find frame 11"    "11" "11"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp3:" ""
+	"TDP $tdp3:" "printf TDP frame 11"
 gdb_backtrace_tdp_2 "8.6: Backtrace, depth == 3, collect regs"
 
 gdb_tfind_test "8.6: find frame 12"    "12" "12"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp4:" ""
+	"TDP $tdp4:" "printf TDP frame 12"
 gdb_backtrace_tdp_3 "8.6: Backtrace, depth == 3, collect args and locals"
 
 
 gdb_tfind_test "8.6: find frame 14"    "14" "14"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp6:" ""
+	"TDP $tdp6:" "printf TDP frame 14"
 gdb_backtrace_tdp_4 "8.6: Backtrace, depth == 1, collect stack mem expr" "0" 14
 
 gdb_tfind_test "8.6: find frame 15"    "15" "15"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp2:" ""
+	"TDP $tdp2:" "printf TDP frame 15"
 gdb_backtrace_tdp_1 "8.6: Backtrace, depth == 4, collect nothing"
 
 gdb_tfind_test "8.6: find frame 16"    "16" "16"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp3:" ""
+	"TDP $tdp3:" "printf TDP frame 16"
 gdb_backtrace_tdp_2 "8.6: Backtrace, depth == 4, collect regs"
 
 gdb_tfind_test "8.6: find frame 17"    "17" "17"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp4:" ""
+	"TDP $tdp4:" "printf TDP frame 17"
 gdb_backtrace_tdp_3 "8.6: Backtrace, depth == 4, collect args and locals"
 
 
 gdb_tfind_test "8.6: find frame 19"    "19" "19"
 gdb_test "printf \"TDP \%d:\\n\", \$tracepoint" \
-	"TDP $tdp6:" ""
+	"TDP $tdp6:" "printf TDP frame 19"
 gdb_backtrace_tdp_4 "8.6: Backtrace, depth == 1, collect stack mem expr" "0" 19
 
 gdb_test "printf \"x \%d x\\n\", depth == 3" \
@@ -351,4 +350,4 @@ gdb_test "printf \"x \%d x\\n\", depth == 3" \
 	"1.13: trace in recursion: depth not equal to 3"
 
 # Finished!
-gdb_test "tfind none" ".*" ""
+gdb_test "tfind none" ".*"
