@@ -1,5 +1,5 @@
 /* Default target hook functions.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -88,6 +88,7 @@ extern bool default_fixed_point_supported_p (void);
 extern bool default_has_ifunc_p (void);
 
 extern bool default_predict_doloop_p (class loop *);
+extern machine_mode default_preferred_doloop_mode (machine_mode);
 extern const char * default_invalid_within_doloop (const rtx_insn *);
 
 extern tree default_builtin_vectorized_function (unsigned int, tree, tree);
@@ -117,12 +118,7 @@ extern opt_machine_mode default_vectorize_related_mode (machine_mode,
 							poly_uint64);
 extern opt_machine_mode default_get_mask_mode (machine_mode);
 extern bool default_empty_mask_is_expensive (unsigned);
-extern void *default_init_cost (class loop *);
-extern unsigned default_add_stmt_cost (void *, int, enum vect_cost_for_stmt,
-				       class _stmt_vec_info *, int,
-				       enum vect_cost_model_location);
-extern void default_finish_cost (void *, unsigned *, unsigned *, unsigned *);
-extern void default_destroy_cost_data (void *);
+extern vector_costs *default_vectorize_create_costs (vec_info *, bool);
 
 /* OpenACC hooks.  */
 extern bool default_goacc_validate_dims (tree, int [], int, unsigned);
@@ -148,6 +144,7 @@ extern const char *hook_invalid_arg_for_unprototyped_fn
   (const_tree, const_tree, const_tree);
 extern void default_function_arg_advance
   (cumulative_args_t, const function_arg_info &);
+extern bool default_push_argument (unsigned int);
 extern HOST_WIDE_INT default_function_arg_offset (machine_mode, const_tree);
 extern pad_direction default_function_arg_padding (machine_mode, const_tree);
 extern rtx default_function_arg (cumulative_args_t, const function_arg_info &);
@@ -159,11 +156,13 @@ extern unsigned int default_function_arg_round_boundary (machine_mode,
 							 const_tree);
 extern bool hook_bool_const_rtx_commutative_p (const_rtx, int);
 extern rtx default_function_value (const_tree, const_tree, bool);
+extern HARD_REG_SET default_zero_call_used_regs (HARD_REG_SET);
 extern rtx default_libcall_value (machine_mode, const_rtx);
 extern bool default_function_value_regno_p (const unsigned int);
 extern rtx default_internal_arg_pointer (void);
 extern rtx default_static_chain (const_tree, bool);
 extern void default_trampoline_init (rtx, tree, rtx);
+extern void default_emit_call_builtin___clear_cache (rtx, rtx);
 extern poly_int64 default_return_pops_args (tree, tree, poly_int64);
 extern reg_class_t default_ira_change_pseudo_allocno_class (int, reg_class_t,
 							    reg_class_t);
@@ -185,9 +184,12 @@ extern tree default_emutls_var_init (tree, tree, tree);
 extern unsigned int default_hard_regno_nregs (unsigned int, machine_mode);
 extern bool default_hard_regno_scratch_ok (unsigned int);
 extern bool default_mode_dependent_address_p (const_rtx, addr_space_t);
+extern bool default_new_address_profitable_p (rtx, rtx_insn *, rtx);
 extern bool default_target_option_valid_attribute_p (tree, tree, tree, int);
 extern bool default_target_option_pragma_parse (tree, tree);
 extern bool default_target_can_inline_p (tree, tree);
+extern bool default_update_ipa_fn_target_info (unsigned int &, const gimple *);
+extern bool default_need_ipa_fn_target_info (const_tree, unsigned int &);
 extern bool default_valid_pointer_mode (scalar_int_mode);
 extern bool default_ref_may_alias_errno (class ao_ref *);
 extern scalar_int_mode default_addr_space_pointer_mode (addr_space_t);
@@ -206,10 +208,11 @@ extern rtx default_addr_space_convert (rtx, tree, tree);
 extern unsigned int default_case_values_threshold (void);
 extern bool default_have_conditional_execution (void);
 
-extern bool default_libc_has_function (enum function_class);
+extern bool default_libc_has_function (enum function_class, tree);
 extern bool default_libc_has_fast_function (int fcode);
-extern bool no_c99_libc_has_function (enum function_class);
-extern bool gnu_libc_has_function (enum function_class);
+extern bool no_c99_libc_has_function (enum function_class, tree);
+extern bool gnu_libc_has_function (enum function_class, tree);
+extern bool bsd_libc_has_function (enum function_class, tree);
 
 extern tree default_builtin_tm_load_store (tree);
 
@@ -217,7 +220,8 @@ extern int default_memory_move_cost (machine_mode, reg_class_t, bool);
 extern int default_register_move_cost (machine_mode, reg_class_t,
 				       reg_class_t);
 extern bool default_slow_unaligned_access (machine_mode, unsigned int);
-extern HOST_WIDE_INT default_estimated_poly_value (poly_int64);
+extern HOST_WIDE_INT default_estimated_poly_value (poly_int64,
+						   poly_value_estimate_kind);
 
 extern bool default_use_by_pieces_infrastructure_p (unsigned HOST_WIDE_INT,
 						    unsigned int,
@@ -225,6 +229,9 @@ extern bool default_use_by_pieces_infrastructure_p (unsigned HOST_WIDE_INT,
 						    bool);
 extern int default_compare_by_pieces_branch_ratio (machine_mode);
 
+extern void default_print_patchable_function_entry_1 (FILE *,
+						      unsigned HOST_WIDE_INT,
+						      bool, unsigned int);
 extern void default_print_patchable_function_entry (FILE *,
 						    unsigned HOST_WIDE_INT,
 						    bool);
@@ -262,10 +269,6 @@ extern bool can_use_doloop_if_innermost (const widest_int &,
 					 const widest_int &,
 					 unsigned int, bool);
 
-extern rtx default_load_bounds_for_arg (rtx, rtx, rtx);
-extern void default_store_bounds_for_arg (rtx, rtx, rtx, rtx);
-extern rtx default_load_returned_bounds (rtx);
-extern void default_store_returned_bounds (rtx,rtx);
 extern bool default_optab_supported_p (int, machine_mode, machine_mode,
 				       optimization_type);
 extern unsigned int default_max_noce_ifcvt_seq_cost (edge);
@@ -282,5 +285,16 @@ extern tree default_preferred_else_value (unsigned, tree, unsigned, tree *);
 extern bool default_have_speculation_safe_value (bool);
 extern bool speculation_safe_value_not_needed (bool);
 extern rtx default_speculation_safe_value (machine_mode, rtx, rtx, rtx);
+
+extern bool default_memtag_can_tag_addresses ();
+extern uint8_t default_memtag_tag_size ();
+extern uint8_t default_memtag_granule_size ();
+extern rtx default_memtag_insert_random_tag (rtx, rtx);
+extern rtx default_memtag_add_tag (rtx, poly_int64, uint8_t);
+extern rtx default_memtag_set_tag (rtx, rtx, rtx);
+extern rtx default_memtag_extract_tag (rtx, rtx);
+extern rtx default_memtag_untagged_pointer (rtx, rtx);
+
+extern HOST_WIDE_INT default_gcov_type_size (void);
 
 #endif /* GCC_TARGHOOKS_H */

@@ -1,55 +1,149 @@
-2023-07-07  Release Manager
+2023-05-08  Release Manager
 
-	* GCC 10.5.0 released.
+	* GCC 12.3.0 released.
 
-2022-06-28  Release Manager
+2022-08-19  Release Manager
 
-	* GCC 10.4.0 released.
+	* GCC 12.2.0 released.
 
-2022-05-29  Iain Sandoe  <iain@sandoe.co.uk>
+2022-05-06  Release Manager
 
-	Backported from master:
-	2021-08-18  Iain Sandoe  <iain@sandoe.co.uk>
+	* GCC 12.1.0 released.
+
+2022-03-29  Chenghua Xu  <xuchenghua@loongson.cn>
+	    Lulu Cheng  <chenglulu@loongson.cn>
+
+	* picflag.m4: Default add build option '-fpic' for LoongArch.
+
+2021-12-21  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	PR d/103528
+	* acx.m4 (ACX_PROG_GDC): Add check whether D compiler works.
+
+2021-12-16  H.J. Lu  <hjl.tools@gmail.com>
+
+	Revert:
+	2021-12-16  H.J. Lu  <hjl.tools@gmail.com>
+
+	* gcc-plugin.m4 (GCC_PLUGIN_OPTION): New.
+
+2021-12-15  H.J. Lu  <hjl.tools@gmail.com>
+
+	* gcc-plugin.m4 (GCC_PLUGIN_OPTION): New.
+
+2021-12-15  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* gcc-plugin.m4: Save and process CXXFLAGS.
+
+2021-11-30  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* acx.m4 (ACX_PROG_GDC): New m4 function.
+
+2021-09-19  Andrew Pinski  <apinski@marvell.com>
+
+	PR bootstrap/102389
+	* bootstrap-lto-lean.mk: Handle NM like RANLIB AND AR.
+	* bootstrap-lto.mk: Likewise.
+
+2021-08-18  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* mh-darwin: Require a non-shared host configuration to
 	enable  mdynamic-no-pic where that is supported.
 
-2022-05-29  Iain Sandoe  <iain@sandoe.co.uk>
-
-	Backported from master:
-	2021-07-09  Iain Sandoe  <iain@sandoe.co.uk>
+2021-07-09  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* mh-darwin: Make this specific to handling the
 	mdynamic-no-pic case.
 
-2021-12-16  Martin Storsjö  <martin@martin.st>
+2021-06-14  Michael Forney  <mforney@mforney.org>
 
-	Backported from master:
-	2021-04-13  Martin Storsjö  <martin@martin.st>
+	* gettext.m4 (AM_GNU_GETTEXT): Skip checks for the internal
+	symbols _nl_msg_cat_cntr, _nl_domain_bindings, and
+	_nl_expand_alias, if __GNU_GETTEXT_SUPPORTED_REVISION is defined.
+	Backport of gettext serial 68 patch.
+
+2021-05-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (CYG_AC_PATH_SIM, CYG_AC_PATH_DEVO): Delete.
+
+2021-05-03  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR bootstrap/99703
+	* cet.m4 (GCC_CET_HOST_FLAGS): Check if host supports multi-byte
+	NOPs.
+
+2021-04-13  Martin Storsjö  <martin@martin.st>
 
 	* mh-mingw: Set __USE_MINGW_ACCESS in missed C++ flags
 	variables
 
-2021-04-08  Release Manager
+2021-01-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
-	* GCC 10.3.0 released.
+	PR c++/98316
+	* ax_lib_socket_nsl.m4: Import from autoconf-archive.
 
-2020-07-23  Release Manager
+2021-01-03  Mike Frysinger  <vapier@gentoo.org>
 
-	* GCC 10.2.0 released.
+	* pkg.m4: New file from pkg-config-0.29.2.
 
-2020-06-22  H.J. Lu  <hjl.tools@gmail.com>
+2020-11-25  Matthew Malcomson  <matthew.malcomson@arm.com>
 
-	Backported from master:
-	2020-05-12  H.J. Lu  <hjl.tools@gmail.com>
+	* bootstrap-hwasan.mk: Disable random frame tags for stack-tagging
+	during bootstrap.
+
+2020-11-25  Matthew Malcomson  <matthew.malcomson@arm.com>
+
+	* bootstrap-hwasan.mk: New file.
+
+2020-09-09  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	Sync from binutils-gdb.
+	2020-07-30  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* largefile.m4 (ACX_LARGEFILE) <sparc-*-solaris*|i?86-*-solaris*>:
+	Check for <sys/procfs.h> incompatilibity with large-file support
+	on Solaris.
+	Only disable large-file support and perhaps plugins if needed.
+	Set, substitute LARGEFILE_CPPFLAGS if so.
+
+2020-08-20  Tobias Burnus  <tobias@codesourcery.com>
+
+	PR bootstrap/96612
+	* ax_cxx_compile_stdcxx.m4: Add fourth argument to check also
+	the CXX_FOR_BUILD compiler.
+
+2020-07-30  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR bootstrap/96202
+	* cet.m4 (GCC_CET_HOST_FLAGS): Don't enable CET without CET
+	support in stage1 nor for build support.
+
+2020-05-29  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR bootstrap/95413
+	* cet.m4: Replace save_CFLAGS and save_LDFLAGS with
+	cet_save_CFLAGS and cet_save_LDFLAGS.
+
+2020-05-18  Jason Merrill  <jason@redhat.com>
+
+	* ax_cxx_compile_stdcxx.m4: Import from autoconf archive with
+	an adjustment to try the default mode.
+
+2020-05-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/95147
+	* cet.m4 (GCC_CET_FLAGS): Also check if -fcf-protection works
+	when defaulting to auto.
+
+2020-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* cet.m4 (GCC_CET_FLAGS): Change default to auto.
+
+2020-05-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR bootstrap/94998
 	* cet.m4 (GCC_CET_HOST_FLAGS): Enable CET in cross compiler if
 	possible.
-
-2020-05-07  Release Manager
-
-	* GCC 10.1.0 released.
 
 2020-04-28  H.J. Lu  <hongjiu.lu@intel.com>
 

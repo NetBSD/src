@@ -1,6 +1,6 @@
 // Concepts and traits for use with iterators -*- C++ -*-
 
-// Copyright (C) 2019-2020 Free Software Foundation, Inc.
+// Copyright (C) 2019-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -32,15 +32,35 @@
 
 #pragma GCC system_header
 
+#if __cplusplus >= 202002L
 #include <concepts>
 #include <bits/ptr_traits.h>	// to_address
-#include <bits/range_cmp.h>	// identity, ranges::less
+#include <bits/ranges_cmp.h>	// identity, ranges::less
 
-#if __cpp_lib_concepts
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
+  /** A sentinel type that can be used to check for the end of a range.
+   *
+   * For some iterator types the past-the-end sentinel value is independent
+   * of the underlying sequence, and a default sentinel can be used with them.
+   * For example, a `std::counted_iterator` keeps a count of how many elements
+   * remain, and so checking for the past-the-end value only requires checking
+   * if that count has reached zero. A past-the-end `std::istream_iterator` is
+   * equal to the default-constructed value, which can be easily checked.
+   *
+   * Comparing iterators of these types to `std::default_sentinel` is a
+   * convenient way to check if the end has been reached.
+   *
+   * @since C++20
+   */
+  struct default_sentinel_t { };
+
+  /// A default sentinel value.
+  inline constexpr default_sentinel_t default_sentinel{};
+
+#if __cpp_lib_concepts
   struct input_iterator_tag;
   struct output_iterator_tag;
   struct forward_iterator_tag;
@@ -120,6 +140,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  using __type = typename __result<_Tp>::type;
 
 	template<std::__detail::__dereferenceable _Tp>
+	  [[nodiscard]]
 	  constexpr __type<_Tp>
 	  operator()(_Tp&& __e) const
 	  noexcept(_S_noexcept<_Tp>())
@@ -141,10 +162,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   } // namespace ranges
 
   template<__detail::__dereferenceable _Tp>
-    requires requires(_Tp& __t)
-    { { ranges::iter_move(__t) } -> __detail::__can_reference; }
+    requires __detail::
+      __can_reference<ranges::__cust_imove::_IMove::__type<_Tp&>>
     using iter_rvalue_reference_t
-      = decltype(ranges::iter_move(std::declval<_Tp&>()));
+      = ranges::__cust_imove::_IMove::__type<_Tp&>;
 
   template<typename> struct incrementable_traits { };
 
@@ -163,10 +184,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Tp>
     requires (!requires { typename _Tp::difference_type; }
 	      && requires(const _Tp& __a, const _Tp& __b)
-	      {
-		requires (!is_void_v<remove_pointer_t<_Tp>>); // PR c++/78173
-		{ __a - __b } -> integral;
-	      })
+	      { { __a - __b } -> integral; })
     struct incrementable_traits<_Tp>
     {
       using difference_type
@@ -267,8 +285,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     : __detail::__cond_value_type<typename _Tp::value_type>
     { };
 
-  // LWG 3446 doesn't add this, but it's needed for the case where
-  // value_type and element_type are both present, but not the same type.
+  // _GLIBCXX_RESOLVE_LIB_DEFECTS
+  // 3541. indirectly_readable_traits should be SFINAE-friendly for all types
   template<__detail::__has_member_value_type _Tp>
     requires __detail::__has_member_element_type<_Tp>
     struct indirectly_readable_traits<_Tp>
@@ -512,13 +530,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       using __iter_concept = typename __iter_concept_impl<_Iter>::type;
 
   template<typename _In>
-    concept __indirectly_readable_impl = requires(const _In __in)
+    concept __indirectly_readable_impl = requires
       {
 	typename iter_value_t<_In>;
 	typename iter_reference_t<_In>;
 	typename iter_rvalue_reference_t<_In>;
-	{ *__in } -> same_as<iter_reference_t<_In>>;
-	{ ranges::iter_move(__in) } -> same_as<iter_rvalue_reference_t<_In>>;
+	requires same_as<iter_reference_t<const _In>,
+			 iter_reference_t<_In>>;
+	requires same_as<iter_rvalue_reference_t<const _In>,
+			 iter_rvalue_reference_t<_In>>;
       }
       && common_reference_with<iter_reference_t<_In>&&, iter_value_t<_In>&>
       && common_reference_with<iter_reference_t<_In>&&,
@@ -551,20 +571,44 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   namespace ranges::__detail
   {
+    class __max_diff_type;
+    class __max_size_type;
+
+    __extension__
+    template<typename _Tp>
+      concept __is_signed_int128
 #if __SIZEOF_INT128__
-    using __max_diff_type = __int128;
-    using __max_size_type = unsigned __int128;
+	= same_as<_Tp, __int128>;
 #else
-    using __max_diff_type = long long;
-    using __max_size_type = unsigned long long;
+	= false;
+#endif
+
+    __extension__
+    template<typename _Tp>
+      concept __is_unsigned_int128
+#if __SIZEOF_INT128__
+	= same_as<_Tp, unsigned __int128>;
+#else
+	= false;
 #endif
 
     template<typename _Tp>
-      concept __is_integer_like = integral<_Tp>
+      concept __cv_bool = same_as<const volatile _Tp, const volatile bool>;
+
+    template<typename _Tp>
+      concept __integral_nonbool = integral<_Tp> && !__cv_bool<_Tp>;
+
+    template<typename _Tp>
+      concept __is_int128 = __is_signed_int128<_Tp> || __is_unsigned_int128<_Tp>;
+
+    template<typename _Tp>
+      concept __is_integer_like = __integral_nonbool<_Tp>
+	|| __is_int128<_Tp>
 	|| same_as<_Tp, __max_diff_type> || same_as<_Tp, __max_size_type>;
 
     template<typename _Tp>
       concept __is_signed_integer_like = signed_integral<_Tp>
+	|| __is_signed_int128<_Tp>
 	|| same_as<_Tp, __max_diff_type>;
 
   } // namespace ranges::__detail
@@ -900,23 +944,27 @@ namespace ranges
 
   inline constexpr unreachable_sentinel_t unreachable_sentinel{};
 
-  struct default_sentinel_t { };
-  inline constexpr default_sentinel_t default_sentinel{};
-
-  namespace __detail
+  // This is the namespace for [range.access] CPOs.
+  namespace ranges::__cust_access
   {
-    template<typename _Tp>
-      constexpr decay_t<_Tp>
-      __decay_copy(_Tp&& __t)
-      noexcept(is_nothrow_convertible_v<_Tp, decay_t<_Tp>>)
-      { return std::forward<_Tp>(__t); }
+    using std::__detail::__class_or_enum;
+
+    struct _Decay_copy final
+    {
+      template<typename _Tp>
+	constexpr decay_t<_Tp>
+	operator()(_Tp&& __t) const
+	noexcept(is_nothrow_convertible_v<_Tp, decay_t<_Tp>>)
+	{ return std::forward<_Tp>(__t); }
+    } inline constexpr __decay_copy{};
 
     template<typename _Tp>
       concept __member_begin = requires(_Tp& __t)
 	{
-	  { __detail::__decay_copy(__t.begin()) } -> input_or_output_iterator;
+	  { __decay_copy(__t.begin()) } -> input_or_output_iterator;
 	};
 
+    // Poison pills so that unqualified lookup doesn't find std::begin.
     void begin(auto&) = delete;
     void begin(const auto&) = delete;
 
@@ -924,7 +972,7 @@ namespace ranges
       concept __adl_begin = __class_or_enum<remove_reference_t<_Tp>>
 	&& requires(_Tp& __t)
 	{
-	  { __detail::__decay_copy(begin(__t)) } -> input_or_output_iterator;
+	  { __decay_copy(begin(__t)) } -> input_or_output_iterator;
 	};
 
     // Simplified version of std::ranges::begin that only supports lvalues,
@@ -932,28 +980,28 @@ namespace ranges
     template<typename _Tp>
       requires is_array_v<_Tp> || __member_begin<_Tp&> || __adl_begin<_Tp&>
       auto
-      __ranges_begin(_Tp& __t)
+      __begin(_Tp& __t)
       {
 	if constexpr (is_array_v<_Tp>)
-	  {
-	    static_assert(sizeof(remove_all_extents_t<_Tp>) != 0,
-			  "not array of incomplete type");
-	    return __t + 0;
-	  }
+	  return __t + 0;
 	else if constexpr (__member_begin<_Tp&>)
 	  return __t.begin();
 	else
 	  return begin(__t);
       }
+  } // namespace ranges::__cust_access
 
+  namespace __detail
+  {
     // Implementation of std::ranges::iterator_t, without using ranges::begin.
     template<typename _Tp>
       using __range_iter_t
-	= decltype(__detail::__ranges_begin(std::declval<_Tp&>()));
+	= decltype(ranges::__cust_access::__begin(std::declval<_Tp&>()));
 
   } // namespace __detail
 
+#endif // C++20 library concepts
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std
-#endif // C++20 library concepts
+#endif // C++20
 #endif // _ITERATOR_CONCEPTS_H

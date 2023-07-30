@@ -1,5 +1,5 @@
 ;;  Machine Description for TI MSP43* processors
-;;  Copyright (C) 2013-2020 Free Software Foundation, Inc.
+;;  Copyright (C) 2013-2022 Free Software Foundation, Inc.
 ;;  Contributed by Red Hat.
 
 ;; This file is part of GCC.
@@ -113,12 +113,34 @@
        (ior (match_code "reg,mem")
 	    (match_operand 0 "immediate_operand"))))
 
-; TRUE for constants which are bit positions for zero_extract
-(define_predicate "msp430_bitpos"
+(define_predicate "const_1_to_8_operand"
+  (and (match_code "const_int")
+       (match_test ("   INTVAL (op) >= 1
+		     && INTVAL (op) <= 8 "))))
+
+(define_predicate "const_0_to_15_operand"
   (and (match_code "const_int")
        (match_test ("   INTVAL (op) >= 0
 		     && INTVAL (op) <= 15 "))))
 
+(define_predicate "const_1_to_19_operand"
+  (and (match_code "const_int")
+       (match_test ("   INTVAL (op) >= 1
+		     && INTVAL (op) <= 19 "))))
+
 (define_predicate "msp430_symbol_operand"
   (match_code "symbol_ref")
 )
+
+; Used in length attribute tests - if a source operand is a reg,
+; (mem (post_inc)), or (mem (reg)) then it is cheap compared to other operand
+; types.
+(define_predicate "msp430_cheap_operand"
+  (ior (match_code "reg")
+       (and (match_code "mem")
+	    (ior (match_code "reg" "0")
+	    (match_code "post_inc" "0")))))
+
+; Used for insn attributes only.  For insn patterns themselves, use constraints.
+(define_predicate "msp430_high_memory_operand"
+  (match_test "msp430x_insn_required (op)"))

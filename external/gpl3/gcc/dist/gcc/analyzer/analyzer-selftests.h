@@ -1,5 +1,5 @@
 /* Selftests for the analyzer.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -41,6 +41,7 @@ extern void analyzer_program_state_cc_tests ();
 extern void analyzer_region_model_cc_tests ();
 extern void analyzer_sm_file_cc_tests ();
 extern void analyzer_sm_signal_cc_tests ();
+extern void analyzer_store_cc_tests ();
 
 } /* end of namespace ana::selftest.  */
 

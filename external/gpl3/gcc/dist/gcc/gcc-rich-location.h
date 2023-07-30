@@ -1,5 +1,5 @@
 /* Declarations relating to class gcc_rich_location
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,14 +21,16 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_RICH_LOCATION_H
 
 /* A gcc_rich_location is libcpp's rich_location with additional
-   helper methods for working with gcc's types.  */
+   helper methods for working with gcc's types.  The class is not
+   copyable or assignable because rich_location isn't. */
+
 class gcc_rich_location : public rich_location
 {
  public:
   /* Constructors.  */
 
   /* Constructing from a location.  */
-  gcc_rich_location (location_t loc, const range_label *label = NULL)
+  explicit gcc_rich_location (location_t loc, const range_label *label = NULL)
   : rich_location (line_table, loc, label)
   {
   }
@@ -60,7 +62,7 @@ class gcc_rich_location : public rich_location
 	if (!added secondary)
 	  inform (secondary_loc, "message for secondary");
 
-     Implemented in diagnostic-show-locus.c.  */
+     Implemented in diagnostic-show-locus.cc.  */
 
   bool add_location_if_nearby (location_t loc,
 			       bool restrict_to_current_line_spans = true,

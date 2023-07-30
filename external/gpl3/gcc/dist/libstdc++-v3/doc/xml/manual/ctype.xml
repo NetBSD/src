@@ -1,4 +1,4 @@
-<section xmlns="http://docbook.org/ns/docbook" version="5.0" 
+<section xmlns="http://docbook.org/ns/docbook" version="5.0"
 	 xml:id="std.localization.facet.ctype" xreflabel="ctype">
 <?dbhtml filename="ctype.html"?>
 
@@ -15,7 +15,7 @@
 
 
   <section xml:id="facet.ctype.impl.spec"><info><title>Specializations</title></info>
-    
+
 
 <para>
 For the required specialization <classname>codecvt&lt;wchar_t, char, mbstate_t&gt;</classname>,
@@ -168,7 +168,7 @@ characters.
   <biblioentry>
       <title>
 	<link xmlns:xlink="http://www.w3.org/1999/xlink"
-	      xlink:href="http://www.unix.org/version3/ieee_std.html">
+	      xlink:href="https://www.unix.org/version3/ieee_std.html">
 	The Open Group Base Specifications, Issue 6 (IEEE Std. 1003.1-2004)
 	</link>
       </title>

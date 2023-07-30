@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-# Copyright (C) 2006-2020 Free Software Foundation, Inc.
+# Copyright (C) 2006-2022 Free Software Foundation, Inc.
 #
 # GCC is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -65,6 +65,20 @@ AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
+# Add CET specific flags if CET is enabled
+GCC_CET_FLAGS(CET_FLAGS)
+AC_SUBST(CET_FLAGS)
+# To ensure that runtime code for CET is compiled in, add in D version flags.
+AS_IF([test x$enable_cet = xyes], [
+  CET_DFLAGS="$CET_FLAGS -fversion=CET"
+  DCFG_ENABLE_CET=true
+], [
+  CET_DFLAGS=
+  DCFG_ENABLE_CET=false
+])
+AC_SUBST(CET_DFLAGS)
+AC_SUBST(DCFG_ENABLE_CET)
+
 # This should be inherited in the recursive make, but ensure it is defined.
 test "$AR" || AR=ar
 AC_SUBST(AR)
@@ -77,8 +91,14 @@ AC_SUBST(CFLAGS_FOR_BUILD)
 LT_INIT(dlopen)
 AM_PROG_LIBTOOL
 WITH_LOCAL_DRUNTIME([LT_LANG([D])], [])
+AC_SUBST(enable_shared)
+AC_SUBST(enable_static)
 
 # libtool variables for Phobos shared and position-independent compiles.
+#
+# Use phobos_lt_pic_flag to designate the automake variable
+# used to encapsulate the default libtool approach to creating objects
+# with position-independent code. Default: -prefer-pic.
 #
 # Use phobos_compiler_shared_flag to designate the compile-time flags for
 # creating shared objects. Default: -fversion=Shared.
@@ -91,26 +111,23 @@ WITH_LOCAL_DRUNTIME([LT_LANG([D])], [])
 # libtool, and so we make it here.  How it is handled is that in shared
 # compilations the `lt_prog_compiler_pic_D' variable is used to instead
 # ensure that conditional compilation of shared runtime code is compiled in.
-# The original PIC flags are then used in the compilation of every object.
-#
-# Why are objects destined for libgphobos.a compiled with -fPIC?
-# Because -fPIC is not harmful to use for objects destined for static
-# libraries. In addition, using -fPIC will allow the use of static
-# libgphobos.a in the creation of other D shared libraries.
 if test "$enable_shared" = yes; then
+  phobos_lt_pic_flag="-prefer-pic"
   phobos_compiler_pic_flag="$lt_prog_compiler_pic_D"
   phobos_compiler_shared_flag="-fversion=Shared"
 else
+  phobos_lt_pic_flag=
   phobos_compiler_pic_flag=
   phobos_compiler_shared_flag=
 fi
+AC_SUBST(phobos_lt_pic_flag)
 AC_SUBST(phobos_compiler_pic_flag)
 AC_SUBST(phobos_compiler_shared_flag)
 
 # Override the libtool's pic_flag and pic_mode.
 # Do this step after AM_PROG_LIBTOOL, but before AC_OUTPUT.
 # NB: this impacts --with-pic and --without-pic.
-lt_prog_compiler_pic_D="$phobos_compiler_shared_flag"
+lt_prog_compiler_pic_D="$phobos_compiler_pic_flag $phobos_compiler_shared_flag"
 pic_mode='default'
 
 # Determine what GCC version number to use in filesystem paths.
@@ -120,6 +137,7 @@ GCC_BASE_VER
 DRUNTIME_CONFIGURE
 DRUNTIME_MULTILIB
 DRUNTIME_WERROR
+DRUNTIME_SECTION_FLAGS
 DRUNTIME_CPU_SOURCES
 DRUNTIME_OS_SOURCES
 DRUNTIME_OS_THREAD_MODEL
@@ -171,18 +189,6 @@ AC_MSG_CHECKING([for host support for libphobos])
 . ${srcdir}/configure.tgt
 case ${host} in
   x86_64-*-solaris2.* | i?86-*-solaris2.*)
-    # libphobos doesn't compile with the Solaris/x86 assembler due to a
-    # relatively low linelength limit.
-    as_prog=`$CC -print-prog-name=as`
-    if test -n "$as_prog" && $as_prog -v /dev/null 2>&1 | grep GNU > /dev/null 2>&1; then
-      druntime_cv_use_gas=yes;
-    else
-      druntime_cv_use_gas=no;
-    fi
-    rm -f a.out
-    if test x$druntime_cv_use_gas = xno; then
-      LIBPHOBOS_SUPPORTED=no
-    fi
     # 64-bit D execution fails with Solaris ld without -z relax=transtls support.
     if test "$druntime_ld_gld" = "no" && test "$druntime_ld_relax_transtls" = "no"; then
       LIBPHOBOS_SUPPORTED=no
@@ -247,7 +253,7 @@ SPEC_PHOBOS_DEPS="$LIBS"
 AC_SUBST(SPEC_PHOBOS_DEPS)
 
 # Libdruntime / phobos soname version
-libtool_VERSION=1:0:0
+libtool_VERSION=3:0:0
 AC_SUBST(libtool_VERSION)
 
 # Set default flags (after DRUNTIME_WERROR!)

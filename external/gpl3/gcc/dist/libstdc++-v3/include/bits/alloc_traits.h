@@ -1,6 +1,6 @@
 // Allocator traits -*- C++ -*-
 
-// Copyright (C) 2011-2020 Free Software Foundation, Inc.
+// Copyright (C) 2011-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -43,8 +43,9 @@ namespace std _GLIBCXX_VISIBILITY(default)
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 #if __cplusplus >= 201103L
-#define __cpp_lib_allocator_traits_is_always_equal 201411
+#define __cpp_lib_allocator_traits_is_always_equal 201411L
 
+  /// @cond undocumented
   struct __allocator_traits_base
   {
     template<typename _Tp, typename _Up, typename = void>
@@ -77,10 +78,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Alloc, typename _Up>
     using __alloc_rebind
       = typename __allocator_traits_base::template __rebind<_Alloc, _Up>::type;
+  /// @endcond
 
   /**
    * @brief  Uniform interface to all allocator types.
+   * @headerfile memory
    * @ingroup allocators
+   * @since C++11
   */
   template<typename _Alloc>
     struct allocator_traits : __allocator_traits_base
@@ -628,13 +632,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	static _GLIBCXX20_CONSTEXPR void
 	construct(allocator_type&, _Up* __p, _Args&&... __args)
 	noexcept(std::is_nothrow_constructible<_Up, _Args...>::value)
-	{
-#if __cplusplus <= 201703L
-	  ::new((void *)__p) _Up(std::forward<_Args>(__args)...);
-#else
-	  std::construct_at(__p, std::forward<_Args>(__args)...);
-#endif
-	}
+	{ std::_Construct(__p, std::forward<_Args>(__args)...); }
 
       /**
        *  @brief  Destroy an object of type `_Up`
@@ -812,6 +810,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Alloc>
     using _RequireNotAllocator
       = typename enable_if<!__is_allocator<_Alloc>::value, _Alloc>::type;
+
+#if __cpp_concepts >= 201907L
+  template<typename _Alloc>
+    concept __allocator_like = requires (_Alloc& __a) {
+      typename _Alloc::value_type;
+      __a.deallocate(__a.allocate(1u), 1u);
+    };
+#endif
 #endif // C++11
 
   /**
@@ -821,6 +827,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    */
 
   template<typename _ForwardIterator, typename _Allocator>
+    _GLIBCXX20_CONSTEXPR
     void
     _Destroy(_ForwardIterator __first, _ForwardIterator __last,
 	     _Allocator& __alloc)
@@ -835,6 +842,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 
   template<typename _ForwardIterator, typename _Tp>
+    _GLIBCXX20_CONSTEXPR
     inline void
     _Destroy(_ForwardIterator __first, _ForwardIterator __last,
 	     allocator<_Tp>&)

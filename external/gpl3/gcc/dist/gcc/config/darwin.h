@@ -1,5 +1,5 @@
 /* Target definitions for Darwin (Mac OS X) systems.
-   Copyright (C) 1989-2020 Free Software Foundation, Inc.
+   Copyright (C) 1989-2022 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -42,6 +42,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #define DARWIN_X86 0
 #define DARWIN_PPC 0
+
+#define OBJECT_FORMAT_MACHO 1
 
 /* Suppress g++ attempt to link in the math library automatically. */
 #define MATH_LIBRARY ""
@@ -275,13 +277,17 @@ extern GTY(()) int darwin_ms_struct;
 #define DARWIN_RDYNAMIC "%{rdynamic:%nrdynamic is not supported}"
 #endif
 
-/* FIXME: we should check that the linker supports the -pie and -no_pie.
+/* Code built with mdynamic-no-pic does not support PIE/PIC, so  we disallow
+   these combinations; we also ensure that the no_pie option is passed to
+   ld64 on system versions that default to PIE when mdynamic-no-pic is given.
+   FIXME: we should check that the linker supports the -pie and -no_pie.
    options.  */
 #define DARWIN_PIE_SPEC \
 "%{pie|fpie|fPIE:\
    %{mdynamic-no-pic: \
      %n'-mdynamic-no-pic' overrides '-pie', '-fpie' or '-fPIE'; \
-     :%:version-compare(>= 10.5 mmacosx-version-min= -pie) }} "
+     :%:version-compare(>= 10.5 mmacosx-version-min= -pie) }; \
+   mdynamic-no-pic:%:version-compare(>= 10.7 mmacosx-version-min= -no_pie) } "
 
 #define DARWIN_NOPIE_SPEC \
 "%{no-pie|fno-pie|fno-PIE: \
@@ -309,7 +315,7 @@ extern GTY(()) int darwin_ms_struct;
   } while (0)
 
 /* Machine dependent cpp options.  Don't add more options here, add
-   them to darwin_cpp_builtins in darwin-c.c.  */
+   them to darwin_cpp_builtins in darwin-c.cc.  */
 
 #undef	CPP_SPEC
 #define CPP_SPEC "%{static:%{!dynamic:-D__STATIC__}}%{!static:-D__DYNAMIC__}" \
@@ -326,7 +332,7 @@ extern GTY(()) int darwin_ms_struct;
 " %:version-compare(>= 10.6 mmacosx-version-min= -no_compact_unwind) "
 
 /* In Darwin linker specs we can put -lcrt0.o and ld will search the library
-   path for crt0.o or -lcrtx.a and it will search for for libcrtx.a.  As for
+   path for crt0.o or -lcrtx.a and it will search for libcrtx.a.  As for
    other ports, we can also put xxx.{o,a}%s and get the appropriate complete
    startfile absolute directory.  This latter point is important when we want
    to override ld's rule of .dylib being found ahead of .a and the user wants
@@ -381,7 +387,7 @@ extern GTY(()) int darwin_ms_struct;
     DARWIN_NOPIE_SPEC \
     DARWIN_RDYNAMIC \
     DARWIN_NOCOMPACT_UNWIND \
-    "}}}}}}} %<pie %<no-pie %<rdynamic "
+    "}}}}}}} %<pie %<no-pie %<rdynamic %<X %<rpath "
 
 /* Spec that controls whether the debug linker is run automatically for
    a link step.  This needs to be done if there is a source file on the
@@ -390,10 +396,10 @@ extern GTY(()) int darwin_ms_struct;
 
 #define DSYMUTIL_SPEC \
   "%{!c:%{!E:%{!S:%{!r:%{!M:%{!MM:%{!fsyntax-only:%{!fdump=*:\
-     %{g*:%{!gstabs*:%{%:debug-level-gt(0): -idsym \
+     %{g*:%{!gctf:%{!gbtf:%{!gstabs*:%{%:debug-level-gt(0): -idsym \
        %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm|.s|.f|.f90|\
 	 .f95|.f03|.f77|.for|.F|.F90|.F95|.F03|.d: -dsym }\
-      }}}\
+      }}}}}\
    }}}}}}}}"
 
 #define LINK_COMMAND_SPEC LINK_COMMAND_SPEC_A DSYMUTIL_SPEC
@@ -437,6 +443,7 @@ extern GTY(()) int darwin_ms_struct;
                      %:replace-outfile(-lobjc libobjc-gnu.a%s); \
                     :%:replace-outfile(-lobjc -lobjc-gnu )}}\
    %{static|static-libgcc|static-libgfortran:%:replace-outfile(-lgfortran libgfortran.a%s)}\
+   %{static|static-libgcc|static-libphobos:%:replace-outfile(-lgphobos libgphobos.a%s)}\
    %{static|static-libgcc|static-libstdc++|static-libgfortran:%:replace-outfile(-lgomp libgomp.a%s)}\
    %{static|static-libgcc|static-libstdc++:%:replace-outfile(-lstdc++ libstdc++.a%s)}\
    %{force_cpusubtype_ALL:-arch %(darwin_arch)} \
@@ -574,7 +581,7 @@ extern GTY(()) int darwin_ms_struct;
 #endif
 
 #if HAVE_GNU_AS
-/* The options are added in gcc.c for this case.  */
+/* The options are added in gcc.cc for this case.  */
 #define ASM_OPTIONS ""
 #else
 /* When we detect that we're cctools or llvm as, we need to insert the right
@@ -602,12 +609,11 @@ ASM_OPTIONS ASM_MMACOSX_VERSION_MIN_SPEC
   "%{gsplit-dwarf:%ngsplit-dwarf is not supported on this platform} \
      %<gsplit-dwarf"
 
-/* Since we bootstrap with C++ toolchains realistically require DWARF-2, even
-   if stabs is supported by the assembler.  */
+/* We now require C++11 to bootstrap and newer tools than those based on
+   stabs, so require DWARF-2, even if stabs is supported by the assembler.  */
 
-#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
-#define DARWIN_PREFER_DWARF
 #define DWARF2_DEBUGGING_INFO 1
+#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 
 #ifdef HAVE_AS_STABS_DIRECTIVE
 #define DBX_DEBUGGING_INFO 1
@@ -715,6 +721,9 @@ ASM_OPTIONS ASM_MMACOSX_VERSION_MIN_SPEC
 
 /* Emit a label to separate the exception table.  */
 #define TARGET_ASM_EMIT_EXCEPT_TABLE_LABEL darwin_emit_except_table_label
+
+/* Make an EH (personality or LDSA) symbol indirect as needed.  */
+#define TARGET_ASM_MAKE_EH_SYMBOL_INDIRECT darwin_make_eh_symbol_indirect
 
 /* Some of Darwin's unwinders need current frame address state to be reset
    after a DW_CFA_restore_state recovers the register values.  */
@@ -1220,5 +1229,11 @@ extern void darwin_driver_init (unsigned int *,struct cl_decoded_option **);
 #  define LD64_VERSION DEF_LD64
 # endif
 #endif
+
+/* CTF and BTF support.  */
+#undef CTF_INFO_SECTION_NAME
+#define CTF_INFO_SECTION_NAME "__CTF_BTF,__ctf,regular,debug"
+#undef BTF_INFO_SECTION_NAME
+#define BTF_INFO_SECTION_NAME "__CTF_BTF,__btf,regular,debug"
 
 #endif /* CONFIG_DARWIN_H */

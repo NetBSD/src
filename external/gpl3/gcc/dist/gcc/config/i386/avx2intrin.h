@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -949,6 +949,9 @@ _mm256_broadcastsi128_si256 (__m128i __X)
 {
   return (__m256i) __builtin_ia32_vbroadcastsi256 ((__v2di)__X);
 }
+
+#define _mm_broadcastsi128_si256(X) _mm256_broadcastsi128_si256(X)
+#define _mm_broadcastsd_pd(X) _mm_movedup_pd(X)
 
 #ifdef __OPTIMIZE__
 extern __inline __m128i

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2022 Free Software Foundation, Inc.
    Contributed by Andy Vaught
    F2003 I/O support contributed by Jerry DeLisle
 
@@ -29,7 +29,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #include "io.h"
 #include "format.h"
-#include <ctype.h>
 #include <string.h>
 
 
@@ -193,7 +192,7 @@ next_char (format_data *fmt, int literal)
 	return -1;
 
       fmt->format_string_len--;
-      c = toupper (*fmt->format_string++);
+      c = safe_toupper (*fmt->format_string++);
       fmt->error_element = c;
     }
   while ((c == ' ' || c == '\t') && !literal);
@@ -328,7 +327,7 @@ format_lex (format_data *fmt)
 
     case '+':
       c = next_char (fmt, 0);
-      if (!isdigit (c))
+      if (!safe_isdigit (c))
 	{
 	  token = FMT_UNKNOWN;
 	  break;
@@ -339,7 +338,7 @@ format_lex (format_data *fmt)
       for (;;)
 	{
 	  c = next_char (fmt, 0);
-	  if (!isdigit (c))
+	  if (!safe_isdigit (c))
 	    break;
 
 	  fmt->value = 10 * fmt->value + c - '0';
@@ -367,7 +366,7 @@ format_lex (format_data *fmt)
       for (;;)
 	{
 	  c = next_char (fmt, 0);
-	  if (!isdigit (c))
+	  if (!safe_isdigit (c))
 	    break;
 
 	  fmt->value = 10 * fmt->value + c - '0';
@@ -617,6 +616,7 @@ parse_format_list (st_parameter_dt *dtp, bool *seen_dd)
   int repeat;
   format_data *fmt = dtp->u.p.fmt;
   bool seen_data_desc = false;
+  int standard;
 
   head = tail = NULL;
 
@@ -929,7 +929,14 @@ parse_format_list (st_parameter_dt *dtp, bool *seen_dd)
       /* Processing for zero width formats.  */
       if (u == FMT_ZERO)
 	{
-	  if (notification_std (GFC_STD_F2008) == NOTIFICATION_ERROR
+          if (t == FMT_F)
+	    standard = GFC_STD_F95;
+	  else if (t == FMT_G)
+	    standard = GFC_STD_F2008;
+	  else
+	    standard = GFC_STD_F2018;
+
+	  if (notification_std (standard) == NOTIFICATION_ERROR
 	      || dtp->u.p.mode == READING)
 	    {
 	      fmt->error = zero_width;

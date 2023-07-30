@@ -1,5 +1,5 @@
 ;; Constraint definitions for Synopsys DesignWare ARC.
-;; Copyright (C) 2007-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2022 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -493,6 +493,11 @@
   Condition Codes"
   (and (match_code "reg") (match_test "cc_register (op, VOIDmode)")))
 
+(define_constraint "Ral"
+  "@internal
+   Accumulator register @code{ACCL} - do not reload into its class"
+  (and (match_code "reg")
+       (match_test "REGNO (op) == ACCL_REGNO")))
 
 (define_constraint "Q"
   "@internal

@@ -1,33 +1,414 @@
-2023-07-07  Release Manager
+2023-05-08  Release Manager
 
-	* GCC 10.5.0 released.
+	* GCC 12.3.0 released.
 
-2022-06-28  Release Manager
+2022-08-19  Release Manager
 
-	* GCC 10.4.0 released.
+	* GCC 12.2.0 released.
 
-2021-04-08  Release Manager
+2022-05-06  Release Manager
 
-	* GCC 10.3.0 released.
+	* GCC 12.1.0 released.
 
-2021-01-03  Iain Sandoe  <iain@sandoe.co.uk>
-	    Jakub Jelinek   <jakub@redhat.com>
+2022-04-05  Ian Lance Taylor  <iant@golang.org>
+
+	* elf.c (elf_zlib_inflate): Don't skip initial aligned byte in
+	uncompressed block.
+
+2022-02-17  Ian Lance Taylor  <iant@golang.org>
+
+	* dwarf.c (find_address_ranges): Handle skeleton units.
+	(read_function_entry): Likewise.
+
+2022-02-16  Ian Lance Taylor  <iant@golang.org>
+
+	* dwarf.c (build_address_map): Initialize DWARF 5 fields of unit.
+
+2022-02-03  David Seifert  <soap@gentoo.org>
+	    Jakub Jelinek  <jakub@redhat.com>
+
+	* configure.ac: Support --disable-werror.
+	* configure: Regenerate.
+
+2021-12-28  Francois-Xavier Coudert  <fxcoudert@gmail.com>
+
+	PR libbacktrace/103822
+	* Makefile.am: Fix newline.
+	* Makefile.in: Regenerate.
+
+2021-11-12  Martin Liska  <mliska@suse.cz>
+
+	PR libbacktrace/103167
+	* elf.c (elf_uncompress_lzma_block): Cast to unsigned int.
+	(elf_uncompress_lzma): Likewise.
+	* xztest.c (test_samples): memcpy only if v > 0.
+
+2021-10-22  Martin Liska  <mliska@suse.cz>
+
+	PR testsuite/102742
+	* btest.c (MIN_DESCRIPTOR): New.
+	(MAX_DESCRIPTOR): Likewise.
+	(check_available_files): Likewise.
+	(check_open_files): Check only file descriptors that
+	were not available at the entry.
+	(main): Call check_available_files.
+
+2021-08-13  Sergei Trofimovich  <siarheit@google.com>
+
+	* install-debuginfo-for-buildid.sh.in: Force non-localized readelf
+	output with LANG=C.
+
+2021-06-28  Clément Chigot  <clement.chigot@atos.net>
+
+	* xcoff.c (SSUBTYP_DWRNGES): New define.
+	(xcoff_add): Use correct XCOFF DWARF section subtype
+	for DEBUG_RANGES. Remove lineoff workaround.
+	Adjust base_address.
+	(xcoff_initialize_syminfo): Adapt to new base_address.
+	(xcoff_lookup_pc): Likewise.
+	(xcoff_initialize_fileline): Likewise.
+
+2021-05-03  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR bootstrap/99703
+	* configure: Regenerated.
+
+2021-03-03  Ian Lance Taylor  <iant@golang.org>
+
+	* dwarf.c (read_line_program): Don't special case file 0.
+	(read_function_entry): Likewise.
+
+2021-03-02  Ian Lance Taylor  <iant@golang.org>
+
+	PR libbacktrace/98818
+	* dwarf.c (dwarf_buf_error): Add errnum parameter.  Change all
+	callers.
+	* backtrace.h: Update backtrace_error_callback comment.
+
+2021-02-12  Ian Lance Taylor  <iant@golang.org>
+
+	* configure.ac: Check for objcopy --add-gnu-debuglink by using
+	objcopy --help.
+	* configure: Regenerate
+
+2021-01-18  Ian Lance Taylor  <iant@golang.org>
+
+	* Makefile.am (%_dwz): If dwz fails, use uncompressed debug info.
+	* Makefile.in: Regenerate.
+	* configure: Regenerate.
+
+2021-01-18  Ian Lance Taylor  <iant@golang.org>
+
+	PR debug/98716
+	* dwarf.c (read_v2_paths): Allocate zero entry for dirs and
+	filenames.
+	(read_line_program): Remove parameter u, change caller.  Don't
+	subtract one from dirs and filenames index.
+	(read_function_entry): Don't subtract one from filenames index.
+
+2021-01-05  Samuel Thibault  <samuel.thibault@ens-lyon.org>
+
+	* configure: Re-generate.
+
+2020-12-05  Iain Sandoe  <iain@sandoe.co.uk>
 
 	PR target/97865
 	* configure: Regenerate.
 
-2020-07-23  Release Manager
+2020-12-02  Ian Lance Taylor  <iant@golang.org>
 
-	* GCC 10.2.0 released.
+	* dwarf.c (resolve_string): Use > rather than >= to check whether
+	string index extends past buffer.
+	(resolve_addr_index): Similarly for address index.
+
+2020-11-29  John David Anglin  <danglin@gcc.gnu.org>
+
+	* configure: Regenerate.
+
+2020-10-20  Ian Lance Taylor  <iant@golang.org>
+
+	* internal.h (ATTRIBUTE_FALLTHROUGH): Define.
+	* elf.c (elf_zlib_inflate): Use ATTRIBUTE_FALLTHROUGH.
+
+2020-09-28  Ian Lance Taylor  <iant@golang.org>
+
+	PR libbacktrace/97082
+	* Makefile.am (check_DATA): Add mtest.dSYM if USE_DSYMUTIL.
+	* Makefile.in: Regenerate.
+
+2020-09-28  Ian Lance Taylor  <iant@golang.org>
+
+	PR libbacktrace/97227
+	* configure.ac (USE_DSYMUTIL): Define instead of HAVE_DSYMUTIL.
+	* Makefile.am: Change all uses of HAVE_DSYMUTIL to USE_DSYMUTIL.
+	* configure: Regenerate.
+	* Makefile.in: Regenerate.
+
+2020-09-23  Ian Lance Taylor  <iant@golang.org>
+
+	* dwarf.c (report_inlined_functions): Handle PC == -1 and PC ==
+	p->low.
+	(dwarf_lookup_pc): Likewise.
+
+2020-09-17  Ian Lance Taylor  <iant@golang.org>
+
+	PR libbacktrace/97080
+	* fileline.c (backtrace_syminfo_to_full_callback): New function.
+	(backtrace_syminfo_to_full_error_callback): New function.
+	* elf.c (elf_nodebug): Call syminfo_fn if possible.
+	* internal.h (struct backtrace_call_full): Define.
+	(backtrace_syminfo_to_full_callback): Declare.
+	(backtrace_syminfo_to_full_error_callback): Declare.
+	* mtest.c (f3): Only check all[i] if data.index permits.
+
+2020-09-16  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* macho.c (MACH_O_CPU_TYPE_PPC): New.
+	(MACH_O_CPU_TYPE_PPC64): New.
+	Add compile-tests for powerpc to the Mach-O variants.
+
+2020-09-14  Ian Lance Taylor  <iant@golang.org>
+
+	PR libbacktrace/93608
+	Add support for MiniDebugInfo.
+	* elf.c (struct elf_view): Define.  Replace most uses of
+	backtrace_view with elf_view.
+	(elf_get_view): New static functions.  Replace most calls of
+	backtrace_get_view with elf_get_view.
+	(elf_release_view): New static functions.  Replace most calls of
+	backtrace_release_view with elf_release_view.
+	(elf_uncompress_failed): Rename from elf_zlib_failed.  Change all
+	callers.
+	(LZMA_STATES, LZMA_POS_STATES, LZMA_DIST_STATES): Define.
+	(LZMA_DIST_SLOTS, LZMA_DIST_MODEL_START): Define.
+	(LZMA_DIST_MODEL_END, LZMA_FULL_DISTANCES): Define.
+	(LZMA_ALIGN_SIZE, LZMA_LEN_LOW_SYMBOLS): Define.
+	(LZMA_LEN_MID_SYMBOLS, LZMA_LEN_HIGH_SYMBOLS): Define.
+	(LZMA_LITERAL_CODERS_MAX, LZMA_LITERAL_CODER_SIZE): Define.
+	(LZMA_PROB_IS_MATCH_LEN, LZMA_PROB_IS_REP_LEN): Define.
+	(LZMA_PROB_IS_REP0_LEN, LZMA_PROB_IS_REP1_LEN): Define.
+	(LZMA_PROB_IS_REP2_LEN, LZMA_PROB_IS_REP0_LONG_LEN): Define.
+	(LZMA_PROB_DIST_SLOT_LEN, LZMA_PROB_DIST_SPECIAL_LEN): Define.
+	(LZMA_PROB_DIST_ALIGN_LEN): Define.
+	(LZMA_PROB_MATCH_LEN_CHOICE_LEN): Define.
+	(LZMA_PROB_MATCH_LEN_CHOICE2_LEN): Define.
+	(LZMA_PROB_MATCH_LEN_LOW_LEN): Define.
+	(LZMA_PROB_MATCH_LEN_MID_LEN): Define.
+	(LZMA_PROB_MATCH_LEN_HIGH_LEN): Define.
+	(LZMA_PROB_REP_LEN_CHOICE_LEN): Define.
+	(LZMA_PROB_REP_LEN_CHOICE2_LEN): Define.
+	(LZMA_PROB_REP_LEN_LOW_LEN): Define.
+	(LZMA_PROB_REP_LEN_MID_LEN): Define.
+	(LZMA_PROB_REP_LEN_HIGH_LEN): Define.
+	(LZMA_PROB_LITERAL_LEN): Define.
+	(LZMA_PROB_IS_MATCH_OFFSET, LZMA_PROB_IS_REP_OFFSET): Define.
+	(LZMA_PROB_IS_REP0_OFFSET, LZMA_PROB_IS_REP1_OFFSET): Define.
+	(LZMA_PROB_IS_REP2_OFFSET): Define.
+	(LZMA_PROB_IS_REP0_LONG_OFFSET): Define.
+	(LZMA_PROB_DIST_SLOT_OFFSET): Define.
+	(LZMA_PROB_DIST_SPECIAL_OFFSET): Define.
+	(LZMA_PROB_DIST_ALIGN_OFFSET): Define.
+	(LZMA_PROB_MATCH_LEN_CHOICE_OFFSET): Define.
+	(LZMA_PROB_MATCH_LEN_CHOICE2_OFFSET): Define.
+	(LZMA_PROB_MATCH_LEN_LOW_OFFSET): Define.
+	(LZMA_PROB_MATCH_LEN_MID_OFFSET): Define.
+	(LZMA_PROB_MATCH_LEN_HIGH_OFFSET): Define.
+	(LZMA_PROB_REP_LEN_CHOICE_OFFSET): Define.
+	(LZMA_PROB_REP_LEN_CHOICE2_OFFSET): Define.
+	(LZMA_PROB_REP_LEN_LOW_OFFSET): Define.
+	(LZMA_PROB_REP_LEN_MID_OFFSET): Define.
+	(LZMA_PROB_REP_LEN_HIGH_OFFSET): Define.
+	(LZMA_PROB_LITERAL_OFFSET): Define.
+	(LZMA_PROB_TOTAL_COUNT): Define.
+	(LZMA_IS_MATCH, LZMA_IS_REP, LZMA_IS_REP0): Define.
+	(LZMA_IS_REP1, LZMA_IS_REP2, LZMA_IS_REP0_LONG): Define.
+	(LZMA_DIST_SLOT, LZMA_DIST_SPECIAL, LZMA_DIST_ALIGN): Define.
+	(LZMA_MATCH_LEN_CHOICE, LZMA_MATCH_LEN_CHOICE2): Define.
+	(LZMA_MATCH_LEN_LOW, LZMA_MATCH_LEN_MID): Define.
+	(LZMA_MATCH_LEN_HIGH, LZMA_REP_LEN_CHOICE): Define.
+	(LZMA_REP_LEN_CHOICE2, LZMA_REP_LEN_LOW): Define.
+	(LZMA_REP_LEN_MID, LZMA_REP_LEN_HIGH, LZMA_LITERAL): Define.
+	(elf_lzma_varint): New static function.
+	(elf_lzma_range_normalize): New static function.
+	(elf_lzma_bit, elf_lzma_integer): New static functions.
+	(elf_lzma_reverse_integer): New static function.
+	(elf_lzma_len, elf_uncompress_lzma_block): New static functions.
+	(elf_uncompress_lzma): New static function.
+	(backtrace_uncompress_lzma): New function.
+	(elf_add): Add memory and memory_size parameters.  Change all
+	callers.  Look for .gnu_debugdata section, and, if found,
+	decompress it and use it for symbols and debug info.  Permit the
+	descriptor parameter to be -1.
+	* internal.h (backtrace_uncompress_lzma): Declare.
+	* mtest.c: New file.
+	* xztest.c: New file.
+	* configure.ac: Check for nm, xz, and comm programs.  Check for
+	liblzma library.
+	(HAVE_MINIDEBUG): Define.
+	* Makefile.am (mtest_SOURCES): Define.
+	(mtest_CFLAGS, mtest_LDADD): Define.
+	(TESTS): Add mtest_minidebug if HAVE_MINIDEBUG.
+	(%_minidebug): New pattern rule, if HAVE_MINIDEBUG.
+	(xztest_SOURCES, xztest_CFLAGS, xztest_LDADD): Define.
+	(xztest_alloc_SOURCES, xztest_alloc_CFLAGS): Define
+	(xztest_alloc_LDADD): Define.
+	(BUILDTESTS): Add mtest, xztest, xztest_alloc.
+	(CLEANFILES): Add files created by minidebug pattern.
+	(btest.lo): Correct INCDIR reference.
+	(mtest.lo, xztest.lo, ztest.lo): New targets.
+	* configure: Regenerate.
+	* config.h.in: Regenerate.
+	* Makefile.in: Regenerate.
+
+2020-09-09  Ian Lance Taylor  <iant@golang.org>
+
+	* pecoff.c (coff_initialize_syminfo): Add is_64 parameter.
+	(coff_add): Determine and pass is_64.
+
+2020-09-09  Ian Lance Taylor  <iant@golang.org>
+
+	PR libbacktrace/96973
+	* fileline.c (macho_get_executable_path): New static function.
+	(fileline_initialize): Call macho_get_executable_path.
+
+2020-09-09  Ian Lance Taylor  <iant@golang.org>
+
+	* dwarf.c (function_addrs_search): Compare against the next entry
+	low address, not the high address.
+	(unit_addrs_search): Likewise.
+	(build_address_map): Add a trailing unit_addrs.
+	(read_function_entry): Add a trailing function_addrs.
+	(read_function_info): Likewise.
+	(report_inlined_functions): Search backward for function_addrs
+	match.
+	(dwarf_lookup_pc): Search backward for unit_addrs and
+	function_addrs matches.
+
+2020-09-08  Ian Lance Taylor  <iant@golang.org>
+
+	* simple.c (simple_unwind): Correct comment spelling.
+
+2020-09-08  Ian Lance Taylor  <iant@golang.org>
+
+	* macho.c (macho_add_dsym): Make space for '/' in dsym.  Use
+	correct length when freeing diralc.
+
+2020-09-08  Ian Lance Taylor  <iant@golang.org>
+
+	PR libbacktrace/96973
+	* macho.c (macho_add_fat): Correctly swap 32-bit file offset.
+
+2020-09-08  Ian Lance Taylor  <iant@golang.org>
+
+	PR libbacktrace/96971
+	* filetype.awk: Only match magic number at start of line.
+
+2020-08-24  Ian Lance Taylor  <iant@golang.org>
+
+	* macho.c (MACH_O_MH_MAGIC_FAT_64): Define.
+	(MACH_O_MH_CIGAM_FAT_64): Define.
+	(struct macho_fat_arch_64): Define.
+	(macho_add_fat): Add and use is_64 parameter.
+	(macho_add): Recognize 64-bit fat files.
+
+2020-07-30  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR bootstrap/96202
+	* configure: Regenerated.
 
 2020-07-08  Ian Lance Taylor  <iant@golang.org>
 
 	* configure.ac: Test linker support for DWARF5
 	* configure: Regenerate
 
-2020-05-07  Release Manager
+2020-05-29  H.J. Lu  <hjl.tools@gmail.com>
 
-	* GCC 10.1.0 released.
+	PR bootstrap/95413
+	* configure: Regenerated.
+
+2020-05-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/95147
+	* configure: Regenerated.
+
+2020-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure: Regenerated.
+
+2020-05-13  Ian Lance Taylor  <iant@golang.org>
+
+	* ztest.c (test_large): Mark state ATTRIBUTE_UNUSED.
+
+2020-05-13  Ian Lance Taylor  <iant@golang.org>
+
+	PR go/95061
+	* posix.c (backtrace_open): Treat EACCESS like ENOENT.
+
+2020-05-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.am (AM_CFLAGS): Add $(CET_HOST_FLAGS).
+	* configure.ac: Add GCC_CET_HOST_FLAGS(CET_HOST_FLAGS) and
+	AC_SUBST(CET_HOST_FLAGS).  Clear CET_HOST_FLAGS if jit isn't
+	enabled.
+	* Makefile.in: Regenerated.
+	* configure: Likewise.
+
+2020-05-11  Ian Lance Taylor  <iant@golang.org>
+
+	PR libbacktrace/95012
+	* configure.ac: Check for getpagesize declaration.
+	* mmap.c: Declare getpagesize if necessary.
+	* mmapio.c: Likewise.
+	* configure: Regenerate.
+	* config.h.in: Regenerate.
+	* Makefile.in: Regenerate.
+
+2020-05-09  Roland McGrath  <mcgrathr@google.com>
+
+	* elf.c (elf_add): Bail early if there are no section headers at all.
+
+2020-05-09  Ian Lance Taylor  <iant@golang.org>
+
+	* elf.c (elf_add): Don't free strtab if an error occurs after
+	recording symbol information.
+
+2020-05-09  Ian Lance Taylor  <iant@golang.org>
+
+	PR libbacktrace/88745
+	* macho.c: New file.
+	* filetype.awk: Recognize Mach-O files.
+	* Makefile.am (FORMAT_FILES): Add macho.c.
+	(check_DATA): New variable.  Set to .dSYM if HAVE_DSYMUTIL.
+	(%.dSYM): New pattern target.
+	(test_macho_SOURCES, test_macho_CFLAGS): New targets.
+	(test_macho_LDADD): New target.
+	(BUILDTESTS): Add test_macho.
+	(macho.lo): Add dependencies.
+	* configure.ac: Recognize macho file type.  Check for
+	mach-o/dyld.h.  Don't try to run objcopy if we don't find it.
+	Look for dsymutil and define a HAVE_DSYMUTIL conditional.
+	* Makefile.in: Regenerate.
+	* configure: Regenerate.
+	* config.h.in: Regenerate.
+
+2020-05-09  Ian Lance Taylor  <iant@golang.org>
+
+	* read.c (backtrace_get_view): Support short read.
+
+2020-05-09  Ian Lance Taylor  <iant@golang.org>
+
+	* elf.c (elf_add): If debug sections are very large or far apart,
+	read them individually rather than as a single view.
+
+2020-05-08  Ian Lance Taylor  <iant@golang.org>
+
+	* fileline.c (sysctl_exec_name): New static function.
+	(sysctl_exec_name1): New macro or static function.
+	(sysctl_exec_name2): Likewise.
+	(fileline_initialize): Try sysctl_exec_name[12].
+	* configure.ac: Check for sysctl args to fetch executable name.
+	* configure: Regenerate.
+	* config.h.in: Regenerate.
 
 2020-02-15  Ian Lance Taylor  <iant@golang.org>
 
@@ -1441,7 +1822,7 @@
 
 	* Initial implementation.
 
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

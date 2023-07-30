@@ -1,5 +1,5 @@
 /* Definitions for C language specific types.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -51,8 +51,7 @@ struct GTY(()) lang_decl {
 
 struct GTY(()) language_function {
   struct c_language_function base;
-  tree x_break_label;
-  tree x_cont_label;
+  unsigned char x_in_statement;
   struct c_switch * GTY((skip)) x_switch_stack;
   struct c_arg_info * GTY((skip)) arg_info;
   int returns_value;

@@ -1,30 +1,88 @@
-2023-07-07  Release Manager
+2023-05-08  Release Manager
 
-	* GCC 10.5.0 released.
+	* GCC 12.3.0 released.
 
-2022-06-28  Release Manager
+2022-08-19  Release Manager
 
-	* GCC 10.4.0 released.
+	* GCC 12.2.0 released.
+
+2022-05-06  Release Manager
+
+	* GCC 12.1.0 released.
+
+2021-05-14  Jakub Jelinek  <jakub@redhat.com>
+
+	* crontab: Stop doing gcc-8 snapshots.
+
+2021-04-20  Jakub Jelinek  <jakub@redhat.com>
+
+	* crontab: Snapshots from trunk are now GCC 12 related.
+	Add GCC 11 snapshots from the respective branch.
+
+2021-04-09  Martin Liska  <mliska@suse.cz>
+
+	* branch_changer.py: Generate URL only when emitting
+	to terminal.
+
+2021-04-09  Martin Liska  <mliska@suse.cz>
+
+	* branch_changer.py: Mention closing candidates and emit
+	console links to bugzilla.
+
+2021-04-09  Martin Liska  <mliska@suse.cz>
+
+	* branch_changer.py: Document more how the script behaves.
+
+2021-04-09  Martin Liska  <mliska@suse.cz>
+
+	* branch_changer.py: Fix usage of Version class.
+
+2021-04-09  Martin Liska  <mliska@suse.cz>
+
+	* branch_changer.py: Use new version scheme in --help output.
 
 2021-04-08  Jonathan Wakely  <jwakely@redhat.com>
-
-	Backported from master:
-	2021-04-08  Jonathan Wakely  <jwakely@redhat.com>
 
 	* generate_libstdcxx_web_docs: Add --disable-multilib to
 	configure command.
 
-2021-04-08  Release Manager
+2021-04-08  Martin Liska  <mliska@suse.cz>
 
-	* GCC 10.3.0 released.
+	* branch_changer.py: Fix wrongly converted assert.
 
-2020-07-23  Release Manager
+2021-04-08  Martin Liska  <mliska@suse.cz>
 
-	* GCC 10.2.0 released.
+	* branch_changer.py: Modernize and fix flake8 issues.
+	* setup.cfg: New file.
 
-2020-05-07  Release Manager
+2020-12-16  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 10.1.0 released.
+	* update_version_git: Put BASEDIR into /sourceware/snapshot-tmp/gcc
+	if it exist.
+
+2020-05-29  Martin Liska  <mliska@suse.cz>
+
+	* bugzilla-close-candidate.py: Fix sorting of branches.
+
+2020-05-29  Martin Liska  <mliska@suse.cz>
+
+	* bugzilla-close-candidate.py: Fix parsing of SVN revisions.
+	Fix skipping of PRs that contain Can be closed message.
+
+2020-05-29  Martin Liska  <mliska@suse.cz>
+
+	* bugzilla-close-candidate.py: Support both SVN and GIT messages
+	in PRs. Remove need of usage of the bugzilla API key.
+
+2020-05-27  Jakub Jelinek  <jakub@redhat.com>
+
+	* update_version_git: Rewrite using
+	contrib/gcc-changelog/git_update_version.py.
+
+2020-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	* crontab: Snapshots from trunk are now GCC 11 related.
+	Add GCC 10 snapshots from the respective branch.
 
 2020-03-12  Jakub Jelinek  <jakub@redhat.com>
 

@@ -1,6 +1,6 @@
 /* Half-float conversion routines.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
    Contributed by CodeSourcery.
 
    This file is free software; you can redistribute it and/or modify it
@@ -51,6 +51,14 @@ binary64 =
   11,    /* exponent.  */
   52     /* significand.  */
 };
+
+/* Function prototypes.  */
+unsigned short __gnu_f2h_ieee (unsigned int a);
+unsigned int __gnu_h2f_ieee (unsigned short a);
+unsigned short __gnu_f2h_alternative (unsigned int x);
+unsigned int __gnu_h2f_alternative (unsigned short a);
+unsigned short __gnu_d2h_ieee (unsigned long long a);
+unsigned short __gnu_d2h_alternative (unsigned long long x);
 
 static inline unsigned short
 __gnu_float2h_internal (const struct format* fmt,
@@ -165,7 +173,7 @@ __gnu_d2h_internal (unsigned long long a, int ieee)
   return __gnu_float2h_internal (&binary64, a, ieee);
 }
 
-unsigned int
+static inline unsigned int
 __gnu_h2f_internal(unsigned short a, int ieee)
 {
   unsigned int sign = (unsigned int)(a & 0x8000) << 16;

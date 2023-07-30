@@ -1,6 +1,6 @@
 // istream classes -*- C++ -*-
 
-// Copyright (C) 1997-2020 Free Software Foundation, Inc.
+// Copyright (C) 1997-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -48,36 +48,38 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     {
       ios_base::iostate __err = ios_base::goodbit;
       if (__in.good())
-	__try
-	  {
-	    if (__in.tie())
-	      __in.tie()->flush();
-	    if (!__noskip && bool(__in.flags() & ios_base::skipws))
-	      {
-		const __int_type __eof = traits_type::eof();
-		__streambuf_type* __sb = __in.rdbuf();
-		__int_type __c = __sb->sgetc();
+	{
+	  __try
+	    {
+	      if (__in.tie())
+		__in.tie()->flush();
+	      if (!__noskip && bool(__in.flags() & ios_base::skipws))
+		{
+		  const __int_type __eof = traits_type::eof();
+		  __streambuf_type* __sb = __in.rdbuf();
+		  __int_type __c = __sb->sgetc();
 
-		const __ctype_type& __ct = __check_facet(__in._M_ctype);
-		while (!traits_type::eq_int_type(__c, __eof)
-		       && __ct.is(ctype_base::space,
-				  traits_type::to_char_type(__c)))
-		  __c = __sb->snextc();
+		  const __ctype_type& __ct = __check_facet(__in._M_ctype);
+		  while (!traits_type::eq_int_type(__c, __eof)
+			 && __ct.is(ctype_base::space,
+				    traits_type::to_char_type(__c)))
+		    __c = __sb->snextc();
 
-		// _GLIBCXX_RESOLVE_LIB_DEFECTS
-		// 195. Should basic_istream::sentry's constructor ever
-		// set eofbit?
-		if (traits_type::eq_int_type(__c, __eof))
-		  __err |= ios_base::eofbit;
-	      }
-	  }
-	__catch(__cxxabiv1::__forced_unwind&)
-	  {
-	    __in._M_setstate(ios_base::badbit);
-	    __throw_exception_again;
-	  }
-	__catch(...)
-	  { __in._M_setstate(ios_base::badbit); }
+		  // _GLIBCXX_RESOLVE_LIB_DEFECTS
+		  // 195. Should basic_istream::sentry's constructor ever
+		  // set eofbit?
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		}
+	    }
+	  __catch(__cxxabiv1::__forced_unwind&)
+	    {
+	      __in._M_setstate(ios_base::badbit);
+	      __throw_exception_again;
+	    }
+	  __catch(...)
+	    { __in._M_setstate(ios_base::badbit); }
+	}
 
       if (__in.good() && __err == ios_base::goodbit)
 	_M_ok = true;
@@ -100,7 +102,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    ios_base::iostate __err = ios_base::goodbit;
 	    __try
 	      {
+#ifndef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
 		const __num_get_type& __ng = __check_facet(this->_M_num_get);
+#else
+		const __num_get_type& __ng
+		  = use_facet<__num_get_type>(this->_M_ios_locale);
+#endif
 		__ng.get(*this, 0, *this, __err, __v);
 	      }
 	    __catch(__cxxabiv1::__forced_unwind&)
@@ -130,7 +137,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  __try
 	    {
 	      long __l;
+#ifndef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
 	      const __num_get_type& __ng = __check_facet(this->_M_num_get);
+#else
+	      const __num_get_type& __ng
+		= use_facet<__num_get_type>(this->_M_ios_locale);
+#endif
 	      __ng.get(*this, 0, *this, __err, __l);
 
 	      // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -175,7 +187,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  __try
 	    {
 	      long __l;
+#ifndef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
 	      const __num_get_type& __ng = __check_facet(this->_M_num_get);
+#else
+	      const __num_get_type& __ng
+		= use_facet<__num_get_type>(this->_M_ios_locale);
+#endif
 	      __ng.get(*this, 0, *this, __err, __l);
 
 	      // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -375,17 +392,24 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      __streambuf_type* __this_sb = this->rdbuf();
 	      int_type __c = __this_sb->sgetc();
 	      char_type __c2 = traits_type::to_char_type(__c);
+	      unsigned long long __gcount = 0;
 
 	      while (!traits_type::eq_int_type(__c, __eof)
 		     && !traits_type::eq_int_type(__c, __idelim)
 		     && !traits_type::eq_int_type(__sb.sputc(__c2), __eof))
 		{
-		  ++_M_gcount;
+		  ++__gcount;
 		  __c = __this_sb->snextc();
 		  __c2 = traits_type::to_char_type(__c);
 		}
 	      if (traits_type::eq_int_type(__c, __eof))
 		__err |= ios_base::eofbit;
+	      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+	      // 3464. istream::gcount() can overflow
+	      if (__gcount <= __gnu_cxx::__numeric_traits<streamsize>::__max)
+		_M_gcount = __gcount;
+	      else
+		_M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
 	    }
 	  __catch(__cxxabiv1::__forced_unwind&)
 	    {
@@ -538,11 +562,19 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		    break;
 		}
 
-	      if (__large_ignore)
-		_M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
+	      if (__n == __gnu_cxx::__numeric_traits<streamsize>::__max)
+		{
+		  if (__large_ignore)
+		    _M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
 
-	      if (traits_type::eq_int_type(__c, __eof))
-                __err |= ios_base::eofbit;
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		}
+	      else if (_M_gcount < __n)
+		{
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		}
             }
 	  __catch(__cxxabiv1::__forced_unwind&)
 	    {
@@ -596,17 +628,29 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		    break;
 		}
 
-	      if (__large_ignore)
-		_M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
-
-              if (traits_type::eq_int_type(__c, __eof))
-                __err |= ios_base::eofbit;
-	      else if (traits_type::eq_int_type(__c, __delim))
+	      if (__n == __gnu_cxx::__numeric_traits<streamsize>::__max)
 		{
-		  if (_M_gcount
-		      < __gnu_cxx::__numeric_traits<streamsize>::__max)
-		    ++_M_gcount;
-		  __sb->sbumpc();
+		  if (__large_ignore)
+		    _M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
+
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		  else
+		    {
+		      if (_M_gcount != __n)
+			++_M_gcount;
+		      __sb->sbumpc();
+		    }
+		}
+	      else if (_M_gcount < __n) // implies __c == __delim or EOF
+		{
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		  else
+		    {
+		      ++_M_gcount;
+		      __sb->sbumpc();
+		    }
 		}
             }
 	  __catch(__cxxabiv1::__forced_unwind&)
@@ -959,8 +1003,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 
   template<typename _CharT, typename _Traits>
-    basic_istream<_CharT, _Traits>&
-    operator>>(basic_istream<_CharT, _Traits>& __in, _CharT* __s)
+    void
+    __istream_extract(basic_istream<_CharT, _Traits>& __in, _CharT* __s,
+		      streamsize __num)
     {
       typedef basic_istream<_CharT, _Traits>		__istream_type;
       typedef basic_streambuf<_CharT, _Traits>          __streambuf_type;
@@ -976,9 +1021,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  __try
 	    {
 	      // Figure out how many characters to extract.
-	      streamsize __num = __in.width();
-	      if (__num <= 0)
-		__num = __gnu_cxx::__numeric_traits<streamsize>::__max;
+	      streamsize __width = __in.width();
+	      if (0 < __width && __width < __num)
+		__num = __width;
 
 	      const __ctype_type& __ct = use_facet<__ctype_type>(__in.getloc());
 
@@ -995,7 +1040,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		  ++__extracted;
 		  __c = __sb->snextc();
 		}
-	      if (_Traits::eq_int_type(__c, __eof))
+
+	      if (__extracted < __num - 1
+		  && _Traits::eq_int_type(__c, __eof))
 		__err |= ios_base::eofbit;
 
 	      // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -1015,7 +1062,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	__err |= ios_base::failbit;
       if (__err)
 	__in.setstate(__err);
-      return __in;
     }
 
   // 27.6.1.4 Standard basic_istream manipulators
@@ -1028,17 +1074,43 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef typename __istream_type::int_type		__int_type;
       typedef ctype<_CharT>				__ctype_type;
 
-      const __ctype_type& __ct = use_facet<__ctype_type>(__in.getloc());
-      const __int_type __eof = _Traits::eof();
-      __streambuf_type* __sb = __in.rdbuf();
-      __int_type __c = __sb->sgetc();
+      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+      // 451. behavior of std::ws
+      typename __istream_type::sentry __cerb(__in, true);
+      if (__cerb)
+	{
+	  ios_base::iostate __err = ios_base::goodbit;
+	  __try
+	    {
+	      const __ctype_type& __ct = use_facet<__ctype_type>(__in.getloc());
+	      const __int_type __eof = _Traits::eof();
+	      __streambuf_type* __sb = __in.rdbuf();
+	      __int_type __c = __sb->sgetc();
 
-      while (!_Traits::eq_int_type(__c, __eof)
-	     && __ct.is(ctype_base::space, _Traits::to_char_type(__c)))
-	__c = __sb->snextc();
-
-       if (_Traits::eq_int_type(__c, __eof))
-	 __in.setstate(ios_base::eofbit);
+	      while (true)
+		{
+		  if (_Traits::eq_int_type(__c, __eof))
+		    {
+		      __err = ios_base::eofbit;
+		      break;
+		    }
+		  if (!__ct.is(ctype_base::space, _Traits::to_char_type(__c)))
+		    break;
+		  __c = __sb->snextc();
+		}
+	    }
+	  __catch (const __cxxabiv1::__forced_unwind&)
+	    {
+	      __in._M_setstate(ios_base::badbit);
+	      __throw_exception_again;
+	    }
+	  __catch (...)
+	    {
+	      __in._M_setstate(ios_base::badbit);
+	    }
+	  if (__err)
+	    __in.setstate(__err);
+	}
       return __in;
     }
 
@@ -1048,11 +1120,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   extern template class basic_istream<char>;
   extern template istream& ws(istream&);
   extern template istream& operator>>(istream&, char&);
-  extern template istream& operator>>(istream&, char*);
   extern template istream& operator>>(istream&, unsigned char&);
   extern template istream& operator>>(istream&, signed char&);
-  extern template istream& operator>>(istream&, unsigned char*);
-  extern template istream& operator>>(istream&, signed char*);
 
   extern template istream& istream::_M_extract(unsigned short&);
   extern template istream& istream::_M_extract(unsigned int&);  
@@ -1074,7 +1143,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   extern template class basic_istream<wchar_t>;
   extern template wistream& ws(wistream&);
   extern template wistream& operator>>(wistream&, wchar_t&);
-  extern template wistream& operator>>(wistream&, wchar_t*);
+  extern template void __istream_extract(wistream&, wchar_t*, streamsize);
 
   extern template wistream& wistream::_M_extract(unsigned short&);
   extern template wistream& wistream::_M_extract(unsigned int&);  

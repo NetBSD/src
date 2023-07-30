@@ -1,6 +1,6 @@
 /* Plugin for AMD GCN execution.
 
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2022 Free Software Foundation, Inc.
 
    Contributed by Mentor Embedded
 
@@ -29,6 +29,7 @@
 /* {{{ Includes and defines  */
 
 #include "config.h"
+#include "symcat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +38,7 @@
 #include <stdbool.h>
 #include <limits.h>
 #include <hsa.h>
+#include <hsa_ext_amd.h>
 #include <dlfcn.h>
 #include <signal.h>
 #include "libgomp-plugin.h"
@@ -46,12 +48,8 @@
 #include "oacc-int.h"
 #include <assert.h>
 
-/* Additional definitions not in HSA 1.1.
-   FIXME: this needs to be updated in hsa.h for upstream, but the only source
-          right now is the ROCr source which may cause license issues.  */
-#define HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT 0xA002
-
 /* These probably won't be in elf.h for a while.  */
+#ifndef R_AMDGPU_NONE
 #define R_AMDGPU_NONE		0
 #define R_AMDGPU_ABS32_LO	1	/* (S + A) & 0xFFFFFFFF  */
 #define R_AMDGPU_ABS32_HI	2	/* (S + A) >> 32  */
@@ -64,8 +62,8 @@
 #define R_AMDGPU_GOTPCREL32_HI	9	/* (G + GOT + A - P) >> 32  */
 #define R_AMDGPU_REL32_LO	10	/* (S + A - P) & 0xFFFFFFFF  */
 #define R_AMDGPU_REL32_HI	11	/* (S + A - P) >> 32  */
-#define reserved		12
 #define R_AMDGPU_RELATIVE64	13	/* B + A  */
+#endif
 
 /* GCN specific definitions for asynchronous queues.  */
 
@@ -295,7 +293,6 @@ struct copy_data
   void *dst;
   const void *src;
   size_t len;
-  bool free_src;
   struct goacc_asyncqueue *aq;
 };
 
@@ -395,7 +392,6 @@ struct gcn_image_desc
   const unsigned kernel_count;
   struct hsa_kernel_description *kernel_infos;
   const unsigned global_variable_count;
-  struct global_var_info *global_variables;
 };
 
 /* This enum mirrors the corresponding LLVM enum's values for all ISAs that we
@@ -406,6 +402,7 @@ typedef enum {
   EF_AMDGPU_MACH_AMDGCN_GFX803 = 0x02a,
   EF_AMDGPU_MACH_AMDGCN_GFX900 = 0x02c,
   EF_AMDGPU_MACH_AMDGCN_GFX906 = 0x02f,
+  EF_AMDGPU_MACH_AMDGCN_GFX908 = 0x030
 } EF_AMDGPU_MACH;
 
 const static int EF_AMDGPU_MACH_MASK = 0x000000ff;
@@ -1074,7 +1071,7 @@ init_environment_variables (void)
 
   hsa_runtime_lib = secure_getenv ("HSA_RUNTIME_LIB");
   if (hsa_runtime_lib == NULL)
-    hsa_runtime_lib = "libhsa-runtime64.so";
+    hsa_runtime_lib = "libhsa-runtime64.so.1";
 
   support_cpu_devices = secure_getenv ("GCN_SUPPORT_CPU_DEVICES");
 
@@ -1135,40 +1132,6 @@ get_executable_symbol_name (hsa_executable_symbol_t symbol)
   res[len] = '\0';
 
   return res;
-}
-
-/* Helper function for find_executable_symbol.  */
-
-static hsa_status_t
-find_executable_symbol_1 (hsa_executable_t executable,
-			  hsa_executable_symbol_t symbol,
-			  void *data)
-{
-  hsa_executable_symbol_t *res = (hsa_executable_symbol_t *)data;
-  *res = symbol;
-  return HSA_STATUS_INFO_BREAK;
-}
-
-/* Find a global symbol in EXECUTABLE, save to *SYMBOL and return true.  If not
-   found, return false.  */
-
-static bool
-find_executable_symbol (hsa_executable_t executable,
-			hsa_executable_symbol_t *symbol)
-{
-  hsa_status_t status;
-
-  status
-    = hsa_fns.hsa_executable_iterate_symbols_fn (executable,
-						 find_executable_symbol_1,
-						 symbol);
-  if (status != HSA_STATUS_INFO_BREAK)
-    {
-      hsa_error ("Could not find executable symbol", status);
-      return false;
-    }
-
-  return true;
 }
 
 /* Get the number of GPU Compute Units.  */
@@ -1256,24 +1219,55 @@ parse_target_attributes (void **input,
 
   if (gcn_dims_found)
     {
+      bool gfx900_workaround_p = false;
+
       if (agent->device_isa == EF_AMDGPU_MACH_AMDGCN_GFX900
 	  && gcn_threads == 0 && override_z_dim == 0)
 	{
-	  gcn_threads = 4;
+	  gfx900_workaround_p = true;
 	  GCN_WARNING ("VEGA BUG WORKAROUND: reducing default number of "
-		       "threads to 4 per team.\n");
+		       "threads to at most 4 per team.\n");
 	  GCN_WARNING (" - If this is not a Vega 10 device, please use "
 		       "GCN_NUM_THREADS=16\n");
 	}
 
+      /* Ideally, when a dimension isn't explicitly specified, we should
+	 tune it to run 40 (or 32?) threads per CU with no threads getting queued.
+	 In practice, we tune for peak performance on BabelStream, which
+	 for OpenACC is currently 32 threads per CU.  */
       def->ndim = 3;
-      /* Fiji has 64 CUs, but Vega20 has 60.  */
-      def->gdims[0] = (gcn_teams > 0) ? gcn_teams : get_cu_count (agent);
-      /* Each thread is 64 work items wide.  */
-      def->gdims[1] = 64;
-      /* A work group can have 16 wavefronts.  */
-      def->gdims[2] = (gcn_threads > 0) ? gcn_threads : 16;
-      def->wdims[0] = 1; /* Single team per work-group.  */
+      if (gcn_teams <= 0 && gcn_threads <= 0)
+	{
+	  /* Set up a reasonable number of teams and threads.  */
+	  gcn_threads = gfx900_workaround_p ? 4 : 16; // 8;
+	  def->gdims[0] = get_cu_count (agent); // * (40 / gcn_threads);
+	  def->gdims[2] = gcn_threads;
+	}
+      else if (gcn_teams <= 0 && gcn_threads > 0)
+	{
+	  /* Auto-scale the number of teams with the number of threads.  */
+	  def->gdims[0] = get_cu_count (agent); // * (40 / gcn_threads);
+	  def->gdims[2] = gcn_threads;
+	}
+      else if (gcn_teams > 0 && gcn_threads <= 0)
+	{
+	  int max_threads = gfx900_workaround_p ? 4 : 16;
+
+	  /* Auto-scale the number of threads with the number of teams.  */
+	  def->gdims[0] = gcn_teams;
+	  def->gdims[2] = 16; // get_cu_count (agent) * 40 / gcn_teams;
+	  if (def->gdims[2] == 0)
+	    def->gdims[2] = 1;
+	  else if (def->gdims[2] > max_threads)
+	    def->gdims[2] = max_threads;
+	}
+      else
+	{
+	  def->gdims[0] = gcn_teams;
+	  def->gdims[2] = gcn_threads;
+	}
+      def->gdims[1] = 64; /* Each thread is 64 work items wide.  */
+      def->wdims[0] = 1;  /* Single team per work-group.  */
       def->wdims[1] = 64;
       def->wdims[2] = 16;
       *result = def;
@@ -1633,6 +1627,7 @@ elf_gcn_isa_field (Elf64_Ehdr *image)
 const static char *gcn_gfx803_s = "gfx803";
 const static char *gcn_gfx900_s = "gfx900";
 const static char *gcn_gfx906_s = "gfx906";
+const static char *gcn_gfx908_s = "gfx908";
 const static int gcn_isa_name_len = 6;
 
 /* Returns the name that the HSA runtime uses for the ISA or NULL if we do not
@@ -1648,6 +1643,8 @@ isa_hsa_name (int isa) {
       return gcn_gfx900_s;
     case EF_AMDGPU_MACH_AMDGCN_GFX906:
       return gcn_gfx906_s;
+    case EF_AMDGPU_MACH_AMDGCN_GFX908:
+      return gcn_gfx908_s;
     }
   return NULL;
 }
@@ -1680,6 +1677,9 @@ isa_code(const char *isa) {
 
   if (!strncmp (isa, gcn_gfx906_s, gcn_isa_name_len))
     return EF_AMDGPU_MACH_AMDGCN_GFX906;
+
+  if (!strncmp (isa, gcn_gfx908_s, gcn_isa_name_len))
+    return EF_AMDGPU_MACH_AMDGCN_GFX908;
 
   return -1;
 }
@@ -2007,13 +2007,15 @@ init_kernel_properties (struct kernel_info *kernel)
   hsa_status_t status;
   struct agent_info *agent = kernel->agent;
   hsa_executable_symbol_t kernel_symbol;
+  char *buf = alloca (strlen (kernel->name) + 4);
+  sprintf (buf, "%s.kd", kernel->name);
   status = hsa_fns.hsa_executable_get_symbol_fn (agent->executable, NULL,
-						 kernel->name, agent->id,
+						 buf, agent->id,
 						 0, &kernel_symbol);
   if (status != HSA_STATUS_SUCCESS)
     {
       hsa_warn ("Could not find symbol for kernel in the code object", status);
-      fprintf (stderr, "not found name: '%s'\n", kernel->name);
+      fprintf (stderr, "not found name: '%s'\n", buf);
       dump_executable_symbols (agent->executable);
       goto failure;
     }
@@ -2327,61 +2329,6 @@ init_basic_kernel_info (struct kernel_info *kernel,
   return true;
 }
 
-/* Find the load_offset for MODULE, save to *LOAD_OFFSET, and return true.  If
-   not found, return false.  */
-
-static bool
-find_load_offset (Elf64_Addr *load_offset, struct agent_info *agent,
-		  struct module_info *module, Elf64_Ehdr *image,
-		  Elf64_Shdr *sections)
-{
-  bool res = false;
-
-  hsa_status_t status;
-
-  hsa_executable_symbol_t symbol;
-  if (!find_executable_symbol (agent->executable, &symbol))
-    return false;
-
-  status = hsa_fns.hsa_executable_symbol_get_info_fn
-    (symbol, HSA_EXECUTABLE_SYMBOL_INFO_VARIABLE_ADDRESS, load_offset);
-  if (status != HSA_STATUS_SUCCESS)
-    {
-      hsa_error ("Could not extract symbol address", status);
-      return false;
-    }
-
-  char *symbol_name = get_executable_symbol_name (symbol);
-  if (symbol_name == NULL)
-    return false;
-
-  /* Find the kernel function in ELF, and calculate actual load offset.  */
-  for (int i = 0; i < image->e_shnum; i++)
-    if (sections[i].sh_type == SHT_SYMTAB)
-      {
-	Elf64_Shdr *strtab = &sections[sections[i].sh_link];
-	char *strings = (char *)image + strtab->sh_offset;
-
-	for (size_t offset = 0;
-	     offset < sections[i].sh_size;
-	     offset += sections[i].sh_entsize)
-	  {
-	    Elf64_Sym *sym = (Elf64_Sym*)((char*)image
-					  + sections[i].sh_offset
-					  + offset);
-	    if (strcmp (symbol_name, strings + sym->st_name) == 0)
-	      {
-		*load_offset -= sym->st_value;
-		res = true;
-		break;
-	      }
-	  }
-      }
-
-  free (symbol_name);
-  return res;
-}
-
 /* Check that the GCN ISA of the given image matches the ISA of the agent. */
 
 static bool
@@ -2421,7 +2368,6 @@ static bool
 create_and_finalize_hsa_program (struct agent_info *agent)
 {
   hsa_status_t status;
-  int reloc_count = 0;
   bool res = true;
   if (pthread_mutex_lock (&agent->prog_mutex))
     {
@@ -2449,18 +2395,6 @@ create_and_finalize_hsa_program (struct agent_info *agent)
 
       if (!isa_matches_agent (agent, image))
 	goto fail;
-
-      /* Hide relocations from the HSA runtime loader.
-	 Keep a copy of the unmodified section headers to use later.  */
-      Elf64_Shdr *image_sections = (Elf64_Shdr *)((char *)image
-						  + image->e_shoff);
-      for (int i = image->e_shnum - 1; i >= 0; i--)
-	{
-	  if (image_sections[i].sh_type == SHT_RELA
-	      || image_sections[i].sh_type == SHT_REL)
-	    /* Change section type to something harmless.  */
-	    image_sections[i].sh_type |= 0x80;
-	}
 
       hsa_code_object_t co = { 0 };
       status = hsa_fns.hsa_code_object_deserialize_fn
@@ -2516,131 +2450,6 @@ create_and_finalize_hsa_program (struct agent_info *agent)
       hsa_error ("Could not freeze the GCN executable", status);
       goto fail;
     }
-
-  if (agent->module)
-    {
-      struct module_info *module = agent->module;
-      Elf64_Ehdr *image = (Elf64_Ehdr *)module->image_desc->gcn_image->image;
-      Elf64_Shdr *sections = (Elf64_Shdr *)((char *)image + image->e_shoff);
-
-      Elf64_Addr load_offset;
-      if (!find_load_offset (&load_offset, agent, module, image, sections))
-	goto fail;
-
-      /* Record the physical load address range.
-	 We need this for data copies later.  */
-      Elf64_Phdr *segments = (Elf64_Phdr *)((char*)image + image->e_phoff);
-      Elf64_Addr low = ~0, high = 0;
-      for (int i = 0; i < image->e_phnum; i++)
-	if (segments[i].p_memsz > 0)
-	  {
-	    if (segments[i].p_paddr < low)
-	      low = segments[i].p_paddr;
-	    if (segments[i].p_paddr > high)
-	      high = segments[i].p_paddr + segments[i].p_memsz - 1;
-	  }
-      module->phys_address_start = low + load_offset;
-      module->phys_address_end = high + load_offset;
-
-      // Find dynamic symbol table
-      Elf64_Shdr *dynsym = NULL;
-      for (int i = 0; i < image->e_shnum; i++)
-	if (sections[i].sh_type == SHT_DYNSYM)
-	  {
-	    dynsym = &sections[i];
-	    break;
-	  }
-
-      /* Fix up relocations.  */
-      for (int i = 0; i < image->e_shnum; i++)
-	{
-	  if (sections[i].sh_type == (SHT_RELA | 0x80))
-	    for (size_t offset = 0;
-		 offset < sections[i].sh_size;
-		 offset += sections[i].sh_entsize)
-	      {
-		Elf64_Rela *reloc = (Elf64_Rela*)((char*)image
-						  + sections[i].sh_offset
-						  + offset);
-		Elf64_Sym *sym =
-		  (dynsym
-		   ? (Elf64_Sym*)((char*)image
-				  + dynsym->sh_offset
-				  + (dynsym->sh_entsize
-				     * ELF64_R_SYM (reloc->r_info)))
-		   : NULL);
-
-		int64_t S = (sym ? sym->st_value : 0);
-		int64_t P = reloc->r_offset + load_offset;
-		int64_t A = reloc->r_addend;
-		int64_t B = load_offset;
-		int64_t V, size;
-		switch (ELF64_R_TYPE (reloc->r_info))
-		  {
-		  case R_AMDGPU_ABS32_LO:
-		    V = (S + A) & 0xFFFFFFFF;
-		    size = 4;
-		    break;
-		  case R_AMDGPU_ABS32_HI:
-		    V = (S + A) >> 32;
-		    size = 4;
-		    break;
-		  case R_AMDGPU_ABS64:
-		    V = S + A;
-		    size = 8;
-		    break;
-		  case R_AMDGPU_REL32:
-		    V = S + A - P;
-		    size = 4;
-		    break;
-		  case R_AMDGPU_REL64:
-		    /* FIXME
-		       LLD seems to emit REL64 where the the assembler has
-		       ABS64.  This is clearly wrong because it's not what the
-		       compiler is expecting.  Let's assume, for now, that
-		       it's a bug.  In any case, GCN kernels are always self
-		       contained and therefore relative relocations will have
-		       been resolved already, so this should be a safe
-		       workaround.  */
-		    V = S + A/* - P*/;
-		    size = 8;
-		    break;
-		  case R_AMDGPU_ABS32:
-		    V = S + A;
-		    size = 4;
-		    break;
-		    /* TODO R_AMDGPU_GOTPCREL */
-		    /* TODO R_AMDGPU_GOTPCREL32_LO */
-		    /* TODO R_AMDGPU_GOTPCREL32_HI */
-		  case R_AMDGPU_REL32_LO:
-		    V = (S + A - P) & 0xFFFFFFFF;
-		    size = 4;
-		    break;
-		  case R_AMDGPU_REL32_HI:
-		    V = (S + A - P) >> 32;
-		    size = 4;
-		    break;
-		  case R_AMDGPU_RELATIVE64:
-		    V = B + A;
-		    size = 8;
-		    break;
-		  default:
-		    fprintf (stderr, "Error: unsupported relocation type.\n");
-		    exit (1);
-		  }
-		status = hsa_fns.hsa_memory_copy_fn ((void*)P, &V, size);
-		if (status != HSA_STATUS_SUCCESS)
-		  {
-		    hsa_error ("Failed to fix up relocation", status);
-		    goto fail;
-		  }
-		reloc_count++;
-	      }
-	}
-    }
-
-  GCN_DEBUG ("Loaded GCN kernels to device %d (%d relocations)\n",
-	     agent->device_id, reloc_count);
 
 final:
   agent->prog_finalized = true;
@@ -3135,8 +2944,6 @@ copy_data (void *data_)
 	     data->aq->agent->device_id, data->aq->id, data->len, data->src,
 	     data->dst);
   hsa_memory_copy_wrapper (data->dst, data->src, data->len);
-  if (data->free_src)
-    free ((void *) data->src);
   free (data);
 }
 
@@ -3150,12 +2957,11 @@ gomp_offload_free (void *ptr)
 }
 
 /* Request an asynchronous data copy, to or from a device, on a given queue.
-   The event will be registered as a callback.  If FREE_SRC is true
-   then the source data will be freed following the copy.  */
+   The event will be registered as a callback.  */
 
 static void
 queue_push_copy (struct goacc_asyncqueue *aq, void *dst, const void *src,
-		 size_t len, bool free_src)
+		 size_t len)
 {
   if (DEBUG_QUEUES)
     GCN_DEBUG ("queue_push_copy %d:%d: %zu bytes from (%p) to (%p)\n",
@@ -3165,7 +2971,6 @@ queue_push_copy (struct goacc_asyncqueue *aq, void *dst, const void *src,
   data->dst = dst;
   data->src = src;
   data->len = len;
-  data->free_src = free_src;
   data->aq = aq;
   queue_push_callback (aq, copy_data, data);
 }
@@ -3257,15 +3062,34 @@ gcn_exec (struct kernel_info *kernel, size_t mapnum, void **hostaddrs,
   if (hsa_kernel_desc->oacc_dims[2] > 0)
     dims[2] = hsa_kernel_desc->oacc_dims[2];
 
-  /* If any of the OpenACC dimensions remain 0 then we get to pick a number.
-     There isn't really a correct answer for this without a clue about the
-     problem size, so let's do a reasonable number of single-worker gangs.
-     64 gangs matches a typical Fiji device.  */
+  /* Ideally, when a dimension isn't explicitly specified, we should
+     tune it to run 40 (or 32?) threads per CU with no threads getting queued.
+     In practice, we tune for peak performance on BabelStream, which
+     for OpenACC is currently 32 threads per CU.  */
+  if (dims[0] == 0 && dims[1] == 0)
+    {
+      /* If any of the OpenACC dimensions remain 0 then we get to pick a
+	 number.  There isn't really a correct answer for this without a clue
+	 about the problem size, so let's do a reasonable number of workers
+	 and gangs.  */
 
-  /* NOTE: Until support for middle-end worker partitioning is merged, use 1
-     for the default number of workers.  */
-  if (dims[0] == 0) dims[0] = get_cu_count (kernel->agent); /* Gangs.  */
-  if (dims[1] == 0) dims[1] = 1;  /* Workers.  */
+      dims[0] = get_cu_count (kernel->agent) * 4; /* Gangs.  */
+      dims[1] = 8; /* Workers.  */
+    }
+  else if (dims[0] == 0 && dims[1] > 0)
+    {
+      /* Auto-scale the number of gangs with the requested number of workers.  */
+      dims[0] = get_cu_count (kernel->agent) * (32 / dims[1]);
+    }
+  else if (dims[0] > 0 && dims[1] == 0)
+    {
+      /* Auto-scale the number of workers with the requested number of gangs.  */
+      dims[1] = get_cu_count (kernel->agent) * 32 / dims[0];
+      if (dims[1] == 0)
+	dims[1] = 1;
+      if (dims[1] > 16)
+	dims[1] = 16;
+    }
 
   /* The incoming dimensions are expressed in terms of gangs, workers, and
      vectors.  The HSA dimensions are expressed in terms of "work-items",
@@ -3532,6 +3356,7 @@ GOMP_OFFLOAD_load_image (int ord, unsigned version, const void *target_data,
   struct kernel_info *kernel;
   int kernel_count = image_desc->kernel_count;
   unsigned var_count = image_desc->global_variable_count;
+  int other_count = 1;
 
   agent = get_agent_info (ord);
   if (!agent)
@@ -3548,7 +3373,8 @@ GOMP_OFFLOAD_load_image (int ord, unsigned version, const void *target_data,
 
   GCN_DEBUG ("Encountered %d kernels in an image\n", kernel_count);
   GCN_DEBUG ("Encountered %u global variables in an image\n", var_count);
-  pair = GOMP_PLUGIN_malloc ((kernel_count + var_count - 2)
+  GCN_DEBUG ("Expect %d other variables in an image\n", other_count);
+  pair = GOMP_PLUGIN_malloc ((kernel_count + var_count + other_count - 2)
 			     * sizeof (struct addr_pair));
   *target_table = pair;
   module = (struct module_info *)
@@ -3590,38 +3416,73 @@ GOMP_OFFLOAD_load_image (int ord, unsigned version, const void *target_data,
   if (!create_and_finalize_hsa_program (agent))
     return -1;
 
-  for (unsigned i = 0; i < var_count; i++)
+  if (var_count > 0)
     {
-      struct global_var_info *v = &image_desc->global_variables[i];
-      GCN_DEBUG ("Looking for variable %s\n", v->name);
-
       hsa_status_t status;
       hsa_executable_symbol_t var_symbol;
       status = hsa_fns.hsa_executable_get_symbol_fn (agent->executable, NULL,
-						     v->name, agent->id,
+						     ".offload_var_table",
+						     agent->id,
 						     0, &var_symbol);
 
       if (status != HSA_STATUS_SUCCESS)
 	hsa_fatal ("Could not find symbol for variable in the code object",
 		   status);
 
-      uint64_t var_addr;
-      uint32_t var_size;
+      uint64_t var_table_addr;
       status = hsa_fns.hsa_executable_symbol_get_info_fn
-	(var_symbol, HSA_EXECUTABLE_SYMBOL_INFO_VARIABLE_ADDRESS, &var_addr);
+	(var_symbol, HSA_EXECUTABLE_SYMBOL_INFO_VARIABLE_ADDRESS,
+	 &var_table_addr);
+      if (status != HSA_STATUS_SUCCESS)
+	hsa_fatal ("Could not extract a variable from its symbol", status);
+
+      struct {
+	uint64_t addr;
+	uint64_t size;
+      } var_table[var_count];
+      GOMP_OFFLOAD_dev2host (agent->device_id, var_table,
+			     (void*)var_table_addr, sizeof (var_table));
+
+      for (unsigned i = 0; i < var_count; i++)
+	{
+	  pair->start = var_table[i].addr;
+	  pair->end = var_table[i].addr + var_table[i].size;
+	  GCN_DEBUG ("Found variable at %p with size %lu\n",
+		     (void *)var_table[i].addr, var_table[i].size);
+	  pair++;
+	}
+    }
+
+  GCN_DEBUG ("Looking for variable %s\n", XSTRING (GOMP_DEVICE_NUM_VAR));
+
+  hsa_status_t status;
+  hsa_executable_symbol_t var_symbol;
+  status = hsa_fns.hsa_executable_get_symbol_fn (agent->executable, NULL,
+						 XSTRING (GOMP_DEVICE_NUM_VAR),
+						 agent->id, 0, &var_symbol);
+  if (status == HSA_STATUS_SUCCESS)
+    {
+      uint64_t device_num_varptr;
+      uint32_t device_num_varsize;
+
+      status = hsa_fns.hsa_executable_symbol_get_info_fn
+	(var_symbol, HSA_EXECUTABLE_SYMBOL_INFO_VARIABLE_ADDRESS,
+	 &device_num_varptr);
       if (status != HSA_STATUS_SUCCESS)
 	hsa_fatal ("Could not extract a variable from its symbol", status);
       status = hsa_fns.hsa_executable_symbol_get_info_fn
-	(var_symbol, HSA_EXECUTABLE_SYMBOL_INFO_VARIABLE_SIZE, &var_size);
+	(var_symbol, HSA_EXECUTABLE_SYMBOL_INFO_VARIABLE_SIZE,
+	 &device_num_varsize);
       if (status != HSA_STATUS_SUCCESS)
 	hsa_fatal ("Could not extract a variable size from its symbol", status);
 
-      pair->start = var_addr;
-      pair->end = var_addr + var_size;
-      GCN_DEBUG ("Found variable %s at %p with size %u\n", v->name,
-		 (void *)var_addr, var_size);
-      pair++;
+      pair->start = device_num_varptr;
+      pair->end = device_num_varptr + device_num_varsize;
     }
+  else
+    /* The 'GOMP_DEVICE_NUM_VAR' variable was not in this image.  */
+    pair->start = pair->end = 0;
+  pair++;
 
   /* Ensure that constructors are run first.  */
   struct GOMP_kernel_launch_attributes kla =
@@ -3645,7 +3506,7 @@ GOMP_OFFLOAD_load_image (int ord, unsigned version, const void *target_data,
   if (module->fini_array_func)
     kernel_count--;
 
-  return kernel_count + var_count;
+  return kernel_count + var_count + other_count;
 }
 
 /* Unload GCN object-code module described by struct gcn_image_desc in
@@ -3868,7 +3729,7 @@ GOMP_OFFLOAD_dev2dev (int device, void *dst, const void *src, size_t n)
     {
       struct agent_info *agent = get_agent_info (device);
       maybe_init_omp_async (agent);
-      queue_push_copy (agent->omp_async_queue, dst, src, n, false);
+      queue_push_copy (agent->omp_async_queue, dst, src, n);
       return true;
     }
 
@@ -4138,15 +3999,7 @@ GOMP_OFFLOAD_openacc_async_host2dev (int device, void *dst, const void *src,
 {
   struct agent_info *agent = get_agent_info (device);
   assert (agent == aq->agent);
-  /* The source data does not necessarily remain live until the deferred
-     copy happens.  Taking a snapshot of the data here avoids reading
-     uninitialised data later, but means that (a) data is copied twice and
-     (b) modifications to the copied data between the "spawning" point of
-     the asynchronous kernel and when it is executed will not be seen.
-     But, that is probably correct.  */
-  void *src_copy = GOMP_PLUGIN_malloc (n);
-  memcpy (src_copy, src, n);
-  queue_push_copy (aq, dst, src_copy, n, true);
+  queue_push_copy (aq, dst, src, n);
   return true;
 }
 
@@ -4158,7 +4011,7 @@ GOMP_OFFLOAD_openacc_async_dev2host (int device, void *dst, const void *src,
 {
   struct agent_info *agent = get_agent_info (device);
   assert (agent == aq->agent);
-  queue_push_copy (aq, dst, src, n, false);
+  queue_push_copy (aq, dst, src, n);
   return true;
 }
 

@@ -1,5 +1,5 @@
 /* GCC backend definitions for the TI MSP430 Processor
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -65,8 +65,6 @@ extern bool msp430x;
   "%{mrelax=-mQ} " /* Pass the relax option on to the assembler.  */ \
   /* Tell the assembler if we are building for the LARGE pointer model.  */ \
   "%{mlarge:-ml} " \
-  /* Copy data from ROM to RAM if necessary.  */ \
-  "%{!msim:-md} %{msim:%{mlarge:-md}} " \
   "%{msilicon-errata=*:-msilicon-errata=%*} " \
   "%{msilicon-errata-warn=*:-msilicon-errata-warn=%*} " \
   /* Create DWARF line number sections for -ffunction-sections.  */ \
@@ -105,7 +103,7 @@ extern const char * msp430_check_path_for_devices (int, const char **);
 extern const char *msp430_propagate_region_opt (int, const char **);
 extern const char *msp430_get_linker_devices_include_path (int, const char **);
 
-/* There must be a trailing comma after the last item, see gcc.c
+/* There must be a trailing comma after the last item, see gcc.cc
    "static_spec_functions".  */
 # define EXTRA_SPEC_FUNCTIONS				\
   { "msp430_hwmult_lib", msp430_select_hwmult_lib },	\
@@ -130,7 +128,7 @@ extern const char *msp430_get_linker_devices_include_path (int, const char **);
    reason that a spec function is used.  There are so many possible
    values of FOO that a table is used to look up the name and map
    it to a hardware multiply library.  This table (in device-msp430.c)
-   must be kept in sync with the same table in msp430.c.  */
+   must be kept in sync with the same table in msp430.cc.  */
 #undef  LIB_SPEC
 #define LIB_SPEC "					\
 --start-group						\
@@ -245,6 +243,14 @@ extern const char *msp430_get_linker_devices_include_path (int, const char **);
 #define HAS_LONG_COND_BRANCH		0
 #define HAS_LONG_UNCOND_BRANCH		0
 
+/* The cost of a branch sequence is roughly 3 "cheap" instructions.  */
+#define BRANCH_COST(speed_p, predictable_p) 3
+
+/* Override the default BRANCH_COST heuristic to indicate that it is preferable
+   to retain short-circuit operations, this results in significantly better
+   codesize and performance.  */
+#define LOGICAL_OP_NON_SHORT_CIRCUIT 0
+
 #define LOAD_EXTEND_OP(M)		ZERO_EXTEND
 #define WORD_REGISTER_OPERATIONS	1
 
@@ -257,6 +263,11 @@ extern const char *msp430_get_linker_devices_include_path (int, const char **);
   msp430_return_addr_rtx (COUNT)
 
 #define SLOW_BYTE_ACCESS		0
+
+/* Calling a constant function address costs the same number of clock
+   cycles as calling an address stored in a register. However, in terms of
+   instruction length, calling a constant address is more expensive.  */
+#define NO_FUNCTION_CSE (optimize >= 2 && !optimize_size)
 
 
 /* Register Usage */
@@ -517,7 +528,23 @@ void msp430_register_pre_includes (const char *sysroot ATTRIBUTE_UNUSED,
 #undef  USE_SELECT_SECTION_FOR_FUNCTIONS
 #define USE_SELECT_SECTION_FOR_FUNCTIONS 1
 
+#undef ASM_OUTPUT_ALIGNED_DECL_COMMON
 #define ASM_OUTPUT_ALIGNED_DECL_COMMON(FILE, DECL, NAME, SIZE, ALIGN)	\
-  msp430_output_aligned_decl_common ((FILE), (DECL), (NAME), (SIZE), (ALIGN))
+  msp430_output_aligned_decl_common ((FILE), (DECL), (NAME), (SIZE), (ALIGN), 0)
+
+#undef  ASM_OUTPUT_ALIGNED_DECL_LOCAL
+#define ASM_OUTPUT_ALIGNED_DECL_LOCAL(FILE, DECL, NAME, SIZE, ALIGN)	\
+  msp430_output_aligned_decl_common ((FILE), (DECL), (NAME), (SIZE), (ALIGN), 1)
+
 
 #define SYMBOL_FLAG_LOW_MEM (SYMBOL_FLAG_MACH_DEP << 0)
+
+#define ADJUST_INSN_LENGTH(insn, length) \
+  do	\
+    {	\
+      if (recog_memoized (insn) >= 0)			\
+	{						\
+	  length += get_attr_extra_length (insn);	\
+	  length *= get_attr_length_multiplier (insn);	\
+	}						\
+    } while (0)

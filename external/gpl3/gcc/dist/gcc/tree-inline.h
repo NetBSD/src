@@ -1,5 +1,5 @@
 /* Tree inlining hooks and declarations.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
 This file is part of GCC.
@@ -133,9 +133,6 @@ struct copy_body_data
      and only in that case will actually remap the type.  */
   bool dont_remap_vla_if_no_change;
 
-  /* A function to be called when duplicating BLOCK nodes.  */
-  void (*transform_lang_insert_block) (tree);
-
   /* Statements that might be possibly folded.  */
   hash_set<gimple *> *statements_to_fold;
 
@@ -150,9 +147,9 @@ struct copy_body_data
   vec<gdebug *> debug_stmts;
 
   /* A map from local declarations in the inlined function to
-     equivalents in the function into which it is being inlined, where
-     the originals have been mapped to a value rather than to a
-     variable.  */
+     equivalents in the function into which it is being inlined,
+     where the originals have been mapped to a value rather than
+     to a variable.  */
   hash_map<tree, tree> *debug_map;
 
   /* A map from the inlined functions dependence info cliques to
@@ -252,7 +249,7 @@ extern tree copy_decl_for_dup_finish (copy_body_data *id, tree decl, tree copy);
 extern tree copy_decl_to_var (tree, copy_body_data *);
 extern tree force_value_to_type (tree type, tree value);
 
-/* This is in tree-inline.c since the routine uses
+/* This is in tree-inline.cc since the routine uses
    data structures from the inliner.  */
 extern tree build_duplicate_type (tree);
 

@@ -1,4 +1,4 @@
-// Copyright (C) 1997-2020 Free Software Foundation, Inc.
+// Copyright (C) 1997-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -515,7 +515,7 @@ namespace {
 #endif
 
 #ifdef __GTHREADS
-	if (__gthread_active_p())
+	if (!__gnu_cxx::__is_single_threaded())
 	  {
 	    if (__atomic_always_lock_free(sizeof(_M_index), &_M_index))
 	      {

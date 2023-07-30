@@ -1,5 +1,5 @@
-/* LTO plugin for gold and/or GNU ld.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+/* LTO plugin for linkers like gold, GNU ld or mold.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Contributed by Rafael Avila de Espindola (espindola@google.com).
 
 This program is free software; you can redistribute it and/or modify
@@ -16,11 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* The plugin has only one external function: onload. Gold passes it an array of
-   function that the plugin uses to communicate back to gold.
+/* The plugin has only one external function: onload. A linker passes it an array of
+   function that the plugin uses to communicate back to the linker.
 
-   With the functions provided by gold, the plugin can be notified when
-   gold first analyzes a file and pass a symbol table back to gold. The plugin
+   With the functions provided by the linker, the plugin can be notified when
+   the linker first analyzes a file and pass a symbol table back to the linker. The plugin
    is also notified when all symbols have been read and it is time to generate
    machine code for the necessary symbols.
 
@@ -32,6 +32,9 @@ along with this program; see the file COPYING3.  If not see
    -nop: Instead of running lto-wrapper, pass the original to the plugin. This
    only works if the input files are hybrid. 
    -linker-output-known: Do not determine linker output
+   -linker-output-auto-nolto-rel: Switch from rel to nolto-rel mode without
+   warning.  This is used on systems like VxWorks (kernel) where the link is
+   always partial and repeated incremental linking is generally not used.
    -sym-style={none,win32,underscore|uscore}
    -pass-through  */
 
@@ -86,16 +89,13 @@ along with this program; see the file COPYING3.  If not see
 
 #define LTO_SEGMENT_NAME "__GNU_LTO"
 
-/* LTO magic section name.  */
+/* Return true if STR string starts with PREFIX.  */
 
-#define LTO_SYMTAB_PREFIX	    ".gnu.lto_.symtab"
-#define LTO_SYMTAB_PREFIX_LEN	    (sizeof (LTO_SYMTAB_PREFIX) - 1)
-#define LTO_SYMTAB_EXT_PREFIX	    ".gnu.lto_.ext_symtab"
-#define LTO_SYMTAB_EXT_PREFIX_LEN   (sizeof (LTO_SYMTAB_EXT_PREFIX) - 1)
-#define LTO_LTO_PREFIX		    ".gnu.lto_.lto"
-#define LTO_LTO_PREFIX_LEN	    (sizeof (LTO_LTO_PREFIX) - 1)
-#define OFFLOAD_SECTION		    ".gnu.offload_lto_.opts"
-#define OFFLOAD_SECTION_LEN	    (sizeof (OFFLOAD_SECTION) - 1)
+static inline bool
+startswith (const char *str, const char *prefix)
+{
+  return strncmp (str, prefix, strlen (prefix)) == 0;
+}
 
 /* The part of the symbol table the plugin has to keep track of. Note that we
    must keep SYMS until all_symbols_read is called to give the linker time to
@@ -190,15 +190,22 @@ static int lto_wrapper_num_args;
 static char **pass_through_items = NULL;
 static unsigned int num_pass_through_items;
 
+static char *ltrans_objects = NULL;
+
 static bool debug;
 static bool save_temps;
 static bool verbose;
 static char nop;
 static char *resolution_file = NULL;
 static enum ld_plugin_output_file_type linker_output;
-static int linker_output_set;
-static int linker_output_known;
+static bool linker_output_set;
+static bool linker_output_known;
+static bool linker_output_auto_nolto_rel;
 static const char *link_output_name = NULL;
+
+/* This indicates link_output_name already contains the dot of the
+   suffix, so we can skip it in extensions.  */
+static int skip_in_suffix = 0;
 
 /* The version of gold being used, or -1 if not gold.  The number is
    MAJOR * 100 + MINOR.  */
@@ -628,15 +635,12 @@ exec_lto_wrapper (char *argv[])
 
   /* Write argv to a file to avoid a command line that is too long
      Save the file locally on save-temps.  */
+  const char *suffix = ".lto_wrapper_args";
+  suffix += skip_in_suffix;
   if (save_temps && link_output_name)
-    {
-      arguments_file_name = (char *) xmalloc (strlen (link_output_name)
-				  + sizeof (".lto_wrapper_args") + 1);
-      strcpy (arguments_file_name, link_output_name);
-      strcat (arguments_file_name, ".lto_wrapper_args");
-    }
+    arguments_file_name = concat (link_output_name, suffix, NULL);
   else
-     arguments_file_name = make_temp_file (".lto_wrapper_args");
+    arguments_file_name = make_temp_file (".lto_wrapper_args");
   check (arguments_file_name, LDPL_FATAL,
          "Failed to generate a temorary file name");
 
@@ -721,9 +725,10 @@ use_original_files (void)
 static enum ld_plugin_status
 all_symbols_read_handler (void)
 {
+  const unsigned num_lto_args
+    = num_claimed_files + lto_wrapper_num_args + 2
+      + !linker_output_known + !linker_output_auto_nolto_rel;
   unsigned i;
-  unsigned num_lto_args = num_claimed_files + lto_wrapper_num_args + 2
-    	   + !linker_output_known;
   char **lto_argv;
   const char *linker_output_str = NULL;
   const char **lto_arg_ptr;
@@ -733,6 +738,14 @@ all_symbols_read_handler (void)
   if (nop)
     {
       use_original_files ();
+      return LDPS_OK;
+    }
+
+  if (ltrans_objects)
+    {
+      FILE *objs = fopen (ltrans_objects, "r");
+      add_output_files (objs);
+      fclose (objs);
       return LDPS_OK;
     }
 
@@ -755,9 +768,10 @@ all_symbols_read_handler (void)
 	case LDPO_REL:
 	  if (non_claimed_files)
 	    {
-	      message (LDPL_WARNING, "incremental linking of LTO and non-LTO "
-		       "objects; using -flinker-output=nolto-rel which will "
-		       "bypass whole program optimization");
+	      if (!linker_output_auto_nolto_rel)
+		message (LDPL_WARNING, "incremental linking of LTO and non-LTO"
+			 " objects; using -flinker-output=nolto-rel which will"
+			 " bypass whole program optimization");
 	      linker_output_str = "-flinker-output=nolto-rel";
 	    }
 	  else
@@ -785,8 +799,15 @@ all_symbols_read_handler (void)
       char *arg;
       char *offload_objects_file_name;
       struct plugin_offload_file *ofld;
+      const char *suffix = ".ofldlist";
 
-      offload_objects_file_name = make_temp_file (".ofldlist");
+      if (save_temps && link_output_name)
+	{
+	  suffix += skip_in_suffix;
+	  offload_objects_file_name = concat (link_output_name, suffix, NULL);
+	}
+      else
+	offload_objects_file_name = make_temp_file (suffix);
       check (offload_objects_file_name, LDPL_FATAL,
 	     "Failed to generate a temporary file name");
       f = fopen (offload_objects_file_name, "w");
@@ -825,7 +846,7 @@ all_symbols_read_handler (void)
       unsigned int i;
       for (i = 0; i < num_pass_through_items; i++)
         {
-          if (strncmp (pass_through_items[i], "-l", 2) == 0)
+	  if (startswith (pass_through_items[i], "-l"))
             add_input_library (pass_through_items[i] + 2);
           else
             add_input_file (pass_through_items[i]);
@@ -1015,7 +1036,7 @@ process_symtab (void *data, const char *name, off_t offset, off_t length)
   char *s;
   char *secdatastart, *secdata;
 
-  if (strncmp (name, LTO_SYMTAB_PREFIX, LTO_SYMTAB_PREFIX_LEN) != 0)
+  if (!startswith (name, ".gnu.lto_.symtab"))
     return 1;
 
   s = strrchr (name, '.');
@@ -1067,7 +1088,7 @@ process_symtab_extension (void *data, const char *name, off_t offset,
   char *s;
   char *secdatastart, *secdata;
 
-  if (strncmp (name, LTO_SYMTAB_EXT_PREFIX, LTO_SYMTAB_EXT_PREFIX_LEN) != 0)
+  if (!startswith (name, ".gnu.lto_.ext_symtab"))
     return 1;
 
   s = strrchr (name, '.');
@@ -1115,7 +1136,7 @@ err:
 static int
 process_offload_section (void *data, const char *name, off_t offset, off_t len)
 {
-  if (!strncmp (name, OFFLOAD_SECTION, OFFLOAD_SECTION_LEN))
+  if (startswith (name, ".gnu.offload_lto_.opts"))
     {
       struct plugin_objfile *obj = (struct plugin_objfile *) data;
       obj->offload = 1;
@@ -1125,7 +1146,7 @@ process_offload_section (void *data, const char *name, off_t offset, off_t len)
   return 1;
 }
 
-/* Callback used by gold to check if the plugin will claim FILE. Writes
+/* Callback used by a linker to check if the plugin will claim FILE. Writes
    the result in CLAIMED. */
 
 static enum ld_plugin_status
@@ -1306,8 +1327,12 @@ static void
 process_option (const char *option)
 {
   if (strcmp (option, "-linker-output-known") == 0)
-    linker_output_known = 1;
-  if (strcmp (option, "-debug") == 0)
+    linker_output_known = true;
+  /* Also accept "notlo" for backwards compatibility.  */
+  else if ((strcmp (option, "-linker-output-auto-nolto-rel") == 0)
+           || (strcmp (option, "-linker-output-auto-notlo-rel") == 0))
+    linker_output_auto_nolto_rel = true;
+  else if (strcmp (option, "-debug") == 0)
     debug = true;
   else if ((strcmp (option, "-v") == 0)
            || (strcmp (option, "--verbose") == 0))
@@ -1316,7 +1341,7 @@ process_option (const char *option)
     save_temps = true;
   else if (strcmp (option, "-nop") == 0)
     nop = 1;
-  else if (!strncmp (option, "-pass-through=", strlen("-pass-through=")))
+  else if (startswith (option, "-pass-through="))
     {
       num_pass_through_items++;
       pass_through_items = xrealloc (pass_through_items,
@@ -1324,7 +1349,7 @@ process_option (const char *option)
       pass_through_items[num_pass_through_items - 1] =
           xstrdup (option + strlen ("-pass-through="));
     }
-  else if (!strncmp (option, "-sym-style=", sizeof ("-sym-style=") - 1))
+  else if (startswith (option, "-sym-style="))
     {
       switch (option[sizeof ("-sym-style=") - 1])
 	{
@@ -1339,6 +1364,8 @@ process_option (const char *option)
 	  break;
 	}
     }
+  else if (startswith (option, "-ltrans-objects="))
+    ltrans_objects = xstrdup (option + strlen ("-ltrans-objects="));
   else
     {
       int size;
@@ -1347,14 +1374,14 @@ process_option (const char *option)
       size = lto_wrapper_num_args * sizeof (char *);
       lto_wrapper_argv = (char **) xrealloc (lto_wrapper_argv, size);
       lto_wrapper_argv[lto_wrapper_num_args - 1] = opt;
-      if (strncmp (option, "-fresolution=", sizeof ("-fresolution=") - 1) == 0)
+      if (startswith (option, "-fresolution="))
 	resolution_file = opt + sizeof ("-fresolution=") - 1;
     }
   save_temps = save_temps || debug;
   verbose = verbose || debug;
 }
 
-/* Called by gold after loading the plugin. TV is the transfer vector. */
+/* Called by a linker after loading the plugin. TV is the transfer vector. */
 
 enum ld_plugin_status
 onload (struct ld_plugin_tv *tv)
@@ -1405,7 +1432,7 @@ onload (struct ld_plugin_tv *tv)
 	  break;
 	case LDPT_LINKER_OUTPUT:
 	  linker_output = (enum ld_plugin_output_file_type) p->tv_u.tv_val;
-	  linker_output_set = 1;
+	  linker_output_set = true;
 	  break;
 	case LDPT_OUTPUT_NAME:
 	  /* We only use this to make user-friendly temp file names.  */
@@ -1446,12 +1473,82 @@ onload (struct ld_plugin_tv *tv)
       if (strstr (collect_gcc_options, "'-fno-use-linker-plugin'"))
 	return LDPS_ERR;
 
-      if ( strstr (collect_gcc_options, "'-save-temps'"))
+      if (strstr (collect_gcc_options, "'-save-temps'"))
 	save_temps = true;
 
       if (strstr (collect_gcc_options, "'-v'")
           || strstr (collect_gcc_options, "'--verbose'"))
 	verbose = true;
+
+      const char *p;
+      if ((p = strstr (collect_gcc_options, "'-dumpdir'")))
+	{
+	  p += sizeof ("'-dumpdir'");
+	  while (*p == ' ')
+	    p++;
+	  const char *start = p;
+	  int ticks = 0, escapes = 0;
+	  /* Count ticks (') and escaped (\.) characters.  Stop at the
+	     end of the options or at a blank after an even number of
+	     ticks (not counting escaped ones.  */
+	  for (p = start; *p; p++)
+	    {
+	      if (*p == '\'')
+		{
+		  ticks++;
+		  continue;
+		}
+	      else if ((ticks % 2) != 0)
+		{
+		  if (*p == ' ')
+		    break;
+		  if (*p == '\\')
+		    {
+		      if (*++p)
+			escapes++;
+		      else
+			p--;
+		    }
+		}
+	    }
+
+	  /* Now allocate a new link_output_name and decode dumpdir
+	     into it.  The loop uses the same logic, except it counts
+	     ticks and escapes backwards (so ticks is adjusted if we
+	     find an odd number of them), and it copies characters
+	     that are escaped or not otherwise skipped.  */
+	  int len = p - start - ticks - escapes + 1;
+	  char *q = xmalloc (len);
+	  link_output_name = q;
+	  int oddticks = (ticks % 2);
+	  ticks += oddticks;
+	  for (p = start; *p; p++)
+	    {
+	      if (*p == '\'')
+		{
+		  ticks--;
+		  continue;
+		}
+	      else if ((ticks % 2) != 0)
+		{
+		  if (*p == ' ')
+		    break;
+		  if (*p == '\\')
+		    {
+		      if (*++p)
+			escapes--;
+		      else
+			p--;
+		    }
+		}
+	      *q++ = *p;
+	    }
+	  *q = '\0';
+	  assert (escapes == 0);
+	  assert (ticks == oddticks);
+	  assert (q - link_output_name == len - 1);
+	  skip_in_suffix = 1;
+	}
     }
 
   return LDPS_OK;

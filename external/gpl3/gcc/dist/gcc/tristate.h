@@ -1,5 +1,5 @@
 /* "True" vs "False" vs "Unknown".
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -54,6 +54,8 @@ class tristate {
   {
     return m_value != other.m_value;
   }
+
+  enum value get_value () const { return m_value; }
 
  private:
   enum value m_value;

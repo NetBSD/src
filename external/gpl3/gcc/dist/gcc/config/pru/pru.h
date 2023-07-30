@@ -1,5 +1,5 @@
 /* Definitions of target machine for TI PRU.
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2022 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of GCC.
@@ -125,7 +125,8 @@
    1      r1		  Caller Saved.  Also used as a temporary by function.
 			  profiler and function prologue/epilogue.
    2      r2       sp	  Stack Pointer.
-   3*     r3.w0    ra	  Return Address (16-bit).
+   3*     r3.w0		  Caller saved.
+   3*     r3.w2    ra	  Return Address (16-bit).
    4      r4       fp	  Frame Pointer, also called Argument Pointer in ABI.
    5-13   r5-r13	  Callee Saved Registers.
    14-29  r14-r29	  Register Arguments.  Caller Saved Registers.
@@ -152,7 +153,7 @@
 
 #define FIXED_REGISTERS				\
   {						\
-/*   0 */  0,0,0,0, 0,0,0,0, 1,1,1,1, 1,1,1,1,	\
+/*   0 */  0,0,0,0, 0,0,0,0, 1,1,1,1, 0,0,1,1,	\
 /*   4 */  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,	\
 /*   8 */  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,	\
 /*  12 */  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,	\
@@ -178,10 +179,13 @@
   }
 
 #define PRU_SEQ_R(X)  (X) * 4 + 0, (X) * 4 + 1, (X) * 4 + 2, (X) * 4 + 3
+#define PRU_SEQ_R_W0(X)  (X) * 4 + 0, (X) * 4 + 1
+#define PRU_SEQ_R_W2(X)  (X) * 4 + 2, (X) * 4 + 3
 #define REG_ALLOC_ORDER							    \
   {									    \
     /* Call-clobbered, yet not used for parameters.  */			    \
     PRU_SEQ_R (0),  PRU_SEQ_R ( 1),					    \
+    PRU_SEQ_R_W0 (3),							    \
 									    \
     PRU_SEQ_R (14), PRU_SEQ_R (15), PRU_SEQ_R (16), PRU_SEQ_R (17),	    \
     PRU_SEQ_R (18), PRU_SEQ_R (19), PRU_SEQ_R (20), PRU_SEQ_R (21),	    \
@@ -193,7 +197,8 @@
     PRU_SEQ_R (13),							    \
 									    \
     PRU_SEQ_R ( 4),							    \
-    PRU_SEQ_R ( 2), PRU_SEQ_R ( 3),					    \
+    PRU_SEQ_R ( 2),							    \
+    PRU_SEQ_R_W2 (3),							    \
 									    \
     /* I/O and virtual registers.  */					    \
     PRU_SEQ_R (30), PRU_SEQ_R (31), PRU_SEQ_R (32), PRU_SEQ_R (33),	    \
@@ -210,6 +215,7 @@ enum reg_class
   MULDST_REGS,
   MULSRC0_REGS,
   MULSRC1_REGS,
+  REGIO_REGS,
   GP_REGS,
   ALL_REGS,
   LIM_REG_CLASSES
@@ -224,6 +230,7 @@ enum reg_class
      "MULDST_REGS",	  \
      "MULSRC0_REGS",	  \
      "MULSRC1_REGS",	  \
+     "REGIO_REGS",	  \
      "GP_REGS",		  \
      "ALL_REGS" }
 
@@ -237,6 +244,7 @@ enum reg_class
     /* MULDST_REGS    */ { 0, 0, 0, 0x00000f00, 0},		\
     /* MULSRC0_REGS   */ { 0, 0, 0, 0x000f0000, 0},		\
     /* MULSRC1_REGS   */ { 0, 0, 0, 0x00f00000, 0},		\
+    /* REGIO_REGS     */ { 0, 0, 0, 0xff000000, 0},		\
     /* GP_REGS	      */ { ~0, ~0, ~0, ~0, 0},			\
     /* ALL_REGS	      */ { ~0,~0, ~0, ~0, ~0}			\
   }
@@ -247,6 +255,8 @@ enum reg_class
 	((REGNO) == MULDST_REGNUM ? MULDST_REGS				    \
 	 : (REGNO) == MULSRC0_REGNUM ? MULSRC0_REGS			    \
 	 : (REGNO) == MULSRC1_REGNUM ? MULSRC1_REGS			    \
+	 : (REGNO) == R30_REGNUM ? REGIO_REGS				    \
+	 : (REGNO) == R31_REGNUM ? REGIO_REGS				    \
 	 : (REGNO) >= FIRST_ARG_REGNUM					    \
 	    && (REGNO) <= LAST_ARG_REGNUM ? SIB_REGS			    \
 	 : (REGNO) == STATIC_CHAIN_REGNUM ? SIB_REGS			    \
@@ -334,7 +344,6 @@ typedef struct pru_args
   ((REGNO) >= FIRST_ARG_REGNUM && (REGNO) <= LAST_ARG_REGNUM)
 
 /* Passing function arguments on stack.  */
-#define PUSH_ARGS 0
 #define ACCUMULATE_OUTGOING_ARGS 1
 
 /* We define TARGET_RETURN_IN_MEMORY, so set to zero.  */
@@ -556,6 +565,10 @@ do {									\
 #define FUNCTION_MODE Pmode
 
 #define CASE_VECTOR_MODE Pmode
+
+/* See definition of clz pattern for rationale of the value.  */
+#define CLZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE)	\
+	((VALUE) = GET_MODE_BITSIZE (MODE) - 1 - 32, 2)
 
 /* Jumps are cheap on PRU.  */
 #define LOGICAL_OP_NON_SHORT_CIRCUIT		0

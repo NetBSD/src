@@ -1,5 +1,5 @@
 /* Tree switch conversion for GNU compiler.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -48,8 +48,8 @@ class cluster
 {
 public:
   /* Constructor.  */
-  cluster (tree case_label_expr, basic_block case_bb, profile_probability prob,
-	   profile_probability subtree_prob);
+  inline cluster (tree case_label_expr, basic_block case_bb,
+		  profile_probability prob, profile_probability subtree_prob);
 
   /* Destructor.  */
   virtual ~cluster ()
@@ -121,8 +121,9 @@ class simple_cluster: public cluster
 {
 public:
   /* Constructor.  */
-  simple_cluster (tree low, tree high, tree case_label_expr,
-		  basic_block case_bb, profile_probability prob);
+  inline simple_cluster (tree low, tree high, tree case_label_expr,
+			 basic_block case_bb, profile_probability prob,
+			 bool has_forward_bb = false);
 
   /* Destructor.  */
   ~simple_cluster ()
@@ -144,6 +145,11 @@ public:
   get_high ()
   {
     return m_high;
+  }
+
+  void set_high (tree high)
+  {
+    m_high = high;
   }
 
   void
@@ -174,6 +180,13 @@ public:
     return tree_int_cst_equal (get_low (), get_high ());
   }
 
+  /* Return number of comparisons needed for the case.  */
+  unsigned
+  get_comparison_count ()
+  {
+    return m_range_p ? 2 : 1;
+  }
+
   /* Low value of the case.  */
   tree m_low;
 
@@ -182,12 +195,16 @@ public:
 
   /* True if case is a range.  */
   bool m_range_p;
+
+  /* True if the case will use a forwarder BB.  */
+  bool m_has_forward_bb;
 };
 
 simple_cluster::simple_cluster (tree low, tree high, tree case_label_expr,
-				basic_block case_bb, profile_probability prob):
+				basic_block case_bb, profile_probability prob,
+				bool has_forward_bb):
   cluster (case_label_expr, case_bb, prob, prob),
-  m_low (low), m_high (high)
+  m_low (low), m_high (high), m_has_forward_bb (has_forward_bb)
 {
   m_range_p = m_high != NULL;
   if (m_high == NULL)
@@ -257,9 +274,12 @@ public:
   static vec<cluster *> find_jump_tables (vec<cluster *> &clusters);
 
   /* Return true when cluster starting at START and ending at END (inclusive)
-     can build a jump-table.  */
+     can build a jump-table.  COMPARISON_COUNT is number of comparison
+     operations needed if the clusters are expanded as decision tree.
+     MAX_RATIO tells about the maximum code growth (in percent).  */
   static bool can_be_handled (const vec<cluster *> &clusters, unsigned start,
-			      unsigned end);
+			      unsigned end, unsigned HOST_WIDE_INT max_ratio,
+			      unsigned HOST_WIDE_INT comparison_count);
 
   /* Return true if cluster starting at START and ending at END (inclusive)
      is profitable transformation.  */
@@ -271,7 +291,7 @@ public:
   static inline unsigned int case_values_threshold (void);
 
   /* Return whether jump table expansion is allowed.  */
-  static bool is_enabled (void);
+  static inline bool is_enabled (void);
 };
 
 /* A GIMPLE switch statement can be expanded to a short sequence of bit-wise
@@ -411,6 +431,12 @@ public:
 						    basic_block case_bb,
 						    profile_probability prob,
 						    location_t);
+
+  /* Return whether bit test expansion is allowed.  */
+  static inline bool is_enabled (void)
+  {
+    return flag_bit_tests;
+  }
 
   /* True when the jump table handles an entire switch statement.  */
   bool m_handles_entire_switch;
@@ -876,6 +902,16 @@ switch_decision_tree::reset_out_edges_aux (gswitch *swtch)
   edge_iterator ei;
   FOR_EACH_EDGE (e, ei, bb->succs)
     e->aux = (void *) 0;
+}
+
+/* Release CLUSTERS vector and destruct all dynamically allocated items.  */
+
+static inline void
+release_clusters (vec<cluster *> &clusters)
+{
+  for (unsigned i = 0; i < clusters.length (); i++)
+    delete clusters[i];
+  clusters.release ();
 }
 
 } // tree_switch_conversion namespace

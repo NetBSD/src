@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
@@ -18,8 +18,8 @@
  #error elf.h included before elfos.h
 #endif
 
-#define TEXT_SECTION_ASM_OP "\t.section\t.text"
-#define BSS_SECTION_ASM_OP  "\t.section\t.bss"
+#define TEXT_SECTION_ASM_OP "\t.text"
+#define BSS_SECTION_ASM_OP  "\t.bss"
 #define GLOBAL_ASM_OP       "\t.globl\t"
 #define DATA_SECTION_ASM_OP "\t.data\t"
 #define SET_ASM_OP          "\t.set\t"
@@ -71,25 +71,74 @@ extern unsigned int gcn_local_sym_hash (const char *name);
 #define ASM_APP_ON  ""
 #define ASM_APP_OFF ""
 
-/* Avoid the default in ../../gcc.c, which adds "-pthread", which is not
+/* Avoid the default in ../../gcc.cc, which adds "-pthread", which is not
    supported for gcn.  */
 #define GOMP_SELF_SPECS ""
 
+#ifdef HAVE_GCN_XNACK_FIJI
+#define X_FIJI
+#else
+#define X_FIJI "!march=*:;march=fiji:;"
+#endif
+#ifdef HAVE_GCN_XNACK_GFX900
+#define X_900
+#else
+#define X_900 "march=gfx900:;"
+#endif
+#ifdef HAVE_GCN_XNACK_GFX906
+#define X_906
+#else
+#define X_906 "march=gfx906:;"
+#endif
+#ifdef HAVE_GCN_XNACK_GFX908
+#define X_908
+#else
+#define X_908 "march=gfx908:;"
+#endif
+
+/* These targets can't have SRAM-ECC, even if a broken assembler allows it.  */
+#define S_FIJI "!march=*:;march=fiji:;"
+#define S_900 "march=gfx900:;"
+#define S_906 "march=gfx906:;"
+#ifdef HAVE_GCN_SRAM_ECC_GFX908
+#define S_908
+#else
+#define S_908 "march=gfx908:;"
+#endif
+
+#ifdef HAVE_GCN_ASM_V3_SYNTAX
+#define SRAMOPT "!msram-ecc=off:-mattr=+sram-ecc;:-mattr=-sram-ecc"
+#endif
+#ifdef HAVE_GCN_ASM_V4_SYNTAX
+/* In HSACOv4 no attribute setting means the binary supports "any" hardware
+   configuration.  The name of the attribute also changed.  */
+#define SRAMOPT "msram-ecc=on:-mattr=+sramecc;msram-ecc=off:-mattr=-sramecc"
+#endif
+#if !defined(SRAMOPT) && !defined(IN_LIBGCC2)
+#error "No assembler syntax configured"
+#endif
+
+#ifdef HAVE_GCN_ASM_V4_SYNTAX
+/* FIJI cards don't seem to support drivers new enough to allow HSACOv4.  */
+#define HSACO3_SELECT_OPT \
+    "%{!march=*|march=fiji:--amdhsa-code-object-version=3} "
+#else
+#define HSACO3_SELECT_OPT
+#endif
+
+/* These targets can't have SRAM-ECC, even if a broken assembler allows it.  */
+#define DRIVER_SELF_SPECS \
+  "%{march=fiji|march=gfx900|march=gfx906:%{!msram-ecc=*:-msram-ecc=off}}"
+
 /* Use LLVM assembler and linker options.  */
-#define ASM_SPEC  "-triple=amdgcn--amdhsa -mattr=-code-object-v3 "  \
+#define ASM_SPEC  "-triple=amdgcn--amdhsa "  \
 		  "%:last_arg(%{march=*:-mcpu=%*}) " \
+		  HSACO3_SELECT_OPT \
+		  "%{" X_FIJI X_900 X_906 X_908 \
+		     "mxnack:-mattr=+xnack;:-mattr=-xnack} " \
+		  "%{" S_FIJI S_900 S_906 S_908 SRAMOPT "} " \
 		  "-filetype=obj"
-/* Add -mlocal-symbol-id=<source-file-basename> unless the user (or mkoffload)
-   passes the option explicitly on the command line.  The option also causes
-   several dump-matching tests to fail in the testsuite, so the option is not
-   added when or tree dump/compare-debug options used in the testsuite are
-   present.
-   This has the potential for surprise, but a user can still use an explicit
-   -mlocal-symbol-id=<whatever> option manually together with -fdump-tree or
-   -fcompare-debug options.  */
-#define CC1_SPEC "%{!mlocal-symbol-id=*:%{!fdump-tree-*:"	\
-		 "%{!fdump-ipa-*:%{!fcompare-debug*:-mlocal-symbol-id=%b}}}}"
-#define LINK_SPEC "--pie"
+#define LINK_SPEC "--pie --export-dynamic"
 #define LIB_SPEC  "-lc"
 
 /* Provides a _start symbol to keep the linker happy.  */
@@ -113,3 +162,4 @@ extern const char *last_arg_spec_function (int argc, const char **argv);
 #define DWARF2_DEBUGGING_INFO      1
 #define DWARF2_ASM_LINE_DEBUG_INFO 1
 #define EH_FRAME_THROUGH_COLLECT2  1
+#define DBX_REGISTER_NUMBER(REGNO) gcn_dwarf_register_number (REGNO)

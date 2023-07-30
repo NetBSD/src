@@ -1,4 +1,4 @@
-/* Copyright (C) 1988-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1988-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -26,14 +26,16 @@ char *ix86_target_string (HOST_WIDE_INT isa, HOST_WIDE_INT isa2,
 			  int flags, int flags2,
 			  const char *arch, const char *tune,
 			  enum fpmath_unit fpmath,
-			  enum prefer_vector_width pvw, bool add_nl_p,
-			  bool add_abi_p);
+			  enum prefer_vector_width pvw,
+			  enum prefer_vector_width move_max,
+			  enum prefer_vector_width store_max,
+			  bool add_nl_p, bool add_abi_p);
 
 extern enum attr_cpu ix86_schedule;
 
 extern enum processor_type ix86_tune;
 extern enum processor_type ix86_arch;
-extern unsigned char x86_prefetch_sse;
+extern unsigned char ix86_prefetch_sse;
 extern const struct processor_costs *ix86_tune_cost;
 
 extern int ix86_tune_defaulted;
@@ -70,8 +72,10 @@ extern const char *stringop_alg_names[];
 
 void ix86_add_new_builtins (HOST_WIDE_INT isa, HOST_WIDE_INT isa2);
 void ix86_function_specific_save (struct cl_target_option *,
-				  struct gcc_options *opts);
+				  struct gcc_options *opts,
+				  struct gcc_options *opts_set);
 void ix86_function_specific_restore (struct gcc_options *opts,
+				     struct gcc_options *opts_set,
 				     struct cl_target_option *);
 void ix86_function_specific_post_stream_in (struct cl_target_option *);
 void ix86_function_specific_print (FILE *, int,

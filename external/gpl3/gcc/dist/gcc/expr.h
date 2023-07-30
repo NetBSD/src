@@ -1,5 +1,5 @@
 /* Definitions for code generation pass of GNU compiler.
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -107,7 +107,15 @@ enum block_op_methods
   BLOCK_OP_NO_LIBCALL_RET
 };
 
-typedef rtx (*by_pieces_constfn) (void *, HOST_WIDE_INT, scalar_int_mode);
+typedef rtx (*by_pieces_constfn) (void *, void *, HOST_WIDE_INT,
+				  fixed_size_mode);
+
+/* The second pointer passed to by_pieces_constfn.  */
+struct by_pieces_prev
+{
+  rtx data;
+  fixed_size_mode mode;
+};
 
 extern rtx emit_block_move (rtx, rtx, rtx, enum block_op_methods);
 extern rtx emit_block_move_hints (rtx, rtx, rtx, enum block_op_methods,
@@ -193,7 +201,8 @@ extern rtx clear_storage_hints (rtx, rtx, enum block_op_methods,
 			        unsigned int, HOST_WIDE_INT,
 				unsigned HOST_WIDE_INT,
 				unsigned HOST_WIDE_INT,
-				unsigned HOST_WIDE_INT);
+				unsigned HOST_WIDE_INT,
+				unsigned);
 /* The same, but always output an library call.  */
 extern rtx set_storage_via_libcall (rtx, rtx, rtx, bool = false);
 
@@ -223,6 +232,16 @@ extern int can_store_by_pieces (unsigned HOST_WIDE_INT,
    Returns TO + LEN.  */
 extern rtx store_by_pieces (rtx, unsigned HOST_WIDE_INT, by_pieces_constfn,
 			    void *, unsigned int, bool, memop_ret);
+
+/* If can_store_by_pieces passes for worst-case values near MAX_LEN, call
+   store_by_pieces within conditionals so as to handle variable LEN efficiently,
+   storing VAL, if non-NULL_RTX, or valc instead.  */
+extern bool try_store_by_multiple_pieces (rtx to, rtx len,
+					  unsigned int ctz_len,
+					  unsigned HOST_WIDE_INT min_len,
+					  unsigned HOST_WIDE_INT max_len,
+					  rtx val, char valc,
+					  unsigned int align);
 
 /* Emit insns to set X from Y.  */
 extern rtx_insn *emit_move_insn (rtx, rtx);
@@ -289,11 +308,16 @@ expand_normal (tree exp)
 }
 
 
-/* Return the tree node and offset if a given argument corresponds to
-   a string constant.  */
+/* Return STRING_CST and set offset, size and decl, if the first
+   argument corresponds to a string constant.  */
 extern tree string_constant (tree, tree *, tree *, tree *);
+/* Similar to string_constant, return a STRING_CST corresponding
+   to the value representation of the first argument if it's
+   a constant.  */
+extern tree byte_representation (tree, tree *, tree *, tree *);
 
 extern enum tree_code maybe_optimize_mod_cmp (enum tree_code, tree *, tree *);
+extern void maybe_optimize_sub_cmp_0 (enum tree_code, tree *, tree *);
 
 /* Two different ways of generating switch statements.  */
 extern int try_casesi (tree, tree, tree, tree, rtx, rtx, rtx, profile_probability);
@@ -321,5 +345,8 @@ extern void expand_operands (tree, tree, rtx, rtx*, rtx*,
 /* rtl.h and tree.h were included.  */
 /* Return an rtx for the size in bytes of the value of an expr.  */
 extern rtx expr_size (tree);
+
+extern bool mem_ref_refers_to_non_mem_p (tree);
+extern bool non_mem_decl_p (tree);
 
 #endif /* GCC_EXPR_H */

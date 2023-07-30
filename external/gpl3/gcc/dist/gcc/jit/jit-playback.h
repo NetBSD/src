@@ -1,5 +1,5 @@
 /* Internals of libgccjit: classes for playing back recorded API calls.
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -24,6 +24,7 @@ along with GCC; see the file COPYING3.  If not see
 #include <utility> // for std::pair
 
 #include "timevar.h"
+#include "varasm.h"
 
 #include "jit-recording.h"
 
@@ -109,7 +110,29 @@ public:
   new_global (location *loc,
 	      enum gcc_jit_global_kind kind,
 	      type *type,
-	      const char *name);
+	      const char *name,
+	      enum global_var_flags flags);
+
+  lvalue *
+  new_global_initialized (location *loc,
+                          enum gcc_jit_global_kind kind,
+                          type *type,
+                          size_t element_size,
+                          size_t initializer_num_elem,
+                          const void *initializer,
+			  const char *name,
+			  enum global_var_flags flags);
+
+  rvalue *
+  new_ctor (location *log,
+	    type *type,
+	    const auto_vec<field*> *fields,
+	    const auto_vec<rvalue*> *rvalues);
+
+
+  void
+  global_set_init_rvalue (lvalue* variable,
+			  rvalue* init);
 
   template <typename HOST_TYPE>
   rvalue *
@@ -157,6 +180,11 @@ public:
   new_cast (location *loc,
 	    rvalue *expr,
 	    type *type_);
+
+  rvalue *
+  new_bitcast (location *loc,
+	       rvalue *expr,
+	       type *type_);
 
   lvalue *
   new_array_access (location *loc,
@@ -243,6 +271,8 @@ public:
 
   timer *get_timer () const { return m_recording_ctxt->get_timer (); }
 
+  void add_top_level_asm (const char *asm_stmts);
+
 private:
   void dump_generated_code ();
 
@@ -260,11 +290,25 @@ private:
   source_file *
   get_source_file (const char *filename);
 
+  tree
+  get_tree_node_for_type (enum gcc_jit_types type_);
+
   void handle_locations ();
+
+  void init_types ();
 
   const char * get_path_c_file () const;
   const char * get_path_s_file () const;
   const char * get_path_so_file () const;
+
+  tree
+  global_new_decl (location *loc,
+                   enum gcc_jit_global_kind kind,
+                   type *type,
+		   const char *name,
+		   enum global_var_flags flags);
+  lvalue *
+  global_finalize_lvalue (tree inner);
 
 private:
 
@@ -497,6 +541,21 @@ struct case_
   block *m_dest_block;
 };
 
+struct asm_operand
+{
+  asm_operand (const char *asm_symbolic_name,
+	       const char *constraint,
+	       tree expr)
+  : m_asm_symbolic_name (asm_symbolic_name),
+    m_constraint (constraint),
+    m_expr (expr)
+  {}
+
+  const char *m_asm_symbolic_name;
+  const char *m_constraint;
+  tree m_expr;
+};
+
 class block : public wrapper
 {
 public:
@@ -546,6 +605,16 @@ public:
 	      block *default_block,
 	      const auto_vec <case_> *cases);
 
+  void
+  add_extended_asm (location *loc,
+		    const char *asm_template,
+		    bool is_volatile,
+		    bool is_inline,
+		    const auto_vec <asm_operand> *outputs,
+		    const auto_vec <asm_operand> *inputs,
+		    const auto_vec <const char *> *clobbers,
+		    const auto_vec <block *> *goto_blocks);
+
 private:
   void
   set_tree_location (tree t, location *loc)
@@ -576,7 +645,12 @@ public:
   rvalue (context *ctxt, tree inner)
     : m_ctxt (ctxt),
       m_inner (inner)
-  {}
+  {
+    /* Pre-mark tree nodes with TREE_VISITED so that they can be
+       deeply unshared during gimplification (including across
+       functions); this requires LANG_HOOKS_DEEP_UNSHARING to be true.  */
+    TREE_VISITED (inner) = 1;
+  }
 
   rvalue *
   as_rvalue () { return this; }
@@ -620,6 +694,33 @@ public:
 
   rvalue *
   get_address (location *loc);
+
+  void
+  set_tls_model (enum tls_model tls_model)
+  {
+    set_decl_tls_model (as_tree (), tls_model);
+  }
+
+  void
+  set_link_section (const char* name)
+  {
+    set_decl_section_name (as_tree (), name);
+  }
+
+  void
+  set_register_name (const char* reg_name)
+  {
+    set_user_assembler_name (as_tree (), reg_name);
+    DECL_REGISTER (as_tree ()) = 1;
+    DECL_HARD_REGISTER (as_tree ()) = 1;
+  }
+
+  void
+  set_alignment (int alignment)
+  {
+      SET_DECL_ALIGN (as_tree (), alignment * BITS_PER_UNIT);
+      DECL_USER_ALIGN (as_tree ()) = 1;
+  }
 
 private:
   bool mark_addressable (location *loc);

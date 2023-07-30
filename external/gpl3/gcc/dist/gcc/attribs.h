@@ -1,5 +1,5 @@
 /* Declarations and definitions dealing with attribute handling.
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,6 +21,7 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_ATTRIBS_H
 
 extern const struct attribute_spec *lookup_attribute_spec (const_tree);
+extern void free_attr_data ();
 extern void init_attributes (void);
 
 /* Process the attributes listed in ATTRIBUTES and install them in *NODE,
@@ -38,15 +39,18 @@ extern tree get_attribute_name (const_tree);
 extern tree get_attribute_namespace (const_tree);
 extern void apply_tm_attr (tree, tree);
 extern tree make_attribute (const char *, const char *, tree);
+extern bool attribute_ignored_p (tree);
+extern bool attribute_ignored_p (const attribute_spec *const);
 
 extern struct scoped_attributes* register_scoped_attributes (const struct attribute_spec *,
-							     const char *);
+							     const char *,
+							     bool = false);
 
 extern char *sorted_attr_string (tree);
 extern bool common_function_versions (tree, tree);
-extern char *make_unique_name (tree, const char *, bool);
 extern tree make_dispatcher_decl (const tree);
 extern bool is_function_default_version (const tree);
+extern void handle_ignored_attributes_option (vec<char *> *);
 
 /* Return a type like TTYPE except that its TYPE_ATTRIBUTES
    is ATTRIBUTE.
@@ -58,12 +62,16 @@ extern tree build_type_attribute_variant (tree, tree);
 extern tree build_decl_attribute_variant (tree, tree);
 extern tree build_type_attribute_qual_variant (tree, tree, int);
 
+extern bool simple_cst_list_equal (const_tree, const_tree);
 extern bool attribute_value_equal (const_tree, const_tree);
 
 /* Return 0 if the attributes for two types are incompatible, 1 if they
    are compatible, and 2 if they are nearly compatible (which causes a
    warning to be generated).  */
 extern int comp_type_attributes (const_tree, const_tree);
+
+extern tree affects_type_identity_attributes (tree, bool = true);
+extern tree restrict_type_identity_attributes_to (tree, tree);
 
 /* Default versions of target-overridable functions.  */
 extern tree merge_decl_attributes (tree, tree);
@@ -112,17 +120,34 @@ extern unsigned decls_mismatched_attributes (tree, tree, tree,
 
 extern void maybe_diag_alias_attributes (tree, tree);
 
+/* For a given string S of length L, strip leading and trailing '_' characters
+   so that we have a canonical form of attribute names.  NB: This function may
+   change S and L.  */
+
+template <typename T>
+inline bool
+canonicalize_attr_name (const char *&s, T &l)
+{
+  if (l > 4 && s[0] == '_' && s[1] == '_' && s[l - 1] == '_' && s[l - 2] == '_')
+    {
+      s += 2;
+      l -= 4;
+      return true;
+    }
+  return false;
+}
+
 /* For a given IDENTIFIER_NODE, strip leading and trailing '_' characters
    so that we have a canonical form of attribute names.  */
 
 static inline tree
 canonicalize_attr_name (tree attr_name)
 {
-  const size_t l = IDENTIFIER_LENGTH (attr_name);
+  size_t l = IDENTIFIER_LENGTH (attr_name);
   const char *s = IDENTIFIER_POINTER (attr_name);
 
-  if (l > 4 && s[0] == '_' && s[1] == '_' && s[l - 1] == '_' && s[l - 2] == '_')
-    return get_identifier_with_length (s + 2, l - 4);
+  if (canonicalize_attr_name (s, l))
+    return get_identifier_with_length (s, l);
 
   return attr_name;
 }
@@ -166,7 +191,11 @@ is_attribute_p (const char *attr_name, const_tree ident)
 static inline tree
 lookup_attribute (const char *attr_name, tree list)
 {
-  gcc_checking_assert (attr_name[0] != '_');
+  if (CHECKING_P && attr_name[0] != '_')
+    {
+      size_t attr_len = strlen (attr_name);
+      gcc_checking_assert (!canonicalize_attr_name (attr_name, attr_len));
+    }
   /* In most cases, list is NULL_TREE.  */
   if (list == NULL_TREE)
     return NULL_TREE;
@@ -197,7 +226,8 @@ lookup_attribute_by_prefix (const char *attr_name, tree list)
       size_t attr_len = strlen (attr_name);
       while (list)
 	{
-	  size_t ident_len = IDENTIFIER_LENGTH (get_attribute_name (list));
+	  tree name = get_attribute_name (list);
+	  size_t ident_len = IDENTIFIER_LENGTH (name);
 
 	  if (attr_len > ident_len)
 	    {
@@ -205,7 +235,7 @@ lookup_attribute_by_prefix (const char *attr_name, tree list)
 	      continue;
 	    }
 
-	  const char *p = IDENTIFIER_POINTER (get_attribute_name (list));
+	  const char *p = IDENTIFIER_POINTER (name);
 	  gcc_checking_assert (attr_len == 0 || p[0] != '_');
 
 	  if (strncmp (attr_name, p, attr_len) == 0)
@@ -224,18 +254,93 @@ lookup_attribute_by_prefix (const char *attr_name, tree list)
 
 struct attr_access
 {
+  /* The beginning and end of the internal string representation.  */
+  const char *str, *end;
   /* The attribute pointer argument.  */
   tree ptr;
-  /* The size of the pointed-to object or NULL when not specified.  */
+  /* For a declaration, a TREE_CHAIN of VLA bound expressions stored
+     in TREE_VALUE and their positions in the argument list (stored
+     in TREE_PURPOSE).  Each expression may be a PARM_DECL or some
+     other DECL (for ordinary variables), or an EXPR for other
+     expressions (e.g., funcion calls).  */
   tree size;
 
-  /* The zero-based number of each of the formal function arguments.  */
+  /* The zero-based position of each of the formal function arguments.
+     For the optional SIZARG, UINT_MAX when not specified.  For VLAs
+     with multiple variable bounds, SIZARG is the position corresponding
+     to the most significant bound in the argument list.  Positions of
+     subsequent bounds are in the TREE_PURPOSE field of the SIZE chain.  */
   unsigned ptrarg;
   unsigned sizarg;
+  /* For internal specifications only, the constant minimum size of
+     the array, zero if not specified, and HWI_M1U for the unspecified
+     VLA [*] notation.  Meaningless for external (explicit) access
+     specifications.  */
+  unsigned HOST_WIDE_INT minsize;
 
   /* The access mode.  */
-  enum access_mode { read_only, write_only, read_write };
   access_mode mode;
+
+  /* Set for an attribute added internally rather than by an explicit
+     declaration. */
+  bool internal_p;
+  /* Set for the T[static MINSIZE] array notation for nonzero MINSIZE
+     less than HWI_M1U.  */
+  bool static_p;
+
+  /* Return the number of specified VLA bounds.  */
+  unsigned vla_bounds (unsigned *) const;
+
+  /* Return internal representation as STRING_CST.  */
+  tree to_internal_string () const;
+
+  /* Return the human-readable representation of the external attribute
+     specification (as it might appear in the source code) as STRING_CST.  */
+  tree to_external_string () const;
+
+  /* Return argument of array type formatted as a readable string.  */
+  std::string array_as_string (tree) const;
+
+  /* Return the access mode corresponding to the character code.  */
+  static access_mode from_mode_char (char);
+
+  /* Reset front end-specific attribute access data from attributes.  */
+  static void free_lang_data (tree);
+
+  /* The character codes corresponding to all the access modes.  */
+  static constexpr char mode_chars[5] = { '-', 'r', 'w', 'x', '^' };
+
+  /* The strings corresponding to just the external access modes.  */
+  static constexpr char mode_names[4][11] =
+    {
+     "none", "read_only", "write_only", "read_write"
+    };
 };
+
+inline access_mode
+attr_access::from_mode_char (char c)
+{
+  switch (c)
+    {
+    case mode_chars[access_none]: return access_none;
+    case mode_chars[access_read_only]: return access_read_only;
+    case mode_chars[access_write_only]: return access_write_only;
+    case mode_chars[access_read_write]: return access_read_write;
+    case mode_chars[access_deferred]: return access_deferred;
+    }
+  gcc_unreachable ();
+}
+
+/* Used to define rdwr_map below.  */
+struct rdwr_access_hash: int_hash<int, -1> { };
+
+/* A mapping between argument number corresponding to attribute access
+   mode (read_only, write_only, or read_write) and operands.  */
+struct attr_access;
+typedef hash_map<rdwr_access_hash, attr_access> rdwr_map;
+
+extern void init_attr_rdwr_indices (rdwr_map *, tree);
+extern attr_access *get_parm_access (rdwr_map &, tree,
+				     tree = current_function_decl);
 
 #endif // GCC_ATTRIBS_H

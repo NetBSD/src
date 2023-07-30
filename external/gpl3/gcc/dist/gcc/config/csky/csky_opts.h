@@ -1,5 +1,5 @@
 /* Processor and arch enumerations for C-SKY targets.
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2022 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of GCC.
@@ -58,6 +58,13 @@ enum csky_fpu_type
 #undef CSKY_FPU
 };
 #define CSKY_TARGET_FPU_GET(name) TARGET_FPU_ ## name
+
+enum float_abi_type
+{
+  CSKY_FLOAT_ABI_SOFT,
+  CSKY_FLOAT_ABI_SOFTFP,
+  CSKY_FLOAT_ABI_HARD
+};
 
 
 #endif /* CSKY_OPTS_H */

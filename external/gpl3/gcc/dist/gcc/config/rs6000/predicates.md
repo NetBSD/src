@@ -1,5 +1,5 @@
 ;; Predicate definitions for POWER and PowerPC.
-;; Copyright (C) 2005-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2022 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -214,6 +214,11 @@
   (and (match_code "const_int")
        (match_test "INTVAL (op) >= -16 && INTVAL (op) <= 15")))
 
+;; Return 1 if op is an unsigned 1-bit constant integer.
+(define_predicate "u1bit_cint_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) >= 0 && INTVAL (op) <= 1")))
+
 ;; Return 1 if op is a unsigned 3-bit constant integer.
 (define_predicate "u3bit_cint_operand"
   (and (match_code "const_int")
@@ -234,7 +239,7 @@
   (and (match_code "const_int")
        (match_test "IN_RANGE (INTVAL (op), 0, 127)")))
 
-;; Return 1 if op is an unsigned 8-bit constant integer.
+;; Return 1 if op is a unsigned 8-bit constant integer.
 (define_predicate "u8bit_cint_operand"
   (and (match_code "const_int")
        (match_test "IN_RANGE (INTVAL (op), 0, 255)")))
@@ -272,6 +277,16 @@
        (match_test "(unsigned HOST_WIDE_INT)
 		    (INTVAL (op) + 0x8000) >= 0x10000")))
 
+;; Return 1 if op is a 32-bit constant signed integer
+(define_predicate "s32bit_cint_operand"
+  (and (match_code "const_int")
+       (match_test "(0x80000000 + UINTVAL (op)) >> 32 == 0")))
+
+;; Return 1 if op is a constant 32-bit unsigned
+(define_predicate "c32bit_cint_operand"
+  (and (match_code "const_int")
+       (match_test "((UINTVAL (op) >> 32) == 0)")))
+
 ;; Return 1 if op is a positive constant integer that is an exact power of 2.
 (define_predicate "exact_log2_cint_operand"
   (and (match_code "const_int")
@@ -281,6 +296,11 @@
 (define_predicate "const_0_to_1_operand"
   (and (match_code "const_int")
        (match_test "IN_RANGE (INTVAL (op), 0, 1)")))
+
+;; Match op = -1, op = 0, or op = 1.
+(define_predicate "const_m1_to_1_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), -1, 1)")))
 
 ;; Match op = 0..3.
 (define_predicate "const_0_to_3_operand"
@@ -476,7 +496,7 @@
 })
 
 ;; Return 1 if op is a constant integer valid for D field
-;; or non-special register register.
+;; or non-special register.
 (define_predicate "reg_or_short_operand"
   (if_then_else (match_code "const_int")
     (match_operand 0 "short_cint_operand")
@@ -581,12 +601,82 @@
   if (TARGET_VSX && op == CONST0_RTX (mode))
     return 1;
 
+  /* Constants that can be generated with ISA 3.1 instructions are easy.  */
+  vec_const_128bit_type vsx_const;
+  if (TARGET_POWER10 && vec_const_128bit_to_bytes (op, mode, &vsx_const))
+    {
+      if (constant_generates_lxvkq (&vsx_const))
+	return true;
+
+      if (constant_generates_xxspltiw (&vsx_const))
+	return true;
+
+      if (constant_generates_xxspltidp (&vsx_const))
+	return true;
+    }
+
   /* Otherwise consider floating point constants hard, so that the
      constant gets pushed to memory during the early RTL phases.  This
      has the advantage that double precision constants that can be
      represented in single precision without a loss of precision will
      use single precision loads.  */
    return 0;
+})
+
+;; Return 1 if the operand is a 64-bit floating point scalar constant or a
+;; vector constant that can be loaded to a VSX register with one prefixed
+;; instruction, such as XXSPLTIDP or XXSPLTIW.
+;;
+;; In addition regular constants, we also recognize constants formed with the
+;; VEC_DUPLICATE insn from scalar constants.
+;;
+;; We don't handle scalar integer constants here because the assumption is the
+;; normal integer constants will be loaded into GPR registers.  For the
+;; constants that need to be loaded into vector registers, the instructions
+;; don't work well with TImode variables assigned a constant.  This is because
+;; the 64-bit scalar constants are splatted into both halves of the register.
+
+(define_predicate "vsx_prefixed_constant"
+  (match_code "const_double,const_vector,vec_duplicate")
+{
+  /* If we can generate the constant with a few Altivec instructions, don't
+      generate a prefixed instruction.  */
+  if (CONST_VECTOR_P (op) && easy_altivec_constant (op, mode))
+    return false;
+
+  /* Do we have prefixed instructions and are VSX registers available?  Is the
+     constant recognized?  */
+  if (!TARGET_PREFIXED || !TARGET_VSX)
+    return false;
+
+  vec_const_128bit_type vsx_const;
+  if (!vec_const_128bit_to_bytes (op, mode, &vsx_const))
+    return false;
+
+  if (constant_generates_xxspltiw (&vsx_const))
+    return true;
+
+  if (constant_generates_xxspltidp (&vsx_const))
+    return true;
+
+  return false;
+})
+
+;; Return 1 if the operand is a special IEEE 128-bit value that can be loaded
+;; via the LXVKQ instruction.
+
+(define_predicate "easy_vector_constant_ieee128"
+  (match_code "const_vector,const_double")
+{
+  vec_const_128bit_type vsx_const;
+
+  /* Can we generate the LXVKQ instruction?  */
+  if (!TARGET_IEEE128_CONSTANT || !TARGET_FLOAT128_HW || !TARGET_POWER10
+      || !TARGET_VSX)
+    return false;
+
+  return (vec_const_128bit_to_bytes (op, mode, &vsx_const)
+	  && constant_generates_lxvkq (&vsx_const) != 0);
 })
 
 ;; Return 1 if the operand is a constant that can loaded with a XXSPLTIB
@@ -633,6 +723,21 @@
       if (zero_constant (op, mode) || all_ones_constant (op, mode))
 	return true;
 
+      /* Constants that can be generated with ISA 3.1 instructions are
+         easy.  */
+      vec_const_128bit_type vsx_const;
+      if (TARGET_POWER10 && vec_const_128bit_to_bytes (op, mode, &vsx_const))
+	{
+	  if (constant_generates_lxvkq (&vsx_const))
+	    return true;
+
+	  if (constant_generates_xxspltiw (&vsx_const))
+	    return true;
+
+	  if (constant_generates_xxspltidp (&vsx_const))
+	    return true;
+	}
+
       if (TARGET_P9_VECTOR
           && xxspltib_constant_p (op, mode, &num_insns, &value))
 	return true;
@@ -663,15 +768,26 @@
 (define_predicate "easy_vector_constant_msb"
   (and (match_code "const_vector")
        (and (match_test "TARGET_ALTIVEC")
-	    (match_test "easy_altivec_constant (op, mode)")))
+	    (match_test "easy_altivec_constant (op, mode)")
+	    (match_test "vspltis_shifted (op) == 0")))
 {
   HOST_WIDE_INT val;
-  int elt;
+  int elt, sz = easy_altivec_constant (op, mode);
+  machine_mode inner = GET_MODE_INNER (mode);
+  int isz = GET_MODE_SIZE (inner);
   if (mode == V2DImode || mode == V2DFmode)
     return 0;
   elt = BYTES_BIG_ENDIAN ? GET_MODE_NUNITS (mode) - 1 : 0;
+  if (isz < sz)
+    {
+      if (const_vector_elt_as_int (op, elt) != 0)
+	return 0;
+      elt += (BYTES_BIG_ENDIAN ? -1 : 1) * (sz - isz) / isz;
+    }
+  else if (isz > sz)
+    inner = smallest_int_mode_for_size (sz * BITS_PER_UNIT);
   val = const_vector_elt_as_int (op, elt);
-  return EASY_VECTOR_MSB (val, GET_MODE_INNER (mode));
+  return EASY_VECTOR_MSB (val, inner);
 })
 
 ;; Return true if this is an easy altivec constant that we form
@@ -832,6 +948,15 @@
 		    || GET_CODE (XEXP (op, 0)) == PRE_DEC
 		    || GET_CODE (XEXP (op, 0)) == PRE_MODIFY))"))
 
+;; Anything that matches memory_operand but does not update the address.
+(define_predicate "non_update_memory_operand"
+  (match_code "mem")
+{
+  if (update_address_mem (op, mode))
+    return 0;
+  return memory_operand (op, mode);
+})
+
 ;; Return 1 if the operand is a MEM with an indexed-form address.
 (define_special_predicate "indexed_address_mem"
   (match_test "(MEM_P (op)
@@ -963,6 +1088,20 @@
   return INTVAL (offset) % 4 == 0;
 })
 
+;; Return 1 if the operand is a memory operand that has a valid address for
+;; a DS-form instruction. I.e. the address has to be either just a register,
+;; or register + const where the two low order bits of const are zero.
+(define_predicate "ds_form_mem_operand"
+  (match_code "subreg,mem")
+{
+  if (!any_memory_operand (op, mode))
+    return false;
+
+  rtx addr = XEXP (op, 0);
+
+  return address_to_insn_form (addr, mode, NON_PREFIXED_DS) == INSN_FORM_DS;
+})
+
 ;; Return 1 if the operand, used inside a MEM, is a SYMBOL_REF.
 (define_predicate "symbol_ref_operand"
   (and (match_code "symbol_ref")
@@ -970,7 +1109,7 @@
 		    && (DEFAULT_ABI != ABI_AIX || SYMBOL_REF_FUNCTION_P (op))")))
 
 ;; Return 1 if op is an operand that can be loaded via the GOT.
-;; or non-special register register field no cr0
+;; or non-special register field no cr0
 (define_predicate "got_operand"
   (match_code "symbol_ref,const,label_ref"))
 
@@ -1032,7 +1171,9 @@
        (match_test "(DEFAULT_ABI != ABI_AIX || SYMBOL_REF_FUNCTION_P (op))
 		    && (SYMBOL_REF_LOCAL_P (op)
 			|| (op == XEXP (DECL_RTL (current_function_decl), 0)
-			    && !decl_replaceable_p (current_function_decl)))
+			    && !decl_replaceable_p (current_function_decl,
+						    opt_for_fn (current_function_decl,
+								flag_semantic_interposition))))
 		    && !((DEFAULT_ABI == ABI_AIX
 			  || DEFAULT_ABI == ABI_ELFv2)
 			 && (SYMBOL_REF_EXTERNAL_P (op)
@@ -1041,7 +1182,7 @@
 			 && SYMBOL_REF_DECL (op) != NULL
 			 && TREE_CODE (SYMBOL_REF_DECL (op)) == FUNCTION_DECL
 			 && (rs6000_fndecl_pcrel_p (SYMBOL_REF_DECL (op))
-			     != rs6000_pcrel_p (cfun)))")))
+			     != rs6000_pcrel_p ()))")))
 
 ;; Return 1 if this operand is a valid input for a move insn.
 (define_predicate "input_operand"
@@ -1132,6 +1273,23 @@
 			&& (indexed_or_indirect_address (XEXP (op, 0), mode)
 			    || quad_address_p (XEXP (op, 0), mode, false)))))"))
 
+;; Return 1 if this operand is valid for an MMA disassemble insn.
+(define_predicate "mma_disassemble_output_operand"
+  (match_code "reg,subreg,mem")
+{
+  if (MEM_P (op))
+    {
+      rtx  addr = XEXP (op, 0);
+      return indexed_or_indirect_address (addr, mode)
+	     || quad_address_p (addr, mode, false);
+    }
+
+  if (SUBREG_P (op))
+    op = SUBREG_REG (op);
+
+  return vsx_register_operand (op, mode);
+})
+
 ;; Return true if operand is an operator used in rotate-and-mask instructions.
 (define_predicate "rotate_mask_operator"
   (match_code "rotate,ashift,lshiftrt"))
@@ -1154,10 +1312,11 @@
 (define_predicate "branch_comparison_operator"
    (and (match_operand 0 "comparison_operator")
 	(match_test "GET_MODE_CLASS (GET_MODE (XEXP (op, 0))) == MODE_CC")
-	(if_then_else (match_test "GET_MODE (XEXP (op, 0)) == CCFPmode
-				   && !flag_finite_math_only")
-		      (match_code "lt,gt,eq,unordered,unge,unle,ne,ordered")
-		      (match_code "lt,ltu,le,leu,gt,gtu,ge,geu,eq,ne"))
+	(if_then_else (match_test "GET_MODE (XEXP (op, 0)) == CCFPmode")
+	  (if_then_else (match_test "flag_finite_math_only")
+	    (match_code "lt,le,gt,ge,eq,ne,unordered,ordered")
+	    (match_code "lt,gt,eq,unordered,unge,unle,ne,ordered"))
+	  (match_code "lt,ltu,le,leu,gt,gtu,ge,geu,eq,ne"))
 	(match_test "validate_condition_mode (GET_CODE (op),
 					      GET_MODE (XEXP (op, 0))),
 		     1")))
@@ -1864,6 +2023,33 @@
 {
   return address_is_prefixed (XEXP (op, 0), mode, NON_PREFIXED_DEFAULT);
 })
+
+;; Return true if the operand is a valid memory operand with a D-form
+;; address that could be merged with the load of a PC-relative external address
+;; with the PCREL_OPT optimization.  We don't check here whether or not the
+;; offset needs to be used in a DS-FORM (bottom 2 bits 0) or DQ-FORM (bottom 4
+;; bits 0) instruction.
+(define_predicate "d_form_memory"
+  (match_code "mem")
+{
+  if (!memory_operand (op, mode))
+    return false;
+
+  rtx addr = XEXP (op, 0);
+
+  if (REG_P (addr))
+    return true;
+  if (SUBREG_P (addr) && REG_P (SUBREG_REG (addr)))
+    return true;
+
+  return !indexed_address (addr, mode);
+})
+
+;; Return 1 if this operand is valid as the index for vec_set.
+(define_predicate "vec_set_index_operand"
+ (if_then_else (match_test "TARGET_VSX")
+  (match_operand 0 "reg_or_cint_operand")
+  (match_operand 0 "const_int_operand")))
 
 ;; Return true if the operand is a valid Mach-O pic address.
 ;;

@@ -34,7 +34,8 @@ This status table is based on the table of contents of ISO/IEC 14882:2011.
 </para>
 
 <para>
-This section describes the C++11 support in the GCC 10 release series.
+This section describes the C++11 support in the GCC 12 release series,
+not in any particular release.
 </para>
 
 <!-- Status is Yes or No, Broken/Partial-->
@@ -2176,7 +2177,6 @@ This section describes the C++11 support in the GCC 10 release series.
       <entry>Class template <code>regex_traits</code></entry>
       <entry>Partial</entry>
       <entry><code>transform_primary</code> is not correctly implemented</entry>
-      <entry/>
     </row>
     <row>
       <entry>28.8</entry>
@@ -2403,10 +2403,11 @@ This section describes the C++11 support in the GCC 10 release series.
       <?dbhtml bgcolor="#B0B0B0" ?>
       <entry>30.4.4.2</entry>
       <entry>Function <code>call_once</code></entry>
-      <entry>Broken</entry>
-      <entry>See <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      <entry>Y</entry>
+      <entry>Exception support is broken on non-Linux targets.
+	See <link xmlns:xlink="http://www.w3.org/1999/xlink"
 	xlink:href="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66146">PR
-	66146</link>
+	66146</link>.
       </entry>
     </row>
     <row>
@@ -2717,6 +2718,36 @@ This section describes the C++11 support in the GCC 10 release series.
           instruction to read from an on-chip hardware random number generator.
           These tokens are only valid for x86 and x86_64 targets when both
           the assembler and CPU support the corresponding instruction.
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>"darn"</literal></term>
+        <listitem>
+          Use the Power ISA-3.0 <literal>DARN</literal>
+          ("Deliver A Random Number")
+          instruction to read from an on-chip hardware random number generator.
+          This token is only valid for 64-bit powerpc targets when both
+          the assembler and CPU support the corresponding instruction.
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>"hw"</literal></term>
+        <term><literal>"hardware"</literal></term>
+        <listitem>
+          Use any available CPU
+          instruction to read from an on-chip hardware random number generator.
+          This is equivalent to trying each of the following and using the
+          first that is supported:
+          <literal>"rdseed"</literal>
+          <literal>"rdrand"</literal>
+          <literal>"darn"</literal>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>"arc4random"</literal></term>
+        <term><literal>"getentropy"</literal></term>
+        <listitem>
+          Use the named C library function, if available on the target.
         </listitem>
       </varlistentry>
       <varlistentry>

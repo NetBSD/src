@@ -1,5 +1,5 @@
 /* Definitions for Intel 386 running FreeBSD with ELF format
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
    Contributed by Eric Youngdale.
    Modified for stabs-in-ELF by H.J. Lu.
    Adapted from GNU/Linux version by John Polstra.
@@ -39,7 +39,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef  NO_PROFILE_COUNTERS
 #define NO_PROFILE_COUNTERS	1
 
-/* Tell final.c that we don't need a label passed to mcount.  */
+/* Tell final.cc that we don't need a label passed to mcount.  */
 
 #undef  MCOUNT_NAME
 #define MCOUNT_NAME ".mcount"
@@ -96,19 +96,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #define SUBALIGN_LOG 3
 
-#ifdef HAVE_GAS_MAX_SKIP_P2ALIGN
-#undef  ASM_OUTPUT_MAX_SKIP_ALIGN
-#define ASM_OUTPUT_MAX_SKIP_ALIGN(FILE,LOG,MAX_SKIP)			\
-  do {									\
-    if ((LOG) != 0) {							\
-      if ((MAX_SKIP) == 0 || (MAX_SKIP) >= (1 << (LOG)) - 1)		\
-	fprintf ((FILE), "\t.p2align %d\n", (LOG));			\
-      else								\
-	fprintf ((FILE), "\t.p2align %d,,%d\n", (LOG), (MAX_SKIP));	\
-    }									\
-  } while (0)
-#endif
-
 /* Don't default to pcc-struct-return, we want to retain compatibility with
    older gcc versions AND pcc-struct-return is nonreentrant.
    (even though the SVR4 ABI for the i386 says that records and unions are
@@ -129,3 +116,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #define TARGET_ASM_FILE_END file_end_indicate_exec_stack
 
+/* Define the shadow offsets for asan.  */
+#undef SUBTARGET_SHADOW_OFFSET
+#define SUBTARGET_SHADOW_OFFSET	\
+  (TARGET_LP64 ? HOST_WIDE_INT_1 << 46 : HOST_WIDE_INT_1 << 30)

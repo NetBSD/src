@@ -245,6 +245,10 @@
     </p></dd><dt><a id="manual.bugs.dr409"></a><span class="term"><a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#409" target="_top">409</a>:
 	<span class="emphasis"><em>Closing an fstream should clear the error state</em></span>
     </span></dt><dd><p>Have <code class="code">open</code> clear the error flags.
+    </p></dd><dt><a id="manual.bugs.dr415"></a><span class="term"><a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#415" target="_top">415</a>:
+	<span class="emphasis"><em>Behavior of std::ws</em></span>
+    </span></dt><dd><p>Change it to be an unformatted input function
+      (i.e. construct a sentry and catch exceptions).
     </p></dd><dt><span class="term"><a class="link" href="../ext/lwg-closed.html#431" target="_top">431</a>:
 	<span class="emphasis"><em>Swapping containers with unequal allocators</em></span>
     </span></dt><dd><p>Implement Option 3, as per N1599.
@@ -303,6 +307,9 @@
     </p></dd><dt><a id="manual.bugs.dr550"></a><span class="term"><a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#550" target="_top">550</a>:
 	<span class="emphasis"><em>What should the return type of pow(float,int) be?</em></span>
     </span></dt><dd><p>In C++11 mode, remove the pow(float,int), etc., signatures.
+    </p></dd><dt><a id="manual.bugs.dr581"></a><span class="term"><a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#581" target="_top">581</a>:
+	<span class="emphasis"><em><code class="code">flush()</code> not unformatted function</em></span>
+    </span></dt><dd><p>Change it to be a unformatted output function (i.e. construct a sentry and catch exceptions).
     </p></dd><dt><a id="manual.bugs.dr586"></a><span class="term"><a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#586" target="_top">586</a>:
 	<span class="emphasis"><em>string inserter not a formatted function</em></span>
     </span></dt><dd><p>Change it to be a formatted output function (i.e. catch exceptions).
@@ -350,6 +357,9 @@
 	<span class="emphasis"><em>More algorithms that throw away information</em></span>
     </span></dt><dd><p>The traditional HP / SGI return type and value is blessed
 		    by the resolution of the DR.
+    </p></dd><dt><a id="manual.bugs.dr1203"></a><span class="term"><a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#1203" target="_top">1203</a>:
+       <span class="emphasis"><em>More useful rvalue stream insertion</em></span>
+    </span></dt><dd><p>Return the stream as its original type, not the base class.
     </p></dd><dt><a id="manual.bugs.dr1339"></a><span class="term"><a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#1339" target="_top">1339</a>:
        <span class="emphasis"><em>uninitialized_fill_n should return the end of its range</em></span>
     </span></dt><dd><p>Return the end of the filled range.
@@ -514,6 +524,17 @@
        </em></span>
     </span></dt><dd><p>Avoid using <code class="code">dynamic_cast</code> when it would be
     ill-formed.
+    </p></dd><dt><a id="manual.bugs.dr2487"></a><span class="term"><a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2487" target="_top">2487</a>:
+       <span class="emphasis"><em><code class="code">bind()</code> should be <code class="code">const</code>-overloaded
+      not cv-overloaded
+       </em></span>
+    </span></dt><dd><p>Deprecate volatile-qualified <code class="code">operator()</code>
+    for C++17, make it ill-formed for C++20.
+    </p></dd><dt><a id="manual.bugs.dr2499"></a><span class="term"><a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2499" target="_top">2499</a>:
+       <span class="emphasis"><em><code class="code">operator&gt;&gt;(basic_istream&amp;, CharT*)</code> makes it hard to avoid buffer overflows
+       </em></span>
+    </span></dt><dd><p>Replace <code class="code">operator&gt;&gt;(basic_istream&amp;, CharT*)</code>
+     and other overloads writing through pointers.
     </p></dd><dt><a id="manual.bugs.dr2537"></a><span class="term"><a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2537" target="_top">2537</a>:
        <span class="emphasis"><em>Constructors for <code class="code">priority_queue</code> taking allocators
 	 should call <code class="code">make_heap</code>

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2022 Free Software Foundation, Inc.
    Contributed by Andy Vaught
    F2003 I/O support contributed by Jerry DeLisle
 
@@ -52,8 +52,12 @@ struct format_data;
 typedef struct fnode fnode;
 struct gfc_unit;
 
-#ifdef HAVE_NEWLOCALE
-/* We have POSIX 2008 extended locale stuff.  */
+#if defined (HAVE_FREELOCALE) && defined (HAVE_NEWLOCALE) \
+  && defined (HAVE_USELOCALE)
+/* We have POSIX 2008 extended locale stuff.  We only choose to use it
+   if all the functions required are present as some systems, e.g. NetBSD
+   do not have `uselocale'.  */
+#define HAVE_POSIX_2008_LOCALE
 extern locale_t c_locale;
 internal_proto(c_locale);
 #else
@@ -562,7 +566,7 @@ typedef struct st_parameter_dt
 	  char *line_buffer;
 	  struct format_data *fmt;
 	  namelist_info *ionml;
-#ifdef HAVE_NEWLOCALE
+#ifdef HAVE_POSIX_2008_LOCALE
 	  locale_t old_locale;
 #endif
 	  /* Current position within the look-ahead line buffer.  */
@@ -1059,7 +1063,8 @@ default_width_for_float (int kind)
     {
     case 4:  return 15;
     case 8:  return 25;
-    case 16: return 42;
+    case 16:
+    case 17: return 42;
     default: return  0;
     }
 }
@@ -1071,7 +1076,8 @@ default_precision_for_float (int kind)
     {
     case 4:  return 7;
     case 8:  return 16;
-    case 16: return 33;
+    case 16:
+    case 17: return 33;
     default: return 0;
     }
 }
@@ -1079,11 +1085,11 @@ default_precision_for_float (int kind)
 #endif
 
 extern void
-st_write_done_worker (st_parameter_dt *);
+st_write_done_worker (st_parameter_dt *, bool);
 internal_proto (st_write_done_worker);
 
 extern void
-st_read_done_worker (st_parameter_dt *);
+st_read_done_worker (st_parameter_dt *, bool);
 internal_proto (st_read_done_worker);
 
 extern void

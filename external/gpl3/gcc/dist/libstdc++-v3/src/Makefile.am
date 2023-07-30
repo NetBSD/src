@@ -1,6 +1,6 @@
 ## Makefile for the C++11 sources of the GNU C++ Standard library.
 ##
-## Copyright (C) 1997-2020 Free Software Foundation, Inc.
+## Copyright (C) 1997-2022 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ## Process this file with automake to produce Makefile.in.
@@ -28,8 +28,16 @@ else
 filesystem_dir =
 endif
 
+if ENABLE_BACKTRACE
+backtrace_dir = libbacktrace
+backtrace_supported_h = $(backtrace_dir)/backtrace-supported.h
+else
+backtrace_dir =
+backtrace_supported_h =
+endif
+
 ## Keep this list sync'd with acinclude.m4:GLIBCXX_CONFIGURE.
-SUBDIRS = c++98 c++11 c++17 $(filesystem_dir)
+SUBDIRS = c++98 c++11 c++17 c++20 $(filesystem_dir) $(backtrace_dir)
 
 # Cross compiler support.
 if VTV_CYGMIN
@@ -60,14 +68,32 @@ endif
 vpath % $(top_srcdir)/src/c++98
 vpath % $(top_srcdir)/src/c++11
 vpath % $(top_srcdir)/src/c++17
+vpath % $(top_srcdir)/src/c++20
 if ENABLE_FILESYSTEM_TS
 vpath % $(top_srcdir)/src/filesystem
+endif
+if ENABLE_BACKTRACE
+vpath % $(top_srcdir)/src/libbacktrace
 endif
 
 if GLIBCXX_LDBL_COMPAT
 ldbl_compat_sources = compatibility-ldbl.cc
 else
 ldbl_compat_sources =
+endif
+
+if GLIBCXX_LDBL_ALT128_COMPAT
+if ENABLE_DUAL_ABI
+ldbl_alt128_compat_cxx11_sources = \
+	compatibility-ldbl-alt128-cxx11.cc
+else
+ldbl_alt128_compat_cxx11_sources =
+endif
+ldbl_alt128_compat_sources = \
+	compatibility-ldbl-alt128.cc \
+	${ldbl_alt128_compat_cxx11_sources}
+else
+ldbl_alt128_compat_sources =
 endif
 
 
@@ -86,7 +112,8 @@ cxx11_sources = \
 	compatibility-atomic-c++0x.cc \
 	compatibility-thread-c++0x.cc \
 	compatibility-chrono.cc \
-	compatibility-condvar.cc
+	compatibility-condvar.cc \
+	${ldbl_alt128_compat_sources}
 
 libstdc___la_SOURCES = $(cxx98_sources) $(cxx11_sources)
 
@@ -95,27 +122,53 @@ libstdc___la_LIBADD = \
 	$(top_builddir)/libsupc++/libsupc++convenience.la \
 	$(top_builddir)/src/c++98/libc++98convenience.la \
 	$(top_builddir)/src/c++11/libc++11convenience.la \
-	$(top_builddir)/src/c++17/libc++17convenience.la
+	$(top_builddir)/src/c++17/libc++17convenience.la \
+	$(top_builddir)/src/c++20/libc++20convenience.la
 
 libstdc___la_DEPENDENCIES = \
 	${version_dep} \
 	$(top_builddir)/libsupc++/libsupc++convenience.la \
 	$(top_builddir)/src/c++98/libc++98convenience.la \
 	$(top_builddir)/src/c++11/libc++11convenience.la \
-	$(top_builddir)/src/c++17/libc++17convenience.la
+	$(top_builddir)/src/c++17/libc++17convenience.la \
+	$(top_builddir)/src/c++20/libc++20convenience.la
 
 libstdc___la_LDFLAGS = \
 	-version-info $(libtool_VERSION) ${version_arg} -lm
 
-libstdc___la_LINK = $(CXXLINK) $(libstdc___la_LDFLAGS)
+libstdc___la_LINK = $(CXXLINK) $(libstdc___la_LDFLAGS) $(lt_host_flags)
 
 # Use special rules for compatibility-ldbl.cc compilation, as we need to
-# pass -mlong-double-64.
+# pass -mlong-double-64, and not use -mabi={ieee,ibm}longdouble.
 if GLIBCXX_LDBL_COMPAT
+if GLIBCXX_LDBL_ALT128_COMPAT
+LTCXXCOMPILE64 = \
+  $(filter-out -mabi=ieeelongdouble -mabi=ibmlongdouble,$(LTCXXCOMPILE))
+CXXCOMPILE64 = \
+  $(filter-out -mabi=ieeelongdouble -mabi=ibmlongdouble,$(CXXCOMPILE))
+else
+LTCXXCOMPILE64 = $(LTCXXCOMPILE)
+CXXCOMPILE64 = $(CXXCOMPILE)
+endif
 compatibility-ldbl.lo: compatibility-ldbl.cc
-	$(LTCXXCOMPILE) $(LONG_DOUBLE_COMPAT_FLAGS) -c $<
+	$(LTCXXCOMPILE64) $(LONG_DOUBLE_COMPAT_FLAGS) -c $<
 compatibility-ldbl.o: compatibility-ldbl.cc
-	$(CXXCOMPILE) $(LONG_DOUBLE_COMPAT_FLAGS) -c $<
+	$(CXXCOMPILE64) $(LONG_DOUBLE_COMPAT_FLAGS) -c $<
+endif
+
+# Use special rules for compatibility-ldbl-alt128.cc compilation, as we need to
+# ensure it is compiled with the correct flag.
+if GLIBCXX_LDBL_ALT128_COMPAT
+compatibility-ldbl-alt128.lo: compatibility-ldbl-alt128.cc
+	$(LTCXXCOMPILE) $(LONG_DOUBLE_ALT128_COMPAT_FLAGS) -std=gnu++11 -c $<
+compatibility-ldbl-alt128.o: compatibility-ldbl-alt128.cc
+	$(CXXCOMPILE) $(LONG_DOUBLE_ALT128_COMPAT_FLAGS) -std=gnu++11 -c $<
+if ENABLE_DUAL_ABI
+compatibility-ldbl-alt128-cxx11.lo: compatibility-ldbl-alt128-cxx11.cc
+	$(LTCXXCOMPILE) $(LONG_DOUBLE_ALT128_COMPAT_FLAGS) -std=gnu++11 -c $<
+compatibility-ldbl-alt128-cxx11.o: compatibility-ldbl-alt128-cxx11.cc
+	$(CXXCOMPILE) $(LONG_DOUBLE_ALT128_COMPAT_FLAGS) -std=gnu++11 -c $<
+endif
 endif
 
 # Use special rules for C++11 files/objects.
@@ -153,7 +206,8 @@ compatibility-condvar.o: compatibility-condvar.cc
 # segregated in the sources with -D_GLIBCXX_SHARED.
 #
 # In the sub-directories of libsupc++, src/c++98, src/c++11, src/c++17,
-# only -prefer-pic objects are generated for the convenience libraries.
+# src/c++20, only -prefer-pic objects are generated for the convenience
+# libraries.
 #
 # In the main src directory, make shared and static objects just for
 # the compat libraries. Shared objects are compiled with -prefer-pic
@@ -171,11 +225,13 @@ compatibility-condvar.o: compatibility-condvar.cc
 # set this option because CONFIG_CXXFLAGS has to be after
 # OPTIMIZE_CXXFLAGS on the compile line so that -O2 can be overridden
 # as the occasion calls for it.
-AM_CXXFLAGS = \
+AM_CXXFLAGS_PRE = \
 	-std=gnu++98 \
 	$(glibcxx_compiler_pic_flag) \
 	$(XTEMPLATE_FLAGS) $(VTV_CXXFLAGS) \
 	$(WARN_CXXFLAGS) $(OPTIMIZE_CXXFLAGS) $(CONFIG_CXXFLAGS)
+
+AM_CXXFLAGS = $(filter-out -fvtable-verify=std,$(AM_CXXFLAGS_PRE))
 
 # Libtool notes
 
@@ -267,8 +323,8 @@ libstdc++-symbols.ver-sun : libstdc++-symbols.ver \
 	perl $(toplevel_srcdir)/contrib/make_sunver.pl \
 	  libstdc++-symbols.ver \
 	  $(libstdc___la_OBJECTS:%.lo=.libs/%.o) \
-	 `echo $(libstdc___la_LIBADD) | \
-	    sed 's,/\([^/.]*\)\.la,/.libs/\1.a,g'` \
+	 `echo ' $(libstdc___la_LIBADD) ' | \
+	    sed -e 's,/\([^/.]*\)\.la,/.libs/\1.a,g' -e 's/ -l[^ ]* / /'` \
 	 > $@ || (rm -f $@ ; exit 1)
 endif
 if ENABLE_SYMVERS_DARWIN
@@ -326,7 +382,7 @@ endif
 # Build a debug variant.
 # Take care to fix all possibly-relative paths.
 debugdir = ${glibcxx_builddir}/src/debug
-stamp-debug:
+stamp-debug: Makefile $(foreach dir,$(SUBDIRS),$(dir)/Makefile)
 	if test ! -d ${debugdir} || test ! -f ${debugdir}/Makefile ; then \
 	  mkdir -p ${debugdir}; \
 	  for d in $(SUBDIRS); do mkdir -p  ${debugdir}/$$d; done; \
@@ -350,7 +406,15 @@ stamp-debug:
 	fi; \
 	echo `date` > stamp-debug;
 
-build-debug: stamp-debug
+if ENABLE_BACKTRACE
+${debugdir}/$(backtrace_supported_h): $(backtrace_supported_h) stamp-debug
+	cp $< $@
+debug_backtrace_supported_h = ${debugdir}/$(backtrace_supported_h)
+else
+debug_backtrace_supported_h =
+endif
+
+build-debug: stamp-debug $(debug_backtrace_supported_h)
 	  (cd ${debugdir}; \
 	  mv Makefile Makefile.tmp; \
 	  sed -e 's,all-local: all-once,all-local:,' \

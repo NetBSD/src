@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -148,6 +148,14 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 # define LLONG_WIDTH __LONG_LONG_WIDTH__
 # undef ULLONG_WIDTH
 # define ULLONG_WIDTH __LONG_LONG_WIDTH__
+#endif
+
+#if defined (__STDC_VERSION__) && __STDC_VERSION__ > 201710L
+/* C2X width and limit of _Bool.  */
+# undef BOOL_MAX
+# define BOOL_MAX 1
+# undef BOOL_WIDTH
+# define BOOL_WIDTH 1
 #endif
 
 #endif /* _LIMITS_H___ */

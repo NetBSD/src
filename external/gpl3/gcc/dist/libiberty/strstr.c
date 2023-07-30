@@ -16,10 +16,6 @@ length, the function returns @var{string}.
 
 */
 
-
-/* FIXME:  The above description is ANSI compiliant.  This routine has not
-   been validated to comply with it.  -fnf */
-
 #include <stddef.h>
 
 extern char *strchr (const char *, int);

@@ -1,4 +1,4 @@
-.. Copyright (C) 2014-2020 Free Software Foundation, Inc.
+.. Copyright (C) 2014-2022 Free Software Foundation, Inc.
    Originally contributed by David Malcolm <dmalcolm@redhat.com>
 
    This is free software: you can redistribute it and/or modify it
@@ -13,17 +13,13 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see
-   <http://www.gnu.org/licenses/>.
+   <https://www.gnu.org/licenses/>.
 
 libgccjit
 =========
 
-This document describes `libgccjit <http://gcc.gnu.org/wiki/JIT>`_, an API
+This document describes `libgccjit <https://gcc.gnu.org/wiki/JIT>`_, an API
 for embedding GCC inside programs and libraries.
-
-Note that libgccjit is currently of "Alpha" quality;
-the APIs are not yet set in stone, and they shouldn't be used in
-production yet.
 
 There are actually two APIs for the library:
 
@@ -55,4 +51,4 @@ Indices and tables
    The Sphinx C domain appears to lack explicit support for enum values,
    so I've been using :c:macro: for them.
 
-   See http://sphinx-doc.org/domains.html#the-c-domain
+   See https://sphinx-doc.org/domains.html#the-c-domain

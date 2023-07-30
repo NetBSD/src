@@ -1,6 +1,6 @@
 // Debugging support implementation -*- C++ -*-
 
-// Copyright (C) 2003-2020 Free Software Foundation, Inc.
+// Copyright (C) 2003-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -120,12 +120,17 @@ namespace __gnu_debug
   // We may have an iterator that derives from _Safe_iterator_base but isn't
   // a _Safe_iterator.
   template<typename _Iterator>
+    _GLIBCXX_CONSTEXPR
     inline bool
     __check_singular(_Iterator const& __x)
-    { return __check_singular_aux(std::__addressof(__x)); }
+    {
+      return ! std::__is_constant_evaluated()
+	       && __check_singular_aux(std::__addressof(__x));
+    }
 
   /** Non-NULL pointers are nonsingular. */
   template<typename _Tp>
+    _GLIBCXX_CONSTEXPR
     inline bool
     __check_singular(_Tp* const& __ptr)
     { return __ptr == 0; }
@@ -225,11 +230,6 @@ namespace __gnu_debug
     __valid_range(_InputIterator __first, _InputIterator __last,
 		  typename _Distance_traits<_InputIterator>::__type& __dist)
     {
-#ifdef __cpp_lib_is_constant_evaluated
-      if (std::is_constant_evaluated())
-	// Detected by the compiler directly.
-	return true;
-#endif
       typedef typename std::__is_integer<_InputIterator>::__type _Integral;
       return __valid_range_aux(__first, __last, __dist, _Integral());
     }
@@ -253,11 +253,6 @@ namespace __gnu_debug
     inline bool
     __valid_range(_InputIterator __first, _InputIterator __last)
     {
-#ifdef _GLIBCXX_HAVE_BUILTIN_IS_CONSTANT_EVALUATED
-      if (__builtin_is_constant_evaluated())
-	// Detected by the compiler directly.
-	return true;
-#endif
       typedef typename std::__is_integer<_InputIterator>::__type _Integral;
       return __valid_range_aux(__first, __last, _Integral());
     }

@@ -3,7 +3,7 @@
 ;; expander, and the actual vector instructions will be in altivec.md and
 ;; vsx.md
 
-;; Copyright (C) 2009-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2022 Free Software Foundation, Inc.
 ;; Contributed by Michael Meissner <meissner@linux.vnet.ibm.com>
 
 ;; This file is part of GCC.
@@ -25,6 +25,9 @@
 
 ;; Vector int modes
 (define_mode_iterator VEC_I [V16QI V8HI V4SI V2DI])
+
+;; 128-bit int modes
+(define_mode_iterator VEC_TI [V1TI TI])
 
 ;; Vector int modes for parity
 (define_mode_iterator VEC_IP [V8HI
@@ -53,7 +56,7 @@
 (define_mode_iterator VEC_N [V4SI V4SF V2DI V2DF V1TI KF TF])
 
 ;; Vector comparison modes
-(define_mode_iterator VEC_C [V16QI V8HI V4SI V2DI V4SF V2DF])
+(define_mode_iterator VEC_C [V16QI V8HI V4SI V2DI V4SF V2DF V1TI])
 
 ;; Vector init/extract modes
 (define_mode_iterator VEC_E [V16QI V8HI V4SI V2DI V4SF V2DF])
@@ -354,7 +357,7 @@
 				    operands[3], operands[4], operands[5]))
     DONE;
   else
-    FAIL;
+    gcc_unreachable ();
 })
 
 (define_expand "vcond<mode><mode>"
@@ -371,7 +374,7 @@
 				    operands[3], operands[4], operands[5]))
     DONE;
   else
-    FAIL;
+    gcc_unreachable ();
 })
 
 (define_expand "vcondv4sfv4si"
@@ -389,7 +392,7 @@
 				    operands[3], operands[4], operands[5]))
     DONE;
   else
-    FAIL;
+    gcc_unreachable ();
 })
 
 (define_expand "vcondv4siv4sf"
@@ -407,7 +410,7 @@
 				    operands[3], operands[4], operands[5]))
     DONE;
   else
-    FAIL;
+    gcc_unreachable ();
 })
 
 (define_expand "vcondv2dfv2di"
@@ -425,7 +428,7 @@
 				    operands[3], operands[4], operands[5]))
     DONE;
   else
-    FAIL;
+    gcc_unreachable ();
 })
 
 (define_expand "vcondv2div2df"
@@ -443,7 +446,7 @@
 				    operands[3], operands[4], operands[5]))
     DONE;
   else
-    FAIL;
+    gcc_unreachable ();
 })
 
 (define_expand "vcondu<mode><mode>"
@@ -460,7 +463,7 @@
 				    operands[3], operands[4], operands[5]))
     DONE;
   else
-    FAIL;
+    gcc_unreachable ();
 })
 
 (define_expand "vconduv4sfv4si"
@@ -478,7 +481,7 @@
 				    operands[3], operands[4], operands[5]))
     DONE;
   else
-    FAIL;
+    gcc_unreachable ();
 })
 
 (define_expand "vconduv2dfv2di"
@@ -496,7 +499,7 @@
 				    operands[3], operands[4], operands[5]))
     DONE;
   else
-    FAIL;
+    gcc_unreachable ();
 })
 
 ;; To support vector condition vectorization, define vcond_mask and vec_cmp.
@@ -697,11 +700,29 @@
   operands[3] = gen_reg_rtx_and_attrs (operands[0]);
 })
 
+(define_expand "vector_nltv1ti"
+  [(set (match_operand:V1TI 3 "vlogical_operand")
+	(gt:V1TI (match_operand:V1TI 2 "vlogical_operand")
+		 (match_operand:V1TI 1 "vlogical_operand")))
+   (set (match_operand:V1TI 0 "vlogical_operand")
+        (not:V1TI (match_dup 3)))]
+  "TARGET_POWER10"
+{
+  operands[3] = gen_reg_rtx_and_attrs (operands[0]);
+})
+
 (define_expand "vector_gtu<mode>"
   [(set (match_operand:VEC_I 0 "vint_operand")
 	(gtu:VEC_I (match_operand:VEC_I 1 "vint_operand")
 		   (match_operand:VEC_I 2 "vint_operand")))]
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "")
+
+(define_expand "vector_gtuv1ti"
+  [(set (match_operand:V1TI 0 "altivec_register_operand")
+	(gtu:V1TI (match_operand:V1TI 1 "altivec_register_operand")
+		  (match_operand:V1TI 2 "altivec_register_operand")))]
+  "TARGET_POWER10"
   "")
 
 ; >= for integer vectors: swap operands and apply not-greater-than
@@ -712,6 +733,17 @@
    (set (match_operand:VEC_I 0 "vlogical_operand")
         (not:VEC_I (match_dup 3)))]
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+{
+  operands[3] = gen_reg_rtx_and_attrs (operands[0]);
+})
+
+(define_expand "vector_nltuv1ti"
+  [(set (match_operand:V1TI 3 "vlogical_operand")
+	(gtu:V1TI (match_operand:V1TI 2 "vlogical_operand")
+		  (match_operand:V1TI 1 "vlogical_operand")))
+   (set (match_operand:V1TI 0 "vlogical_operand")
+	(not:V1TI (match_dup 3)))]
+  "TARGET_POWER10"
 {
   operands[3] = gen_reg_rtx_and_attrs (operands[0]);
 })
@@ -735,6 +767,17 @@
   operands[3] = gen_reg_rtx_and_attrs (operands[0]);
 })
 
+(define_expand "vector_ngtv1ti"
+  [(set (match_operand:V1TI 3 "vlogical_operand")
+	(gt:V1TI (match_operand:V1TI 1 "vlogical_operand")
+		 (match_operand:V1TI 2 "vlogical_operand")))
+   (set (match_operand:V1TI 0 "vlogical_operand")
+        (not:V1TI (match_dup 3)))]
+  "TARGET_POWER10"
+{
+  operands[3] = gen_reg_rtx_and_attrs (operands[0]);
+})
+
 (define_expand "vector_ngtu<mode>"
   [(set (match_operand:VEC_I 3 "vlogical_operand")
 	(gtu:VEC_I (match_operand:VEC_I 1 "vlogical_operand")
@@ -742,6 +785,17 @@
    (set (match_operand:VEC_I 0 "vlogical_operand")
         (not:VEC_I (match_dup 3)))]
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+{
+  operands[3] = gen_reg_rtx_and_attrs (operands[0]);
+})
+
+(define_expand "vector_ngtuv1ti"
+  [(set (match_operand:V1TI 3 "vlogical_operand")
+	(gtu:V1TI (match_operand:V1TI 1 "vlogical_operand")
+		  (match_operand:V1TI 2 "vlogical_operand")))
+   (set (match_operand:V1TI 0 "vlogical_operand")
+        (not:V1TI (match_dup 3)))]
+  "TARGET_POWER10"
 {
   operands[3] = gen_reg_rtx_and_attrs (operands[0]);
 })
@@ -862,23 +916,21 @@
 ;; which is in the reverse order that we want
 (define_expand "vector_select_<mode>"
   [(set (match_operand:VEC_L 0 "vlogical_operand")
-	(if_then_else:VEC_L
-	 (ne:CC (match_operand:VEC_L 3 "vlogical_operand")
-		(match_dup 4))
-	 (match_operand:VEC_L 2 "vlogical_operand")
-	 (match_operand:VEC_L 1 "vlogical_operand")))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
-  "operands[4] = CONST0_RTX (<MODE>mode);")
+	(ior:VEC_L
+	  (and:VEC_L (not:VEC_L (match_operand:VEC_L 3 "vlogical_operand"))
+		     (match_operand:VEC_L 1 "vlogical_operand"))
+	  (and:VEC_L (match_dup 3)
+		     (match_operand:VEC_L 2 "vlogical_operand"))))]
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)")
 
 (define_expand "vector_select_<mode>_uns"
   [(set (match_operand:VEC_L 0 "vlogical_operand")
-	(if_then_else:VEC_L
-	 (ne:CCUNS (match_operand:VEC_L 3 "vlogical_operand")
-		   (match_dup 4))
-	 (match_operand:VEC_L 2 "vlogical_operand")
-	 (match_operand:VEC_L 1 "vlogical_operand")))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
-  "operands[4] = CONST0_RTX (<MODE>mode);")
+	(ior:VEC_L
+	  (and:VEC_L (not:VEC_L (match_operand:VEC_L 3 "vlogical_operand"))
+		     (match_operand:VEC_L 1 "vlogical_operand"))
+	  (and:VEC_L (match_dup 3)
+		     (match_operand:VEC_L 2 "vlogical_operand"))))]
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)")
 
 ;; Expansions that compare vectors producing a vector result and a predicate,
 ;; setting CR6 to indicate a combined status
@@ -892,6 +944,18 @@
 	  (eq:VEC_A (match_dup 1)
 		    (match_dup 2)))])]
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "")
+
+(define_expand "vector_eq_v1ti_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(eq:CC (match_operand:V1TI 1 "altivec_register_operand")
+			     (match_operand:V1TI 2 "altivec_register_operand"))]
+		     UNSPEC_PREDICATE))
+     (set (match_operand:V1TI 0 "vlogical_operand")
+	  (eq:V1TI (match_dup 1)
+		   (match_dup 2)))])]
+  "TARGET_POWER10"
   "")
 
 ;; This expansion handles the V16QI, V8HI, and V4SI modes in the
@@ -976,6 +1040,23 @@
   operands[3] = gen_reg_rtx (V2DImode);
 })
 
+(define_expand "vector_ne_v1ti_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(eq:CC (match_operand:V1TI 1 "altivec_register_operand")
+			     (match_operand:V1TI 2 "altivec_register_operand"))]
+		     UNSPEC_PREDICATE))
+     (set (match_dup 3)
+	  (eq:V1TI (match_dup 1)
+		   (match_dup 2)))])
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(eq:SI (reg:CC CR6_REGNO)
+	       (const_int 0)))]
+  "TARGET_POWER10"
+{
+  operands[3] = gen_reg_rtx (V1TImode);
+})
+
 ;; This expansion handles the V2DI mode in the implementation of the
 ;; vec_any_eq built-in function on Power9.
 ;;
@@ -1000,6 +1081,26 @@
   "TARGET_P9_VECTOR"
 {
   operands[3] = gen_reg_rtx (V2DImode);
+})
+
+(define_expand "vector_ae_v1ti_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(eq:CC (match_operand:V1TI 1 "altivec_register_operand")
+			     (match_operand:V1TI 2 "altivec_register_operand"))]
+		     UNSPEC_PREDICATE))
+     (set (match_dup 3)
+	  (eq:V1TI (match_dup 1)
+		   (match_dup 2)))])
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(eq:SI (reg:CC CR6_REGNO)
+	       (const_int 0)))
+   (set (match_dup 0)
+	(xor:SI (match_dup 0)
+		(const_int 1)))]
+  "TARGET_POWER10"
+{
+  operands[3] = gen_reg_rtx (V1TImode);
 })
 
 ;; This expansion handles the V4SF and V2DF modes in the Power9
@@ -1061,6 +1162,18 @@
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
   "")
 
+(define_expand "vector_gt_v1ti_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(gt:CC (match_operand:V1TI 1 "vlogical_operand")
+			     (match_operand:V1TI 2 "vlogical_operand"))]
+		     UNSPEC_PREDICATE))
+     (set (match_operand:V1TI 0 "vlogical_operand")
+	  (gt:V1TI (match_dup 1)
+		   (match_dup 2)))])]
+  "TARGET_POWER10"
+  "")
+
 (define_expand "vector_ge_<mode>_p"
   [(parallel
     [(set (reg:CC CR6_REGNO)
@@ -1083,6 +1196,18 @@
 	  (gtu:VEC_I (match_dup 1)
 		     (match_dup 2)))])]
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "")
+
+(define_expand "vector_gtu_v1ti_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(gtu:CC (match_operand:V1TI 1 "altivec_register_operand")
+			      (match_operand:V1TI 2 "altivec_register_operand"))]
+		     UNSPEC_PREDICATE))
+     (set (match_operand:V1TI 0 "altivec_register_operand")
+	  (gtu:V1TI (match_dup 1)
+		    (match_dup 2)))])]
+  "TARGET_POWER10"
   "")
 
 ;; AltiVec/VSX predicates.
@@ -1236,10 +1361,10 @@
 (define_expand "vec_set<mode>"
   [(match_operand:VEC_E 0 "vlogical_operand")
    (match_operand:<VEC_base> 1 "register_operand")
-   (match_operand 2 "const_int_operand")]
+   (match_operand 2 "vec_set_index_operand")]
   "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
 {
-  rs6000_expand_vector_set (operands[0], operands[1], INTVAL (operands[2]));
+  rs6000_expand_vector_set (operands[0], operands[1], operands[2]);
   DONE;
 })
 
@@ -1419,7 +1544,7 @@
   [(match_operand:VEC_L 0 "vlogical_operand")
    (match_operand:VEC_L 1 "vlogical_operand")
    (match_operand:QI 2 "reg_or_short_operand")]
-  "TARGET_ALTIVEC"
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
 {
   rtx bitshift = operands[2];
   rtx shift;
@@ -1472,6 +1597,20 @@
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
   "")
 
+(define_expand "vrotlv1ti3"
+  [(set (match_operand:V1TI 0 "vsx_register_operand" "=v")
+        (rotate:V1TI (match_operand:V1TI 1 "vsx_register_operand" "v")
+                     (match_operand:V1TI 2 "vsx_register_operand" "v")))]
+  "TARGET_POWER10"
+{
+  /* Shift amount in needs to be put in bits[57:63] of 128-bit operand2. */
+  rtx tmp = gen_reg_rtx (V1TImode);
+
+  emit_insn (gen_xxswapd_v1ti (tmp, operands[2]));
+  emit_insn (gen_altivec_vrlq (operands[0], operands[1], tmp));
+  DONE;
+})
+
 ;; Expanders for rotatert to make use of vrotl
 (define_expand "vrotr<mode>3"
   [(set (match_operand:VEC_I 0 "vint_operand")
@@ -1493,6 +1632,21 @@
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
   "")
 
+;; No immediate version of this 128-bit instruction
+(define_expand "vashl<mode>3"
+  [(set (match_operand:VEC_TI 0 "vsx_register_operand" "=v")
+	(ashift:VEC_TI (match_operand:VEC_TI 1 "vsx_register_operand")
+			 (match_operand:VEC_TI 2 "vsx_register_operand")))]
+  "TARGET_POWER10"
+{
+  /* Shift amount in needs to be put in bits[57:63] of 128-bit operand2. */
+  rtx tmp = gen_reg_rtx (<MODE>mode);
+
+  emit_insn (gen_xxswapd_v1ti (tmp, operands[2]));
+  emit_insn(gen_altivec_vslq_<mode> (operands[0], operands[1], tmp));
+  DONE;
+})
+
 ;; Expanders for logical shift right on each vector element
 (define_expand "vlshr<mode>3"
   [(set (match_operand:VEC_I 0 "vint_operand")
@@ -1501,6 +1655,21 @@
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
   "")
 
+;; No immediate version of this 128-bit instruction
+(define_expand "vlshr<mode>3"
+  [(set (match_operand:VEC_TI 0 "vsx_register_operand" "=v")
+	(lshiftrt:VEC_TI (match_operand:VEC_TI 1 "vsx_register_operand")
+			   (match_operand:VEC_TI 2 "vsx_register_operand")))]
+  "TARGET_POWER10"
+{
+  /* Shift amount in needs to be put into bits[57:63] of 128-bit operand2. */
+  rtx tmp = gen_reg_rtx (<MODE>mode);
+
+  emit_insn (gen_xxswapd_v1ti (tmp, operands[2]));
+  emit_insn(gen_altivec_vsrq_<mode> (operands[0], operands[1], tmp));
+  DONE;
+})
+
 ;; Expanders for arithmetic shift right on each vector element
 (define_expand "vashr<mode>3"
   [(set (match_operand:VEC_I 0 "vint_operand")
@@ -1508,6 +1677,22 @@
 			(match_operand:VEC_I 2 "vint_operand")))]
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
   "")
+
+;; No immediate version of this 128-bit instruction
+(define_expand "vashrv1ti3"
+  [(set (match_operand:V1TI 0 "vsx_register_operand" "=v")
+	(ashiftrt:V1TI (match_operand:V1TI 1 "vsx_register_operand" "v")
+		       (match_operand:V1TI 2 "vsx_register_operand" "v")))]
+  "TARGET_POWER10"
+{
+  /* Shift amount in needs to be put into bits[57:63] of 128-bit operand2. */
+  rtx tmp = gen_reg_rtx (V1TImode);
+
+  emit_insn (gen_xxswapd_v1ti (tmp, operands[2]));
+  emit_insn (gen_altivec_vsraq (operands[0], operands[1], tmp));
+  DONE;
+})
+
 
 ;; Vector reduction expanders for VSX
 ; The (VEC_reduc:...

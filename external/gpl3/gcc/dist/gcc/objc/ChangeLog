@@ -1,52 +1,132 @@
-2023-07-07  Release Manager
+2023-05-08  Release Manager
 
-	* GCC 10.5.0 released.
+	* GCC 12.3.0 released.
 
-2022-06-28  Release Manager
+2022-08-19  Release Manager
 
-	* GCC 10.4.0 released.
+	* GCC 12.2.0 released.
 
-2022-05-31  Iain Sandoe  <iain@sandoe.co.uk>
+2022-05-06  Release Manager
 
-	Backported from master:
-	2021-09-01  Iain Sandoe  <iain@sandoe.co.uk>
+	* GCC 12.1.0 released.
+
+2022-01-17  Martin Liska  <mliska@suse.cz>
+
+	* Make-lang.in: Rename .c names to .cc.
+	* config-lang.in: Likewise.
+	* lang-specs.h: Likewise.
+	* objc-act.cc (objc_build_component_ref): Likewise.
+	(objc_copy_binfo): Likewise.
+	(lookup_method_in_hash_lists): Likewise.
+	(objc_finish_foreach_loop): Likewise.
+	* objc-act.h (objc_common_init_ts): Likewise.
+	* objc-gnu-runtime-abi-01.cc: Likewise.
+	* objc-lang.cc (struct lang_hooks): Likewise.
+	* objc-map.cc: Likewise.
+	* objc-next-runtime-abi-01.cc (generate_objc_symtab_decl): Likewise.
+	* objc-runtime-shared-support.cc: Likewise.
+	* objc-runtime-shared-support.h (build_protocol_initializer): Likewise.
+
+2022-01-17  Martin Liska  <mliska@suse.cz>
+
+	* objc-act.c: Moved to...
+	* objc-act.cc: ...here.
+	* objc-encoding.c: Moved to...
+	* objc-encoding.cc: ...here.
+	* objc-gnu-runtime-abi-01.c: Moved to...
+	* objc-gnu-runtime-abi-01.cc: ...here.
+	* objc-lang.c: Moved to...
+	* objc-lang.cc: ...here.
+	* objc-map.c: Moved to...
+	* objc-map.cc: ...here.
+	* objc-next-runtime-abi-01.c: Moved to...
+	* objc-next-runtime-abi-01.cc: ...here.
+	* objc-next-runtime-abi-02.c: Moved to...
+	* objc-next-runtime-abi-02.cc: ...here.
+	* objc-runtime-shared-support.c: Moved to...
+	* objc-runtime-shared-support.cc: ...here.
+
+2022-01-11  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/101597
+	* objc-act.c (objc_rewrite_function_call): Build OBJ_TYPE_REF
+	with INTEGER_CST OBJ_TYPE_REF_TOKEN with type equal to
+	OBJ_TYPE_REF_OBJECT type.
+	* objc-next-runtime-abi-01.c (build_objc_method_call): Likewise.
+	* objc-gnu-runtime-abi-01.c (build_objc_method_call): Likewise.
+	* objc-next-runtime-abi-02.c (build_v2_objc_method_fixup_call,
+	build_v2_build_objc_method_call): Likewise.
+
+2021-12-05  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-next-metadata-tags.h (objc_rt_trees): Declare here.
+	* objc-next-runtime-abi-01.c: Remove from here.
+	* objc-next-runtime-abi-02.c: Likewise.
+	* objc-runtime-shared-support.c: Reorder headers, provide
+	a GTY declaration the definition of objc_rt_trees.
+
+2021-11-30  Richard Biener  <rguenther@suse.de>
+
+	* objc-act.c (objc_build_setter_call): Remove unreachable
+	return.
+
+2021-11-29  Eric Gallager  <egallager@gcc.gnu.org>
+
+	PR other/103021
+	* Make-lang.in: Use ETAGS variable in TAGS target.
+
+2021-10-22  Eric Gallager  <egallager@gcc.gnu.org>
+
+	PR other/102663
+	* Make-lang.in: Add dummy objc.install-dvi target.
+
+2021-10-08  Martin Liska  <mliska@suse.cz>
+
+	* objc-next-runtime-abi-01.c: Add missing include.
+	* objc-next-runtime-abi-02.c: Likewise.
+
+2021-10-08  Martin Liska  <mliska@suse.cz>
+
+	* objc-next-runtime-abi-01.c: Use new macro
+	OPTION_SET_P.
+	* objc-next-runtime-abi-02.c (objc_next_runtime_abi_02_init): Likewise.
+
+2021-09-01  Iain Sandoe  <iain@sandoe.co.uk>
 
 	PR objc/101718
 	* objc-next-runtime-abi-02.c (build_v2_build_objc_method_call):
 	Revise for cases where scalar objects use an sret parameter.
 	(next_runtime_abi_02_build_objc_method_call): Likwise.
 
-2022-05-31  Iain Sandoe  <iain@sandoe.co.uk>
+2021-09-01  Iain Sandoe  <iain@sandoe.co.uk>
 
-	* objc-next-metadata-tags.h (objc_rt_trees): Declare here.
-	* objc-next-runtime-abi-01.c: Remove from here.
-	(generate_static_references): Likewise.
-	* objc-next-runtime-abi-02.c: Likewise.
-	(objc_next_runtime_abi_02_init): Warn about and reset
-	flag_objc_sjlj_exceptions regardless of flag_objc_exceptions.
-	(next_runtime_02_initialize): Use a checking assert that
-	flag_objc_sjlj_exceptions is off.
-	(next_runtime_abi_02_category_decl): Adjust category
-	superclass name ordering.
-	(next_runtime_abi_02_init_metadata_attributes): Attach metadata
-	for the special string sections to class, method and method type
-	string sections.
-	(next_runtime_abi_02_protocol_decl): Do not dead-strip the runtime
-	meta-data symbols.
-	(build_v2_classrefs_table): Likewise.
-	(build_v2_protocol_list_address_table): Likewise.
-	(objc_next_runtime_abi_02_init): Default receiver nilchecks on.
-	* objc-runtime-shared-support.c: Reorder headers, provide
-	a GTY declaration the definition of objc_rt_trees.
-	* objc-gnu-runtime-abi-01.c
-	(build_shared_structure_initializer): Remove references to
-	the NeXT runtime.
+	* objc-act.c (objc_add_property_declaration): Register unavailable
+	attribute.
+	(maybe_make_artificial_property_decl): Set available.
+	(objc_maybe_build_component_ref): Generalise to the method prototype
+	to count availability.
+	(objc_build_class_component_ref): Likewise.
+	(build_private_template): Likewise.
+	(objc_decl_method_attributes): Handle unavailable attribute.
+	(lookup_method_in_hash_lists): Amend comments.
+	(objc_finish_message_expr): Handle unavailability in addition to
+	deprecation.
+	(start_class): Likewise.
+	(finish_class): Likewise.
+	(lookup_protocol): Likewise.
+	(objc_declare_protocol): Likewise.
+	(start_protocol): Register unavailable attribute.
+	(really_start_method): Likewise.
+	(objc_gimplify_property_ref): Emit error on encountering an
+	unavailable entity (and a warning for a deprecated one).
 
-2022-05-29  Iain Sandoe  <iain@sandoe.co.uk>
+2021-08-19  Iain Sandoe  <iain@sandoe.co.uk>
 
-	Backported from master:
-	2021-08-18  Iain Sandoe  <iain@sandoe.co.uk>
-		    Matt Jacobson   <mhjacobson@me.com>
+	* objc-next-runtime-abi-02.c (objc_next_runtime_abi_02_init):
+	Default receiver nilchecks on.
+
+2021-08-18  Iain Sandoe  <iain@sandoe.co.uk>
+	    Matt Jacobson   <mhjacobson@me.com>
 
 	PR objc/101666
 	* objc-act.c (objc_build_constructor): Handle empty constructor
@@ -55,14 +135,112 @@
 	Handle nil receivers.
 	(build_v2_build_objc_method_call): Likewise.
 
-2021-04-08  Release Manager
+2021-08-17  Matt Jacobson  <mhjacobson@me.com>
 
-	* GCC 10.3.0 released.
+	* objc-next-runtime-abi-02.c
+	(objc_next_runtime_abi_02_init): Warn about and reset
+	flag_objc_sjlj_exceptions regardless of flag_objc_exceptions.
+	(next_runtime_02_initialize): Use a checking assert that
+	flag_objc_sjlj_exceptions is off.
 
-2021-03-24  Iain Sandoe  <iain@sandoe.co.uk>
+2021-06-28  Martin Sebor  <msebor@redhat.com>
 
-	Backported from master:
-	2020-11-01  Iain Sandoe  <iain@sandoe.co.uk>
+	* objc-act.c (objc_maybe_build_modify_expr): Replace direct uses
+	of TREE_NO_WARNING with warning_suppressed_p, and suppress_warning.
+	(objc_build_incr_expr_for_property_ref): Same.
+	(objc_build_struct): Same.
+	(synth_module_prologue): Same.
+	* objc-gnu-runtime-abi-01.c (gnu_runtime_01_initialize): Same.
+	* objc-next-runtime-abi-01.c (next_runtime_01_initialize): Same.
+	* objc-next-runtime-abi-02.c (next_runtime_02_initialize): Same.
+
+2021-06-08  Bernd Edlinger  <bernd.edlinger@hotmail.de>
+
+	* Make-lang.in (cc1-obj-checksum.c): Check previous
+	stage checksum exists.
+
+2021-06-07  Bernd Edlinger  <bernd.edlinger@hotmail.de>
+
+	* Make-lang.in (cc1obj-checksum.c): For stage-final re-use
+	the checksum from the previous stage.
+
+2021-05-20  Indu Bhagat  <indu.bhagat@oracle.com>
+
+	* objc-act.c (synth_module_prologue): Use uint32_t instead of enum
+	debug_info_type.
+
+2021-05-10  Martin Liska  <mliska@suse.cz>
+
+	* objc-act.c (objc_string_ref_type_p): Use startswith
+	function instead of strncmp.
+	* objc-encoding.c (encode_type): Likewise.
+	* objc-next-runtime-abi-02.c (has_load_impl): Likewise.
+
+2020-11-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR other/97911
+	* Make-lang.in (objc.serial): Change from goal to a variable.
+	(.PHONY): Drop objc.serial and objc.prev.
+	(cc1obj$(exeext)): Depend on $(objc.serial) rather than objc.serial.
+
+2020-11-18  Jakub Jelinek  <jakub@redhat.com>
+
+	* Make-lang.in (objc.serial): New goal.
+	(.PHONY): Add objc.serial objc.prev.
+	(cc1obj$(exeext)): Depend on objc.prev.  Call LINK_PROGRESS.
+
+2020-11-13  Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR objc/90707
+	* objc-act.c (objc_prop_attr_kind_for_rid): Handle nullability.
+	(objc_add_property_declaration): Handle nullability attributes.
+	Check that these are applicable to the property type.
+	* objc-act.h (enum objc_property_nullability): New.
+
+2020-11-13  Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR objc/77404
+	* objc-act.c (objc_start_class_interface): Accept the location
+	of the class name, use it in existing diagnostic.
+	(start_class): Accept obj_root_class type attributes.  Warn when
+	the interface for an implementation does not contain a super
+	class (unless the diagnostic is suppressed by the the command
+	line flag or the objc_root_class type attribute).
+
+2020-11-08  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-act.c (objc_prop_attr_kind_for_rid): Handle class
+	attribute.
+	(objc_add_property_declaration): Likewise.
+	* objc-act.h (PROPERTY_CLASS): Record class attribute state.
+
+2020-11-07  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-act.c (objc_prop_attr_kind_for_rid): Handle
+	RID_PROPATOMIC.
+
+2020-11-07  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-act.c (objc_compare_types): Handle NSObject type
+	attributes.
+	(objc_type_valid_for_messaging): Likewise.
+
+2020-11-06  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-act.c (start_class): Accept visibility attributes
+	without warning.
+
+2020-11-06  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-act.c (objc_prop_attr_kind_for_rid): New.
+	(objc_add_property_declaration): Adjust to consume the
+	parser output using a vector of parsed attributes.
+
+2020-11-04  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-act.c (objc_non_constant_expr_p): New.
+
+2020-11-01  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* objc-act.c (synth_module_prologue): Get the SEL identifier.
 	* objc-act.h (enum objc_tree_index): Add OCTI_SEL_NAME.
@@ -74,41 +252,63 @@
 	(next_runtime_01_initialize): Likewise.
 	* objc-next-runtime-abi-02.c
 
-2021-03-24  Iain Sandoe  <iain@sandoe.co.uk>
+2020-10-11  Iain Sandoe  <iain@sandoe.co.uk>
 
-	Backported from master:
-	2020-11-06  Iain Sandoe  <iain@sandoe.co.uk>
+	* objc-next-runtime-abi-02.c
+	(create_global_decl): Update to allow the caller to
+	specify declaration or definition.
+	(create_hidden_decl): Likewise.
+	(next_runtime_abi_02_protocol_decl): Make the symbol
+	weak and hidden for later OS runtime versions.
+	(build_v2_protocol_list_address_table): Likewise.
 
-	* objc-act.c (start_class): Accept visibility attributes
-	without warning.
-
-2021-03-24  Iain Sandoe  <iain@sandoe.co.uk>
-
-	* objc-act.c (objc_prop_attr_kind_for_rid): Handle
-	RID_PROPATOMIC.
-
-2021-03-24  Iain Sandoe  <iain@sandoe.co.uk>
-
-	* objc-act.c (objc_prop_attr_kind_for_rid): New.
-	(objc_add_property_declaration): Adjust to consume the
-	parser output using a vector of parsed attributes.
-
-2021-03-24  Iain Sandoe  <iain@sandoe.co.uk>
-
-	Backported from master:
-	2020-10-11  Iain Sandoe  <iain@sandoe.co.uk>
+2020-10-11  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* objc-next-runtime-abi-02.c (objc_v2_build_ivar_ref): Test
 	DECL_C_BIT_FIELD to detect that an ivar is a bitfield.
 
-2021-03-24  Iain Sandoe  <iain@sandoe.co.uk>
+2020-10-11  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-next-runtime-abi-02.c (FIXUP_NEEDED): Rename ...
+	(USE_FIXUP_BEFORE): ... to this.
+	(next_runtime_02_initialize): Likewise.
+	(next_runtime_abi_02_get_arg_type_list_base): Likewise.
+	(next_runtime_abi_02_build_objc_method_call): Likewise.
+
+2020-10-11  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-next-runtime-abi-02.c (TAG_MSGSENDSUPER): Revised
+	spelling.
+	(TAG_MSGSENDID): Likewise.
+	(TAG_MSGSENDSUPER_STRET): Likewise.
+	(TAG_MSGSENDID_STRET): Likewise.
+	(FIXUP_NEEDED): Likewise.
+	(TAG_FIXUP): New.
+	(next_runtime_02_initialize): Adjust message calls to use
+	fixup variants only when required.
+	(next_runtime_abi_02_get_arg_type_list_base): Correct
+	indent.
+	(build_v2_build_objc_method_call): New.
+	(build_v2_objc_method_fixup_call): Split out from ...
+	(next_runtime_abi_02_build_objc_method_call): ... here.
+	Arrange to adjust the call on the basis of the target
+	runtime.
+
+2020-10-11  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-runtime-shared-support.c (start_var_decl): Make the
+	decl_assembler_name follow the metadata name for C++ on NeXT
+	runtime platforms.
+
+2020-10-11  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* objc-next-runtime-abi-02.c
-	(objc_get_superclass_ref_decl): Split this code out.
-	(next_runtime_abi_02_get_class_super_ref): Compute
-	super refs using the objc_get_superclass_ref_decl().
-	(next_runtime_abi_02_get_category_super_ref): Likewise.
-	(build_v2_super_template): Add new
+	(next_runtime_abi_02_category_decl): Adjust category
+	superclass name ordering.
+
+2020-10-11  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* objc-next-runtime-abi-02.c (build_v2_super_template): Add new
 	fields to the template.
 	(build_v2_protocol_template): Build new field entries.
 	(generate_v2_meth_descriptor_table): Adjust to allow recording all
@@ -117,63 +317,48 @@
 	(build_v2_protocol_initializer): Initialize the additional fields.
 	(generate_v2_protocols): Record method types for all entries and
 	generate the additional method type table.
-	* objc-runtime-shared-support.c (start_var_decl): Make the
-	decl_assembler_name follow the metadata name for C++ on NeXT
-	runtime platforms.
-	(TAG_MSGSENDSUPER, TAG_MSGSENDID, TAG_MSGSENDSUPER_STRET,
-	TAG_MSGSENDID_STRET, FIXUP_NEEDED): Revised spelling.
-	(TAG_FIXUP): New.
-	Rename FIXUP_NEEDED to USE_FIXUP_BEFORE
-	(next_runtime_02_initialize): Adjust message calls to use
-	fixup variants only when required. Use renamed macros.
-	(next_runtime_abi_02_get_arg_type_list_base): Likewise.
-	(next_runtime_abi_02_build_objc_method_call): Likewise.
-	(next_runtime_abi_02_get_arg_type_list_base): Correct indent.
-	(build_v2_build_objc_method_call): New.
-	(build_v2_objc_method_fixup_call): Split out from ...
-	(next_runtime_abi_02_build_objc_method_call): ... here.
-	Arrange to adjust the call on the basis of the target
-	runtime.
-	(create_global_decl): Update to allow the caller to
-	specify declaration or definition.
-	(create_hidden_decl): Likewise.
-	(next_runtime_abi_02_protocol_decl): Make the symbol
-	weak and hidden for later OS runtime versions.
-	(build_v2_protocol_list_address_table): Likewise.
 
-2021-03-22  Iain Sandoe  <iain@sandoe.co.uk>
+2020-10-10  Iain Sandoe  <iain@sandoe.co.uk>
 
-	Backported from master:
-	2020-10-10  Iain Sandoe  <iain@sandoe.co.uk>
+	* objc-next-runtime-abi-02.c
+	(objc_get_superclass_ref_decl): Split this code out.
+	(next_runtime_abi_02_get_class_super_ref): Compute
+	super refs using the objc_get_superclass_ref_decl().
+	(next_runtime_abi_02_get_category_super_ref): Likewise.
+
+2020-10-10  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* objc-next-runtime-abi-02.c
 	(next_runtime_abi_02_init_metadata_attributes): Make protocol
 	refs a distinct section.
 
-2021-03-22  Iain Sandoe  <iain@sandoe.co.uk>
-
-	Backported from master:
-	2020-10-10  Iain Sandoe  <iain@sandoe.co.uk>
+2020-10-10  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* objc-next-runtime-abi-02.c
 	(next_runtime_abi_02_init_metadata_attributes): Attach metadata
 	for the special string sections to class, method and method type
 	string sections.
 
-2021-01-14  Iain Sandoe  <iain@sandoe.co.uk>
+2020-10-10  Iain Sandoe  <iain@sandoe.co.uk>
 
-	Backported from master:
-	2020-11-04  Iain Sandoe  <iain@sandoe.co.uk>
+	* objc-gnu-runtime-abi-01.c
+	(build_shared_structure_initializer): Remove references to
+	the NeXT runtime.
+	(generate_static_references): Likewise.
 
-	* objc-act.c (objc_non_constant_expr_p): New.
+2020-09-19  Sandra Loosemore  <sandra@codesourcery.com>
 
-2020-07-23  Release Manager
+	* objc-act.c (objc_start_method_definition): Update to reflect
+	changes to break/continue state bookkeeping in C front end.
 
-	* GCC 10.2.0 released.
+2020-09-17  Patrick Palka  <ppalka@redhat.com>
 
-2020-05-07  Release Manager
-
-	* GCC 10.1.0 released.
+	PR c/80076
+	* objc-gnu-runtime-abi-01.c
+	(gnu_runtime_abi_01_get_class_super_ref): Reduce indentation of
+	misleadingly indented return statements.
+	* objc-next-runtime-abi-01.c
+	(next_runtime_abi_01_get_class_super_ref): Likewise.
 
 2020-01-01  Jakub Jelinek  <jakub@redhat.com>
 
@@ -4045,7 +4230,7 @@
 	Move to c-objc-common.h.
 
 
-Copyright (C) 2004-2020 Free Software Foundation, Inc.
+Copyright (C) 2004-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

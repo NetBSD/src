@@ -1,5 +1,5 @@
 `/* Specific implementation of the UNPACK intrinsic
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
    Contributed by Thomas Koenig <tkoenig@gcc.gnu.org>, based on
    unpack_generic.c by Paul Brook <paul@nowt.org>.
 
@@ -80,6 +80,8 @@ unpack0_'rtype_code` ('rtype` *ret, const 'rtype` *vector,
   else
     runtime_error ("Funny sized logical array");
 
+  /* Initialize to avoid -Wmaybe-uninitialized complaints.  */
+  rstride[0] = 1;
   if (ret->base_addr == NULL)
     {
       /* The front end has signalled that we need to populate the
@@ -103,8 +105,6 @@ unpack0_'rtype_code` ('rtype` *ret, const 'rtype` *vector,
   else
     {
       dim = GFC_DESCRIPTOR_RANK (ret);
-      /* Initialize to avoid -Wmaybe-uninitialized complaints.  */
-      rstride[0] = 1;
       for (n = 0; n < dim; n++)
 	{
 	  count[n] = 0;
@@ -226,6 +226,8 @@ unpack1_'rtype_code` ('rtype` *ret, const 'rtype` *vector,
   else
     runtime_error ("Funny sized logical array");
 
+  /* Initialize to avoid -Wmaybe-uninitialized complaints.  */
+  rstride[0] = 1;
   if (ret->base_addr == NULL)
     {
       /* The front end has signalled that we need to populate the
@@ -250,8 +252,6 @@ unpack1_'rtype_code` ('rtype` *ret, const 'rtype` *vector,
   else
     {
       dim = GFC_DESCRIPTOR_RANK (ret);
-      /* Initialize to avoid -Wmaybe-uninitialized complaints.  */
-      rstride[0] = 1;
       for (n = 0; n < dim; n++)
 	{
 	  count[n] = 0;

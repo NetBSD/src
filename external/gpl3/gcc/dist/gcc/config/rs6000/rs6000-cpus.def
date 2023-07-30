@@ -1,5 +1,5 @@
 /* IBM RS/6000 CPU names..
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
    This file is part of GCC.
@@ -44,14 +44,13 @@
 				 | OPTION_MASK_VSX)
 
 /* For now, don't provide an embedded version of ISA 2.07.  Do not set power8
-   fusion here, instead set it in rs6000.c if we are tuning for a power8
+   fusion here, instead set it in rs6000.cc if we are tuning for a power8
    system.  */
 #define ISA_2_7_MASKS_SERVER	(ISA_2_6_MASKS_SERVER			\
 				 | OPTION_MASK_P8_VECTOR		\
 				 | OPTION_MASK_CRYPTO			\
 				 | OPTION_MASK_DIRECT_MOVE		\
 				 | OPTION_MASK_EFFICIENT_UNALIGNED_VSX	\
-				 | OPTION_MASK_HTM			\
 				 | OPTION_MASK_QUAD_MEMORY		\
 				 | OPTION_MASK_QUAD_MEMORY_ATOMIC)
 
@@ -76,13 +75,17 @@
 				 | OPTION_MASK_P9_VECTOR)
 
 /* Flags that need to be turned off if -mno-power10.  */
+/* We comment out PCREL_OPT here to disable it by default because SPEC2017
+   performance was degraded by it.  */
 #define OTHER_POWER10_MASKS	(OPTION_MASK_MMA			\
 				 | OPTION_MASK_PCREL			\
+				 /* | OPTION_MASK_PCREL_OPT */		\
 				 | OPTION_MASK_PREFIXED)
 
 #define ISA_3_1_MASKS_SERVER	(ISA_3_0_MASKS_SERVER			\
 				 | OPTION_MASK_POWER10			\
-				 | OTHER_POWER10_MASKS)
+				 | OTHER_POWER10_MASKS			\
+				 | OPTION_MASK_P10_FUSION)
 
 /* Flags that need to be turned off if -mno-power9-vector.  */
 #define OTHER_P9_VECTOR_MASKS	(OPTION_MASK_FLOAT128_HW		\
@@ -129,6 +132,7 @@
 				 | OPTION_MASK_FLOAT128_KEYWORD		\
 				 | OPTION_MASK_FPRND			\
 				 | OPTION_MASK_POWER10			\
+				 | OPTION_MASK_P10_FUSION		\
 				 | OPTION_MASK_HTM			\
 				 | OPTION_MASK_ISEL			\
 				 | OPTION_MASK_MFCRF			\
@@ -142,6 +146,7 @@
 				 | OPTION_MASK_P9_MISC			\
 				 | OPTION_MASK_P9_VECTOR		\
 				 | OPTION_MASK_PCREL			\
+				 | OPTION_MASK_PCREL_OPT		\
 				 | OPTION_MASK_POPCNTB			\
 				 | OPTION_MASK_POPCNTD			\
 				 | OPTION_MASK_POWERPC64		\
@@ -240,10 +245,13 @@ RS6000_CPU ("power6x", PROCESSOR_POWER6, MASK_POWERPC64 | MASK_PPC_GPOPT
 	    | MASK_PPC_GFXOPT | MASK_MFCRF | MASK_POPCNTB | MASK_FPRND
 	    | MASK_CMPB | MASK_DFP | MASK_RECIP_PRECISION)
 RS6000_CPU ("power7", PROCESSOR_POWER7, MASK_POWERPC64 | ISA_2_6_MASKS_SERVER)
-RS6000_CPU ("power8", PROCESSOR_POWER8, MASK_POWERPC64 | ISA_2_7_MASKS_SERVER)
-RS6000_CPU ("power9", PROCESSOR_POWER9, MASK_POWERPC64 | ISA_3_0_MASKS_SERVER)
+RS6000_CPU ("power8", PROCESSOR_POWER8, MASK_POWERPC64 | ISA_2_7_MASKS_SERVER
+	    | OPTION_MASK_HTM)
+RS6000_CPU ("power9", PROCESSOR_POWER9, MASK_POWERPC64 | ISA_3_0_MASKS_SERVER
+	    | OPTION_MASK_HTM)
 RS6000_CPU ("power10", PROCESSOR_POWER10, MASK_POWERPC64 | ISA_3_1_MASKS_SERVER)
 RS6000_CPU ("powerpc", PROCESSOR_POWERPC, 0)
 RS6000_CPU ("powerpc64", PROCESSOR_POWERPC64, MASK_PPC_GFXOPT | MASK_POWERPC64)
-RS6000_CPU ("powerpc64le", PROCESSOR_POWER8, MASK_POWERPC64 | ISA_2_7_MASKS_SERVER)
+RS6000_CPU ("powerpc64le", PROCESSOR_POWER8, MASK_POWERPC64 | ISA_2_7_MASKS_SERVER
+	    | OPTION_MASK_HTM)
 RS6000_CPU ("rs64", PROCESSOR_RS64A, MASK_PPC_GFXOPT | MASK_POWERPC64)

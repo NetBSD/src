@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -21,8 +21,8 @@
    see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifndef _X86INTRIN_H_INCLUDED
-# error "Never use <lwpintrin.h> directly; include <x86intrin.h> instead."
+#ifndef _X86GPRINTRIN_H_INCLUDED
+# error "Never use <lwpintrin.h> directly; include <x86gprintrin.h> instead."
 #endif
 
 #ifndef _LWPINTRIN_H_INCLUDED

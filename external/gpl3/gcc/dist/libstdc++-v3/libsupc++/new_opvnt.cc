@@ -1,6 +1,6 @@
 // Boilerplate support routines for -*- C++ -*- dynamic memory management.
 
-// Copyright (C) 1997-2020 Free Software Foundation, Inc.
+// Copyright (C) 1997-2022 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -25,7 +25,8 @@
 
 #include <bits/c++config.h>
 #include "new"
- 
+#include "exception_defines.h"
+
 _GLIBCXX_WEAK_DEFINITION void*
 operator new[] (std::size_t sz, const std::nothrow_t&) noexcept
 {

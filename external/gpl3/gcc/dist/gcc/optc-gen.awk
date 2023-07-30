@@ -1,4 +1,4 @@
-#  Copyright (C) 2003-2020 Free Software Foundation, Inc.
+#  Copyright (C) 2003-2022 Free Software Foundation, Inc.
 #  Contributed by Kelley Cook, June 2004.
 #  Original code from Neil Booth, May 2003.
 #
@@ -25,7 +25,7 @@
 # opt-read.awk.
 #
 # Usage: awk -f opt-functions.awk -f opt-read.awk -f optc-gen.awk \
-#            [-v header_name=header.h] < inputfile > options.c
+#            [-v header_name=header.h] < inputfile > options.cc
 
 # Dump that array of options into a C file.
 END {
@@ -98,12 +98,61 @@ for (i = 0; i < n_opts; i++) {
 
     enabledby_arg = opt_args("LangEnabledBy", flags[i]);
     if (enabledby_arg != "") {
-        enabledby_langs = nth_arg(0, enabledby_arg);
-        enabledby_name = nth_arg(1, enabledby_arg);
-        enabledby_posarg = nth_arg(2, enabledby_arg);
-	enabledby_negarg = nth_arg(3, enabledby_arg);
-        lang_enabled_by(enabledby_langs, enabledby_name, enabledby_posarg, enabledby_negarg);
+	enabledby_n_args = n_args(enabledby_arg)
+	if (enabledby_n_args != 2 \
+	    && enabledby_n_args != 4) {
+	    print "#error " opts[i] " LangEnabledBy(" enabledby_arg ") must specify two or four arguments"
+	}
+
+	enabledby_langs = nth_arg(0, enabledby_arg);
+	if (enabledby_langs == "")
+	    print "#error " opts[i] " LangEnabledBy(" enabledby_arg ") must specify LANGUAGE"
+	enabledby_opt = nth_arg(1, enabledby_arg);
+	if (enabledby_opt == "")
+	    print "#error " opts[i] " LangEnabledBy(" enabledby_arg ") must specify OPT"
+
+	enabledby_posarg_negarg = ""
+	if (enabledby_n_args == 4) {
+	    enabledby_posarg = nth_arg(2, enabledby_arg);
+	    enabledby_negarg = nth_arg(3, enabledby_arg);
+	    if (enabledby_posarg == "" \
+		|| enabledby_negarg == "")
+		print "#error " opts[i] " LangEnabledBy(" enabledby_arg ") with four arguments must specify POSARG and NEGARG"
+	    else
+		enabledby_posarg_negarg = "," enabledby_posarg "," enabledby_negarg
+	}
+
+	n_enabledby_arg_langs = split(enabledby_langs, enabledby_arg_langs, " ");
+	n_enabledby_array = split(enabledby_opt, enabledby_array, " \\|\\| ");
+	for (k = 1; k <= n_enabledby_array; k++) {
+	    enabledby_index = opt_numbers[enabledby_array[k]];
+	    if (enabledby_index == "") {
+		print "#error " opts[i] " LangEnabledBy(" enabledby_arg "), unknown option '" enabledby_opt "'"
+		continue
+	    }
+
+	    for (j = 1; j <= n_enabledby_arg_langs; j++) {
+		lang_name = enabledby_arg_langs[j]
+		lang_index = lang_numbers[lang_name];
+		if (lang_index == "") {
+		    print "#error " opts[i] " LangEnabledBy(" enabledby_arg "), unknown language '" lang_name "'"
+		    continue
+		}
+
+		lang_name = lang_sanitized_name(lang_name);
+
+		if (enables[lang_name,enabledby_array[k]] == "") {
+		    enabledby[lang_name,n_enabledby_lang[lang_index]] = enabledby_array[k];
+		    n_enabledby_lang[lang_index]++;
+		}
+		enables[lang_name,enabledby_array[k]] \
+		    = enables[lang_name,enabledby_array[k]] opts[i] enabledby_posarg_negarg ";";
+	    }
+	}
     }
+
+    if (flag_set_p("Param", flags[i]) && !(opts[i] ~ "^-param="))
+      print "#error Parameter option name '" opts[i] "' must start with '-param='"
 }
 
 
@@ -192,10 +241,14 @@ for (i = 0; i < n_extra_vars; i++) {
 }
 for (i = 0; i < n_opts; i++) {
 	name = var_name(flags[i]);
-	if (name == "")
-		continue;
-
 	init = opt_args("Init", flags[i])
+
+	if (name == "") {
+		if (init != "")
+		    print "#error " opts[i] " must specify Var to use Init"
+		continue;
+	}
+
 	if (init != "") {
 		if (name in var_init && var_init[name] != init)
 			print "#error multiple initializers for " name
@@ -263,9 +316,12 @@ for (i = 0; i < n_opts; i++) {
 		flags[i + 1] = flags[i] " " flags[i + 1];
 		if (help[i + 1] == "")
 			help[i + 1] = help[i]
-		else if (help[i] != "" && help[i + 1] != help[i])
+		else if (help[i] != "" && help[i + 1] != help[i]) {
 			print "#error Multiple different help strings for " \
-				opts[i] ":\n\t" help[i] "\n\t" help[i + 1]
+				opts[i] ":"
+			print "#error   " help[i]
+			print "#error   " help[i + 1]
+		}
 				
 		i++;
 		back_chain[i] = "N_OPTS";
@@ -329,8 +385,6 @@ for (i = 0; i < n_opts; i++) {
 				  print "#error Ignored option with Warn"
         if (var_name(flags[i]) != "")
 				  print "#error Ignored option with Var"
-        if (flag_set_p("Report", flags[i]))
-				  print "#error Ignored option with Report"
       }
     else if (flag_set_p("Deprecated", flags[i]))
         print "#error Deprecated was replaced with WarnRemoved"
@@ -338,13 +392,13 @@ for (i = 0; i < n_opts; i++) {
 			  alias_data = "NULL, NULL, OPT_SPECIAL_warn_removed"
         if (warn_message != "NULL")
 				  print "#error WarnRemoved option with Warn"
-        if (flag_set_p("Report", flags[i]))
-				  print "#error WarnRemoved option with Report"
       }
 		else
 			alias_data = "NULL, NULL, N_OPTS"
 		if (flag_set_p("Enum.*", flags[i])) {
 			if (!flag_set_p("RejectNegative", flags[i]) \
+			    && !flag_set_p("EnumSet", flags[i]) \
+			    && !flag_set_p("EnumBitSet", flags[i]) \
 			    && opts[i] ~ "^[Wfgm]")
 				print "#error Enum allowing negative form"
 		}
@@ -419,7 +473,7 @@ for (i = 0; i < n_opts; i++) {
 		       cl_flags, cl_bit_fields)
 	printf("    %s, %s, %s }%s\n", var_ref(opts[i], flags[i]),
 	       var_set(flags[i]), integer_range_info(opt_args("IntegerRange", flags[i]),
-		    opt_args("Init", flags[i]), opts[i]), comma)
+		    opt_args("Init", flags[i]), opts[i], flag_set_p("UInteger", flags[i])), comma)
 
 	# Bump up the informational option index.
 	++optindex
@@ -592,5 +646,29 @@ for (i = 0; i < n_opts; i++) {
 }
 print "}               "
 
+split("", var_seen, ":")
+print "\n#if !defined(GENERATOR_FILE) && defined(ENABLE_PLUGIN)"
+print "DEBUG_VARIABLE const struct cl_var cl_vars[] =\n{"
+
+for (i = 0; i < n_opts; i++) {
+	name = var_name(flags[i]);
+	if (name == "")
+		continue;
+	var_seen[name] = 1;
 }
 
+for (i = 0; i < n_extra_vars; i++) {
+	var = extra_vars[i]
+	sub(" *=.*", "", var)
+	name = var
+	sub("^.*[ *]", "", name)
+	sub("\\[.*\\]$", "", name)
+	if (name in var_seen)
+		continue;
+	print "  { " quote name quote ", offsetof (struct gcc_options, x_" name ") },"
+	var_seen[name] = 1
+}
+
+print "  { NULL, (unsigned short) -1 }\n};\n#endif"
+
+}

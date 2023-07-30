@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for the pdp-11
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
    Contributed by Michael K. Gschwind (mike@vlsivie.tuwien.ac.at).
 
 This file is part of GCC.
@@ -53,6 +53,9 @@ along with GCC; see the file COPYING3.  If not see
 /* Generate DBX debugging information.  */
 
 #define DBX_DEBUGGING_INFO
+
+#undef PREFERRED_DEBUGGING_TYPE
+#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
 #define TARGET_40_PLUS		(TARGET_40 || TARGET_45)
 #define TARGET_10		(! TARGET_40_PLUS)
@@ -413,7 +416,7 @@ extern int current_first_parm_offset;
    They give nonzero only if REGNO is a hard reg of the suitable class
    or a pseudo reg currently allocated to a suitable hard reg.
    Since they use reg_renumber, they are safe only once reg_renumber
-   has been allocated, which happens in reginfo.c during register
+   has been allocated, which happens in reginfo.cc during register
    allocation.  */
 
 #define REGNO_OK_FOR_BASE_P(REGNO)  \
@@ -618,10 +621,12 @@ extern int current_first_parm_offset;
     fprintf (FILE, "\t.even\n")
 
 #define ASM_OUTPUT_SKIP(FILE,SIZE)  \
-  if (TARGET_DEC_ASM) \
-    fprintf (FILE, "\t.blkb\t%o\n", (SIZE) & 0xffff);	\
-  else							\
-    fprintf (FILE, "\t.=.+ %#o\n", (SIZE) & 0xffff);
+  do {								\
+    if (TARGET_DEC_ASM)						\
+      fprintf (FILE, "\t.blkb\t%o\n", (int) ((SIZE) & 0xffff));	\
+    else							\
+      fprintf (FILE, "\t.=.+ %#o\n", (int) ((SIZE) & 0xffff));	\
+  } while (0)
 
 /* This says how to output an assembler line
    to define a global common symbol.  */

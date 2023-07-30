@@ -1,5 +1,5 @@
 ;; Machine description for AArch64 architecture.
-;; Copyright (C) 2009-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2022 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 ;;
 ;; This file is part of GCC.
@@ -17,6 +17,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GCC; see the file COPYING3.  If not see
 ;; <http://www.gnu.org/licenses/>.
+
+(include "../arm/common.md")
 
 (define_special_predicate "cc_register"
   (and (match_code "reg")
@@ -119,12 +121,12 @@
 
 (define_predicate "aarch64_sub_immediate"
   (and (match_code "const_int")
-       (match_test "aarch64_uimm12_shift (-INTVAL (op))")))
+       (match_test "aarch64_uimm12_shift (-UINTVAL (op))")))
 
 (define_predicate "aarch64_plus_immediate"
   (and (match_code "const_int")
        (ior (match_test "aarch64_uimm12_shift (INTVAL (op))")
-	    (match_test "aarch64_uimm12_shift (-INTVAL (op))"))))
+	    (match_test "aarch64_uimm12_shift (-UINTVAL (op))"))))
 
 (define_predicate "aarch64_plus_operand"
   (ior (match_operand 0 "register_operand")
@@ -235,21 +237,6 @@
   (and (match_code "const_int")
        (match_test "IN_RANGE (UINTVAL (op), 0, 0xffffff)")))
 
-(define_predicate "aarch64_pwr_imm3"
-  (and (match_code "const_int")
-       (match_test "INTVAL (op) != 0
-		    && (unsigned) exact_log2 (INTVAL (op)) <= 4")))
-
-(define_predicate "aarch64_pwr_2_si"
-  (and (match_code "const_int")
-       (match_test "INTVAL (op) != 0
-		    && (unsigned) exact_log2 (INTVAL (op)) < 32")))
-
-(define_predicate "aarch64_pwr_2_di"
-  (and (match_code "const_int")
-       (match_test "INTVAL (op) != 0
-		    && (unsigned) exact_log2 (INTVAL (op)) < 64")))
-
 (define_predicate "aarch64_mem_pair_offset"
   (and (match_code "const_int")
        (match_test "aarch64_offset_7bit_signed_scaled_p (mode, INTVAL (op))")))
@@ -266,6 +253,10 @@
        (match_test "aarch64_legitimate_address_p (GET_MODE (op), XEXP (op, 0),
 						  false,
 						  ADDR_QUERY_LDP_STP_N)")))
+
+(define_predicate "aarch64_reg_or_mem_pair_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_operand 0 "aarch64_mem_pair_lanes_operand")))
 
 (define_predicate "aarch64_prefetch_operand"
   (match_test "aarch64_address_valid_for_prefetch_p (op, false)"))
@@ -557,6 +548,28 @@
 (define_predicate "aarch64_simd_shift_imm_offset_di"
   (and (match_code "const_int")
        (match_test "IN_RANGE (INTVAL (op), 1, 64)")))
+
+(define_predicate "aarch64_simd_shift_imm_vec_exact_top"
+  (and (match_code "const_vector")
+       (match_test "aarch64_const_vec_all_same_in_range_p (op,
+			GET_MODE_UNIT_BITSIZE (GET_MODE (op)) / 2,
+			GET_MODE_UNIT_BITSIZE (GET_MODE (op)) / 2)")))
+
+(define_predicate "aarch64_simd_shift_imm_vec_qi"
+  (and (match_code "const_vector")
+       (match_test "aarch64_const_vec_all_same_in_range_p (op, 1, 8)")))
+
+(define_predicate "aarch64_simd_shift_imm_vec_hi"
+  (and (match_code "const_vector")
+       (match_test "aarch64_const_vec_all_same_in_range_p (op, 1, 16)")))
+
+(define_predicate "aarch64_simd_shift_imm_vec_si"
+  (and (match_code "const_vector")
+       (match_test "aarch64_const_vec_all_same_in_range_p (op, 1, 32)")))
+
+(define_predicate "aarch64_simd_shift_imm_vec_di"
+  (and (match_code "const_vector")
+       (match_test "aarch64_const_vec_all_same_in_range_p (op, 1, 64)")))
 
 (define_predicate "aarch64_simd_shift_imm_bitsize_qi"
   (and (match_code "const_int")

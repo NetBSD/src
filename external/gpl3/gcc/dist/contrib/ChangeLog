@@ -1,111 +1,654 @@
-2023-07-07  Release Manager
+2023-05-08  Release Manager
 
-	* GCC 10.5.0 released.
+	* GCC 12.3.0 released.
 
-2022-06-28  Release Manager
+2022-08-19  Release Manager
 
-	* GCC 10.4.0 released.
+	* GCC 12.2.0 released.
+
+2022-05-06  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2022-05-06  Jakub Jelinek  <jakub@redhat.com>
+
+	* gennews (files): Add files for GCC 12.
+
+2022-05-06  Release Manager
+
+	* GCC 12.1.0 released.
+
+2022-04-25  Martin Liska  <mliska@suse.cz>
+
+	* filter-clang-warnings.py: Filter out
+	-Wc++20-attribute-extensions in lex.cc.
+
+2022-04-25  Martin Liska  <mliska@suse.cz>
+
+	* filter-clang-warnings.py: Filter out
+	-Wbitwise-instead-of-logical.
+
+2022-04-04  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_update_version.py: Ignore the revision.
+
+2022-03-31  Jakub Jelinek  <jakub@redhat.com>
+	    Joseph Myers  <joseph@codesourcery.com>
+
+	PR other/105114
+	* gcc_update: Fix up spelling of
+	gcc/config/loongarch/genopts/loongarch-strings dependency.
+
+2022-03-29  Chenghua Xu  <xuchenghua@loongson.cn>
+	    Lulu Cheng  <chenglulu@loongson.cn>
+
+	* config-list.mk: Add LoongArch triplet.
+
+2022-03-29  Chenghua Xu  <xuchenghua@loongson.cn>
+	    Lulu Cheng  <chenglulu@loongson.cn>
+
+	* gcc_update (files_and_dependencies): Add
+	  config/loongarch/loongarch.opt and config/loongarch/loongarch-str.h.
+
+2022-03-28  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Match trailing dot literally.
+
+2022-03-28  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Make the parsing stricter.
+
+2022-03-26  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc-changelog/git_update_version.py: Add
+	3ab5c8cd03d92bf4ec41e351820349d92fbc40c4 to ignored commits.
+
+2022-03-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR other/102664
+	* gcc-git-customization.sh: Fix non-portable commands.
+
+2022-03-10  Jakub Jelinek  <jakub@redhat.com>
+
+	PR other/102664
+	* git-descr.sh: Replace all [1-9] occurrences with [0-9].
+	* git-undescr.sh: Likewise.
+
+2022-03-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR other/102664
+	* git-descr.sh: Use portable sed commands.
+	* git-undescr.sh: Likewise.
+
+2022-03-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR other/102664
+	* git-descr.sh: Use portable form of expr match.
+
+2022-01-31  Martin Liska  <mliska@suse.cz>
+
+	* analyze_brprob.py: Support more formatted predict.def file.
+	* analyze_brprob_spec.py: Improve output and documentation.
 
 2022-01-27  Martin Liska  <mliska@suse.cz>
 
-	* gcc-git-customization.sh: Sync from master.
+	* git-undescr.sh: Support full output of git-descr.sh.
+
+2022-01-27  Martin Liska  <mliska@suse.cz>
+	    Martin Jambor  <mjambor@suse.cz>
+
 	* git-descr.sh: New file.
 	* git-undescr.sh: New file.
+	Support optional arguments --long, --short and default
+	to 14 characters of git hash.
+	* gcc-git-customization.sh: Use the created files.
 
 2022-01-24  Martin Liska  <mliska@suse.cz>
 
-	* gcc-changelog/git_commit.py: Sync from master.
-	* gcc-changelog/test_email.py: Likewise.
-	* gcc-changelog/test_patches.txt: Likewise.
+	* gcc-changelog/git_commit.py: New files in toplev must
+	be explicitly marked as "New file".
+	* gcc-changelog/test_email.py: Test.
+	* gcc-changelog/test_patches.txt: Add test.
+
+2022-01-23  Martin Liska  <mliska@suse.cz>
+
+	* filter-clang-warnings.py: Filter out one another warning
+	for sse.md.
 
 2022-01-19  Martin Liska  <mliska@suse.cz>
 
-	* git-backport.py: Sync from master.
-	* git-commit-mklog.py: Likewise.
+	* check_GNU_style_lib.py: Skip Python files.
+
+2022-01-19  Martin Liska  <mliska@suse.cz>
+
+	* git-backport.py: Use it.
 	* git-fix-changelog.py: New file.
+	* gcc-git-customization.sh: Add new alias git gcc-fix-changelog.
 
 2022-01-17  Martin Liska  <mliska@suse.cz>
 
-	Backported from master:
-	2022-01-17  Martin Liska  <mliska@suse.cz>
-
 	* git-backport.py: Support renaming of .cc files.
 
-2021-11-08  Martin Liska  <mliska@suse.cz>
+2022-01-17  Martin Liska  <mliska@suse.cz>
 
-	* gcc-changelog/git_check_commit.py: Sync from master.
-	* gcc-changelog/git_commit.py: Likewise.
-	* gcc-changelog/git_email.py: Likewise.
-	* gcc-changelog/git_update_version.py: Likewise.
-	* gcc-changelog/test_email.py: Likewise.
+	* filter-clang-warnings.py: Rename .c names to .cc.
+	* gcc_update: Likewise.
+	* paranoia.cc: Likewise.
+
+2022-01-17  Martin Liska  <mliska@suse.cz>
+
+	* maintainers-verify.sh: Removed.
+
+2022-01-13  Martin Liska  <mliska@suse.cz>
+
+	* git-backport.py: Simplify the script as pre-auto-ChangeLog era
+	is 14 months old.
+
+2022-01-11  Martin Liska  <mliska@suse.cz>
+
+	* check-MAINTAINERS.py: Use sys.argv[1] as path to MAINTAINERS.
+
+2022-01-11  Martin Liska  <mliska@suse.cz>
+
+	* check-MAINTAINERS.py: New file.
+
+2022-01-03  Jakub Jelinek  <jakub@redhat.com>
+
+	* update-copyright.py: Add University of Illinois as external author.
+
+2021-12-16  Xionghu Luo  <luoxhu@linux.ibm.com>
+
+	* analyze_brprob_spec.py: Add verbose argument.
+
+2021-12-06  Martin Liska  <mliska@suse.cz>
+
+	* filter-clang-warnings.py: Filter out one warning.
+
+2021-11-24  Tobias Burnus  <tobias@codesourcery.com>
+
+	* download_prerequisites: Update to gmp-6.2.1, mpfr-4.1.0,
+	mpc-1.2.1 and isl-0.24.
+	* prerequisites.md5: Update hash.
+	* prerequisites.sha512: Likewise.
+
+2021-11-23  Martin Liska  <mliska@suse.cz>
+
+	* filter-clang-warnings.py: Filter -Wc++20-extensions as it does
+	not respect proper attribute detection.
+
+2021-11-23  Martin Liska  <mliska@suse.cz>
+
+	* check-params-in-docs.py: Support @itemx in param documentation
+	and support multi-line documentation for parameters.
+
+2021-11-08  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* update-copyright.py (class BadYear): Derive from 'Exception'.
+
+2021-11-05  Bernhard Reutner-Fischer  <aldot@gcc.gnu.org>
+
+	* testsuite-management/validate_failures.py: 2to3
+
+2021-11-04  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_check_commit.py: Add -v option.
+	* gcc-changelog/git_commit.py: Print verbose diff for wrong
+	filename.
+
+2021-11-02  Martin Liska  <mliska@suse.cz>
+
+	* check-internal-format-escaping.py: Fix flake8 errors.
+
+2021-11-01  David Malcolm  <dmalcolm@redhat.com>
+
+	* unicode/utf8-dump.py: New file.
+
+2021-10-20  H.J. Lu  <hjl.tools@gmail.com>
+
+	* gcc-changelog/git_commit.py (ignored_prefixes): Add libffi/.
+
+2021-10-18  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Update location of
+	'bad parentheses wrapping'.
+	* gcc-changelog/test_email.py: Test it.
+
+2021-10-02  Martin Liska  <mliska@suse.cz>
+
+	* filter-clang-warnings.py: Filter out -Wtautological-compare
+	for the file.
+
+2021-09-20  Richard Biener  <rguenther@suse.de>
+
+	* config-list.mk: --enable-obsolete for hppa2.0-hpux10.1 and
+	hppa2.0-hpux11.9.
+
+2021-09-15  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Add FIXME note.
+
+2021-09-15  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Check commit email.
+	* gcc-changelog/test_email.py: Add new test.
 	* gcc-changelog/test_patches.txt: Likewise.
 
+2021-09-15  Richard Biener  <rguenther@suse.de>
+
+	* config-list.mk: Remove vax-openbsd.
+
+2021-09-15  Richard Biener  <rguenther@suse.de>
+
+	* config-list.mk: Remove m68k-openbsd.
+
+2021-09-13  Andrew Pinski  <apinski@marvell.com>
+
+	* config-list.mk: Remove m32r-linux and m32rle-linux
+	from the list.
+
+2021-09-13  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* config-list.mk (LIST): --enable-obsolete for cr16-elf.
+
+2021-09-06  Serge Belyshev  <belyshev@depni.sinp.msu.ru>
+
+	* gcc_update: Derive human readable name for HEAD using git describe
+	like "git gcc-descr" with short commit hash.  Drop "revision" from
+	gcc/REVISION.
+
+2021-08-30  Andrew Pinski  <apinski@marvell.com>
+
+	* download_prerequisites (md5_check): Replace == inside
+	test with = to be more portable.
+
+2021-08-26  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Use file.{source,target}_file for proper rename
+	handling.
+
+2021-08-24  Andrew Pinski  <apinski@marvell.com>
+
+	PR other/82704
+	* download_prerequisites: Fix issues with --md5 and
+	--sha512 options.
+
+2021-08-18  Martin Liska  <mliska@suse.cz>
+
+	* gcc-git-customization.sh: Wrap $@ in quotes.
+	* git-commit-mklog.py: Add new argument --co.
+	* mklog.py: Skip the Co-Authored-By lines.
+
+2021-08-10  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Support additional PRs without PR prefix.
+
+2021-08-03  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_update_version.py: Ignore problematic
+	  commit.
+
+2021-07-20  Richard Earnshaw  <rearnsha@arm.com>
+
+	* vimrc (textwidth): Change non-gitcommit length to 79.
+
+2021-07-02  Eugene Rozenfeld  <erozen@microsoft.com>
+
+	* gen_autofdo_event.py: handle stepping, non-working PEBS
+
+2021-06-28  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Handle correctly long lines.
+	* test_mklog.py: Test it.
+
 2021-06-23  Martin Liska  <mliska@suse.cz>
 
-	* mklog.py: New file.
-	* test_mklog.py: New file.
-
-2021-06-23  Martin Liska  <mliska@suse.cz>
-
+	* gcc-git-customization.sh: Use the new wrapper.
 	* git-commit-mklog.py: New file.
+	* prepare-commit-msg: Support GCC_MKLOG_ARGS.
+
+2021-06-22  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Fix flake8 issue.
+
+2021-06-21  Tobias Burnus  <tobias@codesourcery.com>
+	    Martin Sebor  <msebor@redhat.com>
+
+	* mklog.py (bugzilla_url): Fetch also component.
+	(pr_filename_regex): New.
+	(get_pr_titles): Update PR string with correct format and component.
+	(generate_changelog): Take additional PRs; extract PR from the
+	filename.
+	(__main__): Add -b/--pr-numbers argument.
+	* test_mklog.py (EXPECTED4): Update to expect a PR for the new file.
+
+2021-06-17  Jason Merrill  <jason@redhat.com>
+
+	* mklog.py: Add an initial component: [PRnnnnn] line when
+	we have a PR.
+
+2021-06-13  Tobias Burnus  <tobias@codesourcery.com>
+
+	* gcc-changelog/git_commit.py (pr_regex): Add ?P<pr> for group('pr').
+	(subject_pr_regex, subject_pr2_regex): New.
+	(GitInfo.__init__, GitCommit.parse_changelog): Check subject PRs.
+	* gcc-changelog/git_email.py (SUBJECT_PREFIX, subject_patch_regex): New.
+	(GitEmail.__init__): Parse 'Subject:' and pass it to GitInfo.
+	* gcc-changelog/test_email.py (test_pr_only_in_subject,
+	test_wrong_pr_comp_in_subject, test_copyright_years): New.
+	* gcc-changelog/test_patches.txt (0030-PR-c-92746, pr-check1.patch):
+	Update to avoid triggering the new check.
+	(0001-rs6000-Support-doubleword, pr-wrong-comp.patch,
+	copyright-years.patch): New.
+
+2021-06-11  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_update_version.py: Ignore commit that
+	violates rules and was somehow pushed.
+
+2021-05-25  Jakub Jelinek  <jakub@redhat.com>
+
+	* update-copyright.py: Add c++tools.
+
+2021-05-24  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Add note that ChangeLog entries
+	are added automatically.
+	* gcc-changelog/test_email.py: Update test.
 
 2021-05-18  Jonathan Wakely  <jwakely@redhat.com>
-
-	Backported from master:
-	2021-05-18  Jonathan Wakely  <jwakely@redhat.com>
 
 	* gcc-changelog/git_email.py: Remove use of non-strict mode.
 
 2021-05-17  Richard Biener  <rguenther@suse.de>
 
-	Backported from master:
-	2021-05-17  Richard Biener  <rguenther@suse.de>
-
 	* download_prerequisites: Update mpfr version to 3.1.6.
 	* prerequisites.md5: Update.
 	* prerequisites.sha512: Likewise.
 
+2021-05-17  Richard Biener  <rguenther@suse.de>
+
+	Revert:
+	2021-05-14  Martin Liska  <mliska@suse.cz>
+
+	* download_prerequisites: Use version 4.1.0.
+
 2021-05-14  Martin Liska  <mliska@suse.cz>
 
-	* gcc-changelog/git_check_commit.py: Sync from master.
-	* gcc-changelog/git_commit.py: Likewise.
+	* download_prerequisites: Use version 4.1.0.
+
+2021-05-14  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc-changelog/git_update_version.py: Remove releases/gcc-8 from
+	active_refs.
+
+2021-05-14  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Support Co-Authored-By before
+	a first ChangeLog entry.
+
+2021-05-13  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Put PR entries before all ChangeLog entries
+	(will be added to all ChangeLog locations by Daily bump script).
+	* test_mklog.py: Test the new behavior.
+
+2021-05-12  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Simplify needle lookup.
+	* gcc-changelog/git_update_version.py: Pass ref_name to
+	parse_git_revisions.
+
+2021-05-11  Martin Liska  <mliska@suse.cz>
+
+	* gcc_update: Remove libhsail-rt folder.
+	* update-copyright.py: Likewise.
+
+2021-05-11  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_check_commit.py: Remove --non-strict-mode.
+	* gcc-changelog/git_commit.py: Remove strict mode.
 	* gcc-changelog/git_email.py: Likewise.
 	* gcc-changelog/git_repository.py: Likewise.
-	* gcc-changelog/git_update_version.py: Likewise.
 	* gcc-changelog/test_email.py: Likewise.
+	* gcc-changelog/test_patches.txt: Update patches so that they
+	don't contain a ChangeLog file changes.
+
+2021-05-11  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Remove ChangeLog locations
+	based on ref_name.
+	* gcc-changelog/git_repository.py: Likewise.
+
+2021-05-10  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_email.py: Remove newlines when --help
+	is used.
+
+2021-05-10  Tobias Burnus  <tobias@codesourcery.com>
+
+	* gcc-changelog/git_check_commit.py (__Main__): State in --help
+	the default value for 'revisions'.
+	* gcc-changelog/git_email.py (show_help): Add.
+	(__main__): Handle -h and --help.
+
+2021-05-10  Tobias Burnus  <tobias@codesourcery.com>
+
+	* gcc-changelog/git_commit.py (Error.__repr__): Add space after the colon.
+	(GitCommit.check_mentioned_files): Check whether the same file has been
+	specified multiple times.
+	* gcc-changelog/test_email.py (TestGccChangelog.test_multi_same_file): New.
+	* gcc-changelog/test_patches.txt (0001-OpenMP-Fix-SIMT): New test.
+
+2021-05-10  Martin Liska  <mliska@suse.cz>
+
+	Revert:
+	2021-05-10  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Remove components that will be
+	removed.
+
+2021-05-10  Martin Liska  <mliska@suse.cz>
+
+	* gcc_update: Start using reload.c instead of version.c.
+
+2021-05-10  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Remove components that will be
+	removed.
+
+2021-04-27  Jakub Jelinek  <jakub@redhat.com>
+
+	* gennews (files): Add files for GCC 10 and GCC 11.
+
+2021-04-22  David Edelsohn  <dje.gcc@gmail.com>
+
+	* config-list.mk: Remove rs6000-ibm-aix6.1.
+	Rename rs6000-ibm-aix7.1 to powerpc-ibm-aix7.1.
+	Add powerpc-ibm-aix7.2.
+
+2021-04-20  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc-changelog/git_update_version.py (active_refs): Add
+	releases/gcc-11.
+
+2021-04-12  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Do not allow space in long lines.
+
+2021-04-12  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Support long filenames
+	in entries.
+	* gcc-changelog/test_email.py: Test it.
 	* gcc-changelog/test_patches.txt: Likewise.
 
-2021-04-14  Martin Liska  <mliska@suse.cz>
+2021-03-23  Martin Liska  <mliska@suse.cz>
 
-	* gcc-changelog/git_commit.py: Sync with master.
-	* gcc-changelog/git_email.py: Likewise.
-	* gcc-changelog/git_update_version.py: Likewise.
-	* gcc-changelog/setup.cfg: Likewise.
-	* gcc-changelog/test_email.py: Likewise.
-	* gcc-changelog/test_patches.txt: Likewise.
+	* mklog.py: Fix broken tests.
 
-2021-04-08  Release Manager
+2021-03-22  Martin Liska  <mliska@suse.cz>
 
-	* GCC 10.3.0 released.
+	* mklog.py: Add --directory argument.
 
 2021-03-19  Matthias Klose  <doko@ubuntu.com>
 
-	Backported from master:
-	2021-03-19  Matthias Klose  <doko@ubuntu.com>
-
 	* texi2pod.pl: Substitute @tie{} with a space for the man pages.
+
+2021-03-16  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_update_version.py: Skip one problematic
+	commit.
+
+2021-03-12  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Allow deletion of ChangeLog
+	files.
+	* gcc-changelog/setup.cfg: Set line limit to 120 characters.
+	* gcc-changelog/test_email.py: Add test.
+	* gcc-changelog/test_patches.txt: Likewise.
+	* gcc-changelog/git_email.py: Fix parsing of deleted files.
+
+2021-02-08  Mike Frysinger  <vapier@gentoo.org>
+
+	* mklog.py (generated_files): New set.
+	(generate_changelog): Add entries based on generated_files.
+
+2021-02-03  Aaron Sawdey  <acsawdey@linux.ibm.com>
+
+	* gcc_update (files_and_dependencies): Add dependency for
+	gcc/config/rs6000/fusion.md on gcc/config/rs6000/genfusion.md.
 
 2021-01-28  Eric Botcazou  <ebotcazou@adacore.com>
 
 	PR lto/85574
 	* compare-lto: Deal with PE-COFF executables specifically.
 
-2021-01-07  Martin Liska  <mliska@suse.cz>
+2021-01-14  Martin Liska  <mliska@suse.cz>
 
-	* gcc-changelog/git_commit.py: Sync from master.
-	* gcc-changelog/git_email.py: Likewise.
+	* mklog.py: Fix infinite loop for unsupported files.
+
+2021-01-13  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Support wrapping of functions
+	in parentheses that can take multiple lines.
+	* gcc-changelog/test_email.py: Add tests for it.
+	* gcc-changelog/test_patches.txt: Add 2 patches.
+
+2021-01-13  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Parse also define_insn_and_split and similar
+	directives in .md files.
+	* test_mklog.py: Test.
+
+2021-01-13  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Allow modifications of older
+	ChangeLog (or specific) files without need to make a ChangeLog
+	entry.
+	* gcc-changelog/test_email.py: Test it.
+	* gcc-changelog/test_patches.txt: Add new patch.
+
+2021-01-11  Martin Liska  <mliska@suse.cz>
+
+	* update-copyright.py: Port to python3 by guessing encoding
+	(first utf8, then iso8859). Add 2 more ignores: .png and .pyc.
+
+2021-01-06  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Add decode_path function.
+	* gcc-changelog/git_email.py: Use it in order to solve
+	utf8 encoding filename issues.
 	* gcc-changelog/git_repository.py: Likewise.
-	* gcc-changelog/test_email.py: Likewise.
+	* gcc-changelog/test_email.py: Test it.
+
+2021-01-04  Jakub Jelinek  <jakub@redhat.com>
+
+	* update-copyright.py: Add AMD and Ulf Adams as external authors.
+
+2021-01-04  Jakub Jelinek  <jakub@redhat.com>
+
+	* update-copyright.py: Use 8 spaces instead of tab to indent.
+
+2021-01-04  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Add --update-copyright option which adds:
+	"Update copyright years." to ChangeLog files belonging
+	to a modified file.
+
+2021-01-04  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Skip Update copyright
+	years commits.
+
+2020-12-21  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Add new error for quoted
+	filenames.
+	* gcc-changelog/test_email.py: Test it.
+	* gcc-changelog/test_patches.txt: Test it.
+
+2020-12-21  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/test_email.py: New test.
+	* gcc-changelog/test_patches.txt: Likewise.
+
+2020-12-17  Nathan Sidwell  <nathan@acm.org>
+
+	PR bootstrap/98300
+	* gcc_update: Add c++tools/config.h.in.
+
+2020-12-15  Nathan Sidwell  <nathan@acm.org>
+
+	* gcc_update: Add c++tools & libcody.
+
+2020-12-15  Nathan Sidwell  <nathan@acm.org>
+
+	* gcc-changelog/git_commit.py (changelog_locations): Add
+	libcody, c++tools.
+
+2020-12-08  Martin Liska  <mliska@suse.cz>
+
+	* filter-clang-warnings.py: Filter more cases.
+
+2020-12-08  Martin Liska  <mliska@suse.cz>
+
+	* filter-clang-warnings.py: Modernize and filter 2 more
+	patterns.
+
+2020-12-04  Martin Liska  <mliska@suse.cz>
+
+	* check-params-in-docs.py: use flake8 and add some
+	tweaks to ignore aarch64 params.
+
+2020-12-02  Jason Merrill  <jason@redhat.com>
+
+	* gcc-git-customization.sh: Configure sendemail.to.
+
+2020-11-30  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Suggest close file for
+	'unchanged file mentioned in a ChangeLog' error.
+	* gcc-changelog/test_email.py: Test it.
+
+2020-11-30  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Allow sub-directory wildcard
+	changelog entry. Fix a typo caused by apostrophe escaping.
+	* gcc-changelog/test_email.py: Test it.
+	* gcc-changelog/test_patches.txt: Likewise.
+
+2020-11-30  Jonathan Wakely  <jwakely@redhat.com>
+
+	* gcc-changelog/git_commit.py (wildcard_prefixes): Add libstdc++
+	testsuite directory.
+
+2020-11-30  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Allow wildcard pattern only.
+
+2020-11-27  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Use regex for cherry pick prefix.
+	* gcc-changelog/test_email.py: Test it.
 	* gcc-changelog/test_patches.txt: Likewise.
 
 2020-11-25  Martin Liska  <mliska@suse.cz>
@@ -113,57 +656,261 @@
 	* gcc-changelog/git_commit.py: Use revert_regex instead
 	of string prefix.  Convert sets to literals.
 
+2020-11-16  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Do not call read on an input stream.
+	Fix some flake8 issues.
+
+2020-11-07  Lewis Hyatt  <lhyatt@gmail.com>
+
+	* unicode/EastAsianWidth.txt: Update to Unicode 13.0.0.
+	* unicode/PropList.txt: Likewise.
+	* unicode/README: Likewise.
+	* unicode/UnicodeData.txt: Likewise.
+	* unicode/from_glibc/unicode_utils.py: Update to latest glibc version.
+	* unicode/from_glibc/utf8_gen.py: Likewise.
+
 2020-11-06  Martin Liska  <mliska@suse.cz>
 
-	* gcc-changelog/git_commit.py: Sync.
-	* gcc-changelog/git_email.py: Likewise.
-	* gcc-changelog/git_repository.py: Likewise.
-	* gcc-changelog/test_email.py: Likewise.
-	* gcc-changelog/test_patches.txt: Likewise.
+	* gcc-changelog/git_commit.py: Add new check.
+	* gcc-changelog/test_email.py: Test it.
+	* gcc-changelog/test_patches.txt: Add new patch.
+
+2020-11-04  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_repository.py: Set strict=True
+	for parse_git_revisions as a default.
+
+2020-11-04  Tobias Burnus  <tobias@codesourcery.com>
+
+	* gcc-changelog/git_commit.py (item_parenthesis_empty_regex,
+	item_parenthesis_regex): Add.
+	(check_for_empty_description): Use them.
+	* gcc-changelog/test_email.py (test_emptry_entry_desc,
+	test_emptry_entry_desc_2): Add.
+	* gcc-changelog/test_patches.txt: Add two testcases for it.
+
+2020-11-03  Tobias Burnus  <tobias@codesourcery.com>
+
+	* gcc-changelog/git_email.py: Add unidiff_supports_renaming check.
+
+2020-11-03  Martin Liska  <mliska@suse.cz>
+
 	* gcc-changelog/setup.cfg: New file.
+
+2020-10-30  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Handle empty groups in
+	file description.
+	* gcc-changelog/test_email.py: New test.
+	* gcc-changelog/test_patches.txt: Likewise.
+
+2020-09-21  Tobias Burnus  <tobias@codesourcery.com>
+
+	* mklog.py: Parse first 10 lines for PR/DR number
+	not only the first line.
+
+2020-09-17  Dimitrij Mojoski  <dmjpp@hotmail.com>
+
+	* clang-format: Autodetect C++ standard in use rather than
+	forcing C++03.
+
+2020-08-26  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* config-list.mk (LIST): Add OPT-enable-obsolete to tilegx-linux-gnu,
+	tilegxbe-linux-gnu, and tilepro-linux-gnu.
 
 2020-07-29  Martin Liska  <mliska@suse.cz>
 
 	* git-backport.py: fix how are ChangeLog paths combined.
 
-2020-07-23  Martin Liska  <mliska@suse.cz>
+2020-07-23  Patrick Palka  <ppalka@redhat.com>
 
-	Backported from master:
-	2020-07-23  Martin Liska  <mliska@suse.cz>
+	* vimrc (SetStyle): Also inspect &filetype to determine whether
+	a file is C-like.
+
+2020-07-23  Martin Liska  <mliska@suse.cz>
 
 	* gcc-changelog/git_commit.py: When reverting a backport,
 	we should print only Revert header.
 
-2020-07-23  Jonathan Wakely  <jwakely@redhat.com>
-
-	Backported from master:
-	2020-07-17  Jonathan Wakely  <jwakely@redhat.com>
+2020-07-17  Jonathan Wakely  <jwakely@redhat.com>
 
 	* gcc-changelog/git_update_version.py: Fix typo.
 
-2020-07-23  Release Manager
+2020-07-10  Mike Nolta  <mike@nolta.net>
 
-	* GCC 10.2.0 released.
+	* download_prerequisites: Don't pass wget options to curl.
 
-2020-07-08  Alexandre Oliva  <oliva@adacore.com>
-
-	Backported from master:
-	2020-07-07  Alexandre Oliva  <oliva@adacore.com>
-		    Martin Liska  <mliska@suse.cz>
+2020-07-07  Alexandre Oliva  <oliva@adacore.com>
+	    Martin Liska  <mliska@suse.cz>
 
 	* gcc-changelog/git_commit.py: Support CASE and COND.
 	* gcc-changelog/test_patches.txt: Add test.
 	* gcc-changelog/test_email.py: Add test.
 
-2020-07-02  Martin Liska  <mliska@suse.cz>
+2020-06-30  Martin Liska  <mliska@suse.cz>
 
-	* gcc-changelog/git_check_commit.py: New file.
-	* gcc-changelog/git_commit.py: New file.
-	* gcc-changelog/git_email.py: New file.
-	* gcc-changelog/git_repository.py: New file.
-	* gcc-changelog/git_update_version.py: New file.
-	* gcc-changelog/test_email.py: New file.
-	* gcc-changelog/test_patches.txt: New file.
+	* gcc-changelog/git_repository.py: Support older releases of
+	GitPython when renamed_file was named renamed.
+
+2020-06-30  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_check_commit.py: Print revision
+	of original_info.
+	* gcc-changelog/git_commit.py: Support Revert commits.
+
+2020-06-30  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_check_commit.py: Use GitInfo
+	* gcc-changelog/git_commit.py: Add GitInfo class.
+	* gcc-changelog/git_email.py: Use GitInfo class.
+	* gcc-changelog/git_repository.py: Likewise.
+
+2020-06-24  Ilya Leoshkevich  <iii@linux.ibm.com>
+
+	* download_prerequisites: Support AIX and OpenBSD unames.
+	Pipe `{gzip,bzip2} -d` to `tar -xf -`.
+
+2020-06-18  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_update_version.py: First checkout and then
+	run git pull ---rebase.
+
+2020-06-18  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_update_version.py: Support merge commits
+	and walk only on the branch that is being merged and generate
+	missing ChangeLog entries.
+
+2020-06-18  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Fix Backported from timestamp when
+	use_commit_ts=True is used.
+
+2020-06-17  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Print 'Backported from master'
+	heading to backported commits.
+	* gcc-changelog/test_email.py: Test it.
+	* gcc-changelog/test_patches.txt: Add new patch.
+	* gcc-changelog/git_repository.py: Add commit_to_date hook.
+	* gcc-changelog/git_email.py: Add fuzzy implementation
+	of commit_to_date_hook.
+
+2020-06-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	* prepare-commit-msg: Use the gcc-config.mklog-hook-type Git
+	config key instead of the GCC_FORCE_MKLOG environment variable.
+	Optionally disable generating a new ChangeLog template for
+	amended commits when the existing log is still OK.
+
+2020-06-11  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_update_version.py: Add --curent argument.
+
+2020-06-11  Martin Liska  <mliska@suse.cz>
+
+	* prepare-commit-msg: Replace ENV variable with a git config
+	value.
+
+2020-06-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	* prepare-commit-msg: Use 'tee' to save the diff to a file
+	instead of running 'git diff' twice.
+
+2020-06-10  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Fix renamed files in
+	parse_git_name_status.
+	* gcc-changelog/test_email.py: Add test for it.
+
+2020-06-10  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Add more supported prefixes.
+	* gcc-changelog/test_email.py: Fix one flake8 error.
+	* gcc-changelog/test_patches.txt: Add tested for newly
+	supported prefixes.
+
+2020-06-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	* gcc-changelog/git_commit.py (GitCommit.parse_changelog):
+	Improve error strings.
+	* gcc-changelog/test_email.py: Update expected errors.
+
+2020-06-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	* gcc-changelog/git_email.py: Set exit status on error.
+
+2020-06-09  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Fix ChangeLog regex in order to
+	match the top-level ChangeLog.
+	* gcc-changelog/test_email.py: Add test.
+	* gcc-changelog/test_patches.txt: Likewise.
+
+2020-06-02  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Support foo/bar/*: patterns in
+	wildcard_prefixes locations.
+	* gcc-changelog/test_email.py: Test it.
+	* gcc-changelog/test_patches.txt: Add 3 new patches.
+
+2020-06-02  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* gcc-changelog/git_commit.py (ignored_prefixes): Add
+	gcc/testsuite/gdc.test/.
+
+2020-06-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	* gcc-changelog/test_email.py (TestGccChangelog.test_long_lines):
+	Update expected error message.
+
+2020-06-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	* gcc-changelog/git_commit.py (GitCommit.parse_changelog): Fix
+	grammar.
+
+2020-06-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	* prepare-commit-msg: Do nothing if the mklog.py script isn't
+	present.
+
+2020-06-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	* gcc-changelog/git_commit.py (GitCommit.check_mentioned_files):
+	Improve error text.
+
+2020-05-31  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* config-list.mk (LIST): Add v850e1-elf.
+
+2020-05-31  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* config-list.mk (LIST): Add or1k-elf, or1k-linux-*, and or1k-rtems.
+
+2020-05-31  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* config-list.mk (LIST): Remove arm-wrs-vxworks.
+
+2020-05-31  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* config-list.mk (LIST): Remove cris-linux, crisv32-elf, and
+	crisv32-linux.
+
+2020-05-31  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* config-list.mk (LIST): Add pru-elf.
+
+2020-05-29  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* config-list.mk (LIST): Remove rs6000-ibm-aix5.3.0.
+
+2020-05-29  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Find empty change descriptions.
+	* gcc-changelog/test_email.py: New test.
+	* gcc-changelog/test_patches.txt: New patch that tests that.
 
 2020-05-29  Martin Liska  <mliska@suse.cz>
 
@@ -172,17 +919,226 @@
 	git cherry pick.
 	Run cherry-pick --continue without editor.
 
+2020-05-29  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Properly
+	handle duplicite authors.
+	* gcc-changelog/test_email.py: New test.
+	* gcc-changelog/test_patches.txt: New patch.
+
+2020-05-28  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gcc-changelog/git_email.py (GitEmail.__init__): Interpret file
+	renamings as a file deletion plus a file addition.
+	* gcc-changelog/git_repository.py (parse_git_revisions):
+	Likewise.
+	* gcc-changelog/test_email.py: New testcase.
+	* gcc-changelog/test_patches.txt: New testcase.
+
+2020-05-28  Martin Liska  <mliska@suse.cz>
+
+	* check-params-in-docs.py: Update to new format
+	of help.  Apply flake8 corrections.
+
+2020-05-28  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Support renaming of files.
+	One needs unidiff 0.6.0+.
+	* test_mklog.py: Test it.
+
 2020-05-27  Martin Liska  <mliska@suse.cz>
 
+	* gcc-git-customization.sh: Use git-backport.py to drop
+	all changes for ChangeLog files.
 	* git-backport.py: New file.
 
-2020-05-07  Release Manager
+2020-05-27  Martin Liska  <mliska@suse.cz>
 
-	* GCC 10.1.0 released.
+	* gcc-git-customization.sh: Rename
+	commit-mklog to gcc-commit-mklog.
 
-2020-05-07  Jakub Jelinek  <jakub@redhat.com>
+2020-05-27  Martin Liska  <mliska@suse.cz>
 
-	* gennews (files): Add files for GCC 10.
+	* prepare-commit-msg: Save diff to a file if
+	the GCC_GIT_DIFF_FILE variable is set.
+
+2020-05-26  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gcc-changelog/git_commit.py (ChangeLogEntry): Handle entries
+	with multi-line file lists.
+	* gcc-changelog/test_email.py: New testcase.
+	* gcc-changelog/test_patches.txt: Likewise.
+
+2020-05-26  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gcc-changelog/git_update_version.py: Close file objects after
+	use.
+	* gcc-changelog/git_email.py: Likewise.
+	* gcc-changelog/test_email.py: Likewise.
+
+2020-05-26  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_update_version.py: Add 2 new options.
+
+2020-05-26  Alexandre Oliva  <oliva@gnu.org>
+
+	* gcc-changelog/git_commit.py (changelog_regex): Accept optional
+	'for' prefix.
+
+2020-05-26  Alexandre Oliva  <oliva@adacore.com>
+
+	* compare-debug: Adjust for .gkd files named as dump files,
+	with the source suffix rather than the object suffix.
+
+2020-05-26  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Parse changelog entries for
+	ignored locations.
+	* gcc-changelog/test_email.py: Add new test for it.
+	* gcc-changelog/test_patches.txt: Likewise.
+
+2020-05-26  Jason Merrill  <jason@redhat.com>
+
+	* prepare-commit-msg: New file.
+	* gcc-git-customization.sh: Install it.  Add commit-mklog alias.
+	* mklog.py: Add new option -c which appends
+	to a ChangeLog file.
+
+2020-05-25  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Add trailing '/'
+	for libdruntime.  Allow empty changelog for
+	only ignored files.
+	* gcc-changelog/test_email.py: New test for go
+	patch in ignored location.
+	* gcc-changelog/test_patches.txt: Add test.
+
+2020-05-22  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc-changelog/git_commit.py: Add trailing / to
+	gcc/testsuite/go.test/test and replace gcc/go/frontend/
+	with gcc/go/gofrontend/ in ignored locations.
+
+2020-05-22  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Add gcc/testsuite/go.test/test
+	to ignored locations.
+
+2020-05-21  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_update_version.py: Prepare the script, the
+	only missing piece is pushing of the updated branches.
+
+2020-05-21  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Support DR entries/
+	* gcc-changelog/test_email.py: New test for it.
+	* gcc-changelog/test_patches.txt: New patch for it.
+
+2020-05-21  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Support DR parsing.
+	* test_mklog.py: New test for DR parsing.
+
+2020-05-20  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Add author_tuple
+	only if not present in author_lines.
+	* gcc-changelog/test_email.py: New test.
+	* gcc-changelog/test_patches.txt: Add new patch.
+
+2020-05-20  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Refactor to make flake8 happy.
+	* gcc-changelog/test_email.py: Add new test.
+	* gcc-changelog/test_patches.txt: Add new patch.
+
+2020-05-20  Frederik Harwath  <frederik@codesourcery.com>
+
+	* gcc-changelog/git_commit.py: Skip over lines starting
+	with "Reviewed-by: ", "Reviewed-on: ", or "Signed-off-by: "
+
+2020-05-20  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_check_commit.py: Change
+	--allow-non-strict-mode to --non-strict-mode.
+
+2020-05-20  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Support cherry pick
+	prefix.
+	* gcc-changelog/test_email.py: Test it.
+	* gcc-changelog/test_patches.txt: Add new patch.
+	* gcc-git-customization.sh: Add gcc-backport.
+
+2020-05-19  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Use REST API for bug title downloading.
+
+2020-05-19  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Add param use_commit_ts
+	for to_changelog_entries.
+	* gcc-changelog/git_update_version.py: Se use_commit_ts to True.
+
+2020-05-19  Martin Liska  <mliska@suse.cz>
+
+	* mklog.py: Skip GTY for struct names.  Make flake8 happy.
+	* test_mklog.py: Add test for GTY.
+
+2020-05-19  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_update_version.py:
+	Fill up entries in reverse order.
+
+2020-05-19  Martin Liska  <mliska@suse.cz>
+
+	* gcc-git-customization.sh: Add
+	alias.gcc-mklog new hook.
+	* mklog.py: New file.
+	* test_mklog.py: New file.
+
+2020-05-19  Martin Liska  <mliska@suse.cz>
+
+	* legacy/mklog: Moved from mklog.
+	* legacy/mklog.pl: Moved from mklog.pl.
+
+2020-05-19  Martin Liska  <mliska@suse.cz>
+
+	* gcc-git-customization.sh: Add gcc-verify alias
+	that uses contrib/gcc-changelog/git_check_commit.py.
+
+2020-05-15  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* dg-extract-results.py: Handle GDB specific test types.
+	* dg-extract-results.sh: Likewise.
+
+2020-05-14  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/test_email.py: New file.
+	* gcc-changelog/test_patches.txt: New file.
+
+2020-05-13  Patrick Palka  <ppalka@redhat.com>
+
+	* vimrc: Reduce textwidth to 72 for Git commit messages.
+
+2020-05-13  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_check_commit.py: Add default argument HEAD
+	for revisions and improve error message output.
+
+2020-05-13  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_commit.py: Restore print_output syntax
+	in git_commit.py.
+
+2020-05-13  Martin Liska  <mliska@suse.cz>
+
+	* gcc-changelog/git_check_commit.py: New file.
+	* gcc-changelog/git_commit.py: New file.
+	* gcc-changelog/git_email.py: New file.
+	* gcc-changelog/git_repository.py: New file.
+	* gcc-changelog/git_update_version.py: New file.
 
 2020-04-17  Martin Liska  <mliska@suse.cz>
 

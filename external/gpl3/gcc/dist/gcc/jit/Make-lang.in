@@ -1,5 +1,5 @@
 # Top level -*- makefile -*- fragment for libgccjit.so.
-#   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2022 Free Software Foundation, Inc.
 
 #This file is part of GCC.
 
@@ -43,6 +43,15 @@
 LIBGCCJIT_VERSION_NUM = 0
 LIBGCCJIT_MINOR_NUM = 0
 LIBGCCJIT_RELEASE_NUM = 1
+
+ifneq (,$(findstring mingw,$(target)))
+LIBGCCJIT_FILENAME = libgccjit-$(LIBGCCJIT_VERSION_NUM).dll
+LIBGCCJIT_IMPORT_LIB = libgccjit.dll.a
+
+jit: $(LIBGCCJIT_FILENAME) \
+	$(FULL_DRIVER_NAME)
+
+else
 
 ifneq (,$(findstring darwin,$(host)))
 
@@ -104,6 +113,7 @@ jit: $(LIBGCCJIT_FILENAME) \
 	$(FULL_DRIVER_NAME)
 
 endif
+endif
 
 jit.serial = $(LIBGCCJIT_FILENAME)
 
@@ -122,8 +132,17 @@ jit_OBJS = attribs.o \
 	jit/jit-spec.o \
 	gcc.o
 
+ifneq (,$(findstring mingw,$(target)))
+jit_OBJS += jit/jit-w32.o
+endif
+
 # Use strict warnings for this front end.
 jit-warn = $(STRICT_WARN)
+
+ifneq (,$(findstring mingw,$(target)))
+# Create import library
+LIBGCCJIT_EXTRA_OPTS = -Wl,--out-implib,$(LIBGCCJIT_IMPORT_LIB)
+else
 
 ifneq (,$(findstring darwin,$(host)))
 # TODO : Construct a Darwin-style symbol export file.
@@ -136,6 +155,7 @@ else
 LIBGCCJIT_EXTRA_OPTS = $(LIBGCCJIT_VERSION_SCRIPT_OPTION) \
 	$(LIBGCCJIT_SONAME_OPTION)
 endif
+endif
 
 # We avoid using $(BACKEND) from Makefile.in in order to avoid pulling
 # in main.o
@@ -143,14 +163,17 @@ $(LIBGCCJIT_FILENAME): $(jit_OBJS) \
 	libbackend.a libcommon-target.a libcommon.a \
 	$(CPPLIB) $(LIBDECNUMBER) \
 	$(LIBDEPS) $(srcdir)/jit/libgccjit.map \
-	$(EXTRA_GCC_OBJS)
+	$(EXTRA_GCC_OBJS) $(jit.prev)
+	@$(call LINK_PROGRESS,$(INDEX.jit),start)
 	+$(LLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ -shared \
 	     $(jit_OBJS) libbackend.a libcommon-target.a libcommon.a \
 	     $(CPPLIB) $(LIBDECNUMBER) $(EXTRA_GCC_LIBS) $(LIBS) $(BACKENDLIBS) \
 	     $(EXTRA_GCC_OBJS) \
 	     $(LIBGCCJIT_EXTRA_OPTS)
+	@$(call LINK_PROGRESS,$(INDEX.jit),end)
 
-# Create symlinks
+# Create symlinks when not building for Windows
+ifeq (,$(findstring mingw,$(target)))
 
 ifeq (,$(findstring darwin,$(host)))
 # but only one level for Darwin, version info is embedded.
@@ -160,6 +183,7 @@ endif
 
 $(LIBGCCJIT_LINKER_NAME_SYMLINK): $(LIBGCCJIT_SONAME_SYMLINK)
 	ln -sf $(LIBGCCJIT_SONAME_SYMLINK) $(LIBGCCJIT_LINKER_NAME_SYMLINK)
+endif
 
 #
 # Build hooks:
@@ -273,7 +297,7 @@ jit.texinfo.install-pdf: doc/libgccjit.pdf
 SPHINX_BUILD_DIR=jit/sphinx-build
 
 jit.sphinx.html:
-	mkdir -p $(SPHINX_BUILD_DIR)
+	$(mkinstalldirs) $(SPHINX_BUILD_DIR)
 	(cd $(srcdir)/jit/docs && \
 	  make html BUILDDIR=$(PWD)/$(SPHINX_BUILD_DIR) )
 
@@ -294,7 +318,7 @@ jit.sphinx.install-html: jit.sphinx.html
 # see https://bugzilla.redhat.com/show_bug.cgi?id=1148845 )
 jit.sphinx.pdf: $(SPHINX_BUILD_DIR)/latex/libgccjit.pdf
 $(SPHINX_BUILD_DIR)/latex/libgccjit.pdf:
-	mkdir -p $(SPHINX_BUILD_DIR)
+	$(mkinstalldirs) $(SPHINX_BUILD_DIR)
 	(cd $(srcdir)/jit/docs && \
 	  make latexpdf BUILDDIR=$(PWD)/$(SPHINX_BUILD_DIR) )
 
@@ -329,14 +353,22 @@ selftest-jit:
 
 #
 # Install hooks:
-
 jit.install-headers: installdirs
 	$(INSTALL_DATA) $(srcdir)/jit/libgccjit.h \
 	  $(DESTDIR)$(includedir)/libgccjit.h
 	$(INSTALL_DATA) $(srcdir)/jit/libgccjit++.h \
 	  $(DESTDIR)$(includedir)/libgccjit++.h
 
+ifneq (,$(findstring mingw,$(target)))
+jit.install-common: installdirs jit.install-headers
+# Install import library
+	$(INSTALL_PROGRAM) $(LIBGCCJIT_IMPORT_LIB) \
+	  $(DESTDIR)$(libdir)/$(LIBGCCJIT_IMPORT_LIB)
+# Install DLL file
+	$(INSTALL_PROGRAM) $(LIBGCCJIT_FILENAME) \
+	  $(DESTDIR)$(bindir)/$(LIBGCCJIT_FILENAME)
 
+else
 ifneq (,$(findstring darwin,$(host)))
 # but only one level for Darwin
 
@@ -350,13 +382,14 @@ jit.install-common: installdirs jit.install-headers
 else
 jit.install-common: installdirs jit.install-headers
 	$(INSTALL_PROGRAM) $(LIBGCCJIT_FILENAME) \
-	  $(DESTDIR)/$(libdir)/$(LIBGCCJIT_FILENAME)
+	  $(DESTDIR)$(libdir)/$(LIBGCCJIT_FILENAME)
 	ln -sf \
 	  $(LIBGCCJIT_FILENAME) \
-	  $(DESTDIR)/$(libdir)/$(LIBGCCJIT_SONAME_SYMLINK)
+	  $(DESTDIR)$(libdir)/$(LIBGCCJIT_SONAME_SYMLINK)
 	ln -sf \
 	  $(LIBGCCJIT_SONAME_SYMLINK)\
 	  $(DESTDIR)$(libdir)/$(LIBGCCJIT_LINKER_NAME_SYMLINK)
+endif
 endif
 
 jit.install-man:

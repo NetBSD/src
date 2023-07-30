@@ -1,6 +1,6 @@
 // <memory_resource> -*- C++ -*-
 
-// Copyright (C) 2018-2020 Free Software Foundation, Inc.
+// Copyright (C) 2018-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -33,14 +33,21 @@
 
 #if __cplusplus >= 201703L
 
-#include <memory>			// align, allocator_arg_t, __uses_alloc
-#include <utility>			// pair, index_sequence
+#include <new>
 #include <vector>			// vector
 #include <cstddef>			// size_t, max_align_t, byte
 #include <shared_mutex>			// shared_mutex
-#include <bits/functexcept.h>
+#include <bits/align.h>			// align
+#include <bits/functexcept.h>		// __throw_bad_array_new_length
+#include <bits/uses_allocator.h>	// allocator_arg_t, __use_alloc
+#include <bits/uses_allocator_args.h>	// uninitialized_construct_using_alloc
 #include <ext/numeric_traits.h>
 #include <debug/assertions.h>
+
+#if ! __cpp_lib_make_obj_using_allocator
+# include <bits/utility.h>		// index_sequence
+# include <tuple>			// tuple, forward_as_tuple
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -49,7 +56,7 @@ namespace pmr
 {
 #ifdef _GLIBCXX_HAS_GTHREADS
   // Header and all contents are present.
-# define __cpp_lib_memory_resource 201603
+# define __cpp_lib_memory_resource 201603L
 #else
   // The pmr::synchronized_pool_resource type is missing.
 # define __cpp_lib_memory_resource 1
@@ -67,11 +74,26 @@ namespace pmr
 #endif
 
   // Global memory resources
-  memory_resource* new_delete_resource() noexcept;
-  memory_resource* null_memory_resource() noexcept;
-  memory_resource* set_default_resource(memory_resource* __r) noexcept;
-  memory_resource* get_default_resource() noexcept
-    __attribute__((__returns_nonnull__));
+
+  /// A pmr::memory_resource that uses `new` to allocate memory
+  [[nodiscard, __gnu__::__returns_nonnull__, __gnu__::__const__]]
+  memory_resource*
+  new_delete_resource() noexcept;
+
+  /// A pmr::memory_resource that always throws `bad_alloc`
+  [[nodiscard, __gnu__::__returns_nonnull__, __gnu__::__const__]]
+  memory_resource*
+  null_memory_resource() noexcept;
+
+  /// Replace the default memory resource pointer
+  [[__gnu__::__returns_nonnull__]]
+  memory_resource*
+  set_default_resource(memory_resource* __r) noexcept;
+
+  /// Get the current default memory resource pointer
+  [[__gnu__::__returns_nonnull__]]
+  memory_resource*
+  get_default_resource() noexcept;
 
   // Pool resource classes
   struct pool_options;
@@ -97,13 +119,14 @@ namespace pmr
     void*
     allocate(size_t __bytes, size_t __alignment = _S_max_align)
     __attribute__((__returns_nonnull__,__alloc_size__(2),__alloc_align__(3)))
-    { return do_allocate(__bytes, __alignment); }
+    { return ::operator new(__bytes, do_allocate(__bytes, __alignment)); }
 
     void
     deallocate(void* __p, size_t __bytes, size_t __alignment = _S_max_align)
     __attribute__((__nonnull__))
     { return do_deallocate(__p, __bytes, __alignment); }
 
+    [[nodiscard]]
     bool
     is_equal(const memory_resource& __other) const noexcept
     { return do_is_equal(__other); }
@@ -119,11 +142,13 @@ namespace pmr
     do_is_equal(const memory_resource& __other) const noexcept = 0;
   };
 
+  [[nodiscard]]
   inline bool
   operator==(const memory_resource& __a, const memory_resource& __b) noexcept
   { return &__a == &__b || __a.is_equal(__b); }
 
 #if __cpp_impl_three_way_comparison < 201907L
+  [[nodiscard]]
   inline bool
   operator!=(const memory_resource& __a, const memory_resource& __b) noexcept
   { return !(__a == __b); }
@@ -168,8 +193,8 @@ namespace pmr
       allocate(size_t __n)
       __attribute__((__returns_nonnull__))
       {
-	if (__n > (__gnu_cxx::__int_traits<size_t>::__max / sizeof(_Tp)))
-	  _GLIBCXX_THROW_OR_ABORT(bad_array_new_length());
+	if ((__gnu_cxx::__int_traits<size_t>::__max / sizeof(_Tp)) < __n)
+	  std::__throw_bad_array_new_length();
 	return static_cast<_Tp*>(_M_resource->allocate(__n * sizeof(_Tp),
 						       alignof(_Tp)));
       }
@@ -195,7 +220,7 @@ namespace pmr
 	allocate_object(size_t __n = 1)
 	{
 	  if ((__gnu_cxx::__int_traits<size_t>::__max / sizeof(_Up)) < __n)
-	    _GLIBCXX_THROW_OR_ABORT(bad_array_new_length());
+	    std::__throw_bad_array_new_length();
 	  return static_cast<_Up*>(allocate_bytes(__n * sizeof(_Up),
 						  alignof(_Up)));
 	}
@@ -226,12 +251,12 @@ namespace pmr
 	void
 	delete_object(_Up* __p)
 	{
-	  destroy(__p);
+	  __p->~_Up();
 	  deallocate_object(__p);
 	}
 #endif // C++2a
 
-#if __cplusplus == 201703L
+#if ! __cpp_lib_make_obj_using_allocator
       template<typename _Tp1, typename... _Args>
 	__attribute__((__nonnull__))
 	typename __not_pair<_Tp1>::type
@@ -281,8 +306,8 @@ namespace pmr
 	construct(pair<_Tp1, _Tp2>* __p, _Up&& __x, _Vp&& __y)
 	{
 	  this->construct(__p, piecewise_construct,
-			  forward_as_tuple(std::forward<_Up>(__x)),
-			  forward_as_tuple(std::forward<_Vp>(__y)));
+	      std::forward_as_tuple(std::forward<_Up>(__x)),
+	      std::forward_as_tuple(std::forward<_Vp>(__y)));
 	}
 
       template <typename _Tp1, typename _Tp2, typename _Up, typename _Vp>
@@ -291,8 +316,8 @@ namespace pmr
 	construct(pair<_Tp1, _Tp2>* __p, const std::pair<_Up, _Vp>& __pr)
 	{
 	  this->construct(__p, piecewise_construct,
-			  forward_as_tuple(__pr.first),
-			  forward_as_tuple(__pr.second));
+	      std::forward_as_tuple(__pr.first),
+	      std::forward_as_tuple(__pr.second));
 	}
 
       template<typename _Tp1, typename _Tp2, typename _Up, typename _Vp>
@@ -301,10 +326,10 @@ namespace pmr
 	construct(pair<_Tp1, _Tp2>* __p, pair<_Up, _Vp>&& __pr)
 	{
 	  this->construct(__p, piecewise_construct,
-			  forward_as_tuple(std::forward<_Up>(__pr.first)),
-			  forward_as_tuple(std::forward<_Vp>(__pr.second)));
+	      std::forward_as_tuple(std::forward<_Up>(__pr.first)),
+	      std::forward_as_tuple(std::forward<_Vp>(__pr.second)));
 	}
-#else
+#else // make_obj_using_allocator
       template<typename _Tp1, typename... _Args>
 	__attribute__((__nonnull__))
 	void
@@ -316,6 +341,7 @@ namespace pmr
 #endif
 
       template<typename _Up>
+	_GLIBCXX20_DEPRECATED_SUGGEST("allocator_traits::destroy")
 	__attribute__((__nonnull__))
 	void
 	destroy(_Up* __p)
@@ -330,7 +356,24 @@ namespace pmr
       __attribute__((__returns_nonnull__))
       { return _M_resource; }
 
+      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+      // 3683. operator== for polymorphic_allocator cannot deduce template arg
+      [[nodiscard]]
+      friend bool
+      operator==(const polymorphic_allocator& __a,
+		 const polymorphic_allocator& __b) noexcept
+      { return *__a.resource() == *__b.resource(); }
+
+#if __cpp_impl_three_way_comparison < 201907L
+      [[nodiscard]]
+      friend bool
+      operator!=(const polymorphic_allocator& __a,
+		 const polymorphic_allocator& __b) noexcept
+      { return !(__a == __b); }
+#endif
+
     private:
+#if ! __cpp_lib_make_obj_using_allocator
       using __uses_alloc1_ = __uses_alloc1<polymorphic_allocator>;
       using __uses_alloc2_ = __uses_alloc2<polymorphic_allocator>;
 
@@ -354,11 +397,13 @@ namespace pmr
 	_S_construct_p(__uses_alloc2_ __ua, index_sequence<_Ind...>,
 		       tuple<_Args...>& __t)
 	{ return { std::get<_Ind>(std::move(__t))..., *__ua._M_a }; }
+#endif
 
       memory_resource* _M_resource;
     };
 
   template<typename _Tp1, typename _Tp2>
+    [[nodiscard]]
     inline bool
     operator==(const polymorphic_allocator<_Tp1>& __a,
 	       const polymorphic_allocator<_Tp2>& __b) noexcept
@@ -366,12 +411,143 @@ namespace pmr
 
 #if __cpp_impl_three_way_comparison < 201907L
   template<typename _Tp1, typename _Tp2>
+    [[nodiscard]]
     inline bool
     operator!=(const polymorphic_allocator<_Tp1>& __a,
 	       const polymorphic_allocator<_Tp2>& __b) noexcept
     { return !(__a == __b); }
 #endif
 
+} // namespace pmr
+
+  /// Partial specialization for std::pmr::polymorphic_allocator
+  template<typename _Tp>
+    struct allocator_traits<pmr::polymorphic_allocator<_Tp>>
+    {
+      /// The allocator type
+      using allocator_type = pmr::polymorphic_allocator<_Tp>;
+
+      /// The allocated type
+      using value_type = _Tp;
+
+      /// The allocator's pointer type.
+      using pointer = _Tp*;
+
+      /// The allocator's const pointer type.
+      using const_pointer = const _Tp*;
+
+      /// The allocator's void pointer type.
+      using void_pointer = void*;
+
+      /// The allocator's const void pointer type.
+      using const_void_pointer = const void*;
+
+      /// The allocator's difference type
+      using difference_type = std::ptrdiff_t;
+
+      /// The allocator's size type
+      using size_type = std::size_t;
+
+      /** @{
+       * A `polymorphic_allocator` does not propagate when a
+       * container is copied, moved, or swapped.
+       */
+      using propagate_on_container_copy_assignment = false_type;
+      using propagate_on_container_move_assignment = false_type;
+      using propagate_on_container_swap = false_type;
+
+      static allocator_type
+      select_on_container_copy_construction(const allocator_type&) noexcept
+      { return allocator_type(); }
+      /// @}
+
+      /// Whether all instances of the allocator type compare equal.
+      using is_always_equal = false_type;
+
+      template<typename _Up>
+	using rebind_alloc = pmr::polymorphic_allocator<_Up>;
+
+      template<typename _Up>
+	using rebind_traits = allocator_traits<pmr::polymorphic_allocator<_Up>>;
+
+      /**
+       *  @brief  Allocate memory.
+       *  @param  __a  An allocator.
+       *  @param  __n  The number of objects to allocate space for.
+       *
+       *  Calls `a.allocate(n)`.
+      */
+      [[nodiscard]] static pointer
+      allocate(allocator_type& __a, size_type __n)
+      { return __a.allocate(__n); }
+
+      /**
+       *  @brief  Allocate memory.
+       *  @param  __a  An allocator.
+       *  @param  __n  The number of objects to allocate space for.
+       *  @return Memory of suitable size and alignment for `n` objects
+       *          of type `value_type`.
+       *
+       *  The third parameter is ignored..
+       *
+       *  Returns `a.allocate(n)`.
+      */
+      [[nodiscard]] static pointer
+      allocate(allocator_type& __a, size_type __n, const_void_pointer)
+      { return __a.allocate(__n); }
+
+      /**
+       *  @brief  Deallocate memory.
+       *  @param  __a  An allocator.
+       *  @param  __p  Pointer to the memory to deallocate.
+       *  @param  __n  The number of objects space was allocated for.
+       *
+       *  Calls `a.deallocate(p, n)`.
+      */
+      static void
+      deallocate(allocator_type& __a, pointer __p, size_type __n)
+      { __a.deallocate(__p, __n); }
+
+      /**
+       *  @brief  Construct an object of type `_Up`
+       *  @param  __a  An allocator.
+       *  @param  __p  Pointer to memory of suitable size and alignment for
+       *	       an object of type `_Up`.
+       *  @param  __args Constructor arguments.
+       *
+       *  Calls `__a.construct(__p, std::forward<_Args>(__args)...)`
+       *  in C++11, C++14 and C++17. Changed in C++20 to call
+       *  `std::construct_at(__p, std::forward<_Args>(__args)...)` instead.
+      */
+      template<typename _Up, typename... _Args>
+	static void
+	construct(allocator_type& __a, _Up* __p, _Args&&... __args)
+	{ __a.construct(__p, std::forward<_Args>(__args)...); }
+
+      /**
+       *  @brief  Destroy an object of type `_Up`
+       *  @param  __a  An allocator.
+       *  @param  __p  Pointer to the object to destroy
+       *
+       *  Calls `p->_Up()`.
+      */
+      template<typename _Up>
+	static _GLIBCXX20_CONSTEXPR void
+	destroy(allocator_type&, _Up* __p)
+	noexcept(is_nothrow_destructible<_Up>::value)
+	{ __p->~_Up(); }
+
+      /**
+       *  @brief  The maximum supported allocation size
+       *  @return `numeric_limits<size_t>::max() / sizeof(value_type)`
+      */
+      static _GLIBCXX20_CONSTEXPR size_type
+      max_size(const allocator_type&) noexcept
+      { return size_t(-1) / sizeof(value_type); }
+    };
+
+namespace pmr
+{
   /// Parameters for tuning a pool resource's behaviour.
   struct pool_options
   {
@@ -636,11 +812,11 @@ namespace pmr
     void*
     do_allocate(size_t __bytes, size_t __alignment) override
     {
-      if (__bytes == 0)
+      if (__builtin_expect(__bytes == 0, false))
 	__bytes = 1; // Ensures we don't return the same pointer twice.
 
       void* __p = std::align(__alignment, __bytes, _M_current_buf, _M_avail);
-      if (!__p)
+      if (__builtin_expect(__p == nullptr, false))
 	{
 	  _M_new_buffer(__bytes, __alignment);
 	  __p = _M_current_buf;
@@ -671,7 +847,7 @@ namespace pmr
     static size_t
     _S_next_bufsize(size_t __buffer_size) noexcept
     {
-      if (__buffer_size == 0)
+      if (__builtin_expect(__buffer_size == 0, false))
 	__buffer_size = 1;
       return __buffer_size * _S_growth_factor;
     }

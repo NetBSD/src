@@ -1,6 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /* Definitions of target machine for GNU compiler,
    for IBM RS/6000 POWER running AIX V7.2.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
    Contributed by David Edelsohn (edelsohn@gnu.org).
 
    This file is part of GCC.
@@ -32,7 +33,7 @@ do {									\
   if (TARGET_SOFT_FLOAT && TARGET_LONG_DOUBLE_128)			\
     {									\
       rs6000_long_double_type_size = 64;				\
-      if (global_options_set.x_rs6000_long_double_type_size)		\
+      if (OPTION_SET_P (rs6000_long_double_type_size))		\
 	warning (0, "soft-float and long-double-128 are incompatible");	\
     }									\
   if (TARGET_POWERPC64 && ! TARGET_64BIT)				\
@@ -42,7 +43,7 @@ do {									\
   if ((rs6000_isa_flags_explicit					\
        & OPTION_MASK_MINIMAL_TOC) != 0)					\
     {									\
-      if (global_options_set.x_rs6000_current_cmodel			\
+      if (OPTION_SET_P (rs6000_current_cmodel)			\
 	  && rs6000_current_cmodel != CMODEL_SMALL)			\
 	error ("%<-mcmodel%> incompatible with other toc options"); 	\
       SET_CMODEL (CMODEL_SMALL);					\
@@ -62,18 +63,23 @@ do {									\
       /* aix/ppc doesn't support -mvsx and -maltivec with Go */		\
       rs6000_isa_flags &= ~(OPTION_MASK_VSX | OPTION_MASK_ALTIVEC);	\
     }									\
+  if (!OPTION_SET_P (dwarf_version))				\
+    /* AIX only supports DWARF 4.  */					\
+    dwarf_version = 4;							\
 } while (0)
 
-#undef ASM_SPEC
-#define ASM_SPEC "-u %{maix64:-a64} %(asm_cpu)"
+#define ASM_SPEC32 "-a32"
+#define ASM_SPEC64 "-a64"
+#define ASM_SPEC_COMMON "-u %(asm_cpu)"
 
 /* Common ASM definitions used by ASM_SPEC amongst the various targets for
-   handling -mcpu=xxx switches.  There is a parallel list in driver-rs6000.c to
+   handling -mcpu=xxx switches.  There is a parallel list in driver-rs6000.cc to
    provide the default assembler options if the user uses -mcpu=native, so if
    you make changes here, make them there also.  */
 #undef ASM_CPU_SPEC
 #define ASM_CPU_SPEC \
 "%{mcpu=native: %(asm_cpu_native); \
+  mcpu=power10: -mpwr10; \
   mcpu=power9: -mpwr9; \
   mcpu=power8: -mpwr8; \
   mcpu=power7: -mpwr7; \
@@ -91,10 +97,7 @@ do {									\
   mcpu=620: -m620; \
   mcpu=630: -m620; \
   mcpu=970|mcpu=G5: -m970; \
-  !mcpu*: %{mvsx: -mpwr6; \
-	    maltivec: -m970; \
-	    maix64|mpowerpc64: -mppc64; \
-	    : %(asm_default)}} \
+  !mcpu*: %(asm_default)} \
 -many"
 
 #undef	ASM_DEFAULT_SPEC
@@ -115,19 +118,17 @@ do {									\
     }                                \
   while (0)
 
-#undef CPP_SPEC
-#define CPP_SPEC "%{posix: -D_POSIX_SOURCE}	\
+#define CPP_SPEC32 ""
+#define CPP_SPEC64 "-D__64BIT__"
+#define CPP_SPEC_COMMON "%{posix: -D_POSIX_SOURCE} \
   %{ansi: -D_ANSI_C_SOURCE}			\
-  %{maix64: -D__64BIT__}			\
   %{mpe: -I%R/usr/lpp/ppe.poe/include}		\
   %{pthread: -D_THREAD_SAFE}"
 
-/* The GNU C++ standard library requires that these macros be 
+/* The GNU C++ standard library requires that these macros be
    defined.  Synchronize with libstdc++ os_defines.h.  */
-#undef CPLUSPLUS_CPP_SPEC                       
-#define CPLUSPLUS_CPP_SPEC			\
+#define CPLUSPLUS_CPP_SPEC_COMMON		\
   "-D_ALL_SOURCE -D__COMPATMATH__		\
-   %{maix64: -D__64BIT__}			\
    %{mpe: -I%R/usr/lpp/ppe.poe/include}		\
    %{pthread: -D_THREAD_SAFE}"
 
@@ -136,7 +137,11 @@ do {									\
 #undef RS6000_CPU
 
 #undef  TARGET_DEFAULT
+#ifdef RS6000_BI_ARCH
+#define TARGET_DEFAULT (ISA_2_6_MASKS_EMBEDDED | MASK_POWERPC64 | MASK_64BIT)
+#else
 #define TARGET_DEFAULT ISA_2_6_MASKS_EMBEDDED
+#endif
 
 #undef  PROCESSOR_DEFAULT
 #define PROCESSOR_DEFAULT PROCESSOR_POWER7
@@ -155,29 +160,78 @@ do {									\
    the target makefile fragment or if none of the options listed in
    `MULTILIB_OPTIONS' are set by default.  *Note Target Fragment::.  */
 
-#undef	MULTILIB_DEFAULTS
+#undef MULTILIB_DEFAULTS
 
-#undef LIB_SPEC
-#define LIB_SPEC "%{pg:-L%R/lib/profiled -L%R/usr/lib/profiled}\
+#define DEFAULT_ARCH64_P (TARGET_DEFAULT & MASK_64BIT)
+
+#define LIB_SPEC32 "%{!shared:%{g*:-lg}}"
+#define LIB_SPEC64 ""
+#define LIB_SPEC_COMMON "%{pg:-L%R/lib/profiled -L%R/usr/lib/profiled}\
    %{p:-L%R/lib/profiled -L%R/usr/lib/profiled}\
-   %{!maix64:%{!shared:%{g*:-lg}}}\
    %{fprofile-arcs|fprofile-generate*|coverage:-lpthreads}\
    %{mpe:-L%R/usr/lpp/ppe.poe/lib -lmpi -lvtd}\
    %{mlong-double-128:-lc128}\
    %{pthread:-lpthreads} -lc"
 
-#undef LINK_SPEC
-#define LINK_SPEC "-bpT:0x10000000 -bpD:0x20000000 %{!r:-btextro}\
+#define LINK_SPEC32 "%{!shared:%{g*: %(link_libg) }} -b32"
+#define LINK_SPEC64 "-b64"
+#define LINK_SPEC_COMMON "-bpT:0x10000000 -bpD:0x20000000 %{!r:-btextro}\
    %{static:-bnso %(link_syscalls) } %{shared:-bM:SRE %{!e:-bnoentry}}\
-   %{!maix64:%{!shared:%{g*: %(link_libg) }}} %{maix64:-b64}\
-   %{mpe:-binitfini:poe_remote_main}"
+   %{mpe:-binitfini:poe_remote_main} "
 
 #undef STARTFILE_SPEC
+#if DEFAULT_ARCH64_P
+#define STARTFILE_SPEC "%{!shared:\
+   %{!maix32:%{pg:gcrt0_64%O%s;:%{p:mcrt0_64%O%s;:crt0_64%O%s}};:\
+     %{pthread:%{pg:gcrt0_r%O%s;:%{p:mcrt0_r%O%s;:crt0_r%O%s}};:\
+       %{pg:gcrt0%O%s;:%{p:mcrt0%O%s;:crt0%O%s}}}}}\
+   %{!maix32:%{shared:crtcxa_64_s%O%s;:crtcxa_64%O%s} crtdbase_64%O%s;:\
+     %{shared:crtcxa_s%O%s;:crtcxa%O%s} crtdbase%O%s}"
+#else
 #define STARTFILE_SPEC "%{!shared:\
    %{maix64:%{pg:gcrt0_64%O%s;:%{p:mcrt0_64%O%s;:crt0_64%O%s}};:\
      %{pthread:%{pg:gcrt0_r%O%s;:%{p:mcrt0_r%O%s;:crt0_r%O%s}};:\
        %{pg:gcrt0%O%s;:%{p:mcrt0%O%s;:crt0%O%s}}}}}\
-   %{shared:crtcxa_s%O%s;:crtcxa%O%s} crtdbase%O%s"
+   %{maix64:%{shared:crtcxa_64_s%O%s;:crtcxa_64%O%s} crtdbase_64%O%s;:\
+     %{shared:crtcxa_s%O%s;:crtcxa%O%s} crtdbase%O%s}"
+#endif
+
+
+#undef ASM_SPEC
+#undef CPP_SPEC
+#undef CPLUSPLUS_CPP_SPEC
+#undef LIB_SPEC
+#undef LINK_SPEC
+
+#if DEFAULT_ARCH64_P
+#define ASM_SPEC "%{maix32:%(asm_spec32);:%(asm_spec64)} %(asm_spec_common)"
+#define CPP_SPEC "%{maix32:%(cpp_spec32);:%(cpp_spec64)} %(cpp_spec_common)"
+#define CPLUSPLUS_CPP_SPEC "%{maix32:%(cpp_spec32);:%(cpp_spec64)} %(cplusplus_cpp_spec_common)"
+#define LIB_SPEC "%{maix32:%(lib_spec32);:%(lib_spec64)} %(lib_spec_common)"
+#define LINK_SPEC "%{maix32:%(link_spec32);:%(link_spec64)} %(link_spec_common)"
+#else
+#define ASM_SPEC "%{maix64:%(asm_spec64);:%(asm_spec32)} %(asm_spec_common)"
+#define CPP_SPEC "%{maix64:%(cpp_spec64);:%(cpp_spec32)} %(cpp_spec_common)"
+#define CPLUSPLUS_CPP_SPEC "%{maix64:%(cpp_spec64);:%(cpp_spec32)} %(cplusplus_cpp_spec_common)"
+#define LIB_SPEC "%{maix64:%(lib_spec64);:%(lib_spec32)} %(lib_spec_common)"
+#define LINK_SPEC "%{maix64:%(link_spec64);:%(link_spec32)} %(link_spec_common)"
+#endif
+
+#undef SUBTARGET_EXTRA_SPECS
+#define SUBTARGET_EXTRA_SPECS					\
+  { "asm_spec_common",		ASM_SPEC_COMMON },		\
+  { "asm_spec32",		ASM_SPEC32 },			\
+  { "asm_spec64",		ASM_SPEC64 },			\
+  { "cpp_spec_common",		CPP_SPEC_COMMON },		\
+  { "cplusplus_cpp_spec_common", CPLUSPLUS_CPP_SPEC_COMMON },	\
+  { "cpp_spec32",		CPP_SPEC32 },			\
+  { "cpp_spec64",		CPP_SPEC64 },			\
+  { "lib_spec_common",		LIB_SPEC_COMMON },		\
+  { "lib_spec32",		LIB_SPEC32 },			\
+  { "lib_spec64",		LIB_SPEC64 },			\
+  { "link_spec_common",		LINK_SPEC_COMMON },		\
+  { "link_spec32",		LINK_SPEC32 },			\
+  { "link_spec64",		LINK_SPEC64 },
 
 /* AIX V5 typedefs ptrdiff_t as "long" while earlier releases used "int".  */
 
@@ -201,7 +255,7 @@ do {									\
 #define LD_INIT_SWITCH "-binitfini"
 
 #ifndef _AIX52
-extern long long int    atoll(const char *);  
+extern long long int    atoll(const char *);
 #endif
 
 /* This target uses the aix64.opt file.  */
@@ -216,14 +270,17 @@ extern long long int    atoll(const char *);
 #define SET_CMODEL(opt) do {} while (0)
 #endif
 
+/* System headers are not C++-aware.  */
+#define SYSTEM_IMPLICIT_EXTERN_C 1
+
 /* This target defines SUPPORTS_WEAK and TARGET_ASM_NAMED_SECTION,
    but does not have crtbegin/end.  */
 
 #define TARGET_AIX_VERSION 72
 
-/* AIX 7.2 supports DWARF3 debugging, but XCOFF remains the default.  */
+/* AIX 7.2 supports DWARF3+ debugging.  */
 #define DWARF2_DEBUGGING_INFO 1
-#define PREFERRED_DEBUGGING_TYPE XCOFF_DEBUG
+#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 #define DEBUG_INFO_SECTION	"0x10000"
 #define DEBUG_LINE_SECTION	"0x20000"
 #define DEBUG_PUBNAMES_SECTION	"0x30000"

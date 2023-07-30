@@ -1,6 +1,6 @@
 ## Makefile for the GNU C++ Support library.
 ##
-## Copyright (C) 2000-2020 Free Software Foundation, Inc.
+## Copyright (C) 2000-2022 Free Software Foundation, Inc.
 ##
 ## Process this file with automake to produce Makefile.in.
 ##
@@ -132,28 +132,6 @@ atomicity_file = ${glibcxx_srcdir}/$(ATOMICITY_SRCDIR)/atomicity.h
 atomicity.cc: ${atomicity_file}
 	$(LN_S) ${atomicity_file} ./atomicity.cc || true
 
-# Use special rules for the C++17 sources so that the proper flags are passed.
-new_opa.lo: new_opa.cc
-	$(LTCXXCOMPILE) -std=gnu++1z -c $<
-new_opant.lo: new_opant.cc
-	$(LTCXXCOMPILE) -std=gnu++1z -c $<
-new_opva.lo: new_opva.cc
-	$(LTCXXCOMPILE) -std=gnu++1z -c $<
-new_opvant.lo: new_opvant.cc
-	$(LTCXXCOMPILE) -std=gnu++1z -c $<
-del_opa.lo: del_opa.cc
-	$(LTCXXCOMPILE) -std=gnu++1z -c $<
-del_opant.lo: del_opant.cc
-	$(LTCXXCOMPILE) -std=gnu++1z -c $<
-del_opsa.lo: del_opsa.cc
-	$(LTCXXCOMPILE) -std=gnu++1z -c $<
-del_opva.lo: del_opva.cc
-	$(LTCXXCOMPILE) -std=gnu++1z -c $<
-del_opvant.lo: del_opvant.cc
-	$(LTCXXCOMPILE) -std=gnu++1z -c $<
-del_opvsa.lo: del_opvsa.cc
-	$(LTCXXCOMPILE) -std=gnu++1z -c $<
-
 # AM_CXXFLAGS needs to be in each subdirectory so that it can be
 # modified in a per-library or per-sub-library way.  Need to manually
 # set this option because CONFIG_CXXFLAGS has to be after
@@ -161,7 +139,7 @@ del_opvsa.lo: del_opvsa.cc
 # as the occasion call for it.
 AM_CXXFLAGS = \
 	$(glibcxx_lt_pic_flag) $(glibcxx_compiler_shared_flag) \
-	$(XTEMPLATE_FLAGS) \
+	$(XTEMPLATE_FLAGS) $(FREESTANDING_FLAGS) \
 	$(WARN_CXXFLAGS) $(OPTIMIZE_CXXFLAGS)  $(CONFIG_CXXFLAGS)
 
 AM_MAKEFLAGS = \

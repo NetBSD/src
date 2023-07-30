@@ -1,5 +1,5 @@
 /* d-builtins.cc -- GCC builtins support for D.
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 
 GCC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "dmd/identifier.h"
 #include "dmd/module.h"
 #include "dmd/mtype.h"
+#include "dmd/target.h"
 
 #include "tree.h"
 #include "fold-const.h"
@@ -38,12 +39,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "stor-layout.h"
 
 #include "d-tree.h"
+#include "d-frontend.h"
 #include "d-target.h"
 
 
-static GTY(()) vec<tree, va_gc> *gcc_builtins_functions = NULL;
-static GTY(()) vec<tree, va_gc> *gcc_builtins_libfuncs = NULL;
-static GTY(()) vec<tree, va_gc> *gcc_builtins_types = NULL;
+static GTY(()) vec <tree, va_gc> *gcc_builtins_functions = NULL;
+static GTY(()) vec <tree, va_gc> *gcc_builtins_libfuncs = NULL;
+static GTY(()) vec <tree, va_gc> *gcc_builtins_types = NULL;
 
 /* Record built-in types and their associated decls for re-use when
    generating the `gcc.builtins' module.  */
@@ -59,7 +61,7 @@ struct builtin_data
   { }
 };
 
-static vec<builtin_data> builtin_converted_decls;
+static vec <builtin_data> builtin_converted_decls;
 
 /* Build D frontend type from tree TYPE type given.  This will set the
    back-end type symbol directly for complex types to save build_ctype()
@@ -67,7 +69,7 @@ static vec<builtin_data> builtin_converted_decls;
    as casting from `C char' to `D char', which also means that `char *`
    needs to be specially handled.  */
 
-static Type *
+Type *
 build_frontend_type (tree type)
 {
   Type *dtype;
@@ -79,7 +81,8 @@ build_frontend_type (tree type)
     mod |= MODshared;
 
   /* If we've seen the type before, re-use the converted decl.  */
-  for (size_t i = 0; i < builtin_converted_decls.length (); ++i)
+  unsigned saved_builtin_decls_length = builtin_converted_decls.length ();
+  for (size_t i = 0; i < saved_builtin_decls_length; ++i)
     {
       tree t = builtin_converted_decls[i].ctype;
       if (TYPE_MAIN_VARIANT (t) == TYPE_MAIN_VARIANT (type))
@@ -96,7 +99,7 @@ build_frontend_type (tree type)
 	  if (TYPE_MAIN_VARIANT (TREE_TYPE (type)) == char_type_node)
 	    return Type::tchar->addMod (dtype->mod)->pointerTo ()->addMod (mod);
 
-	  if (dtype->ty == Tfunction)
+	  if (dtype->ty == TY::Tfunction)
 	    return (TypePointer::create (dtype))->addMod (mod);
 
 	  return dtype->pointerTo ()->addMod (mod);
@@ -128,7 +131,7 @@ build_frontend_type (tree type)
 
       /* For now, skip support for cent/ucent until the frontend
 	 has better support for handling it.  */
-      for (size_t i = Tint8; i <= Tuns64; i++)
+      for (size_t i = (size_t) TY::Tint8; i <= (size_t) TY::Tuns64; i++)
 	{
 	  dtype = Type::basic[i];
 
@@ -146,7 +149,7 @@ build_frontend_type (tree type)
     {
       unsigned size = TREE_INT_CST_LOW (TYPE_SIZE_UNIT (type));
 
-      for (size_t i = Tfloat32; i <= Tfloat80; i++)
+      for (size_t i = (size_t) TY::Tfloat32; i <= (size_t) TY::Tfloat80; i++)
 	{
 	  dtype = Type::basic[i];
 
@@ -162,7 +165,8 @@ build_frontend_type (tree type)
     case COMPLEX_TYPE:
     {
       unsigned size = TREE_INT_CST_LOW (TYPE_SIZE_UNIT (type));
-      for (size_t i = Tcomplex32; i <= Tcomplex80; i++)
+      for (size_t i = (size_t) TY::Tcomplex32; i <= (size_t) TY::Tcomplex80;
+	   i++)
 	{
 	  dtype = Type::basic[i];
 
@@ -207,10 +211,10 @@ build_frontend_type (tree type)
 	break;
 
       dtype = dtype->sarrayOf (nunits)->addMod (mod);
-      if (dtype->nextOf ()->isTypeBasic () == NULL)
+      if (target.isVectorTypeSupported (dtype->size (), dtype->nextOf ()))
 	break;
 
-      dtype = (TypeVector::create (Loc (), dtype))->addMod (mod);
+      dtype = (TypeVector::create (dtype))->addMod (mod);
       builtin_converted_decls.safe_push (builtin_data (dtype, type));
       return dtype;
     }
@@ -221,7 +225,7 @@ build_frontend_type (tree type)
 	Identifier::idPool (IDENTIFIER_POINTER (TYPE_IDENTIFIER (type))) : NULL;
 
       /* Neither the `object' and `gcc.builtins' modules will not exist when
-	 this is called.  Use a stub 'object' module parent in the meantime.
+	 this is called.  Use a stub `object' module parent in the meantime.
 	 If `gcc.builtins' is later imported, the parent will be overridden
 	 with the correct module symbol.  */
       static Identifier *object = Identifier::idPool ("object");
@@ -232,29 +236,35 @@ build_frontend_type (tree type)
       sdecl->parent = stubmod;
       sdecl->structsize = int_size_in_bytes (type);
       sdecl->alignsize = TYPE_ALIGN_UNIT (type);
-      sdecl->alignment = STRUCTALIGN_DEFAULT;
-      sdecl->sizeok = SIZEOKdone;
+      sdecl->alignment.setDefault ();
+      sdecl->sizeok = Sizeok::done;
       sdecl->type = (TypeStruct::create (sdecl))->addMod (mod);
       sdecl->type->ctype = type;
       sdecl->type->merge2 ();
 
       /* Add both named and anonymous fields as members of the struct.
-	 Anonymous fields still need a name in D, so call them "__pad%d".  */
-      int anonfield_id = 0;
-      sdecl->members = new Dsymbols;
+	 Anonymous fields still need a name in D, so call them "__pad%u".  */
+      unsigned anonfield_id = 0;
+      sdecl->members = d_gc_malloc<Dsymbols> ();
 
       for (tree field = TYPE_FIELDS (type); field; field = DECL_CHAIN (field))
 	{
 	  Type *ftype = build_frontend_type (TREE_TYPE (field));
 	  if (!ftype)
 	    {
-	      delete sdecl->members;
+	      /* Drop any field types that got cached before the conversion
+		 of this record type failed.  */
+	      builtin_converted_decls.truncate (saved_builtin_decls_length);
 	      return NULL;
 	    }
 
 	  Identifier *fident;
 	  if (DECL_NAME (field) == NULL_TREE)
-	    fident = Identifier::generateId ("__pad", anonfield_id++);
+	    {
+	      char name[16];
+	      snprintf (name, sizeof (name), "__pad%u", anonfield_id++);
+	      fident = Identifier::idPool (name);
+	    }
 	  else
 	    {
 	      const char *name = IDENTIFIER_POINTER (DECL_NAME (field));
@@ -265,7 +275,7 @@ build_frontend_type (tree type)
 						       NULL);
 	  vd->parent = sdecl;
 	  vd->offset = tree_to_uhwi (byte_position (field));
-	  vd->semanticRun = PASSsemanticdone;
+	  vd->semanticRun = PASS::semanticdone;
 	  vd->csym = field;
 	  sdecl->members->push (vd);
 	  sdecl->fields.push (vd);
@@ -281,9 +291,9 @@ build_frontend_type (tree type)
       if (dtype)
 	{
 	  tree parms = TYPE_ARG_TYPES (type);
-	  int varargs_p = 1;
+	  VarArg varargs_p = VARARGvariadic;
 
-	  Parameters *args = new Parameters;
+	  Parameters *args = d_gc_malloc<Parameters> ();
 	  args->reserve (list_length (parms));
 
 	  /* Attempt to convert all parameter types.  */
@@ -292,7 +302,7 @@ build_frontend_type (tree type)
 	      tree argtype = TREE_VALUE (parm);
 	      if (argtype == void_type_node)
 		{
-		  varargs_p = 0;
+		  varargs_p = VARARGnone;
 		  break;
 		}
 
@@ -306,18 +316,20 @@ build_frontend_type (tree type)
 	      Type *targ = build_frontend_type (argtype);
 	      if (!targ)
 		{
-		  delete args;
+		  /* Drop any parameter types that got cached before the
+		     conversion of this function type failed.  */
+		  builtin_converted_decls.truncate (saved_builtin_decls_length);
 		  return NULL;
 		}
 
-	      args->push (Parameter::create (sc, targ, NULL, NULL));
+	      args->push (Parameter::create (sc, targ, NULL, NULL, NULL));
 	    }
 
 	  /* GCC generic and placeholder built-ins are marked as variadic, yet
 	     have no named parameters, and so can't be represented in D.  */
-	  if (args->dim != 0 || !varargs_p)
+	  if (args->length != 0 || varargs_p == VARARGnone)
 	    {
-	      dtype = TypeFunction::create (args, dtype, varargs_p, LINKc);
+	      dtype = TypeFunction::create (args, dtype, varargs_p, LINK::c);
 	      return dtype->addMod (mod);
 	    }
 	}
@@ -331,11 +343,12 @@ build_frontend_type (tree type)
 }
 
 /* Attempt to convert GCC evaluated CST to a D Frontend Expression.
+   LOC is the location in the source file where this CST is being evaluated.
    This is used for getting the CTFE value out of a const-folded builtin,
    returns NULL if it cannot convert CST.  */
 
 Expression *
-d_eval_constant_expression (tree cst)
+d_eval_constant_expression (const Loc &loc, tree cst)
 {
   STRIP_TYPE_NOPS (cst);
   Type *type = build_frontend_type (TREE_TYPE (cst));
@@ -352,44 +365,58 @@ d_eval_constant_expression (tree cst)
 	  real_value re = TREE_REAL_CST (TREE_REALPART (cst));
 	  real_value im = TREE_REAL_CST (TREE_IMAGPART (cst));
 	  complex_t value = complex_t (ldouble (re), ldouble (im));
-	  return ComplexExp::create (Loc (), value, type);
+	  return ComplexExp::create (loc, value, type);
 	}
       else if (code == INTEGER_CST)
 	{
 	  dinteger_t value = TREE_INT_CST_LOW (cst);
-	  return IntegerExp::create (Loc (), value, type);
+	  return IntegerExp::create (loc, value, type);
 	}
       else if (code == REAL_CST)
 	{
 	  real_value value = TREE_REAL_CST (cst);
-	  return RealExp::create (Loc (), ldouble (value), type);
+	  return RealExp::create (loc, ldouble (value), type);
 	}
       else if (code == STRING_CST)
 	{
 	  const void *string = TREE_STRING_POINTER (cst);
-	  size_t len = TREE_STRING_LENGTH (cst);
-	  return StringExp::create (Loc (), CONST_CAST (void *, string), len);
+	  size_t len = TREE_STRING_LENGTH (cst) - 1;
+	  return StringExp::create (loc, CONST_CAST (void *, string), len);
 	}
       else if (code == VECTOR_CST)
 	{
 	  dinteger_t nunits = VECTOR_CST_NELTS (cst).to_constant ();
-	  Expressions *elements = new Expressions;
+	  Expressions *elements = d_gc_malloc<Expressions> ();
 	  elements->setDim (nunits);
 
 	  for (size_t i = 0; i < nunits; i++)
 	    {
 	      Expression *elem
-		= d_eval_constant_expression (VECTOR_CST_ELT (cst, i));
+		= d_eval_constant_expression (loc, VECTOR_CST_ELT (cst, i));
 	      if (elem == NULL)
 		return NULL;
 
 	      (*elements)[i] = elem;
 	    }
 
-	  Expression *e = ArrayLiteralExp::create (Loc (), elements);
-	  e->type = ((TypeVector *) type)->basetype;
+	  Expression *e = ArrayLiteralExp::create (loc, elements);
+	  e->type = type->isTypeVector ()->basetype;
 
-	  return VectorExp::create (Loc (), e, type);
+	  return VectorExp::create (loc, e, type);
+	}
+      else if (code == ADDR_EXPR)
+	{
+	  /* Special handling for trees constructed by build_string_literal.
+	     What we receive is an `&"string"[0]' expression, strip off the
+	     outer ADDR_EXPR and ARRAY_REF to get to the underlying CST.  */
+	  tree pointee = TREE_OPERAND (cst, 0);
+
+	  if (TREE_CODE (pointee) != ARRAY_REF
+	      || TREE_OPERAND (pointee, 1) != integer_zero_node
+	      || TREE_CODE (TREE_OPERAND (pointee, 0)) != STRING_CST)
+	    return NULL;
+
+	  return d_eval_constant_expression (loc, TREE_OPERAND (pointee, 0));
 	}
     }
 
@@ -402,25 +429,6 @@ d_eval_constant_expression (tree cst)
 void
 d_add_builtin_version (const char* ident)
 {
-  /* For now, we need to tell the D frontend what platform is being targeted.
-     This should be removed once the frontend has been fixed.  */
-  if (strcmp (ident, "linux") == 0)
-    global.params.isLinux = true;
-  else if (strcmp (ident, "OSX") == 0)
-    global.params.isOSX = true;
-  else if (strcmp (ident, "Windows") == 0)
-    global.params.isWindows = true;
-  else if (strcmp (ident, "FreeBSD") == 0)
-    global.params.isFreeBSD = true;
-  else if (strcmp (ident, "OpenBSD") == 0)
-    global.params.isOpenBSD = true;
-  else if (strcmp (ident, "Solaris") == 0)
-    global.params.isSolaris = true;
-  /* The is64bit field only refers to x86_64 target.  */
-  else if (strcmp (ident, "X86_64") == 0)
-    global.params.is64bit = true;
-  /* No other fields are required to be set for the frontend.  */
-
   VersionCondition::addPredefinedGlobalIdent (ident);
 }
 
@@ -454,7 +462,7 @@ d_init_versions (void)
   VersionCondition::addPredefinedGlobalIdent ("GNU_InlineAsm");
 
   /* LP64 only means 64bit pointers in D.  */
-  if (global.params.isLP64)
+  if (POINTER_SIZE == 64)
     VersionCondition::addPredefinedGlobalIdent ("D_LP64");
 
   /* Setting `global.params.cov' forces module info generation which is
@@ -464,6 +472,8 @@ d_init_versions (void)
     VersionCondition::addPredefinedGlobalIdent ("D_Coverage");
   if (flag_pic)
     VersionCondition::addPredefinedGlobalIdent ("D_PIC");
+  if (flag_pie)
+    VersionCondition::addPredefinedGlobalIdent ("D_PIE");
 
   if (global.params.doDocComments)
     VersionCondition::addPredefinedGlobalIdent ("D_Ddoc");
@@ -471,10 +481,19 @@ d_init_versions (void)
   if (global.params.useUnitTests)
     VersionCondition::addPredefinedGlobalIdent ("unittest");
 
-  if (global.params.useAssert)
+  if (global.params.useAssert == CHECKENABLEon)
     VersionCondition::addPredefinedGlobalIdent ("assert");
 
-  if (global.params.useArrayBounds == BOUNDSCHECKoff)
+  if (global.params.useIn == CHECKENABLEon)
+    VersionCondition::addPredefinedGlobalIdent("D_PreConditions");
+
+  if (global.params.useOut == CHECKENABLEon)
+    VersionCondition::addPredefinedGlobalIdent("D_PostConditions");
+
+  if (global.params.useInvariants == CHECKENABLEon)
+    VersionCondition::addPredefinedGlobalIdent("D_Invariants");
+
+  if (global.params.useArrayBounds == CHECKENABLEoff)
     VersionCondition::addPredefinedGlobalIdent ("D_NoBoundsChecks");
 
   if (global.params.betterC)
@@ -510,14 +529,14 @@ build_alias_declaration (const char *alias, Type *type)
 void
 d_build_builtins_module (Module *m)
 {
-  Dsymbols *members = new Dsymbols;
+  Dsymbols *members = d_gc_malloc<Dsymbols> ();
   tree decl;
 
   for (size_t i = 0; vec_safe_iterate (gcc_builtins_functions, i, &decl); ++i)
     {
       const char *name = IDENTIFIER_POINTER (DECL_NAME (decl));
-      TypeFunction *tf
-	= (TypeFunction *) build_frontend_type (TREE_TYPE (decl));
+      Type *t = build_frontend_type (TREE_TYPE (decl));
+      TypeFunction *tf = t ? t->isTypeFunction () : NULL;
 
       /* Cannot create built-in function type for DECL.  */
       if (!tf)
@@ -533,16 +552,16 @@ d_build_builtins_module (Module *m)
 	   flag_unsafe_math_optimizations.
 	 - Built-ins never use the GC or raise a D exception, and so are always
 	   marked as `nothrow' and `@nogc'.  */
-      tf->purity = DECL_PURE_P (decl) ? PUREstrong
-	: TREE_READONLY (decl) ? PUREconst
-	: DECL_IS_NOVOPS (decl) ? PUREweak
-	: !DECL_ASSEMBLER_NAME_SET_P (decl) ? PUREweak
-	: PUREimpure;
-      tf->trust = !DECL_ASSEMBLER_NAME_SET_P (decl) ? TRUSTsafe
-	: TREE_NOTHROW (decl) ? TRUSTtrusted
-	: TRUSTsystem;
-      tf->isnothrow = true;
-      tf->isnogc = true;
+      tf->purity = DECL_PURE_P (decl) ? PURE::const_
+	: TREE_READONLY (decl) ? PURE::const_
+	: DECL_IS_NOVOPS (decl) ? PURE::weak
+	: !DECL_ASSEMBLER_NAME_SET_P (decl) ? PURE::weak
+	: PURE::impure;
+      tf->trust = !DECL_ASSEMBLER_NAME_SET_P (decl) ? TRUST::safe
+	: TREE_NOTHROW (decl) ? TRUST::trusted
+	: TRUST::system;
+      tf->isnothrow (true);
+      tf->isnogc (true);
 
       FuncDeclaration *func
 	= FuncDeclaration::create (Loc (), Loc (),
@@ -550,7 +569,7 @@ d_build_builtins_module (Module *m)
 				   STCextern, tf);
       DECL_LANG_SPECIFIC (decl) = build_lang_decl (func);
       func->csym = decl;
-      func->builtin = BUILTINyes;
+      func->builtin = BUILTIN::gcc;
 
       members->push (func);
     }
@@ -598,18 +617,15 @@ d_build_builtins_module (Module *m)
 	}
     }
 
-  /* va_list should already be built, so no need to convert to D type again.  */
-  StructDeclaration *sd = (Type::tvalist->ty == Tstruct)
-    ? ((TypeStruct *) Type::tvalist)->sym : NULL;
-  if (sd == NULL || !sd->isAnonymous ())
-    {
-      members->push (build_alias_declaration ("__builtin_va_list",
-					      Type::tvalist));
-    }
+  /* Expose target-specific va_list type.  */
+  Type *tvalist = target.va_listType (Loc (), NULL);
+  TypeStruct *ts = tvalist->isTypeStruct ();
+  if (ts == NULL || !ts->sym->isAnonymous ())
+    members->push (build_alias_declaration ("__builtin_va_list", tvalist));
   else
     {
-      sd->ident = Identifier::idPool ("__builtin_va_list");
-      members->push (sd);
+      ts->sym->ident = Identifier::idPool ("__builtin_va_list");
+      members->push (ts->sym);
     }
 
   /* Expose target-specific integer types to the builtins module.  */
@@ -653,7 +669,7 @@ d_build_builtins_module (Module *m)
     members->push (build_alias_declaration ("__builtin_unwind_uint", t));
   }
 
-  m->members->push (LinkDeclaration::create (LINKc, members));
+  m->members->push (LinkDeclaration::create (Loc (), LINK::c, members));
 }
 
 /* Search for any `extern(C)' functions that match any known GCC library builtin
@@ -668,10 +684,10 @@ maybe_set_builtin_1 (Dsymbol *d)
   if (ad != NULL)
     {
       /* Recursively search through attribute decls.  */
-      Dsymbols *decls = ad->include (NULL, NULL);
-      if (decls && decls->dim)
+      Dsymbols *decls = ad->include (NULL);
+      if (decls && decls->length)
 	{
-	  for (size_t i = 0; i < decls->dim; i++)
+	  for (size_t i = 0; i < decls->length; i++)
 	    {
 	      Dsymbol *sym = (*decls)[i];
 	      maybe_set_builtin_1 (sym);
@@ -693,7 +709,7 @@ maybe_set_builtin_1 (Dsymbol *d)
 	  /* Found a match, tell the frontend this is a builtin.  */
 	  DECL_LANG_SPECIFIC (t) = build_lang_decl (fd);
 	  fd->csym = t;
-	  fd->builtin = BUILTINyes;
+	  fd->builtin = BUILTIN::gcc;
 	  return;
 	}
     }
@@ -708,7 +724,7 @@ d_maybe_set_builtin (Module *m)
   if (!m || !m->members)
     return;
 
-  for (size_t i = 0; i < m->members->dim; i++)
+  for (size_t i = 0; i < m->members->length; i++)
     {
       Dsymbol *sym = (*m->members)[i];
       maybe_set_builtin_1 (sym);
@@ -743,8 +759,7 @@ do_build_builtin_fn (built_in_function fncode,
     return;
 
   gcc_assert ((!both_p && !fallback_p)
-	      || !strncmp (name, "__builtin_",
-			   strlen ("__builtin_")));
+	      || startswith (name, "__builtin_"));
 
   libname = name + strlen ("__builtin_");
 
@@ -849,6 +864,17 @@ d_build_d_type_nodes (void)
 
   ireal_type_node = build_distinct_type_copy (long_double_type_node);
   TYPE_IMAGINARY_FLOAT (ireal_type_node) = 1;
+
+  /* Noreturn type.  */
+  noreturn_type_node = build_distinct_type_copy (void_type_node);
+
+  /* Calling build_ctype() links the front-end Type to the GCC node,
+     and sets the TYPE_NAME to the D language type.  */
+  for (unsigned ty = 0; ty < (unsigned) TY::TMAX; ty++)
+    {
+      if (Type::basic[ty] != NULL)
+	build_ctype (Type::basic[ty]);
+    }
 
   /* Used for ModuleInfo, ClassInfo, and Interface decls.  */
   unknown_type_node = make_node (RECORD_TYPE);
@@ -1152,16 +1178,6 @@ d_define_builtins (tree va_list_ref_type_node ATTRIBUTE_UNUSED,
 void
 d_init_builtins (void)
 {
-  /* Build the "standard" abi va_list.  */
-  Type::tvalist = build_frontend_type (va_list_type_node);
-  if (!Type::tvalist)
-    sorry ("cannot represent built-in %<va_list%> type in D");
-
-  /* Map the va_list type to the D frontend Type.  This is to prevent both
-     errors in gimplification or an ICE in targetm.canonical_va_list_type.  */
-  Type::tvalist->ctype = va_list_type_node;
-  TYPE_LANG_SPECIFIC (va_list_type_node) = build_lang_type (Type::tvalist);
-
   d_build_c_type_nodes ();
   d_build_d_type_nodes ();
 
