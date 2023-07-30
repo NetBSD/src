@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.316 2023/07/20 20:00:34 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.317 2023/07/30 12:17:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.316 2023/07/20 20:00:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.317 2023/07/30 12:17:02 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2037,14 +2037,17 @@ ehci_open(struct usbd_pipe *pipe)
 		    );
 		sqh->qh.qh_endphub = htole32(
 		    EHCI_QH_SET_MULT(1) |
-		    EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x02 : 0)
+		    (xfertype == UE_INTERRUPT ?
+			EHCI_QH_SET_SMASK(__BIT(1))	   /* Start Split Y1 */
+			: 0)
 		    );
 		if (speed != EHCI_QH_SPEED_HIGH)
 			sqh->qh.qh_endphub |= htole32(
 			    EHCI_QH_SET_PORT(hshubport) |
 			    EHCI_QH_SET_HUBA(hshubaddr) |
 			    (xfertype == UE_INTERRUPT ?
-				 EHCI_QH_SET_CMASK(0x08) : 0)
+				 EHCI_QH_SET_CMASK(__BITS(3,5)) /* CS Y[345] */
+				 : 0)
 			);
 		sqh->qh.qh_curqtd = EHCI_NULL;
 		/* Fill the overlay qTD */
