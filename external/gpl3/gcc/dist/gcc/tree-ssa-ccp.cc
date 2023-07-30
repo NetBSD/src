@@ -4641,3 +4641,49 @@ make_pass_post_ipa_warn (gcc::context *ctxt)
 {
   return new pass_post_ipa_warn (ctxt);
 }
+
+#if defined(__NetBSD__) && defined(NETBSD_NATIVE)
+/*
+ * This is a big, ugly, temporary hack:
+ *    http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59958
+ * To make sure we have configured all our targets correctly, mimic the
+ * #ifdef cascade from src/lib/libc/stdlib/jemalloc.c here and compile
+ * time assert that the value matches gcc's MALLOC_ABI_ALIGNMENT here.
+ */
+
+#if defined(__hppa__)
+#define	JEMALLOC_TINY_MIN_2POW	4
+#elif defined(__alpha__) || defined(__amd64__) || defined(__sparc64__)	\
+     ||	(defined(__arm__) && defined(__ARM_EABI__)) \
+     || defined(__ia64__) || defined(__powerpc__) \
+     || defined(__aarch64__) \
+     || ((defined(__mips__) || defined(__riscv__)) && defined(_LP64))
+#define	JEMALLOC_TINY_MIN_2POW	3
+#endif
+
+#ifndef JEMALLOC_TINY_MIN_2POW
+#define	JEMALLOC_TINY_MIN_2POW	2
+#endif
+
+/* make sure we test the (native) 64bit variant for targets supporting -m32 */
+#undef	TARGET_64BIT
+#ifdef _LP64
+#define	TARGET_64BIT	1
+#else
+#ifdef __sh__
+#undef UNITS_PER_WORD
+#define	UNITS_PER_WORD	4	/* original definition varies depending on cpu */
+#endif
+#define	TARGET_64BIT	0
+#endif
+
+/* ARM has a non-constant MALLOC_ABI_ALIGNMENT since GCC 5.  */
+#if !defined(__arm__)
+#ifdef __CTASSERT
+__CTASSERT((8<<JEMALLOC_TINY_MIN_2POW) == MALLOC_ABI_ALIGNMENT);
+#else
+#error compiling on an older NetBSD version?
+#endif
+#endif
+
+#endif

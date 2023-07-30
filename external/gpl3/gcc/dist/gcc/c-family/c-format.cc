@@ -926,43 +926,43 @@ static const format_kind_info format_types_orig[] =
     printf_flag_specs, printf_flag_pairs,
     FMT_FLAG_ARG_CONVERT|FMT_FLAG_DOLLAR_MULTIPLE|FMT_FLAG_USE_DOLLAR|FMT_FLAG_EMPTY_PREC_OK,
     'w', 0, 'p', 0, 'L', 0,
-    &integer_type_node, &integer_type_node
+    &integer_type_node, &integer_type_node, format_type_error
   },
   { "asm_fprintf",   asm_fprintf_length_specs,  asm_fprintf_char_table, " +#0-", NULL,
     asm_fprintf_flag_specs, asm_fprintf_flag_pairs,
     FMT_FLAG_ARG_CONVERT|FMT_FLAG_EMPTY_PREC_OK,
     'w', 0, 'p', 0, 'L', 0,
-    NULL, NULL
+    NULL, NULL, format_type_error
   },
   { "gcc_diag",   gcc_diag_length_specs,  gcc_diag_char_table, "q+#", NULL,
     gcc_diag_flag_specs, gcc_diag_flag_pairs,
-    FMT_FLAG_ARG_CONVERT,
+    FMT_FLAG_ARG_CONVERT|FMT_FLAG_M_OK,
     0, 0, 'p', 0, 'L', 0,
-    NULL, &integer_type_node
+    NULL, &integer_type_node, format_type_error
   },
   { "gcc_tdiag",   gcc_tdiag_length_specs,  gcc_tdiag_char_table, "q+#", NULL,
     gcc_tdiag_flag_specs, gcc_tdiag_flag_pairs,
-    FMT_FLAG_ARG_CONVERT,
+    FMT_FLAG_ARG_CONVERT|FMT_FLAG_M_OK,
     0, 0, 'p', 0, 'L', 0,
-    NULL, &integer_type_node
+    NULL, &integer_type_node, format_type_error
   },
   { "gcc_cdiag",   gcc_cdiag_length_specs,  gcc_cdiag_char_table, "q+#", NULL,
     gcc_cdiag_flag_specs, gcc_cdiag_flag_pairs,
-    FMT_FLAG_ARG_CONVERT,
+    FMT_FLAG_ARG_CONVERT|FMT_FLAG_M_OK,
     0, 0, 'p', 0, 'L', 0,
-    NULL, &integer_type_node
+    NULL, &integer_type_node, format_type_error
   },
   { "gcc_cxxdiag",   gcc_cxxdiag_length_specs,  gcc_cxxdiag_char_table, "q+#", NULL,
     gcc_cxxdiag_flag_specs, gcc_cxxdiag_flag_pairs,
-    FMT_FLAG_ARG_CONVERT,
+    FMT_FLAG_ARG_CONVERT|FMT_FLAG_M_OK,
     0, 0, 'p', 0, 'L', 0,
-    NULL, &integer_type_node
+    NULL, &integer_type_node, format_type_error
   },
   { "gcc_gfc", gcc_gfc_length_specs, gcc_gfc_char_table, "q+#", NULL,
     gcc_gfc_flag_specs, gcc_gfc_flag_pairs,
-    FMT_FLAG_ARG_CONVERT,
+    FMT_FLAG_ARG_CONVERT|FMT_FLAG_M_OK,
     0, 0, 0, 0, 0, 0,
-    NULL, NULL
+    NULL, NULL, format_type_error
   },
   { "gcc_dump_printf",   gcc_dump_printf_length_specs,
     gcc_dump_printf_char_table, "q+#", NULL,
@@ -974,24 +974,30 @@ static const format_kind_info format_types_orig[] =
   { "NSString",   NULL,  NULL, NULL, NULL,
     NULL, NULL,
     FMT_FLAG_ARG_CONVERT|FMT_FLAG_PARSE_ARG_CONVERT_EXTERNAL, 0, 0, 0, 0, 0, 0,
-    NULL, NULL
+    NULL, NULL, format_type_error
   },
   { "gnu_scanf",    scanf_length_specs,   scan_char_table,  "*'I", NULL,
     scanf_flag_specs, scanf_flag_pairs,
     FMT_FLAG_ARG_CONVERT|FMT_FLAG_SCANF_A_KLUDGE|FMT_FLAG_USE_DOLLAR|FMT_FLAG_ZERO_WIDTH_BAD|FMT_FLAG_DOLLAR_GAP_POINTER_OK,
     'w', 0, 0, '*', 'L', 'm',
-    NULL, NULL
+    NULL, NULL, format_type_error
   },
   { "gnu_strftime", NULL,                 time_char_table,  "_-0^#", "EO",
     strftime_flag_specs, strftime_flag_pairs,
-    FMT_FLAG_FANCY_PERCENT_OK, 'w', 0, 0, 0, 0, 0,
-    NULL, NULL
+    FMT_FLAG_FANCY_PERCENT_OK|FMT_FLAG_M_OK, 'w', 0, 0, 0, 0, 0,
+    NULL, NULL, format_type_error
   },
   { "gnu_strfmon",  strfmon_length_specs, monetary_char_table, "=^+(!-", NULL,
     strfmon_flag_specs, strfmon_flag_pairs,
     FMT_FLAG_ARG_CONVERT, 'w', '#', 'p', 0, 'L', 0,
-    NULL, NULL
-  }
+    NULL, NULL, format_type_error
+  },
+  { "gnu_syslog",   printf_length_specs,  print_char_table, " +#0-'I", NULL,
+    printf_flag_specs, printf_flag_pairs,
+    FMT_FLAG_ARG_CONVERT|FMT_FLAG_DOLLAR_MULTIPLE|FMT_FLAG_USE_DOLLAR|FMT_FLAG_EMPTY_PREC_OK|FMT_FLAG_M_OK,
+    'w', 0, 'p', 0, 'L', 0,
+    &integer_type_node, &integer_type_node, printf_format_type
+  },
 };
 
 /* This layer of indirection allows GCC to reassign format_types with
@@ -1187,6 +1193,7 @@ check_function_format (const_tree fntype, tree attrs, int nargs,
 		params = tree_cons (NULL_TREE, argarray[i], params);
 	      check_format_info (&info, params, arglocs);
 	    }
+	  const format_kind_info *fi = &format_types[info.format_type];
 
 	  /* Attempt to detect whether the current function might benefit
 	     from the format attribute if the called function is decorated
@@ -1195,8 +1202,7 @@ check_function_format (const_tree fntype, tree attrs, int nargs,
 	  if (warn_suggest_attribute_format
 	      && current_function_decl != NULL_TREE
 	      && info.first_arg_num == 0
-	      && (format_types[info.format_type].flags
-		  & (int) FMT_FLAG_ARG_CONVERT)
+	      && (fi->flags & (int) FMT_FLAG_ARG_CONVERT)
 	      /* c_strlen will fail for a function parameter but succeed
 		 for a literal or constant array.  */
 	      && !c_strlen (argarray[info.format_num - 1], 1))
@@ -1205,11 +1211,17 @@ check_function_format (const_tree fntype, tree attrs, int nargs,
 	      for (c = TYPE_ATTRIBUTES (TREE_TYPE (current_function_decl));
 		   c;
 		   c = TREE_CHAIN (c))
-		if (is_attribute_p ("format", get_attribute_name (c))
-		    && (decode_format_type (IDENTIFIER_POINTER
-					    (TREE_VALUE (TREE_VALUE (c))))
-			== info.format_type))
-		  break;
+		{
+		  if (!is_attribute_p ("format", TREE_PURPOSE (c)))
+		     continue;
+		  int format_type = decode_format_type (
+		      IDENTIFIER_POINTER (TREE_VALUE (TREE_VALUE (c))));
+		  if (format_type == format_type_error)
+		     continue;
+		  if (format_type == info.format_type ||
+		      format_type == fi->parent_format_type)
+		    break;
+		}
 	      if (c == NULL_TREE)
 		{
 		  /* Check if the current function has a parameter to which
@@ -3891,6 +3903,14 @@ check_format_info_main (format_check_results *res,
 			     "conversion lacks type at end of format");
 	  continue;
 	}
+
+      if (format_char == 'm' && !(fki->flags & FMT_FLAG_M_OK))
+        {
+	  warning (OPT_Wformat_,
+	      "%%m is only allowed in syslog(3) like functions");
+	  continue;
+	}
+
       format_chars++;
 
       const format_char_info * const fci
@@ -5093,6 +5113,7 @@ extern const target_ovr_attr TARGET_OVERRIDES_FORMAT_ATTRIBUTES[];
 static const target_ovr_attr gnu_target_overrides_format_attributes[] =
 {
   { "gnu_printf",   "printf" },
+  { "gnu_syslog",   "syslog" },
   { "gnu_scanf",    "scanf" },
   { "gnu_strftime", "strftime" },
   { "gnu_strfmon",  "strfmon" },

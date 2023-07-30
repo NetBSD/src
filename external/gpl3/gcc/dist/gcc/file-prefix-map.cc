@@ -40,7 +40,8 @@ static void
 add_prefix_map (file_prefix_map *&maps, const char *arg, const char *opt)
 {
   file_prefix_map *map;
-  const char *p;
+  const char *p, *old;
+  size_t oldlen;
 
   /* Note: looking for the last '='. The thinking is we can control the paths
      inside our projects but not where the users build them.  */
@@ -50,9 +51,28 @@ add_prefix_map (file_prefix_map *&maps, const char *arg, const char *opt)
       error ("invalid argument %qs to %qs", arg, opt);
       return;
     }
+  if (*arg == '$')
+    {
+      char *env = xstrndup (arg + 1, p - (arg + 1));
+      old = getenv(env);
+      if (!old)
+	{
+	  warning (0, "environment variable %qs not set in argument to "
+		   "%s", env, opt);
+	  free(env);
+	  return;
+	}
+      oldlen = strlen(old);
+      free(env);
+    }
+  else
+    {
+      old = xstrndup (arg, p - arg);
+      oldlen = p - arg;
+    }
   map = XNEW (file_prefix_map);
-  map->old_prefix = xstrndup (arg, p - arg);
-  map->old_len = p - arg;
+  map->old_prefix = old;
+  map->old_len = oldlen;
   p++;
   map->new_prefix = xstrdup (p);
   map->new_len = strlen (p);
@@ -132,12 +152,126 @@ remap_macro_filename (const char *filename)
   return remap_filename (macro_prefix_maps, filename);
 }
 
+/* Original GCC version disabled. The NetBSD version handles regex */
+#if 0
 /* Remap using -fdebug-prefix-map.  Return the GC-allocated new name
    corresponding to FILENAME or FILENAME if no remapping was performed.  */
 const char *
 remap_debug_filename (const char *filename)
 {
   return remap_filename (debug_prefix_maps, filename);
+}
+#endif
+
+/*****
+ ***** The following code is a NetBSD extension that allows regex and
+ ***** \[0-9] substitutition arguments.
+ *****/
+
+/* Perform user-specified mapping of debug filename prefixes.  Return
+   the new name corresponding to FILENAME.  */
+
+static const char *
+remap_debug_prefix_filename (const char *filename)
+{
+  file_prefix_map *map;
+  char *s;
+  const char *name;
+  size_t name_len;
+
+  for (map = debug_prefix_maps; map; map = map->next)
+    if (filename_ncmp (filename, map->old_prefix, map->old_len) == 0)
+      break;
+  if (!map)
+    return filename;
+  name = filename + map->old_len;
+  name_len = strlen (name) + 1;
+  s = (char *) alloca (name_len + map->new_len);
+  memcpy (s, map->new_prefix, map->new_len);
+  memcpy (s + map->new_len, name, name_len);
+  return ggc_strdup (s);
+}
+
+#include <regex.h>
+
+typedef struct debug_regex_map
+{
+  regex_t re;
+  const char *sub;
+  struct debug_regex_map *next;
+} debug_regex_map;
+
+/* Linked list of such structures.  */
+debug_regex_map *debug_regex_maps;
+
+
+/* Record a debug file regex mapping.  ARG is the argument to
+   -fdebug-regex-map and must be of the form OLD=NEW.  */
+
+void
+add_debug_regex_map (const char *arg)
+{
+  debug_regex_map *map;
+  const char *p;
+  char *old;
+  char buf[1024];
+  regex_t re;
+  int e;
+
+  p = strchr (arg, '=');
+  if (!p)
+    {
+      error ("invalid argument %qs to -fdebug-regex-map", arg);
+      return;
+    }
+  
+  old = xstrndup (arg, p - arg);
+  if ((e = regcomp(&re, old, REG_EXTENDED)) != 0)
+    {
+      regerror(e, &re, buf, sizeof(buf));
+      warning (0, "regular expression compilation for %qs in argument to "
+	       "-fdebug-regex-map failed: %qs", old, buf);
+      free(old);
+      return;
+    }
+  free(old);
+
+  map = XNEW (debug_regex_map);
+  map->re = re;
+  p++;
+  map->sub = xstrdup (p);
+  map->next = debug_regex_maps;
+  debug_regex_maps = map;
+}
+
+extern "C" ssize_t regasub(char **, const char *,
+  const regmatch_t *rm, const char *);
+
+/* Perform user-specified mapping of debug filename regular expressions.  Return
+   the new name corresponding to FILENAME.  */
+
+static const char *
+remap_debug_regex_filename (const char *filename)
+{
+  debug_regex_map *map;
+  char *s;
+  regmatch_t rm[10];
+
+  for (map = debug_regex_maps; map; map = map->next)
+    if (regexec (&map->re, filename, 10, rm, 0) == 0
+       && regasub (&s, map->sub, rm, filename) >= 0)
+      {
+	 const char *name = ggc_strdup(s);
+	 free(s);
+	 return name;
+      }
+  return filename;
+}
+
+const char *
+remap_debug_filename (const char *filename)
+{
+   return remap_debug_regex_filename (remap_debug_prefix_filename (filename));
 }
 
 /* Remap using -fprofile-prefix-map.  Return the GC-allocated new name

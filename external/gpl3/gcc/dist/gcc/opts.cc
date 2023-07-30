@@ -2756,6 +2756,10 @@ common_handle_option (struct gcc_options *opts,
       /* Deferred.  */
       break;
 
+    case OPT_fdebug_regex_map_:
+      /* Deferred.  */
+      break;
+
     case OPT_fcallgraph_info:
       opts->x_flag_callgraph_info = CALLGRAPH_INFO_NAKED;
       break;

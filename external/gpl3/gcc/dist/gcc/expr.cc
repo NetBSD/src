@@ -4688,7 +4688,8 @@ emit_push_insn (rtx x, machine_mode mode, tree type, rtx size,
   int overlapping = 0;
 
   if (mode == BLKmode
-      || (STRICT_ALIGNMENT && align < GET_MODE_ALIGNMENT (mode)))
+      || (STRICT_ALIGNMENT && align < GET_MODE_ALIGNMENT (mode)
+	  && type != NULL_TREE))
     {
       /* Copy a block into the stack, entirely or partially.  */
 

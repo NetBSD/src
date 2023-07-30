@@ -382,6 +382,10 @@ handle_common_deferred_options (void)
 	  add_debug_prefix_map (opt->arg);
 	  break;
 
+	case OPT_fdebug_regex_map_:
+	  add_debug_regex_map (opt->arg);
+	  break;
+
 	case OPT_ffile_prefix_map_:
 	  add_file_prefix_map (opt->arg);
 	  break;
