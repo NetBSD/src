@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,11 +23,10 @@ if {[prepare_for_testing "failed to prepare" $testfile $sources]} {
 # This is required due to PR25764.
 gdb_test "maint expand-symtabs"
 
-gdb_test "p a" { = \{1, 2\}}
+gdb_test "p a" { = \{1, 2\}} "no running process: p a"
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
-gdb_test "p a" { = \{1, 2\}}
+gdb_test "p a" { = \{1, 2\}} "running process: p a"

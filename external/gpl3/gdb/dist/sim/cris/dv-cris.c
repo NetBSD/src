@@ -1,6 +1,6 @@
 /* The CRIS interrupt framework for GDB, the GNU Debugger.
 
-   Copyright 2006-2020 Free Software Foundation, Inc.
+   Copyright 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,6 +16,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"
@@ -85,7 +88,7 @@ static const struct hw_port_descriptor cris_ports[] =
 
 struct cris_vec_tr
  {
-   unsigned32 portval, vec;
+   uint32_t portval, vec;
  };
 
 enum cris_multiple_ints
@@ -98,10 +101,10 @@ enum cris_multiple_ints
 struct cris_hw
  {
    struct hw_event *pending_handler;
-   unsigned32 pending_vector;
+   uint32_t pending_vector;
    struct cris_vec_tr *int_to_vec;
    enum cris_multiple_ints multi_int_action;
-   unsigned32 multiple_int_vector;
+   uint32_t multiple_int_vector;
  };
 
 /* An event function, calling the actual CPU-model-specific
@@ -133,9 +136,9 @@ deliver_cris_interrupt (struct hw *me, void *data)
       time we get here, until a new time is seen (supposedly unstuck
       re-delivery).  (Fixing in SIM/GDB source will hopefully then
       also be easier, having a tangible test-case.)  */
-   static signed64 last_events_time = 0;
-   static signed64 delta = 1;
-   signed64 this_events_time = hw_event_queue_time (me);
+   static int64_t last_events_time = 0;
+   static int64_t delta = 1;
+   int64_t this_events_time = hw_event_queue_time (me);
 
    if (this_events_time == last_events_time)
      delta++;
@@ -161,7 +164,7 @@ cris_port_event (struct hw *me,
 		 int intparam)
 {
   struct cris_hw *crishw = hw_data (me);
-  unsigned32 vec;
+  uint32_t vec;
 
   /* A few placeholders; only the INT port is implemented.  */
   switch (my_port)
@@ -191,7 +194,7 @@ cris_port_event (struct hw *me,
       vec = crishw->int_to_vec[i].vec;
     }
   else
-    vec = (unsigned32) intparam;
+    vec = (uint32_t) intparam;
 
   if (crishw->pending_vector != 0)
     {
@@ -242,8 +245,8 @@ cris_finish (struct hw *me)
   vec_for_int = hw_find_property (me, "vec-for-int");
   if (vec_for_int != NULL)
     {
-      unsigned32 vecsize;
-      unsigned32 i;
+      uint32_t vecsize;
+      uint32_t i;
 
       if (hw_property_type (vec_for_int) != array_property)
 	hw_abort (me, "property \"vec-for-int\" has the wrong type");
@@ -269,8 +272,8 @@ cris_finish (struct hw *me)
 	      || vec_sc < 0)
 	    hw_abort (me, "no valid vector translation pair %u", i);
 
-	  crishw->int_to_vec[i].portval = (unsigned32) portval_sc;
-	  crishw->int_to_vec[i].vec = (unsigned32) vec_sc;
+	  crishw->int_to_vec[i].portval = (uint32_t) portval_sc;
+	  crishw->int_to_vec[i].vec = (uint32_t) vec_sc;
 	}
 
       crishw->int_to_vec[i].portval = 0;

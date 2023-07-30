@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2020 Free Software Foundation, Inc.
+# Copyright (C) 1996-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ standard_testfile
 # carriage return)
 set horiz "\[^\n\r\]*"
 
-if [istarget "*-*-linux"] then {
+if {[istarget "*-*-linux"]} {
     set target_cflags "-D_MIT_POSIX_THREADS"
 } else {
     set target_cflags ""
@@ -79,7 +79,7 @@ proc all_threads_running {} {
 	}
     }
 
-    if { $return_me == 1 } then {
+    if {$return_me == 1} {
 	return 0
     }
 
@@ -139,7 +139,7 @@ proc test_startup {} {
 	}
     }
 
-    if { $return_me == 1 } then {
+    if {$return_me == 1} {
 	return 0
     }
 
@@ -189,7 +189,7 @@ proc check_control_c {} {
 
     # Verify that all threads are running.
     with_test_prefix "after startup" {
-	if [all_threads_running] then {
+	if {[all_threads_running]} {
 	    pass "all threads running after startup"
 	}
     }
@@ -219,7 +219,7 @@ proc check_control_c {} {
 
     # Verify that all threads can be run again after a ^C stop.
     with_test_prefix "after continue" {
-	if [all_threads_running] then {
+	if {[all_threads_running]} {
 	    pass "all threads running after continuing from ^C stop"
 	}
     }
@@ -345,9 +345,9 @@ proc check_qcs {} {
 
 }
 
-if [runto_main] then {
-    if [test_startup] then {
-	if [check_control_c] then {
+if {[runto_main]} {
+    if {[test_startup]} {
+	if {[check_control_c]} {
 	    warning "Could not stop child with ^C; skipping rest of tests.\n"
 	    return
 	}

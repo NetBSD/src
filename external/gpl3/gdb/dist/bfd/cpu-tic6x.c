@@ -1,5 +1,5 @@
 /* BFD support for the TI C6X processor.
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -32,7 +32,7 @@ const bfd_arch_info_type bfd_tic6x_arch =
   "tic6x", /* Architecture name.  */
   "tic6x", /* Printable name.  */
   2, /* Section alignment power.  */
-  TRUE, /* Default machine for this architecture.  */
+  true, /* Default machine for this architecture.  */
   bfd_default_compatible,
   bfd_default_scan,
   bfd_arch_default_fill,

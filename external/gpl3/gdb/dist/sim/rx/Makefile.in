@@ -1,6 +1,6 @@
 #### Makefile.in --- Makefile template for the RX simulator
 
-### Copyright (C) 2008-2020 Free Software Foundation, Inc.
+### Copyright (C) 2008-2023 Free Software Foundation, Inc.
 ### Contributed by Red Hat, Inc.
 ### 
 ### This file is part of the GNU simulators.
@@ -20,11 +20,9 @@
 
 ## COMMON_PRE_CONFIG_FRAG
 
-SIM_EXTRA_CFLAGS = -Wall
+SIM_EXTRA_CFLAGS = @SIM_RX_CYCLE_ACCURATE_FLAGS@
 
-SIM_RUN_OBJS = \
-	main.o \
-	$(ENDLIST)
+SIM_RUN_OBJS = main.o
 
 SIM_OBJS = \
 	fpu.o \
@@ -36,27 +34,6 @@ SIM_OBJS = \
 	syscalls.o \
 	trace.o \
 	gdb-if.o \
-	err.o \
-	$(ENDLIST)
-
-LIBS = $B/bfd/libbfd.a $B/libiberty/libiberty.a
+	err.o
 
 ## COMMON_POST_CONFIG_FRAG
-
-arch = rx
-
-err.o : err.h
-fpu.o : cpu.h fpu.h
-gdb-if.o : cpu.h mem.h load.h syscalls.h err.h \
-           $(srcdir)/../../include/gdb/callback.h \
-	   $(srcdir)/../../include/gdb/remote-sim.h \
-	   $(srcdir)/../../include/gdb/signals.h \
-	   $(srcdir)/../../include/gdb/sim-rx.h
-load.o : ../../bfd/bfd.h cpu.h mem.h
-main.o : ../../bfd/bfd.h cpu.h mem.h misc.h load.h trace.h err.h
-mem.o : mem.h cpu.h syscalls.h misc.h err.h
-misc.o : cpu.h misc.h
-reg.o : cpu.h trace.h
-rx.o : $(srcdir)/../../include/opcode/rx.h cpu.h mem.h syscalls.h fpu.h
-syscalls.o : $(srcdir)/../../include/gdb/callback.h cpu.h mem.h syscalls.h syscall.h
-trace.o : ../../bfd/bfd.h $(srcdir)/../../include/dis-asm.h cpu.h mem.h load.h

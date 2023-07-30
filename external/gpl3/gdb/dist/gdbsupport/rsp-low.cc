@@ -1,6 +1,6 @@
 /* Low-level RSP routines for GDB, the GNU debugger.
 
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,21 +19,6 @@
 
 #include "common-defs.h"
 #include "rsp-low.h"
-
-/* See rsp-low.h.  */
-
-int
-fromhex (int a)
-{
-  if (a >= '0' && a <= '9')
-    return a - '0';
-  else if (a >= 'a' && a <= 'f')
-    return a - 'a' + 10;
-  else if (a >= 'A' && a <= 'F')
-    return a - 'A' + 10;
-  else
-    error (_("Reply contains invalid hex digit %d"), a);
-}
 
 /* See rsp-low.h.  */
 
@@ -107,40 +92,6 @@ unpack_varlen_hex (const char *buff,	/* packet to parse */
     }
   *result = retval;
   return buff;
-}
-
-/* See rsp-low.h.  */
-
-int
-hex2bin (const char *hex, gdb_byte *bin, int count)
-{
-  int i;
-
-  for (i = 0; i < count; i++)
-    {
-      if (hex[0] == 0 || hex[1] == 0)
-	{
-	  /* Hex string is short, or of uneven length.
-	     Return the count that has been converted so far.  */
-	  return i;
-	}
-      *bin++ = fromhex (hex[0]) * 16 + fromhex (hex[1]);
-      hex += 2;
-    }
-  return i;
-}
-
-/* See rsp-low.h.  */
-
-gdb::byte_vector
-hex2bin (const char *hex)
-{
-  size_t bin_len = strlen (hex) / 2;
-  gdb::byte_vector bin (bin_len);
-
-  hex2bin (hex, bin.data (), bin_len);
-
-  return bin;
 }
 
 /* See rsp-low.h.  */

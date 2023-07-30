@@ -1,5 +1,5 @@
 // Simulator definition for the micromips DSP ASE.
-// Copyright (C) 2005-2020 Free Software Foundation, Inc.
+// Copyright (C) 2005-2023 Free Software Foundation, Inc.
 // Contributed by Imagination Technologies, Ltd.
 // Written by Andrew Bennett <andrew.bennett@imgtec.com>
 //
@@ -169,7 +169,7 @@
 "bposge32 <IMMEDIATE>"
 *micromipsdsp:
 {
-  unsigned32 pos = (DSPCR >> DSPCR_POS_SHIFT) & DSPCR_POS_MASK;
+  uint32_t pos = (DSPCR >> DSPCR_POS_SHIFT) & DSPCR_POS_MASK;
   if (pos >= 32)
     NIA = delayslot_micromips (SD_, NIA + (EXTEND12 (IMMEDIATE) << 1), NIA,
 			       MICROMIPS_DELAYSLOT_SIZE_ANY);

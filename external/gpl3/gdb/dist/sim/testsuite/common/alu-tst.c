@@ -14,7 +14,10 @@
 
 #define SIM_BITS_INLINE (INCLUDE_MODULE | INCLUDED_BY_MODULE)
 
+#include <stdlib.h>
 #include <string.h>
+
+#define PACKAGE "sim"
 
 #include "sim-basics.h"
 
@@ -24,13 +27,13 @@
 
 typedef struct {
   char *op;
-  unsigned64 arg;
+  uint64_t arg;
 } alu_op;
 
 typedef struct {
-  unsigned64 begin;
+  uint64_t begin;
   alu_op ops[4];
-  unsigned64 result;
+  uint64_t result;
   int carry_borrow;
   int overflow;
 } alu_test;
@@ -48,23 +51,21 @@ typedef struct {
 #define MIN_INT64 UNSIGNED64 (0x8000000000000000)
 
 static void
-print_hex (unsigned64 val, int nr_bits)
+print_hex (uint64_t val, int nr_bits)
 {
   switch (nr_bits)
     {
     case 8:
-      printf ("0x%02lx", (long) (unsigned8) (val));
+      printf ("0x%02lx", (long) (uint8_t) (val));
       break;
     case 16:
-      printf ("0x%04lx", (long) (unsigned16) (val));
+      printf ("0x%04lx", (long) (uint16_t) (val));
       break;
     case 32:
-      printf ("0x%08lx", (long) (unsigned32) (val));
+      printf ("0x%08lx", (long) (uint32_t) (val));
       break;
     case 64:
-      printf ("0x%08lx%08lx",
-	      (long) (unsigned32) (val >> 32),
-	      (long) (unsigned32) (val));
+      printf ("0x%016llx", (long long) (uint64_t) (val));
       break;
     default:
       abort ();

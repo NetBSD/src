@@ -1,6 +1,6 @@
 /* Test program for byte registers.
 
-   Copyright 2010-2020 Free Software Foundation, Inc.
+   Copyright 2010-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

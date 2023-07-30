@@ -1,4 +1,4 @@
-# Copyright 2005-2020 Free Software Foundation, Inc.
+# Copyright 2005-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,9 +23,6 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable {debug}] != ""} {
     return -1
 }
 
-if [get_compiler_info] {
-    return -1
-}
 set old_gcc [expr [test_compiler_info {gcc-[0-3]-*}] \
 	     || [test_compiler_info {gcc-4-[0-6]-*}]]
 

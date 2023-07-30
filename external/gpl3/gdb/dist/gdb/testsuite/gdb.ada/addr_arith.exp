@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,8 +26,7 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" }
 clean_restart ${testfile}
 
 set bp_location [gdb_get_line_number "START" ${testdir}/foo_na07_019.adb]
-if ![runto "foo_na07_019.adb:$bp_location" ] then {
-  perror "Couldn't run ${testfile}"
+if {![runto "foo_na07_019.adb:$bp_location"]} {
   return
 }
 

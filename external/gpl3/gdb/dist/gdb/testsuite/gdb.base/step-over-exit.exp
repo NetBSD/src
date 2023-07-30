@@ -1,4 +1,4 @@
-#   Copyright 2016-2020 Free Software Foundation, Inc.
+#   Copyright 2016-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ set syscall_insn ""
 # Define the syscall instruction for each target.
 
 if { [istarget "i\[34567\]86-*-linux*"] || [istarget "x86_64-*-linux*"] } {
-    set syscall_insn "\[ \t\](int|syscall|sysenter)\[ \t\]"
+    set syscall_insn "\[ \t\](int|syscall|sysenter)\[ \t\]*"
 } elseif { [istarget "aarch64*-*-linux*"] || [istarget "arm*-*-linux*"] } {
     set syscall_insn "\[ \t\](swi|svc)\[ \t\]"
 } else {
@@ -35,10 +35,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
-# Start with a fresh gdb.
-clean_restart ${testfile}
 if ![runto_main] {
-    fail "can't run to main"
     return -1
 }
 
@@ -94,7 +91,7 @@ delete_breakpoints
 
 gdb_test "break marker"
 
-gdb_test "continue" "Continuing\\..*Breakpoint $decimal, .*" \
+gdb_test "continue" "Continuing\\..*Breakpoint $bkptno_num_re, .*" \
     "continue to marker, first time"
 
 # Step 2, create a breakpoint which evaluates false, and force it
@@ -123,5 +120,5 @@ gdb_test "inferior 1" ".*Switching to inferior 1.*" \
 # Switch back to the parent process, continue to the marker to
 # test GDBserver's state is still correct.
 
-gdb_test "continue" "Continuing\\..*Breakpoint $decimal, .*" \
+gdb_test "continue" "Continuing\\..*Breakpoint $bkptno_numopt_re, .*" \
     "continue to marker, second time"

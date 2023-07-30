@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,17 +39,15 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
      return -1
     }
 
-if [get_compiler_info] {
-    return -1
-}
-
 clean_restart ${binfile}
 
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
+
+# This is used as an expected result value.
+set false 0
 
 gdb_test_no_output "set variable x=14" "set variable x=14"
 gdb_test_no_output "set variable y=2" "set variable y=2"

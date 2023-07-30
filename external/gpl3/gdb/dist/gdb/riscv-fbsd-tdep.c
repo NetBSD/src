@@ -1,5 +1,5 @@
 /* Target-dependent code for FreeBSD on RISC-V processors.
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,32 +53,16 @@ static const struct regcache_map_entry riscv_fbsd_fpregmap[] =
     { 0 }
   };
 
-/* Supply the general-purpose registers stored in GREGS to REGCACHE.
-   This function only exists to supply the always-zero x0 in addition
-   to the registers in GREGS.  */
-
-static void
-riscv_fbsd_supply_gregset (const struct regset *regset,
-			   struct regcache *regcache, int regnum,
-			   const void *gregs, size_t len)
-{
-  regcache->supply_regset (&riscv_fbsd_gregset, regnum, gregs, len);
-  if (regnum == -1 || regnum == RISCV_ZERO_REGNUM)
-    regcache->raw_supply_zeroed (RISCV_ZERO_REGNUM);
-}
-
 /* Register set definitions.  */
 
 const struct regset riscv_fbsd_gregset =
   {
-    riscv_fbsd_gregmap,
-    riscv_fbsd_supply_gregset, regcache_collect_regset
+    riscv_fbsd_gregmap, riscv_supply_regset, regcache_collect_regset
   };
 
 const struct regset riscv_fbsd_fpregset =
   {
-    riscv_fbsd_fpregmap,
-    regcache_supply_regset, regcache_collect_regset
+    riscv_fbsd_fpregmap, riscv_supply_regset, regcache_collect_regset
   };
 
 /* Implement the "iterate_over_regset_sections" gdbarch method.  */
@@ -124,7 +108,7 @@ riscv_fbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static void
 riscv_fbsd_sigframe_init (const struct tramp_frame *self,
-			  struct frame_info *this_frame,
+			  frame_info_ptr this_frame,
 			  struct trad_frame_cache *this_cache,
 			  CORE_ADDR func)
 {

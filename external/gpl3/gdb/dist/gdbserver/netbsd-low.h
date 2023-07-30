@@ -1,4 +1,4 @@
-/* Copyright (C) 2020 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,21 +35,6 @@ struct netbsd_regset_info
   void (*store_function) (struct regcache *regcache, const char *buf);
 };
 
-/* A list of regsets for the target being debugged, terminated by an entry
-   where the size is negative.
-
-   This list should be created by the target-specific code.  */
-
-extern struct netbsd_regset_info netbsd_target_regsets[];
-
-/* The target-specific operations for NetBSD support.  */
-
-struct netbsd_target_ops
-{
-  /* Architecture-specific setup.  */
-  void (*arch_setup) ();
-};
-
 /* Target ops definitions for a NetBSD target.  */
 
 class netbsd_process_target : public process_stratum_target
@@ -76,7 +61,7 @@ public:
   void resume (thread_resume *resume_info, size_t n) override;
 
   ptid_t wait (ptid_t ptid, target_waitstatus *status,
-	       int options) override;
+	       target_wait_flags options) override;
 
   void fetch_registers (regcache *regcache, int regno) override;
 
@@ -136,19 +121,22 @@ public:
 
   bool supports_pid_to_exec_file () override;
 
-  char *pid_to_exec_file (int pid) override;
+  const char *pid_to_exec_file (int pid) override;
 
   const char *thread_name (ptid_t thread) override;
 
   bool supports_catch_syscall () override;
+
+protected:
+  /* The architecture-specific "low" methods are listed below.  */
+
+  /* Return the information to access registers.  */
+  virtual const netbsd_regset_info *get_regs_info () = 0;
+
+  /* Architecture-specific setup for the current process.  */
+  virtual void low_arch_setup () = 0;
 };
 
-/* The inferior's target description.  This is a global because the
-   NetBSD ports support neither bi-arch nor multi-process.  */
-
-extern struct netbsd_target_ops the_low_target;
-
-/* XXX: multilib */
-extern const struct target_desc *netbsd_tdesc;
+extern netbsd_process_target *the_netbsd_target;
 
 #endif /* GDBSERVER_NETBSD_LOW_H */

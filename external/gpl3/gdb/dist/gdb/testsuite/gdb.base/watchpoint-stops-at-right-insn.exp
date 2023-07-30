@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@
 standard_testfile
 
 # No use testing this if we can't use hardware watchpoints.
-if {[target_info exists gdb,no_hardware_watchpoints]} {
+if {[skip_hw_watchpoint_tests]} {
     return -1
 }
 
@@ -79,8 +79,7 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return -1
 }
 
-if { ![runto main] } then {
-    fail "run to main"
+if {![runto_main]} {
     return
 }
 
@@ -134,8 +133,7 @@ proc test {always_inserted} {
 
 	clean_restart $binfile
 
-	if { ![runto main] } then {
-	    fail "run to main"
+	if {![runto_main]} {
 	    return
 	}
 

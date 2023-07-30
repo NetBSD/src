@@ -1,5 +1,5 @@
 /* GDB stub for Itanium OpenVMS
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
    Contributed by Tristan Gingold, AdaCore.
 
@@ -75,7 +75,7 @@
 extern void ots$fill (void *addr, size_t len, unsigned char b);
 extern void ots$move (void *dst, size_t len, const void *src);
 extern int ots$strcmp_eql (const void *str1, size_t str1len,
-                           const void *str2, size_t str2len);
+			   const void *str2, size_t str2len);
 
 /* Stub port number.  */
 static unsigned int serv_port = 1234;
@@ -296,14 +296,14 @@ term_raw_write (const char *str, unsigned int len)
   struct _iosb iosb;
 
   status = sys$qiow (EFN$C_ENF,           /* Event flag.  */
-                     term_chan,           /* I/O channel.  */
-                     IO$_WRITEVBLK,       /* I/O function code.  */
-                     &iosb,               /* I/O status block.  */
-                     0,                   /* Ast service routine.  */
-                     0,                   /* Ast parameter.  */
-                     (char *)str,         /* P1 - buffer address.  */
-                     len,                 /* P2 - buffer length.  */
-                     0, 0, 0, 0);
+		     term_chan,           /* I/O channel.  */
+		     IO$_WRITEVBLK,       /* I/O function code.  */
+		     &iosb,               /* I/O status block.  */
+		     0,                   /* Ast service routine.  */
+		     0,                   /* Ast parameter.  */
+		     (char *)str,         /* P1 - buffer address.  */
+		     len,                 /* P2 - buffer length.  */
+		     0, 0, 0, 0);
 
   if (status & STS$M_SUCCESS)
     status = iosb.iosb$w_status;
@@ -443,10 +443,10 @@ term_init (void)
 
   /* Translate the logical name.  */
   status = SYS$TRNLNM (0,          	  /* Attr of the logical name.  */
-                       (void *) &tabdesc, /* Logical name table.  */
-                       (void *) &logdesc, /* Logical name.  */
-                       0,          /* Access mode.  */
-                       item_lst);  /* Item list.  */
+		       (void *) &tabdesc, /* Logical name table.  */
+		       (void *) &logdesc, /* Logical name.  */
+		       0,          /* Access mode.  */
+		       item_lst);  /* Item list.  */
   if (!(status & STS$M_SUCCESS))
     LIB$SIGNAL (status);
 
@@ -461,9 +461,9 @@ term_init (void)
 
   /* Assign a channel.  */
   status = sys$assign (&term_desc,   /* Device name.  */
-                       &term_chan,   /* I/O channel.  */
-                       0,            /* Access mode.  */
-                       0);
+		       &term_chan,   /* I/O channel.  */
+		       0,            /* Access mode.  */
+		       0);
   if (!(status & STS$M_SUCCESS))
     LIB$SIGNAL (status);
 }
@@ -522,13 +522,13 @@ sock_init (void)
 
   /* Create a listen socket.  */
   status = sys$qiow (EFN$C_ENF,           /* Event flag.  */
-                     listen_channel,      /* I/O channel.  */
-                     IO$_SETMODE,         /* I/O function code.  */
-                     &iosb,               /* I/O status block.  */
-                     0,                   /* Ast service routine.  */
-                     0,                   /* Ast parameter.  */
-                     &listen_sockchar,    /* P1 - socket characteristics.  */
-                     0, 0, 0, 0, 0);
+		     listen_channel,      /* I/O channel.  */
+		     IO$_SETMODE,         /* I/O function code.  */
+		     &iosb,               /* I/O status block.  */
+		     0,                   /* Ast service routine.  */
+		     0,                   /* Ast parameter.  */
+		     &listen_sockchar,    /* P1 - socket characteristics.  */
+		     0, 0, 0, 0, 0);
   if (status & STS$M_SUCCESS)
     status = iosb.iosb$w_status;
   if (!(status & STS$M_SUCCESS))
@@ -549,17 +549,17 @@ sock_init (void)
   sockopt_itemlst.ile2$ps_bufaddr = &reuseaddr_itemlst;
 
   status = sys$qiow (EFN$C_ENF,       /* Event flag.  */
-                     listen_channel,  /* I/O channel.  */
-                     IO$_SETMODE,     /* I/O function code.  */
-                     &iosb,           /* I/O status block.  */
-                     0,               /* Ast service routine.  */
-                     0,               /* Ast parameter.  */
-                     0,               /* P1.  */
-                     0,               /* P2.  */
-                     0,               /* P3.  */
-                     0,               /* P4.  */
-                     (__int64) &sockopt_itemlst, /* P5 - socket options.  */
-                     0);
+		     listen_channel,  /* I/O channel.  */
+		     IO$_SETMODE,     /* I/O function code.  */
+		     &iosb,           /* I/O status block.  */
+		     0,               /* Ast service routine.  */
+		     0,               /* Ast parameter.  */
+		     0,               /* P1.  */
+		     0,               /* P2.  */
+		     0,               /* P3.  */
+		     0,               /* P4.  */
+		     (__int64) &sockopt_itemlst, /* P5 - socket options.  */
+		     0);
   if (status & STS$M_SUCCESS)
     status = iosb.iosb$w_status;
   if (!(status & STS$M_SUCCESS))
@@ -581,15 +581,15 @@ sock_init (void)
   serv_itemlst.ile2$ps_bufaddr = &serv_addr;
 
   status = sys$qiow (EFN$C_ENF,           /* Event flag.  */
-                     listen_channel,      /* I/O channel.  */
-                     IO$_SETMODE,         /* I/O function code.  */
-                     &iosb,               /* I/O status block.  */
-                     0,                   /* Ast service routine.  */
-                     0,                   /* Ast parameter.  */
-                     0,                   /* P1.  */
-                     0,                   /* P2.  */
-                     (__int64) &serv_itemlst, /* P3 - local socket name.  */
-                     0, 0, 0);
+		     listen_channel,      /* I/O channel.  */
+		     IO$_SETMODE,         /* I/O function code.  */
+		     &iosb,               /* I/O status block.  */
+		     0,                   /* Ast service routine.  */
+		     0,                   /* Ast parameter.  */
+		     0,                   /* P1.  */
+		     0,                   /* P2.  */
+		     (__int64) &serv_itemlst, /* P3 - local socket name.  */
+		     0, 0, 0);
   if (status & STS$M_SUCCESS)
     status = iosb.iosb$w_status;
   if (!(status & STS$M_SUCCESS))
@@ -600,16 +600,16 @@ sock_init (void)
 
   /* Set socket as a listen socket.  */
   status = sys$qiow (EFN$C_ENF,           /* Event flag.  */
-                     listen_channel,      /* I/O channel.  */
-                     IO$_SETMODE,         /* I/O function code.  */
-                     &iosb,               /* I/O status block.  */
-                     0,                   /* Ast service routine.  */
-                     0,                   /* Ast parameter.  */
-                     0,                   /* P1.  */
-                     0,                   /* P2.  */
-                     0,                   /* P3.  */
-                     1,                   /* P4 - connection backlog.  */
-                     0, 0);
+		     listen_channel,      /* I/O channel.  */
+		     IO$_SETMODE,         /* I/O function code.  */
+		     &iosb,               /* I/O status block.  */
+		     0,                   /* Ast service routine.  */
+		     0,                   /* Ast parameter.  */
+		     0,                   /* P1.  */
+		     0,                   /* P2.  */
+		     0,                   /* P3.  */
+		     1,                   /* P4 - connection backlog.  */
+		     0, 0);
   if (status & STS$M_SUCCESS)
     status = iosb.iosb$w_status;
   if (!(status & STS$M_SUCCESS))
@@ -623,16 +623,16 @@ sock_init (void)
 	    wordswap (serv_addr.sin_port));
 
   status = sys$qiow (EFN$C_ENF,              /* Event flag.  */
-                     listen_channel,         /* I/O channel.  */
-                     IO$_ACCESS|IO$M_ACCEPT, /* I/O function code.  */
-                     &iosb,                  /* I/O status block.  */
-                     0,                      /* Ast service routine.  */
-                     0,                      /* Ast parameter.  */
-                     0,                      /* P1.  */
-                     0,                      /* P2.  */
-                     0,                      /* P3.  */
-                     (__int64) &conn_channel, /* P4 - I/O channel for conn.  */
-                     0, 0);
+		     listen_channel,         /* I/O channel.  */
+		     IO$_ACCESS|IO$M_ACCEPT, /* I/O function code.  */
+		     &iosb,                  /* I/O status block.  */
+		     0,                      /* Ast service routine.  */
+		     0,                      /* Ast parameter.  */
+		     0,                      /* P1.  */
+		     0,                      /* P2.  */
+		     0,                      /* P3.  */
+		     (__int64) &conn_channel, /* P4 - I/O channel for conn.  */
+		     0, 0);
 
   if (status & STS$M_SUCCESS)
     status = iosb.iosb$w_status;
@@ -649,16 +649,16 @@ sock_init (void)
   cli_itemlst.ile3$ps_retlen_addr = &cli_addrlen;
   ots$fill (&cli_addr, sizeof(cli_addr), 0);
   status = sys$qiow (EFN$C_ENF,           /* Event flag.  */
-                     conn_channel,        /* I/O channel.  */
-                     IO$_SENSEMODE,       /* I/O function code.  */
-                     &iosb,               /* I/O status block.  */
-                     0,                   /* Ast service routine.  */
-                     0,                   /* Ast parameter.  */
-                     0,                   /* P1.  */
-                     0,                   /* P2.  */
-                     0,                   /* P3.  */
-                     (__int64) &cli_itemlst,  /* P4 - peer socket name.  */
-                     0, 0);
+		     conn_channel,        /* I/O channel.  */
+		     IO$_SENSEMODE,       /* I/O function code.  */
+		     &iosb,               /* I/O status block.  */
+		     0,                   /* Ast service routine.  */
+		     0,                   /* Ast parameter.  */
+		     0,                   /* P1.  */
+		     0,                   /* P2.  */
+		     0,                   /* P3.  */
+		     (__int64) &cli_itemlst,  /* P4 - peer socket name.  */
+		     0, 0);
   if (status & STS$M_SUCCESS)
     status = iosb.iosb$w_status;
   if (!(status & STS$M_SUCCESS))
@@ -685,12 +685,12 @@ sock_close (void)
 
   /* Close socket.  */
   status = sys$qiow (EFN$C_ENF,           /* Event flag.  */
-                     conn_channel,        /* I/O channel.  */
-                     IO$_DEACCESS,        /* I/O function code.  */
-                     &iosb,               /* I/O status block.  */
-                     0,                   /* Ast service routine.  */
-                     0,                   /* Ast parameter.  */
-                     0, 0, 0, 0, 0, 0);
+		     conn_channel,        /* I/O channel.  */
+		     IO$_DEACCESS,        /* I/O function code.  */
+		     &iosb,               /* I/O status block.  */
+		     0,                   /* Ast service routine.  */
+		     0,                   /* Ast parameter.  */
+		     0, 0, 0, 0, 0, 0);
 
   if (status & STS$M_SUCCESS)
     status = iosb.iosb$w_status;
@@ -714,14 +714,14 @@ sock_close (void)
 
 static unsigned int
 page_set_rw (unsigned __int64 startva, unsigned __int64 len,
-             unsigned int *oldprot)
+	     unsigned int *oldprot)
 {
   unsigned int status;
   unsigned __int64 retva;
   unsigned __int64 retlen;
 
   status = SYS$SETPRT_64 ((void *)startva, len, PSL$C_USER, PRT$C_UW,
-                          (void *)&retva, &retlen, oldprot);
+			  (void *)&retva, &retlen, oldprot);
   return status;
 }
 
@@ -729,7 +729,7 @@ page_set_rw (unsigned __int64 startva, unsigned __int64 len,
 
 static void
 page_restore_rw (unsigned __int64 startva, unsigned __int64 len,
-                unsigned int prot)
+		unsigned int prot)
 {
   unsigned int status;
   unsigned __int64 retva;
@@ -737,7 +737,7 @@ page_restore_rw (unsigned __int64 startva, unsigned __int64 len,
   unsigned int oldprot;
 
   status = SYS$SETPRT_64 ((void *)startva, len, PSL$C_USER, prot,
-                          (void *)&retva, &retlen, &oldprot);
+			  (void *)&retva, &retlen, &oldprot);
   if (!(status & STS$M_SUCCESS))
     LIB$SIGNAL (status);
 }
@@ -1267,7 +1267,7 @@ pkt2val (const unsigned char *pkt, unsigned int *pos)
       int r = hex2nibble (pkt[*pos]);
 
       if (r < 0)
-        return res;
+	return res;
       res = (res << 4) | r;
       (*pos)++;
     }
@@ -1287,12 +1287,12 @@ mem2bin (const unsigned char *b, unsigned int len)
       case '}':
       case '*':
       case 0:
-        gdb_buf[gdb_blen++] = '}';
-        gdb_buf[gdb_blen++] = b[i] ^ 0x20;
-        break;
+	gdb_buf[gdb_blen++] = '}';
+	gdb_buf[gdb_blen++] = b[i] ^ 0x20;
+	break;
       default:
-        gdb_buf[gdb_blen++] = b[i];
-        break;
+	gdb_buf[gdb_blen++] = b[i];
+	break;
       }
 }
 
@@ -1366,19 +1366,19 @@ handle_q_packet (const unsigned char *pkt, unsigned int pktlen)
 
       pc = pkt2val (pkt, &pos);
       if (pkt[pos] != ':')
-        return;
+	return;
       pos++;
       off = pkt2val (pkt, &pos);
       if (pkt[pos] != ',' || off != 0)
-        return;
+	return;
       pos++;
       len = pkt2val (pkt, &pos);
       if (pkt[pos] != '#' || len != 0x20)
-        return;
+	return;
 
       res = SYS$GET_UNWIND_ENTRY_INFO (pc, &uei.data, 0);
       if (res == SS$_NODATA || res != SS$_NORMAL)
-        ots$fill (uei.bytes, sizeof (uei.bytes), 0);
+	ots$fill (uei.bytes, sizeof (uei.bytes), 0);
 
       if (trace_unwind)
 	{
@@ -1450,7 +1450,7 @@ handle_q_packet (const unsigned char *pkt, unsigned int pktlen)
 
       thr = (pthread_t) pkt2val (pkt, &pos);
       if (pkt[pos] != '#')
-        return;
+	return;
       res = pthread_debug_thd_get_info_addr (thr, &info);
       if (res != 0)
 	{
@@ -1592,33 +1592,33 @@ handle_packet (unsigned char *pkt, unsigned int len)
     {
     case '?':
       if (len == 1)
-        {
+	{
 	  packet_status ();
-          return 0;
-        }
+	  return 0;
+	}
       break;
     case 'c':
       if (len == 1)
-        {
-          /* Clear psr.ss.  */
-          excp_regs.psr.v &= ~(unsigned __int64)PSR$M_SS;
-          return 1;
-        }
+	{
+	  /* Clear psr.ss.  */
+	  excp_regs.psr.v &= ~(unsigned __int64)PSR$M_SS;
+	  return 1;
+	}
       else
-        packet_error (0);
+	packet_error (0);
       break;
     case 'g':
       if (len == 1)
-        {
-          unsigned int i;
+	{
+	  unsigned int i;
 	  struct ia64_all_regs *regs = get_selected_regs ();
-          unsigned char *p = regs->gr[0].b;
+	  unsigned char *p = regs->gr[0].b;
 
-          for (i = 0; i < 8 * 32; i++)
-            byte2hex (gdb_buf + 1 + 2 * i, p[i]);
-          gdb_blen += 2 * 8 * 32;
-          return 0;
-        }
+	  for (i = 0; i < 8 * 32; i++)
+	    byte2hex (gdb_buf + 1 + 2 * i, p[i]);
+	  gdb_blen += 2 * 8 * 32;
+	  return 0;
+	}
       break;
     case 'H':
       if (pkt[1] == 'g')
@@ -1678,24 +1678,24 @@ handle_packet (unsigned char *pkt, unsigned int len)
       break;
     case 'm':
       {
-        unsigned __int64 addr;
+	unsigned __int64 addr;
 	unsigned __int64 paddr;
-        unsigned int l;
-        unsigned int i;
+	unsigned int l;
+	unsigned int i;
 
-        addr = pkt2val (pkt, &pos);
-        if (pkt[pos] != ',')
-          {
-            packet_error (0);
-            return 0;
-          }
-        pos++;
-        l = pkt2val (pkt, &pos);
-        if (pkt[pos] != '#')
-          {
-            packet_error (0);
-            return 0;
-          }
+	addr = pkt2val (pkt, &pos);
+	if (pkt[pos] != ',')
+	  {
+	    packet_error (0);
+	    return 0;
+	  }
+	pos++;
+	l = pkt2val (pkt, &pos);
+	if (pkt[pos] != '#')
+	  {
+	    packet_error (0);
+	    return 0;
+	  }
 
 	/* Check access.  */
 	i = l + (addr & VMS_PAGE_MASK);
@@ -1721,27 +1721,27 @@ handle_packet (unsigned char *pkt, unsigned int len)
       break;
     case 'M':
       {
-        unsigned __int64 addr;
-        unsigned __int64 paddr;
-        unsigned int l;
-        unsigned int i;
-        unsigned int oldprot;
+	unsigned __int64 addr;
+	unsigned __int64 paddr;
+	unsigned int l;
+	unsigned int i;
+	unsigned int oldprot;
 
-        addr = pkt2val (pkt, &pos);
-        if (pkt[pos] != ',')
-          {
-            packet_error (0);
-            return 0;
-          }
-        pos++;
-        l = pkt2val (pkt, &pos);
-        if (pkt[pos] != ':')
-          {
-            packet_error (0);
-            return 0;
-          }
-        pos++;
-        page_set_rw (addr, l, &oldprot);
+	addr = pkt2val (pkt, &pos);
+	if (pkt[pos] != ',')
+	  {
+	    packet_error (0);
+	    return 0;
+	  }
+	pos++;
+	l = pkt2val (pkt, &pos);
+	if (pkt[pos] != ':')
+	  {
+	    packet_error (0);
+	    return 0;
+	  }
+	pos++;
+	page_set_rw (addr, l, &oldprot);
 
 	/* Check access.  */
 	i = l + (addr & VMS_PAGE_MASK);
@@ -1760,63 +1760,63 @@ handle_packet (unsigned char *pkt, unsigned int len)
 	  }
 
 	/* Write.  */
-        for (i = 0; i < l; i++)
-          {
-            int v = hex2byte (pkt + pos);
-            pos += 2;
-            ((unsigned char *)addr)[i] = v;
-          }
+	for (i = 0; i < l; i++)
+	  {
+	    int v = hex2byte (pkt + pos);
+	    pos += 2;
+	    ((unsigned char *)addr)[i] = v;
+	  }
 
 	/* Sync caches.  */
-        for (i = 0; i < l; i += 15)
-          __fc (addr + i);
-        __fc (addr + l);
+	for (i = 0; i < l; i += 15)
+	  __fc (addr + i);
+	__fc (addr + l);
 
-        page_restore_rw (addr, l, oldprot);
-        packet_ok ();
+	page_restore_rw (addr, l, oldprot);
+	packet_ok ();
       }
       break;
     case 'p':
       {
-        unsigned int num = 0;
-        unsigned int i;
+	unsigned int num = 0;
+	unsigned int i;
 	struct ia64_all_regs *regs = get_selected_regs ();
 
-        num = pkt2val (pkt, &pos);
-        if (pos != len)
-          {
-            packet_error (0);
-            return 0;
-          }
+	num = pkt2val (pkt, &pos);
+	if (pos != len)
+	  {
+	    packet_error (0);
+	    return 0;
+	  }
 
-        switch (num)
-          {
-          case IA64_IP_REGNUM:
-            ireg2pkt (regs->ip.b);
-            break;
-          case IA64_BR0_REGNUM:
-            ireg2pkt (regs->br[0].b);
-            break;
-          case IA64_PSR_REGNUM:
-            ireg2pkt (regs->psr.b);
-            break;
-          case IA64_BSP_REGNUM:
-            ireg2pkt (regs->bsp.b);
-            break;
-          case IA64_CFM_REGNUM:
-            ireg2pkt (regs->cfm.b);
-            break;
-          case IA64_PFS_REGNUM:
-            ireg2pkt (regs->pfs.b);
-            break;
-          case IA64_PR_REGNUM:
-            ireg2pkt (regs->pr.b);
-            break;
-          default:
-            TERM_FAO ("gdbserv: unhandled reg !UW!/", num);
-            packet_error (0);
-            return 0;
-          }
+	switch (num)
+	  {
+	  case IA64_IP_REGNUM:
+	    ireg2pkt (regs->ip.b);
+	    break;
+	  case IA64_BR0_REGNUM:
+	    ireg2pkt (regs->br[0].b);
+	    break;
+	  case IA64_PSR_REGNUM:
+	    ireg2pkt (regs->psr.b);
+	    break;
+	  case IA64_BSP_REGNUM:
+	    ireg2pkt (regs->bsp.b);
+	    break;
+	  case IA64_CFM_REGNUM:
+	    ireg2pkt (regs->cfm.b);
+	    break;
+	  case IA64_PFS_REGNUM:
+	    ireg2pkt (regs->pfs.b);
+	    break;
+	  case IA64_PR_REGNUM:
+	    ireg2pkt (regs->pr.b);
+	    break;
+	  default:
+	    TERM_FAO ("gdbserv: unhandled reg !UW!/", num);
+	    packet_error (0);
+	    return 0;
+	  }
       }
       break;
     case 'q':
@@ -1824,13 +1824,13 @@ handle_packet (unsigned char *pkt, unsigned int len)
       break;
     case 's':
       if (len == 1)
-        {
-          /* Set psr.ss.  */
-          excp_regs.psr.v |= (unsigned __int64)PSR$M_SS;
-          return 1;
-        }
+	{
+	  /* Set psr.ss.  */
+	  excp_regs.psr.v |= (unsigned __int64)PSR$M_SS;
+	  return 1;
+	}
       else
-        packet_error (0);
+	packet_error (0);
       break;
     case 'T':
       /* Thread status.  */
@@ -1907,14 +1907,14 @@ sock_write (const unsigned char *buf, int len)
 
   /* Write data to connection.  */
   status = sys$qiow (EFN$C_ENF,           /* Event flag.  */
-                     conn_channel,        /* I/O channel.  */
-                     IO$_WRITEVBLK,       /* I/O function code.  */
-                     &iosb,               /* I/O status block.  */
-                     0,                   /* Ast service routine.  */
-                     0,                   /* Ast parameter.  */
-                     (char *)buf,         /* P1 - buffer address.  */
-                     len,                 /* P2 - buffer length.  */
-                     0, 0, 0, 0);
+		     conn_channel,        /* I/O channel.  */
+		     IO$_WRITEVBLK,       /* I/O function code.  */
+		     &iosb,               /* I/O status block.  */
+		     0,                   /* Ast service routine.  */
+		     0,                   /* Ast parameter.  */
+		     (char *)buf,         /* P1 - buffer address.  */
+		     len,                 /* P2 - buffer length.  */
+		     0, 0, 0, 0);
   if (status & STS$M_SUCCESS)
     status = iosb.iosb$w_status;
   if (!(status & STS$M_SUCCESS))
@@ -1966,91 +1966,91 @@ one_command (void)
     {
       off = 0;
       while (1)
-        {
-          /* Read data from connection.  */
-          status = sys$qiow (EFN$C_ENF,           /* Event flag.  */
-                             conn_channel,        /* I/O channel.  */
-                             IO$_READVBLK,        /* I/O function code.  */
-                             &iosb,               /* I/O status block.  */
-                             0,                   /* Ast service routine.  */
-                             0,                   /* Ast parameter.  */
-                             gdb_buf + off,       /* P1 - buffer address.  */
-                             sizeof (gdb_buf) - off, /* P2 - buffer leng.  */
-                             0, 0, 0, 0);
-          if (status & STS$M_SUCCESS)
-            status = iosb.iosb$w_status;
-          if (!(status & STS$M_SUCCESS))
-            {
-              term_puts ("Failed to read data from connection\n" );
-              LIB$SIGNAL (status);
-            }
+	{
+	  /* Read data from connection.  */
+	  status = sys$qiow (EFN$C_ENF,           /* Event flag.  */
+			     conn_channel,        /* I/O channel.  */
+			     IO$_READVBLK,        /* I/O function code.  */
+			     &iosb,               /* I/O status block.  */
+			     0,                   /* Ast service routine.  */
+			     0,                   /* Ast parameter.  */
+			     gdb_buf + off,       /* P1 - buffer address.  */
+			     sizeof (gdb_buf) - off, /* P2 - buffer leng.  */
+			     0, 0, 0, 0);
+	  if (status & STS$M_SUCCESS)
+	    status = iosb.iosb$w_status;
+	  if (!(status & STS$M_SUCCESS))
+	    {
+	      term_puts ("Failed to read data from connection\n" );
+	      LIB$SIGNAL (status);
+	    }
 
 #ifdef RAW_DUMP
-          term_puts ("{: ");
-          term_write ((char *)gdb_buf + off, iosb.iosb$w_bcnt);
-          term_putnl ();
+	  term_puts ("{: ");
+	  term_write ((char *)gdb_buf + off, iosb.iosb$w_bcnt);
+	  term_putnl ();
 #endif
 
-          gdb_blen = off + iosb.iosb$w_bcnt;
+	  gdb_blen = off + iosb.iosb$w_bcnt;
 
-          if (off == 0)
-            {
-              /* Search for '$'.  */
-              for (dollar_off = 0; dollar_off < gdb_blen; dollar_off++)
-                if (gdb_buf[dollar_off] == '$')
-                  break;
-              if (dollar_off >= gdb_blen)
-                {
-                  /* Not found, discard the data.  */
-                  off = 0;
-                  continue;
-                }
-              /* Search for '#'.  */
-              for (sharp_off = dollar_off + 1;
+	  if (off == 0)
+	    {
+	      /* Search for '$'.  */
+	      for (dollar_off = 0; dollar_off < gdb_blen; dollar_off++)
+		if (gdb_buf[dollar_off] == '$')
+		  break;
+	      if (dollar_off >= gdb_blen)
+		{
+		  /* Not found, discard the data.  */
+		  off = 0;
+		  continue;
+		}
+	      /* Search for '#'.  */
+	      for (sharp_off = dollar_off + 1;
 		   sharp_off < gdb_blen;
 		   sharp_off++)
-                if (gdb_buf[sharp_off] == '#')
-                  break;
-            }
-          else if (sharp_off >= off)
-            {
-              /* Search for '#'.  */
-              for (; sharp_off < gdb_blen; sharp_off++)
-                if (gdb_buf[sharp_off] == '#')
-                  break;
-            }
+		if (gdb_buf[sharp_off] == '#')
+		  break;
+	    }
+	  else if (sharp_off >= off)
+	    {
+	      /* Search for '#'.  */
+	      for (; sharp_off < gdb_blen; sharp_off++)
+		if (gdb_buf[sharp_off] == '#')
+		  break;
+	    }
 
-          /* Got packet with checksum.  */
-          if (sharp_off + 2 <= gdb_blen)
-            break;
+	  /* Got packet with checksum.  */
+	  if (sharp_off + 2 <= gdb_blen)
+	    break;
 
-          off = gdb_blen;
-          if (gdb_blen == sizeof (gdb_buf))
-            {
-              /* Packet too large, discard.  */
-              off = 0;
-            }
-        }
+	  off = gdb_blen;
+	  if (gdb_blen == sizeof (gdb_buf))
+	    {
+	      /* Packet too large, discard.  */
+	      off = 0;
+	    }
+	}
 
       /* Validate and acknowledge a packet.  */
       {
-        unsigned char chksum = 0;
-        unsigned int i;
-        int v;
+	unsigned char chksum = 0;
+	unsigned int i;
+	int v;
 
-        for (i = dollar_off + 1; i < sharp_off; i++)
-          chksum += gdb_buf[i];
-        v = hex2byte (gdb_buf + sharp_off + 1);
-        if (v != chksum)
-          {
-            term_puts ("Discard bad checksum packet\n");
-            continue;
-          }
-        else
-          {
-            sock_write ((const unsigned char *)"+", 1);
-            break;
-          }
+	for (i = dollar_off + 1; i < sharp_off; i++)
+	  chksum += gdb_buf[i];
+	v = hex2byte (gdb_buf + sharp_off + 1);
+	if (v != chksum)
+	  {
+	    term_puts ("Discard bad checksum packet\n");
+	    continue;
+	  }
+	else
+	  {
+	    sock_write ((const unsigned char *)"+", 1);
+	    break;
+	  }
       }
     }
 
@@ -2088,12 +2088,12 @@ display_excp (struct chf64$signal_array *sig64, struct chf$mech_array *mech)
       char msg2[160];
       unsigned short msg2len;
       struct dsc$descriptor_s msg2_desc =
-        { sizeof (msg2), DSC$K_DTYPE_T, DSC$K_CLASS_S, msg2};
+	{ sizeof (msg2), DSC$K_DTYPE_T, DSC$K_CLASS_S, msg2};
       msg_desc.dsc$w_length = msglen;
       status = SYS$FAOL_64 (&msg_desc, &msg2len, &msg2_desc,
-                            &sig64->chf64$q_sig_arg1);
+			    &sig64->chf64$q_sig_arg1);
       if (status & STS$M_SUCCESS)
-        term_write (msg2, msg2len);
+	term_write (msg2, msg2len);
     }
   else
     term_puts ("no message");
@@ -2240,7 +2240,7 @@ do_debug (struct chf$mech_array *mech)
 
 static int
 excp_handler (struct chf$signal_array *sig,
-              struct chf$mech_array *mech)
+	      struct chf$mech_array *mech)
 {
   struct chf64$signal_array *sig64 =
     (struct chf64$signal_array *)mech->chf$ph_mch_sig64_addr;
@@ -2282,7 +2282,7 @@ excp_handler (struct chf$signal_array *sig,
       static unsigned int entry_prot;
 
       if (trace_entry)
-        term_puts ("initial entry breakpoint\n");
+	term_puts ("initial entry breakpoint\n");
       page_set_rw (entry_pc, 16, &entry_prot);
 
       ots$move ((void *)entry_pc, 16, entry_saved);
@@ -2294,24 +2294,24 @@ excp_handler (struct chf$signal_array *sig,
     {
     case SS$_ACCVIO & STS$M_COND_ID:
       if (trace_excp <= 1)
-        display_excp (sig64, mech);
+	display_excp (sig64, mech);
       /* Fall through.  */
     case SS$_BREAK  & STS$M_COND_ID:
     case SS$_OPCDEC & STS$M_COND_ID:
     case SS$_TBIT   & STS$M_COND_ID:
     case SS$_DEBUG  & STS$M_COND_ID:
       if (trace_excp > 1)
-        {
+	{
 	  int i;
 	  struct _intstk *intstk =
 	    (struct _intstk *)mech->chf$q_mch_esf_addr;
 
-          display_excp (sig64, mech);
+	  display_excp (sig64, mech);
 
-          TERM_FAO (" intstk: !XH!/", intstk);
-          for (i = 0; i < cnt + 1; i++)
+	  TERM_FAO (" intstk: !XH!/", intstk);
+	  for (i = 0; i < cnt + 1; i++)
 	    TERM_FAO ("   !XH!/", ((unsigned __int64 *)sig64)[i]);
-        }
+	}
       do_debug (mech);
       ret = SS$_CONTINUE_64;
       break;
@@ -2350,10 +2350,10 @@ trace_init (void)
 
   /* Translate the logical name.  */
   status = SYS$TRNLNM (0,   		/* Attributes of the logical name.  */
-                       (void *)&tabdesc,       /* Logical name table.  */
-                       (void *)&logdesc,       /* Logical name.  */
-                       0,              	       /* Access mode.  */
-                       &item_lst);             /* Item list.  */
+		       (void *)&tabdesc,       /* Logical name table.  */
+		       (void *)&logdesc,       /* Logical name.  */
+		       0,              	       /* Access mode.  */
+		       &item_lst);             /* Item list.  */
   if (status == SS$_NOLOGNAM)
     return;
   if (!(status & STS$M_SUCCESS))
@@ -2364,11 +2364,11 @@ trace_init (void)
     {
       if ((i == len || resstring[i] == ',' || resstring[i] == ';')
 	  && i != start)
-        {
+	{
 	  int j;
 
-          sub_desc.dsc$a_pointer = resstring + start;
-          sub_desc.dsc$w_length = i - start;
+	  sub_desc.dsc$a_pointer = resstring + start;
+	  sub_desc.dsc$w_length = i - start;
 
 	  for (j = 0; j < NBR_DEBUG_FLAGS; j++)
 	    if (str$case_blind_compare (&sub_desc, 
@@ -2380,8 +2380,8 @@ trace_init (void)
 	  if (j == NBR_DEBUG_FLAGS)
 	    TERM_FAO ("GDBSTUB$TRACE: unknown directive !AS!/", &sub_desc);
 
-          start = i + 1;
-        }
+	  start = i + 1;
+	}
     }
 
   TERM_FAO ("GDBSTUB$TRACE=!AD ->", len, resstring);
@@ -2396,8 +2396,8 @@ trace_init (void)
 
 static int
 stub_start (unsigned __int64 *progxfer, void *cli_util,
-            EIHD *imghdr, IFD *imgfile,
-            unsigned int linkflag, unsigned int cliflag)
+	    EIHD *imghdr, IFD *imgfile,
+	    unsigned int linkflag, unsigned int cliflag)
 {
   static int initialized;
   int i;
@@ -2579,7 +2579,7 @@ stub_start (unsigned __int64 *progxfer, void *cli_util,
   if (entry_pc == 0)
     {
       while (one_command () == 0)
-        ;
+	;
     }
 
   /* We will see!  */

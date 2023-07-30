@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -30,7 +30,7 @@ proc add {var name params expected {kind {func}}} {
     lappend result [list "${method_name}($params)" $expect]
 }
 
-if {[skip_cplus_tests]} { continue }
+if {[skip_cplus_tests]} { return }
 
 # Tests for c++/12266 et al
 standard_testfile .cc
@@ -41,8 +41,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
 }
 
 if {![runto_main]} {
-    perror "couldn't run to breakpoint"
-    continue
+    return
 }
 
 array set typedefs {

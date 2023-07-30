@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 # toolchain for a subset of ABIs, so we need to check that a MIPS16
 # executable can be built and run at all before we attempt the actual test.
 
-if { ![istarget "mips*-*-*"] } then {
+if {![istarget "mips*-*-*"]} {
     verbose "Skipping MIPS16 thunk support tests."
     return
 }
@@ -37,7 +37,7 @@ proc set_src_and_obj { filename { suffix "" } } {
     global srcdir
     global subdir
 
-    if ![string equal "$suffix" ""] then {
+    if {![string equal "$suffix" ""]} {
 	set suffix "-$suffix"
     }
     set srcfile ${srcdir}/${subdir}/${filename}.c
@@ -61,7 +61,7 @@ gdb_compile ${srcfile} ${objfile} object ${options}
 
 set binfile [standard_output_file ${testname}]
 set options [list debug nowarnings]
-if { [gdb_compile ${objfiles} ${binfile} executable ${options}] != "" } then {
+if {[gdb_compile ${objfiles} ${binfile} executable ${options}] != ""} {
     unsupported "no MIPS16 support in the toolchain."
     return
 }
@@ -116,7 +116,7 @@ gdb_compile ${srcfile} ${objfile} object ${options}
 
 set binfile [standard_output_file ${testname}]
 set options [list debug nowarnings additional_flags=-fPIC]
-if { [gdb_compile ${objfiles} ${binfile} executable ${options}] == "" } then {
+if {[gdb_compile ${objfiles} ${binfile} executable ${options}] == ""} {
     clean_restart ${testname}
     gdb_breakpoint inmain
     gdb_run_cmd
@@ -189,8 +189,7 @@ set binfile [standard_output_file ${testname}]
 set options [list debug nowarnings]
 gdb_compile ${objfiles} ${binfile} executable ${options}
 clean_restart ${testname}
-if ![runto_main] then {
-    fail "running test program, MIPS16 thunk tests aborted"
+if {![runto_main]} {
     return
 }
 
@@ -292,7 +291,7 @@ proc finish_through { id funcs } {
 
 # Report PASS if VAL is equal to EXP, otherwise report FAIL, using MSG.
 proc pass_if_eq { val exp msg } {
-    if [string equal "$val" "$exp"] then {
+    if {[string equal "$val" "$exp"]} {
 	pass "$msg"
     } else {
 	fail "$msg"
@@ -305,7 +304,7 @@ proc pass_if_eq { val exp msg } {
 # for the same function.  If successful, then return the name of the
 # function we have stopped in.
 proc finish_if_ne { id func want funcs } {
-    if ![string equal "$func" "$want"] then {
+    if {![string equal "$func" "$want"]} {
 	set call "$func"
 	set want [lindex $funcs 0]
 	set func [finish_through "$id" [linsert $funcs 0 "$func"]]

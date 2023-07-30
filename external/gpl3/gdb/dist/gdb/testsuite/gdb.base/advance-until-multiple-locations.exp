@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,6 @@ proc_with_prefix until_advance_lineno_from_inlined {cmd} {
     global lineno
 
     if ![runto test] {
-	fail "can't run to test"
 	return
     }
 
@@ -55,7 +54,6 @@ proc_with_prefix until_advance_lineno_from_non_inlined {cmd} {
     global lineno
 
     if ![runto test] {
-	fail "can't run to test"
 	return
     }
 
@@ -71,7 +69,6 @@ proc_with_prefix until_advance_inline_func {cmd} {
     global lineno
 
     if ![runto test] {
-	fail "can't run to test"
 	return
     }
 
@@ -87,7 +84,6 @@ proc_with_prefix advance_overload {} {
     global lineno
 
     if ![runto test] {
-	fail "can't run to test"
 	return
     }
 
@@ -122,7 +118,6 @@ proc_with_prefix until_overload {} {
     global lineno
 
     if ![runto test] {
-	fail "can't run to test"
 	return
     }
 

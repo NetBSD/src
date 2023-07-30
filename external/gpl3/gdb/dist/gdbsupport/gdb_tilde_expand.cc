@@ -1,6 +1,6 @@
 /* Perform tilde expansion on paths for GDB and gdbserver.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "common-defs.h"
+#include <algorithm>
+#include "filenames.h"
 #include "gdb_tilde_expand.h"
 #include <glob.h>
 
@@ -71,25 +73,32 @@ private:
 std::string
 gdb_tilde_expand (const char *dir)
 {
-  gdb_glob glob (dir, GLOB_TILDE_CHECK, NULL);
+  if (dir[0] != '~')
+    return std::string (dir);
 
-  gdb_assert (glob.pathc () > 0);
-  /* "glob" may return more than one match to the path provided by the
-     user, but we are only interested in the first match.  */
-  std::string expanded_dir = glob.pathv ()[0];
+  /* This function uses glob in order to expand the ~.  However, this function
+     will fail to expand if the actual dir we are looking for does not exist.
+     Given "~/does/not/exist", glob will fail.
 
-  return expanded_dir;
-}
+     In order to avoid such limitation, we only use glob to expand "~" and keep
+     "/does/not/exist" unchanged.
 
-/* See gdbsupport/gdb_tilde_expand.h.  */
+     Similarly, to expand ~gdb/might/not/exist, we only expand "~gdb" using
+     glob and leave "/might/not/exist" unchanged.  */
+  const std::string d (dir);
 
-gdb::unique_xmalloc_ptr<char>
-gdb_tilde_expand_up (const char *dir)
-{
-  gdb_glob glob (dir, GLOB_TILDE_CHECK, NULL);
+  /* Look for the first dir separator (if any) and split d around it.  */
+  const auto first_sep
+    = std::find_if (d.cbegin (), d.cend(),
+                    [] (const char c) -> bool
+                    {
+                      return IS_DIR_SEPARATOR (c);
+                    });
+  const std::string to_expand (d.cbegin (), first_sep);
+  const std::string remainder (first_sep, d.cend ());
 
-  gdb_assert (glob.pathc () > 0);
-  /* "glob" may return more than one match to the path provided by the
-     user, but we are only interested in the first match.  */
-  return make_unique_xstrdup (glob.pathv ()[0]);
+  const gdb_glob glob (to_expand.c_str (), GLOB_TILDE_CHECK, nullptr);
+
+  gdb_assert (glob.pathc () == 1);
+  return std::string (glob.pathv ()[0]) + remainder;
 }

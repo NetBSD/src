@@ -1,6 +1,6 @@
 /* Cache and manage frames for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,12 +19,13 @@
 
 #include "defs.h"
 #include "frame.h"
+#include "frame-info.h"
 #include "target.h"
 #include "value.h"
 #include "inferior.h"	/* for inferior_ptid */
 #include "regcache.h"
 #include "user-regs.h"
-#include "gdb_obstack.h"
+#include "gdbsupport/gdb_obstack.h"
 #include "dummy-frame.h"
 #include "sentinel-frame.h"
 #include "gdbcore.h"
@@ -51,7 +52,7 @@
    The current frame, which is the innermost frame, can be found at
    sentinel_frame->prev.  */
 
-static struct frame_info *sentinel_frame;
+static frame_info *sentinel_frame;
 
 /* Number of calls to reinit_frame_cache.  */
 static unsigned int frame_cache_generation = 0;
@@ -67,7 +68,7 @@ get_frame_cache_generation ()
 /* The values behind the global "set backtrace ..." settings.  */
 set_backtrace_options user_set_backtrace_options;
 
-static struct frame_info *get_prev_frame_raw (struct frame_info *this_frame);
+static frame_info_ptr get_prev_frame_raw (frame_info_ptr this_frame);
 static const char *frame_stop_reason_symbol_string (enum unwind_stop_reason reason);
 
 /* Status of some values cached in the frame_info object.  */
@@ -111,6 +112,9 @@ enum class frame_id_status
 
 struct frame_info
 {
+  /* Return a string representation of this frame.  */
+  std::string to_string () const;
+
   /* Level of this frame.  The inner-most (youngest) frame is at level
      0.  As you move towards the outer-most (oldest) frame, the level
      increases.  This is a cached value.  It could just as easily be
@@ -189,7 +193,7 @@ struct frame_info
 /* See frame.h.  */
 
 void
-set_frame_previous_pc_masked (struct frame_info *frame)
+set_frame_previous_pc_masked (frame_info_ptr frame)
 {
   frame->prev_pc.masked = true;
 }
@@ -197,7 +201,7 @@ set_frame_previous_pc_masked (struct frame_info *frame)
 /* See frame.h.  */
 
 bool
-get_frame_pc_masked (const struct frame_info *frame)
+get_frame_pc_masked (frame_info_ptr frame)
 {
   gdb_assert (frame->next != nullptr);
   gdb_assert (frame->next->prev_pc.status == CC_VALUE);
@@ -219,7 +223,7 @@ static htab_t frame_stash;
 static hashval_t
 frame_addr_hash (const void *ap)
 {
-  const struct frame_info *frame = (const struct frame_info *) ap;
+  const frame_info *frame = (const frame_info *) ap;
   const struct frame_id f_id = frame->this_id.value;
   hashval_t hash = 0;
 
@@ -241,16 +245,15 @@ frame_addr_hash (const void *ap)
 }
 
 /* Internal equality function for the hash table.  This function
-   defers equality operations to frame_id_eq.  */
+   defers equality operations to frame_id::operator==.  */
 
 static int
 frame_addr_hash_eq (const void *a, const void *b)
 {
-  const struct frame_info *f_entry = (const struct frame_info *) a;
-  const struct frame_info *f_element = (const struct frame_info *) b;
+  const frame_info *f_entry = (const frame_info *) a;
+  const frame_info *f_element = (const frame_info *) b;
 
-  return frame_id_eq (f_entry->this_id.value,
-		      f_element->this_id.value);
+  return f_entry->this_id.value == f_element->this_id.value;
 }
 
 /* Internal function to create the frame_stash hash table.  100 seems
@@ -275,8 +278,8 @@ frame_stash_add (frame_info *frame)
   /* Do not try to stash the sentinel frame.  */
   gdb_assert (frame->level >= 0);
 
-  frame_info **slot = (struct frame_info **) htab_find_slot (frame_stash,
-							     frame, INSERT);
+  frame_info **slot = (frame_info **) htab_find_slot (frame_stash,
+						      frame, INSERT);
 
   /* If we already have a frame in the stack with the same id, we
      either have a stack cycle (corrupted stack?), or some bug
@@ -293,15 +296,15 @@ frame_stash_add (frame_info *frame)
    given frame ID.  If found, return that frame.  Otherwise return
    NULL.  */
 
-static struct frame_info *
+static frame_info_ptr
 frame_stash_find (struct frame_id id)
 {
   struct frame_info dummy;
-  struct frame_info *frame;
+  frame_info *frame;
 
   dummy.this_id.value = id;
-  frame = (struct frame_info *) htab_find (frame_stash, &dummy);
-  return frame;
+  frame = (frame_info *) htab_find (frame_stash, &dummy);
+  return frame_info_ptr (frame);
 }
 
 /* Internal function to invalidate the frame stash by removing all
@@ -317,27 +320,26 @@ frame_stash_invalidate (void)
 /* See frame.h  */
 scoped_restore_selected_frame::scoped_restore_selected_frame ()
 {
-  m_fid = get_frame_id (get_selected_frame (NULL));
+  m_lang = current_language->la_language;
+  save_selected_frame (&m_fid, &m_level);
 }
 
 /* See frame.h  */
 scoped_restore_selected_frame::~scoped_restore_selected_frame ()
 {
-  frame_info *frame = frame_find_by_id (m_fid);
-  if (frame == NULL)
-    warning (_("Unable to restore previously selected frame."));
-  else
-    select_frame (frame);
+  restore_selected_frame (m_fid, m_level);
+  set_language (m_lang);
 }
 
 /* Flag to control debugging.  */
 
-unsigned int frame_debug;
+bool frame_debug;
+
 static void
 show_frame_debug (struct ui_file *file, int from_tty,
 		  struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, _("Frame debugging is %s.\n"), value);
+  gdb_printf (file, _("Frame debugging is %s.\n"), value);
 }
 
 /* Implementation of "show backtrace past-main".  */
@@ -346,10 +348,10 @@ static void
 show_backtrace_past_main (struct ui_file *file, int from_tty,
 			  struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file,
-		    _("Whether backtraces should "
-		      "continue past \"main\" is %s.\n"),
-		    value);
+  gdb_printf (file,
+	      _("Whether backtraces should "
+		"continue past \"main\" is %s.\n"),
+	      value);
 }
 
 /* Implementation of "show backtrace past-entry".  */
@@ -358,9 +360,9 @@ static void
 show_backtrace_past_entry (struct ui_file *file, int from_tty,
 			   struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, _("Whether backtraces should continue past the "
-			    "entry point of a program is %s.\n"),
-		    value);
+  gdb_printf (file, _("Whether backtraces should continue past the "
+		      "entry point of a program is %s.\n"),
+	      value);
 }
 
 /* Implementation of "show backtrace limit".  */
@@ -369,140 +371,131 @@ static void
 show_backtrace_limit (struct ui_file *file, int from_tty,
 		      struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file,
-		    _("An upper bound on the number "
-		      "of backtrace levels is %s.\n"),
-		    value);
+  gdb_printf (file,
+	      _("An upper bound on the number "
+		"of backtrace levels is %s.\n"),
+	      value);
 }
 
+/* See frame.h.  */
 
-static void
-fprint_field (struct ui_file *file, const char *name, int p, CORE_ADDR addr)
+std::string
+frame_id::to_string () const
 {
-  if (p)
-    fprintf_unfiltered (file, "%s=%s", name, hex_string (addr));
-  else
-    fprintf_unfiltered (file, "!%s", name);
-}
+  const struct frame_id &id = *this;
 
-void
-fprint_frame_id (struct ui_file *file, struct frame_id id)
-{
-  fprintf_unfiltered (file, "{");
+  std::string res = "{";
 
   if (id.stack_status == FID_STACK_INVALID)
-    fprintf_unfiltered (file, "!stack");
+    res += "!stack";
   else if (id.stack_status == FID_STACK_UNAVAILABLE)
-    fprintf_unfiltered (file, "stack=<unavailable>");
+    res += "stack=<unavailable>";
   else if (id.stack_status == FID_STACK_SENTINEL)
-    fprintf_unfiltered (file, "stack=<sentinel>");
+    res += "stack=<sentinel>";
   else if (id.stack_status == FID_STACK_OUTER)
-    fprintf_unfiltered (file, "stack=<outer>");
+    res += "stack=<outer>";
   else
-    fprintf_unfiltered (file, "stack=%s", hex_string (id.stack_addr));
+    res += std::string ("stack=") + hex_string (id.stack_addr);
 
-  fprintf_unfiltered (file, ",");
+  /* Helper function to format 'N=A' if P is true, otherwise '!N'.  */
+  auto field_to_string = [] (const char *n, bool p, CORE_ADDR a) -> std::string
+  {
+    if (p)
+      return std::string (n) + "=" + core_addr_to_string (a);
+    else
+      return std::string ("!") + std::string (n);
+  };
 
-  fprint_field (file, "code", id.code_addr_p, id.code_addr);
-  fprintf_unfiltered (file, ",");
-
-  fprint_field (file, "special", id.special_addr_p, id.special_addr);
+  res += (std::string (",")
+	  + field_to_string ("code", id.code_addr_p, id.code_addr)
+	  + std::string (",")
+	  + field_to_string ("special", id.special_addr_p, id.special_addr));
 
   if (id.artificial_depth)
-    fprintf_unfiltered (file, ",artificial=%d", id.artificial_depth);
-
-  fprintf_unfiltered (file, "}");
+    res += ",artificial=" + std::to_string (id.artificial_depth);
+  res += "}";
+  return res;
 }
 
-static void
-fprint_frame_type (struct ui_file *file, enum frame_type type)
+/* Return a string representation of TYPE.  */
+
+static const char *
+frame_type_str (frame_type type)
 {
   switch (type)
     {
     case NORMAL_FRAME:
-      fprintf_unfiltered (file, "NORMAL_FRAME");
-      return;
+      return "NORMAL_FRAME";
+
     case DUMMY_FRAME:
-      fprintf_unfiltered (file, "DUMMY_FRAME");
-      return;
+      return "DUMMY_FRAME";
+
     case INLINE_FRAME:
-      fprintf_unfiltered (file, "INLINE_FRAME");
-      return;
+      return "INLINE_FRAME";
+
     case TAILCALL_FRAME:
-      fprintf_unfiltered (file, "TAILCALL_FRAME");
-      return;
+      return "TAILCALL_FRAME";
+
     case SIGTRAMP_FRAME:
-      fprintf_unfiltered (file, "SIGTRAMP_FRAME");
-      return;
+      return "SIGTRAMP_FRAME";
+
     case ARCH_FRAME:
-      fprintf_unfiltered (file, "ARCH_FRAME");
-      return;
+      return "ARCH_FRAME";
+
     case SENTINEL_FRAME:
-      fprintf_unfiltered (file, "SENTINEL_FRAME");
-      return;
+      return "SENTINEL_FRAME";
+
     default:
-      fprintf_unfiltered (file, "<unknown type>");
-      return;
+      return "<unknown type>";
     };
 }
 
-static void
-fprint_frame (struct ui_file *file, struct frame_info *fi)
+ /* See struct frame_info.  */
+
+std::string
+frame_info::to_string () const
 {
-  if (fi == NULL)
-    {
-      fprintf_unfiltered (file, "<NULL frame>");
-      return;
-    }
+  const frame_info *fi = this;
 
-  fprintf_unfiltered (file, "{");
-  fprintf_unfiltered (file, "level=%d", fi->level);
-  fprintf_unfiltered (file, ",");
+  std::string res;
 
-  fprintf_unfiltered (file, "type=");
+  res += string_printf ("{level=%d,", fi->level);
+
   if (fi->unwind != NULL)
-    fprint_frame_type (file, fi->unwind->type);
+    res += string_printf ("type=%s,", frame_type_str (fi->unwind->type));
   else
-    fprintf_unfiltered (file, "<unknown>");
-  fprintf_unfiltered (file, ",");
+    res += "type=<unknown>,";
 
-  fprintf_unfiltered (file, "unwind=");
   if (fi->unwind != NULL)
-    gdb_print_host_address (fi->unwind, file);
+    res += string_printf ("unwinder=\"%s\",", fi->unwind->name);
   else
-    fprintf_unfiltered (file, "<unknown>");
-  fprintf_unfiltered (file, ",");
+    res += "unwinder=<unknown>,";
 
-  fprintf_unfiltered (file, "pc=");
   if (fi->next == NULL || fi->next->prev_pc.status == CC_UNKNOWN)
-    fprintf_unfiltered (file, "<unknown>");
+    res += "pc=<unknown>,";
   else if (fi->next->prev_pc.status == CC_VALUE)
-    {
-      fprintf_unfiltered (file, "%s", hex_string (fi->next->prev_pc.value));
-      if (fi->next->prev_pc.masked)
-	fprintf_unfiltered (file, "[PAC]");
-    }
+    res += string_printf ("pc=%s%s,", hex_string (fi->next->prev_pc.value),
+			  fi->next->prev_pc.masked ? "[PAC]" : "");
   else if (fi->next->prev_pc.status == CC_NOT_SAVED)
-    val_print_not_saved (file);
+    res += "pc=<not saved>,";
   else if (fi->next->prev_pc.status == CC_UNAVAILABLE)
-    val_print_unavailable (file);
-  fprintf_unfiltered (file, ",");
+    res += "pc=<unavailable>,";
 
-  fprintf_unfiltered (file, "id=");
   if (fi->this_id.p == frame_id_status::NOT_COMPUTED)
-    fprintf_unfiltered (file, "<not computed>");
+    res += "id=<not computed>,";
   else if (fi->this_id.p == frame_id_status::COMPUTING)
-    fprintf_unfiltered (file, "<computing>");
+    res += "id=<computing>,";
   else
-    fprint_frame_id (file, fi->this_id.value);
-  fprintf_unfiltered (file, ",");
+    res += string_printf ("id=%s,", fi->this_id.value.to_string ().c_str ());
 
-  fprintf_unfiltered (file, "func=");
   if (fi->next != NULL && fi->next->prev_func.status == CC_VALUE)
-    fprintf_unfiltered (file, "%s", hex_string (fi->next->prev_func.addr));
+    res += string_printf ("func=%s", hex_string (fi->next->prev_func.addr));
   else
-    fprintf_unfiltered (file, "<unknown>");
-  fprintf_unfiltered (file, "}");
+    res += "func=<unknown>";
+
+  res += "}";
+
+  return res;
 }
 
 /* Given FRAME, return the enclosing frame as found in real frames read-in from
@@ -510,8 +503,8 @@ fprint_frame (struct ui_file *file, struct frame_info *fi)
    Return FRAME if FRAME is a non-artificial frame.
    Return NULL if FRAME is the start of an artificial-only chain.  */
 
-static struct frame_info *
-skip_artificial_frames (struct frame_info *frame)
+static frame_info_ptr
+skip_artificial_frames (frame_info_ptr frame)
 {
   /* Note we use get_prev_frame_always, and not get_prev_frame.  The
      latter will truncate the frame chain, leading to this function
@@ -531,8 +524,8 @@ skip_artificial_frames (struct frame_info *frame)
   return frame;
 }
 
-struct frame_info *
-skip_unwritable_frames (struct frame_info *frame)
+frame_info_ptr
+skip_unwritable_frames (frame_info_ptr frame)
 {
   while (gdbarch_code_of_frame_writable (get_frame_arch (frame), frame) == 0)
     {
@@ -546,8 +539,8 @@ skip_unwritable_frames (struct frame_info *frame)
 
 /* See frame.h.  */
 
-struct frame_info *
-skip_tailcall_frames (struct frame_info *frame)
+frame_info_ptr
+skip_tailcall_frames (frame_info_ptr frame)
 {
   while (get_frame_type (frame) == TAILCALL_FRAME)
     {
@@ -565,8 +558,10 @@ skip_tailcall_frames (struct frame_info *frame)
    frame.  */
 
 static void
-compute_frame_id (struct frame_info *fi)
+compute_frame_id (frame_info_ptr fi)
 {
+  FRAME_SCOPED_DEBUG_ENTER_EXIT;
+
   gdb_assert (fi->this_id.p == frame_id_status::NOT_COMPUTED);
 
   unsigned int entry_generation = get_frame_cache_generation ();
@@ -576,9 +571,7 @@ compute_frame_id (struct frame_info *fi)
       /* Mark this frame's id as "being computed.  */
       fi->this_id.p = frame_id_status::COMPUTING;
 
-      if (frame_debug)
-	fprintf_unfiltered (gdb_stdlog, "{ compute_frame_id (fi=%d) ",
-			    fi->level);
+      frame_debug_printf ("fi=%d", fi->level);
 
       /* Find the unwinder.  */
       if (fi->unwind == NULL)
@@ -593,17 +586,12 @@ compute_frame_id (struct frame_info *fi)
       /* Mark this frame's id as "computed".  */
       fi->this_id.p = frame_id_status::COMPUTED;
 
-      if (frame_debug)
-	{
-	  fprintf_unfiltered (gdb_stdlog, "-> ");
-	  fprint_frame_id (gdb_stdlog, fi->this_id.value);
-	  fprintf_unfiltered (gdb_stdlog, " }\n");
-	}
+      frame_debug_printf ("  -> %s", fi->this_id.value.to_string ().c_str ());
     }
   catch (const gdb_exception &ex)
     {
       /* On error, revert the frame id status to not computed.  If the frame
-         cache generation changed, the frame object doesn't exist anymore, so
+	 cache generation changed, the frame object doesn't exist anymore, so
 	 don't touch it.  */
       if (get_frame_cache_generation () == entry_generation)
 	fi->this_id.p = frame_id_status::NOT_COMPUTED;
@@ -616,7 +604,7 @@ compute_frame_id (struct frame_info *fi)
    frame.  */
 
 struct frame_id
-get_frame_id (struct frame_info *fi)
+get_frame_id (frame_info_ptr fi)
 {
   if (fi == NULL)
     return null_frame_id;
@@ -639,7 +627,7 @@ get_frame_id (struct frame_info *fi)
 
       /* Since this is the first frame in the chain, this should
 	 always succeed.  */
-      bool stashed = frame_stash_add (fi);
+      bool stashed = frame_stash_add (fi.get ());
       gdb_assert (stashed);
     }
 
@@ -647,15 +635,15 @@ get_frame_id (struct frame_info *fi)
 }
 
 struct frame_id
-get_stack_frame_id (struct frame_info *next_frame)
+get_stack_frame_id (frame_info_ptr next_frame)
 {
   return get_frame_id (skip_artificial_frames (next_frame));
 }
 
 struct frame_id
-frame_unwind_caller_id (struct frame_info *next_frame)
+frame_unwind_caller_id (frame_info_ptr next_frame)
 {
-  struct frame_info *this_frame;
+  frame_info_ptr this_frame;
 
   /* Use get_prev_frame_always, and not get_prev_frame.  The latter
      will truncate the frame chain, leading to this function
@@ -679,7 +667,7 @@ const struct frame_id outer_frame_id = { 0, 0, 0, FID_STACK_OUTER, 0, 1, 0 };
 
 struct frame_id
 frame_id_build_special (CORE_ADDR stack_addr, CORE_ADDR code_addr,
-                        CORE_ADDR special_addr)
+			CORE_ADDR special_addr)
 {
   struct frame_id id = null_frame_id;
 
@@ -749,12 +737,7 @@ frame_id_p (frame_id l)
   /* The frame is valid iff it has a valid stack address.  */
   bool p = l.stack_status != FID_STACK_INVALID;
 
-  if (frame_debug)
-    {
-      fprintf_unfiltered (gdb_stdlog, "{ frame_id_p (l=");
-      fprint_frame_id (gdb_stdlog, l);
-      fprintf_unfiltered (gdb_stdlog, ") -> %d }\n", p);
-    }
+  frame_debug_printf ("l=%s -> %d", l.to_string ().c_str (), p);
 
   return p;
 }
@@ -769,42 +752,36 @@ frame_id_artificial_p (frame_id l)
 }
 
 bool
-frame_id_eq (frame_id l, frame_id r)
+frame_id::operator== (const frame_id &r) const
 {
   bool eq;
 
-  if (l.stack_status == FID_STACK_INVALID
+  if (stack_status == FID_STACK_INVALID
       || r.stack_status == FID_STACK_INVALID)
     /* Like a NaN, if either ID is invalid, the result is false.
        Note that a frame ID is invalid iff it is the null frame ID.  */
     eq = false;
-  else if (l.stack_status != r.stack_status || l.stack_addr != r.stack_addr)
+  else if (stack_status != r.stack_status || stack_addr != r.stack_addr)
     /* If .stack addresses are different, the frames are different.  */
     eq = false;
-  else if (l.code_addr_p && r.code_addr_p && l.code_addr != r.code_addr)
+  else if (code_addr_p && r.code_addr_p && code_addr != r.code_addr)
     /* An invalid code addr is a wild card.  If .code addresses are
        different, the frames are different.  */
     eq = false;
-  else if (l.special_addr_p && r.special_addr_p
-	   && l.special_addr != r.special_addr)
+  else if (special_addr_p && r.special_addr_p
+	   && special_addr != r.special_addr)
     /* An invalid special addr is a wild card (or unused).  Otherwise
        if special addresses are different, the frames are different.  */
     eq = false;
-  else if (l.artificial_depth != r.artificial_depth)
+  else if (artificial_depth != r.artificial_depth)
     /* If artificial depths are different, the frames must be different.  */
     eq = false;
   else
     /* Frames are equal.  */
     eq = true;
 
-  if (frame_debug)
-    {
-      fprintf_unfiltered (gdb_stdlog, "{ frame_id_eq (l=");
-      fprint_frame_id (gdb_stdlog, l);
-      fprintf_unfiltered (gdb_stdlog, ",r=");
-      fprint_frame_id (gdb_stdlog, r);
-      fprintf_unfiltered (gdb_stdlog, ") -> %d }\n", eq);
-    }
+  frame_debug_printf ("l=%s, r=%s -> %d",
+		      to_string ().c_str (), r.to_string ().c_str (), eq);
 
   return eq;
 }
@@ -880,22 +857,17 @@ frame_id_inner (struct gdbarch *gdbarch, struct frame_id l, struct frame_id r)
        different .code and/or .special address).  */
     inner = gdbarch_inner_than (gdbarch, l.stack_addr, r.stack_addr);
 
-  if (frame_debug)
-    {
-      fprintf_unfiltered (gdb_stdlog, "{ frame_id_inner (l=");
-      fprint_frame_id (gdb_stdlog, l);
-      fprintf_unfiltered (gdb_stdlog, ",r=");
-      fprint_frame_id (gdb_stdlog, r);
-      fprintf_unfiltered (gdb_stdlog, ") -> %d }\n", inner);
-    }
+  frame_debug_printf ("is l=%s inner than r=%s? %d",
+		      l.to_string ().c_str (), r.to_string ().c_str (),
+		      inner);
 
   return inner;
 }
 
-struct frame_info *
+frame_info_ptr
 frame_find_by_id (struct frame_id id)
 {
-  struct frame_info *frame, *prev_frame;
+  frame_info_ptr frame, prev_frame;
 
   /* ZERO denotes the null frame, let the caller decide what to do
      about it.  Should it instead return get_current_frame()?  */
@@ -903,8 +875,8 @@ frame_find_by_id (struct frame_id id)
     return NULL;
 
   /* Check for the sentinel frame.  */
-  if (frame_id_eq (id, sentinel_frame_id))
-    return sentinel_frame;
+  if (id == sentinel_frame_id)
+    return frame_info_ptr (sentinel_frame);
 
   /* Try using the frame stash first.  Finding it there removes the need
      to perform the search by looping over all frames, which can be very
@@ -922,7 +894,7 @@ frame_find_by_id (struct frame_id id)
     {
       struct frame_id self = get_frame_id (frame);
 
-      if (frame_id_eq (id, self))
+      if (id == self)
 	/* An exact match.  */
 	return frame;
 
@@ -945,7 +917,7 @@ frame_find_by_id (struct frame_id id)
 }
 
 static CORE_ADDR
-frame_unwind_pc (struct frame_info *this_frame)
+frame_unwind_pc (frame_info_ptr this_frame)
 {
   if (this_frame->prev_pc.status == CC_UNKNOWN)
     {
@@ -982,21 +954,15 @@ frame_unwind_pc (struct frame_info *this_frame)
 	    {
 	      this_frame->prev_pc.status = CC_UNAVAILABLE;
 
-	      if (frame_debug)
-		fprintf_unfiltered (gdb_stdlog,
-				    "{ frame_unwind_pc (this_frame=%d)"
-				    " -> <unavailable> }\n",
-				    this_frame->level);
+	      frame_debug_printf ("this_frame=%d -> <unavailable>",
+				  this_frame->level);
 	    }
 	  else if (ex.error == OPTIMIZED_OUT_ERROR)
 	    {
 	      this_frame->prev_pc.status = CC_NOT_SAVED;
 
-	      if (frame_debug)
-		fprintf_unfiltered (gdb_stdlog,
-				    "{ frame_unwind_pc (this_frame=%d)"
-				    " -> <not saved> }\n",
-				    this_frame->level);
+	      frame_debug_printf ("this_frame=%d -> <not saved>",
+				  this_frame->level);
 	    }
 	  else
 	    throw;
@@ -1006,12 +972,10 @@ frame_unwind_pc (struct frame_info *this_frame)
 	{
 	  this_frame->prev_pc.value = pc;
 	  this_frame->prev_pc.status = CC_VALUE;
-	  if (frame_debug)
-	    fprintf_unfiltered (gdb_stdlog,
-				"{ frame_unwind_pc (this_frame=%d) "
-				"-> %s }\n",
-				this_frame->level,
-				hex_string (this_frame->prev_pc.value));
+
+	  frame_debug_printf ("this_frame=%d -> %s",
+			      this_frame->level,
+			      hex_string (this_frame->prev_pc.value));
 	}
     }
 
@@ -1022,13 +986,12 @@ frame_unwind_pc (struct frame_info *this_frame)
   else if (this_frame->prev_pc.status == CC_NOT_SAVED)
     throw_error (OPTIMIZED_OUT_ERROR, _("PC not saved"));
   else
-    internal_error (__FILE__, __LINE__,
-		    "unexpected prev_pc status: %d",
+    internal_error ("unexpected prev_pc status: %d",
 		    (int) this_frame->prev_pc.status);
 }
 
 CORE_ADDR
-frame_unwind_caller_pc (struct frame_info *this_frame)
+frame_unwind_caller_pc (frame_info_ptr this_frame)
 {
   this_frame = skip_artificial_frames (this_frame);
 
@@ -1041,34 +1004,31 @@ frame_unwind_caller_pc (struct frame_info *this_frame)
 }
 
 bool
-get_frame_func_if_available (frame_info *this_frame, CORE_ADDR *pc)
+get_frame_func_if_available (frame_info_ptr this_frame, CORE_ADDR *pc)
 {
-  struct frame_info *next_frame = this_frame->next;
+  frame_info *next_frame = this_frame->next;
 
   if (next_frame->prev_func.status == CC_UNKNOWN)
     {
       CORE_ADDR addr_in_block;
 
       /* Make certain that this, and not the adjacent, function is
-         found.  */
+	 found.  */
       if (!get_frame_address_in_block_if_available (this_frame, &addr_in_block))
 	{
 	  next_frame->prev_func.status = CC_UNAVAILABLE;
-	  if (frame_debug)
-	    fprintf_unfiltered (gdb_stdlog,
-				"{ get_frame_func (this_frame=%d)"
-				" -> unavailable }\n",
-				this_frame->level);
+
+	  frame_debug_printf ("this_frame=%d -> unavailable",
+			      this_frame->level);
 	}
       else
 	{
 	  next_frame->prev_func.status = CC_VALUE;
 	  next_frame->prev_func.addr = get_pc_function_start (addr_in_block);
-	  if (frame_debug)
-	    fprintf_unfiltered (gdb_stdlog,
-				"{ get_frame_func (this_frame=%d) -> %s }\n",
-				this_frame->level,
-				hex_string (next_frame->prev_func.addr));
+
+	  frame_debug_printf ("this_frame=%d -> %s",
+			      this_frame->level,
+			      hex_string (next_frame->prev_func.addr));
 	}
     }
 
@@ -1087,7 +1047,7 @@ get_frame_func_if_available (frame_info *this_frame, CORE_ADDR *pc)
 }
 
 CORE_ADDR
-get_frame_func (struct frame_info *this_frame)
+get_frame_func (frame_info_ptr this_frame)
 {
   CORE_ADDR pc;
 
@@ -1098,7 +1058,7 @@ get_frame_func (struct frame_info *this_frame)
 }
 
 std::unique_ptr<readonly_detached_regcache>
-frame_save_as_regcache (struct frame_info *this_frame)
+frame_save_as_regcache (frame_info_ptr this_frame)
 {
   auto cooked_read = [this_frame] (int regnum, gdb_byte *buf)
     {
@@ -1115,9 +1075,9 @@ frame_save_as_regcache (struct frame_info *this_frame)
 }
 
 void
-frame_pop (struct frame_info *this_frame)
+frame_pop (frame_info_ptr this_frame)
 {
-  struct frame_info *prev_frame;
+  frame_info_ptr prev_frame;
 
   if (get_frame_type (this_frame) == DUMMY_FRAME)
     {
@@ -1164,7 +1124,7 @@ frame_pop (struct frame_info *this_frame)
 }
 
 void
-frame_register_unwind (frame_info *next_frame, int regnum,
+frame_register_unwind (frame_info_ptr next_frame, int regnum,
 		       int *optimizedp, int *unavailablep,
 		       enum lval_type *lvalp, CORE_ADDR *addrp,
 		       int *realnump, gdb_byte *bufferp)
@@ -1195,10 +1155,10 @@ frame_register_unwind (frame_info *next_frame, int regnum,
   if (bufferp)
     {
       if (!*optimizedp && !*unavailablep)
-	memcpy (bufferp, value_contents_all (value),
-		TYPE_LENGTH (value_type (value)));
+	memcpy (bufferp, value_contents_all (value).data (),
+		value_type (value)->length ());
       else
-	memset (bufferp, 0, TYPE_LENGTH (value_type (value)));
+	memset (bufferp, 0, value_type (value)->length ());
     }
 
   /* Dispose of the new value.  This prevents watchpoints from
@@ -1206,8 +1166,13 @@ frame_register_unwind (frame_info *next_frame, int regnum,
   release_value (value);
 }
 
-void
-frame_register (struct frame_info *frame, int regnum,
+/* Get the value of the register that belongs to this FRAME.  This
+   function is a wrapper to the call sequence ``frame_register_unwind
+   (get_next_frame (FRAME))''.  As per frame_register_unwind(), if
+   VALUEP is NULL, the registers value is not fetched/computed.  */
+
+static void
+frame_register (frame_info_ptr frame, int regnum,
 		int *optimizedp, int *unavailablep, enum lval_type *lvalp,
 		CORE_ADDR *addrp, int *realnump, gdb_byte *bufferp)
 {
@@ -1222,12 +1187,12 @@ frame_register (struct frame_info *frame, int regnum,
   /* Obtain the register value by unwinding the register from the next
      (more inner frame).  */
   gdb_assert (frame != NULL && frame->next != NULL);
-  frame_register_unwind (frame->next, regnum, optimizedp, unavailablep,
-			 lvalp, addrp, realnump, bufferp);
+  frame_register_unwind (frame_info_ptr (frame->next), regnum, optimizedp,
+			 unavailablep, lvalp, addrp, realnump, bufferp);
 }
 
 void
-frame_unwind_register (frame_info *next_frame, int regnum, gdb_byte *buf)
+frame_unwind_register (frame_info_ptr next_frame, int regnum, gdb_byte *buf)
 {
   int optimized;
   int unavailable;
@@ -1247,88 +1212,115 @@ frame_unwind_register (frame_info *next_frame, int regnum, gdb_byte *buf)
 }
 
 void
-get_frame_register (struct frame_info *frame,
+get_frame_register (frame_info_ptr frame,
 		    int regnum, gdb_byte *buf)
 {
-  frame_unwind_register (frame->next, regnum, buf);
+  frame_unwind_register (frame_info_ptr (frame->next), regnum, buf);
 }
 
 struct value *
-frame_unwind_register_value (frame_info *next_frame, int regnum)
+frame_unwind_register_value (frame_info_ptr next_frame, int regnum)
 {
-  struct gdbarch *gdbarch;
-  struct value *value;
+  FRAME_SCOPED_DEBUG_ENTER_EXIT;
 
   gdb_assert (next_frame != NULL);
-  gdbarch = frame_unwind_arch (next_frame);
-
-  if (frame_debug)
-    {
-      fprintf_unfiltered (gdb_stdlog,
-			  "{ frame_unwind_register_value "
-			  "(frame=%d,regnum=%d(%s),...) ",
-			  next_frame->level, regnum,
-			  user_reg_map_regnum_to_name (gdbarch, regnum));
-    }
+  gdbarch *gdbarch = frame_unwind_arch (next_frame);
+  frame_debug_printf ("frame=%d, regnum=%d(%s)",
+		      next_frame->level, regnum,
+		      user_reg_map_regnum_to_name (gdbarch, regnum));
 
   /* Find the unwinder.  */
   if (next_frame->unwind == NULL)
     frame_unwind_find_by_frame (next_frame, &next_frame->prologue_cache);
 
   /* Ask this frame to unwind its register.  */
-  value = next_frame->unwind->prev_register (next_frame,
-					     &next_frame->prologue_cache,
-					     regnum);
+  value *value = next_frame->unwind->prev_register (next_frame,
+						    &next_frame->prologue_cache,
+						    regnum);
 
   if (frame_debug)
     {
-      fprintf_unfiltered (gdb_stdlog, "->");
+      string_file debug_file;
+
+      gdb_printf (&debug_file, "  ->");
       if (value_optimized_out (value))
 	{
-	  fprintf_unfiltered (gdb_stdlog, " ");
-	  val_print_not_saved (gdb_stdlog);
+	  gdb_printf (&debug_file, " ");
+	  val_print_not_saved (&debug_file);
 	}
       else
 	{
 	  if (VALUE_LVAL (value) == lval_register)
-	    fprintf_unfiltered (gdb_stdlog, " register=%d",
-				VALUE_REGNUM (value));
+	    gdb_printf (&debug_file, " register=%d",
+			VALUE_REGNUM (value));
 	  else if (VALUE_LVAL (value) == lval_memory)
-	    fprintf_unfiltered (gdb_stdlog, " address=%s",
-				paddress (gdbarch,
-					  value_address (value)));
+	    gdb_printf (&debug_file, " address=%s",
+			paddress (gdbarch,
+				  value_address (value)));
 	  else
-	    fprintf_unfiltered (gdb_stdlog, " computed");
+	    gdb_printf (&debug_file, " computed");
 
 	  if (value_lazy (value))
-	    fprintf_unfiltered (gdb_stdlog, " lazy");
+	    gdb_printf (&debug_file, " lazy");
 	  else
 	    {
 	      int i;
-	      const gdb_byte *buf = value_contents (value);
+	      gdb::array_view<const gdb_byte> buf = value_contents (value);
 
-	      fprintf_unfiltered (gdb_stdlog, " bytes=");
-	      fprintf_unfiltered (gdb_stdlog, "[");
+	      gdb_printf (&debug_file, " bytes=");
+	      gdb_printf (&debug_file, "[");
 	      for (i = 0; i < register_size (gdbarch, regnum); i++)
-		fprintf_unfiltered (gdb_stdlog, "%02x", buf[i]);
-	      fprintf_unfiltered (gdb_stdlog, "]");
+		gdb_printf (&debug_file, "%02x", buf[i]);
+	      gdb_printf (&debug_file, "]");
 	    }
 	}
 
-      fprintf_unfiltered (gdb_stdlog, " }\n");
+      frame_debug_printf ("%s", debug_file.c_str ());
     }
 
   return value;
 }
 
 struct value *
-get_frame_register_value (struct frame_info *frame, int regnum)
+get_frame_register_value (frame_info_ptr frame, int regnum)
 {
-  return frame_unwind_register_value (frame->next, regnum);
+  return frame_unwind_register_value (frame_info_ptr (frame->next), regnum);
 }
 
 LONGEST
-frame_unwind_register_signed (frame_info *next_frame, int regnum)
+frame_unwind_register_signed (frame_info_ptr next_frame, int regnum)
+{
+  struct gdbarch *gdbarch = frame_unwind_arch (next_frame);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  struct value *value = frame_unwind_register_value (next_frame, regnum);
+
+  gdb_assert (value != NULL);
+
+  if (value_optimized_out (value))
+    {
+      throw_error (OPTIMIZED_OUT_ERROR,
+		   _("Register %d was not saved"), regnum);
+    }
+  if (!value_entirely_available (value))
+    {
+      throw_error (NOT_AVAILABLE_ERROR,
+		   _("Register %d is not available"), regnum);
+    }
+
+  LONGEST r = extract_signed_integer (value_contents_all (value), byte_order);
+
+  release_value (value);
+  return r;
+}
+
+LONGEST
+get_frame_register_signed (frame_info_ptr frame, int regnum)
+{
+  return frame_unwind_register_signed (frame_info_ptr (frame->next), regnum);
+}
+
+ULONGEST
+frame_unwind_register_unsigned (frame_info_ptr next_frame, int regnum)
 {
   struct gdbarch *gdbarch = frame_unwind_arch (next_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -1348,55 +1340,21 @@ frame_unwind_register_signed (frame_info *next_frame, int regnum)
 		   _("Register %d is not available"), regnum);
     }
 
-  LONGEST r = extract_signed_integer (value_contents_all (value), size,
-				      byte_order);
-
-  release_value (value);
-  return r;
-}
-
-LONGEST
-get_frame_register_signed (struct frame_info *frame, int regnum)
-{
-  return frame_unwind_register_signed (frame->next, regnum);
-}
-
-ULONGEST
-frame_unwind_register_unsigned (frame_info *next_frame, int regnum)
-{
-  struct gdbarch *gdbarch = frame_unwind_arch (next_frame);
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  int size = register_size (gdbarch, regnum);
-  struct value *value = frame_unwind_register_value (next_frame, regnum);
-
-  gdb_assert (value != NULL);
-
-  if (value_optimized_out (value))
-    {
-      throw_error (OPTIMIZED_OUT_ERROR,
-		   _("Register %d was not saved"), regnum);
-    }
-  if (!value_entirely_available (value))
-    {
-      throw_error (NOT_AVAILABLE_ERROR,
-		   _("Register %d is not available"), regnum);
-    }
-
-  ULONGEST r = extract_unsigned_integer (value_contents_all (value), size,
-					 byte_order);
+  ULONGEST r = extract_unsigned_integer (value_contents_all (value).data (),
+					 size, byte_order);
 
   release_value (value);
   return r;
 }
 
 ULONGEST
-get_frame_register_unsigned (struct frame_info *frame, int regnum)
+get_frame_register_unsigned (frame_info_ptr frame, int regnum)
 {
-  return frame_unwind_register_unsigned (frame->next, regnum);
+  return frame_unwind_register_unsigned (frame_info_ptr (frame->next), regnum);
 }
 
 bool
-read_frame_register_unsigned (frame_info *frame, int regnum,
+read_frame_register_unsigned (frame_info_ptr frame, int regnum,
 			      ULONGEST *val)
 {
   struct value *regval = get_frame_register_value (frame, regnum);
@@ -1408,7 +1366,8 @@ read_frame_register_unsigned (frame_info *frame, int regnum,
       enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
       int size = register_size (gdbarch, VALUE_REGNUM (regval));
 
-      *val = extract_unsigned_integer (value_contents (regval), size, byte_order);
+      *val = extract_unsigned_integer (value_contents (regval).data (), size,
+				       byte_order);
       return true;
     }
 
@@ -1416,7 +1375,7 @@ read_frame_register_unsigned (frame_info *frame, int regnum,
 }
 
 void
-put_frame_register (struct frame_info *frame, int regnum,
+put_frame_register (frame_info_ptr frame, int regnum,
 		    const gdb_byte *buf)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
@@ -1454,7 +1413,7 @@ put_frame_register (struct frame_info *frame, int regnum,
    Returns 0 if the register value could not be found.  */
 
 bool
-deprecated_frame_register_read (frame_info *frame, int regnum,
+deprecated_frame_register_read (frame_info_ptr frame, int regnum,
 				gdb_byte *myaddr)
 {
   int optimized;
@@ -1470,8 +1429,9 @@ deprecated_frame_register_read (frame_info *frame, int regnum,
 }
 
 bool
-get_frame_register_bytes (frame_info *frame, int regnum,
-			  CORE_ADDR offset, int len, gdb_byte *myaddr,
+get_frame_register_bytes (frame_info_ptr frame, int regnum,
+			  CORE_ADDR offset,
+			  gdb::array_view<gdb_byte> buffer,
 			  int *optimizedp, int *unavailablep)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
@@ -1498,6 +1458,8 @@ get_frame_register_bytes (frame_info *frame, int regnum,
 	break;	/* This register is not available on this architecture.  */
       maxsize += thissize;
     }
+
+  int len = buffer.size ();
   if (len > maxsize)
     error (_("Bad debug information detected: "
 	     "Attempt to read %d bytes from registers."), len);
@@ -1509,6 +1471,8 @@ get_frame_register_bytes (frame_info *frame, int regnum,
 
       if (curr_len > len)
 	curr_len = len;
+
+      gdb_byte *myaddr = buffer.data ();
 
       if (curr_len == register_size (gdbarch, regnum))
 	{
@@ -1523,8 +1487,9 @@ get_frame_register_bytes (frame_info *frame, int regnum,
 	}
       else
 	{
-	  struct value *value = frame_unwind_register_value (frame->next,
-							     regnum);
+	  struct value *value
+	    = frame_unwind_register_value (frame_info_ptr (frame->next),
+					   regnum);
 	  gdb_assert (value != NULL);
 	  *optimizedp = value_optimized_out (value);
 	  *unavailablep = !value_entirely_available (value);
@@ -1535,7 +1500,8 @@ get_frame_register_bytes (frame_info *frame, int regnum,
 	      return false;
 	    }
 
-	  memcpy (myaddr, value_contents_all (value) + offset, curr_len);
+	  memcpy (myaddr, value_contents_all (value).data () + offset,
+		  curr_len);
 	  release_value (value);
 	}
 
@@ -1552,8 +1518,9 @@ get_frame_register_bytes (frame_info *frame, int regnum,
 }
 
 void
-put_frame_register_bytes (struct frame_info *frame, int regnum,
-			  CORE_ADDR offset, int len, const gdb_byte *myaddr)
+put_frame_register_bytes (frame_info_ptr frame, int regnum,
+			  CORE_ADDR offset,
+			  gdb::array_view<const gdb_byte> buffer)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
 
@@ -1564,6 +1531,7 @@ put_frame_register_bytes (struct frame_info *frame, int regnum,
       regnum++;
     }
 
+  int len = buffer.size ();
   /* Copy the data.  */
   while (len > 0)
     {
@@ -1572,19 +1540,22 @@ put_frame_register_bytes (struct frame_info *frame, int regnum,
       if (curr_len > len)
 	curr_len = len;
 
+      const gdb_byte *myaddr = buffer.data ();
       if (curr_len == register_size (gdbarch, regnum))
 	{
 	  put_frame_register (frame, regnum, myaddr);
 	}
       else
 	{
-	  struct value *value = frame_unwind_register_value (frame->next,
-							     regnum);
+	  struct value *value
+	    = frame_unwind_register_value (frame_info_ptr (frame->next),
+					   regnum);
 	  gdb_assert (value != NULL);
 
-	  memcpy ((char *) value_contents_writeable (value) + offset, myaddr,
-		  curr_len);
-	  put_frame_register (frame, regnum, value_contents_raw (value));
+	  memcpy ((char *) value_contents_writeable (value).data () + offset,
+		  myaddr, curr_len);
+	  put_frame_register (frame, regnum,
+			      value_contents_raw (value).data ());
 	  release_value (value);
 	}
 
@@ -1597,10 +1568,10 @@ put_frame_register_bytes (struct frame_info *frame, int regnum,
 
 /* Create a sentinel frame.  */
 
-static struct frame_info *
+static frame_info *
 create_sentinel_frame (struct program_space *pspace, struct regcache *regcache)
 {
-  struct frame_info *frame = FRAME_OBSTACK_ZALLOC (struct frame_info);
+  frame_info *frame = FRAME_OBSTACK_ZALLOC (struct frame_info);
 
   frame->level = -1;
   frame->pspace = pspace;
@@ -1617,12 +1588,9 @@ create_sentinel_frame (struct program_space *pspace, struct regcache *regcache)
   /* The sentinel frame has a special ID.  */
   frame->this_id.p = frame_id_status::COMPUTED;
   frame->this_id.value = sentinel_frame_id;
-  if (frame_debug)
-    {
-      fprintf_unfiltered (gdb_stdlog, "{ create_sentinel_frame (...) -> ");
-      fprint_frame (gdb_stdlog, frame);
-      fprintf_unfiltered (gdb_stdlog, " }\n");
-    }
+
+  frame_debug_printf ("  -> %s", frame->to_string ().c_str ());
+
   return frame;
 }
 
@@ -1641,23 +1609,23 @@ frame_obstack_zalloc (unsigned long size)
   return data;
 }
 
-static struct frame_info *get_prev_frame_always_1 (struct frame_info *this_frame);
+static frame_info_ptr get_prev_frame_always_1 (frame_info_ptr this_frame);
 
-struct frame_info *
+frame_info_ptr
 get_current_frame (void)
 {
-  struct frame_info *current_frame;
+  frame_info_ptr current_frame;
 
   /* First check, and report, the lack of registers.  Having GDB
      report "No stack!" or "No memory" when the target doesn't even
      have registers is very confusing.  Besides, "printcmd.exp"
      explicitly checks that ``print $pc'' with no registers prints "No
      registers".  */
-  if (!target_has_registers)
+  if (!target_has_registers ())
     error (_("No registers."));
-  if (!target_has_stack)
+  if (!target_has_stack ())
     error (_("No stack."));
-  if (!target_has_memory)
+  if (!target_has_memory ())
     error (_("No memory."));
   /* Traceframes are effectively a substitute for the live inferior.  */
   if (get_traceframe_number () < 0)
@@ -1678,21 +1646,145 @@ get_current_frame (void)
      want to leave with the current frame created and linked in --
      we should never end up with the sentinel frame as outermost
      frame.  */
-  current_frame = get_prev_frame_always_1 (sentinel_frame);
+  current_frame = get_prev_frame_always_1 (frame_info_ptr (sentinel_frame));
   gdb_assert (current_frame != NULL);
 
   return current_frame;
 }
 
 /* The "selected" stack frame is used by default for local and arg
-   access.  May be zero, for no selected frame.  */
+   access.
 
-static struct frame_info *selected_frame;
+   The "single source of truth" for the selected frame is the
+   SELECTED_FRAME_ID / SELECTED_FRAME_LEVEL pair.
+
+   Frame IDs can be saved/restored across reinitializing the frame
+   cache, while frame_info pointers can't (frame_info objects are
+   invalidated).  If we know the corresponding frame_info object, it
+   is cached in SELECTED_FRAME.
+
+   If SELECTED_FRAME_ID / SELECTED_FRAME_LEVEL are null_frame_id / -1,
+   and the target has stack and is stopped, the selected frame is the
+   current (innermost) frame.  This means that SELECTED_FRAME_LEVEL is
+   never 0 and SELECTED_FRAME_ID is never the ID of the innermost
+   frame.
+
+   If SELECTED_FRAME_ID / SELECTED_FRAME_LEVEL are null_frame_id / -1,
+   and the target has no stack or is executing, then there's no
+   selected frame.  */
+static frame_id selected_frame_id = null_frame_id;
+static int selected_frame_level = -1;
+
+/* The cached frame_info object pointing to the selected frame.
+   Looked up on demand by get_selected_frame.  */
+static frame_info_ptr selected_frame;
+
+/* See frame.h.  */
+
+void
+save_selected_frame (frame_id *frame_id, int *frame_level)
+  noexcept
+{
+  *frame_id = selected_frame_id;
+  *frame_level = selected_frame_level;
+}
+
+/* See frame.h.  */
+
+void
+restore_selected_frame (frame_id frame_id, int frame_level)
+  noexcept
+{
+  /* save_selected_frame never returns level == 0, so we shouldn't see
+     it here either.  */
+  gdb_assert (frame_level != 0);
+
+  /* FRAME_ID can be null_frame_id only IFF frame_level is -1.  */
+  gdb_assert ((frame_level == -1 && !frame_id_p (frame_id))
+	      || (frame_level != -1 && frame_id_p (frame_id)));
+
+  selected_frame_id = frame_id;
+  selected_frame_level = frame_level;
+
+  /* Will be looked up later by get_selected_frame.  */
+  selected_frame = nullptr;
+}
+
+/* Lookup the frame_info object for the selected frame FRAME_ID /
+   FRAME_LEVEL and cache the result.
+
+   If FRAME_LEVEL > 0 and the originally selected frame isn't found,
+   warn and select the innermost (current) frame.  */
+
+static void
+lookup_selected_frame (struct frame_id a_frame_id, int frame_level)
+{
+  frame_info_ptr frame = NULL;
+  int count;
+
+  /* This either means there was no selected frame, or the selected
+     frame was the current frame.  In either case, select the current
+     frame.  */
+  if (frame_level == -1)
+    {
+      select_frame (get_current_frame ());
+      return;
+    }
+
+  /* select_frame never saves 0 in SELECTED_FRAME_LEVEL, so we
+     shouldn't see it here.  */
+  gdb_assert (frame_level > 0);
+
+  /* Restore by level first, check if the frame id is the same as
+     expected.  If that fails, try restoring by frame id.  If that
+     fails, nothing to do, just warn the user.  */
+
+  count = frame_level;
+  frame = find_relative_frame (get_current_frame (), &count);
+  if (count == 0
+      && frame != NULL
+      /* The frame ids must match - either both valid or both
+	 outer_frame_id.  The latter case is not failsafe, but since
+	 it's highly unlikely the search by level finds the wrong
+	 frame, it's 99.9(9)% of the time (for all practical purposes)
+	 safe.  */
+      && get_frame_id (frame) == a_frame_id)
+    {
+      /* Cool, all is fine.  */
+      select_frame (frame);
+      return;
+    }
+
+  frame = frame_find_by_id (a_frame_id);
+  if (frame != NULL)
+    {
+      /* Cool, refound it.  */
+      select_frame (frame);
+      return;
+    }
+
+  /* Nothing else to do, the frame layout really changed.  Select the
+     innermost stack frame.  */
+  select_frame (get_current_frame ());
+
+  /* Warn the user.  */
+  if (frame_level > 0 && !current_uiout->is_mi_like_p ())
+    {
+      warning (_("Couldn't restore frame #%d in "
+		 "current thread.  Bottom (innermost) frame selected:"),
+	       frame_level);
+      /* For MI, we should probably have a notification about current
+	 frame change.  But this error is not very likely, so don't
+	 bother for now.  */
+      print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
+    }
+}
 
 bool
 has_stack_frames ()
 {
-  if (!target_has_registers || !target_has_stack || !target_has_memory)
+  if (!target_has_registers () || !target_has_stack ()
+      || !target_has_memory ())
     return false;
 
   /* Traceframes are effectively a substitute for the live inferior.  */
@@ -1708,39 +1800,27 @@ has_stack_frames ()
 	return false;
 
       /* ... or from a spinning thread.  */
-      if (tp->executing)
+      if (tp->executing ())
 	return false;
     }
 
   return true;
 }
 
-/* Return the selected frame.  Always non-NULL (unless there isn't an
-   inferior sufficient for creating a frame) in which case an error is
-   thrown.  */
+/* See frame.h.  */
 
-struct frame_info *
+frame_info_ptr
 get_selected_frame (const char *message)
 {
   if (selected_frame == NULL)
     {
       if (message != NULL && !has_stack_frames ())
 	error (("%s"), message);
-      /* Hey!  Don't trust this.  It should really be re-finding the
-	 last selected frame of the currently selected thread.  This,
-	 though, is better than nothing.  */
-      select_frame (get_current_frame ());
+
+      lookup_selected_frame (selected_frame_id, selected_frame_level);
     }
   /* There is always a frame.  */
   gdb_assert (selected_frame != NULL);
-  return selected_frame;
-}
-
-/* If there is a selected frame, return it.  Otherwise, return NULL.  */
-
-struct frame_info *
-get_selected_frame_if_set (void)
-{
   return selected_frame;
 }
 
@@ -1748,7 +1828,7 @@ get_selected_frame_if_set (void)
    the inferior does not have a frame; in that case it will return
    NULL instead of calling error().  */
 
-struct frame_info *
+frame_info_ptr
 deprecated_safe_get_selected_frame (void)
 {
   if (!has_stack_frames ())
@@ -1756,12 +1836,54 @@ deprecated_safe_get_selected_frame (void)
   return get_selected_frame (NULL);
 }
 
-/* Select frame FI (or NULL - to invalidate the current frame).  */
+/* Invalidate the selected frame.  */
+
+static void
+invalidate_selected_frame ()
+{
+  selected_frame = nullptr;
+  selected_frame_level = -1;
+  selected_frame_id = null_frame_id;
+}
+
+/* See frame.h.  */
 
 void
-select_frame (struct frame_info *fi)
+select_frame (frame_info_ptr fi)
 {
+  gdb_assert (fi != nullptr);
+
   selected_frame = fi;
+  selected_frame_level = frame_relative_level (fi);
+  if (selected_frame_level == 0)
+    {
+      /* Treat the current frame especially -- we want to always
+	 save/restore it without warning, even if the frame ID changes
+	 (see lookup_selected_frame).  E.g.:
+
+	  // The current frame is selected, the target had just stopped.
+	  {
+	    scoped_restore_selected_frame restore_frame;
+	    some_operation_that_changes_the_stack ();
+	  }
+	  // scoped_restore_selected_frame's dtor runs, but the
+	  // original frame_id can't be found.  No matter whether it
+	  // is found or not, we still end up with the now-current
+	  // frame selected.  Warning in lookup_selected_frame in this
+	  // case seems pointless.
+
+	 Also get_frame_id may access the target's registers/memory,
+	 and thus skipping get_frame_id optimizes the common case.
+
+	 Saving the selected frame this way makes get_selected_frame
+	 and restore_current_frame return/re-select whatever frame is
+	 the innermost (current) then.  */
+      selected_frame_level = -1;
+      selected_frame_id = null_frame_id;
+    }
+  else
+    selected_frame_id = get_frame_id (fi);
+
   /* NOTE: cagney/2002-05-04: FI can be NULL.  This occurs when the
      frame is being invalidated.  */
 
@@ -1792,10 +1914,10 @@ select_frame (struct frame_info *fi)
 	  struct compunit_symtab *cust = find_pc_compunit_symtab (pc);
 
 	  if (cust != NULL
-	      && compunit_language (cust) != current_language->la_language
-	      && compunit_language (cust) != language_unknown
+	      && cust->language () != current_language->la_language
+	      && cust->language () != language_unknown
 	      && language_mode == language_mode_auto)
-	    set_language (compunit_language (cust));
+	    set_language (cust->language ());
 	}
     }
 }
@@ -1803,17 +1925,12 @@ select_frame (struct frame_info *fi)
 /* Create an arbitrary (i.e. address specified by user) or innermost frame.
    Always returns a non-NULL value.  */
 
-struct frame_info *
+frame_info_ptr
 create_new_frame (CORE_ADDR addr, CORE_ADDR pc)
 {
-  struct frame_info *fi;
+  frame_info *fi;
 
-  if (frame_debug)
-    {
-      fprintf_unfiltered (gdb_stdlog,
-			  "{ create_new_frame (addr=%s, pc=%s) ",
-			  hex_string (addr), hex_string (pc));
-    }
+  frame_debug_printf ("addr=%s, pc=%s", hex_string (addr), hex_string (pc));
 
   fi = FRAME_OBSTACK_ZALLOC (struct frame_info);
 
@@ -1833,30 +1950,25 @@ create_new_frame (CORE_ADDR addr, CORE_ADDR pc)
 
   /* Select/initialize both the unwind function and the frame's type
      based on the PC.  */
-  frame_unwind_find_by_frame (fi, &fi->prologue_cache);
+  frame_unwind_find_by_frame (frame_info_ptr (fi), &fi->prologue_cache);
 
   fi->this_id.p = frame_id_status::COMPUTED;
   fi->this_id.value = frame_id_build (addr, pc);
 
-  if (frame_debug)
-    {
-      fprintf_unfiltered (gdb_stdlog, "-> ");
-      fprint_frame (gdb_stdlog, fi);
-      fprintf_unfiltered (gdb_stdlog, " }\n");
-    }
+  frame_debug_printf ("  -> %s", fi->to_string ().c_str ());
 
-  return fi;
+  return frame_info_ptr (fi);
 }
 
 /* Return the frame that THIS_FRAME calls (NULL if THIS_FRAME is the
    innermost frame).  Be careful to not fall off the bottom of the
    frame chain and onto the sentinel frame.  */
 
-struct frame_info *
-get_next_frame (struct frame_info *this_frame)
+frame_info_ptr
+get_next_frame (frame_info_ptr this_frame)
 {
   if (this_frame->level > 0)
-    return this_frame->next;
+    return frame_info_ptr (this_frame->next);
   else
     return NULL;
 }
@@ -1865,8 +1977,8 @@ get_next_frame (struct frame_info *this_frame)
    innermost (i.e. current) frame, return the sentinel frame.  Thus,
    unlike get_next_frame(), NULL will never be returned.  */
 
-struct frame_info *
-get_next_frame_sentinel_okay (struct frame_info *this_frame)
+frame_info_ptr
+get_next_frame_sentinel_okay (frame_info_ptr this_frame)
 {
   gdb_assert (this_frame != NULL);
 
@@ -1877,7 +1989,7 @@ get_next_frame_sentinel_okay (struct frame_info *this_frame)
      is likely a coding error.  */
   gdb_assert (this_frame != sentinel_frame);
 
-  return this_frame->next;
+  return frame_info_ptr (this_frame->next);
 }
 
 /* Observer for the target_changed event.  */
@@ -1893,12 +2005,10 @@ frame_observer_target_changed (struct target_ops *target)
 void
 reinit_frame_cache (void)
 {
-  struct frame_info *fi;
-
   ++frame_cache_generation;
 
   /* Tear down all frame caches.  */
-  for (fi = sentinel_frame; fi != NULL; fi = fi->prev)
+  for (frame_info *fi = sentinel_frame; fi != NULL; fi = fi->prev)
     {
       if (fi->prologue_cache && fi->unwind->dealloc_cache)
 	fi->unwind->dealloc_cache (fi, fi->prologue_cache);
@@ -1914,10 +2024,13 @@ reinit_frame_cache (void)
     annotate_frames_invalid ();
 
   sentinel_frame = NULL;		/* Invalidate cache */
-  select_frame (NULL);
+  invalidate_selected_frame ();
   frame_stash_invalidate ();
-  if (frame_debug)
-    fprintf_unfiltered (gdb_stdlog, "{ reinit_frame_cache () }\n");
+
+  for (frame_info_ptr &iter : frame_info_ptr::frame_list)
+    iter.invalidate ();
+
+  frame_debug_printf ("generation=%d", frame_cache_generation);
 }
 
 /* Find where a register is saved (in memory or another register).
@@ -1925,7 +2038,7 @@ reinit_frame_cache (void)
    relative to this particular frame.  */
 
 static void
-frame_register_unwind_location (struct frame_info *this_frame, int regnum,
+frame_register_unwind_location (frame_info_ptr this_frame, int regnum,
 				int *optimizedp, enum lval_type *lvalp,
 				CORE_ADDR *addrp, int *realnump)
 {
@@ -1955,14 +2068,23 @@ frame_register_unwind_location (struct frame_info *this_frame, int regnum,
    outermost, with UNWIND_SAME_ID stop reason.  Unlike the other
    validity tests, that compare THIS_FRAME and the next frame, we do
    this right after creating the previous frame, to avoid ever ending
-   up with two frames with the same id in the frame chain.  */
+   up with two frames with the same id in the frame chain.
 
-static struct frame_info *
-get_prev_frame_if_no_cycle (struct frame_info *this_frame)
+   There is however, one case where this cycle detection is not desirable,
+   when asking for the previous frame of an inline frame, in this case, if
+   the previous frame is a duplicate and we return nullptr then we will be
+   unable to calculate the frame_id of the inline frame, this in turn
+   causes inline_frame_this_id() to fail.  So for inline frames (and only
+   for inline frames), the previous frame will always be returned, even when it
+   has a duplicate frame_id.  We're not worried about cycles in the frame
+   chain as, if the previous frame returned here has a duplicate frame_id,
+   then the frame_id of the inline frame, calculated based off the frame_id
+   of the previous frame, should also be a duplicate.  */
+
+static frame_info_ptr
+get_prev_frame_maybe_check_cycle (frame_info_ptr this_frame)
 {
-  struct frame_info *prev_frame;
-
-  prev_frame = get_prev_frame_raw (this_frame);
+  frame_info_ptr prev_frame = get_prev_frame_raw (this_frame);
 
   /* Don't compute the frame id of the current frame yet.  Unwinding
      the sentinel frame can fail (e.g., if the thread is gone and we
@@ -1981,16 +2103,47 @@ get_prev_frame_if_no_cycle (struct frame_info *this_frame)
   try
     {
       compute_frame_id (prev_frame);
-      if (!frame_stash_add (prev_frame))
+
+      bool cycle_detection_p = get_frame_type (this_frame) != INLINE_FRAME;
+
+      /* This assert checks GDB's state with respect to calculating the
+	 frame-id of THIS_FRAME, in the case where THIS_FRAME is an inline
+	 frame.
+
+	 If THIS_FRAME is frame #0, and is an inline frame, then we put off
+	 calculating the frame_id until we specifically make a call to
+	 get_frame_id().  As a result we can enter this function in two
+	 possible states.  If GDB asked for the previous frame of frame #0
+	 then THIS_FRAME will be frame #0 (an inline frame), and the
+	 frame_id will be in the NOT_COMPUTED state.  However, if GDB asked
+	 for the frame_id of frame #0, then, as getting the frame_id of an
+	 inline frame requires us to get the frame_id of the previous
+	 frame, we will still end up in here, and the frame_id status will
+	 be COMPUTING.
+
+	 If, instead, THIS_FRAME is at a level greater than #0 then things
+	 are simpler.  For these frames we immediately compute the frame_id
+	 when the frame is initially created, and so, for those frames, we
+	 will always enter this function with the frame_id status of
+	 COMPUTING.  */
+      gdb_assert (cycle_detection_p
+		  || (this_frame->level > 0
+		      && (this_frame->this_id.p
+			  == frame_id_status::COMPUTING))
+		  || (this_frame->level == 0
+		      && (this_frame->this_id.p
+			  != frame_id_status::COMPUTED)));
+
+      /* We must do the CYCLE_DETECTION_P check after attempting to add
+	 PREV_FRAME into the cache; if PREV_FRAME is unique then we do want
+	 it in the cache, but if it is a duplicate and CYCLE_DETECTION_P is
+	 false, then we don't want to unlink it.  */
+      if (!frame_stash_add (prev_frame.get ()) && cycle_detection_p)
 	{
 	  /* Another frame with the same id was already in the stash.  We just
 	     detected a cycle.  */
-	  if (frame_debug)
-	    {
-	      fprintf_unfiltered (gdb_stdlog, "-> ");
-	      fprint_frame (gdb_stdlog, NULL);
-	      fprintf_unfiltered (gdb_stdlog, " // this frame has same ID }\n");
-	    }
+	  frame_debug_printf ("  -> nullptr // this frame has same ID");
+
 	  this_frame->stop_reason = UNWIND_SAME_ID;
 	  /* Unlink.  */
 	  prev_frame->next = NULL;
@@ -2016,34 +2169,34 @@ get_prev_frame_if_no_cycle (struct frame_info *this_frame)
    TRY_CATCH block.  Return the frame that called THIS_FRAME or NULL if
    there is no such frame.  This may throw an exception.  */
 
-static struct frame_info *
-get_prev_frame_always_1 (struct frame_info *this_frame)
+static frame_info_ptr
+get_prev_frame_always_1 (frame_info_ptr this_frame)
 {
-  struct gdbarch *gdbarch;
+  FRAME_SCOPED_DEBUG_ENTER_EXIT;
 
   gdb_assert (this_frame != NULL);
-  gdbarch = get_frame_arch (this_frame);
 
   if (frame_debug)
     {
-      fprintf_unfiltered (gdb_stdlog, "{ get_prev_frame_always (this_frame=");
       if (this_frame != NULL)
-	fprintf_unfiltered (gdb_stdlog, "%d", this_frame->level);
+	frame_debug_printf ("this_frame=%d", this_frame->level);
       else
-	fprintf_unfiltered (gdb_stdlog, "<NULL>");
-      fprintf_unfiltered (gdb_stdlog, ") ");
+	frame_debug_printf ("this_frame=nullptr");
     }
+
+  struct gdbarch *gdbarch = get_frame_arch (this_frame);
 
   /* Only try to do the unwind once.  */
   if (this_frame->prev_p)
     {
-      if (frame_debug)
-	{
-	  fprintf_unfiltered (gdb_stdlog, "-> ");
-	  fprint_frame (gdb_stdlog, this_frame->prev);
-	  fprintf_unfiltered (gdb_stdlog, " // cached \n");
-	}
-      return this_frame->prev;
+      if (this_frame->prev != nullptr)
+	frame_debug_printf ("  -> %s // cached",
+			    this_frame->prev->to_string ().c_str ());
+      else
+	frame_debug_printf
+	  ("  -> nullptr // %s // cached",
+	   frame_stop_reason_symbol_string (this_frame->stop_reason));
+      return frame_info_ptr (this_frame->prev);
     }
 
   /* If the frame unwinder hasn't been selected yet, we must do so
@@ -2062,7 +2215,24 @@ get_prev_frame_always_1 (struct frame_info *this_frame)
      until we have unwound all the way down to the previous non-inline
      frame.  */
   if (get_frame_type (this_frame) == INLINE_FRAME)
-    return get_prev_frame_if_no_cycle (this_frame);
+    return get_prev_frame_maybe_check_cycle (this_frame);
+
+  /* If this_frame is the current frame, then compute and stash its
+     frame id prior to fetching and computing the frame id of the
+     previous frame.  Otherwise, the cycle detection code in
+     get_prev_frame_if_no_cycle() will not work correctly.  When
+     get_frame_id() is called later on, an assertion error will be
+     triggered in the event of a cycle between the current frame and
+     its previous frame.
+
+     Note we do this after the INLINE_FRAME check above.  That is
+     because the inline frame's frame id computation needs to fetch
+     the frame id of its previous real stack frame.  I.e., we need to
+     avoid recursion in that case.  This is OK since we're sure the
+     inline frame won't create a cycle with the real stack frame.  See
+     inline_frame_this_id.  */
+  if (this_frame->level == 0)
+    get_frame_id (this_frame);
 
   /* Check that this frame is unwindable.  If it isn't, don't try to
      unwind to the prev frame.  */
@@ -2072,15 +2242,9 @@ get_prev_frame_always_1 (struct frame_info *this_frame)
 
   if (this_frame->stop_reason != UNWIND_NO_REASON)
     {
-      if (frame_debug)
-	{
-	  enum unwind_stop_reason reason = this_frame->stop_reason;
-
-	  fprintf_unfiltered (gdb_stdlog, "-> ");
-	  fprint_frame (gdb_stdlog, NULL);
-	  fprintf_unfiltered (gdb_stdlog, " // %s }\n",
-			      frame_stop_reason_symbol_string (reason));
-	}
+      frame_debug_printf
+	("  -> nullptr // %s",
+	 frame_stop_reason_symbol_string (this_frame->stop_reason));
       return NULL;
     }
 
@@ -2090,14 +2254,14 @@ get_prev_frame_always_1 (struct frame_info *this_frame)
      See the comment at frame_id_inner for details.  */
   if (get_frame_type (this_frame) == NORMAL_FRAME
       && this_frame->next->unwind->type == NORMAL_FRAME
-      && frame_id_inner (get_frame_arch (this_frame->next),
+      && frame_id_inner (get_frame_arch (frame_info_ptr (this_frame->next)),
 			 get_frame_id (this_frame),
-			 get_frame_id (this_frame->next)))
+			 get_frame_id (frame_info_ptr (this_frame->next))))
     {
       CORE_ADDR this_pc_in_block;
       struct minimal_symbol *morestack_msym;
       const char *morestack_name = NULL;
-      
+
       /* gcc -fsplit-stack __morestack can continue the stack anywhere.  */
       this_pc_in_block = get_frame_address_in_block (this_frame);
       morestack_msym = lookup_minimal_symbol_by_pc (this_pc_in_block).minsym;
@@ -2105,13 +2269,7 @@ get_prev_frame_always_1 (struct frame_info *this_frame)
 	morestack_name = morestack_msym->linkage_name ();
       if (!morestack_name || strcmp (morestack_name, "__morestack") != 0)
 	{
-	  if (frame_debug)
-	    {
-	      fprintf_unfiltered (gdb_stdlog, "-> ");
-	      fprint_frame (gdb_stdlog, NULL);
-	      fprintf_unfiltered (gdb_stdlog,
-				  " // this frame ID is inner }\n");
-	    }
+	  frame_debug_printf ("  -> nullptr // this frame ID is inner");
 	  this_frame->stop_reason = UNWIND_INNER_ID;
 	  return NULL;
 	}
@@ -2134,8 +2292,8 @@ get_prev_frame_always_1 (struct frame_info *this_frame)
   if (this_frame->level > 0
       && gdbarch_pc_regnum (gdbarch) >= 0
       && get_frame_type (this_frame) == NORMAL_FRAME
-      && (get_frame_type (this_frame->next) == NORMAL_FRAME
-	  || get_frame_type (this_frame->next) == INLINE_FRAME))
+      && (get_frame_type (frame_info_ptr (this_frame->next)) == NORMAL_FRAME
+	  || get_frame_type (frame_info_ptr (this_frame->next)) == INLINE_FRAME))
     {
       int optimized, realnum, nrealnum;
       enum lval_type lval, nlval;
@@ -2151,20 +2309,14 @@ get_prev_frame_always_1 (struct frame_info *this_frame)
       if ((lval == lval_memory && lval == nlval && addr == naddr)
 	  || (lval == lval_register && lval == nlval && realnum == nrealnum))
 	{
-	  if (frame_debug)
-	    {
-	      fprintf_unfiltered (gdb_stdlog, "-> ");
-	      fprint_frame (gdb_stdlog, NULL);
-	      fprintf_unfiltered (gdb_stdlog, " // no saved PC }\n");
-	    }
-
+	  frame_debug_printf ("  -> nullptr // no saved PC");
 	  this_frame->stop_reason = UNWIND_NO_SAVED_PC;
 	  this_frame->prev = NULL;
 	  return NULL;
 	}
     }
 
-  return get_prev_frame_if_no_cycle (this_frame);
+  return get_prev_frame_maybe_check_cycle (this_frame);
 }
 
 /* Return a "struct frame_info" corresponding to the frame that called
@@ -2173,10 +2325,10 @@ get_prev_frame_always_1 (struct frame_info *this_frame)
    Unlike get_prev_frame, this function always tries to unwind the
    frame.  */
 
-struct frame_info *
-get_prev_frame_always (struct frame_info *this_frame)
+frame_info_ptr
+get_prev_frame_always (frame_info_ptr this_frame)
 {
-  struct frame_info *prev_frame = NULL;
+  frame_info_ptr prev_frame = NULL;
 
   try
     {
@@ -2193,9 +2345,9 @@ get_prev_frame_always (struct frame_info *this_frame)
 	      size_t size;
 
 	      /* The error needs to live as long as the frame does.
-	         Allocate using stack local STOP_STRING then assign the
-	         pointer to the frame, this allows the STOP_STRING on the
-	         frame to be of type 'const char *'.  */
+		 Allocate using stack local STOP_STRING then assign the
+		 pointer to the frame, this allows the STOP_STRING on the
+		 frame to be of type 'const char *'.  */
 	      size = ex.message->size () + 1;
 	      stop_string = (char *) frame_obstack_zalloc (size);
 	      memcpy (stop_string, ex.what (), size);
@@ -2213,10 +2365,10 @@ get_prev_frame_always (struct frame_info *this_frame)
 /* Construct a new "struct frame_info" and link it previous to
    this_frame.  */
 
-static struct frame_info *
-get_prev_frame_raw (struct frame_info *this_frame)
+static frame_info_ptr
+get_prev_frame_raw (frame_info_ptr this_frame)
 {
-  struct frame_info *prev_frame;
+  frame_info *prev_frame;
 
   /* Allocate the new frame but do not wire it in to the frame chain.
      Some (bad) code in INIT_FRAME_EXTRA_INFO tries to look along
@@ -2257,62 +2409,77 @@ get_prev_frame_raw (struct frame_info *this_frame)
 
   /* Link it in.  */
   this_frame->prev = prev_frame;
-  prev_frame->next = this_frame;
+  prev_frame->next = this_frame.get ();
 
-  if (frame_debug)
-    {
-      fprintf_unfiltered (gdb_stdlog, "-> ");
-      fprint_frame (gdb_stdlog, prev_frame);
-      fprintf_unfiltered (gdb_stdlog, " }\n");
-    }
+  frame_debug_printf ("  -> %s", prev_frame->to_string ().c_str ());
 
-  return prev_frame;
+  return frame_info_ptr (prev_frame);
 }
 
 /* Debug routine to print a NULL frame being returned.  */
 
 static void
-frame_debug_got_null_frame (struct frame_info *this_frame,
+frame_debug_got_null_frame (frame_info_ptr this_frame,
 			    const char *reason)
 {
   if (frame_debug)
     {
-      fprintf_unfiltered (gdb_stdlog, "{ get_prev_frame (this_frame=");
       if (this_frame != NULL)
-	fprintf_unfiltered (gdb_stdlog, "%d", this_frame->level);
+	frame_debug_printf ("this_frame=%d -> %s", this_frame->level, reason);
       else
-	fprintf_unfiltered (gdb_stdlog, "<NULL>");
-      fprintf_unfiltered (gdb_stdlog, ") -> // %s}\n", reason);
+	frame_debug_printf ("this_frame=nullptr -> %s", reason);
     }
 }
 
 /* Is this (non-sentinel) frame in the "main"() function?  */
 
 static bool
-inside_main_func (frame_info *this_frame)
+inside_main_func (frame_info_ptr this_frame)
 {
-  if (symfile_objfile == nullptr)
+  if (current_program_space->symfile_object_file == nullptr)
     return false;
 
+  CORE_ADDR sym_addr;
+  const char *name = main_name ();
   bound_minimal_symbol msymbol
-    = lookup_minimal_symbol (main_name (), NULL, symfile_objfile);
+    = lookup_minimal_symbol (name, NULL,
+			     current_program_space->symfile_object_file);
   if (msymbol.minsym == nullptr)
-    return false;
+    {
+      /* In some language (for example Fortran) there will be no minimal
+	 symbol with the name of the main function.  In this case we should
+	 search the full symbols to see if we can find a match.  */
+      struct block_symbol bs = lookup_symbol (name, NULL, VAR_DOMAIN, 0);
+      if (bs.symbol == nullptr)
+	return false;
 
-  /* Make certain that the code, and not descriptor, address is
-     returned.  */
-  CORE_ADDR maddr
-    = gdbarch_convert_from_func_ptr_addr (get_frame_arch (this_frame),
-					  BMSYMBOL_VALUE_ADDRESS (msymbol),
-					  current_top_target ());
+      /* We might have found some unrelated symbol.  For example, the
+	 Rust compiler can emit both a subprogram and a namespace with
+	 the same name in the same scope; and due to how gdb's symbol
+	 tables currently work, we can't request the one we'd
+	 prefer.  */
+      if (bs.symbol->aclass () != LOC_BLOCK)
+	return false;
 
-  return maddr == get_frame_func (this_frame);
+      const struct block *block = bs.symbol->value_block ();
+      gdb_assert (block != nullptr);
+      sym_addr = block->start ();
+    }
+  else
+    sym_addr = msymbol.value_address ();
+
+  /* Convert any function descriptor addresses into the actual function
+     code address.  */
+  sym_addr = gdbarch_convert_from_func_ptr_addr
+    (get_frame_arch (this_frame), sym_addr, current_inferior ()->top_target ());
+
+  return sym_addr == get_frame_func (this_frame);
 }
 
 /* Test whether THIS_FRAME is inside the process entry point function.  */
 
 static bool
-inside_entry_func (frame_info *this_frame)
+inside_entry_func (frame_info_ptr this_frame)
 {
   CORE_ADDR entry_point;
 
@@ -2331,9 +2498,11 @@ inside_entry_func (frame_info *this_frame)
    This function should not contain target-dependent tests, such as
    checking whether the program-counter is zero.  */
 
-struct frame_info *
-get_prev_frame (struct frame_info *this_frame)
+frame_info_ptr
+get_prev_frame (frame_info_ptr this_frame)
 {
+  FRAME_SCOPED_DEBUG_ENTER_EXIT;
+
   CORE_ADDR frame_pc;
   int frame_pc_p;
 
@@ -2341,16 +2510,6 @@ get_prev_frame (struct frame_info *this_frame)
      something should be calling get_selected_frame() or
      get_current_frame().  */
   gdb_assert (this_frame != NULL);
-  
-  /* If this_frame is the current frame, then compute and stash
-     its frame id prior to fetching and computing the frame id of the
-     previous frame.  Otherwise, the cycle detection code in
-     get_prev_frame_if_no_cycle() will not work correctly.  When
-     get_frame_id() is called later on, an assertion error will
-     be triggered in the event of a cycle between the current
-     frame and its previous frame.  */
-  if (this_frame->level == 0)
-    get_frame_id (this_frame);
 
   frame_pc_p = get_frame_pc_if_available (this_frame, &frame_pc);
 
@@ -2360,9 +2519,9 @@ get_prev_frame (struct frame_info *this_frame)
      pcsqh register (space register for the instruction at the head of the
      instruction queue) cannot be written directly; the only way to set it
      is to branch to code that is in the target space.  In order to implement
-     frame dummies on HPUX, the called function is made to jump back to where 
-     the inferior was when the user function was called.  If gdb was inside 
-     the main function when we created the dummy frame, the dummy frame will 
+     frame dummies on HPUX, the called function is made to jump back to where
+     the inferior was when the user function was called.  If gdb was inside
+     the main function when we created the dummy frame, the dummy frame will
      point inside the main function.  */
   if (this_frame->level >= 0
       && get_frame_type (this_frame) == NORMAL_FRAME
@@ -2407,7 +2566,7 @@ get_prev_frame (struct frame_info *this_frame)
      That should provide a far better stopper than the current
      heuristics.  */
   /* NOTE: tausq/2004-10-09: this is needed if, for example, the compiler
-     applied tail-call optimizations to main so that a function called 
+     applied tail-call optimizations to main so that a function called
      from main returns directly to the caller of main.  Since we don't
      stop at main, we should at least stop at the entry point of the
      application.  */
@@ -2437,38 +2596,22 @@ get_prev_frame (struct frame_info *this_frame)
   return get_prev_frame_always (this_frame);
 }
 
-struct frame_id
-get_prev_frame_id_by_id (struct frame_id id)
-{
-  struct frame_id prev_id;
-  struct frame_info *frame;
-  
-  frame = frame_find_by_id (id);
-
-  if (frame != NULL)
-    prev_id = get_frame_id (get_prev_frame (frame));
-  else
-    prev_id = null_frame_id;
-
-  return prev_id;
-}
-
 CORE_ADDR
-get_frame_pc (struct frame_info *frame)
+get_frame_pc (frame_info_ptr frame)
 {
   gdb_assert (frame->next != NULL);
-  return frame_unwind_pc (frame->next);
+  return frame_unwind_pc (frame_info_ptr (frame->next));
 }
 
 bool
-get_frame_pc_if_available (frame_info *frame, CORE_ADDR *pc)
+get_frame_pc_if_available (frame_info_ptr frame, CORE_ADDR *pc)
 {
 
   gdb_assert (frame->next != NULL);
 
   try
     {
-      *pc = frame_unwind_pc (frame->next);
+      *pc = frame_unwind_pc (frame_info_ptr (frame->next));
     }
   catch (const gdb_exception_error &ex)
     {
@@ -2484,12 +2627,12 @@ get_frame_pc_if_available (frame_info *frame, CORE_ADDR *pc)
 /* Return an address that falls within THIS_FRAME's code block.  */
 
 CORE_ADDR
-get_frame_address_in_block (struct frame_info *this_frame)
+get_frame_address_in_block (frame_info_ptr this_frame)
 {
   /* A draft address.  */
   CORE_ADDR pc = get_frame_pc (this_frame);
 
-  struct frame_info *next_frame = this_frame->next;
+  frame_info_ptr next_frame (this_frame->next);
 
   /* Calling get_frame_pc returns the resume address for THIS_FRAME.
      Normally the resume address is inside the body of the function
@@ -2531,7 +2674,7 @@ get_frame_address_in_block (struct frame_info *this_frame)
      "calling" normal function should not be adjusted either.  */
 
   while (get_frame_type (next_frame) == INLINE_FRAME)
-    next_frame = next_frame->next;
+    next_frame = frame_info_ptr (next_frame->next);
 
   if ((get_frame_type (next_frame) == NORMAL_FRAME
        || get_frame_type (next_frame) == TAILCALL_FRAME)
@@ -2544,7 +2687,7 @@ get_frame_address_in_block (struct frame_info *this_frame)
 }
 
 bool
-get_frame_address_in_block_if_available (frame_info *this_frame,
+get_frame_address_in_block_if_available (frame_info_ptr this_frame,
 					 CORE_ADDR *pc)
 {
 
@@ -2563,9 +2706,9 @@ get_frame_address_in_block_if_available (frame_info *this_frame,
 }
 
 symtab_and_line
-find_frame_sal (frame_info *frame)
+find_frame_sal (frame_info_ptr frame)
 {
-  struct frame_info *next_frame;
+  frame_info_ptr next_frame;
   int notcurrent;
   CORE_ADDR pc;
 
@@ -2587,10 +2730,10 @@ find_frame_sal (frame_info *frame)
       gdb_assert (sym);
 
       symtab_and_line sal;
-      if (SYMBOL_LINE (sym) != 0)
+      if (sym->line () != 0)
 	{
-	  sal.symtab = symbol_symtab (sym);
-	  sal.line = SYMBOL_LINE (sym);
+	  sal.symtab = sym->symtab ();
+	  sal.line = sym->line ();
 	}
       else
 	/* If the symbol does not have a location, we don't know where
@@ -2621,7 +2764,7 @@ find_frame_sal (frame_info *frame)
 /* Per "frame.h", return the ``address'' of the frame.  Code should
    really be using get_frame_id().  */
 CORE_ADDR
-get_frame_base (struct frame_info *fi)
+get_frame_base (frame_info_ptr fi)
 {
   return get_frame_id (fi).stack_addr;
 }
@@ -2629,7 +2772,7 @@ get_frame_base (struct frame_info *fi)
 /* High-level offsets into the frame.  Used by the debug info.  */
 
 CORE_ADDR
-get_frame_base_address (struct frame_info *fi)
+get_frame_base_address (frame_info_ptr fi)
 {
   if (get_frame_type (fi) != NORMAL_FRAME)
     return 0;
@@ -2643,7 +2786,7 @@ get_frame_base_address (struct frame_info *fi)
 }
 
 CORE_ADDR
-get_frame_locals_address (struct frame_info *fi)
+get_frame_locals_address (frame_info_ptr fi)
 {
   if (get_frame_type (fi) != NORMAL_FRAME)
     return 0;
@@ -2658,7 +2801,7 @@ get_frame_locals_address (struct frame_info *fi)
 }
 
 CORE_ADDR
-get_frame_args_address (struct frame_info *fi)
+get_frame_args_address (frame_info_ptr fi)
 {
   if (get_frame_type (fi) != NORMAL_FRAME)
     return 0;
@@ -2676,7 +2819,7 @@ get_frame_args_address (struct frame_info *fi)
    otherwise.  */
 
 bool
-frame_unwinder_is (frame_info *fi, const frame_unwind *unwinder)
+frame_unwinder_is (frame_info_ptr fi, const frame_unwind *unwinder)
 {
   if (fi->unwind == nullptr)
     frame_unwind_find_by_frame (fi, &fi->prologue_cache);
@@ -2688,7 +2831,7 @@ frame_unwinder_is (frame_info *fi, const frame_unwind *unwinder)
    or -1 for a NULL frame.  */
 
 int
-frame_relative_level (struct frame_info *fi)
+frame_relative_level (frame_info_ptr fi)
 {
   if (fi == NULL)
     return -1;
@@ -2697,7 +2840,7 @@ frame_relative_level (struct frame_info *fi)
 }
 
 enum frame_type
-get_frame_type (struct frame_info *frame)
+get_frame_type (frame_info_ptr frame)
 {
   if (frame->unwind == NULL)
     /* Initialize the frame's unwinder because that's what
@@ -2707,13 +2850,13 @@ get_frame_type (struct frame_info *frame)
 }
 
 struct program_space *
-get_frame_program_space (struct frame_info *frame)
+get_frame_program_space (frame_info_ptr frame)
 {
   return frame->pspace;
 }
 
 struct program_space *
-frame_unwind_program_space (struct frame_info *this_frame)
+frame_unwind_program_space (frame_info_ptr this_frame)
 {
   gdb_assert (this_frame);
 
@@ -2724,7 +2867,7 @@ frame_unwind_program_space (struct frame_info *this_frame)
 }
 
 const address_space *
-get_frame_address_space (struct frame_info *frame)
+get_frame_address_space (frame_info_ptr frame)
 {
   return frame->aspace;
 }
@@ -2732,14 +2875,14 @@ get_frame_address_space (struct frame_info *frame)
 /* Memory access methods.  */
 
 void
-get_frame_memory (struct frame_info *this_frame, CORE_ADDR addr,
-		  gdb_byte *buf, int len)
+get_frame_memory (frame_info_ptr this_frame, CORE_ADDR addr,
+		  gdb::array_view<gdb_byte> buffer)
 {
-  read_memory (addr, buf, len);
+  read_memory (addr, buffer.data (), buffer.size ());
 }
 
 LONGEST
-get_frame_memory_signed (struct frame_info *this_frame, CORE_ADDR addr,
+get_frame_memory_signed (frame_info_ptr this_frame, CORE_ADDR addr,
 			 int len)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -2749,7 +2892,7 @@ get_frame_memory_signed (struct frame_info *this_frame, CORE_ADDR addr,
 }
 
 ULONGEST
-get_frame_memory_unsigned (struct frame_info *this_frame, CORE_ADDR addr,
+get_frame_memory_unsigned (frame_info_ptr this_frame, CORE_ADDR addr,
 			   int len)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -2759,23 +2902,23 @@ get_frame_memory_unsigned (struct frame_info *this_frame, CORE_ADDR addr,
 }
 
 bool
-safe_frame_unwind_memory (struct frame_info *this_frame,
-			  CORE_ADDR addr, gdb_byte *buf, int len)
+safe_frame_unwind_memory (frame_info_ptr this_frame,
+			  CORE_ADDR addr, gdb::array_view<gdb_byte> buffer)
 {
   /* NOTE: target_read_memory returns zero on success!  */
-  return target_read_memory (addr, buf, len) == 0;
+  return target_read_memory (addr, buffer.data (), buffer.size ()) == 0;
 }
 
 /* Architecture methods.  */
 
 struct gdbarch *
-get_frame_arch (struct frame_info *this_frame)
+get_frame_arch (frame_info_ptr this_frame)
 {
-  return frame_unwind_arch (this_frame->next);
+  return frame_unwind_arch (frame_info_ptr (this_frame->next));
 }
 
 struct gdbarch *
-frame_unwind_arch (struct frame_info *next_frame)
+frame_unwind_arch (frame_info_ptr next_frame)
 {
   if (!next_frame->prev_arch.p)
     {
@@ -2792,18 +2935,16 @@ frame_unwind_arch (struct frame_info *next_frame)
 
       next_frame->prev_arch.arch = arch;
       next_frame->prev_arch.p = true;
-      if (frame_debug)
-	fprintf_unfiltered (gdb_stdlog,
-			    "{ frame_unwind_arch (next_frame=%d) -> %s }\n",
-			    next_frame->level,
-			    gdbarch_bfd_arch_info (arch)->printable_name);
+      frame_debug_printf ("next_frame=%d -> %s",
+			  next_frame->level,
+			  gdbarch_bfd_arch_info (arch)->printable_name);
     }
 
   return next_frame->prev_arch.arch;
 }
 
 struct gdbarch *
-frame_unwind_caller_arch (struct frame_info *next_frame)
+frame_unwind_caller_arch (frame_info_ptr next_frame)
 {
   next_frame = skip_artificial_frames (next_frame);
 
@@ -2818,7 +2959,7 @@ frame_unwind_caller_arch (struct frame_info *next_frame)
 /* Gets the language of FRAME.  */
 
 enum language
-get_frame_language (struct frame_info *frame)
+get_frame_language (frame_info_ptr frame)
 {
   CORE_ADDR pc = 0;
   bool pc_p = false;
@@ -2850,7 +2991,7 @@ get_frame_language (struct frame_info *frame)
       struct compunit_symtab *cust = find_pc_compunit_symtab (pc);
 
       if (cust != NULL)
-	return compunit_language (cust);
+	return cust->language ();
     }
 
   return language_unknown;
@@ -2859,19 +3000,19 @@ get_frame_language (struct frame_info *frame)
 /* Stack pointer methods.  */
 
 CORE_ADDR
-get_frame_sp (struct frame_info *this_frame)
+get_frame_sp (frame_info_ptr this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
 
   /* NOTE drow/2008-06-28: gdbarch_unwind_sp could be converted to
      operate on THIS_FRAME now.  */
-  return gdbarch_unwind_sp (gdbarch, this_frame->next);
+  return gdbarch_unwind_sp (gdbarch, frame_info_ptr (this_frame->next));
 }
 
 /* Return the reason why we can't unwind past FRAME.  */
 
 enum unwind_stop_reason
-get_frame_unwind_stop_reason (struct frame_info *frame)
+get_frame_unwind_stop_reason (frame_info_ptr frame)
 {
   /* Fill-in STOP_REASON.  */
   get_prev_frame_always (frame);
@@ -2893,13 +3034,12 @@ unwind_stop_reason_to_string (enum unwind_stop_reason reason)
 #undef SET
 
     default:
-      internal_error (__FILE__, __LINE__,
-		      "Invalid frame stop reason");
+      internal_error ("Invalid frame stop reason");
     }
 }
 
 const char *
-frame_stop_reason_string (struct frame_info *fi)
+frame_stop_reason_string (frame_info_ptr fi)
 {
   gdb_assert (fi->prev_p);
   gdb_assert (fi->prev == NULL);
@@ -2926,8 +3066,7 @@ frame_stop_reason_symbol_string (enum unwind_stop_reason reason)
 #undef SET
 
     default:
-      internal_error (__FILE__, __LINE__,
-		      "Invalid frame stop reason");
+      internal_error ("Invalid frame stop reason");
     }
 }
 
@@ -2935,7 +3074,7 @@ frame_stop_reason_symbol_string (enum unwind_stop_reason reason)
    FRAME.  */
 
 void
-frame_cleanup_after_sniffer (struct frame_info *frame)
+frame_cleanup_after_sniffer (frame_info_ptr frame)
 {
   /* The sniffer should not allocate a prologue cache if it did not
      match this frame.  */
@@ -2965,7 +3104,7 @@ frame_cleanup_after_sniffer (struct frame_info *frame)
    frame_cleanup_after_sniffer.  */
 
 void
-frame_prepare_for_sniffer (struct frame_info *frame,
+frame_prepare_for_sniffer (frame_info_ptr frame,
 			   const struct frame_unwind *unwind)
 {
   gdb_assert (frame->unwind == NULL);
@@ -2980,8 +3119,6 @@ static struct cmd_list_element *show_backtrace_cmdlist;
 
 using boolean_option_def
   = gdb::option::boolean_option_def<set_backtrace_options>;
-using uinteger_option_def
-  = gdb::option::uinteger_option_def<set_backtrace_options>;
 
 const gdb::option::option_def set_backtrace_option_defs[] = {
 
@@ -3008,6 +3145,30 @@ the rest of the stack trace."),
   },
 };
 
+/* Implement the 'maintenance print frame-id' command.  */
+
+static void
+maintenance_print_frame_id (const char *args, int from_tty)
+{
+  frame_info_ptr frame;
+
+  /* Use the currently selected frame, or select a frame based on the level
+     number passed by the user.  */
+  if (args == nullptr)
+    frame = get_selected_frame ("No frame selected");
+  else
+    {
+      int level = value_as_long (parse_and_eval (args));
+      frame = find_relative_frame (get_current_frame (), &level);
+    }
+
+  /* Print the frame-id.  */
+  gdb_assert (frame != nullptr);
+  gdb_printf ("frame-id for frame #%d: %s\n",
+	      frame_relative_level (frame),
+	      get_frame_id (frame).to_string ().c_str ());
+}
+
 void _initialize_frame ();
 void
 _initialize_frame ()
@@ -3016,18 +3177,18 @@ _initialize_frame ()
 
   frame_stash_create ();
 
-  gdb::observers::target_changed.attach (frame_observer_target_changed);
+  gdb::observers::target_changed.attach (frame_observer_target_changed,
+					 "frame");
 
-  add_basic_prefix_cmd ("backtrace", class_maintenance, _("\
+  add_setshow_prefix_cmd ("backtrace", class_maintenance,
+			  _("\
 Set backtrace specific variables.\n\
 Configure backtrace variables such as the backtrace limit"),
-			&set_backtrace_cmdlist, "set backtrace ",
-			0/*allow-unknown*/, &setlist);
-  add_show_prefix_cmd ("backtrace", class_maintenance, _("\
+			  _("\
 Show backtrace specific variables.\n\
 Show backtrace variables such as the backtrace limit."),
-		       &show_backtrace_cmdlist, "show backtrace ",
-		       0/*allow-unknown*/, &showlist);
+			  &set_backtrace_cmdlist, &show_backtrace_cmdlist,
+			  &setlist, &showlist);
 
   add_setshow_uinteger_cmd ("limit", class_obscure,
 			    &user_set_backtrace_options.backtrace_limit, _("\
@@ -3045,11 +3206,15 @@ Literal \"unlimited\" or zero means no limit."),
      set_backtrace_option_defs, &set_backtrace_cmdlist, &show_backtrace_cmdlist);
 
   /* Debug this files internals.  */
-  add_setshow_zuinteger_cmd ("frame", class_maintenance, &frame_debug,  _("\
+  add_setshow_boolean_cmd ("frame", class_maintenance, &frame_debug,  _("\
 Set frame debugging."), _("\
 Show frame debugging."), _("\
 When non-zero, frame specific internal debugging is enabled."),
-			     NULL,
-			     show_frame_debug,
-			     &setdebuglist, &showdebuglist);
+			   NULL,
+			   show_frame_debug,
+			   &setdebuglist, &showdebuglist);
+
+  add_cmd ("frame-id", class_maintenance, maintenance_print_frame_id,
+	   _("Print the current frame-id."),
+	   &maintenanceprintlist);
 }

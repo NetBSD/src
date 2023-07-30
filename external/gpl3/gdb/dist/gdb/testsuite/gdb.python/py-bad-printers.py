@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,18 +29,18 @@ class BadChildrenContainerPrinter1(object):
         self.val = val
 
     def to_string(self):
-        return 'container %s with %d elements' % (self.val['name'], self.val['len'])
+        return "container %s with %d elements" % (self.val["name"], self.val["len"])
 
     @staticmethod
     def _bad_iterator(pointer, len):
         start = pointer
         end = pointer + len
         while pointer != end:
-            yield 'intentional violation of children iterator protocol'
+            yield "intentional violation of children iterator protocol"
             pointer += 1
 
     def children(self):
-        return self._bad_iterator(self.val['elements'], self.val['len'])
+        return self._bad_iterator(self.val["elements"], self.val["len"])
 
 
 class BadChildrenContainerPrinter2(object):
@@ -50,7 +50,7 @@ class BadChildrenContainerPrinter2(object):
         self.val = val
 
     def to_string(self):
-        return 'container %s with %d elements' % (self.val['name'], self.val['len'])
+        return "container %s with %d elements" % (self.val["name"], self.val["len"])
 
     @staticmethod
     def _bad_iterator(pointer, len):
@@ -58,20 +58,18 @@ class BadChildrenContainerPrinter2(object):
         end = pointer + len
         while pointer != end:
             # The first argument is supposed to be a string.
-            yield (42, 'intentional violation of children iterator protocol')
+            yield (42, "intentional violation of children iterator protocol")
             pointer += 1
 
     def children(self):
-        return self._bad_iterator(self.val['elements'], self.val['len'])
+        return self._bad_iterator(self.val["elements"], self.val["len"])
 
 
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("bad-printers")
 
-    pp.add_printer('container1', '^container$',
-                   BadChildrenContainerPrinter1)
-    pp.add_printer('container2', '^container$',
-                   BadChildrenContainerPrinter2)
+    pp.add_printer("container1", "^container$", BadChildrenContainerPrinter1)
+    pp.add_printer("container2", "^container$", BadChildrenContainerPrinter2)
 
     return pp
 

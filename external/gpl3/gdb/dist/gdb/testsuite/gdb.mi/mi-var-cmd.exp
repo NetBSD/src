@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ set MIFLAGS "-i=mi"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 standard_testfile var-cmd.c
@@ -587,14 +587,24 @@ proc set_frozen {varobjs flag} {
 }
 
 mi_prepare_inline_tests $srcfile
-mi_run_inline_test frozen
 
-mi_run_inline_test bitfield
+set inline_tests {
+    frozen
+    bitfield
+}
+
+# Needs to be last, following tests rely on this.
+lappend inline_tests floating
+
+foreach_with_prefix inline_test $inline_tests {
+    if { [mi_run_inline_test $inline_test] < 0 } {
+	return -1
+    }
+}
 
 # Since the inline test framework does not really work with
-# function calls, first to inline tests and then do the reminder
+# function calls, first to inline tests and then do the remainder
 # manually.
-mi_run_inline_test floating
 set do_at_tests_callee_breakpoint [gdb_get_line_number "breakpoint inside callee"]
 mi_gdb_test "-break-insert var-cmd.c:$do_at_tests_callee_breakpoint" ".*" \
     "inside breakpoint inside callee"
@@ -657,7 +667,7 @@ with_test_prefix "second run" {
 mi_create_varobj "L" "lsimple" "in-and-out-of-scope: create varobj"
 mi_check_varobj_value "L" "{...}" "in-and-out-of-scope: check initial value"
 
-mi_runto main
+mi_runto_main
 
 mi_gdb_test "-var-update L" \
     {\^done,changelist=\[{name="L",in_scope="false",type_changed="false",has_more="0"}\]} \

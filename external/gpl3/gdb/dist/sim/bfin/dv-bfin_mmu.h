@@ -1,6 +1,6 @@
 /* Blackfin Memory Management Unit (MMU) model.
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,6 +20,8 @@
 
 #ifndef DV_BFIN_MMU_H
 #define DV_BFIN_MMU_H
+
+#undef PAGE_SIZE	/* Cleanup system headers.  */
 
 void mmu_check_addr (SIM_CPU *, bu32 addr, bool write, bool inst, int size);
 void mmu_check_cache_addr (SIM_CPU *, bu32 addr, bool write, bool inst);

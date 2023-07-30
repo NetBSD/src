@@ -1,5 +1,5 @@
 /* BFD back-end for binary objects.
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -43,10 +43,10 @@
 
 /* Create a binary object.  Invoked via bfd_set_format.  */
 
-static bfd_boolean
+static bool
 binary_mkobject (bfd *abfd ATTRIBUTE_UNUSED)
 {
-  return TRUE;
+  return true;
 }
 
 /* Any file may be considered to be a binary file, provided the target
@@ -95,7 +95,7 @@ binary_object_p (bfd *abfd)
 
 /* Get contents of the only section.  */
 
-static bfd_boolean
+static bool
 binary_get_section_contents (bfd *abfd,
 			     asection *section,
 			     void * location,
@@ -104,8 +104,8 @@ binary_get_section_contents (bfd *abfd,
 {
   if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
       || bfd_bread (location, count, abfd) != count)
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 /* Return the amount of memory needed to read the symbol table.  */
@@ -206,6 +206,7 @@ binary_get_symbol_info (bfd *ignore_abfd ATTRIBUTE_UNUSED,
 #define binary_bfd_is_local_label_name	    bfd_generic_is_local_label_name
 #define binary_get_lineno		   _bfd_nosymbols_get_lineno
 #define binary_find_nearest_line	   _bfd_nosymbols_find_nearest_line
+#define binary_find_nearest_line_with_alt  _bfd_nosymbols_find_nearest_line_with_alt
 #define binary_find_line		   _bfd_nosymbols_find_line
 #define binary_find_inliner_info	   _bfd_nosymbols_find_inliner_info
 #define binary_bfd_make_debug_symbol	   _bfd_nosymbols_bfd_make_debug_symbol
@@ -218,7 +219,7 @@ binary_get_symbol_info (bfd *ignore_abfd ATTRIBUTE_UNUSED,
 
 /* Write section contents of a binary file.  */
 
-static bfd_boolean
+static bool
 binary_set_section_contents (bfd *abfd,
 			     asection *sec,
 			     const void * data,
@@ -226,18 +227,18 @@ binary_set_section_contents (bfd *abfd,
 			     bfd_size_type size)
 {
   if (size == 0)
-    return TRUE;
+    return true;
 
   if (! abfd->output_has_begun)
     {
-      bfd_boolean found_low;
+      bool found_low;
       bfd_vma low;
       asection *s;
 
       /* The lowest section LMA sets the virtual address of the start
 	 of the file.  We use this to set the file position of all the
 	 sections.  */
-      found_low = FALSE;
+      found_low = false;
       low = 0;
       for (s = abfd->sections; s != NULL; s = s->next)
 	if (((s->flags
@@ -247,7 +248,7 @@ binary_set_section_contents (bfd *abfd,
 	    && (! found_low || s->lma < low))
 	  {
 	    low = s->lma;
-	    found_low = TRUE;
+	    found_low = true;
 	  }
 
       for (s = abfd->sections; s != NULL; s = s->next)
@@ -278,16 +279,16 @@ binary_set_section_contents (bfd *abfd,
 	       s);
 	}
 
-      abfd->output_has_begun = TRUE;
+      abfd->output_has_begun = true;
     }
 
   /* We don't want to output anything for a section that is neither
      loaded nor allocated.  The contents of such a section are not
      meaningful in the binary format.  */
   if ((sec->flags & (SEC_LOAD | SEC_ALLOC)) == 0)
-    return TRUE;
+    return true;
   if ((sec->flags & SEC_NEVER_LOAD) != 0)
-    return TRUE;
+    return true;
 
   return _bfd_generic_set_section_contents (abfd, sec, data, offset, size);
 }
@@ -335,6 +336,7 @@ const bfd_target binary_vec =
   ' ',				/* ar_pad_char */
   16,				/* ar_max_namelen */
   255,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* data */

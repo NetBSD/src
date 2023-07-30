@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,12 +63,8 @@ proc dtrace_test {} {
     # Since test:progress-counter is disabled we can run to the second
     # instance of the test:two-locations probe.
 
-    if {![runto "-probe-dtrace test:two-locations"]} {
-	fail "run to the first test:two-locations probe point"
-    }
-    if {![runto "-probe-dtrace test:two-locations"]} {
-	fail "run to the second test:two-locations probe point"
-    }
+    runto "-probe-dtrace test:two-locations"]
+    runto "-probe-dtrace test:two-locations"]
 
     # Go back to the breakpoint on main() and enable the
     # test:progress-counter probe.  Set a breakpoint on it and see

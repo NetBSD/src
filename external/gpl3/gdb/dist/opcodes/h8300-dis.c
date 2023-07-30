@@ -1,5 +1,5 @@
 /* Disassemble h8300 instructions.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -317,7 +317,7 @@ bfd_h8_disassemble (bfd_vma addr, disassemble_info *info, int mach)
   int dispregno[3] = { 0, 0, 0 };
   int cst[3] = { 0, 0, 0 };
   int cstlen[3] = { 0, 0, 0 };
-  static bfd_boolean init = 0;
+  static bool init = 0;
   const struct h8_instruction *qi;
   char const **pregnames = mach != 0 ? lregnames : wregnames;
   int status;
@@ -655,7 +655,7 @@ bfd_h8_disassemble (bfd_vma addr, disassemble_info *info, int mach)
 		   regno[1]);
 	  return qi->length;
 	}
-      if (CONST_STRNEQ (q->name, "mova"))
+      if (startswith (q->name, "mova"))
 	{
 	  const op_type *args = q->args.nib;
 

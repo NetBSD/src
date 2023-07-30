@@ -620,24 +620,19 @@ ac_includes_default="\
 #endif"
 
 ac_subst_vars='LTLIBOBJS
-sim_fpu
-sim_fpu_cflags
-sim_targ_vals
-sim_callback
-sim_devzero
+LIBOBJS
 sim_termio
 sim_model_issue
+sim_default_model
 sim_model
 sim_monitor
-sim_reserved
+sim_float
 sim_timebase
 sim_hostbitsize
+sim_bitsize
 sim_igen_smp
 sim_smp
-sim_hostendian
 sim_xor_endian
-sim_pk_obj
-sim_pk_src
 sim_hw_obj
 sim_hw_src
 sim_icache
@@ -647,17 +642,10 @@ sim_decode_mechanism
 sim_dup
 sim_switch
 sim_opcode
-sim_config
 sim_line_nr
-sim_warnings
-RANLIB
-AR
-HDEFINES
-CFLAGS_FOR_BUILD
-CC_FOR_BUILD
-LIBOBJS
-zlibinc
-zlibdir
+EGREP
+GREP
+CPP
 target_os
 target_vendor
 target_cpu
@@ -670,24 +658,6 @@ build_os
 build_vendor
 build_cpu
 build
-REPORT_BUGS_TEXI
-REPORT_BUGS_TO
-PKGVERSION
-EGREP
-GREP
-CPP
-CATOBJEXT
-GENCAT
-INSTOBJEXT
-DATADIRNAME
-CATALOGS
-POSUB
-GMSGFMT
-XGETTEXT
-INCINTL
-LIBINTL_DEP
-LIBINTL
-USE_NLS
 OBJEXT
 EXEEXT
 ac_ct_CC
@@ -698,19 +668,6 @@ CC
 INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
-WERROR_CFLAGS
-WARN_CFLAGS
-sim_reserved_bits
-sim_inline
-sim_hw
-sim_hw_objs
-sim_hw_cflags
-sim_default_model
-sim_scache
-sim_float
-sim_endian
-sim_bitsize
-sim_alignment
 target_alias
 host_alias
 build_alias
@@ -752,41 +709,24 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
-enable_sim_alignment
-enable_sim_assert
 enable_sim_bitsize
-enable_sim_config
 enable_sim_decode_mechanism
 enable_sim_default_model
 enable_sim_duplicate
-enable_sim_endian
-enable_sim_env
 enable_sim_filter
 enable_sim_float
 enable_sim_hardware
-enable_sim_hostbitsize
-enable_sim_hostendian
 enable_sim_icache
-enable_sim_inline
 enable_sim_jump
 enable_sim_line_nr
 enable_sim_model
 enable_sim_model_issue
 enable_sim_monitor
 enable_sim_opcode
-enable_sim_packages
-enable_sim_reserved_bits
 enable_sim_smp
-enable_sim_stdio
 enable_sim_switch
 enable_sim_timebase
-enable_sim_trace
-enable_sim_warnings
 enable_sim_xor_endian
-with_pkgversion
-with_bugurl
-with_system_zlib
-enable_plugins
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1394,11 +1334,6 @@ _ACEOF
 
   cat <<\_ACEOF
 
-Program names:
-  --program-prefix=PREFIX            prepend PREFIX to installed program names
-  --program-suffix=SUFFIX            append SUFFIX to installed program names
-  --program-transform-name=PROGRAM   run sed PROGRAM on installed program names
-
 System types:
   --build=BUILD     configure for building on BUILD [guessed]
   --host=HOST       cross-compile to build programs to run on HOST [BUILD]
@@ -1414,45 +1349,24 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-sim-alignment=align		Specify strict or nonstrict alignment.
-  --enable-sim-assert			Specify whether to perform random assertions.
   --enable-sim-bitsize=n		Specify target bitsize (32 or 64).
-  --enable-sim-config=file		Override default config file
   --enable-sim-decode-mechanism=which		Specify the instruction decode mechanism.
   --enable-sim-default-model=which	Specify default PowerPC to model.
   --enable-sim-duplicate		Expand (duplicate) semantic functions.
-  --enable-sim-endian=endian		Specify target byte endian orientation.
-  --enable-sim-env=env			Specify target environment (operating, virtual, user).
   --enable-sim-filter=rule		Specify filter rules.
   --enable-sim-float			Specify whether the target has hard, soft, altivec or e500 floating point.
   --enable-sim-hardware=list		Specify the hardware to be included in the build.
-  --enable-sim-hostbitsize=32|64	Specify host bitsize (32 or 64).
-  --enable-sim-hostendian=end		Specify host byte endian orientation.
   --enable-sim-icache=size		Specify instruction-decode cache size and type.
-  --enable-sim-inline=inlines		Specify which functions should be inlined.
   --enable-sim-jump		Jump between semantic code (instead of call/return).
   --enable-sim-line-nr=opts		Generate extra CPP code that references source rather than generated code
   --enable-sim-model=which		Specify PowerPC to model.
   --enable-sim-model-issue		Specify whether to simulate model specific actions
   --enable-sim-monitor=mon		Specify whether to enable monitoring events.
   --enable-sim-opcode=which		Override default opcode lookup.
-  --enable-sim-packages=list		Specify the packages to be included in the build.
-  --enable-sim-reserved-bits		Specify whether to check reserved bits in instruction.
   --enable-sim-smp=n			Specify number of processors to configure for.
-  --enable-sim-stdio			Specify whether to use stdio for console input/output.
   --enable-sim-switch			Use a switch instead of a table for instruction call.
   --enable-sim-timebase			Specify whether the PPC timebase is supported.
-  --enable-sim-trace			Specify whether tracing is supported.
-  --enable-sim-warnings=opts		Extra CFLAGS for turning on compiler warnings except for idecode.o, semantics.o and psim.o
   --enable-sim-xor-endian=n		Specify number bytes involved in PowerPC XOR bi-endian mode (default 8).
-  --enable-plugins        Enable support for plugins
-
-Optional Packages:
-  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
-  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-pkgversion=PKG   Use PKG in the version string in place of "GDB"
-  --with-bugurl=URL       Direct users to URL to report a bug
-  --with-system-zlib      use installed libz
 
 Some influential environment variables:
   CC          C compiler command
@@ -1624,6 +1538,60 @@ fi
 
 } # ac_fn_c_try_run
 
+# ac_fn_c_check_type LINENO TYPE VAR INCLUDES
+# -------------------------------------------
+# Tests whether TYPE exists after having included INCLUDES, setting cache
+# variable VAR accordingly.
+ac_fn_c_check_type ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  eval "$3=no"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+if (sizeof ($2))
+	 return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+if (sizeof (($2)))
+	    return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+  eval "$3=yes"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_type
+
 # ac_fn_c_try_cpp LINENO
 # ----------------------
 # Try to preprocess conftest.$ac_ext, and return whether this succeeded.
@@ -1691,363 +1659,6 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_c_check_header_compile
-
-# ac_fn_c_try_link LINENO
-# -----------------------
-# Try to link conftest.$ac_ext, and return whether this succeeded.
-ac_fn_c_try_link ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  rm -f conftest.$ac_objext conftest$ac_exeext
-  if { { ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-$as_echo "$ac_try_echo"; } >&5
-  (eval "$ac_link") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 test -x conftest$ac_exeext
-       }; then :
-  ac_retval=0
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_retval=1
-fi
-  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
-  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
-  # interfere with the next link command; also delete a directory that is
-  # left behind by Apple's compiler.  We do this before executing the actions.
-  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-  as_fn_set_status $ac_retval
-
-} # ac_fn_c_try_link
-
-# ac_fn_c_check_member LINENO AGGR MEMBER VAR INCLUDES
-# ----------------------------------------------------
-# Tries to find if the field MEMBER exists in type AGGR, after including
-# INCLUDES, setting cache variable VAR accordingly.
-ac_fn_c_check_member ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2.$3" >&5
-$as_echo_n "checking for $2.$3... " >&6; }
-if eval \${$4+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$5
-int
-main ()
-{
-static $2 ac_aggr;
-if (ac_aggr.$3)
-return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  eval "$4=yes"
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$5
-int
-main ()
-{
-static $2 ac_aggr;
-if (sizeof ac_aggr.$3)
-return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  eval "$4=yes"
-else
-  eval "$4=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$4
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_member
-
-# ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
-# ---------------------------------------------
-# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
-# accordingly.
-ac_fn_c_check_decl ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  as_decl_name=`echo $2|sed 's/ *(.*//'`
-  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
-$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-#ifndef $as_decl_name
-#ifdef __cplusplus
-  (void) $as_decl_use;
-#else
-  (void) $as_decl_name;
-#endif
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  eval "$3=yes"
-else
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_decl
-
-# ac_fn_c_check_type LINENO TYPE VAR INCLUDES
-# -------------------------------------------
-# Tests whether TYPE exists after having included INCLUDES, setting cache
-# variable VAR accordingly.
-ac_fn_c_check_type ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  eval "$3=no"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-if (sizeof ($2))
-	 return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-if (sizeof (($2)))
-	    return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-else
-  eval "$3=yes"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_type
-
-# ac_fn_c_check_func LINENO FUNC VAR
-# ----------------------------------
-# Tests whether FUNC exists, setting the cache variable VAR accordingly
-ac_fn_c_check_func ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-/* Define $2 to an innocuous variant, in case <limits.h> declares $2.
-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
-#define $2 innocuous_$2
-
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $2 (); below.
-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  */
-
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-
-#undef $2
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char $2 ();
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined __stub_$2 || defined __stub___$2
-choke me
-#endif
-
-int
-main ()
-{
-return $2 ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  eval "$3=yes"
-else
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_func
-
-# ac_fn_c_check_header_mongrel LINENO HEADER VAR INCLUDES
-# -------------------------------------------------------
-# Tests whether HEADER exists, giving a warning if it cannot be compiled using
-# the include files in INCLUDES and setting the cache variable VAR
-# accordingly.
-ac_fn_c_check_header_mongrel ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  if eval \${$3+:} false; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-else
-  # Is the header compilable?
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 usability" >&5
-$as_echo_n "checking $2 usability... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-#include <$2>
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_header_compiler=yes
-else
-  ac_header_compiler=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_compiler" >&5
-$as_echo "$ac_header_compiler" >&6; }
-
-# Is the header present?
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 presence" >&5
-$as_echo_n "checking $2 presence... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <$2>
-_ACEOF
-if ac_fn_c_try_cpp "$LINENO"; then :
-  ac_header_preproc=yes
-else
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.i conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_preproc" >&5
-$as_echo "$ac_header_preproc" >&6; }
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in #((
-  yes:no: )
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&5
-$as_echo "$as_me: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
-$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
-    ;;
-  no:yes:* )
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: present but cannot be compiled" >&5
-$as_echo "$as_me: WARNING: $2: present but cannot be compiled" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     check for missing prerequisite headers?" >&5
-$as_echo "$as_me: WARNING: $2:     check for missing prerequisite headers?" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: see the Autoconf documentation" >&5
-$as_echo "$as_me: WARNING: $2: see the Autoconf documentation" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&5
-$as_echo "$as_me: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
-$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
-    ;;
-esac
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  eval "$3=\$ac_header_compiler"
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-fi
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_header_mongrel
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -2398,1818 +2009,6 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-
-# This file contains common code used by all simulators.
-#
-# SIM_AC_COMMON invokes AC macros used by all simulators and by the common
-# directory.  It is intended to be invoked before any target specific stuff.
-# SIM_AC_OUTPUT is a cover function to AC_OUTPUT to generate the Makefile.
-# It is intended to be invoked last.
-#
-# The simulator's configure.ac should look like:
-#
-# dnl Process this file with autoconf to produce a configure script.
-# AC_PREREQ(2.64)dnl
-# AC_INIT(Makefile.in)
-# sinclude(../common/aclocal.m4)
-#
-# SIM_AC_COMMON
-#
-# ... target specific stuff ...
-#
-# SIM_AC_OUTPUT
-
-# Include global overrides and fixes for Autoconf.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# libtool.m4 - Configure libtool for the host system. -*-Autoconf-*-
-#
-#   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
-#                 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
-#   Written by Gordon Matzigkeit, 1996
-#
-# This file is free software; the Free Software Foundation gives
-# unlimited permission to copy and/or distribute it, with or without
-# modifications, as long as this notice is preserved.
-
-
-
-# serial 56 LT_INIT
-
-
-# LT_PREREQ(VERSION)
-# ------------------
-# Complain and exit if this libtool version is less that VERSION.
-
-
-
-# _LT_CHECK_BUILDDIR
-# ------------------
-# Complain if the absolute build directory name contains unusual characters
-
-
-
-# LT_INIT([OPTIONS])
-# ------------------
-# LT_INIT
-
-# Old names:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# _LT_CC_BASENAME(CC)
-# -------------------
-# Calculate cc_basename.  Skip known compiler wrappers and cross-prefix.
-
-
-
-# _LT_FILEUTILS_DEFAULTS
-# ----------------------
-# It is okay to use these file commands and assume they have been set
-# sensibly after `m4_require([_LT_FILEUTILS_DEFAULTS])'.
-# _LT_FILEUTILS_DEFAULTS
-
-
-# _LT_SETUP
-# ---------
-# _LT_SETUP
-
-
-# _LT_PREPARE_SED_QUOTE_VARS
-# --------------------------
-# Define a few sed substitution that help us do robust quoting.
-
-
-# _LT_PROG_LTMAIN
-# ---------------
-# Note that this code is called both from `configure', and `config.status'
-# now that we use AC_CONFIG_COMMANDS to generate libtool.  Notably,
-# `config.status' has no value for ac_aux_dir unless we are using Automake,
-# so we pass a copy along to make sure it has a sensible value anyway.
-# _LT_PROG_LTMAIN
-
-
-## ------------------------------------- ##
-## Accumulate code for creating libtool. ##
-## ------------------------------------- ##
-
-# So that we can recreate a full libtool script including additional
-# tags, we accumulate the chunks of code to send to AC_CONFIG_COMMANDS
-# in macros and then make a single call at the end using the `libtool'
-# label.
-
-
-# _LT_CONFIG_LIBTOOL_INIT([INIT-COMMANDS])
-# ----------------------------------------
-# Register INIT-COMMANDS to be passed to AC_CONFIG_COMMANDS later.
-
-
-# Initialize.
-
-
-
-# _LT_CONFIG_LIBTOOL([COMMANDS])
-# ------------------------------
-# Register COMMANDS to be passed to AC_CONFIG_COMMANDS later.
-
-
-# Initialize.
-
-
-
-# _LT_CONFIG_SAVE_COMMANDS([COMMANDS], [INIT_COMMANDS])
-# -----------------------------------------------------
-
-
-
-# _LT_FORMAT_COMMENT([COMMENT])
-# -----------------------------
-# Add leading comment marks to the start of each line, and a trailing
-# full-stop to the whole comment if one is not present already.
-
-
-
-
-## ------------------------ ##
-## FIXME: Eliminate VARNAME ##
-## ------------------------ ##
-
-
-# _LT_DECL([CONFIGNAME], VARNAME, VALUE, [DESCRIPTION], [IS-TAGGED?])
-# -------------------------------------------------------------------
-# CONFIGNAME is the name given to the value in the libtool script.
-# VARNAME is the (base) name used in the configure script.
-# VALUE may be 0, 1 or 2 for a computed quote escaped value based on
-# VARNAME.  Any other value will be used directly.
-
-
-
-# _LT_TAGDECL([CONFIGNAME], VARNAME, VALUE, [DESCRIPTION])
-# --------------------------------------------------------
-
-
-
-# lt_decl_tag_varnames([SEPARATOR], [VARNAME1...])
-# ------------------------------------------------
-
-
-
-# _lt_decl_filter(SUBKEY, VALUE, [SEPARATOR], [VARNAME1..])
-# ---------------------------------------------------------
-
-
-
-# lt_decl_quote_varnames([SEPARATOR], [VARNAME1...])
-# --------------------------------------------------
-
-
-
-# lt_decl_dquote_varnames([SEPARATOR], [VARNAME1...])
-# ---------------------------------------------------
-
-
-
-# lt_decl_varnames_tagged([SEPARATOR], [VARNAME1...])
-# ---------------------------------------------------
-
-
-
-
-# lt_decl_all_varnames([SEPARATOR], [VARNAME1...])
-# ------------------------------------------------
-
-
-
-
-# _LT_CONFIG_STATUS_DECLARE([VARNAME])
-# ------------------------------------
-# Quote a variable value, and forward it to `config.status' so that its
-# declaration there will have the same value as in `configure'.  VARNAME
-# must have a single quote delimited value for this to work.
-
-
-
-# _LT_CONFIG_STATUS_DECLARATIONS
-# ------------------------------
-# We delimit libtool config variables with single quotes, so when
-# we write them to config.status, we have to be sure to quote all
-# embedded single quotes properly.  In configure, this macro expands
-# each variable declared with _LT_DECL (and _LT_TAGDECL) into:
-#
-#    <var>='`$ECHO "$<var>" | $SED "$delay_single_quote_subst"`'
-
-
-
-# _LT_LIBTOOL_TAGS
-# ----------------
-# Output comment and list of tags supported by the script
-
-
-
-# _LT_LIBTOOL_DECLARE(VARNAME, [TAG])
-# -----------------------------------
-# Extract the dictionary values for VARNAME (optionally with TAG) and
-# expand to a commented shell variable setting:
-#
-#    # Some comment about what VAR is for.
-#    visible_name=$lt_internal_name
-
-
-
-# _LT_LIBTOOL_CONFIG_VARS
-# -----------------------
-# Produce commented declarations of non-tagged libtool config variables
-# suitable for insertion in the LIBTOOL CONFIG section of the `libtool'
-# script.  Tagged libtool config variables (even for the LIBTOOL CONFIG
-# section) are produced by _LT_LIBTOOL_TAG_VARS.
-
-
-
-# _LT_LIBTOOL_TAG_VARS(TAG)
-# -------------------------
-
-
-
-# _LT_TAGVAR(VARNAME, [TAGNAME])
-# ------------------------------
-
-
-
-# _LT_CONFIG_COMMANDS
-# -------------------
-# Send accumulated output to $CONFIG_STATUS.  Thanks to the lists of
-# variables for single and double quote escaping we saved from calls
-# to _LT_DECL, we can put quote escaped variables declarations
-# into `config.status', and then the shell code to quote escape them in
-# for loops in `config.status'.  Finally, any additional code accumulated
-# from calls to _LT_CONFIG_LIBTOOL_INIT is expanded.
-#_LT_CONFIG_COMMANDS
-
-
-# Initialize.
-
-
-# _LT_GENERATED_FILE_INIT(FILE, [COMMENT])
-# ------------------------------------
-# Generate a child script FILE with all initialization necessary to
-# reuse the environment learned by the parent script, and make the
-# file executable.  If COMMENT is supplied, it is inserted after the
-# `#!' sequence but before initialization text begins.  After this
-# macro, additional text can be appended to FILE to form the body of
-# the child script.  The macro ends with non-zero status if the
-# file could not be fully written (such as if the disk is full).
-# _LT_GENERATED_FILE_INIT
-
-# LT_OUTPUT
-# ---------
-# This macro allows early generation of the libtool script (before
-# AC_OUTPUT is called), incase it is used in configure for compilation
-# tests.
-# LT_OUTPUT
-
-
-# _LT_CONFIG(TAG)
-# ---------------
-# If TAG is the built-in tag, create an initial libtool script with a
-# default configuration from the untagged config vars.  Otherwise add code
-# to config.status for appending the configuration named by TAG from the
-# matching tagged config vars.
-# _LT_CONFIG
-
-
-# LT_SUPPORTED_TAG(TAG)
-# ---------------------
-# Trace this macro to discover what tags are supported by the libtool
-# --tag option, using:
-#    autoconf --trace 'LT_SUPPORTED_TAG:$1'
-
-
-
-# C support is built-in for now
-
-
-
-
-# LT_LANG(LANG)
-# -------------
-# Enable libtool support for the given language if not already enabled.
-# LT_LANG
-
-
-# _LT_LANG(LANGNAME)
-# ------------------
-# _LT_LANG
-
-
-# _LT_LANG_DEFAULT_CONFIG
-# -----------------------
-# _LT_LANG_DEFAULT_CONFIG
-
-# Obsolete macros:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# _LT_TAG_COMPILER
-# ----------------
-# _LT_TAG_COMPILER
-
-
-# _LT_COMPILER_BOILERPLATE
-# ------------------------
-# Check for compiler boilerplate output or warnings with
-# the simple compiler test code.
-# _LT_COMPILER_BOILERPLATE
-
-
-# _LT_LINKER_BOILERPLATE
-# ----------------------
-# Check for linker boilerplate output or warnings with
-# the simple link test code.
-# _LT_LINKER_BOILERPLATE
-
-# _LT_REQUIRED_DARWIN_CHECKS
-# -------------------------
-
-
-
-# _LT_DARWIN_LINKER_FEATURES
-# --------------------------
-# Checks for linker and compiler features on darwin
-
-
-# _LT_SYS_MODULE_PATH_AIX
-# -----------------------
-# Links a minimal program and checks the executable
-# for the system default hardcoded library path. In most cases,
-# this is /usr/lib:/lib, but when the MPI compilers are used
-# the location of the communication and MPI libs are included too.
-# If we don't find anything, use the default library path according
-# to the aix ld manual.
-# _LT_SYS_MODULE_PATH_AIX
-
-
-# _LT_SHELL_INIT(ARG)
-# -------------------
-# _LT_SHELL_INIT
-
-
-
-# _LT_PROG_ECHO_BACKSLASH
-# -----------------------
-# Find how we can fake an echo command that does not interpret backslash.
-# In particular, with Autoconf 2.60 or later we add some code to the start
-# of the generated configure script which will find a shell with a builtin
-# printf (which we can use as an echo command).
-# _LT_PROG_ECHO_BACKSLASH
-
-
-# _LT_ENABLE_LOCK
-# ---------------
-# _LT_ENABLE_LOCK
-
-
-# _LT_CMD_OLD_ARCHIVE
-# -------------------
-# _LT_CMD_OLD_ARCHIVE
-
-
-# _LT_COMPILER_OPTION(MESSAGE, VARIABLE-NAME, FLAGS,
-#		[OUTPUT-FILE], [ACTION-SUCCESS], [ACTION-FAILURE])
-# ----------------------------------------------------------------
-# Check whether the given compiler option works
-# _LT_COMPILER_OPTION
-
-# Old name:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# _LT_LINKER_OPTION(MESSAGE, VARIABLE-NAME, FLAGS,
-#                  [ACTION-SUCCESS], [ACTION-FAILURE])
-# ----------------------------------------------------
-# Check whether the given linker option works
-# _LT_LINKER_OPTION
-
-# Old name:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# LT_CMD_MAX_LEN
-#---------------
-# LT_CMD_MAX_LEN
-
-# Old name:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# _LT_HEADER_DLFCN
-# ----------------
-# _LT_HEADER_DLFCN
-
-
-# _LT_TRY_DLOPEN_SELF (ACTION-IF-TRUE, ACTION-IF-TRUE-W-USCORE,
-#                      ACTION-IF-FALSE, ACTION-IF-CROSS-COMPILING)
-# ----------------------------------------------------------------
-# _LT_TRY_DLOPEN_SELF
-
-
-# LT_SYS_DLOPEN_SELF
-# ------------------
-# LT_SYS_DLOPEN_SELF
-
-# Old name:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# _LT_COMPILER_C_O([TAGNAME])
-# ---------------------------
-# Check to see if options -c and -o are simultaneously supported by compiler.
-# This macro does not hard code the compiler like AC_PROG_CC_C_O.
-# _LT_COMPILER_C_O
-
-
-# _LT_COMPILER_FILE_LOCKS([TAGNAME])
-# ----------------------------------
-# Check to see if we can do hard links to lock some files if needed
-# _LT_COMPILER_FILE_LOCKS
-
-
-# _LT_CHECK_OBJDIR
-# ----------------
-# _LT_CHECK_OBJDIR
-
-
-# _LT_LINKER_HARDCODE_LIBPATH([TAGNAME])
-# --------------------------------------
-# Check hardcoding attributes.
-# _LT_LINKER_HARDCODE_LIBPATH
-
-
-# _LT_CMD_STRIPLIB
-# ----------------
-# _LT_CMD_STRIPLIB
-
-
-# _LT_SYS_DYNAMIC_LINKER([TAG])
-# -----------------------------
-# PORTME Fill in your ld.so characteristics
-# _LT_SYS_DYNAMIC_LINKER
-
-
-# _LT_PATH_TOOL_PREFIX(TOOL)
-# --------------------------
-# find a file program which can recognize shared library
-# _LT_PATH_TOOL_PREFIX
-
-# Old name:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# _LT_PATH_MAGIC
-# --------------
-# find a file program which can recognize a shared library
-# _LT_PATH_MAGIC
-
-
-# LT_PATH_LD
-# ----------
-# find the pathname to the GNU or non-GNU linker
-# LT_PATH_LD
-
-# Old names:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# _LT_PATH_LD_GNU
-#- --------------
-# _LT_PATH_LD_GNU
-
-
-# _LT_CMD_RELOAD
-# --------------
-# find reload flag for linker
-#   -- PORTME Some linkers may need a different reload flag.
-# _LT_CMD_RELOAD
-
-
-# _LT_CHECK_MAGIC_METHOD
-# ----------------------
-# how to check for library dependencies
-#  -- PORTME fill in with the dynamic library characteristics
-# _LT_CHECK_MAGIC_METHOD
-
-
-# LT_PATH_NM
-# ----------
-# find the pathname to a BSD- or MS-compatible name lister
-# LT_PATH_NM
-
-# Old names:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# LT_LIB_M
-# --------
-# check for math library
-# LT_LIB_M
-
-# Old name:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# _LT_COMPILER_NO_RTTI([TAGNAME])
-# -------------------------------
-# _LT_COMPILER_NO_RTTI
-
-
-# _LT_CMD_GLOBAL_SYMBOLS
-# ----------------------
- # _LT_CMD_GLOBAL_SYMBOLS
-
-
-# _LT_COMPILER_PIC([TAGNAME])
-# ---------------------------
-# _LT_COMPILER_PIC
-
-
-# _LT_LINKER_SHLIBS([TAGNAME])
-# ----------------------------
-# See if the linker supports building shared libraries.
-# _LT_LINKER_SHLIBS
-
-
-# _LT_LANG_C_CONFIG([TAG])
-# ------------------------
-# Ensure that the configuration variables for a C compiler are suitably
-# defined.  These variables are subsequently used by _LT_CONFIG to write
-# the compiler configuration to `libtool'.
-# _LT_LANG_C_CONFIG
-
-
-# _LT_LANG_CXX_CONFIG([TAG])
-# --------------------------
-# Ensure that the configuration variables for a C++ compiler are suitably
-# defined.  These variables are subsequently used by _LT_CONFIG to write
-# the compiler configuration to `libtool'.
-# _LT_LANG_CXX_CONFIG
-
-
-# _LT_SYS_HIDDEN_LIBDEPS([TAGNAME])
-# ---------------------------------
-# Figure out "hidden" library dependencies from verbose
-# compiler output when linking a shared library.
-# Parse the compiler output and extract the necessary
-# objects, libraries and library flags.
-# _LT_SYS_HIDDEN_LIBDEPS
-
-
-# _LT_LANG_F77_CONFIG([TAG])
-# --------------------------
-# Ensure that the configuration variables for a Fortran 77 compiler are
-# suitably defined.  These variables are subsequently used by _LT_CONFIG
-# to write the compiler configuration to `libtool'.
-# _LT_LANG_F77_CONFIG
-
-
-# _LT_LANG_FC_CONFIG([TAG])
-# -------------------------
-# Ensure that the configuration variables for a Fortran compiler are
-# suitably defined.  These variables are subsequently used by _LT_CONFIG
-# to write the compiler configuration to `libtool'.
-# _LT_LANG_FC_CONFIG
-
-
-# _LT_LANG_GCJ_CONFIG([TAG])
-# --------------------------
-# Ensure that the configuration variables for the GNU Java Compiler compiler
-# are suitably defined.  These variables are subsequently used by _LT_CONFIG
-# to write the compiler configuration to `libtool'.
-# _LT_LANG_GCJ_CONFIG
-
-
-# _LT_LANG_RC_CONFIG([TAG])
-# -------------------------
-# Ensure that the configuration variables for the Windows resource compiler
-# are suitably defined.  These variables are subsequently used by _LT_CONFIG
-# to write the compiler configuration to `libtool'.
-# _LT_LANG_RC_CONFIG
-
-
-# LT_PROG_GCJ
-# -----------
-
-
-# Old name:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# LT_PROG_RC
-# ----------
-
-
-# Old name:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# _LT_DECL_EGREP
-# --------------
-# If we don't have a new enough Autoconf to choose the best grep
-# available, choose the one first in the user's PATH.
-
-
-
-# _LT_DECL_OBJDUMP
-# --------------
-# If we don't have a new enough Autoconf to choose the best objdump
-# available, choose the one first in the user's PATH.
-
-
-
-# _LT_DECL_SED
-# ------------
-# Check for a fully-functional sed program, that truncates
-# as few characters as possible.  Prefer GNU sed if found.
-# _LT_DECL_SED
-
-#m4_ifndef
-
-# Old name:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-# _LT_CHECK_SHELL_FEATURES
-# ------------------------
-# Find out whether the shell is Bourne or XSI compatible,
-# or has some other useful features.
-# _LT_CHECK_SHELL_FEATURES
-
-
-# _LT_PROG_XSI_SHELLFNS
-# ---------------------
-# Bourne and XSI compatible variants of some useful shell functions.
-
-
-# Helper functions for option handling.                    -*- Autoconf -*-
-#
-#   Copyright (C) 2004, 2005, 2007, 2008, 2009 Free Software Foundation,
-#   Inc.
-#   Written by Gary V. Vaughan, 2004
-#
-# This file is free software; the Free Software Foundation gives
-# unlimited permission to copy and/or distribute it, with or without
-# modifications, as long as this notice is preserved.
-
-# serial 6 ltoptions.m4
-
-# This is to help aclocal find these macros, as it can't see m4_define.
-
-
-
-# _LT_MANGLE_OPTION(MACRO-NAME, OPTION-NAME)
-# ------------------------------------------
-
-
-
-# _LT_SET_OPTION(MACRO-NAME, OPTION-NAME)
-# ---------------------------------------
-# Set option OPTION-NAME for macro MACRO-NAME, and if there is a
-# matching handler defined, dispatch to it.  Other OPTION-NAMEs are
-# saved as a flag.
-
-
-
-# _LT_IF_OPTION(MACRO-NAME, OPTION-NAME, IF-SET, [IF-NOT-SET])
-# ------------------------------------------------------------
-# Execute IF-SET if OPTION is set, IF-NOT-SET otherwise.
-
-
-
-# _LT_UNLESS_OPTIONS(MACRO-NAME, OPTION-LIST, IF-NOT-SET)
-# -------------------------------------------------------
-# Execute IF-NOT-SET unless all options in OPTION-LIST for MACRO-NAME
-# are set.
-
-
-
-# _LT_SET_OPTIONS(MACRO-NAME, OPTION-LIST)
-# ----------------------------------------
-# OPTION-LIST is a space-separated list of Libtool options associated
-# with MACRO-NAME.  If any OPTION has a matching handler declared with
-# LT_OPTION_DEFINE, dispatch to that macro; otherwise complain about
-# the unknown option and exit.
-# _LT_SET_OPTIONS
-
-
-## --------------------------------- ##
-## Macros to handle LT_INIT options. ##
-## --------------------------------- ##
-
-# _LT_MANGLE_DEFUN(MACRO-NAME, OPTION-NAME)
-# -----------------------------------------
-
-
-
-# LT_OPTION_DEFINE(MACRO-NAME, OPTION-NAME, CODE)
-# -----------------------------------------------
-# LT_OPTION_DEFINE
-
-
-# dlopen
-# ------
-
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-
-# win32-dll
-# ---------
-# Declare package support for building win32 dll's.
-# win32-dll
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-
-# _LT_ENABLE_SHARED([DEFAULT])
-# ----------------------------
-# implement the --enable-shared flag, and supports the `shared' and
-# `disable-shared' LT_INIT options.
-# DEFAULT is either `yes' or `no'.  If omitted, it defaults to `yes'.
-# _LT_ENABLE_SHARED
-
-
-
-
-# Old names:
-
-
-
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-
-
-# _LT_ENABLE_STATIC([DEFAULT])
-# ----------------------------
-# implement the --enable-static flag, and support the `static' and
-# `disable-static' LT_INIT options.
-# DEFAULT is either `yes' or `no'.  If omitted, it defaults to `yes'.
-# _LT_ENABLE_STATIC
-
-
-
-
-# Old names:
-
-
-
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-
-
-# _LT_ENABLE_FAST_INSTALL([DEFAULT])
-# ----------------------------------
-# implement the --enable-fast-install flag, and support the `fast-install'
-# and `disable-fast-install' LT_INIT options.
-# DEFAULT is either `yes' or `no'.  If omitted, it defaults to `yes'.
-# _LT_ENABLE_FAST_INSTALL
-
-
-
-
-# Old names:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-
-# _LT_WITH_PIC([MODE])
-# --------------------
-# implement the --with-pic flag, and support the `pic-only' and `no-pic'
-# LT_INIT options.
-# MODE is either `yes' or `no'.  If omitted, it defaults to `both'.
-# _LT_WITH_PIC
-
-
-
-
-# Old name:
-# This is what autoupdate's m4 run will expand.  It fires
-# the warning (with _au_warn_XXX), outputs it into the
-# updated configure.ac (with AC_DIAGNOSE), and then outputs
-# the replacement expansion.
-
-
-# This is an auxiliary macro that is also run when
-# autoupdate runs m4.  It simply calls m4_warning, but
-# we need a wrapper so that each warning is emitted only
-# once.  We break the quoting in m4_warning's argument in
-# order to expand this macro's arguments, not AU_DEFUN's.
-
-
-# Finally, this is the expansion that is picked up by
-# autoconf.  It tells the user to run autoupdate, and
-# then outputs the replacement expansion.  We do not care
-# about autoupdate's warning because that contains
-# information on what to do *after* running autoupdate.
-
-
-
-## ----------------- ##
-## LTDL_INIT Options ##
-## ----------------- ##
-
-
-
-
-
-
-
-
-
-
-# ltsugar.m4 -- libtool m4 base layer.                         -*-Autoconf-*-
-#
-# Copyright (C) 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
-# Written by Gary V. Vaughan, 2004
-#
-# This file is free software; the Free Software Foundation gives
-# unlimited permission to copy and/or distribute it, with or without
-# modifications, as long as this notice is preserved.
-
-# serial 6 ltsugar.m4
-
-# This is to help aclocal find these macros, as it can't see m4_define.
-
-
-
-# lt_join(SEP, ARG1, [ARG2...])
-# -----------------------------
-# Produce ARG1SEPARG2...SEPARGn, omitting [] arguments and their
-# associated separator.
-# Needed until we can rely on m4_join from Autoconf 2.62, since all earlier
-# versions in m4sugar had bugs.
-
-
-
-
-# lt_car(LIST)
-# lt_cdr(LIST)
-# ------------
-# Manipulate m4 lists.
-# These macros are necessary as long as will still need to support
-# Autoconf-2.59 which quotes differently.
-
-
-
-
-
-# lt_append(MACRO-NAME, STRING, [SEPARATOR])
-# ------------------------------------------
-# Redefine MACRO-NAME to hold its former content plus `SEPARATOR'`STRING'.
-# Note that neither SEPARATOR nor STRING are expanded; they are appended
-# to MACRO-NAME as is (leaving the expansion for when MACRO-NAME is invoked).
-# No SEPARATOR is output if MACRO-NAME was previously undefined (different
-# than defined and empty).
-#
-# This macro is needed until we can rely on Autoconf 2.62, since earlier
-# versions of m4sugar mistakenly expanded SEPARATOR but not STRING.
-
-
-
-
-# lt_combine(SEP, PREFIX-LIST, INFIX, SUFFIX1, [SUFFIX2...])
-# ----------------------------------------------------------
-# Produce a SEP delimited list of all paired combinations of elements of
-# PREFIX-LIST with SUFFIX1 through SUFFIXn.  Each element of the list
-# has the form PREFIXmINFIXSUFFIXn.
-# Needed until we can rely on m4_combine added in Autoconf 2.62.
-
-
-
-# lt_if_append_uniq(MACRO-NAME, VARNAME, [SEPARATOR], [UNIQ], [NOT-UNIQ])
-# -----------------------------------------------------------------------
-# Iff MACRO-NAME does not yet contain VARNAME, then append it (delimited
-# by SEPARATOR if supplied) and expand UNIQ, else NOT-UNIQ.
-
-
-
-# lt_dict_add(DICT, KEY, VALUE)
-# -----------------------------
-
-
-
-# lt_dict_add_subkey(DICT, KEY, SUBKEY, VALUE)
-# --------------------------------------------
-
-
-
-# lt_dict_fetch(DICT, KEY, [SUBKEY])
-# ----------------------------------
-
-
-
-# lt_if_dict_fetch(DICT, KEY, [SUBKEY], VALUE, IF-TRUE, [IF-FALSE])
-# -----------------------------------------------------------------
-
-
-
-# lt_dict_filter(DICT, [SUBKEY], VALUE, [SEPARATOR], KEY, [...])
-# --------------------------------------------------------------
-
-
-# ltversion.m4 -- version numbers			-*- Autoconf -*-
-#
-#   Copyright (C) 2004 Free Software Foundation, Inc.
-#   Written by Scott James Remnant, 2004
-#
-# This file is free software; the Free Software Foundation gives
-# unlimited permission to copy and/or distribute it, with or without
-# modifications, as long as this notice is preserved.
-
-# Generated from ltversion.in.
-
-# serial 3134 ltversion.m4
-# This file is part of GNU Libtool
-
-
-
-
-
-
-# lt~obsolete.m4 -- aclocal satisfying obsolete definitions.    -*-Autoconf-*-
-#
-#   Copyright (C) 2004, 2005, 2007, 2009 Free Software Foundation, Inc.
-#   Written by Scott James Remnant, 2004.
-#
-# This file is free software; the Free Software Foundation gives
-# unlimited permission to copy and/or distribute it, with or without
-# modifications, as long as this notice is preserved.
-
-# serial 4 lt~obsolete.m4
-
-# These exist entirely to fool aclocal when bootstrapping libtool.
-#
-# In the past libtool.m4 has provided macros via AC_DEFUN (or AU_DEFUN)
-# which have later been changed to m4_define as they aren't part of the
-# exported API, or moved to Autoconf or Automake where they belong.
-#
-# The trouble is, aclocal is a bit thick.  It'll see the old AC_DEFUN
-# in /usr/share/aclocal/libtool.m4 and remember it, then when it sees us
-# using a macro with the same name in our local m4/libtool.m4 it'll
-# pull the old libtool.m4 in (it doesn't see our shiny new m4_define
-# and doesn't know about Autoconf macros at all.)
-#
-# So we provide this file, which has a silly filename so it's always
-# included after everything else.  This provides aclocal with the
-# AC_DEFUNs it wants, but when m4 processes it, it doesn't do anything
-# because those macros already exist, or will be overwritten later.
-# We use AC_DEFUN over AU_DEFUN for compatibility with aclocal-1.6.
-#
-# Anytime we withdraw an AC_DEFUN or AU_DEFUN, remember to add it here.
-# Yes, that means every name once taken will need to remain here until
-# we give up compatibility with versions before 1.7, at which point
-# we need to keep only those names which we still refer to.
-
-# This is to help aclocal find these macros, as it can't see m4_define.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##                                                          -*- Autoconf -*-
-
-# Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007
-# Free Software Foundation, Inc.
-#
-# This file is free software; the Free Software Foundation
-# gives unlimited permission to copy and/or distribute it,
-# with or without modifications, as long as this notice is preserved.
-
-# serial 8
-
-# Based on depend.m4 from automake 1.9, modified for standalone use in
-# an environment where GNU make is required.
-
-# ZW_PROG_COMPILER_DEPENDENCIES
-# -----------------------------
-# Variant of _AM_DEPENDENCIES which just does the dependency probe and
-# sets fooDEPMODE accordingly.  Cache-variable compatible with
-# original; not side-effect compatible.  As the users of this macro
-# may require accurate dependencies for correct builds, it does *not*
-# honor --disable-dependency-checking, and failure to detect a usable
-# method is an error.  depcomp is assumed to be located in
-# $ac_aux_dir.
-#
-# FIXME: Should use the Autoconf 2.5x language-selection mechanism.
-
-
-
-# AM_SET_DEPDIR
-# -------------
-# Choose a directory name for dependency files.
-
-
-# ZW_CREATE_DEPDIR
-# ----------------
-# As AM_SET_DEPDIR, but also create the directory at config.status time.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# intl sister-directory configuration rules.
-#
-
-# The idea behind this macro is that there's no need to repeat all the
-# autoconf probes done by the intl directory - it's already done them
-# for us.  In fact, there's no need even to look at the cache for the
-# answers.  All we need to do is nab a few pieces of information.
-# The intl directory is set up to make this easy, by generating a
-# small file which can be sourced as a shell script; then we produce
-# the necessary substitutions and definitions for this directory.
-
-
-
-# Autoconf M4 include file defining utility macros for complex Canadian
-# cross builds.
-
-
-
-
-
-
-
-
-
-####
-# _NCN_TOOL_PREFIXES:  Some stuff that oughtta be done in AC_CANONICAL_SYSTEM
-# or AC_INIT.
-# These demand that AC_CANONICAL_SYSTEM be called beforehand.
-
-####
-# NCN_STRICT_CHECK_TOOLS(variable, progs-to-check-for,[value-if-not-found],[path])
-# Like plain AC_CHECK_TOOLS, but require prefix if build!=host.
-
-
-####
-# NCN_STRICT_CHECK_TARGET_TOOLS(variable, progs-to-check-for,[value-if-not-found],[path])
-# Like CVS Autoconf AC_CHECK_TARGET_TOOLS, but require prefix if build!=target.
-
-
-
-# Backported from Autoconf 2.5x; can go away when and if
-# we switch.  Put the OS path separator in $PATH_SEPARATOR.
-
-
-
-
-
-
-
-
-# ACX_HAVE_GCC_FOR_TARGET
-# Check if the variable GCC_FOR_TARGET really points to a GCC binary.
-
-
-# ACX_CHECK_INSTALLED_TARGET_TOOL(VAR, PROG)
-# Searching for installed target binutils.  We need to take extra care,
-# else we may find the wrong assembler, linker, etc., and lose.
-#
-# First try --with-build-time-tools, if specified.
-#
-# For build != host, we ask the installed GCC for the name of the tool it
-# uses, and accept it if it is an absolute path.  This is because the
-# only good choice for a compiler is the same GCC version that is being
-# installed (or we couldn't make target libraries), and we assume that
-# on the host system we'll have not only the same GCC version, but also
-# the same binutils version.
-#
-# For build == host, search the same directories that the installed
-# compiler will search.  We used to do this for the assembler, linker,
-# and nm only; for simplicity of configuration, however, we extend this
-# criterion to tools (such as ar and ranlib) that are never invoked by
-# the compiler, to avoid mismatches.
-#
-# Also note we have to check MD_EXEC_PREFIX before checking the user's path
-# if build == target.  This makes the most sense only when bootstrapping,
-# but we also do so when build != host.  In this case, we hope that the
-# build and host systems will have similar contents of MD_EXEC_PREFIX.
-#
-# If we do not find a suitable binary, then try the user's path.
-
-
-###
-# AC_PROG_CPP_WERROR
-# Used for autoconf 2.5x to force AC_PREPROC_IFELSE to reject code which
-# triggers warnings from the preprocessor.  Will be in autoconf 2.58.
-# For now, using this also overrides header checks to use only the
-# preprocessor (matches 2.13 behavior; matching 2.58's behavior is a
-# bit harder from here).
-# Eventually autoconf will default to checking headers with the compiler
-# instead, and we'll have to do this differently.
-
-# AC_PROG_CPP_WERROR
-
-# Test for GNAT.
-# We require the gnatbind & gnatmake programs, as well as a compiler driver
-# that understands Ada.  We use the user's CC setting, already found, and
-# possibly add $1 to the command-line parameters.
-#
-# Sets the shell variable have_gnat to yes or no as appropriate, and
-# substitutes GNATBIND and GNATMAKE.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -5126,121 +2925,116 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-# Put a plausible default for CC_FOR_BUILD in Makefile.
-if test "x$cross_compiling" = "xno"; then
-  CC_FOR_BUILD='$(CC)'
+# Make sure we can run config.sub.
+$SHELL "$ac_aux_dir/config.sub" sun4 >/dev/null 2>&1 ||
+  as_fn_error $? "cannot run $SHELL $ac_aux_dir/config.sub" "$LINENO" 5
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking build system type" >&5
+$as_echo_n "checking build system type... " >&6; }
+if ${ac_cv_build+:} false; then :
+  $as_echo_n "(cached) " >&6
 else
-  CC_FOR_BUILD=gcc
-fi
-CFLAGS_FOR_BUILD=${CFLAGS_FOR_BUILD-${CFLAGS}}
-
-ALL_LINGUAS=
-# If we haven't got the data from the intl directory,
-# assume NLS is disabled.
-USE_NLS=no
-LIBINTL=
-LIBINTL_DEP=
-INCINTL=
-XGETTEXT=
-GMSGFMT=
-POSUB=
-
-if test -f  ../../intl/config.intl; then
-  .  ../../intl/config.intl
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether NLS is requested" >&5
-$as_echo_n "checking whether NLS is requested... " >&6; }
-if test x"$USE_NLS" != xyes; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-$as_echo "#define ENABLE_NLS 1" >>confdefs.h
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for catalogs to be installed" >&5
-$as_echo_n "checking for catalogs to be installed... " >&6; }
-  # Look for .po and .gmo files in the source directory.
-  CATALOGS=
-  XLINGUAS=
-  for cat in $srcdir/po/*.gmo $srcdir/po/*.po; do
-    # If there aren't any .gmo files the shell will give us the
-    # literal string "../path/to/srcdir/po/*.gmo" which has to be
-    # weeded out.
-    case "$cat" in *\**)
-      continue;;
-    esac
-    # The quadruple backslash is collapsed to a double backslash
-    # by the backticks, then collapsed again by the double quotes,
-    # leaving us with one backslash in the sed expression (right
-    # before the dot that mustn't act as a wildcard).
-    cat=`echo $cat | sed -e "s!$srcdir/po/!!" -e "s!\\\\.po!.gmo!"`
-    lang=`echo $cat | sed -e "s!\\\\.gmo!!"`
-    # The user is allowed to set LINGUAS to a list of languages to
-    # install catalogs for.  If it's empty that means "all of them."
-    if test "x$LINGUAS" = x; then
-      CATALOGS="$CATALOGS $cat"
-      XLINGUAS="$XLINGUAS $lang"
-    else
-      case "$LINGUAS" in *$lang*)
-        CATALOGS="$CATALOGS $cat"
-        XLINGUAS="$XLINGUAS $lang"
-        ;;
-      esac
-    fi
-  done
-  LINGUAS="$XLINGUAS"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LINGUAS" >&5
-$as_echo "$LINGUAS" >&6; }
-
-
-    DATADIRNAME=share
-
-  INSTOBJEXT=.mo
-
-  GENCAT=gencat
-
-  CATOBJEXT=.gmo
+  ac_build_alias=$build_alias
+test "x$ac_build_alias" = x &&
+  ac_build_alias=`$SHELL "$ac_aux_dir/config.guess"`
+test "x$ac_build_alias" = x &&
+  as_fn_error $? "cannot guess build type; you must specify one" "$LINENO" 5
+ac_cv_build=`$SHELL "$ac_aux_dir/config.sub" $ac_build_alias` ||
+  as_fn_error $? "$SHELL $ac_aux_dir/config.sub $ac_build_alias failed" "$LINENO" 5
 
 fi
-
-
-# Check whether --enable-sim-alignment was given.
-if test "${enable_sim_alignment+set}" = set; then :
-  enableval=$enable_sim_alignment; case "${enableval}" in
-  yes | strict | STRICT)	sim_alignment="-DWITH_ALIGNMENT=STRICT_ALIGNMENT";;
-  no | nonstrict | NONSTRICT)	sim_alignment="-DWITH_ALIGNMENT=NONSTRICT_ALIGNMENT";;
-  0 | default | DEFAULT)	sim_alignment="-DWITH_ALIGNMENT=0";;
-  *)				as_fn_error $? "\"Unknown value $enableval passed to --enable-sim-alignment\"" "$LINENO" 5; sim_alignment="";;
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_build" >&5
+$as_echo "$ac_cv_build" >&6; }
+case $ac_cv_build in
+*-*-*) ;;
+*) as_fn_error $? "invalid value of canonical build" "$LINENO" 5;;
 esac
-if test x"$silent" != x"yes" && test x"$sim_alignment" != x""; then
-  echo "Setting alignment flags = $sim_alignment" 6>&1
-fi
+build=$ac_cv_build
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_build
+shift
+build_cpu=$1
+build_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+build_os=$*
+IFS=$ac_save_IFS
+case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking host system type" >&5
+$as_echo_n "checking host system type... " >&6; }
+if ${ac_cv_host+:} false; then :
+  $as_echo_n "(cached) " >&6
 else
-  sim_alignment=""
+  if test "x$host_alias" = x; then
+  ac_cv_host=$ac_cv_build
+else
+  ac_cv_host=`$SHELL "$ac_aux_dir/config.sub" $host_alias` ||
+    as_fn_error $? "$SHELL $ac_aux_dir/config.sub $host_alias failed" "$LINENO" 5
 fi
 
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable sim asserts" >&5
-$as_echo_n "checking whether to enable sim asserts... " >&6; }
-sim_assert="1"
-# Check whether --enable-sim-assert was given.
-if test "${enable_sim_assert+set}" = set; then :
-  enableval=$enable_sim_assert; case "${enableval}" in
-  yes)	sim_assert="1";;
-  no)	sim_assert="0";;
-  *)	as_fn_error $? "--enable-sim-assert does not take a value" "$LINENO" 5;;
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_host" >&5
+$as_echo "$ac_cv_host" >&6; }
+case $ac_cv_host in
+*-*-*) ;;
+*) as_fn_error $? "invalid value of canonical host" "$LINENO" 5;;
 esac
+host=$ac_cv_host
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_host
+shift
+host_cpu=$1
+host_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+host_os=$*
+IFS=$ac_save_IFS
+case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking target system type" >&5
+$as_echo_n "checking target system type... " >&6; }
+if ${ac_cv_target+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "x$target_alias" = x; then
+  ac_cv_target=$ac_cv_host
+else
+  ac_cv_target=`$SHELL "$ac_aux_dir/config.sub" $target_alias` ||
+    as_fn_error $? "$SHELL $ac_aux_dir/config.sub $target_alias failed" "$LINENO" 5
 fi
 
-cat >>confdefs.h <<_ACEOF
-#define WITH_ASSERT $sim_assert
-_ACEOF
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_target" >&5
+$as_echo "$ac_cv_target" >&6; }
+case $ac_cv_target in
+*-*-*) ;;
+*) as_fn_error $? "invalid value of canonical target" "$LINENO" 5;;
+esac
+target=$ac_cv_target
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_target
+shift
+target_cpu=$1
+target_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+target_os=$*
+IFS=$ac_save_IFS
+case $target_os in *\ *) target_os=`echo "$target_os" | sed 's/ /-/g'`;; esac
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_assert" >&5
-$as_echo "$sim_assert" >&6; }
+
+# The aliases save the names the user supplied, while $host etc.
+# will get canonicalized.
+test -n "$target_alias" &&
+  test "$program_prefix$program_suffix$program_transform_name" = \
+    NONENONEs,x,x, &&
+  program_prefix=${target_alias}-
 
 
 # Check whether --enable-sim-bitsize was given.
@@ -5254,30 +3048,6 @@ if test x"$silent" != x"yes" && test x"$sim_bitsize" != x""; then
 fi
 else
   sim_bitsize=""
-fi
-
-
-# Check whether --enable-sim-config was given.
-if test "${enable_sim_config+set}" = set; then :
-  enableval=$enable_sim_config; case "${enableval}" in
-  yes|no)	as_fn_error $? "\"No value supplied for --enable-sim-config=file\"" "$LINENO" 5;;
-  *)		if test -f "${srcdir}/${enableval}"; then
-		  sim_config="${enableval}";
-		elif test -f "${srcdir}/${enableval}-config.h"; then
-		  sim_config="${enableval}-config.h"
-		else
-		  as_fn_error $? "\"Config file $enableval was not found\"" "$LINENO" 5;
-		  sim_config=std-config.h
-		fi;;
-esac
-if test x"$silent" != x"yes" && test x"$sim_config" != x""; then
-  echo "Setting config flags = $sim_config" 6>&1
-fi
-else
-  sim_config="std-config.h"
-if test x"$silent" != x"yes"; then
-  echo "Setting config flags = $sim_config" 6>&1
-fi
 fi
 
 
@@ -5330,49 +3100,6 @@ if test x"$silent" != x"yes"; then
   echo "Setting duplicate flags = $sim_dup" 6>&1
 fi
 fi
-
-
-# Check whether --enable-sim-endian was given.
-if test "${enable_sim_endian+set}" = set; then :
-  enableval=$enable_sim_endian; case "${enableval}" in
-  yes)	case "$target" in
-	  *powerpc-*) sim_endian="-DWITH_TARGET_BYTE_ORDER=BIG_ENDIAN";;
-	  *powerpcle-*) sim_endian="-DWITH_TARGET_BYTE_ORDER=LITTLE_ENDIAN";;
-	  *) echo "Unknown target $target" 1>&6; sim_endian="-DWITH_TARGET_BYTE_ORDER=0";;
-	esac;;
-  no)	 sim_endian="-DWITH_TARGET_BYTE_ORDER=0";;
-  b*|B*) sim_endian="-DWITH_TARGET_BYTE_ORDER=BIG_ENDIAN";;
-  l*|L*) sim_endian="-DWITH_TARGET_BYTE_ORDER=LITTLE_ENDIAN";;
-  *)	 as_fn_error $? "\"Unknown value $enableval for --enable-sim-endian\"" "$LINENO" 5; sim_endian="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_endian" != x""; then
-  echo "Setting endian flags = $sim_endian" 6>&1
-fi
-else
-  sim_endian=""
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking default sim environment setting" >&5
-$as_echo_n "checking default sim environment setting... " >&6; }
-sim_env="0"
-# Check whether --enable-sim-env was given.
-if test "${enable_sim_env+set}" = set; then :
-  enableval=$enable_sim_env; case "${enableval}" in
-  operating | os | oea)	sim_env="OPERATING_ENVIRONMENT";;
-  virtual | vea)	sim_env="VIRTUAL_ENVIRONMENT";;
-  user | uea)		sim_env="USER_ENVIRONMENT";;
-  no)			sim_env="0";;
-  *)			as_fn_error $? "Unknown value $enableval passed to --enable-sim-env" "$LINENO" 5;;
-esac
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define WITH_ENVIRONMENT $sim_env
-_ACEOF
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_env" >&5
-$as_echo "$sim_env" >&6; }
 
 
 # Check whether --enable-sim-filter was given.
@@ -5616,19 +3343,402 @@ if test x"$silent" != x"yes"; then
 fi
 fi
 
-# Check whether --enable-sim-hostbitsize was given.
-if test "${enable_sim_hostbitsize+set}" = set; then :
-  enableval=$enable_sim_hostbitsize; case "${enableval}" in
-  32|64) sim_hostbitsize="-DWITH_HOST_WORD_BITSIZE=$enableval";;
-  *)	 as_fn_error $? "\"--enable-sim-hostbitsize was given $enableval.  Expected 32 or 64\"" "$LINENO" 5; sim_hostbitsize="";;
+
+# Check whether --enable-sim-icache was given.
+if test "${enable_sim_icache+set}" = set; then :
+  enableval=$enable_sim_icache; icache="-R"
+ case "${enableval}" in
+  yes)		icache="1024"; sim_icache="-I $icache";;
+  no)		sim_icache="-R";;
+  *) icache=1024
+     sim_icache="-"
+     for x in `echo "${enableval}" | sed -e "s/,/ /g"`; do
+       case "$x" in
+         define)	sim_icache="${sim_icache}R";;
+         semantic)	sim_icache="${sim_icache}C";;
+	 insn)		sim_icache="${sim_icache}S";;
+	 0*|1*|2*|3*|4*|5*|6*|7*|8*|9*)	icache=$x;;
+         *)		as_fn_error $? "\"Unknown value $x for --enable-sim-icache\"" "$LINENO" 5; sim_icache="";;
+       esac
+     done
+     sim_icache="${sim_icache}I $icache";;
 esac
-if test x"$silent" != x"yes" && test x"$sim_hostbitsize" != x""; then
-  echo "Setting hostbitsize flags = $sim_hostbitsize" 6>&1
+if test x"$silent" != x"yes" && test x"$icache" != x""; then
+  echo "Setting instruction cache size to $icache ($sim_icache)"
 fi
 else
-  sim_hostbitsize=""
+  sim_icache="-CSRI 1024"
+if test x"$silent" != x"yes"; then
+  echo "Setting instruction cache size to 1024 ($sim_icache)"
+fi
 fi
 
+
+# Check whether --enable-sim-jump was given.
+if test "${enable_sim_jump+set}" = set; then :
+  enableval=$enable_sim_jump; case "${enableval}" in
+  yes)	sim_jump="-J";;
+  no)	sim_jump="";;
+  *)	as_fn_error $? "\"--enable-sim-jump does not take a value\"" "$LINENO" 5; sim_jump="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_jump" != x""; then
+  echo "Setting jump flag = $sim_jump" 6>&1
+fi
+else
+  sim_jump=""
+if test x"$silent" != x"yes"; then
+  echo "Setting jump flag = $sim_jump" 6>&1
+fi
+fi
+
+
+# Check whether --enable-sim-line-nr was given.
+if test "${enable_sim_line_nr+set}" = set; then :
+  enableval=$enable_sim_line_nr; case "${enableval}" in
+  yes)	sim_line_nr="";;
+  no)	sim_line_nr="-L";;
+  *)	as_fn_error $? "\"--enable-sim-line-nr does not take a value\"" "$LINENO" 5; sim_line_nr="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_line_nr" != x""; then
+  echo "Setting warning flags = $sim_line_nr" 6>&1
+fi
+else
+  sim_line_nr=""
+fi
+
+
+# Check whether --enable-sim-model was given.
+if test "${enable_sim_model+set}" = set; then :
+  enableval=$enable_sim_model; case "${enableval}" in
+  yes|no)	as_fn_error $? "\"No value supplied for --enable-sim-model=model\"" "$LINENO" 5;;
+  *)		sim_model="-DWITH_MODEL=${enableval}";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_model" != x""; then
+  echo "Setting model flags = $sim_model" 6>&1
+fi
+else
+  sim_model=""
+fi
+
+
+# Check whether --enable-sim-model-issue was given.
+if test "${enable_sim_model_issue+set}" = set; then :
+  enableval=$enable_sim_model_issue; case "${enableval}" in
+  yes)	sim_model_issue="-DWITH_MODEL_ISSUE=MODEL_ISSUE_PROCESS";;
+  no)	sim_model_issue="-DWITH_MODEL_ISSUE=MODEL_ISSUE_IGNORE";;
+  *)	as_fn_error $? "\"--enable-sim-model-issue does not take a value\"" "$LINENO" 5; sim_model_issue="";;
+esac
+if test x"$silent" != x"yes"; then
+  echo "Setting model-issue flags = $sim_model_issue" 6>&1
+fi
+else
+  sim_model_issue=""
+fi
+
+
+# Check whether --enable-sim-monitor was given.
+if test "${enable_sim_monitor+set}" = set; then :
+  enableval=$enable_sim_monitor; case "${enableval}" in
+  yes)		sim_monitor="-DWITH_MON='MONITOR_INSTRUCTION_ISSUE | MONITOR_LOAD_STORE_UNIT'";;
+  no)		sim_monitor="-DWITH_MON=0";;
+  instruction)	sim_monitor="-DWITH_MON=MONITOR_INSTRUCTION_ISSUE";;
+  memory)	sim_monitor="-DWITH_MON=MONITOR_LOAD_STORE_UNIT";;
+  *)		as_fn_error $? "\"Unknown value $enableval passed to --enable-sim-mon\"" "$LINENO" 5;;
+esac
+if test x"$silent" != x"yes" && test x"$sim_monitor" != x""; then
+  echo "Setting monitor flags = $sim_monitor" 6>&1
+fi
+else
+  sim_monitor=""
+fi
+
+
+# Check whether --enable-sim-opcode was given.
+if test "${enable_sim_opcode+set}" = set; then :
+  enableval=$enable_sim_opcode; case "${enableval}" in
+  yes|no)	as_fn_error $? "\"No value supplied for --enable-sim-opcode=file\"" "$LINENO" 5;;
+  *)		if test -f "${srcdir}/${enableval}"; then
+		  sim_opcode="${enableval}"
+		elif test -f "${srcdir}/dc-${enableval}"; then
+		  sim_opcode="dc-${enableval}"
+		else
+		  as_fn_error $? "\"File $enableval is not an opcode rules file\"" "$LINENO" 5;
+		  sim_opcode="dc-complex"
+		fi;;
+esac
+if test x"$silent" != x"yes" && test x"$sim_opcode" != x""; then
+  echo "Setting opcode flags = $sim_opcode" 6>&1
+fi
+else
+  sim_opcode="dc-complex"
+if test x"$silent" != x"yes"; then
+  echo "Setting opcode flags = $sim_opcode"
+fi
+fi
+
+
+# Check whether --enable-sim-smp was given.
+if test "${enable_sim_smp+set}" = set; then :
+  enableval=$enable_sim_smp; case "${enableval}" in
+  yes)	sim_smp="-DWITH_SMP=5" ; sim_igen_smp="-N 5";;
+  no)	sim_smp="-DWITH_SMP=0" ; sim_igen_smp="-N 0";;
+  *)	sim_smp="-DWITH_SMP=$enableval" ; sim_igen_smp="-N $enableval";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_smp" != x""; then
+  echo "Setting smp flags = $sim_smp" 6>&1
+fi
+else
+  sim_smp="-DWITH_SMP=5" ; sim_igen_smp="-N 5"
+if test x"$silent" != x"yes"; then
+  echo "Setting smp flags = $sim_smp" 6>&1
+fi
+fi
+
+
+# Check whether --enable-sim-switch was given.
+if test "${enable_sim_switch+set}" = set; then :
+  enableval=$enable_sim_switch; case "${enableval}" in
+  yes)	sim_switch="-s";;
+  no)	sim_switch="";;
+  *)	as_fn_error $? "\"--enable-sim-switch does not take a value\"" "$LINENO" 5; sim_switch="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_switch" != x""; then
+  echo "Setting switch flags = $sim_switch" 6>&1
+fi
+else
+  sim_switch="";
+if test x"$silent" != x"yes"; then
+  echo "Setting switch flags = $sim_switch" 6>&1
+fi
+fi
+
+
+# Check whether --enable-sim-timebase was given.
+if test "${enable_sim_timebase+set}" = set; then :
+  enableval=$enable_sim_timebase; case "${enableval}" in
+  yes)	sim_timebase="-DWITH_TIME_BASE=1";;
+  no)	sim_timebase="-DWITH_TIME_BASE=0";;
+  *)	as_fn_error $? "\"--enable-sim-timebase does not take a value\"" "$LINENO" 5; sim_timebase="";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_timebase" != x""; then
+  echo "Setting timebase flags = $sim_timebase" 6>&1
+fi
+else
+  sim_timebase=""
+fi
+
+
+# Check whether --enable-sim-xor-endian was given.
+if test "${enable_sim_xor_endian+set}" = set; then :
+  enableval=$enable_sim_xor_endian; case "${enableval}" in
+  yes)	sim_xor_endian="-DWITH_XOR_ENDIAN=8";;
+  no)	sim_xor_endian="-DWITH_XOR_ENDIAN=0";;
+  *)	sim_xor_endian="-DWITH_XOR_ENDIAN=$enableval";;
+esac
+if test x"$silent" != x"yes" && test x"$sim_xor_endian" != x""; then
+  echo "Setting xor-endian flag = $sim_xor_endian" 6>&1
+fi
+else
+  sim_xor_endian=""
+fi
+
+
+ac_config_headers="$ac_config_headers config.h:config.in"
+
+
+
+sim_termio=""
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct termios" >&5
+$as_echo_n "checking for struct termios... " >&6; }
+if ${ac_cv_termios_struct+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+#include <sys/termios.h>
+int
+main ()
+{
+static struct termios x;
+ x.c_iflag = 0;
+ x.c_oflag = 0;
+ x.c_cflag = 0;
+ x.c_lflag = 0;
+ x.c_cc[NCCS] = 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_termios_struct=yes
+else
+  ac_cv_termios_struct=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_termios_struct" >&5
+$as_echo "$ac_cv_termios_struct" >&6; }
+if test $ac_cv_termios_struct = yes; then
+  sim_termio="$sim_termio -DHAVE_TERMIOS_STRUCTURE"
+fi
+
+if test "$ac_cv_termios_struct" = "yes"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for c_line field in struct termios" >&5
+$as_echo_n "checking for c_line field in struct termios... " >&6; }
+  if ${ac_cv_termios_cline+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+#include <sys/termios.h>
+int
+main ()
+{
+static struct termios x; x.c_line = 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_termios_cline=yes
+else
+  ac_cv_termios_cline=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_termios_cline" >&5
+$as_echo "$ac_cv_termios_cline" >&6; }
+  if test $ac_cv_termios_cline = yes; then
+    sim_termio="$sim_termio -DHAVE_TERMIOS_CLINE"
+  fi
+else
+  ac_cv_termios_cline=no
+fi
+
+if test "$ac_cv_termios_struct" != "yes"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct termio" >&5
+$as_echo_n "checking for struct termio... " >&6; }
+  if ${ac_cv_termio_struct+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+#include <sys/termio.h>
+int
+main ()
+{
+static struct termio x;
+ x.c_iflag = 0;
+ x.c_oflag = 0;
+ x.c_cflag = 0;
+ x.c_lflag = 0;
+ x.c_cc[NCC] = 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_termio_struct=yes
+else
+  ac_cv_termio_struct=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_termio_struct" >&5
+$as_echo "$ac_cv_termio_struct" >&6; }
+  if test $ac_cv_termio_struct = yes; then
+    sim_termio="$sim_termio -DHAVE_TERMIO_STRUCTURE"
+  fi
+else
+  ac_cv_termio_struct=no
+fi
+
+if test "$ac_cv_termio_struct" = "yes"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for c_line field in struct termio" >&5
+$as_echo_n "checking for c_line field in struct termio... " >&6; }
+  if ${ac_cv_termio_cline+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+#include <sys/termio.h>
+int
+main ()
+{
+static struct termio x; x.c_line = 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_termio_cline=yes
+else
+  ac_cv_termio_cline=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_termio_cline" >&5
+$as_echo "$ac_cv_termio_cline" >&6; }
+  if test $ac_cv_termio_cline = yes; then
+    sim_termio="$sim_termio -DHAVE_TERMIO_CLINE"
+  fi
+else
+  ac_cv_termio_cline=no
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct statfs" >&5
+$as_echo_n "checking for struct statfs... " >&6; }
+if ${ac_cv_struct_statfs+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h>
+#endif
+int
+main ()
+{
+static struct statfs s;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_struct_statfs=yes
+else
+  ac_cv_struct_statfs=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_struct_statfs" >&5
+$as_echo "$ac_cv_struct_statfs" >&6; }
+if test $ac_cv_struct_statfs = yes; then
+
+$as_echo "#define HAVE_STRUCT_STATFS 1" >>confdefs.h
+
+fi
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -6027,1634 +4137,6 @@ fi
 done
 
 
-# Check whether --enable-sim-hostendian was given.
-if test "${enable_sim_hostendian+set}" = set; then :
-  enableval=$enable_sim_hostendian; case "${enableval}" in
-  no)	 sim_hostendian="-DWITH_HOST_BYTE_ORDER=0";;
-  b*|B*) sim_hostendian="-DWITH_HOST_BYTE_ORDER=BIG_ENDIAN";;
-  l*|L*) sim_hostendian="-DWITH_HOST_BYTE_ORDER=LITTLE_ENDIAN";;
-  *)	 as_fn_error $? "\"Unknown value $enableval for --enable-sim-hostendian\"" "$LINENO" 5; sim_hostendian="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_hostendian" != x""; then
-  echo "Setting hostendian flags = $sim_hostendian" 6>&1
-fi
-else
-
-if test "x$cross_compiling" = "xno"; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether byte ordering is bigendian" >&5
-$as_echo_n "checking whether byte ordering is bigendian... " >&6; }
-if ${ac_cv_c_bigendian+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_cv_c_bigendian=unknown
-    # See if we're dealing with a universal compiler.
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifndef __APPLE_CC__
-	       not a universal capable compiler
-	     #endif
-	     typedef int dummy;
-
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-	# Check for potential -arch flags.  It is not universal unless
-	# there are at least two -arch flags with different values.
-	ac_arch=
-	ac_prev=
-	for ac_word in $CC $CFLAGS $CPPFLAGS $LDFLAGS; do
-	 if test -n "$ac_prev"; then
-	   case $ac_word in
-	     i?86 | x86_64 | ppc | ppc64)
-	       if test -z "$ac_arch" || test "$ac_arch" = "$ac_word"; then
-		 ac_arch=$ac_word
-	       else
-		 ac_cv_c_bigendian=universal
-		 break
-	       fi
-	       ;;
-	   esac
-	   ac_prev=
-	 elif test "x$ac_word" = "x-arch"; then
-	   ac_prev=arch
-	 fi
-       done
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    if test $ac_cv_c_bigendian = unknown; then
-      # See if sys/param.h defines the BYTE_ORDER macro.
-      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-	     #include <sys/param.h>
-
-int
-main ()
-{
-#if ! (defined BYTE_ORDER && defined BIG_ENDIAN \
-		     && defined LITTLE_ENDIAN && BYTE_ORDER && BIG_ENDIAN \
-		     && LITTLE_ENDIAN)
-	      bogus endian macros
-	     #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  # It does; now see whether it defined to BIG_ENDIAN or not.
-	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-		#include <sys/param.h>
-
-int
-main ()
-{
-#if BYTE_ORDER != BIG_ENDIAN
-		 not big endian
-		#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_c_bigendian=yes
-else
-  ac_cv_c_bigendian=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    fi
-    if test $ac_cv_c_bigendian = unknown; then
-      # See if <limits.h> defines _LITTLE_ENDIAN or _BIG_ENDIAN (e.g., Solaris).
-      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <limits.h>
-
-int
-main ()
-{
-#if ! (defined _LITTLE_ENDIAN || defined _BIG_ENDIAN)
-	      bogus endian macros
-	     #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  # It does; now see whether it defined to _BIG_ENDIAN or not.
-	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <limits.h>
-
-int
-main ()
-{
-#ifndef _BIG_ENDIAN
-		 not big endian
-		#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_c_bigendian=yes
-else
-  ac_cv_c_bigendian=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    fi
-    if test $ac_cv_c_bigendian = unknown; then
-      # Compile a test program.
-      if test "$cross_compiling" = yes; then :
-  # Try to guess by grepping values from an object file.
-	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-short int ascii_mm[] =
-		  { 0x4249, 0x4765, 0x6E44, 0x6961, 0x6E53, 0x7953, 0 };
-		short int ascii_ii[] =
-		  { 0x694C, 0x5454, 0x656C, 0x6E45, 0x6944, 0x6E61, 0 };
-		int use_ascii (int i) {
-		  return ascii_mm[i] + ascii_ii[i];
-		}
-		short int ebcdic_ii[] =
-		  { 0x89D3, 0xE3E3, 0x8593, 0x95C5, 0x89C4, 0x9581, 0 };
-		short int ebcdic_mm[] =
-		  { 0xC2C9, 0xC785, 0x95C4, 0x8981, 0x95E2, 0xA8E2, 0 };
-		int use_ebcdic (int i) {
-		  return ebcdic_mm[i] + ebcdic_ii[i];
-		}
-		extern int foo;
-
-int
-main ()
-{
-return use_ascii (foo) == use_ebcdic (foo);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  if grep BIGenDianSyS conftest.$ac_objext >/dev/null; then
-	      ac_cv_c_bigendian=yes
-	    fi
-	    if grep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
-	      if test "$ac_cv_c_bigendian" = unknown; then
-		ac_cv_c_bigendian=no
-	      else
-		# finding both strings is unlikely to happen, but who knows?
-		ac_cv_c_bigendian=unknown
-	      fi
-	    fi
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$ac_includes_default
-int
-main ()
-{
-
-	     /* Are we little or big endian?  From Harbison&Steele.  */
-	     union
-	     {
-	       long int l;
-	       char c[sizeof (long int)];
-	     } u;
-	     u.l = 1;
-	     return u.c[sizeof (long int) - 1] == 1;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  ac_cv_c_bigendian=no
-else
-  ac_cv_c_bigendian=yes
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-    fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_bigendian" >&5
-$as_echo "$ac_cv_c_bigendian" >&6; }
- case $ac_cv_c_bigendian in #(
-   yes)
-     $as_echo "#define WORDS_BIGENDIAN 1" >>confdefs.h
-;; #(
-   no)
-      ;; #(
-   universal)
-
-$as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
-
-     ;; #(
-   *)
-     as_fn_error $? "unknown endianness
- presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
- esac
-
-  if test $ac_cv_c_bigendian = yes; then
-    sim_hostendian="-DWITH_HOST_BYTE_ORDER=BIG_ENDIAN"
-  else
-    sim_hostendian="-DWITH_HOST_BYTE_ORDER=LITTLE_ENDIAN"
-  fi
-else
-  sim_hostendian="-DWITH_HOST_BYTE_ORDER=0"
-fi
-fi
-
-
-# Check whether --enable-sim-icache was given.
-if test "${enable_sim_icache+set}" = set; then :
-  enableval=$enable_sim_icache; icache="-R"
- case "${enableval}" in
-  yes)		icache="1024"; sim_icache="-I $icache";;
-  no)		sim_icache="-R";;
-  *) icache=1024
-     sim_icache="-"
-     for x in `echo "${enableval}" | sed -e "s/,/ /g"`; do
-       case "$x" in
-         define)	sim_icache="${sim_icache}R";;
-         semantic)	sim_icache="${sim_icache}C";;
-	 insn)		sim_icache="${sim_icache}S";;
-	 0*|1*|2*|3*|4*|5*|6*|7*|8*|9*)	icache=$x;;
-         *)		as_fn_error $? "\"Unknown value $x for --enable-sim-icache\"" "$LINENO" 5; sim_icache="";;
-       esac
-     done
-     sim_icache="${sim_icache}I $icache";;
-esac
-if test x"$silent" != x"yes" && test x"$icache" != x""; then
-  echo "Setting instruction cache size to $icache ($sim_icache)"
-fi
-else
-  sim_icache="-CSRI 1024"
-if test x"$silent" != x"yes"; then
-  echo "Setting instruction cache size to 1024 ($sim_icache)"
-fi
-fi
-
-
-# Check whether --enable-sim-inline was given.
-if test "${enable_sim_inline+set}" = set; then :
-  enableval=$enable_sim_inline; sim_inline=""
-case "$enableval" in
-  no)		sim_inline="-DDEFAULT_INLINE=0";;
-  0)		sim_inline="-DDEFAULT_INLINE=0";;
-  yes | 2)	sim_inline="-DDEFAULT_INLINE=ALL_INLINE";;
-  1)		sim_inline="-DDEFAULT_INLINE=PSIM_INLINE_LOCALS";;
-  *) for x in `echo "$enableval" | sed -e "s/,/ /g"`; do
-       new_flag=""
-       case "$x" in
-	 *_INLINE=*)	new_flag="-D$x";;
-	 *=*)		new_flag=`echo "$x" | sed -e "s/=/_INLINE=/" -e "s/^/-D/"`;;
-	 *_INLINE)	new_flag="-D$x=ALL_INLINE";;
-	 *)		new_flag="-D$x""_INLINE=ALL_INLINE";;
-       esac
-       if test x"$sim_inline" = x""; then
-	 sim_inline="$new_flag"
-       else
-	 sim_inline="$sim_inline $new_flag"
-       fi
-     done;;
-esac
-if test x"$silent" != x"yes" && test x"$sim_inline" != x""; then
-  echo "Setting inline flags = $sim_inline" 6>&1
-fi
-else
-  if test x"$GCC" != ""; then
-  sim_inline="-DDEFAULT_INLINE=PSIM_INLINE_LOCALS"
-  if test x"$silent" != x"yes"; then
-    echo "Setting inline flags = $sim_inline" 6>&1
-  fi
-else
-  sim_inline=""
-fi
-fi
-
-
-# Check whether --enable-sim-jump was given.
-if test "${enable_sim_jump+set}" = set; then :
-  enableval=$enable_sim_jump; case "${enableval}" in
-  yes)	sim_jump="-J";;
-  no)	sim_jump="";;
-  *)	as_fn_error $? "\"--enable-sim-jump does not take a value\"" "$LINENO" 5; sim_jump="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_jump" != x""; then
-  echo "Setting jump flag = $sim_jump" 6>&1
-fi
-else
-  sim_jump=""
-if test x"$silent" != x"yes"; then
-  echo "Setting jump flag = $sim_jump" 6>&1
-fi
-fi
-
-
-# Check whether --enable-sim-line-nr was given.
-if test "${enable_sim_line_nr+set}" = set; then :
-  enableval=$enable_sim_line_nr; case "${enableval}" in
-  yes)	sim_line_nr="";;
-  no)	sim_line_nr="-L";;
-  *)	as_fn_error $? "\"--enable-sim-line-nr does not take a value\"" "$LINENO" 5; sim_line_nr="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_line_nr" != x""; then
-  echo "Setting warning flags = $sim_line_nr" 6>&1
-fi
-else
-  sim_line_nr=""
-fi
-
-
-# Check whether --enable-sim-model was given.
-if test "${enable_sim_model+set}" = set; then :
-  enableval=$enable_sim_model; case "${enableval}" in
-  yes|no)	as_fn_error $? "\"No value supplied for --enable-sim-model=model\"" "$LINENO" 5;;
-  *)		sim_model="-DWITH_MODEL=${enableval}";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_model" != x""; then
-  echo "Setting model flags = $sim_model" 6>&1
-fi
-else
-  sim_model=""
-fi
-
-
-# Check whether --enable-sim-model-issue was given.
-if test "${enable_sim_model_issue+set}" = set; then :
-  enableval=$enable_sim_model_issue; case "${enableval}" in
-  yes)	sim_model_issue="-DWITH_MODEL_ISSUE=MODEL_ISSUE_PROCESS";;
-  no)	sim_model_issue="-DWITH_MODEL_ISSUE=MODEL_ISSUE_IGNORE";;
-  *)	as_fn_error $? "\"--enable-sim-model-issue does not take a value\"" "$LINENO" 5; sim_model_issue="";;
-esac
-if test x"$silent" != x"yes"; then
-  echo "Setting model-issue flags = $sim_model_issue" 6>&1
-fi
-else
-  sim_model_issue=""
-fi
-
-
-# Check whether --enable-sim-monitor was given.
-if test "${enable_sim_monitor+set}" = set; then :
-  enableval=$enable_sim_monitor; case "${enableval}" in
-  yes)		sim_monitor="-DWITH_MON='MONITOR_INSTRUCTION_ISSUE | MONITOR_LOAD_STORE_UNIT'";;
-  no)		sim_monitor="-DWITH_MON=0";;
-  instruction)	sim_monitor="-DWITH_MON=MONITOR_INSTRUCTION_ISSUE";;
-  memory)	sim_monitor="-DWITH_MON=MONITOR_LOAD_STORE_UNIT";;
-  *)		as_fn_error $? "\"Unknown value $enableval passed to --enable-sim-mon\"" "$LINENO" 5; sim_env="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_monitor" != x""; then
-  echo "Setting monitor flags = $sim_monitor" 6>&1
-fi
-else
-  sim_monitor=""
-fi
-
-
-# Check whether --enable-sim-opcode was given.
-if test "${enable_sim_opcode+set}" = set; then :
-  enableval=$enable_sim_opcode; case "${enableval}" in
-  yes|no)	as_fn_error $? "\"No value supplied for --enable-sim-opcode=file\"" "$LINENO" 5;;
-  *)		if test -f "${srcdir}/${enableval}"; then
-		  sim_opcode="${enableval}"
-		elif test -f "${srcdir}/dc-${enableval}"; then
-		  sim_opcode="dc-${enableval}"
-		else
-		  as_fn_error $? "\"File $enableval is not an opcode rules file\"" "$LINENO" 5;
-		  sim_opcode="dc-complex"
-		fi;;
-esac
-if test x"$silent" != x"yes" && test x"$sim_opcode" != x""; then
-  echo "Setting opcode flags = $sim_opcode" 6>&1
-fi
-else
-  sim_opcode="dc-complex"
-if test x"$silent" != x"yes"; then
-  echo "Setting opcode flags = $sim_opcode"
-fi
-fi
-
-
-# Check whether --enable-sim-packages was given.
-if test "${enable_sim_packages+set}" = set; then :
-  enableval=$enable_sim_packages; packages=disklabel
-case "${enableval}" in
-  yes)	;;
-  no)	as_fn_error $? "\"List of packages must be specified for --enable-sim-packages\"" "$LINENO" 5; packages="";;
-  ,*)   packages="${packages}${enableval}";;
-  *,)   packages="${enableval}${packages}";;
-  *)	packages="${enableval}"'';;
-esac
-sim_pk_src=`echo $packages | sed -e 's/,/.c pk_/g' -e 's/^/pk_/' -e 's/$/.c/'`
-sim_pk_obj=`echo $sim_pk_src | sed -e 's/\.c/.o/g'`
-if test x"$silent" != x"yes" && test x"$packages" != x""; then
-  echo "Setting packages to $sim_pk_src, $sim_pk_obj"
-fi
-else
-  packages=disklabel
-sim_pk_src=`echo $packages | sed -e 's/,/.c pk_/g' -e 's/^/pk_/' -e 's/$/.c/'`
-sim_pk_obj=`echo $sim_pk_src | sed -e 's/\.c/.o/g'`
-if test x"$silent" != x"yes"; then
-  echo "Setting packages to $sim_pk_src, $sim_pk_obj"
-fi
-fi
-
-
-# Check whether --enable-sim-reserved-bits was given.
-if test "${enable_sim_reserved_bits+set}" = set; then :
-  enableval=$enable_sim_reserved_bits; case "${enableval}" in
-  yes)	sim_reserved="-DWITH_RESERVED_BITS=1";;
-  no)	sim_reserved="-DWITH_RESERVED_BITS=0";;
-  *)	as_fn_error $? "\"--enable-sim-reserved-bits does not take a value\"" "$LINENO" 5; sim_reserved="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_reserved" != x""; then
-  echo "Setting reserved flags = $sim_reserved" 6>&1
-fi
-else
-  sim_reserved=""
-fi
-
-
-# Check whether --enable-sim-smp was given.
-if test "${enable_sim_smp+set}" = set; then :
-  enableval=$enable_sim_smp; case "${enableval}" in
-  yes)	sim_smp="-DWITH_SMP=5" ; sim_igen_smp="-N 5";;
-  no)	sim_smp="-DWITH_SMP=0" ; sim_igen_smp="-N 0";;
-  *)	sim_smp="-DWITH_SMP=$enableval" ; sim_igen_smp="-N $enableval";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_smp" != x""; then
-  echo "Setting smp flags = $sim_smp" 6>&1
-fi
-else
-  sim_smp="-DWITH_SMP=5" ; sim_igen_smp="-N 5"
-if test x"$silent" != x"yes"; then
-  echo "Setting smp flags = $sim_smp" 6>&1
-fi
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim stdio debug behavior" >&5
-$as_echo_n "checking for sim stdio debug behavior... " >&6; }
-sim_stdio=0
-# Check whether --enable-sim-stdio was given.
-if test "${enable_sim_stdio+set}" = set; then :
-  enableval=$enable_sim_stdio; case "${enableval}" in
-  yes)	sim_stdio="DO_USE_STDIO";;
-  no)	sim_stdio="DONT_USE_STDIO";;
-  *)	as_fn_error $? "Unknown value $enableval passed to --enable-sim-stdio" "$LINENO" 5;;
-esac
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define WITH_STDIO $sim_stdio
-_ACEOF
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_stdio" >&5
-$as_echo "$sim_stdio" >&6; }
-
-
-# Check whether --enable-sim-switch was given.
-if test "${enable_sim_switch+set}" = set; then :
-  enableval=$enable_sim_switch; case "${enableval}" in
-  yes)	sim_switch="-s";;
-  no)	sim_switch="";;
-  *)	as_fn_error $? "\"--enable-sim-switch does not take a value\"" "$LINENO" 5; sim_switch="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_switch" != x""; then
-  echo "Setting switch flags = $sim_switch" 6>&1
-fi
-else
-  sim_switch="";
-if test x"$silent" != x"yes"; then
-  echo "Setting switch flags = $sim_switch" 6>&1
-fi
-fi
-
-
-# Check whether --enable-sim-timebase was given.
-if test "${enable_sim_timebase+set}" = set; then :
-  enableval=$enable_sim_timebase; case "${enableval}" in
-  yes)	sim_timebase="-DWITH_TIME_BASE=1";;
-  no)	sim_timebase="-DWITH_TIME_BASE=0";;
-  *)	as_fn_error $? "\"--enable-sim-timebase does not take a value\"" "$LINENO" 5; sim_timebase="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_timebase" != x""; then
-  echo "Setting timebase flags = $sim_timebase" 6>&1
-fi
-else
-  sim_timebase=""
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim trace settings" >&5
-$as_echo_n "checking for sim trace settings... " >&6; }
-sim_trace="1"
-# Check whether --enable-sim-trace was given.
-if test "${enable_sim_trace+set}" = set; then :
-  enableval=$enable_sim_trace; case "${enableval}" in
-  yes)	sim_trace="1";;
-  no)	sim_trace="0";;
-  *)	as_fn_error $? "--enable-sim-trace does not take a value" "$LINENO" 5;;
-esac
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define WITH_TRACE $sim_trace
-_ACEOF
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_trace" >&5
-$as_echo "$sim_trace" >&6; }
-
-
-# Check whether --enable-sim-warnings was given.
-if test "${enable_sim_warnings+set}" = set; then :
-  enableval=$enable_sim_warnings; case "${enableval}" in
-  yes)	sim_warnings="-Werror -Wall -Wpointer-arith -Wmissing-prototypes -Wmissing-declarations ";;
-  no)	sim_warnings="-w";;
-  *)	sim_warnings=`echo "${enableval}" | sed -e "s/,/ /g"`;;
-esac
-if test x"$silent" != x"yes" && test x"$sim_warnings" != x""; then
-  echo "Setting warning flags = $sim_warnings" 6>&1
-fi
-else
-  sim_warnings=""
-fi
-
-
-# Check whether --enable-sim-xor-endian was given.
-if test "${enable_sim_xor_endian+set}" = set; then :
-  enableval=$enable_sim_xor_endian; case "${enableval}" in
-  yes)	sim_xor_endian="-DWITH_XOR_ENDIAN=8";;
-  no)	sim_xor_endian="-DWITH_XOR_ENDIAN=0";;
-  *)	sim_xor_endian="-DWITH_XOR_ENDIAN=$enableval";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_xor_endian" != x""; then
-  echo "Setting xor-endian flag = $sim_xor_endian" 6>&1
-fi
-else
-  sim_xor_endian=""
-fi
-
-
-
-
-# Check whether --with-pkgversion was given.
-if test "${with_pkgversion+set}" = set; then :
-  withval=$with_pkgversion; case "$withval" in
-      yes) as_fn_error $? "package version not specified" "$LINENO" 5 ;;
-      no)  PKGVERSION= ;;
-      *)   PKGVERSION="($withval) " ;;
-     esac
-else
-  PKGVERSION="(GDB) "
-
-fi
-
-
-
-
-
-# Check whether --with-bugurl was given.
-if test "${with_bugurl+set}" = set; then :
-  withval=$with_bugurl; case "$withval" in
-      yes) as_fn_error $? "bug URL not specified" "$LINENO" 5 ;;
-      no)  BUGURL=
-	   ;;
-      *)   BUGURL="$withval"
-	   ;;
-     esac
-else
-  BUGURL="http://www.gnu.org/software/gdb/bugs/"
-
-fi
-
-  case ${BUGURL} in
-  "")
-    REPORT_BUGS_TO=
-    REPORT_BUGS_TEXI=
-    ;;
-  *)
-    REPORT_BUGS_TO="<$BUGURL>"
-    REPORT_BUGS_TEXI=@uref{`echo "$BUGURL" | sed 's/@/@@/g'`}
-    ;;
-  esac;
-
-
-
-
-cat >>confdefs.h <<_ACEOF
-#define PKGVERSION "$PKGVERSION"
-_ACEOF
-
-
-cat >>confdefs.h <<_ACEOF
-#define REPORT_BUGS_TO "$REPORT_BUGS_TO"
-_ACEOF
-
-
-# Make sure we can run config.sub.
-$SHELL "$ac_aux_dir/config.sub" sun4 >/dev/null 2>&1 ||
-  as_fn_error $? "cannot run $SHELL $ac_aux_dir/config.sub" "$LINENO" 5
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking build system type" >&5
-$as_echo_n "checking build system type... " >&6; }
-if ${ac_cv_build+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_build_alias=$build_alias
-test "x$ac_build_alias" = x &&
-  ac_build_alias=`$SHELL "$ac_aux_dir/config.guess"`
-test "x$ac_build_alias" = x &&
-  as_fn_error $? "cannot guess build type; you must specify one" "$LINENO" 5
-ac_cv_build=`$SHELL "$ac_aux_dir/config.sub" $ac_build_alias` ||
-  as_fn_error $? "$SHELL $ac_aux_dir/config.sub $ac_build_alias failed" "$LINENO" 5
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_build" >&5
-$as_echo "$ac_cv_build" >&6; }
-case $ac_cv_build in
-*-*-*) ;;
-*) as_fn_error $? "invalid value of canonical build" "$LINENO" 5;;
-esac
-build=$ac_cv_build
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_build
-shift
-build_cpu=$1
-build_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-build_os=$*
-IFS=$ac_save_IFS
-case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking host system type" >&5
-$as_echo_n "checking host system type... " >&6; }
-if ${ac_cv_host+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "x$host_alias" = x; then
-  ac_cv_host=$ac_cv_build
-else
-  ac_cv_host=`$SHELL "$ac_aux_dir/config.sub" $host_alias` ||
-    as_fn_error $? "$SHELL $ac_aux_dir/config.sub $host_alias failed" "$LINENO" 5
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_host" >&5
-$as_echo "$ac_cv_host" >&6; }
-case $ac_cv_host in
-*-*-*) ;;
-*) as_fn_error $? "invalid value of canonical host" "$LINENO" 5;;
-esac
-host=$ac_cv_host
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_host
-shift
-host_cpu=$1
-host_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-host_os=$*
-IFS=$ac_save_IFS
-case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking target system type" >&5
-$as_echo_n "checking target system type... " >&6; }
-if ${ac_cv_target+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "x$target_alias" = x; then
-  ac_cv_target=$ac_cv_host
-else
-  ac_cv_target=`$SHELL "$ac_aux_dir/config.sub" $target_alias` ||
-    as_fn_error $? "$SHELL $ac_aux_dir/config.sub $target_alias failed" "$LINENO" 5
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_target" >&5
-$as_echo "$ac_cv_target" >&6; }
-case $ac_cv_target in
-*-*-*) ;;
-*) as_fn_error $? "invalid value of canonical target" "$LINENO" 5;;
-esac
-target=$ac_cv_target
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_target
-shift
-target_cpu=$1
-target_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-target_os=$*
-IFS=$ac_save_IFS
-case $target_os in *\ *) target_os=`echo "$target_os" | sed 's/ /-/g'`;; esac
-
-
-# The aliases save the names the user supplied, while $host etc.
-# will get canonicalized.
-test -n "$target_alias" &&
-  test "$program_prefix$program_suffix$program_transform_name" = \
-    NONENONEs,x,x, &&
-  program_prefix=${target_alias}-
-
-test "$program_prefix" != NONE &&
-  program_transform_name="s&^&$program_prefix&;$program_transform_name"
-# Use a double $ so make ignores it.
-test "$program_suffix" != NONE &&
-  program_transform_name="s&\$&$program_suffix&;$program_transform_name"
-# Double any \ or $.
-# By default was `s,x,x', remove it if useless.
-ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
-program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
-
-
-# BFD conditionally uses zlib, so we must link it in if libbfd does, by
-# using the same condition.
-
-  # Use the system's zlib library.
-  zlibdir="-L\$(top_builddir)/../zlib"
-  zlibinc="-I\$(top_srcdir)/../zlib"
-
-# Check whether --with-system-zlib was given.
-if test "${with_system_zlib+set}" = set; then :
-  withval=$with_system_zlib; if test x$with_system_zlib = xyes ; then
-    zlibdir=
-    zlibinc=
-  fi
-
-fi
-
-
-
-
-
-# BFD uses libdl when when plugins enabled.
-
-  maybe_plugins=no
-  for ac_header in dlfcn.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "dlfcn.h" "ac_cv_header_dlfcn_h" "$ac_includes_default
-"
-if test "x$ac_cv_header_dlfcn_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_DLFCN_H 1
-_ACEOF
- maybe_plugins=yes
-fi
-
-done
-
-  for ac_header in windows.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "windows.h" "ac_cv_header_windows_h" "$ac_includes_default
-"
-if test "x$ac_cv_header_windows_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_WINDOWS_H 1
-_ACEOF
- maybe_plugins=yes
-fi
-
-done
-
-
-  # Check whether --enable-plugins was given.
-if test "${enable_plugins+set}" = set; then :
-  enableval=$enable_plugins; case "${enableval}" in
-      no) plugins=no ;;
-      *) plugins=yes
-         if test "$maybe_plugins" != "yes" ; then
-	   as_fn_error $? "Building with plugin support requires a host that supports dlopen." "$LINENO" 5
-	 fi ;;
-     esac
-else
-  plugins=$maybe_plugins
-
-fi
-
-  if test "$plugins" = "yes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlsym" >&5
-$as_echo_n "checking for library containing dlsym... " >&6; }
-if ${ac_cv_search_dlsym+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char dlsym ();
-int
-main ()
-{
-return dlsym ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' dl; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_dlsym=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_dlsym+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_dlsym+:} false; then :
-
-else
-  ac_cv_search_dlsym=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlsym" >&5
-$as_echo "$ac_cv_search_dlsym" >&6; }
-ac_res=$ac_cv_search_dlsym
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-  fi
-
-
-. ${srcdir}/../../bfd/configure.host
-
-case ${host} in
-  *mingw32*)
-
-$as_echo "#define USE_WIN32API 1" >>confdefs.h
-
-    ;;
-esac
-
-ac_config_headers="$ac_config_headers config.h:config.in"
-
-
-ac_fn_c_check_member "$LINENO" "struct stat" "st_blksize" "ac_cv_member_struct_stat_st_blksize" "$ac_includes_default"
-if test "x$ac_cv_member_struct_stat_st_blksize" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_STAT_ST_BLKSIZE 1
-_ACEOF
-
-
-$as_echo "#define HAVE_ST_BLKSIZE 1" >>confdefs.h
-
-fi
-
-
-ac_fn_c_check_member "$LINENO" "struct stat" "st_blocks" "ac_cv_member_struct_stat_st_blocks" "$ac_includes_default"
-if test "x$ac_cv_member_struct_stat_st_blocks" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_STAT_ST_BLOCKS 1
-_ACEOF
-
-
-$as_echo "#define HAVE_ST_BLOCKS 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" fileblocks.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS fileblocks.$ac_objext"
- ;;
-esac
-
-fi
-
-
-ac_fn_c_check_member "$LINENO" "struct stat" "st_rdev" "ac_cv_member_struct_stat_st_rdev" "$ac_includes_default"
-if test "x$ac_cv_member_struct_stat_st_rdev" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_STAT_ST_RDEV 1
-_ACEOF
-
-
-$as_echo "#define HAVE_ST_RDEV 1" >>confdefs.h
-
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether struct tm is in sys/time.h or time.h" >&5
-$as_echo_n "checking whether struct tm is in sys/time.h or time.h... " >&6; }
-if ${ac_cv_struct_tm+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <time.h>
-
-int
-main ()
-{
-struct tm tm;
-				     int *p = &tm.tm_sec;
-				     return !p;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_struct_tm=time.h
-else
-  ac_cv_struct_tm=sys/time.h
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_struct_tm" >&5
-$as_echo "$ac_cv_struct_tm" >&6; }
-if test $ac_cv_struct_tm = sys/time.h; then
-
-$as_echo "#define TM_IN_SYS_TIME 1" >>confdefs.h
-
-fi
-
-ac_fn_c_check_member "$LINENO" "struct tm" "tm_zone" "ac_cv_member_struct_tm_tm_zone" "#include <sys/types.h>
-#include <$ac_cv_struct_tm>
-
-"
-if test "x$ac_cv_member_struct_tm_tm_zone" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_TM_TM_ZONE 1
-_ACEOF
-
-
-fi
-
-if test "$ac_cv_member_struct_tm_tm_zone" = yes; then
-
-$as_echo "#define HAVE_TM_ZONE 1" >>confdefs.h
-
-else
-  ac_fn_c_check_decl "$LINENO" "tzname" "ac_cv_have_decl_tzname" "#include <time.h>
-"
-if test "x$ac_cv_have_decl_tzname" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_TZNAME $ac_have_decl
-_ACEOF
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for tzname" >&5
-$as_echo_n "checking for tzname... " >&6; }
-if ${ac_cv_var_tzname+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <time.h>
-#if !HAVE_DECL_TZNAME
-extern char *tzname[];
-#endif
-
-int
-main ()
-{
-return tzname[0][0];
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_var_tzname=yes
-else
-  ac_cv_var_tzname=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_var_tzname" >&5
-$as_echo "$ac_cv_var_tzname" >&6; }
-  if test $ac_cv_var_tzname = yes; then
-
-$as_echo "#define HAVE_TZNAME 1" >>confdefs.h
-
-  fi
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for uid_t in sys/types.h" >&5
-$as_echo_n "checking for uid_t in sys/types.h... " >&6; }
-if ${ac_cv_type_uid_t+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "uid_t" >/dev/null 2>&1; then :
-  ac_cv_type_uid_t=yes
-else
-  ac_cv_type_uid_t=no
-fi
-rm -f conftest*
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_type_uid_t" >&5
-$as_echo "$ac_cv_type_uid_t" >&6; }
-if test $ac_cv_type_uid_t = no; then
-
-$as_echo "#define uid_t int" >>confdefs.h
-
-
-$as_echo "#define gid_t int" >>confdefs.h
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking type of array argument to getgroups" >&5
-$as_echo_n "checking type of array argument to getgroups... " >&6; }
-if ${ac_cv_type_getgroups+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "$cross_compiling" = yes; then :
-  ac_cv_type_getgroups=cross
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-/* Thanks to Mike Rendell for this test.  */
-$ac_includes_default
-#define NGID 256
-#undef MAX
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-
-int
-main ()
-{
-  gid_t gidset[NGID];
-  int i, n;
-  union { gid_t gval; long int lval; }  val;
-
-  val.lval = -1;
-  for (i = 0; i < NGID; i++)
-    gidset[i] = val.gval;
-  n = getgroups (sizeof (gidset) / MAX (sizeof (int), sizeof (gid_t)) - 1,
-		 gidset);
-  /* Exit non-zero if getgroups seems to require an array of ints.  This
-     happens when gid_t is short int but getgroups modifies an array
-     of ints.  */
-  return n > 0 && gidset[n] != val.gval;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  ac_cv_type_getgroups=gid_t
-else
-  ac_cv_type_getgroups=int
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-if test $ac_cv_type_getgroups = cross; then
-        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <unistd.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "getgroups.*int.*gid_t" >/dev/null 2>&1; then :
-  ac_cv_type_getgroups=gid_t
-else
-  ac_cv_type_getgroups=int
-fi
-rm -f conftest*
-
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_type_getgroups" >&5
-$as_echo "$ac_cv_type_getgroups" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define GETGROUPS_T $ac_cv_type_getgroups
-_ACEOF
-
-
-ac_fn_c_check_type "$LINENO" "mode_t" "ac_cv_type_mode_t" "$ac_includes_default"
-if test "x$ac_cv_type_mode_t" = xyes; then :
-
-else
-
-cat >>confdefs.h <<_ACEOF
-#define mode_t int
-_ACEOF
-
-fi
-
-ac_fn_c_check_type "$LINENO" "off_t" "ac_cv_type_off_t" "$ac_includes_default"
-if test "x$ac_cv_type_off_t" = xyes; then :
-
-else
-
-cat >>confdefs.h <<_ACEOF
-#define off_t long int
-_ACEOF
-
-fi
-
-ac_fn_c_check_type "$LINENO" "pid_t" "ac_cv_type_pid_t" "$ac_includes_default"
-if test "x$ac_cv_type_pid_t" = xyes; then :
-
-else
-
-cat >>confdefs.h <<_ACEOF
-#define pid_t int
-_ACEOF
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking return type of signal handlers" >&5
-$as_echo_n "checking return type of signal handlers... " >&6; }
-if ${ac_cv_type_signal+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <signal.h>
-
-int
-main ()
-{
-return *(signal (0, 0)) (0) == 1;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_type_signal=int
-else
-  ac_cv_type_signal=void
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_type_signal" >&5
-$as_echo "$ac_cv_type_signal" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define RETSIGTYPE $ac_cv_type_signal
-_ACEOF
-
-
-ac_fn_c_check_type "$LINENO" "size_t" "ac_cv_type_size_t" "$ac_includes_default"
-if test "x$ac_cv_type_size_t" = xyes; then :
-
-else
-
-cat >>confdefs.h <<_ACEOF
-#define size_t unsigned int
-_ACEOF
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for uid_t in sys/types.h" >&5
-$as_echo_n "checking for uid_t in sys/types.h... " >&6; }
-if ${ac_cv_type_uid_t+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "uid_t" >/dev/null 2>&1; then :
-  ac_cv_type_uid_t=yes
-else
-  ac_cv_type_uid_t=no
-fi
-rm -f conftest*
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_type_uid_t" >&5
-$as_echo "$ac_cv_type_uid_t" >&6; }
-if test $ac_cv_type_uid_t = no; then
-
-$as_echo "#define uid_t int" >>confdefs.h
-
-
-$as_echo "#define gid_t int" >>confdefs.h
-
-fi
-
-
-for ac_func in access cfgetispeed cfgetospeed cfsetispeed cfsetospeed chdir chmod chown dup dup2 fchmod fchown fcntl fstat fstatfs getdirentries getegid geteuid getgid getpid getppid getrusage gettimeofday getuid ioctl kill link lseek lstat mkdir pipe readlink rmdir setreuid setregid stat sigprocmask stat symlink tcgetattr tcsetattr tcsendbreak tcdrain tcflush tcflow tcgetpgrp tcsetpgrp time umask unlink
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
-
-for ac_header in fcntl.h stdlib.h string.h strings.h sys/ioctl.h sys/mount.h sys/param.h sys/resource.h sys/stat.h sys/termio.h sys/termios.h sys/time.h sys/times.h sys/types.h time.h unistd.h sys/vfs.h sys/statfs.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-ac_header_dirent=no
-for ac_hdr in dirent.h sys/ndir.h sys/dir.h ndir.h; do
-  as_ac_Header=`$as_echo "ac_cv_header_dirent_$ac_hdr" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_hdr that defines DIR" >&5
-$as_echo_n "checking for $ac_hdr that defines DIR... " >&6; }
-if eval \${$as_ac_Header+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <$ac_hdr>
-
-int
-main ()
-{
-if ((DIR *) 0)
-return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  eval "$as_ac_Header=yes"
-else
-  eval "$as_ac_Header=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$as_ac_Header
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_hdr" | $as_tr_cpp` 1
-_ACEOF
-
-ac_header_dirent=$ac_hdr; break
-fi
-
-done
-# Two versions of opendir et al. are in -ldir and -lx on SCO Xenix.
-if test $ac_header_dirent = dirent.h; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing opendir" >&5
-$as_echo_n "checking for library containing opendir... " >&6; }
-if ${ac_cv_search_opendir+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char opendir ();
-int
-main ()
-{
-return opendir ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' dir; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_opendir=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_opendir+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_opendir+:} false; then :
-
-else
-  ac_cv_search_opendir=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_opendir" >&5
-$as_echo "$ac_cv_search_opendir" >&6; }
-ac_res=$ac_cv_search_opendir
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing opendir" >&5
-$as_echo_n "checking for library containing opendir... " >&6; }
-if ${ac_cv_search_opendir+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char opendir ();
-int
-main ()
-{
-return opendir ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' x; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_opendir=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_opendir+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_opendir+:} false; then :
-
-else
-  ac_cv_search_opendir=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_opendir" >&5
-$as_echo "$ac_cv_search_opendir" >&6; }
-ac_res=$ac_cv_search_opendir
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-fi
-
-
-sim_termio=""
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct termios" >&5
-$as_echo_n "checking for struct termios... " >&6; }
-if ${ac_cv_termios_struct+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <sys/termios.h>
-int
-main ()
-{
-static struct termios x;
- x.c_iflag = 0;
- x.c_oflag = 0;
- x.c_cflag = 0;
- x.c_lflag = 0;
- x.c_cc[NCCS] = 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_termios_struct=yes
-else
-  ac_cv_termios_struct=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_termios_struct" >&5
-$as_echo "$ac_cv_termios_struct" >&6; }
-if test $ac_cv_termios_struct = yes; then
-  sim_termio="$sim_termio -DHAVE_TERMIOS_STRUCTURE"
-fi
-
-if test "$ac_cv_termios_struct" = "yes"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for c_line field in struct termios" >&5
-$as_echo_n "checking for c_line field in struct termios... " >&6; }
-  if ${ac_cv_termios_cline+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <sys/termios.h>
-int
-main ()
-{
-static struct termios x; x.c_line = 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_termios_cline=yes
-else
-  ac_cv_termios_cline=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_termios_cline" >&5
-$as_echo "$ac_cv_termios_cline" >&6; }
-  if test $ac_cv_termios_cline = yes; then
-    sim_termio="$sim_termio -DHAVE_TERMIOS_CLINE"
-  fi
-else
-  ac_cv_termios_cline=no
-fi
-
-if test "$ac_cv_termios_struct" != "yes"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct termio" >&5
-$as_echo_n "checking for struct termio... " >&6; }
-  if ${ac_cv_termio_struct+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <sys/termio.h>
-int
-main ()
-{
-static struct termio x;
- x.c_iflag = 0;
- x.c_oflag = 0;
- x.c_cflag = 0;
- x.c_lflag = 0;
- x.c_cc[NCC] = 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_termio_struct=yes
-else
-  ac_cv_termio_struct=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_termio_struct" >&5
-$as_echo "$ac_cv_termio_struct" >&6; }
-  if test $ac_cv_termio_struct = yes; then
-    sim_termio="$sim_termio -DHAVE_TERMIO_STRUCTURE"
-  fi
-else
-  ac_cv_termio_struct=no
-fi
-
-if test "$ac_cv_termio_struct" = "yes"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for c_line field in struct termio" >&5
-$as_echo_n "checking for c_line field in struct termio... " >&6; }
-  if ${ac_cv_termio_cline+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <sys/termio.h>
-int
-main ()
-{
-static struct termio x; x.c_line = 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_termio_cline=yes
-else
-  ac_cv_termio_cline=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_termio_cline" >&5
-$as_echo "$ac_cv_termio_cline" >&6; }
-  if test $ac_cv_termio_cline = yes; then
-    sim_termio="$sim_termio -DHAVE_TERMIO_CLINE"
-  fi
-else
-  ac_cv_termio_cline=no
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct statfs" >&5
-$as_echo_n "checking for struct statfs... " >&6; }
-if ${ac_cv_struct_statfs+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_MOUNT_H
-#include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_VFS_H
-#include <sys/vfs.h>
-#endif
-#ifdef HAVE_SYS_STATFS_H
-#include <sys/statfs.h>
-#endif
-int
-main ()
-{
-static struct statfs s;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_struct_statfs=yes
-else
-  ac_cv_struct_statfs=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_struct_statfs" >&5
-$as_echo "$ac_cv_struct_statfs" >&6; }
-if test $ac_cv_struct_statfs = yes; then
-
-$as_echo "#define HAVE_STRUCT_STATFS 1" >>confdefs.h
-
-fi
-
 ac_fn_c_check_type "$LINENO" "long long" "ac_cv_type_long_long" "$ac_includes_default"
 if test "x$ac_cv_type_long_long" = xyes; then :
 
@@ -7665,81 +4147,6 @@ _ACEOF
 
 fi
 
-
-sim_devzero=""
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for /dev/zero" >&5
-$as_echo_n "checking for /dev/zero... " >&6; }
-if ${ac_cv_devzero+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "$cross_compiling" = yes; then :
-  ac_cv_devzero=no
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <fcntl.h>
-main () {
-  char buf[2048];
-  int i;
-  int fd = open ("/dev/zero", O_RDONLY);
-  if (fd < 0)
-    return 1;
-  for (i = 0; i < sizeof (buf); i++)
-    buf[i] = 1;
-  if (read (fd, buf, sizeof (buf)) != sizeof (buf))
-    return 1;
-  for (i = 0; i < sizeof (buf); i++)
-    if (buf[i])
-      return 1;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  ac_cv_devzero=yes
-else
-  ac_cv_devzero=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_devzero" >&5
-$as_echo "$ac_cv_devzero" >&6; }
-if test $ac_cv_devzero = yes; then
-  sim_devzero="-DHAVE_DEVZERO"
-else
-  sim_devzero=""
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for common simulator directory" >&5
-$as_echo_n "checking for common simulator directory... " >&6; }
-if test -f "${srcdir}/../common/callback.c"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-  sim_callback="callback.o targ-map.o"
-  sim_targ_vals="targ-vals.h targ-map.c targ-vals.def"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-  sim_callback=""
-  sim_targ_vals=""
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for common simulator directory fpu implementation" >&5
-$as_echo_n "checking for common simulator directory fpu implementation... " >&6; }
-if test -f "${srcdir}/../common/sim-fpu.c"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-  sim_fpu_cflags="-DHAVE_COMMON_FPU -I../common -I${srcdir}/../common"
-  sim_fpu="sim-fpu.o"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-  sim_fpu_cflags=
-  sim_fpu=
-fi
 
 # Since we run commands on the build system, we have to create a
 # separate config header for the build system if build != host.
@@ -7756,7 +4163,13 @@ else
   *) realsrcdir=../${srcdir};;
   esac
   saved_CFLAGS="${CFLAGS}"
-  CC="${CC_FOR_BUILD}" CFLAGS="${CFLAGS_FOR_BUILD}" \
+  # Put a plausible default for CC_FOR_BUILD in Makefile.
+  if test "x$cross_compiling" = "xno"; then
+    CC_FOR_BUILD='$(CC)'
+  else
+    CC_FOR_BUILD=gcc
+  fi
+  CC="${CC_FOR_BUILD}" CFLAGS="${CFLAGS_FOR_BUILD-${CFLAGS}}" \
   LDFLAGS="${LDFLAGS_FOR_BUILD}" \
   ${realsrcdir}/configure \
     --enable-languages=${enable_languages-all} \
@@ -7766,120 +4179,6 @@ else
   cd ..
   rm -rf $tempdir
 fi
-
-
-
-
-
-
-
-AR=${AR-ar}
-
-if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
-set dummy ${ac_tool_prefix}ranlib; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$RANLIB"; then
-  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="${ac_tool_prefix}ranlib"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-RANLIB=$ac_cv_prog_RANLIB
-if test -n "$RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
-$as_echo "$RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-fi
-if test -z "$ac_cv_prog_RANLIB"; then
-  ac_ct_RANLIB=$RANLIB
-  # Extract the first word of "ranlib", so it can be a program name with args.
-set dummy ranlib; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_RANLIB"; then
-  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_RANLIB="ranlib"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
-if test -n "$ac_ct_RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_RANLIB" >&5
-$as_echo "$ac_ct_RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_RANLIB" = x; then
-    RANLIB=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    RANLIB=$ac_ct_RANLIB
-  fi
-else
-  RANLIB="$ac_cv_prog_RANLIB"
-fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -8015,7 +4314,6 @@ done
 LIBOBJS=$ac_libobjs
 
 LTLIBOBJS=$ac_ltlibobjs
-
 
 
 

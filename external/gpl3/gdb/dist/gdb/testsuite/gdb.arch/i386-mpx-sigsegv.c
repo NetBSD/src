@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <walfred.tedeschi@intel.com>
 
@@ -15,9 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "x86-cpuid.h"
-#include <stdio.h>
-
 #define OUR_SIZE    5
 
 int gx[OUR_SIZE];
@@ -25,29 +22,6 @@ int ga[OUR_SIZE];
 int gb[OUR_SIZE];
 int gc[OUR_SIZE];
 int gd[OUR_SIZE];
-
-unsigned int
-have_mpx (void)
-{
-  unsigned int eax, ebx, ecx, edx;
-
-  if (!__get_cpuid (1, &eax, &ebx, &ecx, &edx))
-    return 0;
-
-  if ((ecx & bit_OSXSAVE) == bit_OSXSAVE)
-    {
-      if (__get_cpuid_max (0, NULL) < 7)
-	return 0;
-
-      __cpuid_count (7, 0, eax, ebx, ecx, edx);
-
-      if ((ebx & bit_MPX) == bit_MPX)
-	return 1;
-      else
-	return 0;
-    }
-  return 0;
-}
 
 int
 bp1 (int value)
@@ -87,34 +61,32 @@ lower (int * p, int * a, int * b, int * c, int * d, int len)
 int
 main (void)
 {
-  if (have_mpx ())
-    {
-      int sx[OUR_SIZE];
-      int sa[OUR_SIZE];
-      int sb[OUR_SIZE];
-      int sc[OUR_SIZE];
-      int sd[OUR_SIZE];
-      int *x, *a, *b, *c, *d;
+  int sx[OUR_SIZE];
+  int sa[OUR_SIZE];
+  int sb[OUR_SIZE];
+  int sc[OUR_SIZE];
+  int sd[OUR_SIZE];
+  int *x, *a, *b, *c, *d;
 
-      x = calloc (OUR_SIZE, sizeof (int));
-      a = calloc (OUR_SIZE, sizeof (int));
-      b = calloc (OUR_SIZE, sizeof (int));
-      c = calloc (OUR_SIZE, sizeof (int));
-      d = calloc (OUR_SIZE, sizeof (int));
+  x = calloc (OUR_SIZE, sizeof (int));
+  a = calloc (OUR_SIZE, sizeof (int));
+  b = calloc (OUR_SIZE, sizeof (int));
+  c = calloc (OUR_SIZE, sizeof (int));
+  d = calloc (OUR_SIZE, sizeof (int));
 
-      upper (x, a, b, c, d, OUR_SIZE + 2);
-      upper (sx, sa, sb, sc, sd, OUR_SIZE + 2);
-      upper (gx, ga, gb, gc, gd, OUR_SIZE + 2);
-      lower (x, a, b, c, d, 1);
-      lower (sx, sa, sb, sc, sd, 1);
-      bp1 (*x);
-      lower (gx, ga, gb, gc, gd, 1);
+  upper (x, a, b, c, d, OUR_SIZE + 2);
+  upper (sx, sa, sb, sc, sd, OUR_SIZE + 2);
+  upper (gx, ga, gb, gc, gd, OUR_SIZE + 2);
+  lower (x, a, b, c, d, 1);
+  lower (sx, sa, sb, sc, sd, 1);
+  bp1 (*x);
+  lower (gx, ga, gb, gc, gd, 1);
 
-      free (x);
-      free (a);
-      free (b);
-      free (c);
-      free (d);
-    }
+  free (x);
+  free (a);
+  free (b);
+  free (c);
+  free (d);
+
   return 0;
 }

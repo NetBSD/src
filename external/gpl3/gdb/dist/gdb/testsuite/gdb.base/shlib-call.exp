@@ -1,4 +1,4 @@
-#   Copyright 1997-2020 Free Software Foundation, Inc.
+#   Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,6 +33,10 @@ if {[skip_shlib_tests]} {
     return 0
 }
 
+if { [is_remote host] } {
+    gdb_remote_download host $srcdir/$subdir/ss.h
+}
+
 standard_testfile shmain.c shr1.c shr2.c
 set srcfile  ${srcdir}/${subdir}/${srcfile}
 set lib1src  ${srcdir}/${subdir}/${srcfile2}
@@ -42,10 +46,6 @@ set lib2     [standard_output_file shr2.sl]
 
 set lib_opts "debug"
 set exec_opts [list debug shlib=${lib1} shlib=${lib2}]
-
-if [get_compiler_info] {
-    return -1
-}
 
 if { [gdb_compile_shlib ${lib1src} ${lib1} $lib_opts] != ""
      || [gdb_compile_shlib ${lib2src} ${lib2} $lib_opts] != ""
@@ -60,13 +60,9 @@ clean_restart ${binfile}
 gdb_load_shlib $lib1
 gdb_load_shlib $lib2
 
-gdb_test_no_output "set print sevenbit-strings"
-gdb_test_no_output "set print address off"
-gdb_test_no_output "set width 0"
 
-
-if ![runto_main] then {
-        perror "C function calling tests suppressed"
+if {![runto_main]} {
+    return
 }
 
 
@@ -90,7 +86,7 @@ if ![gdb_skip_stdio_test "next over shr1"] {
 
 
 #print g
-gdb_test "print g" "\[0-9\]* = 2"
+gdb_test "print g" "\[0-9\]* = 2" "print g two"
 
 #print shr1(1)
 if ![gdb_skip_stdio_test "print shr1(1)"] {
@@ -137,7 +133,7 @@ gdb_test "print mainshr1(1)" "\[0-9\]* = 2" \
 # behavior will differ depending upon upon whether or not
 # the compiler emits line number information for the epilogue.
 gdb_test_multiple "step" "step out of shr2 to main" {
-    -re "main \\(\\) at.*g = mainshr1\\(g\\);.*$gdb_prompt $" { 
+    -re "main \\(\\) at.*g = mainshr1\\(g\\);.*$gdb_prompt $" {
 	pass "step out of shr2 to main"
     }
     -re ".*\\\}.*$gdb_prompt $" {
@@ -152,7 +148,7 @@ gdb_test_multiple "step" "step out of shr2 to main" {
 	}
     }
 }
-    
+
 #print mainshr1(1)
 gdb_test "print mainshr1(1)" "\[0-9\]* = 2"
 
@@ -162,14 +158,7 @@ gdb_test "step" "mainshr1 \\(g=4\\) at.*return 2.g;" \
 
 # Start with a fresh gdb.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
-gdb_test_no_output "set print sevenbit-strings"
-gdb_test_no_output "set print address off"
-gdb_test_no_output "set width 0"
-
+clean_restart $binfile
 
 # PR's 16495, 18213
 # test that we can re-set breakpoints in shared libraries
@@ -179,7 +168,7 @@ set test "run to bp in shared library"
 gdb_run_cmd
 gdb_test_multiple "" $test {
     -re "Breakpoint .,.*${gdb_prompt} " {
-	pass $test
+	pass $gdb_test_name
     }
 }
 
@@ -189,8 +178,8 @@ set test "re-run to bp in shared library (PR's 16495, 18213)"
 gdb_run_cmd
 gdb_test_multiple "" $test {
     -re "Breakpoint .,.*${gdb_prompt} " {
-	pass $test
+	pass $gdb_test_name
     }
 }
 
-gdb_continue_to_end "" continue 1
+gdb_continue_to_end "after re-run" continue 1

@@ -622,6 +622,9 @@ ac_unique_file="gettext.c"
 ac_header_list=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+BISON3_NO
+BISON3_YES
+PICFLAG
 INCINTL
 LIBINTL_DEP
 MAINT
@@ -5082,7 +5085,7 @@ else
       # Check to see if the program is GNU ld.  I'd rather use --version,
       # but apparently some GNU ld's only accept -v.
       # Break only if it was the GNU/non-GNU ld that we prefer.
-      if "$acl_cv_path_LD" -v 2>&1 < /dev/null | egrep '(GNU|with BFD)' > /dev/null; then
+      if "$acl_cv_path_LD" -v 2>&1 < /dev/null | $EGREP '(GNU|with BFD)' > /dev/null; then
 	test "$with_gnu_ld" != no && break
       else
 	test "$with_gnu_ld" != yes && break
@@ -5110,7 +5113,7 @@ if ${acl_cv_prog_gnu_ld+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   # I'd rather use --version here, but apparently some GNU ld's only accept -v.
-if $LD -v 2>&1 </dev/null | egrep '(GNU|with BFD)' 1>&5; then
+if $LD -v 2>&1 </dev/null | $EGREP '(GNU|with BFD)' 1>&5; then
   acl_cv_prog_gnu_ld=yes
 else
   acl_cv_prog_gnu_ld=no
@@ -5978,13 +5981,19 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <libintl.h>
+#ifndef __GNU_GETTEXT_SUPPORTED_REVISION
 extern int _nl_msg_cat_cntr;
 extern int *_nl_domain_bindings;
+#define __GNU_GETTEXT_SYMBOL_EXPRESSION (_nl_msg_cat_cntr + *_nl_domain_bindings)
+#else
+#define __GNU_GETTEXT_SYMBOL_EXPRESSION 0
+#endif
+
 int
 main ()
 {
 bindtextdomain ("", "");
-return (int) gettext ("") + (int) ngettext ("", "", 0) + _nl_msg_cat_cntr + *_nl_domain_bindings
+return (int) gettext ("") + (int) ngettext ("", "", 0) + __GNU_GETTEXT_SYMBOL_EXPRESSION
   ;
   return 0;
 }
@@ -6407,17 +6416,23 @@ else
                         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <libintl.h>
+#ifndef __GNU_GETTEXT_SUPPORTED_REVISION
 extern int _nl_msg_cat_cntr;
 extern
 #ifdef __cplusplus
 "C"
 #endif
 const char *_nl_expand_alias ();
+#define __GNU_GETTEXT_SYMBOL_EXPRESSION (_nl_msg_cat_cntr + *_nl_expand_alias (0))
+#else
+#define __GNU_GETTEXT_SYMBOL_EXPRESSION 0
+#endif
+
 int
 main ()
 {
 bindtextdomain ("", "");
-return (int) gettext ("") + (int) ngettext ("", "", 0) + _nl_msg_cat_cntr + *_nl_expand_alias (0)
+return (int) gettext ("") + (int) ngettext ("", "", 0) + __GNU_GETTEXT_SYMBOL_EXPRESSION
   ;
   return 0;
 }
@@ -6434,17 +6449,23 @@ rm -f core conftest.err conftest.$ac_objext \
               cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <libintl.h>
+#ifndef __GNU_GETTEXT_SUPPORTED_REVISION
 extern int _nl_msg_cat_cntr;
 extern
 #ifdef __cplusplus
 "C"
 #endif
 const char *_nl_expand_alias ();
+#define __GNU_GETTEXT_SYMBOL_EXPRESSION (_nl_msg_cat_cntr + *_nl_expand_alias (0))
+#else
+#define __GNU_GETTEXT_SYMBOL_EXPRESSION 0
+#endif
+
 int
 main ()
 {
 bindtextdomain ("", "");
-return (int) gettext ("") + (int) ngettext ("", "", 0) + _nl_msg_cat_cntr + *_nl_expand_alias (0)
+return (int) gettext ("") + (int) ngettext ("", "", 0) + __GNU_GETTEXT_SYMBOL_EXPRESSION
   ;
   return 0;
 }
@@ -6784,12 +6805,116 @@ LIBINTL_DEP=
 INCINTL=
 case $USE_INCLUDED_LIBINTL in
   yes)
-    LIBINTL=`echo $LIBINTL | sed 's,${top_builddir},&/..,' `
-    LTLIBINTL=`echo $LTLIBINTL | sed 's,${top_builddir},&/..,' `
+    LIBINTL=`echo $LIBINTL | sed 's,${top_builddir},-L&/..,; s,\.\./intl/libintl\.a,../intl -lintl,' `
     LIBINTL_DEP='${top_builddir}/../intl/libintl.a'
     INCINTL='-I${top_builddir}/../intl'
     ;;
 esac
+
+# intl is sometimes linked into shared libraries even without --enable-shared
+# (e.g. gdbsupport's inprocess agent): so always PICify, just in case.
+
+
+
+
+case "${host}" in
+    # PIC is the default on some targets or must not be used.
+    *-*-darwin*)
+	# For darwin, common symbols are not allowed in MH_DYLIB files
+	case "${CFLAGS}" in
+	  # If we are using a compiler supporting mdynamic-no-pic
+	  # and the option has been tested as safe to add, then cancel
+	  # it here, since the code generated is incompatible with shared
+	  # libs.
+	  *-mdynamic-no-pic*) PICFLAG='-fno-common -mno-dynamic-no-pic' ;;
+	  *) PICFLAG=-fno-common ;;
+	esac
+	;;
+    alpha*-dec-osf5*)
+	# PIC is the default.
+	;;
+    hppa*64*-*-hpux*)
+	# PIC is the default for 64-bit PA HP-UX.
+	;;
+    i[34567]86-*-cygwin* | x86_64-*-cygwin*)
+	;;
+    i[34567]86-*-mingw* | x86_64-*-mingw*)
+	;;
+    i[34567]86-*-interix[3-9]*)
+	# Interix 3.x gcc -fpic/-fPIC options generate broken code.
+	# Instead, we relocate shared libraries at runtime.
+	;;
+    i[34567]86-*-nto-qnx*)
+	# QNX uses GNU C++, but need to define -shared option too, otherwise
+	# it will coredump.
+	PICFLAG='-fPIC -shared'
+	;;
+    i[34567]86-pc-msdosdjgpp*)
+	# DJGPP does not support shared libraries at all.
+	;;
+    ia64*-*-hpux*)
+	# On IA64 HP-UX, PIC is the default but the pic flag
+	# sets the default TLS model and affects inlining.
+	PICFLAG=-fPIC
+	;;
+    mips-sgi-irix6*)
+	# PIC is the default.
+	;;
+    rs6000-ibm-aix* | powerpc-ibm-aix*)
+	# All AIX code is PIC.
+	;;
+
+    # Some targets support both -fPIC and -fpic, but prefer the latter.
+    # FIXME: Why?
+    i[34567]86-*-* | x86_64-*-*)
+	PICFLAG=-fpic
+	;;
+    # FIXME: Override -fPIC default in libgcc only?
+    sh-*-linux* | sh[2346lbe]*-*-linux*)
+	PICFLAG=-fpic
+	;;
+    sh*-*-netbsd*)
+	PICFLAG=-fpic
+	;;
+    # Default to -fPIC unless specified otherwise.
+    *)
+	PICFLAG=-fPIC
+	;;
+esac
+
+# If the user explicitly uses -fpic/-fPIC, keep that.
+case "${CFLAGS}" in
+    *-fpic*)
+	PICFLAG=-fpic
+	;;
+    *-fPIC*)
+	PICFLAG=-fPIC
+	;;
+esac
+
+
+
+BISON3_YES='#'
+BISON3_NO=
+if test "$INTLBISON" != :; then
+  ac_bison3=no
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking bison 3 or later" >&5
+$as_echo_n "checking bison 3 or later... " >&6; }
+  ac_prog_version=`$INTLBISON --version 2>&1 | sed -n 's/^.*GNU Bison.* \([0-9]*\.[0-9.]*\).*$/\1/p'`
+  case $ac_prog_version in
+    [3-9].*)
+      ac_prog_version="$ac_prog_version, bison3"; ac_bison3=yes;;
+    *) ac_prog_version="$ac_prog_version, old";;
+  esac
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_prog_version" >&5
+$as_echo "$ac_prog_version" >&6; }
+  if test $ac_bison3 = yes; then
+    BISON3_YES=
+    BISON3_NO='#'
+  fi
+fi
+
+
 
 ac_config_files="$ac_config_files Makefile config.intl"
 

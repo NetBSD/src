@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,17 +22,14 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    continue
-}
-
 standard_testfile basics.c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested "failed to compile"
      return -1
 }
+
+mi_clean_restart $binfile
 
 mi_gdb_test "-interpreter-exec" \
   {\^error,msg="-interpreter-exec: Usage: -interpreter-exec interp command"} \
@@ -59,7 +56,7 @@ mi_gdb_test "-interpreter-exec console \"file $binfile\"" \
   {~"Reading symbols from .*mi-cli...\\n".*} \
   "-interpreter-exec console \"file \$binfile\""
 
-mi_run_to_main
+mi_runto_main
 
 set line_main_head    [gdb_get_line_number "main ("]
 set line_main_body    [expr $line_main_head + 2]

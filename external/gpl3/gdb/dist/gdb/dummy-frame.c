@@ -1,6 +1,6 @@
 /* Code dealing with dummy stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,7 +47,7 @@ static int
 dummy_frame_id_eq (struct dummy_frame_id *id1,
 		   struct dummy_frame_id *id2)
 {
-  return frame_id_eq (id1->id, id2->id) && id1->thread == id2->thread;
+  return id1->id == id2->id && id1->thread == id2->thread;
 }
 
 /* List of dummy_frame destructors.  */
@@ -130,7 +130,7 @@ static bool
 pop_dummy_frame_bpt (struct breakpoint *b, struct dummy_frame *dummy)
 {
   if (b->thread == dummy->id.thread->global_num
-      && b->disposition == disp_del && frame_id_eq (b->frame_id, dummy->id.id))
+      && b->disposition == disp_del && b->frame_id == dummy->id.id)
     {
       while (b->related_breakpoint != b)
 	delete_breakpoint (b->related_breakpoint);
@@ -166,10 +166,9 @@ pop_dummy_frame (struct dummy_frame **dummy_ptr)
 
   restore_infcall_suspend_state (dummy->caller_state);
 
-  iterate_over_breakpoints ([dummy] (breakpoint* bp)
-    {
-      return pop_dummy_frame_bpt (bp, dummy);
-    });
+  for (breakpoint *bp : all_breakpoints_safe ())
+    if (pop_dummy_frame_bpt (bp, dummy))
+      break;
 
   /* restore_infcall_control_state frees inf_state,
      all that remains is to pop *dummy_ptr.  */
@@ -273,7 +272,7 @@ find_dummy_frame_dtor (dummy_frame_dtor_ftype *dtor, void *dtor_data)
    them up at least once whenever we start a new inferior.  */
 
 static void
-cleanup_dummy_frames (struct target_ops *target, int from_tty)
+cleanup_dummy_frames (inferior *inf)
 {
   while (dummy_frame_stack != NULL)
     remove_dummy_frame (&dummy_frame_stack);
@@ -289,7 +288,7 @@ struct dummy_frame_cache
 
 static int
 dummy_frame_sniffer (const struct frame_unwind *self,
-		     struct frame_info *this_frame,
+		     frame_info_ptr this_frame,
 		     void **this_prologue_cache)
 {
   /* When unwinding a normal frame, the stack structure is determined
@@ -335,7 +334,7 @@ dummy_frame_sniffer (const struct frame_unwind *self,
    register value is taken from the local copy of the register buffer.  */
 
 static struct value *
-dummy_frame_prev_register (struct frame_info *this_frame,
+dummy_frame_prev_register (frame_info_ptr this_frame,
 			   void **this_prologue_cache,
 			   int regnum)
 {
@@ -354,8 +353,8 @@ dummy_frame_prev_register (struct frame_info *this_frame,
   /* Use the regcache_cooked_read() method so that it, on the fly,
      constructs either a raw or pseudo register from the raw
      register cache.  */
-  cache->prev_regcache->cooked_read (regnum,
-				     value_contents_writeable (reg_val));
+  cache->prev_regcache->cooked_read
+    (regnum, value_contents_writeable (reg_val).data ());
   return reg_val;
 }
 
@@ -365,7 +364,7 @@ dummy_frame_prev_register (struct frame_info *this_frame,
    dummy cache is located and saved in THIS_PROLOGUE_CACHE.  */
 
 static void
-dummy_frame_this_id (struct frame_info *this_frame,
+dummy_frame_this_id (frame_info_ptr this_frame,
 		     void **this_prologue_cache,
 		     struct frame_id *this_id)
 {
@@ -379,6 +378,7 @@ dummy_frame_this_id (struct frame_info *this_frame,
 
 const struct frame_unwind dummy_frame_unwind =
 {
+  "dummy",
   DUMMY_FRAME,
   default_frame_unwind_stop_reason,
   dummy_frame_this_id,
@@ -390,7 +390,7 @@ const struct frame_unwind dummy_frame_unwind =
 /* See dummy-frame.h.  */
 
 struct frame_id
-default_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
+default_dummy_id (struct gdbarch *gdbarch, frame_info_ptr this_frame)
 {
   CORE_ADDR sp, pc;
 
@@ -405,15 +405,10 @@ fprint_dummy_frames (struct ui_file *file)
   struct dummy_frame *s;
 
   for (s = dummy_frame_stack; s != NULL; s = s->next)
-    {
-      gdb_print_host_address (s, file);
-      fprintf_unfiltered (file, ":");
-      fprintf_unfiltered (file, " id=");
-      fprint_frame_id (file, s->id.id);
-      fprintf_unfiltered (file, ", ptid=%s",
-			  target_pid_to_str (s->id.thread->ptid).c_str ());
-      fprintf_unfiltered (file, "\n");
-    }
+    gdb_printf (file, "%s: id=%s, ptid=%s\n",
+		host_address_to_string (s),
+		s->id.id.to_string ().c_str (),
+		s->id.thread->ptid.to_string ().c_str ());
 }
 
 static void
@@ -439,5 +434,5 @@ _initialize_dummy_frame ()
 	   _("Print the contents of the internal dummy-frame stack."),
 	   &maintenanceprintlist);
 
-  gdb::observers::inferior_created.attach (cleanup_dummy_frames);
+  gdb::observers::inferior_created.attach (cleanup_dummy_frames, "dummy-frame");
 }

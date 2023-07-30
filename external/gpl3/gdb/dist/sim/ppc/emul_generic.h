@@ -111,25 +111,25 @@ INLINE_EMUL_GENERIC void emul_do_system_call
  unsigned_word cia);
 
 
-INLINE_EMUL_GENERIC unsigned64 emul_read_gpr64
+INLINE_EMUL_GENERIC uint64_t emul_read_gpr64
 (cpu *processor,
  int g);
 
 INLINE_EMUL_GENERIC void emul_write_gpr64
 (cpu *processor,
  int g,
- unsigned64 val);
+ uint64_t val);
 
 INLINE_EMUL_GENERIC void emul_write_status
 (cpu *processor,
  int status,
- int errno);
+ int err);
 
 INLINE_EMUL_GENERIC void emul_write2_status
 (cpu *processor,
  int status1,
  int status2,
- int errno);
+ int err);
 
 INLINE_EMUL_GENERIC char *emul_read_string
 (char *dest,

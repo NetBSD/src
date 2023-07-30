@@ -1,4 +1,4 @@
-#   Copyright 2005-2020 Free Software Foundation, Inc.
+#   Copyright 2005-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
 # Until "set follow-fork-mode" and "catch fork" are implemented on
 # other targets...
 #
-if { ![istarget "*-*-linux*"] } then {
-    continue
+if {![istarget "*-*-linux*"]} {
+    return
 }
 
 
@@ -104,26 +104,32 @@ proc continue_to_exit_bp_loc {} {
 # zero means to take the child's branch; a pid means to take the
 # parent's branch.
 
-# First set gdb to follow the child.
-# The result should be that each of the 4 forks returns zero.
+foreach mode { "child" "parent" } {
+    clean_restart ${binfile}
+    runto_main
 
-clean_restart ${binfile}
-runto_main
-gdb_test_no_output "set follow-fork child"
-continue_to_exit_bp_loc
+    gdb_test_no_output "set follow-fork $mode"
+    with_test_prefix "follow $mode" {
+	continue_to_exit_bp_loc
 
-gdb_test "print pids" "\\$.* = \\{0, 0, 0, 0\\}.*" "follow child, print pids"
-
-# Now set gdb to follow the parent.
-# Result should be that none of the 4 forks returns zero.
-
-clean_restart ${binfile}
-runto_main
-gdb_test_no_output "set follow-fork parent" ""
-continue_to_exit_bp_loc
-
-gdb_test "print pids\[0\]==0 || pids\[1\]==0 || pids\[2\]==0 || pids\[3\]==0" \
-    " = 0" "follow parent, print pids"
+	set test "print pids"
+	if { $mode eq "child" } {
+	    # Gdb is set to follow the child.
+	    # The result should be that each of the 4 forks returns zero.
+	    gdb_test "print pids" "\\$.* = \\{0, 0, 0, 0\\}.*" $test
+	} else {
+	    # Gdb is set to follow the parent.
+	    # Result should be that none of the 4 forks returns zero.
+	    set val \
+		[join [list \
+			   "pids\[0\]==0" \
+			   "pids\[1\]==0" \
+			   "pids\[2\]==0" \
+			   "pids\[3\]==0"] " || "]
+	    gdb_test "print $val" " = 0" $test
+	}
+    }
+}
 
 #
 # Now test with detach-on-fork off.
@@ -149,7 +155,17 @@ gdb_test_no_output "set detach off" "set detach off"
 #
 
 for {set i 1} {$i <= 15} {incr i} {
-  gdb_test "continue" "Breakpoint .* main .*exit.*" "run to exit $i"
+  gdb_test_multiple "continue" "run to exit $i" {
+      -re "Continuing\.\r\n" {
+	  exp_continue
+      }
+      -re "\[New inferior $decimal \\(process $decimal\\)\]\r\n" {
+	  exp_continue
+      }
+      -re -wrap "Breakpoint .* main .*exit.*" {
+	  pass $gdb_test_name
+      }
+  }
   gdb_test "info inferior" " 2 .* 3 .* 4 .* 5 .*" "info inferior $i"
   gdb_test "inferior $i + 1" "(_dl_sysinfo_int80|fork|__kernel_(v|)syscall).*" \
       "inferior $i"

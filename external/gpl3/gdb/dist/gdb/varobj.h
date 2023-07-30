@@ -1,5 +1,5 @@
 /* GDB variable objects API.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -233,8 +233,6 @@ extern const struct lang_varobj_ops c_varobj_ops;
 extern const struct lang_varobj_ops cplus_varobj_ops;
 extern const struct lang_varobj_ops ada_varobj_ops;
 
-#define default_varobj_ops c_varobj_ops
-
 /* Non-zero if we want to see trace of varobj level stuff.  */
 
 extern unsigned int varobjdebug;
@@ -311,13 +309,15 @@ extern std::string varobj_get_value (struct varobj *var);
 
 extern bool varobj_set_value (struct varobj *var, const char *expression);
 
-extern void all_root_varobjs (void (*func) (struct varobj *var, void *data),
-			      void *data);
+extern void all_root_varobjs (gdb::function_view<void (struct varobj *var)>);
 
 extern std::vector<varobj_update_result>
   varobj_update (struct varobj **varp, bool is_explicit);
 
-extern void varobj_invalidate (void);
+/* Try to recreate any global or floating varobj.  This is called after
+   changing symbol files.  */
+
+extern void varobj_re_set (void);
 
 extern bool varobj_editable_p (const struct varobj *var);
 

@@ -1,6 +1,6 @@
 # cpexprs.exp - C++ expressions tests
 #
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -30,8 +30,7 @@ proc test_breakpoint {func} {
 	fail "set test_function breakpoint for $func"
     } elseif { [gdb_test "continue" \
 		    "Continuing.\r\n\r\nBreakpoint $DEC+,.*test_function.*" \
-		    ""] != 0 } {
-	fail "continue to test_function for $func"
+		    "continue to test_function for $func"] != 0 } {
     } else {
 	gdb_breakpoint "$func"
 	set i [expr {[string last : $func] + 1}]
@@ -686,10 +685,6 @@ if {[skip_cplus_tests]} { continue }
 #
 
 standard_testfile cpexprs.cc
-
-if {[get_compiler_info "c++"]} {
-    return -1
-}
 
 # Include required flags.
 set flags "$flags debug c++"

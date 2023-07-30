@@ -1,4 +1,4 @@
-#   Copyright 1988-2020 Free Software Foundation, Inc.
+#   Copyright 1988-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -128,8 +128,48 @@ gdb_test "apropos handle signal" "handle -- Specify how to handle signals\."
 gdb_test "apropos apropos" "apropos -- Search for commands matching a REGEXP.*"
 
 # Test apropos for commands having aliases.
+gdb_test_no_output "alias mybt = backtrace" "define mybt alias"
+gdb_test_no_output "alias mybt10 = backtrace 10" "define mybt10 alias"
+
 gdb_test "apropos Print backtrace of all stack frames, or innermost COUNT frames\." \
-    "backtrace, where, bt -- Print backtrace of all stack frames, or innermost COUNT frames\."
+    "backtrace, mybt10, mybt, where, bt -- Print backtrace of all stack frames, or innermost COUNT frames\.\[\r\n\]+  alias mybt10 = backtrace 10"
 
 # Test help for commands having aliases.
-gdb_test "help bt" "backtrace, where, bt\[\r\n\]+Print backtrace of all stack frames, or innermost COUNT frames\..*"
+gdb_test "help bt" "backtrace, mybt10, mybt, where, bt\[\r\n\]+  alias mybt10 = backtrace 10\[\r\n\]+Print backtrace of all stack frames, or innermost COUNT frames\..*"
+
+# Document the aliases.  The apropos and help commands should then consider them
+# as "standalone" commands.
+gdb_test_multiple "document mybt" "document alias: mybt" {
+    -re "Type documentation for \"mybt\".\r\nEnd with a line saying just \"end\".\r\n>$" {
+	gdb_test "An alias of command backtrace without any args.\nend" \
+	    "" \
+	    "document alias: mybt"
+    }
+}
+gdb_test_multiple "document mybt10" "document alias: mybt10" {
+    -re "Type documentation for \"mybt10\".\r\nEnd with a line saying just \"end\".\r\n>$" {
+	gdb_test "An alias of command backtrace with arg 10.\nend" \
+	    "" \
+	    "document alias: mybt10"
+    }
+}
+
+# As the aliases are now documented, they do not appear in apropos/help backtrace output anymore.
+gdb_test "apropos Print backtrace of all stack frames, or innermost COUNT frames\." \
+    "backtrace, where, bt -- Print backtrace of all stack frames, or innermost COUNT frames\." \
+    "apropos after documenting aliases"
+
+gdb_test "help bt" "backtrace, where, bt\[\r\n\]+Print backtrace of all stack frames, or innermost COUNT frames\..*" \
+    "help after documenting aliases"
+
+# Check apropos and help use the alias documentation.
+gdb_test "apropos An alias of command backtrace with arg 10" \
+    "mybt10 -- An alias of command backtrace with arg 10\." \
+    "apropos after documenting aliases showing mybt10 doc"
+
+gdb_test "help mybt" " alias mybt = backtrace \[\r\n\]+An alias of command backtrace without any args\." \
+    "help mybt after documenting aliases showing mybt doc"
+
+# Check pre-defined aliases cannot be documented.
+gdb_test "document where" "Alias \"where\" is built-in.*" \
+    "documenting builtin where alias disallowed"

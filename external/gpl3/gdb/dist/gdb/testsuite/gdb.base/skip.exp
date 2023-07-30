@@ -1,4 +1,4 @@
-#   Copyright 2011-2020 Free Software Foundation, Inc.
+#   Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,7 +50,6 @@ gdb_test "skip -x" "Invalid skip option: -x"
 gdb_test "skip -rfu foo.* xyzzy" "Invalid argument: xyzzy"
 
 if ![runto_main] {
-    fail "can't run to main"
     return
 }
 
@@ -84,23 +83,30 @@ gdb_test "info skip 999" "No skiplist entries found with number 999."
 # Does |info skip| look right?
 
 gdb_test "info skip" \
-    "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
-1\\s+y\\s+n\\s+.*$srcfile\\s+n\\s+<none>\\s*
-2\\s+y\\s+n\\s+<none>\\s+n\\s+main\\s*
-3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>\\s*
-4\\s+y\\s+n\\s+<none>\\s+n\\s+baz\\s*"
+    [multi_line "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function" \
+		"1\\s+y\\s+n\\s+.*$srcfile\\s+n\\s+<none>" \
+		"2\\s+y\\s+n\\s+<none>\\s+n\\s+main" \
+		"3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>" \
+		"4\\s+y\\s+n\\s+<none>\\s+n\\s+baz"]
 
 # Right now, we have an outstanding skiplist entry on both source
 # files, so when we step into the first line in main(), we should step
 # right over it and go to the second line of main().
 
 if ![runto_main] {
-    fail "can't run to main"
     return
 }
 
 gdb_test "step" ".*" "step in the main"
 gdb_test "bt" "\\s*\\#0\\s+main.*" "step after all ignored"
+
+# This proc tests that GDB can step into the function foo, exit it
+# and skip the functions bar and baz.
+proc step_foo_skip_bar_baz {} {
+    gdb_test "step" "foo \\(\\) at.*" "step and skip bar"
+    gdb_test "finish" ".*" "return from bar"
+    gdb_test "step" ".*test_skip_file_and_function.*" "step and skip baz"
+}
 
 # Now remove skip.c from the skiplist.  Our first step should take us
 # into foo(), and our second step should take us to the next line in main().
@@ -109,20 +115,43 @@ with_test_prefix "step after deleting 1" {
     gdb_test "skip delete 1"
     # Check that entry 1 is missing from |info skip|
     gdb_test "info skip" \
-	"Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
-2\\s+y\\s+n\\s+<none>\\s+n\\s+main\\s*
-3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>\\s*
-4\\s+y\\s+n\\s+<none>\\s+n\\s+baz\\s*" \
+	[multi_line "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function" \
+		    "2\\s+y\\s+n\\s+<none>\\s+n\\s+main" \
+		    "3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>" \
+		    "4\\s+y\\s+n\\s+<none>\\s+n\\s+baz"] \
 	"info skip (delete 1)"
 
     if ![runto_main] {
-	fail "can't run to main"
 	return
     }
 
-    gdb_test "step" "foo \\(\\) at.*" "step 1"
-    gdb_test "step" ".*" "step 2" ; # Return from foo()
-    gdb_test "step" "main \\(\\) at.*" "step 3"
+    step_foo_skip_bar_baz
+}
+
+# Test that we step into foo(), then into bar(), but not into baz().
+proc step_bar_foo_skip_baz {} {
+    gdb_test "step" "bar \\(\\) at.*" "step into bar"
+    gdb_test "finish" ".*" "return from bar"
+
+    # With at least gcc 6.5.0 and 9.2.0, we jump once back to main
+    # before entering foo here.  If that happens try to step a second
+    # time.
+    set stepped_again 0
+    gdb_test_multiple "step" "step into foo" {
+	-re -wrap "foo \\(\\) at.*" {
+	    pass $gdb_test_name
+	}
+	-re -wrap "main \\(\\) at .*" {
+	    if {!$stepped_again} {
+		set stepped_again 1
+		send_gdb "step\n"
+	    }
+	    exp_continue
+	}
+    }
+
+    gdb_test "finish" ".*" "Return from foo"
+    gdb_test "step" ".*test_skip_file_and_function.*" "step and skip baz"
 }
 
 # Now disable the skiplist entry for  skip1.c.  We should now
@@ -136,18 +165,10 @@ with_test_prefix "step after disabling 3" {
 	"info skip shows entry as disabled"
 
     if ![runto_main] {
-	fail "can't run to main"
 	return
     }
 
-    gdb_test "step" "bar \\(\\) at.*" "step 1"
-    gdb_test "step" ".*" "step 2"; # Return from bar()
-    # With gcc 9.2.0 we jump once back to main before entering foo here.
-    # If that happens try to step a second time.
-    gdb_test "step" "foo \\(\\) at.*" "step 3" \
-	"main \\(\\) at .*\r\n$gdb_prompt " "step"
-    gdb_test "step" ".*" "step 4"; # Return from foo()
-    gdb_test "step" "main \\(\\) at.*" "step 5"
+    step_bar_foo_skip_baz
 }
 
 # Enable skiplist entry 3 and make sure we step over it like before.
@@ -160,13 +181,10 @@ with_test_prefix "step after enable 3" {
 	"info skip shows entry as enabled"
 
     if ![runto_main] {
-	fail "can't run to main"
 	return
     }
 
-    gdb_test "step" "foo \\(\\) at.*" "step 1"
-    gdb_test "step" ".*" "step 2"; # Return from foo()
-    gdb_test "step" "main \\(\\) at.*" "step 3"
+    step_foo_skip_bar_baz
 }
 
 # Admin tests (disable,enable,delete).
@@ -174,45 +192,45 @@ with_test_prefix "step after enable 3" {
 with_test_prefix "admin" {
     gdb_test "skip disable"
     gdb_test "info skip" \
-	"Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
-2\\s+n\\s+n\\s+<none>\\s+n\\s+main\\s*
-3\\s+n\\s+n\\s+$srcfile1\\s+n\\s+<none>\\s*
-4\\s+n\\s+n\\s+<none>\\s+n\\s+baz\\s*" \
+	[multi_line "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function" \
+		    "2\\s+n\\s+n\\s+<none>\\s+n\\s+main" \
+		    "3\\s+n\\s+n\\s+$srcfile1\\s+n\\s+<none>" \
+		    "4\\s+n\\s+n\\s+<none>\\s+n\\s+baz"] \
 	"info skip after disabling all"
 
     gdb_test "skip enable"
     gdb_test "info skip" \
-	"Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
-2\\s+y\\s+n\\s+<none>\\s+n\\s+main\\s*
-3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>\\s*
-4\\s+y\\s+n\\s+<none>\\s+n\\s+baz\\s*" \
+	[multi_line "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function" \
+		    "2\\s+y\\s+n\\s+<none>\\s+n\\s+main" \
+		    "3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>" \
+		    "4\\s+y\\s+n\\s+<none>\\s+n\\s+baz"] \
 	"info skip after enabling all"
 
     gdb_test "skip disable 4 2-3"
     gdb_test "info skip" \
-	"Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
-2\\s+n\\s+n\\s+<none>\\s+n\\s+main\\s*
-3\\s+n\\s+n\\s+$srcfile1\\s+n\\s+<none>\\s*
-4\\s+n\\s+n\\s+<none>\\s+n\\s+baz\\s*" \
+	[multi_line "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function" \
+		    "2\\s+n\\s+n\\s+<none>\\s+n\\s+main" \
+		    "3\\s+n\\s+n\\s+$srcfile1\\s+n\\s+<none>" \
+		    "4\\s+n\\s+n\\s+<none>\\s+n\\s+baz"] \
 	"info skip after disabling 4 2-3"
 
     gdb_test "skip enable 2-3"
     gdb_test "info skip" \
-	"Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
-2\\s+y\\s+n\\s+<none>\\s+n\\s+main\\s*
-3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>\\s*
-4\\s+n\\s+n\\s+<none>\\s+n\\s+baz\\s*" \
+	[multi_line "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function" \
+		    "2\\s+y\\s+n\\s+<none>\\s+n\\s+main" \
+		    "3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>" \
+		    "4\\s+n\\s+n\\s+<none>\\s+n\\s+baz"] \
 	"info skip after enabling 2-3"
 
     gdb_test "info skip 2-3" \
-	"Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
-2\\s+y\\s+n\\s+<none>\\s+n\\s+main\\s*
-3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>\\s*"
+	[multi_line "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function" \
+		    "2\\s+y\\s+n\\s+<none>\\s+n\\s+main" \
+		    "3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>"]
 
     gdb_test "skip delete 2 3"
     gdb_test "info skip" \
-	"Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
-4\\s+n\\s+n\\s+<none>\\s+n\\s+baz\\s*" \
+	[multi_line "Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function" \
+		    "4\\s+n\\s+n\\s+<none>\\s+n\\s+baz"] \
 	"info skip after deleting 2 3"
 
     gdb_test "skip delete"
@@ -230,64 +248,44 @@ gdb_test "skip -rfu ^b.z$" "Function\\(s\\) \\^b\\.z\\$ will be skipped when ste
 
 with_test_prefix "step using -fi" {
     if ![runto_main] {
-	fail "can't run to main"
 	return
     }
 
     gdb_test_no_output "skip disable"
     gdb_test_no_output "skip enable 5"
-    gdb_test "step" "foo \\(\\) at.*" "step 1"
-    gdb_test "step" ".*" "step 2"; # Return from foo()
-    gdb_test "step" "main \\(\\) at.*" "step 3"
+    step_foo_skip_bar_baz
 }
 
 with_test_prefix "step using -gfi" {
     if ![runto_main] {
-	fail "can't run to main"
 	return
     }
 
     gdb_test_no_output "skip disable"
     gdb_test_no_output "skip enable 6"
-    gdb_test "step" "foo \\(\\) at.*" "step 1"
-    gdb_test "step" ".*" "step 2"; # Return from foo()
-    gdb_test "step" "main \\(\\) at.*" "step 3"
+    step_foo_skip_bar_baz
 }
 
 with_test_prefix "step using -fu for baz" {
     if ![runto_main] {
-	fail "can't run to main"
 	return
     }
 
     gdb_test_no_output "skip disable"
     gdb_test_no_output "skip enable 7"
-    gdb_test "step" "bar \\(\\) at.*" "step 1"
-    gdb_test "step" ".*" "step 2"; # Return from bar()
-    # With gcc 9.2.0 we jump once back to main before entering foo here.
-    # If that happens try to step a second time.
-    gdb_test "step" "foo \\(\\) at.*" "step 3" \
-	"main \\(\\) at .*\r\n$gdb_prompt " "step"
-    gdb_test "step" ".*" "step 4"; # Return from foo()
-    gdb_test "step" "main \\(\\) at.*" "step 5"
+
+    step_bar_foo_skip_baz
 }
 
 with_test_prefix "step using -rfu for baz" {
     if ![runto_main] {
-	fail "can't run to main"
 	return
     }
 
     gdb_test_no_output "skip disable"
     gdb_test_no_output "skip enable 8"
-    gdb_test "step" "bar \\(\\) at.*" "step 1"
-    gdb_test "step" ".*" "step 2"; # Return from bar()
-    # With gcc 9.2.0 we jump once back to main before entering foo here.
-    # If that happens try to step a second time.
-    gdb_test "step" "foo \\(\\) at.*" "step 3" \
-	"main \\(\\) at .*\r\n$gdb_prompt " "step"
-    gdb_test "step" ".*" "step 4"; # Return from foo()
-    gdb_test "step" "main \\(\\) at.*" "step 5"
+
+    step_bar_foo_skip_baz
 }
 
 # Test -fi + -fu.
@@ -295,8 +293,7 @@ with_test_prefix "step using -rfu for baz" {
 with_test_prefix "step using -fi + -fu" {
     gdb_test_no_output "skip delete"
 
-    if ![runto test_skip_file_and_function no-message] {
-	fail "can't run to test_skip_file_and_function"
+    if ![runto test_skip_file_and_function] {
 	return
     }
 
@@ -314,7 +311,6 @@ with_test_prefix "skip delete completion" {
     global binfile
     clean_restart "${binfile}"
     if ![runto_main] {
-	fail "can't run to main"
 	return
     }
 

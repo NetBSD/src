@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
 
 standard_testfile .c psym-external-decl-2.c
 
-get_compiler_info
 if { [test_compiler_info "clang-*"] } {
     return -1
 }

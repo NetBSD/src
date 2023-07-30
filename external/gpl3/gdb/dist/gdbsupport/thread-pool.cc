@@ -1,6 +1,6 @@
 /* Thread pool
 
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,13 +18,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "common-defs.h"
+#include "gdbsupport/thread-pool.h"
 
 #if CXX_STD_THREAD
 
-#include "gdbsupport/thread-pool.h"
 #include "gdbsupport/alt-stack.h"
 #include "gdbsupport/block-signals.h"
 #include <algorithm>
+#include <system_error>
 
 /* On the off chance that we have the pthread library on a Windows
    host, but std::thread is not using it, avoid calling
@@ -45,14 +46,15 @@
    difference.  */
 
 ATTRIBUTE_UNUSED static void
-set_thread_name (int (*set_name) (pthread_t, const char *, void *),
-				  const char *name)
+do_set_thread_name (int (*set_name) (pthread_t, const char *, void *),
+		    const char *name)
 {
   set_name (pthread_self (), "%s", const_cast<char *> (name));
 }
 
 ATTRIBUTE_UNUSED static void
-set_thread_name (int (*set_name) (pthread_t, const char *), const char *name)
+do_set_thread_name (int (*set_name) (pthread_t, const char *),
+		    const char *name)
 {
   set_name (pthread_self (), name);
 }
@@ -60,12 +62,70 @@ set_thread_name (int (*set_name) (pthread_t, const char *), const char *name)
 /* The macOS man page says that pthread_setname_np returns "void", but
    the headers actually declare it returning "int".  */
 ATTRIBUTE_UNUSED static void
-set_thread_name (int (*set_name) (const char *), const char *name)
+do_set_thread_name (int (*set_name) (const char *), const char *name)
 {
   set_name (name);
 }
 
-#endif	/* USE_PTHREAD_SETNAME_NP */
+static void
+set_thread_name (const char *name)
+{
+  do_set_thread_name (pthread_setname_np, name);
+}
+
+#elif defined (USE_WIN32API)
+
+#include <windows.h>
+
+typedef HRESULT WINAPI (SetThreadDescription_ftype) (HANDLE, PCWSTR);
+static SetThreadDescription_ftype *dyn_SetThreadDescription;
+static bool initialized;
+
+static void
+init_windows ()
+{
+  initialized = true;
+
+  HMODULE hm = LoadLibrary (TEXT ("kernel32.dll"));
+  if (hm)
+    dyn_SetThreadDescription
+      = (SetThreadDescription_ftype *) GetProcAddress (hm,
+						       "SetThreadDescription");
+
+  /* On some versions of Windows, this function is only available in
+     KernelBase.dll, not kernel32.dll.  */
+  if (dyn_SetThreadDescription == nullptr)
+    {
+      hm = LoadLibrary (TEXT ("KernelBase.dll"));
+      if (hm)
+	dyn_SetThreadDescription
+	  = (SetThreadDescription_ftype *) GetProcAddress (hm,
+							   "SetThreadDescription");
+    }
+}
+
+static void
+do_set_thread_name (const wchar_t *name)
+{
+  if (!initialized)
+    init_windows ();
+
+  if (dyn_SetThreadDescription != nullptr)
+    dyn_SetThreadDescription (GetCurrentThread (), name);
+}
+
+#define set_thread_name(NAME) do_set_thread_name (L ## NAME)
+
+#else /* USE_WIN32API */
+
+static void
+set_thread_name (const char *name)
+{
+}
+
+#endif
+
+#endif /* CXX_STD_THREAD */
 
 namespace gdb
 {
@@ -92,6 +152,7 @@ thread_pool::~thread_pool ()
 void
 thread_pool::set_thread_count (size_t num_threads)
 {
+#if CXX_STD_THREAD
   std::lock_guard<std::mutex> guard (m_tasks_mutex);
 
   /* If the new size is larger, start some new threads.  */
@@ -102,8 +163,19 @@ thread_pool::set_thread_count (size_t num_threads)
       block_signals blocker;
       for (size_t i = m_thread_count; i < num_threads; ++i)
 	{
-	  std::thread thread (&thread_pool::thread_function, this);
-	  thread.detach ();
+	  try
+	    {
+	      std::thread thread (&thread_pool::thread_function, this);
+	      thread.detach ();
+	    }
+	  catch (const std::system_error &)
+	    {
+	      /* libstdc++ may not implement std::thread, and will
+		 throw an exception on use.  It seems fine to ignore
+		 this, and any other sort of startup failure here.  */
+	      num_threads = i;
+	      break;
+	    }
 	}
     }
   /* If the new size is smaller, terminate some existing threads.  */
@@ -115,36 +187,37 @@ thread_pool::set_thread_count (size_t num_threads)
     }
 
   m_thread_count = num_threads;
+#else
+  /* No threads available, simply ignore the request.  */
+#endif /* CXX_STD_THREAD */
 }
 
-std::future<void>
-thread_pool::post_task (std::function<void ()> func)
-{
-  std::packaged_task<void ()> t (func);
-  std::future<void> f = t.get_future ();
+#if CXX_STD_THREAD
 
-  if (m_thread_count == 0)
-    {
-      /* Just execute it now.  */
-      t ();
-    }
-  else
+void
+thread_pool::do_post_task (std::packaged_task<void ()> &&func)
+{
+  std::packaged_task<void ()> t (std::move (func));
+
+  if (m_thread_count != 0)
     {
       std::lock_guard<std::mutex> guard (m_tasks_mutex);
       m_tasks.emplace (std::move (t));
       m_tasks_cv.notify_one ();
     }
-  return f;
+  else
+    {
+      /* Just execute it now.  */
+      t ();
+    }
 }
 
 void
 thread_pool::thread_function ()
 {
-#ifdef USE_PTHREAD_SETNAME_NP
   /* This must be done here, because on macOS one can only set the
      name of the current thread.  */
-  set_thread_name (pthread_setname_np, "gdb worker");
-#endif
+  set_thread_name ("gdb worker");
 
   /* Ensure that SIGSEGV is delivered to an alternate signal
      stack.  */
@@ -152,7 +225,7 @@ thread_pool::thread_function ()
 
   while (true)
     {
-      optional<task> t;
+      optional<task_t> t;
 
       {
 	/* We want to hold the lock while examining the task list, but
@@ -170,6 +243,6 @@ thread_pool::thread_function ()
     }
 }
 
-}
-
 #endif /* CXX_STD_THREAD */
+
+} /* namespace gdb */

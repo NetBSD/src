@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ standard_testfile
 # test.
 if [target_info exists gdb,cannot_call_functions] {
     unsupported "this target can not call functions"
-    continue
+    return
 }
 
 
@@ -42,9 +42,8 @@ gdb_test_no_output "set print address off"
 gdb_test_no_output "set print symbol off"
 gdb_test_no_output "set width 0"
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 set prev_timeout $timeout

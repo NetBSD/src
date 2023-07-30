@@ -1,5 +1,5 @@
 /* Generic support for 64-bit ELF
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,34 +29,34 @@
 static reloc_howto_type dummy =
   HOWTO (0,			/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 NULL,			/* special_function */
 	 "UNKNOWN",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE);		/* pcrel_offset */
+	 false);		/* pcrel_offset */
 
-static bfd_boolean
+static bool
 elf_generic_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 			   arelent *bfd_reloc,
 			   Elf_Internal_Rela *elf_reloc ATTRIBUTE_UNUSED)
 {
   bfd_reloc->howto = &dummy;
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 elf_generic_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
 			       arelent *bfd_reloc,
 			       Elf_Internal_Rela *elf_reloc ATTRIBUTE_UNUSED)
 {
   bfd_reloc->howto = &dummy;
-  return TRUE;
+  return true;
 }
 
 static void
@@ -72,20 +72,20 @@ check_for_relocs (bfd * abfd, asection * o, void * failed)
 			  abfd, ehdrp->e_machine);
 
       bfd_set_error (bfd_error_wrong_format);
-      * (bfd_boolean *) failed = TRUE;
+      * (bool *) failed = true;
     }
 }
 
-static bfd_boolean
+static bool
 elf64_generic_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 {
-  bfd_boolean failed = FALSE;
+  bool failed = false;
 
   /* Check if there are any relocations.  */
   bfd_map_over_sections (abfd, check_for_relocs, & failed);
 
   if (failed)
-    return FALSE;
+    return false;
   return bfd_elf_link_add_symbols (abfd, info);
 }
 

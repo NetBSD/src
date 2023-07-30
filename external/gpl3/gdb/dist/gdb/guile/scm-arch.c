@@ -1,6 +1,6 @@
 /* Scheme interface to architecture.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,10 +26,9 @@
 #include "arch-utils.h"
 #include "guile-internal.h"
 
-/* The <gdb:arch> smob.
-   The typedef for this struct is in guile-internal.h.  */
+/* The <gdb:arch> smob.  */
 
-struct _arch_smob
+struct arch_smob
 {
   /* This always appears first.  */
   gdb_smob base;
@@ -42,7 +41,10 @@ static const char arch_smob_name[] = "gdb:arch";
 /* The tag Guile knows the arch smob by.  */
 static scm_t_bits arch_smob_tag;
 
-static struct gdbarch_data *arch_object_data = NULL;
+/* Use a 'void *' here because it isn't guaranteed that SCM is a
+   pointer.  */
+static const registry<gdbarch>::key<void, gdb::noop_deleter<void>>
+     arch_object_data;
 
 static int arscm_is_arch (SCM);
 
@@ -106,30 +108,28 @@ gdbscm_arch_p (SCM scm)
   return scm_from_bool (arscm_is_arch (scm));
 }
 
-/* Associates an arch_object with GDBARCH as gdbarch_data via the gdbarch
-   post init registration mechanism (gdbarch_data_register_post_init).  */
-
-static void *
-arscm_object_data_init (struct gdbarch *gdbarch)
-{
-  SCM arch_scm = arscm_make_arch_smob (gdbarch);
-
-  /* This object lasts the duration of the GDB session, so there is no
-     call to scm_gc_unprotect_object for it.  */
-  scm_gc_protect_object (arch_scm);
-
-  return (void *) arch_scm;
-}
-
 /* Return the <gdb:arch> object corresponding to GDBARCH.
    The object is cached in GDBARCH so this is simple.  */
 
 SCM
 arscm_scm_from_arch (struct gdbarch *gdbarch)
 {
-  SCM a_scm = (SCM) gdbarch_data (gdbarch, arch_object_data);
+  SCM arch_scm;
+  void *data = arch_object_data.get (gdbarch);
+  if (data == nullptr)
+    {
+      arch_scm = arscm_make_arch_smob (gdbarch);
 
-  return a_scm;
+      /* This object lasts the duration of the GDB session, so there
+	 is no call to scm_gc_unprotect_object for it.  */
+      scm_gc_protect_object (arch_scm);
+
+      arch_object_data.set (gdbarch, (void *) arch_scm);
+    }
+  else
+    arch_scm = (SCM) data;
+
+  return arch_scm;
 }
 
 /* Return the <gdb:arch> smob in SELF.
@@ -651,7 +651,4 @@ gdbscm_initialize_arches (void)
   scm_set_smob_print (arch_smob_tag, arscm_print_arch_smob);
 
   gdbscm_define_functions (arch_functions, 1);
-
-  arch_object_data
-    = gdbarch_data_register_post_init (arscm_object_data_init);
 }

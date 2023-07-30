@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -25,21 +25,11 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-#include "config.h"
 #include "misc.h"
 #include "lf.h"
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
 
 struct _lf
 {
@@ -55,8 +45,8 @@ struct _lf
 
 
 lf *
-lf_open (char *name,
-	 char *real_name,
+lf_open (const char *name,
+	 const char *real_name,
 	 lf_file_references references,
 	 lf_file_type type, const char *program)
 {
@@ -215,7 +205,7 @@ lf_printf (lf *file, const char *fmt, ...)
 
 
 int
-lf_print__line_ref (lf *file, line_ref *line)
+lf_print__line_ref (lf *file, const line_ref *line)
 {
   return lf_print__external_ref (file, line->line_nr, line->file_name);
 }

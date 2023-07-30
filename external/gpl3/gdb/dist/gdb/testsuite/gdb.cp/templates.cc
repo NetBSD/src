@@ -690,6 +690,18 @@ int gf2 (int a) {
 
 char string[3];
 
+// Template class with typedefs and const attributes.
+template<typename DataT>
+class Cfoo
+{
+  typedef float myfloat;
+public:
+  DataT me0;
+  const DataT me1=1;
+  const myfloat me2=2.0;
+  const int me3=0;
+};
+
 
 // Template for nested instantiations
 
@@ -729,6 +741,34 @@ template<class C> int FunctionArg<C>::method(Empty<void (FunctionArg<C>)> &arg)
 
 Empty<void(FunctionArg<int>)> empty;
 FunctionArg<int> arg;
+
+template <typename T1>
+struct Foozle
+{
+  int x;
+  T1 t;
+  template <typename T2>
+  T2 fogey (T2 plop);
+};
+
+template <typename T1>
+template <typename T2>
+T2 Foozle<T1>::fogey (T2 plop)
+{
+  return plop;
+}
+
+template <typename T>
+int operator< (T &lhs, T &rhs)
+{
+  return 0;
+}
+
+template <typename T>
+int operator<< (T &obj, T &val)
+{
+  return 1;
+};
 
 int main()
 {
@@ -778,6 +818,8 @@ int main()
   sic.spec ('c');
   siip.spec (&x);
 
+  Cfoo<double> cfoo;
+
   Garply<int> f;
   Garply<char> fc;
   f.x = 13;
@@ -801,5 +843,24 @@ int main()
 
   arg.method(empty);
 
-  return 0;
+  Empty<int> e;
+  Foozle<int> fzi;
+  x = fzi.fogey (0);
+  c = fzi.fogey<char> ('a');
+  e = fzi.fogey<Empty<int>> (e);
+  Foozle<char> fzc;
+  c = fzc.fogey ('b');
+  x = fzc.fogey<int> (0);
+  e = fzc.fogey<Empty<int>> (e);
+  Foozle<Empty<int>> fze;
+  e = fze.fogey (e);
+  c = fze.fogey<char> ('c');
+  x = fze.fogey<int> (0);
+
+  z = e < e;
+  z += e << e;
+  z += fzi < fzi;
+  z += fzi << fzi;
+
+  return 0;	/* Final breakpoint.  */
 }

@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,8 +38,7 @@ proc probe_displaced_stepping_support {} {
 	clean_restart $binfile
 
 	gdb_test_no_output "set displaced on"
-	if ![runto_main] then {
-	    fail "can't run to main"
+	if {![runto_main]} {
 	    return 0
 	}
 
@@ -48,7 +47,7 @@ proc probe_displaced_stepping_support {} {
 	# that breakpoint.
 	gdb_test_no_output "set debug displaced 1"
 	gdb_test_multiple "next" "probe" {
-	    -re "displaced pc to.*$gdb_prompt $" {
+	    -re "prepared successfully .*$gdb_prompt $" {
 		pass "supported"
 	    }
 	    -re ".*$gdb_prompt $" {
@@ -78,8 +77,7 @@ proc do_test { cond_bp_target detach_on_fork displaced } {
     clean_restart $binfile
     set GDBFLAGS $saved_gdbflags
 
-    if ![runto_main] then {
-	fail "can't run to main"
+    if {![runto_main]} {
 	return 0
     }
 

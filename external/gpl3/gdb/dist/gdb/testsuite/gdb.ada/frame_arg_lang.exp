@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,11 +33,11 @@ foreach_with_prefix scenario {all minimal} {
 		   additional_flags=-margs \
 		   additional_flags=-fgnat-encodings=$scenario]
 
-    if {[gdb_compile_ada "${srcfile}" "${binfile}" executable $flags] != ""} {
+    if {[gdb_compile_ada "${srcfile}" "${binfile}-${scenario}" executable $flags] != ""} {
 	return -1
     }
 
-    clean_restart ${testfile}
+    clean_restart ${testfile}-${scenario}
 
     set bp_location [gdb_get_line_number "STOP" ${testdir}/foo.c]
     runto "foo.c:$bp_location"
@@ -69,14 +69,8 @@ foreach_with_prefix scenario {all minimal} {
 	"The current source language is \"c\"." \
 	"show language when set to 'c'"
 
-    # With -fgnat-encodings=minimal, this works properly in C as well.
-    if {$scenario == "minimal"} {
-	set expected "\"test\""
-    } else {
-	set expected "{P_ARRAY = $hex, P_BOUNDS = $hex}"
-    }
     gdb_test "bt" \
-	"#1  $hex in pck\\.call_me \\(s=$expected\\).*" \
+	"#1  $hex in pck\\.call_me \\(s={P_ARRAY = $hex, P_BOUNDS = $hex}\\).*" \
 	"backtrace with language forced to 'c'"
 
     gdb_test_no_output "set language auto" \

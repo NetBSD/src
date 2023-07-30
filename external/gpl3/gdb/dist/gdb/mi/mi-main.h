@@ -1,6 +1,6 @@
 /* MI Internal Functions for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -54,9 +54,26 @@ struct mi_suppress_notification
 };
 extern struct mi_suppress_notification mi_suppress_notification;
 
+/* This is a hack so we can get some extra commands going, but has existed
+   within GDB for many years now.  Ideally we don't want to channel things
+   through the CLI, but implement all commands as pure MI commands with
+   their own implementation.
+
+   Execute the CLI command CMD, if ARGS_P is true then ARGS should be a
+   non-nullptr string containing arguments to add after CMD.  If ARGS_P is
+   false then ARGS must be nullptr.  */
+
+extern void mi_execute_cli_command (const char *cmd, bool args_p,
+				    const char *args);
+
 /* Implementation of -fix-multi-location-breakpoint-output.  */
 
 extern void mi_cmd_fix_multi_location_breakpoint_output (const char *command,
 							 char **argv, int argc);
+
+/* Implementation of -fix-breakpoint-script-output.  */
+
+extern void mi_cmd_fix_breakpoint_script_output (const char *command,
+						 char **argv, int argc);
 
 #endif /* MI_MI_MAIN_H */

@@ -69,7 +69,7 @@ hw_trace_ioctl(device *me,
       const device_property *prop = device_find_property(me, NULL);
       while (prop != NULL) {
 	const char *name = prop->name;
-	unsigned32 value = device_find_integer_property(me, name);
+	uint32_t value = device_find_integer_property(me, name);
 	trace_option(name, value);
 	prop = device_next_property(prop);
       }

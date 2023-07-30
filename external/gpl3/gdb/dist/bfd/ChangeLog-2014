@@ -621,7 +621,7 @@
 
 	PR binutils/17512
 	* coffgen.c (coff_get_normalized_symtab): Check for an excessive
-	number of auxillary entries.
+	number of auxiliary entries.
 	* ieee.c (next_byte): Convert to a function.  Return FALSE if the
 	next byte is beyond the end of the buffer.
 	(parse_int): Test the return value of next_byte.

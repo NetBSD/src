@@ -1,6 +1,6 @@
 /* Python interface to inferior stop events.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,12 +35,12 @@ create_stop_event_object (PyTypeObject *py_type)
    returns -1.  */
 
 int
-emit_stop_event (struct bpstats *bs, enum gdb_signal stop_signal)
+emit_stop_event (struct bpstat *bs, enum gdb_signal stop_signal)
 {
   gdbpy_ref<> stop_event_obj;
   gdbpy_ref<> list;
   PyObject *first_bp = NULL;
-  struct bpstats *current_bs;
+  struct bpstat *current_bs;
 
   if (evregpy_no_listeners_p (gdb_py_events.stop))
     return 0;
@@ -49,24 +49,24 @@ emit_stop_event (struct bpstats *bs, enum gdb_signal stop_signal)
   for (current_bs = bs; current_bs != NULL; current_bs = current_bs->next)
     {
       if (current_bs->breakpoint_at
-          && current_bs->breakpoint_at->py_bp_object)
-        {
-          PyObject *current_py_bp =
-              (PyObject *) current_bs->breakpoint_at->py_bp_object;
+	  && current_bs->breakpoint_at->py_bp_object)
+	{
+	  PyObject *current_py_bp =
+	      (PyObject *) current_bs->breakpoint_at->py_bp_object;
 
-          if (list == NULL)
-            {
-              list.reset (PyList_New (0));
-              if (list == NULL)
+	  if (list == NULL)
+	    {
+	      list.reset (PyList_New (0));
+	      if (list == NULL)
 		return -1;
-            }
+	    }
 
-          if (PyList_Append (list.get (), current_py_bp))
+	  if (PyList_Append (list.get (), current_py_bp))
 	    return -1;
 
-          if (first_bp == NULL)
-            first_bp = current_py_bp;
-        }
+	  if (first_bp == NULL)
+	    first_bp = current_py_bp;
+	}
     }
 
   if (list != NULL)

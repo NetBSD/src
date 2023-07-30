@@ -18,6 +18,7 @@ create_feature_aarch64_core (struct target_desc *result, long regnum)
   tdesc_add_flag (type_with_fields, 7, "I");
   tdesc_add_flag (type_with_fields, 8, "A");
   tdesc_add_flag (type_with_fields, 9, "D");
+  tdesc_add_bitfield (type_with_fields, "BTYPE", 10, 11);
   tdesc_add_flag (type_with_fields, 12, "SSBS");
   tdesc_add_flag (type_with_fields, 20, "IL");
   tdesc_add_flag (type_with_fields, 21, "SS");

@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,8 +37,7 @@ if { ![istarget x86_64-*-* ] || ![is_lp64_target] } { continue }
 
 # The following tests require execution.
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -57,4 +56,10 @@ gdb_test_sequence "where"  "Backtrace restored by unwinder" {
 }
 
 # Check that the Python unwinder frames can be flushed / released.
-gdb_test "flushregs" "Register cache flushed\\." "flush frames"
+gdb_test "maint flush register-cache" "Register cache flushed\\." "flush frames"
+
+# Check that invalid register names cause errors.
+gdb_test "python print(add_saved_register_error)" "True" \
+    "add_saved_register error"
+gdb_test "python print(read_register_error)" "True" \
+    "read_register error"

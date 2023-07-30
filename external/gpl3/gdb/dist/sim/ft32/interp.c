@@ -1,6 +1,6 @@
 /* Simulator for the FT32 processor
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
    Contributed by FTDI <support@ftdichip.com>
 
    This file is part of simulators.
@@ -18,19 +18,22 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdint.h>
 
 #include "bfd.h"
-#include "gdb/callback.h"
+#include "sim/callback.h"
 #include "libiberty.h"
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 
 #include "sim-main.h"
 #include "sim-options.h"
+#include "sim-signal.h"
 
 #include "opcode/ft32.h"
 
@@ -53,7 +56,7 @@
 #define RAM_BIAS  0x800000  /* Bias added to RAM addresses.  */
 
 static unsigned long
-ft32_extract_unsigned_integer (unsigned char *addr, int len)
+ft32_extract_unsigned_integer (const unsigned char *addr, int len)
 {
   unsigned long retval;
   unsigned char *p;
@@ -742,7 +745,7 @@ ft32_lookup_register (SIM_CPU *cpu, int nr)
 static int
 ft32_reg_store (SIM_CPU *cpu,
 		int rn,
-		unsigned char *memory,
+		const void *memory,
 		int length)
 {
   if (0 <= rn && rn <= 32)
@@ -759,7 +762,7 @@ ft32_reg_store (SIM_CPU *cpu,
 static int
 ft32_reg_fetch (SIM_CPU *cpu,
 		int rn,
-		unsigned char *memory,
+		void *memory,
 		int length)
 {
   if (0 <= rn && rn <= 32)
@@ -806,8 +809,12 @@ sim_open (SIM_OPEN_KIND kind,
   size_t i;
   SIM_DESC sd = sim_state_alloc (kind, cb);
 
+  /* Set default options before parsing user options.  */
+  current_alignment = STRICT_ALIGNMENT;
+  current_target_byte_order = BFD_ENDIAN_LITTLE;
+
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -835,10 +842,7 @@ sim_open (SIM_OPEN_KIND kind,
     }
 
   /* Check for/establish the reference program image.  */
-  if (sim_analyze_program (sd,
-			   (STATE_PROG_ARGV (sd) != NULL
-			    ? *STATE_PROG_ARGV (sd)
-			    : NULL), abfd) != SIM_RC_OK)
+  if (sim_analyze_program (sd, STATE_PROG_FILE (sd), abfd) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -880,6 +884,7 @@ sim_create_inferior (SIM_DESC sd,
 {
   uint32_t addr;
   sim_cpu *cpu = STATE_CPU (sd, 0);
+  host_callback *cb = STATE_CALLBACK (sd);
 
   /* Set the PC.  */
   if (abfd != NULL)
@@ -896,6 +901,16 @@ sim_create_inferior (SIM_DESC sd,
       freeargv (STATE_PROG_ARGV (sd));
       STATE_PROG_ARGV (sd) = dupargv (argv);
     }
+
+  if (STATE_PROG_ENVP (sd) != env)
+    {
+      freeargv (STATE_PROG_ENVP (sd));
+      STATE_PROG_ENVP (sd) = dupargv (env);
+    }
+
+  cb->argv = STATE_PROG_ARGV (sd);
+  cb->envp = STATE_PROG_ENVP (sd);
+
   cpu->state.regs[FT32_HARD_SP] = addr;
   cpu->state.num_i = 0;
   cpu->state.cycles = 0;

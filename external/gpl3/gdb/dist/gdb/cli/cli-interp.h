@@ -1,6 +1,6 @@
 /* CLI Definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2020 Free Software Foundation, Inc.
+   Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -32,16 +32,28 @@ public:
 		    bool debug_redirect) override;
   void pre_command_loop () override;
   bool supports_command_editing () override;
+
+private:
+  struct saved_output_files
+  {
+    /* Saved gdb_stdout, gdb_stderr, etc.  */
+    ui_file *out;
+    ui_file *err;
+    ui_file *log;
+    ui_file *targ;
+    ui_file *targerr;
+    /* When redirecting, some or all of these may be non-null
+       depending on the logging mode.  */
+    ui_file_up stdout_holder;
+    ui_file_up stderr_holder;
+    ui_file_up stdlog_holder;
+    ui_file_up logfile_holder;
+  };
+
+  /* These hold the pushed copies of the gdb output files.  If NULL
+     then nothing has yet been pushed.  */
+  std::unique_ptr<saved_output_files> m_saved_output;
 };
-
-/* The CLI interpreter's set_logging_proc method.  Exported so other
-   interpreters can reuse it.  */
-extern void cli_set_logging (struct interp *interp,
-			     ui_file_up logfile, bool logging_redirect);
-
-extern int cli_interpreter_supports_command_editing (struct interp *interp);
-
-extern void cli_interpreter_pre_command_loop (struct interp *self);
 
 /* Returns true if the current stop should be printed to
    CONSOLE_INTERP.  */

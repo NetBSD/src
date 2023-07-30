@@ -29,19 +29,8 @@
 #include "device.h"
 #include "tree.h"
 
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
 #include <ctype.h>
 
 #include "libiberty.h"
@@ -317,7 +306,6 @@ split_find_device(device *current,
     }
     else if (strncmp(spec->path, "./", strlen("./")) == 0) {
       /* cd ./... */
-      current = current;
       spec->path += strlen("./");
     }
     else if (strncmp(spec->path, "../", strlen("../")) == 0) {
@@ -328,7 +316,6 @@ split_find_device(device *current,
     }
     else if (strcmp(spec->path, ".") == 0) {
       /* cd . */
-      current = current;
       spec->path += strlen(".");
     }
     else if (strcmp(spec->path, "..") == 0) {
@@ -403,9 +390,9 @@ INLINE_TREE\
 tree_init(device *root,
 	  psim *system)
 {
-  TRACE(trace_device_tree, ("tree_init(root=0x%lx, system=0x%lx)\n",
-			    (long)root,
-			    (long)system));
+  TRACE(trace_device_tree, ("tree_init(root=%p, system=%p)\n",
+			    root,
+			    system));
   /* remove the old, rebuild the new */
   tree_traverse(root, device_clean, NULL, system);
   tree_traverse(root, device_init_static_properties, NULL, system);
@@ -539,7 +526,7 @@ parse_reg_property(device *current,
     if (device_nr_size_cells(bus) > 0)
       chp = parse_size(current, bus, chp, &regs[reg_nr].size);
     else
-      memset(&regs[reg_nr].size, 0, sizeof (&regs[reg_nr].size));
+      memset(&regs[reg_nr].size, 0, sizeof (regs[reg_nr].size));
   }
 
   /* create it */
@@ -866,7 +853,7 @@ tree_parse(device *current,
 	break;
       case '[':
 	{
-	  unsigned8 words[1024];
+	  uint8_t words[1024];
 	  char *curr = spec.value + 1;
 	  int nr_words = 0;
 	  while (1) {
@@ -1061,7 +1048,7 @@ print_properties(device *me)
 	  }
 	}
 	else {
-	  unsigned8 *w = (unsigned8*)property->array;
+	  uint8_t *w = (uint8_t*)property->array;
 	  printf_filtered(" [");
 	  while ((char*)w - (char*)property->array < property->sizeof_array) {
 	    printf_filtered(" 0x%2x", BE2H_1(*w));

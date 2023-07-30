@@ -2,7 +2,7 @@
 
 /* The leading newlines here are intentional, do not remove.  They are used to
    test that the source highlighter doesn't strip them.  */
-/* Copyright 2018-2020 Free Software Foundation, Inc.
+/* Copyright 2018-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,6 +33,13 @@ struct some_struct
 };
 
 struct some_struct struct_value = { 23, "skidoo", VALUE_TWO };
+
+struct just_bitfield
+{
+  unsigned int field : 3;
+};
+
+struct just_bitfield just_bitfield_value = { 4 };
 
 int some_called_function (void)
 {

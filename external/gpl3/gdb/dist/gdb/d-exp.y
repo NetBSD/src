@@ -1,6 +1,6 @@
 /* YACC parser for D expressions, for GDB.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,6 +52,7 @@
 #include "charset.h"
 #include "block.h"
 #include "type-stack.h"
+#include "expop.h"
 
 #define parse_type(ps) builtin_type (ps->gdbarch ())
 #define parse_d_type(ps) builtin_d_type (ps->gdbarch ())
@@ -76,6 +77,8 @@ static int yylex (void);
 static void yyerror (const char *);
 
 static int type_aggregate_p (struct type *);
+
+using namespace expr;
 
 %}
 
@@ -191,53 +194,63 @@ Expression:
 CommaExpression:
 	AssignExpression
 |	AssignExpression ',' CommaExpression
-		{ write_exp_elt_opcode (pstate, BINOP_COMMA); }
+		{ pstate->wrap2<comma_operation> (); }
 ;
 
 AssignExpression:
 	ConditionalExpression
 |	ConditionalExpression '=' AssignExpression
-		{ write_exp_elt_opcode (pstate, BINOP_ASSIGN); }
+		{ pstate->wrap2<assign_operation> (); }
 |	ConditionalExpression ASSIGN_MODIFY AssignExpression
-		{ write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY);
-		  write_exp_elt_opcode (pstate, $2);
-		  write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY); }
+		{
+		  operation_up rhs = pstate->pop ();
+		  operation_up lhs = pstate->pop ();
+		  pstate->push_new<assign_modify_operation>
+		    ($2, std::move (lhs), std::move (rhs));
+		}
 ;
 
 ConditionalExpression:
 	OrOrExpression
 |	OrOrExpression '?' Expression ':' ConditionalExpression
-		{ write_exp_elt_opcode (pstate, TERNOP_COND); }
+		{
+		  operation_up last = pstate->pop ();
+		  operation_up mid = pstate->pop ();
+		  operation_up first = pstate->pop ();
+		  pstate->push_new<ternop_cond_operation>
+		    (std::move (first), std::move (mid),
+		     std::move (last));
+		}
 ;
 
 OrOrExpression:
 	AndAndExpression
 |	OrOrExpression OROR AndAndExpression
-		{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_OR); }
+		{ pstate->wrap2<logical_or_operation> (); }
 ;
 
 AndAndExpression:
 	OrExpression
 |	AndAndExpression ANDAND OrExpression
-		{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_AND); }
+		{ pstate->wrap2<logical_and_operation> (); }
 ;
 
 OrExpression:
 	XorExpression
 |	OrExpression '|' XorExpression
-		{ write_exp_elt_opcode (pstate, BINOP_BITWISE_IOR); }
+		{ pstate->wrap2<bitwise_ior_operation> (); }
 ;
 
 XorExpression:
 	AndExpression
 |	XorExpression '^' AndExpression
-		{ write_exp_elt_opcode (pstate, BINOP_BITWISE_XOR); }
+		{ pstate->wrap2<bitwise_xor_operation> (); }
 ;
 
 AndExpression:
 	CmpExpression
 |	AndExpression '&' CmpExpression
-		{ write_exp_elt_opcode (pstate, BINOP_BITWISE_AND); }
+		{ pstate->wrap2<bitwise_and_operation> (); }
 ;
 
 CmpExpression:
@@ -249,120 +262,121 @@ CmpExpression:
 
 EqualExpression:
 	ShiftExpression EQUAL ShiftExpression
-		{ write_exp_elt_opcode (pstate, BINOP_EQUAL); }
+		{ pstate->wrap2<equal_operation> (); }
 |	ShiftExpression NOTEQUAL ShiftExpression
-		{ write_exp_elt_opcode (pstate, BINOP_NOTEQUAL); }
+		{ pstate->wrap2<notequal_operation> (); }
 ;
 
 IdentityExpression:
 	ShiftExpression IDENTITY ShiftExpression
-		{ write_exp_elt_opcode (pstate, BINOP_EQUAL); }
+		{ pstate->wrap2<equal_operation> (); }
 |	ShiftExpression NOTIDENTITY ShiftExpression
-		{ write_exp_elt_opcode (pstate, BINOP_NOTEQUAL); }
+		{ pstate->wrap2<notequal_operation> (); }
 ;
 
 RelExpression:
 	ShiftExpression '<' ShiftExpression
-		{ write_exp_elt_opcode (pstate, BINOP_LESS); }
+		{ pstate->wrap2<less_operation> (); }
 |	ShiftExpression LEQ ShiftExpression
-		{ write_exp_elt_opcode (pstate, BINOP_LEQ); }
+		{ pstate->wrap2<leq_operation> (); }
 |	ShiftExpression '>' ShiftExpression
-		{ write_exp_elt_opcode (pstate, BINOP_GTR); }
+		{ pstate->wrap2<gtr_operation> (); }
 |	ShiftExpression GEQ ShiftExpression
-		{ write_exp_elt_opcode (pstate, BINOP_GEQ); }
+		{ pstate->wrap2<geq_operation> (); }
 ;
 
 ShiftExpression:
 	AddExpression
 |	ShiftExpression LSH AddExpression
-		{ write_exp_elt_opcode (pstate, BINOP_LSH); }
+		{ pstate->wrap2<lsh_operation> (); }
 |	ShiftExpression RSH AddExpression
-		{ write_exp_elt_opcode (pstate, BINOP_RSH); }
+		{ pstate->wrap2<rsh_operation> (); }
 ;
 
 AddExpression:
 	MulExpression
 |	AddExpression '+' MulExpression
-		{ write_exp_elt_opcode (pstate, BINOP_ADD); }
+		{ pstate->wrap2<add_operation> (); }
 |	AddExpression '-' MulExpression
-		{ write_exp_elt_opcode (pstate, BINOP_SUB); }
+		{ pstate->wrap2<sub_operation> (); }
 |	AddExpression '~' MulExpression
-		{ write_exp_elt_opcode (pstate, BINOP_CONCAT); }
+		{ pstate->wrap2<concat_operation> (); }
 ;
 
 MulExpression:
 	UnaryExpression
 |	MulExpression '*' UnaryExpression
-		{ write_exp_elt_opcode (pstate, BINOP_MUL); }
+		{ pstate->wrap2<mul_operation> (); }
 |	MulExpression '/' UnaryExpression
-		{ write_exp_elt_opcode (pstate, BINOP_DIV); }
+		{ pstate->wrap2<div_operation> (); }
 |	MulExpression '%' UnaryExpression
-		{ write_exp_elt_opcode (pstate, BINOP_REM); }
+		{ pstate->wrap2<rem_operation> (); }
 
 UnaryExpression:
 	'&' UnaryExpression
-		{ write_exp_elt_opcode (pstate, UNOP_ADDR); }
+		{ pstate->wrap<unop_addr_operation> (); }
 |	INCREMENT UnaryExpression
-		{ write_exp_elt_opcode (pstate, UNOP_PREINCREMENT); }
+		{ pstate->wrap<preinc_operation> (); }
 |	DECREMENT UnaryExpression
-		{ write_exp_elt_opcode (pstate, UNOP_PREDECREMENT); }
+		{ pstate->wrap<predec_operation> (); }
 |	'*' UnaryExpression
-		{ write_exp_elt_opcode (pstate, UNOP_IND); }
+		{ pstate->wrap<unop_ind_operation> (); }
 |	'-' UnaryExpression
-		{ write_exp_elt_opcode (pstate, UNOP_NEG); }
+		{ pstate->wrap<unary_neg_operation> (); }
 |	'+' UnaryExpression
-		{ write_exp_elt_opcode (pstate, UNOP_PLUS); }
+		{ pstate->wrap<unary_plus_operation> (); }
 |	'!' UnaryExpression
-		{ write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT); }
+		{ pstate->wrap<unary_logical_not_operation> (); }
 |	'~' UnaryExpression
-		{ write_exp_elt_opcode (pstate, UNOP_COMPLEMENT); }
+		{ pstate->wrap<unary_complement_operation> (); }
 |	TypeExp '.' SIZEOF_KEYWORD
-		{ write_exp_elt_opcode (pstate, UNOP_SIZEOF); }
+		{ pstate->wrap<unop_sizeof_operation> (); }
 |	CastExpression
 |	PowExpression
 ;
 
 CastExpression:
 	CAST_KEYWORD '(' TypeExp ')' UnaryExpression
-		{ write_exp_elt_opcode (pstate, UNOP_CAST_TYPE); }
+		{ pstate->wrap2<unop_cast_type_operation> (); }
 	/* C style cast is illegal D, but is still recognised in
 	   the grammar, so we keep this around for convenience.  */
 |	'(' TypeExp ')' UnaryExpression
-		{ write_exp_elt_opcode (pstate, UNOP_CAST_TYPE); }
-
+		{ pstate->wrap2<unop_cast_type_operation> (); }
 ;
 
 PowExpression:
 	PostfixExpression
 |	PostfixExpression HATHAT UnaryExpression
-		{ write_exp_elt_opcode (pstate, BINOP_EXP); }
+		{ pstate->wrap2<exp_operation> (); }
 ;
 
 PostfixExpression:
 	PrimaryExpression
 |	PostfixExpression '.' COMPLETE
-		{ struct stoken s;
-		  pstate->mark_struct_expression ();
-		  write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
-		  s.ptr = "";
-		  s.length = 0;
-		  write_exp_string (pstate, s);
-		  write_exp_elt_opcode (pstate, STRUCTOP_STRUCT); }
+		{
+		  structop_base_operation *op
+		    = new structop_ptr_operation (pstate->pop (), "");
+		  pstate->mark_struct_expression (op);
+		  pstate->push (operation_up (op));
+		}
 |	PostfixExpression '.' IDENTIFIER
-		{ write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
-		  write_exp_string (pstate, $3);
-		  write_exp_elt_opcode (pstate, STRUCTOP_STRUCT); }
+		{
+		  pstate->push_new<structop_operation>
+		    (pstate->pop (), copy_name ($3));
+		}
 |	PostfixExpression '.' IDENTIFIER COMPLETE
-		{ pstate->mark_struct_expression ();
-		  write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
-		  write_exp_string (pstate, $3);
-		  write_exp_elt_opcode (pstate, STRUCTOP_STRUCT); }
+		{
+		  structop_base_operation *op
+		    = new structop_operation (pstate->pop (), copy_name ($3));
+		  pstate->mark_struct_expression (op);
+		  pstate->push (operation_up (op));
+		}
 |	PostfixExpression '.' SIZEOF_KEYWORD
-		{ write_exp_elt_opcode (pstate, UNOP_SIZEOF); }
+		{ pstate->wrap<unop_sizeof_operation> (); }
 |	PostfixExpression INCREMENT
-		{ write_exp_elt_opcode (pstate, UNOP_POSTINCREMENT); }
+		{ pstate->wrap<postinc_operation> (); }
 |	PostfixExpression DECREMENT
-		{ write_exp_elt_opcode (pstate, UNOP_POSTDECREMENT); }
+		{ pstate->wrap<postdec_operation> (); }
 |	CallExpression
 |	IndexExpression
 |	SliceExpression
@@ -385,21 +399,25 @@ CallExpression:
 	PostfixExpression '('
 		{ pstate->start_arglist (); }
 	ArgumentList_opt ')'
-		{ write_exp_elt_opcode (pstate, OP_FUNCALL);
-		  write_exp_elt_longcst (pstate, pstate->end_arglist ());
-		  write_exp_elt_opcode (pstate, OP_FUNCALL); }
+		{
+		  std::vector<operation_up> args
+		    = pstate->pop_vector (pstate->end_arglist ());
+		  pstate->push_new<funcall_operation>
+		    (pstate->pop (), std::move (args));
+		}
 ;
 
 IndexExpression:
 	PostfixExpression '[' ArgumentList ']'
 		{ if (pstate->arglist_len > 0)
 		    {
-		      write_exp_elt_opcode (pstate, MULTI_SUBSCRIPT);
-		      write_exp_elt_longcst (pstate, pstate->arglist_len);
-		      write_exp_elt_opcode (pstate, MULTI_SUBSCRIPT);
+		      std::vector<operation_up> args
+			= pstate->pop_vector (pstate->arglist_len);
+		      pstate->push_new<multi_subscript_operation>
+			(pstate->pop (), std::move (args));
 		    }
 		  else
-		    write_exp_elt_opcode (pstate, BINOP_SUBSCRIPT);
+		    pstate->wrap2<subscript_operation> ();
 		}
 ;
 
@@ -407,7 +425,14 @@ SliceExpression:
 	PostfixExpression '[' ']'
 		{ /* Do nothing.  */ }
 |	PostfixExpression '[' AssignExpression DOTDOT AssignExpression ']'
-		{ write_exp_elt_opcode (pstate, TERNOP_SLICE); }
+		{
+		  operation_up last = pstate->pop ();
+		  operation_up mid = pstate->pop ();
+		  operation_up first = pstate->pop ();
+		  pstate->push_new<ternop_slice_operation>
+		    (std::move (first), std::move (mid),
+		     std::move (last));
+		}
 ;
 
 PrimaryExpression:
@@ -423,32 +448,28 @@ PrimaryExpression:
 		  sym = lookup_symbol (copy.c_str (),
 				       pstate->expression_context_block,
 				       VAR_DOMAIN, &is_a_field_of_this);
-		  if (sym.symbol && SYMBOL_CLASS (sym.symbol) != LOC_TYPEDEF)
+		  if (sym.symbol && sym.symbol->aclass () != LOC_TYPEDEF)
 		    {
 		      if (symbol_read_needs_frame (sym.symbol))
 			pstate->block_tracker->update (sym);
-		      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
-		      write_exp_elt_block (pstate, sym.block);
-		      write_exp_elt_sym (pstate, sym.symbol);
-		      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
+		      pstate->push_new<var_value_operation> (sym);
 		    }
 		  else if (is_a_field_of_this.type != NULL)
 		     {
 		      /* It hangs off of `this'.  Must not inadvertently convert from a
 			 method call to data ref.  */
 		      pstate->block_tracker->update (sym);
-		      write_exp_elt_opcode (pstate, OP_THIS);
-		      write_exp_elt_opcode (pstate, OP_THIS);
-		      write_exp_elt_opcode (pstate, STRUCTOP_PTR);
-		      write_exp_string (pstate, $1);
-		      write_exp_elt_opcode (pstate, STRUCTOP_PTR);
+		      operation_up thisop
+			= make_operation<op_this_operation> ();
+		      pstate->push_new<structop_ptr_operation>
+			(std::move (thisop), std::move (copy));
 		    }
 		  else
 		    {
 		      /* Lookup foreign name in global static symbols.  */
 		      msymbol = lookup_bound_minimal_symbol (copy.c_str ());
 		      if (msymbol.minsym != NULL)
-			write_exp_msymbol (pstate, msymbol);
+			pstate->push_new<var_msym_value_operation> (msymbol);
 		      else if (!have_full_symbols () && !have_partial_symbols ())
 			error (_("No symbol table is loaded.  Use the \"file\" command"));
 		      else
@@ -464,7 +485,6 @@ PrimaryExpression:
 			     been resolved, it's not likely to be found.  */
 			  if (type->code () == TYPE_CODE_MODULE)
 			    {
-			      struct bound_minimal_symbol msymbol;
 			      struct block_symbol sym;
 			      const char *type_name = TYPE_SAFE_NAME (type);
 			      int type_name_len = strlen (type_name);
@@ -477,89 +497,64 @@ PrimaryExpression:
 				lookup_symbol (name.c_str (),
 					       (const struct block *) NULL,
 					       VAR_DOMAIN, NULL);
-			      if (sym.symbol)
-				{
-				  write_exp_elt_opcode (pstate, OP_VAR_VALUE);
-				  write_exp_elt_block (pstate, sym.block);
-				  write_exp_elt_sym (pstate, sym.symbol);
-				  write_exp_elt_opcode (pstate, OP_VAR_VALUE);
-				  break;
-				}
-
-			      msymbol = lookup_bound_minimal_symbol (name.c_str ());
-			      if (msymbol.minsym != NULL)
-				write_exp_msymbol (pstate, msymbol);
-			      else if (!have_full_symbols () && !have_partial_symbols ())
-				error (_("No symbol table is loaded.  Use the \"file\" command."));
-			      else
-				error (_("No symbol \"%s\" in current context."),
-				       name.c_str ());
+			      pstate->push_symbol (name.c_str (), sym);
 			    }
+			  else
+			    {
+			      /* Check if the qualified name resolves as a member
+				 of an aggregate or an enum type.  */
+			      if (!type_aggregate_p (type))
+				error (_("`%s' is not defined as an aggregate type."),
+				       TYPE_SAFE_NAME (type));
 
-			  /* Check if the qualified name resolves as a member
-			     of an aggregate or an enum type.  */
-			  if (!type_aggregate_p (type))
-			    error (_("`%s' is not defined as an aggregate type."),
-				   TYPE_SAFE_NAME (type));
-
-			  write_exp_elt_opcode (pstate, OP_SCOPE);
-			  write_exp_elt_type (pstate, type);
-			  write_exp_string (pstate, $3);
-			  write_exp_elt_opcode (pstate, OP_SCOPE);
+			      pstate->push_new<scope_operation>
+				(type, copy_name ($3));
+			    }
 			}
 |	DOLLAR_VARIABLE
-		{ write_dollar_variable (pstate, $1); }
+		{ pstate->push_dollar ($1); }
 |	NAME_OR_INT
 		{ YYSTYPE val;
-                  parse_number (pstate, $1.ptr, $1.length, 0, &val);
-		  write_exp_elt_opcode (pstate, OP_LONG);
-		  write_exp_elt_type (pstate, val.typed_val_int.type);
-		  write_exp_elt_longcst (pstate,
-					 (LONGEST) val.typed_val_int.val);
-		  write_exp_elt_opcode (pstate, OP_LONG); }
+		  parse_number (pstate, $1.ptr, $1.length, 0, &val);
+		  pstate->push_new<long_const_operation>
+		    (val.typed_val_int.type, val.typed_val_int.val); }
 |	NULL_KEYWORD
 		{ struct type *type = parse_d_type (pstate)->builtin_void;
 		  type = lookup_pointer_type (type);
-		  write_exp_elt_opcode (pstate, OP_LONG);
-		  write_exp_elt_type (pstate, type);
-		  write_exp_elt_longcst (pstate, (LONGEST) 0);
-		  write_exp_elt_opcode (pstate, OP_LONG); }
+		  pstate->push_new<long_const_operation> (type, 0); }
 |	TRUE_KEYWORD
-		{ write_exp_elt_opcode (pstate, OP_BOOL);
-		  write_exp_elt_longcst (pstate, (LONGEST) 1);
-		  write_exp_elt_opcode (pstate, OP_BOOL); }
+		{ pstate->push_new<bool_operation> (true); }
 |	FALSE_KEYWORD
-		{ write_exp_elt_opcode (pstate, OP_BOOL);
-		  write_exp_elt_longcst (pstate, (LONGEST) 0);
-		  write_exp_elt_opcode (pstate, OP_BOOL); }
+		{ pstate->push_new<bool_operation> (false); }
 |	INTEGER_LITERAL
-		{ write_exp_elt_opcode (pstate, OP_LONG);
-		  write_exp_elt_type (pstate, $1.type);
-		  write_exp_elt_longcst (pstate, (LONGEST)($1.val));
-		  write_exp_elt_opcode (pstate, OP_LONG); }
+		{ pstate->push_new<long_const_operation> ($1.type, $1.val); }
 |	FLOAT_LITERAL
-		{ write_exp_elt_opcode (pstate, OP_FLOAT);
-		  write_exp_elt_type (pstate, $1.type);
-		  write_exp_elt_floatcst (pstate, $1.val);
-		  write_exp_elt_opcode (pstate, OP_FLOAT); }
+		{
+		  float_data data;
+		  std::copy (std::begin ($1.val), std::end ($1.val),
+			     std::begin (data));
+		  pstate->push_new<float_const_operation> ($1.type, data);
+		}
 |	CHARACTER_LITERAL
 		{ struct stoken_vector vec;
 		  vec.len = 1;
 		  vec.tokens = &$1;
-		  write_exp_string_vector (pstate, $1.type, &vec); }
+		  pstate->push_c_string (0, &vec); }
 |	StringExp
 		{ int i;
-		  write_exp_string_vector (pstate, 0, &$1);
+		  pstate->push_c_string (0, &$1);
 		  for (i = 0; i < $1.len; ++i)
 		    free ($1.tokens[i].ptr);
 		  free ($1.tokens); }
 |	ArrayLiteral
-		{ write_exp_elt_opcode (pstate, OP_ARRAY);
-		  write_exp_elt_longcst (pstate, (LONGEST) 0);
-		  write_exp_elt_longcst (pstate, (LONGEST) $1 - 1);
-		  write_exp_elt_opcode (pstate, OP_ARRAY); }
+		{
+		  std::vector<operation_up> args
+		    = pstate->pop_vector ($1);
+		  pstate->push_new<array_operation>
+		    (0, $1 - 1, std::move (args));
+		}
 |	TYPEOF_KEYWORD '(' Expression ')'
-		{ write_exp_elt_opcode (pstate, OP_TYPEOF); }
+		{ pstate->wrap<typeof_operation> (); }
 ;
 
 ArrayLiteral:
@@ -608,14 +603,10 @@ TypeExp:
 	'(' TypeExp ')'
 		{ /* Do nothing.  */ }
 |	BasicType
-		{ write_exp_elt_opcode (pstate, OP_TYPE);
-		  write_exp_elt_type (pstate, $1);
-		  write_exp_elt_opcode (pstate, OP_TYPE); }
+		{ pstate->push_new<type_operation> ($1); }
 |	BasicType BasicType2
 		{ $$ = type_stack->follow_types ($1);
-		  write_exp_elt_opcode (pstate, OP_TYPE);
-		  write_exp_elt_type (pstate, $$);
-		  write_exp_elt_opcode (pstate, OP_TYPE);
+		  pstate->push_new<type_operation> ($$);
 		}
 ;
 
@@ -648,7 +639,7 @@ type_aggregate_p (struct type *type)
 	  || type->code () == TYPE_CODE_UNION
 	  || type->code () == TYPE_CODE_MODULE
 	  || (type->code () == TYPE_CODE_ENUM
-	      && TYPE_DECLARED_CLASS (type)));
+	      && type->is_declared_class ()));
 }
 
 /* Take care of parsing a number (anything that starts with a digit).
@@ -793,7 +784,7 @@ parse_number (struct parser_state *ps, const char *p,
 	  if (base > 10 && c >= 'a' && c <= 'f')
 	    {
 	      if (found_suffix)
-	        return ERROR;
+		return ERROR;
 	      n += i = c - 'a' + 10;
 	    }
 	  else if (c == 'l' && long_p == 0)
@@ -972,25 +963,25 @@ static const struct token tokentab2[] =
     {"|=", ASSIGN_MODIFY, BINOP_BITWISE_IOR},
     {"&=", ASSIGN_MODIFY, BINOP_BITWISE_AND},
     {"^=", ASSIGN_MODIFY, BINOP_BITWISE_XOR},
-    {"++", INCREMENT, BINOP_END},
-    {"--", DECREMENT, BINOP_END},
-    {"&&", ANDAND, BINOP_END},
-    {"||", OROR, BINOP_END},
-    {"^^", HATHAT, BINOP_END},
-    {"<<", LSH, BINOP_END},
-    {">>", RSH, BINOP_END},
-    {"==", EQUAL, BINOP_END},
-    {"!=", NOTEQUAL, BINOP_END},
-    {"<=", LEQ, BINOP_END},
-    {">=", GEQ, BINOP_END},
-    {"..", DOTDOT, BINOP_END},
+    {"++", INCREMENT, OP_NULL},
+    {"--", DECREMENT, OP_NULL},
+    {"&&", ANDAND, OP_NULL},
+    {"||", OROR, OP_NULL},
+    {"^^", HATHAT, OP_NULL},
+    {"<<", LSH, OP_NULL},
+    {">>", RSH, OP_NULL},
+    {"==", EQUAL, OP_NULL},
+    {"!=", NOTEQUAL, OP_NULL},
+    {"<=", LEQ, OP_NULL},
+    {">=", GEQ, OP_NULL},
+    {"..", DOTDOT, OP_NULL},
   };
 
 /* Identifier-like tokens.  */
 static const struct token ident_tokens[] =
   {
-    {"is", IDENTITY, BINOP_END},
-    {"!is", NOTIDENTITY, BINOP_END},
+    {"is", IDENTITY, OP_NULL},
+    {"!is", NOTIDENTITY, OP_NULL},
 
     {"cast", CAST_KEYWORD, OP_NULL},
     {"const", CONST_KEYWORD, OP_NULL},
@@ -1036,7 +1027,6 @@ lex_one_token (struct parser_state *par_state)
 {
   int c;
   int namelen;
-  unsigned int i;
   const char *tokstart;
   int saw_structop = last_was_structop;
 
@@ -1048,21 +1038,21 @@ lex_one_token (struct parser_state *par_state)
 
   tokstart = pstate->lexptr;
   /* See if it is a special token of length 3.  */
-  for (i = 0; i < sizeof tokentab3 / sizeof tokentab3[0]; i++)
-    if (strncmp (tokstart, tokentab3[i].oper, 3) == 0)
+  for (const auto &token : tokentab3)
+    if (strncmp (tokstart, token.oper, 3) == 0)
       {
 	pstate->lexptr += 3;
-	yylval.opcode = tokentab3[i].opcode;
-	return tokentab3[i].token;
+	yylval.opcode = token.opcode;
+	return token.token;
       }
 
   /* See if it is a special token of length 2.  */
-  for (i = 0; i < sizeof tokentab2 / sizeof tokentab2[0]; i++)
-    if (strncmp (tokstart, tokentab2[i].oper, 2) == 0)
+  for (const auto &token : tokentab2)
+    if (strncmp (tokstart, token.oper, 2) == 0)
       {
 	pstate->lexptr += 2;
-	yylval.opcode = tokentab2[i].opcode;
-	return tokentab2[i].token;
+	yylval.opcode = token.opcode;
+	return token.token;
       }
 
   switch (c = *tokstart)
@@ -1080,7 +1070,7 @@ lex_one_token (struct parser_state *par_state)
       else if (saw_structop)
 	return COMPLETE;
       else
-        return 0;
+	return 0;
 
     case ' ':
     case '\t':
@@ -1269,9 +1259,9 @@ lex_one_token (struct parser_state *par_state)
       const char *p = tokstart + namelen + 1;
 
       while (*p == ' ' || *p == '\t')
-        p++;
+	p++;
       if (*p >= '0' && *p <= '9')
-        return 0;
+	return 0;
     }
 
   pstate->lexptr += namelen;
@@ -1283,13 +1273,13 @@ lex_one_token (struct parser_state *par_state)
 
   /* Catch specific keywords.  */
   std::string copy = copy_name (yylval.sval);
-  for (i = 0; i < sizeof ident_tokens / sizeof ident_tokens[0]; i++)
-    if (copy == ident_tokens[i].oper)
+  for (const auto &token : ident_tokens)
+    if (copy == token.oper)
       {
 	/* It is ok to always set this, even though we don't always
 	   strictly need to.  */
-	yylval.opcode = ident_tokens[i].opcode;
-	return ident_tokens[i].token;
+	yylval.opcode = token.opcode;
+	return token.token;
       }
 
   if (*tokstart == '$')
@@ -1351,9 +1341,9 @@ classify_name (struct parser_state *par_state, const struct block *block)
   std::string copy = copy_name (yylval.sval);
 
   sym = lookup_symbol (copy.c_str (), block, VAR_DOMAIN, &is_a_field_of_this);
-  if (sym.symbol && SYMBOL_CLASS (sym.symbol) == LOC_TYPEDEF)
+  if (sym.symbol && sym.symbol->aclass () == LOC_TYPEDEF)
     {
-      yylval.tsym.type = SYMBOL_TYPE (sym.symbol);
+      yylval.tsym.type = sym.symbol->type ();
       return TYPENAME;
     }
   else if (sym.symbol == NULL)
@@ -1365,7 +1355,7 @@ classify_name (struct parser_state *par_state, const struct block *block)
 
       if (sym.symbol != NULL)
 	{
-	  yylval.tsym.type = SYMBOL_TYPE (sym.symbol);
+	  yylval.tsym.type = sym.symbol->type ();
 	  return TYPENAME;
 	}
 
@@ -1398,9 +1388,9 @@ classify_inner_name (struct parser_state *par_state,
   if (yylval.ssym.sym.symbol == NULL)
     return ERROR;
 
-  if (SYMBOL_CLASS (yylval.ssym.sym.symbol) == LOC_TYPEDEF)
+  if (yylval.ssym.sym.symbol->aclass () == LOC_TYPEDEF)
     {
-      yylval.tsym.type = SYMBOL_TYPE (yylval.ssym.sym.symbol);
+      yylval.tsym.type = yylval.ssym.sym.symbol->type ();
       return TYPENAME;
     }
 
@@ -1488,7 +1478,7 @@ yylex (void)
 	  if (next.token == IDENTIFIER && last_was_dot)
 	    {
 	      /* Update the partial name we are constructing.  */
-              obstack_grow_str (&name_obstack, ".");
+	      obstack_grow_str (&name_obstack, ".");
 	      obstack_grow (&name_obstack, next.value.sval.ptr,
 			    next.value.sval.length);
 
@@ -1568,7 +1558,7 @@ yylex (void)
 	  if (context_type != NULL)
 	    {
 	      /* We don't want to put a leading "." into the name.  */
-              obstack_grow_str (&name_obstack, ".");
+	      obstack_grow_str (&name_obstack, ".");
 	    }
 	  obstack_grow (&name_obstack, next.value.sval.ptr,
 			next.value.sval.length);
@@ -1635,7 +1625,10 @@ d_parse (struct parser_state *par_state)
   popping = 0;
   name_obstack.clear ();
 
-  return yyparse ();
+  int result = yyparse ();
+  if (!result)
+    pstate->set_operation (pstate->pop ());
+  return result;
 }
 
 static void

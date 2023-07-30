@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -41,7 +41,7 @@ static void
 print_semantic_function_header (lf *file,
 				const char *basename,
 				const char *format_name,
-				opcode_bits *expanded_bits,
+				const opcode_bits *expanded_bits,
 				int is_function_definition,
 				int nr_prefetched_words)
 {
@@ -83,9 +83,10 @@ print_semantic_function_header (lf *file,
 
 void
 print_semantic_declaration (lf *file,
-			    insn_entry * insn,
-			    opcode_bits *expanded_bits,
-			    insn_opcodes *opcodes, int nr_prefetched_words)
+			    const insn_entry *insn,
+			    const opcode_bits *expanded_bits,
+			    const insn_opcodes *opcodes,
+			    int nr_prefetched_words)
 {
   print_semantic_function_header (file,
 				  insn->name,
@@ -143,8 +144,9 @@ print_idecode_invalid (lf *file, const char *result, invalid_type type)
 
 void
 print_semantic_body (lf *file,
-		     insn_entry * instruction,
-		     opcode_bits *expanded_bits, insn_opcodes *opcodes)
+		     const insn_entry *instruction,
+		     const opcode_bits *expanded_bits,
+		     const insn_opcodes *opcodes)
 {
   /* validate the instruction, if a cache this has already been done */
   if (!options.gen.icache)
@@ -300,10 +302,11 @@ print_semantic_body (lf *file,
 
 static void
 print_c_semantic (lf *file,
-		  insn_entry * instruction,
-		  opcode_bits *expanded_bits,
-		  insn_opcodes *opcodes,
-		  cache_entry *cache_rules, int nr_prefetched_words)
+		  const insn_entry *instruction,
+		  const opcode_bits *expanded_bits,
+		  const insn_opcodes *opcodes,
+		  cache_entry *cache_rules,
+		  int nr_prefetched_words)
 {
 
   lf_printf (file, "{\n");
@@ -348,10 +351,11 @@ print_c_semantic (lf *file,
 
 static void
 print_c_semantic_function (lf *file,
-			   insn_entry * instruction,
-			   opcode_bits *expanded_bits,
-			   insn_opcodes *opcodes,
-			   cache_entry *cache_rules, int nr_prefetched_words)
+			   const insn_entry *instruction,
+			   const opcode_bits *expanded_bits,
+			   const insn_opcodes *opcodes,
+			   cache_entry *cache_rules,
+			   int nr_prefetched_words)
 {
   /* build the semantic routine to execute the instruction */
   print_semantic_function_header (file,
@@ -367,10 +371,11 @@ print_c_semantic_function (lf *file,
 
 void
 print_semantic_definition (lf *file,
-			   insn_entry * insn,
-			   opcode_bits *expanded_bits,
-			   insn_opcodes *opcodes,
-			   cache_entry *cache_rules, int nr_prefetched_words)
+			   const insn_entry *insn,
+			   const opcode_bits *expanded_bits,
+			   const insn_opcodes *opcodes,
+			   cache_entry *cache_rules,
+			   int nr_prefetched_words)
 {
   print_c_semantic_function (file,
 			     insn,

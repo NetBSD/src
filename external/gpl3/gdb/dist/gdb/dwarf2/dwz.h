@@ -1,6 +1,6 @@
 /* DWARF DWZ handling for GDB.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,8 @@
 #include "gdb_bfd.h"
 #include "dwarf2/index-cache.h"
 #include "dwarf2/section.h"
+
+struct dwarf2_per_bfd;
 
 /* This represents a '.dwz' file.  */
 
@@ -61,5 +63,14 @@ struct dwz_file
 
   const char *read_string (struct objfile *objfile, LONGEST str_offset);
 };
+
+/* Open the separate '.dwz' debug file, if needed.  If there is no
+   .gnu_debugaltlink section in the file, then the result depends on
+   REQUIRE: if REQUIRE is true, then error; if REQUIRE is false,
+   return NULL.  Always error if there is such a section but the file
+   cannot be found.  */
+
+extern dwz_file *dwarf2_get_dwz_file (dwarf2_per_bfd *per_bfd,
+				      bool require = false);
 
 #endif /* GDB_DWARF2_DWZ_H */

@@ -1,7 +1,7 @@
 /* The remote-virtual-component simulator framework
    for GDB, the GNU Debugger.
 
-   Copyright 2006-2020 Free Software Foundation, Inc.
+   Copyright 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"
@@ -25,37 +27,19 @@
 #include "hw-tree.h"
 
 #include <ctype.h>
-
-#ifdef HAVE_ERRNO_H
 #include <errno.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
 
-#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif
 
 /* Not guarded in dv-sockser.c, so why here.  */
 #include <netinet/in.h>
@@ -309,43 +293,43 @@ enum rv_command {
 typedef struct _hw_rv_device
 {
   /* Mapping of remote interrupt bit-numbers to local ones.  */
-  unsigned32 remote_to_local_int[32];
+  uint32_t remote_to_local_int[32];
 
   /* When multiple bits are set, a non-zero value here indicates that
      this value should be used instead.  */
-  unsigned32 intmultiple;
+  uint32_t intmultiple;
 
   /* Local address of registers.  */
-  unsigned32 reg_address;
+  uint32_t reg_address;
 
   /* Size of register bank in bytes.  */
-  unsigned32 reg_size;
+  uint32_t reg_size;
 
   /* Remote address of registers.  */
-  unsigned32 remote_reg_address;
+  uint32_t remote_reg_address;
 
   /* Local address of DMA:able memory.  */
-  unsigned32 mem_address;
+  uint32_t mem_address;
 
   /* Size of DMA:able memory in bytes.  */
-  unsigned32 mem_size;
+  uint32_t mem_size;
 
   /* Bitmask for valid DMA request size.  */
-  unsigned32 mem_burst_mask;
+  uint32_t mem_burst_mask;
 
   /* Remote address of DMA:able memory.  */
-  unsigned32 remote_mem_address;
+  uint32_t remote_mem_address;
 
   /* (Local) address of mbox; where to put a pointer to the mbox to be
      sent.  */
-  unsigned32 mbox_address;
+  uint32_t mbox_address;
 
   /* Probably not 127.0.0.1:10000.  */
   const char *host;
   int port;
 
   /* If non-NULL, points to memory to use instead of connection.  */
-  unsigned8 *dummy;
+  uint8_t *dummy;
 
   /* File descriptor for the socket.  Set to -1 when error.  Only one
      of dummy and this is active.  */
@@ -357,18 +341,18 @@ typedef struct _hw_rv_device
   /* This, plus latency because the CPU might not be checking until a
      CTI insn (usually a branch or a jump) is the interval in cycles
      between the rv is polled for e.g. DMA requests.  */
-  unsigned32 max_tick_poll_interval;
+  uint32_t max_tick_poll_interval;
 
   /* Running counter for exponential backoff up to
      max_tick_poll_interval to avoid polling the connection
      unnecessarily often.  Set to 1 when rv activity (read/write
      register, DMA request) is detected.  */
-  unsigned32 next_period;
+  uint32_t next_period;
 
   /* This is the interval in wall-clock seconds between watchdog
      packets are sent to the remote side.  Zero means no watchdog
      packets. */
-  unsigned32 watchdog_interval;
+  uint32_t watchdog_interval;
 
   /* Last time we sent a watchdog packet.  */
   struct timeval last_wdog_time;
@@ -400,7 +384,7 @@ hw_rv_write (struct hw *me,
 	     unsigned int len)
 {
   hw_rv_device *rv = (hw_rv_device *) hw_data (me);
-  unsigned8 *bufp = buf;
+  uint8_t *bufp = buf;
 
   /* If we don't have a valid fd here, it's because we got an error
      initially, and we suppressed that error.  */
@@ -430,7 +414,7 @@ hw_rv_read (struct hw *me,
 	    unsigned int len)
 {
   hw_rv_device *rv = (hw_rv_device *) hw_data (me);
-  unsigned8 *bufp = buf;
+  uint8_t *bufp = buf;
 
   while (len > 0)
     {
@@ -462,8 +446,8 @@ hw_rv_send (struct hw *me,
 	    unsigned int len_noheader)
 {
   hw_rv_device *rv = (hw_rv_device *) hw_data (me);
-  unsigned8 buf[32+3];
-  unsigned8 *bufp;
+  uint8_t buf[32+3];
+  uint8_t *bufp;
   unsigned int len = len_noheader + 3;
   int ret;
 
@@ -494,12 +478,12 @@ hw_rv_read_mem (struct hw *me, unsigned int len)
 {
   hw_rv_device *rv = (hw_rv_device *) hw_data (me);
   /* If you change this size, please adjust the mem2 testcase.  */
-  unsigned8 buf[32+8];
-  unsigned8 *bufp = buf;
-  unsigned32 leaddr;
-  unsigned32 addr;
-  unsigned32 lelen;
-  unsigned32 i;
+  uint8_t buf[32+8];
+  uint8_t *bufp = buf;
+  uint32_t leaddr;
+  uint32_t addr;
+  uint32_t lelen;
+  uint32_t i;
 
   if (len != 8)
     hw_abort (me, "expected DMA read request len 8+3, got %d+3", len);
@@ -548,13 +532,13 @@ hw_rv_write_mem (struct hw *me, unsigned int plen)
 {
   hw_rv_device *rv = (hw_rv_device *) hw_data (me);
   /* If you change this size, please adjust the mem2 testcase.  */
-  unsigned8 buf[32+8];
-  unsigned8 *bufp = buf;
-  unsigned32 leaddr;
-  unsigned32 addr;
-  unsigned32 lelen;
-  unsigned32 len;
-  unsigned32 i;
+  uint8_t buf[32+8];
+  uint8_t *bufp = buf;
+  uint32_t leaddr;
+  uint32_t addr;
+  uint32_t lelen;
+  uint32_t len;
+  uint32_t i;
 
   hw_rv_read (me, &leaddr, 4);
   hw_rv_read (me, &lelen, 4);
@@ -598,9 +582,9 @@ static void
 hw_rv_irq (struct hw *me, unsigned int len)
 {
   hw_rv_device *rv = (hw_rv_device *) hw_data (me);
-  unsigned32 intbitsle;
-  unsigned32 intbits_ext;
-  unsigned32 intval = 0;
+  uint32_t intbitsle;
+  uint32_t intbits_ext;
+  uint32_t intval = 0;
   int i;
 
   if (len != 4)
@@ -625,11 +609,11 @@ hw_rv_irq (struct hw *me, unsigned int len)
 static void
 hw_rv_handle_incoming (struct hw *me,
 		       int expected_type,
-		       unsigned8 *buf,
+		       uint8_t *buf,
 		       unsigned int *return_len)
 {
   hw_rv_device *rv = (hw_rv_device *) hw_data (me);
-  unsigned8 cbuf[32];
+  uint8_t cbuf[32];
   unsigned int len;
   unsigned int cmd;
 
@@ -781,7 +765,7 @@ static void
 do_poll_event (struct hw *me, void *data)
 {
   hw_rv_device *rv = (hw_rv_device *) hw_data (me);
-  unsigned32 new_period;
+  uint32_t new_period;
 
   if (rv->dummy != NULL)
     return;
@@ -916,8 +900,8 @@ hw_rv_reg_read (struct hw *me,
 		unsigned int nr_bytes)
 {
   hw_rv_device *rv = (hw_rv_device *) hw_data (me);
-  unsigned8 addr_data[8] = "";
-  unsigned32 a_l = H2LE_4 (addr - rv->reg_address + rv->remote_reg_address);
+  uint8_t addr_data[8] = "";
+  uint32_t a_l = H2LE_4 (addr - rv->reg_address + rv->remote_reg_address);
   unsigned int len = 8;
 
   if (nr_bytes != 4)
@@ -953,10 +937,10 @@ hw_rv_reg_read (struct hw *me,
 static void
 hw_rv_mbox (struct hw *me, unsigned_word address)
 {
-  unsigned8 buf[256+3];
+  uint8_t buf[256+3];
   unsigned int cmd;
   unsigned int rlen;
-  unsigned32 i;
+  uint32_t i;
   unsigned int len
     = hw_dma_read_buffer (me, buf, 0, address, 3);
 
@@ -1018,8 +1002,8 @@ hw_rv_reg_write (struct hw *me,
 {
   hw_rv_device *rv = (hw_rv_device *) hw_data (me);
 
-  unsigned8 addr_data[8] = "";
-  unsigned32 a_l = H2LE_4 (addr - rv->reg_address + rv->remote_reg_address);
+  uint8_t addr_data[8] = "";
+  uint32_t a_l = H2LE_4 (addr - rv->reg_address + rv->remote_reg_address);
   unsigned int len = 8;
 
   if (nr_bytes != 4)
@@ -1030,7 +1014,7 @@ hw_rv_reg_write (struct hw *me,
 
   if (addr == rv->mbox_address)
     {
-      unsigned32 mbox_addr_le;
+      uint32_t mbox_addr_le;
       if (rv->dummy != NULL)
 	hw_abort (me, "mbox not supported for a dummy instance");
       memcpy (&mbox_addr_le, source, 4);
@@ -1139,15 +1123,15 @@ hw_rv_finish (struct hw *me)
 
       if (hw_property_type (dummy_prop) == integer_property)
 	{
-	  unsigned32 dummyfill = hw_find_integer_property (me, "dummy");
-	  unsigned8 *dummymem = hw_malloc (me, rv->reg_size);
+	  uint32_t dummyfill = hw_find_integer_property (me, "dummy");
+	  uint8_t *dummymem = hw_malloc (me, rv->reg_size);
 	  memset (dummymem, dummyfill, rv->reg_size);
 	  rv->dummy = dummymem;
 	}
       else
 	{
 	  const char *dummyarg = hw_find_string_property (me, "dummy");
-	  unsigned8 *dummymem = hw_malloc (me, rv->reg_size);
+	  uint8_t *dummymem = hw_malloc (me, rv->reg_size);
 	  FILE *f = fopen (dummyarg, "rb");
 
 	  if (f == NULL)
@@ -1169,10 +1153,10 @@ hw_rv_finish (struct hw *me)
 	  signed_cell attach_address_sc
 	    = hw_find_integer_property (me, "mbox");
 
-	  rv->mbox_address = (unsigned32) attach_address_sc;
+	  rv->mbox_address = (uint32_t) attach_address_sc;
 	  hw_attach_address (hw_parent (me),
 			     0,
-			     0, (unsigned32) attach_address_sc, 4, me);
+			     0, (uint32_t) attach_address_sc, 4, me);
 	}
       else
 	hw_abort (me, "property \"mbox\" has the wrong type");
@@ -1192,8 +1176,8 @@ hw_rv_finish (struct hw *me)
 	  && hw_find_integer_array_property (me, "mem", 1, &attach_size_sc))
 	{
 	  /* Unfortunate choice of types forces us to dance around a bit.  */
-	  rv->mem_address = (unsigned32) attach_address_sc;
-	  rv->mem_size = (unsigned32) attach_size_sc;
+	  rv->mem_address = (uint32_t) attach_address_sc;
+	  rv->mem_size = (uint32_t) attach_size_sc;
 	  if ((attach_address_sc & 3) != 0)
 	    hw_abort (me, "memory block must be 4 byte aligned");
 	}

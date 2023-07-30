@@ -1,6 +1,6 @@
 /* Block signals used by gdb
 
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,6 +42,7 @@ public:
     sigaddset (&mask, SIGCHLD);
     sigaddset (&mask, SIGALRM);
     sigaddset (&mask, SIGWINCH);
+    sigaddset (&mask, SIGTERM);
     gdb_sigmask (SIG_BLOCK, &mask, &m_old_mask);
 #endif
   }

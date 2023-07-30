@@ -1,6 +1,6 @@
 /* Output generating routines for GDB CLI.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -108,10 +108,4 @@ tui_ui_out::do_text (const char *string)
 tui_ui_out::tui_ui_out (ui_file *stream)
   : cli_ui_out (stream, 0)
 {
-}
-
-tui_ui_out *
-tui_out_new (struct ui_file *stream)
-{
-  return new tui_ui_out (stream);
 }

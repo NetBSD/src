@@ -1,6 +1,6 @@
 /* GNU/Linux/aarch64 specific target description, for the remote server
    for GDB.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,35 +25,36 @@
 #include "arch/aarch64.h"
 #include "linux-aarch32-low.h"
 #include <inttypes.h>
+#include <unordered_map>
 
 /* All possible aarch64 target descriptors.  */
-struct target_desc *tdesc_aarch64_list[AARCH64_MAX_SVE_VQ + 1][2/*pauth*/];
+static std::unordered_map<aarch64_features, target_desc *> tdesc_aarch64_map;
 
 /* Create the aarch64 target description.  */
 
 const target_desc *
-aarch64_linux_read_description (uint64_t vq, bool pauth_p)
+aarch64_linux_read_description (const aarch64_features &features)
 {
-  if (vq > AARCH64_MAX_SVE_VQ)
-    error (_("VQ is %" PRIu64 ", maximum supported value is %d"), vq,
+  if (features.vq > AARCH64_MAX_SVE_VQ)
+    error (_("VQ is %" PRIu64 ", maximum supported value is %d"), features.vq,
 	   AARCH64_MAX_SVE_VQ);
 
-  struct target_desc *tdesc = tdesc_aarch64_list[vq][pauth_p];
+  struct target_desc *tdesc = tdesc_aarch64_map[features];
 
   if (tdesc == NULL)
     {
-      tdesc = aarch64_create_target_description (vq, pauth_p);
+      tdesc = aarch64_create_target_description (features);
 
       static const char *expedite_regs_aarch64[] = { "x29", "sp", "pc", NULL };
       static const char *expedite_regs_aarch64_sve[] = { "x29", "sp", "pc",
 							 "vg", NULL };
 
-      if (vq == 0)
+      if (features.vq == 0)
 	init_target_desc (tdesc, expedite_regs_aarch64);
       else
 	init_target_desc (tdesc, expedite_regs_aarch64_sve);
 
-      tdesc_aarch64_list[vq][pauth_p] = tdesc;
+      tdesc_aarch64_map[features] = tdesc;
     }
 
   return tdesc;

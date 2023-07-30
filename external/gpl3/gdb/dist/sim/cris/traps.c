@@ -1,5 +1,5 @@
 /* CRIS exception, interrupt, and trap (EIT) support
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -17,16 +17,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
+#include "portability.h"
 #include "sim-main.h"
 #include "sim-syscall.h"
 #include "sim-options.h"
+#include "sim-signal.h"
+#include "sim/callback.h"
 #include "bfd.h"
 /* FIXME: get rid of targ-vals.h usage everywhere else.  */
 
+#include <stdlib.h>
 #include <stdarg.h>
-#ifdef HAVE_ERRNO_H
 #include <errno.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -798,8 +803,11 @@ dump_statistics (SIM_CPU *current_cpu)
   SIM_DESC sd = CPU_STATE (current_cpu);
   CRIS_MISC_PROFILE *profp
     = CPU_CRIS_MISC_PROFILE (current_cpu);
-  unsigned64 total = profp->basic_cycle_count;
-  const char *textmsg = "Basic clock cycles, total @: %llu\n";
+  uint64_t total = profp->basic_cycle_count;
+
+  /* Historically, these messages have gone to stderr, so we'll keep it
+     that way.  It's also easier to then tell it from normal program
+     output.  FIXME: Add redirect option like "run -e file".  */
 
   /* The --cris-stats={basic|unaligned|schedulable|all} counts affect
      what's included in the "total" count only.  */
@@ -807,16 +815,18 @@ dump_statistics (SIM_CPU *current_cpu)
 	  & FLAG_CRIS_MISC_PROFILE_ALL)
     {
     case FLAG_CRIS_MISC_PROFILE_SIMPLE:
+      sim_io_eprintf (sd, "Basic clock cycles, total @: %" PRIu64 "\n", total);
       break;
 
     case (FLAG_CRIS_MISC_PROFILE_UNALIGNED | FLAG_CRIS_MISC_PROFILE_SIMPLE):
-      textmsg
-	= "Clock cycles including stall cycles for unaligned accesses @: %llu\n";
       total += profp->unaligned_mem_dword_count;
+      sim_io_eprintf (sd,
+		      "Clock cycles including stall cycles for unaligned "
+		      "accesses @: %" PRIu64 "\n",
+		      total);
       break;
 
     case (FLAG_CRIS_MISC_PROFILE_SCHEDULABLE | FLAG_CRIS_MISC_PROFILE_SIMPLE):
-      textmsg = "Schedulable clock cycles, total @: %llu\n";
       total
 	+= (profp->memsrc_stall_count
 	    + profp->memraw_stall_count
@@ -825,10 +835,11 @@ dump_statistics (SIM_CPU *current_cpu)
 	    + profp->mulsrc_stall_count
 	    + profp->jumpsrc_stall_count
 	    + profp->unaligned_mem_dword_count);
+      sim_io_eprintf (sd, "Schedulable clock cycles, total @: %" PRIu64 "\n",
+		      total);
       break;
 
     case FLAG_CRIS_MISC_PROFILE_ALL:
-      textmsg = "All accounted clock cycles, total @: %llu\n";
       total
 	+= (profp->memsrc_stall_count
 	    + profp->memraw_stall_count
@@ -840,44 +851,36 @@ dump_statistics (SIM_CPU *current_cpu)
 	    + profp->branch_stall_count
 	    + profp->jumptarget_stall_count
 	    + profp->unaligned_mem_dword_count);
+      sim_io_eprintf (sd, "All accounted clock cycles, total @: %" PRIu64 "\n",
+		      total);
       break;
 
     default:
-      abort ();
-
-      sim_io_eprintf (sd,
-		      "Internal inconsistency at %s:%d",
-		      __FILE__, __LINE__);
-      sim_engine_halt (sd, current_cpu, NULL, 0,
-		       sim_stopped, SIM_SIGILL);
+      sim_engine_abort (sd, current_cpu, 0,
+			"Internal inconsistency at %s:%d",
+			__FILE__, __LINE__);
     }
-
-  /* Historically, these messages have gone to stderr, so we'll keep it
-     that way.  It's also easier to then tell it from normal program
-     output.  FIXME: Add redirect option like "run -e file".  */
-  sim_io_eprintf (sd, textmsg, total);
 
   /* For v32, unaligned_mem_dword_count should always be 0.  For
      v10, memsrc_stall_count should always be 0.  */
-  sim_io_eprintf (sd, "Memory source stall cycles: %llu\n",
-		  (unsigned long long) (profp->memsrc_stall_count
-					+ profp->unaligned_mem_dword_count));
-  sim_io_eprintf (sd, "Memory read-after-write stall cycles: %llu\n",
-		  (unsigned long long) profp->memraw_stall_count);
-  sim_io_eprintf (sd, "Movem source stall cycles: %llu\n",
-		  (unsigned long long) profp->movemsrc_stall_count);
-  sim_io_eprintf (sd, "Movem destination stall cycles: %llu\n",
-		  (unsigned long long) profp->movemdst_stall_count);
-  sim_io_eprintf (sd, "Movem address stall cycles: %llu\n",
-		  (unsigned long long) profp->movemaddr_stall_count);
-  sim_io_eprintf (sd, "Multiplication source stall cycles: %llu\n",
-		  (unsigned long long) profp->mulsrc_stall_count);
-  sim_io_eprintf (sd, "Jump source stall cycles: %llu\n",
-		  (unsigned long long) profp->jumpsrc_stall_count);
-  sim_io_eprintf (sd, "Branch misprediction stall cycles: %llu\n",
-		  (unsigned long long) profp->branch_stall_count);
-  sim_io_eprintf (sd, "Jump target stall cycles: %llu\n",
-		  (unsigned long long) profp->jumptarget_stall_count);
+  sim_io_eprintf (sd, "Memory source stall cycles: %" PRIu64 "\n",
+		  profp->memsrc_stall_count + profp->unaligned_mem_dword_count);
+  sim_io_eprintf (sd, "Memory read-after-write stall cycles: %" PRIu64 "\n",
+		  profp->memraw_stall_count);
+  sim_io_eprintf (sd, "Movem source stall cycles: %" PRIu64 "\n",
+		  profp->movemsrc_stall_count);
+  sim_io_eprintf (sd, "Movem destination stall cycles: %" PRIu64 "\n",
+		  profp->movemdst_stall_count);
+  sim_io_eprintf (sd, "Movem address stall cycles: %" PRIu64 "\n",
+		  profp->movemaddr_stall_count);
+  sim_io_eprintf (sd, "Multiplication source stall cycles: %" PRIu64 "\n",
+		  profp->mulsrc_stall_count);
+  sim_io_eprintf (sd, "Jump source stall cycles: %" PRIu64 "\n",
+		  profp->jumpsrc_stall_count);
+  sim_io_eprintf (sd, "Branch misprediction stall cycles: %" PRIu64 "\n",
+		  profp->branch_stall_count);
+  sim_io_eprintf (sd, "Jump target stall cycles: %" PRIu64 "\n",
+		  profp->jumptarget_stall_count);
 }
 
 /* Check whether any part of [addr .. addr + len - 1] is already mapped.
@@ -926,8 +929,10 @@ is_mapped_only (SIM_DESC sd ATTRIBUTE_UNUSED,
   return 0;
 }
 
-/* Debug helper; to be run from gdb.  */
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+void cris_dump_map (SIM_CPU *current_cpu);
 
+/* Debug helper; to be run from gdb.  */
 void
 cris_dump_map (SIM_CPU *current_cpu)
 {
@@ -1065,36 +1070,6 @@ sim_engine_invalid_insn (SIM_CPU *current_cpu, IADDR cia, SEM_PC vpc)
 
   sim_engine_halt (sd, current_cpu, NULL, cia, sim_stopped, SIM_SIGILL);
   return vpc;
-}
-
-/* Handlers from the CGEN description that should not be called.  */
-
-USI
-cris_bmod_handler (SIM_CPU *current_cpu ATTRIBUTE_UNUSED,
-		   UINT srcreg ATTRIBUTE_UNUSED,
-		   USI dstreg ATTRIBUTE_UNUSED)
-{
-  SIM_DESC sd = CPU_STATE (current_cpu);
-  abort ();
-}
-
-void
-h_supr_set_handler (SIM_CPU *current_cpu ATTRIBUTE_UNUSED,
-		    UINT index ATTRIBUTE_UNUSED,
-		    USI page ATTRIBUTE_UNUSED,
-		    USI newval ATTRIBUTE_UNUSED)
-{
-  SIM_DESC sd = CPU_STATE (current_cpu);
-  abort ();
-}
-
-USI
-h_supr_get_handler (SIM_CPU *current_cpu ATTRIBUTE_UNUSED,
-		    UINT index ATTRIBUTE_UNUSED,
-		    USI page ATTRIBUTE_UNUSED)
-{
-  SIM_DESC sd = CPU_STATE (current_cpu);
-  abort ();
 }
 
 /* Swap one context for another.  */
@@ -1407,7 +1382,7 @@ make_first_thread (SIM_CPU *current_cpu)
 /* Handle unknown system calls.  Returns (if it does) the syscall
    return value.  */
 
-static USI
+static USI ATTRIBUTE_PRINTF (3, 4)
 cris_unknown_syscall (SIM_CPU *current_cpu, USI pc, char *s, ...)
 {
   SIM_DESC sd = CPU_STATE (current_cpu);
@@ -1467,8 +1442,8 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
       sim_engine_halt (sd, current_cpu, NULL, pc, sim_exited, arg1);
     }
 
-  s.p1 = (PTR) sd;
-  s.p2 = (PTR) current_cpu;
+  s.p1 = sd;
+  s.p2 = current_cpu;
   s.read_mem = sim_syscall_read_mem;
   s.write_mem = sim_syscall_write_mem;
 
@@ -1476,10 +1451,9 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 
   if (cb_syscall (cb, &s) != CB_RC_OK)
     {
-      abort ();
-      sim_io_eprintf (sd, "Break 13: invalid %d?  Returned %ld\n", callnum,
-		      s.result);
-      sim_engine_halt (sd, current_cpu, NULL, pc, sim_stopped, SIM_SIGILL);
+      sim_engine_abort (sd, current_cpu, pc,
+			"Break 13: invalid %d?  Returned %ld\n", callnum,
+			s.result);
     }
 
   retval = s.result == -1 ? -s.errcode : s.result;
@@ -2235,7 +2209,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 
 	case TARGET_SYS_time:
 	  {
-	    retval = (int) (*cb->time) (cb, 0L);
+	    retval = (int) (*cb->time) (cb);
 
 	    /* At time of this writing, CB_SYSCALL_time doesn't do the
 	       part of setting *arg1 to the return value.  */
@@ -3328,13 +3302,16 @@ cris_pipe_empty (host_callback *cb,
 
 /* We have a simulator-specific notion of time.  See TARGET_TIME.  */
 
-static long
-cris_time (host_callback *cb ATTRIBUTE_UNUSED, long *t)
+static int64_t
+cris_time (host_callback *cb ATTRIBUTE_UNUSED)
 {
-  long retval = TARGET_TIME (current_cpu_for_cb_callback);
-  if (t)
-    *t = retval;
-  return retval;
+  return TARGET_TIME (current_cpu_for_cb_callback);
+}
+
+static int
+cris_getpid (host_callback *cb ATTRIBUTE_UNUSED)
+{
+  return TARGET_PID;
 }
 
 /* Set target-specific callback data. */
@@ -3345,6 +3322,8 @@ cris_set_callbacks (host_callback *cb)
   /* Yeargh, have to cast away constness to avoid warnings.  */
   cb->syscall_map = (CB_TARGET_DEFS_MAP *) syscall_map;
   cb->errno_map = (CB_TARGET_DEFS_MAP *) errno_map;
+
+  cb->getpid = cris_getpid;
 
   /* The kernel stat64 layout.  If we see a file > 2G, the "long"
      parameter to cb_store_target_endian will make st_size negative.

@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenVMS IA-64.
 
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,8 +31,8 @@
 
 static int
 ia64_vms_find_proc_info_x (unw_addr_space_t as, unw_word_t ip,
-                           unw_proc_info_t *pi,
-                           int need_unwind_info, void *arg)
+			   unw_proc_info_t *pi,
+			   int need_unwind_info, void *arg)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   gdb_byte buf[32];
@@ -41,8 +41,9 @@ ia64_vms_find_proc_info_x (unw_addr_space_t as, unw_word_t ip,
   CORE_ADDR table_addr;
   unsigned int info_len;
 
-  res = target_read (current_top_target (), TARGET_OBJECT_OPENVMS_UIB,
-                     annex + 2, buf, 0, sizeof (buf));
+  res = target_read (current_inferior ()->top_target (),
+		     TARGET_OBJECT_OPENVMS_UIB,
+		     annex + 2, buf, 0, sizeof (buf));
 
   if (res != sizeof (buf))
     return -UNW_ENOINFO;
@@ -75,7 +76,7 @@ ia64_vms_find_proc_info_x (unw_addr_space_t as, unw_word_t ip,
   pi->unwind_info = xmalloc (pi->unwind_info_size);
 
   res = target_read_memory (table_addr + 8,
-                            (gdb_byte *) pi->unwind_info, pi->unwind_info_size);
+			    (gdb_byte *) pi->unwind_info, pi->unwind_info_size);
   if (res != 0)
     {
       xfree (pi->unwind_info);
@@ -103,7 +104,7 @@ ia64_vms_find_proc_info_x (unw_addr_space_t as, unw_word_t ip,
 
 static void
 ia64_vms_put_unwind_info (unw_addr_space_t as,
-                          unw_proc_info_t *pip, void *arg)
+			  unw_proc_info_t *pip, void *arg)
 {
   /* Nothing required for now.  */
 }
@@ -113,7 +114,7 @@ ia64_vms_put_unwind_info (unw_addr_space_t as,
 
 static int
 ia64_vms_get_dyn_info_list (unw_addr_space_t as,
-                            unw_word_t *dilap, void *arg)
+			    unw_word_t *dilap, void *arg)
 {
   return -UNW_ENOINFO;
 }
@@ -131,7 +132,7 @@ static struct libunwind_descr ia64_vms_libunwind_descr;
 static void
 ia64_openvms_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  set_gdbarch_long_double_format (gdbarch, floatformats_ia64_quad);
+  set_gdbarch_long_double_format (gdbarch, floatformats_ieee_quad);
 
 #ifdef HAVE_LIBUNWIND_IA64_H
   /* Override the default descriptor.  */

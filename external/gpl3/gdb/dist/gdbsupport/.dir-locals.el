@@ -1,5 +1,5 @@
 ;; Emacs settings.
-;; Copyright (C) 2012-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -22,12 +22,14 @@
  (tcl-mode . ((tcl-indent-level . 4)
 	      (tcl-continued-indent-level . 4)
 	      (indent-tabs-mode . t)))
- (nil . ((bug-reference-url-format . "http://sourceware.org/bugzilla/show_bug.cgi?id=%s")))
+ (nil . ((bug-reference-url-format . "http://sourceware.org/bugzilla/show_bug.cgi?id=%s")
+	 (sentence-end-double-space . t)))
  (c-mode . ((c-file-style . "GNU")
 	    (mode . c++)
 	    (indent-tabs-mode . t)
 	    (tab-width . 8)
 	    (c-basic-offset . 2)
+	    (eval . (c-set-offset 'brace-list-open 0))
 	    (eval . (c-set-offset 'innamespace 0))
 	    ))
  (c++-mode . ((eval . (when (fboundp 'c-toggle-comment-style)
@@ -36,6 +38,7 @@
 	      (tab-width . 8)
 	      (c-file-style . "GNU")
 	      (c-basic-offset . 2)
+	      (eval . (c-set-offset 'brace-list-open 0))
 	      (eval . (c-set-offset 'innamespace 0))
 	      ))
 )

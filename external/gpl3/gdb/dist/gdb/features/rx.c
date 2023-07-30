@@ -1,18 +1,18 @@
 /* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
-  Original: rx.xml.tmp */
+  Original: rx.xml */
 
 #include "defs.h"
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_rx;
+const struct target_desc *tdesc_rx;
 static void
 initialize_tdesc_rx (void)
 {
-  struct target_desc *result = allocate_target_description ();
+  target_desc_up result = allocate_target_description ();
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.rx.core");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.rx.core");
   tdesc_type_with_fields *type_with_fields;
   type_with_fields = tdesc_create_flags (feature, "psw_flags", 4);
   tdesc_add_flag (type_with_fields, 0, "C");
@@ -76,5 +76,5 @@ initialize_tdesc_rx (void)
   tdesc_create_reg (feature, "fpsw", 24, 1, NULL, 32, "fpsw_flags");
   tdesc_create_reg (feature, "acc", 25, 1, NULL, 64, "uint64");
 
-  tdesc_rx = result;
+  tdesc_rx = result.release ();
 }

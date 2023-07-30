@@ -1,4 +1,4 @@
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,22 +20,20 @@ if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
 }
 
 if { ![runto_main] } {
-    fail "can't run to main"
     return -1
 }
 
 gdb_test "info program" "Program stopped at $hex\.\r\nIt stopped at breakpoint $decimal\.\r\nType \"info stack\" or \"info registers\" for more information\." \
     "info program after run to main"
 
-# We don't really care where this step lands, so long as it gets
-# the inferior pushed off the breakpoint it's currently on...
-gdb_test "next" "$decimal\t.*" "step before info program"
+# We don't really care where this step lands, so long as GDB reports
+# that the inferior stopped  due to a step in the subsequent test.
+gdb_test "next" ".*" "step before info program"
 
 gdb_test "info program" "Program stopped at $hex\.\r\nIt stopped after being stepped\.\r\nType \"info stack\" or \"info registers\" for more information\." \
     "info program after next"
 
-if { ![runto_main] } then {
-    fail "can't restart program"
+if {![runto_main]} {
     return -1
 }
 

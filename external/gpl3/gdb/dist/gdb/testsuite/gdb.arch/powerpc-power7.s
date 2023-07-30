@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2020 Free Software Foundation, Inc.
+   Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,16 +26,10 @@ func:
 	.long  0xf16c6857    /* xxmrghd vs43,vs44,vs45     */
 	.long  0xf0642b50    /* xxmrgld vs3,vs4,vs5        */
 	.long  0xf16c6b57    /* xxmrgld vs43,vs44,vs45     */
-	.long  0xf0642850    /* xxmrghd vs3,vs4,vs5        */
-	.long  0xf16c6857    /* xxmrghd vs43,vs44,vs45     */
-	.long  0xf0642b50    /* xxmrgld vs3,vs4,vs5        */
-	.long  0xf16c6b57    /* xxmrgld vs43,vs44,vs45     */
 	.long  0xf0642950    /* xxpermdi vs3,vs4,vs5,1     */
 	.long  0xf16c6957    /* xxpermdi vs43,vs44,vs45,1  */
 	.long  0xf0642a50    /* xxpermdi vs3,vs4,vs5,2     */
 	.long  0xf16c6a57    /* xxpermdi vs43,vs44,vs45,2  */
-	.long  0xf0642780    /* xvmovdp vs3,vs4            */
-	.long  0xf16c6787    /* xvmovdp vs43,vs44          */
 	.long  0xf0642780    /* xvmovdp vs3,vs4            */
 	.long  0xf16c6787    /* xvmovdp vs43,vs44          */
 	.long  0xf0642f80    /* xvcpsgndp vs3,vs4,vs5      */
@@ -105,17 +99,13 @@ func:
 	.long  0xedc07835    /* frsqrtes. f14,f15          */
 	.long  0x7c43271e    /* isel    r2,r3,r4,28        */
 	.long  0x7f7bdb78    /* yield                      */
-	.long  0x7f7bdb78    /* yield                      */
 	.long  0x60420000    /* ori     r2,r2,0            */
 	.long  0x60000000    /* nop                        */
-	.long  0x60000000    /* nop                        */
-	.long  0x60420000    /* ori     r2,r2,0            */
 	.long  0x7fbdeb78    /* mdoio                      */
-	.long  0x7fbdeb78    /* mdoio                      */
-	.long  0x7fdef378    /* mdoom                      */
 	.long  0x7fdef378    /* mdoom                      */
 	.long  0x7d40e2a6    /* mfppr   r10                */
 	.long  0x7d62e2a6    /* mfppr32 r11                */
 	.long  0x7d80e3a6    /* mtppr   r12                */
 	.long  0x7da2e3a6    /* mtppr32 r13                */
 	.long  0x7d605264    /* tlbie   r10,r11            */
+	.section	.note.GNU-stack,"",@progbits

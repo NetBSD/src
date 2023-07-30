@@ -1,4 +1,4 @@
-# Copyright 2009-2020 Free Software Foundation, Inc.
+# Copyright 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +12,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Valgrind gdbserver requires gdb with xml support.
+require gdb_skip_xml_test 0
 
 load_lib valgrind.exp
 
@@ -30,6 +33,8 @@ if { [vgdb_start] == -1 } {
 }
 
 set double_free [gdb_get_line_number "double-free"]
+
+gdb_breakpoint "main"
 
 set test "continue"
 gdb_test_multiple "continue" $test {
@@ -57,7 +62,7 @@ gdb_test_multiple "continue" $test {
 gdb_test_no_output "set height 0"
 gdb_test_no_output "set width 0"
 
-gdb_test "bt" "in main \\(.*\\) at .*${srcfile}:$double_free"
+gdb_test "bt" "#\[0-9 ]+main \\(.*\\) at .*${srcfile}.*"
 
 # Explicitly kill the program so it doesn't dump core when we quit->detach.
 gdb_test "kill" "" "kill program" "Kill the program being debugged.*y or n. $" "y"

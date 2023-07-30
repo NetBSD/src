@@ -1,5 +1,5 @@
 /* ELF AArch64 mapping symbol support
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -21,5 +21,5 @@
 #define BFD_AARCH64_SPECIAL_SYM_TYPE_TAG	(1 << 1)
 #define BFD_AARCH64_SPECIAL_SYM_TYPE_OTHER	(1 << 2)
 #define BFD_AARCH64_SPECIAL_SYM_TYPE_ANY	(~0)
-extern bfd_boolean bfd_is_aarch64_special_symbol_name
+extern bool bfd_is_aarch64_special_symbol_name
   (const char * name, int type);

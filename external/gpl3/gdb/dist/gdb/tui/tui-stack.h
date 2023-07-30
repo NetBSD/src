@@ -1,6 +1,6 @@
 /* TUI display locator.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -24,7 +24,7 @@
 
 #include "tui/tui-data.h"
 
-struct frame_info;
+class frame_info_ptr;
 
 /* Locator window class.  */
 
@@ -52,25 +52,12 @@ struct tui_locator_window : public tui_win_info
     return false;
   }
 
+  bool can_focus () const override
+  {
+    return false;
+  }
+
   void rerender () override;
-
-  /* Update the locator, with the provided arguments.
-
-     Returns true if any of the locator's fields were actually
-     changed, and false otherwise.  */
-  bool set_locator_info (struct gdbarch *gdbarch,
-			 const struct symtab_and_line &sal,
-			 const char *procname);
-
-  /* Set the full_name portion of the locator.  */
-  void set_locator_fullname (const char *fullname);
-
-  std::string full_name;
-  std::string proc_name;
-  int line_no = 0;
-  CORE_ADDR addr = 0;
-  /* Architecture associated with code at this location.  */
-  struct gdbarch *gdbarch = nullptr;
 
 protected:
 
@@ -91,8 +78,7 @@ private:
   std::string make_status_line () const;
 };
 
-extern void tui_update_locator_fullname (struct symtab *symtab);
 extern void tui_show_locator_content (void);
-extern bool tui_show_frame_info (struct frame_info *);
+extern bool tui_show_frame_info (frame_info_ptr);
 
 #endif /* TUI_TUI_STACK_H */

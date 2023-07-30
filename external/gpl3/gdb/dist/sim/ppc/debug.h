@@ -169,5 +169,24 @@ trace_option(const char *option, int setting);
 extern void trace_usage
 (int verbose);
 
+/* TODO: These values aren't currently used by the ppc port.  They're here to
+   glue the common sim compile-time settings in.  The ppc_trace settings above
+   would need to be overhauled.  */
+#define TRACE_insn     1
+#define TRACE_disasm   1
+#define TRACE_decode   1
+#define TRACE_extract  1
+#define TRACE_linenum  1
+#define TRACE_memory   1
+#define TRACE_model    1
+#define TRACE_alu      1
+#define TRACE_core     1
+#define TRACE_events   1
+#define TRACE_fpu      1
+#define TRACE_vpu      1
+#define TRACE_branch   1
+#define TRACE_syscall  1
+#define TRACE_register 1
+#define TRACE_debug    1
 
 #endif /* _DEBUG_H_ */

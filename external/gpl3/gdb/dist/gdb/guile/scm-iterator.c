@@ -1,6 +1,6 @@
 /* Simple iterators for GDB/Scheme.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,8 +35,8 @@
      (let ((next! (lambda (iter)
 		    (let ((l (iterator-progress iter)))
 		      (if (eq? l '())
-		          end-marker
-		          (begin
+			  end-marker
+			  (begin
 			    (set-iterator-progress! iter (cdr l))
 			    (car l)))))))
        (make-iterator l l next!)))
@@ -55,10 +55,9 @@
 
 /* A smob for iterating over something.
    Typically this is used when computing a list of everything is
-   too expensive.
-   The typedef for this struct is in guile-internal.h.  */
+   too expensive.  */
 
-struct _iterator_smob
+struct iterator_smob
 {
   /* This always appears first.  */
   gdb_smob base;

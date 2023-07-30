@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,8 +27,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-if ![runto_main ] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return -1
 }
 
@@ -44,10 +43,13 @@ gdb_test "enable pretty-printer global bad-printers;container1" \
     "printers enabled"
 gdb_test "disable pretty-printer global bad-printers;container2" \
     "printers enabled"
-gdb_test "print c" "Result of children iterator not a tuple of two elements.*"
+gdb_test "print c" \
+    "Result of children iterator not a tuple of two elements.*" \
+    "print c, children method doesn't return a tuple"
 
 gdb_test "enable pretty-printer global bad-printers;container2" \
     "printers enabled"
 gdb_test "disable pretty-printer global bad-printers;container1" \
     "printers enabled"
-gdb_test "print c" "Bad result from children iterator.*"
+gdb_test "print c" "Bad result from children iterator.*" \
+    "print c, children method returns a malformed tuple"

@@ -1,5 +1,5 @@
 /* Interface to prologue value handling for GDB.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -216,9 +216,9 @@ enum pv_boolean {
    an element boundary, or doesn't refer to the whole element, return
    pv_maybe.  */
 enum pv_boolean pv_is_array_ref (pv_t addr, CORE_ADDR size,
-                                 pv_t array_addr, CORE_ADDR array_len,
-                                 CORE_ADDR elt_size,
-                                 int *i);
+				 pv_t array_addr, CORE_ADDR array_len,
+				 CORE_ADDR elt_size,
+				 int *i);
 
 
 /* A 'pv_area' keeps track of values stored in a particular region of

@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,9 +27,9 @@ enum arc_isa
   ARC_ISA_ARCV2	      /* such as ARC EM and ARC HS  */
 };
 
-struct arc_gdbarch_features
+struct arc_arch_features
 {
-  arc_gdbarch_features (int reg_size, arc_isa isa)
+  arc_arch_features (int reg_size, arc_isa isa)
     : reg_size (reg_size), isa (isa)
   {}
 
@@ -41,13 +41,13 @@ struct arc_gdbarch_features
   const arc_isa isa;
 
   /* Equality operator.  */
-  bool operator== (const struct arc_gdbarch_features &rhs) const
+  bool operator== (const struct arc_arch_features &rhs) const
   {
     return (reg_size == rhs.reg_size && isa == rhs.isa);
   }
 
   /* Inequality operator.  */
-  bool operator!= (const struct arc_gdbarch_features &rhs) const
+  bool operator!= (const struct arc_arch_features &rhs) const
   {
     return !(*this == rhs);
   }
@@ -70,8 +70,8 @@ struct arc_gdbarch_features
    The only external client of this must be the gdbserver which manipulates
    the returned data.  */
 
-target_desc *arc_create_target_description
-	(const struct arc_gdbarch_features &features);
+target_desc_up arc_create_target_description
+	(const struct arc_arch_features &features);
 
 #else
 
@@ -79,7 +79,7 @@ target_desc *arc_create_target_description
    If nothing is found, then create one and return it.  */
 
 const target_desc *arc_lookup_target_description
-	(const struct arc_gdbarch_features &features);
+	(const struct arc_arch_features &features);
 
 #endif /* GDBSERVER */
 
