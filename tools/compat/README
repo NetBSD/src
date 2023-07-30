@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.23 2023/07/16 18:09:54 palle Exp $
+$NetBSD: README,v 1.24 2023/07/30 19:03:50 palle Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -118,7 +118,10 @@ Solaris 11:
  * Set HOST_CC to /usr/bin/gcc
 
 * Solaris 11.4 (CBE)
- * TBD
+ * POSIX.1-2008, SUSv4 (see standards(7))
+ * Using gcc-11
+ * Set PATH to /usr/xpg7/bin:/usr/xpg6/bin:/usr/xpg4/bin:/usr/bin
+ * Set HOST_CC to /usr/bin/gcc
 
 * Solaris 11.4 (SRU57)
  * POSIX.1-2008, SUSv4 (see standards(7))
