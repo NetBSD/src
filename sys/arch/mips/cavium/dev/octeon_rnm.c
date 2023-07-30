@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.2.4.2 2020/05/19 17:39:04 martin Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.2.4.3 2023/07/30 11:41:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.2.4.2 2020/05/19 17:39:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.2.4.3 2023/07/30 11:41:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -118,7 +118,8 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.2.4.2 2020/05/19 17:39:04 martin Ex
 //#define	OCTEON_RNM_DEBUG
 
 #define	ENT_DELAY_CLOCK 8	/* cycles for each 64-bit RO sample batch */
-#define	RNG_DELAY_CLOCK 81	/* cycles for each SHA-1 output */
+#define	LFSR_DELAY_CLOCK 81	/* cycles to fill LFSR buffer */
+#define	SHA1_DELAY_CLOCK 81	/* cycles to compute SHA-1 output */
 #define	NROGROUPS	16
 #define	RNG_FIFO_WORDS	(512/sizeof(uint64_t))
 
@@ -195,7 +196,7 @@ octeon_rnm_attach(device_t parent, device_t self, void *aux)
 	 */
 	octeon_rnm_reset(sc);
 	octeon_rnm_conditioned_deterministic(sc);
-	octeon_rnm_delay(RNG_DELAY_CLOCK*1);
+	octeon_rnm_delay(LFSR_DELAY_CLOCK + SHA1_DELAY_CLOCK);
 	sample = octeon_rnm_load(sc);
 	if (sample != expected)
 		aprint_error_dev(self, "self-test: read %016"PRIx64","
