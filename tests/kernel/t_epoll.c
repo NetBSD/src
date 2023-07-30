@@ -1,4 +1,4 @@
-/*	$NetBSD: t_epoll.c,v 1.1 2023/07/28 18:19:01 christos Exp $	*/
+/*	$NetBSD: t_epoll.c,v 1.2 2023/07/30 18:31:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_epoll.c,v 1.1 2023/07/28 18:19:01 christos Exp $");
+__RCSID("$NetBSD: t_epoll.c,v 1.2 2023/07/30 18:31:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/epoll.h>
+#include <sys/fcntl.h>
 #include <errno.h>
 
 #include <atf-c.h>
@@ -58,6 +59,26 @@ ATF_TC_BODY(create_size, tc)
 	ATF_REQUIRE_ERRNO(EINVAL, true);
 
 	RL(epoll_create(1));
+}
+
+ATF_TC(create_cloexec);
+ATF_TC_HEAD(create_cloexec, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks that epoll_create1 sets close on exec when desired");
+}
+ATF_TC_BODY(create_cloexec, tc)
+{
+	int fd;
+
+	RL(fd = epoll_create1(0));
+	ATF_REQUIRE_MSG((fcntl(fd, F_GETFD) & FD_CLOEXEC) == 0,
+	    "Close on exec set unexpectedly.");
+
+	RL(fd = epoll_create1(EPOLL_CLOEXEC));
+	ATF_REQUIRE_MSG((fcntl(fd, F_GETFD) & FD_CLOEXEC) != 0,
+	    "Close on exec was not set.");
 }
 
 ATF_TC(bad_epfd);
@@ -214,6 +235,7 @@ ATF_TC_BODY(watch_depth, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, create_size);
+	ATF_TP_ADD_TC(tp, create_cloexec);
 	ATF_TP_ADD_TC(tp, bad_epfd);
 	ATF_TP_ADD_TC(tp, bad_fd);
 	ATF_TP_ADD_TC(tp, not_added);
