@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.260 2023/07/29 15:04:29 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.261 2023/07/30 18:31:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.260 2023/07/29 15:04:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.261 2023/07/30 18:31:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1725,7 +1725,7 @@ linux_sys_epoll_create1(struct lwp *l,
 
 	SCARG(&ca, flags) = 0;
 	if ((SCARG(uap, flags) & LINUX_O_CLOEXEC) != 0)
-		SCARG(&ca, flags) |= O_CLOEXEC;
+		SCARG(&ca, flags) |= EPOLL_CLOEXEC;
 
 	return sys_epoll_create1(l, &ca, retval);
 }
