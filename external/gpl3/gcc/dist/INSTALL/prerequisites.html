@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2020 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2022 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -88,21 +88,20 @@ described below.
 <a name="Tools_002fpackages-necessary-for-building-GCC"></a>
 <h3 class="heading">Tools/packages necessary for building GCC</h3>
 <dl compact="compact">
-<dt>ISO C++98 compiler</dt>
-<dd><p>Necessary to bootstrap GCC, although versions of GCC prior
-to 4.8 also allow bootstrapping with a ISO C89 compiler and versions
-of GCC prior to 3.4 also allow bootstrapping with a traditional
-(K&amp;R) C compiler.
+<dt>ISO C++11 compiler</dt>
+<dd><p>Necessary to bootstrap GCC.  GCC 4.8.3 or newer has sufficient
+support for used C++11 features, with earlier GCC versions you
+might run into implementation bugs.
+</p>
+<p>Versions of GCC prior to 11 also allow bootstrapping with an ISO C++98
+compiler, versions of GCC prior to 4.8 also allow bootstrapping with a
+ISO C89 compiler, and versions of GCC prior to 3.4 also allow
+bootstrapping with a traditional (K&amp;R) C compiler.
 </p>
 <p>To build all languages in a cross-compiler or other configuration where
 3-stage bootstrap is not performed, you need to start with an existing
-GCC binary (version 3.4 or later) because source code for language
+GCC binary (version 4.8.3 or later) because source code for language
 frontends other than C might use GCC extensions.
-</p>
-<p>Note that to bootstrap GCC with versions of GCC earlier than 3.4, you
-may need to use <samp>--disable-stage1-checking</samp>, though
-bootstrapping the compiler with such earlier compilers is strongly
-discouraged.
 </p>
 </dd>
 <dt>C standard library and headers</dt>
@@ -125,7 +124,7 @@ name of the package depends on your distro) or you must build GCC as a
 <dt><a name="GNAT-prerequisite"></a>GNAT</dt>
 <dd>
 <p>In order to build GNAT, the Ada compiler, you need a working GNAT
-compiler (GCC version 4.7 or later).
+compiler (GCC version 5.1 or later).
 </p>
 <p>This includes GNAT tools such as <code>gnatmake</code> and
 <code>gnatlink</code>, since the Ada front end is written in Ada and
@@ -150,6 +149,31 @@ must not be set when building the Ada compiler, the Ada tools, or the
 Ada runtime libraries. You can check that your build environment is clean
 by verifying that &lsquo;<samp>gnatls -v</samp>&rsquo; lists only one explicit path in each
 section.
+</p>
+</dd>
+<dt><a name="GDC-prerequisite"></a>GDC</dt>
+<dd>
+<p>In order to build GDC, the D compiler, you need a working GDC
+compiler (GCC version 9.4 or later) and D runtime library,
+&lsquo;<samp>libphobos</samp>&rsquo;, as the D front end is written in D.
+</p>
+<p>Versions of GDC prior to 12 can be built with an ISO C++11 compiler, which can
+then be installed and used to bootstrap newer versions of the D front end.
+</p>
+<p>It is strongly recommended to use an older version of GDC to build GDC. More
+recent versions of GDC than the version built are not guaranteed to work and
+will often fail during the build with compilation errors relating to
+deprecations or removed features.
+</p>
+<p>Note that <code>configure</code> does not test whether the GDC installation works
+and has a sufficiently recent version.  Though the implementation of the D
+front end does not make use of any GDC-specific extensions, or novel features
+of the D language, if too old a GDC version is installed and
+<samp>--enable-languages=d</samp> is used, the build will fail.
+</p>
+<p>On some targets, &lsquo;<samp>libphobos</samp>&rsquo; isn&rsquo;t enabled by default, but compiles
+and works if <samp>--enable-libphobos</samp> is used.  Specifics are
+documented for affected targets.
 </p>
 </dd>
 <dt>A &ldquo;working&rdquo; POSIX compatible shell, or GNU bash</dt>
@@ -183,6 +207,9 @@ are broken.  GNU awk version 3.1.5 is known to work.
 <p>Necessary in some circumstances, optional in others.  See the
 host/target specific instructions for your platform for the exact
 requirements.
+</p>
+<p>Note binutils 2.35 or newer is required for LTO to work correctly
+with GNU libtool that includes doing a bootstrap with LTO enabled.
 </p>
 </dd>
 <dt>gzip version 1.2.4 (or later) or</dt>
@@ -261,7 +288,7 @@ download_prerequisites installs.
 <dt>MPC Library version 1.0.1 (or later)</dt>
 <dd>
 <p>Necessary to build GCC.  It can be downloaded from
-<a href="http://www.multiprecision.org/mpc/">http://www.multiprecision.org/mpc/</a>.  If an MPC source distribution
+<a href="https://www.multiprecision.org/mpc/">https://www.multiprecision.org/mpc/</a>.  If an MPC source distribution
 is found in a subdirectory of your GCC sources named <samp>mpc</samp>, it
 will be built together with GCC.  Alternatively, if MPC is already
 installed but it is not in your default library search path, the
@@ -329,7 +356,7 @@ to the latest released version.
 <samp>gcc/cp/cfns.h</samp>.
 </p>
 </dd>
-<dt>DejaGnu 1.4.4</dt>
+<dt>DejaGnu version 1.5.3 (or later)</dt>
 <dt>Expect</dt>
 <dt>Tcl</dt>
 <dd>
@@ -409,7 +436,6 @@ own sources.
 <p>
 <p><a href="./index.html">Return to the GCC Installation page</a>
 </p>
-
 
 
 

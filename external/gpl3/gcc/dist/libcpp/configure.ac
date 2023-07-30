@@ -12,6 +12,7 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_RANLIB
+AC_CHECK_TOOL(AR, ar)
 
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
@@ -20,6 +21,11 @@ MISSING=`cd $ac_aux_dir && ${PWDCMD-pwd}`/missing
 AC_CHECK_PROGS([ACLOCAL], [aclocal], [$MISSING aclocal])
 AC_CHECK_PROGS([AUTOCONF], [autoconf], [$MISSING autoconf])
 AC_CHECK_PROGS([AUTOHEADER], [autoheader], [$MISSING autoheader])
+
+if test -z "$ETAGS"; then
+  ETAGS=etags
+fi
+AC_SUBST([ETAGS])
 
 # Figure out what compiler warnings we can enable.
 # See config/warnings.m4 for details.
@@ -96,6 +102,9 @@ if test $ac_cv_type_uchar = yes; then
   AC_DEFINE(HAVE_UCHAR, 1,
   [Define if <sys/types.h> defines \`uchar'.])
 fi
+
+AC_CHECK_SIZEOF(ino_t)
+AC_CHECK_SIZEOF(dev_t)
 
 # g++ on Solaris 10+ defines _XOPEN_SOURCE=600, which exposes a different
 # iconv() prototype.
@@ -205,6 +214,17 @@ AC_ARG_ENABLE(host-shared,
 		[build host code as shared libraries])],
 [PICFLAG=-fPIC], [PICFLAG=])
 AC_SUBST(PICFLAG)
+
+# Enable Intel CET on Intel CET enabled host if jit is enabled.
+GCC_CET_HOST_FLAGS(CET_HOST_FLAGS)
+case x$enable_languages in
+*jit*)
+  ;;
+*)
+  CET_HOST_FLAGS=
+  ;;
+esac
+AC_SUBST(CET_HOST_FLAGS)
 
 AC_ARG_ENABLE(valgrind-annotations,
 [AS_HELP_STRING([--enable-valgrind-annotations],

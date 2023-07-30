@@ -1,5 +1,5 @@
 /* Definition of RISC-V target for GNU compiler.
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2022 Free Software Foundation, Inc.
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target for GNU compiler.
 
@@ -35,7 +35,7 @@ enum riscv_symbol_type {
 };
 #define NUM_SYMBOL_TYPES (SYMBOL_TLS_GD + 1)
 
-/* Routines implemented in riscv.c.  */
+/* Routines implemented in riscv.cc.  */
 extern enum riscv_symbol_type riscv_classify_symbolic_expression (rtx);
 extern bool riscv_symbolic_constant_p (rtx, enum riscv_symbol_type *);
 extern int riscv_regno_mode_ok_for_base_p (int, machine_mode, bool);
@@ -75,21 +75,34 @@ extern bool riscv_store_data_bypass_p (rtx_insn *, rtx_insn *);
 extern rtx riscv_gen_gpr_save_insn (struct riscv_frame_info *);
 extern bool riscv_gpr_save_operation_p (rtx);
 
-/* Routines implemented in riscv-c.c.  */
+/* Routines implemented in riscv-c.cc.  */
 void riscv_cpu_cpp_builtins (cpp_reader *);
 
-/* Routines implemented in riscv-d.c  */
-extern void riscv_d_target_versions (void);
-
-/* Routines implemented in riscv-builtins.c.  */
+/* Routines implemented in riscv-builtins.cc.  */
 extern void riscv_atomic_assign_expand_fenv (tree *, tree *, tree *);
 extern rtx riscv_expand_builtin (tree, rtx, rtx, machine_mode, int);
 extern tree riscv_builtin_decl (unsigned int, bool);
 extern void riscv_init_builtins (void);
 
-/* Routines implemented in riscv-common.c.  */
-extern std::string riscv_arch_str ();
+/* Routines implemented in riscv-common.cc.  */
+extern std::string riscv_arch_str (bool version_p = true);
 
 extern bool riscv_hard_regno_rename_ok (unsigned, unsigned);
+
+rtl_opt_pass * make_pass_shorten_memrefs (gcc::context *ctxt);
+
+/* Information about one CPU we know about.  */
+struct riscv_cpu_info {
+  /* This CPU's canonical name.  */
+  const char *name;
+
+  /* Default arch for this CPU, could be NULL if no default arch.  */
+  const char *arch;
+
+  /* Which automaton to use for tuning.  */
+  const char *tune;
+};
+
+extern const riscv_cpu_info *riscv_find_cpu (const char *);
 
 #endif /* ! GCC_RISCV_PROTOS_H */

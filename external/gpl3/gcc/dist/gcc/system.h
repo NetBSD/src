@@ -1,6 +1,6 @@
 /* Get common system includes and various definitions and declarations based
    on autoconf macros.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -238,9 +238,17 @@ extern int errno;
 #ifdef INCLUDE_VECTOR
 # include <vector>
 #endif
+#ifdef INCLUDE_ARRAY
+# include <array>
+#endif
+#ifdef INCLUDE_FUNCTIONAL
+# include <functional>
+#endif
 # include <cstring>
+# include <initializer_list>
 # include <new>
 # include <utility>
+# include <type_traits>
 #endif
 
 /* Some of glibc's string inlines cause warnings.  Plus we'd rather
@@ -357,6 +365,10 @@ extern int errno;
 # ifdef HAVE_SYS_FILE_H
 #  include <sys/file.h>
 # endif
+#endif
+
+#ifdef HAVE_SYS_LOCKING_H
+# include <sys/locking.h>
 #endif
 
 #ifndef SEEK_SET
@@ -732,17 +744,40 @@ extern int vsnprintf (char *, size_t, const char *, va_list);
 
 /* Some of the headers included by <memory> can use "abort" within a
    namespace, e.g. "_VSTD::abort();", which fails after we use the
-   preprocessor to redefine "abort" as "fancy_abort" below.
-   Given that unique-ptr.h can use "free", we need to do this after "free"
-   is declared but before "abort" is overridden.  */
+   preprocessor to redefine "abort" as "fancy_abort" below.  */
 
-#ifdef INCLUDE_UNIQUE_PTR
-# include "unique-ptr.h"
+#ifdef INCLUDE_MEMORY
+# include <memory>
 #endif
 
 #ifdef INCLUDE_MALLOC_H
-#ifdef HAVE_MALLINFO
+#if defined(HAVE_MALLINFO) || defined(HAVE_MALLINFO2)
 #include <malloc.h>
+#endif
+#endif
+
+#ifdef INCLUDE_PTHREAD_H
+#include <pthread.h>
+#endif
+
+#ifdef INCLUDE_ISL
+#ifdef HAVE_isl
+#include <isl/options.h>
+#include <isl/ctx.h>
+#include <isl/val.h>
+#include <isl/set.h>
+#include <isl/union_set.h>
+#include <isl/map.h>
+#include <isl/union_map.h>
+#include <isl/aff.h>
+#include <isl/constraint.h>
+#include <isl/flow.h>
+#include <isl/ilp.h>
+#include <isl/schedule.h>
+#include <isl/ast_build.h>
+#include <isl/schedule_node.h>
+#include <isl/id.h>
+#include <isl/space.h>
 #endif
 #endif
 
@@ -775,6 +810,12 @@ extern void fancy_abort (const char *, int, const char *)
 #define ALWAYS_INLINE inline __attribute__ ((always_inline))
 #else
 #define ALWAYS_INLINE inline
+#endif
+
+#if GCC_VERSION >= 3004
+#define WARN_UNUSED_RESULT __attribute__ ((__warn_unused_result__))
+#else
+#define WARN_UNUSED_RESULT
 #endif
 
 /* Use gcc_unreachable() to mark unreachable locations (like an
@@ -876,12 +917,10 @@ extern void fancy_abort (const char *, int, const char *)
    etc don't spuriously fail.  */
 #ifdef IN_GCC
 
-#ifndef USES_ISL
 #undef calloc
 #undef strdup
 #undef strndup
  #pragma GCC poison calloc strdup strndup
-#endif
 
 #if !defined(FLEX_SCANNER) && !defined(YYBISON)
 #undef malloc
@@ -1039,7 +1078,8 @@ extern void fancy_abort (const char *, int, const char *)
 	LIBGCC2_LONG_DOUBLE_TYPE_SIZE STRUCT_VALUE			   \
 	EH_FRAME_IN_DATA_SECTION TARGET_FLT_EVAL_METHOD_NON_DEFAULT	   \
 	JCR_SECTION_NAME TARGET_USE_JCR_SECTION SDB_DEBUGGING_INFO	   \
-	SDB_DEBUG NO_IMPLICIT_EXTERN_C
+	SDB_DEBUG NO_IMPLICIT_EXTERN_C NOTICE_UPDATE_CC			   \
+	CC_STATUS_MDEP_INIT CC_STATUS_MDEP CC_STATUS
 
 /* Hooks that are no longer used.  */
  #pragma GCC poison LANG_HOOKS_FUNCTION_MARK LANG_HOOKS_FUNCTION_FREE	\
@@ -1219,6 +1259,7 @@ void gcc_sort_r (void *, size_t, size_t, sort_r_cmp_fn *, void *);
 void gcc_qsort (void *, size_t, size_t, int (*)(const void *, const void *));
 void gcc_stablesort (void *, size_t, size_t,
 		     int (*)(const void *, const void *));
+void gcc_stablesort_r (void *, size_t, size_t, sort_r_cmp_fn *, void *data);
 /* Redirect four-argument qsort calls to gcc_qsort; one-argument invocations
    correspond to vec::qsort, and use C qsort internally.  */
 #define PP_5th(a1, a2, a3, a4, a5, ...) a5
@@ -1227,6 +1268,7 @@ void gcc_stablesort (void *, size_t, size_t,
 
 #define ONE_K 1024
 #define ONE_M (ONE_K * ONE_K)
+#define ONE_G (ONE_K * ONE_M)
 
 /* Display a number as an integer multiple of either:
    - 1024, if said integer is >= to 10 K (in base 2)
@@ -1253,5 +1295,36 @@ void gcc_stablesort (void *, size_t, size_t,
 /* Format string particle for printing a SIZE_AMOUNT with N being the width
    of the number.  */
 #define PRsa(n) "%" #n PRIu64 "%c"
+
+/* System headers may define NULL to be an integer (e.g. 0L), which cannot be
+   used safely in certain contexts (e.g. as sentinels).  Redefine NULL to
+   nullptr in order to make it safer.  Note that this might confuse system
+   headers, however, by convention they must not be included after this point.
+*/
+#ifdef __cplusplus
+#undef NULL
+#define NULL nullptr
+#endif
+
+/* Return true if STR string starts with PREFIX.  */
+
+static inline bool
+startswith (const char *str, const char *prefix)
+{
+  return strncmp (str, prefix, strlen (prefix)) == 0;
+}
+
+/* Return true if STR string ends with SUFFIX.  */
+
+static inline bool
+endswith (const char *str, const char *suffix)
+{
+  size_t str_len = strlen (str);
+  size_t suffix_len = strlen (suffix);
+  if (str_len < suffix_len)
+    return false;
+
+  return memcmp (str + str_len - suffix_len, suffix, suffix_len) == 0;
+}
 
 #endif /* ! GCC_SYSTEM_H */

@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GCOV 1"
-.TH GCOV 1 "2023-07-07" "gcc-10.5.0" "GNU"
+.TH GCOV 1 "2023-05-08" "gcc-12.3.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -144,8 +144,8 @@ gcov [\fB\-v\fR|\fB\-\-version\fR] [\fB\-h\fR|\fB\-\-help\fR]
      [\fB\-c\fR|\fB\-\-branch\-counts\fR]
      [\fB\-d\fR|\fB\-\-display\-progress\fR]
      [\fB\-f\fR|\fB\-\-function\-summaries\fR]
-     [\fB\-i\fR|\fB\-\-json\-format\fR]
-     [\fB\-j\fR|\fB\-\-human\-readable\fR]
+     [\fB\-j\fR|\fB\-\-json\-format\fR]
+     [\fB\-H\fR|\fB\-\-human\-readable\fR]
      [\fB\-k\fR|\fB\-\-use\-colors\fR]
      [\fB\-l\fR|\fB\-\-long\-file\-names\fR]
      [\fB\-m\fR|\fB\-\-demangled\-names\fR]
@@ -265,8 +265,8 @@ Output summaries for each function in addition to the file level summary.
 .PD
 Display help about using \fBgcov\fR (on the standard output), and
 exit without doing any further processing.
-.IP "\fB\-i\fR" 4
-.IX Item "-i"
+.IP "\fB\-j\fR" 4
+.IX Item "-j"
 .PD 0
 .IP "\fB\-\-json\-format\fR" 4
 .IX Item "--json-format"
@@ -280,11 +280,11 @@ Structure of the \s-1JSON\s0 is following:
 .Sp
 .Vb 7
 \&        {
-\&          "current_working_directory": <current_working_directory>,
-\&          "data_file": <data_file>,
-\&          "format_version": <format_version>,
-\&          "gcc_version": <gcc_version>
-\&          "files": [<file>]
+\&          "current_working_directory": "foo/bar",
+\&          "data_file": "a.out",
+\&          "format_version": "1",
+\&          "gcc_version": "11.1.1 20210510"
+\&          "files": ["$file"]
 \&        }
 .Ve
 .Sp
@@ -306,9 +306,9 @@ Each \fIfile\fR has the following form:
 .Sp
 .Vb 5
 \&        {
-\&          "file": <file_name>,
-\&          "functions": [<function>],
-\&          "lines": [<line>]
+\&          "file": "a.c",
+\&          "functions": ["$function"],
+\&          "lines": ["$line"]
 \&        }
 .Ve
 .Sp
@@ -322,15 +322,15 @@ Each \fIfunction\fR has the following form:
 .Sp
 .Vb 11
 \&        {
-\&          "blocks": <blocks>,
-\&          "blocks_executed": <blocks_executed>,
-\&          "demangled_name": "<demangled_name>,
-\&          "end_column": <end_column>,
-\&          "end_line": <end_line>,
-\&          "execution_count": <execution_count>,
-\&          "name": <name>,
-\&          "start_column": <start_column>
-\&          "start_line": <start_line>
+\&          "blocks": 2,
+\&          "blocks_executed": 2,
+\&          "demangled_name": "foo",
+\&          "end_column": 1,
+\&          "end_line": 4,
+\&          "execution_count": 1,
+\&          "name": "foo",
+\&          "start_column": 5,
+\&          "start_line": 1
 \&        }
 .Ve
 .Sp
@@ -365,11 +365,11 @@ Each \fIline\fR has the following form:
 .Sp
 .Vb 7
 \&        {
-\&          "branches": [<branch>],
-\&          "count": <count>,
-\&          "line_number": <line_number>,
-\&          "unexecuted_block": <unexecuted_block>
-\&          "function_name": <function_name>,
+\&          "branches": ["$branch"],
+\&          "count": 2,
+\&          "line_number": 15,
+\&          "unexecuted_block": false,
+\&          "function_name": "foo",
 \&        }
 .Ve
 .Sp
@@ -392,9 +392,9 @@ Each \fIbranch\fR has the following form:
 .Sp
 .Vb 5
 \&        {
-\&          "count": <count>,
-\&          "fallthrough": <fallthrough>,
-\&          "throw": <throw>
+\&          "count": 11,
+\&          "fallthrough": true,
+\&          "throw": false
 \&        }
 .Ve
 .Sp
@@ -408,8 +408,8 @@ Fields of the \fIbranch\fR element have following semantics:
 .RE
 .RS 4
 .RE
-.IP "\fB\-j\fR" 4
-.IX Item "-j"
+.IP "\fB\-H\fR" 4
+.IX Item "-H"
 .PD 0
 .IP "\fB\-\-human\-readable\fR" 4
 .IX Item "--human-readable"
@@ -639,8 +639,9 @@ will now produce a listing of the code along with frequency of execution
 for each line.  For example, if your program is called \fItmp.cpp\fR, this
 is what you see when you use the basic \fBgcov\fR facility:
 .PP
-.Vb 6
-\&        $ g++ \-\-coverage tmp.cpp
+.Vb 7
+\&        $ g++ \-\-coverage tmp.cpp \-c
+\&        $ g++ \-\-coverage tmp.o
 \&        $ a.out
 \&        $ gcov tmp.cpp \-m
 \&        File \*(Aqtmp.cpp\*(Aq
@@ -992,13 +993,14 @@ same source lines, the line counts themselves might seem inconsistent.
 .PP
 Long-running applications can use the \f(CW\*(C`_\|_gcov_reset\*(C'\fR and \f(CW\*(C`_\|_gcov_dump\*(C'\fR
 facilities to restrict profile collection to the program region of
-interest. Calling \f(CW\*(C`_\|_gcov_reset(void)\*(C'\fR will clear all profile counters
-to zero, and calling \f(CW\*(C`_\|_gcov_dump(void)\*(C'\fR will cause the profile information
-collected at that point to be dumped to \fI.gcda\fR output files.
+interest. Calling \f(CW\*(C`_\|_gcov_reset(void)\*(C'\fR will clear all run-time profile
+counters to zero, and calling \f(CW\*(C`_\|_gcov_dump(void)\*(C'\fR will cause the profile
+information collected at that point to be dumped to \fI.gcda\fR output files.
 Instrumented applications use a static destructor with priority 99
 to invoke the \f(CW\*(C`_\|_gcov_dump\*(C'\fR function. Thus \f(CW\*(C`_\|_gcov_dump\*(C'\fR
 is executed after all user defined static destructors,
 as well as handlers registered with \f(CW\*(C`atexit\*(C'\fR.
+.PP
 If an executable loads a dynamic shared object via dlopen functionality,
 \&\fB\-Wl,\-\-dynamic\-list\-data\fR is needed to dump all profile data.
 .PP
@@ -1014,7 +1016,7 @@ to a misleading profile.
 \&\fIgpl\fR\|(7), \fIgfdl\fR\|(7), \fIfsf\-funding\fR\|(7), \fIgcc\fR\|(1) and the Info entry for \fIgcc\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1996\-2020 Free Software Foundation, Inc.
+Copyright (c) 1996\-2022 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or

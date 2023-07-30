@@ -1,7 +1,8 @@
 //===-- tsan_flags.inc ------------------------------------------*- C++ -*-===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -42,7 +43,6 @@ TSAN_FLAG(
     bool, force_seq_cst_atomics, false,
     "If set, all atomics are effectively sequentially consistent (seq_cst), "
     "regardless of what user actually specified.")
-TSAN_FLAG(bool, print_benign, false, "Print matched \"benign\" races at exit.")
 TSAN_FLAG(bool, halt_on_error, false, "Exit after first reported error.")
 TSAN_FLAG(int, atexit_sleep_ms, 1000,
           "Sleep in main thread before exiting for that many ms "
@@ -75,7 +75,7 @@ TSAN_FLAG(int, io_sync, 1,
 TSAN_FLAG(bool, die_after_fork, true,
           "Die after multi-threaded fork if the child creates new threads.")
 TSAN_FLAG(const char *, suppressions, "", "Suppressions file name.")
-TSAN_FLAG(bool, ignore_interceptors_accesses, false,
+TSAN_FLAG(bool, ignore_interceptors_accesses, SANITIZER_MAC ? true : false,
           "Ignore reads and writes from all interceptors.")
 TSAN_FLAG(bool, ignore_noninstrumented_modules, SANITIZER_MAC ? true : false,
           "Interceptors should only detect races when called from instrumented "

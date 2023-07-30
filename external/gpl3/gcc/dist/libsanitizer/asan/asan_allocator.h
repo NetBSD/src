@@ -14,10 +14,11 @@
 #define ASAN_ALLOCATOR_H
 
 #include "asan_flags.h"
-#include "asan_internal.h"
 #include "asan_interceptors.h"
+#include "asan_internal.h"
 #include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_list.h"
+#include "sanitizer_common/sanitizer_platform.h"
 
 namespace __asan {
 
@@ -27,7 +28,7 @@ enum AllocType {
   FROM_NEW_BR = 3   // Memory block came from operator new [ ]
 };
 
-struct AsanChunk;
+class AsanChunk;
 
 struct AllocatorOptions {
   u32 quarantine_size_mb;
@@ -62,8 +63,6 @@ class AsanChunkView {
   bool Eq(const AsanChunkView &c) const { return chunk_ == c.chunk_; }
   u32 GetAllocStackId() const;
   u32 GetFreeStackId() const;
-  StackTrace GetAllocStack() const;
-  StackTrace GetFreeStack() const;
   AllocType GetAllocType() const;
   bool AddrIsInside(uptr addr, uptr access_size, sptr *offset) const {
     if (addr >= Beg() && (addr + access_size) <= End()) {
@@ -131,6 +130,10 @@ typedef DefaultSizeClassMap SizeClassMap;
 const uptr kAllocatorSpace =  ~(uptr)0;
 const uptr kAllocatorSize  =  0x2000000000ULL;  // 128G.
 typedef VeryCompactSizeClassMap SizeClassMap;
+#elif SANITIZER_RISCV64
+const uptr kAllocatorSpace = ~(uptr)0;
+const uptr kAllocatorSize = 0x2000000000ULL;  // 128G.
+typedef VeryDenseSizeClassMap SizeClassMap;
 # elif defined(__aarch64__)
 // AArch64/SANITIZER_CAN_USE_ALLOCATOR64 is only for 42-bit VMA
 // so no need to different values for different VMA.
@@ -177,7 +180,7 @@ typedef CompactSizeClassMap SizeClassMap;
 struct AP32 {
   static const uptr kSpaceBeg = 0;
   static const u64 kSpaceSize = SANITIZER_MMAP_RANGE_SIZE;
-  static const uptr kMetadataSize = 16;
+  static const uptr kMetadataSize = 0;
   typedef __asan::SizeClassMap SizeClassMap;
   static const uptr kRegionSizeLog = __asan::kRegionSizeLog;
   typedef __asan::ByteMap ByteMap;

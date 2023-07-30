@@ -6,8 +6,9 @@ gcc_version := $(shell @get_gcc_base_ver@ $(top_srcdir)/../gcc/BASE-VER)
 DEFS = -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS 
 AM_CXXFLAGS = -Wall -W -Wno-unused-parameter -Wwrite-strings -pedantic -Wno-long-long  -fPIC -fno-builtin -fno-exceptions -fno-rtti -fomit-frame-pointer -funwind-tables -fvisibility=hidden -Wno-variadic-macros
 AM_CXXFLAGS += $(LIBSTDCXX_RAW_CXX_CXXFLAGS)
-AM_CXXFLAGS += -std=gnu++11
+AM_CXXFLAGS += -std=gnu++14
 AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
+AM_CCASFLAGS = $(EXTRA_ASFLAGS)
 ACLOCAL_AMFLAGS = -I m4
 
 noinst_LTLIBRARIES = libsanitizer_lsan.la
@@ -17,19 +18,20 @@ nodist_toolexeclib_HEADERS = liblsan_preinit.o
 endif
 
 sanitizer_lsan_files = \
-	lsan_common.cc \
-	lsan_common_linux.cc \
-	lsan_common_mac.cc
+	lsan_common.cpp \
+	lsan_common_linux.cpp \
+	lsan_common_mac.cpp
 
 lsan_files = \
 	$(sanitizer_lsan_files) \
-	lsan.cc \
-	lsan_linux.cc \
-	lsan_mac.cc \
-	lsan_malloc_mac.cc \
-	lsan_allocator.cc \
-	lsan_interceptors.cc \
-	lsan_thread.cc
+	lsan.cpp \
+	lsan_linux.cpp \
+	lsan_mac.cpp \
+	lsan_malloc_mac.cpp \
+	lsan_allocator.cpp \
+	lsan_interceptors.cpp \
+	lsan_thread.cpp \
+	lsan_posix.cpp
 
 libsanitizer_lsan_la_SOURCES = $(sanitizer_lsan_files)
 

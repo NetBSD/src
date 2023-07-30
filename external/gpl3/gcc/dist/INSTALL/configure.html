@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2020 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2022 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -176,21 +176,68 @@ The <var>url</var> should end with a <code>/</code> character.
 </dd>
 </dl>
 
-<a name="Target-specification"></a>
-<h3 class="heading">Target specification</h3>
-<ul>
-<li> GCC has code to correctly determine the correct value for <var>target</var>
-for nearly all native systems.  Therefore, we highly recommend you do
-not provide a configure target when configuring a native compiler.
+<a name="Host_002c-Build-and-Target-specification"></a>
+<h3 class="heading">Host, Build and Target specification</h3>
 
-</li><li> <var>target</var> must be specified as <samp>--target=<var>target</var></samp>
-when configuring a cross compiler; examples of valid targets would be
-m68k-elf, sh-elf, etc.
+<p>Specify the host, build and target machine configurations.  You do this
+when you run the <samp>configure</samp> script.
+</p>
+<p>The <em>build</em> machine is the system which you are using, the
+<em>host</em> machine is the system where you want to run the resulting
+compiler (normally the build machine), and the <em>target</em> machine is
+the system for which you want the compiler to generate code.
+</p>
+<p>If you are building a compiler to produce code for the machine it runs
+on (a native compiler), you normally do not need to specify any operands
+to <samp>configure</samp>; it will try to guess the type of machine you are on
+and use that as the build, host and target machines.  So you don&rsquo;t need
+to specify a configuration when building a native compiler unless
+<samp>configure</samp> cannot figure out what your configuration is or guesses
+wrong.
+</p>
+<p>In those cases, specify the build machine&rsquo;s <em>configuration name</em>
+with the <samp>--host</samp> option; the host and target will default to be
+the same as the host machine.
+</p>
+<p>Here is an example:
+</p>
+<div class="smallexample">
+<pre class="smallexample">./configure --host=x86_64-pc-linux-gnu
+</pre></div>
 
-</li><li> Specifying just <var>target</var> instead of <samp>--target=<var>target</var></samp>
-implies that the host defaults to <var>target</var>.
-</li></ul>
+<p>A configuration name may be canonical or it may be more or less
+abbreviated (<samp>config.sub</samp> script produces canonical versions).
+</p>
+<p>A canonical configuration name has three parts, separated by dashes.
+It looks like this: &lsquo;<samp><var>cpu</var>-<var>company</var>-<var>system</var></samp>&rsquo;.
+</p>
+<p>Here are the possible CPU types:
+</p>
+<blockquote>
+<p>aarch64, aarch64_be, alpha, alpha64, amdgcn, arc, arceb, arm, armeb, avr, bfin,
+bpf, cr16, cris, csky, epiphany, fido, fr30, frv, ft32, h8300, hppa, hppa2.0,
+hppa64, i486, i686, ia64, iq2000, lm32, loongarch64, m32c, m32r, m32rle, m68k,
+mcore, microblaze, microblazeel, mips, mips64, mips64el, mips64octeon,
+mips64orion, mips64vr, mipsel, mipsisa32, mipsisa32r2, mipsisa64, mipsisa64r2,
+mipsisa64r2el, mipsisa64sb1, mipsisa64sr71k, mipstx39, mmix, mn10300, moxie,
+msp430, nds32be, nds32le, nios2, nvptx, or1k, pdp11, powerpc, powerpc64,
+powerpc64le, powerpcle, pru, riscv32, riscv32be, riscv64, riscv64be, rl78, rx,
+s390, s390x, sh, shle, sparc, sparc64, tic6x, tilegx, tilegxbe, tilepro, v850,
+v850e, v850e1, vax, visium, x86_64, xstormy16, xtensa
+</p></blockquote>
 
+<p>Here is a list of system types:
+</p>
+<blockquote>
+<p>aix<var>version</var>, amdhsa, aout, cygwin, darwin<var>version</var>,
+eabi, eabialtivec, eabisim, eabisimaltivec, elf, elf32,
+elfbare, elfoabi, freebsd<var>version</var>, gnu, hpux, hpux<var>version</var>,
+kfreebsd-gnu, kopensolaris-gnu, linux-androideabi, linux-gnu,
+linux-gnu_altivec, linux-musl, linux-uclibc, lynxos, mingw32, mingw32crt,
+mmixware, msdosdjgpp, netbsd, netbsdelf<var>version</var>, nto-qnx, openbsd,
+rtems, solaris<var>version</var>, symbianelf, tpf, uclinux, uclinux_eabi, vms,
+vxworks, vxworksae, vxworksmils
+</p></blockquote>
 
 <a name="Options-specification"></a>
 <h3 class="heading">Options specification</h3>
@@ -540,12 +587,6 @@ but for the linker.
 but for the debug linker (only used on Darwin platforms so far).
 </p>
 </dd>
-<dt><code>--with-stabs</code></dt>
-<dd><p>Specify that stabs debugging
-information should be used instead of whatever format the host normally
-uses.  Normally GCC uses the same debug format as the host system.
-</p>
-</dd>
 <dt><code>--with-tls=<var>dialect</var></code></dt>
 <dd><p>Specify the default TLS dialect, for systems were there is a choice.
 For ARM targets, possible values for <var>dialect</var> are <code>gnu</code> or
@@ -624,8 +665,9 @@ sysv, aix.
 <dt><code>--without-multilib-list</code></dt>
 <dd><p>Specify what multilibs to build.  <var>list</var> is a comma separated list of
 values, possibly consisting of a single value.  Currently only implemented
-for aarch64*-*-*, arm*-*-*, riscv*-*-*, sh*-*-* and x86-64-*-linux*.  The
-accepted values and meaning for each target is given below.
+for aarch64*-*-*, arm*-*-*, loongarch64-*-*, riscv*-*-*, sh*-*-* and
+x86-64-*-linux*.  The accepted values and meaning for each target is given
+below.
 </p>
 <dl compact="compact">
 <dt><code>aarch64*-*-*</code></dt>
@@ -700,6 +742,15 @@ profile.  The union of these options is considered when specifying both
 </table>
 
 </dd>
+<dt><code>loongarch*-*-*</code></dt>
+<dd><p><var>list</var> is a comma-separated list of the following ABI identifiers:
+<code>lp64d[/base]</code> <code>lp64f[/base]</code> <code>lp64d[/base]</code>, where the
+<code>/base</code> suffix may be omitted, to enable their respective run-time
+libraries.  If <var>list</var> is empty or <code>default</code>,
+or if <samp>--with-multilib-list</samp> is not specified, then the default ABI
+as specified by <samp>--with-abi</samp> or implied by <samp>--target</samp> is selected.
+</p>
+</dd>
 <dt><code>riscv*-*-*</code></dt>
 <dd><p><var>list</var> is a single ABI name.  The target architecture must be either
 <code>rv32gc</code> or <code>rv64gc</code>.  This will build a single multilib for the
@@ -751,6 +802,55 @@ and only the default run-time library will be enabled.
 64-bit run-time libraries will be enabled.
 </p></dd>
 </dl>
+
+</dd>
+<dt><code>--with-multilib-generator=<var>config</var></code></dt>
+<dd><p>Specify what multilibs to build.  <var>config</var> is a semicolon separated list of
+values, possibly consisting of a single value.  Currently only implemented
+for riscv*-*-elf*.  The accepted values and meanings are given below.
+</p>
+
+<p>Every config is constructed with four components: architecture string, ABI,
+reuse rule with architecture string and reuse rule with sub-extension.
+</p>
+<p>Example 1: Add multi-lib suppport for rv32i with ilp32.
+</p><div class="smallexample">
+<pre class="smallexample">rv32i-ilp32--
+</pre></div>
+
+<p>Example 2: Add multi-lib suppport for rv32i with ilp32 and rv32imafd with ilp32.
+</p><div class="smallexample">
+<pre class="smallexample">rv32i-ilp32--;rv32imafd-ilp32--
+</pre></div>
+
+<p>Example 3: Add multi-lib suppport for rv32i with ilp32; rv32im with ilp32 and
+rv32ic with ilp32 will reuse this multi-lib set.
+</p><div class="smallexample">
+<pre class="smallexample">rv32i-ilp32-rv32im-c
+</pre></div>
+
+<p>Example 4: Add multi-lib suppport for rv64ima with lp64; rv64imaf with lp64,
+rv64imac with lp64 and rv64imafc with lp64 will reuse this multi-lib set.
+</p><div class="smallexample">
+<pre class="smallexample">rv64ima-lp64--f,c,fc
+</pre></div>
+
+<p><samp>--with-multilib-generator</samp> have an optional configuration argument
+<samp>--cmodel=val</samp> for code model, this option will expand with other
+config options, <var>val</var> is a comma separated list of possible code model,
+currently we support medlow and medany.
+</p>
+<p>Example 5: Add multi-lib suppport for rv64ima with lp64; rv64ima with lp64 and
+medlow code model
+</p><div class="smallexample">
+<pre class="smallexample">rv64ima-lp64--;--cmodel=medlow
+</pre></div>
+
+<p>Example 6: Add multi-lib suppport for rv64ima with lp64; rv64ima with lp64 and
+medlow code model; rv64ima with lp64 and medany code model
+</p><div class="smallexample">
+<pre class="smallexample">rv64ima-lp64--;--cmodel=medlow,medany
+</pre></div>
 
 </dd>
 <dt><code>--with-endian=<var>endians</var></code></dt>
@@ -1043,6 +1143,24 @@ size as a power of two in bytes.  On AArch64 <var>size</var> is required to be e
 12 (4KB) or 16 (64KB).
 </p>
 </dd>
+<dt><code>--with-isa-spec=<var>ISA-spec-string</var></code></dt>
+<dd><p>On RISC-V targets specify the default version of the RISC-V Unprivileged
+(formerly User-Level) ISA specification to produce code conforming to.
+The possibilities for <var>ISA-spec-string</var> are:
+</p><dl compact="compact">
+<dt><code>2.2</code></dt>
+<dd><p>Produce code conforming to version 2.2.
+</p></dd>
+<dt><code>20190608</code></dt>
+<dd><p>Produce code conforming to version 20190608.
+</p></dd>
+<dt><code>20191213</code></dt>
+<dd><p>Produce code conforming to version 20191213.
+</p></dd>
+</dl>
+<p>In the absence of this configuration option the default version is 20191213.
+</p>
+</dd>
 <dt><code>--enable-__cxa_atexit</code></dt>
 <dd><p>Define if you want to use __cxa_atexit, rather than atexit, to
 register C++ destructors for local statics and global objects.
@@ -1086,6 +1204,15 @@ will try to guess whether the <code>.init_array</code> and
 <dd><p>When building GCC, use a mutex to avoid linking the compilers for
 multiple languages at the same time, to avoid thrashing on build
 systems with limited free memory.  The default is not to use such a mutex.
+</p>
+</dd>
+<dt><code>--enable-link-serialization</code></dt>
+<dd><p>When building GCC, use make dependencies to serialize linking the compilers for
+multiple languages, to avoid thrashing on build
+systems with limited free memory.  The default is not to add such
+dependencies and thus with parallel make potentially link different
+compilers concurrently.  If the argument is a positive integer, allow
+that number of concurrent link processes for the large binaries.
 </p>
 </dd>
 <dt><code>--enable-maintainer-mode</code></dt>
@@ -1453,7 +1580,7 @@ checking with extra checks that might affect code generation and should
 therefore not differ between stage1 and later stages in bootstrap.
 </p>
 <p>The &lsquo;<samp>valgrind</samp>&rsquo; check requires the external <code>valgrind</code> simulator,
-available from <a href="http://valgrind.org/">http://valgrind.org/</a>.  The &lsquo;<samp>rtl</samp>&rsquo; checks are
+available from <a href="https://valgrind.org">https://valgrind.org</a>.  The &lsquo;<samp>rtl</samp>&rsquo; checks are
 expensive and the &lsquo;<samp>df</samp>&rsquo;, &lsquo;<samp>gcac</samp>&rsquo; and &lsquo;<samp>valgrind</samp>&rsquo; checks are very
 expensive.
 </p>
@@ -1582,17 +1709,6 @@ the <samp>--with-long-double-format=ibm</samp> and
 Until all of the libraries are converted to use IEEE 128-bit floating
 point, it is not recommended to use
 <samp>--with-long-double-format=ieee</samp>.
-</p>
-<p>On little endian PowerPC Linux systems, if you explicitly set the
-<code>long double</code> type, it will build multilibs to allow you to
-select either <code>long double</code> format, unless you disable multilibs
-with the <code>--disable-multilib</code> option.  At present,
-<code>long double</code> multilibs are not built on big endian PowerPC Linux
-systems.  If you are building multilibs, you will need to configure
-the compiler using the <samp>--with-system-zlib</samp> option.
-</p>
-<p>If you do not set the <code>long double</code> type explicitly, no multilibs
-will be generated.
 </p>
 </dd>
 <dt><code>--enable-fdpic</code></dt>
@@ -1793,23 +1909,28 @@ specifying paths <var>path1</var>, &hellip;, <var>pathN</var>.
 </p>
 <div class="smallexample">
 <pre class="smallexample">% <var>srcdir</var>/configure \
-    --enable-offload-targets=x86_64-intelmicemul-linux-gnu=/path/to/x86_64/compiler,nvptx-none,hsa
+    --enable-offload-targets=x86_64-intelmicemul-linux-gnu=/path/to/x86_64/compiler,nvptx-none
 </pre></div>
 
-<p>If &lsquo;<samp>hsa</samp>&rsquo; is specified as one of the targets, the compiler will be
-built with support for HSA GPU accelerators.  Because the same
-compiler will emit the accelerator code, no path should be specified.
+</dd>
+<dt><code>--enable-offload-defaulted</code></dt>
+<dd>
+<p>Tell GCC that configured but not installed offload compilers and libgomp
+plugins are silently ignored.  Useful for distribution compilers where
+those are in separate optional packages and where the presence or absence
+of those optional packages should determine the actual supported offloading
+target set rather than the GCC configure-time selection.
 </p>
 </dd>
 <dt><code>--with-hsa-runtime=<var>pathname</var></code></dt>
 <dt><code>--with-hsa-runtime-include=<var>pathname</var></code></dt>
 <dt><code>--with-hsa-runtime-lib=<var>pathname</var></code></dt>
 <dd>
-<p>If you configure GCC with HSA offloading but do not have the HSA
-run-time library installed in a standard location then you can
-explicitly specify the directory where they are installed.  The
-<samp>--with-hsa-runtime=<var>hsainstalldir</var></samp> option is a
-shorthand for
+<p>If you configure GCC with offloading which uses an HSA run-time such as
+AMDGCN but do not have the HSA run-time library installed in a standard
+location then you can explicitly specify the directory where they are
+installed.  The <samp>--with-hsa-runtime=<var>hsainstalldir</var></samp> option
+is a shorthand for
 <samp>--with-hsa-runtime-lib=<var>hsainstalldir</var>/lib</samp> and
 <samp>--with-hsa-runtime-include=<var>hsainstalldir</var>/include</samp>.
 </p>
@@ -1822,11 +1943,10 @@ instrumentation, see <samp>-fcf-protection</samp> option.  When
 to add <samp>-fcf-protection</samp> and, if needed, other target
 specific options to a set of building options.
 </p>
-<p>The option is disabled by default.  When <code>--enable-cet=auto</code>
-is used, it is enabled on Linux/x86 if target binutils
-supports <code>Intel CET</code> instructions and disabled otherwise.
-In this case the target libraries are configured to get additional
-<samp>-fcf-protection</samp> option.
+<p><code>--enable-cet=auto</code> is default.  CET is enabled on Linux/x86 if
+target binutils supports <code>Intel CET</code> instructions and disabled
+otherwise.  In this case, the target libraries are configured to get
+additional <samp>-fcf-protection</samp> option.
 </p>
 </dd>
 <dt><code>--with-riscv-attribute=&lsquo;<samp>yes</samp>&rsquo;, &lsquo;<samp>no</samp>&rsquo; or &lsquo;<samp>default</samp>&rsquo;</code></dt>
@@ -1835,6 +1955,34 @@ information in object.
 </p>
 <p>The option is disabled by default. It is enabled on RISC-V/ELF (bare-metal)
 target if target binutils supported.
+</p>
+</dd>
+<dt><code>--enable-s390-excess-float-precision</code></dt>
+<dt><code>--disable-s390-excess-float-precision</code></dt>
+<dd><p>On s390(x) targets, enable treatment of float expressions with double precision
+when in standards-compliant mode (e.g., when <code>--std=c99</code> or
+<code>-fexcess-precision=standard</code> are given).
+</p>
+<p>For a native build and cross compiles that have target headers, the option&rsquo;s
+default is derived from glibc&rsquo;s behavior. When glibc clamps float_t to double,
+GCC follows and enables the option. For other cross compiles, the default is
+disabled.
+</p>
+</dd>
+<dt><code>--with-zstd=<var>pathname</var></code></dt>
+<dt><code>--with-zstd-include=<var>pathname</var></code></dt>
+<dt><code>--with-zstd-lib=<var>pathname</var></code></dt>
+<dd><p>If you do not have the <code>zstd</code> library installed in a standard
+location and you want to build GCC, you can explicitly specify the
+directory where it is installed (&lsquo;<samp>--with-zstd=<var>zstdinstalldir</var></samp>&rsquo;).
+The <samp>--with-zstd=<var>zstdinstalldir</var></samp> option is shorthand for
+<samp>--with-zstd-lib=<var>zstdinstalldir</var>/lib</samp> and
+<samp>--with-zstd-include=<var>zstdinstalldir</var>/include</samp>. If this
+shorthand assumption is not correct, you can use the explicit
+include and lib options directly.
+</p>
+<p>These flags are applicable to the host platform only.  When building
+a cross compiler, they will not be used to configure target libraries.
 </p></dd>
 </dl>
 
@@ -1933,7 +2081,7 @@ omitted from <samp>libgcc.a</samp> on the assumption that it will be provided by
 being used as the target C&nbsp; library.  This causes float support
 functions like <code>__addsf3</code> to be omitted from <samp>libgcc.a</samp> on
 the assumption that it will be provided by <samp>libm.a</samp>.  For more
-technical details, cf. <a href="http://gcc.gnu.org/PR54461">PR54461</a>.
+technical details, cf. <a href="https://gcc.gnu.org/PR54461">PR54461</a>.
 It is not supported for
 RTEMS configurations, which currently use newlib.  The option is
 supported since version 4.7.2 and is the default in 4.8.0 and newer.
@@ -2137,7 +2285,6 @@ to be available for each multilib variant, unless configured with
 <p>
 <p><a href="./index.html">Return to the GCC Installation page</a>
 </p>
-
 
 
 

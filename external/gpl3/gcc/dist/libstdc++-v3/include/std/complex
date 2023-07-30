@@ -1,6 +1,6 @@
 // The template and inlines for the -*- C++ -*- complex number classes.
 
-// Copyright (C) 1997-2020 Free Software Foundation, Inc.
+// Copyright (C) 1997-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -134,8 +134,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  @param  Tp  Type of real and imaginary values.
   */
   template<typename _Tp>
-    struct complex
+    class complex
     {
+    public:
       /// Value typedef.
       typedef _Tp value_type;
 
@@ -1090,8 +1091,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   /// 26.2.3  complex specializations
   /// complex<float> specialization
   template<>
-    struct complex<float>
+    class complex<float>
     {
+    public:
       typedef float value_type;
       typedef __complex__ float _ComplexT;
 
@@ -1235,8 +1237,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   /// 26.2.3  complex specializations
   /// complex<double> specialization
   template<>
-    struct complex<double>
+    class complex<double>
     {
+    public:
       typedef double value_type;
       typedef __complex__ double _ComplexT;
 
@@ -1380,8 +1383,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   /// 26.2.3  complex specializations
   /// complex<long double> specialization
   template<>
-    struct complex<long double>
+    class complex<long double>
     {
+    public:
       typedef long double value_type;
       typedef __complex__ long double _ComplexT;
 
@@ -1560,35 +1564,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #endif
 
   /// @} group complex_numbers
-
-_GLIBCXX_END_NAMESPACE_VERSION
-} // namespace
-
-namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
-{
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
-
-  // See ext/type_traits.h for the primary template.
-  template<typename _Tp, typename _Up>
-    struct __promote_2<std::complex<_Tp>, _Up>
-    {
-    public:
-      typedef std::complex<typename __promote_2<_Tp, _Up>::__type> __type;
-    };
-
-  template<typename _Tp, typename _Up>
-    struct __promote_2<_Tp, std::complex<_Up> >
-    {
-    public:
-      typedef std::complex<typename __promote_2<_Tp, _Up>::__type> __type;
-    };
-
-  template<typename _Tp, typename _Up>
-    struct __promote_2<std::complex<_Tp>, std::complex<_Up> >
-    {
-    public:
-      typedef std::complex<typename __promote_2<_Tp, _Up>::__type> __type;
-    };
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace
@@ -1991,7 +1966,7 @@ inline namespace literals {
 inline namespace complex_literals {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wliteral-suffix"
-#define __cpp_lib_complex_udls 201309
+#define __cpp_lib_complex_udls 201309L
 
   constexpr std::complex<float>
   operator""if(long double __num)

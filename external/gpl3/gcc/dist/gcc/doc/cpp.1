@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "CPP 1"
-.TH CPP 1 "2023-07-07" "gcc-10.5.0" "GNU"
+.TH CPP 1 "2023-05-08" "gcc-12.3.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -337,6 +337,9 @@ also suppresses preprocessed output, as a missing header file renders
 this useless.
 .Sp
 This feature is used in automatic updating of makefiles.
+.IP "\fB\-Mno\-modules\fR" 4
+.IX Item "-Mno-modules"
+Disable dependency generation for compiled module interfaces.
 .IP "\fB\-MP\fR" 4
 .IX Item "-MP"
 This option instructs \s-1CPP\s0 to add a phony target for each dependency
@@ -927,7 +930,7 @@ reproducible.
 The value of \fB\s-1SOURCE_DATE_EPOCH\s0\fR must be a \s-1UNIX\s0 timestamp,
 defined as the number of seconds (excluding leap seconds) since
 01 Jan 1970 00:00:00 represented in \s-1ASCII\s0; identical to the output of
-\&\fB\f(CB@command\fB{date +%s\fR} on GNU/Linux and other systems that support the
+\&\f(CW\*(C`date +%s\*(C'\fR on GNU/Linux and other systems that support the
 \&\f(CW%s\fR extension in the \f(CW\*(C`date\*(C'\fR command.
 .Sp
 The value should be a known timestamp such as the last modification
@@ -939,7 +942,7 @@ process.
 \&\fIgcc\fR\|(1), and the Info entries for \fIcpp\fR and \fIgcc\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1987\-2020 Free Software Foundation, Inc.
+Copyright (c) 1987\-2022 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or
