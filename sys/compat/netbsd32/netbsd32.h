@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.142 2023/07/29 12:38:25 rin Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.143 2023/07/30 06:52:20 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -207,6 +207,15 @@ typedef netbsd32_uint64 netbsd32_dev_t;
 typedef netbsd32_int64 netbsd32_off_t;
 typedef netbsd32_uint64 netbsd32_ino_t;
 typedef netbsd32_int64 netbsd32_blkcnt_t;
+
+/* from <sys/epoll.h> */
+typedef netbsd32_uint64 netbsd32_epoll_data_t;
+
+typedef netbsd32_pointer_t netbsd32_epoll_eventp_t;
+struct netbsd32_epoll_event {
+	uint32_t		events;
+	netbsd32_epoll_data_t	data;
+};
 
 /* from <sys/spawn.h> */
 typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actionsp;
