@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.50 2023/07/29 12:39:20 rin Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.51 2023/07/30 05:31:30 rin Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -3701,6 +3701,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		const struct netbsd32_lpathconf_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* const netbsd32_charp */
 		iarg[1] = SCARG(p, name); /* int */
+		*n_args = 2;
+		break;
+	}
+	/* netbsd32_memfd_create */
+	case 500: {
+		const struct netbsd32_memfd_create_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, name).i32; /* const netbsd32_charp */
+		uarg[1] = SCARG(p, flags); /* unsigned int */
 		*n_args = 2;
 		break;
 	}
@@ -10035,6 +10043,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* netbsd32_memfd_create */
+	case 500:
+		switch(ndx) {
+		case 0:
+			p = "const netbsd32_charp";
+			break;
+		case 1:
+			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* netbsd32___kevent100 */
 	case 501:
 		switch(ndx) {
@@ -12151,6 +12172,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 499:
 		if (ndx == 0 || ndx == 1)
 			p = "long";
+		break;
+	/* netbsd32_memfd_create */
+	case 500:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
 		break;
 	/* netbsd32___kevent100 */
 	case 501:
