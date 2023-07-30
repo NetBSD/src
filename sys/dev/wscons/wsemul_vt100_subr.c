@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.24 2018/12/06 01:42:20 uwe Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.24.30.1 2023/07/30 11:47:08 martin Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.24 2018/12/06 01:42:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.24.30.1 2023/07/30 11:47:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,98 +54,98 @@ static int vt100_decmode(struct vt100base_data *, int, int);
  * scroll up within scrolling region
  */
 void
-wsemul_vt100_scrollup(struct vt100base_data *edp, int n)
+wsemul_vt100_scrollup(struct vt100base_data *vd, int n)
 {
 	int help;
 
-	if (n > edp->scrreg_nrows)
-		n = edp->scrreg_nrows;
+	if (n > vd->scrreg_nrows)
+		n = vd->scrreg_nrows;
 
-	help = edp->scrreg_nrows - n;
+	help = vd->scrreg_nrows - n;
 	if (help > 0) {
-		(*edp->emulops->copyrows)(edp->emulcookie,
-					  edp->scrreg_startrow + n,
-					  edp->scrreg_startrow,
+		(*vd->emulops->copyrows)(vd->emulcookie,
+					  vd->scrreg_startrow + n,
+					  vd->scrreg_startrow,
 					  help);
-		if (edp->dblwid)
-			memmove(&edp->dblwid[edp->scrreg_startrow],
-				&edp->dblwid[edp->scrreg_startrow + n],
+		if (vd->dblwid)
+			memmove(&vd->dblwid[vd->scrreg_startrow],
+				&vd->dblwid[vd->scrreg_startrow + n],
 				help);
 	}
-	(*edp->emulops->eraserows)(edp->emulcookie,
-				   edp->scrreg_startrow + help, n,
-				   edp->bkgdattr);
-	if (edp->dblwid)
-		memset(&edp->dblwid[edp->scrreg_startrow + help], 0, n);
-	CHECK_DW(edp);
+	(*vd->emulops->eraserows)(vd->emulcookie,
+				   vd->scrreg_startrow + help, n,
+				   vd->bkgdattr);
+	if (vd->dblwid)
+		memset(&vd->dblwid[vd->scrreg_startrow + help], 0, n);
+	CHECK_DW(vd);
 }
 
 /*
  * scroll down within scrolling region
  */
 void
-wsemul_vt100_scrolldown(struct vt100base_data *edp, int n)
+wsemul_vt100_scrolldown(struct vt100base_data *vd, int n)
 {
 	int help;
 
-	if (n > edp->scrreg_nrows)
-		n = edp->scrreg_nrows;
+	if (n > vd->scrreg_nrows)
+		n = vd->scrreg_nrows;
 
-	help = edp->scrreg_nrows - n;
+	help = vd->scrreg_nrows - n;
 	if (help > 0) {
-		(*edp->emulops->copyrows)(edp->emulcookie,
-					  edp->scrreg_startrow,
-					  edp->scrreg_startrow + n,
+		(*vd->emulops->copyrows)(vd->emulcookie,
+					  vd->scrreg_startrow,
+					  vd->scrreg_startrow + n,
 					  help);
-		if (edp->dblwid)
-			memmove(&edp->dblwid[edp->scrreg_startrow + n],
-				&edp->dblwid[edp->scrreg_startrow],
+		if (vd->dblwid)
+			memmove(&vd->dblwid[vd->scrreg_startrow + n],
+				&vd->dblwid[vd->scrreg_startrow],
 				help);
 	}
-	(*edp->emulops->eraserows)(edp->emulcookie,
-				   edp->scrreg_startrow, n,
-				   edp->bkgdattr);
-	if (edp->dblwid)
-		memset(&edp->dblwid[edp->scrreg_startrow], 0, n);
-	CHECK_DW(edp);
+	(*vd->emulops->eraserows)(vd->emulcookie,
+				   vd->scrreg_startrow, n,
+				   vd->bkgdattr);
+	if (vd->dblwid)
+		memset(&vd->dblwid[vd->scrreg_startrow], 0, n);
+	CHECK_DW(vd);
 }
 
 /*
  * erase in display
  */
 void
-wsemul_vt100_ed(struct vt100base_data *edp, int arg)
+wsemul_vt100_ed(struct vt100base_data *vd, int arg)
 {
 	int n;
 
 	switch (arg) {
 	    case 0: /* cursor to end */
-		ERASECOLS(edp, edp->ccol, COLS_LEFT(edp) + 1, edp->bkgdattr);
-		n = edp->nrows - edp->crow - 1;
+		ERASECOLS(vd, vd->ccol, COLS_LEFT(vd) + 1, vd->bkgdattr);
+		n = vd->nrows - vd->crow - 1;
 		if (n > 0) {
-			(*edp->emulops->eraserows)(edp->emulcookie,
-						   edp->crow + 1, n,
-						   edp->bkgdattr);
-			if (edp->dblwid)
-				memset(&edp->dblwid[edp->crow + 1], 0, n);
+			(*vd->emulops->eraserows)(vd->emulcookie,
+						   vd->crow + 1, n,
+						   vd->bkgdattr);
+			if (vd->dblwid)
+				memset(&vd->dblwid[vd->crow + 1], 0, n);
 		}
 		break;
 	    case 1: /* beginning to cursor */
-		if (edp->crow > 0) {
-			(*edp->emulops->eraserows)(edp->emulcookie,
-						   0, edp->crow,
-						   edp->bkgdattr);
-			if (edp->dblwid)
-				memset(&edp->dblwid[0], 0, edp->crow);
+		if (vd->crow > 0) {
+			(*vd->emulops->eraserows)(vd->emulcookie,
+						   0, vd->crow,
+						   vd->bkgdattr);
+			if (vd->dblwid)
+				memset(&vd->dblwid[0], 0, vd->crow);
 		}
-		ERASECOLS(edp, 0, edp->ccol + 1, edp->bkgdattr);
+		ERASECOLS(vd, 0, vd->ccol + 1, vd->bkgdattr);
 		break;
 	    case 2: /* complete display */
-		(*edp->emulops->eraserows)(edp->emulcookie,
-					   0, edp->nrows,
-					   edp->bkgdattr);
-		if (edp->dblwid)
-			memset(&edp->dblwid[0], 0, edp->nrows);
+		(*vd->emulops->eraserows)(vd->emulcookie,
+					   0, vd->nrows,
+					   vd->bkgdattr);
+		if (vd->dblwid)
+			memset(&vd->dblwid[0], 0, vd->nrows);
 		break;
 	    default:
 #ifdef VT100_PRINTUNKNOWN
@@ -153,26 +153,26 @@ wsemul_vt100_ed(struct vt100base_data *edp, int arg)
 #endif
 		break;
 	}
-	CHECK_DW(edp);
+	CHECK_DW(vd);
 }
 
 /*
  * erase in line
  */
 void
-wsemul_vt100_el(struct vt100base_data *edp, int arg)
+wsemul_vt100_el(struct vt100base_data *vd, int arg)
 {
 	switch (arg) {
 	    case 0: /* cursor to end */
-		ERASECOLS(edp, edp->ccol, COLS_LEFT(edp) + 1, edp->bkgdattr);
+		ERASECOLS(vd, vd->ccol, COLS_LEFT(vd) + 1, vd->bkgdattr);
 		break;
 	    case 1: /* beginning to cursor */
-		ERASECOLS(edp, 0, edp->ccol + 1, edp->bkgdattr);
+		ERASECOLS(vd, 0, vd->ccol + 1, vd->bkgdattr);
 		break;
 	    case 2: /* complete line */
-		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-					   0, edp->ncols,
-					   edp->bkgdattr);
+		(*vd->emulops->erasecols)(vd->emulcookie, vd->crow,
+					   0, vd->ncols,
+					   vd->bkgdattr);
 		break;
 	    default:
 #ifdef VT100_PRINTUNKNOWN
@@ -186,76 +186,76 @@ wsemul_vt100_el(struct vt100base_data *edp, int arg)
  * handle commands after CSI (ESC[)
  */
 void
-wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
+wsemul_vt100_handle_csi(struct vt100base_data *vd, u_char c)
 {
-	int n, help, flags, fgcol, bgcol;
+	int n, m, help, flags, fgcol, bgcol;
 	long attr, bkgdattr;
 
 #define A3(a, b, c) (((a) << 16) | ((b) << 8) | (c))
-	switch (A3(edp->modif1, edp->modif2, c)) {
+	switch (A3(vd->modif1, vd->modif2, c)) {
 	    case A3('>', '\0', 'c'): /* DA secondary */
-		wsdisplay_emulinput(edp->cbcookie, WSEMUL_VT_ID2,
-				    sizeof(WSEMUL_VT_ID2));
+		wsdisplay_emulinput(vd->cbcookie, WSEMUL_VT_ID2,
+				    sizeof(WSEMUL_VT_ID2) - 1);
 		break;
 
 	    case A3('\0', '\0', 'J'): /* ED selective erase in display */
 	    case A3('?', '\0', 'J'): /* DECSED selective erase in display */
-		wsemul_vt100_ed(edp, ARG(edp, 0));
+		wsemul_vt100_ed(vd, ARG(vd, 0));
 		break;
 	    case A3('\0', '\0', 'K'): /* EL selective erase in line */
 	    case A3('?', '\0', 'K'): /* DECSEL selective erase in line */
-		wsemul_vt100_el(edp, ARG(edp, 0));
+		wsemul_vt100_el(vd, ARG(vd, 0));
 		break;
 	    case A3('\0', '\0', 'h'): /* SM */
-		for (n = 0; n < edp->nargs; n++)
-			vt100_ansimode(edp, ARG(edp, n), VTMODE_SET);
+		for (n = 0; n < vd->nargs; n++)
+			vt100_ansimode(vd, ARG(vd, n), VTMODE_SET);
 		break;
 	    case A3('?', '\0', 'h'): /* DECSM */
-		for (n = 0; n < edp->nargs; n++)
-			vt100_decmode(edp, ARG(edp, n), VTMODE_SET);
+		for (n = 0; n < vd->nargs; n++)
+			vt100_decmode(vd, ARG(vd, n), VTMODE_SET);
 		break;
 	    case A3('\0', '\0', 'l'): /* RM */
-		for (n = 0; n < edp->nargs; n++)
-			vt100_ansimode(edp, ARG(edp, n), VTMODE_RESET);
+		for (n = 0; n < vd->nargs; n++)
+			vt100_ansimode(vd, ARG(vd, n), VTMODE_RESET);
 		break;
 	    case A3('?', '\0', 'l'): /* DECRM */
-		for (n = 0; n < edp->nargs; n++)
-			vt100_decmode(edp, ARG(edp, n), VTMODE_RESET);
+		for (n = 0; n < vd->nargs; n++)
+			vt100_decmode(vd, ARG(vd, n), VTMODE_RESET);
 		break;
 	    case A3('\0', '$', 'p'): /* DECRQM request mode ANSI */
-		vt100_ansimode(edp, ARG(edp, 0), VTMODE_REPORT);
+		vt100_ansimode(vd, ARG(vd, 0), VTMODE_REPORT);
 		break;
 	    case A3('?', '$', 'p'): /* DECRQM request mode DEC */
-		vt100_decmode(edp, ARG(edp, 0), VTMODE_REPORT);
+		vt100_decmode(vd, ARG(vd, 0), VTMODE_REPORT);
 		break;
 	    case A3('\0', '\0', 'i'): /* MC printer controller mode */
 	    case A3('?', '\0', 'i'): /* MC printer controller mode */
-		switch (ARG(edp, 0)) {
+		switch (ARG(vd, 0)) {
 		    case 0: /* print screen */
 		    case 1: /* print cursor line */
 		    case 4: /* off */
 		    case 5: /* on */
 #ifdef VT100_PRINTNOTIMPL
-			printf("CSI%di ignored\n", ARG(edp, 0));
+			printf("CSI%di ignored\n", ARG(vd, 0));
 #endif
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("CSI%di unknown\n", ARG(edp, 0));
+			printf("CSI%di unknown\n", ARG(vd, 0));
 #endif
 			break;
 		}
 		break;
 
 #define A2(a, b) (((a) << 8) | (b))
-#if 0 /* XXX */
+#if 0 /* XXX: edp not available here */
 	    case A2('!', 'p'): /* DECSTR soft reset VT300 only */
 		wsemul_vt100_reset(edp);
 		break;
 #endif
 
 	    case A2('"', 'p'): /* DECSCL */
-		switch (ARG(edp, 0)) {
+		switch (ARG(vd, 0)) {
 		    case 61: /* VT100 mode (no further arguments!) */
 			break;
 		    case 62:
@@ -263,28 +263,28 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("CSI%d\"p unknown\n", ARG(edp, 0));
+			printf("CSI%d\"p unknown\n", ARG(vd, 0));
 #endif
 			break;
 		}
-		switch (ARG(edp, 1)) {
+		switch (ARG(vd, 1)) {
 		    case 0:
 		    case 2: /* 8-bit controls */
 #ifdef VT100_PRINTNOTIMPL
-			printf("CSI%d;%d\"p ignored\n", ARG(edp, 0), ARG(edp, 1));
+			printf("CSI%d;%d\"p ignored\n", ARG(vd, 0), ARG(vd, 1));
 #endif
 			break;
 		    case 1: /* 7-bit controls */
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("CSI%d;%d\"p unknown\n", ARG(edp, 0), ARG(edp, 1));
+			printf("CSI%d;%d\"p unknown\n", ARG(vd, 0), ARG(vd, 1));
 #endif
 			break;
 		}
 		break;
 	    case A2('"', 'q'): /* DECSCA select character attribute VT300 */
-		switch (ARG(edp, 0)) {
+		switch (ARG(vd, 0)) {
 		    case 0:
 		    case 1: /* erasable */
 			break;
@@ -295,14 +295,14 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("CSI%d\"q unknown\n", ARG(edp, 0));
+			printf("CSI%d\"q unknown\n", ARG(vd, 0));
 #endif
 			break;
 		}
 		break;
 
 	    case A2('$', 'u'): /* DECRQTSR request terminal status report */
-		switch (ARG(edp, 0)) {
+		switch (ARG(vd, 0)) {
 		    case 0: /* ignored */
 			break;
 		    case 1: /* terminal state report */
@@ -312,14 +312,14 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("CSI%d$u unknown\n", ARG(edp, 0));
+			printf("CSI%d$u unknown\n", ARG(vd, 0));
 #endif
 			break;
 		}
 		break;
 	    case A2('$', 'w'): /* DECRQPSR request presentation status report
 				(VT300 only) */
-		switch (ARG(edp, 0)) {
+		switch (ARG(vd, 0)) {
 		    case 0: /* error */
 			break;
 		    case 1: /* cursor information report */
@@ -331,53 +331,53 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 			{
 			int i, j, ps = 0;
 			char buf[20];
-			KASSERT(edp->tabs != 0);
-			wsdisplay_emulinput(edp->cbcookie, "\033P2$u", 5);
-			for (i = 0; i < edp->ncols; i++)
-				if (edp->tabs[i]) {
+			KASSERT(vd->tabs != NULL);
+			wsdisplay_emulinput(vd->cbcookie, "\033P2$u", 5);
+			for (i = 0; i < vd->ncols; i++)
+				if (vd->tabs[i]) {
 					j = snprintf(buf, sizeof(buf), "%s%d",
 					    (ps ? "/" : ""), i + 1);
-					wsdisplay_emulinput(edp->cbcookie,
+					wsdisplay_emulinput(vd->cbcookie,
 							    buf, j);
 					ps = 1;
 				}
 			}
-			wsdisplay_emulinput(edp->cbcookie, "\033\\", 2);
+			wsdisplay_emulinput(vd->cbcookie, "\033\\", 2);
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("CSI%d$w unknown\n", ARG(edp, 0));
+			printf("CSI%d$w unknown\n", ARG(vd, 0));
 #endif
 			break;
 		}
 		break;
 	    case A2('$', '}'): /* DECSASD select active status display */
-		switch (ARG(edp, 0)) {
+		switch (ARG(vd, 0)) {
 		    case 0: /* main display */
 		    case 1: /* status line */
 #ifdef VT100_PRINTNOTIMPL
-			printf("CSI%d$} ignored\n", ARG(edp, 0));
+			printf("CSI%d$} ignored\n", ARG(vd, 0));
 #endif
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("CSI%d$} unknown\n", ARG(edp, 0));
+			printf("CSI%d$} unknown\n", ARG(vd, 0));
 #endif
 			break;
 		}
 		break;
 	    case A2('$', '~'): /* DECSSDD select status line type */
-		switch (ARG(edp, 0)) {
+		switch (ARG(vd, 0)) {
 		    case 0: /* none */
 		    case 1: /* indicator */
 		    case 2: /* host-writable */
 #ifdef VT100_PRINTNOTIMPL
-			printf("CSI%d$~ ignored\n", ARG(edp, 0));
+			printf("CSI%d$~ ignored\n", ARG(vd, 0));
 #endif
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("CSI%d$~ unknown\n", ARG(edp, 0));
+			printf("CSI%d$~ unknown\n", ARG(vd, 0));
 #endif
 			break;
 		}
@@ -385,108 +385,136 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 
 	    case A2('&', 'u'): /* DECRQUPSS request user preferred
 				  supplemental set */
-		wsdisplay_emulinput(edp->cbcookie, "\033P0!u%5\033\\", 9);
+		wsdisplay_emulinput(vd->cbcookie, "\033P0!u%5\033\\", 9);
 		break;
 
 	    case '@': /* ICH insert character VT300 only */
-		n = uimin(DEF1_ARG(edp, 0), COLS_LEFT(edp) + 1);
-		help = NCOLS(edp) - (edp->ccol + n);
+		n = uimin(DEF1_ARG(vd, 0), COLS_LEFT(vd) + 1);
+		help = NCOLS(vd) - (vd->ccol + n);
 		if (help > 0)
-			COPYCOLS(edp, edp->ccol, edp->ccol + n, help);
-		ERASECOLS(edp, edp->ccol, n, edp->bkgdattr);
+			COPYCOLS(vd, vd->ccol, vd->ccol + n, help);
+		ERASECOLS(vd, vd->ccol, n, vd->bkgdattr);
 		break;
 	    case 'A': /* CUU */
-		edp->crow -= uimin(DEF1_ARG(edp, 0), ROWS_ABOVE(edp));
-		CHECK_DW(edp);
+		vd->crow -= uimin(DEF1_ARG(vd, 0), ROWS_ABOVE(vd));
+		CHECK_DW(vd);
 		break;
 	    case 'B': /* CUD */
-		edp->crow += uimin(DEF1_ARG(edp, 0), ROWS_BELOW(edp));
-		CHECK_DW(edp);
+		vd->crow += uimin(DEF1_ARG(vd, 0), ROWS_BELOW(vd));
+		CHECK_DW(vd);
 		break;
 	    case 'C': /* CUF */
-		edp->ccol += uimin(DEF1_ARG(edp, 0), COLS_LEFT(edp));
+		vd->ccol += uimin(DEF1_ARG(vd, 0), COLS_LEFT(vd));
 		break;
 	    case 'D': /* CUB */
-		edp->ccol -= uimin(DEF1_ARG(edp, 0), edp->ccol);
-		edp->flags &= ~VTFL_LASTCHAR;
+		vd->ccol -= uimin(DEF1_ARG(vd, 0), vd->ccol);
+		vd->flags &= ~VTFL_LASTCHAR;
+		break;
+	    case 'G': /* CHA */
+		vd->ccol = uimin(DEF1_ARG(vd, 0) - 1, vd->ncols -1);
 		break;
 	    case 'H': /* CUP */
 	    case 'f': /* HVP */
-		if (edp->flags & VTFL_DECOM)
-			edp->crow = edp->scrreg_startrow +
-			    uimin(DEF1_ARG(edp, 0), edp->scrreg_nrows) - 1;
+		if (vd->flags & VTFL_DECOM)
+			vd->crow = vd->scrreg_startrow +
+			    uimin(DEF1_ARG(vd, 0), vd->scrreg_nrows) - 1;
 		else
-			edp->crow = uimin(DEF1_ARG(edp, 0), edp->nrows) - 1;
-		CHECK_DW(edp);
-		edp->ccol = uimin(DEF1_ARG(edp, 1), NCOLS(edp)) - 1;
-		edp->flags &= ~VTFL_LASTCHAR;
+			vd->crow = uimin(DEF1_ARG(vd, 0), vd->nrows) - 1;
+		CHECK_DW(vd);
+		vd->ccol = uimin(DEF1_ARG(vd, 1), NCOLS(vd)) - 1;
+		vd->flags &= ~VTFL_LASTCHAR;
 		break;
 	    case 'L': /* IL insert line */
 	    case 'M': /* DL delete line */
-		n = uimin(DEF1_ARG(edp, 0), ROWS_BELOW(edp) + 1);
+		n = uimin(DEF1_ARG(vd, 0), ROWS_BELOW(vd) + 1);
 		{
 		int savscrstartrow, savscrnrows;
-		savscrstartrow = edp->scrreg_startrow;
-		savscrnrows = edp->scrreg_nrows;
-		edp->scrreg_nrows -= ROWS_ABOVE(edp);
-		edp->scrreg_startrow = edp->crow;
+		savscrstartrow = vd->scrreg_startrow;
+		savscrnrows = vd->scrreg_nrows;
+		vd->scrreg_nrows -= ROWS_ABOVE(vd);
+		vd->scrreg_startrow = vd->crow;
 		if (c == 'L')
-			wsemul_vt100_scrolldown(edp, n);
+			wsemul_vt100_scrolldown(vd, n);
 		else
-			wsemul_vt100_scrollup(edp, n);
-		edp->scrreg_startrow = savscrstartrow;
-		edp->scrreg_nrows = savscrnrows;
+			wsemul_vt100_scrollup(vd, n);
+		vd->scrreg_startrow = savscrstartrow;
+		vd->scrreg_nrows = savscrnrows;
 		}
 		break;
 	    case 'P': /* DCH delete character */
-		n = uimin(DEF1_ARG(edp, 0), COLS_LEFT(edp) + 1);
-		help = NCOLS(edp) - (edp->ccol + n);
+		n = uimin(DEF1_ARG(vd, 0), COLS_LEFT(vd) + 1);
+		help = NCOLS(vd) - (vd->ccol + n);
 		if (help > 0)
-			COPYCOLS(edp, edp->ccol + n, edp->ccol, help);
-		ERASECOLS(edp, NCOLS(edp) - n, n, edp->bkgdattr);
+			COPYCOLS(vd, vd->ccol + n, vd->ccol, help);
+		ERASECOLS(vd, NCOLS(vd) - n, n, vd->bkgdattr);
+		break;
+	    case 'S': /* SU */
+		wsemul_vt100_scrollup(vd, DEF1_ARG(vd, 0));
+		break;
+	    case 'T': /* SD */
+		wsemul_vt100_scrolldown(vd, DEF1_ARG(vd, 0));
 		break;
 	    case 'X': /* ECH erase character */
-		n = uimin(DEF1_ARG(edp, 0), COLS_LEFT(edp) + 1);
-		ERASECOLS(edp, edp->ccol, n, edp->bkgdattr);
+		n = uimin(DEF1_ARG(vd, 0), COLS_LEFT(vd) + 1);
+		ERASECOLS(vd, vd->ccol, n, vd->bkgdattr);
+		break;
+	    case 'Z': /* CBT */
+		if (vd->ccol == 0)
+			break;
+		for (m = 0; m < DEF1_ARG(vd, 0); m++) {
+			if (vd->tabs) {
+				for (n = vd->ccol - 1; n > 0; n--) {
+					if (vd->tabs[n])
+						break;
+				}
+			} else
+				n = (vd->ccol - 1) & ~7;
+			vd->ccol = n;
+			if (n == 0)
+				break;
+		}
 		break;
 	    case 'c': /* DA primary */
-		if (ARG(edp, 0) == 0)
-			wsdisplay_emulinput(edp->cbcookie, WSEMUL_VT_ID1,
-					    sizeof(WSEMUL_VT_ID1));
+		if (ARG(vd, 0) == 0)
+			wsdisplay_emulinput(vd->cbcookie, WSEMUL_VT_ID1,
+					    sizeof(WSEMUL_VT_ID1) - 1);
 		break;
+	    case 'd': /* VPA */
+		vd->crow = uimin(DEF1_ARG(vd, 0) - 1, vd->nrows - 1);
+ 		break;
 	    case 'g': /* TBC */
-		KASSERT(edp->tabs != 0);
-		switch (ARG(edp, 0)) {
+		KASSERT(vd->tabs != NULL);
+		switch (ARG(vd, 0)) {
 		    case 0:
-			edp->tabs[edp->ccol] = 0;
+			vd->tabs[vd->ccol] = 0;
 			break;
 		    case 3:
-			memset(edp->tabs, 0, edp->ncols);
+			memset(vd->tabs, 0, vd->ncols);
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("CSI%dg unknown\n", ARG(edp, 0));
+			printf("CSI%dg unknown\n", ARG(vd, 0));
 #endif
 			break;
 		}
 		break;
 	    case 'm': /* SGR select graphic rendition */
-		flags = edp->attrflags;
-		fgcol = edp->fgcol;
-		bgcol = edp->bgcol;
-		for (n = 0; n < edp->nargs; n++) {
-			switch (ARG(edp, n)) {
+		flags = vd->attrflags;
+		fgcol = vd->fgcol;
+		bgcol = vd->bgcol;
+		for (n = 0; n < vd->nargs; n++) {
+			switch (ARG(vd, n)) {
 			    case 0: /* reset */
-				if (n == edp->nargs - 1) {
-					edp->bkgdattr = edp->curattr = edp->defattr;
-					edp->attrflags = edp->msgattrs.default_attrs;
-					edp->fgcol = edp->msgattrs.default_fg;
-					edp->bgcol = edp->msgattrs.default_bg;
+				if (n == vd->nargs - 1) {
+					vd->bkgdattr = vd->curattr = vd->defattr;
+					vd->attrflags = vd->msgattrs.default_attrs;
+					vd->fgcol = vd->msgattrs.default_fg;
+					vd->bgcol = vd->msgattrs.default_bg;
 					return;
 				}
-				flags = edp->msgattrs.default_attrs;
-				fgcol = edp->msgattrs.default_fg;
-				bgcol = edp->msgattrs.default_bg;
+				flags = vd->msgattrs.default_attrs;
+				fgcol = vd->msgattrs.default_fg;
+				bgcol = vd->msgattrs.default_bg;
 				break;
 			    case 1: /* bold */
 				flags |= WSATTR_HILIT;
@@ -516,119 +544,119 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 			    case 34: case 35: case 36: case 37:
 				/* fg color */
 				flags |= WSATTR_WSCOLORS;
-				fgcol = ARG(edp, n) - 30;
+				fgcol = ARG(vd, n) - 30;
 				break;
 			    case 39:
-				fgcol = edp->msgattrs.default_fg;
+				fgcol = vd->msgattrs.default_fg;
 				break;
 			    case 40: case 41: case 42: case 43:
 			    case 44: case 45: case 46: case 47:
 				/* bg color */
 				flags |= WSATTR_WSCOLORS;
-				bgcol = ARG(edp, n) - 40;
+				bgcol = ARG(vd, n) - 40;
 				break;
 			    case 49:
-				bgcol = edp->msgattrs.default_bg;
+				bgcol = vd->msgattrs.default_bg;
 				break;
 			    default:
 #ifdef VT100_PRINTUNKNOWN
-				printf("CSI%dm unknown\n", ARG(edp, n));
+				printf("CSI%dm unknown\n", ARG(vd, n));
 #endif
 				break;
 			}
 		}
-		if (vt100_selectattribute(edp, flags, fgcol, bgcol, &attr,
+		if (vt100_selectattribute(vd, flags, fgcol, bgcol, &attr,
 		    &bkgdattr)) {
 #ifdef VT100_DEBUG
 			printf("error allocating attr %d/%d/%x\n",
 			       fgcol, bgcol, flags);
 #endif
 		} else {
-			edp->curattr = attr;
-			edp->bkgdattr = bkgdattr;
-			edp->attrflags = flags;
-			edp->fgcol = fgcol;
-			edp->bgcol = bgcol;
+			vd->curattr = attr;
+			vd->bkgdattr = bkgdattr;
+			vd->attrflags = flags;
+			vd->fgcol = fgcol;
+			vd->bgcol = bgcol;
 		}
 		break;
 	    case 't': /* terminal size and such */
-		switch (ARG(edp, 0)) {
+		switch (ARG(vd, 0)) {
 		    case 18: {	/* xterm size */
 			char buf[20];
 
 			n = snprintf(buf, sizeof(buf), "\033[8;%d;%dt",
-			    edp->nrows, edp->ncols);
-			wsdisplay_emulinput(edp->cbcookie, buf, n);
+			    vd->nrows, vd->ncols);
+			wsdisplay_emulinput(vd->cbcookie, buf, n);
 			}
 			break;
 		}
 		break;	
 	    case 'n': /* reports */
-		switch (ARG(edp, 0)) {
+		switch (ARG(vd, 0)) {
 		    case 5: /* DSR operating status */
 			/* 0 = OK, 3 = malfunction */
-			wsdisplay_emulinput(edp->cbcookie, "\033[0n", 4);
+			wsdisplay_emulinput(vd->cbcookie, "\033[0n", 4);
 			break;
 		    case 6: { /* DSR cursor position report */
 			char buf[20];
 			int row;
-			if (edp->flags & VTFL_DECOM)
-				row = ROWS_ABOVE(edp);
+			if (vd->flags & VTFL_DECOM)
+				row = ROWS_ABOVE(vd);
 			else
-				row = edp->crow;
+				row = vd->crow;
 			n = snprintf(buf, sizeof(buf), "\033[%d;%dR",
-			    row + 1, edp->ccol + 1);
-			wsdisplay_emulinput(edp->cbcookie, buf, n);
+			    row + 1, vd->ccol + 1);
+			wsdisplay_emulinput(vd->cbcookie, buf, n);
 			}
 			break;
 		    case 15: /* DSR printer status */
 			/* 13 = no printer, 10 = ready, 11 = not ready */
-			wsdisplay_emulinput(edp->cbcookie, "\033[?13n", 6);
+			wsdisplay_emulinput(vd->cbcookie, "\033[?13n", 6);
 			break;
 		    case 25: /* UDK status - VT300 only */
 			/* 20 = locked, 21 = unlocked */
-			wsdisplay_emulinput(edp->cbcookie, "\033[?21n", 6);
+			wsdisplay_emulinput(vd->cbcookie, "\033[?21n", 6);
 			break;
 		    case 26: /* keyboard dialect */
 			/* 1 = north american , 7 = german */
-			wsdisplay_emulinput(edp->cbcookie, "\033[?27;1n", 8);
+			wsdisplay_emulinput(vd->cbcookie, "\033[?27;1n", 8);
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("CSI%dn unknown\n", ARG(edp, 0));
+			printf("CSI%dn unknown\n", ARG(vd, 0));
 #endif
 			break;
 		}
 		break;
 	    case 'r': /* DECSTBM set top/bottom margins */
-		help = uimin(DEF1_ARG(edp, 0), edp->nrows) - 1;
-		n = uimin(DEFx_ARG(edp, 1, edp->nrows), edp->nrows) - help;
+		help = uimin(DEF1_ARG(vd, 0), vd->nrows) - 1;
+		n = uimin(DEFx_ARG(vd, 1, vd->nrows), vd->nrows) - help;
 		if (n < 2) {
 			/* minimal scrolling region has 2 lines */
 			return;
 		} else {
-			edp->scrreg_startrow = help;
-			edp->scrreg_nrows = n;
+			vd->scrreg_startrow = help;
+			vd->scrreg_nrows = n;
 		}
-		edp->crow = ((edp->flags & VTFL_DECOM) ?
-			     edp->scrreg_startrow : 0);
-		edp->ccol = 0;
+		vd->crow = ((vd->flags & VTFL_DECOM) ?
+			     vd->scrreg_startrow : 0);
+		vd->ccol = 0;
 		break;
 	    case 'y':
-		switch (ARG(edp, 0)) {
+		switch (ARG(vd, 0)) {
 		    case 4: /* DECTST invoke confidence test */
 			/* ignore */
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("CSI%dy unknown\n", ARG(edp, 0));
+			printf("CSI%dy unknown\n", ARG(vd, 0));
 #endif
 			break;
 		}
 		break;
 	    default:
 #ifdef VT100_PRINTUNKNOWN
-		printf("CSI%c (%d, %d) unknown\n", c, ARG(edp, 0), ARG(edp, 1));
+		printf("CSI%c (%d, %d) unknown\n", c, ARG(vd, 0), ARG(vd, 1));
 #endif
 		break;
 	}
@@ -640,27 +668,27 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
  * is not supported
  */
 static int
-vt100_selectattribute(struct vt100base_data *edp,
+vt100_selectattribute(struct vt100base_data *vd,
 	int flags, int fgcol, int bgcol, long *attr, long *bkgdattr)
 {
 	int error;
 
-	if (!(edp->scrcapabilities & WSSCREEN_WSCOLORS)) {
+	if (!(vd->scrcapabilities & WSSCREEN_WSCOLORS)) {
 		flags &= ~WSATTR_WSCOLORS;
 #ifdef VT100_DEBUG
 		printf("colors ignored (impossible)\n");
 #endif
 	} else
 		flags |= WSATTR_WSCOLORS;
-	error = (*edp->emulops->allocattr)(edp->emulcookie, fgcol, bgcol,
+	error = (*vd->emulops->allocattr)(vd->emulcookie, fgcol, bgcol,
 					   flags & WSATTR_WSCOLORS, bkgdattr);
 	if (error)
 		return (error);
 
 	if ((flags & WSATTR_HILIT) &&
-	    !(edp->scrcapabilities & WSSCREEN_HILIT)) {
+	    !(vd->scrcapabilities & WSSCREEN_HILIT)) {
 		flags &= ~WSATTR_HILIT;
-		if (edp->scrcapabilities & WSSCREEN_WSCOLORS) {
+		if (vd->scrcapabilities & WSSCREEN_WSCOLORS) {
 #if defined(WSEMUL_VT100_HILIT_FG) && WSEMUL_VT100_HILIT_FG != -1
 			fgcol = WSEMUL_VT100_HILIT_FG;
 #elif !defined(WSEMUL_VT100_HILIT_FG)
@@ -677,9 +705,9 @@ vt100_selectattribute(struct vt100base_data *edp,
 		}
 	}
 	if ((flags & WSATTR_UNDERLINE) &&
-	    !(edp->scrcapabilities & WSSCREEN_UNDERLINE)) {
+	    !(vd->scrcapabilities & WSSCREEN_UNDERLINE)) {
 		flags &= ~WSATTR_UNDERLINE;
-		if (edp->scrcapabilities & WSSCREEN_WSCOLORS) {
+		if (vd->scrcapabilities & WSSCREEN_WSCOLORS) {
 #if defined(WSEMUL_VT100_UNDERLINE_FG) && WSEMUL_VT100_UNDERLINE_FG != -1
 			fgcol = WSEMUL_VT100_UNDERLINE_FG;
 #endif
@@ -696,16 +724,16 @@ vt100_selectattribute(struct vt100base_data *edp,
 		}
 	}
 	if ((flags & WSATTR_BLINK) &&
-	    !(edp->scrcapabilities & WSSCREEN_BLINK)) {
+	    !(vd->scrcapabilities & WSSCREEN_BLINK)) {
 		flags &= ~WSATTR_BLINK;
 #ifdef VT100_DEBUG
 		printf("blink ignored (impossible)\n");
 #endif
 	}
 	if ((flags & WSATTR_REVERSE) &&
-	    !(edp->scrcapabilities & WSSCREEN_REVERSE)) {
+	    !(vd->scrcapabilities & WSSCREEN_REVERSE)) {
 		flags &= ~WSATTR_REVERSE;
-		if (edp->scrcapabilities & WSSCREEN_WSCOLORS) {
+		if (vd->scrcapabilities & WSSCREEN_WSCOLORS) {
 			int help;
 			help = bgcol;
 			bgcol = fgcol;
@@ -717,7 +745,7 @@ vt100_selectattribute(struct vt100base_data *edp,
 #endif
 		}
 	}
-	error = (*edp->emulops->allocattr)(edp->emulcookie, fgcol, bgcol,
+	error = (*vd->emulops->allocattr)(vd->emulcookie, fgcol, bgcol,
 					   flags, attr);
 	if (error)
 		return (error);
@@ -727,30 +755,41 @@ vt100_selectattribute(struct vt100base_data *edp,
 
 /*
  * handle device control sequences if the main state machine
- * told so by setting edp->dcstype to a nonzero value
+ * told so by setting vd->dcstype to a nonzero value
  */
 void
-wsemul_vt100_handle_dcs(struct vt100base_data *edp)
+wsemul_vt100_handle_dcs(struct vt100base_data *vd)
 {
 	int i, pos;
 
-	switch (edp->dcstype) {
+	switch (vd->dcstype) {
 	    case 0: /* not handled */
 		return;
 	    case DCSTYPE_TABRESTORE:
-		KASSERT(edp->tabs != 0);
-		memset(edp->tabs, 0, edp->ncols);
+		KASSERT(vd->tabs != NULL);
+		KASSERT(vd->ncols <= 1024);
+		memset(vd->tabs, 0, vd->ncols);
 		pos = 0;
-		for (i = 0; i < edp->dcspos; i++) {
-			char c = edp->dcsarg[i];
+		for (i = 0; i < vd->dcspos; i++) {
+			char c = vd->dcsarg[i];
 			switch (c) {
 			    case '0': case '1': case '2': case '3': case '4':
-			    case '5': case '6': case '7': case '8': case '9':
-				pos = pos * 10 + (edp->dcsarg[i] - '0');
+			    case '5': case '6': case '7': case '8': case '9': {
+				const int c0 = c - '0';
+				if (pos < 0 ||
+				    pos > INT_MAX/10 ||
+				    pos * 10 > vd->ncols - c0) {
+					pos = -1;
+					break;
+				}
+				pos = pos * 10 + c0;
 				break;
+			    }
 			    case '/':
-				if (pos > 0)
-					edp->tabs[pos - 1] = 1;
+				if (pos > 0) {
+					KASSERT(pos <= vd->ncols);
+					vd->tabs[pos - 1] = 1;
+				}
 				pos = 0;
 				break;
 			    default:
@@ -760,17 +799,19 @@ wsemul_vt100_handle_dcs(struct vt100base_data *edp)
 				break;
 			}
 		}
-		if (pos > 0)
-			edp->tabs[pos - 1] = 1;
+		if (pos > 0) {
+			KASSERT(pos <= vd->ncols);
+			vd->tabs[pos - 1] = 1;
+		}
 		break;
 	    default:
-		panic("wsemul_vt100_handle_dcs: bad type %d", edp->dcstype);
+		panic("wsemul_vt100_handle_dcs: bad type %d", vd->dcstype);
 	}
-	edp->dcstype = 0;
+	vd->dcstype = 0;
 }
 
 static int
-vt100_ansimode(struct vt100base_data *edp, int nr, int op)
+vt100_ansimode(struct vt100base_data *vd, int nr, int op)
 {
 	int res = 0; /* default: unknown */
 
@@ -781,10 +822,10 @@ vt100_ansimode(struct vt100base_data *edp, int nr, int op)
 		break;
 	    case 4: /* IRM insert/replace characters */
 		if (op == VTMODE_SET)
-			edp->flags |= VTFL_INSERTMODE;
+			vd->flags |= VTFL_INSERTMODE;
 		else if (op == VTMODE_RESET)
-			edp->flags &= ~VTFL_INSERTMODE;
-		res = ((edp->flags & VTFL_INSERTMODE) ? 1 : 2);
+			vd->flags &= ~VTFL_INSERTMODE;
+		res = ((vd->flags & VTFL_INSERTMODE) ? 1 : 2);
 		break;
 	    case 10: /* HEM horizontal editing (permanently reset) */
 		res = 4;
@@ -804,12 +845,12 @@ vt100_ansimode(struct vt100base_data *edp, int nr, int op)
 }
 
 static int
-vt100_decmode(struct vt100base_data *edp, int nr, int op)
+vt100_decmode(struct vt100base_data *vd, int nr, int op)
 {
 	int res = 0; /* default: unknown */
 	int flags;
 
-	flags = edp->flags;
+	flags = vd->flags;
 	switch (nr) {
 	    case 1: /* DECCKM application/nomal cursor keys */
 		if (op == VTMODE_SET)
@@ -851,10 +892,10 @@ vt100_decmode(struct vt100base_data *edp, int nr, int op)
 			flags |= VTFL_CURSORON;
 		else if (op == VTMODE_RESET)
 			flags &= ~VTFL_CURSORON;
-		if (flags != edp->flags)
-			(*edp->emulops->cursor)(edp->emulcookie,
+		if (flags != vd->flags)
+			(*vd->emulops->cursor)(vd->emulcookie,
 						flags & VTFL_CURSORON,
-						edp->crow, edp->ccol);
+						vd->crow, vd->ccol);
 		res = ((flags & VTFL_CURSORON) ? 1 : 2);
 		break;
 	    case 42: /* DECNRCM use 7-bit NRC /
@@ -875,7 +916,7 @@ vt100_decmode(struct vt100base_data *edp, int nr, int op)
 #endif
 		break;
 	}
-	edp->flags = flags;
+	vd->flags = flags;
 
 	return (res);
 }
