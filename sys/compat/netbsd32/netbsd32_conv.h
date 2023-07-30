@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.47 2023/07/29 12:38:25 rin Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.48 2023/07/30 06:52:20 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -43,6 +43,7 @@
 #include <sys/time.h>
 #include <sys/timex.h>
 #include <sys/event.h>
+#include <sys/epoll.h>
 
 #include <compat/sys/dirent.h>
 
@@ -954,6 +955,26 @@ netbsd32_from_mq_attr(const struct mq_attr *attr,
 	a32->mq_maxmsg = attr->mq_maxmsg;
 	a32->mq_msgsize = attr->mq_msgsize;
 	a32->mq_curmsgs = attr->mq_curmsgs;
+}
+
+static __inline void
+netbsd32_to_epoll_event(const struct netbsd32_epoll_event *ee32,
+    struct epoll_event *ee)
+{
+
+	memset(ee, 0, sizeof(*ee));
+	ee->events = ee32->events;
+	ee->data = ee32->data;
+}
+
+static __inline void
+netbsd32_from_epoll_event(const struct epoll_event *ee,
+    struct netbsd32_epoll_event *ee32)
+{
+
+	memset(ee32, 0, sizeof(*ee32));
+	ee32->events = ee->events;
+	ee32->data = ee->data;
 }
 
 #endif /* _COMPAT_NETBSD32_NETBSD32_CONV_H_ */

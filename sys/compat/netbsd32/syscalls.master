@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.143 2023/07/30 05:30:45 rin Exp $
+	$NetBSD: syscalls.master,v 1.144 2023/07/30 06:52:20 rin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1222,6 +1222,10 @@
 			    netbsd32_keventp_t eventlist, \
 			    netbsd32_size_t nevents, \
 			    const netbsd32_timespecp_t timeout); }
-502	UNIMPL		epoll_create1
-503	UNIMPL		epoll_ctl
-504	UNIMPL		epoll_pwait2
+502	STD		{ int|netbsd32||epoll_create1(int flags); }
+503	STD		{ int|netbsd32||epoll_ctl(int epfd, int op, int fd, \
+			    netbsd32_epoll_eventp_t event); }
+504	STD		{ int|netbsd32||epoll_pwait2(int epfd, \
+			    netbsd32_epoll_eventp_t events, int maxevents, \
+			    netbsd32_timespecp_t timeout, \
+			    netbsd32_sigsetp_t sigmask); }
