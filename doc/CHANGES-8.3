@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.185 2023/07/29 11:48:37 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.186 2023/07/30 12:16:28 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3619,4 +3619,9 @@ sys/arch/x86/x86/coretemp.c			1.38-1.39 (patch)
 
 	coretemp(4): change limits of Tjmax.
 	[msaitoh, ticket #1857]
+
+lib/csu/arch/vax/crtbegin.S			1.8,1.9
+
+	vax/csu: fix register preservation.
+	[rin, ticket #1858]
 
