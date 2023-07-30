@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.234 2023/07/30 05:10:47 rin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.235 2023/07/30 05:30:45 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.234 2023/07/30 05:10:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.235 2023/07/30 05:30:45 rin Exp $");
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
@@ -2646,6 +2646,21 @@ netbsd32_eventfd(struct lwp *l,
 	NETBSD32TO64_UAP(val);
 	NETBSD32TO64_UAP(flags);
 	return sys_eventfd(l, &ua, retval);
+}
+
+int
+netbsd32_memfd_create(struct lwp *l,
+    const struct netbsd32_memfd_create_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const netbsd32_charp)	name;
+		syscallarg(unsigned int)		flags;
+	} */
+	struct sys_memfd_create_args ua;
+
+	NETBSD32TOP_UAP(name, const char);
+	NETBSD32TO64_UAP(flags);
+	return sys_memfd_create(l, &ua, retval);
 }
 
 /*
