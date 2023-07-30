@@ -1,4 +1,4 @@
-.\"	$NetBSD: nvmm.4,v 1.7 2023/07/29 23:11:50 gdt Exp $
+.\"	$NetBSD: nvmm.4,v 1.8 2023/07/30 00:11:32 wiz Exp $
 .\"
 .\" Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
 .\" All rights reserved.
@@ -54,8 +54,9 @@ x86-VMX, for x86 Intel CPUs
 .El
 Note that for VMX support, the CPU must also support "VMX Unrestricted
 Guest", which is only present if Extended Page Tables (EPT) is
-supported.  The earliest CPU family with this feature is Westmere, and
-not all later CPUs have it.
+supported.
+The earliest CPU family with this feature is Westmere, and not all
+later CPUs have it.
 .Sh SEE ALSO
 .Xr libnvmm 3 ,
 .Xr nvmmctl 8
