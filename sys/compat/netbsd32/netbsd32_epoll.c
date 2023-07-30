@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_epoll.c,v 1.2 2023/07/30 07:48:54 rin Exp $	*/
+/*	$NetBSD: netbsd32_epoll.c,v 1.3 2023/07/30 07:56:15 rin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_epoll.c,v 1.2 2023/07/30 07:48:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_epoll.c,v 1.3 2023/07/30 07:56:15 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/epoll.h>
@@ -129,10 +129,8 @@ netbsd32_epoll_pwait2(struct lwp *l,
 
 	error = epoll_wait_common(l, retval, SCARG(uap, epfd), events,
 	    maxevents, tsp, ssp);
-	if (error != 0 || *retval == 0) {
-		kmem_free(events, maxevents * sizeof(*events));
-		return error;
-	}
+	if (error != 0 || *retval == 0)
+		goto out;
 
 	struct netbsd32_epoll_event *events32 =
 	    kmem_alloc(*retval * sizeof(*events32), KM_SLEEP);
@@ -140,12 +138,12 @@ netbsd32_epoll_pwait2(struct lwp *l,
 	for (int i = 0; i < *retval; i++)
 		netbsd32_from_epoll_event(&events[i], &events32[i]);
 
-	kmem_free(events, maxevents * sizeof(*events));
-
 	error = copyout(events, SCARG_P32(uap, events),
 	    *retval * sizeof(*events32));
 
 	kmem_free(events32, *retval * sizeof(*events32));
 
+ out:
+	kmem_free(events, maxevents * sizeof(*events));
 	return error;
 }
