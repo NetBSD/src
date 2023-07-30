@@ -1,6 +1,6 @@
 /* Definitions of target machine for GCC,
    for ARM with targeting the VXWorks run time environment. 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    Contributed by: Mike Stump <mrs@wrs.com>
    Brought up to date by CodeSourcery, LLC.
@@ -44,7 +44,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 							\
     if (arm_arch_xscale)				\
       builtin_define ("_VX_CPU=XSCALE");		\
-    if (arm_arch8)					\
+    else if (arm_arch8)					\
       builtin_define ("_VX_CPU=ARMARCH8A");		\
     else if (arm_arch7)					\
       {							\

@@ -1,5 +1,5 @@
 /* ACLE support for AArch64 SVE (__ARM_FEATURE_SVE intrinsics)
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -1123,7 +1123,7 @@ public:
   rtx
   expand (function_expander &e) const OVERRIDE
   {
-    insn_code icode = code_for_aarch64_load (extend_rtx_code (),
+    insn_code icode = code_for_aarch64_load (UNSPEC_LD1_SVE, extend_rtx_code (),
 					     e.vector_mode (0),
 					     e.memory_vector_mode ());
     return e.use_contiguous_load_insn (icode);
@@ -2295,17 +2295,6 @@ public:
   CONSTEXPR svundef_impl (unsigned int vectors_per_tuple)
     : quiet<multi_vector_function> (vectors_per_tuple) {}
 
-  gimple *
-  fold (gimple_folder &f) const OVERRIDE
-  {
-    /* Don't fold svundef at the gimple level.  There's no exact
-       correspondence for SSA_NAMEs, and we explicitly don't want
-       to generate a specific value (like an all-zeros vector).  */
-    if (vectors_per_tuple () == 1)
-      return NULL;
-    return gimple_build_assign (f.lhs, build_clobber (TREE_TYPE (f.lhs)));
-  }
-
   rtx
   expand (function_expander &e) const OVERRIDE
   {
@@ -2377,7 +2366,7 @@ public:
        Hence we do the same rotation on arguments as svdot_impl does.  */
     e.rotate_inputs_left (0, 3);
     machine_mode mode = e.vector_mode (0);
-    insn_code icode = code_for_aarch64_dot_prod (UNSPEC_USDOT, mode);
+    insn_code icode = code_for_dot_prod (UNSPEC_USDOT, mode);
     return e.use_exact_insn (icode);
   }
 

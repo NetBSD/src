@@ -1,22 +1,25 @@
-2023-07-07  Release Manager
+2023-05-08  Release Manager
 
-	* GCC 10.5.0 released.
+	* GCC 12.3.0 released.
 
-2022-06-28  Release Manager
+2022-08-19  Release Manager
 
-	* GCC 10.4.0 released.
+	* GCC 12.2.0 released.
 
-2021-04-08  Release Manager
+2022-05-06  Release Manager
 
-	* GCC 10.3.0 released.
+	* GCC 12.1.0 released.
 
-2020-07-23  Release Manager
+2020-10-23  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 10.2.0 released.
+	PR tree-optimization/97164
+	* bid_functions.h (UINT192): Decrease alignment to 8 bytes.
 
-2020-05-07  Release Manager
+2020-05-05  Martin Liska  <mliska@suse.cz>
 
-	* GCC 10.1.0 released.
+	PR libgcc/92565
+	* bid_internal.h (handle_UF_128_rem): Remove unused variable.
+	(handle_UF_128): Likewise.
 
 2020-01-01  Jakub Jelinek  <jakub@redhat.com>
 
@@ -423,7 +426,7 @@
 	* inline_bid_add.h: Likewise.
 	* sqrt_macros.h: Likewise.
 
-Copyright (C) 2007-2020 Free Software Foundation, Inc.
+Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

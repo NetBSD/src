@@ -1,5 +1,5 @@
-/* Declarations for interface to insn recognizer and insn-output.c.
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+/* Declarations for interface to insn recognizer and insn-output.cc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -24,7 +24,7 @@ along with GCC; see the file COPYING3.  If not see
    a type that has at least MAX_RECOG_ALTERNATIVES + 1 bits, with the extra
    bit giving an invalid value that can be used to mean "uninitialized".  */
 #define MAX_RECOG_ALTERNATIVES 35
-typedef uint64_t alternative_mask;  /* Keep in sync with genattrtab.c.  */
+typedef uint64_t alternative_mask;  /* Keep in sync with genattrtab.cc.  */
 
 /* A mask of all alternatives.  */
 #define ALL_ALTERNATIVES ((alternative_mask) -1)
@@ -82,12 +82,113 @@ alternative_class (const operand_alternative *alt, int i)
   return alt[i].matches >= 0 ? alt[alt[i].matches].cl : alt[i].cl;
 }
 
+/* A class for substituting one rtx for another within an instruction,
+   or for recursively simplifying the instruction as-is.  Derived classes
+   can record or filter certain decisions.  */
+
+class insn_propagation : public simplify_context
+{
+public:
+  /* Assignments for RESULT_FLAGS.
+
+     UNSIMPLIFIED is true if a substitution has been made inside an rtx
+     X and if neither X nor its parent expressions could be simplified.
+
+     FIRST_SPARE_RESULT is the first flag available for derived classes.  */
+  static const uint16_t UNSIMPLIFIED = 1U << 0;
+  static const uint16_t FIRST_SPARE_RESULT = 1U << 1;
+
+  insn_propagation (rtx_insn *);
+  insn_propagation (rtx_insn *, rtx, rtx, bool = true);
+  bool apply_to_pattern (rtx *);
+  bool apply_to_rvalue (rtx *);
+
+  /* Return true if we should accept a substitution into the address of
+     memory expression MEM.  Undoing changes OLD_NUM_CHANGES and up restores
+     MEM's original address.  */
+  virtual bool check_mem (int /*old_num_changes*/,
+			  rtx /*mem*/) { return true; }
+
+  /* Note that we've simplified OLD_RTX into NEW_RTX.  When substituting,
+     this only happens if a substitution occured within OLD_RTX.
+     Undoing OLD_NUM_CHANGES and up will restore the old form of OLD_RTX.
+     OLD_RESULT_FLAGS is the value that RESULT_FLAGS had before processing
+     OLD_RTX.  */
+  virtual void note_simplification (int /*old_num_changes*/,
+				    uint16_t /*old_result_flags*/,
+				    rtx /*old_rtx*/, rtx /*new_rtx*/) {}
+
+private:
+  bool apply_to_mem_1 (rtx);
+  bool apply_to_lvalue_1 (rtx);
+  bool apply_to_rvalue_1 (rtx *);
+  bool apply_to_pattern_1 (rtx *);
+
+public:
+  /* The instruction that we are simplifying or propagating into.  */
+  rtx_insn *insn;
+
+  /* If FROM is nonnull, we're replacing FROM with TO, otherwise we're
+     just doing a recursive simplification.  */
+  rtx from;
+  rtx to;
+
+  /* The number of times that we have replaced FROM with TO.  */
+  unsigned int num_replacements;
+
+  /* A bitmask of flags that describe the result of the simplificiation;
+     see above for details.  */
+  uint16_t result_flags : 16;
+
+  /* True if we should unshare TO when making the next substitution,
+     false if we can use TO itself.  */
+  uint16_t should_unshare : 1;
+
+  /* True if we should call check_mem after substituting into a memory.  */
+  uint16_t should_check_mems : 1;
+
+  /* True if we should call note_simplification after each simplification.  */
+  uint16_t should_note_simplifications : 1;
+
+  /* For future expansion.  */
+  uint16_t spare : 13;
+
+  /* Gives the reason that a substitution failed, for debug purposes.  */
+  const char *failure_reason;
+};
+
+/* Try to replace FROM with TO in INSN.  SHARED_P is true if TO is shared
+   with other instructions, false if INSN can use TO directly.  */
+
+inline insn_propagation::insn_propagation (rtx_insn *insn, rtx from, rtx to,
+					   bool shared_p)
+  : insn (insn),
+    from (from),
+    to (to),
+    num_replacements (0),
+    result_flags (0),
+    should_unshare (shared_p),
+    should_check_mems (false),
+    should_note_simplifications (false),
+    spare (0),
+    failure_reason (nullptr)
+{
+}
+
+/* Try to simplify INSN without performing a substitution.  */
+
+inline insn_propagation::insn_propagation (rtx_insn *insn)
+  : insn_propagation (insn, NULL_RTX, NULL_RTX)
+{
+}
+
 extern void init_recog (void);
 extern void init_recog_no_volatile (void);
 extern int check_asm_operands (rtx);
 extern int asm_operand_ok (rtx, const char *, const char **);
 extern bool validate_change (rtx, rtx *, rtx, bool);
 extern bool validate_unshare_change (rtx, rtx *, rtx, bool);
+extern bool validate_change_xveclen (rtx, rtx *, int, bool);
 extern bool canonicalize_change_group (rtx_insn *insn, rtx x);
 extern int insn_invalid_p (rtx_insn *, bool);
 extern int verify_changes (int);
@@ -95,13 +196,15 @@ extern void confirm_change_group (void);
 extern int apply_change_group (void);
 extern int num_validated_changes (void);
 extern void cancel_changes (int);
+extern void temporarily_undo_changes (int);
+extern void redo_changes (int);
 extern int constrain_operands (int, alternative_mask);
 extern int constrain_operands_cached (rtx_insn *, int);
-extern int memory_address_addr_space_p (machine_mode, rtx, addr_space_t);
+extern bool memory_address_addr_space_p (machine_mode, rtx, addr_space_t);
 #define memory_address_p(mode,addr) \
 	memory_address_addr_space_p ((mode), (addr), ADDR_SPACE_GENERIC)
-extern int strict_memory_address_addr_space_p (machine_mode, rtx,
-					       addr_space_t);
+extern bool strict_memory_address_addr_space_p (machine_mode, rtx,
+						addr_space_t);
 #define strict_memory_address_p(mode,addr) \
 	strict_memory_address_addr_space_p ((mode), (addr), ADDR_SPACE_GENERIC)
 extern int validate_replace_rtx_subexp (rtx, rtx, rtx_insn *, rtx *);
@@ -113,10 +216,11 @@ extern void validate_replace_src_group (rtx, rtx, rtx_insn *);
 extern bool validate_simplify_insn (rtx_insn *insn);
 extern int num_changes_pending (void);
 extern bool reg_fits_class_p (const_rtx, reg_class_t, int, machine_mode);
+extern bool valid_insn_p (rtx_insn *);
 
-extern int offsettable_memref_p (rtx);
-extern int offsettable_nonstrict_memref_p (rtx);
-extern int offsettable_address_addr_space_p (int, machine_mode, rtx,
+extern bool offsettable_memref_p (rtx);
+extern bool offsettable_nonstrict_memref_p (rtx);
+extern bool offsettable_address_addr_space_p (int, machine_mode, rtx,
 					     addr_space_t);
 #define offsettable_address_p(strict,mode,addr) \
 	offsettable_address_addr_space_p ((strict), (mode), (addr), \
@@ -149,6 +253,8 @@ extern rtx_insn *peephole2_insns (rtx, rtx_insn *, int *);
 
 extern int store_data_bypass_p (rtx_insn *, rtx_insn *);
 extern int if_test_bypass_p (rtx_insn *, rtx_insn *);
+
+extern void copy_frame_info_to_split_insn (rtx_insn *, rtx_insn *);
 
 #ifndef GENERATOR_FILE
 /* Try recognizing the instruction INSN,
@@ -284,51 +390,22 @@ which_op_alt ()
   return &recog_op_alt[which_alternative * recog_data.n_operands];
 }
 
-/* A table defined in insn-output.c that give information about
+/* A table defined in insn-output.cc that give information about
    each insn-code value.  */
 
-typedef int (*insn_operand_predicate_fn) (rtx, machine_mode);
+typedef bool (*insn_operand_predicate_fn) (rtx, machine_mode);
 typedef const char * (*insn_output_fn) (rtx *, rtx_insn *);
 
 struct insn_gen_fn
 {
-  typedef rtx_insn * (*f0) (void);
-  typedef rtx_insn * (*f1) (rtx);
-  typedef rtx_insn * (*f2) (rtx, rtx);
-  typedef rtx_insn * (*f3) (rtx, rtx, rtx);
-  typedef rtx_insn * (*f4) (rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f5) (rtx, rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f6) (rtx, rtx, rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f7) (rtx, rtx, rtx, rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f8) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f9) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f10) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f11) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f12) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f13) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f14) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f15) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
-  typedef rtx_insn * (*f16) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx);
-
   typedef void (*stored_funcptr) (void);
 
-  rtx_insn * operator () (void) const { return ((f0)func) (); }
-  rtx_insn * operator () (rtx a0) const { return ((f1)func) (a0); }
-  rtx_insn * operator () (rtx a0, rtx a1) const { return ((f2)func) (a0, a1); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2) const { return ((f3)func) (a0, a1, a2); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3) const { return ((f4)func) (a0, a1, a2, a3); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4) const { return ((f5)func) (a0, a1, a2, a3, a4); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5) const { return ((f6)func) (a0, a1, a2, a3, a4, a5); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6) const { return ((f7)func) (a0, a1, a2, a3, a4, a5, a6); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7) const { return ((f8)func) (a0, a1, a2, a3, a4, a5, a6, a7); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8) const { return ((f9)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9) const { return ((f10)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10) const { return ((f11)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10, rtx a11) const { return ((f12)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10, rtx a11, rtx a12) const { return ((f13)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10, rtx a11, rtx a12, rtx a13) const { return ((f14)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10, rtx a11, rtx a12, rtx a13, rtx a14) const { return ((f15)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14); }
-  rtx_insn * operator () (rtx a0, rtx a1, rtx a2, rtx a3, rtx a4, rtx a5, rtx a6, rtx a7, rtx a8, rtx a9, rtx a10, rtx a11, rtx a12, rtx a13, rtx a14, rtx a15) const { return ((f16)func) (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15); }
+  template<typename ...Ts>
+  rtx_insn *operator() (Ts... args) const
+  {
+    typedef rtx_insn *(*funcptr) (decltype ((void) args, NULL_RTX)...);
+    return ((funcptr) func) (args...);
+  }
 
   // This is for compatibility of code that invokes functions like
   //   (*funcptr) (arg)
@@ -336,7 +413,7 @@ struct insn_gen_fn
 
   // The wrapped function pointer must be public and there must not be any
   // constructors.  Otherwise the insn_data_d struct initializers generated
-  // by genoutput.c will result in static initializer functions, which defeats
+  // by genoutput.cc will result in static initializer functions, which defeats
   // the purpose of the generated insn_data_d array.
   stored_funcptr func;
 };
@@ -426,6 +503,63 @@ alternative_mask get_preferred_alternatives (rtx_insn *, basic_block);
 bool check_bool_attrs (rtx_insn *);
 
 void recog_init ();
+
+/* This RAII class can help to undo tentative insn changes on failure.
+   When an object of the class goes out of scope, it undoes all group
+   changes that have been made via the validate_change machinery and
+   not yet confirmed via confirm_change_group.
+
+   For example:
+
+      insn_change_watermark watermark;
+      validate_change (..., true); // A
+      ...
+      if (test)
+	// Undoes change A.
+	return false;
+      ...
+      validate_change (..., true); // B
+      ...
+      if (test)
+	// Undoes changes A and B.
+	return false;
+      ...
+      confirm_change_group ();
+
+   Code that wants to avoid this behavior can use keep ():
+
+      insn_change_watermark watermark;
+      validate_change (..., true); // A
+      ...
+      if (test)
+	// Undoes change A.
+	return false;
+      ...
+      watermark.keep ();
+      validate_change (..., true); // B
+      ...
+      if (test)
+	// Undoes change B, but not A.
+	return false;
+      ...
+      confirm_change_group ();  */
+class insn_change_watermark
+{
+public:
+  insn_change_watermark () : m_old_num_changes (num_validated_changes ()) {}
+  ~insn_change_watermark ();
+  void keep () { m_old_num_changes = num_validated_changes (); }
+
+private:
+  int m_old_num_changes;
+};
+
+inline insn_change_watermark::~insn_change_watermark ()
+{
+  if (m_old_num_changes < num_validated_changes ())
+    cancel_changes (m_old_num_changes);
+}
+
 #endif
 
 #endif /* GCC_RECOG_H */

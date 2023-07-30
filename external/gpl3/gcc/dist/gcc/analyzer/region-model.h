@@ -1,5 +1,5 @@
 /* Classes for modeling the state of memory.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -26,256 +26,17 @@ along with GCC; see the file COPYING3.  If not see
       (Zhongxing Xu, Ted Kremenek, and Jian Zhang)
      http://lcs.ios.ac.cn/~xuzb/canalyze/memmodel.pdf  */
 
-/* A tree, extended with stack frame information for locals, so that
-   we can distinguish between different values of locals within a potentially
-   recursive callstack.  */
-// TODO: would this be better as a new tree code?
+#include "analyzer/svalue.h"
+#include "analyzer/region.h"
 
 using namespace ana;
-
-namespace ana {
-
-class path_var
-{
-public:
-  path_var (tree t, int stack_depth)
-  : m_tree (t), m_stack_depth (stack_depth)
-  {
-    // TODO: ignore stack depth for globals and constants
-  }
-
-  bool operator== (const path_var &other) const
-  {
-    return (m_tree == other.m_tree
-	    && m_stack_depth == other.m_stack_depth);
-  }
-
-  void dump (pretty_printer *pp) const;
-
-  tree m_tree;
-  int m_stack_depth; // or -1 for globals?
-};
-
-} // namespace ana
 
 namespace inchash
 {
   extern void add_path_var (path_var pv, hash &hstate);
 } // namespace inchash
 
-
 namespace ana {
-
-/* A region_model is effectively a graph of regions and symbolic values.
-   We store per-model IDs rather than pointers to make it easier to clone
-   and to compare graphs.  */
-
-/* An ID for an svalue within a region_model.  Internally, this is an index
-   into a vector of svalue * within the region_model.  */
-
-class svalue_id
-{
-public:
-  static svalue_id null () { return svalue_id (-1); }
-
-  svalue_id () : m_idx (-1) {}
-
-  bool operator== (const svalue_id &other) const
-  {
-    return m_idx == other.m_idx;
-  }
-
-  bool operator!= (const svalue_id &other) const
-  {
-    return m_idx != other.m_idx;
-  }
-
-  bool null_p () const { return m_idx == -1; }
-
-  static svalue_id from_int (int idx) { return svalue_id (idx); }
-  int as_int () const { return m_idx; }
-
-  void print (pretty_printer *pp) const;
-  void dump_node_name_to_pp (pretty_printer *pp) const;
-
-  void validate (const region_model &model) const;
-
-private:
-  svalue_id (int idx) : m_idx (idx) {}
-
-  int m_idx;
-};
-
-/* An ID for a region within a region_model.  Internally, this is an index
-   into a vector of region * within the region_model.  */
-
-class region_id
-{
-public:
-  static region_id null () { return region_id (-1); }
-
-  region_id () : m_idx (-1) {}
-
-  bool operator== (const region_id &other) const
-  {
-    return m_idx == other.m_idx;
-  }
-
-  bool operator!= (const region_id &other) const
-  {
-    return m_idx != other.m_idx;
-  }
-
-  bool null_p () const { return m_idx == -1; }
-
-  static region_id from_int (int idx) { return region_id (idx); }
-  int as_int () const { return m_idx; }
-
-  void print (pretty_printer *pp) const;
-  void dump_node_name_to_pp (pretty_printer *pp) const;
-
-  void validate (const region_model &model) const;
-
-private:
-  region_id (int idx) : m_idx (idx) {}
-
-  int m_idx;
-};
-
-/* A class for renumbering IDs within a region_model, mapping old IDs
-   to new IDs (e.g. when removing one or more elements, thus needing to
-   renumber).  */
-// TODO: could this be useful for equiv_class_ids?
-
-template <typename T>
-class id_map
-{
- public:
-  id_map (int num_ids);
-  void put (T src, T dst);
-  T get_dst_for_src (T src) const;
-  T get_src_for_dst (T dst) const;
-  void dump_to_pp (pretty_printer *pp) const;
-  void dump () const;
-  void update (T *) const;
-
- private:
-  auto_vec<T> m_src_to_dst;
-  auto_vec<T> m_dst_to_src;
-};
-
-typedef id_map<svalue_id> svalue_id_map;
-typedef id_map<region_id> region_id_map;
-
-/* class id_map.  */
-
-/* id_map's ctor, which populates the map with dummy null values.  */
-
-template <typename T>
-inline id_map<T>::id_map (int num_svalues)
-: m_src_to_dst (num_svalues),
-  m_dst_to_src (num_svalues)
-{
-  for (int i = 0; i < num_svalues; i++)
-    {
-      m_src_to_dst.quick_push (T::null ());
-      m_dst_to_src.quick_push (T::null ());
-    }
-}
-
-/* Record that SRC is to be mapped to DST.  */
-
-template <typename T>
-inline void
-id_map<T>::put (T src, T dst)
-{
-  m_src_to_dst[src.as_int ()] = dst;
-  m_dst_to_src[dst.as_int ()] = src;
-}
-
-/* Get the new value for SRC within the map.  */
-
-template <typename T>
-inline T
-id_map<T>::get_dst_for_src (T src) const
-{
-  if (src.null_p ())
-    return src;
-  return m_src_to_dst[src.as_int ()];
-}
-
-/* Given DST, a new value, determine which old value will be mapped to it
-   (the inverse of the map).  */
-
-template <typename T>
-inline T
-id_map<T>::get_src_for_dst (T dst) const
-{
-  if (dst.null_p ())
-    return dst;
-  return m_dst_to_src[dst.as_int ()];
-}
-
-/* Dump this id_map to PP.  */
-
-template <typename T>
-inline void
-id_map<T>::dump_to_pp (pretty_printer *pp) const
-{
-  pp_string (pp, "src to dst: {");
-  unsigned i;
-  T *dst;
-  FOR_EACH_VEC_ELT (m_src_to_dst, i, dst)
-    {
-      if (i > 0)
-	pp_string (pp, ", ");
-      T src (T::from_int (i));
-      src.print (pp);
-      pp_string (pp, " -> ");
-      dst->print (pp);
-    }
-  pp_string (pp, "}");
-  pp_newline (pp);
-
-  pp_string (pp, "dst to src: {");
-  T *src;
-  FOR_EACH_VEC_ELT (m_dst_to_src, i, src)
-    {
-      if (i > 0)
-	pp_string (pp, ", ");
-      T dst (T::from_int (i));
-      dst.print (pp);
-      pp_string (pp, " <- ");
-      src->print (pp);
-    }
-  pp_string (pp, "}");
-  pp_newline (pp);
-}
-
-/* Dump this id_map to stderr.  */
-
-template <typename T>
-DEBUG_FUNCTION inline void
-id_map<T>::dump () const
-{
-  pretty_printer pp;
-  pp.buffer->stream = stderr;
-  dump_to_pp (&pp);
-  pp_flush (&pp);
-}
-
-/* Update *ID from the old value to its new value in this map.  */
-
-template <typename T>
-inline void
-id_map<T>::update (T *id) const
-{
-  *id = get_dst_for_src (*id);
-}
-
-/* Variant of the above, which only stores things in one direction.
-   (e.g. for merging, when the number of destination regions is not
-   the same of the src regions, and can grow).  */
 
 template <typename T>
 class one_way_id_map
@@ -290,10 +51,7 @@ class one_way_id_map
 
  private:
   auto_vec<T> m_src_to_dst;
-};
-
-typedef one_way_id_map<svalue_id> one_way_svalue_id_map;
-typedef one_way_id_map<region_id> one_way_region_id_map;
+ };
 
 /* class one_way_id_map.  */
 
@@ -370,57 +128,53 @@ one_way_id_map<T>::update (T *id) const
   *id = get_dst_for_src (*id);
 }
 
-/* A set of region_ids within a region_model.  */
+/* A mapping from region to svalue for use when tracking state.  */
 
-class region_id_set
+class region_to_value_map
 {
 public:
-  region_id_set (const region_model *model);
+  typedef hash_map<const region *, const svalue *> hash_map_t;
+  typedef hash_map_t::iterator iterator;
 
-  void add_region (region_id rid)
+  region_to_value_map () : m_hash_map () {}
+  region_to_value_map (const region_to_value_map &other)
+  : m_hash_map (other.m_hash_map) {}
+  region_to_value_map &operator= (const region_to_value_map &other);
+
+  bool operator== (const region_to_value_map &other) const;
+  bool operator!= (const region_to_value_map &other) const
   {
-    if (!rid.null_p ())
-      bitmap_set_bit (m_bitmap, rid.as_int ());
+    return !(*this == other);
   }
 
-  bool region_p (region_id rid) const
+  iterator begin () const { return m_hash_map.begin (); }
+  iterator end () const { return m_hash_map.end (); }
+
+  const svalue * const *get (const region *reg) const
   {
-    gcc_assert (!rid.null_p ());
-    return bitmap_bit_p (const_cast <auto_sbitmap &> (m_bitmap),
-			 rid.as_int ());
+    return const_cast <hash_map_t &> (m_hash_map).get (reg);
+  }
+  void put (const region *reg, const svalue *sval)
+  {
+    m_hash_map.put (reg, sval);
+  }
+  void remove (const region *reg)
+  {
+    m_hash_map.remove (reg);
   }
 
-  unsigned int num_regions ()
-  {
-    return bitmap_count_bits (m_bitmap);
-  }
+  bool is_empty () const { return m_hash_map.is_empty (); }
+
+  void dump_to_pp (pretty_printer *pp, bool simple, bool multiline) const;
+  void dump (bool simple) const;
+
+  bool can_merge_with_p (const region_to_value_map &other,
+			 region_to_value_map *out) const;
+
+  void purge_state_involving (const svalue *sval);
 
 private:
-  auto_sbitmap m_bitmap;
-};
-
-/* A set of svalue_ids within a region_model.  */
-
-class svalue_id_set
-{
-public:
-  svalue_id_set ();
-
-  void add_svalue (svalue_id sid)
-  {
-    if (!sid.null_p ())
-      bitmap_set_bit (m_bitmap, sid.as_int ());
-  }
-
-  bool svalue_p (svalue_id sid) const
-  {
-    gcc_assert (!sid.null_p ());
-    return bitmap_bit_p (const_cast <auto_bitmap &> (m_bitmap),
-			 sid.as_int ());
-  }
-
-private:
-  auto_bitmap m_bitmap;
+  hash_map_t m_hash_map;
 };
 
 /* Various operations delete information from a region_model.
@@ -435,6 +189,7 @@ struct purge_stats
     m_num_regions (0),
     m_num_equiv_classes (0),
     m_num_constraints (0),
+    m_num_bounded_ranges_constraints (0),
     m_num_client_items (0)
   {}
 
@@ -442,1246 +197,369 @@ struct purge_stats
   int m_num_regions;
   int m_num_equiv_classes;
   int m_num_constraints;
+  int m_num_bounded_ranges_constraints;
   int m_num_client_items;
 };
 
-/* An enum for discriminating between the different concrete subclasses
-   of svalue.  */
+/* A base class for visiting regions and svalues, with do-nothing
+   base implementations of the per-subclass vfuncs.  */
 
-enum svalue_kind
-{
-  SK_REGION,
-  SK_CONSTANT,
-  SK_UNKNOWN,
-  SK_POISONED,
-  SK_SETJMP
-};
-
-/* svalue and its subclasses.
-
-   The class hierarchy looks like this (using indentation to show
-   inheritance, and with svalue_kinds shown for the concrete subclasses):
-
-   svalue
-     region_svalue (SK_REGION)
-     constant_svalue (SK_CONSTANT)
-     unknown_svalue (SK_UNKNOWN)
-     poisoned_svalue (SK_POISONED)
-     setjmp_svalue (SK_SETJMP).  */
-
-/* An abstract base class representing a value held by a region of memory.  */
-
-class svalue
+class visitor
 {
 public:
-  virtual ~svalue () {}
+  virtual void visit_region_svalue (const region_svalue *) {}
+  virtual void visit_constant_svalue (const constant_svalue *) {}
+  virtual void visit_unknown_svalue (const unknown_svalue *) {}
+  virtual void visit_poisoned_svalue (const poisoned_svalue *) {}
+  virtual void visit_setjmp_svalue (const setjmp_svalue *) {}
+  virtual void visit_initial_svalue (const initial_svalue *) {}
+  virtual void visit_unaryop_svalue (const unaryop_svalue *) {}
+  virtual void visit_binop_svalue (const binop_svalue *) {}
+  virtual void visit_sub_svalue (const sub_svalue *) {}
+  virtual void visit_repeated_svalue (const repeated_svalue *) {}
+  virtual void visit_bits_within_svalue (const bits_within_svalue *) {}
+  virtual void visit_unmergeable_svalue (const unmergeable_svalue *) {}
+  virtual void visit_placeholder_svalue (const placeholder_svalue *) {}
+  virtual void visit_widening_svalue (const widening_svalue *) {}
+  virtual void visit_compound_svalue (const compound_svalue *) {}
+  virtual void visit_conjured_svalue (const conjured_svalue *) {}
+  virtual void visit_asm_output_svalue (const asm_output_svalue *) {}
+  virtual void visit_const_fn_result_svalue (const const_fn_result_svalue *) {}
 
-  bool operator== (const svalue &other) const;
-  bool operator!= (const svalue &other) const { return !(*this == other); }
-
-  virtual svalue *clone () const = 0;
-
-  tree get_type () const { return m_type; }
-
-  virtual enum svalue_kind get_kind () const = 0;
-
-  hashval_t hash () const;
-
-  void print (const region_model &model,
-	      svalue_id this_sid,
-	      pretty_printer *pp) const;
-
-  virtual void dump_dot_to_pp (const region_model &model,
-			       svalue_id this_sid,
-			       pretty_printer *pp) const;
-
-  virtual region_svalue *dyn_cast_region_svalue () { return NULL; }
-  virtual constant_svalue *dyn_cast_constant_svalue () { return NULL; }
-  virtual const constant_svalue *dyn_cast_constant_svalue () const
-  { return NULL; }
-  virtual poisoned_svalue *dyn_cast_poisoned_svalue () { return NULL; }
-  virtual unknown_svalue *dyn_cast_unknown_svalue () { return NULL; }
-  virtual setjmp_svalue *dyn_cast_setjmp_svalue () { return NULL; }
-
-  virtual void remap_region_ids (const region_id_map &map);
-
-  virtual void walk_for_canonicalization (canonicalization *c) const;
-
-  virtual svalue_id get_child_sid (region *parent, region *child,
-				   region_model &model,
-				   region_model_context *ctxt);
-
-  tree maybe_get_constant () const;
-
- protected:
-  svalue (tree type) : m_type (type) {}
-
-  virtual void add_to_hash (inchash::hash &hstate) const = 0;
-
- private:
-  virtual void print_details (const region_model &model,
-			      svalue_id this_sid,
-			      pretty_printer *pp) const = 0;
-  tree m_type;
+  virtual void visit_region (const region *) {}
 };
 
-/* Concrete subclass of svalue representing a pointer value that points to
-   a known region  */
+} // namespace ana
 
-class region_svalue : public svalue
+namespace ana {
+
+/* A class responsible for owning and consolidating region and svalue
+   instances.
+   region and svalue instances are immutable as far as clients are
+   concerned, so they are provided as "const" ptrs.  */
+
+class region_model_manager
 {
 public:
-  region_svalue (tree type, region_id rid) : svalue (type), m_rid (rid)
+  region_model_manager (logger *logger = NULL);
+  ~region_model_manager ();
+
+  /* svalue consolidation.  */
+  const svalue *get_or_create_constant_svalue (tree cst_expr);
+  const svalue *get_or_create_int_cst (tree type, poly_int64);
+  const svalue *get_or_create_null_ptr (tree pointer_type);
+  const svalue *get_or_create_unknown_svalue (tree type);
+  const svalue *get_or_create_setjmp_svalue (const setjmp_record &r,
+					     tree type);
+  const svalue *get_or_create_poisoned_svalue (enum poison_kind kind,
+					       tree type);
+  const svalue *get_or_create_initial_value (const region *reg);
+  const svalue *get_ptr_svalue (tree ptr_type, const region *pointee);
+  const svalue *get_or_create_unaryop (tree type, enum tree_code op,
+				       const svalue *arg);
+  const svalue *get_or_create_cast (tree type, const svalue *arg);
+  const svalue *get_or_create_binop (tree type,
+				     enum tree_code op,
+				     const svalue *arg0, const svalue *arg1);
+  const svalue *get_or_create_sub_svalue (tree type,
+					  const svalue *parent_svalue,
+					  const region *subregion);
+  const svalue *get_or_create_repeated_svalue (tree type,
+					       const svalue *outer_size,
+					       const svalue *inner_svalue);
+  const svalue *get_or_create_bits_within (tree type,
+					   const bit_range &bits,
+					   const svalue *inner_svalue);
+  const svalue *get_or_create_unmergeable (const svalue *arg);
+  const svalue *get_or_create_widening_svalue (tree type,
+					       const program_point &point,
+					       const svalue *base_svalue,
+					       const svalue *iter_svalue);
+  const svalue *get_or_create_compound_svalue (tree type,
+					       const binding_map &map);
+  const svalue *get_or_create_conjured_svalue (tree type, const gimple *stmt,
+					       const region *id_reg,
+					       const conjured_purge &p);
+  const svalue *
+  get_or_create_asm_output_svalue (tree type,
+				   const gasm *asm_stmt,
+				   unsigned output_idx,
+				   const vec<const svalue *> &inputs);
+  const svalue *
+  get_or_create_const_fn_result_svalue (tree type,
+					tree fndecl,
+					const vec<const svalue *> &inputs);
+
+  const svalue *maybe_get_char_from_string_cst (tree string_cst,
+						tree byte_offset_cst);
+
+  /* Dynamically-allocated svalue instances.
+     The number of these within the analysis can grow arbitrarily.
+     They are still owned by the manager.  */
+  const svalue *create_unique_svalue (tree type);
+
+  /* region consolidation.  */
+  const stack_region * get_stack_region () const { return &m_stack_region; }
+  const heap_region *get_heap_region () const { return &m_heap_region; }
+  const code_region *get_code_region () const { return &m_code_region; }
+  const globals_region *get_globals_region () const
   {
-    /* Should we support NULL ptrs here?  */
-    gcc_assert (!rid.null_p ());
+    return &m_globals_region;
   }
-
-  bool compare_fields (const region_svalue &other) const;
-
-  svalue *clone () const FINAL OVERRIDE
-  { return new region_svalue (get_type (), m_rid); }
-
-  enum svalue_kind get_kind () const FINAL OVERRIDE { return SK_REGION; }
-
-  void dump_dot_to_pp (const region_model &model,
-		       svalue_id this_sid,
-		       pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  region_svalue *dyn_cast_region_svalue () FINAL OVERRIDE { return this; }
-
-  region_id get_pointee () const { return m_rid; }
-
-  void remap_region_ids (const region_id_map &map) FINAL OVERRIDE;
-
-  static void merge_values (const region_svalue &region_sval_a,
-			    const region_svalue &region_sval_b,
-			    svalue_id *merged_sid,
-			    tree type,
-			    model_merger *merger);
-
-  void walk_for_canonicalization (canonicalization *c) const FINAL OVERRIDE;
-
-  static tristate eval_condition (region_svalue *lhs_ptr,
-				  enum tree_code op,
-				  region_svalue *rhs_ptr);
-
-  void add_to_hash (inchash::hash &hstate) const FINAL OVERRIDE;
-
- private:
-  void print_details (const region_model &model,
-		      svalue_id this_sid,
-		      pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  region_id m_rid;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <region_svalue *>::test (svalue *sval)
-{
-  return sval->get_kind () == SK_REGION;
-}
-
-namespace ana {
-
-/* Concrete subclass of svalue representing a specific constant value.  */
-
-class constant_svalue : public svalue
-{
-public:
-  constant_svalue (tree cst_expr)
-  : svalue (TREE_TYPE (cst_expr)), m_cst_expr (cst_expr)
-  {
-    gcc_assert (cst_expr);
-    gcc_assert (CONSTANT_CLASS_P (cst_expr));
-  }
-
-  bool compare_fields (const constant_svalue &other) const;
-
-  svalue *clone () const FINAL OVERRIDE
-  { return new constant_svalue (m_cst_expr); }
-
-  enum svalue_kind get_kind () const FINAL OVERRIDE { return SK_CONSTANT; }
-
-  void add_to_hash (inchash::hash &hstate) const FINAL OVERRIDE;
-
-  constant_svalue *dyn_cast_constant_svalue () FINAL OVERRIDE { return this; }
-  const constant_svalue *dyn_cast_constant_svalue () const FINAL OVERRIDE
-  { return this; }
-
-  tree get_constant () const { return m_cst_expr; }
-
-  static void merge_values (const constant_svalue &cst_sval_a,
-			    const constant_svalue &cst_sval_b,
-			    svalue_id *merged_sid,
-			    model_merger *merger);
-
-  static tristate eval_condition (constant_svalue *lhs,
-				  enum tree_code op,
-				  constant_svalue *rhs);
-
-  svalue_id get_child_sid (region *parent, region *child,
-			   region_model &model,
-			   region_model_context *ctxt) FINAL OVERRIDE;
-
- private:
-  void print_details (const region_model &model,
-		      svalue_id this_sid,
-		      pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  tree m_cst_expr;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <constant_svalue *>::test (svalue *sval)
-{
-  return sval->get_kind () == SK_CONSTANT;
-}
-
-namespace ana {
-
-/* Concrete subclass of svalue representing a unique but unknown value.
-   Comparisons of variables that share the same unknown value are known
-   to be equal, even if we don't know what the value is.  */
-
-class unknown_svalue : public svalue
-{
-public:
-  unknown_svalue (tree type)
-  : svalue (type)
-  {}
-
-  bool compare_fields (const unknown_svalue &other) const;
-
-  svalue *clone () const FINAL OVERRIDE
-  { return new unknown_svalue (get_type ()); }
-
-  enum svalue_kind get_kind () const FINAL OVERRIDE { return SK_UNKNOWN; }
-
-  void add_to_hash (inchash::hash &hstate) const FINAL OVERRIDE;
-
-  unknown_svalue *dyn_cast_unknown_svalue () FINAL OVERRIDE { return this; }
-
- private:
-  void print_details (const region_model &model,
-		      svalue_id this_sid,
-		      pretty_printer *pp) const
-    FINAL OVERRIDE;
-};
-
-/* An enum describing a particular kind of "poisoned" value.  */
-
-enum poison_kind
-{
-  /* For use to describe freed memory.  */
-  POISON_KIND_FREED,
-
-  /* For use on pointers to regions within popped stack frames.  */
-  POISON_KIND_POPPED_STACK
-};
-
-extern const char *poison_kind_to_str (enum poison_kind);
-
-/* Concrete subclass of svalue representing a value that should not
-   be used (e.g. uninitialized memory, freed memory).  */
-
-class poisoned_svalue : public svalue
-{
-public:
-  poisoned_svalue (enum poison_kind kind, tree type)
-  : svalue (type), m_kind (kind) {}
-
-  bool compare_fields (const poisoned_svalue &other) const;
-
-  svalue *clone () const FINAL OVERRIDE
-  { return new poisoned_svalue (m_kind, get_type ()); }
-
-  enum svalue_kind get_kind () const FINAL OVERRIDE { return SK_POISONED; }
-
-  void add_to_hash (inchash::hash &hstate) const FINAL OVERRIDE;
-
-  poisoned_svalue *dyn_cast_poisoned_svalue () FINAL OVERRIDE { return this; }
-
-  enum poison_kind get_poison_kind () const { return m_kind; }
-
- private:
-  void print_details (const region_model &model,
-		      svalue_id this_sid,
-		      pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  enum poison_kind m_kind;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <poisoned_svalue *>::test (svalue *sval)
-{
-  return sval->get_kind () == SK_POISONED;
-}
-
-namespace ana {
-
-/* A bundle of information recording a setjmp/sigsetjmp call, corresponding
-   roughly to a jmp_buf.  */
-
-struct setjmp_record
-{
-  setjmp_record (const exploded_node *enode,
-		 const gcall *setjmp_call)
-  : m_enode (enode), m_setjmp_call (setjmp_call)
-  {
-  }
-
-  bool operator== (const setjmp_record &other) const
-  {
-    return (m_enode == other.m_enode
-	    && m_setjmp_call == other.m_setjmp_call);
-  }
-
-  const exploded_node *m_enode;
-  const gcall *m_setjmp_call;
-};
-
-/* Concrete subclass of svalue representing buffers for setjmp/sigsetjmp,
-   so that longjmp/siglongjmp can potentially "return" to an entirely
-   different function.  */
-
-class setjmp_svalue : public svalue
-{
-public:
-  setjmp_svalue (const setjmp_record &setjmp_record,
-		 tree type)
-  : svalue (type), m_setjmp_record (setjmp_record)
-  {}
-
-  bool compare_fields (const setjmp_svalue &other) const;
-
-  svalue *clone () const FINAL OVERRIDE
-  { return new setjmp_svalue (m_setjmp_record, get_type ()); }
-
-  enum svalue_kind get_kind () const FINAL OVERRIDE { return SK_SETJMP; }
-
-  void add_to_hash (inchash::hash &hstate) const FINAL OVERRIDE;
-
-  setjmp_svalue *dyn_cast_setjmp_svalue () FINAL OVERRIDE { return this; }
-
-  int get_enode_index () const;
-
-  const setjmp_record &get_setjmp_record () const { return m_setjmp_record; }
-
- private:
-  void print_details (const region_model &model,
-		      svalue_id this_sid,
-		      pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  setjmp_record m_setjmp_record;
-};
-
-/* An enum for discriminating between the different concrete subclasses
-   of region.  */
-
-enum region_kind
-{
-  RK_PRIMITIVE,
-  RK_STRUCT,
-  RK_UNION,
-  RK_FRAME,
-  RK_GLOBALS,
-  RK_CODE,
-  RK_FUNCTION,
-  RK_ARRAY,
-  RK_STACK,
-  RK_HEAP,
-  RK_ROOT,
-  RK_SYMBOLIC
-};
-
-extern const char *region_kind_to_str (enum region_kind);
-
-/* Region and its subclasses.
-
-   The class hierarchy looks like this (using indentation to show
-   inheritance, and with region_kinds shown for the concrete subclasses):
-
-   region
-     primitive_region (RK_PRIMITIVE)
-     map_region
-       struct_or_union_region
-         struct_region (RK_STRUCT)
-         union_region (RK_UNION)
-       scope_region
-         frame_region (RK_FRAME)
-         globals_region (RK_GLOBALS)
-       code_region (RK_CODE)
-       function_region (RK_FUNCTION)
-     array_region (RK_ARRAY)
-     stack_region (RK_STACK)
-     heap_region (RK_HEAP)
-     root_region (RK_ROOT)
-     label_region (RK_FUNCTION)
-     symbolic_region (RK_SYMBOLIC).  */
-
-/* Abstract base class representing a chunk of memory.
-
-   Regions form a tree-like hierarchy, with a root region at the base,
-   with memory space regions within it, representing the stack and
-   globals, with frames within the stack, and regions for variables
-   within the frames and the "globals" region.  Regions for structs
-   can have subregions for fields.
-
-   A region can optionally have a value, or inherit its value from
-   the first ancestor with a value.  For example, the stack region
-   has a "uninitialized" poison value which is inherited by all
-   descendent regions that don't themselves have a value.  */
-
-class region
-{
-public:
-  virtual ~region () {}
-
-  bool operator== (const region &other) const;
-  bool operator!= (const region &other) const { return !(*this == other); }
-
-  virtual region *clone () const = 0;
-
-  virtual enum region_kind get_kind () const = 0;
-  virtual map_region *dyn_cast_map_region () { return NULL; }
-  virtual array_region *dyn_cast_array_region () { return NULL; }
-  virtual symbolic_region *dyn_cast_symbolic_region () { return NULL; }
-  virtual const symbolic_region *dyn_cast_symbolic_region () const { return NULL; }
-
-  region_id get_parent () const { return m_parent_rid; }
-  region *get_parent_region (const region_model &model) const;
-
-  void set_value (region_model &model, region_id this_rid, svalue_id rhs_sid,
-		  region_model_context *ctxt);
-  svalue_id get_value (region_model &model, bool non_null,
-		       region_model_context *ctxt);
-  svalue_id get_value_direct () const { return m_sval_id; }
-
-  svalue_id get_inherited_child_sid (region *child,
-				     region_model &model,
-				     region_model_context *ctxt);
-
-  tree get_type () const { return m_type; }
-
-  hashval_t hash () const;
-
-  void print (const region_model &model,
-	      region_id this_rid,
-	      pretty_printer *pp) const;
-
-  virtual void dump_dot_to_pp (const region_model &model,
-			       region_id this_rid,
-			       pretty_printer *pp) const;
-
-  void dump_to_pp (const region_model &model,
-		   region_id this_rid,
-		   pretty_printer *pp,
-		   const char *prefix,
-		   bool is_last_child) const;
-  virtual void dump_child_label (const region_model &model,
-				 region_id this_rid,
-				 region_id child_rid,
-				 pretty_printer *pp) const;
-
-  void remap_svalue_ids (const svalue_id_map &map);
-  virtual void remap_region_ids (const region_id_map &map);
-
-  virtual void walk_for_canonicalization (canonicalization *c) const = 0;
-
-  void add_view (region_id view_rid, region_model *model);
-  region_id get_view (tree type, region_model *model) const;
-  region_id get_active_view () const { return m_active_view_rid; }
-  bool is_view_p () const { return m_is_view; }
-
-  virtual void validate (const region_model &model) const;
-
-  bool non_null_p (const region_model &model) const;
-
- protected:
-  region (region_id parent_rid, svalue_id sval_id, tree type);
-  region (const region &other);
-
-  virtual void add_to_hash (inchash::hash &hstate) const;
-  virtual void print_fields (const region_model &model,
-			     region_id this_rid,
-			     pretty_printer *pp) const;
-
- private:
-  void become_active_view (region_model &model, region_id this_rid);
-  void deactivate_any_active_view (region_model &model);
-  void deactivate_view (region_model &model, region_id this_view_rid);
-
-  region_id m_parent_rid;
-  svalue_id m_sval_id;
-  tree m_type;
-  /* Child regions that are "views" (one per type).  */
-  auto_vec<region_id> m_view_rids;
-
-  bool m_is_view;
-  region_id m_active_view_rid;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <region *>::test (region *)
-{
-  return true;
-}
-
-namespace ana {
-
-/* Concrete region subclass for storing "primitive" types (integral types,
-   pointers, etc).  */
-
-class primitive_region : public region
-{
-public:
-  primitive_region (region_id parent_rid, tree type)
-  : region (parent_rid, svalue_id::null (), type)
-  {}
-
-  region *clone () const FINAL OVERRIDE;
-
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_PRIMITIVE; }
-
-  void walk_for_canonicalization (canonicalization *c) const FINAL OVERRIDE;
-};
-
-/* A region that has children identified by tree keys.
-   For example a stack frame has subregions per local, and a region
-   for a struct has subregions per field.  */
-
-class map_region : public region
-{
-public:
-  typedef ordered_hash_map<tree, region_id> map_t;
-  typedef map_t::iterator iterator_t;
-
-  map_region (region_id parent_rid, tree type)
-  : region (parent_rid, svalue_id::null (), type)
-  {}
-  map_region (const map_region &other);
-
-  map_region *dyn_cast_map_region () FINAL OVERRIDE { return this; }
-
-  void dump_dot_to_pp (const region_model &model,
-		       region_id this_rid,
-		       pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  void dump_child_label (const region_model &model,
-			 region_id this_rid,
-			 region_id child_rid,
-			 pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  region_id get_or_create (region_model *model,
-			   region_id this_rid,
-			   tree expr, tree type,
-			   region_model_context *ctxt);
-  void unbind (tree expr);
-  region_id *get (tree expr);
-
-  void remap_region_ids (const region_id_map &map) FINAL OVERRIDE;
-
-  tree get_tree_for_child_region (region_id child_rid) const;
-
-  tree get_tree_for_child_region (region *child,
-				  const region_model &model) const;
-
-  static bool can_merge_p (const map_region *map_region_a,
-			   const map_region *map_region_b,
-			   map_region *merged_map_region,
-			   region_id merged_rid,
-			   model_merger *merger);
-
-  void walk_for_canonicalization (canonicalization *c) const FINAL OVERRIDE;
-
-  virtual bool valid_key_p (tree key) const = 0;
-
-  svalue_id get_value_by_name (tree identifier,
-			       const region_model &model) const;
-
-  iterator_t begin () { return m_map.begin (); }
-  iterator_t end () { return m_map.end (); }
-  size_t elements () const { return m_map.elements (); }
-
- protected:
-  bool compare_fields (const map_region &other) const;
-  void add_to_hash (inchash::hash &hstate) const OVERRIDE;
-  void print_fields (const region_model &model,
-		     region_id this_rid,
-		     pretty_printer *pp) const
-    OVERRIDE;
-  void validate (const region_model &model) const FINAL OVERRIDE;
-
- private:
-  /* Mapping from tree to child region.  */
-  map_t m_map;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <map_region *>::test (region *reg)
-{
-  return (reg->dyn_cast_map_region () != NULL);
-}
-
-namespace ana {
-
-/* Abstract subclass representing a region with fields
-   (either a struct or a union).  */
-
-class struct_or_union_region : public map_region
-{
-public:
-  bool valid_key_p (tree key) const FINAL OVERRIDE;
-
- protected:
-  struct_or_union_region (region_id parent_rid, tree type)
-  : map_region (parent_rid, type)
-  {}
-
-  bool compare_fields (const struct_or_union_region &other) const;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <struct_or_union_region *>::test (region *reg)
-{
-  return (reg->get_kind () == RK_STRUCT
-	  || reg->get_kind () == RK_UNION);
-}
-
-namespace ana {
-
-/* Concrete region subclass.  A map_region representing a struct, using
-   FIELD_DECLs for its keys.  */
-
-class struct_region : public struct_or_union_region
-{
-public:
-  struct_region (region_id parent_rid, tree type)
-  : struct_or_union_region (parent_rid, type)
-  {
-    gcc_assert (TREE_CODE (type) == RECORD_TYPE);
-  }
-
-  region *clone () const FINAL OVERRIDE;
-
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_STRUCT; }
-
-  bool compare_fields (const struct_region &other) const;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <struct_region *>::test (region *reg)
-{
-  return reg->get_kind () == RK_STRUCT;
-}
-
-namespace ana {
-
-/* Concrete region subclass.  A map_region representing a union, using
-   FIELD_DECLs for its keys.  */
-
-class union_region : public struct_or_union_region
-{
-public:
-  union_region (region_id parent_rid, tree type)
-  : struct_or_union_region (parent_rid, type)
-  {
-    gcc_assert (TREE_CODE (type) == UNION_TYPE);
-  }
-
-  region *clone () const FINAL OVERRIDE;
-
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_UNION; }
-
-  bool compare_fields (const union_region &other) const;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <union_region *>::test (region *reg)
-{
-  return reg->get_kind () == RK_UNION;
-}
-
-namespace ana {
-
-/* Abstract map_region subclass for accessing decls, used as a base class
-   for function frames and for the globals region.  */
-
-class scope_region : public map_region
-{
- public:
-
- protected:
-  scope_region (region_id parent_rid)
-  : map_region (parent_rid, NULL_TREE)
-  {}
-
-  scope_region (const scope_region &other)
-  : map_region (other)
-  {
-  }
-
-  bool compare_fields (const scope_region &other) const;
-};
-
-/* Concrete region subclass, representing a function frame on the stack,
-   to contain the locals.  */
-
-class frame_region : public scope_region
-{
-public:
-  frame_region (region_id parent_rid, function *fun, int depth)
-  : scope_region (parent_rid), m_fun (fun), m_depth (depth)
-  {}
-
-  frame_region (const frame_region &other)
-  : scope_region (other), m_fun (other.m_fun), m_depth (other.m_depth)
-  {
-  }
-
-  /* region vfuncs.  */
-  region *clone () const FINAL OVERRIDE;
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_FRAME; }
-  void print_fields (const region_model &model,
-		     region_id this_rid,
-		     pretty_printer *pp) const
-    FINAL OVERRIDE;
-  void add_to_hash (inchash::hash &hstate) const FINAL OVERRIDE;
-
-  /* map_region vfuncs.  */
-  bool valid_key_p (tree key) const FINAL OVERRIDE;
-
-  /* Accessors.  */
-  function *get_function () const { return m_fun; }
-  int get_depth () const { return m_depth; }
-
-  bool compare_fields (const frame_region &other) const;
-
- private:
-  function *m_fun;
-  int m_depth;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <frame_region *>::test (region *reg)
-{
-  return reg->get_kind () == RK_FRAME;
-}
-
-namespace ana {
-
-/* Concrete region subclass, to hold global variables (data and bss).  */
-
-class globals_region : public scope_region
-{
- public:
-  globals_region (region_id parent_rid)
-  : scope_region (parent_rid)
-  {}
-
-  globals_region (const globals_region &other)
-  : scope_region (other)
-  {
-  }
-
-  /* region vfuncs.  */
-  region *clone () const FINAL OVERRIDE;
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_GLOBALS; }
-
-  /* map_region vfuncs.  */
-  bool valid_key_p (tree key) const FINAL OVERRIDE;
-
-  bool compare_fields (const globals_region &other) const;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <globals_region *>::test (region *reg)
-{
-  return reg->get_kind () == RK_GLOBALS;
-}
-
-namespace ana {
-
-/* Concrete region subclass.  A map_region representing the code, using
-   FUNCTION_DECLs for its keys.  */
-
-class code_region : public map_region
-{
-public:
-  code_region (region_id parent_rid)
-  : map_region (parent_rid, NULL_TREE)
-  {}
-  code_region (const code_region &other)
-  : map_region (other)
-  {}
-
-  /* region vfuncs.  */
-  region *clone () const FINAL OVERRIDE;
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_CODE; }
-
-  /* map_region vfunc.  */
-  bool valid_key_p (tree key) const FINAL OVERRIDE;
-
-  region_id get_element (region_model *model,
-			 region_id this_rid,
-			 svalue_id index_sid,
-			 region_model_context *ctxt);
-
-  bool compare_fields (const code_region &other) const;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <code_region *>::test (region *reg)
-{
-  return reg->get_kind () == RK_CODE;
-}
-
-namespace ana {
-
-/* Concrete region subclass.  A map_region representing the code for
-   a particular function, using LABEL_DECLs for its keys.  */
-
-class function_region : public map_region
-{
-public:
-  function_region (region_id parent_rid, tree type)
-  : map_region (parent_rid, type)
-  {
-    gcc_assert (FUNC_OR_METHOD_TYPE_P (type));
-  }
-  function_region (const function_region &other)
-  : map_region (other)
-  {}
-
-  /* region vfuncs.  */
-  region *clone () const FINAL OVERRIDE;
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_FUNCTION; }
-
-  /* map_region vfunc.  */
-  bool valid_key_p (tree key) const FINAL OVERRIDE;
-
-  region_id get_element (region_model *model,
-			 region_id this_rid,
-			 svalue_id index_sid,
-			 region_model_context *ctxt);
-
-  bool compare_fields (const function_region &other) const;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <function_region *>::test (region *reg)
-{
-  return reg->get_kind () == RK_FUNCTION;
-}
-
-namespace ana {
-
-/* Concrete region subclass representing an array (or an array-like view
-   of a parent region of memory.
-   This can't be a map_region as we can't use trees as the keys: there's
-   no guarantee about the uniqueness of an INTEGER_CST.  */
-
-class array_region : public region
-{
-public:
-#if 0
-  wide_int m_test;
-
-  typedef wide_int key_t;
-  typedef int_hash <wide_int, -1, -2> hash_t;
-  typedef ordered_hash_map<hash_t, region_id> map_t;
-#else
-  typedef int key_t;
-  typedef int_hash <int, -1, -2> int_hash_t;
-  typedef ordered_hash_map<int_hash_t, region_id> map_t;
-#endif
-  typedef map_t::iterator iterator_t;
-
-  array_region (region_id parent_rid, tree type)
-  : region (parent_rid, svalue_id::null (), type)
-  {
-    gcc_assert (TREE_CODE (type) == ARRAY_TYPE);
-  }
-  array_region (const array_region &other);
-
-  void dump_dot_to_pp (const region_model &model,
-		       region_id this_rid,
-		       pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  void dump_child_label (const region_model &model,
-			 region_id this_rid,
-			 region_id child_rid,
-			 pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  /* region vfuncs.  */
-  region *clone () const FINAL OVERRIDE;
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_ARRAY; }
-  array_region *dyn_cast_array_region () { return this; }
-
-  region_id get_element (region_model *model,
-			 region_id this_rid,
-			 svalue_id index_sid,
-			 region_model_context *ctxt);
-
-  bool compare_fields (const array_region &other) const;
-
-  static bool can_merge_p (const array_region *array_region_a,
-			   const array_region *array_region_b,
-			   array_region *merged_array_region,
-			   region_id merged_rid,
-			   model_merger *merger);
-
-  void walk_for_canonicalization (canonicalization *c) const FINAL OVERRIDE;
-
-  iterator_t begin () { return m_map.begin (); }
-  iterator_t end () { return m_map.end (); }
-  size_t elements () const { return m_map.elements (); }
-
-  region_id get_or_create (region_model *model,
-			   region_id this_rid,
-			   key_t key, tree type,
-			   region_model_context *ctxt);
-//  void unbind (int expr);
-  region_id *get (key_t key);
-
-  void remap_region_ids (const region_id_map &map) FINAL OVERRIDE;
-
-  bool get_key_for_child_region (region_id child_rid,
-				 key_t *out) const;
-
-#if 0
-  bool get_key_for_child_region (region *child,
-				 const region_model &model,
-				 key_t *out) const;
-#endif
-
-  void add_to_hash (inchash::hash &hstate) const OVERRIDE;
-  void print_fields (const region_model &model,
-		     region_id this_rid,
-		     pretty_printer *pp) const
-    OVERRIDE;
-  void validate (const region_model &model) const FINAL OVERRIDE;
-
-  static key_t key_from_constant (tree cst);
-  tree constant_from_key (key_t key);
-
- private:
-  static int key_cmp (const void *, const void *);
-
-  /* Mapping from tree to child region.  */
-  map_t m_map;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <array_region *>::test (region *reg)
-{
-  return reg->get_kind () == RK_ARRAY;
-}
-
-namespace ana {
-
-/* Concrete region subclass representing a stack, containing all stack
-   frames, and implicitly providing a POISON_KIND_UNINIT value to all
-   child regions by default.  */
-
-class stack_region : public region
-{
-public:
-  stack_region (region_id parent_rid, svalue_id sval_id)
-  : region (parent_rid, sval_id, NULL_TREE)
-  {}
-
-  stack_region (const stack_region &other);
-
-  bool compare_fields (const stack_region &other) const;
-
-  region *clone () const FINAL OVERRIDE;
-
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_STACK; }
-
-  void dump_child_label (const region_model &model,
-			 region_id this_rid,
-			 region_id child_rid,
-			 pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  void push_frame (region_id frame_rid);
-  region_id get_current_frame_id () const;
-  void pop_frame (region_model *model, region_id result_dst_rid,
-		  bool purge, purge_stats *stats,
-		  region_model_context *ctxt);
-
-  void remap_region_ids (const region_id_map &map) FINAL OVERRIDE;
-
-  unsigned get_num_frames () const { return m_frame_rids.length (); }
-  region_id get_frame_rid (unsigned i) const { return m_frame_rids[i]; }
-
-  static bool can_merge_p (const stack_region *stack_region_a,
-			   const stack_region *stack_region_b,
-			   model_merger *merger);
-
-  void walk_for_canonicalization (canonicalization *c) const FINAL OVERRIDE;
-
-  svalue_id get_value_by_name (tree identifier,
-			       const region_model &model) const;
-
-  void validate (const region_model &model) const FINAL OVERRIDE;
-
- private:
-  void add_to_hash (inchash::hash &hstate) const FINAL OVERRIDE;
-  void print_fields (const region_model &model,
-		     region_id this_rid,
-		     pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  auto_vec<region_id> m_frame_rids;
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <stack_region *>::test (region *reg)
-{
-  return reg->get_kind () == RK_STACK;
-}
-
-namespace ana {
-
-/* Concrete region subclass: a region within which regions can be
-   dynamically allocated.  */
-
-class heap_region : public region
-{
-public:
-  heap_region (region_id parent_rid, svalue_id sval_id)
-  : region (parent_rid, sval_id, NULL_TREE)
-  {}
-  heap_region (const heap_region &other);
-
-  bool compare_fields (const heap_region &other) const;
-
-  region *clone () const FINAL OVERRIDE;
-
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_HEAP; }
-
-  static bool can_merge_p (const heap_region *heap_a, region_id heap_a_rid,
-			   const heap_region *heap_b, region_id heap_b_rid,
-			   heap_region *merged_heap, region_id merged_heap_rid,
-			   model_merger *merger);
-
-  void walk_for_canonicalization (canonicalization *c) const FINAL OVERRIDE;
-
-};
-
-} // namespace ana
-
-template <>
-template <>
-inline bool
-is_a_helper <heap_region *>::test (region *reg)
-{
-  return reg->get_kind () == RK_HEAP;
-}
-
-namespace ana {
-
-/* Concrete region subclass.  The root region, containing all regions
-   (either directly, or as descendents).
-   Unique within a region_model.  */
-
-class root_region : public region
-{
-public:
-  root_region ();
-  root_region (const root_region &other);
-
-  bool compare_fields (const root_region &other) const;
-
-  region *clone () const FINAL OVERRIDE;
-
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_ROOT; }
-
-  void dump_child_label (const region_model &model,
-			 region_id this_rid,
-			 region_id child_rid,
-			 pretty_printer *pp) const
-    FINAL OVERRIDE;
-
-  region_id push_frame (region_model *model, function *fun,
-			vec<svalue_id> *arg_sids,
-			region_model_context *ctxt);
-  region_id get_current_frame_id (const region_model &model) const;
-  void pop_frame (region_model *model, region_id result_dst_rid,
-		  bool purge, purge_stats *stats,
-		  region_model_context *ctxt);
-
-  region_id ensure_stack_region (region_model *model);
-  region_id get_stack_region_id () const { return m_stack_rid; }
-  stack_region *get_stack_region (const region_model *model) const;
-
-  region_id ensure_globals_region (region_model *model);
-  region_id get_globals_region_id () const { return m_globals_rid; }
-  globals_region *get_globals_region (const region_model *model) const;
-
-  region_id ensure_code_region (region_model *model);
-  code_region *get_code_region (const region_model *model) const;
-
-  region_id ensure_heap_region (region_model *model);
-  heap_region *get_heap_region (const region_model *model) const;
-
-  void remap_region_ids (const region_id_map &map) FINAL OVERRIDE;
-
-  static bool can_merge_p (const root_region *root_region_a,
-			   const root_region *root_region_b,
-			   root_region *merged_root_region,
-			   model_merger *merger);
-
-  void walk_for_canonicalization (canonicalization *c) const FINAL OVERRIDE;
-
-  svalue_id get_value_by_name (tree identifier,
-			       const region_model &model) const;
-
-  void validate (const region_model &model) const FINAL OVERRIDE;
+  const function_region *get_region_for_fndecl (tree fndecl);
+  const label_region *get_region_for_label (tree label);
+  const decl_region *get_region_for_global (tree expr);
+  const region *get_field_region (const region *parent, tree field);
+  const region *get_element_region (const region *parent,
+				    tree element_type,
+				    const svalue *index);
+  const region *get_offset_region (const region *parent,
+				   tree type,
+				   const svalue *byte_offset);
+  const region *get_sized_region (const region *parent,
+				  tree type,
+				  const svalue *byte_size_sval);
+  const region *get_cast_region (const region *original_region,
+				 tree type);
+  const frame_region *get_frame_region (const frame_region *calling_frame,
+					function *fun);
+  const region *get_symbolic_region (const svalue *sval);
+  const string_region *get_region_for_string (tree string_cst);
+  const region *get_bit_range (const region *parent, tree type,
+			       const bit_range &bits);
+
+  const region *get_unknown_symbolic_region (tree region_type);
+
+  const region *
+  get_region_for_unexpected_tree_code (region_model_context *ctxt,
+				       tree t,
+				       const dump_location_t &loc);
+
+  unsigned alloc_region_id () { return m_next_region_id++; }
+
+  store_manager *get_store_manager () { return &m_store_mgr; }
+  bounded_ranges_manager *get_range_manager () const { return m_range_mgr; }
+
+  /* Dynamically-allocated region instances.
+     The number of these within the analysis can grow arbitrarily.
+     They are still owned by the manager.  */
+  const region *create_region_for_heap_alloc ();
+  const region *create_region_for_alloca (const frame_region *frame);
+
+  void log_stats (logger *logger, bool show_objs) const;
+
+  void begin_checking_feasibility (void) { m_checking_feasibility = true; }
+  void end_checking_feasibility (void) { m_checking_feasibility = false; }
+
+  logger *get_logger () const { return m_logger; }
+
+  void dump_untracked_regions () const;
 
 private:
-  void add_to_hash (inchash::hash &hstate) const FINAL OVERRIDE;
-  void print_fields (const region_model &model,
-		     region_id this_rid,
-		     pretty_printer *pp) const
-    FINAL OVERRIDE;
+  bool too_complex_p (const complexity &c) const;
+  bool reject_if_too_complex (svalue *sval);
 
-  region_id m_stack_rid;
-  region_id m_globals_rid;
-  region_id m_code_rid;
-  region_id m_heap_rid;
+  const svalue *maybe_fold_unaryop (tree type, enum tree_code op,
+				    const svalue *arg);
+  const svalue *maybe_fold_binop (tree type, enum tree_code op,
+				  const svalue *arg0, const svalue *arg1);
+  const svalue *maybe_fold_sub_svalue (tree type,
+				       const svalue *parent_svalue,
+				       const region *subregion);
+  const svalue *maybe_fold_repeated_svalue (tree type,
+					    const svalue *outer_size,
+					    const svalue *inner_svalue);
+  const svalue *maybe_fold_bits_within_svalue (tree type,
+					       const bit_range &bits,
+					       const svalue *inner_svalue);
+  const svalue *maybe_undo_optimize_bit_field_compare (tree type,
+						       const compound_svalue *compound_sval,
+						       tree cst, const svalue *arg1);
+  const svalue *maybe_fold_asm_output_svalue (tree type,
+					      const vec<const svalue *> &inputs);
+
+  logger *m_logger;
+
+  unsigned m_next_region_id;
+  root_region m_root_region;
+  stack_region m_stack_region;
+  heap_region m_heap_region;
+
+  /* svalue consolidation.  */
+  typedef hash_map<tree, constant_svalue *> constants_map_t;
+  constants_map_t m_constants_map;
+
+  typedef hash_map<tree, unknown_svalue *> unknowns_map_t;
+  unknowns_map_t m_unknowns_map;
+  const unknown_svalue *m_unknown_NULL;
+
+  typedef hash_map<poisoned_svalue::key_t,
+		   poisoned_svalue *> poisoned_values_map_t;
+  poisoned_values_map_t m_poisoned_values_map;
+
+  typedef hash_map<setjmp_svalue::key_t,
+		   setjmp_svalue *> setjmp_values_map_t;
+  setjmp_values_map_t m_setjmp_values_map;
+
+  typedef hash_map<const region *, initial_svalue *> initial_values_map_t;
+  initial_values_map_t m_initial_values_map;
+
+  typedef hash_map<region_svalue::key_t, region_svalue *> pointer_values_map_t;
+  pointer_values_map_t m_pointer_values_map;
+
+  typedef hash_map<unaryop_svalue::key_t,
+		   unaryop_svalue *> unaryop_values_map_t;
+  unaryop_values_map_t m_unaryop_values_map;
+
+  typedef hash_map<binop_svalue::key_t, binop_svalue *> binop_values_map_t;
+  binop_values_map_t m_binop_values_map;
+
+  typedef hash_map<sub_svalue::key_t, sub_svalue *> sub_values_map_t;
+  sub_values_map_t m_sub_values_map;
+
+  typedef hash_map<repeated_svalue::key_t,
+		   repeated_svalue *> repeated_values_map_t;
+  repeated_values_map_t m_repeated_values_map;
+
+  typedef hash_map<bits_within_svalue::key_t,
+		   bits_within_svalue *> bits_within_values_map_t;
+  bits_within_values_map_t m_bits_within_values_map;
+
+  typedef hash_map<const svalue *,
+		   unmergeable_svalue *> unmergeable_values_map_t;
+  unmergeable_values_map_t m_unmergeable_values_map;
+
+  typedef hash_map<widening_svalue::key_t,
+		   widening_svalue */*,
+		   widening_svalue::key_t::hash_map_traits*/>
+    widening_values_map_t;
+  widening_values_map_t m_widening_values_map;
+
+  typedef hash_map<compound_svalue::key_t,
+		   compound_svalue *> compound_values_map_t;
+  compound_values_map_t m_compound_values_map;
+
+  typedef hash_map<conjured_svalue::key_t,
+		   conjured_svalue *> conjured_values_map_t;
+  conjured_values_map_t m_conjured_values_map;
+
+  typedef hash_map<asm_output_svalue::key_t,
+		   asm_output_svalue *> asm_output_values_map_t;
+  asm_output_values_map_t m_asm_output_values_map;
+
+  typedef hash_map<const_fn_result_svalue::key_t,
+		   const_fn_result_svalue *> const_fn_result_values_map_t;
+  const_fn_result_values_map_t m_const_fn_result_values_map;
+
+  bool m_checking_feasibility;
+
+  /* "Dynamically-allocated" svalue instances.
+     The number of these within the analysis can grow arbitrarily.
+     They are still owned by the manager.  */
+  auto_delete_vec<svalue> m_managed_dynamic_svalues;
+
+  /* Maximum complexity of svalues that weren't rejected.  */
+  complexity m_max_complexity;
+
+  /* region consolidation.  */
+
+  code_region m_code_region;
+  typedef hash_map<tree, function_region *> fndecls_map_t;
+  typedef fndecls_map_t::iterator fndecls_iterator_t;
+  fndecls_map_t m_fndecls_map;
+
+  typedef hash_map<tree, label_region *> labels_map_t;
+  typedef labels_map_t::iterator labels_iterator_t;
+  labels_map_t m_labels_map;
+
+  globals_region m_globals_region;
+  typedef hash_map<tree, decl_region *> globals_map_t;
+  typedef globals_map_t::iterator globals_iterator_t;
+  globals_map_t m_globals_map;
+
+  consolidation_map<field_region> m_field_regions;
+  consolidation_map<element_region> m_element_regions;
+  consolidation_map<offset_region> m_offset_regions;
+  consolidation_map<sized_region> m_sized_regions;
+  consolidation_map<cast_region> m_cast_regions;
+  consolidation_map<frame_region> m_frame_regions;
+  consolidation_map<symbolic_region> m_symbolic_regions;
+
+  typedef hash_map<tree, string_region *> string_map_t;
+  string_map_t m_string_map;
+
+  consolidation_map<bit_range_region> m_bit_range_regions;
+
+  store_manager m_store_mgr;
+
+  bounded_ranges_manager *m_range_mgr;
+
+  /* "Dynamically-allocated" region instances.
+     The number of these within the analysis can grow arbitrarily.
+     They are still owned by the manager.  */
+  auto_delete_vec<region> m_managed_dynamic_regions;
 };
 
-} // namespace ana
+struct append_regions_cb_data;
 
-template <>
-template <>
-inline bool
-is_a_helper <root_region *>::test (region *reg)
-{
-  return reg->get_kind () == RK_ROOT;
-}
+/* Helper class for handling calls to functions with known behavior.
+   Implemented in region-model-impl-calls.c.  */
 
-namespace ana {
-
-/* Concrete region subclass: a region to use when dereferencing an unknown
-   pointer.  */
-
-class symbolic_region : public region
+class call_details
 {
 public:
-  symbolic_region (region_id parent_rid, tree type, bool possibly_null)
-  : region (parent_rid, svalue_id::null (), type),
-    m_possibly_null (possibly_null)
-  {}
-  symbolic_region (const symbolic_region &other);
+  call_details (const gcall *call, region_model *model,
+		region_model_context *ctxt);
 
-  const symbolic_region *dyn_cast_symbolic_region () const FINAL OVERRIDE
-  { return this; }
-  symbolic_region *dyn_cast_symbolic_region () FINAL OVERRIDE
-  { return this; }
+  region_model_manager *get_manager () const;
+  region_model_context *get_ctxt () const { return m_ctxt; }
+  uncertainty_t *get_uncertainty () const;
+  tree get_lhs_type () const { return m_lhs_type; }
+  const region *get_lhs_region () const { return m_lhs_region; }
 
-  bool compare_fields (const symbolic_region &other) const;
+  bool maybe_set_lhs (const svalue *result) const;
 
-  region *clone () const FINAL OVERRIDE;
+  unsigned num_args () const;
 
-  enum region_kind get_kind () const FINAL OVERRIDE { return RK_SYMBOLIC; }
+  const gcall *get_call_stmt () const { return m_call; }
 
-  void walk_for_canonicalization (canonicalization *c) const FINAL OVERRIDE;
+  tree get_arg_tree (unsigned idx) const;
+  tree get_arg_type (unsigned idx) const;
+  const svalue *get_arg_svalue (unsigned idx) const;
+  const char *get_arg_string_literal (unsigned idx) const;
 
-  void print_fields (const region_model &model,
-		     region_id this_rid,
-		     pretty_printer *pp) const FINAL OVERRIDE;
+  tree get_fndecl_for_call () const;
 
-  bool m_possibly_null;
+  void dump_to_pp (pretty_printer *pp, bool simple) const;
+  void dump (bool simple) const;
+
+  const svalue *get_or_create_conjured_svalue (const region *) const;
+
+private:
+  const gcall *m_call;
+  region_model *m_model;
+  region_model_context *m_ctxt;
+  tree m_lhs_type;
+  const region *m_lhs_region;
 };
 
 /* A region_model encapsulates a representation of the state of memory, with
    a tree of regions, along with their associated values.
    The representation is graph-like because values can be pointers to
    regions.
-   It also stores a constraint_manager, capturing relationships between
-   the values.  */
+   It also stores:
+   - a constraint_manager, capturing relationships between the values, and
+   - dynamic extents, mapping dynamically-allocated regions to svalues (their
+   capacities).  */
 
 class region_model
 {
  public:
-  region_model ();
+  typedef region_to_value_map dynamic_extents_t;
+
+  region_model (region_model_manager *mgr);
   region_model (const region_model &other);
   ~region_model ();
-
-#if 0//__cplusplus >= 201103
-  region_model (region_model &&other);
-#endif
-
   region_model &operator= (const region_model &other);
 
   bool operator== (const region_model &other) const;
@@ -1694,31 +572,68 @@ class region_model
 
   void print (pretty_printer *pp) const;
 
-  void print_svalue (svalue_id sid, pretty_printer *pp) const;
-
-  void dump_dot_to_pp (pretty_printer *pp) const;
-  void dump_dot_to_file (FILE *fp) const;
-  void dump_dot (const char *path) const;
-
-  void dump_to_pp (pretty_printer *pp, bool summarize) const;
-  void dump (FILE *fp, bool summarize) const;
-  void dump (bool summarize) const;
+  void dump_to_pp (pretty_printer *pp, bool simple, bool multiline) const;
+  void dump (FILE *fp, bool simple, bool multiline) const;
+  void dump (bool simple) const;
 
   void debug () const;
 
   void validate () const;
 
-  void canonicalize (region_model_context *ctxt);
+  void canonicalize ();
   bool canonicalized_p () const;
 
-  void check_for_poison (tree expr, region_model_context *ctxt);
+  void
+  on_stmt_pre (const gimple *stmt,
+	       bool *out_terminate_path,
+	       bool *out_unknown_side_effects,
+	       region_model_context *ctxt);
+
   void on_assignment (const gassign *stmt, region_model_context *ctxt);
-  bool on_call_pre (const gcall *stmt, region_model_context *ctxt);
+  const svalue *get_gassign_result (const gassign *assign,
+				    region_model_context *ctxt);
+  void on_asm_stmt (const gasm *asm_stmt, region_model_context *ctxt);
+  bool on_call_pre (const gcall *stmt, region_model_context *ctxt,
+		    bool *out_terminate_path);
   void on_call_post (const gcall *stmt,
 		     bool unknown_side_effects,
 		     region_model_context *ctxt);
+
+  void purge_state_involving (const svalue *sval, region_model_context *ctxt);
+
+  /* Specific handling for on_call_pre.  */
+  void impl_call_alloca (const call_details &cd);
+  void impl_call_analyzer_describe (const gcall *call,
+				    region_model_context *ctxt);
+  void impl_call_analyzer_dump_capacity (const gcall *call,
+					 region_model_context *ctxt);
+  void impl_call_analyzer_dump_escaped (const gcall *call);
+  void impl_call_analyzer_eval (const gcall *call,
+				region_model_context *ctxt);
+  void impl_call_builtin_expect (const call_details &cd);
+  void impl_call_calloc (const call_details &cd);
+  bool impl_call_error (const call_details &cd, unsigned min_args,
+			bool *out_terminate_path);
+  void impl_call_fgets (const call_details &cd);
+  void impl_call_fread (const call_details &cd);
+  void impl_call_free (const call_details &cd);
+  void impl_call_malloc (const call_details &cd);
+  void impl_call_memcpy (const call_details &cd);
+  void impl_call_memset (const call_details &cd);
+  void impl_call_realloc (const call_details &cd);
+  void impl_call_strchr (const call_details &cd);
+  void impl_call_strcpy (const call_details &cd);
+  void impl_call_strlen (const call_details &cd);
+  void impl_call_operator_new (const call_details &cd);
+  void impl_call_operator_delete (const call_details &cd);
+  void impl_deallocation_call (const call_details &cd);
+
   void handle_unrecognized_call (const gcall *call,
 				 region_model_context *ctxt);
+  void get_reachable_svalues (svalue_set *out,
+			      const svalue *extra_sval,
+			      const uncertainty_t *uncertainty);
+
   void on_return (const greturn *stmt, region_model_context *ctxt);
   void on_setjmp (const gcall *stmt, const exploded_node *enode,
 		  region_model_context *ctxt);
@@ -1729,116 +644,85 @@ class region_model
 			const cfg_superedge *last_cfg_superedge,
 			region_model_context *ctxt);
 
-  void handle_phi (const gphi *phi,
-		   tree lhs, tree rhs, bool is_back_edge,
+  void handle_phi (const gphi *phi, tree lhs, tree rhs,
+		   const region_model &old_state,
 		   region_model_context *ctxt);
 
   bool maybe_update_for_edge (const superedge &edge,
 			      const gimple *last_stmt,
-			      region_model_context *ctxt);
+			      region_model_context *ctxt,
+			      rejected_constraint **out);
 
-  region_id get_root_rid () const { return m_root_rid; }
-  root_region *get_root_region () const;
+  void update_for_gcall (const gcall *call_stmt,
+                         region_model_context *ctxt,
+                         function *callee = NULL);
+  
+  void update_for_return_gcall (const gcall *call_stmt,
+                                region_model_context *ctxt);
 
-  region_id get_stack_region_id () const;
-  region_id push_frame (function *fun, vec<svalue_id> *arg_sids,
-			region_model_context *ctxt);
-  region_id get_current_frame_id () const;
+  const region *push_frame (function *fun, const vec<const svalue *> *arg_sids,
+			    region_model_context *ctxt);
+  const frame_region *get_current_frame () const { return m_current_frame; }
   function * get_current_function () const;
-  void pop_frame (region_id result_dst_rid,
-		  bool purge, purge_stats *stats,
-		  region_model_context *ctxt);
+  void pop_frame (tree result_lvalue,
+		  const svalue **out_result,
+		  region_model_context *ctxt,
+		  bool eval_return_svalue = true);
   int get_stack_depth () const;
-  function *get_function_at_depth (unsigned depth) const;
+  const frame_region *get_frame_at_index (int index) const;
 
-  region_id get_globals_region_id () const;
+  const region *get_lvalue (path_var pv, region_model_context *ctxt) const;
+  const region *get_lvalue (tree expr, region_model_context *ctxt) const;
+  const svalue *get_rvalue (path_var pv, region_model_context *ctxt) const;
+  const svalue *get_rvalue (tree expr, region_model_context *ctxt) const;
 
-  svalue_id add_svalue (svalue *sval);
-  void replace_svalue (svalue_id sid, svalue *new_sval);
+  const region *deref_rvalue (const svalue *ptr_sval, tree ptr_tree,
+			       region_model_context *ctxt) const;
 
-  region_id add_region (region *r);
+  const svalue *get_rvalue_for_bits (tree type,
+				     const region *reg,
+				     const bit_range &bits,
+				     region_model_context *ctxt) const;
 
-  region_id add_region_for_type (region_id parent_rid, tree type,
-				 region_model_context *ctxt);
-
-  svalue *get_svalue (svalue_id sval_id) const;
-  region *get_region (region_id rid) const;
-
-  template <typename Subclass>
-  Subclass *get_region (region_id rid) const
-  {
-    region *result = get_region (rid);
-    if (result)
-      gcc_assert (is_a<Subclass *> (result));
-    return (Subclass *)result;
-  }
-
-  region_id get_lvalue (path_var pv, region_model_context *ctxt);
-  region_id get_lvalue (tree expr, region_model_context *ctxt);
-  svalue_id get_rvalue (path_var pv, region_model_context *ctxt);
-  svalue_id get_rvalue (tree expr, region_model_context *ctxt);
-
-  svalue_id get_or_create_ptr_svalue (tree ptr_type, region_id id);
-  svalue_id get_or_create_constant_svalue (tree cst_expr);
-  svalue_id get_svalue_for_fndecl (tree ptr_type, tree fndecl,
-				   region_model_context *ctxt);
-  svalue_id get_svalue_for_label (tree ptr_type, tree label,
-				  region_model_context *ctxt);
-
-  region_id get_region_for_fndecl (tree fndecl, region_model_context *ctxt);
-  region_id get_region_for_label (tree label, region_model_context *ctxt);
-
-  svalue_id maybe_cast (tree type, svalue_id sid, region_model_context *ctxt);
-  svalue_id maybe_cast_1 (tree type, svalue_id sid);
-
-  region_id get_field_region (region_id rid, tree field,
-			      region_model_context *ctxt);
-
-  region_id deref_rvalue (svalue_id ptr_sid, region_model_context *ctxt);
-  region_id deref_rvalue (tree ptr, region_model_context *ctxt);
-
-  void set_value (region_id lhs_rid, svalue_id rhs_sid,
+  void set_value (const region *lhs_reg, const svalue *rhs_sval,
 		  region_model_context *ctxt);
   void set_value (tree lhs, tree rhs, region_model_context *ctxt);
-  svalue_id set_to_new_unknown_value (region_id dst_rid, tree type,
-				      region_model_context *ctxt);
+  void clobber_region (const region *reg);
+  void purge_region (const region *reg);
+  void fill_region (const region *reg, const svalue *sval);
+  void zero_fill_region (const region *reg);
+  void mark_region_as_unknown (const region *reg, uncertainty_t *uncertainty);
 
-  void copy_region (region_id dst_rid, region_id src_rid,
-		    region_model_context *ctxt);
-
-  tristate eval_condition (svalue_id lhs,
+  tristate eval_condition (const svalue *lhs,
 			   enum tree_code op,
-			   svalue_id rhs) const;
-  tristate eval_condition_without_cm (svalue_id lhs,
+			   const svalue *rhs) const;
+  tristate eval_condition_without_cm (const svalue *lhs,
 				      enum tree_code op,
-				      svalue_id rhs) const;
+				      const svalue *rhs) const;
+  tristate compare_initial_and_pointer (const initial_svalue *init,
+					const region_svalue *ptr) const;
   tristate eval_condition (tree lhs,
 			   enum tree_code op,
 			   tree rhs,
 			   region_model_context *ctxt);
   bool add_constraint (tree lhs, enum tree_code op, tree rhs,
 		       region_model_context *ctxt);
+  bool add_constraint (tree lhs, enum tree_code op, tree rhs,
+		       region_model_context *ctxt,
+		       rejected_constraint **out);
 
-  tree maybe_get_constant (svalue_id sid) const;
+  const region *create_region_for_heap_alloc (const svalue *size_in_bytes,
+					      region_model_context *ctxt);
+  const region *create_region_for_alloca (const svalue *size_in_bytes,
+					  region_model_context *ctxt);
 
-  region_id add_new_malloc_region ();
-
-  tree get_representative_tree (svalue_id sid) const;
-  path_var get_representative_path_var (region_id rid) const;
-  void get_path_vars_for_svalue (svalue_id sid, vec<path_var> *out) const;
-
-  void purge_unused_svalues (purge_stats *out,
-			     region_model_context *ctxt,
-			     svalue_id_set *known_used_sids = NULL);
-  void remap_svalue_ids (const svalue_id_map &map);
-  void remap_region_ids (const region_id_map &map);
-
-  void purge_regions (const region_id_set &set,
-		      purge_stats *stats,
-		      logger *logger);
-
-  unsigned get_num_svalues () const { return m_svalues.length (); }
-  unsigned get_num_regions () const { return m_regions.length (); }
+  tree get_representative_tree (const svalue *sval) const;
+  path_var
+  get_representative_path_var (const svalue *sval,
+			       svalue_set *visited) const;
+  path_var
+  get_representative_path_var (const region *reg,
+			       svalue_set *visited) const;
 
   /* For selftests.  */
   constraint_manager *get_constraints ()
@@ -1846,66 +730,77 @@ class region_model
     return m_constraints;
   }
 
-  void get_descendents (region_id rid, region_id_set *out,
-			region_id exclude_rid) const;
+  store *get_store () { return &m_store; }
+  const store *get_store () const { return &m_store; }
 
-  void delete_region_and_descendents (region_id rid,
-				      enum poison_kind pkind,
-				      purge_stats *stats,
-				      logger *logger);
+  const dynamic_extents_t &
+  get_dynamic_extents () const
+  {
+    return m_dynamic_extents;
+  }
+  const svalue *get_dynamic_extents (const region *reg) const;
+  void set_dynamic_extents (const region *reg,
+			    const svalue *size_in_bytes,
+			    region_model_context *ctxt);
+  void unset_dynamic_extents (const region *reg);
+
+  region_model_manager *get_manager () const { return m_mgr; }
+  bounded_ranges_manager *get_range_manager () const
+  {
+    return m_mgr->get_range_manager ();
+  }
+
+  void unbind_region_and_descendents (const region *reg,
+				      enum poison_kind pkind);
 
   bool can_merge_with_p (const region_model &other_model,
+			 const program_point &point,
 			 region_model *out_model,
-			 svalue_id_merger_mapping *out) const;
-  bool can_merge_with_p (const region_model &other_model,
-			 region_model *out_model) const;
-
-  svalue_id get_value_by_name (const char *name) const;
-
-  svalue_id convert_byte_offset_to_array_index (tree ptr_type,
-						svalue_id offset_sid);
-
-  region_id get_or_create_mem_ref (tree type,
-				   svalue_id ptr_sid,
-				   svalue_id offset_sid,
-				   region_model_context *ctxt);
-  region_id get_or_create_pointer_plus_expr (tree type,
-					     svalue_id ptr_sid,
-					     svalue_id offset_sid,
-					     region_model_context *ctxt);
-  region_id get_or_create_view (region_id raw_rid, tree type,
-				region_model_context *ctxt);
+			 const extrinsic_state *ext_state = NULL,
+			 const program_state *state_a = NULL,
+			 const program_state *state_b = NULL) const;
 
   tree get_fndecl_for_call (const gcall *call,
 			    region_model_context *ctxt);
 
+  void get_regions_for_current_frame (auto_vec<const decl_region *> *out) const;
+  static void append_regions_cb (const region *base_reg,
+				 struct append_regions_cb_data *data);
+
+  const svalue *get_store_value (const region *reg,
+				 region_model_context *ctxt) const;
+
+  bool region_exists_p (const region *reg) const;
+
+  void loop_replay_fixup (const region_model *dst_state);
+
+  const svalue *get_capacity (const region *reg) const;
+
+  /* Implemented in sm-malloc.cc  */
+  void on_realloc_with_move (const call_details &cd,
+			     const svalue *old_ptr_sval,
+			     const svalue *new_ptr_sval);
+
  private:
-  region_id get_lvalue_1 (path_var pv, region_model_context *ctxt);
-  svalue_id get_rvalue_1 (path_var pv, region_model_context *ctxt);
+  const region *get_lvalue_1 (path_var pv, region_model_context *ctxt) const;
+  const svalue *get_rvalue_1 (path_var pv, region_model_context *ctxt) const;
 
-  void copy_struct_region (region_id dst_rid, struct_region *dst_reg,
-			   struct_region *src_reg, region_model_context *ctxt);
-  void copy_union_region (region_id dst_rid, union_region *src_reg,
-			  region_model_context *ctxt);
-  void copy_array_region (region_id dst_rid, array_region *dst_reg,
-			  array_region *src_reg, region_model_context *ctxt);
+  path_var
+  get_representative_path_var_1 (const svalue *sval,
+				 svalue_set *visited) const;
+  path_var
+  get_representative_path_var_1 (const region *reg,
+				 svalue_set *visited) const;
 
-  region_id make_region_for_unexpected_tree_code (region_model_context *ctxt,
-						  tree t,
-						  const dump_location_t &loc);
-
-  void add_any_constraints_from_ssa_def_stmt (tree lhs,
-					      enum tree_code op,
-					      tree rhs,
-					      region_model_context *ctxt);
-  void add_any_constraints_from_gassign (enum tree_code op,
-					 tree rhs,
-					 const gassign *assign,
-					 region_model_context *ctxt);
-  void add_any_constraints_from_gcall (enum tree_code op,
-				       tree rhs,
-				       const gcall *call,
-				       region_model_context *ctxt);
+  bool add_constraint (const svalue *lhs,
+		       enum tree_code op,
+		       const svalue *rhs,
+		       region_model_context *ctxt);
+  bool add_constraints_from_binop (const svalue *outer_lhs,
+				   enum tree_code outer_op,
+				   const svalue *outer_rhs,
+				   bool *out,
+				   region_model_context *ctxt);
 
   void update_for_call_superedge (const call_superedge &call_edge,
 				  region_model_context *ctxt);
@@ -1915,30 +810,73 @@ class region_model
 				region_model_context *ctxt);
   bool apply_constraints_for_gcond (const cfg_superedge &edge,
 				    const gcond *cond_stmt,
-				    region_model_context *ctxt);
+				    region_model_context *ctxt,
+				    rejected_constraint **out);
   bool apply_constraints_for_gswitch (const switch_cfg_superedge &edge,
 				      const gswitch *switch_stmt,
-				      region_model_context *ctxt);
+				      region_model_context *ctxt,
+				      rejected_constraint **out);
+  bool apply_constraints_for_exception (const gimple *last_stmt,
+					region_model_context *ctxt,
+					rejected_constraint **out);
 
-  void poison_any_pointers_to_bad_regions (const region_id_set &bad_regions,
-					   enum poison_kind pkind);
+  int poison_any_pointers_to_descendents (const region *reg,
+					  enum poison_kind pkind);
 
-  void dump_summary_of_rep_path_vars (pretty_printer *pp,
-				      auto_vec<path_var> *rep_path_vars,
-				      bool *is_first);
+  void on_top_level_param (tree param,
+			   bool nonnull,
+			   region_model_context *ctxt);
 
-  auto_delete_vec<svalue> m_svalues;
-  auto_delete_vec<region> m_regions;
-  region_id m_root_rid;
+  bool called_from_main_p () const;
+  const svalue *get_initial_value_for_global (const region *reg) const;
+
+  const svalue *check_for_poison (const svalue *sval,
+				  tree expr,
+				  region_model_context *ctxt) const;
+  const region * get_region_for_poisoned_expr (tree expr) const;
+
+  void check_dynamic_size_for_taint (enum memory_space mem_space,
+				     const svalue *size_in_bytes,
+				     region_model_context *ctxt) const;
+
+  void check_region_for_taint (const region *reg,
+			       enum access_direction dir,
+			       region_model_context *ctxt) const;
+
+  void check_for_writable_region (const region* dest_reg,
+				  region_model_context *ctxt) const;
+  void check_region_access (const region *reg,
+			    enum access_direction dir,
+			    region_model_context *ctxt) const;
+  void check_region_for_write (const region *dest_reg,
+			       region_model_context *ctxt) const;
+  void check_region_for_read (const region *src_reg,
+			      region_model_context *ctxt) const;
+
+  void check_call_args (const call_details &cd) const;
+  void check_external_function_for_access_attr (const gcall *call,
+						tree callee_fndecl,
+						region_model_context *ctxt) const;
+
+  /* Storing this here to avoid passing it around everywhere.  */
+  region_model_manager *const m_mgr;
+
+  store m_store;
+
   constraint_manager *m_constraints; // TODO: embed, rather than dynalloc?
+
+  const frame_region *m_current_frame;
+
+  /* Map from base region to size in bytes, for tracking the sizes of
+     dynamically-allocated regions.
+     This is part of the region_model rather than the region to allow for
+     memory regions to be resized (e.g. by realloc).  */
+  dynamic_extents_t m_dynamic_extents;
 };
 
 /* Some region_model activity could lead to warnings (e.g. attempts to use an
    uninitialized value).  This abstract base class encapsulates an interface
    for the region model to use when emitting such warnings.
-
-   It also provides an interface for being notified about svalue_ids being
-   remapped, and being deleted.
 
    Having this as an abstract base class allows us to support the various
    operations needed by program_state in the analyzer within region_model,
@@ -1947,48 +885,26 @@ class region_model
 class region_model_context
 {
  public:
-  virtual void warn (pending_diagnostic *d) = 0;
+  /* Hook for clients to store pending diagnostics.
+     Return true if the diagnostic was stored, or false if it was deleted.  */
+  virtual bool warn (pending_diagnostic *d) = 0;
 
-  /* Hook for clients that store svalue_id instances, so that they
-     can remap their IDs when the underlying region_model renumbers
-     the IDs.  */
-  virtual void remap_svalue_ids (const svalue_id_map &map) = 0;
+  /* Hook for clients to add a note to the last previously stored pending diagnostic.
+     Takes ownership of the pending_node (or deletes it).  */
+  virtual void add_note (pending_note *pn) = 0;
 
-#if 0
-  /* Return true if if's OK to purge SID when simplifying state.
-     Subclasses can return false for values that have sm state,
-     to avoid generating "leak" false positives.  */
-  virtual bool can_purge_p (svalue_id sid) = 0;
-#endif
+  /* Hook for clients to be notified when an SVAL that was reachable
+     in a previous state is no longer live, so that clients can emit warnings
+     about leaks.  */
+  virtual void on_svalue_leak (const svalue *sval) = 0;
 
-  /* Hook for clients to be notified when a range of SIDs have
-     been purged, so that they can purge state relating to those
-     values (and potentially emit warnings about leaks).
-     All SIDs from FIRST_PURGED_SID numerically upwards are being
-     purged.
-     The return values is a count of how many items of data the client
-     has purged (potentially for use in selftests).
-     MAP has already been applied to the IDs, but is provided in case
-     the client needs to figure out the old IDs.  */
-  virtual int on_svalue_purge (svalue_id first_purged_sid,
-			       const svalue_id_map &map) = 0;
+  /* Hook for clients to be notified when the set of explicitly live
+     svalues changes, so that they can purge state relating to dead
+     svalues.  */
+  virtual void on_liveness_change (const svalue_set &live_svalues,
+				   const region_model *model) = 0;
 
   virtual logger *get_logger () = 0;
-
-  /* Hook for clients to be notified when CHILD_SID is created
-     from PARENT_SID, when "inheriting" a value for a region from a
-     parent region.
-     This exists so that state machines that inherit state can
-     propagate the state from parent to child.  */
-  virtual void on_inherited_svalue (svalue_id parent_sid,
-				    svalue_id child_sid) = 0;
-
-  /* Hook for clients to be notified when DST_SID is created
-     (or reused) as a cast from SRC_SID.
-     This exists so that state machines can propagate the state
-     from SRC_SID to DST_SID.  */
-  virtual void on_cast (svalue_id src_sid,
-			svalue_id dst_sid) = 0;
 
   /* Hook for clients to be notified when the condition
      "LHS OP RHS" is added to the region model.
@@ -1996,11 +912,13 @@ class region_model_context
      and use them to trigger sm-state transitions (e.g. transitions due
      to ptrs becoming known to be NULL or non-NULL, rather than just
      "unchecked") */
-  virtual void on_condition (tree lhs, enum tree_code op, tree rhs) = 0;
+  virtual void on_condition (const svalue *lhs,
+			     enum tree_code op,
+			     const svalue *rhs) = 0;
 
   /* Hooks for clients to be notified when an unknown change happens
-     to SID (in response to a call to an unknown function).  */
-  virtual void on_unknown_change (svalue_id sid) = 0;
+     to SVAL (in response to a call to an unknown function).  */
+  virtual void on_unknown_change (const svalue *sval, bool is_mutable) = 0;
 
   /* Hooks for clients to be notified when a phi node is handled,
      where RHS is the pertinent argument.  */
@@ -2010,6 +928,36 @@ class region_model_context
      know how to handle the tree code of T at LOC.  */
   virtual void on_unexpected_tree_code (tree t,
 					const dump_location_t &loc) = 0;
+
+  /* Hook for clients to be notified when a function_decl escapes.  */
+  virtual void on_escaped_function (tree fndecl) = 0;
+
+  virtual uncertainty_t *get_uncertainty () = 0;
+
+  /* Hook for clients to purge state involving SVAL.  */
+  virtual void purge_state_involving (const svalue *sval) = 0;
+
+  /* Hook for clients to split state with a non-standard path.
+     Take ownership of INFO.  */
+  virtual void bifurcate (custom_edge_info *info) = 0;
+
+  /* Hook for clients to terminate the standard path.  */
+  virtual void terminate_path () = 0;
+
+  virtual const extrinsic_state *get_ext_state () const = 0;
+
+  /* Hook for clients to access the "malloc" state machine in
+     any underlying program_state.  */
+  virtual bool get_malloc_map (sm_state_map **out_smap,
+			       const state_machine **out_sm,
+			       unsigned *out_sm_idx) = 0;
+  /* Likewise for the "taint" state machine.  */
+  virtual bool get_taint_map (sm_state_map **out_smap,
+			      const state_machine **out_sm,
+			      unsigned *out_sm_idx) = 0;
+
+  /* Get the current statement, if any.  */
+  virtual const gimple *get_stmt () const = 0;
 };
 
 /* A "do nothing" subclass of region_model_context.  */
@@ -2017,28 +965,19 @@ class region_model_context
 class noop_region_model_context : public region_model_context
 {
 public:
-  void warn (pending_diagnostic *) OVERRIDE {}
-  void remap_svalue_ids (const svalue_id_map &) OVERRIDE {}
-  int on_svalue_purge (svalue_id, const svalue_id_map &) OVERRIDE
-  {
-    return 0;
-  }
+  bool warn (pending_diagnostic *) OVERRIDE { return false; }
+  void add_note (pending_note *pn) OVERRIDE;
+  void on_svalue_leak (const svalue *) OVERRIDE {}
+  void on_liveness_change (const svalue_set &,
+			   const region_model *) OVERRIDE {}
   logger *get_logger () OVERRIDE { return NULL; }
-  void on_inherited_svalue (svalue_id parent_sid ATTRIBUTE_UNUSED,
-			    svalue_id child_sid  ATTRIBUTE_UNUSED)
-    OVERRIDE
-  {
-  }
-  void on_cast (svalue_id src_sid ATTRIBUTE_UNUSED,
-		svalue_id dst_sid ATTRIBUTE_UNUSED) OVERRIDE
-  {
-  }
-  void on_condition (tree lhs ATTRIBUTE_UNUSED,
+  void on_condition (const svalue *lhs ATTRIBUTE_UNUSED,
 		     enum tree_code op ATTRIBUTE_UNUSED,
-		     tree rhs ATTRIBUTE_UNUSED) OVERRIDE
+		     const svalue *rhs ATTRIBUTE_UNUSED) OVERRIDE
   {
   }
-  void on_unknown_change (svalue_id sid ATTRIBUTE_UNUSED) OVERRIDE
+  void on_unknown_change (const svalue *sval ATTRIBUTE_UNUSED,
+			  bool is_mutable ATTRIBUTE_UNUSED) OVERRIDE
   {
   }
   void on_phi (const gphi *phi ATTRIBUTE_UNUSED,
@@ -2046,6 +985,32 @@ public:
   {
   }
   void on_unexpected_tree_code (tree, const dump_location_t &) OVERRIDE {}
+
+  void on_escaped_function (tree) OVERRIDE {}
+
+  uncertainty_t *get_uncertainty () OVERRIDE { return NULL; }
+
+  void purge_state_involving (const svalue *sval ATTRIBUTE_UNUSED) OVERRIDE {}
+
+  void bifurcate (custom_edge_info *info) OVERRIDE;
+  void terminate_path () OVERRIDE;
+
+  const extrinsic_state *get_ext_state () const OVERRIDE { return NULL; }
+
+  bool get_malloc_map (sm_state_map **,
+		       const state_machine **,
+		       unsigned *) OVERRIDE
+  {
+    return false;
+  }
+  bool get_taint_map (sm_state_map **,
+		      const state_machine **,
+		      unsigned *) OVERRIDE
+  {
+    return false;
+  }
+
+  const gimple *get_stmt () const OVERRIDE { return NULL; }
 };
 
 /* A subclass of region_model_context for determining if operations fail
@@ -2068,6 +1033,147 @@ private:
   int m_num_unexpected_codes;
 };
 
+/* Subclass of region_model_context that wraps another context, allowing
+   for extra code to be added to the various hooks.  */
+
+class region_model_context_decorator : public region_model_context
+{
+ public:
+  bool warn (pending_diagnostic *d) OVERRIDE
+  {
+    return m_inner->warn (d);
+  }
+
+  void add_note (pending_note *pn) OVERRIDE
+  {
+    m_inner->add_note (pn);
+  }
+
+  void on_svalue_leak (const svalue *sval) OVERRIDE
+  {
+    m_inner->on_svalue_leak (sval);
+  }
+
+  void on_liveness_change (const svalue_set &live_svalues,
+			   const region_model *model) OVERRIDE
+  {
+    m_inner->on_liveness_change (live_svalues, model);
+  }
+
+  logger *get_logger () OVERRIDE
+  {
+    return m_inner->get_logger ();
+  }
+
+  void on_condition (const svalue *lhs,
+		     enum tree_code op,
+		     const svalue *rhs) OVERRIDE
+  {
+    m_inner->on_condition (lhs, op, rhs);
+  }
+
+  void on_unknown_change (const svalue *sval, bool is_mutable) OVERRIDE
+  {
+    m_inner->on_unknown_change (sval, is_mutable);
+  }
+
+  void on_phi (const gphi *phi, tree rhs) OVERRIDE
+  {
+    m_inner->on_phi (phi, rhs);
+  }
+
+  void on_unexpected_tree_code (tree t,
+				const dump_location_t &loc) OVERRIDE
+  {
+    m_inner->on_unexpected_tree_code (t, loc);
+  }
+
+  void on_escaped_function (tree fndecl) OVERRIDE
+  {
+    m_inner->on_escaped_function (fndecl);
+  }
+
+  uncertainty_t *get_uncertainty () OVERRIDE
+  {
+    return m_inner->get_uncertainty ();
+  }
+
+  void purge_state_involving (const svalue *sval) OVERRIDE
+  {
+    m_inner->purge_state_involving (sval);
+  }
+
+  void bifurcate (custom_edge_info *info) OVERRIDE
+  {
+    m_inner->bifurcate (info);
+  }
+
+  void terminate_path () OVERRIDE
+  {
+    m_inner->terminate_path ();
+  }
+
+  const extrinsic_state *get_ext_state () const OVERRIDE
+  {
+    return m_inner->get_ext_state ();
+  }
+
+  bool get_malloc_map (sm_state_map **out_smap,
+		       const state_machine **out_sm,
+		       unsigned *out_sm_idx) OVERRIDE
+  {
+    return m_inner->get_malloc_map (out_smap, out_sm, out_sm_idx);
+  }
+
+  bool get_taint_map (sm_state_map **out_smap,
+		      const state_machine **out_sm,
+		      unsigned *out_sm_idx) OVERRIDE
+  {
+    return m_inner->get_taint_map (out_smap, out_sm, out_sm_idx);
+  }
+
+  const gimple *get_stmt () const OVERRIDE
+  {
+    return m_inner->get_stmt ();
+  }
+
+protected:
+  region_model_context_decorator (region_model_context *inner)
+  : m_inner (inner)
+  {
+    gcc_assert (m_inner);
+  }
+
+  region_model_context *m_inner;
+};
+
+/* Subclass of region_model_context_decorator that adds a note
+   when saving diagnostics.  */
+
+class note_adding_context : public region_model_context_decorator
+{
+public:
+  bool warn (pending_diagnostic *d) OVERRIDE
+  {
+    if (m_inner->warn (d))
+      {
+	add_note (make_note ());
+	return true;
+      }
+    else
+      return false;
+  }
+
+  /* Hook to make the new note.  */
+  virtual pending_note *make_note () = 0;
+
+protected:
+  note_adding_context (region_model_context *inner)
+  : region_model_context_decorator (inner)
+  {
+  }
+};
+
 /* A bundle of data for use when attempting to merge two region_model
    instances to make a third.  */
 
@@ -2075,108 +1181,108 @@ struct model_merger
 {
   model_merger (const region_model *model_a,
 		const region_model *model_b,
+		const program_point &point,
 		region_model *merged_model,
-		svalue_id_merger_mapping *sid_mapping)
+		const extrinsic_state *ext_state,
+		const program_state *state_a,
+		const program_state *state_b)
   : m_model_a (model_a), m_model_b (model_b),
+    m_point (point),
     m_merged_model (merged_model),
-    m_map_regions_from_a_to_m (model_a->get_num_regions ()),
-    m_map_regions_from_b_to_m (model_b->get_num_regions ()),
-    m_sid_mapping (sid_mapping)
+    m_ext_state (ext_state),
+    m_state_a (state_a), m_state_b (state_b)
   {
-    gcc_assert (sid_mapping);
   }
 
-  void dump_to_pp (pretty_printer *pp) const;
-  void dump (FILE *fp) const;
-  void dump () const;
+  void dump_to_pp (pretty_printer *pp, bool simple) const;
+  void dump (FILE *fp, bool simple) const;
+  void dump (bool simple) const;
 
-  template <typename Subclass>
-  Subclass *get_region_a (region_id rid_a) const
+  region_model_manager *get_manager () const
   {
-    return m_model_a->get_region <Subclass> (rid_a);
+    return m_model_a->get_manager ();
   }
 
-  template <typename Subclass>
-  Subclass *get_region_b (region_id rid_b) const
-  {
-    return m_model_b->get_region <Subclass> (rid_b);
-  }
-
-  bool can_merge_values_p (svalue_id sid_a,
-			   svalue_id sid_b,
-			   svalue_id *merged_sid);
-
-  void record_regions (region_id a_rid,
-		       region_id b_rid,
-		       region_id merged_rid);
-
-  void record_svalues (svalue_id a_sid,
-		       svalue_id b_sid,
-		       svalue_id merged_sid);
+  bool mergeable_svalue_p (const svalue *) const;
 
   const region_model *m_model_a;
   const region_model *m_model_b;
+  const program_point &m_point;
   region_model *m_merged_model;
 
-  one_way_region_id_map m_map_regions_from_a_to_m;
-  one_way_region_id_map m_map_regions_from_b_to_m;
-  svalue_id_merger_mapping *m_sid_mapping;
+  const extrinsic_state *m_ext_state;
+  const program_state *m_state_a;
+  const program_state *m_state_b;
 };
 
-/* A bundle of data that can be optionally generated during merger of two
-   region_models that describes how svalue_ids in each of the two inputs
-   are mapped to svalue_ids in the merged output.
+/* A record that can (optionally) be written out when
+   region_model::add_constraint fails.  */
 
-   For use when merging sm-states within program_state.  */
-
-struct svalue_id_merger_mapping
+class rejected_constraint
 {
-  svalue_id_merger_mapping (const region_model &a,
-			    const region_model &b);
+public:
+  virtual ~rejected_constraint () {}
+  virtual void dump_to_pp (pretty_printer *pp) const = 0;
 
-  void dump_to_pp (pretty_printer *pp) const;
-  void dump (FILE *fp) const;
-  void dump () const;
+  const region_model &get_model () const { return m_model; }
 
-  one_way_svalue_id_map m_map_from_a_to_m;
-  one_way_svalue_id_map m_map_from_b_to_m;
+protected:
+  rejected_constraint (const region_model &model)
+  : m_model (model)
+  {}
+
+  region_model m_model;
 };
 
-/* A bundle of data used when canonicalizing a region_model so that the
-   order of regions and svalues is in a predictable order (thus increasing
-   the chance of two region_models being equal).
-
-   This object is used to keep track of a recursive traversal across the
-   svalues and regions within the model, made in a deterministic order,
-   assigning new ids the first time each region or svalue is
-   encountered.  */
-
-struct canonicalization
+class rejected_op_constraint : public rejected_constraint
 {
-  canonicalization (const region_model &model);
-  void walk_rid (region_id rid);
-  void walk_sid (svalue_id sid);
+public:
+  rejected_op_constraint (const region_model &model,
+			  tree lhs, enum tree_code op, tree rhs)
+  : rejected_constraint (model),
+    m_lhs (lhs), m_op (op), m_rhs (rhs)
+  {}
 
-  void dump_to_pp (pretty_printer *pp) const;
-  void dump (FILE *fp) const;
-  void dump () const;
+  void dump_to_pp (pretty_printer *pp) const FINAL OVERRIDE;
 
-  const region_model &m_model;
-  /* Maps from existing IDs to new IDs.  */
-  region_id_map m_rid_map;
-  svalue_id_map m_sid_map;
-  /* The next IDs to hand out.  */
-  int m_next_rid_int;
-  int m_next_sid_int;
+  tree m_lhs;
+  enum tree_code m_op;
+  tree m_rhs;
+};
+
+class rejected_ranges_constraint : public rejected_constraint
+{
+public:
+  rejected_ranges_constraint (const region_model &model,
+			      tree expr, const bounded_ranges *ranges)
+  : rejected_constraint (model),
+    m_expr (expr), m_ranges (ranges)
+  {}
+
+  void dump_to_pp (pretty_printer *pp) const FINAL OVERRIDE;
+
+private:
+  tree m_expr;
+  const bounded_ranges *m_ranges;
+};
+
+/* A bundle of state.  */
+
+class engine
+{
+public:
+  engine (const supergraph *sg = NULL, logger *logger = NULL);
+  const supergraph *get_supergraph () { return m_sg; }
+  region_model_manager *get_model_manager () { return &m_mgr; }
+
+  void log_stats (logger *logger) const;
+
+private:
+  const supergraph *m_sg;
+  region_model_manager m_mgr;
 };
 
 } // namespace ana
-
-namespace inchash
-{
-  extern void add (svalue_id sid, hash &hstate);
-  extern void add (region_id rid, hash &hstate);
-} // namespace inchash
 
 extern void debug (const region_model &rmodel);
 
@@ -2194,9 +1300,10 @@ using namespace ::selftest;
 class test_region_model_context : public noop_region_model_context
 {
 public:
-  void warn (pending_diagnostic *d) FINAL OVERRIDE
+  bool warn (pending_diagnostic *d) FINAL OVERRIDE
   {
     m_diagnostics.safe_push (d);
+    return true;
   }
 
   unsigned get_num_diagnostics () const { return m_diagnostics.length (); }
@@ -2205,7 +1312,7 @@ public:
     FINAL OVERRIDE
   {
     internal_error ("unhandled tree code: %qs",
-		    t ? get_tree_code_name (TREE_CODE (t)) : "(null)");
+		    get_tree_code_name (TREE_CODE (t)));
   }
 
 private:
@@ -2232,6 +1339,11 @@ private:
   SELFTEST_END_STMT
 
 /* Implementation detail of the ASSERT_CONDITION_* macros.  */
+
+void assert_condition (const location &loc,
+		       region_model &model,
+		       const svalue *lhs, tree_code op, const svalue *rhs,
+		       tristate expected);
 
 void assert_condition (const location &loc,
 		       region_model &model,

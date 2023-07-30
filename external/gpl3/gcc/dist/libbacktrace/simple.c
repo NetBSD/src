@@ -1,5 +1,5 @@
 /* simple.c -- The backtrace_simple function.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Google.
 
 Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@ struct backtrace_simple_data
   int ret;
 };
 
-/* Unwind library callback routine.  This is passd to
+/* Unwind library callback routine.  This is passed to
    _Unwind_Backtrace.  */
 
 static _Unwind_Reason_Code

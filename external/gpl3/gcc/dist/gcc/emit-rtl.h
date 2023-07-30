@@ -1,5 +1,5 @@
-/* Exported functions from emit-rtl.c
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+/* Exported functions from emit-rtl.cc
+   Copyright (C) 2004-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,6 +23,7 @@ along with GCC; see the file COPYING3.  If not see
 class temp_slot;
 typedef class temp_slot *temp_slot_p;
 class predefined_function_abi;
+namespace rtl_ssa { class function_info; }
 
 /* Information mainlined about RTL representation of incoming arguments.  */
 struct GTY(()) incoming_args {
@@ -73,7 +74,9 @@ struct GTY(()) rtl_data {
      different ABIs.  */
   const predefined_function_abi *GTY((skip)) abi;
 
-  /* For function.c  */
+  rtl_ssa::function_info *GTY((skip)) ssa;
+
+  /* For function.cc  */
 
   /* # of bytes of outgoing arguments.  If ACCUMULATE_OUTGOING_ARGS is
      defined, the needed space is pushed by the prologue.  */
@@ -173,6 +176,12 @@ struct GTY(()) rtl_data {
         local stack.  */
   unsigned int stack_alignment_estimated;
 
+  /* How many NOP insns to place at each function entry by default.  */
+  unsigned short patch_area_size;
+
+  /* How far the real asm entry point is into this area.  */
+  unsigned short patch_area_entry;
+
   /* For reorg.  */
 
   /* Nonzero if function being compiled called builtin_return_addr or
@@ -223,7 +232,7 @@ struct GTY(()) rtl_data {
   bool arg_pointer_save_area_init;
 
   /* Nonzero if current function must be given a frame pointer.
-     Set in reload1.c or lra-eliminations.c if anything is allocated
+     Set in reload1.cc or lra-eliminations.cc if anything is allocated
      on the stack there.  */
   bool frame_pointer_needed;
 
@@ -303,6 +312,9 @@ struct GTY(()) rtl_data {
      to eliminable regs (like the frame pointer) are set if an asm
      sets them.  */
   HARD_REG_SET asm_clobbers;
+
+  /* All hard registers that need to be zeroed at the return of the routine.  */
+  HARD_REG_SET must_be_zero_on_return;
 
   /* The highest address seen during shorten_branches.  */
   int max_insn_address;

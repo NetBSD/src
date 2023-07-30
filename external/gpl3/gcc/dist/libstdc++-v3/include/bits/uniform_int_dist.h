@@ -1,6 +1,6 @@
 // Class template uniform_int_distribution -*- C++ -*-
 
-// Copyright (C) 2009-2020 Free Software Foundation, Inc.
+// Copyright (C) 2009-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -32,10 +32,11 @@
 #define _GLIBCXX_BITS_UNIFORM_INT_DIST_H
 
 #include <type_traits>
-#include <limits>
+#include <ext/numeric_traits.h>
 #if __cplusplus > 201703L
 # include <concepts>
 #endif
+#include <bits/concept_check.h> // __glibcxx_function_requires
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -56,9 +57,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   namespace __detail
   {
-    /* Determine whether number is a power of 2.  */
+    // Determine whether number is a power of two.
+    // This is true for zero, which is OK because we want _Power_of_2(n+1)
+    // to be true if n==numeric_limits<_Tp>::max() and so n+1 wraps around.
     template<typename _Tp>
-      inline bool
+      constexpr bool
       _Power_of_2(_Tp __x)
       {
 	return ((__x - 1) & __x) == 0;
@@ -88,7 +91,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 	explicit
 	param_type(_IntType __a,
-		   _IntType __b = numeric_limits<_IntType>::max())
+		   _IntType __b = __gnu_cxx::__int_traits<_IntType>::__max)
 	: _M_a(__a), _M_b(__b)
 	{
 	  __glibcxx_assert(_M_a <= _M_b);
@@ -126,7 +129,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
        */
       explicit
       uniform_int_distribution(_IntType __a,
-			       _IntType __b = numeric_limits<_IntType>::max())
+			       _IntType __b
+				 = __gnu_cxx::__int_traits<_IntType>::__max)
       : _M_param(__a, __b)
       { }
 
@@ -183,35 +187,35 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       /**
        * @brief Generating functions.
        */
-      template<typename _UniformRandomNumberGenerator>
+      template<typename _UniformRandomBitGenerator>
 	result_type
-	operator()(_UniformRandomNumberGenerator& __urng)
+	operator()(_UniformRandomBitGenerator& __urng)
         { return this->operator()(__urng, _M_param); }
 
-      template<typename _UniformRandomNumberGenerator>
+      template<typename _UniformRandomBitGenerator>
 	result_type
-	operator()(_UniformRandomNumberGenerator& __urng,
+	operator()(_UniformRandomBitGenerator& __urng,
 		   const param_type& __p);
 
       template<typename _ForwardIterator,
-	       typename _UniformRandomNumberGenerator>
+	       typename _UniformRandomBitGenerator>
 	void
 	__generate(_ForwardIterator __f, _ForwardIterator __t,
-		   _UniformRandomNumberGenerator& __urng)
+		   _UniformRandomBitGenerator& __urng)
 	{ this->__generate(__f, __t, __urng, _M_param); }
 
       template<typename _ForwardIterator,
-	       typename _UniformRandomNumberGenerator>
+	       typename _UniformRandomBitGenerator>
 	void
 	__generate(_ForwardIterator __f, _ForwardIterator __t,
-		   _UniformRandomNumberGenerator& __urng,
+		   _UniformRandomBitGenerator& __urng,
 		   const param_type& __p)
 	{ this->__generate_impl(__f, __t, __urng, __p); }
 
-      template<typename _UniformRandomNumberGenerator>
+      template<typename _UniformRandomBitGenerator>
 	void
 	__generate(result_type* __f, result_type* __t,
-		   _UniformRandomNumberGenerator& __urng,
+		   _UniformRandomBitGenerator& __urng,
 		   const param_type& __p)
 	{ this->__generate_impl(__f, __t, __urng, __p); }
 
@@ -226,46 +230,103 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     private:
       template<typename _ForwardIterator,
-	       typename _UniformRandomNumberGenerator>
+	       typename _UniformRandomBitGenerator>
 	void
 	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
-			_UniformRandomNumberGenerator& __urng,
+			_UniformRandomBitGenerator& __urng,
 			const param_type& __p);
 
       param_type _M_param;
+
+      // Lemire's nearly divisionless algorithm.
+      // Returns an unbiased random number from __g downscaled to [0,__range)
+      // using an unsigned type _Wp twice as wide as unsigned type _Up.
+      template<typename _Wp, typename _Urbg, typename _Up>
+	static _Up
+	_S_nd(_Urbg& __g, _Up __range)
+	{
+	  using _Up_traits = __gnu_cxx::__int_traits<_Up>;
+	  using _Wp_traits = __gnu_cxx::__int_traits<_Wp>;
+	  static_assert(!_Up_traits::__is_signed, "U must be unsigned");
+	  static_assert(!_Wp_traits::__is_signed, "W must be unsigned");
+	  static_assert(_Wp_traits::__digits == (2 * _Up_traits::__digits),
+			"W must be twice as wide as U");
+
+	  // reference: Fast Random Integer Generation in an Interval
+	  // ACM Transactions on Modeling and Computer Simulation 29 (1), 2019
+	  // https://arxiv.org/abs/1805.10941
+	  _Wp __product = _Wp(__g()) * _Wp(__range);
+	  _Up __low = _Up(__product);
+	  if (__low < __range)
+	    {
+	      _Up __threshold = -__range % __range;
+	      while (__low < __threshold)
+		{
+		  __product = _Wp(__g()) * _Wp(__range);
+		  __low = _Up(__product);
+		}
+	    }
+	  return __product >> _Up_traits::__digits;
+	}
     };
 
   template<typename _IntType>
-    template<typename _UniformRandomNumberGenerator>
+    template<typename _UniformRandomBitGenerator>
       typename uniform_int_distribution<_IntType>::result_type
       uniform_int_distribution<_IntType>::
-      operator()(_UniformRandomNumberGenerator& __urng,
+      operator()(_UniformRandomBitGenerator& __urng,
 		 const param_type& __param)
       {
-	typedef typename _UniformRandomNumberGenerator::result_type
-	  _Gresult_type;
-	typedef typename std::make_unsigned<result_type>::type __utype;
-	typedef typename std::common_type<_Gresult_type, __utype>::type
-	  __uctype;
+	typedef typename _UniformRandomBitGenerator::result_type _Gresult_type;
+	typedef typename make_unsigned<result_type>::type __utype;
+	typedef typename common_type<_Gresult_type, __utype>::type __uctype;
 
-	const __uctype __urngmin = __urng.min();
-	const __uctype __urngmax = __urng.max();
-	const __uctype __urngrange = __urngmax - __urngmin;
+	constexpr __uctype __urngmin = _UniformRandomBitGenerator::min();
+	constexpr __uctype __urngmax = _UniformRandomBitGenerator::max();
+	static_assert( __urngmin < __urngmax,
+	    "Uniform random bit generator must define min() < max()");
+	constexpr __uctype __urngrange = __urngmax - __urngmin;
+
 	const __uctype __urange
 	  = __uctype(__param.b()) - __uctype(__param.a());
 
 	__uctype __ret;
-
 	if (__urngrange > __urange)
 	  {
 	    // downscaling
+
 	    const __uctype __uerange = __urange + 1; // __urange can be zero
-	    const __uctype __scaling = __urngrange / __uerange;
-	    const __uctype __past = __uerange * __scaling;
-	    do
-	      __ret = __uctype(__urng()) - __urngmin;
-	    while (__ret >= __past);
-	    __ret /= __scaling;
+
+#if defined __UINT64_TYPE__ && defined __UINT32_TYPE__
+#if __SIZEOF_INT128__
+	    if _GLIBCXX17_CONSTEXPR (__urngrange == __UINT64_MAX__)
+	      {
+		// __urng produces values that use exactly 64-bits,
+		// so use 128-bit integers to downscale to desired range.
+		__UINT64_TYPE__ __u64erange = __uerange;
+		__ret = __extension__ _S_nd<unsigned __int128>(__urng,
+							       __u64erange);
+	      }
+	    else
+#endif
+	    if _GLIBCXX17_CONSTEXPR (__urngrange == __UINT32_MAX__)
+	      {
+		// __urng produces values that use exactly 32-bits,
+		// so use 64-bit integers to downscale to desired range.
+		__UINT32_TYPE__ __u32erange = __uerange;
+		__ret = _S_nd<__UINT64_TYPE__>(__urng, __u32erange);
+	      }
+	    else
+#endif
+	      {
+		// fallback case (2 divisions)
+		const __uctype __scaling = __urngrange / __uerange;
+		const __uctype __past = __uerange * __scaling;
+		do
+		  __ret = __uctype(__urng()) - __urngmin;
+		while (__ret >= __past);
+		__ret /= __scaling;
+	      }
 	  }
 	else if (__urngrange < __urange)
 	  {
@@ -303,23 +364,24 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<typename _IntType>
     template<typename _ForwardIterator,
-	     typename _UniformRandomNumberGenerator>
+	     typename _UniformRandomBitGenerator>
       void
       uniform_int_distribution<_IntType>::
       __generate_impl(_ForwardIterator __f, _ForwardIterator __t,
-		      _UniformRandomNumberGenerator& __urng,
+		      _UniformRandomBitGenerator& __urng,
 		      const param_type& __param)
       {
 	__glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
-	typedef typename _UniformRandomNumberGenerator::result_type
-	  _Gresult_type;
-	typedef typename std::make_unsigned<result_type>::type __utype;
-	typedef typename std::common_type<_Gresult_type, __utype>::type
-	  __uctype;
+	typedef typename _UniformRandomBitGenerator::result_type _Gresult_type;
+	typedef typename make_unsigned<result_type>::type __utype;
+	typedef typename common_type<_Gresult_type, __utype>::type __uctype;
 
-	const __uctype __urngmin = __urng.min();
-	const __uctype __urngmax = __urng.max();
-	const __uctype __urngrange = __urngmax - __urngmin;
+	static_assert( __urng.min() < __urng.max(),
+	    "Uniform random bit generator must define min() < max()");
+
+	constexpr __uctype __urngmin = __urng.min();
+	constexpr __uctype __urngmax = __urng.max();
+	constexpr __uctype __urngrange = __urngmax - __urngmin;
 	const __uctype __urange
 	  = __uctype(__param.b()) - __uctype(__param.a());
 
@@ -373,7 +435,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      {
 		do
 		  {
-		    const __uctype __uerngrange = __urngrange + 1;
+		    constexpr __uctype __uerngrange = __urngrange + 1;
 		    __tmp = (__uerngrange * operator()
 			     (__urng, param_type(0, __urange / __uerngrange)));
 		    __ret = __tmp + (__uctype(__urng()) - __urngmin);

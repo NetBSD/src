@@ -157,6 +157,8 @@ BUILD_EXPORTS = \
 	CC="$(CC_FOR_BUILD)"; export CC; \
 	CFLAGS="$(CFLAGS_FOR_BUILD)"; export CFLAGS; \
 	CONFIG_SHELL="$(SHELL)"; export CONFIG_SHELL; \
+	CPP="$(CPP_FOR_BUILD)"; export CPP; \
+	CPPFLAGS="$(CPPFLAGS_FOR_BUILD)"; export CPPFLAGS; \
 	CXX="$(CXX_FOR_BUILD)"; export CXX; \
 	CXXFLAGS="$(CXXFLAGS_FOR_BUILD)"; export CXXFLAGS; \
 	GFORTRAN="$(GFORTRAN_FOR_BUILD)"; export GFORTRAN; \
@@ -205,6 +207,8 @@ HOST_EXPORTS = \
 	AR="$(AR)"; export AR; \
 	AS="$(AS)"; export AS; \
 	CC_FOR_BUILD="$(CC_FOR_BUILD)"; export CC_FOR_BUILD; \
+	CPP_FOR_BUILD="$(CPP_FOR_BUILD)"; export CPP_FOR_BUILD; \
+	CPPFLAGS_FOR_BUILD="$(CPPFLAGS_FOR_BUILD)"; export CPPFLAGS_FOR_BUILD; \
 	CXX_FOR_BUILD="$(CXX_FOR_BUILD)"; export CXX_FOR_BUILD; \
 	DLLTOOL="$(DLLTOOL)"; export DLLTOOL; \
 	DSYMUTIL="$(DSYMUTIL)"; export DSYMUTIL; \
@@ -272,11 +276,14 @@ POSTSTAGE1_HOST_EXPORTS = \
 	$(POSTSTAGE1_CXX_EXPORT) \
 	$(LTO_EXPORTS) \
 	GDC="$$r/$(HOST_SUBDIR)/prev-gcc/gdc$(exeext) -B$$r/$(HOST_SUBDIR)/prev-gcc/ \
-	  -B$(build_tooldir)/bin/ $(GDC_FLAGS_FOR_TARGET) \
+	  -B$(build_tooldir)/bin/ $(GDCFLAGS_FOR_TARGET) \
+	  -B$$r/prev-$(TARGET_SUBDIR)/libphobos/libdruntime/gcc \
 	  -B$$r/prev-$(TARGET_SUBDIR)/libphobos/src \
+	  -B$$r/prev-$(TARGET_SUBDIR)/libphobos/src/.libs \
 	  -I$$r/prev-$(TARGET_SUBDIR)/libphobos/libdruntime -I$$s/libphobos/libdruntime \
 	  -L$$r/prev-$(TARGET_SUBDIR)/libphobos/src/.libs \
-	  -L$$r/prev-$(TARGET_SUBDIR)/libphobos/libdruntime/.libs"; \
+	  -B$$r/prev-$(TARGET_SUBDIR)/libstdc++-v3/src/.libs \
+	  -L$$r/prev-$(TARGET_SUBDIR)/libstdc++-v3/src/.libs"; \
 	export GDC; \
 	GDC_FOR_BUILD="$$GDC"; export GDC_FOR_BUILD; \
 	GNATBIND="$$r/$(HOST_SUBDIR)/prev-gcc/gnatbind"; export GNATBIND; \
@@ -363,6 +370,8 @@ AR_FOR_BUILD = @AR_FOR_BUILD@
 AS_FOR_BUILD = @AS_FOR_BUILD@
 CC_FOR_BUILD = @CC_FOR_BUILD@
 CFLAGS_FOR_BUILD = @CFLAGS_FOR_BUILD@
+CPP_FOR_BUILD = @CPP_FOR_BUILD@
+CPPFLAGS_FOR_BUILD = @CPPFLAGS_FOR_BUILD@
 CXXFLAGS_FOR_BUILD = @CXXFLAGS_FOR_BUILD@
 CXX_FOR_BUILD = @CXX_FOR_BUILD@
 DLLTOOL_FOR_BUILD = @DLLTOOL_FOR_BUILD@
@@ -441,6 +450,49 @@ LIBCXXFLAGS = $(CXXFLAGS) -fno-implicit-templates
 GOCFLAGS = $(CFLAGS)
 GDCFLAGS = $(CFLAGS)
 
+# Pass additional PGO and LTO compiler options to the PGO build.
+BUILD_CFLAGS = $(PGO_BUILD_CFLAGS) $(PGO_BUILD_LTO_CFLAGS)
+override CFLAGS += $(BUILD_CFLAGS)
+override CXXFLAGS += $(BUILD_CFLAGS)
+
+# Additional PGO and LTO compiler options to generate profiling data
+# for the PGO build.
+PGO_BUILD_GEN_FLAGS_TO_PASS = \
+	PGO_BUILD_CFLAGS="@PGO_BUILD_GEN_CFLAGS@" \
+	PGO_BUILD_LTO_CFLAGS="@PGO_BUILD_LTO_CFLAGS@"
+
+# NB: Filter out any compiler options which may fail PGO training runs.
+PGO_BUILD_TRAINING_CFLAGS:= \
+	$(filter-out -Werror=%,$(CFLAGS))
+PGO_BUILD_TRAINING_CXXFLAGS:=\
+	$(filter-out -Werror=%,$(CXXFLAGS))
+PGO_BUILD_TRAINING_CFLAGS:= \
+	$(filter-out -Wall,$(PGO_BUILD_TRAINING_CFLAGS))
+PGO_BUILD_TRAINING_CXXFLAGS:= \
+	$(filter-out -Wall,$(PGO_BUILD_TRAINING_CXXFLAGS))
+PGO_BUILD_TRAINING_CFLAGS:= \
+	$(filter-out -specs=%,$(PGO_BUILD_TRAINING_CFLAGS))
+PGO_BUILD_TRAINING_CXXFLAGS:= \
+	$(filter-out -specs=%,$(PGO_BUILD_TRAINING_CXXFLAGS))
+PGO_BUILD_TRAINING_FLAGS_TO_PASS = \
+	PGO_BUILD_TRAINING=yes \
+	CFLAGS_FOR_TARGET="$(PGO_BUILD_TRAINING_CFLAGS)" \
+	CXXFLAGS_FOR_TARGET="$(PGO_BUILD_TRAINING_CXXFLAGS)"
+
+# Ignore "make check" errors in PGO training runs.
+PGO_BUILD_TRAINING_MFLAGS = -i
+
+# Additional PGO and LTO compiler options to use profiling data for the
+# PGO build.
+PGO_BUILD_USE_FLAGS_TO_PASS = \
+	PGO_BUILD_CFLAGS="@PGO_BUILD_USE_CFLAGS@" \
+	PGO_BUILD_LTO_CFLAGS="@PGO_BUILD_LTO_CFLAGS@"
+
+# PGO training targets for the PGO build.  FIXME: Add gold tests to
+# training.
+PGO-TRAINING-TARGETS = binutils gas gdb ld sim
+PGO_BUILD_TRAINING = $(addprefix maybe-check-,$(PGO-TRAINING-TARGETS))
+
 CREATE_GCOV = create_gcov
 
 TFLAGS =
@@ -481,6 +533,11 @@ STAGE1_CONFIGURE_FLAGS = --disable-intermodule $(STAGE1_CHECKING) \
 	  --disable-coverage --enable-languages="$(STAGE1_LANGUAGES)" \
 	  --disable-build-format-warnings
 
+@if target-libphobos-bootstrap
+STAGE1_CONFIGURE_FLAGS += --with-libphobos-druntime-only
+STAGE2_CONFIGURE_FLAGS += --with-libphobos-druntime-only
+@endif target-libphobos-bootstrap
+
 # When using the slow stage1 compiler disable IL verification and forcefully
 # enable it when using the stage2 compiler instead.  As we later compare
 # stage2 and stage3 we are merely avoid doing redundant work, plus we apply
@@ -497,7 +554,7 @@ STAGEprofile_TFLAGS = $(STAGE2_TFLAGS)
 STAGEtrain_CFLAGS = $(filter-out -fchecking=1,$(STAGE3_CFLAGS))
 STAGEtrain_TFLAGS = $(filter-out -fchecking=1,$(STAGE3_TFLAGS))
 
-STAGEfeedback_CFLAGS = $(STAGE4_CFLAGS) -fprofile-use
+STAGEfeedback_CFLAGS = $(STAGE4_CFLAGS) -fprofile-use -fprofile-reproducible=parallel-runs
 STAGEfeedback_TFLAGS = $(STAGE4_TFLAGS)
 
 STAGEautoprofile_CFLAGS = $(STAGE2_CFLAGS) -g
@@ -770,6 +827,12 @@ configure-target: [+
 
 # The target built for a native non-bootstrap build.
 .PHONY: all
+
+# --enable-pgo-build enables the PGO build.
+# 1. First build with -fprofile-generate.
+# 2. Use "make maybe-check-*" to generate profiling data.
+# 3. Use "make clean" to remove the previous build.
+# 4. Rebuild with -fprofile-use.
 all:
 @if gcc-bootstrap
 	[ -f stage_final ] || echo stage3 > stage_final
@@ -778,7 +841,7 @@ all:
 	$(MAKE) $(RECURSE_FLAGS_TO_PASS) `cat stage_final`-bubble
 @endif gcc-bootstrap
 	@: $(MAKE); $(unstage)
-	@r=`${PWD_COMMAND}`; export r; \
+	+@r=`${PWD_COMMAND}`; export r; \
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 @if gcc-bootstrap
 	if [ -f stage_last ]; then \
@@ -786,7 +849,17 @@ all:
 	  $(MAKE) $(TARGET_FLAGS_TO_PASS) all-host all-target; \
 	else \
 @endif gcc-bootstrap
-	  $(MAKE) $(RECURSE_FLAGS_TO_PASS) all-host all-target \
+	  $(MAKE) $(RECURSE_FLAGS_TO_PASS) \
+		$(PGO_BUILD_GEN_FLAGS_TO_PASS) all-host all-target \
+@if pgo-build
+	&& $(MAKE) $(RECURSE_FLAGS_TO_PASS) \
+		$(PGO_BUILD_TRAINING_MFLAGS) \
+		$(PGO_BUILD_TRAINING_FLAGS_TO_PASS) \
+		$(PGO_BUILD_TRAINING) \
+	&& $(MAKE) $(RECURSE_FLAGS_TO_PASS) clean \
+	&& $(MAKE) $(RECURSE_FLAGS_TO_PASS) \
+		$(PGO_BUILD_USE_FLAGS_TO_PASS) all-host all-target \
+@endif pgo-build
 @if gcc-bootstrap
 	    ; \
 	fi \
@@ -836,7 +909,7 @@ do-[+make_target+]:
 # Here are the targets which correspond to the do-X targets.
 
 .PHONY: info installcheck dvi pdf html
-.PHONY: install-info install-pdf install-html
+.PHONY: install-info install-dvi install-pdf install-html
 .PHONY: clean distclean mostlyclean maintainer-clean realclean
 .PHONY: local-clean local-distclean local-maintainer-clean
 info: do-info
@@ -854,6 +927,8 @@ install-info: do-install-info dir.info
 	if [ -f dir.info ]; then \
 	  $(INSTALL_DATA) dir.info $(DESTDIR)$(infodir)/dir.info; \
 	else true; fi
+
+install-dvi: do-install-dvi
 
 install-pdf: do-install-pdf
 
@@ -876,8 +951,8 @@ local-distclean:
 	-rm -f texinfo/doc/Makefile texinfo/po/POTFILES
 	-rmdir texinfo/doc texinfo/info texinfo/intl texinfo/lib 2>/dev/null
 	-rmdir texinfo/makeinfo texinfo/po texinfo/util 2>/dev/null
-	-rmdir fastjar gcc gnattools gotools libcc1 libiberty 2>/dev/null
-	-rmdir texinfo zlib 2>/dev/null
+	-rmdir c++tools fastjar gcc gnattools gotools 2>/dev/null
+	-rmdir libcc1 libiberty texinfo zlib 2>/dev/null
 	-find . -name config.cache -exec rm -f {} \; \; 2>/dev/null
 
 local-maintainer-clean:

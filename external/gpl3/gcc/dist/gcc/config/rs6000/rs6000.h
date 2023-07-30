@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for IBM RS/6000.
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2022 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
    This file is part of GCC.
@@ -101,7 +101,7 @@
 #endif
 
 /* Common ASM definitions used by ASM_SPEC among the various targets for
-   handling -mcpu=xxx switches.  There is a parallel list in driver-rs6000.c to
+   handling -mcpu=xxx switches.  There is a parallel list in driver-rs6000.cc to
    provide the default assembler options if the user uses -mcpu=native, so if
    you make changes here, make them also there.  PR63177: Do not pass -mpower8
    to the assembler if -mpower9-vector was also used.  */
@@ -198,9 +198,9 @@ ASM_OPT_ANY
 
 /* -mcpu=native handling only makes sense with compiler running on
    an PowerPC chip.  If changing this condition, also change
-   the condition in driver-rs6000.c.  */
+   the condition in driver-rs6000.cc.  */
 #if defined(__powerpc__) || defined(__POWERPC__) || defined(_AIX)
-/* In driver-rs6000.c.  */
+/* In driver-rs6000.cc.  */
 extern const char *host_detect_local_cpu (int argc, const char **argv);
 #define EXTRA_SPEC_FUNCTIONS \
   { "local_cpu_detect", host_detect_local_cpu },
@@ -542,6 +542,7 @@ extern int rs6000_vector_align[];
 #define MASK_UPDATE			OPTION_MASK_UPDATE
 #define MASK_VSX			OPTION_MASK_VSX
 #define MASK_POWER10			OPTION_MASK_POWER10
+#define MASK_P10_FUSION			OPTION_MASK_P10_FUSION
 
 #ifndef IN_LIBGCC2
 #define MASK_POWERPC64			OPTION_MASK_POWERPC64
@@ -606,6 +607,11 @@ extern int rs6000_vector_align[];
 					 && TARGET_P8_VECTOR		\
 					 && TARGET_POWERPC64)
 
+/* Inlining allows targets to define the meanings of bits in target_info
+   field of ipa_fn_summary by itself, the used bits for rs6000 are listed
+   below.  */
+#define RS6000_FN_TARGET_INFO_HTM 1
+
 /* Whether the various reciprocal divide/square root estimate instructions
    exist, and whether we should automatically generate code for the instruction
    by default.  */
@@ -643,9 +649,6 @@ extern unsigned char rs6000_recip_bits[];
 #define TARGET_CPU_CPP_BUILTINS() \
   rs6000_cpu_cpp_builtins (pfile)
 
-/* Target CPU versions for D.  */
-#define TARGET_D_CPU_VERSIONS rs6000_d_target_versions
-
 /* This is used by rs6000_cpu_cpp_builtins to indicate the byte order
    we're compiling for.  Some configurations may need to override it.  */
 #define RS6000_CPU_CPP_ENDIAN_BUILTINS()	\
@@ -667,17 +670,6 @@ extern unsigned char rs6000_recip_bits[];
   while (0)
 
 /* Target machine storage layout.  */
-
-/* Define this macro if it is advisable to hold scalars in registers
-   in a wider mode than that declared by the program.  In such cases,
-   the value is constrained to be within the bounds of the declared
-   type, but kept valid in the wider mode.  The signedness of the
-   extension may differ from that of the type.  */
-
-#define PROMOTE_MODE(MODE,UNSIGNEDP,TYPE)	\
-  if (GET_MODE_CLASS (MODE) == MODE_INT		\
-      && GET_MODE_SIZE (MODE) < (TARGET_32BIT ? 4 : 8)) \
-    (MODE) = TARGET_32BIT ? SImode : DImode;
 
 /* Define this if most significant bit is lowest numbered
    in instructions that operate on numbered bit-fields.  */
@@ -760,7 +752,7 @@ extern unsigned char rs6000_recip_bits[];
    machine.  If you don't define this, the default is two words.  */
 #define LONG_DOUBLE_TYPE_SIZE rs6000_long_double_type_size
 
-/* Work around rs6000_long_double_type_size dependency in ada/targtyps.c.  */
+/* Work around rs6000_long_double_type_size dependency in ada/targtyps.cc.  */
 #define WIDEST_HARDWARE_FP_SIZE 64
 
 /* Width in bits of a pointer.
@@ -1044,7 +1036,7 @@ enum data_align { align_abi, align_opt, align_both };
 /* Modes that are not vectors, but require vector alignment.  Treat these like
    vectors in terms of loads and stores.  */
 #define VECTOR_ALIGNMENT_P(MODE)					\
-  (FLOAT128_VECTOR_P (MODE) || (MODE) == POImode || (MODE) == PXImode)
+  (FLOAT128_VECTOR_P (MODE) || (MODE) == OOmode || (MODE) == XOmode)
 
 #define ALTIVEC_VECTOR_MODE(MODE)					\
   ((MODE) == V16QImode							\
@@ -1365,10 +1357,10 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 
    The default value for this macro is `STACK_POINTER_OFFSET' plus the
    length of the outgoing arguments.  The default is correct for most
-   machines.  See `function.c' for details.
+   machines.  See `function.cc' for details.
 
    This value must be a multiple of STACK_BOUNDARY (hard coded in
-   `emit-rtl.c').  */
+   `emit-rtl.cc').  */
 #define STACK_DYNAMIC_OFFSET(FUNDECL)					\
   RS6000_ALIGN (crtl->outgoing_args_size.to_constant ()			\
 		+ STACK_POINTER_OFFSET,					\
@@ -1614,7 +1606,7 @@ typedef struct rs6000_args
 /* #define RETURN_ADDR_IN_PREVIOUS_FRAME */
 
 /* Number of bytes into the frame return addresses can be found.  See
-   rs6000_stack_info in rs6000.c for more information on how the different
+   rs6000_stack_info in rs6000.cc for more information on how the different
    abi's store the return address.  */
 #define RETURN_ADDRESS_OFFSET \
   ((DEFAULT_ABI == ABI_V4 ? 4 : 8) << (TARGET_64BIT ? 1 : 0))
@@ -1668,7 +1660,7 @@ typedef struct rs6000_args
    They give nonzero only if REGNO is a hard reg of the suitable class
    or a pseudo reg currently allocated to a suitable hard reg.
    Since they use reg_renumber, they are safe only once reg_renumber
-   has been allocated, which happens in reginfo.c during register
+   has been allocated, which happens in reginfo.cc during register
    allocation.  */
 
 #define REGNO_OK_FOR_INDEX_P(REGNO)				\
@@ -1759,15 +1751,15 @@ typedef struct rs6000_args
 
 /* #define LEGITIMATE_PIC_OPERAND_P (X) */
 
-/* Specify the machine mode that this machine uses
-   for the index in the tablejump instruction.  */
-#define CASE_VECTOR_MODE SImode
-
 /* Define as C expression which evaluates to nonzero if the tablejump
    instruction expects the table to contain offsets from the address of the
    table.
    Do not define this if the table should contain absolute addresses.  */
-#define CASE_VECTOR_PC_RELATIVE 1
+#define CASE_VECTOR_PC_RELATIVE rs6000_relative_jumptables
+
+/* Specify the machine mode that this machine uses
+   for the index in the tablejump instruction.  */
+#define CASE_VECTOR_MODE (rs6000_relative_jumptables ? SImode : Pmode)
 
 /* Define this as 1 if `char' should by default be signed; else as 0.  */
 #define DEFAULT_SIGNED_CHAR 0
@@ -2197,6 +2189,11 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
        putc ('\n', FILE);				\
      } while (0)
 
+/* This is how to output an element of a case-vector
+   that is non-relative.  */
+#define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE) \
+  rs6000_output_addr_vec_elt ((FILE), (VALUE))
+
 /* This is how to output an assembler line
    that says to advance the location counter
    to a multiple of 2**LOG bytes.  */
@@ -2351,60 +2348,6 @@ extern int frame_pointer_needed;
 				 | RS6000_BTM_MMA			\
 				 | RS6000_BTM_P10)
 
-/* Define builtin enum index.  */
-
-#undef RS6000_BUILTIN_0
-#undef RS6000_BUILTIN_1
-#undef RS6000_BUILTIN_2
-#undef RS6000_BUILTIN_3
-#undef RS6000_BUILTIN_A
-#undef RS6000_BUILTIN_D
-#undef RS6000_BUILTIN_H
-#undef RS6000_BUILTIN_M
-#undef RS6000_BUILTIN_P
-#undef RS6000_BUILTIN_X
-
-#define RS6000_BUILTIN_0(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
-#define RS6000_BUILTIN_1(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
-#define RS6000_BUILTIN_2(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
-#define RS6000_BUILTIN_3(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
-#define RS6000_BUILTIN_A(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
-#define RS6000_BUILTIN_D(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
-#define RS6000_BUILTIN_H(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
-#define RS6000_BUILTIN_M(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
-#define RS6000_BUILTIN_P(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
-#define RS6000_BUILTIN_X(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
-
-enum rs6000_builtins
-{
-#include "rs6000-builtin.def"
-
-  RS6000_BUILTIN_COUNT
-};
-
-#undef RS6000_BUILTIN_0
-#undef RS6000_BUILTIN_1
-#undef RS6000_BUILTIN_2
-#undef RS6000_BUILTIN_3
-#undef RS6000_BUILTIN_A
-#undef RS6000_BUILTIN_D
-#undef RS6000_BUILTIN_H
-#undef RS6000_BUILTIN_M
-#undef RS6000_BUILTIN_P
-#undef RS6000_BUILTIN_X
-
-/* Mappings for overloaded builtins.  */
-struct altivec_builtin_types
-{
-  enum rs6000_builtins code;
-  enum rs6000_builtins overloaded_code;
-  signed char ret_type;
-  signed char op1;
-  signed char op2;
-  signed char op3;
-};
-extern const struct altivec_builtin_types altivec_overloaded_builtins[];
-
 enum rs6000_builtin_type_index
 {
   RS6000_BTI_NOT_OPAQUE,
@@ -2437,6 +2380,7 @@ enum rs6000_builtin_type_index
   RS6000_BTI_bool_V8HI,          /* __vector __bool short */
   RS6000_BTI_bool_V4SI,          /* __vector __bool int */
   RS6000_BTI_bool_V2DI,          /* __vector __bool long */
+  RS6000_BTI_bool_V1TI,          /* __vector __bool 128-bit */
   RS6000_BTI_pixel_V8HI,         /* __vector __pixel */
   RS6000_BTI_long,	         /* long_integer_type_node */
   RS6000_BTI_unsigned_long,      /* long_unsigned_type_node */
@@ -2463,6 +2407,46 @@ enum rs6000_builtin_type_index
   RS6000_BTI_const_str,		 /* pointer to const char * */
   RS6000_BTI_vector_pair,	 /* unsigned 256-bit types (vector pair).  */
   RS6000_BTI_vector_quad,	 /* unsigned 512-bit types (vector quad).  */
+  RS6000_BTI_const_ptr_void,     /* const pointer to void */
+  RS6000_BTI_ptr_V16QI,
+  RS6000_BTI_ptr_V1TI,
+  RS6000_BTI_ptr_V2DI,
+  RS6000_BTI_ptr_V2DF,
+  RS6000_BTI_ptr_V4SI,
+  RS6000_BTI_ptr_V4SF,
+  RS6000_BTI_ptr_V8HI,
+  RS6000_BTI_ptr_unsigned_V16QI,
+  RS6000_BTI_ptr_unsigned_V1TI,
+  RS6000_BTI_ptr_unsigned_V8HI,
+  RS6000_BTI_ptr_unsigned_V4SI,
+  RS6000_BTI_ptr_unsigned_V2DI,
+  RS6000_BTI_ptr_bool_V16QI,
+  RS6000_BTI_ptr_bool_V8HI,
+  RS6000_BTI_ptr_bool_V4SI,
+  RS6000_BTI_ptr_bool_V2DI,
+  RS6000_BTI_ptr_bool_V1TI,
+  RS6000_BTI_ptr_pixel_V8HI,
+  RS6000_BTI_ptr_INTQI,
+  RS6000_BTI_ptr_UINTQI,
+  RS6000_BTI_ptr_INTHI,
+  RS6000_BTI_ptr_UINTHI,
+  RS6000_BTI_ptr_INTSI,
+  RS6000_BTI_ptr_UINTSI,
+  RS6000_BTI_ptr_INTDI,
+  RS6000_BTI_ptr_UINTDI,
+  RS6000_BTI_ptr_INTTI,
+  RS6000_BTI_ptr_UINTTI,
+  RS6000_BTI_ptr_long_integer,
+  RS6000_BTI_ptr_long_unsigned,
+  RS6000_BTI_ptr_float,
+  RS6000_BTI_ptr_double,
+  RS6000_BTI_ptr_long_double,
+  RS6000_BTI_ptr_dfloat64,
+  RS6000_BTI_ptr_dfloat128,
+  RS6000_BTI_ptr_vector_pair,
+  RS6000_BTI_ptr_vector_quad,
+  RS6000_BTI_ptr_long_long,
+  RS6000_BTI_ptr_long_long_unsigned,
   RS6000_BTI_MAX
 };
 
@@ -2490,6 +2474,7 @@ enum rs6000_builtin_type_index
 #define bool_V8HI_type_node	      (rs6000_builtin_types[RS6000_BTI_bool_V8HI])
 #define bool_V4SI_type_node	      (rs6000_builtin_types[RS6000_BTI_bool_V4SI])
 #define bool_V2DI_type_node	      (rs6000_builtin_types[RS6000_BTI_bool_V2DI])
+#define bool_V1TI_type_node	      (rs6000_builtin_types[RS6000_BTI_bool_V1TI])
 #define pixel_V8HI_type_node	      (rs6000_builtin_types[RS6000_BTI_pixel_V8HI])
 
 #define long_long_integer_type_internal_node  (rs6000_builtin_types[RS6000_BTI_long_long])
@@ -2517,12 +2502,50 @@ enum rs6000_builtin_type_index
 #define const_str_type_node		 (rs6000_builtin_types[RS6000_BTI_const_str])
 #define vector_pair_type_node		 (rs6000_builtin_types[RS6000_BTI_vector_pair])
 #define vector_quad_type_node		 (rs6000_builtin_types[RS6000_BTI_vector_quad])
+#define pcvoid_type_node		 (rs6000_builtin_types[RS6000_BTI_const_ptr_void])
+#define ptr_V16QI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_V16QI])
+#define ptr_V1TI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_V1TI])
+#define ptr_V2DI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_V2DI])
+#define ptr_V2DF_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_V2DF])
+#define ptr_V4SI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_V4SI])
+#define ptr_V4SF_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_V4SF])
+#define ptr_V8HI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_V8HI])
+#define ptr_unsigned_V16QI_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_unsigned_V16QI])
+#define ptr_unsigned_V1TI_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_unsigned_V1TI])
+#define ptr_unsigned_V8HI_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_unsigned_V8HI])
+#define ptr_unsigned_V4SI_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_unsigned_V4SI])
+#define ptr_unsigned_V2DI_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_unsigned_V2DI])
+#define ptr_bool_V16QI_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_bool_V16QI])
+#define ptr_bool_V8HI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_bool_V8HI])
+#define ptr_bool_V4SI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_bool_V4SI])
+#define ptr_bool_V2DI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_bool_V2DI])
+#define ptr_bool_V1TI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_bool_V1TI])
+#define ptr_pixel_V8HI_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_pixel_V8HI])
+#define ptr_intQI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_INTQI])
+#define ptr_uintQI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_UINTQI])
+#define ptr_intHI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_INTHI])
+#define ptr_uintHI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_UINTHI])
+#define ptr_intSI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_INTSI])
+#define ptr_uintSI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_UINTSI])
+#define ptr_intDI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_INTDI])
+#define ptr_uintDI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_UINTDI])
+#define ptr_intTI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_INTTI])
+#define ptr_uintTI_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_UINTTI])
+#define ptr_long_integer_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_long_integer])
+#define ptr_long_unsigned_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_long_unsigned])
+#define ptr_float_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_float])
+#define ptr_double_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_double])
+#define ptr_long_double_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_long_double])
+#define ptr_dfloat64_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_dfloat64])
+#define ptr_dfloat128_type_node		 (rs6000_builtin_types[RS6000_BTI_ptr_dfloat128])
+#define ptr_vector_pair_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_vector_pair])
+#define ptr_vector_quad_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_vector_quad])
+#define ptr_long_long_integer_type_node	 (rs6000_builtin_types[RS6000_BTI_ptr_long_long])
+#define ptr_long_long_unsigned_type_node (rs6000_builtin_types[RS6000_BTI_ptr_long_long_unsigned])
 
 extern GTY(()) tree rs6000_builtin_types[RS6000_BTI_MAX];
-extern GTY(()) tree rs6000_builtin_decls[RS6000_BUILTIN_COUNT];
 
 #ifndef USED_FOR_TARGET
-extern GTY(()) tree builtin_mode_to_type[MAX_MACHINE_MODE][2];
 extern GTY(()) tree altivec_builtin_mask_for_load;
 extern GTY(()) section *toc_section;
 
@@ -2555,6 +2578,7 @@ typedef struct GTY(()) machine_function
   bool fpr_is_wrapped_separately[32];
   bool lr_is_wrapped_separately;
   bool toc_is_wrapped_separately;
+  bool mma_return_type_error;
 } machine_function;
 #endif
 

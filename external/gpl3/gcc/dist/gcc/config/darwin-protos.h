@@ -1,5 +1,5 @@
 /* Prototypes.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -69,6 +69,7 @@ extern void darwin_non_lazy_pcrel (FILE *, rtx);
 
 extern void darwin_emit_unwind_label (FILE *, tree, int, int);
 extern void darwin_emit_except_table_label (FILE *);
+extern rtx darwin_make_eh_symbol_indirect (rtx, bool);
 extern bool darwin_should_restore_cfa_state (void);
 
 extern void darwin_pragma_ignore (struct cpp_reader *);
@@ -126,6 +127,6 @@ extern bool darwin_kextabi_p (void);
 extern void darwin_override_options (void);
 extern void darwin_patch_builtins (void);
 extern void darwin_rename_builtins (void);
-extern bool darwin_libc_has_function (enum function_class fn_class);
+extern bool darwin_libc_has_function (enum function_class fn_class, tree);
 
 #endif /* CONFIG_DARWIN_PROTOS_H */

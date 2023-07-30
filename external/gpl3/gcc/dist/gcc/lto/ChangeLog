@@ -1,33 +1,212 @@
-2023-07-07  Release Manager
+2023-05-08  Release Manager
 
-	* GCC 10.5.0 released.
+	* GCC 12.3.0 released.
 
-2022-06-28  Release Manager
-
-	* GCC 10.4.0 released.
-
-2021-04-08  Release Manager
-
-	* GCC 10.3.0 released.
-
-2020-08-13  Jan Hubicka  <jh@suse.cz>
+2023-03-19  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
-	2020-06-03  Jan Hubicka  <hubicka@ucw.cz>
+	2023-03-01  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/108910
+	* lto-common.cc (lto_fixup_prevailing_type): Don't add t to
+	TYPE_POINTER_TO or TYPE_REFERENCE_TO chain if it has
+	TYPE_ATTRIBUTES or is TYPE_REF_IS_RVALUE.
+
+2022-10-27  Martin Liska  <mliska@suse.cz>
+
+	Backported from master:
+	2022-10-27  Martin Liska  <mliska@suse.cz>
+
+	PR lto/107418
+	* lto-dump.cc (lto_main): Do not load LTO stream for aliases.
+
+2022-08-19  Release Manager
+
+	* GCC 12.2.0 released.
+
+2022-05-06  Release Manager
+
+	* GCC 12.1.0 released.
+
+2022-03-23  Tobias Burnus  <tobias@codesourcery.com>
+
+	PR middle-end/104285
+	* lto-partition.cc (maybe_rewrite_identifier): Use get_identifier
+	for the returned string to be usable as hash key.
+	(validize_symbol_for_target): Hence, use return value directly.
+	(privatize_symbol_name_1): Track maybe_rewrite_identifier renames.
+	* lto.cc (offload_handle_link_vars): Move function up before ...
+	(do_whole_program_analysis): Call it after static renamings.
+	(lto_main): Move call after static renamings.
+
+2022-02-04  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/90348
+	PR middle-end/104092
+	* lto-common.cc (compare_tree_sccs_1): Compare CLOBBER_KIND.
+
+2022-02-02  Martin Liska  <mliska@suse.cz>
+
+	PR lto/104333
+	* lto-common.cc (read_cgraph_and_symbols): Move resolution
+	checking for number of files later and report a reasonable
+	error message.
+	* lto-object.cc (lto_obj_file_open): Make error fatal.
+
+2022-01-17  Martin Liska  <mliska@suse.cz>
+
+	* config-lang.in: Rename .c names to .cc.
+	* lang-specs.h: Likewise.
+	* lto-common.cc (gimple_register_canonical_type_1): Likewise.
+	* lto-common.h: Likewise.
+	* lto-dump.cc (lto_main): Likewise.
+	* lto-lang.cc (handle_fnspec_attribute): Likewise.
+	(lto_getdecls): Likewise.
+	(lto_init): Likewise.
+	* lto.cc (lto_main): Likewise.
+	* lto.h: Likewise.
+
+2022-01-17  Martin Liska  <mliska@suse.cz>
+
+	* common.c: Moved to...
+	* common.cc: ...here.
+	* lto-common.c: Moved to...
+	* lto-common.cc: ...here.
+	* lto-dump.c: Moved to...
+	* lto-dump.cc: ...here.
+	* lto-lang.c: Moved to...
+	* lto-lang.cc: ...here.
+	* lto-object.c: Moved to...
+	* lto-object.cc: ...here.
+	* lto-partition.c: Moved to...
+	* lto-partition.cc: ...here.
+	* lto-symtab.c: Moved to...
+	* lto-symtab.cc: ...here.
+	* lto.c: Moved to...
+	* lto.cc: ...here.
+
+2021-11-18  Jan Hubicka  <hubicka@ucw.cz>
+
+	* lto-partition.c (promote_symbol): Clear semantic_interposition flag.
+
+2021-11-06  Jan Hubicka  <hubicka@ucw.cz>
+
+	PR ipa/103070
+	PR ipa/103058
+	* lto-partition.c (must_not_rename): Update comment.
+	(promote_symbol): Set resolution to LDPR_PREVAILING_DEF_IRONLY.
+
+2021-10-22  Eric Gallager  <egallager@gcc.gnu.org>
+
+	PR other/102663
+	* Make-lang.in: Add dummy lto.install-dvi target.
+
+2021-09-27  Martin Liska  <mliska@suse.cz>
+
+	* lto-lang.c (lto_init_options_struct): Set also
+	  x_flag_default_complex_method.
+
+2021-09-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/102024
+	* lto-common.c (compare_tree_sccs_1): Also compare
+	DECL_FIELD_CXX_ZERO_WIDTH_BIT_FIELD values.
+
+2021-09-02  liuhongt  <hongtao.liu@intel.com>
+
+	* lto-lang.c (lto_type_for_mode): Return float16_type_node
+	when mode == TYPE_MODE (float16_type_node).
+
+2021-05-31  Martin Liska  <mliska@suse.cz>
+
+	* lto-common.c (compare_tree_sccs_1): Compare
+	FUNCTION_DECL_DECL_TYPE.
+
+2021-05-24  Wang Liushuai  <wangliushuai@bytedance.com>
+
+	* lto-dump.c (get_size): Fix the NPD error about the thunk symbol.
+
+2021-04-15  Jan Hubicka  <hubicka@ucw.cz>
+
+	PR lto/98599
+	* lto.c (lto_wpa_write_files): Fix handling of clones.
+
+2021-04-08  Martin Sebor  <msebor@redhat.com>
+
+	PR middle-end/99883
+	* lto-lang.c (lto_post_options): Correct spelling.
+
+2021-02-28  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/99304
+	* lto-symtab.c (lto_symtab_prevailing_virtual_decl): Fix comment
+	typos - refernced -> referenced and
+	devirtualizaiton -> devirtualization.
+
+2020-12-16  Martin Liska  <mliska@suse.cz>
+
+	* lang.opt: Remove usage of Report.
+
+2020-11-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR other/97911
+	* Make-lang.in (lto1.serial, lto2.serial): Change from goals to
+	variables.
+	(.PHONY): Drop lto1.serial, lto2.serial, lto1.prev and lto2.prev.
+	($(LTO_EXE)): Depend on $(lto1.serial) rather than lto1.serial.
+	($(LTO_DUMP_EXE)): Depend on $(lto2.serial) rather than lto2.serial.
+
+2020-11-18  Jerry Clcanny  <a837940593@gmail.com>
+
+	* lto-symtab.c (lto_symtab_merge_symbols): Fix typos in comment.
+
+2020-11-18  Jakub Jelinek  <jakub@redhat.com>
+
+	* Make-lang.in (lto, lto1.serial, lto2.serial): New goals.
+	(.PHONY): Add lto lto1.serial lto1.prev lto2.serial lto2.prev.
+	(lto.all.cross, lto.start.encap): Remove dependencies.
+	($(LTO_EXE)): Depend on lto1.prev.  Call LINK_PROGRESS.
+	($(LTO_DUMP_EXE)): Depend on lto2.prev.  Call LINK_PROGRESS.
+
+2020-11-17  Jan Hubicka  <jh@suse.cz>
+
+	PR bootstrap/97857
+	* lto-common.c (gimple_register_canonical_type_1): Only
+	register types with TYPE_CXX_ODR_P flag; sanity check that no
+	conflict happens at ltrans time.
+
+2020-11-06  Nathan Sidwell  <nathan@acm.org>
+
+	* lto-symtab.c (lto_symtab_merge_decls_1): Rename
+	DECL_IS_BUILTIN->DECL_IS_UNDECLARED_BUILTIN.
+
+2020-10-28  Jakub Jelinek  <jakub@redhat.com>
+
+	PR lto/96680
+	* lto-common.c (lto_fixup_prevailing_decls): Don't use
+	LTO_NO_PREVAIL on TREE_LIST's TREE_PURPOSE.
+	* lto-partition.c (lto_balanced_map): Treat declare_variant_alt
+	nodes like definitions.
+
+2020-10-23  Jan Hubicka  <hubicka@ucw.cz>
+
+	* lto-partition.c (add_symbol_to_partition_1): Update for new thunk
+	api.
+
+2020-08-27  Martin Liska  <mliska@suse.cz>
+
+	* lto-common.c (lto_file_finalize): Set exact argument of a vector
+	growth function to true.
+
+2020-06-03  Jan Hubicka  <hubicka@ucw.cz>
 
 	* lto-common.c (compare_tree_sccs_1): Do not compare TYPE_VALUES.
 
-2020-08-13  Jan Hubicka  <jh@suse.cz>
-
-	Backported from master:
-	2020-08-13  Jan Hubicka  <hubicka@ucw.cz>
+2020-05-22  Jan Hubicka  <hubicka@ucw.cz>
 
 	* lto-common.c (lto_read_decls): Do not skip stray refs.
 
-2020-08-13  Jan Hubicka  <jh@suse.cz>
-
-	Backported from master:
-	2020-08-13  Jan Hubicka  <hubicka@ucw.cz>
+2020-05-20  Jan Hubicka  <hubicka@ucw.cz>
 
 	* lto-common.c (compare_tree_sccs_1): Sanity check that we never
 	read TRANSLATION_UNIT_DECL.
@@ -37,13 +216,11 @@
 	(lto_read_decls): ... here; handle streaming of singleton trees.
 	(print_lto_report_1): Update statistics.
 
-2020-07-23  Release Manager
+2020-05-07  Richard Biener  <rguenther@suse.de>
 
-	* GCC 10.2.0 released.
-
-2020-05-07  Release Manager
-
-	* GCC 10.1.0 released.
+	PR middle-end/94703
+	* lto-common.c (compare_tree_sccs_1): Compare
+	DECL_NOT_GIMPLE_REG_P.
 
 2020-04-29  Jakub Jelinek  <jakub@redhat.com>
 
@@ -6449,7 +6626,7 @@
 	* lto-tree.h: Likewise.
 	* lto-lang.c: Likewise.
 
-Copyright (C) 2006-2020 Free Software Foundation, Inc.
+Copyright (C) 2006-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

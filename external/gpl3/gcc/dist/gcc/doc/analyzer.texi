@@ -1,4 +1,4 @@
-@c Copyright (C) 2019 Free Software Foundation, Inc.
+@c Copyright (C) 2019-2022 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 @c Contributed by David Malcolm <dmalcolm@redhat.com>.
@@ -29,6 +29,11 @@ The implementation is read-only: it doesn't attempt to change anything,
 just emit warnings.
 
 The gimple representation can be seen using @option{-fdump-ipa-analyzer}.
+@quotation Tip
+If the analyzer ICEs before this is written out, one workaround is to use
+@option{--param=analyzer-bb-explosion-factor=0} to force the analyzer
+to bail out after analyzing the first basic block.
+@end quotation
 
 First, we build a @code{supergraph} which combines the callgraph and all
 of the CFGs into a single directed graph, with both interprocedural and
@@ -240,56 +245,39 @@ Merging can be disabled via @option{-fno-analyzer-state-merge}.
 
 Part of the state stored at a @code{exploded_node} is a @code{region_model}.
 This is an implementation of the region-based ternary model described in
-@url{http://lcs.ios.ac.cn/~xuzb/canalyze/memmodel.pdf,
+@url{https://www.researchgate.net/publication/221430855_A_Memory_Model_for_Static_Analysis_of_C_Programs,
 "A Memory Model for Static Analysis of C Programs"}
 (Zhongxing Xu, Ted Kremenek, and Jian Zhang).
 
 A @code{region_model} encapsulates a representation of the state of
-memory, with a tree of @code{region} instances, along with their associated
-values.  The representation is graph-like because values can be pointers
-to regions.  It also stores a constraint_manager, capturing relationships
-between the values.
+memory, with a @code{store} recording a binding between @code{region}
+instances, to @code{svalue} instances.  The bindings are organized into
+clusters, where regions accessible via well-defined pointer arithmetic
+are in the same cluster.  The representation is graph-like because values
+can be pointers to regions.  It also stores a constraint_manager,
+capturing relationships between the values.
 
 Because each node in the @code{exploded_graph} has a @code{region_model},
 and each of the latter is graph-like, the @code{exploded_graph} is in some
 ways a graph of graphs.
 
-Here's an example of printing a @code{region_model}, showing the ASCII-art
-used to visualize the region hierarchy (colorized when printing to stderr):
+Here's an example of printing a @code{program_state}, showing the
+@code{region_model} within it, along with state for the @code{malloc}
+state machine.
 
 @smallexample
 (gdb) call debug (*this)
-r0: @{kind: 'root', parent: null, sval: null@}
-|-stack: r1: @{kind: 'stack', parent: r0, sval: sv1@}
-|  |: sval: sv1: @{poisoned: uninit@}
-|  |-frame for 'test': r2: @{kind: 'frame', parent: r1, sval: null, map: @{'ptr_3': r3@}, function: 'test', depth: 0@}
-|  |  `-'ptr_3': r3: @{kind: 'map', parent: r2, sval: sv3, type: 'void *', map: @{@}@}
-|  |    |: sval: sv3: @{type: 'void *', unknown@}
-|  |    |: type: 'void *'
-|  `-frame for 'calls_malloc': r4: @{kind: 'frame', parent: r1, sval: null, map: @{'result_3': r7, '_4': r8, '<anonymous>': r5@}, function: 'calls_malloc', depth: 1@}
-|    |-'<anonymous>': r5: @{kind: 'map', parent: r4, sval: sv4, type: 'void *', map: @{@}@}
-|    |  |: sval: sv4: @{type: 'void *', &r6@}
-|    |  |: type: 'void *'
-|    |-'result_3': r7: @{kind: 'map', parent: r4, sval: sv4, type: 'void *', map: @{@}@}
-|    |  |: sval: sv4: @{type: 'void *', &r6@}
-|    |  |: type: 'void *'
-|    `-'_4': r8: @{kind: 'map', parent: r4, sval: sv4, type: 'void *', map: @{@}@}
-|      |: sval: sv4: @{type: 'void *', &r6@}
-|      |: type: 'void *'
-`-heap: r9: @{kind: 'heap', parent: r0, sval: sv2@}
-  |: sval: sv2: @{poisoned: uninit@}
-  `-r6: @{kind: 'symbolic', parent: r9, sval: null, map: @{@}@}
-svalues:
-  sv0: @{type: 'size_t', '1024'@}
-  sv1: @{poisoned: uninit@}
-  sv2: @{poisoned: uninit@}
-  sv3: @{type: 'void *', unknown@}
-  sv4: @{type: 'void *', &r6@}
-constraint manager:
+rmodel:
+stack depth: 1
+  frame (index 0): frame: ‘test’@@1
+clusters within frame: ‘test’@@1
+  cluster for: ptr_3: &HEAP_ALLOCATED_REGION(12)
+m_called_unknown_fn: FALSE
+constraint_manager:
   equiv classes:
-    ec0: @{sv0 == '1024'@}
-    ec1: @{sv4@}
   constraints:
+malloc:
+  0x2e89590: &HEAP_ALLOCATED_REGION(12): unchecked ('ptr_3')
 @end smallexample
 
 This is the state at the point of returning from @code{calls_malloc} back
@@ -310,13 +298,12 @@ void test (void)
 @}
 @end smallexample
 
-The ``root'' region (``r0'') has a ``stack'' child (``r1''), with two
-children: a frame for @code{test} (``r2''), and a frame for
-@code{calls_malloc} (``r4'').  These frame regions have child regions for
-storing their local variables.  For example, the return region
-and that of various other regions within the ``calls_malloc'' frame all have
-value ``sv4'', a pointer to a heap-allocated region ``r6''.  Within the parent
-frame, @code{ptr_3} has value ``sv3'', an unknown @code{void *}.
+Within the store, there is the cluster for @code{ptr_3} within the frame
+for @code{test}, where the whole cluster is bound to a pointer value,
+pointing at @code{HEAP_ALLOCATED_REGION(12)}.  Additionally, this pointer
+has the @code{unchecked} state for the @code{malloc} state machine
+indicating it hasn't yet been checked against NULL since the allocation
+call.
 
 @subsection Analyzer Paths
 
@@ -333,21 +320,56 @@ feasible
 @end itemize
 
 Without state-merging, all paths in the exploded graph are feasible
-(in terms of constraints being satisified).
+(in terms of constraints being satisfied).
 With state-merging, paths in the exploded graph can be infeasible.
 
 We collate warnings and only emit them for the simplest path
 e.g. for a bug in a utility function, with lots of routes to calling it,
 we only emit the simplest path (which could be intraprocedural, if
-it can be reproduced without a caller).  We apply a check that
-each duplicate warning's shortest path is feasible, rejecting any
-warnings for which the shortest path is infeasible (which could lead to
-false negatives).
+it can be reproduced without a caller).
 
-We use the shortest feasible @code{exploded_path} through the
-@code{exploded_graph} (a list of @code{exploded_edge *}) to build a
-@code{diagnostic_path} (a list of events for the diagnostic subsystem) -
-specifically a @code{checker_path}.
+We thus want to find the shortest feasible path through the exploded
+graph from the origin to the exploded node at which the diagnostic was
+saved.  Unfortunately, if we simply find the shortest such path and
+check if it's feasible we might falsely reject the diagnostic, as there
+might be a longer path that is feasible.  Examples include the cases
+where the diagnostic requires us to go at least once around a loop for a
+later condition to be satisfied, or where for a later condition to be
+satisfied we need to enter a suite of code that the simpler path skips.
+
+We attempt to find the shortest feasible path to each diagnostic by
+first constructing a ``trimmed graph'' from the exploded graph,
+containing only those nodes and edges from which there are paths to
+the target node, and using Dijkstra's algorithm to order the trimmed
+nodes by minimal distance to the target.
+
+We then use a worklist to iteratively build a ``feasible graph''
+(actually a tree), capturing the pertinent state along each path, in
+which every path to a ``feasible node'' is feasible by construction,
+restricting ourselves to the trimmed graph to ensure we stay on target,
+and ordering the worklist so that the first feasible path we find to the
+target node is the shortest possible path.  Hence we start by trying the
+shortest possible path, but if that fails, we explore progressively
+longer paths, eventually trying iterations through loops.  The
+exploration is captured in the feasible_graph, which can be dumped as a
+.dot file via @option{-fdump-analyzer-feasibility} to visualize the
+exploration.  The indices of the feasible nodes show the order in which
+they were created.  We effectively explore the tree of feasible paths in
+order of shortest path until we either find a feasible path to the
+target node, or hit a limit and give up.
+
+This is something of a brute-force approach, but the trimmed graph
+hopefully keeps the complexity manageable.
+
+This algorithm can be disabled (for debugging purposes) via
+@option{-fno-analyzer-feasibility}, which simply uses the shortest path,
+and notes if it is infeasible.
+
+The above gives us a shortest feasible @code{exploded_path} through the
+@code{exploded_graph} (a list of @code{exploded_edge *}).  We use this
+@code{exploded_path} to build a @code{diagnostic_path} (a list of
+@strong{events} for the diagnostic subsystem) - specifically a
+@code{checker_path}.
 
 Having built the @code{checker_path}, we prune it to try to eliminate
 events that aren't relevant, to minimize how much the user has to read.
@@ -393,21 +415,6 @@ The constraint-handling code assumes reflexivity in some places
 As a simple workaround, constraints on floating-point values are
 currently ignored.
 @item
-The region model code creates lots of little mutable objects at each
-@code{region_model} (and thus per @code{exploded_node}) rather than
-sharing immutable objects and having the mutable state in the
-@code{program_state} or @code{region_model}.  The latter approach might be
-more efficient, and might avoid dealing with IDs rather than pointers
-(which requires us to impose an ordering to get meaningful equality).
-@item
-The region model code doesn't yet support @code{memcpy}.  At the
-gimple-ssa level these have been optimized to statements like this:
-@smallexample
-_10 = MEM <long unsigned int> [(char * @{ref-all@})&c]
-MEM <long unsigned int> [(char * @{ref-all@})&d] = _10;
-@end smallexample
-Perhaps they could be supported via a new @code{compound_svalue} type.
-@item
 There are various other limitations in the region model (grep for TODO/xfail
 in the testsuite).
 @item
@@ -423,16 +430,6 @@ LTO, LTO support hasn't had extensive testing.  There are various
 lang-specific things in the analyzer that assume C rather than LTO.
 For example, SSA names are printed to the user in ``raw'' form, rather
 than printing the underlying variable name.
-@end itemize
-
-Some ideas for other checkers
-@itemize @bullet
-@item
-File-descriptor-based APIs
-@item
-Linux kernel internal APIs
-@item
-Signal handling
 @end itemize
 
 @node Debugging the Analyzer
@@ -455,12 +452,37 @@ to the source being analyzed to trigger a breakpoint in the analyzer when
 that source is reached.  By putting a series of these in the source, it's
 much easier to effectively step through the program state as it's analyzed.
 
+The analyzer handles:
+
+@smallexample
+__analyzer_describe (0, expr);
+@end smallexample
+
+by emitting a warning describing the 2nd argument (which can be of any
+type), at a verbosity level given by the 1st argument.  This is for use when
+debugging, and may be of use in DejaGnu tests.
+
 @smallexample
 __analyzer_dump ();
 @end smallexample
 
 will dump the copious information about the analyzer's state each time it
 reaches the call in its traversal of the source.
+
+@smallexample
+extern void __analyzer_dump_capacity (const void *ptr);
+@end smallexample
+
+will emit a warning describing the capacity of the base region of
+the region pointed to by the 1st argument.
+
+@smallexample
+extern void __analyzer_dump_escaped (void);
+@end smallexample
+
+will emit a warning giving the number of decls that have escaped on this
+analysis path, followed by a comma-separated list of their names,
+in alphabetical order.
 
 @smallexample
 __analyzer_dump_path ();
@@ -498,6 +520,15 @@ it will also dump all of the states within the ``processed'' nodes.
 will dump the region_model's state to stderr.
 
 @smallexample
+__analyzer_dump_state ("malloc", ptr);
+@end smallexample
+
+will emit a warning describing the state of the 2nd argument
+(which can be of any type) with respect to the state machine with
+a name matching the 1st argument (which must be a string literal).
+This is for use when debugging, and may be of use in DejaGnu tests.
+
+@smallexample
 __analyzer_eval (expr);
 @end smallexample
 will emit a warning with text "TRUE", FALSE" or "UNKNOWN" based on the
@@ -506,23 +537,19 @@ truthfulness of the argument.  This is useful for writing DejaGnu tests.
 
 @subsection Other Debugging Techniques
 
+The option @option{-fdump-analyzer-json} will dump both the supergraph
+and the exploded graph in compressed JSON form.
+
 One approach when tracking down where a particular bogus state is
 introduced into the @code{exploded_graph} is to add custom code to
-@code{region_model::validate}.
+@code{program_state::validate}.
 
-For example, this custom code (added to @code{region_model::validate})
-breaks with an assertion failure when a variable called @code{ptr}
-acquires a value that's unknown, using
-@code{region_model::get_value_by_name} to locate the variable
-
+The debug function @code{region::is_named_decl_p} can be used when debugging,
+such as for assertions and conditional breakpoints.  For example, when
+tracking down a bug in handling a decl called @code{yy_buffer_stack}, I
+temporarily added a:
 @smallexample
-    /* Find a variable matching "ptr".  */
-    svalue_id sid = get_value_by_name ("ptr");
-    if (!sid.null_p ())
-      @{
-	svalue *sval = get_svalue (sid);
-	gcc_assert (sval->get_kind () != SK_UNKNOWN);
-      @}
+  gcc_assert (!m_base_region->is_named_decl_p ("yy_buffer_stack"));
 @end smallexample
-
-making it easier to investigate further in a debugger when this occurs.
+to @code{binding_cluster::mark_as_escaped} to trap a point where
+@code{yy_buffer_stack} was mistakenly being treated as having escaped.

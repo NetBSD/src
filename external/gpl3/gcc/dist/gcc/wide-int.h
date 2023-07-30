@@ -1,5 +1,5 @@
 /* Operations with very long integers.  -*- C++ -*-
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -1387,8 +1387,10 @@ private:
   /* The shared maximum length of each number.  */
   unsigned char m_max_len;
 
-  /* The current length of each number.  */
-  unsigned char m_len[N];
+  /* The current length of each number.
+     Avoid char array so the whole structure is not a typeless storage
+     that will, in turn, turn off TBAA on gimple, trees and RTL.  */
+  struct {unsigned char len;} m_len[N];
 
   /* The variable-length part of the structure, which always contains
      at least one HWI.  Element I starts at index I * M_MAX_LEN.  */
@@ -1470,7 +1472,7 @@ template <int N>
 inline trailing_wide_int
 trailing_wide_ints <N>::operator [] (unsigned int index)
 {
-  return trailing_wide_int_storage (m_precision, &m_len[index],
+  return trailing_wide_int_storage (m_precision, &m_len[index].len,
 				    &m_val[index * m_max_len]);
 }
 
@@ -1479,7 +1481,7 @@ inline typename trailing_wide_ints <N>::const_reference
 trailing_wide_ints <N>::operator [] (unsigned int index) const
 {
   return wi::storage_ref (&m_val[index * m_max_len],
-			  m_len[index], m_precision);
+			  m_len[index].len, m_precision);
 }
 
 /* Return how many extra bytes need to be added to the end of the structure
@@ -3167,11 +3169,9 @@ wi::lrotate (const T1 &x, const T2 &y, unsigned int width)
     width = precision;
   WI_UNARY_RESULT (T2) ymod = umod_trunc (y, width);
   WI_UNARY_RESULT (T1) left = wi::lshift (x, ymod);
-  WI_UNARY_RESULT (T1) right
-    = wi::lrshift (width != precision ? wi::zext (x, width) : x,
-		   wi::sub (width, ymod));
+  WI_UNARY_RESULT (T1) right = wi::lrshift (x, wi::sub (width, ymod));
   if (width != precision)
-    return wi::zext (left, width) | right;
+    return wi::zext (left, width) | wi::zext (right, width);
   return left | right;
 }
 
@@ -3186,11 +3186,10 @@ wi::rrotate (const T1 &x, const T2 &y, unsigned int width)
   if (width == 0)
     width = precision;
   WI_UNARY_RESULT (T2) ymod = umod_trunc (y, width);
-  WI_UNARY_RESULT (T1) right
-    = wi::lrshift (width != precision ? wi::zext (x, width) : x, ymod);
+  WI_UNARY_RESULT (T1) right = wi::lrshift (x, ymod);
   WI_UNARY_RESULT (T1) left = wi::lshift (x, wi::sub (width, ymod));
   if (width != precision)
-    return wi::zext (left, width) | right;
+    return wi::zext (left, width) | wi::zext (right, width);
   return left | right;
 }
 
@@ -3339,7 +3338,7 @@ gt_pch_nx (generic_wide_int <T> *)
 
 template<typename T>
 void
-gt_pch_nx (generic_wide_int <T> *, void (*) (void *, void *), void *)
+gt_pch_nx (generic_wide_int <T> *, gt_pointer_operator, void *)
 {
 }
 
@@ -3357,7 +3356,7 @@ gt_pch_nx (trailing_wide_ints <N> *)
 
 template<int N>
 void
-gt_pch_nx (trailing_wide_ints <N> *, void (*) (void *, void *), void *)
+gt_pch_nx (trailing_wide_ints <N> *, gt_pointer_operator, void *)
 {
 }
 
@@ -3391,6 +3390,8 @@ namespace wi
 		   unsigned int);
   wide_int round_down_for_mask (const wide_int &, const wide_int &);
   wide_int round_up_for_mask (const wide_int &, const wide_int &);
+
+  wide_int mod_inv (const wide_int &a, const wide_int &b);
 
   template <typename T>
   T mask (unsigned int, bool);

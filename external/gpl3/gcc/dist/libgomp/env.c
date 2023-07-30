@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2022 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Offloading and Multi Processing Library
@@ -68,13 +68,14 @@ struct gomp_task_icv gomp_global_icv = {
   .run_sched_chunk_size = 1,
   .default_device_var = 0,
   .dyn_var = false,
-  .nest_var = false,
+  .max_active_levels_var = 1,
   .bind_var = omp_proc_bind_false,
   .target_data = NULL
 };
 
-unsigned long gomp_max_active_levels_var = INT_MAX;
 bool gomp_cancel_var = false;
+enum gomp_target_offload_t gomp_target_offload_var
+  = GOMP_TARGET_OFFLOAD_DEFAULT;
 int gomp_max_task_priority_var = 0;
 #ifndef HAVE_SYNC_BUILTINS
 gomp_mutex_t gomp_managed_threads_lock;
@@ -86,8 +87,11 @@ char *gomp_bind_var_list;
 unsigned long gomp_bind_var_list_len;
 void **gomp_places_list;
 unsigned long gomp_places_list_len;
+uintptr_t gomp_def_allocator = omp_default_mem_alloc;
 int gomp_debug_var;
 unsigned int gomp_num_teams_var;
+int gomp_nteams_var;
+int gomp_teams_thread_limit_var;
 bool gomp_display_affinity_var;
 char *gomp_affinity_format_var = "level %L thread %i affinity %A";
 size_t gomp_affinity_format_len;
@@ -96,6 +100,9 @@ int goacc_device_num;
 int goacc_default_dims[GOMP_DIM_MAX];
 
 #ifndef LIBGOMP_OFFLOADED_ONLY
+
+static int wait_policy;
+static unsigned long stacksize = GOMP_DEFAULT_STACKSIZE;
 
 /* Parse the OMP_SCHEDULE environment variable.  */
 
@@ -176,7 +183,7 @@ parse_schedule (void)
 
   errno = 0;
   value = strtoul (env, &end, 10);
-  if (errno)
+  if (errno || end == env)
     goto invalid;
 
   while (isspace ((unsigned char) *end))
@@ -225,7 +232,7 @@ parse_unsigned_long_1 (const char *name, unsigned long *pvalue, bool allow_zero,
 
   errno = 0;
   value = strtoul (env, &end, 10);
-  if (errno || (long) value <= 0 - allow_zero)
+  if (errno || end == env || (long) value <= 0 - allow_zero)
     goto invalid;
 
   while (isspace ((unsigned char) *end))
@@ -373,6 +380,44 @@ parse_unsigned_long_list (const char *name, unsigned long *p1stvalue,
   return false;
 }
 
+static void
+parse_target_offload (const char *name, enum gomp_target_offload_t *offload)
+{
+  const char *env;
+  int new_offload = -1;
+
+  env = getenv (name);
+  if (env == NULL)
+    return;
+
+  while (isspace ((unsigned char) *env))
+    ++env;
+  if (strncasecmp (env, "default", 7) == 0)
+    {
+      env += 7;
+      new_offload = GOMP_TARGET_OFFLOAD_DEFAULT;
+    }
+  else if (strncasecmp (env, "mandatory", 9) == 0)
+    {
+      env += 9;
+      new_offload = GOMP_TARGET_OFFLOAD_MANDATORY;
+    }
+  else if (strncasecmp (env, "disabled", 8) == 0)
+    {
+      env += 8;
+      new_offload = GOMP_TARGET_OFFLOAD_DISABLED;
+    }
+  while (isspace ((unsigned char) *env))
+    ++env;
+  if (new_offload != -1 && *env == '\0')
+    {
+      *offload = new_offload;
+      return;
+    }
+
+  gomp_error ("Invalid value for environment variable OMP_TARGET_OFFLOAD");
+}
+
 /* Parse environment variable set to a boolean or list of omp_proc_bind_t
    enum values.  Return true if one was present and it was successfully
    parsed.  */
@@ -394,6 +439,7 @@ parse_bind_var (const char *name, char *p1stvalue,
     { "false", 5, omp_proc_bind_false },
     { "true", 4, omp_proc_bind_true },
     { "master", 6, omp_proc_bind_master },
+    { "primary", 7, omp_proc_bind_primary },
     { "close", 5, omp_proc_bind_close },
     { "spread", 6, omp_proc_bind_spread }
   };
@@ -407,14 +453,14 @@ parse_bind_var (const char *name, char *p1stvalue,
   if (*env == '\0')
     goto invalid;
 
-  for (i = 0; i < 5; i++)
+  for (i = 0; i < 6; i++)
     if (strncasecmp (env, kinds[i].name, kinds[i].len) == 0)
       {
 	value = kinds[i].kind;
 	env += kinds[i].len;
 	break;
       }
-  if (i == 5)
+  if (i == 6)
     goto invalid;
 
   while (isspace ((unsigned char) *env))
@@ -454,14 +500,14 @@ parse_bind_var (const char *name, char *p1stvalue,
 	      if (*env == '\0')
 		goto invalid;
 
-	      for (i = 2; i < 5; i++)
+	      for (i = 2; i < 6; i++)
 		if (strncasecmp (env, kinds[i].name, kinds[i].len) == 0)
 		  {
 		    value = kinds[i].kind;
 		    env += kinds[i].len;
 		    break;
 		  }
-	      if (i == 5)
+	      if (i == 6)
 		goto invalid;
 
 	      values[nvalues++] = value;
@@ -500,6 +546,7 @@ parse_one_place (char **envp, bool *negatep, unsigned long *lenp,
   long stride = 1;
   int pass;
   bool any_negate = false;
+  bool has_braces = true;
   *negatep = false;
   while (isspace ((unsigned char) *env))
     ++env;
@@ -511,12 +558,28 @@ parse_one_place (char **envp, bool *negatep, unsigned long *lenp,
 	++env;
     }
   if (*env != '{')
-    return false;
-  ++env;
-  while (isspace ((unsigned char) *env))
-    ++env;
+    {
+      char *end;
+      unsigned long this_num;
+
+      errno = 0;
+      this_num = strtoul (env, &end, 10);
+      if (errno || end == env)
+	return false;
+      env = end - 1;
+      has_braces = false;
+      if (gomp_places_list
+	  && !gomp_affinity_add_cpus (p, this_num, 1, 1, false))
+	return false;
+    }
+  else
+    {
+      ++env;
+      while (isspace ((unsigned char) *env))
+	++env;
+    }
   start = env;
-  for (pass = 0; pass < (any_negate ? 2 : 1); pass++)
+  for (pass = 0; pass < (any_negate ? 2 : has_braces); pass++)
     {
       env = start;
       do
@@ -524,6 +587,7 @@ parse_one_place (char **envp, bool *negatep, unsigned long *lenp,
 	  unsigned long this_num, this_len = 1;
 	  long this_stride = 1;
 	  bool this_negate = (*env == '!');
+	  char *end;
 	  if (this_negate)
 	    {
 	      if (gomp_places_list)
@@ -534,14 +598,17 @@ parse_one_place (char **envp, bool *negatep, unsigned long *lenp,
 	    }
 
 	  errno = 0;
-	  this_num = strtoul (env, &env, 10);
-	  if (errno)
+	  this_num = strtoul (env, &end, 10);
+	  if (errno || end == env)
 	    return false;
+	  env = end;
 	  while (isspace ((unsigned char) *env))
 	    ++env;
 	  if (*env == ':')
 	    {
 	      ++env;
+	      if (this_negate)
+		return false;
 	      while (isspace ((unsigned char) *env))
 		++env;
 	      errno = 0;
@@ -556,15 +623,14 @@ parse_one_place (char **envp, bool *negatep, unsigned long *lenp,
 		  while (isspace ((unsigned char) *env))
 		    ++env;
 		  errno = 0;
-		  this_stride = strtol (env, &env, 10);
-		  if (errno)
+		  this_stride = strtol (env, &end, 10);
+		  if (errno || end == env)
 		    return false;
+		  env = end;
 		  while (isspace ((unsigned char) *env))
 		    ++env;
 		}
 	    }
-	  if (this_negate && this_len != 1)
-	    return false;
 	  if (gomp_places_list && pass == this_negate)
 	    {
 	      if (this_negate)
@@ -590,6 +656,9 @@ parse_one_place (char **envp, bool *negatep, unsigned long *lenp,
     ++env;
   if (*env == ':')
     {
+      char *end;
+      if (*negatep)
+	return false;
       ++env;
       while (isspace ((unsigned char) *env))
 	++env;
@@ -605,15 +674,14 @@ parse_one_place (char **envp, bool *negatep, unsigned long *lenp,
 	  while (isspace ((unsigned char) *env))
 	    ++env;
 	  errno = 0;
-	  stride = strtol (env, &env, 10);
-	  if (errno)
+	  stride = strtol (env, &end, 10);
+	  if (errno || end == env)
 	    return false;
+	  env = end;
 	  while (isspace ((unsigned char) *env))
 	    ++env;
 	}
     }
-  if (*negatep && len != 1)
-    return false;
   *envp = env;
   *lenp = len;
   *stridep = stride;
@@ -650,6 +718,16 @@ parse_places_var (const char *name, bool ignore)
       env += 7;
       level = 3;
     }
+  else if (strncasecmp (env, "ll_caches", 9) == 0)
+    {
+      env += 9;
+      level = 4;
+    }
+  else if (strncasecmp (env, "numa_domains", 12) == 0)
+    {
+      env += 12;
+      level = 5;
+    }
   if (level)
     {
       count = ULONG_MAX;
@@ -664,7 +742,7 @@ parse_places_var (const char *name, bool ignore)
 
 	  errno = 0;
 	  count = strtoul (env, &end, 10);
-	  if (errno)
+	  if (errno || end == env)
 	    goto invalid;
 	  env = end;
 	  while (isspace ((unsigned char) *env))
@@ -803,7 +881,7 @@ parse_stacksize (const char *name, unsigned long *pvalue)
 
   errno = 0;
   value = strtoul (env, &end, 10);
-  if (errno)
+  if (errno || end == env)
     goto invalid;
 
   while (isspace ((unsigned char) *end))
@@ -872,7 +950,7 @@ parse_spincount (const char *name, unsigned long long *pvalue)
 
   errno = 0;
   value = strtoull (env, &end, 10);
-  if (errno)
+  if (errno || end == env)
     goto invalid;
 
   while (isspace ((unsigned char) *end))
@@ -918,16 +996,17 @@ parse_spincount (const char *name, unsigned long long *pvalue)
 }
 
 /* Parse a boolean value for environment variable NAME and store the
-   result in VALUE.  */
+   result in VALUE.  Return true if one was present and it was
+   successfully parsed.  */
 
-static void
+static bool
 parse_boolean (const char *name, bool *value)
 {
   const char *env;
 
   env = getenv (name);
   if (env == NULL)
-    return;
+    return false;
 
   while (isspace ((unsigned char) *env))
     ++env;
@@ -946,11 +1025,14 @@ parse_boolean (const char *name, bool *value)
   while (isspace ((unsigned char) *env))
     ++env;
   if (*env != '\0')
-    gomp_error ("Invalid value for environment variable %s", name);
+    {
+      gomp_error ("Invalid value for environment variable %s", name);
+      return false;
+    }
+  return true;
 }
 
-/* Parse the OMP_WAIT_POLICY environment variable and store the
-   result in gomp_active_wait_policy.  */
+/* Parse the OMP_WAIT_POLICY environment variable and return the value.  */
 
 static int
 parse_wait_policy (void)
@@ -1020,7 +1102,7 @@ parse_affinity (bool ignore)
 
 	  errno = 0;
 	  cpu_beg = strtoul (env, &end, 0);
-	  if (errno || cpu_beg >= 65536)
+	  if (errno || end == env || cpu_beg >= 65536)
 	    goto invalid;
 	  cpu_end = cpu_beg;
 	  cpu_stride = 1;
@@ -1030,7 +1112,7 @@ parse_affinity (bool ignore)
 	    {
 	      errno = 0;
 	      cpu_end = strtoul (++env, &end, 0);
-	      if (errno || cpu_end >= 65536 || cpu_end < cpu_beg)
+	      if (errno || end == env || cpu_end >= 65536 || cpu_end < cpu_beg)
 		goto invalid;
 
 	      env = end;
@@ -1084,6 +1166,47 @@ parse_affinity (bool ignore)
   return false;
 }
 
+/* Parse the OMP_ALLOCATOR environment variable and return the value.  */
+
+static uintptr_t
+parse_allocator (void)
+{
+  const char *env;
+  uintptr_t ret = omp_default_mem_alloc;
+
+  env = getenv ("OMP_ALLOCATOR");
+  if (env == NULL)
+    return ret;
+
+  while (isspace ((unsigned char) *env))
+    ++env;
+  if (0)
+    ;
+#define C(v) \
+  else if (strncasecmp (env, #v, sizeof (#v) - 1) == 0)	\
+    {							\
+      ret = v;						\
+      env += sizeof (#v) - 1;				\
+    }
+  C (omp_default_mem_alloc)
+  C (omp_large_cap_mem_alloc)
+  C (omp_const_mem_alloc)
+  C (omp_high_bw_mem_alloc)
+  C (omp_low_lat_mem_alloc)
+  C (omp_cgroup_mem_alloc)
+  C (omp_pteam_mem_alloc)
+  C (omp_thread_mem_alloc)
+#undef C
+  else
+    env = "X";
+  while (isspace ((unsigned char) *env))
+    ++env;
+  if (*env == '\0')
+    return ret;
+  gomp_error ("Invalid value for environment variable OMP_ALLOCATOR");
+  return omp_default_mem_alloc;
+}
+
 static void
 parse_acc_device_type (void)
 {
@@ -1101,69 +1224,37 @@ parse_gomp_openacc_dim (void)
   /* The syntax is the same as for the -fopenacc-dim compilation option.  */
   const char *var_name = "GOMP_OPENACC_DIM";
   const char *env_var = getenv (var_name);
+  const char *pos = env_var;
+  int i;
+
   if (!env_var)
     return;
 
-  const char *pos = env_var;
-  int i;
   for (i = 0; *pos && i != GOMP_DIM_MAX; i++)
     {
+      char *eptr;
+      long val;
+
       if (i && *pos++ != ':')
 	break;
 
       if (*pos == ':')
 	continue;
 
-      const char *eptr;
       errno = 0;
-      long val = strtol (pos, (char **)&eptr, 10);
-      if (errno || val < 0 || (unsigned)val != val)
+      val = strtol (pos, &eptr, 10);
+      if (errno || eptr == pos || val < 0 || (unsigned)val != val)
 	break;
 
       goacc_default_dims[i] = (int)val;
-      pos = eptr;
+      pos = (const char *) eptr;
     }
 }
 
-static void
-handle_omp_display_env (unsigned long stacksize, int wait_policy)
+void
+omp_display_env (int verbose)
 {
-  const char *env;
-  bool display = false;
-  bool verbose = false;
   int i;
-
-  env = getenv ("OMP_DISPLAY_ENV");
-  if (env == NULL)
-    return;
-
-  while (isspace ((unsigned char) *env))
-    ++env;
-  if (strncasecmp (env, "true", 4) == 0)
-    {
-      display = true;
-      env += 4;
-    }
-  else if (strncasecmp (env, "false", 5) == 0)
-    {
-      display = false;
-      env += 5;
-    }
-  else if (strncasecmp (env, "verbose", 7) == 0)
-    {
-      display = true;
-      verbose = true;
-      env += 7;
-    }
-  else
-    env = "X";
-  while (isspace ((unsigned char) *env))
-    ++env;
-  if (*env != '\0')
-    gomp_error ("Invalid value for environment variable OMP_DISPLAY_ENV");
-
-  if (!display)
-    return;
 
   fputs ("\nOPENMP DISPLAY ENVIRONMENT BEGIN\n", stderr);
 
@@ -1171,7 +1262,7 @@ handle_omp_display_env (unsigned long stacksize, int wait_policy)
   fprintf (stderr, "  OMP_DYNAMIC = '%s'\n",
 	   gomp_global_icv.dyn_var ? "TRUE" : "FALSE");
   fprintf (stderr, "  OMP_NESTED = '%s'\n",
-	   gomp_global_icv.nest_var ? "TRUE" : "FALSE");
+	   gomp_global_icv.max_active_levels_var > 1 ? "TRUE" : "FALSE");
 
   fprintf (stderr, "  OMP_NUM_THREADS = '%lu", gomp_global_icv.nthreads_var);
   for (i = 1; i < gomp_nthreads_var_list_len; i++)
@@ -1224,7 +1315,7 @@ handle_omp_display_env (unsigned long stacksize, int wait_policy)
       fputs ("TRUE", stderr);
       break;
     case omp_proc_bind_master:
-      fputs ("MASTER", stderr);
+      fputs ("MASTER", stderr); /* TODO: Change to PRIMARY for OpenMP 5.1.  */
       break;
     case omp_proc_bind_close:
       fputs ("CLOSE", stderr);
@@ -1237,7 +1328,7 @@ handle_omp_display_env (unsigned long stacksize, int wait_policy)
     switch (gomp_bind_var_list[i])
       {
       case omp_proc_bind_master:
-	fputs (",MASTER", stderr);
+	fputs (",MASTER", stderr); /* TODO: Change to PRIMARY for OpenMP 5.1. */
 	break;
       case omp_proc_bind_close:
 	fputs (",CLOSE", stderr);
@@ -1263,8 +1354,11 @@ handle_omp_display_env (unsigned long stacksize, int wait_policy)
 	   wait_policy > 0 ? "ACTIVE" : "PASSIVE");
   fprintf (stderr, "  OMP_THREAD_LIMIT = '%u'\n",
 	   gomp_global_icv.thread_limit_var);
-  fprintf (stderr, "  OMP_MAX_ACTIVE_LEVELS = '%lu'\n",
-	   gomp_max_active_levels_var);
+  fprintf (stderr, "  OMP_MAX_ACTIVE_LEVELS = '%u'\n",
+	   gomp_global_icv.max_active_levels_var);
+  fprintf (stderr, "  OMP_NUM_TEAMS = '%u'\n", gomp_nteams_var);
+  fprintf (stderr, "  OMP_TEAMS_THREAD_LIMIT = '%u'\n",
+	   gomp_teams_thread_limit_var);
 
   fprintf (stderr, "  OMP_CANCELLATION = '%s'\n",
 	   gomp_cancel_var ? "TRUE" : "FALSE");
@@ -1276,6 +1370,37 @@ handle_omp_display_env (unsigned long stacksize, int wait_policy)
 	   gomp_display_affinity_var ? "TRUE" : "FALSE");
   fprintf (stderr, "  OMP_AFFINITY_FORMAT = '%s'\n",
 	   gomp_affinity_format_var);
+  fprintf (stderr, "  OMP_ALLOCATOR = '");
+  switch (gomp_def_allocator)
+    {
+#define C(v) case v: fputs (#v, stderr); break;
+    C (omp_default_mem_alloc)
+    C (omp_large_cap_mem_alloc)
+    C (omp_const_mem_alloc)
+    C (omp_high_bw_mem_alloc)
+    C (omp_low_lat_mem_alloc)
+    C (omp_cgroup_mem_alloc)
+    C (omp_pteam_mem_alloc)
+    C (omp_thread_mem_alloc)
+#undef C
+    default: break;
+    }
+  fputs ("'\n", stderr);
+
+  fputs ("  OMP_TARGET_OFFLOAD = '", stderr);
+  switch (gomp_target_offload_var)
+    {
+    case GOMP_TARGET_OFFLOAD_DEFAULT:
+      fputs ("DEFAULT", stderr);
+      break;
+    case GOMP_TARGET_OFFLOAD_MANDATORY:
+      fputs ("MANDATORY", stderr);
+      break;
+    case GOMP_TARGET_OFFLOAD_DISABLED:
+      fputs ("DISABLED", stderr);
+      break;
+    }
+  fputs ("'\n", stderr);
 
   if (verbose)
     {
@@ -1292,26 +1417,66 @@ handle_omp_display_env (unsigned long stacksize, int wait_policy)
 
   fputs ("OPENMP DISPLAY ENVIRONMENT END\n", stderr);
 }
+ialias (omp_display_env)
+
+static void
+handle_omp_display_env (void)
+{
+  const char *env;
+  bool display = false;
+  bool verbose = false;
+
+  env = getenv ("OMP_DISPLAY_ENV");
+  if (env == NULL)
+    return;
+
+  while (isspace ((unsigned char) *env))
+    ++env;
+  if (strncasecmp (env, "true", 4) == 0)
+    {
+      display = true;
+      env += 4;
+    }
+  else if (strncasecmp (env, "false", 5) == 0)
+    {
+      display = false;
+      env += 5;
+    }
+  else if (strncasecmp (env, "verbose", 7) == 0)
+    {
+      display = true;
+      verbose = true;
+      env += 7;
+    }
+  else
+    env = "X";
+  while (isspace ((unsigned char) *env))
+    ++env;
+  if (*env != '\0')
+    gomp_error ("Invalid value for environment variable OMP_DISPLAY_ENV");
+
+  if (display)
+    ialias_call (omp_display_env) (verbose);
+}
 
 
 static void __attribute__((constructor))
 initialize_env (void)
 {
-  unsigned long thread_limit_var, stacksize = GOMP_DEFAULT_STACKSIZE;
-  int wait_policy;
+  unsigned long thread_limit_var;
+  unsigned long max_active_levels_var;
 
   /* Do a compile time check that mkomp_h.pl did good job.  */
   omp_check_defines ();
 
   parse_schedule ();
   parse_boolean ("OMP_DYNAMIC", &gomp_global_icv.dyn_var);
-  parse_boolean ("OMP_NESTED", &gomp_global_icv.nest_var);
   parse_boolean ("OMP_CANCELLATION", &gomp_cancel_var);
   parse_boolean ("OMP_DISPLAY_AFFINITY", &gomp_display_affinity_var);
   parse_int ("OMP_DEFAULT_DEVICE", &gomp_global_icv.default_device_var, true);
+  parse_target_offload ("OMP_TARGET_OFFLOAD", &gomp_target_offload_var);
   parse_int ("OMP_MAX_TASK_PRIORITY", &gomp_max_task_priority_var, true);
-  parse_unsigned_long ("OMP_MAX_ACTIVE_LEVELS", &gomp_max_active_levels_var,
-		       true);
+  gomp_def_allocator = parse_allocator ();
   if (parse_unsigned_long ("OMP_THREAD_LIMIT", &thread_limit_var, false))
     {
       gomp_global_icv.thread_limit_var
@@ -1328,6 +1493,8 @@ initialize_env (void)
 				 &gomp_nthreads_var_list,
 				 &gomp_nthreads_var_list_len))
     gomp_global_icv.nthreads_var = gomp_available_cpus;
+  parse_int ("OMP_NUM_TEAMS", &gomp_nteams_var, false);
+  parse_int ("OMP_TEAMS_THREAD_LIMIT", &gomp_teams_thread_limit_var, false);
   bool ignore = false;
   if (parse_bind_var ("OMP_PROC_BIND",
 		      &gomp_global_icv.bind_var,
@@ -1335,6 +1502,22 @@ initialize_env (void)
 		      &gomp_bind_var_list_len)
       && gomp_global_icv.bind_var == omp_proc_bind_false)
     ignore = true;
+  if (parse_unsigned_long ("OMP_MAX_ACTIVE_LEVELS",
+			   &max_active_levels_var, true))
+    gomp_global_icv.max_active_levels_var
+      = (max_active_levels_var > gomp_supported_active_levels)
+	? gomp_supported_active_levels : max_active_levels_var;
+  else
+    {
+      bool nested = true;
+
+      /* OMP_NESTED is deprecated in OpenMP 5.0.  */
+      if (parse_boolean ("OMP_NESTED", &nested))
+	gomp_global_icv.max_active_levels_var
+	  = nested ? gomp_supported_active_levels : 1;
+      else if (gomp_nthreads_var_list_len > 1 || gomp_bind_var_list_len > 1)
+	gomp_global_icv.max_active_levels_var = gomp_supported_active_levels;
+    }
   /* Make sure OMP_PLACES and GOMP_CPU_AFFINITY env vars are always
      parsed if present in the environment.  If OMP_PROC_BIND was set
      explicitly to false, don't populate places list though.  If places
@@ -1414,7 +1597,7 @@ initialize_env (void)
 	gomp_error ("Stack size change failed: %s", strerror (err));
     }
 
-  handle_omp_display_env (stacksize, wait_policy);
+  handle_omp_display_env ();
 
   /* OpenACC.  */
 

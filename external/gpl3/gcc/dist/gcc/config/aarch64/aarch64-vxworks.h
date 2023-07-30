@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler.  Vxworks Aarch 64bit
    version.
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2022 Free Software Foundation, Inc.
    Contributed by Douglas B Rupp
 
 This file is part of GCC.
@@ -50,7 +50,8 @@ along with GCC; see the file COPYING3.  If not see
       builtin_define ("ARMEB");                 \
     else                                        \
       builtin_define ("ARMEL");                 \
-    builtin_define ("_VX_CPU=ARMARCH8A"); \
+    builtin_define \
+      (VX_CPU_PREFIX "CPU=" VX_CPU_PREFIX "ARMARCH8A");	\
     VXWORKS_OS_CPP_BUILTINS ();		  \
   } while (0)
 
@@ -60,12 +61,14 @@ along with GCC; see the file COPYING3.  If not see
 #undef STACK_CHECK_PROTECT
 #define STACK_CHECK_PROTECT 16384
 
-/* The VxWorks environment on aarch64 is llvm-based only, uses R18 as
-   a TCB pointer.  */
-
+/* The VxWorks environment on aarch64 is llvm-based.  */
 #undef VXWORKS_PERSONALITY
 #define VXWORKS_PERSONALITY "llvm"
 
-#undef  TARGET_OS_USES_R18
-#define TARGET_OS_USES_R18 1
+/* VxWorks uses R18 as a TCB pointer.  We must pick something else as
+   the static chain and R18 needs to be claimed "fixed".  Until we
+   arrange to override the common parts of the port family to
+   acknowledge the latter, configure --with-specs="-ffixed-r18".  */
+#undef  STATIC_CHAIN_REGNUM
+#define STATIC_CHAIN_REGNUM 9
 

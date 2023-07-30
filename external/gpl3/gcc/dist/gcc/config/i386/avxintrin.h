@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -443,6 +443,13 @@ _mm_cmp_ss (__m128 __X, __m128 __Y, const int __P)
   ((__m128) __builtin_ia32_cmpss ((__v4sf)(__m128)(X),			\
 				  (__v4sf)(__m128)(Y), (int)(P)))
 #endif
+
+extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_mm256_cvtsi256_si32 (__m256i __A)
+{
+  __v8si __B = (__v8si) __A;
+  return __B[0];
+}
 
 extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_cvtepi32_pd (__m128i __A)
@@ -1200,21 +1207,30 @@ _mm256_movemask_ps (__m256 __A)
 extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_undefined_pd (void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winit-self"
   __m256d __Y = __Y;
+#pragma GCC diagnostic pop
   return __Y;
 }
 
 extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_undefined_ps (void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winit-self"
   __m256 __Y = __Y;
+#pragma GCC diagnostic pop
   return __Y;
 }
 
 extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_undefined_si256 (void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winit-self"
   __m256i __Y = __Y;
+#pragma GCC diagnostic pop
   return __Y;
 }
 

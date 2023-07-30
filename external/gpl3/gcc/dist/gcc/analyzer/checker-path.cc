@@ -1,5 +1,5 @@
 /* Subclasses of diagnostic_path and diagnostic_event for analyzer diagnostics.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -38,6 +38,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "fibonacci_heap.h"
 #include "diagnostic-event-id.h"
 #include "shortest-paths.h"
+#include "json.h"
 #include "analyzer/analyzer.h"
 #include "analyzer/analyzer-logging.h"
 #include "analyzer/sm.h"
@@ -46,6 +47,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "tristate.h"
 #include "ordered-hash-map.h"
 #include "selftest.h"
+#include "analyzer/call-string.h"
+#include "analyzer/program-point.h"
+#include "analyzer/store.h"
 #include "analyzer/region-model.h"
 #include "analyzer/program-state.h"
 #include "analyzer/checker-path.h"
@@ -56,8 +60,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "analyzer/constraint-manager.h"
 #include "analyzer/diagnostic-manager.h"
 #include "analyzer/checker-path.h"
-#include "analyzer/call-string.h"
-#include "analyzer/program-point.h"
 #include "analyzer/exploded-graph.h"
 
 #if ENABLE_ANALYZER
@@ -79,6 +81,8 @@ event_kind_to_string (enum event_kind ek)
       return "EK_CUSTOM";
     case EK_STMT:
       return "EK_STMT";
+    case EK_REGION_CREATION:
+      return "EK_REGION_CREATION";
     case EK_FUNCTION_ENTRY:
       return "EK_FUNCTION_ENTRY";
     case EK_STATE_CHANGE:
@@ -91,6 +95,10 @@ event_kind_to_string (enum event_kind ek)
       return "EK_CALL_EDGE";
     case EK_RETURN_EDGE:
       return "EK_RETURN_EDGE";
+    case EK_START_CONSOLIDATED_CFG_EDGES:
+      return "EK_START_CONSOLIDATED_CFG_EDGES";
+    case EK_END_CONSOLIDATED_CFG_EDGES:
+      return "EK_END_CONSOLIDATED_CFG_EDGES";
     case EK_SETJMP:
       return "EK_SETJMP";
     case EK_REWIND_FROM_LONGJMP:
@@ -156,14 +164,14 @@ debug_event::get_desc (bool) const
   return label_text::borrow (m_desc);
 }
 
-/* class custom_event : public checker_event.  */
+/* class precanned_custom_event : public custom_event.  */
 
 /* Implementation of diagnostic_event::get_desc vfunc for
-   custom_event.
+   precanned_custom_event.
    Use the saved string as the event's description.  */
 
 label_text
-custom_event::get_desc (bool) const
+precanned_custom_event::get_desc (bool) const
 {
   return label_text::borrow (m_desc);
 }
@@ -193,6 +201,34 @@ statement_event::get_desc (bool) const
   return label_text::take (xstrdup (pp_formatted_text (&pp)));
 }
 
+/* class region_creation_event : public checker_event.  */
+
+region_creation_event::region_creation_event (const region *reg,
+					      location_t loc,
+					      tree fndecl,
+					      int depth)
+: checker_event (EK_REGION_CREATION, loc, fndecl, depth),
+  m_reg (reg)
+{
+}
+
+/* Implementation of diagnostic_event::get_desc vfunc for
+   region_creation_event.  */
+
+label_text
+region_creation_event::get_desc (bool) const
+{
+  switch (m_reg->get_memory_space ())
+    {
+    default:
+      return label_text::borrow ("region created here");
+    case MEMSPACE_STACK:
+      return label_text::borrow ("region created on stack here");
+    case MEMSPACE_HEAP:
+      return label_text::borrow ("region created on heap here");
+    }
+}
+
 /* class function_entry_event : public checker_event.  */
 
 /* Implementation of diagnostic_event::get_desc vfunc for
@@ -214,16 +250,16 @@ state_change_event::state_change_event (const supernode *node,
 					const gimple *stmt,
 					int stack_depth,
 					const state_machine &sm,
-					tree var,
+					const svalue *sval,
 					state_machine::state_t from,
 					state_machine::state_t to,
-					tree origin,
+					const svalue *origin,
 					const program_state &dst_state)
 : checker_event (EK_STATE_CHANGE,
 		 stmt->location, node->m_fun->decl,
 		 stack_depth),
   m_node (node), m_stmt (stmt), m_sm (sm),
-  m_var (var), m_from (from), m_to (to),
+  m_sval (sval), m_from (from), m_to (to),
   m_origin (origin),
   m_dst_state (dst_state)
 {
@@ -245,9 +281,12 @@ state_change_event::get_desc (bool can_colorize) const
 {
   if (m_pending_diagnostic)
     {
+      region_model *model = m_dst_state.m_region_model;
+      tree var = model->get_representative_tree (m_sval);
+      tree origin = model->get_representative_tree (m_origin);
       label_text custom_desc
 	= m_pending_diagnostic->describe_state_change
-	    (evdesc::state_change (can_colorize, m_var, m_origin,
+	    (evdesc::state_change (can_colorize, var, origin,
 				   m_from, m_to, m_emission_id, *this));
       if (custom_desc.m_buffer)
 	{
@@ -260,18 +299,18 @@ state_change_event::get_desc (bool can_colorize) const
 		  (can_colorize,
 		   "%s (state of %qE: %qs -> %qs, origin: %qE)",
 		   custom_desc.m_buffer,
-		   m_var,
-		   m_sm.get_state_name (m_from),
-		   m_sm.get_state_name (m_to),
-		   m_origin);
+		   var,
+		   m_from->get_name (),
+		   m_to->get_name (),
+		   origin);
 	      else
 		result = make_label_text
 		  (can_colorize,
-		   "%s (state of %qE: %qs -> %qs, origin: NULL)",
+		   "%s (state of %qE: %qs -> %qs, NULL origin)",
 		   custom_desc.m_buffer,
-		   m_var,
-		   m_sm.get_state_name (m_from),
-		   m_sm.get_state_name (m_to));
+		   var,
+		   m_from->get_name (),
+		   m_to->get_name ());
 	      custom_desc.maybe_free ();
 	      return result;
 	    }
@@ -281,32 +320,40 @@ state_change_event::get_desc (bool can_colorize) const
     }
 
   /* Fallback description.  */
-  if (m_var)
+  if (m_sval)
     {
+      label_text sval_desc = m_sval->get_desc ();
+      label_text result;
       if (m_origin)
-	return make_label_text
-	  (can_colorize,
-	   "state of %qE: %qs -> %qs (origin: %qE)",
-	   m_var,
-	   m_sm.get_state_name (m_from),
-	   m_sm.get_state_name (m_to),
-	   m_origin);
+	{
+	  label_text origin_desc = m_origin->get_desc ();
+	  result = make_label_text
+	    (can_colorize,
+	     "state of %qs: %qs -> %qs (origin: %qs)",
+	     sval_desc.m_buffer,
+	     m_from->get_name (),
+	     m_to->get_name (),
+	     origin_desc.m_buffer);
+	  origin_desc.maybe_free ();
+	}
       else
-	return make_label_text
+	result = make_label_text
 	  (can_colorize,
-	   "state of %qE: %qs -> %qs (origin: NULL)",
-	   m_var,
-	   m_sm.get_state_name (m_from),
-	   m_sm.get_state_name (m_to));
+	   "state of %qs: %qs -> %qs (NULL origin)",
+	   sval_desc.m_buffer,
+	   m_from->get_name (),
+	   m_to->get_name ());
+      sval_desc.maybe_free ();
+      return result;
     }
   else
     {
-      gcc_assert (m_origin == NULL_TREE);
+      gcc_assert (m_origin == NULL);
       return make_label_text
 	(can_colorize,
 	 "global state: %qs -> %qs",
-	 m_sm.get_state_name (m_from),
-	 m_sm.get_state_name (m_to));
+	 m_from->get_name (),
+	 m_to->get_name ());
     }
 }
 
@@ -601,7 +648,11 @@ call_event::call_event (const exploded_edge &eedge,
 			location_t loc, tree fndecl, int depth)
 : superedge_event (EK_CALL_EDGE, eedge, loc, fndecl, depth)
 {
-  gcc_assert (eedge.m_sedge->m_kind == SUPEREDGE_CALL);
+  if (eedge.m_sedge)
+    gcc_assert (eedge.m_sedge->m_kind == SUPEREDGE_CALL);
+
+   m_src_snode = eedge.m_src->get_supernode ();
+   m_dest_snode = eedge.m_dest->get_supernode ();
 }
 
 /* Implementation of diagnostic_event::get_desc vfunc for
@@ -621,12 +672,13 @@ call_event::get_desc (bool can_colorize) const
   if (m_critical_state && m_pending_diagnostic)
     {
       gcc_assert (m_var);
+      tree var = fixup_tree_for_diagnostic (m_var);
       label_text custom_desc
 	= m_pending_diagnostic->describe_call_with_state
 	    (evdesc::call_with_state (can_colorize,
-				      m_sedge->m_src->m_fun->decl,
-				      m_sedge->m_dest->m_fun->decl,
-				      m_var,
+				      m_src_snode->m_fun->decl,
+				      m_dest_snode->m_fun->decl,
+				      var,
 				      m_critical_state));
       if (custom_desc.m_buffer)
 	return custom_desc;
@@ -634,8 +686,8 @@ call_event::get_desc (bool can_colorize) const
 
   return make_label_text (can_colorize,
 			  "calling %qE from %qE",
-			  m_sedge->m_dest->m_fun->decl,
-			  m_sedge->m_src->m_fun->decl);
+			  m_dest_snode->m_fun->decl,
+			  m_src_snode->m_fun->decl);
 }
 
 /* Override of checker_event::is_call_p for calls.  */
@@ -654,7 +706,11 @@ return_event::return_event (const exploded_edge &eedge,
 			    location_t loc, tree fndecl, int depth)
 : superedge_event (EK_RETURN_EDGE, eedge, loc, fndecl, depth)
 {
-  gcc_assert (eedge.m_sedge->m_kind == SUPEREDGE_RETURN);
+  if (eedge.m_sedge)
+    gcc_assert (eedge.m_sedge->m_kind == SUPEREDGE_RETURN);
+
+  m_src_snode = eedge.m_src->get_supernode ();
+  m_dest_snode = eedge.m_dest->get_supernode ();
 }
 
 /* Implementation of diagnostic_event::get_desc vfunc for
@@ -680,16 +736,16 @@ return_event::get_desc (bool can_colorize) const
       label_text custom_desc
 	= m_pending_diagnostic->describe_return_of_state
 	    (evdesc::return_of_state (can_colorize,
-				      m_sedge->m_dest->m_fun->decl,
-				      m_sedge->m_src->m_fun->decl,
+				      m_dest_snode->m_fun->decl,
+				      m_src_snode->m_fun->decl,
 				      m_critical_state));
       if (custom_desc.m_buffer)
 	return custom_desc;
     }
   return make_label_text (can_colorize,
 			  "returning to %qE from %qE",
-			  m_sedge->m_dest->m_fun->decl,
-			  m_sedge->m_src->m_fun->decl);
+			  m_dest_snode->m_fun->decl,
+			  m_src_snode->m_fun->decl);
 }
 
 /* Override of checker_event::is_return_p for returns.  */
@@ -698,6 +754,16 @@ bool
 return_event::is_return_p () const
 {
   return true;
+}
+
+/* class start_consolidated_cfg_edges_event : public checker_event.  */
+
+label_text
+start_consolidated_cfg_edges_event::get_desc (bool can_colorize) const
+{
+  return make_label_text (can_colorize,
+			  "following %qs branch...",
+			  m_edge_sense ? "true" : "false");
 }
 
 /* class setjmp_event : public checker_event.  */
@@ -857,18 +923,25 @@ warning_event::get_desc (bool can_colorize) const
 {
   if (m_pending_diagnostic)
     {
+      tree var = fixup_tree_for_diagnostic (m_var);
       label_text ev_desc
 	= m_pending_diagnostic->describe_final_event
-	    (evdesc::final_event (can_colorize, m_var, m_state));
+	    (evdesc::final_event (can_colorize, var, m_state));
       if (ev_desc.m_buffer)
 	{
 	  if (m_sm && flag_analyzer_verbose_state_changes)
 	    {
-	      label_text result
-		= make_label_text (can_colorize,
-				   "%s (%qE is in state %qs)",
-				   ev_desc.m_buffer,
-				   m_var,m_sm->get_state_name (m_state));
+	      label_text result;
+	      if (var)
+		result = make_label_text (can_colorize,
+					  "%s (%qE is in state %qs)",
+					  ev_desc.m_buffer,
+					  var, m_state->get_name ());
+	      else
+		result = make_label_text (can_colorize,
+					  "%s (in global state %qs)",
+					  ev_desc.m_buffer,
+					  m_state->get_name ());
 	      ev_desc.maybe_free ();
 	      return result;
 	    }
@@ -878,10 +951,16 @@ warning_event::get_desc (bool can_colorize) const
     }
 
   if (m_sm)
-    return make_label_text (can_colorize,
-			    "here (%qE is in state %qs)",
-			    m_var,
-			    m_sm->get_state_name (m_state));
+    {
+      if (m_var)
+	return make_label_text (can_colorize,
+				"here (%qE is in state %qs)",
+				m_var, m_state->get_name ());
+      else
+	return make_label_text (can_colorize,
+				"here (in global state %qs)",
+				m_state->get_name ());
+    }
   else
     return label_text::borrow ("here");
 }
@@ -946,6 +1025,17 @@ checker_path::debug () const
     }
 }
 
+/* Add region_creation_event instance to this path for REG,
+   describing whether REG is on the stack or heap.  */
+
+void
+checker_path::add_region_creation_event (const region *reg,
+					 location_t loc,
+					 tree fndecl, int depth)
+{
+  add_event (new region_creation_event (reg, loc, fndecl, depth));
+}
+
 /* Add a warning_event to the end of this path.  */
 
 void
@@ -954,11 +1044,30 @@ checker_path::add_final_event (const state_machine *sm,
 			       tree var, state_machine::state_t state)
 {
   checker_event *end_of_path
-    = new warning_event (stmt->location,
+    = new warning_event (get_stmt_location (stmt, enode->get_function ()),
 			 enode->get_function ()->decl,
 			 enode->get_stack_depth (),
 			 sm, var, state);
   add_event (end_of_path);
+}
+
+void
+checker_path::fixup_locations (pending_diagnostic *pd)
+{
+  for (checker_event *e : m_events)
+    e->set_location (pd->fixup_location (e->get_location ()));
+}
+
+/* Return true if there is a (start_cfg_edge_event, end_cfg_edge_event) pair
+   at (IDX, IDX + 1).  */
+
+bool
+checker_path::cfg_edge_pair_at_p (unsigned idx) const
+{
+  if (m_events.length () < idx + 1)
+    return false;
+  return (m_events[idx]->m_kind == EK_START_CFG_EDGE
+	  && m_events[idx + 1]->m_kind == EK_END_CFG_EDGE);
 }
 
 } // namespace ana

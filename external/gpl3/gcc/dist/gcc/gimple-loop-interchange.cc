@@ -1,5 +1,5 @@
 /* Loop interchange.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
 This file is part of GCC.
@@ -1283,12 +1283,15 @@ tree_loop_interchange::move_code_to_inner_loop (class loop *outer,
 	   arr[i][j - 1][k] = 0;  */
 
 static void
-compute_access_stride (class loop *loop_nest, class loop *loop,
+compute_access_stride (class loop *&loop_nest, class loop *loop,
 		       data_reference_p dr)
 {
   vec<tree> *strides = new vec<tree> ();
-  basic_block bb = gimple_bb (DR_STMT (dr));
+  dr->aux = strides;
 
+  basic_block bb = gimple_bb (DR_STMT (dr));
+  if (!flow_bb_inside_loop_p (loop_nest, bb))
+    return;
   while (!flow_bb_inside_loop_p (loop, bb))
     {
       strides->safe_push (build_int_cst (sizetype, 0));
@@ -1316,39 +1319,47 @@ compute_access_stride (class loop *loop_nest, class loop *loop,
 	}
       /* Otherwise punt.  */
       else
-	{
-	  dr->aux = strides;
-	  return;
-	}
+	return;
     }
   tree scev_base = build_fold_addr_expr (ref);
   tree scev = analyze_scalar_evolution (loop, scev_base);
-  scev = instantiate_scev (loop_preheader_edge (loop_nest), loop, scev);
-  if (! chrec_contains_undetermined (scev))
+  if (chrec_contains_undetermined (scev))
+    return;
+
+  tree orig_scev = scev;
+  do
     {
-      tree sl = scev;
-      class loop *expected = loop;
-      while (TREE_CODE (sl) == POLYNOMIAL_CHREC)
+      scev = instantiate_scev (loop_preheader_edge (loop_nest),
+			       loop, orig_scev);
+      if (! chrec_contains_undetermined (scev))
+	break;
+
+      /* If we couldn't instantiate for the desired nest, shrink it.  */
+      if (loop_nest == loop)
+	return;
+      loop_nest = loop_nest->inner;
+    } while (1);
+
+  tree sl = scev;
+  class loop *expected = loop;
+  while (TREE_CODE (sl) == POLYNOMIAL_CHREC)
+    {
+      class loop *sl_loop = get_chrec_loop (sl);
+      while (sl_loop != expected)
 	{
-	  class loop *sl_loop = get_chrec_loop (sl);
-	  while (sl_loop != expected)
-	    {
-	      strides->safe_push (size_int (0));
-	      expected = loop_outer (expected);
-	    }
-	  strides->safe_push (CHREC_RIGHT (sl));
-	  sl = CHREC_LEFT (sl);
+	  strides->safe_push (size_int (0));
 	  expected = loop_outer (expected);
 	}
-      if (! tree_contains_chrecs (sl, NULL))
-	while (expected != loop_outer (loop_nest))
-	  {
-	    strides->safe_push (size_int (0));
-	    expected = loop_outer (expected);
-	  }
+      strides->safe_push (CHREC_RIGHT (sl));
+      sl = CHREC_LEFT (sl);
+      expected = loop_outer (expected);
     }
-
-  dr->aux = strides;
+  if (! tree_contains_chrecs (sl, NULL))
+    while (expected != loop_outer (loop_nest))
+      {
+	strides->safe_push (size_int (0));
+	expected = loop_outer (expected);
+      }
 }
 
 /* Given loop nest LOOP_NEST with innermost LOOP, the function computes
@@ -1366,9 +1377,10 @@ compute_access_strides (class loop *loop_nest, class loop *loop,
   data_reference_p dr;
   vec<tree> *stride;
 
+  class loop *interesting_loop_nest = loop_nest;
   for (i = 0; datarefs.iterate (i, &dr); ++i)
     {
-      compute_access_stride (loop_nest, loop, dr);
+      compute_access_stride (interesting_loop_nest, loop, dr);
       stride = DR_ACCESS_STRIDE (dr);
       if (stride->length () < num_loops)
 	{
@@ -1943,7 +1955,10 @@ prepare_data_references (class loop *loop, vec<data_reference_p> *datarefs)
           delete bb_refs;
         }
       else if (bb_refs->is_empty ())
-	delete bb_refs;
+	{
+	  bb_refs->release ();
+	  delete bb_refs;
+	}
       else
 	bb->aux = bb_refs;
     }
@@ -1957,7 +1972,10 @@ prepare_data_references (class loop *loop, vec<data_reference_p> *datarefs)
 
       bb_refs = (vec<data_reference_p> *) bb->aux;
       if (loop_nest && flow_bb_inside_loop_p (loop_nest, bb))
-	datarefs->safe_splice (*bb_refs);
+	{
+	  datarefs->safe_splice (*bb_refs);
+	  bb_refs->release ();
+	}
       else
 	free_data_refs (*bb_refs);
 
@@ -2071,8 +2089,7 @@ pass_linterchange::execute (function *fun)
     return 0;
 
   bool changed_p = false;
-  class loop *loop;
-  FOR_EACH_LOOP (loop, LI_ONLY_INNERMOST)
+  for (auto loop : loops_list (cfun, LI_ONLY_INNERMOST))
     {
       vec<loop_p> loop_nest = vNULL;
       vec<data_reference_p> datarefs = vNULL;
@@ -2087,7 +2104,14 @@ pass_linterchange::execute (function *fun)
       loop_nest.release ();
     }
 
-  return changed_p ? (TODO_update_ssa_only_virtuals) : 0;
+  if (changed_p)
+    {
+      unsigned todo = TODO_update_ssa_only_virtuals;
+      todo |= loop_invariant_motion_in_fun (cfun, false);
+      scev_reset ();
+      return todo;
+    }
+  return 0;
 }
 
 } // anon namespace

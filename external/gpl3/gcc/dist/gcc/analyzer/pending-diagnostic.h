@@ -1,5 +1,5 @@
 /* Classes for analyzer diagnostics.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -22,6 +22,22 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_ANALYZER_PENDING_DIAGNOSTIC_H
 
 namespace ana {
+
+/* A bundle of information about things that are of interest to a
+   pending_diagnostic.
+
+   For now, merely the set of regions that are pertinent to the
+   diagnostic, so that we can notify the user about when they
+   were created.  */
+
+struct interesting_t
+{
+  void add_region_creation (const region *reg);
+
+  void dump_to_pp (pretty_printer *pp, bool simple) const;
+
+  auto_vec<const region *> m_region_creation;
+};
 
 /* Various bundles of information used for generating more precise
    messages for events within a diagnostic_path, for passing to the
@@ -146,6 +162,12 @@ class pending_diagnostic
  public:
   virtual ~pending_diagnostic () {}
 
+  /* Vfunc to get the command-line option used when emitting the diagnostic,
+     or zero if there is none.
+     Used by diagnostic_manager for early rejection of diagnostics (to avoid
+     having to generate feasible execution paths for them).  */
+  virtual int get_controlling_option () const = 0;
+
   /* Vfunc for emitting the diagnostic.  The rich_location will have been
      populated with a diagnostic_path.
      Return true if a diagnostic is actually emitted.  */
@@ -154,10 +176,13 @@ class pending_diagnostic
   /* Hand-coded RTTI: get an ID for the subclass.  */
   virtual const char *get_kind () const = 0;
 
+  /* A vfunc for identifying "use of uninitialized value".  */
+  virtual bool use_of_uninit_p () const { return false; }
+
   /* Compare for equality with OTHER, which might be of a different
      subclass.  */
 
-  bool equal_p (const pending_diagnostic &other)
+  bool equal_p (const pending_diagnostic &other) const
   {
     /* Check for pointer equality on the IDs from get_kind.  */
     if (get_kind () != other.get_kind ())
@@ -174,6 +199,14 @@ class pending_diagnostic
   /* Return true if T1 and T2 are "the same" for the purposes of
      diagnostic deduplication.  */
   static bool same_tree_p (tree t1, tree t2);
+
+  /* A vfunc for fixing up locations (both the primary location for the
+     diagnostic, and for events in their paths), e.g. to avoid unwinding
+     inside specific macros.  */
+  virtual location_t fixup_location (location_t loc) const
+  {
+    return loc;
+  }
 
   /* For greatest precision-of-wording, the various following "describe_*"
      virtual functions give the pending diagnostic a way to describe events
@@ -246,6 +279,39 @@ class pending_diagnostic
   }
 
   /* End of precision-of-wording vfuncs.  */
+
+  /* Vfunc for extending/overriding creation of the events for an
+     exploded_edge that corresponds to a superedge, allowing for custom
+     events to be created that are pertinent to a particular
+     pending_diagnostic subclass.
+
+     For example, the -Wanalyzer-stale-setjmp-buffer diagnostic adds a
+     custom event showing when the pertinent stack frame is popped
+     (and thus the point at which the jmp_buf becomes invalid).  */
+
+  virtual bool maybe_add_custom_events_for_superedge (const exploded_edge &,
+						      checker_path *)
+  {
+    return false;
+  }
+
+  /* Vfunc for determining that this pending_diagnostic supercedes OTHER,
+     and that OTHER should therefore not be emitted.
+     They have already been tested for being at the same stmt.  */
+
+  virtual bool
+  supercedes_p (const pending_diagnostic &other ATTRIBUTE_UNUSED) const
+  {
+    return false;
+  }
+
+  /* Vfunc for registering additional information of interest to this
+     diagnostic.  */
+
+  virtual void mark_interesting_stuff (interesting_t *)
+  {
+    /* Default no-op implementation.  */
+  }
 };
 
 /* A template to make it easier to make subclasses of pending_diagnostic.
@@ -262,6 +328,49 @@ class pending_diagnostic_subclass : public pending_diagnostic
 {
  public:
   bool subclass_equal_p (const pending_diagnostic &base_other) const
+    FINAL OVERRIDE
+  {
+    const Subclass &other = (const Subclass &)base_other;
+    return *(const Subclass*)this == other;
+  }
+};
+
+/* An abstract base class for capturing additional notes that are to be
+   emitted with a diagnostic.  */
+
+class pending_note
+{
+public:
+  virtual ~pending_note () {}
+
+  /* Hand-coded RTTI: get an ID for the subclass.  */
+  virtual const char *get_kind () const = 0;
+
+  /* Vfunc for emitting the note.  */
+  virtual void emit () const = 0;
+
+  bool equal_p (const pending_note &other) const
+  {
+    /* Check for pointer equality on the IDs from get_kind.  */
+    if (get_kind () != other.get_kind ())
+      return false;
+    /* Call vfunc now we know they have the same ID: */
+    return subclass_equal_p (other);
+  }
+
+  /* A vfunc for testing for equality, where we've already
+     checked they have the same ID.  See pending_note_subclass
+     below for a convenience subclass for implementing this.  */
+  virtual bool subclass_equal_p (const pending_note &other) const = 0;
+};
+
+/* Analogous to pending_diagnostic_subclass, but for pending_note.  */
+
+template <class Subclass>
+class pending_note_subclass : public pending_note
+{
+ public:
+  bool subclass_equal_p (const pending_note &base_other) const
     FINAL OVERRIDE
   {
     const Subclass &other = (const Subclass &)base_other;

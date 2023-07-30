@@ -1,5 +1,5 @@
 /* Callgraph handling code.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -117,6 +117,7 @@ public:
       refuse_visibility_changes (false), externally_visible (false),
       no_reorder (false), force_output (false), forced_by_abi (false),
       unique_name (false), implicit_section (false), body_removed (false),
+      semantic_interposition (flag_semantic_interposition),
       used_from_other_partition (false), in_other_partition (false),
       address_taken (false), in_init_priority_hash (false),
       need_lto_streaming (false), offloadable (false), ifunc_resolver (false),
@@ -192,10 +193,11 @@ public:
   /* Clone reference REF to this symtab_node and set its stmt to STMT.  */
   ipa_ref *clone_reference (ipa_ref *ref, gimple *stmt);
 
-  /* Find the structure describing a reference to REFERRED_NODE
-     and associated with statement STMT.  */
+  /* Find the structure describing a reference to REFERRED_NODE of USE_TYPE and
+     associated with statement STMT or LTO_STMT_UID.  */
   ipa_ref *find_reference (symtab_node *referred_node, gimple *stmt,
-			   unsigned int lto_stmt_uid);
+			   unsigned int lto_stmt_uid,
+			   enum ipa_ref_use use_type);
 
   /* Remove all references that are associated with statement STMT.  */
   void remove_stmt_references (gimple *stmt);
@@ -221,7 +223,7 @@ public:
   /* Get number of references for this node.  */
   inline unsigned num_references (void)
   {
-    return ref_list.references ? ref_list.references->length () : 0;
+    return ref_list.references.length ();
   }
 
   /* Iterates I-th reference in the list, REF is also set.  */
@@ -263,7 +265,7 @@ public:
     }
 
   /* Return section as string.  */
-  const char * get_section ()
+  const char * get_section () const
     {
       if (!x_section)
 	return NULL;
@@ -325,10 +327,17 @@ public:
   /* Set section for symbol and its aliases.  */
   void set_section (const char *section);
 
+  /* Like set_section, but copying the section name from another node.  */
+  void set_section (const symtab_node &other);
+
   /* Set section, do not recurse into aliases.
      When one wants to change section of symbol and its aliases,
      use set_section.  */
   void set_section_for_node (const char *section);
+
+  /* Like set_section_for_node, but copying the section name from another
+     node.  */
+  void set_section_for_node (const symtab_node &other);
 
   /* Set initialization priority to PRIORITY.  */
   void set_init_priority (priority_type priority);
@@ -397,7 +406,8 @@ public:
   inline bool
   can_be_discarded_p (void)
   {
-    return (DECL_EXTERNAL (decl)
+    return ((DECL_EXTERNAL (decl)
+	     && !in_other_partition)
 	    || ((get_comdat_group ()
 		 || DECL_COMMON (decl)
 		 || (DECL_SECTION_NAME (decl) && DECL_WEAK (decl)))
@@ -495,7 +505,7 @@ public:
 	 declarations). In this case the assembler names compare via
 	 assembler_names_equal_p and weakref is false
        - aliases that are renamed at a time being output to final file
-	 by varasm.c. For those DECL_ASSEMBLER_NAME have
+	 by varasm.cc. For those DECL_ASSEMBLER_NAME have
 	 IDENTIFIER_TRANSPARENT_ALIAS set and thus also their assembler
 	 name must be unique.
 	 Weakrefs belong to this category when we target assembler without
@@ -549,6 +559,8 @@ public:
   /* True when body and other characteristics have been removed by
      symtab_remove_unreachable_nodes. */
   unsigned body_removed : 1;
+  /* True when symbol should comply to -fsemantic-interposition flag.  */
+  unsigned semantic_interposition : 1;
 
   /*** WHOPR Partitioning flags.
        These flags are used at ltrans stage when only part of the callgraph is
@@ -607,7 +619,7 @@ public:
   symtab_node *same_comdat_group;
 
   /* Vectors of referring and referenced entities.  */
-  ipa_ref_list ref_list;
+  ipa_ref_list GTY((skip)) ref_list;
 
   /* Alias target. May be either DECL pointer or ASSEMBLER_NAME pointer
      depending to what was known to frontend on the creation time.
@@ -634,7 +646,7 @@ protected:
 
   /* Remove node from symbol table.  This function is not used directly, but via
      cgraph/varpool node removal routines.  */
-  void unregister (void);
+  void unregister (struct clone_info *);
 
   /* Return the initialization and finalization priority information for
      DECL.  If there is no previous priority information, a freshly
@@ -646,8 +658,9 @@ protected:
 				      void *data,
 				      bool include_overwrite);
 private:
-  /* Worker for set_section.  */
-  static bool set_section (symtab_node *n, void *s);
+  /* Workers for set_section.  */
+  static bool set_section_from_string (symtab_node *n, void *s);
+  static bool set_section_from_node (symtab_node *n, void *o);
 
   /* Worker for symtab_resolve_alias.  */
   static bool set_implicit_section (symtab_node *n, void *);
@@ -684,52 +697,6 @@ extern const char * const cgraph_availability_names[];
 extern const char * const ld_plugin_symbol_resolution_names[];
 extern const char * const tls_model_names[];
 
-/* Sub-structure of cgraph_node.  Holds information about thunk, used only for
-   same body aliases.
-
-   Thunks are basically wrappers around methods which are introduced in case
-   of multiple inheritance in order to adjust the value of the "this" pointer
-   or of the returned value.
-
-   In the case of this-adjusting thunks, each back-end can override the
-   can_output_mi_thunk/output_mi_thunk target hooks to generate a minimal thunk
-   (with a tail call for instance) directly as assembly.  For the default hook
-   or for the case where the can_output_mi_thunk hooks return false, the thunk
-   is gimplified and lowered using the regular machinery.  */
-
-struct GTY(()) cgraph_thunk_info {
-  /* Offset used to adjust "this".  */
-  HOST_WIDE_INT fixed_offset;
-
-  /* Offset in the virtual table to get the offset to adjust "this".  Valid iff
-     VIRTUAL_OFFSET_P is true.  */
-  HOST_WIDE_INT virtual_value;
-
-  /* Offset from "this" to get the offset to adjust "this".  Zero means: this
-     offset is to be ignored.  */
-  HOST_WIDE_INT indirect_offset;
-
-  /* Thunk target, i.e. the method that this thunk wraps.  Depending on the
-     TARGET_USE_LOCAL_THUNK_ALIAS_P macro, this may have to be a new alias.  */
-  tree alias;
-
-  /* Nonzero for a "this" adjusting thunk and zero for a result adjusting
-     thunk.  */
-  bool this_adjusting;
-
-  /* If true, this thunk is what we call a virtual thunk.  In this case:
-     * for this-adjusting thunks, after the FIXED_OFFSET based adjustment is
-       done, add to the result the offset found in the vtable at:
-	 vptr + VIRTUAL_VALUE
-     * for result-adjusting thunks, the FIXED_OFFSET adjustment is done after
-       the virtual one.  */
-  bool virtual_offset_p;
-
-  /* Set to true when alias node (the cgraph_node to which this struct belong)
-     is a thunk.  Access to any other fields is invalid if this is false.  */
-  bool thunk_p;
-};
-
 /* Represent which DECL tree (or reference to such tree)
    will be replaced by another tree while versioning.  */
 struct GTY(()) ipa_replace_map
@@ -738,27 +705,10 @@ struct GTY(()) ipa_replace_map
   tree new_tree;
   /* Parameter number to replace, when old_tree is NULL.  */
   int parm_num;
-};
-
-struct GTY(()) cgraph_clone_info
-{
-  /* Constants discovered by IPA-CP, i.e. which parameter should be replaced
-     with what.  */
-  vec<ipa_replace_map *, va_gc> *tree_map;
-  /* Parameter modification that IPA-SRA decided to perform.  */
-  ipa_param_adjustments *param_adjustments;
-  /* Lists of dummy-decl and offset pairs representing split formal parameters
-     in the caller.  Offsets of all new replacements are enumerated, those
-     coming from the same original parameter have the same dummy decl stored
-     along with them.
-
-     Dummy decls sit in call statement arguments followed by new parameter
-     decls (or their SSA names) in between (caller) clone materialization and
-     call redirection.  Redirection then recognizes the dummy variable and
-     together with the stored offsets can reconstruct what exactly the new
-     parameter decls represent and can leave in place only those that the
-     callee expects.  */
-  vec<ipa_param_performed_split, va_gc> *performed_splits;
+  /* Set if the newly added reference should not be an address one, but a load
+     one from the operand of the ADDR_EXPR in NEW_TREE.  This is for cases when
+     the corresponding parameter p is used only as *p.  */
+  unsigned force_load_ref : 1;
 };
 
 enum cgraph_simd_clone_arg_type
@@ -815,31 +765,31 @@ struct GTY(()) cgraph_simd_clone_arg {
      variable), uniform, or vector.  */
   enum cgraph_simd_clone_arg_type arg_type;
 
+  /* Variable alignment if available, otherwise 0.  */
+  unsigned int alignment;
+
   /* For arg_type SIMD_CLONE_ARG_TYPE_LINEAR_*CONSTANT_STEP this is
      the constant linear step, if arg_type is
      SIMD_CLONE_ARG_TYPE_LINEAR_*VARIABLE_STEP, this is index of
      the uniform argument holding the step, otherwise 0.  */
   HOST_WIDE_INT linear_step;
-
-  /* Variable alignment if available, otherwise 0.  */
-  unsigned int alignment;
 };
 
 /* Specific data for a SIMD function clone.  */
 
 struct GTY(()) cgraph_simd_clone {
   /* Number of words in the SIMD lane associated with this clone.  */
-  unsigned int simdlen;
+  poly_uint64 simdlen;
 
   /* Number of annotated function arguments in `args'.  This is
      usually the number of named arguments in FNDECL.  */
   unsigned int nargs;
 
   /* Max hardware vector size in bits for integral vectors.  */
-  unsigned int vecsize_int;
+  poly_uint64 vecsize_int;
 
   /* Max hardware vector size in bits for floating point vectors.  */
-  unsigned int vecsize_float;
+  poly_uint64 vecsize_float;
 
   /* Machine mode of the mask argument(s), if they are to be passed
      as bitmasks in integer argument(s).  VOIDmode if masks are passed
@@ -924,14 +874,15 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
   /* Constructor.  */
   explicit cgraph_node (int uid)
     : symtab_node (SYMTAB_FUNCTION), callees (NULL), callers (NULL),
-      indirect_calls (NULL), origin (NULL), nested (NULL), next_nested (NULL),
+      indirect_calls (NULL),
       next_sibling_clone (NULL), prev_sibling_clone (NULL), clones (NULL),
       clone_of (NULL), call_site_hash (NULL), former_clone_of (NULL),
       simdclone (NULL), simd_clones (NULL), ipa_transforms_to_apply (vNULL),
-      inlined_to (NULL), rtl (NULL), clone (), thunk (),
+      inlined_to (NULL), rtl (NULL),
       count (profile_count::uninitialized ()),
       count_materialization_scale (REG_BR_PROB_BASE), profile_id (0),
-      unit_id (0), tp_first_run (0), used_as_abstract_origin (false),
+      unit_id (0), tp_first_run (0), thunk (false),
+      used_as_abstract_origin (false),
       lowered (false), process (false), frequency (NODE_FREQUENCY_NORMAL),
       only_called_at_startup (false), only_called_at_exit (false),
       tm_clone (false), dispatcher_function (false), calls_comdat_local (false),
@@ -940,7 +891,8 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
       split_part (false), indirect_call_target (false), local (false),
       versionable (false), can_change_signature (false),
       redefined_extern_inline (false), tm_may_enter_irr (false),
-      ipcp_clone (false), m_uid (uid), m_summary_id (-1)
+      ipcp_clone (false), declare_variant_alt (false),
+      calls_declare_variant_alt (false), m_uid (uid), m_summary_id (-1)
   {}
 
   /* Remove the node from cgraph and all inline clones inlined into it.
@@ -1006,7 +958,7 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
   /* Create callgraph node clone with new declaration.  The actual body will be
      copied later at compilation stage.  The name of the new clone will be
      constructed from the name of the original node, SUFFIX and NUM_SUFFIX.  */
-  cgraph_node *create_virtual_clone (vec<cgraph_edge *> redirect_callers,
+  cgraph_node *create_virtual_clone (const vec<cgraph_edge *> &redirect_callers,
 				     vec<ipa_replace_map *, va_gc> *tree_map,
 				     ipa_param_adjustments *param_adjustments,
 				     const char * suffix, unsigned num_suffix);
@@ -1017,7 +969,7 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
 
   /* cgraph node being removed from symbol table; see if its entry can be
    replaced by other inline clone.  */
-  cgraph_node *find_replacement (void);
+  cgraph_node *find_replacement (struct clone_info *);
 
   /* Create a new cgraph node which is the new version of
      callgraph node.  REDIRECT_CALLERS holds the callers
@@ -1059,13 +1011,16 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
      that will promote value of the attribute DECL_FUNCTION_SPECIFIC_TARGET
      of the declaration.
 
+     If VERSION_DECL is set true, use clone_function_name_numbered for the
+     function clone.  Otherwise, use clone_function_name.
+
      Return the new version's cgraph node.  */
   cgraph_node *create_version_clone_with_body
     (vec<cgraph_edge *> redirect_callers,
      vec<ipa_replace_map *, va_gc> *tree_map,
      ipa_param_adjustments *param_adjustments,
      bitmap bbs_to_copy, basic_block new_entry_block, const char *clone_name,
-     tree target_attributes = NULL_TREE);
+     tree target_attributes = NULL_TREE, bool version_decl = true);
 
   /* Insert a new cgraph_function_version_info node into cgraph_fnver_htab
      corresponding to cgraph_node.  */
@@ -1080,7 +1035,7 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
 
   /* Add thunk alias into callgraph.  The alias declaration is ALIAS and it
      aliases DECL with an adjustments made into the first parameter.
-     See comments in struct cgraph_thunk_info for detail on the parameters.  */
+     See comments in struct symtab-thunks.h for detail on the parameters.  */
   cgraph_node * create_thunk (tree alias, tree, bool this_adjusting,
 			      HOST_WIDE_INT fixed_offset,
 			      HOST_WIDE_INT virtual_value,
@@ -1100,13 +1055,6 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
 
   cgraph_node *ultimate_alias_target (availability *availability = NULL,
 				      symtab_node *ref = NULL);
-
-  /* Expand thunk NODE to gimple if possible.
-     When FORCE_GIMPLE_THUNK is true, gimple thunk is created and
-     no assembler is produced.
-     When OUTPUT_ASM_THUNK is true, also produce assembler for
-     thunks that are not lowered.  */
-  bool expand_thunk (bool output_asm_thunks, bool force_gimple_thunk);
 
   /*  Call expand_thunk on all callers that are thunks and analyze those
       nodes that were expanded.  */
@@ -1147,24 +1095,23 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
 
   /* When doing LTO, read cgraph_node's body from disk if it is not already
      present.  */
-  bool get_untransformed_body (void);
+  bool get_untransformed_body ();
 
   /* Prepare function body.  When doing LTO, read cgraph_node's body from disk 
      if it is not already present.  When some IPA transformations are scheduled,
      apply them.  */
-  bool get_body (void);
+  bool get_body ();
+
+  void materialize_clone (void);
 
   /* Release memory used to represent body of function.
      Use this only for functions that are released before being translated to
      target code (i.e. RTL).  Functions that are compiled to RTL and beyond
-     are free'd in final.c via free_after_compilation().  */
+     are free'd in final.cc via free_after_compilation().  */
   void release_body (bool keep_arguments = false);
 
   /* Return the DECL_STRUCT_FUNCTION of the function.  */
   struct function *get_fun () const;
-
-  /* cgraph_node is no longer nested function; update cgraph accordingly.  */
-  void unnest (void);
 
   /* Bring cgraph node local.  */
   void make_local (void);
@@ -1204,7 +1151,7 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
 
   /* Collect all callers of cgraph_node and its aliases that are known to lead
      to NODE (i.e. are not overwritable) and that are not thunks.  */
-  vec<cgraph_edge *> collect_callers (void);
+  auto_vec<cgraph_edge *> collect_callers (void);
 
   /* Remove all callers from the node.  */
   void remove_callers (void);
@@ -1223,6 +1170,10 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
   /* SET DECL_IS_MALLOC on cgraph_node's decl and on aliases of the node
      if any.  */
   bool set_malloc_flag (bool malloc_p);
+
+  /* SET TREE_THIS_VOLATILE on cgraph_node's decl and on aliases of the node
+     if any.  */
+  bool set_noreturn_flag (bool noreturn_p);
 
   /* If SET_CONST is true, mark function, aliases and thunks to be ECF_CONST.
     If SET_CONST if false, clear the flag.
@@ -1327,14 +1278,14 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
   inline bool has_gimple_body_p (void);
 
   /* Return true if this node represents a former, i.e. an expanded, thunk.  */
-  inline bool former_thunk_p (void);
+  bool former_thunk_p (void);
 
   /* Check if function calls comdat local.  This is used to recompute
      calls_comdat_local flag after function transformations.  */
   bool check_calls_comdat_local_p ();
 
   /* Return true if function should be optimized for size.  */
-  bool optimize_for_size_p (void);
+  enum optimize_size_level optimize_for_size_p (void);
 
   /* Dump the callgraph to file F.  */
   static void dump_cgraph (FILE *f);
@@ -1438,13 +1389,6 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
   /* List of edges representing indirect calls with a yet undetermined
      callee.  */
   cgraph_edge *indirect_calls;
-  /* For nested functions points to function the node is nested in.  */
-  cgraph_node *origin;
-  /* Points to first nested function, if any.  */
-  cgraph_node *nested;
-  /* Pointer to the next function with same origin, if any.  */
-  cgraph_node *next_nested;
-  /* Pointer to the next clone.  */
   cgraph_node *next_sibling_clone;
   cgraph_node *prev_sibling_clone;
   cgraph_node *clones;
@@ -1464,17 +1408,15 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
   /* Interprocedural passes scheduled to have their transform functions
      applied next time we execute local pass on them.  We maintain it
      per-function in order to allow IPA passes to introduce new functions.  */
-  vec<ipa_opt_pass> GTY((skip)) ipa_transforms_to_apply;
+  vec<ipa_opt_pass, va_heap, vl_ptr> GTY((skip)) ipa_transforms_to_apply;
 
   /* For inline clones this points to the function they will be
      inlined into.  */
   cgraph_node *inlined_to;
 
   struct cgraph_rtl_info *rtl;
-  cgraph_clone_info clone;
-  cgraph_thunk_info thunk;
 
-  /* Expected number of executions: calculated in profile.c.  */
+  /* Expected number of executions: calculated in profile.cc.  */
   profile_count count;
   /* How to scale counts at materialization time; used to merge
      LTO units with different number of profile runs.  */
@@ -1486,6 +1428,8 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
   /* Time profiler: first run of function.  */
   int tp_first_run;
 
+  /* True when symbol is a thunk.  */
+  unsigned thunk : 1;
   /* Set when decl is an abstract function pointed to by the
      ABSTRACT_DECL_ORIGIN of a reachable function.  */
   unsigned used_as_abstract_origin : 1;
@@ -1542,6 +1486,11 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
   unsigned tm_may_enter_irr : 1;
   /* True if this was a clone created by ipa-cp.  */
   unsigned ipcp_clone : 1;
+  /* True if this is the deferred declare variant resolution artificial
+     function.  */
+  unsigned declare_variant_alt : 1;
+  /* True if the function calls declare_variant_alt functions.  */
+  unsigned calls_declare_variant_alt : 1;
 
 private:
   /* Unique id of the node.  */
@@ -1935,7 +1884,7 @@ public:
   /* Return num_speculative_targets of this edge.  */
   int num_speculative_call_targets_p (void);
 
-  /* Expected number of executions: calculated in profile.c.  */
+  /* Expected number of executions: calculated in profile.cc.  */
   profile_count count;
   cgraph_node *caller;
   cgraph_node *callee;
@@ -2018,6 +1967,9 @@ private:
 
   /* Output flags of edge to a file F.  */
   void dump_edge_flags (FILE *f);
+
+  /* Dump edge to stderr.  */
+  void DEBUG_FUNCTION debug (void);
 
   /* Verify that call graph edge corresponds to DECL from the associated
      statement.  Return true if the verification should fail.  */
@@ -2243,6 +2195,16 @@ struct asmname_hasher : ggc_ptr_hash <symtab_node>
   static bool equal (symtab_node *n, const_tree t);
 };
 
+/* Core summaries maintained about symbols.  */
+
+struct thunk_info;
+template <class T> class function_summary;
+typedef function_summary <thunk_info *> thunk_summary;
+
+struct clone_info;
+template <class T> class function_summary;
+typedef function_summary <clone_info *> clone_summary;
+
 class GTY((tag ("SYMTAB"))) symbol_table
 {
 public:
@@ -2259,6 +2221,7 @@ public:
   function_flags_ready (false), cpp_implicit_aliases_done (false),
   section_hash (NULL), assembler_name_hash (NULL), init_priority_hash (NULL),
   dump_file (NULL), ipa_clones_dump_file (NULL), cloned_nodes (),
+  m_thunks (NULL), m_clones (NULL),
   m_first_edge_removal_hook (NULL), m_first_cgraph_removal_hook (NULL),
   m_first_edge_duplicated_hook (NULL), m_first_cgraph_duplicated_hook (NULL),
   m_first_cgraph_insertion_hook (NULL), m_first_varpool_insertion_hook (NULL),
@@ -2289,13 +2252,6 @@ public:
      functions into callgraph in a way so they look like ordinary reachable
      functions inserted into callgraph already at construction time.  */
   void process_new_functions (void);
-
-  /* Once all functions from compilation unit are in memory, produce all clones
-     and update all calls.  We might also do this on demand if we don't want to
-     bring all functions to memory prior compilation, but current WHOPR
-     implementation does that and it is bit easier to keep everything right
-     in this order.  */
-  void materialize_all_clones (void);
 
   /* Register a symbol NODE.  */
   inline void register_symbol (symtab_node *node);
@@ -2547,6 +2503,12 @@ public:
 
   hash_set <const cgraph_node *> GTY ((skip)) cloned_nodes;
 
+  /* Thunk annotations.  */
+  thunk_summary *m_thunks;
+
+  /* Virtual clone annotations.  */
+  clone_summary *m_clones;
+
 private:
   /* Allocate a cgraph_edge structure and fill it with data according to the
      parameters of which only CALLEE can be NULL (when creating an indirect
@@ -2606,8 +2568,8 @@ asmname_hasher::equal (symtab_node *n, const_tree t)
   return symbol_table::decl_assembler_name_equal (n->decl, t);
 }
 
-/* In cgraph.c  */
-void cgraph_c_finalize (void);
+/* In cgraph.cc  */
+void cgraph_cc_finalize (void);
 void release_function_body (tree);
 cgraph_indirect_call_info *cgraph_allocate_init_indirect_info (void);
 
@@ -2617,9 +2579,12 @@ bool cgraph_function_possibly_inlined_p (tree);
 const char* cgraph_inline_failed_string (cgraph_inline_failed_t);
 cgraph_inline_failed_type_t cgraph_inline_failed_type (cgraph_inline_failed_t);
 
-/* In cgraphunit.c  */
-void cgraphunit_c_finalize (void);
+/* In cgraphunit.cc  */
+void cgraphunit_cc_finalize (void);
 int tp_first_run_node_cmp (const void *pa, const void *pb);
+
+/* In symtab-thunks.cc  */
+void symtab_thunks_cc_finalize (void);
 
 /*  Initialize datastructures so DECL is a function in lowered gimple form.
     IN_SSA is true if the gimple is in SSA.  */
@@ -2627,7 +2592,7 @@ basic_block init_lowered_empty_function (tree, bool, profile_count);
 
 tree thunk_adjust (gimple_stmt_iterator *, tree, bool, HOST_WIDE_INT, tree,
 		   HOST_WIDE_INT);
-/* In cgraphclones.c  */
+/* In cgraphclones.cc  */
 
 tree clone_function_name_numbered (const char *name, const char *suffix);
 tree clone_function_name_numbered (tree decl, const char *suffix);
@@ -2644,18 +2609,18 @@ void tree_function_versioning (tree, tree, vec<ipa_replace_map *, va_gc> *,
 void dump_callgraph_transformation (const cgraph_node *original,
 				    const cgraph_node *clone,
 				    const char *suffix);
-/* In cgraphbuild.c  */
+/* In cgraphbuild.cc  */
 int compute_call_stmt_bb_frequency (tree, basic_block bb);
 void record_references_in_initializer (tree, bool);
 
-/* In ipa.c  */
+/* In ipa.cc  */
 void cgraph_build_static_cdtor (char which, tree body, int priority);
 bool ipa_discover_variable_flags (void);
 
-/* In varpool.c  */
+/* In varpool.cc  */
 tree ctor_for_folding (tree);
 
-/* In ipa-inline-analysis.c  */
+/* In ipa-inline-analysis.cc  */
 void initialize_inline_failed (struct cgraph_edge *);
 bool speculation_useful_p (struct cgraph_edge *e, bool anticipate_inlining);
 
@@ -2749,7 +2714,7 @@ symtab_node::next_defined_symbol (void)
 inline ipa_ref *
 symtab_node::iterate_reference (unsigned i, ipa_ref *&ref)
 {
-  vec_safe_iterate (ref_list.references, i, &ref);
+  ref_list.references.iterate (i, &ref);
 
   return ref;
 }
@@ -3102,18 +3067,7 @@ symbol_table::next_function_with_gimple_body (cgraph_node *node)
 inline bool
 cgraph_node::has_gimple_body_p (void)
 {
-  return definition && !thunk.thunk_p && !alias;
-}
-
-/* Return true if this node represents a former, i.e. an expanded, thunk.  */
-
-inline bool
-cgraph_node::former_thunk_p (void)
-{
-  return (!thunk.thunk_p
-	  && (thunk.fixed_offset
-	      || thunk.virtual_offset_p
-	      || thunk.indirect_offset));
+  return definition && !thunk && !alias;
 }
 
 /* Walk all functions with body defined.  */
@@ -3386,15 +3340,17 @@ cgraph_node::mark_force_output (void)
 
 /* Return true if function should be optimized for size.  */
 
-inline bool
+inline enum optimize_size_level
 cgraph_node::optimize_for_size_p (void)
 {
   if (opt_for_fn (decl, optimize_size))
-    return true;
+    return OPTIMIZE_SIZE_MAX;
+  if (count == profile_count::zero ())
+    return OPTIMIZE_SIZE_MAX;
   if (frequency == NODE_FREQUENCY_UNLIKELY_EXECUTED)
-    return true;
+    return OPTIMIZE_SIZE_BALANCED;
   else
-    return false;
+    return OPTIMIZE_SIZE_NO;
 }
 
 /* Return symtab_node for NODE or create one if it is not present

@@ -1,4 +1,4 @@
-@c Copyright (C) 1988-2020 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2022 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -240,7 +240,7 @@ between the two is that @code{LIB_SPEC} is used at the end of the
 command given to the linker.
 
 If this macro is not defined, a default is provided that
-loads the standard C library from the usual place.  See @file{gcc.c}.
+loads the standard C library from the usual place.  See @file{gcc.cc}.
 @end defmac
 
 @defmac LIBGCC_SPEC
@@ -287,7 +287,7 @@ difference between the two is that @code{STARTFILE_SPEC} is used at
 the very beginning of the command given to the linker.
 
 If this macro is not defined, a default is provided that loads the
-standard C startup file from the usual place.  See @file{gcc.c}.
+standard C startup file from the usual place.  See @file{gcc.cc}.
 @end defmac
 
 @defmac ENDFILE_SPEC
@@ -392,7 +392,7 @@ The default value of this macro is empty string.
 @defmac LINK_COMMAND_SPEC
 A C string constant giving the complete command line need to execute the
 linker.  When you do this, you will need to update your port each time a
-change is made to the link command line within @file{gcc.c}.  Therefore,
+change is made to the link command line within @file{gcc.cc}.  Therefore,
 define this macro only if you need to completely redefine the command
 line for invoking the linker and there is no other way to accomplish
 the effect you need.  Overriding this macro may be avoidable by overriding
@@ -929,6 +929,9 @@ Do not define this macro if it would never modify @var{m}.
 @end defmac
 
 @hook TARGET_C_EXCESS_PRECISION
+Return a value, with the same meaning as the C99 macro
+@code{FLT_EVAL_METHOD} that describes which excess precision should be
+applied.
 
 @hook TARGET_PROMOTE_FUNCTION_MODE
 
@@ -1035,6 +1038,8 @@ a 32-bit host e.g.@: @samp{(((uint64_t) 1 << 28) * 8)}.
 On 32-bit ELF the largest supported section alignment in bits is
 @samp{(0x80000000 * 8)}, but this is not representable on 32-bit hosts.
 @end defmac
+
+@hook TARGET_LOWER_LOCAL_DECL_ALIGNMENT
 
 @hook TARGET_STATIC_RTX_ALIGNMENT
 
@@ -1430,7 +1435,7 @@ The string can contain more than one keyword.  If so, separate them with
 spaces, and write first any length keyword, then @code{unsigned} if
 appropriate, and finally @code{int}.  The string must exactly match one
 of the data type names defined in the function
-@code{c_common_nodes_and_builtins} in the file @file{c-family/c-common.c}.
+@code{c_common_nodes_and_builtins} in the file @file{c-family/c-common.cc}.
 You may not omit @code{int} or change the order---that would cause the
 compiler to crash on startup.
 
@@ -1958,7 +1963,7 @@ they must be consecutively numbered.  Furthermore, the existing
 support for stack-like registers is specific to the 80387 floating
 point coprocessor.  If you have a new architecture that uses
 stack-like registers, you will need to do substantial work on
-@file{reg-stack.c} and write your machine description to cooperate
+@file{reg-stack.cc} and write your machine description to cooperate
 with it, as well as defining these macros.
 
 @defmac STACK_REGS
@@ -2274,7 +2279,7 @@ intermediate registers or scratch registers.
 
 If copying a register @var{class} in @var{mode} to @var{x} requires an
 intermediate or scratch register, @code{SECONDARY_OUTPUT_RELOAD_CLASS}
-was supposed to be defined be defined to return the largest register
+was supposed to be defined to return the largest register
 class required.  If the
 requirements for input and output reloads were the same, the macro
 @code{SECONDARY_RELOAD_CLASS} should have been used instead of defining both
@@ -2474,7 +2479,7 @@ on the stack, e.g., by @code{alloca}.
 
 The default value for this macro is @code{STACK_POINTER_OFFSET} plus the
 length of the outgoing arguments.  The default is correct for most
-machines.  See @file{function.c} for details.
+machines.  See @file{function.cc} for details.
 @end defmac
 
 @defmac INITIAL_FRAME_ADDRESS_RTX
@@ -3098,14 +3103,7 @@ control passing certain arguments in registers.
 
 @hook TARGET_PROMOTE_PROTOTYPES
 
-@defmac PUSH_ARGS
-A C expression.  If nonzero, push insns will be used to pass
-outgoing arguments.
-If the target machine does not have a push instruction, set it to zero.
-That directs GCC to use an alternate strategy: to
-allocate the entire argument block and then store the arguments into
-it.  When @code{PUSH_ARGS} is nonzero, @code{PUSH_ROUNDING} must be defined too.
-@end defmac
+@hook TARGET_PUSH_ARGUMENT
 
 @defmac PUSH_ARGS_REVERSED
 A C expression.  If nonzero, function arguments will be evaluated from
@@ -3782,14 +3780,6 @@ These machine description macros help implement varargs:
 
 @hook TARGET_PRETEND_OUTGOING_VARARGS_NAMED
 
-@hook TARGET_LOAD_BOUNDS_FOR_ARG
-
-@hook TARGET_STORE_BOUNDS_FOR_ARG
-
-@hook TARGET_LOAD_RETURNED_BOUNDS
-
-@hook TARGET_STORE_RETURNED_BOUNDS
-
 @node Trampolines
 @section Support for Nested Functions
 @cindex support for nested functions
@@ -3826,6 +3816,11 @@ addresses.  Since GCC's generic function descriptors are
 not ABI-compliant, this option is typically used only on a
 per-language basis (notably by Ada) or when it can otherwise be
 applied to the whole program.
+
+For languages other than Ada, the @code{-ftrampolines} and
+@code{-fno-trampolines} options currently have no effect, and
+trampolines are always generated on platforms that need them
+for nested functions.
 
 Define the following hook if your backend either implements ABI-specified
 descriptor support, or can use GCC's generic descriptor implementation
@@ -3875,6 +3870,8 @@ is used for aligning trampolines.
 
 @hook TARGET_TRAMPOLINE_INIT
 
+@hook TARGET_EMIT_CALL_BUILTIN___CLEAR_CACHE
+
 @hook TARGET_TRAMPOLINE_ADJUST_ADDRESS
 
 Implementing trampolines is difficult on many machines because they have
@@ -3895,7 +3892,7 @@ the following macro.
 If defined, expands to a C expression clearing the @emph{instruction
 cache} in the specified interval.  The definition of this macro would
 typically be a series of @code{asm} statements.  Both @var{beg} and
-@var{end} are both pointer expressions.
+@var{end} are pointer expressions.
 @end defmac
 
 To use a standard subroutine, define the following macro.  In addition,
@@ -4077,9 +4074,9 @@ preserve functionality of inline assembly constructs using the
 
 @defmac FIND_BASE_TERM (@var{x})
 A C expression to determine the base term of address @var{x},
-or to provide a simplified version of @var{x} from which @file{alias.c}
+or to provide a simplified version of @var{x} from which @file{alias.cc}
 can easily find the base term.  This macro is used in only two places:
-@code{find_base_value} and @code{find_base_term} in @file{alias.c}.
+@code{find_base_value} and @code{find_base_term} in @file{alias.cc}.
 
 It is always safe for this macro to not be defined.  It exists so
 that alias analysis can understand machine-dependent addresses.
@@ -4143,6 +4140,8 @@ address;  but often a machine-dependent strategy can generate better code.
 
 @hook TARGET_LEGITIMATE_CONSTANT_P
 
+@hook TARGET_PRECOMPUTE_TLS_P
+
 @hook TARGET_DELEGITIMIZE_ADDRESS
 
 @hook TARGET_CONST_NOT_OK_FOR_DEBUG_P
@@ -4183,13 +4182,7 @@ address;  but often a machine-dependent strategy can generate better code.
 
 @hook TARGET_VECTORIZE_EMPTY_MASK_IS_EXPENSIVE
 
-@hook TARGET_VECTORIZE_INIT_COST
-
-@hook TARGET_VECTORIZE_ADD_STMT_COST
-
-@hook TARGET_VECTORIZE_FINISH_COST
-
-@hook TARGET_VECTORIZE_DESTROY_COST_DATA
+@hook TARGET_VECTORIZE_CREATE_COSTS
 
 @hook TARGET_VECTORIZE_BUILTIN_GATHER
 
@@ -4214,6 +4207,14 @@ address;  but often a machine-dependent strategy can generate better code.
 @hook TARGET_GOACC_REDUCTION
 
 @hook TARGET_PREFERRED_ELSE_VALUE
+
+@hook TARGET_GOACC_ADJUST_PRIVATE_DECL
+
+@hook TARGET_GOACC_EXPAND_VAR_DECL
+
+@hook TARGET_GOACC_CREATE_WORKER_BROADCAST_RECORD
+
+@hook TARGET_GOACC_SHARED_MEM_LAYOUT
 
 @node Anchored Addresses
 @section Anchored Addresses
@@ -4262,21 +4263,16 @@ or @code{TARGET_MAX_ANCHOR_OFFSET} is set to a nonzero value.
 @section Condition Code Status
 @cindex condition code status
 
-The macros in this section can be split in two families, according to the
-two ways of representing condition codes in GCC.
-
-The first representation is the so called @code{(cc0)} representation
-(@pxref{Jump Patterns}), where all instructions can have an implicit
-clobber of the condition codes.  The second is the condition code
-register representation, which provides better schedulability for
+Condition codes in GCC are represented as registers,
+which provides better schedulability for
 architectures that do have a condition code register, but on which
 most instructions do not affect it.  The latter category includes
 most RISC machines.
 
-The implicit clobbering poses a strong restriction on the placement of
+Implicit clobbering would pose a strong restriction on the placement of
 the definition and use of the condition code.  In the past the definition
 and use were always adjacent.  However, recent changes to support trapping
-arithmatic may result in the definition and user being in different blocks.
+arithmetic may result in the definition and user being in different blocks.
 Thus, there may be a @code{NOTE_INSN_BASIC_BLOCK} between them.  Additionally,
 the definition may be the source of exception handling edges.
 
@@ -4287,8 +4283,7 @@ three instructions earlier than the conditional branch.  The instruction
 scheduler cannot perform this optimization if it is not permitted to
 separate the definition and use of the condition code register.
 
-For this reason, it is possible and suggested to use a register to
-represent the condition code for new ports.  If there is a specific
+If there is a specific
 condition code register in the machine, use a hard register.  If the
 condition code or comparison result can be placed in any general register,
 or if there are multiple condition registers, use a pseudo register.
@@ -4300,77 +4295,8 @@ specified already in the compare instruction.  In this case, you are not
 interested in most macros in this section.
 
 @menu
-* CC0 Condition Codes::      Old style representation of condition codes.
 * MODE_CC Condition Codes::  Modern representation of condition codes.
 @end menu
-
-@node CC0 Condition Codes
-@subsection Representation of condition codes using @code{(cc0)}
-@findex cc0
-
-@findex cc_status
-The file @file{conditions.h} defines a variable @code{cc_status} to
-describe how the condition code was computed (in case the interpretation of
-the condition code depends on the instruction that it was set by).  This
-variable contains the RTL expressions on which the condition code is
-currently based, and several standard flags.
-
-Sometimes additional machine-specific flags must be defined in the machine
-description header file.  It can also add additional machine-specific
-information by defining @code{CC_STATUS_MDEP}.
-
-@defmac CC_STATUS_MDEP
-C code for a data type which is used for declaring the @code{mdep}
-component of @code{cc_status}.  It defaults to @code{int}.
-
-This macro is not used on machines that do not use @code{cc0}.
-@end defmac
-
-@defmac CC_STATUS_MDEP_INIT
-A C expression to initialize the @code{mdep} field to ``empty''.
-The default definition does nothing, since most machines don't use
-the field anyway.  If you want to use the field, you should probably
-define this macro to initialize it.
-
-This macro is not used on machines that do not use @code{cc0}.
-@end defmac
-
-@defmac NOTICE_UPDATE_CC (@var{exp}, @var{insn})
-A C compound statement to set the components of @code{cc_status}
-appropriately for an insn @var{insn} whose body is @var{exp}.  It is
-this macro's responsibility to recognize insns that set the condition
-code as a byproduct of other activity as well as those that explicitly
-set @code{(cc0)}.
-
-This macro is not used on machines that do not use @code{cc0}.
-
-If there are insns that do not set the condition code but do alter
-other machine registers, this macro must check to see whether they
-invalidate the expressions that the condition code is recorded as
-reflecting.  For example, on the 68000, insns that store in address
-registers do not set the condition code, which means that usually
-@code{NOTICE_UPDATE_CC} can leave @code{cc_status} unaltered for such
-insns.  But suppose that the previous insn set the condition code
-based on location @samp{a4@@(102)} and the current insn stores a new
-value in @samp{a4}.  Although the condition code is not changed by
-this, it will no longer be true that it reflects the contents of
-@samp{a4@@(102)}.  Therefore, @code{NOTICE_UPDATE_CC} must alter
-@code{cc_status} in this case to say that nothing is known about the
-condition code value.
-
-The definition of @code{NOTICE_UPDATE_CC} must be prepared to deal
-with the results of peephole optimization: insns whose patterns are
-@code{parallel} RTXs containing various @code{reg}, @code{mem} or
-constants which are just the operands.  The RTL structure of these
-insns is not sufficient to indicate what the insns actually do.  What
-@code{NOTICE_UPDATE_CC} should do when it sees one is just to run
-@code{CC_STATUS_INIT}.
-
-A possible definition of @code{NOTICE_UPDATE_CC} is to call a function
-that looks at an attribute (@pxref{Insn Attributes}) named, for example,
-@samp{cc}.  This avoids having detailed information about patterns in
-two places, the @file{md} file and in @code{NOTICE_UPDATE_CC}.
-@end defmac
 
 @node MODE_CC Condition Codes
 @subsection Representation of condition codes using registers
@@ -4582,6 +4508,8 @@ If you don't define this, a reasonable default is used.
 
 @hook TARGET_USE_BY_PIECES_INFRASTRUCTURE_P
 
+@hook TARGET_OVERLAP_OP_BY_PIECES_P
+
 @hook TARGET_COMPARE_BY_PIECES_BRANCH_RATIO
 
 @defmac MOVE_MAX_PIECES
@@ -4696,6 +4624,8 @@ Define this macro if a non-short-circuit operation produced by
 @hook TARGET_MAX_NOCE_IFCVT_SEQ_COST
 
 @hook TARGET_NOCE_CONVERSION_PROFITABLE_P
+
+@hook TARGET_NEW_ADDRESS_PROFITABLE_P
 
 @hook TARGET_NO_SPECULATION_IN_DELAY_SLOTS_P
 
@@ -4815,11 +4745,11 @@ section}, which holds initialized writable data; and the @dfn{bss
 section}, which holds uninitialized data.  Some systems have other kinds
 of sections.
 
-@file{varasm.c} provides several well-known sections, such as
+@file{varasm.cc} provides several well-known sections, such as
 @code{text_section}, @code{data_section} and @code{bss_section}.
 The normal way of controlling a @code{@var{foo}_section} variable
 is to define the associated @code{@var{FOO}_SECTION_ASM_OP} macro,
-as described below.  The macros are only read once, when @file{varasm.c}
+as described below.  The macros are only read once, when @file{varasm.cc}
 initializes itself, so their values must be run-time constants.
 They may however depend on command-line flags.
 
@@ -4839,7 +4769,7 @@ in @code{TARGET_ASM_INIT_SECTIONS}.  The same is true of
 create a distinct @code{readonly_data_section}, the default is to
 reuse @code{text_section}.
 
-All the other @file{varasm.c} sections are optional, and are null
+All the other @file{varasm.cc} sections are optional, and are null
 if the target does not provide them.
 
 @defmac TEXT_SECTION_ASM_OP
@@ -5370,7 +5300,7 @@ A C statement (sans semicolon) to output to the stdio stream
 is the alignment specified as the number of bits.
 
 Try to use function @code{asm_output_aligned_bss} defined in file
-@file{varasm.c} when defining this macro.  If unable, use the expression
+@file{varasm.cc} when defining this macro.  If unable, use the expression
 @code{assemble_name (@var{stream}, @var{name})} to output the name itself;
 before and after that, output the additional assembler syntax for defining
 the name, and a newline.
@@ -5701,7 +5631,7 @@ requires changes to @var{decl}, such as putting it in a separate section.
 A C expression which evaluates to true if the target supports one-only
 semantics.
 
-If you don't define this macro, @file{varasm.c} provides a default
+If you don't define this macro, @file{varasm.cc} provides a default
 definition.  If @code{MAKE_DECL_ONE_ONLY} is defined, the default
 definition is @samp{1}; otherwise, it is @samp{0}.  Define this macro if
 you want to control one-only symbol support with a compiler flag, or if
@@ -6311,7 +6241,7 @@ being output.
 @defmacx IMMEDIATE_PREFIX
 If defined, C string expressions to be used for the @samp{%R}, @samp{%L},
 @samp{%U}, and @samp{%I} options of @code{asm_fprintf} (see
-@file{final.c}).  These are useful when a single @file{md} file must
+@file{final.cc}).  These are useful when a single @file{md} file must
 support multiple assembler formats.  In that case, the various @file{tm.h}
 files can define these macros differently.
 @end defmac
@@ -6453,6 +6383,8 @@ the jump-table.
 @hook TARGET_ASM_EMIT_EXCEPT_PERSONALITY
 
 @hook TARGET_ASM_UNWIND_EMIT
+
+@hook TARGET_ASM_MAKE_EH_SYMBOL_INDIRECT
 
 @hook TARGET_ASM_UNWIND_EMIT_BEFORE_INSN
 
@@ -6676,6 +6608,8 @@ This describes how to specify debugging information.
 * File Names and DBX:: Macros controlling output of file names in DBX format.
 * DWARF::              Macros for DWARF format.
 * VMS Debug::          Macros for VMS debug format.
+* CTF Debug::          Macros for CTF debug format.
+* BTF Debug::          Macros for BTF debug format.
 @end menu
 
 @node All Debuggers
@@ -7057,6 +6991,30 @@ behavior is controlled by @code{TARGET_OPTION_OPTIMIZATION} and
 @code{TARGET_OPTION_OVERRIDE}.
 @end defmac
 
+@need 2000
+@node CTF Debug
+@subsection Macros for CTF Debug Format
+
+@c prevent bad page break with this line
+Here are macros for CTF debug format.
+
+@defmac CTF_DEBUGGING_INFO
+Define this macro if GCC should produce debugging output in CTF debug
+format in response to the @option{-gctf} option.
+@end defmac
+
+@need 2000
+@node BTF Debug
+@subsection Macros for BTF Debug Format
+
+@c prevent bad page break with this line
+Here are macros for BTF debug format.
+
+@defmac BTF_DEBUGGING_INFO
+Define this macro if GCC should produce debugging output in BTF debug
+format in response to the @option{-gbtf} option.
+@end defmac
+
 @node Floating Point
 @section Cross Compilation and Floating Point
 @cindex cross compilation and floating point
@@ -7233,6 +7191,10 @@ on this implementation detail.
 
 @hook TARGET_CAN_INLINE_P
 
+@hook TARGET_UPDATE_IPA_FN_TARGET_INFO
+
+@hook TARGET_NEED_IPA_FN_TARGET_INFO
+
 @hook TARGET_RELAYOUT_FUNCTION
 
 @node Emulated TLS
@@ -7351,7 +7313,19 @@ floating-point support; they are not included in this mechanism.
 
 @hook TARGET_D_OS_VERSIONS
 
-@hook TARGET_D_CRITSEC_SIZE
+@hook TARGET_D_REGISTER_CPU_TARGET_INFO
+
+@hook TARGET_D_REGISTER_OS_TARGET_INFO
+
+@hook TARGET_D_MINFO_SECTION
+
+@hook TARGET_D_MINFO_START_NAME
+
+@hook TARGET_D_MINFO_END_NAME
+
+@hook TARGET_D_HAS_STDCALL_CONVENTION
+
+@hook TARGET_D_TEMPLATES_ALWAYS_COMDAT
 
 @node Named Address Spaces
 @section Adding support for named address spaces
@@ -7661,7 +7635,7 @@ this macro.
 @end defmac
 
 @defmac VECTOR_STORE_FLAG_VALUE (@var{mode})
-A C expression that gives a rtx representing the nonzero true element
+A C expression that gives an rtx representing the nonzero true element
 for vector comparisons.  The returned rtx should be valid for the inner
 mode of @var{mode} which is guaranteed to be a vector mode.  Define
 this macro on machines that have vector comparison operations that
@@ -7887,8 +7861,7 @@ for cross-profiling.
 
 A C expression for the maximum number of instructions to execute via
 conditional execution instructions instead of a branch.  A value of
-@code{BRANCH_COST}+1 is the default if the machine does not use cc0, and
-1 if it does use cc0.
+@code{BRANCH_COST}+1 is the default.
 @end defmac
 
 @defmac IFCVT_MODIFY_TESTS (@var{ce_info}, @var{true_expr}, @var{false_expr})
@@ -7969,6 +7942,8 @@ to by @var{ce_info}.
 
 @hook TARGET_INVALID_WITHIN_DOLOOP
 
+@hook TARGET_PREFERRED_DOLOOP_MODE
+
 @hook TARGET_LEGITIMATE_COMBINED_INSN
 
 @hook TARGET_CAN_FOLLOW_JUMP
@@ -8009,6 +7984,8 @@ lists.
 @hook TARGET_GEN_CCMP_FIRST
 
 @hook TARGET_GEN_CCMP_NEXT
+
+@hook TARGET_GEN_MEMSET_SCRATCH_RTX
 
 @hook TARGET_LOOP_UNROLL_ADJUST
 
@@ -8111,6 +8088,8 @@ and the associated definitions of those functions.
 
 @hook TARGET_GET_DRAP_RTX
 
+@hook TARGET_ZERO_CALL_USED_REGS
+
 @hook TARGET_ALLOCATE_STACK_SLOTS_FOR_ARGS
 
 @hook TARGET_CONST_ANCHOR
@@ -8122,6 +8101,8 @@ and the associated definitions of those functions.
 @hook TARGET_ATOMIC_TEST_AND_SET_TRUEVAL
 
 @hook TARGET_HAS_IFUNC_P
+
+@hook TARGET_IFUNC_REF_LOCAL_OK
 
 @hook TARGET_ATOMIC_ALIGN_FOR_MODE
 
@@ -8182,3 +8163,23 @@ maintainer is familiar with.
 @hook TARGET_SPECULATION_SAFE_VALUE
 
 @hook TARGET_RUN_TARGET_SELFTESTS
+
+@hook TARGET_MEMTAG_CAN_TAG_ADDRESSES
+
+@hook TARGET_MEMTAG_TAG_SIZE
+
+@hook TARGET_MEMTAG_GRANULE_SIZE
+
+@hook TARGET_MEMTAG_INSERT_RANDOM_TAG
+
+@hook TARGET_MEMTAG_ADD_TAG
+
+@hook TARGET_MEMTAG_SET_TAG
+
+@hook TARGET_MEMTAG_EXTRACT_TAG
+
+@hook TARGET_MEMTAG_UNTAGGED_POINTER
+
+@hook TARGET_GCOV_TYPE_SIZE
+
+@hook TARGET_HAVE_SHADOW_CALL_STACK

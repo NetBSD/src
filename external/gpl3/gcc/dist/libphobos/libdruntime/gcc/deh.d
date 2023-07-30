@@ -1,5 +1,5 @@
 // GNU D Compiler exception personality routines.
-// Copyright (C) 2011-2020 Free Software Foundation, Inc.
+// Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
 // GCC is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -28,17 +28,13 @@ import gcc.unwind;
 import gcc.unwind.pe;
 import gcc.builtins;
 import gcc.config;
-import gcc.attribute;
+import gcc.attributes;
 
 extern(C)
 {
-    int _d_isbaseof(ClassInfo, ClassInfo);
-    void _d_createTrace(Object, void*);
-
-    // Not used in GDC but declaration required by rt/sections.d
-    struct FuncTable
-    {
-    }
+    int _d_isbaseof(ClassInfo, ClassInfo) @nogc nothrow pure @safe;
+    void _d_createTrace(Throwable, void*);
+    void _d_print_throwable(Throwable t);
 }
 
 /**
@@ -211,7 +207,7 @@ struct ExceptionHeader
      */
     static void free(ExceptionHeader* eh) @nogc
     {
-        *eh = ExceptionHeader.init;
+        __builtin_memset(eh, 0, ExceptionHeader.sizeof);
         if (eh != &ehstorage)
             __builtin_free(eh);
     }
@@ -281,26 +277,6 @@ struct ExceptionHeader
             lsda = eh.languageSpecificData;
             landingPad = cast(_Unwind_Ptr)eh.landingPad;
         }
-    }
-
-    /**
-     * Look at the chain of inflight exceptions and pick the class type that'll
-     * be looked for in catch clauses.
-     */
-    static ClassInfo getClassInfo(_Unwind_Exception* unwindHeader) @nogc
-    {
-        ExceptionHeader* eh = toExceptionHeader(unwindHeader);
-        // The first thrown Exception at the top of the stack takes precedence
-        // over others that are inflight, unless an Error was thrown, in which
-        // case, we search for error handlers instead.
-        Throwable ehobject = eh.object;
-        for (ExceptionHeader* ehn = eh.next; ehn; ehn = ehn.next)
-        {
-            Error e = cast(Error)ehobject;
-            if (e is null || (cast(Error)ehn.object) !is null)
-                ehobject = ehn.object;
-        }
-        return ehobject.classinfo;
     }
 
     /**
@@ -456,6 +432,9 @@ extern(C) void* __gdc_begin_catch(_Unwind_Exception* unwindHeader)
     ExceptionHeader* header = ExceptionHeader.toExceptionHeader(unwindHeader);
 
     void* objectp = cast(void*)header.object;
+    // Remove our reference to the exception. We should not decrease its refcount,
+    // because we pass the object on to the caller.
+    header.object = null;
 
     // Something went wrong when stacking up chained headers...
     if (header != ExceptionHeader.pop())
@@ -478,6 +457,11 @@ extern(C) void _d_throw(Throwable object)
 
     // Add to thrown exception stack.
     eh.push();
+
+    // Increment reference count if object is a refcounted Throwable.
+    auto refcount = object.refcount();
+    if (refcount)
+        object.refcount() = refcount + 1;
 
     // Called by unwinder when exception object needs destruction by other than our code.
     extern(C) void exception_cleanup(_Unwind_Reason_Code code, _Unwind_Exception* exc)
@@ -515,7 +499,11 @@ extern(C) void _d_throw(Throwable object)
     // things, almost certainly we will have crashed before now, rather than
     // actually being able to diagnose the problem.
     if (r == _URC_END_OF_STACK)
+    {
+        __gdc_begin_catch(&eh.unwindHeader);
+        _d_print_throwable(object);
         terminate("uncaught exception", __LINE__);
+    }
 
     terminate("unwind error", __LINE__);
 }
@@ -552,7 +540,7 @@ _Unwind_Reason_Code scanLSDA(const(ubyte)* lsda, _Unwind_Exception_Class excepti
     _Unwind_Ptr LPStart = 0;
 
     if (LPStartEncoding != DW_EH_PE_omit)
-        LPStart = read_encoded_value(context, LPStartEncoding, &p);
+        LPStart = read_encoded_value(context, LPStartEncoding, p);
     else
         LPStart = Start;
 
@@ -568,14 +556,14 @@ _Unwind_Reason_Code scanLSDA(const(ubyte)* lsda, _Unwind_Exception_Class excepti
             // hardcoded OS-specific format.
             TTypeEncoding = _TTYPE_ENCODING;
         }
-        auto TTbase = read_uleb128(&p);
+        auto TTbase = read_uleb128(p);
         TType = p + TTbase;
     }
 
     // The encoding and length of the call-site table; the action table
     // immediately follows.
     ubyte CSEncoding = *p++;
-    auto CSTableSize = read_uleb128(&p);
+    auto CSTableSize = read_uleb128(p);
     const(ubyte)* actionTable = p + CSTableSize;
 
     auto TTypeBase = base_of_encoded_value(TTypeEncoding, context);
@@ -613,8 +601,8 @@ _Unwind_Reason_Code scanLSDA(const(ubyte)* lsda, _Unwind_Exception_Class excepti
             _uleb128_t CSLandingPad, CSAction;
             do
             {
-                CSLandingPad = read_uleb128(&p);
-                CSAction = read_uleb128(&p);
+                CSLandingPad = read_uleb128(p);
+                CSAction = read_uleb128(p);
             }
             while (--ip);
 
@@ -631,10 +619,10 @@ _Unwind_Reason_Code scanLSDA(const(ubyte)* lsda, _Unwind_Exception_Class excepti
         while (p < actionTable)
         {
             // Note that all call-site encodings are "absolute" displacements.
-            auto CSStart = read_encoded_value(null, CSEncoding, &p);
-            auto CSLen = read_encoded_value(null, CSEncoding, &p);
-            auto CSLandingPad = read_encoded_value(null, CSEncoding, &p);
-            auto CSAction = read_uleb128(&p);
+            auto CSStart = read_encoded_value(null, CSEncoding, p);
+            auto CSLen = read_encoded_value(null, CSEncoding, p);
+            auto CSLandingPad = read_encoded_value(null, CSEncoding, p);
+            auto CSAction = read_uleb128(p);
 
             // The table is sorted, so if we've passed the ip, stop.
             if (ip < Start + CSStart)
@@ -666,7 +654,7 @@ _Unwind_Reason_Code scanLSDA(const(ubyte)* lsda, _Unwind_Exception_Class excepti
     {
         // Otherwise we have a catch handler or exception specification.
         handler = actionTableLookup(actions, unwindHeader, actionRecord,
-                                    exceptionClass, TTypeBase,
+                                    lsda, exceptionClass, TTypeBase,
                                     TType, TTypeEncoding,
                                     saw_handler, saw_cleanup);
     }
@@ -694,7 +682,8 @@ _Unwind_Reason_Code scanLSDA(const(ubyte)* lsda, _Unwind_Exception_Class excepti
  * Look up and return the handler index of the classType in Action Table.
  */
 int actionTableLookup(_Unwind_Action actions, _Unwind_Exception* unwindHeader,
-                      const(ubyte)* actionRecord, _Unwind_Exception_Class exceptionClass,
+                      const(ubyte)* actionRecord, const(ubyte)* lsda,
+                      _Unwind_Exception_Class exceptionClass,
                       _Unwind_Ptr TTypeBase, const(ubyte)* TType,
                       ubyte TTypeEncoding,
                       out bool saw_handler, out bool saw_cleanup)
@@ -702,15 +691,15 @@ int actionTableLookup(_Unwind_Action actions, _Unwind_Exception* unwindHeader,
     ClassInfo thrownType;
     if (isGdcExceptionClass(exceptionClass))
     {
-        thrownType = ExceptionHeader.getClassInfo(unwindHeader);
+        thrownType = getClassInfo(unwindHeader, lsda);
     }
 
     while (1)
     {
         auto ap = actionRecord;
-        auto ARFilter = read_sleb128(&ap);
+        auto ARFilter = read_sleb128(ap);
         auto apn = ap;
-        auto ARDisp = read_sleb128(&ap);
+        auto ARDisp = read_sleb128(ap);
 
         if (ARFilter == 0)
         {
@@ -730,7 +719,7 @@ int actionTableLookup(_Unwind_Action actions, _Unwind_Exception* unwindHeader,
             // the ClassInfo is stored.
             const(ubyte)* tp = TType - ARFilter * encodedSize;
 
-            auto entry = read_encoded_value_with_base(TTypeEncoding, TTypeBase, &tp);
+            auto entry = read_encoded_value_with_base(TTypeEncoding, TTypeBase, tp);
             ClassInfo ci = cast(ClassInfo)cast(void*)(entry);
 
             // D does not have catch-all handlers, and so the following
@@ -779,6 +768,41 @@ int actionTableLookup(_Unwind_Action actions, _Unwind_Exception* unwindHeader,
 }
 
 /**
+ * Look at the chain of inflight exceptions and pick the class type that'll
+ * be looked for in catch clauses.
+ */
+ClassInfo getClassInfo(_Unwind_Exception* unwindHeader,
+                       const(ubyte)* currentLsd) @nogc
+{
+    ExceptionHeader* eh = ExceptionHeader.toExceptionHeader(unwindHeader);
+    // The first thrown Exception at the top of the stack takes precedence
+    // over others that are inflight, unless an Error was thrown, in which
+    // case, we search for error handlers instead.
+    Throwable ehobject = eh.object;
+    for (ExceptionHeader* ehn = eh.next; ehn; ehn = ehn.next)
+    {
+        const(ubyte)* nextLsd = void;
+        _Unwind_Ptr nextLandingPad = void;
+        _Unwind_Word nextCfa = void;
+        int nextHandler = void;
+
+        ExceptionHeader.restore(&ehn.unwindHeader, nextHandler, nextLsd, nextLandingPad, nextCfa);
+
+        // Don't combine when the exceptions are from different functions.
+        if (currentLsd != nextLsd)
+            break;
+
+        Error e = cast(Error)ehobject;
+        if (e is null || (cast(Error)ehn.object) !is null)
+        {
+            currentLsd = nextLsd;
+            ehobject = ehn.object;
+        }
+    }
+    return ehobject.classinfo;
+}
+
+/**
  * Called when the personality function has found neither a cleanup or handler.
  * To support ARM EABI personality routines, that must also unwind the stack.
  */
@@ -805,7 +829,7 @@ version (GNU_SEH_Exceptions)
                                                            void* ms_orig_context, void* ms_disp)
     {
         return _GCC_specific_handler(ms_exc, this_frame, ms_orig_context,
-                                     ms_disp, &__gdc_personality_imp);
+                                     ms_disp, &gdc_personality);
     }
 }
 else version (GNU_SjLj_Exceptions)
@@ -934,16 +958,15 @@ private _Unwind_Reason_Code __gdc_personality(_Unwind_Action actions,
         // current object onto the end of the prevous object.
         ExceptionHeader* eh = ExceptionHeader.toExceptionHeader(unwindHeader);
         auto currentLsd = lsda;
-        auto currentCfa = cfa;
         bool bypassed = false;
 
         while (eh.next)
         {
             ExceptionHeader* ehn = eh.next;
-            const(ubyte)* nextLsd;
-            _Unwind_Ptr nextLandingPad;
-            _Unwind_Word nextCfa;
-            int nextHandler;
+            const(ubyte)* nextLsd = void;
+            _Unwind_Ptr nextLandingPad = void;
+            _Unwind_Word nextCfa = void;
+            int nextHandler = void;
 
             ExceptionHeader.restore(&ehn.unwindHeader, nextHandler, nextLsd, nextLandingPad, nextCfa);
 
@@ -952,24 +975,19 @@ private _Unwind_Reason_Code __gdc_personality(_Unwind_Action actions,
             {
                 // We found an Error, bypass the exception chain.
                 currentLsd = nextLsd;
-                currentCfa = nextCfa;
                 eh = ehn;
                 bypassed = true;
                 continue;
             }
 
             // Don't combine when the exceptions are from different functions.
-            if (currentLsd != nextLsd && currentCfa != nextCfa)
+            if (currentLsd != nextLsd)
                 break;
 
-            // Add our object onto the end of the existing chain.
-            Throwable n = ehn.object;
-            while (n.next)
-                n = n.next;
-            n.next = eh.object;
+            // Add our object onto the end of the existing chain and replace
+            // our exception object with in-flight one.
+            eh.object = Throwable.chainTogether(ehn.object, eh.object);
 
-            // Replace our exception object with in-flight one
-            eh.object = ehn.object;
             if (nextHandler != handler && !bypassed)
             {
                 handler = nextHandler;

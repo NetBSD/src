@@ -1,5 +1,5 @@
 /* Operations with very long integers.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -2057,6 +2057,10 @@ wi::arshift_large (HOST_WIDE_INT *val, const HOST_WIDE_INT *xval,
 int
 wi::clz (const wide_int_ref &x)
 {
+  if (x.sign_mask () < 0)
+    /* The upper bit is set, so there are no leading zeros.  */
+    return 0;
+
   /* Calculate how many bits there above the highest represented block.  */
   int count = x.precision - x.len * HOST_BITS_PER_WIDE_INT;
 
@@ -2065,9 +2069,6 @@ wi::clz (const wide_int_ref &x)
     /* The upper -COUNT bits of HIGH are not part of the value.
        Clear them out.  */
     high = (high << -count) >> -count;
-  else if (x.sign_mask () < 0)
-    /* The upper bit is set, so there are no leading zeros.  */
-    return 0;
 
   /* We don't need to look below HIGH.  Either HIGH is nonzero,
      or the top bit of the block below is nonzero; clz_hwi is
@@ -2245,6 +2246,39 @@ wi::round_up_for_mask (const wide_int &val, const wide_int &mask)
   wide_int tmp = wi::bit_and_not (upper_mask, val);
 
   return (val | tmp) & -tmp;
+}
+
+/* Compute the modular multiplicative inverse of A modulo B
+   using extended Euclid's algorithm.  Assumes A and B are coprime,
+   and that A and B have the same precision.  */
+wide_int
+wi::mod_inv (const wide_int &a, const wide_int &b)
+{
+  /* Verify the assumption.  */
+  gcc_checking_assert (wi::eq_p (wi::gcd (a, b), 1));
+
+  unsigned int p = a.get_precision () + 1;
+  gcc_checking_assert (b.get_precision () + 1 == p);
+  wide_int c = wide_int::from (a, p, UNSIGNED);
+  wide_int d = wide_int::from (b, p, UNSIGNED);
+  wide_int x0 = wide_int::from (0, p, UNSIGNED);
+  wide_int x1 = wide_int::from (1, p, UNSIGNED);
+
+  if (wi::eq_p (b, 1))
+    return wide_int::from (1, p, UNSIGNED);
+
+  while (wi::gt_p (c, 1, UNSIGNED))
+    {
+      wide_int t = d;
+      wide_int q = wi::divmod_trunc (c, d, UNSIGNED, &d);
+      c = t;
+      wide_int s = x0;
+      x0 = wi::sub (x1, wi::mul (q, x0));
+      x1 = s;
+    }
+  if (wi::lt_p (x1, 0, SIGNED))
+    x1 += d;
+  return x1;
 }
 
 /*

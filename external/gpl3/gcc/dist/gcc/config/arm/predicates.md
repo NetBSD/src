@@ -1,5 +1,5 @@
 ;; Predicate definitions for ARM and Thumb
-;; Copyright (C) 2004-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2022 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 
 ;; This file is part of GCC.
@@ -17,6 +17,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GCC; see the file COPYING3.  If not see
 ;; <http://www.gnu.org/licenses/>.
+
+(include "common.md")
 
 (define_predicate "s_register_operand"
   (match_code "reg,subreg")
@@ -107,7 +109,7 @@
 (define_predicate "imm_for_neon_inv_logic_operand"
   (match_code "const_vector")
 {
-  return (TARGET_NEON
+  return ((TARGET_NEON || TARGET_HAVE_MVE)
           && neon_immediate_valid_for_logic (op, mode, 1, NULL, NULL));
 })
 
@@ -118,7 +120,7 @@
 (define_predicate "imm_for_neon_logic_operand"
   (match_code "const_vector")
 {
-  return (TARGET_NEON
+  return ((TARGET_NEON || TARGET_HAVE_MVE)
           && neon_immediate_valid_for_logic (op, mode, 0, NULL, NULL));
 })
 
@@ -185,7 +187,7 @@
 	      || REGNO_REG_CLASS (REGNO (op)) == VFP_D0_D7_REGS
 	      || REGNO_REG_CLASS (REGNO (op)) == VFP_LO_REGS
 	      || (TARGET_VFPD32
-		  && REGNO_REG_CLASS (REGNO (op)) == VFP_REGS)));
+		  && REGNO_REG_CLASS (REGNO (op)) == VFP_HI_REGS)));
 })
 
 (define_predicate "vfp_hard_register_operand"
@@ -197,6 +199,10 @@
 (define_predicate "zero_operand"
   (and (match_code "const_int,const_double,const_vector")
        (match_test "op == CONST0_RTX (mode)")))
+
+(define_predicate "minus_one_operand"
+  (and (match_code "const_int,const_double,const_vector")
+       (match_test "op == CONSTM1_RTX (mode)")))
 
 ;; Match a register, or zero in the appropriate mode.
 (define_predicate "reg_or_zero_operand"
@@ -484,6 +490,18 @@
 (define_predicate "arm_comparison_operator_mode"
   (and (match_operand 0 "expandable_comparison_operator")
        (match_test "maybe_get_arm_condition_code (op) != ARM_NV")))
+
+(define_special_predicate "arm_comparison_operation"
+  (match_code "eq,ne,le,lt,ge,gt,geu,gtu,leu,ltu,unordered,
+         ordered,unlt,unle,unge,ungt")
+{
+  if (XEXP (op, 1) != const0_rtx)
+    return false;
+  rtx op0 = XEXP (op, 0);
+  if (!REG_P (op0) || REGNO (op0) != CC_REGNUM)
+    return false;
+  return maybe_get_arm_condition_code (op) != ARM_NV;
+})
 
 (define_special_predicate "lt_ge_comparison_operator"
   (match_code "lt,ge"))
@@ -857,6 +875,10 @@
 (define_predicate "neon_struct_operand"
   (and (match_code "mem")
        (match_test "TARGET_32BIT && neon_vector_mem_operand (op, 2, true)")))
+
+(define_predicate "mve_struct_operand"
+  (and (match_code "mem")
+       (match_test "TARGET_HAVE_MVE && mve_struct_mem_operand (op)")))
 
 (define_predicate "neon_permissive_struct_operand"
   (and (match_code "mem")
