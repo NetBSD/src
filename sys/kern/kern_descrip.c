@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.251 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.251.10.1 2023/07/30 12:09:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.251 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.251.10.1 2023/07/30 12:09:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,10 +392,45 @@ fd_getfile(unsigned fd)
 		 * Multi threaded: issue a memory barrier to ensure that we
 		 * acquire the file pointer _after_ adding a reference.  If
 		 * no memory barrier, we could fetch a stale pointer.
+		 *
+		 * In particular, we must coordinate the following four
+		 * memory operations:
+		 *
+		 *	A. fd_close store ff->ff_file = NULL
+		 *	B. fd_close refcnt = atomic_dec_uint_nv(&ff->ff_refcnt)
+		 *	C. fd_getfile atomic_inc_uint(&ff->ff_refcnt)
+		 *	D. fd_getfile load fp = ff->ff_file
+		 *
+		 * If the order is D;A;B;C:
+		 *
+		 *	1. D: fp = ff->ff_file
+		 *	2. A: ff->ff_file = NULL
+		 *	3. B: refcnt = atomic_dec_uint_nv(&ff->ff_refcnt)
+		 *	4. C: atomic_inc_uint(&ff->ff_refcnt)
+		 *
+		 * then fd_close determines that there are no more
+		 * references and decides to free fp immediately, at
+		 * the same that fd_getfile ends up with an fp that's
+		 * about to be freed.  *boom*
+		 *
+		 * By making B a release operation in fd_close, and by
+		 * making C an acquire operation in fd_getfile, since
+		 * they are atomic operations on the same object, which
+		 * has a total modification order, we guarantee either:
+		 *
+		 *	- B happens before C.  Then since A is
+		 *	  sequenced before B in fd_close, and C is
+		 *	  sequenced before D in fd_getfile, we
+		 *	  guarantee A happens before D, so fd_getfile
+		 *	  reads a null fp and safely fails.
+		 *
+		 *	- C happens before B.  Then fd_getfile may read
+		 *	  null or nonnull, but either way, fd_close
+		 *	  will safely wait for references to drain.
 		 */
 		atomic_inc_uint(&ff->ff_refcnt);
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-		membar_enter();
+		membar_acquire();
 #endif
 	}
 
@@ -451,7 +486,7 @@ fd_putfile(unsigned fd)
 	 * CPU.
 	 */
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 
 	/*
@@ -602,6 +637,9 @@ fd_close(unsigned fd)
 		 * waiting for other users of the file to drain.  Release
 		 * our reference, and wake up the closer.
 		 */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+		membar_release();
+#endif
 		atomic_dec_uint(&ff->ff_refcnt);
 		cv_broadcast(&ff->ff_closing);
 		mutex_exit(&fdp->fd_lock);
@@ -621,7 +659,7 @@ fd_close(unsigned fd)
 	 * will prevent them from adding additional uses to this file
 	 * while we are closing it.
 	 */
-	ff->ff_file = NULL;
+	atomic_store_relaxed(&ff->ff_file, NULL);
 	ff->ff_exclose = false;
 
 	/*
@@ -637,9 +675,12 @@ fd_close(unsigned fd)
 	} else {
 		/* Multi threaded. */
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-		membar_producer();
+		membar_release();
 #endif
 		refcnt = atomic_dec_uint_nv(&ff->ff_refcnt);
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+		membar_acquire();
+#endif
 	}
 	if (__predict_false(refcnt != 0)) {
 		/*
@@ -1146,12 +1187,6 @@ fd_affix(proc_t *p, file_t *fp, unsigned fd)
 
 	/*
 	 * Insert the new file into the descriptor slot.
-	 *
-	 * The memory barriers provided by lock activity in this routine
-	 * ensure that any updates to the file structure become globally
-	 * visible before the file becomes visible to other LWPs in the
-	 * current process; otherwise we would set ff->ff_file with
-	 * atomic_store_release(&ff->ff_file, fp) at the bottom.
 	 */
 	fdp = p->p_fd;
 	dt = atomic_load_consume(&fdp->fd_dt);
@@ -1164,7 +1199,7 @@ fd_affix(proc_t *p, file_t *fp, unsigned fd)
 	KASSERT(fd >= NDFDFILE || ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
 
 	/* No need to lock in order to make file initially visible. */
-	ff->ff_file = fp;
+	atomic_store_release(&ff->ff_file, fp);
 }
 
 /*
@@ -1532,10 +1567,13 @@ fd_free(void)
 	KASSERT(fdp->fd_dtbuiltin.dt_link == NULL);
 
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 	if (atomic_dec_uint_nv(&fdp->fd_refcnt) > 0)
 		return;
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_acquire();
+#endif
 
 	/*
 	 * Close any files that the process holds open.
