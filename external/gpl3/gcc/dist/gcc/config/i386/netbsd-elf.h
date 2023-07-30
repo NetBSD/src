@@ -114,6 +114,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef PREFERRED_STACK_BOUNDARY_DEFAULT
 #define PREFERRED_STACK_BOUNDARY_DEFAULT MIN_STACK_BOUNDARY
 
-/* NetBSD/x86 on 32-bit places the ASAN shadow map at 0x40000000.  */
-#undef X86_32_ASAN_BIT_OFFSET
-#define X86_32_ASAN_BIT_OFFSET 30
+/* Define the shadow offsets for asan.  */
+#undef SUBTARGET_SHADOW_OFFSET
+#define SUBTARGET_SHADOW_OFFSET \
+  (TARGET_LP64 ? HOST_WIDE_INT_1 << 46 : HOST_WIDE_INT_1 << 30)

@@ -97,7 +97,7 @@ extern tree rs6000_builtin_reciprocal (tree);
      of the include files, so that POWERPC_LINUX and POWERPC_FREEBSD are
      properly defined.  */
 #ifndef TARGET_IEEEQUAD_DEFAULT
-#if !defined (POWERPC_LINUX) && !defined (POWERPC_FREEBSD)
+#if !defined (POWERPC_LINUX) && !defined (POWERPC_FREEBSD) && !defined(POWERPC_NETBSD)
 #define TARGET_IEEEQUAD_DEFAULT 1
 #else
 #define TARGET_IEEEQUAD_DEFAULT 0
@@ -20755,7 +20755,11 @@ rs6000_elf_reloc_rw_mask (void)
   if (flag_pic)
     return 3;
   else if (DEFAULT_ABI == ABI_AIX || DEFAULT_ABI == ABI_ELFv2)
+#if defined (POWERPC_NETBSD)
+    return 3;
+#else
     return 2;
+#endif
   else
     return 0;
 }

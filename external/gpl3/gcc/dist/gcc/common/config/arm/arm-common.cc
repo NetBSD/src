@@ -55,6 +55,9 @@ arm_except_unwind_info (struct gcc_options *opts)
     return UI_SJLJ;
 #endif
 
+  if (ARM_DWARF_UNWIND_TABLES)
+    return UI_DWARF2;
+
   /* If not using ARM EABI unwind tables... */
   if (ARM_UNWIND_INFO)
     {

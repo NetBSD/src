@@ -222,20 +222,32 @@ static bool check_file_against_entries (cpp_reader *, _cpp_file *, bool);
 static bool
 open_file (_cpp_file *file)
 {
+  const char *cpp_restricted;
+
+  cpp_restricted = getenv ("CPP_RESTRICTED");
+
   if (file->path[0] == '\0')
     {
       file->fd = 0;
       set_stdin_to_binary_mode ();
     }
   else
-    file->fd = open (file->path, O_RDONLY | O_NOCTTY | O_BINARY, 0666);
+    file->fd = open (file->path, O_RDONLY | O_NOCTTY | O_BINARY
+		     | ((cpp_restricted != NULL) ? O_NONBLOCK : 0), 0666);
+
 
   if (file->fd != -1)
     {
       if (fstat (file->fd, &file->st) == 0)
 	{
 	  if (!S_ISDIR (file->st.st_mode))
+	  if (cpp_restricted != NULL
+	      ? S_ISREG (file->st.st_mode) : !S_ISDIR (file->st.st_mode))
+
 	    {
+	      if (cpp_restricted)
+		fcntl(file->fd, F_SETFL,
+		      fcntl(file->fd, F_GETFL, 0) & ~O_NONBLOCK);
 	      file->err_no = 0;
 	      return true;
 	    }

@@ -2878,9 +2878,6 @@ extern enum attr_cpu ix86_schedule;
 #define LIBGCC2_UNWIND_ATTRIBUTE __attribute__((target ("no-mmx,no-sse")))
 #endif
 
-/* Standard location for 32-bit ASAN shadow map.  */
-#define X86_32_ASAN_BIT_OFFSET 29
-
 /*
 Local variables:
 version-control: t

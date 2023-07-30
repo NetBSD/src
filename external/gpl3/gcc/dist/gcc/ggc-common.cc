@@ -726,6 +726,8 @@ gt_pch_restore (FILE *f)
   size_t i;
   struct mmap_info mmi;
   int result;
+  struct line_maps * old_line_table = line_table;
+  location_t old_input_loc = input_location;
 
   /* We are about to reload the line maps along with the rest of the PCH
      data, which means that the (loaded) ones cannot be guaranteed to be
@@ -745,7 +747,11 @@ gt_pch_restore (FILE *f)
   for (rt = gt_pch_scalar_rtab; *rt; rt++)
     for (rti = *rt; rti->base != NULL; rti++)
       if (fread (rti->base, rti->stride, 1, f) != 1)
-	fatal_error (input_location, "cannot read PCH file: %m");
+	{
+          line_table = old_line_table;
+	  input_location = old_input_loc;
+	  fatal_error (input_location, "cannot read PCH file: %m");
+        }
 
   /* Read in all the global pointers, in 6 easy loops.  */
   bool error_reading_pointers = false;
@@ -764,7 +770,11 @@ gt_pch_restore (FILE *f)
     fatal_error (input_location, "cannot read PCH file: %m");
 
   if (fread (&mmi, sizeof (mmi), 1, f) != 1)
-    fatal_error (input_location, "cannot read PCH file: %m");
+    {
+      line_table = old_line_table;
+      input_location = old_input_loc;
+      fatal_error (input_location, "cannot read PCH file: %m");
+    }
 
   void *orig_preferred_base = mmi.preferred_base;
   result = host_hooks.gt_pch_use_address (mmi.preferred_base, mmi.size,
@@ -774,6 +784,8 @@ gt_pch_restore (FILE *f)
      address needed.  */
   if (result < 0)
     {
+      line_table = old_line_table;
+      input_location = old_input_loc;
       sorry_at (input_location, "PCH allocation failure");
       /* There is no point in continuing from here, we will only end up
 	 with a crashed (most likely hanging) compiler.  */
@@ -787,14 +799,26 @@ gt_pch_restore (FILE *f)
     {
       if (fseek (f, mmi.offset, SEEK_SET) != 0
 	  || fread (mmi.preferred_base, mmi.size, 1, f) != 1)
-	fatal_error (input_location, "cannot read PCH file: %m");
+	{
+          line_table = old_line_table;
+          input_location = old_input_loc;
+	  fatal_error (input_location, "cannot read PCH file: %m");
+	}
     }
   else if (fseek (f, mmi.offset + mmi.size, SEEK_SET) != 0)
-    fatal_error (input_location, "cannot read PCH file: %m");
+    {
+      line_table = old_line_table;
+      input_location = old_input_loc;
+      fatal_error (input_location, "cannot read PCH file: %m");
+    }
 
   size_t reloc_addrs_size;
   if (fread (&reloc_addrs_size, sizeof (reloc_addrs_size), 1, f) != 1)
-    fatal_error (input_location, "cannot read PCH file: %m");
+    {
+      line_table = old_line_table;
+      input_location = old_input_loc;
+      fatal_error (input_location, "cannot read PCH file: %m");
+    }
 
   if (orig_preferred_base != mmi.preferred_base)
     {
@@ -829,7 +853,11 @@ gt_pch_restore (FILE *f)
 	    = MIN (reloc_addrs_size,
 		   (size_t) (4096 - (uleb128_ptr - uleb128_buf)));
 	  if (fread (uleb128_ptr, 1, this_size, f) != this_size)
-	    fatal_error (input_location, "cannot read PCH file: %m");
+	    {
+              line_table = old_line_table;
+              input_location = old_input_loc;
+	      fatal_error (input_location, "cannot read PCH file: %m");
+	    }
 	  unsigned char *uleb128_end = uleb128_ptr + this_size;
 	  if (this_size != reloc_addrs_size)
 	    uleb128_end -= 2 * sizeof (size_t);
@@ -866,7 +894,11 @@ gt_pch_restore (FILE *f)
   unsigned num_callbacks;
   if (fread (&pch_save, sizeof (pch_save), 1, f) != 1
       || fread (&num_callbacks, sizeof (num_callbacks), 1, f) != 1)
-    fatal_error (input_location, "cannot read PCH file: %m");
+    {
+      line_table = old_line_table;
+      input_location = old_input_loc;
+      fatal_error (input_location, "cannot read PCH file: %m");
+    }
   if (pch_save != &gt_pch_save)
     {
       uintptr_t binbias = (uintptr_t) &gt_pch_save - (uintptr_t) pch_save;
@@ -876,7 +908,11 @@ gt_pch_restore (FILE *f)
 	= (uintptr_t) mmi.preferred_base - (uintptr_t) orig_preferred_base;
 
       if (fread (ptrs, sizeof (void *), num_callbacks, f) != num_callbacks)
-	fatal_error (input_location, "cannot read PCH file: %m");
+        {
+          line_table = old_line_table;
+          input_location = old_input_loc;
+	  fatal_error (input_location, "cannot read PCH file: %m");
+	}
       for (i = 0; i < num_callbacks; ++i)
 	{
 	  void *ptr = (void *) ((uintptr_t) ptrs[i] + bias);
