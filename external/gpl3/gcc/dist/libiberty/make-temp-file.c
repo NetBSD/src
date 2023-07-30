@@ -143,7 +143,7 @@ choose_tmpdir (void)
 
       /* Try /tmp, then /var/tmp.  */
       base = try_dir (tmp, base);
-      base = try_dir (usrtmp, base);
+      base = try_dir (vartmp, base);
       
       /* If all else fails, use the current directory!  */
       if (base == 0)
