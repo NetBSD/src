@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.201 2023/07/20 20:00:34 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.202 2023/07/31 17:41:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.201 2023/07/20 20:00:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.202 2023/07/31 17:41:18 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -857,7 +857,7 @@ int
 usbread(dev_t dev, struct uio *uio, int flag)
 {
 	struct usb_event *ue;
-	struct usb_event_old *ueo = NULL;	/* XXXGCC */
+	struct usb_event30 *ueo = NULL;	/* XXXGCC */
 	int useold = 0;
 	int error, n;
 
@@ -865,8 +865,8 @@ usbread(dev_t dev, struct uio *uio, int flag)
 		return ENXIO;
 
 	switch (uio->uio_resid) {
-	case sizeof(struct usb_event_old):
-		ueo = kmem_zalloc(sizeof(struct usb_event_old), KM_SLEEP);
+	case sizeof(struct usb_event30):
+		ueo = kmem_zalloc(sizeof(struct usb_event30), KM_SLEEP);
 		useold = 1;
 		/* FALLTHROUGH */
 	case sizeof(struct usb_event):
@@ -905,7 +905,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 	}
 	usb_free_event(ue);
 	if (ueo)
-		kmem_free(ueo, sizeof(struct usb_event_old));
+		kmem_free(ueo, sizeof(struct usb_event30));
 
 	return error;
 }
@@ -1056,10 +1056,10 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	}
 
-	case USB_DEVICEINFO_OLD:
+	case USB_DEVICEINFO_30:
 	{
 		struct usbd_device *dev;
-		struct usb_device_info_old *di = (void *)data;
+		struct usb_device_info30 *di = (void *)data;
 		int addr = di->udi_addr;
 
 		if (addr < 1 || addr >= USB_MAX_DEVICES) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.172 2023/07/20 20:00:34 mrg Exp $	*/
+/*	$NetBSD: ugen.c,v 1.173 2023/07/31 17:41:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.172 2023/07/20 20:00:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.173 2023/07/31 17:41:18 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2068,11 +2068,11 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		usbd_fill_deviceinfo(sc->sc_udev,
 				     (struct usb_device_info *)addr, 0);
 		break;
-	case USB_GET_DEVICEINFO_OLD:
+	case USB_GET_DEVICEINFO_30:
 	{
 		int ret;
 		MODULE_HOOK_CALL(usb_subr_fill_30_hook,
-		    (sc->sc_udev, (struct usb_device_info_old *)addr, 0,
+		    (sc->sc_udev, (struct usb_device_info30 *)addr, 0,
 		      usbd_devinfo_vp, usbd_printBCD),
 		    enosys(), ret);
 		if (ret == 0)
