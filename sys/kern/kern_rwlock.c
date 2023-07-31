@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.66.4.1 2023/07/31 14:38:25 martin Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.66.4.2 2023/07/31 14:45:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.66.4.1 2023/07/31 14:38:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.66.4.2 2023/07/31 14:45:59 martin Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -103,11 +103,9 @@ do { \
 #ifdef __HAVE_ATOMIC_AS_MEMBAR
 #define	RW_MEMBAR_ACQUIRE()
 #define	RW_MEMBAR_RELEASE()
-#define	RW_MEMBAR_PRODUCER()
 #else
 #define	RW_MEMBAR_ACQUIRE()		membar_acquire()
 #define	RW_MEMBAR_RELEASE()		membar_release()
-#define	RW_MEMBAR_PRODUCER()		membar_producer()
 #endif
 
 /*
@@ -613,7 +611,7 @@ rw_downgrade(krwlock_t *rw)
 	__USE(curthread);
 #endif
 
-	RW_MEMBAR_PRODUCER();
+	RW_MEMBAR_RELEASE();
 
 	for (owner = rw->rw_owner;; owner = next) {
 		/*
@@ -712,7 +710,7 @@ rw_tryupgrade(krwlock_t *rw)
 		newown = curthread | RW_WRITE_LOCKED | (owner & ~RW_THREAD);
 		next = rw_cas(rw, owner, newown);
 		if (__predict_true(next == owner)) {
-			RW_MEMBAR_PRODUCER();
+			RW_MEMBAR_ACQUIRE();
 			break;
 		}
 		RW_ASSERT(rw, (next & RW_WRITE_LOCKED) == 0);
