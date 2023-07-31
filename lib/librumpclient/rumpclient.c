@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.70 2023/07/28 18:19:00 christos Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.71 2023/07/31 04:37:04 rin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -50,7 +50,7 @@
 #define USE_SIGNALFD
 #endif
 
-__RCSID("$NetBSD: rumpclient.c,v 1.70 2023/07/28 18:19:00 christos Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.71 2023/07/31 04:37:04 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -926,7 +926,7 @@ rumpclient_init(void)
 #ifdef __NetBSD__
 #if !__NetBSD_Prereq__(5,99,7)
 	FINDSYM(kevent)
-#elif !__NetBSD_Prereq__(10,99,4)
+#elif !__NetBSD_Prereq__(10,99,7)
 	FINDSYM2(kevent,_sys___kevent50)
 #else
 	FINDSYM2(kevent,_sys___kevent100)

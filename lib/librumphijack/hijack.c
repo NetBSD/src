@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.137 2023/07/28 18:19:00 christos Exp $	*/
+/*      $NetBSD: hijack.c,v 1.138 2023/07/31 04:37:04 rin Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.137 2023/07/28 18:19:00 christos Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.138 2023/07/31 04:37:04 rin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -214,7 +214,7 @@ enum dualcall {
 
 #if !__NetBSD_Prereq__(5,99,7)
 #define REALKEVENT kevent
-#elif !__NetBSD_Prereq__(10,99,4)
+#elif !__NetBSD_Prereq__(10,99,7)
 #define REALKEVENT _sys___kevent50
 #else
 #define REALKEVENT _sys___kevent100
