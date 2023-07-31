@@ -1,4 +1,4 @@
-.\"	$NetBSD: mremap.2,v 1.7.12.1 2023/07/31 15:52:44 martin Exp $
+.\"	$NetBSD: mremap.2,v 1.7.12.2 2023/07/31 16:02:32 martin Exp $
 .\"
 .\" Copyright (c) 2007 Thomas Klausner and Joerg Sonnenberger
 .\" All rights reserved.
@@ -231,3 +231,36 @@ system call appeared in
 It was based on the code that supports
 .Fn mremap
 compatibility for Linux binaries.
+.Sh BUGS
+If a mapping is created by
+.Xr mmap 2
+with
+.Dv MAP_PRIVATE
+and then duplicated by
+.Nm
+with
+.Dv MAP_REMAPDUP ,
+calling
+.Xr fork 2
+destroys the coupling between the original and duplicate mapping.
+Workarounds:
+.Bl -dash
+.It
+Create the original mapping with
+.Dv MAP_SHARED .
+.It
+Use
+.Xr minherit 2
+with
+.Dv MAP_INHERIT_NONE
+on the writable mapping.
+.It
+Don't use
+.Xr fork 2 ;
+use
+.Xr posix_spawn 2 .
+.El
+.Pp
+See
+.%U https://gnats.NetBSD.org/55177
+for details.
