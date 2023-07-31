@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.45 2023/07/31 01:23:04 dholland Exp $	*/
+/*	$NetBSD: aarp.c,v 1.46 2023/07/31 01:24:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.45 2023/07/31 01:23:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.46 2023/07/31 01:24:36 dholland Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_atalk.h"
@@ -73,14 +73,14 @@ struct aarptab  aarptab[AARPTAB_SIZE];
 #define AARPTAB_LOOK(aat, addr) { 				\
 	int n;							\
 								\
-	aat = &aarptab[AARPTAB_HASH(addr) * AARPTAB_BSIZ];	\
-	for (n = 0; n < AARPTAB_BSIZ; n++, aat++) {		\
-		if (aat->aat_ataddr.s_net == (addr).s_net &&	\
-	            aat->aat_ataddr.s_node == (addr).s_node)	\
+	(aat) = &aarptab[AARPTAB_HASH(addr) * AARPTAB_BSIZ];	\
+	for (n = 0; n < AARPTAB_BSIZ; n++, (aat)++) {		\
+		if ((aat)->aat_ataddr.s_net == (addr).s_net &&	\
+	            (aat)->aat_ataddr.s_node == (addr).s_node)	\
 			break;					\
 	}							\
 	if (n >= AARPTAB_BSIZ) {				\
-		aat = 0;					\
+		(aat) = 0;					\
 	}							\
 }
 
