@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1345 2023/07/23 16:52:37 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.1346 2023/07/31 17:35:31 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -121,7 +121,7 @@ EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 #
 HAVE_GDB?=	1100
 
-.if ${HAVE_GDB} == 1310
+.if ${HAVE_GDB} == 1320
 EXTERNAL_GDB_SUBDIR=		gdb
 .elif ${HAVE_GDB} == 1100
 EXTERNAL_GDB_SUBDIR=		gdb.old
