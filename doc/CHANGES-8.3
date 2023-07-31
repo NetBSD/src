@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.186 2023/07/30 12:16:28 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.187 2023/07/31 16:53:36 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3624,4 +3624,72 @@ lib/csu/arch/vax/crtbegin.S			1.8,1.9
 
 	vax/csu: fix register preservation.
 	[rin, ticket #1858]
+
+sys/arch/aarch64/aarch64/locore.S		1.91 (patch)
+sys/arch/alpha/include/asm.h			1.45 (patch)
+ (applied to sys/arch/alpha/alpha/multiproc.s)
+sys/arch/arm/arm32/cpuswitch.S			1.106 (patch)
+ (applied also to sys/arch/arm/cortex/a9_mpsubr.S,
+ sys/arch/arm/cortex/a9_mpsubr.S,
+ sys/arch/arm/cortex/cortex_init.S)
+sys/arch/evbmips/ingenic/cpu_startup.S		1.2 (patch)
+sys/arch/hppa/include/cpu.h			1.13 (patch)
+sys/arch/ia64/ia64/machdep.c			1.44 (patch)
+sys/arch/ia64/ia64/vm_machdep.c			1.18 (patch)
+sys/arch/mips/include/asm.h			1.74 (patch)
+sys/arch/mips/mips/locore.S			1.229 (patch)
+sys/arch/mips/mips/locore_mips3.S		1.116 (patch)
+sys/arch/powerpc/powerpc/locore_subr.S		1.67 (patch)
+sys/arch/sparc/sparc/locore.s			1.284 (patch)
+sys/arch/sparc64/sparc64/locore.s		1.432 (patch)
+sys/arch/vax/vax/subr.S				1.42 (patch)
+
+	PR 57240: add missing barriers in cpu_switchto.
+	[riastradh, ticket #1859]
+
+sys/kern/kern_lock.c				1.182 (patch)
+sys/kern/kern_mutex.c				1.102 (patch)
+sys/kern/kern_rwlock.c				1.67 (patch)
+
+	Sprinkle __predict_{true,false} for panicstr checks.
+	[riastradh, ticket #1860]
+
+sys/kern/kern_rwlock.c				1.68 (patch)
+
+	rwlock(9): Fix membars.
+	[riastradh, ticket #1861]
+
+sys/arch/xen/x86/xen_intr.c			1.31 (patch)
+sys/arch/xen/include/xen.h			(apply patch)
+
+	xen: fix potential preemption races in interrupt disabling.
+	[riastradh, ticket #1862]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.129 (apply minimal patch)
+
+	xennet(4): add missing membar.
+	[riastradh, ticket #1863]
+
+sys/arch/xen/x86/hypervisor_machdep.c		1.46 (patch)
+
+	xen: fix preemption race in stipending.
+	[riastradh, ticket #1864]
+
+sys/fs/hfs/libhfs.c				1.16,1.17
+sys/fs/hfs/libhfs.h				1.9
+
+	fs/hfs: Fix undefined behaviour.
+	[riastradh, ticket #1865]
+
+sys/netatalk/at_control.c			1.44
+
+	netatalk: Fix potential user-controlled buffer overruns through
+	sa_len by ignoring what the user specified and computing it in
+	the kernel instead from known-good sizes.
+	[riastradh, ticket #1866]
+
+sys/kern/uipc_domain.c				1.109
+
+	sockaddr(9): fix uninitialized buffer in DIAGNOSTIC checks.
+	[riastradh, ticket #1867]
 
