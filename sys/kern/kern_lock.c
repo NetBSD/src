@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.163 2019/05/09 05:00:31 ozaki-r Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.163.2.1 2023/07/31 14:40:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.163 2019/05/09 05:00:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.163.2.1 2023/07/31 14:40:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,7 +63,7 @@ assert_sleepable(void)
 	uint64_t pctr;
 	bool idle;
 
-	if (panicstr != NULL) {
+	if (__predict_false(panicstr != NULL)) {
 		return;
 	}
 
