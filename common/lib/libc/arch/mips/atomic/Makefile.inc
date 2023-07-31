@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2021/04/25 22:45:16 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.15.6.1 2023/07/31 16:10:26 martin Exp $
 
 .if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c" || ${LIB} == "pthread" \
 	|| ${LIB} == "rump")
@@ -51,6 +51,9 @@ SRCS+=	atomic_xor_32_cas.c atomic_xor_16_cas.c atomic_xor_8_cas.c	\
 	atomic_c11_compare_exchange_cas_32.c				\
 	atomic_c11_compare_exchange_cas_16.c				\
 	atomic_c11_compare_exchange_cas_8.c
+.if !${MACHINE_MIPS64}
+SRCS+=	atomic_is_lock_free.c
+.endif
 .endif
 
 .if defined(LIB) && (${LIB} == "kern" || ${LIB} == "rump")

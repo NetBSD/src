@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2019/02/28 02:35:37 isaki Exp $
+#	$NetBSD: Makefile.inc,v 1.14.14.1 2023/07/31 16:10:26 martin Exp $
 
 .if defined(LIB)
 
@@ -36,6 +36,7 @@ SRCS+=	atomic_xor_32_cas.c atomic_xor_16_cas.c atomic_xor_8_cas.c	\
 	atomic_cas_32_cas.c atomic_cas_16_cas.c atomic_cas_8_cas.c	\
 	atomic_c11_compare_exchange_cas_32.c				\
 	atomic_c11_compare_exchange_cas_16.c				\
-	atomic_c11_compare_exchange_cas_8.c
+	atomic_c11_compare_exchange_cas_8.c				\
+	atomic_is_lock_free.c
 .endif
 .endif
