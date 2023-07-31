@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.h,v 1.8 2019/01/05 10:25:11 maya Exp $	*/
+/*	$NetBSD: libhfs.h,v 1.8.30.1 2023/07/31 15:47:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -585,7 +585,7 @@ size_t hfslib_read_master_directory_block(void*,
 	hfs_hfs_master_directory_block_t*);
 size_t hfslib_reada_node(void*, hfs_node_descriptor_t*, void***, uint16_t**,
 	hfs_btree_file_type, hfs_volume*, hfs_callback_args*);
-size_t hfslib_reada_node_offsets(void*, uint16_t*);
+size_t hfslib_reada_node_offsets(void*, uint16_t*, uint16_t);
 size_t hfslib_read_header_node(void**, uint16_t*, uint16_t,
 	hfs_header_record_t*, void*, void*);
 size_t hfslib_read_catalog_keyed_record(void*, hfs_catalog_keyed_record_t*,
