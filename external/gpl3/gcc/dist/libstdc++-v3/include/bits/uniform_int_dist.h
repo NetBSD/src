@@ -247,8 +247,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	{
 	  using _Up_traits = __gnu_cxx::__int_traits<_Up>;
 	  using _Wp_traits = __gnu_cxx::__int_traits<_Wp>;
-	  static_assert(!_Up_traits::__is_signed, "U must be unsigned");
-	  static_assert(!_Wp_traits::__is_signed, "W must be unsigned");
+	  static_assert(!_Up_traits::__is_signed_val, "U must be unsigned");
+	  static_assert(!_Wp_traits::__is_signed_val, "W must be unsigned");
 	  static_assert(_Wp_traits::__digits == (2 * _Up_traits::__digits),
 			"W must be twice as wide as U");
 
