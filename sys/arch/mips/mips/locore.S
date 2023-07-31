@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.228 2021/05/29 12:35:27 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.228.12.1 2023/07/31 13:36:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.228 2021/05/29 12:35:27 simonb Exp $")
+RCSID("$NetBSD: locore.S,v 1.228.12.1 2023/07/31 13:36:31 martin Exp $")
 
 #include "assym.h"
 
@@ -286,7 +286,28 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
 	nop					# patchable load delay slot
+
+	/*
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
+	 */
+	SYNC_PRODUCER		/* XXX fixup to nop for uniprocessor boot */
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(t2)
+	SYNC_DEKKER		/* XXX fixup to nop for uniprocessor boot */
 
 	/* Check for restartable atomic sequences (RAS) */
 	PTR_L	a0, L_PROC(MIPS_CURLWP)		# argument to ras_lookup
@@ -406,7 +427,9 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	move	MIPS_CURLWP, a0				# switch to softint lwp
 	PTR_L	s1, L_CPU(MIPS_CURLWP)			# get curcpu()
 	nop					# patchable load delay slot
+	SYNC_PRODUCER /* XXX fixup */	/* for mutex_enter; see cpu_switchto */
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ...
+	SYNC_DEKKER /* XXX fixup */	/* for mutex_enter; see cpu_switchto */
 	move	s2, sp					# remember sp
 	move	s3, t0					# remember curpcb
 
@@ -417,7 +440,9 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 
 	move	sp, s2					# restore stack
 	move	MIPS_CURLWP, s0				# restore curlwp
+	SYNC_PRODUCER /* XXX fixup */	/* for mutex_enter; see cpu_switchto */
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ....
+	SYNC_DEKKER /* XXX fixup */	/* for mutex_enter; see cpu_switchto */
 
 	REG_L	ra, CALLFRAME_RA(sp)		# load early since we use it
 

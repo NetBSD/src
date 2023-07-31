@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 2021/11/02 11:26:04 ryo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.4.1 2023/07/31 13:36:31 martin Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -200,7 +200,26 @@ extern int cpu_revision;
 #define	GET_CURLWP(r)		mfctl CR_CURCPU, r ! ldw CI_CURLWP(r), r
 #define	GET_CURLWP_SPACE(s, r)	mfctl CR_CURCPU, r ! ldw CI_CURLWP(s, r), r
 
-#define	SET_CURLWP(r,t)		mfctl CR_CURCPU, t ! stw r, CI_CURLWP(t)
+/*
+ * Issue barriers to coordinate mutex_exit on this CPU with
+ * mutex_vector_enter on another CPU.
+ *
+ * 1. Any prior mutex_exit by oldlwp must be visible to other
+ *    CPUs before we set ci_curlwp := newlwp on this one,
+ *    requiring a store-before-store barrier.
+ *
+ * 2. ci_curlwp := newlwp must be visible on all other CPUs
+ *    before any subsequent mutex_exit by newlwp can even test
+ *    whether there might be waiters, requiring a
+ *    store-before-load barrier.
+ *
+ * See kern_mutex.c for details -- this is necessary for
+ * adaptive mutexes to detect whether the lwp is on the CPU in
+ * order to safely block without requiring atomic r/m/w in
+ * mutex_exit.
+ */
+#define	SET_CURLWP(r,t)		\
+	sync ! mfctl CR_CURCPU, t ! stw r, CI_CURLWP(t) ! sync
 
 #else /*  MULTIPROCESSOR */
 

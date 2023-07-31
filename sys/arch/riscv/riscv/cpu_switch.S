@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_switch.S,v 1.2 2022/12/04 16:29:35 skrll Exp $ */
+/* $NetBSD: cpu_switch.S,v 1.2.2.1 2023/07/31 13:36:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -62,7 +62,28 @@ ENTRY_NP(cpu_switchto)
 	mv	tp, a1			// # put the new lwp in thread pointer
 
 	PTR_L	t1, L_CPU(tp)		// # get curcpu
+
+	/*
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
+	 */
+	fence	w,w
 	PTR_S	tp, CI_CURLWP(t1)	// # update curcpu with the new curlwp
+	fence	w,r
 
 	REG_L	sp, L_MD_KTF(tp)	// # load its kernel stack pointer
 	REG_L	t4, TF_SR(sp)		// # fetch status register
@@ -154,14 +175,18 @@ ENTRY_NP(cpu_fast_switchto)
 
 	PTR_S	sp, L_MD_KTF(tp)	// save trapframe ptr in oldlwp
 	mv	tp, a0			// set thread pointer to newlwp
+	fence	w,w			// for mutex_enter; see cpu_switchto
 	PTR_S	tp, CI_CURLWP(t1)	// update curlwp
+	fence	w,r			// for mutex_enter; see cpu_switchto
 	PTR_L	sp, L_MD_KTF(tp)	// switch to its stack
 	csrw	sstatus, t0		// reenable interrupts
 	call	_C_LABEL(softint_dispatch)
 	csrrci	t0, sstatus, SR_SIE	// disable interrupts
 	PTR_L	t1, L_CPU(tp)		// get curcpu() again
 	mv	tp, s0			// return to pinned lwp
+	fence	w,w			// for mutex_enter; see cpu_switchto
 	PTR_S	tp, CI_CURLWP(t1)	// restore curlwp
+	fence	w,r			// for mutex_enter; see cpu_switchto
 	csrw	sstatus, t0		// reenable interrupts
 	mv	sp, s1			// restore stack pointer
 

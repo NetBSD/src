@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.17 2022/01/01 21:07:14 andvar Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17.4.1 2023/07/31 13:36:30 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <machine/frame.h>
 #include <machine/md_var.h>
@@ -77,9 +78,29 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	register uint64_t reg9 __asm("r9");
 
 	KASSERT(newlwp != NULL);
-	
+
+	/*
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
+	 */
+	membar_producer();	/* store-before-store */
 	ci->ci_curlwp = newlwp;
-	
+	membar_sync();		/* store-before-load */
+
 	/* required for lwp_startup, copy oldlwp into r9, "mov r9=in0" */
 	__asm __volatile("mov %0=%1" : "=r"(reg9) : "r"(oldlwp));
 	

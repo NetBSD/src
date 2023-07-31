@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.66 2022/03/16 09:48:23 andvar Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.66.4.1 2023/07/31 13:36:30 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -215,7 +215,32 @@ ENTRY(cpu_switchto)
 	 */
 
 	GET_CPUINFO(%r7)
+
+	/*
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
+	 */
+#ifdef MULTIPROCESSOR
+	sync	/* store-before-store XXX use eieio if available -- cheaper */
+#endif
 	stptr	%r31,CI_CURLWP(%r7)
+#ifdef MULTIPROCESSOR
+	sync	/* store-before-load */
+#endif
 	mr	%r13,%r31
 #ifdef PPC_BOOKE
 	mtsprg2	%r31			/* save curlwp in sprg2 */
@@ -389,7 +414,13 @@ _ENTRY(softint_fast_dispatch)
 	 * to a kernel thread
 	 */
 
+#ifdef MULTIPROCESSOR
+	sync	/* XXX eieio */		/* for mutex_enter; see cpu_switchto */
+#endif
 	stptr	%r3, CI_CURLWP(%r7)
+#ifdef MULTIPROCESSOR
+	sync				/* for mutex_enter; see cpu_switchto */
+#endif
 	mr	%r13, %r3
 #ifdef PPC_BOOKE
 	mtsprg2	%r3
@@ -423,7 +454,13 @@ _ENTRY(softint_fast_dispatch)
 #endif
 
 	GET_CPUINFO(%r7)
+#ifdef MULTIPROCESSOR
+	sync	/* XXX eieio */		/* for mutex_enter; see cpu_switchto */
+#endif
 	stptr	%r30, CI_CURLWP(%r7)
+#ifdef MULTIPROCESSOR
+	sync				/* for mutex_enter; see cpu_switchto */
+#endif
 	mr	%r13, %r30
 #ifdef PPC_BOOKE
 	mtsprg2	%r30

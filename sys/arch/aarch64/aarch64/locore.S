@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.89 2022/10/29 07:32:54 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.89.2.1 2023/07/31 13:36:30 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.89 2022/10/29 07:32:54 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.89.2.1 2023/07/31 13:36:30 martin Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -529,6 +529,11 @@ mp_vstart:
 	 */
 	ldr	x1, [x0, #CI_IDLELWP]	/* x0 = curcpu()->ci_idlelwp */
 	msr	tpidr_el1, x1		/* tpidr_el1 = curlwp = x1 */
+	/*
+	 * No membar needed because we're not switching from a
+	 * previous lwp, and the idle lwp we're switching to can't be
+	 * holding locks already; see cpu_switchto.
+	 */
 	str	x1, [x0, #CI_CURLWP]	/* curlwp is idlelwp */
 
 	/* get my stack from lwp */
