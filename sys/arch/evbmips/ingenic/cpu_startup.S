@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_startup.S,v 1.1 2016/01/29 01:54:14 macallan Exp $ */
+/*	$NetBSD: cpu_startup.S,v 1.1.26.1 2023/07/31 13:44:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -33,7 +33,7 @@
 #include <sys/endian.h>
 
 #include <mips/asm.h>
-RCSID("$NetBSD: cpu_startup.S,v 1.1 2016/01/29 01:54:14 macallan Exp $");
+RCSID("$NetBSD: cpu_startup.S,v 1.1.26.1 2023/07/31 13:44:16 martin Exp $");
 
 #ifdef MULTIPROCESSOR
 
@@ -56,6 +56,11 @@ NESTED_NOPROFILE(ingenic_trampoline, 0, ra)
 	nop
 	beqz	MIPS_CURLWP, 1b
 	 nop
+	/*
+	 * No membar needed because we're not switching from a
+	 * previous lwp, and the idle lwp we're switching to can't be
+	 * holding locks already; see cpu_switchto.
+	 */
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(a0)
 
 	li	v0, 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2019/04/19 16:28:32 scole Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43.4.1 2023/07/31 13:44:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -638,6 +638,10 @@ ia64_init(void)
 
 	/*
 	 * Initialise process context. XXX: This should really be in cpu_switchto
+	 *
+	 * No membar needed because we're not switching from a
+	 * previous lwp, and the idle lwp we're switching to can't be
+	 * holding locks already; see cpu_switchto.
 	 */
 	ci->ci_curlwp = &lwp0;
 

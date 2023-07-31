@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.11.4.1 2019/12/24 17:30:28 martin Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.11.4.2 2023/07/31 13:44:15 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.11.4.1 2019/12/24 17:30:28 martin Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.11.4.2 2023/07/31 13:44:15 martin Exp $")
 
 /*
  * At IPL_SCHED:
@@ -81,7 +81,29 @@ ENTRY_NP(cpu_switchto)
 	msr	cpacr_el1, x5		/* restore cpacr_el1 */
 
 	mrs	x3, tpidr_el1
+
+	/*
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
+	 */
+	dmb	ishst			/* store-before-store */
 	str	x1, [x3, #CI_CURLWP]	/* switch curlwp to new lwp */
+	dmb	ish			/* store-before-load */
+
 	ENABLE_INTERRUPT
 
 	/*
@@ -133,7 +155,9 @@ ENTRY_NP(cpu_switchto_softint)
 	ldr	x6, [x19, #L_PCB]	/* x6 = lwp_getpcb(curlwp) */
 	str	x4, [x6, #PCB_TF]
 	str	x5, [x19, #L_MD_CPACR]
+	dmb	ishst			/* for mutex_enter; see cpu_switchto */
 	str	x0, [x3, #CI_CURLWP]	/* curcpu()->ci_curlwp = softlwp; */
+	dmb	ish			/* for mutex_enter; see cpu_switchto */
 
 #ifdef KASAN
 	/* clear the new stack */
@@ -155,7 +179,9 @@ ENTRY_NP(cpu_switchto_softint)
 
 	mrs	x3, tpidr_el1
 	DISABLE_INTERRUPT
+	dmb	ishst			/* for mutex_enter; see cpu_switchto */
 	str	x19, [x3, #CI_CURLWP]	/* curcpu()->ci_curlwp := x19 */
+	dmb	ish			/* for mutex_enter; see cpu_switchto */
 	ldr	x6, [x19, #L_PCB]	/* x6 = lwp_getpcb(curlwp) */
 	ldr	x4, [x6, #PCB_TF]	/* x4 := pinned_lwp->l_addr->pcb_tf */
 	ldr	x5, [x19, #L_MD_CPACR]	/* x5 := pinned_lwp->l_md_cpacr */
