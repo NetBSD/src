@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.42 2021/09/21 15:01:59 christos Exp $	 */
+/*	$NetBSD: at_control.c,v 1.42.4.1 2023/07/31 16:13:40 martin Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.42 2021/09/21 15:01:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.42.4.1 2023/07/31 16:13:40 martin Exp $");
 
 #include "opt_atalk.h"
 
@@ -421,7 +421,7 @@ at_ifinit(struct ifnet *ifp, struct at_ifaddr *aa, const struct sockaddr_at *sat
          * that phase 1 probes use only nodes, not net.node pairs.  Under
          * phase 2, both the net and node must be the same.
          */
-	AA_SAT(aa)->sat_len = sat->sat_len;
+	AA_SAT(aa)->sat_len = sizeof(struct sockaddr_at);
 	AA_SAT(aa)->sat_family = AF_APPLETALK;
 	if (ifp->if_flags & IFF_LOOPBACK) {
 		AA_SAT(aa)->sat_addr.s_net = sat->sat_addr.s_net;
