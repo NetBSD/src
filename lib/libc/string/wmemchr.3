@@ -1,4 +1,4 @@
-.\"	$NetBSD: wmemchr.3,v 1.17 2016/10/15 14:22:00 kamil Exp $
+.\"	$NetBSD: wmemchr.3,v 1.18 2023/07/31 17:38:28 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd October 15, 2016
+.Dd July 30, 2023
 .Dt WMEMCHR 3
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Nm wmemcmp ,
 .Nm wmemcpy ,
 .Nm wmemmove ,
+.Nm wmempcpy ,
 .Nm wmemset ,
 .Nm wcscat ,
 .Nm wcschr ,
@@ -72,6 +73,8 @@
 .Fn wmemcpy "wchar_t * restrict s1" "const wchar_t * restrict s2" "size_t n"
 .Ft wchar_t *
 .Fn wmemmove "wchar_t *s1" "const wchar_t *s2" "size_t n"
+.Ft wchar_t *
+.Fn wmempcpy "wchar_t * restrict s1" "const wchar_t * restrict s2" "size_t n"
 .Ft wchar_t *
 .Fn wmemset "wchar_t *s" "wchar_t c" "size_t n"
 .Ft wchar_t *
@@ -203,9 +206,10 @@ function conforms to
 .St -p1003.1-2008 .
 .Pp
 The
-.Fn wcslcat
-and
+.Fn wcslcat ,
 .Fn wcslcpy
+and
+.Fn wmempcpy
 functions are
 .Nx
 extensions.
