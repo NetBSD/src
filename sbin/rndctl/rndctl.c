@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.40 2021/04/04 13:37:17 nia Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.40.6.1 2023/07/31 15:57:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.40 2021/04/04 13:37:17 nia Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.40.6.1 2023/07/31 15:57:43 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -570,7 +570,7 @@ main(int argc, char **argv)
 	rndctl_t rctl;
 	int ch, cmd, lflag, mflag, sflag;
 	u_int32_t type;
-	char name[16];
+	char name[16] = "";
 	const char *filename = NULL;
 
 	if (SHA3_Selftest() != 0)
@@ -692,12 +692,6 @@ main(int argc, char **argv)
 	 * Bomb out on no-ops.
 	 */
 	if (lflag == 0 && mflag == 0 && sflag == 0)
-		usage();
-
-	/*
-	 * If not listing, we need a device name or a type.
-	 */
-	if (lflag == 0 && cmd == 0 && sflag == 0)
 		usage();
 
 	/*
