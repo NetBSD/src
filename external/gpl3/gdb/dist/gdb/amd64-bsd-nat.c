@@ -1,6 +1,6 @@
 /* Native-dependent code for AMD64 BSD's.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -59,9 +59,6 @@ amd64bsd_fetch_inferior_registers (struct regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   ptid_t ptid = regcache->ptid ();
-#if defined(PT_GETFSBASE) || defined(PT_GETGSBASE)
-  const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-#endif
 
   if (regnum == -1 || amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
@@ -75,50 +72,9 @@ amd64bsd_fetch_inferior_registers (struct regcache *regcache, int regnum)
 	return;
     }
 
-#ifdef PT_GETFSBASE
-  if (regnum == -1 || regnum == tdep->fsbase_regnum)
-    {
-      register_t base;
-
-      if (gdb_ptrace (PT_GETFSBASE, ptid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
-	perror_with_name (_("Couldn't get segment register fs_base"));
-
-      regcache->raw_supply (tdep->fsbase_regnum, &base);
-      if (regnum != -1)
-	return;
-    }
-#endif
-#ifdef PT_GETGSBASE
-  if (regnum == -1 || regnum == tdep->fsbase_regnum + 1)
-    {
-      register_t base;
-
-      if (gdb_ptrace (PT_GETGSBASE, ptid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
-	perror_with_name (_("Couldn't get segment register gs_base"));
-
-      regcache->raw_supply (tdep->fsbase_regnum + 1, &base);
-      if (regnum != -1)
-	return;
-    }
-#endif
-
   if (regnum == -1 || !amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
       struct fpreg fpregs;
-#ifdef PT_GETXSTATE_INFO
-      void *xstateregs;
-
-      if (x86bsd_xsave_len != 0)
-	{
-	  xstateregs = alloca (x86bsd_xsave_len);
-	  if (gdb_ptrace (PT_GETXSTATE, ptid, (PTRACE_TYPE_ARG3) xstateregs, 0)
-	      == -1)
-	    perror_with_name (_("Couldn't get extended state status"));
-
-	  amd64_supply_xsave (regcache, -1, xstateregs);
-	  return;
-	}
-#endif
 
       if (gdb_ptrace (PT_GETFPREGS, ptid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
@@ -135,78 +91,26 @@ amd64bsd_store_inferior_registers (struct regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   ptid_t ptid = regcache->ptid ();
-#if defined(PT_SETFSBASE) || defined(PT_SETGSBASE)
-  const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-#endif
 
   if (regnum == -1 || amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
       struct reg regs;
 
       if (gdb_ptrace (PT_GETREGS, ptid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
-        perror_with_name (_("Couldn't get registers"));
+	perror_with_name (_("Couldn't get registers"));
 
       amd64_collect_native_gregset (regcache, &regs, regnum);
 
       if (gdb_ptrace (PT_SETREGS, ptid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
-        perror_with_name (_("Couldn't write registers"));
+	perror_with_name (_("Couldn't write registers"));
 
       if (regnum != -1)
 	return;
     }
-
-#ifdef PT_SETFSBASE
-  if (regnum == -1 || regnum == tdep->fsbase_regnum)
-    {
-      register_t base;
-
-      /* Clear the full base value to support 32-bit targets.  */
-      base = 0;
-      regcache->raw_collect (tdep->fsbase_regnum, &base);
-
-      if (gdb_ptrace (PT_SETFSBASE, ptid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
-	perror_with_name (_("Couldn't write segment register fs_base"));
-      if (regnum != -1)
-	return;
-    }
-#endif
-#ifdef PT_SETGSBASE
-  if (regnum == -1 || regnum == tdep->fsbase_regnum + 1)
-    {
-      register_t base;
-
-      /* Clear the full base value to support 32-bit targets.  */
-      base = 0;
-      regcache->raw_collect (tdep->fsbase_regnum + 1, &base);
-
-      if (gdb_ptrace (PT_SETGSBASE, ptid, (PTRACE_TYPE_ARG3) &base, 0) == -1)
-	perror_with_name (_("Couldn't write segment register gs_base"));
-      if (regnum != -1)
-	return;
-    }
-#endif
 
   if (regnum == -1 || !amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
       struct fpreg fpregs;
-#ifdef PT_GETXSTATE_INFO
-      void *xstateregs;
-
-      if (x86bsd_xsave_len != 0)
-	{
-	  xstateregs = alloca (x86bsd_xsave_len);
-	  if (gdb_ptrace (PT_GETXSTATE, ptid, (PTRACE_TYPE_ARG3) xstateregs, 0)
-	      == -1)
-	    perror_with_name (_("Couldn't get extended state status"));
-
-	  amd64_collect_xsave (regcache, regnum, xstateregs,  inferior_ptid.lwp ());
-
-	  if (gdb_ptrace (PT_SETXSTATE, ptid, (PTRACE_TYPE_ARG3) xstateregs,
-			  x86bsd_xsave_len) == -1)
-	    perror_with_name (_("Couldn't write extended state status"));
-	  return;
-	}
-#endif
 
       if (gdb_ptrace (PT_GETFPREGS, ptid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name (_("Couldn't get floating point status"));

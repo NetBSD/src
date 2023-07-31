@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2020/09/21 06:48:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2023/07/31 17:02:08 christos Exp $
 
 NOCTF=
 #HOSTPROG_CXX=   1
@@ -33,23 +33,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-DBINDIR=\"${BINDIR}\" \
 		${GCPPFLAGS:M-D*}
 
-CWARNFLAGS.clang+=	-Wno-switch
-
-CLEANDIRFILES+= ctf-error.h
-
-${G_OBJECTS} ${G_OBJECTS:.o=.d}: ctf-error.h
-
-ctf-error.h: ${DIST}/libctf/mkerrors.sed ${DIST}/include/ctf-api.h
-	${TOOL_SED} -nf ${DIST}/libctf/mkerrors.sed < ${DIST}/include/ctf-api.h > $@
-
-
 .include "../../Makefile.inc"
 .include <bsd.lib.mk>
-
-# Force c++
-#CWARNFLAGS.clang+=	-Wno-deprecated
-#HOST_CC:=		${HOST_CXX}
-#CC:=			${CXX}
-#CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 
 .PATH: ${DIST}/libctf ${GDBARCHDIR}

@@ -280,7 +280,7 @@ INLINE_DEVICE\
 (void) device_add_boolean_property
 (device *me,
  const char *property,
- int bool);
+ int boolean);
 
 INLINE_DEVICE\
 (int) device_find_boolean_property
@@ -729,7 +729,7 @@ EXTERN_DEVICE\
 (void) device_error
 (device *me,
  const char *fmt,
- ...) __attribute__ ((format (printf, 2, 3)));
+ ...) ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF_2;
 
 INLINE_DEVICE\
 (int) device_trace
@@ -780,17 +780,17 @@ typedef void device_event_handler(void *data);
 INLINE_DEVICE\
 (event_entry_tag) device_event_queue_schedule
 (device *me,
- signed64 delta_time,
+ int64_t delta_time,
  device_event_handler *handler,
  void *data);
 
-INLINE_EVENTS\
+INLINE_DEVICE\
 (void) device_event_queue_deschedule
 (device *me,
  event_entry_tag event_to_remove);
 
-INLINE_EVENTS\
-(signed64) device_event_queue_time
+INLINE_DEVICE\
+(int64_t) device_event_queue_time
 (device *me);
 
 #endif /* _DEVICE_H_ */

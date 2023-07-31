@@ -1,6 +1,6 @@
 /* Common definitions.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -70,7 +70,9 @@
 
 /* We don't support Windows versions before XP, so we define
    _WIN32_WINNT correspondingly to ensure the Windows API headers
-   expose the required symbols.  */
+   expose the required symbols.
+
+   NOTE: this must be kept in sync with common.m4.  */
 #if defined (__MINGW32__) || defined (__CYGWIN__)
 # ifdef _WIN32_WINNT
 #  if _WIN32_WINNT < 0x0501
@@ -105,10 +107,85 @@
 /* This is defined by ansidecl.h, but we prefer gnulib's version.  On
    MinGW, gnulib might enable __USE_MINGW_ANSI_STDIO, which may or not
    require use of attribute gnu_printf instead of printf.  gnulib
-   checks that at configure time.  Since _GL_ATTRIBUTE_FORMAT_PRINTF
+   checks that at configure time.  Since _GL_ATTRIBUTE_FORMAT_PRINTF_STANDARD
    is compatible with ATTRIBUTE_PRINTF, simply use it.  */
 #undef ATTRIBUTE_PRINTF
-#define ATTRIBUTE_PRINTF _GL_ATTRIBUTE_FORMAT_PRINTF
+#define ATTRIBUTE_PRINTF _GL_ATTRIBUTE_FORMAT_PRINTF_STANDARD
+
+/* This is defined by ansidecl.h, but we disable the attribute.
+
+   Say a developer starts out with:
+   ...
+   extern void foo (void *ptr) __atttribute__((nonnull (1)));
+   void foo (void *ptr) {}
+   ...
+   with the idea in mind to catch:
+   ...
+   foo (nullptr);
+   ...
+   at compile time with -Werror=nonnull, and then adds:
+   ...
+    void foo (void *ptr) {
+   +  gdb_assert (ptr != nullptr);
+    }
+   ...
+   to catch:
+   ...
+   foo (variable_with_nullptr_value);
+   ...
+   at runtime as well.
+
+   Said developer then verifies that the assert works (using -O0), and commits
+   the code.
+
+   Some other developer then checks out the code and accidentally writes some
+   variant of:
+   ...
+   foo (variable_with_nullptr_value);
+   ...
+   and builds with -O2, and ... the assert doesn't trigger, because it's
+   optimized away by gcc.
+
+   There's no suppported recipe to prevent the assertion from being optimized
+   away (other than: build with -O0, or remove the nonnull attribute).  Note
+   that -fno-delete-null-pointer-checks does not help.  A patch was submitted
+   to improve gcc documentation to point this out more clearly (
+   https://gcc.gnu.org/pipermail/gcc-patches/2021-July/576218.html ).  The
+   patch also mentions a possible workaround that obfuscates the pointer
+   using:
+   ...
+    void foo (void *ptr) {
+   +  asm ("" : "+r"(ptr));
+      gdb_assert (ptr != nullptr);
+    }
+   ...
+   but that still requires the developer to manually add this in all cases
+   where that's necessary.
+
+   A warning was added to detect the situation: -Wnonnull-compare, which does
+   help in detecting those cases, but each new gcc release may indicate a new
+   batch of locations that needs fixing, which means we've added a maintenance
+   burden.
+
+   We could try to deal with the problem more proactively by introducing a
+   gdb_assert variant like:
+   ...
+   void gdb_assert_non_null (void *ptr) {
+      asm ("" : "+r"(ptr));
+      gdb_assert (ptr != nullptr);
+    }
+    void foo (void *ptr) {
+      gdb_assert_nonnull (ptr);
+    }
+   ...
+   and make it a coding style to use it everywhere, but again, maintenance
+   burden.
+
+   With all these things considered, for now we go with the solution with the
+   least maintenance burden: disable the attribute, such that we reliably deal
+   with it everywhere.  */
+#undef ATTRIBUTE_NONNULL
+#define ATTRIBUTE_NONNULL(m)
 
 /* This is defined by ansidecl.h, but we disable the attribute.
 
@@ -191,6 +268,12 @@
 #define ATTRIBUTE_UNUSED_RESULT
 #endif
 
+#if (GCC_VERSION > 4000)
+#define ATTRIBUTE_USED __attribute__ ((__used__))
+#else
+#define ATTRIBUTE_USED
+#endif
+
 #include "libiberty.h"
 #include "pathmax.h"
 #include "gdb/signals.h"
@@ -212,9 +295,6 @@
 
 /* Pull in gdb::unique_xmalloc_ptr.  */
 #include "gdbsupport/gdb_unique_ptr.h"
-
-/* String containing the current directory (what getwd would return).  */
-extern char *current_directory;
 
 /* sbrk on macOS is not useful for our purposes, since sbrk(0) always
    returns the same value.  brk/sbrk on macOS is just an emulation

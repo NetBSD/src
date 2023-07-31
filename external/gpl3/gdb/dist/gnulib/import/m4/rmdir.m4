@@ -1,5 +1,5 @@
-# rmdir.m4 serial 17
-dnl Copyright (C) 2002, 2005, 2009-2020 Free Software Foundation, Inc.
+# rmdir.m4 serial 18
+dnl Copyright (C) 2002, 2005, 2009-2022 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -22,23 +22,22 @@ AC_DEFUN([gl_FUNC_RMDIR],
            #else /* on Windows with MSVC */
            # include <direct.h>
            #endif
-]], [[int result = 0;
-      if (!rmdir ("conftest.file/"))
-        result |= 1;
-      else if (errno != ENOTDIR)
-        result |= 2;
-      if (!rmdir ("conftest.dir/./"))
-        result |= 4;
-      return result;
-    ]])],
+         ]GL_MDA_DEFINES],
+         [[int result = 0;
+           if (!rmdir ("conftest.file/"))
+             result |= 1;
+           else if (errno != ENOTDIR)
+             result |= 2;
+           if (!rmdir ("conftest.dir/./"))
+             result |= 4;
+           return result;
+         ]])],
        [gl_cv_func_rmdir_works=yes], [gl_cv_func_rmdir_works=no],
        [case "$host_os" in
                            # Guess yes on Linux systems.
           linux-* | linux) gl_cv_func_rmdir_works="guessing yes" ;;
                            # Guess yes on glibc systems.
           *-gnu* | gnu*)   gl_cv_func_rmdir_works="guessing yes" ;;
-                           # Guess yes on bsd systems.
-          *bsd*)           gl_cv_func_rmdir_works="guessing yes" ;;
                            # Guess no on native Windows.
           mingw*)          gl_cv_func_rmdir_works="guessing no" ;;
                            # If we don't know, obey --enable-cross-guesses.

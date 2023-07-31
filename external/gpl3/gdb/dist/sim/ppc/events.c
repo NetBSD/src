@@ -55,7 +55,7 @@ typedef struct _event_entry event_entry;
 struct _event_entry {
   void *data;
   event_handler *handler;
-  signed64 time_of_event;  
+  int64_t time_of_event;  
   event_entry *next;
 };
 
@@ -64,8 +64,8 @@ struct _event_queue {
   event_entry *queue;
   event_entry *volatile held;
   event_entry *volatile *volatile held_end;
-  signed64 time_of_event;
-  signed64 time_from_event;
+  int64_t time_of_event;
+  int64_t time_from_event;
 };
 
 
@@ -142,7 +142,7 @@ event_queue_init(event_queue *queue)
 }
 
 INLINE_EVENTS\
-(signed64)
+(int64_t)
 event_queue_time(event_queue *queue)
 {
   return queue->time_of_event - queue->time_from_event;
@@ -152,7 +152,7 @@ STATIC_INLINE_EVENTS\
 (void)
 update_time_from_event(event_queue *events)
 {
-  signed64 current_time = event_queue_time(events);
+  int64_t current_time = event_queue_time(events);
   if (events->queue != NULL) {
     events->time_from_event = (events->queue->time_of_event - current_time);
     events->time_of_event = events->queue->time_of_event;
@@ -169,14 +169,14 @@ update_time_from_event(event_queue *events)
 	   event != NULL;
 	   event = event->next, i++)
 	{
-	  TRACE(trace_events, ("event time-from-event - time %ld, delta %ld - event %d, tag 0x%lx, time %ld, handler 0x%lx, data 0x%lx\n",
-			       (long)current_time,
-			       (long)events->time_from_event,
+	  TRACE(trace_events, ("event time-from-event - time %" PRIi64 ", delta %" PRIi64 " - event %d, tag %p, time %" PRIi64 ", handler %p, data %p\n",
+			       current_time,
+			       events->time_from_event,
 			       i,
-			       (long)event,
-			       (long)event->time_of_event,
-			       (long)event->handler,
-			       (long)event->data));
+			       event,
+			       event->time_of_event,
+			       event->handler,
+			       event->data));
 	}
     }
   ASSERT(current_time == event_queue_time(events));
@@ -186,11 +186,11 @@ STATIC_INLINE_EVENTS\
 (void)
 insert_event_entry(event_queue *events,
 		   event_entry *new_event,
-		   signed64 delta)
+		   int64_t delta)
 {
   event_entry *curr;
   event_entry **prev;
-  signed64 time_of_event;
+  int64_t time_of_event;
 
   if (delta < 0)
     error("what is past is past!\n");
@@ -221,7 +221,7 @@ insert_event_entry(event_queue *events,
 INLINE_EVENTS\
 (event_entry_tag)
 event_queue_schedule(event_queue *events,
-		     signed64 delta_time,
+		     int64_t delta_time,
 		     event_handler *handler,
 		     void *data)
 {
@@ -229,12 +229,12 @@ event_queue_schedule(event_queue *events,
   new_event->data = data;
   new_event->handler = handler;
   insert_event_entry(events, new_event, delta_time);
-  TRACE(trace_events, ("event scheduled at %ld - tag 0x%lx - time %ld, handler 0x%lx, data 0x%lx\n",
-		       (long)event_queue_time(events),
-		       (long)new_event,
-		       (long)new_event->time_of_event,
-		       (long)new_event->handler,
-		       (long)new_event->data));
+  TRACE(trace_events, ("event scheduled at %" PRIi64 " - tag %p - time %" PRIi64 ", handler %p, data %p\n",
+		       event_queue_time(events),
+		       new_event,
+		       new_event->time_of_event,
+		       new_event->handler,
+		       new_event->data));
   return (event_entry_tag)new_event;
 }
 
@@ -242,7 +242,7 @@ event_queue_schedule(event_queue *events,
 INLINE_EVENTS\
 (event_entry_tag)
 event_queue_schedule_after_signal(event_queue *events,
-				  signed64 delta_time,
+				  int64_t delta_time,
 				  event_handler *handler,
 				  void *data)
 {
@@ -272,12 +272,12 @@ event_queue_schedule_after_signal(event_queue *events,
 #endif
   }
 
-  TRACE(trace_events, ("event scheduled at %ld - tag 0x%lx - time %ld, handler 0x%lx, data 0x%lx\n",
-		       (long)event_queue_time(events),
-		       (long)new_event,
-		       (long)new_event->time_of_event,
-		       (long)new_event->handler,
-		       (long)new_event->data));
+  TRACE(trace_events, ("event scheduled at %" PRIi64 " - tag %p - time %" PRIi64 ", handler %p, data %p\n",
+		       event_queue_time(events),
+		       new_event,
+		       new_event->time_of_event,
+		       new_event->handler,
+		       new_event->data));
 
   return (event_entry_tag)new_event;
 }
@@ -298,19 +298,19 @@ event_queue_deschedule(event_queue *events,
 	 ptr_to_current = &current->next, current = *ptr_to_current);
     if (current == to_remove) {
       *ptr_to_current = current->next;
-      TRACE(trace_events, ("event descheduled at %ld - tag 0x%lx - time %ld, handler 0x%lx, data 0x%lx\n",
-			   (long)event_queue_time(events),
-			   (long)event_to_remove,
-			   (long)current->time_of_event,
-			   (long)current->handler,
-			   (long)current->data));
+      TRACE(trace_events, ("event descheduled at %" PRIi64 " - tag %p - time %" PRIi64 ", handler %p, data %p\n",
+			   event_queue_time(events),
+			   event_to_remove,
+			   current->time_of_event,
+			   current->handler,
+			   current->data));
       free(current);
       update_time_from_event(events);
     }
     else {
-      TRACE(trace_events, ("event descheduled at %ld - tag 0x%lx - not found\n",
-			   (long)event_queue_time(events),
-			   (long)event_to_remove));
+      TRACE(trace_events, ("event descheduled at %" PRIi64 " - tag %p - not found\n",
+			   event_queue_time(events),
+			   event_to_remove));
     }
   }
   ASSERT((events->time_from_event >= 0) == (events->queue != NULL));
@@ -323,7 +323,7 @@ INLINE_EVENTS\
 (int)
 event_queue_tick(event_queue *events)
 {
-  signed64 time_from_event;
+  int64_t time_from_event;
 
   /* we should only be here when the previous tick has been fully processed */
   ASSERT(!events->processing);
@@ -372,7 +372,7 @@ INLINE_EVENTS\
 (void)
 event_queue_process(event_queue *events)
 {
-  signed64 event_time = event_queue_time(events);
+  int64_t event_time = event_queue_time(events);
 
   ASSERT((events->time_from_event == -1 && events->queue != NULL)
 	 || events->processing); /* something to do */
@@ -386,12 +386,12 @@ event_queue_process(event_queue *events)
     event_handler *handler = to_do->handler;
     void *data = to_do->data;
     events->queue = to_do->next;
-    TRACE(trace_events, ("event issued at %ld - tag 0x%lx - time %ld, handler 0x%lx, data 0x%lx\n",
-			 (long)event_time,
-			 (long)to_do,
-			 (long)to_do->time_of_event,
-			 (long)handler,
-			 (long)data));
+    TRACE(trace_events, ("event issued at %" PRIi64 " - tag %p - time %" PRIi64 ", handler %p, data %p\n",
+			 event_time,
+			 to_do,
+			 to_do->time_of_event,
+			 handler,
+			 data));
     free(to_do);
     /* Always re-compute the time to the next event so that HANDLER()
        can safely insert new events into the queue. */

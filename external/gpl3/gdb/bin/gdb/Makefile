@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2021/09/18 01:47:09 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2023/07/31 16:59:49 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -52,9 +52,12 @@ LIBGNULIBDIR!=	     cd ${.CURDIR}/../../lib/libgnulib	   && ${PRINTOBJDIR}
 LIBGDBSUPPORTDIR!=   cd ${.CURDIR}/../../lib/libgdbsupport && ${PRINTOBJDIR}
 LIBOPCODESDIR!=	     cd ${.CURDIR}/../../lib/libopcodes	   && ${PRINTOBJDIR}
 LIBBFDDIR!=	     cd ${.CURDIR}/../../lib/libbfd	   && ${PRINTOBJDIR}
+LIBBACKTRACE!=	     cd ${.CURDIR}/../../lib/libbacktrace  && ${PRINTOBJDIR}
+LIBSFRAME!=	     cd ${.CURDIR}/../../lib/libsframe	   && ${PRINTOBJDIR}
 LIBIBERTYDIR!=	     cd ${.CURDIR}/../../lib/libiberty	   && ${PRINTOBJDIR}
 LIBGDBDIR!=	     cd ${.CURDIR}/../../lib/libgdb	   && ${PRINTOBJDIR}
 LIBDECNUMBERDIR!=    cd ${.CURDIR}/../../lib/libdecnumber  && ${PRINTOBJDIR}
+LIBGMP!=	     cd ${.CURDIR}/../../../../lgpl3/gmp/lib/libgmp && ${PRINTOBJDIR}
 
 .if ${USE_LIBEDIT} == yes
 LIBRL=-ledit
@@ -84,8 +87,11 @@ LDADD+= -L${LIBOPCODESDIR} -lopcodes \
 	-L${LIBBFDDIR} -lbfd \
 	-L${LIBDECNUMBERDIR} -ldecnumber \
 	-L${LIBGDBSUPPORTDIR} -lgdbsupport \
+	-L${LIBBACKTRACE} -lbacktrace \
+	-L${LIBSFRAME} -lsframe \
 	-L${LIBCTFDIR} -lctf \
 	-L${LIBGNULIBDIR} -lgnulib \
+	-L${LIBGMP} -lgmp \
 	${LIBRL} \
 	-lterminfo \
 	-L${LIBIBERTYDIR} -liberty
@@ -94,8 +100,11 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 	${LIBBFDDIR}/libbfd.a \
 	${LIBDECNUMBERDIR}/libdecnumber.a \
 	${LIBGDBSUPPORTDIR}/libgdbsupport.a \
+	${LIBBACKTRACE}/libbacktrace.a \
+	${LIBSFRAME}/libsframe.a \
 	${LIBCTFDIR}/libctf.a \
 	${LIBGNULIBDIR}/libgnulib.a \
+	${LIBGMP}/libgmp.a \
 	${LIBRLDP} \
 	${LIBTERMINFO} \
 	${LIBIBERTYDIR}/libiberty.a
