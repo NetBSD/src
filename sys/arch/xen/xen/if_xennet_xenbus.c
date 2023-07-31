@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.70.6.2 2019/01/21 20:12:15 martin Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.70.6.3 2023/07/31 15:31:43 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.70.6.2 2019/01/21 20:12:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.70.6.3 2023/07/31 15:31:43 martin Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -947,7 +947,7 @@ again:
 	sc->sc_tx_ring.sring->rsp_event = 
 	    resp_prod + ((sc->sc_tx_ring.sring->req_prod - resp_prod) >> 1) + 1;
 	ifp->if_timer = 0;
-	xen_wmb();
+	xen_mb();
 	if (resp_prod != sc->sc_tx_ring.sring->rsp_prod)
 		goto again;
 end:
