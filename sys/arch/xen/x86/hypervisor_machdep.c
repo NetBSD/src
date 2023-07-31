@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.36 2019/05/09 17:09:51 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.36.2.1 2023/07/31 15:39:23 martin Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36 2019/05/09 17:09:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36.2.1 2023/07/31 15:39:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,8 @@ stipending(void)
 	volatile struct vcpu_info *vci;
 	int ret;
 
+	kpreempt_disable();
+
 	ret = 0;
 	ci = curcpu();
 	vci = ci->ci_vcpu;
@@ -210,6 +212,8 @@ stipending(void)
 		    HYPERVISOR_shared_info->events_mask, ci->ci_ilevel,
 		    ci->ci_xpending);
 #endif
+
+	kpreempt_enable();
 
 	return (ret);
 }
