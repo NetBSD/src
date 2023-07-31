@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.78 2022/06/20 08:20:09 yamaguchi Exp $	*/
+/*	$NetBSD: bpf.h,v 1.79 2023/07/31 17:41:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -88,9 +88,9 @@ struct bpf_stat {
 };
 
 /*
- * Struct returned by BIOCGSTATSOLD.
+ * Struct returned by BIOCGSTATS_30.
  */
-struct bpf_stat_old {
+struct bpf_stat30 {
 	u_int bs_recv;		/* number of packets received */
 	u_int bs_drop;		/* number of packets dropped */
 };
@@ -135,7 +135,7 @@ struct bpf_version {
 #define BIOCGORTIMEOUT	 _IOR('B', 110, struct timeval50)
 #endif
 #define BIOCGSTATS	 _IOR('B', 111, struct bpf_stat)
-#define BIOCGSTATSOLD	 _IOR('B', 111, struct bpf_stat_old)
+#define BIOCGSTATS_30	 _IOR('B', 111, struct bpf_stat30)
 #define BIOCIMMEDIATE	 _IOW('B', 112, u_int)
 #define BIOCVERSION	 _IOR('B', 113, struct bpf_version)
 #define BIOCSTCPF	 _IOW('B', 114, struct bpf_program)

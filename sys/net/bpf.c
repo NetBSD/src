@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.251 2023/02/08 01:37:53 gutteridge Exp $	*/
+/*	$NetBSD: bpf.c,v 1.252 2023/07/31 17:41:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.251 2023/02/08 01:37:53 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.252 2023/07/31 17:41:18 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1257,9 +1257,9 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 			break;
 		}
 
-	case BIOCGSTATSOLD:
+	case BIOCGSTATS_30:
 		{
-			struct bpf_stat_old *bs = addr;
+			struct bpf_stat30 *bs = addr;
 
 			bs->bs_recv = d->bd_rcount;
 			bs->bs_drop = d->bd_dcount;

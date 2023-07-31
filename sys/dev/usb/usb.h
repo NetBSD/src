@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.121 2022/09/16 07:35:44 msaitoh Exp $	*/
+/*	$NetBSD: usb.h,v 1.122 2023/07/31 17:41:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -913,7 +913,7 @@ struct usb_device_info {
 };
 
 /* <=3.0 had this layout of the structure */
-struct usb_device_info_old {
+struct usb_device_info30 {
 	uint8_t		udi_bus;
 	uint8_t		udi_addr;       /* device address */
 	usb_event_cookie_t udi_cookie;
@@ -973,14 +973,14 @@ struct usb_event {
 };
 
 /* old <=3.0 compat event */
-struct usb_event_old {
+struct usb_event30 {
 	int                     ue_type;
 	struct timespec         ue_time;
 	union {
 		struct {
 			int                     ue_bus;
 		} ue_ctrlr;
-		struct usb_device_info_old          ue_device;
+		struct usb_device_info30	ue_device;
 		struct {
 			usb_event_cookie_t      ue_cookie;
 			char                    ue_devname[16];
@@ -994,7 +994,7 @@ struct usb_event_old {
 #define USB_SETDEBUG		_IOW ('U', 2, int)
 #define USB_DISCOVER		_IO  ('U', 3)
 #define USB_DEVICEINFO		_IOWR('U', 4, struct usb_device_info)
-#define USB_DEVICEINFO_OLD	_IOWR('U', 4, struct usb_device_info_old)
+#define USB_DEVICEINFO_30	_IOWR('U', 4, struct usb_device_info30)
 #define USB_DEVICESTATS		_IOR ('U', 5, struct usb_device_stats)
 
 /* Generic HID device */
@@ -1018,7 +1018,7 @@ struct usb_event_old {
 #define USB_GET_STRING_DESC	_IOWR('U', 110, struct usb_string_desc)
 #define USB_DO_REQUEST		_IOWR('U', 111, struct usb_ctl_request)
 #define USB_GET_DEVICEINFO	_IOR ('U', 112, struct usb_device_info)
-#define USB_GET_DEVICEINFO_OLD	_IOR ('U', 112, struct usb_device_info_old)
+#define USB_GET_DEVICEINFO_30	_IOR ('U', 112, struct usb_device_info30)
 #define USB_SET_SHORT_XFER	_IOW ('U', 113, int)
 #define USB_SET_TIMEOUT		_IOW ('U', 114, int)
 #define USB_SET_BULK_RA		_IOW ('U', 115, int)

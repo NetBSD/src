@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr_30.c,v 1.6 2019/12/12 02:15:42 pgoyette Exp $	*/
+/*	$NetBSD: usb_subr_30.c,v 1.7 2023/07/31 17:41:17 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr_30.c,v 1.6 2019/12/12 02:15:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr_30.c,v 1.7 2023/07/31 17:41:17 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -63,11 +63,11 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr_30.c,v 1.6 2019/12/12 02:15:42 pgoyette Exp
 #include <dev/usb/usb_verbose.h>
 #include <dev/usb/usbhist.h>
 
-Static void usb_copy_old_devinfo(struct usb_device_info_old *,
+static void usb_copy30_devinfo(struct usb_device_info30 *,
     const struct usb_device_info *);
 
-Static void
-usb_copy_old_devinfo(struct usb_device_info_old *uo,
+static void
+usb_copy30_devinfo(struct usb_device_info30 *uo,
 		     const struct usb_device_info *ue)
 {
 	const unsigned char *p;
@@ -124,8 +124,8 @@ usb_copy_old_devinfo(struct usb_device_info_old *uo,
 }
 
 static int
-usbd_fill_deviceinfo_old(struct usbd_device *dev,
-    struct usb_device_info_old *di, int usedev,
+usbd_fill_deviceinfo30(struct usbd_device *dev,
+    struct usb_device_info30 *di, int usedev,
     void (*do_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
 	    size_t, int, int),
     int (*do_printBCD)(char *cp, size_t l, int bcd))
@@ -197,7 +197,7 @@ usbd_fill_deviceinfo_old(struct usbd_device *dev,
 }
 
 static int
-usb_copy_to_old30(struct usb_event *ue, struct usb_event_old *ueo,
+usb_copy_to30(struct usb_event *ue, struct usb_event30 *ueo,
     struct uio *uio)
 {
 
@@ -206,7 +206,7 @@ usb_copy_to_old30(struct usb_event *ue, struct usb_event_old *ueo,
 	switch (ue->ue_type) {
 		case USB_EVENT_DEVICE_ATTACH:
 		case USB_EVENT_DEVICE_DETACH:
-			usb_copy_old_devinfo(&ueo->u.ue_device,
+			usb_copy30_devinfo(&ueo->u.ue_device,
 			    &ue->u.ue_device);
 			break;
 
@@ -233,8 +233,8 @@ void
 usb_30_init(void)
 {
 
-	MODULE_HOOK_SET(usb_subr_fill_30_hook, usbd_fill_deviceinfo_old);
-	MODULE_HOOK_SET(usb_subr_copy_30_hook, usb_copy_to_old30);
+	MODULE_HOOK_SET(usb_subr_fill_30_hook, usbd_fill_deviceinfo30);
+	MODULE_HOOK_SET(usb_subr_copy_30_hook, usb_copy_to30);
 }
 
 void

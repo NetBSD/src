@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.25 2020/11/01 18:51:03 pgoyette Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.26 2023/07/31 17:41:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -82,17 +82,25 @@ MODULE_HOOK(sctp_delete_ip_address, int, struct ifaddr *);
  */
 
 struct usbd_device;
-struct usb_device_info_old;
+struct usb_device_info30;
+struct usb_device_info100;
 struct usb_event;
-struct usb_event_old;
+struct usb_event30;
+struct usb_event100;
 struct uio;
 MODULE_HOOK(usb_subr_fill_30_hook, int,
-    (struct usbd_device *, struct usb_device_info_old *, int,
+    (struct usbd_device *, struct usb_device_info30 *, int,
       void (*)(struct usbd_device *, char *, size_t, char *, size_t, int, int),
       int (*)(char *, size_t, int)));
 MODULE_HOOK(usb_subr_copy_30_hook, int,
-    (struct usb_event *, struct usb_event_old *, struct uio *));
+    (struct usb_event *, struct usb_event30 *, struct uio *));
 
+MODULE_HOOK(usb_subr_fill_100_hook, int,
+    (struct usbd_device *, struct usb_device_info100 *, int,
+      void (*)(struct usbd_device *, char *, size_t, char *, size_t, int, int),
+      int (*)(char *, size_t, int)));
+MODULE_HOOK(usb_subr_copy_100_hook, int,
+    (struct usb_event *, struct usb_event100 *, struct uio *));
 /*
  * Routine vector for dev/ccd ioctl()
  */

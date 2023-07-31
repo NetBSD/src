@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.127 2023/03/28 20:01:58 andvar Exp $	*/
+/*	$NetBSD: uhid.c,v 1.128 2023/07/31 17:41:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.127 2023/03/28 20:01:58 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.128 2023/07/31 17:41:18 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -663,10 +663,10 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		usbd_fill_deviceinfo(sc->sc_udev,
 				     (struct usb_device_info *)addr, 0);
 		break;
-	case USB_GET_DEVICEINFO_OLD:
+	case USB_GET_DEVICEINFO_30:
 		MODULE_HOOK_CALL(usb_subr_fill_30_hook,
                     (sc->sc_udev,
-		      (struct usb_device_info_old *)addr, 0,
+		      (struct usb_device_info30 *)addr, 0,
                       usbd_devinfo_vp, usbd_printBCD),
                     enosys(), err);
 		if (err == 0)
