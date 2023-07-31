@@ -1,7 +1,8 @@
 //===-- sanitizer_tls_get_addr.h --------------------------------*- C++ -*-===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -47,7 +48,7 @@ struct DTLS {
 
   atomic_uintptr_t dtv_block;
 
-  // Auxiliary fields, don't access them outside sanitizer_tls_get_addr.cc
+  // Auxiliary fields, don't access them outside sanitizer_tls_get_addr.cpp
   uptr last_memalign_size;
   uptr last_memalign_ptr;
 };
