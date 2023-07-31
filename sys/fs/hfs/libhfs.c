@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.14.10.1 2023/04/01 16:34:04 martin Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.14.10.2 2023/07/31 15:50:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.14.10.1 2023/04/01 16:34:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.14.10.2 2023/07/31 15:50:36 martin Exp $");
 
 #include "libhfs.h"
 
@@ -1477,7 +1477,7 @@ hfslib_reada_node(void* in_bytes,
 		HFS_LIBERR("could not allocate node records");
 
 	last_bytes_read = hfslib_reada_node_offsets((uint8_t*)in_bytes + nodesize -
-			numrecords * sizeof(uint16_t), rec_offsets);
+			numrecords * sizeof(uint16_t), rec_offsets, numrecords);
 	if (last_bytes_read == 0)
 		HFS_LIBERR("could not read node record offsets");
 
@@ -1566,7 +1566,8 @@ exit:
  *	in reverse order. Does not read the free space offset.
  */
 size_t
-hfslib_reada_node_offsets(void* in_bytes, uint16_t* out_offset_array)
+hfslib_reada_node_offsets(void* in_bytes, uint16_t* out_offset_array,
+    uint16_t numrecords)
 {
 	void*		ptr;
 
@@ -1581,11 +1582,11 @@ hfslib_reada_node_offsets(void* in_bytes, uint16_t* out_offset_array)
 	 * offset=14, we know this is the last offset. In this way, we don't need
 	 * to know the number of records beforehand.
 	 */
-	out_offset_array--;
 	do {
-		out_offset_array++;
+		if (numrecords-- == 0)
+			return 0;
 		*out_offset_array = be16tohp(&ptr);
-	} while (*out_offset_array != (uint16_t)14);
+	} while (*out_offset_array++ != (uint16_t)14);
 
 	return ((uint8_t*)ptr - (uint8_t*)in_bytes);
 }
