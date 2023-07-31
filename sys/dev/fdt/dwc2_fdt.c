@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.12 2021/08/07 16:19:10 thorpej Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.13 2023/07/31 04:59:47 rin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.12 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.13 2023/07/31 04:59:47 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,13 +215,13 @@ dwc2_fdt_amlogic_params(struct dwc2_fdt_softc *sc, struct dwc2_core_params *para
 	params->otg_cap = DWC2_CAP_PARAM_NO_HNP_SRP_CAPABLE;
 	params->speed = DWC2_SPEED_PARAM_HIGH;
 	params->dma_enable = 1;
-	params->enable_dynamic_fifo = 1,
+	params->enable_dynamic_fifo = 1;
 	params->host_rx_fifo_size = 512;
 	params->host_nperio_tx_fifo_size = 500;
 	params->host_perio_tx_fifo_size = 500;
 	params->host_channels = 16;
 	params->phy_type = DWC2_PHY_TYPE_PARAM_UTMI;
-	params->reload_ctl = 1,
+	params->reload_ctl = 1;
 	params->ahbcfg = GAHBCFG_HBSTLEN_INCR8 << GAHBCFG_HBSTLEN_SHIFT;
 #ifdef DWC2_POWER_DOWN_PARAM_NONE
 	params->power_down = DWC2_POWER_DOWN_PARAM_NONE;
