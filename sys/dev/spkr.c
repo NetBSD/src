@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.24 2022/09/24 23:16:37 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.24.4.1 2023/07/31 16:39:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.24 2022/09/24 23:16:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.24.4.1 2023/07/31 16:39:52 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -204,6 +204,7 @@ playtone(struct spkr_softc *sc, int note, int val, int sustain)
 			rest(sc, total);
 		return;
 	}
+	KASSERTMSG(note < __arraycount(pitchtab), "note=%d", note);
 
 	/*
 	 * Rest 1/8 (if NORMAL) or 3/8 (if STACCATO) in tick.
@@ -233,6 +234,10 @@ playstring(struct spkr_softc *sc, const char *cp, size_t slen)
 
 #define GETNUM(cp, v)	\
 	for (v = 0; slen > 0 && isdigit((unsigned char)cp[1]); ) { \
+		if (v > INT_MAX/10 - (cp[1] - '0')) { \
+			v = INT_MAX; \
+			continue; \
+		} \
 		v = v * 10 + (*++cp - '0'); \
 		slen--; \
 	}
@@ -320,6 +325,8 @@ playstring(struct spkr_softc *sc, const char *cp, size_t slen)
 				slen--;
 			} else {
 				GETNUM(cp, sc->sc_octave);
+				KASSERTMSG(sc->sc_octave >= 0, "%d",
+				    sc->sc_octave);
 				if (sc->sc_octave >= NOCTAVES)
 					sc->sc_octave = DFLT_OCTAVE;
 				sc->sc_octprefix = true;
@@ -340,6 +347,9 @@ playstring(struct spkr_softc *sc, const char *cp, size_t slen)
 
 		case 'N':
 			GETNUM(cp, pitch);
+			KASSERTMSG(pitch >= 0, "pitch=%d", pitch);
+			if (pitch >= __arraycount(pitchtab))
+				break;
 			for (sustain = 0; slen > 0 && cp[1] == '.'; cp++) {
 				slen--;
 				sustain++;
