@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.108 2022/09/02 23:48:10 thorpej Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.108.4.1 2023/07/31 15:23:02 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.108 2022/09/02 23:48:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.108.4.1 2023/07/31 15:23:02 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,7 +117,7 @@ struct xnetback_instance {
 	grant_handle_t xni_tx_ring_handle; /* to unmap the ring */
 	grant_handle_t xni_rx_ring_handle;
 	vaddr_t xni_tx_ring_va; /* to unmap the ring */
-	vaddr_t xni_rx_ring_va; 
+	vaddr_t xni_rx_ring_va;
 
 	/* arrays used in xennetback_ifstart(), used for both Rx and Tx */
 	gnttab_copy_t     	xni_gop_copy[NB_XMIT_PAGES_BATCH];
@@ -497,9 +497,7 @@ xennetback_connect(struct xnetback_instance *xneti)
 		goto err2;
 	}
 	xneti->xni_evtchn = evop.u.bind_interdomain.local_port;
-	xen_wmb();
 	xneti->xni_status = CONNECTED;
-	xen_wmb();
 
 	xneti->xni_ih = xen_intr_establish_xname(-1, &xen_pic,
 	    xneti->xni_evtchn, IST_LEVEL, IPL_NET, xennetback_evthandler,
@@ -784,7 +782,7 @@ xennetback_tx_m0len_fragment(struct xnetback_instance *xneti,
 {
 	netif_tx_request_t *txreq;
 
-	/* This assumes all the requests are already pushed into the ring */ 
+	/* This assumes all the requests are already pushed into the ring */
 	*cntp = 1;
 	do {
 		txreq = RING_GET_REQUEST(&xneti->xni_txring, req_cons);
@@ -805,7 +803,7 @@ xennetback_evthandler(void *arg)
 	netif_tx_request_t txreq;
 	struct mbuf *m, *m0 = NULL, *mlast = NULL;
 	int receive_pending;
-	RING_IDX req_cons;
+	RING_IDX req_cons, req_prod;
 	int queued = 0, m0_len = 0;
 	struct xnetback_xstate *xst;
 	const bool discard = ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
@@ -813,17 +811,12 @@ xennetback_evthandler(void *arg)
 
 	XENPRINTF(("xennetback_evthandler "));
 	req_cons = xneti->xni_txring.req_cons;
-	while (1) {
-		xen_rmb(); /* be sure to read the request before updating */
-		xneti->xni_txring.req_cons = req_cons;
-		xen_wmb();
-		RING_FINAL_CHECK_FOR_REQUESTS(&xneti->xni_txring,
-		    receive_pending);
-		if (receive_pending == 0)
-			break;
+again:
+	req_prod = xneti->xni_txring.sring->req_prod;
+	xen_rmb();
+	while (req_cons != req_prod) {
 		RING_COPY_REQUEST(&xneti->xni_txring, req_cons,
 		    &txreq);
-		xen_rmb();
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname,
 		    txreq.size));
 		req_cons++;
@@ -962,6 +955,12 @@ mbuf_fail:
 			queued = 0;
 		}
 	}
+	xen_wmb();
+	RING_FINAL_CHECK_FOR_REQUESTS(&xneti->xni_txring, receive_pending);
+	if (receive_pending)
+		goto again;
+	xneti->xni_txring.req_cons = req_cons;
+
 	if (m0) {
 		/* Queue empty, and still unfinished multi-fragment request */
 		printf("%s: dropped unfinished multi-fragment\n",
@@ -1021,14 +1020,13 @@ xennetback_rx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
 	}
 
 	/* update pointer */
-	xen_rmb();
 	xneti->xni_rxring.req_cons += queued;
 	xneti->xni_rxring.rsp_prod_pvt += queued;
 	RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(&xneti->xni_rxring, notify);
 
 	/* send event */
 	if (notify) {
-		xen_rmb();
+		xen_wmb();
 		XENPRINTF(("%s receive event\n",
 		    xneti->xni_if.if_xname));
 		hypervisor_notify_via_evtchn(xneti->xni_evtchn);
@@ -1271,7 +1269,7 @@ again:
 		 * here, as the frontend doesn't notify when adding
 		 * requests anyway
 		 */
-		if (__predict_false(abort || 
+		if (__predict_false(abort ||
 		    !RING_HAS_UNCONSUMED_REQUESTS(&xneti->xni_rxring))) {
 			/* ring full */
 			ifp->if_timer = 1;

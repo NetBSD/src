@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.129.20.1 2023/07/27 17:56:31 martin Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.129.20.2 2023/07/31 15:23:02 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.129.20.1 2023/07/27 17:56:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.129.20.2 2023/07/31 15:23:02 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.129.20.1 2023/07/27 17:56:31 martin
 #define XBD_XFER_LIMIT	(2*XBD_MAX_XFER)
 
 #define XEN_BSHIFT      9               /* log2(XEN_BSIZE) */
-#define XEN_BSIZE       (1 << XEN_BSHIFT) 
+#define XEN_BSIZE       (1 << XEN_BSHIFT)
 
 CTASSERT((MAXPHYS <= 2*XBD_MAX_CHUNK));
 CTASSERT(XEN_BSIZE == DEV_BSIZE);
@@ -676,7 +676,7 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 		sc->sc_xbdsize =
 		    sc->sc_sectors * (uint64_t)sc->sc_secsize / DEV_BSIZE;
 		dg = &sc->sc_dksc.sc_dkdev.dk_geom;
-		memset(dg, 0, sizeof(*dg));	
+		memset(dg, 0, sizeof(*dg));
 
 		dg->dg_secperunit = sc->sc_sectors;
 		dg->dg_secsize = sc->sc_secsize;
@@ -735,25 +735,26 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_path, "virtual-device", &sc->sc_handle, 10);
 	if (err)
-		panic("%s: can't read number from %s/virtual-device\n", 
+		panic("%s: can't read number from %s/virtual-device\n",
 		    device_xname(sc->sc_dksc.sc_dev),
 		    sc->sc_xbusd->xbusd_otherend);
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_otherend, "info", &sc->sc_info, 10);
 	if (err)
-		panic("%s: can't read number from %s/info\n", 
+		panic("%s: can't read number from %s/info\n",
 		    device_xname(sc->sc_dksc.sc_dev),
 		    sc->sc_xbusd->xbusd_otherend);
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_otherend, "sector-size", &sc->sc_secsize, 10);
 	if (err)
-		panic("%s: can't read number from %s/sector-size\n", 
+		panic("%s: can't read number from %s/sector-size\n",
 		    device_xname(sc->sc_dksc.sc_dev),
 		    sc->sc_xbusd->xbusd_otherend);
+
 	err = xenbus_read_ull(NULL,
 	    sc->sc_xbusd->xbusd_otherend, "sectors", &sectors, 10);
 	if (err)
-		panic("%s: can't read number from %s/sectors\n", 
+		panic("%s: can't read number from %s/sectors\n",
 		    device_xname(sc->sc_dksc.sc_dev),
 		    sc->sc_xbusd->xbusd_otherend);
 	sc->sc_sectors = sectors * (uint64_t)XEN_BSIZE / sc->sc_secsize;
@@ -935,7 +936,7 @@ xbd_iosize(device_t dev, int *maxxfer)
 {
 	/*
 	 * Always restrict dumps to XBD_MAX_XFER to avoid indirect segments,
-	 * so that it uses as little memory as possible. 
+	 * so that it uses as little memory as possible.
 	 */
 	if (*maxxfer > XBD_MAX_XFER)
 		*maxxfer = XBD_MAX_XFER;
@@ -1009,7 +1010,7 @@ xbdsize(dev_t dev)
 static int
 xbdread(dev_t dev, struct uio *uio, int flags)
 {
-	struct xbd_xenbus_softc *sc = 
+	struct xbd_xenbus_softc *sc =
 	    device_lookup_private(&xbd_cd, DISKUNIT(dev));
 	struct  dk_softc *dksc = &sc->sc_dksc;
 
@@ -1282,7 +1283,7 @@ xbd_diskstart_submit(struct xbd_xenbus_softc *sc,
 	    __func__, req->id, req->operation, req->sector_number,
 	    req->handle));
 
-	size = uimin(bp->b_bcount - start, XBD_MAX_CHUNK); 
+	size = uimin(bp->b_bcount - start, XBD_MAX_CHUNK);
 	for (dmaseg = 0; dmaseg < dmamap->dm_nsegs && size > 0; dmaseg++) {
 		bus_dma_segment_t *ds = &dmamap->dm_segs[dmaseg];
 

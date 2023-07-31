@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.50 2020/05/07 19:25:57 maxv Exp $	*/
+/*	$NetBSD: xencons.c,v 1.50.20.1 2023/07/31 15:23:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.50 2020/05/07 19:25:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.50.20.1 2023/07/31 15:23:02 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -82,10 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.50 2020/05/07 19:25:57 maxv Exp $");
 #endif
 
 #undef XENDEBUG
- 
+
 #ifdef XENDEBUG
 #define XENPRINTK(x) printk x
-#else 
+#else
 #define XENPRINTK(x)
 #endif
 
@@ -127,7 +127,7 @@ const struct cdevsw xencons_cdevsw = {
 	.d_close = xencons_close,
 	.d_read = xencons_read,
 	.d_write = xencons_write,
-	.d_ioctl = xencons_ioctl, 
+	.d_ioctl = xencons_ioctl,
 	.d_stop = xencons_stop,
 	.d_tty = xencons_tty,
 	.d_poll = xencons_poll,
@@ -328,7 +328,7 @@ xencons_poll(dev_t dev, int events, struct lwp *l)
 	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
 	    XENCONS_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
@@ -442,7 +442,7 @@ xencons_stop(struct tty *tp, int flag)
 }
 
 /* Non-privileged console interrupt routine */
-static int 
+static int
 xencons_handler(void *arg)
 {
 	struct xencons_softc *sc = arg;
@@ -453,7 +453,7 @@ xencons_handler(void *arg)
 		splx(s);
 		return 1;
 	}
-		
+
 
 #define XNC_IN (xencons_interface->in)
 
@@ -479,9 +479,9 @@ xencons_handler(void *arg)
 			cons += len;
 			xen_wmb();
 			xencons_interface->in_cons = cons;
-			xen_wmb();
 		}
 	}
+	xen_wmb();
 	hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 	splx(s);
 	return 1;
@@ -575,7 +575,6 @@ xenconscn_getc(dev_t dev)
 
 	cons = xencons_interface->in_cons;
 	prod = xencons_interface->in_prod;
-	xen_rmb();
 	while (cons == prod) {
 		HYPERVISOR_yield();
 		prod = xencons_interface->in_prod;
@@ -583,7 +582,7 @@ xenconscn_getc(dev_t dev)
 	xen_rmb();
 	c = xencons_interface->in[MASK_XENCONS_IDX(xencons_interface->in_cons,
 	    xencons_interface->in)];
-	xen_rmb();
+	xen_wmb();
 	xencons_interface->in_cons = cons + 1;
 	cn_check_magic(dev, c, xencons_cnm_state);
 	splx(s);
@@ -614,9 +613,9 @@ xenconscn_putc(dev_t dev, int c)
 		}
 		xencons_interface->out[MASK_XENCONS_IDX(xencons_interface->out_prod,
 		    xencons_interface->out)] = c;
-		xen_rmb();
+		xen_wmb();
 		xencons_interface->out_prod++;
-		xen_rmb();
+		xen_wmb();
 		hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 		splx(s);
 	}
