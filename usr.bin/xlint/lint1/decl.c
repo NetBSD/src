@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.369 2023/07/30 22:38:09 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.370 2023/07/31 20:31:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.369 2023/07/30 22:38:09 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.370 2023/07/31 20:31:58 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1132,6 +1132,8 @@ set_bit_field_width(sym_t *dsym, int bit_field_width)
 		dsym->s_scl = STRUCT_MEMBER;
 		dsym->s_type = gettyp(UINT);
 		dsym->s_block_level = -1;
+		lint_assert(dcs->d_tag_type->t_sou != NULL);
+		dsym->u.s_member.sm_containing_type = dcs->d_tag_type->t_sou;
 	}
 	dsym->s_type = block_dup_type(dsym->s_type);
 	dsym->s_type->t_bitfield = true;
