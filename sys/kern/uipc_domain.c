@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.106 2018/12/27 07:56:43 maxv Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.106.4.1 2023/07/31 16:21:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.106 2018/12/27 07:56:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.106.4.1 2023/07/31 16:21:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -324,6 +324,15 @@ sockaddr_alloc(sa_family_t af, socklen_t socklen, int flags)
 	struct sockaddr *sa;
 	socklen_t reallen = MAX(socklen, offsetof(struct sockaddr, sa_data[0]));
 
+#ifdef DIAGNOSTIC
+	/*
+	 * sockaddr_checklen passes sa to sockaddr_format which
+	 * requires it to be fully initialized.
+	 *
+	 * XXX This should be factored better.
+	 */
+	flags |= M_ZERO;
+#endif
 	if ((sa = malloc(reallen, M_SOCKADDR, flags)) == NULL)
 		return NULL;
 
