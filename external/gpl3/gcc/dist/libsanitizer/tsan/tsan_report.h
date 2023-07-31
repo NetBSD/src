@@ -1,7 +1,8 @@
 //===-- tsan_report.h -------------------------------------------*- C++ -*-===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -12,6 +13,7 @@
 #define TSAN_REPORT_H
 
 #include "sanitizer_common/sanitizer_symbolizer.h"
+#include "sanitizer_common/sanitizer_thread_registry.h"
 #include "sanitizer_common/sanitizer_vector.h"
 #include "tsan_defs.h"
 
@@ -82,7 +84,7 @@ struct ReportThread {
   Tid id;
   tid_t os_id;
   bool running;
-  bool workerthread;
+  ThreadType thread_type;
   char *name;
   Tid parent_tid;
   ReportStack *stack;

@@ -1,7 +1,8 @@
 //===-- sanitizer_signal_interceptors.inc -----------------------*- C++ -*-===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -17,7 +18,7 @@
 using namespace __sanitizer;
 
 #if SANITIZER_NETBSD
-#define sigaction_symname __sigaction_siginfo
+#define sigaction_symname __sigaction14
 #else
 #define sigaction_symname sigaction
 #endif
