@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.21 2018/02/17 19:10:18 rjs Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.21.34.1 2023/07/31 16:37:18 martin Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.21 2018/02/17 19:10:18 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.21.34.1 2023/07/31 16:37:18 martin Exp $");
 #include "opt_atalk.h"
 
 #include <sys/param.h>
@@ -172,7 +172,7 @@ ddp_route(struct mbuf *m, struct route *ro)
 		}
 
 		elh = mtod(m, struct elaphdr *);
-		elh->el_snode = satosat(&aa->aa_addr)->sat_addr.s_node;
+		elh->el_snode = aa->aa_addr.sat_addr.s_node;
 		elh->el_type = ELAP_DDPEXTEND;
 		if (ntohs(satocsat(rtcache_getdst(ro))->sat_addr.s_net) >=
 		    ntohs(aa->aa_firstnet) &&

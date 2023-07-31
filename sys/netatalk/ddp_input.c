@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.33 2022/09/03 02:48:00 thorpej Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.33.4.1 2023/07/31 16:37:18 martin Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.33 2022/09/03 02:48:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.33.4.1 2023/07/31 16:37:18 martin Exp $");
 #include "opt_atalk.h"
 
 #include <sys/param.h>
@@ -163,7 +163,7 @@ ddp_input(struct mbuf *m, struct ifnet *ifp, struct elaphdr *elh, int phase)
 		from.sat_addr.s_node = elh->el_snode;
 		from.sat_port = ddps.dsh_sport;
 
-		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
+		TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 			if (aa->aa_ifp == ifp &&
 			    (aa->aa_flags & AFA_PHASE2) == 0 &&
 			    (AA_SAT(aa)->sat_addr.s_node ==
@@ -199,8 +199,7 @@ ddp_input(struct mbuf *m, struct ifnet *ifp, struct elaphdr *elh, int phase)
 		to.sat_port = ddpe.deh_dport;
 
 		if (to.sat_addr.s_net == ATADDR_ANYNET) {
-			for (aa = at_ifaddr.tqh_first; aa;
-			    aa = aa->aa_list.tqe_next) {
+			TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 				if (phase == 1 && (aa->aa_flags & AFA_PHASE2))
 					continue;
 
@@ -216,8 +215,7 @@ ddp_input(struct mbuf *m, struct ifnet *ifp, struct elaphdr *elh, int phase)
 					break;
 			}
 		} else {
-			for (aa = at_ifaddr.tqh_first; aa;
-			    aa = aa->aa_list.tqe_next) {
+			TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 				if (to.sat_addr.s_net == aa->aa_firstnet &&
 				    to.sat_addr.s_node == 0)
 					break;

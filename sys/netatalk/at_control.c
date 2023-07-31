@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.42.4.1 2023/07/31 16:13:40 martin Exp $	 */
+/*	$NetBSD: at_control.c,v 1.42.4.2 2023/07/31 16:37:18 martin Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.42.4.1 2023/07/31 16:13:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.42.4.2 2023/07/31 16:37:18 martin Exp $");
 
 #include "opt_atalk.h"
 
@@ -88,7 +88,7 @@ at_control(u_long cmd, void *data, struct ifnet *ifp)
          * If we have an ifp, then find the matching at_ifaddr if it exists
          */
 	if (ifp)
-		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next)
+		TAILQ_FOREACH(aa, &at_ifaddr, aa_list)
 			if (aa->aa_ifp == ifp)
 				break;
 
@@ -109,7 +109,7 @@ at_control(u_long cmd, void *data, struct ifnet *ifp)
 		 * NEXT interface!
 		 */
 		if (ifra->ifra_addr.sat_family == AF_APPLETALK) {
-			for (; aa; aa = aa->aa_list.tqe_next)
+			for (; aa; aa = TAILQ_NEXT(aa, aa_list))
 				if (aa->aa_ifp == ifp &&
 				    sateqaddr(&aa->aa_addr, &ifra->ifra_addr))
 					break;
@@ -141,7 +141,7 @@ at_control(u_long cmd, void *data, struct ifnet *ifp)
 		         * This may leave aa pointing to the first address on
 			 * the NEXT interface!
 		         */
-			for (; aa; aa = aa->aa_list.tqe_next) {
+			for (; aa; aa = TAILQ_NEXT(aa, aa_list)) {
 				if (aa->aa_ifp == ifp &&
 				    (aa->aa_flags & AFA_PHASE2) == 0)
 					break;
@@ -152,7 +152,7 @@ at_control(u_long cmd, void *data, struct ifnet *ifp)
 		         * This may leave aa pointing to the first address on
 			 * the NEXT interface!
 		         */
-			for (; aa; aa = aa->aa_list.tqe_next) {
+			for (; aa; aa = TAILQ_NEXT(aa, aa_list)) {
 				if (aa->aa_ifp == ifp &&
 				    (aa->aa_flags & AFA_PHASE2))
 					break;
@@ -177,7 +177,7 @@ at_control(u_long cmd, void *data, struct ifnet *ifp)
 
 			callout_init(&aa->aa_probe_ch, 0);
 
-			if ((aa0 = at_ifaddr.tqh_first) != NULL) {
+			if ((aa0 = TAILQ_FIRST(&at_ifaddr)) != NULL) {
 				/*
 				 * Don't let the loopback be first, since the
 				 * first address is the machine's default
@@ -245,7 +245,7 @@ at_control(u_long cmd, void *data, struct ifnet *ifp)
 		         * If the request is specifying phase 1, then
 		         * only look at a phase one address
 		         */
-			for (; aa; aa = aa->aa_list.tqe_next) {
+			for (; aa; aa = TAILQ_NEXT(aa, aa_list)) {
 				if (aa->aa_ifp == ifp &&
 				    (aa->aa_flags & AFA_PHASE2) == 0)
 					break;
@@ -255,7 +255,7 @@ at_control(u_long cmd, void *data, struct ifnet *ifp)
 		         * If the request is specifying phase 2, then
 		         * only look at a phase two address
 		         */
-			for (; aa; aa = aa->aa_list.tqe_next) {
+			for (; aa; aa = TAILQ_NEXT(aa, aa_list)) {
 				if (aa->aa_ifp == ifp &&
 				    (aa->aa_flags & AFA_PHASE2))
 					break;
@@ -264,7 +264,7 @@ at_control(u_long cmd, void *data, struct ifnet *ifp)
 			/*
 		         * default to everything
 		         */
-			for (; aa; aa = aa->aa_list.tqe_next) {
+			for (; aa; aa = TAILQ_NEXT(aa, aa_list)) {
 				if (aa->aa_ifp == ifp)
 					break;
 			}
@@ -682,7 +682,7 @@ at_broadcast(const struct sockaddr_at *sat)
 	/*
          * failing that, if the net is one we have, it's a broadcast as well.
          */
-	for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
+	TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 		if ((aa->aa_ifp->if_flags & IFF_BROADCAST)
 		    && (ntohs(sat->sat_addr.s_net) >= ntohs(aa->aa_firstnet)
 		  && ntohs(sat->sat_addr.s_net) <= ntohs(aa->aa_lastnet)))
