@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.106 2023/07/28 08:05:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.107 2023/07/31 01:48:37 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -108,6 +108,12 @@ MKNATIVE_CONFIG_TARGET_LIBS+= \
 MKNATIVE_CONFIG_TARGET_LIBS+= \
 	configure-target-libsanitizer
 .endif
+.endif
+
+.if ${HAVE_GCC} <= 10
+EXTRA_FILES=	gcov-iov.h
+.else
+EXTRA_FILES=	bversion.h gtyp-input.list
 .endif
 
 BINENV=		/usr/bin/env -i
@@ -230,7 +236,7 @@ MKENV_BUILD_MAKE=cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE}
 				    -e 's/\(maybe-all-target-libgcc:\) all-target-libgcc/\1/' \
 				< Makefile.config > Makefile)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
-		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e tree-check.h config.h multilib.h gcov-iov.h)
+		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e tree-check.h config.h multilib.h ${EXTRA_FILES})
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e libgcc.mvars tconfig.h); \
 		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 gcc/libgcc.a gcc/libgcc_s.so)

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.116 2022/07/22 06:50:26 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.117 2023/07/31 01:48:37 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -131,9 +131,6 @@ get_libgcov () {
 			LIBGCOV_INTERFACE \
 			LIBGCOV_DRIVER
 	} | write_mk $_OUTDIRBASE/lib/lib$_subdir/libgcov/arch/$_MACHINE_ARCH/defs.mk
-
-	write_c $_OUTDIRBASE/lib/lib$_subdir/libgcov/arch/$_MACHINE_ARCH/gcov-iov.h \
-	   <$_TMPDIR/gcc/gcov-iov.h
 
 }
 
