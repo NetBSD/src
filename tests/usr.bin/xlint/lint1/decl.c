@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.23 2023/07/13 22:44:10 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.24 2023/07/31 20:31:58 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -190,3 +190,24 @@ const volatile int
 /* expect+1: warning: duplicate 'volatile' [10] */
     *volatile const volatile
     *duplicate_ptr;
+
+
+/*
+ * Since tree.c 1.573 from 2023-07-15 and before decl.c 1.370 from 2023-07-31,
+ * lint crashed due to a failed assertion in find_member.  The assertion states
+ * that every member of a struct or union must link back to its containing
+ * type, which had not been the case for unnamed bit-fields.
+ */
+struct bit_and_data {
+	unsigned int :0;
+	unsigned int bit:1;
+	unsigned int :0;
+
+	void *data;
+};
+
+static inline void *
+bit_and_data(struct bit_and_data *node)
+{
+	return node->data;
+}
