@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.57.4.1 2023/07/31 15:43:33 martin Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.57.4.2 2023/07/31 15:57:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.57.4.1 2023/07/31 15:43:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.57.4.2 2023/07/31 15:57:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1634,6 +1634,8 @@ rnd_attach_source(struct krndsource *rs, const char *name, uint32_t type,
 	uint32_t extra[4];
 	unsigned i = 0;
 
+	KASSERTMSG(name[0] != '\0', "rndsource must have nonempty name");
+
 	/* Grab cycle counter to mix extra into the pool.  */
 	extra[i++] = entropy_timer();
 
@@ -2387,7 +2389,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 			if (rndctl->type != 0xff) {
 				if (rs->type != rndctl->type)
 					continue;
-			} else {
+			} else if (rndctl->name[0] != '\0') {
 				if (strncmp(rs->name, rndctl->name, n) != 0)
 					continue;
 			}
