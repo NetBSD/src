@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.122 2023/07/31 17:41:18 christos Exp $	*/
+/*	$NetBSD: usb.h,v 1.123 2023/07/31 23:52:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -988,6 +988,12 @@ struct usb_event30 {
 	} u;
 };
 
+#if 1	/* XXX: remove me, for the benefit of sanitizers */
+#define usb_device_info_old usb_device_info30
+#define usb_event_old usb_event30
+#define USB_DEVICEINFO_OLD USB_DEVICEINFO_30
+#define USB_GET_DEVICEINFO_OLD USB_GET_DEVICEINFO_30
+#endif
 
 /* USB controller */
 #define USB_REQUEST		_IOWR('U', 1, struct usb_ctl_request)
