@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbreg.h,v 1.8 2009/11/11 17:01:17 macallan Exp $ */
+/*	$NetBSD: igsfbreg.h,v 1.9 2023/07/31 20:48:04 andvar Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -181,7 +181,7 @@
 
 /*
  * Linear Address registers
- *   PCI: don't write directly, just use nomral PCI configuration
+ *   PCI: don't write directly, just use normal PCI configuration
  *   ISA: only bits [23..20] are programmable, the rest MBZ
  */
 #define   IGS_EXT_LINA_LO		0x34	/* [3..0] -> [23..20] */
