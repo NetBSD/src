@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2023/05/08 09:47:20 skrll Exp $
+#	$NetBSD: Makefile,v 1.42 2023/07/31 17:09:59 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -10,7 +10,7 @@ FIND_ARGS=	\! \( -type d -name sim -prune \)
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
-		--without-mpfr
+		--without-mpfr --with-libgmp-prefix=${TOOLDIR}
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
 
@@ -107,6 +107,7 @@ native-gdb: .native/.configure_done
 			${MKNATIVE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure \
 			--prefix=/usr \
 			--with-separate-debug-dir=/usr/libdata/debug \
+			--with-libgmp-prefix=${TOOLDIR} \
 			${CONFIGURE_ARGS_SIM} \
 			${CONFIGURE_ARGS_GDBSERVER} \
 			--build=`${GNUHOSTDIST}/config.guess` \
@@ -118,7 +119,9 @@ native-gdb: .native/.configure_done
 		(cd ${.OBJDIR}/.native/bfd && \
 			${MKENV_BUILD_MAKE} bfd.h bfdver.h) && \
 		(cd ${.OBJDIR}/.native/gdb && \
-			${MKENV_BUILD_MAKE} init.c version.c) && \
+			${MKENV_BUILD_MAKE} xml-builtin.c init.c version.c) && \
+		(cd ${.OBJDIR}/.native/libbacktrace && \
+			${MKENV_BUILD_MAKE} backtrace-supported.h) && \
 		(if [ -d ${.OBJDIR}/.native/gdbserver ]; then \
 			cd ${.OBJDIR}/.native/gdbserver && \
 			${MKENV_BUILD_MAKE} version-generated.cc; fi)

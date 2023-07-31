@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gdb,v 1.15 2020/12/05 21:27:31 christos Exp $
+#	$NetBSD: mknative-gdb,v 1.16 2023/07/31 17:09:59 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/gdb
@@ -28,7 +28,7 @@ get_gdb_libbfd () {
 			INCLUDES TDEFAULTS
 	} | write_mk $_BFD/arch/$_MACHINE_SUBDIR/defs.mk
 
-	for i in bfd-in3.h bfd_stdint.h config.h bfd.h bfdver.h targmatch.h 
+	for i in bfd-in3.h config.h bfd.h bfdver.h targmatch.h 
 	do
 	    write_c $_BFD/arch/$_MACHINE_SUBDIR/$i <$_TMPDIR/bfd/$i
 	done
@@ -86,7 +86,7 @@ get_gdb_libdecnumber () {
 	mkdir -p $_TOP/$_DECNUMBER/arch/$_MACHINE_SUBDIR
 
 	getvars libdecnumber/Makefile libdecnumber_a_OBJS |
-	sed -e s/libdecnumber_a_// |
+	sed -e s/libdecnumber_a_//g |
 	write_mk $_DECNUMBER/arch/$_MACHINE_SUBDIR/defs.mk
 
 	write_c $_DECNUMBER/arch/$_MACHINE_SUBDIR/config.h \
@@ -103,43 +103,75 @@ get_gdb_libgdbsupport () {
 	mkdir -p $_TOP/$_GDBSUPPORT/arch/$_MACHINE_SUBDIR/gdbsupport
 
 	getvars gdbsupport/Makefile libgdbsupport_a_OBJECTS |
-	sed -e s/libgdbsupport_a_// |
+	sed -e s/libgdbsupport_a_//g |
 	write_mk $_GDBSUPPORT/arch/$_MACHINE_SUBDIR/defs.mk
 
 	write_c $_GDBSUPPORT/arch/$_MACHINE_SUBDIR/gdbsupport/config.h \
 		<$_TMPDIR/gdbsupport/config.h
 }
 
+##### gdb/lib/libctf #####
+
 get_gdb_libctf () {
 	local _CTF=$_GDB/lib/libctf
 	mkdir -p $_TOP/$_CTF/arch/$_MACHINE_SUBDIR
 
 	getvars libctf/Makefile libctf_la_OBJECTS |
-	sed -e s/libctf_la_// -e 's/\.lo/.o/g' -e s/libctf_la-//g |
+	sed -e s/libctf_la_//g -e 's/\.lo/.o/g' -e s/libctf_la-//g |
 	write_mk $_CTF/arch/$_MACHINE_SUBDIR/defs.mk
 
 	write_c $_CTF/arch/$_MACHINE_SUBDIR/config.h \
 		<$_TMPDIR/libctf/config.h
 }
 
+##### gdb/lib/libbacktrace #####
+
+get_gdb_libbacktrace () {
+	local _BACKTRACE=$_GDB/lib/libbacktrace
+	mkdir -p $_TOP/$_BACKTRACE/arch/$_MACHINE_SUBDIR
+
+	getvars libbacktrace/Makefile libbacktrace_la_OBJECTS \
+	    libbacktrace_la_LIBADD |
+	sed -e s/libbacktrace_la_//g -e 's/\.lo/.o/g' -e s/libbacktrace_la-//g |
+	write_mk $_BACKTRACE/arch/$_MACHINE_SUBDIR/defs.mk
+
+	write_c $_BACKTRACE/arch/$_MACHINE_SUBDIR/config.h \
+		<$_TMPDIR/libbacktrace/config.h
+	write_c $_BACKTRACE/arch/$_MACHINE_SUBDIR/backtrace-supported.h \
+		<$_TMPDIR/libbacktrace/backtrace-supported.h
+}
+
+##### gdb/lib/libsframe #####
+
+get_gdb_libsframe () {
+	local _SFRAME=$_GDB/lib/libsframe
+	mkdir -p $_TOP/$_SFRAME/arch/$_MACHINE_SUBDIR
+
+	getvars libsframe/Makefile libsframe_la_OBJECTS |
+	sed -e s/libsframe_la_//g -e 's/\.lo/.o/g' -e s/libsframe_la-//g |
+	write_mk $_SFRAME/arch/$_MACHINE_SUBDIR/defs.mk
+}
+
 ##### gdb/lib/libgnulib #####
 
 get_gdb_libgnulib () {
 	local _GNULIB=$_GDB/lib/libgnulib
-	mkdir -p $_TOP/$_GNULIB/arch/$_MACHINE_SUBDIR/gnulib/import
+	mkdir -p $_TOP/$_GNULIB/arch/$_MACHINE_SUBDIR/gnulib/import/malloc
 
 	(getvars gnulib/Makefile gl_LIBOBJS |
-	sed -e s/gl_LIB// &&
+	sed -e s/gl_LIB//g &&
 	getvars gnulib/import/Makefile libgnu_a_OBJECTS |
-	sed -e s/libgnu_a_// -e s@glthread/@@g -e s@malloc/@@g) |
+	sed -e s/libgnu_a-//g -e s@glthread/@@g -e s@malloc/@@g) |
 	write_mk $_GNULIB/arch/$_MACHINE_SUBDIR/defs.mk
 
 	for i in config.h \
 	    import/alloca.h import/ctype.h \
 	    import/dirent.h import/fcntl.h \
 	    import/fnmatch.h import/glob.h \
+	    import/glob-libc.gl.h \
 	    import/inttypes.h import/limits.h \
 	    import/locale.h import/math.h \
+	    import/malloc/scratch_buffer.gl.h \
 	    import/signal.h import/stdint.h \
 	    import/stdio.h import/stdlib.h \
 	    import/string.h import/time.h \
@@ -237,6 +269,8 @@ all|gdb)	# everything (uses "canadian cross" temp environment)
 	get_gdb_libgdb
 	get_gdb_libgdbsupport
 	get_gdb_libctf
+	get_gdb_libbacktrace
+	get_gdb_libsframe
 	get_gdb_libgnulib
 	get_gdb_libbfd
 	get_gdb_libopcodes
