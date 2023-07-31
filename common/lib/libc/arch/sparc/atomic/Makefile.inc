@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2019/02/28 02:35:37 isaki Exp $
+#	$NetBSD: Makefile.inc,v 1.23.14.1 2023/07/31 16:10:26 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -46,7 +46,8 @@ SRCS+=	atomic_nand_16_cas.c atomic_nand_8_cas.c	\
 	atomic_c11_compare_exchange_cas_32.c		\
 	atomic_c11_compare_exchange_cas_16.c		\
 	atomic_c11_compare_exchange_cas_8.c \
-	atomic_load.c atomic_store.c
+	atomic_load.c atomic_store.c \
+	atomic_is_lock_free.c
 .  endif
 
 .  if (${LIB} == "kern" || ${LIB} == "rump")

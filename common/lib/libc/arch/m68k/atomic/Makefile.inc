@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2019/02/28 02:35:37 isaki Exp $
+#	$NetBSD: Makefile.inc,v 1.15.14.1 2023/07/31 16:10:26 martin Exp $
 
 #
 # Note: The atomic operations here in these assembly files are atomic
@@ -56,4 +56,8 @@ CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_UP -D__HAVE_ASM_ATOMIC_CAS_16_UP \
 	 -D__HAVE_ASM_ATOMIC_CAS_8_UP
 
 .endif
+.endif
+
+.if defined(LIB) && ${LIB} == "c"
+SRCS+=	atomic_is_lock_free.c
 .endif
