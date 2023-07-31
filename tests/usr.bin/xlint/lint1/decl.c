@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.24 2023/07/31 20:31:58 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.25 2023/07/31 20:52:26 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -210,4 +210,22 @@ static inline void *
 bit_and_data(struct bit_and_data *node)
 {
 	return node->data;
+}
+
+
+// See cgram.y, rule 'notype_member_declarator'.
+void
+symbol_type_in_unnamed_bit_field_member(void)
+{
+	enum {
+		bits = 4,
+	};
+
+	struct s {
+		// Since there is no name in the declarator, the next symbol
+		// after the ':' must not be interpreted as a member name, but
+		// instead as a variable, type or function (FVFT).
+		unsigned int :bits;
+		int named_member;
+	};
 }
