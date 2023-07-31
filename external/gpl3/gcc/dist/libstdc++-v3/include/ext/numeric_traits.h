@@ -210,7 +210,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     struct __numeric_traits_floating<__ibm128>
     {
       static const int __max_digits10 = 33;
-      static const bool __is_signed = true;
+      static const bool __is_signed_val = true;
       static const int __digits10 = 31;
       static const int __max_exponent10 = 308;
     };
@@ -224,7 +224,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     struct __numeric_traits_floating<__ieee128>
     {
       static const int __max_digits10 = 36;
-      static const bool __is_signed = true;
+      static const bool __is_signed_val = true;
       static const int __digits10 = 33;
       static const int __max_exponent10 = 4932;
     };
