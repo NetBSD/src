@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.39 2022/09/19 17:23:14 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.39.4.1 2023/07/31 13:36:30 martin Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.39 2022/09/19 17:23:14 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.39.4.1 2023/07/31 13:36:30 martin Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -125,8 +125,29 @@ ENTRY_NP(cpu_switchto)
 
 	msr	tpidr_el1, x1		/* switch curlwp to new lwp */
 	ldr	x3, [x1, #L_CPU]
+
+	/*
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
+	 */
+	dmb	ishst			/* store-before-store */
 	str	x1, [x3, #CI_CURLWP]	/* switch curlwp to new lwp */
-	dmb	ishst			/* see comments in kern_mutex.c */
+	dmb	ish			/* store-before-load */
+
 	ENABLE_INTERRUPT
 
 	/*
@@ -201,8 +222,9 @@ ENTRY_NP(cpu_switchto_softint)
 	/* onto new stack */
 	sub	sp, x4, #TF_SIZE	/* new sp := softlwp->l_md_utf - 1 */
 	msr	tpidr_el1, x0		/* curlwp = softlwp; */
+	dmb	ishst			/* for mutex_enter; see cpu_switchto */
 	str	x0, [x20, #CI_CURLWP]	/* curcpu()->ci_curlwp = softlwp; */
-					/* no need for memory barrier here */
+	dmb	ish			/* for mutex_enter; see cpu_switchto */
 
 	mov	x5, #CPACR_FPEN_NONE
 	msr	cpacr_el1, x5		/* cpacr_el1 = CPACR_FPEN_NONE */
@@ -244,8 +266,9 @@ ENTRY_NP(cpu_switchto_softint)
 	DISABLE_INTERRUPT
 	msr	tpidr_el1, x19		/* curlwp = pinned_lwp */
 	ldr	x3, [x19, #L_CPU]	/* x3 = curlwp->l_cpu */
+	dmb	ishst			/* for mutex_enter; see cpu_switchto */
 	str	x19, [x3, #CI_CURLWP]	/* curlwp->l_cpu->ci_curlwp := x19 */
-	dmb	ishst			/* see comments in kern_mutex.c */
+	dmb	ish			/* for mutex_enter; see cpu_switchto */
 
 	mov	sp, x4			/* restore pinned_lwp sp */
 	msr	cpacr_el1, x5		/* restore pinned_lwp cpacr */

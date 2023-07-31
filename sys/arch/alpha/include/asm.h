@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.44 2020/09/04 03:53:12 thorpej Exp $ */
+/* $NetBSD: asm.h,v 1.44.20.1 2023/07/31 13:36:31 martin Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -669,10 +669,30 @@ label:	ASCIZ msg;						\
 #define	GET_CURLWP							\
 	call_pal PAL_OSF1_rdval
 
+/*
+ * Issue barriers to coordinate mutex_exit on this CPU with
+ * mutex_vector_enter on another CPU.
+ *
+ * 1. Any prior mutex_exit by oldlwp must be visible to other
+ *    CPUs before we set ci_curlwp := newlwp on this one,
+ *    requiring a store-before-store barrier.
+ *
+ * 2. ci_curlwp := newlwp must be visible on all other CPUs
+ *    before any subsequent mutex_exit by newlwp can even test
+ *    whether there might be waiters, requiring a
+ *    store-before-load barrier.
+ *
+ * See kern_mutex.c for details -- this is necessary for
+ * adaptive mutexes to detect whether the lwp is on the CPU in
+ * order to safely block without requiring atomic r/m/w in
+ * mutex_exit.
+ */
 #define	SET_CURLWP(r)							\
 	ldq	v0, L_CPU(r)					;	\
 	mov	r, a0						;	\
+	wmb	/* store-before-store XXX patch out if !MP? */	;	\
 	stq	r, CPU_INFO_CURLWP(v0)				;	\
+	mb	/* store-before-load XXX patch out if !MP? */	;	\
 	call_pal PAL_OSF1_wrval
 
 #else	/* if not MULTIPROCESSOR... */
