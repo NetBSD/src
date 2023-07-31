@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.101 2022/09/01 15:33:23 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.101.4.1 2023/07/31 15:23:02 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.101 2022/09/01 15:33:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.101.4.1 2023/07/31 15:23:02 martin Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -105,7 +105,7 @@ typedef enum {WAITING, RUN, DISCONNECTING, DISCONNECTED} xbdback_state_t;
  * event channels, biointr() soft interrupts, xenbus commands), the xbdi_lock
  * mutex is used to protect specific elements of the xbdback instance from
  * concurrent access: thread status and ring access (when pushing responses).
- * 
+ *
  * Here's how the call graph is supposed to be for a single I/O:
  *
  * xbdback_co_main()
@@ -125,7 +125,7 @@ typedef enum {WAITING, RUN, DISCONNECTING, DISCONNECTED} xbdback_state_t;
  *        |                     |
  *        |                     xbdback_co_main_incr() -> xbdback_co_main_loop()
  *        |
- *     xbdback_co_do_io() 
+ *     xbdback_co_do_io()
  *        |
  *     xbdback_co_main_incr() -> xbdback_co_main_loop()
  */
@@ -210,7 +210,7 @@ struct xbdback_instance {
 	vaddr_t xbdi_ring_va; /* to unmap the ring */
 	/* disconnection must be postponed until all I/O is done */
 	int xbdi_refcnt;
-	/* 
+	/*
 	 * State for I/O processing/coalescing follows; this has to
 	 * live here instead of on the stack because of the
 	 * continuation-ness (see above).
@@ -361,7 +361,7 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 	mutex_init(&xbdi->xbdi_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&xbdi->xbdi_cv, xbdi->xbdi_name);
 
-	xbusd->xbusd_u.b.b_cookie = xbdi;	
+	xbusd->xbusd_u.b.b_cookie = xbdi;
 	xbusd->xbusd_u.b.b_detach = xbdback_xenbus_destroy;
 	xbusd->xbusd_otherend_changed = xbdback_frontend_changed;
 	xbdi->xbdi_xbusd = xbusd;
@@ -615,7 +615,7 @@ err1:
 static void
 xbdback_disconnect(struct xbdback_instance *xbdi)
 {
-	
+
 	mutex_enter(&xbdi->xbdi_lock);
 	if (xbdi->xbdi_status == DISCONNECTED) {
 		mutex_exit(&xbdi->xbdi_lock);
@@ -759,7 +759,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		/* If both Ioctls failed set device size to 0 and return */
 		printf("xbdback %s: can't DIOCGWEDGEINFO device "
 		    "0x%"PRIx64": %d\n", xbusd->xbusd_path,
-		    xbdi->xbdi_dev, err);		
+		    xbdi->xbdi_dev, err);
 		xbdi->xbdi_size = xbdi->xbdi_dev = 0;
 		vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
 		xbdi->xbdi_vp = NULL;
@@ -901,7 +901,7 @@ xbdback_thread(void *arg)
 				cv_wait(&xbdi->xbdi_cv, &xbdi->xbdi_lock);
 				continue;
 			}
-			
+
 			/* All I/Os should have been processed by now,
 			 * xbdi_refcnt should drop to 0 */
 			xbdi_put(xbdi);
@@ -941,7 +941,7 @@ xbdback_co_main(struct xbdback_instance *xbdi, void *obj)
  * the ring.
  */
 static void *
-xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj __unused) 
+xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj __unused)
 {
 	blkif_request_t *req, *reqn;
 	blkif_x86_32_request_t *req32;
@@ -1065,6 +1065,7 @@ xbdback_co_main_done2(struct xbdback_instance *xbdi, void *obj)
 {
 	int work_to_do;
 
+	xen_wmb();
 	RING_FINAL_CHECK_FOR_REQUESTS(&xbdi->xbdi_ring.ring_n, work_to_do);
 	if (work_to_do)
 		xbdi->xbdi_cont = xbdback_co_main;
@@ -1114,7 +1115,7 @@ xbdback_co_cache_doflush(struct xbdback_instance *xbdi, void *obj)
  */
 static void *
 xbdback_co_io(struct xbdback_instance *xbdi, void *obj __unused)
-{	
+{
 	int i, error;
 	blkif_request_t *req, *reqn;
 	blkif_x86_32_request_t *req32;
@@ -1241,7 +1242,7 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 
 	xbdi_get(xbdi);
 	xbdi->xbdi_pendingreqs++;
-	
+
 	req = &xbdi->xbdi_xen_req;
 	xbd_io = obj;
 	memset(xbd_io, 0, sizeof(*xbd_io));
@@ -1431,7 +1432,7 @@ xbdback_iodone_locked(struct xbdback_instance *xbdi, struct xbdback_io *xbd_io,
 		status = BLKIF_RSP_ERROR;
 	} else
 		status = BLKIF_RSP_OKAY;
-	
+
 	xbdback_send_reply(xbdi, xbd_io->xio_id, xbd_io->xio_operation, status);
 
 	xbdi_put(xbdi);
@@ -1535,7 +1536,7 @@ xbdback_map_shm(struct xbdback_io *xbd_io)
 	xbd_io->xio_vaddr = xbd_io->xio_xv->xv_vaddr;
 
 	error = xen_shm_map(xbd_io->xio_nrma, xbdi->xbdi_domid,
-	    xbd_io->xio_gref, xbd_io->xio_vaddr, xbd_io->xio_gh, 
+	    xbd_io->xio_gref, xbd_io->xio_vaddr, xbd_io->xio_gh,
 	    (xbd_io->xio_operation == BLKIF_OP_WRITE) ? XSHM_RO : 0);
 
 	switch(error) {

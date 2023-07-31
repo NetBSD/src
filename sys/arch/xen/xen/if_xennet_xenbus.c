@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.128 2020/08/26 15:54:10 riastradh Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.128.20.1 2023/07/31 15:23:02 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.128 2020/08/26 15:54:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.128.20.1 2023/07/31 15:23:02 martin Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -951,12 +951,12 @@ again:
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, req, txreq_next);
 		sc->sc_free_txreql++;
 	}
-
 	sc->sc_tx_ring.rsp_cons = resp_prod;
 	/* set new event and check for race with rsp_cons update */
+	xen_wmb();
 	sc->sc_tx_ring.sring->rsp_event =
 	    resp_prod + ((sc->sc_tx_ring.sring->req_prod - resp_prod) >> 1) + 1;
-	xen_wmb();
+	xen_mb();
 	if (resp_prod != sc->sc_tx_ring.sring->rsp_prod)
 		goto again;
 }
@@ -1060,8 +1060,8 @@ again:
 		if_statinc(ifp, if_iqdrops);
 		m_freem(m0);
 	}
-	xen_rmb();
 	sc->sc_rx_ring.rsp_cons = i;
+	xen_wmb();
 	RING_FINAL_CHECK_FOR_RESPONSES(&sc->sc_rx_ring, more_to_do);
 	mutex_exit(&sc->sc_rx_lock);
 

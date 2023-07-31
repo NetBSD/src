@@ -1,24 +1,24 @@
-/* $NetBSD: xenbus_comms.c,v 1.24 2020/05/13 13:19:38 jdolecek Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.24.20.1 2023/07/31 15:23:02 martin Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
  * Low level code to talks to Xen Store: ringbuffer and event channel.
  *
  * Copyright (C) 2005 Rusty Russell, IBM Corporation
- * 
+ *
  * This file may be distributed separately from the Linux kernel, or
  * incorporated into other software packages, subject to the following license:
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
  * restriction, including without limitation the rights to use, copy, modify,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
  * and to permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,11 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.24 2020/05/13 13:19:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.24.20.1 2023/07/31 15:23:02 martin Exp $");
 
 #include <sys/types.h>
-#include <sys/null.h> 
-#include <sys/errno.h> 
+#include <sys/null.h>
+#include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ wake_waiting(void *arg)
 {
 	if (__predict_false(xenstored_ready == 0 && xendomain_is_dom0())) {
 		xb_xenstored_make_ready();
-	} 
+	}
 
 	mutex_enter(&xenstore_lock);
 	cv_broadcast(&xenstore_cv);
@@ -153,9 +153,9 @@ xb_write(const void *data, unsigned len)
 		len -= avail;
 
 		/* Other side must not see new header until data is there. */
-		xen_rmb();
+		xen_wmb();
 		intf->req_prod += avail;
-		xen_rmb();
+		xen_wmb();
 
 		hypervisor_notify_via_evtchn(xen_start_info.store_evtchn);
 	}
@@ -202,9 +202,9 @@ xb_read(void *data, unsigned len)
 		len -= avail;
 
 		/* Other side must not see free space until we've copied out */
-		xen_rmb();
+		xen_wmb();
 		intf->rsp_cons += avail;
-		xen_rmb();
+		xen_wmb();
 
 		XENPRINTF(("Finished read of %i bytes (%i to go)\n",
 		    avail, len));

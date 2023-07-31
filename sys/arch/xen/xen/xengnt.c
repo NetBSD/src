@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.39 2022/06/03 10:42:17 bouyer Exp $      */
+/*      $NetBSD: xengnt.c,v 1.39.4.1 2023/07/31 15:23:02 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.39 2022/06/03 10:42:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.39.4.1 2023/07/31 15:23:02 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -212,7 +212,7 @@ xengnt_suspend(void) {
 		/* invalidate all grant entries (necessary for resume) */
 		gnt_entries[i] = XENGNT_NO_ENTRY;
 	}
-	
+
 	/* Remove virtual => machine mapping for grant table */
 	pmap_kremove((vaddr_t)grant_table.gntt, gnt_nr_grant_frames * PAGE_SIZE);
 
@@ -450,21 +450,21 @@ xengnt_grant_access(domid_t dom, paddr_t ma, int ro, grant_ref_t *entryp)
 		grant_table.gntt_v2[*entryp].full_page.frame = ma >> PAGE_SHIFT;
 		grant_table.gntt_v2[*entryp].hdr.domid = dom;
 		/*
-		 * ensure that the above values reach global visibility 
+		 * ensure that the above values reach global visibility
 		 * before permitting frame's access (done when we set flags)
 		 */
-		xen_rmb();
+		xen_wmb();
 		grant_table.gntt_v2[*entryp].hdr.flags =
 		    GTF_permit_access | (ro ? GTF_readonly : 0);
 	} else {
 		grant_table.gntt_v1[*entryp].frame = ma >> PAGE_SHIFT;
 		grant_table.gntt_v1[*entryp].domid = dom;
-		/*      
+		/*
 		* ensure that the above values reach global visibility
-		* before permitting frame's access (done when we set flags)    
+		* before permitting frame's access (done when we set flags)
 		*/
-		xen_rmb();
-		grant_table.gntt_v1[*entryp].flags =  
+		xen_wmb();
+		grant_table.gntt_v1[*entryp].flags =
 		   GTF_permit_access | (ro ? GTF_readonly : 0);
 	}
 	mutex_exit(&grant_lock);
@@ -472,7 +472,7 @@ xengnt_grant_access(domid_t dom, paddr_t ma, int ro, grant_ref_t *entryp)
 }
 
 static inline uint16_t
-xen_atomic_cmpxchg16(volatile uint16_t *ptr, uint16_t  val, uint16_t newval) 
+xen_atomic_cmpxchg16(volatile uint16_t *ptr, uint16_t  val, uint16_t newval)
 {
 	unsigned long result;
 

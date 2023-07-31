@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.55 2022/09/07 00:40:19 knakahara Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.55.4.1 2023/07/31 15:23:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,21 +26,21 @@
  */
 
 /*
- * 
+ *
  * Communication to/from hypervisor.
- * 
+ *
  * Copyright (c) 2002-2004, K A Fraser
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
  * restriction, including without limitation the rights to use, copy, modify,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
  * and to permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -111,8 +111,8 @@ struct xen_npx_attach_args {
 #undef xen_wmb
 
 #define xen_mb()  membar_sync()
-#define xen_rmb() membar_producer()
-#define xen_wmb() membar_consumer()
+#define xen_rmb() membar_acquire()
+#define xen_wmb() membar_release()
 #endif /* __XEN_INTERFACE_VERSION */
 
 #include <machine/xen/hypercalls.h>
@@ -187,10 +187,10 @@ void hypervisor_set_ipending(uint64_t, int, int);
 void hypervisor_machdep_attach(void);
 void hypervisor_machdep_resume(void);
 
-/* 
+/*
  * Force a proper event-channel callback from Xen after clearing the
  * callback mask. We do this in a very simple manner, by making a call
- * down into Xen. The pending flag will be checked by Xen on return. 
+ * down into Xen. The pending flag will be checked by Xen on return.
  */
 static __inline void hypervisor_force_callback(void)
 {
