@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.79 2023/07/31 17:41:18 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.80 2023/07/31 23:53:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -606,5 +606,10 @@ u_int	bpf_filter_with_aux_data(const struct bpf_insn *, const u_char *, u_int, u
 
 
 __END_DECLS
+
+#if 1  /* XXX: remove me, for the benefit of sanitizers */
+#define BIOCGSTATSOLD BIOCGSTATS_30
+#define bpf_stat_old bpf_stat30
+#endif
 
 #endif /* !_NET_BPF_H_ */
