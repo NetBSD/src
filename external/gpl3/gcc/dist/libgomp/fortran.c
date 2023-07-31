@@ -781,7 +781,7 @@ omp_set_default_allocator_ (const intptr_t *allocator)
 }
 
 intptr_t
-omp_get_default_allocator_ ()
+omp_get_default_allocator_ (void)
 {
   return (intptr_t) omp_get_default_allocator ();
 }
