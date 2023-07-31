@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-bdz.c,v 1.11 2021/01/26 21:25:55 joerg Exp $	*/
+/*	$NetBSD: nbperf-bdz.c,v 1.12 2023/07/31 21:07:50 andvar Exp $	*/
 /*-
  * Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.11 2021/01/26 21:25:55 joerg Exp $");
+__RCSID("$NetBSD: nbperf-bdz.c,v 1.12 2023/07/31 21:07:50 andvar Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: nbperf-bdz.c,v 1.11 2021/01/26 21:25:55 joerg Exp $");
 /*
  * A full description of the algorithm can be found in:
  * "Simple and Space-Efficient Minimal Perfect Hash Functions"
- * by Botelho, Pagh and Ziviani, proceeedings of WADS 2007.
+ * by Botelho, Pagh and Ziviani, proceedings of WADS 2007.
  */
 
 /*
