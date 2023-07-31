@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.14 2019/06/12 06:53:21 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.14.2.1 2023/07/31 13:44:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -884,6 +884,11 @@ armv7_mpcontinuation:
 #else
 #error either TPIDRPRW_IS_CURCPU or TPIDRPRW_IS_CURLWP must be defined
 #endif
+	/*
+	 * No membar needed because we're not switching from a
+	 * previous lwp, and the idle lwp we're switching to can't be
+	 * holding locks already; see cpu_switchto.
+	 */
 	str	r6, [r5, #CI_CURLWP]		// and note we are running on it
 
 	mov	r0, r5				// pass cpu_info
