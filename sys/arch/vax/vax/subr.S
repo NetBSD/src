@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.34 2017/05/22 16:53:05 ragge Exp $	   */
+/*	$NetBSD: subr.S,v 1.34.2.1 2023/07/31 13:56:15 martin Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -335,7 +335,9 @@ softint_process:
 	movab	softint_exit,PCB_PC(%r3)/* do a quick exit */
 #ifdef MULTIPROCESSOR
 	movl	L_CPU(%r6),%r8
+	/* XXX store-before-store barrier -- see cpu_switchto */
 	movl	%r6,CI_CURLWP(%r8)
+	/* XXX store-before-load barrier -- see cpu_switchto */
 #endif
 
 	mtpr	PCB_PADDR(%r3),$PR_PCBB	/* restore PA of interrupted pcb */
@@ -358,7 +360,9 @@ softint_common:
 	movl	%r6,PCB_R6(%r3)		/* move old lwp into new pcb */
 	movl	%r1,PCB_R7(%r3)		/* move IPL into new pcb */
 #ifdef MULTIPROCESSOR
+	/* XXX store-before-store barrier -- see cpu_switchto */
 	movl	%r2,CI_CURLWP(%r8)	/* update ci_curlwp */
+	/* XXX store-before-load barrier -- see cpu_switchto */
 #endif
 
 	/*
@@ -424,7 +428,31 @@ JSBENTRY(Swtchto)
 #ifdef MULTIPROCESSOR
 	movl	L_CPU(%r0), %r8		/* get cpu_info of old lwp */
 	movl	%r8, L_CPU(%r1)		/* update cpu_info of new lwp */
+	/*
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
+	 *
+	 * XXX I'm fuzzy on the memory model of VAX.  I would guess
+	 * it's TSO like x86 but I can't find a store-before-load
+	 * barrier, which is the only one TSO requires explicitly.
+	 */
+	/* XXX store-before-store barrier */
 	movl	%r1,CI_CURLWP(%r8)	/* update ci_curlwp */
+	/* XXX store-before-load barrier */
 #endif
 
 	mtpr	PCB_PADDR(%r3),$PR_PCBB	# set PA of new pcb

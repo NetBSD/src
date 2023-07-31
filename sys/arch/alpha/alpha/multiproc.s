@@ -1,4 +1,4 @@
-/* $NetBSD: multiproc.s,v 1.13 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: multiproc.s,v 1.13.80.1 2023/07/31 14:26:25 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.13 2008/04/28 20:23:10 martin Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.13.80.1 2023/07/31 14:26:25 martin Exp $")
 
 /*
  * Multiprocessor glue code.
@@ -65,6 +65,11 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 
 	/* Switch to this CPU's idle thread. */
 	ldq	a0, CPU_INFO_IDLE_LWP(s0)
+	/*
+	 * No membar needed because we're not switching from a
+	 * previous lwp, and the idle lwp we're switching to can't be
+	 * holding locks already; see cpu_switchto.
+	 */
 	stq	a0, CPU_INFO_CURLWP(s0)	/* set curlwp */
 	ldq	a0, L_MD_PCBPADDR(a0)
 	SWITCH_CONTEXT

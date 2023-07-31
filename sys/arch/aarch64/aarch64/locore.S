@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: locore.S,v 1.1.22.1 2023/07/31 13:56:14 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include "opt_ddb.h"
 
-RCSID("$NetBSD: locore.S,v 1.1 2014/08/10 05:47:37 matt Exp $")
+RCSID("$NetBSD: locore.S,v 1.1.22.1 2023/07/31 13:56:14 martin Exp $")
 
 /*
  * At IPL_SCHED:
@@ -99,7 +99,27 @@ ENTRY_NP(cpu_switchto)
 	msr	tpidr_el0, x4		// restore it
 
 	mrs	x3, tpidr_el1		// get curcpu
+	/*
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
+	 */
+	dmb	ishst			/* store-before-store */
 	str	x1, [x3, #CI_CURLWP]	// show as curlwp
+	dmb	ish			/* store-before-load */
 
 	/*
 	 * Restore callee save registers

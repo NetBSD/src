@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.47.8.2 2017/11/17 15:07:16 martin Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.47.8.3 2023/07/31 14:26:25 martin Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -771,6 +771,11 @@ cortex_mpcontinuation:
 #else
 #error either TPIDRPRW_IS_CURCPU or TPIDRPRW_IS_CURLWP must be defined
 #endif
+	/*
+	 * No membar needed because we're not switching from a
+	 * previous lwp, and the idle lwp we're switching to can't be
+	 * holding locks already; see cpu_switchto.
+	 */
 	str	r6, [r5, #CI_CURLWP]		// and note we are running on it
 
 #ifdef MPDEBUG

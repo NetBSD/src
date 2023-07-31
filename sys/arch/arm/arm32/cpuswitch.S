@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.90 2015/04/08 12:07:40 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.90.10.1 2023/07/31 13:56:15 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.90 2015/04/08 12:07:40 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.90.10.1 2023/07/31 13:56:15 martin Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -205,8 +205,34 @@ ENTRY(cpu_switchto)
 	mcr	p15, 0, r6, c13, c0, 4		/* set current lwp */
 #endif
 
+	/*
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
+	 */
+
 	/* We have a new curlwp now so make a note of it */
+#ifdef _ARM_ARCH_7
+	dmb				/* store-before-store */
+#endif
 	str	r6, [r5, #(CI_CURLWP)]
+#ifdef _ARM_ARCH_7
+	dmb				/* store-before-load */
+#endif
+
 	/* Get the new pcb */
 	ldr	r7, [r6, #(L_PCB)]
 
@@ -403,7 +429,13 @@ ENTRY_NP(softint_switch)
 #if defined(TPIDRPRW_IS_CURLWP)
 	mcr	p15, 0, r5, c13, c0, 4		/* save new lwp */
 #endif
+#ifdef _ARM_ARCH_7
+	dmb				/* for mutex_enter; see cpu_switchto */
+#endif
 	str	r5, [r7, #(CI_CURLWP)]		/* save new lwp */
+#ifdef _ARM_ARCH_7
+	dmb				/* for mutex_enter; see cpu_switchto */
+#endif
 
 	/*
 	 * Normally, we'd get {r8-r13} but since this is a softint lwp
@@ -431,7 +463,13 @@ ENTRY_NP(softint_switch)
 #if defined(TPIDRPRW_IS_CURLWP)
 	mcr	p15, 0, r4, c13, c0, 4		/* restore pinned lwp */
 #endif
+#ifdef _ARM_ARCH_7
+	dmb				/* for mutex_enter; see cpu_switchto */
+#endif
 	str	r4, [r7, #(CI_CURLWP)]		/* restore pinned lwp */
+#ifdef _ARM_ARCH_7
+	dmb				/* for mutex_enter; see cpu_switchto */
+#endif
 	ldr	sp, [r2, #(PCB_KSP)]	/* now running on the old stack. */
 
 	/* At this point we can allow IRQ's again. */
