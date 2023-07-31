@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.37.10.1 2018/10/13 17:16:12 martin Exp $	*/
+/*	$NetBSD: xen.h,v 1.37.10.2 2023/07/31 14:59:25 martin Exp $	*/
 
 /*
  *
@@ -142,34 +142,46 @@ void xpq_flush_cache(void);
 
 #define __save_flags(x)							\
 do {									\
+	kpreempt_disable();						\
 	(x) = curcpu()->ci_vcpu->evtchn_upcall_mask;			\
+	kpreempt_enable();						\
 } while (0)
 
 #define __restore_flags(x)						\
 do {									\
-	volatile struct vcpu_info *_vci = curcpu()->ci_vcpu;		\
+	uint8_t _flags = (x);						\
+	struct cpu_info *_ci;						\
+									\
+	kpreempt_disable();						\
+	_ci = curcpu();							\
+	_ci->ci_vcpu->evtchn_upcall_mask = _flags;			\
 	__insn_barrier();						\
-	if ((_vci->evtchn_upcall_mask = (x)) == 0) {			\
-		x86_lfence();						\
-		if (__predict_false(_vci->evtchn_upcall_pending))	\
-			hypervisor_force_callback();			\
-	}								\
+	if (__predict_false(_ci->ci_vcpu->evtchn_upcall_pending &&	\
+		_flags == 0))						\
+		hypervisor_force_callback();				\
+	kpreempt_enable();						\
 } while (0)
 
 #define __cli()								\
 do {									\
+	kpreempt_disable();						\
 	curcpu()->ci_vcpu->evtchn_upcall_mask = 1;			\
-	x86_lfence();							\
+	kpreempt_enable();						\
+	__insn_barrier();						\
 } while (0)
 
 #define __sti()								\
 do {									\
-	volatile struct vcpu_info *_vci = curcpu()->ci_vcpu;		\
+	struct cpu_info *_ci;						\
+									\
 	__insn_barrier();						\
-	_vci->evtchn_upcall_mask = 0;					\
-	x86_lfence(); /* unmask then check (avoid races) */		\
-	if (__predict_false(_vci->evtchn_upcall_pending))		\
+	kpreempt_disable();						\
+	_ci = curcpu();							\
+	_ci->ci_vcpu->evtchn_upcall_mask = 0;				\
+	__insn_barrier();						\
+	if (__predict_false(_ci->ci_vcpu->evtchn_upcall_pending))	\
 		hypervisor_force_callback();				\
+	kpreempt_enable();						\
 } while (0)
 
 #define cli()			__cli()

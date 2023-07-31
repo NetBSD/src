@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.9 2009/01/16 20:16:47 jym Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.9.58.1 2023/07/31 14:59:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.9 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.9.58.1 2023/07/31 14:59:25 martin Exp $");
 
 #include <sys/param.h>
 
@@ -97,18 +97,25 @@ x86_enable_intr(void)
 u_long
 x86_read_psl(void)
 {
+	u_long psl;
 
-	return (curcpu()->ci_vcpu->evtchn_upcall_mask);
+	kpreempt_disable();
+	psl = curcpu()->ci_vcpu->evtchn_upcall_mask;
+	kpreempt_enable();
+
+	return psl;
 }
 
 void
 x86_write_psl(u_long psl)
 {
-	struct cpu_info *ci = curcpu();
+	struct cpu_info *ci;
 
+	kpreempt_disable();
+	ci = curcpu();
 	ci->ci_vcpu->evtchn_upcall_mask = psl;
-	xen_rmb();
-	if (ci->ci_vcpu->evtchn_upcall_pending && psl == 0) {
+	__insn_barrier();
+	if (__predict_false(ci->ci_vcpu->evtchn_upcall_pending) && psl == 0)
 	    	hypervisor_force_callback();
-	}
+	kpreempt_enable();
 }
