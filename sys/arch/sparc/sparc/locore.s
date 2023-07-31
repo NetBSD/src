@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.268.30.1 2017/11/27 10:31:33 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.268.30.2 2023/07/31 13:56:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4905,7 +4905,30 @@ Lnosaveoldlwp:
 	/* set new cpcb, and curlwp */
 	sethi	%hi(curlwp), %l7
 	st	%g5, [%l6 + %lo(cpcb)]		! cpcb = newpcb;
+
+	/*
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
+	 */
+	/* stbar -- store-before-store, not needed on TSO */
 	st      %g3, [%l7 + %lo(curlwp)]        ! curlwp = l;
+#ifdef MULTIPROCESSOR
+	ldstub	[%sp - 4], %g0	/* makeshift store-before-load barrier */
+#endif
 
 	/* compute new wim */
 	ld	[%g5 + PCB_WIM], %o0

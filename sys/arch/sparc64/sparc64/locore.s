@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.411 2017/05/06 21:46:31 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.411.2.1 2023/07/31 13:56:15 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -6471,9 +6471,28 @@ ENTRY(cpu_switchto)
 	 * Load the new lwp.  To load, we must change stacks and
 	 * alter cpcb and the window control registers, hence we must
 	 * keep interrupts disabled.
+	 *
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
 	 */
 
+	membar	#StoreStore
 	STPTR	%i1, [%l7 + %lo(CURLWP)]	! curlwp = l;
+	membar	#StoreLoad
 	STPTR	%l1, [%l6 + %lo(CPCB)]		! cpcb = newpcb;
 
 	ldx	[%l1 + PCB_SP], %i6
@@ -6566,7 +6585,9 @@ ENTRY(softint_fastintr)
 	sethi	%hi(USPACE - TF_SIZE - CC64FSZ - STKB), %o3
 	LDPTR	[%i0 + L_PCB], %l1		! l1 = softint pcb
 	or	%o3, %lo(USPACE - TF_SIZE - CC64FSZ - STKB), %o3
+	membar	#StoreStore		/* for mutex_enter; see cpu_switchto */
 	STPTR	%i0, [%l7 + %lo(CURLWP)]
+	membar	#StoreLoad		/* for mutex_enter; see cpu_switchto */
 	add	%l1, %o3, %i6
 	STPTR	%l1, [%l6 + %lo(CPCB)]
 	stx	%i6, [%l1 + PCB_SP]
@@ -6579,7 +6600,9 @@ ENTRY(softint_fastintr)
 
 	/* switch back to interrupted lwp */
 	ldx	[%l5 + PCB_SP], %i6
+	membar	#StoreStore		/* for mutex_enter; see cpu_switchto */
 	STPTR	%l0, [%l7 + %lo(CURLWP)]
+	membar	#StoreLoad		/* for mutex_enter; see cpu_switchto */
 	STPTR	%l5, [%l6 + %lo(CPCB)]
 
 	restore					! rewind register window

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.122 2012/02/19 21:05:58 rmind Exp $ */
+/* $NetBSD: locore.s,v 1.122.32.1 2023/07/31 14:26:25 martin Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.122 2012/02/19 21:05:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.122.32.1 2023/07/31 14:26:25 martin Exp $");
 
 #include "assym.h"
 
@@ -686,8 +686,28 @@ LEAF(cpu_switchto, 0)
 
 	SWITCH_CONTEXT				/* swap the context */
 
-	GET_CPUINFO
+	/*
+	 * Issue barriers to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by oldlwp must be visible to other
+	 *    CPUs before we set ci_curlwp := newlwp on this one,
+	 *    requiring a store-before-store barrier.
+	 *
+	 * 2. ci_curlwp := newlwp must be visible on all other CPUs
+	 *    before any subsequent mutex_exit by newlwp can even test
+	 *    whether there might be waiters, requiring a
+	 *    store-before-load barrier.
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.
+	 */
+	GET_CPUINFO				/* v0 = curcpu() */
+	wmb		/* store-before-store XXX patch out if !MP? */
 	stq	s2, CPU_INFO_CURLWP(v0)		/* curlwp = l */
+	mb		/* store-before-load XXX patch out if !MP? */
 
 	/*
 	 * Now running on the new PCB.
