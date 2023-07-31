@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.85 2021/04/14 08:07:49 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.86 2023/07/31 17:38:28 christos Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -29,7 +29,7 @@ SRCS+=	popcount32.c popcount64.c
 SRCS+=	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
 	wcslen.c wcsncat.c wcsnlen.c wcscasecmp.c wcsdup.c wcsncasecmp.c \
 	wcsncmp.c wcsncpy.c wcspbrk.c wcsrchr.c wcsspn.c wcsstr.c wcstok.c \
-	wcswcs.c wmemchr.c wmemcmp.c wmemcpy.c wmemmove.c wmemset.c
+	wcswcs.c wmemchr.c wmemcmp.c wmemcpy.c wmemmove.c wmempcpy.c wmemset.c
 CPPFLAGS.wcscmp.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.wcsncmp.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.wmemcmp.c+=	-I${LIBCDIR}/locale
@@ -74,7 +74,8 @@ MLINKS+=strerror.3 strerror_r.3 strerror.3 perror.3 \
 MLINKS+=strdup.3 strndup.3
 MLINKS+=strsep.3 stresep.3
 MLINKS+=wmemchr.3 wmemcmp.3 wmemchr.3 wmemcpy.3 \
-	wmemchr.3 wmemmove.3 wmemchr.3 wmemset.3 \
+	wmemchr.3 wmemmove.3 wmemchr.3 wmempcpy.3 \
+	wmemchr.3 wmemset.3 \
 	wmemchr.3 wcscat.3 wmemchr.3 wcschr.3 \
 	wmemchr.3 wcscmp.3 wmemchr.3 wcscpy.3 \
 	wmemchr.3 wcscspn.3 wmemchr.3 wcslcat.3 \

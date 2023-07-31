@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2438 2023/07/28 18:18:59 christos Exp $
+#	$NetBSD: mi,v 1.2439 2023/07/31 17:38:28 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11154,6 +11154,7 @@
 ./usr/share/man/cat3/wmemcmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wmemcpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wmemmove.0			comp-c-catman		.cat
+./usr/share/man/cat3/wmempcpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wmemset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wmouse_trafo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wmove.0			comp-c-catman		.cat
@@ -19553,6 +19554,7 @@
 ./usr/share/man/html3/wmemcmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/wmemcpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/wmemmove.html		comp-c-htmlman		html
+./usr/share/man/html3/wmempcpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/wmemset.html		comp-c-htmlman		html
 ./usr/share/man/html3/wmouse_trafo.html		comp-c-htmlman		html
 ./usr/share/man/html3/wmove.html		comp-c-htmlman		html
@@ -28024,6 +28026,7 @@
 ./usr/share/man/man3/wmemcmp.3			comp-c-man		.man
 ./usr/share/man/man3/wmemcpy.3			comp-c-man		.man
 ./usr/share/man/man3/wmemmove.3			comp-c-man		.man
+./usr/share/man/man3/wmempcpy.3			comp-c-man		.man
 ./usr/share/man/man3/wmemset.3			comp-c-man		.man
 ./usr/share/man/man3/wmouse_trafo.3		comp-c-man		.man
 ./usr/share/man/man3/wmove.3			comp-c-man		.man
