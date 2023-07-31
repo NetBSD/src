@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.54.2.1 2023/07/31 14:40:04 martin Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.54.2.2 2023/07/31 14:48:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.54.2.1 2023/07/31 14:40:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.54.2.2 2023/07/31 14:48:07 martin Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -594,8 +594,7 @@ rw_downgrade(krwlock_t *rw)
 	__USE(curthread);
 #endif
 
-
-	membar_producer();
+	membar_exit();
 	owner = rw->rw_owner;
 	if ((owner & RW_HAS_WAITERS) == 0) {
 		/*
@@ -691,7 +690,7 @@ rw_tryupgrade(krwlock_t *rw)
 		newown = curthread | RW_WRITE_LOCKED | (owner & ~RW_THREAD);
 		next = rw_cas(rw, owner, newown);
 		if (__predict_true(next == owner)) {
-			membar_producer();
+			membar_enter(); /* XXX membar_acquire */
 			break;
 		}
 	}
