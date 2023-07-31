@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,13 +20,15 @@
 #ifndef SPARC_TDEP_H
 #define SPARC_TDEP_H 1
 
+#include "gdbarch.h"
+
 #define SPARC_CORE_REGISTERS                      \
   "g0", "g1", "g2", "g3", "g4", "g5", "g6", "g7", \
   "o0", "o1", "o2", "o3", "o4", "o5", "sp", "o7", \
   "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7", \
   "i0", "i1", "i2", "i3", "i4", "i5", "fp", "i7"
 
-struct frame_info;
+class frame_info_ptr;
 struct gdbarch;
 struct regcache;
 struct regset;
@@ -55,43 +57,44 @@ struct sparc_fpregmap
 
 /* SPARC architecture-specific information.  */
 
-struct gdbarch_tdep
+struct sparc_gdbarch_tdep : gdbarch_tdep_base
 {
   /* Register numbers for the PN and nPC registers.  The definitions
      for (64-bit) UltraSPARC differ from the (32-bit) SPARC
      definitions.  */
-  int pc_regnum;
-  int npc_regnum;
+  int pc_regnum = 0;
+  int npc_regnum = 0;
 
   /* Register names specific for architecture (sparc32 vs. sparc64) */
-  const char **fpu_register_names;
-  size_t fpu_registers_num;
-  const char **cp0_register_names;
-  size_t cp0_registers_num;
+  const char * const *fpu_register_names = nullptr;
+  size_t fpu_registers_num = 0;
+  const char * const *cp0_register_names = nullptr;
+  size_t cp0_registers_num = 0;
 
   /* Register sets.  */
-  const struct regset *gregset;
-  size_t sizeof_gregset;
-  const struct regset *fpregset;
-  size_t sizeof_fpregset;
+  const struct regset *gregset = nullptr;
+  size_t sizeof_gregset = 0;
+  const struct regset *fpregset = nullptr;
+  size_t sizeof_fpregset = 0;
 
   /* Offset of saved PC in jmp_buf.  */
-  int jb_pc_offset;
+  int jb_pc_offset = 0;
 
   /* Size of an Procedure Linkage Table (PLT) entry, 0 if we shouldn't
      treat the PLT special when doing prologue analysis.  */
-  size_t plt_entry_size;
+  size_t plt_entry_size = 0;
 
   /* Alternative location for trap return.  Used for single-stepping.  */
-  CORE_ADDR (*step_trap) (struct frame_info *frame, unsigned long insn);
+  CORE_ADDR (*step_trap) (frame_info_ptr frame, unsigned long insn)
+    = nullptr;
 
   /* ISA-specific data types.  */
-  struct type *sparc_psr_type;
-  struct type *sparc_fsr_type;
-  struct type *sparc64_ccr_type;
-  struct type *sparc64_pstate_type;
-  struct type *sparc64_fsr_type;
-  struct type *sparc64_fprs_type;
+  struct type *sparc_psr_type = nullptr;
+  struct type *sparc_fsr_type = nullptr;
+  struct type *sparc64_ccr_type = nullptr;
+  struct type *sparc64_pstate_type = nullptr;
+  struct type *sparc64_fsr_type = nullptr;
+  struct type *sparc64_fprs_type = nullptr;
 };
 
 /* Register numbers of various important registers.  */
@@ -204,10 +207,10 @@ extern CORE_ADDR sparc_analyze_prologue (struct gdbarch *gdbarch,
 					 struct sparc_frame_cache *cache);
 
 extern struct sparc_frame_cache *
-  sparc_frame_cache (struct frame_info *this_frame, void **this_cache);
+  sparc_frame_cache (frame_info_ptr this_frame, void **this_cache);
 
 extern struct sparc_frame_cache *
-  sparc32_frame_cache (struct frame_info *this_frame, void **this_cache);
+  sparc32_frame_cache (frame_info_ptr this_frame, void **this_cache);
 
 extern int
   sparc_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc);
@@ -245,17 +248,17 @@ extern int sparc_is_annulled_branch_insn (CORE_ADDR pc);
 extern const struct sparc_gregmap sparc32_sol2_gregmap;
 extern const struct sparc_fpregmap sparc32_sol2_fpregmap;
 
-/* Functions and variables exported from sparcnbsd-tdep.c.  */
+/* Functions and variables exported from sparc-netbsd-tdep.c.  */
 
 /* Register offsets for NetBSD.  */
 extern const struct sparc_gregmap sparc32nbsd_gregmap;
 
 /* Return the address of a system call's alternative return
    address.  */
-extern CORE_ADDR sparcnbsd_step_trap (struct frame_info *frame,
+extern CORE_ADDR sparcnbsd_step_trap (frame_info_ptr frame,
 				      unsigned long insn);
 
 extern struct trad_frame_saved_reg *
-  sparc32nbsd_sigcontext_saved_regs (struct frame_info *next_frame);
+  sparc32nbsd_sigcontext_saved_regs (frame_info_ptr next_frame);
 
 #endif /* sparc-tdep.h */

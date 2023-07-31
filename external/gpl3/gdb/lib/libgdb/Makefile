@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2021/09/18 01:47:09 christos Exp $
+#	$NetBSD: Makefile,v 1.33 2023/07/31 17:02:08 christos Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -13,10 +13,12 @@ GDBARCHDIR=	${.CURDIR}/arch/${GDB_MACHINE_ARCH}
 
 .include "${GDBARCHDIR}/defs.mk"
 
-SRCS=		${G_LIBGDB_OBS:.o=.c} dwarf2-frame.c
+SRCS=		${G_LIBGDB_OBS:.o=.c}
+SRCS+=		dwarf2-frame.c netbsd-nat-low.c target-low.c
 GCPPFLAGS=	${G_INTERNAL_CFLAGS}
 CPPFLAGS+=	-I${.CURDIR} \
 		-I${GDBARCHDIR} \
+		-I${GMPDIR}/arch/${MACHINE_ARCH} \
 		-I${DIST} \
 		-I${DIST}/gdb \
 		-I${DIST}/gdbsupport \
@@ -25,8 +27,10 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/include/opcode \
 		-I${DIST}/readline \
 		-I${DIST}/libdecnumber \
+		-I${DIST}/libbacktrace \
 		-I${.CURDIR}/../libgnulib/arch/${GDB_MACHINE_ARCH} \
 		-I${.CURDIR}/../libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib/import \
+		-I${.CURDIR}/../libbacktrace/arch/${GDB_MACHINE_ARCH} \
 		-I${.CURDIR}/../libgdbsupport/arch/${GDB_MACHINE_ARCH} \
 		-I${.CURDIR}/../libbfd/arch/${GDB_MACHINE_ARCH} \
 		-I${.CURDIR}/../libdecnumber/arch/${GDB_MACHINE_ARCH} \

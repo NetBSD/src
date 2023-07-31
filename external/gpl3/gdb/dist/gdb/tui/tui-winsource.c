@@ -1,6 +1,6 @@
 /* TUI display source/assembly window.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -28,6 +28,7 @@
 #include "source.h"
 #include "objfiles.h"
 #include "filenames.h"
+#include "safe-ctype.h"
 
 #include "tui/tui.h"
 #include "tui/tui-data.h"
@@ -38,6 +39,7 @@
 #include "tui/tui-winsource.h"
 #include "tui/tui-source.h"
 #include "tui/tui-disasm.h"
+#include "tui/tui-location.h"
 #include "gdb_curses.h"
 
 /* Function to display the "main" routine.  */
@@ -57,7 +59,7 @@ tui_display_main ()
 
 	  tui_update_source_windows_with_addr (gdbarch, addr);
 	  s = find_pc_line_symtab (addr);
-	  tui_update_locator_fullname (s);
+	  tui_location.set_location (s);
 	}
     }
 }
@@ -65,26 +67,12 @@ tui_display_main ()
 /* See tui-winsource.h.  */
 
 std::string
-tui_copy_source_line (const char **ptr, int line_no, int first_col,
-		      int line_width, int ndigits)
+tui_copy_source_line (const char **ptr, int *length)
 {
   const char *lineptr = *ptr;
 
   /* Init the line with the line number.  */
   std::string result;
-
-  if (line_no > 0)
-    {
-      if (ndigits > 0)
-	result = string_printf ("%*d ", ndigits, line_no);
-      else
-	{
-	  result = string_printf ("%-6d", line_no);
-	  int len = result.size ();
-	  len = len - ((len / tui_tab_width) * tui_tab_width);
-	  result.append (len, ' ');
-	}
-    }
 
   int column = 0;
   char c;
@@ -112,37 +100,29 @@ tui_copy_source_line (const char **ptr, int line_no, int first_col,
 
 	  --column;
 	  for (int j = column % max_tab_len;
-	       j < max_tab_len && column < first_col + line_width;
+	       j < max_tab_len;
 	       column++, j++)
-	    if (column >= first_col)
-	      result.push_back (' ');
+	    result.push_back (' ');
 	};
-
-      /* We have to process all the text in order to pick up all the
-	 escapes.  */
-      if (column <= first_col || column > first_col + line_width)
-	{
-	  if (c == '\t')
-	    process_tab ();
-	  continue;
-	}
 
       if (c == '\n' || c == '\r' || c == '\0')
 	{
 	  /* Nothing.  */
 	}
-      else if (c < 040 && c != '\t')
+      else if (c == '\t')
+	process_tab ();
+      else if (ISCNTRL (c))
 	{
 	  result.push_back ('^');
 	  result.push_back (c + 0100);
+	  ++column;
 	}
       else if (c == 0177)
 	{
 	  result.push_back ('^');
 	  result.push_back ('?');
+	  ++column;
 	}
-      else if (c == '\t')
-	process_tab ();
       else
 	result.push_back (c);
     }
@@ -151,6 +131,9 @@ tui_copy_source_line (const char **ptr, int line_no, int first_col,
   if (c == '\r' && *lineptr == '\n')
     ++lineptr;
   *ptr = lineptr;
+
+  if (length != nullptr)
+    *length = column;
 
   return result;
 }
@@ -216,7 +199,7 @@ tui_update_source_windows_with_line (struct symtab_and_line sal)
   if (sal.symtab != nullptr)
     {
       find_line_pc (sal.symtab, sal.line, &sal.pc);
-      gdbarch = SYMTAB_OBJFILE (sal.symtab)->arch ();
+      gdbarch = sal.symtab->compunit ()->objfile ()->arch ();
     }
 
   for (struct tui_source_window_base *win_info : tui_source_windows ())
@@ -254,24 +237,35 @@ void
 tui_source_window_base::show_source_line (int lineno)
 {
   struct tui_source_element *line;
-  int x;
 
-  line = &m_content[lineno - 1];
+  line = &m_content[lineno];
   if (line->is_exec_point)
-    tui_set_reverse_mode (handle.get (), true);
+    tui_set_reverse_mode (m_pad.get (), true);
 
-  wmove (handle.get (), lineno, TUI_EXECINFO_SIZE);
-  tui_puts (line->line.c_str (), handle.get ());
+  wmove (m_pad.get (), lineno, 0);
+  tui_puts (line->line.c_str (), m_pad.get ());
   if (line->is_exec_point)
-    tui_set_reverse_mode (handle.get (), false);
+    tui_set_reverse_mode (m_pad.get (), false);
+}
 
-  /* Clear to end of line but stop before the border.  */
-  x = getcurx (handle.get ());
-  while (x + 1 < width)
-    {
-      waddch (handle.get (), ' ');
-      x = getcurx (handle.get ());
-    }
+/* See tui-winsource.h.  */
+
+void
+tui_source_window_base::refresh_window ()
+{
+  /* tui_win_info::refresh_window would draw the empty background window to
+     the screen, potentially creating a flicker.  */
+  wnoutrefresh (handle.get ());
+
+  int pad_width = std::max (m_max_length, width);
+  int left_margin = 1 + TUI_EXECINFO_SIZE + extra_margin ();
+  int view_width = width - left_margin - 1;
+  int pad_x = std::min (pad_width - view_width, m_horizontal_offset);
+  /* Ensure that an equal number of scrolls will work if the user
+     scrolled beyond where we clip.  */
+  m_horizontal_offset = pad_x;
+  prefresh (m_pad.get (), 0, pad_x, y + 1, x + left_margin,
+	    y + m_content.size (), x + left_margin + view_width - 1);
 }
 
 void
@@ -279,10 +273,17 @@ tui_source_window_base::show_source_content ()
 {
   gdb_assert (!m_content.empty ());
 
-  for (int lineno = 1; lineno <= m_content.size (); lineno++)
+  check_and_display_highlight_if_needed ();
+
+  int pad_width = std::max (m_max_length, width);
+  if (m_pad == nullptr || pad_width > getmaxx (m_pad.get ())
+      || m_content.size () > getmaxy (m_pad.get ()))
+    m_pad.reset (newpad (m_content.size (), pad_width));
+
+  werase (m_pad.get ());
+  for (int lineno = 0; lineno < m_content.size (); lineno++)
     show_source_line (lineno);
 
-  check_and_display_highlight_if_needed ();
   refresh_window ();
 }
 
@@ -291,14 +292,14 @@ tui_source_window_base::tui_source_window_base ()
   m_start_line_or_addr.loa = LOA_ADDRESS;
   m_start_line_or_addr.u.addr = 0;
 
-  gdb::observers::source_styling_changed.attach
+  gdb::observers::styling_changed.attach
     (std::bind (&tui_source_window::style_changed, this),
-     m_observable);
+     m_observable, "tui-winsource");
 }
 
 tui_source_window_base::~tui_source_window_base ()
 {
-  gdb::observers::source_styling_changed.detach (m_observable);
+  gdb::observers::styling_changed.detach (m_observable);
 }
 
 /* See tui-data.h.  */
@@ -328,7 +329,7 @@ tui_source_window_base::rerender ()
     {
       struct symtab_and_line cursal
 	= get_current_source_symtab_and_line ();
-      struct frame_info *frame = deprecated_safe_get_selected_frame ();
+      frame_info_ptr frame = deprecated_safe_get_selected_frame ();
       struct gdbarch *gdbarch = get_frame_arch (frame);
 
       struct symtab *s = find_pc_line_symtab (get_frame_pc (frame));
@@ -352,7 +353,7 @@ tui_source_window_base::refill ()
       sal = get_current_source_symtab_and_line ();
       if (sal.symtab == NULL)
 	{
-	  struct frame_info *fi = deprecated_safe_get_selected_frame ();
+	  frame_info_ptr fi = deprecated_safe_get_selected_frame ();
 	  if (fi != nullptr)
 	    sal = find_pc_line (get_frame_pc (fi), 0);
 	}
@@ -380,7 +381,7 @@ tui_source_window_base::do_scroll_horizontal (int num_to_scroll)
       if (offset < 0)
 	offset = 0;
       m_horizontal_offset = offset;
-      refill ();
+      refresh_window ();
     }
 }
 
@@ -403,16 +404,15 @@ tui_source_window_base::set_is_exec_point_at (struct tui_line_or_address l)
 
       if (content_loa.loa == l.loa
 	  && ((l.loa == LOA_LINE && content_loa.u.line_no == l.u.line_no)
-              || (l.loa == LOA_ADDRESS && content_loa.u.addr == l.u.addr)))
-        new_state = true;
+	      || (l.loa == LOA_ADDRESS && content_loa.u.addr == l.u.addr)))
+	new_state = true;
       else
 	new_state = false;
       if (new_state != m_content[i].is_exec_point)
-        {
-          changed = true;
-          m_content[i].is_exec_point = new_state;
-          show_source_line (i + 1);
-        }
+	{
+	  changed = true;
+	  m_content[i].is_exec_point = new_state;
+	}
       i++;
     }
   if (changed)
@@ -451,20 +451,18 @@ tui_source_window_base::update_breakpoint_info
 
       line = &m_content[i];
       if (current_only && !line->is_exec_point)
-         continue;
+	 continue;
 
       /* Scan each breakpoint to see if the current line has something to
-         do with it.  Identify enable/disabled breakpoints as well as
-         those that we already hit.  */
+	 do with it.  Identify enable/disabled breakpoints as well as
+	 those that we already hit.  */
       tui_bp_flags mode = 0;
-      iterate_over_breakpoints ([&] (breakpoint *bp) -> bool
-        {
-	  struct bp_location *loc;
-
+      for (breakpoint *bp : all_breakpoints ())
+	{
 	  if (bp == being_deleted)
-	    return false;
+	    continue;
 
-	  for (loc = bp->loc; loc != NULL; loc = loc->next)
+	  for (bp_location *loc : bp->locations ())
 	    {
 	      if (location_matches_p (loc, i))
 		{
@@ -480,13 +478,13 @@ tui_source_window_base::update_breakpoint_info
 		    mode |= TUI_BP_HARDWARE;
 		}
 	    }
-	  return false;
-        });
+	}
+
       if (line->break_mode != mode)
-        {
-          line->break_mode = mode;
-          need_refresh = true;
-        }
+	{
+	  line->break_mode = mode;
+	  need_refresh = true;
+	}
     }
   return need_refresh;
 }
@@ -520,6 +518,8 @@ tui_source_window_base::update_exec_info ()
 	element[TUI_EXEC_POS] = '>';
 
       mvwaddstr (handle.get (), i + 1, 1, element);
+
+      show_line_number (i);
     }
   refresh_window ();
 }

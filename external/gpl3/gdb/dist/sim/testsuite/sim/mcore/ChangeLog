@@ -1,8 +1,0 @@
-2015-11-15  Mike Frysinger  <vapier@gentoo.org>
-
-	* fail.s: New test.
-	* testutils.inc (fail): Fix exit code.
-
-2015-03-29  Mike Frysinger  <vapier@gentoo.org>
-
-	* pass.s, allinsn.exp, testutils.inc: New files.

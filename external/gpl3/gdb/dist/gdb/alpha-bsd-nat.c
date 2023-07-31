@@ -1,6 +1,6 @@
 /* Native-dependent code for Alpha BSD's.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include "alpha-tdep.h"
 #include "alpha-bsd-tdep.h"
 #include "inf-ptrace.h"
-#include "nbsd-nat.h"
+#include "netbsd-nat.h"
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
@@ -94,14 +94,14 @@ alpha_bsd_nat_target::store_registers (struct regcache *regcache, int regno)
     {
       struct reg gregs;
       if (ptrace (PT_GETREGS, regcache->ptid ().pid (),
-                  (PTRACE_TYPE_ARG3) &gregs, lwp) == -1)
-        perror_with_name (_("Couldn't get registers"));
+		  (PTRACE_TYPE_ARG3) &gregs, lwp) == -1)
+	perror_with_name (_("Couldn't get registers"));
 
       alphabsd_fill_reg (regcache, (char *) &gregs, regno);
 
       if (ptrace (PT_SETREGS, regcache->ptid ().pid (),
-                  (PTRACE_TYPE_ARG3) &gregs, lwp) == -1)
-        perror_with_name (_("Couldn't write registers"));
+		  (PTRACE_TYPE_ARG3) &gregs, lwp) == -1)
+	perror_with_name (_("Couldn't write registers"));
 
       if (regno != -1)
 	return;

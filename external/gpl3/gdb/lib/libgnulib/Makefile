@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2020/09/17 16:36:39 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2023/07/31 17:02:09 christos Exp $
 
 NOCTF=
 #HOSTPROG_CXX=   1
@@ -13,7 +13,12 @@ GDBARCHDIR=	${.CURDIR}/arch/${GDB_MACHINE_ARCH}
 
 .include "${GDBARCHDIR}/defs.mk"
 
-SRCS=		${G_OBJS:.o=.c} ${G_OBJECTS:.o=.c}
+SRCS=		${G_OBJS:.o=.c} ${G_OBJECTS:S/libgnu_a-//:.o=.c}
+SRCS+=		free.c memchr.c fcntl.c glob.c globfree.c scratch_buffer_grow.c
+SRCS+=		getcwd.c canonicalize-lgpl.c openat.c readlink.c cloexec.c
+SRCS+=		scratch_buffer_set_array_size.c scratch_buffer_dupfree.c
+SRCS+=		scratch_buffer_grow_preserve.c strerror_r.c fdopendir.c
+SRCS+=		rawmemchr.c strerror-override.c
 GCPPFLAGS=	${G_INTERNAL_CFLAGS}
 CPPFLAGS+=	-I${.CURDIR} \
 		-I${GDBARCHDIR}/gnulib \
@@ -34,11 +39,6 @@ CWARNFLAGS.clang+=	-Wno-switch
 .include "../../Makefile.inc"
 .include <bsd.lib.mk>
 
-# Force c++
-#CWARNFLAGS.clang+=	-Wno-deprecated
-#HOST_CC:=		${HOST_CXX}
-#CC:=			${CXX}
-#CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 CFLAGS:=		${CFLAGS} -std=gnu11 -Wno-error=stack-protector
 
 .PATH: ${DIST}/gnulib/import ${DIST}/gnulib/import/glthread \

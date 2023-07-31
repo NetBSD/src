@@ -15,9 +15,19 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_aarch64_elf64_le_vec)
 
-{ "aarch64-*-elf", NULL },{ "aarch64-*-rtems*",
+{ "aarch64-*-elf", NULL },{ "aarch64-*-rtems*", NULL },{ "aarch64-*-genode*",
 &aarch64_elf64_le_vec },
 #endif
+
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_aarch64_pe_le_vec)
+
+{ "aarch64-*-pe*",
+&aarch64_pe_le_vec },
+#endif
+
 
 
 
@@ -42,6 +52,15 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_aarch64_elf64_le_vec)
 
+{ "aarch64-*-openbsd*",
+&aarch64_elf64_le_vec },
+#endif
+
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_aarch64_elf64_le_vec)
+
 { "aarch64-*-fuchsia*",
 &aarch64_elf64_le_vec },
 #endif
@@ -53,6 +72,15 @@
 
 { "aarch64-*-cloudabi*",
 &aarch64_elf64_le_cloudabi_vec },
+#endif
+
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_aarch64_elf64_le_vec)
+
+{ "aarch64-*-haiku*",
+&aarch64_elf64_le_vec },
 #endif
 
 
@@ -130,6 +158,14 @@
 
 
     
+#if !defined (SELECT_VECS) || defined (HAVE_amdgcn_elf64_le_vec)
+
+{ "amdgcn-*-*",
+&amdgcn_elf64_le_vec },
+#endif
+
+
+    
 #if !defined (SELECT_VECS) || defined (HAVE_ia64_elf64_le_vec)
 
 { "ia64*-*-freebsd*", NULL },{ "ia64*-*-netbsd*", NULL },{ "ia64*-*-linux-*", NULL },{ "ia64*-*-elf*", NULL },{ "ia64*-*-kfreebsd*-gnu",
@@ -202,6 +238,14 @@
 
 
     
+#if !defined (SELECT_VECS) || defined (HAVE_arm_elf32_le_vec)
+
+{ "arm*-*-haiku*",
+&arm_elf32_le_vec },
+#endif
+
+
+    
 #if !defined (SELECT_VECS) || defined (HAVE_arm_elf32_nacl_le_vec)
 
 { "arm-*-nacl*",
@@ -220,7 +264,7 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_arm_elf32_be_vec)
 
-{ "arm*eb-*-netbsdelf*",
+{ "armeb-*-netbsd*",
 &arm_elf32_be_vec },
 #endif
 
@@ -228,7 +272,7 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_arm_elf32_le_vec)
 
-{ "arm*-*-netbsdelf*",
+{ "arm-*-netbsd*", NULL },{ "arm-*-openbsd*",
 &arm_elf32_le_vec },
 #endif
 
@@ -304,14 +348,6 @@
 
 
     
-#if !defined (SELECT_VECS) || defined (HAVE_arm_elf32_symbian_le_vec)
-
-{ "arm*-*-symbianelf*",
-&arm_elf32_symbian_le_vec },
-#endif
-
-
-    
 #if !defined (SELECT_VECS) || defined (HAVE_arm_elf32_le_vec)
 
 { "arm9e-*-elf",
@@ -376,7 +412,6 @@
 
     
 
-#ifdef BFD64
 #if !defined (SELECT_VECS) || defined (HAVE_cris_aout_vec)
 
 { "cris-*-*", NULL },{ "crisv32-*-*",
@@ -386,7 +421,6 @@
 
 
     
-#endif
 
 #if !defined (SELECT_VECS) || defined (HAVE_crx_elf32_vec)
 
@@ -593,7 +627,7 @@
 
 #if !defined (SELECT_VECS) || defined (HAVE_i386_elf32_vec)
 
-{ "i[3-7]86-*-elf*", NULL },{ "i[3-7]86-*-rtems*",
+{ "i[3-7]86-*-elf*", NULL },{ "i[3-7]86-*-rtems*", NULL },{ "i[3-7]86-*-genode*",
 &i386_elf32_vec },
 #endif
 
@@ -692,18 +726,10 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_i386_elf32_vec)
 
-{ "i[3-7]86-*-netbsdelf*", NULL },{ "i[3-7]86-*-netbsd*-gnu*", NULL },{ "i[3-7]86-*-knetbsd*-gnu",
+{ "i[3-7]86-*-netbsd*", NULL },{ "i[3-7]86-*-knetbsd*-gnu",
 &i386_elf32_vec },
 #endif
 
-
-
-    
-#if !defined (SELECT_VECS) || defined (HAVE_i386_pe_vec)
-
-{ "i[3-7]86-*-netbsdpe*",
-&i386_pe_vec },
-#endif
 
 
     
@@ -763,7 +789,7 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_x86_64_elf64_vec)
 
-{ "x86_64-*-elf*", NULL },{ "x86_64-*-rtems*", NULL },{ "x86_64-*-fuchsia",
+{ "x86_64-*-elf*", NULL },{ "x86_64-*-rtems*", NULL },{ "x86_64-*-fuchsia", NULL },{ "x86_64-*-genode*",
 &x86_64_elf64_vec },
 #endif
 
@@ -783,6 +809,15 @@
 
 { "x86_64-*-freebsd*", NULL },{ "x86_64-*-kfreebsd*-gnu",
 &x86_64_elf64_fbsd_vec },
+#endif
+
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_x86_64_elf64_vec)
+
+{ "x86_64-*-haiku*",
+&x86_64_elf64_vec },
 #endif
 
 
@@ -876,7 +911,15 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_i386_elf32_vec)
 
-{ "i[3-7]86-*-beoself*", NULL },{ "i[3-7]86-*-beos*",
+{ "i[3-7]86-*-beos*",
+&i386_elf32_vec },
+#endif
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_i386_elf32_vec)
+
+{ "i[3-7]86-*-haiku*",
 &i386_elf32_vec },
 #endif
 
@@ -964,7 +1007,7 @@
 
 #if !defined (SELECT_VECS) || defined (HAVE_m32c_elf32_vec)
 
-{ "m32c-*-elf", NULL },{ "m32c-*-rtems*",
+{ "m32c-*-elf",
 &m32c_elf32_vec },
 #endif
 
@@ -1003,6 +1046,13 @@
 
     
 
+#if !defined (SELECT_VECS) || defined (HAVE_m68k_elf32_vec)
+
+{ "m68*-*-haiku*",
+&m68k_elf32_vec },
+#endif
+
+    
 #if !defined (SELECT_VECS) || defined (HAVE_m68hc11_elf32_vec)
 
 { "m68hc11-*-*", NULL },{ "m6811-*-*",
@@ -1150,6 +1200,14 @@
 
 { "mips*-*-netbsd*",
 &mips_elf32_trad_be_vec },
+#endif
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_le_vec)
+
+{ "mips*el-*-haiku*",
+&mips_elf32_le_vec },
 #endif
 
 
@@ -1467,7 +1525,7 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_ns32k_aout_pc532nbsd_vec)
 
-{ "ns32k-*-netbsd*", NULL },{ "ns32k-*-lites*", NULL },{ "ns32k-*-openbsd*",
+{ "ns32k-*-lites*", NULL },{ "ns32k-*-*bsd*",
 &ns32k_aout_pc532nbsd_vec },
 #endif
 
@@ -1553,6 +1611,15 @@
 
 
     
+#if !defined (SELECT_VECS) || defined (HAVE_powerpc_elf32_vec)
+
+{ "powerpc-*-haiku*",
+&powerpc_elf32_vec },
+#endif
+
+
+
+    
 #ifdef BFD64
 #if !defined (SELECT_VECS) || defined (HAVE_rs6000_xcoff64_aix_vec)
 
@@ -1609,6 +1676,15 @@
 
 { "powerpc64-*-freebsd*",
 &powerpc_elf64_fbsd_vec },
+#endif
+
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_powerpc_elf64_fbsd_le_vec)
+
+{ "powerpc64le-*-freebsd*",
+&powerpc_elf64_fbsd_le_vec },
 #endif
 
 
@@ -1734,10 +1810,28 @@
     
 
 #ifdef BFD64
+#if !defined (SELECT_VECS) || defined (HAVE_riscv_elf32_be_vec)
+
+{ "riscvbe-*-*", NULL },{ "riscv32be*-*-*",
+&riscv_elf32_be_vec },
+#endif
+
+
+
+    
 #if !defined (SELECT_VECS) || defined (HAVE_riscv_elf32_vec)
 
 { "riscv-*-*", NULL },{ "riscv32*-*-*",
 &riscv_elf32_vec },
+#endif
+
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_riscv_elf64_be_vec)
+
+{ "riscv64be*-*-*",
+&riscv_elf64_be_vec },
 #endif
 
 
@@ -1849,7 +1943,7 @@
 
 #if !defined (SELECT_VECS) || defined (HAVE_sh_elf32_nbsd_le_vec)
 
-{ "sh*l*-*-netbsdelf*",
+{ "sh*l*-*-netbsd*",
 &sh_elf32_nbsd_le_vec },
 #endif
 
@@ -1857,7 +1951,7 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_sh_elf32_nbsd_vec)
 
-{ "sh*-*-netbsdelf*",
+{ "sh*-*-netbsd*",
 &sh_elf32_nbsd_vec },
 #endif
 
@@ -1933,6 +2027,7 @@
 
     
 
+
 #if !defined (SELECT_VECS) || defined (HAVE_sparc_elf32_sol2_vec)
 
 { "sparc-*-solaris2.[0-6]", NULL },{ "sparc-*-solaris2.[0-6].*",
@@ -1941,10 +2036,20 @@
 
     
 #ifdef BFD64
+
 #if !defined (SELECT_VECS) || defined (HAVE_sparc_elf32_sol2_vec)
 
 { "sparc-*-solaris2*", NULL },{ "sparcv9-*-solaris2*", NULL },{ "sparc64-*-solaris2*",
 &sparc_elf32_sol2_vec },
+#endif
+
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_sparc_elf64_vec)
+
+{ "sparc64-*-haiku*",
+&sparc_elf64_vec },
 #endif
 
 
@@ -2064,21 +2169,21 @@
 
     
 
-#if !defined (SELECT_VECS) || defined (HAVE_vax_elf32_vec)
+#if !defined (SELECT_VECS) || defined (HAVE_vax_aout_nbsd_vec)
 
-{ "vax-*-netbsdelf*",
-&vax_elf32_vec },
+{ "vax-*-netbsdaout*",
+&vax_aout_nbsd_vec },
 #endif
+
 
 
     
 
-#if !defined (SELECT_VECS) || defined (HAVE_vax_aout_nbsd_vec)
+#if !defined (SELECT_VECS) || defined (HAVE_vax_elf32_vec)
 
-{ "vax-*-netbsdaout*", NULL },{ "vax-*-netbsd*",
-&vax_aout_nbsd_vec },
+{ "vax-*-netbsd*",
+&vax_elf32_vec },
 #endif
-
 
 
     
@@ -2114,14 +2219,6 @@
 &wasm32_elf32_vec },
 #endif
 
-
-    
-
-#if !defined (SELECT_VECS) || defined (HAVE_xc16x_elf32_vec)
-
-{ "xc16x-*-elf",
-&xc16x_elf32_vec },
-#endif
 
     
 
@@ -2177,4 +2274,26 @@
 
 
     
+
+#ifdef BFD64
+#if !defined (SELECT_VECS) || defined (HAVE_loongarch_elf32_vec)
+
+{ "loongarch32-*",
+&loongarch_elf32_vec },
+#endif
+
+
+
+    
+
+#if !defined (SELECT_VECS) || defined (HAVE_loongarch_elf64_vec)
+
+{ "loongarch64-*",
+&loongarch_elf64_vec },
+#endif
+
+
+
+    
+#endif
 
