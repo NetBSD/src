@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.1 2020/01/21 15:48:52 martin Exp $
+#	$NetBSD: Makefile,v 1.10.2.2 2023/08/01 15:46:25 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -458,4 +458,21 @@ COPTS.archive_read_support_format_mtree.c += -Wno-error=implicit-fallthrough
 COPTS.target.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 COPTS.archive_write_set_format_iso9660.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
+FILES+=				libarchive.pc
+FILESOWN_libarchive.pc=		${BINOWN}
+FILESGRP_libarchive.pc=		${BINGRP}
+FILESMODE_libarchive.pc=	${NONBINMODE}
+FILESDIR_libarchive.pc=		/usr/lib/pkgconfig
+
+CLEANFILES+=libarchive.pc
+
 .include <bsd.lib.mk>
+
+all: libarchive.pc
+dependall: all
+
+libarchive.pc: archive.h libarchive.pc.in
+	@(V=$$( (echo '#include <archive.h>'; echo ARCHIVE_VERSION_ONLY_STRING) | \
+	    ${CC} ${CPPFLAGS} -E -I${.CURDIR} - | tail -1 | tr -d '"') && \
+	    ${TOOL_SED} -e s/@VERSION@/$$V/ < ${.CURDIR}/libarchive.pc.in \
+	    > ${.TARGET})
