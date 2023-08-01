@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238.2.1 2023/08/01 16:34:56 martin Exp $
+# $NetBSD: mi,v 1.1238.2.2 2023/08/01 17:03:53 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4093,6 +4093,7 @@
 ./usr/tests/libexec/ld.elf_so/t_dlerror-false		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dlinfo			tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dlvsym			tests-libexec-tests	compattestfile,atf,pic
+./usr/tests/libexec/ld.elf_so/t_hash			tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_ifunc			tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_rtld_r_debug		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_thread_local_dtor	tests-libexec-tests	compattestfile,atf,pic

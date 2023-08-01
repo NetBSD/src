@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.212.2.2 2023/08/01 16:34:56 martin Exp $	 */
+/*	$NetBSD: rtld.c,v 1.212.2.3 2023/08/01 17:03:53 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.212.2.2 2023/08/01 16:34:56 martin Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.212.2.3 2023/08/01 17:03:53 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,9 @@ __RCSID("$NetBSD: rtld.c,v 1.212.2.2 2023/08/01 16:34:56 martin Exp $");
 #include <ctype.h>
 
 #include <dlfcn.h>
+
 #include "debug.h"
+#include "hash.h"
 #include "rtld.h"
 
 #if !defined(lint)

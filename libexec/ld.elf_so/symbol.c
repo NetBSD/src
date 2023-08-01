@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.73 2020/02/29 18:45:20 kamil Exp $	 */
+/*	$NetBSD: symbol.c,v 1.73.8.1 2023/08/01 17:03:53 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.73 2020/02/29 18:45:20 kamil Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.73.8.1 2023/08/01 17:03:53 martin Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: symbol.c,v 1.73 2020/02/29 18:45:20 kamil Exp $");
 #include <dirent.h>
 
 #include "debug.h"
+#include "hash.h"
 #include "rtld.h"
 
 /*
@@ -78,45 +79,6 @@ _rtld_donelist_check(DoneList *dlp, const Obj_Entry *obj)
 	if (dlp->num_used < dlp->num_alloc)
 		dlp->objs[dlp->num_used++] = obj;
 	return false;
-}
-
-/*
- * Hash function for symbol table lookup.  Don't even think about changing
- * this.  It is specified by the System V ABI.
- */
-unsigned long
-_rtld_sysv_hash(const char *name)
-{
-	const unsigned char *p = (const unsigned char *) name;
-	unsigned long   h = 0;
-	unsigned long   g;
-	unsigned long   c;
-
-	for (; __predict_true((c = *p) != '\0'); p++) {
-		h <<= 4;
-		h += c;
-		if ((g = h & 0xf0000000) != 0) {
-			h ^= g;
-			h ^= g >> 24;
-		}
-	}
-	return (h);
-}
-
-/*
- * Hash function for symbol table lookup.  Don't even think about changing
- * this.  It is specified by the GNU toolchain ABI.
- */
-unsigned long
-_rtld_gnu_hash(const char *name)
-{
-	const unsigned char *p = (const unsigned char *) name;
-	uint_fast32_t h = 5381;
-	unsigned char c;
-
-	for (c = *p; c != '\0'; c = *++p)
-		h = h * 33 + c;
-	return (unsigned long)h;
 }
 
 const Elf_Sym *
