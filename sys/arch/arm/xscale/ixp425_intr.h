@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.h,v 1.10 2012/11/12 18:00:38 skrll Exp $	*/
+/*	$NetBSD: ixp425_intr.h,v 1.11 2023/08/01 10:35:42 rin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -88,6 +88,10 @@ static inline int __attribute__((__unused__))
 ixp425_splraise(int ipl)
 {
 	int old = curcpl();
+
+	if (ipl <= old)
+		return (old);
+
 	set_curcpl(ipl);
 
 	/* Don't let the compiler re-order this code with subsequent code */
