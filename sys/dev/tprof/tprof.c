@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.14 2018/07/13 07:56:29 maxv Exp $	*/
+/*	$NetBSD: tprof.c,v 1.14.6.1 2023/08/01 17:34:33 martin Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.14 2018/07/13 07:56:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.14.6.1 2023/08/01 17:34:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ tprof_worker(struct work *wk, void *dummy)
 	KASSERT(dummy == NULL);
 
 	/*
-	 * get a per cpu buffer.
+	 * Get a per cpu buffer.
 	 */
 	buf = tprof_buf_refresh();
 
@@ -208,12 +208,11 @@ tprof_worker(struct work *wk, void *dummy)
 		tprof_stat.ts_dropbuf++;
 	}
 	mutex_exit(&tprof_lock);
-	if (buf) {
+	if (buf)
 		tprof_buf_free(buf);
-	}
-	if (!shouldstop) {
+
+	if (!shouldstop)
 		callout_schedule(&c->c_callout, hz);
-	}
 }
 
 static void
@@ -239,9 +238,9 @@ tprof_stop1(void)
 		tprof_buf_t *old;
 
 		old = tprof_buf_switch(c, NULL);
-		if (old != NULL) {
+		if (old != NULL)
 			tprof_buf_free(old);
-		}
+
 		callout_destroy(&c->c_callout);
 	}
 	workqueue_destroy(tprof_wq);
@@ -256,9 +255,8 @@ tprof_getinfo(struct tprof_info *info)
 
 	memset(info, 0, sizeof(*info));
 	info->ti_version = TPROF_VERSION;
-	if ((tb = tprof_backend) != NULL) {
+	if ((tb = tprof_backend) != NULL)
 		info->ti_ident = tb->tb_ops->tbo_ident();
-	}
 }
 
 static int
@@ -351,9 +349,9 @@ tprof_stop(void)
 	mutex_enter(&tprof_lock);
 	tprof_running = false;
 	cv_broadcast(&tprof_reader_cv);
-	while (tprof_nworker > 0) {
+	while (tprof_nworker > 0)
 		cv_wait(&tprof_cv, &tprof_lock);
-	}
+
 	mutex_exit(&tprof_lock);
 
 	tprof_stop1();
@@ -451,9 +449,8 @@ tprof_backend_register(const char *name, const tprof_backend_ops_t *ops,
 {
 	tprof_backend_t *tb;
 
-	if (vers != TPROF_BACKEND_VERSION) {
+	if (vers != TPROF_BACKEND_VERSION)
 		return EINVAL;
-	}
 
 	mutex_enter(&tprof_startstop_lock);
 	tb = tprof_backend_lookup(name);
@@ -504,9 +501,8 @@ tprof_backend_unregister(const char *name)
 		return EBUSY;
 	}
 #if 1 /* XXX for now */
-	if (tprof_backend == tb) {
+	if (tprof_backend == tb)
 		tprof_backend = NULL;
-	}
 #endif
 	LIST_REMOVE(tb, tb_list);
 	mutex_exit(&tprof_startstop_lock);
@@ -522,9 +518,9 @@ static int
 tprof_open(dev_t dev, int flags, int type, struct lwp *l)
 {
 
-	if (minor(dev) != 0) {
+	if (minor(dev) != 0)
 		return EXDEV;
-	}
+
 	mutex_enter(&tprof_lock);
 	if (tprof_owner != NULL) {
 		mutex_exit(&tprof_lock);
@@ -566,7 +562,7 @@ tprof_read(dev_t dev, struct uio *uio, int flags)
 	mutex_enter(&tprof_reader_lock);
 	while (uio->uio_resid > 0 && error == 0) {
 		/*
-		 * take the first buffer from the list.
+		 * Take the first buffer from the list.
 		 */
 		mutex_enter(&tprof_lock);
 		buf = STAILQ_FIRST(&tprof_list);
@@ -588,7 +584,7 @@ tprof_read(dev_t dev, struct uio *uio, int flags)
 		mutex_exit(&tprof_lock);
 
 		/*
-		 * copy it out.
+		 * Copy it out.
 		 */
 		bytes = MIN(buf->b_used * sizeof(tprof_sample_t) -
 		    tprof_reader_offset, uio->uio_resid);
@@ -599,7 +595,7 @@ tprof_read(dev_t dev, struct uio *uio, int flags)
 		tprof_reader_offset += done;
 
 		/*
-		 * if we didn't consume the whole buffer,
+		 * If we didn't consume the whole buffer,
 		 * put it back to the list.
 		 */
 		if (tprof_reader_offset <
@@ -676,7 +672,7 @@ void
 tprofattach(int nunits)
 {
 
-	/* nothing */
+	/* Nothing */
 }
 
 MODULE(MODULE_CLASS_DRIVER, tprof, NULL);

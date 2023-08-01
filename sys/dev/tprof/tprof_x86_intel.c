@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_intel.c,v 1.3.2.1 2022/10/15 10:20:32 martin Exp $	*/
+/*	$NetBSD: tprof_x86_intel.c,v 1.3.2.2 2023/08/01 17:34:33 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.3.2.1 2022/10/15 10:20:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.3.2.2 2023/08/01 17:34:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ tprof_intel_nmi(const struct trapframe *tf, void *dummy)
 		return 0;
 	}
 
-	/* record a sample */
+	/* Record a sample */
 #if defined(__x86_64__)
 	tfi.tfi_pc = tf->tf_rip;
 #else
@@ -154,10 +154,10 @@ tprof_intel_nmi(const struct trapframe *tf, void *dummy)
 	tfi.tfi_inkernel = tfi.tfi_pc >= VM_MIN_KERNEL_ADDRESS;
 	tprof_sample(NULL, &tfi);
 
-	/* reset counter */
+	/* Reset counter */
 	wrmsr(MSR_PERFCTR0, counter_reset_val);
 
-	/* unmask PMI */
+	/* Unmask PMI */
 	pcint = lapic_readreg(LAPIC_LVT_PCINT);
 	KASSERT((pcint & LAPIC_LVT_MASKED) != 0);
 	lapic_writereg(LAPIC_LVT_PCINT, pcint & ~LAPIC_LVT_MASKED);
@@ -183,20 +183,18 @@ tprof_intel_ident(void)
 {
 	uint32_t descs[4];
 
-	if (cpu_vendor != CPUVENDOR_INTEL) {
+	if (cpu_vendor != CPUVENDOR_INTEL)
 		return TPROF_IDENT_NONE;
-	}
 
-	if (cpuid_level < 0x0A) {
+	if (cpuid_level < 0x0a)
 		return TPROF_IDENT_NONE;
-	}
-	x86_cpuid(0x0A, descs);
-	if ((descs[0] & CPUID_PERF_VERSION) == 0) {
+
+	x86_cpuid(0x0a, descs);
+	if ((descs[0] & CPUID_PERF_VERSION) == 0)
 		return TPROF_IDENT_NONE;
-	}
-	if ((descs[0] & CPUID_PERF_NGPPC) == 0) {
+
+	if ((descs[0] & CPUID_PERF_NGPPC) == 0)
 		return TPROF_IDENT_NONE;
-	}
 
 	counter_bitwidth = __SHIFTOUT(descs[0], CPUID_PERF_NBWGPPC);
 
@@ -208,9 +206,8 @@ tprof_intel_start(const tprof_param_t *param)
 {
 	uint64_t xc;
 
-	if (tprof_intel_ident() == TPROF_IDENT_NONE) {
+	if (tprof_intel_ident() == TPROF_IDENT_NONE)
 		return ENOTSUP;
-	}
 
 	KASSERT(intel_nmi_handle == NULL);
 	intel_nmi_handle = nmi_establish(tprof_intel_nmi, NULL);

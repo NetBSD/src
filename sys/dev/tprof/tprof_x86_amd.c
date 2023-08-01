@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_amd.c,v 1.4.2.1 2019/10/12 14:34:45 martin Exp $	*/
+/*	$NetBSD: tprof_x86_amd.c,v 1.4.2.2 2023/08/01 17:34:33 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.4.2.1 2019/10/12 14:34:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.4.2.2 2023/08/01 17:34:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ tprof_amd_nmi(const struct trapframe *tf, void *dummy)
 		return 0;
 	}
 
-	/* record a sample */
+	/* Record a sample */
 #if defined(__x86_64__)
 	tfi.tfi_pc = tf->tf_rip;
 #else
@@ -199,14 +199,14 @@ tprof_amd_ident(void)
 {
 	struct cpu_info *ci = curcpu();
 
-	if (cpu_vendor != CPUVENDOR_AMD) {
+	if (cpu_vendor != CPUVENDOR_AMD)
 		return TPROF_IDENT_NONE;
-	}
 
 	switch (CPUID_TO_FAMILY(ci->ci_signature)) {
 	case 0x10:
 	case 0x15:
 	case 0x17:
+	case 0x19:
 		return TPROF_IDENT_AMD_GENERIC;
 	}
 
@@ -218,9 +218,8 @@ tprof_amd_start(const tprof_param_t *param)
 {
 	uint64_t xc;
 
-	if (tprof_amd_ident() == TPROF_IDENT_NONE) {
+	if (tprof_amd_ident() == TPROF_IDENT_NONE)
 		return ENOTSUP;
-	}
 
 	KASSERT(amd_nmi_handle == NULL);
 	amd_nmi_handle = nmi_establish(tprof_amd_nmi, NULL);

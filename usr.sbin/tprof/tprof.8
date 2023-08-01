@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.14.2.1 2019/10/12 14:34:45 martin Exp $
+.\"	$NetBSD: tprof.8,v 1.14.2.2 2023/08/01 17:34:32 martin Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 11, 2019
+.Dd April 10, 2023
 .Dt TPROF 8
 .Os
 .Sh NAME
@@ -37,7 +37,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-tool can be used to monitor hardware events (PMCs) during the execution of
+tool can be used to monitor hardware events
+.Tn ( PMC Ns s )
+during the execution of
 certain commands.
 .Pp
 The
@@ -48,7 +50,7 @@ keeps recording samples from the kernel driver until the command finishes,
 and reports statistics to the standard error.
 .Pp
 The
-.Nm tprof
+.Xr tprof 4
 pseudo driver and a suitable backend should be loaded beforehand.
 .Pp
 The
@@ -134,9 +136,11 @@ x86 AMD Family 15h
 .It
 x86 AMD Family 17h
 .It
+x86 AMD Family 19h
+.It
 x86 Intel Generic (all Intel CPUs)
 .It
-x86 Intel Skylake/Kabylake
+x86 Intel Skylake, Kabylake and Cometlake
 .It
 x86 Intel Silvermont/Airmont
 .It
@@ -148,7 +152,7 @@ x86 Intel Goldmont Plus
 The
 .Nm
 utility reports the following statistics about the activities of the
-.Nm tprof
+.Xr tprof 4
 pseudo driver.
 .Bl -tag -width dropbuf_samples
 .It sample
