@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.93 2023/07/31 16:55:56 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.94 2023/08/01 17:05:58 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -3357,6 +3357,207 @@ sys/netatalk/ddp_output.c			1.22
 
 sys/dev/spkr.c					1.25
 
-	spkr(4): Avoid some overflow issues.
+	spkr(4): avoid some overflow issues.
 	[riastradh, ticket #279]
+
+sys/dev/usb/xhci.c				1.176
+sys/dev/usb/xhcivar.h				1.23
+
+	xhci(4): PR 57326: defer root intr xfers while polling.
+	[riastradh, ticket #280]
+
+sys/dev/usb/xhci.c				1.177,1.180
+sys/dev/usb/xhcivar.h				1.24
+
+	xhci(4): avoid crash in suspend/resume/resume if first resume fails.
+	[riastradh, ticket #281]
+
+sys/arch/amd64/conf/GENERIC			1.602
+sys/arch/x86/pci/files.pci			1.27
+sys/arch/x86/pci/ichlpcib.c			1.59
+sys/arch/x86/pci/tco.c				1.10
+sys/arch/x86/pci/tco.h				1.5
+sys/dev/ic/i82801lpcreg.h			1.17
+sys/dev/pci/files.pci				1.446
+sys/dev/pci/ichsmb.c				1.82
+
+	ichsmb(4), tco(4): add support for TCO on newer Intel chipsets.
+	[riastradh, ticket #282]
+
+sys/arch/powerpc/powerpc/db_disasm.c		1.30,1.31
+sys/arch/powerpc/powerpc/db_trace.c		1.61-1.63
+usr.sbin/crash/Makefile				1.47
+usr.sbin/crash/arch/generic.c			1.2
+usr.sbin/crash/arch/powerpc.c			1.1
+usr.sbin/crash/arch/powerpc64.c			1.1
+usr.sbin/crash/crash.c				1.15
+
+	crash(8): add powerpc support.
+	[riastradh, ticket #283]
+
+sys/dev/dkwedge/dk.c				1.125-1.158
+sys/kern/subr_disk.c				1.135-1.137
+sys/sys/disk.h					1.78
+
+	dk(4), disk(9): fix various races and locking errors.
+	[riastradh, ticket #284]
+
+sys/kern/subr_autoconf.c			1.308
+
+	autoconf(9): fix potential memory corruption in rare ABA case.
+	[riastradh, ticket #285]
+
+sys/dev/isapnp/sb_isapnp.c			1.54
+sys/dev/ofisa/sb_ofisa.c			1.24
+
+	sb(4): PR 57363: fix missing mutex initialization at isapnp and ofisa.
+	[riastradh, ticket #286]
+
+sys/kern/vfs_vnops.c				1.238
+
+	readdir(2), lseek(2): fix races in access to struct file::f_offset.
+	[riastradh, ticket #287]
+
+libexec/ld.elf_so/rtld.c			1.213
+
+	dlopen(3): Read _rtld_objtail under the lock.
+	[riastradh, ticket #288]
+
+sys/fs/tmpfs/tmpfs_subr.c			1.116,1.117
+
+	tmpfs: protect against unreasonable file resizing.
+	[riastradh, ticket #289]
+
+sys/dev/acpi/acpica/acpi_func.h			1.7
+
+	acpi(4): fix membars in ACPI_ACQUIRE/RELEASE_GLOBAL_LOCK.
+	[riastradh, ticket #290]
+
+sys/external/bsd/drm2/dist/drm/i915/gem/i915_gem_busy.c 1.4
+
+	i915: PR 57402: fix crash from null pointer dereference under load.
+	[riastradh, ticket #291]
+
+sys/arch/arm/arm/efi_runtime.c			1.11
+sys/arch/x86/x86/efi_machdep.c			1.5,1.6
+sys/dev/efi.c					1.5-1.9
+sys/dev/efi/efi.h				1.3
+sys/dev/efivar.h				1.2
+sys/sys/efiio.h					1.3
+
+	efi(4): PR 57076: implement EFI runtime table ioctls.
+	[riastradh, ticket #292]
+
+sys/arch/i386/conf/ALL				1.507
+sys/arch/i386/conf/GENERIC			1.1247
+
+	i386: enable EFI runtime support.
+	[riastradh, ticket #293]
+
+sys/kern/kern_entropy.c				1.60,1.61
+
+	entropy(9): fix races in changes to entropy source flags.
+	[riastradh, ticket #294]
+
+sys/external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_device.c 1.19
+
+	amdgpu: fix mostly harmless merge botch.
+	[riastradh, ticket #295]
+
+lib/libpthread/arch/aarch64/pthread_md.h	1.2
+lib/libpthread/arch/arm/pthread_md.h		1.12,1.13
+lib/libpthread/arch/i386/pthread_md.h		1.21
+lib/libpthread/arch/x86_64/pthread_md.h		1.13
+lib/libpthread/pthread_int.h			1.110,1.111
+lib/libpthread/pthread_spin.c			1.11
+
+	libpthread: PR 57437: reduce spin lock hangs on arm.
+	[riastradh, ticket #296]
+
+distrib/sets/lists/debug/mi			1.400-.406 (patch)
+distrib/sets/lists/debug/shl.mi			1.306-1.314 (patch)
+distrib/sets/lists/tests/mi			1.1265 (patch)
+distrib/sets/lists/tests/shl.mi			1.12-1.16 (patch)
+libexec/ld.elf_so/README.TLS			1.6 (patch)
+libexec/ld.elf_so/arch/aarch64/mdreloc.c	1.18 (patch)
+libexec/ld.elf_so/arch/alpha/alpha_reloc.c	1.44 (patch)
+libexec/ld.elf_so/arch/arm/mdreloc.c		1.46 (patch)
+libexec/ld.elf_so/arch/hppa/hppa_reloc.c	1.50 (patch)
+libexec/ld.elf_so/arch/i386/mdreloc.c		1.42,1.43 (patch)
+libexec/ld.elf_so/arch/m68k/mdreloc.c		1.34 (patch)
+libexec/ld.elf_so/arch/mips/mips_reloc.c	1.75 (patch)
+libexec/ld.elf_so/arch/or1k/mdreloc.c		1.4 (patch)
+libexec/ld.elf_so/arch/powerpc/ppc_reloc.c	1.63 (patch)
+libexec/ld.elf_so/arch/riscv/mdreloc.c		1.9 (patch)
+libexec/ld.elf_so/arch/sh3/mdreloc.c		1.36 (patch)
+libexec/ld.elf_so/arch/sparc/mdreloc.c		1.57 (patch)
+libexec/ld.elf_so/arch/sparc64/mdreloc.c	1.70 (patch)
+libexec/ld.elf_so/arch/x86_64/mdreloc.c		1.48 (patch)
+libexec/ld.elf_so/map_object.c			1.66,1.67 (patch)
+libexec/ld.elf_so/rtld.c			1.214 (patch)
+libexec/ld.elf_so/rtld.h			1.146 (patch)
+libexec/ld.elf_so/tls.c				1.16-1.19 (patch)
+tests/libexec/ld.elf_so/Makefile		1.13-1.19 (patch)
+tests/libexec/ld.elf_so/helper.mk		1.1 (patch)
+tests/libexec/ld.elf_so/helper_abuse_dynamic/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_abuse_dynamic/h_abuse_dynamic.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_abuse_static/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_abuse_static/h_abuse_static.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_def_dynamic/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_def_dynamic/h_def_dynamic.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_def_static/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_def_static/h_def_static.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_dso1/Makefile	1.2 (patch)
+tests/libexec/ld.elf_so/helper_dso2/Makefile	1.2 (patch)
+tests/libexec/ld.elf_so/helper_dso3/Makefile	1.2 (patch)
+tests/libexec/ld.elf_so/helper_ifunc_dso/Makefile 1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlyctor_dynamic/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlyctor_dynamic/h_onlyctor_dynamic.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_onlydef/Makefile	1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlydef/h_onlydef.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_onlydef_static/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlydef_static/h_onlydef_static.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_onlyuse_dynamic/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlyuse_dynamic/h_onlyuse_dynamic.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_onlyuse_static/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlyuse_static/h_onlyuse_static.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_symver_dso0/Makefile 1.2 (patch)
+tests/libexec/ld.elf_so/helper_symver_dso1/Makefile 1.4 (patch)
+tests/libexec/ld.elf_so/helper_symver_dso2/Makefile 1.4 (patch)
+tests/libexec/ld.elf_so/helper_use_dynamic/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_use_dynamic/h_use_dynamic.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_use_static/Makefile 1.1-1.3 (patch)
+tests/libexec/ld.elf_so/helper_use_static/h_use_static.c 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/t_tls_extern.c		1.1-1.12 (patch)
+
+	ld.elf_so(1): fix dlopen with static thread-local storage (TLS), i.e.,
+	dlopening shared objects with the `initial-exec' model of TLS.
+	- PR toolchain/50277
+	- PR pkg/57445
+	[riastradh, ticket #297]
+
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.15
+
+	drm: PR 57537: fix mistake in ww_mutex wait loops.
+	[riastradh, ticket #298]
+
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.16
+
+	drm/linux_ww_mutex: fix ww acquire context ordering.
+	[riastradh, ticket #299]
+
+distrib/sets/lists/debug/mi			1.409
+distrib/sets/lists/tests/mi			1.1280
+libexec/ld.elf_so/Makefile			1.145-1.147
+libexec/ld.elf_so/hash.c			1.1
+libexec/ld.elf_so/hash.h			1.1
+libexec/ld.elf_so/reloc.c			1.118
+libexec/ld.elf_so/rtld.c			1.215
+libexec/ld.elf_so/rtld.h			1.145,1.147
+libexec/ld.elf_so/symbol.c			1.74-1.76
+tests/libexec/ld.elf_so/Makefile		1.21
+tests/libexec/ld.elf_so/t_hash.c		1.1
+
+	ld.elf_so(1): fix sysv hash on LP64 platforms.
+	[riastradh, ticket #300]
 
