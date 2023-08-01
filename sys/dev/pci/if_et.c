@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.35 2021/09/10 14:56:26 jakllsch Exp $	*/
+/*	$NetBSD: if_et.c,v 1.36 2023/08/01 20:46:01 andvar Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.12 2008/07/11 09:29:02 kevlo $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.35 2021/09/10 14:56:26 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.36 2023/08/01 20:46:01 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -1687,7 +1687,7 @@ et_init_txmac(struct et_softc *sc)
 	/* No flow control yet */
 	CSR_WRITE_4(sc, ET_TXMAC_FLOWCTRL, 0);
 
-	/* Enable TX MAC but leave FC(?) diabled */
+	/* Enable TX MAC but leave FC(?) disabled */
 	CSR_WRITE_4(sc, ET_TXMAC_CTRL,
 		    ET_TXMAC_CTRL_ENABLE | ET_TXMAC_CTRL_FC_DISABLE);
 }
