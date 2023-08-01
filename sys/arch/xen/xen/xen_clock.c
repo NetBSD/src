@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.16 2023/08/01 19:36:57 riastradh Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.17 2023/08/01 20:11:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.16 2023/08/01 19:36:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.17 2023/08/01 20:11:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -834,9 +834,7 @@ again:
 		 * Warn if we violate timecounter(9) contract: with a
 		 * k-bit timeocunter (here k = 32), and timecounter
 		 * frequency f (here f = 1 GHz), the maximum period
-		 * between hardclock calls is 2^k / f.  This comes out
-		 * to 2^32 ns, in what is conveneintly already the
-		 * correct unit for the Xen systime clock.
+		 * between hardclock calls is 2^k / f.
 		 */
 		if (delta > xen_timecounter.tc_counter_mask) {
 			printf("WARNING: hardclock skipped %"PRIu64"ns"
@@ -911,6 +909,9 @@ xen_initclocks(void)
 	evcnt_attach_dynamic(&ci->ci_xen_timecounter_backwards_evcnt,
 	    EVCNT_TYPE_INTR, NULL, device_xname(ci->ci_dev),
 	    "timecounter went backwards");
+	evcnt_attach_dynamic(&ci->ci_xen_timecounter_jump_evcnt,
+	    EVCNT_TYPE_INTR, NULL, device_xname(ci->ci_dev),
+	    "hardclock jumped past timecounter max");
 
 	/* Fire up the clocks.  */
 	xen_resumeclocks(ci);
