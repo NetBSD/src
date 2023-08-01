@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdb.c,v 1.12 2017/01/10 21:06:17 christos Exp $	*/
+/*	$NetBSD: ypdb.c,v 1.13 2023/08/01 08:47:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypdb.c,v 1.12 2017/01/10 21:06:17 christos Exp $");
+__RCSID("$NetBSD: ypdb.c,v 1.13 2023/08/01 08:47:25 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -82,11 +82,11 @@ ypdb_open(const char *file)
 		suffix = "";
 	else
 		suffix = YPDB_SUFFIX;
-	if (strlen(file) + strlen(suffix) > (sizeof(path) - 1)) {
+	if ((size_t)snprintf(path, sizeof(path), "%s%s", file, suffix) >
+	    sizeof(path)) {
 		warnx("File name `%s' is too long", file);
-		return (NULL);
+		return NULL;
 	}
-	snprintf(path, sizeof(path), "%s%s", file, suffix);
 	return _ypdb_dbopen(path, O_RDONLY, 0444);
 }
 

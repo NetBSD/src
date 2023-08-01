@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.16 2015/02/24 17:56:20 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.17 2023/08/01 08:47:25 mrg Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -89,7 +89,7 @@
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_query.c,v 1.11 2008/11/14 02:36:51 marka Exp";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.16 2015/02/24 17:56:20 christos Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.17 2023/08/01 08:47:25 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -398,7 +398,7 @@ res_nquerydomain(res_state statp,
 {
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
-	size_t n, d;
+	size_t n;
 
 #ifdef DEBUG
 	if (statp->options & RES_DEBUG)
@@ -416,18 +416,15 @@ res_nquerydomain(res_state statp,
 			return (-1);
 		}
 		if (n && name[--n] == '.') {
-			strncpy(nbuf, name, n);
-			nbuf[n] = '\0';
+			snprintf(nbuf, sizeof(nbuf), "%*s", (int)n, name);
 		} else
 			longname = name;
 	} else {
-		n = strlen(name);
-		d = strlen(domain);
-		if (n + d + 1 >= MAXDNAME) {
+		if ((size_t)snprintf(nbuf, sizeof(nbuf), "%s.%s",
+				name, domain) >= sizeof(nbuf)) {
 			RES_SET_H_ERRNO(statp, NO_RECOVERY);
 			return (-1);
 		}
-		sprintf(nbuf, "%s.%s", name, domain);
 	}
 	return (res_nquery(statp, longname, class, type, answer, anslen));
 }

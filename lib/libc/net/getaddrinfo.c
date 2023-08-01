@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.123 2022/04/19 20:32:15 rillig Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.124 2023/08/01 08:47:25 mrg Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.123 2022/04/19 20:32:15 rillig Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.124 2023/08/01 08:47:25 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -2820,7 +2820,7 @@ res_querydomainN(const char *name, const char *domain,
 {
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
-	size_t n, d;
+	size_t n;
 
 	_DIAGASSERT(name != NULL);
 	/* XXX: target may be NULL??? */
@@ -2841,18 +2841,15 @@ res_querydomainN(const char *name, const char *domain,
 			return -1;
 		}
 		if (n > 0 && name[--n] == '.') {
-			strncpy(nbuf, name, n);
-			nbuf[n] = '\0';
+			snprintf(nbuf, sizeof(nbuf), "%*s", (int)n, name);
 		} else
 			longname = name;
 	} else {
-		n = strlen(name);
-		d = strlen(domain);
-		if (n + 1 + d + 1 > sizeof(nbuf)) {
+		if ((size_t)snprintf(nbuf, sizeof(nbuf), "%s.%s",
+				name, domain) >= sizeof(nbuf)) {
 			h_errno = NO_RECOVERY;
 			return -1;
 		}
-		snprintf(nbuf, sizeof(nbuf), "%s.%s", name, domain);
 	}
 	return res_queryN(longname, target, res);
 }
