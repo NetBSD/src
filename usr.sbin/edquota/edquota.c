@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.53 2021/11/09 09:21:31 nia Exp $ */
+/*      $NetBSD: edquota.c,v 1.54 2023/08/01 08:47:25 mrg Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.53 2021/11/09 09:21:31 nia Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.54 2023/08/01 08:47:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -752,10 +752,10 @@ top:
 		setuid(getuid());
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = _PATH_VI;
-		if (strlen(ed) + strlen(ltmpfile) + 2 >= MAX_TMPSTR) {
+		if ((size_t)snprintf(p, sizeof(p), "%s %s", ed, ltmpfile) >=
+		    sizeof(p)) {
 			errx(1, "%s", "editor or filename too long");
 		}
-		snprintf(p, sizeof(p), "%s %s", ed, ltmpfile);
 		execlp(_PATH_BSHELL, _PATH_BSHELL, "-c", p, NULL);
 		err(1, "%s", ed);
 	default:

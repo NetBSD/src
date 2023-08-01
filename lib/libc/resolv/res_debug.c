@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.16 2021/09/16 20:17:46 andvar Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.17 2023/08/01 08:47:25 mrg Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -97,7 +97,7 @@
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.16 2021/09/16 20:17:46 andvar Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.17 2023/08/01 08:47:25 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1183,9 +1183,13 @@ p_secstodate (u_long secs) {
 #endif
 	mytime->tm_year += 1900;
 	mytime->tm_mon += 1;
-	sprintf(output, "%04d%02d%02d%02d%02d%02d",
-		mytime->tm_year, mytime->tm_mon, mytime->tm_mday,
-		mytime->tm_hour, mytime->tm_min, mytime->tm_sec);
+	if ((size_t)snprintf(output, sizeof p_secstodate_output,
+	   	     "%04d%02d%02d%02d%02d%02d",
+		     mytime->tm_year, mytime->tm_mon, mytime->tm_mday,
+		     mytime->tm_hour, mytime->tm_min, mytime->tm_sec) >
+	            sizeof p_secstodate_output) {
+		output[sizeof(p_secstodate_output) - 1] = 0;
+	}
 	return (output);
 }
 

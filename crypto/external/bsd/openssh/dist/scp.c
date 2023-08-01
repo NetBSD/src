@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.38 2023/07/28 04:40:54 rin Exp $	*/
+/*	$NetBSD: scp.c,v 1.39 2023/08/01 08:47:25 mrg Exp $	*/
 /* $OpenBSD: scp.c,v 1.253 2023/03/03 03:12:24 dtucker Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.38 2023/07/28 04:40:54 rin Exp $");
+__RCSID("$NetBSD: scp.c,v 1.39 2023/08/01 08:47:25 mrg Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -1476,11 +1476,11 @@ rsource(char *name, struct stat *statp)
 			continue;
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 			continue;
-		if (strlen(name) + 1 + strlen(dp->d_name) >= sizeof(path) - 1) {
+		if ((size_t)snprintf(path, sizeof path, "%s/%s",
+		    name, dp->d_name) >= sizeof path) {
 			run_err("%s/%s: name too long", name, dp->d_name);
 			continue;
 		}
-		(void) snprintf(path, sizeof path, "%s/%s", name, dp->d_name);
 		vect[0] = path;
 		source(1, vect);
 	}

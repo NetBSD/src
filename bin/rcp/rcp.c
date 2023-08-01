@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.52 2022/07/18 13:01:59 rin Exp $	*/
+/*	$NetBSD: rcp.c,v 1.53 2023/08/01 08:47:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.52 2022/07/18 13:01:59 rin Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.53 2023/08/01 08:47:24 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -466,11 +466,11 @@ rsource(char *name, struct stat *statp)
 			continue;
 		if (!strcmp(dp->d_name, dot) || !strcmp(dp->d_name, ".."))
 			continue;
-		if (strlen(name) + 1 + strlen(dp->d_name) >= MAXPATHLEN - 1) {
+		if (snprintf(path, sizeof(path), "%s/%s", name, dp->d_name) >=
+		    sizeof(path)) {
 			run_err("%s/%s: name too long", name, dp->d_name);
 			continue;
 		}
-		(void)snprintf(path, sizeof(path), "%s/%s", name, dp->d_name);
 		vect[0] = path;
 		source(1, vect);
 	}
