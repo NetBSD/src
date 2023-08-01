@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.53 2021/08/09 20:49:08 andvar Exp $	*/
+/*	$NetBSD: string.h,v 1.54 2023/08/01 17:51:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -106,6 +106,7 @@ char	*strsep(char **, const char *);
 char	*stresep(char **, const char *, int);
 char	*strnstr(const char *, const char *, size_t);
 void	*memrchr(const void *, int, size_t);
+void	*mempcpy(void * __restrict, const void * __restrict, size_t);
 void	*explicit_memset(void *, int, size_t);
 int	consttime_memequal(const void *, const void *, size_t);
 __END_DECLS
