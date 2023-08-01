@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.47 2021/06/07 17:11:17 christos Exp $
+# $NetBSD: ad.aarch64,v 1.48 2023/08/01 06:35:55 mrg Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -163,6 +163,11 @@
 ./usr/include/gcc-10/arm_neon.h			comp-c-include		gcc=10
 ./usr/include/gcc-10/arm_sve.h			comp-c-include		gcc=10
 ./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
+./usr/include/gcc-12/arm_acle.h			comp-c-include		gcc=12
+./usr/include/gcc-12/arm_bf16.h			comp-c-include		gcc=12
+./usr/include/gcc-12/arm_fp16.h			comp-c-include		gcc=12
+./usr/include/gcc-12/arm_neon.h			comp-c-include		gcc=12
+./usr/include/gcc-12/arm_sve.h			comp-c-include		gcc=12
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/eabi/libarm.a				comp-c-lib		compat,llvm
 ./usr/lib/eabi/libarm.so			base-sys-shlib		compat,pic,llvm

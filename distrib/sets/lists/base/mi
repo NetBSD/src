@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1324 2023/05/27 02:28:46 riastradh Exp $
+# $NetBSD: mi,v 1.1325 2023/08/01 06:35:55 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1084,6 +1084,8 @@
 ./usr/include/g++/tr2				base-cxx-usr
 ./usr/include/gcc-10				base-c-usr
 ./usr/include/gcc-10/sanitizer			base-c-usr
+./usr/include/gcc-12				base-c-usr
+./usr/include/gcc-12/sanitizer			base-c-usr
 ./usr/include/gcc-4.1				base-obsolete		obsolete
 ./usr/include/gcc-4.5				base-obsolete		obsolete
 ./usr/include/gcc-4.8				base-obsolete		obsolete
@@ -1095,8 +1097,8 @@
 ./usr/include/gcc-7/sanitizer			base-obsolete		obsolete
 ./usr/include/gcc-8				base-obsolete		obsolete
 ./usr/include/gcc-8/sanitizer			base-obsolete		obsolete
-./usr/include/gcc-9				base-c-usr
-./usr/include/gcc-9/sanitizer			base-c-usr
+./usr/include/gcc-9				base-obsolete		obsolete
+./usr/include/gcc-9/sanitizer			base-obsolete		obsolete
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
 ./usr/include/isofs				base-c-usr

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1280 2023/07/30 09:22:02 riastradh Exp $
+# $NetBSD: mi,v 1.1281 2023/08/01 06:35:56 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3061,8 +3061,8 @@
 ./usr/tests/lib/libc/misc				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/misc/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/misc/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
-./usr/tests/lib/libc/misc/t_ubsan			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libc/misc/t_ubsanxx			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/misc/t_ubsan			tests-lib-tests		compattestfile,atf,gcc=10
+./usr/tests/lib/libc/misc/t_ubsanxx			tests-lib-tests		compattestfile,atf,gcc=10
 ./usr/tests/lib/libc/net				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/net/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/net/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
