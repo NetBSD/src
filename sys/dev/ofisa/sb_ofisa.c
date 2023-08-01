@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.18 2016/12/09 17:18:35 christos Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.18.8.1 2023/08/01 15:01:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.18 2016/12/09 17:18:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.18.8.1 2023/08/01 15:01:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,6 +174,9 @@ sb_ofisa_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": sbmatch failed\n");
 		return;
 	}
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	sc->sc_ih = isa_intr_establish(aa->ic, intr.irq, IST_EDGE, IPL_AUDIO,
 	    sbdsp_intr, sc);
