@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.23 2010/12/08 21:56:42 jakllsch Exp $	*/
+/*	$NetBSD: mbr.S,v 1.24 2023/08/01 21:26:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -174,7 +174,7 @@ mbr:
  *
  * Register use:
  * %ax			temp
- * %bx	nametab[]	boot seletor menu
+ * %bx	nametab[]	boot selector menu
  * %ecx			base of 'extended' partition
  * %edx			next extended partition
  * %si			message ptr (etc)

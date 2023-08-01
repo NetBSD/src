@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.27 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: lca_dma.c,v 1.28 2023/08/01 21:26:27 andvar Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.27 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.28 2023/08/01 21:26:27 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ lca_dma_init(struct lca_config *lcp)
 	REGVAL64(LCA_IOC_W_T_BASE0) = lcp->lc_sgmap.aps_ptpa;
 	alpha_mb();
 
-	/* Enble the scatter/gather TLB. */
+	/* Enable the scatter/gather TLB. */
 	REGVAL64(LCA_IOC_TB_ENA) = IOC_TB_ENA_TEN;
 	alpha_mb();
 

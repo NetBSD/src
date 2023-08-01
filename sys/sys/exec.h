@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.161 2021/11/26 08:06:12 ryo Exp $	*/
+/*	$NetBSD: exec.h,v 1.162 2023/08/01 21:26:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -215,7 +215,7 @@ struct exec_package {
 	void	*ep_emul_arg;		/* emulation argument */
 	const struct	execsw *ep_esch;/* execsw entry */
 	struct vnode *ep_emul_root;     /* base of emulation filesystem */
-	struct vnode *ep_interp;        /* vnode of (elf) interpeter */
+	struct vnode *ep_interp;        /* vnode of (elf) interpreter */
 	uint32_t ep_pax_flags;		/* pax flags */
 	void	(*ep_emul_arg_free)(void *);
 					/* free ep_emul_arg */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.42 2022/02/23 21:54:41 andvar Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.43 2023/08/01 21:26:28 andvar Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.42 2022/02/23 21:54:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.43 2023/08/01 21:26:28 andvar Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -1008,7 +1008,7 @@ bus_reset:
 				 * In the non-paging case, the sequencer will
 				 * never re-reference the in-core SCB.
 				 * To make sure we are notified during
-				 * reslection, set the MK_MESSAGE flag in
+				 * reselection, set the MK_MESSAGE flag in
 				 * the card's copy of the SCB.
 				 */
 				if ((ahc->flags & AHC_PAGESCBS) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.111 2022/08/04 21:11:52 andvar Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.112 2023/08/01 21:26:28 andvar Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.111 2022/08/04 21:11:52 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.112 2023/08/01 21:26:28 andvar Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -5586,7 +5586,7 @@ bnx_iff(struct bnx_softc *sc)
 
 	/*
 	 * ASF/IPMI/UMP firmware requires that VLAN tag stripping
-	 * be enbled.
+	 * be enabled.
 	 */
 	if (!(sc->bnx_flags & BNX_MFW_ENABLE_FLAG))
 		rx_mode |= BNX_EMAC_RX_MODE_KEEP_VLAN_TAG;
