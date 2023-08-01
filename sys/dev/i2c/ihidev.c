@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.28 2022/02/12 03:24:35 riastradh Exp $ */
+/* $NetBSD: ihidev.c,v 1.29 2023/08/01 19:36:45 riastradh Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.28 2022/02/12 03:24:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.29 2023/08/01 19:36:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ ihidev_match(device_t parent, cfdata_t match, void *aux)
 	int match_result;
 
 	if (iic_use_direct_match(ia, match, compat_data, &match_result))
-		return I2C_MATCH_DIRECT_COMPATIBLE;
+		return match_result;
 
 	return 0;
 }
