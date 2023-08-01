@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cdb.c,v 1.2 2017/01/10 22:24:29 christos Exp $	*/
+/*	$NetBSD: t_cdb.c,v 1.3 2023/08/01 07:57:17 mrg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cdb.c,v 1.2 2017/01/10 22:24:29 christos Exp $");
+__RCSID("$NetBSD: t_cdb.c,v 1.3 2023/08/01 07:57:17 mrg Exp $");
 
 #include <atf-c.h>
 
@@ -100,7 +100,7 @@ write_database(size_t len)
 		ATF_REQUIRE(cdbw_put(db, &keys[i], sizeof(keys[i]),
 		    buf, sizeof(buf)) == 0);
 	}
-	ATF_REQUIRE(cdbw_output(db, fd, "test database", arc4random) == 0);
+	ATF_REQUIRE(cdbw_output(db, fd, "test database\0\0", arc4random) == 0);
 	cdbw_close(db);
 	ATF_REQUIRE(close(fd) == 0);
 }

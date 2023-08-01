@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.50 2022/06/07 16:27:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.51 2023/08/01 07:57:17 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -1203,7 +1203,7 @@ _npf_table_build_const(nl_table_t *tl)
 	}
 	unlink(sfn);
 
-	if (cdbw_output(cdbw, fd, "npf-table-cdb", NULL) == -1) {
+	if (cdbw_output(cdbw, fd, "npf-table-cdb\0\0", NULL) == -1) {
 		error = errno;
 		goto out;
 	}
