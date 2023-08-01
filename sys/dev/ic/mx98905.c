@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.16 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.17 2023/08/01 20:52:43 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,13 +53,13 @@
  * and that chipset has a bug in it, in that it the MSB remote DMA
  * register does not work.  There is a workaround for this which
  * should be around soon.  In fact, I think only the buffer ram test
- * ever transfers more than 256 bytes across the DMA channel, so diabling
+ * ever transfers more than 256 bytes across the DMA channel, so disabling
  * it will make the mx stuff work.
  */
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.16 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.17 2023/08/01 20:52:43 andvar Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
