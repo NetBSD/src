@@ -1,5 +1,6 @@
+# $NetBSD: INSTALL,v 1.2 2023/08/01 21:30:14 gutteridge Exp $
 #
-#
+# riscv INSTALL kernel.
 #
 include "arch/riscv/conf/GENERIC"
 include "arch/riscv/conf/INSTALL.config"
