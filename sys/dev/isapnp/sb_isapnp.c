@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.53 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.53.28.1 2023/08/01 14:57:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.53 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.53.28.1 2023/08/01 14:57:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,9 @@ sb_isapnp_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "sbmatch failed\n");
 		return;
 	}
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_AUDIO, sbdsp_intr, sc);
