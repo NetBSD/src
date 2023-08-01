@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.409 2023/07/30 09:22:02 riastradh Exp $
+# $NetBSD: mi,v 1.410 2023/08/01 06:35:55 mrg Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -26,7 +26,7 @@
 ./usr/lib/i18n/libmapper_zone_g.a		comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libamu_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libarchive_g.a			comp-c-debuglib		debuglib,compatfile
-./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc
+./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc=10
 ./usr/lib/libasn1_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libatf-c++_g.a			comp-c-debuglib		debuglib,compatfile,atf
 ./usr/lib/libatf-c_g.a				comp-c-debuglib		debuglib,compatfile,atf
@@ -100,7 +100,7 @@
 ./usr/lib/liblber_g.a				comp-c-debuglib		debuglib,ldap,compatfile
 ./usr/lib/libldap_g.a				comp-c-debuglib		debuglib,ldap,compatfile
 ./usr/lib/libldap_r_g.a				comp-c-debuglib		debuglib,ldap,compatfile
-./usr/lib/liblsan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc
+./usr/lib/liblsan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc=10
 ./usr/lib/liblua_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/liblwres_g.a				comp-obsolete		obsolete
 ./usr/lib/liblzf_g.a				comp-c-debuglib		debuglib,compatfile
@@ -269,7 +269,7 @@
 ./usr/lib/libtsan_g.a				comp-c-debuglib		debuglib,arch64,cxx,gcc=9,machine=amd64
 ./usr/lib/libtsan_g.a				comp-c-debuglib		debuglib,arch64,cxx,gcc=10,machine=amd64
 ./usr/lib/libtspi_g.a				comp-c-debuglib		debuglib,compatfile,tpm
-./usr/lib/libubsan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc
+./usr/lib/libubsan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc=10
 ./usr/lib/libukfs_g.a				comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/libumem_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libunbound_g.a			comp-c-debuglib		debuglib,compatfile,unbound
@@ -666,7 +666,7 @@
 ./usr/libdata/debug/usr/bin/lpq.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/bin/lpr.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/bin/lprm.debug		comp-lpr-debug		debug
-./usr/libdata/debug/usr/bin/lto-dump.debug	comp-c-debug		gcccmds,gcc=10,debug
+./usr/libdata/debug/usr/bin/lto-dump.debug	comp-c-debug		gcccmds
 ./usr/libdata/debug/usr/bin/lua.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/luac.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/lzf.debug		comp-util-debug		debug
@@ -966,7 +966,7 @@
 ./usr/libdata/debug/usr/libexec/bozohttpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/cc1.debug	comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1obj.debug	comp-objc-debug		gcccmds,debug
-./usr/libdata/debug/usr/libexec/cc1objplus.debug	comp-objc-debug		gcccmds,gcc=10,debug
+./usr/libdata/debug/usr/libexec/cc1objplus.debug	comp-objc-debug		gcccmds,gcc,debug
 ./usr/libdata/debug/usr/libexec/cc1plus.debug	comp-cxx-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/ccom.debug	comp-c-debug		pcc,debug
 ./usr/libdata/debug/usr/libexec/ching/castching.debug	comp-games-debug	debug
@@ -2074,8 +2074,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/membar/t_dekker.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/membar/t_seqlock.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/membar/t_spinlock.debug		tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsan.debug		tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsanxx.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsan.debug		tests-lib-debug		debug,atf,compattestfile,gcc=10
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsanxx.debug		tests-lib-debug		debug,atf,compattestfile,gcc=10
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_dns_server.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_hostent.debug		tests-lib-debug		debug,atf,compattestfile

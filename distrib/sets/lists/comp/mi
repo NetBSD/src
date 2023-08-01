@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2439 2023/07/31 17:38:28 christos Exp $
+#	$NetBSD: mi,v 1.2440 2023/08/01 06:35:55 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -55,7 +55,7 @@
 ./usr/bin/llvm-symbolizer			comp-c-bin		llvm
 ./usr/bin/llvm-tblgen				comp-c-bin		llvm
 ./usr/bin/lorder				comp-util-bin
-./usr/bin/lto-dump				comp-c-bin		gcccmds,gcc=10
+./usr/bin/lto-dump				comp-c-bin		gcccmds
 ./usr/bin/luac					comp-util-bin
 ./usr/bin/menuc					comp-c-bin
 ./usr/bin/mkstr					comp-obsolete		obsolete
@@ -1083,12 +1083,13 @@
 ./usr/include/g++/backward/tempbuf.h		comp-obsolete		obsolete
 ./usr/include/g++/backward/tree.h		comp-obsolete		obsolete
 ./usr/include/g++/backward/vector.h		comp-obsolete		obsolete
-./usr/include/g++/bit				comp-cxx-include	gcc=10,cxx,libstdcxx
-./usr/include/g++/bit				comp-cxx-include	gcc=9,cxx,libstdcxx
+./usr/include/g++/barrier			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/bit				comp-cxx-include	cxx,libstdcxx
 ./usr/include/g++/bitdo1.h			comp-obsolete		obsolete
 ./usr/include/g++/bitdo2.h			comp-obsolete		obsolete
 ./usr/include/g++/bitprims.h			comp-obsolete		obsolete
 ./usr/include/g++/bits/algorithmfwd.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/align.h			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/alloc_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/allocated_ptr.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/allocator.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1097,6 +1098,8 @@
 ./usr/include/g++/bits/atomic_base.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/atomic_futex.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/atomic_lockfree_defines.h	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/atomic_timed_wait.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/bits/atomic_wait.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/atomic_word.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/atomicfwd_c.h		comp-obsolete	obsolete
 ./usr/include/g++/bits/atomicfwd_cxx.h		comp-obsolete	obsolete
@@ -1114,12 +1117,14 @@
 ./usr/include/g++/bits/c++io.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/c++locale.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/char_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/charconv.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/bits/charconv.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/chrono.h			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/cmath.tcc		comp-obsolete	obsolete
 ./usr/include/g++/bits/codecvt.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/codecvt_specializations.h	comp-obsolete		obsolete
 ./usr/include/g++/bits/concept_check.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/concurrence.h		comp-obsolete		gcc,obsolete
+./usr/include/g++/bits/cow_string.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/cpp_type_traits.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/cpu_defines.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/ctype_base.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1160,7 +1165,7 @@
 ./usr/include/g++/bits/invoke.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/ios_base.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/istream.tcc		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/iterator_concepts.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/bits/iterator_concepts.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/list.tcc			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/locale_classes.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/locale_classes.tcc	comp-cxx-include	gcc,cxx,libstdcxx
@@ -1171,10 +1176,14 @@
 ./usr/include/g++/bits/locale_facets_nonio.tcc	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/localefwd.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/mask_array.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/max_size_type.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/memoryfwd.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/messages_members.h	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/mofunc_impl.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/move.h			comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/move_only_function.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/nested_exception.h	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/new_allocator.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/node_handle.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/opt_random.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/os_defines.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1190,9 +1199,12 @@
 ./usr/include/g++/bits/random.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/range_access.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/range_cmp.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
-./usr/include/g++/bits/ranges_algo.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
-./usr/include/g++/bits/ranges_algobase.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
-./usr/include/g++/bits/ranges_uninitialized.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/bits/ranges_cmp.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/bits/ranges_algo.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/ranges_algobase.h	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/ranges_base.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/bits/ranges_uninitialized.h	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/ranges_util.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/refwrap.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/regex.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/regex.tcc		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1211,6 +1223,7 @@
 ./usr/include/g++/bits/regex_nfa.tcc		comp-cxx-include	obsolete
 ./usr/include/g++/bits/regex_scanner.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/regex_scanner.tcc	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/semaphore_base.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/shared_ptr.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/shared_ptr_atomic.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/shared_ptr_base.h	comp-cxx-include	gcc,cxx,libstdcxx
@@ -1220,6 +1233,7 @@
 ./usr/include/g++/bits/std_abs.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/std_function.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/std_mutex.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/std_thread.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/stdc++.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/stdtr1c++.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/stl_algo.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1255,6 +1269,7 @@
 ./usr/include/g++/bits/streambuf_iterator.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/string_view.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/stringfwd.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/this_thread_sleep.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/time_members.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/type_traits.h		comp-obsolete		obsolete
 ./usr/include/g++/bits/uniform_int_dist.h	comp-cxx-include	gcc,cxx,libstdcxx
@@ -1263,6 +1278,8 @@
 ./usr/include/g++/bits/unordered_map.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/unordered_set.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/uses_allocator.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/uses_allocator_args.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/bits/utility.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/bits/valarray_after.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/valarray_array.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/valarray_array.tcc	comp-cxx-include	gcc,cxx,libstdcxx
@@ -1290,12 +1307,15 @@
 ./usr/include/g++/cmath				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/codecvt			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/compare			comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/compare			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/compare.h			comp-obsolete		obsolete
 ./usr/include/g++/complex			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/complex.h			comp-obsolete		obsolete
 ./usr/include/g++/concepts			comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/concepts			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/condition_variable		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/coroutine			comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/coroutine			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/csetjmp			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/csignal			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/cstdalign			comp-cxx-include	gcc,cxx,libstdcxx
@@ -1313,7 +1333,7 @@
 ./usr/include/g++/cwctype			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/cxxabi-forced.h		comp-obsolete 		obsolete
 ./usr/include/g++/cxxabi.h			comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/debug/array			comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/debug/array			comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
 ./usr/include/g++/debug/assertions.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/bitset			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/debug.h			comp-cxx-include	gcc,cxx,libstdcxx
@@ -1362,6 +1382,67 @@
 ./usr/include/g++/exception_defines.h		comp-obsolete		obsolete
 ./usr/include/g++/exception_ptr.h		comp-obsolete		obsolete
 ./usr/include/g++/execution			comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/expected			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/algorithm	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/any		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/array		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/fs_dir.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/fs_fwd.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/fs_ops.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/fs_path.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/lfts_config.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/net.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/numeric_traits.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/shared_ptr.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/simd.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/simd_builtin.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/simd_converter.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/simd_detail.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/simd_fixed_size.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/simd_math.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/simd_neon.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/simd_ppc.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/simd_scalar.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/simd_x86.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/simd_x86_conversions.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/bits/string_view.tcc	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/buffer		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/chrono		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/deque		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/executor		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/filesystem	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/forward_list	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/functional	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/internet		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/io_context	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/iterator		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/list		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/map		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/memory		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/memory_resource	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/net		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/netfwd		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/numeric		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/optional		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/propagate_const	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/random		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/ratio		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/regex		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/set		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/simd		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/socket		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/source_location	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/string		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/string_view	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/system_error	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/timer		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/tuple		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/type_traits	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/unordered_map	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/unordered_set	comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/utility		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/experimental/vector		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/ext/opt_random.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/experimental/algorithm	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
 ./usr/include/g++/experimental/any		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
 ./usr/include/g++/experimental/array		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
@@ -1871,6 +1952,7 @@
 ./usr/include/g++/istream.h			comp-obsolete		obsolete
 ./usr/include/g++/iterator			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/iterator.h			comp-obsolete		obsolete
+./usr/include/g++/latch				comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/lbvector.h			comp-obsolete		obsolete
 ./usr/include/g++/ldeque.h			comp-obsolete		obsolete
 ./usr/include/g++/libc.h			comp-obsolete		obsolete
@@ -1903,6 +1985,7 @@
 ./usr/include/g++/nmultset.h			comp-obsolete		obsolete
 ./usr/include/g++/nset.h			comp-obsolete		obsolete
 ./usr/include/g++/numbers			comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/numbers			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/numeric			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/optional			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/osfcn.h			comp-obsolete		obsolete
@@ -2034,6 +2117,7 @@
 ./usr/include/g++/pstl/numeric_impl.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/pstl/parallel_backend.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/pstl/parallel_backend_serial.h comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/pstl/parallel_backend_serial.h comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/pstl/parallel_backend_tbb.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/pstl/parallel_backend_utils.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/pstl/parallel_impl.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -2046,6 +2130,7 @@
 ./usr/include/g++/random			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/random.cc			comp-obsolete		obsolete
 ./usr/include/g++/ranges			comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/ranges			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/ratio				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/regex				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/regex.h			comp-obsolete		obsolete
@@ -2054,15 +2139,20 @@
 ./usr/include/g++/ropeimpl.h			comp-obsolete		obsolete
 ./usr/include/g++/rx.h				comp-obsolete		obsolete
 ./usr/include/g++/scoped_allocator		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/semaphore			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/set				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/set.h				comp-obsolete		obsolete
 ./usr/include/g++/shared_mutex		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/slist				comp-obsolete		obsolete
 ./usr/include/g++/slist.h			comp-obsolete		obsolete
+./usr/include/g++/source_location		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/span				comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/span				comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
+./usr/include/g++/spanstream			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/sstream			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/stack				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/stack.h			comp-obsolete		obsolete
+./usr/include/g++/stacktrace			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/std				comp-obsolete		obsolete
 ./usr/include/g++/std.h				comp-obsolete		obsolete
 ./usr/include/g++/std/bastring.cc		comp-obsolete		obsolete
@@ -2149,6 +2239,7 @@
 ./usr/include/g++/stl_uninitialized.h		comp-obsolete		obsolete
 ./usr/include/g++/stl_vector.h			comp-obsolete		obsolete
 ./usr/include/g++/stop_token			comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/stop_token			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/strclass.h			comp-obsolete		obsolete
 ./usr/include/g++/stream.h			comp-obsolete		obsolete
 ./usr/include/g++/streambuf			comp-cxx-include	gcc,cxx,libstdcxx
@@ -2159,6 +2250,7 @@
 ./usr/include/g++/strstream			comp-obsolete		obsolete
 ./usr/include/g++/strstream.h			comp-obsolete		obsolete
 ./usr/include/g++/swap.h			comp-obsolete		obsolete
+./usr/include/g++/syncstream			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
 ./usr/include/g++/sysent.h			comp-obsolete		obsolete
 ./usr/include/g++/system_error			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tempbuf.cc			comp-obsolete		obsolete
@@ -2286,6 +2378,18 @@
 ./usr/include/gcc-10/sanitizer/tsan_interface.h		comp-gcc-include	gcc=10
 ./usr/include/gcc-10/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=10
 ./usr/include/gcc-10/stdatomic.h			comp-gcc-include	gcc=10
+./usr/include/gcc-12/omp.h				comp-gcc-include	gcc=12
+./usr/include/gcc-12/openacc.h				comp-gcc-include	gcc=12
+./usr/include/gcc-12/sanitizer				comp-gcc-include	gcc=12
+./usr/include/gcc-12/sanitizer/allocator_interface.h	comp-gcc-include	gcc=12
+./usr/include/gcc-12/sanitizer/asan_interface.h		comp-gcc-include	gcc=12
+./usr/include/gcc-12/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=12
+./usr/include/gcc-12/sanitizer/lsan_interface.h		comp-gcc-include	gcc=12
+./usr/include/gcc-12/sanitizer/netbsd_syscall_hooks.h	comp-gcc-include	gcc=12
+./usr/include/gcc-12/sanitizer/tsan_interface.h		comp-gcc-include	gcc=12
+./usr/include/gcc-12/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=12
+./usr/include/gcc-12/stdatomic.h			comp-gcc-include	gcc=12
+./usr/include/gcc-12/tgmath.h				comp-gcc-include	gcc=12
 ./usr/include/gcc-4.5/mf-runtime.h		comp-obsolete		obsolete
 ./usr/include/gcc-4.5/omp.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/mf-runtime.h		comp-obsolete		obsolete
@@ -3732,8 +3836,8 @@
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib		compatfile
 ./usr/lib/libarchive_p.a			comp-c-proflib		compatfile,profile
-./usr/lib/libasan.a				comp-c-lib		compatfile,cxx,gcc
-./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc
+./usr/lib/libasan.a				comp-c-lib		compatfile,cxx,gcc=10
+./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc=10
 ./usr/lib/libasn1.a				comp-krb5-lib		compatfile,kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	compatfile,kerberos,profile
 ./usr/lib/libatf-c++.a				comp-atf-lib		compatfile,atf
@@ -3893,8 +3997,8 @@
 ./usr/lib/libldap_p.a				comp-ldap-proflib	compatfile,ldap,profile
 ./usr/lib/libldap_r.a				comp-ldap-lib		compatfile,ldap
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	compatfile,ldap,profile
-./usr/lib/liblsan.a				comp-c-lib		compatfile,cxx,gcc
-./usr/lib/liblsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc
+./usr/lib/liblsan.a				comp-c-lib		compatfile,cxx,gcc=10
+./usr/lib/liblsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc=10
 ./usr/lib/liblua.a				comp-c-lib		compatfile
 ./usr/lib/liblua_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/liblutok.a				comp-c-lib		compatfile,kyua
@@ -4243,8 +4347,8 @@
 ./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcc=9,machine=amd64
 ./usr/lib/libtspi.a				comp-c-lib		compatfile,tpm
 ./usr/lib/libtspi_p.a				comp-c-proflib		compatfile,tpm,profile
-./usr/lib/libubsan.a				comp-c-lib		compatfile,cxx,gcc
-./usr/lib/libubsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc
+./usr/lib/libubsan.a				comp-c-lib		compatfile,cxx,gcc=10
+./usr/lib/libubsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc=10
 ./usr/lib/libukfs.a				comp-c-lib		compatfile,rump
 ./usr/lib/libukfs_p.a				comp-c-proflib		compatfile,rump,profile
 ./usr/lib/libumem.a				comp-zfs-lib		compatfile,zfs
@@ -4423,7 +4527,7 @@
 ./usr/libdata/lint/strict-bool/stdbool.h	comp-c-bin
 ./usr/libexec/cc1				comp-c-bin		gcccmds
 ./usr/libexec/cc1obj				comp-objc-bin		gcccmds
-./usr/libexec/cc1objplus			comp-objc-bin		gcccmds,gcc=10
+./usr/libexec/cc1objplus			comp-objc-bin		gcccmds
 ./usr/libexec/cc1plus				comp-cxx-bin		gcccmds
 ./usr/libexec/ccom				comp-c-bin		pcc
 ./usr/libexec/collect2				comp-obsolete		obsolete
@@ -4613,7 +4717,7 @@
 ./usr/share/man/cat1/lexdoc.0			comp-obsolete		obsolete
 ./usr/share/man/cat1/lint.0			comp-c-catman		.cat
 ./usr/share/man/cat1/lorder.0			comp-util-catman	.cat
-./usr/share/man/cat1/lto-dump.0			comp-c-catman		gcccmds,.cat,gcc=10
+./usr/share/man/cat1/lto-dump.0			comp-c-catman		gcccmds,.cat
 ./usr/share/man/cat1/luac.0			comp-util-catman	.cat
 ./usr/share/man/cat1/menuc.0			comp-c-catman		.cat
 ./usr/share/man/cat1/mkstr.0			comp-obsolete		obsolete
@@ -13123,7 +13227,7 @@
 ./usr/share/man/html1/lex.html			comp-c-htmlman		html
 ./usr/share/man/html1/lint.html			comp-c-htmlman		html
 ./usr/share/man/html1/lorder.html		comp-util-htmlman	html
-./usr/share/man/html1/lto-dump.html		comp-c-htmlman		gcccmds,html,gcc=10
+./usr/share/man/html1/lto-dump.html		comp-c-htmlman		gcccmds,html
 ./usr/share/man/html1/luac.html			comp-util-htmlman	html
 ./usr/share/man/html1/menuc.html		comp-c-htmlman		html
 ./usr/share/man/html1/mkstr.html		comp-obsolete		obsolete
@@ -21433,7 +21537,7 @@
 ./usr/share/man/man1/lex.1			comp-c-man		.man
 ./usr/share/man/man1/lint.1			comp-c-man		.man
 ./usr/share/man/man1/lorder.1			comp-util-man		.man
-./usr/share/man/man1/lto-dump.1			comp-c-man		gcccmds,.man,gcc=10
+./usr/share/man/man1/lto-dump.1			comp-c-man		gcccmds,.man
 ./usr/share/man/man1/luac.1			comp-util-man		.man
 ./usr/share/man/man1/menuc.1			comp-c-man		.man
 ./usr/share/man/man1/mkstr.1			comp-obsolete		obsolete
