@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_intel.c,v 1.11 2022/03/19 13:51:01 hannken Exp $	*/
+/*	$NetBSD: ata_raid_intel.c,v 1.12 2023/08/01 07:58:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.11 2022/03/19 13:51:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.12 2023/08/01 07:58:41 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -262,8 +262,7 @@ findvol:
 	    aai->aai_capacity / (aai->aai_heads * aai->aai_sectors);
 	aai->aai_offset = map->offset;
 	aai->aai_reserved = 3;
-	if (map->name)
-		strlcpy(aai->aai_name, map->name, sizeof(aai->aai_name));
+	strlcpy(aai->aai_name, map->name, sizeof(aai->aai_name));
 
 	/* Fill in disk info */
 	diskidx = aai->aai_curdisk++;
