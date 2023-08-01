@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.7 2022/12/05 07:26:25 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.7.2.1 2023/08/01 16:34:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.7 2022/12/05 07:26:25 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.7.2.1 2023/08/01 16:34:59 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -168,7 +168,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			Elf_Addr old = *where;
 			Elf_Addr val = old;
 
-			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_done &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			val = (Elf_Addr)def->st_value - TLS_DTV_OFFSET;
