@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.5 2023/07/16 07:30:54 skrll Exp $
+#	$NetBSD: GENERIC.common,v 1.6 2023/08/01 22:06:23 rjs Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -57,7 +57,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 
 # Compatibility options
-#include 	"conf/compat_netbsd90.config"
+include 	"conf/compat_netbsd100.config"
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
