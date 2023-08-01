@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.26 2023/04/29 10:07:05 riastradh Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.27 2023/08/01 16:33:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2019, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct vcache_key {
  *	l	vi_nc_listlock
  *	m	mnt_vnodelock
  *	n	vi_nc_lock
- *	n,l	vi_nc_lock + vi_nc_listlock to modify
+ *	n,l	both vi_nc_lock + vi_nc_listlock to modify, either to read
  *	s	syncer_data_lock
  */
 struct vnode_impl {
