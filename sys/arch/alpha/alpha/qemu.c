@@ -1,4 +1,4 @@
-/* $NetBSD: qemu.c,v 1.5 2020/10/11 18:39:48 thorpej Exp $ */
+/* $NetBSD: qemu.c,v 1.6 2023/08/01 20:09:12 andvar Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: qemu.c,v 1.6 2023/08/01 20:09:12 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

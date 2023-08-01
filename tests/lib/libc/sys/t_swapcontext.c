@@ -1,4 +1,4 @@
-/* $NetBSD: t_swapcontext.c,v 1.3 2013/05/05 10:28:11 skrll Exp $ */
+/* $NetBSD: t_swapcontext.c,v 1.4 2023/08/01 20:09:12 andvar Exp $ */
 
 /*
  * Copyright (c) 2012 Emmanuel Dreyfus. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: t_swapcontext.c,v 1.4 2023/08/01 20:09:12 andvar Exp $");
 
 #include <ucontext.h>
 #include <stdio.h>

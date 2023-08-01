@@ -1,4 +1,4 @@
-/*	$NetBSD*/
+/*	$NetBSD: crtbegin.h,v 1.2 2023/08/01 20:09:12 andvar Exp $*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
