@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.144.2.1 2023/08/01 16:34:56 martin Exp $	 */
+/*	$NetBSD: rtld.h,v 1.144.2.2 2023/08/01 17:03:53 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -442,8 +442,6 @@ void _rtld_call_ifunc(Obj_Entry *, sigset_t *, u_int);
 Obj_Entry *_rtld_load_library(const char *, const Obj_Entry *, int);
 
 /* symbol.c */
-unsigned long _rtld_sysv_hash(const char *);
-unsigned long _rtld_gnu_hash(const char *);
 const Elf_Sym *_rtld_symlook_obj(const char *, Elf_Hash *,
     const Obj_Entry *, u_int, const Ver_Entry *);
 const Elf_Sym *_rtld_find_symdef(unsigned long, const Obj_Entry *,
