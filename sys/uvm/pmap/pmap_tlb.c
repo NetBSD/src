@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.59 2023/06/12 06:47:17 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.60 2023/08/01 08:17:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.59 2023/06/12 06:47:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.60 2023/08/01 08:17:26 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -568,7 +568,7 @@ pmap_tlb_shootdown_process(void)
 		struct pmap_asid_info * const pai = PMAP_PAI(ti->ti_victim, ti);
 		KASSERT(ti->ti_victim != pmap_kernel());
 		if (pmap_tlb_intersecting_onproc_p(ti->ti_victim, ti)) {
-			UVMHIST_LOG(maphist, "pmap_tlb_intersecting_onproc_p", 0, 0, 0, 0);
+			UVMHIST_LOG(maphist, "... onproc asid %jd", pai->pai_asid, 0, 0, 0);
 			/*
 			 * The victim is an active pmap so we will just
 			 * invalidate its TLB entries.
@@ -578,7 +578,7 @@ pmap_tlb_shootdown_process(void)
 			tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
 			pmap_tlb_asid_check();
 		} else if (pai->pai_asid) {
-			UVMHIST_LOG(maphist, "asid %jd", pai->pai_asid, 0, 0, 0);
+			UVMHIST_LOG(maphist, "... not active asid %jd", pai->pai_asid, 0, 0, 0);
 			/*
 			 * The victim is no longer an active pmap for this TLB.
 			 * So simply clear its ASID and when pmap_activate is
