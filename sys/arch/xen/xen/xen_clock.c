@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.15 2023/07/28 10:39:14 riastradh Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.16 2023/08/01 19:36:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.15 2023/07/28 10:39:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.16 2023/08/01 19:36:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -829,6 +829,24 @@ again:
 	if (__predict_false(delta >= 2*ns_per_tick)) {
 		SDT_PROBE3(sdt, xen, hardclock, jump,
 		    last, now, delta/ns_per_tick);
+
+		/*
+		 * Warn if we violate timecounter(9) contract: with a
+		 * k-bit timeocunter (here k = 32), and timecounter
+		 * frequency f (here f = 1 GHz), the maximum period
+		 * between hardclock calls is 2^k / f.  This comes out
+		 * to 2^32 ns, in what is conveneintly already the
+		 * correct unit for the Xen systime clock.
+		 */
+		if (delta > xen_timecounter.tc_counter_mask) {
+			printf("WARNING: hardclock skipped %"PRIu64"ns"
+			    " (%"PRIu64" -> %"PRIu64"),"
+			    " exceeding maximum of %"PRIu32"ns"
+			    " for timecounter(9)\n",
+			    last, now, delta,
+			    xen_timecounter.tc_counter_mask);
+			ci->ci_xen_timecounter_jump_evcnt.ev_count++;
+		}
 	}
 	while (delta >= ns_per_tick) {
 		ci->ci_xen_hardclock_systime_ns += ns_per_tick;
