@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.15 2021/05/02 12:50:46 rillig Exp $	*/
+/*	$NetBSD: message.c,v 1.16 2023/08/01 07:55:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: message.c,v 1.15 2021/05/02 12:50:46 rillig Exp $");
+__RCSID("$NetBSD: message.c,v 1.16 2023/08/01 07:55:57 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -307,8 +307,8 @@ print_stats(int stat_mask)
 		if (rogue.exp > MAX_EXP_LEVEL) {
 			rogue.exp = MAX_EXP_LEVEL;
 		}
-		snprintf(buf, sizeof(buf), "%d/%ld",
-			rogue.exp, rogue.exp_points);
+		snprintf(buf, sizeof(buf), "%d/%lu",
+			rogue.exp, (unsigned long)rogue.exp_points);
 		mvprintw(row, 61, "%-11s", buf);
 	}
 	if (stat_mask & STAT_HUNGER) {
