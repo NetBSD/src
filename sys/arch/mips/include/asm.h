@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.55.4.1 2023/07/31 13:44:15 martin Exp $	*/
+/*	$NetBSD: asm.h,v 1.55.4.2 2023/08/01 13:14:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -512,8 +512,13 @@ _C_LABEL(x):
 #endif
 
 /* XXX pullup more mips barrier improvements here */
+#if defined(MULTIPROCESSOR) && (__mips >= 3 || !defined(__mips_o32))
 #define	SYNC_ACQ	sync
 #define	SYNC_REL	sync
+#else
+#define	SYNC_ACQ	/* nothing */
+#define	SYNC_REL	/* nothing */
+#endif
 
 /*
  * Store-before-load barrier.  Do not use this unless you know what
