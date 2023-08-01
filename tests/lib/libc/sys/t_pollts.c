@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pollts.c,v 1.1 2020/07/17 15:34:17 kamil Exp $	*/
+/*	$NetBSD: t_pollts.c,v 1.2 2023/08/01 23:41:54 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2020 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ ATF_TC_HEAD(basic, tc)
 {
 	atf_tc_set_md_var(tc, "timeout", "10");
 	atf_tc_set_md_var(tc, "descr",
-	    "Basis functionality test for ppoll(2)/pollts(2)");
+	    "Basic functionality test for ppoll(2)/pollts(2)");
 }
 
 ATF_TC_BODY(basic, tc)
