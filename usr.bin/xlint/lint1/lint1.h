@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.197 2023/07/29 10:34:24 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.198 2023/08/01 19:57:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -390,13 +390,15 @@ typedef	struct decl_level {
 	bool	d_used:1;
 	type_t	*d_tag_type;	/* during a member declaration, the tag type to
 				 * which the member belongs */
-	sym_t	*d_func_args;	/* during a function declaration, the list of
-				 * arguments */
+	sym_t	*d_func_args;	/* during a function declaration, the
+				 * parameters, stored in the enclosing level */
 	pos_t	d_func_def_pos;	/* position of the function definition */
 	sym_t	*d_first_dlsym;	/* first symbol declared at this level */
 	sym_t	**d_last_dlsym;	/* points to s_level_next in the last symbol
 				   declaration at this level */
-	sym_t	*d_func_proto_syms; /* symbols defined in prototype */
+	sym_t	*d_func_proto_syms;	/* symbols defined in prototype, such
+					 * as tagged types or parameter names,
+					 * may overlap d_func_args */
 	struct decl_level *d_enclosing; /* the enclosing declaration level */
 } decl_level;
 
