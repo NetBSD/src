@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.197.2.5 2023/04/01 16:08:05 martin Exp $	 */
+/*	$NetBSD: rtld.c,v 1.197.2.6 2023/08/01 15:17:44 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.197.2.5 2023/04/01 16:08:05 martin Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.197.2.6 2023/08/01 15:17:44 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1024,7 +1024,7 @@ __strong_alias(__dlopen,dlopen)
 void *
 dlopen(const char *name, int mode)
 {
-	Obj_Entry **old_obj_tail = _rtld_objtail;
+	Obj_Entry **old_obj_tail;
 	Obj_Entry *obj = NULL;
 	int flags = _RTLD_DLOPEN;
 	bool nodelete;
@@ -1035,6 +1035,8 @@ dlopen(const char *name, int mode)
 	dbg(("dlopen of %s %d", name, mode));
 
 	_rtld_exclusive_enter(&mask);
+
+	old_obj_tail = _rtld_objtail;
 
 	flags |= (mode & RTLD_GLOBAL) ? _RTLD_GLOBAL : 0;
 	flags |= (mode & RTLD_NOLOAD) ? _RTLD_NOLOAD : 0;
