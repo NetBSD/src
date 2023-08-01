@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.68 2022/05/23 19:52:35 andvar Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.69 2023/08/01 20:50:11 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.68 2022/05/23 19:52:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.69 2023/08/01 20:50:11 andvar Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -6153,7 +6153,7 @@ ahd_init(struct ahd_softc *ahd)
 		goto init_done;
 	}
 
-	/* Diable current sensing. */
+	/* Disable current sensing. */
 	ahd_write_flexport(ahd, FLXADDR_ROMSTAT_CURSENSECTL, 0);
 
 #ifdef AHD_DEBUG

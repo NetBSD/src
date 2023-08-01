@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfb.c,v 1.10 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: tdvfb.c,v 1.11 2023/08/01 20:50:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.   
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.10 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.11 2023/08/01 20:50:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,7 +434,7 @@ tdvfb_videomode_set(struct tdvfb_softc *sc)
 	tdvfb_cvg_unset(sc, TDV_OFF_FBIINIT0, TDV_FBIINIT0_FBI_RST |
 	    TDV_FBIINIT0_FIFO_RST);
 	tdvfb_cvg_set(sc, TDV_OFF_FBIINIT2, TDV_FBIINIT2_DRAM_REFR);
-	/* diable access to FBIINIT regs */
+	/* disable access to FBIINIT regs */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, TDV_INITENABLE_REG, 
 	    TDV_INITENABLE_EN_FIFO);
 	tdvfb_wait(sc);	
