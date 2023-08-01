@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.7.6.2 2023/01/23 12:10:12 martin Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.7.6.3 2023/08/01 13:48:15 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -109,7 +109,7 @@ struct xhci_softc {
 	int *sc_rhportmap[2];
 	int sc_rhportcount[2];
 	struct usbd_xfer *sc_intrxfer[2];
-
+	bool sc_intrxfer_deferred[2];
 
 	struct xhci_slot * sc_slots;
 
