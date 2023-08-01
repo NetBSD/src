@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.58 2022/09/22 14:42:29 riastradh Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.58.4.1 2023/08/01 14:06:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.58 2022/09/22 14:42:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.58.4.1 2023/08/01 14:06:36 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,6 +88,11 @@ struct lpcib_softc {
 	bus_space_tag_t		sc_pmt;
 	bus_space_handle_t	sc_pmh;
 	bus_size_t		sc_iosize;
+
+	/* TCO variables. */
+	bus_space_tag_t		sc_tcot;
+	bus_space_handle_t	sc_tcoh;
+	bus_size_t		sc_tcosz;
 
 	/* HPET variables. */
 	uint32_t		sc_hpet_reg;
@@ -346,6 +351,13 @@ lpcibattach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self,
 	    	"can't map power management i/o space\n");
 		return;
+	}
+
+	if (bus_space_subregion(sc->sc_pmt, sc->sc_pmh, PMC_TCO_BASE,
+		TCO_REGSIZE, &sc->sc_tcoh)) {
+		aprint_error_dev(self, "can't map TCO space\n");
+	} else {
+		sc->sc_tcot = sc->sc_pmt;
 	}
 
 	sc->sc_pmcon_orig = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
@@ -644,6 +656,8 @@ tcotimer_configure(device_t self)
 	arg.ta_rcbat = sc->sc_rcbat;
 	arg.ta_rcbah = sc->sc_rcbah;
 	arg.ta_pcib = &sc->sc_pcib;
+	arg.ta_tcot = sc->sc_tcot;
+	arg.ta_tcoh = sc->sc_tcoh;
 
 	sc->sc_tco = config_found(self, &arg, NULL,
 	    CFARGS(.iattr = "tcoichbus"));

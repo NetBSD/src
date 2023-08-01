@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.16 2022/09/22 14:45:33 riastradh Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.16.4.1 2023/08/01 14:06:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -171,6 +171,11 @@
 #define SMB_HOSTC_HSTEN		(1 << 0)	/* enable host controller */
 #define SMB_HOSTC_SMIEN		(1 << 1)	/* generate SMI */
 #define SMB_HOSTC_I2CEN		(1 << 2)	/* enable I2C commands */
+#define SMB_TCOBASE	0x50		/* TCO Base Address */
+#define  SMB_TCOBASE_TCOBA	__BITS(15,5)	/* TCO Base Address */
+#define  SMB_TCOBASE_IOS	__BIT(0)	/* I/O Space */
+#define SMB_TCOCTL	0x54		/* TCO Control */
+#define  SMB_TCOCTL_TCO_BASE_EN	__BIT(8)	/* TCO Base Enable */
 
 /* SMBus I/O registers */
 #define SMB_HS		0x00		/* host status */
@@ -300,5 +305,43 @@ tcotimer_second_to_tick(int ltick)
 #define TCOTIMER2_MIN_TICK	2
 #define TCOTIMER_MAX_TICK 	0x3f 	/* 39 seconds max */
 #define TCOTIMER2_MAX_TICK 	0x265	/* 613 seconds max */
+
+/*
+ * P2SB: Primary to Sideband Bridge, PCI configuration registers
+ */
+#define	P2SB_SBREG_BAR		0x10	/* Sideband Register Access BAR */
+#define	P2SB_SBREG_BARH		0x14	/* Sideband BAR High DWORD */
+#define	P2SB_P2SBC		0xe0	/* P2SB Control */
+#define	 P2SB_P2SBC_HIDE	__BIT(8)	/* Hide Device */
+
+/*
+ * PCH Private Configuration Space -- Sideband
+ */
+#define	SB_PORTID		__BITS(23,16)
+#define	 SB_PORTID_SMBUS		0xc6
+
+#define	SB_PORT(id)		__SHIFTIN(id, SB_PORTID)
+
+#define	SB_SMBUS_BASE		(SB_PORT(SB_PORTID_SMBUS) + 0x00)
+#define	SB_SMBUS_SIZE		0x14
+
+#define	SB_SMBUS_TCOCFG		0x00	/* TCO Configuration */
+#define	 SB_SMBUS_TCOCFG_IE	__BIT(7)	/* TCO IRQ Enable */
+#define	 SB_SMBUS_TCOCFG_IS	__BITS(2,0)	/* TCO IRQ Select */
+#define	 SB_SMBUS_TCOCFG_IS_IRQ9	0	/* maps to 8259 and APIC */
+#define	 SB_SMBUS_TCOCFG_IS_IRQ10	1	/* maps to 8259 and APIC */
+#define	 SB_SMBUS_TCOCFG_IS_IRQ11	2	/* maps to 8259 and APIC */
+#define	 SB_SMBUS_TCOCFG_IS_IRQ20	4	/* maps to APIC */
+#define	 SB_SMBUS_TCOCFG_IS_IRQ21	3	/* maps to APIC */
+#define	 SB_SMBUS_TCOCFG_IS_IRQ22	4	/* maps to APIC */
+#define	 SB_SMBUS_TCOCFG_IS_IRQ23	5	/* maps to APIC */
+#define	SB_SMBUS_GC		0x0c	/* General Control */
+#define	 SB_SMBUS_GC_NR		__BIT(1)	/* No Reboot */
+#define	 SB_SMBUS_GC_FD		__BIT(0)	/* Function Disable */
+#define	SB_SMBUS_PCE		0x10	/* Power Control Enable */
+#define	 SB_SMBUS_PCE_SE	__BIT(3)	/* Sleep Enable */
+#define	 SB_SMBUS_PCE_D3HE	__BIT(2)	/* D3-Hot Enable */
+#define	 SB_SMBUS_PCE_I3E	__BIT(1)	/* I3 Enable */
+#define	 SB_SMBUS_PCE_PMCRE	__BIT(0)	/* PMC Request Enable */
 
 #endif /*  _DEV_IC_I82801LPCREG_H_ */
