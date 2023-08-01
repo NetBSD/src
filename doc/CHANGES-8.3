@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.187 2023/07/31 16:53:36 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.188 2023/08/01 17:31:33 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3692,4 +3692,51 @@ sys/kern/uipc_domain.c				1.109
 
 	sockaddr(9): fix uninitialized buffer in DIAGNOSTIC checks.
 	[riastradh, ticket #1867]
+
+sys/dev/spkr.c					1.25 (patch)
+
+	spkr(4): Avoid some overflow issues.
+	[riastradh, ticket #1868]
+
+sys/dev/usb/xhci.c				1.176
+sys/dev/usb/xhcivar.h				1.23
+
+	xhci(4): PR 57326: defer root intr xfers while polling.
+	[riastradh, ticket #1869]
+
+sys/dev/isapnp/sb_isapnp.c			1.54
+sys/dev/ofisa/sb_ofisa.c			1.24
+
+	sb(4): PR 57363: fix missing mutex initialization at isapnp and ofisa.
+	[riastradh, ticket #1870]
+
+libexec/ld.elf_so/rtld.c			1.213
+
+	dlopen(3): Read _rtld_objtail under the lock.
+	[riastradh, ticket #1871]
+
+sys/fs/tmpfs/tmpfs_subr.c			1.116,1.117
+
+	tmpfs: protect against unreasonable file resizing.
+	[riastradh, ticket #1872]
+
+sys/dev/acpi/acpica/acpi_func.h			1.7 (patch)
+
+	acpi(4): fix membars in ACPI_ACQUIRE/RELEASE_GLOBAL_LOCK.
+	[riastradh, ticket #1873]
+
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.16
+
+	drm/linux_ww_mutex: fix ww acquire context ordering.
+	[riastradh, ticket #1874]
+
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.10 (patch)
+
+	drm: fix ww_mutex return values on signal.
+	[riastradh, ticket #1875]
+
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.15
+
+	drm: PR 57537: fix mistake in ww_mutex wait loops.
+	[riastradh, ticket #1876]
 
