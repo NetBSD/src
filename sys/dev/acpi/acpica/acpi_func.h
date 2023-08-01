@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_func.h,v 1.6 2018/10/12 21:36:24 jmcneill Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.6.4.1 2023/08/01 15:38:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -62,6 +62,7 @@ acpi_acquire_global_lock(uint32_t *lock)
 		    ((old >> 1) & GL_BIT_PENDING);
 		val = atomic_cas_32(lock, old, new);
 	} while (__predict_false(val != old));
+	membar_enter();		/* XXX expensive for acquire semantics */
 
 	return ((new < GL_BIT_MASK) ? GL_ACQUIRED : GL_BUSY);
 }
@@ -71,6 +72,7 @@ acpi_release_global_lock(uint32_t *lock)
 {
 	uint32_t new, old, val;
 
+	membar_exit();		/* release semantics */
 	do {
 		old = *lock;
 		new = old & ~GL_BIT_MASK;
