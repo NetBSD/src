@@ -1,4 +1,4 @@
-/*	$NetBSD: imxcspireg.h,v 1.2 2019/09/27 02:59:21 hkenken Exp $	*/
+/*	$NetBSD: imxcspireg.h,v 1.3 2023/08/01 21:26:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -51,7 +51,7 @@
 #define	 CSPI_CON_MODE		__BIT(1)	/* MODE */
 #define	 CSPI_CON_ENABLE	__BIT(0)	/* EN */
 #define	CSPI_INTREG		0x0c
-#define	 CSPI_INTR_ALL_EN	0x000001ff	/* All Intarruption Enabled */
+#define	 CSPI_INTR_ALL_EN	0x000001ff	/* All Interrupts Enabled */
 #define	 CSPI_IMX31_INTR_TC_EN	__BIT(8)	/* TX Complete */
 #define	 CSPI_IMX31_INTR_BO_EN	__BIT(7)	/* Bit Counter Overflow */
 #define	 CSPI_IMX35_INTR_TC_EN	__BIT(7)	/* TX Complete */

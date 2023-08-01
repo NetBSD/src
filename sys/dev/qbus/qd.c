@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.61 2022/04/16 18:15:22 andvar Exp $	*/
+/*	$NetBSD: qd.c,v 1.62 2023/08/01 21:26:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.61 2022/04/16 18:15:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.62 2023/08/01 21:26:28 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -824,7 +824,7 @@ qdopen(dev_t dev, int flag, int mode, struct proc *p)
 			qdopened[unit] = 1;
 		qdflags[unit].inuse |= GRAPHIC_DEV;  /* graphics dev is open */
 		/*
-		 * enble kbd & mouse intrpts in DUART mask reg
+		 * enable kbd & mouse intrpts in DUART mask reg
 		 */
 		qdflags[unit].duart_imask |= 0x22;
 		duart->imask = qdflags[unit].duart_imask;

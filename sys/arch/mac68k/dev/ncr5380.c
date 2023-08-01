@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.71 2022/04/07 19:33:37 andvar Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.72 2023/08/01 21:26:28 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.71 2022/04/07 19:33:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.72 2023/08/01 21:26:28 andvar Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -703,7 +703,7 @@ scsi_select(SC_REQ *reqp, int code)
 	sps = splbio();
 
 	/*
-	 * Prevent a race condition here. If a reslection interrupt occurred
+	 * Prevent a race condition here. If a reselection interrupt occurred
 	 * between the decision to pick a new request and the call to select,
 	 * we abort the selection.
 	 * Interrupts are lowered when the 5380 is setup to arbitrate for the

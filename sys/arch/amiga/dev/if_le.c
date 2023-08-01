@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.46 2014/01/22 00:25:16 christos Exp $ */
+/*	$NetBSD: if_le.c,v 1.47 2023/08/01 21:26:27 andvar Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.46 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.47 2023/08/01 21:26:27 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -282,7 +282,7 @@ ariadne_hwinit(struct lance_softc *sc)
 	ariadne_wribcr(sc, LE_BCR_LED3, 0x0084);
 
 	/*
-	 * Enabel/Disable auto selection
+	 * Enable/Disable auto selection
 	 */
 	if (sc->sc_initmodemedia == 2)
 		ariadne_autoselect(sc, 1);

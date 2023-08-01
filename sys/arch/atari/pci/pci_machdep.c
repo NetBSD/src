@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.63 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.64 2023/08/01 21:26:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.63 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.64 2023/08/01 21:26:27 andvar Exp $");
 
 #include "opt_mbtype.h"
 
@@ -359,7 +359,7 @@ enable_pci_devices(void)
 		 * enabled preserve 128k at 0xa0000 as vga memory.
 		 * XXX: if a display card is found without being enabled,
 		 * leave it alone! You will usually only create conflicts
-		 * by enabeling it.
+		 * by enabling it.
 		 */
 		class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 		switch (PCI_CLASS(class)) {

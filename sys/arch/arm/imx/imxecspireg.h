@@ -1,4 +1,4 @@
-/*	$NetBSD: imxecspireg.h,v 1.3 2019/12/26 04:53:11 msaitoh Exp $	*/
+/*	$NetBSD: imxecspireg.h,v 1.4 2023/08/01 21:26:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -51,7 +51,7 @@
 #define	 ECSPI_CONFIG_SCLK_POL	__BITS( 7, 4)	/* SCLK POL */
 #define	 ECSPI_CONFIG_SCLK_PHA	__BITS( 3, 0)	/* SCLK PHA */
 #define	ECSPI_INTREG		0x10
-#define	 ECSPI_INTR_ALL_EN	__BITS( 7, 0)	/* All Intarruption Enabled */
+#define	 ECSPI_INTR_ALL_EN	__BITS( 7, 0)	/* All Interrupts Enabled */
 #define	 ECSPI_INTR_TC_EN	__BIT(7)	/* TX Complete */
 #define	 ECSPI_INTR_RO_EN	__BIT(6)	/* RXFIFO Overflow */
 #define	 ECSPI_INTR_RF_EN	__BIT(5)	/* RXFIFO Full */
