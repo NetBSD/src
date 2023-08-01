@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2018/01/23 21:06:25 sevan Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 2023/08/01 07:04:17 mrg Exp $	*/
 
 extern	int		interrupted;
 extern	pr_list		printers;
@@ -11,7 +11,7 @@ int		build_pr_list(void);
 pirstat		build_pr_queue(printername, username, int, int *, int *);
 int		check_cache(char *, char *, int *, int *);
 void		free_mapreq_results(mapreq_res);
-void            fillin_extra_groups(char *, u_int, int *, u_int[]);
+void            fillin_extra_groups(char *, u_int, int *, gid_t[EXTRAGIDLEN]);
 #ifdef USE_YP
 char	       *find_entry(const char *, const char *);
 #endif

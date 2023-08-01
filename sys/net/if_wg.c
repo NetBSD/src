@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.76 2023/04/11 14:03:46 jakllsch Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.77 2023/08/01 07:04:16 mrg Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.76 2023/04/11 14:03:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.77 2023/08/01 07:04:16 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -668,7 +668,8 @@ static struct mbuf *
 static int	wg_send_data_msg(struct wg_peer *, struct wg_session *,
 		    struct mbuf *);
 static int	wg_send_cookie_msg(struct wg_softc *, struct wg_peer *,
-		    const uint32_t, const uint8_t [], const struct sockaddr *);
+		    const uint32_t, const uint8_t [WG_MAC_LEN],
+		    const struct sockaddr *);
 static int	wg_send_handshake_msg_resp(struct wg_softc *, struct wg_peer *,
 		    struct wg_session *, const struct wg_msg_init *);
 static void	wg_send_keepalive_msg(struct wg_peer *, struct wg_session *);
@@ -678,7 +679,7 @@ static struct wg_peer *
 		    struct psref *);
 static struct wg_peer *
 		wg_lookup_peer_by_pubkey(struct wg_softc *,
-		    const uint8_t [], struct psref *);
+		    const uint8_t [WG_STATIC_KEY_LEN], struct psref *);
 
 static struct wg_session *
 		wg_lookup_session_by_index(struct wg_softc *,

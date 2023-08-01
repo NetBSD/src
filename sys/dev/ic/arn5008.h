@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.h,v 1.1 2013/03/30 02:53:00 christos Exp $	*/
+/*	$NetBSD: arn5008.h,v 1.2 2023/08/01 07:04:15 mrg Exp $	*/
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,15 +31,15 @@
 #include <dev/ic/arn5008reg.h>
 
 int	ar5008_attach(struct athn_softc *);
-void	ar5008_write_txpower(struct athn_softc *, int16_t power[]);
+void	ar5008_write_txpower(struct athn_softc *, int16_t power[ATHN_POWER_COUNT]);
 void	ar5008_set_viterbi_mask(struct athn_softc *, int);
 void	ar5008_get_pdadcs(struct athn_softc *, uint8_t, struct athn_pier *,
 		    struct athn_pier *, int, int, uint8_t, uint8_t *, uint8_t *);
 
 void	ar5008_get_ht_tpow(struct athn_softc *, struct ieee80211_channel *,
-		    uint8_t, const struct ar_cal_target_power_ht *, int, uint8_t[]);
+		    uint8_t, const struct ar_cal_target_power_ht *, int, uint8_t[8]);
 void	ar5008_get_lg_tpow(struct athn_softc *, struct ieee80211_channel *,
-		    uint8_t, const struct ar_cal_target_power_leg *, int, uint8_t[]);
+		    uint8_t, const struct ar_cal_target_power_leg *, int, uint8_t[4]);
 
 
 #endif /* _IF_ARN5008_H_ */

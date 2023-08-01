@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.106 2023/07/20 20:00:34 mrg Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.107 2023/08/01 07:04:16 mrg Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.106 2023/07/20 20:00:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.107 2023/08/01 07:04:16 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -325,11 +325,12 @@ static void	urtwn_cam_init(struct urtwn_softc *);
 static void	urtwn_pa_bias_init(struct urtwn_softc *);
 static void	urtwn_rxfilter_init(struct urtwn_softc *);
 static void	urtwn_edca_init(struct urtwn_softc *);
-static void	urtwn_write_txpower(struct urtwn_softc *, int, uint16_t[]);
+static void	urtwn_write_txpower(struct urtwn_softc *, int,
+		    uint16_t[URTWN_RIDX_COUNT]);
 static void	urtwn_get_txpower(struct urtwn_softc *, size_t, u_int, u_int,
-		    uint16_t[]);
+		    uint16_t[URTWN_RIDX_COUNT]);
 static void	urtwn_r88e_get_txpower(struct urtwn_softc *, size_t, u_int,
-		    u_int, uint16_t[]);
+		    u_int, uint16_t[URTWN_RIDX_COUNT]);
 static void	urtwn_set_txpower(struct urtwn_softc *, u_int, u_int);
 static void	urtwn_set_chan(struct urtwn_softc *, struct ieee80211_channel *,
 		    u_int);

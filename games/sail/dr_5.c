@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_5.c,v 1.14 2009/03/14 22:52:52 dholland Exp $	*/
+/*	$NetBSD: dr_5.c,v 1.15 2023/08/01 07:04:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dr_5.c,v 1.14 2009/03/14 22:52:52 dholland Exp $");
+__RCSID("$NetBSD: dr_5.c,v 1.15 2023/08/01 07:04:15 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: dr_5.c,v 1.14 2009/03/14 22:52:52 dholland Exp $");
 #include "extern.h"
 
 void
-subtract(struct ship *from, struct ship *fromcap, int totalfrom, int *crewfrom,
+subtract(struct ship *from, struct ship *fromcap, int totalfrom, int crewfrom[3],
 	 int pcfrom)
 {
 	int n;
@@ -66,7 +66,7 @@ subtract(struct ship *from, struct ship *fromcap, int totalfrom, int *crewfrom,
 }
 
 int
-mensent(struct ship *from, struct ship *to, int *crew, struct ship **captured,
+mensent(struct ship *from, struct ship *to, int crew[3], struct ship **captured,
 	int *pc, int isdefense)
 {					/* returns # of crew squares sent */
 	int men = 0;

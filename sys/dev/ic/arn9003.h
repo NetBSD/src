@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.h,v 1.1 2013/03/30 02:53:01 christos Exp $	*/
+/*	$NetBSD: arn9003.h,v 1.2 2023/08/01 07:04:15 mrg Exp $	*/
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,10 +33,10 @@ int	ar9003_init_calib(struct athn_softc *);
 void	ar9003_reset_txsring(struct athn_softc *);
 void	ar9003_get_lg_tpow(struct athn_softc *, struct ieee80211_channel *,
 	    uint8_t, const uint8_t *, const struct ar_cal_target_power_leg *,
-	    int, uint8_t[]);
+	    int, uint8_t[4]);
 void	ar9003_get_ht_tpow(struct athn_softc *, struct ieee80211_channel *,
 	    uint8_t, const uint8_t *, const struct ar_cal_target_power_ht *,
-	    int, uint8_t[]);
-void	ar9003_write_txpower(struct athn_softc *, int16_t power[]);
+	    int, uint8_t[14]);
+void	ar9003_write_txpower(struct athn_softc *, int16_t power[ATHN_POWER_COUNT]);
 
 #endif /* _IF_ARN9003_H_ */

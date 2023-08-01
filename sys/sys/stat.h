@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.69 2019/09/15 23:55:22 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.70 2023/08/01 07:04:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -279,17 +279,17 @@ int     fstatat(int, const char *, struct stat *, int);
 int     mkdirat(int, const char *, mode_t);
 int     mkfifoat(int, const char *, mode_t);
 int     mknodat(int, const char *, mode_t, dev_t);
-int     utimensat(int, const char *, const struct timespec *, int);
+int     utimensat(int, const char *, const struct timespec [2], int);
 #endif
 
 #ifdef _NETBSD_SOURCE
-int utimens(const char *, const struct timespec *);
-int lutimens(const char *, const struct timespec *);
+int utimens(const char *, const struct timespec [2]);
+int lutimens(const char *, const struct timespec [2]);
 #endif
 
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
     defined(_NETBSD_SOURCE)
-int futimens(int, const struct timespec *);
+int futimens(int, const struct timespec [2]);
 #endif
 #endif
 

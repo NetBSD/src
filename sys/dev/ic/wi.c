@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.257 2021/09/21 14:50:12 christos Exp $	*/
+/*	$NetBSD: wi.c,v 1.258 2023/08/01 07:04:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.257 2021/09/21 14:50:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.258 2023/08/01 07:04:15 mrg Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -165,10 +165,12 @@ STATIC int wi_choose_rate(struct ieee80211com *, struct ieee80211_node *,
     struct ieee80211_frame *, u_int);
 STATIC void wi_rssadapt_updatestats_cb(void *, struct ieee80211_node *);
 STATIC void wi_rssadapt_updatestats(void *);
-STATIC void wi_rssdescs_init(struct wi_rssdesc (*)[], wi_rssdescq_t *);
-STATIC void wi_rssdescs_reset(struct ieee80211com *, struct wi_rssdesc (*)[],
-    wi_rssdescq_t *, uint8_t (*)[]);
-STATIC void wi_sync_bssid(struct wi_softc *, uint8_t new_bssid[]);
+STATIC void wi_rssdescs_init(struct wi_rssdesc (*)[WI_NTXRSS], wi_rssdescq_t *);
+STATIC void wi_rssdescs_reset(struct ieee80211com *,
+    struct wi_rssdesc (*)[WI_NTXRSS], wi_rssdescq_t *,
+    uint8_t (*)[IEEE80211_RATE_MAXSIZE]);
+STATIC void wi_sync_bssid(struct wi_softc *,
+    uint8_t new_bssid[IEEE80211_ADDR_LEN]);
 
 STATIC void wi_rx_intr(struct wi_softc *);
 STATIC void wi_txalloc_intr(struct wi_softc *);

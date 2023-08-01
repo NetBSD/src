@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.h,v 1.3 2016/07/01 16:43:16 christos Exp $	*/
+/*	$NetBSD: rmd160.h,v 1.4 2023/08/01 07:04:16 mrg Exp $	*/
 /*	$KAME: rmd160.h,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.h,v 1.3 2002/03/14 01:26:51 millert Exp $	*/
 /*
@@ -47,10 +47,10 @@ void	 RMD160Transform(uint32_t [5], const u_char [64]);
 void	 RMD160Update(RMD160_CTX *, const u_char *, uint32_t);
 void	 RMD160Final(u_char [RMD160_DIGEST_LENGTH], RMD160_CTX *);
 #ifndef _KERNEL
-char	*RMD160End(RMD160_CTX *, char *);
+char	*RMD160End(RMD160_CTX *, char[RMD160_DIGEST_STRING_LENGTH]);
 char	*RMD160FileChunk(const char *, char *, off_t, off_t);
 char	*RMD160File(const char *, char *);
-char	*RMD160Data(const u_char *, size_t, char *);
+char	*RMD160Data(const u_char *, size_t, char[RMD160_DIGEST_STRING_LENGTH]);
 #endif /* _KERNEL */
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: chap_ms.c,v 1.6 2023/08/01 07:04:15 mrg Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -81,7 +81,7 @@
 #define RCSID	"Id: chap_ms.c,v 1.38 2007/12/01 20:10:51 carlsonj Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: chap_ms.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: chap_ms.c,v 1.6 2023/08/01 07:04:15 mrg Exp $");
 #endif
 
 #ifdef CHAPMS
@@ -108,7 +108,8 @@ __RCSID("$NetBSD: chap_ms.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 
 static void	ascii2unicode (char[], int, u_char[]);
 static void	NTPasswordHash (u_char *, int, u_char[MD4_SIGNATURE_SIZE]);
-static void	ChallengeResponse (u_char *, u_char *, u_char[24]);
+static void	ChallengeResponse (u_char *, u_char[MD4_SIGNATURE_SIZE],
+				u_char[24]);
 static void	ChapMS_NT (u_char *, char *, int, u_char[24]);
 static void	ChapMS2_NT (u_char *, u_char[16], char *, char *, int,
 				u_char[24]);
@@ -923,7 +924,7 @@ ChapMS(u_char *rchallenge, char *secret, int secret_len,
 void
 ChapMS2(u_char *rchallenge, u_char *PeerChallenge,
 	char *user, char *secret, int secret_len, unsigned char *response,
-	u_char authResponse[], int authenticator)
+	u_char authResponse[MS_AUTH_RESPONSE_LENGTH+1], int authenticator)
 {
     /* ARGSUSED */
     u_char *p = &response[MS_CHAP2_PEER_CHALLENGE];

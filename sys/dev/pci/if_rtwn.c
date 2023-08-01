@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.20 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.21 2023/08/01 07:04:15 mrg Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.20 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.21 2023/08/01 07:04:15 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -161,10 +161,11 @@ static void	rtwn_cam_init(struct rtwn_softc *);
 static void	rtwn_pa_bias_init(struct rtwn_softc *);
 static void	rtwn_rxfilter_init(struct rtwn_softc *);
 static void	rtwn_edca_init(struct rtwn_softc *);
-static void	rtwn_write_txpower(struct rtwn_softc *, int, uint16_t[]);
+static void	rtwn_write_txpower(struct rtwn_softc *, int,
+		    uint16_t[RTWN_RIDX_COUNT]);
 static void	rtwn_get_txpower(struct rtwn_softc *, int,
 		    struct ieee80211_channel *, struct ieee80211_channel *,
-		    uint16_t[]);
+		    uint16_t[RTWN_RIDX_COUNT]);
 static void	rtwn_set_txpower(struct rtwn_softc *,
 		    struct ieee80211_channel *, struct ieee80211_channel *);
 static void	rtwn_set_chan(struct rtwn_softc *,
