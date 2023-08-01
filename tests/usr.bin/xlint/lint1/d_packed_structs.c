@@ -1,4 +1,4 @@
-/*	$NetBSD: d_packed_structs.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: d_packed_structs.c,v 1.5 2023/08/01 19:52:15 rillig Exp $	*/
 # 3 "d_packed_structs.c"
 
 /* packed tests */
@@ -39,3 +39,8 @@ struct y {
 };
 
 int a[sizeof(struct y) - sizeof(struct x) - 1];
+
+/* expect+1: error: negative array dimension (-9) [20] */
+typedef int sizeof_x[-(int)sizeof(struct x)];
+/* expect+1: error: negative array dimension (-16) [20] */
+typedef int sizeof_y[-(int)sizeof(struct y)];

@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.25 2023/07/31 20:52:26 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.26 2023/08/01 19:52:15 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -228,4 +228,16 @@ symbol_type_in_unnamed_bit_field_member(void)
 		unsigned int :bits;
 		int named_member;
 	};
+}
+
+// Symbols that are defined in the parameter list of a function definition can
+// be accessed in the body of the function, even if they are nested.
+int
+get_x(struct point3d { struct point3d_number { int v; } x, y, z; } arg)
+{
+/* expect-1: warning: dubious tag declaration 'struct point3d' [85] */
+/* expect-2: warning: dubious tag declaration 'struct point3d_number' [85] */
+	static struct point3d local;
+	static struct point3d_number z;
+	return arg.x.v + local.x.v + z.v;
 }
