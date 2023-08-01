@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.60 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.60.20.1 2023/08/01 14:36:59 martin Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60.20.1 2023/08/01 14:36:59 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -53,13 +53,28 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60 2020/07/06 09:34:18 rin Exp $");
 #elif defined(PPC_BOOKE)
 #include <powerpc/booke/spr.h>
 #else
-#include unknown powerpc variants
+#ifdef _KERNEL
+#error unknown powerpc variants
+#endif
+#endif
+
+#ifndef _KERNEL			/* crash(8) */
+#include <unistd.h>
+#define	PAGE_SIZE	((unsigned)sysconf(_SC_PAGESIZE))
 #endif
 
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_proc.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
+
+#define	R(P)								      \
+({									      \
+	__typeof__(*(P)) __db_tmp;					      \
+	db_read_bytes((db_addr_t)(P), sizeof(*(P)), (char *)&__db_tmp);	      \
+	__db_tmp;							      \
+})
 
 const struct db_variable db_regs[] = {
 	{ "r0",  (long *)&ddb_regs.r[0],  FCN_NULL, NULL },
@@ -101,7 +116,7 @@ const struct db_variable db_regs[] = {
 	{ "cr",  (long *)&ddb_regs.cr,    FCN_NULL, NULL },
 	{ "xer", (long *)&ddb_regs.xer,   FCN_NULL, NULL },
 	{ "mq",  (long *)&ddb_regs.mq,    FCN_NULL, NULL },
-#ifdef PPC_IBM4XX
+#ifdef PPC_IBM4XX		/* XXX crash(8) */
 	{ "dear", (long *)&ddb_regs.dear, FCN_NULL, NULL },
 	{ "esr", (long *)&ddb_regs.esr,   FCN_NULL, NULL },
 	{ "pid", (long *)&ddb_regs.pid,   FCN_NULL, NULL },
@@ -125,9 +140,13 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	bool kernel_only = true;
 	bool trace_thread = false;
 	bool lwpaddr = false;
+#ifdef _KERNEL
 	extern int trapexit[], sctrapexit[];
 #ifdef PPC_BOOKE
 	extern int intrcall[];
+#endif
+#else
+	extern void *trapexit, *sctrapexit, *intrcall;
 #endif
 	bool full = false;
 	bool in_kernel = true;
@@ -153,24 +172,24 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 			if (lwpaddr) {
 				l = (struct lwp *)addr;
-				p = l->l_proc;
-				(*pr)("trace: pid %d ", p->p_pid);
+				p = R(&l->l_proc);
+				(*pr)("trace: pid %d ", R(&p->p_pid));
 			} else {
 				(*pr)("trace: pid %d ", (int)addr);
-				p = proc_find_raw(addr);
+				p = db_proc_find((pid_t)addr);
 				if (p == NULL) {
 					(*pr)("not found\n");
 					return;
 				}
-				l = LIST_FIRST(&p->p_lwps);
+				l = R(&LIST_FIRST(&p->p_lwps));
 				if (l == NULL) {
 					(*pr)("trace: no LWP?\n");
 					return;
 				}
 			}
-			(*pr)("lid %d ", l->l_lid);
-			pcb = lwp_getpcb(l);
-			frame = (db_addr_t)pcb->pcb_sp;
+			(*pr)("lid %d ", R(&l->l_lid));
+			pcb = R(&l->l_addr); /* lwp_getpcb */
+			frame = (db_addr_t)R(&pcb->pcb_sp);
 			(*pr)("at %p\n", frame);
 		} else
 			frame = (db_addr_t)addr;
@@ -180,7 +199,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	for (;;) {
 		if (frame < PAGE_SIZE)
 			break;
-		frame = *(db_addr_t *)frame;
+		frame = R((db_addr_t *)frame);
 	    next_frame:
 		args = (db_addr_t *)(frame + 8);
 		if (frame < PAGE_SIZE)
@@ -188,7 +207,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	        if (count-- == 0)
 			break;
 
-		lr = *(db_addr_t *)(frame + 4) - 4;
+		lr = R((db_addr_t *)(frame + 4)) - 4;
 		if ((lr & 3) || (lr < 0x100)) {
 			(*pr)("saved LR(0x%x) is invalid.", lr);
 			break;
@@ -196,36 +215,42 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		(*pr)("0x%08lx: ", frame);
 		if (lr + 4 == (db_addr_t) trapexit ||
-#ifdef PPC_BOOKE
+#if !defined(_KERNEL) || defined(PPC_BOOKE) /* XXX crash(8) */
 		    lr + 4 == (db_addr_t) intrcall ||
 #endif
 		    lr + 4 == (db_addr_t) sctrapexit) {
 			const char *trapstr;
-			struct trapframe *tf = &((struct ktrapframe *)frame)->ktf_tf;
-			(*pr)("%s ", tf->tf_srr1 & PSL_PR ? "user" : "kernel");
+			struct trapframe *tf =
+			    &((struct ktrapframe *)frame)->ktf_tf;
+			(*pr)("%s ",
+			    R(&tf->tf_srr1) & PSL_PR ? "user" : "kernel");
 			if (lr + 4 == (db_addr_t) sctrapexit) {
-				(*pr)("SC trap #%d by ", tf->tf_fixreg[0]);
+				(*pr)("SC trap #%d by ", R(&tf->tf_fixreg[0]));
 				goto print_trap;
 			}
-			switch (tf->tf_exc) {
+			switch (R(&tf->tf_exc)) {
 			case EXC_DSI:
-#ifdef PPC_OEA
+#ifdef PPC_OEA			/* XXX crash(8) */
 				(*pr)("DSI %s trap @ %#x by ",
-				    tf->tf_dsisr & DSISR_STORE ? "write" : "read",
-				    tf->tf_dar);
+				    (R(&tf->tf_dsisr) & DSISR_STORE
+					? "write"
+					: "read"),
+				    R(&tf->tf_dar));
 #endif
-#ifdef PPC_IBM4XX
+#ifdef PPC_IBM4XX		/* XXX crash(8) */
 				trapstr = "DSI";
 dsi:
 				(*pr)("%s %s trap @ %#x by ", trapstr,
-				    tf->tf_esr & ESR_DST ? "write" : "read",
-				    tf->tf_dear);
+				    (R(&tf->tf_esr) & ESR_DST
+					? "write"
+					: "read"),
+				    R(&tf->tf_dear));
 #endif
 				goto print_trap;
 			case EXC_ALI:
-#ifdef PPC_OEA
+#ifdef PPC_OEA			/* XXX crash(8) */
 				(*pr)("ALI trap @ %#x (DSISR %#x) ",
-				    tf->tf_dar, tf->tf_dsisr);
+				    R(&tf->tf_dar), R(&tf->tf_dsisr));
 				goto print_trap;
 #else
 				trapstr = "ALI"; break;
@@ -246,7 +271,7 @@ dsi:
 			case EXC_SMI: trapstr = "SMI"; break;
 			case EXC_RST: trapstr = "RST"; break;
 			case EXC_DTMISS: trapstr = "DTMISS";
-#ifdef PPC_IBM4XX
+#ifdef PPC_IBM4XX		/* XXX crash(8) */
 				goto dsi;
 #endif
 				break;
@@ -259,41 +284,46 @@ dsi:
 			if (trapstr != NULL) {
 				(*pr)("%s trap by ", trapstr);
 			} else {
-				(*pr)("trap %#x by ", tf->tf_exc);
+				(*pr)("trap %#x by ", R(&tf->tf_exc));
 			}
 		   print_trap:
-			lr = (db_addr_t) tf->tf_srr0;
+			lr = (db_addr_t)R(&tf->tf_srr0);
 			diff = 0;
 			symname = NULL;
-			if (in_kernel && (tf->tf_srr1 & PSL_PR) == 0) {
+			if (in_kernel && (R(&tf->tf_srr1) & PSL_PR) == 0) {
 				sym = db_search_symbol(lr, DB_STGY_ANY, &diff);
 				db_symbol_values(sym, &symname, 0);
 			}
 			if (symname == NULL || !strcmp(symname, "end")) {
-				(*pr)("%p: srr1=%#x\n", lr, tf->tf_srr1);
+				(*pr)("%p: srr1=%#x\n", lr, R(&tf->tf_srr1));
 			} else {
 				(*pr)("%s+%#x: srr1=%#x\n", symname,
-				    diff, tf->tf_srr1);
+				    diff, R(&tf->tf_srr1));
 			}
 			(*pr)("%-10s  r1=%#x cr=%#x xer=%#x ctr=%#x",
-			    "", tf->tf_fixreg[1], tf->tf_cr, tf->tf_xer, tf->tf_ctr);
-#ifdef PPC_OEA
-			if (tf->tf_exc == EXC_DSI)
-				(*pr)(" dsisr=%#x", tf->tf_dsisr);
-#ifdef PPC_OEA601
-			if ((mfpvr() >> 16) == MPC601)
-				(*pr)(" mq=%#x", tf->tf_mq);
+			    "",
+			    R(&tf->tf_fixreg[1]),
+			    R(&tf->tf_cr),
+			    R(&tf->tf_xer),
+			    R(&tf->tf_ctr));
+#ifdef PPC_OEA			/* XXX crash(8) */
+			if (R(&tf->tf_exc) == EXC_DSI)
+				(*pr)(" dsisr=%#x", R(&tf->tf_dsisr));
+#ifdef PPC_OEA601		/* XXX crash(8) */
+			if ((mfpvr() >> 16) == MPC601) /* XXX crash(8) */
+				(*pr)(" mq=%#x", R(&tf->tf_mq));
 #endif /* PPC_OEA601 */
 #endif /* PPC_OEA */
-#ifdef PPC_IBM4XX
-			if (tf->tf_exc == EXC_DSI ||
-			    tf->tf_exc == EXC_DTMISS)
-				(*pr)(" dear=%#x", tf->tf_dear);
-			(*pr)(" esr=%#x pid=%#x", tf->tf_esr, tf->tf_pid);
+#ifdef PPC_IBM4XX		/* XXX crash(8) */
+			if (R(&tf->tf_exc) == EXC_DSI ||
+			    R(&tf->tf_exc) == EXC_DTMISS)
+				(*pr)(" dear=%#x", R(&tf->tf_dear));
+			(*pr)(" esr=%#x pid=%#x", R(&tf->tf_esr),
+			    R(&tf->tf_pid));
 #endif
 			(*pr)("\n");
-			frame = (db_addr_t) tf->tf_fixreg[1];
-			in_kernel = !(tf->tf_srr1 & PSL_PR);
+			frame = (db_addr_t)R(&tf->tf_fixreg[1]);
+			in_kernel = !(R(&tf->tf_srr1) & PSL_PR);
 			if (kernel_only && !in_kernel)
 				break;
 			goto next_frame;
@@ -312,8 +342,8 @@ dsi:
 		if (full)
 			/* Print all the args stored in that stackframe. */
 			(*pr)("(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)",
-				args[0], args[1], args[2], args[3],
-				args[4], args[5], args[6], args[7]);
+			    R(&args[0]), R(&args[1]), R(&args[2]), R(&args[3]),
+			    R(&args[4]), R(&args[5]), R(&args[6]), R(&args[7]));
 		(*pr)("\n");
 	}
 }

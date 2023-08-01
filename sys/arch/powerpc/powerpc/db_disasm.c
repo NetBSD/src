@@ -1,14 +1,16 @@
-/*	$NetBSD: db_disasm.c,v 1.29 2020/07/06 10:31:24 rin Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.29.20.1 2023/08/01 14:36:59 martin Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.29 2020/07/06 10:31:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.29.20.1 2023/08/01 14:36:59 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
 #endif
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/proc.h>
 #include <sys/systm.h>
 
@@ -84,8 +86,7 @@ typedef u_int32_t instr_t;
 typedef void (op_class_func) (instr_t, vaddr_t);
 
 u_int32_t extract_field(u_int32_t value, u_int32_t base, u_int32_t width);
-void disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
-    char *disasm_str, size_t slen);
+void disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc);
 void dis_ppc(const struct opcode *opcodeset, instr_t instr, vaddr_t loc);
 
 op_class_func op_ill, op_base;
@@ -412,7 +413,7 @@ const struct opcode opcodes_3f[] = {
 
 
 struct specialreg {
-	int reg;
+	unsigned reg;
 	const char *name;
 };
 
@@ -619,22 +620,9 @@ extract_field(u_int32_t value, u_int32_t base, u_int32_t width)
 const struct opcode * search_op(const struct opcode *);
 
 void
-disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc, 
-	char *disasm_str, size_t slen)
+disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc)
 {
-	char * pstr;
 	enum function_mask func;
-	int len;
-
-#define ADD_LEN(s)	do { \
-		len = (s); \
-		slen -= len; \
-		pstr += len; \
-	} while(0)
-#define APP_PSTR(fmt, arg)	ADD_LEN(snprintf(pstr, slen, (fmt), (arg)))
-#define APP_PSTRS(fmt)		ADD_LEN(snprintf(pstr, slen, "%s", (fmt)))
-
-	pstr = disasm_str;
 
 	func =  popcode->func;
 	if (func & Op_BC) {
@@ -646,12 +634,13 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 			/* standard, no decrement */
 			if (BO & 16) {
 				if (popcode->code == 0x40000000) {
-					APP_PSTRS("c");
+					db_printf("c");
 					func |= Op_BO | Op_BI;
 				}
 			}
 			else {
-				APP_PSTRS(condstr[((BO & 8) >> 1) + (BI & 3)]);
+				db_printf("%s",
+				    condstr[((BO & 8) >> 1) + (BI & 3)]);
 				if (BI >= 4)
 					func |= Op_crfS;
 			}
@@ -659,20 +648,20 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		else {
 			/* decrement and branch */
 			if (BO & 2)
-				APP_PSTRS("dz");
+				db_printf("dz");
 			else
-				APP_PSTRS("dnz");
+				db_printf("dnz");
 			if ((BO & 24) == 0)
-				APP_PSTRS("f");
+				db_printf("f");
 			else if ((BO & 24) == 8)
-				APP_PSTRS("t");
+				db_printf("t");
 			else
 				func |= Op_BI;
 		}
 		if (popcode->code == 0x4c000020)
-			APP_PSTRS("lr");
+			db_printf("lr");
 		else if (popcode->code == 0x4c000420)
-			APP_PSTRS("ctr");
+			db_printf("ctr");
 		if ((BO & 20) != 20 && (func & Op_BO) == 0)
 			func |= Op_BP;  /* branch prediction hint */
 	}
@@ -680,26 +669,26 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		u_int OE;
 		OE = extract_field(instr, 31 - 21, 1);
 		if (OE) {
-			APP_PSTRS("o");
+			db_printf("o");
 		}
 		func &= ~Op_OE;
 	}
 	switch (func & Op_LKM) {
 	case Op_Rc:
 		if (instr & 0x1)
-			APP_PSTRS(".");
+			db_printf(".");
 		break;
 	case Op_AA:
 		if (instr & 0x1)
-			APP_PSTRS("l");
+			db_printf("l");
 		if (instr & 0x2) {
-			APP_PSTRS("a");
+			db_printf("a");
 			loc = 0; /* Absolute address */
 		}
 		break;
 	case Op_LK:
 		if (instr & 0x1)
-			APP_PSTRS("l");
+			db_printf("l");
 		break;
 	default:
 		func &= ~Op_LKM;
@@ -716,91 +705,91 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 			if ((vaddr_t)BD < loc)
 				y ^= 1;
 		}
-		APP_PSTR("%c", y ? '+' : '-');
+		db_printf("%c", y ? '+' : '-');
 		func &= ~Op_BP;
 	}
-	APP_PSTRS("\t");
+	db_printf("\t");
 
 	/* XXX: special cases here, out of flags in a 32bit word. */
 	if (strcmp(popcode->name, "wrteei") == 0) {
 		int E;
 		E = extract_field(instr, 31 - 16, 5);
-		APP_PSTR("%d", E);
+		db_printf("%d", E);
 		return;
 	}
 	else if (strcmp(popcode->name, "mtfsfi") == 0) {
 		u_int UI;
 		UI = extract_field(instr, 31 - 8, 3);
-		APP_PSTR("crf%u, ", UI);
+		db_printf("crf%u, ", UI);
 		UI = extract_field(instr, 31 - 19, 4);
-		APP_PSTR("0x%x", UI);
+		db_printf("0x%x", UI);
 	}
 	/* XXX: end of special cases here. */
 
 	if ((func & Op_FM) == Op_FM) {
 		u_int FM;
 		FM = extract_field(instr, 31 - 14, 8);
-		APP_PSTR("0x%x, ", FM);
+		db_printf("0x%x, ", FM);
 		func &= ~Op_FM;
 	}
 	if (func & Op_D) {  /* Op_ST is the same */
 		u_int D;
 		D = extract_field(instr, 31 - 10, 5);
-		APP_PSTR("r%d, ", D);
+		db_printf("r%d, ", D);
 		func &= ~Op_D;
 	}
 	if (func & Op_crbD) {
 		u_int crbD;
 		crbD = extract_field(instr, 31 - 10, 5);
-		APP_PSTR("crb%d, ", crbD);
+		db_printf("crb%d, ", crbD);
 		func &= ~Op_crbD;
 	}
 	if (func & Op_crfD) {
 		u_int crfD;
 		crfD = extract_field(instr, 31 - 8, 3);
-		APP_PSTR("crf%d, ", crfD);
+		db_printf("crf%d, ", crfD);
 		func &= ~Op_crfD;
 	}
 	if (func & Op_TO) {
 		u_int TO;
 		TO = extract_field(instr, 31 - 10, 1);
-		APP_PSTR("%d, ", TO);
+		db_printf("%d, ", TO);
 		func &= ~Op_TO;
 	}
 	if (func & Op_crfS) {
 		u_int crfS;
 		crfS = extract_field(instr, 31 - 13, 3);
-		APP_PSTR("crf%d, ", crfS);
+		db_printf("crf%d, ", crfS);
 		func &= ~Op_crfS;
 	}
 	if (func & Op_CRM) {
 		u_int CRM;
 		CRM = extract_field(instr, 31 - 19, 8);
-		APP_PSTR("0x%x, ", CRM);
+		db_printf("0x%x, ", CRM);
 		func &= ~Op_CRM;
 	}
 	if (func & Op_BO) {
 		u_int BO;
 		BO = extract_field(instr, 31 - 10, 5);
-		APP_PSTR("%d, ", BO);
+		db_printf("%d, ", BO);
 		func &= ~Op_BO;
 	}
 	if (func & Op_BI) {
 		u_int BI;
 		BI = extract_field(instr, 31 - 15, 5);
-		APP_PSTR("%d, ", BI);
+		db_printf("%d, ", BI);
 		func &= ~Op_BI;
 	}
 	if (func & Op_dA) {  /* register A indirect with displacement */
 		u_int A;
 		A = extract_field(instr, 31 - 31, 16);
 		if (A & 0x8000) {
-			APP_PSTRS("-");
+			db_printf("-");
 			A = 0x10000-A;
 		}
-		APP_PSTR("0x%x", A);
+		db_printf("0x%x", A);
 		A = extract_field(instr, 31 - 15, 5);
-		APP_PSTR("(r%d)", A);
+		db_printf("(r%d)", A);
 		func &= ~Op_dA;
 	}
 	if (func & Op_spr) {
@@ -822,56 +811,56 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 			if (spr == regs[i].reg)
 				break;
 		if (regs[i].name == NULL)
-			APP_PSTR("[unknown special reg (%d)]", spr);
+			db_printf("[unknown special reg (%d)]", spr);
 		else
-			APP_PSTR("%s", regs[i].name);
+			db_printf("%s", regs[i].name);
 
 		if (popcode->name[1] == 't')	/* spr is destination */
-			APP_PSTRS(", ");
+			db_printf(", ");
 		func &= ~Op_spr;
 	}
 	if (func & Op_SR) {
 		u_int SR;
 		SR = extract_field(instr, 31 - 15, 3);
-		APP_PSTR("sr%d", SR);
+		db_printf("sr%d", SR);
 		if (popcode->name[1] == 't')	/* SR is destination */
-			APP_PSTRS(", ");
+			db_printf(", ");
 		func &= ~Op_SR;
 	}
 	if (func & Op_A) {
 		u_int A;
 		A = extract_field(instr, 31 - 15, 5);
-		APP_PSTR("r%d, ", A);
+		db_printf("r%d, ", A);
 		func &= ~Op_A;
 	}
 	if (func & Op_S) {
 		u_int D;
 		D = extract_field(instr, 31 - 10, 5);
-		APP_PSTR("r%d, ", D);
+		db_printf("r%d, ", D);
 		func &= ~Op_S;
 	}
 	if (func & Op_C) {
 		u_int C;
 		C = extract_field(instr, 31 - 25, 5);
-		APP_PSTR("r%d, ", C);
+		db_printf("r%d, ", C);
 		func &= ~Op_C;
 	}
 	if (func & Op_B) {
 		u_int B;
 		B = extract_field(instr, 31 - 20, 5);
-		APP_PSTR("r%d", B);
+		db_printf("r%d", B);
 		func &= ~Op_B;
 	}
 	if (func & Op_crbA) {
 		u_int crbA;
 		crbA = extract_field(instr, 31 - 15, 5);
-		APP_PSTR("%d, ", crbA);
+		db_printf("%d, ", crbA);
 		func &= ~Op_crbA;
 	}
 	if (func & Op_crbB) {
 		u_int crbB;
 		crbB = extract_field(instr, 31 - 20, 5);
-		APP_PSTR("%d, ", crbB);
+		db_printf("%d, ", crbB);
 		func &= ~Op_crbB;
 	}
 	if (func & Op_LI) {
@@ -881,8 +870,7 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		LI = LI << 8;
 		LI = LI >> 6;
 		LI += loc;
-		db_symstr(pstr, slen, LI, DB_STGY_ANY);
-		ADD_LEN(strlen(pstr));
+		db_printsym(LI, DB_STGY_ANY, db_printf);
 		func &= ~Op_LI;
 	}
 	switch (func & Op_SIMM) {
@@ -890,7 +878,7 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 	case Op_SIMM: /* same as Op_d */
 		IMM = extract_field(instr, 31 - 31, 16);
 		if (IMM & 0x8000) {
-			APP_PSTRS("-");
+			db_printf("-");
 			IMM = 0x10000-IMM;
 		}
 		func &= ~Op_SIMM;
@@ -900,7 +888,7 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		func &= ~Op_UIMM;
 		goto common;
 	common:
-		APP_PSTR("0x%x", IMM);
+		db_printf("0x%x", IMM);
 		break;
 	default:
 		;
@@ -912,14 +900,13 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		BD = BD << 18;
 		BD = BD >> 16;
 		BD += loc;
-		db_symstr(pstr, slen, BD, DB_STGY_ANY);
-		ADD_LEN(strlen(pstr));
+		db_printsym(BD, DB_STGY_ANY, db_printf);
 		func &= ~Op_BD;
 	}
 	if (func & Op_ds) {
 		u_int ds;
 		ds = extract_field(instr, 31 - 29, 14) << 2;
-		APP_PSTR("0x%x", ds);
+		db_printf("0x%x", ds);
 		func &= ~Op_ds;
 	}
 	if (func & Op_me) {
@@ -927,42 +914,42 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		mel = extract_field(instr, 31 - 25, 4);
 		meh = extract_field(instr, 31 - 26, 1);
 		me = meh << 4 | mel;
-		APP_PSTR(", 0x%x", me);
+		db_printf(", 0x%x", me);
 		func &= ~Op_me;
 	}
 	if ((func & Op_SH) && (func & Op_sh_mb_sh)) {
 		u_int SH;
 		SH = extract_field(instr, 31 - 20, 5);
-		APP_PSTR("%d", SH);
+		db_printf("%d", SH);
 	}
 	if ((func & Op_MB) && (func & Op_sh_mb_sh)) {
 		u_int MB;
 		u_int ME;
 		MB = extract_field(instr, 31 - 25, 5);
-		APP_PSTR(", %d", MB);
+		db_printf(", %d", MB);
 		ME = extract_field(instr, 31 - 30, 5);
-		APP_PSTR(", %d", ME);
+		db_printf(", %d", ME);
 	}
 	if ((func & Op_sh) && ! (func & Op_sh_mb_sh)) {
 		u_int sh, shl, shh;
 		shl = extract_field(instr, 31 - 19, 4);
 		shh = extract_field(instr, 31 - 20, 1);
 		sh = shh << 4 | shl;
-		APP_PSTR(", %d", sh);
+		db_printf(", %d", sh);
 	}
 	if ((func & Op_mb) && ! (func & Op_sh_mb_sh)) {
 		u_int mb, mbl, mbh;
 		mbl = extract_field(instr, 31 - 25, 4);
 		mbh = extract_field(instr, 31 - 26, 1);
 		mb = mbh << 4 | mbl;
-		APP_PSTR(", %d", mb);
+		db_printf(", %d", mb);
 	}
 	if ((func & Op_me) && ! (func & Op_sh_mb_sh)) {
 		u_int me, mel, meh;
 		mel = extract_field(instr, 31 - 25, 4);
 		meh = extract_field(instr, 31 - 26, 1);
 		me = meh << 4 | mel;
-		APP_PSTR(", %d", me);
+		db_printf(", %d", me);
 	}
 	if (func & Op_tbr) {
 		u_int tbr;
@@ -984,9 +971,9 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 			reg = 0;
 		}
 		if (reg == 0)
-			APP_PSTR(", [unknown tbr %d ]", tbr);
+			db_printf(", [unknown tbr %d ]", tbr);
 		else
-			APP_PSTR(", %s", reg);
+			db_printf(", %s", reg);
 		func &= ~Op_tbr;
 	}
 	if (func & Op_NB) {
@@ -994,12 +981,9 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		NB = extract_field(instr, 31 - 20, 5);
 		if (NB == 0)
 			NB = 32;
-		APP_PSTR(", %d", NB);
+		db_printf(", %d", NB);
 		func &= ~Op_SR;
 	}
-#undef ADD_LEN
-#undef APP_PSTR
-#undef APP_PSTRS
 }
 
 void
@@ -1056,16 +1040,14 @@ dis_ppc(const struct opcode *opcodeset, instr_t instr, vaddr_t loc)
 	const struct opcode *op;
 	int found = 0;
 	int i;
-	char disasm_str[80];
 
 	for (i = 0, op = &opcodeset[0];
 	    found == 0 && op->mask != 0;
 	    i++, op = &opcodeset[i]) {
 		if ((instr & op->mask) == op->code) {
 			found = 1;
-			disasm_fields(op, instr, loc, disasm_str,
-				sizeof disasm_str);
-			db_printf("%s%s\n", op->name, disasm_str);
+			db_printf("%s", op->name);
+			disasm_fields(op, instr, loc);
 			return;
 		}
 	}
@@ -1077,7 +1059,8 @@ db_disasm(db_addr_t loc, bool extended)
 {
 	int class;
 	instr_t opcode;
-	opcode = *(instr_t *)(loc);
+
+	db_read_bytes(loc, sizeof(opcode), (char *)&opcode);
 	class = opcode >> 26;
 	(opcodes_base[class])(opcode, loc);
 
