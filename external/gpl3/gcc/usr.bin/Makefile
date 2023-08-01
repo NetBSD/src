@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2021/04/23 22:50:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2023/08/01 05:57:53 mrg Exp $
 
 NOOBJ=# defined
 
@@ -16,12 +16,12 @@ SUBDIR+=	host-libiberty .WAIT \
 		backend .WAIT \
 		frontend .WAIT \
 		common common-target .WAIT \
-		libcpp libdecnumber .WAIT \
+		libcody libcpp libdecnumber .WAIT \
 		gcov gcov-dump cc1 cc1obj cc1objplus cc1plus cpp g++ gcc \
-		lto1 lto-wrapper lto-dump \
-		include
-
+		lto1 lto-wrapper lto-dump
 .endif
+
+SUBDIR+=	include
 
 .include <bsd.subdir.mk>
 

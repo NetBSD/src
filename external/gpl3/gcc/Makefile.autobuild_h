@@ -1,0 +1,42 @@
+#	$NetBSD: Makefile.autobuild_h,v 1.1 2023/08/01 05:57:53 mrg Exp $
+
+# makefile fragment to create auto-build.h
+
+.ifndef GCC_MAKEFILE_AUTOBUILD_H
+GCC_MAKEFILE_AUTOBUILD_H=1
+
+# Yuck, we have to run configure to generate this one...
+# We use ORIGHOST_CC here because GCC's ./configure expects (and
+# depends upon) it.
+CLEANFILES+=	auto-build.h
+HOST_CFLAGS+= -I${.OBJDIR}
+HOST_CXXFLAGS+= -I${.OBJDIR}
+
+# Set this to "true" to leave .ab around
+HOST_AB_CLEAN?=	rm -rf .ab
+
+auto-build.h: gmp.h Makefile
+	${_MKTARGET_CREATE}
+	rm -rf .ab && \
+	mkdir .ab && \
+	(cd .ab && \
+		AWK=${TOOL_AWK:Q} \
+		CC=${ORIGHOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} \
+		CPPFLAGS=${HOST_CPPFLAGS:Q} \
+		CXX=${HOST_CXX:Q} CXXFLAGS=${HOST_CXXFLAGS:Q} \
+		MAKE=${TOOL_GMAKE:Q} \
+		CONFIG_SHELL=${HOST_SH:Q} \
+		gcc_cv_ld=${LD:Q} \
+		gcc_cv_as=${AS:Q} \
+		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
+			--build=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
+			--host=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
+			--target=${MACHINE_GNU_PLATFORM} && \
+		mv auto-host.h ../auto-build.h) && \
+	${HOST_AB_CLEAN}
+
+GMPDISTDIR=	${NETBSDSRCDIR}/external/lgpl3/gmp
+BUILDSYMLINKS+=	${GMPDISTDIR}/lib/libgmp/arch/${GMP_MACHINE_ARCH}/gmp.h gmp.h
+DPSRCS+=	gmp.h
+
+.endif # GCC_MAKEFILE_AUTOBUILD_H

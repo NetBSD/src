@@ -1,0 +1,66 @@
+#	$NetBSD: Makefile.version_h,v 1.1 2023/08/01 05:57:53 mrg Exp $
+
+# makefile fragment to build version.h
+
+.ifndef GCC_MAKEFILE_VERSION_H
+GCC_MAKEFILE_VERSION_H=1
+
+BASEVER!=		cat ${GNUHOSTDIST}/gcc/BASE-VER
+.if exists(${GNUHOSTDIST}/gcc/DEV-PHASE)
+DEVPHASE!=		cat ${GNUHOSTDIST}/gcc/DEV-PHASE
+.else
+DEVPHASE=
+.endif
+.if ${DEVPHASE} == "release" || ${DEVPHASE} == ""
+DATESTAMP=
+.else
+DATESTAMP!=		cat ${GNUHOSTDIST}/gcc/DATESTAMP
+.endif
+
+BASEVERSTR=		"\"$(BASEVER)\""
+.if !empty(DEVPHASE)
+DEVPHASESTR=		"\" $(DEVPHASE)\""
+.else
+DEVPHASESTR=		"\"\""
+.endif
+.if !empty(DATESTAMP)
+DATESTAMPSTR=		"\" $(DATESTAMP)\""
+.else
+DATESTAMPSTR=		"\"\""
+.endif
+
+.include "${NETBSDSRCDIR}/tools/gcc/gcc-version.mk"
+
+# XXX pull this out of our configs
+G_BUGURL=<http://www.NetBSD.org/support/send-pr.html>
+G_BUGURL_s="\"${G_BUGURL}\""
+G_PKGVERSION=(${NETBSD_GCC_VERSION}) 
+G_PKGVERSION_s="\"${G_PKGVERSION} \""
+
+VER_CPPFLAGS=	-DBASEVER=$(BASEVERSTR) \
+		-DDATESTAMP=$(DATESTAMPSTR) \
+		-DREVISION=$(REVISION_s) \
+		-DDEVPHASE=$(DEVPHASESTR) \
+		-DPKGVERSION=$(G_PKGVERSION_s) \
+		-DBUGURL=$(G_BUGURL_s)
+
+CPPFLAGS.genversion.cc+=	${VER_CPPFLAGS} \
+				-I${GCCARCH} \
+				-I${GCC_SUBDIR}/dist/include
+# XXXMRG for now, needs "nbmake-foo auto-build.h" in usr.bin/backend
+#BINBACKENDOBJ!=	cd ${GCC_SUBDIR}/usr.bin/backend && ${PRINTOBJDIR}
+#CPPFLAGS.genversion.cc+=	-I${BINBACKENDOBJ}
+CPPFLAGS.genversion.cc+=	-I.
+genversion.cc: auto-build.h
+# XXXMRG for now
+version.h: genversion
+	${_MKTARGET_LINK}
+	./genversion >${.TARGET}
+genversion.lo: Makefile
+genversion: genversion.lo
+	${_MKTARGET_LINK}
+	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBCPP} ${HOSTLIBIBERTY}
+
+CLEANFILES+=	version.h genversion genversion.lo
+
+.endif # GCC_MAKEFILE_VERSION_H

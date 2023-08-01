@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2016/03/15 19:12:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2023/08/01 05:57:55 mrg Exp $
 
 PROG=		gcc
-SRCS=		gccspec.c ${G_GCC_OBJS:.o=.c}
+SRCS=		gccspec.cc ${G_GCC_OBJS:.o=.cc}
 
 .include "../Makefile.target-defines"
 
-COPTS.builtins.c = -Wno-stack-protector
+#COPTS.builtins.cc = -Wno-stack-protector
 
 LINKS+=		${BINDIR}/gcc ${BINDIR}/cc 
 
@@ -24,8 +24,8 @@ ${SRCS}: ${GCCARCH}/defs.mk
 
 .include <bsd.info.mk>
 
-COPTS.gcc.c=	-Wno-stack-protector
-.if ${MACHINE_ARCH} == "vax"
+#COPTS.gcc.cc=	-Wno-stack-protector
+.if ${MACHINE_ARCH} == "vax" && 0
 COPTS.dse.c=	-O1
 .endif
 
