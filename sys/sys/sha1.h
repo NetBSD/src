@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.h,v 1.15 2016/07/01 16:43:16 christos Exp $	*/
+/*	$NetBSD: sha1.h,v 1.16 2023/08/01 07:04:16 mrg Exp $	*/
 
 /*
  * SHA-1 in C
@@ -28,10 +28,10 @@ void	SHA1Init(SHA1_CTX *);
 void	SHA1Update(SHA1_CTX *, const uint8_t *, unsigned int);
 void	SHA1Final(uint8_t[SHA1_DIGEST_LENGTH], SHA1_CTX *);
 #ifndef _KERNEL
-char	*SHA1End(SHA1_CTX *, char *);
+char	*SHA1End(SHA1_CTX *, char[SHA1_DIGEST_STRING_LENGTH]);
 char	*SHA1FileChunk(const char *, char *, off_t, off_t);
 char	*SHA1File(const char *, char *);
-char	*SHA1Data(const uint8_t *, size_t, char *);
+char	*SHA1Data(const uint8_t *, size_t, char[SHA1_DIGEST_STRING_LENGTH]);
 #endif /* _KERNEL */
 __END_DECLS
 

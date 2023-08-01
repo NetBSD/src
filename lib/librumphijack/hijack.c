@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.138 2023/07/31 04:37:04 rin Exp $	*/
+/*      $NetBSD: hijack.c,v 1.139 2023/08/01 07:04:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.138 2023/07/31 04:37:04 rin Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.139 2023/08/01 07:04:15 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2628,13 +2628,13 @@ FDCALL(int, fsync_range, DUALCALL_FSYNC_RANGE,				\
 #endif
 
 FDCALL(int, futimes, DUALCALL_FUTIMES,					\
-	(int fd, const struct timeval *tv),				\
-	(int, const struct timeval *),					\
+	(int fd, const struct timeval tv[2]),				\
+	(int, const struct timeval[2]),					\
 	(fd, tv))
 
 FDCALL(int, futimens, DUALCALL_FUTIMENS,				\
-	(int fd, const struct timespec *ts),				\
-	(int, const struct timespec *),					\
+	(int fd, const struct timespec ts[2]),				\
+	(int, const struct timespec[2]),				\
 	(fd, ts))
 
 #ifdef HAVE_CHFLAGS
@@ -2734,13 +2734,13 @@ PATHCALL(int, rmdir, DUALCALL_RMDIR,					\
 	(path))
 
 PATHCALL(int, utimes, DUALCALL_UTIMES,					\
-	(const char *path, const struct timeval *tv),			\
-	(const char *, const struct timeval *),				\
+	(const char *path, const struct timeval tv[2]),			\
+	(const char *, const struct timeval[2]),			\
 	(path, tv))
 
 PATHCALL(int, lutimes, DUALCALL_LUTIMES,				\
-	(const char *path, const struct timeval *tv),			\
-	(const char *, const struct timeval *),				\
+	(const char *path, const struct timeval tv[2]),			\
+	(const char *, const struct timeval[2]),			\
 	(path, tv))
 
 #ifdef HAVE_CHFLAGS

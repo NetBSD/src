@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_utimes.c,v 1.2 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: compat_utimes.c,v 1.3 2023/08/01 07:04:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_utimes.c,v 1.2 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: compat_utimes.c,v 1.3 2023/08/01 07:04:15 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -52,7 +52,7 @@ __warn_references(futimes,
  * libc12 compatible f,l,utimes routine.
  */
 int
-utimes(const char *path, const struct timeval50 *tv50)
+utimes(const char *path, const struct timeval50 tv50[2])
 {
 	struct timeval tv[2];
 
@@ -64,7 +64,7 @@ utimes(const char *path, const struct timeval50 *tv50)
 }
 
 int
-lutimes(const char *path, const struct timeval50 *tv50)
+lutimes(const char *path, const struct timeval50 tv50[2])
 {
 	struct timeval tv[2];
 
@@ -76,7 +76,7 @@ lutimes(const char *path, const struct timeval50 *tv50)
 }
 
 int
-futimes(int fd, const struct timeval50 *tv50)
+futimes(int fd, const struct timeval50 tv50[2])
 {
 	struct timeval tv[2];
 

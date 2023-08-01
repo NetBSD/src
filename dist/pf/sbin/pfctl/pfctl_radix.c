@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_radix.c,v 1.5 2008/06/18 09:06:26 yamt Exp $	*/
+/*	$NetBSD: pfctl_radix.c,v 1.6 2023/08/01 07:04:14 mrg Exp $	*/
 /*	$OpenBSD: pfctl_radix.c,v 1.27 2005/05/21 21:03:58 henning Exp $ */
 
 /*
@@ -52,7 +52,7 @@
 
 extern int dev;
 
-static int	 pfr_next_token(char buf[], FILE *);
+static int	 pfr_next_token(char buf[BUF_SIZE], FILE *);
 
 
 int

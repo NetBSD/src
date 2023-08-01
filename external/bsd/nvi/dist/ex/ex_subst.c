@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_subst.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: ex_subst.c,v 1.5 2023/08/01 07:04:14 mrg Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: ex_subst.c,v 10.50 2002/02/09 21:18:23 skimo Exp  (Berkeley) Date: 2002/02/09 21:18:23 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_subst.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: ex_subst.c,v 1.5 2023/08/01 07:04:14 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1320,7 +1320,7 @@ re_error(SCR *sp, int errcode, regex_t *preg)
  * 	Do the substitution for a regular expression.
  */
 static int
-re_sub(SCR *sp, CHAR_T *ip, CHAR_T **lbp, size_t *lbclenp, size_t *lblenp, regmatch_t *match)
+re_sub(SCR *sp, CHAR_T *ip, CHAR_T **lbp, size_t *lbclenp, size_t *lblenp, regmatch_t match[10])
 	        
 	           			/* Input line. */
 	             

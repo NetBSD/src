@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.h,v 1.3 2021/12/19 11:38:03 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.h,v 1.4 2023/08/01 07:04:16 mrg Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -11,6 +11,7 @@
 #include <linux/types.h>
 
 #include <drm/i915_drm.h>
+#include <drm/drm_dp_helper.h>
 
 #include "i915_reg.h"
 
@@ -107,7 +108,8 @@ void intel_dp_compute_rate(struct intel_dp *intel_dp, int port_clock,
 bool intel_dp_source_supports_hbr2(struct intel_dp *intel_dp);
 bool intel_dp_source_supports_hbr3(struct intel_dp *intel_dp);
 bool
-intel_dp_get_link_status(struct intel_dp *intel_dp, u8 *link_status);
+intel_dp_get_link_status(struct intel_dp *intel_dp, u8
+			 link_status[DP_LINK_STATUS_SIZE]);
 
 bool intel_dp_read_dpcd(struct intel_dp *intel_dp);
 bool intel_dp_get_colorimetry_status(struct intel_dp *intel_dp);

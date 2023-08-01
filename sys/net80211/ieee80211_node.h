@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.31 2022/02/16 22:00:56 andvar Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.32 2023/08/01 07:04:16 mrg Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -283,7 +283,8 @@ void	ieee80211_dump_node(struct ieee80211_node_table *,
 void	ieee80211_dump_nodes(struct ieee80211_node_table *);
 
 struct ieee80211_node *ieee80211_fakeup_adhoc_node(
-		struct ieee80211_node_table *, const u_int8_t macaddr[]);
+		struct ieee80211_node_table *,
+		const u_int8_t macaddr[IEEE80211_ADDR_LEN]);
 void	ieee80211_node_join(struct ieee80211com *, struct ieee80211_node *,int);
 void	ieee80211_node_leave(struct ieee80211com *, struct ieee80211_node *);
 u_int8_t ieee80211_getrssi(struct ieee80211com *ic);

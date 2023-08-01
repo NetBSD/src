@@ -1,4 +1,4 @@
-/*	$NetBSD: util-internal.h,v 1.7 2021/04/10 19:18:45 rillig Exp $	*/
+/*	$NetBSD: util-internal.h,v 1.8 2023/08/01 07:04:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -305,7 +305,7 @@ int evutil_socket_connect_(evutil_socket_t *fd_ptr, const struct sockaddr *sa, i
 int evutil_socket_finished_connecting_(evutil_socket_t fd);
 
 EVENT2_EXPORT_SYMBOL
-int evutil_ersatz_socketpair_(int, int , int, evutil_socket_t[]);
+int evutil_ersatz_socketpair_(int, int , int, evutil_socket_t[2]);
 
 int evutil_resolve_(int family, const char *hostname, struct sockaddr *sa,
     ev_socklen_t *socklen, int port);

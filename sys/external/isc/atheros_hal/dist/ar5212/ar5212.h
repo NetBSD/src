@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212.h,v 1.4 2011/03/07 11:25:43 cegger Exp $
+ * $Id: ar5212.h,v 1.5 2023/08/01 07:04:16 mrg Exp $
  */
 #ifndef _ATH_AR5212_H_
 #define _ATH_AR5212_H_
@@ -541,7 +541,7 @@ extern	HAL_BOOL ar5212PerCalibrationN(struct ath_hal *ah, HAL_CHANNEL *chan,
 extern	HAL_BOOL ar5212ResetCalValid(struct ath_hal *ah, HAL_CHANNEL *chan);
 extern	int16_t ar5212GetNoiseFloor(struct ath_hal *ah);
 extern	void ar5212InitNfCalHistBuffer(struct ath_hal *);
-extern	int16_t ar5212GetNfHistMid(const int16_t calData[]);
+extern	int16_t ar5212GetNfHistMid(const int16_t calData[AR512_NF_CAL_HIST_MAX]);
 extern	void ar5212SetSpurMitigation(struct ath_hal *, HAL_CHANNEL_INTERNAL *);
 extern	HAL_BOOL ar5212SetAntennaSwitchInternal(struct ath_hal *ah,
 		HAL_ANT_SETTING settings, const HAL_CHANNEL_INTERNAL *ichan);

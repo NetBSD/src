@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.4 2018/08/13 09:54:19 christos Exp $ */
+/* $NetBSD: sha2.c,v 1.5 2023/08/01 07:04:14 mrg Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -588,7 +588,7 @@ netpgpv_SHA224_256_Final(uint8_t digest[], NETPGPV_SHA256_CTX *context, size_t l
 }
 
 int
-netpgpv_SHA256_Final(uint8_t digest[], NETPGPV_SHA256_CTX *context)
+netpgpv_SHA256_Final(uint8_t digest[32], NETPGPV_SHA256_CTX *context)
 {
 	return netpgpv_SHA224_256_Final(digest, context, SHA256_DIGEST_LENGTH);
 }
@@ -622,7 +622,7 @@ netpgpv_SHA224_Transform(NETPGPV_SHA224_CTX *context, const uint32_t *data)
 }
 
 int
-netpgpv_SHA224_Final(uint8_t digest[], NETPGPV_SHA224_CTX *context)
+netpgpv_SHA224_Final(uint8_t digest[28], NETPGPV_SHA224_CTX *context)
 {
 	return netpgpv_SHA224_256_Final(digest, (NETPGPV_SHA256_CTX *)context,
 	    SHA224_DIGEST_LENGTH);
@@ -915,7 +915,7 @@ netpgpv_SHA512_Last(NETPGPV_SHA512_CTX *context)
 }
 
 int
-netpgpv_SHA512_Final(uint8_t digest[], NETPGPV_SHA512_CTX *context)
+netpgpv_SHA512_Final(uint8_t digest[64], NETPGPV_SHA512_CTX *context)
 {
 	size_t i;
 
@@ -962,7 +962,7 @@ netpgpv_SHA384_Transform(NETPGPV_SHA512_CTX *context, const uint64_t *data)
 }
 
 int
-netpgpv_SHA384_Final(uint8_t digest[], NETPGPV_SHA384_CTX *context)
+netpgpv_SHA384_Final(uint8_t digest[48], NETPGPV_SHA384_CTX *context)
 {
 	size_t i;
 

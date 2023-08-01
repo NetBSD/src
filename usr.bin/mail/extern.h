@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.34 2016/09/05 00:40:29 sevan Exp $	*/
+/*	$NetBSD: extern.h,v 1.35 2023/08/01 07:04:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$NetBSD: extern.h,v 1.34 2016/09/05 00:40:29 sevan Exp $
+ *	$NetBSD: extern.h,v 1.35 2023/08/01 07:04:17 mrg Exp $
  */
 
 #ifndef __EXTERN_H__
@@ -289,7 +289,7 @@ int	blankline(char []);
 char *	copy(char *, char *);
 char *	hfield(const char [], const struct message *);
 int	isdir(const char []);
-int	isign(const char *, struct ignoretab []);
+int	isign(const char *, struct ignoretab [2]);
 void	istrcpy(char *, const char *);
 int	member(char *, struct ignoretab *);
 char *	nameof(struct message *, int);

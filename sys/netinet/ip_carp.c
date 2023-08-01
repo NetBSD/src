@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.119 2023/04/07 06:44:08 mlelstv Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.120 2023/08/01 07:04:16 mrg Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.119 2023/04/07 06:44:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.120 2023/08/01 07:04:16 mrg Exp $");
 
 /*
  * TODO:
@@ -186,10 +186,10 @@ struct carp_if {
 	}
 
 static void	carp_hmac_prepare(struct carp_softc *);
-static void	carp_hmac_generate(struct carp_softc *, u_int32_t *,
-		    unsigned char *);
-static int	carp_hmac_verify(struct carp_softc *, u_int32_t *,
-		    unsigned char *);
+static void	carp_hmac_generate(struct carp_softc *, u_int32_t[2],
+		    unsigned char[20]);
+static int	carp_hmac_verify(struct carp_softc *, u_int32_t[2],
+		    unsigned char[20]);
 static void	carp_setroute(struct carp_softc *, int);
 static void	carp_proto_input_c(struct mbuf *, struct carp_header *,
 		    sa_family_t);
