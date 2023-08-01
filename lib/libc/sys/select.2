@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.44 2023/07/07 01:31:25 riastradh Exp $
+.\"	$NetBSD: select.2,v 1.45 2023/08/01 23:33:04 gutteridge Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd November 28, 2013
+.Dd August 1, 2023
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -273,6 +273,10 @@ The
 .Fn select
 function call appeared in
 .Bx 4.2 .
+The
+.Fn pselect
+function call first appeared in
+.Nx 3.0 .
 .Sh BUGS
 Although the provision of
 .Xr getdtablesize 3
