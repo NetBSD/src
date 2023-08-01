@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.52 2022/07/22 21:59:11 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.53 2023/08/01 05:57:56 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -207,6 +207,26 @@ ${LSE_NAMES:=.go}: ${LSE_SRC} Makefile
 G_LIB2ADD+=	${GNUHOSTDIST}/libgcc/config/aarch64/lse-init.c
 
 .endif # } arm64
+
+.if (${LIBGCC_MACHINE_ARCH} == "x86_64" || \
+     ${LIBGCC_MACHINE_ARCH} == "i386") # {
+
+.if ${LIBGCC_MACHINE_ARCH} == "x86_64"
+MSSE_FILES=	fixhfti.c fixunshfti.c floattihf.c floatunstihf.c
+.endif
+
+.if ${LIBGCC_MACHINE_ARCH} == "i386"
+MSSE_FILES=	extendhfsf2.c extendhfdf2.c extendhftf2.c extendhfxf2.c \
+		truncsfhf2.c truncdfhf2.c truncxfhf2.c trunctfhf2.c \
+		eqhf2.c _divhc3.c _mulhc3.c
+
+.endif # } i386
+
+.for _f in ${MSSE_FILES}
+COPTS.${_f}+=	-msse2
+.endfor
+
+.endif # } x86
 
 # Use dynamic sources to arrange for the C file to be the first dependency
 # so ${.IMPSRC} will work.

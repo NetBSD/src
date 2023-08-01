@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2023/06/03 21:31:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.69 2023/08/01 05:57:54 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -8,7 +8,7 @@ LIBISPRIVATE=	yes
 
 LIB=		backend
 
-SRCS=		${G_OBJS:S,analyzer/,,} ${G_out_file:T} regsub.c
+SRCS=		${G_OBJS:S,analyzer/,,:S,rtl-ssa/,,} ${G_out_file:T} regsub.cc
 
 # XXX: something misses these.
 CLEANDIRFILES+=	${G_OBJS:.o=.d}
@@ -21,16 +21,17 @@ BOTH_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 CPPFLAGS+=	${BOTH_CPPFLAGS} -DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
 HOST_CPPFLAGS+=	-I${HOST_LIBIBERTYOBJ}/libiberty
 HOST_CPPFLAGS+=	${BOTH_CPPFLAGS} -DGENERATOR_FILE
+DPSRCS+=	version.h
 DPSRCS+=	insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 DPSRCS+=	${DIST}/gcc/BASE-VER
 CPPFLAGS+=	-I${DIST}/libgcc
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${MACHINE_ARCH}
 
-CPPFLAGS.cppdefault.c+=	-DPREFIX=\"/usr\" \
-			-DNATIVE_SYSTEM_HEADER_DIR=\"${G_NATIVE_SYSTEM_HEADER_DIR}\"
-CPPFLAGS.lto-streamer-in.c+=	-DTARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
+CPPFLAGS.cppdefault.cc+=	-DPREFIX=\"/usr\" \
+				-DNATIVE_SYSTEM_HEADER_DIR=\"${G_NATIVE_SYSTEM_HEADER_DIR}\"
+CPPFLAGS.lto-streamer-in.cc+=	-DTARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
 
-HOST_CXXFLAGS+=	-std=gnu++98
+HOST_CXXFLAGS+=	-std=gnu++11
 
 HOST_LIBIBERTYOBJ!=	cd ${.CURDIR}/../host-libiberty && ${PRINTOBJDIR}
 
@@ -42,27 +43,27 @@ HOST_CC:=	${HOST_CXX}
 CC:=		${CXX}
 CFLAGS:=	${CXXFLAGS}
 
-# Check PREPROCESSOR_DEFINES for cppbuiltin.c and cppdefault.c
-CPPFLAGS.cppbuiltin.c+=	-DBASEVER="\"${BASEVER}"\"
+# Check PREPROCESSOR_DEFINES for cppbuiltin.cc and cppdefault.cc
+CPPFLAGS.cppbuiltin.cc+=	-DBASEVER="\"${BASEVER}"\"
 
 #
 # Independent generation programs.
 #
 CLEANFILES+=	gengenrtl genrtl.h \
-		gengtype gtyp-gen.h gtype-brig.h gtype-desc.c gtype-desc.h \
+		gengtype gtyp-gen.h gtype-brig.h gtype-desc.cc gtype-desc.h \
 		gtype-c.h gtype-cp.h gtype-f.h gtype-objc.h \
 		genflags genflags.h \
 		gencheck tree-check.h \
-		insn-preds.c genpreds tm-preds.h tm_p.h cs-tm_p.h \
+		insn-preds.cc genpreds tm-preds.h tm_p.h cs-tm_p.h \
 		auto-host.h \
 		gt-*.h *.o *.lo \
 		cs-config.h \
-		gcov-iov gcov-iov.h \
+		version.h \
 		gtype-go.h gtype.state \
 		pass-instances.def
 
 # XXX
-COPTS.varasm.c=			-Wno-error
+#COPTS.varasm.cc=		-Wno-error
 
 # XXX Override the normal rule to use HOST_COMPILE.cc
 .c.lo:
@@ -86,7 +87,7 @@ gengenrtl: gengenrtl.lo build-errors.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
-insn-preds.c: genpreds ${G_md_file}
+insn-preds.cc: genpreds ${G_md_file}
 	${_MKTARGET_CREATE}
 	./genpreds ${G_md_file} >${.TARGET}
 tm-preds.h: genpreds ${G_md_file}
@@ -104,7 +105,7 @@ CLEANFILES+=	gtyp-input.list.tmp
 # XXX
 CLEANFILES+=	gtype-lto.h gtype-objcp.h tm-constrs.h gtype-jit.h
 
-gtype-desc.c: gtype-desc.h
+gtype-desc.cc: gtype-desc.h
 gtype-desc.h: gengtype gtyp-input.list.tmp
 	${_MKTARGET_CREATE}
 	rm -f auto-host.h
@@ -118,17 +119,17 @@ gtype-desc.h: gengtype gtyp-input.list.tmp
 	# GCC 4.8 installs gtype-state and gengtype as a plugin
 
 # gengtype is the real need for options.h
-gengtype.lo gengtype-lex.lo gengtype-parse.lo gengtype-state.lo version.lo: ${HH} gtyp-gen.h config.h options.h
-gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo gengtype-state.lo build-errors.lo version.lo
+gengtype.lo gengtype-lex.lo gengtype-parse.lo gengtype-state.lo: ${HH} gtyp-gen.h config.h options.h
+gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo gengtype-state.lo build-errors.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
 # XXX fix this by properly marking all the files that should
 # XXX be built with -DGENERATOR_FILE
-COPTS.gengtype-lex.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
-COPTS.gengtype-parse.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
-COPTS.gengtype-state.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
-COPTS.gengtype.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
+COPTS.gengtype-lex.cc=		-UGENERATOR_FILE -DHOST_GENERATOR_FILE
+COPTS.gengtype-parse.cc=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
+COPTS.gengtype-state.cc=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
+COPTS.gengtype.cc=		-UGENERATOR_FILE -DHOST_GENERATOR_FILE
 
 gtyp-gen.h: Makefile
 	${_MKTARGET_CREATE}
@@ -149,7 +150,7 @@ gtyp-gen.h: Makefile
 	echo "NULL };"							; \
 	) >${.TARGET}
 
-insn-modes.c: genmodes
+insn-modes.cc: genmodes
 	${_MKTARGET_CREATE}
 	./genmodes >${.TARGET}
 insn-modes.h-test: genmodes
@@ -160,7 +161,7 @@ insn-modes.h-test: genmodes
 		echo "Checked in insn-modes.h does not match; rerun mknative-gcc." 1>&2
 		false
 	fi
-min-insn-modes.c: genmodes
+min-insn-modes.cc: genmodes
 	${_MKTARGET_CREATE}
 	./genmodes -m >${.TARGET}
 insn-modes-inline.h: genmodes
@@ -171,28 +172,22 @@ genmodes: genmodes.lo build-errors.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
-CLEANFILES+=	genmodes insn-modes.c insn-modes.h-test min-insn-modes.c insn-modes-inline.h
+CLEANFILES+=	genmodes insn-modes.cc insn-modes.h-test min-insn-modes.cc insn-modes-inline.h
 
-gimple-match.c: genmatch cfn-operators.pd
-	./genmatch --gimple ${GNUHOSTDIST}/gcc/match.pd > gimple-match.c.tmp
-	mv gimple-match.c.tmp gimple-match.c
-generic-match.c: genmatch cfn-operators.pd
-	./genmatch --generic ${GNUHOSTDIST}/gcc/match.pd > generic-match.c.tmp
-	mv generic-match.c.tmp generic-match.c
+gimple-match.cc: genmatch cfn-operators.pd
+	./genmatch --gimple ${GNUHOSTDIST}/gcc/match.pd > gimple-match.cc.tmp
+	mv gimple-match.cc.tmp gimple-match.cc
+generic-match.cc: genmatch cfn-operators.pd
+	./genmatch --generic ${GNUHOSTDIST}/gcc/match.pd > generic-match.cc.tmp
+	mv generic-match.cc.tmp generic-match.cc
 genmatch.lo: ${HH_NORTL} ${G_GGC_H} case-cfn-macros.h
 genmatch: genmatch.lo build-errors.lo build-vec.lo build-hash-table.lo build-sort.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBCPP} ${HOSTLIBIBERTY}
 
-CLEANFILES+=	genmatch gimple-match.c generic-match.c
+CLEANFILES+=	genmatch gimple-match.cc generic-match.cc
 
-gcov-iov.h: gcov-iov
-	${_MKTARGET_CREATE}
-	./gcov-iov "${BASEVER}" "${DEVPHASE}" >${.TARGET}
-gcov-iov.lo: ${HH_NORTL}
-gcov-iov: gcov-iov.lo
-	${_MKTARGET_CREATE}
-	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+.include "${.PARSEDIR}/../../Makefile.version_h"
 
 tm_p.h: Makefile tm-preds.h
 	${_MKTARGET_CREATE}
@@ -204,36 +199,7 @@ tm_p.h: Makefile tm-preds.h
 ${G_OBJS} ${G_OBJS:.o=.d}:	tm.h tm_p.h insn-opinit.h
 
 .include "../Makefile.options"
-
-# Yuck, we have to run configure to generate this one...
-# We use ORIGHOST_CC here because GCC's ./configure expects (and
-# depends upon) it.
-CLEANFILES+=	auto-build.h
-HOST_CFLAGS+= -I${.OBJDIR}
-HOST_CXXFLAGS+= -I${.OBJDIR}
-
-# Set this to "true" to leave .ab around
-HOST_AB_CLEAN?=	rm -rf .ab
-
-auto-build.h: gmp.h Makefile
-	${_MKTARGET_CREATE}
-	rm -rf .ab && \
-	mkdir .ab && \
-	(cd .ab && \
-		AWK=${TOOL_AWK:Q} \
-		CC=${ORIGHOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} \
-		CPPFLAGS=${HOST_CPPFLAGS:Q} \
-		CXX=${HOST_CXX:Q} CXXFLAGS=${HOST_CXXFLAGS:Q} \
-		MAKE=${TOOL_GMAKE:Q} \
-		CONFIG_SHELL=${HOST_SH:Q} \
-		gcc_cv_ld=${LD:Q} \
-		gcc_cv_as=${AS:Q} \
-		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
-			--build=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
-			--host=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
-			--target=${MACHINE_GNU_PLATFORM} && \
-		mv auto-host.h ../auto-build.h) && \
-	${HOST_AB_CLEAN}
+.include "../../Makefile.autobuild_h"
 
 pass-instances.def: passes.def gen-pass-instances.awk
 	${_MKTARGET_CREATE}
@@ -246,73 +212,73 @@ CLEANFILES+=	pass-instances.def
 # by the genfoo programs.
 #
 
-build-rtl.c: rtl.c \
+build-rtl.cc: rtl.cc \
   ${G_RTL_H} real.h ${G_GCC_H} ${G_RTL_BASE_H} ${G_GGC_H} errors.h
 	${_MKTARGET_CREATE}
-	rm -f build-rtl.c
+	rm -f build-rtl.cc
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
-		${GNUHOSTDIST}/gcc/rtl.c >${.TARGET}
+		${GNUHOSTDIST}/gcc/rtl.cc >${.TARGET}
 build-rtl.lo: ${HH} insn-constants.h
-CLEANFILES+=	build-rtl.c
+CLEANFILES+=	build-rtl.cc
 
-build-print-rtl.c: print-rtl.c \
+build-print-rtl.cc: print-rtl.cc \
   ${G_RTL_BASE_H} ${G_GTM_H} hard-reg-set.h
 	${_MKTARGET_CREATE}
-	rm -f build-print-rtl.c
+	rm -f build-print-rtl.cc
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
-		${GNUHOSTDIST}/gcc/print-rtl.c >${.TARGET}
+		${GNUHOSTDIST}/gcc/print-rtl.cc >${.TARGET}
 build-print-rtl.lo: ${HH}
-build-print-rtl.o: print-rtl.c $(BCONFIG_H) $(SYSTEM_H) coretypes.h     \
+build-print-rtl.o: print-rtl.cc $(BCONFIG_H) $(SYSTEM_H) coretypes.h     \
   ${GTM_H} ${G_RTL_BASE_H}
-CLEANFILES+=	build-print-rtl.c
+CLEANFILES+=	build-print-rtl.cc
 
-build-bitmap.c: bitmap.c \
+build-bitmap.cc: bitmap.cc \
   ${G_RTL_H} flags.h ${G_BASIC_BLOCK_H} ${REGS_H} ${G_GCC_H} ${G_GGC_H}
 	${_MKTARGET_CREATE}
-	rm -f build-bitmap.c
+	rm -f build-bitmap.cc
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
-		${GNUHOSTDIST}/gcc/bitmap.c >${.TARGET}
+		${GNUHOSTDIST}/gcc/bitmap.cc >${.TARGET}
 build-bitmap.lo: ${HH}
-CLEANFILES+=	build-bitmap.c
+CLEANFILES+=	build-bitmap.cc
 
-build-errors.c: errors.c errors.h
+build-errors.cc: errors.cc errors.h
 	${_MKTARGET_CREATE}
-	rm -f build-errors.c
-	cat ${GNUHOSTDIST}/gcc/errors.c >${.TARGET}
+	rm -f build-errors.cc
+	cat ${GNUHOSTDIST}/gcc/errors.cc >${.TARGET}
 build-errors.lo: ${HH_NORTL}
-CLEANFILES+=	build-errors.c
+CLEANFILES+=	build-errors.cc
 
-build-varray.c: varray.c \
+build-varray.cc: varray.cc \
   ${G_RTL_H} ${G_GCC_H} ${TREE_H} bitmap.h errors.h
 	${_MKTARGET_CREATE}
-	rm -f build-varray.c
+	rm -f build-varray.cc
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
-		${GNUHOSTDIST}/gcc/varray.c >${.TARGET}
+		${GNUHOSTDIST}/gcc/varray.cc >${.TARGET}
 build-varray.lo: ${HH} gtype-desc.h
-CLEANFILES+=	build-varray.c
+CLEANFILES+=	build-varray.cc
 
-build-ggc-none.c: ggc-none.c \
+build-ggc-none.cc: ggc-none.cc \
   ${G_GCC_H} gtype-desc.h
 	${_MKTARGET_CREATE}
-	rm -f build-ggc-none.c
+	rm -f build-ggc-none.cc
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
-		${GNUHOSTDIST}/gcc/ggc-none.c >${.TARGET}
+		${GNUHOSTDIST}/gcc/ggc-none.cc >${.TARGET}
 build-ggc-none.lo: ${HH}
-CLEANFILES+=	build-ggc-none.c
+CLEANFILES+=	build-ggc-none.cc
 
-build-hash-table.c: hash-table.c hash-table.h ${G_HASH_TABLE_H} ${HH}
+build-hash-table.cc: hash-table.cc hash-table.h ${G_HASH_TABLE_H} ${HH}
 	${_MKTARGET_CREATE}
-	rm -f build-hash-table.c
-	cat ${GNUHOSTDIST}/gcc/hash-table.c >${.TARGET}
+	rm -f build-hash-table.cc
+	cat ${GNUHOSTDIST}/gcc/hash-table.cc >${.TARGET}
 build-hash-table.lo: ${HH_NORTL}
-CLEANFILES+=	build-hash-table.c
+CLEANFILES+=	build-hash-table.cc
 
-build-vec.c: vec.c vec.h ${G_HASH_TABLE_H} ${HH}
+build-vec.cc: vec.cc vec.h ${G_HASH_TABLE_H} ${HH}
 	${_MKTARGET_CREATE}
-	rm -f build-vec.c
-	cat ${GNUHOSTDIST}/gcc/vec.c >${.TARGET}
+	rm -f build-vec.cc
+	cat ${GNUHOSTDIST}/gcc/vec.cc >${.TARGET}
 build-vec.lo: ${HH_NORTL}
-CLEANFILES+=	build-vec.c
+CLEANFILES+=	build-vec.cc
 
 build-sort.cc: sort.cc sort.h ${G_GGC_H}
 	${_MKTARGET_CREATE}
@@ -326,7 +292,7 @@ build-genattrtab.o: ${G_GGC_H}
 #
 # The normal insn-foo generators
 #
-.for f in gensupport.c read-rtl.c dummy-conditions.c read-md.c
+.for f in gensupport.cc read-rtl.cc dummy-conditions.cc read-md.cc
 ${f:R}.lo: ${HH}
 .endfor
 
@@ -346,7 +312,7 @@ GENPROG_RTL_DEPENDS=	${G_BUILD_RTL:.o=.lo} ${GENPROG_READER_DEPENDS} ${GENPROG_E
 .for f in attr attr-common attrtab automata codes conditions config emit \
 	  extract flags opinit output peep preds recog mddump condmd \
 	  target-def cfn-macros
-gen${f}.lo: ${HH} gen${f}.c ${G_RTL_BASE_H} build-sort.lo
+gen${f}.lo: ${HH} gen${f}.cc ${G_RTL_BASE_H} build-sort.lo
 gen${f}: gen${f}.lo ${GENPROG_RTL_DEPENDS} 
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}} build-sort.lo
@@ -354,7 +320,7 @@ CLEANFILES+=	gen${f} gen${f}.lo
 .endfor
 
 .for f in mddeps constants enums
-gen${f}.lo: ${HH} gen${f}.c ${G_RTL_BASE_H}
+gen${f}.lo: ${HH} gen${f}.cc ${G_RTL_BASE_H}
 gen${f}: gen${f}.lo ${GENPROG_READER_DEPENDS}
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}}
@@ -362,7 +328,7 @@ CLEANFILES+=	gen${f} gen${f}.lo
 .endfor
 
 .for f in check checksum
-gen${f}.lo: ${HH} gen${f}.c ${G_RTL_BASE_H}
+gen${f}.lo: ${HH} gen${f}.cc ${G_RTL_BASE_H}
 gen${f}: gen${f}.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}}
@@ -381,7 +347,7 @@ CLEANFILES+=	gen${f} gen${f}.lo
 
 # RTL based files
 .for f in attr.h attr-common.h codes.h config.h flags.h \
-	  automata.c emit.c extract.c output.c peep.c recog.c \
+	  automata.cc emit.cc extract.cc output.cc peep.cc recog.cc \
 	  target-def.h
 insn-${f}: gen${f:R} ${G_md_file} insn-conditions.md
 	${_MKTARGET_CREATE}
@@ -390,18 +356,18 @@ CLEANFILES+=	insn-${f}
 .endfor
 
 # normal files
-.for f in constants.h enums.c
+.for f in constants.h enums.cc
 insn-${f}: gen${f:R} ${G_md_file}
 	${_MKTARGET_CREATE}
 	./gen${f:R} ${G_md_file} >${.TARGET}
 CLEANFILES+=	insn-${f}
 .endfor
 
-# genconditions outputs gencondmd.c
-gencondmd.c: genconditions ${G_md_file}
+# genconditions outputs gencondmd.cc
+gencondmd.cc: genconditions ${G_md_file}
 	${_MKTARGET_CREATE}
 	./genconditions ${G_md_file} >${.TARGET}
-CLEANFILES+=	gencondmd.c
+CLEANFILES+=	gencondmd.cc
 
 # gencheck outputs tree-check.h
 tree-check.h: gencheck
@@ -410,25 +376,25 @@ tree-check.h: gencheck
 CLEANFILES+=	tree-check.h
 
 # genattrtab has three output files
-insn-dfatab.c insn-latencytab.c: insn-attrtab.c
+insn-dfatab.cc insn-latencytab.cc: insn-attrtab.cc
 	cp -p ${.TARGET}.tmp ${.TARGET}
-insn-attrtab.c: genattrtab ${G_md_file} insn-conditions.md 
+insn-attrtab.cc: genattrtab ${G_md_file} insn-conditions.md 
 	${_MKTARGET_CREATE}
 	./genattrtab ${G_md_file} insn-conditions.md \
-		-A${.TARGET}.tmp -Dinsn-dfatab.c.tmp -Linsn-latencytab.c.tmp && \
+		-A${.TARGET}.tmp -Dinsn-dfatab.cc.tmp -Linsn-latencytab.cc.tmp && \
 	mv ${.TARGET}.tmp ${.TARGET}
-CLEANFILES+=	insn-attrtab.c insn-dfatab.c insn-latencytab.c \
-		insn-dfatab.c.tmp insn-latencytab.c.tmp
+CLEANFILES+=	insn-attrtab.cc insn-dfatab.cc insn-latencytab.cc \
+		insn-dfatab.cc.tmp insn-latencytab.cc.tmp
 
 # genopinit has two output files
-insn-opinit.h: insn-opinit.c
+insn-opinit.h: insn-opinit.cc
 	cp -p ${.TARGET}.tmp ${.TARGET}
-insn-opinit.c: genopinit ${G_md_file} insn-conditions.md
+insn-opinit.cc: genopinit ${G_md_file} insn-conditions.md
 	${_MKTARGET_CREATE}
 	./genopinit ${G_md_file} insn-conditions.md \
 		-hinsn-opinit.h.tmp -c${.TARGET}.tmp && \
 	mv ${.TARGET}.tmp ${.TARGET}
-CLEANFILES+=	insn-opinit.h insn-opinit.c insn-opinit.h.tmp
+CLEANFILES+=	insn-opinit.h insn-opinit.cc insn-opinit.h.tmp
 
 LDFLAGS.genautomata+=	-lm
 
@@ -447,12 +413,12 @@ cfn-operators.pd: gencfn-macros
 CLEANFILES+=	case-cfn-macros.h.tmp case-cfn-macros.h \
 		cfn-operators.pd.tmp cfn-operators.pd
 
-CASECFNDEPS=	aarch64-builtins.c arm-builtins.c i386.c rs6000.c \
-		riscv-builtins.c builtins.c \
-		fold-const.c tree-ssa-math-opts.c tree-ssa-reassoc.c \
-		tree-vect-patterns.c tree-vrp.c generic-match-head.c \
-		gimple-match-head.c ChangeLog-2015 fold-const-call.c \
-		gimple-ssa-backprop.c
+CASECFNDEPS=	aarch64-builtins.cc arm-builtins.cc i386.cc rs6000.cc \
+		riscv-builtins.cc builtins.cc \
+		fold-const.cc tree-ssa-math-opts.cc tree-ssa-reassoc.cc \
+		tree-vect-patterns.cc tree-vrp.cc generic-match-head.cc \
+		gimple-match-head.cc fold-const-call.cc \
+		gimple-ssa-backprop.cc
 ${CASECFNDEPS}: case-cfn-macros.h
 
 aarch64-builtin-iterators.h: ${DIST}/gcc/config/aarch64/geniterators.sh \
@@ -477,18 +443,18 @@ ggc-none.o: gtype-desc.h
 insn-attrtab.o: insn-config.h
 insn-extract.o: insn-config.h
 toplev.d toplev.o: options.h
-coverage.d: gcov-iov.h
-gcov-io.h: gcov-iov.h
+coverage.d: version.h
+gcov-io.h: version.h
 cgraph.d cgraphunit.d cgraphunit.o: gcov-io.h
 vec.lo: gtype-desc.h
 insn-emit.d insn-emit.o: tm-constrs.h
 insn-attr.h: insn-attr-common.h
-gcov-io.h: gcov-iov.h
+gcov-io.h: version.h
 df-scan.d df-scan.o: target-hooks-def.h
 read-md.d read-md.o read-md.lo: auto-build.h
 hash-table.d hash-table.o hash-table.lo: auto-build.h gtype-desc.h
 gencfn-macros.d gencfn-macros.o gencfn-macros.lo: gtype-desc.h
-pass_manager.h passes.c: pass-instances.def
+pass_manager.h passes.cc: pass-instances.def
 context.d coverage.d lto-cgraph.d passes.d statistics.d toplev.d cgraphunit.d: pass_manager.h
 context.o coverage.o lto-cgraph.o passes.o statistics.o toplev.o cgraphunit.o: pass_manager.h
 insn-opinit.o insn-opinit.d: insn-flags.h
@@ -506,20 +472,20 @@ ${_f}.o ${_f}.d: insn-codes.h insn-config.h insn-constants.h insn-flags.h
 ${_f}.o ${_f}.d: insn-constants.h
 .endfor
 .for _f in data-streamer data-streamer-out coverage gcov-dump gcov-io \
-	   gcov-iov gcov libgcov lto-cgraph mcf modulo-sched profile value-prof
+	   gcov libgcov lto-cgraph mcf modulo-sched profile value-prof
 ${_f}.o ${_f}.d: gcov-io.h
 .endfor
 
-${G_out_file:T:.c=.o}: insn-target-def.h target-hooks-def.h tm-constrs.h
+${G_out_file:T:.cc=.o}: insn-target-def.h target-hooks-def.h tm-constrs.h
 
 # XXX make all hooks generated for now.
 final.o: target-hooks-def.h c-family/c-target-hooks-def.h common/common-target-hooks-def.h
 
-COPTS.ira-color.c+= -Wno-error=int-in-bool-context
+#COPTS.ira-color.cc+= -Wno-error=int-in-bool-context
 
 .if ${MACHINE_CPU} == "arm"
-# XXX insn-recog.c:10304:7: error: this decimal constant is unsigned only in ISO C90 [-Werror]
-COPTS.insn-recog.c+=-Wno-error
+# XXX insn-recog.cc:10304:7: error: this decimal constant is unsigned only in ISO C90 [-Werror]
+#COPTS.insn-recog.cc+=-Wno-error
 .endif
 
 .if ${GCC_MACHINE_ARCH} == "i386" || ${GCC_MACHINE_ARCH} == "x86_64"
@@ -528,10 +494,10 @@ i386.d i386.o: pass_manager.h
 
 .if ${MACHINE_CPU} == "mips"
 # XXX mips.md:3474:11: error: this decimal constant is unsigned only in ISO C90 [-Werror]
-COPTS.insn-recog.c+=-Wno-error
+#COPTS.insn-recog.cc+=-Wno-error
 .endif
 
-.if ${GCC_MACHINE_ARCH} == "vax"
+.if ${GCC_MACHINE_ARCH} == "vax" && 0
 CPPFLAGS+=-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${GCC_MACHINE_ARCH}
 COPTS.builtins.c+=-O0
 COPTS.calls.c+=-O0
@@ -595,30 +561,34 @@ COPTS.vr-values.c+=-O0
 COPTS.web.c+=-O0
 COPTS.wide-int-range.cc+=-O0
 COPTS.wide-int.cc+=-O0
-.else
-COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 .endif
+
+COPTS.tree.cc+=	${${ACTIVE_CC} == "clang" :? -O0 :}
 
 CFLAGS+=	-Wno-stack-protector
 
-COPTS.dwarf2out.c+=${CC_WNO_MAYBE_UNINITIALIZED}
+#COPTS.dwarf2out.cc+=${CC_WNO_MAYBE_UNINITIALIZED}
 
 .if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
 	${GCC_MACHINE_ARCH} == "coldfire"
-COPTS.tree-loop-distribution.c+=-O2
-COPTS.generic-match.c+=-fno-jump-tables
-COPTS.gimple-match.c+=-fno-jump-tables
+#COPTS.tree-loop-distribution.cc+=-O2
+#COPTS.generic-match.cc+=-fno-jump-tables
+#COPTS.gimple-match.cc+=-fno-jump-tables
 .endif
+
+# XXXGCC12
+COPTS.diagnostic-manager.cc+=	-Wno-format-extra-args -Wno-format
 
 # Don't fight with decimal128Local.h.
 # The GCC build only ignores the warning?
-COPTS.dfp.c+=	-fno-strict-aliasing
+COPTS.dfp.cc+=	-fno-strict-aliasing
 
 CFLAGS+= -fno-exceptions -fno-rtti -fasynchronous-unwind-tables
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${GCCARCH} ${G_out_file:H} ${DIST}/include
 .PATH: ${DIST}/gcc/config
 .PATH: ${DIST}/gcc/analyzer
+.PATH: ${DIST}/gcc/rtl-ssa
 .if ${MACHINE_CPU} == "aarch64"
 .PATH: ${DIST}/gcc/config/arm
 .endif

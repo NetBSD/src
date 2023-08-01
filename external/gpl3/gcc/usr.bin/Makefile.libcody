@@ -1,0 +1,12 @@
+#	$NetBSD: Makefile.libcody,v 1.1 2023/08/01 05:57:54 mrg Exp $
+
+.ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_LIBCODY_
+_EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_LIBCODY_=1
+
+.include <bsd.own.mk>
+
+LIBCODYOBJ!=		cd ${.CURDIR}/../libcody && ${PRINTOBJDIR}
+DPADD+=			${LIBCODYOBJ}/libcody.a
+LDADD+=			${LIBCODYOBJ}/libcody.a
+
+.endif

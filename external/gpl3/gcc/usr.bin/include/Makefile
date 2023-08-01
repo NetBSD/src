@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2018/08/12 21:48:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2023/08/01 05:57:55 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -17,10 +17,10 @@ INCS+=	stdatomic.h
 .if ${GCC_MACHINE_ARCH} == "i386" || ${GCC_MACHINE_ARCH} == "x86_64"
 INCS+=	mm_malloc.h
 
-# XXX we should put this in gcc/config.gcc and regenerate the i386/x86
-# mknative files
+.if !target(obj)
 mm_malloc.h: ${DIST}/gcc/config/i386/pmm_malloc.h
 	cp -f $> ${.TARGET}
+.endif
 
 CLEANFILES+=	mm_malloc.h
 .endif

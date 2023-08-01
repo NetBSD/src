@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2022/07/22 21:51:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.54 2023/08/01 05:57:57 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -56,7 +56,7 @@ CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 .include "${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	9
-SHLIB_MINOR=	0
+SHLIB_MINOR=	1
 
 SUBDIR=		include
 
@@ -87,8 +87,7 @@ CONF=		${DIST}/libstdc++-v3/config
 GLIBCPP_INCLUDE_DIR=	${DESTDIR}/usr/include/g++
 
 # Template instantiation bug workaround for -O<2/s
-COPTS.cp-demangle.c += -Wno-stack-protector
-COPTS.cp-demangle.c += -Wno-stack-protector
+COPTS.cp-demangle.cc += -Wno-stack-protector
 COPTS.fstream-inst.cc += -Wno-stack-protector
 COPTS.locale-inst.cc += -Wno-stack-protector
 COPTS.misc-inst.cc += -Wno-stack-protector
@@ -210,6 +209,10 @@ COPTS.ext-inst.cc+= -Wno-error
 	  c++locale
 COPTS.${f}.cc+= -fimplicit-templates ${G_GLIBCXX_ABI_FLAGS}
 .endfor
+
+# XXXGCC12
+# hits on sparc, sparc64, armv7 at least
+COPTS.floating_to_chars.cc+=	-Wno-error=unused-function
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
