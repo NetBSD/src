@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.107.2.11 2023/01/23 12:05:36 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.107.2.12 2023/08/01 13:46:18 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.11 2023/01/23 12:05:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.12 2023/08/01 13:46:18 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2295,11 +2295,15 @@ xhci_rhpsc(struct xhci_softc * const sc, u_int ctlrport)
 	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
 	uint8_t *p = xfer->ux_buf;
-	memset(p, 0, xfer->ux_length);
+	if (!xhci_polling_p(sc) || !sc->sc_intrxfer_deferred[bn])
+		memset(p, 0, xfer->ux_length);
 	p[rhp / NBBY] |= 1 << (rhp % NBBY);
 	xfer->ux_actlen = xfer->ux_length;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
-	usb_transfer_complete(xfer);
+	if (xhci_polling_p(sc))
+		sc->sc_intrxfer_deferred[bn] = true;
+	else
+		usb_transfer_complete(xfer);
 }
 
 /* Process Transfer Events */
@@ -2576,7 +2580,7 @@ xhci_softintr(void *v)
 	struct xhci_softc * const sc = XHCI_BUS2SC(bus);
 	struct xhci_ring * const er = &sc->sc_er;
 	struct xhci_trb *trb;
-	int i, j, k;
+	int i, j, k, bn;
 
 	XHCIHIST_FUNC();
 
@@ -2586,6 +2590,20 @@ xhci_softintr(void *v)
 	j = er->xr_cs;
 
 	XHCIHIST_CALLARGS("er: xr_ep %jd xr_cs %jd", i, j, 0, 0);
+
+	/*
+	 * Handle deferred root intr xfer, in case we just switched off
+	 * polling.  It's not safe to complete root intr xfers while
+	 * polling -- too much kernel machinery gets involved.
+	 */
+	if (!xhci_polling_p(sc)) {
+		for (bn = 0; bn < 2; bn++) {
+			if (__predict_false(sc->sc_intrxfer_deferred[bn])) {
+				sc->sc_intrxfer_deferred[bn] = false;
+				usb_transfer_complete(sc->sc_intrxfer[bn]);
+			}
+		}
+	}
 
 	while (1) {
 		usb_syncmem(&er->xr_dma, XHCI_TRB_SIZE * i, XHCI_TRB_SIZE,
