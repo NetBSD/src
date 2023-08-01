@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.388 2022/10/11 22:03:37 andvar Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.389 2023/08/01 20:46:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.388 2022/10/11 22:03:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.389 2023/08/01 20:46:01 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2663,7 +2663,7 @@ bge_blockinit(struct bge_softc *sc)
 	/* 57XX step 48 */
 	/*
 	 * Disable all receive return rings by setting the
-	 * 'ring diabled' bit in the flags field of all the receive
+	 * 'ring disabled' bit in the flags field of all the receive
 	 * return ring control blocks, located in NIC memory.
 	 */
 	if (BGE_IS_5717_PLUS(sc)) {
