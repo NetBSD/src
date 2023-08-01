@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.466 2023/07/28 21:50:03 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.467 2023/08/01 16:08:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.466 2023/07/28 21:50:03 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.467 2023/08/01 16:08:58 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -163,7 +163,11 @@ is_either(const char *s, const char *a, const char *b)
 		fprintf(yyo, "%Lg", $$->u.floating);
 } <y_val>
 %printer { fprintf(yyo, "'%s'", $$ != NULL ? $$->sb_name : "<null>"); } <y_name>
-%printer { debug_sym("", $$, ""); } <y_sym>
+%printer {
+	bool indented = debug_push_indented(true);
+	debug_sym("", $$, "");
+	debug_pop_indented(indented);
+} <y_sym>
 %printer { fprintf(yyo, "%s", op_name($$)); } <y_op>
 %printer { fprintf(yyo, "%s", scl_name($$)); } <y_scl>
 %printer { fprintf(yyo, "%s", tspec_name($$)); } <y_tspec>

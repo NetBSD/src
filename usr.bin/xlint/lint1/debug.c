@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.58 2023/07/30 22:27:21 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.59 2023/08/01 16:08:58 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.58 2023/07/30 22:27:21 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.59 2023/08/01 16:08:58 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -106,6 +106,20 @@ debug_indent_dec(void)
 
 	lint_assert(debug_indentation > 0);
 	debug_indentation--;
+}
+
+bool
+debug_push_indented(bool indented)
+{
+	bool prev = did_indentation;
+	did_indentation = indented;
+	return prev;
+}
+
+void
+debug_pop_indented(bool indented)
+{
+	did_indentation = indented;
 }
 
 void
@@ -426,7 +440,7 @@ static void
 debug_decl_level(const decl_level *dl)
 {
 
-	debug_printf("decl_level: %s", decl_level_kind_name(dl->d_kind));
+	debug_printf("kind=%s", decl_level_kind_name(dl->d_kind));
 	if (dl->d_scl != NOSCL)
 		debug_printf(" %s", scl_name(dl->d_scl));
 	if (dl->d_type != NULL)
@@ -477,15 +491,19 @@ debug_decl_level(const decl_level *dl)
 }
 
 void
-debug_dcs(bool all)
+debug_dcs(void)
 {
-	int prev_indentation = debug_indentation;
+	debug_printf("dcs ");
+	debug_decl_level(dcs);
+}
+
+void
+debug_dcs_all(void)
+{
+	size_t i = 0;
 	for (const decl_level *dl = dcs; dl != NULL; dl = dl->d_enclosing) {
+		debug_printf("dcs[%zu] ", i++);
 		debug_decl_level(dl);
-		if (!all)
-			return;
-		debug_indentation++;
 	}
-	debug_indentation = prev_indentation;
 }
 #endif
