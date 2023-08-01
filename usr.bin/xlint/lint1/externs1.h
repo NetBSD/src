@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.203 2023/07/30 22:27:21 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.204 2023/08/01 16:08:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -136,7 +136,8 @@ const char *scl_name(scl_t);
 const char *symt_name(symt_t);
 const char *type_qualifiers_string(type_qualifiers);
 const char *function_specifier_name(function_specifier);
-void	debug_dcs(bool);
+void	debug_dcs(void);
+void	debug_dcs_all(void);
 void	debug_node(const tnode_t *);
 void	debug_type(const type_t *);
 void	debug_sym(const char *, const sym_t *, const char *);
@@ -145,6 +146,8 @@ void	debug_printf(const char *fmt, ...) __printflike(1, 2);
 void	debug_skip_indent(void);
 void	debug_indent_inc(void);
 void	debug_indent_dec(void);
+bool	debug_push_indented(bool);
+void	debug_pop_indented(bool);
 void	debug_enter_func(const char *);
 void	debug_step(const char *fmt, ...) __printflike(1, 2);
 void	debug_leave_func(const char *);
@@ -152,7 +155,8 @@ void	debug_leave_func(const char *);
 #define	debug_leave()		debug_leave_func(__func__)
 #else
 #define	debug_noop()		do { } while (false)
-#define	debug_dcs(all)		debug_noop()
+#define	debug_dcs()		debug_noop()
+#define	debug_dcs_all()		debug_noop()
 #define	debug_sym(p, sym, s)	debug_noop()
 #define	debug_symtab()		debug_noop()
 #define	debug_node(tn)		debug_noop()
@@ -161,6 +165,8 @@ void	debug_leave_func(const char *);
 #define	debug_skip_indent()	debug_noop()
 #define	debug_indent_inc()	debug_noop()
 #define	debug_indent_dec()	debug_noop()
+#define debug_push_indented(c)	true
+#define debug_pop_indented(c)	(void)(c)
 #define	debug_enter()		debug_noop()
 #define	debug_step(...)		debug_noop()
 #define	debug_leave()		debug_noop()

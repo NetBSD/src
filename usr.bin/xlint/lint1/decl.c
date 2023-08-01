@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.370 2023/07/31 20:31:58 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.371 2023/08/01 16:08:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.370 2023/07/31 20:31:58 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.371 2023/08/01 16:08:58 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -216,8 +216,8 @@ dcs_add_storage_class(scl_t sc)
 		dcs->d_scl = STATIC;	/* ignore thread_local */
 	else
 		dcs->d_multiple_storage_classes = true;
-	debug_step("%s:", __func__);
-	debug_dcs(false);
+	debug_printf("%s: ", __func__);
+	debug_dcs();
 }
 
 /* Merge the signedness into the abstract type. */
@@ -315,7 +315,7 @@ dcs_add_type(type_t *tp)
 {
 
 	debug_step("%s: %s", __func__, type_name(tp));
-	debug_dcs(false);
+	debug_dcs();
 	if (tp->t_typedef) {
 		/*
 		 * something like "typedef int a; int a b;"
@@ -344,7 +344,7 @@ dcs_add_type(type_t *tp)
 			dcs->d_rank_mod = NO_TSPEC;
 		}
 		dcs->d_type = tp;
-		debug_dcs(false);
+		debug_dcs();
 		return;
 	}
 
@@ -412,7 +412,7 @@ dcs_add_type(type_t *tp)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_abstract_type = t;
 	}
-	debug_dcs(false);
+	debug_dcs();
 }
 
 static void
@@ -470,7 +470,7 @@ pack_struct_or_union(type_t *tp)
 			bits = mem_bits;
 	}
 	tp->t_sou->sou_size_in_bits = bits;
-	debug_dcs(false);
+	debug_dcs();
 }
 
 void
@@ -509,14 +509,14 @@ begin_declaration_level(decl_level_kind kind)
 	dl->d_last_dlsym = &dl->d_first_dlsym;
 	dcs = dl;
 	debug_enter();
-	debug_dcs(true);
+	debug_dcs_all();
 }
 
 void
 end_declaration_level(void)
 {
 
-	debug_dcs(true);
+	debug_dcs_all();
 
 	decl_level *dl = dcs;
 	dcs = dl->d_enclosing;
@@ -657,8 +657,6 @@ dcs_merge_declaration_specifiers(void)
 		return;
 	}
 
-	debug_step("%s: %s", __func__, type_name(tp));
-
 	if (t == NO_TSPEC && s == NO_TSPEC && l == NO_TSPEC && c == NO_TSPEC)
 		dcs->d_no_type_specifier = true;
 	if (t == NO_TSPEC && s == NO_TSPEC && (l == NO_TSPEC || l == LONG))
@@ -699,7 +697,8 @@ dcs_merge_declaration_specifiers(void)
 	if (l != NO_TSPEC)
 		t = l;
 	dcs->d_type = gettyp(merge_signedness(t, s));
-	debug_dcs(false);
+	debug_printf("%s: ", __func__);
+	debug_dcs();
 }
 
 /* Create a type in 'dcs->d_type' from the information gathered in 'dcs'. */
@@ -739,7 +738,7 @@ dcs_end_type(void)
 		dcs->d_type->t_volatile |= dcs->d_qual.tq_volatile;
 	}
 
-	debug_dcs(false);
+	debug_dcs();
 	debug_leave();
 }
 
@@ -1050,7 +1049,7 @@ dcs_add_member(sym_t *mem)
 	if (union_size > dcs->d_sou_size_in_bits)
 		dcs->d_sou_size_in_bits = union_size;
 
-	debug_dcs(false);
+	debug_dcs();
 }
 
 sym_t *
@@ -1195,7 +1194,7 @@ sym_t *
 add_pointer(sym_t *decl, qual_ptr *p)
 {
 
-	debug_dcs(false);
+	debug_dcs();
 
 	type_t **tpp = &decl->s_type;
 	while (*tpp != NULL && *tpp != dcs->d_type)
@@ -1266,7 +1265,7 @@ sym_t *
 add_array(sym_t *decl, bool dim, int n)
 {
 
-	debug_dcs(false);
+	debug_dcs();
 
 	type_t **tpp = &decl->s_type;
 	while (*tpp != NULL && *tpp != dcs->d_type)
@@ -1349,7 +1348,7 @@ add_function(sym_t *decl, struct parameter_list params)
 {
 
 	debug_enter();
-	debug_dcs(true);
+	debug_dcs_all();
 	debug_sym("decl: ", decl, "\n");
 #ifdef DEBUG
 	for (const sym_t *arg = params.first; arg != NULL; arg = arg->s_next)
@@ -1407,7 +1406,7 @@ add_function(sym_t *decl, struct parameter_list params)
 	    params.prototype, params.first, params.vararg);
 
 	debug_step("add_function: '%s'", type_name(decl->s_type));
-	debug_dcs(true);
+	debug_dcs_all();
 	debug_leave();
 	return decl;
 }
