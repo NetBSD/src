@@ -43,9 +43,10 @@ This is normally def->st_value + rela->r_addend.
 
 (c) R_TYPE(TLS_TPOFF): Static TLS offset.  The code has to check whether
 the static TLS offset for this module has been allocated
-(defobj->tls_done) and otherwise call _rtld_tls_offset_allocate().  This
+(defobj->tls_static) and otherwise call _rtld_tls_offset_allocate().  This
 may fail if no static space is available and the object has been pulled
-in via dlopen(3).
+in via dlopen(3). It can also fail if the TLS area has already been used
+via a global-dynamic allocation.
 
 For TLS Variant I, this is typically:
 

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.11 2017/07/11 15:21:32 joerg Exp $
+# $NetBSD: shl.mi,v 1.11.18.1 2023/08/01 16:34:56 martin Exp $
 #
 ./usr/tests/lib/csu/h_initfini3_dso.so		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		compattestfile,atf
@@ -16,6 +16,14 @@
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so.1	tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so	tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so.1	tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_abuse_dynamic.so				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_abuse_dynamic.so.1				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_abuse_static.so				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_abuse_static.so.1				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_def_dynamic.so				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_def_dynamic.so.1				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_def_static.so				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_def_static.so.1				tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso1.so				tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1				tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso2.so				tests-libexec-tests	compattestfile,atf
@@ -24,5 +32,17 @@
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso3.so.1				tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so				tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so.1			tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_onlyctor_dynamic.so				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_onlyctor_dynamic.so.1			tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_onlydef.so					tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_onlydef.so.1					tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_onlyuse_dynamic.so				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_onlyuse_dynamic.so.1				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_onlyuse_static.so				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_onlyuse_static.so.1				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_use_dynamic.so				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_use_dynamic.so.1				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_use_static.so				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_use_static.so.1				tests-libexec-tests	compattestfile,atf
 ./usr/tests/util/id/libfake.so.0		tests-obsolete		obsolete
 ./usr/tests/util/id/libfake.so.0.0		tests-obsolete		obsolete

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238 2022/12/01 04:24:37 ozaki-r Exp $
+# $NetBSD: mi,v 1.1238.2.1 2023/08/01 16:34:56 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4096,6 +4096,7 @@
 ./usr/tests/libexec/ld.elf_so/t_ifunc			tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_rtld_r_debug		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_thread_local_dtor	tests-libexec-tests	compattestfile,atf,pic
+./usr/tests/libexec/ld.elf_so/t_tls_extern		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/modules					tests-sys-tests		compattestfile,atf
 ./usr/tests/net						tests-net-tests		compattestfile,atf
 ./usr/tests/net/Atffile					tests-net-tests		compattestfile,atf

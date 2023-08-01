@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2021/05/30 02:26:51 joerg Exp $
+# $NetBSD: Makefile,v 1.12.4.1 2023/08/01 16:34:58 martin Exp $
 #
 
 NOMAN=		# defined
@@ -13,10 +13,23 @@ SUBDIR+=	helper_dso1 helper_dso3 .WAIT helper_dso2 .WAIT \
 		helper_symver_dso2 .WAIT \
 		data
 
+SUBDIR+=	helper_def_dynamic
+SUBDIR+=	helper_def_static
+SUBDIR+=	helper_onlydef
+SUBDIR+=	.WAIT
+SUBDIR+=	helper_abuse_dynamic
+SUBDIR+=	helper_abuse_static
+SUBDIR+=	helper_onlyctor_dynamic
+SUBDIR+=	helper_onlyuse_dynamic
+SUBDIR+=	helper_onlyuse_static
+SUBDIR+=	helper_use_dynamic
+SUBDIR+=	helper_use_static
+
 TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
 
 TESTS_C+=	t_dlerror-cleared t_dlerror-false t_dlinfo t_dlvsym t_ifunc
 TESTS_C+=	t_rtld_r_debug
+TESTS_C+=	t_tls_extern
 
 COPTS.t_rtld_r_debug.c += ${${ACTIVE_CC} == "gcc" :? -Wno-maybe-uninitialized :}
 
@@ -24,6 +37,7 @@ LDADD.t_dlerror-false=	-Wl,-rpath,/var/nonexistent/lib
 LDADD.t_dlvsym=		-Wl,-rpath,${TESTSDIR}/h_helper_symver_dso2
 LDADD.t_ifunc=		-Wl,-rpath,${TESTSDIR} -lutil
 DPADD.t_ifunc=		${LIBUTIL}
+LDADD.t_tls_extern+=	-Wl,-rpath,${TESTSDIR}
 
 TESTS_SH+=		t_df_1_noopen t_dl_symver t_thread_local_dtor
 
