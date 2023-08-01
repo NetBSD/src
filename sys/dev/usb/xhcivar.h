@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.22.2.1 2023/08/01 13:43:34 martin Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.22.2.2 2023/08/01 16:49:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -140,6 +140,7 @@ struct xhci_softc {
 	bool sc_resultpending;
 
 	bool sc_dying;
+	bool sc_suspendresume_failed;
 	struct lwp *sc_suspender;
 
 	void (*sc_vendor_init)(struct xhci_softc *);

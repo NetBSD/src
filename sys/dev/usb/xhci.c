@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.175.2.1 2023/08/01 13:43:34 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.175.2.2 2023/08/01 16:49:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.175.2.1 2023/08/01 13:43:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.175.2.2 2023/08/01 16:49:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -895,11 +895,13 @@ xhci_suspend(device_t self, const pmf_qual_t *qual)
 out:	mutex_exit(&sc->sc_rhlock);
 	if (!ok) {
 		/*
-		 * If suspend failed, resume command issuance.
+		 * If suspend failed, stop holding up command issuance
+		 * and make it fail instead.
 		 */
 		mutex_enter(&sc->sc_lock);
 		KASSERT(sc->sc_suspender == curlwp);
 		sc->sc_suspender = NULL;
+		sc->sc_suspendresume_failed = true;
 		cv_broadcast(&sc->sc_cmdbusy_cv);
 		mutex_exit(&sc->sc_lock);
 	}
@@ -917,7 +919,18 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
+	/*
+	 * If resume had previously failed, just try again.  Can't make
+	 * things worse, probably.
+	 */
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_suspendresume_failed) {
+		KASSERT(sc->sc_suspender == NULL);
+		sc->sc_suspender = curlwp;
+		sc->sc_suspendresume_failed = false;
+	}
 	KASSERT(sc->sc_suspender);
+	mutex_exit(&sc->sc_lock);
 
 	/*
 	 * Block roothub xfers which might touch portsc registers until
@@ -1111,6 +1124,7 @@ out:	/*
 	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_suspender);
 	sc->sc_suspender = NULL;
+	sc->sc_suspendresume_failed = !ok;
 	cv_broadcast(&sc->sc_cmdbusy_cv);
 	mutex_exit(&sc->sc_lock);
 
@@ -3217,6 +3231,8 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 	while (sc->sc_command_addr != 0 ||
 	    (sc->sc_suspender != NULL && sc->sc_suspender != curlwp))
 		cv_wait(&sc->sc_cmdbusy_cv, &sc->sc_lock);
+	if (sc->sc_suspendresume_failed)
+		return USBD_IOERROR;
 
 	/*
 	 * If enqueue pointer points at last of ring, it's Link TRB,
