@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.57.4.2 2023/07/31 15:57:43 martin Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.57.4.3 2023/08/01 16:10:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.57.4.2 2023/07/31 15:57:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.57.4.3 2023/08/01 16:10:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1910,6 +1910,14 @@ rnd_add_data(struct krndsource *rs, const void *buf, uint32_t len,
 		return;
 	}
 
+	/*
+	 * Hold up the reset xcall before it zeroes the entropy counts
+	 * on this CPU or globally.  Otherwise, we might leave some
+	 * nonzero entropy attributed to an untrusted source in the
+	 * event of a race with a change to flags.
+	 */
+	kpreempt_disable();
+
 	/* Load a snapshot of the flags.  Ioctl may change them under us.  */
 	flags = atomic_load_relaxed(&rs->flags);
 
@@ -1922,7 +1930,7 @@ rnd_add_data(struct krndsource *rs, const void *buf, uint32_t len,
 	if (!atomic_load_relaxed(&entropy_collection) ||
 	    ISSET(flags, RND_FLAG_NO_COLLECT) ||
 	    !ISSET(flags, RND_FLAG_COLLECT_VALUE|RND_FLAG_COLLECT_TIME))
-		return;
+		goto out;
 
 	/* If asked, ignore the estimate.  */
 	if (ISSET(flags, RND_FLAG_NO_ESTIMATE))
@@ -1939,6 +1947,9 @@ rnd_add_data(struct krndsource *rs, const void *buf, uint32_t len,
 		rnd_add_data_1(rs, &extra, sizeof extra, 0,
 		    RND_FLAG_COLLECT_TIME);
 	}
+
+out:	/* Allow concurrent changes to flags to finish.  */
+	kpreempt_enable();
 }
 
 static unsigned
@@ -2414,6 +2425,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 			E->pending = 0;
 			atomic_store_relaxed(&E->needed,
 			    ENTROPY_CAPACITY*NBBY);
+			E->consolidate = false;
 			mutex_exit(&E->lock);
 		}
 
