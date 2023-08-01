@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.371 2023/08/01 16:08:58 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.372 2023/08/01 19:57:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.371 2023/08/01 16:08:58 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.372 2023/08/01 19:57:38 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -609,12 +609,18 @@ dcs_begin_type(void)
 	dcs->d_rank_mod = NO_TSPEC;
 	dcs->d_scl = NOSCL;
 	dcs->d_type = NULL;
+	dcs->d_redeclared_symbol = NULL;
 	dcs->d_qual = (type_qualifiers) { .tq_const = false };
 	dcs->d_inline = false;
 	dcs->d_multiple_storage_classes = false;
 	dcs->d_invalid_type_combination = false;
 	dcs->d_nonempty_decl = false;
 	dcs->d_no_type_specifier = false;
+	dcs->d_packed = false;
+	dcs->d_used = false;
+	dcs->d_func_args = NULL;
+	dcs->d_func_def_pos = (pos_t){ NULL, 0, 0 };
+	dcs->d_func_proto_syms = NULL;
 }
 
 static void
@@ -1380,6 +1386,7 @@ add_function(sym_t *decl, struct parameter_list params)
 	    decl->s_type == dcs->d_enclosing->d_type) {
 		dcs->d_enclosing->d_func_proto_syms = dcs->d_first_dlsym;
 		dcs->d_enclosing->d_func_args = params.first;
+		debug_dcs_all();
 	}
 
 	/*
