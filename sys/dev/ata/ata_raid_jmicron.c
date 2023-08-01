@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_jmicron.c,v 1.8 2022/03/19 13:51:01 hannken Exp $	*/
+/*	$NetBSD: ata_raid_jmicron.c,v 1.9 2023/08/01 07:58:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.8 2022/03/19 13:51:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.9 2023/08/01 07:58:41 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -241,8 +241,7 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 	    aai->aai_capacity / (aai->aai_heads * aai->aai_sectors);
 	aai->aai_offset = info->offset * 16;
 	aai->aai_reserved = 2;
-	if (info->name)
-		strlcpy(aai->aai_name, info->name, sizeof(aai->aai_name));
+	strlcpy(aai->aai_name, info->name, sizeof(aai->aai_name));
 
 	atabus = device_private(device_parent(dksc->sc_dev));
 	drive = atabus->sc_chan->ch_channel;
