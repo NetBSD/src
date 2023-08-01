@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.81.4.1 2023/07/29 10:50:05 martin Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.81.4.2 2023/08/01 14:06:36 martin Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.44 2020/10/07 11:23:05 jsg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.81.4.1 2023/07/29 10:50:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.81.4.2 2023/08/01 14:06:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.81.4.1 2023/07/29 10:50:05 martin Exp $
 #include <dev/ic/i82801lpcreg.h>
 
 #include <dev/i2c/i2cvar.h>
+
+#include <x86/pci/tco.h>
 
 #ifdef ICHIIC_DEBUG
 #define DPRINTF(x) printf x
@@ -75,6 +77,18 @@ struct ichsmb_softc {
 		bool         done;
 	}			sc_i2c_xfer;
 	device_t		sc_i2c_device;
+
+	bus_space_tag_t		sc_tcot;
+	bus_space_handle_t	sc_tcoh;
+	bus_size_t		sc_tcosz;
+	bus_space_tag_t		sc_sbregt;
+	bus_space_handle_t	sc_sbregh;
+	bus_size_t		sc_sbregsz;
+	bus_space_tag_t		sc_pmt;
+	bus_space_handle_t	sc_pmh;
+	bus_size_t		sc_pmsz;
+	bool			sc_tco_probed;
+	device_t		sc_tco_device;
 };
 
 static int	ichsmb_match(device_t, cfdata_t, void *);
@@ -82,6 +96,9 @@ static void	ichsmb_attach(device_t, device_t, void *);
 static int	ichsmb_detach(device_t, int);
 static int	ichsmb_rescan(device_t, const char *, const int *);
 static void	ichsmb_chdet(device_t, device_t);
+
+static void	ichsmb_probe_tco(struct ichsmb_softc *,
+		    const struct pci_attach_args *);
 
 static int	ichsmb_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 		    size_t, void *, size_t, int);
@@ -229,11 +246,199 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_exec = ichsmb_i2c_exec;
 
+	/*
+	 * Probe to see if there's a TCO hanging here instead of the
+	 * LPCIB and map it if we can.
+	 */
+	ichsmb_probe_tco(sc, pa);
+
 	sc->sc_i2c_device = NULL;
 	ichsmb_rescan(self, NULL, NULL);
 
 out:	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static void
+ichsmb_probe_tco(struct ichsmb_softc *sc, const struct pci_attach_args *pa)
+{
+	const device_t self = sc->sc_dev;
+	const pci_chipset_tag_t pc = sc->sc_pc;
+	const pcitag_t p2sb_tag = pci_make_tag(pc,
+	    /*bus*/0, /*dev*/0x1f, /*fn*/1);
+	const pcitag_t pmc_tag = pci_make_tag(pc,
+	    /*bus*/0, /*dev*/0x1f, /*fn*/2);
+	pcireg_t tcoctl, tcobase, p2sbc, sbreglo, sbreghi;
+	bus_addr_t sbreg, pmbase;
+	int error = EIO;
+
+	/*
+	 * Only attempt this on devices where we expect to find a TCO.
+	 */
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_INTEL_100SERIES_LP_SMB:
+	case PCI_PRODUCT_INTEL_100SERIES_SMB:
+		break;
+	default:
+		goto fail;
+	}
+
+	/*
+	 * Verify the TCO base address register is enabled.
+	 */
+	tcoctl = pci_conf_read(pa->pa_pc, pa->pa_tag, SMB_TCOCTL);
+	aprint_debug_dev(self, "TCOCTL=0x%"PRIx32"\n", tcoctl);
+	if ((tcoctl & SMB_TCOCTL_TCO_BASE_EN) == 0) {
+		aprint_debug_dev(self, "TCO disabled\n");
+		goto fail;
+	}
+
+	/*
+	 * Verify the TCO base address register has the I/O space bit
+	 * set -- otherwise we don't know how to interpret the
+	 * register.
+	 */
+	tcobase = pci_conf_read(pa->pa_pc, pa->pa_tag, SMB_TCOBASE);
+	aprint_debug_dev(self, "TCOBASE=0x%"PRIx32"\n", tcobase);
+	if ((tcobase & SMB_TCOBASE_IOS) == 0) {
+		aprint_error_dev(self, "unrecognized TCO space\n");
+		goto fail;
+	}
+
+	/*
+	 * Map the TCO I/O space.
+	 */
+	sc->sc_tcot = sc->sc_iot;
+	error = bus_space_map(sc->sc_tcot, tcobase & SMB_TCOBASE_TCOBA,
+	    TCO_REGSIZE, 0, &sc->sc_tcoh);
+	if (error) {
+		aprint_error_dev(self, "failed to map TCO: %d\n", error);
+		goto fail;
+	}
+	sc->sc_tcosz = TCO_REGSIZE;
+
+	/*
+	 * Clear the Hide Device bit so we can map the SBREG_BAR from
+	 * the P2SB registers; then restore the Hide Device bit so
+	 * nobody else gets confused.
+	 *
+	 * XXX Hope nobody else is trying to touch the P2SB!
+	 *
+	 * XXX Should we have a way to lock PCI bus enumeration,
+	 * e.g. from concurrent drvctl rescan?
+	 *
+	 * XXX pci_mapreg_info doesn't work to get the size, somehow
+	 * comes out as 4.  Datasheet for 100-series chipset says the
+	 * size is 16 MB, unconditionally, and the type is memory.
+	 *
+	 * XXX The above XXX comment was probably a result of PEBCAK
+	 * when I tried to use 0xe4 instead of 0xe0 for P2SBC -- should
+	 * try again with pci_mapreg_info or pci_mapreg_map.
+	 */
+	p2sbc = pci_conf_read(pc, p2sb_tag, P2SB_P2SBC);
+	aprint_debug_dev(self, "P2SBC=0x%x\n", p2sbc);
+	pci_conf_write(pc, p2sb_tag, P2SB_P2SBC, p2sbc & ~P2SB_P2SBC_HIDE);
+	aprint_debug_dev(self, "P2SBC=0x%x -> 0x%x\n", p2sbc,
+	    pci_conf_read(pc, p2sb_tag, P2SB_P2SBC));
+	sbreglo = pci_conf_read(pc, p2sb_tag, P2SB_SBREG_BAR);
+	sbreghi = pci_conf_read(pc, p2sb_tag, P2SB_SBREG_BARH);
+	aprint_debug_dev(self, "SBREG_BAR=0x%08x 0x%08x\n", sbreglo, sbreghi);
+	pci_conf_write(sc->sc_pc, p2sb_tag, P2SB_P2SBC, p2sbc);
+
+	/*
+	 * Map the sideband registers so we can touch the NO_REBOOT
+	 * bit.
+	 */
+	sbreg = ((uint64_t)sbreghi << 32) | (sbreglo & ~__BITS(0,3));
+	if (((uint64_t)sbreg >> 32) != sbreghi) {
+		/* paranoia for 32-bit non-PAE */
+		aprint_error_dev(self, "can't map 64-bit SBREG\n");
+		goto fail;
+	}
+	sc->sc_sbregt = pa->pa_memt;
+	error = bus_space_map(sc->sc_sbregt, sbreg + SB_SMBUS_BASE,
+	    SB_SMBUS_SIZE, 0, &sc->sc_sbregh);
+	if (error) {
+		aprint_error_dev(self, "failed to map SMBUS sideband: %d\n",
+		    error);
+		goto fail;
+	}
+	sc->sc_sbregsz = SB_SMBUS_SIZE;
+
+	/*
+	 * Map the power management configuration controller's I/O
+	 * space.  Older manual call this PMBASE for power management;
+	 * newer manuals call it ABASE for ACPI.  The chapters
+	 * describing the registers say `power management' and I can't
+	 * find any connection to ACPI (I suppose ACPI firmware logic
+	 * probably peeks and pokes registers here?) so we say PMBASE
+	 * here.
+	 *
+	 * XXX Hope nobody else is trying to touch it!
+	 */
+	pmbase = pci_conf_read(pc, pmc_tag, LPCIB_PCI_PMBASE);
+	aprint_debug_dev(self, "PMBASE=0x%"PRIxBUSADDR"\n", pmbase);
+	if ((pmbase & 1) != 1) {	/* I/O space bit? */
+		aprint_error_dev(self, "unrecognized PMC space\n");
+		goto fail;
+	}
+	sc->sc_pmt = sc->sc_iot;
+	error = bus_space_map(sc->sc_pmt, PCI_MAPREG_IO_ADDR(pmbase),
+	    LPCIB_PCI_PM_SIZE, 0, &sc->sc_pmh);
+	if (error) {
+		aprint_error_dev(self, "failed to map PMC space: %d\n", error);
+		goto fail;
+	}
+	sc->sc_pmsz = LPCIB_PCI_PM_SIZE;
+
+	/* Success! */
+	sc->sc_tco_probed = true;
+	return;
+
+fail:	if (sc->sc_pmsz) {
+		bus_space_unmap(sc->sc_pmt, sc->sc_pmh, sc->sc_pmsz);
+		sc->sc_pmsz = 0;
+	}
+	if (sc->sc_sbregsz) {
+		bus_space_unmap(sc->sc_sbregt, sc->sc_sbregh, sc->sc_sbregsz);
+		sc->sc_sbregsz = 0;
+	}
+	if (sc->sc_tcosz) {
+		bus_space_unmap(sc->sc_tcot, sc->sc_tcoh, sc->sc_tcosz);
+		sc->sc_tcosz = 0;
+	}
+}
+
+static int
+ichsmb_tco_set_noreboot(device_t tco, bool noreboot)
+{
+	device_t self = device_parent(tco);
+	struct ichsmb_softc *sc = device_private(self);
+	uint32_t gc, gc1;
+
+	KASSERTMSG(tco == sc->sc_tco_device || sc->sc_tco_device == NULL,
+	    "tco=%p child=%p", tco, sc->sc_tco_device);
+	KASSERTMSG(device_is_a(self, "ichsmb"), "%s@%s",
+	    device_xname(tco), device_xname(self));
+
+	/*
+	 * Try to clear the No Reboot bit.
+	 */
+	gc = bus_space_read_4(sc->sc_sbregt, sc->sc_sbregh, SB_SMBUS_GC);
+	if (noreboot)
+		gc |= SB_SMBUS_GC_NR;
+	else
+		gc &= ~SB_SMBUS_GC_NR;
+	bus_space_write_4(sc->sc_sbregt, sc->sc_sbregh, SB_SMBUS_GC, gc);
+
+	/*
+	 * Check whether we could make it what we want.
+	 */
+	gc1 = bus_space_read_4(sc->sc_sbregt, sc->sc_sbregh, SB_SMBUS_GC);
+	aprint_debug_dev(self, "gc=0x%x -> 0x%x\n", gc, gc1);
+	if ((gc1 & SB_SMBUS_GC_NR) != (gc & SB_SMBUS_GC_NR))
+		return ENODEV;
+	return 0;
 }
 
 static int
@@ -247,7 +452,22 @@ ichsmb_rescan(device_t self, const char *ifattr, const int *locators)
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &sc->sc_i2c_tag;
 		sc->sc_i2c_device = config_found(self, &iba, iicbus_print,
-		    CFARGS_NONE);
+		    CFARGS(.iattr = "i2cbus"));
+	}
+	if (sc->sc_tco_probed &&
+	    ifattr_match(ifattr, "tcoichbus") &&
+	    sc->sc_tco_device == NULL) {
+		struct tco_attach_args ta;
+
+		memset(&ta, 0, sizeof(ta));
+		ta.ta_version = TCO_VERSION_SMBUS;
+		ta.ta_pmt = sc->sc_pmt;
+		ta.ta_pmh = sc->sc_pmh;
+		ta.ta_tcot = sc->sc_tcot;
+		ta.ta_tcoh = sc->sc_tcoh;
+		ta.ta_set_noreboot = &ichsmb_tco_set_noreboot;
+		sc->sc_tco_device = config_found(self, &ta, NULL,
+		    CFARGS(.iattr = "tcoichbus"));
 	}
 
 	return 0;
@@ -275,6 +495,12 @@ ichsmb_detach(device_t self, int flags)
 		sc->sc_pihp = NULL;
 	}
 
+	if (sc->sc_pmsz != 0)
+		bus_space_unmap(sc->sc_pmt, sc->sc_pmh, sc->sc_pmsz);
+	if (sc->sc_sbregsz != 0)
+		bus_space_unmap(sc->sc_sbregt, sc->sc_sbregh, sc->sc_sbregsz);
+	if (sc->sc_tcosz != 0)
+		bus_space_unmap(sc->sc_tcot, sc->sc_tcoh, sc->sc_tcosz);
 	if (sc->sc_size != 0)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
 
@@ -291,6 +517,8 @@ ichsmb_chdet(device_t self, device_t child)
 
 	if (sc->sc_i2c_device == child)
 		sc->sc_i2c_device = NULL;
+	if (sc->sc_tco_device == child)
+		sc->sc_tco_device = NULL;
 }
 
 static int

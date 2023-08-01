@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.26 2021/04/24 23:36:51 thorpej Exp $
+#	$NetBSD: files.pci,v 1.26.16.1 2023/08/01 14:06:36 martin Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -59,7 +59,6 @@ file 	arch/x86/pci/rdcpcib.c 		rdcpcib
 
 define	fwhichbus {}
 define	hpetichbus {}
-define	tcoichbus {}
 device	ichlpcib: acpipmtimer, isabus, fwhichbus, hpetichbus, gpiobus, tcoichbus
 attach	ichlpcib at pci
 file 	arch/x86/pci/ichlpcib.c 	ichlpcib

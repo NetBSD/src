@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.c,v 1.9 2022/09/22 14:43:04 riastradh Exp $	*/
+/*	$NetBSD: tco.c,v 1.9.4.1 2023/08/01 14:06:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.9 2022/09/22 14:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.9.4.1 2023/08/01 14:06:36 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,8 +60,10 @@ struct tco_softc {
 	bus_space_tag_t		sc_rcbat;
 	bus_space_handle_t	sc_rcbah;
 	struct pcib_softc *	sc_pcib;
+	pci_chipset_tag_t	sc_pc;
 	bus_space_tag_t		sc_tcot;
 	bus_space_handle_t	sc_tcoh;
+	int			(*sc_set_noreboot)(device_t, bool);
 	int			sc_armed;
 	unsigned int		sc_min_t;
 	unsigned int		sc_max_t;
@@ -93,12 +95,13 @@ tco_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct tco_attach_args *ta = aux;
 
-	if (ta->ta_pmt == 0)
-		return 0;
-
 	switch (ta->ta_version) {
+	case TCO_VERSION_SMBUS:
+		break;
 	case TCO_VERSION_RCBA:
 	case TCO_VERSION_PCIB:
+		if (ta->ta_pmt == 0)
+			return 0;
 		break;
 	default:
 		return 0;
@@ -125,11 +128,21 @@ tco_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": TCO (watchdog) timer configured.\n");
 	aprint_naive("\n");
 
-	sc->sc_tcot = sc->sc_pmt;
-	if (bus_space_subregion(sc->sc_pmt, sc->sc_pmh, PMC_TCO_BASE,
-		TCO_REGSIZE, &sc->sc_tcoh)) {
-		aprint_error_dev(self, "failed to map TCO registers\n");
-		return;
+	switch (sc->sc_version) {
+	case TCO_VERSION_SMBUS:
+		sc->sc_tcot = ta->ta_tcot;
+		sc->sc_tcoh = ta->ta_tcoh;
+		sc->sc_set_noreboot = ta->ta_set_noreboot;
+		break;
+	case TCO_VERSION_RCBA:
+	case TCO_VERSION_PCIB:
+		sc->sc_tcot = sc->sc_pmt;
+		if (bus_space_subregion(sc->sc_pmt, sc->sc_pmh, PMC_TCO_BASE,
+			TCO_REGSIZE, &sc->sc_tcoh)) {
+			aprint_error_dev(self, "failed to map TCO\n");
+			return;
+		}
+		break;
 	}
 
 	/* Explicitly stop the TCO timer. */
@@ -140,6 +153,7 @@ tco_attach(device_t parent, device_t self, void *aux)
 	 * work. We don't know what the SMBIOS does.
 	 */
 	ioreg = bus_space_read_4(sc->sc_pmt, sc->sc_pmh, PMC_SMI_EN);
+	aprint_debug_dev(self, "SMI_EN=0x%08x\n", ioreg);
 	ioreg &= ~PMC_SMI_EN_TCO_EN;
 
 	/*
@@ -150,7 +164,10 @@ tco_attach(device_t parent, device_t self, void *aux)
 		ioreg |= PMC_SMI_EN_TCO_EN;
 	}
 	if ((ioreg & PMC_SMI_EN_GBL_SMI_EN) != 0) {
+		aprint_debug_dev(self, "SMI_EN:=0x%08x\n", ioreg);
 		bus_space_write_4(sc->sc_pmt, sc->sc_pmh, PMC_SMI_EN, ioreg);
+		aprint_debug_dev(self, "SMI_EN=0x%08x\n",
+		    bus_space_read_4(sc->sc_pmt, sc->sc_pmh, PMC_SMI_EN));
 	}
 
 	/* Reset the watchdog status registers. */
@@ -172,6 +189,7 @@ tco_attach(device_t parent, device_t self, void *aux)
 	 *                              2secs          23secs
 	 */
 	switch (sc->sc_version) {
+	case TCO_VERSION_SMBUS:
 	case TCO_VERSION_RCBA:
 		sc->sc_max_t = TCOTIMER2_MAX_TICK;
 		sc->sc_min_t = TCOTIMER2_MIN_TICK;
@@ -256,6 +274,7 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 
 		/* set the timeout, */
 		switch (sc->sc_version) {
+		case TCO_VERSION_SMBUS:
 		case TCO_VERSION_RCBA:
 			/* ICH6 or newer */
 			ich6period = bus_space_read_2(sc->sc_tcot, sc->sc_tcoh,
@@ -289,6 +308,7 @@ tcotimer_tickle(struct sysmon_wdog *smw)
 
 	/* any value is allowed */
 	switch (sc->sc_version) {
+	case TCO_VERSION_SMBUS:
 	case TCO_VERSION_RCBA:
 		bus_space_write_2(sc->sc_tcot, sc->sc_tcoh, TCO_RLD, 1);
 		break;
@@ -339,8 +359,14 @@ static int
 tcotimer_disable_noreboot(device_t self)
 {
 	struct tco_softc *sc = device_private(self);
+	int error = EINVAL;
 
 	switch (sc->sc_version) {
+	case TCO_VERSION_SMBUS:
+		error = (*sc->sc_set_noreboot)(self, false);
+		if (error)
+			goto error;
+		break;
 	case TCO_VERSION_RCBA: {
 		uint32_t status;
 
@@ -376,7 +402,7 @@ tcotimer_disable_noreboot(device_t self)
 error:
 	aprint_error_dev(self, "TCO timer reboot disabled by hardware; "
 	    "hope SMBIOS properly handles it.\n");
-	return EINVAL;
+	return error;
 }
 
 MODULE(MODULE_CLASS_DRIVER, tco, "sysmon_wdog");
