@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.84 2023/07/31 18:02:32 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.85 2023/08/01 17:36:58 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1787,4 +1787,79 @@ sys/kern/uipc_domain.c				1.109
 
 	sockaddr(9): fix uninitialized buffer in DIAGNOSTIC checks.
 	[riastradh, ticket #1685]
+
+sys/dev/spkr.c					1.25 (patch)
+
+	spkr(4): Avoid some overflow issues.
+	[riastradh, ticket #1686]
+
+sys/dev/usb/xhci.c				1.176
+sys/dev/usb/xhcivar.h				1.23
+
+	xhci(4): PR 57326: defer root intr xfers while polling.
+	[riastradh, ticket #1687]
+
+sys/kern/subr_autoconf.c			1.308
+
+	autoconf(9): fix potential memory corruption in rare ABA case.
+	[riastradh, ticket #1688]
+
+sys/dev/isapnp/sb_isapnp.c			1.54
+sys/dev/ofisa/sb_ofisa.c			1.24
+
+	sb(4): PR 57363: fix missing mutex initialization at isapnp and ofisa.
+	[riastradh, ticket #1689]
+
+libexec/ld.elf_so/rtld.c			1.213
+
+	dlopen(3): Read _rtld_objtail under the lock.
+	[riastradh, ticket #1690]
+
+sys/fs/tmpfs/tmpfs_subr.c			1.116,1.117
+
+	tmpfs: protect against unreasonable file resizing.
+	[riastradh, ticket #1691]
+
+sys/dev/acpi/acpica/acpi_func.h			1.7 (patch)
+
+	acpi(4): fix membars in ACPI_ACQUIRE/RELEASE_GLOBAL_LOCK.
+	[riastradh, ticket #1692]
+
+distrib/sets/lists/comp/mi			1.2417 (patch)
+external/bsd/libarchive/lib/libarchive/Makefile	1.14
+external/bsd/libarchive/lib/libarchive/libarchive.pc.in 1.1
+external/public-domain/xz/lib/Makefile		1.11
+
+	Build and install pkgconfig files for liblzma and libarchive.
+	[tsutsui, ticket #1693]
+
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.16
+
+	drm/linux_ww_mutex: fix ww acquire context ordering.
+	[riastradh, ticket #1694]
+
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.10 (patch)
+
+	drm: fix ww_mutex return values on signal.
+	[riastradh, ticket #1695]
+
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.15
+
+	drm: PR 57537: fix mistake in ww_mutex wait loops.
+	[riastradh, ticket #1696]
+
+usr.sbin/tprof/tprof.8                          1.16,1.22,1.25,1.29 via patch
+usr.sbin/tprof/tprof_analyze.c                  1.4
+usr.sbin/tprof/arch/tprof_x86.c                 1.13-1.19
+sys/dev/tprof/tprof.c                           1.23 via patch
+sys/dev/tprof/tprof_x86_amd.c                   1.7-1.8 via patch
+sys/dev/tprof/tprof_x86_intel.c                 1.8 via patch
+
+        - Add AMD family 19h (zen3 and zen4) support.
+        - Add Intel Comet Lake support.
+        - Add support for Intel Skylake-X and Cascade Lake.
+        - Print the path that we failed to open on error.
+        - Use lowercase consistently for hexadecimal numbers.
+        - KNF
+	[msaitoh, ticket #1697]
 
