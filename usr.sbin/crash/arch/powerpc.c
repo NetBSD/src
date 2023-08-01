@@ -1,11 +1,8 @@
-/*	$NetBSD: generic.c,v 1.1.58.1 2023/08/01 14:36:59 martin Exp $	*/
+/*	$NetBSD: powerpc.c,v 1.1.2.2 2023/08/01 14:36:59 martin Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,23 +27,40 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: generic.c,v 1.1.58.1 2023/08/01 14:36:59 martin Exp $");
-#endif /* not lint */
+__RCSID("$NetBSD: powerpc.c,v 1.1.2.2 2023/08/01 14:36:59 martin Exp $");
 
-#include <sys/types.h>
-
-#include <ddb/ddb.h>
-
-#include <kvm.h>
-#include <nlist.h>
 #include <err.h>
+#include <kvm.h>
 #include <stdlib.h>
 
 #include "extern.h"
+
+enum {
+	N_TRAPEXIT,
+	N_SCTRAPEXIT,
+	N_INTRCALL,
+	N
+};
+
+void *trapexit;
+void *sctrapexit;
+void *intrcall;
+
+static struct nlist nl[] = {
+	[N_TRAPEXIT] = { .n_name = "trapexit" },
+	[N_SCTRAPEXIT] = { .n_name = "sctrapexit" },
+	[N_INTRCALL] = { .n_name = "intrcall" },
+	[N] = { .n_name = NULL },
+};
 
 void
 db_mach_init(kvm_t *kd)
 {
 
+	if (kvm_nlist(kd, nl) == -1)
+		errx(EXIT_FAILURE, "kvm_nlist: %s", kvm_geterr(kd));
+
+	trapexit = (void *)nl[N_TRAPEXIT].n_value;
+	sctrapexit = (void *)nl[N_SCTRAPEXIT].n_value;
+	intrcall = (void *)nl[N_INTRCALL].n_value;
 }
