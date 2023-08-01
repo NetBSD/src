@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.306.4.1 2023/07/30 12:04:22 martin Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.306.4.2 2023/08/01 14:53:54 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.306.4.1 2023/07/30 12:04:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.306.4.2 2023/08/01 14:53:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1347,7 +1347,7 @@ config_makeroom(int n, struct cfdriver *cd)
 		 * If another thread moved the array while we did
 		 * not hold alldevs_lock, try again.
 		 */
-		if (cd->cd_devs != osp) {
+		if (cd->cd_devs != osp || cd->cd_ndevs != ondevs) {
 			mutex_exit(&alldevs_lock);
 			kmem_free(nsp, sizeof(device_t) * nndevs);
 			mutex_enter(&alldevs_lock);
