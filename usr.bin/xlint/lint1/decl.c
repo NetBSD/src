@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.375 2023/08/02 21:11:35 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.376 2023/08/02 21:26:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.375 2023/08/02 21:11:35 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.376 2023/08/02 21:26:12 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1203,12 +1203,10 @@ add_pointer(sym_t *decl, qual_ptr *p)
 	debug_dcs();
 
 	type_t **tpp = &decl->s_type;
-	while (*tpp != NULL && *tpp != dcs->d_type)
+	lint_assert(*tpp != NULL);
+	while (*tpp != dcs->d_type) {
 		tpp = &(*tpp)->t_subt;
-	if (*tpp == NULL) {
-		debug_step("add_pointer: unchanged '%s'",
-		    type_name(decl->s_type));
-		return decl;
+		lint_assert(*tpp != NULL);
 	}
 
 	while (p != NULL) {
@@ -1274,12 +1272,10 @@ add_array(sym_t *decl, bool dim, int n)
 	debug_dcs();
 
 	type_t **tpp = &decl->s_type;
-	while (*tpp != NULL && *tpp != dcs->d_type)
+	lint_assert(*tpp != NULL);
+	while (*tpp != dcs->d_type) {
 		tpp = &(*tpp)->t_subt;
-	if (*tpp == NULL) {
-		debug_step("add_array: unchanged '%s'",
-		    type_name(decl->s_type));
-		return decl;
+		lint_assert(*tpp != NULL);
 	}
 
 	*tpp = block_derive_array(dcs->d_type, dim, n);
@@ -1389,24 +1385,11 @@ add_function(sym_t *decl, struct parameter_list params)
 		debug_dcs_all();
 	}
 
-	/*
-	 * XXX: What is this code doing on a semantic level, and why?
-	 * Returning decl leads to the wrong function types in msg_347.
-	 */
 	type_t **tpp = &decl->s_type;
-	if (*tpp == NULL)
-		decl->s_type = dcs->d_enclosing->d_type;
-	while (*tpp != NULL && *tpp != dcs->d_enclosing->d_type)
-		/*
-		 * XXX: accessing INT->t_subt feels strange, even though it
-		 * may even be guaranteed to be NULL.
-		 */
+	lint_assert(*tpp != NULL);
+	while (*tpp != dcs->d_enclosing->d_type) {
 		tpp = &(*tpp)->t_subt;
-	if (*tpp == NULL) {
-		debug_step("add_function: unchanged '%s'",
-		    type_name(decl->s_type));
-		debug_leave();
-		return decl;	/* see msg_347 */
+		lint_assert(*tpp != NULL);
 	}
 
 	*tpp = block_derive_function(dcs->d_enclosing->d_type,
