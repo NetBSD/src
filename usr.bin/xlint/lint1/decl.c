@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.374 2023/08/02 18:51:25 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.375 2023/08/02 21:11:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.374 2023/08/02 18:51:25 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.375 2023/08/02 21:11:35 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2767,8 +2767,8 @@ declare_local(sym_t *dsym, bool has_initializer)
 }
 
 /* Create a symbol for an abstract declaration. */
-sym_t *
-abstract_name(void)
+static sym_t *
+abstract_name_level(bool enclosing)
 {
 
 	lint_assert(dcs->d_kind == DLK_ABSTRACT
@@ -2786,17 +2786,24 @@ abstract_name(void)
 	 * type will be updated later, adding pointers, arrays and functions
 	 * as necessary.
 	 */
-	/*
-	 * XXX: This is not the correct type.  For example in msg_347, it is
-	 * the type of the last prototype parameter, but it should rather be
-	 * the return type of the function.
-	 */
-	sym->s_type = dcs->d_type;
+	sym->s_type = (enclosing ? dcs->d_enclosing : dcs)->d_type;
 	dcs->d_redeclared_symbol = NULL;
 
 	debug_printf("%s: ", __func__);
 	debug_sym("", sym, "\n");
 	return sym;
+}
+
+sym_t *
+abstract_name(void)
+{
+	return abstract_name_level(false);
+}
+
+sym_t *
+abstract_enclosing_name(void)
+{
+	return abstract_name_level(true);
 }
 
 /* Removes anything which has nothing to do on global level. */

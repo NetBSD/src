@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_type_name.c,v 1.10 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: parse_type_name.c,v 1.11 2023/08/02 21:11:35 rillig Exp $	*/
 # 3 "parse_type_name.c"
 
 /*
@@ -81,8 +81,11 @@ cover_direct_abstract_declarator(void)
 	sink(sizeof(int[3][5][8]));
 
 	/* cover 'abstract_decl_param_list asm_or_symbolrename_opt' */
+	/* expect+1: error: cannot take size/alignment of function type 'function(double) returning int' [144] */
 	sink(sizeof(int(double)));
+	/* expect+1: error: cannot take size/alignment of function type 'function(double) returning int' [144] */
 	sink(sizeof(int(double) __asm("anything")));
+	/* expect+1: error: cannot take size/alignment of function type 'function(double) returning int' [144] */
 	sink(sizeof(int(double) __symbolrename(alias)));
 
 	/* cover 'direct_abstract_declarator abstract_decl_param_list asm_or_symbolrename_opt' */
