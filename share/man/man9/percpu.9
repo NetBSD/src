@@ -1,4 +1,4 @@
-.\"     $NetBSD: percpu.9,v 1.15 2020/02/07 15:11:46 wiz Exp $
+.\"     $NetBSD: percpu.9,v 1.16 2023/08/02 06:24:46 riastradh Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,15 +94,18 @@ returns a handle for the per-CPU storage.
 .It Fn percpu_create "size" "ctor" "dtor" "arg"
 Like
 .Fn percpu_alloc ,
-but before returning, for each CPU, call
-.Fn "(*ctor)" p arg ci
-in the current thread, where
+but before any access to the storage on any CPU, arrange to call
+.Fn "(*ctor)" p arg ci ,
+where
 .Fa p
 is the pointer to that CPU's storage and
 .Fa ci
 is the
 .Vt "struct cpu_info *"
 for that CPU.
+This may happen synchronously in
+.Fn percpu_create
+or when a CPU is attached later.
 Further, arrange that
 .Fn percpu_free
 will do the same with
