@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.10 2023/07/09 11:18:55 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.11 2023/08/02 05:44:27 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -132,6 +132,24 @@ void cover_asm_or_symbolrename_asm(void)
 
 void cover_asm_or_symbolrename_symbolrename(void)
     __symbolrename(alternate_name);
+
+
+double
+f(e, s, r, a, t, n)
+	/* expect+1: error: only 'register' is valid as storage class in parameter [9] */
+	extern double e;
+	/* expect+1: error: only 'register' is valid as storage class in parameter [9] */
+	static double s;
+	register double r;
+	/* expect+1: error: only 'register' is valid as storage class in parameter [9] */
+	auto double a;
+	/* expect+1: error: only 'register' is valid as storage class in parameter [9] */
+	typedef double t;
+	double n;
+{
+	return e + s + r + a + t + n;
+}
+
 
 // FIXME: internal error in decl.c:906 near decl_arg.c:134: length(0)
 //void cover_abstract_declarator_typeof(void (*)(typeof(no_args)));

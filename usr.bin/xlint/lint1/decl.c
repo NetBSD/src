@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.372 2023/08/01 19:57:38 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.373 2023/08/02 05:44:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.372 2023/08/01 19:57:38 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.373 2023/08/02 05:44:27 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1482,14 +1482,10 @@ declarator_name(sym_t *sym)
 	case DLK_PROTO_PARAMS:
 		sym->s_arg = true;
 		/* FALLTHROUGH */
-	case DLK_OLD_STYLE_ARGS:
-		if ((sc = dcs->d_scl) == NOSCL)
-			sc = AUTO;
-		else {
-			lint_assert(sc == REG);
-			sym->s_register = true;
-			sc = AUTO;
-		}
+	case DLK_OLD_STYLE_ARGS:;
+		lint_assert(dcs->d_scl == NOSCL || dcs->d_scl == REG);
+		sym->s_register = dcs->d_scl == REG;
+		sc = AUTO;
 		sym->s_def = DEF;
 		break;
 	case DLK_AUTO:
