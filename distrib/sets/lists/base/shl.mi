@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.954 2023/08/01 06:35:55 mrg Exp $
+# $NetBSD: shl.mi,v 1.955 2023/08/02 12:12:52 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -24,7 +24,7 @@
 ./lib/libblocklist.so.0.0			base-sys-shlib		dynamicroot
 ./lib/libc.so					base-sys-shlib		dynamicroot
 ./lib/libc.so.12				base-sys-shlib		dynamicroot
-./lib/libc.so.12.220				base-sys-shlib		dynamicroot
+./lib/libc.so.12.221				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
@@ -257,7 +257,7 @@
 ./usr/lib/libc++.so.1.0				base-sys-shlib		compatfile,libcxx
 ./usr/lib/libc.so				base-sys-shlib		compatfile
 ./usr/lib/libc.so.12				base-sys-shlib		compatfile
-./usr/lib/libc.so.12.220			base-sys-shlib		compatfile
+./usr/lib/libc.so.12.221			base-sys-shlib		compatfile
 ./usr/lib/libcbor.so				base-sys-shlib		compatfile
 ./usr/lib/libcbor.so.0				base-sys-shlib		compatfile
 ./usr/lib/libcbor.so.0.5			base-sys-shlib		compatfile
