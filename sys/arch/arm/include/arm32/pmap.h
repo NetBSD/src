@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.175 2023/04/24 16:32:54 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.176 2023/08/02 15:57:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -94,12 +94,7 @@
 #endif
 #define	PMAP_TLB_FLUSH_ASID_ON_RESET	arm_has_tlbiasid_p
 #define	PMAP_TLB_NUM_PIDS		256
-#define	cpu_set_tlb_info(ci, ti)        ((void)((ci)->ci_tlb_info = (ti)))
-#if PMAP_TLB_MAX > 1
-#define	cpu_tlb_info(ci)		((ci)->ci_tlb_info)
-#else
-#define	cpu_tlb_info(ci)		(&pmap_tlb0_info)
-#endif
+
 #define	pmap_md_tlb_asid_max()		(PMAP_TLB_NUM_PIDS - 1)
 #include <uvm/pmap/tlb.h>
 #include <uvm/pmap/pmap_tlb.h>
