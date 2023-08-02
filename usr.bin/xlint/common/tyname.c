@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.56 2023/06/29 12:52:06 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.57 2023/08/02 18:51:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.56 2023/06/29 12:52:06 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.57 2023/08/02 18:51:25 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -155,14 +155,12 @@ type_name_of_function(buffer *buf, const type_t *tp)
 	buf_add(buf, "(");
 	if (tp->t_proto) {
 #ifdef IS_LINT1
-		sym_t *arg;
-
-		arg = tp->t_args;
-		if (arg == NULL)
+		const sym_t *param = tp->t_params;
+		if (param == NULL)
 			buf_add(buf, "void");
-		for (; arg != NULL; arg = arg->s_next) {
+		for (; param != NULL; param = param->s_next) {
 			buf_add(buf, sep), sep = ", ";
-			buf_add(buf, type_name(arg->s_type));
+			buf_add(buf, type_name(param->s_type));
 		}
 #else
 		type_t **argtype;

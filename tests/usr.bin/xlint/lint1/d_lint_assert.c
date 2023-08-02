@@ -1,4 +1,4 @@
-/*	$NetBSD: d_lint_assert.c,v 1.9 2023/07/15 09:53:46 rillig Exp $	*/
+/*	$NetBSD: d_lint_assert.c,v 1.10 2023/08/02 18:51:25 rillig Exp $	*/
 # 3 "d_lint_assert.c"
 
 /*
@@ -19,7 +19,7 @@ enum {
 
 /*
  * Before decl.c 1.196 from 2021-07-10, lint ran into an assertion failure
- * for 'sym->s_type != NULL' in declare_argument.
+ * for 'sym->s_type != NULL' in declare_argument (now declare_parameter).
  */
 /* expect+1: warning: old-style declaration; add 'int' [1] */
 c(void());

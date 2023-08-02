@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_086.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: msg_086.c,v 1.7 2023/08/02 18:51:25 rillig Exp $	*/
 # 3 "msg_086.c"
 
 // Test for message: automatic '%s' hides external declaration [86]
@@ -15,7 +15,7 @@ local_auto(void)
 	return identifier;
 }
 
-/* XXX: the function argument does not trigger the warning. */
+/* XXX: the function parameter does not trigger the warning. */
 int
 arg_auto(int identifier)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.172 2023/07/29 07:49:14 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.173 2023/08/02 18:51:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.172 2023/07/29 07:49:14 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.173 2023/08/02 18:51:25 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -80,8 +80,8 @@ bool	suppress_fallthrough;
 static control_statement *cstmt;
 
 /*
- * Number of arguments which will be checked for usage in following
- * function definition. -1 stands for all arguments.
+ * Number of parameters which will be checked for usage in following
+ * function definition. -1 stands for all parameters.
  *
  * The position of the last ARGSUSED comment is stored in argsused_pos.
  */
@@ -89,8 +89,8 @@ int	nargusg = -1;
 pos_t	argsused_pos;
 
 /*
- * Number of arguments of the following function definition whose types
- * shall be checked by lint2. -1 stands for all arguments.
+ * Number of parameters of the following function definition whose types
+ * shall be checked by lint2. -1 stands for all parameters.
  *
  * The position of the last VARARGS comment is stored in vapos.
  */
@@ -99,7 +99,7 @@ pos_t	vapos;
 
 /*
  * Both printflike_argnum and scanflike_argnum contain the 1-based number
- * of the string argument which shall be used to check the types of remaining
+ * of the string parameter which shall be used to check the types of remaining
  * arguments (for PRINTFLIKE and SCANFLIKE).
  *
  * printflike_pos and scanflike_pos are the positions of the last PRINTFLIKE
@@ -201,9 +201,9 @@ check_statement_reachable(void)
 
 /*
  * Called after a function declaration which introduces a function definition
- * and before an (optional) old-style argument declaration list.
+ * and before an (optional) old-style parameter declaration list.
  *
- * Puts all symbols declared in the prototype or in an old-style argument
+ * Puts all symbols declared in the prototype or in an old-style parameter
  * list back to the symbol table.
  *
  * Does the usual checking of storage class, type (return value),
@@ -214,12 +214,12 @@ begin_function(sym_t *fsym)
 {
 	int n;
 	bool dowarn;
-	sym_t *arg, *sym, *rdsym;
+	sym_t *sym, *rdsym;
 
 	funcsym = fsym;
 
 	/*
-	 * Put all symbols declared in the argument list back to the
+	 * Put all symbols declared in the parameter list back to the
 	 * symbol table.
 	 */
 	for (sym = dcs->d_func_proto_syms; sym != NULL;
@@ -233,9 +233,9 @@ begin_function(sym_t *fsym)
 	/*
 	 * In old_style_function() we did not know whether it is an old
 	 * style function definition or only an old-style declaration,
-	 * if there are no arguments inside the argument list ("f()").
+	 * if there are no parameters inside the parameter list ("f()").
 	 */
-	if (!fsym->s_type->t_proto && fsym->u.s_old_style_args == NULL)
+	if (!fsym->s_type->t_proto && fsym->u.s_old_style_params == NULL)
 		fsym->s_osdef = true;
 
 	check_type(fsym);
@@ -262,17 +262,18 @@ begin_function(sym_t *fsym)
 		fsym->s_inline = true;
 
 	/*
-	 * Arguments in new style function declarations need a name.
-	 * (void is already removed from the list of arguments)
+	 * Parameters in new-style function declarations need a name.
+	 * ('void' is already removed from the list of parameters.)
 	 */
 	n = 1;
-	for (arg = fsym->s_type->t_args; arg != NULL; arg = arg->s_next) {
-		if (arg->s_scl == ABSTRACT) {
-			lint_assert(arg->s_name == unnamed);
+	for (const sym_t *param = fsym->s_type->t_params;
+	     param != NULL; param = param->s_next) {
+		if (param->s_scl == ABSTRACT) {
+			lint_assert(param->s_name == unnamed);
 			/* formal parameter #%d lacks name */
 			error(59, n);
 		} else {
-			lint_assert(arg->s_name != unnamed);
+			lint_assert(param->s_name != unnamed);
 		}
 		n++;
 	}
@@ -380,9 +381,9 @@ end_function(void)
 	/* Warn about unused parameters. */
 	int n = nargusg;
 	nargusg = -1;
-	for (sym_t *arg = dcs->d_func_args;
-	     arg != NULL && n != 0; arg = arg->s_next, n--)
-		check_usage_sym(dcs->d_asm, arg);
+	for (const sym_t *param = dcs->d_func_params;
+	     param != NULL && n != 0; param = param->s_next, n--)
+		check_usage_sym(dcs->d_asm, param);
 
 	/*
 	 * write the information about the function definition to the
@@ -395,7 +396,7 @@ end_function(void)
 	} else {
 		outfdef(funcsym, &dcs->d_func_def_pos,
 		    cstmt->c_had_return_value, funcsym->s_osdef,
-		    dcs->d_func_args);
+		    dcs->d_func_params);
 	}
 
 	/* clean up after syntax errors, see test stmt_for.c. */
@@ -403,8 +404,8 @@ end_function(void)
 		dcs = dcs->d_enclosing;
 
 	/*
-	 * remove all symbols declared during argument declaration from
-	 * the symbol table
+	 * Remove all symbols declared during the parameter declaration from
+	 * the symbol table.
 	 */
 	lint_assert(dcs->d_enclosing == NULL);
 	lint_assert(dcs->d_kind == DLK_EXTERN);
@@ -1118,7 +1119,7 @@ global_clean_up_decl(bool silent)
 }
 
 /*
- * Only the first n arguments of the following function are checked for usage.
+ * Only the first n parameters of the following function are checked for usage.
  * A missing argument is taken to be 0.
  */
 static void
@@ -1162,8 +1163,8 @@ varargs(int n)
 }
 
 /*
- * Check all arguments until the (n-1)-th as usual. The n-th argument is
- * used the check the types of remaining arguments.
+ * Check all parameters until the (n-1)-th as usual. The n-th argument is
+ * used to check the types of the remaining arguments.
  */
 static void
 printflike(int n)
@@ -1186,7 +1187,7 @@ printflike(int n)
 }
 
 /*
- * Check all arguments until the (n-1)-th as usual. The n-th argument is
+ * Check all parameters until the (n-1)-th as usual. The n-th argument is
  * used the check the types of remaining arguments.
  */
 static void

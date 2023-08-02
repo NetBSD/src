@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.214 2023/07/29 10:45:00 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.215 2023/08/02 18:51:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.214 2023/07/29 10:45:00 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.215 2023/08/02 18:51:25 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -58,7 +58,7 @@ static const char *const msgs[] = {
 	"empty declaration",					      /* 0 */
 	"old-style declaration; add 'int'",			      /* 1 */
 	"empty declaration",					      /* 2 */
-	"'%s' declared in argument declaration list",		      /* 3 */
+	"'%s' declared in parameter declaration list",		      /* 3 */
 	"illegal type combination",				      /* 4 */
 	"modifying typedef with '%s'; only qualifiers allowed",	      /* 5 */
 	"use 'double' instead of 'long float'",			      /* 6 */
@@ -87,7 +87,7 @@ static const char *const msgs[] = {
 	"'%s' was previously declared extern, becomes static",	      /* 29 */
 	"redeclaration of '%s'; ANSI C requires static",	      /* 30 */
 	"'%s' has incomplete type '%s'",			      /* 31 */
-	"type of argument '%s' defaults to 'int'",		      /* 32 */
+	"type of parameter '%s' defaults to 'int'",		      /* 32 */
 	"duplicate member name '%s'",				      /* 33 */
 	"nonportable bit-field type '%s'",			      /* 34 */
 	"illegal bit-field type '%s'",				      /* 35 */
@@ -108,7 +108,7 @@ static const char *const msgs[] = {
 	"parameter '%s' has function type, should be pointer",	      /* 50 */
 	"parameter mismatch: %d declared, %d defined",		      /* 51 */
 	"cannot initialize parameter '%s'",			      /* 52 */
-	"declared argument '%s' is missing",			      /* 53 */
+	"declared parameter '%s' is missing",			      /* 53 */
 	"trailing ',' in enum declaration requires C99 or later",     /* 54 */
 	"integral constant expression expected",		      /* 55 */
 	"integral constant too large",				      /* 56 */
@@ -294,7 +294,7 @@ static const char *const msgs[] = {
 	"static function '%s' unused",				      /* 236 */
 	"redeclaration of formal parameter '%s'",		      /* 237 */
 	"initialization of union is illegal in traditional C",	      /* 238 */
-	"constant argument to '!'",				      /* 239 */
+	"constant operand to '!'",				      /* 239 */
 	"",			/* unused */			      /* 240 */
 	"dubious operation '%s' on enum",			      /* 241 */
 	"combination of '%s' and '%s', op '%s'",		      /* 242 */
@@ -338,7 +338,7 @@ static const char *const msgs[] = {
 	"comment /* %s */ must be outside function",		      /* 280 */
 	"duplicate comment /* %s */",				      /* 281 */
 	"comment /* %s */ must precede function definition",	      /* 282 */
-	"argument number mismatch in comment /* %s */",		      /* 283 */
+	"parameter number mismatch in comment /* %s */",	      /* 283 */
 	"fallthrough on default statement",			      /* 284 */
 	"prototype declaration",				      /* 285 */
 	"function definition is not a prototype",		      /* 286 */
@@ -348,7 +348,7 @@ static const char *const msgs[] = {
 	"static function '%s' declared but not defined",	      /* 290 */
 	"invalid multibyte character",				      /* 291 */
 	"cannot concatenate wide and regular string literals",	      /* 292 */
-	"argument %d must be 'char *' for PRINTFLIKE/SCANFLIKE",      /* 293 */
+	"parameter %d must be 'char *' for PRINTFLIKE/SCANFLIKE",     /* 293 */
 	"multi-character character constant",			      /* 294 */
 	"conversion of '%s' to '%s' is out of range, arg #%d",	      /* 295 */
 	"conversion of negative constant to unsigned type, arg #%d",  /* 296 */
@@ -365,7 +365,7 @@ static const char *const msgs[] = {
 	"static variable '%s' set but not used",		      /* 307 */
 	"invalid type for _Complex",				      /* 308 */
 	"extra bits set to 0 in conversion of '%s' to '%s', op '%s'", /* 309 */
-	"symbol renaming can't be used on function arguments",	      /* 310 */
+	"symbol renaming can't be used on function parameters",	      /* 310 */
 	"symbol renaming can't be used on automatic variables",	      /* 311 */
 	"%s does not support '//' comments",			      /* 312 */
 	"struct or union member name in initializer is a C99 feature",/* 313 */
@@ -389,7 +389,7 @@ static const char *const msgs[] = {
 	"left operand of '%s' must be bool, not '%s'",		      /* 331 */
 	"right operand of '%s' must be bool, not '%s'",		      /* 332 */
 	"controlling expression must be bool, not '%s'",	      /* 333 */
-	"argument %d expects '%s', gets passed '%s'",		      /* 334 */
+	"parameter %d expects '%s', gets passed '%s'",		      /* 334 */
 	"operand of '%s' must not be bool",			      /* 335 */
 	"left operand of '%s' must not be bool",		      /* 336 */
 	"right operand of '%s' must not be bool",		      /* 337 */

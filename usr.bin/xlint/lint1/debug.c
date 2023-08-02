@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.59 2023/08/01 16:08:58 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.60 2023/08/02 18:51:25 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.59 2023/08/01 16:08:58 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.60 2023/08/02 18:51:25 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -286,7 +286,7 @@ decl_level_kind_name(decl_level_kind kind)
 		"struct",
 		"union",
 		"enum",
-		"old-style-function-arguments",
+		"old-style-function-parameters",
 		"prototype-parameters",
 		"auto",
 		"abstract",
@@ -312,8 +312,8 @@ scl_name(scl_t scl)
 		"member-of-struct",
 		"member-of-union",
 		"abstract",
-		"old-style-function-argument",
-		"prototype-argument",
+		"old-style-function-parameter",
+		"prototype-parameter",
 	};
 
 	return name[scl];
@@ -378,9 +378,9 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 	debug_word(sym->s_bitfield, "bit-field");
 	debug_word(sym->s_set, "set");
 	debug_word(sym->s_used, "used");
-	debug_word(sym->s_arg, "argument");
+	debug_word(sym->s_param, "parameter");
 	debug_word(sym->s_register, "register");
-	debug_word(sym->s_defarg, "old-style-undefined");
+	debug_word(sym->s_defparam, "old-style-undefined");
 	debug_word(sym->s_return_type_implicit_int, "return-int");
 	debug_word(sym->s_osdef, "old-style");
 	debug_word(sym->s_inline, "inline");
@@ -427,8 +427,8 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 			    sym->u.s_keyword.u.function_specifier));
 	}
 
-	debug_word(sym->s_osdef && sym->u.s_old_style_args != NULL,
-	    "old-style-args");
+	debug_word(sym->s_osdef && sym->u.s_old_style_params != NULL,
+	    "old-style-params");
 
 	if (strcmp(suffix, "\n") == 0)
 		debug_printf("\n");
@@ -477,9 +477,8 @@ debug_decl_level(const decl_level *dl)
 
 	if (dl->d_tag_type != NULL)
 		debug_printf(" tag_type='%s'", type_name(dl->d_tag_type));
-	for (const sym_t *arg = dl->d_func_args;
-	     arg != NULL; arg = arg->s_next)
-		debug_sym(" arg(", arg, ")");
+	for (const sym_t *p = dl->d_func_params; p != NULL; p = p->s_next)
+		debug_sym(" param(", p, ")");
 	if (dl->d_func_def_pos.p_file != NULL)
 		debug_printf(" func_def_pos=%s:%d:%d",
 		    dl->d_func_def_pos.p_file, dl->d_func_def_pos.p_line,

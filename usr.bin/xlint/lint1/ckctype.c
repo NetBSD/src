@@ -1,4 +1,4 @@
-/* $NetBSD: ckctype.c,v 1.5 2022/05/20 21:18:55 rillig Exp $ */
+/* $NetBSD: ckctype.c,v 1.6 2023/08/02 18:51:25 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckctype.c,v 1.5 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: ckctype.c,v 1.6 2023/08/02 18:51:25 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -47,8 +47,8 @@ __RCSID("$NetBSD: ckctype.c,v 1.5 2022/05/20 21:18:55 rillig Exp $");
  * Check that the functions from <ctype.h> are used properly.  They must not
  * be called with an argument of type 'char'.  In such a case, the argument
  * must be converted to 'unsigned char'.  The tricky thing is that even though
- * the expected argument type is 'int', a 'char' argument must not be directly
- * cast to 'int', as that would preserve negative argument values.
+ * the parameter type is declared as 'int', a 'char' argument must not be
+ * directly cast to 'int', as that would preserve negative argument values.
  *
  * See also:
  *	ctype(3)

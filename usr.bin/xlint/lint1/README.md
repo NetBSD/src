@@ -1,4 +1,4 @@
-[//]: # ($NetBSD: README.md,v 1.12 2023/02/22 23:55:05 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.13 2023/08/02 18:51:25 rillig Exp $)
 
 # Introduction
 
@@ -71,7 +71,7 @@ Lint operates on the level of individual expressions.
 * It does not build an AST of the statements of a function, therefore it
   cannot reliably analyze the control flow in a single function.
 * It does not store the control flow properties of functions, therefore it
-  cannot relate argument nullability with the return value.
+  cannot relate parameter nullability with the return value.
 * It does not have information about functions, except for their prototypes,
   therefore it cannot relate them across translation units.
 * It does not store detailed information about complex data types, therefore
@@ -197,14 +197,14 @@ See `expr_free_all`.
 
 # Abbreviations in variable names
 
-| Abbr | Expanded                                    |
-|------|---------------------------------------------|
-| l    | left                                        |
-| r    | right                                       |
-| o    | old (during type conversions)               |
-| n    | new (during type conversions)               |
-| op   | operator                                    |
-| arg  | the number of the argument, for diagnostics |
+| Abbr | Expanded                                     |
+|------|----------------------------------------------|
+| l    | left                                         |
+| r    | right                                        |
+| o    | old (during type conversions)                |
+| n    | new (during type conversions)                |
+| op   | operator                                     |
+| arg  | the number of the parameter, for diagnostics |
 
 # Debugging
 

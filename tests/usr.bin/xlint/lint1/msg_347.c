@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_347.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_347.c,v 1.6 2023/08/02 18:51:25 rillig Exp $	*/
 # 3 "msg_347.c"
 
 // Test for message: redeclaration of '%s' with type '%s', expected '%s' [347]
@@ -33,7 +33,7 @@ void function_parameter(void *fs, double *func(void *, int));
 struct last_arg;
 /*
  * FIXME: The following error is completely wrong.
- *  There is no argument that has 'struct last_arg', there are only pointers
+ *  There is no parameter that has 'struct last_arg', there are only pointers
  *  to it.
  */
 /* expect+2: error: '<unnamed>' has incomplete type 'incomplete struct last_arg' [31] */

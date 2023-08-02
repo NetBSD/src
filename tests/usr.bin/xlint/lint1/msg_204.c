@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_204.c,v 1.9 2023/07/09 11:18:55 rillig Exp $	*/
+/*	$NetBSD: msg_204.c,v 1.10 2023/08/02 18:51:25 rillig Exp $	*/
 # 3 "msg_204.c"
 
 // Test for message: controlling expressions must have scalar type [204]
 
-/* Suppress messages for unused arguments and for 'extern' declarations. */
+/* Suppress messages for unused parameters and for 'extern' declarations. */
 /* lint1-extra-flags: -X 231 -X 351 */
 
 extern void

@@ -1,4 +1,4 @@
-# $NetBSD: msg_000.ln,v 1.4 2022/05/30 23:27:45 rillig Exp $
+# $NetBSD: msg_000.ln,v 1.5 2023/08/02 18:51:25 rillig Exp $
 #
 # Test data for message 0 of lint2:
 #	%s used( %s ), but not defined
@@ -37,6 +37,6 @@ S msg_000.c
 #	'd'	function definition
 #	'o'	old-style function definition
 #	'16...'	the name of the defined function
-#	'f0'	it's a function with 0 arguments
+#	'f0'	it's a function with 0 parameters
 #	'I'	the return type of the function is (implicitly) 'int'
 2 d 0.2 d o 16defined_not_used f0 I

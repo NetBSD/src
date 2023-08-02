@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.43 2023/07/09 11:18:55 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.44 2023/08/02 18:51:25 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -124,11 +124,11 @@ strict_bool_constant(void)
 {
 	accept_bool(__lint_false);
 	accept_bool(__lint_true);
-	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
 	accept_bool(0);
-	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
 	accept_bool(1);
-	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
 	accept_bool(2);
 }
 
@@ -334,17 +334,17 @@ strict_bool_conversion_function_argument_pass(bool b, int i, const char *p)
 	take_arguments(b, i, p);
 
 	/* Implicitly converting bool to other scalar types. */
-	/* expect+2: error: argument 2 expects 'int', gets passed '_Bool' [334] */
-	/* expect+1: error: argument 3 expects 'pointer', gets passed '_Bool' [334] */
+	/* expect+2: error: parameter 2 expects 'int', gets passed '_Bool' [334] */
+	/* expect+1: error: parameter 3 expects 'pointer', gets passed '_Bool' [334] */
 	take_arguments(b, b, b);
 
 	/* Implicitly converting int to bool (arg #1). */
-	/* expect+2: error: argument 1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+2: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
 	/* expect+1: warning: illegal combination of pointer 'pointer to const char' and integer 'int', arg #3 [154] */
 	take_arguments(i, i, i);
 
 	/* Implicitly converting pointer to bool (arg #1). */
-	/* expect+2: error: argument 1 expects '_Bool', gets passed 'pointer' [334] */
+	/* expect+2: error: parameter 1 expects '_Bool', gets passed 'pointer' [334] */
 	/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to const char', arg #2 [154] */
 	take_arguments(p, p, p);
 
@@ -359,11 +359,11 @@ strict_bool_conversion_function_argument_pass(bool b, int i, const char *p)
 	take_arguments(__lint_true, i, p);
 
 	/* Trying to pass integer constants. */
-	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
 	take_arguments(0, i, p);
-	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
 	take_arguments(1, i, p);
-	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
 	take_arguments(2, i, p);
 }
 
@@ -484,10 +484,10 @@ strict_bool_operand_unary_not(void)
 	b = !b;
 	b = !!!b;
 	/* expect+2: warning: constant in conditional context [161] */
-	/* expect+1: warning: constant argument to '!' [239] */
+	/* expect+1: warning: constant operand to '!' [239] */
 	b = !__lint_false;
 	/* expect+2: warning: constant in conditional context [161] */
-	/* expect+1: warning: constant argument to '!' [239] */
+	/* expect+1: warning: constant operand to '!' [239] */
 	b = !__lint_true;
 
 	int i = 0;

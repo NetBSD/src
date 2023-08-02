@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.373 2023/08/02 05:44:27 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.374 2023/08/02 18:51:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.373 2023/08/02 05:44:27 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.374 2023/08/02 18:51:25 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -161,8 +161,8 @@ expr_unqualified_type(const type_t *tp)
 }
 
 /*
- * Returns whether the argument is void or an incomplete array, struct, union
- * or enum type.
+ * Returns whether the type is 'void' or an incomplete array, struct, union
+ * or enum.
  */
 bool
 is_incomplete(const type_t *tp)
@@ -534,12 +534,12 @@ end_declaration_level(void)
 		if ((*dcs->d_last_dlsym = dl->d_first_dlsym) != NULL)
 			dcs->d_last_dlsym = dl->d_last_dlsym;
 		break;
-	case DLK_OLD_STYLE_ARGS:
+	case DLK_OLD_STYLE_PARAMS:
 		/*
 		 * All symbols in dcs->d_first_dlsym are introduced in
-		 * old-style argument declarations (it's not clean, but
+		 * old-style parameter declarations (it's not clean, but
 		 * possible). They are appended to the list of symbols declared
-		 * in an old-style argument identifier list or a new-style
+		 * in an old-style parameter identifier list or a new-style
 		 * parameter type list.
 		 */
 		if (dl->d_first_dlsym != NULL) {
@@ -563,7 +563,7 @@ end_declaration_level(void)
 		check_usage(dl);
 		/* FALLTHROUGH */
 	case DLK_PROTO_PARAMS:
-		/* usage of arguments will be checked by end_function() */
+		/* usage of parameters will be checked by end_function() */
 		symtab_remove_level(dl->d_first_dlsym);
 		break;
 	case DLK_EXTERN:
@@ -618,7 +618,7 @@ dcs_begin_type(void)
 	dcs->d_no_type_specifier = false;
 	dcs->d_packed = false;
 	dcs->d_used = false;
-	dcs->d_func_args = NULL;
+	dcs->d_func_params = NULL;
 	dcs->d_func_def_pos = (pos_t){ NULL, 0, 0 };
 	dcs->d_func_proto_syms = NULL;
 }
@@ -632,7 +632,7 @@ dcs_adjust_storage_class(void)
 			error(8);
 			dcs->d_scl = NOSCL;
 		}
-	} else if (dcs->d_kind == DLK_OLD_STYLE_ARGS ||
+	} else if (dcs->d_kind == DLK_OLD_STYLE_PARAMS ||
 		   dcs->d_kind == DLK_PROTO_PARAMS) {
 		if (dcs->d_scl != NOSCL && dcs->d_scl != REG) {
 			/* only 'register' is valid as storage class ... */
@@ -1289,13 +1289,13 @@ add_array(sym_t *decl, bool dim, int n)
 }
 
 static type_t *
-block_derive_function(type_t *ret, bool proto, sym_t *args, bool vararg)
+block_derive_function(type_t *ret, bool proto, sym_t *params, bool vararg)
 {
 
 	type_t *tp = block_derive_type(ret, FUNC);
 	tp->t_proto = proto;
 	if (proto)
-		tp->t_args = args;
+		tp->t_params = params;
 	tp->t_vararg = vararg;
 	debug_step("%s: '%s'", __func__, type_name(tp));
 	return tp;
@@ -1325,7 +1325,7 @@ check_prototype_parameters(sym_t *args)
 }
 
 static void
-old_style_function(sym_t *decl, sym_t *args)
+old_style_function(sym_t *decl, sym_t *params)
 {
 
 	/*
@@ -1338,12 +1338,12 @@ old_style_function(sym_t *decl, sym_t *args)
 		 * Assume that this becomes a function definition. If not, it
 		 * will be corrected in check_function_definition.
 		 */
-		if (args != NULL) {
+		if (params != NULL) {
 			decl->s_osdef = true;
-			decl->u.s_old_style_args = args;
+			decl->u.s_old_style_params = params;
 		}
 	} else {
-		if (args != NULL)
+		if (params != NULL)
 			/* function prototype parameters must have types */
 			warning(62);
 	}
@@ -1377,15 +1377,15 @@ add_function(sym_t *decl, struct parameter_list params)
 	 * end_declaration_level after add_function. To be able to restore
 	 * them if this is a function definition, a pointer to the list of
 	 * all symbols is stored in dcs->d_enclosing->d_func_proto_syms. Also,
-	 * a list of the arguments (concatenated by s_next) is stored in
-	 * dcs->d_enclosing->d_func_args. (dcs->d_enclosing must be used
+	 * a list of the parameters (concatenated by s_next) is stored in
+	 * dcs->d_enclosing->d_func_params. (dcs->d_enclosing must be used
 	 * because *dcs is the declaration stack element created for the list
 	 * of params and is removed after add_function.)
 	 */
 	if (dcs->d_enclosing->d_kind == DLK_EXTERN &&
 	    decl->s_type == dcs->d_enclosing->d_type) {
 		dcs->d_enclosing->d_func_proto_syms = dcs->d_first_dlsym;
-		dcs->d_enclosing->d_func_args = params.first;
+		dcs->d_enclosing->d_func_params = params.first;
 		debug_dcs_all();
 	}
 
@@ -1432,7 +1432,7 @@ check_function_definition(sym_t *sym, bool msg)
 			error(22);
 		}
 		sym->s_osdef = false;
-		sym->u.s_old_style_args = NULL;
+		sym->u.s_old_style_params = NULL;
 	}
 }
 
@@ -1444,8 +1444,8 @@ declarator_name(sym_t *sym)
 
 	if (sym->s_scl == NOSCL)
 		dcs->d_redeclared_symbol = NULL;
-	else if (sym->s_defarg) {
-		sym->s_defarg = false;
+	else if (sym->s_defparam) {
+		sym->s_defparam = false;
 		dcs->d_redeclared_symbol = NULL;
 	} else {
 		dcs->d_redeclared_symbol = sym;
@@ -1480,9 +1480,9 @@ declarator_name(sym_t *sym)
 		}
 		break;
 	case DLK_PROTO_PARAMS:
-		sym->s_arg = true;
+		sym->s_param = true;
 		/* FALLTHROUGH */
-	case DLK_OLD_STYLE_ARGS:;
+	case DLK_OLD_STYLE_PARAMS:
 		lint_assert(dcs->d_scl == NOSCL || dcs->d_scl == REG);
 		sym->s_register = dcs->d_scl == REG;
 		sc = AUTO;
@@ -1533,14 +1533,15 @@ old_style_function_parameter_name(sym_t *sym)
 		if (block_level == sym->s_block_level) {
 			/* redeclaration of formal parameter '%s' */
 			error(21, sym->s_name);
-			lint_assert(sym->s_defarg);
+			lint_assert(sym->s_defparam);
 		}
 		sym = pushdown(sym);
 	}
 	sym->s_type = gettyp(INT);
 	sym->s_scl = AUTO;
 	sym->s_def = DEF;
-	sym->s_defarg = sym->s_arg = true;
+	sym->s_defparam = true;
+	sym->s_param = true;
 	debug_sym("old_style_function_parameter_name: ", sym, "\n");
 	return sym;
 }
@@ -1770,7 +1771,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	if (sym->s_scl != NOSCL) {
 		if (sym->s_block_level == block_level) {
 			/* no hflag, because this is illegal */
-			if (sym->s_arg) {
+			if (sym->s_param) {
 				/* enumeration constant '%s' hides parameter */
 				warning(57, sym->s_name);
 			} else {
@@ -1872,35 +1873,35 @@ check_init(sym_t *sym)
 }
 
 /*
- * Compares a prototype declaration with the remembered arguments of a previous
- * old-style function definition.
+ * Compares a prototype declaration with the remembered parameters of a
+ * previous old-style function definition.
  */
 static bool
 check_old_style_definition(const sym_t *rdsym, const sym_t *dsym)
 {
 
-	const sym_t *args = rdsym->u.s_old_style_args;
-	const sym_t *pargs = dsym->s_type->t_args;
+	const sym_t *old_params = rdsym->u.s_old_style_params;
+	const sym_t *proto_params = dsym->s_type->t_params;
 
 	bool msg = false;
 
-	int narg = 0;
-	for (const sym_t *arg = args; arg != NULL; arg = arg->s_next)
-		narg++;
-	int nparg = 0;
-	for (const sym_t *parg = pargs; parg != NULL; parg = parg->s_next)
-		nparg++;
-	if (narg != nparg) {
+	int old_n = 0;
+	for (const sym_t *p = old_params; p != NULL; p = p->s_next)
+		old_n++;
+	int proto_n = 0;
+	for (const sym_t *p = proto_params; p != NULL; p = p->s_next)
+		proto_n++;
+	if (old_n != proto_n) {
 		/* prototype does not match old-style definition */
 		error(63);
 		msg = true;
 		goto end;
 	}
 
-	const sym_t *arg = args;
-	const sym_t *parg = pargs;
+	const sym_t *arg = old_params;
+	const sym_t *parg = proto_params;
 	int n = 1;
-	while (narg-- > 0) {
+	while (old_n-- > 0) {
 		bool dowarn = false;
 		if (!types_compatible(arg->s_type, parg->s_type,
 		    true, true, &dowarn) ||
@@ -1982,7 +1983,7 @@ declare_extern(sym_t *dsym, bool has_initializer, sbuf_t *renaming)
 		/*
 		 * If the old symbol stems from an old-style function
 		 * definition, we have remembered the params in
-		 * rdsym->s_old_style_args and compare them with the params
+		 * rdsym->s_old_style_params and compare them with the params
 		 * of the prototype.
 		 */
 		bool redec = rdsym->s_osdef && dsym->s_type->t_proto &&
@@ -2007,8 +2008,8 @@ declare_extern(sym_t *dsym, bool has_initializer, sbuf_t *renaming)
 			 */
 			if (rdsym->s_osdef && !dsym->s_type->t_proto) {
 				dsym->s_osdef = rdsym->s_osdef;
-				dsym->u.s_old_style_args =
-				    rdsym->u.s_old_style_args;
+				dsym->u.s_old_style_params =
+				    rdsym->u.s_old_style_params;
 				dsym->s_def_pos = rdsym->s_def_pos;
 			}
 
@@ -2048,17 +2049,17 @@ declare(sym_t *decl, bool has_initializer, sbuf_t *renaming)
 
 	if (dcs->d_kind == DLK_EXTERN)
 		declare_extern(decl, has_initializer, renaming);
-	else if (dcs->d_kind == DLK_OLD_STYLE_ARGS ||
+	else if (dcs->d_kind == DLK_OLD_STYLE_PARAMS ||
 		 dcs->d_kind == DLK_PROTO_PARAMS) {
 		if (renaming != NULL) {
-			/* symbol renaming can't be used on function arguments */
+			/* symbol renaming can't be used on function ... */
 			error(310);
 		} else
-			(void)declare_argument(decl, has_initializer);
+			(void)declare_parameter(decl, has_initializer);
 	} else {
 		lint_assert(dcs->d_kind == DLK_AUTO);
 		if (renaming != NULL) {
-			/* symbol renaming can't be used on automatic variables */
+			/* symbol renaming can't be used on automatic ... */
 			error(311);
 		} else
 			declare_local(decl, has_initializer);
@@ -2185,15 +2186,15 @@ prototypes_compatible(const type_t *tp1, const type_t *tp2, bool *dowarn)
 	if (tp1->t_vararg != tp2->t_vararg)
 		return false;
 
-	sym_t *a1 = tp1->t_args;
-	sym_t *a2 = tp2->t_args;
+	const sym_t *p1 = tp1->t_params;
+	const sym_t *p2 = tp2->t_params;
 
-	for (; a1 != NULL && a2 != NULL; a1 = a1->s_next, a2 = a2->s_next) {
-		if (!types_compatible(a1->s_type, a2->s_type,
+	for (; p1 != NULL && p2 != NULL; p1 = p1->s_next, p2 = p2->s_next) {
+		if (!types_compatible(p1->s_type, p2->s_type,
 		    true, false, dowarn))
 			return false;
 	}
-	return a1 == a2;
+	return p1 == p2;
 }
 
 /*
@@ -2212,8 +2213,8 @@ matches_no_arg_function(const type_t *tp, bool *dowarn)
 
 	if (tp->t_vararg && dowarn != NULL)
 		*dowarn = true;
-	for (sym_t *arg = tp->t_args; arg != NULL; arg = arg->s_next) {
-		tspec_t t = arg->s_type->t_tspec;
+	for (const sym_t *p = tp->t_params; p != NULL; p = p->s_next) {
+		tspec_t t = p->s_type->t_tspec;
 		if (t == FLOAT ||
 		    t == CHAR || t == SCHAR || t == UCHAR ||
 		    t == SHORT || t == USHORT) {
@@ -2324,7 +2325,7 @@ complete_type(sym_t *dsym, sym_t *ssym)
 			if (!dst->t_proto && src->t_proto) {
 				*dstp = dst = block_dup_type(dst);
 				dst->t_proto = true;
-				dst->t_args = src->t_args;
+				dst->t_params = src->t_params;
 			}
 		}
 		dstp = &dst->t_subt;
@@ -2335,11 +2336,8 @@ complete_type(sym_t *dsym, sym_t *ssym)
 	debug_sym("ssym: ", ssym, "\n");
 }
 
-/*
- * Completes the declaration of a single argument.
- */
 sym_t *
-declare_argument(sym_t *sym, bool has_initializer)
+declare_parameter(sym_t *sym, bool has_initializer)
 {
 
 	check_function_definition(sym, true);
@@ -2351,13 +2349,13 @@ declare_argument(sym_t *sym, bool has_initializer)
 		/* redeclaration of formal parameter '%s' */
 		error(237, sym->s_name);
 		rmsym(dcs->d_redeclared_symbol);
-		sym->s_arg = true;
+		sym->s_param = true;
 	}
 
-	if (!sym->s_arg) {
-		/* declared argument '%s' is missing */
+	if (!sym->s_param) {
+		/* declared parameter '%s' is missing */
 		error(53, sym->s_name);
-		sym->s_arg = true;
+		sym->s_param = true;
 	}
 
 	if (has_initializer) {
@@ -2429,31 +2427,31 @@ check_func_lint_directives(void)
 	}
 
 	/*
-	 * check if the argument of a lint directive is compatible with the
-	 * number of arguments.
+	 * check if the numeric argument of a lint directive is compatible with
+	 * the number of parameters of the function.
 	 */
 	int narg = 0;
-	for (sym_t *arg = dcs->d_func_args; arg != NULL; arg = arg->s_next)
+	for (const sym_t *p = dcs->d_func_params; p != NULL; p = p->s_next)
 		narg++;
 	if (nargusg > narg) {
-		/* argument number mismatch in comment ** %s ** */
+		/* parameter number mismatch in comment ** %s ** */
 		warning(283, "ARGSUSED");
 		nargusg = 0;
 	}
 	if (nvararg > narg) {
-		/* argument number mismatch in comment ** %s ** */
+		/* parameter number mismatch in comment ** %s ** */
 		warning(283, "VARARGS");
 		nvararg = 0;
 	}
 	if (printflike_argnum > narg) {
-		/* argument number mismatch in comment ** %s ** */
+		/* parameter number mismatch in comment ** %s ** */
 		warning(283, "PRINTFLIKE");
 		printflike_argnum = -1;
 	} else if (printflike_argnum == 0) {
 		printflike_argnum = -1;
 	}
 	if (scanflike_argnum > narg) {
-		/* argument number mismatch in comment ** %s ** */
+		/* parameter number mismatch in comment ** %s ** */
 		warning(283, "SCANFLIKE");
 		scanflike_argnum = -1;
 	} else if (scanflike_argnum == 0) {
@@ -2462,11 +2460,11 @@ check_func_lint_directives(void)
 	if (printflike_argnum != -1 || scanflike_argnum != -1) {
 		narg = printflike_argnum != -1
 		    ? printflike_argnum : scanflike_argnum;
-		const sym_t *arg = dcs->d_func_args;
+		const sym_t *param = dcs->d_func_params;
 		for (int n = 1; n < narg; n++)
-			arg = arg->s_next;
-		if (!is_character_pointer(arg->s_type)) {
-			/* argument %d must be 'char *' for PRINTFLIKE/... */
+			param = param->s_next;
+		if (!is_character_pointer(param->s_type)) {
+			/* parameter %d must be 'char *' for PRINTFLIKE/... */
 			warning(293, narg);
 			printflike_argnum = scanflike_argnum = -1;
 		}
@@ -2479,19 +2477,19 @@ check_func_lint_directives(void)
  * Returns true if the position of the previous declaration should be reported.
  */
 static bool
-check_prototype_declaration(sym_t *arg, sym_t *parg)
+check_prototype_declaration(const sym_t *old_param, const sym_t *proto_param)
 {
-	type_t *tp = arg->s_type;
-	type_t *ptp = parg->s_type;
+	type_t *old_tp = old_param->s_type;
+	type_t *proto_tp = proto_param->s_type;
 	bool dowarn = false;
 
-	if (!types_compatible(tp, ptp, true, true, &dowarn)) {
-		if (types_compatible(tp, ptp, true, false, &dowarn)) {
+	if (!types_compatible(old_tp, proto_tp, true, true, &dowarn)) {
+		if (types_compatible(old_tp, proto_tp, true, false, &dowarn)) {
 			/* type of '%s' does not match prototype */
-			return gnuism(58, arg->s_name);
+			return gnuism(58, old_param->s_name);
 		} else {
 			/* type of '%s' does not match prototype */
-			error(58, arg->s_name);
+			error(58, old_param->s_name);
 			return true;
 		}
 	}
@@ -2499,10 +2497,10 @@ check_prototype_declaration(sym_t *arg, sym_t *parg)
 		/* TODO: Make this an error in C99 mode as well. */
 		if (!allow_trad && !allow_c99)
 			/* type of '%s' does not match prototype */
-			error(58, arg->s_name);
+			error(58, old_param->s_name);
 		else
 			/* type of '%s' does not match prototype */
-			warning(58, arg->s_name);
+			warning(58, old_param->s_name);
 		return true;
 	}
 
@@ -2510,59 +2508,51 @@ check_prototype_declaration(sym_t *arg, sym_t *parg)
 }
 
 /*
- * Warn about arguments in old-style function definitions that default to int.
+ * Warn about parameters in old-style function definitions that default to int.
  * Check that an old-style function definition is compatible to a previous
  * prototype.
  */
 void
-check_func_old_style_arguments(void)
+check_func_old_style_parameters(void)
 {
-	int narg;
-	int nparg;
-	bool msg;
+	sym_t *old_params = funcsym->u.s_old_style_params;
+	sym_t *proto_params = funcsym->s_type->t_params;
 
-	sym_t *args = funcsym->u.s_old_style_args;
-	sym_t *pargs = funcsym->s_type->t_args;
-
-	/*
-	 * print a warning for each argument of an old-style function
-	 * definition which defaults to int
-	 */
-	for (sym_t *arg = args; arg != NULL; arg = arg->s_next) {
-		if (arg->s_defarg) {
-			/* type of argument '%s' defaults to 'int' */
+	for (sym_t *arg = old_params; arg != NULL; arg = arg->s_next) {
+		if (arg->s_defparam) {
+			/* type of parameter '%s' defaults to 'int' */
 			warning(32, arg->s_name);
-			arg->s_defarg = false;
+			arg->s_defparam = false;
 			mark_as_set(arg);
 		}
 	}
 
 	/*
 	 * If this is an old-style function definition and a prototype
-	 * exists, compare the types of arguments.
+	 * exists, compare the types of parameters.
 	 */
 	if (funcsym->s_osdef && funcsym->s_type->t_proto) {
 		/*
-		 * If the number of arguments does not match, we need not
+		 * If the number of parameters does not match, we need not
 		 * continue.
 		 */
-		narg = nparg = 0;
-		msg = false;
-		for (sym_t *parg = pargs; parg != NULL; parg = parg->s_next)
-			nparg++;
-		for (sym_t *arg = args; arg != NULL; arg = arg->s_next)
-			narg++;
-		if (narg != nparg) {
+		int old_n = 0, proto_n = 0;
+		bool msg = false;
+		for (const sym_t *p = proto_params; p != NULL; p = p->s_next)
+			proto_n++;
+		for (const sym_t *p = old_params; p != NULL; p = p->s_next)
+			old_n++;
+		if (old_n != proto_n) {
 			/* parameter mismatch: %d declared, %d defined */
-			error(51, nparg, narg);
+			error(51, proto_n, old_n);
 			msg = true;
 		} else {
-			sym_t *parg = pargs;
-			sym_t *arg = args;
-			while (narg-- > 0) {
-				msg |= check_prototype_declaration(arg, parg);
-				parg = parg->s_next;
-				arg = arg->s_next;
+			const sym_t *proto_param = proto_params;
+			const sym_t *old_param = old_params;
+			while (old_n-- > 0) {
+				msg |= check_prototype_declaration(old_param, proto_param);
+				proto_param = proto_param->s_next;
+				old_param = old_param->s_next;
 			}
 		}
 		if (msg && rflag) {
@@ -2572,7 +2562,7 @@ check_func_old_style_arguments(void)
 
 		/* from now on the prototype is valid */
 		funcsym->s_osdef = false;
-		funcsym->u.s_old_style_args = NULL;
+		funcsym->u.s_old_style_params = NULL;
 	}
 }
 
@@ -2610,7 +2600,7 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rdsym)
 	} else if (rdsym->s_block_level == block_level) {
 
 		/* no hflag, because it's illegal! */
-		if (rdsym->s_arg) {
+		if (rdsym->s_param) {
 			/*
 			 * if allow_c90, a "redeclaration of '%s'" error
 			 * is produced below
@@ -2789,7 +2779,7 @@ abstract_name(void)
 	sym->s_def = DEF;
 	sym->s_scl = ABSTRACT;
 	sym->s_block_level = -1;
-	sym->s_arg = dcs->d_kind == DLK_PROTO_PARAMS;
+	sym->s_param = dcs->d_kind == DLK_PROTO_PARAMS;
 
 	/*
 	 * At this point, dcs->d_type contains only the basic type.  That
@@ -2901,7 +2891,7 @@ check_usage(const decl_level *dl)
 }
 
 static void
-check_argument_usage(bool novar, const sym_t *arg)
+check_parameter_usage(bool novar, const sym_t *arg)
 {
 
 	lint_assert(arg->s_set);
@@ -3037,8 +3027,8 @@ check_usage_sym(bool novar, const sym_t *sym)
 	if (sym->s_block_level == -1)
 		return;
 
-	if (sym->s_kind == FVFT && sym->s_arg)
-		check_argument_usage(novar, sym);
+	if (sym->s_kind == FVFT && sym->s_param)
+		check_parameter_usage(novar, sym);
 	else if (sym->s_kind == FVFT)
 		check_variable_usage(novar, sym);
 	else if (sym->s_kind == FLABEL)
