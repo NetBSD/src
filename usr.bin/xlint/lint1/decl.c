@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.376 2023/08/02 21:26:12 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.377 2023/08/02 21:58:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.376 2023/08/02 21:26:12 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.377 2023/08/02 21:58:11 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1297,6 +1297,14 @@ block_derive_function(type_t *ret, bool proto, sym_t *params, bool vararg)
 	return tp;
 }
 
+static const char *
+tag_name(scl_t sc)
+{
+	return sc == STRUCT_TAG ? "struct"
+	    : sc == UNION_TAG ? "union"
+	    : "enum";
+}
+
 static void
 check_prototype_parameters(sym_t *args)
 {
@@ -1306,7 +1314,7 @@ check_prototype_parameters(sym_t *args)
 		scl_t sc = sym->s_scl;
 		if (sc == STRUCT_TAG || sc == UNION_TAG || sc == ENUM_TAG) {
 			/* dubious tag declaration '%s %s' */
-			warning(85, storage_class_name(sc), sym->s_name);
+			warning(85, tag_name(sc), sym->s_name);
 		}
 	}
 
@@ -1546,13 +1554,12 @@ new_tag(sym_t *tag, scl_t scl, bool decl, bool semi)
 				/* XXX: Why is this warning suppressed in C90 mode? */
 				if (allow_trad || allow_c99)
 					/* declaration of '%s %s' intro... */
-					warning(44, storage_class_name(scl),
+					warning(44, tag_name(scl),
 					    tag->s_name);
 				tag = pushdown(tag);
 			} else if (tag->s_scl != scl) {
 				/* base type is really '%s %s' */
-				warning(45, storage_class_name(tag->s_scl),
-				    tag->s_name);
+				warning(45, tag_name(tag->s_scl), tag->s_name);
 			}
 			dcs->d_enclosing->d_nonempty_decl = true;
 		} else if (decl) {
@@ -1564,13 +1571,11 @@ new_tag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			dcs->d_enclosing->d_nonempty_decl = true;
 		} else if (tag->s_scl != scl) {
 			/* base type is really '%s %s' */
-			warning(45, storage_class_name(tag->s_scl),
-			    tag->s_name);
+			warning(45, tag_name(tag->s_scl), tag->s_name);
 			/* XXX: Why is this warning suppressed in C90 mode? */
 			if (allow_trad || allow_c99) {
 				/* declaration of '%s %s' introduces ... */
-				warning(44, storage_class_name(scl),
-				    tag->s_name);
+				warning(44, tag_name(scl), tag->s_name);
 			}
 			tag = pushdown(tag);
 			dcs->d_enclosing->d_nonempty_decl = true;
@@ -1579,8 +1584,8 @@ new_tag(sym_t *tag, scl_t scl, bool decl, bool semi)
 		if (tag->s_scl != scl ||
 		    (decl && !is_incomplete(tag->s_type))) {
 			/* %s tag '%s' redeclared as %s */
-			error(46, storage_class_name(tag->s_scl),
-			    tag->s_name, storage_class_name(scl));
+			error(46, tag_name(tag->s_scl),
+			    tag->s_name, tag_name(scl));
 			print_previous_declaration(tag);
 			tag = pushdown(tag);
 			dcs->d_enclosing->d_nonempty_decl = true;
@@ -1666,23 +1671,6 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 	debug_printf("%s: '%s'", __func__, type_name(tp));
 	debug_sym(" ", tag, "\n");
 	return tp;
-}
-
-const char *
-storage_class_name(scl_t sc)
-{
-	switch (sc) {
-	case EXTERN:	return "extern";
-	case STATIC:	return "static";
-	case AUTO:	return "auto";
-	case REG:	return "register";
-	case TYPEDEF:	return "typedef";
-	case STRUCT_TAG:return "struct";
-	case UNION_TAG:	return "union";
-	case ENUM_TAG:	return "enum";
-	default:	lint_assert(/*CONSTCOND*/false);
-	}
-	/* NOTREACHED */
 }
 
 static bool
