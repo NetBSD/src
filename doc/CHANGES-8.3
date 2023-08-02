@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.188 2023/08/01 17:31:33 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.189 2023/08/02 10:25:32 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3739,4 +3739,9 @@ sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.15
 
 	drm: PR 57537: fix mistake in ww_mutex wait loops.
 	[riastradh, ticket #1876]
+
+sys/dev/usb/ehci.c				1.317
+
+	PR 57518: usb keyboard causes host controller to miss microframe.
+	[skrll, ticket #1877]
 
