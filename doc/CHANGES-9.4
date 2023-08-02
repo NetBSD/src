@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.85 2023/08/01 17:36:58 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.86 2023/08/02 10:23:26 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1862,4 +1862,9 @@ sys/dev/tprof/tprof_x86_intel.c                 1.8 via patch
         - Use lowercase consistently for hexadecimal numbers.
         - KNF
 	[msaitoh, ticket #1697]
+
+sys/dev/usb/ehci.c				1.317
+
+	PR 57518: usb keyboard causes host controller to miss microframe.
+	[skrll, ticket #1698]
 
