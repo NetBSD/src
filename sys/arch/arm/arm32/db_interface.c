@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64 2022/10/26 23:38:06 riastradh Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.65 2023/08/02 14:36:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64 2022/10/26 23:38:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.65 2023/08/02 14:36:39 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -276,10 +276,10 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 	}
 
 	if (size == 4 && (addr & 3) == 0 && ((uintptr_t)data & 3) == 0)
-		*((int*)dst) = *((const int *)data);
+		*((int *)dst) = *((const int *)data);
 	else
 	if (size == 2 && (addr & 1) == 0 && ((uintptr_t)data & 1) == 0)
-		*((short*)dst) = *((const short *)data);
+		*((short *)dst) = *((const short *)data);
 	else {
 		loop = size;
 		while (loop-- > 0) {
