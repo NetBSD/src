@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.468 2023/08/02 18:51:25 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.469 2023/08/02 21:11:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.468 2023/08/02 18:51:25 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.469 2023/08/02 21:11:35 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1529,7 +1529,8 @@ direct_abstract_declarator:
 		$$ = add_array($1, $3.has_dim, $3.dim);
 	}
 |	abstract_decl_param_list asm_or_symbolrename_opt {
-		$$ = add_function(symbolrename(abstract_name(), $2), $1);
+		sym_t *name = abstract_enclosing_name();
+		$$ = add_function(symbolrename(name, $2), $1);
 		end_declaration_level();
 		block_level--;
 	}

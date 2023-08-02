@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.205 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.206 2023/08/02 21:11:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -254,6 +254,7 @@ void	check_func_old_style_parameters(void);
 
 void	declare_local(sym_t *, bool);
 sym_t	*abstract_name(void);
+sym_t	*abstract_enclosing_name(void);
 void	global_clean_up(void);
 sym_t	*declare_abstract_type(sym_t *);
 void	check_size(const sym_t *);
