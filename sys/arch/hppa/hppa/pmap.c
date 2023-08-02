@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121 2023/08/02 08:54:42 macallan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.122 2023/08/02 09:18:14 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2020 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2023/08/02 08:54:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2023/08/02 09:18:14 macallan Exp $");
 
 #include "opt_cputype.h"
 
@@ -767,6 +767,9 @@ static void
 pmap_page_physload(paddr_t spa, paddr_t epa)
 {
 
+	if (spa == epa)
+		return;
+
 	if (spa < FIRST_16M && epa <= FIRST_16M) {
 		uvm_page_physload(spa, epa, spa, epa, VM_FREELIST_ISADMA);
 	} else if (spa < FIRST_16M && epa > FIRST_16M) {
@@ -1090,8 +1093,7 @@ pmap_bootstrap(vaddr_t vstart)
 	availphysmem = 0;
 
 	pmap_page_physload(resvmem, atop(ksrx));
-	if (atop(kero) != atop(ksrw))
-		pmap_page_physload(atop(kero), atop(ksrw));
+	pmap_page_physload(atop(kero), atop(ksrw));
 	pmap_page_physload(atop(kerw), physmem);
 
 	mutex_init(&pmaps_lock, MUTEX_DEFAULT, IPL_NONE);
