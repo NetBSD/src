@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.22 2022/11/02 08:37:32 skrll Exp $ */
+/* $NetBSD: db_interface.c,v 1.23 2023/08/02 14:45:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.22 2022/11/02 08:37:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.23 2023/08/02 14:45:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -171,7 +171,8 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		 */
 		/* old pte is returned by pmap_kvattr */
 		pte = pmap_kvattr(ptep, VM_PROT_EXECUTE | VM_PROT_READ | VM_PROT_WRITE);
-		aarch64_tlbi_all();
+		/* dsb(ishst) included in aarch64_tlbi_by_va */
+		aarch64_tlbi_by_va(addr);
 
 		s = size;
 		if (size > PAGE_SIZE)
@@ -182,7 +183,8 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 
 		/* restore pte */
 		*ptep = pte;
-		aarch64_tlbi_all();
+		/* dsb(ishst) included in aarch64_tlbi_by_va */
+		aarch64_tlbi_by_va(addr);
 
 		addr += s;
 		size -= s;
