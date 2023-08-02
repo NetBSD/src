@@ -1,4 +1,4 @@
-/*	$NetBSD: wsemul_vt100.c,v 1.51 2023/07/16 17:43:50 christos Exp $	*/
+/*	$NetBSD: wsemul_vt100.c,v 1.52 2023/08/02 22:37:02 uwe Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.51 2023/07/16 17:43:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.52 2023/08/02 22:37:02 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
@@ -88,7 +88,10 @@ static void wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *,
 				       u_char, int);
 static void wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *,
 				     u_char, int);
-static void wsemul_vt100_nextline(struct wsemul_vt100_emuldata *);
+
+static void wsemul_vt100_nextline(struct vt100base_data *); /* IND */
+static void wsemul_vt100_prevline(struct vt100base_data *); /* RI */
+
 typedef u_int vt100_handler(struct wsemul_vt100_emuldata *, u_char);
 
 static vt100_handler
@@ -364,14 +367,15 @@ wsemul_vt100_reset(struct wsemul_vt100_emuldata *edp)
  */
 
 /*
- * Move the cursor to the next line if possible. If the cursor is at
- * the bottom of the scroll area, then scroll it up. If the cursor is
+ * New line (including autowrap), index (IND).
+ *
+ * Move the cursor to the next line if possible.  If the cursor is at
+ * the bottom of the scroll area, then scroll it up.  If the cursor is
  * at the bottom of the screen then don't move it down.
  */
 static void
-wsemul_vt100_nextline(struct wsemul_vt100_emuldata *edp)
+wsemul_vt100_nextline(struct vt100base_data *vd)
 {
-	struct vt100base_data *vd = &edp->bd;
 
 	if (ROWS_BELOW(vd) == 0) {
 		/* Bottom of the scroll region. */
@@ -380,6 +384,26 @@ wsemul_vt100_nextline(struct wsemul_vt100_emuldata *edp)
 		if ((vd->crow+1) < vd->nrows)
 			/* Cursor not at the bottom of the screen. */
 			vd->crow++;
+		CHECK_DW(vd);
+	}
+}
+
+/*
+ * Reverse index (RI).
+ *
+ * Inverse of wsemul_vt100_nextline.  Move up, scroll down.
+ */
+static void
+wsemul_vt100_prevline(struct vt100base_data *vd)
+{
+
+	if (ROWS_ABOVE(vd) == 0) {
+		/* Top of the scroll region. */
+	  	wsemul_vt100_scrolldown(vd, 1);
+	} else {
+		if (vd->crow > 0)
+			/* Cursor not at the top of the screen. */
+			vd->crow--;
 		CHECK_DW(vd);
 	}
 }
@@ -393,7 +417,7 @@ wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *edp, u_char c,
 
 	if ((vd->flags & (VTFL_LASTCHAR | VTFL_DECAWM)) ==
 	    (VTFL_LASTCHAR | VTFL_DECAWM)) {
-		wsemul_vt100_nextline(edp);
+		wsemul_vt100_nextline(vd);
 		vd->ccol = 0;
 		vd->flags &= ~VTFL_LASTCHAR;
 	}
@@ -509,7 +533,7 @@ wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
 	case ASCII_LF:
 	case ASCII_VT:
 	case ASCII_FF:
-		wsemul_vt100_nextline(edp);
+		wsemul_vt100_nextline(vd);
 		break;
 	}
 }
@@ -565,7 +589,7 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 		vd->ccol = 0;
 		/* FALLTHRU */
 	case 'D': /* IND */
-		wsemul_vt100_nextline(edp);
+		wsemul_vt100_nextline(vd);
 		break;
 	case 'H': /* HTS */
 		KASSERT(vd->tabs != 0);
@@ -593,12 +617,7 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 		edp->sschartab = 3;
 		break;
 	case 'M': /* RI */
-		if (ROWS_ABOVE(vd) > 0) {
-			vd->crow--;
-			CHECK_DW(vd);
-			break;
-		}
-		wsemul_vt100_scrolldown(vd, 1);
+		wsemul_vt100_prevline(vd);
 		break;
 	case 'P': /* DCS */
 		vd->nargs = 0;
