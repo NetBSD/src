@@ -452,7 +452,7 @@ static void ioctl_table_fill() {
   _(USB_SETDEBUG, READ, sizeof(int));
   _(USB_DISCOVER, NONE, 0);
   _(USB_DEVICEINFO, READWRITE, struct_usb_device_info_sz);
-  _(USB_DEVICEINFO_OLD, READWRITE, struct_usb_device_info_old_sz);
+  _(USB_DEVICEINFO_30, READWRITE, struct_usb_device_info30_sz);
   _(USB_DEVICESTATS, WRITE, struct_usb_device_stats_sz);
   _(USB_GET_REPORT_DESC, WRITE, struct_usb_ctl_report_desc_sz);
   _(USB_SET_IMMED, READ, sizeof(int));
@@ -472,7 +472,7 @@ static void ioctl_table_fill() {
   _(USB_GET_STRING_DESC, READWRITE, struct_usb_string_desc_sz);
   _(USB_DO_REQUEST, READWRITE, struct_usb_ctl_request_sz);
   _(USB_GET_DEVICEINFO, WRITE, struct_usb_device_info_sz);
-  _(USB_GET_DEVICEINFO_OLD, WRITE, struct_usb_device_info_old_sz);
+  _(USB_GET_DEVICEINFO_30, WRITE, struct_usb_device_info30_sz);
   _(USB_SET_SHORT_XFER, READ, sizeof(int));
   _(USB_SET_TIMEOUT, READ, sizeof(int));
   _(USB_SET_BULK_RA, READ, sizeof(int));
@@ -675,7 +675,7 @@ static void ioctl_table_fill() {
   _(BIOCGETIF, WRITE, struct_ifreq_sz);
   _(BIOCSETIF, READ, struct_ifreq_sz);
   _(BIOCGSTATS, WRITE, struct_bpf_stat_sz);
-  _(BIOCGSTATSOLD, WRITE, struct_bpf_stat_old_sz);
+  _(BIOCGSTATS_30, WRITE, struct_bpf_stat30_sz);
   _(BIOCIMMEDIATE, READ, sizeof(unsigned int));
   _(BIOCVERSION, WRITE, struct_bpf_version_sz);
   _(BIOCSTCPF, READ, struct_bpf_program_sz);
