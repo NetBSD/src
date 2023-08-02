@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.198 2023/08/01 19:57:38 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.199 2023/08/02 18:51:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -156,7 +156,7 @@ struct lint1_type {
 	bool	t_incomplete_array:1;
 	bool	t_const:1;	/* const modifier */
 	bool	t_volatile:1;	/* volatile modifier */
-	bool	t_proto:1;	/* function prototype (t_args valid) */
+	bool	t_proto:1;	/* function prototype (t_params valid) */
 	bool	t_vararg:1;	/* prototype with '...' */
 	bool	t_typedef:1;	/* type defined with typedef */
 	bool	t_typeof:1;	/* type defined with GCC's __typeof__ */
@@ -176,7 +176,7 @@ struct lint1_type {
 		int	_t_dim;		/* dimension (if ARRAY) */
 		struct_or_union	*_t_sou;
 		enumeration	*_t_enum;
-		struct	sym *_t_args;	/* arguments (if t_proto) */
+		struct	sym *_t_params;	/* parameters (if t_proto) */
 	} t_u;
 	unsigned int	t_bit_field_width:8;
 	unsigned int	t_bit_field_offset:24;
@@ -188,7 +188,7 @@ struct lint1_type {
 #define	t_dim	t_u._t_dim
 #define	t_sou	t_u._t_sou
 #define	t_enum	t_u._t_enum
-#define	t_args	t_u._t_args
+#define	t_params	t_u._t_params
 
 /*
  * types of symbols
@@ -244,9 +244,9 @@ typedef	struct sym {
 	bool	s_bitfield:1;
 	bool	s_set:1;	/* variable set, label defined */
 	bool	s_used:1;	/* variable/label used */
-	bool	s_arg:1;	/* symbol is function argument */
+	bool	s_param:1;	/* symbol is function parameter */
 	bool	s_register:1;	/* symbol is register variable */
-	bool	s_defarg:1;	/* undefined symbol in old-style function
+	bool	s_defparam:1;	/* undefined symbol in old-style function
 				   definition */
 	bool	s_return_type_implicit_int:1;
 	bool	s_osdef:1;	/* symbol stems from old-style function def. */
@@ -277,14 +277,14 @@ typedef	struct sym {
 				function_specifier function_specifier;
 			} u;
 		} s_keyword;
-		struct	sym *s_old_style_args;	/* arguments in an old-style
+		struct	sym *s_old_style_params;	/* parameters in an old-style
 						 * function definition */
 	} u;
 	struct	sym *s_symtab_next;	/* next symbol with same hash value */
 	struct	sym **s_symtab_ref;	/* pointer to s_symtab_next of the
 					 * previous symbol */
 	struct	sym *s_next;	/* next struct/union member, enumerator,
-				   argument */
+				   parameter */
 	struct	sym *s_level_next;	/* next symbol declared on the same
 					 * level */
 } sym_t;
@@ -347,7 +347,7 @@ typedef enum decl_level_kind {
 	DLK_STRUCT,		/* members */
 	DLK_UNION,		/* members */
 	DLK_ENUM,		/* constants */
-	DLK_OLD_STYLE_ARGS,	/* arguments in an old-style function
+	DLK_OLD_STYLE_PARAMS,	/* parameters in an old-style function
 				 * definition */
 	DLK_PROTO_PARAMS,	/* parameters in a prototype function
 				 * definition */
@@ -357,8 +357,9 @@ typedef enum decl_level_kind {
 } decl_level_kind;
 
 /*
- * A declaration level describes a struct, union, enum, block, argument
- * declaration list or an abstract (unnamed) type.
+ * A declaration level collects information for a declarator in a struct,
+ * union or enum declaration, a parameter declaration list, or a plain
+ * declaration in or outside a function body.
  *
  * For nested declarations, the global 'dcs' holds all information needed for
  * the current level, the outer levels are available via 'd_enclosing'.
@@ -390,7 +391,7 @@ typedef	struct decl_level {
 	bool	d_used:1;
 	type_t	*d_tag_type;	/* during a member declaration, the tag type to
 				 * which the member belongs */
-	sym_t	*d_func_args;	/* during a function declaration, the
+	sym_t	*d_func_params;	/* during a function declaration, the
 				 * parameters, stored in the enclosing level */
 	pos_t	d_func_def_pos;	/* position of the function definition */
 	sym_t	*d_first_dlsym;	/* first symbol declared at this level */
@@ -398,7 +399,7 @@ typedef	struct decl_level {
 				   declaration at this level */
 	sym_t	*d_func_proto_syms;	/* symbols defined in prototype, such
 					 * as tagged types or parameter names,
-					 * may overlap d_func_args */
+					 * may overlap d_func_params */
 	struct decl_level *d_enclosing; /* the enclosing declaration level */
 } decl_level;
 

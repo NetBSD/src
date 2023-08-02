@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.25 2023/07/10 19:47:12 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.26 2023/08/02 18:51:25 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.25 2023/07/10 19:47:12 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.26 2023/08/02 18:51:25 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -114,7 +114,7 @@ typeok_strict_bool_binary_compatible(op_t op, int arg,
 		return true;
 
 	if (op == FARG) {
-		/* argument %d expects '%s', gets passed '%s' */
+		/* parameter %d expects '%s', gets passed '%s' */
 		error(334, arg, tspec_name(lt), tspec_name(rt));
 	} else if (op == RETURN) {
 		/* function has return type '%s' but returns '%s' */
@@ -204,7 +204,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 
 /*
  * See if the node is valid as operand of an operator that compares its
- * argument with 0.
+ * operand with 0.
  */
 bool
 is_typeok_bool_compares_with_zero(const tnode_t *tn)

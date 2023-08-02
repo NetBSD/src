@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.467 2023/08/01 16:08:58 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.468 2023/08/02 18:51:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.467 2023/08/01 16:08:58 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.468 2023/08/02 18:51:25 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -54,7 +54,7 @@ int	block_level;
 
 /*
  * level for memory allocation. Normally the same as block_level.
- * An exception is the declaration of arguments in prototypes. Memory
+ * An exception is the declaration of parameters in prototypes. Memory
  * for these can't be freed after the declaration, but symbols must
  * be removed from the symbol table after the declaration.
  */
@@ -1357,7 +1357,7 @@ type_direct_declarator:
 
 /*
  * The two distinct rules type_param_declarator and notype_param_declarator
- * avoid a conflict in argument lists. A typename enclosed in parentheses is
+ * avoid a conflict in parameter lists. A typename enclosed in parentheses is
  * always treated as a typename, not an argument name. For example, after
  * "typedef double a;", the declaration "f(int (a));" is interpreted as
  * "f(int (double));", not "f(int a);".
@@ -1597,31 +1597,31 @@ parameter_type_list:
 parameter_declaration:
 	begin_type_declmods end_type {
 		/* ^^ There is no check for the missing type-specifier. */
-		$$ = declare_argument(abstract_name(), false);
+		$$ = declare_parameter(abstract_name(), false);
 	}
 |	begin_type_declaration_specifiers end_type {
-		$$ = declare_argument(abstract_name(), false);
+		$$ = declare_parameter(abstract_name(), false);
 	}
 |	begin_type_declmods end_type notype_param_declarator {
 		/* ^^ There is no check for the missing type-specifier. */
-		$$ = declare_argument($3, false);
+		$$ = declare_parameter($3, false);
 	}
 	/*
 	 * type_param_declarator is needed because of following conflict:
 	 * "typedef int a; f(int (a));" could be parsed as
 	 * "function with argument a of type int", or
-	 * "function with an abstract argument of type function".
+	 * "function with an unnamed (abstract) argument of type function".
 	 * This grammar realizes the second case.
 	 */
 |	begin_type_declaration_specifiers end_type type_param_declarator {
-		$$ = declare_argument($3, false);
+		$$ = declare_parameter($3, false);
 	}
 |	begin_type_declmods end_type abstract_declarator {
 		/* ^^ There is no check for the missing type-specifier. */
-		$$ = declare_argument($3, false);
+		$$ = declare_parameter($3, false);
 	}
 |	begin_type_declaration_specifiers end_type abstract_declarator {
-		$$ = declare_argument($3, false);
+		$$ = declare_parameter($3, false);
 	}
 ;
 
@@ -2086,14 +2086,14 @@ function_definition:		/* C99 6.9.1 */
 		check_extern_declaration($1);
 		begin_function($1);
 		block_level++;
-		begin_declaration_level(DLK_OLD_STYLE_ARGS);
+		begin_declaration_level(DLK_OLD_STYLE_PARAMS);
 		if (lwarn == LWARN_NONE)
 			$1->s_used = true;
 	} arg_declaration_list_opt {
 		end_declaration_level();
 		block_level--;
 		check_func_lint_directives();
-		check_func_old_style_arguments();
+		check_func_old_style_parameters();
 		begin_control_statement(CS_FUNCTION_BODY);
 	} compound_statement {
 		end_function();
@@ -2148,14 +2148,14 @@ arg_declaration:
 			/* empty declaration */
 			warning(2);
 		} else {
-			/* '%s' declared in argument declaration list */
+			/* '%s' declared in parameter declaration list */
 			warning(3, type_name(dcs->d_type));
 		}
 	}
 |	begin_type_declaration_specifiers end_type
 	    type_init_declarators T_SEMI {
 		if (dcs->d_nonempty_decl) {
-			/* '%s' declared in argument declaration list */
+			/* '%s' declared in parameter declaration list */
 			warning(3, type_name(dcs->d_type));
 		}
 	}

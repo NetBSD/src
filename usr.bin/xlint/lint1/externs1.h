@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.204 2023/08/01 16:08:58 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.205 2023/08/02 18:51:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -248,9 +248,9 @@ bool	check_redeclaration(sym_t *, bool *);
 bool	pointer_types_are_compatible(const type_t *, const type_t *, bool);
 bool	types_compatible(const type_t *, const type_t *, bool, bool, bool *);
 void	complete_type(sym_t *, sym_t *);
-sym_t	*declare_argument(sym_t *, bool);
+sym_t	*declare_parameter(sym_t *, bool);
 void	check_func_lint_directives(void);
-void	check_func_old_style_arguments(void);
+void	check_func_old_style_parameters(void);
 
 void	declare_local(sym_t *, bool);
 sym_t	*abstract_name(void);

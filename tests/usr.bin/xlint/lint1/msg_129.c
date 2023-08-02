@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_129.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: msg_129.c,v 1.8 2023/08/02 18:51:25 rillig Exp $	*/
 # 3 "msg_129.c"
 
 // Test for message: expression has null effect [129]
@@ -50,7 +50,7 @@ legitimate_use_cases(int arg)
 	int local = 3;
 
 	/*
-	 * This expression is commonly used to mark the argument as
+	 * This expression is commonly used to mark the parameter as
 	 * deliberately unused.
 	 */
 	(void)arg;

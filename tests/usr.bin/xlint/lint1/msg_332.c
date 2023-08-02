@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_332.c,v 1.6 2023/07/09 10:42:07 rillig Exp $	*/
+/*	$NetBSD: msg_332.c,v 1.7 2023/08/02 18:51:25 rillig Exp $	*/
 # 3 "msg_332.c"
 
 // Test for message: right operand of '%s' must be bool, not '%s' [332]
@@ -18,11 +18,11 @@ example(bool b, char c, int i)
 	test(b && b);
 
 	/* expect+2: error: right operand of '&&' must be bool, not 'char' [332] */
-	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
 	test(b && c);
 
 	/* expect+2: error: right operand of '&&' must be bool, not 'int' [332] */
-	/* expect+1: error: argument 1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
 	test(b && i);
 
 	test(c != '\0');

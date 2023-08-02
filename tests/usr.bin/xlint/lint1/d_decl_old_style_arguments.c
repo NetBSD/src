@@ -18,6 +18,6 @@ void func(num, ptr, dbl, def)
     char *ptr;
     double dbl;
 {
-	/* expect-1: warning: type of argument 'def' defaults to 'int' [32] */
+	/* expect-1: warning: type of parameter 'def' defaults to 'int' [32] */
 	/* expect-2: error: parameter mismatch: 3 declared, 4 defined [51] */
 }

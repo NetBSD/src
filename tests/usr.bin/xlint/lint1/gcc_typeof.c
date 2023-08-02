@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_typeof.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: gcc_typeof.c,v 1.7 2023/08/02 18:51:25 rillig Exp $	*/
 # 3 "gcc_typeof.c"
 
 /*
@@ -46,7 +46,7 @@ const volatile __typeof__(lock) *lock_pointer = &lock;
 
 /*
  * Before cgram.y 1.427 from 2023-01-21, lint crashed due to a null pointer
- * dereference if the __typeof__ operator had an invalid argument.  Seen in
+ * dereference if the __typeof__ operator had an invalid operand.  Seen in
  * _fc_atomic_ptr_cmpexch from fontconfig, which uses <stdatomic.h> provided
  * by GCC, which in turn uses __auto_type and __typeof__, and lint doesn't
  * know about __auto_type.

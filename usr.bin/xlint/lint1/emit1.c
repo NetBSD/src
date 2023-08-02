@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.72 2023/07/13 08:40:38 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.73 2023/08/02 18:51:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.72 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.73 2023/08/02 18:51:25 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -101,7 +101,6 @@ outtype(const type_t *tp)
 	static const char ss[NTSPEC] = "???  su u u u us l?s l sue   ";
 #endif
 	int na;
-	sym_t *arg;
 	tspec_t ts;
 
 	while (tp != NULL) {
@@ -124,13 +123,15 @@ outtype(const type_t *tp)
 			outtt(tp->t_sou->sou_tag, tp->t_sou->sou_first_typedef);
 		} else if (ts == FUNC && tp->t_proto) {
 			na = 0;
-			for (arg = tp->t_args; arg != NULL; arg = arg->s_next)
+			for (const sym_t *param = tp->t_params;
+			     param != NULL; param = param->s_next)
 				na++;
 			if (tp->t_vararg)
 				na++;
 			outint(na);
-			for (arg = tp->t_args; arg != NULL; arg = arg->s_next)
-				outtype(arg->s_type);
+			for (const sym_t *param = tp->t_params;
+			     param != NULL; param = param->s_next)
+				outtype(param->s_type);
 			if (tp->t_vararg)
 				outchar('E');
 		}
@@ -311,7 +312,7 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 		outname(fsym->s_rename);
 	}
 
-	/* argument types and return value */
+	/* parameter types and return value */
 	if (osdef) {
 		narg = 0;
 		for (arg = args; arg != NULL; arg = arg->s_next)

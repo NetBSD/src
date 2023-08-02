@@ -1,4 +1,4 @@
-# $NetBSD: read.ln,v 1.7 2023/07/03 07:03:19 rillig Exp $
+# $NetBSD: read.ln,v 1.8 2023/08/02 18:51:25 rillig Exp $
 #
 # Cover each path of reading declarations, definitions and usages.
 
@@ -67,12 +67,12 @@ S read.c
 193 d 0.193 v0 d 15varargs_comment   F1 PcC V
 199 d 0.199 v0 d 17varargs_0_comment F1 PcC V
 205 d 0.205 v3 d 17varargs_3_comment F4 I I I PcC V
-# The PRINTFLIKE information is only emitted if its argument is > 0.
+# The PRINTFLIKE information is only emitted if its parameter is > 0.
 211 d 0.211         d 18printflike_comment    F1  PcC V
 217 d 0.217         d 20printflike_0_comment  F1  PcC V
 223 d 0.223 v3  P3  d 20printflike_3_comment  F3  I I PcC V
 229 d 0.229 v10 P10 d 21printflike_10_comment F10 I I I I I I I I I PcC V
-# The SCANFLIKE information is only emitted if its argument is > 0.
+# The SCANFLIKE information is only emitted if its parameter is > 0.
 237 d 0.237         d 17scanflike_comment     F1  PcC V
 243 d 0.243         d 19scanflike_0_comment   F1  PcC V
 249 d 0.249 v3  S3  d 19scanflike_3_comment   F3  I I PcC V

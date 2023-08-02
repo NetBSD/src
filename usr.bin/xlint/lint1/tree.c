@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.573 2023/07/15 15:51:22 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.574 2023/08/02 18:51:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.573 2023/07/15 15:51:22 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.574 2023/08/02 18:51:25 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1491,7 +1491,7 @@ fold_bool(tnode_t *tn)
 	switch (tn->tn_op) {
 	case NOT:
 		if (hflag && !suppress_constcond)
-			/* constant argument to '!' */
+			/* constant operand to '!' */
 			warning(239);
 		v->u.integer = !l ? 1 : 0;
 		break;
@@ -1920,8 +1920,8 @@ remove_unknown_member(tnode_t *tn, sym_t *msym)
 }
 
 /*
- * Returns a symbol which has the same name as the msym argument and is a
- * member of the struct or union specified by the tn argument.
+ * Returns a symbol which has the same name as 'msym' and is a member of the
+ * struct or union specified by 'tn'.
  */
 static sym_t *
 struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
@@ -3601,7 +3601,7 @@ convert_pointer_from_pointer(type_t *ntp, tnode_t *tn)
  *	binary	integer promotion for one of the operands, or a usual
  *		arithmetic conversion
  *	binary	plain or compound assignments to bit-fields
- *	FARG	'arg' is the number of the argument (used for warnings)
+ *	FARG	'arg' is the number of the parameter (used for warnings)
  *	NOOP	several other implicit conversions
  *	...
  */
@@ -3893,11 +3893,11 @@ convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 		warn_constant_check_range_loss(op, arg, tp, ot);
 }
 
-/*
+/*-
  * Converts a typed constant to a constant of another type.
  *
  * op		operator which requires conversion
- * arg		if op is FARG, # of argument
+ * arg		if op is FARG, # of parameter
  * tp		type to which to convert the constant
  * nv		new constant
  * v		old constant
@@ -4162,7 +4162,7 @@ invalid_cast:
  * Create the node for a function argument.
  * All necessary conversions and type checks are done in
  * build_function_call because build_function_argument has no
- * information about expected argument types.
+ * information about the expected parameter types.
  */
 tnode_t *
 build_function_argument(tnode_t *args, tnode_t *arg)
@@ -4212,27 +4212,24 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 {
 	/* get # of parameters in the prototype */
 	int npar = 0;
-	for (sym_t *asym = ftp->t_args; asym != NULL; asym = asym->s_next)
+	for (const sym_t *p = ftp->t_params; p != NULL; p = p->s_next)
 		npar++;
 
 	/* get # of arguments in the function call */
 	int narg = 0;
-	for (tnode_t *arg = args; arg != NULL; arg = arg->tn_right)
+	for (const tnode_t *arg = args; arg != NULL; arg = arg->tn_right)
 		narg++;
 
-	sym_t *asym = ftp->t_args;
+	const sym_t *param = ftp->t_params;
 	if (ftp->t_proto && npar != narg && !(ftp->t_vararg && npar < narg)) {
 		/* argument mismatch: %d %s passed, %d expected */
 		error(150, narg, narg > 1 ? "arguments" : "argument", npar);
-		asym = NULL;
+		param = NULL;
 	}
 
 	for (int n = 1; n <= narg; n++) {
 
-		/*
-		 * The rightmost argument is at the top of the argument
-		 * subtree.
-		 */
+		// The rightmost argument starts the argument list.
 		tnode_t *arg = args;
 		for (int i = narg; i > n; i--, arg = arg->tn_right)
 			continue;
@@ -4243,12 +4240,14 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 			/* void expressions may not be arguments, arg #%d */
 			error(151, n);
 			return NULL;
-		} else if (is_struct_or_union(at) &&
+		}
+		if (is_struct_or_union(at) &&
 			   is_incomplete(arg->tn_left->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
 			error(152, n);
 			return NULL;
-		} else if (is_integer(at) &&
+		}
+		if (is_integer(at) &&
 			   arg->tn_left->tn_type->t_is_enum &&
 			   is_incomplete(arg->tn_left->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
@@ -4258,15 +4257,15 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 		/* class conversions (arg in value context) */
 		arg->tn_left = cconv(arg->tn_left);
 
-		if (asym != NULL) {
+		if (param != NULL) {
 			arg->tn_left = check_prototype_argument(
-			    n, asym->s_type, arg->tn_left);
+			    n, param->s_type, arg->tn_left);
 		} else
 			arg->tn_left = promote(NOOP, true, arg->tn_left);
 		arg->tn_type = arg->tn_left->tn_type;
 
-		if (asym != NULL)
-			asym = asym->s_next;
+		if (param != NULL)
+			param = param->s_next;
 	}
 
 	return args;

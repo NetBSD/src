@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_decls_after_stmt.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: d_c99_decls_after_stmt.c,v 1.7 2023/08/02 18:51:25 rillig Exp $	*/
 # 3 "d_c99_decls_after_stmt.c"
 
 /*
@@ -35,7 +35,7 @@ second_decl_stmt_uses_a_typedef(void)
 }
 
 void
-function_with_argument(int i)
+function_with_parameter(int i)
 {
 	i += 1;
 
