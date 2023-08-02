@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.94 2023/08/01 17:05:58 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.95 2023/08/02 10:36:01 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -3560,4 +3560,26 @@ tests/libexec/ld.elf_so/t_hash.c		1.1
 
 	ld.elf_so(1): fix sysv hash on LP64 platforms.
 	[riastradh, ticket #300]
+
+sys/dev/usb/ehci.c				1.317
+
+	PR 57518: usb keyboard causes host controller to miss microframe.
+	[skrll, ticket #301]
+
+sys/external/bsd/drm2/amdgpu/files.amdgpu	1.30
+sys/modules/amdgpu/Makefile			1.6
+
+	amdgpu: enable display core logic.
+	[riastradh, ticket #302]
+
+sys/external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_fence.c 1.11
+
+	amdgpu: fix an error branch.
+	[riastradh, ticket #303]
+
+sys/external/bsd/drm2/dist/drm/amd/display/dc/calcs/amdgpu_dcn_calcs.c 1.4
+sys/external/bsd/drm2/dist/drm/amd/display/dc/dcn20/amdgpu_dcn20_resource.c 1.5
+
+	amdgpu: mark float-dependent variables volatile.
+	[riastradh, ticket #304]
 
