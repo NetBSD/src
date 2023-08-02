@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.58 2023/04/20 08:28:03 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.59 2023/08/02 15:57:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,12 +59,6 @@
 /* Maximum number of ASIDs. Some CPUs have less.*/
 #define	PMAP_TLB_NUM_PIDS		65536
 #define	PMAP_TLB_BITMAP_LENGTH		PMAP_TLB_NUM_PIDS
-#define	cpu_set_tlb_info(ci, ti)        ((void)((ci)->ci_tlb_info = (ti)))
-#if PMAP_TLB_MAX > 1
-#define	cpu_tlb_info(ci)		((ci)->ci_tlb_info)
-#else
-#define	cpu_tlb_info(ci)		(&pmap_tlb0_info)
-#endif
 
 static inline tlb_asid_t
 pmap_md_tlb_asid_max(void)
