@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.574 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.575 2023/08/02 18:57:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.574 2023/08/02 18:51:25 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.575 2023/08/02 18:57:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4223,7 +4223,7 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 	const sym_t *param = ftp->t_params;
 	if (ftp->t_proto && npar != narg && !(ftp->t_vararg && npar < narg)) {
 		/* argument mismatch: %d %s passed, %d expected */
-		error(150, narg, narg > 1 ? "arguments" : "argument", npar);
+		error(150, narg, narg != 1 ? "arguments" : "argument", npar);
 		param = NULL;
 	}
 
