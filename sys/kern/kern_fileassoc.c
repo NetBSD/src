@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.36 2014/07/10 15:00:28 christos Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.37 2023/08/02 07:11:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.36 2014/07/10 15:00:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.37 2023/08/02 07:11:31 riastradh Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.36 2014/07/10 15:00:28 christos
 #include <sys/hash.h>
 #include <sys/kmem.h>
 #include <sys/once.h>
+#include <sys/mutex.h>
+#include <sys/xcall.h>
 
 #define	FILEASSOC_INITIAL_TABLESIZE	128
 
@@ -88,6 +90,52 @@ struct fileassoc_table {
 	(hash32_buf((handle), FHANDLE_SIZE(handle), HASH32_BUF_INIT) \
 	 & ((tbl)->tbl_mask))
 
+/*
+ * Global usage counting.  This is bad for parallelism of updates, but
+ * good for avoiding calls to fileassoc when it's not in use.  Unclear
+ * if parallelism of updates matters much.  If you want to improve
+ * fileassoc(9) update performance, feel free to rip this out as long
+ * as you don't cause the fast paths to take any global locks or incur
+ * memory barriers when fileassoc(9) is not in use.
+ */
+static struct {
+	kmutex_t lock;
+	uint64_t nassocs;
+	volatile bool inuse;
+} fileassoc_global __cacheline_aligned;
+
+static void
+fileassoc_incuse(void)
+{
+
+	mutex_enter(&fileassoc_global.lock);
+	if (fileassoc_global.nassocs++ == 0) {
+		KASSERT(!fileassoc_global.inuse);
+		atomic_store_relaxed(&fileassoc_global.inuse, true);
+		xc_barrier(0);
+	}
+	mutex_exit(&fileassoc_global.lock);
+}
+
+static void
+fileassoc_decuse(void)
+{
+
+	mutex_enter(&fileassoc_global.lock);
+	KASSERT(fileassoc_global.nassocs > 0);
+	KASSERT(fileassoc_global.inuse);
+	if (--fileassoc_global.nassocs == 0)
+		atomic_store_relaxed(&fileassoc_global.inuse, false);
+	mutex_exit(&fileassoc_global.lock);
+}
+
+static bool
+fileassoc_inuse(void)
+{
+
+	return __predict_false(atomic_load_relaxed(&fileassoc_global.inuse));
+}
+
 static void *
 file_getdata(struct fileassoc_file *faf, const struct fileassoc *assoc)
 {
@@ -128,6 +176,7 @@ file_free(struct fileassoc_file *faf)
 
 	LIST_FOREACH(assoc, &fileassoc_list, assoc_list) {
 		file_cleanup(faf, assoc);
+		fileassoc_decuse();
 	}
 	vfs_composefh_free(faf->faf_handle);
 	specificdata_fini(fileassoc_domain, &faf->faf_data);
@@ -225,6 +274,9 @@ static struct fileassoc_table *
 fileassoc_table_lookup(struct mount *mp)
 {
 	int error;
+
+	if (!fileassoc_inuse())
+		return NULL;
 
 	error = RUN_ONCE(&control, fileassoc_init);
 	if (error) {
@@ -437,6 +489,8 @@ fileassoc_table_clear(struct mount *mp, fileassoc_t assoc)
 		LIST_FOREACH(faf, &tbl->tbl_hash[i], faf_list) {
 			file_cleanup(faf, assoc);
 			file_setdata(faf, assoc, NULL);
+			/* XXX missing faf->faf_nassocs--? */
+			fileassoc_decuse();
 		}
 	}
 
@@ -510,10 +564,9 @@ fileassoc_file_delete(struct vnode *vp)
 	struct fileassoc_table *tbl;
 	struct fileassoc_file *faf;
 
-	/* Pre-check if fileassoc is used. XXX */
-	if (!fileassoc_domain) {
+	if (!fileassoc_inuse())
 		return ENOENT;
-	}
+
 	KERNEL_LOCK(1, NULL);
 
 	faf = fileassoc_file_lookup(vp, NULL);
@@ -553,6 +606,8 @@ fileassoc_add(struct vnode *vp, fileassoc_t assoc, void *data)
 	if (olddata != NULL)
 		return (EEXIST);
 
+	fileassoc_incuse();
+
 	file_setdata(faf, assoc, data);
 
 	faf->faf_nassocs++;
@@ -576,6 +631,8 @@ fileassoc_clear(struct vnode *vp, fileassoc_t assoc)
 	file_setdata(faf, assoc, NULL);
 
 	--(faf->faf_nassocs); /* XXX gc? */
+
+	fileassoc_decuse();
 
 	return (0);
 }
