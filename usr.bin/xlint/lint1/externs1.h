@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.206 2023/08/02 21:11:35 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.207 2023/08/02 21:58:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -238,7 +238,6 @@ void	check_function_definition(sym_t *, bool);
 sym_t	*declarator_name(sym_t *);
 sym_t	*old_style_function_parameter_name(sym_t *);
 type_t	*make_tag_type(sym_t *, tspec_t, bool, bool);
-const	char *storage_class_name(scl_t);
 type_t	*complete_struct_or_union(sym_t *);
 type_t	*complete_enum(sym_t *);
 sym_t	*enumeration_constant(sym_t *, int, bool);

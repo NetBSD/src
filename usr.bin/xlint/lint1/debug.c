@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.60 2023/08/02 18:51:25 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.61 2023/08/02 21:58:11 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.60 2023/08/02 18:51:25 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.61 2023/08/02 21:58:11 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -200,7 +200,7 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 	if (op == NAME)
 		debug_printf(" '%s' with %s",
 		    tn->tn_sym->s_name,
-		    storage_class_name(tn->tn_sym->s_scl));
+		    scl_name(tn->tn_sym->s_scl));
 	else
 		debug_printf(" type");
 	debug_printf(" '%s'", type_name(tn->tn_type));
