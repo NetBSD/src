@@ -1,4 +1,4 @@
-/*	$NetBSD: t_etfs.c,v 1.11 2017/01/13 21:30:43 christos Exp $	*/
+/*	$NetBSD: t_etfs.c,v 1.12 2023/08/03 03:21:56 rin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -168,6 +168,11 @@ ATF_TC_BODY(large_blk, tc)
 	char cmpbuf[128];
 	ssize_t n;
 	int rv, tfd;
+
+	if (sysconf(_SC_PAGESIZE) > 8192) {
+		atf_tc_skip(
+		    "PR kern/55658: cause kernel freeze for page size > 8192");
+	}
 
 	/*
 	 * mount mfs.  it would be nice if this would not be required,
