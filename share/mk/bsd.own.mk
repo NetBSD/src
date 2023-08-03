@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1347 2023/08/01 06:52:06 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1348 2023/08/03 13:33:26 rin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -696,6 +696,11 @@ CC_WNO_MAYBE_UNINITIALIZED=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -W
 CC_WNO_RETURN_LOCAL_ADDR=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-return-local-addr :}
 CC_WNO_STRINGOP_OVERFLOW=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-stringop-overflow :}
 CC_WNO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
+
+# -Wuse-after-free for GCC 12 is premature. It fires on a common idiom:
+#	newbuf = realloc(buf, size); p = newbuf + (p - buf);
+# Let shut this up for GCC 12 (with hoping it gets improved for 13!).
+CC_WNO_USE_AFTER_FREE=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 12:? -Wno-use-after-free :}
 
 # For each ${MACHINE_CPU}, list the ports that use it.
 MACHINES.aarch64=	evbarm
