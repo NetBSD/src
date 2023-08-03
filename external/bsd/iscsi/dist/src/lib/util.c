@@ -134,15 +134,15 @@ iscsi_malloc(unsigned n)
 void 
 iscsi_free_atomic(void *ptr)
 {
-	(void) free(ptr);
 	iscsi_trace(TRACE_MEM, "iscsi_free_atomic(%p)\n", ptr);
+	(void) free(ptr);
 }
 
 void 
 iscsi_free(void *ptr)
 {
-	(void) free(ptr);
 	iscsi_trace(TRACE_MEM, "iscsi_free(%p)\n", ptr);
+	(void) free(ptr);
 }
 
 /* debugging levels */
