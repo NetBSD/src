@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.13 2020/06/17 00:16:21 kamil Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.14 2023/08/03 20:45:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ donewfs(const atf_tc_t *tc, void **argp,
 
 	pflags = &args->pta_pflags;
 
-	/* Create sucketpair for communication with the real file server */
+	/* Create socketpair for communication with the real file server */
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) == -1)
 		return errno;
 
