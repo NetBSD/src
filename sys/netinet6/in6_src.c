@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.91 2022/11/04 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.92 2023/08/03 04:24:55 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.91 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.92 2023/08/03 04:24:55 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -709,6 +709,7 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			if (count_discard)
 				in6_ifstat_inc(rt->rt_ifp, ifs6_out_discard);
 			error = EHOSTUNREACH;
+			rtcache_unref(rt, *ro);
 			rt = NULL;
 		}
 	}
