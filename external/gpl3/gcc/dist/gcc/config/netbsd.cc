@@ -23,6 +23,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm.h"
 #include "tree.h"
 #include "varasm.h"
+#include "opts.h"
 #include "netbsd-protos.h"
 
 static void

@@ -34,6 +34,7 @@
 // format. Struct kernel_stat is defined as 'struct stat' in asm/stat.h. To
 // access stat from asm/stat.h, without conflicting with definition in
 // sys/stat.h, we use this trick.
+#if SANITIZER_LINUX
 #if defined(__mips64)
 #include <asm/unistd.h>
 #include <sys/types.h>
@@ -48,6 +49,11 @@
 #endif
 #include <asm/stat.h>
 #undef stat
+#endif
+#endif
+
+#if SANITIZER_NETBSD
+#include <lwp.h>
 #endif
 
 #include <dlfcn.h>
@@ -1778,12 +1784,15 @@ void internal_join_thread(void *th) {}
 
 #if defined(__aarch64__)
 // Android headers in the older NDK releases miss this definition.
+#if SANITIZER_LINUX
 struct __sanitizer_esr_context {
   struct _aarch64_ctx head;
   uint64_t esr;
 };
+#endif
 
 static bool Aarch64GetESR(ucontext_t *ucontext, u64 *esr) {
+#if SANITIZER_LINUX
   static const u32 kEsrMagic = 0x45535201;
   u8 *aux = reinterpret_cast<u8 *>(ucontext->uc_mcontext.__reserved);
   while (true) {
@@ -1795,6 +1804,7 @@ static bool Aarch64GetESR(ucontext_t *ucontext, u64 *esr) {
     }
     aux += ctx->size;
   }
+#endif
   return false;
 }
 #endif
@@ -1821,7 +1831,12 @@ SignalContext::WriteFlag SignalContext::GetWriteFlag() const {
   uint32_t faulty_instruction;
   uint32_t op_code;
 
+#if SANITIZER_NETBSD
+  ucontext_t *nucontext = (ucontext_t *)ucontext;
+  exception_source = (uint32_t *)_UC_MACHINE_PC(nucontext);
+#else
   exception_source = (uint32_t *)ucontext->uc_mcontext.pc;
+#endif
   faulty_instruction = (uint32_t)(*exception_source);
 
   op_code = (faulty_instruction >> 26) & 0x3f;
@@ -1879,6 +1894,8 @@ SignalContext::WriteFlag SignalContext::GetWriteFlag() const {
   // From OpenSolaris $SRC/uts/sun4/os/trap.c (get_accesstype).
 #if SANITIZER_SOLARIS
   uptr pc = ucontext->uc_mcontext.gregs[REG_PC];
+#elif SANITIZER_NETBSD
+  uptr pc = ucontext->uc_mcontext.__gregs[_REG_PC];
 #else
   // Historical BSDism here.
   struct sigcontext *scontext = (struct sigcontext *)context;

@@ -45,9 +45,8 @@ along with GCC; see the file COPYING3.  If not see
 #undef LINK_SPEC
 #define LINK_SPEC NETBSD_LINK_SPEC_ELF
 
-#undef EXTRA_SPECS
-#define EXTRA_SPECS NETBSD_SUBTARGET_EXTRA_SPECS
-#undef SUBTARGET_EXTRA_SPECS
+#define EXTRA_SPECS				\
+  { "netbsd_entry_point", NETBSD_ENTRY_POINT },
 
 #undef INTPTR_TYPE
 #define INTPTR_TYPE "long int"

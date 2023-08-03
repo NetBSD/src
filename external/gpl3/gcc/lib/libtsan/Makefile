@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2021/04/25 23:12:54 christos Exp $
+# $NetBSD: Makefile,v 1.17 2023/08/03 01:36:55 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=     # defined
 NOSANITIZER=    # defined
@@ -13,44 +13,43 @@ NOCOMPAT=	# defined
 
 # XXXmknative
 TSAN_SRCS= \
-	tsan_clock.cc \
-	tsan_debugging.cc \
-	tsan_external.cc \
-	tsan_fd.cc \
-	tsan_flags.cc \
-	tsan_ignoreset.cc \
-	tsan_interceptors.cc \
-	tsan_interceptors_mac.cc \
-	tsan_interface_ann.cc \
-	tsan_interface_atomic.cc \
-	tsan_interface.cc \
-	tsan_interface_java.cc \
-	tsan_libdispatch_mac.cc \
-	tsan_malloc_mac.cc \
-	tsan_md5.cc \
-	tsan_mman.cc \
-	tsan_mutex.cc \
-	tsan_mutexset.cc \
-	tsan_new_delete.cc \
-	tsan_platform_linux.cc \
-	tsan_platform_mac.cc \
-	tsan_platform_posix.cc \
-	tsan_platform_windows.cc \
-	tsan_report.cc \
-	tsan_rtl.cc \
-	tsan_rtl_mutex.cc \
-	tsan_rtl_proc.cc \
-	tsan_rtl_report.cc \
-	tsan_rtl_thread.cc \
-	tsan_stack_trace.cc \
-	tsan_stat.cc \
-	tsan_suppressions.cc \
-	tsan_symbolize.cc \
-	tsan_sync.cc 
+	tsan_clock.cpp \
+	tsan_debugging.cpp \
+	tsan_external.cpp \
+	tsan_fd.cpp \
+	tsan_flags.cpp \
+	tsan_ignoreset.cpp \
+	tsan_interceptors_posix.cpp \
+	tsan_interceptors_mac.cpp \
+	tsan_interface_ann.cpp \
+	tsan_interface_atomic.cpp \
+	tsan_interface.cpp \
+	tsan_interface_java.cpp \
+	tsan_malloc_mac.cpp \
+	tsan_md5.cpp \
+	tsan_mman.cpp \
+	tsan_mutexset.cpp \
+	tsan_new_delete.cpp \
+	tsan_platform_linux.cpp \
+	tsan_platform_mac.cpp \
+	tsan_platform_posix.cpp \
+	tsan_platform_windows.cpp \
+	tsan_report.cpp \
+	tsan_rtl.cpp \
+	tsan_rtl_access.cpp \
+	tsan_rtl_mutex.cpp \
+	tsan_rtl_proc.cpp \
+	tsan_rtl_report.cpp \
+	tsan_rtl_thread.cpp \
+	tsan_stack_trace.cpp \
+	tsan_suppressions.cpp \
+	tsan_symbolize.cpp \
+	tsan_sync.cpp \
+	tsan_vector_clock.cpp
 
 .if ${MACHINE_ARCH} == "x86_64"
 TSAN_SRCS+= tsan_rtl_amd64.S
-.elif ${MACHINE_ARCH} == "aarch64"
+.elif ${MACHINE_CPU} == "aarch64"
 TSAN_SRCS+= tsan_rtl_aarch64.S
 .elif ${MACHINE_MIPS64}
 TSAN_SRCS+= tsan_rtl_mips64.S
@@ -66,6 +65,6 @@ LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
 LIBDPLIBS+= m  ${NETBSDSRCDIR}/lib/libm
 LIBDPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 CPPFLAGS+=-DCAN_SANITIZE_UB=0
-COPTS.tsan_interceptors.cc += -Wno-unused-function
+COPTS.tsan_interceptors.cpp += -Wno-unused-function
 
 .include <bsd.lib.mk>

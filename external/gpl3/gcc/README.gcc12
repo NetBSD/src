@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.3 2023/08/01 07:09:38 mrg Exp $
+$NetBSD: README.gcc12,v 1.4 2023/08/03 01:36:53 mrg Exp $
 
 
 new stuff:
@@ -10,7 +10,6 @@ new stuff:
 	d
 	gfortran
 	libbacktrace: +dwarf5_CFLAGS = $(libbacktrace_TEST_CFLAGS) -gdwarf-5
-	libcody
 	c++tools
 
 todo:
@@ -23,8 +22,8 @@ tools:		does build.sh tools work?
 kernels:	does a kernel run?  y (yes), b (builds/ready), ? (not ready)
 libgcc:		does libgcc build?
 native-gcc:	does a full mknative-gcc complete?
-sani:		has sanitizer been ported to this CPU again for GCC 12
-make release:	does build.sh release complete?
+sani:		has sanitizer been ported to this CPU again for GCC 12?  b (build) y (works)
+make release:	does build.sh release complete?  (before sanitizer - bs)
 runs:		does the system boot with a full world?
 atf:		does atf run / compare well
 switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
@@ -32,48 +31,65 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc/sani	make release[2]	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
-aarch64		y	y	y	y	?	y		y	y	?
-aarch64eb	y	?	?	y	?	?		?	?	?
-alpha		y	?	?	y	?	?		?	?	?
-earmv4		?	?	?	?	?	?		?	?	?
-earmv4eb	?	?	?	?	?	?		?	?	?
-earmv5		y	?	?	y	?	?		?	?	?
-earmv5eb	y	?	?	y	?	?		?	?	?
-earmv5hf	y	?	?	y	?	?		?	?	?
-earmv5hfeb	y	?	?	y	?	?		?	?	?
-earmv6		y	?	?	y	?	?		?	?	?
-earmv6eb	y	?	?	y	?	?		?	?	?
-earmv6hf	y	?	?	y	?	?		?	?	?
-earmv6hfeb	y	?	?	y	?	?		?	?	?
-earmv7		y	?	y	y	?	?		?	?	?
-earmv7eb	y	?	?	y	?	?		?	?	?
-earmv7hf	y	?	?	y	?	?		?	?	?
-earmv7hfeb	y	?	?	y	?	?		?	?	?
-hppa		y	?	?	y	?	?		?	?	?
-i386		y	?	y	y	?	y		?	?	?
-ia64		y	y	y	y	?	y		y[3]	n	?
-m68000		y	?	?	y	?	?		?	?	?
-m68k		y	?	?	y	?	?		?	?	?
-mipseb		y	?	?	y	?	?		?	?	?
-mipsel		y	?	y	y	?	y		?	?	?
-mips64eb	y	?	?	y	?	?		?	?	?
-mips64el	y	?	?	y	?	?		?	?	?
-powerpc		y	?	?	y	?	?		?	?	?
-powerpc64	?	?	?	?	?	?		?	?	?
-sh3eb		y	?	?	y	?	?		?	?	?
-sh3el		y	?	?	y	?	?		?	?	?
-sparc		y	?	?	y	?	y		?	?	?
-sparc64		y	?	?	y	?	y		?	?	?
+aarch64		y	y	y	y	b	y		y	y	?
+aarch64eb	y	y	y	y	b	y		y	y	?
+alpha		y	b	y	y	b	y		?	?	?
+earmv4		y	b	?	y	?	?		?	?	?
+earmv4eb	y	b	?	y	?	?		?	?	?
+earmv5		y	b	?	y	?	?		?	?	?
+earmv5eb	y	b	?	y	?	?		?	?	?
+earmv5hf	y	b	?	y	?	?		?	?	?
+earmv5hfeb	y	b	?	y	?	?		?	?	?
+earmv6		y	b	?	y	?	?		?	?	?
+earmv6eb	y	b	?	y	?	?		?	?	?
+earmv6hf	y	b	?	y	?	?		?	?	?
+earmv6hfeb	y	b	?	y	?	?		?	?	?
+earmv7		y	b	y	y	?	?		?	?	?
+earmv7eb	y	b	?	y	?	?		?	?	?
+earmv7hf	y	b	?	y	?	?		?	?	?
+earmv7hfeb	y	b	?	y	?	?		?	?	?
+hppa		y	b	y	y	?	n[5]		?	?	?
+i386		y	b	y	y	y	y		?	?	?
+ia64		y	b	y	y	y	y		y[3]	n	?
+m68000		y	n[9]	y	y	?	bs		?	?	?
+m68k		y	b	y	y	?	bs		?	?	?
+mipseb		y	b	y	y	?	bs		?	?	?
+mipsel		y	b	y	y	?	bs		?	?	?
+mips64eb	y	b	y	y	?	bs		?	?	?
+mips64el	y	b	y	y	?	bs		?	?	?
+powerpc		y	?	y	y	?	n[4]		?	?	?
+powerpc64	y	?	?	y	?	?		?	?	?
+sh3eb		y	?	y	y	?	?		?	?	?
+sh3el		y	?	y	y	?	?		?	?	?
+sparc		y	y	y	y	?	bs		y	?	?
+sparc64		y	b	y	y	b	y		?	?	?
 vax		y	?	y	y	?	n		?	?	?
-x86_64		y	y	y	y	?	y		y	n[1]	?
-riscv32		y	?	?	?	?	?		?	?	?
-riscv64		y	?	?	?	?	?		?	?	?
+x86_64		y	y	y	y	y	y		y	y	?
+riscv32		y	y	y	y	?	bs		?	?	?
+riscv64		y	y	y	y	?	bs		?	?	?
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
 [1]: amd64 crashed in memfd, likely bug in new code
 [2]: while libsanitizer is not re-ported, "make release" does not include it.
 [3]: GENERIC.SKI boots just as well as GCC 10.
+[4]: rs6000 has a new generator for rs6000-builtins.cc and rs6000-builtins.h rs6000-vecdefines.h
+[5]: GCC itself fails to build:
+     build-print-rtl.c: In constructor 'rtx_writer::rtx_writer(FILE*, int, bool, bool, rtx_reuse_manager*)':
+     build-print-rtl.c:90:3: error: class 'rtx_writer' does not have any field named 'm_rtx_reuse_manager'
+[6]: rs6000 has new generator to deal with
+[7]: fails to build kernels:
+     In file included from sys/arch/powerpc/oea/pmap64.c:4:
+     sys/arch/powerpc/oea/pmap.c:2186:2: error: #error PPC_OEA64 not supported
+[8]: destdir.evbsh3/usr/include/ssp/string.h: In function '_int_strtod_l':
+     destdir.evbsh3/usr/include/ssp/string.h:82:1: error: inlining failed in call to 'always_inline' '__memcpy_ichk': target specific option mismatch
+     82 | __ssp_bos_icheck3_restrict(memcpy, void *, const void *)
+        | ^~~~~~~~~~~~~~~~~~~~~~~~~~
+     src/lib/libc/gdtoa/gdtoaimp.h:534:20: note: called from here
+     534 | #define Bcopy(x,y) memcpy(&x->sign,&y->sign,y->wds*sizeof(ULong) + 2*sizeof(int))
+     src/lib/libc/gdtoa/strtod.c:582:17: note: in expansion of macro 'Bcopy'
+     582 |                 Bcopy(bd, bd0);
+[9]: sun2 fails to load the kernel, probably too big again.
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
@@ -82,33 +98,33 @@ values:		y (yes), k (kernels only), n (failed), r (running), ? (not attempted), 
 CPU		platform list
 ---		-------- ----
 		acorn32		cats	epoc32	evbarm-eb	evbarm-el	hpcarm		iyonix		netwinder	shark 		zaurus
-earmv4:		?		?	?	?		?		?		 		?		?		 
-earm:		 		 	 	?		?		 		?		 		 		?
-earmhf:		 		 	 	?		?		 		 		 		 		 
-earmv6:		 		 	 	?		?
-earmv6hf:	 		 	 	?		?
-earmv7:		 		 	 	?		?
-earmv7hf:	 		 	 	?		?
+earmv4:		k		k	k	k		k		k		 		k		y		 
+earm:		 		 	 	k		k		 		k		 		 		k
+earmhf:		 		 	 	k		k		 		 		 		 		 
+earmv6:		 		 	 	k		k
+earmv6hf:	 		 	 	k		k
+earmv7:		 		 	 	k		k
+earmv7hf:	 		 	 	k		k
 
 		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
-m68k:		?		?	?	?		?		?		?		?		?		y 	?
+m68k:		y		k	k	k		k		k		k		k		k		k 	k
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
-mipseb:		?		?		?		?		?		?
+mipseb:		k		k		k		k		k		y
 
 		evbmips		algor		arc		cobalt		hpcmips		pmax
-mipsel:		?		?		?		?		?		r
+mipsel:		k		k		k		k		k		y
 
 		algor		evbmips		pmax
-mips64eb:	 		?		 
-mips64el:	?		?		?
+mips64eb:	 		r		 
+mips64el:	k		r		r
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
-powerpc:	?		?	?	?		?		?		?		?		?		?
+powerpc:	k		k	k	k		kn[6]		k		k		k		k		k
 
 		evbppc		macppc		ofppc
-powerpc64:	?		?		?
+powerpc64:	k		k		n[7]
 
 		dreamcast	evbsh3		hpcsh		landisk		mmeye
-sh3eb:		 		?		 		 		?
-sh3el:		?		?		?		?
+sh3eb:		 		kn[8]		 		 		k
+sh3el:		k		kn[8]		k		k
