@@ -1,4 +1,4 @@
-/*	$NetBSD: h_exec.c,v 1.6 2011/02/16 17:57:44 pooka Exp $	*/
+/*	$NetBSD: h_exec.c,v 1.7 2023/08/03 20:45:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/* open and listenize two TCP4 suckets */
+	/* open and listenize two TCP4 sockets */
 	if ((s1 = rump_sys_socket(PF_INET, SOCK_STREAM, 0)) == -1)
 		err(1, "socket 1");
 	if ((s2 = rump_sys_socket(PF_INET, SOCK_STREAM, 0)) == -1)

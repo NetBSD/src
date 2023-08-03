@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_daemonize.c,v 1.7 2014/11/04 19:05:17 pooka Exp $	*/
+/*	$NetBSD: rumpuser_daemonize.c,v 1.8 2023/08/03 20:45:49 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_daemonize.c,v 1.7 2014/11/04 19:05:17 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_daemonize.c,v 1.8 2023/08/03 20:45:49 andvar Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ rumpuser_daemonize_begin(void)
 	 * after rump_init (which creates threads), do it now.  Add
 	 * a little pipe trickery to make sure we don't exit until the
 	 * service is fully inited (i.e. interlocked daemonization).
-	 * Actually, use sucketpair since that allows to easily steer
+	 * Actually, use socketpair since that allows to easily steer
 	 * clear of the dreaded sigpipe.
 	 *
 	 * Note: We do *NOT* host chdir("/").  It's up to the caller to

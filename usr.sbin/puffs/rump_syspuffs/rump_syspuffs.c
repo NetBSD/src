@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syspuffs.c,v 1.13 2019/02/01 09:06:07 mrg Exp $	*/
+/*	$NetBSD: rump_syspuffs.c,v 1.14 2023/08/03 20:45:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -98,7 +98,7 @@ mount_syspuffs_parseargs(int argc, char *argv[],
 	if (argc < 2)
 		usage();
 
-	/* Create sucketpair for communication with the real file server */
+	/* Create socketpair for communication with the real file server */
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) == -1)
 		err(1, "socketpair");
 

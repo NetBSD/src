@@ -1,4 +1,4 @@
-/*	$NetBSD: tbrconfig.c,v 1.4 2011/08/29 20:38:54 joerg Exp $	*/
+/*	$NetBSD: tbrconfig.c,v 1.5 2023/08/03 20:45:50 andvar Exp $	*/
 /*	$KAME: tbrconfig.c,v 1.3 2001/05/08 04:36:39 itojun Exp $	*/
 /*
  * Copyright (C) 2000
@@ -237,7 +237,7 @@ atobytes(const char *s)
 }
 
 /*
- * use heuristics to determin the bucket size
+ * use heuristics to determine the bucket size
  */
 static u_int
 size_bucket(const char *ifname, const u_int rate)

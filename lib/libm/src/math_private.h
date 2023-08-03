@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.26 2022/08/27 08:31:59 christos Exp $
+ * $NetBSD: math_private.h,v 1.27 2023/08/03 20:45:49 andvar Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -462,7 +462,7 @@ rnintf(float x)
  * The complications for extra precision are smaller for rnintl() since it
  * can safely assume that the rounding precision has been increased from
  * its default to FP_PE on x86.  We don't exploit that here to get small
- * optimizations from limiting the rangle to double.  We just need it for
+ * optimizations from limiting the range to double.  We just need it for
  * the magic number to work with long doubles.  ld128 callers should use
  * rnint() instead of this if possible.  ld80 callers should prefer
  * rnintl() since for amd64 this avoids swapping the register set, while
