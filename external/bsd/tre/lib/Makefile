@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2023/08/03 13:36:08 rin Exp $
+#	$NetBSD: Makefile,v 1.5 2023/08/03 14:56:36 rin Exp $
 
 # for information:
 # the configure script is run as:
@@ -18,7 +18,5 @@ SRCS+=	regcomp.c regerror.c regexec.c
 SRCS+=	tre-ast.c tre-compile.c tre-match-approx.c
 SRCS+=	tre-match-backtrack.c tre-match-parallel.c tre-mem.c
 SRCS+=	tre-parse.c tre-stack.c xmalloc.c
-
-COPTS.xmalloc.c+=	${CC_WNO_USE_AFTER_FREE}
 
 .include <bsd.lib.mk>
