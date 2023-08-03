@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.215 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.216 2023/08/03 18:48:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.215 2023/08/02 18:51:25 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.216 2023/08/03 18:48:42 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -409,6 +409,8 @@ static const char *const msgs[] = {
 	"missing%s header declaration for '%s'",		      /* 351 */
 	"nested 'extern' declaration of '%s'",			      /* 352 */
 	"empty initializer braces require C23 or later",	      /* 353 */
+	"'_Static_assert' requires C11 or later",		      /* 354 */
+	"'_Static_assert' without message requires C23 or later",     /* 355 */
 };
 
 static bool	is_suppressed[sizeof(msgs) / sizeof(msgs[0])];
