@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2022/04/25 15:37:14 reinoud Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2023/08/03 08:06:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.13 2022/04/25 15:37:14 reinoud Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2023/08/03 08:06:11 mrg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2800,6 +2800,7 @@ udf_check_VDS_areas(void) {
 		context.vds_buf  = vds1_buf;
 		context.vds_size = vds1_size;
 		free(vds2_buf);
+		vds2_buf = NULL;
 	}
 	if (!error2) {
 		/* retrieve data from VDS 2 */
@@ -2807,6 +2808,7 @@ udf_check_VDS_areas(void) {
 		context.vds_buf  = vds2_buf;
 		context.vds_size = vds2_size;
 		free(vds1_buf);
+		vds1_buf = NULL;
 	}
 	/* check if all is correct and complete */
 	error = udf_process_vds();
