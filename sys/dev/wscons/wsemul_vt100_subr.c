@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.31 2023/07/26 10:46:01 uwe Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.32 2023/08/03 02:04:17 uwe Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.31 2023/07/26 10:46:01 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.32 2023/08/03 02:04:17 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,11 +396,21 @@ wsemul_vt100_handle_csi(struct vt100base_data *vd, u_char c)
 		ERASECOLS(vd, vd->ccol, n, vd->bkgdattr);
 		break;
 	    case 'A': /* CUU */
-		vd->crow -= uimin(DEF1_ARG(vd, 0), ROWS_ABOVE(vd));
+		/* stop at the top scroll margin */
+		m = vd->scrreg_startrow;
+		if (vd->crow < m)/* but if already above the margin */
+			m = 0;	 /* then at the screen top */
+		help = vd->crow - m; /* rows above */
+		vd->crow -= uimin(DEF1_ARG(vd, 0), help);
 		CHECK_DW(vd);
 		break;
 	    case 'B': /* CUD */
-		vd->crow += uimin(DEF1_ARG(vd, 0), ROWS_BELOW(vd));
+		/* stop at the bottom scroll margin */
+		m = vd->scrreg_startrow + vd->scrreg_nrows - 1;
+		if (vd->crow > m) /* but if already below the margin */
+			m = vd->nrows - 1; /* then at the screen bottom */
+		help = m - vd->crow; /* rows below */
+		vd->crow += uimin(DEF1_ARG(vd, 0), help);
 		CHECK_DW(vd);
 		break;
 	    case 'C': /* CUF */
