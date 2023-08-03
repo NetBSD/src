@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2023/06/03 09:09:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.43 2023/08/03 13:36:09 rin Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -78,7 +78,7 @@ FILESDIR_mail.rc=	/etc
 FILESMODE_mail.rc=	644
 
 COPTS.format.c+= -Wno-format-nonliteral
-COPTS.fio.c+=	${CC_WNO_FORMAT_TRUNCATION}
+COPTS.fio.c+=	${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_USE_AFTER_FREE}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
