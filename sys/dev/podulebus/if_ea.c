@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.17 2012/10/10 22:17:44 skrll Exp $ */
+/* $NetBSD: if_ea.c,v 1.18 2023/08/03 08:35:14 mrg Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.17 2012/10/10 22:17:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.18 2023/08/03 08:35:14 mrg Exp $");
 
 #include <sys/param.h>
 
@@ -119,7 +119,7 @@ eaattach(device_t parent, device_t self, void *aux)
 	    &sc->sc_8005.sc_ioh);
 
 	/* Get the Ethernet address from the device description string. */
-	if (pa->pa_descr == NULL) {
+	if (pa->pa_descr[0] == '\0') {
 		printf(": No description for Ethernet address\n");
 		return;
 	}
