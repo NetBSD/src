@@ -1,4 +1,4 @@
-/*	$NetBSD: regdump.c,v 1.14 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: regdump.c,v 1.15 2023/08/03 08:16:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: regdump.c,v 1.14 2019/04/06 03:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: regdump.c,v 1.15 2023/08/03 08:16:31 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,12 @@ regdump(struct trapframe *tf, int sbytes)
 	for (i = 0; i < 8; i++)
 		printf(" %s", hexstr(tf->tf_regs[i+8], 8));
 	if (sbytes > 0) {
+/*
+ * XXXGCC12.
+ * This accesses beyond what "trapframe *tf" technically supplies.
+ */
+#pragma GCC push_options
+#pragma GCC diagnostic ignored "-Warray-bounds"
 		if (tf->tf_sr & PSL_S) {
 			printf("\n\nKernel stack (%s):",
 			    hexstr((int)(((int *)(void *)&tf)-1), 8));
@@ -94,6 +100,7 @@ regdump(struct trapframe *tf, int sbytes)
 			    hexstr(tf->tf_regs[SP], 8));
 			dumpmem((int *)tf->tf_regs[SP], sbytes, 1);
 		}
+#pragma GCC pop_options
 	}
 	doingdump = 0;
 	splx(s);

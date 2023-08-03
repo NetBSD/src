@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.67 2023/04/20 08:28:05 skrll Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.68 2023/08/03 08:16:31 mrg Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.67 2023/04/20 08:28:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.68 2023/08/03 08:16:31 mrg Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -344,7 +344,14 @@ initarm(void *arg)
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
         if (! memcmp(&end, "\177ELF", 4)) {
+/*
+ * XXXGCC12.
+ * This accesses beyond what "int end" technically supplies.
+ */
+#pragma GCC push_options
+#pragma GCC diagnostic ignored "-Warray-bounds"
                 sh = (Elf_Shdr *)((char *)&end + ((Elf_Ehdr *)&end)->e_shoff);
+#pragma GCC pop_options
                 loop = ((Elf_Ehdr *)&end)->e_shnum;
                 for(; loop; loop--, sh++)
                         if (sh->sh_offset > 0 &&
