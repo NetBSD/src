@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.233 2023/03/20 09:15:52 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.234 2023/08/03 05:45:36 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.233 2023/03/20 09:15:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.234 2023/08/03 05:45:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -169,6 +169,12 @@ ip6_if_output(struct ifnet * const ifp, struct ifnet * const origifp,
 			m_freem(m);
 			return error;
 		}
+	}
+
+	/* discard the packet if IPv6 operation is disabled on the interface */
+	if ((ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED)) {
+		m_freem(m);
+		return ENETDOWN; /* better error? */
 	}
 
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
