@@ -1,4 +1,4 @@
-/*	$NetBSD: sshkey-xmss.c,v 1.9 2023/07/26 17:58:16 christos Exp $	*/
+/*	$NetBSD: sshkey-xmss.c,v 1.10 2023/08/03 07:59:32 mrg Exp $	*/
 /* $OpenBSD: sshkey-xmss.c,v 1.12 2022/10/28 00:39:29 djm Exp $ */
 /*
  * Copyright (c) 2017 Markus Friedl.  All rights reserved.
@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey-xmss.c,v 1.9 2023/07/26 17:58:16 christos Exp $");
+__RCSID("$NetBSD: sshkey-xmss.c,v 1.10 2023/08/03 07:59:32 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -445,7 +445,7 @@ sshkey_xmss_get_state(const struct sshkey *k, int printerror)
 	u_int32_t idx = 0;
 	char *filename = NULL;
 	char *statefile = NULL, *ostatefile = NULL, *lockfile = NULL;
-	int lockfd = -1, have_state = 0, have_ostate, tries = 0;
+	int lockfd = -1, have_state = 0, have_ostate = 0, tries = 0;
 	int ret = SSH_ERR_INVALID_ARGUMENT, r;
 
 	if (state == NULL)
