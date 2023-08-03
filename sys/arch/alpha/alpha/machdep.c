@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.375 2021/07/22 01:39:18 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.376 2023/08/03 03:07:35 rin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.375 2021/07/22 01:39:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376 2023/08/03 03:07:35 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -795,6 +795,11 @@ nobootinfo:
 		case 'v': /* verbose boot */
 		case 'V':
 			boothowto |= AB_VERBOSE;
+			break;
+
+		case 'x': /* debug messages */
+		case 'X':
+			boothowto |= AB_DEBUG;
 			break;
 
 		case '-':
