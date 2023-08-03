@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.357 2023/07/06 21:10:15 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.358 2023/08/03 02:32:16 gutteridge Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1009,6 +1009,8 @@ MLC	multi-level cell
 MLD	multicast listener discovery
 MLHP	micro loop heat pipe
 MLIR	multi-level intermediate representation
+MLO	MMC loader
+MMC	multi-media card
 MMF	multi-mode fiber
 MMIC	monolithic microwave integrated circuit
 MMIO	memory mapped input/output
@@ -1582,8 +1584,9 @@ SPDIF	Sony/Philips digital interface format
 SPI	serial peripheral interface
 SPI	stateful packet inspection
 SPIR	standard portable intermediate representation
-SPL	system interrupt priority level
+SPL	secondary program loader
 SPL	spinlock
+SPL	system interrupt priority level
 SPMD	single process, multiple data
 SPR	special purpose register
 SPT	sectors per track
