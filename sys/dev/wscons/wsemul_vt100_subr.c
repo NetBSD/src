@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.32 2023/08/03 02:04:17 uwe Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.33 2023/08/03 02:25:09 uwe Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.32 2023/08/03 02:04:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.33 2023/08/03 02:25:09 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,6 +436,10 @@ wsemul_vt100_handle_csi(struct vt100base_data *vd, u_char c)
 		break;
 	    case 'L': /* IL insert line */
 	    case 'M': /* DL delete line */
+		/* ignored when the cursor is outside the scrolling region */
+		if (vd->crow < vd->scrreg_startrow
+		    || vd->scrreg_startrow + vd->scrreg_nrows <= vd->crow)
+			break;
 		n = uimin(DEF1_ARG(vd, 0), ROWS_BELOW(vd) + 1);
 		{
 		int savscrstartrow, savscrnrows;
@@ -450,6 +454,7 @@ wsemul_vt100_handle_csi(struct vt100base_data *vd, u_char c)
 		vd->scrreg_startrow = savscrstartrow;
 		vd->scrreg_nrows = savscrnrows;
 		}
+		vd->ccol = 0;
 		break;
 	    case 'P': /* DCH delete character */
 		n = uimin(DEF1_ARG(vd, 0), COLS_LEFT(vd) + 1);
