@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.955 2023/08/02 12:12:52 martin Exp $
+# $NetBSD: shl.mi,v 1.956 2023/08/03 13:13:04 rin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -211,8 +211,11 @@
 ./usr/lib/libarchive.so.4			base-sys-shlib		compatfile
 ./usr/lib/libarchive.so.4.0			base-sys-shlib		compatfile
 ./usr/lib/libasan.so				base-sys-shlib		compatfile,cxx,gcc=10
+./usr/lib/libasan.so				base-sys-shlib		compatfile,cxx,gcc=12
 ./usr/lib/libasan.so.5				base-sys-shlib		compatfile,cxx,gcc=10
+./usr/lib/libasan.so.5				base-sys-shlib		compatfile,cxx,gcc=12
 ./usr/lib/libasan.so.5.0			base-sys-shlib		compatfile,cxx,gcc=10
+./usr/lib/libasan.so.5.0			base-sys-shlib		compatfile,cxx,gcc=12
 ./usr/lib/libasn1.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.10				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.10.0			base-krb5-shlib		compatfile,kerberos
@@ -435,10 +438,13 @@
 ./usr/lib/libldap_r.so.5			base-ldap-shlib		ldap,compatfile
 ./usr/lib/libldap_r.so.5.0			base-ldap-shlib		ldap,compatfile
 ./usr/lib/liblsan.so				base-sys-shlib		compatfile,cxx,gcc=10
+./usr/lib/liblsan.so				base-sys-shlib		compatfile,cxx,gcc=12
 ./usr/lib/liblsan.so.1				base-sys-shlib		compatfile,obsolete
 ./usr/lib/liblsan.so.1.0			base-sys-shlib		compatfile,obsolete
 ./usr/lib/liblsan.so.2				base-sys-shlib		compatfile,cxx,gcc=10
+./usr/lib/liblsan.so.2				base-sys-shlib		compatfile,cxx,gcc=12
 ./usr/lib/liblsan.so.2.0			base-sys-shlib		compatfile,cxx,gcc=10
+./usr/lib/liblsan.so.2.0			base-sys-shlib		compatfile,cxx,gcc=12
 ./usr/lib/liblua.so				base-sys-shlib		compatfile
 ./usr/lib/liblua.so.6				base-sys-shlib		compatfile
 ./usr/lib/liblua.so.6.1				base-sys-shlib		compatfile
@@ -905,7 +911,6 @@
 ./usr/lib/libssl.so.15.0			base-crypto-shlib	compatfile,openssl=30
 ./usr/lib/libstdc++.so				base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.9			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
-./usr/lib/libstdc++.so.9.0			base-sys-shlib		compatfile,gcc,cxx,libstdcxx,gcc=10
 ./usr/lib/libstdc++.so.9.0			base-sys-shlib		compatfile,gcc,cxx,libstdcxx,obsolete,gcc=12
 ./usr/lib/libstdc++.so.9.1			base-sys-shlib		compatfile,gcc,cxx,libstdcxx,gcc=12
 ./usr/lib/libtelnet.so				base-obsolete		obsolete
@@ -928,8 +933,11 @@
 ./usr/lib/libtspi.so.3				base-sys-shlib		compatfile,tpm
 ./usr/lib/libtspi.so.3.0			base-sys-shlib		compatfile,tpm
 ./usr/lib/libubsan.so				base-sys-shlib		compatfile,cxx,gcc=10
+./usr/lib/libubsan.so				base-sys-shlib		compatfile,cxx,gcc=12
 ./usr/lib/libubsan.so.4				base-sys-shlib		compatfile,cxx,gcc=10
+./usr/lib/libubsan.so.4				base-sys-shlib		compatfile,cxx,gcc=12
 ./usr/lib/libubsan.so.4.0			base-sys-shlib		compatfile,cxx,gcc=10
+./usr/lib/libubsan.so.4.0			base-sys-shlib		compatfile,cxx,gcc=12
 ./usr/lib/libukfs.so				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1.0			base-sys-shlib		compatfile,rump

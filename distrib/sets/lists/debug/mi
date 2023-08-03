@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.412 2023/08/03 12:30:25 nia Exp $
+# $NetBSD: mi,v 1.413 2023/08/03 13:13:05 rin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -27,6 +27,7 @@
 ./usr/lib/libamu_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libarchive_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc=10
+./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc=12
 ./usr/lib/libasn1_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libatf-c++_g.a			comp-c-debuglib		debuglib,compatfile,atf
 ./usr/lib/libatf-c_g.a				comp-c-debuglib		debuglib,compatfile,atf
@@ -101,6 +102,7 @@
 ./usr/lib/libldap_g.a				comp-c-debuglib		debuglib,ldap,compatfile
 ./usr/lib/libldap_r_g.a				comp-c-debuglib		debuglib,ldap,compatfile
 ./usr/lib/liblsan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc=10
+./usr/lib/liblsan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc=12
 ./usr/lib/liblua_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/liblwres_g.a				comp-obsolete		obsolete
 ./usr/lib/liblzf_g.a				comp-c-debuglib		debuglib,compatfile
@@ -268,8 +270,10 @@
 ./usr/lib/libtre_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libtsan_g.a				comp-c-debuglib		debuglib,arch64,cxx,gcc=9,machine=amd64
 ./usr/lib/libtsan_g.a				comp-c-debuglib		debuglib,arch64,cxx,gcc=10,machine=amd64
+# NOTYET ./usr/lib/libtsan_g.a				comp-c-debuglib		debuglib,arch64,cxx,gcc=12,machine=amd64
 ./usr/lib/libtspi_g.a				comp-c-debuglib		debuglib,compatfile,tpm
 ./usr/lib/libubsan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc=10
+./usr/lib/libubsan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc=12
 ./usr/lib/libukfs_g.a				comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/libumem_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libunbound_g.a			comp-c-debuglib		debuglib,compatfile,unbound
@@ -2075,7 +2079,9 @@
 ./usr/libdata/debug/usr/tests/lib/libc/membar/t_seqlock.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/membar/t_spinlock.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsan.debug		tests-lib-debug		debug,atf,compattestfile,gcc=10
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsan.debug		tests-lib-debug		debug,atf,compattestfile,gcc=12
 ./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsanxx.debug		tests-lib-debug		debug,atf,compattestfile,gcc=10
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsanxx.debug		tests-lib-debug		debug,atf,compattestfile,gcc=12
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_dns_server.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_hostent.debug		tests-lib-debug		debug,atf,compattestfile
