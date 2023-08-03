@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1281 2023/08/01 06:35:56 mrg Exp $
+# $NetBSD: mi,v 1.1282 2023/08/03 12:24:47 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2296,7 +2296,7 @@
 ./usr/tests/kernel/posix_spawn/t_fileactions		tests-obsolete		obsolete
 ./usr/tests/kernel/posix_spawn/t_spawn			tests-obsolete		obsolete
 ./usr/tests/kernel/posix_spawn/t_spawnattr		tests-obsolete		obsolete
-./usr/tests/kernel/t_epoll				tests-kernel-tests	atf
+./usr/tests/kernel/t_epoll				tests-obsolete		obsolete
 ./usr/tests/kernel/t_extattrctl				tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_extent				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_fcntl				tests-kernel-tests	atf
