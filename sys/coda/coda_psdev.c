@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.62 2022/05/03 20:52:31 andvar Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.63 2023/08/03 03:10:23 rin Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.62 2022/05/03 20:52:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.63 2023/08/03 03:10:23 rin Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -712,9 +712,10 @@ coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
 	}
 
 	else {	/* If venus died (!VC_OPEN(vcp)) */
-	    if (codadebug)
-		myprintf(("vcclose woke op %d.%d flags %d\n",
-		       vmp->vm_opcode, vmp->vm_unique, vmp->vm_flags));
+		if (codadebug) {
+			myprintf(("vcclose woke op %d.%d flags %d\n",
+			       vmp->vm_opcode, vmp->vm_unique, vmp->vm_flags));
+		}
 
 		error = ENODEV;
 	}
