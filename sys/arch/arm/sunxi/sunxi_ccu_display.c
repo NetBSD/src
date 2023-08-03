@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_display.c,v 1.2 2018/04/02 20:55:49 bouyer Exp $ */
+/* $NetBSD: sunxi_ccu_display.c,v 1.3 2023/08/03 08:10:40 mrg Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_display.c,v 1.2 2018/04/02 20:55:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_display.c,v 1.3 2023/08/03 08:10:40 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,7 +102,7 @@ sunxi_ccu_lcdxch1_set_rate(struct sunxi_ccu_softc *sc,
 {
 	struct clk *clkp, *pllclkp;
 	int best_diff;
-	int parent_rate, best_parent_rate;
+	int parent_rate, best_parent_rate = 0;
 	uint32_t best_m, best_d;
 	int error;
 
