@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2023/08/01 05:57:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2023/08/03 01:36:54 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,16 +11,13 @@ SUBDIR+= liblto_plugin
 .if (${MKLIBSTDCXX} != "no") && (${MKCXX} != "no")
 SUBDIR+= libsupc++ libstdc++-v3
 
-# XXX needs re-port
-.if 0
 SUBDIR+= .WAIT libasan liblsan libubsan
 
 # TSan does not work with 32bit address space and has not been ported
 # to all 64-bit architectures.
-.if ${MACHINE} == "amd64"
+.if ${MACHINE} == "amd64" || ${MACHINE_CPU} == "aarch64"
 SUBDIR+= libtsan
 .endif
-.endif # 0
 
 .endif
 

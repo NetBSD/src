@@ -133,6 +133,7 @@ am__objects_1 = sancov_flags.lo sanitizer_allocator.lo \
 	sanitizer_netbsd.lo sanitizer_openbsd.lo \
 	sanitizer_platform_limits_freebsd.lo \
 	sanitizer_platform_limits_linux.lo \
+	sanitizer_platform_limits_netbsd.lo \
 	sanitizer_platform_limits_openbsd.lo \
 	sanitizer_platform_limits_posix.lo \
 	sanitizer_platform_limits_solaris.lo sanitizer_posix.lo \
@@ -145,6 +146,7 @@ am__objects_1 = sancov_flags.lo sanitizer_allocator.lo \
 	sanitizer_symbolizer_mac.lo sanitizer_symbolizer_report.lo \
 	sanitizer_stacktrace_printer.lo \
 	sanitizer_stoptheworld_linux_libcdep.lo \
+	sanitizer_stoptheworld_netbsd_libcdep.lo \
 	sanitizer_stoptheworld_mac.lo sanitizer_suppressions.lo \
 	sanitizer_symbolizer.lo sanitizer_symbolizer_libbacktrace.lo \
 	sanitizer_symbolizer_libcdep.lo \
@@ -408,6 +410,7 @@ sanitizer_common_files = \
 	sanitizer_openbsd.cpp \
 	sanitizer_platform_limits_freebsd.cpp \
 	sanitizer_platform_limits_linux.cpp \
+	sanitizer_platform_limits_netbsd.cpp \
 	sanitizer_platform_limits_openbsd.cpp \
 	sanitizer_platform_limits_posix.cpp \
 	sanitizer_platform_limits_solaris.cpp \
@@ -428,6 +431,7 @@ sanitizer_common_files = \
 	sanitizer_symbolizer_report.cpp \
 	sanitizer_stacktrace_printer.cpp \
 	sanitizer_stoptheworld_linux_libcdep.cpp \
+	sanitizer_stoptheworld_netbsd_libcdep.cpp \
 	sanitizer_stoptheworld_mac.cpp \
 	sanitizer_suppressions.cpp \
 	sanitizer_symbolizer.cpp \
@@ -564,6 +568,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_openbsd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_platform_limits_freebsd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_platform_limits_linux.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_platform_limits_netbsd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_platform_limits_openbsd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_platform_limits_posix.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_platform_limits_solaris.Plo@am__quote@
@@ -582,6 +587,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_stacktrace_printer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_stacktrace_sparc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_stoptheworld_linux_libcdep.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_stoptheworld_netbsd_libcdep.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_stoptheworld_mac.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_suppressions.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sanitizer_symbolizer.Plo@am__quote@

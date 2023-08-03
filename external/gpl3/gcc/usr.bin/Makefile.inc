@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.37 2023/08/01 05:57:53 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.38 2023/08/03 01:36:55 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -83,5 +83,11 @@ COPTS+=-Wno-narrowing -Wno-unused
 
 # Lots trigger this.
 CFLAGS+=	-Wno-format-diag
+
+# Avoid jump tables that don't fit.
+.if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
+	${GCC_MACHINE_ARCH} == "coldfire"
+COPTS.c-omp.cc+=-fno-jump-tables
+.endif
 
 .endif

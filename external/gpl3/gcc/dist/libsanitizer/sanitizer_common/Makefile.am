@@ -47,6 +47,7 @@ sanitizer_common_files = \
 	sanitizer_openbsd.cpp \
 	sanitizer_platform_limits_freebsd.cpp \
 	sanitizer_platform_limits_linux.cpp \
+	sanitizer_platform_limits_netbsd.cpp \
 	sanitizer_platform_limits_openbsd.cpp \
 	sanitizer_platform_limits_posix.cpp \
 	sanitizer_platform_limits_solaris.cpp \
@@ -67,6 +68,7 @@ sanitizer_common_files = \
 	sanitizer_symbolizer_report.cpp \
 	sanitizer_stacktrace_printer.cpp \
 	sanitizer_stoptheworld_linux_libcdep.cpp \
+	sanitizer_stoptheworld_netbsd_libcdep.cpp \
 	sanitizer_stoptheworld_mac.cpp \
 	sanitizer_suppressions.cpp \
 	sanitizer_symbolizer.cpp \
