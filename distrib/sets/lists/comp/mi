@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2442 2023/08/03 12:24:47 nia Exp $
+#	$NetBSD: mi,v 1.2443 2023/08/03 13:13:04 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3838,6 +3838,8 @@
 ./usr/lib/libarchive_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libasan.a				comp-c-lib		compatfile,cxx,gcc=10
 ./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc=10
+./usr/lib/libasan.a				comp-c-lib		compatfile,cxx,gcc=12
+./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc=12
 ./usr/lib/libasn1.a				comp-krb5-lib		compatfile,kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	compatfile,kerberos,profile
 ./usr/lib/libatf-c++.a				comp-atf-lib		compatfile,atf
@@ -3999,6 +4001,8 @@
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	compatfile,ldap,profile
 ./usr/lib/liblsan.a				comp-c-lib		compatfile,cxx,gcc=10
 ./usr/lib/liblsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc=10
+./usr/lib/liblsan.a				comp-c-lib		compatfile,cxx,gcc=12
+./usr/lib/liblsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc=12
 ./usr/lib/liblua.a				comp-c-lib		compatfile
 ./usr/lib/liblua_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/liblutok.a				comp-c-lib		compatfile,kyua
@@ -4341,6 +4345,8 @@
 ./usr/lib/libtpm_unseal_p.a			comp-c-proflib		compatfile,tpm,profile
 ./usr/lib/libtre.a				comp-c-lib		compatfile
 ./usr/lib/libtre_p.a				comp-c-proflib		compatfile,profile
+# NOTYET ./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcc=12,machine=amd64
+# NOTYET ./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcc=12,machine=amd64
 ./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcc=10,machine=amd64
 ./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcc=9,machine=amd64
 ./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcc=10,machine=amd64
@@ -4348,6 +4354,8 @@
 ./usr/lib/libtspi.a				comp-c-lib		compatfile,tpm
 ./usr/lib/libtspi_p.a				comp-c-proflib		compatfile,tpm,profile
 ./usr/lib/libubsan.a				comp-c-lib		compatfile,cxx,gcc=10
+./usr/lib/libubsan.a				comp-c-lib		compatfile,cxx,gcc=12
+./usr/lib/libubsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc=12
 ./usr/lib/libubsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcc=10
 ./usr/lib/libukfs.a				comp-c-lib		compatfile,rump
 ./usr/lib/libukfs_p.a				comp-c-proflib		compatfile,rump,profile
