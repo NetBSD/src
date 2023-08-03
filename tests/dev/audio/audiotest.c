@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.30 2023/06/24 05:27:13 msaitoh Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.31 2023/08/03 08:36:38 rin Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.30 2023/06/24 05:27:13 msaitoh Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.31 2023/08/03 08:36:38 rin Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -1065,7 +1065,7 @@ void *debug_mmap(int line, void *ptr, size_t len, int prot, int flags, int fd,
 #define ADDFLAG(buf, var, name)	do {				\
 	if (((var) & (name)))					\
 		n = strlcat(buf, "|" #name, sizeof(buf));	\
-		var &= ~(name);					\
+	(var) &= ~(name);					\
 } while (0)
 
 	n = 0;
