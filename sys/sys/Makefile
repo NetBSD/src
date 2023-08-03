@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.181 2023/07/28 18:19:01 christos Exp $
+#	$NetBSD: Makefile,v 1.182 2023/08/03 12:24:46 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ INCS=	acct.h acl.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h \
 	dir.h dirent.h \
 	disk.h disklabel.h disklabel_acorn.h disklabel_gpt.h disklabel_rdb.h \
 	dkbad.h dkio.h dkstat.h domain.h drvctlio.h dvdio.h \
-	efiio.h endian.h envsys.h epoll.h errno.h evcnt.h event.h eventfd.h exec.h \
+	efiio.h endian.h envsys.h errno.h evcnt.h event.h eventfd.h exec.h \
 	exec_aout.h exec_coff.h exec_ecoff.h exec_elf.h exec_script.h \
 	extattr.h extent.h \
 	fault.h \
