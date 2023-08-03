@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.20 2020/10/12 16:54:43 roy Exp $	*/
+/*	$NetBSD: powerd.c,v 1.21 2023/08/03 08:03:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -189,6 +189,7 @@ run_script(const char *argv[])
 		if (access(path, R_OK|X_OK) == 0) {
 			int status;
 			pid_t pid;
+			const char *orig_argv0 = argv[0];
 
 			argv[0] = path;
 
@@ -199,13 +200,16 @@ run_script(const char *argv[])
 					(void)fprintf(stderr, " %s", argv[j]);
 				(void)fprintf(stderr, "\n");
 			}
-			if (no_scripts != 0)
+			if (no_scripts != 0) {
+				argv[0] = orig_argv0;
 				return;
+			}
 
 			switch ((pid = vfork())) {
 			case -1:
 				powerd_log(LOG_ERR, "fork to run script: %s",
 				    strerror(errno));
+				argv[0] = orig_argv0;
 				return;
 
 			case 0:
@@ -233,6 +237,7 @@ run_script(const char *argv[])
 				}
 				break;
 			}
+			argv[0] = orig_argv0;
 			
 			return;
 		}

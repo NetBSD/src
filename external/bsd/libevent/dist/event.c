@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: event.c,v 1.6 2023/08/03 08:03:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -28,7 +28,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: event.c,v 1.5 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: event.c,v 1.6 2023/08/03 08:03:19 mrg Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
@@ -1382,6 +1382,7 @@ event_signal_closure(struct event_base *base, struct event *ev)
 			return;
 		}
 	}
+	ev->ev_pncalls = NULL;
 }
 
 /* Common timeouts are special timeouts that are handled as queues rather than

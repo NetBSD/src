@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.18 2009/07/14 21:05:34 apb Exp $	*/
+/*	$NetBSD: expand.c,v 1.19 2023/08/03 08:03:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: expand.c,v 1.18 2009/07/14 21:05:34 apb Exp $");
+__RCSID("$NetBSD: expand.c,v 1.19 2023/08/03 08:03:19 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,6 +141,10 @@ expand(struct namelist *list, int wh)
 		printf("expanded list = ");
 		prnames(list);
 	}
+	sortbase = NULL;
+	eargv = NULL;
+	path = tpathp = pathp = NULL;
+	lastpathp = NULL;
 	return(list);
 }
 
