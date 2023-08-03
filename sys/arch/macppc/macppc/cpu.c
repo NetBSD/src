@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.72 2020/02/15 07:20:41 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.73 2023/08/03 08:16:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72 2020/02/15 07:20:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73 2023/08/03 08:16:31 mrg Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -235,9 +235,17 @@ md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 		u_int node, off;
 		char cpupath[32];
 
+/*
+ * XXXGCC12 has:
+ * macppc/cpu.c:239:17: error: array subscript 0 is outside array bounds
+ *     of 'u_int[0]' {aka 'unsigned int[]'} [-Werror=array-bounds]
+ */
+#pragma GCC push_options
+#pragma GCC diagnostic ignored "-Warray-bounds"
 		/* construct an absolute branch instruction */
 		*(u_int *)EXC_RST =		/* ba cpu_spinup_trampoline */
 		    0x48000002 | (u_int)cpu_spinup_trampoline;
+#pragma GCC pop_options
 		__syncicache((void *)EXC_RST, 0x100);
 		h->hatch_running = -1;
 

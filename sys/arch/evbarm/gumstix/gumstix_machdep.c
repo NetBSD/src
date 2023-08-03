@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.73 2023/04/20 08:28:04 skrll Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.74 2023/08/03 08:16:30 mrg Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -467,6 +467,13 @@ read_system_serial(void)
 	char system_serial[GUMSTIX_SYSTEM_SERIAL_SIZE], *src;
 	char x;
 
+/*
+ * XXXGCC12.
+ * This accesses beyond what "char *src" is known to supply.
+ */
+#pragma GCC push_options
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
 	src = (char *)(FLASH_OFFSET_USER_PROTECTION * 2 /*word*/);
 	*(volatile uint16_t *)0 = FLASH_CMD_READ_ID;
 	memcpy(system_serial,
@@ -487,6 +494,7 @@ read_system_serial(void)
 		 * gumstix_serial_hash(system_serial);
 		 */
 	}
+#pragma GCC pop_options
 	system_serial_high = system_serial[0] << 24 | system_serial[1] << 16 |
 	    system_serial[2] << 8 | system_serial[3];
 	system_serial_low = system_serial[4] << 24 | system_serial[5] << 16 |
