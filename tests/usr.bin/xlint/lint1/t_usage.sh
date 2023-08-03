@@ -1,4 +1,4 @@
-# $NetBSD: t_usage.sh,v 1.10 2023/07/02 23:40:23 rillig Exp $
+# $NetBSD: t_usage.sh,v 1.11 2023/08/03 18:48:42 rillig Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,13 +39,13 @@ suppress_messages_body()
 
 	# The largest known message.
 	atf_check \
-	    "$lint1" -X 353 code.c /dev/null
+	    "$lint1" -X 355 code.c /dev/null
 
 	# Larger than the largest known message.
 	atf_check \
 	    -s 'exit:1' \
-	    -e "inline:lint1: invalid message ID '354'\n" \
-	    "$lint1" -X 354 code.c /dev/null
+	    -e "inline:lint1: invalid message ID '356'\n" \
+	    "$lint1" -X 356 code.c /dev/null
 
 	# Whitespace is not allowed before a message ID.
 	atf_check \

@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.4 2023/07/28 22:05:44 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.5 2023/08/03 18:48:42 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -43,9 +43,10 @@ three_times(void)
 }
 
 
-_Static_assert(1 > 0, "string");
-/* XXX: requires C23 or later */
-_Static_assert(1 > 0);
+struct static_assert_tag {
+	_Static_assert(1 > 0, "string");
+	int member;
+};
 
 
 // C11 6.7.6.1p3
