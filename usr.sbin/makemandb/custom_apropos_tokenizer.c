@@ -1,4 +1,4 @@
-/*	$NetBSD: custom_apropos_tokenizer.c,v 1.4 2021/12/05 08:03:32 wiz Exp $	*/
+/*	$NetBSD: custom_apropos_tokenizer.c,v 1.5 2023/08/03 07:49:23 rin Exp $	*/
 /*
 ** 2006 September 30
 **
@@ -72,7 +72,7 @@ aproposPorterCreate(int argc, const char *const * argv,
 /*
  * Destroy a tokenizer
  */
-static int 
+static int
 aproposPorterDestroy(sqlite3_tokenizer * pTokenizer)
 {
 	free(pTokenizer);
@@ -82,10 +82,10 @@ aproposPorterDestroy(sqlite3_tokenizer * pTokenizer)
 /*
  * Prepare to begin tokenizing a particular string.  The input
  * string to be tokenized is zInput[0..nInput-1].  A cursor
- * used to incrementally tokenize this string is returned in 
+ * used to incrementally tokenize this string is returned in
  * *ppCursor.
  */
-static int 
+static int
 aproposPorterOpen(
     sqlite3_tokenizer * pTokenizer,	/* The tokenizer */
     const char *zInput, int nInput,	/* String to be tokenized */
@@ -114,7 +114,7 @@ aproposPorterOpen(
  * Close a tokenization cursor previously opened by a call to
  * aproposPorterOpen() above.
  */
-static int 
+static int
 aproposPorterClose(sqlite3_tokenizer_cursor *pCursor)
 {
 	custom_apropos_tokenizer_cursor *c = (custom_apropos_tokenizer_cursor *) pCursor;
@@ -134,7 +134,7 @@ static const char cType[] = {
 /*
  * isConsonant() and isVowel() determine if their first character in
  * the string they point to is a consonant or a vowel, according
- * to Porter ruls.  
+ * to Porter ruls.
  *
  * A consonate is any letter other than 'a', 'e', 'i', 'o', or 'u'.
  * 'Y' is a consonant unless it follows another consonant,
@@ -146,7 +146,7 @@ static const char cType[] = {
  */
 static int isVowel(const char*);
 
-static int 
+static int
 isConsonant(const char *z)
 {
 	int j;
@@ -160,7 +160,7 @@ isConsonant(const char *z)
 	return z[1] == 0 || isVowel(z + 1);
 }
 
-static int 
+static int
 isVowel(const char *z)
 {
 	int j;
@@ -193,7 +193,7 @@ isVowel(const char *z)
  * In this routine z[] is in reverse order.  So we are really looking
  * for an instance of a consonant followed by a vowel.
  */
-static int 
+static int
 m_gt_0(const char *z)
 {
 	while (isVowel(z)) {
@@ -210,7 +210,7 @@ m_gt_0(const char *z)
 /* Like mgt0 above except we are looking for a value of m which is
  * exactly 1
  */
-static int 
+static int
 m_eq_1(const char *z)
 {
 	while (isVowel(z)) {
@@ -237,7 +237,7 @@ m_eq_1(const char *z)
 /* Like mgt0 above except we are looking for a value of m>1 instead
  * or m>0
  */
-static int 
+static int
 m_gt_1(const char *z)
 {
 	while (isVowel(z)) {
@@ -264,7 +264,7 @@ m_gt_1(const char *z)
 /*
  * Return TRUE if there is a vowel anywhere within z[0..n-1]
  */
-static int 
+static int
 hasVowel(const char *z)
 {
 	while (isConsonant(z)) {
@@ -279,7 +279,7 @@ hasVowel(const char *z)
  * The text is reversed here. So we are really looking at
  * the first two characters of z[].
  */
-static int 
+static int
 doubleConsonant(const char *z)
 {
 	return isConsonant(z) && z[0] == z[1];
@@ -293,7 +293,7 @@ doubleConsonant(const char *z)
  * The word is reversed here.  So we are really checking the
  * first three letters and the first one cannot be in [wxy].
  */
-static int 
+static int
 star_oh(const char *z)
 {
 	return isConsonant(z) &&
@@ -304,17 +304,17 @@ star_oh(const char *z)
 
 /*
  * If the word ends with zFrom and xCond() is true for the stem
- * of the word that precedes the zFrom ending, then change the 
+ * of the word that precedes the zFrom ending, then change the
  * ending to zTo.
  *
  * The input word *pz and zFrom are both in reverse order.  zTo
- * is in normal order. 
+ * is in normal order.
  *
  * Return TRUE if zFrom matches.  Return FALSE if zFrom does not
  * match.  Not that TRUE is returned even if xCond() fails and
  * no substitution occurs.
  */
-static int 
+static int
 stem(
     char **pz,			/* The word being stemmed (Reversed) */
     const char *zFrom,		/* If the ending matches this... (Reversed) */
@@ -346,7 +346,7 @@ stem(
  * it contains digits) then word is truncated to 20 or 6 bytes
  * by taking 10 or 3 bytes from the beginning and end.
  */
-static void 
+static void
 copy_stemmer(const char *zIn, size_t nIn, char *zOut, size_t *pnOut)
 {
 	size_t i, mx, j;
@@ -387,16 +387,16 @@ copy_stemmer(const char *zIn, size_t nIn, char *zOut, size_t *pnOut)
  * word contains digits, 3 bytes are taken from the beginning and
  * 3 bytes from the end.  For long words without digits, 10 bytes
  * are taken from each end.  US-ASCII case folding still applies.
- * 
- * If the input word contains not digits but does characters not 
- * in [a-zA-Z] then no stemming is attempted and this routine just 
+ *
+ * If the input word contains not digits but does characters not
+ * in [a-zA-Z] then no stemming is attempted and this routine just
  * copies the input into the input into the output with US-ASCII
  * case folding.
  *
  * Stemming never increases the length of the word.  So there is
  * no chance of overflowing the zOut buffer.
  */
-static void 
+static void
 porter_stemmer(const char *zIn, size_t nIn, char *zOut, size_t *pnOut)
 {
 	size_t i, j;
@@ -632,7 +632,7 @@ porter_stemmer(const char *zIn, size_t nIn, char *zOut, size_t *pnOut)
 /*
  * Based on whether the input word is in the nostem list or not
  * call porter stemmer to stem it, or call copy_stemmer to keep it
- * as it is (copy_stemmer converts simply converts it to lower case) 
+ * as it is (copy_stemmer converts simply converts it to lower case)
  * Returns  SQLITE_OK if stemming is successful, an error code for
  * any errors
  */
@@ -679,7 +679,7 @@ static const char porterIdChar[] = {
  * Extract the next token from a tokenization cursor.  The cursor must
  * have been opened by a prior call to aproposPorterOpen().
  */
-static int 
+static int
 aproposPorterNext(
     sqlite3_tokenizer_cursor *pCursor,	/* Cursor returned by aproposPorterOpen */
     const char **pzToken,	/* OUT: *pzToken is the token text */
@@ -716,8 +716,8 @@ aproposPorterNext(
 					return SQLITE_NOMEM;
 				c->zToken = pNew;
 			}
-			
-			size_t temp; 
+
+			size_t temp;
 			int stemStatus = do_stem(&z[iStartOffset], n, c->zToken, &temp);
 			*pnBytes = temp;
 			if (stemStatus != SQLITE_OK)
@@ -750,7 +750,7 @@ static const sqlite3_tokenizer_module aproposPorterTokenizerModule = {
  * Allocate a new porter tokenizer.  Return a pointer to the new
  * tokenizer in *ppModule
  */
-void 
+void
 get_custom_apropos_tokenizer(sqlite3_tokenizer_module const ** ppModule)
 {
 	*ppModule = &aproposPorterTokenizerModule;

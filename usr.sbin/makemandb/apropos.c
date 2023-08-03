@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.26 2022/05/19 04:08:03 gutteridge Exp $	*/
+/*	$NetBSD: apropos.c,v 1.27 2023/08/03 07:49:23 rin Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.26 2022/05/19 04:08:03 gutteridge Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.27 2023/08/03 07:49:23 rin Exp $");
 
 #include <err.h>
 #include <signal.h>
@@ -275,7 +275,7 @@ main(int argc, char *argv[])
 	if (pc == -1)
 		err(EXIT_FAILURE, "pclose error");
 
-	/* 
+	/*
 	 * Something wrong with the database, writing output, or a non-existent
 	 * pager.
 	 */
