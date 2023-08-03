@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2023/08/03 13:36:08 rin Exp $
+#	$NetBSD: Makefile,v 1.54 2023/08/03 14:56:36 rin Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 WARNS=	3
@@ -76,6 +76,5 @@ CPPFLAGS+=	-I.
 CPPFLAGS+=	-D_KMEMUSER
 .endif
 
-COPTS.kvm_proc.c+=	${CC_WNO_USE_AFTER_FREE}
 
 .include <bsd.lib.mk>

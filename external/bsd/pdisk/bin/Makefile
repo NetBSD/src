@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2023/08/03 13:36:08 rin Exp $	
+#	$NetBSD: Makefile,v 1.8 2023/08/03 14:56:36 rin Exp $	
 
 .include <bsd.own.mk>
 WARNS=5
@@ -21,7 +21,6 @@ CPPFLAGS+=	-I${SRCDIR}
 CPPFLAGS+=	-D__unix__
 
 COPTS.file_media.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
-COPTS.io.c+=		${CC_WNO_USE_AFTER_FREE}
 COPTS.partition_map.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.pathname.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 COPTS.pdisk.c+=		${CC_WNO_IMPLICIT_FALLTHROUGH} ${CC_WNO_STRINGOP_TRUNCATION}
