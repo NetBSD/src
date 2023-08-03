@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.33 2023/08/03 02:25:09 uwe Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.34 2023/08/03 22:11:41 uwe Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.33 2023/08/03 02:25:09 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.34 2023/08/03 22:11:41 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -612,7 +612,7 @@ wsemul_vt100_handle_csi(struct vt100base_data *vd, u_char c)
 			/* 0 = OK, 3 = malfunction */
 			wsdisplay_emulinput(vd->cbcookie, "\033[0n", 4);
 			break;
-		    case 6: { /* DSR cursor position report */
+		    case 6: { /* CPR cursor position report */
 			char buf[20];
 			int row;
 			if (vd->flags & VTFL_DECOM)
