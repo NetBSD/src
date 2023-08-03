@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.25 2021/08/07 16:19:04 thorpej Exp $	*/
+/*	$NetBSD: mace.c,v 1.26 2023/08/03 08:31:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.25 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.26 2023/08/03 08:31:06 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ mace_intr_disestablish(void *cookie)
 
 	/* do not do an unmask when irq is shared. */
 	for (i = 0; i < MACE_NINTR; i++)
-		if (&maceintrtab[i].func != NULL && maceintrtab[i].irq == irq)
+		if (maceintrtab[i].func != NULL && maceintrtab[i].irq == irq)
 			break;
 	if (i == MACE_NINTR)
 		crime_intr_unmask(intr);
