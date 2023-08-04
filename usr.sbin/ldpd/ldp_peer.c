@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.16 2013/08/02 07:29:56 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.16.28.1 2023/08/04 13:26:17 martin Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -306,7 +306,7 @@ int
 add_ifaddresses(struct ldp_peer * p, const struct al_tlv * a)
 {
 	int             i, c, n;
-	const struct in_addr *ia;
+	const char		*ia;
 	struct sockaddr_in	ipa;
 
 	memset(&ipa, 0, sizeof(ipa));
@@ -328,8 +328,9 @@ add_ifaddresses(struct ldp_peer * p, const struct al_tlv * a)
 	debugp("Trying to add %d addresses to peer %s ... \n", n,
 	    inet_ntoa(p->ldp_id));
 
-	for (ia = (const struct in_addr *) & a->address,c = 0,i = 0; i<n; i++) {
-		memcpy(&ipa.sin_addr, &ia[i], sizeof(ipa.sin_addr));
+	for (ia = (const void *)&a->address, c = 0, i = 0; i < n; i++) {
+		memcpy(&ipa.sin_addr, ia + i*sizeof(ipa.sin_addr),
+		    sizeof(ipa.sin_addr));
 		if (add_ifaddr(p, (struct sockaddr *)&ipa) == LDP_E_OK)
 			c++;
 	}
