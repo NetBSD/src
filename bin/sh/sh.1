@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.255 2022/12/20 17:51:54 kre Exp $
+.\"	$NetBSD: sh.1,v 1.256 2023/08/04 15:31:40 jschauma Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1000,7 +1000,7 @@ If not explicitly present,
 .Ar n
 will be 0 (standard input)
 or 1 (standard output)
-depending upon the redicection operator used.
+depending upon the redirection operator used.
 If file descriptor
 .Ar n
 was open prior to the redirection, its previous use is closed.
@@ -3632,7 +3632,7 @@ which is processed as if it had been part of the original line.
 This includes reading yet more input if necessary,
 until a line is read that contains or ends with an unescaped
 copy of the delimiter character.
-If the end delimiter (when it is not a newline) is escaoed,
+If the end delimiter (when it is not a newline) is escaped,
 it is treated as a normal character, and
 .Ic read
 continues looking for an unescaped end delimiter character.
