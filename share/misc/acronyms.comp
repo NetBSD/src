@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.358 2023/08/03 02:32:16 gutteridge Exp $
+$NetBSD: acronyms.comp,v 1.359 2023/08/04 03:59:00 gutteridge Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1138,6 +1138,7 @@ OFET	organic field-effect transistor
 OLAP	online analytical processing
 OLE	object linking and embedding
 OLTP	online transaction processing
+ONCE	on-{chip,circuit} emulation
 ONFI	open nand flash interface
 OO	OpenOffice
 OO	object oriented
