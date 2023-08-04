@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.34 2017/04/12 17:02:51 roy Exp $ */
+/* $NetBSD: socketops.c,v 1.34.4.1 2023/08/04 13:28:40 martin Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -401,6 +401,7 @@ send_hello(void)
 	struct hello_tlv *t;
 	struct common_hello_tlv *cht;
 	struct ldp_pdu  *spdu;
+	struct in_addr ldp_id;
 	struct transport_address_tlv *trtlv;
 	void *v;
 	struct sockaddr_in sadest;	/* Destination ALL_ROUTERS */
@@ -440,7 +441,8 @@ send_hello(void)
 	/* Prepare PDU envelope */
 	spdu->version = htons(LDP_VERSION);
 	spdu->length = htons(IPV4_HELLO_MSG_SIZE - PDU_VER_LENGTH);
-	inet_aton(LDP_ID, &spdu->ldp_id);
+	inet_aton(LDP_ID, &ldp_id);
+	spdu->ldp_id = ldp_id;
 
 	/* Prepare Hello TLV */
 	t->type = htons(LDP_HELLO);
@@ -1384,10 +1386,13 @@ send_message(const struct ldp_peer * p, const struct ldp_pdu * pdu,
 int 
 send_tlv(const struct ldp_peer * p, const struct tlv * t)
 {
+	struct in_addr ldp_id;
 	struct ldp_pdu  pdu;
 
+	inet_aton(LDP_ID, &ldp_id);
+
 	pdu.version = htons(LDP_VERSION);
-	inet_aton(LDP_ID, &pdu.ldp_id);
+	pdu.ldp_id = ldp_id;
 	pdu.label_space = 0;
 	pdu.length = htons(ntohs(t->length) + TLV_TYPE_LENGTH +
 		PDU_PAYLOAD_LENGTH);
