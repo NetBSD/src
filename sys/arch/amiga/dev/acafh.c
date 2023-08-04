@@ -1,4 +1,4 @@
-/*	$NetBSD: acafh.c,v 1.5 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: acafh.c,v 1.6 2023/08/04 08:39:44 rin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.5 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.6 2023/08/04 08:39:44 rin Exp $");
 
 /*
  * Individual Computers ACA500 driver. 
@@ -167,7 +167,7 @@ acafh_attach(device_t parent, device_t self, void *aux)
 		pmap_enter(vm_map_pmap(kernel_map),
 			i - ACAFH_BASE + aca_vbase, i,
 			   VM_PROT_READ | VM_PROT_WRITE, true);
-		pmap_update(vm_map_pmap(kernel_map));
+	pmap_update(vm_map_pmap(kernel_map));
 
 	aca_vbase += ACAFH_FIRST_REG_OFF;
 
