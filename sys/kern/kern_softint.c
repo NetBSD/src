@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.73 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.74 2023/08/04 07:40:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.73 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.74 2023/08/04 07:40:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -488,6 +488,8 @@ softint_schedule(void *arg)
 
 	SDT_PROBE2(sdt, kernel, softint, schedule,  arg, /*ci*/NULL);
 
+	KASSERT(!cold);
+
 	/*
 	 * If this assert fires, rather than disabling preemption explicitly
 	 * to make it stop, consider that you are probably using a softint
@@ -569,6 +571,7 @@ softint_execute(lwp_t *l, int s)
 	KASSERT(si->si_cpu == curcpu());
 	KASSERT(si->si_lwp->l_wchan == NULL);
 	KASSERT(si->si_active);
+	KASSERT(!cold);
 
 	/*
 	 * Note: due to priority inheritance we may have interrupted a
@@ -721,6 +724,8 @@ softint_thread(void *cookie)
 	lwp_t *l;
 	int s;
 
+	KASSERT(!cold);
+
 	l = curlwp;
 	si = l->l_private;
 
@@ -799,6 +804,8 @@ softint_dispatch(lwp_t *pinned, int s)
 	struct bintime now;
 	u_int timing;
 	lwp_t *l;
+
+	KASSERT(!cold);
 
 #ifdef DIAGNOSTIC
 	if ((pinned->l_pflag & LP_RUNNING) == 0 || curlwp->l_stat != LSIDL) {
