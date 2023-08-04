@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.216.6.8 2023/02/22 19:51:47 martin Exp $	*/
+/*	$NetBSD: bpf.c,v 1.216.6.9 2023/08/04 15:00:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.216.6.8 2023/02/22 19:51:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.216.6.9 2023/08/04 15:00:28 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1605,6 +1605,8 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 			else
 				slen = bpf_filter_ext(NULL, filter->bf_insn,
 				    &args);
+		} else {
+			slen = (u_int)-1; /* No filter means accept all */
 		}
 
 		if (!slen) {
