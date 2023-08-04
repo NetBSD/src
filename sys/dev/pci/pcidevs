@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1485 2023/08/04 12:48:00 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1486 2023/08/04 19:11:38 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4397,15 +4397,15 @@ product INTEL SNR_E882_L_SFP	0x1898	Snow Ridge E882-L for SFP
 product INTEL SNR_E882_L_10GT	0x1899	Snow Ridge E882-L/X557-AT 10GBASE-T
 product INTEL SNR_E882_L_1G	0x189a	Snow Ridge E882-L 1G
 product INTEL SNR_QAT_18	0x18a0	Snow Ridge QAT 1.8
-product INTEL SNR_PCH_C2_RP_11	0x18a2	Snow Ridge PCH PCIe Cluster 0, RP 11
+product INTEL SNR_PCH_C2_RP_11	0x18a2	Snow Ridge PCH PCIe Cluster 2, RP 11
 product INTEL SNR_PCH_C0_RP_0	0x18a4	Snow Ridge PCH PCIe Cluster 0, RP 0
 product INTEL SNR_PCH_C0_RP_1	0x18a5	Snow Ridge PCH PCIe Cluster 0, RP 1
 product INTEL SNR_PCH_C0_RP_2	0x18a6	Snow Ridge PCH PCIe Cluster 0, RP 2
 product INTEL SNR_PCH_C0_RP_3	0x18a7	Snow Ridge PCH PCIe Cluster 0, RP 3
 product INTEL SNR_SMB_HOST	0x18ac	Snow Ridge Host (DMA) SMBus
-product INTEL SNR_PCH_C2_RP_8	0x18ad	Snow Ridge PCH PCIe Cluster 0, RP 8
-product INTEL SNR_PCH_C2_RP_9	0x18ae	Snow Ridge PCH PCIe Cluster 0, RP 9
-product INTEL SNR_PCH_C2_RP_10	0x18af	Snow Ridge PCH PCIe Cluster 0, RP 10
+product INTEL SNR_PCH_C2_RP_8	0x18ad	Snow Ridge PCH PCIe Cluster 2, RP 8
+product INTEL SNR_PCH_C2_RP_9	0x18ae	Snow Ridge PCH PCIe Cluster 2, RP 9
+product INTEL SNR_PCH_C2_RP_10	0x18af	Snow Ridge PCH PCIe Cluster 2, RP 10
 product INTEL SNR_SATA_0	0x18b3	Snow Ridge SATA 0
 product INTEL SNR_USB		0x18d0	Snow Ridge USB
 product INTEL SNR_NIS		0x18d1	Snow Ridge VRP to NIS
@@ -5480,7 +5480,7 @@ product INTEL 82X58_QP1_P1	0x3428	5520/5500/X58 QuickPath Port 1
 product INTEL 82X58_IOXAPIC	0x342d	5520/5500/X58 IOxAPIC
 product INTEL 82X58_MISC	0x342e	5520/5500/X58 Misc
 product INTEL 82X58_THROTTLE	0x3438	5520/5500/X58 Throttling
-product INTEL SNR_SMB_SPD	0x3448	Snow Ridge SPD0 SMBus
+product INTEL SNR_SMB_SPD	0x3448	Snow Ridge SPD SMBus
 product INTEL SNR_IMC		0x344a	Snow Ridge IMC
 product INTEL SNR_MCC		0x344c	Snow Ridge Mesh Credit Configuration
 product INTEL SNR_IMC_CM	0x344d	Snow Ridge IMC Channel Mapping
