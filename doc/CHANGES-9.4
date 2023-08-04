@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.86 2023/08/02 10:23:26 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.87 2023/08/04 15:11:22 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1867,4 +1867,119 @@ sys/dev/usb/ehci.c				1.317
 
 	PR 57518: usb keyboard causes host controller to miss microframe.
 	[skrll, ticket #1698]
+
+distrib/sets/lists/debug/mi			1.400-1.406 (patch)
+distrib/sets/lists/debug/shl.mi			1.306-1.311,1.314 (patch)
+distrib/sets/lists/tests/mi			1.1265 (patch)
+distrib/sets/lists/tests/shl.mi			1.12-1.16 (patch)
+libexec/ld.elf_so/README.TLS			1.6 (patch)
+libexec/ld.elf_so/arch/aarch64/mdreloc.c	1.18 (patch)
+libexec/ld.elf_so/arch/alpha/alpha_reloc.c	1.44 (patch)
+libexec/ld.elf_so/arch/arm/mdreloc.c		1.46 (patch)
+libexec/ld.elf_so/arch/hppa/hppa_reloc.c	1.50 (patch)
+libexec/ld.elf_so/arch/i386/mdreloc.c		1.42,1.43 (patch)
+libexec/ld.elf_so/arch/m68k/mdreloc.c		1.34 (patch)
+libexec/ld.elf_so/arch/mips/mips_reloc.c	1.75 (patch)
+libexec/ld.elf_so/arch/or1k/mdreloc.c		1.4 (patch)
+libexec/ld.elf_so/arch/powerpc/ppc_reloc.c	1.63 (patch)
+libexec/ld.elf_so/arch/riscv/mdreloc.c		1.9 (patch)
+libexec/ld.elf_so/arch/sh3/mdreloc.c		1.36 (patch)
+libexec/ld.elf_so/arch/sparc/mdreloc.c		1.57 (patch)
+libexec/ld.elf_so/arch/sparc64/mdreloc.c	1.70 (patch)
+libexec/ld.elf_so/arch/x86_64/mdreloc.c		1.48 (patch)
+libexec/ld.elf_so/map_object.c			1.66,1.67 (patch)
+libexec/ld.elf_so/rtld.c			1.214 (patch)
+libexec/ld.elf_so/rtld.h			1.146 (patch)
+libexec/ld.elf_so/tls.c				1.16-1.19 (patch)
+tests/libexec/ld.elf_so/Makefile		1.13-1.19 (patch)
+tests/libexec/ld.elf_so/helper.mk		1.1 (patch)
+tests/libexec/ld.elf_so/helper_abuse_dynamic/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_abuse_dynamic/h_abuse_dynamic.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_abuse_static/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_abuse_static/h_abuse_static.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_def_dynamic/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_def_dynamic/h_def_dynamic.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_def_static/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_def_static/h_def_static.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_dso1/Makefile	1.2 (patch)
+tests/libexec/ld.elf_so/helper_dso2/Makefile	1.2 (patch)
+tests/libexec/ld.elf_so/helper_dso3/Makefile	1.2 (patch)
+tests/libexec/ld.elf_so/helper_ifunc_dso/Makefile 1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlyctor_dynamic/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlyctor_dynamic/h_onlyctor_dynamic.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_onlydef/Makefile	1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlydef/h_onlydef.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_onlydef_static/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlydef_static/h_onlydef_static.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_onlyuse_dynamic/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlyuse_dynamic/h_onlyuse_dynamic.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_onlyuse_static/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_onlyuse_static/h_onlyuse_static.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_symver_dso0/Makefile 1.2 (patch)
+tests/libexec/ld.elf_so/helper_symver_dso1/Makefile 1.4 (patch)
+tests/libexec/ld.elf_so/helper_symver_dso2/Makefile 1.4 (patch)
+tests/libexec/ld.elf_so/helper_use_dynamic/Makefile 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/helper_use_dynamic/h_use_dynamic.c 1.1 (patch)
+tests/libexec/ld.elf_so/helper_use_static/Makefile 1.1-1.3 (patch)
+tests/libexec/ld.elf_so/helper_use_static/h_use_static.c 1.1,1.2 (patch)
+tests/libexec/ld.elf_so/t_tls_extern.c		1.1-1.12 (patch)
+
+	ld.elf_so(1): fix dlopen with static thread-local storage.
+	[riastradh, ticket #1699]
+
+lib/libpthread/arch/aarch64/pthread_md.h	1.2
+lib/libpthread/arch/arm/pthread_md.h		1.12,1.13
+lib/libpthread/arch/i386/pthread_md.h		1.21
+lib/libpthread/arch/x86_64/pthread_md.h		1.13
+lib/libpthread/pthread_int.h			1.110,1.111
+lib/libpthread/pthread_spin.c			1.11
+
+	libpthread: reduce spin lock hangs on arm.
+	[riastradh, ticket #1700]
+
+usr.bin/find/function.c				1.80
+usr.bin/find/main.c				1.32
+
+	find(1): PR 57313: don't bail if "." cannot be opened.
+	[riastradh, ticket #1701]
+
+usr.sbin/ldpd/fsm.c				1.16
+usr.sbin/ldpd/ldp_peer.c			1.19
+usr.sbin/ldpd/socketops.c			1.36
+
+	ldpd(8): PR 56895: fix address of misaligned packed members.
+	[riastradh, ticket #1702]
+
+sys/fs/ptyfs/ptyfs_vnops.c			1.61
+
+	ptyfs: PR 55821: allow chown/chmod at root of ptyfs.
+	[riastradh, ticket #1703]
+
+xsrc/external/mit/MesaLib/dist/src/glx/glxcurrent.c	1.4 (patch)
+
+	mesa: remove massive kludge that worked around PR 50277.
+	[riastradh, ticket #1704]
+
+sys/dev/ic/rtl8169.c				1.167,1.168
+sys/dev/ic/rtl81x9reg.h				1.54
+sys/dev/ic/rtl81x9var.h				1.58
+
+	re(4): PR 56312: misc chip revision support changes
+	[jakllsch, ticket #1705]
+
+sys/netinet6/in6_src.c				1.92
+
+	in6: add missing rtcache_unref.
+	[ozaki-r, ticket #1706]
+
+sys/netinet6/in6.c				1.289
+sys/netinet6/ip6_output.c			1.234
+
+	in6: fixes for IPv6-disabled interfaces.
+	[ozaki-r, ticket #1707]
+
+sys/net/bpf.c					(apply patch)
+
+	bpf: allow to read with no filter.
+	[ozaki-r, ticket #1708]
 
