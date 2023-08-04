@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.4 2023/08/03 01:36:53 mrg Exp $
+$NetBSD: README.gcc12,v 1.5 2023/08/04 03:39:22 rin Exp $
 
 
 new stuff:
@@ -33,7 +33,7 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release[2]	runs	atf	switc
 ------------	-----	-------	------	---------------	------------	----	---	--------
 aarch64		y	y	y	y	b	y		y	y	?
 aarch64eb	y	y	y	y	b	y		y	y	?
-alpha		y	b	y	y	b	y		?	?	?
+alpha		y	y	y	y	b	y		y	y	?
 earmv4		y	b	?	y	?	?		?	?	?
 earmv4eb	y	b	?	y	?	?		?	?	?
 earmv5		y	b	?	y	?	?		?	?	?
@@ -70,14 +70,12 @@ riscv64		y	y	y	y	?	bs		?	?	?
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
-[1]: amd64 crashed in memfd, likely bug in new code
 [2]: while libsanitizer is not re-ported, "make release" does not include it.
 [3]: GENERIC.SKI boots just as well as GCC 10.
 [4]: rs6000 has a new generator for rs6000-builtins.cc and rs6000-builtins.h rs6000-vecdefines.h
 [5]: GCC itself fails to build:
      build-print-rtl.c: In constructor 'rtx_writer::rtx_writer(FILE*, int, bool, bool, rtx_reuse_manager*)':
      build-print-rtl.c:90:3: error: class 'rtx_writer' does not have any field named 'm_rtx_reuse_manager'
-[6]: rs6000 has new generator to deal with
 [7]: fails to build kernels:
      In file included from sys/arch/powerpc/oea/pmap64.c:4:
      sys/arch/powerpc/oea/pmap.c:2186:2: error: #error PPC_OEA64 not supported
@@ -120,7 +118,7 @@ mips64eb:	 		r
 mips64el:	k		r		r
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
-powerpc:	k		k	k	k		kn[6]		k		k		k		k		k
+powerpc:	k		k	k	k		kn[4]		k		k		k		k		k
 
 		evbppc		macppc		ofppc
 powerpc64:	k		k		n[7]
