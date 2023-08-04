@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.19 2022/05/10 14:16:25 msaitoh Exp $ */
+/* $NetBSD: bioctl.c,v 1.20 2023/08/04 03:45:07 rin Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.19 2022/05/10 14:16:25 msaitoh Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.20 2023/08/04 03:45:07 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ struct locator {
 __dead static void 	usage(void);
 static void	bio_alarm(int, int, char **);
 static void	bio_show_common(int, int, char **);
-static int	bio_show_volumes(struct biotmp *);
+static int	bio_show_volumes(struct biotmp *, struct bioc_vol *);
 static void	bio_show_disks(struct biotmp *);
 static void	bio_setblink(int, int, char **);
 static void 	bio_blink(int, char *, int, int);
@@ -232,34 +232,33 @@ str2locator(const char *string, struct locator *location)
  * Shows info about available RAID volumes.
  */
 static int
-bio_show_volumes(struct biotmp *bt)
+bio_show_volumes(struct biotmp *bt, struct bioc_vol *bv)
 {
-	struct bioc_vol 	bv;
 	const char 		*status, *rtypestr, *stripestr;
 	char 			size[64], percent[16], seconds[20];
 	char 			rtype[16], stripe[16], tmp[48];
 
 	rtypestr = stripestr = NULL;
 
-	memset(&bv, 0, sizeof(bv));
-	bv.bv_cookie = bl.bl_cookie;
-	bv.bv_volid = bt->volid;
-	bv.bv_percent = -1;
-	bv.bv_seconds = 0;
+	memset(bv, 0, sizeof(*bv));
+	bv->bv_cookie = bl.bl_cookie;
+	bv->bv_volid = bt->volid;
+	bv->bv_percent = -1;
+	bv->bv_seconds = 0;
 
-	if (ioctl(bt->fd, BIOCVOL, &bv) == -1)
+	if (ioctl(bt->fd, BIOCVOL, bv) == -1)
 		err(EXIT_FAILURE, "BIOCVOL");
 
 	percent[0] = '\0';
 	seconds[0] = '\0';
-	if (bv.bv_percent != -1)
+	if (bv->bv_percent != -1)
 		snprintf(percent, sizeof(percent),
-		    " %3.2f%% done", bv.bv_percent / 10.0);
-	if (bv.bv_seconds)
+		    " %3.2f%% done", bv->bv_percent / 10.0);
+	if (bv->bv_seconds)
 		snprintf(seconds, sizeof(seconds),
-		    " %u seconds", bv.bv_seconds);
+		    " %u seconds", bv->bv_seconds);
 
-	switch (bv.bv_status) {
+	switch (bv->bv_status) {
 	case BIOC_SVONLINE:
 		status = BIOC_SVONLINE_S;
 		break;
@@ -290,13 +289,13 @@ bio_show_volumes(struct biotmp *bt)
 		break;
 	}
 
-	snprintf(bt->volname, sizeof(bt->volname), "%u", bv.bv_volid);
-	if (bv.bv_vendor[0])
-		snprintf(tmp, sizeof(tmp), "%s %s", bv.bv_dev, bv.bv_vendor);
+	snprintf(bt->volname, sizeof(bt->volname), "%u", bv->bv_volid);
+	if (bv->bv_vendor[0])
+		snprintf(tmp, sizeof(tmp), "%s %s", bv->bv_dev, bv->bv_vendor);
 	else
-		snprintf(tmp, sizeof(tmp), "%s", bv.bv_dev);
+		snprintf(tmp, sizeof(tmp), "%s", bv->bv_dev);
 
-	switch (bv.bv_level) {
+	switch (bv->bv_level) {
 	case BIOC_SVOL_HOTSPARE:
 		rtypestr = "Hot spare";
 		stripestr = "N/A";
@@ -312,8 +311,8 @@ bio_show_volumes(struct biotmp *bt)
 		rtypestr = "RAID 1+0";
 		break;
 	default:
-		snprintf(rtype, sizeof(rtype), "RAID %u", bv.bv_level);
-		if (bv.bv_level == 1 || bv.bv_stripe_size == 0)
+		snprintf(rtype, sizeof(rtype), "RAID %u", bv->bv_level);
+		if (bv->bv_level == 1 || bv->bv_stripe_size == 0)
 			stripestr = "N/A";
 		break;
 	}
@@ -323,18 +322,18 @@ bio_show_volumes(struct biotmp *bt)
 	if (stripestr)
 		strlcpy(stripe, stripestr, sizeof(stripe));
 	else
-		snprintf(stripe, sizeof(stripe), "%uK", bv.bv_stripe_size);
+		snprintf(stripe, sizeof(stripe), "%uK", bv->bv_stripe_size);
 
-	humanize_number(size, 5, (int64_t)bv.bv_size, "", HN_AUTOSCALE,
+	humanize_number(size, 5, (int64_t)bv->bv_size, "", HN_AUTOSCALE,
 	    HN_B | HN_NOSPACE | HN_DECIMAL);
 
 	printf("%6s %-12s %4s %20s %8s %6s %s%s\n",
 	    bt->volname, status, size, tmp,
 	    rtype, stripe, percent, seconds);
 
-	bt->bv = &bv;
+	bt->bv = bv;
 
-	return bv.bv_nodisk;
+	return bv->bv_nodisk;
 }
 
 /*
@@ -431,6 +430,7 @@ bio_show_common(int fd, int argc, char **argv)
 {
 	struct biotmp 		*biot;
 	struct bioc_inq 	bi;
+	struct bioc_vol 	bv;
 	int 			i, d, ndisks;
 	bool 			show_all, show_disks;
 	bool 			show_vols, show_caps;
@@ -491,7 +491,7 @@ bio_show_common(int fd, int argc, char **argv)
 	for (i = 0; i < bi.bi_novol; i++) {
 		biot->format = true;
 		biot->volid = i;
-		ndisks = bio_show_volumes(biot);
+		ndisks = bio_show_volumes(biot, &bv);
 		if (show_vols)
 			continue;
 
