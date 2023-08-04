@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.72 2018/01/19 23:17:41 christos Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.72.6.1 2023/08/04 12:55:45 martin Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.72 2018/01/19 23:17:41 christos Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.72.6.1 2023/08/04 12:55:45 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -427,9 +427,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			Elf_Addr old = load_ptr(where, ELFSIZE / 8);
 			Elf_Addr val = old;
 
-			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
-				return -1;
-
 			val += (Elf_Addr)def->st_value - TLS_DTV_OFFSET;
 			store_ptr(where, val, ELFSIZE / 8);
 
@@ -448,7 +445,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			Elf_Addr old = load_ptr(where, ELFSIZE / 8);
 			Elf_Addr val = old;
 
-			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			val += (Elf_Addr)(def->st_value + defobj->tlsoffset

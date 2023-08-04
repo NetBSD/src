@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.197.2.6 2023/08/01 15:17:44 martin Exp $	 */
+/*	$NetBSD: rtld.c,v 1.197.2.7 2023/08/04 12:55:45 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.197.2.6 2023/08/01 15:17:44 martin Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.197.2.7 2023/08/04 12:55:45 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1032,7 +1032,7 @@ dlopen(const char *name, int mode)
 	sigset_t mask;
 	int result;
 
-	dbg(("dlopen of %s %d", name, mode));
+	dbg(("dlopen of %s 0x%x", name, mode));
 
 	_rtld_exclusive_enter(&mask);
 
@@ -1088,6 +1088,9 @@ dlopen(const char *name, int mode)
 	}
 	_rtld_debug.r_state = RT_CONSISTENT;
 	_rtld_debug_state();
+
+	dbg(("dlopen of %s 0x%x returned %p%s%s%s", name, mode, obj,
+	    obj ? "" : " (", obj ? "" : error_message, obj ? "" : ")"));
 
 	_rtld_exclusive_exit(&mask);
 
@@ -1561,6 +1564,7 @@ _rtld_error(const char *fmt,...)
 
 	va_start(ap, fmt);
 	xvsnprintf(buf, sizeof buf, fmt, ap);
+	dbg(("%s: %s", __func__, buf));
 	error_message = buf;
 	va_end(ap);
 }
