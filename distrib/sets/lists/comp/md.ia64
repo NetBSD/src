@@ -1,4 +1,4 @@
-# $NetBSD: md.ia64,v 1.9 2021/04/12 02:09:00 mrg Exp $
+# $NetBSD: md.ia64,v 1.10 2023/08/04 08:54:00 mrg Exp $
 ./usr/include/gcc-4.8/ia64intrin.h	comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h		comp-obsolete		obsolete
 ./usr/include/gcc-5/ia64intrin.h	comp-obsolete		obsolete
@@ -13,6 +13,7 @@
 ./usr/include/gcc-9/tgmath.h		comp-c-include		gcc=9
 ./usr/include/gcc-10/ia64intrin.h	comp-c-include		gcc=10
 ./usr/include/gcc-10/tgmath.h		comp-c-include		gcc=10
+./usr/include/gcc-12/ia64intrin.h	comp-c-include		gcc=12
 ./usr/include/ia64			comp-c-include
 ./usr/include/ia64/_regset.h		comp-c-include
 ./usr/include/ia64/acpi_machdep.h	comp-c-include

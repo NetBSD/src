@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.48 2023/08/01 06:35:55 mrg Exp $
+# $NetBSD: ad.aarch64,v 1.49 2023/08/04 08:54:00 mrg Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -181,6 +181,9 @@
 ./usr/lib/eabihf/libarm.so			base-sys-shlib		compat,pic,llvm
 ./usr/lib/eabihf/libarm_p.a			comp-c-proflib		compat,profile,llvm
 ./usr/lib/eabihf/libarm_pic.a			comp-c-piclib		compat,pic,picinstall,llvm
+./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcc=12
+./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcc=12
+./usr/lib/libtsan_pic.a				comp-c-piclib		compat,picinstall,cxx,gcc=12
 ./usr/lib/oabi/libarm.a				comp-obsolete		obsolete
 ./usr/lib/oabi/libarm.so			base-obsolete		obsolete
 ./usr/lib/oabi/libarm_p.a			comp-obsolete		obsolete

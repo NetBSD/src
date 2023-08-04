@@ -1,7 +1,8 @@
-# $NetBSD: ad.aarch64,v 1.33 2021/06/07 17:11:17 christos Exp $
+# $NetBSD: ad.aarch64,v 1.34 2023/08/04 08:54:00 mrg Exp $
 ./usr/lib/eabi/libarm_g.a					comp-sys-debug	debuglib,compat,llvm
 ./usr/lib/eabi/libc_vfp_g.a					comp-sys-debug	debuglib,compat,llvm
 ./usr/lib/eabihf/libarm_g.a					comp-sys-debug	debuglib,compat,llvm
+./usr/lib/libtsan_g.a						comp-c-debuglib	debuglib,arch64,cxx,gcc=12
 ./usr/lib/oabi/libarm_g.a					comp-obsolete		obsolete
 ./usr/lib/oabi/libc_vfp_g.a					comp-obsolete		obsolete
 ./usr/libdata/debug/lib/eabi					comp-sys-debug	compat,llvm
@@ -19,6 +20,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libc_vfp.so.0.0.debug		comp-sys-debug	debug,compat,pic,llvm
 ./usr/libdata/debug/usr/lib/eabi/libproc.so.1.0.debug		comp-sys-debug	debug,compat,pic,llvm,dtrace
 ./usr/libdata/debug/usr/lib/eabi/librtld_db.so.0.0.debug	comp-sys-debug	debug,compat,pic,llvm,dtrace
+./usr/libdata/debug/usr/lib/libtsan.so.2.0.debug		comp-sys-debug	debug,cxx,gcc=12
 ./usr/libdata/debug/usr/lib/eabihf				comp-sys-debug	compat,llvm
 ./usr/libdata/debug/usr/lib/eabihf/i18n				comp-sys-debug	compat,llvm
 ./usr/libdata/debug/usr/lib/eabihf/libarm.so.0.0.debug		comp-sys-debug	debug,compat,pic,llvm
