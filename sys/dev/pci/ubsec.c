@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.63 2023/05/06 21:53:26 andvar Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.64 2023/08/04 07:38:53 riastradh Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.63 2023/05/06 21:53:26 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.64 2023/08/04 07:38:53 riastradh Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -1939,7 +1939,7 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 		    rng->rng_buf.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		p = (u_int32_t *)rng->rng_buf.dma_vaddr;
 		i = UBSEC_RNG_BUFSIZ * sizeof(u_int32_t);
-		rnd_add_data(&sc->sc_rnd_source, (char *)p, i, i * NBBY);
+		rnd_add_data_intr(&sc->sc_rnd_source, (char *)p, i, i * NBBY);
 		sc->sc_rng_need -= i;
 		rng->rng_used = 0;
 		if (sc->sc_rng_need > 0) {

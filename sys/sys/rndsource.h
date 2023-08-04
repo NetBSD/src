@@ -1,4 +1,4 @@
-/*	$NetBSD: rndsource.h,v 1.9 2023/07/16 10:36:11 riastradh Exp $	*/
+/*	$NetBSD: rndsource.h,v 1.10 2023/08/04 07:38:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -94,6 +94,8 @@ void	_rnd_add_uint64(struct krndsource *, uint64_t); /* legacy */
 
 void	rnd_add_uint32(struct krndsource *, uint32_t);
 void	rnd_add_data(struct krndsource *, const void *, uint32_t, uint32_t);
+void	rnd_add_data_intr(struct krndsource *, const void *, uint32_t,
+	    uint32_t);
 void	rnd_add_data_sync(struct krndsource *, const void *, uint32_t,
 	    uint32_t);
 
