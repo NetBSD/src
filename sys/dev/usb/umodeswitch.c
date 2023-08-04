@@ -1,4 +1,4 @@
-/*	$NetBSD: umodeswitch.c,v 1.4.6.1 2020/02/27 17:22:56 martin Exp $	*/
+/*	$NetBSD: umodeswitch.c,v 1.4.6.2 2023/08/04 19:51:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodeswitch.c,v 1.4.6.1 2020/02/27 17:22:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodeswitch.c,v 1.4.6.2 2023/08/04 19:51:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,6 +440,7 @@ umodeswitch_match(device_t parent, cfdata_t match, void *aux)
 		switch (uaa->uaa_product) {
 		case USB_PRODUCT_DLINK_DWM157E_CD:
 		case USB_PRODUCT_DLINK_DWM157_CD:
+		case USB_PRODUCT_DLINK_DWM222_CD:
 			(void)u3g_bulk_ata_eject(uaa->uaa_device);
 			(void)u3g_bulk_scsi_eject(uaa->uaa_device);
 			return UMATCH_HIGHEST;
