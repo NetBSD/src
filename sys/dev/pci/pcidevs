@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1486 2023/08/04 19:11:38 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1487 2023/08/04 19:17:00 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4246,6 +4246,9 @@ product INTEL 82441FX		0x1237	82441FX (PMC) PCI and Memory Controller
 product INTEL 82380AB		0x123c	82380AB (MISA) Mobile PCI-ISA Bridge
 product INTEL 82380FB		0x124b	82380FB (MPCI2) Mobile PCI-PCI Bridge
 product INTEL 82439HX		0x1250	82439HX (TXC) System Controller
+product INTEL I226_LM		0x125b	I226-LM Ethernet
+product INTEL I226_V		0x125c	I226-V Ethernet
+product INTEL I226_IT		0x125d	I226-IT Ethernet
 product INTEL C3K_X553_10G	0x1306	C3000 X553 10G Ethernet
 product INTEL C3K_X553_1G	0x1307	C3000 X553 1G Ethernet
 product INTEL 82870P2_PPB	0x1460	82870P2 P64H2 PCI-PCI Bridge
