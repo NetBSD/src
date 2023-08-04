@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1484 2023/07/31 11:18:20 tnn Exp $
+$NetBSD: pcidevs,v 1.1485 2023/08/04 12:48:00 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3877,6 +3877,13 @@ product INTEL WIFI_LINK_7265_2	0x095b	Dual Band Wireless AC 7265
 product INTEL X1000_LB		0x095e	Quark X1000 Legacy Bridge
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
+product INTEL SNR_IEH		0x0998	Snow Ridge IEH
+product INTEL SNR_M2IIO_VTD	0x09a2	Snow Ridge Mesh2IIO MMAP/VT-d
+product INTEL SNR_M2IIO_RAS	0x09a3	Snow Ridge Mesh2IIO RAS
+product INTEL SNR_M2IIO_PMU	0x09a4	Snow Ridge Mesh2IIO PMU/PMON
+product INTEL SNR_M2IIO_DFX	0x09a5	Snow Ridge Mesh2IIO DFx
+product INTEL SNR_PECI_OOB_MSM	0x09a6	Snow Ridge PECI OOB-MSM
+product INTEL SNR_PECI_OOB_MSM_PMU 0x09a7 Snow Ridge PECI OOB-MSM PMU
 product INTEL CORE4G_D_ULT_GT1	0x0a02	HD Graphics
 product INTEL CORE4G_M_HOST_DRAM 0x0a04	Core 4G (mobile) Host Bridge, DRAM
 product INTEL CORE4G_M_ULT_GT1	0x0a06	HD Graphics (GT1)
@@ -3897,6 +3904,7 @@ product INTEL CORE4G_R_ULT_GT3_2 0x0a2e	Iris Graphics 5100
 product INTEL DC_P3520_SSD	0x0a53	SSD DC P3520
 product INTEL DC_P4500_SSD	0x0a54	SSD DC P4500
 product INTEL DC_P4600_SSD	0x0a55	SSD DC P4600
+product INTEL SNR_DMA		0x0b00	Snow Ridge DMA
 product INTEL HASWELL_HOST_DRAM	0x0c00	Haswell Host Bridge, DRAM
 product INTEL HASWELL_PCIE16	0x0c01	Haswell PCI-E x16 Controller
 product INTEL HASWELL_PCIE8	0x0c05	Haswell PCI-E x8 Controller
@@ -4378,6 +4386,43 @@ product INTEL CORE5G_M_GT2_1	0x1616	HD Graphics 5500
 product INTEL CORE5G_M_GT2_2	0x161e	HD Graphics 5300
 product INTEL CORE5G_M_GT3_15W	0x1626	HD Graphics 6000
 product INTEL CORE5G_M_GT3_28W	0x162b	Iris Graphics 6100
+product INTEL SNR_E882_C_BP	0x1890	Snow Ridge E882-C for backplane
+product INTEL SNR_E882_C_QSFP	0x1891	Snow Ridge E882-C for QSFP
+product INTEL SNR_E882_C_SFP	0x1892	Snow Ridge E882-C for SFP
+product INTEL SNR_E882_C_10GT	0x1893	Snow Ridge E882-C/X557-AT 10GBASE-T
+product INTEL SNR_E882_C_1G	0x1894	Snow Ridge E882-C 1G
+product INTEL SNR_E882_X	0x1895	Snow Ridge E882-X (for BMSM)
+product INTEL SNR_E882_L_BP	0x1897	Snow Ridge E882-L for backplane
+product INTEL SNR_E882_L_SFP	0x1898	Snow Ridge E882-L for SFP
+product INTEL SNR_E882_L_10GT	0x1899	Snow Ridge E882-L/X557-AT 10GBASE-T
+product INTEL SNR_E882_L_1G	0x189a	Snow Ridge E882-L 1G
+product INTEL SNR_QAT_18	0x18a0	Snow Ridge QAT 1.8
+product INTEL SNR_PCH_C2_RP_11	0x18a2	Snow Ridge PCH PCIe Cluster 0, RP 11
+product INTEL SNR_PCH_C0_RP_0	0x18a4	Snow Ridge PCH PCIe Cluster 0, RP 0
+product INTEL SNR_PCH_C0_RP_1	0x18a5	Snow Ridge PCH PCIe Cluster 0, RP 1
+product INTEL SNR_PCH_C0_RP_2	0x18a6	Snow Ridge PCH PCIe Cluster 0, RP 2
+product INTEL SNR_PCH_C0_RP_3	0x18a7	Snow Ridge PCH PCIe Cluster 0, RP 3
+product INTEL SNR_SMB_HOST	0x18ac	Snow Ridge Host (DMA) SMBus
+product INTEL SNR_PCH_C2_RP_8	0x18ad	Snow Ridge PCH PCIe Cluster 0, RP 8
+product INTEL SNR_PCH_C2_RP_9	0x18ae	Snow Ridge PCH PCIe Cluster 0, RP 9
+product INTEL SNR_PCH_C2_RP_10	0x18af	Snow Ridge PCH PCIe Cluster 0, RP 10
+product INTEL SNR_SATA_0	0x18b3	Snow Ridge SATA 0
+product INTEL SNR_USB		0x18d0	Snow Ridge USB
+product INTEL SNR_NIS		0x18d1	Snow Ridge VRP to NIS
+product INTEL SNR_ME_HECI	0x18d3	Snow Ridge ME HECI
+product INTEL SNR_HSUART	0x18d8	Snow Ridge HSUART
+product INTEL SNR_VRP_QAT	0x18da	Snow Ridge VRP for QAT
+product INTEL SNR_EMMC		0x18db	Snow Ridge eMMC
+product INTEL SNR_LPC		0x18dc	Snow Ridge LPC/eSPI
+product INTEL SNR_P2SB		0x18dd	Snow Ridge PCH P2SB
+product INTEL SNR_PMC		0x18de	Snow Ridge PCH PMC
+product INTEL SNR_SMB_LEGACY	0x18df	Snow Ridge Legacy SMBus
+product INTEL SNR_SPI		0x18e0	Snow Ridge SPI
+product INTEL SNR_PCH_TRACE	0x18e1	Snow Ridge PCH Trace Hub
+product INTEL SNR_IRC		0x18e2	Snow Ridge MAC iRC
+product INTEL SNR_PMC_SRAM	0x18e3	Snow Ridge PMC/SRAM
+product INTEL SNR_QAT_17	0x18ee	Snow Ridge QAT 1.7
+product INTEL SNR_SATA_2	0x18f3	Snow Ridge SATA 2
 product INTEL CORE6G_H_HB_1	0x1900	Core 6G Host and DRAM (H, Dual Core)
 product INTEL CORE6G_PCIE_X16	0x1901	Core 6G PCIe x16
 product INTEL CORE6G_PEN_GTX_1	0x1902	HD Graphics 510
@@ -4961,6 +5006,7 @@ product INTEL 63XXESB_ACA	0x2698	63xxESB AC'97 Audio Controller
 product INTEL 63XXESB_HDA	0x269a	63xxESB High Definition Audio Controller
 product INTEL 63XXESB_SMB	0x269b	63xxESB SMBus Controller
 product INTEL 63XXESB_IDE	0x269e	63xxESB IDE Controller
+product INTEL SNR_DLB		0x270b	Snow Ridge DLB 1.0
 product INTEL 82945P_MCH	0x2770	82945G/P Memory Controller Hub
 product INTEL 82945P_EXP	0x2771	82945G/P PCI Express Bridge
 product INTEL 82945P_IGD	0x2772	82945G/P Integrated Graphics Device
@@ -5039,6 +5085,8 @@ product INTEL 82801H_EXP_6	0x2849	82801H PCI Express Port #6
 product INTEL 82801H_HDA	0x284b	82801H High Definition Audio Controller
 product INTEL 82801H_THERMAL	0x284f	82801H Thermal Controller
 product INTEL 82801HBM_IDE	0x2850 	82801H IDE Controller
+product INTEL SNR_DDRIO		0x2880	Snow Ridge DDRIO
+product INTEL SNR_VMD		0x28c0	Snow Ridge VMD
 product INTEL 82801IH_LPC	0x2912	82801IH LPC Interface Bridge
 product INTEL 82801IO_LPC	0x2914	82801IO LPC Interface Bridge
 product INTEL 82801IR_LPC	0x2916	82801IR LPC Interface Bridge
@@ -5401,6 +5449,10 @@ product INTEL 31244		0x3200	31244 Serial ATA Controller
 product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
 product INTEL 82855PM_AGP	0x3341	82855PM Host-AGP Bridge
 product INTEL 82855PM_PM	0x3342	82855PM Power Management Controller
+product INTEL SNR_CPU_RP_A	0x334a	Snow Ridge CPU PCIe RP A (Max x16)
+product INTEL SNR_CPU_RP_B	0x334b	Snow Ridge CPU PCIe RP B (Max x4)
+product INTEL SNR_CPU_RP_C	0x334c	Snow Ridge CPU PCIe RP C (Max x8)
+product INTEL SNR_CPU_RP_D	0x334d	Snow Ridge CPU PCIe RP D (Max x4)
 product INTEL 3400_HB		0x3403	5500/X58 DMI port
 product INTEL 5500_HB		0x3404	5500/X58 ESI Port
 product INTEL 82X58_HB		0x3405	X58 Host
@@ -5428,6 +5480,25 @@ product INTEL 82X58_QP1_P1	0x3428	5520/5500/X58 QuickPath Port 1
 product INTEL 82X58_IOXAPIC	0x342d	5520/5500/X58 IOxAPIC
 product INTEL 82X58_MISC	0x342e	5520/5500/X58 Misc
 product INTEL 82X58_THROTTLE	0x3438	5520/5500/X58 Throttling
+product INTEL SNR_SMB_SPD	0x3448	Snow Ridge SPD0 SMBus
+product INTEL SNR_IMC		0x344a	Snow Ridge IMC
+product INTEL SNR_MCC		0x344c	Snow Ridge Mesh Credit Configuration
+product INTEL SNR_IMC_CM	0x344d	Snow Ridge IMC Channel Mapping
+product INTEL SNR_CHAALL0	0x344f	Snow Ridge Multicast DRAM Rules
+product INTEL SNR_UBOX_RACU	0x3451	Snow Ridge UBOX RACU
+product INTEL SNR_UBOX_NCDECS	0x3452	Snow Ridge UBOX NCDECS
+product INTEL SNR_UBOX_EH	0x3455	Snow Ridge UBOX Error Handling
+product INTEL SNR_CPU_TRACE	0x3456	Snow Ridge Trace Hub (CPU Complex)
+product INTEL SNR_CHAALL1	0x3457	Snow Ridge Multicast MMIO Rules
+product INTEL SNR_PCU_0		0x3458	Snow Ridge PCU
+product INTEL SNR_PCU_1		0x3459	Snow Ridge PCU
+product INTEL SNR_PCU_2		0x345a	Snow Ridge PCU
+product INTEL SNR_PCU_3		0x345b	Snow Ridge PCU
+product INTEL SNR_PCU_4		0x345c	Snow Ridge PCU
+product INTEL SNR_PCU_5		0x345d	Snow Ridge PCU
+product INTEL SNR_PCU_6		0x345e	Snow Ridge PCU
+product INTEL SNR_PCU_7		0x345f	Snow Ridge PCU
+product INTEL SNR_UBOX_NCEVENTS	0x3460	Snow Ridge UBOX NCEVENTS
 product INTEL 495_U_P_ESPI	0x3482	495 Series U Premium eSPI
 product INTEL 495_Y_P_ESPI	0x3487	495 Series Y Premium eSPI
 product INTEL 495_YU_P2SB	0x34a0	495 Series P2SB
