@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.12.2.1 2019/11/26 08:12:26 martin Exp $	*/
+/*	$NetBSD: tls.c,v 1.12.2.2 2023/08/04 12:55:45 martin Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.12.2.1 2019/11/26 08:12:26 martin Exp $");
+__RCSID("$NetBSD: tls.c,v 1.12.2.2 2023/08/04 12:55:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: tls.c,v 1.12.2.1 2019/11/26 08:12:26 martin Exp $");
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 
 static struct tls_tcb *_rtld_tls_allocate_locked(void);
+static void *_rtld_tls_module_allocate(struct tls_tcb *, size_t);
 
 #ifndef TLS_DTV_OFFSET
 #define	TLS_DTV_OFFSET	0
@@ -84,7 +85,7 @@ _rtld_tls_get_addr(void *tls, size_t idx, size_t offset)
 	}
 
 	if (__predict_false(dtv[idx] == NULL))
-		dtv[idx] = _rtld_tls_module_allocate(idx);
+		dtv[idx] = _rtld_tls_module_allocate(tcb, idx);
 
 	_rtld_exclusive_exit(&mask);
 
@@ -129,21 +130,22 @@ _rtld_tls_allocate_locked(void)
 	tcb = (struct tls_tcb *)p;
 	tcb->tcb_self = tcb;
 #endif
-	dbg(("tcb %p", tcb));
+	dbg(("lwp %d tls tcb %p", _lwp_self(), tcb));
 	tcb->tcb_dtv = xcalloc(sizeof(*tcb->tcb_dtv) * (2 + _rtld_tls_max_index));
 	++tcb->tcb_dtv;
 	SET_DTV_MAX_INDEX(tcb->tcb_dtv, _rtld_tls_max_index);
 	SET_DTV_GENERATION(tcb->tcb_dtv, _rtld_tls_dtv_generation);
 
 	for (obj = _rtld_objlist; obj != NULL; obj = obj->next) {
-		if (obj->tls_done) {
+		if (obj->tls_static) {
 #ifdef __HAVE_TLS_VARIANT_I
 			q = p + obj->tlsoffset;
 #else
 			q = p - obj->tlsoffset;
 #endif
-			dbg(("obj %p dtv %p tlsoffset %zu",
-			    obj, q, obj->tlsoffset));
+			dbg(("%s: [lwp %d] tls dtv %p index %zu offset %zu",
+			    obj->path, _lwp_self(),
+			    q, obj->tlsindex, obj->tlsoffset));
 			if (obj->tlsinitsize)
 				memcpy(q, obj->tlsinit, obj->tlsinitsize);
 			tcb->tcb_dtv[obj->tlsindex] = q;
@@ -194,8 +196,8 @@ _rtld_tls_free(struct tls_tcb *tcb)
 	_rtld_exclusive_exit(&mask);
 }
 
-void *
-_rtld_tls_module_allocate(size_t idx)
+static void *
+_rtld_tls_module_allocate(struct tls_tcb *tcb, size_t idx)
 {
 	Obj_Entry *obj;
 	uint8_t *p;
@@ -208,10 +210,20 @@ _rtld_tls_module_allocate(size_t idx)
 		_rtld_error("Module for TLS index %zu missing", idx);
 		_rtld_die();
 	}
+	if (obj->tls_static) {
+#ifdef __HAVE_TLS_VARIANT_I
+		p = (uint8_t *)tcb + obj->tlsoffset + sizeof(struct tls_tcb);
+#else
+		p = (uint8_t *)tcb - obj->tlsoffset;
+#endif
+		return p;
+	}
 
 	p = xmalloc(obj->tlssize);
 	memcpy(p, obj->tlsinit, obj->tlsinitsize);
 	memset(p + obj->tlsinitsize, 0, obj->tlssize - obj->tlsinitsize);
+
+	obj->tls_dynamic = 1;
 
 	return p;
 }
@@ -221,11 +233,14 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 {
 	size_t offset, next_offset;
 
-	if (obj->tls_done)
+	if (obj->tls_dynamic)
+		return -1;
+
+	if (obj->tls_static)
 		return 0;
 	if (obj->tlssize == 0) {
 		obj->tlsoffset = 0;
-		obj->tls_done = 1;
+		obj->tls_static = 1;
 		return 0;
 	}
 
@@ -261,8 +276,10 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 		}
 	}
 	obj->tlsoffset = offset;
+	dbg(("%s: static tls offset 0x%zx size %zu\n",
+	    obj->path, obj->tlsoffset, obj->tlssize));
 	_rtld_tls_static_offset = next_offset;
-	obj->tls_done = 1;
+	obj->tls_static = 1;
 
 	return 0;
 }
@@ -274,7 +291,7 @@ _rtld_tls_offset_free(Obj_Entry *obj)
 	/*
 	 * XXX See above.
 	 */
-	obj->tls_done = 0;
+	obj->tls_static = 0;
 	return;
 }
 

@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.41 2018/04/03 21:10:27 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.41.4.1 2023/08/04 12:55:48 martin Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.41 2018/04/03 21:10:27 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.41.4.1 2023/08/04 12:55:48 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -14,6 +14,9 @@ __RCSID("$NetBSD: mdreloc.c,v 1.41 2018/04/03 21:10:27 joerg Exp $");
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
+
+#define rdbg_symname(obj, rela) \
+	((obj)->strtab + (obj)->symtab[ELF_R_SYM((rela)->r_info)].st_name)
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -97,7 +100,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 			*where += target - (Elf_Addr)where;
 			rdbg(("PC32 %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where, defobj->path));
 			break;
 
@@ -111,7 +114,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			if (*where != tmp)
 				*where = tmp;
 			rdbg(("32/GLOB_DAT %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where, defobj->path));
 			break;
 
@@ -147,25 +150,25 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_TPOFF):
-			if (!defobj->tls_done &&
-			    _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			*where += (Elf_Addr)(def->st_value - defobj->tlsoffset);
 
 			rdbg(("TLS_TPOFF %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where));
 			break;
 
 		case R_TYPE(TLS_TPOFF32):
-			if (!defobj->tls_done &&
-			    _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			*where += (Elf_Addr)(defobj->tlsoffset - def->st_value);
 			rdbg(("TLS_TPOFF32 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where));
 			break;
 
@@ -173,7 +176,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			*where = (Elf_Addr)(defobj->tlsindex);
 
 			rdbg(("TLS_DTPMOD32 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where));
 			break;
 
@@ -181,7 +184,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			*where = (Elf_Addr)(def->st_value);
 
 			rdbg(("TLS_DTPOFF32 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where));
 
 			break;
@@ -192,7 +195,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    (u_long)ELF_R_SYM(rel->r_info),
 			    (u_long)ELF_R_TYPE(rel->r_info),
 			    (void *)rel->r_offset, (void *)*where,
-			    obj->strtab + obj->symtab[symnum].st_name));
+			    rdbg_symname(obj, rel)));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations",
 			    obj->path, (u_long) ELF_R_TYPE(rel->r_info));
