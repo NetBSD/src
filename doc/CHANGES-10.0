@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.96 2023/08/04 15:03:43 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.97 2023/08/04 19:55:08 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -3617,4 +3617,15 @@ sys/netinet6/ip6_output.c			1.234
 
 	in6: fixes for IPv6-disabled interfaces.
 	[ozaki-r, ticket #310]
+
+sys/dev/usb/umodeswitch.c			1.6
+
+	Add support for D-Link DWM-222 4G LTS USB adapter.
+	[manu, ticket #311]
+
+sys/arch/xen/xen/xennetback_xenbus.c		1.113-1.115
+
+	xvif(4): Revert the changes that caused PR 57560 pending
+	investigation.
+	[riastradh, ticket #312]
 
