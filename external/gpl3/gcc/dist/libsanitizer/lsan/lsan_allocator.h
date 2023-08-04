@@ -53,7 +53,8 @@ struct ChunkMetadata {
     defined(__arm__) || SANITIZER_RISCV64 || defined(__hexagon__) || \
     ((defined(__hppa__) || defined(__sparc__)) && !defined(_LP64)) || \
     defined(__mips_o32) || defined(__mips_n32) || defined(__m68k__) || \
-    (defined(__riscv__) && !defined(_LP64))
+    (defined(__riscv__) && !defined(_LP64)) || \
+    (defined(__powerpc__) && !defined(__powerpc64__))
 template <typename AddressSpaceViewTy>
 struct AP32 {
   static const uptr kSpaceBeg = 0;
@@ -70,7 +71,7 @@ using PrimaryAllocatorASVT = SizeClassAllocator32<AP32<AddressSpaceView>>;
 using PrimaryAllocator = PrimaryAllocatorASVT<LocalAddressSpaceView>;
 #elif defined(__x86_64__) || defined(__powerpc64__) || defined(__s390x__) || \
       defined(__alpha__) || defined(__sparc64__) || defined(__ia64__) || \
-      (defined(__riscv__) && !defined(_LP64))
+      defined(__powerpc64__) || (defined(__riscv__) && !defined(_LP64))
 # if SANITIZER_FUCHSIA
 const uptr kAllocatorSpace = ~(uptr)0;
 const uptr kAllocatorSize  =  0x40000000000ULL;  // 4T.
