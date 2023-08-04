@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.159.2.1 2020/01/28 11:12:30 martin Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.159.2.2 2023/08/04 15:06:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.159.2.1 2020/01/28 11:12:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.159.2.2 2023/08/04 15:06:50 martin Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -171,6 +171,54 @@ static int re_miibus_writereg(device_t, int, int, uint16_t);
 static void re_miibus_statchg(struct ifnet *);
 
 static void re_reset(struct rtk_softc *);
+
+static const struct re_revision {
+	uint32_t		re_chipid;
+	const char		*re_name;
+} re_revisions[] = {
+	{ RTK_HWREV_8100,	"RTL8100" },
+	{ RTK_HWREV_8100E,	"RTL8100E" },
+	{ RTK_HWREV_8100E_SPIN2, "RTL8100E 2" },
+	{ RTK_HWREV_8101,	"RTL8101" },
+	{ RTK_HWREV_8101E,	"RTL8101E" },
+	{ RTK_HWREV_8102E,	"RTL8102E" },
+	{ RTK_HWREV_8106E,	"RTL8106E" },
+	{ RTK_HWREV_8401E,	"RTL8401E" },
+	{ RTK_HWREV_8402,	"RTL8402" },
+	{ RTK_HWREV_8411,	"RTL8411" },
+	{ RTK_HWREV_8411B,	"RTL8411B" },
+	{ RTK_HWREV_8102EL,	"RTL8102EL" },
+	{ RTK_HWREV_8102EL_SPIN1, "RTL8102EL 1" },
+	{ RTK_HWREV_8103E,       "RTL8103E" },
+	{ RTK_HWREV_8110S,	"RTL8110S" },
+	{ RTK_HWREV_8139CPLUS,	"RTL8139C+" },
+	{ RTK_HWREV_8168B_SPIN1, "RTL8168 1" },
+	{ RTK_HWREV_8168B_SPIN2, "RTL8168 2" },
+	{ RTK_HWREV_8168B_SPIN3, "RTL8168 3" },
+	{ RTK_HWREV_8168C,	"RTL8168C/8111C" },
+	{ RTK_HWREV_8168C_SPIN2, "RTL8168C/8111C" },
+	{ RTK_HWREV_8168CP,	"RTL8168CP/8111CP" },
+	{ RTK_HWREV_8168F,	"RTL8168F/8111F" },
+	{ RTK_HWREV_8168G,	"RTL8168G/8111G" },
+	{ RTK_HWREV_8168GU,	"RTL8168GU/8111GU" },
+	{ RTK_HWREV_8168H,	"RTL8168H/8111H" },
+	{ RTK_HWREV_8105E,	"RTL8105E" },
+	{ RTK_HWREV_8105E_SPIN1, "RTL8105E" },
+	{ RTK_HWREV_8168D,	"RTL8168D/8111D" },
+	{ RTK_HWREV_8168DP,	"RTL8168DP/8111DP" },
+	{ RTK_HWREV_8168E,	"RTL8168E/8111E" },
+	{ RTK_HWREV_8168E_VL,	"RTL8168E/8111E-VL" },
+	{ RTK_HWREV_8168EP,	"RTL8168EP/8111EP" },
+	{ RTK_HWREV_8168FP,	"RTL8168FP/8117" },
+	{ RTK_HWREV_8169,	"RTL8169" },
+	{ RTK_HWREV_8169_8110SB, "RTL8169/8110SB" },
+	{ RTK_HWREV_8169_8110SBL, "RTL8169SBL" },
+	{ RTK_HWREV_8169_8110SC, "RTL8169/8110SCd" },
+	{ RTK_HWREV_8169_8110SCE, "RTL8169/8110SCe" },
+	{ RTK_HWREV_8169S,	"RTL8169S" },
+
+	{ 0, NULL }
+};
 
 static inline void
 re_set_bufaddr(struct re_desc *d, bus_addr_t addr)
@@ -562,13 +610,26 @@ re_attach(struct rtk_softc *sc)
 	struct ifnet *ifp;
 	struct mii_data *mii = &sc->mii;
 	int error = 0, i;
+	const struct re_revision *rr;
+	const char *re_name = NULL;
 
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
-		uint32_t hwrev;
-
 		/* Revision of 8169/8169S/8110s in bits 30..26, 23 */
-		hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
-		switch (hwrev) {
+		sc->sc_hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
+
+		for (rr = re_revisions; rr->re_name != NULL; rr++) {
+			if (rr->re_chipid == sc->sc_hwrev)
+				re_name = rr->re_name;
+		}
+
+		if (re_name == NULL)
+			aprint_normal_dev(sc->sc_dev,
+			    "unknown ASIC (0x%04x)\n", sc->sc_hwrev >> 16);
+		else
+			aprint_normal_dev(sc->sc_dev,
+			    "%s (0x%04x)\n", re_name, sc->sc_hwrev >> 16);
+
+		switch (sc->sc_hwrev) {
 		case RTK_HWREV_8169:
 			sc->sc_quirk |= RTKQ_8169NONS;
 			break;
@@ -579,9 +640,9 @@ re_attach(struct rtk_softc *sc)
 		case RTK_HWREV_8169_8110SC:
 			sc->sc_quirk |= RTKQ_MACLDPS;
 			break;
-		case RTK_HWREV_8168_SPIN1:
-		case RTK_HWREV_8168_SPIN2:
-		case RTK_HWREV_8168_SPIN3:
+		case RTK_HWREV_8168B_SPIN1:
+		case RTK_HWREV_8168B_SPIN2:
+		case RTK_HWREV_8168B_SPIN3:
 			sc->sc_quirk |= RTKQ_MACSTAT;
 			break;
 		case RTK_HWREV_8168C:
@@ -607,16 +668,9 @@ re_attach(struct rtk_softc *sc)
 			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8168E:
-		case RTK_HWREV_8168H_SPIN1:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_PHYWAKE_PM |
 			    RTKQ_NOJUMBO;
-			break;
-		case RTK_HWREV_8168H:
-		case RTK_HWREV_8168FP:
-			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
-			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_PHYWAKE_PM |
-			    RTKQ_NOJUMBO | RTKQ_RXDV_GATED | RTKQ_TXRXEN_LATER;
 			break;
 		case RTK_HWREV_8168E_VL:
 		case RTK_HWREV_8168F:
@@ -625,13 +679,14 @@ re_attach(struct rtk_softc *sc)
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8168EP:
+		case RTK_HWREV_8168FP:
 		case RTK_HWREV_8168G:
-		case RTK_HWREV_8168G_SPIN1:
-		case RTK_HWREV_8168G_SPIN2:
-		case RTK_HWREV_8168G_SPIN4:
+		case RTK_HWREV_8168GU:
+		case RTK_HWREV_8168H:
+		case RTK_HWREV_8411B:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO | 
-			    RTKQ_RXDV_GATED;
+			    RTKQ_RXDV_GATED | RTKQ_TXRXEN_LATER;
 			break;
 		case RTK_HWREV_8100E:
 		case RTK_HWREV_8100E_SPIN2:
@@ -650,7 +705,7 @@ re_attach(struct rtk_softc *sc)
 			break;
 		case RTK_HWREV_8401E:
 		case RTK_HWREV_8105E:
-		case RTK_HWREV_8105E_SPIN1:
+		case RTK_HWREV_8105E_SPIN1: /* XXX */
 		case RTK_HWREV_8106E:
 			sc->sc_quirk |= RTKQ_PHYWAKE_PM |
 			    RTKQ_DESCV2 | RTKQ_NOEECMD | RTKQ_MACSTAT |
@@ -662,8 +717,7 @@ re_attach(struct rtk_softc *sc)
 			    RTKQ_CMDSTOP; /* CMDSTOP_WAIT_TXQ */
 			break;
 		default:
-			aprint_normal_dev(sc->sc_dev,
-			    "Unknown revision (0x%08x)\n", hwrev);
+			aprint_normal_dev(sc->sc_dev, "Use default quirks\n");
 			/* assume the latest features */
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD;
 			sc->sc_quirk |= RTKQ_NOJUMBO;
