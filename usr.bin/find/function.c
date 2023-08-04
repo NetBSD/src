@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.79 2021/03/18 18:24:14 cheusov Exp $	*/
+/*	$NetBSD: function.c,v 1.79.6.1 2023/08/04 13:09:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.79 2021/03/18 18:24:14 cheusov Exp $");
+__RCSID("$NetBSD: function.c,v 1.79.6.1 2023/08/04 13:09:17 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -641,7 +641,8 @@ f_exec(PLAN *plan, FTSENT *entry)
 			err(1, "vfork");
 			/* NOTREACHED */
 		case 0:
-			if (fchdir(dotfd)) {
+			/* change dir back from where we started */
+			if (!(ftsoptions & FTS_NOCHDIR) && fchdir(dotfd)) {
 				warn("chdir");
 				_exit(1);
 			}
@@ -673,7 +674,8 @@ run_f_exec(PLAN *plan)
 		err(1, "vfork");
 		/* NOTREACHED */
 	case 0:
-		if (fchdir(dotfd)) {
+		/* change dir back from where we started */
+		if (!(ftsoptions & FTS_NOCHDIR) && fchdir(dotfd)) {
 			warn("chdir");
 			_exit(1);
 		}
