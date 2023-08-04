@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.20 2012/03/02 23:19:47 joerg Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.20.24.1 2023/08/04 13:06:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ _initcontext_u_md(ucontext_t *ucp)
 #define	_INITCONTEXT_U_MD(ucp)	_initcontext_u_md(ucp);
 
 #define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
+#define	pthread__smt_wait()	__asm __volatile("rep; nop" ::: "memory")
 
 /* Don't need additional memory barriers. */
 #define	PTHREAD__ATOMIC_IS_MEMBAR
