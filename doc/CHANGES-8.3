@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.189 2023/08/02 10:25:32 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.190 2023/08/04 15:02:46 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3745,3 +3745,51 @@ sys/dev/usb/ehci.c				1.317
 	PR 57518: usb keyboard causes host controller to miss microframe.
 	[skrll, ticket #1877]
 
+lib/libpthread/arch/aarch64/pthread_md.h	1.2
+lib/libpthread/arch/arm/pthread_md.h		1.12,1.13
+lib/libpthread/arch/i386/pthread_md.h		1.21
+lib/libpthread/arch/x86_64/pthread_md.h		1.13
+lib/libpthread/pthread_int.h			1.110,1.111
+lib/libpthread/pthread_spin.c			1.11
+
+	libpthread: reduce spin lock hangs on arm.
+	[riastradh, ticket #1878]
+
+usr.bin/find/function.c				1.80
+usr.bin/find/main.c				1.32
+
+	find(1): PR 57313: don't bail if "." cannot be opened.
+	[riastradh, ticket #1879]
+
+sys/uvm/uvm_map.c				1.403 (patch)
+
+	mmap(2): PR 56900: fix arithmetic overflow in mmap search.
+	[riastradh, ticket #1880]
+
+usr.sbin/ldpd/fsm.c				1.16
+usr.sbin/ldpd/ldp_peer.c			1.19
+usr.sbin/ldpd/socketops.c			1.36
+
+	ldpd(8): PR 56895: fix address of misaligned packed members.
+	[riastradh, ticket #1881]
+
+sys/kern/init_main.c				(apply patch)
+
+	PR 55906: fix aiodoned workqueue initialization order.
+	[riastradh, ticket #1882]
+
+sys/netinet6/in6_src.c				1.92
+
+	in6: add missing rtcache_unref.
+	[ozaki-r, ticket #1883]
+
+sys/netinet6/in6.c				1.289
+sys/netinet6/ip6_output.c			1.234
+
+	in6: fixes for IPv6-disabled interfaces.
+	[ozaki-r, ticket #1884]
+
+sys/net/bpf.c					(apply patch)
+
+	bpf: allow to read with no filter.
+	[ozaki-r, ticket #1885]
