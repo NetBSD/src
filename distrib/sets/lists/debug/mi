@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.414 2023/08/04 08:54:00 mrg Exp $
+# $NetBSD: mi,v 1.415 2023/08/04 20:56:08 riastradh Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2072,10 +2072,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/membar/t_dekker.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/membar/t_seqlock.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/membar/t_spinlock.debug		tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsan.debug		tests-lib-debug		debug,atf,compattestfile,gcc=10
-./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsan.debug		tests-lib-debug		debug,atf,compattestfile,gcc=12
-./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsanxx.debug		tests-lib-debug		debug,atf,compattestfile,gcc=10
-./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsanxx.debug		tests-lib-debug		debug,atf,compattestfile,gcc=12
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsan.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsanxx.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_dns_server.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_hostent.debug		tests-lib-debug		debug,atf,compattestfile
