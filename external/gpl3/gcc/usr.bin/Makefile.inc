@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.38 2023/08/03 01:36:55 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.39 2023/08/04 17:17:06 rin Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -88,6 +88,8 @@ CFLAGS+=	-Wno-format-diag
 .if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
 	${GCC_MACHINE_ARCH} == "coldfire"
 COPTS.c-omp.cc+=-fno-jump-tables
+COPTS.generic-match.cc+=-fno-jump-tables
+COPTS.gimple-match.cc+=-fno-jump-tables
 .endif
 
 .endif
