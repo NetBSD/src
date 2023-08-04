@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.6 2023/08/04 07:40:04 mrg Exp $
+$NetBSD: README.gcc12,v 1.7 2023/08/04 14:54:40 rin Exp $
 
 
 new stuff:
@@ -19,7 +19,7 @@ todo:
 arch/feature list.
 
 tools:		does build.sh tools work?
-kernels:	does a kernel run?  y (yes), b (builds/ready), ? (not ready)
+kernels:	does a kernel run?  y (yes), b (builds/ready), p (partially), ? (not ready)
 libgcc:		does libgcc build?
 native-gcc:	does a full mknative-gcc complete?
 sani:		has sanitizer been ported to this CPU again for GCC 12?  b (build) y (works)
@@ -51,8 +51,8 @@ earmv7hfeb	y	b	?	y	b	y		?	?	?
 hppa		y	b	y	y	?	n[5]		?	?	?
 i386		y	b	y	y	y	y		?	?	?
 ia64		y	b	y	y	y	y		y[3]	n	?
-m68000		y	n[9]	y	y	n[11]	n		?	?	?
-m68k		y	b	y	y	b	y		?	?	?
+m68000		y	y	y	y	n[11]	n		y[14]	?	?
+m68k		y	y	y	y	b	y		y[14]	p[15]	?
 mipseb		y	b	y	y	b	y		?	?	?
 mipsel		y	b	y	y	b	y		?	?	?
 mips64eb	y	b	y	y	b	y		?	?	?
@@ -87,7 +87,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
      534 | #define Bcopy(x,y) memcpy(&x->sign,&y->sign,y->wds*sizeof(ULong) + 2*sizeof(int))
      src/lib/libc/gdtoa/strtod.c:582:17: note: in expansion of macro 'Bcopy'
      582 |                 Bcopy(bd, bd0);
-[9]: sun2 fails to load the kernel, probably too big again.
 [10]: libc.so fails to link with weird relocation errors:
       vax--netbsdelf/bin/ld: warning: dynamic relocation to `?' in readonly section `.eh_frame'
 [11]: sanitizers don't build yet.
@@ -105,6 +104,8 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       ==21499==Hint: address points to the zero page.
       ThreadSanitizer:DEADLYSIGNAL
       ThreadSanitizer: nested bug in the same thread, aborting.
+[14]: "dd count=1" aborts. "COPTS.strsuftoll.c+=-fno-stack-protector" works around the problem.
+[15]: No regression observed for tests/lib/libc/{sys,gen}.
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
