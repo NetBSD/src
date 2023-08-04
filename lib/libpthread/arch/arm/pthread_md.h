@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.11 2018/11/22 20:38:59 skrll Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.11.2.1 2023/08/04 13:04:04 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -50,14 +50,14 @@ pthread__sp(void)
 }
 
 #if defined(__thumb__) && defined(_ARM_ARCH_6)
-#define pthread__smt_pause()	__asm __volatile(".inst.n 0xbf20") /* wfe */
+#define pthread__smt_wait()	__asm __volatile(".inst.n 0xbf20") /* wfe */
 #define pthread__smt_wake()	__asm __volatile(".inst.n 0xbf40") /* sev */
 #elif !defined(__thumb__)
-#define pthread__smt_pause()	__asm __volatile(".inst 0xe320f002") /* wfe */
+#define pthread__smt_wait()	__asm __volatile(".inst 0xe320f002") /* wfe */
 #define pthread__smt_wake()	__asm __volatile(".inst 0xe320f004") /* sev */
 #else
-#define pthread__smt_pause()
-#define pthread__smt_wake()
+#define pthread__smt_wait()	__nothing
+#define pthread__smt_wake()	__nothing
 #endif
 
 #define	pthread__uc_sp(ucp)	((ucp)->uc_mcontext.__gregs[_REG_SP])
