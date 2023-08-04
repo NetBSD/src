@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.275.2.1 2020/10/08 18:04:59 martin Exp $	*/
+/*	$NetBSD: in6.c,v 1.275.2.2 2023/08/04 14:29:44 martin Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.275.2.1 2020/10/08 18:04:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.275.2.2 2023/08/04 14:29:44 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2310,6 +2310,10 @@ in6_if_link_down(struct ifnet *ifp)
 	}
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);
+
+	/* Clear ND6_IFF_IFDISABLED to allow DAD again on link-up. */
+	if (ifp->if_afdata[AF_INET6] != NULL)
+		ND_IFINFO(ifp)->flags &= ~ND6_IFF_IFDISABLED;
 }
 
 void
