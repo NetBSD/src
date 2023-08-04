@@ -1880,7 +1880,7 @@ SignalContext::WriteFlag SignalContext::GetWriteFlag() const {
 #endif
   }
   return SignalContext::UNKNOWN;
-#elif defined(__arm__)
+#elif defined(__arm__) && !SANITIZER_NETBSD
   static const uptr FSR_WRITE = 1U << 11;
   uptr fsr = ucontext->uc_mcontext.error_code;
   return fsr & FSR_WRITE ? WRITE : READ;
@@ -1910,6 +1910,8 @@ SignalContext::WriteFlag SignalContext::GetWriteFlag() const {
 #elif defined(__riscv)
 #if SANITIZER_FREEBSD
   unsigned long pc = ucontext->uc_mcontext.mc_gpregs.gp_sepc;
+#elif SANITIZER_NETBSD
+  uptr pc = ucontext->uc_mcontext.__gregs[_REG_PC];
 #else
   unsigned long pc = ucontext->uc_mcontext.__gregs[REG_PC];
 #endif

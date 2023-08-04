@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.5 2023/08/04 03:39:22 rin Exp $
+$NetBSD: README.gcc12,v 1.6 2023/08/04 07:40:04 mrg Exp $
 
 
 new stuff:
@@ -31,7 +31,7 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc/sani	make release[2]	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
-aarch64		y	y	y	y	b	y		y	y	?
+aarch64		y	y	y	y	n[12]	y		y	y	?
 aarch64eb	y	y	y	y	b	y		y	y	?
 alpha		y	y	y	y	b	y		y	y	?
 earmv4		y	b	?	y	?	?		?	?	?
@@ -42,31 +42,31 @@ earmv5hf	y	b	?	y	?	?		?	?	?
 earmv5hfeb	y	b	?	y	?	?		?	?	?
 earmv6		y	b	?	y	?	?		?	?	?
 earmv6eb	y	b	?	y	?	?		?	?	?
-earmv6hf	y	b	?	y	?	?		?	?	?
+earmv6hf	y	b	?	y	?	y		?	?	?
 earmv6hfeb	y	b	?	y	?	?		?	?	?
 earmv7		y	b	y	y	?	?		?	?	?
 earmv7eb	y	b	?	y	?	?		?	?	?
-earmv7hf	y	b	?	y	?	?		?	?	?
-earmv7hfeb	y	b	?	y	?	?		?	?	?
+earmv7hf	y	b	?	y	b	y		?	?	?
+earmv7hfeb	y	b	?	y	b	y		?	?	?
 hppa		y	b	y	y	?	n[5]		?	?	?
 i386		y	b	y	y	y	y		?	?	?
 ia64		y	b	y	y	y	y		y[3]	n	?
-m68000		y	n[9]	y	y	?	bs		?	?	?
-m68k		y	b	y	y	?	bs		?	?	?
-mipseb		y	b	y	y	?	bs		?	?	?
-mipsel		y	b	y	y	?	bs		?	?	?
-mips64eb	y	b	y	y	?	bs		?	?	?
-mips64el	y	b	y	y	?	bs		?	?	?
+m68000		y	n[9]	y	y	n[11]	n		?	?	?
+m68k		y	b	y	y	b	y		?	?	?
+mipseb		y	b	y	y	b	y		?	?	?
+mipsel		y	b	y	y	b	y		?	?	?
+mips64eb	y	b	y	y	b	y		?	?	?
+mips64el	y	b	y	y	b	y		?	?	?
 powerpc		y	?	y	y	?	n[4]		?	?	?
 powerpc64	y	?	?	y	?	?		?	?	?
 sh3eb		y	?	y	y	?	?		?	?	?
 sh3el		y	?	y	y	?	?		?	?	?
-sparc		y	y	y	y	?	bs		y	?	?
+sparc		y	y	y	y	b	y		y	?	?
 sparc64		y	b	y	y	b	y		?	?	?
 vax		y	?	y	y	?	n		?	?	?
-x86_64		y	y	y	y	y	y		y	y	?
-riscv32		y	y	y	y	?	bs		?	?	?
-riscv64		y	y	y	y	?	bs		?	?	?
+x86_64		y	y	y	y	y[13]	y		y	y	?
+riscv32		y	y	y	y	b	y		?	?	?
+riscv64		y	y	y	y	b	y		?	?	?
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
@@ -88,6 +88,23 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
      src/lib/libc/gdtoa/strtod.c:582:17: note: in expansion of macro 'Bcopy'
      582 |                 Bcopy(bd, bd0);
 [9]: sun2 fails to load the kernel, probably too big again.
+[10]: libc.so fails to link with weird relocation errors:
+      vax--netbsdelf/bin/ld: warning: dynamic relocation to `?' in readonly section `.eh_frame'
+[11]: sanitizers don't build yet.
+[12]: sanitizers crash early:
+      (gdb) bt
+      #0  0x0000f8ae19f9f424 in __sanitizer::CheckASLR () at /usr/src/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_linux.cpp:2179
+      #1  0x0000f8ae19ee1668 in __asan::AsanInitInternal () at /usr/src/external/gpl3/gcc/dist/libsanitizer/asan/asan_rtl.cpp:445
+      #2  0x0000f8ae19ee1834 in __asan::AsanInitInternal () at /usr/src/external/gpl3/gcc/dist/libsanitizer/asan/asan_rtl.cpp:394
+      #3  0x0000f8ae19f19e40 in __interceptor_pthread_mutex_lock (m=0xf8ae19c102c8 <__gthread_active_mutex.0>)
+[13]: on amd64, with very basic test, lsan, ubsan, and asan work, but tsan crashes at start up:
+      ThreadSanitizer: CHECK failed: tsan_rtl.cpp:149 "((reinterpret_cast<uptr>(this) % 64)) == ((0))" (0x10, 0x0) (tid=21499)
+      ThreadSanitizer:DEADLYSIGNAL
+      ==21499==ERROR: ThreadSanitizer: SEGV on unknown address 0x000000000017 (pc 0x7f7ff4e5e14e bp 0x7f7fffffdbd0 sp 0x7f7fffffdb40 T21499)
+      ==21499==The signal is caused by a READ memory access.
+      ==21499==Hint: address points to the zero page.
+      ThreadSanitizer:DEADLYSIGNAL
+      ThreadSanitizer: nested bug in the same thread, aborting.
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
