@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.31 2022/05/17 01:39:57 riastradh Exp $
+.\"	$NetBSD: rnd.9,v 1.32 2023/08/04 07:38:53 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,6 +35,7 @@
 .Nm rnd_attach_source ,
 .Nm rnd_detach_source ,
 .Nm rnd_add_data ,
+.Nm rnd_add_data_intr ,
 .Nm rnd_add_data_sync ,
 .Nm rnd_add_uint32
 .Nd functions to make a device available for entropy collection
@@ -49,6 +50,8 @@
 .Fn rnd_detach_source "krndsource_t *rnd_source"
 .Ft void
 .Fn rnd_add_data "krndsource_t *rnd_source" "void *data" "uint32_t len" "uint32_t entropy"
+.Ft void
+.Fn rnd_add_data_intr "krndsource_t *rnd_source" "void *data" "uint32_t len" "uint32_t entropy"
 .Ft void
 .Fn rnd_add_data_sync "krndsource_t *rnd_source" "void *data" "uint32_t len" "uint32_t entropy"
 .Ft void
@@ -82,7 +85,8 @@ Attach the random source with
 .Fn rnd_attach_source .
 .It
 Enter data with
-.Fn rnd_add_data
+.Fn rnd_add_data ,
+.Fn rnd_add_data_intr ,
 or
 .Fn rnd_add_uint32 ,
 or, if in the callback,
@@ -147,7 +151,8 @@ The callback normally does one of two things:
 Sends a request to a hardware device for entropy and returns.
 The hardware will later return data asynchronously by an interrupt, and
 the callback will use
-.Fn rnd_add_data
+.Fn rnd_add_data ,
+.Fn rnd_add_data_intr ,
 or
 .Fn rnd_add_uint32
 to add the data to the pool.
@@ -161,9 +166,10 @@ returning, the callback
 use
 .Fn rnd_add_data_sync ,
 not
-.Fn rnd_add_data
+.Fn rnd_add_data ,
+.Fn rnd_add_data_intr \" this works for now but no promises
 or
-.Fn rnd_add_uint32 .
+.Fn rnd_add_uint32 . \" this also works for now but no promises
 .El
 .Pp
 .Nm
@@ -285,22 +291,65 @@ be used during a callback as set with
 use
 .Fn rnd_add_data_sync
 instead.
-.It Fn rnd_add_data_sync "rnd_source" "data" "len" "entropy"
-Like
-.Fn rnd_add_data ,
-but may be used in a callback as set with
-.Fn rndsource_setcb .
-.It Fn rnd_add_uint32 "rnd_source" "datum"
-Equivalent to
-.Li rnd_add_data Ns ( Ns Fa rnd_source , Li & Ns Fa datum , Li 4 , 0 ) .
 .Pp
-.Fn rnd_add_uint32
+.Fn rnd_add_data
+.Em must not
+be called from thread context with spin locks held.
+.Pp
+For compatibility,
+.Fn rnd_add_data
+currently
+.Em may
+but
+.Em should not
+be called from interrupt context, possibly with spin locks held.
+However, this may be forbidden in the future; use
+.Fn rnd_add_data_intr
+from interrupt context instead, if the work can't be usefully deferred
+to softint or thread.
+.It Fn rnd_add_data_intr "rnd_source" "data" "len" "entropy"
+Tries to enter
+.Fa len
+bytes at
+.Fa data
+into the entropy pool like
+.Fn rnd_add_data ,
+but if this fills or would overflow a sample buffer, schedules a
+softint to process it and discards an unspecified subset of the data
+while counting zero entropy for the sample.
+.Pp
+.Fn rnd_add_data_intr
+may be called from any context, including hard interrupt context,
+including contexts where spin locks are held, except that it
 .Em must not
 be used during a callback as set with
 .Fn rndsource_setcb ;
 use
 .Fn rnd_add_data_sync
-instead.
+in that context instead.
+.It Fn rnd_add_data_sync "rnd_source" "data" "len" "entropy"
+Like
+.Fn rnd_add_data ,
+but may be used in a callback as set with
+.Fn rndsource_setcb .
+Must always be called in thread context.
+.It Fn rnd_add_uint32 "rnd_source" "datum"
+Equivalent to
+.Li rnd_add_data_intr Ns ( Ns Fa rnd_source , Li & Ns Fa datum , Li 4 , 0 ) .
+.Pp
+.Fn rnd_add_uint32
+may be called from any context, including hard interrupt context,
+including contexts where spin locks are held, except that it
+.Em must not
+be used during a callback as set with
+.Fn rndsource_setcb ;
+use
+.Fn rnd_add_data_sync
+in that context instead.
+.Pp
+.Fn rnd_add_uint32
+is meant for cheaply taking samples from devices that aren't designed
+to be hardware random number generators.
 .El
 .Sh FILES
 These functions are declared in src/sys/sys/rndsource.h and defined in
