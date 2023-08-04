@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.31 2023/07/10 07:04:20 rin Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.32 2023/08/04 09:06:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.31 2023/07/10 07:04:20 rin Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.32 2023/08/04 09:06:33 mrg Exp $");
 
 #include <sys/param.h>
 
@@ -584,7 +584,7 @@ cpu_kernel_vm_init(paddr_t memory_start, paddr_t memory_end)
 	 */
 	extern char const __start__init_memory[];
 	extern char const __stop__init_memory[] __weak;
-	if (__start__init_memory != __stop__init_memory) {
+	if (&__start__init_memory[0] != &__stop__init_memory[0]) {
 		const paddr_t spa = KERN_VTOPHYS((vaddr_t)__start__init_memory);
 		const paddr_t epa = KERN_VTOPHYS((vaddr_t)__stop__init_memory);
 
