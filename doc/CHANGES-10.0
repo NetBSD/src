@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.95 2023/08/02 10:36:01 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.96 2023/08/04 15:03:43 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -3582,4 +3582,39 @@ sys/external/bsd/drm2/dist/drm/amd/display/dc/dcn20/amdgpu_dcn20_resource.c 1.5
 
 	amdgpu: mark float-dependent variables volatile.
 	[riastradh, ticket #304]
+
+usr.bin/find/function.c				1.80
+usr.bin/find/main.c				1.32
+
+	find(1): PR 57313: don't bail if "." cannot be opened.
+	[riastradh, ticket #305]
+
+libexec/ld.elf_so/arch/powerpc/Makefile.inc	1.17
+libexec/ld.elf_so/arch/powerpc/ld.so.script	delete
+
+	ld.elf_so powerpc: PR 57323: remove bogus ldscript.
+	[riastradh, ticket #306]
+
+sys/external/bsd/drm2/dist/drm/i915/gt/intel_ggtt.c 1.16
+
+	i915: PR 56648: fail gracefully, don't panic, with unsupported 
+        ggtt views.
+	[riastradh, ticket #307]
+
+xsrc/external/mit/MesaLib.old/dist/src/glx/glxcurrent.c 1.2
+xsrc/external/mit/MesaLib/dist/src/glx/glxcurrent.c	1.4
+
+	mesa: remove massive kludge that worked around PR 50277.
+	[riastradh, ticket #308]
+
+sys/netinet6/in6_src.c				1.92
+
+	in6: add missing rtcache_unref.
+	[ozaki-r, ticket #309]
+
+sys/netinet6/in6.c				1.289
+sys/netinet6/ip6_output.c			1.234
+
+	in6: fixes for IPv6-disabled interfaces.
+	[ozaki-r, ticket #310]
 
