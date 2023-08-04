@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.63 2023/08/04 07:38:53 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.64 2023/08/04 16:02:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.63 2023/08/04 07:38:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.64 2023/08/04 16:02:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1115,7 +1115,9 @@ entropy_thread(void *cookie)
 {
 	bool consolidate;
 
+#ifndef _RUMPKERNEL		/* XXX rump starts threads before cold */
 	KASSERT(!cold);
+#endif
 
 	for (;;) {
 		/*
