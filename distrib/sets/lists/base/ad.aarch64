@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.43 2023/05/27 02:28:46 riastradh Exp $
+# $NetBSD: ad.aarch64,v 1.44 2023/08/04 08:54:00 mrg Exp $
 ./lib/eabi					base-compat-lib		compat,llvm
 ./lib/eabi/npf					base-compat-lib		compat,llvm
 ./lib/eabihf					base-compat-lib		compat,llvm
@@ -26,6 +26,9 @@
 ./usr/lib/eabi/openssl/modules			base-compat-lib		compat,llvm
 ./usr/lib/eabi/openssl/modules/legacy.so	base-compat-lib		compat,llvm
 ./usr/lib/eabi/security				base-compat-lib		compat,llvm
+./usr/lib/libtsan.so				base-sys-shlib		cxx,gcc=12
+./usr/lib/libtsan.so.2				base-sys-shlib		cxx,gcc=12
+./usr/lib/libtsan.so.2.0			base-sys-shlib		cxx,gcc=12
 ./usr/lib/eabihf				base-compat-lib		compat,llvm
 ./usr/lib/eabihf/i18n				base-compat-lib		compat,llvm
 ./usr/lib/eabihf/libarm.so.0			base-compat-shlib	compat,pic,llvm
