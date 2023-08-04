@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.105 2023/07/10 07:01:48 rin Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.106 2023/08/04 09:06:33 mrg Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.105 2023/07/10 07:01:48 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.106 2023/08/04 09:06:33 mrg Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -407,7 +407,7 @@ initarm(void *arg)
 	extern char const __start__init_memory[];
 	extern char const __stop__init_memory[] __weak;
 
-	if (__start__init_memory != __stop__init_memory) {
+	if (&__start__init_memory[0] != &__stop__init_memory[0]) {
 		const paddr_t spa = KERN_VTOPHYS((vaddr_t)__start__init_memory);
 		const paddr_t epa = KERN_VTOPHYS((vaddr_t)__stop__init_memory);
 		const paddr_t spg = atop(spa);
