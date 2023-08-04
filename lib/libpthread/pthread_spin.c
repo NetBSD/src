@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_spin.c,v 1.6 2012/08/16 04:49:47 matt Exp $	*/
+/*	$NetBSD: pthread_spin.c,v 1.6.24.1 2023/08/04 13:06:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_spin.c,v 1.6 2012/08/16 04:49:47 matt Exp $");
+__RCSID("$NetBSD: pthread_spin.c,v 1.6.24.1 2023/08/04 13:06:59 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/ras.h>
@@ -99,7 +99,7 @@ pthread_spin_lock(pthread_spinlock_t *lock)
 
 	self = pthread__self();
 	while (pthread__spintrylock(self, &lock->pts_spin) == 0) {
-		pthread__smt_pause();
+		pthread__smt_wait();
 	}
 
 	return 0;
