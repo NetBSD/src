@@ -1,4 +1,4 @@
-/*	$NetBSD: h_ioctl.c,v 1.5 2022/05/21 20:38:34 riastradh Exp $	*/
+/*	$NetBSD: h_ioctl.c,v 1.6 2023/08/05 13:29:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -32,6 +32,7 @@
 #include <poll.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -450,9 +451,11 @@ main(void)
 	if (ret < 0)
 		err(1, "test_ncryptret");
 
-	ret = test_asymfeat(fd);
-	if (ret < 0)
-		err(1, "test_asymfeat");
+	if (getuid() == 0) {
+		ret = test_asymfeat(fd);
+		if (ret < 0)
+			err(1, "test_asymfeat");
+	}
 
 	return 0;
 }
