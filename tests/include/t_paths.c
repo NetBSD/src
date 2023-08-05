@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.17 2019/02/03 03:19:28 mrg Exp $ */
+/*	$NetBSD: t_paths.c,v 1.18 2023/08/05 11:59:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.17 2019/02/03 03:19:28 mrg Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.18 2023/08/05 11:59:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -74,7 +74,7 @@ static const struct {
 	{ _PATH_I18NMODULE,	PATH_DIR		},
 	{ _PATH_ICONV,		PATH_DIR		},
 	{ _PATH_KMEM,		PATH_DEV | PATH_ROOT	},
-	{ _PATH_KSYMS,		PATH_DEV		},
+	{ _PATH_KSYMS,		PATH_DEV | PATH_ROOT	},
 	{ _PATH_KVMDB,		PATH_FILE		},
 	{ _PATH_LOCALE,		PATH_DIR		},
 	{ _PATH_MAILDIR,	PATH_DIR		},
