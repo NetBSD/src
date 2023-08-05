@@ -1,4 +1,4 @@
-#	$NetBSD: t_io_assist.sh,v 1.2 2020/09/05 07:22:26 maxv Exp $
+#	$NetBSD: t_io_assist.sh,v 1.3 2023/08/05 13:05:14 riastradh Exp $
 #
 # Copyright (c) 2019-2020 Maxime Villard, m00nbsd.net
 # All rights reserved.
@@ -31,6 +31,7 @@ atf_test_case io_assist
 io_assist_head()
 {
 	atf_set "descr" "Check the I/O Assist provided in libnvmm"
+	atf_set "require.user" "root"
 }
 
 io_assist_body()
