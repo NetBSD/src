@@ -30,6 +30,7 @@ atf_test_case nullmnt_upper_lower cleanup
 nullmnt_upper_lower_head()
 {
 	atf_set "descr" "ensure upper fs events seen on lower fs"
+	atf_set "require.user" "root"
 }
 nullmnt_upper_lower_body()
 {
@@ -44,6 +45,7 @@ atf_test_case nullmnt_upper_upper cleanup
 nullmnt_upper_upper_head()
 {
 	atf_set "descr" "ensure upper fs events seen on upper fs"
+	atf_set "require.user" "root"
 }
 nullmnt_upper_upper_body()
 {
@@ -57,6 +59,7 @@ atf_test_case nullmnt_lower_upper cleanup
 nullmnt_lower_upper_head()
 {
 	atf_set "descr" "ensure lower fs events seen on upper fs"
+	atf_set "require.user" "root"
 }
 nullmnt_lower_upper_body()
 {
@@ -71,6 +74,7 @@ atf_test_case nullmnt_lower_lower cleanup
 nullmnt_lower_lower_head()
 {
 	atf_set "descr" "ensure lower fs events seen on lower fs"
+	atf_set "require.user" "root"
 }
 nullmnt_lower_lower_body()
 {
