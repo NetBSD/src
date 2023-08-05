@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.18 2023/08/05 11:59:09 riastradh Exp $ */
+/*	$NetBSD: t_paths.c,v 1.19 2023/08/05 12:11:05 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.18 2023/08/05 11:59:09 riastradh Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.19 2023/08/05 12:11:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -135,39 +135,34 @@ ATF_TC_BODY(paths, tc)
 	uid = getuid();
 
 	for (i = 0; i < __arraycount(paths); i++) {
-
 		(void)fprintf(stderr, "testing '%s'\n", paths[i].path);
 
 		errno = 0;
 		fd = open(paths[i].path, O_RDONLY);
-
 		if (fd < 0) {
-
 			switch (errno) {
-
 			case ENODEV:
 				if ((paths[i].flags & PATH_OPT) == 0) {
-
-					atf_tc_fail("Required path %s does "
-					    "not exist", paths[i].path);
+					atf_tc_fail_nonfatal("Required path %s"
+					    " does not exist", paths[i].path);
+					continue;
 				}
 				break;
-
 			case EPERM:	/* FALLTHROUGH */
 			case EACCES:	/* FALLTHROUGH */
-
 				if ((paths[i].flags & PATH_ROOT) == 0) {
-
-					atf_tc_fail("UID %u failed to open %s, "
-					    "error %d", (uint32_t)uid,
-					     paths[i].path, errno);
+					atf_tc_fail_nonfatal("UID %u"
+					    " failed to open %s,"
+					    " error %d (%s)",
+					    (uint32_t)uid,
+					    paths[i].path,
+					    errno, strerror(errno));
+					continue;
 				}
-
 				/* FALLTHROUGH */
 			case EBUSY:	/* FALLTHROUGH */
 			case ENXIO:	/* FALLTHROUGH */
 			case ENOENT:	/* FALLTHROUGH */
-
 			default:
 				continue;
 			}
@@ -175,35 +170,34 @@ ATF_TC_BODY(paths, tc)
 
 		(void)memset(&st, 0, sizeof(struct stat));
 
-		ATF_REQUIRE(fstat(fd, &st) == 0);
+		if (fstat(fd, &st) == -1) {
+			atf_tc_fail_nonfatal("fstat %s failed, error %d (%s)",
+			    paths[i].path, errno, strerror(errno));
+			ATF_CHECK(close(fd) == 0);
+			continue;
+		}
 
 		m = st.st_mode;
 
 		if ((paths[i].flags & PATH_DEV) != 0) {
-
 			ATF_CHECK(S_ISBLK(m) != 0 || S_ISCHR(m) != 0);
-
 			ATF_CHECK((paths[i].flags & PATH_DIR) == 0);
 			ATF_CHECK((paths[i].flags & PATH_FILE) == 0);
 		}
 
 		if ((paths[i].flags & PATH_DIR) != 0) {
-
 			ATF_CHECK(S_ISDIR(m) != 0);
-
 			ATF_CHECK((paths[i].flags & PATH_DEV) == 0);
 			ATF_CHECK((paths[i].flags & PATH_FILE) == 0);
 		}
 
 		if ((paths[i].flags & PATH_FILE) != 0) {
-
 			ATF_CHECK(S_ISREG(m) != 0);
-
 			ATF_CHECK((paths[i].flags & PATH_DEV) == 0);
 			ATF_CHECK((paths[i].flags & PATH_DIR) == 0);
 		}
 
-		ATF_REQUIRE(close(fd) == 0);
+		ATF_CHECK(close(fd) == 0);
 	}
 }
 
