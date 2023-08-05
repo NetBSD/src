@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.18 2022/09/01 18:32:25 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.19 2023/08/05 11:39:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.18 2022/09/01 18:32:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.19 2023/08/05 11:39:18 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,7 +58,7 @@ struct cprng_fast {
 };
 
 static void	cprng_fast_init_cpu(void *, void *, struct cpu_info *);
-static void	cprng_fast_reseed(struct cprng_fast *);
+static void	cprng_fast_reseed(struct cprng_fast **, unsigned);
 
 static void	cprng_fast_seed(struct cprng_fast *, const void *);
 static void	cprng_fast_buf(struct cprng_fast *, void *, unsigned);
@@ -93,6 +93,7 @@ static int
 cprng_fast_get(struct cprng_fast **cprngp)
 {
 	struct cprng_fast *cprng;
+	unsigned epoch;
 	int s;
 
 	KASSERT(!cpu_intr_p());
@@ -101,9 +102,10 @@ cprng_fast_get(struct cprng_fast **cprngp)
 	*cprngp = cprng = percpu_getref(cprng_fast_percpu);
 	s = splsoftserial();
 
-	if (__predict_false(cprng->epoch != entropy_epoch())) {
+	epoch = entropy_epoch();
+	if (__predict_false(cprng->epoch != epoch)) {
 		splx(s);
-		cprng_fast_reseed(cprng);
+		cprng_fast_reseed(cprngp, epoch);
 		s = splsoftserial();
 	}
 
@@ -121,13 +123,25 @@ cprng_fast_put(struct cprng_fast *cprng, int s)
 }
 
 static void
-cprng_fast_reseed(struct cprng_fast *cprng)
+cprng_fast_reseed(struct cprng_fast **cprngp, unsigned epoch)
 {
-	unsigned epoch = entropy_epoch();
+	struct cprng_fast *cprng;
 	uint8_t seed[CPRNG_FAST_SEED_BYTES];
 	int s;
 
+	/*
+	 * Drop the percpu(9) reference to extract a fresh seed from
+	 * the entropy pool.  cprng_strong may sleep on an adaptive
+	 * lock, which invalidates our percpu(9) reference.
+	 *
+	 * This may race with reseeding in another thread, which is no
+	 * big deal -- worst case, we rewind the entropy epoch here and
+	 * cause the next caller to reseed again, and in the end we
+	 * just reseed a couple more times than necessary.
+	 */
+	percpu_putref(cprng_fast_percpu);
 	cprng_strong(kern_cprng, seed, sizeof(seed), 0);
+	*cprngp = cprng = percpu_getref(cprng_fast_percpu);
 
 	s = splsoftserial();
 	cprng_fast_seed(cprng, seed);
