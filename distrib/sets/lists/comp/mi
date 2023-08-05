@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2444 2023/08/04 08:54:00 mrg Exp $
+#	$NetBSD: mi,v 1.2445 2023/08/05 08:15:40 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -1084,7 +1084,7 @@
 ./usr/include/g++/backward/tree.h		comp-obsolete		obsolete
 ./usr/include/g++/backward/vector.h		comp-obsolete		obsolete
 ./usr/include/g++/barrier			comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
-./usr/include/g++/bit				comp-cxx-include	cxx,libstdcxx
+./usr/include/g++/bit				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bitdo1.h			comp-obsolete		obsolete
 ./usr/include/g++/bitdo2.h			comp-obsolete		obsolete
 ./usr/include/g++/bitprims.h			comp-obsolete		obsolete
