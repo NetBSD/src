@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.43 2022/05/13 09:40:25 riastradh Exp $	*/
+/*	$NetBSD: subr_cprng.c,v 1.44 2023/08/05 11:21:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.43 2022/05/13 09:40:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.44 2023/08/05 11:21:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -265,10 +265,39 @@ cprng_fini_cpu(void *ptr, void *cookie, struct cpu_info *ci)
 	kmem_free(cc->cc_drbg, sizeof(*cc->cc_drbg));
 }
 
+static void
+cprng_strong_reseed(struct cprng_strong *cprng, unsigned epoch,
+    struct cprng_cpu **ccp, int *sp)
+{
+	uint8_t seed[NIST_HASH_DRBG_SEEDLEN_BYTES];
+
+	/*
+	 * Drop everything to extract a fresh seed from the entropy
+	 * pool.  entropy_extract may sleep on an adaptive lock, which
+	 * invalidates our percpu(9) reference.
+	 *
+	 * This may race with reseeding in another thread, which is no
+	 * big deal -- worst case, we rewind the entropy epoch here and
+	 * cause the next caller to reseed again, and in the end we
+	 * just reseed a couple more times than necessary.
+	 */
+	splx(*sp);
+	percpu_putref(cprng->cs_percpu);
+	entropy_extract(seed, sizeof seed, 0);
+	*ccp = percpu_getref(cprng->cs_percpu);
+	*sp = splraiseipl(cprng->cs_iplcookie);
+
+	(*ccp)->cc_evcnt->reseed.ev_count++;
+	if (__predict_false(nist_hash_drbg_reseed((*ccp)->cc_drbg,
+		    seed, sizeof seed, NULL, 0)))
+		panic("nist_hash_drbg_reseed");
+	explicit_memset(seed, 0, sizeof seed);
+	(*ccp)->cc_epoch = epoch;
+}
+
 size_t
 cprng_strong(struct cprng_strong *cprng, void *buf, size_t len, int flags)
 {
-	uint8_t seed[NIST_HASH_DRBG_SEEDLEN_BYTES];
 	struct cprng_cpu *cc;
 	unsigned epoch;
 	int s;
@@ -293,25 +322,13 @@ cprng_strong(struct cprng_strong *cprng, void *buf, size_t len, int flags)
 
 	/* If the entropy epoch has changed, (re)seed.  */
 	epoch = entropy_epoch();
-	if (__predict_false(epoch != cc->cc_epoch)) {
-		entropy_extract(seed, sizeof seed, 0);
-		cc->cc_evcnt->reseed.ev_count++;
-		if (__predict_false(nist_hash_drbg_reseed(cc->cc_drbg,
-			    seed, sizeof seed, NULL, 0)))
-			panic("nist_hash_drbg_reseed");
-		explicit_memset(seed, 0, sizeof seed);
-		cc->cc_epoch = epoch;
-	}
+	if (__predict_false(epoch != cc->cc_epoch))
+		cprng_strong_reseed(cprng, epoch, &cc, &s);
 
 	/* Generate data.  Failure here means it's time to reseed.  */
 	if (__predict_false(nist_hash_drbg_generate(cc->cc_drbg, buf, len,
 		    NULL, 0))) {
-		entropy_extract(seed, sizeof seed, 0);
-		cc->cc_evcnt->reseed.ev_count++;
-		if (__predict_false(nist_hash_drbg_reseed(cc->cc_drbg,
-			    seed, sizeof seed, NULL, 0)))
-			panic("nist_hash_drbg_reseed");
-		explicit_memset(seed, 0, sizeof seed);
+		cprng_strong_reseed(cprng, epoch, &cc, &s);
 		if (__predict_false(nist_hash_drbg_generate(cc->cc_drbg,
 			    buf, len, NULL, 0)))
 			panic("nist_hash_drbg_generate");
