@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.22 2023/05/28 08:17:00 hannken Exp $
+#       $NetBSD: t_tcpip.sh,v 1.23 2023/08/05 13:13:37 riastradh Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -229,6 +229,11 @@ atf_test_case nfs cleanup
 nfs_head()
 {
         atf_set "descr" "Test hijacked nfsd and mount_nfs"
+
+	# XXX Can probably make this work as nonroot, but need to
+	# convince rpcbind running in the rump kernel server that it
+	# has uid 0.
+	atf_set "require.user" "root"
 }
 
 nfs_body()
@@ -250,6 +255,11 @@ atf_test_case nfs_autoload cleanup
 nfs_autoload_head()
 {
         atf_set "descr" "Test hijacked nfsd with autoload from /stand"
+
+	# XXX Can probably make this work as nonroot, but need to
+	# convince rpcbind running in the rump kernel server that it
+	# has uid 0.
+	atf_set "require.user" "root"
 }
 
 nfs_autoload_body()
