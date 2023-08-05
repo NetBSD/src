@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fcntl.c,v 1.3 2023/07/29 12:16:34 christos Exp $	*/
+/*	$NetBSD: t_fcntl.c,v 1.4 2023/08/05 08:05:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -108,14 +108,18 @@ ATF_TC_BODY(getpath_memfd, tc)
 
 	for (size_t i = 0; i < __arraycount(memfd_names); i++) {
 		fd = memfd_create(memfd_names[i].bare, 0);
-		ATF_REQUIRE_MSG(fd != -1, "Failed to create memfd (%s)",
+		ATF_CHECK_MSG(fd != -1, "Failed to create memfd (%s)",
 		    strerror(errno));
+		if (fd == -1)
+			continue;
 		rv = fcntl(fd, F_GETPATH, path);
-		ATF_REQUIRE_MSG(rv != -1, "Can't get path `%s' (%s)",
+		ATF_CHECK_MSG(rv != -1, "Can't get path `%s' (%s)",
 		    memfd_names[i].bare, strerror(errno));
-		ATF_REQUIRE_MSG(strcmp(memfd_names[i].prefixed, path) == 0,
+		if (rv == -1)
+			goto next;
+		ATF_CHECK_MSG(strcmp(memfd_names[i].prefixed, path) == 0,
 		    "Bad name `%s' != `%s'", path, memfd_names[i].prefixed);
-		close(fd);
+next:		close(fd);
 	}
 }
 
