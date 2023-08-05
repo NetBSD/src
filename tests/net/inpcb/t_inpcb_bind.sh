@@ -1,4 +1,4 @@
-#	$NetBSD: t_inpcb_bind.sh,v 1.1 2022/11/17 08:40:23 ozaki-r Exp $
+#	$NetBSD: t_inpcb_bind.sh,v 1.2 2023/08/05 13:25:26 riastradh Exp $
 #
 # Copyright (c) 2022 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -70,6 +70,7 @@ add_test()
 	eval "${name}_head() {
 			atf_set descr \"${desc}\"
 			atf_set require.progs rump_server
+			atf_set require.user root
 		}
 	    ${name}_body() {
 			test_${name}
