@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.64 2023/08/04 16:02:01 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.65 2023/08/05 11:21:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.64 2023/08/04 16:02:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.65 2023/08/05 11:21:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1468,8 +1468,9 @@ sysctl_entropy_gather(SYSCTLFN_ARGS)
  *		EINTR/ERESTART	No entropy, ENTROPY_SIG set, and interrupted.
  *
  *	If ENTROPY_WAIT is set, allowed only in thread context.  If
- *	ENTROPY_WAIT is not set, allowed also in softint context.
- *	Forbidden in hard interrupt context.
+ *	ENTROPY_WAIT is not set, allowed also in softint context -- may
+ *	sleep on an adaptive lock up to IPL_SOFTSERIAL.  Forbidden in
+ *	hard interrupt context.
  */
 int
 entropy_extract(void *buf, size_t len, int flags)
