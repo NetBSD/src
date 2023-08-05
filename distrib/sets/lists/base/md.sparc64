@@ -1,15 +1,15 @@
-# $NetBSD: md.sparc64,v 1.261 2023/05/27 10:12:11 riastradh Exp $
+# $NetBSD: md.sparc64,v 1.262 2023/08/05 08:55:48 riastradh Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-obsolete	obsolete
 ./usr/bin/fdformat				base-util-bin
 ./usr/libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
-./usr/lib/sparc/openssl				base-crypto-usr
-./usr/lib/sparc/openssl/engines			base-crypto-usr
+./usr/lib/sparc/openssl				base-crypto-usr		compat
+./usr/lib/sparc/openssl/engines			base-crypto-usr		compat
 ./usr/lib/sparc/openssl/engines/dasync.so	base-crypto-usr		compat,pic,openssl=30
 ./usr/lib/sparc/openssl/engines/devcrypto.so	base-crypto-usr		compat,pic,openssl=30
 ./usr/lib/sparc/openssl/engines/loader_attic.so	base-crypto-usr		compat,pic,openssl=30
 ./usr/lib/sparc/openssl/engines/ossltest.so	base-crypto-usr		compat,pic,openssl=30
-./usr/lib/sparc/openssl/modules			base-crypto-usr
+./usr/lib/sparc/openssl/modules			base-crypto-usr		compat
 ./usr/lib/sparc/openssl/modules/legacy.so	base-crypto-usr		compat,pic,openssl=30
 ./usr/lkm/compat_netbsd32.o			base-obsolete		obsolete
 ./usr/lkm/compat_sunos32.o			base-obsolete		obsolete
