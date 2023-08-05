@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.575 2023/08/02 18:57:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.576 2023/08/05 10:13:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.575 2023/08/02 18:57:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.576 2023/08/05 10:13:39 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3960,17 +3960,26 @@ build_sizeof(const type_t *tp)
 /*
  * Create a constant node for offsetof.
  */
-/* ARGSUSED */ /* FIXME: See implementation comments. */
 tnode_t *
 build_offsetof(const type_t *tp, const sym_t *sym)
 {
+	unsigned int offset_in_bits = 0;
 
-	if (!is_struct_or_union(tp->t_tspec))
+	if (!is_struct_or_union(tp->t_tspec)) {
 		/* unacceptable operand of '%s' */
 		error(111, "offsetof");
+		goto proceed;
+	}
+	sym_t *mem = find_member(tp->t_sou, sym->s_name);
+	if (mem == NULL) {
+		/* type '%s' does not have member '%s' */
+		error(101, sym->s_name, type_name(tp));
+		goto proceed;
+	}
+	offset_in_bits = mem->u.s_member.sm_offset_in_bits;
 
-	/* FIXME: Don't wrongly use the size of the whole type, use sym. */
-	unsigned int offset_in_bytes = type_size_in_bits(tp) / CHAR_SIZE;
+proceed:;
+	unsigned int offset_in_bytes = offset_in_bits / CHAR_SIZE;
 	tnode_t *tn = build_integer_constant(SIZEOF_TSPEC, offset_in_bytes);
 	tn->tn_system_dependent = true;
 	return tn;

@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.13 2023/07/09 11:18:55 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.14 2023/08/05 10:13:39 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -132,8 +132,7 @@ bit_fields(void)
 	} mixed;
 	/* expect+1: error: negative array dimension (-8) [20] */
 	typedef int sizeof_mixed[-(int)sizeof(mixed)];
-	/* FIXME: Implement build_offsetof correctly. */
-	/* expect+3: error: negative array dimension (-8) [20] */
+	/* expect+3: error: negative array dimension (-1) [20] */
 	typedef int offsetof_mixed_ch[
 	    -(int)__builtin_offsetof(struct mixed, ch)
 	];
