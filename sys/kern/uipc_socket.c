@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.302 2022/04/09 23:52:22 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.303 2023/08/05 09:25:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.302 2022/04/09 23:52:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.303 2023/08/05 09:25:39 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -702,7 +702,7 @@ sofree(struct socket *so)
 	KASSERT(!cv_has_waiters(&so->so_snd.sb_cv));
 	sorflush(so);
 	refs = so->so_aborting;	/* XXX */
-	/* Remove acccept filter if one is present. */
+	/* Remove accept filter if one is present. */
 	if (so->so_accf != NULL)
 		(void)accept_filt_clear(so);
 	sounlock(so);
