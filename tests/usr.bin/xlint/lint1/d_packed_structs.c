@@ -1,4 +1,4 @@
-/*	$NetBSD: d_packed_structs.c,v 1.5 2023/08/01 19:52:15 rillig Exp $	*/
+/*	$NetBSD: d_packed_structs.c,v 1.6 2023/08/05 10:00:59 rillig Exp $	*/
 # 3 "d_packed_structs.c"
 
 /* packed tests */
@@ -30,12 +30,12 @@ typedef struct __packed {
 
 struct x {
 	char c;
-	long l;
+	long long l;
 } __packed;
 
 struct y {
 	char c;
-	long l;
+	long long l;
 };
 
 int a[sizeof(struct y) - sizeof(struct x) - 1];
