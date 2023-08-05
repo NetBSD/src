@@ -1,6 +1,18 @@
-# $NetBSD: msg_013.ln,v 1.1 2021/08/05 22:36:08 rillig Exp $
+# $NetBSD: msg_013.ln,v 1.2 2023/08/05 09:44:18 rillig Exp $
 #
 # Test data for message 13 of lint2:
 #	%s: malformed format string  	%s
 #
-# TODO: add actual test data
+
+0 s local.c
+S local.c
+
+# void my_printf(const char *fmt) {}
+4 d 0.4 v 1P 1d 9my_printf F1 PcC V
+
+# my_printf("%f", 0.0);
+11 c 0.11 s1"%f" i 9my_printf f2 PC D V
+# my_printf("%a", 0.0);
+12 c 0.12 s1"%a" i 9my_printf f2 PC D V
+# my_printf("%lf", 0.0L);
+13 c 0.13 s1"%lf" i 9my_printf f2 PC lD V

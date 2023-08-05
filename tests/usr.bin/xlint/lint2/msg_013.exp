@@ -1,0 +1,3 @@
+my_printf: malformed format string  	local.c(12)
+my_printf: malformed format string  	local.c(13)
+my_printf, arg 2 inconsistent with format  	local.c(13)
