@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bind.c,v 1.1 2020/09/08 14:13:50 christos Exp $	*/
+/*	$NetBSD: t_bind.c,v 1.2 2023/08/05 13:22:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_bind.c,v 1.1 2020/09/08 14:13:50 christos Exp $");
+__RCSID("$Id: t_bind.c,v 1.2 2023/08/05 13:22:49 riastradh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -144,6 +144,7 @@ ATF_TC_HEAD(bindany_4, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Check AF_INET bindany");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(bindany_4, tc)
@@ -156,6 +157,7 @@ ATF_TC_HEAD(bindany_6, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Check AF_INET6 bindany");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(bindany_6, tc)
