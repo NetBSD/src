@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.356 2023/08/05 08:05:57 riastradh Exp $	*/
+/*	$NetBSD: rump.c,v 1.357 2023/08/05 11:51:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.356 2023/08/05 08:05:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.357 2023/08/05 11:51:47 riastradh Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -391,8 +391,13 @@ rump_init_callback(void (*cpuinit_callback) (void))
 	cprng_init();
 	cprng_fast_init();
 
+	mp_online = true;
+
 	if (cpuinit_callback)
 		(*cpuinit_callback)();
+
+	/* CPUs are up.  allow kernel threads to run */
+	rump_thread_allow(NULL);
 
 	rnd_init_softint();
 
@@ -446,11 +451,6 @@ rump_init_callback(void (*cpuinit_callback) (void))
 		mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_VM);
 
 	cold = 0;
-
-	mp_online = true;
-
-	/* CPUs are up.  allow kernel threads to run */
-	rump_thread_allow(NULL);
 
 	sysctl_finalize();
 
