@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.39 2023/07/22 15:19:03 riastradh Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.40 2023/08/05 14:38:43 riastradh Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -77,6 +77,10 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 options DDB_COMMANDONENTER="show registers"
 options 	KDTRACE_HOOKS	# kernel DTrace hooks
+
+# Heartbeat checks
+options 	HEARTBEAT
+options 	HEARTBEAT_MAX_PERIOD_DEFAULT=15
 
 # Compatibility options
 include 	"conf/compat_netbsd09.config"
