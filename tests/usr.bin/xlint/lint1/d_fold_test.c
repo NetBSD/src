@@ -81,6 +81,6 @@ void do_while_struct(struct s s)	{ do { return; } while (s); }
 
 /* C99 6.5.15 does not require a scalar type, curiously. */
 /* expect+3: error: first operand of '?' must have scalar type [170] */
-/* expect+2: warning: function 'conditional_struct' expects to return value [214] */
+/* expect+2: error: function 'conditional_struct' expects to return value [214] */
 /* expect+1: warning: parameter 's' unused in function 'conditional_struct' [231] */
 int conditional_struct(struct s s)	{ return s ? 1 : 2; }
