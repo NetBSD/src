@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_204.c,v 1.10 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: msg_204.c,v 1.11 2023/08/06 19:44:50 rillig Exp $	*/
 # 3 "msg_204.c"
 
 // Test for message: controlling expressions must have scalar type [204]
@@ -108,5 +108,5 @@ void do_while_struct(struct s s)	{ do { return; } while (s); }
  * controlling expression must have a scalar type, curiously.
  */
 /* expect+2: error: first operand of '?' must have scalar type [170] */
-/* expect+1: warning: function 'conditional_struct' expects to return value [214] */
+/* expect+1: error: function 'conditional_struct' expects to return value [214] */
 int conditional_struct(struct s s)	{ return s ? 1 : 2; }

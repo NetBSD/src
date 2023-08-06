@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.21 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.22 2023/08/06 19:44:50 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -168,7 +168,7 @@ _Bool
 str_equal_bad(const char *s1, const char *s2)
 {
 	/* expect+2: error: operand of '!' must be bool, not 'int' [330] */
-	/* expect+1: warning: function 'str_equal_bad' expects to return value [214] */
+	/* expect+1: error: function 'str_equal_bad' expects to return value [214] */
 	return !strcmp(s1, s2);
 }
 

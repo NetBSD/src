@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_cast.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: expr_cast.c,v 1.5 2023/08/06 19:44:50 rillig Exp $	*/
 # 3 "expr_cast.c"
 
 /*
@@ -28,6 +28,6 @@ cast(void)
 	};
 
 	/* expect+2: error: invalid cast from 'struct S' to 'struct S' [147] */
-	/* expect+1: warning: function 'cast' expects to return value [214] */
+	/* expect+1: error: function 'cast' expects to return value [214] */
 	return (struct S)local;
 }

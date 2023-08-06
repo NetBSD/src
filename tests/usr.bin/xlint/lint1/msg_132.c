@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.31 2023/06/03 20:28:54 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.32 2023/08/06 19:44:50 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -175,7 +175,7 @@ const char *
 cover_build_plus_minus(const char *arr, double idx)
 {
 	/* expect+3: error: operands of '+' have incompatible types 'pointer to const char' and 'double' [107] */
-	/* expect+2: warning: function 'cover_build_plus_minus' expects to return value [214] */
+	/* expect+2: error: function 'cover_build_plus_minus' expects to return value [214] */
 	if (idx > 0.0)
 		return arr + idx;
 	return arr + (unsigned int)idx;

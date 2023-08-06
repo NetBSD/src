@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.173 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.174 2023/08/06 19:44:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.173 2023/08/02 18:51:25 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.174 2023/08/06 19:44:50 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1052,12 +1052,13 @@ stmt_return(bool sys, tnode_t *tn)
 		error(213, funcsym->s_name);
 		expr_free_all();
 		tn = NULL;
-	} else if (tn == NULL && funcsym->s_type->t_subt->t_tspec != VOID) {
-		/*
-		 * Assume that the function has a return value only if it
-		 * is explicitly declared.
-		 */
-		if (!funcsym->s_return_type_implicit_int)
+	}
+	if (tn == NULL && funcsym->s_type->t_subt->t_tspec != VOID
+	    && !funcsym->s_return_type_implicit_int) {
+		if (allow_c99)
+			/* function '%s' expects to return value */
+			error(214, funcsym->s_name);
+		else
 			/* function '%s' expects to return value */
 			warning(214, funcsym->s_name);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lang_level_c99.c,v 1.1 2023/08/06 19:31:06 rillig Exp $	*/
+/*	$NetBSD: lang_level_c99.c,v 1.2 2023/08/06 19:44:50 rillig Exp $	*/
 # 3 "lang_level_c99.c"
 
 /*
@@ -297,7 +297,7 @@ const const int duplicate_type_qualifier = 2;
 //
 // Irrelevant, as lint only sees the preprocessed source code.
 
-// [-] return without expression not permitted in function that returns a value
+// [x] return without expression not permitted in function that returns a value
 // (and vice versa)
 
 void
@@ -311,7 +311,6 @@ return_no_expr(int x)
 int
 return_expr(void)
 {
-	// FIXME: Make this an error in C99 and later.
-	/* expect+1: warning: function 'return_expr' expects to return value [214] */
+	/* expect+1: error: function 'return_expr' expects to return value [214] */
 	return;
 }

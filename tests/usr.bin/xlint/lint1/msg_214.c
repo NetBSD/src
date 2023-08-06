@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_214.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_214.c,v 1.6 2023/08/06 19:44:50 rillig Exp $	*/
 # 3 "msg_214.c"
 
 // Test for message: function '%s' expects to return value [214]
@@ -8,6 +8,6 @@
 int
 int_function(void)
 {
-	/* expect+1: warning: function 'int_function' expects to return value [214] */
+	/* expect+1: error: function 'int_function' expects to return value [214] */
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.18 2023/07/09 11:18:55 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.19 2023/08/06 19:44:50 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -17,7 +17,8 @@
 
 /*
  * The type of 'var' is not compatible with any of the types from the
- * generic-association.  This is a compile-time error.
+ * generic-association.  This is a constraint violation that the compiler must
+ * detect, therefore lint doesn't repeat that diagnostic.
  */
 const char *
 classify_type_without_default(double var)
@@ -29,7 +30,7 @@ classify_type_without_default(double var)
 	    long long: "long long",
 	    unsigned: "unsigned"
 	);
-	/* expect-1: warning: function 'classify_type_without_default' expects to return value [214] */
+	/* expect-1: error: function 'classify_type_without_default' expects to return value [214] */
 }
 
 /*
