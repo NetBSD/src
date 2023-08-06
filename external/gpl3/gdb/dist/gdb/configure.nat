@@ -383,7 +383,9 @@ case ${gdb_host} in
 	    i386)
 		# Host: NetBSD/amd64
 		NATDEPFILES="${NATDEPFILES} netbsd-nat.o amd64-nat.o x86-nat.o \
-		nat/x86-dregs.o x86-bsd-nat.o amd64-bsd-nat.o amd64-netbsd-nat.o"
+		nat/x86-dregs.o x86-bsd-nat.o amd64-bsd-nat.o \
+		amd64-netbsd-nat.o bsd-kvm.o"
+		LOADLIBES='-lkvm'
 		;;
 	    sparc)
 		# Host: NetBSD/sparc64
