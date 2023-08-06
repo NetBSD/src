@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1285 2023/08/04 20:56:08 riastradh Exp $
+# $NetBSD: mi,v 1.1286 2023/08/06 19:31:06 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6697,6 +6697,7 @@
 ./usr/tests/usr.bin/xlint/lint1/init_braces.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/init_c90.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/init_c90.exp			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/lang_level_c99.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_char.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_char.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_char_uchar.c		tests-usr.bin-tests	compattestfile,atf
