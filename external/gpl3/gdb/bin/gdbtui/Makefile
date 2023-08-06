@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2023/08/06 20:33:39 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2023/08/06 20:39:07 christos Exp $
 
 NOCTF=
 NOMAN=
@@ -22,8 +22,9 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/readline \
 		-I${DIST}/libdecnumber \
 		-I${DIST} \
-		-I${GDBLIBDIR}/libbfd/arch/${GDB_MACHINE_ARCH} \
+		-I${GDBARCHDIR} \
 		-I${GDBLIBDIR}/libgdbsupport/arch/${GDB_MACHINE_ARCH} \
+		-I${GDBLIBDIR}/libbfd/arch/${GDB_MACHINE_ARCH} \
 		-I${GDBLIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH} \
 		-I${GDBLIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib/import \
 		-I${DIST}/bfd \
