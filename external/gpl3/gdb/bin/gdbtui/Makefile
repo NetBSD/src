@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2023/08/06 20:32:41 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2023/08/06 20:33:39 christos Exp $
 
 NOCTF=
 NOMAN=
@@ -29,22 +29,6 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
 		${GCPPFLAGS:M-D*}
-
-TEXINFO=	gdb.texinfo stabs.texinfo
-INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
-		-I${DIST}/readline/readline/doc -I${.CURDIR}/.. -DGDBN=${GDBN}
-
-GDBvn.texi: ${DIST}/gdb/version.in
-	echo "@set GDBVN $$(${TOOL_CAT} ${.ALLSRC})" > ${.TARGET}
-
-gdb-cfg.texi: ${DIST}/gdb/doc/all-cfg.texi
-	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
-
-CLEANFILES+= GDBvn.texi gdb-cfg.texi
-stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
-
-FILES=		netbsd.xml
-FILESDIR=	/usr/share/gdb/syscalls
 
 .include "../../Makefile.inc"
 .include <bsd.info.mk>
