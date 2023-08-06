@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.36 2023/07/07 17:04:49 riastradh Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.37 2023/08/06 17:50:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010, 2019 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.36 2023/07/07 17:04:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.37 2023/08/06 17:50:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,11 +149,11 @@ xc_init(void)
 
 	memset(xclo, 0, sizeof(xc_state_t));
 	mutex_init(&xclo->xc_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&xclo->xc_busy, "xclocv");
+	cv_init(&xclo->xc_busy, "xclow");
 
 	memset(xchi, 0, sizeof(xc_state_t));
 	mutex_init(&xchi->xc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
-	cv_init(&xchi->xc_busy, "xchicv");
+	cv_init(&xchi->xc_busy, "xchigh");
 
 	/* Set up a softint for each IPL_SOFT*. */
 #define SETUP_SOFTINT(xipl, sipl) do {					\
