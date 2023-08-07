@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.9 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.10 2023/08/07 23:28:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -63,7 +63,7 @@ static const char *last_hit[DBG_PID];
 		int i;							\
 		for (i = 0; i < DBG_PID - 1; i++)			\
 			last_hit[i] = last_hit[i + 1];			\
-			last_hit[DBG_PID - 1] = a;			\
+		last_hit[DBG_PID - 1] = a;				\
 	}								\
 	/* olast_hit = last_hit; last_hit = a; */
 #else

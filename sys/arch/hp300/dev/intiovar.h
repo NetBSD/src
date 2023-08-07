@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.13 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.14 2023/08/07 23:28:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ intio_device_writecmd(bus_space_tag_t bst, bus_space_handle_t bsh,
 	WAIT(bst, bsh);
 	bus_space_write_1(bst, bsh, INTIO_DEV_3xx_CMD, cmd);
 	while (len--) {
-	WAIT(bst, bsh);
+		WAIT(bst, bsh);
 		bus_space_write_1(bst, bsh, INTIO_DEV_3xx_DATA, *datap++);
 	}
 	return (0);
