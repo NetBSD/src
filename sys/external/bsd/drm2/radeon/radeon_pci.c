@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.23 2023/03/07 20:23:00 mrg Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.24 2023/08/07 16:35:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.23 2023/03/07 20:23:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.24 2023/08/07 16:35:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "genfb.h"
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.23 2023/03/07 20:23:00 mrg Exp $");
 #include <drm/drm_device.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_fb_helper.h>
+#include <drm/drm_ioctl.h>
 #include <drm/drm_pci.h>
 
 #if NGENFB > 0
@@ -366,6 +367,8 @@ radeon_do_suspend(device_t self, const pmf_qual_t *qual)
 	int ret;
 	bool is_console = true; /* XXX */
 
+	drm_suspend_ioctl(dev);
+
 	ret = radeon_suspend_kms(dev, true, is_console, false);
 	if (ret)
 		return false;
@@ -383,9 +386,10 @@ radeon_do_resume(device_t self, const pmf_qual_t *qual)
 
 	ret = radeon_resume_kms(dev, true, is_console);
 	if (ret)
-		return false;
+		goto out;
 
-	return true;
+out:	drm_resume_ioctl(dev);
+	return ret == 0;
 }
 
 static void
