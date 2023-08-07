@@ -1,4 +1,4 @@
-/* $NetBSD: ldbl_dummy.c,v 1.3 2023/03/13 18:18:36 riastradh Exp $ */
+/* $NetBSD: ldbl_dummy.c,v 1.4 2023/08/07 08:54:40 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldbl_dummy.c,v 1.3 2023/03/13 18:18:36 riastradh Exp $");
+__RCSID("$NetBSD: ldbl_dummy.c,v 1.4 2023/08/07 08:54:40 riastradh Exp $");
 
 #include "namespace.h"
 #include <math.h>
@@ -221,4 +221,16 @@ long double
 tgammal(long double x)
 {
 	return tgamma(x);
+}
+
+long double
+remainderl(long double x, long double y)
+{
+	return remainder(x, y);
+}
+
+long double
+remquol(long double x, long double y, int *quo)
+{
+	return remquo(x, y, quo);
 }
