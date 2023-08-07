@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.7 2020/09/07 18:06:13 jakllsch Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.1 2023/08/07 01:07:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SYS_CRYPTO_CHACHA_ARCH_ARM_ARM_NEON_H
-#define	_SYS_CRYPTO_CHACHA_ARCH_ARM_ARM_NEON_H
+#ifndef	_SYS_CRYPTO_ARCH_ARM_ARM_NEON_H
+#define	_SYS_CRYPTO_ARCH_ARM_ARM_NEON_H
 
 #if defined(__GNUC__) && !defined(__clang__)
 
@@ -714,4 +714,4 @@ vtbl2_u8(uint8x8x2_t __tab, uint8x8_t __idx)
 
 #endif	/* !defined(__aarch64__) */
 
-#endif	/* _SYS_CRYPTO_CHACHA_ARCH_ARM_ARM_NEON_H */
+#endif	/* _SYS_CRYPTO_ARCH_ARM_ARM_NEON_H */

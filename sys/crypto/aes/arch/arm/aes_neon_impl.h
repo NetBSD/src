@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_impl.h,v 1.3 2020/08/08 14:47:01 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_impl.h,v 1.4 2023/08/07 01:07:35 rin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -31,8 +31,8 @@
 
 #include <sys/types.h>
 
-#include "arm_neon.h"
-#include "arm_neon_imm.h"
+#include <crypto/arch/arm/arm_neon.h>
+#include <crypto/arch/arm/arm_neon_imm.h>
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/arch/arm/aes_neon.h>

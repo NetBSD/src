@@ -1,4 +1,4 @@
-/*	$NetBSD: immintrin_ext.h,v 1.1 2020/06/29 23:47:54 riastradh Exp $	*/
+/*	$NetBSD: immintrin_ext.h,v 1.1 2023/08/07 01:07:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,10 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SYS_CRYPTO_AES_ARCH_X86_IMMINTRIN_EXT_H
-#define	_SYS_CRYPTO_AES_ARCH_X86_IMMINTRIN_EXT_H
+#ifndef	_SYS_CRYPTO_ARCH_X86_IMMINTRIN_EXT_H
+#define	_SYS_CRYPTO_ARCH_X86_IMMINTRIN_EXT_H
 
-#include "immintrin.h"
+#include <crypto/arch/x86/immintrin.h>
 
 _INTRINSATTR
 static __inline __m128i
@@ -45,4 +45,4 @@ _mm_storeu_epi8(void *__p, __m128i __v)
 	((struct { __m128i_u __v; } _PACKALIAS *)__p)->__v = __v;
 }
 
-#endif	/* _SYS_CRYPTO_AES_ARCH_X86_IMMINTRIN_EXT_H */
+#endif	/* _SYS_CRYPTO_ARCH_X86_IMMINTRIN_EXT_H */

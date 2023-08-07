@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon.c,v 1.8 2020/08/08 14:47:01 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon.c,v 1.9 2023/08/07 01:07:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
 #include <sys/types.h>
 #include <sys/endian.h>
 
-#include "arm_neon.h"
-#include "arm_neon_imm.h"
+#include <crypto/arch/arm/arm_neon.h>
+#include <crypto/arch/arm/arm_neon_imm.h>
 #include "chacha_neon.h"
 
 /*

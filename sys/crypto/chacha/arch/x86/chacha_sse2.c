@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_sse2.c,v 1.2 2020/07/27 20:48:18 riastradh Exp $	*/
+/*	$NetBSD: chacha_sse2.c,v 1.3 2023/08/07 01:07:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/types.h>
 #include <sys/endian.h>
 
-#include "immintrin.h"
+#include <crypto/arch/x86/immintrin.h>
 
 #include "chacha_sse2.h"
 
