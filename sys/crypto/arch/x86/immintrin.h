@@ -1,4 +1,4 @@
-/*	$NetBSD: immintrin.h,v 1.5 2020/07/25 22:45:10 riastradh Exp $	*/
+/*	$NetBSD: immintrin.h,v 1.1 2023/08/07 01:07:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SYS_CRYPTO_AES_ARCH_X86_IMMINTRIN_H
-#define	_SYS_CRYPTO_AES_ARCH_X86_IMMINTRIN_H
+#ifndef	_SYS_CRYPTO_ARCH_X86_IMMINTRIN_H
+#define	_SYS_CRYPTO_ARCH_X86_IMMINTRIN_H
 
 #include <sys/types.h>
 
@@ -348,4 +348,4 @@ _mm_unpacklo_epi64(__m128i __lo, __m128i __hi)
 #endif
 }
 
-#endif	/* _SYS_CRYPTO_AES_ARCH_X86_IMMINTRIN_H */
+#endif	/* _SYS_CRYPTO_ARCH_X86_IMMINTRIN_H */

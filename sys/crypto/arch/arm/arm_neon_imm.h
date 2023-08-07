@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon_imm.h,v 1.2 2020/08/09 01:59:04 riastradh Exp $	*/
+/*	$NetBSD: arm_neon_imm.h,v 1.1 2023/08/07 01:07:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SYS_CRYPTO_CHACHA_ARCH_ARM_ARM_NEON_IMM_H
-#define	_SYS_CRYPTO_CHACHA_ARCH_ARM_ARM_NEON_IMM_H
+#ifndef	_SYS_CRYPTO_ARCH_ARM_ARM_NEON_IMM_H
+#define	_SYS_CRYPTO_ARCH_ARM_ARM_NEON_IMM_H
 
 /*
  * Non-standard macros for writing ARM NEON vector literals.  Needed
@@ -77,4 +77,4 @@
 #endif
 #endif
 
-#endif	/* _SYS_CRYPTO_CHACHA_ARCH_ARM_ARM_NEON_IMM_H */
+#endif	/* _SYS_CRYPTO_ARCH_ARM_ARM_NEON_IMM_H */

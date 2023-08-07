@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ssse3_impl.h,v 1.1 2020/06/29 23:51:35 riastradh Exp $	*/
+/*	$NetBSD: aes_ssse3_impl.h,v 1.2 2023/08/07 01:07:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -33,8 +33,8 @@
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/arch/x86/aes_ssse3.h>
-#include <crypto/aes/arch/x86/immintrin.h>
-#include <crypto/aes/arch/x86/immintrin_ext.h>
+#include <crypto/arch/x86/immintrin.h>
+#include <crypto/arch/x86/immintrin_ext.h>
 
 __m128i aes_ssse3_enc1(const struct aesenc *, __m128i, unsigned);
 __m128i aes_ssse3_dec1(const struct aesdec *, __m128i, unsigned);
