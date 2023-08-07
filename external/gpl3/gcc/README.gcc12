@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.8 2023/08/05 23:52:43 mrg Exp $
+$NetBSD: README.gcc12,v 1.9 2023/08/07 00:35:49 rin Exp $
 
 
 new stuff:
@@ -31,25 +31,25 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc/sani	make release[2]	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
-aarch64		y	y	y	y	n[12]	y		y	y	?
-aarch64eb	y	y	y	y	b	y		y	y	?
+aarch64		y	y	y	y	y[17]	y		y	y	?
+aarch64eb	y	y	y	y	y[17]	y		y	y	?
 alpha		y	y	y	y	b	y		y	y	?
 earmv4		y	b	?	y	?	?		?	?	?
 earmv4eb	y	b	?	y	?	?		?	?	?
-earmv5		y	b	?	y	?	?		?	?	?
-earmv5eb	y	b	?	y	?	?		?	?	?
+earmv5		y	y	y	y	b	y		y	?	?
+earmv5eb	y	y	y	y	b	y		y	?	?
 earmv5hf	y	b	?	y	?	?		?	?	?
 earmv5hfeb	y	b	?	y	?	?		?	?	?
 earmv6		y	b	?	y	?	?		?	?	?
 earmv6eb	y	b	?	y	?	?		?	?	?
-earmv6hf	y	b	?	y	?	y		?	?	?
-earmv6hfeb	y	b	?	y	?	?		?	?	?
+earmv6hf	y	y	y	y	b	y		y	y	?
+earmv6hfeb	y	y	y	y	b	y		y	y	?
 earmv7		y	b	y	y	?	?		?	?	?
 earmv7eb	y	b	?	y	?	?		?	?	?
-earmv7hf	y	b	?	y	b	y		?	?	?
-earmv7hfeb	y	b	?	y	b	y		?	?	?
+earmv7hf	y	y	y	y	b	y		y	y	?
+earmv7hfeb	y	y	y	y	b	y		y	y	?
 hppa		y	b	y	y	?	n[5]		?	?	?
-i386		y	b	y	y	y	y		?	?	?
+i386		y	y	y	y	n[18]	y		y	n[19]	?
 ia64		y	b	y	y	y	y		y[3]	n	?
 m68000		y	y	y	y	n[11]	n		y[14]	?	?
 m68k		y	y	y	y	b	y		y[14]	p[15]	?
@@ -57,10 +57,10 @@ mipseb		y	b	y	y	b	y		?	?	?
 mipsel		y	b	y	y	b	y		?	?	?
 mips64eb	y	b	y	y	b	y		?	?	?
 mips64el	y	b	y	y	b	y		?	?	?
-powerpc		y	?	y	y	?	n[4]		?	?	?
+powerpc		y	y	y	y	?	n[4]		?	?	?
 powerpc64	y	?	?	y	?	?		?	?	?
 sh3eb		y	?	y	y	?	?		?	?	?
-sh3el		y	?	y	y	?	?		?	?	?
+sh3el		y	n[20]	y	y	?	n[8]		?	?	?
 sparc		y	y	y	y	n[atf]	y		y	y	?
 sparc64		y	b	y	y	n[16]	y		y	?	?
 vax		y	?	y	y	?	n		?	?	?
@@ -104,7 +104,7 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       ==21499==Hint: address points to the zero page.
       ThreadSanitizer:DEADLYSIGNAL
       ThreadSanitizer: nested bug in the same thread, aborting.
-[14]: "dd count=1" aborts. "COPTS.strsuftoll.c+=-fno-stack-protector" works around the problem.
+[14]: "dd count=1" and "env LC_CTYPE=en_US.UTF-8 locale" abort. -fno-stack-protector for strsuftoll.c and citrus_module.c works around the problem.
 [15]: No regression observed for tests/lib/libc/{sys,gen}.
 [16]: sanitizers crash early:
       Program received signal SIGSEGV, Segmentation fault.
@@ -112,6 +112,20 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       #0  0x000000004064265c in __sanitizer::CheckASLR () at /usr/src/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_linux.cpp:2181
       #1  0xffffffffffffc704 in ?? ()
       Backtrace stopped: previous frame identical to this frame (corrupt stack?)
+[17]: Not a regression, libtsan is newly introduced. tsan fails with:
+      FATAL: ThreadSanitizer: unexpected memory mapping 0x200100000-0x200101000
+[18]: *san requires 64-bit atomic ops:
+      ld: /usr/lib/libasan.so: undefined reference to `__sync_val_compare_and_swap_8'
+      If lib*san is compiled with -march=i586, all tests in usr.bin/{cc,c++} successfully pass.
+[19]: Kernel freezes with garbage parmanently output to console, after lib/libc/sys/t_ptrace_wait:syscall_signal_on_sce fails:
+          syscall_signal_on_sce: [[ 3013.0266693] sorry pid 1847 was killed: orphanes
+          ss
+          ss
+          ss
+          ...
+[20]: Kernel needs -O1 for ffs32() and ffs_nodealloccg() for multi-user boot. Even if the whole kernel is built with -O1, it panics during ATF:
+      kernel/t_sysv (92/935): 3 test cases
+          msg: [ 3981.4751382] panic: kernel diagnostic assertion "msghdr->msg_spot >= 0" failed: file "../../../../kern/sysv_msg.c", line 426
 [atf]: new failures in ATF, probably crashes
 
 
@@ -122,15 +136,15 @@ CPU		platform list
 ---		-------- ----
 		acorn32		cats	epoc32	evbarm-eb	evbarm-el	hpcarm		iyonix		netwinder	shark 		zaurus
 earmv4:		k		k	k	k		k		k		 		k		y		 
-earm:		 		 	 	k		k		 		k		 		 		k
+earm:		 		 	 	nx		k		 		k		 		 		k
 earmhf:		 		 	 	k		k		 		 		 		 		 
 earmv6:		 		 	 	k		k
-earmv6hf:	 		 	 	k		k
+earmv6hf:	 		 	 	nx		nx
 earmv7:		 		 	 	k		k
-earmv7hf:	 		 	 	k		k
+earmv7hf:	 		 	 	nx		nx
 
 		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
-m68k:		y		k	k	k		k		k		k		k		k		k 	k
+m68k:		nx		k	k	k		k		k		k		k		k		k 	k
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
 mipseb:		k		k		k		k		k		y
