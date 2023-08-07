@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2023/07/31 17:02:08 christos Exp $
+#	$NetBSD: Makefile,v 1.34 2023/08/07 16:52:52 christos Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -40,7 +40,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-DTARGET_SYSTEM_ROOT=\"\" \
 		-DTARGET_SYSTEM_ROOT_RELOCATABLE=0 \
 		-DBINDIR=\"${BINDIR}\" \
-		${GCPPFLAGS:M-D*}
+		${GCPPFLAGS:M-D*} -D__STDC_ISO_10646__
 
 CWARNFLAGS.clang+=	-Wno-switch
 
