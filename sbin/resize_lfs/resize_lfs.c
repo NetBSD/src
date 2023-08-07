@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.15 2019/08/22 20:26:07 brad Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.16 2023/08/07 23:27:07 mrg Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 		err(1, "open filesystem root");
 
 	/* Read the superblock, finding alternates if necessary */
-	fs = (struct lfs *)malloc(sizeof(*fs));
+	fs = (struct lfs *)calloc(sizeof(*fs), 1);
 	for (sboff = LFS_LABELPAD;;) {
 		pread(devfd, buf, sboff, LFS_SBPAD);
 		__CTASSERT(sizeof(struct dlfs) == sizeof(struct dlfs64));
