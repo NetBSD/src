@@ -1,4 +1,4 @@
-#	$NetBSD: t_asan_global_buffer_overflow.sh,v 1.3 2019/01/29 19:56:37 mgorny Exp $
+#	$NetBSD: t_asan_global_buffer_overflow.sh,v 1.4 2023/08/07 00:54:54 rin Exp $
 #
 # Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,12 +31,13 @@
 ASAN_CODE='
 #include <stdio.h>
 #include <stdlib.h>
-int arr[5] = {-1};
 void foo(int);
 #ifndef PIC_MAIN
+extern int arr[];
 void foo(int index) { arr[index] = 0; }
 #endif
 #ifndef PIC_FOO
+int arr[5] = {-1};
 int main(int argc, char **argv) {foo(argc + 5); printf("CHECK\n"); exit(0);}
 #endif
 '
