@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.c,v 1.15 2018/12/14 23:40:17 christos Exp $	*/
+/*	$NetBSD: ring.c,v 1.16 2023/08/07 23:31:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: ring.c,v 1.15 2018/12/14 23:40:17 christos Exp $");
+__RCSID("$NetBSD: ring.c,v 1.16 2023/08/07 23:31:11 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,8 +179,7 @@ ring_consumed(Ring *ring, int count)
 		ring->clearto <= ring->consume + count)
 	ring->clearto = 0;
     else if (ring->consume + count > ring->top &&
-		ring->bottom <= ring->clearto &&
-		ring->bottom + ((ring->consume + count) - ring->top))
+		ring->bottom <= ring->clearto)
 	ring->clearto = 0;
 #endif	/* ENCRYPTION */
     ring->consume = ring_increment(ring, ring->consume, count);
