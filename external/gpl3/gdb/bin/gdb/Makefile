@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2023/08/06 20:24:54 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2023/08/07 14:30:48 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -21,13 +21,15 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/readline \
 		-I${DIST}/libdecnumber \
 		-I${DIST} \
-		-I${GDBLIBDIR}/libbfd/arch/${GDB_MACHINE_ARCH} \
 		-I${GDBLIBDIR}/libgdbsupport/arch/${GDB_MACHINE_ARCH} \
+		-I${GDBLIBDIR}/libgdbsupport/arch/${GDB_MACHINE_ARCH}/gdbsupport \
+		-I${GDBLIBDIR}/libbfd/arch/${GDB_MACHINE_ARCH} \
 		-I${GDBLIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH} \
 		-I${GDBLIBDIR}/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib/import \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
 		${GCPPFLAGS:M-D*}
+
 
 TEXINFO=	gdb.texinfo stabs.texinfo
 INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
