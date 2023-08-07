@@ -1,16 +1,17 @@
-/*	$NetBSD: msg_247.c,v 1.32 2023/07/14 08:53:52 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.33 2023/08/07 22:30:39 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
 
-/*
- * The word 'may' in the message text means that the trouble is not necessarily
- * on this platform with its specific type sizes, but on other platforms.
- *
- * See also:
- *	msg_247_portable.c
- *	msg_247_lp64.c
- */
+//
+// The word 'may' in the message text means that the trouble is not necessarily
+// on this platform with its specific type sizes, but on other platforms.
+//
+// See also:
+//	msg_247_ilp32_ldbl64.c
+//	msg_247_lp64_ldbl128.c
+//	msg_247_portable.c
+//	msg_247_portable_int.c
 
 /* lint1-extra-flags: -c -X 351 */
 
@@ -175,7 +176,7 @@ lh_OPENSSL_STRING_new(void)
 	 */
 	return (struct lhash_st_OPENSSL_STRING *)OPENSSL_LH_new();
 }
-# 179 "msg_247.c" 2
+# 180 "msg_247.c" 2
 
 void sink(const void *);
 

@@ -1,20 +1,25 @@
-/*	$NetBSD: msg_247_portable.c,v 1.5 2023/08/07 22:30:39 rillig Exp $	*/
-# 3 "msg_247_portable.c"
+/*	$NetBSD: msg_247_portable_int.c,v 1.1 2023/08/07 22:30:39 rillig Exp $	*/
+# 3 "msg_247_portable_int.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
 
-// In portable mode on platforms where 'ptrdiff_t' is 'long', lint defines the
-// rank of the integer types such that _Bool < char < short < int < long <
+// In portable mode on platforms where 'ptrdiff_t' is 'int', lint defines the
+// rank of the integer types such that _Bool < char < short < int == long <
 // long long < int128_t.  The rank of the floating points is float < double <
 // long double, analogous for the complex types.
+//
+// XXX: Even though the mode is named 'portable', its behavior between 'int'
+// and 'long' platforms differs.  On 'int' platforms, 'int' and 'long' have the
+// same integer rank while on 'long' platforms, 'long' has a greater rank than
+// 'int'.
 //
 // See also:
 //	msg_247.c
 //	msg_247_ilp32_ldbl64.c
 //	msg_247_lp64_ldbl128.c
-//	msg_247_portable_int.c
+//	msg_247_portable.c
 
-/* lint1-only-if: long */
+/* lint1-only-if: int */
 /* lint1-extra-flags: -c -p -X 351 */
 
 typedef double double_array[5];
@@ -328,9 +333,9 @@ all_casts(void)
 	int_ptr = (typeof(int_ptr))ushort_ptr;
 	int_ptr = (typeof(int_ptr))int_ptr;
 	int_ptr = (typeof(int_ptr))uint_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to long' to 'pointer to int' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to long' to 'pointer to int' may be troublesome [247] */
 	int_ptr = (typeof(int_ptr))long_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to unsigned long' to 'pointer to int' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to unsigned long' to 'pointer to int' may be troublesome [247] */
 	int_ptr = (typeof(int_ptr))ulong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to long long' to 'pointer to int' may be troublesome [247] */
 	int_ptr = (typeof(int_ptr))llong_ptr;
@@ -375,9 +380,9 @@ all_casts(void)
 	uint_ptr = (typeof(uint_ptr))ushort_ptr;
 	uint_ptr = (typeof(uint_ptr))int_ptr;
 	uint_ptr = (typeof(uint_ptr))uint_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to long' to 'pointer to unsigned int' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to long' to 'pointer to unsigned int' may be troublesome [247] */
 	uint_ptr = (typeof(uint_ptr))long_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to unsigned long' to 'pointer to unsigned int' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to unsigned long' to 'pointer to unsigned int' may be troublesome [247] */
 	uint_ptr = (typeof(uint_ptr))ulong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to long long' to 'pointer to unsigned int' may be troublesome [247] */
 	uint_ptr = (typeof(uint_ptr))llong_ptr;
@@ -420,9 +425,9 @@ all_casts(void)
 	long_ptr = (typeof(long_ptr))short_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned short' to 'pointer to long' may be troublesome [247] */
 	long_ptr = (typeof(long_ptr))ushort_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to int' to 'pointer to long' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to int' to 'pointer to long' may be troublesome [247] */
 	long_ptr = (typeof(long_ptr))int_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to unsigned int' to 'pointer to long' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to unsigned int' to 'pointer to long' may be troublesome [247] */
 	long_ptr = (typeof(long_ptr))uint_ptr;
 	long_ptr = (typeof(long_ptr))long_ptr;
 	long_ptr = (typeof(long_ptr))ulong_ptr;
@@ -451,7 +456,7 @@ all_casts(void)
 	long_ptr = (typeof(long_ptr))char_union_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to union typedef double_union' to 'pointer to long' may be troublesome [247] */
 	long_ptr = (typeof(long_ptr))double_union_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to enum typedef int_enum' to 'pointer to long' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to enum typedef int_enum' to 'pointer to long' may be troublesome [247] */
 	long_ptr = (typeof(long_ptr))enum_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to array[5] of double' to 'pointer to long' may be troublesome [247] */
 	long_ptr = (typeof(long_ptr))double_array_ptr;
@@ -468,9 +473,9 @@ all_casts(void)
 	ulong_ptr = (typeof(ulong_ptr))short_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned short' to 'pointer to unsigned long' may be troublesome [247] */
 	ulong_ptr = (typeof(ulong_ptr))ushort_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to int' to 'pointer to unsigned long' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to int' to 'pointer to unsigned long' may be troublesome [247] */
 	ulong_ptr = (typeof(ulong_ptr))int_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to unsigned int' to 'pointer to unsigned long' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to unsigned int' to 'pointer to unsigned long' may be troublesome [247] */
 	ulong_ptr = (typeof(ulong_ptr))uint_ptr;
 	ulong_ptr = (typeof(ulong_ptr))long_ptr;
 	ulong_ptr = (typeof(ulong_ptr))ulong_ptr;
@@ -499,7 +504,7 @@ all_casts(void)
 	ulong_ptr = (typeof(ulong_ptr))char_union_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to union typedef double_union' to 'pointer to unsigned long' may be troublesome [247] */
 	ulong_ptr = (typeof(ulong_ptr))double_union_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to enum typedef int_enum' to 'pointer to unsigned long' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to enum typedef int_enum' to 'pointer to unsigned long' may be troublesome [247] */
 	ulong_ptr = (typeof(ulong_ptr))enum_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to array[5] of double' to 'pointer to unsigned long' may be troublesome [247] */
 	ulong_ptr = (typeof(ulong_ptr))double_array_ptr;
@@ -1127,9 +1132,9 @@ all_casts(void)
 	enum_ptr = (typeof(enum_ptr))ushort_ptr;
 	enum_ptr = (typeof(enum_ptr))int_ptr;
 	enum_ptr = (typeof(enum_ptr))uint_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to long' to 'pointer to enum typedef int_enum' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to long' to 'pointer to enum typedef int_enum' may be troublesome [247] */
 	enum_ptr = (typeof(enum_ptr))long_ptr;
-	/* expect+1: warning: pointer cast from 'pointer to unsigned long' to 'pointer to enum typedef int_enum' may be troublesome [247] */
+	/* XXX: only on 'long' platforms: expect+1: warning: pointer cast from 'pointer to unsigned long' to 'pointer to enum typedef int_enum' may be troublesome [247] */
 	enum_ptr = (typeof(enum_ptr))ulong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to long long' to 'pointer to enum typedef int_enum' may be troublesome [247] */
 	enum_ptr = (typeof(enum_ptr))llong_ptr;
