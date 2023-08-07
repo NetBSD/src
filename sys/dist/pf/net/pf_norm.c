@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.29 2021/03/08 23:34:58 christos Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.30 2023/08/07 23:28:58 mrg Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.109 2007/05/28 17:16:39 henning Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.29 2021/03/08 23:34:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.30 2023/08/07 23:28:58 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1011,10 +1011,12 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 
 		if (dir == PF_IN)
 #ifdef __NetBSD__
+		{
 			pf_mtag = pf_find_mtag(m);
 			KASSERT(pf_mtag != NULL);
 
 			pf_mtag->flags |= PF_TAG_FRAGCACHE;
+		}
 #else
 			m->m_pkthdr.pf.flags |= PF_TAG_FRAGCACHE;
 #endif /* !__NetBSD__ */

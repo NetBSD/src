@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.c,v 1.16 2006/03/01 17:34:08 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.c,v 1.9 2021/12/10 20:36:04 andvar Exp $ */
+/*	$NetBSD: dccp_tfrc.c,v 1.10 2023/08/07 23:28:58 mrg Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.9 2021/12/10 20:36:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.10 2023/08/07 23:28:58 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -128,10 +128,10 @@ const struct timeval delta_half = {0, TFRC_OPSYS_TIME_GRAN / 2};
  */
 #define HALFTIMEVAL(tvp) \
         do { \
-		if ((tvp)->tv_sec & 1)							\
-			(tvp)->tv_usec += 1000000;					\
-			(tvp)->tv_sec = (tvp)->tv_sec >> 1;			\
-			(tvp)->tv_usec = (tvp)->tv_usec >> 1;		\
+		if ((tvp)->tv_sec & 1)				\
+			(tvp)->tv_usec += 1000000;		\
+		(tvp)->tv_sec = (tvp)->tv_sec >> 1;		\
+		(tvp)->tv_usec = (tvp)->tv_usec >> 1;		\
         } while (0)
 
 /* Sender side */
