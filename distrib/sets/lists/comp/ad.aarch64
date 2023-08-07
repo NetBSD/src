@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.49 2023/08/04 08:54:00 mrg Exp $
+# $NetBSD: ad.aarch64,v 1.50 2023/08/07 00:45:47 rin Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -153,10 +153,10 @@
 ./usr/include/gcc-8/arm_fp16.h			comp-c-include		obsolete
 ./usr/include/gcc-8/arm_neon.h			comp-c-include		obsolete
 ./usr/include/gcc-8/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-9/arm_acle.h			comp-c-include		gcc=9
-./usr/include/gcc-9/arm_fp16.h			comp-c-include		gcc=9
-./usr/include/gcc-9/arm_neon.h			comp-c-include		gcc=9
-./usr/include/gcc-9/tgmath.h			comp-c-include		gcc=9
+./usr/include/gcc-9/arm_acle.h			comp-c-include		obsolete
+./usr/include/gcc-9/arm_fp16.h			comp-c-include		obsolete
+./usr/include/gcc-9/arm_neon.h			comp-c-include		obsolete
+./usr/include/gcc-9/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-10/arm_acle.h			comp-c-include		gcc=10
 ./usr/include/gcc-10/arm_bf16.h			comp-c-include		gcc=10
 ./usr/include/gcc-10/arm_fp16.h			comp-c-include		gcc=10
