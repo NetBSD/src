@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.218 2023/08/07 09:41:56 riastradh Exp $	*/
+/*	$NetBSD: lwp.h,v 1.219 2023/08/07 10:31:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -539,8 +539,9 @@ CURCPU_IDLE_P(void)
 static __inline void
 KPREEMPT_DISABLE(lwp_t *l)
 {
+	struct lwp *l1 __diagused;
 
-	KASSERTMSG(l == curlwp, "l=%p curlwp=%p", l, curlwp);
+	KASSERTMSG(l == (l1 = curlwp), "l=%p curlwp=%p", l, l1);
 	l->l_nopreempt++;
 	__insn_barrier();
 }
@@ -548,8 +549,9 @@ KPREEMPT_DISABLE(lwp_t *l)
 static __inline void
 KPREEMPT_ENABLE(lwp_t *l)
 {
+	struct lwp *l1 __diagused;
 
-	KASSERTMSG(l == curlwp, "l=%p curlwp=%p", l, curlwp);
+	KASSERTMSG(l == (l1 = curlwp), "l=%p curlwp=%p", l, l1);
 	KASSERT(l->l_nopreempt > 0);
 	__insn_barrier();
 	if (--l->l_nopreempt != 0)
