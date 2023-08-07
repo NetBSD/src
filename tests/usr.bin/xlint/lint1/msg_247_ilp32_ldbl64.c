@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247_ilp32_ldbl64.c,v 1.4 2023/07/08 16:13:00 rillig Exp $	*/
+/*	$NetBSD: msg_247_ilp32_ldbl64.c,v 1.5 2023/08/07 22:30:39 rillig Exp $	*/
 # 3 "msg_247_ilp32_ldbl64.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -6,8 +6,10 @@
 // In non-portable mode, lint warns based on the actual type sizes.
 //
 // See also:
+//	msg_247.c
 //	msg_247_lp64_ldbl128.c
 //	msg_247_portable.c
+//	msg_247_portable_int.c
 
 /* lint1-only-if: ilp32 ldbl64 */
 /* lint1-extra-flags: -c -X 351 */
