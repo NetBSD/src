@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.18 2023/05/06 21:34:40 andvar Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.19 2023/08/07 23:29:22 mrg Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.18 2023/05/06 21:34:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.19 2023/08/07 23:29:22 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ static u_int16_t read_2(struct vrc4172gpio_softc *, bus_addr_t);
 static void write_2(struct vrc4172gpio_softc *, bus_addr_t, u_int16_t);
 static u_int32_t read_4(struct vrc4172gpio_softc *, bus_addr_t);
 static void write_4(struct vrc4172gpio_softc *, bus_addr_t, u_int32_t);
-static void dumpbits(u_int32_t*, int, int, int, const char[2]);
+static void dumpbits(u_int32_t*, int, int, int, const char *);
 
 static struct hpcio_chip vrc4172gpio_iochip = {
 	.hc_portread =		vrc4172gpio_port_read,
