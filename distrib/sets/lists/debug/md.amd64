@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.118 2023/08/05 03:13:57 pgoyette Exp $
+# $NetBSD: md.amd64,v 1.119 2023/08/07 16:14:32 riastradh Exp $
 ./usr/libdata/debug/usr/bin/gdbserver.debug	base-util-debug		gdb,debug
 ./usr/lib/i386/12.202++_g.a			comp-c-debuglib		debuglib,compat,12.202xx
 ./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
@@ -12,7 +12,8 @@
 ./usr/libdata/debug/usr/lib/i386/libpam.so.4.1.debug	comp-compat-shlib	compat,pic,debug,pam
 ./usr/libdata/debug/usr/lib/i386/libproc.so.1.0.debug	comp-compat-shlib	compat,pic,debug,dtrace
 ./usr/libdata/debug/usr/lib/i386/librtld_db.so.0.0.debug	comp-compat-shlib	compat,pic,debug,dtrace
-./usr/libdata/debug/usr/lib/libtsan.so.1.0.debug		comp-sys-debug	debug,cxx,gcc
+./usr/libdata/debug/usr/lib/libtsan.so.1.0.debug		comp-sys-debug	debug,cxx,gcc=10
+./usr/libdata/debug/usr/lib/libtsan.so.2.0.debug		comp-sys-debug	debug,cxx,gcc=12
 ./usr/libdata/debug/usr/lib/libx86_64.so.0.0.debug	comp-sys-shlib		pic,debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat

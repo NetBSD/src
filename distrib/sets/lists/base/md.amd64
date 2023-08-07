@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.295 2023/08/05 08:55:48 riastradh Exp $
+# $NetBSD: md.amd64,v 1.296 2023/08/07 16:14:31 riastradh Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -23,8 +23,6 @@
 ./usr/lib/libtsan.so				base-sys-shlib		cxx,gcc
 ./usr/lib/libtsan.so.1				base-sys-shlib		cxx,gcc=10
 ./usr/lib/libtsan.so.1.0			base-sys-shlib		cxx,gcc=10
-./usr/lib/libtsan.so.1				base-sys-shlib		cxx,obsolete,gcc=12
-./usr/lib/libtsan.so.1.0			base-sys-shlib		cxx,obsolete,gcc=12
 ./usr/lib/libtsan.so.2				base-sys-shlib		cxx,gcc=12
 ./usr/lib/libtsan.so.2.0			base-sys-shlib		cxx,gcc=12
 ./usr/lib/libx86_64.so				base-sys-shlib		pic
