@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_pci.c,v 1.11 2022/07/18 23:34:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_pci.c,v 1.12 2023/08/07 16:34:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.11 2022/07/18 23:34:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.12 2023/08/07 16:34:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.11 2022/07/18 23:34:02 riastradh Ex
 #include <drm/drm_device.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_fb_helper.h>
+#include <drm/drm_ioctl.h>
 #include <drm/drm_pci.h>
 
 #include <amdgpu.h>
@@ -260,6 +261,8 @@ amdgpu_do_suspend(device_t self, const pmf_qual_t *qual)
 	struct drm_device *const dev = sc->sc_drm_dev;
 	int ret;
 
+	drm_suspend_ioctl(dev);
+
 	ret = amdgpu_device_suspend(dev, /*fbcon*/true);
 	if (ret)
 		return false;
@@ -276,9 +279,10 @@ amdgpu_do_resume(device_t self, const pmf_qual_t *qual)
 
 	ret = amdgpu_device_resume(dev, /*fbcon*/true);
 	if (ret)
-		return false;
+		goto out;
 
-	return true;
+out:	drm_resume_ioctl(dev);
+	return ret == 0;
 }
 
 static void
