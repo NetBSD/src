@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.55 2022/01/26 20:22:14 christos Exp $	*/
+/*	$NetBSD: traverse.c,v 1.56 2023/08/07 23:26:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.55 2022/01/26 20:22:14 christos Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.56 2023/08/07 23:26:40 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -780,7 +780,7 @@ appendextdata(union dinode *dp)
 	tbperdb = ufsib->ufs_bsize >> tp_bshift;
 	assert(count + blks < TP_NINDIR);
 	for (i = 0; i < blks; i++)
-		if (&dp->dp2.di_extb[i / tbperdb] != 0)
+		if (dp->dp2.di_extb[i / tbperdb] != 0)
 				spcl.c_addr[count + i] = 1;
 			else
 				spcl.c_addr[count + i] = 0;
