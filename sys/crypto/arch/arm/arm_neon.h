@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.1 2023/08/07 01:07:36 rin Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.2 2023/08/07 01:14:19 rin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -522,7 +522,11 @@ static __inline uint32x4_t
 vshrq_n_u32(uint32x4_t __v, uint8_t __bits)
 {
 #ifdef __aarch64__
+#  if __GNUC_PREREQ__(12, 0)
+	return __builtin_aarch64_lshrv4si_uus(__v, __bits);
+#  else
 	return (uint32x4_t)__builtin_aarch64_lshrv4si((int32x4_t)__v, __bits);
+#  endif
 #else
 	return (uint32x4_t)__builtin_neon_vshru_nv4si((int32x4_t)__v, __bits);
 #endif
@@ -538,7 +542,11 @@ static __inline uint8x16_t
 vshrq_n_u8(uint8x16_t __v, uint8_t __bits)
 {
 #ifdef __aarch64__
+#  if __GNUC_PREREQ__(12, 0)
+	return __builtin_aarch64_lshrv16qi_uus(__v, __bits);
+#  else
 	return (uint8x16_t)__builtin_aarch64_lshrv16qi((int8x16_t)__v, __bits);
+#  endif
 #else
 	return (uint8x16_t)__builtin_neon_vshru_nv16qi((int8x16_t)__v, __bits);
 #endif
