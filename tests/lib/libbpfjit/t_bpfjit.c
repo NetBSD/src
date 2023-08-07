@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.14 2015/02/14 22:40:18 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.15 2023/08/07 23:29:58 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014-2015 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.14 2015/02/14 22:40:18 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.15 2023/08/07 23:29:58 mrg Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -65,7 +65,7 @@ ATF_TC_HEAD(libbpfjit_empty, tc)
 
 ATF_TC_BODY(libbpfjit_empty, tc)
 {
-	struct bpf_insn dummy;
+	struct bpf_insn dummy = { 0 };
 
 	ATF_CHECK(!bpf_validate(&dummy, 0));
 	ATF_CHECK(bpfjit_generate_code(NULL, &dummy, 0) == NULL);
