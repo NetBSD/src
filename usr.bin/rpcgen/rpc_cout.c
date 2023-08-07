@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.38 2016/01/23 02:33:09 dholland Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.39 2023/08/07 21:12:02 tnn Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.38 2016/01/23 02:33:09 dholland Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.39 2023/08/07 21:12:02 tnn Exp $");
 #endif
 #endif
 
@@ -186,7 +186,9 @@ print_ifopen(int indent, const char *name)
 	if (!strcmp(name, "rpcprog_t") || !strcmp(name, "rpcvers_t") ||
 	    !strcmp(name, "rpcproc_t") || !strcmp(name, "rpcprot_t") ||
 	    !strcmp(name, "rpcport_t") || !strcmp(name, "rpcpinline_t")) {
-		strncpy(_t_kludge, name, strlen(name) - 2);
+		strlcpy(_t_kludge, name, sizeof(_t_kludge));
+		char *underscore = strchr(_t_kludge, '_');
+		*underscore = 0;
 		name = _t_kludge;
 	}
 	tabify(fout, indent);
