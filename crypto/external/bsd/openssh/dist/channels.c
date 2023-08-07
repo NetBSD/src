@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.39 2023/07/26 17:58:15 christos Exp $	*/
+/*	$NetBSD: channels.c,v 1.40 2023/08/07 00:44:25 rin Exp $	*/
 /* $OpenBSD: channels.c,v 1.430 2023/03/10 03:01:51 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.39 2023/07/26 17:58:15 christos Exp $");
+__RCSID("$NetBSD: channels.c,v 1.40 2023/08/07 00:44:25 rin Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -449,7 +449,7 @@ channel_new(struct ssh *ssh, const char *ctype, int type, int rfd, int wfd,
     int nonblock)
 {
 	struct ssh_channels *sc = ssh->chanctxt;
-	u_int i, found;
+	u_int i, found = 0 /* XXXGCC12 */;
 	Channel *c;
 	int r;
 
