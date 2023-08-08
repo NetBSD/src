@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.220 2023/07/09 03:57:09 rin Exp $
+#  $NetBSD: Makefile,v 1.221 2023/08/08 02:09:42 rin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -161,6 +161,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 COMMON_SRCS += fenv.c s_nexttoward.c s_rintl.c
 .endif
 .endif
+COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 # end of m68k
 
 .elif (${LIBC_MACHINE_ARCH} == "vax")
