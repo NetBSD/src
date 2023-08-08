@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780var.h,v 1.9 2023/08/08 16:29:00 nat Exp $ */
+/* $NetBSD: hd44780var.h,v 1.10 2023/08/08 16:32:39 nat Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -118,6 +118,7 @@ struct hd44780_chip {
 	void     (* sc_writereg)(struct hd44780_chip *, uint32_t, uint32_t,
 	  uint8_t);
 	uint8_t (* sc_readreg)(struct hd44780_chip *, uint32_t, uint32_t);
+	bool sc_writeonly;		/* Output only device */
 };
 
 #define hd44780_ir_write(sc, en, dat) \
