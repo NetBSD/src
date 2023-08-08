@@ -16,7 +16,7 @@
 __FBSDID("$FreeBSD: head/lib/msun/src/k_rem_pio2.c 342651 2018-12-31 15:43:06Z pfg $");
 #endif
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_rem_pio2.c,v 1.14 2022/08/24 13:51:19 christos Exp $");
+__RCSID("$NetBSD: k_rem_pio2.c,v 1.15 2023/08/08 06:31:17 mrg Exp $");
 #endif
 
 /*
@@ -301,6 +301,11 @@ __kernel_rem_pio2(double *x, double *y, int e0, int nx, int prec)
 {
 	int32_t jz,jx,jv,jp,jk,carry,n,iq[20],i,j,k,m,q0,ih;
 	double z,fw,f[20],fq[20],q[20];
+
+    /* if nx < 2, fq[0] may be accessed uninitialised */
+	if (nx < 2) {
+	    fq[0] = 0;
+	}
 
     /* initialize jk*/
 	jk = init_jk[prec];
