@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.9 2023/08/07 00:35:49 rin Exp $
+$NetBSD: README.gcc12,v 1.10 2023/08/08 06:42:16 mrg Exp $
 
 
 new stuff:
@@ -61,7 +61,7 @@ powerpc		y	y	y	y	?	n[4]		?	?	?
 powerpc64	y	?	?	y	?	?		?	?	?
 sh3eb		y	?	y	y	?	?		?	?	?
 sh3el		y	n[20]	y	y	?	n[8]		?	?	?
-sparc		y	y	y	y	n[atf]	y		y	y	?
+sparc		y	y	y	y	n[21]	y		y	y	?
 sparc64		y	b	y	y	n[16]	y		y	?	?
 vax		y	?	y	y	?	n		?	?	?
 x86_64		y	y	y	y	y[13]	y		y	y	?
@@ -126,7 +126,15 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [20]: Kernel needs -O1 for ffs32() and ffs_nodealloccg() for multi-user boot. Even if the whole kernel is built with -O1, it panics during ATF:
       kernel/t_sysv (92/935): 3 test cases
           msg: [ 3981.4751382] panic: kernel diagnostic assertion "msghdr->msg_spot >= 0" failed: file "../../../../kern/sysv_msg.c", line 426
-[atf]: new failures in ATF, probably crashes
+[21]: asan has v7/v8/atomic issues:
+      ld: /usr/lib/libasan.so: undefined reference to `__sync_val_compare_and_swap_8'
+      nm shows some more:
+	U __sync_add_and_fetch_4
+	U __sync_fetch_and_add_4
+	U __sync_lock_test_and_set_4
+	U __sync_val_compare_and_swap_1
+	U __sync_val_compare_and_swap_4
+      liblsan and libubsan are mssing the _4 and _8 versions, too.
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
