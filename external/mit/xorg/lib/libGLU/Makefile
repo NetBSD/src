@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2021/08/24 03:10:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2023/08/08 06:27:31 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -154,6 +154,9 @@ PKGCONFIG_SED_FLAGS= \
 COPTS.arcsorter.cc+=	-Wno-error
 COPTS.sorter.cc+=	-Wno-error
 COPTS.tobezier.cc+=	-Wno-error
+
+COPTS.varray.cc+=	${CC_WNO_REGISTER}
+COPTS.project.c+=	${CC_WNO_STRINGOP_OVERFLOW}
 
 CWARNFLAGS.clang+=	-Wno-parentheses -Wno-tautological-compare
 CWARNFLAGS.clang+=	-Wno-deprecated-register

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hppa,v 1.8 2020/09/14 16:13:18 skrll Exp $
+# $NetBSD: Makefile.hppa,v 1.9 2023/08/08 06:27:32 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -86,6 +86,9 @@ com_gsc.o clock.o pdc.o autoconf.o machdep.o: Makefile
 ##
 ## (7) misc settings
 ##
+
+# GCC 12 gets this wrong
+COPTS.pdc.c+=	${CC_WNO_ARRAY_BOUNDS}
 
 ##
 ## (8) config(8) generated machinery

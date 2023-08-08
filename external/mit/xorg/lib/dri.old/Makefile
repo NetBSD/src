@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2023/07/15 21:24:46 rjs Exp $
+# $NetBSD: Makefile,v 1.8 2023/08/08 06:27:31 mrg Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -510,6 +510,9 @@ COPTS.brw_eu_compact.c+=	-Wno-error=stack-protector
 COPTS.brw_fs_copy_propagation.cpp+=	-Wno-error=stack-protector
 COPTS.brw_fs.cpp+=	-Wno-error=stack-protector
 COPTS.brw_fs_reg_allocate.cpp+=	-Wno-error=stack-protector
+
+COPTS.prog_opt_constant_fold.c+=	${CC_WNO_STRINGOP_OVERREAD}
+COPTS.s_texfilter.c+=			${CC_WNO_STRINGOP_OVERREAD}
 
 .include <bsd.lib.mk>
 .else

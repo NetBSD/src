@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1351 2023/08/08 03:44:12 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1352 2023/08/08 06:27:32 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -700,6 +700,10 @@ CC_WNO_MAYBE_UNINITIALIZED=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -W
 CC_WNO_RETURN_LOCAL_ADDR=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-return-local-addr :}
 CC_WNO_STRINGOP_OVERFLOW=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-stringop-overflow :}
 CC_WNO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
+CC_WNO_MISSING_TEMPLATE_KEYWORD=${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-missing-template-keyword :}
+CC_WNO_STRINGOP_OVERREAD=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-stringop-overread :}
+CC_WNO_REGISTER=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-register :}
+CC_WNO_ARRAY_BOUNDS=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-array-bounds :}
 
 # For each ${MACHINE_CPU}, list the ports that use it.
 MACHINES.aarch64=	evbarm

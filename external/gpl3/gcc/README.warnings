@@ -1,4 +1,4 @@
-$NetBSD: README.warnings,v 1.3 2023/06/03 09:09:07 lukem Exp $
+$NetBSD: README.warnings,v 1.4 2023/08/08 06:27:33 mrg Exp $
 
 What to do about GCC warnings and NetBSD.
 
@@ -22,7 +22,46 @@ modified for updates to warnings and new warnings.
    COPTS.foo.c += ${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
    COPTS.foo.c += ${CC_WNO_MAYBE_UNINITIALIZED}
    COPTS.foo.c += ${CC_WNO_RETURN_LOCAL_ADDR}
+   COPTS.foo.c += ${CC_WNO_MISSING_TEMPLATE_KEYWORD}
+   COPTS.foo.c += ${CC_WNO_STRINGOP_OVERREAD}
+   COPTS.foo.c += ${CC_WNO_REGISTER}
+   COPTS.foo.c += ${CC_WNO_ARRAY_BOUNDS}
 
+
+new GCC 12 warnings:
+
+  -Wno-missing-template-keyword
+
+      This warning trips on older C++ code, and should only be applyed to 3rd
+      party code.
+
+      bsd.own.mk variable: ${CC_WNO_MISSING_TEMPLATE_KEYWORD}
+     
+  -Wno-stringop-overread
+
+      This warning triggers when array bounds appear to be exceeded.  There
+      maybe some bugs related to this warning in GCC 12.
+
+      bsd.own.mk variable: ${CC_WNO_STRINGOP_OVERREAD}
+     
+  -Wno-register
+
+      This warning triggers in C++17 mode where 'register' has been removed,
+      and should only be applied to 3rd party code.
+
+      bsd.own.mk variable: ${CC_WNO_REGISTER}
+     
+  -Wno-array-bounds
+
+      This warning triggers with a number of code issues that tend to be real
+      problem but require careful adjustments to fix properly, when there are
+      platform related accesses beyond the immediately size and address of
+      known variables (real bugs to fix), but also may trigger when passing
+      C arrays vs C pointers to functions, often incorrectly.  See
+	https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110878
+
+      bsd.own.mk variable: ${CC_WNO_ARRAY_BOUNDS}
+     
 
 new GCC 10 warnings:
 
