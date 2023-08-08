@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2020/09/08 17:35:27 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.7 2023/08/08 06:27:32 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -79,5 +79,16 @@ SRCS.t_aes+=	aes_via.c
 .endif				# x86
 
 WARNS=		5
+
+# Many of these are probably GCC bugs, see
+#   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110878
+COPTS.aes_armv8.c+=	${CC_WNO_STRINGOP_OVERREAD} ${CC_WNO_STRINGOP_OVERFLOW}
+COPTS.aes_bear.c+=	${CC_WNO_STRINGOP_OVERFLOW} ${CC_WNO_ARRAY_BOUNDS}
+COPTS.aes_neon_subr.c+=	${CC_WNO_ARRAY_BOUNDS}
+
+COPTS.aes_ni.c+=	${CC_WNO_STRINGOP_OVERREAD} ${CC_WNO_STRINGOP_OVERFLOW}
+COPTS.aes_sse2_subr.c+=	${CC_WNO_ARRAY_BOUNDS}
+COPTS.aes_ssse3_subr.c+=${CC_WNO_ARRAY_BOUNDS}
+COPTS.aes_via.c+=	${CC_WNO_ARRAY_BOUNDS}
 
 .include <bsd.test.mk>

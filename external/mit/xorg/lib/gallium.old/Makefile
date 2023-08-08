@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2023/07/15 21:24:46 rjs Exp $
+# $NetBSD: Makefile,v 1.7 2023/08/08 06:27:31 mrg Exp $
 
 # Transparent struct/union broken
 NOLINT=yes
@@ -1215,7 +1215,16 @@ COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
 COPTS.nir.c += -O1
 .endif
 
+# XXXGCC12
+.if ${MACHINE_ARCH} == "m68k"
+COPTS.st_glsl_to_tgsi.cpp += -O1
+COPTS.vl_bicubic_filter.c += -O1
+COPTS.nir_opt_algebraic.c += -Os -fno-jump-tables
+.endif
+
 COPTS.u_atomic.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-builtin-declaration-mismatch :}
+
+COPTS.prog_opt_constant_fold.c+=	${CC_WNO_STRINGOP_OVERREAD}
 
 .include <bsd.lib.mk>
 # Don't regenerate c files
