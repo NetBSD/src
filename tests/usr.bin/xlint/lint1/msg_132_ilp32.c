@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132_ilp32.c,v 1.4 2023/08/08 19:57:23 rillig Exp $	*/
+/*	$NetBSD: msg_132_ilp32.c,v 1.5 2023/08/08 20:15:11 rillig Exp $	*/
 # 3 "msg_132_ilp32.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -76,9 +76,7 @@ convert_all(void)
 	char_var = uchar_var;
 	char_var = short_var;
 	char_var = ushort_var;
-	/* expect+1: warning: conversion from 'int' to 'char' may lose accuracy [132] */
 	char_var = int_var;
-	/* expect+1: warning: conversion from 'unsigned int' to 'char' may lose accuracy [132] */
 	char_var = uint_var;
 	/* expect+1: warning: conversion from 'long' to 'char' may lose accuracy [132] */
 	char_var = long_var;
@@ -95,9 +93,7 @@ convert_all(void)
 	schar_var = uchar_var;
 	schar_var = short_var;
 	schar_var = ushort_var;
-	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
 	schar_var = int_var;
-	/* expect+1: warning: conversion from 'unsigned int' to 'signed char' may lose accuracy [132] */
 	schar_var = uint_var;
 	/* expect+1: warning: conversion from 'long' to 'signed char' may lose accuracy [132] */
 	schar_var = long_var;
@@ -114,9 +110,7 @@ convert_all(void)
 	uchar_var = uchar_var;
 	uchar_var = short_var;
 	uchar_var = ushort_var;
-	/* expect+1: warning: conversion from 'int' to 'unsigned char' may lose accuracy [132] */
 	uchar_var = int_var;
-	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned char' may lose accuracy [132] */
 	uchar_var = uint_var;
 	/* expect+1: warning: conversion from 'long' to 'unsigned char' may lose accuracy [132] */
 	uchar_var = long_var;
@@ -133,9 +127,7 @@ convert_all(void)
 	short_var = uchar_var;
 	short_var = short_var;
 	short_var = ushort_var;
-	/* expect+1: warning: conversion from 'int' to 'short' may lose accuracy [132] */
 	short_var = int_var;
-	/* expect+1: warning: conversion from 'unsigned int' to 'short' may lose accuracy [132] */
 	short_var = uint_var;
 	/* expect+1: warning: conversion from 'long' to 'short' may lose accuracy [132] */
 	short_var = long_var;
@@ -152,9 +144,7 @@ convert_all(void)
 	ushort_var = uchar_var;
 	ushort_var = short_var;
 	ushort_var = ushort_var;
-	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
 	ushort_var = int_var;
-	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned short' may lose accuracy [132] */
 	ushort_var = uint_var;
 	/* expect+1: warning: conversion from 'long' to 'unsigned short' may lose accuracy [132] */
 	ushort_var = long_var;

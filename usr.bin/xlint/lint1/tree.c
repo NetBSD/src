@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.576 2023/08/05 10:13:39 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.577 2023/08/08 20:15:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.576 2023/08/05 10:13:39 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.577 2023/08/08 20:15:10 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3386,6 +3386,27 @@ can_represent(const type_t *tp, const tnode_t *tn)
 	return false;
 }
 
+static bool
+should_warn_about_integer_conversion(const type_t *ntp, tspec_t nt,
+				     const tnode_t *otn, tspec_t ot)
+{
+
+	// XXX: The portable_rank_cmp aims at portable mode, independent of the
+	// current platform, while can_represent acts on the actual type sizes
+	// from the current platform.  This mix is inconsistent, but anything
+	// else would make the exact conditions too complicated to grasp.
+	if (aflag > 0 && portable_rank_cmp(nt, ot) < 0) {
+		if (ot == LONG || ot == ULONG
+		    || ot == LLONG || ot == ULLONG
+#ifdef INT128_SIZE
+		    || ot == INT128 || ot == UINT128
+#endif
+		    || aflag > 1)
+			return !can_represent(ntp, otn);
+	}
+	return false;
+}
+
 static void
 convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 			     type_t *tp, tnode_t *tn)
@@ -3417,15 +3438,7 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 		    op_name(tn->tn_op));
 	}
 
-	if (aflag > 0 &&
-	    portable_rank_cmp(nt, ot) < 0 &&
-	    (portable_rank_cmp(ot, LONG) >= 0 || aflag > 1) &&
-	     // XXX: The portable_rank_cmp above aims at portable mode,
-	     // independent of the current platform, while can_represent acts
-	     // on the actual type sizes from the current platform.  This mix
-	     // is inconsistent, but anything else would make the exact
-	     // conditions too complicated to grasp.
-	    !can_represent(tp, tn)) {
+	if (should_warn_about_integer_conversion(tp, nt, tn, ot)) {
 		if (op == FARG) {
 			/* conversion from '%s' to '%s' may lose ... */
 			warning(298,
