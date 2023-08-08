@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.23 2023/08/08 16:32:39 nat Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.24 2023/08/08 17:31:13 nat Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.23 2023/08/08 16:32:39 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.24 2023/08/08 17:31:13 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,7 +458,8 @@ hd44780_chipinit(struct hd44780_chip *sc, uint32_t en)
 	hd44780_ir_write(sc, en, cmd_ddramset(0x5));
 	hd44780_ir_write(sc, en, cmd_shift(0, 1));
 	hd44780_busy_wait(sc, en);
-	if (!sc->sc_writeonly && (dat = hd44780_ir_read(sc, en) & 0x7f) != 0x6) {
+	if (!(sc->sc_flags & HD_WRITEONLY) &&
+	    (dat = hd44780_ir_read(sc, en) & 0x7f) != 0x6) {
 		sc->sc_dev_ok = 0;
 		sc->sc_flags &= ~HD_UP;
 		return EIO;
