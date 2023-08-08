@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc.c,v 1.8 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: apple_smc.c,v 1.9 2023/08/08 05:20:14 mrg Exp $	*/
 
 /*
  * Apple System Management Controller
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.8 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.9 2023/08/08 05:20:14 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -476,7 +476,7 @@ apple_smc_release_key(struct apple_smc_tag *smc, struct apple_smc_key *key)
 }
 
 int
-apple_smc_key_search(struct apple_smc_tag *smc, const char *name,
+apple_smc_key_search(struct apple_smc_tag *smc, const char name[4 + 1],
     uint32_t *result)
 {
 	struct apple_smc_key *key;
