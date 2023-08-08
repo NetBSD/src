@@ -1,4 +1,4 @@
-/*	$NetBSD: output_cdb.c,v 1.2 2023/08/07 20:21:08 tnn Exp $	*/
+/*	$NetBSD: output_cdb.c,v 1.3 2023/08/08 10:35:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ cdb_close(void)
 	rv = 0;
 	serrno = errno;
 
-	if (cdbw_output(cdbw, cdbw_fd, "services(5)\0\0\0\0", NULL)) {
+	if (cdbw_output(cdbw, cdbw_fd, "services(5)", NULL)) {
 		rv = -1;
 		serrno = errno;
 	}
