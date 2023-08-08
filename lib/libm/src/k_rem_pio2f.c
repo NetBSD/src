@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_rem_pio2f.c,v 1.9 2017/06/22 12:43:43 maya Exp $");
+__RCSID("$NetBSD: k_rem_pio2f.c,v 1.10 2023/08/08 06:31:17 mrg Exp $");
 #endif
 
 #include "namespace.h"
@@ -52,6 +52,11 @@ __kernel_rem_pio2f(float *x, float *y, int e0, int nx, int prec, const int32_t *
 {
 	int32_t jz,jx,jv,jp,jk,carry,n,iq[20],i,j,k,m,q0,ih;
 	float z,fw,f[20],fq[20],q[20];
+
+    /* if nx < 2, fq[0] may be accessed uninitialised */
+	if (nx < 2) {
+	    fq[0] = 0;
+	}
 
     /* initialize jk*/
 	jk = init_jk[prec];
