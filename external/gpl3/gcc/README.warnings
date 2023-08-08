@@ -1,4 +1,4 @@
-$NetBSD: README.warnings,v 1.4 2023/08/08 06:27:33 mrg Exp $
+$NetBSD: README.warnings,v 1.5 2023/08/08 11:50:22 riastradh Exp $
 
 What to do about GCC warnings and NetBSD.
 
@@ -36,21 +36,21 @@ new GCC 12 warnings:
       party code.
 
       bsd.own.mk variable: ${CC_WNO_MISSING_TEMPLATE_KEYWORD}
-     
+
   -Wno-stringop-overread
 
       This warning triggers when array bounds appear to be exceeded.  There
       maybe some bugs related to this warning in GCC 12.
 
       bsd.own.mk variable: ${CC_WNO_STRINGOP_OVERREAD}
-     
+
   -Wno-register
 
       This warning triggers in C++17 mode where 'register' has been removed,
       and should only be applied to 3rd party code.
 
       bsd.own.mk variable: ${CC_WNO_REGISTER}
-     
+
   -Wno-array-bounds
 
       This warning triggers with a number of code issues that tend to be real
@@ -61,7 +61,7 @@ new GCC 12 warnings:
 	https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110878
 
       bsd.own.mk variable: ${CC_WNO_ARRAY_BOUNDS}
-     
+
 
 new GCC 10 warnings:
 
