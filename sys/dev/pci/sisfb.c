@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sisfb.c,v 1.8 2021/09/21 14:47:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sisfb.c,v 1.9 2023/08/08 06:57:20 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -694,6 +694,8 @@ sisfb_getcmap(uint8_t *cmap, struct wsdisplay_cmap *cm)
 	dst = ramp;
 	for (i = 0; i < count; i++)
 		*dst++ = *src, src += 3;
+	for (; i < sizeof(ramp); i++)
+		*dst++ = 0;
 	rc = copyout(ramp, cm->red, count);
 	if (rc != 0)
 		return rc;
