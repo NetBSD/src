@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.29 2022/10/16 16:44:15 rillig Exp $	*/
+/*	$NetBSD: timed.c,v 1.30 2023/08/08 06:31:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.29 2022/10/16 16:44:15 rillig Exp $");
+__RCSID("$NetBSD: timed.c,v 1.30 2023/08/08 06:31:58 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -688,7 +688,8 @@ add_good_host(const char* name,
 		exit(EXIT_FAILURE);
 	}
 
-	(void)strncpy(&ghp->name[0], name, sizeof(ghp->name));
+	(void)strncpy(&ghp->name[0], name, sizeof(ghp->name) - 1);
+	ghp->name[sizeof(ghp->name) - 1] = 0;
 	ghp->next = goodhosts;
 	ghp->perm = perm;
 	goodhosts = ghp;
