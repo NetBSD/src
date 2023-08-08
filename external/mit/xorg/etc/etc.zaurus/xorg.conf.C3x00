@@ -1,4 +1,4 @@
-# $NetBSD: xorg.conf.C3x00,v 1.3 2023/08/08 14:34:21 tsutsui Exp $
+# $NetBSD: xorg.conf.C3x00,v 1.4 2023/08/08 14:38:44 tsutsui Exp $
 
 Section "ServerLayout"
 	Identifier	"wsfb"
@@ -6,7 +6,7 @@ Section "ServerLayout"
 	InputDevice	"TouchScreen0" "CorePointer"
 	InputDevice	"Keyboard0" "CoreKeyboard"
 EndSection
-	
+
 Section "Files"
 #	FontPath	"/usr/pkg/share/fonts/X11/TTF/"
 EndSection
