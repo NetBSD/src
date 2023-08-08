@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.30 2023/08/01 07:57:17 mrg Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.31 2023/08/08 10:35:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dev_mkdb.c,v 1.30 2023/08/01 07:57:17 mrg Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.31 2023/08/08 10:35:37 riastradh Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -76,7 +76,7 @@ cdb_close(void)
 	fd = open(db_name_tmp, O_CREAT|O_EXCL|O_WRONLY, FILE_PERMISSION);
 	if (fd == -1)
 		err(1, "opening %s failed", db_name_tmp);
-	if (cdbw_output(db, fd, "NetBSD6 devdb\0\0", NULL))
+	if (cdbw_output(db, fd, "NetBSD6 devdb", NULL))
 		err(1, "failed to write temporary database %s", db_name_tmp);
 	cdbw_close(db);
 	db = NULL;
