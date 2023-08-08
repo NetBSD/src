@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.26 2023/08/01 07:57:17 mrg Exp $	*/
+/*	$NetBSD: npftest.c,v 1.27 2023/08/08 10:35:48 riastradh Exp $	*/
 
 /*
  * NPF testing framework.
@@ -147,7 +147,7 @@ generate_test_cdb(size_t *size)
 	if (cdbw_put(cdbw, &addr, alen, &addr, alen) == -1)
 		err(EXIT_FAILURE, "cdbw_put");
 
-	if (cdbw_output(cdbw, fd, "npf-table-cdb\0\0", NULL) == -1) {
+	if (cdbw_output(cdbw, fd, "npf-table-cdb", NULL) == -1) {
 		err(EXIT_FAILURE, "cdbw_output");
 	}
 	cdbw_close(cdbw);
