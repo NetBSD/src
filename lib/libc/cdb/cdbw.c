@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbw.c,v 1.8 2022/04/19 20:32:14 rillig Exp $	*/
+/*	$NetBSD: cdbw.c,v 1.9 2023/08/08 10:34:08 riastradh Exp $	*/
 /*-
  * Copyright (c) 2009, 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbw.c,v 1.8 2022/04/19 20:32:14 rillig Exp $");
+__RCSID("$NetBSD: cdbw.c,v 1.9 2023/08/08 10:34:08 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -602,7 +602,7 @@ print_hash(struct cdbw *cdbw, struct state *state, int fd, const char *descr)
 }
 
 int
-cdbw_output(struct cdbw *cdbw, int fd, const char descr[16],
+cdbw_output(struct cdbw *cdbw, int fd, const char *descr,
     uint32_t (*seedgen)(void))
 {
 	struct state state;
