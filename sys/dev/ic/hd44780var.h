@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780var.h,v 1.8 2015/09/06 06:01:00 dholland Exp $ */
+/* $NetBSD: hd44780var.h,v 1.9 2023/08/08 16:29:00 nat Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -136,6 +136,7 @@ struct hd44780_chip {
 	(sc)->sc_readreg((sc), (en), 1)
 
 void hd44780_attach_subr(struct hd44780_chip *);
+void hd44780_detach(struct hd44780_chip *);
 void hd44780_busy_wait(struct hd44780_chip *, uint32_t);
 int  hd44780_init(struct hd44780_chip *);
 int  hd44780_chipinit(struct hd44780_chip *, uint32_t);

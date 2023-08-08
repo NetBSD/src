@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.21 2010/11/13 13:52:01 uebayasi Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.22 2023/08/08 16:29:00 nat Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.21 2010/11/13 13:52:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.22 2023/08/08 16:29:00 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,6 +391,15 @@ hd44780_attach_subr(struct hd44780_chip *sc)
 	sc->sc_curchip = 0;
 	callout_init(&sc->redraw, 0);
 	callout_setfunc(&sc->redraw, hlcd_redraw, sc);
+}
+
+void hd44780_detach(struct hd44780_chip *sc)
+{
+	callout_stop(&sc->redraw);
+	callout_destroy(&sc->redraw);
+
+	if (sc->sc_screen.image)
+		free(sc->sc_screen.image, M_DEVBUF);
 }
 
 int hd44780_init(struct hd44780_chip *sc)
