@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.415 2023/08/04 20:56:08 riastradh Exp $
+# $NetBSD: mi,v 1.416 2023/08/08 06:22:31 rin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -68,9 +68,9 @@
 ./usr/lib/libfido2_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libfl_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libform_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcccmds
+./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgcc_g.a				comp-c-debuglib		debuglib,compatfile,gcc
-./usr/lib/libgcc_s_g.a				comp-c-debuglib		debuglib,compatfile,gcccmds
+./usr/lib/libgcc_s_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgcov_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgnuctf_g.a				comp-c-debuglib		debuglib,compatfile,binutils
 ./usr/lib/libgnumalloc_g.a			comp-c-debuglib		debuglib,compatfile
