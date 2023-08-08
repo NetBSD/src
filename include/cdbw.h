@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbw.h,v 1.2 2012/06/03 21:21:45 joerg Exp $	*/
+/*	$NetBSD: cdbw.h,v 1.3 2023/08/08 10:34:08 riastradh Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,7 +50,7 @@ int		 cdbw_put_data(struct cdbw *, const void *, size_t,
 int		 cdbw_put_key(struct cdbw *, const void *, size_t,
     uint32_t);
 uint32_t	 cdbw_stable_seeder(void);
-int		 cdbw_output(struct cdbw *, int, const char[16],
+int		 cdbw_output(struct cdbw *, int, const char *,
     uint32_t (*)(void));
 void		 cdbw_close(struct cdbw *);
 

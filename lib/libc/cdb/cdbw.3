@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdbw.3,v 1.8 2014/02/06 15:50:40 rmind Exp $
+.\"	$NetBSD: cdbw.3,v 1.9 2023/08/08 10:34:08 riastradh Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,7 +74,7 @@
 .Fo cdbw_output
 .Fa "struct cdbw *cdbw"
 .Fa "int output"
-.Fa "const char descr[16]"
+.Fa "const char *descr"
 .Fa "uint32_t (*seedgen)(void)"
 .Fc
 .Ft void
@@ -113,7 +113,8 @@ computes the database file and writes it to the given descriptor.
 The function returns an error if the file cannot be written correctly.
 The
 .Fa descr
-parameter provides a human readable description of the database content.
+parameter, a string of up to 16 bytes, provides a human readable
+description of the database content.
 The
 .Fa seedgen
 parameter can be used to override the default PRNG.
