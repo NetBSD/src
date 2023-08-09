@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.118 2023/08/09 08:38:05 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.119 2023/08/09 08:38:16 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.118 2023/08/09 08:38:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.119 2023/08/09 08:38:16 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -811,6 +811,7 @@ xennetback_evthandler(void *arg)
 	    (IFF_UP | IFF_RUNNING));
 
 	XENPRINTF(("xennetback_evthandler "));
+again:
 	while (1) {
 		/*
 		 * XXX The xen_rmb here and comment make no sense:
@@ -819,16 +820,7 @@ xennetback_evthandler(void *arg)
 		xen_rmb(); /* be sure to read the request before updating */
 		/* XXX Unclear what this xen_wmb is for.  */
 		xen_wmb();
-		/*
-		 * XXX RING_FINAL_CHECK_FOR_REQUESTS issues the most
-		 * expensive memory barrier, xen_mb.  This should be
-		 * used only at the end of the loop after we updating
-		 * the producer with the last index of the requests we
-		 * consumed in the queue.
-		 */
-		RING_FINAL_CHECK_FOR_REQUESTS(&xneti->xni_txring,
-		    receive_pending);
-		if (receive_pending == 0)
+		if (!RING_HAS_UNCONSUMED_REQUESTS(&xneti->xni_txring))
 			break;
 		/*
 		 * Ensure we have read the producer's queue index in
@@ -981,6 +973,9 @@ mbuf_fail:
 			queued = 0;
 		}
 	}
+	RING_FINAL_CHECK_FOR_REQUESTS(&xneti->xni_txring, receive_pending);
+	if (receive_pending)
+		goto again;
 	if (m0) {
 		/* Queue empty, and still unfinished multi-fragment request */
 		printf("%s: dropped unfinished multi-fragment\n",
