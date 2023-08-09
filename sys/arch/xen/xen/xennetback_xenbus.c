@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.117 2023/08/09 08:37:55 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.118 2023/08/09 08:38:05 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.117 2023/08/09 08:37:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.118 2023/08/09 08:38:05 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -805,21 +805,18 @@ xennetback_evthandler(void *arg)
 	netif_tx_request_t txreq;
 	struct mbuf *m, *m0 = NULL, *mlast = NULL;
 	int receive_pending;
-	RING_IDX req_cons;
 	int queued = 0, m0_len = 0;
 	struct xnetback_xstate *xst;
 	const bool discard = ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
 	    (IFF_UP | IFF_RUNNING));
 
 	XENPRINTF(("xennetback_evthandler "));
-	req_cons = xneti->xni_txring.req_cons;
 	while (1) {
 		/*
 		 * XXX The xen_rmb here and comment make no sense:
 		 * xneti->xni_txring.req_cons is a private variable.
 		 */
 		xen_rmb(); /* be sure to read the request before updating */
-		xneti->xni_txring.req_cons = req_cons;
 		/* XXX Unclear what this xen_wmb is for.  */
 		xen_wmb();
 		/*
@@ -840,13 +837,14 @@ xennetback_evthandler(void *arg)
 		 * RING_COPY_REQUEST.
 		 */
 		xen_rmb();
-		RING_COPY_REQUEST(&xneti->xni_txring, req_cons,
+		RING_COPY_REQUEST(&xneti->xni_txring,
+		    xneti->xni_txring.req_cons,
 		    &txreq);
 		/* XXX Unclear what this xen_rmb is for. */
 		xen_rmb();
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname,
 		    txreq.size));
-		req_cons++;
+		xneti->xni_txring.req_cons++;
 		if (__predict_false(discard)) {
 			/* interface not up, drop all requests */
 			if_statinc(ifp, if_iqdrops);
@@ -895,7 +893,7 @@ mbuf_fail:
 			 */
 			int cnt;
 			m0_len = xennetback_tx_m0len_fragment(xneti,
-			    txreq.size, req_cons, &cnt);
+			    txreq.size, xneti->xni_txring.req_cons, &cnt);
 			m->m_len = m0_len;
 			KASSERT(cnt <= XEN_NETIF_NR_SLOTS_MIN);
 
@@ -961,7 +959,8 @@ mbuf_fail:
 
 		XENPRINTF(("%s pkt offset %d size %d id %d req_cons %d\n",
 		    xneti->xni_if.if_xname, txreq.offset,
-		    txreq.size, txreq.id, req_cons & (RING_SIZE(&xneti->xni_txring) - 1)));
+		    txreq.size, txreq.id,
+		    xneti->xni_txring.req_cons & (RING_SIZE(&xneti->xni_txring) - 1)));
 
 		xst = &xneti->xni_xstate[queued];
 		xst->xs_m = (m0 == NULL || m == m0) ? m : NULL;
