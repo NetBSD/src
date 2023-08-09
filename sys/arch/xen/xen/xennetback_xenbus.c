@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.122 2023/08/09 08:38:47 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.123 2023/08/09 08:38:57 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.122 2023/08/09 08:38:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.123 2023/08/09 08:38:57 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -497,9 +497,7 @@ xennetback_connect(struct xnetback_instance *xneti)
 		goto err2;
 	}
 	xneti->xni_evtchn = evop.u.bind_interdomain.local_port;
-	xen_wmb();
 	xneti->xni_status = CONNECTED;
-	xen_wmb();
 
 	xneti->xni_ih = xen_intr_establish_xname(-1, &xen_pic,
 	    xneti->xni_evtchn, IST_LEVEL, IPL_NET, xennetback_evthandler,
