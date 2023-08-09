@@ -1,4 +1,4 @@
-/*	$NetBSD: t_workqueue.c,v 1.3 2023/08/09 08:23:03 riastradh Exp $	*/
+/*	$NetBSD: t_workqueue.c,v 1.4 2023/08/09 08:23:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -88,7 +88,6 @@ ATF_TC_HEAD(workqueue_wait_pause, tc)
 ATF_TC_BODY(workqueue_wait_pause, tc)
 {
 
-	atf_tc_expect_fail("PR kern/57574");
 	REQUIRE_LIBC(signal(SIGSEGV, &sigsegv), SIG_ERR);
 
 	rump_init();

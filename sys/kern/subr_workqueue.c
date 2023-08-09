@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.41 2022/10/29 11:41:00 riastradh Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.42 2023/08/09 08:23:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.41 2022/10/29 11:41:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.42 2023/08/09 08:23:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -51,7 +51,7 @@ struct workqueue_queue {
 	kmutex_t q_mutex;
 	kcondvar_t q_cv;
 	struct workqhead q_queue_pending;
-	struct workqhead q_queue_running;
+	uint64_t q_gen;
 	lwp_t *q_worker;
 };
 
@@ -161,6 +161,8 @@ workqueue_worker(void *cookie)
 	if (wq->wq_flags & WQ_FPU)
 		s = kthread_fpu_enter();
 	for (;;) {
+		struct workqhead tmp;
+
 		/*
 		 * we violate abstraction of SIMPLEQ.
 		 */
@@ -168,18 +170,25 @@ workqueue_worker(void *cookie)
 		mutex_enter(&q->q_mutex);
 		while (SIMPLEQ_EMPTY(&q->q_queue_pending))
 			cv_wait(&q->q_cv, &q->q_mutex);
-		KASSERT(SIMPLEQ_EMPTY(&q->q_queue_running));
-		q->q_queue_running.sqh_first =
-		    q->q_queue_pending.sqh_first; /* XXX */
+		tmp.sqh_first = q->q_queue_pending.sqh_first; /* XXX */
 		SIMPLEQ_INIT(&q->q_queue_pending);
+
+		/*
+		 * Mark the queue as actively running a batch of work
+		 * by setting the generation number odd.
+		 */
+		q->q_gen |= 1;
 		mutex_exit(&q->q_mutex);
 
-		workqueue_runlist(wq, &q->q_queue_running);
+		workqueue_runlist(wq, &tmp);
 
+		/*
+		 * Notify workqueue_wait that we have completed a batch
+		 * of work by incrementing the generation number.
+		 */
 		mutex_enter(&q->q_mutex);
-		KASSERT(!SIMPLEQ_EMPTY(&q->q_queue_running));
-		SIMPLEQ_INIT(&q->q_queue_running);
-		/* Wake up workqueue_wait */
+		KASSERTMSG(q->q_gen & 1, "q=%p gen=%"PRIu64, q, q->q_gen);
+		q->q_gen++;
 		cv_broadcast(&q->q_cv);
 		mutex_exit(&q->q_mutex);
 	}
@@ -212,7 +221,7 @@ workqueue_initqueue(struct workqueue *wq, struct workqueue_queue *q,
 	mutex_init(&q->q_mutex, MUTEX_DEFAULT, ipl);
 	cv_init(&q->q_cv, wq->wq_name);
 	SIMPLEQ_INIT(&q->q_queue_pending);
-	SIMPLEQ_INIT(&q->q_queue_running);
+	q->q_gen = 0;
 	ktf = ((wq->wq_flags & WQ_MPSAFE) != 0 ? KTHREAD_MPSAFE : 0);
 	if (wq->wq_prio < PRI_KERNEL)
 		ktf |= KTHREAD_TS;
@@ -329,25 +338,48 @@ workqueue_q_wait(struct workqueue_queue *q, work_impl_t *wk_target)
 {
 	work_impl_t *wk;
 	bool found = false;
+	uint64_t gen;
 
 	mutex_enter(&q->q_mutex);
+
+	/*
+	 * Avoid a deadlock scenario.  We can't guarantee that
+	 * wk_target has completed at this point, but we can't wait for
+	 * it either, so do nothing.
+	 *
+	 * XXX Are there use-cases that require this semantics?
+	 */
 	if (q->q_worker == curlwp)
 		goto out;
+
+	/*
+	 * Wait until the target is no longer pending.  If we find it
+	 * on this queue, the caller can stop looking in other queues.
+	 * If we don't find it in this queue, however, we can't skip
+	 * waiting -- it may be hidden in the running queue which we
+	 * have no access to.
+	 */
     again:
 	SIMPLEQ_FOREACH(wk, &q->q_queue_pending, wk_entry) {
-		if (wk == wk_target)
-			goto found;
+		if (wk == wk_target) {
+			found = true;
+			cv_wait(&q->q_cv, &q->q_mutex);
+			goto again;
+		}
 	}
-	SIMPLEQ_FOREACH(wk, &q->q_queue_running, wk_entry) {
-		if (wk == wk_target)
-			goto found;
+
+	/*
+	 * The target may be in the batch of work currently running,
+	 * but we can't touch that queue.  So if there's anything
+	 * running, wait until the generation changes.
+	 */
+	gen = q->q_gen;
+	if (gen & 1) {
+		do
+			cv_wait(&q->q_cv, &q->q_mutex);
+		while (gen == q->q_gen);
 	}
-    found:
-	if (wk != NULL) {
-		found = true;
-		cv_wait(&q->q_cv, &q->q_mutex);
-		goto again;
-	}
+
     out:
 	mutex_exit(&q->q_mutex);
 
