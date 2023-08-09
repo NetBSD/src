@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1490 2023/08/09 03:14:53 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1491 2023/08/09 09:57:35 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4389,16 +4389,16 @@ product INTEL CORE5G_M_GT2_1	0x1616	HD Graphics 5500
 product INTEL CORE5G_M_GT2_2	0x161e	HD Graphics 5300
 product INTEL CORE5G_M_GT3_15W	0x1626	HD Graphics 6000
 product INTEL CORE5G_M_GT3_28W	0x162b	Iris Graphics 6100
-product INTEL SNR_E882_C_BP	0x1890	Snow Ridge E882-C for backplane
-product INTEL SNR_E882_C_QSFP	0x1891	Snow Ridge E882-C for QSFP
-product INTEL SNR_E882_C_SFP	0x1892	Snow Ridge E882-C for SFP
-product INTEL SNR_E882_C_10GT	0x1893	Snow Ridge E882-C/X557-AT 10GBASE-T
-product INTEL SNR_E882_C_1G	0x1894	Snow Ridge E882-C 1G
-product INTEL SNR_E882_X	0x1895	Snow Ridge E882-X (for BMSM)
-product INTEL SNR_E882_L_BP	0x1897	Snow Ridge E882-L for backplane
-product INTEL SNR_E882_L_SFP	0x1898	Snow Ridge E882-L for SFP
-product INTEL SNR_E882_L_10GT	0x1899	Snow Ridge E882-L/X557-AT 10GBASE-T
-product INTEL SNR_E882_L_1G	0x189a	Snow Ridge E882-L 1G
+product INTEL SNR_E882_C_BP	0x1890	E882-C for backplane
+product INTEL SNR_E882_C_QSFP	0x1891	E882-C for QSFP
+product INTEL SNR_E882_C_SFP	0x1892	E882-C for SFP
+product INTEL SNR_E882_C_10GT	0x1893	E882-C/X557-AT 10GBASE-T
+product INTEL SNR_E882_C_1G	0x1894	E882-C 1G
+product INTEL SNR_E882_X	0x1895	E882-X (for BMSM)
+product INTEL SNR_E882_L_BP	0x1897	E882-L for backplane
+product INTEL SNR_E882_L_SFP	0x1898	E882-L for SFP
+product INTEL SNR_E882_L_10GT	0x1899	E882-L/X557-AT 10GBASE-T
+product INTEL SNR_E882_L_1G	0x189a	E882-L 1G
 product INTEL SNR_QAT_18	0x18a0	Snow Ridge QAT 1.8
 product INTEL SNR_PCH_C2_RP_11	0x18a2	Snow Ridge PCH PCIe Cluster 2, RP 11
 product INTEL SNR_PCH_C0_RP_0	0x18a4	Snow Ridge PCH PCIe Cluster 0, RP 0
