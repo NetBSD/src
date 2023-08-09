@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.115 2023/08/04 18:41:01 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.116 2023/08/09 08:37:44 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.115 2023/08/04 18:41:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.116 2023/08/09 08:37:44 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -814,15 +814,28 @@ xennetback_evthandler(void *arg)
 	XENPRINTF(("xennetback_evthandler "));
 	req_cons = xneti->xni_txring.req_cons;
 	while (1) {
+		/*
+		 * XXX The xen_rmb here and comment make no sense:
+		 * xneti->xni_txring.req_cons is a private variable.
+		 */
 		xen_rmb(); /* be sure to read the request before updating */
 		xneti->xni_txring.req_cons = req_cons;
+		/* XXX Unclear what this xen_wmb is for.  */
 		xen_wmb();
+		/*
+		 * XXX RING_FINAL_CHECK_FOR_REQUESTS issues the most
+		 * expensive memory barrier, xen_mb.  This should be
+		 * used only at the end of the loop after we updating
+		 * the producer with the last index of the requests we
+		 * consumed in the queue.
+		 */
 		RING_FINAL_CHECK_FOR_REQUESTS(&xneti->xni_txring,
 		    receive_pending);
 		if (receive_pending == 0)
 			break;
 		RING_COPY_REQUEST(&xneti->xni_txring, req_cons,
 		    &txreq);
+		/* XXX Unclear what this xen_rmb is for. */
 		xen_rmb();
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname,
 		    txreq.size));
