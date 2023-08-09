@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.604 2023/07/15 22:16:00 riastradh Exp $
+# $NetBSD: GENERIC,v 1.605 2023/08/09 09:36:26 andvar Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.604 $"
+#ident		"GENERIC-$Revision: 1.605 $"
 
 maxusers	64		# estimated number of users
 
@@ -471,7 +471,8 @@ radeondrmkmsfb* at radeonfbbus?
 nouveau*	at pci? dev ? function ?
 nouveaufb*	at nouveaufbbus?
 
-# DRMUMS drivers
+# DRMUMS drivers -- make them loadable, but not statically linked in
+options 	DRM_LEGACY
 #viadrmums*	at drm?
 
 #options 	DRM_MAX_RESOLUTION_HORIZONTAL=1920	# Limit DRM size in horizontal dimension
