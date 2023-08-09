@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.107 2023/07/31 01:48:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.108 2023/08/09 18:57:04 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -171,22 +171,7 @@ native-gcc: .native/.configure_done
 		${MACHINE_GNU_PLATFORM} ${GCC_MACHINE_ARCH} ${DESTDIR} ${TOOLDIR}
 
 NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
-MPC=		${NETBSDSRCDIR}/external/lgpl3/mpc
-MPFR=		${NETBSDSRCDIR}/external/lgpl3/mpfr
-GMP=		${NETBSDSRCDIR}/external/lgpl3/gmp
-MPCOBJ!=	cd ${MPC}/lib/libmpc && ${PRINTOBJDIR}
-MPFROBJ!=	cd ${MPFR}/lib/libmpfr && ${PRINTOBJDIR}
-GMPOBJ!=	cd ${GMP}/lib/libgmp && ${PRINTOBJDIR}
-
-.include "../../external/lgpl3/gmp/Makefile.arch"
-
-NATIVE_CONFIGURE_ARGS+=	\
-			--with-mpc-lib=${MPCOBJ} \
-			--with-mpfr-lib=${MPFROBJ} \
-			--with-gmp-lib=${GMPOBJ} \
-			--with-mpc-include=${MPC}/dist/src \
-			--with-mpfr-include=${MPFR}/dist/src \
-			--with-gmp-include=${GMP}/lib/libgmp/arch/${GMP_MACHINE_ARCH}
+.include "lgpl3.mk"
 
 .if ${MACHINE_ARCH} != "vax"
 NATIVE_CONFIGURE_ARGS+= --enable-tls
