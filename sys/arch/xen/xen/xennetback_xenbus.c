@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.121 2023/08/09 08:38:37 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.122 2023/08/09 08:38:47 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.121 2023/08/09 08:38:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.122 2023/08/09 08:38:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1024,14 +1024,12 @@ xennetback_rx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
 	}
 
 	/* update pointer */
-	xen_rmb();
 	xneti->xni_rxring.req_cons += queued;
 	xneti->xni_rxring.rsp_prod_pvt += queued;
 	RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(&xneti->xni_rxring, notify);
 
 	/* send event */
 	if (notify) {
-		xen_rmb();
 		XENPRINTF(("%s receive event\n",
 		    xneti->xni_if.if_xname));
 		hypervisor_notify_via_evtchn(xneti->xni_evtchn);
