@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.43 2023/08/09 08:23:25 riastradh Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.44 2023/08/09 08:23:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.43 2023/08/09 08:23:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.44 2023/08/09 08:23:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -140,10 +140,6 @@ workqueue_runlist(struct workqueue *wq, struct workqhead *list)
 	work_impl_t *wk;
 	work_impl_t *next;
 
-	/*
-	 * note that "list" is not a complete SIMPLEQ.
-	 */
-
 	for (wk = SIMPLEQ_FIRST(list); wk != NULL; wk = next) {
 		next = SIMPLEQ_NEXT(wk, wk_entry);
 		SDT_PROBE4(sdt, kernel, workqueue, entry,
@@ -169,14 +165,12 @@ workqueue_worker(void *cookie)
 	for (;;) {
 		struct workqhead tmp;
 
-		/*
-		 * we violate abstraction of SIMPLEQ.
-		 */
+		SIMPLEQ_INIT(&tmp);
 
 		mutex_enter(&q->q_mutex);
 		while (SIMPLEQ_EMPTY(&q->q_queue_pending))
 			cv_wait(&q->q_cv, &q->q_mutex);
-		tmp.sqh_first = q->q_queue_pending.sqh_first; /* XXX */
+		SIMPLEQ_CONCAT(&tmp, &q->q_queue_pending);
 		SIMPLEQ_INIT(&q->q_queue_pending);
 
 		/*
