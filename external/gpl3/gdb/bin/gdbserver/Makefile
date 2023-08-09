@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2023/08/06 20:28:26 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2023/08/09 14:56:41 christos Exp $
 
 NOCTF=
 NOMAN=
@@ -9,7 +9,7 @@ PROG=		gdbserver
 
 SERVER_SRCS+=	ax.cc debug.cc dll.cc hostio.cc inferiors.cc
 SERVER_SRCS+=	notif.cc mem-break.cc
-SERVER_SRCS+=	regcache.cc remote-utils.cc server.cc symbol.cc target.cc
+SERVER_SRCS+=	regcache.cc remote-utils.cc server.cc symbol.cc target-ser.cc
 SERVER_SRCS+=	tdesc.cc tracepoint.cc utils.cc waitstatus.c version.cc
 
 NETBSD_SRCS=		netbsd-low.cc fork-child.cc fork-inferior.c netbsd-nat.c
