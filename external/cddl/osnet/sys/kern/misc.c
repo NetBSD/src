@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5.4.1 2020/02/25 20:03:12 martin Exp $	*/
+/*	$NetBSD: misc.c,v 1.5.4.2 2023/08/09 17:25:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -94,8 +94,8 @@ vn_is_readonly(vnode_t *vp)
 }
 
 kthread_t *
-thread_create(void * stk, size_t stksize, void (*proc)(), void *arg,
-	      size_t len, proc_t *pp, int state, pri_t pri)
+solaris__thread_create(void * stk, size_t stksize, void (*proc)(), void *arg,
+    size_t len, proc_t *pp, int state, pri_t pri, const char *name)
 {
 	int error;
 	lwp_t *thr;
@@ -105,7 +105,7 @@ thread_create(void * stk, size_t stksize, void (*proc)(), void *arg,
 	ASSERT(state == TS_RUN);
 
 	error = kthread_create(pri, KTHREAD_MPSAFE, NULL,
-	    proc, arg, &thr, "zfs");
+	    proc, arg, &thr, "%s", name);
 	KASSERT(error == 0);
 	return thr;
 }

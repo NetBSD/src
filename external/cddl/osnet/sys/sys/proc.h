@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.9 2018/11/15 04:55:26 riastradh Exp $	*/
+/*	$NetBSD: proc.h,v 1.9.2.1 2023/08/09 17:25:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -89,8 +89,11 @@ typedef struct lwp	*kthread_id_t;
 struct contract {
 };
 
-kthread_t *thread_create(void *, size_t, void (*)(void *), void *, size_t,
-			 proc_t *, int, pri_t);
+#define	thread_create(stk, stksz, proc, arg, len, pp, state, pri)	      \
+	solaris__thread_create(stk, stksz, proc, arg, len, pp, state, pri,    \
+	    #proc)
+kthread_t *solaris__thread_create(void *, size_t, void (*)(void *), void *,
+    size_t, proc_t *, int, pri_t, const char *);
 void	thread_exit(void);
 void	thread_join(uint64_t);
 
