@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pciids.h,v 1.4 2021/12/18 23:45:46 riastradh Exp $	*/
+/*	$NetBSD: drm_pciids.h,v 1.5 2023/08/09 09:36:26 andvar Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #define radeon_PCI_IDS \
@@ -781,6 +781,9 @@
 	{0x1106, 0x3230, PCI_ANY_ID, PCI_ANY_ID, 0, 0, VIA_DX9_0}, \
 	{0x1106, 0x3157, PCI_ANY_ID, PCI_ANY_ID, 0, 0, VIA_PRO_GROUP_A}, \
 	{0x1106, 0x3371, PCI_ANY_ID, PCI_ANY_ID, 0, 0, VIA_DX9_0}, \
+	{0x1106, 0x1122, PCI_ANY_ID, PCI_ANY_ID, 0, 0, VIA_DX9_0}, \
+	{0x1106, 0x5122, PCI_ANY_ID, PCI_ANY_ID, 0, 0, VIA_DX9_0}, \
+	{0x1106, 0x7122, PCI_ANY_ID, PCI_ANY_ID, 0, 0, VIA_DX9_0}, \
 	{0, 0, 0}
 
 #define i810_PCI_IDS \
