@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.46 2023/08/09 08:24:08 riastradh Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.47 2023/08/09 08:24:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.46 2023/08/09 08:24:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.47 2023/08/09 08:24:18 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -156,12 +156,12 @@ workqueue_worker(void *cookie)
 {
 	struct workqueue *wq = cookie;
 	struct workqueue_queue *q;
-	int s;
+	int s, fpu = wq->wq_flags & WQ_FPU;
 
 	/* find the workqueue of this kthread */
 	q = workqueue_queue_lookup(wq, curlwp->l_cpu);
 
-	if (wq->wq_flags & WQ_FPU)
+	if (fpu)
 		s = kthread_fpu_enter();
 	mutex_enter(&q->q_mutex);
 	for (;;) {
@@ -193,7 +193,7 @@ workqueue_worker(void *cookie)
 		cv_broadcast(&q->q_cv);
 	}
 	mutex_exit(&q->q_mutex);
-	if (wq->wq_flags & WQ_FPU)
+	if (fpu)
 		kthread_fpu_exit(s);
 }
 
