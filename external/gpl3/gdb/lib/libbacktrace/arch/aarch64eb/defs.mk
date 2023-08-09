@@ -2,4 +2,5 @@
 # Generated from: NetBSD: mknative-gdb,v 1.16 2023/07/31 17:09:59 christos Exp 
 # Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp 
 #
-G_OBJS=decNumber.o decContext.o decimal32.o decimal64.o decimal128.o bid2dpd_dpd2bid.o host-ieee32.o host-ieee64.o host-ieee128.o
+G_OBJECTS=atomic.o dwarf.o fileline.o posix.o print.o sort.o state.o
+G_LIBADD=backtrace.o simple.o elf.o mmapio.o mmap.o

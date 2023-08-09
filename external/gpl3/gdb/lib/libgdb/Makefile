@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2023/08/07 16:52:52 christos Exp $
+#	$NetBSD: Makefile,v 1.35 2023/08/09 22:14:23 christos Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -12,13 +12,14 @@ LIB=		gdb
 GDBARCHDIR=	${.CURDIR}/arch/${GDB_MACHINE_ARCH}
 
 .include "${GDBARCHDIR}/defs.mk"
+.include "${NETBSDSRCDIR}/external/lgpl3/gmp/Makefile.arch"
+
 
 SRCS=		${G_LIBGDB_OBS:.o=.c}
 SRCS+=		dwarf2-frame.c netbsd-nat-low.c target-low.c
 GCPPFLAGS=	${G_INTERNAL_CFLAGS}
 CPPFLAGS+=	-I${.CURDIR} \
 		-I${GDBARCHDIR} \
-		-I${GMPDIR}/arch/${MACHINE_ARCH} \
 		-I${DIST} \
 		-I${DIST}/gdb \
 		-I${DIST}/gdbsupport \
@@ -36,6 +37,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${.CURDIR}/../libdecnumber/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
+		-I${GMPDIR}/arch/${GMP_MACHINE_ARCH} \
 		-Dsighandler_t=sig_t \
 		-DTARGET_SYSTEM_ROOT=\"\" \
 		-DTARGET_SYSTEM_ROOT_RELOCATABLE=0 \
