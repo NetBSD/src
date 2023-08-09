@@ -26,7 +26,7 @@
 #include <machine/frame.h>
 #include <machine/pcb.h>
 
-#include "nbsd-nat.h"
+#include "netbsd-nat.h"
 #include "aarch64-tdep.h"
 #include "aarch64-nbsd-tdep.h"
 #include "regcache.h"
