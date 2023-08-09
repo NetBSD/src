@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2015/04/23 02:01:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.38.26.1 2023/08/09 16:23:10 martin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 FILES=	NetBSD.el acronyms acronyms-o acronyms.comp airport ascii \
@@ -23,7 +23,7 @@ FILESBUILD_acronyms-o=yes
 
 # According to iana@ISI.EDU, the URL below is the authoritative list
 # distributed by the ISO 3166 Maintenance Agency.
-DOMAIN_URL=	http://www.iana.org/root-whois/index.html 
+DOMAIN_URL=	https://www.iana.org/domains/root/db 
 update-domains:
 	( \
 	  echo '# $$''NetBSD''$$' ;  \
@@ -31,7 +31,10 @@ update-domains:
 	  echo '# Last update:' `date` ; \
 	  echo '#' ; \
 	  ftp -o - ${DOMAIN_URL} \
-	  | ${TOOL_SED} -n -f ${.CURDIR}/domains.sed \
+	  | ${TOOL_SED} -f ${.CURDIR}/nanpa.sed \
+	  | ${TOOL_SED} '/^\..*/!d' \
+	  | ${TOOL_SED} 's/&quot;/\"/g' \
+	  | ${TOOL_AWK} 'BEGIN{FS=":"} {print $$1 " " $$3}' \
 	 ) > domains ; \
 
 update-na.phone:
