@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/11/09 21:39:27 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2023/08/09 21:09:08 christos Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -22,6 +22,6 @@ SRCS=		${G_OBJS:.o=.c} ${G_SOURCES}
 COPTS.decNumber.c=-O0
 .endif
 
-.PATH: ${DIST}/libdecnumber ${DIST}/libdecnumber/dpd
+.PATH: ${DIST}/libdecnumber ${DIST}/libdecnumber/dpd ${DIST}/libdecnumber/bid
 
 .include <bsd.lib.mk>

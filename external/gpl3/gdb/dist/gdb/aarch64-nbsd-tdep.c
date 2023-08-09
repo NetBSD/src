@@ -20,7 +20,7 @@
 #include "defs.h"
 
 #include "gdbarch.h"
-#include "nbsd-tdep.h"
+#include "netbsd-tdep.h"
 #include "aarch64-tdep.h"
 #include "aarch64-nbsd-tdep.h"
 #include "osabi.h"
@@ -61,7 +61,7 @@
 
 static void
 aarch64_nbsd_sigframe_init (const struct tramp_frame *self,
-			     struct frame_info *this_frame,
+			     frame_info_ptr this_frame,
 			     struct trad_frame_cache *this_cache,
 			     CORE_ADDR func)
 {
@@ -180,7 +180,7 @@ aarch64_nbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 static void
 aarch64_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep>(gdbarch);
 
   nbsd_init_abi (info, gdbarch);
 
