@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.119 2023/08/09 08:38:16 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.120 2023/08/09 08:38:27 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.119 2023/08/09 08:38:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.120 2023/08/09 08:38:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -813,13 +813,6 @@ xennetback_evthandler(void *arg)
 	XENPRINTF(("xennetback_evthandler "));
 again:
 	while (1) {
-		/*
-		 * XXX The xen_rmb here and comment make no sense:
-		 * xneti->xni_txring.req_cons is a private variable.
-		 */
-		xen_rmb(); /* be sure to read the request before updating */
-		/* XXX Unclear what this xen_wmb is for.  */
-		xen_wmb();
 		if (!RING_HAS_UNCONSUMED_REQUESTS(&xneti->xni_txring))
 			break;
 		/*
@@ -832,8 +825,6 @@ again:
 		RING_COPY_REQUEST(&xneti->xni_txring,
 		    xneti->xni_txring.req_cons,
 		    &txreq);
-		/* XXX Unclear what this xen_rmb is for. */
-		xen_rmb();
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname,
 		    txreq.size));
 		xneti->xni_txring.req_cons++;
