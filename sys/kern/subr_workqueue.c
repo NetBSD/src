@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.45 2023/08/09 08:23:45 riastradh Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.46 2023/08/09 08:24:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,19 +27,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.45 2023/08/09 08:23:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.46 2023/08/09 08:24:08 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/cpu.h>
-#include <sys/systm.h>
-#include <sys/kthread.h>
-#include <sys/kmem.h>
-#include <sys/proc.h>
-#include <sys/workqueue.h>
-#include <sys/mutex.h>
+
 #include <sys/condvar.h>
-#include <sys/sdt.h>
+#include <sys/cpu.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/mutex.h>
+#include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/sdt.h>
+#include <sys/systm.h>
+#include <sys/workqueue.h>
 
 typedef struct work_impl {
 	SIMPLEQ_ENTRY(work_impl) wk_entry;
