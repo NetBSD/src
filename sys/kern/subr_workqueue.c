@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.42 2023/08/09 08:23:13 riastradh Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.43 2023/08/09 08:23:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.42 2023/08/09 08:23:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.43 2023/08/09 08:23:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -96,6 +96,12 @@ SDT_PROBE_DEFINE4(sdt, kernel, workqueue, return,
     "void (*)(struct work *, void *)"/*func*/,
     "void *"/*arg*/);
 SDT_PROBE_DEFINE2(sdt, kernel, workqueue, wait__start,
+    "struct workqueue *"/*wq*/,
+    "struct work *"/*wk*/);
+SDT_PROBE_DEFINE2(sdt, kernel, workqueue, wait__self,
+    "struct workqueue *"/*wq*/,
+    "struct work *"/*wk*/);
+SDT_PROBE_DEFINE2(sdt, kernel, workqueue, wait__hit,
     "struct workqueue *"/*wq*/,
     "struct work *"/*wk*/);
 SDT_PROBE_DEFINE2(sdt, kernel, workqueue, wait__done,
@@ -334,7 +340,8 @@ workqueue_create(struct workqueue **wqp, const char *name,
 }
 
 static bool
-workqueue_q_wait(struct workqueue_queue *q, work_impl_t *wk_target)
+workqueue_q_wait(struct workqueue *wq, struct workqueue_queue *q,
+    work_impl_t *wk_target)
 {
 	work_impl_t *wk;
 	bool found = false;
@@ -349,8 +356,10 @@ workqueue_q_wait(struct workqueue_queue *q, work_impl_t *wk_target)
 	 *
 	 * XXX Are there use-cases that require this semantics?
 	 */
-	if (q->q_worker == curlwp)
+	if (q->q_worker == curlwp) {
+		SDT_PROBE2(sdt, kernel, workqueue, wait__self,  wq, wk_target);
 		goto out;
+	}
 
 	/*
 	 * Wait until the target is no longer pending.  If we find it
@@ -362,6 +371,7 @@ workqueue_q_wait(struct workqueue_queue *q, work_impl_t *wk_target)
     again:
 	SIMPLEQ_FOREACH(wk, &q->q_queue_pending, wk_entry) {
 		if (wk == wk_target) {
+			SDT_PROBE2(sdt, kernel, workqueue, wait__hit,  wq, wk);
 			found = true;
 			cv_wait(&q->q_cv, &q->q_mutex);
 			goto again;
@@ -406,13 +416,13 @@ workqueue_wait(struct workqueue *wq, struct work *wk)
 		CPU_INFO_ITERATOR cii;
 		for (CPU_INFO_FOREACH(cii, ci)) {
 			q = workqueue_queue_lookup(wq, ci);
-			found = workqueue_q_wait(q, (work_impl_t *)wk);
+			found = workqueue_q_wait(wq, q, (work_impl_t *)wk);
 			if (found)
 				break;
 		}
 	} else {
 		q = workqueue_queue_lookup(wq, NULL);
-		(void) workqueue_q_wait(q, (work_impl_t *)wk);
+		(void)workqueue_q_wait(wq, q, (work_impl_t *)wk);
 	}
 	SDT_PROBE2(sdt, kernel, workqueue, wait__done,  wq, wk);
 }
