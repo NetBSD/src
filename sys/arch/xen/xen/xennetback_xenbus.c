@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.116 2023/08/09 08:37:44 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.117 2023/08/09 08:37:55 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.116 2023/08/09 08:37:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.117 2023/08/09 08:37:55 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -833,6 +833,13 @@ xennetback_evthandler(void *arg)
 		    receive_pending);
 		if (receive_pending == 0)
 			break;
+		/*
+		 * Ensure we have read the producer's queue index in
+		 * RING_FINAL_CHECK_FOR_REQUESTS before we read the
+		 * content of the producer's next request in
+		 * RING_COPY_REQUEST.
+		 */
+		xen_rmb();
 		RING_COPY_REQUEST(&xneti->xni_txring, req_cons,
 		    &txreq);
 		/* XXX Unclear what this xen_rmb is for. */
