@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.136.6.1 2017/07/04 12:47:58 martin Exp $
+#	$NetBSD: Makefile,v 1.136.6.2 2023/08/09 16:16:40 martin Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -70,9 +70,22 @@ PROG=		ld.elf_so
 
 CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
 
-SRCS+=		rtld.c reloc.c symbol.c xmalloc.c xprintf.c debug.c \
-		map_object.c load.c search.c headers.c paths.c expand.c \
-		tls.c symver.c diagassert.c
+SRCS+=		debug.c
+SRCS+=		diagassert.c
+SRCS+=		expand.c
+SRCS+=		hash.c
+SRCS+=		headers.c
+SRCS+=		load.c
+SRCS+=		map_object.c
+SRCS+=		paths.c
+SRCS+=		reloc.c
+SRCS+=		rtld.c
+SRCS+=		search.c
+SRCS+=		symbol.c
+SRCS+=		symver.c
+SRCS+=		tls.c
+SRCS+=		xmalloc.c
+SRCS+=		xprintf.c
 
 .if ${USE_FORT} == "yes"
 .PATH.c: ${NETBSDSRCDIR}/lib/libc/misc

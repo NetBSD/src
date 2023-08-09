@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8.8.1 2017/08/29 09:43:16 bouyer Exp $
+# $NetBSD: Makefile,v 1.8.8.2 2023/08/09 16:16:40 martin Exp $
 #
 
 NOMAN=		# defined
@@ -16,6 +16,12 @@ SUBDIR+=	helper_dso1 helper_dso3 .WAIT helper_dso2 .WAIT \
 TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
 
 TESTS_C+=	t_dlerror-cleared t_dlerror-false t_dlinfo t_dlvsym t_ifunc
+TESTS_C+=	t_hash
+
+.PATH:	${NETBSDSRCDIR}/libexec/ld.elf_so
+SRCS.t_hash+=	t_hash.c
+SRCS.t_hash+=	hash.c
+CPPFLAGS.t_hash.c+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so
 
 LDADD.t_dlerror-false=	-Wl,-rpath,/var/nonexistent/lib
 LDADD.t_dlvsym=		-Wl,-rpath,${TESTSDIR}/h_helper_symver_dso2
