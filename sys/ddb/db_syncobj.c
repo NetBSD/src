@@ -1,11 +1,8 @@
-/*	$NetBSD: mutex.h,v 1.7.4.1 2023/08/09 17:42:02 martin Exp $	*/
+/*	$NetBSD: db_syncobj.c,v 1.2.2.2 2023/08/09 17:42:03 martin Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Takayoshi Kochi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,36 +26,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IA64_MUTEX_H_
-#define	_IA64_MUTEX_H_
+#define	__MUTEX_PRIVATE
+#define	__RWLOCK_PRIVATE
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_syncobj.c,v 1.2.2.2 2023/08/09 17:42:03 martin Exp $");
 
 #include <sys/types.h>
 
-#ifndef __MUTEX_PRIVATE
+#include <sys/mutex.h>
+#include <sys/null.h>
+#include <sys/rwlock.h>
+#include <sys/syncobj.h>
 
-struct kmutex {
-	uintptr_t	mtx_pad1;
-	uint32_t	mtx_pad2[2];
-};
+#include <ddb/ddb.h>
 
-#else
+struct lwp *
+db_syncobj_owner(struct syncobj *sobj, wchan_t wchan)
+{
+	db_expr_t mutex_syncobj_;
+	db_expr_t rw_syncobj_;
 
-#include <machine/intr.h>
+	if (db_value_of_name("mutex_syncobj", &mutex_syncobj_) &&
+	    (db_expr_t)(uintptr_t)sobj == mutex_syncobj_) {
+		volatile const struct kmutex *mtx = wchan;
+		uintptr_t owner;
 
-struct kmutex {
-	volatile uintptr_t	mtx_owner;
-	ipl_cookie_t		mtx_ipl;
-	__cpu_simple_lock_t	mtx_lock;
-};
+		db_read_bytes((db_addr_t)&mtx->mtx_owner, sizeof(owner),
+		    (char *)&owner);
+		return (struct lwp *)(owner & MUTEX_THREAD);
 
-/* XXX when we implement mutex_enter()/mutex_exit(), uncomment this
-#define __HAVE_MUTEX_STUBS		1
-*/
-/* XXX when we implement mutex_spin_enter()/mutex_spin_exit(), uncomment this
-#define __HAVE_SPIN_MUTEX_STUBS		1
-*/
-#define	__HAVE_SIMPLE_MUTEXES		1
+	} else if (db_value_of_name("rw_syncobj", &rw_syncobj_) &&
+	    (db_expr_t)(uintptr_t)sobj == rw_syncobj_) {
+		volatile const struct krwlock *rw = wchan;
+		uintptr_t owner;
 
-#endif	/* __MUTEX_PRIVATE */
+		db_read_bytes((db_addr_t)&rw->rw_owner, sizeof(owner),
+		    (char *)&owner);
+		if (owner & RW_WRITE_LOCKED)
+			return (struct lwp *)(owner & RW_THREAD);
+		return NULL;
 
-#endif	/* _IA64_MUTEX_H_ */
+	} else {
+		return NULL;
+	}
+}

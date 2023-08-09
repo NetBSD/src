@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.9 2020/03/05 17:58:08 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.9.22.1 2023/08/09 17:42:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2009 The NetBSD Foundation, Inc.
@@ -31,6 +31,12 @@
 
 #ifndef _X86_MUTEX_H_
 #define	_X86_MUTEX_H_
+
+#include <sys/types.h>
+
+#ifdef _KERNEL
+#include <machine/intr.h>
+#endif
 
 struct kmutex {
 	union {

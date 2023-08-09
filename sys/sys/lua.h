@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.h,v 1.8 2015/09/06 06:01:02 dholland Exp $ */
+/*	$NetBSD: lua.h,v 1.8.48.1 2023/08/09 17:42:01 martin Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -39,6 +39,7 @@
 
 #ifdef _KERNEL
 #include <sys/condvar.h>
+#include <sys/mutex.h>
 #endif
 
 #define MAX_LUA_NAME		16

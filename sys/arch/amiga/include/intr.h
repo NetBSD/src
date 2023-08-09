@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2020/08/10 10:59:33 rin Exp $	*/
+/*	$NetBSD: intr.h,v 1.22.20.1 2023/08/09 17:42:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,6 +58,8 @@ typedef struct {
 	uint16_t _ipl;
 } ipl_cookie_t;
 
+#ifdef _KERNEL
+
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
@@ -104,5 +106,7 @@ extern int _spllkm7(void);
 #endif /* _MODULE */
 
 #define splx(s)		_spl(s)
+
+#endif	/* _KERNEL */
 
 #endif	/* !_AMIGA_INTR_H_ */

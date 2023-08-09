@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.7 2021/08/25 04:13:41 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.7.4.1 2023/08/09 17:42:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,6 +31,13 @@
 
 #ifndef _SPARC64_MUTEX_H_
 #define	_SPARC64_MUTEX_H_
+
+#include <sys/types.h>
+
+#ifdef __MUTEX_PRIVATE
+#include <machine/intr.h>
+#include <machine/psl.h>
+#endif
 
 struct kmutex {
 	union {

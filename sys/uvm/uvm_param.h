@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.41 2020/07/23 19:07:01 skrll Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.41.20.1 2023/08/09 17:42:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -74,7 +74,6 @@
 #ifdef _KERNEL
 #include <sys/types.h>
 #include <machine/vmparam.h>
-#include <sys/resourcevar.h>
 #endif
 
 #if defined(_KERNEL)
