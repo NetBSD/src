@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.c,v 1.7 2023/08/09 08:22:43 riastradh Exp $	*/
+/*	$NetBSD: workqueue.c,v 1.8 2023/08/09 08:22:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: workqueue.c,v 1.7 2023/08/09 08:22:43 riastradh Exp $");
+__RCSID("$NetBSD: workqueue.c,v 1.8 2023/08/09 08:22:53 riastradh Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -54,6 +54,8 @@ static void
 rump_work1(struct work *wk, void *arg)
 {
 	struct test_softc *sc = arg;
+
+	memset(wk, 0x5a, sizeof(*wk));
 
 	mutex_enter(&sc->mtx);
 	++sc->counter;
