@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2011/12/22 15:06:17 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.78.1 2023/08/09 17:42:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,14 @@
  */
 #include <machine/psl.h>
 
+#if (defined(_KERNEL) || defined(_KMEMUSER)) && !defined(_LOCORE)
+
+typedef struct {
+	uint16_t _psl;
+} ipl_cookie_t;
+
+#endif
+
 #if defined(_KERNEL) && !defined(_LOCORE)
 /* spl0 requires checking for software interrupts */
 #define spl1()  _spl(PSL_S|PSL_IPL1)
@@ -83,9 +91,6 @@ int	spl0(void);
 extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
-typedef struct {
-	uint16_t _psl;
-} ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)

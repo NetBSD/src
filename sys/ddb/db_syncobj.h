@@ -1,11 +1,8 @@
-/*	$NetBSD: mutex.h,v 1.7.4.1 2023/08/09 17:42:02 martin Exp $	*/
+/*	$NetBSD: db_syncobj.h,v 1.1.2.2 2023/08/09 17:42:03 martin Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Takayoshi Kochi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,36 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IA64_MUTEX_H_
-#define	_IA64_MUTEX_H_
+#ifndef	_DDB_DB_SYNCOBJ_H
+#define	_DDB_DB_SYNCOBJ_H
 
-#include <sys/types.h>
+#include <sys/syncobj.h>
 
-#ifndef __MUTEX_PRIVATE
+struct lwp;
+struct syncobj;
 
-struct kmutex {
-	uintptr_t	mtx_pad1;
-	uint32_t	mtx_pad2[2];
-};
+struct lwp *db_syncobj_owner(struct syncobj *, wchan_t);
 
-#else
-
-#include <machine/intr.h>
-
-struct kmutex {
-	volatile uintptr_t	mtx_owner;
-	ipl_cookie_t		mtx_ipl;
-	__cpu_simple_lock_t	mtx_lock;
-};
-
-/* XXX when we implement mutex_enter()/mutex_exit(), uncomment this
-#define __HAVE_MUTEX_STUBS		1
-*/
-/* XXX when we implement mutex_spin_enter()/mutex_spin_exit(), uncomment this
-#define __HAVE_SPIN_MUTEX_STUBS		1
-*/
-#define	__HAVE_SIMPLE_MUTEXES		1
-
-#endif	/* __MUTEX_PRIVATE */
-
-#endif	/* _IA64_MUTEX_H_ */
+#endif	/* _DDB_DB_SYNCOBJ_H */

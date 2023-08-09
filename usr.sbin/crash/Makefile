@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46.6.1 2023/08/01 14:36:59 martin Exp $
+#	$NetBSD: Makefile,v 1.46.6.2 2023/08/09 17:42:05 martin Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -46,13 +46,18 @@ CPPFLAGS+=	-I${.CURDIR} -I${.OBJDIR} -I${S} -fno-strict-aliasing
 CPPFLAGS+=	-DDDB_VERBOSE_HELP -DDB_MAX_LINE=10000000 -D_KMEMUSER
 CPPFLAGS+=	-UDB_MACHINE_COMMANDS
 
+# XXX
+.if ${MACHINE} == "evbppc"
+CPPFLAGS+=	-DPPC_INTR_IMPL="<powerpc/intr.h>"
+.endif
+
 # ddb files from kernel
 .PATH:	$S/ddb
 SRCS+=	db_command.c db_lwp.c db_proc.c db_xxx.c db_cpu.c
 SRCS+=  db_autoconf.c
 SRCS+=	db_access.c db_elf.c db_examine.c
 SRCS+=	db_expr.c db_lex.c db_output.c db_print.c
-SRCS+=	db_sym.c db_variables.c db_write_cmd.c
+SRCS+=	db_sym.c db_syncobj.c db_variables.c db_write_cmd.c
 
 .PATH:	${S}/arch/${MACHINE}/${MACHINE}
 .PATH:	${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}

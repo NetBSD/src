@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.52 2020/06/14 21:41:42 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.52.20.1 2023/08/09 17:42:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@ struct lwp;
 #include <sys/queue.h>
 #include <sys/kcpuset.h>
 #include <sys/ipi.h>
+#include <sys/intr.h>
 
 /* Per-CPU counters.  New elements must be added in blocks of 8. */
 enum cpu_count {

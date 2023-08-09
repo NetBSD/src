@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.370.4.1 2023/05/28 09:43:26 martin Exp $	*/
+/*	$NetBSD: proc.h,v 1.370.4.2 2023/08/09 17:42:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -93,7 +93,9 @@
 #include <sys/event.h>
 #include <sys/specificdata.h>
 
-#ifndef _KERNEL
+#ifdef _KERNEL
+#include <sys/resourcevar.h>
+#else
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
