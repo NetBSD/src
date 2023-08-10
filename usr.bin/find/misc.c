@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.15 2022/01/22 14:08:19 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.16 2023/08/10 20:36:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)misc.c	8.2 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.15 2022/01/22 14:08:19 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.16 2023/08/10 20:36:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,11 +78,13 @@ brace_subst(char *orig, char **store, char *path, size_t *len)
 				nlen *= 2;
 
 			if (nlen > *len) {
+				ptrdiff_t off = p - *store;
+
 				ostore = *store;
 				if ((*store = realloc(ostore, nlen)) == NULL)
 					err(1, "realloc");
 				*len = nlen;
-				p += *store - ostore;	/* Relocate. */
+				p = *store + off;	/* Relocate. */
 			}
 			memmove(p, path, plen);
 			p += plen;

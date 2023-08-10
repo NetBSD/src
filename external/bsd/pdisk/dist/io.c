@@ -328,6 +328,7 @@ get_string(int eos)
     char *ret_value;
     char *limit;
     int length;
+    ptrdiff_t off;
 
     ret_value = (char *) malloc(STRING_CHUNK);
     if (ret_value == NULL) {
@@ -348,8 +349,9 @@ get_string(int eos)
 		break;
 	    }
 	    strncpy(limit, ret_value, length);
+	    off = s - ret_value;
 	    free(ret_value);
-	    s = limit + (s - ret_value);
+	    s = limit + off;
 	    ret_value = limit;
 	    length += STRING_CHUNK;
 	    limit = ret_value + length;
