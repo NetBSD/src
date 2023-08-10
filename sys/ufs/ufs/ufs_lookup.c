@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.157 2023/02/22 21:49:45 riastradh Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.158 2023/08/10 20:49:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.157 2023/02/22 21:49:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.158 2023/08/10 20:49:20 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1297,8 +1297,8 @@ int
 ufs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 {
 	doff_t off;
-	struct dirtemplate dbuf;
-	struct direct *dp = (void *)&dbuf;
+	struct direct dbuf;
+	struct direct *dp = &dbuf;
 	int error;
 	size_t count;
 	const int needswap = UFS_IPNEEDSWAP(ip);

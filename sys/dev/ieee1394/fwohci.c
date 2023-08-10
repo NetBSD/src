@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.151 2022/07/03 19:58:42 andvar Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.152 2023/08/10 20:49:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.151 2022/07/03 19:58:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.152 2023/08/10 20:49:20 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -2643,17 +2643,20 @@ static int
 fwohci_arcv_swap(struct fw_pkt *fp, int len)
 {
 	struct fw_pkt *fp0;
-	uint32_t ld0;
+	union {
+		uint32_t ld0;
+		struct fw_pkt pkt;
+	} pktu;
 	int hlen;
 #if BYTE_ORDER == BIG_ENDIAN
 	int slen, i;
 #endif
 
-	ld0 = FWOHCI_DMA_READ(fp->mode.ld[0]);
+	pktu.ld0 = FWOHCI_DMA_READ(fp->mode.ld[0]);
 #if 0
-	printf("ld0: x%08x\n", ld0);
+	printf("ld0: x%08x\n", pktu.ld0);
 #endif
-	fp0 = (struct fw_pkt *)&ld0;
+	fp0 = (struct fw_pkt *)&pktu;
 	/* determine length to swap */
 	switch (fp0->mode.common.tcode) {
 	case FWTCODE_WRES:

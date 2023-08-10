@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdv.c,v 1.8 2013/10/19 17:06:57 christos Exp $	*/
+/*	$NetBSD: fwdv.c,v 1.9 2023/08/10 20:49:20 mrg Exp $	*/
 /*
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -268,7 +268,15 @@ dvsend(int d, const char *filename, char ich, int count)
 	int lsystem=-1, pad_acc, cycle_acc, cycle, f_frac;
 	struct iovec wbuf[TNBUF*2 + NEMPTY];
 	char *pbuf;
-	uint32_t iso_data, iso_empty, hdr[TNBUF + NEMPTY][3];
+	uint32_t hdr[TNBUF + NEMPTY][3];
+	union {
+		uint32_t iso_empty;
+		struct fw_pkt pkt;
+	} empty_pkt;
+	union {
+		uint32_t iso_data;
+		struct fw_pkt pkt;
+	} data_pkt;
 	struct ciphdr *ciph;
 	struct timeval start, end;
 	double rtime;
@@ -297,18 +305,18 @@ dvsend(int d, const char *filename, char ich, int count)
 	if (ioctl(d, FW_STSTREAM, &isoreq) < 0)
 		err(EXIT_FAILURE, "%s: ioctl FW_STSTREAM", __func__);
 
-	iso_data = 0;
-	pkt = (struct fw_pkt *) &iso_data;
+	data_pkt.iso_data = 0;
+	pkt = &data_pkt.pkt;
 	pkt->mode.stream.len = DSIZE + sizeof(struct ciphdr);
 	pkt->mode.stream.sy = 0;
 	pkt->mode.stream.tcode = FWTCODE_STREAM;
 	pkt->mode.stream.chtag = ich;
-	iso_empty = iso_data;
-	pkt = (struct fw_pkt *) &iso_empty;
+	empty_pkt.iso_empty = data_pkt.iso_data;
+	pkt = &empty_pkt.pkt;
 	pkt->mode.stream.len = sizeof(struct ciphdr);
 
 	bzero(hdr[0], sizeof(hdr[0]));
-	hdr[0][0] = iso_data;
+	hdr[0][0] = data_pkt.iso_data;
 	ciph = (struct ciphdr *)&hdr[0][1];
 	ciph->src = 0;	 /* XXX */
 	ciph->len = 120;
@@ -388,13 +396,13 @@ next:
 		if (pad_acc >= pad_rate[lsystem].d) {
 			pad_acc -= pad_rate[lsystem].d;
 			bcopy(hdr[nhdr], hdr[nhdr+1], sizeof(hdr[0]));
-			hdr[nhdr][0] = iso_empty;
+			hdr[nhdr][0] = empty_pkt.iso_empty;
 			wbuf[vec].iov_base = (char *)hdr[nhdr];
 			wbuf[vec++].iov_len = sizeof(hdr[0]);
 			nhdr ++;
 			cycle ++;
 		}
-		hdr[nhdr][0] = iso_data;
+		hdr[nhdr][0] = data_pkt.iso_data;
 		wbuf[vec].iov_base = (char *)hdr[nhdr];
 		wbuf[vec++].iov_len = sizeof(hdr[0]);
 		wbuf[vec].iov_base = (char *)dv;
