@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.34 2023/04/20 08:28:04 skrll Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.35 2023/08/10 20:02:55 andvar Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.34 2023/04/20 08:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.35 2023/08/10 20:02:55 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -1079,7 +1079,7 @@ printf("%s:%d: pmap_link_l2pt ipmq_pt\n", __FUNCTION__, __LINE__);
 
 #ifdef GEMINI_SLAVE
 	/*
-	 * Map all memory, incluuding that owned by other core
+	 * Map all memory, including that owned by other core
 	 * take into account the RAM remap, so view in this region
 	 * is consistent with MASTER
 	 */
@@ -1094,7 +1094,7 @@ printf("%s:%d: pmap_link_l2pt ipmq_pt\n", __FUNCTION__, __LINE__);
 	    (MEMSIZE * 1024 * 1024),
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #else
-	/* Map all memory, incluuding that owned by other core */
+	/* Map all memory, including that owned by other core */
 	pmap_map_chunk(l1_va, GEMINI_ALLMEM_VBASE, GEMINI_ALLMEM_PBASE,
 	    GEMINI_ALLMEM_SIZE * 1024 * 1024, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif	/* GEMINI_SLAVE */

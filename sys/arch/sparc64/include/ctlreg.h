@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.68 2023/05/06 22:17:28 andvar Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.69 2023/08/10 20:02:56 andvar Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -293,7 +293,7 @@
 #define	SFSR_FT_IO_ATOMIC	0x00200	/* DMMU: Atomic access to noncacheable page */
 #define	SFSR_FT_ILL_NF		0x00100	/* DMMU: NF load or flush to page marked E (has side effects) */
 #define	SFSR_FT_PRIV		0x00080	/* Privilege violation */
-#define	SFSR_FT_E		0x00040	/* DMUU: value of E bit associated address */
+#define	SFSR_FT_E		0x00040	/* DMMU: value of E bit associated address */
 #define	SFSR_CTXT(x)		(((x)>>4)&0x3)
 #define	SFSR_CTXT_IS_PRIM(x)	(SFSR_CTXT(x)==0x00)
 #define	SFSR_CTXT_IS_SECOND(x)	(SFSR_CTXT(x)==0x01)

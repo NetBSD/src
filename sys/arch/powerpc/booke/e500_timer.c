@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_timer.c,v 1.7 2020/05/29 12:30:40 rin Exp $	*/
+/*	$NetBSD: e500_timer.c,v 1.8 2023/08/10 20:02:56 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.7 2020/05/29 12:30:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.8 2023/08/10 20:02:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -92,7 +92,7 @@ e500_clock_intr(void *v)
 	 * Now let's how delayed the clock interrupt was.  Obviously it must
 	 * at least one clock tick since the clock interrupt.  But it might
 	 * be more if interrupts were blocked for a long time.  We keep 
-	 * suubtracting an interrupts We should be
+	 * subtracting an interrupts We should be
 	 * [well] within a single tick.
 	 * We add back one tick (which should put us back above 0).  If we
 	 * are still below 0, keep adding ticks until we are above 0.
