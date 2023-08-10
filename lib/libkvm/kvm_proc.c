@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.98 2022/04/19 20:32:16 rillig Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.99 2023/08/10 20:38:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.98 2022/04/19 20:32:16 rillig Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.99 2023/08/10 20:38:00 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -980,7 +980,7 @@ kvm_argv(kvm_t *kd, const struct miniproc *p, u_long addr, int narg,
 		if (len + cc > kd->argspc_len) {
 			ptrdiff_t off;
 			char **pp;
-			char *op = kd->argspc;
+			uintptr_t op = (uintptr_t)kd->argspc;
 
 			kd->argspc_len *= 2;
 			kd->argspc = _kvm_realloc(kd, kd->argspc,
@@ -991,7 +991,7 @@ kvm_argv(kvm_t *kd, const struct miniproc *p, u_long addr, int narg,
 			 * Adjust argv pointers in case realloc moved
 			 * the string space.
 			 */
-			off = kd->argspc - op;
+			off = (uintptr_t)kd->argspc - op;
 			for (pp = kd->argv; pp < argv; pp++)
 				*pp += off;
 			ap += off;
