@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.94 2022/04/19 20:32:15 rillig Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.95 2023/08/10 20:38:00 mrg Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.94 2022/04/19 20:32:15 rillig Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.95 2023/08/10 20:38:00 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,10 +110,11 @@ __weak_alias(gethostent,_gethostent)
 
 #define addalias(d, s, arr, siz) do {			\
 	if (d >= &arr[siz]) {				\
+		ptrdiff_t _off = d - arr;		\
 		char **xptr = realloc(arr, (siz + 10) * sizeof(*arr)); \
 		if (xptr == NULL)			\
 			goto nospc;			\
-		d = xptr + (d - arr);			\
+		d = xptr + _off;			\
 		arr = xptr;				\
 		siz += 10;				\
 	}						\
