@@ -1,5 +1,5 @@
 /*	$KAME: sctp_structs.h,v 1.13 2005/03/06 16:04:18 itojun Exp $	*/
-/*	$NetBSD: sctp_structs.h,v 1.3 2023/06/24 05:35:00 msaitoh Exp $ */
+/*	$NetBSD: sctp_structs.h,v 1.4 2023/08/10 06:44:12 andvar Exp $ */
 
 #ifndef __SCTP_STRUCTS_H__
 #define __SCTP_STRUCTS_H__
@@ -491,7 +491,7 @@ struct sctp_association {
 	unsigned int total_flight;
 	/* Total book size in flight */
 	unsigned int total_flight_count;	/* count of chunks used with book total */
-	/* count of destinaton nets and list of destination nets */
+	/* count of destination nets and list of destination nets */
 	unsigned int numnets;
 
 	/* Total error count on this association */
