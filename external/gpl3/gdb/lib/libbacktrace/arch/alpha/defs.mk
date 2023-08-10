@@ -2,6 +2,5 @@
 # Generated from: NetBSD: mknative-gdb,v 1.16 2023/07/31 17:09:59 christos Exp 
 # Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp 
 #
-G_archdefs=-DARCH_alpha
-G_BFD_MACHINES=alpha-dis.lo alpha-opc.lo
-G_libopcodes_la_SOURCES=dis-buf.c disassemble.c dis-init.c
+G_OBJECTS=atomic.o dwarf.o fileline.o posix.o print.o sort.o state.o
+G_LIBADD=backtrace.o simple.o elf.o mmapio.o mmap.o

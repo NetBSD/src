@@ -5,78 +5,72 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define if building universal (internal helper macro) */
-/* #undef AC_APPLE_UNIVERSAL_BUILD */
+/* ELF size: 32 or 64 */
+#define BACKTRACE_ELF_SIZE 64
 
-/* Enable expensive debugging of CTF deduplication type hashing */
-/* #undef ENABLE_LIBCTF_HASH_DEBUGGING */
+/* XCOFF size: 32 or 64 */
+#define BACKTRACE_XCOFF_SIZE unused
 
-/* Define to 1 if translation of program messages to the user's native
-   language is requested. */
-#define ENABLE_NLS 1
+/* Define to 1 if you have the __atomic functions */
+#define HAVE_ATOMIC_FUNCTIONS 1
 
-/* Whether libbfd was configured for an ELF target. */
-#define HAVE_BFD_ELF 1
+/* Define to 1 if you have the `clock_gettime' function. */
+#define HAVE_CLOCK_GETTIME 1
 
-/* Define to 1 if you have the <byteswap.h> header file. */
-/* #undef HAVE_BYTESWAP_H */
-
-/* Define to 1 if you have the declaration of `asprintf', and to 0 if you
+/* Define to 1 if you have the declaration of `getpagesize', and to 0 if you
    don't. */
-#define HAVE_DECL_ASPRINTF 1
+#define HAVE_DECL_GETPAGESIZE 1
 
-/* Define to 1 if you have the declaration of `bswap_16', and to 0 if you
+/* Define to 1 if you have the declaration of `strnlen', and to 0 if you
    don't. */
-#define HAVE_DECL_BSWAP_16 0
-
-/* Define to 1 if you have the declaration of `bswap_32', and to 0 if you
-   don't. */
-#define HAVE_DECL_BSWAP_32 0
-
-/* Define to 1 if you have the declaration of `bswap_64', and to 0 if you
-   don't. */
-#define HAVE_DECL_BSWAP_64 0
-
-/* Define to 1 if you have the declaration of `stpcpy', and to 0 if you don't.
-   */
-#define HAVE_DECL_STPCPY 1
-
-/* Define to 1 if you have the declaration of `vasprintf', and to 0 if you
-   don't. */
-#define HAVE_DECL_VASPRINTF 1
+#define HAVE_DECL_STRNLEN 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
-/* Define to 1 if you have the <endian.h> header file. */
-#define HAVE_ENDIAN_H 1
+/* Define if dl_iterate_phdr is available. */
+#define HAVE_DL_ITERATE_PHDR 1
 
-/* Define to 1 if you have the `getpagesize' function. */
-#define HAVE_GETPAGESIZE 1
+/* Define to 1 if you have the fcntl function */
+#define HAVE_FCNTL 1
+
+/* Define if getexecname is available. */
+/* #undef HAVE_GETEXECNAME */
+
+/* Define if _Unwind_GetIPInfo is available. */
+#define HAVE_GETIPINFO 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have KERN_PROC and KERN_PROC_PATHNAME in <sys/sysctl.h>.
+   */
+#define HAVE_KERN_PROC 1
+
+/* Define to 1 if you have KERN_PROCARGS and KERN_PROC_PATHNAME in
+   <sys/sysctl.h>. */
+#define HAVE_KERN_PROC_ARGS 1
+
+/* Define if -llzma is available. */
+#define HAVE_LIBLZMA 1
+
+/* Define to 1 if you have the <link.h> header file. */
+#define HAVE_LINK_H 1
+
+/* Define if AIX loadquery is available. */
+/* #undef HAVE_LOADQUERY */
+
+/* Define to 1 if you have the `lstat' function. */
+#define HAVE_LSTAT 1
+
+/* Define to 1 if you have the <mach-o/dyld.h> header file. */
+/* #undef HAVE_MACH_O_DYLD_H */
+
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
-/* Define to 1 if you have a working `mmap' system call. */
-#define HAVE_MMAP 1
-
-/* Whether the platform has a definition of O_CLOEXEC. */
-#define HAVE_O_CLOEXEC 1
-
-/* Define to 1 if you have the `pread' function. */
-#define HAVE_PREAD 1
-
-/* Define to 1 if you have the `qsort_r' function. */
-/* #undef HAVE_QSORT_R */
-
-/* Whether a qsort_r exists with a void *arg as its last arg. */
-/* #undef HAVE_QSORT_R_ARG_LAST */
-
-/* Whether a qsort_r exists with the compar function as its last arg. */
-/* #undef HAVE_QSORT_R_COMPAR_LAST */
+/* Define to 1 if you have the `readlink' function. */
+#define HAVE_READLINK 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -90,8 +84,14 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
-/* Define to 1 if you have the <sys/param.h> header file. */
-#define HAVE_SYS_PARAM_H 1
+/* Define to 1 if you have the __sync functions */
+#define HAVE_SYNC_FUNCTIONS 1
+
+/* Define to 1 if you have the <sys/ldr.h> header file. */
+/* #undef HAVE_SYS_LDR_H */
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#define HAVE_SYS_MMAN_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -102,30 +102,45 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define if -lz is available. */
+#define HAVE_ZLIB 1
+
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #define LT_OBJDIR ".libs/"
-
-/* Name of package */
-#define PACKAGE "libctf"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "libctf"
+#define PACKAGE_NAME "package-unused"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libctf 1.2.0"
+#define PACKAGE_STRING "package-unused version-unused"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "libctf"
+#define PACKAGE_TARNAME "libbacktrace"
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.2.0"
+#define PACKAGE_VERSION "version-unused"
+
+/* The size of `char', as computed by sizeof. */
+/* #undef SIZEOF_CHAR */
+
+/* The size of `int', as computed by sizeof. */
+/* #undef SIZEOF_INT */
+
+/* The size of `long', as computed by sizeof. */
+/* #undef SIZEOF_LONG */
+
+/* The size of `short', as computed by sizeof. */
+/* #undef SIZEOF_SHORT */
+
+/* The size of `void *', as computed by sizeof. */
+/* #undef SIZEOF_VOID_P */
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -151,21 +166,6 @@
 # define __EXTENSIONS__ 1
 #endif
 
-
-/* Version number of package */
-#define VERSION "1.2.0"
-
-/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
-   significant byte first (like Motorola and SPARC, unlike Intel). */
-#if defined AC_APPLE_UNIVERSAL_BUILD
-# if defined __BIG_ENDIAN__
-#  define WORDS_BIGENDIAN 1
-# endif
-#else
-# ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
-# endif
-#endif
 
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE

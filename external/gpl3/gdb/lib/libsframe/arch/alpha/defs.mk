@@ -2,6 +2,4 @@
 # Generated from: NetBSD: mknative-gdb,v 1.16 2023/07/31 17:09:59 christos Exp 
 # Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp 
 #
-G_archdefs=-DARCH_alpha
-G_BFD_MACHINES=alpha-dis.lo alpha-opc.lo
-G_libopcodes_la_SOURCES=dis-buf.c disassemble.c dis-init.c
+G_OBJECTS=sframe.o sframe-dump.o sframe-error.o
