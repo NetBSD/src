@@ -1,4 +1,4 @@
-/*	$NetBSD: uvax.h,v 1.8 2017/05/22 17:12:11 ragge Exp $ */
+/*	$NetBSD: uvax.h,v 1.9 2023/08/10 19:13:52 andvar Exp $ */
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -55,7 +55,7 @@
 #define uVAX_CLKLANG	0360
 
 /*
- * Miscellaneous registers common on most VAXststions.
+ * Miscellaneous registers common on most VAXstations.
  */
 struct vs_cpu {
 	u_long	vc_hltcod;	/* 00 - Halt Code Register */
