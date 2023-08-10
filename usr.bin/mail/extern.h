@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.35 2023/08/01 07:04:17 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.36 2023/08/10 20:36:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$NetBSD: extern.h,v 1.35 2023/08/01 07:04:17 mrg Exp $
+ *	$NetBSD: extern.h,v 1.36 2023/08/10 20:36:28 mrg Exp $
  */
 
 #ifndef __EXTERN_H__
@@ -357,7 +357,7 @@ int	get_msgCount(void);
 /* we trash these commands */
 # define do_recursion()			0
 # define thread_recursion(mp,fn,args)	fn(mp,args)
-# define thread_fix_old_links(nmessage,message,omsgCount)
+# define thread_fix_old_links(nmessage,off,omsgCount)
 # define thread_fix_new_links(message,omsgCount,msgCount)
 #endif /* THREAD_SUPPORT */
 

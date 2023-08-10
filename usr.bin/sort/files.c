@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.42 2015/08/05 07:10:03 mrg Exp $	*/
+/*	$NetBSD: files.c,v 1.43 2023/08/10 20:36:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 #include "fsort.h"
 
-__RCSID("$NetBSD: files.c,v 1.42 2015/08/05 07:10:03 mrg Exp $");
+__RCSID("$NetBSD: files.c,v 1.43 2023/08/10 20:36:29 mrg Exp $");
 
 #include <string.h>
 
@@ -199,13 +199,14 @@ seq(FILE *fp, u_char **line)
 			/* Long line - double size of buffer */
 			/* XXX: Check here for stupidly long lines */
 			buf_size *= 2;
+			ptrdiff_t off = pos - buf;
 			new_buf = realloc(buf, buf_size);
 			if (!new_buf)
 				err(2, "realloc of linebuf to %zu bytes failed",
 					buf_size);
 		
 			end = new_buf + buf_size;
-			pos = new_buf + (pos - buf);
+			pos = new_buf + off;
 			buf = new_buf;
 		}
 	}

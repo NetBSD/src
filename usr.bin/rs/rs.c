@@ -1,4 +1,4 @@
-/*	$NetBSD: rs.c,v 1.16 2019/02/03 03:19:30 mrg Exp $	*/
+/*	$NetBSD: rs.c,v 1.17 2023/08/10 20:36:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rs.c,v 1.16 2019/02/03 03:19:30 mrg Exp $");
+__RCSID("$NetBSD: rs.c,v 1.17 2023/08/10 20:36:29 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -376,13 +376,15 @@ static char **
 getptrs(char **sp)
 {
 	char **p;
+	ptrdiff_t off;
 
 	allocsize += allocsize;
+	off = sp - elem;
 	p = (char **)realloc(elem, allocsize * sizeof(char *));
 	if (p == (char **)0)
 		err(1, "no memory");
 
-	sp += (p - elem);
+	sp = p + off;
 	endelem = (elem = p) + allocsize;
 	return(sp);
 }

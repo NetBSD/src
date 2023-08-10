@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.14 2021/12/17 15:29:44 kre Exp $	*/
+/*	$NetBSD: thread.c,v 1.15 2023/08/10 20:36:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.14 2021/12/17 15:29:44 kre Exp $");
+__RCSID("$NetBSD: thread.c,v 1.15 2023/08/10 20:36:28 mrg Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -440,10 +440,10 @@ redepth(struct thread_s *thread)
  * as it needs access to current_thread.t_head.
  */
 PUBLIC void
-thread_fix_old_links(struct message *nmessage, struct message *message, int omsgCount)
+thread_fix_old_links(struct message *nmessage, ptrdiff_t off, int omsgCount)
 {
 	int i;
-	if (nmessage == message)
+	if (off == 0)
 		return;
 
 #ifndef NDEBUG
@@ -451,8 +451,7 @@ thread_fix_old_links(struct message *nmessage, struct message *message, int omsg
 #endif
 
 # define FIX_LINK(p)	do {\
-	if (p)\
-		p = nmessage + (p - message);\
+	p = nmessage + off;\
   } while (0)
 
 	FIX_LINK(current_thread.t_head);
