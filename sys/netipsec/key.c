@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.281 2023/07/21 00:44:38 knakahara Exp $	*/
+/*	$NetBSD: key.c,v 1.282 2023/08/10 06:44:12 andvar Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.281 2023/07/21 00:44:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.282 2023/08/10 06:44:12 andvar Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -2240,7 +2240,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 
 	xpl0 = mhp->ext[SADB_X_EXT_POLICY];
 
-	/* checking the direciton. */
+	/* checking the direction. */
 	switch (xpl0->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
 	case IPSEC_DIR_OUTBOUND:

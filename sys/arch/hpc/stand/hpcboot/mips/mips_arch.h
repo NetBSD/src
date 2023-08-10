@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_arch.h,v 1.6 2008/04/28 20:23:20 martin Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_arch.h,v 1.7 2023/08/10 06:44:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ public:
 /*
  * 2nd-bootloader.  make sure that PIC and its size is lower than page size.
  * and can't call subroutine.
- * naked funciton can't use stack. if you want to use, remove its declare.
+ * naked function can't use stack. if you want to use, remove its declare.
  * interrupts are disabled. but if access kuseg,(should not occur)
  * it causes TLB exception and then Windows CE enable interrupts again.
  */
