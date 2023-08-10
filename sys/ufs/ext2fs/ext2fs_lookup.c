@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.92 2022/08/06 18:26:42 andvar Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.93 2023/08/10 20:49:19 mrg Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.92 2022/08/06 18:26:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.93 2023/08/10 20:49:19 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1126,8 +1126,8 @@ int
 ext2fs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 {
 	off_t off;
-	struct ext2fs_dirtemplate dbuf;
-	struct ext2fs_direct *dp = (struct ext2fs_direct *)&dbuf;
+	struct ext2fs_direct dbuf;
+	struct ext2fs_direct *dp = &dbuf;
 	int error, namlen;
 	size_t count;
 
