@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.11 2022/09/16 07:55:34 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.12 2023/08/10 08:24:44 riastradh Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.11 2022/09/16 07:55:34 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.12 2023/08/10 08:24:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_vmx.h"
@@ -212,6 +212,8 @@ struct vmxnet3_txqueue {
 	struct evcnt vxtxq_watchdogto;
 	struct evcnt vxtxq_defragged;
 	struct evcnt vxtxq_defrag_failed;
+
+	bool vxtxq_stopping;
 };
 
 
@@ -230,6 +232,8 @@ struct vmxnet3_rxqueue {
 	struct evcnt vxrxq_deferreq;
 	struct evcnt vxrxq_mgetcl_failed;
 	struct evcnt vxrxq_mbuf_load_failed;
+
+	bool vxrxq_stopping;
 };
 
 struct vmxnet3_queue {
@@ -291,6 +295,9 @@ struct vmxnet3_softc {
 
 	kmutex_t *vmx_mtx;
 
+	int vmx_if_flags;
+	bool vmx_promisc;
+	bool vmx_mcastactive;
 	uint8_t *vmx_mcast;
 	void *vmx_qs;
 	struct vmxnet3_rss_shared *vmx_rss;
@@ -311,6 +318,10 @@ struct vmxnet3_softc {
 
 	bool vmx_txrx_workqueue;
 	struct workqueue *vmx_queue_wq;
+
+	struct workqueue *vmx_reset_wq;
+	struct work vmx_reset_work;
+	bool vmx_reset_pending;
 };
 
 #define VMXNET3_STAT
@@ -435,6 +446,7 @@ static int vmxnet3_ifflags_cb(struct ethercom *);
 static int vmxnet3_watchdog(struct vmxnet3_txqueue *);
 static void vmxnet3_refresh_host_stats(struct vmxnet3_softc *);
 static void vmxnet3_tick(void *);
+static void vmxnet3_reset_work(struct work *, void *);
 static void vmxnet3_if_link_status(struct vmxnet3_softc *);
 static bool vmxnet3_cmd_link_status(struct ifnet *);
 static void vmxnet3_ifmedia_status(struct ifnet *, struct ifmediareq *);
@@ -632,6 +644,18 @@ vmxnet3_attach(device_t parent, device_t self, void *aux)
 	error = vmxnet3_setup_stats(sc);
 	if (error)
 		return;
+
+	char buf[128];
+	snprintf(buf, sizeof(buf), "%s_reset", device_xname(sc->vmx_dev));
+	error = workqueue_create(&sc->vmx_reset_wq, "%s_reset",
+	    vmxnet3_reset_work, sc, VMXNET3_WORKQUEUE_PRI, IPL_SOFTCLOCK,
+	    WQ_MPSAFE);
+	if (error) {
+		aprint_error_dev(sc->vmx_dev,
+		    "failed to create reset workqueue: %d\n",
+		    error);
+		return;
+	}
 
 	sc->vmx_flags |= VMXNET3_FLAG_ATTACHED;
 }
@@ -1124,6 +1148,8 @@ vmxnet3_init_rxq(struct vmxnet3_softc *sc, int q)
 		rxq->vxrxq_comp_ring.vxcr_ndesc += sc->vmx_nrxdescs;
 	}
 
+	rxq->vxrxq_stopping = true;
+
 	return (0);
 }
 
@@ -1158,6 +1184,8 @@ vmxnet3_init_txq(struct vmxnet3_softc *sc, int q)
 	txq->vxtxq_comp_ring.vxcr_ndesc = sc->vmx_ntxdescs;
 
 	txq->vxtxq_interq = pcq_create(sc->vmx_ntxdescs, KM_SLEEP);
+
+	txq->vxtxq_stopping = true;
 
 	return (0);
 }
@@ -2336,7 +2364,7 @@ vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq, u_int limit)
 
 	VMXNET3_RXQ_LOCK_ASSERT(rxq);
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	if (rxq->vxrxq_stopping)
 		return more;
 
 	m_head = rxq->vxrxq_mhead;
@@ -2442,7 +2470,7 @@ vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq, u_int limit)
 			m_head = m_tail = NULL;
 
 			/* Must recheck after dropping the Rx lock. */
-			if ((ifp->if_flags & IFF_RUNNING) == 0)
+			if (rxq->vxrxq_stopping)
 				break;
 		}
 
@@ -2711,11 +2739,13 @@ vmxnet3_stop_rendezvous(struct vmxnet3_softc *sc)
 	for (i = 0; i < sc->vmx_nrxqueues; i++) {
 		rxq = &sc->vmx_queue[i].vxq_rxqueue;
 		VMXNET3_RXQ_LOCK(rxq);
+		rxq->vxrxq_stopping = true;
 		VMXNET3_RXQ_UNLOCK(rxq);
 	}
 	for (i = 0; i < sc->vmx_ntxqueues; i++) {
 		txq = &sc->vmx_queue[i].vxq_txqueue;
 		VMXNET3_TXQ_LOCK(txq);
+		txq->vxtxq_stopping = true;
 		VMXNET3_TXQ_UNLOCK(txq);
 	}
 	for (i = 0; i < sc->vmx_nrxqueues; i++) {
@@ -2727,21 +2757,23 @@ vmxnet3_stop_rendezvous(struct vmxnet3_softc *sc)
 static void
 vmxnet3_stop_locked(struct vmxnet3_softc *sc)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
 	int q;
 
-	ifp = &sc->vmx_ethercom.ec_if;
 	VMXNET3_CORE_LOCK_ASSERT(sc);
+	KASSERT(IFNET_LOCKED(ifp));
+
+	vmxnet3_stop_rendezvous(sc);
+
+	sc->vmx_mcastactive = false;
+	sc->vmx_link_active = 0;
+	callout_halt(&sc->vmx_tick, sc->vmx_mtx);
 
 	ifp->if_flags &= ~IFF_RUNNING;
-	sc->vmx_link_active = 0;
-	callout_stop(&sc->vmx_tick);
 
 	/* Disable interrupts. */
 	vmxnet3_disable_all_intrs(sc);
 	vmxnet3_write_cmd(sc, VMXNET3_CMD_DISABLE);
-
-	vmxnet3_stop_rendezvous(sc);
 
 	for (q = 0; q < sc->vmx_ntxqueues; q++)
 		vmxnet3_txstop(sc, &sc->vmx_queue[q].vxq_txqueue);
@@ -2755,6 +2787,8 @@ static void
 vmxnet3_stop(struct ifnet *ifp, int disable)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
+
+	KASSERT(IFNET_LOCKED(ifp));
 
 	VMXNET3_CORE_LOCK(sc);
 	vmxnet3_stop_locked(sc);
@@ -2877,6 +2911,8 @@ static int
 vmxnet3_reinit(struct vmxnet3_softc *sc)
 {
 
+	VMXNET3_CORE_LOCK_ASSERT(sc);
+
 	vmxnet3_set_lladdr(sc);
 	vmxnet3_reinit_shared_data(sc);
 
@@ -2895,7 +2931,11 @@ static int
 vmxnet3_init_locked(struct vmxnet3_softc *sc)
 {
 	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
+	int q;
 	int error;
+
+	KASSERT(IFNET_LOCKED(ifp));
+	VMXNET3_CORE_LOCK_ASSERT(sc);
 
 	vmxnet3_stop_locked(sc);
 
@@ -2907,9 +2947,21 @@ vmxnet3_init_locked(struct vmxnet3_softc *sc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	vmxnet3_if_link_status(sc);
+	sc->vmx_mcastactive = true;
 
 	vmxnet3_enable_all_intrs(sc);
 	callout_reset(&sc->vmx_tick, hz, vmxnet3_tick, sc);
+
+	for (q = 0; q < sc->vmx_ntxqueues; q++) {
+		VMXNET3_TXQ_LOCK(&sc->vmx_queue[q].vxq_txqueue);
+		sc->vmx_queue[q].vxq_txqueue.vxtxq_stopping = false;
+		VMXNET3_TXQ_UNLOCK(&sc->vmx_queue[q].vxq_txqueue);
+	}
+	for (q = 0; q < sc->vmx_nrxqueues; q++) {
+		VMXNET3_RXQ_LOCK(&sc->vmx_queue[q].vxq_rxqueue);
+		sc->vmx_queue[q].vxq_rxqueue.vxrxq_stopping = false;
+		VMXNET3_RXQ_UNLOCK(&sc->vmx_queue[q].vxq_rxqueue);
+	}
 
 	return (0);
 }
@@ -2919,6 +2971,8 @@ vmxnet3_init(struct ifnet *ifp)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
 	int error;
+
+	KASSERT(IFNET_LOCKED(ifp));
 
 	VMXNET3_CORE_LOCK(sc);
 	error = vmxnet3_init_locked(sc);
@@ -3164,8 +3218,7 @@ vmxnet3_tx_common_locked(struct ifnet *ifp, struct vmxnet3_txqueue *txq, int txt
 
 	VMXNET3_TXQ_LOCK_ASSERT(txq);
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    sc->vmx_link_active == 0)
+	if (txq->vxtxq_stopping || sc->vmx_link_active == 0)
 		return;
 
 	for (;;) {
@@ -3309,13 +3362,14 @@ vmxnet3_deferred_transmit(void *arg)
 static void
 vmxnet3_set_rxfilter(struct vmxnet3_softc *sc)
 {
-	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
 	struct ethercom *ec = &sc->vmx_ethercom;
 	struct vmxnet3_driver_shared *ds = sc->vmx_ds;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int mode;
 	uint8_t *p;
+
+	VMXNET3_CORE_LOCK_ASSERT(sc);
 
 	ds->mcast_tablelen = 0;
 	ETHER_LOCK(ec);
@@ -3329,7 +3383,7 @@ vmxnet3_set_rxfilter(struct vmxnet3_softc *sc)
 	mode = VMXNET3_RXMODE_BCAST | VMXNET3_RXMODE_UCAST;
 
 	ETHER_LOCK(ec);
-	if (ISSET(ifp->if_flags, IFF_PROMISC) ||
+	if (sc->vmx_promisc ||
 	    ec->ec_multicnt > VMXNET3_MULTICAST_MAX)
 		goto allmulti;
 
@@ -3366,7 +3420,7 @@ allmulti:
 	SET(ec->ec_flags, ETHER_F_ALLMULTI);
 	ETHER_UNLOCK(ec);
 	SET(mode, (VMXNET3_RXMODE_ALLMULTI | VMXNET3_RXMODE_MCAST));
-	if (ifp->if_flags & IFF_PROMISC)
+	if (sc->vmx_promisc)
 		SET(mode, VMXNET3_RXMODE_PROMISC);
 
 setit:
@@ -3381,6 +3435,14 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct vmxnet3_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
+
+	switch (cmd) {
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+	default:
+		KASSERT(IFNET_LOCKED(ifp));
+	}
 
 	switch (cmd) {
 	case SIOCSIFMTU: {
@@ -3408,7 +3470,7 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	if (error == ENETRESET) {
 		VMXNET3_CORE_LOCK(sc);
-		if (ifp->if_flags & IFF_RUNNING)
+		if (sc->vmx_mcastactive)
 			vmxnet3_set_rxfilter(sc);
 		VMXNET3_CORE_UNLOCK(sc);
 		error = 0;
@@ -3420,17 +3482,28 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 static int
 vmxnet3_ifflags_cb(struct ethercom *ec)
 {
-	struct vmxnet3_softc *sc;
+	struct ifnet *ifp = &ec->ec_if;
+	struct vmxnet3_softc *sc = ifp->if_softc;
+	int error = 0;
 
-	sc = ec->ec_if.if_softc;
+	KASSERT(IFNET_LOCKED(ifp));
 
 	VMXNET3_CORE_LOCK(sc);
-	vmxnet3_set_rxfilter(sc);
+	const unsigned short changed = ifp->if_flags ^ sc->vmx_if_flags;
+	if ((changed & ~(IFF_CANTCHANGE | IFF_DEBUG)) == 0) {
+		sc->vmx_if_flags = ifp->if_flags;
+		if (changed & IFF_PROMISC) {
+			sc->vmx_promisc = ifp->if_flags & IFF_PROMISC;
+			error = ENETRESET;
+		}
+	} else {
+		error = ENETRESET;
+	}
 	VMXNET3_CORE_UNLOCK(sc);
 
 	vmxnet3_if_link_status(sc);
 
-	return 0;
+	return error;
 }
 
 static int
@@ -3478,12 +3551,33 @@ vmxnet3_tick(void *xsc)
 	for (i = 0; i < sc->vmx_ntxqueues; i++)
 		timedout |= vmxnet3_watchdog(&sc->vmx_queue[i].vxq_txqueue);
 
-	if (timedout != 0)
-		vmxnet3_init_locked(sc);
-	else
+	if (timedout != 0) {
+		if (!sc->vmx_reset_pending) {
+			sc->vmx_reset_pending = true;
+			workqueue_enqueue(sc->vmx_reset_wq,
+			    &sc->vmx_reset_work, NULL);
+		}
+	} else {
 		callout_reset(&sc->vmx_tick, hz, vmxnet3_tick, sc);
+	}
 
 	VMXNET3_CORE_UNLOCK(sc);
+}
+
+static void
+vmxnet3_reset_work(struct work *work, void *arg)
+{
+	struct vmxnet3_softc *sc = arg;
+	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
+
+	VMXNET3_CORE_LOCK(sc);
+	KASSERT(sc->vmx_reset_pending);
+	sc->vmx_reset_pending = false;
+	VMXNET3_CORE_UNLOCK(sc);
+
+	IFNET_LOCK(ifp);
+	(void)vmxnet3_init(ifp);
+	IFNET_UNLOCK(ifp);
 }
 
 /*
