@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2019/01/07 15:43:17 christos Exp $
+# $NetBSD: Makefile,v 1.4 2023/08/10 06:56:12 riastradh Exp $
 .include "../Makefile.inc"
 
 CPPFLAGS+=-DAPPID=\"TSPI\" -DVAR_PREFIX=\"/var\" -DETC_PREFIX=\"/etc\"
@@ -15,6 +15,10 @@ CPPFLAGS+=-DTSS_BUILD_SELFTEST -DTSS_BUILD_PCRS_LIST -DTSS_BUILD_HASH_LIST
 CPPFLAGS+=-DTSS_BUILD_ENCDATA_LIST -DTSS_BUILD_RSAKEY_LIST -DTSS_BUILD_ASN1
 CPPFLAGS+=-DTSS_BUILD_AUDIT -DTSS_BUILD_SEALX -DTSS_BUILD_QUOTE2
 CPPFLAGS+=-DTSS_BUILD_NV -DTSS_BUILD_DELEGATION -DTSS_BUILD_CMK
+
+COPTS.rpc.c+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+COPTS.hash.c+=	-Wno-error=deprecated-declarations # openssl3 PKCS1_MGF
+COPTS.rsa.c+=	-Wno-error=deprecated-declarations # openssl3 RSA_*
 
 TSPI=${DIST}/src/tspi 
 TRSPI=${DIST}/src/trspi 
