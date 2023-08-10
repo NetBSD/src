@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.242 2022/02/01 01:28:26 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.243 2023/08/10 20:02:56 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.242 2022/02/01 01:28:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.243 2023/08/10 20:02:56 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -606,7 +606,7 @@ static const struct pci_class pci_subclass_crypto[] = {
 
 /*
  * Class 0x11.
- * Data aquuisition and signal processing controller.
+ * Data acquisition and signal processing controller.
  */
 static const struct pci_class pci_subclass_dasp[] = {
 	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,		NULL,	},
