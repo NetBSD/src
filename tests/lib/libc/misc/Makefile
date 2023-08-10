@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2022/05/29 10:47:40 andvar Exp $
+# $NetBSD: Makefile,v 1.9 2023/08/10 20:44:37 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -30,12 +30,11 @@ COPTS.t_ubsan.c += -Wno-stack-protector
 COPTS.t_ubsanxx.cpp += -Wno-stack-protector
 COPTS.ubsan.c+=    ${${ACTIVE_CC} == "clang" && ${MACHINE_ARCH} == "powerpc":? -O0 :}
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.t_ubsan.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-int-in-bool-context :}
 COPTS.t_ubsanxx.cpp+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-int-in-bool-context :}
-.endif
+COPTS.t_ubsan.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-uninitialized :}
+COPTS.t_ubsanxx.cpp+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-uninitialized :}
 
-# XXX
-COPTS.ubsan.c+=    	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-error=builtin-declaration-mismatch :}
+COPTS.ubsan.c+=    	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-builtin-declaration-mismatch :}
 
 .include <bsd.test.mk>
