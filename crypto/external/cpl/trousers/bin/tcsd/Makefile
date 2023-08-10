@@ -1,10 +1,12 @@
-# $NetBSD: Makefile,v 1.2 2019/01/07 15:18:03 christos Exp $
+# $NetBSD: Makefile,v 1.3 2023/08/10 06:56:12 riastradh Exp $
 .include "../Makefile.inc"
 
 .PATH.c: ${DIST}/src/tcsd
 
 CPPFLAGS+=-DAPPID=\"TCSD\" -DVAR_PREFIX=\"/var\"  -DETC_PREFIX=\"/etc\"
 CPPFLAGS+=-DTSS_BUILD_PS -DTSS_BUILD_PCR_EVENTS
+
+COPTS.tcsd_threads.c+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 BINDIR=/usr/sbin
 PROG=tcsd
