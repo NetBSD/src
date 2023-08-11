@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.5 2021/08/27 17:53:13 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.6 2023/08/11 02:43:59 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: base64.c,v 1.5 2021/08/27 17:53:13 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.6 2023/08/11 02:43:59 rillig Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -65,9 +65,8 @@ putoutput(FILE *fout, uint8_t out[4], size_t len, size_t wrap, size_t *pos)
 	size_t i;
 
 	for (i = 0; i < len + 1; i++) {
-		if (out[i] >= 64) {
+		if (out[i] >= 64)
 			return EINVAL;
-		}
 		if (fputc(B64[out[i]], fout) == -1)
 			return errno;
 		if (++(*pos) == wrap) {
@@ -119,13 +118,12 @@ b64_encode(FILE *fout, FILE *fin, size_t wrap)
 			return e;
 	}
 
-	if (pos && wrap) {
+	if (pos != 0 && wrap != 0) {
 		if (fputc('\n', fout) == -1)
 			return errno;
 	}
 	return 0;
 }
-		
 
 static int
 b64_decode(FILE *fout, FILE *fin, bool ignore)
@@ -152,7 +150,7 @@ b64_decode(FILE *fout, FILE *fin, bool ignore)
 
 		switch (state) {
 		case 0:
-			out = (uint8_t)(b << 2); 
+			out = (uint8_t)(b << 2);
 			break;
 		case 1:
 			out |= b >> 4;
@@ -212,7 +210,7 @@ b64_decode(FILE *fout, FILE *fin, bool ignore)
 	return 0;
 }
 
-static __dead void 
+static __dead void
 usage(void)
 {
 	fprintf(stderr, "Usage: %s [-di] [-w <wrap>] [<file>]...\n",
