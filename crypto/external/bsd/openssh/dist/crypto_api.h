@@ -1,5 +1,5 @@
-/*	$NetBSD: crypto_api.h,v 1.4 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: crypto_api.h,v 1.7 2021/01/08 02:33:13 dtucker Exp $ */
+/*	$NetBSD: crypto_api.h,v 1.4.6.1 2023/08/11 15:36:39 martin Exp $	*/
+/* $OpenBSD: crypto_api.h,v 1.8 2023/01/15 23:05:32 djm Exp $ */
 
 /*
  * Assembled from generated headers and source files by Markus Friedl.
@@ -28,8 +28,6 @@ typedef uint64_t crypto_uint64;
 
 int	crypto_hash_sha512(unsigned char *, const unsigned char *,
     unsigned long long);
-
-int	crypto_verify_32(const unsigned char *, const unsigned char *);
 
 #define crypto_sign_ed25519_SECRETKEYBYTES 64U
 #define crypto_sign_ed25519_PUBLICKEYBYTES 32U

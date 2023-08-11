@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34.6.1 2023/08/11 13:40:11 martin Exp $
+#	$NetBSD: Makefile,v 1.34.6.2 2023/08/11 15:36:41 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -28,9 +28,7 @@ dispatch.c \
 dns.c \
 ed25519.c \
 fatal.c \
-fe25519.c \
 freezero.c \
-ge25519.c \
 hash.c \
 hmac.c \
 hostfile.c \
@@ -54,7 +52,6 @@ poly1305.c \
 progressmeter.c \
 readpass.c \
 recallocarray.c \
-sc25519.c \
 smult_curve25519_ref.c \
 sntrup761.c \
 ssh-ed25519.c \
@@ -75,7 +72,6 @@ uidswap.c \
 umac.c \
 umac128.c \
 utf8.c \
-verify.c \
 xmalloc.c \
 xmss_commons.c \
 xmss_fast.c \
@@ -127,8 +123,8 @@ COPTS.poly1305.c+=	-O0
 COPTS.umac.c+=		-O0
 .endif
 
-COPTS.hostfile.c+=	${GCC_NO_FORMAT_TRUNCATION}
-COPTS.sshkey.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.hostfile.c+=	${CC_WNO_FORMAT_TRUNCATION}
+COPTS.sshkey.c+=	${CC_WNO_FORMAT_TRUNCATION}
 COPTS.cipher.c+=	-Wno-error=deprecated-declarations
 COPTS.dh.c+=		-Wno-error=deprecated-declarations
 COPTS.kex.c+=		-Wno-error=deprecated-declarations

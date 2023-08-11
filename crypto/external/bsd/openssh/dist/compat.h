@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.h,v 1.16 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: compat.h,v 1.57 2021/06/06 03:40:39 djm Exp $ */
+/*	$NetBSD: compat.h,v 1.16.2.1 2023/08/11 15:36:39 martin Exp $	*/
+/* $OpenBSD: compat.h,v 1.62 2023/03/06 12:14:48 dtucker Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
@@ -36,12 +36,12 @@
 /* #define unused		0x00000020 */
 #define SSH_BUG_DEBUG		0x00000040
 /* #define unused		0x00000080 */
-#define SSH_BUG_IGNOREMSG	0x00000100
+/* #define unused		0x00000100 */
 /* #define unused		0x00000200 */
-#define SSH_BUG_PASSWORDPAD	0x00000400
+/* #define unused		0x00000400 */
 #define SSH_BUG_SCANNER		0x00000800
-#define SSH_BUG_BIGENDIANAES	0x00001000
-#define SSH_BUG_RSASIGMD5	0x00002000
+/* #define unused		0x00001000 */
+/* #define unused		0x00002000 */
 #define SSH_OLD_DHGEX		0x00004000
 #define SSH_BUG_NOREKEY		0x00008000
 /* #define unused		0x00010000 */
@@ -58,12 +58,10 @@
 #define SSH_BUG_CURVE25519PAD	0x10000000
 #define SSH_BUG_HOSTKEYS	0x20000000
 #define SSH_BUG_DHGEX_LARGE	0x40000000
-#define SSH_BUG_LARGEWINDOW     0x80000000
+#define SSH_BUG_LARGEWINDOW	0x80000000
 
 struct ssh;
 
 void    compat_banner(struct ssh *, const char *);
-char	*compat_cipher_proposal(struct ssh *, char *);
-char	*compat_pkalg_proposal(struct ssh *, char *);
-char	*compat_kex_proposal(struct ssh *, char *);
+char	*compat_kex_proposal(struct ssh *, const char *);
 #endif

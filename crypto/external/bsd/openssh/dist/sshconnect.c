@@ -1,6 +1,5 @@
-/*	$NetBSD: sshconnect.c,v 1.33 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.358 2022/08/26 08:16:27 djm Exp $ */
-
+/*	$NetBSD: sshconnect.c,v 1.33.2.1 2023/08/11 15:36:39 martin Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.363 2023/03/10 07:17:08 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.33 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.33.2.1 2023/08/11 15:36:39 martin Exp $");
 
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
@@ -49,7 +48,6 @@ __RCSID("$NetBSD: sshconnect.c,v 1.33 2022/10/05 22:39:36 christos Exp $");
 #include "ssh.h"
 #include "sshbuf.h"
 #include "packet.h"
-#include "compat.h"
 #include "sshkey.h"
 #include "sshconnect.h"
 #include "hostfile.h"
@@ -294,14 +292,17 @@ ssh_set_socket_recvbuf(int sock)
 	int socksize;
 	socklen_t socksizelen = sizeof(int);
 
-	debug("setsockopt Attempting to set SO_RCVBUF to %d", options.tcp_rcv_buf);
+	debug("setsockopt Attempting to set SO_RCVBUF to %d",
+	    options.tcp_rcv_buf);
 	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, buf, sz) >= 0) {
-	  getsockopt(sock, SOL_SOCKET, SO_RCVBUF, &socksize, &socksizelen);
-	  debug("setsockopt SO_RCVBUF: %.100s %d", strerror(errno), socksize);
-	}
-	else
+		getsockopt(sock, SOL_SOCKET, SO_RCVBUF, &socksize,
+		    &socksizelen);
+		debug("setsockopt SO_RCVBUF: %.100s %d", strerror(errno),
+		    socksize);
+	} else {
 		error("Couldn't set socket receive buffer to %d: %.100s",
 		    options.tcp_rcv_buf, strerror(errno));
+	}
 }
 
 /*
@@ -381,7 +382,7 @@ ssh_create_socket(struct addrinfo *ai)
 		error("socket: %s", strerror(errno));
 		return -1;
 	}
-	fcntl(sock, F_SETFD, FD_CLOEXEC);
+	(void)fcntl(sock, F_SETFD, FD_CLOEXEC);
 
 	if (options.tcp_rcv_buf > 0)
 		ssh_set_socket_recvbuf(sock);
@@ -933,7 +934,7 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 	char *ip = NULL, *host = NULL;
 	char hostline[1000], *hostp, *fp, *ra;
 	char msg[1024];
-	const char *type, *fail_reason;
+	const char *type, *fail_reason = NULL;
 	const struct hostkey_entry *host_found = NULL, *ip_found = NULL;
 	int len, cancelled_forwarding = 0, confirmed;
 	int local = sockaddr_is_local(hostaddr);
@@ -956,6 +957,17 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 		    "loopback/localhost.");
 		options.update_hostkeys = 0;
 		return 0;
+	}
+
+	/*
+	 * Don't ever try to write an invalid name to a known hosts file.
+	 * Note: do this before get_hostfile_hostname_ipaddr() to catch
+	 * '[' or ']' in the name before they are added.
+	 */
+	if (strcspn(hostname, "@?*#[]|'\'\"\\") != strlen(hostname)) {
+		debug_f("invalid hostname \"%s\"; will not record: %s",
+		    hostname, fail_reason);
+		readonly = RDONLY;
 	}
 
 	/*
@@ -1263,8 +1275,11 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 		}
 		/* The host key has changed. */
 		warn_changed_key(host_key);
-		error("Add correct host key in %.100s to get rid of this message.",
-		    user_hostfiles[0]);
+		if (num_user_hostfiles > 0 || num_system_hostfiles > 0) {
+			error("Add correct host key in %.100s to get rid "
+			    "of this message.", num_user_hostfiles > 0 ?
+			    user_hostfiles[0] : system_hostfiles[0]);
+		}
 		error("Offending %s key in %s:%lu",
 		    sshkey_type(host_found->key),
 		    host_found->file, host_found->line);
