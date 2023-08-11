@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.99 2023/08/10 10:24:39 sborrill Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.100 2023/08/11 13:31:39 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -3642,6 +3642,7 @@ sys/arch/amiga/dev/grfabs_cc.c			1.39
 sys/arch/amiga/include/intr.h			1.23
 sys/arch/arm/include/cpu.h			1.125
 sys/arch/arm/include/mutex.h			1.28,1.29
+sys/arch/arm/marvell/mvsoc_intr.h		1.9
 sys/arch/arm/xscale/pxa2x0_intr.c		1.26
 sys/arch/arm/xscale/pxa2x0_intr.h		1.16
 sys/arch/atari/include/intr.h			1.23
@@ -3686,6 +3687,7 @@ sys/ddb/db_syncobj.c				1.1,1.2
 sys/ddb/db_syncobj.h				1.1
 sys/ddb/ddb.h					1.6
 sys/ddb/files.ddb				1.16
+sys/dev/marvell/marvellvar.h			1.7
 sys/external/bsd/drm2/include/linux/idr.h	1.11
 sys/kern/kern_core.c				1.38
 sys/opencrypto/cryptodev.h			1.51
