@@ -1,4 +1,4 @@
-/* $NetBSD: namespace.h,v 1.16 2022/08/27 08:31:59 christos Exp $ */
+/* $NetBSD: namespace.h,v 1.16.2.1 2023/08/11 14:44:19 martin Exp $ */
 
 #define atan2 _atan2
 #define atan2f _atan2f
@@ -10,6 +10,7 @@
 #define exp _exp
 #define expf _expf
 #define expl _expl
+#define expm1l _expm1l
 #define log _log
 #define logf _logf
 #define logl _logl
@@ -73,9 +74,14 @@
 #define tanhl _tanhl
 #define atanhl _atanhl
 #define log10l _log10l
+#define log1pl _log1pl
+#define log2l _log2l
 
-#define erfl	_erfl
-#define erfcl	_erfcl
+#define erfl _erfl
+#define erfcl _erfcl
+
+#define lgammal _lgammal
+#define tgammal _tgammal
 
 #define feclearexcept _feclearexcept
 #define fegetenv _fegetenv
