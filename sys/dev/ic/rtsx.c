@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsx.c,v 1.6 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: rtsx.c,v 1.7 2023/08/11 07:05:39 mrg Exp $	*/
 /*	$OpenBSD: rtsx.c,v 1.10 2014/08/19 17:55:03 phessler Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx.c,v 1.6 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx.c,v 1.7 2023/08/11 07:05:39 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -935,7 +935,7 @@ static int
 rtsx_read(struct rtsx_softc *sc, uint16_t addr, uint8_t *val)
 {
 	int tries = 1024;
-	uint32_t reg;
+	uint32_t reg = 0 /* XXXGCC12 */;
 
 	WRITE4(sc, RTSX_HAIMR, RTSX_HAIMR_BUSY |
 	    (uint32_t)((addr & 0x3FFF) << 16));

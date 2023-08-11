@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_fmn.c,v 1.4 2011/09/27 01:02:34 jym Exp $	*/
+/*	$NetBSD: rmixl_fmn.c,v 1.5 2023/08/11 07:05:39 mrg Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -896,7 +896,7 @@ static int
 rmixl_fmn_msg_recv_subr(u_int bucket, rmixl_fmn_rxmsg_t *rxmsg)
 {
 	fmn_t *fmnp;
-	uint32_t msg_status;
+	uint32_t msg_status = 0 /* XXXGCC12 */;
 	int rv;
 
 	fmnp = fmn_lookup(curcpu()->ci_cpuid);

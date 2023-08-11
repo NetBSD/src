@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.25 2017/05/04 16:29:08 sevan Exp $ */
+/* $NetBSD: sunlabel.c,v 1.26 2023/08/11 07:05:39 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.25 2017/05/04 16:29:08 sevan Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.26 2023/08/11 07:05:39 mrg Exp $");
 #endif
 
 #include <stdio.h>
@@ -1018,7 +1018,7 @@ print_part(int all)
 	int i, j, k, n, r, c;
 	size_t ncols;
 	uint32_t edges[2 * NPART];
-	int ce[2 * NPART];
+	int ce[2 * NPART] = {0}; /* XXXGCC12 */
 	int row[NPART];
 	unsigned char table[2 * NPART][NPART];
 	char *line;
