@@ -24,6 +24,7 @@
 
 #include "sparc64-tdep.h"
 #include "sparc-nat.h"
+#include "netbsd-nat.h"
 
 /* NetBSD is different from the other OSes that support both SPARC and
    UltraSPARC in that the result of ptrace(2) depends on whether the
@@ -168,7 +169,7 @@ sparc64nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 }
 
 /* We've got nothing to add to the generic SPARC target.  */
-static sparc_target<inf_ptrace_target> the_sparc64_nbsd_nat_target;
+static sparc_target<nbsd_nat_target> the_sparc64_nbsd_nat_target;
 
 void _initialize_sparc64nbsd_nat ();
 void

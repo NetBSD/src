@@ -23,6 +23,7 @@
 
 #include "sparc-tdep.h"
 #include "sparc-nat.h"
+#include "netbsd-nat.h"
 
 /* Support for debugging kernel virtual memory images.  */
 
@@ -55,7 +56,7 @@ sparc32nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   return 1;
 }
 
-static sparc_target<inf_ptrace_target> the_sparc_nbsd_nat_target;
+static sparc_target<nbsd_nat_target> the_sparc_nbsd_nat_target;
 
 void _initialize_sparcnbsd_nat ();
 void
@@ -64,7 +65,7 @@ _initialize_sparcnbsd_nat ()
   sparc_gregmap = &sparc32nbsd_gregmap;
   sparc_fpregmap = &sparc32_bsd_fpregmap;
 
-  add_inf_child_target (&sparc_nbsd_nat_target);
+  add_inf_child_target (&the_sparc_nbsd_nat_target);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (sparc32nbsd_supply_pcb);
