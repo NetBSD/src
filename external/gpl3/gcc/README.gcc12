@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.11 2023/08/11 05:34:36 mrg Exp $
+$NetBSD: README.gcc12,v 1.12 2023/08/11 07:37:48 mrg Exp $
 
 
 new stuff:
@@ -59,8 +59,8 @@ mips64eb	y	b	y	y	b	y		?	?	?
 mips64el	y	b	y	y	b	y		?	?	?
 powerpc		y	y	y	y	?	n[4]		?	?	?
 powerpc64	y	?	?	y	?	?		?	?	?
-sh3eb		y	?	y	y	?	?		?	?	?
-sh3el		y	n[20]	y	y	?	n[8]		?	?	?
+sh3eb		y	?	y	y	b	y		?	?	?
+sh3el		y	n[20]	y	y	b	y		?	?	?
 sparc		y	y	y	y	n[21]	y		y	y	?
 sparc64		y	b	y	y	n[16]	y		y	?	?
 vax		y	?	y	y	?	n		?	?	?
@@ -79,10 +79,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [7]: fails to build kernels:
      In file included from sys/arch/powerpc/oea/pmap64.c:4:
      sys/arch/powerpc/oea/pmap.c:2186:2: error: #error PPC_OEA64 not supported
-[8]: destdir.evbsh3/usr/include/ssp/string.h: In function '_int_strtod_l':
-     destdir.evbsh3/usr/include/ssp/string.h:82:1: error: inlining failed in call to 'always_inline' '__memcpy_ichk': target specific option mismatch
-     this is caused by strtod.c using optimise("O0") conflicting with the always_inline attribute.
-     originally -O0 to fix PR#55668, but may be fixed in gcc10+.
 [10]: libc.so fails to link with weird relocation errors:
       vax--netbsdelf/bin/ld: warning: dynamic relocation to `?' in readonly section `.eh_frame'
 [11]: sanitizers don't build yet.
@@ -157,8 +153,8 @@ mipseb:		k		k		k		k		k		y
 mipsel:		k		k		k		k		k		y
 
 		algor		evbmips		pmax
-mips64eb:	 		r		 
-mips64el:	k		r		r
+mips64eb:	 		y		 
+mips64el:	k		y		y
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
 powerpc:	k		k	k	k		kn[4]		k		k		k		k		k
@@ -167,5 +163,5 @@ powerpc:	k		k	k	k		kn[4]		k		k		k		k		k
 powerpc64:	k		k		n[7]
 
 		dreamcast	evbsh3		hpcsh		landisk		mmeye
-sh3eb:		 		kn[8]		 		 		k
-sh3el:		k		kn[8]		k		k
+sh3eb:		 		y		 		 		k
+sh3el:		k		y		k		k
