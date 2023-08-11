@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.26 2023/08/11 16:05:56 riastradh Exp $
+.\"	$NetBSD: strcpy.3,v 1.27 2023/08/11 21:17:16 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRCPY 3
@@ -59,7 +59,7 @@ to
 .Fa dst ,
 including the terminating
 .Tn NUL
-character.
+byte.
 .Pp
 The strings
 .Fa src
@@ -70,7 +70,7 @@ The string
 .Fa src
 must be terminated by a
 .Tn NUL
-character.
+byte.
 The memory for
 .Fa dst
 must have space for
@@ -86,7 +86,7 @@ The
 .Fn stpcpy
 function returns a pointer to the terminating
 .Tn NUL
-character of
+byte of
 .Fa dst .
 .Sh SEE ALSO
 .Xr bcopy 3 ,
