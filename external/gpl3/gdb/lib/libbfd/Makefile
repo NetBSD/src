@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2023/08/11 17:46:01 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2023/08/11 18:25:27 christos Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -59,11 +59,11 @@ elf32-aarch64.c: elfnn-aarch64.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/32/g < $> > $@
 
-elf32-ia64.c: elfxx-ia64.c
+elf32-ia64.c: elfnn-ia64.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/32/g < $> > $@
 
-elf64-ia64.c: elfxx-ia64.c
+elf64-ia64.c: elfnn-ia64.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/64/g < $> > $@
 
