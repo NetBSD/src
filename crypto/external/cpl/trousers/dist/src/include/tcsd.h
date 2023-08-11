@@ -170,7 +170,7 @@ void	   *tcsd_thread_run(void *);
 void	   thread_signal_init();
 
 /* signal handling */
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(__NetBSD__)
 struct sigaction tcsd_sa_int;
 struct sigaction tcsd_sa_chld;
 #endif
