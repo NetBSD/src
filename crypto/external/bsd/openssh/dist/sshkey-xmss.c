@@ -1,6 +1,5 @@
-/*	$NetBSD: sshkey-xmss.c,v 1.8 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: sshkey-xmss.c,v 1.11 2021/04/03 06:18:41 djm Exp $ */
-
+/*	$NetBSD: sshkey-xmss.c,v 1.8.6.1 2023/08/11 15:36:39 martin Exp $	*/
+/* $OpenBSD: sshkey-xmss.c,v 1.12 2022/10/28 00:39:29 djm Exp $ */
 /*
  * Copyright (c) 2017 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey-xmss.c,v 1.8 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: sshkey-xmss.c,v 1.8.6.1 2023/08/11 15:36:39 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -363,7 +362,7 @@ sshkey_xmss_deserialize_pk_info(struct sshkey *k, struct sshbuf *b)
 }
 
 int
-sshkey_xmss_generate_private_key(struct sshkey *k, u_int bits)
+sshkey_xmss_generate_private_key(struct sshkey *k, int bits)
 {
 	int r;
 	const char *name;
@@ -446,7 +445,7 @@ sshkey_xmss_get_state(const struct sshkey *k, int printerror)
 	u_int32_t idx = 0;
 	char *filename = NULL;
 	char *statefile = NULL, *ostatefile = NULL, *lockfile = NULL;
-	int lockfd = -1, have_state = 0, have_ostate, tries = 0;
+	int lockfd = -1, have_state = 0, have_ostate = 0, tries = 0;
 	int ret = SSH_ERR_INVALID_ARGUMENT, r;
 
 	if (state == NULL)
