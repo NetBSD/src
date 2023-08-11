@@ -31,7 +31,7 @@
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
 .\"     from: NetBSD: strcpy.3,v 1.23 2015/04/01 20:18:17 riastradh Exp
-.\"	$NetBSD: strncpy.3,v 1.7 2023/08/11 15:37:55 riastradh Exp $
+.\"	$NetBSD: strncpy.3,v 1.8 2023/08/11 16:04:25 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRNCPY 3
@@ -108,52 +108,79 @@ character, it instead returns a pointer to
 .Sm on
 which may be one past the last element of an array.
 .Sh EXAMPLES
-The following sets
-.Va chararray
-to
-.Li \*qabc\e0\e0\e0\*q :
+The following logic fills a fixed-width field in a record that might
+appear on disk with the content of a caller-provided string
+.Dv str ,
+padded to the end of the field with
+.Tn NUL
+characters:
 .Bd -literal -offset indent
-char chararray[6];
+struct record {
+	uint16_t	id;
+	char		name[6];
+	uint8_t		tag;
+	...
+};
 
-(void)strncpy(chararray, "abc", sizeof(chararray));
+struct record *rec = ...;
+strncpy(rec->name, str, sizeof(rec->name));
 .Ed
 .Pp
-The following sets
-.Va chararray
-to
-.Li \*qabcdef\*q :
-.Bd -literal -offset indent
-char chararray[6];
-
-(void)strncpy(chararray, "abcdefgh", sizeof(chararray));
-.Ed
+The following values for
+.Dv str
+result in the following corresponding contents of
+.Dv rec Ns Li "->name" :
+.Bl -column -offset indent ".Li \*qabcdefghi\*q" ".Li \*qabc\e0\e0\e0\*q"
+.It Dv str Ta Dv rec Ns Li "->name"
+.It Li \*qabc\e0\*q Ta Li \*qabc\e0\e0\e0\*q
+.It Li \*qabc\e0\e0\e0\*q Ta Li \*qabc\e0\e0\e0\*q
+.It Li \*qabcde\e0\*q Ta Li \*qabcde\e0\*q
+.It Li \*qabcdef\e0\*q Ta Li \*qabcdef\*q
+.It Li \*qabcdef\*q Ta Li \*qabcdef\*q
+.It Li \*qabcdefghi\e0\*q Ta Li \*qabcdef\*q
+.It Li \*qabcdefghi\*q Ta Li \*qabcdef\*q
+.El
 .Pp
-Note that it does
+Note that when
+.Dv str
+has at least six
+.No non- Ns Tn NUL
+characters,
+.Dv rec Ns Li "->name"
+is
 .Em not
-.Tn NUL Ns -terminate
-.Va chararray
-because the length of the source string is greater than or equal
-to the length parameter.
+.Tn NUL Ns -terminated
+\(em it is only
+.Em padded
+with (possibly zero)
+.Tn NUL
+bytes to fill the fixed-width buffer.
+When
+.Dv str
+has
+.Em more
+than six
+.No non- Ns Tn NUL
+characters, the additional ones are truncated.
+If
+.Dv str
+has space for
+.Em fewer
+than six characters, and the last one is not
+.Tn NUL ,
+using
 .Fn strncpy
-.Em only
-.Tn NUL Ns -terminates
-the destination string when the length of the source
-string is less than the length parameter.
+is undefined.
 .Pp
-The following copies as many characters from
-.Va input
-to
-.Va buf
-as will fit and
-.Tn NUL Ns -terminates
-the result.
 Because
 .Fn strncpy
 does
 .Em not
 guarantee to
 .Tn NUL Ns -terminate
-the string itself, this must be done explicitly.
+the result, if
+.Tn NUL Ns -termination
+is required it must be done explicitly:
 .Bd -literal -offset indent
 char buf[1024];
 
