@@ -1,4 +1,4 @@
-.\"	$NetBSD: strlcpy.3,v 1.20 2023/08/11 21:20:39 riastradh Exp $
+.\"	$NetBSD: strlcpy.3,v 1.21 2023/08/11 21:30:32 riastradh Exp $
 .\" from OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -53,8 +53,8 @@ strings respectively.
 The
 .Fn strlcpy
 function copies up to
-.Fa size
-- 1 bytes from the
+.Fa size Li "- 1"
+bytes from the
 .Tn NUL Ns -terminated
 string
 .Fa src
@@ -72,8 +72,8 @@ string
 to the end of
 .Fa dst .
 It will append at most
-.Fa size
-- strlen(dst) - 1 bytes,
+.Fa size Li "-" Fn strlen dst Li "- 1"
+bytes,
 .Tn NUL Ns -terminating
 the result.
 .Ss Relation to Xr strncpy 3 and Xr strncat 3
