@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strncpy.3,v 1.4 2023/08/11 13:10:59 uwe Exp $
+.\"	$NetBSD: strncpy.3,v 1.5 2023/08/11 13:18:24 uwe Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRNCPY 3
@@ -110,7 +110,7 @@ which may be one past the last element of an array.
 The following sets
 .Va chararray
 to
-.Dq Li abc\e0\e0\e0 :
+.Li \*qabc\e0\e0\e0\*q :
 .Bd -literal -offset indent
 char chararray[6];
 
@@ -120,7 +120,7 @@ char chararray[6];
 The following sets
 .Va chararray
 to
-.Dq Li abcdef :
+.Li \*qabcdef\*q :
 .Bd -literal -offset indent
 char chararray[6];
 
@@ -129,13 +129,13 @@ char chararray[6];
 .Pp
 Note that it does
 .Em not
-.Dv NUL Ns No -terminate
+.Tn NUL Ns -terminate
 .Va chararray
 because the length of the source string is greater than or equal
 to the length parameter.
 .Fn strncpy
 .Em only
-.Dv NUL Ns No -terminates
+.Tn NUL Ns -terminates
 the destination string when the length of the source
 string is less than the length parameter.
 .Pp
@@ -144,14 +144,14 @@ The following copies as many characters from
 to
 .Va buf
 as will fit and
-.Dv NUL Ns No -terminates
+.Tn NUL Ns -terminates
 the result.
 Because
 .Fn strncpy
 does
 .Em not
 guarantee to
-.Dv NUL Ns No -terminate
+.Tn NUL Ns -terminate
 the string itself, this must be done explicitly.
 .Bd -literal -offset indent
 char buf[1024];
@@ -162,7 +162,11 @@ buf[sizeof(buf) - 1] = '\e0';
 .Pp
 If
 .Va buf
-need only be be NUL-terminated, not fully initialized with NUL padding,
+need only be
+.Tn NUL Ns -terminated ,
+not fully initialized with
+.Tn NUL
+padding,
 this could be achieved using
 .Xr strlcpy 3
 as follows:
@@ -182,7 +186,9 @@ does not fully initialize
 .Fa dst ,
 it is
 .Em not
-a safe NUL-terminating replacement for
+a safe
+.Tn NUL Ns -terminating
+replacement for
 .Fn strncpy
 if the buffer is not separately zero-initialized.
 Naively replacing
@@ -218,4 +224,6 @@ The
 .Fn stpncpy
 and
 .Fn strncpy
-functions are not guaranteed to NUL-terminate the result.
+functions are not guaranteed to
+.Tn NUL Ns -terminate
+the result.
