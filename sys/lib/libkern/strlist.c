@@ -1,4 +1,4 @@
-/*	$NetBSD: strlist.c,v 1.2 2021/01/23 19:41:16 thorpej Exp $	*/
+/*	$NetBSD: strlist.c,v 1.3 2023/08/11 07:05:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ strlist_match(const char * const sl, size_t const slsize,
     const char * const str)
 {
 	unsigned int count;
-	int idx;
+	int idx = 0 /* XXXGCC 12 */;
 
 	if (strlist_match_internal(sl, slsize, str, &idx, &count,
 				   match_strcmp)) {
@@ -279,7 +279,7 @@ strlist_pmatch(const char * const sl, size_t const slsize,
     const char * const pattern)
 {
 	unsigned int count;
-	int idx;
+	int idx = 0; /* XXXGCC12 */
 
 	if (strlist_match_internal(sl, slsize, pattern, &idx, &count,
 				   match_pmatch)) {
