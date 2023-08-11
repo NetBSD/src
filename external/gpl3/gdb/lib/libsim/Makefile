@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2023/08/11 15:18:29 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2023/08/11 17:46:04 christos Exp $
 
 LIBISPRIVATE=	yes
 NOGCCERROR=
@@ -15,6 +15,8 @@ SRCS=	debug.c filter_filename.c bits.c sim-endian.c os_emul.c emul_generic.c \
 	hw_iobus.c hw_htab.c hw_disk.c hw_trace.c hw_register.c hw_vm.c \
 	hw_init.c hw_core.c hw_pal.c hw_com.c hw_eeprom.c hw_opic.c hw_glue.c \
 	hw_phb.c hw_ide.c options.c sim_calls.c callback.c gdb-sim.c
+SRCS+=	target-newlib-errno.c target-newlib-open.c target-newlib-signal.c \
+	target-newlib-syscall.c
 
 MIC=	${HOST_SH} ${DIST}/move-if-change
 
