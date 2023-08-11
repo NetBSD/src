@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.69 2017/08/09 18:44:32 joerg Exp $	 */
+/*	$NetBSD: symbol.c,v 1.69.6.1 2023/08/11 12:13:10 sborrill Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.69 2017/08/09 18:44:32 joerg Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.69.6.1 2023/08/11 12:13:10 sborrill Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -78,29 +78,6 @@ _rtld_donelist_check(DoneList *dlp, const Obj_Entry *obj)
 	if (dlp->num_used < dlp->num_alloc)
 		dlp->objs[dlp->num_used++] = obj;
 	return false;
-}
-
-/*
- * Hash function for symbol table lookup.  Don't even think about changing
- * this.  It is specified by the System V ABI.
- */
-unsigned long
-_rtld_elf_hash(const char *name)
-{
-	const unsigned char *p = (const unsigned char *) name;
-	unsigned long   h = 0;
-	unsigned long   g;
-	unsigned long   c;
-
-	for (; __predict_true((c = *p) != '\0'); p++) {
-		h <<= 4;
-		h += c;
-		if ((g = h & 0xf0000000) != 0) {
-			h ^= g;
-			h ^= g >> 24;
-		}
-	}
-	return (h);
 }
 
 const Elf_Sym *
