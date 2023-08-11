@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strncpy.3,v 1.1 2023/08/11 09:39:39 riastradh Exp $
+.\"	$NetBSD: strncpy.3,v 1.2 2023/08/11 11:51:54 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRNCPY 3
@@ -158,9 +158,12 @@ char buf[1024];
 buf[sizeof(buf) - 1] = '\e0';
 .Ed
 .Pp
-This could be better and more simply achieved using
-.Xr strlcpy 3 ,
-as shown in the following example:
+If
+.Va buf
+need only be be NUL-terminated, not fully initialized with NUL padding,
+this could be achieved using
+.Xr strlcpy 3
+as follows:
 .Bd -literal -offset indent
 (void)strlcpy(buf, input, sizeof(buf));
 .Ed
@@ -169,6 +172,22 @@ Note that because
 .Xr strlcpy 3
 is not defined in any standards, it should
 only be used when portability is not a concern.
+.Pp
+.Sy WARNING :
+Because
+.Xr strlcpy 3
+does not fully initialize
+.Fa dst ,
+it is
+.Em not
+a safe NUL-terminating replacement for
+.Fn strncpy
+if the buffer is not separately zero-initialized.
+Naively replacing
+.Fn strncpy
+by
+.Xr strlcpy 3
+can lead to disclosure of secrets from uninitialized memory.
 .Sh SEE ALSO
 .Xr bcopy 3 ,
 .Xr memccpy 3 ,
