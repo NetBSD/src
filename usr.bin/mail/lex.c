@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.45 2018/02/04 09:01:12 mrg Exp $	*/
+/*	$NetBSD: lex.c,v 1.46 2023/08/11 07:01:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.45 2018/02/04 09:01:12 mrg Exp $");
+__RCSID("$NetBSD: lex.c,v 1.46 2023/08/11 07:01:01 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,8 @@ update_mailname(const char *name)
 				sep = "...";
 			}
 			(void)snprintf(displayname, sizeof(displayname),
-			    "+%s%s", sep, cp);
+			    "+%s%.*s", sep,
+			    (int)(sizeof(displayname) - 1 - strlen(sep)), cp);
 			return;
 		}
 	}
