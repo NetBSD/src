@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.22 2023/08/10 20:49:19 mrg Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.23 2023/08/11 08:36:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.22 2023/08/10 20:49:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.23 2023/08/11 08:36:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -320,8 +320,8 @@ acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
     const char *src, struct wmi_t **out)
 {
 	struct wmi_t *wmi;
-	struct guid_t *guid;
-	char bin[MAX(16, sizeof(*guid))];
+	struct guid_t guid;
+	char bin[16];
 	char hex[3];
 	const char *ptr;
 	uint8_t i;
@@ -346,14 +346,14 @@ acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
 		ptr++;
 	}
 
-	guid = (struct guid_t *)bin;
-	guid->data1 = be32toh(guid->data1);
-	guid->data2 = be16toh(guid->data2);
-	guid->data3 = be16toh(guid->data3);
+	guid.data1 = be32dec(&bin[0]);
+	guid.data2 = be16dec(&bin[4]);
+	guid.data3 = be16dec(&bin[6]);
+	memcpy(guid.data4, &bin[8], 8);
 
 	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
-		if (GUIDCMP(guid, &wmi->guid) != 0) {
+		if (GUIDCMP(&guid, &wmi->guid) != 0) {
 
 			if (out != NULL)
 				*out = wmi;
