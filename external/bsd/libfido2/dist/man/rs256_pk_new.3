@@ -1,17 +1,41 @@
-.\" Copyright (c) 2018 Yubico AB. All rights reserved.
-.\" Use of this source code is governed by a BSD-style
-.\" license that can be found in the LICENSE file.
+.\" Copyright (c) 2018-2022 Yubico AB. All rights reserved.
 .\"
-.Dd $Mdocdate: May 24 2018 $
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\"    1. Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"    2. Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in
+.\"       the documentation and/or other materials provided with the
+.\"       distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" SPDX-License-Identifier: BSD-2-Clause
+.\"
+.Dd $Mdocdate: July 15 2022 $
 .Dt RS256_PK_NEW 3
 .Os
 .Sh NAME
 .Nm rs256_pk_new ,
 .Nm rs256_pk_free ,
 .Nm rs256_pk_from_RSA ,
+.Nm rs256_pk_from_EVP_PKEY ,
 .Nm rs256_pk_from_ptr ,
 .Nm rs256_pk_to_EVP_PKEY
-.Nd FIDO 2 COSE RS256 API
+.Nd FIDO2 COSE RS256 API
 .Sh SYNOPSIS
 .In openssl/rsa.h
 .In fido/rs256.h
@@ -19,6 +43,8 @@
 .Fn rs256_pk_new "void"
 .Ft void
 .Fn rs256_pk_free "rs256_pk_t **pkp"
+.Ft int
+.Fn rs256_pk_from_EVP_PKEY "rs256_pk_t *pk" "const EVP_PKEY *pkey"
 .Ft int
 .Fn rs256_pk_from_RSA "rs256_pk_t *pk" "const RSA *rsa"
 .Ft int
@@ -69,6 +95,16 @@ may be NULL, in which case
 is a NOP.
 .Pp
 The
+.Fn rs256_pk_from_EVP_PKEY
+function fills
+.Fa pk
+with the contents of
+.Fa pkey .
+No references to
+.Fa pkey
+are kept.
+.Pp
+The
 .Fn rs256_pk_from_RSA
 function fills
 .Fa pk
@@ -106,7 +142,8 @@ If an error occurs,
 returns NULL.
 .Sh RETURN VALUES
 The
-.Fn rs256_pk_from_RSA
+.Fn rs256_pk_from_EVP_PKEY ,
+.Fn rs256_pk_from_RSA ,
 and
 .Fn rs256_pk_from_ptr
 functions return
@@ -118,5 +155,6 @@ is returned.
 .Sh SEE ALSO
 .Xr eddsa_pk_new 3 ,
 .Xr es256_pk_new 3 ,
+.Xr es384_pk_new 3 ,
 .Xr fido_assert_verify 3 ,
 .Xr fido_cred_pubkey_ptr 3

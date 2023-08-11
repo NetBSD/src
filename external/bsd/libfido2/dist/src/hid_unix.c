@@ -2,6 +2,7 @@
  * Copyright (c) 2020 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include <sys/stat.h>
@@ -58,8 +59,7 @@ fido_hid_unix_wait(int fd, int ms, const fido_sigset_t *sigmask)
 	pfd.fd = fd;
 
 #ifdef FIDO_FUZZ
-	if (ms < 0)
-		return (0);
+	return (0);
 #endif
 	if (ms > -1) {
 		ts.tv_sec = ms / 1000;
