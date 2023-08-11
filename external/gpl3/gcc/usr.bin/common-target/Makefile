@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2023/08/01 05:57:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2023/08/11 06:52:45 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -24,7 +24,7 @@ CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 #COPTS.rs6000-common.cc+=	-Wno-stack-protector
 #COPTS.arm-common.cc+=	-Wno-stack-protector
 .if ${MACHINE_CPU} == "sh3"
-#COPTS.opts.cc+=		${CC_WNO_FORMAT_TRUNCATION}
+COPTS.opts.cc+=		${CC_WNO_FORMAT_TRUNCATION}
 .endif
 
 GENPROG_ERROR_DEPENDS=errors.lo
