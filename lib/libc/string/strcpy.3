@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.24 2023/08/11 09:39:39 riastradh Exp $
+.\"	$NetBSD: strcpy.3,v 1.25 2023/08/11 15:36:17 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRCPY 3
@@ -58,7 +58,7 @@ copy the string
 to
 .Fa dst ,
 including the terminating
-.Ql \e0
+.Tn NUL
 character.
 .Pp
 The strings
@@ -69,7 +69,7 @@ may not overlap.
 The string
 .Fa src
 must be terminated by a
-.Ql \e0
+.Tn NUL
 character.
 The memory for
 .Fa dst
@@ -85,7 +85,7 @@ function returns
 The
 .Fn stpcpy
 function returns a pointer to the terminating
-.Ql \e0
+.Tn NUL
 character of
 .Fa dst .
 .Sh SEE ALSO
@@ -117,11 +117,11 @@ The
 and
 .Fn stpcpy
 functions copy until a
-.Ql \e0
+.Tn NUL
 terminator without any bounds checks on the size of the input or output
 buffers.
 If the input buffer is missing a
-.Ql \e0
+.Tn NUL
 terminator, or the input string is longer than the output buffer, this
 can lead to crashes or security vulnerabilities from buffer overruns,
 including disclosure of secrets in memory and arbitrary code

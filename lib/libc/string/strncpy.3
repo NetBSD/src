@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strncpy.3,v 1.5 2023/08/11 13:18:24 uwe Exp $
+.\"	$NetBSD: strncpy.3,v 1.6 2023/08/11 15:36:17 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRNCPY 3
@@ -54,7 +54,7 @@ and
 .Fn strncpy
 functions copy at most
 .Fa len
-.No non- Ns Ql \e0
+.No non- Ns Tn NUL
 characters from
 .Fa src
 into
@@ -64,18 +64,18 @@ If
 is less than
 .Fa len
 characters long before the first
-.Ql \e0
+.Tn NUL
 character, the remainder of
 .Fa dst
 is filled with
-.Ql \e0
+.Tn NUL
 characters.
 Otherwise,
 .Fa dst
 is
 .Em not
 terminated with a
-.Ql \e0
+.Tn NUL
 character.
 .Pp
 The strings
@@ -92,7 +92,7 @@ function returns
 The
 .Fn stpncpy
 function returns a pointer to the terminating
-.Ql \e0
+.Tn NUL
 character of
 .Fa dst .
 If
@@ -100,7 +100,7 @@ If
 does not terminate
 .Fa dst
 with a
-.Ql \e0
+.Tn NUL
 character, it instead returns a pointer to
 .Sm off
 .Fa dst Li "[" Fa len Li "]" ,
