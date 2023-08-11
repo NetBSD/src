@@ -31,7 +31,7 @@
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
 .\"     from: NetBSD: strcpy.3,v 1.23 2015/04/01 20:18:17 riastradh Exp
-.\"	$NetBSD: strncpy.3,v 1.14 2023/08/11 21:20:39 riastradh Exp $
+.\"	$NetBSD: strncpy.3,v 1.15 2023/08/11 21:32:26 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRNCPY 3
@@ -153,7 +153,7 @@ The following values for
 .Dv str
 result in the following corresponding contents of
 .Dv rec Ns Li "->name" :
-.Bl -column -offset indent ".Li \*qabcdefghi\*q" ".Li \*qabc\e0\e0\e0\*q"
+.Bl -column -offset indent ".Li \*qabcdefghi\e0\*q" ".Li \*qabc\e0\e0\e0\*q"
 .It Dv str Ta Dv rec Ns Li "->name"
 .It Li \*qabc\e0\*q Ta Li \*qabc\e0\e0\e0\*q
 .It Li \*qabc\e0\e0\e0\*q Ta Li \*qabc\e0\e0\e0\*q
