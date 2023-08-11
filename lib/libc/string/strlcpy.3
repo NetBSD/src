@@ -1,4 +1,4 @@
-.\"	$NetBSD: strlcpy.3,v 1.17 2023/08/11 16:06:10 uwe Exp $
+.\"	$NetBSD: strlcpy.3,v 1.18 2023/08/11 16:34:28 riastradh Exp $
 .\" from OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -74,7 +74,7 @@ to the end of
 It will append at most
 .Fa size
 - strlen(dst) - 1 bytes,
-.Tn NUL -terminating
+.Tn NUL Ns -terminating
 the result.
 .Ss Relation to Xr strncpy 3 and Xr strncat 3
 Unlike
