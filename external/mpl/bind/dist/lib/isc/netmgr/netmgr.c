@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.c,v 1.8 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: netmgr.c,v 1.8.2.1 2023/08/11 13:43:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -243,15 +243,15 @@ isc__nm_threadpool_initialize(uint32_t workers) {
 	}
 }
 
-#if HAVE_DECL_UV_UDP_LINUX_RECVERR
-#define MINIMAL_UV_VERSION UV_VERSION(1, 42, 0)
-#elif HAVE_DECL_UV_UDP_MMSG_FREE
+#if HAVE_DECL_UV_UDP_MMSG_FREE
 #define MINIMAL_UV_VERSION UV_VERSION(1, 40, 0)
 #elif HAVE_DECL_UV_UDP_RECVMMSG
+#define MAXIMAL_UV_VERSION UV_VERSION(1, 39, 99)
 #define MINIMAL_UV_VERSION UV_VERSION(1, 37, 0)
-#elif HAVE_DECL_UV_UDP_MMSG_CHUNK
-#define MINIMAL_UV_VERSION UV_VERSION(1, 35, 0)
+#elif _WIN32
+#define MINIMAL_UV_VERSION UV_VERSION(1, 0, 0)
 #else
+#define MAXIMAL_UV_VERSION UV_VERSION(1, 34, 99)
 #define MINIMAL_UV_VERSION UV_VERSION(1, 0, 0)
 #endif
 
@@ -262,11 +262,21 @@ isc__netmgr_create(isc_mem_t *mctx, uint32_t workers, isc_nm_t **netmgrp) {
 
 	REQUIRE(workers > 0);
 
+#ifdef MAXIMAL_UV_VERSION
+	if (uv_version() > MAXIMAL_UV_VERSION) {
+		isc_error_fatal(__FILE__, __LINE__,
+				"libuv version too new: running with libuv %s "
+				"when compiled with libuv %s will lead to "
+				"libuv failures",
+				uv_version_string(), UV_VERSION_STRING);
+	}
+#endif /* MAXIMAL_UV_VERSION */
+
 	if (uv_version() < MINIMAL_UV_VERSION) {
 		isc_error_fatal(__FILE__, __LINE__,
 				"libuv version too old: running with libuv %s "
 				"when compiled with libuv %s will lead to "
-				"libuv failures because of unknown flags",
+				"libuv failures",
 				uv_version_string(), UV_VERSION_STRING);
 	}
 
@@ -2401,7 +2411,8 @@ isc___nm_uvreq_put(isc__nm_uvreq_t **req0, isc_nmsocket_t *sock FLARG) {
 
 #if !__SANITIZE_ADDRESS__ && !__SANITIZE_THREAD__
 	if (!isc__nmsocket_active(sock) ||
-	    !isc_astack_trypush(sock->inactivereqs, req)) {
+	    !isc_astack_trypush(sock->inactivereqs, req))
+	{
 		isc_mem_put(sock->mgr->mctx, req, sizeof(*req));
 	}
 #else  /* !__SANITIZE_ADDRESS__ && !__SANITIZE_THREAD__ */

@@ -20,7 +20,7 @@ options {
 	port @PORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.7; };
-	listen-on-v6 { none; };
+	listen-on-v6 { fd92:7065:b8e:ffff::7; };
 	recursion yes;
 	dnssec-validation yes;
 	empty-zones-enable yes;
@@ -61,4 +61,14 @@ zone "edns-version.tld" {
 zone "all-cnames" {
 	type primary;
 	file "all-cnames.db";
+};
+
+zone "tld2" {
+	type primary;
+	file "tld2.db";
+};
+
+zone "sub.tld1" {
+	type primary;
+	file "sub.tld1.db";
 };

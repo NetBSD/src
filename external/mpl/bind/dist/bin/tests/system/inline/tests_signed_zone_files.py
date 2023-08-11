@@ -35,7 +35,6 @@ class RawFormatHeader(dict):
 
 
 def test_unsigned_serial_number():
-
     """
     Check whether all signed zone files in the "ns8" subdirectory contain the
     serial number of the unsigned version of the zone in the raw-format header.

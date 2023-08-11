@@ -1,21 +1,18 @@
-#	$NetBSD: store.inc,v 1.2 2018/09/23 13:33:04 christos Exp $
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/store/Makefile
-#
+#	$NetBSD: store.inc,v 1.2.10.1 2023/08/11 13:41:55 martin Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/store
 
-
 STORE_SRCS += \
-loader_file.c \
-store_init.c \
 store_err.c \
+store_init.c \
 store_lib.c \
+store_meth.c \
 store_register.c \
-store_strings.c
+store_result.c \
+store_strings.c \
 
 SRCS += ${STORE_SRCS}
 
 .for cryptosrc in ${STORE_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/store
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/store ${STORECPPFLAGS}
 .endfor

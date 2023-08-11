@@ -156,9 +156,9 @@ zone "rsasha512.example" {
 	auto-dnssec maintain;
 };
 
-zone "nsec.example" {
+zone "nsec-only.example" {
 	type primary;
-	file "nsec.example.db";
+	file "nsec-only.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };

@@ -70,3 +70,10 @@ Bug Fixes
 - An invalid direction field (not one of ``N``, ``S``, ``E``, ``W``) in
   a LOC record resulted in an INSIST failure when a zone file containing
   such a record was loaded. :gl:`#2499`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

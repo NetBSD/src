@@ -33,7 +33,7 @@ resolution_succeeds() {
 resolution_fails() {
 	_servfail=0
 	_timeout=0
-	$DIG $DIGOPTS +tcp +tries=3 +time=5 @10.53.0.1 ${1} SOA > dig.out.test$n
+	$DIG $DIGOPTS +tcp +time=5 @10.53.0.1 ${1} SOA > dig.out.test$n
 	grep "status: SERVFAIL" dig.out.test$n > /dev/null && _servfail=1
 	grep "connection timed out" dig.out.test$n > /dev/null && _timeout=1
 	if [ $_servfail -eq 1 ] || [ $_timeout -eq 1 ]; then
@@ -255,9 +255,9 @@ fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} legacy ns1
+stop_server --use-rndc --port ${CONTROLPORT} ns1
 copy_setports ns1/named2.conf.in ns1/named.conf
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} legacy ns1
+start_server --noclean --restart --port ${PORT} ns1
 
 n=`expr $n + 1`
 echo_i "checking recursive lookup to edns 512 + no tcp + trust anchor fails ($n)"

@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.6 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.6.2.1 2023/08/11 13:43:40 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -110,7 +110,9 @@ enum {
 
 	ns_statscounter_reclimitdropped = 66,
 
-	ns_statscounter_max = 67,
+	ns_statscounter_updatequota = 67,
+
+	ns_statscounter_max = 68,
 };
 
 void

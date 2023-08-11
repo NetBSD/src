@@ -38,17 +38,17 @@ key "sha256" {
 };
 
 key "keyforview1" {
-	algorithm "hmac-sha1";
+	algorithm @DEFAULT_HMAC@;
 	secret "YPfMoAk6h+3iN8MDRQC004iSNHY=";
 };
 
 key "keyforview2" {
-	algorithm "hmac-sha1";
+	algorithm @DEFAULT_HMAC@;
 	secret "4xILSZQnuO1UKubXHkYUsvBRPu8=";
 };
 
 key "keyforview3" {
-	algorithm "hmac-sha1";
+	algorithm @DEFAULT_HMAC@;
 	secret "C1Azf+gGPMmxrUg/WQINP6eV9Y0=";
 };
 

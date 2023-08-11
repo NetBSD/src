@@ -41,3 +41,10 @@ Bug Fixes
 
 - ``UV_EOF`` is no longer treated as a ``TCP4RecvErr`` or a
   ``TCP6RecvErr``. :gl:`#2208`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

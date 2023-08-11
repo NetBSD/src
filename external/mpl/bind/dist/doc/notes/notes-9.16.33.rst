@@ -59,3 +59,10 @@ Bug Fixes
   from cache for lookups that received duplicate queries or queries that
   would be dropped. This bug resulted in premature SERVFAIL responses,
   and has now been resolved. :gl:`#2982`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

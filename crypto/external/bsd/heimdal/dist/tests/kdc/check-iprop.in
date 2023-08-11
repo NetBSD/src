@@ -157,7 +157,8 @@ echo foo > ${objdir}/foopassword
 echo "Test log recovery"
 ${kadmin} -l add --random-key --use-defaults recovtest@${R} || exit 1
 # Test theory: save the log, make a change and save the record it
-# produced, restore the log, append to it the saved record, then get
+# produced, restore the log, append to it the saved record, then add dummy
+# record.
 
 # Save the log
 cp current.log current.log.tmp
@@ -180,7 +181,10 @@ mv current.log.tmp current.log
 # Append the saved record
 cat current.log.tmp.saved-record >> current.log
 rm current.log.tmp.saved-record
-# Check that we still see the principal as modified
+# Check that we still see the principal as modified after another write forcing
+# log recovery.
+${kadmin} -l add --random-key --use-defaults dummy@${R} || exit 1
+${kadmin} -l del dummy@${R} || exit 1
 ${kadmin} -l get recovtest@${R} | grep 'Attributes: requires-pre-auth$' > /dev/null || exit 1
 
 # -- foo

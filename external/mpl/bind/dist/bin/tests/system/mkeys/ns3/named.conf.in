@@ -42,7 +42,4 @@ zone "." {
 	file "../../common/root.hint";
 };
 
-# purposely broken key for testing
-trust-anchors {
-    "." initial-key 257 3 5 "PURPOSELYBROKEN/xs9iVj7QekClcpzjCf0JrvXW1z07hNMqMm6Q2FtIXMbRgfvTtHF3/ZNvcewT9hpfczC+JACHsQSYYdr7UI8oe4nJfal9+2F3pz4a+HR6CqkgrR6WLWQI1Q==";
-};
+include "broken.conf";

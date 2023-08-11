@@ -6,6 +6,11 @@
 .align	16
 poly1305_init:
 .L_poly1305_init_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -63,6 +68,11 @@ poly1305_init:
 .align	16
 poly1305_blocks:
 .L_poly1305_blocks_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -231,6 +241,11 @@ poly1305_blocks:
 .align	16
 poly1305_emit:
 .L_poly1305_emit_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -290,6 +305,11 @@ poly1305_emit:
 .type	_poly1305_init_sse2,@function
 .align	16
 _poly1305_init_sse2:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movdqu	24(%edi),%xmm4
 	leal	48(%edi),%edi
 	movl	%esp,%ebp
@@ -492,6 +512,11 @@ _poly1305_init_sse2:
 .type	_poly1305_blocks_sse2,@function
 .align	16
 _poly1305_blocks_sse2:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -1253,6 +1278,11 @@ _poly1305_blocks_sse2:
 .type	_poly1305_emit_sse2,@function
 .align	16
 _poly1305_emit_sse2:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -1354,3 +1384,20 @@ _poly1305_emit_sse2:
 .byte	114,103,62,0
 .align	4
 .comm	OPENSSL_ia32cap_P,16,4
+
+	.section ".note.gnu.property", "a"
+	.p2align 2
+	.long 1f - 0f
+	.long 4f - 1f
+	.long 5
+0:
+	.asciz "GNU"
+1:
+	.p2align 2
+	.long 0xc0000002
+	.long 3f - 2f
+2:
+	.long 3
+3:
+	.p2align 2
+4:

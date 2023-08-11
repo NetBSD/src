@@ -96,4 +96,13 @@ zone "child.optout.example" {
 	auto-dnssec maintain;
 };
 
+zone "optout-with-ent" {
+	type primary;
+	file "optout-with-ent.db";
+	allow-query { any; };
+	allow-transfer { any; };
+	allow-update { any; };
+	auto-dnssec maintain;
+};
+
 include "trusted.conf";

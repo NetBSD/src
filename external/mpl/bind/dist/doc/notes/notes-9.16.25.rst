@@ -39,3 +39,10 @@ Bug Fixes
   contents after ``named`` restarted, if the unsigned zone file was
   modified while ``named`` was not running. This has been fixed.
   :gl:`#3071`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

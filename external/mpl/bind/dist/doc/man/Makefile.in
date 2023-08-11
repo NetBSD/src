@@ -158,9 +158,10 @@ BIND9_VERSIONSTRING=@BIND9_VERSIONSTRING@
 # You can set these variables from the command line.
 SPHINXBUILD = @SPHINX_BUILD@
 SPHINXBUILDDIR = ${builddir}/_build
+SPHINX_W = -W
 
 common_SPHINXOPTS =		\
-	-W			\
+	$(SPHINX_W)		\
 	-a			\
 	-v			\
 	-c "${abs_srcdir}"

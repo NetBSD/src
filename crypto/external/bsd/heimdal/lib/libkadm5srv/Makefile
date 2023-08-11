@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2018/07/12 11:13:50 martin Exp $
+# $NetBSD: Makefile,v 1.5.10.1 2023/08/11 13:40:06 martin Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -10,7 +10,9 @@ NOLINT=		# defined
 .PATH:		${HEIMDIST}/lib/kadm5
 
 LIB=		kadm5srv
-CPPFLAGS+=	-I${HEIMDIST}/lib/krb5
+CPPFLAGS+=				\
+	-I${HEIMDIST}/lib/krb5		\
+	-I${HEIMDIST}/lib
 
 LIBDPLIBS+=	krb5	${.CURDIR}/../libkrb5 \
 		com_err	${.CURDIR}/../libcom_err \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2022/09/23 12:15:37 christos Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2023/08/11 13:43:41 martin Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -66,5 +66,9 @@ LDADD+=-Wl,-Bdynamic
 
 LDADD+=-lz
 DPADD+=${LIBZ}
+
+COPTS.iterated_hash.c+= -Wno-error=deprecated-declarations
+COPTS.hmac.c+= -Wno-error=deprecated-declarations
+COPTS.md.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.lib.mk>

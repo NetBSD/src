@@ -24,6 +24,9 @@ Known Issues
    dispatch for reserved port") on some of them. There are currently no
    plans to make such a combination of settings work again.
 
+-  See :ref:`above <relnotes_known_issues>` for a list of all known
+   issues affecting this BIND 9 branch.
+
 Feature Changes
 ~~~~~~~~~~~~~~~
 

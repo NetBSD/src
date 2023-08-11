@@ -1,16 +1,16 @@
-#	$NetBSD: seed.inc,v 1.1 2012/07/26 19:58:40 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/seed/Makefile
-#
+#	$NetBSD: seed.inc,v 1.1.48.1 2023/08/11 13:41:55 martin Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/seed
 
-SEED_SRCS = seed.c seed_ecb.c seed_cbc.c seed_cfb.c seed_ofb.c
+SEED_SRCS += \
+seed.c \
+seed_cbc.c \
+seed_cfb.c \
+seed_ecb.c \
+seed_ofb.c \
 
 SRCS += ${SEED_SRCS}
 
 .for cryptosrc in ${SEED_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/seed
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/seed ${SEEDCPPFLAGS}
 .endfor

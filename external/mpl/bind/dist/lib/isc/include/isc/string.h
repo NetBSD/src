@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: string.h,v 1.6.2.1 2023/08/11 13:43:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,6 +33,11 @@ strlcpy(char *dst, const char *src, size_t size);
 size_t
 strlcat(char *dst, const char *src, size_t size);
 #endif /* if !defined(HAVE_STRLCAT) */
+
+#if !defined(HAVE_STRNSTR)
+char *
+strnstr(const char *s, const char *find, size_t slen);
+#endif /* if !defined(HAVE_STRNSTR) */
 
 int
 isc_string_strerror_r(int errnum, char *buf, size_t buflen);

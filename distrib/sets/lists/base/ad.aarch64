@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.36 2021/06/07 17:11:16 christos Exp $
+# $NetBSD: ad.aarch64,v 1.36.2.1 2023/08/11 13:42:53 martin Exp $
 ./lib/eabi					base-compat-lib		compat,llvm
 ./lib/eabi/npf					base-compat-lib		compat,llvm
 ./lib/eabihf					base-compat-lib		compat,llvm
@@ -16,6 +16,14 @@
 ./usr/lib/eabi/libc_vfp.so.0.0			base-compat-shlib	compat,pic,llvm
 ./usr/lib/eabi/lua				base-compat-lib		compat,llvm
 ./usr/lib/eabi/lua/5.3				base-compat-lib		compat,llvm
+./usr/lib/eabi/openssl				base-compat-lib		compat,llvm
+./usr/lib/eabi/openssl/engines			base-compat-lib		compat,llvm
+./usr/lib/eabi/openssl/engines/dasync.so	base-compat-lib		pic,openssl=30,compat,llvm
+./usr/lib/eabi/openssl/engines/devcrypto.so	base-compat-lib		pic,openssl=30,compat,llvm
+./usr/lib/eabi/openssl/engines/loader_attic.so	base-compat-lib		pic,openssl=30,compat,llvm
+./usr/lib/eabi/openssl/engines/ossltest.so	base-compat-lib		pic,openssl=30,compat,llvm
+./usr/lib/eabi/openssl/modules			base-compat-lib		compat,llvm
+./usr/lib/eabi/openssl/modules/legacy.so	base-compat-lib		compat,llvm
 ./usr/lib/eabi/security				base-compat-lib		compat,llvm
 ./usr/lib/eabihf				base-compat-lib		compat,llvm
 ./usr/lib/eabihf/i18n				base-compat-lib		compat,llvm
@@ -23,6 +31,14 @@
 ./usr/lib/eabihf/libarm.so.0.0			base-compat-shlib	compat,pic,llvm
 ./usr/lib/eabihf/lua				base-compat-lib		compat,llvm
 ./usr/lib/eabihf/lua/5.3			base-compat-lib		compat,llvm
+./usr/lib/eabihf/openssl			base-compat-lib		compat,llvm
+./usr/lib/eabihf/openssl/engines		base-compat-lib		compat,llvm
+./usr/lib/eabihf/openssl/engines/dasync.so	base-compat-lib		pic,openssl=30,compat,llvm
+./usr/lib/eabihf/openssl/engines/devcrypto.so	base-compat-lib		pic,openssl=30,compat,llvm
+./usr/lib/eabihf/openssl/engines/loader_attic.so	base-compat-lib		pic,openssl=30,compat,llvm
+./usr/lib/eabihf/openssl/engines/ossltest.so	base-compat-lib		pic,openssl=30,compat,llvm
+./usr/lib/eabihf/openssl/modules		base-compat-lib		compat,llvm
+./usr/lib/eabihf/openssl/modules/legacy.so	base-compat-lib		compat,llvm
 ./usr/lib/eabihf/security			base-compat-lib		compat,llvm
 ./usr/lib/oabi					base-obsolete		obsolete
 ./usr/lib/oabi/i18n				base-obsolete		obsolete

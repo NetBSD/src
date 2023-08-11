@@ -71,14 +71,14 @@ To clone the repository, use:
 
 >       $ git clone https://gitlab.isc.org/isc-projects/bind9.git
 
-Release branch names are of the form `v9_X`, where X represents the second
-number in the BIND 9 version number.  So, to check out the BIND 9.12
+Release branch names are of the form `bind-9.X`, where X represents the second
+number in the BIND 9 version number.  So, to check out the BIND 9.18
 branch, use:
 
->       $ git checkout v9_12
+>       $ git checkout bind-9.18
 
 Whenever a branch is ready for publication, a tag is placed of the
-form `v9_X_Y`.  The 9.12.0 release, for instance, is tagged as `v9_12_0`.
+form `v9.X.Y`.  The 9.18.0 release, for instance, is tagged as `v9.18.0`.
 
 The branch in which the next major release is being developed is called
 `main`.

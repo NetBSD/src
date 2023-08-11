@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.3 2022/04/03 01:10:58 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.3.2.1 2023/08/11 13:43:41 martin Exp $	*/
 
 /* dispatch.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dispatch.c,v 1.3 2022/04/03 01:10:58 christos Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.3.2.1 2023/08/11 13:43:41 martin Exp $");
 
 #include "dhcpd.h"
 
@@ -183,7 +183,8 @@ isclib_timer_callback(isc_task_t  *taskp,
 			(*q->unref) (&q->what, MDL);
 		}
 		q->next = free_timeouts;
-		isc_timer_detach(&q->isc_timeout);
+		isc_event_free(&eventp);
+		isc_timer_destroy(&q->isc_timeout);
 		free_timeouts = q;
 	} else {
 		/*
@@ -192,9 +193,9 @@ isclib_timer_callback(isc_task_t  *taskp,
 		 * don't try to - may change this to a log_fatal
 		 */
 		log_error("Error finding timer structure");
+		isc_event_free(&eventp);
 	}
 
-	isc_event_free(&eventp);
 	return;
 }
 
@@ -409,7 +410,7 @@ void cancel_timeout (where, what)
 #if defined (TRACING)
 		if (!trace_playback()) {
 #endif
-			isc_timer_detach(&q->isc_timeout);
+			isc_timer_destroy(&q->isc_timeout);
 #if defined (TRACING)
 		}
 #endif
@@ -427,7 +428,7 @@ void cancel_all_timeouts ()
 	struct timeout *t, *n;
 	for (t = timeouts; t; t = n) {
 		n = t->next;
-		isc_timer_detach(&t->isc_timeout);
+		isc_timer_destroy(&t->isc_timeout);
 		if (t->unref && t->what)
 			(*t->unref) (&t->what, MDL);
 		t->next = free_timeouts;

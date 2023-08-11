@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
@@ -18,3 +20,5 @@ ln -s $CHECKZONE named-compilezone
         zones/good1.db > /dev/null 2>&1
 ./named-compilezone -D -F map -o good1.db.map example \
         zones/good1.db > /dev/null 2>&1
+
+copy_setports zones/bad-tsig.db.in zones/bad-tsig.db

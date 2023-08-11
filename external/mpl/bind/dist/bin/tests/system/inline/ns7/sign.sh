@@ -20,6 +20,6 @@ SYSTEMTESTTOP=../..
 zone=nsec3-loop
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)

@@ -179,7 +179,7 @@ OPTIONS
   	answer-cookie boolean;
   	attach-cache string;
   	auth-nxdomain boolean; // default changed
-  	auto-dnssec ( allow | maintain | off );
+  	auto-dnssec ( allow | maintain | off );// deprecated
   	automatic-interface-scan boolean;
   	avoid-v4-udp-ports { portrange; ... };
   	avoid-v6-udp-ports { portrange; ... };
@@ -446,6 +446,7 @@ OPTIONS
   	trust-anchor-telemetry boolean; // experimental
   	try-tcp-refresh boolean;
   	update-check-ksk boolean;
+  	update-quota integer;
   	use-alt-transfer-source boolean;
   	use-v4-udp-ports { portrange; ... };
   	use-v6-udp-ports { portrange; ... };
@@ -584,7 +585,7 @@ VIEW
   	    * ) ] [ dscp integer ];
   	attach-cache string;
   	auth-nxdomain boolean; // default changed
-  	auto-dnssec ( allow | maintain | off );
+  	auto-dnssec ( allow | maintain | off );// deprecated
   	cache-file quoted_string;// deprecated
   	catalog-zones { zone string [ default-masters [ port integer ]
   	    [ dscp integer ] { ( remote-servers | ipv4_address [ port
@@ -859,7 +860,7 @@ VIEW
   		    integer | * ) ] [ dscp integer ];
   		alt-transfer-source-v6 ( ipv6_address | * ) [ port (
   		    integer | * ) ] [ dscp integer ];
-  		auto-dnssec ( allow | maintain | off );
+  		auto-dnssec ( allow | maintain | off );// deprecated
   		check-dup-records ( fail | warn | ignore );
   		check-integrity boolean;
   		check-mx ( fail | warn | ignore );
@@ -950,7 +951,7 @@ VIEW
   		    6to4-self | external | krb5-self | krb5-selfsub |
   		    krb5-subdomain | ms-self | ms-selfsub | ms-subdomain |
   		    name | self | selfsub | selfwild | subdomain | tcp-self
-  		    | wildcard | zonesub ) [ string ] rrtypelist; ... };
+  		    | wildcard | zonesub ) [ string ] rrtypelist; ... } );
   		use-alt-transfer-source boolean;
   		zero-no-soa-ttl boolean;
   		zone-statistics ( full | terse | none | boolean );
@@ -977,7 +978,7 @@ ZONE
   	    ] [ dscp integer ];
   	alt-transfer-source-v6 ( ipv6_address | * ) [ port ( integer |
   	    * ) ] [ dscp integer ];
-  	auto-dnssec ( allow | maintain | off );
+  	auto-dnssec ( allow | maintain | off );// deprecated
   	check-dup-records ( fail | warn | ignore );
   	check-integrity boolean;
   	check-mx ( fail | warn | ignore );
@@ -1063,7 +1064,7 @@ ZONE
   	    external | krb5-self | krb5-selfsub | krb5-subdomain | ms-self
   	    | ms-selfsub | ms-subdomain | name | self | selfsub | selfwild
   	    | subdomain | tcp-self | wildcard | zonesub ) [ string ]
-  	    rrtypelist; ... };
+  	    rrtypelist; ... } );
   	use-alt-transfer-source boolean;
   	zero-no-soa-ttl boolean;
   	zone-statistics ( full | terse | none | boolean );

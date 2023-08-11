@@ -1,4 +1,4 @@
-/*	$NetBSD: getxxyyy.c,v 1.3 2017/09/08 15:29:43 christos Exp $	*/
+/*	$NetBSD: getxxyyy.c,v 1.3.14.1 2023/08/11 13:40:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2011 Kungliga Tekniska Högskolan
@@ -51,6 +51,15 @@ rk_getpwuid_r(uid_t, struct passwd *, char *, size_t, struct passwd **);
 static void
 copypw(struct passwd *pwd, char *buffer, size_t bufsize, const struct passwd *p)
 {
+     struct passwd *p;
+     size_t slen;
+     
+     *result = NULL;
+
+     p = getpwnam(name);
+     if(p == NULL)
+	 return (errno = ENOENT);
+	 
      memset(pwd, 0, sizeof(*pwd));
 
 #define APPEND(el)					\

@@ -39,3 +39,13 @@ zone "." {
 	type primary;
 	file "root.db.signed";
 };
+
+zone "tld" {
+	type primary;
+	file "tld.db.signed";
+};
+
+zone "sub.tld" {
+	type primary;
+	file "sub.tld.db.signed";
+};

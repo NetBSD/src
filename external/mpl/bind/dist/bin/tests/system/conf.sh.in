@@ -17,68 +17,102 @@
 #
 
 # Find the top of the BIND9 tree.
-TOP=@abs_top_builddir@
-TOP_SRCDIR=@abs_top_srcdir@
+export TOP=@abs_top_builddir@
+export TOP_SRCDIR=@abs_top_srcdir@
 
 # Provide TMPDIR variable for tests that need it.
-TMPDIR=${TMPDIR:-/tmp}
+export TMPDIR=${TMPDIR:-/tmp}
 
 # This is not the windows build.
-CYGWIN=""
+export CYGWIN=""
+
+export ARPANAME=$TOP/bin/tools/arpaname
+export CDS=$TOP/bin/dnssec/dnssec-cds
+export CHECKCONF=$TOP/bin/check/named-checkconf
+export CHECKDS=$TOP/bin/python/dnssec-checkds
+export CHECKZONE=$TOP/bin/check/named-checkzone
+export COVERAGE=$TOP/bin/python/dnssec-coverage
+export DDNSCONFGEN=$TOP/bin/confgen/ddns-confgen
+export DELV=$TOP/bin/delv/delv
+export DIG=$TOP/bin/dig/dig
+export DNSTAPREAD=$TOP/bin/tools/dnstap-read
+export DSFROMKEY=$TOP/bin/dnssec/dnssec-dsfromkey
+export FEATURETEST=$TOP/bin/tests/system/feature-test
+export FSTRM_CAPTURE=@FSTRM_CAPTURE@
+export HOST=$TOP/bin/dig/host
+export IMPORTKEY=$TOP/bin/dnssec/dnssec-importkey
+export JOURNALPRINT=$TOP/bin/tools/named-journalprint
+export KEYFRLAB=$TOP/bin/dnssec/dnssec-keyfromlabel
+export KEYGEN=$TOP/bin/dnssec/dnssec-keygen
+export KEYMGR=$TOP/bin/python/dnssec-keymgr
+export MDIG=$TOP/bin/tools/mdig
+export NAMED=$TOP/bin/named/named
+export NSEC3HASH=$TOP/bin/tools/nsec3hash
+export NSLOOKUP=$TOP/bin/dig/nslookup
+export NSUPDATE=$TOP/bin/nsupdate/nsupdate
+export NZD2NZF=$TOP/bin/tools/named-nzd2nzf
+export PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
+export PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+export PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+export RESOLVE=$TOP/bin/tests/system/resolve
+export REVOKE=$TOP/bin/dnssec/dnssec-revoke
+export RNDC=$TOP/bin/rndc/rndc
+export RNDCCONFGEN=$TOP/bin/confgen/rndc-confgen
+export RRCHECKER=$TOP/bin/tools/named-rrchecker
+export SETTIME=$TOP/bin/dnssec/dnssec-settime
+export SIGNER=$TOP/bin/dnssec/dnssec-signzone
+export TSIGKEYGEN=$TOP/bin/confgen/tsig-keygen
+export VERIFY=$TOP/bin/dnssec/dnssec-verify
+export WIRETEST=$TOP/bin/tests/wire_test
+
+export BIGKEY=$TOP/bin/tests/system/rsabigexponent/bigkey
+export GENCHECK=$TOP/bin/tests/system/rndc/gencheck
+export KEYCREATE=$TOP/bin/tests/system/tkey/keycreate
+export KEYDELETE=$TOP/bin/tests/system/tkey/keydelete
+export MAKEJOURNAL=$TOP/bin/tests/makejournal
+export PIPEQUERIES=$TOP/bin/tests/system/pipelined/pipequeries
+
+# we don't want a KRB5_CONFIG setting breaking the tests
+export KRB5_CONFIG=/dev/null
+# use local keytab instead of default /etc/krb5.keytab
+export KRB5_KTNAME=dns.keytab
+
+# Things that are different on Windows
+export KILL=kill
+export DIFF=diff
+export DOS2UNIX=true
+# There's no trailing period on Windows
+export TP=.
+
+# Programs detected by configure
+# Variables will be empty if no program was found by configure
+export SHELL=@SHELL@
+export CURL=@CURL@
+export XMLLINT=@XMLLINT@
+export XSLTPROC=@XSLTPROC@
+export PYTEST=@PYTEST@
+
+# Windows process management leave empty
+export PSSUSPEND=
+
+#
+# Interpreters for system tests detected by configure
+#
+export PERL=@PERL@
+if ! test -x "$PERL"; then
+    echo "Perl interpreter is required for system tests."
+    exit 77
+fi
+export PYTHON=@PYTHON@
+
+#
+# Determine if we support various optional features.
+#
+export CRYPTO=@CRYPTO@
+
 
 # Load common values shared between windows and unix/linux.
 . $TOP/bin/tests/system/conf.sh.common
-
-ARPANAME=$TOP/bin/tools/arpaname
-CDS=$TOP/bin/dnssec/dnssec-cds
-CHECKCONF=$TOP/bin/check/named-checkconf
-CHECKDS=$TOP/bin/python/dnssec-checkds
-CHECKZONE=$TOP/bin/check/named-checkzone
-COVERAGE=$TOP/bin/python/dnssec-coverage
-DDNSCONFGEN=$TOP/bin/confgen/ddns-confgen
-DELV=$TOP/bin/delv/delv
-DIG=$TOP/bin/dig/dig
-DNSTAPREAD=$TOP/bin/tools/dnstap-read
-DSFROMKEY=$TOP/bin/dnssec/dnssec-dsfromkey
-FEATURETEST=$TOP/bin/tests/system/feature-test
-FSTRM_CAPTURE=@FSTRM_CAPTURE@
-HOST=$TOP/bin/dig/host
-IMPORTKEY=$TOP/bin/dnssec/dnssec-importkey
-JOURNALPRINT=$TOP/bin/tools/named-journalprint
-KEYFRLAB=$TOP/bin/dnssec/dnssec-keyfromlabel
-KEYGEN=$TOP/bin/dnssec/dnssec-keygen
-KEYMGR=$TOP/bin/python/dnssec-keymgr
-MDIG=$TOP/bin/tools/mdig
-NAMED=$TOP/bin/named/named
-NSEC3HASH=$TOP/bin/tools/nsec3hash
-NSLOOKUP=$TOP/bin/dig/nslookup
-NSUPDATE=$TOP/bin/nsupdate/nsupdate
-NZD2NZF=$TOP/bin/tools/named-nzd2nzf
-PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
-PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
-PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
-RESOLVE=$TOP/bin/tests/system/resolve
-REVOKE=$TOP/bin/dnssec/dnssec-revoke
-RNDC=$TOP/bin/rndc/rndc
-RNDCCONFGEN=$TOP/bin/confgen/rndc-confgen
-RRCHECKER=$TOP/bin/tools/named-rrchecker
-SETTIME=$TOP/bin/dnssec/dnssec-settime
-SIGNER=$TOP/bin/dnssec/dnssec-signzone
-TSIGKEYGEN=$TOP/bin/confgen/tsig-keygen
-VERIFY=$TOP/bin/dnssec/dnssec-verify
-WIRETEST=$TOP/bin/tests/wire_test
-
-BIGKEY=$TOP/bin/tests/system/rsabigexponent/bigkey
-GENCHECK=$TOP/bin/tests/system/rndc/gencheck
-KEYCREATE=$TOP/bin/tests/system/tkey/keycreate
-KEYDELETE=$TOP/bin/tests/system/tkey/keydelete
-MAKEJOURNAL=$TOP/bin/tests/makejournal
-PIPEQUERIES=$TOP/bin/tests/system/pipelined/pipequeries
-
-# we don't want a KRB5_CONFIG setting breaking the tests
-KRB5_CONFIG=/dev/null
-# use local keytab instead of default /etc/krb5.keytab
-KRB5_KTNAME=dns.keytab
 
 #
 # Construct the lists of tests to run
@@ -90,48 +124,3 @@ PARALLEL_UNIX="@CHECKDS@ @COVERAGE@ @DNSTAP@ @KEYMGR@ cookie logfileconfig"
 PARALLELDIRS="$PARALLEL_COMMON $PARALLEL_UNIX"
 
 SUBDIRS="$SEQUENTIALDIRS $PARALLELDIRS"
-
-
-# Things that are different on Windows
-KILL=kill
-DIFF=diff
-DOS2UNIX=true
-# There's no trailing period on Windows
-TP=.
-
-# Use the CONFIG_SHELL detected by configure for tests
-SHELL=@SHELL@
-
-# CURL will be empty if no program was found by configure
-CURL=@CURL@
-
-# XMLLINT will be empty if no program was found by configure
-XMLLINT=@XMLLINT@
-
-# XSLTPROC will be empty if no program was found by configure
-XSLTPROC=@XSLTPROC@
-
-# PERL will be an empty string if no perl interpreter was found.
-PERL=@PERL@
-
-# Windows process management leave empty
-PSSUSPEND=
-
-PYTHON=@PYTHON@
-PYTEST=@PYTEST@
-
-#
-# Determine if we support various optional features.
-#
-LIBXML2_LIBS="@LIBXML2_LIBS@"
-HAVEXMLSTATS=${LIBXML2_LIBS:+1}
-JSON_C_LIBS="@JSON_C_LIBS@"
-HAVEJSONSTATS=${JSON_C_LIBS:+1}
-MAXMINDDB_LIBS="@MAXMINDDB_LIBS@"
-HAVEGEOIP2=${MAXMINDDB_LIBS:+1}
-ZLIB_LIBS="@ZLIB_LIBS@"
-HAVEZLIB=${ZLIB_LIBS:+1}
-NZD=@NZD_TOOLS@
-CRYPTO=@CRYPTO@
-
-export HAVEXMLSTATS HAVEJSONSTATS

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdb_driver.c,v 1.5 2022/09/23 12:15:27 christos Exp $	*/
+/*	$NetBSD: dlz_bdb_driver.c,v 1.5.2.1 2023/08/11 13:43:30 martin Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -290,7 +290,8 @@ bdb_allnodes(const char *zone, void *driverarg, void *dbdata,
 	flags = DB_SET;
 
 	while ((bdbres = zone_cursor->c_get(zone_cursor, &key, &data, flags)) ==
-	       0) {
+	       0)
+	{
 		flags = DB_NEXT_DUP;
 
 		tmp = realloc(tmp, data.size + 1);

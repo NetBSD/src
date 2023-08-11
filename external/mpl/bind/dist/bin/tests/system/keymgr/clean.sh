@@ -11,8 +11,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+rm -f 18-nonstd-prepub/policy.conf
+rm -f 19-old-keys/policy.conf
 rm -f K*.key */K*.key
 rm -f K*.private */K*.private
 rm -f coverage.* keymgr.* settime.*
 rm -f ns*/managed-keys.bind*
+rm -f policy.conf
 rm -f policy.out

@@ -271,7 +271,7 @@ status=$((status + ret))
 
 echo_i "Shutting down secondary"
 
-(cd ..; $SHELL stop.sh rrsetorder ns2 )
+stop_server ns2
 
 echo_i "Checking for secondary's on disk copy of zone"
 
@@ -283,7 +283,7 @@ fi
 
 echo_i "Re-starting secondary"
 
-$PERL $SYSTEMTESTTOP/start.pl --noclean --port ${PORT} rrsetorder ns2
+start_server --noclean --restart --port ${PORT} ns2
 
 #
 #

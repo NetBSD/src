@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
@@ -9,6 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+rm -f dig.out*
 rm -f ns1/named.conf
 rm -f ns1/named.lock
 rm -f ns1/named.memstats

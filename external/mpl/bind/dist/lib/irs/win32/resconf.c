@@ -1,4 +1,4 @@
-/*	$NetBSD: resconf.c,v 1.6 2022/09/23 12:15:32 christos Exp $	*/
+/*	$NetBSD: resconf.c,v 1.6.2.1 2023/08/11 13:43:37 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -100,7 +100,8 @@ get_win32_nameservers(irs_resconf_t *conf) {
 	}
 
 	if (ISC_LIST_EMPTY(conf->searchlist) &&
-	    strlen(FixedInfo->DomainName) > 0) {
+	    strlen(FixedInfo->DomainName) > 0)
+	{
 		result = add_search(conf, FixedInfo->DomainName);
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;

@@ -1139,6 +1139,7 @@ dns_view_initsecroots
 dns_view_iscacheshared
 dns_view_isdelegationonly
 dns_view_issecuredomain
+dns_view_istrusted
 dns_view_load
 dns_view_loadnta
 dns_view_ntacovers

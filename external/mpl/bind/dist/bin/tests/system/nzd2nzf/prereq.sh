@@ -12,7 +12,7 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-if [ -z "$NZD" ]; then
+if ! $FEATURETEST --with-lmdb; then
         echo_i "This test requires LMDB support (--with-lmdb)"
         exit 255
 fi

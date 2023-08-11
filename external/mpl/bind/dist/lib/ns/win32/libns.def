@@ -42,6 +42,7 @@ ns_client_shuttingdown
 ns_client_sourceip
 ns_clientmgr_create
 ns_clientmgr_destroy
+ns_clientmgr_shutdown
 ns_hook_add
 ns_hooktable_create
 ns_hooktable_free

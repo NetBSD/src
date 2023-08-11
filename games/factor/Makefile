@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2021/04/12 04:19:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.14.6.1 2023/08/11 13:43:41 martin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -12,6 +12,8 @@ CPPFLAGS+=-I${PRIMES}
 CPPFLAGS+=-DHAVE_OPENSSL
 LDADD+=	-lcrypto -lcrypt
 DPADD+=	${LIBCRYPTO} ${LIBCRYPT}
+
+COPTS.factor.c+= -Wno-error=deprecated-declarations
 
 MAN=	factor.6
 .PATH:	${PRIMES}

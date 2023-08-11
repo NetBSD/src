@@ -14,3 +14,5 @@
 rm -f ns2/example.bk
 rm -f ns3/example.bk
 rm -f */named.memstats */named.run
+rm -f ns*/named.conf
+rm -f ns*/named.lock

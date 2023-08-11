@@ -11,11 +11,13 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+# leave as expr as expr treats arguments with leading 0's as base 10
+# handle exit code 1 from expr when the result is 0
 oldid=${1:-00000}
-newid=`expr \( ${oldid} + 1000 \) % 65536`
-newid=`expr "0000${newid}" : '.*\(.....\)$'`
-badid=`expr \( ${oldid} + 7777 \) % 65536`
-badid=`expr "0000${badid}" : '.*\(.....\)$'`
+newid=$(expr \( ${oldid} + 1000 \) % 65536 || true)
+newid=$(expr "0000${newid}" : '.*\(.....\)$')	# prepend leading 0's
+badid=$(expr \( ${oldid} + 7777 \) % 65536 || true)
+badid=$(expr "0000${badid}" : '.*\(.....\)$')	# prepend leading 0's
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -24,8 +26,8 @@ zone=example.
 infile=example.db.in
 zonefile=example.db
 
-keyname1=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone`
-keyname2=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone`
+keyname1=$($KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone)
+keyname2=$($KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone)
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 echo root-key-sentinel-is-ta-$oldid A 10.53.0.1 >> $zonefile

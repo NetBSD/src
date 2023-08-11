@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1314 2022/12/11 06:59:36 kre Exp $
+# $NetBSD: mi,v 1.1314.2.1 2023/08/11 13:42:53 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1209,6 +1209,14 @@
 ./usr/lib/lua/5.3				base-sys-usr		compatfile
 ./usr/lib/named					base-sys-usr
 ./usr/lib/npf					base-obsolete		obsolete
+./usr/lib/openssl				base-crypto-usr
+./usr/lib/openssl/engines			base-crypto-usr
+./usr/lib/openssl/engines/dasync.so		base-crypto-usr		pic,openssl=30
+./usr/lib/openssl/engines/devcrypto.so		base-crypto-usr		pic,openssl=30
+./usr/lib/openssl/engines/loader_attic.so	base-crypto-usr		pic,openssl=30
+./usr/lib/openssl/engines/ossltest.so		base-crypto-usr		pic,openssl=30
+./usr/lib/openssl/modules			base-crypto-usr
+./usr/lib/openssl/modules/legacy.so		base-crypto-usr		pic,openssl=30
 ./usr/lib/postfix				base-postfix-usr
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete

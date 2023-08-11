@@ -1,4 +1,4 @@
-# $NetBSD: t_hashes.sh,v 1.4 2018/09/24 16:25:24 christos Exp $
+# $NetBSD: t_hashes.sh,v 1.4.10.1 2023/08/11 13:43:42 martin Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -58,6 +58,6 @@ mdc2_body()
 atf_init_test_cases()
 {
 	atf_add_test_case hmac
-	atf_add_test_case md2
+#	atf_add_test_case md2
 	atf_add_test_case mdc2
 }

@@ -1,16 +1,12 @@
-#	$NetBSD: hmac.inc,v 1.1 2009/07/19 23:30:43 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/hmac/Makefile
-#
+#	$NetBSD: hmac.inc,v 1.1.58.1 2023/08/11 13:41:55 martin Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/hmac
 
+HMAC_SRCS += \
+hmac.c \
 
-HMAC_SRCS = hmac.c hm_ameth.c hm_pmeth.c
 SRCS += ${HMAC_SRCS}
 
 .for cryptosrc in ${HMAC_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/hmac
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/hmac ${HMACCPPFLAGS}
 .endfor

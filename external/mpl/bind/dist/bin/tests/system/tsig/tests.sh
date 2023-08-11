@@ -28,20 +28,25 @@ sha512="jI/Pa4qRu96t76Pns5Z/Ndxbn3QCkwcxLOgt9vgvnJw5wqTRvNyk3FtD6yIMd1dWVlqZ+Y4f
 
 status=0
 
-echo_i "fetching using hmac-md5 (old form)"
-ret=0
-$DIG $DIGOPTS example.nil. -y "md5:$md5" @10.53.0.1 soa > dig.out.md5.old || ret=1
-grep -i "md5.*TSIG.*NOERROR" dig.out.md5.old > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
-fi
+if $FEATURETEST --md5
+then
+	echo_i "fetching using hmac-md5 (old form)"
+	ret=0
+	$DIG $DIGOPTS example.nil. -y "md5:$md5" @10.53.0.1 soa > dig.out.md5.old || ret=1
+	grep -i "md5.*TSIG.*NOERROR" dig.out.md5.old > /dev/null || ret=1
+	if [ $ret -eq 1 ] ; then
+		echo_i "failed"; status=1
+	fi
 
-echo_i "fetching using hmac-md5 (new form)"
-ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-md5:md5:$md5" @10.53.0.1 soa > dig.out.md5.new || ret=1
-grep -i "md5.*TSIG.*NOERROR" dig.out.md5.new > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+	echo_i "fetching using hmac-md5 (new form)"
+	ret=0
+	$DIG $DIGOPTS example.nil. -y "hmac-md5:md5:$md5" @10.53.0.1 soa > dig.out.md5.new || ret=1
+	grep -i "md5.*TSIG.*NOERROR" dig.out.md5.new > /dev/null || ret=1
+	if [ $ret -eq 1 ] ; then
+		echo_i "failed"; status=1
+	fi
+else
+	echo_i "skipping using hmac-md5"
 fi
 
 echo_i "fetching using hmac-sha1"
@@ -89,12 +94,17 @@ fi
 #	Truncated TSIG
 #
 #
-echo_i "fetching using hmac-md5 (trunc)"
-ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-md5-80:md5-trunc:$md5" @10.53.0.1 soa > dig.out.md5.trunc || ret=1
-grep -i "md5-trunc.*TSIG.*NOERROR" dig.out.md5.trunc > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+if $FEATURETEST --md5
+then
+	echo_i "fetching using hmac-md5 (trunc)"
+	ret=0
+	$DIG $DIGOPTS example.nil. -y "hmac-md5-80:md5-trunc:$md5" @10.53.0.1 soa > dig.out.md5.trunc || ret=1
+	grep -i "md5-trunc.*TSIG.*NOERROR" dig.out.md5.trunc > /dev/null || ret=1
+	if [ $ret -eq 1 ] ; then
+		echo_i "failed"; status=1
+	fi
+else
+	echo_i "skipping using hmac-md5 (trunc)"
 fi
 
 echo_i "fetching using hmac-sha1 (trunc)"
@@ -143,12 +153,17 @@ fi
 #	Check for bad truncation.
 #
 #
-echo_i "fetching using hmac-md5-80 (BADTRUNC)"
-ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-md5-80:md5:$md5" @10.53.0.1 soa > dig.out.md5-80 || ret=1
-grep -i "md5.*TSIG.*BADTRUNC" dig.out.md5-80 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+if $FEATURETEST --md5
+then
+	echo_i "fetching using hmac-md5-80 (BADTRUNC)"
+	ret=0
+	$DIG $DIGOPTS example.nil. -y "hmac-md5-80:md5:$md5" @10.53.0.1 soa > dig.out.md5-80 || ret=1
+	grep -i "md5.*TSIG.*BADTRUNC" dig.out.md5-80 > /dev/null || ret=1
+	if [ $ret -eq 1 ] ; then
+		echo_i "failed"; status=1
+	fi
+else
+	echo_i "skipping using hmac-md5-80 (BADTRUNC)"
 fi
 
 echo_i "fetching using hmac-sha1-80 (BADTRUNC)"

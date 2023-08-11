@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2020/10/11 07:07:32 rin Exp $
+# $NetBSD: Makefile,v 1.9.6.1 2023/08/11 13:42:56 martin Exp $
 
 USE_FORT?= yes	# network client/server
 
@@ -34,6 +34,7 @@ LDADD+= -L${LIBISC} -liscntp -levent -lm
 DPADD+=	${LIBM} ${LIBEVENT}
 
 COPTS.utilities.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.crypto.c+=	-Wno-error=deprecated-declarations
 
 CLEANFILES+=${MAN}
 

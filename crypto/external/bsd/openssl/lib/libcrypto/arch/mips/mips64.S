@@ -586,7 +586,7 @@ bn_div_3_words:
 	ld	$4,($7)
 	move	$10,$5
 	bne	$4,$6,bn_div_3_words_internal
-	 ld	$5,-8($7)
+	ld	$5,-8($7)
 	li	$2,-1
 	jr	$31
 	move	$4,$2
@@ -1570,6 +1570,8 @@ bn_sqr_comba8:
 	sltu	$1,$3,$24
 	daddu	$7,$25,$1
 	sd	$3,8($4)
+	sltu	$1,$7,$25
+	daddu	$2,$1
 	mflo	($24,$14,$12)
 	mfhi	($25,$14,$12)
 	daddu	$7,$24
@@ -2071,6 +2073,8 @@ bn_sqr_comba4:
 	sltu	$1,$3,$24
 	daddu	$7,$25,$1
 	sd	$3,8($4)
+	sltu	$1,$7,$25
+	daddu	$2,$1
 	mflo	($24,$14,$12)
 	mfhi	($25,$14,$12)
 	daddu	$7,$24

@@ -41,3 +41,8 @@ zone "." {
 	type primary;
 	file "root.db";
 };
+
+zone "stale.test" {
+	type primary;
+	file "stale.test.db";
+};

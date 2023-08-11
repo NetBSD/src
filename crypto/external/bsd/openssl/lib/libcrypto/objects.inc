@@ -1,16 +1,16 @@
-#	$NetBSD: objects.inc,v 1.1 2009/07/19 23:30:44 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/objects/Makefile
-#
+#	$NetBSD: objects.inc,v 1.1.58.1 2023/08/11 13:41:55 martin Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/objects
 
+OBJECTS_SRCS += \
+o_names.c \
+obj_dat.c \
+obj_err.c \
+obj_lib.c \
+obj_xref.c \
 
-OBJECTS_SRCS = o_names.c obj_dat.c obj_lib.c obj_err.c obj_xref.c
 SRCS += ${OBJECTS_SRCS}
 
 .for cryptosrc in ${OBJECTS_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/objects
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/objects ${OBJECTSCPPFLAGS}
 .endfor

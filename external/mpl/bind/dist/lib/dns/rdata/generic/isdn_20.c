@@ -1,4 +1,4 @@
-/*	$NetBSD: isdn_20.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: isdn_20.c,v 1.7.2.1 2023/08/11 13:43:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,7 +41,8 @@ fromtext_isdn(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_qstring,
 				      true));
 	if (token.type != isc_tokentype_string &&
-	    token.type != isc_tokentype_qstring) {
+	    token.type != isc_tokentype_qstring)
+	{
 		isc_lex_ungettoken(lexer, &token);
 		return (ISC_R_SUCCESS);
 	}

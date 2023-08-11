@@ -41,3 +41,11 @@ zone "." {
 	type hint;
 	file "../../common/root.hint";
 };
+
+zone "foo" {
+	type primary;
+	file "foo.db";
+};
+
+include "island.conf";
+include "private.conf";

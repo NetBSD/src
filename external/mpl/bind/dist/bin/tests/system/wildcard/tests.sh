@@ -243,7 +243,7 @@ do
 	$DIG $DIGOPTS @10.53.0.1 "\\$x.example" TXT > dig.out.ns1.$x.test$n
 	if test $i -le 32 -o $i -ge 127
 	then
-		grep '^\\'"$x"'\.example\..*TXT.*\"this is a wildcard\"$' dig.out.ns1.$x.test$n > /dev/null || { echo_i "code point $x failed" ; ret=1; }
+		grep '^\\'"$x"'\.example\..*TXT.*"this is a wildcard"$' dig.out.ns1.$x.test$n > /dev/null || { echo_i "code point $x failed" ; ret=1; }
         # "=34 $=36 (=40 )=41 .=46 ;=59 \=92 @=64
 	elif test $i -eq 34 -o $i -eq 36 -o $i -eq 40 -o $i -eq 41 -o \
                   $i -eq 46 -o $i -eq 59 -o $i -eq 64 -o $i -eq 92

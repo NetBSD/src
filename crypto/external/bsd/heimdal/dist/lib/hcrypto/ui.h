@@ -1,4 +1,4 @@
-/*	$NetBSD: ui.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: ui.h,v 1.2.22.1 2023/08/11 13:39:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -40,6 +40,10 @@
 
 /* symbol renaming */
 #define UI_UTIL_read_pw_string hc_UI_UTIL_read_pw_string
+
+/* OpenSSL API extensions */
+#define UI_UTIL_FLAG_VERIFY	    0x1 /* ask to verify password */
+#define UI_UTIL_FLAG_VERIFY_SILENT  0x2 /* silence on verify failure */
 
 int	UI_UTIL_read_pw_string(char *, int, const char *, int); /* XXX */
 

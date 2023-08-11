@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.9 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.9.2.1 2023/08/11 13:43:34 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1104,7 +1104,8 @@ clearnode(dns_db_t *db, dns_dbnode_t *node) {
 	isc_result_t result;
 	dns_rdatasetiter_t *iter = NULL;
 
-	result = dns_db_allrdatasets(db, node, NULL, (isc_stdtime_t)0, &iter);
+	result = dns_db_allrdatasets(db, node, NULL, DNS_DB_STALEOK,
+				     (isc_stdtime_t)0, &iter);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}

@@ -198,7 +198,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* define if you have a berkeley db1/2 library */
 #undef HAVE_DB1
 
-/* define if you have a berkeley db3/4/5 library */
+/* define if you have a berkeley db3/4/5/6 library */
 #undef HAVE_DB3
 
 /* Define to 1 if you have the <db3/db.h> header file. */
@@ -321,8 +321,8 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the function `ecalloc'. */
 #undef HAVE_ECALLOC
 
-/* Define to 1 if you have the <editline/readline.h > header file. */
-#undef HAVE_EDITLINE_READLINE_H_
+/* Define to 1 if you have the <editline/readline.h> header file. */
+#undef HAVE_EDITLINE_READLINE_H
 
 /* Define if you have the function `emalloc'. */
 #undef HAVE_EMALLOC
@@ -592,9 +592,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the function `memmove'. */
 #undef HAVE_MEMMOVE
 
-/* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
-
 /* Define if you have the function `memset_s'. */
 #undef HAVE_MEMSET_S
 
@@ -697,16 +694,11 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have a readline compatible library. */
 #undef HAVE_READLINE
 
-/* Define to 1 if you have the
-   <[readline.h])[][]_AH_CHECK_HEADER([readline/readline.h])[][]_AH_CHECK_HEADER([editline/readline.h]>
-   header file. */
+/* Define to 1 if you have the <readline.h> header file. */
 #undef HAVE_READLINE_H
 
 /* Define to 1 if you have the <readline/readline.h> header file. */
 #undef HAVE_READLINE_READLINE_H
-
-/* Define to 1 if you have the <readline/readline.h > header file. */
-#undef HAVE_READLINE_READLINE_H_
 
 /* Define if you have the function `readv'. */
 #undef HAVE_READV
@@ -842,6 +834,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
@@ -1466,7 +1461,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the sqlite3 package. */
 #undef SQLITE3
 
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
 
 /* Define if you have streams ptys. */
@@ -1485,7 +1482,8 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to what version of SunOS you are running. */
 #undef SunOS
 
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. This
+   macro is obsolete. */
 #undef TIME_WITH_SYS_TIME
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
@@ -1506,11 +1504,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Required for functional/sane headers on AIX */
 #undef _ALL_SOURCE
-
-/* Enable large inode numbers on Mac OS X 10.5.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
@@ -1548,7 +1541,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to `long int' if <sys/types.h> does not define. */
 #undef off_t
 
-/* Define to `int' if <sys/types.h> does not define. */
+/* Define as a signed integer type capable of holding a process identifier. */
 #undef pid_t
 
 /* Path name delimiter */
@@ -1571,10 +1564,6 @@ struct sockaddr_dl;
 struct sockaddr_in;
 #endif
 
-#ifdef __APPLE__
-#include <AvailabilityMacros.h>
-#endif
-
 #ifdef ROKEN_RENAME
 #include "roken_rename.h"
 #endif
@@ -1583,10 +1572,6 @@ struct sockaddr_in;
 #define SIGRETURN(x) return
 #else
 #define SIGRETURN(x) return (RETSIGTYPE)(x)
-#endif
-
-#ifdef BROKEN_REALLOC
-#define realloc(X, Y) rk_realloc((X), (Y))
 #endif
 
 
@@ -1615,3 +1600,7 @@ struct sockaddr_in;
 #define LOGIN_PATH BINDIR "/login"
 #endif
 
+
+#ifdef __APPLE__
+#include <AvailabilityMacros.h>
+#endif

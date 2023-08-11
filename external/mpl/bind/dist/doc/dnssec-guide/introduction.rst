@@ -250,7 +250,7 @@ at a very high level, looking up the name ``www.isc.org`` :
 
     Let's take a quick break here and look at what we've got so far...
     how can our server trust this answer? If a clever attacker had taken over
-    the ``isc.org`` name server(s), or course she would send matching
+    the ``isc.org`` name server(s), of course she would send matching
     keys and signatures. We need to ask someone else to have confidence
     that we are really talking to the real ``isc.org`` name server. This
     is a critical part of DNSSEC: at some point, the DNS administrators

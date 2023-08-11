@@ -1,4 +1,4 @@
-#	$NetBSD: blake2.inc,v 1.1 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: blake2.inc,v 1.1.14.1 2023/08/11 13:41:54 martin Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,10 +8,11 @@
 .PATH:	${OPENSSLSRC}/crypto/blake2
 
 BLAKE2_SRCS = \
-blake2b.c \
-blake2s.c \
-m_blake2b.c \
-m_blake2s.c
+blake2_prov.c \
+blake2b_prov.c \
+blake2s_prov.c \
+blake2b_mac.c \
+blake2s_mac.c
 
 SRCS += ${BLAKE2_SRCS}
 

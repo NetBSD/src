@@ -49,6 +49,16 @@ my $udpsock = IO::Socket::INET->new(LocalAddr => "$localaddr",
 my $SOA = "example 300 IN SOA . . 0 0 0 0 300";
 my $NS = "example 300 IN NS ns.example";
 my $A = "ns.example 300 IN A $localaddr";
+
+#
+# Slow delegation
+#
+my $slowSOA = "slow 300 IN SOA . . 0 0 0 0 300";
+my $slowNS = "slow 300 IN NS ns.slow";
+my $slowA = "ns.slow 300 IN A $localaddr";
+my $slowTXT = "data.slow 2 IN TXT \"A slow text record with a 2 second ttl\"";
+my $slownegSOA = "slow 2 IN SOA . . 0 0 0 0 300";
+
 #
 # Records to be TTL stretched
 #
@@ -58,6 +68,8 @@ my $CAA = "othertype.example 2 IN CAA 0 issue \"ca1.example.net\"";
 my $negSOA = "example 2 IN SOA . . 0 0 0 0 300";
 my $CNAME = "cname.example 7 IN CNAME target.example";
 my $TARGET = "target.example 9 IN A $localaddr";
+my $SHORTCNAME = "shortttl.cname.example 1 IN CNAME longttl.target.example";
+my $LONGTARGET = "longttl.target.example 600 IN A $localaddr";
 
 sub reply_handler {
     my ($qname, $qclass, $qtype) = @_;
@@ -97,6 +109,12 @@ sub reply_handler {
 
     # If we are not responding to queries we are done.
     return if (!$send_response);
+
+    if (index($qname, "latency") == 0) {
+        # simulate network latency before answering
+        print "  Sleeping 50 milliseconds\n";
+        select(undef, undef, undef, 0.05);
+    }
 
     # Construct the response and send it.
     if ($qname eq "ns.example" ) {
@@ -166,6 +184,28 @@ sub reply_handler {
 	    push @auth, $rr;
 	}
 	$rcode = "NOERROR";
+    } elsif ($qname eq "shortttl.cname.example") {
+	if ($qtype eq "A") {
+	    my $rr = new Net::DNS::RR($SHORTCNAME);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "longttl.target.example") {
+	if ($slow_response) {
+                print "  Sleeping 3 seconds\n";
+		sleep(3);
+	}
+	if ($qtype eq "A") {
+	    my $rr = new Net::DNS::RR($LONGTARGET);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
     } elsif ($qname eq "longttl.example") {
 	if ($qtype eq "TXT") {
 	    my $rr = new Net::DNS::RR($LONGTXT);
@@ -185,6 +225,44 @@ sub reply_handler {
 	    push @ans, $rr;
 	} else {
 	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "ns.slow" ) {
+	if ($qtype eq "A") {
+	    my $rr = new Net::DNS::RR($slowA);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($slowSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "slow") {
+	if ($qtype eq "NS") {
+	    my $rr = new Net::DNS::RR($slowNS);
+	    push @auth, $rr;
+	    $rr = new Net::DNS::RR($slowA);
+	    push @add, $rr;
+	} elsif ($qtype eq "SOA") {
+	    my $rr = new Net::DNS::RR($slowSOA);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($slowSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "data.slow") {
+	if ($slow_response) {
+                print "  Sleeping 3 seconds\n";
+		sleep(3);
+		# only one time
+		$slow_response = 0;
+	}
+	if ($qtype eq "TXT") {
+	    my $rr = new Net::DNS::RR($slowTXT);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($slownegSOA);
 	    push @auth, $rr;
 	}
 	$rcode = "NOERROR";

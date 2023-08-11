@@ -1,4 +1,4 @@
-/*	$NetBSD: evp-openssl.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: evp-openssl.h,v 1.2.38.1 2023/08/11 13:39:58 martin Exp $	*/
 
 /*
  * Copyright (c) 2009-2016 Kungliga Tekniska Högskolan
@@ -39,7 +39,6 @@
 #define HEIM_EVP_OSSL_H 1
 
 /* symbol renaming */
-#define EVP_ossl_md2 hc_EVP_ossl_md2
 #define EVP_ossl_md4 hc_EVP_ossl_md4
 #define EVP_ossl_md5 hc_EVP_ossl_md5
 #define EVP_ossl_sha1 hc_EVP_ossl_sha1
@@ -69,7 +68,6 @@
 
 HC_CPP_BEGIN
 
-const hc_EVP_MD * hc_EVP_ossl_md2(void);
 const hc_EVP_MD * hc_EVP_ossl_md4(void);
 const hc_EVP_MD * hc_EVP_ossl_md5(void);
 const hc_EVP_MD * hc_EVP_ossl_sha1(void);

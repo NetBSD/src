@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: ext.c,v 1.2.22.1 2023/08/11 13:39:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -146,7 +146,7 @@ do_ext_keytab(krb5_principal principal, void *data)
     }
     free(unparsed);
     free(keys);
-    return 0;
+    return ret;
 }
 
 int

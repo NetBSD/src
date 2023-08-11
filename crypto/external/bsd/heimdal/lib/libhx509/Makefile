@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2021/06/20 10:38:54 christos Exp $
+# $NetBSD: Makefile,v 1.7.2.1 2023/08/11 13:40:06 martin Exp $
 
 NOLINT=		# defined
 
@@ -61,7 +61,8 @@ SRCS=				\
 
 CPPFLAGS+=				\
 	-I${HEIMDIST}/lib/hx509/ref	\
-	-I${HEIMDIST}/lib/asn1
+	-I${HEIMDIST}/lib/asn1		\
+	-I${HEIMDIST}/lib
 
 sel-gram.c: ${ASN1_INCS} ${COMPILE_ET_INCS}
 
@@ -84,6 +85,20 @@ ASN1_FILES.ocsp.asn1 =			\
 	asn1_id_pkix_ocsp.x             \
 	asn1_id_pkix_ocsp_basic.x       \
 	asn1_id_pkix_ocsp_nonce.x
+
+COPTS.cert.c += -Wno-error=deprecated-declarations
+COPTS.crypto-ec.c += -Wno-error=deprecated-declarations
+COPTS.crypto.c += -Wno-error=deprecated-declarations
+COPTS.ks_p11.c += -Wno-error=deprecated-declarations
+
+# XXX: Pull this in from hcrypto.  Be sure to be last!  This subdir
+# XXX: also has a "doxygen.c" in it, but the .PATH ordering ensures
+# XXX: that the lib/hx509 version is used here, not the lib/hcrypto
+# XXX: version.
+SRCS+=	ui.c
+.PATH:	${HEIMDIST}/lib/hcrypto
+CPPFLAGS.ui.c+= 		\
+	-I${HEIMDIST}/lib/hcrypto
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>

@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
@@ -28,8 +30,7 @@ status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "adding a new zone into default NZD using rndc addzone ($n)"
-$RNDCCMD 10.53.0.1 addzone "added.example { type master; file \"added.db\";
-};" 2>&1 | sed 's/^/I:ns1 /' | cat_i
+$RNDCCMD 10.53.0.1 addzone "added.example { type master; file \"added.db\"; };" 2>&1 | sed 's/^/I:ns1 /' | cat_i
 sleep 2
 
 n=`expr $n + 1`
@@ -41,7 +42,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 echo_i "stopping ns1"
-$PERL $SYSTEMTESTTOP/stop.pl nzd2nzf ns1
+stop_server ns1
 
 n=`expr $n + 1`
 echo_i "dumping _default.nzd to _default.nzf ($n)"
@@ -59,7 +60,7 @@ echo_i "deleting _default.nzd database"
 rm -f ns1/_default.nzd
 
 echo_i "starting ns1 which should migrate the .nzf to .nzd"
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} nzd2nzf ns1
+start_server --noclean --restart --port ${PORT} ns1
 
 n=`expr $n + 1`
 echo_i "querying for zone data from migrated zone config ($n)"

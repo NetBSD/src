@@ -16,97 +16,141 @@ example.		300	IN SOA	mname1. . (
 					604800     ; expire (1 week)
 					3600       ; minimum (1 hour)
 					)
-			300	RRSIG	SOA 5 1 300 (
-					20361231235959 20000101000000 51829 example.
-					HW8O/KHJEObWSYtQD14+3MRtD6rasy/AeIAo
-					1HmtELxeUoMvVcQzm7z1RoeV6S7+r/SrUjAz
-					PwtlE4TpyTEj9sfTr4mJhU0DwrNW6dN6qHCw
-					vB3nuURVOKzU8V26PdFcjJB+/HnJT2LyLUqr
-					KAzHwU1tAXkgx0FOwfyOs2rxooo= )
+			300	RRSIG	SOA 8 1 300 (
+					20361231235959 20000101000000 52810 example.
+					IfZrUTjdr4Ull5MSQW4eHxrub6X5O8VWB3vG
+					kg6TBT8f2Aw4hLcwT0X47xRqL9nU1kKA3qpu
+					mi71wqiZPbYI+suHYGuqRO/V6YujdQRpLhGS
+					gTpLmETa46unkMDY6sze41AlCyzR79yaDxVS
+					+pS2V1AVYzQzzeswJXHwSLO5HKtClPL3izpV
+					AJD1+dL0UZRs9yOqbxU1RgvASPFEt+1Wd2p6
+					qwyeadJ7PB0PL7QQXSDsQ09Ms1BGoKq5p6Os
+					HtgXPo+aZQR2gczm3Yals9I1tZnk/ZM86aS0
+					63NrEEUQycMNCr100WgWzYQzO90SmJMqpdeZ
+					fxzlRQbY7jN4qRbM7A== )
 			300	NS	ns2.example.
-			300	RRSIG	NS 5 1 300 (
-					20361231235959 20000101000000 51829 example.
-					EO8/KzfhppvhD2b0hGCdEN8/WTNexK6zkC1Z
-					oW3vu0cFVvac+wrV9Vox90lHI0jTce/R+bvT
-					T9RbpZiZcBKLVyBuHIdFPOdc3ogHMPwaPNkD
-					pvVvLfV6auHCvINiVw+jWinBpTjqoROH/yTC
-					03BQ41vewKsz3fYZ03XUr2xga5Q= )
-			3600	NSEC	a.example. NS SOA RRSIG NSEC DNSKEY
-			3600	RRSIG	NSEC 5 1 3600 (
-					20361231235959 20000101000000 51829 example.
-					FiUyrwO7MV9Lhg6yu0XN/hLZPOiDg/NqIIUc
-					HfA9Yix90Z9G/yzn8NBC92Yp5EPiI4HiE24T
-					t1p4YwHe6n/IJA4KZUIpCxEY5xhQL/mVMeuj
-					dlFA2LaiDwbOh//42zdocaeGPrcV+u6OmXoU
-					xkQIuWeJ1QCaD5FXJdN6zELZsnw= )
-			300	DNSKEY	256 3 5 (
-					BwEAAAAAAAGfDKVFak/2o446xOsi39QnfZmR
-					idaRyg3LaCxDBM6kVqCHQKI3a2lEf4FWVSbp
-					+dYjGavsqWJ/Z7poMRy9JJol2bMLhtsZhESK
-					5EYRaR/2dLw5H10SR+wb/qRVVYovWlk67sql
-					7XYc3x5cjc4XaMVziBBrQMiWqkQS2oGQLwKC
-					Lw==
-					) ; ZSK; alg = RSASHA1; key id = 51829
-			300	DNSKEY	257 3 5 (
-					AwEAAaLNbgMfH/XUwZC9DBVG4OpYVUVyCyZE
-					Bqhk3k6WziIAY+2f7MN3L9CoZR9GqfqM+/c6
-					g8gfkIaZZ2YP/YUUaN73xH/nxtHYkrP5Rqe/
-					dw7qONnsVwvf3HJ8HvURG3wjaOrPoe207+Hp
-					NTNhe/sT2usKhokSU8yKB0DKlnrKQvp9vScs
-					IB/RsIxOXWmYgOMkSXtpI3lQ07l1i2Tv6Une
-					cD9s8rukfl/gPbRBketLYACrqpb2j/1f7ciQ
-					v+rz1GnN9ma8XK1Yw8173/hrVL1S/ZqTGczw
-					deA3AVyiHThOZ15EPhSuL7jaJusHOi43Aa8Z
-					fCMCeimT73F5epktGomAxFU=
-					) ; KSK; alg = RSASHA1; key id = 5896
-			300	RRSIG	DNSKEY 5 1 300 (
-					20361231235959 20000101000000 5896 example.
-					b07impYEH+uW8iPCVE0QXqYSs6Yyu7Nb8q1f
-					rXv+NgE5wbsIvdo4PDdSfScP41WgVKdLPipH
-					gaTyk4CKAuGSvIBMzlc3yib03zdvzBDgn3Yi
-					lONpl2yH47vhvn5iXYcVV4kbuYE9+SFVoVO8
-					m6xvihm1D17m8emivnG6DuJSpJJM09v0toSd
-					3yGI3bgUtki85ehOPU0ZkvA20InVgP5kKUgw
-					/M4vP4VkcwenNO7koMZOorI02KFOH3vvZSI4
-					hzuwJVaQZ35IBBVmSSMAD+0LTBk6sMPSpcmP
-					Pff75NLhU+4+UflWie6mzWIvm3ovcG3fveq0
-					W4G3TCriTIKSjY3Jqg== )
-			300	RRSIG	DNSKEY 5 1 300 (
-					20361231235959 20000101000000 51829 example.
-					a7WU2WcHEpDfM5NBUzN7t4WXEwldn1EM/HkH
-					XEo9NnZhFV16414qbuwWMlUsc5MTii+T4OFZ
-					p2+XHj9M8glM1d98o+EDSYT7LdrrE7AqdtSO
-					gcXdeY6WRI9R5wkLP3cP6kADp5WIOcQ78IPb
-					pRJ4jhxqMPFV3cqCWH/Lp8JPghY= )
+			300	RRSIG	NS 8 1 300 (
+					20361231235959 20000101000000 52810 example.
+					VUPhDucH6rlx93V13b7OSAQ6fE/9jlxhCTXv
+					peBD69WOa4jZHMZf60gqy10gLVMx35gZdEaU
+					cJqaBcAniSwPY3a7mxclMja7fmuCB9wcSbiP
+					pwk5KIYSgIvoWp3ro2I19C0IDQDVWtH1xqdQ
+					Dv+3MV39Zpf0AnXB05mBopI2DQI9mYHCnmis
+					F3pfcfs+h/ipyodE5kccBBRvtfKWHly342Xe
+					azHKM4eyuGj9NLwuwsoVgnyQ3I9hrKVAiUjS
+					fQ4cxyBVhh+Wb1/VrVSbX+X9VNzQ04mcREHS
+					yXIPoIQBNju3dyOSTQ+VIeasRvRU8nqMS/1f
+					oeqj5ehTjtfejF6Jfw== )
+			300	NSEC	a.example. NS SOA RRSIG NSEC DNSKEY
+			300	RRSIG	NSEC 8 1 300 (
+					20361231235959 20000101000000 52810 example.
+					bG90DOCaN7BhihvtCUs2eJhSHkRaV582ROQi
+					AbamawevX8NQGJeVpHb3t5ekQuK5EWjLFr6i
+					bga5TpeP8HOv3lDb8w7kb7xOrHycw5Sizws5
+					PZTvtuty9nT6dZ9h4pfLNTbW+SBV904xv3JT
+					ZlXoxtm4JAdmKUcGiCFLjMvwbQ5SKEZq27uN
+					9xCeY0CPkQmiGbTrySYFyNZsBBsL2OI5ec2V
+					TbQVSDhnnEhbVdMb8Yh2sTt9H/CT1yG2s4U9
+					a9ccxguFzt6mk+f5ZL+WKgxkTOMOrZW3dyiI
+					x53dNQyZN/tczibox/LLG/SaET5wR/V5gDsh
+					9DObfc9u1+of/H0lhg== )
+			300	DNSKEY	257 3 8 (
+					AwEAAeeXAGBcXxSNj5X/PWT8XDBk4U9OUkZ7
+					YKQBf2IN3V6OZomt/s3FUWIh70Wot+z1Ld3R
+					fswq1DjCaWNRFOMhs+9j3Fhc46wMZ4pnsDW1
+					nLHk2TnQRdrbiuhLkQy5oNMjSRxu924XLw5y
+					lsuqjxE7vXcCeKSFe674roSqwo39atWsTJMD
+					z0FQGxlPucnXai0nHoCeC7+u1s+wLaGcpNSZ
+					lsab7ZnyFD4HZ3HKUCJw/Jjr5CZjqal9KdmW
+					SC1SINRtlAN6PX5VSiNEncnYMCdjiv+ZhRGn
+					+aHh1BmEWomGbAm2Jjw5mrYMgDs9lJRc5Vtg
+					0YXb9OkYvxNFV4QGw1oeF+M=
+					) ; KSK; alg = RSASHA256 ; key id = 51650
+			300	DNSKEY	256 3 8 (
+					BwEAAAAAAAHYYy161+wCg6yFHRlyex8oVkcK
+					+K2SBUryI1+DEKzjusH6yLfzzlJCPGrubmD+
+					jseKYwXfzelJkRQbMDjWbMYLHKytuPtwnJMS
+					eVh+a/Ore6oVPXy716EYpsEBSmVjfQyS0mGH
+					pwrYk4QaKjJDM7Q173EFl/sEeXjHqInlzOgJ
+					bXqsCrSfA94anSt42DGhJeeIfQ8b3vqD/nCn
+					A6C7khItAWlfJto7d42Ev8tckjr3CrTW9tn9
+					pHb2DKeh85rKeJBBLMYQU3jfF5KHEEsjztLG
+					MnPLlXTteh8wKrk/0IJrot17w0FR0H2v8oG3
+					xDXxfhJ0OeTW7dtBHD6ISgqeJ9zt
+					) ; ZSK; alg = RSASHA256 ; key id = 52810
+			300	RRSIG	DNSKEY 8 1 300 (
+					20361231235959 20000101000000 52810 example.
+					O4q1oueEgPoWHhrLiobGvMQLS2KHN+xxSddf
+					y6fqksqivRLgj0633fnEZrFtc44YueV+L4gQ
+					kaoWCCpR0yQH4BOw4p3FVjEgl+jXLzIc7amw
+					ZfKAnSOtMoTaBCQ2hN8b2ducUHgKV7ta9bca
+					lO0wuqqp2OOO/n9S3YMBVfrCW4jL2w1QPC+b
+					lm/4ka8OwqKKGAcO0d/nGeOPJZnfbddSzqEQ
+					C3j1tGavwBC4RAGilxw3XoyoICDp0LQR7M9a
+					tWAxYmMfilEEfpip9R3HhCa+ynIVsHP8yTXE
+					dlWM3LUZePm44aV38YeObJpRMkb8sO5VrbZn
+					8hJoIs3eyguC4HKKTg== )
+			300	RRSIG	DNSKEY 8 1 300 (
+					20361231235959 20000101000000 51650 example.
+					Eaw79mOoImGg+ymMJ+9paoanUgR/Od0Pxv/X
+					mevid1TRbssSc2KynAToxSXRcOQwRQjto9sC
+					qj0pOekPPmW1I6DRlMOGDS6l0Uuk51GvUuRD
+					Xbr19BG73mcPuKfYHNbx6cUHvBlPilnjM803
+					m9E8DK6Ba9uo/MNhgtWoWj8wQxqP2YS+HW3v
+					bOv/p4en9Dc5ft6ATtSYj84ejuPAKnfVbleI
+					fJW+qIQ7q9A24xEZ4QlWuRovjsoASVsuLnX+
+					X4sQYlWBIPMQYQ8RIN1CgSRPGb603pAq9ru6
+					ySpjlxHQRtdOGBNJleg9Wz612rHRd3x7BM+8
+					/Lvz31Ot/JSh3u4DSQ== )
 a.example.		300	IN A	10.0.0.1
-			300	RRSIG	A 5 2 300 (
-					20361231235959 20000101000000 51829 example.
-					h4WyY0hUkZobUbt2xWC4lJLEbGvzxGczH/mN
-					WHZBpgg+1tuoTAdVbt6a2TfQcJV/iPQGAHte
-					Vu/U6tD8KzP08krlqrcefwvR5LDAQygWRdjt
-					Rx105w9F0GiL6kpDH6S9T8xCw3aF5Rl1lu/u
-					8eiUzDIMIBTijhXmM96Nde18RdA= )
-			3600	NSEC	ns2.example. A RRSIG NSEC
-			3600	RRSIG	NSEC 5 2 3600 (
-					20361231235959 20000101000000 51829 example.
-					LbzeWbk9r119I95TVCebEPfnCCk9zBRq4nAR
-					swliQVQ84bCjwVJfakvlD4mgilSPtypxpyXC
-					DQaiOQWOz9LFzro5u71VuSS5fY7U4elp/lq6
-					5BJB6o/dmk5xASAHHbOO6e5dcoQ5vRxcnJaE
-					0vE1jGppo2FiQzkVi7Zbrghoolg= )
+			300	RRSIG	A 8 2 300 (
+					20361231235959 20000101000000 52810 example.
+					zp4L0Um0guehtT+4GQaMeYx5PiwEbSRyi7sg
+					Xv2uFn/wFML/Df0PgCxCYkWKL2Db/j15IZON
+					uz2CNRG7lDMZsb+JgyLZ6R3OuSKjwzA++kUu
+					8ExPpdrFHxZFMPefkU1vjf7E1yt4/aSaO23T
+					m0F6yFHcVfBE1DElG1vLWO6cWtSIMKjXOo15
+					Zy2hHhT/7jKhqcHnwwCBHLuV9/e9OmI34H7I
+					Sd3Ik8dnNEjRTVbLem3tQMfQ9ZfYDHPHli+z
+					Z5dGgPmpyNPq5bfs7O5uCO5cNCbouFdEnc6O
+					DA9QiyOGba8w7vI1gHMvA+rWPpA+fTGgrVRq
+					7bTfa0jTOsybR8rZjg== )
+			300	NSEC	ns2.example. A RRSIG NSEC
+			300	RRSIG	NSEC 8 2 300 (
+					20361231235959 20000101000000 52810 example.
+					oh6oqdC9OIoO0jIN0x9MIBlYlzAg2LFYffrP
+					QlgPAtPn8A9cPCxU2i6hJ1ubqc6o1LVD7LH6
+					GVj842Ytys1uO2Nwf9xXS4gbchJ6NE9IjQh6
+					IoBNmlgdfprzJEJlEFx73dytakfcjc+hIj8t
+					b14Lu2/5BBDSamw+uVyeV8Wg2jNdrN7UEqyA
+					ccnhLPWHAOtspzxrmCrBDPc6Geelu8KzARs5
+					qOZ/p9CKffmKL/65K/N8WWKQWVNI22tAbiWT
+					J1t3BNkOLUSKMvEVLFcgStV4QtFcQrSB96Hu
+					D2rSbAGsH5Ujmz4GTxhOSqd8OJ7XDEWlhZod
+					LhUBltfjmakorhGqqg== )
 ns2.example.		300	IN A	10.53.0.2
-			300	RRSIG	A 5 2 300 (
-					20361231235959 20000101000000 51829 example.
-					Jfp3xzrym5GksbZ+a2rjOXzV/Ct+eX2DCo8a
-					lSbriEhuK9OR3WUnXoDqp1X/d7adNL2lI9c+
-					B3UVL+EOCyvNxt9kECcN8KgQdXKExZEQUwnN
-					UB51QESM9pW6akavhXJu98sjnhtpdTwrtKbg
-					nMJkfYe5Mw3e/8RFY+wpEq/8cHw= )
-			3600	NSEC	example. A RRSIG NSEC
-			3600	RRSIG	NSEC 5 2 3600 (
-					20361231235959 20000101000000 51829 example.
-					Wxkz4nY5rty6O90QhFZguyqbaz9njnJKUs7m
-					qYF9u7dDk8vUf3yS97fw3e0N13X5zGZa7hTr
-					+65U4NKEOqYDBbvWaXSVFxrzVfSVXqY6l4jX
-					kWjA6q4q5TTgcjOUJ0MfvcjtgxcaKUiPGmPJ
-					RWdOV7t9YMWnf7QAbPI55QN9sfY= )
+			300	RRSIG	A 8 2 300 (
+					20361231235959 20000101000000 52810 example.
+					sDlETJwDoWqYZdcwYBW/l+Ot4Tb3mSXJvW3R
+					1fsoiq/obWZeC+bU2MszckcZKPET2CRqBD+c
+					uLCcOhZrcH0m25Y02SAzOOG2V12KNvWVznSz
+					bZw+/+ucYhxhiNKherdwpHOAdjlhG//zFHDy
+					sAxmrtjWO2DT9pv1Hd/Hm3aGgAYTs0ryyeyo
+					k05sTgdr43APFkX4SNoNXGUEt8E0uMghIvhi
+					mgKSQ45fZFsZeUiEfwvtQ8uAuDNOLWK49Bw5
+					184QrQ/NZ3YVyJercg7wm/jFMVkgxggiOl2q
+					ZCLadaSQNnsvtbwgyTktRJb5YovzZEQrH7O0
+					vW/DAN1Cqa1nXw/kZA== )
+			300	NSEC	example. A RRSIG NSEC
+			300	RRSIG	NSEC 8 2 300 (
+					20361231235959 20000101000000 52810 example.
+					DyLuymW3Bv6irCLzfUGnz2cy1XctqfW7ycLc
+					7wgDzDLNvJ6tqr8tjHKMdCODJDiG+lR5oFo7
+					8RA604OYcmJjLIAMj3fCxzBkIlH5SXRcJ86X
+					a8U6oXrgt6IvUMC2crdWMVgVnSWlqBS4TNNg
+					QhUa+vt+Em8ce3fveqh1tXm1hzysSroOQtMk
+					HOPAtwYR9XP4mTdbC43AU/67jsYPqXq59lm4
+					sE1tmnVdhXuOk7yNAt8O2CSZGGZl5bYMC4On
+					IgWZP7liebXAmhmXpHbBf5/BaE9dVfvWzYTT
+					4wUch+f8TDwwyTqumrlrPsVnvkQ9V0LwODox
+					PxWWxFAznmUMEtlo3g== )

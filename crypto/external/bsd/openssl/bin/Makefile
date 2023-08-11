@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2018/09/23 13:32:54 christos Exp $
-
-WARNS?=	2	# XXX -Wcast-qual
+#	$NetBSD: Makefile,v 1.10.10.1 2023/08/11 13:40:11 martin Exp $
 
 NOMAN=	# defined
 BINDIR=/usr/bin
@@ -9,41 +7,74 @@ BINDIR=/usr/bin
 
 USE_FORT?= yes	# cryptographic software
 
-# RCSid:
-#	$Id: Makefile,v 1.10 2018/09/23 13:32:54 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	This file is provided in the hope that it will
-#	be of use.  There is absolutely NO WARRANTY.
-#	Permission to copy, redistribute or otherwise
-#	use this file is hereby granted provided that 
-#	the above copyright notice and this notice are
-#	left intact. 
-#      
-#	Please send copies of changes and bug-fixes to:
-#	sjg@quick.com.au
-#
-
 PROG=	openssl
 
-SRCS=	openssl.c
-SRCS+=	apps.c ecparam.c ec.c pkeyparam.c genpkey.c pkey.c pkeyutl.c ts.c cms.c
-SRCS+=	s_cb.c s_socket.c bf_prefix.c storeutl.c
-SRCS+=	app_rand.c rehash.c
-SRCS+=	verify.c asn1pars.c req.c dgst.c dhparam.c enc.c passwd.c errstr.c \
-	opt.c ca.c \
-	pkcs7.c crl2p7.c crl.c \
-	rsa.c rsautl.c dsa.c dsaparam.c \
-	x509.c genrsa.c gendsa.c prime.c s_server.c s_client.c speed.c \
-	s_time.c version.c sess_id.c srp.c \
-	ciphers.c nseq.c pkcs12.c pkcs8.c spkac.c smime.c rand.c engine.c ocsp.c
+SRCS+= \
+asn1parse.c \
+ca.c \
+ciphers.c \
+cmp.c \
+cms.c \
+crl.c \
+crl2pkcs7.c \
+dgst.c \
+dhparam.c \
+dsa.c \
+dsaparam.c \
+ec.c \
+ecparam.c \
+enc.c \
+engine.c \
+errstr.c \
+fipsinstall.c \
+gendsa.c \
+genpkey.c \
+genrsa.c \
+info.c \
+kdf.c \
+list.c \
+mac.c \
+nseq.c \
+ocsp.c \
+openssl.c \
+passwd.c \
+pkcs12.c \
+pkcs7.c \
+pkcs8.c \
+pkey.c \
+pkeyparam.c \
+pkeyutl.c \
+prime.c \
+progs.c \
+rand.c \
+rehash.c \
+req.c \
+rsa.c \
+rsautl.c \
+s_client.c \
+s_server.c \
+s_time.c \
+sess_id.c \
+smime.c \
+speed.c \
+spkac.c \
+srp.c \
+storeutl.c \
+ts.c \
+verify.c \
+version.c \
+x509.c \
 
-CPPFLAGS+= -DMONOLITH -DUSE_SSL -I${OPENSSLSRC}
-CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/../include
+CPPFLAGS+= -I${OPENSSLSRC} -I${.CURDIR}/../include
+CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/apps/include
 
-LDADD+=	-lssl -lcrypto -lcrypt
-DPADD+=	${LIBSSL} ${LIBCRYPTO} ${LIBCRYPT}
+PROGDPLIBSSTATIC=yes
+PROGDPLIBS+=    apps ${OPENSSLSRC}/../lib/libapps
+PROGDPLIBS+=    ssl ${OPENSSLSRC}/../lib/libssl
+PROGDPLIBS+=    crypto ${OPENSSLSRC}/../lib/libcrypto
+
+LDADD+=	-lcrypt
+DPADD+=	${LIBCRYPT}
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"

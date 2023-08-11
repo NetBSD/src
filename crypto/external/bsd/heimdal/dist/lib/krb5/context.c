@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.6 2017/01/30 18:59:04 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.6.22.1 2023/08/11 13:40:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2010 Kungliga Tekniska Högskolan
@@ -103,7 +103,7 @@ init_context_from_config_file(krb5_context context)
     krb5_error_code ret;
     const char * tmp;
     char **s;
-    krb5_enctype *tmptypes;
+    krb5_enctype *tmptypes = NULL;
 
     INIT_FIELD(context, time, max_skew, 5 * 60, "clockskew");
     INIT_FIELD(context, time, kdc_timeout, 30, "kdc_timeout");

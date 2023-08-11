@@ -695,7 +695,7 @@ dnssec_verify()
 	echo_i "dnssec-verify zone ${ZONE} ($n)"
 	ret=0
 	_dig_with_opts "$ZONE" "@${SERVER}" AXFR > dig.out.axfr.test$n || _log_error "dig ${ZONE} AXFR failed"
-	$VERIFY -z -o "$ZONE" dig.out.axfr.test$n > /dev/null || _log_error "dnssec verify zone $ZONE failed"
+	$VERIFY -z -o "$ZONE" dig.out.axfr.test$n > verify.out.$ZONE.test$n || _log_error "dnssec verify zone $ZONE failed"
 	test "$ret" -eq 0 || echo_i "failed"
 	status=$((status+ret))
 }
@@ -1107,7 +1107,7 @@ _check_apex_dnskey() {
 
 	test "$_checksig" -eq 0 && return 0
 
-	retry_quiet 3 _check_signatures "DNSKEY" "dig.out.$DIR.test$n" "KSK" || return 1
+	_check_signatures "DNSKEY" "dig.out.$DIR.test$n" "KSK" || return 1
 
 	return 0
 }
@@ -1120,11 +1120,11 @@ check_apex() {
 	n=$((n+1))
 	echo_i "check DNSKEY rrset is signed correctly for zone ${ZONE} ($n)"
 	ret=0
-	retry_quiet 3 _check_apex_dnskey || ret=1
+	retry_quiet 10 _check_apex_dnskey || ret=1
 	test "$ret" -eq 0 || echo_i "failed"
 	status=$((status+ret))
 
-	# We retry the DNSKEY query for at most three seconds to avoid test
+	# We retry the DNSKEY query for at most ten seconds to avoid test
 	# failures due to timing issues. If the DNSKEY query check passes this
 	# means the zone is resigned and further apex checks (SOA, CDS, CDNSKEY)
 	# don't need to be retried quietly.

@@ -126,9 +126,10 @@ if ($server_arg) {
 # Start the servers we found.
 
 foreach my $name(@ns) {
+	my $instances_so_far = count_running_lines($name);
 	&check_ns_port($name);
 	&start_ns_server($name, $options_arg);
-	&verify_ns_server($name);
+	&verify_ns_server($name, $instances_so_far);
 }
 
 foreach my $name(@ans) {
@@ -372,24 +373,28 @@ sub start_ans_server {
 	start_server($server, $command, $pid_file);
 }
 
-sub verify_ns_server {
+sub count_running_lines {
 	my ( $server ) = @_;
-
-	my $tries = 0;
 
 	my $runfile = "$testdir/$server/named.run";
 
-	while (1) {
-		# the shell *ought* to have created the file immediately, but this
-		# logic allows the creation to be delayed without issues
-		if (open(my $fh, "<", $runfile)) {
-			# the two non-whitespace blobs should be the date and time
-			# but we don't care about them really, only that they are there
-			if (grep /^\S+ \S+ running\R/, <$fh>) {
-				last;
-			}
-		}
+	# the shell *ought* to have created the file immediately, but this
+	# logic allows the creation to be delayed without issues
+	if (open(my $fh, "<", $runfile)) {
+		# the two non-whitespace blobs should be the date and time
+		# but we don't care about them really, only that they are there
+		return scalar(grep /^\S+ \S+ running\R/, <$fh>);
+	} else {
+		return 0;
+	}
+}
 
+sub verify_ns_server {
+	my ( $server, $instances_so_far ) = @_;
+
+	my $tries = 0;
+
+	while (count_running_lines($server) < $instances_so_far + 1) {
 		$tries++;
 
 		if ($tries >= 30) {
@@ -420,8 +425,13 @@ sub verify_ns_server {
 		$tcp = "";
 	}
 
+	my $ip = "10.53.0.$n";
+	if (-e "$testdir/$server/named.ipv6-only") {
+		$ip = "fd92:7065:b8e:ffff::$n";
+	}
+
 	while (1) {
-		my $return = system("$DIG $tcp +noadd +nosea +nostat +noquest +nocomm +nocmd +noedns -p $port version.bind. chaos txt \@10.53.0.$n > /dev/null");
+		my $return = system("$DIG $tcp +noadd +nosea +nostat +noquest +nocomm +nocmd +noedns -p $port version.bind. chaos txt \@$ip > /dev/null");
 
 		last if ($return == 0);
 

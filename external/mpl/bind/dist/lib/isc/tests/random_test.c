@@ -1,4 +1,4 @@
-/*	$NetBSD: random_test.c,v 1.10 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: random_test.c,v 1.10.2.1 2023/08/11 13:43:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -355,7 +355,8 @@ random_test(pvalue_func_t *func, isc_random_func test_func) {
 			uniform_values = (uint16_t *)values;
 			for (i = 0;
 			     i < (sizeof(values) / (sizeof(*uniform_values)));
-			     i++) {
+			     i++)
+			{
 				uniform_values[i] =
 					isc_random_uniform(UINT16_MAX);
 			}

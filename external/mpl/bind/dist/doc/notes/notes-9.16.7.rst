@@ -53,4 +53,11 @@ Bug Fixes
 - Several problems found by `OSS-Fuzz`_ were fixed. (None of these are
   security issues.) :gl:`!3953` :gl:`!3975`
 
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.
+
 .. _OSS-Fuzz: https://github.com/google/oss-fuzz
