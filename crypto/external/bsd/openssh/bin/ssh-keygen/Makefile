@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.8.2 2023/08/11 15:36:41 martin Exp $
+#	$NetBSD: Makefile,v 1.8.8.3 2023/08/11 18:13:07 martin Exp $
 
 BINDIR=	/usr/bin
 
@@ -7,7 +7,7 @@ SRCS=	ssh-keygen.c moduli.c sshsig.c
 
 COPTS.ssh-keygen.c+=	-Wno-pointer-sign
 
-COPTS.ssh-keygen.c+=	${CC_WNO_FORMAT_TRUNCATION}
+COPTS.ssh-keygen.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.ssh-keygen.c+= -Wno-error=deprecated-declarations
 COPTS.moduli.c+= -Wno-error=deprecated-declarations
 
