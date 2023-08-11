@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.90 2023/08/10 10:30:56 sborrill Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.91 2023/08/11 12:14:10 sborrill Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2004,4 +2004,17 @@ sys/arch/xen/x86/xen_ipi.c			1.41 via patch
 	xen/x86: Fix 'mach cpu N' in ddb by passing the right pointer
 	to a struct intrframe to IPI handlers.
 	[riastradh, ticket #1713]
+
+distrib/sets/lists/debug/mi			1.409 via patch
+distrib/sets/lists/tests/mi			1.1280 via patch
+libexec/ld.elf_so/Makefile			1.145-1.147 via patch
+libexec/ld.elf_so/hash.c			1.1 via patch
+libexec/ld.elf_so/hash.h			1.1 via patch
+libexec/ld.elf_so/symbol.c			1.74-1.76 via patch
+tests/libexec/ld.elf_so/Makefile		1.21 via patch
+tests/libexec/ld.elf_so/t_hash.c		1.1 via patch
+
+	ld.elf_so: Fix sysv elf hash on edge cases like `ZZZZZW9p' on
+	LP64 platforms where long is 64-bit.
+	[riastradh, ticket #1712]
 
