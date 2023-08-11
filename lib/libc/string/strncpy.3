@@ -31,7 +31,7 @@
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
 .\"     from: NetBSD: strcpy.3,v 1.23 2015/04/01 20:18:17 riastradh Exp
-.\"	$NetBSD: strncpy.3,v 1.12 2023/08/11 21:12:10 riastradh Exp $
+.\"	$NetBSD: strncpy.3,v 1.13 2023/08/11 21:17:16 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRNCPY 3
@@ -136,7 +136,7 @@ appear on disk with the content of a caller-provided string
 .Dv str ,
 padded to the end of the field with
 .Tn NUL
-characters:
+bytes:
 .Bd -literal -offset indent
 struct record {
 	uint16_t	id;
@@ -168,7 +168,7 @@ Note that when
 .Dv str
 has at least six
 .No non- Ns Tn NUL
-characters,
+bytes,
 .Dv rec Ns Li "->name"
 is
 .Em not
@@ -184,12 +184,12 @@ has
 .Em more
 than six
 .No non- Ns Tn NUL
-characters, the additional ones are truncated.
+bytes, the additional ones are truncated.
 If
 .Dv str
 has space for
 .Em fewer
-than six characters, and the last one is not
+than six bytes, and the last one is not
 .Tn NUL ,
 using
 .Fn strncpy
