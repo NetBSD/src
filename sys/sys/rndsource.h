@@ -1,4 +1,4 @@
-/*	$NetBSD: rndsource.h,v 1.7 2020/04/30 03:28:19 riastradh Exp $	*/
+/*	$NetBSD: rndsource.h,v 1.7.20.1 2023/08/11 14:35:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ struct percpu;
 /*
  * struct rnd_delta_estimator
  *
- *	Unused.  Preserved for ABI compatibility.
+ *	State for the time-delta entropy estimation model.
  */
 typedef struct rnd_delta_estimator {
 	uint64_t	x;
@@ -67,14 +67,14 @@ typedef struct rnd_delta_estimator {
  */
 struct krndsource {
 	LIST_ENTRY(krndsource) list;	/* the linked list */
-        char            name[16];       /* device name */
-	rnd_delta_t	time_delta;	/* unused */
-	rnd_delta_t	value_delta;	/* unused */
-        uint32_t        total;          /* number of bits added while cold */
-        uint32_t        type;           /* type, RND_TYPE_* */
-        uint32_t        flags;          /* flags, RND_FLAG_* */
-        void            *state;         /* percpu (struct rndsource_cpu *) */
-        size_t          test_cnt;       /* unused */
+	char		name[16];	/* device name */
+	rnd_delta_t	time_delta;	/* time samples added while cold */
+	rnd_delta_t	value_delta;	/* value samples added whiel cold */
+	uint32_t	total;		/* number of bits added while cold */
+	uint32_t	type;		/* type, RND_TYPE_* */
+	uint32_t	flags;		/* flags, RND_FLAG_* */
+	void		*state;		/* percpu (struct rndsource_cpu *) */
+	size_t		test_cnt;	/* unused */
 	void		(*get)(size_t, void *);	/* pool wants N bytes (badly) */
 	void		*getarg;	/* argument to get-function */
 	void		(*enable)(struct krndsource *, bool); /* unused */
@@ -94,6 +94,8 @@ void	_rnd_add_uint64(struct krndsource *, uint64_t); /* legacy */
 
 void	rnd_add_uint32(struct krndsource *, uint32_t);
 void	rnd_add_data(struct krndsource *, const void *, uint32_t, uint32_t);
+void	rnd_add_data_intr(struct krndsource *, const void *, uint32_t,
+	    uint32_t);
 void	rnd_add_data_sync(struct krndsource *, const void *, uint32_t,
 	    uint32_t);
 
