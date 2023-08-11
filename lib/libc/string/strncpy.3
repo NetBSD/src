@@ -31,7 +31,7 @@
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
 .\"     from: NetBSD: strcpy.3,v 1.23 2015/04/01 20:18:17 riastradh Exp
-.\"	$NetBSD: strncpy.3,v 1.13 2023/08/11 21:17:16 riastradh Exp $
+.\"	$NetBSD: strncpy.3,v 1.14 2023/08/11 21:20:39 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRNCPY 3
@@ -207,7 +207,7 @@ is required it must be done explicitly:
 .Bd -literal -offset indent
 char buf[1024];
 
-(void)strncpy(buf, input, sizeof(buf) - 1);
+strncpy(buf, input, sizeof(buf) - 1);
 buf[sizeof(buf) - 1] = '\e0';
 .Ed
 .Pp
@@ -222,7 +222,7 @@ this could be achieved using
 .Xr strlcpy 3
 as follows:
 .Bd -literal -offset indent
-(void)strlcpy(buf, input, sizeof(buf));
+strlcpy(buf, input, sizeof(buf));
 .Ed
 .Pp
 Note that because
