@@ -31,7 +31,7 @@
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
 .\"     from: NetBSD: strcpy.3,v 1.23 2015/04/01 20:18:17 riastradh Exp
-.\"	$NetBSD: strncpy.3,v 1.8 2023/08/11 16:04:25 riastradh Exp $
+.\"	$NetBSD: strncpy.3,v 1.9 2023/08/11 21:09:11 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRNCPY 3
@@ -39,7 +39,7 @@
 .Sh NAME
 .Nm stpncpy ,
 .Nm strncpy
-.Nd copy fixed-width string buffers
+.Nd copy fixed-width buffers with NUL padding
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -53,37 +53,59 @@ The
 .Fn stpncpy
 and
 .Fn strncpy
-functions copy at most
+functions fill a
+.Fa len Ns -byte
+buffer at
+.Fa dst
+by copying up to
 .Fa len
 .No non- Ns Tn NUL
-characters from
+bytes from
 .Fa src
-into
-.Fa dst .
-If
-.Fa src
-is less than
-.Fa len
-characters long before the first
+followed by enough
 .Tn NUL
-character, the remainder of
-.Fa dst
-is filled with
-.Tn NUL
-characters.
-Otherwise,
-.Fa dst
-is
-.Em not
-terminated with a
-.Tn NUL
-character.
+bytes \(em possibly zero of them \(em to pad the remainder.
 .Pp
-The strings
+The buffers
 .Fa src
 and
 .Fa dst
 may not overlap.
+.Pp
+The buffer
+.Fa src
+is not required to hold a
+.Tn NUL Ns -terminated
+string on input; it is only required to have
+.Em either
+at least
+.Fa len
+bytes allocated and initialized,
+.Em or
+to have a
+.Tn NUL
+byte if it is shorter than
+.Fa len
+bytes.
+.Pp
+The buffer
+.Fa dst
+is not guaranteed to hold a
+.Tn NUL Ns -terminated
+string on output;
+.Fn stpcpy
+and
+.Fn strncpy
+write exactly
+.Fa len
+bytes to it, including nonempty
+.Tn NUL
+padding only if a
+.Tn NUL
+byte appears in the first
+.Fa len
+bytes at
+.Fa src .
 .Sh RETURN VALUES
 The
 .Fn strncpy
@@ -92,21 +114,22 @@ function returns
 .Pp
 The
 .Fn stpncpy
-function returns a pointer to the terminating
-.Tn NUL
-character of
+function returns a pointer to the byte after the last
+.No non- Ns Tn NUL
+byte of
 .Fa dst .
-If
-.Fn stpncpy
-does not terminate
-.Fa dst
-with a
+This does not necessarily point to a
 .Tn NUL
-character, it instead returns a pointer to
-.Sm off
-.Fa dst Li "[" Fa len Li "]" ,
-.Sm on
-which may be one past the last element of an array.
+byte;
+.Fn stpncpy
+may return
+.Li \*(Am Ns Fa dst Ns Li "[" Fa len Ns Li "]" Ns ,
+if all
+.Fa len
+bytes starting at
+.Fa src
+are
+.No non- Tn NUL .
 .Sh EXAMPLES
 The following logic fills a fixed-width field in a record that might
 appear on disk with the content of a caller-provided string
