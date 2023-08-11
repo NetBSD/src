@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.25 2023/08/11 15:36:17 riastradh Exp $
+.\"	$NetBSD: strcpy.3,v 1.26 2023/08/11 16:05:56 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRCPY 3
@@ -126,3 +126,27 @@ terminator, or the input string is longer than the output buffer, this
 can lead to crashes or security vulnerabilities from buffer overruns,
 including disclosure of secrets in memory and arbitrary code
 execution.
+.Pp
+The
+.Xr strlcpy 3
+function is a safer replacement for
+.Fn strcpy
+which allows the caller to specify the space allocated for
+.Fa dst .
+.Xr strlcpy 3 ,
+or
+.Xr snprintf 3
+with a format string of
+.Li \*q%s\*q ,
+should be used instead of
+.Fn strcpy
+and
+.Fn stpcpy
+wherever possible to avoid buffer overruns in
+.Fa dst .
+.Po
+However, they still require
+.Fa src
+to be
+.Tn NUL Ns -terminated .
+.Pc
