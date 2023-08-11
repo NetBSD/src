@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.36.4.1 2023/03/20 17:24:15 martin Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.36.4.2 2023/08/11 14:48:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.36.4.1 2023/03/20 17:24:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.36.4.2 2023/08/11 14:48:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "genfb.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.36.4.1 2023/03/20 17:24:15 martin 
 #include <dev/wsfb/genfbvar.h>
 #endif
 
+#include <drm/drm_ioctl.h>
 #include <drm/drm_pci.h>
 
 #include <core/device.h>
@@ -316,16 +317,31 @@ static bool
 nouveau_pci_suspend(device_t self, const pmf_qual_t *qual __unused)
 {
 	struct nouveau_pci_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
+	int ret;
 
-	return nouveau_pmops_suspend(sc->sc_drm_dev) == 0;
+	drm_suspend_ioctl(dev);
+
+	ret = nouveau_pmops_suspend(dev);
+	if (ret)
+		return false;
+
+	return true;
 }
 
 static bool
 nouveau_pci_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct nouveau_pci_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
+	int ret;
 
-	return nouveau_pmops_resume(sc->sc_drm_dev) == 0;
+	ret = nouveau_pmops_resume(sc->sc_drm_dev);
+	if (ret)
+		goto out;
+
+out:	drm_resume_ioctl(dev);
+	return ret == 0;
 }
 
 static void
