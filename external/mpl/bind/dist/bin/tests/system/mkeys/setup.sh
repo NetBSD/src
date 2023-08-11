@@ -12,7 +12,15 @@
 # information regarding copyright ownership.
 
 SYSTEMTESTTOP=..
+
+export ALGORITHM_SET="ecc_default"
 . $SYSTEMTESTTOP/conf.sh
+
+# Ensure the selected algorithm set is okay.
+if [ "$ALGORITHM_SET" = "error" ]; then
+    echofail "Algorithm selection failed." >&2
+    exit 1
+fi
 
 copy_setports ns1/named1.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf
@@ -25,6 +33,7 @@ copy_setports ns7/named.conf.in ns7/named.conf
 cp ns5/named1.args ns5/named.args
 
 ( cd ns1 && $SHELL sign.sh )
+( cd ns4 && $SHELL sign.sh )
 ( cd ns6 && $SHELL setup.sh )
 
 cp ns2/managed.conf ns2/managed1.conf

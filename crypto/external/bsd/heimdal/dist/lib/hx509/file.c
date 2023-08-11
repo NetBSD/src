@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.2.22.1 2023/08/11 13:39:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2006 Kungliga Tekniska Högskolan
@@ -232,7 +232,7 @@ hx509_pem_read(hx509_context context,
 		where = INDATA;
 		goto indata;
 	    }
-	    /* FALLTHOUGH */
+	    /* FALLTHROUGH */
 	case INHEADER:
 	    if (buf[0] == '\0') {
 		where = INDATA;

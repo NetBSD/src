@@ -429,6 +429,9 @@
 /* Define to 1 if you have the `strlcpy' function. */
 #undef HAVE_STRLCPY
 
+/* Define to 1 if you have the `strnstr' function. */
+#undef HAVE_STRNSTR
+
 /* Define to 1 if you have the `sysconf' function. */
 #undef HAVE_SYSCONF
 

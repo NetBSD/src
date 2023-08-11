@@ -111,10 +111,15 @@ Options
    ``ISC_MEM_DEBUGXXXX`` flags described in ``<isc/mem.h>``.
 
 ``-n #cpus``
-   This option creates ``#cpus`` worker threads to take advantage of multiple CPUs. If
-   not specified, ``named`` tries to determine the number of CPUs
-   present and creates one thread per CPU. If it is unable to determine
-   the number of CPUs, a single worker thread is created.
+   This option controls the number of CPUs that ``named`` assumes the
+   presence of. If not specified, ``named`` tries to determine the
+   number of CPUs present automatically; if it fails, a single CPU is
+   assumed to be present.
+
+   ``named`` creates two threads per each CPU present (one thread for
+   receiving and sending client traffic and another thread for sending
+   and receiving resolver traffic) and then on top of that a single
+   thread for handling time-based events.
 
 ``-p port``
    This option listens for queries on ``port``. If not specified, the default is
@@ -185,7 +190,8 @@ Options
    This option reports the version number and exits.
 
 ``-V``
-   This option reports the version number and build options, and exits.
+   This option reports the version number, build options, supported
+   cryptographics algorithms, and exits.
 
 ``-X lock-file``
    This option acquires a lock on the specified file at runtime; this helps to

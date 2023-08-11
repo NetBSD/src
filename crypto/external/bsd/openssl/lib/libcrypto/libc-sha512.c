@@ -9,12 +9,14 @@
  * according to the OpenSSL license [found in ../../LICENSE].
  * ====================================================================
  */
-#include <openssl/opensslconf.h>
+// #include <openssl/opensslconf.h>
 
 #include <stdlib.h>
 #include <string.h>
 
 #include <openssl/crypto.h>
+#undef OSSL_DEPRECATEDIN_3_0
+#define OSSL_DEPRECATEDIN_3_0
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
 
@@ -27,7 +29,7 @@ unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
 
 	if (md == NULL) md=m;
 	SHA384_Init(&c);
-	SHA384_Update(&c, d, n); 
+	SHA384_Update(&c, d, n);
 	SHA384_Final(md, &c);
 	OPENSSL_cleanse(&c, sizeof(c));
 	return(md);

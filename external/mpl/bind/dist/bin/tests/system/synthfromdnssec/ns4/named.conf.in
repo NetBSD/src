@@ -33,4 +33,3 @@ zone "." {
 };
 
 include "../ns1/trusted.conf";
-// include "../../common/controls.conf";

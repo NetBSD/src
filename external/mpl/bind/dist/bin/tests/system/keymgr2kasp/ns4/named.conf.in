@@ -36,12 +36,12 @@ controls {
 };
 
 key "external" {
-	algorithm "hmac-sha1";
+	algorithm @DEFAULT_HMAC@;
 	secret "YPfMoAk6h+3iN8MDRQC004iSNHY=";
 };
 
 key "internal" {
-	algorithm "hmac-sha1";
+	algorithm @DEFAULT_HMAC@;
 	secret "4xILSZQnuO1UKubXHkYUsvBRPu8=";
 };
 

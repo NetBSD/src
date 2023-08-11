@@ -18,7 +18,7 @@ status=0
 
 rm -f dig.out.*
 
-DIGOPTS="+norec +tcp +noadd +nosea +nostat +noquest +nocmd -p 5300"
+DIGOPTS="+norec +tcp +noadd +nosea +nostat +noquest +nocmd -p ${PORT}"
 
 # Check the example. domain
 

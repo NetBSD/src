@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2021/04/13 04:58:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.25.6.1 2023/08/11 13:42:57 martin Exp $
 
 LIBISPRIVATE=yes
 
@@ -104,5 +104,7 @@ CPPFLAGS.ntp_calendar.c += -DMKREPRO_TIME=\"${MKREPRO_TIME:Q}\"
 COPTS.timetoa.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.socktoa.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-restrict :}
 COPTS.socktohost.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-restrict :}
+
+COPTS.a_md5encrypt.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.lib.mk>

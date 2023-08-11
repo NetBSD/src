@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2017/01/28 21:31:52 christos Exp $
+# $NetBSD: Makefile,v 1.3.22.1 2023/08/11 13:40:07 martin Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -17,9 +17,14 @@ LIBDPLIBS+=	krb5	${.CURDIR}/../libkrb5 \
 
 SRCS=		afssys.c afskrb5.c common.c rxkad_kdf.c
 
+CPPFLAGS+=				\
+	-I${HEIMDIST}/lib
+
 INCS=		kafs.h
 INCSDIR=	/usr/include/krb5
 MAN=		kafs.3
+
+COPTS.rxkad_kdf.c+= -Wno-error=deprecated-declarations
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>

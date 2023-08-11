@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2017/01/29 15:42:58 christos Exp $
+# $NetBSD: Makefile,v 1.11.22.1 2023/08/11 13:40:07 martin Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -519,7 +519,8 @@ MLINKS=	\
 	krb5_verify_user.3		krb5_verify_user_lrealm.3	\
 	krb5_verify_user.3		krb5_verify_user_opt.3
 
-CPPFLAGS+= -I${HEIMDIST}/lib/ipc
+CPPFLAGS+= 			\
+	-I${HEIMDIST}/lib/ipc
 
 # Prevent collision with old MIT Kerberos includes -- require manual
 # intervention of the operator.
@@ -549,6 +550,14 @@ vars.texi: vars.tin
 
 
 CLEANFILES+=	vars.texi
+
+COPTS.crypto-des.c+= -Wno-error=deprecated-declarations
+COPTS.crypto-des3.c+= -Wno-error=deprecated-declarations
+COPTS.pkinit.c+= -Wno-error=deprecated-declarations
+COPTS.pkinit-ec.c+= -Wno-error=deprecated-declarations
+COPTS.salt-des.c+= -Wno-error=deprecated-declarations
+COPTS.salt-des3.c+= -Wno-error=deprecated-declarations
+COPTS.sp800-108-kdf.c+= -Wno-error=deprecated-declarations
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>

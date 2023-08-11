@@ -46,7 +46,7 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-if [ -n "$NZD" ]; then
+if $FEATURETEST --with-lmdb; then
     echo_i "checking that existing NZF file was renamed after migration ($n)"
     [ -e ns2/3bf305731dd26307.nzf~ ] || ret=1
     n=`expr $n + 1`
@@ -125,7 +125,7 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-if [ -z "$NZD" ]; then
+if ! $FEATURETEST --with-lmdb; then
     echo_i "verifying no comments in NZF file ($n)"
     ret=0
     hcount=`grep "^# New zone file for view: _default" ns2/3bf305731dd26307.nzf | wc -l`
@@ -144,7 +144,7 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-if [ -n "$NZD" ]; then
+if $FEATURETEST --with-lmdb; then
     echo_i "checking zone is present in NZD ($n)"
     ret=0
     $NZD2NZF ns2/_default.nzd | grep previous.example > /dev/null || ret=1
@@ -170,14 +170,14 @@ check_nzd2nzf() (
 	! grep previous.example nzd2nzf.out.$n > /dev/null
 )
 
-if [ -n "$NZD" ]; then
+if $FEATURETEST --with-lmdb; then
     echo_i "checking zone was deleted from NZD ($n)"
     retry_quiet 10 check_nzd2nzf || ret=1
     if [ $ret != 0 ]; then echo_i "failed"; fi
     status=`expr $status + $ret`
 fi
 
-if [ -z "$NZD" ]; then
+if ! $FEATURETEST --with-lmdb; then
     echo_i "checking NZF file now has comment ($n)"
     ret=0
     hcount=`grep "^# New zone file for view: _default" ns2/3bf305731dd26307.nzf | wc -l`
@@ -513,7 +513,7 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-if [ -z "$NZD" ]; then
+if ! $FEATURETEST --with-lmdb; then
     echo_i "checking new NZF file has comment ($n)"
     ret=0
     hcount=`grep "^# New zone file for view: external" ns2/external.nzf | wc -l`
@@ -523,7 +523,7 @@ if [ -z "$NZD" ]; then
     status=`expr $status + $ret`
 fi
 
-if [ -n "$NZD" ]; then
+if $FEATURETEST --with-lmdb; then
     echo_i "verifying added.example in external view created an external.nzd DB ($n)"
     ret=0
     [ -e ns2/external.nzd ] || ret=1
@@ -549,7 +549,7 @@ status=`expr $status + $ret`
 
 echo_i "checking rndc showzone with newly added zone ($n)"
 _check_rndc_showzone_newly_added() (
-	if [ -z "$NZD" ]; then
+	if ! $FEATURETEST --with-lmdb; then
 		expected='zone "added.example" in external { type primary; file "added.db"; };'
 	else
 		expected='zone "added.example" { type primary; file "added.db"; };'
@@ -656,7 +656,7 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-if [ -n "$NZD" ]; then
+if $FEATURETEST --with-lmdb; then
     echo_i "checking NZD file was created in new-zones-directory ($n)"
     expect=ns2/new-zones/directory.nzd
 else
@@ -726,8 +726,8 @@ $RNDCCMD 10.53.0.3 addzone '"test\".baz"' '{ type primary; check-names ignore; f
 $RNDCCMD 10.53.0.3 addzone '"test\\.baz"' '{ type primary; check-names ignore; file "e.db"; };' > /dev/null 2>&1 || ret=1
 $RNDCCMD 10.53.0.3 addzone '"test\032.baz"' '{ type primary; check-names ignore; file "e.db"; };' > /dev/null 2>&1 || ret=1
 $RNDCCMD 10.53.0.3 addzone '"test\010.baz"' '{ type primary; check-names ignore; file "e.db"; };' > /dev/null 2>&1 || ret=1
-$PERL $SYSTEMTESTTOP/stop.pl addzone ns3
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} addzone ns3 || ret=1
+stop_server ns3
+start_server --noclean --restart --port ${PORT} ns3 || ret=1
 retry_quiet 10 _check_version_bind || ret=1
 $DIG $DIGOPTS @10.53.0.3 SOA  "test4.baz" > dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n > /dev/null || ret=1

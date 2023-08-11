@@ -48,13 +48,13 @@ run_server() {
     TESTNAME=$1
 
     echo_i "stopping resolver"
-    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpzrecurse ns2
+    stop_server --use-rndc --port ${CONTROLPORT} ns2
 
     sleep 1
 
     echo_i "starting resolver using named.$TESTNAME.conf"
     cp -f ns2/named.$TESTNAME.conf ns2/named.conf
-    $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} rpzrecurse ns2
+    start_server --noclean --restart --port ${PORT} ns2
     sleep 3
 }
 
@@ -124,7 +124,7 @@ for mode in native dnsrps; do
       continue
     fi
     echo_i "attempting to configure servers with DNSRPS..."
-    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpzrecurse
+    stop_server --use-rndc --port ${CONTROLPORT}
     $SHELL ./setup.sh -N -D $DEBUG
     sed -n 's/^## //p' dnsrps.conf | cat_i
     if grep '^#fail' dnsrps.conf >/dev/null; then
@@ -136,7 +136,7 @@ for mode in native dnsrps; do
       continue
     else
       echo_i "running DNSRPS sub-test"
-      $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} rpzrecurse
+      start_server --noclean --restart --port ${PORT}
       sleep 3
     fi
     ;;
@@ -500,7 +500,7 @@ for mode in native dnsrps; do
     echo_i "test ${t} failed"
     status=1
   }
-  
+
   t=`expr $t + 1`
   echo_i "checking 'nsip-wait-recurse no' is faster than 'nsip-wait-recurse yes' ($t)"
   add_test_marker 10.53.0.2 10.53.0.3

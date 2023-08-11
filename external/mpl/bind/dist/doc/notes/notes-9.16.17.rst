@@ -58,3 +58,10 @@ Bug Fixes
 - A race condition could occur when reading and writing key files for
   zones using KASP and configured in multiple views. This has been
   fixed. :gl:`#1875`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

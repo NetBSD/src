@@ -18,8 +18,8 @@ zone=signed
 infile=example.db
 zonefile=signed.db
 
-key1=`$KEYGEN -q -a rsasha256 $zone`
-key2=`$KEYGEN -q -a rsasha256 -fk $zone`
+key1=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} $zone)
+key2=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -fk $zone)
 
 cat $infile $key1.key $key2.key > $zonefile
 
@@ -29,8 +29,8 @@ zone=nsec3
 infile=example.db
 zonefile=nsec3.db
 
-key1=`$KEYGEN -q -a rsasha256 -3 $zone`
-key2=`$KEYGEN -q -a rsasha256 -3 -fk $zone`
+key1=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -3 $zone)
+key2=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -3 -fk $zone)
 
 cat $infile $key1.key $key2.key > $zonefile
 

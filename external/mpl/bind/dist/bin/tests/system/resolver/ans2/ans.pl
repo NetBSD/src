@@ -73,6 +73,15 @@ for (;;) {
 		# Data for the "cname + other data / 2" test: same RRs in opposite order
 		$packet->push("answer", new Net::DNS::RR("cname2.example.com 300 A 1.2.3.4"));
 		$packet->push("answer", new Net::DNS::RR("cname2.example.com 300 CNAME cname2.example.com"));
+	} elsif ($qname =~ /redirect\.com/) {
+		$packet->push("authority", new Net::DNS::RR("redirect.com 300 NS ns.redirect.com"));
+		$packet->push("additional", new Net::DNS::RR("ns.redirect.com 300 A 10.53.0.6"));
+	} elsif ($qname =~ /\.tld1/) {
+		$packet->push("authority", new Net::DNS::RR("tld1 300 NS ns.tld1"));
+		$packet->push("additional", new Net::DNS::RR("ns.tld1 300 A 10.53.0.6"));
+	} elsif ($qname =~ /\.tld2/) {
+		$packet->push("authority", new Net::DNS::RR("tld2 300 NS ns.tld2"));
+		$packet->push("additional", new Net::DNS::RR("ns.tld2 300 A 10.53.0.7"));
 	} elsif ($qname eq "org" && $qtype eq "NS") {
 		$packet->header->aa(1);
 		$packet->push("answer", new Net::DNS::RR("org 300 NS a.root-servers.nil."));

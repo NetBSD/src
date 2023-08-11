@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.246 2022/06/12 03:51:13 tsutsui Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.246.2.1 2023/08/11 13:42:55 martin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -355,6 +355,9 @@
 ./usr/lib/lua
 ./usr/lib/lua/5.3
 ./usr/lib/named
+./usr/lib/openssl
+./usr/lib/openssl/engines
+./usr/lib/openssl/modules
 ./usr/lib/pkgconfig
 ./usr/lib/postfix
 ./usr/lib/security

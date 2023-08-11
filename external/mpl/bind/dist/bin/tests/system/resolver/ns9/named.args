@@ -1,0 +1,2 @@
+# this server is IPv6 only
+-6 -m record -c named.conf -d 99 -D resolver-ns9 -X named.lock -g -T maxcachesize=2097152

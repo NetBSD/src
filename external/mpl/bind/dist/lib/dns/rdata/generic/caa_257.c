@@ -1,4 +1,4 @@
-/*	$NetBSD: caa_257.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: caa_257.c,v 1.7.2.1 2023/08/11 13:43:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -321,7 +321,8 @@ fromtext_caa(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_qstring,
 				      false));
 	if (token.type != isc_tokentype_qstring &&
-	    token.type != isc_tokentype_string) {
+	    token.type != isc_tokentype_string)
+	{
 		RETERR(DNS_R_SYNTAX);
 	}
 	RETERR(multitxt_fromtext(&token.value.as_textregion, target));

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.h,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
+/*	$NetBSD: crypto.h,v 1.3.14.1 2023/08/11 13:40:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2016 Kungliga Tekniska Högskolan
@@ -132,9 +132,9 @@ struct _krb5_encryption_type {
 			   krb5_crypto, const krb5_data *, krb5_data *);
 };
 
-#define ENCRYPTION_USAGE(U) (((U) << 8) | 0xAA)
-#define INTEGRITY_USAGE(U) (((U) << 8) | 0x55)
-#define CHECKSUM_USAGE(U) (((U) << 8) | 0x99)
+#define ENCRYPTION_USAGE(U) ((int32_t)((((uint32_t)(U)) << 8)) | 0xAA)
+#define INTEGRITY_USAGE(U)  ((int32_t)((((uint32_t)(U)) << 8)) | 0x55)
+#define CHECKSUM_USAGE(U)   ((int32_t)((((uint32_t)(U)) << 8)) | 0x99)
 
 /* Checksums */
 

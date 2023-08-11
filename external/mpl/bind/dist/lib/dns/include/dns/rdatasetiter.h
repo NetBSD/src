@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatasetiter.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rdatasetiter.h,v 1.5.2.1 2023/08/11 13:43:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -96,6 +96,7 @@ struct dns_rdatasetiter {
 	dns_dbnode_t		  *node;
 	dns_dbversion_t		  *version;
 	isc_stdtime_t		   now;
+	unsigned int		   options;
 };
 
 void

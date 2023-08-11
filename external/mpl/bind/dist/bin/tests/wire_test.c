@@ -1,4 +1,4 @@
-/*	$NetBSD: wire_test.c,v 1.7 2022/09/23 12:15:23 christos Exp $	*/
+/*	$NetBSD: wire_test.c,v 1.7.2.1 2023/08/11 13:43:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -210,7 +210,8 @@ main(int argc, char *argv[]) {
 					break;
 				}
 				if (*rp != ' ' && *rp != '\t' && *rp != '\r' &&
-				    *rp != '\n') {
+				    *rp != '\n')
+				{
 					*wp++ = *rp;
 					len++;
 				}

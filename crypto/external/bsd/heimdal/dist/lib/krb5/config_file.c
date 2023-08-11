@@ -1,4 +1,4 @@
-/*	$NetBSD: config_file.c,v 1.4 2018/06/16 18:51:36 kamil Exp $	*/
+/*	$NetBSD: config_file.c,v 1.4.12.1 2023/08/11 13:40:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -354,6 +354,9 @@ krb5_config_parse_debug (struct fileptr *f,
     krb5_config_binding *b = NULL;
     char buf[KRB5_BUFSIZ];
     krb5_error_code ret;
+
+    *lineno = 0;
+    *err_message = "";
 
     while (config_fgets(buf, sizeof(buf), f) != NULL) {
 	char *p;

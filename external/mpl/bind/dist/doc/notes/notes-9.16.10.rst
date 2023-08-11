@@ -49,3 +49,10 @@ Bug Fixes
 
 - Building with native PKCS#11 support for AEP Keyper has been broken
   since BIND 9.16.6. This has been fixed. :gl:`#2315`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

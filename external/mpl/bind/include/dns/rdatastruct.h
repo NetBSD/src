@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2022  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2023  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,8 +14,6 @@
  ***************/
 
 /*! \file */
-
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,8 +51,6 @@ typedef struct dns_rdatacommon {
 		(_data)->common.rdclass = (_rdclass);  \
 		ISC_LINK_INIT(&(_data)->common, link); \
 	} while (0)
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -78,8 +74,6 @@ typedef struct dns_rdata_in_a {
 } dns_rdata_in_a_t;
 
 #endif /* IN_1_A_1_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -111,8 +105,6 @@ typedef struct dns_rdata_ch_a {
 } dns_rdata_ch_a_t;
 
 #endif /* CH_3_A_1_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -136,8 +128,6 @@ typedef struct dns_rdata_hs_a {
 } dns_rdata_hs_a_t;
 
 #endif /* HS_4_A_1_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -162,8 +152,6 @@ typedef struct dns_rdata_ns {
 } dns_rdata_ns_t;
 
 #endif /* GENERIC_NS_2_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -188,8 +176,6 @@ typedef struct dns_rdata_md {
 } dns_rdata_md_t;
 
 #endif /* GENERIC_MD_3_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -214,8 +200,6 @@ typedef struct dns_rdata_mf {
 } dns_rdata_mf_t;
 
 #endif /* GENERIC_MF_4_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -239,8 +223,6 @@ typedef struct dns_rdata_cname {
 } dns_rdata_cname_t;
 
 #endif /* GENERIC_CNAME_5_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -271,8 +253,6 @@ typedef struct dns_rdata_soa {
 } dns_rdata_soa_t;
 
 #endif /* GENERIC_SOA_6_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -297,8 +277,6 @@ typedef struct dns_rdata_mb {
 } dns_rdata_mb_t;
 
 #endif /* GENERIC_MB_7_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -323,8 +301,6 @@ typedef struct dns_rdata_mg {
 } dns_rdata_mg_t;
 
 #endif /* GENERIC_MG_8_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -349,8 +325,6 @@ typedef struct dns_rdata_mr {
 } dns_rdata_mr_t;
 
 #endif /* GENERIC_MR_9_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -376,8 +350,6 @@ typedef struct dns_rdata_null {
 } dns_rdata_null_t;
 
 #endif /* GENERIC_NULL_10_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -404,8 +376,6 @@ typedef struct dns_rdata_in_wks {
 } dns_rdata_in_wks_t;
 
 #endif /* IN_1_WKS_11_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -430,8 +400,6 @@ typedef struct dns_rdata_ptr {
 } dns_rdata_ptr_t;
 
 #endif /* GENERIC_PTR_12_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -458,8 +426,6 @@ typedef struct dns_rdata_hinfo {
 } dns_rdata_hinfo_t;
 
 #endif /* GENERIC_HINFO_13_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -485,8 +451,6 @@ typedef struct dns_rdata_minfo {
 } dns_rdata_minfo_t;
 
 #endif /* GENERIC_MINFO_14_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -512,8 +476,6 @@ typedef struct dns_rdata_mx {
 } dns_rdata_mx_t;
 
 #endif /* GENERIC_MX_15_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -560,8 +522,6 @@ isc_result_t
 dns_rdata_txt_current(dns_rdata_txt_t *, dns_rdata_txt_string_t *);
 
 #endif /* GENERIC_TXT_16_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -589,8 +549,6 @@ typedef struct dns_rdata_rp {
 } dns_rdata_rp_t;
 
 #endif /* GENERIC_RP_17_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -618,8 +576,6 @@ typedef struct dns_rdata_afsdb {
 } dns_rdata_afsdb_t;
 
 #endif /* GENERIC_AFSDB_18_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -647,8 +603,6 @@ typedef struct dns_rdata_x25 {
 } dns_rdata_x25_t;
 
 #endif /* GENERIC_X25_19_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -678,8 +632,6 @@ typedef struct dns_rdata_isdn {
 } dns_rdata_isdn_t;
 
 #endif /* GENERIC_ISDN_20_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -707,8 +659,6 @@ typedef struct dns_rdata_rt {
 } dns_rdata_rt_t;
 
 #endif /* GENERIC_RT_21_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -736,8 +686,6 @@ typedef struct dns_rdata_in_nsap {
 } dns_rdata_in_nsap_t;
 
 #endif /* IN_1_NSAP_22_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -764,8 +712,6 @@ typedef struct dns_rdata_in_nsap_ptr {
 } dns_rdata_in_nsap_ptr_t;
 
 #endif /* IN_1_NSAP_PTR_23_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -801,8 +747,6 @@ typedef struct dns_rdata_sig_t {
 } dns_rdata_sig_t;
 
 #endif /* GENERIC_SIG_24_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -833,8 +777,6 @@ typedef struct dns_rdata_key {
 } dns_rdata_key_t;
 
 #endif /* GENERIC_KEY_25_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -863,8 +805,6 @@ typedef struct dns_rdata_in_px {
 } dns_rdata_in_px_t;
 
 #endif /* IN_1_PX_26_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -896,8 +836,6 @@ typedef struct dns_rdata_gpos {
 } dns_rdata_gpos_t;
 
 #endif /* GENERIC_GPOS_27_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -923,8 +861,6 @@ typedef struct dns_rdata_in_aaaa {
 } dns_rdata_in_aaaa_t;
 
 #endif /* IN_1_AAAA_28_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -962,8 +898,6 @@ typedef struct dns_rdata_loc {
 } dns_rdata_loc_t;
 
 #endif /* GENERIC_LOC_29_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -992,8 +926,6 @@ typedef struct dns_rdata_nxt {
 } dns_rdata_nxt_t;
 
 #endif /* GENERIC_NXT_30_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1022,8 +954,6 @@ typedef struct dns_rdata_in_eid {
 } dns_rdata_in_eid_t;
 
 #endif /* IN_1_EID_31_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1052,8 +982,6 @@ typedef struct dns_rdata_in_nimloc {
 } dns_rdata_in_nimloc_t;
 
 #endif /* IN_1_NIMLOC_32_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1083,8 +1011,6 @@ typedef struct dns_rdata_in_srv {
 } dns_rdata_in_srv_t;
 
 #endif /* IN_1_SRV_33_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1113,8 +1039,6 @@ typedef struct dns_rdata_in_atma {
 } dns_rdata_in_atma_t;
 
 #endif /* IN_1_ATMA_22_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1149,8 +1073,6 @@ typedef struct dns_rdata_naptr {
 } dns_rdata_naptr_t;
 
 #endif /* GENERIC_NAPTR_35_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1178,8 +1100,6 @@ typedef struct dns_rdata_in_kx {
 } dns_rdata_in_kx_t;
 
 #endif /* IN_1_KX_36_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1208,8 +1128,6 @@ typedef struct dns_rdata_cert {
 } dns_rdata_cert_t;
 
 #endif /* GENERIC_CERT_37_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1238,8 +1156,6 @@ typedef struct dns_rdata_in_a6 {
 } dns_rdata_in_a6_t;
 
 #endif /* IN_1_A6_38_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1266,8 +1182,6 @@ typedef struct dns_rdata_dname {
 } dns_rdata_dname_t;
 
 #endif /* GENERIC_DNAME_39_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1295,8 +1209,6 @@ typedef struct dns_rdata_sink_t {
 } dns_rdata_sink_t;
 
 #endif /* GENERIC_SINK_40_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1346,8 +1258,6 @@ isc_result_t
 dns_rdata_opt_current(dns_rdata_opt_t *, dns_rdata_opt_opcode_t *);
 
 #endif /* GENERIC_OPT_41_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1401,8 +1311,6 @@ unsigned int
 dns_rdata_apl_count(const dns_rdata_in_apl_t *apl);
 
 #endif /* IN_1_APL_42_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1432,8 +1340,6 @@ typedef struct dns_rdata_ds {
 } dns_rdata_ds_t;
 
 #endif /* GENERIC_DS_43_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1463,8 +1369,6 @@ typedef struct dns_rdata_sshfp {
 } dns_rdata_sshfp_t;
 
 #endif /* GENERIC_SSHFP_44_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1495,8 +1399,6 @@ typedef struct dns_rdata_ipseckey {
 } dns_rdata_ipseckey_t;
 
 #endif /* GENERIC_IPSECKEY_45_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1531,8 +1433,6 @@ typedef struct dns_rdata_rrsig {
 } dns_rdata_rrsig_t;
 
 #endif /* GENERIC_DNSSIG_46_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1561,8 +1461,6 @@ typedef struct dns_rdata_nsec {
 } dns_rdata_nsec_t;
 
 #endif /* GENERIC_NSEC_47_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1586,8 +1484,6 @@ typedef struct dns_rdata_nsec {
 typedef struct dns_rdata_key dns_rdata_dnskey_t;
 
 #endif /* GENERIC_DNSKEY_48_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1613,8 +1509,6 @@ typedef struct dns_rdata_in_dhcid {
 } dns_rdata_in_dhcid_t;
 
 #endif /* IN_1_DHCID_49_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1727,8 +1621,6 @@ typedef struct dns_rdata_nsec3 {
 #define DNS_NSEC3FLAG_NONSEC 0x10U
 
 #endif /* GENERIC_NSEC3_50_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1761,8 +1653,6 @@ typedef struct dns_rdata_nsec3param {
 } dns_rdata_nsec3param_t;
 
 #endif /* GENERIC_NSEC3PARAM_51_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1793,8 +1683,6 @@ typedef struct dns_rdata_tlsa {
 } dns_rdata_tlsa_t;
 
 #endif /* GENERIC_TLSA_52_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1814,8 +1702,6 @@ typedef struct dns_rdata_tlsa {
 typedef struct dns_rdata_tlsa dns_rdata_smimea_t;
 
 #endif /* GENERIC_SMIMEA_53_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1858,8 +1744,6 @@ void
 dns_rdata_hip_current(dns_rdata_hip_t *, dns_name_t *);
 
 #endif /* GENERIC_HIP_5_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1896,8 +1780,6 @@ isc_result_t
 dns_rdata_ninfo_current(dns_rdata_ninfo_t *, dns_rdata_ninfo_string_t *);
 
 #endif /* GENERIC_NINFO_16_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1917,8 +1799,6 @@ dns_rdata_ninfo_current(dns_rdata_ninfo_t *, dns_rdata_ninfo_string_t *);
 typedef struct dns_rdata_key dns_rdata_rkey_t;
 
 #endif /* GENERIC_RKEY_57_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1947,8 +1827,6 @@ typedef struct dns_rdata_talink {
 } dns_rdata_talink_t;
 
 #endif /* GENERIC_TALINK_58_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1969,8 +1847,6 @@ typedef struct dns_rdata_talink {
 typedef struct dns_rdata_ds dns_rdata_cds_t;
 
 #endif /* GENERIC_CDS_59_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1991,8 +1867,6 @@ typedef struct dns_rdata_ds dns_rdata_cds_t;
 typedef struct dns_rdata_key dns_rdata_cdnskey_t;
 
 #endif /* GENERIC_CDNSKEY_60_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2017,8 +1891,6 @@ typedef struct dns_rdata_openpgpkey {
 } dns_rdata_openpgpkey_t;
 
 #endif /* GENERIC_OPENPGPKEY_61_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2049,8 +1921,6 @@ typedef struct dns_rdata_csync {
 } dns_rdata_csync_t;
 
 #endif /* GENERIC_CSYNC_62_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2085,8 +1955,6 @@ typedef struct dns_rdata_zonemd {
 } dns_rdata_zonemd_t;
 
 #endif /* GENERIC_ZONEMD_63_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2127,8 +1995,6 @@ void
 dns_rdata_in_svcb_current(dns_rdata_in_svcb_t *, isc_region_t *);
 
 #endif /* IN_1_SVCB_64_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2164,8 +2030,6 @@ void
 dns_rdata_in_https_current(dns_rdata_in_https_t *, isc_region_t *);
 
 #endif /* IN_1_HTTPS_65_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2201,8 +2065,6 @@ typedef struct dns_rdata_spf {
  * via rdatastructpre.h and rdatastructsuf.h.
  */
 #endif /* GENERIC_SPF_99_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2227,8 +2089,6 @@ typedef struct dns_rdata_nid {
 } dns_rdata_nid_t;
 
 #endif /* GENERIC_NID_104_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2253,8 +2113,6 @@ typedef struct dns_rdata_l32 {
 } dns_rdata_l32_t;
 
 #endif /* GENERIC_L32_105_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2279,8 +2137,6 @@ typedef struct dns_rdata_l64 {
 } dns_rdata_l64_t;
 
 #endif /* GENERIC_L64_106_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2306,8 +2162,6 @@ typedef struct dns_rdata_lp {
 } dns_rdata_lp_t;
 
 #endif /* GENERIC_LP_107_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2331,8 +2185,6 @@ typedef struct dns_rdata_eui48 {
 } dns_rdata_eui48_t;
 
 #endif /* GENERIC_EUI48_10k_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2356,8 +2208,6 @@ typedef struct dns_rdata_eui64 {
 } dns_rdata_eui64_t;
 
 #endif /* GENERIC_EUI64_10k_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2392,8 +2242,6 @@ typedef struct dns_rdata_tkey {
 } dns_rdata_tkey_t;
 
 #endif /* GENERIC_TKEY_249_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2426,8 +2274,6 @@ typedef struct dns_rdata_any_tsig {
 } dns_rdata_any_tsig_t;
 
 #endif /* ANY_255_TSIG_250_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2454,8 +2300,6 @@ typedef struct dns_rdata_uri {
 } dns_rdata_uri_t;
 
 #endif /* GENERIC_URI_256_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2483,8 +2327,6 @@ typedef struct dns_rdata_caa {
 } dns_rdata_caa_t;
 
 #endif /* GENERIC_CAA_257_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2517,8 +2359,6 @@ typedef struct dns_rdata_avc {
  * via rdatastructpre.h and rdatastructsuf.h.
  */
 #endif /* GENERIC_AVC_258_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2548,8 +2388,6 @@ typedef struct dns_rdata_doa {
 } dns_rdata_doa_t;
 
 #endif /* GENERIC_DOA_259_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2580,8 +2418,6 @@ typedef struct dns_rdata_amtrelay {
 } dns_rdata_amtrelay_t;
 
 #endif /* GENERIC_AMTRELAY_260_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2604,8 +2440,6 @@ typedef struct dns_rdata_amtrelay {
 typedef struct dns_rdata_ds dns_rdata_ta_t;
 
 #endif /* GENERIC_TA_32768_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2626,8 +2460,6 @@ typedef struct dns_rdata_ds dns_rdata_ta_t;
 typedef struct dns_rdata_ds dns_rdata_dlv_t;
 
 #endif /* GENERIC_DLV_32769_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2658,8 +2490,6 @@ typedef struct dns_rdata_keydata {
 } dns_rdata_keydata_t;
 
 #endif /* GENERIC_KEYDATA_65533_H */
-/*	$NetBSD: rdatastruct.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *

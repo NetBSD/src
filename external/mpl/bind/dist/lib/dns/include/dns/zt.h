@@ -1,4 +1,4 @@
-/*	$NetBSD: zt.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: zt.h,v 1.6.2.1 2023/08/11 13:43:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,7 @@
 #include <stdbool.h>
 
 #include <isc/lang.h>
+#include <isc/rwlock.h>
 
 #include <dns/types.h>
 
@@ -172,7 +173,7 @@ dns_zt_freezezones(dns_zt_t *zt, dns_view_t *view, bool freeze);
  */
 
 isc_result_t
-dns_zt_apply(dns_zt_t *zt, bool stop, isc_result_t *sub,
+dns_zt_apply(dns_zt_t *zt, isc_rwlocktype_t lock, bool stop, isc_result_t *sub,
 	     isc_result_t (*action)(dns_zone_t *, void *), void *uap);
 /*%<
  * Apply a given 'action' to all zone zones in the table.

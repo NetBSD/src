@@ -1,12 +1,53 @@
-#	$NetBSD: Makefile.openssl,v 1.12 2020/03/22 00:54:03 christos Exp $
+#	$NetBSD: Makefile.openssl,v 1.12.6.1 2023/08/11 13:39:44 martin Exp $
 
 .ifndef _MAKEFILE_OPENSSL_INCLUDED
 _MAKEFILE_OPENSSL_INCLUDED=1
 
 .include <bsd.own.mk>
+WARNS=3
+
+# would require changing a lot of code
+CWARNFLAGS+= -Wno-error=cast-qual
+CWARNFLAGS+= -Wno-error=char-subscripts # XXX likely real ctype(3) missing cast bugs
+CWARNFLAGS+= -Wno-error=missing-field-initializers
+CWARNFLAGS+= -Wno-error=shadow
+
+CWARNFLAGS.gcc+= -Wno-error=discarded-qualifiers
+CWARNFLAGS.clang+= -Wno-error=ignored-qualifiers
+
+# OpenSSL extensively uses string literals as char *, which clang
+# (reasonably if not exactly rightly) objects to.
+CWARNFLAGS.clang+= -Wno-error=incompatible-pointer-types-discards-qualifiers
+
+# XXX: re-examine the below
+CWARNFLAGS.clang+= -Wno-empty-body -Wno-unused-value -Wno-parentheses
+CWARNFLAGS.clang+= -Wno-implicit-int-float-conversion
+# XXX: This warning seems to trigger incorrectly
+CWARNFLAGS.clang+=	-Wno-atomic-alignment
+
+LINTFLAGS+=	-X 161	# constant in conditional context
+LINTFLAGS+=	-X 129	# expression has null effect
+LINTFLAGS+=	-X 117	# bitwise '>>' on signed value possibly nonportable
+LINTFLAGS+=	-X 231	# argument '%s' unused in function '%s'
+LINTFLAGS+=	-X 220	# fallthrough on case statement
+LINTFLAGS+=	-X 118	# semantics of '%s' change in ANSI C; use explicit cast
+
+
+.if ${HAVE_OPENSSL} <= 11
+OSSL_ENGINESDIR=/usr/lib/openssl
+.else
+.	if defined(MLIBDIR)
+OSSL_LIBDIR=/usr/lib/${MLIBDIR}/openssl
+.	else
+OSSL_LIBDIR=/usr/lib/openssl
+.	endif
+OSSL_ENGINESDIR=${OSSL_LIBDIR}/engines
+OSSL_MODULESDIR=${OSSL_LIBDIR}/modules
+.endif
 
 OPENSSLSRC=	${CRYPTODIST}/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/dist
 CPPFLAGS+=	-DOPENSSLDIR=\"/etc/openssl\"
-CPPFLAGS+=	-DENGINESDIR=\"/usr/lib/openssl\"
+CPPFLAGS+=	-DENGINESDIR=\"${OSSL_ENGINESDIR}\"
+CPPFLAGS+=	-DMODULESDIR=\"${OSSL_MODULESDIR}\"
 
 .endif

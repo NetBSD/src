@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2021/06/17 01:15:44 christos Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2023/08/11 13:42:55 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -23,5 +23,8 @@ explicit_bzero.c \
 freezero.c \
 readpassphrase.c \
 recallocarray.c
+
+COPTS.assert_verify.c+=-Wno-error=deprecated-declarations
+COPTS.util.c+=-Wno-error=deprecated-declarations
 
 .include <bsd.prog.mk>

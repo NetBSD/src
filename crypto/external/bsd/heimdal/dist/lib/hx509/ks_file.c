@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_file.c,v 1.4 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: ks_file.c,v 1.4.8.1 2023/08/11 13:39:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2007 Kungliga Tekniska Högskolan
@@ -122,7 +122,12 @@ try_decrypt(hx509_context context,
 #else
 	ctx = EVP_CIPHER_CTX_new();
 #endif
-	EVP_CipherInit_ex(ctx, c, NULL, key, ivdata, 0);
+	if (!EVP_CipherInit_ex(ctx, c, NULL, key, ivdata, 0)) {
+	    hx509_set_error_string(context, 0, EINVAL,
+				   "Cannot initialize cipher");
+	    ret = EINVAL;
+	    goto out;
+	}
 	EVP_Cipher(ctx, clear.data, cipher, len);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
 	EVP_CIPHER_CTX_cleanup(ctx);
@@ -545,7 +550,7 @@ store_func(hx509_context context, void *ctx, hx509_cert c)
 {
     struct store_ctx *sc = ctx;
     heim_octet_string data;
-    int ret;
+    int ret = 0;
 
     ret = hx509_cert_binary(context, c, &data);
     if (ret)
@@ -566,14 +571,14 @@ store_func(hx509_context context, void *ctx, hx509_cert c)
 					    HX509_KEY_FORMAT_DER, &data);
 	    if (ret)
 		break;
-	    hx509_pem_write(context, _hx509_private_pem_name(key), NULL, sc->f,
-			    data.data, data.length);
+            ret = hx509_pem_write(context, _hx509_private_pem_name(key), NULL,
+                                  sc->f, data.data, data.length);
 	    free(data.data);
 	}
 	break;
     }
 
-    return 0;
+    return ret;
 }
 
 static int

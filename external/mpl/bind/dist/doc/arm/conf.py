@@ -9,8 +9,6 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# flake8: noqa: E501
-
 import re
 
 from typing import List, Tuple
@@ -110,7 +108,7 @@ def setup(app):
 
 project = "BIND 9"
 # pylint: disable=redefined-builtin
-copyright = "2022, Internet Systems Consortium"
+copyright = "2023, Internet Systems Consortium"
 author = "Internet Systems Consortium"
 
 version_vars = {}

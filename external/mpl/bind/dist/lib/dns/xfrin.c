@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.11 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.11.2.1 2023/08/11 13:43:35 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -501,7 +501,8 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, uint32_t ttl,
 	xfr->nrecs++;
 
 	if (rdata->type == dns_rdatatype_none ||
-	    dns_rdatatype_ismeta(rdata->type)) {
+	    dns_rdatatype_ismeta(rdata->type))
+	{
 		FAIL(DNS_R_FORMERR);
 	}
 
@@ -511,7 +512,8 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, uint32_t ttl,
 	 * apex.
 	 */
 	if (rdata->type == dns_rdatatype_soa &&
-	    !dns_name_equal(&xfr->name, name)) {
+	    !dns_name_equal(&xfr->name, name))
+	{
 		char namebuf[DNS_NAME_FORMATSIZE];
 		dns_name_format(name, namebuf, sizeof(namebuf));
 		xfrin_log(xfr, ISC_LOG_DEBUG(3), "SOA name mismatch: '%s'",
@@ -648,7 +650,8 @@ redo:
 			}
 		}
 		if (rdata->type == dns_rdatatype_ns &&
-		    dns_name_iswildcard(name)) {
+		    dns_name_iswildcard(name))
+		{
 			FAIL(DNS_R_INVALIDNS);
 		}
 		CHECK(ixfr_putdata(xfr, DNS_DIFFOP_ADD, name, ttl, rdata));
@@ -949,7 +952,7 @@ xfrin_create(isc_mem_t *mctx, dns_zone_t *zone, dns_db_t *db, isc_task_t *task,
 
 failure:
 	if (xfr->timer != NULL) {
-		isc_timer_detach(&xfr->timer);
+		isc_timer_destroy(&xfr->timer);
 	}
 	if (dns_name_dynamic(&xfr->name)) {
 		dns_name_free(&xfr->name, xfr->mctx);
@@ -1333,16 +1336,19 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 		{
 			result = ISC_RESULTCLASS_DNSRCODE + msg->rcode; /*XXX*/
 		} else if (result == ISC_R_SUCCESS &&
-			   msg->opcode != dns_opcode_query) {
+			   msg->opcode != dns_opcode_query)
+		{
 			result = DNS_R_UNEXPECTEDOPCODE;
 		} else if (result == ISC_R_SUCCESS &&
-			   msg->rdclass != xfr->rdclass) {
+			   msg->rdclass != xfr->rdclass)
+		{
 			result = DNS_R_BADCLASS;
 		} else if (result == ISC_R_SUCCESS || result == DNS_R_NOERROR) {
 			result = DNS_R_UNEXPECTEDID;
 		}
 		if (xfr->reqtype == dns_rdatatype_axfr ||
-		    xfr->reqtype == dns_rdatatype_soa) {
+		    xfr->reqtype == dns_rdatatype_soa)
+		{
 			goto failure;
 		}
 		xfrin_log(xfr, ISC_LOG_DEBUG(3), "got %s, retrying with AXFR",
@@ -1378,7 +1384,8 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 	}
 
 	if (xfr->reqtype == dns_rdatatype_soa &&
-	    (msg->flags & DNS_MESSAGEFLAG_AA) == 0) {
+	    (msg->flags & DNS_MESSAGEFLAG_AA) == 0)
+	{
 		FAIL(DNS_R_NOTAUTHORITATIVE);
 	}
 
@@ -1575,7 +1582,7 @@ maybe_free(dns_xfrin_ctx_t *xfr) {
 	}
 
 	if (xfr->timer != NULL) {
-		isc_timer_detach(&xfr->timer);
+		isc_timer_destroy(&xfr->timer);
 	}
 
 	if (xfr->task != NULL) {

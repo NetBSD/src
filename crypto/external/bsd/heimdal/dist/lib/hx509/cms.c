@@ -1,4 +1,4 @@
-/*	$NetBSD: cms.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: cms.c,v 1.3.8.1 2023/08/11 13:39:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2007 Kungliga Tekniska Högskolan
@@ -184,7 +184,7 @@ fill_CMSIdentifier(const hx509_cert cert,
 						   &id->u.subjectKeyIdentifier);
 	if (ret == 0)
 	    break;
-	/* FALL THOUGH */
+	/* FALLTHROUGH */
     case CMS_ID_NAME: {
 	hx509_name name;
 

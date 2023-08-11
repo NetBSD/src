@@ -59,3 +59,10 @@ Bug Fixes
 - A race condition could occur where two threads were competing for the
   same set of key file locks, leading to a deadlock. This has been
   fixed. :gl:`#2786`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

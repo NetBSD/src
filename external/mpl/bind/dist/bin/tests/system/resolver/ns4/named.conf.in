@@ -57,6 +57,11 @@ zone "sourcens" {
     file "sourcens.db";
 };
 
+zone "v4only.net" {
+	type primary;
+	file "v4only.net.db";
+};
+
 key rndc_key {
 	secret "1234abcd8765";
 	algorithm hmac-sha256;

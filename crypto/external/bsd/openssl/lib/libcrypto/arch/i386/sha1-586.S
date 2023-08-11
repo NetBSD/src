@@ -5,6 +5,11 @@
 .align	16
 sha1_block_data_order:
 .L_sha1_block_data_order_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -1394,6 +1399,11 @@ sha1_block_data_order:
 .type	_sha1_block_data_order_shaext,@function
 .align	16
 _sha1_block_data_order_shaext:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -1564,6 +1574,11 @@ _sha1_block_data_order_shaext:
 .type	_sha1_block_data_order_ssse3,@function
 .align	16
 _sha1_block_data_order_ssse3:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -2793,3 +2808,20 @@ _sha1_block_data_order_ssse3:
 .byte	89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112
 .byte	114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
 .comm	OPENSSL_ia32cap_P,16,4
+
+	.section ".note.gnu.property", "a"
+	.p2align 2
+	.long 1f - 0f
+	.long 4f - 1f
+	.long 5
+0:
+	.asciz "GNU"
+1:
+	.p2align 2
+	.long 0xc0000002
+	.long 3f - 2f
+2:
+	.long 3
+3:
+	.p2align 2
+4:

@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.9 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.9.2.1 2023/08/11 13:43:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2616,7 +2616,8 @@ dns_zone_catz_enable(dns_zone_t *zone, dns_catz_zones_t *catzs);
 void
 dns_zone_catz_disable(dns_zone_t *zone);
 /*%<
- * Disable zone as catalog zone, if it is one.
+ * Disable zone as catalog zone, if it is one.  Also disables any
+ * registered callbacks for the catalog zone.
  *
  * Requires:
  *

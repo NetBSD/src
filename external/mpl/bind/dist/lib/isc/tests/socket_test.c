@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_test.c,v 1.10 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: socket_test.c,v 1.10.2.1 2023/08/11 13:43:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -162,7 +162,8 @@ waitfor2(completion_t *c1, completion_t *c2) {
 	int i = 0;
 
 	while (!(atomic_load(&c1->done) && atomic_load(&c2->done)) &&
-	       i++ < 5000) {
+	       i++ < 5000)
+	{
 		waitbody();
 	}
 	if (atomic_load(&c1->done) && atomic_load(&c2->done)) {

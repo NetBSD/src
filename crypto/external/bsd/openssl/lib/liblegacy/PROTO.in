@@ -1,0 +1,12 @@
+#	$NetBSD: PROTO.in,v 1.1.2.2 2023/08/11 13:42:15 martin Exp $
+
+.PATH:	${OPENSSLSRC}/@proto@
+
+@PROTO@_SRCS += \
+@SRCS@
+
+SRCS += ${@PROTO@_SRCS}
+
+.for legacysrc in ${@PROTO@_SRCS}
+CPPFLAGS.${legacysrc} += -I${OPENSSLSRC}/@proto@ ${@PROTO@CPPFLAGS}
+.endfor

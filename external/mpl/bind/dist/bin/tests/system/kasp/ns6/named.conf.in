@@ -38,6 +38,14 @@ controls {
 	inet 10.53.0.6 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
+/* This zone switch from dynamic to inline-signing. */
+zone "dynamic2inline.kasp" {
+	type primary;
+	file "dynamic2inline.kasp.db";
+	allow-update { any; };
+	dnssec-policy "default";
+};
+
 /* These zones are going insecure. */
 zone "step1.going-insecure.kasp" {
 	type master;
@@ -65,7 +73,7 @@ zone "step1.algorithm-roll.kasp" {
 	type primary;
 	file "step1.algorithm-roll.kasp.db";
 	inline-signing yes;
-	dnssec-policy "rsasha1";
+	dnssec-policy "rsasha256";
 };
 
 zone "step1.csk-algorithm-roll.kasp" {

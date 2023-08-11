@@ -1,4 +1,4 @@
-/*	$NetBSD: ntgroups.c,v 1.8 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: ntgroups.c,v 1.8.2.1 2023/08/11 13:43:39 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -111,7 +111,8 @@ isc_ntsecurity_getaccountgroups(char *username, char **GroupList,
 		 * Loop through the entries
 		 */
 		for (i = 0; (i < dwEntriesRead && *totalGroups < maxgroups);
-		     i++) {
+		     i++)
+		{
 			assert(pTmpLBuf != NULL);
 			if (pTmpLBuf == NULL) {
 				break;
@@ -170,7 +171,8 @@ isc_ntsecurity_getaccountgroups(char *username, char **GroupList,
 		 * Loop through the entries
 		 */
 		for (i = 0; (i < dwEntriesRead && *totalGroups < maxgroups);
-		     i++) {
+		     i++)
+		{
 			assert(pTmpBuf != NULL);
 
 			if (pTmpBuf == NULL) {

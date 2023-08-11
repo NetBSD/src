@@ -16,8 +16,9 @@ set -e
 rm -f ./keygen.*
 rm -f ./K*.private ./K*.key ./K*.state ./K*.cmp
 rm -rf ./keys/
-rm -f dig.out* rrsig.out.* keyevent.out.*
+rm -f dig.out* rrsig.out.* keyevent.out.* verify.out.* zone.out.*
 rm -f ns*/named.conf ns*/named.memstats ns*/named.run*
+rm -f ns*/named-fips.conf
 rm -f ns*/policies/*.conf
 rm -f ns*/*.jnl ns*/*.jbk
 rm -f ns*/K*.private ns*/K*.key ns*/K*.state

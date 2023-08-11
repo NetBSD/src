@@ -45,7 +45,8 @@ do
 	cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
 	private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
 	private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
-	$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+	cp $infile $zonefile
+	$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 	# Step 2:
 	# Set up a zone with dnssec-policy that is going insecure. Don't add
@@ -66,7 +67,8 @@ do
 	cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
 	private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
 	private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
-	$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+	cp $infile $zonefile
+	$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 done
 
 # This zone is going straight to "none" policy. This is undefined behavior.
@@ -78,7 +80,8 @@ CSK=$($KEYGEN -k default $csktimes $zone 2> keygen.out.$zone.1)
 $SETTIME -s -g $O -k $O $TactN -z $O $TactN -r $O $TactN -d $O $TactN "$CSK" > settime.out.$zone.1 2>&1
 cat template.db.in "${CSK}.key" > "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
-$SIGNER -S -z -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -z -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 #
 # The zones at algorithm-roll.kasp represent the various steps of a ZSK/KSK
@@ -92,14 +95,15 @@ echo "$zone" >> zones
 TactN="now"
 ksktimes="-P ${TactN} -A ${TactN} -P sync ${TactN}"
 zsktimes="-P ${TactN} -A ${TactN}"
-KSK=$($KEYGEN -a RSASHA1 -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a RSASHA1 -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
+KSK=$($KEYGEN -a RSASHA256 -L 3600 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a RSASHA256 -L 3600        $zsktimes $zone 2> keygen.out.$zone.2)
 $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN "$KSK" > settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $O $TactN -z $O $TactN              "$ZSK" > settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 5 "$KSK" >> "$infile"
-private_type_record $zone 5 "$ZSK" >> "$infile"
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+private_type_record $zone 8 "$KSK" >> "$infile"
+private_type_record $zone 8 "$ZSK" >> "$infile"
+cp $infile $zonefile
+$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 # Step 2:
 # After the publication interval has passed the DNSKEY is OMNIPRESENT.
@@ -114,8 +118,8 @@ ksk1times="-P ${TactN}  -A ${TactN}  -P sync ${TactN}  -I now"
 zsk1times="-P ${TactN}  -A ${TactN}                    -I now"
 ksk2times="-P ${TpubN1} -A ${TpubN1} -P sync ${TsbmN1}"
 zsk2times="-P ${TpubN1} -A ${TpubN1}"
-KSK1=$($KEYGEN -a RSASHA1            -L 3600 -f KSK $ksk1times $zone 2> keygen.out.$zone.1)
-ZSK1=$($KEYGEN -a RSASHA1            -L 3600        $zsk1times $zone 2> keygen.out.$zone.2)
+KSK1=$($KEYGEN -a RSASHA256          -L 3600 -f KSK $ksk1times $zone 2> keygen.out.$zone.1)
+ZSK1=$($KEYGEN -a RSASHA256          -L 3600        $zsk1times $zone 2> keygen.out.$zone.2)
 KSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 -f KSK $ksk2times $zone 2> keygen.out.$zone.3)
 ZSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $zsk2times $zone 2> keygen.out.$zone.4)
 $SETTIME -s -g $H -k $O $TactN  -r $O $TactN  -d $O $TactN  "$KSK1" > settime.out.$zone.1 2>&1
@@ -126,11 +130,12 @@ $SETTIME -s -g $O -k $R $TpubN1 -z $R $TpubN1               "$ZSK2" > settime.ou
 echo "Lifetime: 0" >> "${KSK1}.state"
 echo "Lifetime: 0" >> "${ZSK1}.state"
 cat template.db.in "${KSK1}.key" "${ZSK1}.key" "${KSK2}.key" "${ZSK2}.key" > "$infile"
-private_type_record $zone 5  "$KSK1" >> "$infile"
-private_type_record $zone 5  "$ZSK1" >> "$infile"
+private_type_record $zone 8  "$KSK1" >> "$infile"
+private_type_record $zone 8  "$ZSK1" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK2" >> "$infile"
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 # Step 3:
 # The zone signatures are also OMNIPRESENT.
@@ -144,8 +149,8 @@ ksk1times="-P ${TactN}  -A ${TactN}  -P sync ${TactN}  -I ${TretN}"
 zsk1times="-P ${TactN}  -A ${TactN}                    -I ${TretN}"
 ksk2times="-P ${TpubN1} -A ${TpubN1} -P sync ${TsbmN1}"
 zsk2times="-P ${TpubN1} -A ${TpubN1}"
-KSK1=$($KEYGEN -a RSASHA1            -L 3600 -f KSK $ksk1times $zone 2> keygen.out.$zone.1)
-ZSK1=$($KEYGEN -a RSASHA1            -L 3600        $zsk1times $zone 2> keygen.out.$zone.2)
+KSK1=$($KEYGEN -a RSASHA256          -L 3600 -f KSK $ksk1times $zone 2> keygen.out.$zone.1)
+ZSK1=$($KEYGEN -a RSASHA256          -L 3600        $zsk1times $zone 2> keygen.out.$zone.2)
 KSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 -f KSK $ksk2times $zone 2> keygen.out.$zone.3)
 ZSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $zsk2times $zone 2> keygen.out.$zone.4)
 $SETTIME -s -g $H -k $O $TactN  -r $O $TactN  -d $O $TactN  "$KSK1" > settime.out.$zone.1 2>&1
@@ -156,11 +161,12 @@ $SETTIME -s -g $O -k $O $TpubN1 -z $R $TpubN1               "$ZSK2" > settime.ou
 echo "Lifetime: 0" >> "${KSK1}.state"
 echo "Lifetime: 0" >> "${ZSK1}.state"
 cat template.db.in "${KSK1}.key" "${ZSK1}.key" "${KSK2}.key" "${ZSK2}.key" > "$infile"
-private_type_record $zone 5  "$KSK1" >> "$infile"
-private_type_record $zone 5  "$ZSK1" >> "$infile"
+private_type_record $zone 8  "$KSK1" >> "$infile"
+private_type_record $zone 8  "$ZSK1" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK2" >> "$infile"
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 # Step 4:
 # The DS is swapped and can become OMNIPRESENT.
@@ -175,8 +181,8 @@ ksk1times="-P ${TactN}  -A ${TactN}  -P sync ${TactN}  -I ${TretN}"
 zsk1times="-P ${TactN}  -A ${TactN}                    -I ${TretN}"
 ksk2times="-P ${TpubN1} -A ${TpubN1} -P sync ${TsbmN1}"
 zsk2times="-P ${TpubN1} -A ${TpubN1}"
-KSK1=$($KEYGEN -a RSASHA1            -L 3600 -f KSK $ksk1times $zone 2> keygen.out.$zone.1)
-ZSK1=$($KEYGEN -a RSASHA1            -L 3600        $zsk1times $zone 2> keygen.out.$zone.2)
+KSK1=$($KEYGEN -a RSASHA256          -L 3600 -f KSK $ksk1times $zone 2> keygen.out.$zone.1)
+ZSK1=$($KEYGEN -a RSASHA256          -L 3600        $zsk1times $zone 2> keygen.out.$zone.2)
 KSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 -f KSK $ksk2times $zone 2> keygen.out.$zone.3)
 ZSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $zsk2times $zone 2> keygen.out.$zone.4)
 $SETTIME -s -g $H -k $O $TactN  -r $O $TactN  -d $U $TactN1 -D ds $TactN1 "$KSK1" > settime.out.$zone.1 2>&1
@@ -187,11 +193,12 @@ $SETTIME -s -g $O -k $O $TpubN1 -z $R $TpubN1                             "$ZSK2
 echo "Lifetime: 0" >> "${KSK1}.state"
 echo "Lifetime: 0" >> "${ZSK1}.state"
 cat template.db.in "${KSK1}.key" "${ZSK1}.key" "${KSK2}.key" "${ZSK2}.key" > "$infile"
-private_type_record $zone 5  "$KSK1" >> "$infile"
-private_type_record $zone 5  "$ZSK1" >> "$infile"
+private_type_record $zone 8  "$KSK1" >> "$infile"
+private_type_record $zone 8  "$ZSK1" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK2" >> "$infile"
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 # Step 5:
 # The DNSKEY is removed long enough to be HIDDEN.
@@ -207,8 +214,8 @@ ksk1times="-P ${TactN}  -A ${TactN}  -P sync ${TactN}  -I ${TretN}"
 zsk1times="-P ${TactN}  -A ${TactN}                    -I ${TretN}"
 ksk2times="-P ${TpubN1} -A ${TpubN1} -P sync ${TsbmN1}"
 zsk2times="-P ${TpubN1} -A ${TpubN1}"
-KSK1=$($KEYGEN -a RSASHA1            -L 3600 -f KSK $ksk1times $zone 2> keygen.out.$zone.1)
-ZSK1=$($KEYGEN -a RSASHA1            -L 3600        $zsk1times $zone 2> keygen.out.$zone.2)
+KSK1=$($KEYGEN -a RSASHA256          -L 3600 -f KSK $ksk1times $zone 2> keygen.out.$zone.1)
+ZSK1=$($KEYGEN -a RSASHA256          -L 3600        $zsk1times $zone 2> keygen.out.$zone.2)
 KSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 -f KSK $ksk2times $zone 2> keygen.out.$zone.3)
 ZSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $zsk2times $zone 2> keygen.out.$zone.4)
 $SETTIME -s -g $H -k $U $TremN  -r $U $TremN  -d $H $TactN1 "$KSK1" > settime.out.$zone.1 2>&1
@@ -219,11 +226,12 @@ $SETTIME -s -g $O -k $O $TpubN1 -z $R $TpubN1               "$ZSK2" > settime.ou
 echo "Lifetime: 0" >> "${KSK1}.state"
 echo "Lifetime: 0" >> "${ZSK1}.state"
 cat template.db.in "${KSK1}.key" "${ZSK1}.key" "${KSK2}.key" "${ZSK2}.key" > "$infile"
-private_type_record $zone 5  "$KSK1" >> "$infile"
-private_type_record $zone 5  "$ZSK1" >> "$infile"
+private_type_record $zone 8  "$KSK1" >> "$infile"
+private_type_record $zone 8  "$ZSK1" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK2" >> "$infile"
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 # Step 6:
 # The RRSIGs have been removed long enough to be HIDDEN.
@@ -240,8 +248,8 @@ ksk1times="-P ${TactN}  -A ${TactN}  -P sync ${TactN}  -I ${TretN}"
 zsk1times="-P ${TactN}  -A ${TactN}                    -I ${TretN}"
 ksk2times="-P ${TpubN1} -A ${TpubN1} -P sync ${TsbmN1}"
 zsk2times="-P ${TpubN1} -A ${TpubN1}"
-KSK1=$($KEYGEN -a RSASHA1            -L 3600 -f KSK $ksk1times $zone 2> keygen.out.$zone.1)
-ZSK1=$($KEYGEN -a RSASHA1            -L 3600        $zsk1times $zone 2> keygen.out.$zone.2)
+KSK1=$($KEYGEN -a RSASHA256          -L 3600 -f KSK $ksk1times $zone 2> keygen.out.$zone.1)
+ZSK1=$($KEYGEN -a RSASHA256          -L 3600        $zsk1times $zone 2> keygen.out.$zone.2)
 KSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 -f KSK $ksk2times $zone 2> keygen.out.$zone.3)
 ZSK2=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600        $zsk2times $zone 2> keygen.out.$zone.4)
 $SETTIME -s -g $H -k $H $TremN  -r $U $TdeaN  -d $H $TactN1 "$KSK1" > settime.out.$zone.1 2>&1
@@ -252,11 +260,12 @@ $SETTIME -s -g $O -k $O $TpubN1 -z $R $TpubN1               "$ZSK2" > settime.ou
 echo "Lifetime: 0" >> "${KSK1}.state"
 echo "Lifetime: 0" >> "${ZSK1}.state"
 cat template.db.in "${KSK1}.key" "${ZSK1}.key" "${KSK2}.key" "${ZSK2}.key" > "$infile"
-private_type_record $zone 5  "$KSK1" >> "$infile"
-private_type_record $zone 5  "$ZSK1" >> "$infile"
+private_type_record $zone 8  "$KSK1" >> "$infile"
+private_type_record $zone 8  "$ZSK1" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK2" >> "$infile"
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 #
 # The zones at csk-algorithm-roll.kasp represent the various steps of a CSK
@@ -273,7 +282,8 @@ CSK=$($KEYGEN -k csk-algoroll -l policies/csk1.conf $csktimes $zone 2> keygen.ou
 $SETTIME -s -g $O -k $O $TactN -r $O $TactN -z $O $TactN -d $O $TactN "$CSK" > settime.out.$zone.1 2>&1
 cat template.db.in "${CSK}.key" > "$infile"
 private_type_record $zone 5 "$CSK" >> "$infile"
-$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 # Step 2:
 # After the publication interval has passed the DNSKEY is OMNIPRESENT.
@@ -292,7 +302,8 @@ echo "Lifetime: 0" >> "${CSK1}.state"
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
 private_type_record $zone 5  "$CSK1" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
-$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 # Step 3:
 # The zone signatures are also OMNIPRESENT.
@@ -313,7 +324,8 @@ echo "Lifetime: 0" >> "${CSK1}.state"
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
 private_type_record $zone 5  "$CSK1" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
-$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 # Step 4:
 # The DS is swapped and can become OMNIPRESENT.
@@ -335,7 +347,8 @@ echo "Lifetime: 0" >> "${CSK1}.state"
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
 private_type_record $zone 5  "$CSK1" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
-$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 # Step 5:
 # The DNSKEY is removed long enough to be HIDDEN.
@@ -358,7 +371,8 @@ echo "Lifetime: 0" >> "${CSK1}.state"
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
 private_type_record $zone 5  "$CSK1" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
-$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 # Step 6:
 # The RRSIGs have been removed long enough to be HIDDEN.
@@ -382,10 +396,14 @@ echo "Lifetime: 0" >> "${CSK1}.state"
 cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
 private_type_record $zone 5  "$CSK1" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
-$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+cp $infile $zonefile
+$SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 
 #
 # Reload testing
 #
 echo "example" >> zones
 cp example.db.in example.db
+
+setup "dynamic2inline.kasp"
+cp template.db.in $zonefile

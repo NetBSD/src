@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2022/04/15 23:21:33 rillig Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2023/08/11 13:41:54 martin Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -8,10 +8,10 @@
 #	This file is provided in the hope that it will
 #	be of use.  There is absolutely NO WARRANTY.
 #	Permission to copy, redistribute or otherwise
-#	use this file is hereby granted provided that 
+#	use this file is hereby granted provided that
 #	the above copyright notice and this notice are
-#	left intact. 
-#      
+#	left intact.
+#
 #	Please send copies of changes and bug-fixes to:
 #	sjg@quick.com.au
 #
@@ -25,19 +25,6 @@ USE_FIPS=	no
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
 
-# XXX: There's a bit of work to do before we can enable warnings.
-WARNS=0
-CWARNFLAGS.clang+=	-Wno-empty-body -Wno-unused-value -Wno-parentheses -Wno-implicit-int-float-conversion
-# XXX: This warning seems to trigger incorrectly
-CWARNFLAGS.clang+=	-Wno-atomic-alignment
-
-LINTFLAGS+=	-X 161	# constant in conditional context
-LINTFLAGS+=	-X 129	# expression has null effect
-LINTFLAGS+=	-X 117	# bitwise '>>' on signed value possibly nonportable
-LINTFLAGS+=	-X 231	# argument '%s' unused in function '%s'
-LINTFLAGS+=	-X 220	# fallthrough on case statement
-LINTFLAGS+=	-X 118	# semantics of '%s' change in ANSI C; use explicit cast
-
 CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC}
 CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/crypto/include
 CPPFLAGS+= -I${OPENSSLSRC}/crypto/asn1 -I${OPENSSLSRC}/crypto/evp
@@ -45,12 +32,20 @@ CPPFLAGS+= -I${OPENSSLSRC}/crypto/modes
 CPPFLAGS+= -I${OPENSSLSRC}/../include
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
+OPENSSLINC=	${OPENSSLSRC}/include/openssl
 
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
-.PATH: ${OPENSSLSRC} ${OPENSSLSRC}/include/openssl
-.PATH: ${OPENSSLSRC}/../include/openssl ${OPENSSLSRC}/include/internal
+.PATH: ${OPENSSLSRC} ${OPENSSLINC}
+.PATH: ${OPENSSLSRC}/../include/openssl
 
 .include "srcs.inc"
+.include "${.CURDIR}/../libdefault/srcs.inc"
+CPPFLAGS+= -I${.CURDIR}/../libdefault
+CPPFLAGS+= -I${OPENSSLSRC}/providers/common/include
+CPPFLAGS+= -I${OPENSSLSRC}/providers/implementations/include
+.PATH: ${.CURDIR}/../libdefault
+.include "${.CURDIR}/../libcommon/srcs.inc"
+.PATH: ${.CURDIR}/../libcommon
 
 AFLAGS+=-DELF
 LIBDPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt
@@ -90,6 +85,9 @@ buffererr.h \
 camellia.h \
 cast.h \
 cmac.h \
+cmp.h \
+cmp_util.h \
+cmperr.h \
 cms.h \
 cmserr.h \
 comp.h \
@@ -97,10 +95,21 @@ comperr.h \
 conf.h \
 conf_api.h \
 conferr.h \
+configuration.h \
+conftypes.h \
+core.h \
+core_dispatch.h \
+core_names.h \
+core_object.h \
+crmf.h \
+crmferr.h \
 crypto.h \
 cryptoerr.h \
+cryptoerr_legacy.h \
 ct.h \
 cterr.h \
+decoder.h \
+decodererr.h \
 des.h \
 dh.h \
 dherr.h \
@@ -113,15 +122,24 @@ ec.h \
 ecdh.h \
 ecdsa.h \
 ecerr.h \
+encoder.h \
+encodererr.h \
 engine.h \
 engineerr.h \
 err.h \
+ess.h \
+esserr.h \
 evp.h \
 evperr.h \
+fips_names.h \
+fipskey.h \
 hmac.h \
+http.h \
+httperr.h \
 kdf.h \
 kdferr.h \
 lhash.h \
+macros.h \
 md2.h \
 md4.h \
 md5.h \
@@ -134,6 +152,8 @@ ocsperr.h \
 opensslconf.h \
 opensslv.h \
 ossl_typ.h \
+param_build.h \
+params.h \
 pem.h \
 pem2.h \
 pemerr.h \
@@ -141,8 +161,10 @@ pkcs12.h \
 pkcs12err.h \
 pkcs7.h \
 pkcs7err.h \
+prov_ssl.h \
+proverr.h \
+provider.h \
 rand.h \
-rand_drbg.h \
 randerr.h \
 rc2.h \
 rc4.h \
@@ -151,6 +173,7 @@ rsa.h \
 rsaerr.h \
 safestack.h \
 seed.h \
+self_test.h \
 sha.h \
 srp.h \
 srtp.h \
@@ -158,14 +181,17 @@ ssl.h \
 ssl2.h \
 ssl3.h \
 sslerr.h \
+sslerr_legacy.h \
 stack.h \
 store.h \
 storeerr.h \
 symhacks.h \
 tls1.h \
+trace.h \
 ts.h \
 tserr.h \
 txt_db.h \
+types.h \
 ui.h \
 uierr.h \
 whrlpool.h \
@@ -198,7 +224,7 @@ CPPFLAGS+=-DOPENSSL_FIPS
 SRCS+=fips_aes_core.c fips_aes_selftest.c
 .PATH: ${OPENSSLSRC}/fips/des
 SRCS+=fips_des_enc.c fips_des_selftest.c fips_set_key.c
-# asm/fips-dx86-elf.s 
+# asm/fips-dx86-elf.s
 .PATH: ${OPENSSLSRC}/fips/dh
 SRCS+=fips_dh_check.c fips_dh_gen.c fips_dh_key.c
 .PATH: ${OPENSSLSRC}/fips/dsa
@@ -225,6 +251,35 @@ LDFLAGS+=-Wl,--version-script=${.CURDIR}/crypto.map
 PKGCONFIG=libcrypto
 .include "${.CURDIR}/../../pkgconfig.mk"
 
+# too much of a pain to generate opensslv.h / configuration.h / fipskey.h
+GENH = \
+asn1.h \
+asn1t.h \
+bio.h \
+cmp.h \
+cms.h \
+conf.h \
+crmf.h \
+crypto.h \
+ct.h \
+err.h \
+ess.h \
+lhash.h \
+ocsp.h \
+pkcs12.h \
+pkcs7.h \
+safestack.h \
+srp.h \
+ssl.h \
+ui.h \
+x509.h \
+x509_vfy.h \
+x509v3.h
+
+.for i in ${GENH}
+$i: $i.in
+	${_MKTARGET_CREATE}
+	${HOST_SH} ${.CURDIR}/gen ${.ALLSRC} > ${.TARGET}
+.endfor
 
 .include <bsd.lib.mk>
-

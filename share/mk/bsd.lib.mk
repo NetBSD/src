@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.389.2.1 2023/02/14 15:47:01 martin Exp $
+#	$NetBSD: bsd.lib.mk,v 1.389.2.2 2023/08/11 13:43:42 martin Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -69,7 +69,13 @@ LIBDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
 LDADD+=		-l${_lib}
 .else
 LDADD+=		-L${LIBDO.${_lib}} -l${_lib}
-DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so	# Don't use _LIB_PREFIX
+.if exists(${LIBDO.${_lib}}/lib${_lib}_pic.a)
+DPADD+=         ${LIBDO.${_lib}}/lib${_lib}_pic.a
+.elif exists(${LIBDO.${_lib}}/lib${_lib}.so)
+DPADD+=         ${LIBDO.${_lib}}/lib${_lib}.so
+.else   
+DPADD+=         ${LIBDO.${_lib}}/lib${_lib}.a
+.endif  
 .endif
 .endfor
 .endif									# }

@@ -1,4 +1,4 @@
-/*	$NetBSD: badcache.c,v 1.6 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: badcache.c,v 1.6.2.1 2023/08/11 13:43:34 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -270,7 +270,8 @@ dns_badcache_add(dns_badcache_t *bc, const dns_name_t *name,
 		bc->table[hash] = bad;
 		unsigned count = atomic_fetch_add_relaxed(&bc->count, 1);
 		if ((count > bc->size * 8) ||
-		    (count < bc->size * 2 && bc->size > bc->minsize)) {
+		    (count < bc->size * 2 && bc->size > bc->minsize))
+		{
 			resize = true;
 		}
 	} else {

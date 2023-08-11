@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs5.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: pkcs5.c,v 1.2.22.1 2023/08/11 13:39:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -87,7 +87,8 @@ PKCS5_PBKDF2_HMAC(const void * password, size_t password_len,
 
     data = &tmpcksum[checksumsize];
 
-    memcpy(data, salt, salt_len);
+    if (salt_len)
+        memcpy(data, salt, salt_len);
 
     keypart = 1;
     leftofkey = keylen;

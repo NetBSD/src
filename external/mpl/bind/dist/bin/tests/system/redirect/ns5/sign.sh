@@ -22,8 +22,8 @@ zone=signed.
 infile=signed.db.in
 zonefile=signed.db
 
-key1=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS $zone 2> /dev/null`
-key2=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -fk $zone 2> /dev/null`
+key1=$($KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS $zone 2> /dev/null)
+key2=$($KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -fk $zone 2> /dev/null)
 
 cat $infile $key1.key $key2.key > $zonefile
 
@@ -36,8 +36,8 @@ zone=.
 infile=root.db.in
 zonefile=root.db
 
-key1=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS $zone 2> /dev/null`
-key2=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -fk $zone 2> /dev/null`
+key1=$($KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS $zone 2> /dev/null)
+key2=$($KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -fk $zone 2> /dev/null)
 
 # cat $infile $key1.key $key2.key > $zonefile
 cat $infile dsset-signed. $key1.key $key2.key > $zonefile

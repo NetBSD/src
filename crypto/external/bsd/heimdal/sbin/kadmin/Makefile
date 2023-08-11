@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2017/01/28 21:31:53 christos Exp $
+# $NetBSD: Makefile,v 1.3.22.1 2023/08/11 13:40:09 martin Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -39,10 +39,7 @@ CPPFLAGS+= 				\
 	-I${HEIMBASE}/lib/libwind	\
 	-I${DESTDIR}/usr/include/kadm5
 
-LDADD+=	-lkadm5srv -lhdb -lkadm5clnt -lsl
-LDADD+= -lutil -ledit -lterminfo
-DPADD+=	${LIBKADM5SRV} ${LIBHDB} ${LIBKADM5CLNT} ${LIBSL}
-DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMINFO}
+PROGDPLIBS+= ${DPLIBKADM5SRV} ${DPLIBHDB} ${DPLIBKADM5CLNT} ${DPLIBSL}
 
 kadmin.8: kadmin.1
 	@${TOOL_SED} -e 's/KADMIN 1/KADMIN 8/' < ${.ALLSRC} > ${.TARGET}
@@ -51,3 +48,6 @@ CLEANFILES+=kadmin.8
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
+
+LDADD+= -lutil -ledit -lterminfo ${KRB5LDADD}
+DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMINFO} ${KRB5DPADD}

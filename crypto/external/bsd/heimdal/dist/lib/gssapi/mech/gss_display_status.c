@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_display_status.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: gss_display_status.c,v 1.2.22.1 2023/08/11 13:39:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -93,8 +93,7 @@ routine_error(OM_uint32 v)
 	"Incorrect channel bindings were supplied",
 	"An invalid status code was supplied",
 	"A token had an invalid MIC",
-	"No credentials were supplied, "
-	"or the credentials were unavailable or inaccessible.",
+	"No credentials were supplied, or the credentials were unavailable or inaccessible.",
 	"No context has been established",
 	"A token was invalid",
 	"A credential was invalid",

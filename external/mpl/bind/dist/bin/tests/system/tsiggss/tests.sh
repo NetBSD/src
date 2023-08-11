@@ -55,7 +55,7 @@ EOF
 	return 1
     }
 
-    out=`$DIG $DIGOPTS -t $type -q $host | egrep "^${host}"`
+    out=`$DIG $DIGOPTS -t $type -q $host | grep -E "^${host}"`
     lines=`echo "$out" | grep "$digout" | wc -l`
     [ $lines -eq 1 ] || {
 	echo_i "dig output incorrect for $host $type $cmd: $out"

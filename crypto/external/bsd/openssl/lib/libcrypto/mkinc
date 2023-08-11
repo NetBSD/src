@@ -1,0 +1,26 @@
+#!/bin/sh
+
+BUILD=../../openssl-3.0.8
+
+DIRS=$(cd ${BUILD}/crypto/ && ls -d1 */. | sed -e 's,/\.,,g')
+
+extract() {
+    local c
+    if [ $1 = "crypto" ]
+    then
+	c=
+    else
+	c=$1
+    fi
+    ls -1 ${BUILD}/crypto/$c/libcrypto-shlib-*.d | sed -e 's/.*-shlib-//' -e 's/\.d/.c \\/'
+}
+
+for d in ${DIRS} crypto; do
+	proto=$d
+	PROTO=$(echo $d | tr '[a-z]' '[A-Z]')
+	extract $proto > $proto.out
+	sed -e "s/@proto@/$proto/g" -e "s/@PROTO@/$PROTO/g" -e "/@SRCS@/ {
+r $proto.out
+d
+}" PROTO.in > $proto.inc
+done

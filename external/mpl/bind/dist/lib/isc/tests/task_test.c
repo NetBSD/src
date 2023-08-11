@@ -1,4 +1,4 @@
-/*	$NetBSD: task_test.c,v 1.10 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: task_test.c,v 1.10.2.1 2023/08/11 13:43:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -633,8 +633,8 @@ basic(void **state) {
 #else  /* ifndef WIN32 */
 	Sleep(10000);
 #endif /* ifndef WIN32 */
-	isc_timer_detach(&ti1);
-	isc_timer_detach(&ti2);
+	isc_timer_destroy(&ti1);
+	isc_timer_destroy(&ti2);
 }
 
 /*
@@ -1086,7 +1086,8 @@ pg_event2(isc_task_t *task, isc_event_t *event) {
 
 	if (testrange) {
 		if ((purge_type_first <= event->ev_type) &&
-		    (event->ev_type <= purge_type_last)) {
+		    (event->ev_type <= purge_type_last))
+		{
 			type_match = true;
 		}
 	} else {
@@ -1193,7 +1194,8 @@ test_purge(int sender, int type, int tag, int exp_purged) {
 				 */
 				if (((sender_cnt % 2) != 0) &&
 				    ((type_cnt % 2) != 0) &&
-				    ((tag_cnt % 2) != 0)) {
+				    ((tag_cnt % 2) != 0))
+				{
 					eventtab[event_cnt]->ev_attributes |=
 						ISC_EVENTATTR_NOPURGE;
 				}
@@ -1519,20 +1521,6 @@ purgeevent(void **state) {
 	try_purgeevent(true);
 }
 
-/*
- * Purge event not purgeable test:
- * When the event is not marked as purgable, a call to
- * isc_task_purgeevent(task, event) does not purge the event
- * 'event' from the task's queue and returns false.
- */
-
-static void
-purgeevent_notpurge(void **state) {
-	UNUSED(state);
-
-	try_purgeevent(false);
-}
-
 int
 main(int argc, char **argv) {
 	const struct CMUnitTest tests[] = {
@@ -1550,8 +1538,6 @@ main(int argc, char **argv) {
 						_teardown),
 		cmocka_unit_test_setup_teardown(purge, _setup2, _teardown),
 		cmocka_unit_test_setup_teardown(purgeevent, _setup2, _teardown),
-		cmocka_unit_test_setup_teardown(purgeevent_notpurge, _setup,
-						_teardown),
 		cmocka_unit_test_setup_teardown(purgerange, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(task_shutdown, _setup4,
 						_teardown),

@@ -18,7 +18,7 @@ SYSTEMTESTTOP=..
 DIGCMD="$DIG @10.53.0.2 -p ${PORT}"
 RNDCCMD="$RNDC -c $SYSTEMTESTTOP/common/rndc.conf -p ${CONTROLPORT} -s"
 
-if [ ! "$HAVEJSONSTATS" ]
+if ! $FEATURETEST --have-json-c
 then
     unset PERL_JSON
     echo_i "JSON was not configured; skipping" >&2
@@ -30,7 +30,7 @@ else
     echo_i "JSON tests require JSON library; skipping" >&2
 fi
 
-if [ ! "$HAVEXMLSTATS" ]
+if ! $FEATURETEST --have-libxml2
 then
     unset PERL_XML
     echo_i "XML was not configured; skipping" >&2
@@ -138,7 +138,7 @@ n=`expr $n + 1`
 echo_i "checking consistency between regular and compressed output ($n)"
 for i in 1 2 3 4 5; do
 	ret=0
-	if [ "$HAVEXMLSTATS" ];
+	if $FEATURETEST --have-libxml2;
 	then
 		URL=http://10.53.0.2:${EXTRAPORT1}/xml/v3/server
 		filter_str='s#<current-time>.*</current-time>##g'
@@ -164,7 +164,7 @@ n=`expr $n + 1`
 
 ret=0
 echo_i "checking if compressed output is really compressed ($n)"
-if [ "$HAVEZLIB" ];
+if $FEATURETEST --with-zlib;
 then
     REGSIZE=`cat regular.headers | \
 	grep -i Content-Length | sed -e "s/.*: \([0-9]*\).*/\1/"`
@@ -278,6 +278,7 @@ ksk13_id=`cat ns2/$zone.ksk13.id`
 zsk13_id=`cat ns2/$zone.zsk13.id`
 ksk14_id=`cat ns2/$zone.ksk14.id`
 zsk14_id=`cat ns2/$zone.zsk14.id`
+num_ids=$( (echo $ksk8_id; echo $zsk8_id; echo $ksk13_id; echo $zsk13_id; echo $ksk14_id; echo $zsk14_id;) | sort -u | wc -l)
 # The dnssec zone has 10 RRsets to sign (including NSEC) with the ZSKs and one
 # RRset (DNSKEY) with the KSKs. So starting named with signatures that expire
 # almost right away, this should trigger 10 zsk and 1 ksk sign operations per
@@ -298,15 +299,20 @@ cat zones.expect | sort > zones.expect.$n
 rm -f zones.expect
 # Fetch and check the dnssec sign statistics.
 echo_i "fetching zone '$zone' stats data after zone maintenance at startup ($n)"
-if [ $PERL_XML ]; then
-    getzones xml $zone x$n || ret=1
-    cmp zones.out.x$n zones.expect.$n || ret=1
+if test $num_ids -eq 6
+then
+    if [ $PERL_XML ]; then
+        getzones xml $zone x$n || ret=1
+        cmp zones.out.x$n zones.expect.$n || ret=1
+    fi
+    if [ $PERL_JSON ]; then
+        getzones json 2 j$n || ret=1
+        cmp zones.out.j$n zones.expect.$n || ret=1
+    fi
+    if [ $ret != 0 ]; then echo_i "failed"; fi
+else
+    echo_i "skipped: duplicate key id detected (fixed in BIND 9.19)"
 fi
-if [ $PERL_JSON ]; then
-    getzones json 2 j$n || ret=1
-    cmp zones.out.j$n zones.expect.$n || ret=1
-fi
-if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
 
@@ -336,15 +342,20 @@ cat zones.expect | sort > zones.expect.$n
 rm -f zones.expect
 # Fetch and check the dnssec sign statistics.
 echo_i "fetching zone '$zone' stats data after dynamic update ($n)"
-if [ $PERL_XML ]; then
-    getzones xml $zone x$n || ret=1
-    cmp zones.out.x$n zones.expect.$n || ret=1
+if test $num_ids -eq 6
+then
+    if [ $PERL_XML ]; then
+        getzones xml $zone x$n || ret=1
+        cmp zones.out.x$n zones.expect.$n || ret=1
+    fi
+    if [ $PERL_JSON ]; then
+        getzones json 2 j$n || ret=1
+        cmp zones.out.j$n zones.expect.$n || ret=1
+    fi
+    if [ $ret != 0 ]; then echo_i "failed"; fi
+else
+    echo_i "skipped: duplicate key id detected (fixed in BIND 9.19)"
 fi
-if [ $PERL_JSON ]; then
-    getzones json 2 j$n || ret=1
-    cmp zones.out.j$n zones.expect.$n || ret=1
-fi
-if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
 

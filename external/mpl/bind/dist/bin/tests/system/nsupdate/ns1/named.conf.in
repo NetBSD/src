@@ -23,6 +23,7 @@ options {
 	recursion no;
 	notify yes;
 	minimal-responses no;
+	update-quota 1;
 };
 
 acl named-acl {
@@ -83,6 +84,7 @@ zone "other.nil" {
 	check-integrity no;
 	check-mx warn;
 	update-policy local;
+	allow-query { !10.53.0.2; any; };
 	allow-query-on { 10.53.0.1; 127.0.0.1; };
 	allow-transfer { any; };
 };

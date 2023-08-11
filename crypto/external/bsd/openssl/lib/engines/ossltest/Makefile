@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2018/12/08 23:24:02 christos Exp $
+#	$NetBSD: Makefile,v 1.1.14.1 2023/08/11 13:41:53 martin Exp $
 
 LIB=	ossltest
-SRCS=	e_ossltest.c e_ossltest_err.c
+SRCS=	e_ossltest.c
 
 .include "../engines.mk"

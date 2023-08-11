@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.c,v 1.8 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.8.2.1 2023/08/11 13:43:34 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -474,7 +474,8 @@ rpsdb_bind_soa(dns_rdataset_t *rdataset, rpsdb_t *rpsdb) {
 	librpz_emsg_t emsg;
 
 	if (!librpz->rsp_soa(&emsg, &ttl, NULL, NULL, &rpsdb->result,
-			     rpsdb->rsp)) {
+			     rpsdb->rsp))
+	{
 		librpz->log(LIBRPZ_LOG_ERROR, NULL, "%s", emsg.c);
 		return (DNS_R_SERVFAIL);
 	}
@@ -622,7 +623,8 @@ rpsdb_finddb(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 
 static isc_result_t
 rpsdb_allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
-		   isc_stdtime_t now, dns_rdatasetiter_t **iteratorp) {
+		   unsigned int options, isc_stdtime_t now,
+		   dns_rdatasetiter_t **iteratorp) {
 	rpsdb_t *rpsdb = (rpsdb_t *)db;
 	rpsdb_rdatasetiter_t *rpsdb_iter;
 
@@ -638,6 +640,7 @@ rpsdb_allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	rpsdb_iter->common.magic = DNS_RDATASETITER_MAGIC;
 	rpsdb_iter->common.methods = &rpsdb_rdatasetiter_methods;
 	rpsdb_iter->common.db = db;
+	rpsdb_iter->common.options = options;
 	rpsdb_attachnode(db, node, &rpsdb_iter->common.node);
 
 	*iteratorp = &rpsdb_iter->common;
@@ -708,7 +711,8 @@ rpsdb_rdataset_next(dns_rdataset_t *rdataset) {
 		}
 		RD_NEXT_RR(rdataset) = LIBRPZ_IDX_NULL;
 		if (!librpz->rsp_soa(&emsg, NULL, &rr, NULL, &rpsdb->result,
-				     rpsdb->rsp)) {
+				     rpsdb->rsp))
+		{
 			librpz->log(LIBRPZ_LOG_ERROR, NULL, "%s", emsg.c);
 			return (DNS_R_SERVFAIL);
 		}

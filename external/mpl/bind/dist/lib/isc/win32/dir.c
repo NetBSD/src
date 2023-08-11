@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.7 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.7.2.1 2023/08/11 13:43:39 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -109,7 +109,8 @@ isc_dir_read(isc_dir_t *dir) {
 		 * Fetch next file in directory.
 		 */
 		if (FindNextFile(dir->search_handle, &dir->entry.find_data) ==
-		    FALSE) {
+		    FALSE)
+		{
 			/*
 			 * Either the last file has been processed or
 			 * an error has occurred.  The former is not

@@ -11,14 +11,7 @@
  * information regarding copyright ownership.
  */
 
-dnssec-policy "unsigning" {
-	dnskey-ttl 7200;
-
-	keys {
-		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
-		zsk key-directory lifetime P60D algorithm @DEFAULT_ALGORITHM@;
-	};
-};
+include "policies/kasp-fips.conf";
 
 dnssec-policy "rsasha1" {
 	signatures-refresh P5D;
@@ -28,25 +21,6 @@ dnssec-policy "rsasha1" {
 	keys {
 		ksk lifetime unlimited algorithm rsasha1;
 		zsk lifetime unlimited algorithm rsasha1;
-	};
-
-	dnskey-ttl 1h;
-	publish-safety PT1H;
-	retire-safety 2h;
-	zone-propagation-delay 3600;
-	max-zone-ttl 6h;
-	parent-propagation-delay pt1h;
-	parent-ds-ttl 7200;
-};
-
-dnssec-policy "ecdsa256" {
-	signatures-refresh P5D;
-	signatures-validity 30d;
-	signatures-validity-dnskey 30d;
-
-	keys {
-		ksk lifetime unlimited algorithm ecdsa256;
-		zsk lifetime unlimited algorithm ecdsa256;
 	};
 
 	dnskey-ttl 1h;

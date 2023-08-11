@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2021/04/12 02:54:07 mrg Exp $	
+#	$NetBSD: Makefile,v 1.21.6.1 2023/08/11 13:42:57 martin Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -208,5 +208,7 @@ tcpdump.8: tcpdump.1.in
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 COPTS.print-bgp.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.signature.c+=	-Wno-error=deprecated-declarations
+COPTS.print-tcp.c+=	-Wno-error=deprecated-declarations
 
 .include <bsd.prog.mk>

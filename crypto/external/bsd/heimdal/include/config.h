@@ -858,6 +858,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
 
+/* Define to 1 if you have the <stdio.h> header file. */
+#define HAVE_STDIO_H 1
+
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
 
@@ -1443,7 +1446,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_NAME "Heimdal"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Heimdal 7.7.0"
+#define PACKAGE_STRING "Heimdal 7.8.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "heimdal"
@@ -1452,7 +1455,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "7.7.0"
+#define PACKAGE_VERSION "7.8.0"
 
 /* path to PKCS11 module */
 /* #undef PKCS11_MODULE_PATH */
@@ -1510,7 +1513,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "7.7.0"
+#define VERSION "7.8.0"
 
 /* Define if signal handlers return void. */
 #define VOID_RETSIGTYPE 1
@@ -1589,10 +1592,6 @@ struct sockaddr_dl;
 struct sockaddr_in;
 #endif
 
-#ifdef __APPLE__
-#include <AvailabilityMacros.h>
-#endif
-
 #ifdef ROKEN_RENAME
 #include "roken_rename.h"
 #endif
@@ -1633,3 +1632,6 @@ struct sockaddr_in;
 #define LOGIN_PATH BINDIR "/login"
 #endif
 
+#ifdef __APPLE__
+#include <AvailabilityMacros.h>
+#endif

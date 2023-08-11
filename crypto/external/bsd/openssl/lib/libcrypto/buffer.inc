@@ -1,16 +1,13 @@
-#	$NetBSD: buffer.inc,v 1.3 2018/02/08 21:57:24 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/buffer/Makefile
-#
+#	$NetBSD: buffer.inc,v 1.3.14.1 2023/08/11 13:41:54 martin Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/buffer
 
+BUFFER_SRCS += \
+buf_err.c \
+buffer.c \
 
-BUFFER_SRCS = buffer.c buf_err.c
 SRCS += ${BUFFER_SRCS}
 
 .for cryptosrc in ${BUFFER_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/buffer
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/buffer ${BUFFERCPPFLAGS}
 .endfor

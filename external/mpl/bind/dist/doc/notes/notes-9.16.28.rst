@@ -31,3 +31,10 @@ Bug Fixes
 - Handling of TCP write timeouts has been improved to track the timeout
   for each TCP write separately, leading to a faster connection teardown
   in case the other party is not reading the data. :gl:`#3200`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

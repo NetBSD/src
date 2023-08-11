@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.341 2022/07/14 03:48:49 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.341.2.1 2023/08/11 13:43:42 martin Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -404,6 +404,10 @@ PROGS=		${PROG}
 PROGDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=PROGDO.${_lib}
 .endif
+.if defined(PROGDPLIBSSTATIC)
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}.a
+LDADD+=		${PROGDO.${_lib}}/lib${_lib}.a
+.else
 LDADD+=		-L${PROGDO.${_lib}} -l${_lib}
 .if exists(${PROGDO.${_lib}}/lib${_lib}_pic.a)
 DPADD+=		${PROGDO.${_lib}}/lib${_lib}_pic.a
@@ -411,6 +415,7 @@ DPADD+=		${PROGDO.${_lib}}/lib${_lib}_pic.a
 DPADD+=		${PROGDO.${_lib}}/lib${_lib}.so
 .else
 DPADD+=		${PROGDO.${_lib}}/lib${_lib}.a
+.endif
 .endif
 .endfor
 .endif									# }

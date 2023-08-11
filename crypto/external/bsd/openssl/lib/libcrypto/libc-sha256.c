@@ -15,6 +15,8 @@
 #include <string.h>
 
 #include <openssl/crypto.h>
+#undef OSSL_DEPRECATEDIN_3_0
+#define OSSL_DEPRECATEDIN_3_0
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
 

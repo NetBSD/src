@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc-private.h,v 1.2 2019/12/15 22:50:46 christos Exp $	*/
+/*	$NetBSD: kdc-private.h,v 1.2.10.1 2023/08/11 13:39:55 martin Exp $	*/
 
 /* This is a generated file */
 #ifndef __kdc_private_h__
@@ -180,6 +180,9 @@ _kdc_get_preferred_key (
 	const char */*name*/,
 	krb5_enctype */*enctype*/,
 	Key **/*key*/);
+
+krb5_boolean
+_kdc_is_anon_request (const KDC_REQ */*req*/);
 
 krb5_boolean
 _kdc_is_anonymous (

@@ -1,4 +1,4 @@
-/*	$NetBSD: feature-test.c,v 1.9 2022/09/23 12:15:23 christos Exp $	*/
+/*	$NetBSD: feature-test.c,v 1.9.2.1 2023/08/11 13:43:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <isc/md.h>
 #include <isc/net.h>
 #include <isc/print.h>
 #include <isc/util.h>
@@ -44,12 +45,15 @@ usage() {
 	fprintf(stderr, "\t--gssapi\n");
 	fprintf(stderr, "\t--have-dlopen\n");
 	fprintf(stderr, "\t--have-geoip2\n");
+	fprintf(stderr, "\t--have-json-c\n");
 	fprintf(stderr, "\t--have-libxml2\n");
 	fprintf(stderr, "\t--ipv6only=no\n");
+	fprintf(stderr, "\t--md5\n");
 	fprintf(stderr, "\t--tsan\n");
 	fprintf(stderr, "\t--with-dlz-filesystem\n");
 	fprintf(stderr, "\t--with-idn\n");
 	fprintf(stderr, "\t--with-lmdb\n");
+	fprintf(stderr, "\t--with-zlib\n");
 }
 
 int
@@ -137,6 +141,14 @@ main(int argc, char **argv) {
 #endif /* ifdef HAVE_GEOIP2 */
 	}
 
+	if (strcmp(argv[1], "--have-json-c") == 0) {
+#ifdef HAVE_JSON_C
+		return (0);
+#else  /* ifdef HAVE_JSON_C */
+		return (1);
+#endif /* ifdef HAVE_JSON_C */
+	}
+
 	if (strcmp(argv[1], "--have-libxml2") == 0) {
 #ifdef HAVE_LIBXML2
 		return (0);
@@ -164,6 +176,20 @@ main(int argc, char **argv) {
 #else  /* ifdef WIN32 */
 		return (1);
 #endif /* ifdef WIN32 */
+	}
+
+	if (strcmp(argv[1], "--md5") == 0) {
+		unsigned char digest[ISC_MAX_MD_SIZE];
+		const unsigned char test[] = "test";
+		unsigned int size = sizeof(digest);
+
+		if (isc_md(ISC_MD_MD5, test, sizeof(test), digest, &size) ==
+		    ISC_R_SUCCESS)
+		{
+			return (0);
+		} else {
+			return (1);
+		}
 	}
 
 	if (strcmp(argv[1], "--tsan") == 0) {
@@ -201,6 +227,14 @@ main(int argc, char **argv) {
 #else  /* ifdef HAVE_LMDB */
 		return (1);
 #endif /* ifdef HAVE_LMDB */
+	}
+
+	if (strcmp(argv[1], "--with-zlib") == 0) {
+#ifdef HAVE_ZLIB
+		return (0);
+#else  /* ifdef HAVE_ZLIB */
+		return (1);
+#endif /* ifdef HAVE_ZLIB */
 	}
 
 	fprintf(stderr, "unknown arg: %s\n", argv[1]);

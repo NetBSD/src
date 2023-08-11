@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2020/03/04 17:30:40 christos Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2023/08/11 13:40:11 martin Exp $
 
 BINDIR=	/usr/libexec
 
@@ -8,5 +8,8 @@ MAN=	ssh-sk-helper.8
 
 LDADD+=-lfido2 -lcbor -lusbhid -lm
 DPADD+=${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID} ${LIBM}
+
+COPTS.ssh-sk.c+= -Wno-error=deprecated-declarations
+COPTS.sk-usbhid.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.prog.mk>

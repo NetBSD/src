@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: acl.c,v 1.2.22.1 2023/08/11 13:40:00 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2002, 2004 Kungliga Tekniska Högskolan
@@ -248,7 +248,7 @@ krb5_acl_match_file(krb5_context context,
 		    ...)
 {
     krb5_error_code ret;
-    struct acl_field *acl;
+    struct acl_field *acl = NULL;
     char buf[256];
     va_list ap;
     FILE *f;

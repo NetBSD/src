@@ -14,12 +14,15 @@
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
+#
+# We use rsasha256 here to get a ZSK + KSK that don't fit in 512 bytes.
+#
 zone=ds.example.net
 zonefile="${zone}.db"
 infile="${zonefile}.in"
 cp $infile $zonefile
-ksk=`$KEYGEN -q -a rsasha256 -fk $zone`
-zsk=`$KEYGEN -q -a rsasha256 -b 2048 $zone`
+ksk=$($KEYGEN -q -a rsasha256 -fk $zone)
+zsk=$($KEYGEN -q -a rsasha256 -b 2048 $zone)
 cat $ksk.key $zsk.key >> $zonefile
 $SIGNER -P -o $zone $zonefile > /dev/null
 
@@ -27,8 +30,8 @@ zone=example.net
 zonefile="${zone}.db"
 infile="${zonefile}.in"
 cp $infile $zonefile
-ksk=`$KEYGEN -q -a rsasha256 -fk $zone`
-zsk=`$KEYGEN -q -a rsasha256 $zone`
+ksk=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -fk $zone)
+zsk=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} $zone)
 cat $ksk.key $zsk.key dsset-ds.example.net$TP >> $zonefile
 $SIGNER -P -o $zone $zonefile > /dev/null
 

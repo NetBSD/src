@@ -54,3 +54,10 @@ Bug Fixes
 - Updating contents of an RPZ zone which contained names spelled using
   varying letter case could cause some processing rules in that RPZ zone
   to be erroneously ignored. :gl:`#2169`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

@@ -1,5 +1,5 @@
 # Make Read the Docs use the exact same package versions as in
 # registry.gitlab.isc.org/isc-projects/images/bind9:debian-bullseye-amd64
-Sphinx==4.5.0
+Sphinx==5.3.0
 docutils==0.17.1
 sphinx_rtd_theme==1.0.0

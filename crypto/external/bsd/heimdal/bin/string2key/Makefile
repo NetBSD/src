@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:17 he Exp $
+# $NetBSD: Makefile,v 1.2.56.1 2023/08/11 13:39:45 martin Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -22,3 +22,6 @@ CPPFLAGS+= 				\
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
+
+LDADD+= ${KRB5LDADD}
+DPADD+= ${KRB5DPADD}

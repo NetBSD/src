@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.4 2019/12/15 22:50:46 christos Exp $	*/
+/*	$NetBSD: connect.c,v 1.4.8.1 2023/08/11 13:39:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -1270,6 +1270,4 @@ start_kdc(krb5_context context,
     loop(context, config, d, ndescr, -1);
     kdc_log(context, config, 0, "KDC exiting", pid);
 #endif
-
-    free(d);
 }

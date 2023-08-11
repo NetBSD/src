@@ -82,6 +82,7 @@ if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 echo_i "updating zone (signed) ($n)"
 ret=0
 $NSUPDATE -y update.example:c3Ryb25nIGVub3VnaCBmb3IgYSBtYW4gYnV0IG1hZGUgZm9yIGEgd29tYW4K -- - <<EOF || ret=1
+local 10.53.0.1
 server 10.53.0.3 ${PORT}
 update add updated.example. 600 A 10.10.10.1
 update add updated.example. 600 TXT Foo
@@ -140,6 +141,7 @@ fi
 echo_i "updating zone (unsigned) ($n)"
 ret=0
 $NSUPDATE -- - <<EOF || ret=1
+local 10.53.0.1
 server 10.53.0.3 ${PORT}
 update add unsigned.example. 600 A 10.10.10.1
 update add unsigned.example. 600 TXT Foo
@@ -196,6 +198,7 @@ while [ $count -lt 5 -a $ret -eq 0 ]
 do
 (
 $NSUPDATE -- - <<EOF 
+local 10.53.0.1
 server 10.53.0.3 ${PORT}
 zone nomaster
 update add unsigned.nomaster. 600 A 10.10.10.1
@@ -227,6 +230,7 @@ then
 	ret=0
 	keyname=`cat keyname`
 	$NSUPDATE -k $keyname.private -- - <<EOF
+	local 10.53.0.1
 	server 10.53.0.3 ${PORT}
 	zone example2
 	update add unsigned.example2. 600 A 10.10.10.1
@@ -250,6 +254,41 @@ EOF
 		n=`expr $n + 1`
 	fi
 fi
+
+echo_i "attempting an update that should be rejected by ACL ($n)"
+ret=0
+{
+        $NSUPDATE -- - << EOF
+        local 10.53.0.2
+        server 10.53.0.3 ${PORT}
+        update add another.unsigned.example. 600 A 10.10.10.2
+        update add another.unsigned.example. 600 TXT Bar
+        send
+EOF
+} > nsupdate.out.$n 2>&1
+grep REFUSED nsupdate.out.$n > /dev/null || ret=1
+if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
+n=`expr $n + 1`
+
+n=$((n + 1))
+ret=0
+echo_i "attempting updates that should exceed quota ($n)"
+# lower the update quota to 1.
+copy_setports ns3/named2.conf.in ns3/named.conf
+rndc_reconfig ns3 10.53.0.3
+nextpart ns3/named.run > /dev/null
+for loop in 1 2 3 4 5 6 7 8 9 10; do
+{
+  $NSUPDATE -- - > /dev/null 2>&1 <<END
+  local 10.53.0.1
+  server 10.53.0.3 ${PORT}
+  update add txt-$loop.unsigned.example 300 IN TXT Whatever
+  send
+END
+} &
+done
+wait_for_log 10 "too many DNS UPDATEs queued" ns3/named.run || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

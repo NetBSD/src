@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2019/01/04 21:22:20 christos Exp $
+# $NetBSD: Makefile,v 1.10.10.1 2023/08/11 13:42:58 martin Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -147,5 +147,8 @@ SRCS+= sha1-pbkdf2.c sha1.c md5.c
 .endif
 
 .endif
+
+COPTS.crypto_openssl.c+= -Wno-error=deprecated-declarations
+COPTS.tls_openssl.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.prog.mk>

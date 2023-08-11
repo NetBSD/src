@@ -1,4 +1,4 @@
-/*	$NetBSD: digest.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
+/*	$NetBSD: digest.c,v 1.3.14.1 2023/08/11 13:39:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -1368,7 +1368,9 @@ _kdc_do_digest(krb5_context context,
 #else
 	    rc4 = EVP_CIPHER_CTX_new();
 #endif
-	    EVP_CipherInit_ex(rc4, EVP_rc4(), NULL, sessionkey, NULL, 1);
+	    if (!EVP_CipherInit_ex(rc4, EVP_rc4(), NULL, sessionkey, NULL, 1))
+		krb5_set_error_message(context, EINVAL,
+				       "RC4 cipher not supported");
 	    EVP_Cipher(rc4,
 		       masterkey, ireq.u.ntlmRequest.sessionkey->data,
 		       sizeof(masterkey));
@@ -1477,6 +1479,10 @@ _kdc_do_digest(krb5_context context,
     ret = krb5_encrypt_EncryptedData(context, crypto, KRB5_KU_DIGEST_ENCRYPT,
 				     buf.data, buf.length, 0,
 				     &rep.innerRep);
+    if (ret) {
+        krb5_prepend_error_message(context, ret, "Failed to encrypt digest: ");
+        goto out;
+    }
 
     ASN1_MALLOC_ENCODE(DigestREP, reply->data, reply->length, &rep, &size, ret);
     if (ret) {

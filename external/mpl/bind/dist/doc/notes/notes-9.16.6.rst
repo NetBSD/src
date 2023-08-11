@@ -112,3 +112,10 @@ Bug Fixes
 
 - LMDB locking code was revised to make ``rndc reconfig`` work properly
   on FreeBSD and with LMDB >= 0.9.26. :gl:`#1976`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

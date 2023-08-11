@@ -22,8 +22,8 @@ zonefile=example.db
 
 cp ../ns4/dsset-sub.example$TP .
 
-keyname1=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
-keyname2=`$KEYGEN -q -a RSASHA256 -b 2048 -f KSK -n zone $zone`
+keyname1=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname2=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -f KSK -n zone $zone)
 cat $infile $keyname1.key $keyname2.key > $zonefile
 
 $SIGNER -g -o $zone $zonefile > /dev/null
@@ -34,8 +34,8 @@ keyfile_to_static_ds $keyname2 > trusted.conf
 zone=undelegated
 infile=undelegated.db.in
 zonefile=undelegated.db
-keyname1=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
-keyname2=`$KEYGEN -q -a RSASHA256 -b 2048 -f KSK -n zone $zone`
+keyname1=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname2=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -f KSK -n zone $zone)
 cat $infile $keyname1.key $keyname2.key > $zonefile
 
 $SIGNER -g -o $zone $zonefile > /dev/null

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.7.2.1 2023/08/11 13:43:37 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -919,7 +919,8 @@ isc_log_closefilelogs(isc_log_t *lctx) {
 		     channel != NULL; channel = ISC_LIST_NEXT(channel, link))
 		{
 			if (channel->type == ISC_LOG_TOFILE &&
-			    FILE_STREAM(channel) != NULL) {
+			    FILE_STREAM(channel) != NULL)
+			{
 				(void)fclose(FILE_STREAM(channel));
 				FILE_STREAM(channel) = NULL;
 			}
@@ -1083,7 +1084,8 @@ greatest_version(isc_logfile_t *file, int versions, int *greatestp) {
 			if (*digit_end == '\0' && version >= versions) {
 				result = isc_file_remove(dir.entry.name);
 				if (result != ISC_R_SUCCESS &&
-				    result != ISC_R_FILENOTFOUND) {
+				    result != ISC_R_FILENOTFOUND)
+				{
 					syslog(LOG_ERR,
 					       "unable to remove "
 					       "log file '%s': %s",
@@ -1103,7 +1105,7 @@ greatest_version(isc_logfile_t *file, int versions, int *greatestp) {
 }
 
 static void
-insert_sort(int64_t to_keep[], int64_t versions, int version) {
+insert_sort(int64_t to_keep[], int64_t versions, int64_t version) {
 	int i = 0;
 	while (i < versions && version < to_keep[i]) {
 		i++;
@@ -1120,12 +1122,13 @@ insert_sort(int64_t to_keep[], int64_t versions, int version) {
 
 static int64_t
 last_to_keep(int64_t versions, isc_dir_t *dirp, char *bname, size_t bnamelen) {
-	if (versions <= 0) {
-		return INT64_MAX;
-	}
-
 	int64_t to_keep[ISC_LOG_MAX_VERSIONS] = { 0 };
 	int64_t version = 0;
+
+	if (versions <= 0) {
+		return (INT64_MAX);
+	}
+
 	if (versions > ISC_LOG_MAX_VERSIONS) {
 		versions = ISC_LOG_MAX_VERSIONS;
 	}
@@ -1134,6 +1137,9 @@ last_to_keep(int64_t versions, isc_dir_t *dirp, char *bname, size_t bnamelen) {
 	 */
 	memset(to_keep, 0, sizeof(to_keep));
 	while (isc_dir_read(dirp) == ISC_R_SUCCESS) {
+		char *digit_end = NULL;
+		char *ename = NULL;
+
 		if (dirp->entry.length <= bnamelen ||
 		    strncmp(dirp->entry.name, bname, bnamelen) != 0 ||
 		    dirp->entry.name[bnamelen] != '.')
@@ -1141,8 +1147,7 @@ last_to_keep(int64_t versions, isc_dir_t *dirp, char *bname, size_t bnamelen) {
 			continue;
 		}
 
-		char *digit_end;
-		char *ename = &dirp->entry.name[bnamelen + 1];
+		ename = &dirp->entry.name[bnamelen + 1];
 		version = strtoull(ename, &digit_end, 10);
 		if (*digit_end == '\0') {
 			insert_sort(to_keep, versions, version);
@@ -1160,8 +1165,8 @@ last_to_keep(int64_t versions, isc_dir_t *dirp, char *bname, size_t bnamelen) {
 static isc_result_t
 remove_old_tsversions(isc_logfile_t *file, int versions) {
 	isc_result_t result;
-	char *bname, *digit_end;
-	const char *dirname;
+	char *bname = NULL, *digit_end = NULL;
+	const char *dirname = NULL;
 	int64_t version, last = INT64_MAX;
 	size_t bnamelen;
 	isc_dir_t dir;
@@ -1227,7 +1232,8 @@ remove_old_tsversions(isc_logfile_t *file, int versions) {
 			if (*digit_end == '\0' && version < last) {
 				result = isc_file_remove(dir.entry.name);
 				if (result != ISC_R_SUCCESS &&
-				    result != ISC_R_FILENOTFOUND) {
+				    result != ISC_R_FILENOTFOUND)
+				{
 					syslog(LOG_ERR,
 					       "unable to remove "
 					       "log file '%s': %s",
@@ -1264,7 +1270,8 @@ roll_increment(isc_logfile_t *file) {
 			n = snprintf(current, sizeof(current), "%s.%u", path,
 				     (unsigned)greatest);
 			if (n >= (int)sizeof(current) || n < 0 ||
-			    !isc_file_exists(current)) {
+			    !isc_file_exists(current))
+			{
 				break;
 			}
 		}
@@ -1577,7 +1584,8 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 		}
 
 		if (category_channels->module != NULL &&
-		    category_channels->module != module) {
+		    category_channels->module != module)
+		{
 			category_channels = ISC_LIST_NEXT(category_channels,
 							  link);
 			continue;
@@ -1603,7 +1611,8 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 		}
 
 		if ((channel->flags & ISC_LOG_PRINTTIME) != 0 &&
-		    local_time[0] == '\0') {
+		    local_time[0] == '\0')
+		{
 			isc_time_t isctime;
 
 			TIME_NOW(&isctime);
@@ -1617,7 +1626,8 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 		}
 
 		if ((channel->flags & ISC_LOG_PRINTLEVEL) != 0 &&
-		    level_string[0] == '\0') {
+		    level_string[0] == '\0')
+		{
 			if (level < ISC_LOG_CRITICAL) {
 				snprintf(level_string, sizeof(level_string),
 					 "level %d: ", level);
@@ -1671,7 +1681,8 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 
 				while (message != NULL) {
 					if (isc_time_compare(&message->time,
-							     &oldest) < 0) {
+							     &oldest) < 0)
+					{
 						/*
 						 * This message is older
 						 * than the
@@ -1708,7 +1719,8 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 					 * ...
 					 */
 					if (strcmp(lctx->buffer,
-						   message->text) == 0) {
+						   message->text) == 0)
+					{
 						/*
 						 * ... and it is a
 						 * duplicate. Unlock the

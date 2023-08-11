@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg_test.c,v 1.6 2022/09/23 12:15:23 christos Exp $	*/
+/*	$NetBSD: cfg_test.c,v 1.6.2.1 2023/08/11 13:43:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -112,10 +112,12 @@ main(int argc, char **argv) {
 				usage();
 			}
 			if (strcmp(argv[1], "master") == 0 ||
-			    strcmp(argv[1], "primary") == 0) {
+			    strcmp(argv[1], "primary") == 0)
+			{
 				zonetype = CFG_ZONE_PRIMARY;
 			} else if (strcmp(argv[1], "slave") == 0 ||
-				   strcmp(argv[1], "seconary") == 0) {
+				   strcmp(argv[1], "seconary") == 0)
+			{
 				zonetype = CFG_ZONE_SECONDARY;
 			} else if (strcmp(argv[1], "mirror") == 0) {
 				zonetype = CFG_ZONE_MIRROR;

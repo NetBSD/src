@@ -17,7 +17,7 @@ Security Fixes
 
 -  DNS rebinding protection was ineffective when BIND 9 is configured as
    a forwarding DNS server. Found and responsibly reported by Tobias
-   Klein.:gl:`#1574`
+   Klein. :gl:`#1574`
 
 Known Issues
 ~~~~~~~~~~~~
@@ -29,6 +29,9 @@ Known Issues
    NSEC3-related changes (such as an operator changing the NSEC3 salt
    used in the hash calculation). These are being investigated.
    :gl:`#1685`
+
+-  See :ref:`above <relnotes_known_issues>` for a list of all known
+   issues affecting this BIND 9 branch.
 
 Feature Changes
 ~~~~~~~~~~~~~~~

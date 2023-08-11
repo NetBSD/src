@@ -57,3 +57,7 @@ $(LIBNAME): dlz_perl_driver.o dlz_perl_callback_clientinfo.o dlz_perl_callback.o
 
 clean:
 	rm -f dlz_perl_driver.o dlz_perl_driver.so dlz_perl_callback_clientinfo.c dlz_perl_callback_clientinfo.o dlz_perl_callback.c dlz_perl_callback.o
+
+install: dlz_perl_driver.so
+	mkdir -p $(DESTDIR)$(libdir)
+	install dlz_perl_driver.so $(DESTDIR)$(libdir)

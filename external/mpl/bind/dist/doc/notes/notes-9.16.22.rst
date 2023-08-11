@@ -77,3 +77,10 @@ Bug Fixes
 - When new IP addresses were set up by the operating system during
   ``named`` startup, it could fail to listen for TCP connections on the
   newly added interfaces. :gl:`#2852`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

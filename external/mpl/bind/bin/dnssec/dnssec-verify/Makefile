@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2019/10/13 07:28:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2023/08/11 13:42:58 martin Exp $
 
 BASE=	${.CURDIR:T}
 
 .include "${.CURDIR}/../Makefile.inc"
 
-COPTS.discover.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.discover.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>
