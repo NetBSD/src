@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.21 2023/06/28 06:15:42 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.22 2023/08/11 05:01:12 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests a variable
 # expression for emptiness.
@@ -150,7 +150,7 @@ ${:U }=	space
 .  error
 .endif
 
-# There may be spaces at the outside the parentheses.
+# There may be spaces outside the parentheses.
 # Spaces inside the parentheses are interpreted as part of the variable name.
 .if ! empty ( WORD )
 .  error
