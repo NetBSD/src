@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2021/04/12 02:54:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.12.16.1 2023/08/11 16:22:06 martin Exp $
 
 .include "../Makefile.inc"
 
@@ -16,7 +16,7 @@ SRCS+=		lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c lfunc.c lgc.c \
 		lstring.c ltable.c ltm.c lundump.c lvm.c lzio.c
 
 # Lua stdlibs source code
-SRCS+=		lauxlib.c lbaselib.c lbitlib.c lcorolib.c ldblib.c \
+SRCS+=		lauxlib.c lbaselib.c lcorolib.c ldblib.c \
 		lstrlib.c ltablib.c lutf8lib.c linit.c
 
 CPPFLAGS+=	-I${S}/../external/mit/lua/dist/src \
