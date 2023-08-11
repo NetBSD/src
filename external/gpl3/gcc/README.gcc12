@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.10 2023/08/08 06:42:16 mrg Exp $
+$NetBSD: README.gcc12,v 1.11 2023/08/11 05:34:36 mrg Exp $
 
 
 new stuff:
@@ -81,12 +81,8 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
      sys/arch/powerpc/oea/pmap.c:2186:2: error: #error PPC_OEA64 not supported
 [8]: destdir.evbsh3/usr/include/ssp/string.h: In function '_int_strtod_l':
      destdir.evbsh3/usr/include/ssp/string.h:82:1: error: inlining failed in call to 'always_inline' '__memcpy_ichk': target specific option mismatch
-     82 | __ssp_bos_icheck3_restrict(memcpy, void *, const void *)
-        | ^~~~~~~~~~~~~~~~~~~~~~~~~~
-     src/lib/libc/gdtoa/gdtoaimp.h:534:20: note: called from here
-     534 | #define Bcopy(x,y) memcpy(&x->sign,&y->sign,y->wds*sizeof(ULong) + 2*sizeof(int))
-     src/lib/libc/gdtoa/strtod.c:582:17: note: in expansion of macro 'Bcopy'
-     582 |                 Bcopy(bd, bd0);
+     this is caused by strtod.c using optimise("O0") conflicting with the always_inline attribute.
+     originally -O0 to fix PR#55668, but may be fixed in gcc10+.
 [10]: libc.so fails to link with weird relocation errors:
       vax--netbsdelf/bin/ld: warning: dynamic relocation to `?' in readonly section `.eh_frame'
 [11]: sanitizers don't build yet.
