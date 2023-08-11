@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.6 2023/08/11 02:43:59 rillig Exp $	*/
+/*	$NetBSD: base64.c,v 1.7 2023/08/11 02:49:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: base64.c,v 1.6 2023/08/11 02:43:59 rillig Exp $");
+__RCSID("$NetBSD: base64.c,v 1.7 2023/08/11 02:49:28 rillig Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -274,7 +274,6 @@ main(int argc, char *argv[])
 		doit(stdout, fp, decode, ignore, wrap);
 		if (fp != stdin)
 			fclose(fp);
-		fclose(fp);
 	}
 
 	return EXIT_SUCCESS;
