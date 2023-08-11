@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.7 2023/07/08 11:03:00 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.8 2023/08/11 04:27:49 rillig Exp $
 
 --[[
 
@@ -62,7 +62,7 @@ end
 --
 -- example return values:
 --   {
---     ["file.c(18)"] = {"invalid argument 'a'", "invalid argument 'b'"},
+--     ["file.c(18)"] = {"syntax error 'a' [249]", "syntax error 'b' [249]"},
 --     ["file.c(23)"] = {"not a constant expression [123]"},
 --   },
 --   { "file.c(18)", "file.c(23)" }
@@ -132,7 +132,7 @@ local function load_exp(exp_fname)
 
   local messages = {}
   for exp_lineno, line in ipairs(lines) do
-    for location, message in line:gmatch("(%S+%(%d+%)): (.+)$") do
+    for location, message in line:gmatch("(.+%(%d+%)): (.+)$") do
       table.insert(messages, {
         exp_lineno = exp_lineno,
         location = location,
