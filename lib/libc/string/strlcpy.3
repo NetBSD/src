@@ -1,4 +1,4 @@
-.\"	$NetBSD: strlcpy.3,v 1.15 2023/08/11 08:15:30 riastradh Exp $
+.\"	$NetBSD: strlcpy.3,v 1.16 2023/08/11 15:36:17 riastradh Exp $
 .\" from OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,27 +46,36 @@ The
 .Fn strlcpy
 and
 .Fn strlcat
-functions copy and concatenate NUL-terminated strings respectively.
+functions copy and concatenate
+.Tn NUL Ns -terminated
+strings respectively.
 .Pp
 The
 .Fn strlcpy
 function copies up to
 .Fa size
-- 1 characters from the NUL-terminated string
+- 1 characters from the
+.Tn NUL Ns -terminated
+string
 .Fa src
 to
 .Fa dst ,
-NUL-terminating the result.
+.Tn NUL Ns -terminating
+the result.
 .Pp
 The
 .Fn strlcat
-function appends the NUL-terminated string
+function appends the
+.Tn NUL Ns -terminated
+string
 .Fa src
 to the end of
 .Fa dst .
 It will append at most
 .Fa size
-- strlen(dst) - 1 bytes, NUL-terminating the result.
+- strlen(dst) - 1 bytes,
+.Tn NUL -terminating
+the result.
 .Ss Relation to Xr strncpy 3 and Xr strncat 3
 Unlike
 .Xr strncpy 3
@@ -76,13 +85,16 @@ and
 and
 .Fn strlcat
 are guaranteed to
-NUL-terminate the result (as long as
+.Tn NUL Ns -terminate
+the result (as long as
 .Fa size
 is larger than 0 or, in the case of
 .Fn strlcat ,
 as long as there is at least one byte free in
 .Fa dst ) .
-Note that you should include a byte for the NUL in
+Note that you should include a byte for the
+.Tn NUL
+in
 .Fa size .
 .Pp
 .Sy WARNING :
@@ -113,16 +125,22 @@ strings.
 This means that for
 .Fn strlcpy
 .Fa src
-must be NUL-terminated and for
+must be
+.Tn NUL Ns -terminated
+and for
 .Fn strlcat
 both
 .Fa src
 and
 .Fa dst
-must be NUL-terminated.
+must be
+.Tn NUL Ns -terminated .
 Applications handling fixed-width fields with
 .Pq possibly empty
-NUL padding, instead of NUL-terminated C strings, MUST use
+.Tn NUL
+padding, instead of
+.Tn NUL Ns -terminated
+C strings, MUST use
 .Xr strncpy 3
 and
 .Xr strncat 3
@@ -157,11 +175,13 @@ Note however, that if
 .Fn strlcat
 traverses
 .Fa size
-characters without finding a NUL, the length of the string is considered
-to be
+characters without finding a
+.Tn NUL ,
+the length of the string is considered to be
 .Fa size
-and the destination string will not be NUL-terminated (since there was
-no space for the NUL).
+and the destination string will not be
+.Tn NUL Ns -terminated
+.Pq since there was no space for the Tn NUL .
 This keeps
 .Fn strlcat
 from running off the end of a string.
