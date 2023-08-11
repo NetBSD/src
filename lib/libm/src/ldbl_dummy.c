@@ -1,4 +1,4 @@
-/* $NetBSD: ldbl_dummy.c,v 1.2 2014/11/13 21:43:27 christos Exp $ */
+/* $NetBSD: ldbl_dummy.c,v 1.2.26.1 2023/08/11 14:44:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldbl_dummy.c,v 1.2 2014/11/13 21:43:27 christos Exp $");
+__RCSID("$NetBSD: ldbl_dummy.c,v 1.2.26.1 2023/08/11 14:44:19 martin Exp $");
 
 #include "namespace.h"
 #include <math.h>
@@ -43,8 +43,11 @@ __weak_alias(atan2l, _atan2l)
 __weak_alias(hypotl, _hypotl)
 __weak_alias(logl, _logl)
 __weak_alias(log10l, _log10l)
+__weak_alias(log2l, _log2l)
+__weak_alias(log1pl, _log1pl)
 __weak_alias(expl, _expl)
 __weak_alias(exp2l, _exp2l)
+__weak_alias(expm1l, _expm1l)
 __weak_alias(powl, _powl)
 __weak_alias(cosl, _cosl)
 __weak_alias(sinl, _sinl)
@@ -60,6 +63,8 @@ __weak_alias(asinhl, _asinhl)
 __weak_alias(atanhl, _atanhl)
 __weak_alias(erfl, _erfl)
 __weak_alias(erfcl, _erfcl)
+__weak_alias(lgammal, _lgammal)
+__weak_alias(tgammal, _tgammal)
 
 long double
 atan2l(long double y, long double x)
@@ -86,6 +91,18 @@ log10l(long double x)
 }
 
 long double
+log2l(long double x)
+{
+	return log2(x);
+}
+
+long double
+log1pl(long double x)
+{
+	return log1p(x);
+}
+
+long double
 expl(long double x)
 {
 	return exp(x);
@@ -95,6 +112,12 @@ long double
 exp2l(long double x)
 {
 	return exp2(x);
+}
+
+long double
+expm1l(long double x)
+{
+	return expm1(x);
 }
 
 long double
@@ -186,4 +209,28 @@ long double
 erfcl(long double x)
 {
 	return erfc(x);
+}
+
+long double
+lgammal(long double x)
+{
+	return lgamma(x);
+}
+
+long double
+tgammal(long double x)
+{
+	return tgamma(x);
+}
+
+long double
+remainderl(long double x, long double y)
+{
+	return remainder(x, y);
+}
+
+long double
+remquol(long double x, long double y, int *quo)
+{
+	return remquo(x, y, quo);
 }
