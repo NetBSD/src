@@ -1,6 +1,7 @@
-# Copyright (c) 2018 Yubico AB. All rights reserved.
+# Copyright (c) 2018-2022 Yubico AB. All rights reserved.
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
+# SPDX-License-Identifier: BSD-2-Clause
 
 find_program(MANDOC_PATH mandoc)
 find_program(GZIP_PATH gzip)
@@ -11,6 +12,7 @@ message(STATUS "GZIP_PATH: ${GZIP_PATH}")
 list(APPEND MAN_SOURCES
 	eddsa_pk_new.3
 	es256_pk_new.3
+	es384_pk_new.3
 	fido2-assert.1
 	fido2-cred.1
 	fido2-token.1
@@ -44,12 +46,20 @@ list(APPEND MAN_SOURCES
 
 list(APPEND MAN_ALIAS
 	eddsa_pk_new eddsa_pk_free
+	eddsa_pk_new eddsa_pk_from_EVP_PKEY
 	eddsa_pk_new eddsa_pk_from_ptr
 	eddsa_pk_new eddsa_pk_to_EVP_PKEY
 	es256_pk_new es256_pk_free
 	es256_pk_new es256_pk_from_EC_KEY
+	es256_pk_new es256_pk_from_EVP_PKEY
 	es256_pk_new es256_pk_from_ptr
 	es256_pk_new es256_pk_to_EVP_PKEY
+	es384_pk_new es384_pk_free
+	es384_pk_new es384_pk_from_EC_KEY
+	es384_pk_new es384_pk_from_EVP_PKEY
+	es384_pk_new es384_pk_from_ptr
+	es384_pk_new es384_pk_to_EVP_PKEY
+	fido_assert_allow_cred fido_assert_empty_allow_list
 	fido_assert_new fido_assert_authdata_len
 	fido_assert_new fido_assert_authdata_ptr
 	fido_assert_new fido_assert_blob_len
@@ -74,6 +84,7 @@ list(APPEND MAN_ALIAS
 	fido_assert_new fido_assert_user_id_len
 	fido_assert_new fido_assert_user_id_ptr
 	fido_assert_new fido_assert_user_name
+	fido_assert_set_authdata fido_assert_set_authdata_raw
 	fido_assert_set_authdata fido_assert_set_clientdata
 	fido_assert_set_authdata fido_assert_set_clientdata_hash
 	fido_assert_set_authdata fido_assert_set_count
@@ -111,24 +122,39 @@ list(APPEND MAN_ALIAS
 	fido_cbor_info_new fido_cbor_info_algorithm_cose
 	fido_cbor_info_new fido_cbor_info_algorithm_count
 	fido_cbor_info_new fido_cbor_info_algorithm_type
+	fido_cbor_info_new fido_cbor_info_certs_len
+	fido_cbor_info_new fido_cbor_info_certs_name_ptr
+	fido_cbor_info_new fido_cbor_info_certs_value_ptr
 	fido_cbor_info_new fido_cbor_info_extensions_len
 	fido_cbor_info_new fido_cbor_info_extensions_ptr
 	fido_cbor_info_new fido_cbor_info_free
-	fido_cbor_info_new fido_cbor_info_maxmsgsiz
-	fido_cbor_info_new fido_cbor_info_maxcredbloblen
-	fido_cbor_info_new fido_cbor_info_maxcredcntlst;
-	fido_cbor_info_new fido_cbor_info_maxcredidlen;
 	fido_cbor_info_new fido_cbor_info_fwversion
+	fido_cbor_info_new fido_cbor_info_maxcredbloblen
+	fido_cbor_info_new fido_cbor_info_maxcredcntlst
+	fido_cbor_info_new fido_cbor_info_maxcredidlen
+	fido_cbor_info_new fido_cbor_info_maxlargeblob
+	fido_cbor_info_new fido_cbor_info_maxmsgsiz
+	fido_cbor_info_new fido_cbor_info_maxrpid_minpinlen
+	fido_cbor_info_new fido_cbor_info_minpinlen
+	fido_cbor_info_new fido_cbor_info_new_pin_required
 	fido_cbor_info_new fido_cbor_info_options_len
 	fido_cbor_info_new fido_cbor_info_options_name_ptr
 	fido_cbor_info_new fido_cbor_info_options_value_ptr
 	fido_cbor_info_new fido_cbor_info_protocols_len
 	fido_cbor_info_new fido_cbor_info_protocols_ptr
+	fido_cbor_info_new fido_cbor_info_rk_remaining
 	fido_cbor_info_new fido_cbor_info_transports_len
 	fido_cbor_info_new fido_cbor_info_transports_ptr
+	fido_cbor_info_new fido_cbor_info_uv_attempts
+	fido_cbor_info_new fido_cbor_info_uv_modality
 	fido_cbor_info_new fido_cbor_info_versions_len
 	fido_cbor_info_new fido_cbor_info_versions_ptr
 	fido_cbor_info_new fido_dev_get_cbor_info
+	fido_cred_exclude fido_cred_empty_exclude_list
+	fido_cred_new fido_cred_aaguid_len
+	fido_cred_new fido_cred_aaguid_ptr
+	fido_cred_new fido_cred_attstmt_len
+	fido_cred_new fido_cred_attstmt_ptr
 	fido_cred_new fido_cred_authdata_len
 	fido_cred_new fido_cred_authdata_ptr
 	fido_cred_new fido_cred_authdata_raw_len
@@ -137,28 +163,28 @@ list(APPEND MAN_ALIAS
 	fido_cred_new fido_cred_clientdata_hash_ptr
 	fido_cred_new fido_cred_display_name
 	fido_cred_new fido_cred_flags
-	fido_cred_new fido_cred_sigcount
 	fido_cred_new fido_cred_fmt
 	fido_cred_new fido_cred_free
 	fido_cred_new fido_cred_id_len
 	fido_cred_new fido_cred_id_ptr
-	fido_cred_new fido_cred_aaguid_len
-	fido_cred_new fido_cred_aaguid_ptr
 	fido_cred_new fido_cred_largeblob_key_len
 	fido_cred_new fido_cred_largeblob_key_ptr
+	fido_cred_new fido_cred_pin_minlen
 	fido_cred_new fido_cred_prot
 	fido_cred_new fido_cred_pubkey_len
 	fido_cred_new fido_cred_pubkey_ptr
 	fido_cred_new fido_cred_rp_id
 	fido_cred_new fido_cred_rp_name
+	fido_cred_new fido_cred_sigcount
 	fido_cred_new fido_cred_sig_len
 	fido_cred_new fido_cred_sig_ptr
 	fido_cred_new fido_cred_type
-	fido_cred_new fido_cred_user_name
 	fido_cred_new fido_cred_user_id_len
 	fido_cred_new fido_cred_user_id_ptr
+	fido_cred_new fido_cred_user_name
 	fido_cred_new fido_cred_x5c_len
 	fido_cred_new fido_cred_x5c_ptr
+	fido_cred_verify fido_cred_verify_self
 	fido_credman_metadata_new fido_credman_del_dev_rk
 	fido_credman_metadata_new fido_credman_get_dev_metadata
 	fido_credman_metadata_new fido_credman_get_dev_rk
@@ -178,6 +204,7 @@ list(APPEND MAN_ALIAS
 	fido_credman_metadata_new fido_credman_rp_name
 	fido_credman_metadata_new fido_credman_rp_new
 	fido_credman_metadata_new fido_credman_set_dev_rk
+	fido_cred_set_authdata fido_cred_set_attstmt
 	fido_cred_set_authdata fido_cred_set_authdata_raw
 	fido_cred_set_authdata fido_cred_set_blob
 	fido_cred_set_authdata fido_cred_set_clientdata
@@ -185,6 +212,7 @@ list(APPEND MAN_ALIAS
 	fido_cred_set_authdata fido_cred_set_extensions
 	fido_cred_set_authdata fido_cred_set_fmt
 	fido_cred_set_authdata fido_cred_set_id
+	fido_cred_set_authdata fido_cred_set_pin_minlen
 	fido_cred_set_authdata fido_cred_set_prot
 	fido_cred_set_authdata fido_cred_set_rk
 	fido_cred_set_authdata fido_cred_set_rp
@@ -196,6 +224,7 @@ list(APPEND MAN_ALIAS
 	fido_dev_enable_entattest fido_dev_toggle_always_uv
 	fido_dev_enable_entattest fido_dev_force_pin_change
 	fido_dev_enable_entattest fido_dev_set_pin_minlen
+	fido_dev_enable_entattest fido_dev_set_pin_minlen_rpid
 	fido_dev_get_touch_begin fido_dev_get_touch_status
 	fido_dev_info_manifest fido_dev_info_free
 	fido_dev_info_manifest fido_dev_info_manufacturer_string
@@ -204,6 +233,7 @@ list(APPEND MAN_ALIAS
 	fido_dev_info_manifest fido_dev_info_product
 	fido_dev_info_manifest fido_dev_info_product_string
 	fido_dev_info_manifest fido_dev_info_ptr
+	fido_dev_info_manifest fido_dev_info_set
 	fido_dev_info_manifest fido_dev_info_vendor
 	fido_dev_open fido_dev_build
 	fido_dev_open fido_dev_cancel
@@ -212,27 +242,36 @@ list(APPEND MAN_ALIAS
 	fido_dev_open fido_dev_force_fido2
 	fido_dev_open fido_dev_force_u2f
 	fido_dev_open fido_dev_free
+	fido_dev_open fido_dev_has_pin
+	fido_dev_open fido_dev_has_uv
 	fido_dev_open fido_dev_is_fido2
 	fido_dev_open fido_dev_is_winhello
 	fido_dev_open fido_dev_major
 	fido_dev_open fido_dev_minor
 	fido_dev_open fido_dev_new
+	fido_dev_open fido_dev_new_with_info
+	fido_dev_open fido_dev_open_with_info
 	fido_dev_open fido_dev_protocol
 	fido_dev_open fido_dev_supports_cred_prot
 	fido_dev_open fido_dev_supports_credman
+	fido_dev_open fido_dev_supports_permissions
 	fido_dev_open fido_dev_supports_pin
 	fido_dev_open fido_dev_supports_uv
-	fido_dev_open fido_dev_has_uv
 	fido_dev_set_pin fido_dev_get_retry_count
 	fido_dev_set_pin fido_dev_get_uv_retry_count
 	fido_dev_set_pin fido_dev_reset
+	fido_dev_set_io_functions fido_dev_io_handle
 	fido_dev_set_io_functions fido_dev_set_sigmask
+	fido_dev_set_io_functions fido_dev_set_timeout
+	fido_dev_set_io_functions fido_dev_set_transport_functions
 	fido_dev_largeblob_get fido_dev_largeblob_set
 	fido_dev_largeblob_get fido_dev_largeblob_remove
 	fido_dev_largeblob_get fido_dev_largeblob_get_array
 	fido_dev_largeblob_get fido_dev_largeblob_set_array
+	fido_init fido_set_log_handler
 	rs256_pk_new rs256_pk_free
 	rs256_pk_new rs256_pk_from_ptr
+	rs256_pk_new rs256_pk_from_EVP_PKEY
 	rs256_pk_new rs256_pk_from_RSA
 	rs256_pk_new rs256_pk_to_EVP_PKEY
 )
@@ -243,7 +282,7 @@ math(EXPR MAN_ALIAS_MAX "${MAN_ALIAS_LEN} - 2")
 # man_copy
 foreach(f ${MAN_SOURCES})
 	add_custom_command(OUTPUT ${f}
-		COMMAND cp -f ${CMAKE_SOURCE_DIR}/man/${f} .
+		COMMAND cp -f ${PROJECT_SOURCE_DIR}/man/${f} .
 		DEPENDS ${f})
 	list(APPEND COPY_FILES ${f})
 endforeach()
@@ -258,7 +297,7 @@ endforeach()
 
 # man_html
 foreach(f ${MAN_SOURCES})
-	string(REGEX REPLACE ".[13]" "" g ${f})
+	string(REGEX REPLACE "\\.[13]$" "" g ${f})
 	add_custom_command(OUTPUT ${g}.html
 		COMMAND mandoc -T html -O man="%N.html",style=style.css -I os="Yubico AB" ${f} > ${g}.html
 		DEPENDS ${f})
@@ -267,9 +306,9 @@ endforeach()
 
 # man_html_partial
 foreach(f ${MAN_SOURCES})
-	string(REGEX REPLACE ".[13]" "" g ${f})
+	string(REGEX REPLACE "\\.[13]$" "" g ${f})
 	add_custom_command(OUTPUT ${g}.partial
-		COMMAND cat ${CMAKE_SOURCE_DIR}/man/dyc.css > ${g}.partial
+		COMMAND cat ${PROJECT_SOURCE_DIR}/man/dyc.css > ${g}.partial
 		COMMAND mandoc -T html -O man="%N.html",fragment ${f} >> ${g}.partial
 		DEPENDS ${f})
 	list(APPEND HTML_PARTIAL_FILES ${g}.partial)
@@ -317,17 +356,17 @@ add_custom_target(man ALL)
 if(MANDOC_PATH)
 	add_dependencies(man man_symlink_html)
 	add_dependencies(man_gzip man_lint)
-	install(FILES ${CMAKE_SOURCE_DIR}/man/style.css
+	install(FILES ${PROJECT_SOURCE_DIR}/man/style.css
 		DESTINATION "${CMAKE_INSTALL_DOCDIR}/html")
 	foreach(f ${MAN_SOURCES})
-		string(REGEX REPLACE ".[13]" "" f ${f})
-		install(FILES ${CMAKE_BINARY_DIR}/man/${f}.html
+		string(REGEX REPLACE "\\.[13]$" "" f ${f})
+		install(FILES ${PROJECT_BINARY_DIR}/man/${f}.html
 			DESTINATION "${CMAKE_INSTALL_DOCDIR}/html")
 	endforeach()
 	foreach(i RANGE 0 ${MAN_ALIAS_MAX} 2)
 		math(EXPR j "${i} + 1")
 		list(GET MAN_ALIAS ${j} DST)
-		install(FILES ${CMAKE_BINARY_DIR}/man/${DST}.html
+		install(FILES ${PROJECT_BINARY_DIR}/man/${DST}.html
 			DESTINATION "${CMAKE_INSTALL_DOCDIR}/html")
 	endforeach()
 endif()
@@ -338,34 +377,34 @@ if(GZIP_PATH)
 	add_dependencies(man man_symlink_gzip)
 	foreach(f ${MAN_SOURCES})
 		if (${f} MATCHES ".1$")
-			install(FILES ${CMAKE_BINARY_DIR}/man/${f}.gz
+			install(FILES ${PROJECT_BINARY_DIR}/man/${f}.gz
 				DESTINATION "${CMAKE_INSTALL_MANDIR}/man1")
 		elseif(${f} MATCHES ".3$")
-			install(FILES ${CMAKE_BINARY_DIR}/man/${f}.gz
+			install(FILES ${PROJECT_BINARY_DIR}/man/${f}.gz
 				DESTINATION "${CMAKE_INSTALL_MANDIR}/man3")
 		endif()
 	endforeach()
 	foreach(i RANGE 0 ${MAN_ALIAS_MAX} 2)
 		math(EXPR j "${i} + 1")
 		list(GET MAN_ALIAS ${j} DST)
-		install(FILES ${CMAKE_BINARY_DIR}/man/${DST}.3.gz
+		install(FILES ${PROJECT_BINARY_DIR}/man/${DST}.3.gz
 			DESTINATION "${CMAKE_INSTALL_MANDIR}/man3")
 	endforeach()
 elseif(NOT MSVC)
 	add_dependencies(man man_symlink)
 	foreach(f ${MAN_SOURCES})
 		if (${f} MATCHES ".1$")
-			install(FILES ${CMAKE_BINARY_DIR}/man/${f}
+			install(FILES ${PROJECT_BINARY_DIR}/man/${f}
 				DESTINATION "${CMAKE_INSTALL_MANDIR}/man1")
 		elseif(${f} MATCHES ".3$")
-			install(FILES ${CMAKE_BINARY_DIR}/man/${f}
+			install(FILES ${PROJECT_BINARY_DIR}/man/${f}
 				DESTINATION "${CMAKE_INSTALL_MANDIR}/man3")
 		endif()
 	endforeach()
 	foreach(i RANGE 0 ${MAN_ALIAS_MAX} 2)
 		math(EXPR j "${i} + 1")
 		list(GET MAN_ALIAS ${j} DST)
-		install(FILES ${CMAKE_BINARY_DIR}/man/${DST}.3
+		install(FILES ${PROJECT_BINARY_DIR}/man/${DST}.3
 			DESTINATION "${CMAKE_INSTALL_MANDIR}/man3")
 	endforeach()
 endif()

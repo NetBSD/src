@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2018 Yubico AB. All rights reserved.
+ * Copyright (c) 2018-2022 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include "fido.h"
@@ -22,7 +23,7 @@ parse_authkey(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 }
 
 static int
-fido_dev_authkey_tx(fido_dev_t *dev)
+fido_dev_authkey_tx(fido_dev_t *dev, int *ms)
 {
 	fido_blob_t	 f;
 	cbor_item_t	*argv[2];
@@ -43,7 +44,7 @@ fido_dev_authkey_tx(fido_dev_t *dev)
 
 	/* frame and transmit */
 	if (cbor_build_frame(CTAP_CBOR_CLIENT_PIN, argv, nitems(argv),
-	    &f) < 0 || fido_tx(dev, CTAP_CMD_CBOR, f.ptr, f.len) < 0) {
+	    &f) < 0 || fido_tx(dev, CTAP_CMD_CBOR, f.ptr, f.len, ms) < 0) {
 		fido_log_debug("%s: fido_tx", __func__);
 		r = FIDO_ERR_TX;
 		goto fail;
@@ -58,32 +59,41 @@ fail:
 }
 
 static int
-fido_dev_authkey_rx(fido_dev_t *dev, es256_pk_t *authkey, int ms)
+fido_dev_authkey_rx(fido_dev_t *dev, es256_pk_t *authkey, int *ms)
 {
-	unsigned char	reply[FIDO_MAXMSG];
-	int		reply_len;
+	unsigned char	*msg;
+	int		 msglen;
+	int		 r;
 
 	fido_log_debug("%s: dev=%p, authkey=%p, ms=%d", __func__, (void *)dev,
-	    (void *)authkey, ms);
+	    (void *)authkey, *ms);
 
 	memset(authkey, 0, sizeof(*authkey));
 
-	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
-	    ms)) < 0) {
-		fido_log_debug("%s: fido_rx", __func__);
-		return (FIDO_ERR_RX);
+	if ((msg = malloc(FIDO_MAXMSG)) == NULL) {
+		r = FIDO_ERR_INTERNAL;
+		goto out;
 	}
 
-	return (cbor_parse_reply(reply, (size_t)reply_len, authkey,
-	    parse_authkey));
+	if ((msglen = fido_rx(dev, CTAP_CMD_CBOR, msg, FIDO_MAXMSG, ms)) < 0) {
+		fido_log_debug("%s: fido_rx", __func__);
+		r = FIDO_ERR_RX;
+		goto out;
+	}
+
+	r = cbor_parse_reply(msg, (size_t)msglen, authkey, parse_authkey);
+out:
+	freezero(msg, FIDO_MAXMSG);
+
+	return (r);
 }
 
 static int
-fido_dev_authkey_wait(fido_dev_t *dev, es256_pk_t *authkey, int ms)
+fido_dev_authkey_wait(fido_dev_t *dev, es256_pk_t *authkey, int *ms)
 {
 	int r;
 
-	if ((r = fido_dev_authkey_tx(dev)) != FIDO_OK ||
+	if ((r = fido_dev_authkey_tx(dev, ms)) != FIDO_OK ||
 	    (r = fido_dev_authkey_rx(dev, authkey, ms)) != FIDO_OK)
 		return (r);
 
@@ -91,7 +101,7 @@ fido_dev_authkey_wait(fido_dev_t *dev, es256_pk_t *authkey, int ms)
 }
 
 int
-fido_dev_authkey(fido_dev_t *dev, es256_pk_t *authkey)
+fido_dev_authkey(fido_dev_t *dev, es256_pk_t *authkey, int *ms)
 {
-	return (fido_dev_authkey_wait(dev, authkey, -1));
+	return (fido_dev_authkey_wait(dev, authkey, ms));
 }

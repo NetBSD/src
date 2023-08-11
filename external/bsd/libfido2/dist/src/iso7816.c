@@ -2,6 +2,7 @@
  * Copyright (c) 2018 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include "fido.h"
@@ -59,6 +60,6 @@ iso7816_ptr(const iso7816_apdu_t *apdu)
 size_t
 iso7816_len(const iso7816_apdu_t *apdu)
 {
-	return apdu->alloc_len - sizeof(apdu->alloc_len) -
-	    sizeof(apdu->payload_len) - sizeof(apdu->payload_ptr);
+	return apdu->alloc_len - offsetof(iso7816_apdu_t, header) -
+	    (sizeof(iso7816_apdu_t) - offsetof(iso7816_apdu_t, payload));
 }

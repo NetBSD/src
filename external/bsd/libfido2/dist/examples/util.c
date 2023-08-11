@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2018 Yubico AB. All rights reserved.
+ * Copyright (c) 2018-2022 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include <sys/types.h>
@@ -13,6 +14,7 @@
 
 #include <fido.h>
 #include <fido/es256.h>
+#include <fido/es384.h>
 #include <fido/rs256.h>
 #include <fido/eddsa.h>
 
@@ -21,9 +23,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_SIGNAL_H
-#include <signal.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -32,31 +31,6 @@
 #endif
 #include "../openbsd-compat/openbsd-compat.h"
 #include "extern.h"
-
-#ifdef SIGNAL_EXAMPLE
-volatile sig_atomic_t got_signal = 0;
-
-static void
-signal_handler(int signo)
-{
-	(void)signo;
-	got_signal = 1;
-}
-
-void
-prepare_signal_handler(int signo)
-{
-	struct sigaction sa;
-
-	memset(&sa, 0, sizeof(sa));
-
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler = signal_handler;
-
-	if (sigaction(signo, &sa, NULL) < 0)
-		err(1, "sigaction");
-}
-#endif
 
 int
 base10(const char *str, long long *ll)
@@ -186,7 +160,7 @@ fail:
 }
 
 int
-write_ec_pubkey(const char *path, const void *ptr, size_t len)
+write_es256_pubkey(const char *path, const void *ptr, size_t len)
 {
 	FILE *fp = NULL;
 	EVP_PKEY *pkey = NULL;
@@ -242,6 +216,63 @@ fail:
 	return (ok);
 }
 
+int
+write_es384_pubkey(const char *path, const void *ptr, size_t len)
+{
+	FILE *fp = NULL;
+	EVP_PKEY *pkey = NULL;
+	es384_pk_t *pk = NULL;
+	int fd = -1;
+	int ok = -1;
+
+	if ((pk = es384_pk_new()) == NULL) {
+		warnx("es384_pk_new");
+		goto fail;
+	}
+
+	if (es384_pk_from_ptr(pk, ptr, len) != FIDO_OK) {
+		warnx("es384_pk_from_ptr");
+		goto fail;
+	}
+
+	if ((fd = open(path, O_WRONLY | O_CREAT, 0644)) < 0) {
+		warn("open %s", path);
+		goto fail;
+	}
+
+	if ((fp = fdopen(fd, "w")) == NULL) {
+		warn("fdopen");
+		goto fail;
+	}
+	fd = -1; /* owned by fp now */
+
+	if ((pkey = es384_pk_to_EVP_PKEY(pk)) == NULL) {
+		warnx("es384_pk_to_EVP_PKEY");
+		goto fail;
+	}
+
+	if (PEM_write_PUBKEY(fp, pkey) == 0) {
+		warnx("PEM_write_PUBKEY");
+		goto fail;
+	}
+
+	ok = 0;
+fail:
+	es384_pk_free(&pk);
+
+	if (fp != NULL) {
+		fclose(fp);
+	}
+	if (fd != -1) {
+		close(fd);
+	}
+	if (pkey != NULL) {
+		EVP_PKEY_free(pkey);
+	}
+
+	return (ok);
+}
+
 RSA *
 read_rsa_pubkey(const char *path)
 {
@@ -275,7 +306,7 @@ fail:
 }
 
 int
-write_rsa_pubkey(const char *path, const void *ptr, size_t len)
+write_rs256_pubkey(const char *path, const void *ptr, size_t len)
 {
 	FILE *fp = NULL;
 	EVP_PKEY *pkey = NULL;

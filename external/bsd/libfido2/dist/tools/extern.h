@@ -2,6 +2,7 @@
  * Copyright (c) 2018 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #ifndef _EXTERN_H_
@@ -20,7 +21,7 @@ struct blob {
 	size_t len;
 };
 
-#define TOKEN_OPT	"CDGILPRSVabcdefi:k:l:n:p:ru"
+#define TOKEN_OPT	"CDGILPRSVabcdefi:k:l:m:n:p:ru"
 
 #define FLAG_DEBUG	0x01
 #define FLAG_QUIET	0x02
@@ -62,6 +63,7 @@ int config_always_uv(char *, int);
 int config_entattest(char *);
 int config_force_pin_change(char *);
 int config_pin_minlen(char *, const char *);
+int config_pin_minlen_rpid(char *, const char *);
 int cose_type(const char *, int *);
 int cred_make(int, char **);
 int cred_verify(int, char **);
@@ -84,7 +86,8 @@ int token_info(int, char **, char *);
 int token_list(int, char **, char *);
 int token_reset(char *);
 int token_set(int, char **, char *);
-int write_ec_pubkey(FILE *, const void *, size_t);
+int write_es256_pubkey(FILE *, const void *, size_t);
+int write_es384_pubkey(FILE *, const void *, size_t);
 int write_rsa_pubkey(FILE *, const void *, size_t);
 int read_file(const char *, u_char **, size_t *);
 int write_file(const char *, const u_char *, size_t);

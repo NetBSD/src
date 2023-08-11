@@ -1,8 +1,13 @@
 /*
- * Copyright (c) 2019-2021 Yubico AB. All rights reserved.
+ * Copyright (c) 2019-2022 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
+
+#include <sys/types.h>
+#include <sys/random.h>
+#include <sys/socket.h>
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -13,14 +18,19 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <zlib.h>
 
 #include "mutator_aux.h"
 
 extern int prng_up;
 
+int fuzz_save_corpus;
+
 /*
  * Build wrappers around functions of interest, and have them fail
- * in a pseudo-random manner.
+ * in a pseudo-random manner. A uniform probability of 0.25% (1/400)
+ * allows for a depth of log(0.5)/log(399/400) > 276 operations
+ * before simulated errors become statistically more likely. 
  */
 
 #define WRAP(type, name, args, retval, param, prob)	\
@@ -50,11 +60,27 @@ WRAP(void *,
 	1
 )
 
+WRAP(void *,
+	realloc,
+	(void *ptr, size_t size),
+	NULL,
+	(ptr, size),
+	1
+)
+
 WRAP(char *,
 	strdup,
 	(const char *s),
 	NULL,
 	(s),
+	1
+)
+
+WRAP(ssize_t,
+	getrandom,
+	(void *buf, size_t buflen, unsigned int flags),
+	-1,
+	(buf, buflen, flags),
 	1
 )
 
@@ -84,79 +110,11 @@ WRAP(EVP_CIPHER_CTX *,
 )
 
 WRAP(int,
-	EVP_EncryptInit_ex,
-	(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, ENGINE *impl,
-	    const unsigned char *key, const unsigned char *iv),
-	0,
-	(ctx, type, impl, key, iv),
-	1
-)
-
-WRAP(int,
-	EVP_CIPHER_CTX_set_padding,
-	(EVP_CIPHER_CTX *x, int padding),
-	0,
-	(x, padding),
-	1
-)
-
-WRAP(int,
-	EVP_EncryptUpdate,
-	(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
-	    const unsigned char *in, int inl),
-	0,
-	(ctx, out, outl, in, inl),
-	1
-)
-
-WRAP(int,
 	EVP_CipherInit,
 	(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	    const unsigned char *key, const unsigned char *iv, int enc),
 	0,
 	(ctx, cipher, key, iv, enc),
-	1
-)
-
-WRAP(int,
-	EVP_DecryptInit_ex,
-	(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, ENGINE *impl,
-	    const unsigned char *key, const unsigned char *iv),
-	0,
-	(ctx, type, impl, key, iv),
-	1
-)
-
-WRAP(int,
-	EVP_DecryptUpdate,
-	(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
-	    const unsigned char *in, int inl),
-	0,
-	(ctx, out, outl, in, inl),
-	1
-)
-
-WRAP(int,
-	SHA256_Init,
-	(SHA256_CTX *c),
-	0,
-	(c),
-	1
-)
-
-WRAP(int,
-	SHA256_Update,
-	(SHA256_CTX *c, const void *data, size_t len),
-	0,
-	(c, data, len),
-	1
-)
-
-WRAP(int,
-	SHA256_Final,
-	(unsigned char *md, SHA256_CTX *c),
-	0,
-	(md, c),
 	1
 )
 
@@ -201,6 +159,30 @@ WRAP(int,
 	1
 )
 
+WRAP(int,
+	EVP_DigestInit_ex,
+	(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl),
+	0,
+	(ctx, type, impl),
+	1
+)
+
+WRAP(int,
+	EVP_DigestUpdate,
+	(EVP_MD_CTX *ctx, const void *data, size_t count),
+	0,
+	(ctx, data, count),
+	1
+)
+
+WRAP(int,
+	EVP_DigestFinal_ex,
+	(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize),
+	0,
+	(ctx, md, isize),
+	1
+)
+
 WRAP(BIGNUM *,
 	BN_bin2bn,
 	(const unsigned char *s, int len, BIGNUM *ret),
@@ -241,11 +223,27 @@ WRAP(BIGNUM *,
 	1
 )
 
+WRAP(RSA *,
+	RSA_new,
+	(void),
+	NULL,
+	(),
+	1
+)
+
 WRAP(int,
 	RSA_set0_key,
 	(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d),
 	0,
 	(r, n, e, d),
+	1
+)
+
+WRAP(int,
+	RSA_pkey_ctx_ctrl,
+	(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2),
+	-1,
+	(ctx, optype, cmd, p1, p2),
 	1
 )
 
@@ -385,8 +383,48 @@ WRAP(int,
 	1
 )
 
+WRAP(int,
+	EVP_PKEY_verify_init,
+	(EVP_PKEY_CTX *ctx),
+	0,
+	(ctx),
+	1
+)
+
+WRAP(int,
+	EVP_PKEY_CTX_ctrl,
+	(EVP_PKEY_CTX *ctx, int keytype, int optype, int cmd, int p1, void *p2),
+	-1,
+	(ctx, keytype, optype, cmd, p1, p2),
+	1
+)
+
+WRAP(const EVP_MD *,
+	EVP_sha1,
+	(void),
+	NULL,
+	(),
+	1
+)
+
 WRAP(const EVP_MD *,
 	EVP_sha256,
+	(void),
+	NULL,
+	(),
+	1
+)
+
+WRAP(const EVP_CIPHER *,
+	EVP_aes_256_cbc,
+	(void),
+	NULL,
+	(),
+	1
+)
+
+WRAP(const EVP_CIPHER *,
+	EVP_aes_256_gcm,
 	(void),
 	NULL,
 	(),
@@ -433,6 +471,14 @@ WRAP(int,
 	(HMAC_CTX *ctx, unsigned char *md, unsigned int *len),
 	0,
 	(ctx, md, len),
+	1
+)
+
+WRAP(unsigned char *,
+	SHA1,
+	(const unsigned char *d, size_t n, unsigned char *md),
+	NULL,
+	(d, n, md),
 	1
 )
 
@@ -501,8 +547,24 @@ WRAP(cbor_item_t *,
 )
 
 WRAP(cbor_item_t *,
+	cbor_build_uint16,
+	(uint16_t value),
+	NULL,
+	(value),
+	1
+)
+
+WRAP(cbor_item_t *,
 	cbor_build_uint32,
 	(uint32_t value),
+	NULL,
+	(value),
+	1
+)
+
+WRAP(cbor_item_t *,
+	cbor_build_uint64,
+	(uint64_t value),
 	NULL,
 	(value),
 	1
@@ -556,6 +618,14 @@ WRAP(cbor_item_t *,
 	1
 )
 
+WRAP(cbor_item_t *,
+	cbor_new_definite_bytestring,
+	(void),
+	NULL,
+	(),
+	1
+)
+
 WRAP(size_t,
 	cbor_serialize_alloc,
 	(const cbor_item_t *item, cbor_mutable_data *buffer,
@@ -567,16 +637,64 @@ WRAP(size_t,
 
 WRAP(int,
 	fido_tx,
-	(fido_dev_t *d, uint8_t cmd, const void *buf, size_t count),
+	(fido_dev_t *d, uint8_t cmd, const void *buf, size_t count, int *ms),
 	-1,
-	(d, cmd, buf, count),
+	(d, cmd, buf, count, ms),
 	1
 )
 
 WRAP(int,
-	usleep,
-	(unsigned int usec),
+	bind,
+	(int sockfd, const struct sockaddr *addr, socklen_t addrlen),
 	-1,
-	(usec),
+	(sockfd, addr, addrlen),
 	1
 )
+
+WRAP(int,
+	deflateInit2_,
+	(z_streamp strm, int level, int method, int windowBits, int memLevel,
+	    int strategy, const char *version, int stream_size),
+	Z_STREAM_ERROR,
+	(strm, level, method, windowBits, memLevel, strategy, version,
+	    stream_size),
+	1
+)
+
+int __wrap_deflate(z_streamp, int);
+int __real_deflate(z_streamp, int);
+
+int
+__wrap_deflate(z_streamp strm, int flush)
+{
+	if (prng_up && uniform_random(400) < 1) {
+		return Z_BUF_ERROR;
+	}
+	/* should never happen, but we check for it */
+	if (prng_up && uniform_random(400) < 1) {
+		strm->avail_out = UINT_MAX;
+		return Z_STREAM_END;
+	}
+
+	return __real_deflate(strm, flush);
+}
+
+int __wrap_asprintf(char **, const char *, ...);
+
+int
+__wrap_asprintf(char **strp, const char *fmt, ...)
+{
+	va_list ap;
+	int r;
+
+	if (prng_up && uniform_random(400) < 1) {
+		*strp = (void *)0xdeadbeef;
+		return -1;
+	}
+
+	va_start(ap, fmt);
+	r = vasprintf(strp, fmt, ap);
+	va_end(ap);
+
+	return r;
+}
