@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1762 2023/06/30 00:48:03 gutteridge Exp $
+# $NetBSD: mi,v 1.1763 2023/08/11 23:04:29 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -682,6 +682,7 @@
 ./usr/share/man/cat3/atari/ahdi_writelabel.0	man-obsolete		obsolete
 ./usr/share/man/cat3/eddsa_pk_new.0			man-util-catman	.cat
 ./usr/share/man/cat3/es256_pk_new.0			man-util-catman	.cat
+./usr/share/man/cat3/es384_pk_new.0			man-util-catman	.cat
 ./usr/share/man/cat3/i386			man-obsolete		obsolete
 ./usr/share/man/cat3/i386/keycap.0		man-obsolete		obsolete
 ./usr/share/man/cat3/libbozohttpd.0		man-sys-catman		.cat
@@ -4123,6 +4124,7 @@
 ./usr/share/man/html1/ztest.html		man-zfs-htmlman		zfs,html
 ./usr/share/man/html3/eddsa_pk_new.html			man-util-htmlman	html
 ./usr/share/man/html3/es256_pk_new.html			man-util-htmlman	html
+./usr/share/man/html3/es384_pk_new.html			man-util-htmlman	html
 ./usr/share/man/html3/libbozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3/libunbound.html		man-netutil-htmlman	html,unbound
 ./usr/share/man/html3/rs256_pk_new.html			man-util-htmlman	html
@@ -7236,6 +7238,7 @@
 ./usr/share/man/man3/atari/ahdi_writelabel.3	man-obsolete		obsolete
 ./usr/share/man/man3/eddsa_pk_new.3			man-util-man	.man
 ./usr/share/man/man3/es256_pk_new.3			man-util-man	.man
+./usr/share/man/man3/es384_pk_new.3			man-util-man	.man
 ./usr/share/man/man3/i386			man-obsolete		obsolete
 ./usr/share/man/man3/i386/keycap.3		man-obsolete		obsolete
 ./usr/share/man/man3/libbozohttpd.3		man-sys-man		.man
