@@ -31,7 +31,7 @@
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
 .\"     from: NetBSD: strcpy.3,v 1.23 2015/04/01 20:18:17 riastradh Exp
-.\"	$NetBSD: strncpy.3,v 1.9 2023/08/11 21:09:11 riastradh Exp $
+.\"	$NetBSD: strncpy.3,v 1.10 2023/08/11 21:10:26 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRNCPY 3
@@ -93,7 +93,7 @@ The buffer
 is not guaranteed to hold a
 .Tn NUL Ns -terminated
 string on output;
-.Fn stpcpy
+.Fn stpncpy
 and
 .Fn strncpy
 write exactly
