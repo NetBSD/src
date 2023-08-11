@@ -31,7 +31,7 @@
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
 .\"     from: NetBSD: strcpy.3,v 1.23 2015/04/01 20:18:17 riastradh Exp
-.\"	$NetBSD: strncpy.3,v 1.10 2023/08/11 21:10:26 riastradh Exp $
+.\"	$NetBSD: strncpy.3,v 1.11 2023/08/11 21:11:21 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRNCPY 3
@@ -76,9 +76,9 @@ The buffer
 .Fa src
 is not required to hold a
 .Tn NUL Ns -terminated
-string on input; it is only required to have
+string on input; it is only required
 .Em either
-at least
+to have at least
 .Fa len
 bytes allocated and initialized,
 .Em or
