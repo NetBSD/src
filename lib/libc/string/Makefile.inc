@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.87 2023/08/01 17:51:25 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.88 2023/08/11 09:39:39 riastradh Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -60,9 +60,10 @@ MLINKS+=popcount.3 popcount64.3
 MLINKS+=strcasecmp.3 strncasecmp.3
 MLINKS+=strcat.3 strncat.3
 MLINKS+=strcmp.3 strncmp.3
-MLINKS+=strcpy.3 strncpy.3 strcpy.3 stpcpy.3 strcpy.3 stpncpy.3
+MLINKS+=strcpy.3 stpcpy.3
 MLINKS+=strlcpy.3 strlcat.3
 MLINKS+=strlen.3 strnlen.3
+MLINKS+=strncpy.3 stpncpy.3
 MLINKS+=strstr.3 strcasestr.3
 MLINKS+=strstr.3 strnstr.3
 MLINKS+=strchr.3 strchrnul.3
