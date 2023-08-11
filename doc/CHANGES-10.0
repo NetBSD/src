@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.102 2023/08/11 16:25:08 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.103 2023/08/11 18:12:57 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -10944,10 +10944,10 @@ crypto/external/bsd/openssh/dist/sc25519.c      delete
 crypto/external/bsd/openssh/dist/sc25519.h      delete
 crypto/external/bsd/openssh/dist/verify.c       delete
 crypto/external/bsd/openssh/bin/sftp/Makefile   up to 1.11
-crypto/external/bsd/openssh/bin/ssh/Makefile    up to 1.19
-crypto/external/bsd/openssh/bin/ssh-agent/Makefile up to 1.7
-crypto/external/bsd/openssh/bin/ssh-keygen/Makefile up to 1.10
-crypto/external/bsd/openssh/bin/sshd/Makefile   up to 1.27
+crypto/external/bsd/openssh/bin/ssh/Makefile    up to 1.19 (adjusted)
+crypto/external/bsd/openssh/bin/ssh-agent/Makefile up to 1.7 (adjusted)
+crypto/external/bsd/openssh/bin/ssh-keygen/Makefile up to 1.10 (adjusted)
+crypto/external/bsd/openssh/bin/sshd/Makefile   up to 1.27 (adjusted)
 crypto/external/bsd/openssh/dist/LICENCE        up to 1.7
 crypto/external/bsd/openssh/dist/PROTOCOL       up to 1.21
 crypto/external/bsd/openssh/dist/addr.c         up to 1.5
@@ -11044,7 +11044,7 @@ crypto/external/bsd/openssh/dist/moduli-gen/moduli.4096 up to 1.16
 crypto/external/bsd/openssh/dist/moduli-gen/moduli.6144 up to 1.16
 crypto/external/bsd/openssh/dist/moduli-gen/moduli.7680 up to 1.16
 crypto/external/bsd/openssh/dist/moduli-gen/moduli.8192 up to 1.16
-crypto/external/bsd/openssh/lib/Makefile        up to 1.37
+crypto/external/bsd/openssh/lib/Makefile        up to 1.37 (adjusted)
 crypto/external/bsd/openssh/lib/shlib_version   up to 1.34
 distrib/sets/lists/base/shl.mi			1.953
 distrib/sets/lists/debug/shl.mi			1.315
