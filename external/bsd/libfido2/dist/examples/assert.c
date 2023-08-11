@@ -1,11 +1,13 @@
 /*
- * Copyright (c) 2018 Yubico AB. All rights reserved.
+ * Copyright (c) 2018-2022 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include <fido.h>
 #include <fido/es256.h>
+#include <fido/es384.h>
 #include <fido/rs256.h>
 #include <fido/eddsa.h>
 
@@ -20,7 +22,7 @@
 #include "../openbsd-compat/openbsd-compat.h"
 #include "extern.h"
 
-static const unsigned char cdh[32] = {
+static const unsigned char cd[32] = {
 	0xec, 0x8d, 0x8f, 0x78, 0x42, 0x4a, 0x2b, 0xb7,
 	0x82, 0x34, 0xaa, 0xca, 0x07, 0xa1, 0xf6, 0x56,
 	0x42, 0x1c, 0xb6, 0xf6, 0xb3, 0x00, 0x86, 0x52,
@@ -30,9 +32,9 @@ static const unsigned char cdh[32] = {
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: assert [-t ecdsa|rsa|eddsa] [-a cred_id] "
-	    "[-h hmac_secret] [-s hmac_salt] [-P pin] [-T seconds] "
-	    "[-b blobkey] [-puv] <pubkey> <device>\n");
+	fprintf(stderr, "usage: assert [-t es256|es384|rs256|eddsa] "
+	    "[-a cred_id] [-h hmac_secret] [-s hmac_salt] [-P pin] "
+	    "[-T seconds] [-b blobkey] [-puv] <pubkey> <device>\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -46,6 +48,7 @@ verify_assert(int type, const unsigned char *authdata_ptr, size_t authdata_len,
 	RSA		*rsa = NULL;
 	EVP_PKEY	*eddsa = NULL;
 	es256_pk_t	*es256_pk = NULL;
+	es384_pk_t	*es384_pk = NULL;
 	rs256_pk_t	*rs256_pk = NULL;
 	eddsa_pk_t	*eddsa_pk = NULL;
 	void		*pk;
@@ -64,6 +67,21 @@ verify_assert(int type, const unsigned char *authdata_ptr, size_t authdata_len,
 			errx(1, "es256_pk_from_EC_KEY");
 
 		pk = es256_pk;
+		EC_KEY_free(ec);
+		ec = NULL;
+
+		break;
+	case COSE_ES384:
+		if ((ec = read_ec_pubkey(key)) == NULL)
+			errx(1, "read_ec_pubkey");
+
+		if ((es384_pk = es384_pk_new()) == NULL)
+			errx(1, "es384_pk_new");
+
+		if (es384_pk_from_EC_KEY(es384_pk, ec) != FIDO_OK)
+			errx(1, "es384_pk_from_EC_KEY");
+
+		pk = es384_pk;
 		EC_KEY_free(ec);
 		ec = NULL;
 
@@ -106,10 +124,9 @@ verify_assert(int type, const unsigned char *authdata_ptr, size_t authdata_len,
 		errx(1, "fido_assert_new");
 
 	/* client data hash */
-	r = fido_assert_set_clientdata_hash(assert, cdh, sizeof(cdh));
+	r = fido_assert_set_clientdata(assert, cd, sizeof(cd));
 	if (r != FIDO_OK)
-		errx(1, "fido_assert_set_clientdata_hash: %s (0x%x)",
-		    fido_strerr(r), r);
+		errx(1, "fido_assert_set_clientdata: %s (0x%x)", fido_strerr(r), r);
 
 	/* relying party */
 	r = fido_assert_set_rp(assert, "localhost");
@@ -148,6 +165,7 @@ verify_assert(int type, const unsigned char *authdata_ptr, size_t authdata_len,
 		errx(1, "fido_assert_verify: %s (0x%x)", fido_strerr(r), r);
 
 	es256_pk_free(&es256_pk);
+	es384_pk_free(&es384_pk);
 	rs256_pk_free(&rs256_pk);
 	eddsa_pk_free(&eddsa_pk);
 
@@ -166,7 +184,7 @@ main(int argc, char **argv)
 	const char	*blobkey_out = NULL;
 	const char	*hmac_out = NULL;
 	unsigned char	*body = NULL;
-	long long	 seconds = 0;
+	long long	 ms = 0;
 	size_t		 len;
 	int		 type = COSE_ES256;
 	int		 ext = 0;
@@ -182,16 +200,12 @@ main(int argc, char **argv)
 			pin = optarg;
 			break;
 		case 'T':
-#ifndef SIGNAL_EXAMPLE
-			(void)seconds;
-			errx(1, "-T not supported");
-#else
-			if (base10(optarg, &seconds) < 0)
+			if (base10(optarg, &ms) < 0)
 				errx(1, "base10: %s", optarg);
-			if (seconds <= 0 || seconds > 30)
+			if (ms <= 0 || ms > 30)
 				errx(1, "-T: %s must be in (0,30]", optarg);
+			ms *= 1000; /* seconds to milliseconds */
 			break;
-#endif
 		case 'a':
 			if (read_blob(optarg, &body, &len) < 0)
 				errx(1, "read_blob: %s", optarg);
@@ -224,9 +238,11 @@ main(int argc, char **argv)
 			body = NULL;
 			break;
 		case 't':
-			if (strcmp(optarg, "ecdsa") == 0)
+			if (strcmp(optarg, "es256") == 0)
 				type = COSE_ES256;
-			else if (strcmp(optarg, "rsa") == 0)
+			else if (strcmp(optarg, "es384") == 0)
+				type = COSE_ES384;
+			else if (strcmp(optarg, "rs256") == 0)
 				type = COSE_RS256;
 			else if (strcmp(optarg, "eddsa") == 0)
 				type = COSE_EDDSA;
@@ -262,10 +278,9 @@ main(int argc, char **argv)
 		fido_dev_force_u2f(dev);
 
 	/* client data hash */
-	r = fido_assert_set_clientdata_hash(assert, cdh, sizeof(cdh));
+	r = fido_assert_set_clientdata(assert, cd, sizeof(cd));
 	if (r != FIDO_OK)
-		errx(1, "fido_assert_set_clientdata_hash: %s (0x%x)",
-		    fido_strerr(r), r);
+		errx(1, "fido_assert_set_clientdata: %s (0x%x)", fido_strerr(r), r);
 
 	/* relying party */
 	r = fido_assert_set_rp(assert, "localhost");
@@ -286,20 +301,12 @@ main(int argc, char **argv)
 	if (uv && (r = fido_assert_set_uv(assert, FIDO_OPT_TRUE)) != FIDO_OK)
 		errx(1, "fido_assert_set_uv: %s (0x%x)", fido_strerr(r), r);
 
-#ifdef SIGNAL_EXAMPLE
-	prepare_signal_handler(SIGINT);
-	if (seconds) {
-		prepare_signal_handler(SIGALRM);
-		alarm((unsigned)seconds);
-	}
-#endif
+	/* timeout */
+	if (ms != 0 && (r = fido_dev_set_timeout(dev, (int)ms)) != FIDO_OK)
+		errx(1, "fido_dev_set_timeout: %s (0x%x)", fido_strerr(r), r);
 
-	r = fido_dev_get_assert(dev, assert, pin);
-	if (r != FIDO_OK) {
-#ifdef SIGNAL_EXAMPLE
-		if (got_signal)
-			fido_dev_cancel(dev);
-#endif
+	if ((r = fido_dev_get_assert(dev, assert, pin)) != FIDO_OK) {
+		fido_dev_cancel(dev);
 		errx(1, "fido_dev_get_assert: %s (0x%x)", fido_strerr(r), r);
 	}
 
