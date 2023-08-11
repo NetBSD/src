@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.196.2.1 2023/02/08 18:24:52 martin Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.196.2.2 2023/08/11 14:35:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.196.2.1 2023/02/08 18:24:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.196.2.2 2023/08/11 14:35:25 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -520,7 +520,7 @@ putchar(int c, int flags, struct tty *tp)
 #ifdef RND_PRINTF
 	if (__predict_true(kprintf_inited)) {
 		unsigned char ch = c;
-		rnd_add_data(&rnd_printf_source, &ch, 1, 0);
+		rnd_add_data_intr(&rnd_printf_source, &ch, 1, 0);
 	}
 #endif
 }
@@ -1622,7 +1622,7 @@ done:
 
 #ifdef RND_PRINTF
 	if (__predict_true(kprintf_inited))
-		rnd_add_data(&rnd_printf_source, NULL, 0, 0);
+		rnd_add_data_intr(&rnd_printf_source, NULL, 0, 0);
 #endif
 	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.80 2022/05/22 11:39:27 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.80.4.1 2023/08/11 14:35:24 martin Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.179 2020/01/11 21:34:03 cheloha Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.80 2022/05/22 11:39:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.80.4.1 2023/08/11 14:35:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -655,7 +655,7 @@ hifn_rng(struct hifn_softc *sc)
 				hexdump(printf, "hifn", num, sizeof num);
 #endif
 			entropybits = NBBY*sizeof(num)/HIFN_RNG_BITSPER;
-			rnd_add_data(&sc->sc_rnd_source, num, sizeof(num),
+			rnd_add_data_intr(&sc->sc_rnd_source, num, sizeof(num),
 			    entropybits);
 			entropybits = MAX(entropybits, 1);
 			entropybits = MIN(entropybits, sc->sc_rng_needbits);
@@ -693,7 +693,7 @@ hifn_rng(struct hifn_softc *sc)
 				hexdump(printf, "hifn", num, sizeof num);
 #endif
 			entropybits = NBBY*sizeof(num)/HIFN_RNG_BITSPER;
-			rnd_add_data(&sc->sc_rnd_source, num, sizeof num,
+			rnd_add_data_intr(&sc->sc_rnd_source, num, sizeof num,
 			    entropybits);
 			entropybits = MAX(entropybits, 1);
 			entropybits = MIN(entropybits, sc->sc_rng_needbits);

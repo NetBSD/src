@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.18.4.1 2023/05/13 10:56:10 martin Exp $ */
+/* 	$NetBSD: viornd.c,v 1.18.4.2 2023/08/11 14:35:24 martin Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -245,8 +245,9 @@ viornd_vq_done(struct virtqueue *vq)
 #if VIORND_DEBUG
 	aprint_normal("%s: got %d bytes of entropy\n", __func__, len);
 #endif
-	rnd_add_data(&sc->sc_rndsource, sc->sc_buf, VIORND_BUFSIZE,
-		     VIORND_BUFSIZE * NBBY);
+	/* XXX Shouldn't this be len instead of VIORND_BUFSIZE?  */
+	rnd_add_data_intr(&sc->sc_rndsource, sc->sc_buf, VIORND_BUFSIZE,
+	    VIORND_BUFSIZE * NBBY);
 out:
 	virtio_dequeue_commit(vsc, vq, slot);
 	mutex_exit(&sc->sc_mutex);
