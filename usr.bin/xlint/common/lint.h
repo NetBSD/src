@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.42 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.43 2023/08/12 18:05:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -141,14 +141,6 @@ typedef	enum {
 	TDEF,			/* tentative defined */
 	DEF			/* defined */
 } def_t;
-
-/* Some data used for the output buffer. */
-typedef	struct	ob {
-	char	*o_buf;		/* buffer */
-	char	*o_end;		/* first byte after buffer */
-	size_t	o_len;		/* length of buffer */
-	char	*o_next;	/* next free byte in buffer */
-} ob_t;
 
 #if defined(IS_LINT1)
 typedef struct lint1_type type_t;

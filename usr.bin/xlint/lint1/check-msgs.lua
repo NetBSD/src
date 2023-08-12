@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.19 2023/07/10 11:46:14 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.20 2023/08/12 18:05:51 rillig Exp $
 
 --[[
 
@@ -130,6 +130,8 @@ end
 
 local function check_yacc_file(filename)
   local decl = {}
+  local decl_list = {}
+  local decl_list_index = 1
   local f = assert(io.open(filename, "r"))
   local lineno = 0
   for line in f:lines() do
@@ -137,7 +139,12 @@ local function check_yacc_file(filename)
     local type = line:match("^%%type%s+<[%w_]+>%s+(%S+)$") or
       line:match("^/%* No type for ([%w_]+)%. %*/$")
     if type then
+      if decl[type] then
+        print_error("%s:%d: duplicate type declaration for rule %q",
+          filename, lineno, type)
+      end
       decl[type] = lineno
+      table.insert(decl_list, { lineno = lineno, rule = type })
     end
     local rule = line:match("^([%w_]+):")
     if rule then
@@ -146,6 +153,16 @@ local function check_yacc_file(filename)
       else
         print_error("%s:%d: missing type declaration for rule %q",
           filename, lineno, rule)
+      end
+      if decl_list_index > 0 then
+        local expected = decl_list[decl_list_index]
+        if expected.rule == rule then
+          decl_list_index = decl_list_index + 1
+        else
+          print_error("%s:%d: expecting rule %q (from line %d), got %q",
+              filename, lineno, expected.rule, expected.lineno, rule)
+          decl_list_index = 0
+        end
       end
     end
   end
