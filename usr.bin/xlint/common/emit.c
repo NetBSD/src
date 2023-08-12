@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.22 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.23 2023/08/12 17:13:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit.c,v 1.22 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: emit.c,v 1.23 2023/08/12 17:13:27 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -45,121 +45,71 @@ __RCSID("$NetBSD: emit.c,v 1.22 2023/07/13 08:40:38 rillig Exp $");
 
 #include "lint.h"
 
-/* name and handle of output file */
-static	const	char *loname;
-static	FILE	*lout;
+static const char *output_name;
+static FILE *output_file;
+static bool in_line;
 
-/* output buffer data */
-static	ob_t	ob;
-
-static	void	outxbuf(void);
-
-
-/*
- * initialize output
- */
 void
 outopen(const char *name)
 {
 
-	loname = name;
-
-	/* Open output file */
-	if ((lout = fopen(name, "w")) == NULL)
+	output_name = name;
+	if ((output_file = fopen(name, "w")) == NULL)
 		err(1, "cannot open '%s'", name);
-
-	/* Create output buffer */
-	ob.o_len = 1024;
-	ob.o_end = (ob.o_buf = ob.o_next = xmalloc(ob.o_len)) + ob.o_len;
 }
 
-/*
- * flush output buffer and close file
- */
 void
 outclose(void)
 {
 
 	outclr();
-	if (fclose(lout) == EOF)
-		err(1, "cannot close '%s'", loname);
+	if (fclose(output_file) == EOF)
+		err(1, "cannot close '%s'", output_name);
 }
 
-/*
- * resize output buffer
- */
-static void
-outxbuf(void)
-{
-
-	size_t next = (size_t)(ob.o_next - ob.o_buf);
-	ob.o_len *= 2;
-	ob.o_buf = xrealloc(ob.o_buf, ob.o_len);
-	ob.o_end = ob.o_buf + ob.o_len;
-	ob.o_next = ob.o_buf + next;
-}
-
-/*
- * reset output buffer
- * if it is not empty, it is flushed
- */
 void
 outclr(void)
 {
 
-	if (ob.o_buf != ob.o_next) {
+	if (in_line)
 		outchar('\n');
-		size_t sz = (size_t)(ob.o_next - ob.o_buf);
-		if (sz > ob.o_len)
-			errx(1, "internal error: outclr");
-		if (fwrite(ob.o_buf, sz, 1, lout) != 1)
-			err(1, "cannot write to %s", loname);
-		ob.o_next = ob.o_buf;
-	}
 }
 
-/*
- * write a character to the output buffer
- */
 void
 outchar(char c)
 {
 
-	if (ob.o_next == ob.o_end)
-		outxbuf();
-	*ob.o_next++ = c;
+	fputc(c, output_file);
+	in_line = c != '\n';
 }
 
 /*
- * write a string to the output buffer
- * the string must not contain any characters which
- * should be quoted
+ * write a string to the output file
+ * the string must not contain any characters which should be quoted
  */
 void
 outstrg(const char *s)
 {
 
-	while (*s != '\0') {
-		if (ob.o_next == ob.o_end)
-			outxbuf();
-		*ob.o_next++ = *s++;
-	}
+	while (*s != '\0')
+		outchar(*s++);
 }
 
-/* write an integer value to the output buffer */
+/* write an integer value to the output file */
 void
 outint(int i)
 {
+	char buf[1 + 3 * sizeof(int)];
 
-	if ((size_t)(ob.o_end - ob.o_next) < 3 * sizeof(int))
-		outxbuf();
-	ob.o_next += snprintf(ob.o_next, ob.o_end - ob.o_next, "%d", i);
+	snprintf(buf, sizeof(buf), "%d", i);
+	outstrg(buf);
 }
 
-/* write a name to the output buffer, preceded by its length */
+/* write a name to the output file, preceded by its length */
 void
 outname(const char *name)
 {
+
 	outint((int)strlen(name));
 	outstrg(name);
 }
