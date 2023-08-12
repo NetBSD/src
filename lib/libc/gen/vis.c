@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.81 2023/08/12 12:48:17 riastradh Exp $	*/
+/*	$NetBSD: vis.c,v 1.82 2023/08/12 12:48:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.81 2023/08/12 12:48:17 riastradh Exp $");
+__RCSID("$NetBSD: vis.c,v 1.82 2023/08/12 12:48:37 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -396,13 +396,14 @@ static int
 istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
     int flags, const char *mbextra, int *cerr_ptr)
 {
+	char mbbuf[MB_LEN_MAX];
 	wchar_t *dst, *src, *pdst, *psrc, *start, *extra;
 	size_t len, olen;
 	uint64_t bmsk, wmsk;
 	wint_t c;
 	visfun_t f;
 	int clen = 0, cerr, error = -1, i, shft;
-	char *mbdst, *mdst;
+	char *mbdst, *mbwrite, *mdst;
 	size_t mbslength;
 	size_t maxolen;
 	mbstate_t mbstate;
@@ -579,8 +580,33 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	olen = 0;
 	memset(&mbstate, 0, sizeof(mbstate));
 	for (dst = start; len > 0; len--) {
-		if (!cerr)
-			clen = wcrtomb(mbdst, *dst, &mbstate);
+		if (!cerr) {
+			/*
+			 * If we have at least MB_CUR_MAX bytes in the buffer,
+			 * we'll just do the conversion in-place into mbdst.  We
+			 * need to be a little more conservative when we get to
+			 * the end of the buffer, as we may not have MB_CUR_MAX
+			 * bytes but we may not need it.
+			 */
+			if (maxolen - olen > MB_CUR_MAX)
+				mbwrite = mbdst;
+			else
+				mbwrite = mbbuf;
+			clen = wcrtomb(mbwrite, *dst, &mbstate);
+			if (clen > 0 && mbwrite != mbdst) {
+				/*
+				 * Don't break past our output limit, noting
+				 * that maxolen includes the nul terminator so
+				 * we can't write past maxolen - 1 here.
+				 */
+				if (olen + clen >= maxolen) {
+					errno = ENOSPC;
+					goto out;
+				}
+
+				memcpy(mbdst, mbwrite, clen);
+			}
+		}
 		if (cerr || clen < 0) {
 			/*
 			 * Conversion error, process as a byte(s) instead.
@@ -595,16 +621,27 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 				shft = i * NBBY;
 				bmsk = (uint64_t)0xffLL << shft;
 				wmsk |= bmsk;
-				if ((*dst & wmsk) || i == 0)
+				if ((*dst & wmsk) || i == 0) {
+					if (olen + clen + 1 >= maxolen) {
+						errno = ENOSPC;
+						goto out;
+					}
+
 					mbdst[clen++] = (char)(
 					    (uint64_t)(*dst & bmsk) >>
 					    shft);
+				}
 			}
 			cerr = 1;
 		}
-		/* If this character would exceed our output limit, stop. */
-		if (olen + clen > maxolen)
-			break;
+
+		/*
+		 * We'll be dereferencing mbdst[clen] after this to write the
+		 * nul terminator; the above paths should have checked for a
+		 * possible overflow already.
+		 */
+		assert(olen + clen < maxolen);
+
 		/* Advance output pointer by number of bytes written. */
 		mbdst += clen;
 		/* Advance buffer character pointer. */
