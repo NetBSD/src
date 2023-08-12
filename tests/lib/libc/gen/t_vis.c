@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vis.c,v 1.12 2023/08/12 12:46:16 riastradh Exp $	*/
+/*	$NetBSD: t_vis.c,v 1.13 2023/08/12 12:48:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -211,8 +211,6 @@ ATF_TC_BODY(strvis_overflow_mb, tc)
 	unsigned i;
 	int n;
 
-	atf_tc_expect_fail("PR lib/57573: Overflow possibilities in vis(3)");
-
 	setlocale(LC_CTYPE, "en_US.UTF-8");
 
 	for (i = 0; i < sizeof(dst) - 1; i++) {
@@ -250,8 +248,6 @@ ATF_TC_BODY(strvis_overflow_c, tc)
 	char dst[sizeof(src) + 1];
 	unsigned i;
 	int n;
-
-	atf_tc_expect_fail("PR lib/57573: Overflow possibilities in vis(3)");
 
 	for (i = 0; i < sizeof(dst) - 1; i++) {
 		memset(dst, STRVIS_OVERFLOW_MARKER, sizeof(dst));
