@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.79 2023/08/12 12:47:17 riastradh Exp $	*/
+/*	$NetBSD: vis.c,v 1.80 2023/08/12 12:48:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.79 2023/08/12 12:47:17 riastradh Exp $");
+__RCSID("$NetBSD: vis.c,v 1.80 2023/08/12 12:48:01 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -567,7 +567,7 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	 * output byte-by-byte here.  Else use wctomb().
 	 */
 	len = wcslen(start);
-	maxolen = dlen ? *dlen : (wcslen(start) * MB_LEN_MAX + 1);
+	maxolen = dlen ? *dlen : (len * MB_LEN_MAX + 1);
 	olen = 0;
 	memset(&mbstate, 0, sizeof(mbstate));
 	for (dst = start; len > 0; len--) {
