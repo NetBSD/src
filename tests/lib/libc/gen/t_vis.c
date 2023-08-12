@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vis.c,v 1.10 2023/08/12 12:43:26 riastradh Exp $	*/
+/*	$NetBSD: t_vis.c,v 1.11 2023/08/12 12:45:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ ATF_TC_BODY(strvis_locale, tc)
 }
 #endif /* VIS_NOLOCALE */
 
-#define	STRVIS_OVERFLOW_MARKER	0xff	/* Arbitrary */
+#define	STRVIS_OVERFLOW_MARKER	((char)0xff)	/* Arbitrary */
 
 #ifdef VIS_NOLOCALE
 ATF_TC(strvis_overflow_mb);
@@ -189,25 +189,32 @@ ATF_TC_BODY(strvis_overflow_mb, tc)
 	const char src[] = "\xf0\x9f\xa5\x91";
 	/* Extra byte to detect overflow */
 	char dst[sizeof(src) + 1];
+	unsigned i;
 	int n;
 
 	atf_tc_expect_fail("PR lib/57573: Overflow possibilities in vis(3)");
 
 	setlocale(LC_CTYPE, "en_US.UTF-8");
 
-	/* Arbitrary */
+	for (i = 0; i < sizeof(dst) - 1; i++) {
+		memset(dst, STRVIS_OVERFLOW_MARKER, sizeof(dst));
+		n = strnvis(dst, i, src, VIS_SAFE);
+		ATF_CHECK_EQ_MSG(dst[i], STRVIS_OVERFLOW_MARKER,
+		    "[%u] dst=[%02hhx %02hhx %02hhx %02hhx %02hhx]"
+		    " STRVIS_OVERFLOW_MARKER=%02hhx",
+		    i, dst[0], dst[1], dst[2], dst[3], dst[4],
+		    STRVIS_OVERFLOW_MARKER);
+		ATF_CHECK_EQ_MSG(n, -1, "[%u] n=%d", i, n);
+	}
+
 	memset(dst, STRVIS_OVERFLOW_MARKER, sizeof(dst));
-
-	/*
-	 * If we only provide four bytes of buffer, we shouldn't be able encode
-	 * a full 4-byte sequence.
-	 */
-	n = strnvis(dst, 4, src, VIS_SAFE);
-	ATF_REQUIRE(dst[4] == STRVIS_OVERFLOW_MARKER);
-	ATF_REQUIRE(n == -1);
-
-	n = strnvis(dst, sizeof(src), src, VIS_SAFE);
-	ATF_REQUIRE(n == sizeof(src) - 1);
+	n = strnvis(dst, sizeof(dst) - 1, src, VIS_SAFE);
+	ATF_CHECK_EQ_MSG(dst[sizeof(dst) - 1], STRVIS_OVERFLOW_MARKER,
+	    "[%u] dst=[%02hhx %02hhx %02hhx %02hhx %02hhx %02hhx]"
+	    " STRVIS_OVERFLOW_MARKER=%02hhx",
+	    i, dst[0], dst[1], dst[2], dst[3], dst[4], dst[5],
+	    STRVIS_OVERFLOW_MARKER);
+	ATF_CHECK_EQ_MSG(n, (int)sizeof(dst) - 2, "n=%d", n);
 }
 #endif
 
@@ -222,23 +229,30 @@ ATF_TC_BODY(strvis_overflow_c, tc)
 	const char src[] = "AAAA";
 	/* Extra byte to detect overflow */
 	char dst[sizeof(src) + 1];
+	unsigned i;
 	int n;
 
 	atf_tc_expect_fail("PR lib/57573: Overflow possibilities in vis(3)");
 
-	/* Arbitrary */
+	for (i = 0; i < sizeof(dst) - 1; i++) {
+		memset(dst, STRVIS_OVERFLOW_MARKER, sizeof(dst));
+		n = strnvis(dst, i, src, VIS_SAFE | VIS_NOLOCALE);
+		ATF_CHECK_EQ_MSG(dst[i], STRVIS_OVERFLOW_MARKER,
+		    "[%u] dst=[%02hhx %02hhx %02hhx %02hhx %02hhx]"
+		    " STRVIS_OVERFLOW_MARKER=%02hhx",
+		    i, dst[0], dst[1], dst[2], dst[3], dst[4],
+		    STRVIS_OVERFLOW_MARKER);
+		ATF_CHECK_EQ_MSG(n, -1, "[%u] n=%d", i, n);
+	}
+
 	memset(dst, STRVIS_OVERFLOW_MARKER, sizeof(dst));
-
-	/*
-	 * If we only provide four bytes of buffer, we shouldn't be able encode
-	 * 4 bytes of input.
-	 */
-	n = strnvis(dst, 4, src, VIS_SAFE | VIS_NOLOCALE);
-	ATF_REQUIRE(dst[4] == STRVIS_OVERFLOW_MARKER);
-	ATF_REQUIRE(n == -1);
-
-	n = strnvis(dst, sizeof(src), src, VIS_SAFE | VIS_NOLOCALE);
-	ATF_REQUIRE(n == sizeof(src) - 1);
+	n = strnvis(dst, sizeof(dst) - 1, src, VIS_SAFE | VIS_NOLOCALE);
+	ATF_CHECK_EQ_MSG(dst[sizeof(dst) - 1], STRVIS_OVERFLOW_MARKER,
+	    "[%u] dst=[%02hhx %02hhx %02hhx %02hhx %02hhx %02hhx]"
+	    " STRVIS_OVERFLOW_MARKER=%02hhx",
+	    i, dst[0], dst[1], dst[2], dst[3], dst[4], dst[5],
+	    STRVIS_OVERFLOW_MARKER);
+	ATF_CHECK_EQ_MSG(n, (int)sizeof(dst) - 2, "n=%d", n);
 }
 
 ATF_TP_ADD_TCS(tp)
