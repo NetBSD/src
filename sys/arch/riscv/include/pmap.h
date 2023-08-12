@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.19 2023/07/26 06:58:34 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.20 2023/08/12 07:48:11 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 }
 
 static inline void
-pmap_md_page_syncicache(struct vm_page_md *mdpg, const kcpuset_t *kc)
+pmap_md_page_syncicache(struct vm_page_md *mdpg, const kcpuset_t *onproc)
 {
 	__asm __volatile("fence\trw,rw; fence.i" ::: "memory");
 }
