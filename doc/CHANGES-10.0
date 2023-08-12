@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.103 2023/08/11 18:12:57 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.104 2023/08/12 12:00:19 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -10795,7 +10795,7 @@ crypto/external/bsd/openssh/lib/Makefile	1.35
 crypto/external/bsd/openssh/libexec/ssh-sk-helper/Makefile 1.4
 distrib/sets/deps				1.23
 distrib/sets/lists/base/ad.aarch64		1.38-1.43 (patch)
-distrib/sets/lists/base/ad.mips			1.84,1.87,1.88,1.90 (patch)
+distrib/sets/lists/base/ad.mips			1.84,1.87,1.88-1.90 (patch)
 distrib/sets/lists/base/ad.powerpc		1.41,1.42,1.45-1.47 (patch)
 distrib/sets/lists/base/ad.riscv		1.24,1.25,1.28,1.29,1.30 (patch)
 distrib/sets/lists/base/md.amd64		1.288,1.291-1.293,1.295 (patch)
