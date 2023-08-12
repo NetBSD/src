@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.34 2023/08/12 20:48:24 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.35 2023/08/12 21:08:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit2.c,v 1.34 2023/08/12 20:48:24 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.35 2023/08/12 21:08:37 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -116,16 +116,11 @@ static void
 outdef(hte_t *hte, sym_t *sym)
 {
 
-	/* line number in C source file */
-	outint(0);
-
-	/* this is a definition */
-	outchar('d');
-
-	/* index of file where symbol was defined and line number of def. */
-	outint(0);
+	outint(0);		/* line number in C source file */
+	outchar('d');		/* definition */
+	outint(0);		/* index of file where symbol was defined */
 	outchar('.');
-	outint(0);
+	outint(0);		/* line number of definition */
 
 	/* flags */
 	if (sym->s_check_only_first_args) {
@@ -148,12 +143,8 @@ outdef(hte_t *hte, sym_t *sym)
 		if (sym->s_old_style_function)
 			outchar('o');
 	}
-	outchar('u');			/* used (no warning if not used) */
-
-	/* name */
+	outchar('u');		/* used (no warning if not used) */
 	outname(hte->h_name);
-
-	/* type */
 	outtype(TP(sym->s_type));
 	outchar('\n');
 }
@@ -196,28 +187,22 @@ dumpname(hte_t *hte)
 void
 outlib(const char *name)
 {
-	/* Open of output file and initialization of the output buffer */
+
 	outopen(name);
 
-	/* write name of lint library */
-	outsrc(name);
+	outsrc(name);		/* name of the lint library */
 
-	/* name of lint lib has index 0 */
-	outint(0);
+	outint(0);		/* filename index of the lint library */
 	outchar('s');
 	outstrg(name);
 	outchar('\n');
 
-	/*
-	 * print the names of all files referenced by unnamed
-	 * struct/union/enum declarations.
-	 */
+	/* All files referenced by unnamed struct/union/enum declarations. */
 	outfiles();
 
-	/* write all definitions with external linkage */
+	/* Write all definitions with external linkage. */
 	symtab_forall_sorted(dumpname);
 
-	/* close the output */
 	outclose();
 }
 
