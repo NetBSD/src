@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vis.c,v 1.9 2017/01/10 15:16:57 christos Exp $	*/
+/*	$NetBSD: t_vis.c,v 1.10 2023/08/12 12:43:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -175,6 +175,72 @@ ATF_TC_BODY(strvis_locale, tc)
 }
 #endif /* VIS_NOLOCALE */
 
+#define	STRVIS_OVERFLOW_MARKER	0xff	/* Arbitrary */
+
+#ifdef VIS_NOLOCALE
+ATF_TC(strvis_overflow_mb);
+ATF_TC_HEAD(strvis_overflow_mb, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test strvis(3) multi-byte overflow");
+}
+
+ATF_TC_BODY(strvis_overflow_mb, tc)
+{
+	const char src[] = "\xf0\x9f\xa5\x91";
+	/* Extra byte to detect overflow */
+	char dst[sizeof(src) + 1];
+	int n;
+
+	atf_tc_expect_fail("PR lib/57573: Overflow possibilities in vis(3)");
+
+	setlocale(LC_CTYPE, "en_US.UTF-8");
+
+	/* Arbitrary */
+	memset(dst, STRVIS_OVERFLOW_MARKER, sizeof(dst));
+
+	/*
+	 * If we only provide four bytes of buffer, we shouldn't be able encode
+	 * a full 4-byte sequence.
+	 */
+	n = strnvis(dst, 4, src, VIS_SAFE);
+	ATF_REQUIRE(dst[4] == STRVIS_OVERFLOW_MARKER);
+	ATF_REQUIRE(n == -1);
+
+	n = strnvis(dst, sizeof(src), src, VIS_SAFE);
+	ATF_REQUIRE(n == sizeof(src) - 1);
+}
+#endif
+
+ATF_TC(strvis_overflow_c);
+ATF_TC_HEAD(strvis_overflow_c, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test strvis(3) C locale overflow");
+}
+
+ATF_TC_BODY(strvis_overflow_c, tc)
+{
+	const char src[] = "AAAA";
+	/* Extra byte to detect overflow */
+	char dst[sizeof(src) + 1];
+	int n;
+
+	atf_tc_expect_fail("PR lib/57573: Overflow possibilities in vis(3)");
+
+	/* Arbitrary */
+	memset(dst, STRVIS_OVERFLOW_MARKER, sizeof(dst));
+
+	/*
+	 * If we only provide four bytes of buffer, we shouldn't be able encode
+	 * 4 bytes of input.
+	 */
+	n = strnvis(dst, 4, src, VIS_SAFE | VIS_NOLOCALE);
+	ATF_REQUIRE(dst[4] == STRVIS_OVERFLOW_MARKER);
+	ATF_REQUIRE(n == -1);
+
+	n = strnvis(dst, sizeof(src), src, VIS_SAFE | VIS_NOLOCALE);
+	ATF_REQUIRE(n == sizeof(src) - 1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -184,7 +250,9 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, strunvis_hex);
 #ifdef VIS_NOLOCALE
 	ATF_TP_ADD_TC(tp, strvis_locale);
+	ATF_TP_ADD_TC(tp, strvis_overflow_mb);
 #endif /* VIS_NOLOCALE */
+	ATF_TP_ADD_TC(tp, strvis_overflow_c);
 
 	return atf_no_error();
 }
