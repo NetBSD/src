@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.73 2023/07/30 08:58:54 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.74 2023/08/12 20:48:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.73 2023/07/30 08:58:54 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.74 2023/08/12 20:48:24 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -138,11 +138,10 @@ record_filename(const char *s, size_t slen)
 	fn->fn_next = filenames;
 	filenames = fn;
 
-	/* Write the ID of this filename to the output file. */
-	outclr();
 	outint(fn->fn_id);
 	outchar('s');
 	outstrg(transform_filename(fn->fn_name, fn->fn_len));
+	outchar('\n');
 
 	return fn->fn_name;
 }

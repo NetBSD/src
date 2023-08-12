@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.23 2023/08/12 17:13:27 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.24 2023/08/12 20:48:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit.c,v 1.23 2023/08/12 17:13:27 rillig Exp $");
+__RCSID("$NetBSD: emit.c,v 1.24 2023/08/12 20:48:24 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: emit.c,v 1.23 2023/08/12 17:13:27 rillig Exp $");
 
 static const char *output_name;
 static FILE *output_file;
-static bool in_line;
 
 void
 outopen(const char *name)
@@ -62,17 +61,8 @@ void
 outclose(void)
 {
 
-	outclr();
 	if (fclose(output_file) == EOF)
 		err(1, "cannot close '%s'", output_name);
-}
-
-void
-outclr(void)
-{
-
-	if (in_line)
-		outchar('\n');
 }
 
 void
@@ -80,7 +70,6 @@ outchar(char c)
 {
 
 	fputc(c, output_file);
-	in_line = c != '\n';
 }
 
 /*
@@ -119,7 +108,7 @@ void
 outsrc(const char *name)
 {
 
-	outclr();
 	outchar('S');
 	outstrg(name);
+	outchar('\n');
 }

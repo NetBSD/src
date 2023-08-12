@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.33 2023/07/13 08:40:38 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.34 2023/08/12 20:48:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit2.c,v 1.33 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.34 2023/08/12 20:48:24 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -116,9 +116,6 @@ static void
 outdef(hte_t *hte, sym_t *sym)
 {
 
-	/* reset output buffer */
-	outclr();
-
 	/* line number in C source file */
 	outint(0);
 
@@ -158,6 +155,7 @@ outdef(hte_t *hte, sym_t *sym)
 
 	/* type */
 	outtype(TP(sym->s_type));
+	outchar('\n');
 }
 
 /*
@@ -205,10 +203,10 @@ outlib(const char *name)
 	outsrc(name);
 
 	/* name of lint lib has index 0 */
-	outclr();
 	outint(0);
 	outchar('s');
 	outstrg(name);
+	outchar('\n');
 
 	/*
 	 * print the names of all files referenced by unnamed
@@ -266,11 +264,9 @@ outfiles(void)
 	int i;
 
 	for (ofl = outflist, i = 1; ofl != NULL; ofl = ofl->ofl_next, i++) {
-		/* reset output buffer */
-		outclr();
-
 		outint(i);
 		outchar('s');
 		outstrg(fnames[ofl->ofl_num]);
+		outchar('\n');
 	}
 }
