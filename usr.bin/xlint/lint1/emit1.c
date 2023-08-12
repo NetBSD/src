@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.73 2023/08/02 18:51:25 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.74 2023/08/12 20:48:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.73 2023/08/02 18:51:25 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.74 2023/08/12 20:48:24 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -191,9 +191,6 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 	if (ch_isdigit(sym->s_name[0]))	/* 00000000_tmp */
 		return;
 
-	/* reset buffer */
-	outclr();
-
 	outint(csrc_pos.p_line);
 	outchar('d');		/* declaration */
 	outint(get_filename_id(sym->s_def_pos.p_file));
@@ -233,6 +230,7 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 
 	/* type of the symbol */
 	outtype(sym->s_type);
+	outchar('\n');
 }
 
 /*
@@ -245,9 +243,6 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 {
 	int narg;
 	const sym_t *arg;
-
-	/* reset the buffer */
-	outclr();
 
 	if (posp->p_file == csrc_pos.p_file) {
 		outint(posp->p_line);
@@ -325,6 +320,7 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 	} else {
 		outtype(fsym->s_type);
 	}
+	outchar('\n');
 }
 
 /*
@@ -341,9 +337,6 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	tnode_t *args, *arg;
 	int narg, n, i;
 	tspec_t t;
-
-	/* reset buffer */
-	outclr();
 
 	outint(csrc_pos.p_line);
 	outchar('c');		/* function call */
@@ -412,6 +405,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	}
 	/* expected type of return value */
 	outtype(tn->tn_type);
+	outchar('\n');
 }
 
 /* write a character to the output buffer, quoted if necessary */
@@ -573,9 +567,6 @@ outusg(const sym_t *sym)
 	if (ch_isdigit(sym->s_name[0]))	/* 00000000_tmp, from mktempsym */
 		return;
 
-	/* reset buffer */
-	outclr();
-
 	outint(csrc_pos.p_line);
 	outchar('u');		/* used */
 	outint(get_filename_id(curr_pos.p_file));
@@ -586,4 +577,5 @@ outusg(const sym_t *sym)
 	outchar('x');
 
 	outname(sym->s_name);
+	outchar('\n');
 }
