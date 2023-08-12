@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_memfd.c,v 1.10 2023/08/12 23:09:12 christos Exp $	*/
+/*	$NetBSD: sys_memfd.c,v 1.11 2023/08/12 23:22:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.10 2023/08/12 23:09:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.11 2023/08/12 23:22:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -243,7 +243,7 @@ memfd_fcntl(file_t *fp, u_int cmd, void *data)
 
 	switch (cmd) {
 	case F_GETPATH:
-		strncpy(data, mfd->mfd_name, sizeof(mfd->name));
+		strncpy(data, mfd->mfd_name, MAXPATHLEN);
 		return 0;
 
 	case F_ADD_SEALS:
