@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vis.c,v 1.13 2023/08/12 12:48:37 riastradh Exp $	*/
+/*	$NetBSD: t_vis.c,v 1.14 2023/08/12 12:48:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -127,8 +127,6 @@ ATF_TC_BODY(strnvis_empty_empty, tc)
 {
 	char dst[] = "fail";
 	int n;
-
-	atf_tc_expect_fail("PR lib/57573: Overflow possibilities in vis(3)");
 
 	n = strnvis(dst, 0, "", VIS_SAFE);
 	ATF_CHECK(memcmp(dst, "fail", sizeof(dst)) == 0);

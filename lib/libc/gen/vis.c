@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.82 2023/08/12 12:48:37 riastradh Exp $	*/
+/*	$NetBSD: vis.c,v 1.83 2023/08/12 12:48:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.82 2023/08/12 12:48:37 riastradh Exp $");
+__RCSID("$NetBSD: vis.c,v 1.83 2023/08/12 12:48:52 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -570,6 +570,10 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	len = wcslen(start);
 	if (dlen) {
 		maxolen = *dlen;
+		if (maxolen == 0) {
+			errno = ENOSPC;
+			goto out;
+		}
 	} else {
 		if (len > (SIZE_MAX - 1)/MB_LEN_MAX) {
 			errno = ENOSPC;
@@ -651,6 +655,7 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	}
 
 	/* Terminate the output string. */
+	assert(olen < maxolen);
 	*mbdst = '\0';
 
 	if (flags & VIS_NOLOCALE) {
