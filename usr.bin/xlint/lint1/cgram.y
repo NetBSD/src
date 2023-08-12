@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.470 2023/08/03 18:48:42 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.471 2023/08/12 18:05:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.470 2023/08/03 18:48:42 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.471 2023/08/12 18:05:51 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -358,7 +358,6 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_sym>		direct_notype_param_declarator
 %type	<y_parameter_list>	param_list
 /* No type for id_list_lparen. */
-/* No type for abstract_decl_lparen. */
 %type	<y_array_size>	array_size_opt
 %type	<y_tnode>	array_size
 %type	<y_sym>		identifier_list
