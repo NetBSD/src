@@ -1,4 +1,4 @@
-# $NetBSD: xorg.conf.C3x00,v 1.2 2014/06/20 08:08:58 wiz Exp $
+# $NetBSD: xorg.conf.C3x00,v 1.2.34.1 2023/08/12 12:47:47 martin Exp $
 
 Section "ServerLayout"
 	Identifier	"wsfb"
@@ -6,9 +6,14 @@ Section "ServerLayout"
 	InputDevice	"TouchScreen0" "CorePointer"
 	InputDevice	"Keyboard0" "CoreKeyboard"
 EndSection
-	
+
 Section "Files"
 #	FontPath	"/usr/pkg/share/fonts/X11/TTF/"
+EndSection
+
+Section "ServerFlags"
+	# Explicitly prefer keyboard options defined in xorg.conf
+	Option		"AutoAddDevices" "false"
 EndSection
 
 Section "InputDevice"
