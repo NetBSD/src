@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.104 2023/08/12 12:00:19 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.105 2023/08/12 12:41:58 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -10824,6 +10824,10 @@ external/bsd/libfido2/bin/fido2-token/Makefile	1.3
 external/bsd/libfido2/dist/src/assert.c		1.2
 external/bsd/libfido2/dist/src/cred.c		1.2
 external/bsd/libfido2/lib/Makefile		1.9
+external/bsd/nsd/lib/libnsd/Makefile		1.4,1.5
+external/bsd/nsd/sbin/nsd-checkzone/Makefile	1.2
+external/bsd/nsd/sbin/nsd-control/Makefile	1.2
+external/bsd/nsd/sbin/nsd/Makefile		1.2
 external/bsd/ntp/bin/ntp-keygen/Makefile	1.8
 external/bsd/ntp/bin/ntpd/Makefile		1.29
 external/bsd/ntp/bin/sntp/Makefile		1.10
