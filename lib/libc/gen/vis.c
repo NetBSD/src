@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.76 2023/06/29 16:11:31 riastradh Exp $	*/
+/*	$NetBSD: vis.c,v 1.77 2023/08/12 12:46:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.76 2023/06/29 16:11:31 riastradh Exp $");
+__RCSID("$NetBSD: vis.c,v 1.77 2023/08/12 12:46:33 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -403,7 +403,8 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	visfun_t f;
 	int clen = 0, cerr, error = -1, i, shft;
 	char *mbdst, *mdst;
-	ssize_t mbslength, maxolen;
+	ssize_t mbslength;
+	size_t maxolen;
 	mbstate_t mbstate;
 
 	_DIAGASSERT(mbdstp != NULL);
@@ -569,7 +570,7 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 			cerr = 1;
 		}
 		/* If this character would exceed our output limit, stop. */
-		if (olen + clen > (size_t)maxolen)
+		if (olen + clen > maxolen)
 			break;
 		/* Advance output pointer by number of bytes written. */
 		mbdst += clen;
