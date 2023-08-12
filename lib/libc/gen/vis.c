@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.77 2023/08/12 12:46:33 riastradh Exp $	*/
+/*	$NetBSD: vis.c,v 1.78 2023/08/12 12:46:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.77 2023/08/12 12:46:33 riastradh Exp $");
+__RCSID("$NetBSD: vis.c,v 1.78 2023/08/12 12:46:50 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -403,7 +403,7 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	visfun_t f;
 	int clen = 0, cerr, error = -1, i, shft;
 	char *mbdst, *mdst;
-	ssize_t mbslength;
+	size_t mbslength;
 	size_t maxolen;
 	mbstate_t mbstate;
 
@@ -411,7 +411,7 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	_DIAGASSERT(mbsrc != NULL || mblength == 0);
 	_DIAGASSERT(mbextra != NULL);
 
-	mbslength = (ssize_t)mblength;
+	mbslength = mblength;
 	/*
 	 * When inputing a single character, must also read in the
 	 * next character for nextc, the look-ahead character.
@@ -466,12 +466,15 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	memset(&mbstate, 0, sizeof(mbstate));
 	while (mbslength > 0) {
 		/* Convert one multibyte character to wchar_t. */
-		if (!cerr)
+		if (!cerr) {
 			clen = mbrtowc(src, mbsrc,
 			    (mbslength < MB_LEN_MAX
 				? mbslength
 				: MB_LEN_MAX),
 			    &mbstate);
+			assert(clen < 0 || (size_t)clen <= mbslength);
+			assert(clen <= MB_LEN_MAX);
+		}
 		if (cerr || clen < 0) {
 			/* Conversion error, process as a byte instead. */
 			*src = (wint_t)(u_char)*mbsrc;
@@ -485,6 +488,20 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 			 */
 			clen = 1;
 		}
+		/*
+		 * Let n := MIN(mbslength, MB_LEN_MAX).  We have:
+		 *
+		 *	mbslength >= 1
+		 *	mbrtowc(..., n, &mbstate) <= n,
+		 *		by the contract of mbrtowc
+		 *
+		 *  clen is either
+		 *  (a) mbrtowc(..., n, &mbstate), in which case
+		 *      clen <= n <= mbslength; or
+		 *  (b) 1, in which case clen = 1 <= mbslength.
+		 */
+		assert(clen > 0);
+		assert((size_t)clen <= mbslength);
 		/* Advance buffer character pointer. */
 		src++;
 		/* Advance input pointer by number of bytes read. */
