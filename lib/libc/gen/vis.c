@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.78 2023/08/12 12:46:50 riastradh Exp $	*/
+/*	$NetBSD: vis.c,v 1.79 2023/08/12 12:47:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.78 2023/08/12 12:46:50 riastradh Exp $");
+__RCSID("$NetBSD: vis.c,v 1.79 2023/08/12 12:47:17 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -431,6 +431,14 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	 * This will then be converted back to a multibyte string to
 	 * return to the caller.
 	 */
+
+	/*
+	 * Guarantee the arithmetic on input to calloc won't overflow.
+	 */
+	if (mbslength > (SIZE_MAX - 1)/16) {
+		errno = ENOMEM;
+		return -1;
+	}
 
 	/* Allocate space for the wide char strings */
 	psrc = pdst = extra = NULL;
