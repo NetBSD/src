@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.74 2023/08/12 20:48:24 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.75 2023/08/12 21:08:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.74 2023/08/12 20:48:24 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.75 2023/08/12 21:08:37 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -47,10 +47,9 @@ static	void	outtt(sym_t *, sym_t *);
 static	void	outfstrg(strg_t *);
 
 /*
- * Write type into the output buffer.
- * The type is written as a sequence of substrings, each of which describes a
- * node of type type_t
- * a node is encoded as follows:
+ * Write type into the output file, encoded as follows:
+ *	const			c
+ *	volatile		v
  *	_Bool			B
  *	_Complex float		s X
  *	_Complex double		X
@@ -84,10 +83,6 @@ static	void	outfstrg(strg_t *);
  *				1 n tag			tagged type
  *				2 n typename		only typedef name
  *				3 line.file.uniq	anonymous types
- *
- * spaces are only for better readability
- * additionally it is possible to prepend the characters 'c' (for const)
- * and 'v' (for volatile)
  */
 void
 outtype(const type_t *tp)
@@ -219,16 +214,13 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 	if (sc == STATIC)
 		outchar('s');
 
-	/* name of the symbol */
 	outname(sym->s_name);
 
-	/* renamed name of symbol, if necessary */
 	if (sym->s_rename != NULL) {
 		outchar('r');
 		outname(sym->s_rename);
 	}
 
-	/* type of the symbol */
 	outtype(sym->s_type);
 	outchar('\n');
 }
@@ -253,8 +245,6 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 	outint(get_filename_id(posp->p_file));
 	outchar('.');
 	outint(posp->p_line);
-
-	/* flags */
 
 	/* both SCANFLIKE and PRINTFLIKE imply VARARGS */
 	if (printflike_argnum != -1) {
@@ -301,7 +291,6 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 	/* name of function */
 	outname(fsym->s_name);
 
-	/* renamed name of function, if necessary */
 	if (fsym->s_rename != NULL) {
 		outchar('r');
 		outname(fsym->s_rename);
@@ -388,8 +377,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 		}
 
 	}
-	/* return value discarded/used/ignored */
-	outchar((char)(retval_discarded ? 'd' : (retval_used ? 'u' : 'i')));
+	outchar((char)(retval_discarded ? 'd' : retval_used ? 'u' : 'i'));
 
 	/* name of the called function */
 	outname(tn->tn_left->tn_left->tn_sym->s_name);
@@ -572,10 +560,7 @@ outusg(const sym_t *sym)
 	outint(get_filename_id(curr_pos.p_file));
 	outchar('.');
 	outint(curr_pos.p_line);
-
-	/* necessary to delimit both numbers */
-	outchar('x');
-
+	outchar('x');		/* separate the two numbers */
 	outname(sym->s_name);
 	outchar('\n');
 }
