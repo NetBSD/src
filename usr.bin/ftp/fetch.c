@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.237 2023/07/02 10:02:09 mlelstv Exp $	*/
+/*	$NetBSD: fetch.c,v 1.238 2023/08/12 07:40:13 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.237 2023/07/02 10:02:09 mlelstv Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.238 2023/08/12 07:40:13 mlelstv Exp $");
 #endif /* not lint */
 
 /*
@@ -1652,9 +1652,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 		}
 	}
 	if (fout == NULL) {
-		if ((pi.rangeend != -1 && pi.rangeend <= restart_point) ||
+		if (restart_point && (
+		    (pi.rangeend != -1 && pi.rangeend <= restart_point) ||
 		    (pi.rangestart == -1 &&
-		    filesize != -1 && filesize <= restart_point)) {
+		    filesize != -1 && filesize <= restart_point))) {
 			/* already done */
 			if (verbose)
 				fprintf(ttyout, "already done\n");
