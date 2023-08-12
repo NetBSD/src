@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.35 2023/08/12 21:08:37 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.36 2023/08/12 21:32:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit2.c,v 1.35 2023/08/12 21:08:37 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.36 2023/08/12 21:32:16 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -44,9 +44,7 @@ static	void	outdef(hte_t *, sym_t *);
 static	void	dumpname(hte_t *);
 static	void	outfiles(void);
 
-/*
- * Write type into the output buffer.
- */
+/* Write type into the output file. */
 static void
 outtype(type_t *tp)
 {
@@ -109,9 +107,7 @@ outtype(type_t *tp)
 	}
 }
 
-/*
- * Write a definition.
- */
+/* Write a definition. */
 static void
 outdef(hte_t *hte, sym_t *sym)
 {
@@ -149,9 +145,7 @@ outdef(hte_t *hte, sym_t *sym)
 	outchar('\n');
 }
 
-/*
- * Write the first definition of a name into the lint library.
- */
+/* Write the first definition of a name into the lint library. */
 static void
 dumpname(hte_t *hte)
 {
@@ -181,9 +175,7 @@ dumpname(hte_t *hte)
 	outdef(hte, def);
 }
 
-/*
- * Write a new lint library.
- */
+/* Write a new lint library. */
 void
 outlib(const char *name)
 {
@@ -206,9 +198,7 @@ outlib(const char *name)
 	outclose();
 }
 
-/*
- * Write out the name of a file referenced by a type.
- */
+/* Write out the name of a file referenced by a type. */
 struct outflist {
 	short		ofl_num;
 	struct outflist *ofl_next;
