@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.190 2023/08/01 16:08:58 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.191 2023/08/12 06:43:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.190 2023/08/01 16:08:58 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.191 2023/08/12 06:43:16 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -991,71 +991,72 @@ parse_line_directive_flags(const char *p,
 }
 
 /*
+ * The first directive of the preprocessed translation unit provides the name
+ * of the C source file as specified at the command line.
+ */
+static void
+set_csrc_pos(void)
+{
+	static bool done;
+
+	if (done)
+		return;
+	done = true;
+	csrc_pos.p_file = curr_pos.p_file;
+	outsrc(transform_filename(curr_pos.p_file, strlen(curr_pos.p_file)));
+}
+
+/*
  * Called for preprocessor directives. Currently implemented are:
  *	# pragma [argument...]
  *	# lineno
- *	# lineno "filename"
- *	# lineno "filename" GCC-flag...
+ *	# lineno "filename" [GCC-flag...]
  */
 void
 lex_directive(const char *yytext)
 {
-	const char *cp, *fn;
-	char c, *eptr;
-	size_t fnl;
-	long ln;
-	bool is_begin, is_end, is_system;
+	const char *p = yytext + 1;	/* skip '#' */
 
-	static bool first = true;
+	while (*p == ' ' || *p == '\t')
+		p++;
 
-	/* Go to first non-whitespace after # */
-	for (cp = yytext + 1; (c = *cp) == ' ' || c == '\t'; cp++)
-		continue;
-
-	if (!ch_isdigit(c)) {
-		if (strncmp(cp, "pragma", 6) == 0 && ch_isspace(cp[6]))
+	if (!ch_isdigit(*p)) {
+		if (strncmp(p, "pragma", 6) == 0 && ch_isspace(p[6]))
 			return;
-	error:
-		/* undefined or invalid '#' directive */
-		warning(255);
-		return;
+		goto error;
 	}
-	ln = strtol(--cp, &eptr, 10);
-	if (eptr == cp)
-		goto error;
-	if ((c = *(cp = eptr)) != ' ' && c != '\t' && c != '\0')
-		goto error;
-	while ((c = *cp++) == ' ' || c == '\t')
-		continue;
-	if (c != '\0') {
-		if (c != '"')
-			goto error;
-		fn = cp;
-		while ((c = *cp) != '"' && c != '\0')
-			cp++;
-		if (c != '"')
-			goto error;
-		if ((fnl = cp++ - fn) > PATH_MAX)
-			goto error;
-		/* empty string means stdin */
-		if (fnl == 0) {
-			fn = "{standard input}";
-			fnl = 16;	/* strlen (fn) */
-		}
-		curr_pos.p_file = record_filename(fn, fnl);
-		/*
-		 * If this is the first directive, the name is the name
-		 * of the C source file as specified at the command line.
-		 * It is written to the output file.
-		 */
-		if (first) {
-			csrc_pos.p_file = curr_pos.p_file;
-			outsrc(transform_filename(curr_pos.p_file,
-			    strlen(curr_pos.p_file)));
-			first = false;
-		}
 
-		parse_line_directive_flags(cp, &is_begin, &is_end, &is_system);
+	char *end;
+	long ln = strtol(--p, &end, 10);
+	if (end == p)
+		goto error;
+	p = end;
+
+	if (*p != ' ' && *p != '\t' && *p != '\0')
+		goto error;
+	while (*p == ' ' || *p == '\t')
+		p++;
+
+	if (*p != '\0') {
+		if (*p != '"')
+			goto error;
+		const char *fn = ++p;
+		while (*p != '"' && *p != '\0')
+			p++;
+		if (*p != '"')
+			goto error;
+		size_t fn_len = p++ - fn;
+		if (fn_len > PATH_MAX)
+			goto error;
+		if (fn_len == 0) {
+			fn = "{standard input}";
+			fn_len = strlen(fn);
+		}
+		curr_pos.p_file = record_filename(fn, fn_len);
+		set_csrc_pos();
+
+		bool is_begin, is_end, is_system;
+		parse_line_directive_flags(p, &is_begin, &is_end, &is_system);
 		update_location(curr_pos.p_file, (int)ln, is_begin, is_end);
 		in_system_header = is_system;
 	}
@@ -1065,6 +1066,11 @@ lex_directive(const char *yytext)
 		csrc_pos.p_line = (int)ln - 1;
 		csrc_pos.p_uniq = 0;
 	}
+	return;
+
+error:
+	/* undefined or invalid '#' directive */
+	warning(255);
 }
 
 /* Handle lint comments such as ARGSUSED. */
