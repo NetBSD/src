@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.75 2023/08/12 21:08:37 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.76 2023/08/12 21:32:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.75 2023/08/12 21:08:37 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.76 2023/08/12 21:32:16 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -288,7 +288,6 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 	if (fsym->s_scl == STATIC)
 		outchar('s');
 
-	/* name of function */
 	outname(fsym->s_name);
 
 	if (fsym->s_rename != NULL) {
@@ -396,7 +395,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	outchar('\n');
 }
 
-/* write a character to the output buffer, quoted if necessary */
+/* write a character to the output file, quoted if necessary */
 static void
 outqchar(char c)
 {
@@ -448,7 +447,7 @@ outqchar(char c)
 
 /*
  * extracts potential format specifiers for printf() and scanf() and
- * writes them, enclosed in "" and quoted if necessary, to the output buffer
+ * writes them, enclosed in "" and quoted if necessary, to the output file
  */
 static void
 outfstrg(strg_t *strg)
@@ -546,9 +545,7 @@ outfstrg(strg_t *strg)
 	outchar('"');
 }
 
-/*
- * writes a record if sym was used
- */
+/* writes a record if sym was used */
 void
 outusg(const sym_t *sym)
 {
