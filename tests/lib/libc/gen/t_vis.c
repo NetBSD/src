@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vis.c,v 1.11 2023/08/12 12:45:03 riastradh Exp $	*/
+/*	$NetBSD: t_vis.c,v 1.12 2023/08/12 12:46:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -114,6 +114,25 @@ ATF_TC_BODY(strvis_empty, tc)
 	char dst[] = "fail";
 	strvis(dst, "", VIS_SAFE);
 	ATF_REQUIRE(dst[0] == '\0' && dst[1] == 'a');
+}
+
+ATF_TC(strnvis_empty_empty);
+ATF_TC_HEAD(strnvis_empty_empty, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test strnvis(3) with empty source and destination");
+}
+
+ATF_TC_BODY(strnvis_empty_empty, tc)
+{
+	char dst[] = "fail";
+	int n;
+
+	atf_tc_expect_fail("PR lib/57573: Overflow possibilities in vis(3)");
+
+	n = strnvis(dst, 0, "", VIS_SAFE);
+	ATF_CHECK(memcmp(dst, "fail", sizeof(dst)) == 0);
+	ATF_CHECK_EQ_MSG(n, -1, "n=%d", n);
 }
 
 ATF_TC(strunvis_hex);
@@ -261,6 +280,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, strvis_basic);
 	ATF_TP_ADD_TC(tp, strvis_null);
 	ATF_TP_ADD_TC(tp, strvis_empty);
+	ATF_TP_ADD_TC(tp, strnvis_empty_empty);
 	ATF_TP_ADD_TC(tp, strunvis_hex);
 #ifdef VIS_NOLOCALE
 	ATF_TP_ADD_TC(tp, strvis_locale);
