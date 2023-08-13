@@ -31,7 +31,7 @@
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
 .\"     from: NetBSD: strcpy.3,v 1.23 2015/04/01 20:18:17 riastradh Exp
-.\"	$NetBSD: strncpy.3,v 1.15 2023/08/11 21:32:26 riastradh Exp $
+.\"	$NetBSD: strncpy.3,v 1.16 2023/08/13 11:27:22 riastradh Exp $
 .\"
 .Dd August 11, 2023
 .Dt STRNCPY 3
@@ -212,6 +212,10 @@ buf[sizeof(buf) - 1] = '\e0';
 .Ed
 .Pp
 If
+.Va input
+is guaranteed to be
+.Tn NUL Ns -terminated ,
+and if
 .Va buf
 need only be
 .Tn NUL Ns -terminated ,
@@ -225,6 +229,16 @@ as follows:
 strlcpy(buf, input, sizeof(buf));
 .Ed
 .Pp
+It is not enough for
+.Va input
+to have
+.Li sizeof(buf)
+bytes allocated; it MUST be
+.Tn NUL Ns -terminated
+for
+.Xr strlcpy 3
+to be used.
+.Pp
 Note that because
 .Xr strlcpy 3
 is not defined in any standards, it should
@@ -235,18 +249,26 @@ Because
 .Xr strlcpy 3
 does not fully initialize
 .Fa dst ,
-it is
+but does read all the way to a
+.Tn NUL
+terminator in
+.Fa src
+even past
+.Fa len
+bytes,
+.Xr strlcpy 3
+is
 .Em not
 a safe
 .Tn NUL Ns -terminating
 replacement for
-.Fn strncpy
-if the buffer is not separately zero-initialized.
+.Fn strncpy .
 Naively replacing
 .Fn strncpy
 by
 .Xr strlcpy 3
-can lead to disclosure of secrets from uninitialized memory.
+can lead to crashes, undefined behaviour, and disclosure of secrets
+from uninitialized memory.
 .Sh SEE ALSO
 .Xr bcopy 3 ,
 .Xr memccpy 3 ,
