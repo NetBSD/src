@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.233 2023/07/17 12:55:37 riastradh Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.234 2023/08/13 23:06:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.233 2023/07/17 12:55:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.234 2023/08/13 23:06:07 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -634,8 +634,17 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 		goto done;
 	}
 
-	/* copy page [pg now dirty] */
+	/*
+	 * copy the page [pg now dirty]
+	 *
+	 * Remove the pmap entry now for the old page at this address
+	 * so that no thread can modify the new page while any thread
+	 * might still see the old page.
+	 */
 	if (opg) {
+		pmap_remove(vm_map_pmap(ufi->orig_map), ufi->orig_rvaddr,
+			     ufi->orig_rvaddr + PAGE_SIZE);
+		pmap_update(vm_map_pmap(ufi->orig_map));
 		uvm_pagecopy(opg, pg);
 	}
 	KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_DIRTY);
