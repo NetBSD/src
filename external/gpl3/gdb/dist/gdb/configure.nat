@@ -68,7 +68,9 @@ case ${gdb_host} in
 	LOADLIBES='-lkvm'
 	;;
     nbsd*)
-	NATDEPFILES='fork-child.o nat/fork-inferior.o nat/netbsd-nat.o inf-ptrace.o'
+	NATDEPFILES='fork-child.o nat/fork-inferior.o inf-ptrace.o \
+	    nat/netbsd-nat.o bsd-kvm.o'
+	LOADLIBES='-lkvm'
 	HAVE_NATIVE_GCORE_HOST=1
 	;;
     obsd*)
@@ -345,8 +347,6 @@ case ${gdb_host} in
 	esac
 	;;
     nbsd)
-	NATDEPFILES="${NATDEPFILES} bsd-kvm.o"
-	LOADLIBES='-lkvm'
 	case ${gdb_host_cpu} in
 	    aarch64)
 		# Host: NetBSD/aarch64
@@ -366,8 +366,7 @@ case ${gdb_host} in
 		;;
 	    powerpc)
 		# Host: NetBSD/powerpc
-		NATDEPFILES="${NATDEPFILES} ppc-netbsd-nat.o bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		NATDEPFILES="${NATDEPFILES} ppc-netbsd-nat.o"
 		;;
 	    sh)
 		# Host: NetBSD/sh
@@ -377,21 +376,16 @@ case ${gdb_host} in
 	esac
 	;;
     nbsd64)
-	NATDEPFILES="${NATDEPFILES} bsd-kvm.o"
-	LOADLIBES='-lkvm'
 	case ${gdb_host_cpu} in
 	    i386)
 		# Host: NetBSD/amd64
 		NATDEPFILES="${NATDEPFILES} netbsd-nat.o amd64-nat.o x86-nat.o \
 		nat/x86-dregs.o x86-bsd-nat.o amd64-bsd-nat.o \
-		amd64-netbsd-nat.o bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		amd64-netbsd-nat.o"
 		;;
 	    sparc)
 		# Host: NetBSD/sparc64
-		NATDEPFILES="${NATDEPFILES} sparc64-netbsd-nat.o sparc-nat.o \
-		bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		NATDEPFILES="${NATDEPFILES} sparc64-netbsd-nat.o sparc-nat.o"
 		;;
 
 	esac
@@ -408,8 +402,7 @@ case ${gdb_host} in
 		# Host: NetBSD/i386 ELF
 		NATDEPFILES="${NATDEPFILES} netbsd-nat.o x86-nat.o \
 		nat/x86-dregs.o \
-		x86-bsd-nat.o i386-bsd-nat.o i386-netbsd-nat.o bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		x86-bsd-nat.o i386-bsd-nat.o i386-netbsd-nat.o"
 		;;
 	    m68k)
 		# Host: NetBSD/m68k ELF
@@ -417,9 +410,7 @@ case ${gdb_host} in
 		;;
 	    sparc)
 		# Host: NetBSD/sparc ELF
-		NATDEPFILES="${NATDEPFILES} sparc-nat.o sparc-netbsd-nat.o \
-		bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		NATDEPFILES="${NATDEPFILES} sparc-nat.o sparc-netbsd-nat.o"
 		;;
 	    vax)
 		# Host: NetBSD/vax ELF
