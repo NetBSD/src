@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2023/08/11 17:46:00 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2023/08/13 12:16:14 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -35,13 +35,10 @@ TEXINFO=	gdb.texinfo stabs.texinfo
 INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
 		-I${DIST}/readline/readline/doc -I${.CURDIR}/.. -DGDBN=${GDBN}
 
-GDBvn.texi: ${DIST}/gdb/version.in
-	echo "@set GDBVN $$(${TOOL_CAT} ${.ALLSRC})" > ${.TARGET}
-
 gdb-cfg.texi: ${DIST}/gdb/doc/all-cfg.texi
 	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
 
-CLEANFILES+= GDBvn.texi gdb-cfg.texi
+CLEANFILES+= gdb-cfg.texi
 stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
 
 FILES=		netbsd.xml
@@ -54,8 +51,6 @@ PROGDPLIBS+= gdb ${GDBLIBDIR}/libgdb
 # XXX: modula2 won't load otherwise, since nothing brings the m2-objs in.
 LIBGDBDIR!=	cd ${GDBLIBDIR}/libgdb && ${PRINTOBJDIR}
 LDADD+=		${LIBGDBDIR}/m2-lang.o
-#LDADD+= -L${LIBGDBDIR} -Wl,--whole-archive -lgdb -Wl,-no-whole-archive
-#DPADD+= ${LIBGDBDIR}/libgdb.a
 
 # Simulator support
 .if ${GDB_MACHINE_ARCH} == powerpc || ${GDB_MACHINE_ARCH} == powerpcle || \
