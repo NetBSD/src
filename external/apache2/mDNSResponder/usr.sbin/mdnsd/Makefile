@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2023/06/03 21:26:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2023/08/13 18:57:07 gutteridge Exp $
 
 PROG=	mdnsd
 
@@ -7,7 +7,7 @@ PROG=	mdnsd
 .PATH:	${DIST}/mDNSPosix ${DIST}/mDNSCore ${DIST}/mDNSShared
 
 CPPFLAGS+=-I${DIST}/mDNSCore -I${DIST}/mDNSShared \
-	-DPROGRAM_NAME=\"mdnsd\" -DHAVE_SIGINFO
+	-DPROGRAM_NAME=\"mdnsd\" -DHAVE_SIGINFO -D_PLATFORM_HAS_STRONG_PRNG_
 #CPPFLAGS+=-DMDNS_DEBUGMSGS=99
 SRCS=	PosixDaemon.c mDNSPosix.c mDNSBSD.c mDNS.c DNSDigest.c uDNS.c \
 	DNSCommon.c uds_daemon.c mDNSDebug.c dnssd_ipc.c GenLinkedList.c \
