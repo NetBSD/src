@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.84 2023/08/13 15:19:13 riastradh Exp $	*/
+/*	$NetBSD: vis.c,v 1.85 2023/08/13 15:19:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.84 2023/08/13 15:19:13 riastradh Exp $");
+__RCSID("$NetBSD: vis.c,v 1.85 2023/08/13 15:19:24 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -71,6 +71,7 @@ __FBSDID("$FreeBSD$");
 
 #include <assert.h>
 #include <errno.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <vis.h>
 #include <wchar.h>
