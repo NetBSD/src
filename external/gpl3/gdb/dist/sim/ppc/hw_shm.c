@@ -97,7 +97,7 @@ hw_shm_init_data(device *me)
     error("shm_init_data() required key property is missing\n");
 
   shm->key = (key_t) device_find_integer_property(me, "key");
-  DTRACE(shm, ("shm key (0x%08x)\n", shm->key) );
+  DTRACE(shm, ("shm key (0x%08jx)\n", (intmax_t)shm->key) );
   
   /* Figure out where this memory is in address space and how long it is */
   if ( !device_find_reg_array_property(me, "reg", 0, &reg) )

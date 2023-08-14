@@ -120,7 +120,7 @@ hw_sem_init_data(device *me)
     error("sem_init_data() required value property is missing\n");
 
   sem->key = (key_t) device_find_integer_property(me, "key");
-  DTRACE(sem, ("semaphore key (%d)\n", sem->key) );
+  DTRACE(sem, ("semaphore key (%jd)\n", (intmax_t)sem->key) );
 
   sem->initial = (int) device_find_integer_property(me, "value");
   DTRACE(sem, ("semaphore initial value (%d)\n", sem->initial) );
