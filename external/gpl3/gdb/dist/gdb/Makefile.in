@@ -698,7 +698,7 @@ TARGET_OBS = @TARGET_OBS@
 ALL_64_TARGET_OBS = \
 	aarch64-fbsd-tdep.o \
 	aarch64-linux-tdep.o \
-	aarch64-nbsd-tdep.o \
+	aarch64-netbsd-tdep.o \
 	aarch64-newlib-tdep.o \
 	aarch64-ravenscar-thread.o \
 	aarch64-tdep.o \
@@ -737,6 +737,7 @@ ALL_64_TARGET_OBS = \
 	mips64-obsd-tdep.o \
 	riscv-fbsd-tdep.o \
 	riscv-linux-tdep.o \
+	riscv-netbsd-tdep.o \
 	riscv-none-tdep.o \
 	riscv-ravenscar-thread.o \
 	riscv-tdep.o \
@@ -1435,6 +1436,7 @@ HFILES_NO_SRCDIR = \
 	remote-fileio.h \
 	remote-notif.h \
 	riscv-fbsd-tdep.h \
+	riscv-netbsd-tdep.h \
 	riscv-ravenscar-thread.h \
 	riscv-tdep.h \
 	rs6000-aix-tdep.h \
@@ -1627,6 +1629,8 @@ ALLDEPFILES = \
 	aarch64-fbsd-tdep.c \
 	aarch64-linux-nat.c \
 	aarch64-linux-tdep.c \
+	aarch64-netbsd-nat.c \
+	aarch64-netbsd-tdep.c \
 	aarch64-newlib-tdep.c \
 	aarch64-ravenscar-thread.c \
 	aarch64-tdep.c \

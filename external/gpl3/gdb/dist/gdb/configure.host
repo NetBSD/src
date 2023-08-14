@@ -84,7 +84,7 @@ aarch64*-*-netbsd*)	gdb_host=nbsd ;;
 aarch64*-*-freebsd*)	gdb_host=fbsd ;;
 
 alpha*-*-linux*)	gdb_host=alpha-linux ;;
-alpha*-*-netbsdaout* | alpha*-*-knetbsdaout*-gnu)
+alpha*-*-netbsd* | alpha*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 alpha*-*-openbsd*)	gdb_host=nbsd ;;
 
@@ -93,8 +93,8 @@ arc*-*-linux*)		gdb_host=linux ;;
 arm*-*-freebsd*)	gdb_host=fbsd ;;
 arm*-*-linux*)		gdb_host=linux ;;
 arm*-*-netbsd* | arm*-*-knetbsd*-gnu)
-			gdb_host=nbsdelf ;;
-arm*-*-openbsd*)	gdb_host=nbsdelf ;;
+			gdb_host=nbsd ;;
+arm*-*-openbsd*)	gdb_host=nbsd ;;
 
 hppa*-*-linux*)		gdb_host=linux ;;
 hppa*-*-netbsd*)	gdb_host=nbsd ;;
@@ -103,7 +103,7 @@ hppa*-*-openbsd*)	gdb_host=obsd ;;
 i[34567]86-*-freebsd* | i[34567]86-*-kfreebsd*-gnu)
 			gdb_host=fbsd ;;
 i[34567]86-*-netbsd* | i[34567]86-*-knetbsd*-gnu)
-			gdb_host=nbsdelf ;;
+			gdb_host=nbsd ;;
 i[34567]86-*-go32*)	gdb_host=go32 ;;
 i[34567]86-*-mingw32*)	gdb_host=mingw
 			gdb_host_obs=mingw-hdep.o
@@ -123,13 +123,13 @@ loongarch*-linux*)	gdb_host=linux ;;
 
 m68*-*-linux*)		gdb_host=linux ;;
 m68*-*-netbsd* | m68*-*-knetbsd*-gnu)
-			gdb_host=nbsdelf ;;
+			gdb_host=nbsd ;;
 m68*-*-openbsd*)	gdb_host=obsd ;;
 
 m88*-*-openbsd*)	gdb_host=obsd ;;
 
 mips*-*-linux*)		gdb_host=linux ;;
-mips*-*-netbsdaout* | mips*-*-knetbsd*-gnu)
+mips*-*-netbsd* | mips*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 mips*-*-freebsd*)	gdb_host=fbsd ;;
 mips64*-*-openbsd*)	gdb_host=obsd64 ;;
@@ -139,7 +139,7 @@ or1k-*-linux*)		gdb_host=linux ;;
 powerpc-*-aix* | rs6000-*-* | powerpc64-*-aix*)
 			gdb_host=aix ;;
 powerpc*-*-freebsd*)	gdb_host=fbsd ;;
-powerpc-*-netbsdaout* | powerpc-*-knetbsd*-gnu)
+powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 powerpc64-*-netbsd* | powerpc64-*-knetbsd*-gnu)
 			gdb_host=ppc64-nbsd ;;
@@ -150,6 +150,7 @@ powerpc*-*-linux*)	gdb_host=linux ;;
 
 riscv*-*-freebsd*)	gdb_host=fbsd ;;
 riscv*-*-linux*)	gdb_host=linux ;;
+riscv*-*-netbsd*)	gdb_host=nbsd ;;
 
 s390*-*-linux*)		gdb_host=linux ;;
 
@@ -162,10 +163,10 @@ sparc64-*-freebsd* | sparc64-*-kfreebsd*-gnu)
 sparc-*-linux*)		gdb_host=linux ;;
 sparc64-*-linux*)	gdb_host=linux64 ;;
 sparc-*-netbsd* | sparc-*-knetbsd*-gnu)
-			gdb_host=nbsdelf ;;
+			gdb_host=nbsd ;;
 sparc64-*-netbsd* | sparc64-*-knetbsd*-gnu)
 			gdb_host=nbsd64 ;;
-sparc-*-openbsd*)	gdb_host=nbsdelf ;;
+sparc-*-openbsd*)	gdb_host=nbsd ;;
 sparc64-*-openbsd*)	gdb_host=obsd64 ;;
 sparc-*-solaris2* | sparcv9-*-solaris2* | sparc64-*-solaris2*)
 			gdb_host=sol2
@@ -174,7 +175,7 @@ sparc-*-solaris2* | sparcv9-*-solaris2* | sparc64-*-solaris2*)
 tilegx-*-linux*)	gdb_host=linux ;;
 
 vax-*-netbsd* | vax-*-knetbsd*-gnu)
-			gdb_host=nbsdelf ;;
+			gdb_host=nbsd ;;
 vax-*-openbsd*)		gdb_host=obsd ;;
 
 x86_64-*-linux*)	gdb_host=linux64 ;;
