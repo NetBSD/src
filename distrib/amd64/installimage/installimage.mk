@@ -1,4 +1,4 @@
-#	$NetBSD: installimage.mk,v 1.3 2022/07/30 00:55:38 pgoyette Exp $
+#	$NetBSD: installimage.mk,v 1.4 2023/08/14 13:54:05 gdt Exp $
 
 # common code between distrib/amd64/installimage/Makefile and
 # distrib/amd64/installimage-bios/Makefile.
@@ -6,7 +6,7 @@
 .if ${USE_XZ_SETS:Uno} != "no"
 INSTIMAGEMB?=	2500			# for all installation binaries
 .else
-INSTIMAGEMB?=	4000			# for all installation binaries
+INSTIMAGEMB?=	3800			# for all installation binaries
 .endif
 
 PRIMARY_BOOT=		bootxx_ffsv1
