@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.69 2023/08/01 05:57:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.70 2023/08/14 02:21:22 rin Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -119,7 +119,7 @@ gtype-desc.h: gengtype gtyp-input.list.tmp
 	# GCC 4.8 installs gtype-state and gengtype as a plugin
 
 # gengtype is the real need for options.h
-gengtype.lo gengtype-lex.lo gengtype-parse.lo gengtype-state.lo: ${HH} gtyp-gen.h config.h options.h
+gengtype.lo gengtype-lex.lo gengtype-parse.lo gengtype-state.lo: ${HH} gtyp-gen.h config.h options.h version.h
 gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo gengtype-state.lo build-errors.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
