@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.165 2023/06/18 18:16:40 riastradh Exp $
+.\"	$NetBSD: sysctl.7,v 1.166 2023/08/14 16:51:52 riastradh Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -310,6 +310,7 @@ privilege may change the value.
 .It kern.fscale	integer	no
 .It kern.fsync	integer	no
 .It kern.hardclock_ticks	integer	no
+.It kern.heartbeat.max_period	integer	yes
 .It kern.hostid	integer	yes
 .It kern.hostname	string	yes
 .It kern.iov_max	integer	no
@@ -606,6 +607,12 @@ otherwise\ 0.
 Returns the number of
 .Xr hardclock 9
 ticks.
+.It Li kern.heartbeat.max_period
+Time in seconds since the last
+.Cd options HEARTBEAT
+progress check has passed before it will trigger a panic.
+See
+.Xr options 4 .
 .It Li kern.hist
 This variable contains kernel history data if the kernel was
 configured for any of the options

@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.525 2023/05/14 09:02:05 riastradh Exp $
+.\"	$NetBSD: options.4,v 1.526 2023/08/14 16:51:52 riastradh Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1343,6 +1343,53 @@ and
 .Em MEMORY_DISK_DYNAMIC .
 It is incompatible with
 .Em MEMORY_DISK_ROOT_SIZE .
+.It Cd options HEARTBEAT
+Turns on heartbeat checks to panic if any CPU in the system or the
+timecounter appears stuck.
+.Pp
+Each CPU will periodically check in hard interrupt context that the
+timecounter has advanced and soft interrupts have run on the current
+CPU, and each CPU will also be periodically checked for progress by
+another CPU.
+.Pp
+If a CPU detects no progress has been made after
+.Dv HEARTBEAT_MAX_PERIOD
+seconds,
+.Nx
+will panic, giving the opportunity to enter ddb or get a crash dump
+even if the system has become totally unresponsive to keyboard input.
+.Pp
+This is different from a hardware watchdog timer
+.Pq Xr wdogctl 8 :
+.Bl -bullet
+.It
+.Cd options HEARTBEAT
+is purely a software mechanism, so if hard interrupts are stuck on all
+CPUs, then
+.Cd options HEARTBEAT
+cannot trigger, but a hardware watchdog timer can.
+.It
+A hardware watchdog timer won't notice if a single CPU is stuck, or if
+the system timecounter is stuck, as long as at least one CPU is not
+stuck and able to run
+.Xr wdogctl 8
+or the kernel watchdog tickle thread.
+In contrast,
+.Cd options HEARTBEAT
+uses hard interrupts on each CPU to cross-check soft interrupt progress
+on another CPU as well as the timecounter, so it can detect when a
+single CPU is unable to make progress when others are able.
+.El
+.It Cd options HEARTBEAT_MAX_PERIOD_DEFAULT=integer
+Time in seconds since the last
+.Cd options HEARTBEAT
+progress check has passed before it will trigger a panic.
+Default: 15.
+.Pp
+Can be changed at runtime via the
+.Li kern.heartbeat.max_period
+.Xr sysctl 7
+knob.
 .It Cd options HZ=integer
 On ports that support it, set the system clock frequency (see
 .Xr hz 9 )
