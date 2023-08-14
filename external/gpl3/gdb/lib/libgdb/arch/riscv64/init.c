@@ -11,10 +11,13 @@ extern initialize_file_ftype _initialize_riscv_tdep;
 extern initialize_file_ftype _initialize_riscv_none_tdep;
 extern initialize_file_ftype _initialize_ravenscar;
 extern initialize_file_ftype _initialize_svr4_solib;
+extern initialize_file_ftype _initialize_riscv_nbsd_tdep;
 extern initialize_file_ftype _initialize_ser_hardwire;
 extern initialize_file_ftype _initialize_ser_pipe;
 extern initialize_file_ftype _initialize_ser_tcp;
 extern initialize_file_ftype _initialize_ser_socket;
+extern initialize_file_ftype _initialize_fork_child;
+extern initialize_file_ftype _initialize_riscv_nbsd_nat;
 extern initialize_file_ftype _initialize_mi_cmd_env;
 extern initialize_file_ftype _initialize_mi_cmds;
 extern initialize_file_ftype _initialize_mi_interp;
@@ -176,10 +179,13 @@ initialize_all_files ()
       _initialize_riscv_none_tdep,
       _initialize_ravenscar,
       _initialize_svr4_solib,
+      _initialize_riscv_nbsd_tdep,
       _initialize_ser_hardwire,
       _initialize_ser_pipe,
       _initialize_ser_tcp,
       _initialize_ser_socket,
+      _initialize_fork_child,
+      _initialize_riscv_nbsd_nat,
       _initialize_mi_cmd_env,
       _initialize_mi_cmds,
       _initialize_mi_interp,

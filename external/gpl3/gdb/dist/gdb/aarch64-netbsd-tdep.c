@@ -22,7 +22,7 @@
 #include "gdbarch.h"
 #include "netbsd-tdep.h"
 #include "aarch64-tdep.h"
-#include "aarch64-nbsd-tdep.h"
+#include "aarch64-netbsd-tdep.h"
 #include "osabi.h"
 #include "solib-svr4.h"
 #include "target.h"

@@ -15,6 +15,8 @@ extern initialize_file_ftype _initialize_ser_hardwire;
 extern initialize_file_ftype _initialize_ser_pipe;
 extern initialize_file_ftype _initialize_ser_tcp;
 extern initialize_file_ftype _initialize_ser_socket;
+extern initialize_file_ftype _initialize_fork_child;
+extern initialize_file_ftype _initialize_ppcnbsd_nat;
 extern initialize_file_ftype _initialize_remote_sim;
 extern initialize_file_ftype _initialize_mi_cmd_env;
 extern initialize_file_ftype _initialize_mi_cmds;
@@ -181,6 +183,8 @@ initialize_all_files ()
       _initialize_ser_pipe,
       _initialize_ser_tcp,
       _initialize_ser_socket,
+      _initialize_fork_child,
+      _initialize_ppcnbsd_nat,
       _initialize_remote_sim,
       _initialize_mi_cmd_env,
       _initialize_mi_cmds,

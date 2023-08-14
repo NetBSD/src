@@ -26,13 +26,16 @@
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/frame.h>
+#include <arm/arm32/frame.h>
 
 #include "arm-tdep.h"
 #include "arm-netbsd-tdep.h"
 #include "aarch32-tdep.h"
 #include "inf-ptrace.h"
 #include "netbsd-nat.h"
+#include "bsd-kvm.h"
 
 class arm_netbsd_nat_target final : public nbsd_nat_target
 {
@@ -44,6 +47,52 @@ public:
 };
 
 static arm_netbsd_nat_target the_arm_netbsd_nat_target;
+
+static int
+armnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+{
+  struct switchframe sf;
+
+  /* The following is true for NetBSD/arm32 in 5.0 and after:
+
+     The pcb contains r8-r13 (sp) at the point of context switch in
+     cpu_switchto() or call of dumpsys(). At that point we have a
+     stack frame as described by `struct switchframe', which for
+     NetBSD/arm32 has the following layout:
+
+	r4   ascending.
+	r5        |
+	r6        |
+	r7       \|/
+	old sp
+	pc
+
+     we reconstruct the register state as it would look when we just
+     returned from cpu_switchto() or dumpsys().  */
+
+  if (!arm_apcs_32)
+    return 0;
+
+  /* The stack pointer shouldn't be zero.  */
+  if (pcb->pcb_sp == 0)
+    return 0;
+
+  read_memory (pcb->pcb_sp, (gdb_byte *) &sf, sizeof sf);
+
+  regcache->raw_supply (ARM_PC_REGNUM, &sf.sf_pc);
+  regcache->raw_supply (ARM_SP_REGNUM, &pcb->pcb_sp);
+  regcache->raw_supply (12, &pcb->pcb_r12);
+  regcache->raw_supply (11, &pcb->pcb_r11);
+  regcache->raw_supply (10, &pcb->pcb_r10);
+  regcache->raw_supply (9, &pcb->pcb_r9);
+  regcache->raw_supply (8, &pcb->pcb_r8);
+  regcache->raw_supply (7, &sf.sf_r7);
+  regcache->raw_supply (6, &sf.sf_r6);
+  regcache->raw_supply (5, &sf.sf_r5);
+  regcache->raw_supply (4, &sf.sf_r4);
+
+  return 1;
+}
 
 static void
 arm_supply_vfpregset (struct regcache *regcache, struct fpreg *fpregset)
@@ -357,5 +406,8 @@ void _initialize_arm_netbsd_nat ();
 void
 _initialize_arm_netbsd_nat ()
 {
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (armnbsd_supply_pcb);
+
   add_inf_child_target (&the_arm_netbsd_nat_target);
 }

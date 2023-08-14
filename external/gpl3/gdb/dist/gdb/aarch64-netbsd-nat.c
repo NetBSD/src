@@ -28,7 +28,7 @@
 
 #include "netbsd-nat.h"
 #include "aarch64-tdep.h"
-#include "aarch64-nbsd-tdep.h"
+#include "aarch64-netbsd-tdep.h"
 #include "regcache.h"
 #include "gdbcore.h"
 #include "bsd-kvm.h"

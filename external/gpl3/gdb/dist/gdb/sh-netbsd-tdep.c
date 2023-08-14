@@ -24,6 +24,9 @@
 #include "regset.h"
 #include "value.h"
 #include "osabi.h"
+#include "trad-frame.h"
+#include "tramp-frame.h"
+#include "frame-unwind.h"
 
 #include "sh-tdep.h"
 #include "netbsd-tdep.h"
@@ -58,6 +61,101 @@ static const struct sh_corefile_regmap regmap[] =
   {-1 /* Terminator.  */, 0}
 };
 
+/* From <machine/mcontext.h>.  */
+static const int shnbsd_mc_reg_offset[] =
+{
+  (20 * 4),	/* r0 */
+  (19 * 4),	/* r1 */
+  (18 * 4),	/* r2 */ 
+  (17 * 4),	/* r3 */ 
+  (16 * 4),	/* r4 */
+  (15 * 4),	/* r5 */
+  (14 * 4),	/* r6 */
+  (13 * 4),	/* r7 */
+  (12 * 4),	/* r8 */ 
+  (11 * 4),	/* r9 */
+  (10 * 4),	/* r10 */
+  ( 9 * 4),	/* r11 */
+  ( 8 * 4),	/* r12 */
+  ( 7 * 4),	/* r13 */
+  ( 6 * 4),	/* r14 */
+  (21 * 4),	/* r15/sp */
+  ( 1 * 4),	/* pc */
+  ( 5 * 4),	/* pr */
+  ( 0 * 4),	/* gbr */
+  -1,
+  ( 4 * 4),	/* mach */
+  ( 3 * 4),	/* macl */
+  ( 2 * 4),	/* sr */
+};
+
+/* SH register sets.  */
+
+ 
+static void
+shnbsd_sigtramp_cache_init (const struct tramp_frame *,
+			     frame_info_ptr,
+			     struct trad_frame_cache *,
+			     CORE_ADDR);
+
+/* The siginfo signal trampoline for NetBSD/sh3 versions 2.0 and later */
+static const struct tramp_frame shnbsd_sigtramp_si2 =
+{
+  SIGTRAMP_FRAME,
+  2,
+  {
+    { 0x64f3, ULONGEST_MAX },			/* mov     r15,r4 */
+    { 0xd002, ULONGEST_MAX },			/* mov.l   .LSYS_setcontext */
+    { 0xc380, ULONGEST_MAX },			/* trapa   #-128 */
+    { 0xa003, ULONGEST_MAX },			/* bra     .Lskip1 */
+    { 0x0009, ULONGEST_MAX },			/* nop */
+    { 0x0009, ULONGEST_MAX },			/* nop */
+ /* .LSYS_setcontext */
+    { 0x0134, ULONGEST_MAX }, { 0x0000, ULONGEST_MAX },     /* 0x134 */
+ /* .Lskip1 */
+    { 0x6403, ULONGEST_MAX },			/* mov     r0,r4 */
+    { 0xd002, ULONGEST_MAX },			/* mov.l   .LSYS_exit  */
+    { 0xc380, ULONGEST_MAX },			/* trapa   #-128 */
+    { 0xa003, ULONGEST_MAX },			/* bra     .Lskip2 */
+    { 0x0009, ULONGEST_MAX },			/* nop */
+    { 0x0009, ULONGEST_MAX },			/* nop */
+ /* .LSYS_exit */
+    { 0x0001, ULONGEST_MAX }, { 0x0000, ULONGEST_MAX },     /* 0x1 */
+/* .Lskip2 */
+    { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
+  },
+  shnbsd_sigtramp_cache_init
+};
+
+static void
+shnbsd_sigtramp_cache_init (const struct tramp_frame *self,
+			    frame_info_ptr next_frame,
+			    struct trad_frame_cache *this_cache,
+			    CORE_ADDR func)
+{
+  struct gdbarch *gdbarch = get_frame_arch (next_frame);
+  // struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  int sp_regnum = gdbarch_sp_regnum (gdbarch);
+  CORE_ADDR sp = get_frame_register_unsigned (next_frame, sp_regnum);
+  CORE_ADDR base;
+  const int *reg_offset;
+  int num_regs;
+  int i;
+
+  reg_offset = shnbsd_mc_reg_offset;
+  num_regs = ARRAY_SIZE (shnbsd_mc_reg_offset);
+  /* SP already points at the ucontext. */
+  base = sp;
+  /* offsetof(ucontext_t, uc_mcontext) == 36 */
+  base += 36;
+
+  for (i = 0; i < num_regs; i++)
+    if (reg_offset[i] != -1)
+      trad_frame_set_reg_addr (this_cache, i, base + reg_offset[i]);
+
+  /* Construct the frame ID using the function start.  */
+  trad_frame_set_id (this_cache, frame_id_build (sp, func));
+}
 
 static void
 shnbsd_init_abi (struct gdbarch_info info,
@@ -71,6 +169,7 @@ shnbsd_init_abi (struct gdbarch_info info,
 
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  tramp_frame_prepend_unwinder (gdbarch, &shnbsd_sigtramp_si2);
 }
 
 void _initialize_shnbsd_tdep ();

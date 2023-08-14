@@ -25,9 +25,9 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
-#include "nbsd-nat.h"
+#include "netbsd-nat.h"
 #include "riscv-tdep.h"
-#include "riscv-nbsd-tdep.h"
+#include "riscv-netbsd-tdep.h"
 #include "inf-ptrace.h"
 
 struct riscv_nbsd_nat_target final : public nbsd_nat_target

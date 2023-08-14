@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* We define this to get types like register_t.  */
-#define _KERNTYPES
 #include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
@@ -27,11 +26,13 @@
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 
 #include "mips-tdep.h"
 #include "mips-netbsd-tdep.h"
 #include "netbsd-nat.h"
 #include "inf-ptrace.h"
+#include "bsd-kvm.h"
 
 class mips_nbsd_nat_target final : public nbsd_nat_target
 {
@@ -116,9 +117,45 @@ mips_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
     }
 }
 
+static int
+mipsnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+{
+  struct label_t sf;
+
+  sf = pcb->pcb_context;
+
+  /* really should test for n{32,64} abi for this register
+     unless this is purely the "n" ABI */
+
+  regcache->raw_supply (MIPS_S0_REGNUM, &sf.val[_L_S0]);
+  regcache->raw_supply (MIPS_S1_REGNUM, &sf.val[_L_S1]);
+  regcache->raw_supply (MIPS_S2_REGNUM, &sf.val[_L_S2]);
+  regcache->raw_supply (MIPS_S3_REGNUM, &sf.val[_L_S3]);
+  regcache->raw_supply (MIPS_S4_REGNUM, &sf.val[_L_S4]);
+  regcache->raw_supply (MIPS_S5_REGNUM, &sf.val[_L_S5]);
+  regcache->raw_supply (MIPS_S6_REGNUM, &sf.val[_L_S6]);
+  regcache->raw_supply (MIPS_S7_REGNUM, &sf.val[_L_S7]);
+
+  regcache->raw_supply (MIPS_S8_REGNUM, &sf.val[_L_S8]);
+
+  regcache->raw_supply (MIPS_T8_REGNUM, &sf.val[_L_T8]);
+
+  regcache->raw_supply (MIPS_GP_REGNUM, &sf.val[_L_GP]);
+
+  regcache->raw_supply (MIPS_SP_REGNUM, &sf.val[_L_SP]);
+  regcache->raw_supply (MIPS_RA_REGNUM, &sf.val[_L_RA]);
+  regcache->raw_supply (MIPS_PS_REGNUM, &sf.val[_L_SR]);
+
+  /* provide the return address of the savectx as the current pc */
+  regcache->raw_supply (MIPS_EMBED_PC_REGNUM, &sf.val[_L_RA]);
+
+  return 0;
+}
+
 void _initialize_mipsnbsd_nat ();
 void
 _initialize_mipsnbsd_nat ()
 {
   add_inf_child_target (&the_mips_nbsd_nat_target);
+  bsd_kvm_add_target (mipsnbsd_supply_pcb);
 }

@@ -29,11 +29,12 @@
 
 #include "ppc-tdep.h"
 #include "netbsd-tdep.h"
+#include "ppc-netbsd-tdep.h"
 #include "ppc-tdep.h"
 #include "solib-svr4.h"
 
 /* Register offsets from <machine/reg.h>.  */
-static ppc_reg_offsets ppcnbsd_reg_offsets;
+ppc_reg_offsets ppcnbsd_reg_offsets;
 
 
 /* Core file support.  */
@@ -175,6 +176,10 @@ ppcnbsd_init_abi (struct gdbarch_info info,
 		  struct gdbarch *gdbarch)
 {
   nbsd_init_abi (info, gdbarch);
+
+  /* NetBSD doesn't support the 128-bit `long double' from the psABI.  */
+  set_gdbarch_long_double_bit (gdbarch, 64);
+  set_gdbarch_long_double_format (gdbarch, floatformats_ieee_double);
 
   /* For NetBSD, this is an on again, off again thing.  Some systems
      do use the broken struct convention, and some don't.  */
