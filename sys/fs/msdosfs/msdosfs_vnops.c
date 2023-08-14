@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.110 2021/10/23 16:58:17 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.111 2023/08/14 05:41:09 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.110 2021/10/23 16:58:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.111 2023/08/14 05:41:09 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1163,12 +1163,17 @@ msdosfs_readdir(void *v)
 				    offset / sizeof(struct direntry);
 				dirbuf->d_type = DT_REG;
 			}
-			if (chksum != msdosfs_winChksum(dentp->deName))
+			if (chksum != msdosfs_winChksum(dentp->deName)) {
+				char deName[11];
+
+				memcpy(deName, dentp->deName,
+				       sizeof dentp->deName);
+				memset(&deName[8], 0, 3);
 				dirbuf->d_namlen =
-				    msdosfs_dos2unixfn(dentp->deName,
-				    (u_char *)dirbuf->d_name,
-				    pmp->pm_flags & MSDOSFSMNT_SHORTNAME);
-			else
+				    msdosfs_dos2unixfn(deName,
+				        (u_char *)dirbuf->d_name,
+				        pmp->pm_flags & MSDOSFSMNT_SHORTNAME);
+			} else
 				dirbuf->d_name[dirbuf->d_namlen] = 0;
 			namlen = dirbuf->d_namlen;
 			chksum = -1;
