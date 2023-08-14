@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.181 2023/04/30 08:35:52 mlelstv Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.182 2023/08/14 21:17:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.181 2023/04/30 08:35:52 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.182 2023/08/14 21:17:08 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2197,7 +2197,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 				if (sed != NULL)
 					goto ignore;
 				sed = (const struct usb_audio_streaming_endpoint_descriptor *) desc;
-				DPRINTF(" streadming_endpoint: offset=%d bLength=%d\n", *offsp, sed->bLength);
+				DPRINTF(" streaming_endpoint: offset=%d bLength=%d\n", *offsp, sed->bLength);
 				break;
 			default:
 				goto ignore;
