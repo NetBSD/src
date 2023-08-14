@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2023/08/14 16:45:26 christos Exp $
+#	$NetBSD: Makefile,v 1.45 2023/08/14 22:41:34 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -10,7 +10,7 @@ FIND_ARGS=	\! \( -type d -name sim -prune \)
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
-		--without-mpfr
+		--without-mpfr --with-libgmp-prefix=${TOOLDIR}
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
 
@@ -45,15 +45,12 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*:Nam_cv_func_iconv*} \
 
 MKENV_BUILD_MAKE=${MKNATIVE_ENV} ${BUILD_MAKE}
 
-CCADDFLAGS+= --sysroot=${DESTDIR} -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/include
+CCADDFLAGS+= --sysroot=${DESTDIR} -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
 LDADDFLAGS+= -L${DESTDIR}/lib -L${DESTDIR}/usr/lib
 CXXADDFLAGS+= -D__STDC_FORMAT_MACROS
 CXXADDFLAGS+= -D__STDC_LIMIT_MACROS
 CXXADDFLAGS+= -D__STDC_CONSTANT_MACROS
 HOST_CXXFLAGS+= ${CXXADDFLAGS}
-# for gmp
-HOST_CPPFLAGS+= -I${.OBJDIR}/.native/include
-HOST_LDFLAGS+= -L${GMPOBJ}
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-gdb
@@ -107,6 +104,9 @@ native-gdb: .native/.configure_done
 		${GDB_MACHINE_ARCH}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
+	mkdir -p ${.OBJDIR}/.native/include
+	# we need to make a copy because ${GMPINC} has a config.h
+	cp -p ${GMPINC}/gmp.h ${.OBJDIR}/.native/include
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd ${.OBJDIR}/.native && \
 			${MKNATIVE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure \
@@ -134,10 +134,3 @@ native-gdb: .native/.configure_done
 clean: clean.native
 clean.native:
 	-rm -r -f .native
-
-.BEGIN: ${.OBJDIR}/.native/include/gmp.h
-
-${.OBJDIR}/.native/include/gmp.h: ${GMPINC}/gmp.h
-	mkdir -p ${.OBJDIR}/.native/include
-	# we need to make a copy because ${GMPINC} has a config.h
-	cp -p ${GMPINC}/gmp.h ${.OBJDIR}/.native/include
