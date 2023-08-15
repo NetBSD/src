@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.106 2023/08/12 12:56:34 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.107 2023/08/15 10:05:47 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11167,4 +11167,14 @@ share/man/man7/signal.7				1.27,1.28
 
 	signal(7): PR 57527: clarify quirky SysV-inspired SIGCHLD semantics.
 	[riastradh, ticket #325]
+
+sys/uvm/uvm_fault.c				1.234
+
+	uvm: PR 56535: prevent TLB invalidation races during COW resolution.
+	[chs, ticket #327]
+
+external/apache2/mDNSResponder/usr.sbin/mdnsd/Makefile 1.18
+
+	mdnsd(8): switch to use arc4random(3) for randomness
+	[gutteridge, ticket #328]
 
