@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.91 2023/08/11 12:14:10 sborrill Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.92 2023/08/15 10:08:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2017,4 +2017,14 @@ tests/libexec/ld.elf_so/t_hash.c		1.1 via patch
 	ld.elf_so: Fix sysv elf hash on edge cases like `ZZZZZW9p' on
 	LP64 platforms where long is 64-bit.
 	[riastradh, ticket #1712]
+
+sys/uvm/uvm_fault.c				1.234
+
+	uvm: PR 56535: prevent TLB invalidation races during COW resolution.
+	[chs, ticket #1714]
+
+external/apache2/mDNSResponder/usr.sbin/mdnsd/Makefile 1.18
+
+	mdnsd(8): switch to use arc4random(3) for randomness
+	[gutteridge, ticket #1715]
 
