@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2023/08/14 22:41:34 christos Exp $
+#	$NetBSD: Makefile,v 1.46 2023/08/15 19:56:07 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -51,6 +51,9 @@ CXXADDFLAGS+= -D__STDC_FORMAT_MACROS
 CXXADDFLAGS+= -D__STDC_LIMIT_MACROS
 CXXADDFLAGS+= -D__STDC_CONSTANT_MACROS
 HOST_CXXFLAGS+= ${CXXADDFLAGS}
+# Since we are using gmake -e the environment overwrites CPPFLAGS
+# so we overwrite it again here! (see Makefile.gnuhost)
+HOST_CPPFLAGS+= -I${TOOLDIR}/include
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-gdb
