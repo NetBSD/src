@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.18 2020/11/10 11:00:02 gson Exp $
+$NetBSD: README,v 1.19 2023/08/15 22:02:36 christos Exp $
 
 Organization of Sources:
 
@@ -46,6 +46,9 @@ The licenses currently used are:
 
 	atheros		Atheros License.
 
+	broadcom	Broadcom licenses for rpi firmware and bfwm. See
+			*/dist/LICENSE.broadcom*
+
 	bsd		BSD (or equivalent) licensed software, possibly with
 			the "advertising clause".
 			http://www.opensource.org/licenses/bsd-license.php
@@ -76,6 +79,12 @@ The licenses currently used are:
 	intel-public	Intel license permitting redistribution with
 			terms similar to BSD licensed software.
 
+	lgpl2		GNU Lesser General Public License, version 2 (or earlier).
+			https://opensource.org/license/lgpl-2-1/
+
+	lgpl3		GNU Lesser General Public License, version 3 (or earlier).
+			https://opensource.org/license/lgpl-3-0/
+
 	mit		MIT (X11) style license.
 			http://www.opensource.org/licenses/mit-license.php
 
@@ -85,6 +94,9 @@ The licenses currently used are:
 	nvidia-firmware	NVIDIA firmware license permitting redistribution for
 			use on operating systems distributed under the terms
 			of an OSI-approved open source license.
+
+	ofl		SIL Open Font License
+			https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL
 
 	public-domain	Non-license for code that has been explicitly put
 			into the Public Domain.
