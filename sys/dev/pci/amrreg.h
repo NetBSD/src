@@ -1,4 +1,4 @@
-/*	$NetBSD: amrreg.h,v 1.5 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: amrreg.h,v 1.6 2023/08/15 04:04:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ struct amr_enquiry3 {
 	u_int8_t	ae_driveprop[AMR_40LD_MAXDRIVES];	/* logical drive properties */
 	u_int8_t	ae_drivestate[AMR_40LD_MAXDRIVES];	/* physical drive state */
 	u_int8_t	ae_pdrivestate[AMR_40LD_MAXPHYSDRIVES]; /* physical drive state */
-	u_int16_t	ae_driveformat[AMR_40LD_MAXPHYSDRIVES];
+	u_int16_t	ae_driveformat[AMR_40LD_MAXPHYSDRIVES / 16];
 	u_int8_t	ae_targxfer[80];			/* physical drive transfer rates */
 
 	u_int8_t	res1[263];		/* pad to 1024 bytes */
