@@ -1,4 +1,8 @@
-AT&T test data from: http://www2.research.att.com/~gsf/testregex/
+AT&T test data from:
+    http://www2.research.att.com/~gsf/testregex/
+
+The above link does not exist anymore; a copy of it is maintained at:
+    https://github.com/gburd/testregex
 
 Quoting from the page:
     testregex.c 2004-05-31 is the latest source for the AT&T Research
