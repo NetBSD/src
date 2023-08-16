@@ -1,4 +1,4 @@
-.\"	$NetBSD: paxctl.8,v 1.20 2023/06/23 10:27:12 uwe Exp $
+.\"	$NetBSD: paxctl.8,v 1.21 2023/08/16 22:22:02 gutteridge Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright 2008 Christos Zoulas <christos@NetBSD.org>
@@ -113,8 +113,8 @@ note sections to mark executables as having PaX flags enabled.
 This will be done using
 .Xr fileassoc 9
 in the future so that we can control who does the marking and
-not altering the binary file signature.
+not alter the binary file signature.
 .Po
 Note this also means that
-at present any flags set do not survive binary file upgrades
-.Pc .
+at present any flags set do not survive binary file upgrades.
+.Pc
