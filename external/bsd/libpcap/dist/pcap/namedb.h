@@ -1,4 +1,4 @@
-/*	$NetBSD: namedb.h,v 1.4 2018/09/03 15:26:44 christos Exp $	*/
+/*	$NetBSD: namedb.h,v 1.5 2023/08/17 15:18:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996
@@ -61,7 +61,9 @@ PCAP_API struct	pcap_etherent *pcap_next_etherent(FILE *);
 PCAP_API u_char *pcap_ether_hostton(const char*);
 PCAP_API u_char *pcap_ether_aton(const char *);
 
-PCAP_API bpf_u_int32 **pcap_nametoaddr(const char *);
+PCAP_API
+PCAP_DEPRECATED("this is not reentrant; use 'pcap_nametoaddrinfo' instead")
+bpf_u_int32 **pcap_nametoaddr(const char *);
 PCAP_API struct addrinfo *pcap_nametoaddrinfo(const char *);
 PCAP_API bpf_u_int32 pcap_nametonetaddr(const char *);
 

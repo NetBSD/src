@@ -1,4 +1,4 @@
-/*	$NetBSD: os-osf5.h,v 1.4 2017/01/24 22:29:29 christos Exp $	*/
+/*	$NetBSD: os-osf5.h,v 1.5 2023/08/17 15:18:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -23,10 +23,10 @@
 
 /*
  * Prototypes missing in Tru64 UNIX 5.x
- * XXX - "pcap_snprintf()" and "pcap_vsnprintf()" aren't missing, but you have to
+ * XXX - "snprintf()" and "vsnprintf()" aren't missing, but you have to
  * #define the right value to get them defined by <stdio.h>.
  */
-int	pcap_snprintf(char *, size_t, const char *, ...);
-int	pcap_vsnprintf(char *, size_t, const char *, va_list);
+int	snprintf(char *, size_t, const char *, ...);
+int	vsnprintf(char *, size_t, const char *, va_list);
 int	pfopen(char *, int);
 

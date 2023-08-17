@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2023/06/03 21:30:21 lukem Exp $	
+# $NetBSD: Makefile,v 1.32 2023/08/17 15:18:13 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.init.mk>
@@ -140,13 +140,16 @@ pcap-common.c \
 pcap-new.c \
 pcap-rpcap.c \
 pcap-rpcap-unix.c \
+pcap-usb-linux-common.c \
+pcap-util.c \
 pcap.c \
 rpcap-protocol.c \
 savefile.c \
 scanner.l \
 sf-pcap.c \
 sf-pcapng.c \
-sockutils.c
+sockutils.c \
+sslutils.c
 
 
 INCS=		pcap/pcap.h pcap/namedb.h pcap/funcattrs.h \
@@ -161,7 +164,7 @@ scanner.d scanner.o: tokdefs.h
 tokdefs.h: grammar.h
 	cp $? $@
 
-CLEANFILES+=	tokdefs.h scanner.h
+CLEANFILES+=	tokdefs.h scanner.h grammar.y
 
 COPTS.bpf_image.c+=	-Wno-format-nonliteral
 
@@ -173,5 +176,12 @@ COPTS.pcap-rpcap.c+=	${CC_WNO_FORMAT_TRUNCATION}
 
 CWARNFLAGS.clang+=	-Wno-format-extra-args \
 			-Wno-unneeded-internal-declaration
+
+grammar.y: grammar.y.in
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e 's/@REENTRANT_PARSER@/%pure-parser/g' < ${.ALLSRC} > ${.TARGET}
+
+LIBDPLIBS +=	ssl ${OPENSSLDIR}/lib/libssl \
+	    	crypto ${OPENSSLDIR}/lib/libcrypto
 
 .include <bsd.lib.mk>

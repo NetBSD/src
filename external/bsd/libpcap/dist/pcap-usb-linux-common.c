@@ -54,10 +54,10 @@ fix_linux_usb_mmapped_length(struct pcap_pkthdr *pkth, const u_char *bp)
 	    (hdr->endpoint_number & URB_TRANSFER_IN) &&
 	    pkth->len == sizeof(pcap_usb_header_mmapped) +
 	                 (hdr->ndesc * sizeof (usb_isodesc)) + hdr->urb_len) {
-		usb_isodesc *descs;
+		const usb_isodesc *descs;
 		u_int pre_truncation_data_len, pre_truncation_len;
 
-		descs = (usb_isodesc *) (bp + sizeof(pcap_usb_header_mmapped));
+		descs = (const usb_isodesc *) (bp + sizeof(pcap_usb_header_mmapped));
 
 		/*
 		 * We have data (yes, data_flag is 0 if we *do* have data),
