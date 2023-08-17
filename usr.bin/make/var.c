@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1059 2023/06/23 05:21:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1060 2023/08/17 18:52:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1059 2023/06/23 05:21:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1060 2023/08/17 18:52:51 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2836,17 +2836,17 @@ ApplyModifier_Match(const char **pp, ModChain *ch)
 
 struct ModifyWord_MtimeArgs {
 	bool error;
-	bool fallback;
+	bool use_fallback;
 	ApplyModifierResult rc;
-	time_t t;
+	time_t fallback;
 };
 
 static void
 ModifyWord_Mtime(Substring word, SepBuf *buf, void *data)
 {
-	char tbuf[BUFSIZ];
-	struct stat st;
 	struct ModifyWord_MtimeArgs *args = data;
+	struct stat st;
+	char tbuf[21];
 
 	if (Substring_IsEmpty(word))
 		return;
@@ -2859,8 +2859,8 @@ ModifyWord_Mtime(Substring word, SepBuf *buf, void *data)
 			args->rc = AMR_CLEANUP;
 			return;
 		}
-		if (args->fallback)
-			st.st_mtime = args->t;
+		if (args->use_fallback)
+			st.st_mtime = args->fallback;
 		else
 			time(&st.st_mtime);
 	}
@@ -2879,18 +2879,17 @@ ApplyModifier_Mtime(const char **pp, ModChain *ch)
 		return AMR_UNKNOWN;
 	*pp += 5;
 	p = *pp;
-	args.error = args.fallback = false;
+	args.error = false;
+	args.use_fallback = p[0] == '=';
 	args.rc = AMR_OK;
-	if (p[0] == '=') {
+	if (args.use_fallback) {
 		p++;
-		args.fallback = true;
-		if (!TryParseTime(&p, &args.t)) {
-			if (strncmp(p, "error", 5) == 0) {
-				args.error = true;
-				p += 5;
-			} else
-				return AMR_BAD;
-		}
+		if (TryParseTime(&p, &args.fallback)) {
+		} else if (strncmp(p, "error", 5) == 0) {
+			p += 5;
+			args.error = true;
+		} else
+			return AMR_BAD;
 		*pp = p;
 	}
 	if (!ModChain_ShouldEval(ch))
