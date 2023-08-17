@@ -385,11 +385,11 @@ case "${targ}" in
     targ_defvec=arm_elf32_nacl_be_vec
     targ_selvecs="arm_elf32_nacl_le_vec"
     ;;
-  armeb-*-netbsd*)
+  arm*eb-*-netbsd*)
     targ_defvec=arm_elf32_be_vec
     targ_selvecs="arm_elf32_le_vec"
     ;;
-  arm-*-netbsd* | arm-*-openbsd*)
+  arm*-*-netbsd* | arm-*-openbsd*)
     targ_defvec=arm_elf32_le_vec
     targ_selvecs="arm_elf32_be_vec"
     ;;
