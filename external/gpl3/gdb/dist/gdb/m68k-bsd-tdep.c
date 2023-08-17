@@ -28,6 +28,7 @@
 #include "gdbtypes.h"
 
 #include "m68k-tdep.h"
+#include "netbsd-tdep.h"
 #include "solib-svr4.h"
 
 /* Core file support.  */
@@ -134,6 +135,8 @@ static void
 m68kbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   m68k_gdbarch_tdep *tdep = gdbarch_tdep<m68k_gdbarch_tdep> (gdbarch);
+
+  nbsd_init_abi (info, gdbarch);
 
   tdep->jb_pc = 5;
   tdep->jb_elt_size = 4;
