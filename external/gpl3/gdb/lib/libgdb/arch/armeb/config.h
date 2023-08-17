@@ -39,7 +39,7 @@
 #define DEFAULT_BFD_ARCH bfd_arm_arch
 
 /* Define to BFD's default target vector. */
-#define DEFAULT_BFD_VEC arm_elf32_le_vec
+#define DEFAULT_BFD_VEC arm_elf32_be_vec
 
 /* Handle .ctf type-info sections */
 #define ENABLE_LIBCTF 1

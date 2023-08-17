@@ -6,4 +6,4 @@ G_libbfd_la_DEPENDENCIES=elf32-arm.lo elf32.lo elf-nacl.lo elf-vxworks.lo elf.lo
 G_libbfd_la_OBJECTS=archive.lo archures.lo bfd.lo bfdio.lo bfdwin.lo cache.lo coff-bfd.lo compress.lo corefile.lo elf-properties.lo format.lo hash.lo init.lo libbfd.lo linker.lo merge.lo opncls.lo reloc.lo section.lo simple.lo stab-syms.lo stabs.lo syms.lo targets.lo binary.lo ihex.lo srec.lo tekhex.lo verilog.lo
 G_DEFS=-DHAVE_CONFIG_H
 G_INCLUDES=
-G_TDEFAULTS=-DDEFAULT_VECTOR=arm_elf32_le_vec -DSELECT_VECS='&arm_elf32_le_vec,&arm_elf32_fdpic_le_vec,&arm_elf32_be_vec,&arm_elf32_fdpic_be_vec,&elf32_le_vec,&elf32_be_vec' -DSELECT_ARCHITECTURES='&bfd_arm_arch'
+G_TDEFAULTS=-DDEFAULT_VECTOR=arm_elf32_be_vec -DSELECT_VECS='&arm_elf32_be_vec,&arm_elf32_le_vec,&elf32_le_vec,&elf32_be_vec' -DSELECT_ARCHITECTURES='&bfd_arm_arch'

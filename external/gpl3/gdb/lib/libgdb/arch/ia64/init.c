@@ -9,6 +9,7 @@
 
 extern initialize_file_ftype _initialize_ia64_tdep;
 extern initialize_file_ftype _initialize_svr4_solib;
+extern initialize_file_ftype _initialize_ia64nbsd_tdep;
 extern initialize_file_ftype _initialize_ser_hardwire;
 extern initialize_file_ftype _initialize_ser_pipe;
 extern initialize_file_ftype _initialize_ser_tcp;
@@ -172,6 +173,7 @@ initialize_all_files ()
     {
       _initialize_ia64_tdep,
       _initialize_svr4_solib,
+      _initialize_ia64nbsd_tdep,
       _initialize_ser_hardwire,
       _initialize_ser_pipe,
       _initialize_ser_tcp,

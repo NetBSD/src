@@ -264,7 +264,7 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_arm_elf32_be_vec)
 
-{ "armeb-*-netbsd*",
+{ "arm*eb-*-netbsd*",
 &arm_elf32_be_vec },
 #endif
 
@@ -272,7 +272,7 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_arm_elf32_le_vec)
 
-{ "arm-*-netbsd*", NULL },{ "arm-*-openbsd*",
+{ "arm*-*-netbsd*", NULL },{ "arm-*-openbsd*",
 &arm_elf32_le_vec },
 #endif
 
