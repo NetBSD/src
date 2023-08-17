@@ -226,6 +226,6 @@ void _initialize_riscv_nbsd_tdep ();
 void
 _initialize_riscv_nbsd_tdep ()
 {
-  gdbarch_register_osabi (bfd_arch_riscv, 0, GDB_OSABI_FREEBSD,
+  gdbarch_register_osabi (bfd_arch_riscv, 0, GDB_OSABI_NETBSD,
 			  riscv_nbsd_init_abi);
 }
