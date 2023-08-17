@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33 2023/08/17 15:30:36 christos Exp $	
+# $NetBSD: Makefile,v 1.34 2023/08/17 16:19:05 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.init.mk>
@@ -111,7 +111,7 @@ ${i:S/manfile.in/5/}: ${i} __sed
 .endfor
 
 CPPFLAGS+=	-I${.CURDIR}/../include -I${.CURDIR} -I${SRCDIR}
-CPPFLAGS+=	-DYYBISON
+CPPFLAGS+=	-DYYBISON -DYYDEBUG
 LPREFIX=	pcap_
 LFLAGS+=	--header-file=scanner.h
 YPREFIX=	pcap_
