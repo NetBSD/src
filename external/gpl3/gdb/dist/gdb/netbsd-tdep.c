@@ -46,21 +46,6 @@
 #define	KINFO_VME_FLAG_GROWS_UP		0x00000010
 #define	KINFO_VME_FLAG_GROWS_DOWN	0x00000020
 
-/* FIXME: kettenis/20060115: We should really eliminate the next two
-   functions completely.  */
-
-struct link_map_offsets *
-nbsd_ilp32_solib_svr4_fetch_link_map_offsets (void)
-{
-  return svr4_ilp32_fetch_link_map_offsets ();
-}
-
-struct link_map_offsets *
-nbsd_lp64_solib_svr4_fetch_link_map_offsets (void)
-{
-  return svr4_lp64_fetch_link_map_offsets ();
-}
-
 int
 nbsd_pc_in_sigtramp (CORE_ADDR pc, const char *func_name)
 {
