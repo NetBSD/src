@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.54 2022/05/29 10:43:46 rin Exp $	*/
+/*	$NetBSD: ciss.c,v 1.55 2023/08/17 14:19:50 andvar Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.54 2022/05/29 10:43:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.55 2023/08/17 14:19:50 andvar Exp $");
 
 #include "bio.h"
 
@@ -665,7 +665,7 @@ ciss_wait(struct ciss_softc *sc, struct ciss_ccb *ccb, int ms)
 }
 
 /*
- * submit a command and optionally wait for completition.
+ * submit a command and optionally wait for completion.
  * wait arg abuses XS_CTL_POLL|XS_CTL_NOSLEEP flags to request
  * to wait (XS_CTL_POLL) and to allow tsleep() (!XS_CTL_NOSLEEP)
  * instead of busy loop waiting
@@ -1233,7 +1233,7 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	case ADAPTER_REQ_SET_XFER_MODE:
 		/*
 		 * We can't change the transfer mode, but at least let
-		 * scsipi know what the adapter has negociated.
+		 * scsipi know what the adapter has negotiated.
 		 */
 		xm = (struct scsipi_xfer_mode *)arg;
 		xm->xm_mode |= PERIPH_CAP_TQING;
@@ -1533,7 +1533,7 @@ ciss_ioctl_vol(struct ciss_softc *sc, struct bioc_vol *bv)
 	bv->bv_size = blks * (u_quad_t)le16toh(ldid->blksize);
 	bv->bv_level = ciss_level[ldid->type];
 /*
- * XXX Should only return bv_nodisk for logigal volume that we've associated
+ * XXX Should only return bv_nodisk for logical volume that we've associated
  * the physical drives to:  either the 1st degraded, rebuilding, or failed
  * volume else volume 0?
  */

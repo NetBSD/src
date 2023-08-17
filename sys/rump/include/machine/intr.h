@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2018/04/19 21:50:10 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2023/08/17 14:19:49 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@ makeiplcookie(ipl_t ipl)
 #define spl0() ((void)0)
 
 /*
- * IPL_* does not mean anything to a run-to-completition rump kernel,
+ * IPL_* does not mean anything to a run-to-completion rump kernel,
  * but we sometimes assert a "not higher than" condition, so we assign
  * different values (following spl(9)).
  */
