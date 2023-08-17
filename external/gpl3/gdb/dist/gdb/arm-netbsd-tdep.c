@@ -117,7 +117,9 @@ arm_netbsd_init_abi_common (struct gdbarch_info info,
   arm_gdbarch_tdep *tdep = gdbarch_tdep<arm_gdbarch_tdep> (gdbarch);
 
   tdep->lowest_pc = 0x8000;
-  switch (info.byte_order)
+  /* For armv[67]eb (BE8), insns are encoded in little-endian.
+     Therefore, we cannot use info.byte_order here.  */
+  switch (info.byte_order_for_code)
     {
     case BFD_ENDIAN_LITTLE:
       tdep->arm_breakpoint = arm_nbsd_arm_le_breakpoint;
