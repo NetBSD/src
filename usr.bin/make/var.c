@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1060 2023/08/17 18:52:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1061 2023/08/17 19:06:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1060 2023/08/17 18:52:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1061 2023/08/17 19:06:51 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2885,11 +2885,16 @@ ApplyModifier_Mtime(const char **pp, ModChain *ch)
 	if (args.use_fallback) {
 		p++;
 		if (TryParseTime(&p, &args.fallback)) {
-		} else if (strncmp(p, "error", 5) == 0) {
+		} else if (strncmp(p, "error", 5) == 0
+		    && IsDelimiter(p[5], ch)) {
 			p += 5;
 			args.error = true;
-		} else
-			return AMR_BAD;
+		} else {
+			Parse_Error(PARSE_FATAL,
+			    "Invalid argument '%.*s' for modifier ':mtime'",
+			    (int)strcspn(p, ":{}()"), p);
+			return AMR_CLEANUP;
+		}
 		*pp = p;
 	}
 	if (!ModChain_ShouldEval(ch))

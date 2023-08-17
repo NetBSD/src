@@ -1,4 +1,4 @@
-# $NetBSD: varmod-mtime.mk,v 1.2 2023/08/17 18:48:32 rillig Exp $
+# $NetBSD: varmod-mtime.mk,v 1.3 2023/08/17 19:06:51 rillig Exp $
 #
 # Tests for the ':mtime' variable modifier, which maps each word of the
 # expression to that file's modification time.
@@ -62,9 +62,9 @@ _!=	rm -f ${COOKIE}
 .endif
 
 
-# TODO: Only the word 'error' is a special argument to the ':mtime' modifier,
-# all other words should result in a parse error.
-# expect+2: Unknown modifier "handler-no"
+# Only the word 'error' is a special argument to the ':mtime' modifier, all
+# other words result in a parse error.
+# expect+2: Invalid argument 'errorhandler-no' for modifier ':mtime'
 # expect+1: Malformed conditional (${MAKEFILE:mtime=errorhandler-no} > 0)
 .if ${MAKEFILE:mtime=errorhandler-no} > 0
 .else
