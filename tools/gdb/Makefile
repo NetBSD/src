@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2023/08/15 19:56:07 christos Exp $
+#	$NetBSD: Makefile,v 1.47 2023/08/17 05:35:09 rin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -11,6 +11,10 @@ FIND_ARGS=	\! \( -type d -name sim -prune \)
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
 		--without-mpfr --with-libgmp-prefix=${TOOLDIR}
+
+.if ${MACHINE} == "ia64"
+CONFIGURE_ARGS+=--enable-obsolete
+.endif
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
 
