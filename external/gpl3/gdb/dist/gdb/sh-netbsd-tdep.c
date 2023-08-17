@@ -178,6 +178,4 @@ _initialize_shnbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_sh, 0, GDB_OSABI_NETBSD,
 			  shnbsd_init_abi);
-  gdbarch_register_osabi (bfd_arch_sh, 0, GDB_OSABI_OPENBSD,
-			  shnbsd_init_abi);
 }
