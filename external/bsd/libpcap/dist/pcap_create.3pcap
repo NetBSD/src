@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcap_create.3pcap,v 1.4 2019/10/01 16:02:12 christos Exp $
+.\"	$NetBSD: pcap_create.3pcap,v 1.5 2023/08/17 15:18:12 christos Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ pcap_t *pcap_create(const char *source, char *errbuf);
 .ft
 .fi
 .SH DESCRIPTION
-.B pcap_create()
+.BR pcap_create ()
 is used to create a packet capture handle to look
 at packets on the network.
 .I source
@@ -50,12 +50,12 @@ argument of "any" or
 can be used to capture packets from all interfaces.
 .PP
 The returned handle must be activated with
-.B pcap_activate(3PCAP)
+.BR pcap_activate (3PCAP)
 before packets can be captured
 with it; options for the capture, such as promiscuous mode, can be set
 on the handle before activating it.
 .SH RETURN VALUE
-.B pcap_create()
+.BR pcap_create ()
 returns a
 .I pcap_t *
 on success and
@@ -71,4 +71,4 @@ is assumed to be able to hold at least
 .B PCAP_ERRBUF_SIZE
 chars.
 .SH SEE ALSO
-pcap(3PCAP)
+.BR pcap (3PCAP)

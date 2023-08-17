@@ -1,4 +1,4 @@
-/*	$NetBSD: fad-glifc.c,v 1.4 2018/09/03 15:26:43 christos Exp $	*/
+/*	$NetBSD: fad-glifc.c,v 1.5 2023/08/17 15:18:12 christos Exp $	*/
 
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fad-glifc.c,v 1.4 2018/09/03 15:26:43 christos Exp $");
+__RCSID("$NetBSD: fad-glifc.c,v 1.5 2023/08/17 15:18:12 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -55,7 +55,6 @@ struct rtentry;		/* declarations in <net/if.h> */
 #include <net/if.h>
 #include <netinet/in.h>
 
-#include <ctype.h>
 #include <errno.h>
 #include <memory.h>
 #include <stdio.h>
@@ -316,7 +315,7 @@ pcap_findalldevs_interfaces(pcap_if_list_t *devlistp, char *errbuf,
 			 * We have a ":"; is it followed by a number?
 			 */
 			q = p + 1;
-			while (isdigit((unsigned char)*q))
+			while (PCAP_ISDIGIT(*q))
 				q++;
 			if (*q == '\0') {
 				/*

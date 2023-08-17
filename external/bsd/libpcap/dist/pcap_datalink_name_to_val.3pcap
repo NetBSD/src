@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcap_datalink_name_to_val.3pcap,v 1.6 2019/10/01 16:02:12 christos Exp $
+.\"	$NetBSD: pcap_datalink_name_to_val.3pcap,v 1.7 2023/08/17 15:18:12 christos Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@ int pcap_datalink_name_to_val(const char *name);
 .ft
 .fi
 .SH DESCRIPTION
-.B pcap_datalink_name_to_val()
+.BR pcap_datalink_name_to_val ()
 translates a link-layer header type name, which is a
 .B DLT_
 name with the
@@ -42,10 +42,10 @@ name with the
 removed, to the corresponding link-layer header type value.  The
 translation is case-insensitive.
 .SH RETURN VALUE
-.B pcap_datalink_name_to_val()
+.BR pcap_datalink_name_to_val ()
 returns the type value on success and
 .B PCAP_ERROR
 if the name is not a known
-type name..
+type name.
 .SH SEE ALSO
-pcap(3PCAP)
+.BR pcap (3PCAP)

@@ -1,4 +1,4 @@
-/*	$NetBSD: os-solaris2.h,v 1.3 2017/01/24 22:29:29 christos Exp $	*/
+/*	$NetBSD: os-solaris2.h,v 1.4 2023/08/17 15:18:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -23,4 +23,4 @@
 
 /* Prototypes missing in SunOS 5 */
 char    *strerror(int);
-int	pcap_snprintf(char *, size_t, const char *, ...);
+int	snprintf(char *, size_t, const char *, ...);

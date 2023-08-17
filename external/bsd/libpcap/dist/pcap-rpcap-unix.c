@@ -317,7 +317,9 @@ rpcap_send_request_open(pcap_t *p, const char *interface)
 	}
 
 	p->linktype = get32(&reply_buf[0]);
+#if 0
 	p->tzoff    = get32(&reply_buf[4]);
+#endif
 
 	return 0;
 }
@@ -752,7 +754,7 @@ rpcap_create(const char *device, char *err_str, int *is_ours)
 
 	*is_ours = 1;
 
-	p = pcap_create_common(__UNCONST(device), 16384);
+	p = pcap_create_common(__UNCONST(device), 16384, 0);
 	if (p == NULL)
 		return NULL;
 

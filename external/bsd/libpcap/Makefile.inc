@@ -1,8 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.2 2020/08/29 15:05:33 christos Exp $
+# $NetBSD: Makefile.inc,v 1.3 2023/08/17 15:18:12 christos Exp $
 
 SRCDIR := ${.PARSEDIR}/dist
 
 CPPFLAGS+=-DLBL_ALIGN
+OPENSSLDIR=     ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}
 
 __sed: .USE
 	@rm -f ${.TARGET}
