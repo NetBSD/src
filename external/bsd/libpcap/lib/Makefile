@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.32 2023/08/17 15:18:13 christos Exp $	
+# $NetBSD: Makefile,v 1.33 2023/08/17 15:30:36 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.init.mk>
@@ -148,8 +148,7 @@ savefile.c \
 scanner.l \
 sf-pcap.c \
 sf-pcapng.c \
-sockutils.c \
-sslutils.c
+sockutils.c
 
 
 INCS=		pcap/pcap.h pcap/namedb.h pcap/funcattrs.h \
@@ -181,7 +180,11 @@ grammar.y: grammar.y.in
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e 's/@REENTRANT_PARSER@/%pure-parser/g' < ${.ALLSRC} > ${.TARGET}
 
+.if ${USE_OPENSSL:Uno} == "yes"
+CPPFLAGS  +=	-DHAVE_OPENSSL
+SRCS	  +=	sslutils.c
 LIBDPLIBS +=	ssl ${OPENSSLDIR}/lib/libssl \
 	    	crypto ${OPENSSLDIR}/lib/libcrypto
+.endif
 
 .include <bsd.lib.mk>
