@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.274 2022/12/03 01:04:42 brad Exp $
+#	$NetBSD: Makefile,v 1.274.2.1 2023/08/17 09:57:28 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -346,7 +346,6 @@ SUBDIR+=	savagedrm
 SUBDIR+=	sisdrm
 SUBDIR+=	tdfxdrm
 SUBDIR+=	viac7temp
-SUBDIR+=	viadrmums
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
@@ -362,6 +361,7 @@ SUBDIR+=	drmkms_sched
 SUBDIR+=	drmkms_ttm
 SUBDIR+=	i915drm
 SUBDIR+=	i915drmkms
+SUBDIR+=	viadrmums
 #
 # ISA modules
 #
