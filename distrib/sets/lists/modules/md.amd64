@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.98 2022/09/07 11:37:25 martin Exp $
+# $NetBSD: md.amd64,v 1.98.2.1 2023/08/17 09:57:28 martin Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -220,6 +220,8 @@
 ./@MODULEDIR@/tvpll/tvpll.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/ubsec				modules-base-kernel	kmod
 ./@MODULEDIR@/ubsec/ubsec.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/viadrmums				modules-base-kernel	kmod
+./@MODULEDIR@/viadrmums/viadrmums.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/vmt				modules-base-kernel	kmod
 ./@MODULEDIR@/vmt/vmt.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/wbsio				modules-base-kernel	kmod
