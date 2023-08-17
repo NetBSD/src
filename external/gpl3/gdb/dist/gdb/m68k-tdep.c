@@ -1344,10 +1344,14 @@ m68k_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
 static enum gdb_osabi
 m68k_osabi_sniffer (bfd *abfd)
 {
+  /* XXX NetBSD uses ELFOSABI_NONE == ELFOSABI_SYSV. Therefore, do not
+     fall back to EABI here.  */
+#ifndef __NetBSD__
   unsigned int elfosabi = elf_elfheader (abfd)->e_ident[EI_OSABI];
 
   if (elfosabi == ELFOSABI_NONE)
     return GDB_OSABI_SVR4;
+#endif
 
   return GDB_OSABI_UNKNOWN;
 }
