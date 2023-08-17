@@ -349,6 +349,11 @@ ia64-*-*vms*)
 	gdb_target_obs="ia64-vms-tdep.o"
 	;;
 
+ia64-*-netbsd*)
+	# Target: Intel IA-64 running netbsd
+	gdb_target_obs="ia64-netbsd-tdep.o"
+	;;
+
 iq2000-*-*)
 	gdb_target_obs="iq2000-tdep.o"
 	;;
@@ -689,7 +694,7 @@ v850*-*-elf | v850*-*-rtems*)
 
 vax-*-netbsd* | vax-*-knetbsd*-gnu)
 	# Target: NetBSD/vax
-	gdb_target_obs="vax-tdep.o"
+	gdb_target_obs="vax-tdep.o vax-netbsd-tdep.o"
 	;;
 vax-*-openbsd*)
 	# Target: OpenBSD/vax
