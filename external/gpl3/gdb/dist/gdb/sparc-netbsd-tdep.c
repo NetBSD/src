@@ -292,7 +292,7 @@ static const struct regset sparc32nbsd_fpregset =
     NULL, sparc32nbsd_supply_fpregset, NULL
   };
 
-void
+static void
 sparc32nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   sparc_gdbarch_tdep *tdep = gdbarch_tdep<sparc_gdbarch_tdep> (gdbarch);
