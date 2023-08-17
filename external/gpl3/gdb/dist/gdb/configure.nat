@@ -362,7 +362,7 @@ case ${gdb_host} in
 		;;
 	    i386)
 		# Host: NetBSD/i386 ELF
-		NATDEPFILES="${NATDEPFILES} netbsd-nat.o x86-nat.o \
+		NATDEPFILES="${NATDEPFILES} x86-nat.o \
 		nat/x86-dregs.o \
 		x86-bsd-nat.o i386-bsd-nat.o i386-netbsd-nat.o"
 		;;
@@ -376,7 +376,7 @@ case ${gdb_host} in
 		;;
 	    pa)
 		# Host: NetBSD/hppa
-		NATDEPFILES="${NATDEPFILES} netbsd-nat.o hppa-netbsd-nat.o"
+		NATDEPFILES="${NATDEPFILES} hppa-netbsd-nat.o"
 		;;
 	    powerpc)
 		# Host: NetBSD/powerpc
@@ -405,8 +405,8 @@ case ${gdb_host} in
 	case ${gdb_host_cpu} in
 	    i386)
 		# Host: NetBSD/amd64
-		NATDEPFILES="${NATDEPFILES} netbsd-nat.o amd64-nat.o \
-		x86-nat.o nat/x86-dregs.o x86-bsd-nat.o amd64-bsd-nat.o \
+		NATDEPFILES="${NATDEPFILES} amd64-nat.o x86-nat.o \
+		nat/x86-dregs.o x86-bsd-nat.o amd64-bsd-nat.o \
 		amd64-netbsd-nat.o"
 		;;
 	    sparc)
