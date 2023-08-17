@@ -58,9 +58,42 @@ static const struct sh_corefile_regmap regmap[] =
   {PR_REGNUM,	    2 * 4},
   {MACH_REGNUM,	    3 * 4},
   {MACL_REGNUM,	    4 * 4},
+  {GBR_REGNUM,	   21 * 4},
   {-1 /* Terminator.  */, 0}
 };
 
+
+
+#define REGSx16(base) \
+  {(base),      0}, \
+  {(base) +  1, 4}, \
+  {(base) +  2, 8}, \
+  {(base) +  3, 12}, \
+  {(base) +  4, 16}, \
+  {(base) +  5, 20}, \
+  {(base) +  6, 24}, \
+  {(base) +  7, 28}, \
+  {(base) +  8, 32}, \
+  {(base) +  9, 36}, \
+  {(base) + 10, 40}, \
+  {(base) + 11, 44}, \
+  {(base) + 12, 48}, \
+  {(base) + 13, 52}, \
+  {(base) + 14, 56}, \
+  {(base) + 15, 60}
+
+/* Convert an FPU register number into an offset into a ptrace
+   register structure.  */
+static const struct sh_corefile_regmap fpregmap[] =
+{
+  REGSx16 (FR0_REGNUM),
+  /* XXX: REGSx16(XF0_REGNUM) omitted.  */
+  {FPSCR_REGNUM, 128},
+  {FPUL_REGNUM,  132},
+  {-1 /* Terminator.  */, 0}
+};
+
+
 /* From <machine/mcontext.h>.  */
 static const int shnbsd_mc_reg_offset[] =
 {
@@ -91,7 +124,7 @@ static const int shnbsd_mc_reg_offset[] =
 
 /* SH register sets.  */
 
- 
+
 static void
 shnbsd_sigtramp_cache_init (const struct tramp_frame *,
 			     frame_info_ptr,
@@ -165,7 +198,10 @@ shnbsd_init_abi (struct gdbarch_info info,
   nbsd_init_abi (info, gdbarch);
 
   tdep->core_gregmap = (struct sh_corefile_regmap *)regmap;
-  tdep->sizeof_gregset = 84;
+  tdep->sizeof_gregset = 88;
+
+  tdep->core_fpregmap = (struct sh_corefile_regmap *)fpregmap;
+  tdep->sizeof_fpregset = 0;	/* XXX */
 
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
