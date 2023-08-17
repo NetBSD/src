@@ -203,6 +203,11 @@ _initialize_ppcnbsd_tdep ()
   gdbarch_register_osabi (bfd_arch_powerpc, 0, GDB_OSABI_NETBSD,
 			  ppcnbsd_init_abi);
 
+  /* Register NetBSD OSABI also for rs6000, which is default target
+     used before any executable image is loaded.  */
+  gdbarch_register_osabi (bfd_arch_rs6000, 0, GDB_OSABI_NETBSD,
+			  ppcnbsd_init_abi);
+
   /* Avoid initializing the register offsets again if they were
      already initialized by ppc-netbsd-nat.c.  */
   if (ppcnbsd_reg_offsets.pc_offset == 0)
