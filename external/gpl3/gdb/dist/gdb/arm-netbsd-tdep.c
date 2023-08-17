@@ -70,7 +70,10 @@ arm_nbsd_supply_gregset (const struct regset *regset, struct regcache *regcache,
 
   if (regnum == -1 || regnum == ARM_PC_REGNUM)
     {
-      CORE_ADDR r_pc = gdbarch_addr_bits_remove (regcache->arch (), gregset->pc);
+      /* XXX Use uint32_t instead of CORE_ADDR (aka uint64_t; see
+	 gdbsupport/common-types.h).  Otherwise, zero-filled word
+	 will be stored for big-endian targets.  */
+      uint32_t r_pc = gdbarch_addr_bits_remove (regcache->arch (), gregset->pc);
       regcache->raw_supply (ARM_PC_REGNUM, (char *) &r_pc);
     }
 
