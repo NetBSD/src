@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1944 2023/08/11 23:05:48 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1945 2023/08/17 15:19:26 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -786,12 +786,12 @@ libdevmapper ioctl protocol code, therefore we should test it before
 import. Talk to haad before importing new version.
 
 Package:	libpcap
-Version:	1.9.1
-Current Vers:	1.9.1
+Version:	1.10.4
+Current Vers:	1.10.4
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2021-03-01
+Date:		2023-08-17
 Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	dyoung
 License:	BSD (3/4-clause)
