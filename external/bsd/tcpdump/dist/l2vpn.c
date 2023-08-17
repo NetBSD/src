@@ -15,14 +15,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: l2vpn.c,v 1.7 2017/09/08 14:01:12 christos Exp $");
+__RCSID("$NetBSD: l2vpn.c,v 1.8 2023/08/17 20:19:40 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
-#include <netdissect-stdinc.h>
+#include "netdissect-stdinc.h"
 #include "netdissect.h"
 #include "l2vpn.h"
 
@@ -31,7 +31,7 @@ __RCSID("$NetBSD: l2vpn.c,v 1.7 2017/09/08 14:01:12 christos Exp $");
  *
  * RFC 6624
  *
- * http://www.iana.org/assignments/bgp-parameters/bgp-parameters.xhtml#bgp-l2-encapsulation-types-registry
+ * https://www.iana.org/assignments/bgp-parameters/bgp-parameters.xhtml#bgp-l2-encapsulation-types-registry
  */
 const struct tok l2vpn_encaps_values[] = {
     { 0, "Reserved"},
@@ -66,7 +66,7 @@ const struct tok l2vpn_encaps_values[] = {
  *
  * RFC 4446
  *
- * http://www.iana.org/assignments/pwe3-parameters/pwe3-parameters.xhtml#pwe3-parameters-2
+ * https://www.iana.org/assignments/pwe3-parameters/pwe3-parameters.xhtml#pwe3-parameters-2
  */
 const struct tok mpls_pw_types_values[] = {
     { 0x0000, "Reserved"},

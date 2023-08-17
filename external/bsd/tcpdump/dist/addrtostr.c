@@ -38,14 +38,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addrtostr.c,v 1.4 2017/09/08 14:01:12 christos Exp $");
+__RCSID("$NetBSD: addrtostr.c,v 1.5 2023/08/17 20:19:39 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
-#include <netdissect-stdinc.h>
+#include "netdissect-stdinc.h"
 #include "addrtostr.h"
 
 #include <stdio.h>
@@ -76,7 +76,7 @@ addrtostr (const void *src, char *dst, size_t size)
 	return NULL;
     }
     for (i = 0; i < 4; ++i) {
-    	int n = *srcaddr++;
+	int n = *srcaddr++;
 	int non_zerop = 0;
 
 	if (non_zerop || n / 100 > 0) {
@@ -132,7 +132,7 @@ addrtostr6 (const void *src, char *dst, size_t size)
   best.base = -1;
   cur.len = 0;
   cur.base  = -1;
-  for (i = 0; i < (int)(IN6ADDRSZ / INT16SZ); i++)
+  for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++)
   {
     if (words[i] == 0)
     {
@@ -165,14 +165,14 @@ addrtostr6 (const void *src, char *dst, size_t size)
         *dp++ = c; \
         space_left--; \
     }
-  for (i = 0; i < (int)(IN6ADDRSZ / INT16SZ); i++)
+  for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++)
   {
     /* Are we inside the best run of 0x00's?
      */
     if (best.base != -1 && i >= best.base && i < (best.base + best.len))
     {
       if (i == best.base)
-      	 APPEND_CHAR(':');
+	  APPEND_CHAR(':');
       continue;
     }
 

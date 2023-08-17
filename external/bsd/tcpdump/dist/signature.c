@@ -17,20 +17,21 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: signature.c,v 1.9 2019/10/01 16:06:16 christos Exp $");
+__RCSID("$NetBSD: signature.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
-#include <netdissect-stdinc.h>
+#include "netdissect-stdinc.h"
 
 #include <string.h>
 #include <stdlib.h>
 
 #include "netdissect.h"
 #include "signature.h"
+#include "diag-control.h"
 
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/md5.h>
@@ -50,7 +51,7 @@ const struct tok signature_check_values[] = {
  * Compute a HMAC MD5 sum.
  * Taken from rfc2104, Appendix.
  */
-USES_APPLE_DEPRECATED_API
+DIAG_OFF_DEPRECATION
 static void
 signature_compute_hmac_md5(const uint8_t *text, int text_len, unsigned char *key,
                            unsigned int key_len, uint8_t *digest)
@@ -86,8 +87,8 @@ signature_compute_hmac_md5(const uint8_t *text, int text_len, unsigned char *key
      */
 
     /* start out by storing key in pads */
-    memset(k_ipad, 0, sizeof k_ipad);
-    memset(k_opad, 0, sizeof k_opad);
+    memset(k_ipad, 0, sizeof(k_ipad));
+    memset(k_opad, 0, sizeof(k_opad));
     memcpy(k_ipad, key, key_len);
     memcpy(k_opad, key, key_len);
 
@@ -113,7 +114,7 @@ signature_compute_hmac_md5(const uint8_t *text, int text_len, unsigned char *key
     MD5_Update(&context, digest, 16);     /* then results of 1st hash */
     MD5_Final(digest, &context);          /* finish up 2nd pass */
 }
-USES_APPLE_RST
+DIAG_ON_DEPRECATION
 
 /*
  * Verify a cryptographic signature of the packet.
@@ -135,7 +136,7 @@ signature_verify(netdissect_options *ndo, const u_char *pptr, u_int plen,
     /*
      * Do we have all the packet data to be checked?
      */
-    if (!ND_TTEST2(*pptr, plen)) {
+    if (!ND_TTEST_LEN(pptr, plen)) {
         /* No. */
         return (CANT_CHECK_SIGNATURE);
     }
@@ -143,7 +144,7 @@ signature_verify(netdissect_options *ndo, const u_char *pptr, u_int plen,
     /*
      * Do we have the entire signature to check?
      */
-    if (!ND_TTEST2(*sig_ptr, sizeof(sig))) {
+    if (!ND_TTEST_LEN(sig_ptr, sizeof(sig))) {
         /* No. */
         return (CANT_CHECK_SIGNATURE);
     }
@@ -195,7 +196,7 @@ signature_verify(netdissect_options *ndo, const u_char *pptr, u_int plen,
     } else {
         /* No - print the computed signature. */
         for (i = 0; i < sizeof(sig); ++i) {
-            ND_PRINT((ndo, "%02x", sig[i]));
+            ND_PRINT("%02x", sig[i]);
         }
 
         return (SIGNATURE_INVALID);
@@ -210,10 +211,3 @@ signature_verify(netdissect_options *ndo _U_, const u_char *pptr _U_,
     return (CANT_CHECK_SIGNATURE);
 }
 #endif
-
-/*
- * Local Variables:
- * c-style: whitesmith
- * c-basic-offset: 4
- * End:
- */

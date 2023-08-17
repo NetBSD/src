@@ -37,14 +37,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: in_cksum.c,v 1.2 2017/01/24 23:29:13 christos Exp $");
+__RCSID("$NetBSD: in_cksum.c,v 1.3 2023/08/17 20:19:40 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+# include <config.h>
 #endif
 
-#include <netdissect-stdinc.h>
+#include "netdissect-stdinc.h"
 
 #include "netdissect.h"
 
@@ -61,9 +61,9 @@ __RCSID("$NetBSD: in_cksum.c,v 1.2 2017/01/24 23:29:13 christos Exp $");
 uint16_t
 in_cksum(const struct cksum_vec *vec, int veclen)
 {
-	register const uint16_t *w;
-	register int sum = 0;
-	register int mlen = 0;
+	const uint16_t *w;
+	int sum = 0;
+	int mlen = 0;
 	int byte_swapped = 0;
 
 	union {
@@ -201,5 +201,5 @@ in_cksum_shouldbe(uint16_t sum, uint16_t computed_sum)
 	shouldbe += ntohs(computed_sum);
 	shouldbe = (shouldbe & 0xFFFF) + (shouldbe >> 16);
 	shouldbe = (shouldbe & 0xFFFF) + (shouldbe >> 16);
-	return shouldbe;
+	return (uint16_t)shouldbe;
 }

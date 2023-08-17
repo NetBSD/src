@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ascii_strcasecmp.c,v 1.2 2017/01/24 23:29:13 christos Exp $");
+__RCSID("$NetBSD: ascii_strcasecmp.c,v 1.3 2023/08/17 20:19:39 christos Exp $");
 #endif
 
 #include "ascii_strcasecmp.h"
@@ -63,7 +63,7 @@ static const unsigned char charmap[] = {
 int
 ascii_strcasecmp(const char *s1, const char *s2)
 {
-	register const unsigned char *cm = charmap,
+	const unsigned char *cm = charmap,
 			*us1 = (const unsigned char *)s1,
 			*us2 = (const unsigned char *)s2;
 
@@ -74,9 +74,9 @@ ascii_strcasecmp(const char *s1, const char *s2)
 }
 
 int
-ascii_strncasecmp(const char *s1, const char *s2, register size_t n)
+ascii_strncasecmp(const char *s1, const char *s2, size_t n)
 {
-	register const unsigned char *cm = charmap,
+	const unsigned char *cm = charmap,
 			*us1 = (const unsigned char *)s1,
 			*us2 = (const unsigned char *)s2;
 

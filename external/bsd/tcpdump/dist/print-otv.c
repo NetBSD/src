@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-otv.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-otv.c,v 1.4 2023/08/17 20:19:40 christos Exp $");
 #endif
 
 /* \summary: Overlay Transport Virtualization (OTV) printer */
@@ -23,13 +23,16 @@ __RCSID("$NetBSD: print-otv.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 /* specification: draft-hasmit-otv-04 */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
-#include <netdissect-stdinc.h>
+#include "netdissect-stdinc.h"
 
+#define ND_LONGJMP_FROM_TCHECK
 #include "netdissect.h"
 #include "extract.h"
+
+#define OTV_HDR_LEN 8
 
 /*
  * OTV header, draft-hasmit-otv-04
@@ -48,30 +51,31 @@ otv_print(netdissect_options *ndo, const u_char *bp, u_int len)
 {
     uint8_t flags;
 
-    ND_PRINT((ndo, "OTV, "));
-    if (len < 8)
-        goto trunc;
+    ndo->ndo_protocol = "otv";
+    ND_PRINT("OTV, ");
+    if (len < OTV_HDR_LEN) {
+        ND_PRINT("[length %u < %u]", len, OTV_HDR_LEN);
+        goto invalid;
+    }
 
-    ND_TCHECK(*bp);
-    flags = *bp;
-    ND_PRINT((ndo, "flags [%s] (0x%02x), ", flags & 0x08 ? "I" : ".", flags));
+    flags = GET_U_1(bp);
+    ND_PRINT("flags [%s] (0x%02x), ", flags & 0x08 ? "I" : ".", flags);
     bp += 1;
 
-    ND_TCHECK2(*bp, 3);
-    ND_PRINT((ndo, "overlay %u, ", EXTRACT_24BITS(bp)));
+    ND_PRINT("overlay %u, ", GET_BE_U_3(bp));
     bp += 3;
 
-    ND_TCHECK2(*bp, 3);
-    ND_PRINT((ndo, "instance %u\n", EXTRACT_24BITS(bp)));
+    ND_PRINT("instance %u\n", GET_BE_U_3(bp));
     bp += 3;
 
     /* Reserved */
-    ND_TCHECK(*bp);
+    ND_TCHECK_1(bp);
     bp += 1;
 
-    ether_print(ndo, bp, len - 8, ndo->ndo_snapend - bp, NULL, NULL);
+    ether_print(ndo, bp, len - OTV_HDR_LEN, ND_BYTES_AVAILABLE_AFTER(bp), NULL, NULL);
     return;
 
-trunc:
-    ND_PRINT((ndo, " [|OTV]"));
+invalid:
+    nd_print_invalid(ndo);
+    ND_TCHECK_LEN(bp, len);
 }

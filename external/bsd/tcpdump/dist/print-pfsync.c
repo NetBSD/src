@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pfsync.c,v 1.4 2017/01/24 23:29:14 christos Exp $	*/
+/*	$NetBSD: print-pfsync.c,v 1.5 2023/08/17 20:19:40 christos Exp $	*/
 /*	$OpenBSD: print-pfsync.c,v 1.30 2007/05/31 04:16:26 mcbride Exp $	*/
 
 /*
@@ -31,9 +31,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) $Header: /cvsroot/src/external/bsd/tcpdump/dist/print-pfsync.c,v 1.4 2017/01/24 23:29:14 christos Exp $";
+    "@(#) $Header: /cvsroot/src/external/bsd/tcpdump/dist/print-pfsync.c,v 1.5 2023/08/17 20:19:40 christos Exp $";
 #else
-__RCSID("$NetBSD: print-pfsync.c,v 1.4 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-pfsync.c,v 1.5 2023/08/17 20:19:40 christos Exp $");
 #endif
 #endif
 
@@ -85,7 +85,7 @@ const char *pfsync_acts[] = { PFSYNC_ACTIONS };
 
 static void pfsync_print(netdissect_options *, struct pfsync_header *, int);
 
-u_int
+void
 pfsync_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_char *p)
 {
 	u_int caplen = h->caplen;
@@ -93,7 +93,7 @@ pfsync_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_ch
 	ts_print(ndo, &h->ts);
 
 	if (caplen < PFSYNC_HDRLEN) {
-		ND_PRINT((ndo, "[|pfsync]"));
+		ND_PRINT("[|pfsync]");
 		goto out;
 	}
 
@@ -103,8 +103,6 @@ out:
 	if (ndo->ndo_suppress_default_print)
 	    ND_DEFAULTPRINT((const u_char *)h, caplen);
 	//putchar('\n');
-
-	return 0;
 }
 
 void
