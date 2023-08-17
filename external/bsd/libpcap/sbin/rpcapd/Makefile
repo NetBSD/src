@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2023/08/17 15:18:13 christos Exp $
+# $NetBSD: Makefile,v 1.4 2023/08/17 15:30:36 christos Exp $
 
 USE_FORT?=	yes	# network server
 
@@ -34,8 +34,12 @@ CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-DPCAP_DONT_INCLUDE_PCAP_BPF_H
 
 PROGDPLIBS+=	pcap ${.CURDIR}/../../lib \
-		ssl ${OPENSSLDIR}/lib/libssl \
-		crypto ${OPENSSLDIR}/lib/libcrypto \
 		crypt ${NETBSDSRCDIR}/lib/libcrypt
+
+.if ${USE_OPENSSL:Uno} == "yes"
+CPPFLAGS+=	-DHAVE_OPENSSL
+PROGDPLIBS+=	ssl ${OPENSSLDIR}/lib/libssl \
+		crypto ${OPENSSLDIR}/lib/libcrypto 
+.endif
 
 .include <bsd.prog.mk>

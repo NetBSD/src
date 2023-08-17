@@ -136,8 +136,8 @@
 /* Define to 1 if you have the <net/raw.h> header file. */
 /* #undef HAVE_NET_RAW_H */
 
-/* Use OpenSSL */
-#define HAVE_OPENSSL 1
+/* Use OpenSSL from the Makefile */
+/* #define HAVE_OPENSSL 1 */
 
 /* if there's an os_proto.h for this platform, to use additional prototypes */
 /* #undef HAVE_OS_PROTO_H */
