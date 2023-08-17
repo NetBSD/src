@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.80 2023/07/31 23:53:38 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.81 2023/08/17 22:10:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -604,6 +604,8 @@ u_int	bpf_filter_with_aux_data(const struct bpf_insn *, const u_char *, u_int, u
 #define	BPF_TRACK_EVENT_ATTACH	1
 #define	BPF_TRACK_EVENT_DETACH	2
 
+void bpf_dump(const struct bpf_program *, int);
+char  *bpf_image(const struct bpf_insn *, int);
 
 __END_DECLS
 
