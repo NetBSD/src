@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.104 2022/10/26 23:20:36 riastradh Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.105 2023/08/17 06:58:26 rin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015, 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.104 2022/10/26 23:20:36 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.105 2023/08/17 06:58:26 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -198,6 +198,10 @@ elf_populate_auxv(struct lwp *l, struct exec_package *pack, char **stackp)
 		a->a_v = ap->arg_entry;
 		a++;
 
+		a->a_type = AT_STACKBASE;
+		a->a_v = l->l_proc->p_stackbase;
+		a++;
+
 		a->a_type = AT_EUID;
 		if (vap->va_mode & S_ISUID)
 			a->a_v = vap->va_uid;
@@ -218,10 +222,6 @@ elf_populate_auxv(struct lwp *l, struct exec_package *pack, char **stackp)
 
 		a->a_type = AT_RGID;
 		a->a_v = kauth_cred_getgid(l->l_cred);
-		a++;
-
-		a->a_type = AT_STACKBASE;
-		a->a_v = l->l_proc->p_stackbase;
 		a++;
 
 		/* "/" means fexecve(2) could not resolve the pathname */
