@@ -1409,6 +1409,8 @@
 #define AT_FREEBSD_USRSTACKBASE 35      /* Top of user stack. */
 #define AT_FREEBSD_USRSTACKLIM  36      /* Grow limit of user stack. */
 
+#define AT_NETBSD_STACKBASE     13      /* Base address of the main thread. */
+
 #define AT_SUN_UID      2000    /* Effective user ID.  */
 #define AT_SUN_RUID     2001    /* Real user ID.  */
 #define AT_SUN_GID      2002    /* Effective group ID.  */

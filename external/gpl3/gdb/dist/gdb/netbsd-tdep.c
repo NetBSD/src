@@ -27,6 +27,8 @@
 #include "objfiles.h"
 #include "xml-syscall.h"
 
+#include "elf/common.h"
+
 /* Flags in the 'kve_protection' field in struct kinfo_vmentry.  These
    match the KVME_PROT_* constants in <sys/sysctl.h>.  */
 
@@ -390,6 +392,31 @@ get_nbsd_gdbarch_data (struct gdbarch *gdbarch)
   return result;
 }
 
+/* Print descriptions of NetBSD-specific AUXV entries to FILE.  */
+
+static void
+nbsd_print_auxv_entry (struct gdbarch *gdbarch, struct ui_file *file,
+		       CORE_ADDR type, CORE_ADDR val)
+{
+  const char *name = "???";
+  const char *description = "";
+  enum auxv_format format = AUXV_FORMAT_HEX;
+
+  switch (type)
+    {
+    default:
+      default_print_auxv_entry (gdbarch, file, type, val);
+      return;
+#define _TAGNAME(tag) #tag
+#define TAGNAME(tag) _TAGNAME(AT_##tag)
+#define TAG(tag, text, kind) \
+      case AT_NETBSD_##tag: name = TAGNAME(tag); description = text; format = kind; break
+      TAG (STACKBASE, _("Base address of main thread"), AUXV_FORMAT_HEX);
+    }
+
+  fprint_auxv_entry (file, name, description, format, type, val);
+}
+
 /* Implement the "get_siginfo_type" gdbarch method.  */
 
 static struct type *
@@ -613,6 +640,7 @@ nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_gdb_signal_to_target (gdbarch, nbsd_gdb_signal_to_target);
   set_gdbarch_skip_solib_resolver (gdbarch, nbsd_skip_solib_resolver);
   set_gdbarch_auxv_parse (gdbarch, svr4_auxv_parse);
+  set_gdbarch_print_auxv_entry (gdbarch, nbsd_print_auxv_entry);
   set_gdbarch_get_siginfo_type (gdbarch, nbsd_get_siginfo_type);
 
   /* `catch syscall' */
