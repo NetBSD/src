@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.15 2023/08/17 03:14:40 rin Exp $
+$NetBSD: README.gcc12,v 1.16 2023/08/17 03:36:25 rin Exp $
 
 
 new stuff:
@@ -63,7 +63,7 @@ sh3eb		y	?	y	y	b	y		?	?	?
 sh3el		y	n[20]	y	y	b	y		n[22]	?	?
 sparc		y	y	y	y	n[21]	y		y	y	?
 sparc64		y	b	y	y	n[16]	y		y	?	?
-vax		y	?	y	y	?	n		?	?	?
+vax		y	y	y	y	n[23]	n		n[24,25] ?	?
 x86_64		y	y	y	y	y[13]	y		y	y	?
 riscv32		y	y	y	y	b	y		?	?	?
 riscv64		y	y	y	y	b	y		y	y	?
@@ -79,8 +79,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [7]: fails to build kernels:
      In file included from sys/arch/powerpc/oea/pmap64.c:4:
      sys/arch/powerpc/oea/pmap.c:2186:2: error: #error PPC_OEA64 not supported
-[10]: libc.so fails to link with weird relocation errors:
-      vax--netbsdelf/bin/ld: warning: dynamic relocation to `?' in readonly section `.eh_frame'
 [11]: sanitizers don't build yet.
 [12]: sanitizers crash early:
       (gdb) bt
@@ -129,6 +127,18 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       liblsan and libubsan are mssing the _4 and _8 versions, too.
 [22]: single-user shell crashes. if userland is built with DBG=-O1, it boots into multi-user mode.
       however, at least db(3) is broken, by which files are corrupted when edited by vi(1).
+[23]: sanitizers fail to build:
+      sanitizer_flag_parser.h:141:72: error: format '%zx' expects argument of type 'size_t', but argument 4 has type 'unsigned int' [-Werror=format=]
+[24]: c++ exception handling is broken. mechanically applying
+      http://www.execsw.org/netbsd/changeset.cgi?id=20140318T234341Z.c59ac4642e7d4b345f6dc5aa9887e9e1f9aa459a#src/gnu/dist/gcc4/gcc/config/vax/vax.c
+      (with adjustments for gcc 10.5.0) does not help:
+      (gdb) invalid-command
+      [1]   Illegal instruction (core dumped) gdb
+[25]: (probably due to [24]) native gcc is broken:
+      simh# cc hello.c
+      during RTL pass: final
+      hello.c: In function 'main':
+      hello.c:9:1: internal compiler error: Segmentation fault
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
