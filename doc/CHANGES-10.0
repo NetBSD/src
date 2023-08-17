@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.108 2023/08/17 09:31:26 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.109 2023/08/17 10:03:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11179,4 +11179,20 @@ external/apache2/mDNSResponder/dist/mDNSPosix/mDNSPosix.c	1.18
 
 	mdnsd(8): switch to use arc4random(3) for randomness
 	[gutteridge, ticket #328]
+
+distrib/sets/lists/debug/module.md.amd64	1.14
+distrib/sets/lists/modules/md.amd64		1.100
+sys/arch/amd64/conf/GENERIC			1.605
+sys/external/bsd/drm2/dist/include/drm/drm_pciids.h 1.5
+sys/modules/Makefile				1.279
+
+	viadrmums(4): build legacy VIA DRM UMS driver module for amd64.
+	[andvar, ticket #329]
+
+sys/dev/vnd.c					1.289
+
+	vnd(4): PR 57421: fix deadlock in low-memory scenario by allowing
+	the pagedaemon to allocate for I/O to flush dirty buffers to free
+	memory.
+	[riastradh, ticket #330]
 
