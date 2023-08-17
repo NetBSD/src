@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2023/08/17 05:35:09 rin Exp $
+#	$NetBSD: Makefile,v 1.48 2023/08/17 07:54:10 rin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -38,7 +38,7 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*:Nam_cv_func_iconv*} \
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
-			CFLAGS= CPPFLAGS=-I${.OBJDIR}/.native/include \
+			CFLAGS= CPPFLAGS= \
 			CXXFLAGS= LDFLAGS=-L${GMPOBJ} \
 			AS=${AS:Q} AWK=${TOOL_AWK:Q} LD=${LD:Q} \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
@@ -49,7 +49,9 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*:Nam_cv_func_iconv*} \
 
 MKENV_BUILD_MAKE=${MKNATIVE_ENV} ${BUILD_MAKE}
 
-CCADDFLAGS+= --sysroot=${DESTDIR} -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
+CCADDFLAGS+= --sysroot=${DESTDIR} -B${DESTDIR}/usr/lib/ \
+		-I${.OBJDIR}/.native/include \
+		-I${.OBJDIR}/.native/gcc/include
 LDADDFLAGS+= -L${DESTDIR}/lib -L${DESTDIR}/usr/lib
 CXXADDFLAGS+= -D__STDC_FORMAT_MACROS
 CXXADDFLAGS+= -D__STDC_LIMIT_MACROS
