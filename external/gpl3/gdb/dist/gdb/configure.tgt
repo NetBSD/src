@@ -269,7 +269,7 @@ hppa*-*-linux*)
 	;;
 hppa*-*-netbsd*)
 	# Target: NetBSD/hppa
-	gdb_target_obs="hppa-bsd-tdep.o hppa-netbsd-tdep.o solib-svr4.o"
+	gdb_target_obs="hppa-bsd-tdep.o hppa-netbsd-tdep.o"
 	;;
 hppa*-*-openbsd*)
 	# Target: OpenBSD/hppa
