@@ -44,10 +44,10 @@ static sh_nbsd_nat_target the_sh_nbsd_nat_target;
   (((regno) >= R0_REGNUM && (regno) <= (R0_REGNUM + 15)) \
 || (regno) == gdbarch_pc_regnum (gdbarch) || (regno) == PR_REGNUM \
 || (regno) == MACH_REGNUM || (regno) == MACL_REGNUM \
-|| (regno) == SR_REGNUM)
+|| (regno) == SR_REGNUM || (regno) == GBR_REGNUM)
 
 /* Sizeof `struct reg' in <machine/reg.h>.  */
-#define SHNBSD_SIZEOF_GREGS	(21 * 4)
+#define SHNBSD_SIZEOF_GREGS	(22 * 4)
 
 void
 sh_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
