@@ -10697,7 +10697,7 @@ elfcore_grok_netbsd_note (bfd *abfd, Elf_Internal_Note *note)
 #ifdef NT_NETBSDCORE_AUXV
     case NT_NETBSDCORE_AUXV:
       /* NetBSD-specific Elf Auxiliary Vector data. */
-      return elfcore_make_auxv_note_section (abfd, note, 4);
+      return elfcore_make_auxv_note_section (abfd, note, 0);
 #endif
     default:
       break;
