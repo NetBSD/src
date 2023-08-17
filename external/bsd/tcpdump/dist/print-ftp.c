@@ -13,25 +13,22 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ftp.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-ftp.c,v 1.4 2023/08/17 20:19:40 christos Exp $");
 #endif
 
 /* \summary: File Transfer Protocol (FTP) printer */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
-#include <netdissect-stdinc.h>
-
-#include <stdio.h>
-#include <stdlib.h>
+#include "netdissect-stdinc.h"
 
 #include "netdissect.h"
-#include "extract.h"
 
 void
 ftp_print(netdissect_options *ndo, const u_char *pptr, u_int len)
 {
-	txtproto_print(ndo, pptr, len, "ftp", NULL, 0);
+	ndo->ndo_protocol = "ftp";
+	txtproto_print(ndo, pptr, len, NULL, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.8 2017/02/05 04:05:05 spz Exp $	*/
+/*	$NetBSD: interface.h,v 1.9 2023/08/17 20:19:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1988-2002
@@ -28,29 +28,13 @@
 #include "os-proto.h"
 #endif
 
-/* snprintf et al */
+#include "funcattrs.h"
 
 #include <stdarg.h>
 
 #if HAVE_STDINT_H
 #include <stdint.h>
 #endif
-
-#if !defined(HAVE_SNPRINTF)
-int snprintf(char *, size_t, const char *, ...)
-#ifdef __ATTRIBUTE___FORMAT_OK
-     __attribute__((format(printf, 3, 4)))
-#endif /* __ATTRIBUTE___FORMAT_OK */
-     ;
-#endif /* !defined(HAVE_SNPRINTF) */
-
-#if !defined(HAVE_VSNPRINTF)
-int vsnprintf(char *, size_t, const char *, va_list)
-#ifdef __ATTRIBUTE___FORMAT_OK
-     __attribute__((format(printf, 3, 0)))
-#endif /* __ATTRIBUTE___FORMAT_OK */
-     ;
-#endif /* !defined(HAVE_VSNPRINTF) */
 
 #ifndef HAVE_STRLCAT
 extern size_t strlcat(char *, const char *, size_t);
@@ -75,7 +59,13 @@ extern char *program_name;	/* used to generate self-identifying messages */
 
 #ifndef HAVE_BPF_DUMP
 struct bpf_program;
+#endif
 
+/*
+ * With Capsicum bpf_dump() may be not declared even if HAVE_BPF_DUMP is set.
+ */
+#if !defined(HAVE_BPF_DUMP) || \
+    (defined(HAVE_BPF_DUMP) && HAVE_CAPSICUM && !defined(bpf_dump))
 extern void bpf_dump(const struct bpf_program *, int);
 
 #endif

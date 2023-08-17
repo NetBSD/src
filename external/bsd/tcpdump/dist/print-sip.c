@@ -17,19 +17,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sip.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-sip.c,v 1.9 2023/08/17 20:19:40 christos Exp $");
 #endif
 
 /* \summary: Session Initiation Protocol (SIP) printer */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
-#include <netdissect-stdinc.h>
+#include "netdissect-stdinc.h"
 
 #include "netdissect.h"
-#include "extract.h"
 
 static const char *sipcmds[] = {
 	"ACK",
@@ -55,5 +54,6 @@ static const char *sipcmds[] = {
 void
 sip_print(netdissect_options *ndo, const u_char *pptr, u_int len)
 {
-	txtproto_print(ndo, pptr, len, "sip", sipcmds, RESP_CODE_SECOND_TOKEN);
+	ndo->ndo_protocol = "sip";
+	txtproto_print(ndo, pptr, len, sipcmds, RESP_CODE_SECOND_TOKEN);
 }

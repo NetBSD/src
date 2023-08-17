@@ -15,14 +15,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gmpls.c,v 1.6 2017/09/08 14:01:12 christos Exp $");
+__RCSID("$NetBSD: gmpls.c,v 1.7 2023/08/17 20:19:40 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
-#include <netdissect-stdinc.h>
+#include "netdissect-stdinc.h"
 
 #include "netdissect.h"
 #include "gmpls.h"
