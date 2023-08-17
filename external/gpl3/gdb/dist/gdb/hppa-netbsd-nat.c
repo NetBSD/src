@@ -59,7 +59,6 @@ static void
 hppanbsd_supply_gregset (struct regcache *regcache, const void *gregs)
 {
   const char *regs = (const char *)gregs;
-  const int *r = (const int *)gregs;
   int regnum;
 
   for (regnum = HPPA_R1_REGNUM; regnum <= HPPA_R31_REGNUM; regnum++)
@@ -102,7 +101,6 @@ hppanbsd_collect_gregset (const struct regcache *regcache,
 			  void *gregs, int regnum)
 {
   char *regs = (char *)gregs;
-  int *r = (int *)gregs;
   int i;
 
   for (i = HPPA_R1_REGNUM; i <= HPPA_R31_REGNUM; i++)
@@ -146,7 +144,7 @@ hppanbsd_collect_gregset (const struct regcache *regcache,
    in FPREGS.  */
 
 static void
-hppanbsd_collect_fpregset (struct regcache *regcache,
+hppanbsd_collect_fpregset (const struct regcache *regcache,
 			  void *fpregs, int regnum)
 {
   char *regs = (char *)fpregs;
