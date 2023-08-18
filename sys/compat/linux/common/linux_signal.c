@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.88 2021/11/01 05:07:16 thorpej Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.89 2023/08/18 19:41:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.88 2021/11/01 05:07:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.89 2023/08/18 19:41:19 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -845,7 +845,7 @@ native_to_linux_si_status(int code, int status)
 		sts = LINUX_SIGCONT;
 		break;
 	case CLD_EXITED:
-		sts = WEXITSTATUS(status);
+		sts = status;
 		break;
 	case CLD_STOPPED:
 	case CLD_TRAPPED:

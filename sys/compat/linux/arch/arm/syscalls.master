@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.77 2023/07/29 15:04:28 christos Exp $
+	$NetBSD: syscalls.master,v 1.78 2023/08/18 19:41:19 christos Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -471,7 +471,9 @@
 277	UNIMPL		mq_timedreceive
 278	UNIMPL		mq_notify
 279	UNIMPL		mq_getsetattr
-280	UNIMPL		waitid
+280     STD		{ int|linux_sys||waitid(int idtype, id_t id, \
+			    linux_siginfo_t *infop, int options, \
+			    struct rusage50 *rusage); }
 281	UNIMPL		socket
 282	UNIMPL		bind
 283	UNIMPL		connect

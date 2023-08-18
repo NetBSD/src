@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 2023/07/29 15:04:28 christos Exp $
+	$NetBSD: syscalls.master,v 1.10 2023/08/18 19:41:19 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -216,7 +216,9 @@
 92	STD		{ int|linux_sys||personality(unsigned long per); }
 93	STD		{ int|linux_sys||exit(int rval); }
 94	STD		{ int|linux_sys||exit_group(int error_code); }
-95	UNIMPL		waitid
+95      STD		{ int|linux_sys||waitid(int idtype, id_t id, \
+			    linux_siginfo_t *infop, int options, \
+			    struct rusage50 *rusage); }
 96	STD		{ int|linux_sys||set_tid_address(int *tid); }
 97	UNIMPL		unshare
 98	STD		{ int|linux_sys||futex(int *uaddr, int op, int val, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_wait.c,v 1.12 2016/11/10 17:00:51 christos Exp $ */
+/*	$NetBSD: linux32_wait.c,v 1.13 2023/08/18 19:41:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.12 2016/11/10 17:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.13 2023/08/18 19:41:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,13 +109,13 @@ linux32_sys_wait4(struct lwp *l, const struct linux32_sys_wait4_args *uap, regis
 		return EINVAL;
 
 	options = 0;
-	if (linux_options & LINUX_WAIT4_WNOHANG)
+	if (linux_options & LINUX_WNOHANG)
 		options |= WNOHANG;
-	if (linux_options & LINUX_WAIT4_WUNTRACED)
+	if (linux_options & LINUX_WUNTRACED)
 		options |= WUNTRACED;
-	if (linux_options & LINUX_WAIT4_WALL)
+	if (linux_options & LINUX_WALL)
 		options |= WALLSIG;
-	if (linux_options & LINUX_WAIT4_WCLONE)
+	if (linux_options & LINUX_WCLONE)
 		options |= WALTSIG;
 
 	pid = SCARG(uap, pid);

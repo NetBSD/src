@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.70 2023/07/29 15:04:28 christos Exp $
+	$NetBSD: syscalls.master,v 1.71 2023/08/18 19:41:19 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -463,7 +463,9 @@
 244	UNIMPL		mq_notify
 245	UNIMPL		mq_getsetattr
 246	UNIMPL		kexec_load
-247	UNIMPL		waitid
+247	STD		{ int|linux_sys||waitid(int idtype, id_t id, \
+			    linux_siginfo_t *infop, int options, \
+			    struct rusage50 *rusage); }
 248	UNIMPL		add_key
 249	UNIMPL		request_key
 250	UNIMPL		keyctl
