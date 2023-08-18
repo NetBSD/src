@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.17 2022/09/24 20:21:46 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.18 2023/08/18 19:00:11 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: fsmagic.c,v 1.82 2022/04/11 18:14:41 christos Exp $")
+FILE_RCSID("@(#)$File: fsmagic.c,v 1.85 2022/12/26 17:31:14 christos Exp $")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.17 2022/09/24 20:21:46 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.18 2023/08/18 19:00:11 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: fsmagic.c,v 1.17 2022/09/24 20:21:46 christos Exp $");
 #endif
 #undef HAVE_MAJOR
 #ifdef	S_IFLNK
-private int
+file_private int
 bad_link(struct magic_set *ms, int err, char *buf)
 {
 	int mime = ms->flags & MAGIC_MIME;
@@ -93,7 +93,7 @@ bad_link(struct magic_set *ms, int err, char *buf)
 	return 1;
 }
 #endif
-private int
+file_private int
 handle_mime(struct magic_set *ms, int mime, const char *str)
 {
 	if ((mime & MAGIC_MIME_TYPE)) {
@@ -108,7 +108,7 @@ handle_mime(struct magic_set *ms, int mime, const char *str)
 	return 0;
 }
 
-protected int
+file_protected int
 file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 {
 	int ret, did = 0;

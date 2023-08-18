@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.17 2022/09/24 20:21:46 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.18 2023/08/18 19:00:11 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: file.c,v 1.205 2022/09/15 16:54:14 christos Exp $")
+FILE_RCSID("@(#)$File: file.c,v 1.215 2023/05/21 17:08:34 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.17 2022/09/24 20:21:46 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.18 2023/08/18 19:00:11 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -103,14 +103,14 @@ int getopt_long(int, char * const *, const char *,
     "       %s -C [-m <magicfiles>]\n" \
     "       %s [--help]\n"
 
-private int 		/* Global command-line options 		*/
+file_private int 		/* Global command-line options 		*/
 	bflag = 0,	/* brief output format	 		*/
 	nopad = 0,	/* Don't pad output			*/
 	nobuffer = 0,   /* Do not buffer stdout 		*/
 	nulsep = 0;	/* Append '\0' to the separator		*/
 
-private const char *separator = ":";	/* Default field separator	*/
-private const struct option long_options[] = {
+file_private const char *separator = ":";	/* Default field separator	*/
+file_private const struct option long_options[] = {
 #define OPT_HELP		1
 #define OPT_APPLE		2
 #define OPT_EXTENSIONS		3
@@ -127,7 +127,7 @@ private const struct option long_options[] = {
     {0, 0, NULL, 0}
     };
 
-private const struct {
+file_private const struct {
 	const char *name;
 	int value;
 } nv[] = {
@@ -141,11 +141,12 @@ private const struct {
 	{ "soft",	MAGIC_NO_CHECK_SOFT },
 	{ "tar",	MAGIC_NO_CHECK_TAR },
 	{ "json",	MAGIC_NO_CHECK_JSON },
+	{ "simh",	MAGIC_NO_CHECK_SIMH },
 	{ "text",	MAGIC_NO_CHECK_TEXT },	/* synonym for ascii */
 	{ "tokens",	MAGIC_NO_CHECK_TOKENS }, /* OBSOLETE: ignored for backwards compatibility */
 };
 
-private struct {
+file_private struct {
 	const char *name;
 	size_t value;
 	size_t def;
@@ -161,6 +162,8 @@ private struct {
 	    MAGIC_PARAM_ELF_PHNUM_MAX, 0 },
 	{ "elf_shnum", 0, FILE_ELF_SHNUM_MAX, "max ELF sections processed",
 	    MAGIC_PARAM_ELF_SHNUM_MAX, 0 },
+	{ "elf_shsize", 0, FILE_ELF_SHSIZE_MAX, "max ELF section size",
+	    MAGIC_PARAM_ELF_SHSIZE_MAX, 0 },
 	{ "encoding", 0, FILE_ENCODING_MAX, "max bytes to scan for encoding",
 	    MAGIC_PARAM_ENCODING_MAX, 0 },
 	{ "indir", 0, FILE_INDIR_MAX, "recursion limit for indirection",
@@ -171,23 +174,23 @@ private struct {
 	    MAGIC_PARAM_REGEX_MAX, 0 },
 };
 
-private int posixly;
+file_private int posixly;
 
 #ifdef __dead
 __dead
 #endif
-private void usage(void);
-private void docprint(const char *, int);
+file_private void usage(void);
+file_private void docprint(const char *, int);
 #ifdef __dead
 __dead
 #endif
-private void help(void);
+file_private void help(void);
 
-private int unwrap(struct magic_set *, const char *);
-private int process(struct magic_set *ms, const char *, int);
-private struct magic_set *load(const char *, int);
-private void setparam(const char *);
-private void applyparam(magic_t);
+file_private int unwrap(struct magic_set *, const char *);
+file_private int process(struct magic_set *ms, const char *, int);
+file_private struct magic_set *load(const char *, int);
+file_private void setparam(const char *);
+file_private void applyparam(magic_t);
 
 
 /*
@@ -454,7 +457,7 @@ out:
 	return e;
 }
 
-private void
+file_private void
 applyparam(magic_t magic)
 {
 	size_t i;
@@ -467,7 +470,7 @@ applyparam(magic_t magic)
 	}
 }
 
-private void
+file_private void
 setparam(const char *p)
 {
 	size_t i;
@@ -487,7 +490,7 @@ badparm:
 	file_errx(EXIT_FAILURE, "Unknown param %s", p);
 }
 
-private struct magic_set *
+file_private struct magic_set *
 /*ARGSUSED*/
 load(const char *magicfile, int flags)
 {
@@ -511,7 +514,7 @@ load(const char *magicfile, int flags)
 /*
  * unwrap -- read a file of filenames, do each one.
  */
-private int
+file_private int
 unwrap(struct magic_set *ms, const char *fn)
 {
 	FILE *f;
@@ -520,11 +523,8 @@ unwrap(struct magic_set *ms, const char *fn)
 	size_t llen = 0;
 	int wid = 0, cwid;
 	int e = 0;
-	size_t fi = 0, fimax = 100;
-	char **flist = CAST(char **, malloc(sizeof(*flist) * fimax));
-
-	if (flist == NULL)
-out:		file_err(EXIT_FAILURE, "Cannot allocate memory for file list");
+	size_t fi = 0, fimax = 0;
+	char **flist = NULL;
 
 	if (strcmp("-", fn) == 0)
 		f = stdin;
@@ -538,26 +538,37 @@ out:		file_err(EXIT_FAILURE, "Cannot allocate memory for file list");
 	while ((len = getline(&line, &llen, f)) > 0) {
 		if (line[len - 1] == '\n')
 			line[len - 1] = '\0';
+		cwid = file_mbswidth(ms, line);
+		if (nobuffer) {
+			e |= process(ms, line, cwid);
+			free(line);
+			line = NULL;
+			llen = 0;
+			continue;
+		}
+		if (cwid > wid)
+			wid = cwid;
 		if (fi >= fimax) {
 			fimax += 100;
 			char **nf = CAST(char **,
 			    realloc(flist, fimax * sizeof(*flist)));
-			if (nf == NULL)
-				goto out;
+			if (nf == NULL) {
+				file_err(EXIT_FAILURE,
+				    "Cannot allocate memory for file list");
+			}
 			flist = nf;
 		}
 		flist[fi++] = line;
-		cwid = file_mbswidth(ms, line);
-		if (cwid > wid)
-			wid = cwid;
 		line = NULL;
 		llen = 0;
 	}
 
-	fimax = fi;
-	for (fi = 0; fi < fimax; fi++) {
-		e |= process(ms, flist[fi], wid);
-		free(flist[fi]);
+	if (!nobuffer) {
+		fimax = fi;
+		for (fi = 0; fi < fimax; fi++) {
+			e |= process(ms, flist[fi], wid);
+			free(flist[fi]);
+		}
 	}
 	free(flist);
 
@@ -566,16 +577,16 @@ out:		file_err(EXIT_FAILURE, "Cannot allocate memory for file list");
 	return e;
 }
 
-private void
+file_private void
 file_octal(unsigned char c)
 {
-	putc('\\', stdout);
-	putc(((c >> 6) & 7) + '0', stdout);
-	putc(((c >> 3) & 7) + '0', stdout);
-	putc(((c >> 0) & 7) + '0', stdout);
+	(void)putc('\\', stdout);
+	(void)putc(((c >> 6) & 7) + '0', stdout);
+	(void)putc(((c >> 3) & 7) + '0', stdout);
+	(void)putc(((c >> 0) & 7) + '0', stdout);
 }
 
-private void
+file_private void
 fname_print(const char *inname)
 {
 	size_t n = strlen(inname);
@@ -599,7 +610,7 @@ fname_print(const char *inname)
 		inname += bytesconsumed;
 		n -= bytesconsumed;
 		if (iswprint(nextchar)) {
-			printf("%lc", nextchar);
+			printf("%lc", (wint_t)nextchar);
 			continue;
 		}
 		/* XXX: What if it is > 255? */
@@ -610,7 +621,7 @@ fname_print(const char *inname)
 	for (i = 0; i < n; i++) {
 		unsigned char c = CAST(unsigned char, inname[i]);
 		if (isprint(c)) {
-			putc(c);
+			(void)putc(c, stdout);
 			continue;
 		}
 		file_octal(c);
@@ -621,7 +632,7 @@ fname_print(const char *inname)
 /*
  * Called for each input file on the command line (or in a list of files)
  */
-private int
+file_private int
 process(struct magic_set *ms, const char *inname, int wid)
 {
 	const char *type, c = nulsep > 1 ? '\0' : '\n';
@@ -655,7 +666,7 @@ process(struct magic_set *ms, const char *inname, int wid)
 	return haderror || type == NULL;
 }
 
-protected size_t
+file_protected size_t
 file_mbswidth(struct magic_set *ms, const char *s)
 {
 	size_t width = 0;
@@ -692,7 +703,7 @@ file_mbswidth(struct magic_set *ms, const char *s)
 	return width;
 }
 
-private void
+file_private void
 usage(void)
 {
 	const char *pn = file_getprogname();
@@ -700,17 +711,17 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-private void
+file_private void
 defprint(int def)
 {
 	if (!def)
 		return;
 	if (((def & 1) && posixly) || ((def & 2) && !posixly))
-		fprintf(stdout, " (default)");
-	fputc('\n', stdout);
+		(void)fprintf(stdout, " (default)");
+	(void)putc('\n', stdout);
 }
 
-private void
+file_private void
 docprint(const char *opts, int def)
 {
 	size_t i;
@@ -719,7 +730,7 @@ docprint(const char *opts, int def)
 
 	p = CCAST(char *, strchr(opts, '%'));
 	if (p == NULL) {
-		fprintf(stdout, "%s", opts);
+		(void)fprintf(stdout, "%s", opts);
 		defprint(def);
 		return;
 	}
@@ -727,26 +738,26 @@ docprint(const char *opts, int def)
 	for (sp = p - 1; sp > opts && *sp == ' '; sp--)
 		continue;
 
-	fprintf(stdout, "%.*s", CAST(int, p - opts), opts);
+	(void)printf("%.*s", CAST(int, p - opts), opts);
 	pad = (int)CAST(int, p - sp - 1);
 
 	switch (*++p) {
 	case 'e':
 		comma = 0;
 		for (i = 0; i < __arraycount(nv); i++) {
-			fprintf(stdout, "%s%s", comma++ ? ", " : "", nv[i].name);
+			(void)printf("%s%s", comma++ ? ", " : "", nv[i].name);
 			if (i && i % 5 == 0 && i != __arraycount(nv) - 1) {
-				fprintf(stdout, ",\n%*s", pad, "");
+				(void)printf(",\n%*s", pad, "");
 				comma = 0;
 			}
 		}
 		break;
 	case 'P':
 		for (i = 0; i < __arraycount(pm); i++) {
-			fprintf(stdout, "%9s %7zu %s", pm[i].name, pm[i].def,
+			(void)printf("%9s %7zu %s", pm[i].name, pm[i].def,
 			    pm[i].desc);
 			if (i != __arraycount(pm) - 1)
-				fprintf(stdout, "\n%*s", pad, "");
+				(void)printf("\n%*s", pad, "");
 		}
 		break;
 	default:
@@ -754,11 +765,11 @@ docprint(const char *opts, int def)
 		   *p);
 		break;
 	}
-	fprintf(stdout, "%s", opts + (p - opts) + 1);
+	(void)printf("%s", opts + (p - opts) + 1);
 
 }
 
-private void
+file_private void
 help(void)
 {
 	(void)fputs(
@@ -766,89 +777,89 @@ help(void)
 "Determine type of FILEs.\n"
 "\n", stdout);
 #define OPT(shortname, longname, opt, def, doc)      \
-	fprintf(stdout, "  -%c, --" longname, shortname), \
+	(void)printf("  -%c, --" longname, shortname), \
 	docprint(doc, def);
 #define OPT_LONGONLY(longname, opt, def, doc, id)    	\
-	fprintf(stdout, "      --" longname),	\
+	(void)printf("      --" longname),	\
 	docprint(doc, def);
 #include "file_opts.h"
 #undef OPT
 #undef OPT_LONGONLY
-	fprintf(stdout, "\nReport bugs to https://bugs.astron.com/\n");
+	(void)printf("\nReport bugs to https://bugs.astron.com/\n");
 	exit(EXIT_SUCCESS);
 }
 
-private const char *file_progname;
+file_private const char *file_progname;
 
-protected void
+file_protected void
 file_setprogname(const char *progname)
 {
 	file_progname = progname;
 }
 
-protected const char *
+file_protected const char *
 file_getprogname(void)
 {
 	return file_progname;
 }
 
-protected void
+file_protected void
 file_err(int e, const char *fmt, ...)
 {
 	va_list ap;
 	int se = errno;
 
 	va_start(ap, fmt);
-	fprintf(stderr, "%s: ", file_progname);
-	vfprintf(stderr, fmt, ap);
+	(void)fprintf(stderr, "%s: ", file_progname);
+	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (se)
-		fprintf(stderr, " (%s)\n", strerror(se));
+		(void)fprintf(stderr, " (%s)\n", strerror(se));
 	else
 		fputc('\n', stderr);
 	exit(e);
 }
 
-protected void
+file_protected void
 file_errx(int e, const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	fprintf(stderr, "%s: ", file_progname);
-	vfprintf(stderr, fmt, ap);
+	(void)fprintf(stderr, "%s: ", file_progname);
+	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	fprintf(stderr, "\n");
+	(void)fprintf(stderr, "\n");
 	exit(e);
 }
 
-protected void
+file_protected void
 file_warn(const char *fmt, ...)
 {
 	va_list ap;
 	int se = errno;
 
 	va_start(ap, fmt);
-	fprintf(stderr, "%s: ", file_progname);
-	vfprintf(stderr, fmt, ap);
+	(void)fprintf(stderr, "%s: ", file_progname);
+	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (se)
-		fprintf(stderr, " (%s)\n", strerror(se));
+		(void)fprintf(stderr, " (%s)\n", strerror(se));
 	else
 		fputc('\n', stderr);
 	errno = se;
 }
 
-protected void
+file_protected void
 file_warnx(const char *fmt, ...)
 {
 	va_list ap;
 	int se = errno;
 
 	va_start(ap, fmt);
-	fprintf(stderr, "%s: ", file_progname);
-	vfprintf(stderr, fmt, ap);
+	(void)fprintf(stderr, "%s: ", file_progname);
+	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	fprintf(stderr, "\n");
+	(void)fprintf(stderr, "\n");
 	errno = se;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf_time.c,v 1.11 2022/09/24 20:21:46 christos Exp $	*/
+/*	$NetBSD: cdf_time.c,v 1.12 2023/08/18 19:00:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf_time.c,v 1.21 2022/09/16 13:51:06 christos Exp $")
+FILE_RCSID("@(#)$File: cdf_time.c,v 1.24 2023/07/17 15:54:44 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf_time.c,v 1.11 2022/09/24 20:21:46 christos Exp $");
+__RCSID("$NetBSD: cdf_time.c,v 1.12 2023/08/18 19:00:11 christos Exp $");
 #endif
 #endif
 
@@ -174,7 +174,7 @@ cdf_timespec_to_timestamp(cdf_timestamp_t *t, const struct timespec *ts)
 char *
 cdf_ctime(const time_t *sec, char *buf)
 {
-	char *ptr = ctime_r(sec, buf);
+	char *ptr = *sec > MAX_CTIME ? NULL : ctime_r(sec, buf);
 	if (ptr != NULL)
 		return buf;
 #ifdef WIN32
