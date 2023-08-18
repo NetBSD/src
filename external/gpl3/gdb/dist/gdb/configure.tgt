@@ -151,10 +151,6 @@ aarch64*-*-netbsd*)
 			arch/aarch64-insn.o"
 	;;
 
-alpha*-*-osf*)
-	# Target: Little-endian Alpha running OSF/1
-	gdb_target_obs="alpha-tdep.o alpha-osf1-tdep.o alpha-mdebug-tdep.o"
-	;;
 alpha*-*-linux*)
 	# Target: Little-endian Alpha running Linux
 	gdb_target_obs="alpha-mdebug-tdep.o alpha-linux-tdep.o \
@@ -552,7 +548,7 @@ riscv*-*-linux*)
 	;;
 
 riscv*-*-netbsd*) 
-        # Target: FreeBSD/riscv
+        # Target: NetBSD/riscv
 	gdb_target_obs="riscv-netbsd-tdep.o"
 	;;           
 
