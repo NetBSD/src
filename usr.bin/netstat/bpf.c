@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.17 2022/11/19 08:56:20 yamt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.18 2023/08/18 13:18:17 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "prog_ops.h"
 
 void
-bpf_stats(void)
+nsbpf_stats(void)
 {
 	struct bpf_stat bpf_s;
 	size_t len = sizeof(bpf_s);
@@ -69,7 +69,7 @@ bpf_stats(void)
 }
 
 void
-bpf_dump(const char *bpfif)
+nsbpf_dump(const char *bpfif)
 {
 	struct bpf_d_ext *dpe;
 

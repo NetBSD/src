@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.53 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: netstat.h,v 1.54 2023/08/18 13:18:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,8 +137,8 @@ void	routepr(u_long);
 void	mroutepr(u_long, u_long, u_long, u_long);
 void	mrt_stats(u_long, u_long);
 
-void	bpf_stats(void);
-void	bpf_dump(const char *);
+void	nsbpf_stats(void);
+void	nsbpf_dump(const char *);
 
 kvm_t *get_kvmd(void);
 

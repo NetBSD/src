@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.104 2022/10/24 08:11:25 msaitoh Exp $	*/
+/*	$NetBSD: main.c,v 1.105 2023/08/18 13:18:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.104 2022/10/24 08:11:25 msaitoh Exp $");
+__RCSID("$NetBSD: main.c,v 1.105 2023/08/18 13:18:17 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -560,9 +560,9 @@ main(int argc, char *argv[])
 #ifndef SMALL
 	if (Bflag) {
 		if (sflag)
-			bpf_stats();
+			nsbpf_stats();
 		else
-			bpf_dump(interface);
+			nsbpf_dump(interface);
 		exit(0);
 	}
 #endif
