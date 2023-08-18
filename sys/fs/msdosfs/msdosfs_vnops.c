@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.111 2023/08/14 05:41:09 mrg Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.112 2023/08/18 21:05:44 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.111 2023/08/14 05:41:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.112 2023/08/18 21:05:44 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1168,7 +1168,10 @@ msdosfs_readdir(void *v)
 
 				memcpy(deName, dentp->deName,
 				       sizeof dentp->deName);
-				memset(&deName[8], 0, 3);
+				memcpy(deName + 8, dentp->deExtension,
+				       sizeof dentp->deExtension);
+				assert(sizeof(deName) == sizeof(dentp->deName) +
+					sizeof(dentp->deExtension));
 				dirbuf->d_namlen =
 				    msdosfs_dos2unixfn(deName,
 				        (u_char *)dirbuf->d_name,
