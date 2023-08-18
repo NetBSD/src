@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.16 2023/08/17 03:36:25 rin Exp $
+$NetBSD: README.gcc12,v 1.17 2023/08/18 01:21:08 rin Exp $
 
 
 new stuff:
@@ -102,18 +102,18 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       #0  0x000000004064265c in __sanitizer::CheckASLR () at /usr/src/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_linux.cpp:2181
       #1  0xffffffffffffc704 in ?? ()
       Backtrace stopped: previous frame identical to this frame (corrupt stack?)
-[17]: Not a regression, libtsan is newly introduced. tsan fails with:
+[17]: (NOT A REGRESSION) libtsan is newly introduced, which fails with:
       FATAL: ThreadSanitizer: unexpected memory mapping 0x200100000-0x200101000
 [18]: *san requires 64-bit atomic ops:
       ld: /usr/lib/libasan.so: undefined reference to `__sync_val_compare_and_swap_8'
       If lib*san is compiled with -march=i586, all tests in usr.bin/{cc,c++} successfully pass.
-[19]: Kernel freezes with garbage parmanently output to console, after lib/libc/sys/t_ptrace_wait:syscall_signal_on_sce fails:
+[19]: kernel freezes with garbage parmanently output to console, after lib/libc/sys/t_ptrace_wait:syscall_signal_on_sce fails:
           syscall_signal_on_sce: [[ 3013.0266693] sorry pid 1847 was killed: orphanes
           ss
           ss
           ss
           ...
-[20]: Kernel needs -O1 for ffs32() and ffs_nodealloccg() for multi-user boot. Even if the whole kernel is built with -O1, it panics during ATF:
+[20]: kernel needs -O1 for ffs32() and ffs_nodealloccg() for multi-user boot. Even if the whole kernel is built with -O1, it panics during ATF:
       kernel/t_sysv (92/935): 3 test cases
           msg: [ 3981.4751382] panic: kernel diagnostic assertion "msghdr->msg_spot >= 0" failed: file "../../../../kern/sysv_msg.c", line 426
 [21]: asan has v7/v8/atomic issues:
@@ -129,12 +129,12 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       however, at least db(3) is broken, by which files are corrupted when edited by vi(1).
 [23]: sanitizers fail to build:
       sanitizer_flag_parser.h:141:72: error: format '%zx' expects argument of type 'size_t', but argument 4 has type 'unsigned int' [-Werror=format=]
-[24]: c++ exception handling is broken. mechanically applying
+[24]: (NOT A REGRESSION) c++ exception handling is broken. mechanically applying
       http://www.execsw.org/netbsd/changeset.cgi?id=20140318T234341Z.c59ac4642e7d4b345f6dc5aa9887e9e1f9aa459a#src/gnu/dist/gcc4/gcc/config/vax/vax.c
-      (with adjustments for gcc 10.5.0) does not help:
+      does not help (with adjustments for gcc 10.5.0, which is broken, too):
       (gdb) invalid-command
       [1]   Illegal instruction (core dumped) gdb
-[25]: (probably due to [24]) native gcc is broken:
+[25]: (maybe not related to [24]) native gcc is broken:
       simh# cc hello.c
       during RTL pass: final
       hello.c: In function 'main':
