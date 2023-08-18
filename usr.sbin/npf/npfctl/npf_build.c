@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.55 2020/05/30 14:16:56 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.56 2023/08/18 14:26:50 tnn Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -530,8 +530,14 @@ npfctl_build_pcap(nl_rule_t *rl, const char *filter)
 	const size_t maxsnaplen = 64 * 1024;
 	struct bpf_program bf;
 	size_t len;
+	pcap_t *pd;
 
-	if (pcap_compile_nopcap(maxsnaplen, DLT_RAW, &bf,
+	pd = pcap_open_dead(DLT_RAW, maxsnaplen);
+	if (pd == NULL) {
+		err(EXIT_FAILURE, "pcap_open_dead");
+	}
+
+	if (pcap_compile(pd, &bf,
 	    filter, 1, PCAP_NETMASK_UNKNOWN) == -1) {
 		yyerror("invalid pcap-filter(7) syntax");
 	}
@@ -542,6 +548,7 @@ npfctl_build_pcap(nl_rule_t *rl, const char *filter)
 	}
 	npfctl_dump_bpf(&bf);
 	pcap_freecode(&bf);
+	pcap_close(pd);
 }
 
 static void
