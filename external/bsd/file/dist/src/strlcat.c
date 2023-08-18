@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcat.c,v 1.1.1.4 2022/09/24 20:07:55 christos Exp $	*/
+/*	$NetBSD: strlcat.c,v 1.1.1.5 2023/08/18 18:36:49 christos Exp $	*/
 
 /*	$OpenBSD: strlcat.c,v 1.13 2005/08/08 08:05:37 espie Exp $	*/
 
@@ -22,9 +22,9 @@
 #include "file.h"
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: strlcat.c,v 1.3 2022/09/13 18:46:07 christos Exp $")
+FILE_RCSID("@(#)$File: strlcat.c,v 1.5 2022/09/24 20:30:13 christos Exp $")
 #else
-__RCSID("$NetBSD: strlcat.c,v 1.1.1.4 2022/09/24 20:07:55 christos Exp $");
+__RCSID("$NetBSD: strlcat.c,v 1.1.1.5 2023/08/18 18:36:49 christos Exp $");
 #endif
 #endif
 
