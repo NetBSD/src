@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.109 2023/08/17 10:03:37 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.110 2023/08/18 12:52:31 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11174,8 +11174,6 @@ sys/uvm/uvm_fault.c				1.234
 	[chs, ticket #327]
 
 external/apache2/mDNSResponder/usr.sbin/mdnsd/Makefile		1.18
-external/apache2/mDNSResponder/dist/mDNSCore/DNSCommon.c	1.10 
-external/apache2/mDNSResponder/dist/mDNSPosix/mDNSPosix.c	1.18 
 
 	mdnsd(8): switch to use arc4random(3) for randomness
 	[gutteridge, ticket #328]
