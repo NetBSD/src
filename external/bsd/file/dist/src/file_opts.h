@@ -1,4 +1,4 @@
-/*	$NetBSD: file_opts.h,v 1.1.1.12 2022/09/24 20:07:55 christos Exp $	*/
+/*	$NetBSD: file_opts.h,v 1.1.1.13 2023/08/18 18:36:50 christos Exp $	*/
 
 /*
  * Table of command-line options
@@ -39,7 +39,7 @@ OPT('e', "exclude", 1, 0,
     "                               performed for file. Valid tests are:\n"
     "                               %e\n")
 OPT_LONGONLY("exclude-quiet", 1, 0,
-    " TEST         like exclude, but ignore unknown tests\n", OPT_EXCLUDE_QUIET)
+    " TEST   like exclude, but ignore unknown tests\n", OPT_EXCLUDE_QUIET)
 OPT('f', "files-from", 1, 0,
     " FILE      read the filenames to be examined from FILE\n")
 OPT('F', "separator", 1, 0,
