@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.59 2021/11/27 22:30:25 rillig Exp $	*/
+/*	$NetBSD: ndp.c,v 1.60 2023/08/18 13:07:38 tnn Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -62,6 +62,27 @@
  */
 
 /*
+ * Copyright (c) 1997
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that: (1) source code distributions
+ * retain the above copyright notice and this paragraph in its entirety, (2)
+ * distributions including binary code include the above copyright notice and
+ * this paragraph in its entirety in the documentation or other materials
+ * provided with the distribution, and (3) all advertising materials mentioning
+ * features or use of this software display the following acknowledgement:
+ * ``This product includes software developed by the University of California,
+ * Lawrence Berkeley Laboratory and its contributors.'' Neither the name of
+ * the University nor the names of its contributors may be used to endorse
+ * or promote products derived from this software without specific prior
+ * written permission.
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ */
+
+/*
  * Based on:
  * "@(#) Copyright (c) 1984, 1993\n\
  *	The Regents of the University of California.  All rights reserved.\n";
@@ -105,7 +126,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "gmt2local.h"
 #include "prog_ops.h"
 
 static pid_t pid;
@@ -134,6 +154,7 @@ static void ifinfo(char *, int, char **);
 static const char *sec2str(time_t);
 static char *ether_str(struct sockaddr_dl *);
 static void ts_print(const struct timeval *);
+static int32_t gmt2local(time_t t);
 
 #define NDP_F_CLEAR	1
 #define NDP_F_DELETE	2
@@ -952,4 +973,36 @@ ts_print(const struct timeval *tvp)
 	s = (tvp->tv_sec + thiszone) % 86400;
 	(void)printf("%02d:%02d:%02d.%06u ",
 	    s / 3600, (s % 3600) / 60, s % 60, (u_int32_t)tvp->tv_usec);
+}
+
+/*
+ * Returns the difference between gmt and local time in seconds.
+ * Use gmtime() and localtime() to keep things simple.
+ */
+static int32_t
+gmt2local(time_t t)
+{
+	int dt, dir;
+	struct tm *gmt, *loc;
+	struct tm sgmt;
+
+	if (t == 0)
+		t = time(NULL);
+	gmt = &sgmt;
+	*gmt = *gmtime(&t);
+	loc = localtime(&t);
+	dt = (loc->tm_hour - gmt->tm_hour) * 60 * 60 +
+	    (loc->tm_min - gmt->tm_min) * 60;
+
+	/*
+	 * If the year or julian day is different, we span 00:00 GMT
+	 * and must add or subtract a day. Check the year first to
+	 * avoid problems when the julian day wraps.
+	 */
+	dir = loc->tm_year - gmt->tm_year;
+	if (dir == 0)
+		dir = loc->tm_yday - gmt->tm_yday;
+	dt += dir * 24 * 60 * 60;
+
+	return (dt);
 }
