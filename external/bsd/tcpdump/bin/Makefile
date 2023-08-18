@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2023/08/17 20:19:39 christos Exp $	
+#	$NetBSD: Makefile,v 1.27 2023/08/18 12:55:50 tnn Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -101,7 +101,6 @@ print-lwapp.c \
 print-lwres.c \
 print-m3ua.c \
 print-macsec.c \
-print-medsa.c \
 print-mobile.c \
 print-mobility.c \
 print-mpcp.c \
