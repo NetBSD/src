@@ -214,6 +214,4 @@ extern int hppa_in_solib_call_trampoline (struct gdbarch *gdbarch,
 					  CORE_ADDR pc);
 extern CORE_ADDR hppa_skip_trampoline_code (frame_info_ptr, CORE_ADDR pc);
 
-void _initialize_hppabsd_tdep (void);
-
 #endif  /* hppa-tdep.h */

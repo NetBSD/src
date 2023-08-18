@@ -916,6 +916,7 @@ core_target::xfer_partial (enum target_object object, const char *annex,
 			 m_core_section_table,
 			 no_contents_cb);
 #endif
+
 	return xfer_status;
       }
     case TARGET_OBJECT_AUXV:
