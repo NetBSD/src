@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1945 2023/08/17 15:19:26 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1946 2023/08/18 19:02:04 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -422,12 +422,12 @@ Notes:
 Please use "expat" as the vendor tag for CVS imports.
 
 Package:	file
-Version:	5.43
-Current Vers:	5.43
+Version:	5.45
+Current Vers:	5.45
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:	http://www.darwinsys.com/file/
-Date:		2022-09-24
+Date:		2023-08-18
 Mailing List:	file@astron.com
 Responsible:	christos, pooka
 License:	BSD (2-clause)
@@ -801,12 +801,12 @@ Use the src/external/bsd/libpcap/libpcap2netbsd script to prepare source
 tree. sys/net/dlt.h is a copy of the dlt constants from pcap.h
 
 Package:	tcpdump
-Version:	4.9.3
-Current Vers:	4.9.3
+Version:	4.99.4
+Current Vers:	4.99.4
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2021-03-01
+Date:		2023-08-17
 Mailing List:	tcpdump-workers@lists.tcpdump.org
 Responsible:
 License:	BSD (3-clause)
