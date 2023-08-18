@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.16 2022/09/24 20:21:46 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.17 2023/08/18 19:00:11 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: print.c,v 1.93 2022/09/16 14:14:30 christos Exp $")
+FILE_RCSID("@(#)$File: print.c,v 1.99 2023/07/17 16:40:57 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.16 2022/09/24 20:21:46 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.17 2023/08/18 19:00:11 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: print.c,v 1.16 2022/09/24 20:21:46 christos Exp $");
 #include "cdf.h"
 
 #ifndef COMPILE_ONLY
-protected void
+file_protected void
 file_mdump(struct magic *m)
 {
 	static const char optyp[] = { FILE_OPS };
@@ -248,7 +248,7 @@ file_mdump(struct magic *m)
 #endif
 
 /*VARARGS*/
-protected void
+file_protected void
 file_magwarn(struct magic_set *ms, const char *f, ...)
 {
 	va_list va;
@@ -256,7 +256,7 @@ file_magwarn(struct magic_set *ms, const char *f, ...)
 	/* cuz we use stdout for most, stderr here */
 	(void) fflush(stdout);
 
-	if (ms->file)
+	if (ms && ms->file)
 		(void) fprintf(stderr, "%s, %lu: ", ms->file,
 		    CAST(unsigned long, ms->line));
 	(void) fprintf(stderr, "Warning: ");
@@ -266,7 +266,7 @@ file_magwarn(struct magic_set *ms, const char *f, ...)
 	(void) fputc('\n', stderr);
 }
 
-protected const char *
+file_protected const char *
 file_fmtvarint(char *buf, size_t blen, const unsigned char *us, int t)
 {
 	snprintf(buf, blen, "%jd", CAST(intmax_t,
@@ -274,7 +274,7 @@ file_fmtvarint(char *buf, size_t blen, const unsigned char *us, int t)
 	return buf;
 }
 
-protected const char *
+file_protected const char *
 file_fmtdatetime(char *buf, size_t bsize, uint64_t v, int flags)
 {
 	char *pp;
@@ -290,6 +290,9 @@ file_fmtdatetime(char *buf, size_t bsize, uint64_t v, int flags)
 		// on 32 bit time_t?
 		t = CAST(time_t, v);
 	}
+
+	if (t > MAX_CTIME)
+		goto out;
 
 	if (flags & FILE_T_LOCAL) {
 		tm = localtime_r(&t, &tmz);
@@ -313,7 +316,7 @@ out:
  * https://docs.microsoft.com/en-us/windows/win32/api/winbase/\
  *	nf-winbase-dosdatetimetofiletime?redirectedfrom=MSDN
  */
-protected const char *
+file_protected const char *
 file_fmtdate(char *buf, size_t bsize, uint16_t v)
 {
 	struct tm tm;
@@ -332,7 +335,7 @@ out:
 	return buf;
 }
 
-protected const char *
+file_protected const char *
 file_fmttime(char *buf, size_t bsize, uint16_t v)
 {
 	struct tm tm;
@@ -352,7 +355,7 @@ out:
 
 }
 
-protected const char *
+file_protected const char *
 file_fmtnum(char *buf, size_t blen, const char *us, int base)
 {
 	char *endptr;

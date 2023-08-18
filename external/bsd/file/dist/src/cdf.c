@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.c,v 1.20 2022/09/24 20:21:46 christos Exp $	*/
+/*	$NetBSD: cdf.c,v 1.21 2023/08/18 19:00:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf.c,v 1.121 2021/10/20 13:56:15 christos Exp $")
+FILE_RCSID("@(#)$File: cdf.c,v 1.123 2022/09/24 20:30:13 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf.c,v 1.20 2022/09/24 20:21:46 christos Exp $");
+__RCSID("$NetBSD: cdf.c,v 1.21 2023/08/18 19:00:11 christos Exp $");
 #endif
 #endif
 

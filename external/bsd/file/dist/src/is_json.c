@@ -1,4 +1,4 @@
-/*	$NetBSD: is_json.c,v 1.5 2022/09/24 20:21:46 christos Exp $	*/
+/*	$NetBSD: is_json.c,v 1.6 2023/08/18 19:00:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 Christos Zoulas
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: is_json.c,v 1.27 2022/09/16 14:15:29 christos Exp $")
+FILE_RCSID("@(#)$File: is_json.c,v 1.30 2022/09/27 19:12:40 christos Exp $")
 #else
-__RCSID("$NetBSD: is_json.c,v 1.5 2022/09/24 20:21:46 christos Exp $");
+__RCSID("$NetBSD: is_json.c,v 1.6 2023/08/18 19:00:11 christos Exp $");
 #endif
 #endif
 
@@ -446,7 +446,7 @@ file_is_json(struct magic_set *ms, const struct buffer *b)
 		return 1;
 	if (mime) {
 		if (file_printf(ms, "application/%s",
-		    jt == 1 ? "json" : "x-ndjason") == -1)
+		    jt == 1 ? "json" : "x-ndjson") == -1)
 			return -1;
 		return 1;
 	}
