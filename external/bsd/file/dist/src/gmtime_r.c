@@ -1,13 +1,13 @@
-/*	$NetBSD: gmtime_r.c,v 1.1.1.1 2017/02/10 17:42:57 christos Exp $	*/
+/*	$NetBSD: gmtime_r.c,v 1.1.1.2 2023/08/18 18:36:49 christos Exp $	*/
 
-/*	$File: gmtime_r.c,v 1.2 2015/07/11 14:41:37 christos Exp $	*/
+/*	$File: gmtime_r.c,v 1.4 2022/09/24 20:30:13 christos Exp $	*/
 
 #include "file.h"
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: gmtime_r.c,v 1.2 2015/07/11 14:41:37 christos Exp $")
+FILE_RCSID("@(#)$File: gmtime_r.c,v 1.4 2022/09/24 20:30:13 christos Exp $")
 #else
-__RCSID("$NetBSD: gmtime_r.c,v 1.1.1.1 2017/02/10 17:42:57 christos Exp $");
+__RCSID("$NetBSD: gmtime_r.c,v 1.1.1.2 2023/08/18 18:36:49 christos Exp $");
 #endif
 #endif	/* lint */
 #include <time.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: seccomp.c,v 1.1.1.7 2022/09/24 20:07:55 christos Exp $	*/
+/*	$NetBSD: seccomp.c,v 1.1.1.8 2023/08/18 18:36:50 christos Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: seccomp.c,v 1.22 2022/07/30 16:49:18 christos Exp $")
+FILE_RCSID("@(#)$File: seccomp.c,v 1.25 2022/12/26 18:57:29 christos Exp $")
 #else
-__RCSID("$NetBSD: seccomp.c,v 1.1.1.7 2022/09/24 20:07:55 christos Exp $");
+__RCSID("$NetBSD: seccomp.c,v 1.1.1.8 2023/08/18 18:36:50 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -239,6 +239,7 @@ enable_sandbox_full(void)
 	ALLOW_RULE(umask);	// Used in file_pipe2file()
 	ALLOW_RULE(getpid);	// Used by glibc in file_pipe2file()
 	ALLOW_RULE(unlink);
+	ALLOW_RULE(utimes);
 	ALLOW_RULE(write);
 	ALLOW_RULE(writev);
 

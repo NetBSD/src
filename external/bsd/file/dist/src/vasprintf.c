@@ -1,4 +1,4 @@
-/*	$NetBSD: vasprintf.c,v 1.1.1.10 2022/09/24 20:07:55 christos Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.1.1.11 2023/08/18 18:36:49 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -111,9 +111,9 @@ you use strange formats.
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: vasprintf.c,v 1.21 2022/09/16 13:49:39 christos Exp $")
+FILE_RCSID("@(#)$File: vasprintf.c,v 1.23 2022/09/24 20:30:13 christos Exp $")
 #else
-__RCSID("$NetBSD: vasprintf.c,v 1.1.1.10 2022/09/24 20:07:55 christos Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.1.1.11 2023/08/18 18:36:49 christos Exp $");
 #endif
 #endif	/* lint */
 

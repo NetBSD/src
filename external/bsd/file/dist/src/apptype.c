@@ -1,8 +1,8 @@
-/*	$NetBSD: apptype.c,v 1.1.1.5 2018/10/18 23:54:09 christos Exp $	*/
+/*	$NetBSD: apptype.c,v 1.1.1.6 2023/08/18 18:36:50 christos Exp $	*/
 
 /*
  * Adapted from: apptype.c, Written by Eberhard Mattes and put into the
- * public domain
+ * file_public domain
  *
  * Notes: 1. Qualify the filename so that DosQueryAppType does not do extraneous
  * searches.
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: apptype.c,v 1.14 2018/09/09 20:33:28 christos Exp $")
+FILE_RCSID("@(#)$File: apptype.c,v 1.17 2022/12/26 17:31:14 christos Exp $")
 #else
-__RCSID("$NetBSD: apptype.c,v 1.1.1.5 2018/10/18 23:54:09 christos Exp $");
+__RCSID("$NetBSD: apptype.c,v 1.1.1.6 2023/08/18 18:36:50 christos Exp $");
 #endif
 #endif /* lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: apptype.c,v 1.1.1.5 2018/10/18 23:54:09 christos Exp $");
 #include <os2.h>
 typedef ULONG   APPTYPE;
 
-protected int
+file_protected int
 file_os2_apptype(struct magic_set *ms, const char *fn, const void *buf,
     size_t nb)
 {
@@ -122,7 +122,7 @@ file_os2_apptype(struct magic_set *ms, const char *fn, const void *buf,
 			return -1;
 	} else if (type & FAPPTYP_DLL) {
 		if (type & FAPPTYP_PROTDLL)
-			if (file_printf(ms, "protected ") == -1)
+			if (file_printf(ms, "file_protected ") == -1)
 				return -1;
 		if (file_printf(ms, "DLL") == -1)
 			return -1;

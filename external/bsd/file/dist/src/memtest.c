@@ -1,4 +1,4 @@
-/*	$NetBSD: memtest.c,v 1.1.1.1 2022/09/24 20:07:55 christos Exp $	*/
+/*	$NetBSD: memtest.c,v 1.1.1.2 2023/08/18 18:36:50 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2021.
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: memtest.c,v 1.4 2022/09/16 14:12:14 christos Exp $")
+FILE_RCSID("@(#)$File: memtest.c,v 1.6 2022/09/24 20:30:13 christos Exp $")
 #else
-__RCSID("$NetBSD: memtest.c,v 1.1.1.1 2022/09/24 20:07:55 christos Exp $");
+__RCSID("$NetBSD: memtest.c,v 1.1.1.2 2023/08/18 18:36:50 christos Exp $");
 #endif
 #endif
 
