@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2993 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2994 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -197,3 +197,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	gdb(1): Updated to 13.2. [christos 20230811]
 	libfido2: Import 1.13.0 [christos 20230811]
 	libpcap: Import 1.10.4. [christos 20230817]
+	tcpdump(8): Import 4.99.4. [christos 20230817]
+	file(1): Upgraded to 5.45. [christos 20230818]
+
