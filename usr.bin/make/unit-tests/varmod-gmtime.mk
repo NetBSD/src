@@ -1,4 +1,4 @@
-# $NetBSD: varmod-gmtime.mk,v 1.17 2023/08/19 10:33:32 rillig Exp $
+# $NetBSD: varmod-gmtime.mk,v 1.18 2023/08/19 11:13:36 rillig Exp $
 #
 # Tests for the :gmtime variable modifier, which formats a timestamp
 # using strftime(3) in UTC.
@@ -146,13 +146,13 @@
 .endif
 
 
-# As of 2023-08-19, ':gmtime' but not ':localtime' reports wrong values for
-# '%s', depending on the operating system and the timezone, as demonstrated by
-# the following test program:
+# Before var.c 1.1062 from 2023-08-19, ':gmtime' but not ':localtime' reported
+# wrong values for '%s', depending on the operating system and the timezone,
+# as demonstrated by the following test program:
 #
 #	for mod in gmtime localtime; do
 #		for tz in UTC Europe/Berlin America/Los_Angeles; do
-#			TZ=$tz bmake -r -v "\${%F %T %z %s $mod $tz:L:$mod}"
+#			TZ=$tz ./make -r -f /dev/null -v "\${%F %T %z %s $mod $tz:L:$mod}"
 #		done
 #	done
 #
@@ -194,33 +194,30 @@
 #	* ':gmtime' reports the correct timezone offset '+0000'.
 #	* ':gmtime' reports different seconds since the Epoch, and the '%s'
 #	  value cannot be derived from the '%F %T %z' values.
-.if 0			# only for reference, due to platform differences
 export TZ=UTC
-.  for t in ${%s:L:gmtime} ${%s:L:localtime}
+.for t in ${%s:L:gmtime} ${%s:L:localtime}
 TIMESTAMPS+= $t
-.  endfor
+.endfor
 export TZ=Europe/Berlin
-.  for t in ${%s:L:gmtime} ${%s:L:localtime}
+.for t in ${%s:L:gmtime} ${%s:L:localtime}
 TIMESTAMPS+= $t
-.  endfor
+.endfor
 export TZ=UTC
-.  for t in ${%s:L:gmtime} ${%s:L:localtime}
+.for t in ${%s:L:gmtime} ${%s:L:localtime}
 TIMESTAMPS+= $t
-.  endfor
+.endfor
 export TZ=America/Los_Angeles
-.  for t in ${%s:L:gmtime} ${%s:L:localtime}
+.for t in ${%s:L:gmtime} ${%s:L:localtime}
 TIMESTAMPS+= $t
-.  endfor
+.endfor
 export TZ=UTC
-.  for t in ${%s:L:gmtime} ${%s:L:localtime}
+.for t in ${%s:L:gmtime} ${%s:L:localtime}
 TIMESTAMPS+= $t
-.  endfor
-.  info ${TIMESTAMPS:u}
-.  for a b in ${TIMESTAMPS:[1]} ${TIMESTAMPS:@t@$t $t@} ${TIMESTAMPS:[-1]}
-.    if $a > $b
-.      warning timestamp $a > $b
-.    endif
-.  endfor
-.endif
+.endfor
+.for a b in ${TIMESTAMPS:[1]} ${TIMESTAMPS:@t@$t $t@} ${TIMESTAMPS:[-1]}
+.  if $a > $b
+.    warning timestamp $a > $b
+.  endif
+.endfor
 
 all:

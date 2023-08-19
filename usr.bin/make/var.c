@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1061 2023/08/17 19:06:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1062 2023/08/19 11:13:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1061 2023/08/17 19:06:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1062 2023/08/19 11:13:35 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1886,7 +1886,24 @@ FormatTime(const char *fmt, time_t t, bool gmt)
 		time(&t);
 	if (*fmt == '\0')
 		fmt = "%c";
-	strftime(buf, sizeof buf, fmt, gmt ? gmtime(&t) : localtime(&t));
+	if (gmt) {
+		/*
+		 * Work around a buggy 'strftime' implementation on at least
+		 * NetBSD 10 and Linux/glibc-2.31, on which the value of '%s'
+		 * depends on the timezone from TZ; see varmod-gmtime.mk.
+		 */
+		const char *prev_tz_env = getenv("TZ");
+		char *prev_tz = prev_tz_env != NULL
+		    ? bmake_strdup(prev_tz_env) : NULL;
+		setenv("TZ", "UTC", 1);
+		strftime(buf, sizeof buf, fmt, localtime(&t));
+		if (prev_tz != NULL) {
+			setenv("TZ", prev_tz, 1);
+			free(prev_tz);
+		} else
+			unsetenv("TZ");
+	} else
+		strftime(buf, sizeof buf, fmt, localtime(&t));
 
 	buf[sizeof buf - 1] = '\0';
 	return bmake_strdup(buf);
