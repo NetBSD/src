@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.46 2017/05/21 15:28:42 riastradh Exp $
+# $NetBSD: Makefile,v 1.47 2023/08/19 22:56:43 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@
 
 TESTSDIR=	${TESTSBASE}
 
-TESTS_SUBDIRS=		bin dev games include kernel lib libexec net
+TESTS_SUBDIRS=		bin compat dev games include kernel lib libexec net
 TESTS_SUBDIRS+=		sbin sys usr.bin usr.sbin
 
 . if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
