@@ -1,9 +1,11 @@
-# $NetBSD: varmod-mtime.mk,v 1.3 2023/08/17 19:06:51 rillig Exp $
+# $NetBSD: varmod-mtime.mk,v 1.4 2023/08/19 01:34:21 sjg Exp $
 #
 # Tests for the ':mtime' variable modifier, which maps each word of the
 # expression to that file's modification time.
 
-start:=	${%s:L:gmtime}
+# Note: strftime() uses mktime() for %s and mktime() assumes localtime
+# so this should match time()
+start:=	${%s:L:localtime}
 
 
 # Ensure that this makefile exists and has a modification time.  If the file
