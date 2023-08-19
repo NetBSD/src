@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.962 2023/08/17 15:23:33 christos Exp $
+# $NetBSD: shl.mi,v 1.963 2023/08/19 14:22:41 rjs Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -517,8 +517,8 @@
 ./usr/lib/libpanel.so.3				base-sys-shlib		compatfile
 ./usr/lib/libpanel.so.3.0			base-sys-shlib		compatfile
 ./usr/lib/libpcap.so				base-net-shlib		compatfile
-./usr/lib/libpcap.so.8				base-obsolete		obsolete
-./usr/lib/libpcap.so				base-obsolete		obsolete
+./usr/lib/libpcap.so.8				base-obsolete		obsolete,compatfile
+./usr/lib/libpcap.so.8.1			base-obsolete		obsolete,compatfile
 ./usr/lib/libpcap.so.9				base-net-shlib		compatfile
 ./usr/lib/libpcap.so.9.0			base-net-shlib		compatfile
 ./usr/lib/libpci.so				base-sys-shlib		compatfile
