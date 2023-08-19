@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1063 2023/08/19 11:53:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1064 2023/08/19 19:59:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1063 2023/08/19 11:53:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1064 2023/08/19 19:59:17 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1886,8 +1886,8 @@ FormatTime(const char *fmt, time_t t, bool gmt)
 		time(&t);
 	if (*fmt == '\0')
 		fmt = "%c";
-	if (gmt) {
-		/* strftime only works with localtime, not with gmtime. */
+	if (gmt && strchr(fmt, 's') != NULL) {
+		/* strftime "%s" only works with localtime, not with gmtime. */
 		const char *prev_tz_env = getenv("TZ");
 		char *prev_tz = prev_tz_env != NULL
 		    ? bmake_strdup(prev_tz_env) : NULL;
@@ -1899,7 +1899,7 @@ FormatTime(const char *fmt, time_t t, bool gmt)
 		} else
 			unsetenv("TZ");
 	} else
-		strftime(buf, sizeof buf, fmt, localtime(&t));
+		strftime(buf, sizeof buf, fmt, (gmt ? gmtime : localtime)(&t));
 
 	buf[sizeof buf - 1] = '\0';
 	return bmake_strdup(buf);
