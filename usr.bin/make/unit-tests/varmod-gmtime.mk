@@ -1,4 +1,4 @@
-# $NetBSD: varmod-gmtime.mk,v 1.16 2023/08/19 08:19:25 rillig Exp $
+# $NetBSD: varmod-gmtime.mk,v 1.17 2023/08/19 10:33:32 rillig Exp $
 #
 # Tests for the :gmtime variable modifier, which formats a timestamp
 # using strftime(3) in UTC.
@@ -194,5 +194,33 @@
 #	* ':gmtime' reports the correct timezone offset '+0000'.
 #	* ':gmtime' reports different seconds since the Epoch, and the '%s'
 #	  value cannot be derived from the '%F %T %z' values.
+.if 0			# only for reference, due to platform differences
+export TZ=UTC
+.  for t in ${%s:L:gmtime} ${%s:L:localtime}
+TIMESTAMPS+= $t
+.  endfor
+export TZ=Europe/Berlin
+.  for t in ${%s:L:gmtime} ${%s:L:localtime}
+TIMESTAMPS+= $t
+.  endfor
+export TZ=UTC
+.  for t in ${%s:L:gmtime} ${%s:L:localtime}
+TIMESTAMPS+= $t
+.  endfor
+export TZ=America/Los_Angeles
+.  for t in ${%s:L:gmtime} ${%s:L:localtime}
+TIMESTAMPS+= $t
+.  endfor
+export TZ=UTC
+.  for t in ${%s:L:gmtime} ${%s:L:localtime}
+TIMESTAMPS+= $t
+.  endfor
+.  info ${TIMESTAMPS:u}
+.  for a b in ${TIMESTAMPS:[1]} ${TIMESTAMPS:@t@$t $t@} ${TIMESTAMPS:[-1]}
+.    if $a > $b
+.      warning timestamp $a > $b
+.    endif
+.  endfor
+.endif
 
 all:
