@@ -1,4 +1,4 @@
-# $NetBSD: directive.mk,v 1.7 2023/08/19 10:52:14 rillig Exp $
+# $NetBSD: directive.mk,v 1.8 2023/08/19 11:09:02 rillig Exp $
 #
 # Tests for the preprocessing directives, such as .if or .info.
 
@@ -15,9 +15,7 @@
 
 # Directives must be written directly, not indirectly via variable
 # expressions.
-# FIXME: The error message is misleading because it shows the expanded text of
-#  the line, while the parser works on the unexpanded line.
-# expect+1: Unknown directive "info"
+# expect+1: Unknown directive ""
 .${:Uinfo} directives cannot be indirect
 
 # There is no directive called '.target', therefore this is parsed as a
