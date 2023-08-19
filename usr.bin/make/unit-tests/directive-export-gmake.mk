@@ -1,4 +1,4 @@
-# $NetBSD: directive-export-gmake.mk,v 1.3 2020/11/17 20:16:44 rillig Exp $
+# $NetBSD: directive-export-gmake.mk,v 1.4 2023/08/19 10:33:32 rillig Exp $
 #
 # Tests for the export directive (without leading dot), as in GNU make.
 
@@ -60,5 +60,16 @@ export VAR=an ${UNDEF} variable
 .  error
 .endif
 
-all:
-	@:;
+
+# The body of the .for loop expands to 'export VAR=${:U1}', and the 'export'
+# directive is only recognized if the line does not contain a ':', to allow
+# 'export' to be a regular target.
+.for value in 1
+# FIXME: The below error message is missing all details.  But even if it
+# contained the text of the line, it would be confusing because at the point
+# where that error message is printed, all expressions from the line have
+# already been expanded as part of the dependency line parsing, which in this
+# case hides the ':' from the error message.
+# expect+1: Invalid line type
+export VAR=${value}
+.endfor
