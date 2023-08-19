@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.704 2023/06/23 06:08:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.705 2023/08/19 10:52:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.704 2023/06/23 06:08:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.705 2023/08/19 10:52:13 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -887,7 +887,7 @@ InvalidLineType(const char *line)
 		Parse_Error(PARSE_FATAL, "Unknown directive \"%.*s\"",
 		    (int)(dirend - dirstart), dirstart);
 	} else
-		Parse_Error(PARSE_FATAL, "Invalid line type");
+		Parse_Error(PARSE_FATAL, "Invalid line '%s'", line);
 }
 
 static void

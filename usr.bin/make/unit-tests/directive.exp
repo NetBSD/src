@@ -7,8 +7,8 @@ Global: .info = value
 make: "directive.mk" line 33: :=	value
 Global: .MAKEFLAGS =  -r -k -d v -d
 Global: .MAKEFLAGS =  -r -k -d v -d 0
-make: "directive.mk" line 42: Invalid line type
-make: "directive.mk" line 45: Invalid line type
+make: "directive.mk" line 42: Invalid line 'target-without-colon'
+make: "directive.mk" line 45: Invalid line 'target-without-colon another-target'
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
