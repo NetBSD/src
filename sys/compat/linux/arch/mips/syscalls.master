@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.78 2023/08/18 19:41:19 christos Exp $  
+	$NetBSD: syscalls.master,v 1.79 2023/08/19 17:49:49 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -127,7 +127,7 @@
 56	OBSOL		mpx
 57	NOARGS		{ int|sys||setpgid(int pid, int pgid); }
 58	UNIMPL
-59 	STD  		    { int|linux_sys||olduname(struct linux_old_utsname \
+59	STD  		    { int|linux_sys||olduname(struct linux_old_utsname \
 			    *up); }
 60	NOARGS		{ int|sys||umask(int newmask); }
 61	NOARGS		{ int|sys||chroot(char *path); }
@@ -180,7 +180,7 @@
 			    long length); }
 93	NOARGS		{ int|compat_43_sys||ftruncate(int fd, long length); }
 94	NOARGS		{ int|sys||fchmod(int fd, linux_umode_t mode); }
-95 	NOARGS		{ int|sys||__posix_fchown(int fd, uid_t uid, \
+95	NOARGS		{ int|sys||__posix_fchown(int fd, uid_t uid, \
 			    gid_t gid); }
 96	STD		{ int|linux_sys||getpriority(int which, int who); }
 97	NOARGS		{ int|sys||setpriority(int which, int who, int prio); }
@@ -474,7 +474,7 @@
 275	UNIMPL		mq_notify
 276	UNIMPL		mq_getsetattr
 277	UNIMPL		vserve
-278     STD		{ int|linux_sys||waitid(int idtype, id_t id, \
+278	STD		{ int|linux_sys||waitid(int idtype, id_t id, \
 			    linux_siginfo_t *infop, int options, \
 			    struct rusage50 *rusage); }
 279	UNIMPL		setaltroot
@@ -482,9 +482,10 @@
 281	UNIMPL		request_key
 282	UNIMPL		keyctl
 283	STD		{ int|linux_sys||set_thread_area(void *tls); }
-284	UNIMPL		inotify_init
-285	UNIMPL		inotify_add_watch
-286	UNIMPL		inotify_rm_watch
+284	STD		{ int|linux_sys||inotify_init(void); }
+285	STD		{ int|linux_sys||inotify_add_watch(int fd, \
+			    const char *pathname, uint32_t mask); }
+286	STD		{ int|linux_sys||inotify_rm_watch(int fd, int wd); }
 287	UNIMPL		migrate_pages
 288	STD 		{ int|linux_sys||openat(int fd, const char *path, \
 			    int flags, ... linux_umode_t mode); }
@@ -560,7 +561,7 @@
 326	STD		{ int|linux_sys||epoll_create1(int flags); }
 327	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 328	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
-329	UNIMPL		inotify_init1
+329	STD		{ int|linux_sys||inotify_init1(int flags); }
 330	STD		{ int|linux_sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    unsigned long off_lo, unsigned long off_hi); }
@@ -610,7 +611,7 @@
 363	UNIMPL		pkey_mprotect
 364	UNIMPL		pkey_alloc
 365	UNIMPL		pkey_free
-366     STD		{ int|linux_sys||statx(int fd, const char *path, \
+366	STD		{ int|linux_sys||statx(int fd, const char *path, \
 			    int flag, unsigned int mask, \
 			    struct linux_statx *sp); }
 367	UNIMPL

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.71 2023/08/18 19:41:19 christos Exp $
+	$NetBSD: syscalls.master,v 1.72 2023/08/19 17:49:49 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -471,9 +471,10 @@
 250	UNIMPL		keyctl
 251	UNIMPL		ioprio_set
 252	UNIMPL		ioprio_get
-253	UNIMPL		inotify_init
-254	UNIMPL		inotify_add_watch
-255	UNIMPL		inotify_rm_watch
+253	STD		{ int|linux_sys||inotify_init(void); }
+254	STD		{ int|linux_sys||inotify_add_watch(int fd, \
+			    const char *pathname, uint32_t mask); }
+255	STD		{ int|linux_sys||inotify_rm_watch(int fd, int wd); }
 256	UNIMPL		migrate_pages
 257	STD 		{ int|linux_sys||openat(int fd, const char *path, \
 			    int flags, ... linux_umode_t mode); }
@@ -547,7 +548,7 @@
 291	STD		{ int|linux_sys||epoll_create1(int flags); }
 292	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 293	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
-294	UNIMPL		inotify_init1
+294	STD		{ int|linux_sys||inotify_init1(int flags); }
 295	STD		{ int|linux_sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    unsigned long off_lo, unsigned long off_hi); }
@@ -596,7 +597,7 @@
 329	UNIMPL		pkey_mprotect
 330	UNIMPL		pkey_alloc
 331	UNIMPL		pkey_free
-332     STD		{ int|linux_sys||statx(int fd, const char *path, \
+332	STD		{ int|linux_sys||statx(int fd, const char *path, \
 			    int flag, unsigned int mask, \
 			    struct linux_statx *sp); }
 333	UNIMPL		io_pgetevents

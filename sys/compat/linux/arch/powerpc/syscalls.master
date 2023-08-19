@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.83 2023/08/18 19:41:19 christos Exp $  
+	$NetBSD: syscalls.master,v 1.84 2023/08/19 17:49:50 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -150,7 +150,7 @@
 56	OBSOL		mpx
 57	NOARGS		{ int|sys||setpgid(int pid, int pgid); }
 58	OBSOL		ulimit
-59 	STD		{ int|linux_sys||olduname(struct linux_old_utsname \
+59	STD		{ int|linux_sys||olduname(struct linux_old_utsname \
 			   *up); }
 60	NOARGS		{ int|sys||umask(int newmask); }
 61	NOARGS		{ int|sys||chroot(char *path); }
@@ -478,14 +478,15 @@
 269	UNIMPL		add_key
 270	UNIMPL		request_key
 271	UNIMPL		keyctl
-272     STD		{ int|linux_sys||waitid(int idtype, id_t id, \
+272	STD		{ int|linux_sys||waitid(int idtype, id_t id, \
 			    linux_siginfo_t *infop, int options, \
 			    struct rusage50 *rusage); }
 273	UNIMPL		ioprio_set
 274	UNIMPL		ioprio_get
-275	UNIMPL		inotify_init
-276	UNIMPL		inotify_add_watch
-277	UNIMPL		inotify_rm_watch
+275	STD		{ int|linux_sys||inotify_init(void); }
+276	STD		{ int|linux_sys||inotify_add_watch(int fd, \
+			    const char *pathname, uint32_t mask); }
+277	STD		{ int|linux_sys||inotify_rm_watch(int fd, int wd); }
 278	UNIMPL		spu_run
 279	UNIMPL		spu_create
 280	STD		{ int|linux_sys||pselect6(int nfds, fd_set *readfds, \
@@ -559,7 +560,7 @@
 315	STD		{ int|linux_sys||epoll_create1(int flags); }
 316	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 317	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
-318	UNIMPL		inotify_init1
+318	STD		{ int|linux_sys||inotify_init1(int flags); }
 319	UNIMPL		perf_event_open
 320	STD		{ int|linux_sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
@@ -636,7 +637,7 @@
 380	UNIMPL		preadv2
 381	UNIMPL		pwritev2
 382	UNIMPL		kexec_file_load
-383     STD		{ int|linux_sys||statx(int fd, const char *path, \
+383	STD		{ int|linux_sys||statx(int fd, const char *path, \
 			    int flag, unsigned int mask, \
 			    struct linux_statx *sp); }
 384	UNIMPL

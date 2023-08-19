@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.105 2023/08/18 19:41:19 christos Exp $
+	$NetBSD: syscalls.master,v 1.106 2023/08/19 17:49:49 christos Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -703,7 +703,7 @@
 435	UNIMPL		mq_timedreceive
 436	UNIMPL		mq_notify
 437	UNIMPL		mq_getsetattr
-438     STD		{ int|linux_sys||waitid(int idtype, id_t id, \
+438	STD		{ int|linux_sys||waitid(int idtype, id_t id, \
 			    linux_siginfo_t *infop, int options, \
 			    struct rusage50 *rusage); }
 439	UNIMPL		add_key
@@ -711,9 +711,10 @@
 441	UNIMPL		keyctl
 442	UNIMPL		ioprio_set
 443	UNIMPL		ioprio_get
-444	UNIMPL		inotify_init
-445	UNIMPL		inotify_add_watch
-446	UNIMPL		inotify_rm_watch
+444	STD		{ int|linux_sys||inotify_init(void); }
+445	STD		{ int|linux_sys||inotify_add_watch(int fd, \
+			    const char *pathname, uint32_t mask); }
+446	STD		{ int|linux_sys||inotify_rm_watch(int fd, int wd); }
 447	UNIMPL		fdatasync
 448	UNIMPL		kexec_load
 449	UNIMPL		migrate_pages
@@ -791,7 +792,7 @@
 486	STD		{ int|linux_sys||epoll_create1(int flags); }
 487	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 488	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
-489	UNIMPL		inotify_init1
+489	STD		{ int|linux_sys||inotify_init1(int flags); }
 490	STD		{ int|linux_sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    unsigned long off_lo, unsigned long off_hi); }
@@ -833,7 +834,7 @@
 519	UNIMPL
 520	UNIMPL
 521	UNIMPL
-522     STD		{ int|linux_sys||statx(int fd, const char *path, \
+522	STD		{ int|linux_sys||statx(int fd, const char *path, \
 			    int flag, unsigned int mask, \
 			    struct linux_statx *sp); }
 523	UNIMPL
