@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.103 2023/07/29 15:04:29 christos Exp $
+	$NetBSD: syscalls.master,v 1.104 2023/08/19 17:49:49 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -490,9 +490,10 @@
 281	UNIMPL		keyctl
 282	UNIMPL		ioprio_set
 283	UNIMPL		ioprio_get
-284	UNIMPL		inotify_init
-285	UNIMPL		inotify_add_watch
-286	UNIMPL		inotify_rm_watch
+284	STD		{ int|linux_sys||inotify_init(void); }
+285	STD		{ int|linux_sys||inotify_add_watch(int fd, \
+			    const char *pathname, uint32_t mask); }
+286	STD		{ int|linux_sys||inotify_rm_watch(int fd, int wd); }
 287	UNIMPL		migrate_pages
 288	STD 		{ int|linux_sys||openat(int fd, const char *path, \
 			    int flags, ... linux_umode_t mode); }
@@ -569,7 +570,7 @@
 325	STD		{ int|linux_sys||epoll_create1(int flags); }
 326	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 327	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
-328	UNIMPL		inotify_init1
+328	STD		{ int|linux_sys||inotify_init1(int flags); }
 329	STD		{ int|linux_sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    unsigned long off_lo, unsigned long off_hi); }
@@ -632,7 +633,7 @@
 376	UNIMPL		copy_file_range
 377	UNIMPL		preadv2
 378	UNIMPL		pwritev2
-379     STD		{ int|linux_sys||statx(int fd, const char *path, \
+379	STD		{ int|linux_sys||statx(int fd, const char *path, \
 			    int flag, unsigned int mask, \
 			    struct linux_statx *sp); }
 380	UNIMPL

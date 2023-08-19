@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.78 2023/08/18 19:41:19 christos Exp $
+	$NetBSD: syscalls.master,v 1.79 2023/08/19 17:49:49 christos Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -124,7 +124,7 @@
 56	OBSOL		mpx
 57	NOARGS		{ int|sys||setpgid(int pid, int pgid); }
 58	OBSOL		ulimit
-59 	STD		{ int|linux_sys||oldolduname( \
+59	STD		{ int|linux_sys||oldolduname( \
 			   struct linux_oldold_utsname *up); }
 60	NOARGS		{ int|sys||umask(int newmask); }
 61	NOARGS		{ int|sys||chroot(char *path); }
@@ -471,7 +471,7 @@
 277	UNIMPL		mq_timedreceive
 278	UNIMPL		mq_notify
 279	UNIMPL		mq_getsetattr
-280     STD		{ int|linux_sys||waitid(int idtype, id_t id, \
+280	STD		{ int|linux_sys||waitid(int idtype, id_t id, \
 			    linux_siginfo_t *infop, int options, \
 			    struct rusage50 *rusage); }
 281	UNIMPL		socket
@@ -509,9 +509,10 @@
 313	UNIMPL		vserver
 314	UNIMPL		ioptio_set
 315	UNIMPL		ioptio_get
-316	UNIMPL		inotify_init
-317	UNIMPL		inotify_add_watch
-318	UNIMPL		inotify_rm_watch
+316	STD		{ int|linux_sys||inotify_init(void); }
+317	STD		{ int|linux_sys||inotify_add_watch(int fd, \
+			    const char *pathname, uint32_t mask); }
+318	STD		{ int|linux_sys||inotify_rm_watch(int fd, int wd); }
 319	UNIMPL		mbind
 320	UNIMPL		get_mempolicy
 321	UNIMPL		set_mempolicy
@@ -586,7 +587,7 @@
 357	STD		{ int|linux_sys||epoll_create1(int flags); }
 358	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 359	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
-360	UNIMPL		inotify_init1
+360	STD		{ int|linux_sys||inotify_init1(int flags); }
 361	STD		{ int|linux_sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    unsigned long off_lo, unsigned long off_hi); }
@@ -647,7 +648,7 @@
 394	UNIMPL
 395	UNIMPL
 396	UNIMPL
-397     STD		{ int|linux_sys||statx(int fd, const char *path, \
+397	STD		{ int|linux_sys||statx(int fd, const char *path, \
 			    int flag, unsigned int mask, \
 			    struct linux_statx *sp); }
 398	UNIMPL
