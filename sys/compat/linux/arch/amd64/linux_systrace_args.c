@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.24 2023/08/18 19:42:06 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.25 2023/08/19 17:50:24 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1665,6 +1665,28 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 5;
 		break;
 	}
+	/* linux_sys_inotify_init */
+	case 253: {
+		*n_args = 0;
+		break;
+	}
+	/* linux_sys_inotify_add_watch */
+	case 254: {
+		const struct linux_sys_inotify_add_watch_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, pathname); /* const char * */
+		uarg[2] = SCARG(p, mask); /* uint32_t */
+		*n_args = 3;
+		break;
+	}
+	/* linux_sys_inotify_rm_watch */
+	case 255: {
+		const struct linux_sys_inotify_rm_watch_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		iarg[1] = SCARG(p, wd); /* int */
+		*n_args = 2;
+		break;
+	}
 	/* linux_sys_openat */
 	case 257: {
 		const struct linux_sys_openat_args *p = params;
@@ -1925,6 +1947,13 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[0] = (intptr_t) SCARG(p, pfds); /* int * */
 		iarg[1] = SCARG(p, flags); /* int */
 		*n_args = 2;
+		break;
+	}
+	/* linux_sys_inotify_init1 */
+	case 294: {
+		const struct linux_sys_inotify_init1_args *p = params;
+		iarg[0] = SCARG(p, flags); /* int */
+		*n_args = 1;
 		break;
 	}
 	/* linux_sys_preadv */
@@ -4767,6 +4796,38 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_inotify_init */
+	case 253:
+		break;
+	/* linux_sys_inotify_add_watch */
+	case 254:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "const char *";
+			break;
+		case 2:
+			p = "uint32_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_inotify_rm_watch */
+	case 255:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_openat */
 	case 257:
 		switch(ndx) {
@@ -5239,6 +5300,16 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "int *";
 			break;
 		case 1:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_inotify_init1 */
+	case 294:
+		switch(ndx) {
+		case 0:
 			p = "int";
 			break;
 		default:
@@ -6414,6 +6485,18 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux_sys_inotify_init */
+	case 253:
+	/* linux_sys_inotify_add_watch */
+	case 254:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_inotify_rm_watch */
+	case 255:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux_sys_openat */
 	case 257:
 		if (ndx == 0 || ndx == 1)
@@ -6551,6 +6634,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_pipe2 */
 	case 293:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_inotify_init1 */
+	case 294:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
