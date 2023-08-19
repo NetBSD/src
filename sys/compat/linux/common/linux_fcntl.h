@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.21 2023/07/10 02:31:55 christos Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.22 2023/08/19 17:57:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -32,6 +32,11 @@
 #ifndef _LINUX_FCNTL_H
 #define _LINUX_FCNTL_H
 
+#ifdef _KERNEL
+#include <compat/linux/common/linux_types.h> /* For linux_off_t */
+struct stat;
+#endif
+
 /*
  * The arguments in the flock structure have a different order from the
  * BSD structure.
@@ -50,6 +55,7 @@
 #define LINUX_AT_NO_AUTOMOUNT		0x0800
 #define LINUX_AT_EMPTY_PATH		0x1000
 
+#ifdef _KERNEL
 int linux_to_bsd_ioflags(int);
 int linux_to_bsd_atflags(int);
 int bsd_to_linux_statx(struct stat *, struct linux_statx *, unsigned int);
@@ -70,6 +76,7 @@ struct linux_flock64 {
 	off_t	    l_len;
 	linux_pid_t l_pid;
 };
+#endif /* _KERNEL */
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_fcntl.h>
@@ -103,6 +110,7 @@ struct linux_flock64 {
 #define	LINUX_F_ADD_SEALS	(LINUX_F_SPECIFIC_BASE + 9)
 #define	LINUX_F_GET_SEALS	(LINUX_F_SPECIFIC_BASE + 10)
 
+#ifdef _KERNEL
 /*
  * We have to have 4 copies of the code that converts linux fcntl() file
  * locking to native form because there are 4 layouts for the structures.
@@ -171,6 +179,6 @@ LINUX##_to_bsd_##FLOCK(struct flock *bfp, const struct LINUX##_##FLOCK *lfp) \
 	LINUX##_to_bsd_##FLOCK(&bfl, &lfl); \
 	return do_fcntl_lock(fd, cmd == setlk ? F_SETLK : F_SETLKW, &bfl); \
     } while (0)
-
+#endif /* _KERNEL */
 
 #endif /* !_LINUX_FCNTL_H */

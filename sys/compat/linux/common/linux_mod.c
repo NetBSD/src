@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mod.c,v 1.14 2020/04/26 18:53:33 thorpej Exp $	*/
+/*	$NetBSD: linux_mod.c,v 1.15 2023/08/19 17:57:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.14 2020/04/26 18:53:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.15 2023/08/19 17:57:54 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.14 2020/04/26 18:53:33 thorpej Exp $
 #include <sys/signalvar.h>
 #include <sys/sysctl.h>
 
+#include <compat/linux/common/linux_inotify.h>
 #include <compat/linux/common/linux_sysctl.h>
 #include <compat/linux/common/linux_exec.h>
 
@@ -162,7 +163,12 @@ compat_linux_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		error = linux_inotify_init();
+		if (error != 0)
+			return error;
 		error = exec_add(linux_execsw, __arraycount(linux_execsw));
+		if (error)
+			linux_inotify_fini();
 		return error;
 
 	case MODULE_CMD_FINI:
@@ -170,6 +176,7 @@ compat_linux_modcmd(modcmd_t cmd, void *arg)
 		if (error)
 			return error;
 		linux_sysctl_fini();
+		linux_inotify_fini();
 		return 0;
 
 	default:
