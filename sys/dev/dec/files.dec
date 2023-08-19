@@ -1,4 +1,4 @@
-#	$NetBSD: files.dec,v 1.9 2019/12/27 09:47:55 msaitoh Exp $
+#	$NetBSD: files.dec,v 1.10 2023/08/19 19:21:34 andvar Exp $
 #
 # Config file and device description for  machine-independent
 # code for devices for Digital Equipment Corp. systems.
@@ -8,7 +8,7 @@
 # which need it should specify the le_dec_subr attribute.
 define	le_dec_subr
 
-#  DMA copy functions.  Lance attachments qhich Decices
+#  DMA copy functions.
 file	dev/dec/if_le_dec.c		le_dec_subr
 
 #  LK201 keyboard
