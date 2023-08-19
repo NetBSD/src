@@ -1,4 +1,4 @@
-# $NetBSD: varmod-gmtime.mk,v 1.18 2023/08/19 11:13:36 rillig Exp $
+# $NetBSD: varmod-gmtime.mk,v 1.19 2023/08/19 11:53:10 rillig Exp $
 #
 # Tests for the :gmtime variable modifier, which formats a timestamp
 # using strftime(3) in UTC.
@@ -147,53 +147,7 @@
 
 
 # Before var.c 1.1062 from 2023-08-19, ':gmtime' but not ':localtime' reported
-# wrong values for '%s', depending on the operating system and the timezone,
-# as demonstrated by the following test program:
-#
-#	for mod in gmtime localtime; do
-#		for tz in UTC Europe/Berlin America/Los_Angeles; do
-#			TZ=$tz ./make -r -f /dev/null -v "\${%F %T %z %s $mod $tz:L:$mod}"
-#		done
-#	done
-#
-# Cygwin:
-# 2023-08-19 07:34:06 +0000 1692430446 gmtime UTC
-# 2023-08-19 07:34:06 +0000 1692430446 gmtime Europe/Berlin
-# 2023-08-19 07:34:06 +0000 1692430446 gmtime America/Los_Angeles
-# 2023-08-19 07:34:06 +0000 1692430446 localtime UTC
-# 2023-08-19 09:34:07 +0200 1692430447 localtime Europe/Berlin
-# 2023-08-19 00:34:07 -0700 1692430447 localtime America/Los_Angeles
-#
-# Looks good:
-#	* ':gmtime' consistently reports timezone offset '+0000'.
-#	* '%s' is independent of the timezone.
-#
-# NetBSD 10.99:
-# 2023-08-19 07:34:37 +0000 1692430477 gmtime UTC
-# 2023-08-19 07:34:37 +0100 1692426877 gmtime Europe/Berlin
-# 2023-08-19 07:34:37 -0800 1692459277 gmtime America/Los_Angeles
-# 2023-08-19 07:34:37 +0000 1692430477 localtime UTC
-# 2023-08-19 09:34:37 +0200 1692430477 localtime Europe/Berlin
-# 2023-08-19 00:34:37 -0700 1692430477 localtime America/Los_Angeles
-#
-# Looks bad:
-#	* ':gmtime' reports different timezone offsets.
-#	* ':gmtime' reports different seconds since the Epoch.
-#	* ':gmtime' reports the timezone offset '+0100' for Europe/Berlin,
-#	  even though at 2023-08-19, DST with offset '+0200' was in place.
-#
-# Debian:
-# 2023-08-19 07:29:10 +0000 1692430150 gmtime UTC
-# 2023-08-19 07:29:10 +0000 1692426550 gmtime Europe/Berlin
-# 2023-08-19 07:29:10 +0000 1692458950 gmtime America/Los_Angeles
-# 2023-08-19 07:29:10 +0000 1692430150 localtime UTC
-# 2023-08-19 09:29:10 +0200 1692430150 localtime Europe/Berlin
-# 2023-08-19 00:29:10 -0700 1692430150 localtime America/Los_Angeles
-#
-# Looks mixed:
-#	* ':gmtime' reports the correct timezone offset '+0000'.
-#	* ':gmtime' reports different seconds since the Epoch, and the '%s'
-#	  value cannot be derived from the '%F %T %z' values.
+# wrong values for '%s', depending on the operating system and the timezone.
 export TZ=UTC
 .for t in ${%s:L:gmtime} ${%s:L:localtime}
 TIMESTAMPS+= $t
