@@ -1,4 +1,4 @@
-/*	$NetBSD: pflogd.c,v 1.10 2015/08/28 12:17:41 joerg Exp $	*/
+/*	$NetBSD: pflogd.c,v 1.11 2023/08/19 05:57:34 rjs Exp $	*/
 /*	$OpenBSD: pflogd.c,v 1.45 2007/06/06 14:11:26 henning Exp $	*/
 
 /*
@@ -349,7 +349,6 @@ try_reset_dump(int nomove)
 		hdr.magic = TCPDUMP_MAGIC;
 		hdr.version_major = PCAP_VERSION_MAJOR;
 		hdr.version_minor = PCAP_VERSION_MINOR;
-		hdr.thiszone = hpcap->tzoff;
 		hdr.snaplen = hpcap->snapshot;
 		hdr.sigfigs = 0;
 		hdr.linktype = hpcap->linktype;
