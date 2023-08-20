@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.417 2023/08/20 12:21:35 riastradh Exp $
+# $NetBSD: mi,v 1.418 2023/08/20 12:27:02 riastradh Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1613,10 +1613,6 @@
 ./usr/libdata/debug/usr/tests/atf/units/t_user.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/atf/units/t_utils.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/bin/df/h_df.debug				tests-bin-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/compat/linux/h_inotify_init.debug		tests-sys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/compat/linux/h_inotify_directory.debug	tests-sys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/compat/linux/h_inotify_single_file.debug	tests-sys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/compat/linux/h_inotify_watch_change.debug	tests-sys-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_bftest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_bntest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_casttest.debug		tests-crypto-debug	debug,atf,compattestfile
