@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1357 2023/08/19 22:58:15 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1358 2023/08/20 02:11:21 rin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -81,7 +81,6 @@ HAVE_GCC?=	10
 # Platforms that can't run a modern GCC natively
 .if ${MACHINE_ARCH} == "m68000"
 MKGCCCMDS?=	no
-MKGDB?=		no
 .endif
 
 #
