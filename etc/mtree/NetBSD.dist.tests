@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.198 2023/01/15 23:18:05 rillig Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.199 2023/08/20 10:27:11 riastradh Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -11,6 +11,8 @@
 ./usr/libdata/debug/usr/tests/atf/tools
 ./usr/libdata/debug/usr/tests/bin
 ./usr/libdata/debug/usr/tests/bin/df
+./usr/libdata/debug/usr/tests/compat
+./usr/libdata/debug/usr/tests/compat/linux
 ./usr/libdata/debug/usr/tests/crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto
 ./usr/libdata/debug/usr/tests/crypto/opencrypto
@@ -210,6 +212,8 @@
 ./usr/tests/bin/sh/dotcmd/out
 ./usr/tests/bin/sleep
 ./usr/tests/bin/tar
+./usr/tests/compat
+./usr/tests/compat/linux
 ./usr/tests/crypto
 ./usr/tests/crypto/libcrypto
 ./usr/tests/crypto/opencrypto
