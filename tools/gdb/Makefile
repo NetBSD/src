@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2023/08/17 07:54:10 rin Exp $
+#	$NetBSD: Makefile,v 1.49 2023/08/20 02:30:58 rin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -77,7 +77,11 @@ MKNATIVE_CONFIGURE_PRESET= \
 	bash_cv_func_ctype_nonascii=yes \
 	bash_cv_func_sigsetjmp=present \
 	bash_cv_func_strcoll_broken=no \
-	bash_cv_must_reinstall_sighandlers=no
+	bash_cv_must_reinstall_sighandlers=no \
+	gl_cv_func_rename_slash_dst_works=yes \
+	gl_cv_func_rename_slash_src_works=yes \
+	gl_cv_func_rename_link_works=yes \
+	gl_cv_func_rename_dest_works=yes
 
 CONFIGURE_ENV+=	am_cv_func_iconv=no
 
