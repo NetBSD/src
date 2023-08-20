@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1290 2023/08/20 12:29:16 riastradh Exp $
+# $NetBSD: mi,v 1.1291 2023/08/20 19:36:56 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1330,6 +1330,10 @@
 ./usr/tests/compat/Atffile				tests-compat-tests	compattestfile,atf
 ./usr/tests/compat/linux				tests-compat-tests	compattestfile,atf
 ./usr/tests/compat/linux/Atffile			tests-compat-tests	compattestfile,atf
+./usr/tests/compat/linux/h_inotify_init			tests-compat-tests	compattestfile,atf
+./usr/tests/compat/linux/h_inotify_directory		tests-compat-tests	compattestfile,atf
+./usr/tests/compat/linux/h_inotify_single_file		tests-compat-tests	compattestfile,atf
+./usr/tests/compat/linux/h_inotify_watch_change		tests-compat-tests	compattestfile,atf
 ./usr/tests/compat/linux/t_inotify			tests-compat-tests	compattestfile,atf
 ./usr/tests/crypto					tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/Atffile				tests-crypto-tests	compattestfile,atf

@@ -1,8 +1,4 @@
-# $NetBSD: md.amd64,v 1.16 2023/08/20 12:29:16 riastradh Exp $
-./usr/tests/compat/linux/h_inotify_init			tests-compat-tests	compattestfile,atf
-./usr/tests/compat/linux/h_inotify_directory		tests-compat-tests	compattestfile,atf
-./usr/tests/compat/linux/h_inotify_single_file		tests-compat-tests	compattestfile,atf
-./usr/tests/compat/linux/h_inotify_watch_change		tests-compat-tests	compattestfile,atf
+# $NetBSD: md.amd64,v 1.17 2023/08/20 19:36:56 riastradh Exp $
 ./usr/tests/kernel/arch/x86/Atffile		tests-obsolete	obsolete
 ./usr/tests/kernel/arch/x86/Kyuafile		tests-obsolete	obsolete
 ./usr/tests/kernel/arch/x86/t_ptrace_wait	tests-obsolete	obsolete
