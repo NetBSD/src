@@ -1275,19 +1275,19 @@
 
 /* Define if rename does not work when the destination file exists, as on
    Cygwin 1.5 or Windows. */
-#define RENAME_DEST_EXISTS_BUG 1
+/* #undef RENAME_DEST_EXISTS_BUG */
 
 /* Define if rename fails to leave hard links alone, as on NetBSD 1.6 or
    Cygwin 1.5. */
-#define RENAME_HARD_LINK_BUG 1
+/* #undef RENAME_HARD_LINK_BUG */
 
 /* Define if rename does not correctly handle slashes on the destination
    argument, such as on Solaris 11 or NetBSD 1.6. */
-#define RENAME_TRAILING_SLASH_DEST_BUG 1
+/* #undef RENAME_TRAILING_SLASH_DEST_BUG */
 
 /* Define if rename does not correctly handle slashes on the source argument,
    such as on Solaris 9 or cygwin 1.5. */
-#define RENAME_TRAILING_SLASH_SOURCE_BUG 1
+/* #undef RENAME_TRAILING_SLASH_SOURCE_BUG */
 
 /* Define to 1 if gnulib's dirfd() replacement is used. */
 /* #undef REPLACE_DIRFD */

@@ -1728,7 +1728,7 @@ _GL_WARN_ON_USE (remove, "remove cannot handle directories on some platforms - "
 #endif
 
 #if 1
-# if 1
+# if 0
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   undef rename
 #   define rename rpl_rename
