@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.295 2023/06/17 15:47:31 christos Exp $
+#	$NetBSD: Makefile,v 1.296 2023/08/20 02:07:54 rin Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -100,10 +100,15 @@ SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgomp
 # specific build area, but we get better parallelism this way.
 # We don't build compat versions of these.
 . if !defined(MLIBDIR) && (${MKGCCCMDS} != "no")
-SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
 SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
 . endif
+.endif
+
+# GCC and GDB >= 13 require GMP.
+.if !defined(MLIBDIR) && (${MKGCCCMDS} != "no" || \
+    (${MKGDB} != "no" && ${HAVE_GDB:U0} >= 1320))
+SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 .endif
 
 #
