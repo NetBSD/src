@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1288 2023/08/19 22:57:09 christos Exp $
+# $NetBSD: mi,v 1.1289 2023/08/20 12:21:35 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -19,6 +19,8 @@
 ./usr/libdata/debug/usr/tests/atf/units			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/bin			tests-bin-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/bin/df			tests-bin-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/compat			tests-sys-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/compat/linux		tests-sys-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/crypto			tests-crypto-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/crypto/libcrypto		tests-crypto-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/crypto/opencrypto		tests-crypto-debug	compattestfile,atf
