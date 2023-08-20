@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_inotify.c,v 1.1 2023/08/19 17:57:54 christos Exp $	*/
+/*	$NetBSD: linux_inotify.c,v 1.2 2023/08/20 18:09:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.1 2023/08/19 17:57:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.2 2023/08/20 18:09:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -135,8 +135,8 @@ static void	do_kevent_to_inotify(int32_t, uint32_t, uint32_t,
     struct inotify_entry *, size_t *, char *);
 static int	kevent_to_inotify(struct inotifyfd *, int, enum vtype, uint32_t,
     uint32_t, struct inotify_entry *, size_t *);
-static int	inotify_readdir(file_t *, struct dirent *, int *);
-static struct inotify_dir_entries *get_inotify_dir_entries(int);
+static int	inotify_readdir(file_t *, struct dirent *, int *, bool);
+static struct inotify_dir_entries *get_inotify_dir_entries(int, bool);
 
 static int	inotify_filt_attach(struct knote *);
 static void	inotify_filt_detach(struct knote *);
@@ -417,15 +417,15 @@ linux_sys_inotify_add_watch(struct lwp *l,
 		syscallarg(const char *) pathname;
 		syscallarg(uint32_t) mask;
 	} */
-	int wd, dup_of_wd, i, error = 0;
+	int wd, i, error = 0;
 	file_t *fp, *wp, *cur_fp;
-	struct stat wst, cur_st;
 	struct inotifyfd *ifd;
 	struct inotify_dir_entries **new_wds;
 	struct knote *kn, *tmpkn;
 	struct sys_open_args oa;
 	struct kevent kev;
-	enum vtype wtype;
+	struct vnode *wvp;
+	namei_simple_flags_t sflags;
 	struct kevent_ops k_ops = {
 		.keo_private = NULL,
 		.keo_fetch_timeout = NULL,
@@ -452,38 +452,16 @@ linux_sys_inotify_add_watch(struct lwp *l,
 
 	mutex_enter(&ifd->ifd_lock);
 
-	/* open a new file descriptor for the watch descriptor */
-	SCARG(&oa, path) = SCARG(uap, pathname);
-	SCARG(&oa, mode) = 0;
-	SCARG(&oa, flags) = O_RDONLY;
 	if (mask & LINUX_IN_DONT_FOLLOW)
-		SCARG(&oa, flags) |= O_NOFOLLOW;
-	if (mask & LINUX_IN_ONLYDIR)
-		SCARG(&oa, flags) |= O_DIRECTORY;
-
-	error = sys_open(l, &oa, retval);
+		sflags = NSM_NOFOLLOW_TRYEMULROOT;
+	else
+		sflags = NSM_FOLLOW_TRYEMULROOT;
+	error = namei_simple_user(SCARG(uap, pathname), sflags, &wvp);
 	if (error != 0)
 		goto leave1;
-	wd = *retval;
-
-	wp = fd_getfile(wd);
-	KASSERT(wp != NULL);
-	wtype = wp->f_vnode->v_type;
-	error = vn_stat(wp->f_vnode, &wst);
-	fd_putfile(wd);
-	if (error != 0)
-		goto leave1;
-
-	/* translate the flags */
-	memset(&kev, 0, sizeof(kev));
-	EV_SET(&kev, wd, inotify_filtid, EV_ADD|EV_ENABLE,
-	    NOTE_DELETE|NOTE_REVOKE, 0, ifd);
-	if (mask & LINUX_IN_ONESHOT)
-		kev.flags |= EV_ONESHOT;
-	kev.fflags |= inotify_mask_to_kevent_fflags(mask, wtype);
 
 	/* Check to see if we already have a descriptor to wd's file. */
-        dup_of_wd = -1;
+        wd = -1;
 	for (i = 0; i < ifd->ifd_nwds; i++) {
 		if (ifd->ifd_wds[i] != NULL) {
 			cur_fp = fd_getfile(i);
@@ -498,24 +476,47 @@ linux_sys_inotify_add_watch(struct lwp *l,
 				    "with a non-vnode\n", __func__, i));
 				error = EBADF;
 			}
-			if (error == 0)
-				error = vn_stat(cur_fp->f_vnode, &cur_st);
+			if (error == 0 && cur_fp->f_vnode == wvp)
+				wd = i;
 			fd_putfile(i);
 			if (error != 0)
 				goto leave1;
 
-			if (wst.st_ino == cur_st.st_ino) {
-			        dup_of_wd = i;
+			if (wd != -1)
 				break;
-			}
 		}
 	}
 
-	if (dup_of_wd != -1) {
+	if (wd == -1) {
 		/*
-		 * If we do not have a descriptor to wd's file, we need to add
-		 * a knote.
+		 * If we do not have a descriptor to wd's file, we
+		 * need to open the watch descriptor.
 		 */
+		SCARG(&oa, path) = SCARG(uap, pathname);
+		SCARG(&oa, mode) = 0;
+		SCARG(&oa, flags) = O_RDONLY;
+		if (mask & LINUX_IN_DONT_FOLLOW)
+			SCARG(&oa, flags) |= O_NOFOLLOW;
+		if (mask & LINUX_IN_ONLYDIR)
+			SCARG(&oa, flags) |= O_DIRECTORY;
+
+		error = sys_open(l, &oa, retval);
+		if (error != 0)
+			goto leave1;
+		wd = *retval;
+		wp = fd_getfile(wd);
+	        KASSERT(wp != NULL);
+		KASSERT(wp->f_type == DTYPE_VNODE);
+
+		/* translate the flags */
+		memset(&kev, 0, sizeof(kev));
+		EV_SET(&kev, wd, inotify_filtid, EV_ADD|EV_ENABLE,
+		    NOTE_DELETE|NOTE_REVOKE, 0, ifd);
+		if (mask & LINUX_IN_ONESHOT)
+			kev.flags |= EV_ONESHOT;
+		kev.fflags |= inotify_mask_to_kevent_fflags(mask,
+		    wp->f_vnode->v_type);
+
 		error = kevent1(retval, ifd->ifd_kqfd, &kev, 1, NULL, 0, NULL,
 		    &k_ops);
 		if (error != 0) {
@@ -539,30 +540,34 @@ linux_sys_inotify_add_watch(struct lwp *l,
 				ifd->ifd_nwds = wd+1;
 			}
 
-			ifd->ifd_wds[wd] = get_inotify_dir_entries(wd);
+			ifd->ifd_wds[wd] = get_inotify_dir_entries(wd, true);
 		}
 	} else {
 		/*
 		 * If we do have a descriptor to wd's file, try to edit
 		 * the relevant knote.
 		 */
-
-		/* We do not need wd anymore. */
-		fd_getfile(wd);
-		fd_close(wd);
-
 		if (mask & LINUX_IN_MASK_CREATE) {
 			error = EEXIST;
 			goto leave1;
 		}
 
-		wp = fd_getfile(dup_of_wd);
+		wp = fd_getfile(wd);
 		if (wp == NULL) {
 			DPRINTF(("%s: wd=%d was closed externally "
-			    "(race, probably)\n", __func__, dup_of_wd));
+			    "(race, probably)\n", __func__, wd));
 			error = EBADF;
 			goto leave1;
 		}
+		if (wp->f_type != DTYPE_VNODE) {
+			DPRINTF(("%s: wd=%d was replace with a non-vnode "
+			    "(race, probably)\n", __func__, wd));
+			error = EBADF;
+			goto leave2;
+		}
+
+		kev.fflags = NOTE_DELETE | NOTE_REVOKE
+		    | inotify_mask_to_kevent_fflags(mask, wp->f_vnode->v_type);
 
 		mutex_enter(wp->f_vnode->v_interlock);
 
@@ -588,9 +593,13 @@ linux_sys_inotify_add_watch(struct lwp *l,
 		}
 
 		mutex_exit(wp->f_vnode->v_interlock);
-		fd_putfile(dup_of_wd);
+
+		/* Success! */
+		*retval = wd;
 	}
 
+leave2:
+	fd_putfile(wd);
 leave1:
 	mutex_exit(&ifd->ifd_lock);
 leave0:
@@ -748,11 +757,11 @@ do_kevent_to_inotify(int32_t wd, uint32_t mask, uint32_t cookie,
 }
 
 /*
- * Like vn_readdir(), but with vnode locking that depends on if we already have
- * v_interlock (to avoid double locking in some situations).
+ * Like vn_readdir(), but with vnode locking only if needs_lock is
+ * true (to avoid double locking in some situations).
  */
 static int
-inotify_readdir(file_t *fp, struct dirent *dep, int *done)
+inotify_readdir(file_t *fp, struct dirent *dep, int *done, bool needs_lock)
 {
 	struct vnode *vp;
 	struct iovec iov;
@@ -777,10 +786,10 @@ inotify_readdir(file_t *fp, struct dirent *dep, int *done)
 	mutex_exit(&fp->f_lock);
 
 	/* XXX: should pass whether to lock or not */
-	if (!mutex_owned(vp->v_interlock))
+	if (needs_lock)
 		vn_lock(vp, LK_SHARED | LK_RETRY);
 	error = VOP_READDIR(vp, &uio, fp->f_cred, &eofflag, NULL, NULL);
-	if (!mutex_owned(vp->v_interlock))
+	if (needs_lock)
 		VOP_UNLOCK(vp);
 
 	mutex_enter(&fp->f_lock);
@@ -794,10 +803,11 @@ inotify_readdir(file_t *fp, struct dirent *dep, int *done)
 /*
  * Create (and allocate) an appropriate inotify_dir_entries struct for wd to be
  * used on ifd_wds of inotifyfd.  If the entries on a directory fail to be read,
- * NULL is returned.
+ * NULL is returned.  needs_lock indicates if the vnode's lock is not already
+ * owned.
  */
 static struct inotify_dir_entries *
-get_inotify_dir_entries(int wd)
+get_inotify_dir_entries(int wd, bool needs_lock)
 {
 	struct dirent de;
 	struct dirent *currdep;
@@ -823,7 +833,7 @@ get_inotify_dir_entries(int wd)
 	mutex_exit(&wp->f_lock);
 	decount = 0;
 	for (;;) {
-		error = inotify_readdir(wp, &de, &done);
+		error = inotify_readdir(wp, &de, &done, needs_lock);
 		if (error != 0)
 			goto leave;
 		if (done == 0)
@@ -843,7 +853,7 @@ get_inotify_dir_entries(int wd)
 	wp->f_offset = 0;
 	mutex_exit(&wp->f_lock);
 	for (i = 0; i < decount;) {
-		error = inotify_readdir(wp, &de, &done);
+		error = inotify_readdir(wp, &de, &done, needs_lock);
 		if (error != 0 || done == 0) {
 			kmem_free(idep, INOTIFY_DIR_ENTRIES_SIZE(decount));
 			idep = NULL;
@@ -886,7 +896,7 @@ handle_write(struct inotifyfd *ifd, int wd, struct inotify_entry *buf,
 
 	old_idep = ifd->ifd_wds[wd];
 	KASSERT(old_idep != NULL);
-	new_idep = get_inotify_dir_entries(wd);
+	new_idep = get_inotify_dir_entries(wd, false);
 	if (new_idep == NULL) {
 		DPRINTF(("%s: directory for wd=%d could not be read\n",
 		    __func__, wd));
@@ -1049,17 +1059,6 @@ inotify_filt_event(struct knote *kn, long hint)
 		return 0;
 
 	/*
-	 * Because we use kqueue() and file descriptors underneath,
-	 * functions like inotify_add_watch can actually trigger
-	 * events (ie. we're watching for LINUX_IN_OPEN).  In all
-	 * cases where this could happen, we must already own
-	 * ifd->ifd_lock, so we can just drop these events.
-	 */
-	/* XXX: why do we need this here? */
-	if (mutex_owned(&ifd->ifd_lock))
-		return 0;
-
-	/*
 	 * If we don't care about the NOTEs in hint, we don't generate
 	 * any events.
 	 */
@@ -1068,6 +1067,7 @@ inotify_filt_event(struct knote *kn, long hint)
 		return 0;
 
 	KASSERT(mutex_owned(vp->v_interlock));
+	KASSERT(!mutex_owned(&ifd->ifd_lock));
 
 	mutex_enter(&ifd->ifd_qlock);
 
