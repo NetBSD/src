@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.272.4.1 2023/03/15 18:43:28 martin Exp $	*/
+/*	$NetBSD: vnd.c,v 1.272.4.2 2023/08/21 10:57:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.272.4.1 2023/03/15 18:43:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.272.4.2 2023/08/21 10:57:07 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -121,6 +121,8 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.272.4.1 2023/03/15 18:43:28 martin Exp $")
 #include <sys/kauth.h>
 #include <sys/module.h>
 #include <sys/compat_stub.h>
+
+#include <uvm/uvm.h>
 
 #include <net/zlib.h>
 
@@ -558,7 +560,7 @@ vndstrategy(struct buf *bp)
 		 * thread to add requests, as a wedge on vnd queues
 		 * requests with biodone() -> dkstart() -> vndstrategy().
 		 */
-		if (curlwp != vnd->sc_kthread) {
+		if (curlwp != vnd->sc_kthread && curlwp != uvm.pagedaemon_lwp) {
 			while (vnd->sc_pending >= VND_MAXPENDING(vnd))
 				tsleep(&vnd->sc_pending, PRIBIO, "vndpc", 0);
 		}
