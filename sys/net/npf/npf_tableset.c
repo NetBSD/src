@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.33.2.2 2020/06/20 15:46:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.33.2.3 2023/08/21 12:20:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -758,15 +758,17 @@ table_ent_copyout(const npf_addr_t *addr, const int alen, npf_netmask_t mask,
 }
 
 static int
-table_generic_list(const npf_table_t *t, void *ubuf, size_t len)
+table_generic_list(npf_table_t *t, void *ubuf, size_t len)
 {
 	npf_tblent_t *ent;
 	size_t off = 0;
 	int error = 0;
 
 	LIST_FOREACH(ent, &t->t_list, te_listent) {
+		mutex_exit(&t->t_lock);
 		error = table_ent_copyout(&ent->te_addr,
 		    ent->te_alen, ent->te_preflen, ubuf, len, &off);
+		mutex_enter(&t->t_lock);
 		if (error)
 			break;
 	}
