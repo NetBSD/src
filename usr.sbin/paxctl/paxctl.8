@@ -1,4 +1,4 @@
-.\"	$NetBSD: paxctl.8,v 1.21 2023/08/16 22:22:02 gutteridge Exp $
+.\"	$NetBSD: paxctl.8,v 1.22 2023/08/21 00:41:49 dholland Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright 2008 Christos Zoulas <christos@NetBSD.org>
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 23, 2023
+.Dd August 20, 2023
 .Dt PAXCTL 8
 .Os
 .Sh NAME
@@ -104,17 +104,17 @@ PaX project.
 .Sh AUTHORS
 .An Elad Efrat Aq Mt elad@NetBSD.org
 .An Christos Zoulas Aq Mt christos@NetBSD.org
-.Sh BUGS
+.Sh RESTRICTIONS
 The
 .Nm
-utility currently uses
+utility uses
 .Xr elf 5
-note sections to mark executables as having PaX flags enabled.
-This will be done using
-.Xr fileassoc 9
-in the future so that we can control who does the marking and
-not alter the binary file signature.
-.Po
-Note this also means that
-at present any flags set do not survive binary file upgrades.
-.Pc
+note sections to mark executables with PaX flags.
+This means that, as one might expect, the PaX settings do not persist
+if the program file is replaced.
+It also means that running
+.Nm
+changes the target executable, which can be undesirable in production.
+In general,
+.Nm
+settings should be applied to programs at build time.
