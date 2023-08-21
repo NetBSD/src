@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.120 2023/08/20 12:27:02 riastradh Exp $
+# $NetBSD: md.amd64,v 1.121 2023/08/21 09:54:07 martin Exp $
 ./usr/libdata/debug/usr/bin/gdbserver.debug	base-util-debug		gdb,debug
 ./usr/lib/i386/12.202++_g.a			comp-c-debuglib		debuglib,compat,12.202xx
 ./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
@@ -17,10 +17,6 @@
 ./usr/libdata/debug/usr/lib/libx86_64.so.0.0.debug	comp-sys-shlib		pic,debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat
-./usr/libdata/debug/usr/tests/compat/linux/h_inotify_init.debug		tests-sys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/compat/linux/h_inotify_directory.debug	tests-sys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/compat/linux/h_inotify_single_file.debug	tests-sys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/compat/linux/h_inotify_watch_change.debug	tests-sys-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait3.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait4.debug	tests-obsolete	obsolete
