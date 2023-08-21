@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2994 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2995 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -193,10 +193,38 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	x86: Add serial console support to efiboot via raw I/O port
 		access. [rin 20230724]
 	x86: Turn off Zenbleed chicken bit on Zen2 CPUs. [mrg 20230725]
+	evbmips: Allow ramdisk to handle GPT wedges. [gutteridge 20230725]
+	xbd(4): Properly handle 4k sector size backends. [bouyer 20230725]
 	OpenSSH: Import 9.3. [christos 20230726]
+	iostat(8): Add -X option, limited alternative statistics.
+		This is like the "-D" option, except it skips the xfers/s, and
+		reports MB/s instead of KB/s.  Allows for ~50% more devices to
+		be displayed per line by default.  [mrg 20230728]
+	compat_linux(8): Add epoll system calls implemented around kqueue(2),
+		contributed by Theodore Preduta as part of GSoC 2023.
+		[christos 20230728]
+	compat_linux(8): Add/fix statx, readahead, close_range. From GSoC 2023
+		by Theodore Preduta. [christos 20230729]
+	libc: Add wmempcpy(3).  [christos 20230731]
+	libc: Add companion mempcpy(3) to wmempcpy(3).
+		[christos 20230801]
+	u3g(4): Add support for D-Link DWM-222 4G LTS USB adapter.
+		[manu 20230804]
+	amd64: Build legacy VIA DRM UMS driver module by default,
+		this allows basic acceleration on VIA integrated graphics
+		with modload(8) viadrmums. [andvar 20230809]
+	all: Fix many small bugs found by GCC 12. [mrg 20230810]
 	gdb(1): Updated to 13.2. [christos 20230811]
 	libfido2: Import 1.13.0 [christos 20230811]
+	vis(3): Fixed many implementation issues, expand tests.
+		[riastradh 20230812]
 	libpcap: Import 1.10.4. [christos 20230817]
 	tcpdump(8): Import 4.99.4. [christos 20230817]
 	file(1): Upgraded to 5.45. [christos 20230818]
-
+	make(1): Show more detail in "invalid line" error messages.
+		[rillig 20230819]
+	compat_linux(8): Add support for Linux waitid syscall.
+		 Contributed by Theodore Preduta. [christos 20230818]
+	compat_linux(8): Add support for Linux inotify syscalls,
+		implemented around kqueue(2). Contributed by
+		Theodore Preduta. [christos 20230819]
