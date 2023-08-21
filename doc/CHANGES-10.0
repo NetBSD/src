@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.110 2023/08/18 12:52:31 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.111 2023/08/21 12:30:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11193,4 +11193,28 @@ sys/dev/vnd.c					1.289
 	the pagedaemon to allocate for I/O to flush dirty buffers to free
 	memory.
 	[riastradh, ticket #330]
+
+usr.sbin/sysinst/arch/luna68k/md.c		1.11
+usr.sbin/sysinst/arch/luna68k/md.h		1.7
+
+	PR 55058: force the boot partition to sd0d, so our root partitions
+	becomes sd0a again.
+	[tsutsui, ticket #331]
+
+sys/net/npf/npf_tableset.c			1.41
+
+	npf(9): fix crashes in table queries, PR 57136 and 57181.
+	[riastradh, ticket #332]
+
+sys/dev/pci/pcidevs				1.1483-1.1492
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Add AMD 19h/7xh Root Complex.
+	- Add ASMedia ASM106x.
+	- Add Intel Snow Ridge, Xeon D-2100 devices.
+	- Add Intel I226 devices.
+	- Add the VIA VX800 chipset devices and S3 chrome 500 series GPU.
+	- Fix description of Intel 0x37d0.
+	[msaitoh, ticket #333]
 
