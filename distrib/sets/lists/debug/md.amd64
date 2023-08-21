@@ -1,5 +1,4 @@
-# $NetBSD: md.amd64,v 1.121 2023/08/21 09:54:07 martin Exp $
-./usr/libdata/debug/usr/bin/gdbserver.debug	base-util-debug		gdb,debug
+# $NetBSD: md.amd64,v 1.122 2023/08/21 22:37:17 christos Exp $
 ./usr/lib/i386/12.202++_g.a			comp-c-debuglib		debuglib,compat,12.202xx
 ./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
 ./usr/lib/i386/libiberty_g.a			comp-obsolete		obsolete
@@ -7,6 +6,7 @@
 ./usr/lib/libx86_64_g.a				comp-c-debuglib		debuglib
 ./usr/libdata/debug/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/gdbserver.debug	base-util-debug		gdb,debug
 ./usr/libdata/debug/usr/bin/pmc.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/i386/libi386.so.2.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpam.so.4.1.debug	comp-compat-shlib	compat,pic,debug,pam
@@ -17,6 +17,10 @@
 ./usr/libdata/debug/usr/lib/libx86_64.so.0.0.debug	comp-sys-shlib		pic,debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat
+./usr/libdata/debug/usr/tests/compat/linux/h_inotify_directory.debug	tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/compat/linux/h_inotify_init.debug		tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/compat/linux/h_inotify_single_file.debug	tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/compat/linux/h_inotify_watch_change.debug	tests-sys-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait3.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait4.debug	tests-obsolete	obsolete
