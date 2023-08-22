@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.14.2.2 2023/01/18 19:31:43 martin Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.14.2.3 2023/08/22 16:19:57 martin Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.14.2.2 2023/01/18 19:31:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.14.2.3 2023/08/22 16:19:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -155,7 +155,8 @@ static const struct sdhc_pci_quirk {
 		0xffff,
 		0xffff,
 		~0,
-		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET |
+		SDHC_PCI_QUIRK_NO_PWR0
 	},
 
 	{
@@ -165,6 +166,97 @@ static const struct sdhc_pci_quirk {
 		0xffff,
 		~0,
 		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET
+	},
+
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_C3K_EMMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET |
+		SDHC_PCI_QUIRK_NO_PWR0
+	},
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_BAYTRAIL_SCC_MMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET |
+		SDHC_PCI_QUIRK_NO_PWR0
+	},
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_BAYTRAIL_SCC_MMC2,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET |
+		SDHC_PCI_QUIRK_NO_PWR0
+	},
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_APL_EMMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET |
+		SDHC_PCI_QUIRK_NO_PWR0
+	},
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_GLK_EMMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET |
+		SDHC_PCI_QUIRK_NO_PWR0
+	},
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_3HS_U_EMMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET |
+		SDHC_PCI_QUIRK_NO_PWR0
+	},
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_495_YU_PCIE_EMMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET |
+		SDHC_PCI_QUIRK_NO_PWR0
+	},
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_CMTLK_EMMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET |
+		SDHC_PCI_QUIRK_NO_PWR0
+	},
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_JSL_EMMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET |
+		SDHC_PCI_QUIRK_NO_PWR0
+	},
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_EHL_EMMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET |
+		SDHC_PCI_QUIRK_NO_PWR0
 	},
 };
 
