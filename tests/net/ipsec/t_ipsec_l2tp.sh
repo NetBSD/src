@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_l2tp.sh,v 1.9 2020/02/17 08:46:10 ozaki-r Exp $
+#	$NetBSD: t_ipsec_l2tp.sh,v 1.10 2023/08/22 05:40:50 rin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -49,11 +49,7 @@ make_l2tp_pktstr()
 	else
 		proto_cap=AH
 		if [ $ipproto = ipv4 ]; then
-			if [ $mode = tunnel ]; then
-				proto_str="ip-proto-115 102 \(ipip-proto-4\)"
-			else
-				proto_str="ip-proto-115 102"
-			fi
+			proto_str="ip-proto-115 102"
 		else
 			proto_str="ip-proto-115"
 		fi

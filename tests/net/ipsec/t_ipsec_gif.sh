@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_gif.sh,v 1.9 2020/02/17 08:46:10 ozaki-r Exp $
+#	$NetBSD: t_ipsec_gif.sh,v 1.10 2023/08/22 05:40:50 rin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -49,11 +49,7 @@ make_gif_pktstr()
 		proto_cap=ESP
 	else
 		proto_cap=AH
-		if [ $ipproto = ipv4 ]; then
-			inner_str="$src_inner > $dst_inner:.+\(ipip-proto-4\)"
-		else
-			inner_str="$src_inner > $dst_inner"
-		fi
+		inner_str="$src_inner > $dst_inner"
 	fi
 
 	echo "$src > $dst: $proto_cap.+$inner_str"
@@ -144,11 +140,9 @@ test_ipsec4_gif()
 	extract_new_packets $BUS_TUNNEL > $outfile
 	str="$ip_gwlo_tun > $ip_gwre_tun:"
 	str="$str $ip_local > $ip_remote: ICMP echo request,"
-	str="$str .+ \(ipip-proto-4\)"
 	atf_check -s exit:0 -o match:"$str" cat $outfile
 	str="$ip_gwre_tun > $ip_gwlo_tun:"
 	str="$str $ip_remote > $ip_local: ICMP echo reply,"
-	str="$str .+ \(ipip-proto-4\)"
 	atf_check -s exit:0 -o match:"$str" cat $outfile
 
 	if [ $mode = tunnel ]; then
