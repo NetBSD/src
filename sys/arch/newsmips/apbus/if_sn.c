@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.53 2023/08/22 07:13:33 andvar Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.54 2023/08/22 08:33:50 andvar Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.53 2023/08/22 07:13:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.54 2023/08/22 08:33:50 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -83,8 +83,6 @@ static inline u_int	sonicput(struct sn_softc *sc, struct mbuf *m0,
     int mtd_next);
 static inline int	sonic_read(struct sn_softc *, void *, int);
 static inline struct mbuf *sonic_get(struct sn_softc *, void *, int);
-
-int sndebug = 0;
 
 /*
  * SONIC buffers need to be aligned 16 or 32 bit aligned.
