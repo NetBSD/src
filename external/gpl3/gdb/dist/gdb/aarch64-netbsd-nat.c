@@ -34,8 +34,6 @@
 #include "bsd-kvm.h"
 #include "inf-ptrace.h"
 
-/* Determine if PT_GETREGS fetches REGNUM.  */
-
 struct aarch64_nbsd_nat_target final : public nbsd_nat_target
 {
   void fetch_registers (struct regcache *, int) override;
@@ -43,6 +41,8 @@ struct aarch64_nbsd_nat_target final : public nbsd_nat_target
 };
 
 static aarch64_nbsd_nat_target the_aarch64_nbsd_nat_target;
+
+/* Determine if PT_GETREGS fetches REGNUM.  */
 
 static bool
 getregs_supplies (struct gdbarch *gdbarch, int regnum)
