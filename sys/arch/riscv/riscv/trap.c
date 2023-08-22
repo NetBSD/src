@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 2023/05/07 12:41:49 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.22 2023/08/22 07:10:39 rin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.21 2023/05/07 12:41:49 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.22 2023/08/22 07:10:39 rin Exp $");
 
 #include <sys/param.h>
 
@@ -541,6 +541,26 @@ trap_misalignment(struct trapframe *tf, register_t epc, register_t status,
 	return false;
 }
 
+static bool
+trap_breakpoint(struct trapframe *tf, register_t epc, register_t status,
+    register_t cause, register_t tval, bool usertrap_p, ksiginfo_t *ksi)
+{
+	if (usertrap_p) {
+		trap_ksi_init(ksi, SIGTRAP, TRAP_BRKPT,
+		    (intptr_t)tval, cause);
+	} else {
+		dump_trapframe(tf, printf);
+#if defined(DDB)
+		kdb_trap(cause, tf);
+		PC_BREAK_ADVANCE(tf);
+#else
+		panic("%s: unknown kernel trap", __func__);
+#endif
+		return true;
+	}
+	return false;
+}
+
 void
 cpu_trap(struct trapframe *tf, register_t epc, register_t status,
     register_t cause, register_t tval)
@@ -583,15 +603,8 @@ cpu_trap(struct trapframe *tf, register_t epc, register_t status,
 		ok = trap_misalignment(tf, epc, status, cause, addr,
 		    usertrap_p, &ksi);
 	} else if (fault_mask & BREAKPOINT_TRAP_MASK) {
-		if (!usertrap_p) {
-			dump_trapframe(tf, printf);
-#if defined(DDB)
-			kdb_trap(cause, tf);
-			PC_BREAK_ADVANCE(tf);
-			return;	/* KERN */
-#endif
-			panic("%s: unknown kernel trap", __func__);
-		}
+		ok = trap_breakpoint(tf, epc, status, cause, addr,
+		    usertrap_p, &ksi);
 	}
 
 	if (usertrap_p) {
