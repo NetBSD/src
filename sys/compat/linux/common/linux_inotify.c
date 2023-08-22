@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_inotify.c,v 1.2 2023/08/20 18:09:25 christos Exp $	*/
+/*	$NetBSD: linux_inotify.c,v 1.3 2023/08/22 12:02:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.2 2023/08/20 18:09:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.3 2023/08/22 12:02:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -331,6 +331,7 @@ leave0:
 	return error;
 }
 
+#ifndef __aarch64__
 /*
  * inotify_init(2).  Initialize a new inotify fd with flags=0.
  */
@@ -339,6 +340,7 @@ linux_sys_inotify_init(struct lwp *l, const void *v, register_t *retval)
 {
 	return do_inotify_init(l, retval, 0);
 }
+#endif
 
 /*
  * inotify_init(2).  Initialize a new inotify fd with the given flags.
