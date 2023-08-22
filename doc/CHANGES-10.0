@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.111 2023/08/21 12:30:46 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.112 2023/08/22 16:16:20 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11217,4 +11217,21 @@ sys/dev/pci/pcidevs_data.h			regen
 	- Add the VIA VX800 chipset devices and S3 chrome 500 series GPU.
 	- Fix description of Intel 0x37d0.
 	[msaitoh, ticket #333]
+
+sys/dev/pci/ahcisata_pci.c			1.69
+
+	ahcisata(4): ASM106x needs EXTRA_DELAY quirk.
+	[tnn, ticket #334]
+
+sys/arch/x86/pci/amdsmn.c			1.17
+sys/arch/x86/pci/amdzentemp.c			1.19,1.20
+
+	amdsmn(4),amdzentemp(4): Add support for Zen2 Mendocino(17h/Axh) and
+	Zen4 Phoenix(19h/7xh).
+	[msaitoh, ticket #335]
+
+sys/dev/pci/sdhc_pci.c				1.21
+
+	Add quirk setting for some Intel eMMC devices to make them work.
+	[msaitoh, ticket #336]
 
