@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 2023/08/22 07:10:39 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.23 2023/08/22 07:11:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.22 2023/08/22 07:10:39 rin Exp $");
+__RCSID("$NetBSD: trap.c,v 1.23 2023/08/22 07:11:15 rin Exp $");
 
 #include <sys/param.h>
 
@@ -380,7 +380,8 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 #endif
 			break;
 		default:
-			panic("%s: Unhandled cause!", __func__);
+			panic("%s: Unhandled cause! 0x%016lx (%s)", __func__,
+			    (long)cause, cause_name(cause));
 		}
 		if (attr == 0)
 			return false;
