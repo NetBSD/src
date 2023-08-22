@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.39 2021/08/07 16:18:58 thorpej Exp $ */
+/*	$NetBSD: pmu.c,v 1.40 2023/08/22 06:43:34 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.39 2021/08/07 16:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.40 2023/08/22 06:43:34 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.39 2021/08/07 16:18:58 thorpej Exp $");
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/atomic.h>
+#include <sys/condvar.h>
 #include <sys/mutex.h>
 
 #include <sys/bus.h>
@@ -105,7 +106,8 @@ struct pmu_softc {
 	lwp_t *sc_thread;
 	int sc_pending;
 	/* signalling the event thread */
-	int sc_event;
+	kcondvar_t sc_event;
+	kmutex_t sc_evmtx;
 	/* ADB */
 	void (*sc_adb_handler)(void *, int, uint8_t *);
 	void *sc_adb_cookie;
@@ -296,6 +298,9 @@ pmu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_button = 0;
 	sc->sc_env_mask = 0xff;
 
+	cv_init(&sc->sc_event, "pmu_event");
+	mutex_init(&sc->sc_evmtx, MUTEX_DEFAULT, IPL_NONE);
+	
 	/*
 	 * core99 PowerMacs like to send environment messages with the lid
 	 * switch bit set - since that doesn't make any sense here and it
@@ -699,14 +704,14 @@ pmu_intr(void *arg)
 		DPRINTF("brightness: %d volume %d\n", resp[2], resp[3]);
 		sc->sc_brightness_wanted = resp[2];
 		sc->sc_volume_wanted = resp[3];
-		wakeup(&sc->sc_event);
+		cv_signal(&sc->sc_event);
 		goto done;
 	}
 	if (resp[1] & PMU_INT_PCEJECT) {
 		/* deal with PCMCIA eject buttons */
 		DPRINTF("card eject %d\n", resp[3]);
 		atomic_or_32(&sc->sc_pending, (resp[3] & 3));
-		wakeup(&sc->sc_event);
+		cv_signal(&sc->sc_event);
 		goto done;
 	}
 	if (resp[1] & PMU_INT_BATTERY) {
@@ -719,7 +724,7 @@ pmu_intr(void *arg)
 	}
 	if (resp[1] & PMU_INT_ENVIRONMENT) {
 		uint8_t diff;
-#ifdef PMU_VERBOSE
+#ifdef PMU_DEBUG
 		/* deal with environment messages */
 		printf("environment:");
 		for (i = 2; i < len; i++)
@@ -732,12 +737,12 @@ pmu_intr(void *arg)
 		if (diff & PMU_ENV_LID_CLOSED) {
 			sc->sc_lid_closed = (resp[2] & PMU_ENV_LID_CLOSED) != 0;
 			atomic_or_32(&sc->sc_pending, PMU_EV_LID);
-			wakeup(&sc->sc_event);
+			cv_signal(&sc->sc_event);
 		}
 		if (diff & PMU_ENV_POWER_BUTTON) {
 			sc->sc_button = (resp[2] & PMU_ENV_POWER_BUTTON) != 0;
 			atomic_or_32(&sc->sc_pending, PMU_EV_BUTTON);
-			wakeup(&sc->sc_event);
+			cv_signal(&sc->sc_event);
 		}
 		goto done;
 	}
@@ -1054,7 +1059,8 @@ pmu_thread(void *cookie)
 	int ticks = hz, i;
 	
 	while (1) {
-		tsleep(&sc->sc_event, PWAIT, "wait", ticks);
+		mutex_enter(&sc->sc_evmtx);
+		cv_timedwait(&sc->sc_event, &sc->sc_evmtx, ticks);
 		if ((sc->sc_pending & 3) != 0) {
 			DPRINTF("eject %d\n", sc->sc_pending & 3);
 			for (i = 1; i < 3; i++) {
@@ -1062,7 +1068,7 @@ pmu_thread(void *cookie)
 					pmu_eject_card(sc, i);
 			}
 		}
-
+		mutex_exit(&sc->sc_evmtx);
 		/* see if we need to update brightness */
 		if (sc->sc_brightness_wanted != sc->sc_brightness) {
 			pmu_update_brightness(sc);
