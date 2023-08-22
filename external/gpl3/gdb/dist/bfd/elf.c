@@ -11190,6 +11190,7 @@ elfcore_grok_netbsd_note (bfd *abfd, Elf_Internal_Note *note)
 
     case bfd_arch_aarch64:
     case bfd_arch_alpha:
+    case bfd_arch_riscv:
     case bfd_arch_sparc:
       switch (note->type)
 	{
