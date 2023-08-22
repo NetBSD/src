@@ -1,6 +1,5 @@
-# $NetBSD: Makefile,v 1.2 2023/05/11 14:34:30 christos Exp $
+# $NetBSD: Makefile,v 1.3 2023/08/22 17:27:48 christos Exp $
 
-PROGDPLIBSSTATIC=yes
 HELPER_NAME=	ectest
 HELPER_DIR=	ec
 

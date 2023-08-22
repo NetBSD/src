@@ -1,7 +1,6 @@
-# $NetBSD: Makefile,v 1.7 2023/05/13 17:46:10 riastradh Exp $
+# $NetBSD: Makefile,v 1.8 2023/08/22 17:27:49 christos Exp $
 
 .include <bsd.own.mk>
-PROGDPLIBSSTATIC=yes
 HELPER_NAME=	threadstest
 HELPER_DIR=	threads
 
