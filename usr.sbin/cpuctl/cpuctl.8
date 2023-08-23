@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpuctl.8,v 1.20 2019/05/17 23:51:35 gutteridge Exp $
+.\"	$NetBSD: cpuctl.8,v 1.20.10.1 2023/08/23 18:06:49 martin Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012, 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,6 +72,10 @@ Set the specified CPUs on line, making them available to run unbound LWPs.
 .Op Ar file
 .Xc
 This applies the microcode patch to CPUs.
+Unless
+.Fl v
+was given, errors indicating that the microcode
+already exists on the CPU in question are ignored.
 If
 .Ar cpu
 is not specified or \-1, all CPUs are updated.
