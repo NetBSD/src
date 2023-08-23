@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.79.2.2 2019/06/12 10:17:33 martin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.79.2.3 2023/08/23 17:10:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79.2.2 2019/06/12 10:17:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79.2.3 2023/08/23 17:10:57 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -456,6 +456,8 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 	pci_chipset_tag_t pc = pba->pba_pc;
 	pcitag_t tag;
 	pcireg_t id, class;
+	int i;
+	bool havehb = false;
 #endif
 
 	if (pba->pba_bus == 0)
@@ -473,19 +475,25 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 #ifdef __HAVE_PCI_MSI_MSIX
 	/*
 	 * In order to decide whether the system supports MSI we look
-	 * at the host bridge, which should be device 0 function 0 on
-	 * bus 0.  It is better to not enable MSI on systems that
+	 * at the host bridge, which should be device 0 on bus 0.
+	 * It is better to not enable MSI on systems that
 	 * support it than the other way around, so be conservative
 	 * here.  So we don't enable MSI if we don't find a host
 	 * bridge there.  We also deliberately don't enable MSI on
 	 * chipsets from low-end manifacturers like VIA and SiS.
 	 */
-	tag = pci_make_tag(pc, 0, 0, 0);
-	id = pci_conf_read(pc, tag, PCI_ID_REG);
-	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	for (i = 0; i <= 7; i++) {
+		tag = pci_make_tag(pc, 0, 0, i);
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
+		class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 
-	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
-	    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_HOST)
+		if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
+		    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_HOST) {
+			havehb = true;
+			break;
+		}
+	}
+	if (havehb == false)
 		return;
 
 	/* VMware and KVM use old chipset, but they can use MSI/MSI-X */
