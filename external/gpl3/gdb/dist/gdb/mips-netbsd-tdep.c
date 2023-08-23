@@ -95,6 +95,8 @@ mipsnbsd_supply_gregset (const struct regset *regset,
       len -= MIPSNBSD_NUM_GREGS * regsize;
       mipsnbsd_supply_fpregset (regset, regcache, regnum, regs, len);
     }
+  if (regnum == -1 || regnum == MIPS_ZERO_REGNUM)
+    regcache->raw_supply_zeroed (MIPS_ZERO_REGNUM);
 }
 
 /* NetBSD/mips register sets.  */
@@ -150,6 +152,8 @@ mipsnbsd_supply_reg (struct regcache *regcache, const char *regs, int regno)
 	      (i, regs + (i * mips_isa_regsize (gdbarch)));
 	}
     }
+  if (regno == -1 || regno == MIPS_ZERO_REGNUM)
+    regcache->raw_supply_zeroed (MIPS_ZERO_REGNUM);
 }
 
 void
@@ -277,8 +281,7 @@ mipsnbsd_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
 static int
 mipsnbsd_cannot_fetch_register (struct gdbarch *gdbarch, int regno)
 {
-  return (regno == MIPS_ZERO_REGNUM
-	  || regno == mips_regnum (gdbarch)->fp_implementation_revision);
+  return regno == mips_regnum (gdbarch)->fp_implementation_revision;
 }
 
 static int
