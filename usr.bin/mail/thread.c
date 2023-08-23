@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.15 2023/08/10 20:36:28 mrg Exp $	*/
+/*	$NetBSD: thread.c,v 1.16 2023/08/23 03:49:00 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.15 2023/08/10 20:36:28 mrg Exp $");
+__RCSID("$NetBSD: thread.c,v 1.16 2023/08/23 03:49:00 rin Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -443,8 +443,6 @@ PUBLIC void
 thread_fix_old_links(struct message *nmessage, ptrdiff_t off, int omsgCount)
 {
 	int i;
-	if (off == 0)
-		return;
 
 #ifndef NDEBUG
 	message_array.t_head = nmessage; /* for assert check in thread_fix_new_links */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.44 2023/08/10 20:36:28 mrg Exp $	*/
+/*	$NetBSD: fio.c,v 1.45 2023/08/23 03:49:00 rin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.44 2023/08/10 20:36:28 mrg Exp $");
+__RCSID("$NetBSD: fio.c,v 1.45 2023/08/23 03:49:00 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,6 +126,7 @@ makemessage(FILE *f, int omsgCount, int nmsgCount)
 	struct message *omessage;	/* old message structure array */
 	struct message *nmessage;
 	ptrdiff_t off;
+	int need_init;
 
 	omessage = get_abs_message(1);
 
@@ -135,13 +136,15 @@ makemessage(FILE *f, int omsgCount, int nmsgCount)
 		off = 0;
 	else
 		off = dot - omessage;
+	need_init = (omessage == NULL);
 	nmessage = realloc(omessage, size);
 	if (nmessage == NULL)
 		err(EXIT_FAILURE,
 		    "Insufficient memory for %d messages", nmsgCount);
 	dot = nmessage + off;
 
-	thread_fix_old_links(nmessage, off, omsgCount);
+	if (off != 0 || need_init != 0)
+		thread_fix_old_links(nmessage, off, omsgCount);
 
 #ifndef THREAD_SUPPORT
 	message = nmessage;
