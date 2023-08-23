@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_inotify.c,v 1.3 2023/08/22 12:02:34 christos Exp $	*/
+/*	$NetBSD: linux_inotify.c,v 1.4 2023/08/23 19:17:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.3 2023/08/22 12:02:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.4 2023/08/23 19:17:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.3 2023/08/22 12:02:34 christos E
 
 struct inotify_entry {
 	TAILQ_ENTRY(inotify_entry)	ie_entries;
+	char				ie_name[NAME_MAX + 1];
 	struct linux_inotify_event	ie_event;
-	char				ie_name[NAME_MAX+1];
 };
 
 struct inotify_dir_entries {
