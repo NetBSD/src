@@ -1,4 +1,4 @@
-/*	$NetBSD: h_linux.h,v 1.1 2023/08/19 22:56:44 christos Exp $	*/
+/*	$NetBSD: h_linux.h,v 1.2 2023/08/23 20:05:05 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #define	RS(x)			do { if ((x) == -1) exit(errno); } while (0)
 #define	REQUIRE(x)		do { if (!(x)) exit(FAIL); } while (0)
 
-/* Convinience wrappers for common syscalls. */
+/* Convenience wrappers for common syscalls. */
 #define	close(fd)		(int)syscall(LINUX_SYS_close, fd)
 #define	exit(status)		(void)syscall(LINUX_SYS_exit_group, status)
 #define	fcntl(fd, cmd, ...)	(int)syscall(LINUX_SYS_fcntl, fd, cmd, \
