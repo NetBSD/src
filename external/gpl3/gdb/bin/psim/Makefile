@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2023/08/11 15:18:29 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2023/08/23 19:42:25 riastradh Exp $
 
 NOMAN=	# defined
 
@@ -32,6 +32,16 @@ PSIM_DEFINES=	-DHAVE_CONFIG_H \
 
 CPPFLAGS+=	${HOST_CPPFLAGS} ${PSIM_DEFINES}
 
+# /home/source/ab/HEAD-llvm/src/external/gpl3/gdb/bin/psim/../../dist/include/sim/sim.h:37:27: error: redefinition of typedef 'SIM_DESC' is a C11 feature [-Werror,-Wtypedef-redefinition]
+# typedef struct sim_state *SIM_DESC;
+#                           ^
+# /home/source/ab/HEAD-llvm/src/external/gpl3/gdb/bin/psim/../../dist/sim/ppc/sim_callbacks.h:106:27: note: previous definition is here
+# typedef struct sim_state *SIM_DESC;
+#                           ^
+#
+# XXX remove me when we use -std=c11 or -std=gnu11 or something
+CWARNFLAGS.clang+=	-Wno-error=typedef-redefinition
+
 SRCS+=version.c
 
 GDBLIBDIR=	${.CURDIR}/../../lib
@@ -51,4 +61,4 @@ CLEANFILES+=	version.c
 version.c: ${DIST}/gdb/version.in
 	echo 'const char version[] = "'$$(cat ${.ALLSRC})'";' > ${.TARGET}
 
-.PATH: ${DIST}/sim/ppc 
+.PATH: ${DIST}/sim/ppc
