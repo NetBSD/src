@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.9 2022/06/25 06:51:37 skrll Exp $	*/
+/*	$NetBSD: symtab.c,v 1.10 2023/08/23 12:24:59 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.9 2022/06/25 06:51:37 skrll Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.10 2023/08/23 12:24:59 rin Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -141,7 +141,7 @@ symtab_create(int fd, int bind, int type)
 
 		for (size_t i = 0; i < ns; i++) {
 			GElf_Sym sym;
-                        gelf_getsym(edata, (int)i, &sym);
+			gelf_getsym(edata, (int)i, &sym);
 
 			DPRINTF("%s@%#jx=%d,%d",
 			    elf_strptr(elf, shdr.sh_link, sym.st_name),
@@ -165,7 +165,7 @@ symtab_create(int fd, int bind, int type)
 				goto out;
 			}
 			s++;
-                }
+		}
 		st->nsymbols = s - st->symbols;
 		if (st->nsymbols == 0) {
 			warnx("No symbols found");
@@ -196,9 +196,9 @@ symtab_find(const symtab_t *st, const void *p, Dl_info *dli)
 	uintptr_t sa = SYMBOL_CANONICALIZE(dli->dli_saddr);
 	uintptr_t ad = sa - fbase;
 
- 	DPRINTF("[fbase=%#jx, saddr=%p, sa=%#jx, me=%#jx ad=%#jx]",
+	DPRINTF("[fbase=%#jx, saddr=%p, sa=%#jx, me=%#jx ad=%#jx]",
 	    (uintmax_t)fbase, dli->dli_saddr, (uintmax_t)sa,
- 	    (uintmax_t)me, (uintmax_t)ad);
+	    (uintmax_t)me, (uintmax_t)ad);
 
 	for (;;) {
 		if (s[mid].st_value < me)

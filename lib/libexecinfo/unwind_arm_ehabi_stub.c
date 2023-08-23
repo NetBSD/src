@@ -1,3 +1,5 @@
+/*	$NetBSD: unwind_arm_ehabi_stub.c,v 1.3 2023/08/23 12:24:59 rin Exp $	*/
+
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
