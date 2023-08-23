@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.45 2017/01/29 00:15:54 christos Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.45.6.1 2023/08/23 18:25:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.45 2017/01/29 00:15:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.45.6.1 2023/08/23 18:25:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -944,7 +944,7 @@ npf_ruleset_inspect(npf_cache_t *npc, const npf_ruleset_t *rlset,
 		KASSERT(n < skip_to);
 
 		/* Group is a barrier: return a matching if found any. */
-		if ((attr & NPF_RULE_GROUP) != 0 && final_rl) {
+		if ((attr & NPF_DYNAMIC_GROUP) == NPF_RULE_GROUP && final_rl) {
 			break;
 		}
 
