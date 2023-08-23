@@ -1,4 +1,4 @@
-/*	$NetBSD: execinfo.h,v 1.3 2017/06/30 21:39:43 christos Exp $	*/
+/*	$NetBSD: execinfo.h,v 1.4 2023/08/23 12:24:59 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <sys/ansi.h>
-  
+
 #ifdef  _BSD_SIZE_T_
 typedef _BSD_SIZE_T_    size_t;
 #undef  _BSD_SIZE_T_
