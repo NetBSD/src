@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.30.2.1 2020/07/10 11:20:29 martin Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.30.2.2 2023/08/23 18:08:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012, 2015 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.30.2.1 2020/07/10 11:20:29 martin Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.30.2.2 2023/08/23 18:08:44 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -247,7 +247,7 @@ cpu_ucode(char **argv)
 		cpuset_destroy(cpuset);
 	}
 	error = ioctl(fd, IOC_CPU_UCODE_APPLY, &uc);
-	if (error < 0) {
+	if (error < 0 && (verbose || errno != EEXIST)) {
 		if (uc.fwname[0])
 			err(EXIT_FAILURE, "%s", uc.fwname);
 		else
