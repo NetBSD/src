@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_i386pae.c,v 1.3 2020/04/25 05:17:16 maxv Exp $ */
+/* $NetBSD: kvm_i386pae.c,v 1.4 2023/08/23 14:00:11 rin Exp $ */
 
 /*
  * Copyright (c) 2010 Jean-Yves Migeon.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: kvm_i386pae.c,v 1.3 2020/04/25 05:17:16 maxv Exp $");
+__RCSID("$NetBSD: kvm_i386pae.c,v 1.4 2023/08/23 14:00:11 rin Exp $");
 
 /*
  * This will expose PAE functions, macros, definitions and constants.
@@ -75,7 +75,7 @@ _kvm_kvatop_i386pae(kvm_t *kd, vaddr_t va, paddr_t *pa)
 
 	cpu_kh = kd->cpu_data;
 	page_off = va & PGOFSET;
-	
+
 	/*
 	 * Find and read the PDE. Ignore the L3, as it is only a per-CPU
 	 * page, not needed for kernel VA => PA translations.

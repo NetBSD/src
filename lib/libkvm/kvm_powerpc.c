@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.14 2022/01/10 19:51:30 christos Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.15 2023/08/23 14:00:11 rin Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -91,7 +91,7 @@
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
 
-__RCSID("$NetBSD: kvm_powerpc.c,v 1.14 2022/01/10 19:51:30 christos Exp $");
+__RCSID("$NetBSD: kvm_powerpc.c,v 1.15 2023/08/23 14:00:11 rin Exp $");
 
 static int	_kvm_match_601bat(kvm_t *, vaddr_t, paddr_t *, int *);
 static int	_kvm_match_bat(kvm_t *, vaddr_t, paddr_t *, int *);
@@ -341,7 +341,7 @@ _kvm_pa2off(kvm_t *kd, paddr_t pa)
 
 	cpu_kh = kd->cpu_data;
 	e = (char *) kd->cpu_data + kd->cpu_dsize;
-        ram = (void *)((char *)(void *)cpu_kh + ALIGN(sizeof *cpu_kh));
+	ram = (void *)((char *)(void *)cpu_kh + ALIGN(sizeof *cpu_kh));
 	off = kd->dump_off;
 	do {
 		if (pa >= ram->start && (pa - ram->start) < ram->size) {

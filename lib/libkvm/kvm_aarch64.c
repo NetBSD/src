@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_aarch64.c,v 1.11 2022/01/10 19:51:30 christos Exp $ */
+/* $NetBSD: kvm_aarch64.c,v 1.12 2023/08/23 14:00:11 rin Exp $ */
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #include "kvm_private.h"
 
-__RCSID("$NetBSD: kvm_aarch64.c,v 1.11 2022/01/10 19:51:30 christos Exp $");
+__RCSID("$NetBSD: kvm_aarch64.c,v 1.12 2023/08/23 14:00:11 rin Exp $");
 
 /*ARGSUSED*/
 void
@@ -68,10 +68,10 @@ _kvm_initvtop(kvm_t *kd)
 int
 _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
-        if (ISALIVE(kd)) {
-                _kvm_err(kd, 0, "vatop called in live kernel!");
-                return(0);
-        }
+	if (ISALIVE(kd)) {
+		_kvm_err(kd, 0, "vatop called in live kernel!");
+		return(0);
+	}
 
 	if ((va & AARCH64_DIRECTMAP_MASK) != AARCH64_DIRECTMAP_START) {
 		/*
@@ -154,7 +154,7 @@ lose:
 		}
 		if (--levels == 0) {
 			*pa = (pte & page_addr) | (va & page_mask);
-			return page_size - (va & page_mask); 
+			return page_size - (va & page_mask);
 		}
 
 		/*
