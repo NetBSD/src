@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.112 2023/08/22 16:16:20 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.113 2023/08/23 18:21:39 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11234,4 +11234,27 @@ sys/dev/pci/sdhc_pci.c				1.21
 
 	Add quirk setting for some Intel eMMC devices to make them work.
 	[msaitoh, ticket #336]
+
+sys/arch/x86/pci/pci_machdep.c			1.94
+
+	Fix detection of MSI/MSI-X availability on some systems.
+	[msaitoh, ticket #337]
+
+sys/dev/pci/ichsmb.c				1.85
+sys/dev/pci/ismt.c				1.11
+
+	ichsmb(4),ismt(4): add Snow Ridge support.
+	[msaitoh, ticket #338]
+
+usr.sbin/cpuctl/cpuctl.8			1.21
+usr.sbin/cpuctl/cpuctl.c			1.33
+
+	cpuctl(8): do not show error messages when the microcode to be
+	loaded is already available in the cpu.
+	[msaitoh, ticket #339]
+
+sys/net/npf/npf_ruleset.c			1.52
+
+	npf(7): PR 56990: fix handling of dynamic groups.
+	[kardel, ticket #340]
 
