@@ -34,7 +34,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.48.2.3 2020/06/20 15:46:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.48.2.4 2023/08/23 18:22:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -891,7 +891,7 @@ npf_ruleset_inspect(npf_cache_t *npc, const npf_ruleset_t *rlset,
 		KASSERT(n < skip_to);
 
 		/* Group is a barrier: return a matching if found any. */
-		if ((attr & NPF_RULE_GROUP) != 0 && final_rl) {
+		if ((attr & NPF_DYNAMIC_GROUP) == NPF_RULE_GROUP && final_rl) {
 			break;
 		}
 
