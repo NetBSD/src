@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc64.c,v 1.18 2022/01/10 19:51:30 christos Exp $	*/
+/*	$NetBSD: kvm_sparc64.c,v 1.19 2023/08/23 14:00:11 rin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc64.c,v 1.18 2022/01/10 19:51:30 christos Exp $");
+__RCSID("$NetBSD: kvm_sparc64.c,v 1.19 2023/08/23 14:00:11 rin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -147,7 +147,7 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 		/*
 		 * old format: just a textbase/size and database/size
 		 */
-		if (va > cpup->ktextbase && va < 
+		if (va > cpup->ktextbase && va <
 		    (cpup->ktextbase + cpup->ktextsz)) {
 			u_long vaddr;
 
@@ -155,7 +155,7 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 			*pa = cpup->ktextp + vaddr;
 			return (int)(cpup->ktextsz - vaddr);
 		}
-		if (va > cpup->kdatabase && va < 
+		if (va > cpup->kdatabase && va <
 		    (cpup->kdatabase + cpup->kdatasz)) {
 			u_long vaddr;
 
@@ -170,7 +170,7 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	 */
 	pseg = (uint64_t *)(u_long)cpup->segmapoffset;
 	if (_kvm_pread(kd, kd->pmfd, &pdir, sizeof(pdir),
-		_kvm_pa2off(kd, (paddr_t)&pseg[va_to_seg(va)])) 
+		_kvm_pa2off(kd, (paddr_t)&pseg[va_to_seg(va)]))
 		!= sizeof(pdir)) {
 		_kvm_syserr(kd, 0, "could not read L1 PTE");
 		goto lose;
@@ -182,7 +182,7 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	}
 
 	if (_kvm_pread(kd, kd->pmfd, &ptbl, sizeof(ptbl),
-		_kvm_pa2off(kd, (paddr_t)&pdir[va_to_dir(va)])) 
+		_kvm_pa2off(kd, (paddr_t)&pdir[va_to_dir(va)]))
 		!= sizeof(ptbl)) {
 		_kvm_syserr(kd, 0, "could not read L2 PTE");
 		goto lose;
@@ -194,7 +194,7 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	}
 
 	if (_kvm_pread(kd, kd->pmfd, &data, sizeof(data),
-		_kvm_pa2off(kd, (paddr_t)&ptbl[va_to_pte(va)])) 
+		_kvm_pa2off(kd, (paddr_t)&ptbl[va_to_pte(va)]))
 		!= sizeof(data)) {
 		_kvm_syserr(kd, 0, "could not read TTE");
 		goto lose;
@@ -204,8 +204,8 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 		_kvm_err(kd, 0, "invalid L2 TTE");
 		goto lose;
 	}
-	
-	/* 
+
+	/*
 	 * Calculate page offsets and things.
 	 *
 	 * XXXX -- We could support multiple page sizes.
