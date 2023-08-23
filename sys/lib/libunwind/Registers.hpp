@@ -887,7 +887,6 @@ public:
     RETURN_OFFSET = 0,
     RETURN_MASK = 0,
   };
-  typedef uint32_t reg_t;
 
   __dso_hidden Registers_Alpha();
 
