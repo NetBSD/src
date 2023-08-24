@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2_subr.c,v 1.6 2013/06/06 00:51:50 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2_subr.c,v 1.7 2023/08/24 14:56:03 andvar Exp $	*/
 /*  from NetBSD: quota2_subr.c,v 1.5 2012/02/05 14:19:04 dholland Exp  */
 
 /*-
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2_subr.c,v 1.6 2013/06/06 00:51:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2_subr.c,v 1.7 2023/08/24 14:56:03 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -76,7 +76,7 @@ lfsquota2_create_blk0(uint64_t bsize, void *bp, int q2h_hash_shift, int type,
 	q2h->q2h_type = type;
 	q2h->q2h_hash_shift = q2h_hash_shift;
 	q2h->q2h_hash_size = ulfs_rw16(quota2_hash_size, ns);
-	/* setup defaut entry: unlimited, 7 days grace */
+	/* setup default entry: unlimited, 7 days grace */
 	for (i = 0; i < N_QL; i++) {
 		q2h->q2h_defentry.q2e_val[i].q2v_hardlimit =
 		    q2h->q2h_defentry.q2e_val[i].q2v_softlimit =
