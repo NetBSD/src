@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2006/10/14 04:59:52 yamt Exp $
+# $Id: Makefile,v 1.3 2023/08/24 14:53:02 andvar Exp $
 
 CPROGS=		lirs
 HPROGS=		lfu lru nbsd opt rand
@@ -50,7 +50,7 @@ pdsim.dbg.cpro_${_V}:	pdsim.c ${PDPOL}
 
 # clock
 
-CLOCK_CFLAGS.defult=
+CLOCK_CFLAGS.default=
 CLOCK_CFLAGS.inact90=	-DCLOCK_INACTIVEPCT=90
 
 PDSIM_CLOCK_VARIANTS+=	default
