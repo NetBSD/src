@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if HAVE_JEMALLOC != 100
+#if HAVE_JEMALLOC > 100
 #include <malloc.h>
 
 void *__je_mallocx(size_t, int);
