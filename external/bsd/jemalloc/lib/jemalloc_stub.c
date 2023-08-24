@@ -141,4 +141,4 @@ void malloc_conf_set(const char *m)
 {
 	__je_malloc_conf_set(m);
 }
-#endif /* HAVE_JEMALLOC != 100 */
+#endif /* HAVE_JEMALLOC > 100 */
