@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.32 2023/08/04 09:06:33 mrg Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.33 2023/08/24 05:46:55 rin Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.32 2023/08/04 09:06:33 mrg Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.33 2023/08/24 05:46:55 rin Exp $");
 
 #include <sys/param.h>
 
@@ -302,8 +302,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		if (error)
 			return error;
 
-		/* Save register context. */
+		/*
+		 * Avoid updating TLS register here.
+		 */
+		const __greg_t saved_tp = tf->tf_reg[_REG_TP];
 		tf->tf_regs = *(const struct reg *)gr;
+		tf->tf_reg[_REG_TP] = saved_tp;
 	}
 
 	/* Restore the private thread context */
