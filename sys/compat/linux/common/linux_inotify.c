@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_inotify.c,v 1.4 2023/08/23 19:17:59 christos Exp $	*/
+/*	$NetBSD: linux_inotify.c,v 1.5 2023/08/24 19:51:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.4 2023/08/23 19:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.5 2023/08/24 19:51:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -790,9 +790,18 @@ inotify_readdir(file_t *fp, struct dirent *dep, int *done, bool needs_lock)
 	/* XXX: should pass whether to lock or not */
 	if (needs_lock)
 		vn_lock(vp, LK_SHARED | LK_RETRY);
+	else
+		/*
+		 * XXX We need to temprarily drop v_interlock because
+		 * it may be temporarily acquired by biowait().
+		 */
+		mutex_exit(vp->v_interlock);
+	KASSERT(!mutex_owned(vp->v_interlock));
 	error = VOP_READDIR(vp, &uio, fp->f_cred, &eofflag, NULL, NULL);
 	if (needs_lock)
 		VOP_UNLOCK(vp);
+	else
+		mutex_enter(vp->v_interlock);
 
 	mutex_enter(&fp->f_lock);
 	fp->f_offset = uio.uio_offset;
@@ -1107,7 +1116,7 @@ inotify_filt_event(struct knote *kn, long hint)
 		cv_signal(&ifd->ifd_qcv);
 
 		mutex_enter(&ifd->ifd_lock);
-		selnotify(&ifd->ifd_sel, 0, 0);
+		selnotify(&ifd->ifd_sel, 0, NOTE_LOWAT);
 		mutex_exit(&ifd->ifd_lock);
 	} else
 		DPRINTF(("%s: hint=%lx resulted in 0 inotify events\n",
@@ -1295,14 +1304,17 @@ inotify_read_filt_detach(struct knote *kn)
 static int
 inotify_read_filt_event(struct knote *kn, long hint)
 {
-	int rv;
 	struct inotifyfd *ifd = ((file_t *)kn->kn_obj)->f_data;
 
-	mutex_enter(&ifd->ifd_qlock);
-	rv = (ifd->ifd_qcount > 0);
-	mutex_exit(&ifd->ifd_qlock);
+	if (hint != 0) {
+		KASSERT(mutex_owned(&ifd->ifd_lock));
+		KASSERT(mutex_owned(&ifd->ifd_qlock));
+		KASSERT(hint == NOTE_LOWAT);
 
-	return rv;
+		kn->kn_data = ifd->ifd_qcount;
+	}
+
+	return kn->kn_data > 0;
 }
 
 /*
