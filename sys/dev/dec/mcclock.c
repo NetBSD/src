@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.28 2014/11/17 02:15:49 christos Exp $ */
+/* $NetBSD: mcclock.c,v 1.29 2023/08/24 14:21:40 andvar Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.28 2014/11/17 02:15:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.29 2023/08/24 14:21:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.28 2014/11/17 02:15:49 christos Exp $"
  * XXX default rate is machine-dependent.
  */
 #ifdef __alpha__
-#define MC_DFEAULTHZ	1024
+#define MC_DEFAULTHZ	1024
 #endif
 #ifdef pmax
 #define MC_DEFAULTHZ	256
