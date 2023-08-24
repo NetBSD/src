@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.3 2019/06/18 21:18:12 kamil Exp $ */
+/* $NetBSD: ptrace.h,v 1.4 2023/08/24 05:40:08 rin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -53,5 +53,9 @@
 #define PTRACE_REG_SET_PC(r, v)	(r)->r_pc = (v)
 #define PTRACE_REG_SP(r)	(r)->r_reg[1]
 #define PTRACE_REG_INTRV(r)	(r)->r_reg[9]
+
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x02, 0x90 })
+#define PTRACE_BREAKPOINT_ASM	__asm __volatile("c.ebreak" ::: "memory")
+#define PTRACE_BREAKPOINT_SIZE	2
 
 #endif /* _RISCV_PTRACE_H_ */
