@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.94 2023/08/07 06:23:39 msaitoh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.95 2023/08/25 08:05:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.94 2023/08/07 06:23:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.95 2023/08/25 08:05:18 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -310,7 +310,7 @@ static struct pci_conf_lock cl0 = {
 
 static struct pci_conf_lock * const cl = &cl0;
 
-#if NGENFB > 0 && NACPICA > 0 && defined(VGA_POST)
+#if NGENFB > 0 && NACPICA > 0 && defined(VGA_POST) && !defined(XENPV)
 extern int acpi_md_vbios_reset;
 extern int acpi_md_vesa_modenum;
 #endif
@@ -1060,13 +1060,13 @@ static bool
 x86_genfb_setmode(struct genfb_softc *sc, int newmode)
 {
 #if NGENFB > 0
-# if NACPICA > 0 && defined(VGA_POST)
+# if NACPICA > 0 && defined(VGA_POST) && !defined(XENPV)
 	static int curmode = WSDISPLAYIO_MODE_EMUL;
 # endif
 
 	switch (newmode) {
 	case WSDISPLAYIO_MODE_EMUL:
-# if NACPICA > 0 && defined(VGA_POST)
+# if NACPICA > 0 && defined(VGA_POST) && !defined(XENPV)
 		if (curmode != newmode) {
 			if (vga_posth != NULL && acpi_md_vesa_modenum != 0) {
 				vga_post_set_vbe(vga_posth,
@@ -1077,7 +1077,7 @@ x86_genfb_setmode(struct genfb_softc *sc, int newmode)
 		break;
 	}
 
-# if NACPICA > 0 && defined(VGA_POST)
+# if NACPICA > 0 && defined(VGA_POST) && !defined(XENPV)
 	curmode = newmode;
 # endif
 #endif
@@ -1096,7 +1096,7 @@ x86_genfb_resume(device_t dev, const pmf_qual_t *qual)
 #if NGENFB > 0
 	struct pci_genfb_softc *psc = device_private(dev);
 
-#if NACPICA > 0 && defined(VGA_POST)
+#if NACPICA > 0 && defined(VGA_POST) && !defined(XENPV)
 	if (vga_posth != NULL && acpi_md_vbios_reset == 2) {
 		vga_post_call(vga_posth);
 		if (acpi_md_vesa_modenum != 0)

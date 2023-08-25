@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.19 2022/09/13 09:45:36 riastradh Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.20 2023/08/25 08:05:18 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.19 2022/09/13 09:45:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.20 2023/08/25 08:05:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.19 2022/09/13 09:45:36 riastradh
 struct vcons_screen x86_genfb_console_screen;
 bool x86_genfb_use_shadowfb = true;
 
-#if NACPICA > 0
-extern int acpi_md_vesa_modenum;
+#if NACPICA > 0 && !defined(XENPV)
+extern int acpi_md_vesa_modenum; /* XXX should go in a .h file */
 #endif
 
 static device_t x86_genfb_console_dev = NULL;
@@ -131,7 +131,7 @@ x86_genfb_init(void)
 		return 0;
 	}
 
-#if NACPICA > 0
+#if NACPICA > 0 && !defined(XENPV)
 	acpi_md_vesa_modenum = fbinfo->vbemode;
 #endif
 
