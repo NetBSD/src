@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2019/02/14 06:59:24 cherry Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 2023/08/25 08:05:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -34,6 +34,11 @@
 #define	VM_PHYSSEG_MAX	1
 
 #undef VM_NFREELIST
+#undef VM_FREELIST_FIRST16
+#undef VM_FREELIST_FIRST1T
+#undef VM_FREELIST_FIRST64G
+#undef VM_FREELIST_FIRST4G
+#undef VM_FREELIST_FIRST1G
 #undef VM_FREELIST_FIRST16
 #define	VM_NFREELIST	1
 #endif /* XENPV */
