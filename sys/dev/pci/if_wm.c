@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.783 2023/08/25 08:14:14 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.784 2023/08/25 09:38:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.783 2023/08/25 08:14:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.784 2023/08/25 09:38:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -12184,23 +12184,25 @@ wm_gmii_i82544_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
-	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
-		switch (sc->sc_phytype) {
-		case WMPHY_IGP:
-		case WMPHY_IGP_2:
-		case WMPHY_IGP_3:
+	switch (sc->sc_phytype) {
+	case WMPHY_IGP:
+	case WMPHY_IGP_2:
+	case WMPHY_IGP_3:
+		if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 			rv = wm_gmii_mdic_writereg(dev, phy,
 			    IGPHY_PAGE_SELECT, reg);
 			if (rv != 0)
 				return rv;
-			break;
-		default:
+		}
+		break;
+	default:
 #ifdef WM_DEBUG
-			device_printf(dev, "%s: PHYTYPE = 0x%x, addr = %02x\n",
+		if ((reg >> MII_ADDRBITS) != 0)
+			device_printf(dev,
+			    "%s: PHYTYPE = 0x%x, addr = 0x%02x\n",
 			    __func__, sc->sc_phytype, reg);
 #endif
-			break;
-		}
+		break;
 	}
 
 	return wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK, val);
@@ -12235,23 +12237,25 @@ wm_gmii_i82544_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
-	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
-		switch (sc->sc_phytype) {
-		case WMPHY_IGP:
-		case WMPHY_IGP_2:
-		case WMPHY_IGP_3:
+	switch (sc->sc_phytype) {
+	case WMPHY_IGP:
+	case WMPHY_IGP_2:
+	case WMPHY_IGP_3:
+		if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 			rv = wm_gmii_mdic_writereg(dev, phy,
 			    IGPHY_PAGE_SELECT, reg);
 			if (rv != 0)
 				return rv;
-			break;
-		default:
+		}
+		break;
+	default:
 #ifdef WM_DEBUG
-			device_printf(dev, "%s: PHYTYPE == 0x%x, addr = %02x",
+		if ((reg >> MII_ADDRBITS) != 0)
+			device_printf(dev,
+			    "%s: PHYTYPE == 0x%x, addr = 0x%02x",
 			    __func__, sc->sc_phytype, reg);
 #endif
-			break;
-		}
+		break;
 	}
 
 	return wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
