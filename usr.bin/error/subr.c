@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.20 2022/04/07 19:33:38 andvar Exp $	*/
+/*	$NetBSD: subr.c,v 1.21 2023/08/26 11:38:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.20 2022/04/07 19:33:38 andvar Exp $");
+__RCSID("$NetBSD: subr.c,v 1.21 2023/08/26 11:38:14 rillig Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -132,7 +132,7 @@ substitute(char *string, char chold, char chnew)
 char
 lastchar(const char *string)
 {
-	int length;
+	size_t length;
 
 	if (string == NULL)
 		return ('\0');
@@ -155,7 +155,7 @@ firstchar(const char *string)
 char
 next_lastchar(const char *string)
 {
-	int length;
+	size_t length;
 
 	if (string == NULL)
 		return ('\0');
@@ -169,12 +169,8 @@ next_lastchar(const char *string)
 void
 clob_last(char *string, char newstuff)
 {
-	int length = 0;
-
-	if (string)
-		length = strlen(string);
-	if (length >= 1)
-		string[length - 1] = newstuff;
+	if (string != NULL && string[0] != '\0')
+		string[strlen(string) - 1] = newstuff;
 }
 
 /*
@@ -185,10 +181,8 @@ bool
 persperdexplode(char *string, char **r_perd, char **r_pers)
 {
 	char *cp;
-	int length = 0;
+	size_t length = string != NULL ? strlen(string) : 0;
 
-	if (string)
-		length = strlen(string);
 	if (length >= 4 && string[length - 1] == ')') {
 		for (cp = &string[length - 2];
 		     isdigit((unsigned char)*cp) && *cp != '(';

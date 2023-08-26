@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.28 2019/10/13 20:43:25 christos Exp $	*/
+/*	$NetBSD: touch.c,v 1.29 2023/08/26 11:38:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.28 2019/10/13 20:43:25 christos Exp $");
+__RCSID("$NetBSD: touch.c,v 1.29 2023/08/26 11:38:14 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ static int touchstatus = Q_YES;
 static int countfiles(Eptr *);
 static int nopertain(Eptr **);
 static void hackfile(const char *, Eptr **, int, int);
-static boolean preview(const char *,  int, Eptr **, int);
+static boolean preview(int, Eptr **, int);
 static int settotouch(const char *);
 static void diverterrors(const char *, int, Eptr **, int, boolean,  int);
 static int oktotouch(const char *);
@@ -84,7 +84,7 @@ static void insert(int);
 static void text(Eptr, boolean);
 static boolean writetouched(int);
 static int mustoverwrite(FILE *, FILE *);
-static int mustwrite(const char *, unsigned, FILE *);
+static int mustwrite(const char *, size_t, FILE *);
 static void errorprint(FILE *, Eptr, boolean);
 static int probethisfile(const char *);
 
@@ -280,7 +280,7 @@ touchfiles(int my_nfiles, Eptr **my_files, int *r_edargc, char ***r_edargv)
 
 	FILEITERATE(fi, 1, my_nfiles) {
 		name = makename((*my_files[fi])->error_text[0], filelevel);
-		spread = my_files[fi+1] - my_files[fi];
+		spread = (int)(my_files[fi+1] - my_files[fi]);
 
 		fprintf(stdout, terse
 			? "\"%s\" has %d error%s, "
@@ -333,7 +333,7 @@ hackfile(const char *name, Eptr **my_files, int ix, int my_nerrors)
 		previewed = false;
 		errordest = TOSTDOUT;
 	} else {
-		previewed = preview(name, my_nerrors, my_files, ix);
+		previewed = preview(my_nerrors, my_files, ix);
 		errordest = settotouch(name);
 	}
 
@@ -354,7 +354,7 @@ hackfile(const char *name, Eptr **my_files, int ix, int my_nerrors)
 }
 
 static boolean
-preview(const char *name, int my_nerrors, Eptr **my_files, int ix)
+preview(int my_nerrors, Eptr **my_files, int ix)
 {
 	int back;
 	Eptr *erpp;
@@ -363,20 +363,16 @@ preview(const char *name, int my_nerrors, Eptr **my_files, int ix)
 		return false;
 	back = false;
 	if (query) {
-		switch (inquire(terse
+		int answer = inquire(terse
 		    ? "Preview? "
-		    : "Do you want to preview the errors first? ")) {
-		case Q_YES:
-		case Q_yes:
+		    : "Do you want to preview the errors first? ");
+		if (answer == Q_YES || answer == Q_yes) {
 			back = true;
 			EITERATE(erpp, my_files, ix) {
 				errorprint(stdout, *erpp, true);
 			}
 			if (!terse)
 				fprintf(stdout, "\n");
-		case Q_error:
-		default:
-			break;
 		}
 	}
 	return (back);
@@ -443,7 +439,7 @@ diverterrors(const char *name, int dest, Eptr **my_files, int ix,
 	Eptr *erpp;
 	Eptr errorp;
 
-	my_nerrors = my_files[ix+1] - my_files[ix];
+	my_nerrors = (int)(my_files[ix+1] - my_files[ix]);
 
 	if (my_nerrors != nterrors && !previewed) {
 		if (terse)
@@ -636,7 +632,7 @@ text(Eptr p, boolean use_all)
 static boolean
 writetouched(int overwrite)
 {
-	unsigned nread;
+	size_t nread;
 	FILE *localfile;
 	FILE *temp;
 	int botch;
@@ -697,7 +693,7 @@ writetouched(int overwrite)
 static int
 mustoverwrite(FILE *preciousfile, FILE *temp)
 {
-	unsigned nread;
+	size_t nread;
 
 	while ((nread = fread(edbuf, 1, sizeof(edbuf), temp)) != 0) {
 		if (mustwrite(edbuf, nread, preciousfile) == 0)
@@ -710,11 +706,11 @@ mustoverwrite(FILE *preciousfile, FILE *temp)
  * return 0 on catastrophe
  */
 static int
-mustwrite(const char *base, unsigned n, FILE *preciousfile)
+mustwrite(const char *base, size_t n, FILE *preciousfile)
 {
-	unsigned nwrote;
+	size_t nwrote;
 
-	if (n <= 0)
+	if (n == 0)
 		return (1);
 	nwrote = fwrite(base, 1, n, preciousfile);
 	if (nwrote == n)
@@ -741,6 +737,7 @@ mustwrite(const char *base, unsigned n, FILE *preciousfile)
 		default:
 			abort();
 		}
+		/* FALLTHROUGH */
 	case Q_error:
 	default:
 		return (0);
