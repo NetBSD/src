@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.30 2023/08/26 12:43:28 rillig Exp $	*/
+/*	$NetBSD: touch.c,v 1.31 2023/08/26 14:50:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.30 2023/08/26 12:43:28 rillig Exp $");
+__RCSID("$NetBSD: touch.c,v 1.31 2023/08/26 14:50:53 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -72,20 +72,20 @@ static int touchstatus = Q_YES;
 #define F_TOUCHIT	4
 
 static int countfiles(Eptr *);
-static int nopertain(Eptr **);
+static bool nopertain(Eptr **);
 static void hackfile(const char *, Eptr **, int, int);
-static boolean preview(int, Eptr **, int);
+static bool preview(int, Eptr **, int);
 static int settotouch(const char *);
-static void diverterrors(const char *, int, Eptr **, int, boolean,  int);
-static int oktotouch(const char *);
+static void diverterrors(const char *, int, Eptr **, int, bool, int);
+static bool oktotouch(const char *);
 static void execvarg(int, int *, char ***);
-static boolean edit(const char *);
+static bool edit(const char *);
 static void insert(int);
-static void text(Eptr, boolean);
-static boolean writetouched(int);
-static int mustoverwrite(FILE *, FILE *);
-static int mustwrite(const char *, size_t, FILE *);
-static void errorprint(FILE *, Eptr, boolean);
+static void text(Eptr, bool);
+static bool writetouched(bool);
+static bool mustoverwrite(FILE *, FILE *);
+static bool mustwrite(const char *, size_t, FILE *);
+static void errorprint(FILE *, Eptr, bool);
 static int probethisfile(const char *);
 
 static const char *
@@ -120,7 +120,7 @@ findfiles(int my_nerrors, Eptr *my_errors, int *r_nfiles, Eptr ***r_files)
 	my_nfiles = countfiles(my_errors);
 
 	my_files = Calloc(my_nfiles + 3, sizeof (Eptr*));
-	touchedfiles = Calloc(my_nfiles+3, sizeof(boolean));
+	touchedfiles = Calloc(my_nfiles+3, sizeof(touchedfiles[0]));
 	/*
 	 * Now, partition off the error messages
 	 * into those that are synchronization, discarded or
@@ -199,7 +199,7 @@ filenames(int my_nfiles, Eptr **my_files)
 {
 	int fi;
 	const char *sep = " ";
-	int someerrors;
+	bool someerrors;
 
 	/*
 	 * first, simply dump out errors that
@@ -207,8 +207,8 @@ filenames(int my_nfiles, Eptr **my_files)
 	 */
 	someerrors = nopertain(my_files);
 
-	if (my_nfiles) {
-		someerrors++;
+	if (my_nfiles > 0) {
+		someerrors = true;
 		if (terse)
 			fprintf(stdout, "%d file%s", my_nfiles, plural(my_nfiles));
 		else
@@ -233,21 +233,21 @@ filenames(int my_nfiles, Eptr **my_files)
 /*
  * Dump out errors that don't pertain to any file
  */
-static int
+static bool
 nopertain(Eptr **my_files)
 {
 	int type;
-	int someerrors = 0;
+	bool someerrors = false;
 	Eptr *erpp;
 	Eptr errorp;
 
 	if (my_files[1] - my_files[0] <= 0)
-		return 0;
+		return false;
 	for (type = C_UNKNOWN; NOTSORTABLE(type); type++) {
 		if (class_count[type] <= 0)
 			continue;
 		if (type > C_SYNC)
-			someerrors++;
+			someerrors = true;
 		if (terse) {
 			fprintf(stdout, "\t%d %s errors NOT PRINTED\n",
 				class_count[type], class_table[type]);
@@ -274,7 +274,7 @@ touchfiles(int my_nfiles, Eptr **my_files, int *r_edargc, char ***r_edargv)
 	int fi;
 	Eptr *erpp;
 	int ntrueerrors;
-	boolean scribbled;
+	bool scribbled;
 	int n_pissed_on;	/* # of file touched*/
 	int spread;
 
@@ -326,7 +326,7 @@ touchfiles(int my_nfiles, Eptr **my_files, int *r_edargc, char ***r_edargv)
 static void
 hackfile(const char *name, Eptr **my_files, int ix, int my_nerrors)
 {
-	boolean previewed;
+	bool previewed;
 	int errordest;	/* where errors go */
 
 	if (!oktotouch(name)) {
@@ -349,14 +349,14 @@ hackfile(const char *name, Eptr **my_files, int ix, int my_nerrors)
 		/*
 		 * overwrite the original file
 		 */
-		writetouched(1);
+		writetouched(true);
 	}
 }
 
-static boolean
+static bool
 preview(int my_nerrors, Eptr **my_files, int ix)
 {
-	int back;
+	bool back;
 	Eptr *erpp;
 
 	if (my_nerrors <= 0)
@@ -433,7 +433,7 @@ settotouch(const char *name)
 
 static void
 diverterrors(const char *name, int dest, Eptr **my_files, int ix,
-	     boolean previewed, int nterrors)
+	     bool previewed, int nterrors)
 {
 	int my_nerrors;
 	Eptr *erpp;
@@ -471,7 +471,7 @@ diverterrors(const char *name, int dest, Eptr **my_files, int ix,
 	}
 }
 
-static int
+static bool
 oktotouch(const char *filename)
 {
 	const char *src;
@@ -480,9 +480,9 @@ oktotouch(const char *filename)
 
 	pat = suffixlist;
 	if (pat == 0)
-		return 0;
+		return false;
 	if (*pat == '*')
-		return 1;
+		return true;
 	while (*pat++ != '.')
 		continue;
 	--pat;		/* point to the period */
@@ -491,26 +491,27 @@ oktotouch(const char *filename)
 	     src > filename && *src != '.'; --src)
 		continue;
 	if (*src != '.')
-		return 0;
+		return false;
 
-	for (src++, pat++, osrc = src; *src && *pat; src = osrc, pat++) {
-		for (;   *src			/* not at end of the source */
-		      && *pat			/* not off end of pattern */
+	for (src++, pat++, osrc = src;
+	    *src != '\0' && *pat != '\0'; src = osrc, pat++) {
+		for (;   *src != '\0'		/* not at end of the source */
+		      && *pat != '\0'		/* not off end of pattern */
 		      && *pat != '.'		/* not off end of sub pattern */
 		      && *pat != '*'		/* not wild card */
 		      && *src == *pat;		/* and equal... */
 		      src++, pat++)
 			continue;
 		if (*src == 0 && (*pat == 0 || *pat == '.' || *pat == '*'))
-			return 1;
+			return true;
 		if (*src != 0 && *pat == '*')
-			return 1;
-		while (*pat && *pat != '.')
+			return true;
+		while (*pat != '\0' && *pat != '.')
 			pat++;
-		if (!*pat)
-			return 0;
+		if (*pat == '\0')
+			return false;
 	}
-	return 0;
+	return false;
 }
 
 /*
@@ -561,13 +562,13 @@ static const char *o_name;
 static char n_name[MAXPATHLEN];
 static int o_lineno;
 static int n_lineno;
-static boolean tempfileopen = false;
+static bool tempfileopen = false;
 
 /*
  * open the file; guaranteed to be both readable and writable
  * Well, if it isn't, then return TRUE if something failed
  */
-static boolean
+static bool
 edit(const char *name)
 {
 	int fd;
@@ -612,7 +613,7 @@ insert(int place)
 }
 
 static void
-text(Eptr p, boolean use_all)
+text(Eptr p, bool use_all)
 {
 	int offset = use_all ? 0 : 2;
 
@@ -629,23 +630,23 @@ text(Eptr p, boolean use_all)
  * write the touched file to its temporary copy,
  * then bring the temporary in over the local file
  */
-static boolean
-writetouched(int overwrite)
+static bool
+writetouched(bool overwrite)
 {
 	size_t nread;
 	FILE *localfile;
 	FILE *temp;
-	int botch;
-	int oktorm;
+	bool botch;
+	bool oktorm;
 
-	botch = 0;
-	oktorm = 1;
+	botch = false;
+	oktorm = true;
 	while ((nread = fread(edbuf, 1, sizeof(edbuf), o_touchedfile)) != 0) {
 		if (nread != fwrite(edbuf, 1, nread, n_touchedfile)) {
 			/*
 			 * Catastrophe in temporary area: file system full?
 			 */
-			botch = 1;
+			botch = true;
 			warn("write failure: No errors inserted in `%s'",
 			    o_name);
 		}
@@ -657,17 +658,16 @@ writetouched(int overwrite)
 	 * Now, copy the temp file back over the original
 	 * file, thus preserving links, etc
 	 */
-	if (botch == 0 && overwrite) {
-		botch = 0;
+	if (!botch && overwrite) {
 		localfile = NULL;
 		temp = NULL;
 		if ((localfile = fopen(o_name, "w")) == NULL) {
 			warn("Can't open file `%s' to overwrite", o_name);
-			botch++;
+			botch = true;
 		}
 		if ((temp = fopen(n_name, "r")) == NULL) {
 			warn("Can't open file `%s' to read", n_name);
-			botch++;
+			botch = true;
 		}
 		if (!botch)
 			oktorm = mustoverwrite(localfile, temp);
@@ -676,7 +676,7 @@ writetouched(int overwrite)
 		if (temp != NULL)
 			fclose(temp);
 	}
-	if (oktorm == 0)
+	if (!oktorm)
 		errx(1, "Catastrophe: A copy of `%s': was saved in `%s'",
 		    o_name, n_name);
 	/*
@@ -688,33 +688,33 @@ writetouched(int overwrite)
 }
 
 /*
- * return 1 if the tmpfile can be removed after writing it out
+ * return whether the tmpfile can be removed after writing it out
  */
-static int
+static bool
 mustoverwrite(FILE *preciousfile, FILE *temp)
 {
 	size_t nread;
 
 	while ((nread = fread(edbuf, 1, sizeof(edbuf), temp)) != 0) {
-		if (mustwrite(edbuf, nread, preciousfile) == 0)
-			return 0;
+		if (!mustwrite(edbuf, nread, preciousfile))
+			return false;
 	}
-	return 1;
+	return true;
 }
 
 /*
- * return 0 on catastrophe
+ * return false on catastrophe
  */
-static int
+static bool
 mustwrite(const char *base, size_t n, FILE *preciousfile)
 {
 	size_t nwrote;
 
 	if (n == 0)
-		return 1;
+		return true;
 	nwrote = fwrite(base, 1, n, preciousfile);
 	if (nwrote == n)
-		return 1;
+		return true;
 	warn("write failed");
 	switch (inquire(terse
 	    ? "Botch overwriting: retry? "
@@ -722,25 +722,25 @@ mustwrite(const char *base, size_t n, FILE *preciousfile)
 	case Q_YES:
 	case Q_yes:
 		mustwrite(base + nwrote, n - nwrote, preciousfile);
-		return 1;
+		return true;
 	case Q_NO:
 	case Q_no:
 		switch (inquire("Are you sure? ")) {
 		case Q_error:
 		case Q_YES:
 		case Q_yes:
-			return 0;
+			return false;
 		case Q_NO:
 		case Q_no:
 			mustwrite(base + nwrote, n - nwrote, preciousfile);
-			return 1;
+			return true;
 		default:
 			abort();
 		}
 		/* FALLTHROUGH */
 	case Q_error:
 	default:
-		return 0;
+		return false;
 	}
 }
 
@@ -760,7 +760,7 @@ onintr(int sig)
 			/*
 			 * Don't overwrite the original file!
 			 */
-			writetouched(0);
+			writetouched(false);
 		}
 		(void)raise_default_signal(sig);
 		_exit(127);
@@ -769,7 +769,7 @@ onintr(int sig)
 }
 
 static void
-errorprint(FILE *place, Eptr errorp, boolean print_all)
+errorprint(FILE *place, Eptr errorp, bool print_all)
 {
 	int offset = print_all ? 0 : 2;
 

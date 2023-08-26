@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.19 2012/02/29 23:37:07 joerg Exp $	*/
+/*	$NetBSD: error.h,v 1.20 2023/08/26 14:50:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -32,8 +32,6 @@
  */
 
 #include <stdbool.h>
-
-typedef int boolean;
 
 /*
  * Descriptors for the various languages we know about.
@@ -112,8 +110,8 @@ extern char *scriptname;
 
 extern const char *suffixlist;
 
-extern boolean query;
-extern boolean terse;
+extern bool query;
+extern bool terse;
 int inquire(const char *, ...) __printflike(1, 2);	/* inquire for yes/no */
 
 /*
@@ -195,7 +193,7 @@ extern char **cur_wordv;
  */
 extern int nfiles;
 extern Eptr **files;			/* array of pointers into errors */
-extern boolean *touchedfiles;		/* which files we touched */
+extern bool *touchedfiles;		/* which files we touched */
 
 /*
  * The language the compilation is in, as intuited from

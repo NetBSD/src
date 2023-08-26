@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2023/08/26 13:52:10 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2023/08/26 14:50:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.24 2023/08/26 13:52:10 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2023/08/26 14:50:53 rillig Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -65,17 +65,17 @@ static Eptr *errors;
 
 int nfiles = 0;
 Eptr **files;		/* array of pointers into errors*/
-boolean *touchedfiles;  /* which files we touched */
+bool *touchedfiles;	/* which files we touched */
 int language = INCC;
 
 char default_currentfilename[] = "????";
 char *currentfilename = default_currentfilename;
 
-boolean query = false;	/* query the operator if touch files */
-boolean terse = false;	/* Terse output */
+bool query = false;	/* query the operator if touch files */
+bool terse = false;	/* Terse output */
 
 static char im_on[] = _PATH_TTY;	/* my tty name */
-static boolean notouch = false;		/* don't touch ANY files */
+static bool notouch = false;		/* don't touch ANY files */
 
 const char *suffixlist = ".*";	/* initially, can touch any file */
 
@@ -91,10 +91,10 @@ main(int argc, char **argv)
 	char *ignorename = 0;
 	int ed_argc;
 	char **ed_argv;		/* return from touchfiles */
-	boolean show_errors = false;
-	boolean Show_Errors = false;
-	boolean pr_summary = false;
-	boolean edit_files = false;
+	bool show_errors = false;
+	bool Show_Errors = false;
+	bool pr_summary = false;
+	bool edit_files = false;
 
 	setprogname(argv[0]);
 
@@ -168,27 +168,27 @@ main(int argc, char **argv)
 	findfiles(nerrors, errors, &nfiles, &files);
 #define P(msg, arg) fprintf(stdout, msg, arg)
 	if (pr_summary) {
-		if (nunknown)
+		if (nunknown > 0)
 			P("%d Errors are unclassifiable.\n", nunknown);
-		if (nignore)
+		if (nignore > 0)
 			P("%d Errors are classifiable, but totally "
 			    "discarded.\n", nignore);
-		if (nsyncerrors)
+		if (nsyncerrors > 0)
 			P("%d Errors are synchronization errors.\n",
 			    nsyncerrors);
-		if (nignore)
+		if (nignore > 0)
 			P("%d Errors are discarded because they refer to "
 			    "sacrosinct files.\n", ndiscard);
-		if (nnulled)
+		if (nnulled > 0)
 			P("%d Errors are nulled because they refer to specific "
 			    "functions.\n", nnulled);
-		if (nnonspec)
+		if (nnonspec > 0)
 			P("%d Errors are not specific to any file.\n",
 			    nnonspec);
-		if (nthisfile)
+		if (nthisfile > 0)
 			P("%d Errors are specific to a given file, but not "
 			    "to a line.\n", nthisfile);
-		if (ntrue)
+		if (ntrue > 0)
 			P("%d Errors are true errors, and can be inserted "
 			    "into the files.\n", ntrue);
 	}
