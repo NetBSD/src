@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.25 2023/08/26 15:07:14 rillig Exp $	*/
+/*	$NetBSD: subr.c,v 1.26 2023/08/26 15:18:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.25 2023/08/26 15:07:14 rillig Exp $");
+__RCSID("$NetBSD: subr.c,v 1.26 2023/08/26 15:18:27 rillig Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -347,18 +347,14 @@ wordvbuild(char *string, int *r_wordc, char ***r_wordv)
 /*
  * Compare two 0 based wordvectors
  */
-int
-wordvcmp(char **wordv1, int wordc, char **wordv2)
+bool
+wordv_eq(char **wordv1, int wordc, char **wordv2)
 {
-	int back;
-
-	for (int i = 0; i < wordc; i++) {
-		if (wordv1[i] == NULL || wordv2[i] == NULL)
-			return -1;
-		if ((back = strcmp(wordv1[i], wordv2[i])) != 0)
-			return back;
-	}
-	return 0;	/* they are equal */
+	for (int i = 0; i < wordc; i++)
+		if (wordv1[i] == NULL || wordv2[i] == NULL
+		    || strcmp(wordv1[i], wordv2[i]) != 0)
+			return false;
+	return true;
 }
 
 /*

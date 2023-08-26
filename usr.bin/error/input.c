@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.20 2023/08/26 14:50:53 rillig Exp $	*/
+/*	$NetBSD: input.c,v 1.21 2023/08/26 15:18:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.20 2023/08/26 14:50:53 rillig Exp $");
+__RCSID("$NetBSD: input.c,v 1.21 2023/08/26 15:18:27 rillig Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -488,8 +488,8 @@ lint3(void)
 {
 	if (cur_wordc < 3)
 		return C_UNKNOWN;
-	if (wordvcmp(cur_wordv+2, 4, Lint31) == 0
-	    || wordvcmp(cur_wordv+2, 6, Lint32) == 0) {
+	if (wordv_eq(cur_wordv+2, 4, Lint31)
+	    || wordv_eq(cur_wordv+2, 6, Lint32)) {
 		language = INLINT;
 		return C_NONSPEC;
 	}
@@ -526,7 +526,7 @@ f77(void)
 	 *	Warning on line %d of %s: %s
 	 *	Error.  No assembly.
 	 */
-	if (cur_wordc == 3 && wordvcmp(cur_wordv+1, 3, F77_no_ass) == 0) {
+	if (cur_wordc == 3 && wordv_eq(cur_wordv+1, 3, F77_no_ass)) {
 		cur_wordc = 0;
 		return C_SYNC;
 	}
@@ -534,9 +534,9 @@ f77(void)
 		return C_UNKNOWN;
 	if (lastchar(cur_wordv[6]) == ':'
 	    && (
-		wordvcmp(cur_wordv+1, 3, F77_fatal) == 0
-		|| wordvcmp(cur_wordv+1, 3, F77_error) == 0
-		|| wordvcmp(cur_wordv+1, 3, F77_warning) == 0
+		wordv_eq(cur_wordv+1, 3, F77_fatal)
+		|| wordv_eq(cur_wordv+1, 3, F77_error)
+		|| wordv_eq(cur_wordv+1, 3, F77_warning)
 	       )
 	) {
 		language = INF77;
@@ -563,11 +563,11 @@ DECL_STRINGS_5(static, Make_NotRemade,
 static Errorclass
 make(void)
 {
-	if (wordvcmp(cur_wordv+1, 3, Make_Croak) == 0) {
+	if (wordv_eq(cur_wordv+1, 3, Make_Croak)) {
 		language = INMAKE;
 		return C_SYNC;
 	}
-	if (wordvcmp(cur_wordv+2, 5, Make_NotRemade) == 0) {
+	if (wordv_eq(cur_wordv+2, 5, Make_NotRemade)) {
 		language = INMAKE;
 		return C_SYNC;
 	}
