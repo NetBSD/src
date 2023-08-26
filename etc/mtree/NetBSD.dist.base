@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.251 2023/08/01 06:46:52 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.252 2023/08/26 05:58:49 riastradh Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -398,6 +398,12 @@
 ./usr/share
 ./usr/share/atf
 ./usr/share/calendar
+./usr/share/certs
+./usr/share/certs/mozilla
+./usr/share/certs/mozilla/all
+./usr/share/certs/mozilla/code
+./usr/share/certs/mozilla/email
+./usr/share/certs/mozilla/server
 ./usr/share/dhcpd
 ./usr/share/dict
 ./usr/share/dict/papers
