@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.68 2022/09/17 19:03:31 thorpej Exp $ */
+/*	$NetBSD: if_es.c,v 1.69 2023/08/26 20:23:23 andvar Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.68 2022/09/17 19:03:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.69 2023/08/26 20:23:23 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -102,7 +102,7 @@ int	estxint2 = 0;	/* IST_TX active after IST_TX_EMPTY */
 int	estxint3 = 0;	/* IST_TX interrupt processed */
 int	estxint4 = 0;	/* ~TEMPTY counts */
 int	estxint5 = 0;	/* IST_TX_EMPTY interrupts */
-void	es_dump_smcregs(char *, union smcregs *);
+void	es_dump_smcregs(const char *, union smcregs *);
 #endif
 
 int esintr(void *);
@@ -199,7 +199,7 @@ esattach(device_t parent, device_t self, void *aux)
 
 #ifdef ESDEBUG
 void
-es_dump_smcregs(char *where, union smcregs *smc)
+es_dump_smcregs(const char *where, union smcregs *smc)
 {
 	u_short cur_bank = smc->b0.bsr & BSR_MASK;
 
