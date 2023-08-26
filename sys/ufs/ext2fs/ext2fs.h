@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.49 2023/08/25 16:50:23 christos Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.50 2023/08/26 05:18:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -496,6 +496,12 @@ void e2fs_sb_bswap(struct ext2fs *, struct ext2fs *);
 #	define fs2h64(x) bswap64(x)
 #	define e2fs_sbload(old, new) e2fs_sb_bswap((old), (new))
 #	define e2fs_sbsave(old, new) e2fs_sb_bswap((old), (new))
+#endif
+
+#ifndef _KERNEL		/* XXX */
+/* Group descriptors are not byte swapped */
+#define e2fs_cgload(old, new, size) memcpy((new), (old), (size))
+#define e2fs_cgsave(old, new, size) memcpy((new), (old), (size))
 #endif
 
 /*
