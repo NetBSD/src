@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.101 2022/01/17 20:38:49 andvar Exp $ */
+/*	$NetBSD: fd.c,v 1.102 2023/08/26 21:20:48 andvar Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.101 2022/01/17 20:38:49 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.102 2023/08/26 21:20:48 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1675,11 +1675,11 @@ fdminphys(struct buf *bp)
 	toff = sec * FDSECSIZE;
 	tsz = sc->nsectors * FDSECSIZE;
 #ifdef FDDEBUG
-	printf("fdminphys: before %ld", bp->b_bcount);
+	printf("fdminphys: before %d", bp->b_bcount);
 #endif
 	bp->b_bcount = uimin(bp->b_bcount, tsz - toff);
 #ifdef FDDEBUG
-	printf(" after %ld\n", bp->b_bcount);
+	printf(" after %d\n", bp->b_bcount);
 #endif
 	minphys(bp);
 }
