@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.23 2023/08/26 14:59:44 rillig Exp $	*/
+/*	$NetBSD: pi.c,v 1.24 2023/08/26 15:18:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.23 2023/08/26 14:59:44 rillig Exp $");
+__RCSID("$NetBSD: pi.c,v 1.24 2023/08/26 15:18:27 rillig Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -329,10 +329,10 @@ pi(void)
 		int wordindex;
 
 		language = INPI;
-		if ((undefined = (wordvcmp(cur_wordv+2, 3, pi_und1) == 0))
-		     || (undefined = (wordvcmp(cur_wordv+2, 3, pi_und2) == 0))
-		     || wordvcmp(cur_wordv+2, 4, pi_imp1) == 0
-		     || wordvcmp(cur_wordv+2, 4, pi_imp2) == 0
+		if ((undefined = wordv_eq(cur_wordv+2, 3, pi_und1))
+		     || (undefined = wordv_eq(cur_wordv+2, 3, pi_und2))
+		     || wordv_eq(cur_wordv+2, 4, pi_imp1)
+		     || wordv_eq(cur_wordv+2, 4, pi_imp2)
 		) {
 			for (wordindex = undefined ? 5 : 6;
 			     wordindex <= cur_wordc;
@@ -419,10 +419,10 @@ pi(void)
 	structured = false;
 	multiple = false;
 	if (
-	       (cur_wordc == 6 && wordvcmp(cur_wordv+1, 2, pi_Endmatched) == 0)
-	    || (cur_wordc == 8 && wordvcmp(cur_wordv+1, 4, pi_Inserted) == 0)
-	    || (multiple = (cur_wordc == 9 && wordvcmp(cur_wordv+1,6, pi_multiple) == 0))
-	    || (structured = (cur_wordc == 10 && wordvcmp(cur_wordv+6,5, pi_structured) == 0))
+	       (cur_wordc == 6 && wordv_eq(cur_wordv+1, 2, pi_Endmatched))
+	    || (cur_wordc == 8 && wordv_eq(cur_wordv+1, 4, pi_Inserted))
+	    || (multiple = (cur_wordc == 9 && wordv_eq(cur_wordv+1,6, pi_multiple)))
+	    || (structured = (cur_wordc == 10 && wordv_eq(cur_wordv+6,5, pi_structured)))
 	) {
 		language = INPI;
 		nwordv = wordvsplice(2, cur_wordc, cur_wordv+1);

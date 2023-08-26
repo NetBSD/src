@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.20 2023/08/26 14:50:53 rillig Exp $	*/
+/*	$NetBSD: error.h,v 1.21 2023/08/26 15:18:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -281,6 +281,6 @@ char *substitute(char *, char, char);
 bool touchfiles(int, Eptr **, int *, char ***);
 const char *verbform(int);
 void wordvbuild(char *, int*, char ***);
-int wordvcmp(char **, int, char **);
+bool wordv_eq(char **, int, char **);
 void wordvprint(FILE *, int, char **);
 char **wordvsplice(int, int, char **);
