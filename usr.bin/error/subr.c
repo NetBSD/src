@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.21 2023/08/26 11:38:14 rillig Exp $	*/
+/*	$NetBSD: subr.c,v 1.22 2023/08/26 12:43:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.21 2023/08/26 11:38:14 rillig Exp $");
+__RCSID("$NetBSD: subr.c,v 1.22 2023/08/26 12:43:28 rillig Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -78,7 +78,7 @@ Calloc(size_t nelements, size_t size)
 	back = calloc(nelements, size);
 	if (back == NULL)
 		errx(1, "Ran out of memory.");
-	return (back);
+	return back;
 }
 
 char *
@@ -105,9 +105,9 @@ position(const char *string, char ch)
 	if (string)
 		for (i=1; *string; string++, i++) {
 			if (*string == ch)
-				return (i);
+				return i;
 		}
-	return (-1);
+	return -1;
 }
 
 /*
@@ -126,7 +126,7 @@ substitute(char *string, char chold, char chnew)
 			}
 			cp++;
 		}
-	return (string);
+	return string;
 }
 
 char
@@ -135,21 +135,21 @@ lastchar(const char *string)
 	size_t length;
 
 	if (string == NULL)
-		return ('\0');
+		return '\0';
 	length = strlen(string);
 	if (length >= 1)
-		return (string[length-1]);
+		return string[length-1];
 	else
-		return ('\0');
+		return '\0';
 }
 
 char
 firstchar(const char *string)
 {
 	if (string)
-		return (string[0]);
+		return string[0];
 	else
-		return ('\0');
+		return '\0';
 }
 
 char
@@ -158,12 +158,12 @@ next_lastchar(const char *string)
 	size_t length;
 
 	if (string == NULL)
-		return ('\0');
+		return '\0';
 	length = strlen(string);
 	if (length >= 2)
-		return (string[length - 2]);
+		return string[length - 2];
 	else
-		return ('\0');
+		return '\0';
 }
 
 void
@@ -359,11 +359,11 @@ wordvcmp(char **wordv1, int wordc, char **wordv2)
 
 	for (i = 0; i < wordc; i++) {
 		if (wordv1[i] == NULL || wordv2[i] == NULL)
-			return (-1);
+			return -1;
 		if ((back = strcmp(wordv1[i], wordv2[i])) != 0)
-			return (back);
+			return back;
 	}
-	return (0);	/* they are equal */
+	return 0;	/* they are equal */
 }
 
 /*
@@ -383,7 +383,7 @@ wordvsplice(int emptyhead, int wordc, char **wordv)
 	for (i = emptyhead; i < nwordc; i++) {
 		nwordv[i] = wordv[i-emptyhead];
 	}
-	return (nwordv);
+	return nwordv;
 }
 
 /*
@@ -395,11 +395,11 @@ static const char *N = "";
 const char *
 plural(int n)
 {
-	return (n > 1 ? S : N);
+	return n > 1 ? S : N;
 }
 
 const char *
 verbform(int n)
 {
-	return (n > 1 ? N : S);
+	return n > 1 ? N : S;
 }

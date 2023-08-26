@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.20 2022/04/04 19:33:46 andvar Exp $	*/
+/*	$NetBSD: pi.c,v 1.21 2023/08/26 12:43:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.20 2022/04/04 19:33:46 andvar Exp $");
+__RCSID("$NetBSD: pi.c,v 1.21 2023/08/26 12:43:28 rillig Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -189,7 +189,7 @@ alldigits(const char *string)
 {
 	for (; *string && isdigit((unsigned char)*string); string++)
 		continue;
-	return (*string == '\0');
+	return *string == '\0';
 }
 
 static boolean
@@ -205,12 +205,11 @@ instringset(const char *member, const char **set)
 static boolean
 isdateformat(int wordc, char **wordv)
 {
-	return (
-	        (wordc == 5)
-	     && (instringset(wordv[0], Days))
-	     && (instringset(wordv[1], Months))
-	     && (alldigits(wordv[2]))
-	     && (alldigits(wordv[4])));
+	return  wordc == 5
+	     && instringset(wordv[0], Days)
+	     && instringset(wordv[1], Months)
+	     && alldigits(wordv[2])
+	     && alldigits(wordv[4]);
 }
 
 static boolean
@@ -225,7 +224,7 @@ piptr(const char *string)
 	string++;
 	while (*string == '-')
 		string++;
-	return (*string == '\0');
+	return *string == '\0';
 }
 
 Errorclass
@@ -235,7 +234,7 @@ pi(void)
 
 	nwordv = NULL;
 	if (cur_wordc < 2)
-		return (C_UNKNOWN);
+		return C_UNKNOWN;
 	if (strlen(cur_wordv[1]) == 1
 	    && ( cur_wordv[1][0] == 'e' || cur_wordv[1][0] == 'E')
 	    && piptr(cur_wordv[2])
@@ -279,7 +278,7 @@ pi(void)
 		}
 		cur_wordv = nwordv - 1;		/* convert to 1 based */
 		cur_wordc += longpiptr ? 2 : 4;
-		return (C_TRUE);
+		return C_TRUE;
 	}
 	if (cur_wordc >= 4
 	    && strlen(cur_wordv[1]) == 1
@@ -300,7 +299,7 @@ pi(void)
 		c_linenumber = cur_wordv[2];
 		cur_wordc += 1;
 		cur_wordv = nwordv - 1;
-		return (C_TRUE);
+		return C_TRUE;
 	}
 	if (cur_wordc >= 3
 	    && strlen(cur_wordv[1]) == 1
@@ -352,7 +351,7 @@ pi(void)
 			}
 			cur_wordc = undefined ? 4 : 5;
 			cur_wordv = nwordv - 1;
-			return (C_TRUE);
+			return C_TRUE;
 		}
 
 		nwordv = wordvsplice(1+3, cur_wordc, cur_wordv+1);
@@ -362,7 +361,7 @@ pi(void)
 		nwordv[3] = strdup(c_header[2]);
 		cur_wordv = nwordv - 1;
 		cur_wordc += 1 + 3;
-		return (C_THISFILE);
+		return C_THISFILE;
 	}
 	if (strcmp(cur_wordv[1], "...") == 0 && c_linenumber &&
 	    currentfilename != default_currentfilename) {
@@ -377,7 +376,7 @@ pi(void)
 		nwordv[1] = strdup(c_linenumber);
 		cur_wordv = nwordv - 1;
 		cur_wordc += 1;
-		return (C_TRUE);
+		return C_TRUE;
 	}
 	if (cur_wordc == 6
 	   && lastchar(cur_wordv[6]) == ':'
@@ -389,7 +388,7 @@ pi(void)
 		language = INPI;
 		currentfilename = strdup(cur_wordv[6]);
 		clob_last(currentfilename, '\0');
-		return (C_SYNC);
+		return C_SYNC;
 	}
 	if (cur_wordc == 3
 	   && strcmp(cur_wordv[1], "In") == 0
@@ -398,7 +397,7 @@ pi(void)
 	) {
 		language = INPI;
 		c_header = wordvsplice(0, cur_wordc, cur_wordv+1);
-		return (C_SYNC);
+		return C_SYNC;
 	}
 
 	/*
@@ -407,7 +406,7 @@ pi(void)
 	if (alldigits(cur_wordv[1])) {
 		language = INPI;
 		c_linenumber = cur_wordv[1];
-		return (C_IGNORE);
+		return C_IGNORE;
 	}
 
 	/*
@@ -432,11 +431,11 @@ pi(void)
 		cur_wordc += 2;
 		cur_wordv = nwordv - 1;
 		if (!multiple)
-			return (C_TRUE);
+			return C_TRUE;
 		erroradd(cur_wordc, nwordv, C_TRUE, C_UNKNOWN);
 		nwordv = wordvsplice(0, cur_wordc, nwordv);
 		nwordv[1] = cur_wordv[cur_wordc - 2];
-		return (C_TRUE);
+		return C_TRUE;
 	}
-	return (C_UNKNOWN);
+	return C_UNKNOWN;
 }

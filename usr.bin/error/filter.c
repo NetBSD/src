@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.18 2016/05/30 16:35:35 dholland Exp $	*/
+/*	$NetBSD: filter.c,v 1.19 2023/08/26 12:43:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.18 2016/05/30 16:35:35 dholland Exp $");
+__RCSID("$NetBSD: filter.c,v 1.19 2023/08/26 12:43:28 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -132,7 +132,7 @@ lexsort(const void *c1, const void *c2)
 
 	cpp1 = c1;
 	cpp2 = c2;
-	return (strcmp(*cpp1, *cpp2));
+	return strcmp(*cpp1, *cpp2);
 }
 
 static int
@@ -143,17 +143,17 @@ search_ignore(const char *key)
 	int order;
 
 	if (nignored == 0)
-		return (-1);
+		return -1;
 	for (lb = 0, ub = nignored - 1; ub >= lb; ) {
 		halfway = (ub + lb)/2;
 		if ( (order = strcmp(key, names_ignored[halfway])) == 0)
-			return (halfway);
+			return halfway;
 		if (order < 0)	/* key is less than probe, throw away above */
 			ub = halfway - 1;
 		 else
 			lb = halfway + 1;
 	}
-	return (-1);
+	return -1;
 }
 
 /*
@@ -172,17 +172,17 @@ discardit(Eptr errorp)
 	switch (errorclass) {
 		case C_SYNC:
 		case C_NONSPEC:
-		case C_UNKNOWN: return (errorclass);
+		case C_UNKNOWN: return errorclass;
 		default:	;
 	}
 	if (errorp->error_lgtext < 2) {
-		return (C_NONSPEC);
+		return C_NONSPEC;
 	}
 	if (errorp->error_language == INLINT) {
 		if (errorclass != C_NONSPEC) {	/* no file */
 			for (i=0; lint_libs[i] != 0; i++) {
 				if (strcmp(errorp->error_text[0], lint_libs[i]) == 0) {
-					return (C_DISCARD);
+					return C_DISCARD;
 				}
 			}
 		}
@@ -190,8 +190,8 @@ discardit(Eptr errorp)
 		if (ispunct((unsigned char)lastchar(errorp->error_text[2])))
 			clob_last(errorp->error_text[2], '\0');
 		if (search_ignore(errorp->error_text[errorclass == C_NONSPEC ? 0 : 2]) >= 0) {
-			return (C_NULLED);
+			return C_NULLED;
 		}
 	}
-	return (errorclass);
+	return errorclass;
 }
