@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.19 2021/08/07 16:18:42 thorpej Exp $ */
+/*	$NetBSD: p5pb.c,v 1.20 2023/08/26 22:12:45 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -658,7 +658,7 @@ p5pb_conf_search(struct p5pb_softc *sc, uint16_t val)
 void
 p5pb_device_register(device_t dev, void *aux)
 {
-	prop_dictionary_t dict, parent_dict;
+	prop_dictionary_t dict;
 	struct pci_attach_args *pa = aux;
 
 	if (device_parent(dev) && device_is_a(device_parent(dev), "pci")) {
@@ -676,9 +676,6 @@ p5pb_device_register(device_t dev, void *aux)
 			    && (PCI_PRODUCT(pa->pa_id) ==
 			    PCI_PRODUCT_3DFX_VOODOO3) )) {
 
-				parent_dict = device_properties(
-				    device_parent(device_parent(dev)));
-
 				prop_dictionary_set_uint32(dict, "width",
 				    P5GFX_WIDTH);
 
@@ -689,6 +686,11 @@ p5pb_device_register(device_t dev, void *aux)
 				    P5GFX_DEPTH);
 
 #if NGENFB > 0
+				prop_dictionary_t parent_dict;
+
+				parent_dict = device_properties(
+				    device_parent(device_parent(dev)));
+
 				prop_dictionary_set_uint32(dict, "linebytes",
 				    P5GFX_LINEBYTES);
 
