@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.191 2023/08/12 06:43:16 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.192 2023/08/26 10:43:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.191 2023/08/12 06:43:16 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.192 2023/08/26 10:43:53 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -572,7 +572,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 			} else if (allow_trad) {
 				/*
 				 * Remember that the constant is unsigned
-				 * only in ANSI C.
+				 * only in C90.
 				 */
 				ansiu = true;
 			}

@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_274.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_274.c,v 1.5 2023/08/26 10:43:53 rillig Exp $	*/
 # 3 "msg_274.c"
 
-/* Test for message: ANSI C forbids comparison of %s with %s [274] */
+/* Test for message: C90 or later forbid comparison of %s with %s [274] */
 
 /* lint1-flags: -sw -X 351 */
 
@@ -17,7 +17,7 @@ example(void (*function_pointer)(void), void *void_pointer)
 	if (function_pointer == (const void *)0)
 		return;
 
-	/* expect+1: warning: ANSI C forbids comparison of function pointer with 'void *' [274] */
+	/* expect+1: warning: C90 or later forbid comparison of function pointer with 'void *' [274] */
 	if (function_pointer == void_pointer)
 		return;
 }

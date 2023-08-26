@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.63 2023/08/02 18:51:25 rillig Exp $
+.\" $NetBSD: lint.1,v 1.64 2023/08/26 10:43:53 rillig Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -372,7 +372,7 @@ In case of redeclarations, report the position of the previous declaration.
 C99 mode.
 Currently not fully implemented.
 .It Fl s
-Strict ANSI C89/ISO C90 mode.
+Strict ISO C90 mode.
 Issue warnings and errors required by ISO C90, as opposed to traditional C.
 Also do not produce warnings for constructs which behave
 differently in traditional C and ISO C90.
@@ -391,7 +391,7 @@ Traditional C mode.
 is not predefined in this mode.
 Warnings are printed for constructs not allowed in traditional C.
 Warnings for constructs which behave differently in traditional C
-and ANSI C are suppressed.
+and C90 are suppressed.
 Preprocessor macros describing the machine type (e.g.
 .Li sun3 )
 and machine architecture (e.g.

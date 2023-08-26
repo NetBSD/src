@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.377 2023/08/02 21:58:11 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.378 2023/08/26 10:43:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.377 2023/08/02 21:58:11 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.378 2023/08/26 10:43:53 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -954,7 +954,7 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 			if (!allow_trad && !allow_c99) {
 				type_t *btp = block_dup_type(tp);
 				btp->t_bitfield = false;
-				/* bit-field type '%s' invalid in ANSI C */
+				/* bit-field type '%s' invalid in C90 or ... */
 				warning(273, type_name(btp));
 			} else if (pflag) {
 				type_t *btp = block_dup_type(tp);
@@ -2123,7 +2123,7 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 	 */
 	/* TODO: Make this an error in C99 mode as well. */
 	if (!allow_trad && !allow_c99) {
-		/* redeclaration of '%s'; ANSI C requires static */
+		/* redeclaration of '%s'; C90 or later require static */
 		warning(30, dsym->s_name);
 		print_previous_declaration(rdsym);
 	}
