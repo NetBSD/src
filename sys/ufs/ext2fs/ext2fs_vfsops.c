@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.223 2023/08/26 05:22:50 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.224 2023/08/26 21:56:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.223 2023/08/26 05:22:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.224 2023/08/26 21:56:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -767,11 +767,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 		    EXT2_FSBTODB(m_fs, m_fs->e2fs.e2fs_first_dblock +
 		    1 /* superblock */ + i),
 		    m_fs->e2fs_bsize, 0, &bp);
-		if (error) {
-			kmem_free(m_fs->e2fs_gd,
-			    m_fs->e2fs_ngdb * m_fs->e2fs_bsize);
-			goto out;
-		}
+		if (error)
+			goto out1;
 		e2fs_cgload(bp->b_data, &m_fs->e2fs_gd[i * sh],
 		    m_fs->e2fs_bsize, m_fs->e2fs_group_desc_shift);
 		brelse(bp, 0);
@@ -779,10 +776,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	}
 
 	error = ext2fs_cg_verify_and_initialize(devvp, m_fs, ronly);
-	if (error) {
-		kmem_free(m_fs->e2fs_gd, m_fs->e2fs_ngdb * m_fs->e2fs_bsize);
-		goto out;
-	}
+	if (error)
+		goto out1;
 
 	mp->mnt_data = ump;
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
@@ -807,6 +802,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	spec_node_setmountedfs(devvp, mp);
 	return 0;
 
+out1:
+	kmem_free(m_fs->e2fs_gd, m_fs->e2fs_ngdb * sh * sizeof(struct ext2_gd));
 out:
 	if (bp != NULL)
 		brelse(bp, 0);
@@ -847,7 +844,8 @@ ext2fs_unmount(struct mount *mp, int mntflags)
 	error = VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
 	    NOCRED);
 	vput(ump->um_devvp);
-	kmem_free(fs->e2fs_gd, fs->e2fs_ngdb * fs->e2fs_bsize);
+	int32_t sh = fs->e2fs_bsize >> fs->e2fs_group_desc_shift;
+	kmem_free(fs->e2fs_gd, fs->e2fs_ngdb * sh * sizeof(struct ext2_gd));
 	kmem_free(fs, sizeof(*fs));
 	kmem_free(ump, sizeof(*ump));
 	mp->mnt_data = NULL;
