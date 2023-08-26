@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1292 2023/08/26 05:27:14 riastradh Exp $
+# $NetBSD: mi,v 1.1293 2023/08/26 10:06:16 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4846,6 +4846,10 @@
 ./usr/tests/usr.bin/dirname/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/dirname/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/dirname/t_dirname			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/error				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/error/Atffile			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/error/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/error/t_error			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/find				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/find/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/find/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
