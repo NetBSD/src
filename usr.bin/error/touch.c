@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.31 2023/08/26 14:50:53 rillig Exp $	*/
+/*	$NetBSD: touch.c,v 1.32 2023/08/26 14:59:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.31 2023/08/26 14:50:53 rillig Exp $");
+__RCSID("$NetBSD: touch.c,v 1.32 2023/08/26 14:59:44 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -137,7 +137,8 @@ findfiles(int my_nerrors, Eptr *my_errors, int *r_nfiles, Eptr ***r_files)
 	 * for a given file.
 	 */
 	my_files[1] = &my_errors[ei];
-	touchedfiles[0] = touchedfiles[1] = false;
+	touchedfiles[0] = false;
+	touchedfiles[1] = false;
 	name = "\1";
 	fi = 1;
 	ECITERATE(ei, errorp, ei, my_errors, my_nerrors) {
@@ -502,9 +503,10 @@ oktotouch(const char *filename)
 		      && *src == *pat;		/* and equal... */
 		      src++, pat++)
 			continue;
-		if (*src == 0 && (*pat == 0 || *pat == '.' || *pat == '*'))
+		if (*src == '\0'
+		    && (*pat == '\0' || *pat == '.' || *pat == '*'))
 			return true;
-		if (*src != 0 && *pat == '*')
+		if (*src != '\0' && *pat == '*')
 			return true;
 		while (*pat != '\0' && *pat != '.')
 			pat++;
@@ -553,7 +555,7 @@ execvarg(int n_pissed_on, int *r_argc, char ***r_argv)
 	}
 	if (!terse)
 		fprintf(stdout, "\n");
-	(*r_argv)[n_pissed_on] = 0;
+	(*r_argv)[n_pissed_on] = NULL;
 }
 
 static FILE *o_touchedfile;	/* the old file */

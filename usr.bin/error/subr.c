@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.23 2023/08/26 14:50:53 rillig Exp $	*/
+/*	$NetBSD: subr.c,v 1.24 2023/08/26 14:59:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.23 2023/08/26 14:50:53 rillig Exp $");
+__RCSID("$NetBSD: subr.c,v 1.24 2023/08/26 14:59:44 rillig Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -266,7 +266,7 @@ struct lang_desc lang_table[] = {
 	{ /*INRI	17*/	"ri",      riincomment,    rioutcomment },
 	{ /*INTROFF	18*/	"troff",   troffincomment, troffoutcomment },
 	{ /*INMOD2	19*/	"mod2",    mod2incomment,  mod2outcomment },
-	{			0,         0,              0 }
+	{			NULL,      NULL,           NULL }
 };
 
 void

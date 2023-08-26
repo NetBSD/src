@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.22 2023/08/26 14:50:53 rillig Exp $	*/
+/*	$NetBSD: pi.c,v 1.23 2023/08/26 14:59:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.22 2023/08/26 14:50:53 rillig Exp $");
+__RCSID("$NetBSD: pi.c,v 1.23 2023/08/26 14:59:44 rillig Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -144,13 +144,13 @@ static bool piptr(const char *);
 static const char *Months[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-	0
+	NULL
 };
 static const char *Days[] = {
-	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", 0
+	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", NULL
 };
 static const char *Piroutines[] = {
-	"program", "function", "procedure", 0
+	"program", "function", "procedure", NULL
 };
 
 
@@ -416,7 +416,8 @@ pi(void)
 	 * End matched %s on line %d
 	 * Inserted keyword end matching %s on line %d
 	 */
-	multiple = structured = false;
+	structured = false;
+	multiple = false;
 	if (
 	       (cur_wordc == 6 && wordvcmp(cur_wordv+1, 2, pi_Endmatched) == 0)
 	    || (cur_wordc == 8 && wordvcmp(cur_wordv+1, 4, pi_Inserted) == 0)

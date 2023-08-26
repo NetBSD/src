@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2023/08/26 14:50:53 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2023/08/26 14:59:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.25 2023/08/26 14:50:53 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2023/08/26 14:59:44 rillig Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -88,7 +88,7 @@ int
 main(int argc, char **argv)
 {
 	int c;
-	char *ignorename = 0;
+	char *ignorename = NULL;
 	int ed_argc;
 	char **ed_argv;		/* return from touchfiles */
 	bool show_errors = false;
@@ -147,7 +147,7 @@ main(int argc, char **argv)
 	}
 
 	if (notouch)
-		suffixlist = 0;
+		suffixlist = NULL;
 
 
 	if ((queryfile = fopen(im_on, "r")) == NULL) {

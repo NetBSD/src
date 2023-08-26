@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.19 2023/08/26 12:43:28 rillig Exp $	*/
+/*	$NetBSD: filter.c,v 1.20 2023/08/26 14:59:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.19 2023/08/26 12:43:28 rillig Exp $");
+__RCSID("$NetBSD: filter.c,v 1.20 2023/08/26 14:59:44 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,7 +52,7 @@ static const char *lint_libs[] = {
 	IG_FILE2,
 	IG_FILE3,
 	IG_FILE4,
-	0
+	NULL
 };
 
 static int lexsort(const void *, const void *);
