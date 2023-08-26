@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.24 2016/08/20 19:47:44 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.25 2023/08/26 05:22:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.24 2016/08/20 19:47:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.25 2023/08/26 05:22:50 riastradh Exp $");
 
 #include <sys/types.h>
 #include <ufs/ext2fs/ext2fs.h>
@@ -85,7 +85,7 @@ e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 void
 e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new, size_t isize)
 {
-	/* preserve non-swapped and unused fields */ 
+	/* preserve non-swapped and unused fields */
 	memcpy(new, old, isize);
 
 	/* swap what needs to be swapped */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.50 2023/08/26 05:18:17 riastradh Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.51 2023/08/26 05:22:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -177,7 +177,7 @@ struct ext2fs {
 	uint8_t   e2fs_prealloc;	/* # of blocks to preallocate */
 	uint8_t   e2fs_dir_prealloc;	/* # of blocks to preallocate for dir */
 	uint16_t  e2fs_reserved_ngdb;	/* # of reserved gd blocks for resize */
-	
+
 	/* Additional fields */
 	char      e3fs_journal_uuid[16];/* uuid of journal superblock */
 	uint32_t  e3fs_journal_inum;	/* inode number of journal file */
@@ -356,7 +356,7 @@ struct m_ext2fs {
  * - EXT2F_ROCOMPAT_SPARSESUPER
  *    superblock backups stored only in cg_has_sb(bno) groups
  * - EXT2F_ROCOMPAT_LARGEFILE
- *    use e2di_size_high in struct ext2fs_dinode to store 
+ *    use e2di_size_high in struct ext2fs_dinode to store
  *    upper 32bit of size for >2GB files
  * - EXT2F_INCOMPAT_FTYPE
  *    store file type to e2d_type in struct ext2fs_direct
@@ -424,7 +424,7 @@ struct ext2_gd {
 	uint16_t ext2bgd_ndirs;		/* number of directories */
 
 	/*
-	 * Following only valid when either GDT_CSUM (AKA uninit_bg) 
+	 * Following only valid when either GDT_CSUM (AKA uninit_bg)
 	 * or METADATA_CKSUM feature is on
 	 */
 	uint16_t ext2bgd_flags;		/* ext4 bg flags (INODE_UNINIT, ...)*/
@@ -450,7 +450,7 @@ struct ext2_gd {
 
 #define E2FS_HAS_GD_CSUM(fs) \
 	EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_GDT_CSUM|EXT2F_ROCOMPAT_METADATA_CKSUM) != 0
-	
+
 /*
  * If the EXT2F_ROCOMPAT_SPARSESUPER flag is set, the cylinder group has a
  * copy of the super and cylinder group descriptors blocks only if it's

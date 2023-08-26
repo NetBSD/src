@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.53 2023/08/25 16:50:23 christos Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.54 2023/08/26 05:22:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.53 2023/08/25 16:50:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.54 2023/08/26 05:22:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -667,7 +667,7 @@ ext2fs_cg_update(struct m_ext2fs *fs, int cg, struct ext2_gd *gd, int nbfree, in
 	if (nifree) {
 		uint32_t ext2bgd_nifree = fs2h16(gd->ext2bgd_nifree) |
 		    (fs2h16(gd->ext2bgd_nifree_hi) << 16);
-		ext2bgd_nifree += nifree; 
+		ext2bgd_nifree += nifree;
 		gd->ext2bgd_nifree = h2fs16(ext2bgd_nifree);
 		gd->ext2bgd_nifree_hi = h2fs16(ext2bgd_nifree >> 16);
 		/*
@@ -696,7 +696,6 @@ ext2fs_cg_update(struct m_ext2fs *fs, int cg, struct ext2_gd *gd, int nbfree, in
 		ext2bgd_nbfree += nbfree;
 		gd->ext2bgd_nbfree = h2fs16(ext2bgd_nbfree);
 		gd->ext2bgd_nbfree_hi = h2fs16(ext2bgd_nbfree >> 16);
-		
 	}
 
 	if (ndirs) {
@@ -821,7 +820,7 @@ ext2fs_cg_verify_and_initialize(struct vnode *devvp, struct m_ext2fs *fs, int ro
 				    (int)fs->e2fs_bsize, 0, 0);
 				clrbuf(bp);
 			}
-	
+
 			bdwrite(bp);
 		}
 

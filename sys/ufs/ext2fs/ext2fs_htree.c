@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_htree.c,v 1.10 2022/05/04 07:34:28 andvar Exp $	*/
+/*	$NetBSD: ext2fs_htree.c,v 1.11 2023/08/26 05:22:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2012 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  * $FreeBSD: head/sys/fs/ext2fs/ext2fs_htree.c 294653 2016-01-24 02:41:49Z pfg $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.10 2022/05/04 07:34:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.11 2023/08/26 05:22:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.10 2022/05/04 07:34:28 andvar Exp
 
 static int ext2fs_htree_find_leaf(struct inode *, const char *, int ,
     uint32_t *, uint8_t *, struct ext2fs_htree_lookup_info *);
-    
+
 int
 ext2fs_htree_has_idx(struct inode *ip)
 {
@@ -449,7 +449,7 @@ ext2fs_htree_create_index(struct vnode *vp, struct componentname *cnp,
 		(void)bwrite(bp);
 	else
 		bdwrite(bp);
-	
+
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 
 	/*
@@ -504,7 +504,7 @@ ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
 	fs = &(m_fs->e2fs);
 	blksize = m_fs->e2fs_bsize;
 
-	if (ip->i_crap.ulr_count != 0) 
+	if (ip->i_crap.ulr_count != 0)
 		return ext2fs_add_entry(dvp, entry, &(ip->i_crap), newentrysize);
 
 	/* Target directory block is full, split it */
@@ -536,7 +536,7 @@ ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
 		error = ext2fs_blkatoff(dvp, cursize, NULL, &dst_bp);
 		if (error)
 			goto finish;
-	
+
 		dst_node = (struct ext2fs_htree_node *)dst_bp->b_data;
 		dst_entries = dst_node->h_entries;
 
@@ -561,7 +561,7 @@ ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
 			ext2fs_htree_set_count(dst_entries, dst_ent_num);
 			ext2fs_htree_set_limit(dst_entries,
 			    ext2fs_htree_node_limit(ip));
-		
+
 			if (info.h_levels[1].h_entry >= entries + src_ent_num) {
 				struct buf *tmp = info.h_levels[1].h_bp;
 				info.h_levels[1].h_bp = dst_bp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.222 2023/08/25 16:50:23 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.223 2023/08/26 05:22:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.222 2023/08/25 16:50:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.223 2023/08/26 05:22:50 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -760,7 +760,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 
 	int32_t sh = m_fs->e2fs_bsize >> m_fs->e2fs_group_desc_shift;
 	/* XXX: should be added in ext2fs_sbfill()? */
-	m_fs->e2fs_gd = kmem_alloc(m_fs->e2fs_ngdb * sh 
+	m_fs->e2fs_gd = kmem_alloc(m_fs->e2fs_ngdb * sh
 	    * sizeof(struct ext2_gd), KM_SLEEP);
 	for (i = 0; i < m_fs->e2fs_ngdb; i++) {
 		error = bread(devvp,
@@ -1472,4 +1472,3 @@ ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 
 	return 0;
 }
-

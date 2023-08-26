@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.30 2016/08/14 11:26:35 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.31 2023/08/26 05:22:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.30 2016/08/14 11:26:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.31 2023/08/26 05:22:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ ext2fs_bmap(void *v)
  */
 static int
 ext4_bmapext(struct vnode *vp, int32_t bn, int64_t *bnp, int *runp, int *runb)
-{	
+{
 	struct inode *ip;
 	struct m_ext2fs	 *fs;
 	struct ext4_extent *ep;
