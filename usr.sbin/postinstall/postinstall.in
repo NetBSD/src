@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.52 2023/06/21 18:46:06 mrg Exp $
+# $NetBSD: postinstall.in,v 1.53 2023/08/26 05:59:00 riastradh Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1658,6 +1658,37 @@ do_named()
 	compare_dir "${op}" "${SRC_DIR}/etc/namedb" "${DEST_DIR}/etc/namedb" \
 		644 \
 		root.cache
+}
+
+
+#
+#	opensslcerts
+#
+
+additem opensslcerts "build /etc/openssl/certs cache of HTTPS CA certificates"
+do_opensslcerts()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_opensslcerts fix|check"
+
+	case $1 in
+	check)	# XXX Anything to check?
+		return 0
+		;;
+	fix)	# This runs openssl(1), which is not available as a
+		# build-time tool.  So for now, restrict it to running
+		# on the installed system.
+		case $DEST_DIR in
+		''|/)	;;
+		*)	msg "opensslcerts limited to DEST_DIR=/"
+			return 1
+			;;
+		esac
+		certctl rehash
+		return 0
+		;;
+	*)	err 3 "USAGE: do_opensslcerts fix|check"
+		;;
+	esac
 }
 
 
