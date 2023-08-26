@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.24 2023/08/26 14:59:44 rillig Exp $	*/
+/*	$NetBSD: subr.c,v 1.25 2023/08/26 15:07:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.24 2023/08/26 14:59:44 rillig Exp $");
+__RCSID("$NetBSD: subr.c,v 1.25 2023/08/26 15:07:14 rillig Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -292,10 +292,9 @@ printerrors(bool look_at_subclass, int errorc, Eptr errorv[])
 void
 wordvprint(FILE *fyle, int wordc, char **wordv)
 {
-	int i;
 	const char *sep = "";
 
-	for (i = 0; i < wordc; i++)
+	for (int i = 0; i < wordc; i++)
 		if (wordv[i] != NULL) {
 			fprintf(fyle, "%s%s",sep,wordv[i]);
 			sep = " ";
@@ -351,10 +350,9 @@ wordvbuild(char *string, int *r_wordc, char ***r_wordv)
 int
 wordvcmp(char **wordv1, int wordc, char **wordv2)
 {
-	int i;
 	int back;
 
-	for (i = 0; i < wordc; i++) {
+	for (int i = 0; i < wordc; i++) {
 		if (wordv1[i] == NULL || wordv2[i] == NULL)
 			return -1;
 		if ((back = strcmp(wordv1[i], wordv2[i])) != 0)
@@ -364,7 +362,7 @@ wordvcmp(char **wordv1, int wordc, char **wordv2)
 }
 
 /*
- * splice a 0 basedword vector onto the tail of a
+ * splice a 0 based word vector onto the tail of a
  * new wordv, allowing the first emptyhead slots to be empty
  */
 char **
@@ -377,26 +375,19 @@ wordvsplice(int emptyhead, int wordc, char **wordv)
 	nwordv = Calloc(nwordc, sizeof (char *));
 	for (i = 0; i < emptyhead; i++)
 		nwordv[i] = NULL;
-	for (i = emptyhead; i < nwordc; i++) {
+	for (i = emptyhead; i < nwordc; i++)
 		nwordv[i] = wordv[i-emptyhead];
-	}
 	return nwordv;
 }
-
-/*
- * plural and verb forms
- */
-static const char *S = "s";
-static const char *N = "";
 
 const char *
 plural(int n)
 {
-	return n > 1 ? S : N;
+	return n > 1 ? "s" : "";
 }
 
 const char *
 verbform(int n)
 {
-	return n > 1 ? N : S;
+	return n > 1 ? "" : "s";
 }
