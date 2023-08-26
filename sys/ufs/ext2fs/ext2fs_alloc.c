@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.55 2023/08/26 21:37:28 christos Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.56 2023/08/26 22:08:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.55 2023/08/26 21:37:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.56 2023/08/26 22:08:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,7 +448,7 @@ ext2fs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	if (ipref == -1)
 		ipref = 0;
 	fs = ip->i_e2fs;
-	if (fs->e2fs_gd[cg].ext2bgd_nifree == 0 ||
+	if (fs->e2fs_gd[cg].ext2bgd_nifree == 0 &&
 	    fs->e2fs_gd[cg].ext2bgd_nifree_hi == 0)
 		return 0;
 	error = bread(ip->i_devvp, EXT2_FSBTODB64(fs,
