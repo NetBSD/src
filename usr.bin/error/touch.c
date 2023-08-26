@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.29 2023/08/26 11:38:14 rillig Exp $	*/
+/*	$NetBSD: touch.c,v 1.30 2023/08/26 12:43:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.29 2023/08/26 11:38:14 rillig Exp $");
+__RCSID("$NetBSD: touch.c,v 1.30 2023/08/26 12:43:28 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -177,7 +177,7 @@ countfiles(Eptr *errors)
 			}
 		}
 	}
-	return (my_nfiles);
+	return my_nfiles;
 }
 
 const char *class_table[] = {
@@ -242,7 +242,7 @@ nopertain(Eptr **my_files)
 	Eptr errorp;
 
 	if (my_files[1] - my_files[0] <= 0)
-		return (0);
+		return 0;
 	for (type = C_UNKNOWN; NOTSORTABLE(type); type++) {
 		if (class_count[type] <= 0)
 			continue;
@@ -262,7 +262,7 @@ nopertain(Eptr **my_files)
 			}
 		}
 	}
-	return (someerrors);
+	return someerrors;
 }
 
 
@@ -375,7 +375,7 @@ preview(int my_nerrors, Eptr **my_files, int ix)
 				fprintf(stdout, "\n");
 		}
 	}
-	return (back);
+	return back;
 }
 
 static int
@@ -395,7 +395,7 @@ settotouch(const char *name)
 		case Q_no:
 		case Q_error:
 			touchstatus = Q_NO;
-			return (dest);
+			return dest;
 		default:
 			touchstatus = Q_YES;
 			break;
@@ -428,7 +428,7 @@ settotouch(const char *name)
 		dest = edit(name) ? TOSTDOUT : TOTHEFILE;
 		break;
 	}
-	return (dest);
+	return dest;
 }
 
 static void
@@ -480,9 +480,9 @@ oktotouch(const char *filename)
 
 	pat = suffixlist;
 	if (pat == 0)
-		return (0);
+		return 0;
 	if (*pat == '*')
-		return (1);
+		return 1;
 	while (*pat++ != '.')
 		continue;
 	--pat;		/* point to the period */
@@ -491,7 +491,7 @@ oktotouch(const char *filename)
 	     src > filename && *src != '.'; --src)
 		continue;
 	if (*src != '.')
-		return (0);
+		return 0;
 
 	for (src++, pat++, osrc = src; *src && *pat; src = osrc, pat++) {
 		for (;   *src			/* not at end of the source */
@@ -502,15 +502,15 @@ oktotouch(const char *filename)
 		      src++, pat++)
 			continue;
 		if (*src == 0 && (*pat == 0 || *pat == '.' || *pat == '*'))
-			return (1);
+			return 1;
 		if (*src != 0 && *pat == '*')
-			return (1);
+			return 1;
 		while (*pat && *pat != '.')
 			pat++;
 		if (!*pat)
-			return (0);
+			return 0;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -697,9 +697,9 @@ mustoverwrite(FILE *preciousfile, FILE *temp)
 
 	while ((nread = fread(edbuf, 1, sizeof(edbuf), temp)) != 0) {
 		if (mustwrite(edbuf, nread, preciousfile) == 0)
-			return (0);
+			return 0;
 	}
-	return (1);
+	return 1;
 }
 
 /*
@@ -711,10 +711,10 @@ mustwrite(const char *base, size_t n, FILE *preciousfile)
 	size_t nwrote;
 
 	if (n == 0)
-		return (1);
+		return 1;
 	nwrote = fwrite(base, 1, n, preciousfile);
 	if (nwrote == n)
-		return (1);
+		return 1;
 	warn("write failed");
 	switch (inquire(terse
 	    ? "Botch overwriting: retry? "
@@ -722,25 +722,25 @@ mustwrite(const char *base, size_t n, FILE *preciousfile)
 	case Q_YES:
 	case Q_yes:
 		mustwrite(base + nwrote, n - nwrote, preciousfile);
-		return (1);
+		return 1;
 	case Q_NO:
 	case Q_no:
 		switch (inquire("Are you sure? ")) {
 		case Q_error:
 		case Q_YES:
 		case Q_yes:
-			return (0);
+			return 0;
 		case Q_NO:
 		case Q_no:
 			mustwrite(base + nwrote, n - nwrote, preciousfile);
-			return (1);
+			return 1;
 		default:
 			abort();
 		}
 		/* FALLTHROUGH */
 	case Q_error:
 	default:
-		return (0);
+		return 0;
 	}
 }
 
@@ -787,7 +787,7 @@ inquire(const char *fmt, ...)
 	char buffer[128];
 
 	if (queryfile == NULL)
-		return (Q_error);
+		return Q_error;
 	for (;;) {
 		fflush(stdout);
 		va_start(ap, fmt);
@@ -795,12 +795,12 @@ inquire(const char *fmt, ...)
 		va_end(ap);
 		fflush(stderr);
 		if (fgets(buffer, 127, queryfile) == NULL)
-			return (Q_error);
+			return Q_error;
 		switch (buffer[0]) {
-		case 'Y': return (Q_YES);
-		case 'y': return (Q_yes);
-		case 'N': return (Q_NO);
-		case 'n': return (Q_no);
+		case 'Y': return Q_YES;
+		case 'y': return Q_yes;
+		case 'N': return Q_NO;
+		case 'n': return Q_no;
 		default: fprintf(stderr, "Yes or No only!\n");
 		}
 	}
@@ -812,10 +812,10 @@ probethisfile(const char *name)
 	struct stat statbuf;
 
 	if (stat(name, &statbuf) < 0)
-		return (F_NOTEXIST);
+		return F_NOTEXIST;
 	if ((statbuf.st_mode & S_IREAD) == 0)
-		return (F_NOTREAD);
+		return F_NOTREAD;
 	if ((statbuf.st_mode & S_IWRITE) == 0)
-		return (F_NOTWRITE);
-	return (F_TOUCHIT);
+		return F_NOTWRITE;
+	return F_TOUCHIT;
 }
