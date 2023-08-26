@@ -430,7 +430,7 @@ extern int      stbi_gif_info_from_file   (FILE *f,                  int *x, int
 #endif
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.10 2021/12/05 07:13:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.11 2023/08/26 21:03:53 andvar Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -1506,7 +1506,7 @@ static void reset(jpeg *j)
    j->img_comp[0].dc_pred = j->img_comp[1].dc_pred = j->img_comp[2].dc_pred = 0;
    j->marker = MARKER_none;
    j->todo = j->restart_interval ? j->restart_interval : 0x7fffffff;
-   // no more than 1<<31 MCUs if no restart_interal? that's plenty safe,
+   // no more than 1<<31 MCUs if no restart_interval? that's plenty safe,
    // since we don't even allow 1<<30 pixels
 }
 
