@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.19 2023/08/26 12:43:28 rillig Exp $	*/
+/*	$NetBSD: input.c,v 1.20 2023/08/26 14:50:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.19 2023/08/26 12:43:28 rillig Exp $");
+__RCSID("$NetBSD: input.c,v 1.20 2023/08/26 14:50:53 rillig Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -104,7 +104,7 @@ eaterrors(int *r_errorc, Eptr **r_errorv)
 	) ;
 	else
 		errorclass = catchall();
-	if (cur_wordc)
+	if (cur_wordc > 0)
 		erroradd(cur_wordc, cur_wordv+1, errorclass, C_UNKNOWN);
     }
 #ifdef FULLDEBUG
@@ -125,7 +125,8 @@ erroradd(int errorlength, char **errorv, Errorclass errorclass,
 
 	if (errorclass == C_TRUE) {
 		/* check canonicalization of the second argument*/
-		for (cp = errorv[1]; *cp && isdigit((unsigned char)*cp); cp++)
+		for (cp = errorv[1];
+		    *cp != '\0' && isdigit((unsigned char)*cp); cp++)
 			continue;
 		errorclass = (*cp == '\0') ? C_TRUE : C_NONSPEC;
 #ifdef FULLDEBUG
@@ -431,14 +432,10 @@ lint1(void)
 			return C_TRUE;
 		}
 	}
-	if (file2)
-		free(file2);
-	if (file1)
-		free(file1);
-	if (line2)
-		free(line2);
-	if (line1)
-		free(line1);
+	free(file2);
+	free(file1);
+	free(line2);
+	free(line1);
 	return C_UNKNOWN;
 } /* end of lint 1*/
 
