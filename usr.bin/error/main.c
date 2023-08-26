@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2023/08/26 11:35:56 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2023/08/26 13:52:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.23 2023/08/26 11:35:56 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2023/08/26 13:52:10 rillig Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -84,43 +84,6 @@ static void forkvi(int, char **);
 static void try(const char *, int, char **);
 static void usage(void) __attribute__((__noreturn__));
 
-/*
- * error [-nqSsTv] [-I <ignorename>] [-t <suffixlist>] [-p <level>] <infile>
- *
- *	-I:	the following name, `ignorename' contains a list of
- *		function names that are not to be treated as hard errors.
- *		Default: ~/.errorsrc
- *
- *	-n:	don't touch ANY files!
- *
- *	-p:	take the next argument as the number of levels to skip
- *		from the filename, like patch.
- *
- *	-q:	The user is to be queried before touching each
- *		file; if not specified, all files with hard, non
- *		ignorable errors are touched (assuming they can be).
- *
- *	-S:	show the errors in unsorted order
- *		(as they come from the error file)
- *
- *	-s:	print a summary of the error's categories.
- *
- *	-T:	terse output
- *
- *	-t:	touch only files ending with the list of suffixes, each
- *		suffix preceded by a dot.
- *		eg, -t .c.y.l
- *		will touch only files ending with .c, .y or .l
- *
- *	-v:	after touching all files, overlay vi(1), ex(1) or ed(1)
- *		on top of error, entered in the first file with
- *		an error in it, with the appropriate editor
- *		set up to use the "next" command to get the other
- *		files containing errors.
- *
- *	infile:	The error messages come from this file.
- *		Default: stdin
- */
 int
 main(int argc, char **argv)
 {
