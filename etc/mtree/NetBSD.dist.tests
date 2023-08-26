@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.200 2023/08/26 05:27:14 riastradh Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.201 2023/08/26 10:06:16 rillig Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -445,6 +445,7 @@
 ./usr/tests/usr.bin/cut
 ./usr/tests/usr.bin/diff
 ./usr/tests/usr.bin/dirname
+./usr/tests/usr.bin/error
 ./usr/tests/usr.bin/find
 ./usr/tests/usr.bin/fstat
 ./usr/tests/usr.bin/gdb
