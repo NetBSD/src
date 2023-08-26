@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.216 2023/08/03 18:48:42 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.217 2023/08/26 10:43:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.216 2023/08/03 18:48:42 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.217 2023/08/26 10:43:53 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -85,7 +85,7 @@ static const char *const msgs[] = {
 	"redeclaration of '%s'",				      /* 27 */
 	"redefinition of '%s'",					      /* 28 */
 	"'%s' was previously declared extern, becomes static",	      /* 29 */
-	"redeclaration of '%s'; ANSI C requires static",	      /* 30 */
+	"redeclaration of '%s'; C90 or later require static",	      /* 30 */
 	"'%s' has incomplete type '%s'",			      /* 31 */
 	"type of parameter '%s' defaults to 'int'",		      /* 32 */
 	"duplicate member name '%s'",				      /* 33 */
@@ -99,7 +99,7 @@ static const char *const msgs[] = {
 	"bit-field in union is very unusual",			      /* 41 */
 	"forward reference to enum type",			      /* 42 */
 	"redefinition of '%s' hides earlier one",		      /* 43 */
-	"declaration of '%s %s' introduces new type in ANSI C",	      /* 44 */
+	"declaration of '%s %s' introduces new type in C90 or later", /* 44 */
 	"base type is really '%s %s'",				      /* 45 */
 	"%s tag '%s' redeclared as %s",				      /* 46 */
 	"zero sized %s is a C99 feature",			      /* 47 */
@@ -139,7 +139,7 @@ static const char *const msgs[] = {
 	"\\a undefined in traditional C",			      /* 81 */
 	"\\x undefined in traditional C",			      /* 82 */
 	"storage class after type is obsolescent",		      /* 83 */
-	"ANSI C requires formal parameter before '...'",	      /* 84 */
+	"C90 to C17 require formal parameter before '...'",	      /* 84 */
 	"dubious tag declaration '%s %s'",			      /* 85 */
 	"automatic '%s' hides external declaration",		      /* 86 */
 	"static '%s' hides external declaration",		      /* 87 */
@@ -173,14 +173,14 @@ static const char *const msgs[] = {
 	"%soperand of '%s' must be modifiable lvalue",		      /* 115 */
 	"illegal pointer subtraction",				      /* 116 */
 	"bitwise '%s' on signed value possibly nonportable",	      /* 117 */
-	"semantics of '%s' change in ANSI C; use explicit cast",      /* 118 */
+	"semantics of '%s' change in C90; use explicit cast",	      /* 118 */
 	"conversion of '%s' to '%s' is out of range",		      /* 119 */
 	"bitwise '%s' on signed value nonportable",		      /* 120 */
 	"negative shift",					      /* 121 */
 	"shift amount %llu is greater than bit-size %llu of '%s'",    /* 122 */
 	"illegal combination of %s '%s' and %s '%s', op '%s'",	      /* 123 */
 	"illegal combination of '%s' and '%s', op '%s'",	      /* 124 */
-	"ANSI C forbids ordered comparisons of pointers to functions",/* 125 */
+	"pointers to functions can only be compared for equality",    /* 125 */
 	"incompatible types '%s' and '%s' in conditional",	      /* 126 */
 	"'&' before array or function: ignored",		      /* 127 */
 	"operands of '%s' have incompatible pointer types to '%s' and '%s'", /* 128 */
@@ -212,7 +212,7 @@ static const char *const msgs[] = {
 	"illegal combination of %s '%s' and %s '%s', arg #%d",	      /* 154 */
 	"passing '%s' to incompatible '%s', arg #%d",		      /* 155 */
 	"function expects '%s', passing '%s' for arg #%d",	      /* 156 */
-	"ANSI C treats constant as unsigned",			      /* 157 */
+	"C90 treats constant as unsigned",			      /* 157 */
 	"'%s' may be used before set",				      /* 158 */
 	"assignment in conditional context",			      /* 159 */
 	"operator '==' found where '=' was expected",		      /* 160 */
@@ -273,7 +273,7 @@ static const char *const msgs[] = {
 	"function '%s' implicitly declared to return int",	      /* 215 */
 	"function '%s' has 'return expr' and 'return'",		      /* 216 */
 	"function '%s' falls off bottom without returning value",     /* 217 */
-	"ANSI C treats constant as unsigned, op '%s'",		      /* 218 */
+	"C90 treats constant as unsigned, op '%s'",		      /* 218 */
 	"concatenated strings are illegal in traditional C",	      /* 219 */
 	"fallthrough on case statement",			      /* 220 */
 	"initialization of unsigned with negative constant",	      /* 221 */
@@ -328,8 +328,8 @@ static const char *const msgs[] = {
 	"function prototypes are illegal in traditional C",	      /* 270 */
 	"switch expression must be of type 'int' in traditional C",   /* 271 */
 	"empty translation unit",				      /* 272 */
-	"bit-field type '%s' invalid in ANSI C",		      /* 273 */
-	"ANSI C forbids comparison of %s with %s",		      /* 274 */
+	"bit-field type '%s' invalid in C90 or later",		      /* 273 */
+	"C90 or later forbid comparison of %s with %s",		      /* 274 */
 	"cast discards 'const' from type '%s'",			      /* 275 */
 	"'__%s__' is illegal for type '%s'",			      /* 276 */
 	"initialization of '%s' with '%s'",			      /* 277 */
@@ -358,9 +358,9 @@ static const char *const msgs[] = {
 	"old-style definition",					      /* 300 */
 	"array of incomplete type",				      /* 301 */
 	"'%s' returns pointer to automatic object",		      /* 302 */
-	"ANSI C forbids conversion of %s to %s",		      /* 303 */
-	"ANSI C forbids conversion of %s to %s, arg #%d",	      /* 304 */
-	"ANSI C forbids conversion of %s to %s, op %s",		      /* 305 */
+	"conversion of %s to %s requires a cast",		      /* 303 */
+	"conversion of %s to %s requires a cast, arg #%d",	      /* 304 */
+	"conversion of %s to %s requires a cast, op %s",	      /* 305 */
 	"constant truncated by conversion, op '%s'",		      /* 306 */
 	"static variable '%s' set but not used",		      /* 307 */
 	"invalid type for _Complex",				      /* 308 */

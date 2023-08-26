@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.471 2023/08/12 18:05:51 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.472 2023/08/26 10:43:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.471 2023/08/12 18:05:51 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.472 2023/08/26 10:43:53 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1572,10 +1572,10 @@ vararg_parameter_type_list:	/* specific to lint */
 |	T_ELLIPSIS {
 		/* TODO: C99 6.7.5 makes this an error as well. */
 		if (!allow_trad && !allow_c99) {
-			/* ANSI C requires formal parameter before '...' */
+			/* C90 to C17 require formal parameter before '...' */
 			error(84);
 		} else if (allow_c90) {
-			/* ANSI C requires formal parameter before '...' */
+			/* C90 to C17 require formal parameter before '...' */
 			warning(84);
 		}
 		$$ = (struct parameter_list){ .vararg = true };

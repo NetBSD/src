@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.577 2023/08/08 20:15:10 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.578 2023/08/26 10:43:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.577 2023/08/08 20:15:10 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.578 2023/08/26 10:43:53 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1346,7 +1346,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 
 	if (op == SHLASS && hflag && allow_trad && allow_c90
 	    && portable_rank_cmp(lt, rt) < 0)
-		/* semantics of '%s' change in ANSI C; ... */
+		/* semantics of '%s' change in C90; ... */
 		warning(118, "<<=");
 
 	if (op != SHLASS && op != SHRASS
@@ -1683,17 +1683,17 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	/*
 	 * If the result of the operation is different for signed or
 	 * unsigned operands and one of the operands is signed only in
-	 * ANSI C, print a warning.
+	 * C90, print a warning.
 	 */
 	if (mp->m_warn_if_left_unsigned_in_c90 &&
 	    ln->tn_op == CON && ln->tn_val.v_unsigned_since_c90) {
-		/* ANSI C treats constant as unsigned, op '%s' */
+		/* C90 treats constant as unsigned, op '%s' */
 		warning(218, op_name(op));
 		ln->tn_val.v_unsigned_since_c90 = false;
 	}
 	if (mp->m_warn_if_right_unsigned_in_c90 &&
 	    rn->tn_op == CON && rn->tn_val.v_unsigned_since_c90) {
-		/* ANSI C treats constant as unsigned, op '%s' */
+		/* C90 treats constant as unsigned, op '%s' */
 		warning(218, op_name(op));
 		rn->tn_val.v_unsigned_since_c90 = false;
 	}
@@ -2071,7 +2071,7 @@ before_conversion(const tnode_t *tn)
 }
 
 /*
- * Most errors required by ANSI C are reported in struct_or_union_member().
+ * Most errors required by C90 are reported in struct_or_union_member().
  * Here we only check for totally wrong things.
  */
 static bool
@@ -2270,7 +2270,7 @@ typeok_shr(op_t op,
 		   !is_uinteger(olt) && is_uinteger(ort)) {
 		/* The left operand would become unsigned in traditional C. */
 		if (hflag && (ln->tn_op != CON || ln->tn_val.u.integer < 0)) {
-			/* semantics of '%s' change in ANSI C; use ... */
+			/* semantics of '%s' change in C90; use ... */
 			warning(118, op_name(op));
 		}
 	} else if (allow_trad && allow_c90 &&
@@ -2281,7 +2281,7 @@ typeok_shr(op_t op,
 		 * (possibly sign-extended) and then shifted.
 		 */
 		if (hflag && (ln->tn_op != CON || ln->tn_val.u.integer < 0)) {
-			/* semantics of '%s' change in ANSI C; use ... */
+			/* semantics of '%s' change in C90; use ... */
 			warning(118, op_name(op));
 		}
 	}
@@ -2302,10 +2302,10 @@ typeok_shl(op_t op, tspec_t lt, tspec_t rt)
 		/*
 		 * XXX If both operands are constant, make sure
 		 * that there is really a difference between
-		 * ANSI C and traditional C.
+		 * C90 and traditional C.
 		 */
 		if (hflag && allow_trad && allow_c90)
-			/* semantics of '%s' change in ANSI C; use ... */
+			/* semantics of '%s' change in C90; use ... */
 			warning(118, op_name(op));
 	}
 }
@@ -2388,7 +2388,7 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 			const char *lsts, *rsts;
 			*(lst == FUNC ? &lsts : &rsts) = "function pointer";
 			*(lst == VOID ? &lsts : &rsts) = "'void *'";
-			/* ANSI C forbids comparison of %s with %s */
+			/* C90 or later forbid comparison of %s with %s */
 			warning(274, lsts, rsts);
 		}
 		return;
@@ -2402,7 +2402,7 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 	if (lst == FUNC && rst == FUNC) {
 		/* TODO: C99 behaves like C90 here, see C99 6.5.8p2. */
 		if ((!allow_trad && !allow_c99) && op != EQ && op != NE)
-			/* ANSI C forbids ordered comparisons of ... */
+			/* pointers to functions can only be compared ... */
 			warning(125);
 	}
 }
@@ -2456,7 +2456,7 @@ typeok_colon_pointer(const type_t *ltp, const type_t *rtp)
 		/* (void *)0 is handled in typeok_colon */
 		/* TODO: C99 behaves like C90 here. */
 		if (!allow_trad && !allow_c99)
-			/* ANSI C forbids conversion of %s to %s, op %s */
+			/* conversion of %s to %s requires a cast, op %s */
 			warning(305, "function pointer", "'void *'",
 			    op_name(COLON));
 		return;
@@ -2615,15 +2615,15 @@ check_assign_void_pointer(op_t op, int arg,
 	switch (op) {
 	case INIT:
 	case RETURN:
-		/* ANSI C forbids conversion of %s to %s */
+		/* conversion of %s to %s requires a cast */
 		warning(303, rts, lts);
 		break;
 	case FARG:
-		/* ANSI C forbids conversion of %s to %s, arg #%d */
+		/* conversion of %s to %s requires a cast, arg #%d */
 		warning(304, rts, lts, arg);
 		break;
 	default:
-		/* ANSI C forbids conversion of %s to %s, op %s */
+		/* conversion of %s to %s requires a cast, op %s */
 		warning(305, rts, lts, op_name(op));
 		break;
 	}
@@ -3576,7 +3576,7 @@ convert_pointer_from_pointer(type_t *ntp, tnode_t *tn)
 			/* null pointers are already handled in convert() */
 			*(nst == FUNC ? &nts : &ots) = "function pointer";
 			*(nst == VOID ? &nts : &ots) = "'void *'";
-			/* ANSI C forbids conversion of %s to %s */
+			/* conversion of %s to %s requires a cast */
 			warning(303, ots, nts);
 		}
 		return;
@@ -3943,7 +3943,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 	    (is_floating(nt) || (
 		(is_integer(nt) && !is_uinteger(nt) &&
 		    portable_rank_cmp(nt, ot) > 0)))) {
-		/* ANSI C treats constant as unsigned */
+		/* C90 treats constant as unsigned */
 		warning(157);
 		v->v_unsigned_since_c90 = false;
 	}

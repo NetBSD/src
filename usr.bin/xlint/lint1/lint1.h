@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.199 2023/08/02 18:51:25 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.200 2023/08/26 10:43:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -85,9 +85,11 @@ typedef	struct strg {
 } strg_t;
 
 // TODO: Use bit-fields instead of plain bool, but keep an eye on arm and
-// powerpc, on which GCC 10.5.0 generates code that leads to extra 327
-// warnings, even in msg_327.c, which does not contain any type qualifier at
-// all.  A possible starting point for continuing the investigation is that
+// powerpc, on which NetBSD's GCC 10.5.0 (but not the upstream GCC) generates
+// code that leads to extra 327 warnings, even in msg_327.c, which does not
+// contain any type qualifier at all.
+//
+// A possible starting point for continuing the investigation is that
 // type_qualifiers is a very small struct that contains only bool bit-fields,
 // and this struct is a member of the parser's union.
 //

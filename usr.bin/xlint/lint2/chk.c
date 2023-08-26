@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.60 2023/07/13 08:40:38 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.61 2023/08/26 10:43:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.60 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.61 2023/08/26 10:43:53 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -205,7 +205,7 @@ check_multiple_definitions(const hte_t *hte)
 	def1 = NULL;
 	for (sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
 		/*
-		 * ANSI C allows tentative definitions of the same name in
+		 * C90 allows tentative definitions of the same name in
 		 * only one compilation unit.
 		 */
 		if (sym->s_def != DEF && (!sflag || sym->s_def != TDEF))
@@ -921,7 +921,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			goto conv;
 		} else if (fc == 'X') {
 			/*
-			 * XXX valid in ANSI C, but in NetBSD's libc imple-
+			 * XXX valid in C90, but in NetBSD's libc imple-
 			 * mented as "lx". That's why it should be avoided.
 			 */
 			if (sz != NO_TSPEC || !tflag)
@@ -930,7 +930,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			goto conv;
 		} else if (fc == 'E') {
 			/*
-			 * XXX valid in ANSI C, but in NetBSD's libc imple-
+			 * XXX valid in C90, but in NetBSD's libc imple-
 			 * mented as "lf". That's why it should be avoided.
 			 */
 			if (sz != NO_TSPEC || !tflag)
@@ -945,7 +945,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			goto conv;
 		} else if (fc == 'G') {
 			/*
-			 * XXX valid in ANSI C, but in NetBSD's libc not
+			 * XXX valid in C90, but in NetBSD's libc not
 			 * implemented
 			 */
 			if (sz != NO_TSPEC && sz != LONG && sz != LDOUBLE)

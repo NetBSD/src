@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_124.c,v 1.14 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: msg_124.c,v 1.15 2023/08/26 10:43:53 rillig Exp $	*/
 # 3 "msg_124.c"
 
 // Test for message: illegal combination of '%s' and '%s', op '%s' [124]
@@ -32,7 +32,7 @@ compare_pointers(const void *vp, const char *cp, const int *ip,
 {
 	ok(vp == cp);
 	ok(vp == ip);
-	/* expect+1: warning: ANSI C forbids comparison of 'void *' with function pointer [274] */
+	/* expect+1: warning: C90 or later forbid comparison of 'void *' with function pointer [274] */
 	ok(vp == fp);
 	/* expect+1: warning: illegal combination of 'pointer to const char' and 'pointer to const int', op '==' [124] */
 	not_ok(cp == ip);

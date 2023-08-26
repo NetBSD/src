@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_type_name.c,v 1.11 2023/08/02 21:11:35 rillig Exp $	*/
+/*	$NetBSD: parse_type_name.c,v 1.12 2023/08/26 10:43:53 rillig Exp $	*/
 # 3 "parse_type_name.c"
 
 /*
@@ -141,7 +141,7 @@ cover_vararg_parameter_type_list(void)
 	sink(sizeof(void (*)(double, ...)));
 
 	/* cover 'T_ELLIPSIS' */
-	/* expect+1: warning: ANSI C requires formal parameter before '...' [84] */
+	/* expect+1: warning: C90 to C17 require formal parameter before '...' [84] */
 	sink(sizeof(void (*)(...)));
 }
 
