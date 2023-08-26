@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.137 2022/03/27 16:24:58 christos Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.138 2023/08/26 05:22:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.137 2022/03/27 16:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.138 2023/08/26 05:22:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ ext2fs_setattr(void *v)
 		    (vap->va_flags & UF_IMMUTABLE) ? EXT2_IMMUTABLE : 0;
 #endif
 		ip->i_e2fs_flags |=
-		    (vap->va_flags & UF_NODUMP) ? EXT2_NODUMP : 0;   
+		    (vap->va_flags & UF_NODUMP) ? EXT2_NODUMP : 0;
 		ip->i_flag |= IN_CHANGE;
 		if (vap->va_flags & (IMMUTABLE | APPEND))
 			return 0;

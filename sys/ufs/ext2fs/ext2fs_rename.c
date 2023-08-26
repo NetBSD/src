@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.12 2021/10/20 03:08:19 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.13 2023/08/26 05:22:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.12 2021/10/20 03:08:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.13 2023/08/26 05:22:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -843,7 +843,7 @@ ext2fs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 		/* Neither -- keep ascending the family tree.  */
 		error = vcache_get(mp, &dotdot_ino, sizeof(dotdot_ino), &dvp);
 		vput(vp);
-		if (error)  
+		if (error)
 			return error;
 		error = vn_lock(dvp, LK_EXCLUSIVE);
 		if (error) {

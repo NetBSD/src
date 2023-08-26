@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.90 2021/08/17 22:00:33 andvar Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.91 2023/08/26 05:22:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.90 2021/08/17 22:00:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.91 2023/08/26 05:22:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ ext2fs_setnblock(struct inode *ip, uint64_t nblock)
 		return 0;
 	}
 
-	if (!EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_HUGE_FILE)) 
+	if (!EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_HUGE_FILE))
 		return EFBIG;
 
 	if (nblock <= 0xffffffffffffULL) {

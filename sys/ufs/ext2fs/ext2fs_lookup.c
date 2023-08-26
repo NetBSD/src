@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.93 2023/08/10 20:49:19 mrg Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.94 2023/08/26 05:22:50 riastradh Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.93 2023/08/10 20:49:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.94 2023/08/26 05:22:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,7 +399,7 @@ ext2fs_lookup(void *v)
 		struct ext2fs_searchslot ss;
 		numdirpasses = 1;
 		entryoffsetinblock = 0;
-		
+
 		int htree_lookup_ret = ext2fs_htree_lookup(dp, cnp->cn_nameptr,
 		    cnp->cn_namelen, &bp, &entryoffsetinblock, &i_offset,
 		    &prevoff, &enduseful, &ss);
@@ -715,7 +715,7 @@ found:
 }
 static void
 ext2fs_accumulatespace (struct ext2fs_searchslot *ssp, struct ext2fs_direct *ep,
-    doff_t *offp) 
+    doff_t *offp)
 {
 	int size = ep->e2d_reclen;
 
@@ -905,7 +905,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		}
 		return error;
 	}
-	
+
 	/*
 	 * TODO check if Htree index is not created for the directory then
 	 * create one if directory entries get overflew the first dir-block
@@ -944,7 +944,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 	}
 
 	error = ext2fs_add_entry(dvp, &newdir, ulr, newentrysize);
-	
+
 	if (!error && ulr->ulr_endoff && ulr->ulr_endoff < ext2fs_size(dp))
 		error = ext2fs_truncate(dvp, (off_t)ulr->ulr_endoff, IO_SYNC,
 		    cnp->cn_cred);
@@ -958,8 +958,8 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 
 int
 ext2fs_add_entry(struct vnode* dvp, struct ext2fs_direct *entry,
-    const struct ufs_lookup_results *ulr, size_t newentrysize) 
-{	
+    const struct ufs_lookup_results *ulr, size_t newentrysize)
+{
 	struct ext2fs_direct *ep, *nep;
 	struct inode *dp;
 	struct buf *bp;
