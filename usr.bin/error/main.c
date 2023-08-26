@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2021/12/12 13:05:14 andvar Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2023/08/26 11:35:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.22 2021/12/12 13:05:14 andvar Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2023/08/26 11:35:56 rillig Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -94,7 +94,7 @@ static void usage(void) __attribute__((__noreturn__));
  *	-n:	don't touch ANY files!
  *
  *	-p:	take the next argument as the number of levels to skip
- *		from the filename, like perl.
+ *		from the filename, like patch.
  *
  *	-q:	The user is to be queried before touching each
  *		file; if not specified, all files with hard, non
