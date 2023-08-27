@@ -1,0 +1,8 @@
+#	$NetBSD: owtemp.ioconf,v 1.1 2023/08/27 13:20:09 kardel Exp $
+
+ioconf		owtemp
+
+include		"conf/files"
+
+pseudo-root	onewire*
+owtemp*	at onewire?

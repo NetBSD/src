@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.19 2019/11/30 23:06:52 ad Exp $	*/
+/*	$NetBSD: owtemp.c,v 1.20 2023/08/27 13:20:09 kardel Exp $	*/
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*-
@@ -51,13 +51,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.19 2019/11/30 23:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.20 2023/08/27 13:20:09 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/module.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -315,4 +316,38 @@ owtemp_decode_ds1920(const uint8_t *buf)
 
 	/* convert to uK */
 	return (temp + 273150000);
+}
+
+MODULE(MODULE_CLASS_DRIVER, owtemp, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+owtemp_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error;
+
+	error = 0;
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_owtemp,
+		    cfattach_ioconf_owtemp, cfdata_ioconf_owtemp);
+		if (error)
+			aprint_error("%s: unable to init component\n",
+			    owtemp_cd.cd_name);
+#endif
+		break;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		config_fini_component(cfdriver_ioconf_owtemp,
+		    cfattach_ioconf_owtemp, cfdata_ioconf_owtemp);
+#endif
+		break;
+	default:
+		error = ENOTTY;
+	}
+	return error;
 }

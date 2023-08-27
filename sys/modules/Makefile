@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.279 2023/08/09 09:36:26 andvar Exp $
+#	$NetBSD: Makefile,v 1.280 2023/08/27 13:20:09 kardel Exp $
 
 .include <bsd.own.mk>
 
@@ -138,6 +138,7 @@ SUBDIR+=	null
 SUBDIR+=	onewire
 SUBDIR+=	opencrypto
 SUBDIR+=	overlay
+SUBDIR+=	owtemp
 SUBDIR+=	pad
 SUBDIR+=	pciverbose
 SUBDIR+=	pf
