@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.51 2023/08/26 05:22:50 riastradh Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.52 2023/08/27 16:35:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -444,6 +444,7 @@ struct ext2_gd {
 	uint32_t reserved2_hi[3];
 };
 
+#define	E2FS_REV0_GD_SIZE	(sizeof(struct ext2_gd) / 2)	/* 32 */
 #define E2FS_BG_INODE_UNINIT	0x0001	/* Inode bitmap not used/initialized */
 #define E2FS_BG_BLOCK_UNINIT	0x0002	/* Block bitmap not used/initialized */
 #define E2FS_BG_INODE_ZEROED	0x0004	/* On-disk inode table initialized */

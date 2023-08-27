@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.224 2023/08/26 21:56:23 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.225 2023/08/27 16:35:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.224 2023/08/26 21:56:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.225 2023/08/27 16:35:51 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -179,8 +179,9 @@ e2fs_cgload(const char *ondisk, struct ext2_gd *inmemory, int cg_size,
 		}
 	} else {
 		for (int i = 0; i < lim; i++, optr++, iptr += sh) {
-			memcpy(optr, iptr, 32);
-			memset((char *)optr + 32, 0, sizeof(*optr) - 32);
+			memcpy(optr, iptr, E2FS_REV0_GD_SIZE);
+			memset((char *)optr + E2FS_REV0_GD_SIZE, 0,
+			    sizeof(*optr) - E2FS_REV0_GD_SIZE);
 		}
 	}
 }
@@ -202,11 +203,11 @@ e2fs_cgsave(const struct ext2_gd *inmemory, char *ondisk, int cg_size,
 	if (shift_cg_entry_size > 6) {
 		for (int i = 0; i < lim; i++, iptr++, optr += sh) {
 			memcpy(optr, iptr, sizeof(*iptr));
-			memset(optr + sizeof(*optr), 0, sh - sizeof(*iptr));
+			memset(optr + sizeof(*iptr), 0, sh - sizeof(*iptr));
 		}
 	} else {
 		for (int i = 0; i < lim; i++, iptr++, optr += sh) {
-			memcpy(optr, iptr, 32);
+			memcpy(optr, iptr, E2FS_REV0_GD_SIZE);
 		}
 	}
 }
@@ -653,7 +654,7 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		}
 		e2fs_cgload(bp->b_data,
 		    &fs->e2fs_gd[i * fs->e2fs_bsize / sizeof(struct ext2_gd)],
-		    fs->e2fs_bsize, 1 << fs->e2fs_group_desc_shift);
+		    fs->e2fs_bsize, fs->e2fs_group_desc_shift);
 		brelse(bp, 0);
 	}
 
@@ -769,7 +770,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 		    m_fs->e2fs_bsize, 0, &bp);
 		if (error)
 			goto out1;
-		e2fs_cgload(bp->b_data, &m_fs->e2fs_gd[i * sh],
+		e2fs_cgload(bp->b_data, &m_fs->e2fs_gd[i * m_fs->e2fs_bsize
+		    / sizeof(struct ext2_gd)],
 		    m_fs->e2fs_bsize, m_fs->e2fs_group_desc_shift);
 		brelse(bp, 0);
 		bp = NULL;
