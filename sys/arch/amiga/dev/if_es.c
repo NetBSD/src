@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.69 2023/08/26 20:23:23 andvar Exp $ */
+/*	$NetBSD: if_es.c,v 1.70 2023/08/27 22:09:55 andvar Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.69 2023/08/26 20:23:23 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.70 2023/08/27 22:09:55 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -773,7 +773,7 @@ esstart(struct ifnet *ifp)
 	}
 #endif
 	while (!sc->sc_txbusy) {
-#ifdef ESDEBUG
+#if defined(ESDEBUG) && defined(USEPKTBUF)
 		u_short start_ptr, end_ptr;
 #endif
 		/*
@@ -907,8 +907,10 @@ esstart(struct ifnet *ifp)
 #endif
 			smc->b2.bsr = BSR_BANK2;
 #ifdef ESDEBUG
+#ifdef USEPKTBUF
 			printf("start_ptr %04x end_ptr %04x cur ptr %04x\n",
 			    start_ptr, end_ptr, SWAP(smc->b2.ptr));
+#endif
 			--sc->sc_smcbusy;
 #endif
 			esinit(sc);	/* It's really hosed - reset */
