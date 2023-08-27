@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2021/01/10 23:24:26 riastradh Exp $
+#	$NetBSD: Makefile,v 1.37 2023/08/27 15:50:47 rillig Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.init.mk>
@@ -25,6 +25,7 @@ MLINKS+=c.7 c78.7 \
 	c.7 c89.7 \
 	c.7 c90.7 \
 	c.7 c99.7 \
+	c.7 c11.7 \
 	entropy.7 random.7
 
 .include <bsd.man.mk>

@@ -1,4 +1,4 @@
-.\" $NetBSD: c.7,v 1.14 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: c.7,v 1.15 2023/08/27 15:50:47 rillig Exp $
 .\"
 .\" Copyright (C) 2007, 2010 Gabor Kovesdan. All rights reserved.
 .\"
@@ -29,10 +29,10 @@
 .Dt C 7
 .Os
 .Sh NAME
-.Nm c, c78, c89, c90, c99
+.Nm c, c78, c89, c90, c99, c11
 .Nd The C programming language
 .Sh DESCRIPTION
-C is a general purpose programming language, which has a strong connection
+C is a general-purpose programming language, which has a strong connection
 with the UNIX operating system and its derivatives, since the vast
 majority of those systems were written in the C language.
 The C language contains some basic ideas from the BCPL language through
@@ -41,7 +41,7 @@ The development of the UNIX operating system was started on a PDP-7
 machine in assembly language, but this choice made it very difficult
 to port the existing code to other systems.
 .Pp
-In 1972 Dennis M. Ritchie worked out the C programming language for
+In 1972, Dennis M. Ritchie worked out the C programming language for
 further development of the UNIX operating system.
 The idea was to implement only the C compiler for different
 platforms, and implement most parts of the operating system
@@ -78,7 +78,7 @@ used.
 To not lose the portability by using these system calls, the POSIX
 (Portable Operating System Interface (for Unix)) standard evolved.
 It describes what functions should be available to keep portability.
-Note, that POSIX is not a C standard, but an operating system standard
+Note that POSIX is not a C standard, but an operating system standard
 and thus is beyond the scope of this manual.
 The standards discussed below are all C standards and only cover
 the C programming language and the accompanying library.
@@ -105,11 +105,13 @@ development of the language did not stop.
 .Pp
 The ISO C standard was later extended with an amendment as
 ISO/IEC 9899 AM1 in 1995.
-This contained, for example, the wide-character support in wchar.h and
-wctype.h.
-Two corrigenda were also published: Technical Corrigendum 1 as
-ISO/IEC 9899 TCOR1 in 1995 and Technical Corrigendum 2 as ISO/IEC 9899 TCOR2
-in 1996.
+This contained, for example, the wide-character support in
+.In wchar.h
+and
+.In wctype.h .
+Two corrigenda were also published:
+Technical Corrigendum 1 as ISO/IEC 9899 TCOR1 in 1995,
+and Technical Corrigendum 2 as ISO/IEC 9899 TCOR2 in 1996.
 The continuous development and growth made it necessary to work out a new
 standard, which contains the new features and fixes the known defects and
 deficiencies of the language.
@@ -123,7 +125,7 @@ Inline functions.
 .It
 Support for variable length arrays.
 .It
-New high-precision integer type named
+New large-range integer type named
 .Vt long long int ,
 and other integer types described in
 .Xr stdint 3
@@ -133,7 +135,7 @@ and
 New boolean data type; see
 .Xr stdbool 3 .
 .It
-One line comments taken from the C++ language.
+One-line comments taken from the C++ language.
 .It
 Some new preprocessor features.
 .It
@@ -143,7 +145,7 @@ and a
 .Vt restrict
 type qualifier.
 .It
-New variables can be declared anywhere, not just in the beginning of the
+Declarations are allowed after statements, not just in the beginning of the
 program or program blocks.
 .It
 No implicit
@@ -151,11 +153,23 @@ No implicit
 type.
 .El
 .Pp
+In 2011, another revision of ISO/IEC 9899 was published, nicknamed C11,
+adding features such as:
+.Bl -bullet -offset indent
+.It
+Compile-time assertions.
+.It
+Type-generic expressions.
+.It
+Unnamed struct and union members.
+.El
+.Pp
+In 2017, another revision of ISO/IEC 9899 was published, nicknamed C17,
+containing corrections to C11, but no new features.
+.Pp
 Since then no new standards have been published, but the C language is still
 evolving.
-New and useful features have been showing up in the most famous
-C compiler: GNU C
-.Pq Xr gcc 1 .
+.Pp
 Most of the UNIX-like operating systems use GNU C as a system compiler,
 but the various extensions of GNU C, such as
 .Xr attribute 3
@@ -165,6 +179,7 @@ should not be considered standard features.
 .Sh SEE ALSO
 .Xr c89 1 ,
 .Xr c99 1 ,
+.Xr c11 1 ,
 .Xr cc 1 ,
 .Xr cdefs 3
 .Rs
@@ -219,6 +234,11 @@ should not be considered standard features.
 .Rs
 .%A ISO/IEC
 .%T 9899:1999 TCOR3, Programming languages -- C, Technical Corrigendum 3
+.Re
+.Pp
+.Rs
+.%A ISO/IEC
+.%T 9899:2011, Programming languages -- C
 .Re
 .Sh HISTORY
 This manual page first appeared in
