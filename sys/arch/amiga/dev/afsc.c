@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.46 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: afsc.c,v 1.47 2023/08/27 08:15:13 andvar Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.46 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.47 2023/08/27 08:15:13 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,10 +86,6 @@ int afscmatch(device_t, cfdata_t, void *);
 int afsc_dmaintr(void *);
 #ifdef DEBUG
 void afsc_dump(void);
-#endif
-
-
-#ifdef DEBUG
 #endif
 
 CFATTACH_DECL_NEW(afsc, sizeof(struct siop_softc),
