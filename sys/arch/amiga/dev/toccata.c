@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.21 2020/02/29 05:51:10 isaki Exp $ */
+/* $NetBSD: toccata.c,v 1.22 2023/08/27 18:36:55 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.21 2020/02/29 05:51:10 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.22 2023/08/27 18:36:55 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +49,12 @@ __KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.21 2020/02/29 05:51:10 isaki Exp $");
 #include <amiga/dev/zbusvar.h>
 #include <amiga/amiga/isr.h>
 
+#ifdef AUDIO_DEBUG
+#define DPRINTF(x)	if (ad1848debug) printf x
+extern int	ad1848debug;
+#else
+#define DPRINTF(x)
+#endif
 
 /* Register offsets. XXX All of this is guesswork. */
 
