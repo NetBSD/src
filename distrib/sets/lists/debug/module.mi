@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.24 2022/12/20 00:31:55 jakllsch Exp $
+# $NetBSD: module.mi,v 1.25 2023/08/27 13:20:09 kardel Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -308,6 +308,8 @@
 ./usr/libdata/debug/@MODULEDIR@/opencrypto/opencrypto.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/overlay				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/overlay/overlay.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/owtemp				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/owtemp/owtemp.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/pad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/pad/pad.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/pciverbose			modules-base-kernel	kmod,debug
