@@ -12559,29 +12559,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_rx_arch)		ta="$ta rx-dis.lo rx-decode.lo";;
 	bfd_s390_arch)		ta="$ta s390-dis.lo s390-opc.lo" ;;
 	bfd_score_arch)		ta="$ta score-dis.lo score7-dis.lo" ;;
-	bfd_sh_arch)
-	  # We can't decide what we want just from the CPU family.
-	  # We want SH5 support unless a specific version of sh is
-	  # specified, as in sh3-elf, sh3b-linux-gnu, etc.
-	  # Include it just for ELF targets, since the SH5 bfd:s are ELF only.
-	  for t in $target $canon_targets; do
-	    # For NetBSD we do NOT want SH5 support unless sh5 or sh64
-	    # is specified
-	    case $t in
-	      sh5*-* | sh64*-*) # let the case below handle it
-				;;
-	      sh*-*-netbsd* | sh*l*-*-netbsd*)
-				continue ;;
-	      esac
-	    case $t in
-	      all |  sh5*-* | sh64*-* | sh-*-*elf* | shl*-*-*elf* | \
-	      sh-*-linux* | shl-*-linux*)
-				ta="$ta sh64-dis.lo sh64-opc.lo"
-				archdefs="$archdefs -DINCLUDE_SHMEDIA"
-				break;;
-	    esac;
-	  done
-				ta="$ta sh-dis.lo cgen-bitset.lo" ;;
+	bfd_sh_arch)		ta="$ta sh-dis.lo cgen-bitset.lo" ;;
 	bfd_sparc_arch)		ta="$ta sparc-dis.lo sparc-opc.lo" ;;
 	bfd_spu_arch)		ta="$ta spu-dis.lo spu-opc.lo" ;;
 	bfd_tic30_arch)		ta="$ta tic30-dis.lo" ;;
