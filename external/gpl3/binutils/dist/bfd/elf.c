@@ -4796,10 +4796,6 @@ _bfd_elf_map_sections_to_segments (bfd *abfd,
       hdr_index = 0;
       writable = false;
       executable = false;
-      dynsec = bfd_get_section_by_name (abfd, ".dynamic");
-      if (dynsec != NULL
-	  && (dynsec->flags & SEC_LOAD) == 0)
-	dynsec = NULL;
 
       if ((abfd->flags & D_PAGED) == 0)
 	phdr_in_segment = false;
