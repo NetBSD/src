@@ -39,7 +39,7 @@
 #define DEFAULT_BFD_ARCH bfd_mips_arch
 
 /* Define to BFD's default target vector. */
-#define DEFAULT_BFD_VEC mips_elf32_trad_le_vec
+#define DEFAULT_BFD_VEC mips_elf64_trad_le_vec
 
 /* Handle .ctf type-info sections */
 #define ENABLE_LIBCTF 1
