@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: t_certctl.sh,v 1.3 2023/08/28 22:25:32 riastradh Exp $
+#	$NetBSD: t_certctl.sh,v 1.4 2023/08/28 22:25:41 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -334,6 +334,77 @@ missingconf_body()
 	    $CERTCTL rehash
 }
 
+atf_test_case nonexistentcertsdir
+nonexistentcertsdir_head()
+{
+	atf_set "descr" "Test certctl succeeds when certsdir is nonexistent"
+}
+nonexistentcertsdir_body()
+{
+	setupconf certs1
+	rmdir certs
+	checks certs1
+}
+
+atf_test_case symlinkcertsdir
+symlinkcertsdir_head()
+{
+	atf_set "descr" "Test certctl fails when certsdir is a symlink"
+}
+symlinkcertsdir_body()
+{
+	setupconf certs1
+	rmdir certs
+	mkdir empty
+	ln -sfn empty certs
+
+	atf_expect_fail "certctl clobbers symlink at /etc/openssl/certs"
+	atf_check -s not-exit:0 -e match:symlink $CERTCTL -n rehash
+	atf_check -s not-exit:0 -e match:symlink $CERTCTL rehash
+	atf_check -s exit:0 rmdir empty
+}
+
+atf_test_case regularfilecertsdir
+regularfilecertsdir_head()
+{
+	atf_set "descr" "Test certctl fails when certsdir is a regular file"
+}
+regularfilecertsdir_body()
+{
+	setupconf certs1
+	rmdir certs
+	echo 'hello world' >certs
+
+	atf_expect_fail "certctl clobbers file at /etc/openssl/certs"
+	atf_check -s not-exit:0 -e match:directory $CERTCTL -n rehash
+	atf_check -s not-exit:0 -e match:directory $CERTCTL rehash
+	atf_check -s exit:0 rm certs
+}
+
+atf_test_case prepopulatedcerts
+prepopulatedcerts_head()
+{
+	atf_set "descr" "Test certctl fails when directory is prepopulated"
+}
+prepopulatedcerts_body()
+{
+	local cert certbase target
+
+	setupconf certs1
+	ln -sfn "$(atf_get_srcdir)/certs2"/*.pem certs/
+
+	atf_expect_fail "certctl clobbers prepopulated /etc/openssl/certs"
+	atf_check -s not-exit:0 -e match:manual $CERTCTL -n rehash
+	atf_check -s not-exit:0 -e match:manual $CERTCTL rehash
+	for cert in "$(atf_get_srcdir)/certs2"/*.pem; do
+		certbase=$(basename "$cert")
+		atf_check -s exit:0 -o inline:"$cert" \
+		    readlink -n "certs/$certbase"
+		rm "certs/$certbase"
+	done
+	check_empty
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case collidebase
@@ -342,6 +413,10 @@ atf_init_test_cases()
 	atf_add_test_case evilpath
 	atf_add_test_case manual
 	atf_add_test_case missingconf
+	atf_add_test_case nonexistentcertsdir
 	atf_add_test_case onedir
+	atf_add_test_case prepopulatedcerts
+	atf_add_test_case regularfilecertsdir
+	atf_add_test_case symlinkcertsdir
 	atf_add_test_case twodir
 }
