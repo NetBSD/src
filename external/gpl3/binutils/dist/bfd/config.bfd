@@ -1285,7 +1285,6 @@ case "${targ}" in
   sh*-*-netbsd*)
     targ_defvec=sh_elf32_nbsd_vec
     targ_selvecs="sh_elf32_nbsd_le_vec sh_coff_vec sh_coff_le_vec"
-    want64=true
     ;;
 
   shl*-*-elf* | sh[1234]l*-*-elf* | sh3el*-*-elf* | shl*-*-kaos*)
