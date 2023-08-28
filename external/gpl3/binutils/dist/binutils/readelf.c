@@ -5132,6 +5132,7 @@ static struct option options[] =
   {"use-dynamic",      no_argument, 0, 'D'},
   {"dynamic",	       no_argument, 0, 'd'},
   {"headers",	       no_argument, 0, 'e'},
+  {"special-files",    no_argument, 0, 'f'},
   {"section-groups",   no_argument, 0, 'g'},
   {"help",	       no_argument, 0, 'H'},
   {"file-header",      no_argument, 0, 'h'},
@@ -5328,6 +5329,8 @@ usage (FILE * stream)
   -W --wide              Allow output width to exceed 80 characters\n"));
   fprintf (stream, _("\
   -T --silent-truncation If a symbol name is truncated, do not add [...] suffix\n"));
+  fprintf (stream, _("\
+  -f --special-files     Process non-plain files too\n"));
   fprintf (stream, _("\
   @<file>                Read options from <file>\n"));
   fprintf (stream, _("\
