@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: certctl.sh,v 1.2 2023/08/28 22:25:32 riastradh Exp $
+#	$NetBSD: certctl.sh,v 1.3 2023/08/28 22:25:50 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -427,9 +427,40 @@ rehash()
 		return
 	fi
 
-	# Delete the active certificates symlink cache.
-	run rm -rf "$certsdir"
+	# Delete the active certificates symlink cache, if either it is
+	# empty or nonexistent, or it is tagged for use by certctl.
+	if [ -f "$certsdir/.certctl" ]; then
+		# Directory exists and is managed by certctl(8).
+		# Safe to delete it and everything in it.
+		run rm -rf "$certsdir"
+	elif [ -h "$certsdir" ]; then
+		# Paranoia: refuse to chase a symlink.  (Caveat: this
+		# is not secure against an adversary who can recreate
+		# the symlink at any time.  Just a helpful check for
+		# mistakes.)
+		error "certificates directory is a symlink"
+		return 1
+	elif [ ! -e "$certsdir" ]; then
+		# Directory doesn't exist at all.  Nothing to do!
+	elif [ ! -d "$certsdir" ]; then
+		error "certificates directory is not a directory"
+		return 1
+	elif ! find "$certsdir" -maxdepth 0 -type d -empty -exit 1; then
+		# certsdir exists, is a directory, and is empty.  Safe
+		# to delete it with rmdir and take it over.
+		run rmdir "$certsdir"
+	else
+		error "existing certificates; set manual or move them"
+		return 1
+	fi
 	run mkdir "$certsdir"
+	if $vflag; then
+		printf '# initialize %s\n' "$certsdir"
+	fi
+	if ! $nflag; then
+		printf 'This directory is managed by certctl(8).\n' \
+		    >$certsdir/.certctl
+	fi
 
 	# Create a temporary file for the single-file bundle.  This
 	# will be automatically deleted on normal exit or

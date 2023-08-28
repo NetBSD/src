@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: t_certctl.sh,v 1.4 2023/08/28 22:25:41 riastradh Exp $
+#	$NetBSD: t_certctl.sh,v 1.5 2023/08/28 22:25:49 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -358,7 +358,6 @@ symlinkcertsdir_body()
 	mkdir empty
 	ln -sfn empty certs
 
-	atf_expect_fail "certctl clobbers symlink at /etc/openssl/certs"
 	atf_check -s not-exit:0 -e match:symlink $CERTCTL -n rehash
 	atf_check -s not-exit:0 -e match:symlink $CERTCTL rehash
 	atf_check -s exit:0 rmdir empty
@@ -375,7 +374,6 @@ regularfilecertsdir_body()
 	rmdir certs
 	echo 'hello world' >certs
 
-	atf_expect_fail "certctl clobbers file at /etc/openssl/certs"
 	atf_check -s not-exit:0 -e match:directory $CERTCTL -n rehash
 	atf_check -s not-exit:0 -e match:directory $CERTCTL rehash
 	atf_check -s exit:0 rm certs
@@ -393,7 +391,6 @@ prepopulatedcerts_body()
 	setupconf certs1
 	ln -sfn "$(atf_get_srcdir)/certs2"/*.pem certs/
 
-	atf_expect_fail "certctl clobbers prepopulated /etc/openssl/certs"
 	atf_check -s not-exit:0 -e match:manual $CERTCTL -n rehash
 	atf_check -s not-exit:0 -e match:manual $CERTCTL rehash
 	for cert in "$(atf_get_srcdir)/certs2"/*.pem; do
