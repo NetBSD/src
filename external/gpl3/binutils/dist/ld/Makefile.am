@@ -187,7 +187,6 @@ ALL_EMULATION_SOURCES = \
 	earmelfb_nbsd.c \
 	earmelfb_nbsd_eabi.c \
 	earmelfb_nbsd_eabihf.c \
-	earmnbsd.c \
 	earmnto.c \
 	earmpe.c \
 	eavr1.c \
@@ -248,12 +247,6 @@ ALL_EMULATION_SOURCES = \
 	eelf32lppclinux.c \
 	eelf32lppcnto.c \
 	eelf32lppcsim.c \
-	eelf32lriscv.c \
-	eelf32lsmip.c \
-	eelf32ltsmip.c \
-	eelf32ltsmip_fbsd.c \
-	eelf32ltsmipn32.c \
-	eelf32ltsmipn32_fbsd.c \
 	eelf32m32c.c \
 	eelf32mb_linux.c \
 	eelf32mbel_linux.c \
