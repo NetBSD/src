@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: certctl.sh,v 1.1 2023/08/26 05:27:15 riastradh Exp $
+#	$NetBSD: certctl.sh,v 1.2 2023/08/28 22:25:32 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -234,7 +234,7 @@ configure()
 			error "$vconfig:$lineno: unknown command: $vop"
 			;;
 		esac
-	done <$config
+	done <$config || status=$?
 
 	return $status
 }

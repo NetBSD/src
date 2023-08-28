@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: t_certctl.sh,v 1.2 2023/08/28 22:25:21 riastradh Exp $
+#	$NetBSD: t_certctl.sh,v 1.3 2023/08/28 22:25:32 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -330,7 +330,6 @@ missingconf_body()
 {
 	mkdir certs
 	atf_check -s exit:0 test ! -e certs.conf
-	atf_expect_fail 'wrong exit code on missing config file'
 	atf_check -s not-exit:0 -e match:'certs\.conf' \
 	    $CERTCTL rehash
 }
