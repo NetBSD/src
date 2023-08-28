@@ -5871,13 +5871,6 @@ match_save_restore_list_operand (struct mips_arg_info *arg)
     }
   frame_size /= 8;
 
-  /* If the branch is itself the target of a branch, we can not swap.
-     We cheat on this; all we check for is whether there is a label on
-     this instruction.  If there are any branches to anything other than
-     a label, users must use .set noreorder.  */
-  if (seg_info (now_seg)->label_list)
-    return FALSE;
-
   /* Finally build the instruction.  */
   if (mips_opts.mips16)
     opcode |= mips16_encode_save_restore (arg_mask, num_sregs, ra, s0, s1,
