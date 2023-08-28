@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_ul.c,v 1.15 2018/09/03 16:29:22 riastradh Exp $ */
+/*	$NetBSD: ite_ul.c,v 1.16 2023/08/28 09:14:02 andvar Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_ul.c,v 1.15 2018/09/03 16:29:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_ul.c,v 1.16 2023/08/28 09:14:02 andvar Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -458,7 +458,7 @@ gsp_dump(u_int16_t *cmd,int len)
 {
 	printf("gsp");
 	while (len-- > 0)
-		printf(" %lx",*cmd++);
+		printf(" %hx",*cmd++);
 	printf("\n");
 }
 #endif
