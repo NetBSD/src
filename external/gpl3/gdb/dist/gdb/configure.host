@@ -122,7 +122,7 @@ ia64-*-linux*)		gdb_host=linux ;;
 loongarch*-linux*)	gdb_host=linux ;;
 
 m68*-*-linux*)		gdb_host=linux ;;
-m68*-*-netbsd* | m68*-*-knetbsd*-gnu)
+m68*-*-netbsd* | m68*-*-knetbsd*-gnu | m5407-*-netbsd*)
 			gdb_host=nbsd ;;
 m68*-*-openbsd*)	gdb_host=obsd ;;
 
