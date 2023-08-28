@@ -78,7 +78,7 @@ extern "C" {
 #define BFD_ARCH_SIZE 64
 
 /* The word size of the default bfd target.  */
-#define BFD_DEFAULT_TARGET_SIZE 64
+#define BFD_DEFAULT_TARGET_SIZE 32
 
 #include <inttypes.h>
 

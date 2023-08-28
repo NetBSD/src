@@ -6,4 +6,4 @@ G_libbfd_la_DEPENDENCIES=elf32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo elf
 G_libbfd_la_OBJECTS=archive.lo archures.lo bfd.lo bfdio.lo bfdwin.lo cache.lo coff-bfd.lo compress.lo corefile.lo elf-properties.lo format.lo hash.lo init.lo libbfd.lo linker.lo merge.lo opncls.lo reloc.lo section.lo simple.lo stab-syms.lo stabs.lo syms.lo targets.lo binary.lo ihex.lo srec.lo tekhex.lo verilog.lo
 G_DEFS=-DHAVE_CONFIG_H
 G_INCLUDES=
-G_TDEFAULTS=-DDEFAULT_VECTOR=mips_elf32_trad_be_vec -DSELECT_VECS='&mips_elf32_trad_be_vec,&mips_elf32_trad_le_vec,&mips_elf32_ntrad_be_vec,&mips_elf32_ntrad_le_vec,&mips_elf64_trad_le_vec,&mips_elf64_trad_be_vec,&mips_ecoff_be_vec,&mips_ecoff_le_vec,&elf64_le_vec,&elf64_be_vec,&elf32_le_vec,&elf32_be_vec' -DSELECT_ARCHITECTURES='&bfd_mips_arch'
+G_TDEFAULTS=-DDEFAULT_VECTOR=mips_elf32_trad_be_vec -DSELECT_VECS='&mips_elf32_trad_be_vec,&mips_elf32_trad_le_vec,&mips_elf32_ntrad_be_vec,&mips_elf32_ntrad_le_vec,&mips_elf64_trad_be_vec,&mips_elf64_trad_le_vec,&mips_ecoff_be_vec,&mips_ecoff_le_vec,&elf64_le_vec,&elf64_be_vec,&elf32_le_vec,&elf32_be_vec' -DSELECT_ARCHITECTURES='&bfd_mips_arch'
