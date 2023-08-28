@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.360 2023/08/04 15:42:09 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.361 2023/08/28 15:50:17 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -727,6 +727,7 @@ I2O	intelligent input/output
 IA	information assurance
 IAAS	infrastructure as a service
 IANA	Internet Assigned Numbers Authority
+IAB	Internet Architecture Board
 IBC	iterated block cipher
 IBM	International Business Machines
 IBPI	international blinking pattern interpretation
