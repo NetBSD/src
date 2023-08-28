@@ -544,7 +544,8 @@ mips*-sgi-irix5*)	targ_emul=elf32bsmip
 			;;
 mips*-sgi-irix6*)	targ_emul=elf32bmipn32
 			targ_extra_emuls="elf32bsmip elf64bmip"
-			targ_extra_libpath=$targ_extra_emuls ;;
+			targ_extra_libpath=$targ_extra_emuls
+			;;
 mips*el-*-haiku*)	targ_emul=elf_mipsel_haiku
 			targ_extra_emuls="elf32ltsmip elf32btsmip elf32ltsmipn32 elf64ltsmip elf32btsmipn32 elf64btsmip"
 			;;
@@ -991,12 +992,7 @@ sparc*-*-linux-*)	targ_emul=elf32_sparc
 sparc64-*-netbsd*)	targ_emul=elf64_sparc
 			targ_extra_emuls="elf32_sparc"
 			;;
-sparc64-*-openbsd*)	targ_emul=elf64_sparc
-			targ_extra_emuls="elf32_sparc"
-			;;
-sparc*-*-netbsd*elf*)	targ_emul=elf32_sparc
-			;;
-sparc*-*-netbsd*)	targ_emul=sparcnbsd
+sparc*-*-netbsd*)	targ_emul=elf32_sparc
 			;;
 sparc-*-solaris2.[0-6] | sparc-*-solaris2.[0-6].*)
 			targ_emul=elf32_sparc_sol2
