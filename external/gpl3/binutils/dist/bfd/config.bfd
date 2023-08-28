@@ -1329,7 +1329,7 @@ case "${targ}" in
     targ_underscore=yes
     ;;
 
-  sparc-*-netbsdelf*)
+  sparc-*-netbsd*)
     targ_defvec=sparc_elf32_vec
     want64=true
     ;;
