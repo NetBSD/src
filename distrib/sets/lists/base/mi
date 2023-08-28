@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1327 2023/08/26 05:58:48 riastradh Exp $
+# $NetBSD: mi,v 1.1328 2023/08/28 23:57:17 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -114,7 +114,6 @@
 ./etc/openldap					base-ldap-root
 ./etc/openssl					base-crypto-root
 ./etc/openssl/certs				base-crypto-root
-./etc/openssl/certs.conf			base-sysutil-bin
 ./etc/openssl/misc				base-crypto-root
 ./etc/openssl/private				base-crypto-root
 ./etc/pam.d					base-sys-root
