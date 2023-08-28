@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: t_certctl.sh,v 1.1 2023/08/26 05:27:14 riastradh Exp $
+#	$NetBSD: t_certctl.sh,v 1.2 2023/08/28 22:25:21 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -321,6 +321,20 @@ EOF
         checks certs1 "$(pwd)/$evildir"
 }
 
+atf_test_case missingconf
+missingconf_head()
+{
+	atf_set "descr" "Test certctl with missing certs.conf"
+}
+missingconf_body()
+{
+	mkdir certs
+	atf_check -s exit:0 test ! -e certs.conf
+	atf_expect_fail 'wrong exit code on missing config file'
+	atf_check -s not-exit:0 -e match:'certs\.conf' \
+	    $CERTCTL rehash
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case collidebase
@@ -328,6 +342,7 @@ atf_init_test_cases()
 	atf_add_test_case empty
 	atf_add_test_case evilpath
 	atf_add_test_case manual
+	atf_add_test_case missingconf
 	atf_add_test_case onedir
 	atf_add_test_case twodir
 }
