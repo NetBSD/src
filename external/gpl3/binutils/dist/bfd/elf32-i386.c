@@ -527,6 +527,7 @@ elf_i386_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
    one of the last functions.  */
 
 /* The size in bytes of an entry in the lazy procedure linkage table.  */
+
 #define LAZY_PLT_ENTRY_SIZE 16
 
 /* The name of the dynamic interpreter.  This is put in the .interp
