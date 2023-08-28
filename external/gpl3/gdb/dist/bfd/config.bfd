@@ -841,7 +841,7 @@ case "${targ}" in
   m68*-*-*)
     targ_defvec=m68k_elf32_vec
     ;;
-  m68*-*-netbsdelf* | m5407-*-netbsdelf*)
+  m68*-*-netbsd* | m5407-*-netbsd*)
     targ_defvec=m68k_elf32_vec
     targ_selvecs="m68k_aout_nbsd_vec m68k_aout_4knbsd_vec m68k_aout_hp300bsd_vec sparc_aout_sunos_be_vec"
     ;;
