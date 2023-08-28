@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.12 2023/08/10 08:24:44 riastradh Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.13 2023/08/28 09:50:12 msaitoh Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.12 2023/08/10 08:24:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.13 2023/08/28 09:50:12 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_vmx.h"
@@ -3638,7 +3638,7 @@ vmxnet3_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status |= IFM_ACTIVE;
 
 	if (ifp->if_baudrate >= IF_Gbps(10ULL))
-		ifmr->ifm_active |= IFM_10G_T;
+		ifmr->ifm_active |= IFM_10G_T | IFM_FDX;
 }
 
 static int
