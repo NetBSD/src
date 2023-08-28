@@ -269,7 +269,7 @@ hppa*-*-netbsd*)
 	;;
 hppa*-*-openbsd*)
 	# Target: OpenBSD/hppa
-	gdb_target_obs="hppa-bsd-tdep.o hppa-obsd-tdep.o"
+	gdb_target_obs="hppa-bsd-tdep.o hppa-obsd-tdep.o solib-svr4.o"
 	;;
 
 i[34567]86-*-darwin*)
@@ -395,7 +395,7 @@ m68*-*-linux*)
 	gdb_target_obs="m68k-tdep.o m68k-linux-tdep.o solib-svr4.o \
 			linux-tdep.o glibc-tdep.o symfile-mem.o"
 	;;
-m68*-*-netbsd* | m68*-*-knetbsd*-gnu | m5407-*-netbsdelf*)
+m68*-*-netbsd* | m68*-*-knetbsd*-gnu | m5407-*-netbsd*)
 	# Target: NetBSD/m68k
 	gdb_target_obs="m68k-tdep.o m68k-bsd-tdep.o"
 	;;
