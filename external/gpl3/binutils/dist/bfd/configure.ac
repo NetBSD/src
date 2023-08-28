@@ -537,8 +537,8 @@ do
     mips_elf32_le_vec)		 tb="$tb elf32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf $ecoff" ;;
     mips_elf32_n_be_vec)	 tb="$tb elfn32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf $ecoff"; target_size=64 ;;
     mips_elf32_n_le_vec)	 tb="$tb elfn32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf $ecoff"; target_size=64 ;;
-    mips_elf32_ntrad_be_vec)	 tb="$tb elfn32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf $ecoff"; target_size=64 ;;
-    mips_elf32_ntrad_le_vec)	 tb="$tb elfn32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf $ecoff"; target_size=64 ;;
+    mips_elf32_ntrad_be_vec)	 tb="$tb elfn32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf $ecoff"; ;;
+    mips_elf32_ntrad_le_vec)	 tb="$tb elfn32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf $ecoff"; ;;
     mips_elf32_ntradfbsd_be_vec) tb="$tb elfn32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf $ecoff"; target_size=64 ;;
     mips_elf32_ntradfbsd_le_vec) tb="$tb elfn32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf $ecoff"; target_size=64 ;;
     mips_elf32_trad_be_vec)	 tb="$tb elf32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf $ecoff" ;;
