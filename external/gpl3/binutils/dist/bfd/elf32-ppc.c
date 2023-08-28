@@ -3027,7 +3027,7 @@ ppc_elf_check_relocs (bfd *abfd,
 	    sec->nomark_tls_get_addr = 1;
 	}
 
-      switch ((int)r_type)
+      switch (r_type)
 	{
 	case R_PPC_TLSGD:
 	case R_PPC_TLSLD:
