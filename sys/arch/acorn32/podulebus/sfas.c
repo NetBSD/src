@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.30 2021/08/21 11:55:24 andvar Exp $	*/
+/*	$NetBSD: sfas.c,v 1.31 2023/08/28 18:04:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.30 2021/08/21 11:55:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.31 2023/08/28 18:04:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,12 @@ void sfas_setup_nexus(struct sfas_softc *, struct nexus *,
 int sfas_pretests(struct sfas_softc *, sfas_regmap_p);
 int sfas_midaction(struct sfas_softc *, sfas_regmap_p, struct nexus *);
 int sfas_postaction(struct sfas_softc *, sfas_regmap_p, struct nexus *);
+
+#ifdef SFAS_DEBUG
+void dump_nexus(struct nexus *nexus);
+void dump_nexii(struct sfas_softc *sc);
+void dump_sfassoftc(struct sfas_softc *sc);
+#endif
 
 /*
  * Initialize these to make 'em patchable. Defaults to enable sync and discon.
@@ -1573,7 +1579,7 @@ dump_nexus(struct nexus *nexus)
 	printf("\n");
 	printf("DMA:\n");
 	for (loop = 0; loop < MAXCHAIN; ++loop)
-		printf("dma_chain: %08x %04x %04x\n", nexus->dma[loop].ptr,
+		printf("dma_chain: %8p %04x %04x\n", (void *)nexus->dma[loop].ptr,
 		    nexus->dma[loop].len, nexus->dma[loop].flg);
 	printf("\n");
 
