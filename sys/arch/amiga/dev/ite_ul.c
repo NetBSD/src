@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_ul.c,v 1.16 2023/08/28 09:14:02 andvar Exp $ */
+/*	$NetBSD: ite_ul.c,v 1.17 2023/08/28 09:22:26 andvar Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_ul.c,v 1.16 2023/08/28 09:14:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_ul.c,v 1.17 2023/08/28 09:22:26 andvar Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -79,7 +79,7 @@ extern u_int8_t kernel_font_lo, kernel_font_hi;
 extern u_int8_t kernel_font[], kernel_cursor[];
 
 
-#ifdef DEBUG_UL
+#ifdef UL_DEBUG
 #define gsp_out(ba,cmd,len) gsp_dump(cmd,len); gsp_write(ba,cmd,len)
 #else
 #define gsp_out(ba,cmd,len) gsp_write(ba,cmd,len)
@@ -94,7 +94,7 @@ void ulowell_clear(struct ite_softc *, int, int, int, int);
 void ulowell_putc(struct ite_softc *, int, int, int, int);
 void ulowell_init(struct ite_softc *);
 
-#ifdef DEBUG_UL
+#ifdef UL_DEBUG
 void gsp_dump(u_int16_t *, int);
 #endif
 
@@ -305,7 +305,7 @@ static void screen_up(struct ite_softc *ip, int top, int bottom, int lines)
 
 	ba = (volatile struct gspregs *)ip->grf->g_regkva;
 
-#ifdef DEBUG_UL
+#ifdef UL_DEBUG
 	printf("screen_up %d %d %d ->",top,bottom,lines);
 #endif
 	/* do some bounds-checking here.. */
@@ -339,7 +339,7 @@ static void screen_down(struct ite_softc *ip, int top, int bottom, int lines)
 
 	ba = (volatile struct gspregs *)ip->grf->g_regkva;
 
-#ifdef DEBUG_UL
+#ifdef UL_DEBUG
 	printf("screen_down %d %d %d ->",top,bottom,lines);
 #endif
 
@@ -396,7 +396,7 @@ void ulowell_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 
 	u_int16_t cmd[7];
 
-#ifdef	DEBUG_UL
+#ifdef	UL_DEBUG
 	printf("ulowell_clear %d %d %d %d ->",sy,sx,h,w);
 #endif
 	ba = (volatile struct gspregs *)ip->grf->g_regkva;
@@ -419,7 +419,7 @@ void ulowell_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 
 	ba = (volatile struct gspregs *)ip->grf->g_regkva;
 
-#ifdef DEBUG_UL
+#ifdef UL_DEBUG
 	printf("ulowell_scroll %d %d %d %d ->",sy,sx,count,dir);
 #endif
 
@@ -452,7 +452,7 @@ void ulowell_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 	}
 }
 
-#ifdef DEBUG_UL
+#ifdef UL_DEBUG
 void
 gsp_dump(u_int16_t *cmd,int len)
 {
