@@ -847,16 +847,6 @@ bfd_generic_openr_next_archived_file (bfd *archive, bfd *last_file)
     {
       filestart = last_file->proxy_origin;
       if (! bfd_is_thin_archive (archive))
-#if 0
-/* OLD CODE */
-	filestart += size;
-      /* Pad to an even boundary...
-	 Note that last_file->origin can be odd in the case of
-	 BSD-4.4-style element with a long odd size.  */
-      if (!strncmp(arch_hdr (last_file)->ar_name, "#1/", 3))
-	size += strlen(normalize(last_file, last_file->filename));
-      filestart += size % 2;
-#endif
 	{
 	  bfd_size_type size = arelt_size (last_file);
 
@@ -2227,13 +2217,13 @@ _bfd_write_archive_contents (bfd *arch)
        current = current->archive_next)
     {
       char buffer[DEFAULT_BUFFERSIZE];
-      bfd_size_type saved_size = arelt_size (current);
-      bfd_size_type remaining = saved_size;
+      bfd_size_type remaining = arelt_size (current);
+      bfd_size_type saved_size = remaining;
       struct ar_hdr *hdr = arch_hdr (current);
 
       /* Write ar header.  */
       if (!_bfd_write_ar_hdr (arch, current))
-        return false;
+	return false;
       /* Write filename if it is a 4.4BSD extended file, and add to size.  */
       if (!strncmp (hdr->ar_name, "#1/", 3))
 	{
