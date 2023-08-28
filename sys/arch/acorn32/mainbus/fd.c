@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.64 2021/08/07 16:18:40 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.65 2023/08/28 17:53:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64 2021/08/07 16:18:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.65 2023/08/28 17:53:46 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -604,7 +604,7 @@ fdstrategy(struct buf *bp)
  	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
-	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d sz %d\n",
+	printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld cylin %d sz %d\n",
 	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylinder, sz);
 #endif
 
@@ -1045,8 +1045,8 @@ loop:
 		fdc->sc_fr.fr_r12 = fdc->sc_drq;
 #ifdef FD_DEBUG
 		printf("fdc-doio:r9=%x r10=%x r11=%x r12=%x data=%x skip=%x\n",
-		    fdc->sc_fr.fr_r9, fdc->sc_fr.fh_r10, fdc->sc_fr.fh_r11,
-		    fdc->sc_fr.fh_r12, (u_int)bp->b_data, fd->sc_skip);
+		    fdc->sc_fr.fr_r9, fdc->sc_fr.fr_r10, fdc->sc_fr.fr_r11,
+		    fdc->sc_fr.fr_r12, (u_int)bp->b_data, fd->sc_skip);
 #endif
 		if (fiq_claim(&fdc->sc_fh) == -1)
 			panic("%s: Cannot claim FIQ vector",
@@ -1139,7 +1139,7 @@ loop:
 #ifdef FD_DEBUG
 			fdcstatus(fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
-			printf("blkno %d nblks %d\n",
+			printf("blkno %lld nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
 #endif
 			fdcretry(fdc);
