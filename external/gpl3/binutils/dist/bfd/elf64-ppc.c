@@ -16491,7 +16491,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 		    }
 		}
 
-	      if (!can_plt_call && h != NULL)
+	      if (!can_plt_call)
 		{
 		  /* g++ as of 20130507 emits self-calls without a
 		     following nop.  This is arguably wrong since we
