@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.214 2023/08/01 06:35:55 mrg Exp $
+# $NetBSD: md.sparc64,v 1.215 2023/08/29 04:35:26 mrg Exp $
 ./usr/include/g++/bits/sparc			comp-c-include		compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc,compat
 ./usr/include/g++/bits/sparc64			comp-c-include		compat
@@ -8,14 +8,14 @@
 ./usr/include/gcc-4.8/visintrin.h		comp-obsolete		obsolete
 ./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/visintrin.h			comp-obsolete		obsolete
-./usr/include/gcc-6/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-6/visintrin.h			comp-c-include		obsolete
-./usr/include/gcc-7/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-7/visintrin.h			comp-c-include		obsolete
-./usr/include/gcc-8/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-8/visintrin.h			comp-c-include		obsolete
-./usr/include/gcc-9/tgmath.h			comp-c-include		gcc=9
-./usr/include/gcc-9/visintrin.h			comp-c-include		gcc=9
+./usr/include/gcc-6/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-6/visintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-7/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-7/visintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-8/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-8/visintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-9/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-9/visintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
 ./usr/include/gcc-10/visintrin.h		comp-c-include		gcc=10
 ./usr/include/gcc-12/visintrin.h		comp-c-include		gcc=12
