@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.50 2023/08/07 00:45:47 rin Exp $
+# $NetBSD: ad.aarch64,v 1.51 2023/08/29 04:35:26 mrg Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -142,21 +142,21 @@
 ./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcc=48
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcc=48
 ./usr/include/gcc-4.8/unwind-arm-common.h	comp-c-include		gcc=48,eabi
-./usr/include/gcc-6/arm_acle.h			comp-c-include		obsolete
-./usr/include/gcc-6/arm_neon.h			comp-c-include		obsolete
-./usr/include/gcc-6/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-7/arm_acle.h			comp-c-include		obsolete
-./usr/include/gcc-7/arm_fp16.h			comp-c-include		obsolete
-./usr/include/gcc-7/arm_neon.h			comp-c-include		obsolete
-./usr/include/gcc-7/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-8/arm_acle.h			comp-c-include		obsolete
-./usr/include/gcc-8/arm_fp16.h			comp-c-include		obsolete
-./usr/include/gcc-8/arm_neon.h			comp-c-include		obsolete
-./usr/include/gcc-8/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-9/arm_acle.h			comp-c-include		obsolete
-./usr/include/gcc-9/arm_fp16.h			comp-c-include		obsolete
-./usr/include/gcc-9/arm_neon.h			comp-c-include		obsolete
-./usr/include/gcc-9/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-6/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-6/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-6/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-7/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-7/arm_fp16.h			comp-obsolete		obsolete
+./usr/include/gcc-7/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-7/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-8/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-8/arm_fp16.h			comp-obsolete		obsolete
+./usr/include/gcc-8/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-8/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-9/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-9/arm_fp16.h			comp-obsolete		obsolete
+./usr/include/gcc-9/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-9/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/arm_acle.h			comp-c-include		gcc=10
 ./usr/include/gcc-10/arm_bf16.h			comp-c-include		gcc=10
 ./usr/include/gcc-10/arm_fp16.h			comp-c-include		gcc=10

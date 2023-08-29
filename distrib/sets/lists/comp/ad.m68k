@@ -1,19 +1,19 @@
-# $NetBSD: ad.m68k,v 1.67 2023/08/07 00:47:29 rin Exp $
+# $NetBSD: ad.m68k,v 1.68 2023/08/29 04:35:26 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
-./usr/include/gcc-4.5/math-68881.h		comp-c-include		obsolete
-./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-4.8/math-68881.h		comp-c-include		obsolete
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/math-68881.h		comp-obsolete		obsolete
+./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-4.8/math-68881.h		comp-obsolete		obsolete
+./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/math-68881.h		comp-obsolete		obsolete
 ./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-6/math-68881.h		comp-c-include		obsolete
-./usr/include/gcc-6/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-7/math-68881.h		comp-c-include		obsolete
-./usr/include/gcc-7/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-8/math-68881.h		comp-c-include		obsolete
-./usr/include/gcc-8/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-9/math-68881.h		comp-c-include		obsolete
-./usr/include/gcc-9/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-6/math-68881.h		comp-obsolete		obsolete
+./usr/include/gcc-6/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-7/math-68881.h		comp-obsolete		obsolete
+./usr/include/gcc-7/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-8/math-68881.h		comp-obsolete		obsolete
+./usr/include/gcc-8/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-9/math-68881.h		comp-obsolete		obsolete
+./usr/include/gcc-9/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/math-68881.h		comp-c-include		gcc=10
 ./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
 ./usr/include/gcc-12/math-68881.h		comp-c-include		gcc=12
