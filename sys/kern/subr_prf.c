@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.202 2023/08/04 07:38:53 riastradh Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.203 2023/08/29 21:23:14 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.202 2023/08/04 07:38:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.203 2023/08/29 21:23:14 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -281,10 +281,6 @@ vpanic(const char *fmt, va_list ap)
 
 #ifdef KGDB
 	kgdb_panic();
-#endif
-#ifdef KADB
-	if (boothowto & RB_KDB)
-		kdbpanic();
 #endif
 #ifdef DDB
 	db_panic();
