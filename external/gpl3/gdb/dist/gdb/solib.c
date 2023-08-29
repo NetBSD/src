@@ -476,18 +476,20 @@ solib_bfd_open (const char *pathname)
   b = gdbarch_bfd_arch_info (target_gdbarch ());
   if (!b->compatible (b, bfd_get_arch_info (abfd.get ())))
     {
-      char buf[SO_NAME_MAX_PATH_SIZE];
       const char *slash = strrchr(pathname, '/');
       if (slash)
         {
+	  char buf[SO_NAME_MAX_PATH_SIZE], arch[128], *colon;
           struct stat st;
 
-	  snprintf(buf, sizeof(buf), "%.*s/%s/%s", 
-	    (int)(slash - pathname), pathname, b->printable_name, slash + 1);
+	  strlcpy(arch, b->printable_name, sizeof(arch));
+	  if ((colon = strchr(arch, ':')) != NULL)
+		*colon = '\0';
+	  snprintf(buf, sizeof(buf), "%.*s/%s/%s",
+	    (int)(slash - pathname), pathname, arch, slash + 1);
 	  if (stat(buf, &st) == 0)
 	    return solib_bfd_open(buf);
-	  snprintf(buf, sizeof(buf), "%s-%s", 
-	    pathname, b->printable_name);
+	  snprintf(buf, sizeof(buf), "%s-%s", pathname, arch);
 	  if (stat(buf, &st) == 0)
 	    return solib_bfd_open(buf);
 	}
