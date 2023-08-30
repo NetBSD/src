@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.95 2021/05/27 06:54:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.96 2023/08/30 18:47:37 christos Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
+NOSSP=yes
+NOFORTIFY=yes
 
 SA_USE_CREAD?= no		# Read compressed kernels
 SA_INCLUDE_NET?= yes		# Netboot via TFTP, NFS
@@ -18,8 +20,6 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 
 # For testing
 #WARNS=6
-#NOSSP=yes
-#NOFORTIFY=yes
 #COPTS+=-ffreestanding -Wpointer-sign
 #CPPFLAGS+= -I${.CURDIR}/../../ -I${.CURDIR}
 
