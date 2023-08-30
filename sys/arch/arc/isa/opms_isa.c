@@ -1,4 +1,4 @@
-/* $NetBSD: opms_isa.c,v 1.12 2011/07/01 19:25:41 dyoung Exp $ */
+/* $NetBSD: opms_isa.c,v 1.13 2023/08/30 09:17:46 andvar Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.12 2011/07/01 19:25:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.13 2023/08/30 09:17:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,14 +42,13 @@ __KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.12 2011/07/01 19:25:41 dyoung Exp $")
 
 #include <arc/dev/pcconsvar.h>
 #include <arc/dev/opmsvar.h>
+#include <arc/isa/pccons_isavar.h>
 
 static int	opms_isa_match(device_t, cfdata_t, void *);
 static void	opms_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(opms_isa, sizeof(struct opms_softc),
     opms_isa_match, opms_isa_attach, NULL, NULL);
-
-struct pccons_config *pccons_isa_conf;	/* share stroage with pccons_isa.c */
 
 static int
 opms_isa_match(device_t parent, cfdata_t cf, void *aux)
