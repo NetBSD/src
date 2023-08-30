@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.48 2022/06/19 18:28:16 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.49 2023/08/30 18:47:56 christos Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -47,6 +47,7 @@ KERNMAKE= \
 	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
 	    LORDER=${LORDER:q} \
 	    TSORT=${TSORT:q} \
+	    COPTS=${COPTS:q} \
 	    LD=${LD:q} STRIP=${STRIP:q} \
 	    AR=${AR:q} NM=${NM:q} \
 	    RANLIB=${RANLIB:q} SIZE=${SIZE:q} \
