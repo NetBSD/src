@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2020/09/07 03:09:53 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2023/08/30 18:47:56 christos Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -43,6 +43,7 @@ SAMAKE= \
 	    TSORT=${TSORT:q} \
 	    LD=${LD:q} STRIP=${STRIP:q} \
 	    AR=${AR:q} NM=${NM:q} \
+	    COPTS=${COPTS:q} \
 	    RANLIB=${RANLIB:q} SIZE=${SIZE:q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
 	    SACPPFLAGS=${CPPFLAGS:S@^-I.@-I${SADOTDIR}@g:q} \
