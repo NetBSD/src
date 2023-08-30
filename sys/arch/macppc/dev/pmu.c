@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.40 2023/08/22 06:43:34 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.41 2023/08/30 07:42:41 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.40 2023/08/22 06:43:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.41 2023/08/30 07:42:41 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,21 +762,6 @@ done:
 	return 1;
 }
 
-#if 0
-static int
-pmu_error_handler(void *cookie, int len, uint8_t *data)
-{
-	struct pmu_softc *sc = cookie;
-
-	/* 
-	 * something went wrong
-	 * byte 3 seems to be the failed command
-	 */
-	sc->sc_error = 1;
-	wakeup(&sc->sc_todev);
-	return 0;
-}
-#endif
 #define DIFF19041970 2082844800
 
 static int
