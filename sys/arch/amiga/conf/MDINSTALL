@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.36 2022/05/29 10:43:19 andvar Exp $
+#	$NetBSD: MDINSTALL,v 1.37 2023/08/30 20:15:54 andvar Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -129,6 +129,8 @@ options        KFONT_CONS_ISO8859_1
 # enables the Hardwarecursor which does not work on some systems.
 #options 	RH_HARDWARECURSOR
 
+p5bus0		at zbus0		# Phase5 CSPPC/BPPC internal bus
+
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
 grfrh0		at zbus0		# retina III
@@ -234,7 +236,7 @@ mgnsc0		at zbus0		# Magnum scsi
 scsibus*	at mgnsc0
 wesc0		at zbus0		# Warp Engine scsi
 scsibus*	at wesc0
-bppcsc0		at zbus0		# BlizzardPPC 603e+ scsi
+bppcsc0		at p5bus0		# BlizzardPPC 603e+ scsi
 scsibus*	at bppcsc0
 afsc0		at zbus0		# A4091 scsi
 scsibus*	at afsc0
@@ -252,7 +254,7 @@ cbsc0		at zbus0		# CyberSCSI I
 scsibus*	at cbsc0
 cbiisc0 	at zbus0		# CyberSCSI II
 scsibus*	at cbiisc0
-cbiiisc0 	at zbus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
+cbiiisc0 	at p5bus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
 scsibus*	at cbiiisc0
 empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
