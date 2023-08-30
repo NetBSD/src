@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2020/11/07 21:42:32 christos Exp $
+#	$NetBSD: Makefile,v 1.38 2023/08/30 12:18:59 christos Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -30,6 +30,7 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/drm2/dist/uapi
 SRCS+=	netbsd32_drm.c
 .endif
 SRCS+=	netbsd32_acl.c		netbsd32_event.c
+SRCS+=	netbsd32_epoll.c
 SRCS+=	netbsd32_exec_elf32.c	netbsd32_execve.c
 SRCS+=	netbsd32_fd.c		netbsd32_fs.c
 SRCS+=	netbsd32_futex.c
