@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.96 2023/06/24 05:31:04 msaitoh Exp $	*/
+/*	$NetBSD: fd.c,v 1.97 2023/08/30 18:20:40 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.96 2023/06/24 05:31:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.97 2023/08/30 18:20:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,7 +472,7 @@ fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 	int s;
 
 #ifdef FLP_DEBUG
-	printf("fdopen dev=0x%x\n", dev);
+	printf("fdopen dev=0x%llx\n", dev);
 #endif
 
 	if (FLP_TYPE(dev) >= NR_TYPES)
@@ -590,7 +590,7 @@ fdstrategy(struct buf *bp)
 	sc = device_lookup_private(&fd_cd, DISKUNIT(bp->b_dev));
 
 #ifdef FLP_DEBUG
-	printf("fdstrategy: %p, b_bcount: %ld\n", bp, bp->b_bcount);
+	printf("fdstrategy: %p, b_bcount: %d\n", bp, bp->b_bcount);
 #endif
 
 	/*
@@ -1213,13 +1213,13 @@ fdminphys(struct buf *bp)
 	tsz  = sc->nsectors * sc->nheads * SECTOR_SIZE;
 
 #ifdef FLP_DEBUG
-	printf("fdminphys: before %ld", bp->b_bcount);
+	printf("fdminphys: before %d", bp->b_bcount);
 #endif
 
 	bp->b_bcount = uimin(bp->b_bcount, tsz - toff);
 
 #ifdef FLP_DEBUG
-	printf(" after %ld\n", bp->b_bcount);
+	printf(" after %d\n", bp->b_bcount);
 #endif
 
 	minphys(bp);
