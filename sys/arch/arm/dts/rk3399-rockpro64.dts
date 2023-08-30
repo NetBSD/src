@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399-rockpro64.dts,v 1.14 2021/11/07 17:11:43 jmcneill Exp $ */
+/* $NetBSD: rk3399-rockpro64.dts,v 1.15 2023/08/30 21:26:05 rjs Exp $ */
 
 /*-
  * Copyright (c) 2019,2021 Jared McNeill <jmcneill@invisible.ca>
@@ -111,6 +111,10 @@
 				};
 			};
 		};
+	};
+
+	fan: pwm-fan {
+	 	cooling-levels = <0 100 150 200 255>;
 	};
 
 #if 0
