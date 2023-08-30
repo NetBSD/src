@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.37 2023/08/30 20:15:54 andvar Exp $
+#	$NetBSD: MDINSTALL,v 1.38 2023/08/30 20:17:06 andvar Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -134,7 +134,7 @@ p5bus0		at zbus0		# Phase5 CSPPC/BPPC internal bus
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
 grfrh0		at zbus0		# retina III
-grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
+grfcl*		at zbus0		# Picasso II/Piccolo/Spectrum
 grful0		at zbus0		# A2410
 grfcv0		at zbus0		# CyberVision 64
 grfet*		at zbus0		# Tseng (oMniBus, Domino, Merlin)
