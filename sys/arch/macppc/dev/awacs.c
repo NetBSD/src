@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.51 2021/03/05 07:15:53 rin Exp $	*/
+/*	$NetBSD: awacs.c,v 1.52 2023/08/30 08:38:51 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.51 2021/03/05 07:15:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.52 2023/08/30 08:38:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -102,6 +102,7 @@ struct awacs_softc {
 	struct dbdma_command *sc_idmacmd;
 
 	kmutex_t sc_lock;
+	kmutex_t sc_event_lock;
 	kmutex_t sc_intr_lock;
 };
 
@@ -375,6 +376,7 @@ awacs_attach(device_t parent, device_t self, void *aux)
 	    intr_xname);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_event_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	cv_init(&sc->sc_event, "awacs_wait");
@@ -1274,9 +1276,10 @@ awacs_thread(void *cookie)
 {
 	struct awacs_softc *sc = cookie;
 	
-	mutex_enter(&sc->sc_intr_lock);
 	while (1) {
-		cv_timedwait(&sc->sc_event, &sc->sc_intr_lock, hz);
+		mutex_enter(&sc->sc_event_lock);
+		cv_timedwait(&sc->sc_event, &sc->sc_event_lock, hz);
+		mutex_exit(&sc->sc_event_lock);
 		if (sc->sc_output_wanted == sc->sc_output_mask)
 			continue;
 
