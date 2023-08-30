@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.58 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: ser.c,v 1.59 2023/08/30 19:07:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.58 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.59 2023/08/30 19:07:04 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -347,9 +347,9 @@ serattach(device_t parent, device_t self, void *aux)
 }
 
 #ifdef SER_DEBUG
-void serstatus(struct ser_softc *, char *);
+void serstatus(struct ser_softc *, const char *);
 void
-serstatus(struct ser_softc *sc, char *str)
+serstatus(struct ser_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
