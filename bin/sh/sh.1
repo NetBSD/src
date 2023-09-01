@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.256 2023/08/04 15:31:40 jschauma Exp $
+.\"	$NetBSD: sh.1,v 1.257 2023/09/01 01:57:54 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3725,9 +3725,10 @@ command instead, if you want to return from a script or exit
 your shell.
 .\"
 .Pp
-.It set
-.It set { Fl o | Cm +o }
-.It Ic set Oo { Fl options | Cm +options } ... Oc Oo Cm \-\|\- Oc Oo Ar arg ... Oc
+.It Ic set
+.It Ic set No { Fl o | Cm +o No }
+.It Ic set No { Fl options | Cm +options | Fl o Ar opt | Cm +o Ar opt } ... Oo Cm \-\|\- Oc Oo Ar arg ... Oc
+.It Ic set \-\|\- Oo Ar arg ... Oc
 .Pp
 The
 .Ic set
@@ -3751,8 +3752,10 @@ In the
 form, the shell outputs a string that can later be used
 as a command to reset all options to their current values.
 .Pp
-If options are given, it sets the specified option
-flags, or clears them as described in the
+If options are given,
+.Nm
+sets the specified option flags,
+or clears them as described in the
 .Sx Argument List Processing
 section.
 Note that not all options available on the command
@@ -3762,6 +3765,7 @@ built-in command.
 However, in addition to the options listed there,
 when the
 .Dq "option name"
+.Pq Ar opt
 given to
 .Ic set Fl o
 is
@@ -3786,20 +3790,41 @@ parameters with no possibility of changing any options, use
 .Dq \-\|\-
 as the first argument to
 .Ic set .
-If no following arguments are present, the
+If no following
+.Ar arg Ns s
+are present, the
 .Ic set
 command
 will clear all the positional parameters (equivalent to executing
 .Dq Li shift $# . )
-Otherwise the following arguments become
+Otherwise the following
+.Ar arg Ns s
+become
 .Li \&$1 ,
 .Li \&$2 ,
 \&...,
 and
 .Li \&$#
-is set to the number of arguments present.
+is set to the number of
+.Ar arg Ns s
+present.
 The third and fourth forms may be combined, to set options,
-and the argument list, in one operation.
+and the positional parameters, in one operation.
+Note that if it is possible that no
+.Ar arg Ns uments
+might be present,
+or if the first
+.Ar arg
+might begin with a minus
+.Pq Sq \&\-
+then the
+.Dq \-\|\-
+is required to distinguish this case from the first
+and third variants of this command, and an
+.Ar arg
+beginning with
+.Sq \&\-
+from being an attempt to set options.
 .\"
 .Pp
 .It Ic setvar Ar variable Ar value
