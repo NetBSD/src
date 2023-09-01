@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2020/06/11 19:20:43 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2023/09/01 06:16:45 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2020/06/11 19:20:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2023/09/01 06:16:45 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -389,7 +389,7 @@ mips_map_physmem(paddr_t phys, vsize_t size)
 	}
 	ioaccess(addr, phys, size);
 #ifdef PHYSMEMDEBUG
-	printf("mips_map_physmem: alloc'ed %lx bytes for paddr %lx, at %lx\n",
+	printf("mips_map_physmem: alloc'ed %x bytes for paddr %x, at %x\n",
 	    size, phys, addr);
 #endif
 	return addr | (phys & PAGE_MASK);
@@ -402,7 +402,7 @@ void
 mips_unmap_physmem(vaddr_t addr, vsize_t size)
 {
 #ifdef PHYSMEMDEBUG
-	printf("mips_unmap_physmem: unmapping %lx bytes at addr %lx\n", 
+	printf("mips_unmap_physmem: unmapping %x bytes at addr %x\n", 
 	    size, addr);
 #endif
 	size += addr & PAGE_MASK;
