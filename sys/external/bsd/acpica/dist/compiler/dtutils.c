@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -476,6 +476,7 @@ DtGetFieldLength (
     case ACPI_DMT_IVRS_DE:
     case ACPI_DMT_GTDT:
     case ACPI_DMT_MADT:
+    case ACPI_DMT_MPAM_LOCATOR:
     case ACPI_DMT_NHLT1:
     case ACPI_DMT_NHLT1a:
     case ACPI_DMT_NHLT1b:
@@ -506,6 +507,7 @@ DtGetFieldLength (
         ByteLength = 1;
         break;
 
+    case ACPI_DMT_ASPT:
     case ACPI_DMT_UINT16:
     case ACPI_DMT_DMAR:
     case ACPI_DMT_HEST:

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,7 @@
  */
 #define ACPI_SIG_AEST           "AEST"      /* Arm Error Source Table */
 #define ACPI_SIG_ASF            "ASF!"      /* Alert Standard Format table */
+#define ACPI_SIG_ASPT           "ASPT"      /* AMD Secure Processor Table */
 #define ACPI_SIG_BERT           "BERT"      /* Boot Error Record Table */
 #define ACPI_SIG_BGRT           "BGRT"      /* Boot Graphics Resource Table */
 #define ACPI_SIG_BOOT           "BOOT"      /* Simple Boot Flag Table */
@@ -290,6 +291,86 @@ typedef struct acpi_asf_address
 
 } ACPI_ASF_ADDRESS;
 
+/*******************************************************************************
+ *
+ * ASPT - AMD Secure Processor Table (Signature "ASPT")
+ *        Revision 0x1
+ *
+ * Conforms to AMD Socket SP5/SP6 Platform ASPT Rev1 Specification,
+ * 12 September 2022
+ *
+ ******************************************************************************/
+
+typedef struct acpi_table_aspt
+{
+    ACPI_TABLE_HEADER       Header;             /* Common ACPI table header */
+    UINT32                  NumEntries;
+
+} ACPI_TABLE_ASPT;
+
+
+/* ASPT subtable header */
+
+typedef struct acpi_aspt_header
+{
+    UINT16                  Type;
+    UINT16                  Length;
+
+} ACPI_ASPT_HEADER;
+
+
+/* Values for Type field above */
+
+enum AcpiAsptType
+{
+    ACPI_ASPT_TYPE_GLOBAL_REGS      = 0,
+    ACPI_ASPT_TYPE_SEV_MBOX_REGS    = 1,
+    ACPI_ASPT_TYPE_ACPI_MBOX_REGS   = 2,
+    ACPI_ASPT_TYPE_UNKNOWN          = 3,
+};
+
+/*
+ * ASPT subtables
+ */
+
+/* 0: ASPT Global Registers */
+
+typedef struct acpi_aspt_global_regs
+{
+    ACPI_ASPT_HEADER        Header;
+    UINT32                  Reserved;
+    UINT64                  FeatureRegAddr;
+    UINT64                  IrqEnRegAddr;
+    UINT64                  IrqStRegAddr;
+
+} ACPI_ASPT_GLOBAL_REGS;
+
+
+/* 1: ASPT SEV Mailbox Registers */
+
+typedef struct acpi_aspt_sev_mbox_regs
+{
+    ACPI_ASPT_HEADER        Header;
+    UINT8                   MboxIrqId;
+    UINT8                   Reserved[3];
+    UINT64                  CmdRespRegAddr;
+    UINT64                  CmdBufLoRegAddr;
+    UINT64                  CmdBufHiRegAddr;
+
+} ACPI_ASPT_SEV_MBOX_REGS;
+
+
+/* 2: ASPT ACPI Mailbox Registers */
+
+typedef struct acpi_aspt_acpi_mbox_regs
+{
+    ACPI_ASPT_HEADER        Header;
+    UINT32                  Reserved1;
+    UINT64                  CmdRespRegAddr;
+    UINT64                  Reserved2[2];
+
+} ACPI_ASPT_ACPI_MBOX_REGS;
+
 
 /*******************************************************************************
  *
@@ -387,7 +468,6 @@ typedef struct acpi_table_boot
 } ACPI_TABLE_BOOT;
 
 
-
 /*******************************************************************************
  *
  * CDAT - Coherent Device Attribute Table
@@ -435,7 +515,7 @@ enum AcpiCdatType
 
 /* Subtable 0: Device Scoped Memory Affinity Structure (DSMAS) */
 
-typedef struct acpi_cadt_dsmas
+typedef struct acpi_cdat_dsmas
 {
     UINT8                   DsmadHandle;
     UINT8                   Flags;
@@ -447,7 +527,7 @@ typedef struct acpi_cadt_dsmas
 
 /* Flags for subtable above */
 
-#define ACPI_CEDT_DSMAS_NON_VOLATILE        (1 << 2)
+#define ACPI_CDAT_DSMAS_NON_VOLATILE        (1 << 2)
 
 
 /* Subtable 1: Device scoped Latency and Bandwidth Information Structure (DSLBIS) */
@@ -1031,7 +1111,10 @@ typedef struct acpi_dmar_andd
     ACPI_DMAR_HEADER        Header;
     UINT8                   Reserved[3];
     UINT8                   DeviceNumber;
-    char                    DeviceName[1];
+    union {
+        char                  __pad;
+        ACPI_FLEX_ARRAY(char, DeviceName);
+    };
 
 } ACPI_DMAR_ANDD;
 
@@ -1084,7 +1167,7 @@ typedef struct acpi_table_drtm
 typedef struct acpi_drtm_vtable_list
 {
     UINT32                  ValidatedTableCount;
-    UINT64                  ValidatedTables[1];
+    UINT64                  ValidatedTables[];
 
 } ACPI_DRTM_VTABLE_LIST;
 
@@ -1103,7 +1186,7 @@ typedef struct acpi_drtm_resource
 typedef struct acpi_drtm_resource_list
 {
     UINT32                  ResourceCount;
-    ACPI_DRTM_RESOURCE      Resources[1];
+    ACPI_DRTM_RESOURCE      Resources[];
 
 } ACPI_DRTM_RESOURCE_LIST;
 
@@ -1131,7 +1214,7 @@ typedef struct acpi_table_ecdt
     ACPI_GENERIC_ADDRESS    Data;               /* Address of EC data register */
     UINT32                  Uid;                /* Unique ID - must be same as the EC _UID method */
     UINT8                   Gpe;                /* The GPE for the EC */
-    UINT8                   Id[1];              /* Full namepath of the EC in the ACPI namespace */
+    UINT8                   Id[];               /* Full namepath of the EC in the ACPI namespace */
 
 } ACPI_TABLE_ECDT;
 

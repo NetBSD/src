@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -397,6 +397,7 @@ extern ACPI_RSCONVERT_INFO      AcpiRsConvertPinConfig[];
 extern ACPI_RSCONVERT_INFO      AcpiRsConvertPinGroup[];
 extern ACPI_RSCONVERT_INFO      AcpiRsConvertPinGroupFunction[];
 extern ACPI_RSCONVERT_INFO      AcpiRsConvertPinGroupConfig[];
+extern ACPI_RSCONVERT_INFO      AcpiRsConvertClockInput[];
 
 /* These resources require separate get/set tables */
 
@@ -453,6 +454,7 @@ extern ACPI_RSDUMP_INFO         AcpiRsDumpPinConfig[];
 extern ACPI_RSDUMP_INFO         AcpiRsDumpPinGroup[];
 extern ACPI_RSDUMP_INFO         AcpiRsDumpPinGroupFunction[];
 extern ACPI_RSDUMP_INFO         AcpiRsDumpPinGroupConfig[];
+extern ACPI_RSDUMP_INFO         AcpiRsDumpClockInput[];
 #endif
 
 #endif  /* __ACRESRC_H__ */

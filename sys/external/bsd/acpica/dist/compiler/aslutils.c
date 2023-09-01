@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -502,7 +502,7 @@ UtSetParseOpName (
  *
  * FUNCTION:    UtDisplayOneSummary
  *
- * PARAMETERS:  FileID              - ID of outpout file
+ * PARAMETERS:  FileID              - ID of output file
  *
  * RETURN:      None
  *
@@ -625,7 +625,7 @@ UtDisplayOneSummary (
  *
  * FUNCTION:    UtDisplayErrorSummary
  *
- * PARAMETERS:  FileID              - ID of outpout file
+ * PARAMETERS:  FileID              - ID of output file
  *
  * RETURN:      None
  *
@@ -692,7 +692,7 @@ UtDisplayErrorSummary (
  *
  * FUNCTION:    UtDisplaySummary
  *
- * PARAMETERS:  FileID              - ID of outpout file
+ * PARAMETERS:  FileID              - ID of output file
  *
  * RETURN:      None
  *
