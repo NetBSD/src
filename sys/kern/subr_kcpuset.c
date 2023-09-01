@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.15 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.16 2023/09/01 16:57:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.15 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.16 2023/09/01 16:57:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -64,7 +64,7 @@ struct kcpuset {
 typedef struct kcpuset_impl {
 	/* Reference count. */
 	u_int			kc_refcnt;
-	/* Next to free, if non-NULL (used when multiple references). */ 
+	/* Next to free, if non-NULL (used when multiple references). */
 	struct kcpuset *	kc_next;
 	/* Actual variable-sized field of bits. */
 	struct kcpuset		kc_field;
