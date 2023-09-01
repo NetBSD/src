@@ -1,4 +1,4 @@
-/*      $NetBSD: clpscom.c,v 1.10 2022/10/26 23:38:06 riastradh Exp $      */
+/*      $NetBSD: clpscom.c,v 1.11 2023/09/01 08:53:52 andvar Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.10 2022/10/26 23:38:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.11 2023/09/01 08:53:52 andvar Exp $");
 
 #include "rnd.h"
 
@@ -124,7 +124,7 @@ struct clpscom_softc {
 	int sc_swflags;
 
 #ifdef RND_COM
-	krandsource_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 
