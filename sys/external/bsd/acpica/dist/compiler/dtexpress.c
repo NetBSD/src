@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -372,10 +372,11 @@ static void
 DtInsertLabelField (
     DT_FIELD                *Field)
 {
+    ACPI_FUNCTION_NAME (DtInsertLabelField);
 
     DbgPrint (ASL_DEBUG_OUTPUT,
-        "DtInsertLabelField: Found Label : %s at output table offset %X\n",
-        Field->Value, Field->TableOffset);
+        "%s: Found Label : %s at output table offset %X\n",
+         ACPI_GET_FUNCTION_NAME, Field->Value, Field->TableOffset);
 
     Field->NextLabel = AslGbl_LabelList;
     AslGbl_LabelList = Field;

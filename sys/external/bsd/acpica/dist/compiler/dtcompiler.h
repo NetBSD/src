@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -470,6 +470,10 @@ DtCompileAsf (
     void                    **PFieldList);
 
 ACPI_STATUS
+DtCompileAspt (
+    void                    **PFieldList);
+
+ACPI_STATUS
 DtCompileCdat (
     void                    **PFieldList);
 
@@ -546,6 +550,10 @@ DtCompileMcfg (
     void                    **PFieldList);
 
 ACPI_STATUS
+DtCompileMpam (
+    void                    **PFieldList);
+
+ACPI_STATUS
 DtCompileMpst (
     void                    **PFieldList);
 
@@ -587,6 +595,10 @@ DtCompilePrmt (
 
 ACPI_STATUS
 DtCompileRgrt (
+    void                    **PFieldList);
+
+ACPI_STATUS
+DtCompileRhct (
     void                    **PFieldList);
 
 ACPI_STATUS
@@ -665,6 +677,7 @@ extern const unsigned char  TemplateAest[];
 extern const unsigned char  TemplateAgdi[];
 extern const unsigned char  TemplateApmt[];
 extern const unsigned char  TemplateAsf[];
+extern const unsigned char  TemplateAspt[];
 extern const unsigned char  TemplateBoot[];
 extern const unsigned char  TemplateBdat[];
 extern const unsigned char  TemplateBert[];
@@ -693,6 +706,7 @@ extern const unsigned char  TemplateLpit[];
 extern const unsigned char  TemplateMadt[];
 extern const unsigned char  TemplateMcfg[];
 extern const unsigned char  TemplateMchi[];
+extern const unsigned char  TemplateMpam[];
 extern const unsigned char  TemplateMpst[];
 extern const unsigned char  TemplateMsct[];
 extern const unsigned char  TemplateMsdm[];
@@ -706,6 +720,7 @@ extern const unsigned char  TemplatePptt[];
 extern const unsigned char  TemplatePrmt[];
 extern const unsigned char  TemplateRasf[];
 extern const unsigned char  TemplateRgrt[];
+extern const unsigned char  TemplateRhct[];
 extern const unsigned char  TemplateRsdt[];
 extern const unsigned char  TemplateS3pt[];
 extern const unsigned char  TemplateSbst[];

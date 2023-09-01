@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -220,9 +220,10 @@ AcpiNsSimpleRepair (
      */
     if (!ReturnObject)
     {
-        if (ExpectedBtypes && (!(ExpectedBtypes & ACPI_RTYPE_NONE)))
+        if (ExpectedBtypes)
         {
-            if (PackageIndex != ACPI_NOT_PACKAGE_ELEMENT)
+            if (!(ExpectedBtypes & ACPI_RTYPE_NONE) &&
+                PackageIndex != ACPI_NOT_PACKAGE_ELEMENT)
             {
                 ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname,
                     ACPI_WARN_ALWAYS, "Found unexpected NULL package element"));
@@ -234,13 +235,14 @@ AcpiNsSimpleRepair (
                     return (AE_OK); /* Repair was successful */
                 }
             }
-            else
+
+            if (ExpectedBtypes != ACPI_RTYPE_NONE)
             {
                 ACPI_WARN_PREDEFINED ((AE_INFO, Info->FullPathname,
-                    ACPI_WARN_ALWAYS, "Missing expected return value"));
+                                       ACPI_WARN_ALWAYS,
+                                       "Missing expected return value"));
+                return (AE_AML_NO_RETURN_VALUE);
             }
-
-            return (AE_AML_NO_RETURN_VALUE);
         }
     }
 

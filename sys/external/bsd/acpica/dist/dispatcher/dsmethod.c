@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -597,7 +597,7 @@ AcpiDsCallControlMethod (
     if (!Info)
     {
         Status = AE_NO_MEMORY;
-        goto Cleanup;
+        goto PopWalkState;
     }
 
     Info->Parameters = &ThisWalkState->Operands[0];
@@ -609,7 +609,7 @@ AcpiDsCallControlMethod (
     ACPI_FREE (Info);
     if (ACPI_FAILURE (Status))
     {
-        goto Cleanup;
+        goto PopWalkState;
     }
 
     NextWalkState->MethodNestingDepth = ThisWalkState->MethodNestingDepth + 1;
@@ -655,6 +655,12 @@ AcpiDsCallControlMethod (
 
     return_ACPI_STATUS (Status);
 
+
+PopWalkState:
+
+    /* On error, pop the walk state to be deleted from thread */
+
+    AcpiDsPopWalkState(Thread);
 
 Cleanup:
 

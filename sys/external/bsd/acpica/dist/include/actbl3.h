@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -346,13 +346,15 @@ typedef struct acpi_srat_gic_its_affinity
  * 6: ACPI_SRAT_TYPE_GENERIC_PORT_AFFINITY
  */
 
+#define ACPI_SRAT_DEVICE_HANDLE_SIZE	16
+
 typedef struct acpi_srat_generic_affinity
 {
     ACPI_SUBTABLE_HEADER    Header;
     UINT8                   Reserved;
     UINT8                   DeviceHandleType;
     UINT32                  ProximityDomain;
-    UINT8                   DeviceHandle[16];
+    UINT8                   DeviceHandle[ACPI_SRAT_DEVICE_HANDLE_SIZE];
     UINT32                  Flags;
     UINT32                  Reserved1;
 

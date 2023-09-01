@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Name: acgccex.h - Extra GCC specific defines, etc.
+ * Module Name: aczephyr.h - OS specific defines, etc.
  *
  *****************************************************************************/
 
@@ -41,18 +41,41 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-#ifndef __ACGCCEX_H__
-#define __ACGCCEX_H__
+#ifndef __ACZEPHYR_H__
+#define __ACZEPHYR_H__
 
-/*
- * Some versions of gcc implement strchr() with a buggy macro. So,
- * undef it here. Prevents error messages of this form (usually from the
- * file getopt.c):
+#define ACPI_MACHINE_WIDTH      64
+
+#define ACPI_NO_ERROR_MESSAGES
+#undef ACPI_DEBUG_OUTPUT
+#define ACPI_USE_SYSTEM_CLIBRARY
+#undef ACPI_DBG_TRACK_ALLOCATIONS
+#define ACPI_SINGLE_THREADED
+#define ACPI_USE_NATIVE_RSDP_POINTER
+
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <zephyr/fs/fs.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/__assert.h>
+
+
+/******************************************************************************
  *
- * error: logical '&&' with non-zero constant will always evaluate as true
- */
-#ifdef strchr
-#undef strchr
-#endif
+ * FUNCTION:    AcpiEnableDbgPrint
+ *
+ * PARAMETERS:  Enable, 	            - Enable/Disable debug print
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Enable/disable debug print
+ *
+ *****************************************************************************/
 
-#endif /* __ACGCCEX_H__ */
+void AcpiEnableDbgPrint (
+    bool Enable);
+#endif
