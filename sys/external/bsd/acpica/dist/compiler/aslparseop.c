@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -709,6 +709,8 @@ TrAllocateOp (
     ACPI_PARSE_OBJECT       *Op;
     ACPI_PARSE_OBJECT       *LatestOp;
 
+    ACPI_FUNCTION_NAME (TrAllocateOp);
+
 
     Op = UtParseOpCacheCalloc ();
 
@@ -753,7 +755,7 @@ TrAllocateOp (
         }
 
         AslGbl_CommentState.LatestParseOp = Op;
-        CvDbgPrint ("TrAllocateOp=Set latest parse op to this op.\n");
+        CvDbgPrint ("%s=Set latest parse op to this op.\n",  ACPI_GET_FUNCTION_NAME);
         CvDbgPrint ("           Op->Asl.ParseOpName = %s\n",
             AslGbl_CommentState.LatestParseOp->Asl.ParseOpName);
         CvDbgPrint ("           Op->Asl.ParseOpcode = 0x%x\n", ParseOpcode);

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -393,10 +393,11 @@ AnGetBtype (
     ACPI_PARSE_OBJECT       *ReferencedNode;
     UINT32                  ThisNodeBtype = 0;
 
+    ACPI_FUNCTION_NAME (AnGetBtype);
 
     if (!Op)
     {
-        AcpiOsPrintf ("Null Op in AnGetBtype\n");
+        AcpiOsPrintf ("Null Op in %s\n",  ACPI_GET_FUNCTION_NAME);
         return (ACPI_UINT32_MAX);
     }
 

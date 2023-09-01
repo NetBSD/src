@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -654,6 +654,12 @@ RsDoOneResourceDescriptor (
 
     switch (Info->DescriptorTypeOp->Asl.ParseOpcode)
     {
+
+    case PARSEOP_CLOCKINPUT:
+
+        Rnode = RsDoClockInputDescriptor(Info);
+        break;
+
     case PARSEOP_DMA:
 
         Rnode = RsDoDmaDescriptor (Info);

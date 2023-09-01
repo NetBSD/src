@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -372,6 +372,14 @@ static const ACPI_RESOURCE_TAG      AcpiDmIoFlagTags[] =
     {0,             NULL}
 };
 
+/* Subtype tables for ClockInput descriptor */
+
+static const ACPI_RESOURCE_TAG      AcpiDmClockInputTags[] =
+{
+    {( 6 * 8),      ACPI_RESTAG_FQD},
+    {( 8 * 8),      ACPI_RESTAG_FQN},
+    {0,             NULL}
+};
 
 /*
  * Dispatch table used to obtain the correct tag table for a descriptor.
@@ -423,6 +431,7 @@ static const ACPI_RESOURCE_TAG      *AcpiGbl_ResourceTags[] =
     NULL,                           /* 0x10, ACPI_RESOURCE_NAME_PIN_GROUP */
     AcpiDmPinGroupFunctionTags,     /* 0x11, ACPI_RESOURCE_NAME_PIN_GROUP_FUNCTION */
     AcpiDmPinConfigTags,            /* 0x12, ACPI_RESOURCE_NAME_PIN_GROUP_CONFIG - Same as PinConfig */
+    AcpiDmClockInputTags,           /* 0x13, ACPI_RESOURCE_NAME_CLOCK_INPUT */
 };
 
 /* GPIO Subtypes */
