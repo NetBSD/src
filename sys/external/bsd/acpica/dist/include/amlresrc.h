@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -105,6 +105,8 @@
 #define ACPI_RESTAG_TYPE                        "_TTP"  /* Translation(1), Static (0) */
 #define ACPI_RESTAG_XFERTYPE                    "_SIZ"  /* 8(0), 8And16(1), 16(2) */
 #define ACPI_RESTAG_VENDORDATA                  "_VEN"
+#define ACPI_RESTAG_FQN                         "_FQN"
+#define ACPI_RESTAG_FQD                         "_FQD"
 
 
 /* Default sizes for "small" resource descriptors */
@@ -393,7 +395,10 @@ typedef struct aml_resource_extended_irq
     AML_RESOURCE_LARGE_HEADER_COMMON
     UINT8                           Flags;
     UINT8                           InterruptCount;
-    UINT32                          Interrupts[1];
+    union {
+        UINT32                      Interrupt;
+        ACPI_FLEX_ARRAY(UINT32,     Interrupts);
+    };
     /* ResSourceIndex, ResSource optional fields follow */
 
 } AML_RESOURCE_EXTENDED_IRQ;
@@ -595,6 +600,23 @@ typedef struct aml_resource_pin_config
 
 } AML_RESOURCE_PIN_CONFIG;
 
+#define AML_RESOURCE_CLOCK_INPUT_REVISION      1       /* ACPI 6.5 */
+
+typedef struct aml_resource_clock_input
+{
+    AML_RESOURCE_LARGE_HEADER_COMMON
+    UINT8                           RevisionId;
+    UINT16                          Flags;
+    UINT16                          FrequencyDivisor;
+    UINT32                          FrequencyNumerator;
+    /*
+     * Optional fields follow immediately:
+     * 1) Resource Source index
+     * 2) Resource Source String
+     */
+} AML_RESOURCE_CLOCK_INPUT;
+
+
 #define AML_RESOURCE_PIN_CONFIG_REVISION      1       /* ACPI 6.2 */
 
 typedef struct aml_resource_pin_group
@@ -707,6 +729,7 @@ typedef union aml_resource
     AML_RESOURCE_PIN_GROUP                  PinGroup;
     AML_RESOURCE_PIN_GROUP_FUNCTION         PinGroupFunction;
     AML_RESOURCE_PIN_GROUP_CONFIG           PinGroupConfig;
+    AML_RESOURCE_CLOCK_INPUT                ClockInput;
 
     /* Utility overlays */
 

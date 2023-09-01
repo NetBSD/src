@@ -130,7 +130,7 @@ AcpiHwLegacyWake (
  */
 void
 AcpiHwExecuteSleepMethod (
-    char                    *MethodName,
+    const char              *MethodName,
     UINT32                  IntegerArgument);
 
 ACPI_STATUS

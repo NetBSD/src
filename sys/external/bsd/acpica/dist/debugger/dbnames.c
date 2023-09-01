@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -775,6 +775,9 @@ AcpiDbDisplayObjects (
     if (!ObjTypeArg)
     {
         ObjectInfo = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_OBJECT_INFO));
+
+        if (!ObjectInfo)
+                return (AE_NO_MEMORY);
 
         /* Walk the namespace from the root */
 
