@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm.c,v 1.13 2022/05/24 20:50:19 andvar Exp $	*/
+/*	$NetBSD: aicasm.c,v 1.14 2023/09/01 11:23:39 andvar Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware assembler
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aicasm.c,v 1.13 2022/05/24 20:50:19 andvar Exp $");
+__RCSID("$NetBSD: aicasm.c,v 1.14 2023/09/01 11:23:39 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -832,7 +832,7 @@ process_scope(scope_t *scope)
 			}
 			break;
 		case SCOPE_ELSE:
-			/* Count any patches contained in our innter scope */
+			/* Count any patches contained in our inner scope */
 			skip_patch_count += cur_scope->inner_scope_patches;
 
 			skip_instr_count += cur_scope->end_addr
