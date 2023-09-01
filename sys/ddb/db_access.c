@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.26 2019/09/12 17:09:00 ryo Exp $	*/
+/*	$NetBSD: db_access.c,v 1.27 2023/09/01 10:55:23 andvar Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.26 2019/09/12 17:09:00 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.27 2023/09/01 10:55:23 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -94,7 +94,7 @@ db_get_qvalue(db_addr_t addr, size_t size, bool is_signed)
 	}
 
 	if (size != sizeof(data)) {
-		db_error("unnsupported size\n");
+		db_error("unsupported size\n");
 		/*NOTREACHED*/
 	}
 
