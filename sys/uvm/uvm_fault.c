@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.234 2023/08/13 23:06:07 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.235 2023/09/01 10:57:20 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.234 2023/08/13 23:06:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.235 2023/09/01 10:57:20 andvar Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1843,7 +1843,7 @@ uvm_fault_lower_upgrade(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
  *
  *	1. check uobj
  *	1.1. if null, ZFOD.
- *	1.2. if not null, look up unnmapped neighbor pages.
+ *	1.2. if not null, look up unmapped neighbor pages.
  *	2. for center page, check if promote.
  *	2.1. ZFOD always needs promotion.
  *	2.2. other uobjs, when entry is marked COW (usually MAP_PRIVATE vnode).
