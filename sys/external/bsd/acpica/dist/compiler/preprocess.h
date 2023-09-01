@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -141,6 +141,7 @@ typedef struct directive_info
  */
 PR_EXTERN char                  PR_INIT_GLOBAL (*AslGbl_MainTokenBuffer, NULL); /* [ASL_LINE_BUFFER_SIZE]; */
 PR_EXTERN char                  PR_INIT_GLOBAL (*AslGbl_MacroTokenBuffer, NULL); /* [ASL_LINE_BUFFER_SIZE]; */
+PR_EXTERN char                  PR_INIT_GLOBAL (*AslGbl_MacroTokenReplaceBuffer, NULL); /* [ASL_LINE_BUFFER_SIZE]; */
 PR_EXTERN char                  PR_INIT_GLOBAL (*AslGbl_ExpressionTokenBuffer, NULL); /* [ASL_LINE_BUFFER_SIZE]; */
 
 PR_EXTERN UINT32                AslGbl_PreprocessorLineNumber;
@@ -262,6 +263,14 @@ PrError (
     UINT32                  Column);
 
 void
+PrReplaceResizeSubstring(
+    PR_MACRO_ARG            *Args,
+    UINT32                  Diff1,
+    UINT32                  Diff2,
+    UINT32                  i,
+    char                    *Token);
+
+char *
 PrReplaceData (
     char                    *Buffer,
     UINT32                  LengthToRemove,

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -471,6 +471,9 @@ const ACPI_PREDEFINED_INFO          AcpiGbl_PredefinedMethods[] =
 
     {{"_DOS",   METHOD_1ARGS (ACPI_TYPE_INTEGER),
                 METHOD_NO_RETURN_VALUE}},
+    
+    { {"_DSC",   METHOD_0ARGS,
+                    METHOD_RETURNS (ACPI_RTYPE_INTEGER)}},
 
     {{"_DSD",   METHOD_0ARGS,                          /* ACPI 6.0 */
                 METHOD_RETURNS (ACPI_RTYPE_PACKAGE)}}, /* Variable-length (Pkgs) each: 1 Buf, 1 Pkg */

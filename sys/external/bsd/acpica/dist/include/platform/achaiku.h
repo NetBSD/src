@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,8 +86,8 @@ struct mutex;
 #define ACPI_FLUSH_CPU_CACHE() __asm __volatile("wbinvd");
 
 /* Based on FreeBSD's due to lack of documentation */
-extern int AcpiOsAcquireGlobalLock(uint32 *lock);
-extern int AcpiOsReleaseGlobalLock(uint32 *lock);
+int AcpiOsAcquireGlobalLock(uint32 *lock);
+int AcpiOsReleaseGlobalLock(uint32 *lock);
 
 #define ACPI_ACQUIRE_GLOBAL_LOCK(GLptr, Acq)    do {                \
         (Acq) = AcpiOsAcquireGlobalLock(&((GLptr)->GlobalLock));    \

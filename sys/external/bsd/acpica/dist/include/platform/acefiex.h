@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2022, Intel Corp.
+ * Copyright (C) 2000 - 2023, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -400,7 +400,7 @@ typedef struct {
     ACPI_EFI_TIME LastAccessTime;
     ACPI_EFI_TIME ModificationTime;
     UINT64 Attribute;
-    CHAR16 FileName[1];
+    CHAR16 FileName[];
 } ACPI_EFI_FILE_INFO;
 
 #define SIZE_OF_ACPI_EFI_FILE_INFO  ACPI_OFFSET(ACPI_EFI_FILE_INFO, FileName)
