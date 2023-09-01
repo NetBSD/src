@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.21 2022/12/08 08:05:03 knakahara Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.22 2023/09/01 11:23:39 andvar Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.21 2022/12/08 08:05:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.22 2023/09/01 11:23:39 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -243,7 +243,7 @@ ipsecif4_flowinfo(struct mbuf *m, int family, int *proto0, u_int8_t *tos0)
 		}
 		ip = mtod(m, const struct ip *);
 		tos = ip->ip_tos;
-		/* TODO: support ALTQ for innner packet */
+		/* TODO: support ALTQ for inner packet */
 		break;
 #ifdef INET6
 	case AF_INET6: {
@@ -259,7 +259,7 @@ ipsecif4_flowinfo(struct mbuf *m, int family, int *proto0, u_int8_t *tos0)
 		}
 		ip6 = mtod(m, const struct ip6_hdr *);
 		tos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
-		/* TODO: support ALTQ for innner packet */
+		/* TODO: support ALTQ for inner packet */
 		break;
 	}
 #endif /* INET6 */
@@ -549,7 +549,7 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 		}
 		ip = mtod(m, struct ip *);
 		itos = ip->ip_tos;
-		/* TODO: support ALTQ for innner packet */
+		/* TODO: support ALTQ for inner packet */
 		break;
 	    }
 #endif /* INET */
@@ -564,7 +564,7 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 		}
 		xip6 = mtod(m, struct ip6_hdr *);
 		itos = (ntohl(xip6->ip6_flow) >> 20) & 0xff;
-		/* TODO: support ALTQ for innner packet */
+		/* TODO: support ALTQ for inner packet */
 		break;
 	    }
 	default:

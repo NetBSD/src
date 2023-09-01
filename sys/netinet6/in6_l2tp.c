@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_l2tp.c,v 1.22 2022/12/07 08:30:15 knakahara Exp $	*/
+/*	$NetBSD: in6_l2tp.c,v 1.23 2023/09/01 11:23:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.22 2022/12/07 08:30:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.23 2023/09/01 11:23:39 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -124,7 +124,7 @@ in6_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 	}
 
 #ifdef NOTYET
-/* TODO: support ALTQ for innner frame */
+/* TODO: support ALTQ for inner frame */
 #ifdef ALTQ
 	ALTQ_SAVE_PAYLOAD(m, AF_ETHER);
 #endif

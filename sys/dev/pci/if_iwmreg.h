@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmreg.h,v 1.13 2023/06/24 05:35:00 msaitoh Exp $	*/
+/*	$NetBSD: if_iwmreg.h,v 1.14 2023/09/01 11:23:39 andvar Exp $	*/
 /*	OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp 	*/
 
 /*-
@@ -5377,7 +5377,7 @@ enum iwm_scan_offload_channel_flags {
  *			25:	partial scan.
  * @channel_number:	channel number 1-13 etc.
  * @iter_count:		repetition count for the channel.
- * @iter_interval:	interval between two innteration on one channel.
+ * @iter_interval:	interval between two iterations on one channel.
  * @dwell_time:	entry 0 - active scan, entry 1 - passive scan.
  */
 struct iwm_scan_channel_cfg {
