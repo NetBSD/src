@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.163 2023/09/02 17:42:47 riastradh Exp $        */
+/*      $NetBSD: ukbd.c,v 1.164 2023/09/02 17:43:16 riastradh Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.163 2023/09/02 17:42:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.164 2023/09/02 17:43:16 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -47,28 +47,29 @@ __KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.163 2023/09/02 17:42:47 riastradh Exp $")
 #endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
-#include <sys/systm.h>
+
 #include <sys/callout.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 #include <sys/file.h>
-#include <sys/select.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/poll.h>
+#include <sys/proc.h>
+#include <sys/select.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
+#include <dev/hid/hid.h>
+
+#include <dev/usb/uhidev.h>
+#include <dev/usb/ukbdvar.h>
 #include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
-
+#include <dev/usb/usb_quirks.h>
+#include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usbdevs.h>
-#include <dev/usb/usb_quirks.h>
-#include <dev/usb/uhidev.h>
-#include <dev/usb/ukbdvar.h>
-#include <dev/hid/hid.h>
+#include <dev/usb/usbhid.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
