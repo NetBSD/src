@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.5 2023/07/16 10:18:19 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.6 2023/09/02 17:43:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.5 2023/07/16 10:18:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.6 2023/09/02 17:43:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -127,17 +127,22 @@ void *heartbeat_sih			__read_mostly;
  *	Suspend heartbeat monitoring of the current CPU.
  *
  *	Called after the current CPU has been marked offline but before
- *	it has stopped running.  Caller must have preemption disabled.
+ *	it has stopped running, or after IPL has been raised for
+ *	polling-mode console input.  Caller must have preemption
+ *	disabled.  Non-nestable.  Reversed by heartbeat_resume.
  */
 void
 heartbeat_suspend(void)
 {
+	struct cpu_info *ci = curcpu();
+	int s;
 
 	KASSERT(curcpu_stable());
+	KASSERT((ci->ci_schedstate.spc_flags & SPCF_HEARTBEATSUSPENDED) == 0);
 
-	/*
-	 * Nothing to do -- we just check the SPCF_OFFLINE flag.
-	 */
+	s = splsched();
+	ci->ci_schedstate.spc_flags |= SPCF_HEARTBEATSUSPENDED;
+	splx(s);
 }
 
 /*
@@ -148,6 +153,8 @@ heartbeat_suspend(void)
  *	Called at startup while cold, and whenever heartbeat monitoring
  *	is re-enabled after being disabled or the period is changed.
  *	When not cold, ci must be the current CPU.
+ *
+ *	Must be run at splsched.
  */
 static void
 heartbeat_resume_cpu(struct cpu_info *ci)
@@ -155,6 +162,7 @@ heartbeat_resume_cpu(struct cpu_info *ci)
 
 	KASSERT(__predict_false(cold) || curcpu_stable());
 	KASSERT(__predict_false(cold) || ci == curcpu());
+	/* XXX KASSERT IPL_SCHED */
 
 	ci->ci_heartbeat_count = 0;
 	ci->ci_heartbeat_uptime_cache = time_uptime;
@@ -167,9 +175,8 @@ heartbeat_resume_cpu(struct cpu_info *ci)
  *	Resume heartbeat monitoring of the current CPU.
  *
  *	Called after the current CPU has started running but before it
- *	has been marked online.  Also used internally when starting up
- *	heartbeat monitoring at boot or when the maximum period is set
- *	from zero to nonzero.  Caller must have preemption disabled.
+ *	has been marked online, or when ending polling-mode input
+ *	before IPL is restored.  Caller must have preemption disabled.
  */
 void
 heartbeat_resume(void)
@@ -178,6 +185,7 @@ heartbeat_resume(void)
 	int s;
 
 	KASSERT(curcpu_stable());
+	KASSERT(ci->ci_schedstate.spc_flags & SPCF_HEARTBEATSUSPENDED);
 
 	/*
 	 * Block heartbeats while we reset the state so we don't
@@ -185,6 +193,7 @@ heartbeat_resume(void)
 	 * resetting the count and the uptime stamp.
 	 */
 	s = splsched();
+	ci->ci_schedstate.spc_flags &= ~SPCF_HEARTBEATSUSPENDED;
 	heartbeat_resume_cpu(ci);
 	splx(s);
 }
@@ -198,8 +207,11 @@ heartbeat_resume(void)
 static void
 heartbeat_reset_xc(void *a, void *b)
 {
+	int s;
 
-	heartbeat_resume();
+	s = splsched();
+	heartbeat_resume_cpu(curcpu());
+	splx(s);
 }
 
 /*
@@ -488,7 +500,7 @@ select_patient(void)
 	 * in the iteration order.
 	 */
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (ci->ci_schedstate.spc_flags & SPCF_OFFLINE)
+		if (ci->ci_schedstate.spc_flags & SPCF_HEARTBEATSUSPENDED)
 			continue;
 		if (passedcur) {
 			/*
@@ -565,7 +577,8 @@ heartbeat(void)
 	period_secs = atomic_load_relaxed(&heartbeat_max_period_secs);
 	if (__predict_false(period_ticks == 0) ||
 	    __predict_false(period_secs == 0) ||
-	    __predict_false(curcpu()->ci_schedstate.spc_flags & SPCF_OFFLINE))
+	    __predict_false(curcpu()->ci_schedstate.spc_flags &
+		SPCF_HEARTBEATSUSPENDED))
 		return;
 
 	/*
@@ -637,8 +650,8 @@ heartbeat(void)
 	 * Verify that time is advancing on the patient CPU.  If the
 	 * delta exceeds UINT_MAX/2, that means it is already ahead by
 	 * a little on the other CPU, and the subtraction went
-	 * negative, which is OK.  If the CPU has been
-	 * offlined since we selected it, no worries.
+	 * negative, which is OK.  If the CPU's heartbeats have been
+	 * suspended since we selected it, no worries.
 	 *
 	 * This uses the current CPU to ensure the other CPU has made
 	 * progress, even if the other CPU's hard timer interrupt
@@ -650,7 +663,8 @@ heartbeat(void)
 	d = uptime - atomic_load_relaxed(&patient->ci_heartbeat_uptime_cache);
 	if (__predict_false(d > period_secs) &&
 	    __predict_false(d < UINT_MAX/2) &&
-	    ((patient->ci_schedstate.spc_flags & SPCF_OFFLINE) == 0))
+	    ((patient->ci_schedstate.spc_flags & SPCF_HEARTBEATSUSPENDED)
+		== 0))
 		defibrillate(patient, d);
 }
 
@@ -661,11 +675,21 @@ heartbeat(void)
  */
 #ifdef DDB
 static unsigned
-db_read_unsigned(const unsigned *p)
+db_read_unsigned(const volatile unsigned *p)
 {
 	unsigned x;
 
-	db_read_bytes((db_addr_t)p, sizeof(x), (char *)&x);
+	db_read_bytes((db_addr_t)(uintptr_t)p, sizeof(x), (char *)&x);
+
+	return x;
+}
+
+static int
+db_read_signed(const volatile int *p)
+{
+	int x;
+
+	db_read_bytes((db_addr_t)(uintptr_t)p, sizeof(x), (char *)&x);
 
 	return x;
 }
@@ -677,11 +701,13 @@ heartbeat_dump(void)
 
 	db_printf("Heartbeats:\n");
 	for (ci = db_cpu_first(); ci != NULL; ci = db_cpu_next(ci)) {
-		db_printf("cpu%u: count %u uptime %u stamp %u\n",
+		db_printf("cpu%u: count %u uptime %u stamp %u%s\n",
 		    db_read_unsigned(&ci->ci_index),
 		    db_read_unsigned(&ci->ci_heartbeat_count),
 		    db_read_unsigned(&ci->ci_heartbeat_uptime_cache),
-		    db_read_unsigned(&ci->ci_heartbeat_uptime_stamp));
+		    db_read_unsigned(&ci->ci_heartbeat_uptime_stamp),
+		    (db_read_signed(&ci->ci_schedstate.spc_flags) &
+			SPCF_HEARTBEATSUSPENDED ? " (suspended)" : ""));
 	}
 }
 #endif

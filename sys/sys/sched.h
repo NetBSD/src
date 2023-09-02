@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.92 2023/07/13 12:06:20 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.93 2023/09/02 17:43:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019, 2020
@@ -188,6 +188,7 @@ struct schedstate_percpu {
 #define	SPCF_1STCLASS		0x0040	/* first class scheduling entity */
 #define	SPCF_CORE1ST		0x0100	/* first CPU in core */
 #define	SPCF_PACKAGE1ST		0x0200	/* first CPU in package */
+#define	SPCF_HEARTBEATSUSPENDED	0x0400	/* heartbeat (temporarily) suspended */
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
 
