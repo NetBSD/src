@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.96 2023/09/02 17:43:28 riastradh Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.97 2023/09/02 17:44:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.96 2023/09/02 17:43:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.97 2023/09/02 17:44:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -370,9 +370,7 @@ cpu_xc_offline(struct cpu_info *ci, void *unused)
 	pcu_save_all_on_cpu();
 #endif
 
-#ifdef HEARTBEAT
 	heartbeat_suspend();
-#endif
 
 #ifdef __HAVE_MD_CPU_OFFLINE
 	cpu_offline_md();
@@ -391,9 +389,7 @@ cpu_xc_online(struct cpu_info *ci, void *unused)
 	struct schedstate_percpu *spc;
 	int s;
 
-#ifdef HEARTBEAT
 	heartbeat_resume();
-#endif
 
 	spc = &ci->ci_schedstate;
 	s = splsched();

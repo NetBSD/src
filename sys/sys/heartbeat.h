@@ -1,4 +1,4 @@
-/*	$NetBSD: heartbeat.h,v 1.1 2023/07/07 12:34:50 riastradh Exp $	*/
+/*	$NetBSD: heartbeat.h,v 1.2 2023/09/02 17:44:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -47,6 +47,28 @@ void	heartbeat_suspend(void);
 void	heartbeat_resume(void);
 
 void	heartbeat_dump(void);
+
+#else
+
+static inline void
+heartbeat_start(void)
+{
+}
+
+static inline void
+heartbeat(void)
+{
+}
+
+static inline void
+heartbeat_suspend(void)
+{
+}
+
+static inline void
+heartbeat_resume(void)
+{
+}
 
 #endif
 
