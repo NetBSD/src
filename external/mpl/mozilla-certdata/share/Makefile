@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2023/08/26 05:47:53 riastradh Exp $
+#	$NetBSD: Makefile,v 1.2 2023/09/02 17:39:52 riastradh Exp $
 #
 
 MOZCERTS=	/usr/share/certs/mozilla
@@ -16,7 +16,7 @@ FILES+=		${CERTS}
 .for D in ${TRUSTDOMAINS}
 $D_CERTS!=	cat ${.CURDIR:Q}/$D.trust
 .  for C in ${$D_CERTS}
-SYMLINKS+=	${MOZCERTS}/all/$C.pem ${MOZCERTS}/$D/$C.pem
+SYMLINKS+=	../all/$C.pem ${MOZCERTS}/$D/$C.pem
 .  endfor
 .endfor
 
