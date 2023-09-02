@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.8 2023/09/02 17:44:32 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.9 2023/09/02 17:44:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.8 2023/09/02 17:44:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.9 2023/09/02 17:44:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -457,7 +457,21 @@ defibrillator(void *cookie)
 {
 	bool *ack = cookie;
 
+	/*
+	 * Acknowledge the interrupt so the doctor CPU won't trigger a
+	 * new panic for defibrillation timeout.
+	 */
 	atomic_store_relaxed(ack, true);
+
+	/*
+	 * If a panic is already in progress, we may have interrupted
+	 * the logic that prints a stack trace on this CPU -- so let's
+	 * not make it worse by giving the misapprehension of a
+	 * recursive panic.
+	 */
+	if (atomic_load_relaxed(&panicstr) != NULL)
+		return;
+
 	panic("%s[%d %s]: heart stopped beating", cpu_name(curcpu()),
 	    curlwp->l_lid,
 	    curlwp->l_name ? curlwp->l_name : curproc->p_comm);
@@ -498,13 +512,11 @@ defibrillate(struct cpu_info *ci, unsigned d)
 	/*
 	 * Busy-wait up to 1sec for the patient CPU to print a stack
 	 * trace and panic.  If the patient CPU acknowledges the IPI,
-	 * or if we're panicking anyway, just give up and stop here --
-	 * the system is coming down soon and we should avoid getting
-	 * in the way.
+	 * just give up and stop here -- the system is coming down soon
+	 * and we should avoid getting in the way.
 	 */
 	while (countdown --> 0) {
-		if (atomic_load_relaxed(&ack) ||
-		    atomic_load_relaxed(&panicstr) != NULL)
+		if (atomic_load_relaxed(&ack))
 			return;
 		DELAY(1000);	/* 1ms */
 	}
