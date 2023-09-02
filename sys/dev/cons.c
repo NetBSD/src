@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.93 2023/09/02 17:43:46 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.94 2023/09/02 17:44:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.93 2023/09/02 17:43:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.94 2023/09/02 17:44:12 riastradh Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_heartbeat.h"
+#endif
 
 #include <sys/param.h>
 
@@ -47,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.93 2023/09/02 17:43:46 riastradh Exp $");
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/file.h>
+#include <sys/heartbeat.h>
 #include <sys/ioctl.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
@@ -417,8 +422,30 @@ cnpollc(int on)
 		return;
 	if (!on)
 		--refcount;
-	if (refcount == 0)
+	if (refcount == 0) {
+#ifdef HEARTBEAT
+		if (on) {
+			/*
+			 * Bind to the current CPU by disabling
+			 * preemption (more convenient than finding a
+			 * place to store a stack to unwind for
+			 * curlwp_bind/bindx, and preemption wouldn't
+			 * happen anyway while spinning at high IPL in
+			 * cngetc) so that curcpu() is stable so that
+			 * we can suspend heartbeat checks for it.
+			 */
+			kpreempt_disable();
+			heartbeat_suspend();
+		}
+#endif
 		(*cn_tab->cn_pollc)(cn_tab->cn_dev, on);
+#ifdef HEARTBEAT
+		if (!on) {
+			heartbeat_resume();
+			kpreempt_enable();
+		}
+#endif
+	}
 	if (on)
 		++refcount;
 }
