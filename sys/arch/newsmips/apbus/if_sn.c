@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.52 2022/09/18 12:49:34 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.52.4.1 2023/09/02 16:19:35 martin Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.52 2022/09/18 12:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.52.4.1 2023/09/02 16:19:35 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -202,7 +202,7 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 
 #ifdef SNDEBUG
 	aprint_debug_dev(sc->sc_dev, "buffers: rra=%p cda=%p rda=%p tda=%p\n",
-	    device_xname(sc->sc_dev), sc->p_rra[0], sc->p_cda,
+	    sc->p_rra[0], sc->p_cda,
 	    sc->p_rda, sc->mtda[0].mtd_txp);
 #endif
 
@@ -1033,21 +1033,24 @@ sonic_read(struct sn_softc *sc, void *pkt, int len)
 	struct ifnet *ifp = &sc->sc_if;
 	struct mbuf *m;
 
-#ifdef SNDEBUG
-	{
-		printf("%s: rcvd %p len=%d type=0x%x from %s",
-		    devoce_xname(sc->sc_dev), et, len, htons(et->ether_type),
-		    ether_sprintf(et->ether_shost));
-		printf(" (to %s)\n", ether_sprintf(et->ether_dhost));
-	}
-#endif /* SNDEBUG */
-
 	if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN) ||
 	    len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 		printf("%s: invalid packet length %d bytes\n",
 		    device_xname(sc->sc_dev), len);
 		return 0;
 	}
+
+#ifdef SNDEBUG
+	{       
+		struct ether_header eh_s, *eh = &eh_s;
+		memcpy(eh, pkt, sizeof(*eh));
+		CTASSERT(sizeof(*eh) <= ETHER_MIN_LEN);
+		printf("%s: rcvd %p len=%d type=0x%x from %s",
+		    device_xname(sc->sc_dev), eh, len, htons(eh->ether_type),
+		    ether_sprintf(eh->ether_shost));
+		printf(" (to %s)\n", ether_sprintf(eh->ether_dhost));
+	}       
+#endif /* SNDEBUG */
 
 	m = sonic_get(sc, pkt, len);
 	if (m == NULL)
