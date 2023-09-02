@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.8 2023/06/12 19:04:14 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.9 2023/09/02 09:27:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ typedef	register_t	kgdb_reg_t;
 #define	KGDB_BUFLEN	1024
 
 /*
- * RISCV cpus have no hardware single-step.
+ * RISC-V harts have no hardware single-step.
  */
 #define	SOFTWARE_SSTEP
 
@@ -126,12 +126,10 @@ bool ddb_running_on_this_cpu_p(void);
 bool ddb_running_on_any_cpu_p(void);
 void db_resume_others(void);
 
-#if 0
 /*
  * We have machine-dependent commands.
  */
 #define	DB_MACHINE_COMMANDS
-#endif
 
 void dump_trapframe(const struct trapframe *, void (*)(const char *, ...) __printflike(1, 2));
 
