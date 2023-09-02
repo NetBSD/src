@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: certctl.sh,v 1.3 2023/08/28 22:25:50 riastradh Exp $
+#	$NetBSD: certctl.sh,v 1.4 2023/09/02 17:41:43 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -432,7 +432,7 @@ rehash()
 	if [ -f "$certsdir/.certctl" ]; then
 		# Directory exists and is managed by certctl(8).
 		# Safe to delete it and everything in it.
-		run rm -rf "$certsdir"
+		run rm -rf -- "$certsdir"
 	elif [ -h "$certsdir" ]; then
 		# Paranoia: refuse to chase a symlink.  (Caveat: this
 		# is not secure against an adversary who can recreate
@@ -445,15 +445,15 @@ rehash()
 	elif [ ! -d "$certsdir" ]; then
 		error "certificates directory is not a directory"
 		return 1
-	elif ! find "$certsdir" -maxdepth 0 -type d -empty -exit 1; then
+	elif ! find -f "$certsdir" -- -maxdepth 0 -type d -empty -exit 1; then
 		# certsdir exists, is a directory, and is empty.  Safe
 		# to delete it with rmdir and take it over.
-		run rmdir "$certsdir"
+		run rmdir -- "$certsdir"
 	else
 		error "existing certificates; set manual or move them"
 		return 1
 	fi
-	run mkdir "$certsdir"
+	run mkdir -- "$certsdir"
 	if $vflag; then
 		printf '# initialize %s\n' "$certsdir"
 	fi
