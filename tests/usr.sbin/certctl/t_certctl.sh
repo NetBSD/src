@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: t_certctl.sh,v 1.5 2023/08/28 22:25:49 riastradh Exp $
+#	$NetBSD: t_certctl.sh,v 1.6 2023/09/02 17:41:33 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -299,6 +299,71 @@ EOF
 	atf_check -s exit:0 test -h certs/0123abcd.0
 }
 
+atf_test_case evilcertsdir
+evilcertsdir_head()
+{
+	atf_set "descr" "Test certificate directory with evil characters"
+}
+evilcertsdir_body()
+{
+	local certs1 diginotar_base diginotar evilcertsdir evildistrustdir
+
+	certs1=$(atf_get_srcdir)/certs1
+	diginotar_base=Explicitly_Distrust_DigiNotar_Root_CA.pem
+	diginotar=$certs1/$diginotar_base
+
+	evilcertsdir=$(printf '-evil certs\n.')
+	evilcertsdir=${evilcertsdir%.}
+	evildistrustdir=$(printf '-evil untrusted\n.')
+	evildistrustdir=${evildistrustdir%.}
+
+	setupconf certs1
+
+	atf_expect_fail "mistakes were made with evil pathnames"
+
+	# initial (re)hash, nonexistent certs directory
+	atf_check -s exit:0 $CERTCTL rehash
+	atf_check -s exit:0 certctl -C certs.conf \
+	    -c "$evilcertsdir" -u "$evildistrustdir" \
+	    rehash
+	atf_check -s exit:0 diff -ruN -- certs "$evilcertsdir"
+	atf_check -s exit:0 test ! -e untrusted
+	atf_check -s exit:0 test ! -h untrusted
+	atf_check -s exit:0 test ! -e "$evildistrustdir"
+	atf_check -s exit:0 test ! -h "$evildistrustdir"
+
+	# initial (re)hash, empty certs directory
+	atf_check -s exit:0 rm -rf -- certs
+	atf_check -s exit:0 rm -rf -- "$evilcertsdir"
+	atf_check -s exit:0 mkdir -- certs
+	atf_check -s exit:0 mkdir -- "$evilcertsdir"
+	atf_check -s exit:0 $CERTCTL rehash
+	atf_check -s exit:0 certctl -C certs.conf \
+	    -c "$evilcertsdir" -u "$evildistrustdir" \
+	    rehash
+	atf_check -s exit:0 diff -ruN -- certs "$evilcertsdir"
+	atf_check -s exit:0 test ! -e untrusted
+	atf_check -s exit:0 test ! -h untrusted
+	atf_check -s exit:0 test ! -e "$evildistrustdir"
+	atf_check -s exit:0 test ! -h "$evildistrustdir"
+
+	# test distrusting a CA
+	atf_check -s exit:0 $CERTCTL untrust "$diginotar"
+	atf_check -s exit:0 certctl -C certs.conf \
+	    -c "$evilcertsdir" -u "$evildistrustdir" \
+	    untrust "$diginotar"
+	atf_check -s exit:0 diff -ruN -- certs "$evilcertsdir"
+	atf_check -s exit:0 diff -ruN -- untrusted "$evildistrustdir"
+
+	# second rehash
+	atf_check -s exit:0 $CERTCTL rehash
+	atf_check -s exit:0 certctl -C certs.conf \
+	    -c "$evilcertsdir" -u "$evildistrustdir" \
+	    rehash
+	atf_check -s exit:0 diff -ruN -- certs "$evilcertsdir"
+	atf_check -s exit:0 diff -ruN -- untrusted "$evildistrustdir"
+}
+
 atf_test_case evilpath
 evilpath_head()
 {
@@ -407,6 +472,7 @@ atf_init_test_cases()
 	atf_add_test_case collidebase
 	atf_add_test_case collidehash
 	atf_add_test_case empty
+	atf_add_test_case evilcertsdir
 	atf_add_test_case evilpath
 	atf_add_test_case manual
 	atf_add_test_case missingconf
