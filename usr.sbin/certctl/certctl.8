@@ -1,4 +1,4 @@
-.\"	$NetBSD: certctl.8,v 1.1 2023/08/26 05:27:15 riastradh Exp $
+.\"	$NetBSD: certctl.8,v 1.2 2023/09/02 17:41:17 riastradh Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,21 +56,21 @@
 The
 .Nm
 utility manages certificates used by OpenSSL-based applications as
-trust anchors for certificate validation in HTTPS or other purposes.
+trust anchors for certificate validation in TLS or other purposes,
+for example by
+.Xr ftp 1
+in HTTPS.
 .Nm
 allows configuring the set of certificates and persistently excluding
 individual certificates.
 .Pp
-For HTTPS certificate validation, OpenSSL applications typically
-use either a directory at
+For trust anchors to validate TLS certificates, OpenSSL applications
+typically use a directory at
 .Pa /etc/openssl/certs
 of hashed certificates in PEM format, with names like
 .Pa "3513523f.0"
-used for lookup
-.Pq see Xr openssl_rehash 1 ,
-or a single-file bundle at
-.Pa /etc/openssl/certs/ca-certificates.crt
-concatenating all the certificates in PEM format.
+used for lookup; see
+.Xr openssl_rehash 1 .
 .Pp
 .Nm
 scans all directories in the certificate search path specified by the
@@ -87,7 +87,23 @@ in PEM format, except for those that have been excluded by
 and keeps
 .Ar certsdir
 .Pq default: Pa /etc/openssl/certs
-populated with symlinks to them.
+populated with:
+.Bl -dash
+.It
+symlinks to the original files in the certificate search path, for
+applications that scan a directory for all files matching
+.Pa *.cer ,
+.Pa *.crt ,
+or
+.Pa *.pem ;
+.It
+hashed symlinks as in
+.Xr openssl_rehash 1 ; and
+.It
+a single-file bundle
+.Pa ca-certificates.crt
+concatenating all the certificates in PEM format.
+.El
 .Pp
 .Nm
 treats
@@ -189,7 +205,9 @@ Add
 to the certificate search path.
 .Ar dir
 must be an absolute pathname,
-.Xr vis 3 Ns -encoded .
+.Xr vis 3 Ns -encoded
+if it has any characters outside the class
+.Ql "a-zA-Z0-9,.:=/+-" .
 .Pp
 All certificates must have unique base names across all directories
 in the certificate search path.
@@ -211,15 +229,15 @@ update
 .Sh FILES
 .Bl -tag -width Pa
 .It Pa /etc/openssl/certs
-Default directory of hashed HTTPS CA certificates.
+Default directory of hashed TLS CA certificates.
 .It Pa /etc/openssl/certs/ca-certificates.crt
-Default single-file HTTPS CA certificate bundle.
+Default single-file TLS CA certificate bundle.
 .It Pa /etc/openssl/certs.conf
-Default configuration file for HTTPS CA certificates.
+Default configuration file for TLS CA certificates.
 .It Pa /etc/openssl/untrusted
 Default
 .Ar untrusted
-directory of excluded HTTPS CA certificates.
+directory of excluded TLS CA certificates.
 .It Pa /usr/share/certs/mozilla/all
 All root CA certificates published by Mozilla, including untrustworthy
 certificates.
@@ -229,7 +247,7 @@ All root CA certificates published by Mozilla for use in code-signing.
 All root CA certificates published by Mozilla for use in email
 authentication.
 .It Pa /usr/share/certs/mozilla/server
-All root CA certificates published by Mozilla for use in HTTPS server
+All root CA certificates published by Mozilla for use in TLS server
 authentication.
 .El
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
