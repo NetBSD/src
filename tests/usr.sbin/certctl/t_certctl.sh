@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: t_certctl.sh,v 1.6 2023/09/02 17:41:33 riastradh Exp $
+#	$NetBSD: t_certctl.sh,v 1.7 2023/09/02 17:41:43 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -318,8 +318,6 @@ evilcertsdir_body()
 	evildistrustdir=${evildistrustdir%.}
 
 	setupconf certs1
-
-	atf_expect_fail "mistakes were made with evil pathnames"
 
 	# initial (re)hash, nonexistent certs directory
 	atf_check -s exit:0 $CERTCTL rehash
