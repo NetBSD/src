@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: t_certctl.sh,v 1.7 2023/09/02 17:41:43 riastradh Exp $
+#	$NetBSD: t_certctl.sh,v 1.8 2023/09/02 17:42:01 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -371,17 +371,17 @@ evilpath_body()
 {
 	local evildir
 
-	evildir="$(printf 'evil\n.')"
-        evildir=${evildir%.}
-        mkdir "$evildir"
+	evildir=$(printf 'evil\n.')
+	evildir=${evildir%.}
+	mkdir "$evildir"
 
-        cp -p "$(atf_get_srcdir)/certs2"/*.pem "$evildir"/
+	cp -p "$(atf_get_srcdir)/certs2"/*.pem "$evildir"/
 
-        setupconf certs1
-        cat <<EOF >>certs.conf
+	setupconf certs1
+	cat <<EOF >>certs.conf
 path $(printf '%s' "$(pwd)/$evildir" | vis -M)
 EOF
-        checks certs1 "$(pwd)/$evildir"
+	checks certs1 "$(pwd)/$evildir"
 }
 
 atf_test_case missingconf
