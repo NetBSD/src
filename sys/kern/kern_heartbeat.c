@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.6 2023/09/02 17:43:37 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.7 2023/09/02 17:44:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.6 2023/09/02 17:43:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.7 2023/09/02 17:44:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -196,6 +196,41 @@ heartbeat_resume(void)
 	ci->ci_schedstate.spc_flags &= ~SPCF_HEARTBEATSUSPENDED;
 	heartbeat_resume_cpu(ci);
 	splx(s);
+}
+
+/*
+ * heartbeat_timecounter_suspended()
+ *
+ *	True if timecounter heartbeat checks are suspended because the
+ *	timecounter may not be advancing, false if heartbeat checks
+ *	should check for timecounter progress.
+ */
+static bool
+heartbeat_timecounter_suspended(void)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	/*
+	 * The timecounter ticks only on the primary CPU.  Check
+	 * whether it's suspended.
+	 *
+	 * XXX Would be nice if we could find the primary CPU without
+	 * iterating over all CPUs.
+	 */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (CPU_IS_PRIMARY(ci)) {
+			return ci->ci_schedstate.spc_flags &
+			    SPCF_HEARTBEATSUSPENDED;
+		}
+	}
+
+	/*
+	 * This should be unreachable -- there had better be a primary
+	 * CPU in the system!  If not, the timecounter will be busted
+	 * anyway.
+	 */
+	panic("no primary CPU");
 }
 
 /*
@@ -598,7 +633,8 @@ heartbeat(void)
 		/*
 		 * Timecounter hasn't advanced by more than a second.
 		 * Make sure the timecounter isn't stuck according to
-		 * our heartbeats.
+		 * our heartbeats -- unless timecounter heartbeats are
+		 * suspended too.
 		 *
 		 * Our own heartbeat count can't roll back, and
 		 * time_uptime should be updated before it wraps
@@ -608,7 +644,8 @@ heartbeat(void)
 		stamp =
 		    atomic_load_relaxed(&curcpu()->ci_heartbeat_uptime_stamp);
 		d = count - stamp;
-		if (__predict_false(d > period_ticks)) {
+		if (__predict_false(d > period_ticks) &&
+		    !heartbeat_timecounter_suspended()) {
 			panic("%s: time has not advanced in %u heartbeats",
 			    cpu_name(curcpu()), d);
 		}
