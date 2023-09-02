@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.92 2022/10/25 23:21:33 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.93 2023/09/02 17:43:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,23 +39,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.92 2022/10/25 23:21:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.93 2023/09/02 17:43:46 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/ioctl.h>
-#include <sys/poll.h>
-#include <sys/tty.h>
-#include <sys/file.h>
-#include <sys/conf.h>
-#include <sys/vnode.h>
-#include <sys/kauth.h>
-#include <sys/mutex.h>
-#include <sys/module.h>
+
 #include <sys/atomic.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
+#include <sys/module.h>
+#include <sys/mutex.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/pserialize.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
+#include <sys/vnode.h>
 
 #include <dev/cons.h>
 
