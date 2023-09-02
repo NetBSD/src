@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.162 2023/01/10 18:20:10 mrg Exp $        */
+/*      $NetBSD: ukbd.c,v 1.163 2023/09/02 17:42:47 riastradh Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.162 2023/01/10 18:20:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.163 2023/09/02 17:42:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1055,11 +1055,12 @@ ukbd_cnpollc(void *v, int on)
 	if (on) {
 		sc->sc_spl = splusb();
 		pollenter++;
-	} else {
-		splx(sc->sc_spl);
-		pollenter--;
 	}
 	usbd_set_polling(dev, on);
+	if (!on) {
+		pollenter--;
+		splx(sc->sc_spl);
+	}
 }
 
 int
