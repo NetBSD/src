@@ -1,4 +1,4 @@
-/* $NetBSD: plicvar.h,v 1.1 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: plicvar.h,v 1.2 2023/09/02 09:58:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@ struct plic_intrhand {
 	void	*ih_arg;
 	bool	ih_mpsafe;
 	u_int	ih_irq;
-	u_int	ih_cidx;
+	u_int	ih_hartid;
 };
 
 struct plic_softc {

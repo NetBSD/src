@@ -1,4 +1,4 @@
-/* $NetBSD: plic_fdt.c,v 1.2 2023/09/02 09:29:59 skrll Exp $ */
+/* $NetBSD: plic_fdt.c,v 1.3 2023/09/02 09:58:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.2 2023/09/02 09:29:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.3 2023/09/02 09:58:15 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -199,7 +199,7 @@ plic_fdt_attach(device_t parent, device_t self, void *aux)
 				 * When finding context info, parent _must_ be a
 				 * compatbile clint device.
 				 */
-				bus_addr_t cpuid;
+				bus_addr_t hartid;
 				int cpu_ref;
 				static const struct device_compatible_entry clint_compat_data[] = {
 					{ .compat = "riscv,cpu-intc" },
@@ -209,13 +209,13 @@ plic_fdt_attach(device_t parent, device_t self, void *aux)
 				if (of_compatible_match(xref, clint_compat_data)) {
 					/* get cpuid for the parent node */
 					cpu_ref = OF_parent(xref);
-					fdtbus_get_reg(cpu_ref, 0, &cpuid, NULL);
+					fdtbus_get_reg(cpu_ref, 0, &hartid, NULL);
 
 					KASSERT(context <= PLIC_MAX_CONTEXT);
-					sc->sc_context[cpuid] = context;
+					sc->sc_context[hartid] = context;
 					aprint_verbose_dev(self,
-					    "cpu %"PRId64" context %d\n",
-					    cpuid, context);
+					    "hart %"PRId64" context %d\n",
+					    hartid, context);
 				} else {
 					aprint_error_dev(self, "incompatiable CLINT "
 					    " for PLIC for context %d\n", context);

@@ -1,4 +1,4 @@
-/* $NetBSD: plic.c,v 1.1 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: plic.c,v 1.2 2023/09/02 09:58:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plic.c,v 1.1 2023/05/07 12:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plic.c,v 1.2 2023/09/02 09:58:15 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -46,15 +46,15 @@ __KERNEL_RCSID(0, "$NetBSD: plic.c,v 1.1 2023/05/07 12:41:48 skrll Exp $");
 
 #define	PLIC_PRIORITY(irq)	(PLIC_PRIORITY_BASE + (irq) * 4)
 
-#define	PLIC_ENABLE(sc, c, irq)	(PLIC_ENABLE_BASE +		 	       \
-				 sc->sc_context[(c)] * PLIC_ENABLE_SIZE +      \
+#define	PLIC_ENABLE(sc, h, irq)	(PLIC_ENABLE_BASE +		 	       \
+				 sc->sc_context[(h)] * PLIC_ENABLE_SIZE +      \
 				 ((irq / 32) * sizeof(uint32_t)))
 
-#define	PLIC_CONTEXT(sc, c)	(PLIC_CONTEXT_BASE +			\
-				 sc->sc_context[(c)] * PLIC_CONTEXT_SIZE)
-#define	PLIC_CLAIM(sc, c)	(PLIC_CONTEXT(sc, c) + PLIC_CLAIM_COMPLETE_OFFS)
-#define	PLIC_COMPLETE(sc, c)	PLIC_CLAIM(sc, c)	/* same address */
-#define	PLIC_THRESHOLD(sc, c)	(PLIC_CONTEXT(sc, c) + PLIC_THRESHOLD_OFFS)
+#define	PLIC_CONTEXT(sc, h)	(PLIC_CONTEXT_BASE +			\
+				 sc->sc_context[(h)] * PLIC_CONTEXT_SIZE)
+#define	PLIC_CLAIM(sc, h)	(PLIC_CONTEXT(sc, h) + PLIC_CLAIM_COMPLETE_OFFS)
+#define	PLIC_COMPLETE(sc, h)	PLIC_CLAIM(sc, h)	/* same address */
+#define	PLIC_THRESHOLD(sc, h)	(PLIC_CONTEXT(sc, h) + PLIC_THRESHOLD_OFFS)
 
 #define	PLIC_READ(sc, reg)						\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
@@ -72,9 +72,11 @@ plic_intr_establish_xname(u_int irq, int ipl, int flags,
 	struct plic_softc * const sc = plic_sc;
 	struct plic_intrhand *ih;
 
-	/* XXX need a better CPU selection method */
-//	u_int cidx = cpu_index(curcpu());
-	u_int cidx = 0;
+	/*
+	 * Choose hart 0.
+	 * XXX need a better hart selection method
+	 */
+	u_int hartid = 0;
 
 	evcnt_attach_dynamic(&sc->sc_intrevs[irq], EVCNT_TYPE_INTR, NULL,
 	    "plic", xname);
@@ -90,10 +92,10 @@ plic_intr_establish_xname(u_int irq, int ipl, int flags,
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;
-	ih->ih_cidx = cidx;
+	ih->ih_hartid = hartid;
 
 	plic_set_priority(sc, irq, 1);
-	plic_enable(sc, cidx, irq);
+	plic_enable(sc, hartid, irq);
 
 	return ih;
 }
@@ -103,10 +105,10 @@ plic_intr_disestablish(void *cookie)
 {
 	struct plic_softc * const sc = plic_sc;
 	struct plic_intrhand * const ih = cookie;
-	const u_int cidx = ih->ih_cidx;
+	const u_int hartid = ih->ih_hartid;
 	const u_int irq = ih->ih_irq;
 
-	plic_disable(sc, cidx, irq);
+	plic_disable(sc, hartid, irq);
 	plic_set_priority(sc, irq, 0);
 
 	memset(&sc->sc_intr[irq], 0, sizeof(*sc->sc_intr));
@@ -116,9 +118,9 @@ int
 plic_intr(void *arg)
 {
 	struct plic_softc * const sc = arg;
-	const cpuid_t cpuid = cpu_number();
-	const bus_addr_t claim_addr = PLIC_CLAIM(sc, cpuid);
-	const bus_addr_t complete_addr = PLIC_COMPLETE(sc, cpuid);
+	const cpuid_t hartid = cpu_number();
+	const bus_addr_t claim_addr = PLIC_CLAIM(sc, hartid);
+	const bus_addr_t complete_addr = PLIC_COMPLETE(sc, hartid);
 	uint32_t pending;
 	int rv = 0;
 
@@ -144,22 +146,23 @@ plic_intr(void *arg)
 }
 
 void
-plic_enable(struct plic_softc *sc, u_int cpu, u_int irq)
+plic_enable(struct plic_softc *sc, u_int hartid, u_int irq)
 {
 	KASSERT(irq < PLIC_NIRQ);
-	const bus_addr_t addr = PLIC_ENABLE(sc, cpu, irq);
+	const bus_addr_t addr = PLIC_ENABLE(sc, hartid, irq);
 	const uint32_t mask = __BIT(irq % 32);
 
 	uint32_t reg = PLIC_READ(sc, addr);
 	reg |= mask;
+
 	PLIC_WRITE(sc, addr, reg);
 }
 
 void
-plic_disable(struct plic_softc *sc, u_int cpu, u_int irq)
+plic_disable(struct plic_softc *sc, u_int hartid, u_int irq)
 {
 	KASSERT(irq < PLIC_NIRQ);
-	const bus_addr_t addr = PLIC_ENABLE(sc, cpu, irq);
+	const bus_addr_t addr = PLIC_ENABLE(sc, hartid, irq);
 	const uint32_t mask = __BIT(irq % 32);
 
 	uint32_t reg = PLIC_READ(sc, addr);
@@ -177,9 +180,9 @@ plic_set_priority(struct plic_softc *sc, u_int irq, uint32_t priority)
 }
 
 void
-plic_set_threshold(struct plic_softc *sc, cpuid_t cpu, uint32_t threshold)
+plic_set_threshold(struct plic_softc *sc, cpuid_t hartid, uint32_t threshold)
 {
-	const bus_addr_t addr = PLIC_THRESHOLD(sc, cpu);
+	const bus_addr_t addr = PLIC_THRESHOLD(sc, hartid);
 
 	PLIC_WRITE(sc, addr, threshold);
 }
