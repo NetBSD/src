@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.113 2023/08/23 18:21:39 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.114 2023/09/02 16:20:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11257,4 +11257,9 @@ sys/net/npf/npf_ruleset.c			1.52
 
 	npf(7): PR 56990: fix handling of dynamic groups.
 	[kardel, ticket #340]
+
+sys/arch/newsmips/apbus/if_sn.c			1.53
+
+	newsmips: fix build with SNDEBUG option enabled.
+	[andvar, ticket #341]
 
