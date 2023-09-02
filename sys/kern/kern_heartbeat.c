@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.7 2023/09/02 17:44:23 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.8 2023/09/02 17:44:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -53,21 +53,25 @@
  *
  * 4.	sysctl -w debug.crashme_enable=1
  *	sysctl -w debug.crashme.spl_spinout=1   # IPL_SOFTCLOCK
- *	# verify system panics after 15sec
+ *	# verify system panics after 15sec, with a stack trace through
+ *	# crashme_spl_spinout
  *
  * 5.	sysctl -w debug.crashme_enable=1
  *	sysctl -w debug.crashme.spl_spinout=6   # IPL_SCHED
- *	# verify system panics after 15sec
+ *	# verify system panics after 15sec, with a stack trace through
+ *	# crashme_spl_spinout
  *
  * 6.	cpuctl offline 0
  *	sysctl -w debug.crashme_enable=1
  *	sysctl -w debug.crashme.spl_spinout=1   # IPL_SOFTCLOCK
- *	# verify system panics after 15sec
+ *	# verify system panics after 15sec, with a stack trace through
+ *	# crashme_spl_spinout
  *
  * 7.	cpuctl offline 0
  *	sysctl -w debug.crashme_enable=1
  *	sysctl -w debug.crashme.spl_spinout=5   # IPL_VM
- *	# verify system panics after 15sec
+ *	# verify system panics after 15sec, with a stack trace through
+ *	# crashme_spl_spinout
  *
  *	# Not this -- IPL_SCHED and IPL_HIGH spinout on a single CPU
  *	# require a hardware watchdog timer.
@@ -78,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.7 2023/09/02 17:44:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.8 2023/09/02 17:44:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
