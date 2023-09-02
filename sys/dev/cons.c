@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.94 2023/09/02 17:44:12 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.95 2023/09/02 17:44:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,11 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.94 2023/09/02 17:44:12 riastradh Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_heartbeat.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.95 2023/09/02 17:44:59 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -423,7 +419,6 @@ cnpollc(int on)
 	if (!on)
 		--refcount;
 	if (refcount == 0) {
-#ifdef HEARTBEAT
 		if (on) {
 			/*
 			 * Bind to the current CPU by disabling
@@ -437,14 +432,11 @@ cnpollc(int on)
 			kpreempt_disable();
 			heartbeat_suspend();
 		}
-#endif
 		(*cn_tab->cn_pollc)(cn_tab->cn_dev, on);
-#ifdef HEARTBEAT
 		if (!on) {
 			heartbeat_resume();
 			kpreempt_enable();
 		}
-#endif
 	}
 	if (on)
 		++refcount;
