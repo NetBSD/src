@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.54 2023/08/22 08:33:50 andvar Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.55 2023/09/02 07:15:30 andvar Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.54 2023/08/22 08:33:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.55 2023/09/02 07:15:30 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -51,9 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.54 2023/08/22 08:33:50 andvar Exp $");
 #include <newsmips/apbus/if_snreg.h>
 #include <newsmips/apbus/if_snvar.h>
 
-/* #define SONIC_DEBUG */
+/* #define SNDEBUG */
 
-#ifdef SONIC_DEBUG
+#ifdef SNDEBUG
 # define DPRINTF printf
 #else
 # define DPRINTF while (0) printf
