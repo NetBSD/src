@@ -1,4 +1,4 @@
-/* $NetBSD: plic_fdt.c,v 1.1 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: plic_fdt.c,v 1.2 2023/09/02 09:29:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.1 2023/05/07 12:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.2 2023/09/02 09:29:59 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -70,18 +70,12 @@ plic_fdt_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
 
 	return ih;
 }
+
 static void
 plic_fdt_intr_disestablish(device_t dev, void *cookie)
 {
-	struct plic_softc * const sc = device_private(dev);
-	struct plic_intrhand * const ih = cookie;
-	const u_int cidx = ih->ih_cidx;
-	const u_int irq = ih->ih_irq;
 
-	plic_disable(sc, cidx, irq);
-	plic_set_priority(sc, irq, 0);
-
-	memset(&sc->sc_intr[irq], 0, sizeof(*sc->sc_intr));
+	plic_intr_disestablish(cookie);
 }
 
 
