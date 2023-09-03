@@ -1,4 +1,4 @@
-/*	$NetBSD: fpudispatch.c,v 1.4 2009/03/14 21:04:10 dsl Exp $	 */
+/*	$NetBSD: fpudispatch.c,v 1.5 2023/09/03 21:43:48 andvar Exp $	 */
 
 /*
  *  (c) Copyright 1991 HEWLETT-PACKARD COMPANY
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpudispatch.c,v 1.4 2009/03/14 21:04:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpudispatch.c,v 1.5 2023/09/03 21:43:48 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -691,7 +691,7 @@ decode_06(unsigned ir,unsigned fpregs[])
 					&status))
 				error = 1;
 			if (dbl_to_sgl_fcnvfxt(&fpregs[ta],(unsigned *) &atmp,
-				(unsigned *) &atmp,&status))
+					&status))
 				error = 1;
 		}
 		else {
