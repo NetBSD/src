@@ -1,4 +1,4 @@
-/* $NetBSD: riscv_tlb.c,v 1.1 2023/06/12 19:04:14 skrll Exp $ */
+/* $NetBSD: riscv_tlb.c,v 1.2 2023/09/03 08:48:20 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -34,12 +34,16 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_tlb.c,v 1.1 2023/06/12 19:04:14 skrll Exp $");
+__RCSID("$NetBSD: riscv_tlb.c,v 1.2 2023/09/03 08:48:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
-#include <uvm/uvm.h>
+#include <sys/cpu.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <riscv/sbi.h>
 
 tlb_asid_t
 tlb_get_asid(void)
@@ -71,13 +75,39 @@ tlb_invalidate_globals(void)
 void
 tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 {
-	for (; lo <= hi; lo++) {
+	tlb_asid_t asid;
+	for (asid = lo; asid <= hi; asid++) {
 		asm volatile("sfence.vma zero, %[asid]"
 		    : /* output operands */
-		    : [asid] "r" (lo)
+		    : [asid] "r" (asid)
 		    : "memory");
 	}
+#ifdef MULTIPROCESSOR
+#if PMAP_TLB_MAX == 1
+	const cpuid_t myhartid = curcpu()->ci_cpuid;
+	unsigned long hartmask = 0;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		const cpuid_t hartid = ci->ci_cpuid;
+
+		if (hartid == myhartid)
+			continue;
+
+		KASSERT(hartid < sizeof(unsigned long) * NBBY);
+		hartmask |= __BIT(hartid);
+	}
+	for (asid = lo; asid <= hi; asid++) {
+		struct sbiret sbiret = sbi_remote_sfence_vma_asid(hartmask,
+		    0 /* hartmask_base */, 0, ~0UL, asid);
+
+		KASSERTMSG(sbiret.error == SBI_SUCCESS, "error %ld",
+		    sbiret.error);
+	}
+#endif
+#endif
 }
+
 void
 tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 {
@@ -92,22 +122,36 @@ tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 		    : [va] "r" (va), [asid] "r" (asid)
 		    : "memory");
 	}
+#ifdef MULTIPROCESSOR
+#if PMAP_TLB_MAX == 1
+	const cpuid_t myhartid = curcpu()->ci_cpuid;
+	unsigned long hartmask = 0;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		const cpuid_t hartid = ci->ci_cpuid;
+		if (hartid == myhartid)
+			continue;
+
+		KASSERT(hartid < sizeof(unsigned long) * NBBY);
+		hartmask |= __BIT(hartid);
+	}
+	struct sbiret sbiret = sbi_remote_sfence_vma(hartmask,
+	    0 /* hartmask_base */, va, PAGE_SIZE);
+
+	KASSERTMSG(sbiret.error == SBI_SUCCESS, "error %ld",
+	    sbiret.error);
+#endif
+#endif
 }
 
 bool
 tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
 {
-	if (asid == KERNEL_PID) {
-		asm volatile("sfence.vma %[va]"
-		    : /* output operands */
-		    : [va] "r" (va)
-		    : "memory");
-	} else {
-		asm volatile("sfence.vma %[va], %[asid]"
-		    : /* output operands */
-		    : [va] "r" (va), [asid] "r" (asid)
-		    : "memory");
-	}
+	KASSERT((va & PAGE_MASK) == 0);
+
+	tlb_invalidate_addr(va, asid);
+
 	return true;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.1 2023/06/12 19:04:14 skrll Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.2 2023/09/03 08:48:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1 2023/06/12 19:04:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.2 2023/09/03 08:48:20 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -49,8 +49,6 @@ static void ipi_halt(void) __dead;
 static const char * const ipi_names[] = {
 	[IPI_NOP]	= "ipi nop",
 	[IPI_AST]	= "ipi ast",
-	[IPI_SHOOTDOWN]	= "ipi shootdown",
-	[IPI_SYNCICACHE]= "ipi isync",
 	[IPI_KPREEMPT]	= "ipi kpreempt",
 	[IPI_SUSPEND]	= "ipi suspend",
 	[IPI_HALT]	= "ipi halt",
@@ -73,18 +71,6 @@ ipi_ast(struct cpu_info *ci)
 	ci->ci_onproc->l_md.md_astpending = 1;
 }
 
-static void
-ipi_shootdown(struct cpu_info *ci)
-{
-	pmap_tlb_shootdown_process();
-}
-
-static inline void
-ipi_syncicache(struct cpu_info *ci)
-{
-	pmap_tlb_syncicache_wanted(ci);
-}
-
 #ifdef __HAVE_PREEMPTION
 static inline void
 ipi_kpreempt(struct cpu_info *ci)
@@ -100,7 +86,7 @@ ipi_kpreempt(struct cpu_info *ci)
 static void
 ipi_halt(void)
 {
-	const u_int my_cpu = cpu_number();
+	const u_int my_cpu = cpu_index(curcpu());
 	printf("cpu%u: shutting down\n", my_cpu);
 	kcpuset_set(cpus_halted, my_cpu);
 	splhigh();
@@ -121,14 +107,6 @@ ipi_process(struct cpu_info *ci, unsigned long ipi_mask)
 	if (ipi_mask & __BIT(IPI_AST)) {
 		ci->ci_evcnt_per_ipi[IPI_AST].ev_count++;
 		ipi_ast(ci);
-	}
-	if (ipi_mask & __BIT(IPI_SHOOTDOWN)) {
-		ci->ci_evcnt_per_ipi[IPI_SHOOTDOWN].ev_count++;
-		ipi_shootdown(ci);
-	}
-	if (ipi_mask & __BIT(IPI_SYNCICACHE)) {
-		ci->ci_evcnt_per_ipi[IPI_SYNCICACHE].ev_count++;
-		ipi_syncicache(ci);
 	}
 	if (ipi_mask & __BIT(IPI_SUSPEND)) {
 		ci->ci_evcnt_per_ipi[IPI_SUSPEND].ev_count++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 2023/08/28 11:12:42 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5 2023/09/03 08:48:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2023/08/28 11:12:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2023/09/03 08:48:20 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -95,8 +95,7 @@ struct cpu_vendor {
 };
 
 /*
- * Our exported cpu_info structs; these will be first used by the
- * secondary cpus as part of cpu_mpstart and the hatching process.
+ * Our exported cpu_info structs; indexed by BP as 0 and APs [1, ncpu - 1]
  */
 struct cpu_info cpu_info_store[NCPUINFO] = {
 	[0] = {
@@ -108,7 +107,6 @@ struct cpu_info cpu_info_store[NCPUINFO] = {
 #endif
 	}
 };
-
 
 /*
  * setup the per-cpu sysctl tree.
@@ -177,14 +175,15 @@ cpu_identify(device_t self, struct cpu_info *ci)
 
 
 void
-cpu_attach(device_t dv, cpuid_t id)
+cpu_attach(device_t dv, cpuid_t hartid)
 {
-	const int unit = device_unit(dv);
 	struct cpu_info *ci;
 
-	if (unit == 0) {
+	/* Check for the BP */
+	if (hartid == cpu_bphartid) {
 		ci = curcpu();
-		ci->ci_cpuid = id;
+		KASSERTMSG(ci == &cpu_info_store[0], "ci %p", ci);
+		ci->ci_cpuid = hartid;
 	} else {
 #ifdef MULTIPROCESSOR
 		if ((boothowto & RB_MD1) != 0) {
@@ -193,14 +192,15 @@ cpu_attach(device_t dv, cpuid_t id)
 			return;
 		}
 
-		KASSERT(unit < MAXCPUS);
-		ci = &cpu_info_store[unit];
+		KASSERT(hartid < MAXCPUS);
+		KASSERT(cpu_hartindex[hartid] < MAXCPUS);
+
+		ci = &cpu_info_store[cpu_hartindex[hartid]];
 
 		ci->ci_cpl = IPL_HIGH;
-		ci->ci_cpuid = id;
-		/* ci_cpuid is stored by own cpus when hatching */
+		ci->ci_cpuid = hartid;
 
-		if (cpu_hatched_p(unit) == 0) {
+		if (!cpu_hatched_p(cpu_hartindex[hartid])) {
 			ci->ci_dev = dv;
 			device_set_private(dv, ci);
 			ci->ci_index = -1;
@@ -230,18 +230,11 @@ cpu_attach(device_t dv, cpuid_t id)
 	kcpuset_create(&ci->ci_watchcpus, true);
 	kcpuset_create(&ci->ci_ddbcpus, true);
 
-	if (unit != 0) {
+	if (hartid != cpu_bphartid) {
 		mi_cpu_attach(ci);
-		struct pmap_tlb_info *ti = kmem_zalloc(sizeof(*ti), KM_SLEEP);
-		pmap_tlb_info_init(ti);
-		pmap_tlb_info_attach(ti, ci);
 	}
 #endif /* MULTIPROCESSOR */
 	cpu_setup_sysctl(dv, ci);
-
-	if (unit != 0) {
-	    return;
-	}
 }
 
 #ifdef MULTIPROCESSOR
@@ -252,7 +245,7 @@ cpu_attach(device_t dv, cpuid_t id)
  *
  */
 void __noasan
-cpu_init_secondary_processor(int cpuindex)
+cpu_init_secondary_processor(u_int cpuindex)
 {
 	cpu_set_hatched(cpuindex);
 
@@ -267,13 +260,19 @@ cpu_init_secondary_processor(int cpuindex)
  * of the idlelwp for this cpu.
  */
 void
-cpu_hatch(struct cpu_info *ci)
+cpu_hatch(struct cpu_info *ci, unsigned long cpuindex)
 {
 	KASSERT(curcpu() == ci);
+
+	// Show this CPU as present.
+	atomic_or_ulong(&ci->ci_flags, CPUF_PRESENT);
 
 	ci->ci_cpu_freq = riscv_timer_frequency_get();
 
 	riscv_timer_init();
+
+	kcpuset_set(cpus_hatched, cpu_index(ci));
+	kcpuset_set(cpus_running, cpu_index(ci));
 
 	/*
 	 * clear my bit of the mailbox to tell cpu_boot_secondary_processors().
@@ -282,6 +281,6 @@ cpu_hatch(struct cpu_info *ci)
 	 * therefore we have to use device_unit instead of ci_index for mbox.
 	 */
 
-	cpu_clr_mbox(device_unit(ci->ci_dev));
+	cpu_clr_mbox(cpuindex);
 }
 #endif /* MULTIPROCESSOR */

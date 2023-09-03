@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.6 2023/08/01 22:06:23 rjs Exp $
+#	$NetBSD: GENERIC.common,v 1.7 2023/09/03 08:48:19 skrll Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -8,7 +8,7 @@
 maxusers 	64		# estimated number of users
 
 options 	FDT
-#options 	MULTIPROCESSOR
+options 	MULTIPROCESSOR
 
 # Standard system options
 options 	FPE		# Floating-point extension support

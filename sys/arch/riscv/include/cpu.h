@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.13 2023/07/29 06:59:47 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.14 2023/09/03 08:48:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -91,7 +91,6 @@ struct cpu_info {
 #define	CPUF_PRESENT	__BIT(1)		/* CPU is present */
 #define	CPUF_RUNNING	__BIT(2)		/* CPU is running */
 #define	CPUF_PAUSED	__BIT(3)		/* CPU is paused */
-#define	CPUF_USERPMAP	__BIT(4)		/* CPU has a user pmap activated */
 
 	volatile u_long ci_request_ipis;
 						/* bitmask of IPIs requested */
@@ -118,23 +117,21 @@ struct cpu_info {
 
 #ifdef _KERNEL
 
-extern struct cpu_info *cpu_info[];
 extern struct cpu_info cpu_info_store[];
-
+extern cpuid_t cpu_bphartid;
+extern u_int cpu_hartindex[];
 
 #ifdef MULTIPROCESSOR
-extern u_int riscv_cpu_max;
-extern cpuid_t cpu_hartid[];
 
-void cpu_hatch(struct cpu_info *);
+void cpu_hatch(struct cpu_info *, unsigned long);
 
-void cpu_init_secondary_processor(int);
+void cpu_init_secondary_processor(u_int);
 void cpu_boot_secondary_processors(void);
 void cpu_mpstart(void);
 bool cpu_hatched_p(u_int);
 
-void cpu_clr_mbox(int);
-void cpu_set_hatched(int);
+void cpu_clr_mbox(u_int);
+void cpu_set_hatched(u_int);
 
 
 void	cpu_halt(void);
@@ -201,9 +198,9 @@ void	cpu_boot_secondary_processors(void);
 #ifdef MULTIPROCESSOR
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 #define	CPU_INFO_FOREACH(cii, ci)		\
-    cii = 0, ci = &cpu_info_store[0]; 		\
-    ci != NULL; 				\
-    cii++, ncpu ? (ci = cpu_infos[cii]) 	\
+    cii = 0, ci = &cpu_info_store[0];		\
+    ci != NULL;					\
+    cii++, ncpu ? (ci = cpu_infos[cii])		\
 		: (ci = NULL)
 #else
 #define CPU_IS_PRIMARY(ci)	true
