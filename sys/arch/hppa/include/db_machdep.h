@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.14 2017/11/06 03:47:46 christos Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.15 2023/09/03 20:52:13 andvar Exp $	*/
 
 /*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
 
@@ -61,7 +61,7 @@ typedef long kgdb_reg_t;
 /* XXX fredette - I think this is just a "big enough" kind of value */
 #define KGDB_BUFLEN     2048
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_iioq_head)
+#define	PC_REGS(regs)	((regs)->tf_iioq_head)
 
 /* Breakpoint related definitions */
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
