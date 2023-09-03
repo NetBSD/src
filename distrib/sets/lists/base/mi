@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1328 2023/08/28 23:57:17 riastradh Exp $
+# $NetBSD: mi,v 1.1329 2023/09/03 18:31:01 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -2453,6 +2453,8 @@
 ./usr/share/examples/blocklist			base-sys-examples
 ./usr/share/examples/blocklist/blocklistd.conf	base-sys-examples
 ./usr/share/examples/blocklist/npf.conf		base-sys-examples
+./usr/share/examples/certctl			base-sysutil-examples
+./usr/share/examples/certctl/certs.conf		base-sysutil-examples
 ./usr/share/examples/dhcp			base-dhcpd-examples
 ./usr/share/examples/dhcpcd			base-dhcpcd-examples
 ./usr/share/examples/dhcpcd/hooks		base-dhcpcd-examples
