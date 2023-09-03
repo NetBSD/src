@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2014/07/12 19:21:48 nakayama Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2023/09/03 21:41:45 mrg Exp $
 
 SRCS+=	fabs.S modf.S
 SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
@@ -28,6 +28,9 @@ SRCS+=	mul.S umul.S
 .endif
 SRCS+=	fixunsdfsi.S saveregs.S
 SRCS+=	bswap16.c bswap32.c bswap64.c
+
+CPPFLAGS.setjmp.S+=	-I.
+CPPFLAGS.longjmp.c+=	-I.
 
 LSRCS.sparc.gen=	Lint_swapcontext.c
 LSRCS+=		${LSRCS.sparc.gen}

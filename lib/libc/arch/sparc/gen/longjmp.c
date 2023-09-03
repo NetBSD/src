@@ -1,4 +1,4 @@
-/*	$NetBSD: longjmp.c,v 1.3 2011/04/30 23:41:12 martin Exp $	*/
+/*	$NetBSD: longjmp.c,v 1.4 2023/09/03 21:41:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,20 +41,17 @@
 #include <setjmp.h>
 #include <compat/include/setjmp.h>
 
-struct __jmp_buf_regs_t {
-	__greg_t	g4;
-	__greg_t	g7;
-	__greg_t	save_mask;
-};
+#include "assym.h"
+#include "sparc_longjmp.h"
 
 /*
- * setjmp.S uses hard coded offsets into the jump_buf,
- * make sure any changes cause a compile failure here
+ * check that offsets in the above structures match their usage in the
+ * setjmp() side of this setup.  a jmp_buf is the 12-word contents of
+ * the sigcontexst structure, plus 2 more words for g4 and g7.
  */
-__CTASSERT(56 == offsetof(struct __jmp_buf_regs_t,save_mask) +
-	sizeof(struct sigcontext));
-__CTASSERT(sizeof(sigjmp_buf) >= sizeof(struct __jmp_buf_regs_t) +
-	sizeof(struct sigcontext));
+__CTASSERT(_SIZEOF_SC + _JB_G4 == offsetof(struct __jmp_buf,regs.g4));
+__CTASSERT(_SIZEOF_SC + _JB_G7 == offsetof(struct __jmp_buf,regs.g7));
+__CTASSERT(sizeof(jmp_buf) >= sizeof(struct __jmp_buf));
 
 /*
  * Use setcontext to reload the stack pointer, program counter <pc,npc>, and
@@ -64,8 +61,9 @@ __CTASSERT(sizeof(sigjmp_buf) >= sizeof(struct __jmp_buf_regs_t) +
 void
 __longjmp14(jmp_buf env, int val)
 {
-	struct sigcontext *sc = (void *)env;
-	struct __jmp_buf_regs_t *r = (void*)&sc[1];
+	struct __jmp_buf *context = (void *)env;
+	struct sigcontext *sc = &context->sc;
+	struct __jmp_buf_regs_t *r = &context->regs;
 	ucontext_t uc;
 
 	/* Ensure non-zero SP */
