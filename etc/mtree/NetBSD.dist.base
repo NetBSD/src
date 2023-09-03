@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.252 2023/08/26 05:58:49 riastradh Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.253 2023/09/03 18:31:01 riastradh Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -478,6 +478,7 @@
 ./usr/share/examples/asm/hello
 ./usr/share/examples/atf
 ./usr/share/examples/blocklist
+./usr/share/examples/certctl
 ./usr/share/examples/dhcp
 ./usr/share/examples/dhcpcd
 ./usr/share/examples/dhcpcd/hooks
