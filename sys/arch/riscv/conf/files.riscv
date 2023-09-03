@@ -1,4 +1,4 @@
-#	$NetBSD: files.riscv,v 1.13 2023/06/12 19:04:13 skrll Exp $
+#	$NetBSD: files.riscv,v 1.14 2023/09/03 08:48:19 skrll Exp $
 #
 
 maxpartitions	16
@@ -64,7 +64,6 @@ file	kern/subr_disk_mbr.c			disk
 file	uvm/pmap/pmap.c
 file	uvm/pmap/pmap_devmap.c
 file	uvm/pmap/pmap_segtab.c
-file	uvm/pmap/pmap_synci.c
 file	uvm/pmap/pmap_tlb.c
 
 device  plic

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.42 2023/06/12 19:04:14 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.43 2023/09/03 08:48:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -316,7 +316,6 @@ vstart:
 
 	PTR_LA	tp, _C_LABEL(lwp0)	// put curlwp in tp
 
-
 	/* Set supervisor trap vector base register */
 	PTR_LA	a0, _C_LABEL(cpu_exception_handler)
 	csrw	stvec, a0
@@ -379,30 +378,12 @@ ENTRY(cpu_mpstart)
 	mv	s11, a1			// copy sbi_hart_start cookie
 
 	/*
-	 * resolve our cpuindex. each hartid is stored in
-	 * extern unsigned long cpu_hartid[MAXCPUS]
-	 */
-	PTR_LA	t0, _C_LABEL(cpu_hartid)
-	li	t6, MAXCPUS
-	li	t1, 0
-1:
-	addi	t1, t1, 1
-	bgeu	t1, t6, toomanyharts	/* cpuindex >= MAXCPUS ? */
-
-	slli	t2, t1, LONG_SCALESHIFT
-	add	t2, t0, t2
-	LONG_L	t3, 0(t2)		/* cpu_hartid[cpuindex] */
-	bne	t3, s10, 1b
-
-	mv	s9, t1			/* s9 = cpuindex */
-
-	/*
-	 * s9 = cpuindex
+	 * s11 = cpuindex
 	 */
 
 	/* set stack pointer for boot */
 	li	t1, BOOT_AP_STACKSIZE		// XXXNH do a shift
-	mul	t1, s9, t1
+	mul	t1, s11, t1
 	PTR_LA	t0, _C_LABEL(bootstk)
 	/* sp = bootstk + (BOOT_AP_STACKSIZE * cpuindex) */
 	add	sp, t0, t1
@@ -465,17 +446,17 @@ vmpstart:
 	csrsi	sstatus, SR_SIE		// enable interrupts
 
 	li	tp, 0
-	mv	a0, s9
+	mv	a0, s11
 	call	_C_LABEL(cpu_init_secondary_processor)
 
 	/* t3 = __BIT(cpuindex % (sizeof(u_long) * NBBY)) */
 	li	t3, 1
-	andi	t0, s9, (1U << (LONG_SCALESHIFT + NBBY_SHIFT)) - 1
+	andi	t0, s11, (1U << (LONG_SCALESHIFT + NBBY_SHIFT)) - 1
 	sll	t3, t3, t0
 
 	/* t4 = &riscv_cpu_mbox[cpuindex / (sizeof(u_long) * NBBY)] */
 	PTR_LA	t0, _C_LABEL(riscv_cpu_mbox)
-	srli	t1, s9, LONG_SCALESHIFT + NBBY_SHIFT
+	srli	t1, s11, LONG_SCALESHIFT + NBBY_SHIFT
 	slli	t1, t1, LONG_SCALESHIFT
 	add	t4, t0, t1
 
@@ -494,7 +475,7 @@ vmpstart:
 	csrw	stvec, a0
 
 	li	t0, CI_SIZE
-	mul	t0, s9, t0
+	mul	t0, s11, t0
 	PTR_LA	t1, _C_LABEL(cpu_info_store)
 	add	a0, t0, t1		/* a0 = &cpu_info_store[cpuindex] */
 
@@ -513,6 +494,7 @@ vmpstart:
 
 	li	s0, 0			/* trace back starts here (fp = 0) */
 	PTR_L	a0, L_CPU(tp)		/* curlwp->l_cpu */
+	mv	a1, s11			/* cpuindex */
 	call	_C_LABEL(cpu_hatch)
 
 	li	s0, 0			// zero frame pointer
@@ -618,7 +600,6 @@ cpu_Debugger_ret:
 	ret
 END(cpu_Debugger)
 
-#if defined(VERBOSE_INIT_RISCV)
 ENTRY_NP(locore_prints)
 	addi	sp, sp, -(SZREG * 2)
 	REG_S	s0, (0 * SZREG)(sp)
@@ -642,6 +623,7 @@ ENTRY_NP(locore_prints)
 END(locore_prints)
 
 
+#if defined(VERBOSE_INIT_RISCV)
 ENTRY_NP(locore_printx)
 	addi	sp, sp, -(SZREG * 4)
 	REG_S	s0, (0 * SZREG)(sp)

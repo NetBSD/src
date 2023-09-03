@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.33 2023/08/24 05:46:55 rin Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.34 2023/09/03 08:48:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.33 2023/08/24 05:46:55 rin Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.34 2023/09/03 08:48:20 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -536,8 +536,8 @@ cpu_startup(void)
 	kcpuset_create(&cpus_running, true);
 	KASSERT(cpus_running != NULL);
 
-	kcpuset_set(cpus_hatched, cpu_number());
-	kcpuset_set(cpus_running, cpu_number());
+	kcpuset_set(cpus_hatched, cpu_index(curcpu()));
+	kcpuset_set(cpus_running, cpu_index(curcpu()));
 #endif
 
 	fdtbus_intr_init();

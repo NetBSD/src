@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.2 2023/06/12 19:04:13 skrll Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.3 2023/09/03 08:48:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.2 2023/06/12 19:04:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.3 2023/09/03 08:48:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.2 2023/06/12 19:04:13 skrll Exp $");
 #include <riscv/fdt/riscv_fdtvar.h>
 
 
-#ifdef MULTIPROCESSOR
 static bool
 riscv_fdt_cpu_okay(const int child)
 {
@@ -65,33 +64,32 @@ riscv_fdt_cpu_okay(const int child)
 		return true;
 	}
 }
-#endif /* MULTIPROCESSOR */
 
 void
 riscv_fdt_cpu_bootstrap(void)
 {
-#ifdef MULTIPROCESSOR
-
 	const int cpus = OF_finddevice("/cpus");
 	if (cpus == -1) {
 		aprint_error("%s: no /cpus node found\n", __func__);
-		riscv_cpu_max = 1;
 		return;
 	}
 
-	/* Count harts and add hart IDs to to cpu_hartid array */
-	size_t cpuindex = 1;
+	/* Count harts and add hart index numbers to the cpu_hartindex array */
+	u_int cpuindex = 1;
 	for (int child = OF_child(cpus); child; child = OF_peer(child)) {
 		if (!riscv_fdt_cpu_okay(child))
 			continue;
-
-		riscv_cpu_max++;
 
 		uint64_t reg;
 		if (fdtbus_get_reg64(child, 0, &reg, NULL) != 0)
 			continue;
 
 		const cpuid_t hartid = reg;
+		if (hartid > MAXCPUS) {
+			aprint_error("hart id too big %lu (%u)", hartid,
+			    MAXCPUS);
+			continue;
+		}
 
 		struct sbiret sbiret = sbi_hart_get_status(hartid);
 		switch (sbiret.error) {
@@ -107,22 +105,19 @@ riscv_fdt_cpu_bootstrap(void)
 
 		/* Assume the BP is the only one started. */
 		if (sbiret.value == SBI_HART_STARTED) {
-			if (cpu_hartid[0] != -1) {
+			if (cpu_bphartid != ~0UL) {
 				panic("more than 1 hart started");
 			}
-			cpu_hartid[0] = hartid;
+			cpu_bphartid = hartid;
+			cpu_hartindex[hartid] = 0;
 			continue;
 		}
 
 		KASSERT(cpuindex < MAXCPUS);
-		cpu_hartid[cpuindex] = hartid;
-		cpu_dcache_wb_range((vaddr_t)&cpu_hartid[cpuindex],
-		    sizeof(cpu_hartid[cpuindex]));
-
-		cpuindex++;
+		cpu_hartindex[hartid] = cpuindex++;
 	}
-#endif
 }
+
 int
 riscv_fdt_cpu_mpstart(void)
 {
@@ -134,11 +129,8 @@ riscv_fdt_cpu_mpstart(void)
 		return 0;
 	}
 
-	// riscv_fdt_cpu_bootstrap put the boot hart id in cpu_hartid[0]
-	const cpuid_t bp_hartid = cpu_hartid[0];
-
 	/* BootAPs */
-	size_t cpuindex = 1;
+	u_int cpuindex = 1;
 	for (int child = OF_child(cpus); child; child = OF_peer(child)) {
 		if (!riscv_fdt_cpu_okay(child))
 			continue;
@@ -147,13 +139,12 @@ riscv_fdt_cpu_mpstart(void)
 		if (fdtbus_get_reg64(child, 0, &reg, NULL) != 0)
 			continue;
 
-		cpuid_t hartid = reg;
-
-		if (hartid == bp_hartid)
+		const cpuid_t hartid = reg;
+		if (hartid == cpu_bphartid)
 			continue;		/* BP already started */
 
 		const paddr_t entry = KERN_VTOPHYS(cpu_mpstart);
-		struct sbiret sbiret = sbi_hart_start(hartid, entry, 0);
+		struct sbiret sbiret = sbi_hart_start(hartid, entry, cpuindex);
 		switch (sbiret.error) {
 		case SBI_SUCCESS:
 			break;
@@ -179,8 +170,8 @@ riscv_fdt_cpu_mpstart(void)
 
 		if (i == 0) {
 			ret++;
-			aprint_error("cpu%zu: WARNING: AP failed to start\n",
-			    cpuindex);
+			aprint_error("hart%ld: WARNING: AP %u failed to start\n",
+			    hartid, cpuindex);
 		}
 
 		cpuindex++;
@@ -207,13 +198,14 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	bus_addr_t cpuid;
+	bus_addr_t hartid;
 
-	if (fdtbus_get_reg(phandle, 0, &cpuid, NULL) != 0)
-		cpuid = 0;
+
+	if (fdtbus_get_reg(phandle, 0, &hartid, NULL) != 0)
+		hartid = 0;
 
 	/* Attach the CPU */
-	cpu_attach(self, cpuid);
+	cpu_attach(self, hartid);
 
 	fdt_add_bus(self, phandle, faa);
 }

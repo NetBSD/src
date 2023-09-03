@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4 2023/06/12 19:04:14 skrll Exp $ */
+/* $NetBSD: intr.h,v 1.5 2023/09/03 08:48:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -70,14 +70,12 @@
 
 #define	IPI_NOP		0		/* do nothing, interrupt only */
 #define	IPI_AST		1		/* force ast */
-#define	IPI_SHOOTDOWN	2		/* do a tlb shootdown */
-#define	IPI_SYNCICACHE	3		/* sync icache for pages */
-#define	IPI_KPREEMPT	4		/* schedule a kernel preemption */
-#define	IPI_SUSPEND	5		/* DDB suspend signaling */
-#define	IPI_HALT	6		/* halt cpu */
-#define	IPI_XCALL	7		/* xcall */
-#define	IPI_GENERIC	8		/* generic IPI */
-#define	NIPIS		9
+#define	IPI_KPREEMPT	2		/* schedule a kernel preemption */
+#define	IPI_SUSPEND	3		/* DDB suspend signaling */
+#define	IPI_HALT	4		/* halt cpu */
+#define	IPI_XCALL	5		/* xcall */
+#define	IPI_GENERIC	6		/* generic IPI */
+#define	NIPIS		7
 
 #ifdef __INTR_PRIVATE
 #if 0

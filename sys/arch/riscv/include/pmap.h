@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.20 2023/08/12 07:48:11 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.21 2023/09/03 08:48:20 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 #define	KERNEL_PID	0
 
 #define	PMAP_HWPAGEWALKER		1
-#define	PMAP_TLB_MAX			MAXCPUS
+#define	PMAP_TLB_MAX			1
 #ifdef _LP64
 #define	PMAP_INVALID_PDETAB_ADDRESS	((pmap_pdetab_t *)(VM_MIN_KERNEL_ADDRESS - PAGE_SIZE))
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)(VM_MIN_KERNEL_ADDRESS - PAGE_SIZE))
@@ -90,9 +90,7 @@
 #endif
 #define	PMAP_TLB_NUM_PIDS		(__SHIFTOUT_MASK(SATP_ASID) + 1)
 #define	PMAP_TLB_BITMAP_LENGTH          PMAP_TLB_NUM_PIDS
-// Should use SBI TLB ops
-#define	PMAP_TLB_NEED_SHOOTDOWN		1
-#define	PMAP_TLB_FLUSH_ASID_ON_RESET	false
+#define	PMAP_TLB_FLUSH_ASID_ON_RESET	true
 
 #define	pmap_phys_address(x)		(x)
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.18 2023/06/12 19:04:14 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.19 2023/09/03 08:48:20 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -36,10 +36,11 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.18 2023/06/12 19:04:14 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.19 2023/09/03 08:48:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
@@ -175,7 +176,7 @@ pmap_md_xtab_activate(struct pmap *pmap, struct lwp *l)
 {
 //	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	struct cpu_info * const ci = curcpu();
+//	struct cpu_info * const ci = curcpu();
 	struct pmap_asid_info * const pai = PMAP_PAI(pmap, cpu_tlb_info(ci));
 
 	uint64_t satp =
@@ -335,8 +336,9 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	kcpuset_create(&pm->pm_active, true);
 	KASSERT(pm->pm_onproc != NULL);
 	KASSERT(pm->pm_active != NULL);
-	kcpuset_set(pm->pm_onproc, cpu_number());
-	kcpuset_set(pm->pm_active, cpu_number());
+
+	kcpuset_set(pm->pm_onproc, cpu_index(ci));
+	kcpuset_set(pm->pm_active, cpu_index(ci));
 #endif
 
 	VPRINTF("nkmempages ");

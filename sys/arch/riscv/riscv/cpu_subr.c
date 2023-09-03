@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.3 2023/06/12 19:04:14 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.4 2023/09/03 08:48:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.3 2023/06/12 19:04:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.4 2023/09/03 08:48:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -56,15 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.3 2023/06/12 19:04:14 skrll Exp $");
 #define VPRINTF(...)	__nothing
 #endif
 
-#ifdef MULTIPROCESSOR
-#define NCPUINFO	MAXCPUS
-#else
-#define NCPUINFO	1
-#endif /* MULTIPROCESSOR */
-
-unsigned long cpu_hartid[NCPUINFO] = {
-	[0 ... NCPUINFO - 1] = ~0,
+unsigned int cpu_hartindex[MAXCPUS] = {
+	[0 ... MAXCPUS - 1] = ~0U,
 };
+
+cpuid_t cpu_bphartid = ~0UL;
 
 #ifdef MULTIPROCESSOR
 
@@ -82,16 +78,17 @@ kcpuset_t *cpus_running;
 CTASSERT(N == 1);
 volatile u_long riscv_cpu_hatched[N] __cacheline_aligned = { };
 volatile u_long riscv_cpu_mbox[N] __cacheline_aligned = { };
-u_int riscv_cpu_max = 1;
 
 /* IPI all APs to GO! */
 static void
 cpu_ipi_aps(void)
 {
 	unsigned long hartmask = 0;
+
 	// BP is index 0
 	for (size_t i = 1; i < ncpu; i++) {
-		const cpuid_t hartid = cpu_hartid[i];
+		const struct cpu_info * const ci = &cpu_info_store[i];
+		const cpuid_t hartid = ci->ci_cpuid;
 		KASSERT(hartid < sizeof(unsigned long) * NBBY);
 		hartmask |= __BIT(hartid);
 	}
@@ -103,8 +100,6 @@ cpu_ipi_aps(void)
 void
 cpu_boot_secondary_processors(void)
 {
-	u_int cpuno;
-
 	if ((boothowto & RB_MD1) != 0)
 		return;
 
@@ -120,21 +115,25 @@ cpu_boot_secondary_processors(void)
 	cpu_ipi_aps();
 
 	/* wait for all cpus to have done cpu_hatch() */
-	for (cpuno = 1; cpuno < ncpu; cpuno++) {
-		if (!cpu_hatched_p(cpuno))
+	for (u_int cpuindex = 1; cpuindex < ncpu; cpuindex++) {
+		if (!cpu_hatched_p(cpuindex))
 			continue;
 
-		const size_t off = cpuno / CPUINDEX_DIVISOR;
-		const u_long bit = __BIT(cpuno % CPUINDEX_DIVISOR);
+		const size_t off = cpuindex / CPUINDEX_DIVISOR;
+		const u_long bit = __BIT(cpuindex % CPUINDEX_DIVISOR);
 
 		/* load-acquire matches cpu_clr_mbox */
 		while (atomic_load_acquire(&riscv_cpu_mbox[off]) & bit) {
 			/* spin - it shouldn't be long */
 			;
 		}
+		struct cpu_info *ci = &cpu_info_store[cpuindex];
+		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
+		kcpuset_set(cpus_running, cpu_index(ci));
 	}
 
-	VPRINTF("%s: secondary processors hatched\n", __func__);
+	VPRINTF("%s: secondary processors hatched. %d running\n", __func__,
+	    kcpuset_countset(cpus_running));
 }
 
 bool
@@ -149,7 +148,7 @@ cpu_hatched_p(u_int cpuindex)
 
 
 void
-cpu_set_hatched(int cpuindex)
+cpu_set_hatched(u_int cpuindex)
 {
 
 	const size_t off = cpuindex / CPUINDEX_DIVISOR;
@@ -163,7 +162,7 @@ cpu_set_hatched(int cpuindex)
 }
 
 void
-cpu_clr_mbox(int cpuindex)
+cpu_clr_mbox(u_int cpuindex)
 {
 
 	const size_t off = cpuindex / CPUINDEX_DIVISOR;
@@ -213,8 +212,7 @@ cpu_ipi_wait(const char *s, const kcpuset_t *watchset, const kcpuset_t *wanted)
 	kcpuset_t *kcp = ci->ci_watchcpus;
 
 	/* some finite amount of time */
-
-	for (u_long limit = curcpu()->ci_cpu_freq / 10; !done && limit--; ) {
+	for (u_long limit = curcpu()->ci_cpu_freq /* / 10 */; !done && limit--; ) {
 		kcpuset_copy(kcp, watchset);
 		kcpuset_intersect(kcp, wanted);
 		done = kcpuset_match(kcp, wanted);
@@ -288,7 +286,7 @@ cpu_halt_others(void)
  * Pause this cpu
  */
 void
-cpu_pause(void	)
+cpu_pause(void)
 {
 	const int s = splhigh();
 	cpuid_t cii = cpu_index(curcpu());
@@ -349,6 +347,7 @@ cpu_resume(cpuid_t cii)
 	struct cpu_info * const ci = curcpu();
 	kcpuset_t *kcp = ci->ci_ddbcpus;
 
+	kcpuset_zero(kcp);
 	kcpuset_set(kcp, cii);
 	kcpuset_atomicly_remove(cpus_resumed, cpus_resumed);
 	kcpuset_atomic_clear(cpus_paused, cii);
@@ -391,20 +390,21 @@ cpu_debug_dump(void)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	char running, hatched, paused, resumed, halted;
-	db_printf("CPU CPUID STATE CPUINFO            CPL INT MTX IPIS(A/R)\n");
+	db_printf("CPU CPUID  STATE CPUINFO            CPL INT MTX IPIS(A/R)\n");
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		hatched = (kcpuset_isset(cpus_hatched, cpu_index(ci)) ? 'H' : '-');
 		running = (kcpuset_isset(cpus_running, cpu_index(ci)) ? 'R' : '-');
 		paused  = (kcpuset_isset(cpus_paused,  cpu_index(ci)) ? 'P' : '-');
 		resumed = (kcpuset_isset(cpus_resumed, cpu_index(ci)) ? 'r' : '-');
 		halted  = (kcpuset_isset(cpus_halted,  cpu_index(ci)) ? 'h' : '-');
-		db_printf("%3d 0x%03lx %c%c%c%c%c %p "
-			"%3d %3d %3d "
-			"0x%02lx/0x%02lx\n",
-			cpu_index(ci), ci->ci_cpuid,
-			running, hatched, paused, resumed, halted,
-			ci, ci->ci_cpl, ci->ci_intr_depth, ci->ci_mtx_count,
-			ci->ci_active_ipis, ci->ci_request_ipis);
+		db_printf("%3d 0x%03lx%c%c%c%c%c%c%c %p "
+		    "%3d %3d %3d 0x%02lx/0x%02lx\n",
+		    cpu_index(ci), ci->ci_cpuid,
+		    ci == curcpu() ? '<' : ' ',
+		    CPU_IS_PRIMARY(ci) ? '*' : ' ',
+		    hatched, running, paused, resumed, halted,
+		    ci, ci->ci_cpl, ci->ci_intr_depth, ci->ci_mtx_count,
+		    ci->ci_active_ipis, ci->ci_request_ipis);
 	}
 }
 #endif
