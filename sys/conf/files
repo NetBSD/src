@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1307 2023/04/16 16:51:38 jmcneill Exp $
+#	$NetBSD: files,v 1.1308 2023/09/03 19:38:58 andvar Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -86,7 +86,8 @@ defparam opt_sysvparam.h	SEMMAP SEMMNI SEMMNS SEMMNU SEMMSL SEMOPM
 defparam opt_sysvparam.h	SEMUME SEMUSZ SEMVMX SEMAEM
 defparam opt_sysvparam.h	SHMMAX SHMMIN SHMMNI SHMSEG SHMMAXPGS
 
-defflag	opt_ntp.h		PPS_SYNC PPS_DEBUG NTP
+defflag	opt_ntp.h		PPS_DEBUG NTP
+defflag	opt_ntp.h		PPS_SYNC: NTP
 
 defflag	opt_ptm.h		NO_DEV_PTM COMPAT_BSDPTY
 
