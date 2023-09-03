@@ -49,6 +49,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-cfg.h"
 #include "gimple-fold.h"
 #include "varasm.h"
+#include "file-prefix-map.h"
 
 /* Map from a tree to a VAR_DECL tree.  */
 
@@ -304,8 +305,9 @@ ubsan_source_location (location_t loc)
   else
     {
       /* Fill in the values from LOC.  */
-      size_t len = strlen (xloc.file) + 1;
-      str = build_string (len, xloc.file);
+      const char *file = remap_debug_filename (xloc.file);
+      size_t len = strlen (file) + 1;
+      str = build_string (len, file);
       TREE_TYPE (str) = build_array_type_nelts (char_type_node, len);
       TREE_READONLY (str) = 1;
       TREE_STATIC (str) = 1;
