@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238.2.3 2023/08/11 13:42:55 martin Exp $
+# $NetBSD: mi,v 1.1238.2.4 2023/09/04 17:33:28 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7512,6 +7512,22 @@
 ./usr/tests/usr.sbin					tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/Atffile				tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/Kyuafile				tests-usr.sbin-tests	compattestfile,atf,kyua
+./usr/tests/usr.sbin/certctl				tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/Atffile			tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/Kyuafile			tests-usr.sbin-tests	compattestfile,atf,kyua
+./usr/tests/usr.sbin/certctl/certs1			tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs1/DigiCert_Global_Root_CA.pem			tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs1/Explicitly_Distrust_DigiNotar_Root_CA.pem	tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs2			tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs2/GTS_Root_R1.pem		tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs2/GlobalSign_Root_CA_-_R3.pem	tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs3			tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs3/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.1.pem	tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs3/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.pem	tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs4			tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs4/AC_RAIZ_FNMT-RCM.pem	tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs4/DigiCert_Global_Root_CA.pem	tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/t_certctl			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/cpuctl				tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/cpuctl/Atffile			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/cpuctl/Kyuafile			tests-usr.sbin-tests	compattestfile,atf,kyua

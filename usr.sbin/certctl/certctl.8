@@ -1,0 +1,355 @@
+.\"	$NetBSD: certctl.8,v 1.2.2.2 2023/09/04 17:33:27 martin Exp $
+.\"
+.\" Copyright (c) 2023 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 16, 2023
+.Dt CERTCTL 8
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm certctl
+.Nd configure OpenSSL certificate trust anchors
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.Nm
+.Op Fl nv
+.Op Fl C Ar config
+.Op Fl c Ar certsdir
+.Op Fl u Ar distrustdir
+.Ar cmd
+.Op Ar args...
+.\""""""""""""""""""
+.Nm
+.Oo Ar options Oc Cm list
+.Nm
+.Oo Ar options Oc Cm rehash
+.Nm
+.Oo Ar options Oc Cm trust Ar cert
+.Nm
+.Oo Ar options Oc Cm untrust Ar cert
+.Nm
+.Oo Ar options Oc Cm untrusted
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.Nm
+utility manages certificates used by OpenSSL-based applications as
+trust anchors for certificate validation in TLS or other purposes,
+for example by
+.Xr ftp 1
+in HTTPS.
+.Nm
+allows configuring the set of certificates and persistently excluding
+individual certificates.
+.Pp
+For trust anchors to validate TLS certificates, OpenSSL applications
+typically use a directory at
+.Pa /etc/openssl/certs
+of hashed certificates in PEM format, with names like
+.Pa "3513523f.0"
+used for lookup; see
+.Xr openssl_rehash 1 .
+.Pp
+.Nm
+scans all directories in the certificate search path specified by the
+configuration file
+.Ar config
+.Pq default: Pa /etc/openssl/certs.conf
+for files called
+.Pa *.cer ,
+.Pa *.crt ,
+or
+.Pa *.pem
+in PEM format, except for those that have been excluded by
+.Nm Cm untrust ,
+and keeps
+.Ar certsdir
+.Pq default: Pa /etc/openssl/certs
+populated with:
+.Bl -dash
+.It
+symlinks to the original files in the certificate search path, for
+applications that scan a directory for all files matching
+.Pa *.cer ,
+.Pa *.crt ,
+or
+.Pa *.pem ;
+.It
+hashed symlinks as in
+.Xr openssl_rehash 1 ; and
+.It
+a single-file bundle
+.Pa ca-certificates.crt
+concatenating all the certificates in PEM format.
+.El
+.Pp
+.Nm
+treats
+.Ar config
+and
+.Ar distrustdir
+as configuration, and
+.Ar certsdir
+strictly as a cache that can be safely deleted and rebuilt with
+.Nm Cm rehash .
+.Nm
+can also be instructed not to touch
+.Ar certsdir
+at all by putting
+.Cm manual
+in
+.Ar config .
+.
+.\""""""""""""""""""""""""""""""""""""""
+.Ss Commands
+.Bl -tag -width Cm
+.\""""""""""""""""""
+.It Cm list
+List absolute paths to trusted certificates, one per line, in
+.Xr vis 1
+format to encode any shell metacharacters, that
+.Nm Cm rehash
+would use to populate the
+.Ar certsdir
+cache.
+.\""""""""""""""""""
+.It Cm rehash
+Populate
+.Ar certsdir
+with all trusted certificates, excluding any from
+.Nm Cm untrust .
+.\""""""""""""""""""
+.It Cm trust Ar cert
+Allow
+.Ar cert
+to be included in the certificate cache if it is in the certificate
+search path, and rehash the certificate cache.
+In other words, reverse the persistent effect of
+.Nm Cm untrust Ar cert .
+.Pp
+.Ar cert
+must be the full absolute path to a certificate that has been excluded
+by
+.Nm Cm untrust Ar cert .
+.Pp
+This does not add a new certificate which is not in the search path.
+To do that, you can create a directory to hold it and put that
+directory in the search path.
+.\""""""""""""""""""
+.It Cm untrust Ar cert
+Persistently prevent
+.Ar
+from being included in the certificate cache, and rehash the
+certificate cache.
+.Pp
+.Ar cert
+must be the full absolute path to a certificate that is in the
+certificate search path.
+.\""""""""""""""""""
+.It Cm untrusted
+List absolute paths to untrusted certificates, one per line, in
+.Xr vis 1
+format to encode any shell metacharacters, that have been excluded by
+.Nm Cm untrust
+so that
+.Nm Cm rehash
+will not put them in
+.Ar certsdir .
+.\""""""""""""""""""
+.El
+.\""""""""""""""""""""""""""""""""""""""
+.Ss Configuration file
+The configuration file is a plain text file of lines separated by
+.Tn US-ASCII
+line feeds.
+.Pp
+.Pp
+The first line must be:
+.Dl netbsd-certctl 20230816
+.Pp
+Lines with only whitespace, or whitespace followed by the comment
+character
+.Ql #
+are ignored.
+Each line has a directive and arguments separated by whitespace, and
+may be extended by
+.Ql \e
+to continuation lines.
+.Bl -tag -width Cm
+.\""""""""""""""""""
+.It Cm path Ar dir
+Add
+.Ar dir
+to the certificate search path.
+.Ar dir
+must be an absolute pathname,
+.Xr vis 3 Ns -encoded
+if it has any characters outside the class
+.Ql "a-zA-Z0-9,.:=/+-" .
+.Pp
+All certificates must have unique base names across all directories
+in the certificate search path.
+.\""""""""""""""""""
+.It Cm manual
+Manual override.
+If specified,
+.Nm
+will
+.Em not
+modify
+.Ar certsdir ,
+but may still check consistency of the configuration when run and
+update
+.Ar distrustdir .
+.\""""""""""""""""""
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh FILES
+.Bl -tag -width Pa
+.It Pa /etc/openssl/certs
+Default directory of hashed TLS CA certificates.
+.It Pa /etc/openssl/certs/ca-certificates.crt
+Default single-file TLS CA certificate bundle.
+.It Pa /etc/openssl/certs.conf
+Default configuration file for TLS CA certificates.
+.It Pa /etc/openssl/untrusted
+Default
+.Ar untrusted
+directory of excluded TLS CA certificates.
+.It Pa /usr/share/certs/mozilla/all
+All root CA certificates published by Mozilla, including untrustworthy
+certificates.
+.It Pa /usr/share/certs/mozilla/code
+All root CA certificates published by Mozilla for use in code-signing.
+.It Pa /usr/share/certs/mozilla/email
+All root CA certificates published by Mozilla for use in email
+authentication.
+.It Pa /usr/share/certs/mozilla/server
+All root CA certificates published by Mozilla for use in TLS server
+authentication.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh EXAMPLES
+Example configuration file
+.Pq Pa /etc/openssl/certs.conf :
+.Bd -literal -offset indent
+netbsd-certctl 20230816
+
+# Blank lines and comments are ignored.
+# Comments begin with a `#' sign.
+
+# Gather certificates from files called *.cer, *.crt, and *.pem
+# under these directories.
+path /usr/share/certs/mozilla/server
+path /usr/pkg/share/chromium-cacerts
+
+# If the next line is uncommented, certctl(8) will decline to
+# touch /etc/openssl/certs.
+#manual
+.Ed
+.Pp
+Exclude a certificate:
+.Bd -literal -offset indent
+$ certctl untrust /usr/share/certs/mozilla/server/GTS_Root_R1.pem
+.Ed
+.Pp
+There is no need to run
+.Nm Cm rehash
+explicitly after
+.Nm Cm untrust ,
+but if you do, the setting will persist.
+.Pp
+Rebuild the hashed certificate cache at
+.Pa /etc/myapplication/certs
+from
+.Pa /etc/myapplication/certs.conf
+and
+.Pa /etc/myapplication/untrusted :
+.Bd -literal -offset indent
+$ certctl -c /etc/myapplication/certs \e
+        -C /etc/myapplication/certs.conf \e
+        -u /etc/myapplication/untrusted
+.Ed
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DIAGNOSTICS
+.Ex -std
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh COMPATIBILITY
+The
+.Nm
+utility is mostly compatible with a utility of the same name in
+.Fx .
+Differences:
+.Bl -enum
+.\""""""""""""""""""
+.It
+.Fx Nm
+supports destdir/metalog handling;
+.Nx Nm
+does not.
+.\""""""""""""""""""
+.It
+.Fx Nm
+treats
+.Pa /etc/ssl/certs
+and
+.Pa /etc/ssl/untrusted
+both as configuration
+.Em and
+as caches;
+.Nx Nm
+treats
+.Pa /etc/openssl/certs.conf
+and
+.Pa /etc/openssl/untrusted
+as configuration, and treats
+.Pa /etc/openssl/certs
+strictly as a cache.
+.Fx Nm
+will forget any
+.Nm Cm untrust
+settings on
+.Nm Cm rehash ,
+but
+.Nx Nm
+will remember them.
+.\""""""""""""""""""
+.It
+.Fx Nm
+takes configuration through environment variables;
+.Nx Nm
+takes configuration through a file and command-line arguments.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr openssl 1 ,
+.Xr openssl_rehash 1
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+.Nm
+first appeared in
+.Nx 10.0 .
+A utility of the same name previously appeared in
+.Fx 12.2 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.140 2020/05/12 10:20:16 leot Exp $
+.\"	$NetBSD: hier.7,v 1.140.6.1 2023/09/04 17:33:28 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -258,6 +258,52 @@ Network groups; see
 .It Pa networks
 Network name database; see
 .Xr networks 5 .
+.It Pa openssl/
+OpenSSL TLS trust anchors, configuration file, private keys, and
+more.
+Returned by
+.Xr X509_get_default_cert_area 3 .
+.Bl -tag -width "certs/" -compact
+.It Pa certs/
+Hashed directory of trust anchors for TLS certificate validation.
+Managed by
+.Xr certctl 8
+according to
+.Pa certs.conf .
+See
+.Xr openssl_rehash 1 .
+Returned by
+.Xr X509_get_default_cert_dir 3 .
+.It Pa certs/ca-certificates.crt
+Bundle of TLS anchors in PEM format formed by concatenation of
+PEM-format certificates.
+Managed by
+.Xr certctl 8
+according to
+.Pa certs.conf .
+.It Pa certs.conf
+Configuration file for
+.Xr certctl 8 .
+.It Pa misc/
+Miscellaneous OpenSSL scripts.
+Unused in
+.Nx
+base.
+.It Pa openssl.cnf
+Optional default OpenSSL configuration file.
+See
+.Xr openssl_config 5 .
+Returned by
+.Xr CONF_get1_default_config_file 3 .
+.It Pa private/
+Private key area.
+Read/write/execute permitted only by root.
+Unused in
+.Nx
+base.
+Returned by
+.Xr X509_get_default_private_dir 3 .
+.El
 .It Pa passwd
 World readable password file generated from master.passwd; see
 .Xr passwd 5 ,

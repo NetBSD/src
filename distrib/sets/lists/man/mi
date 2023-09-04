@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1757.2.2 2023/08/11 13:42:54 martin Exp $
+# $NetBSD: mi,v 1.1757.2.3 2023/09/04 17:33:26 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2645,6 +2645,7 @@
 ./usr/share/man/cat8/ccdconfig.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/cesfic/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cesfic/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/certctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/cgdconfig.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/chat.0			man-ppp-catman		.cat
 ./usr/share/man/cat8/chown.0			man-sysutil-catman	.cat
@@ -5896,6 +5897,7 @@
 ./usr/share/man/html8/canconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html8/catman.html		man-man-htmlman		html
 ./usr/share/man/html8/ccdconfig.html		man-sysutil-htmlman	html
+./usr/share/man/html8/certctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/cgdconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/chat.html			man-ppp-htmlman		html
 ./usr/share/man/html8/chown.html		man-sysutil-htmlman	html
@@ -9194,6 +9196,7 @@
 ./usr/share/man/man8/ccdconfig.8		man-sysutil-man		.man
 ./usr/share/man/man8/cesfic/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/cesfic/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/certctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/cgdconfig.8		man-sysutil-man		.man
 ./usr/share/man/man8/chat.8			man-ppp-man		.man
 ./usr/share/man/man8/chown.8			man-sysutil-man		.man

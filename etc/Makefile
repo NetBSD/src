@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.466 2022/08/21 07:10:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.466.2.1 2023/09/04 17:33:28 martin Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -348,6 +348,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 .endfor
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/dhcpcd/sbin/dhcpcd configinstall
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/mail configinstall
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.sbin/certctl configinstall
 .if (${MKPF} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.sbin/pf configinstall
 .endif
