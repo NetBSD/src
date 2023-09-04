@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.129.20.2 2023/07/31 15:23:02 martin Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.129.20.3 2023/09/04 16:36:46 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.129.20.2 2023/07/31 15:23:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.129.20.3 2023/09/04 16:36:46 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -906,10 +906,9 @@ again:
 		}
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
-
-	xen_rmb();
 	sc->sc_ring.rsp_cons = i;
 
+	xen_wmb();
 	RING_FINAL_CHECK_FOR_RESPONSES(&sc->sc_ring, more_to_do);
 	if (more_to_do)
 		goto again;
