@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.270 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.271 2023/09/04 09:13:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.270 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.271 2023/09/04 09:13:23 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -118,7 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.270 2023/04/09 09:18:09 riastradh Ex
 struct proclist		allproc		__cacheline_aligned;
 struct proclist		zombproc	__cacheline_aligned;
 
- kmutex_t		proc_lock	__cacheline_aligned;
+kmutex_t		proc_lock	__cacheline_aligned;
 static pserialize_t	proc_psz;
 
 /*
