@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.246.2.2 2023/08/11 16:22:05 martin Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.246.2.3 2023/09/04 17:33:28 martin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -398,6 +398,12 @@
 ./usr/share
 ./usr/share/atf
 ./usr/share/calendar
+./usr/share/certs
+./usr/share/certs/mozilla
+./usr/share/certs/mozilla/all
+./usr/share/certs/mozilla/code
+./usr/share/certs/mozilla/email
+./usr/share/certs/mozilla/server
 ./usr/share/dhcpd
 ./usr/share/dict
 ./usr/share/dict/papers
@@ -472,6 +478,7 @@
 ./usr/share/examples/asm/hello
 ./usr/share/examples/atf
 ./usr/share/examples/blocklist
+./usr/share/examples/certctl
 ./usr/share/examples/dhcp
 ./usr/share/examples/dhcpcd
 ./usr/share/examples/dhcpcd/hooks

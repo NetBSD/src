@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.175 2022/06/06 10:56:28 nia Exp $
+#	$NetBSD: special,v 1.175.2.1 2023/09/04 17:33:28 martin Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -133,6 +133,8 @@
 ./etc/npf.conf			type=file mode=0644 optional
 ./etc/nsswitch.conf		type=file mode=0644
 ./etc/ntp.conf			type=file mode=0644 optional
+./etc/openssl			type=dir  mode=0755
+./etc/openssl/certs.conf	type=file mode=0644
 ./etc/pam.conf			type=file mode=0644 optional
 ./etc/pam.d			type=dir  mode=0755
 ./etc/pam.d/display_manager	type=file mode=0644

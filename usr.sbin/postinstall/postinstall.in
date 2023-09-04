@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.51 2022/05/29 10:47:40 andvar Exp $
+# $NetBSD: postinstall.in,v 1.51.2.1 2023/09/04 17:33:28 martin Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1658,6 +1658,138 @@ do_named()
 	compare_dir "${op}" "${SRC_DIR}/etc/namedb" "${DEST_DIR}/etc/namedb" \
 		644 \
 		root.cache
+}
+
+
+#
+#	opensslcertsconf
+#
+
+additem opensslcertsconf "ensure TLS trust anchor configuration exists"
+do_opensslcertsconf()
+{
+	local certsdir certsconf defaultconf
+
+	[ -n "$1" ] || err 3 "USAGE: do_opensslcertsconf fix|check"
+
+	certsdir="${DEST_DIR}/etc/openssl/certs"
+	certsconf="${DEST_DIR}/etc/openssl/certs.conf"
+	defaultconf="${DEST_DIR}/usr/share/examples/certctl/certs.conf"
+
+	case $1 in
+	check)	if [ ! -r "$certsconf" ]; then
+			msg "/etc/openssl/certs.conf missing; see certctl(8)"
+			return 1
+		fi
+		;;
+	fix)	# If /etc/openssl/certs.conf is already there, nothing
+		# to do.
+		if [ -r "$certsconf" ]; then
+			msg "/etc/openssl/certs.conf already exists"
+			return 0
+		fi
+
+		# If /etc/openssl/certs is a symlink, or exists but is
+		# not a directory, or is a directory but is nonempty,
+		# then either it's managed by someone else or something
+		# fishy is afoot.  So set it manual in that case.
+		# Otherwise, install the default config file.
+		if [ -h "$certsdir" ] ||
+		    [ -e "$certsdir" -a ! -d "$certsdir" ] ||
+		    ([ -d "$certsdir" ] &&
+			find -f "$certsdir" -- \
+			    -maxdepth 0 -type d -empty -exit 1)
+		then
+			msg "/etc/openssl/certs appears manually configured"
+			cat <<EOF >${certsconf}.tmp
+netbsd-certctl 20230816
+
+# existing /etc/openssl/certs configuration detected by postinstall(8)
+manual
+EOF
+		else
+			msg "installing default /etc/openssl/certs.conf"
+			cp -- "$defaultconf" "${certsconf}.tmp"
+		fi && mv -f -- "${certsconf}.tmp" "$certsconf"
+		;;
+	*)	err 3 "USAGE: do_opensslcerts fix|check"
+		;;
+	esac
+}
+
+
+#
+#	opensslcertsrehash
+#
+
+additem opensslcertsrehash "make /etc/openssl/certs cache of TLS trust anchors"
+do_opensslcertsrehash()
+{
+	local mtreekeys scratchdir
+
+	[ -n "$1" ] || err 3 "USAGE: do_opensslcertsrehash fix|check"
+
+	if [ ! -r "${DEST_DIR}/etc/openssl/certs.conf" ]; then
+		msg "/etc/openssl/certs.conf missing; see certctl(8)"
+		return 1
+	fi
+
+	case $1 in
+	check)	# Create a scratch rehash for comparison.
+		mtreekeys="type,link"
+		scratchdir="${SCRATCHDIR}/opensslcerts"
+		certctl -c "$scratchdir" rehash || return $?
+
+		# This will create ${scratchdir}/.certctl unless the
+		# configuration is manual.  If the configuration is
+		# manual, stop here; nothing to do.  certctl(8) will
+		# have already printed a message about that.
+		#
+		# XXX Grody to rely on the internal structure used by
+		# certctl(8), but less bad than having two versions of
+		# the config parsing logic.
+		if [ ! -f "${scratchdir}/.certctl" ]; then
+			return 0
+		fi
+
+		# Do a dry run of rehashing into the real
+		# /etc/openssl/certs.  This curious extra step ensures
+		# that we report a failure if /etc/openssl/certs
+		# appears to be managed manually, but `manual' was not
+		# specified in /etc/openssl/certs.conf.
+		certctl -n rehash || return $?
+
+		# Compare the trees with mtree(8).  Inconveniently,
+		# mtree returns status zero even if there are missing
+		# or extra files.  So instead of examining the return
+		# status, test for any output.  Empty output means
+		# everything matches; otherwise the mismatch, missing,
+		# or extra files are output.
+		mtree -p "$scratchdir" -c -k "$mtreekeys" \
+		| mtree -p "${DEST_DIR}/etc/openssl/certs" 2>&1 \
+		| {
+			while read -r line; do
+				# mismatch, missing, or extra
+				msg "/etc/openssl/certs needs rehash"
+				exit 1
+			done
+			exit 0
+		}
+		;;
+	fix)	# This runs openssl(1), which is not available as a
+		# build-time tool.  So for now, restrict it to running
+		# on the installed system.
+		case $DEST_DIR in
+		''|/)	;;
+		*)	msg "opensslcertsrehash limited to DEST_DIR=/"
+			return 1
+			;;
+		esac
+		certctl rehash
+		;;
+	*)	err 3 "USAGE: do_opensslcerts fix|check"
+		;;
+	esac
 }
 
 
