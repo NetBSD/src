@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.645.2.16 2023/06/27 18:32:46 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.645.2.17 2023/09/04 17:55:24 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.645.2.16 2023/06/27 18:32:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.645.2.17 2023/09/04 17:55:24 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -550,7 +550,7 @@ struct wm_softc {
 #define	WM_MEDIATYPE_COPPER		0x02
 #define	WM_MEDIATYPE_SERDES		0x03 /* Internal SERDES */
 	int sc_funcid;			/* unit number of the chip (0 to 3) */
-	int sc_flags;			/* flags; see below */
+	u_int sc_flags;			/* flags; see below */
 	int sc_if_flags;		/* last if_flags */
 	int sc_ec_capenable;		/* last ec_capenable */
 	int sc_flowflags;		/* 802.3x flow control flags */
@@ -722,6 +722,7 @@ struct wm_softc {
 	int sc_tbi_linkup;		/* TBI link status */
 	int sc_tbi_serdes_anegticks;	/* autonegotiation ticks */
 	int sc_tbi_serdes_ticks;	/* tbi ticks */
+	struct timeval sc_linkup_delay_time; /* delay LINK_STATE_UP */
 
 	int sc_mchash_type;		/* multicast filter offset */
 
@@ -3084,6 +3085,23 @@ alloc_retry:
 	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211))
 		sc->sc_flags |= WM_F_CRC_STRIP;
 
+	/*
+	 * Workaround for some chips to delay sending LINK_STATE_UP.
+	 * Some systems can't send packet soon after linkup. See also
+	 * wm_linkintr_gmii(), wm_tick() and wm_gmii_mediastatus().
+	 */
+	switch (sc->sc_type) {
+	case WM_T_I350:
+	case WM_T_I354:
+	case WM_T_I210:
+	case WM_T_I211:
+		if (sc->sc_mediatype == WM_MEDIATYPE_COPPER)
+			sc->sc_flags |= WM_F_DELAY_LINKUP;
+		break;
+	default:
+		break;
+	}
+
 	/* Set device properties (macflags) */
 	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
 
@@ -3877,9 +3895,29 @@ wm_tick(void *arg)
 
 	wm_update_stats(sc);
 
-	if (sc->sc_flags & WM_F_HAS_MII)
-		mii_tick(&sc->sc_mii);
-	else if ((sc->sc_type >= WM_T_82575) && (sc->sc_type <= WM_T_I211)
+	if (sc->sc_flags & WM_F_HAS_MII) {
+		bool dotick = true;
+
+		/*
+		 * Workaround for some chips to delay sending LINK_STATE_UP.
+		 * See also wm_linkintr_gmii() and wm_gmii_mediastatus().
+		 */
+		if ((sc->sc_flags & WM_F_DELAY_LINKUP) != 0) {
+			struct timeval now;
+
+			getmicrotime(&now);
+			if (timercmp(&now, &sc->sc_linkup_delay_time, <))
+				dotick = false;
+			else if (sc->sc_linkup_delay_time.tv_sec != 0) {
+				/* Simplify by checking tv_sec only. */
+
+				sc->sc_linkup_delay_time.tv_sec = 0;
+				sc->sc_linkup_delay_time.tv_usec = 0;
+			}
+		}
+		if (dotick)
+			mii_tick(&sc->sc_mii);
+	} else if ((sc->sc_type >= WM_T_82575) && (sc->sc_type <= WM_T_I211)
 	    && (sc->sc_mediatype == WM_MEDIATYPE_SERDES))
 		wm_serdes_tick(sc);
 	else
@@ -10266,6 +10304,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 	device_t dev = sc->sc_dev;
 	uint32_t status, reg;
 	bool link;
+	bool dopoll = true;
 	int rv;
 
 	KASSERT(WM_CORE_LOCKED(sc));
@@ -10312,7 +10351,46 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 
 	DPRINTF(sc, WM_DEBUG_LINK, ("%s: LINK: LSC -> mii_pollstat\n",
 		device_xname(dev)));
-	mii_pollstat(&sc->sc_mii);
+	if ((sc->sc_flags & WM_F_DELAY_LINKUP) != 0) {
+		if (link) {
+			/*
+			 * To workaround the problem, it's required to wait
+			 * several hundred miliseconds. The time depend
+			 * on the environment. Wait 1 second for the safety.
+			 */
+			dopoll = false;
+			getmicrotime(&sc->sc_linkup_delay_time);
+			sc->sc_linkup_delay_time.tv_sec += 1;
+		} else if (sc->sc_linkup_delay_time.tv_sec != 0) {
+			/*
+			 * Simplify by checking tv_sec only. It's enough.
+			 *
+			 * Currently, it's not required to clear the time.
+			 * It's just to know the timer is stopped
+			 * (for debugging).
+			 */
+
+			sc->sc_linkup_delay_time.tv_sec = 0;
+			sc->sc_linkup_delay_time.tv_usec = 0;
+		}
+	}
+
+	/*
+	 * Call mii_pollstat().
+	 *
+	 * Some (not all) systems use I35[04] or I21[01] don't send packet soon
+	 * after linkup. The MAC send a packet to the PHY and any error is not
+	 * observed. This behavior causes a problem that gratuitous ARP and/or
+	 * IPv6 DAD packet are silently dropped. To avoid this problem, don't
+	 * call mii_pollstat() here which will send LINK_STATE_UP notification
+	 * to the upper layer. Instead, mii_pollstat() will be called in
+	 * wm_gmii_mediastatus() or mii_tick() will be called in wm_tick().
+	 */
+	if (dopoll)
+		mii_pollstat(&sc->sc_mii);
+
+	/* Do some workarounds soon after link status is changed. */
+
 	if (sc->sc_type == WM_T_82543) {
 		int miistatus, active;
 
@@ -11817,8 +11895,40 @@ static void
 wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct mii_data *mii;
+	bool dopoll = true;
 
-	ether_mediastatus(ifp, ifmr);
+	/*
+	 * In normal drivers, ether_mediastatus() is called here.
+	 * To avoid calling mii_pollstat(), ether_mediastatus() is open coded.
+	 */
+	KASSERT(ec->ec_mii != NULL);
+
+	mii = ec->ec_mii;
+	if ((sc->sc_flags & WM_F_DELAY_LINKUP) != 0) {
+		struct timeval now;
+
+		getmicrotime(&now);
+		if (timercmp(&now, &sc->sc_linkup_delay_time, <))
+			dopoll = false;
+		else if (sc->sc_linkup_delay_time.tv_sec != 0) {
+			/* Simplify by checking tv_sec only. It's enough. */
+
+			sc->sc_linkup_delay_time.tv_sec = 0;
+			sc->sc_linkup_delay_time.tv_usec = 0;
+		}
+	}
+
+	/*
+	 * Don't call mii_pollstat() while doing workaround.
+	 * See also wm_linkintr_gmii() and wm_tick().
+	 */
+	if (dopoll)
+		mii_pollstat(mii);
+	ifmr->ifm_active = mii->mii_media_active;
+	ifmr->ifm_status = mii->mii_media_status;
+
 	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK)
 	    | sc->sc_flowflags;
 }
@@ -12073,23 +12183,25 @@ wm_gmii_i82544_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
-	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
-		switch (sc->sc_phytype) {
-		case WMPHY_IGP:
-		case WMPHY_IGP_2:
-		case WMPHY_IGP_3:
+	switch (sc->sc_phytype) {
+	case WMPHY_IGP:
+	case WMPHY_IGP_2:
+	case WMPHY_IGP_3:
+		if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 			rv = wm_gmii_mdic_writereg(dev, phy,
 			    IGPHY_PAGE_SELECT, reg);
 			if (rv != 0)
 				return rv;
-			break;
-		default:
+		}
+		break;
+	default:
 #ifdef WM_DEBUG
-			device_printf(dev, "%s: PHYTYPE = 0x%x, addr = %02x\n",
+		if ((reg >> MII_ADDRBITS) != 0)
+			device_printf(dev,
+			    "%s: PHYTYPE = 0x%x, addr = 0x%02x\n",
 			    __func__, sc->sc_phytype, reg);
 #endif
-			break;
-		}
+		break;
 	}
 
 	return wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK, val);
@@ -12124,23 +12236,25 @@ wm_gmii_i82544_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
-	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
-		switch (sc->sc_phytype) {
-		case WMPHY_IGP:
-		case WMPHY_IGP_2:
-		case WMPHY_IGP_3:
+	switch (sc->sc_phytype) {
+	case WMPHY_IGP:
+	case WMPHY_IGP_2:
+	case WMPHY_IGP_3:
+		if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 			rv = wm_gmii_mdic_writereg(dev, phy,
 			    IGPHY_PAGE_SELECT, reg);
 			if (rv != 0)
 				return rv;
-			break;
-		default:
+		}
+		break;
+	default:
 #ifdef WM_DEBUG
-			device_printf(dev, "%s: PHYTYPE == 0x%x, addr = %02x",
+		if ((reg >> MII_ADDRBITS) != 0)
+			device_printf(dev,
+			    "%s: PHYTYPE == 0x%x, addr = 0x%02x",
 			    __func__, sc->sc_phytype, reg);
 #endif
-			break;
-		}
+		break;
 	}
 
 	return wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
