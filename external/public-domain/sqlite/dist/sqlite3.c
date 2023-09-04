@@ -34785,7 +34785,7 @@ do_atof_calc:
 
   if( e==0 ){
     *pResult = s;
-  }else
+  }else 
 #ifndef __vax__
   if( sqlite3Config.bUseLongDouble ){
     LONGDOUBLE_TYPE r = (LONGDOUBLE_TYPE)s;
@@ -34844,6 +34844,7 @@ do_atof_calc:
     *pResult = rr[0]+rr[1];
     if( sqlite3IsNaN(*pResult) ) *pResult = 1e300*1e300;
 #else
+  {
     LONGDOUBLE_TYPE scale = 1;
     /* 1.0e+22 is the largest power of 10 than can be 
     ** represented exactly. */
@@ -35205,11 +35206,15 @@ SQLITE_PRIVATE void sqlite3FpDecode(FpDecode *p, double r, int iRound, int mxRou
   if( sqlite3Config.bUseLongDouble ){
     LONGDOUBLE_TYPE rr = r;
     if( rr>=1.0e+19 ){
+#ifndef __vax__
       while( rr>=1.0e+119L ){ exp+=100; rr *= 1.0e-100L; }
+#endif
       while( rr>=1.0e+29L  ){ exp+=10;  rr *= 1.0e-10L;  }
       while( rr>=1.0e+19L  ){ exp++;    rr *= 1.0e-1L;   }
     }else{
+#ifndef __vax__
       while( rr<1.0e-97L   ){ exp-=100; rr *= 1.0e+100L; }
+#endif
       while( rr<1.0e+07L   ){ exp-=10;  rr *= 1.0e+10L;  }
       while( rr<1.0e+17L   ){ exp--;    rr *= 1.0e+1L;   }
     }
@@ -35228,10 +35233,12 @@ SQLITE_PRIVATE void sqlite3FpDecode(FpDecode *p, double r, int iRound, int mxRou
     rr[0] = r;
     rr[1] = 0.0;
     if( rr[0]>1.84e+19 ){
+#ifndef __vax__
       while( rr[0]>1.84e+119 ){
         exp += 100;
         dekkerMul2(rr, 1.0e-100, -1.99918998026028836196e-117);
       }
+#endif
       while( rr[0]>1.84e+29 ){
         exp += 10;
         dekkerMul2(rr, 1.0e-10, -3.6432197315497741579e-27);
@@ -35241,10 +35248,12 @@ SQLITE_PRIVATE void sqlite3FpDecode(FpDecode *p, double r, int iRound, int mxRou
         dekkerMul2(rr, 1.0e-01, -5.5511151231257827021e-18);
       }
     }else{
+#ifndef __vax__
       while( rr[0]<1.84e-82  ){
         exp -= 100;
         dekkerMul2(rr, 1.0e+100, -1.5902891109759918046e+83);
       }
+#endif
       while( rr[0]<1.84e+08  ){
         exp -= 10;
         dekkerMul2(rr, 1.0e+10, 0.0);
