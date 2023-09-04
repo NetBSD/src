@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.17 2022/07/26 20:08:55 andvar Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.18 2023/09/04 12:24:07 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 2022/07/26 20:08:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2023/09/04 12:24:07 andvar Exp $");
 
 #define	_EWS4800MIPS_BUS_DMA_PRIVATE
 /* #define	BUS_DMA_DEBUG */
@@ -484,7 +484,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef BUS_DMA_DEBUG
 		printf("bus_dmamap_sync: flushing segment %d "
-		    "(0x%lx+%lx, 0x%lx+0x%lx) (olen = %ld)...", i,
+		    "(0x%x+%lx, 0x%x+0x%lx) (olen = %ld)...", i,
 		    vaddr, offset, vaddr, offset + minlen - 1, len);
 #endif
 
