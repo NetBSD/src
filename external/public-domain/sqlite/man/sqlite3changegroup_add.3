@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3CHANGEGROUP_ADD 3
 .Os
 .Sh NAME
 .Nm sqlite3changegroup_add
-.Nd Add A Changeset To A Changegroup
+.Nd add a changeset to a changegroup
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3changegroup_add
 .Fa "sqlite3_changegroup*"
 .Fa "int nData"
@@ -32,41 +33,36 @@ Changes to rows that do not already appear in the changegroup are simply
 copied into it.
 Or, if both the new changeset and the changegroup contain changes that
 apply to a single row, the final contents of the changegroup depends
-on the type of each change, as follows: 
+on the type of each change, as follows:
 .Pp
-<table border=1 style="margin-left:8ex;margin-right:8ex"> <tr><th style="white-space:pre">Existing
-Change  </th> <th style="white-space:pre">New Change       </th> <th>Output
-Change <tr><td>INSERT <td>INSERT <td> The new change is ignored.
+  Existing Change New Change Output Change
+  INSERT  INSERT   The new change is ignored.
 This case does not occur if the new changeset was recorded immediately
 after the changesets already added to the changegroup.
-<tr><td>INSERT <td>UPDATE <td> The INSERT change remains in the changegroup.
+  INSERT  UPDATE   The INSERT change remains in the changegroup.
 The values in the INSERT change are modified as if the row was inserted
 by the existing change and then updated according to the new change.
-<tr><td>INSERT <td>DELETE <td> The existing INSERT is removed from
-the changegroup.
+  INSERT  DELETE   The existing INSERT is removed from the changegroup.
 The DELETE is not added.
-<tr><td>UPDATE <td>INSERT <td> The new change is ignored.
+  UPDATE  INSERT   The new change is ignored.
 This case does not occur if the new changeset was recorded immediately
 after the changesets already added to the changegroup.
-<tr><td>UPDATE <td>UPDATE <td> The existing UPDATE remains within the
-changegroup.
+  UPDATE  UPDATE   The existing UPDATE remains within the changegroup.
 It is amended so that the accompanying values are as if the row was
 updated once by the existing change and then again by the new change.
-<tr><td>UPDATE <td>DELETE <td> The existing UPDATE is replaced by the
-new DELETE within the changegroup.
-<tr><td>DELETE <td>INSERT <td> If one or more of the column values
-in the row inserted by the new change differ from those in the row
-deleted by the existing change, the existing DELETE is replaced by
-an UPDATE within the changegroup.
+  UPDATE  DELETE   The existing UPDATE is replaced by the new DELETE within
+the changegroup.
+  DELETE  INSERT   If one or more of the column values in the row inserted
+by the new change differ from those in the row deleted by the existing
+change, the existing DELETE is replaced by an UPDATE within the changegroup.
 Otherwise, if the inserted row is exactly the same as the deleted row,
 the existing DELETE is simply discarded.
-<tr><td>DELETE <td>UPDATE <td> The new change is ignored.
+  DELETE  UPDATE   The new change is ignored.
 This case does not occur if the new changeset was recorded immediately
 after the changesets already added to the changegroup.
-<tr><td>DELETE <td>DELETE <td> The new change is ignored.
+  DELETE  DELETE   The new change is ignored.
 This case does not occur if the new changeset was recorded immediately
 after the changesets already added to the changegroup.
-</table> 
 .Pp
 If the new changeset contains changes to a table that is already present
 in the changegroup, then the number of columns and the position of
@@ -76,7 +72,13 @@ If the input changeset appears to be corrupt and the corruption is
 detected, SQLITE_CORRUPT is returned.
 Or, if an out-of-memory condition occurs during processing, this function
 returns SQLITE_NOMEM.
-In all cases, if an error occurs the final contents of the changegroup
-is undefined.
+In all cases, if an error occurs the state of the final contents of
+the changegroup is undefined.
 .Pp
 If no error occurs, SQLITE_OK is returned.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 11727.
+.Bd -literal
+SQLITE_API int sqlite3changegroup_add(sqlite3_changegroup*, int nData, void *pData);
+.Ed

@@ -1,15 +1,16 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_UNLOCK_NOTIFY 3
 .Os
 .Sh NAME
 .Nm sqlite3_unlock_notify
-.Nd Unlock Notification
+.Nd unlock notification
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_unlock_notify
 .Fa "sqlite3 *pBlocked"
 .Fa "void (*xNotify)(void **apArg, int nArg)"
-.Fa "void *pNotifyArg                            "
+.Fa "void *pNotifyArg"
 .Fc
 .Sh DESCRIPTION
 When running in shared-cache mode, a database operation may fail with
@@ -35,7 +36,7 @@ sqlite3_unlock_notify() method with the blocked connection handle as
 the first argument to register for a callback that will be invoked
 when the blocking connections current transaction is concluded.
 The callback is invoked from within the sqlite3_step or
-sqlite3_close call that concludes the blocking connections
+sqlite3_close call that concludes the blocking connection's
 transaction.
 .Pp
 If sqlite3_unlock_notify() is called in a multi-threaded application,
@@ -55,10 +56,10 @@ If sqlite3_unlock_notify() is called when the blocked connection already
 has a registered unlock-notify callback, then the new callback replaces
 the old.
 If sqlite3_unlock_notify() is called with a NULL pointer as its second
-argument, then any existing unlock-notify callback is canceled.
-The blocked connections unlock-notify callback may also be canceled
-by closing the blocked connection using sqlite3_close().
-.Pp
+argument, then any existing unlock-notify callback is cancelled.
+The blocked connections unlock-notify callback may also be cancelled
+by closing the blocked connection using
+.Fn sqlite3_close .
 The unlock-notify callback is not reentrant.
 If an application invokes any sqlite3_xxx API functions from within
 an unlock-notify callback, a crash or deadlock may be the result.
@@ -66,7 +67,7 @@ an unlock-notify callback, a crash or deadlock may be the result.
 Unless deadlock is detected (see below), sqlite3_unlock_notify() always
 returns SQLITE_OK.
 .Pp
-\fBCallback Invocation Details\fP 
+\fBCallback Invocation Details\fP
 .Pp
 When an unlock-notify callback is registered, the application provides
 a single void* pointer that is passed to the callback when it is invoked.
@@ -76,7 +77,7 @@ The first argument passed to an unlock-notify callback is a pointer
 to an array of void* pointers, and the second is the number of entries
 in the array.
 .Pp
-When a blocking connections transaction is concluded, there may be
+When a blocking connection's transaction is concluded, there may be
 more than one blocked connection that has registered for an unlock-notify
 callback.
 If two or more such blocked connections have specified the same callback
@@ -86,7 +87,7 @@ by the blocked connections bundled together into an array.
 This gives the application an opportunity to prioritize any actions
 related to the set of unblocked database connections.
 .Pp
-\fBDeadlock Detection\fP 
+\fBDeadlock Detection\fP
 .Pp
 Assuming that after registering for an unlock-notify callback a database
 waits for the callback to be issued before taking any further action
@@ -112,10 +113,11 @@ callback on the conclusion of connection C's transaction, where connection
 C is waiting on connection A.
 Any number of levels of indirection are allowed.
 .Pp
-\fBThe "DROP TABLE" Exception\fP 
+\fBThe "DROP TABLE" Exception\fP
 .Pp
-When a call to sqlite3_step() returns SQLITE_LOCKED,
-it is almost always appropriate to call sqlite3_unlock_notify().
+When a call to
+.Fn sqlite3_step
+returns SQLITE_LOCKED, it is almost always appropriate to call sqlite3_unlock_notify().
 There is however, one exception.
 When executing a "DROP TABLE" or "DROP INDEX" statement, SQLite checks
 if there are any currently executing SELECT statements that belong
@@ -132,6 +134,16 @@ If there is a blocking connection, then the extended error code is
 set to SQLITE_LOCKED_SHAREDCACHE.
 Otherwise, in the special "DROP TABLE/INDEX" case, the extended error
 code is just SQLITE_LOCKED.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 9204.
+.Bd -literal
+SQLITE_API int sqlite3_unlock_notify(
+  sqlite3 *pBlocked,                          /* Waiting connection */
+  void (*xNotify)(void **apArg, int nArg),    /* Callback function to invoke */
+  void *pNotifyArg                            /* Argument to pass to xNotify */
+);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_close 3 ,
 .Xr sqlite3_step 3 ,

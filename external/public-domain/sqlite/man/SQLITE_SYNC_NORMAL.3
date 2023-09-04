@@ -1,12 +1,13 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE_SYNC_NORMAL 3
 .Os
 .Sh NAME
 .Nm SQLITE_SYNC_NORMAL ,
 .Nm SQLITE_SYNC_FULL ,
 .Nm SQLITE_SYNC_DATAONLY
-.Nd Synchronization Type Flags
+.Nd synchronization type flags
 .Sh SYNOPSIS
+.In sqlite3.h
 .Fd #define SQLITE_SYNC_NORMAL
 .Fd #define SQLITE_SYNC_FULL
 .Fd #define SQLITE_SYNC_DATAONLY
@@ -34,5 +35,13 @@ on Mac OSX for the default SQLite code.
 (Third-party VFS implementations might also make the distinction between
 SQLITE_SYNC_NORMAL and SQLITE_SYNC_FULL, but among the operating systems
 natively supported by SQLite, only Mac OSX cares about the difference.)
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 688.
+.Bd -literal
+#define SQLITE_SYNC_NORMAL        0x00002
+#define SQLITE_SYNC_FULL          0x00003
+#define SQLITE_SYNC_DATAONLY      0x00010
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_io_methods 3

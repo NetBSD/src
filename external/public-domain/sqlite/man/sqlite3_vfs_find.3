@@ -1,22 +1,23 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_VFS_FIND 3
 .Os
 .Sh NAME
 .Nm sqlite3_vfs_find ,
 .Nm sqlite3_vfs_register ,
 .Nm sqlite3_vfs_unregister
-.Nd Virtual File System Objects
+.Nd virtual file system objects
 .Sh SYNOPSIS
+.In sqlite3.h
 .Ft sqlite3_vfs *
 .Fo sqlite3_vfs_find
 .Fa "const char *zVfsName"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_vfs_register
 .Fa "sqlite3_vfs*"
 .Fa "int makeDflt"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_vfs_unregister
 .Fa "sqlite3_vfs*"
 .Fc
@@ -48,5 +49,13 @@ then the behavior is undefined.
 Unregister a VFS with the sqlite3_vfs_unregister() interface.
 If the default VFS is unregistered, another VFS is chosen as the default.
 The choice for the new VFS is arbitrary.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 7803.
+.Bd -literal
+SQLITE_API sqlite3_vfs *sqlite3_vfs_find(const char *zVfsName);
+SQLITE_API int sqlite3_vfs_register(sqlite3_vfs*, int makeDflt);
+SQLITE_API int sqlite3_vfs_unregister(sqlite3_vfs*);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_vfs 3

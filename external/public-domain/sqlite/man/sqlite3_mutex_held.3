@@ -1,16 +1,17 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_MUTEX_HELD 3
 .Os
 .Sh NAME
 .Nm sqlite3_mutex_held ,
 .Nm sqlite3_mutex_notheld
-.Nd Mutex Verification Routines
+.Nd mutex verification routines
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_mutex_held
 .Fa "sqlite3_mutex*"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_mutex_notheld
 .Fa "sqlite3_mutex*"
 .Fc
@@ -43,3 +44,12 @@ And we do not want the assert() containing the call to sqlite3_mutex_held()
 to fail, so a non-zero return is the appropriate thing to do.
 The sqlite3_mutex_notheld() interface should also return 1 when given
 a NULL pointer.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 8034.
+.Bd -literal
+#ifndef NDEBUG
+SQLITE_API int sqlite3_mutex_held(sqlite3_mutex*);
+SQLITE_API int sqlite3_mutex_notheld(sqlite3_mutex*);
+#endif
+.Ed

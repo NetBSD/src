@@ -1,4 +1,4 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE_STMTSTATUS_FULLSCAN_STEP 3
 .Os
 .Sh NAME
@@ -8,20 +8,27 @@
 .Nm SQLITE_STMTSTATUS_VM_STEP ,
 .Nm SQLITE_STMTSTATUS_REPREPARE ,
 .Nm SQLITE_STMTSTATUS_RUN ,
+.Nm SQLITE_STMTSTATUS_FILTER_MISS ,
+.Nm SQLITE_STMTSTATUS_FILTER_HIT ,
 .Nm SQLITE_STMTSTATUS_MEMUSED
-.Nd Status Parameters for prepared statements
+.Nd status parameters for prepared statements
 .Sh SYNOPSIS
+.In sqlite3.h
 .Fd #define SQLITE_STMTSTATUS_FULLSCAN_STEP
 .Fd #define SQLITE_STMTSTATUS_SORT
 .Fd #define SQLITE_STMTSTATUS_AUTOINDEX
 .Fd #define SQLITE_STMTSTATUS_VM_STEP
 .Fd #define SQLITE_STMTSTATUS_REPREPARE
 .Fd #define SQLITE_STMTSTATUS_RUN
+.Fd #define SQLITE_STMTSTATUS_FILTER_MISS
+.Fd #define SQLITE_STMTSTATUS_FILTER_HIT
 .Fd #define SQLITE_STMTSTATUS_MEMUSED
 .Sh DESCRIPTION
 These preprocessor macros define integer codes that name counter values
-associated with the sqlite3_stmt_status() interface.
-The meanings of the various counters are as follows: 
+associated with the
+.Fn sqlite3_stmt_status
+interface.
+The meanings of the various counters are as follows:
 .Bl -tag -width Ds
 .It SQLITE_STMTSTATUS_FULLSCAN_STEP
 This is the number of times that SQLite has stepped forward in a table
@@ -47,14 +54,24 @@ If the number of virtual machine operations exceeds 2147483647 then
 the value returned by this statement status code is undefined.
 .It SQLITE_STMTSTATUS_REPREPARE
 This is the number of times that the prepare statement has been automatically
-regenerated due to schema changes or change to bound parameters
+regenerated due to schema changes or changes to bound parameters
 that might affect the query plan.
 .It SQLITE_STMTSTATUS_RUN
 This is the number of times that the prepared statement has been run.
 A single "run" for the purposes of this counter is one or more calls
-to sqlite3_step() followed by a call to sqlite3_reset().
-The counter is incremented on the first sqlite3_step()
+to
+.Fn sqlite3_step
+followed by a call to
+.Fn sqlite3_reset .
+The counter is incremented on the first
+.Fn sqlite3_step
 call of each cycle.
+.It SQLITE_STMTSTATUS_FILTER_HIT  SQLITE_STMTSTATUS_FILTER_MISS
+SQLITE_STMTSTATUS_FILTER_HIT is the number of times that a join step
+was bypassed because a Bloom filter returned not-found.
+The corresponding SQLITE_STMTSTATUS_FILTER_MISS value is the number
+of times that the Bloom filter returned a find, and thus the join step
+had to be processed as normal.
 .It SQLITE_STMTSTATUS_MEMUSED
 This is the approximate number of bytes of heap memory used to store
 the prepared statement.
@@ -62,6 +79,20 @@ This value is not actually a counter, and so the resetFlg parameter
 to sqlite3_stmt_status() is ignored when the opcode is SQLITE_STMTSTATUS_MEMUSED.
 .El
 .Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 8693.
+.Bd -literal
+#define SQLITE_STMTSTATUS_FULLSCAN_STEP     1
+#define SQLITE_STMTSTATUS_SORT              2
+#define SQLITE_STMTSTATUS_AUTOINDEX         3
+#define SQLITE_STMTSTATUS_VM_STEP           4
+#define SQLITE_STMTSTATUS_REPREPARE         5
+#define SQLITE_STMTSTATUS_RUN               6
+#define SQLITE_STMTSTATUS_FILTER_MISS       7
+#define SQLITE_STMTSTATUS_FILTER_HIT        8
+#define SQLITE_STMTSTATUS_MEMUSED           99
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_reset 3 ,
 .Xr sqlite3_step 3 ,

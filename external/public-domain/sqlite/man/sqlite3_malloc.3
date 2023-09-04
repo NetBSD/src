@@ -1,4 +1,4 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_MALLOC 3
 .Os
 .Sh NAME
@@ -8,8 +8,9 @@
 .Nm sqlite3_realloc64 ,
 .Nm sqlite3_free ,
 .Nm sqlite3_msize
-.Nd Memory Allocation Subsystem
+.Nd memory allocation subsystem
 .Sh SYNOPSIS
+.In sqlite3.h
 .Ft void *
 .Fo sqlite3_malloc
 .Fa "int"
@@ -28,11 +29,11 @@
 .Fa "void*"
 .Fa "sqlite3_uint64"
 .Fc
-.Ft void 
+.Ft void
 .Fo sqlite3_free
 .Fa "void*"
 .Fc
-.Ft sqlite3_uint64 
+.Ft sqlite3_uint64
 .Fo sqlite3_msize
 .Fa "void*"
 .Fc
@@ -98,27 +99,30 @@ and sqlite3_realloc64() is always aligned to at least an 8 byte boundary,
 or to a 4 byte boundary if the SQLITE_4_BYTE_ALIGNED_MALLOC
 compile-time option is used.
 .Pp
-In SQLite version 3.5.0 and 3.5.1, it was possible to define the SQLITE_OMIT_MEMORY_ALLOCATION
-which would cause the built-in implementation of these routines to
-be omitted.
-That capability is no longer provided.
-Only built-in memory allocators can be used.
-.Pp
-Prior to SQLite version 3.7.10, the Windows OS interface layer called
-the system malloc() and free() directly when converting filenames between
-the UTF-8 encoding used by SQLite and whatever filename encoding is
-used by the particular Windows installation.
-Memory allocation errors were detected, but they were reported back
-as SQLITE_CANTOPEN or SQLITE_IOERR rather
-than SQLITE_NOMEM.
-.Pp
-The pointer arguments to sqlite3_free() and sqlite3_realloc()
+The pointer arguments to
+.Fn sqlite3_free
+and
+.Fn sqlite3_realloc
 must be either NULL or else pointers obtained from a prior invocation
-of sqlite3_malloc() or sqlite3_realloc()
+of
+.Fn sqlite3_malloc
+or
+.Fn sqlite3_realloc
 that have not yet been released.
 .Pp
 The application must not read or write any part of a block of memory
-after it has been released using sqlite3_free() or sqlite3_realloc().
-.Sh SEE ALSO
-.Xr sqlite3_malloc 3 ,
-.Xr SQLITE_OK 3
+after it has been released using
+.Fn sqlite3_free
+or
+.Fn sqlite3_realloc .
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 2993.
+.Bd -literal
+SQLITE_API void *sqlite3_malloc(int);
+SQLITE_API void *sqlite3_malloc64(sqlite3_uint64);
+SQLITE_API void *sqlite3_realloc(void*, int);
+SQLITE_API void *sqlite3_realloc64(void*, sqlite3_uint64);
+SQLITE_API void sqlite3_free(void*);
+SQLITE_API sqlite3_uint64 sqlite3_msize(void*);
+.Ed

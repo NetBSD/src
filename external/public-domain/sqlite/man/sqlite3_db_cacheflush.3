@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_DB_CACHEFLUSH 3
 .Os
 .Sh NAME
 .Nm sqlite3_db_cacheflush
-.Nd Flush caches to disk mid-transaction
+.Nd flush caches to disk mid-transaction
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_db_cacheflush
 .Fa "sqlite3*"
 .Fc
@@ -34,13 +35,22 @@ If any other error occurs while flushing dirty pages to disk (for example
 an IO error or out-of-memory condition), then processing is abandoned
 and an SQLite error code is returned to the caller immediately.
 .Pp
-Otherwise, if no error occurs, sqlite3_db_cacheflush()
+Otherwise, if no error occurs,
+.Fn sqlite3_db_cacheflush
 returns SQLITE_OK.
 .Pp
 This function does not set the database handle error code or message
-returned by the sqlite3_errcode() and sqlite3_errmsg()
+returned by the
+.Fn sqlite3_errcode
+and
+.Fn sqlite3_errmsg
 functions.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 10171.
+.Bd -literal
+SQLITE_API int sqlite3_db_cacheflush(sqlite3*);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
-.Xr sqlite3_db_cacheflush 3 ,
 .Xr sqlite3_errcode 3

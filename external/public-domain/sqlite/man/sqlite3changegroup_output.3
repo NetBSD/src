@@ -1,15 +1,16 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3CHANGEGROUP_OUTPUT 3
 .Os
 .Sh NAME
 .Nm sqlite3changegroup_output
-.Nd Obtain A Composite Changeset From A Changegroup
+.Nd obtain a composite changeset from a changegroup
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3changegroup_output
 .Fa "sqlite3_changegroup*"
 .Fa "int *pnData"
-.Fa "void **ppData                   "
+.Fa "void **ppData"
 .Fc
 .Sh DESCRIPTION
 Obtain a buffer containing a changeset (or patchset) representing the
@@ -34,3 +35,13 @@ Otherwise, SQLITE_OK is returned and the output variables are set to
 the size of and a pointer to the output buffer, respectively.
 In this case it is the responsibility of the caller to eventually free
 the buffer using a call to sqlite3_free().
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 11805.
+.Bd -literal
+SQLITE_API int sqlite3changegroup_output(
+  sqlite3_changegroup*,
+  int *pnData,                    /* OUT: Size of output buffer in bytes */
+  void **ppData                   /* OUT: Pointer to output buffer */
+);
+.Ed

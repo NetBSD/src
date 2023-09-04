@@ -1,25 +1,26 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_CREATE_MODULE 3
 .Os
 .Sh NAME
 .Nm sqlite3_create_module ,
 .Nm sqlite3_create_module_v2
-.Nd Register A Virtual Table Implementation
+.Nd register a virtual table implementation
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_create_module
 .Fa "sqlite3 *db"
 .Fa "const char *zName"
 .Fa "const sqlite3_module *p"
-.Fa "void *pClientData          "
+.Fa "void *pClientData"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_create_module_v2
 .Fa "sqlite3 *db"
 .Fa "const char *zName"
 .Fa "const sqlite3_module *p"
 .Fa "void *pClientData"
-.Fa "void(*xDestroy)(void*)     "
+.Fa "void(*xDestroy)(void*)"
 .Fc
 .Sh DESCRIPTION
 These routines are used to register a new virtual table module
@@ -45,6 +46,30 @@ The destructor will also be invoked if the call to sqlite3_create_module_v2()
 fails.
 The sqlite3_create_module() interface is equivalent to sqlite3_create_module_v2()
 with a NULL destructor.
+.Pp
+If the third parameter (the pointer to the sqlite3_module object) is
+NULL then no new module is created and any existing modules with the
+same name are dropped.
+.Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 7422.
+.Bd -literal
+SQLITE_API int sqlite3_create_module(
+  sqlite3 *db,               /* SQLite connection to register module with */
+  const char *zName,         /* Name of the module */
+  const sqlite3_module *p,   /* Methods for the module */
+  void *pClientData          /* Client data for xCreate/xConnect */
+);
+SQLITE_API int sqlite3_create_module_v2(
+  sqlite3 *db,               /* SQLite connection to register module with */
+  const char *zName,         /* Name of the module */
+  const sqlite3_module *p,   /* Methods for the module */
+  void *pClientData,         /* Client data for xCreate/xConnect */
+  void(*xDestroy)(void*)     /* Module destructor function */
+);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
+.Xr sqlite3_drop_modules 3 ,
 .Xr sqlite3_module 3

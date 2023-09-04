@@ -1,0 +1,29 @@
+.Dd August 24, 2023
+.Dt SQLITE3SESSION_CHANGESET_SIZE 3
+.Os
+.Sh NAME
+.Nm sqlite3session_changeset_size
+.Nd return an upper-limit for the size of the changeset
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft sqlite3_int64
+.Fo sqlite3session_changeset_size
+.Fa "sqlite3_session *pSession"
+.Fc
+.Sh DESCRIPTION
+By default, this function always returns 0.
+For it to return a useful result, the sqlite3_session object must have
+been configured to enable this API using sqlite3session_object_config()
+with the SQLITE_SESSION_OBJCONFIG_SIZE verb.
+.Pp
+When enabled, this function returns an upper limit, in bytes, for the
+size of the changeset that might be produced if sqlite3session_changeset()
+were called.
+The final changeset size might be equal to or smaller than the size
+in bytes returned by this function.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 11165.
+.Bd -literal
+SQLITE_API sqlite3_int64 sqlite3session_changeset_size(sqlite3_session *pSession);
+.Ed

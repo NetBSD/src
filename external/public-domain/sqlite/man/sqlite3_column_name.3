@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_COLUMN_NAME 3
 .Os
 .Sh NAME
 .Nm sqlite3_column_name ,
 .Nm sqlite3_column_name16
-.Nd Column Names In A Result Set
+.Nd column names in a result set
 .Sh SYNOPSIS
+.In sqlite3.h
 .Ft const char *
 .Fo sqlite3_column_name
 .Fa "sqlite3_stmt*"
@@ -28,8 +29,11 @@ The second parameter is the column number.
 The leftmost column is number 0.
 .Pp
 The returned string pointer is valid until either the prepared statement
-is destroyed by sqlite3_finalize() or until the statement
-is automatically reprepared by the first call to sqlite3_step()
+is destroyed by
+.Fn sqlite3_finalize
+or until the statement is automatically reprepared by the first call
+to
+.Fn sqlite3_step
 for a particular run or until the next call to sqlite3_column_name()
 or sqlite3_column_name16() on the same column.
 .Pp
@@ -41,7 +45,14 @@ The name of a result column is the value of the "AS" clause for that
 column, if there is an AS clause.
 If there is no AS clause then the name of the column is unspecified
 and may change from one release of SQLite to the next.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 4789.
+.Bd -literal
+SQLITE_API const char *sqlite3_column_name(sqlite3_stmt*, int N);
+SQLITE_API const void *sqlite3_column_name16(sqlite3_stmt*, int N);
+.Ed
 .Sh SEE ALSO
-.Xr sqlite3_stmt 3 ,
 .Xr sqlite3_finalize 3 ,
-.Xr sqlite3_step 3
+.Xr sqlite3_step 3 ,
+.Xr sqlite3_stmt 3

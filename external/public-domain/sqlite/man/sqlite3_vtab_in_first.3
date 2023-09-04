@@ -1,0 +1,71 @@
+.Dd August 24, 2023
+.Dt SQLITE3_VTAB_IN_FIRST 3
+.Os
+.Sh NAME
+.Nm sqlite3_vtab_in_first ,
+.Nm sqlite3_vtab_in_next
+.Nd find all elements on the right-hand side of an IN constraint
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft int
+.Fo sqlite3_vtab_in_first
+.Fa "sqlite3_value *pVal"
+.Fa "sqlite3_value **ppOut"
+.Fc
+.Ft int
+.Fo sqlite3_vtab_in_next
+.Fa "sqlite3_value *pVal"
+.Fa "sqlite3_value **ppOut"
+.Fc
+.Sh DESCRIPTION
+These interfaces are only useful from within the xFilter() method
+of a virtual table implementation.
+The result of invoking these interfaces from any other context is undefined
+and probably harmful.
+.Pp
+The X parameter in a call to sqlite3_vtab_in_first(X,P) or sqlite3_vtab_in_next(X,P)
+should be one of the parameters to the xFilter method which invokes
+these routines, and specifically a parameter that was previously selected
+for all-at-once IN constraint processing use the
+.Fn sqlite3_vtab_in
+interface in the xBestIndex method.
+If the X parameter is not an xFilter argument that was selected for
+all-at-once IN constraint processing, then these routines return SQLITE_ERROR.
+.Pp
+Use these routines to access all values on the right-hand side of the
+IN constraint using code like the following:
+.Bd -ragged
+.Bd -literal
+   for(rc=sqlite3_vtab_in_first(pList, &pVal);        rc==SQLITE_OK
+&& pVal;        rc=sqlite3_vtab_in_next(pList, &pVal)    ){      //
+do something with pVal    }    if( rc!=SQLITE_OK ){      // an error
+has occurred    }
+.Ed
+.Pp
+.Ed
+.Pp
+On success, the sqlite3_vtab_in_first(X,P) and sqlite3_vtab_in_next(X,P)
+routines return SQLITE_OK and set *P to point to the first or next
+value on the RHS of the IN constraint.
+If there are no more values on the right hand side of the IN constraint,
+then *P is set to NULL and these routines return SQLITE_DONE.
+The return value might be some other value, such as SQLITE_NOMEM, in
+the event of a malfunction.
+.Pp
+The *ppOut values returned by these routines are only valid until the
+next call to either of these routines or until the end of the xFilter
+method from which these routines were called.
+If the virtual table implementation needs to retain the *ppOut values
+for longer, it must make copies.
+The *ppOut values are protected.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 9923.
+.Bd -literal
+SQLITE_API int sqlite3_vtab_in_first(sqlite3_value *pVal, sqlite3_value **ppOut);
+SQLITE_API int sqlite3_vtab_in_next(sqlite3_value *pVal, sqlite3_value **ppOut);
+.Ed
+.Sh SEE ALSO
+.Xr sqlite3_value 3 ,
+.Xr sqlite3_vtab_in 3 ,
+.Xr SQLITE_OK 3

@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_LIMIT 3
 .Os
 .Sh NAME
 .Nm sqlite3_limit
-.Nd Run-time Limits
+.Nd run-time limits
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_limit
 .Fa "sqlite3*"
 .Fa "int id"
@@ -21,13 +22,14 @@ that define a class of constructs to be size limited.
 The third parameter is the new limit for that construct.
 .Pp
 If the new limit is a negative number, the limit is unchanged.
-For each limit category SQLITE_LIMIT_<i>NAME</i> there is a  hard upper bound
-set at compile-time by a C preprocessor macro called  SQLITE_MAX_<i>NAME</i>.
-(The "_LIMIT_" in the name is changed to "_MAX_".)    Attempts to increase
+For each limit category SQLITE_LIMIT_\fINAME\fP there is a hard upper bound
+set at compile-time by a C preprocessor macro called SQLITE_MAX_<i>NAME</i>.
+(The "_LIMIT_" in the name is changed to "_MAX_".) Attempts to increase
 a limit above its hard upper bound are silently truncated to the hard
 upper bound.
 .Pp
-Regardless of whether or not the limit was changed, the sqlite3_limit()
+Regardless of whether or not the limit was changed, the
+.Fn sqlite3_limit
 interface returns the prior value of the limit.
 Hence, to find the current value of a limit without changing it, simply
 invoke this interface with the third parameter set to -1.
@@ -41,13 +43,19 @@ applications downloaded off the Internet.
 The internal databases can be given the large, default limits.
 Databases managed by external sources can be given much smaller limits
 designed to prevent a denial of service attack.
-Developers might also want to use the sqlite3_set_authorizer()
+Developers might also want to use the
+.Fn sqlite3_set_authorizer
 interface to further control untrusted SQL.
 The size of the database created by an untrusted script can be contained
 using the max_page_count PRAGMA.
 .Pp
 New run-time limit categories may be added in future releases.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 4023.
+.Bd -literal
+SQLITE_API int sqlite3_limit(sqlite3*, int id, int newVal);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
-.Xr sqlite3_limit 3 ,
 .Xr sqlite3_set_authorizer 3

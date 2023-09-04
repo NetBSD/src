@@ -1,23 +1,24 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_KEYWORD_COUNT 3
 .Os
 .Sh NAME
 .Nm sqlite3_keyword_count ,
 .Nm sqlite3_keyword_name ,
 .Nm sqlite3_keyword_check
-.Nd SQL Keyword Checking
+.Nd SQL keyword checking
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_keyword_count
 .Fa "void"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_keyword_name
 .Fa "int"
 .Fa "const char**"
 .Fa "int*"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_keyword_check
 .Fa "const char*"
 .Fa "int"
@@ -52,7 +53,7 @@ For example, the statement "CREATE TABLE BEGIN(REPLACE,PRAGMA,END);"
 is accepted by SQLite, and creates a new table named "BEGIN" with three
 columns named "REPLACE", "PRAGMA", and "END".
 Nevertheless, best practice is to avoid using keywords as identifiers.
-Common techniques used to avoid keyword name collisions include: 
+Common techniques used to avoid keyword name collisions include:
 .Bl -bullet
 .It
 Put all identifier names inside double-quotes.
@@ -73,3 +74,11 @@ compile-time options.
 For example, "VACUUM" is not a keyword if SQLite is compiled with the
 -DSQLITE_OMIT_VACUUM option.
 Also, new keywords may be added to future releases of SQLite.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 8219.
+.Bd -literal
+SQLITE_API int sqlite3_keyword_count(void);
+SQLITE_API int sqlite3_keyword_name(int,const char**,int*);
+SQLITE_API int sqlite3_keyword_check(const char*,int);
+.Ed

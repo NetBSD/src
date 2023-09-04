@@ -1,4 +1,4 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_INITIALIZE 3
 .Os
 .Sh NAME
@@ -6,21 +6,22 @@
 .Nm sqlite3_shutdown ,
 .Nm sqlite3_os_init ,
 .Nm sqlite3_os_end
-.Nd Initialize The SQLite Library
+.Nd initialize the SQLite library
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_initialize
 .Fa "void"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_shutdown
 .Fa "void"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_os_init
 .Fa "void"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_os_end
 .Fa "void"
 .Fc
@@ -52,8 +53,8 @@ thread.
 All open database connections must be closed and
 all other SQLite resources must be deallocated prior to invoking sqlite3_shutdown().
 .Pp
-Among other things,  sqlite3_initialize() will invoke sqlite3_os_init().
-Similarly,  sqlite3_shutdown() will invoke sqlite3_os_end().
+Among other things, sqlite3_initialize() will invoke sqlite3_os_init().
+Similarly, sqlite3_shutdown() will invoke sqlite3_os_end().
 .Pp
 The sqlite3_initialize() routine returns SQLITE_OK on success.
 If for some reason, sqlite3_initialize() is unable to initialize the
@@ -63,8 +64,11 @@ a mutex) it returns an error code other than SQLITE_OK.
 The sqlite3_initialize() routine is called internally by many other
 SQLite interfaces so that an application usually does not need to invoke
 sqlite3_initialize() directly.
-For example, sqlite3_open() calls sqlite3_initialize()
-so the SQLite library will be automatically initialized when sqlite3_open()
+For example,
+.Fn sqlite3_open
+calls sqlite3_initialize() so the SQLite library will be automatically
+initialized when
+.Fn sqlite3_open
 is called if it has not be initialized already.
 However, if SQLite is compiled with the SQLITE_OMIT_AUTOINIT
 compile-time option, then the automatic calls to sqlite3_initialize()
@@ -84,8 +88,8 @@ The sqlite3_os_end() routine undoes the effect of sqlite3_os_init().
 Typical tasks performed by these routines include allocation or deallocation
 of static resources, initialization of global variables, setting up
 a default sqlite3_vfs module, or setting up a default configuration
-using sqlite3_config().
-.Pp
+using
+.Fn sqlite3_config .
 The application should never invoke either sqlite3_os_init() or sqlite3_os_end()
 directly.
 The application should only invoke sqlite3_initialize() and sqlite3_shutdown().
@@ -93,12 +97,21 @@ The sqlite3_os_init() interface is called automatically by sqlite3_initialize()
 and sqlite3_os_end() is called by sqlite3_shutdown().
 Appropriate implementations for sqlite3_os_init() and sqlite3_os_end()
 are built into SQLite when it is compiled for Unix, Windows, or OS/2.
-When  built for other platforms (using the
+When built for other platforms (using the
 SQLITE_OS_OTHER=1 compile-time option) the application
 must supply a suitable implementation for sqlite3_os_init() and sqlite3_os_end().
 An application-supplied implementation of sqlite3_os_init() or sqlite3_os_end()
 must return SQLITE_OK on success and some other error code
 upon failure.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 1567.
+.Bd -literal
+SQLITE_API int sqlite3_initialize(void);
+SQLITE_API int sqlite3_shutdown(void);
+SQLITE_API int sqlite3_os_init(void);
+SQLITE_API int sqlite3_os_end(void);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
 .Xr sqlite3_config 3 ,

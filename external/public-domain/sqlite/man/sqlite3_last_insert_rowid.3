@@ -1,17 +1,18 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_LAST_INSERT_ROWID 3
 .Os
 .Sh NAME
 .Nm sqlite3_last_insert_rowid
-.Nd Last Insert Rowid
+.Nd last insert rowid
 .Sh SYNOPSIS
-.Ft sqlite3_int64 
+.In sqlite3.h
+.Ft sqlite3_int64
 .Fo sqlite3_last_insert_rowid
 .Fa "sqlite3*"
 .Fc
 .Sh DESCRIPTION
 Each entry in most SQLite tables (except for WITHOUT ROWID
-tables) has a unique 64-bit signed integer key called the  "rowid".
+tables) has a unique 64-bit signed integer key called the "rowid".
 The rowid is always available as an undeclared column named ROWID,
 OID, or _ROWID_ as long as those names are not also used by explicitly
 declared columns.
@@ -28,17 +29,16 @@ zero.
 .Pp
 As well as being set automatically as rows are inserted into database
 tables, the value returned by this function may be set explicitly by
-sqlite3_set_last_insert_rowid() 
-.Pp
+.Fn sqlite3_set_last_insert_rowid
 Some virtual table implementations may INSERT rows into rowid tables
-as part of committing a transaction (e.g.
-to flush data accumulated in memory to disk).
+as part of committing a transaction (e.g. to flush data accumulated
+in memory to disk).
 In this case subsequent calls to this function return the rowid associated
 with these internal INSERT operations, which leads to unintuitive results.
 Virtual table implementations that do write to rowid tables in this
 way can avoid this problem by restoring the original rowid value using
-sqlite3_set_last_insert_rowid() before
-returning control to the user.
+.Fn sqlite3_set_last_insert_rowid
+before returning control to the user.
 .Pp
 If an INSERT occurs within a trigger then this routine will return
 the rowid of the inserted row as long as the trigger is running.
@@ -62,11 +62,18 @@ be successful even if it is subsequently rolled back.
 This function is accessible to SQL statements via the last_insert_rowid() SQL function.
 .Pp
 If a separate thread performs a new INSERT on the same database
-connection while the sqlite3_last_insert_rowid()
+connection while the
+.Fn sqlite3_last_insert_rowid
 function is running and thus changes the last insert rowid, then
-the value returned by sqlite3_last_insert_rowid()
+the value returned by
+.Fn sqlite3_last_insert_rowid
 is unpredictable and might not equal either the old or the new last
 insert rowid.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 2527.
+.Bd -literal
+SQLITE_API sqlite3_int64 sqlite3_last_insert_rowid(sqlite3*);
+.Ed
 .Sh SEE ALSO
-.Xr sqlite3_last_insert_rowid 3 ,
 .Xr sqlite3_set_last_insert_rowid 3

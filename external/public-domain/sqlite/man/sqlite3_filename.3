@@ -1,0 +1,38 @@
+.Dd August 24, 2023
+.Dt SQLITE3_FILENAME 3
+.Os
+.Sh NAME
+.Nm sqlite3_filename
+.Nd file name
+.Sh SYNOPSIS
+.In sqlite3.h
+.Vt typedef const char *sqlite3_filename;
+.Sh DESCRIPTION
+Type sqlite3_filename is used by SQLite to pass filenames
+to the xOpen method of a VFS.
+It may be cast to (const char*) and treated as a normal, nul-terminated,
+UTF-8 buffer containing the filename, but may also be passed to special
+APIs such as:
+.Bl -bullet
+.It
+sqlite3_filename_database()
+.It
+sqlite3_filename_journal()
+.It
+sqlite3_filename_wal()
+.It
+sqlite3_uri_parameter()
+.It
+sqlite3_uri_boolean()
+.It
+sqlite3_uri_int64()
+.It
+sqlite3_uri_key()
+.El
+.Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 1275.
+.Bd -literal
+typedef const char *sqlite3_filename;
+.Ed

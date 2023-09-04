@@ -1,23 +1,25 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_WAL_HOOK 3
 .Os
 .Sh NAME
 .Nm sqlite3_wal_hook
-.Nd Write-Ahead Log Commit Hook
+.Nd write-Ahead log commit hook
 .Sh SYNOPSIS
+.In sqlite3.h
 .Ft void *
 .Fo sqlite3_wal_hook
 .Fa "sqlite3*"
 .Fa "int(*)(void *,sqlite3*,const char*,int)"
-.Fa "void* "
+.Fa "void*"
 .Fc
 .Sh DESCRIPTION
-The sqlite3_wal_hook() function is used to register
-a callback that is invoked each time data is committed to a database
-in wal mode.
+The
+.Fn sqlite3_wal_hook
+function is used to register a callback that is invoked each time data
+is committed to a database in wal mode.
 .Pp
 The callback is invoked by SQLite after the commit has taken place
-and the associated write-lock on the database released  , so the implementation
+and the associated write-lock on the database released, so the implementation
 may read, write or checkpoint the database as required.
 .Pp
 The first parameter passed to the callback function when it is invoked
@@ -39,13 +41,29 @@ error code, the results are undefined.
 .Pp
 A single database handle may have at most a single write-ahead log
 callback registered at one time.
-Calling sqlite3_wal_hook() replaces any previously
-registered write-ahead log callback.
-Note that the sqlite3_wal_autocheckpoint()
+Calling
+.Fn sqlite3_wal_hook
+replaces any previously registered write-ahead log callback.
+The return value is a copy of the third parameter from the previous
+call, if any, or 0.
+Note that the
+.Fn sqlite3_wal_autocheckpoint
 interface and the wal_autocheckpoint pragma
-both invoke sqlite3_wal_hook() and will overwrite
-any prior sqlite3_wal_hook() settings.
+both invoke
+.Fn sqlite3_wal_hook
+and will overwrite any prior
+.Fn sqlite3_wal_hook
+settings.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 9400.
+.Bd -literal
+SQLITE_API void *sqlite3_wal_hook(
+  sqlite3*,
+  int(*)(void *,sqlite3*,const char*,int),
+  void*
+);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_wal_autocheckpoint 3 ,
-.Xr sqlite3_wal_hook 3 ,
 .Xr SQLITE_OK 3

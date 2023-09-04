@@ -1,0 +1,49 @@
+.Dd August 24, 2023
+.Dt SQLITE_SESSION_OBJCONFIG_SIZE 3
+.Os
+.Sh NAME
+.Nm SQLITE_SESSION_OBJCONFIG_SIZE ,
+.Nm SQLITE_SESSION_OBJCONFIG_ROWID
+.Nd options for sqlite3session_object_config
+.Sh SYNOPSIS
+.In sqlite3.h
+.Fd #define SQLITE_SESSION_OBJCONFIG_SIZE
+.Fd #define SQLITE_SESSION_OBJCONFIG_ROWID
+.Sh DESCRIPTION
+The following values may passed as the the 2nd parameter to sqlite3session_object_config().
+.It SQLITE_SESSION_OBJCONFIG_SIZE
+This option is used to set, clear or query the flag that enables the
+.Fn sqlite3session_changeset_size
+API.
+Because it imposes some computational overhead, this API is disabled
+by default.
+Argument pArg must point to a value of type (int).
+If the value is initially 0, then the sqlite3session_changeset_size()
+API is disabled.
+If it is greater than 0, then the same API is enabled.
+Or, if the initial value is less than zero, no change is made.
+In all cases the (int) variable is set to 1 if the sqlite3session_changeset_size()
+API is enabled following the current call, or 0 otherwise.
+.Pp
+It is an error (SQLITE_MISUSE) to attempt to modify this setting after
+the first table has been attached to the session object.
+.It SQLITE_SESSION_OBJCONFIG_ROWID
+This option is used to set, clear or query the flag that enables collection
+of data for tables with no explicit PRIMARY KEY.
+.Pp
+Normally, tables with no explicit PRIMARY KEY are simply ignored by
+the sessions module.
+However, if this flag is set, it behaves as if such tables have a column
+"_rowid_ INTEGER PRIMARY KEY" inserted as their leftmost columns.
+.Pp
+It is an error (SQLITE_MISUSE) to attempt to modify this setting after
+the first table has been attached to the session object.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 10887.
+.Bd -literal
+#define SQLITE_SESSION_OBJCONFIG_SIZE  1
+#define SQLITE_SESSION_OBJCONFIG_ROWID 2
+.Ed
+.Sh SEE ALSO
+.Xr sqlite3session_changeset_size 3

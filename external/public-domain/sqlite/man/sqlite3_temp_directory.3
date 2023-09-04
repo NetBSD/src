@@ -1,16 +1,17 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_TEMP_DIRECTORY 3
 .Os
 .Sh NAME
 .Nm sqlite3_temp_directory
-.Nd Name Of The Folder Holding Temporary Files
+.Nd name of the folder holding temporary files
 .Sh SYNOPSIS
+.In sqlite3.h
 .Vt char *sqlite3_temp_directory;
 .Sh DESCRIPTION
 If this global variable is made to point to a string which is the name
 of a folder (a.k.a.
 directory), then all temporary files created by SQLite when using a
-built-in  VFS will be placed in that directory.
+built-in VFS will be placed in that directory.
 If this variable is a NULL pointer, then SQLite performs a search for
 an appropriate temporary file directory.
 .Pp
@@ -57,11 +58,17 @@ LPCWSTR zPath = Windows::Storage::ApplicationData::Current->
 TemporaryFolder->Path->Data(); char zPathBuf[MAX_PATH + 1&#93;; memset(zPathBuf,
 0, sizeof(zPathBuf)); WideCharToMultiByte(CP_UTF8, 0, zPath, -1, zPathBuf,
 sizeof(zPathBuf),       NULL, NULL); sqlite3_temp_directory = sqlite3_mprintf("%s",
-zPathBuf); 
+zPathBuf);
 .Ed
 .Pp
 .Ed
 .Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 6320.
+.Bd -literal
+SQLITE_API SQLITE_EXTERN char *sqlite3_temp_directory;
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
 .Xr sqlite3_malloc 3 ,

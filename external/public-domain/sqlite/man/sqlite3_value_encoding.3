@@ -1,0 +1,41 @@
+.Dd August 24, 2023
+.Dt SQLITE3_VALUE_ENCODING 3
+.Os
+.Sh NAME
+.Nm sqlite3_value_encoding
+.Nd report the internal text encoding state of an sqlite3_value object
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft int
+.Fo sqlite3_value_encoding
+.Fa "sqlite3_value*"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_value_encoding(X) interface returns one of SQLITE_UTF8,
+SQLITE_UTF16BE, or SQLITE_UTF16LE according
+to the current text encoding of the value X, assuming that X has type
+TEXT.
+If sqlite3_value_type(X) returns something other than SQLITE_TEXT,
+then the return value from sqlite3_value_encoding(X) is meaningless.
+Calls to sqlite3_value_text(X), sqlite3_value_text16(X),
+sqlite3_value_text16be(X), sqlite3_value_text16le(X),
+sqlite3_value_bytes(X), or sqlite3_value_bytes16(X)
+might change the encoding of the value X and thus change the return
+from subsequent calls to sqlite3_value_encoding(X).
+.Pp
+This routine is intended for used by applications that test and validate
+the SQLite implementation.
+This routine is inquiring about the opaque internal state of an sqlite3_value
+object.
+Ordinary applications should not need to know what the internal state
+of an sqlite3_value object is and hence should not need to use this
+interface.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 5754.
+.Bd -literal
+SQLITE_API int sqlite3_value_encoding(sqlite3_value*);
+.Ed
+.Sh SEE ALSO
+.Xr sqlite3_value 3 ,
+.Xr SQLITE_UTF8 3

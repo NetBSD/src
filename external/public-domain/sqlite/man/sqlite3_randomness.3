@@ -1,20 +1,21 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_RANDOMNESS 3
 .Os
 .Sh NAME
 .Nm sqlite3_randomness
-.Nd Pseudo-Random Number Generator
+.Nd pseudo-Random number generator
 .Sh SYNOPSIS
-.Ft void 
+.In sqlite3.h
+.Ft void
 .Fo sqlite3_randomness
 .Fa "int N"
 .Fa "void *P"
 .Fc
 .Sh DESCRIPTION
 SQLite contains a high-quality pseudo-random number generator (PRNG)
-used to select random  ROWIDs when inserting new records into
+used to select random ROWIDs when inserting new records into
 a table that already uses the largest possible ROWID.
-The PRNG is also used for the build-in random() and randomblob() SQL
+The PRNG is also used for the built-in random() and randomblob() SQL
 functions.
 This interface allows applications to access the same PRNG for other
 purposes.
@@ -29,5 +30,11 @@ sqlite3_vfs object.
 If the previous call to this routine had an N of 1 or more and a non-NULL
 P then the pseudo-randomness is generated internally and without recourse
 to the sqlite3_vfs xRandomness method.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 3101.
+.Bd -literal
+SQLITE_API void sqlite3_randomness(int N, void *P);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_vfs 3

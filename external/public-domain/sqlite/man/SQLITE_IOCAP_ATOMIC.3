@@ -1,4 +1,4 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE_IOCAP_ATOMIC 3
 .Os
 .Sh NAME
@@ -17,8 +17,9 @@
 .Nm SQLITE_IOCAP_POWERSAFE_OVERWRITE ,
 .Nm SQLITE_IOCAP_IMMUTABLE ,
 .Nm SQLITE_IOCAP_BATCH_ATOMIC
-.Nd Device Characteristics
+.Nd device characteristics
 .Sh SYNOPSIS
+.In sqlite3.h
 .Fd #define SQLITE_IOCAP_ATOMIC
 .Fd #define SQLITE_IOCAP_ATOMIC512
 .Fd #define SQLITE_IOCAP_ATOMIC1K
@@ -63,6 +64,26 @@ The SQLITE_IOCAP_BATCH_ATOMIC property means that the underlying filesystem
 supports doing multiple write operations atomically when those write
 operations are bracketed by SQLITE_FCNTL_BEGIN_ATOMIC_WRITE
 and SQLITE_FCNTL_COMMIT_ATOMIC_WRITE.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 622.
+.Bd -literal
+#define SQLITE_IOCAP_ATOMIC                 0x00000001
+#define SQLITE_IOCAP_ATOMIC512              0x00000002
+#define SQLITE_IOCAP_ATOMIC1K               0x00000004
+#define SQLITE_IOCAP_ATOMIC2K               0x00000008
+#define SQLITE_IOCAP_ATOMIC4K               0x00000010
+#define SQLITE_IOCAP_ATOMIC8K               0x00000020
+#define SQLITE_IOCAP_ATOMIC16K              0x00000040
+#define SQLITE_IOCAP_ATOMIC32K              0x00000080
+#define SQLITE_IOCAP_ATOMIC64K              0x00000100
+#define SQLITE_IOCAP_SAFE_APPEND            0x00000200
+#define SQLITE_IOCAP_SEQUENTIAL             0x00000400
+#define SQLITE_IOCAP_UNDELETABLE_WHEN_OPEN  0x00000800
+#define SQLITE_IOCAP_POWERSAFE_OVERWRITE    0x00001000
+#define SQLITE_IOCAP_IMMUTABLE              0x00002000
+#define SQLITE_IOCAP_BATCH_ATOMIC           0x00004000
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_io_methods 3 ,
 .Xr SQLITE_FCNTL_LOCKSTATE 3

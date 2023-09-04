@@ -1,10 +1,11 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_INDEX_INFO 3
 .Os
 .Sh NAME
 .Nm sqlite3_index_info
-.Nd Virtual Table Indexing Information
+.Nd virtual table indexing information
 .Sh SYNOPSIS
+.In sqlite3.h
 .Vt struct sqlite3_index_info ;
 .Sh DESCRIPTION
 The sqlite3_index_info structure and its substructures is used as part
@@ -20,7 +21,7 @@ column OP expr
 .Pp
 where OP is =, <, <=, >, or >=.
 The particular operator is stored in aConstraint[].op using one of
-the  SQLITE_INDEX_CONSTRAINT_ values.
+the SQLITE_INDEX_CONSTRAINT_ values.
 The index of the column is stored in aConstraint[].iColumn.
 aConstraint[].usable is TRUE if the expr on the right-hand side can
 be evaluated (and thus the constraint is usable) and false if it cannot.
@@ -50,13 +51,20 @@ about what parameters to pass to xFilter.
 If argvIndex>0 then the right-hand side of the corresponding aConstraint[]
 is evaluated and becomes the argvIndex-th entry in argv.
 If aConstraintUsage[].omit is true, then the constraint is assumed
-to be fully handled by the virtual table and is not checked again by
-SQLite.
+to be fully handled by the virtual table and might not be checked again
+by the byte code.
+The aConstraintUsage[].omit flag is an optimization hint.
+When the omit flag is left in its default setting of false, the constraint
+will always be checked separately in byte code.
+If the omit flag is change to true, then the constraint may or may
+not be checked in byte code.
+In other words, when the omit flag is true there is no guarantee that
+the constraint will not be checked again using byte code.
 .Pp
-The idxNum and idxPtr values are recorded and passed into the xFilter
+The idxNum and idxStr values are recorded and passed into the xFilter
 method.
-sqlite3_free() is used to free idxPtr if and only if
-needToFreeIdxPtr is true.
+.Fn sqlite3_free
+is used to free idxStr if and only if needToFreeIdxStr is true.
 .Pp
 The orderByConsumed means that output from xFilter/xNext
 will occur in the correct order to satisfy the ORDER BY clause so that
@@ -94,15 +102,52 @@ IMPORTANT: The estimatedRows field was added to the sqlite3_index_info
 structure for SQLite version 3.8.2 (dateof:3.8.2).
 If a virtual table extension is used with an SQLite version earlier
 than 3.8.2, the results of attempting to read or write the estimatedRows
-field are undefined (but are likely to included crashing the application).
-The estimatedRows field should therefore only be used if sqlite3_libversion_number()
+field are undefined (but are likely to include crashing the application).
+The estimatedRows field should therefore only be used if
+.Fn sqlite3_libversion_number
 returns a value greater than or equal to 3008002.
 Similarly, the idxFlags field was added for version 3.9.0
 (dateof:3.9.0).
 It may therefore only be used if sqlite3_libversion_number() returns
 a value greater than or equal to 3009000.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 7223.
+.Bd -literal
+struct sqlite3_index_info {
+  /* Inputs */
+  int nConstraint;           /* Number of entries in aConstraint */
+  struct sqlite3_index_constraint {
+     int iColumn;              /* Column constrained.  -1 for ROWID */
+     unsigned char op;         /* Constraint operator */
+     unsigned char usable;     /* True if this constraint is usable */
+     int iTermOffset;          /* Used internally - xBestIndex should ignore */
+  } *aConstraint;            /* Table of WHERE clause constraints */
+  int nOrderBy;              /* Number of terms in the ORDER BY clause */
+  struct sqlite3_index_orderby {
+     int iColumn;              /* Column number */
+     unsigned char desc;       /* True for DESC.  False for ASC. */
+  } *aOrderBy;               /* The ORDER BY clause */
+  /* Outputs */
+  struct sqlite3_index_constraint_usage {
+    int argvIndex;           /* if >0, constraint is part of argv to xFilter */
+    unsigned char omit;      /* Do not code a test for this constraint */
+  } *aConstraintUsage;
+  int idxNum;                /* Number used to identify the index */
+  char *idxStr;              /* String, possibly obtained from sqlite3_malloc */
+  int needToFreeIdxStr;      /* Free idxStr using sqlite3_free() if true */
+  int orderByConsumed;       /* True if output is already ordered */
+  double estimatedCost;           /* Estimated cost of using this index */
+  /* Fields below are only available in SQLite 3.8.2 and later */
+  sqlite3_int64 estimatedRows;    /* Estimated number of rows returned */
+  /* Fields below are only available in SQLite 3.9.0 and later */
+  int idxFlags;              /* Mask of SQLITE_INDEX_SCAN_* flags */
+  /* Fields below are only available in SQLite 3.10.0 and later */
+  sqlite3_uint64 colUsed;    /* Input: Mask of columns used by statement */
+};
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_malloc 3 ,
+.Xr sqlite3_module 3 ,
 .Xr sqlite3_version 3 ,
-.Xr SQLITE_INDEX_CONSTRAINT_EQ 3 ,
-.Xr sqlite3_module 3
+.Xr SQLITE_INDEX_CONSTRAINT_EQ 3

@@ -1,12 +1,13 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE_VERSION 3
 .Os
 .Sh NAME
 .Nm SQLITE_VERSION ,
 .Nm SQLITE_VERSION_NUMBER ,
 .Nm SQLITE_SOURCE_ID
-.Nd Compile-Time Library Version Numbers
+.Nd compile-Time library version numbers
 .Sh SYNOPSIS
+.In sqlite3.h
 .Fd #define SQLITE_VERSION
 .Fd #define SQLITE_VERSION_NUMBER
 .Fd #define SQLITE_SOURCE_ID
@@ -24,8 +25,8 @@ Either Y will be held constant and Z will be incremented or else Y
 will be incremented and Z will be reset to zero.
 .Pp
 Since version 3.6.18 (dateof:3.6.18), SQLite
-source code has been stored in the <a href="http://www.fossil-scm.org/">Fossil
-configuration management system</a>.
+source code has been stored in the Fossil configuration management
+system.
 The SQLITE_SOURCE_ID macro evaluates to a string which identifies a
 particular check-in of SQLite within its configuration management system.
 The SQLITE_SOURCE_ID string contains the date and time of the check-in
@@ -33,6 +34,13 @@ The SQLITE_SOURCE_ID string contains the date and time of the check-in
 If the source code has been edited in any way since it was last checked
 in, then the last four hexadecimal digits of the hash may be modified.
 .Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 120.
+.Bd -literal
+#define SQLITE_VERSION        "3.43.0"
+#define SQLITE_VERSION_NUMBER 3043000
+#define SQLITE_SOURCE_ID      "2023-08-24 12:36:59 0f80b798b3f4b81a7bb4233c58294edd0f1156f36b6ecf5ab8e83631d468778c"
+.Ed
 .Sh SEE ALSO
-.Xr sqlite3_version 3 ,
-.Xr SQLITE_VERSION 3
+.Xr sqlite3_version 3

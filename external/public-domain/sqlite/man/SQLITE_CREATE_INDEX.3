@@ -1,4 +1,4 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE_CREATE_INDEX 3
 .Os
 .Sh NAME
@@ -36,8 +36,9 @@
 .Nm SQLITE_SAVEPOINT ,
 .Nm SQLITE_COPY ,
 .Nm SQLITE_RECURSIVE
-.Nd Authorizer Action Codes
+.Nd authorizer action codes
 .Sh SYNOPSIS
+.In sqlite3.h
 .Fd #define SQLITE_CREATE_INDEX
 .Fd #define SQLITE_CREATE_TABLE
 .Fd #define SQLITE_CREATE_TEMP_INDEX
@@ -73,9 +74,10 @@
 .Fd #define SQLITE_COPY
 .Fd #define SQLITE_RECURSIVE
 .Sh DESCRIPTION
-The sqlite3_set_authorizer() interface registers
-a callback function that is invoked to authorize certain SQL statement
-actions.
+The
+.Fn sqlite3_set_authorizer
+interface registers a callback function that is invoked to authorize
+certain SQL statement actions.
 The second parameter to the callback is an integer code that specifies
 what action is being authorized.
 These are the integer action codes that the authorizer callback may
@@ -90,5 +92,45 @@ The 5th parameter to the authorizer callback is the name of the database
 The 6th parameter to the authorizer callback is the name of the inner-most
 trigger or view that is responsible for the access attempt or NULL
 if this access attempt is directly from top-level SQL code.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 3234.
+.Bd -literal
+/******************************************* 3rd ************ 4th ***********/
+#define SQLITE_CREATE_INDEX          1   /* Index Name      Table Name      */
+#define SQLITE_CREATE_TABLE          2   /* Table Name      NULL            */
+#define SQLITE_CREATE_TEMP_INDEX     3   /* Index Name      Table Name      */
+#define SQLITE_CREATE_TEMP_TABLE     4   /* Table Name      NULL            */
+#define SQLITE_CREATE_TEMP_TRIGGER   5   /* Trigger Name    Table Name      */
+#define SQLITE_CREATE_TEMP_VIEW      6   /* View Name       NULL            */
+#define SQLITE_CREATE_TRIGGER        7   /* Trigger Name    Table Name      */
+#define SQLITE_CREATE_VIEW           8   /* View Name       NULL            */
+#define SQLITE_DELETE                9   /* Table Name      NULL            */
+#define SQLITE_DROP_INDEX           10   /* Index Name      Table Name      */
+#define SQLITE_DROP_TABLE           11   /* Table Name      NULL            */
+#define SQLITE_DROP_TEMP_INDEX      12   /* Index Name      Table Name      */
+#define SQLITE_DROP_TEMP_TABLE      13   /* Table Name      NULL            */
+#define SQLITE_DROP_TEMP_TRIGGER    14   /* Trigger Name    Table Name      */
+#define SQLITE_DROP_TEMP_VIEW       15   /* View Name       NULL            */
+#define SQLITE_DROP_TRIGGER         16   /* Trigger Name    Table Name      */
+#define SQLITE_DROP_VIEW            17   /* View Name       NULL            */
+#define SQLITE_INSERT               18   /* Table Name      NULL            */
+#define SQLITE_PRAGMA               19   /* Pragma Name     1st arg or NULL */
+#define SQLITE_READ                 20   /* Table Name      Column Name     */
+#define SQLITE_SELECT               21   /* NULL            NULL            */
+#define SQLITE_TRANSACTION          22   /* Operation       NULL            */
+#define SQLITE_UPDATE               23   /* Table Name      Column Name     */
+#define SQLITE_ATTACH               24   /* Filename        NULL            */
+#define SQLITE_DETACH               25   /* Database Name   NULL            */
+#define SQLITE_ALTER_TABLE          26   /* Database Name   Table Name      */
+#define SQLITE_REINDEX              27   /* Index Name      NULL            */
+#define SQLITE_ANALYZE              28   /* Table Name      NULL            */
+#define SQLITE_CREATE_VTABLE        29   /* Table Name      Module Name     */
+#define SQLITE_DROP_VTABLE          30   /* Table Name      Module Name     */
+#define SQLITE_FUNCTION             31   /* NULL            Function Name   */
+#define SQLITE_SAVEPOINT            32   /* Operation       Savepoint Name  */
+#define SQLITE_COPY                  0   /* No longer used */
+#define SQLITE_RECURSIVE            33   /* NULL            NULL            */
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_set_authorizer 3

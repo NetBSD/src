@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_PROGRESS_HANDLER 3
 .Os
 .Sh NAME
 .Nm sqlite3_progress_handler
-.Nd Query Progress Callbacks
+.Nd query progress callbacks
 .Sh SYNOPSIS
-.Ft void 
+.In sqlite3.h
+.Ft void
 .Fo sqlite3_progress_handler
 .Fa "sqlite3*"
 .Fa "int"
@@ -15,8 +16,10 @@
 .Sh DESCRIPTION
 The sqlite3_progress_handler(D,N,X,P) interface causes the callback
 function X to be invoked periodically during long running calls to
-sqlite3_exec(), sqlite3_step() and sqlite3_get_table()
-for database connection D.
+.Fn sqlite3_step
+and
+.Fn sqlite3_prepare
+and similar for database connection D.
 An example use for this interface is to keep a GUI updated during a
 large query.
 .Pp
@@ -38,13 +41,30 @@ dialog box.
 .Pp
 The progress handler callback must not do anything that will modify
 the database connection that invoked the progress handler.
-Note that sqlite3_prepare_v2() and sqlite3_step()
+Note that
+.Fn sqlite3_prepare_v2
+and
+.Fn sqlite3_step
 both modify their database connections for the meaning of "modify"
 in this paragraph.
 .Pp
+The progress handler callback would originally only be invoked from
+the bytecode engine.
+It still might be invoked during
+.Fn sqlite3_prepare
+and similar because those routines might force a reparse of the schema
+which involves running the bytecode engine.
+However, beginning with SQLite version 3.41.0, the progress handler
+callback might also be invoked directly from
+.Fn sqlite3_prepare
+while analyzing and generating code for complex queries.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 3421.
+.Bd -literal
+SQLITE_API void sqlite3_progress_handler(sqlite3*, int, int(*)(void*), void*);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
-.Xr sqlite3_exec 3 ,
-.Xr sqlite3_get_table 3 ,
 .Xr sqlite3_prepare 3 ,
 .Xr sqlite3_step 3

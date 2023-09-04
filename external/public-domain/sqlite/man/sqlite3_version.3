@@ -1,4 +1,4 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_VERSION 3
 .Os
 .Sh NAME
@@ -6,8 +6,9 @@
 .Nm sqlite3_libversion ,
 .Nm sqlite3_sourceid ,
 .Nm sqlite3_libversion_number
-.Nd Run-Time Library Version Numbers
+.Nd run-Time library version numbers
 .Sh SYNOPSIS
+.In sqlite3.h
 .Vt const char sqlite3_version[];
 .Ft const char *
 .Fo sqlite3_libversion
@@ -17,7 +18,7 @@
 .Fo sqlite3_sourceid
 .Fa "void"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_libversion_number
 .Fa "void"
 .Fc
@@ -34,7 +35,7 @@ matching library and header files.
 .Bd -literal
 assert( sqlite3_libversion_number()==SQLITE_VERSION_NUMBER ); assert(
 strncmp(sqlite3_sourceid(),SQLITE_SOURCE_ID,80)==0 ); assert( strcmp(sqlite3_libversion(),SQLITE_VERSION)==0
-); 
+);
 .Ed
 .Pp
 .Ed
@@ -54,5 +55,14 @@ macro.
 Except if SQLite is built using an edited copy of the amalgamation,
 then the last four characters of the hash might be different from SQLITE_SOURCE_ID.
 .Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 154.
+.Bd -literal
+SQLITE_API SQLITE_EXTERN const char sqlite3_version[];
+SQLITE_API const char *sqlite3_libversion(void);
+SQLITE_API const char *sqlite3_sourceid(void);
+SQLITE_API int sqlite3_libversion_number(void);
+.Ed
 .Sh SEE ALSO
 .Xr SQLITE_VERSION 3

@@ -1,4 +1,4 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_CREATE_FUNCTION 3
 .Os
 .Sh NAME
@@ -6,9 +6,10 @@
 .Nm sqlite3_create_function16 ,
 .Nm sqlite3_create_function_v2 ,
 .Nm sqlite3_create_window_function
-.Nd Create Or Redefine SQL Functions
+.Nd create or redefine SQL functions
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_create_function
 .Fa "sqlite3 *db"
 .Fa "const char *zFunctionName"
@@ -17,9 +18,9 @@
 .Fa "void *pApp"
 .Fa "void (*xFunc)(sqlite3_context*,int,sqlite3_value**)"
 .Fa "void (*xStep)(sqlite3_context*,int,sqlite3_value**)"
-.Fa "void (*xFinal)(sqlite3_context*) "
+.Fa "void (*xFinal)(sqlite3_context*)"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_create_function16
 .Fa "sqlite3 *db"
 .Fa "const void *zFunctionName"
@@ -28,9 +29,9 @@
 .Fa "void *pApp"
 .Fa "void (*xFunc)(sqlite3_context*,int,sqlite3_value**)"
 .Fa "void (*xStep)(sqlite3_context*,int,sqlite3_value**)"
-.Fa "void (*xFinal)(sqlite3_context*) "
+.Fa "void (*xFinal)(sqlite3_context*)"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_create_function_v2
 .Fa "sqlite3 *db"
 .Fa "const char *zFunctionName"
@@ -40,9 +41,9 @@
 .Fa "void (*xFunc)(sqlite3_context*,int,sqlite3_value**)"
 .Fa "void (*xStep)(sqlite3_context*,int,sqlite3_value**)"
 .Fa "void (*xFinal)(sqlite3_context*)"
-.Fa "void(*xDestroy)(void*) "
+.Fa "void(*xDestroy)(void*)"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_create_window_function
 .Fa "sqlite3 *db"
 .Fa "const char *zFunctionName"
@@ -53,7 +54,7 @@
 .Fa "void (*xFinal)(sqlite3_context*)"
 .Fa "void (*xValue)(sqlite3_context*)"
 .Fa "void (*xInverse)(sqlite3_context*,int,sqlite3_value**)"
-.Fa "void(*xDestroy)(void*) "
+.Fa "void(*xDestroy)(void*)"
 .Fc
 .Sh DESCRIPTION
 These functions (collectively known as "function creation routines")
@@ -87,13 +88,16 @@ any number of arguments between 0 and the limit set by sqlite3_limit(SQLITE_LIMI
 If the third parameter is less than -1 or greater than 127 then the
 behavior is undefined.
 .Pp
-The fourth parameter, eTextRep, specifies what  text encoding
+The fourth parameter, eTextRep, specifies what text encoding
 this SQL function prefers for its parameters.
 The application should set this parameter to SQLITE_UTF16LE
-if the function implementation invokes sqlite3_value_text16le()
+if the function implementation invokes
+.Fn sqlite3_value_text16le
 on an input, or SQLITE_UTF16BE if the implementation
-invokes sqlite3_value_text16be() on an input,
-or SQLITE_UTF16 if sqlite3_value_text16()
+invokes
+.Fn sqlite3_value_text16be
+on an input, or SQLITE_UTF16 if
+.Fn sqlite3_value_text16
 is used, or SQLITE_UTF8 otherwise.
 The same SQL function may be registered multiple times using different
 preferred text encodings, with different implementations for each encoding.
@@ -104,16 +108,33 @@ The fourth parameter may optionally be ORed with SQLITE_DETERMINISTIC
 to signal that the function will always return the same result given
 the same inputs within a single SQL statement.
 Most SQL functions are deterministic.
-The built-in random() SQL function is an example of a function
-that is not deterministic.
+The built-in
+.Fn random
+SQL function is an example of a function that is not deterministic.
 The SQLite query planner is able to perform additional optimizations
 on deterministic functions, so use of the SQLITE_DETERMINISTIC
 flag is recommended where possible.
 .Pp
+The fourth parameter may also optionally include the SQLITE_DIRECTONLY
+flag, which if present prevents the function from being invoked from
+within VIEWs, TRIGGERs, CHECK constraints, generated column expressions,
+index expressions, or the WHERE clause of partial indexes.
+.Pp
+For best security, the SQLITE_DIRECTONLY flag is recommended
+for all application-defined SQL functions that do not need to be used
+inside of triggers, view, CHECK constraints, or other elements of the
+database schema.
+This flags is especially recommended for SQL functions that have side
+effects or reveal internal application state.
+Without this flag, an attacker might be able to modify the schema of
+a database file to include invocations of the function with parameters
+chosen by the attacker, which the application will then execute when
+the database file is opened and read.
+.Pp
 The fifth parameter is an arbitrary pointer.
 The implementation of the function can gain access to this pointer
-using sqlite3_user_data().
-.Pp
+using
+.Fn sqlite3_user_data .
 The sixth, seventh and eighth parameters passed to the three "sqlite3_create_function*"
 functions, xFunc, xStep and xFinal, are pointers to C-language functions
 that implement the SQL function or aggregate.
@@ -163,6 +184,54 @@ Built-in functions may be overloaded by new application-defined functions.
 An application-defined function is permitted to call other SQLite interfaces.
 However, such calls must not close the database connection nor finalize
 or reset the prepared statement in which the function is running.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 5329.
+.Bd -literal
+SQLITE_API int sqlite3_create_function(
+  sqlite3 *db,
+  const char *zFunctionName,
+  int nArg,
+  int eTextRep,
+  void *pApp,
+  void (*xFunc)(sqlite3_context*,int,sqlite3_value**),
+  void (*xStep)(sqlite3_context*,int,sqlite3_value**),
+  void (*xFinal)(sqlite3_context*)
+);
+SQLITE_API int sqlite3_create_function16(
+  sqlite3 *db,
+  const void *zFunctionName,
+  int nArg,
+  int eTextRep,
+  void *pApp,
+  void (*xFunc)(sqlite3_context*,int,sqlite3_value**),
+  void (*xStep)(sqlite3_context*,int,sqlite3_value**),
+  void (*xFinal)(sqlite3_context*)
+);
+SQLITE_API int sqlite3_create_function_v2(
+  sqlite3 *db,
+  const char *zFunctionName,
+  int nArg,
+  int eTextRep,
+  void *pApp,
+  void (*xFunc)(sqlite3_context*,int,sqlite3_value**),
+  void (*xStep)(sqlite3_context*,int,sqlite3_value**),
+  void (*xFinal)(sqlite3_context*),
+  void(*xDestroy)(void*)
+);
+SQLITE_API int sqlite3_create_window_function(
+  sqlite3 *db,
+  const char *zFunctionName,
+  int nArg,
+  int eTextRep,
+  void *pApp,
+  void (*xStep)(sqlite3_context*,int,sqlite3_value**),
+  void (*xFinal)(sqlite3_context*),
+  void (*xValue)(sqlite3_context*),
+  void (*xInverse)(sqlite3_context*,int,sqlite3_value**),
+  void(*xDestroy)(void*)
+);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
 .Xr sqlite3_limit 3 ,

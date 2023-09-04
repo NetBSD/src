@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_GET_AUTOCOMMIT 3
 .Os
 .Sh NAME
 .Nm sqlite3_get_autocommit
-.Nd Test For Auto-Commit Mode
+.Nd test for auto-Commit mode
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_get_autocommit
 .Fa "sqlite3*"
 .Fc
@@ -25,5 +26,11 @@ transaction after an error is to use this function.
 .Pp
 If another thread changes the autocommit status of the database connection
 while this routine is running, then the return value is undefined.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 6450.
+.Bd -literal
+SQLITE_API int sqlite3_get_autocommit(sqlite3*);
+.Ed
 .Sh SEE ALSO
 .Xr SQLITE_OK 3

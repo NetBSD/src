@@ -1,0 +1,36 @@
+.Dd August 24, 2023
+.Dt SQLITE3_DATABASE_FILE_OBJECT 3
+.Os
+.Sh NAME
+.Nm sqlite3_database_file_object
+.Nd database file corresponding to a journal
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft sqlite3_file *
+.Fo sqlite3_database_file_object
+.Fa "const char*"
+.Fc
+.Sh DESCRIPTION
+If X is the name of a rollback or WAL-mode journal file that is passed
+into the xOpen method of sqlite3_vfs, then sqlite3_database_file_object(X)
+returns a pointer to the sqlite3_file object that represents
+the main database file.
+.Pp
+This routine is intended for use in custom VFS implementations only.
+It is not a general-purpose interface.
+The argument sqlite3_file_object(X) must be a filename pointer that
+has been passed into sqlite3_vfs.xOpen method where the
+flags parameter to xOpen contains one of the bits SQLITE_OPEN_MAIN_JOURNAL
+or SQLITE_OPEN_WAL.
+Any other use of this routine results in undefined and probably undesirable
+behavior.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 3857.
+.Bd -literal
+SQLITE_API sqlite3_file *sqlite3_database_file_object(const char*);
+.Ed
+.Sh SEE ALSO
+.Xr sqlite3_file 3 ,
+.Xr sqlite3_vfs 3 ,
+.Xr SQLITE_OPEN_READONLY 3
