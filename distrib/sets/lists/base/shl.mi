@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.965 2023/09/04 18:12:46 riastradh Exp $
+# $NetBSD: shl.mi,v 1.966 2023/09/04 18:16:02 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -901,8 +901,8 @@
 ./usr/lib/libskey.so.2				base-sys-shlib		compatfile,skey
 ./usr/lib/libskey.so.2.0			base-sys-shlib		compatfile,skey
 ./usr/lib/libsl.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libsl.so.6				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libsl.so.6.0				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libsl.so.7				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libsl.so.7.0				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libsqlite3.so				base-sys-shlib		compatfile
 ./usr/lib/libsqlite3.so.1			base-sys-shlib		compatfile
 ./usr/lib/libsqlite3.so.1.5			base-sys-shlib		compatfile
