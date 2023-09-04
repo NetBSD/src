@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.c,v 1.6 2017/12/28 07:46:34 ozaki-r Exp $	*/
+/*	$NetBSD: workqueue.c,v 1.6.16.1 2023/09/04 16:57:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: workqueue.c,v 1.6 2017/12/28 07:46:34 ozaki-r Exp $");
+__RCSID("$NetBSD: workqueue.c,v 1.6.16.1 2023/09/04 16:57:56 martin Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -48,12 +48,18 @@ struct test_softc {
 	struct workqueue *wq;
 	struct work wk;
 	int counter;
-};	
-	
+	bool pause;
+};
+
 static void
 rump_work1(struct work *wk, void *arg)
 {
 	struct test_softc *sc = arg;
+
+	memset(wk, 0x5a, sizeof(*wk));
+
+	if (sc->pause)
+		kpause("tstwk1", /*intr*/false, /*timo*/2, /*lock*/NULL);
 
 	mutex_enter(&sc->mtx);
 	++sc->counter;
@@ -125,6 +131,36 @@ rumptest_workqueue_wait(void)
 	for (size_t i = 0; i < ITERATIONS; ++i) {
 		KASSERT(sc->counter == i);
 		workqueue_enqueue(sc->wq, &sc->wk, NULL);
+		workqueue_wait(sc->wq, &sc->wk);
+		KASSERT(sc->counter == (i + 1));
+	}
+
+	KASSERT(sc->counter == ITERATIONS);
+
+	/* Wait for a work that is not enqueued. Just return immediately. */
+	workqueue_wait(sc->wq, &dummy);
+
+	destroy_sc(sc);
+#undef ITERATIONS
+}
+
+void
+rumptest_workqueue_wait_pause(void)
+{
+	struct test_softc *sc;
+	struct work dummy;
+
+	sc = create_sc();
+	sc->pause = true;
+
+#define ITERATIONS 1
+	for (size_t i = 0; i < ITERATIONS; ++i) {
+		struct work wk;
+
+		KASSERT(sc->counter == i);
+		workqueue_enqueue(sc->wq, &wk, NULL);
+		workqueue_enqueue(sc->wq, &sc->wk, NULL);
+		kpause("tstwk2", /*intr*/false, /*timo*/1, /*lock*/NULL);
 		workqueue_wait(sc->wq, &sc->wk);
 		KASSERT(sc->counter == (i + 1));
 	}
