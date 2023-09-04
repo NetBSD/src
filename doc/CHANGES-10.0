@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.114 2023/09/02 16:20:27 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.115 2023/09/04 17:47:44 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11262,4 +11262,236 @@ sys/arch/newsmips/apbus/if_sn.c			1.53
 
 	newsmips: fix build with SNDEBUG option enabled.
 	[andvar, ticket #341]
+
+sys/kern/subr_workqueue.c			1.42-1.47
+tests/rump/kernspace/kernspace.h		1.9
+tests/rump/kernspace/workqueue.c		1.7-1.9
+tests/rump/rumpkern/Makefile			1.20
+tests/rump/rumpkern/t_workqueue.c		1.3,1.4
+
+	workqueue(9): Add tests for and fix the issue in PR 57574.
+	[riastradh, ticket #342]
+
+external/mpl/mozilla-certdata/dist/certdata.txt	1.1.1.1
+distrib/sets/lists/base/mi			1.1326-1.1329
+distrib/sets/lists/etc/mi			1.272
+distrib/sets/lists/man/mi			1.1764
+distrib/sets/lists/tests/mi			1.1292
+doc/3RDPARTY					1.1949
+etc/Makefile					1.467
+etc/mtree/NetBSD.dist.base			1.252,1.253
+etc/mtree/NetBSD.dist.tests			1.200
+etc/mtree/special				1.176-1.178
+external/mpl/Makefile				1.5
+external/mpl/mozilla-certdata/Makefile		1.1
+external/mpl/mozilla-certdata/share/Makefile	1.1,1.2
+external/mpl/mozilla-certdata/share/certdata.awk 1.1
+external/mpl/mozilla-certdata/share/certs/ACCVRAIZ1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/AC_RAIZ_FNMT-RCM.pem 1.1
+external/mpl/mozilla-certdata/share/certs/AC_RAIZ_FNMT-RCM_SERVIDORES_SEGUROS.pem 1.1
+external/mpl/mozilla-certdata/share/certs/ANF_Secure_Server_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Actalis_Authentication_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/AffirmTrust_Commercial.pem 1.1
+external/mpl/mozilla-certdata/share/certs/AffirmTrust_Networking.pem 1.1
+external/mpl/mozilla-certdata/share/certs/AffirmTrust_Premium.pem 1.1
+external/mpl/mozilla-certdata/share/certs/AffirmTrust_Premium_ECC.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Amazon_Root_CA_1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Amazon_Root_CA_2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Amazon_Root_CA_3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Amazon_Root_CA_4.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Atos_TrustedRoot_2011.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Atos_TrustedRoot_Root_CA_ECC_G2_2020.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Atos_TrustedRoot_Root_CA_ECC_TLS_2021.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Atos_TrustedRoot_Root_CA_RSA_G2_2020.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Atos_TrustedRoot_Root_CA_RSA_TLS_2021.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.pem 1.1
+external/mpl/mozilla-certdata/share/certs/BJCA_Global_Root_CA1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/BJCA_Global_Root_CA2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Baltimore_CyberTrust_Root.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Buypass_Class_2_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Buypass_Class_3_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/CA_Disig_Root_R2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/CFCA_EV_ROOT.pem 1.1
+external/mpl/mozilla-certdata/share/certs/COMODO_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/COMODO_ECC_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/COMODO_RSA_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Certainly_Root_E1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Certainly_Root_R1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Certigna.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Certigna_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Certum_EC-384_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Certum_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Certum_Trusted_Network_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Certum_Trusted_Network_CA_2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Certum_Trusted_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Chambers_of_Commerce_Root_-_2008.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Comodo_AAA_Services_root.pem 1.1
+external/mpl/mozilla-certdata/share/certs/D-TRUST_BR_Root_CA_1_2020.pem 1.1
+external/mpl/mozilla-certdata/share/certs/D-TRUST_EV_Root_CA_1_2020.pem 1.1
+external/mpl/mozilla-certdata/share/certs/D-TRUST_Root_CA_3_2013.pem 1.1
+external/mpl/mozilla-certdata/share/certs/D-TRUST_Root_Class_3_CA_2_2009.pem 1.1
+external/mpl/mozilla-certdata/share/certs/D-TRUST_Root_Class_3_CA_2_EV_2009.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DIGITALSIGN_GLOBAL_ROOT_ECDSA_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DIGITALSIGN_GLOBAL_ROOT_RSA_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_Assured_ID_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_Assured_ID_Root_G2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_Assured_ID_Root_G3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_Global_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_Global_Root_G2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_Global_Root_G3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_High_Assurance_EV_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_SMIME_ECC_P384_Root_G5.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_SMIME_RSA4096_Root_G5.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_TLS_ECC_P384_Root_G5.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_TLS_RSA4096_Root_G5.pem 1.1
+external/mpl/mozilla-certdata/share/certs/DigiCert_Trusted_Root_G4.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Entrust.net_Premium_2048_Secure_Server_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Entrust_Root_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Entrust_Root_Certification_Authority_-_EC1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Entrust_Root_Certification_Authority_-_G2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Entrust_Root_Certification_Authority_-_G4.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Explicitly_Distrust_DigiNotar_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GDCA_TrustAUTH_R5_ROOT.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GLOBALTRUST_2020.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GTS_Root_R1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GTS_Root_R2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GTS_Root_R3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GTS_Root_R4.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GlobalSign_ECC_Root_CA_-_R4.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GlobalSign_ECC_Root_CA_-_R5.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GlobalSign_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GlobalSign_Root_CA_-_R3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GlobalSign_Root_CA_-_R6.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GlobalSign_Root_E46.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GlobalSign_Root_R46.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GlobalSign_Secure_Mail_Root_E45.pem 1.1
+external/mpl/mozilla-certdata/share/certs/GlobalSign_Secure_Mail_Root_R45.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Global_Chambersign_Root_-_2008.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Go_Daddy_Class_2_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Go_Daddy_Root_Certificate_Authority_-_G2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/HARICA_Client_ECC_Root_CA_2021.pem 1.1
+external/mpl/mozilla-certdata/share/certs/HARICA_Client_RSA_Root_CA_2021.pem 1.1
+external/mpl/mozilla-certdata/share/certs/HARICA_TLS_ECC_Root_CA_2021.pem 1.1
+external/mpl/mozilla-certdata/share/certs/HARICA_TLS_RSA_Root_CA_2021.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Hellenic_Academic_and_Research_Institutions_ECC_RootCA_2015.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Hellenic_Academic_and_Research_Institutions_RootCA_2015.pem 1.1
+external/mpl/mozilla-certdata/share/certs/HiPKI_Root_CA_-_G1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Hongkong_Post_Root_CA_3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/ISRG_Root_X1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/ISRG_Root_X2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/IdenTrust_Commercial_Root_CA_1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/IdenTrust_Public_Sector_Root_CA_1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Izenpe.com.pem 1.1
+external/mpl/mozilla-certdata/share/certs/LAWtrust_Root_CA2_4096.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Microsec_e-Szigno_Root_CA_2009.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Microsoft_ECC_Root_Certificate_Authority_2017.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Microsoft_RSA_Root_Certificate_Authority_2017.pem 1.1
+external/mpl/mozilla-certdata/share/certs/NAVER_Global_Root_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/NetLock_Arany_Class_Gold.pem 1.1
+external/mpl/mozilla-certdata/share/certs/OISTE_WISeKey_Global_Root_GA_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/OISTE_WISeKey_Global_Root_GB_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/OISTE_WISeKey_Global_Root_GC_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/QuoVadis_Root_CA_1_G3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/QuoVadis_Root_CA_2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/QuoVadis_Root_CA_2_G3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/QuoVadis_Root_CA_3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/QuoVadis_Root_CA_3_G3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SSL.com_Client_ECC_Root_CA_2022.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SSL.com_Client_RSA_Root_CA_2022.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SSL.com_EV_Root_Certification_Authority_ECC.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SSL.com_EV_Root_Certification_Authority_RSA_R2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SSL.com_Root_Certification_Authority_ECC.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SSL.com_Root_Certification_Authority_RSA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SSL.com_TLS_ECC_Root_CA_2022.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SSL.com_TLS_RSA_Root_CA_2022.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SZAFIR_ROOT_CA2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Sectigo_Public_Email_Protection_Root_E46.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Sectigo_Public_Email_Protection_Root_R46.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Sectigo_Public_Server_Authentication_Root_E46.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Sectigo_Public_Server_Authentication_Root_R46.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SecureSign_RootCA11.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SecureTrust_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Secure_Global_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Security_Communication_ECC_RootCA1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Security_Communication_RootCA2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Security_Communication_RootCA3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Security_Communication_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Staat_der_Nederlanden_Root_CA_-_G3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Starfield_Class_2_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Starfield_Root_Certificate_Authority_-_G2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Starfield_Services_Root_Certificate_Authority_-_G2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SwissSign_Gold_CA_-_G2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SwissSign_Silver_CA_-_G2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Symantec_Class_1_Public_Primary_Certification_Authority_-_G6.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Symantec_Class_2_Public_Primary_Certification_Authority_-_G6.pem 1.1
+external/mpl/mozilla-certdata/share/certs/T-TeleSec_GlobalRoot_Class_2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/T-TeleSec_GlobalRoot_Class_3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TUBITAK_Kamu_SM_SSL_Kok_Sertifikasi_-_Surum_1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TWCA_Global_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TWCA_Root_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TeliaSonera_Root_CA_v1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Telia_Root_CA_v2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TrustCor_ECA-1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TrustCor_RootCert_CA-1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TrustCor_RootCert_CA-2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Trustwave_Global_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Trustwave_Global_ECC_P256_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Trustwave_Global_ECC_P384_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TunTrust_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/UCA_Extended_Validation_Root.pem 1.1
+external/mpl/mozilla-certdata/share/certs/UCA_Global_G2_Root.pem 1.1
+external/mpl/mozilla-certdata/share/certs/USERTrust_ECC_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/USERTrust_RSA_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Verisign_Class_1_Public_Primary_Certification_Authority_-_G3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Verisign_Class_2_Public_Primary_Certification_Authority_-_G3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/XRamp_Global_CA_Root.pem 1.1
+external/mpl/mozilla-certdata/share/certs/certSIGN_ROOT_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/certSIGN_Root_CA_G2.pem 1.1
+external/mpl/mozilla-certdata/share/certs/e-Szigno_Root_CA_2017.pem 1.1
+external/mpl/mozilla-certdata/share/certs/ePKI_Root_Certification_Authority.pem 1.1
+external/mpl/mozilla-certdata/share/certs/emSign_ECC_Root_CA_-_C3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/emSign_ECC_Root_CA_-_G3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/emSign_Root_CA_-_C1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/emSign_Root_CA_-_G1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/vTrus_ECC_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/vTrus_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/code.trust	1.1
+external/mpl/mozilla-certdata/share/email.trust	1.1
+external/mpl/mozilla-certdata/share/server.trust 1.1
+share/man/man7/hier.7				1.141
+tests/usr.sbin/Makefile				1.8
+tests/usr.sbin/certctl/Makefile			1.1
+tests/usr.sbin/certctl/Makefile.inc		1.1
+tests/usr.sbin/certctl/certs1/DigiCert_Global_Root_CA.pem 1.1
+tests/usr.sbin/certctl/certs1/Explicitly_Distrust_DigiNotar_Root_CA.pem 1.1
+tests/usr.sbin/certctl/certs1/Makefile		1.1
+tests/usr.sbin/certctl/certs2/GTS_Root_R1.pem	1.1
+tests/usr.sbin/certctl/certs2/GlobalSign_Root_CA_-_R3.pem 1.1
+tests/usr.sbin/certctl/certs2/Makefile		1.1
+tests/usr.sbin/certctl/certs3/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.1.pem 1.1
+tests/usr.sbin/certctl/certs3/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.pem 1.1
+tests/usr.sbin/certctl/certs3/Makefile		1.1
+tests/usr.sbin/certctl/certs4/AC_RAIZ_FNMT-RCM.pem 1.1
+tests/usr.sbin/certctl/certs4/DigiCert_Global_Root_CA.pem 1.1
+tests/usr.sbin/certctl/certs4/Makefile		1.1
+tests/usr.sbin/certctl/t_certctl.sh		1.1-1.8
+usr.sbin/Makefile				1.292
+usr.sbin/certctl/Makefile			1.1-1.3
+usr.sbin/certctl/certctl.8			1.1,1.2
+usr.sbin/certctl/certctl.sh			1.1-1.4
+usr.sbin/certctl/certs.conf			1.1
+usr.sbin/postinstall/postinstall.in		1.53-1.55
+
+	Install TLS trust anchors from Mozilla, and add a new tool
+	certctl(8) for configuring the system to let applications use them.
+	[riastradh, ticket #343]
+
+sys/dev/pci/if_wm.c				1.783,1.784
+sys/dev/pci/if_wmvar.h				1.50
+
+	wm(4): delay sending LINK_STATE_UP to prevent dropping packets
+	on I35[04] and I21[01].
+	Print debug message correctly when WM_DEBUG is set.
+	[msaitoh, ticket #344]
 
