@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2023/06/03 21:31:47 lukem Exp $
+# $NetBSD: Makefile,v 1.23 2023/09/04 21:45:35 mrg Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -56,16 +56,20 @@ CWARNFLAGS+=	-Wno-missing-field-initializers
 CWARNFLAGS+=	-Wno-pointer-arith
 CWARNFLAGS+=	-Wno-shadow
 
+COPTS.i915_irq.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
 COPTS.i915_pci.c+=	${${ACTIVE_CC} == "gcc":? -Wno-override-init :}
 COPTS.i915_pci.c+=	${${ACTIVE_CC} == "clang":? -Wno-initializer-overrides :}
 COPTS.i915_sw_fence.c+=	${${ACTIVE_CC} == "clang":? -Wno-unused-function :}
-COPTS.intel_sprite.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
-COPTS.intel_ddi.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
 COPTS.intel_ddi.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.intel_ddi.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
 COPTS.intel_display.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.intel_display_power.c+=	${${ACTIVE_CC} == "gcc":? -Wno-array-bounds :}
+COPTS.intel_dp.c+=	${CC_WNO_STRINGOP_OVERREAD}
 COPTS.intel_guc_submission.c+=	${${ACTIVE_CC} == "clang":? -Wno-unused-function :}
 COPTS.intel_hdmi.c+=	${${ACTIVE_CC} == "clang":? -Wno-unused-function :}
+COPTS.intel_pm.c+=	${CC_WNO_STRINGOP_OVERREAD} ${CC_WNO_STRINGOP_OVERFLOW}
 COPTS.intel_sdvo.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.intel_sprite.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
 
 # NetBSD additions.
 SRCS+=	i915_module.c
