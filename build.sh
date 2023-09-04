@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.373 2023/07/18 16:59:57 lukem Exp $
+#	$NetBSD: build.sh,v 1.374 2023/09/04 02:21:17 khorben Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2030,7 +2030,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.373 2023/07/18 16:59:57 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.374 2023/09/04 02:21:17 khorben Exp $
 # with these arguments: ${_args}
 #
 
@@ -2404,7 +2404,7 @@ setup_mkrepro()
 
 			t=$("${cvslatest}" ${cvslatestflags} "${d}")
 			vcs=cvs
-		elif [ -d "${d}.git" ]; then
+		elif [ -d "${d}.git" -o -f "${d}.git" ]; then
 			t=$(cd "${d}" && git log -1 --format=%ct)
 			vcs=git
 		elif [ -d "${d}.hg" ]; then
