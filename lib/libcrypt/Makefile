@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2022/05/15 16:25:09 christos Exp $
+#	$NetBSD: Makefile,v 1.35 2023/09/04 23:00:48 mrg Exp $
 
 USE_FORT?=	yes	# cryptographic software
 
@@ -40,6 +40,9 @@ WARNS?=	5
 MAN=	crypt.3 pw_gensalt.3
 MLINKS= crypt.3 encrypt.3 crypt.3 setkey.3
 
+# XXXGCC12 - init_perm() takes a larger array than IE3264[] is, but
+# it doesn't need more.
+COPTS.crypt.c+=	${CC_WNO_STRINGOP_OVERFLOW}
 
 .if make(*.test)
 .SUFFIXES: .test
