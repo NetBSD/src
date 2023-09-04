@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.208 2022/08/01 10:30:28 kre Exp $	*/
+/*	$NetBSD: tulip.c,v 1.209 2023/09/04 21:54:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.208 2022/08/01 10:30:28 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.209 2023/09/04 21:54:41 mrg Exp $");
 
 
 #include <sys/param.h>
@@ -2751,7 +2751,7 @@ tlp_filter_setup(struct tulip_softc *sc)
 	txs->txs_mbuf = NULL;
 
 	nexttx = sc->sc_txnext;
-	txd = &sc->sc_txdescs[nexttx];
+	txd = &sc->sc_txdescs[nexttx & TULIP_NTXDESC_MASK /* XXXGCC12 */];
 	txd->td_status = 0;
 	txd->td_bufaddr1 = htole32(TULIP_CDSPADDR(sc));
 	txd->td_ctl = htole32((TULIP_SETUP_PACKET_LEN << TDCTL_SIZE1_SHIFT) |
