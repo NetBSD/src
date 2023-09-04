@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.25 2022/10/17 03:05:32 mrg Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.26 2023/09/04 21:31:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.25 2022/10/17 03:05:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.26 2023/09/04 21:31:58 mrg Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -790,7 +790,8 @@ bus_addr_t
 pci_resource_start(struct pci_dev *pdev, unsigned i)
 {
 
-	KASSERT(i < PCI_NUM_RESOURCES);
+	if (i >= PCI_NUM_RESOURCES)
+		panic("resource %d >= max %d", i, PCI_NUM_RESOURCES);
 	return pdev->pd_resources[i].addr;
 }
 
@@ -798,7 +799,8 @@ bus_size_t
 pci_resource_len(struct pci_dev *pdev, unsigned i)
 {
 
-	KASSERT(i < PCI_NUM_RESOURCES);
+	if (i >= PCI_NUM_RESOURCES)
+		panic("resource %d >= max %d", i, PCI_NUM_RESOURCES);
 	return pdev->pd_resources[i].size;
 }
 
@@ -813,7 +815,8 @@ int
 pci_resource_flags(struct pci_dev *pdev, unsigned i)
 {
 
-	KASSERT(i < PCI_NUM_RESOURCES);
+	if (i >= PCI_NUM_RESOURCES)
+		panic("resource %d >= max %d", i, PCI_NUM_RESOURCES);
 	return pdev->pd_resources[i].flags;
 }
 
