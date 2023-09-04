@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.41 2022/10/29 11:41:00 riastradh Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.41.2.1 2023/09/04 16:57:56 martin Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,19 +27,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.41 2022/10/29 11:41:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.41.2.1 2023/09/04 16:57:56 martin Exp $");
 
 #include <sys/param.h>
-#include <sys/cpu.h>
-#include <sys/systm.h>
-#include <sys/kthread.h>
-#include <sys/kmem.h>
-#include <sys/proc.h>
-#include <sys/workqueue.h>
-#include <sys/mutex.h>
+
 #include <sys/condvar.h>
-#include <sys/sdt.h>
+#include <sys/cpu.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/mutex.h>
+#include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/sdt.h>
+#include <sys/systm.h>
+#include <sys/workqueue.h>
 
 typedef struct work_impl {
 	SIMPLEQ_ENTRY(work_impl) wk_entry;
@@ -51,7 +52,7 @@ struct workqueue_queue {
 	kmutex_t q_mutex;
 	kcondvar_t q_cv;
 	struct workqhead q_queue_pending;
-	struct workqhead q_queue_running;
+	uint64_t q_gen;
 	lwp_t *q_worker;
 };
 
@@ -98,6 +99,12 @@ SDT_PROBE_DEFINE4(sdt, kernel, workqueue, return,
 SDT_PROBE_DEFINE2(sdt, kernel, workqueue, wait__start,
     "struct workqueue *"/*wq*/,
     "struct work *"/*wk*/);
+SDT_PROBE_DEFINE2(sdt, kernel, workqueue, wait__self,
+    "struct workqueue *"/*wq*/,
+    "struct work *"/*wk*/);
+SDT_PROBE_DEFINE2(sdt, kernel, workqueue, wait__hit,
+    "struct workqueue *"/*wq*/,
+    "struct work *"/*wk*/);
 SDT_PROBE_DEFINE2(sdt, kernel, workqueue, wait__done,
     "struct workqueue *"/*wq*/,
     "struct work *"/*wk*/);
@@ -134,10 +141,6 @@ workqueue_runlist(struct workqueue *wq, struct workqhead *list)
 	work_impl_t *wk;
 	work_impl_t *next;
 
-	/*
-	 * note that "list" is not a complete SIMPLEQ.
-	 */
-
 	for (wk = SIMPLEQ_FIRST(list); wk != NULL; wk = next) {
 		next = SIMPLEQ_NEXT(wk, wk_entry);
 		SDT_PROBE4(sdt, kernel, workqueue, entry,
@@ -153,37 +156,44 @@ workqueue_worker(void *cookie)
 {
 	struct workqueue *wq = cookie;
 	struct workqueue_queue *q;
-	int s;
+	int s, fpu = wq->wq_flags & WQ_FPU;
 
 	/* find the workqueue of this kthread */
 	q = workqueue_queue_lookup(wq, curlwp->l_cpu);
 
-	if (wq->wq_flags & WQ_FPU)
+	if (fpu)
 		s = kthread_fpu_enter();
+	mutex_enter(&q->q_mutex);
 	for (;;) {
-		/*
-		 * we violate abstraction of SIMPLEQ.
-		 */
+		struct workqhead tmp;
 
-		mutex_enter(&q->q_mutex);
+		SIMPLEQ_INIT(&tmp);
+
 		while (SIMPLEQ_EMPTY(&q->q_queue_pending))
 			cv_wait(&q->q_cv, &q->q_mutex);
-		KASSERT(SIMPLEQ_EMPTY(&q->q_queue_running));
-		q->q_queue_running.sqh_first =
-		    q->q_queue_pending.sqh_first; /* XXX */
+		SIMPLEQ_CONCAT(&tmp, &q->q_queue_pending);
 		SIMPLEQ_INIT(&q->q_queue_pending);
+
+		/*
+		 * Mark the queue as actively running a batch of work
+		 * by setting the generation number odd.
+		 */
+		q->q_gen |= 1;
 		mutex_exit(&q->q_mutex);
 
-		workqueue_runlist(wq, &q->q_queue_running);
+		workqueue_runlist(wq, &tmp);
 
+		/*
+		 * Notify workqueue_wait that we have completed a batch
+		 * of work by incrementing the generation number.
+		 */
 		mutex_enter(&q->q_mutex);
-		KASSERT(!SIMPLEQ_EMPTY(&q->q_queue_running));
-		SIMPLEQ_INIT(&q->q_queue_running);
-		/* Wake up workqueue_wait */
+		KASSERTMSG(q->q_gen & 1, "q=%p gen=%"PRIu64, q, q->q_gen);
+		q->q_gen++;
 		cv_broadcast(&q->q_cv);
-		mutex_exit(&q->q_mutex);
 	}
-	if (wq->wq_flags & WQ_FPU)
+	mutex_exit(&q->q_mutex);
+	if (fpu)
 		kthread_fpu_exit(s);
 }
 
@@ -212,7 +222,7 @@ workqueue_initqueue(struct workqueue *wq, struct workqueue_queue *q,
 	mutex_init(&q->q_mutex, MUTEX_DEFAULT, ipl);
 	cv_init(&q->q_cv, wq->wq_name);
 	SIMPLEQ_INIT(&q->q_queue_pending);
-	SIMPLEQ_INIT(&q->q_queue_running);
+	q->q_gen = 0;
 	ktf = ((wq->wq_flags & WQ_MPSAFE) != 0 ? KTHREAD_MPSAFE : 0);
 	if (wq->wq_prio < PRI_KERNEL)
 		ktf |= KTHREAD_TS;
@@ -325,29 +335,56 @@ workqueue_create(struct workqueue **wqp, const char *name,
 }
 
 static bool
-workqueue_q_wait(struct workqueue_queue *q, work_impl_t *wk_target)
+workqueue_q_wait(struct workqueue *wq, struct workqueue_queue *q,
+    work_impl_t *wk_target)
 {
 	work_impl_t *wk;
 	bool found = false;
+	uint64_t gen;
 
 	mutex_enter(&q->q_mutex);
-	if (q->q_worker == curlwp)
+
+	/*
+	 * Avoid a deadlock scenario.  We can't guarantee that
+	 * wk_target has completed at this point, but we can't wait for
+	 * it either, so do nothing.
+	 *
+	 * XXX Are there use-cases that require this semantics?
+	 */
+	if (q->q_worker == curlwp) {
+		SDT_PROBE2(sdt, kernel, workqueue, wait__self,  wq, wk_target);
 		goto out;
+	}
+
+	/*
+	 * Wait until the target is no longer pending.  If we find it
+	 * on this queue, the caller can stop looking in other queues.
+	 * If we don't find it in this queue, however, we can't skip
+	 * waiting -- it may be hidden in the running queue which we
+	 * have no access to.
+	 */
     again:
 	SIMPLEQ_FOREACH(wk, &q->q_queue_pending, wk_entry) {
-		if (wk == wk_target)
-			goto found;
+		if (wk == wk_target) {
+			SDT_PROBE2(sdt, kernel, workqueue, wait__hit,  wq, wk);
+			found = true;
+			cv_wait(&q->q_cv, &q->q_mutex);
+			goto again;
+		}
 	}
-	SIMPLEQ_FOREACH(wk, &q->q_queue_running, wk_entry) {
-		if (wk == wk_target)
-			goto found;
+
+	/*
+	 * The target may be in the batch of work currently running,
+	 * but we can't touch that queue.  So if there's anything
+	 * running, wait until the generation changes.
+	 */
+	gen = q->q_gen;
+	if (gen & 1) {
+		do
+			cv_wait(&q->q_cv, &q->q_mutex);
+		while (gen == q->q_gen);
 	}
-    found:
-	if (wk != NULL) {
-		found = true;
-		cv_wait(&q->q_cv, &q->q_mutex);
-		goto again;
-	}
+
     out:
 	mutex_exit(&q->q_mutex);
 
@@ -374,13 +411,13 @@ workqueue_wait(struct workqueue *wq, struct work *wk)
 		CPU_INFO_ITERATOR cii;
 		for (CPU_INFO_FOREACH(cii, ci)) {
 			q = workqueue_queue_lookup(wq, ci);
-			found = workqueue_q_wait(q, (work_impl_t *)wk);
+			found = workqueue_q_wait(wq, q, (work_impl_t *)wk);
 			if (found)
 				break;
 		}
 	} else {
 		q = workqueue_queue_lookup(wq, NULL);
-		(void) workqueue_q_wait(q, (work_impl_t *)wk);
+		(void)workqueue_q_wait(wq, q, (work_impl_t *)wk);
 	}
 	SDT_PROBE2(sdt, kernel, workqueue, wait__done,  wq, wk);
 }

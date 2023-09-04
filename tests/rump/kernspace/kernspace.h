@@ -1,4 +1,4 @@
-/*	$NetBSD: kernspace.h,v 1.8 2018/12/28 19:54:36 thorpej Exp $	*/
+/*	$NetBSD: kernspace.h,v 1.8.10.1 2023/09/04 16:57:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2018 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ void rumptest_alloc(size_t);
 void rumptest_lockme(enum locktest);
 void rumptest_workqueue1(void);
 void rumptest_workqueue_wait(void);
+void rumptest_workqueue_wait_pause(void);
 
 void rumptest_sendsig(char *);
 void rumptest_localsig(int);

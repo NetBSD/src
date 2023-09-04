@@ -1,4 +1,4 @@
-/*	$NetBSD: t_workqueue.c,v 1.2 2017/12/28 07:10:26 ozaki-r Exp $	*/
+/*	$NetBSD: t_workqueue.c,v 1.2.16.1 2023/09/04 16:57:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -72,10 +72,36 @@ ATF_TC_BODY(workqueue_wait, tc)
 	rump_unschedule();
 }
 
+static void
+sigsegv(int signo)
+{
+	atf_tc_fail("SIGSEGV");
+}
+
+ATF_TC(workqueue_wait_pause);
+ATF_TC_HEAD(workqueue_wait_pause, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks workqueue_wait with pause");
+}
+
+ATF_TC_BODY(workqueue_wait_pause, tc)
+{
+
+	REQUIRE_LIBC(signal(SIGSEGV, &sigsegv), SIG_ERR);
+
+	rump_init();
+
+	rump_schedule();
+	rumptest_workqueue_wait_pause(); /* panics or SIGSEGVs if fails */
+	rump_unschedule();
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, workqueue1);
 	ATF_TP_ADD_TC(tp, workqueue_wait);
+	ATF_TP_ADD_TC(tp, workqueue_wait_pause);
 
 	return atf_no_error();
 }
