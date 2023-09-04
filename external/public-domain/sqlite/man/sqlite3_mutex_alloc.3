@@ -1,4 +1,4 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_MUTEX_ALLOC 3
 .Os
 .Sh NAME
@@ -7,25 +7,26 @@
 .Nm sqlite3_mutex_enter ,
 .Nm sqlite3_mutex_try ,
 .Nm sqlite3_mutex_leave
-.Nd Mutexes
+.Nd mutexes
 .Sh SYNOPSIS
+.In sqlite3.h
 .Ft sqlite3_mutex *
 .Fo sqlite3_mutex_alloc
 .Fa "int"
 .Fc
-.Ft void 
+.Ft void
 .Fo sqlite3_mutex_free
 .Fa "sqlite3_mutex*"
 .Fc
-.Ft void 
+.Ft void
 .Fo sqlite3_mutex_enter
 .Fa "sqlite3_mutex*"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_mutex_try
 .Fa "sqlite3_mutex*"
 .Fc
-.Ft void 
+.Ft void
 .Fo sqlite3_mutex_leave
 .Fa "sqlite3_mutex*"
 .Fc
@@ -37,14 +38,14 @@ against SQLite is permitted to use any of these routines.
 The SQLite source code contains multiple implementations of these mutex
 routines.
 An appropriate implementation is selected automatically at compile-time.
-The following implementations are available in the SQLite core: 
+The following implementations are available in the SQLite core:
 .Bl -bullet
 .It
-SQLITE_MUTEX_PTHREADS 
+SQLITE_MUTEX_PTHREADS
 .It
-SQLITE_MUTEX_W32 
+SQLITE_MUTEX_W32
 .It
-SQLITE_MUTEX_NOOP 
+SQLITE_MUTEX_NOOP
 .El
 .Pp
 The SQLITE_MUTEX_NOOP implementation is a set of routines that does
@@ -67,33 +68,33 @@ the requested mutex.
 The argument to sqlite3_mutex_alloc() must one of these integer constants:
 .Bl -bullet
 .It
-SQLITE_MUTEX_FAST 
+SQLITE_MUTEX_FAST
 .It
-SQLITE_MUTEX_RECURSIVE 
+SQLITE_MUTEX_RECURSIVE
 .It
-SQLITE_MUTEX_STATIC_MASTER 
+SQLITE_MUTEX_STATIC_MAIN
 .It
-SQLITE_MUTEX_STATIC_MEM 
+SQLITE_MUTEX_STATIC_MEM
 .It
-SQLITE_MUTEX_STATIC_OPEN 
+SQLITE_MUTEX_STATIC_OPEN
 .It
-SQLITE_MUTEX_STATIC_PRNG 
+SQLITE_MUTEX_STATIC_PRNG
 .It
-SQLITE_MUTEX_STATIC_LRU 
+SQLITE_MUTEX_STATIC_LRU
 .It
-SQLITE_MUTEX_STATIC_PMEM 
+SQLITE_MUTEX_STATIC_PMEM
 .It
-SQLITE_MUTEX_STATIC_APP1 
+SQLITE_MUTEX_STATIC_APP1
 .It
-SQLITE_MUTEX_STATIC_APP2 
+SQLITE_MUTEX_STATIC_APP2
 .It
-SQLITE_MUTEX_STATIC_APP3 
+SQLITE_MUTEX_STATIC_APP3
 .It
-SQLITE_MUTEX_STATIC_VFS1 
+SQLITE_MUTEX_STATIC_VFS1
 .It
-SQLITE_MUTEX_STATIC_VFS2 
+SQLITE_MUTEX_STATIC_VFS2
 .It
-SQLITE_MUTEX_STATIC_VFS3 
+SQLITE_MUTEX_STATIC_VFS3
 .El
 .Pp
 The first two constants (SQLITE_MUTEX_FAST and SQLITE_MUTEX_RECURSIVE)
@@ -151,9 +152,20 @@ entered by the same thread.
 The behavior is undefined if the mutex is not currently entered by
 the calling thread or is not currently allocated.
 .Pp
-If the argument to sqlite3_mutex_enter(), sqlite3_mutex_try(), or sqlite3_mutex_leave()
-is a NULL pointer, then all three routines behave as no-ops.
+If the argument to sqlite3_mutex_enter(), sqlite3_mutex_try(), sqlite3_mutex_leave(),
+or sqlite3_mutex_free() is a NULL pointer, then any of the four routines
+behaves as a no-op.
 .Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 7836.
+.Bd -literal
+SQLITE_API sqlite3_mutex *sqlite3_mutex_alloc(int);
+SQLITE_API void sqlite3_mutex_free(sqlite3_mutex*);
+SQLITE_API void sqlite3_mutex_enter(sqlite3_mutex*);
+SQLITE_API int sqlite3_mutex_try(sqlite3_mutex*);
+SQLITE_API void sqlite3_mutex_leave(sqlite3_mutex*);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_mutex_held 3 ,
 .Xr SQLITE_CONFIG_SINGLETHREAD 3 ,

@@ -1,0 +1,82 @@
+.Dd August 24, 2023
+.Dt SQLITE3_AUTOVACUUM_PAGES 3
+.Os
+.Sh NAME
+.Nm sqlite3_autovacuum_pages
+.Nd autovacuum compaction amount callback
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft int
+.Fo sqlite3_autovacuum_pages
+.Fa "sqlite3 *db"
+.Fa "unsigned int(*)(void*,const char*,unsigned int,unsigned int,unsigned int)"
+.Fa "void*"
+.Fa "void(*)(void*)"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_autovacuum_pages(D,C,P,X) interface registers a callback
+function C that is invoked prior to each autovacuum of the database
+file.
+The callback is passed a copy of the generic data pointer (P), the
+schema-name of the attached database that is being autovacuumed, the
+size of the database file in pages, the number of free pages, and the
+number of bytes per page, respectively.
+The callback should return the number of free pages that should be
+removed by the autovacuum.
+If the callback returns zero, then no autovacuum happens.
+If the value returned is greater than or equal to the number of free
+pages, then a complete autovacuum happens.
+.Pp
+If there are multiple ATTACH-ed database files that are being modified
+as part of a transaction commit, then the autovacuum pages callback
+is invoked separately for each file.
+.Pp
+\fBThe callback is not reentrant.\fP The callback function should not attempt
+to invoke any other SQLite interface.
+If it does, bad things may happen, including segmentation faults and
+corrupt database files.
+The callback function should be a simple function that does some arithmetic
+on its input parameters and returns a result.
+.Pp
+The X parameter to sqlite3_autovacuum_pages(D,C,P,X) is an optional
+destructor for the P parameter.
+If X is not NULL, then X(P) is invoked whenever the database connection
+closes or when the callback is overwritten by another invocation of
+sqlite3_autovacuum_pages().
+.Pp
+There is only one autovacuum pages callback per database connection.
+Each call to the sqlite3_autovacuum_pages() interface overrides all
+previous invocations for that database connection.
+If the callback argument (C) to sqlite3_autovacuum_pages(D,C,P,X) is
+a NULL pointer, then the autovacuum steps callback is cancelled.
+The return value from sqlite3_autovacuum_pages() is normally SQLITE_OK,
+but might be some other error code if something goes wrong.
+The current implementation will only return SQLITE_OK or SQLITE_MISUSE,
+but other return codes might be added in future releases.
+.Pp
+If no autovacuum pages callback is specified (the usual case) or a
+NULL pointer is provided for the callback, then the default behavior
+is to vacuum all free pages.
+So, in other words, the default behavior is the same as if the callback
+function were something like this:
+.Bd -ragged
+.Bd -literal
+    unsigned int demonstration_autovac_pages_callback(       void *pClientData,
+      const char *zSchema,       unsigned int nDbPage,       unsigned
+int nFreePage,       unsigned int nBytePerPage     ){       return
+nFreePage;     }
+.Ed
+.Pp
+.Ed
+.Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 6668.
+.Bd -literal
+SQLITE_API int sqlite3_autovacuum_pages(
+  sqlite3 *db,
+  unsigned int(*)(void*,const char*,unsigned int,unsigned int,unsigned int),
+  void*,
+  void(*)(void*)
+);
+.Ed

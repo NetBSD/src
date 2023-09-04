@@ -1,15 +1,16 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_SNAPSHOT_GET 3
 .Os
 .Sh NAME
 .Nm sqlite3_snapshot_get
-.Nd Record A Database Snapshot
+.Nd record a database snapshot
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_snapshot_get
 .Fa "sqlite3 *db"
 .Fa "const char *zSchema"
-.Fa "sqlite3_snapshot **ppSnapshot "
+.Fa "sqlite3_snapshot **ppSnapshot"
 .Fc
 .Sh DESCRIPTION
 The sqlite3_snapshot_get(D,S,P) interface
@@ -48,16 +49,28 @@ for some other reason, whether or not a read transaction is opened
 on schema S is undefined.
 .Pp
 The sqlite3_snapshot object returned from a successful
-call to sqlite3_snapshot_get() must be freed
-using sqlite3_snapshot_free() to avoid a memory
-leak.
+call to
+.Fn sqlite3_snapshot_get
+must be freed using
+.Fn sqlite3_snapshot_free
+to avoid a memory leak.
 .Pp
-The sqlite3_snapshot_get() interface is only
-available when the SQLITE_ENABLE_SNAPSHOT compile-time
-option is used.
+The
+.Fn sqlite3_snapshot_get
+interface is only available when the SQLITE_ENABLE_SNAPSHOT
+compile-time option is used.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 10358.
+.Bd -literal
+SQLITE_API SQLITE_EXPERIMENTAL int sqlite3_snapshot_get(
+  sqlite3 *db,
+  const char *zSchema,
+  sqlite3_snapshot **ppSnapshot
+);
+.Ed
 .Sh SEE ALSO
-.Xr sqlite3_get_autocommit 3 ,
 .Xr sqlite3 3 ,
+.Xr sqlite3_get_autocommit 3 ,
 .Xr sqlite3_snapshot 3 ,
-.Xr sqlite3_snapshot_free 3 ,
-.Xr sqlite3_snapshot_get 3
+.Xr sqlite3_snapshot_free 3

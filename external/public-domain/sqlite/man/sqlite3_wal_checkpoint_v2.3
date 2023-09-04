@@ -1,17 +1,18 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_WAL_CHECKPOINT_V2 3
 .Os
 .Sh NAME
 .Nm sqlite3_wal_checkpoint_v2
-.Nd Checkpoint a database
+.Nd checkpoint a database
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_wal_checkpoint_v2
 .Fa "sqlite3 *db"
 .Fa "const char *zDb"
 .Fa "int eMode"
 .Fa "int *pnLog"
-.Fa "int *pnCkpt                     "
+.Fa "int *pnCkpt"
 .Fc
 .Sh DESCRIPTION
 The sqlite3_wal_checkpoint_v2(D,X,M,L,C) interface runs a checkpoint
@@ -19,33 +20,36 @@ operation on database X of database connection D
 in mode M.
 Status information is written back into integers pointed to by L and
 C.
-The M parameter must be a valid checkpoint mode:   
+The M parameter must be a valid checkpoint mode:
 .Bl -tag -width Ds
-.It SQLITE_CHECKPOINT_PASSIVECheckpoint as many frames as possible without
-waiting for any database readers or writers to finish, then sync the
-database file if all frames in the log were checkpointed.
+.It SQLITE_CHECKPOINT_PASSIVE
+Checkpoint as many frames as possible without waiting for any database
+readers or writers to finish, then sync the database file if all frames
+in the log were checkpointed.
 The busy-handler callback is never invoked in
 the SQLITE_CHECKPOINT_PASSIVE mode.
 On the other hand, passive mode might leave the checkpoint unfinished
 if there are concurrent readers or writers.
-.It SQLITE_CHECKPOINT_FULLThis mode blocks (it invokes the busy-handler callback)
+.It SQLITE_CHECKPOINT_FULL
+This mode blocks (it invokes the busy-handler callback)
 until there is no database writer and all readers are reading from
 the most recent database snapshot.
 It then checkpoints all frames in the log file and syncs the database
 file.
 This mode blocks new database writers while it is pending, but new
 database readers are allowed to continue unimpeded.
-.It SQLITE_CHECKPOINT_RESTARTThis mode works the same way as SQLITE_CHECKPOINT_FULL
-with the addition that after checkpointing the log file it blocks (calls
-the busy-handler callback) until all readers are
-reading from the database file only.
+.It SQLITE_CHECKPOINT_RESTART
+This mode works the same way as SQLITE_CHECKPOINT_FULL with the addition
+that after checkpointing the log file it blocks (calls the busy-handler callback)
+until all readers are reading from the database file only.
 This ensures that the next writer will restart the log file from the
 beginning.
 Like SQLITE_CHECKPOINT_FULL, this mode blocks new database writer attempts
 while it is pending, but does not impede readers.
-.It SQLITE_CHECKPOINT_TRUNCATEThis mode works the same way as SQLITE_CHECKPOINT_RESTART
-with the addition that it also truncates the log file to zero bytes
-just prior to a successful return.
+.It SQLITE_CHECKPOINT_TRUNCATE
+This mode works the same way as SQLITE_CHECKPOINT_RESTART with the
+addition that it also truncates the log file to zero bytes just prior
+to a successful return.
 .El
 .Pp
 If pnLog is not NULL, then *pnLog is set to the total number of frames
@@ -99,14 +103,26 @@ If zDb is not NULL (or a zero length string) and is not the name of
 any attached database, SQLITE_ERROR is returned to the caller.
 .Pp
 Unless it returns SQLITE_MISUSE, the sqlite3_wal_checkpoint_v2() interface
-sets the error information that is queried by sqlite3_errcode()
-and sqlite3_errmsg().
-.Pp
+sets the error information that is queried by
+.Fn sqlite3_errcode
+and
+.Fn sqlite3_errmsg .
 The PRAGMA wal_checkpoint command can be used
 to invoke this interface from SQL.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 9494.
+.Bd -literal
+SQLITE_API int sqlite3_wal_checkpoint_v2(
+  sqlite3 *db,                    /* Database handle */
+  const char *zDb,                /* Name of attached database (or NULL) */
+  int eMode,                      /* SQLITE_CHECKPOINT_* value */
+  int *pnLog,                     /* OUT: Size of WAL log in frames */
+  int *pnCkpt                     /* OUT: Total number of frames checkpointed */
+);
+.Ed
 .Sh SEE ALSO
-.Xr sqlite3_busy_handler 3 ,
-.Xr SQLITE_CHECKPOINT_PASSIVE 3 ,
 .Xr sqlite3 3 ,
 .Xr sqlite3_busy_handler 3 ,
-.Xr sqlite3_errcode 3
+.Xr sqlite3_errcode 3 ,
+.Xr SQLITE_CHECKPOINT_PASSIVE 3

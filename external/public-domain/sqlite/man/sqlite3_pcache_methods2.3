@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_PCACHE_METHODS2 3
 .Os
 .Sh NAME
 .Nm sqlite3_pcache_methods2 ,
 .Nm sqlite3_pcache_methods2
-.Nd Application Defined Page Cache.
+.Nd application defined page cache
 .Sh SYNOPSIS
+.In sqlite3.h
 .Vt typedef struct sqlite3_pcache_methods2 sqlite3_pcache_methods2;
 .Vt struct sqlite3_pcache_methods2 ;
 .Sh DESCRIPTION
@@ -26,10 +27,12 @@ The built-in page cache is recommended for most uses.
 .Pp
 The contents of the sqlite3_pcache_methods2 structure are copied to
 an internal buffer by SQLite within the call to sqlite3_config.
-Hence the application may discard the parameter after the call to sqlite3_config()
+Hence the application may discard the parameter after the call to
+.Fn sqlite3_config
 returns.
 .Pp
-The xInit() method is called once for each effective call to sqlite3_initialize()
+The xInit() method is called once for each effective call to
+.Fn sqlite3_initialize
 (usually only once during the lifetime of the process).
 The xInit() method is passed a copy of the sqlite3_pcache_methods2.pArg
 value.
@@ -38,14 +41,16 @@ required by the custom page cache implementation.
 If the xInit() method is NULL, then the built-in default page cache
 is used instead of the application defined page cache.
 .Pp
-The xShutdown() method is called by sqlite3_shutdown().
+The xShutdown() method is called by
+.Fn sqlite3_shutdown .
 It can be used to clean up any outstanding resources before process
 shutdown, if required.
 The xShutdown() method may be NULL.
 .Pp
 SQLite automatically serializes calls to the xInit method, so the xInit
 method need not be threadsafe.
-The xShutdown method is only called from sqlite3_shutdown()
+The xShutdown method is only called from
+.Fn sqlite3_shutdown
 so it does not need to be threadsafe either.
 All other methods must be threadsafe in multithreaded applications.
 .Pp
@@ -108,25 +113,22 @@ implementation must return a pointer to the page buffer with its content
 intact.
 If the requested page is not already in the cache, then the cache implementation
 should use the value of the createFlag parameter to help it determined
-what action to take: 
+what action to take:
 .Pp
-<table border=1 width=85% align=center> <tr><th> createFlag <th> Behavior
-when page is not already in cache <tr><td> 0 <td> Do not allocate a
-new page.
+   createFlag   Behavior when page is not already in cache
+   0   Do not allocate a new page.
 Return NULL.
-<tr><td> 1 <td> Allocate a new page if it easy and convenient to do
-so.
+   1   Allocate a new page if it easy and convenient to do so.
 Otherwise return NULL.
-<tr><td> 2 <td> Make every effort to allocate a new page.
+   2   Make every effort to allocate a new page.
 Only return NULL if allocating a new page is effectively impossible.
-</table> 
 .Pp
 SQLite will normally invoke xFetch() with a createFlag of 0 or 1.
 SQLite will only use a createFlag of 2 after a prior call with a createFlag
 of 1 failed.
-In between the to xFetch() calls, SQLite may attempt to unpin one or
-more cache pages by spilling the content of pinned pages to disk and
-synching the operating system disk cache.
+In between the xFetch() calls, SQLite may attempt to unpin one or more
+cache pages by spilling the content of pinned pages to disk and synching
+the operating system disk cache.
 .Pp
 xUnpin() is called by SQLite with a pointer to a currently pinned page
 as its second argument.
@@ -164,6 +166,28 @@ SQLite invokes the xShrink() method when it wants the page cache to
 free up as much of heap memory as possible.
 The page cache implementation is not obligated to free any memory,
 but well-behaved implementations should do their best.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 8797.
+.Bd -literal
+typedef struct sqlite3_pcache_methods2 sqlite3_pcache_methods2;
+struct sqlite3_pcache_methods2 {
+  int iVersion;
+  void *pArg;
+  int (*xInit)(void*);
+  void (*xShutdown)(void*);
+  sqlite3_pcache *(*xCreate)(int szPage, int szExtra, int bPurgeable);
+  void (*xCachesize)(sqlite3_pcache*, int nCachesize);
+  int (*xPagecount)(sqlite3_pcache*);
+  sqlite3_pcache_page *(*xFetch)(sqlite3_pcache*, unsigned key, int createFlag);
+  void (*xUnpin)(sqlite3_pcache*, sqlite3_pcache_page*, int discard);
+  void (*xRekey)(sqlite3_pcache*, sqlite3_pcache_page*,
+      unsigned oldKey, unsigned newKey);
+  void (*xTruncate)(sqlite3_pcache*, unsigned iLimit);
+  void (*xDestroy)(sqlite3_pcache*);
+  void (*xShrink)(sqlite3_pcache*);
+};
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_config 3 ,
 .Xr sqlite3_initialize 3 ,

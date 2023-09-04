@@ -1,17 +1,18 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_GET_AUXDATA 3
 .Os
 .Sh NAME
 .Nm sqlite3_get_auxdata ,
 .Nm sqlite3_set_auxdata
-.Nd Function Auxiliary Data
+.Nd function auxiliary data
 .Sh SYNOPSIS
+.In sqlite3.h
 .Ft void *
 .Fo sqlite3_get_auxdata
 .Fa "sqlite3_context*"
 .Fa "int N"
 .Fc
-.Ft void 
+.Ft void
 .Fo sqlite3_set_auxdata
 .Fa "sqlite3_context*"
 .Fa "int N"
@@ -46,16 +47,19 @@ or NULL if the metadata has been discarded.
 After each call to sqlite3_set_auxdata(C,N,P,X) where X is not NULL,
 SQLite will invoke the destructor function X with parameter P exactly
 once, when the metadata is discarded.
-SQLite is free to discard the metadata at any time, including: 
+SQLite is free to discard the metadata at any time, including:
 .Bl -bullet
 .It
-when the corresponding function parameter changes  , or 
+when the corresponding function parameter changes, or
 .It
-when sqlite3_reset() or sqlite3_finalize()
-is called for the SQL statement  , or 
+when
+.Fn sqlite3_reset
+or
+.Fn sqlite3_finalize
+is called for the SQL statement, or
 .It
-when sqlite3_set_auxdata() is invoked again on the same parameter 
-, or 
+when sqlite3_set_auxdata() is invoked again on the same parameter,
+or
 .It
 during the original sqlite3_set_auxdata() call when a memory allocation
 error occurs.
@@ -78,6 +82,13 @@ kinds of function caching behavior.
 .Pp
 These routines must be called from the same thread in which the SQL
 function is running.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 5878.
+.Bd -literal
+SQLITE_API void *sqlite3_get_auxdata(sqlite3_context*, int N);
+SQLITE_API void sqlite3_set_auxdata(sqlite3_context*, int N, void*, void (*)(void*));
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_finalize 3 ,
 .Xr sqlite3_reset 3

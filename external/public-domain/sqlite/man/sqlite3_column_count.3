@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_COLUMN_COUNT 3
 .Os
 .Sh NAME
 .Nm sqlite3_column_count
-.Nd Number Of Columns In A Result Set
+.Nd number of columns in a result set
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_column_count
 .Fa "sqlite3_stmt *pStmt"
 .Fc
@@ -19,6 +20,12 @@ A SELECT statement will always have a positive sqlite3_column_count()
 but depending on the WHERE clause constraints and the table content,
 it might return no rows.
 .Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 4773.
+.Bd -literal
+SQLITE_API int sqlite3_column_count(sqlite3_stmt *pStmt);
+.Ed
 .Sh SEE ALSO
-.Xr sqlite3_stmt 3 ,
-.Xr sqlite3_data_count 3
+.Xr sqlite3_data_count 3 ,
+.Xr sqlite3_stmt 3

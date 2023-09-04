@@ -1,31 +1,32 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3CHANGESET_APPLY 3
 .Os
 .Sh NAME
 .Nm sqlite3changeset_apply ,
 .Nm sqlite3changeset_apply_v2
-.Nd Apply A Changeset To A Database
+.Nd apply a changeset to a database
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3changeset_apply
 .Fa "sqlite3 *db"
 .Fa "int nChangeset"
 .Fa "void *pChangeset"
-.Fa "int(*xFilter)( void *pCtx,                   const char *zTab              )"
-.Fa "int(*xConflict)( void *pCtx,                   int eConflict,                sqlite3_changeset_iter *p     )"
-.Fa "void *pCtx                      "
+.Fa "int(*xFilter)( void *pCtx,const char *zTab)"
+.Fa "int(*xConflict)( void *pCtx,int eConflict,sqlite3_changeset_iter *p)"
+.Fa "void *pCtx"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3changeset_apply_v2
 .Fa "sqlite3 *db"
 .Fa "int nChangeset"
 .Fa "void *pChangeset"
-.Fa "int(*xFilter)( void *pCtx,                   const char *zTab              )"
-.Fa "int(*xConflict)( void *pCtx,                   int eConflict,                sqlite3_changeset_iter *p     )"
+.Fa "int(*xFilter)( void *pCtx,const char *zTab)"
+.Fa "int(*xConflict)( void *pCtx,int eConflict,sqlite3_changeset_iter *p)"
 .Fa "void *pCtx"
 .Fa "void **ppRebase"
 .Fa "int *pnRebase"
-.Fa "int flags                       "
+.Fa "int flags"
 .Fc
 .Sh DESCRIPTION
 Apply a changeset or patchset to a database.
@@ -50,10 +51,10 @@ A table is considered compatible if all of the following are true:
 .Bl -bullet
 .It
 The table has the same name as the name recorded in the changeset,
-and 
+and
 .It
 The table has at least as many columns as recorded in the changeset,
-and 
+and
 .It
 The table has primary key columns in the same position as recorded
 in the changeset.
@@ -90,9 +91,10 @@ the value returned by each invocation of the conflict-handler function.
 Refer to the documentation for the three available return values
 for details.
 .Bl -tag -width Ds
-.It DELETE ChangesFor each DELETE change, the function checks if the target
-database contains a row with the same primary key value (or values)
-as the original row values stored in the changeset.
+.It DELETE Changes
+For each DELETE change, the function checks if the target database
+contains a row with the same primary key value (or values) as the original
+row values stored in the changeset.
 If it does, and the values stored in all non-primary key columns also
 match the values stored in the changeset the row is deleted from the
 target database.
@@ -117,8 +119,9 @@ conflict-handler function is invoked with SQLITE_CHANGESET_CONSTRAINT
 passed as the second argument.
 This includes the case where the DELETE operation is attempted because
 an earlier call to the conflict handler function returned SQLITE_CHANGESET_REPLACE.
-.It INSERT ChangesFor each INSERT change, an attempt is made to insert
-the new row into the database.
+.It INSERT Changes
+For each INSERT change, an attempt is made to insert the new row into
+the database.
 If the changeset row contains fewer fields than the database table,
 the trailing fields are populated with their default values.
 .Pp
@@ -127,14 +130,14 @@ contains a row with the same primary key values, the conflict handler
 function is invoked with the second argument set to SQLITE_CHANGESET_CONFLICT.
 .Pp
 If the attempt to insert the row fails because of some other constraint
-violation (e.g.
-NOT NULL or UNIQUE), the conflict handler function is invoked with
-the second argument set to SQLITE_CHANGESET_CONSTRAINT.
+violation (e.g. NOT NULL or UNIQUE), the conflict handler function
+is invoked with the second argument set to SQLITE_CHANGESET_CONSTRAINT.
 This includes the case where the INSERT operation is re-attempted because
 an earlier call to the conflict handler function returned SQLITE_CHANGESET_REPLACE.
-.It UPDATE ChangesFor each UPDATE change, the function checks if the target
-database contains a row with the same primary key value (or values)
-as the original row values stored in the changeset.
+.It UPDATE Changes
+For each UPDATE change, the function checks if the target database
+contains a row with the same primary key value (or values) as the original
+row values stored in the changeset.
 If it does, and the values stored in all modified non-primary key columns
 also match the values stored in the changeset the row is updated within
 the target database.
@@ -161,7 +164,7 @@ an earlier call to the conflict handler function returned SQLITE_CHANGESET_REPLA
 .Pp
 It is safe to execute SQL statements, including those that write to
 the table that the callback related to, from within the xConflict callback.
-This can be used to further customize the applications conflict resolution
+This can be used to further customize the application's conflict resolution
 strategy.
 .Pp
 All changes made by these functions are enclosed in a savepoint transaction.
@@ -182,13 +185,49 @@ were encountered while applying the patchset.
 See comments surrounding the sqlite3_rebaser APIs for further details.
 .Pp
 The behavior of sqlite3changeset_apply_v2() and its streaming equivalent
-may be modified by passing a combination of  supported flags
+may be modified by passing a combination of supported flags
 as the 9th parameter.
 .Pp
 Note that the sqlite3changeset_apply_v2() API is still \fBexperimental\fP
 and therefore subject to change.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 11842.
+.Bd -literal
+SQLITE_API int sqlite3changeset_apply(
+  sqlite3 *db,                    /* Apply change to "main" db of this handle */
+  int nChangeset,                 /* Size of changeset in bytes */
+  void *pChangeset,               /* Changeset blob */
+  int(*xFilter)(
+    void *pCtx,                   /* Copy of sixth arg to _apply() */
+    const char *zTab              /* Table name */
+  ),
+  int(*xConflict)(
+    void *pCtx,                   /* Copy of sixth arg to _apply() */
+    int eConflict,                /* DATA, MISSING, CONFLICT, CONSTRAINT */
+    sqlite3_changeset_iter *p     /* Handle describing change and conflict */
+  ),
+  void *pCtx                      /* First argument passed to xConflict */
+);
+SQLITE_API int sqlite3changeset_apply_v2(
+  sqlite3 *db,                    /* Apply change to "main" db of this handle */
+  int nChangeset,                 /* Size of changeset in bytes */
+  void *pChangeset,               /* Changeset blob */
+  int(*xFilter)(
+    void *pCtx,                   /* Copy of sixth arg to _apply() */
+    const char *zTab              /* Table name */
+  ),
+  int(*xConflict)(
+    void *pCtx,                   /* Copy of sixth arg to _apply() */
+    int eConflict,                /* DATA, MISSING, CONFLICT, CONSTRAINT */
+    sqlite3_changeset_iter *p     /* Handle describing change and conflict */
+  ),
+  void *pCtx,                     /* First argument passed to xConflict */
+  void **ppRebase, int *pnRebase, /* OUT: Rebase data */
+  int flags                       /* SESSION_CHANGESETAPPLY_* flags */
+);
+.Ed
 .Sh SEE ALSO
-.Xr SQLITE_CHANGESET_OMIT 3 ,
 .Xr SQLITE_CHANGESET_DATA 3 ,
 .Xr SQLITE_CHANGESET_OMIT 3 ,
 .Xr SQLITE_CHANGESETAPPLY_NOSAVEPOINT 3

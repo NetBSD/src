@@ -1,17 +1,18 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_STR_ERRCODE 3
 .Os
 .Sh NAME
 .Nm sqlite3_str_errcode ,
 .Nm sqlite3_str_length ,
 .Nm sqlite3_str_value
-.Nd Status Of A Dynamic String
+.Nd status of a dynamic string
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_str_errcode
 .Fa "sqlite3_str*"
 .Fc
-.Ft int 
+.Ft int
 .Fo sqlite3_str_length
 .Fa "sqlite3_str*"
 .Fc
@@ -49,6 +50,14 @@ Applications may change the content of the string returned by sqlite3_str_value(
 as long as they do not write into any bytes outside the range of 0
 to sqlite3_str_length(X) and do not read or write
 any byte after any subsequent sqlite3_str method call.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 8369.
+.Bd -literal
+SQLITE_API int sqlite3_str_errcode(sqlite3_str*);
+SQLITE_API int sqlite3_str_length(sqlite3_str*);
+SQLITE_API char *sqlite3_str_value(sqlite3_str*);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_str 3 ,
 .Xr SQLITE_OK 3

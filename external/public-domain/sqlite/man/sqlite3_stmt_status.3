@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_STMT_STATUS 3
 .Os
 .Sh NAME
 .Nm sqlite3_stmt_status
-.Nd Prepared Statement Status
+.Nd prepared statement status
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_stmt_status
 .Fa "sqlite3_stmt*"
 .Fa "int op"
@@ -29,8 +30,14 @@ The current value of the requested counter is returned.
 If the resetFlg is true, then the counter is reset to zero after this
 interface call returns.
 .Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 8667.
+.Bd -literal
+SQLITE_API int sqlite3_stmt_status(sqlite3_stmt*, int op,int resetFlg);
+.Ed
 .Sh SEE ALSO
-.Xr sqlite3_stmt 3 ,
 .Xr sqlite3_db_status 3 ,
 .Xr sqlite3_status 3 ,
+.Xr sqlite3_stmt 3 ,
 .Xr SQLITE_STMTSTATUS_FULLSCAN_STEP 3

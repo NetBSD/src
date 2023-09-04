@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_TABLE_COLUMN_METADATA 3
 .Os
 .Sh NAME
 .Nm sqlite3_table_column_metadata
-.Nd Extract Metadata About A Column Of A Table
+.Nd extract metadata about a column of a table
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_table_column_metadata
 .Fa "sqlite3 *db"
 .Fa "const char *zDbName"
@@ -15,7 +16,7 @@
 .Fa "char const **pzCollSeq"
 .Fa "int *pNotNull"
 .Fa "int *pPrimaryKey"
-.Fa "int *pAutoinc               "
+.Fa "int *pAutoinc"
 .Fc
 .Sh DESCRIPTION
 The sqlite3_table_column_metadata(X,D,T,C,....) routine returns information
@@ -25,7 +26,7 @@ The sqlite3_table_column_metadata() interface returns SQLITE_OK and
 fills in the non-NULL pointers in the final five arguments with appropriate
 values if the specified column exists.
 The sqlite3_table_column_metadata() interface returns SQLITE_ERROR
-and if the specified column does not exist.
+if the specified column does not exist.
 If the column-name parameter to sqlite3_table_column_metadata() is
 a NULL pointer, then this routine simply checks for the existence of
 the table and returns SQLITE_OK if the table exists and SQLITE_ERROR
@@ -35,9 +36,9 @@ is NULL then the result is undefined behavior.
 .Pp
 The column is identified by the second, third and fourth parameters
 to this function.
-The second parameter is either the name of the database (i.e.
-"main", "temp", or an attached database) containing the specified table
-or NULL.
+The second parameter is either the name of the database (i.e. "main",
+"temp", or an attached database) containing the specified table or
+NULL.
 If it is NULL, then all attached databases are searched for the table
 using the same algorithm used by the database engine to resolve unqualified
 table references.
@@ -50,13 +51,14 @@ Metadata is returned by writing to the memory locations passed as the
 Any of these arguments may be NULL, in which case the corresponding
 element of metadata is omitted.
 .Bd -ragged
-<table border="1"> <tr><th> Parameter <th> Output<br>Type <th>  Description
 .Pp
-<tr><td> 5th <td> const char* <td> Data type <tr><td> 6th <td> const
-char* <td> Name of default collation sequence <tr><td> 7th <td> int
-<td> True if column has a NOT NULL constraint <tr><td> 8th <td> int
-<td> True if column is part of the PRIMARY KEY <tr><td> 9th <td> int
-<td> True if column is AUTOINCREMENT </table> 
+   Parameter   Output Type    Description
+   5th   const char*   Data type
+   6th   const char*   Name of default collation sequence
+   7th   int           True if column has a NOT NULL constraint
+   8th   int           True if column is part of the PRIMARY KEY
+   9th   int           True if column is AUTOINCREMENT
+.Pp
 .Ed
 .Pp
 The memory pointed to by the character pointers returned for the declaration
@@ -71,14 +73,30 @@ is not a WITHOUT ROWID table and an INTEGER PRIMARY KEY
 column has been explicitly declared, then the output parameters are
 set for the explicitly declared column.
 If there is no INTEGER PRIMARY KEY column, then
-the outputs for the rowid are set as follows: 
+the outputs for the rowid are set as follows:
 .Bd -literal
 data type: "INTEGER" collation sequence: "BINARY" not null: 0 primary
-key: 1 auto increment: 0 
+key: 1 auto increment: 0
 .Ed
 .Pp
 This function causes all database schemas to be read from disk and
 parsed, if that has not already been done, and returns an error if
 any errors are encountered while loading the schema.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 6944.
+.Bd -literal
+SQLITE_API int sqlite3_table_column_metadata(
+  sqlite3 *db,                /* Connection handle */
+  const char *zDbName,        /* Database name or NULL */
+  const char *zTableName,     /* Table name */
+  const char *zColumnName,    /* Column name */
+  char const **pzDataType,    /* OUTPUT: Declared data type */
+  char const **pzCollSeq,     /* OUTPUT: Collation sequence name */
+  int *pNotNull,              /* OUTPUT: True if NOT NULL constraint exists */
+  int *pPrimaryKey,           /* OUTPUT: True if column part of PK */
+  int *pAutoinc               /* OUTPUT: True if column is auto-increment */
+);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3 3

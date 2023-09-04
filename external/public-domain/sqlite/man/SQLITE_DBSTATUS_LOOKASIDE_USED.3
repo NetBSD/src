@@ -1,4 +1,4 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE_DBSTATUS_LOOKASIDE_USED 3
 .Os
 .Sh NAME
@@ -16,8 +16,9 @@
 .Nm SQLITE_DBSTATUS_CACHE_USED_SHARED ,
 .Nm SQLITE_DBSTATUS_CACHE_SPILL ,
 .Nm SQLITE_DBSTATUS_MAX
-.Nd Status Parameters for database connections
+.Nd status parameters for database connections
 .Sh SYNOPSIS
+.In sqlite3.h
 .Fd #define SQLITE_DBSTATUS_LOOKASIDE_USED
 .Fd #define SQLITE_DBSTATUS_CACHE_USED
 .Fd #define SQLITE_DBSTATUS_SCHEMA_USED
@@ -34,21 +35,25 @@
 .Fd #define SQLITE_DBSTATUS_MAX
 .Sh DESCRIPTION
 These constants are the available integer "verbs" that can be passed
-as the second argument to the sqlite3_db_status()
+as the second argument to the
+.Fn sqlite3_db_status
 interface.
 .Pp
 New verbs may be added in future releases of SQLite.
 Existing verbs might be discontinued.
-Applications should check the return code from sqlite3_db_status()
+Applications should check the return code from
+.Fn sqlite3_db_status
 to make sure that the call worked.
-The sqlite3_db_status() interface will return a
-non-zero error code if a discontinued or unsupported verb is invoked.
+The
+.Fn sqlite3_db_status
+interface will return a non-zero error code if a discontinued or unsupported
+verb is invoked.
 .Bl -tag -width Ds
 .It SQLITE_DBSTATUS_LOOKASIDE_USED
 This parameter returns the number of lookaside memory slots currently
 checked out.
 .It SQLITE_DBSTATUS_LOOKASIDE_HIT
-This parameter returns the number malloc attempts that were satisfied
+This parameter returns the number of malloc attempts that were satisfied
 using lookaside memory.
 Only the high-water value is meaningful; the current value is always
 zero.
@@ -123,12 +128,31 @@ Transactions are more efficient if they are written to disk all at
 once.
 When pages spill mid-transaction, that introduces additional overhead.
 This parameter can be used help identify inefficiencies that can be
-resolve by increasing the cache size.
+resolved by increasing the cache size.
 .It SQLITE_DBSTATUS_DEFERRED_FKS
 This parameter returns zero for the current value if and only if all
 foreign key constraints (deferred or immediate) have been resolved.
 The highwater mark is always 0.
 .El
 .Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 8540.
+.Bd -literal
+#define SQLITE_DBSTATUS_LOOKASIDE_USED       0
+#define SQLITE_DBSTATUS_CACHE_USED           1
+#define SQLITE_DBSTATUS_SCHEMA_USED          2
+#define SQLITE_DBSTATUS_STMT_USED            3
+#define SQLITE_DBSTATUS_LOOKASIDE_HIT        4
+#define SQLITE_DBSTATUS_LOOKASIDE_MISS_SIZE  5
+#define SQLITE_DBSTATUS_LOOKASIDE_MISS_FULL  6
+#define SQLITE_DBSTATUS_CACHE_HIT            7
+#define SQLITE_DBSTATUS_CACHE_MISS           8
+#define SQLITE_DBSTATUS_CACHE_WRITE          9
+#define SQLITE_DBSTATUS_DEFERRED_FKS        10
+#define SQLITE_DBSTATUS_CACHE_USED_SHARED   11
+#define SQLITE_DBSTATUS_CACHE_SPILL         12
+#define SQLITE_DBSTATUS_MAX                 12   /* Largest defined DBSTATUS */
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_db_status 3

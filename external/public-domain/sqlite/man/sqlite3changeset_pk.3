@@ -1,21 +1,22 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3CHANGESET_PK 3
 .Os
 .Sh NAME
 .Nm sqlite3changeset_pk
-.Nd Obtain The Primary Key Definition Of A Table
+.Nd obtain the primary key definition of a table
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3changeset_pk
 .Fa "sqlite3_changeset_iter *pIter"
 .Fa "unsigned char **pabPK"
-.Fa "int *pnCol                      "
+.Fa "int *pnCol"
 .Fc
 .Sh DESCRIPTION
-For each modified table, a changeset includes the following: 
+For each modified table, a changeset includes the following:
 .Bl -bullet
 .It
-The number of columns in the table, and 
+The number of columns in the table, and
 .It
 Which of those columns make up the tables PRIMARY KEY.
 .El
@@ -35,3 +36,13 @@ If this function is called when the iterator does not point to a valid
 entry, SQLITE_MISUSE is returned and the output variables zeroed.
 Otherwise, SQLITE_OK is returned and the output variables populated
 as described above.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 11438.
+.Bd -literal
+SQLITE_API int sqlite3changeset_pk(
+  sqlite3_changeset_iter *pIter,  /* Iterator object */
+  unsigned char **pabPK,          /* OUT: Array of boolean - true for PK cols */
+  int *pnCol                      /* OUT: Number of entries in output array */
+);
+.Ed

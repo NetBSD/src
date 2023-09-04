@@ -1,10 +1,11 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_PCACHE 3
 .Os
 .Sh NAME
 .Nm sqlite3_pcache
-.Nd Custom Page Cache Object
+.Nd custom page cache object
 .Sh SYNOPSIS
+.In sqlite3.h
 .Vt typedef struct sqlite3_pcache sqlite3_pcache;
 .Sh DESCRIPTION
 The sqlite3_pcache type is opaque.
@@ -14,5 +15,11 @@ and never deals with the sqlite3_pcache object except by holding and
 passing pointers to the object.
 .Pp
 See sqlite3_pcache_methods2 for additional information.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 8768.
+.Bd -literal
+typedef struct sqlite3_pcache sqlite3_pcache;
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_pcache_methods2 3

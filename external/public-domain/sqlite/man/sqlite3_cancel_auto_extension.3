@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_CANCEL_AUTO_EXTENSION 3
 .Os
 .Sh NAME
 .Nm sqlite3_cancel_auto_extension
-.Nd Cancel Automatic Extension Loading
+.Nd cancel automatic extension loading
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_cancel_auto_extension
 .Fa "void(*xEntryPoint)(void)"
 .Fc
@@ -16,3 +17,9 @@ using a prior call to sqlite3_auto_extension(X).
 The sqlite3_cancel_auto_extension(X)
 routine returns 1 if initialization routine X was successfully unregistered
 and it returns 0 if X was not on the list of initialization routines.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 7141.
+.Bd -literal
+SQLITE_API int sqlite3_cancel_auto_extension(void(*xEntryPoint)(void));
+.Ed

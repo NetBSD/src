@@ -1,12 +1,13 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE_ACCESS_EXISTS 3
 .Os
 .Sh NAME
 .Nm SQLITE_ACCESS_EXISTS ,
 .Nm SQLITE_ACCESS_READWRITE ,
 .Nm SQLITE_ACCESS_READ
-.Nd Flags for the xAccess VFS method
+.Nd flags for the xAccess VFS method
 .Sh SYNOPSIS
+.In sqlite3.h
 .Fd #define SQLITE_ACCESS_EXISTS
 .Fd #define SQLITE_ACCESS_READWRITE
 .Fd #define SQLITE_ACCESS_READ
@@ -27,5 +28,13 @@ With SQLITE_ACCESS_READ, the xAccess method checks whether the file
 is readable.
 The SQLITE_ACCESS_READ constant is currently unused, though it might
 be used in a future release of SQLite.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 1505.
+.Bd -literal
+#define SQLITE_ACCESS_EXISTS    0
+#define SQLITE_ACCESS_READWRITE 1   /* Used by PRAGMA temp_store_directory */
+#define SQLITE_ACCESS_READ      2   /* Unused */
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_vfs 3

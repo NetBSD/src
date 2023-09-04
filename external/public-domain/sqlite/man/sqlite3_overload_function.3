@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_OVERLOAD_FUNCTION 3
 .Os
 .Sh NAME
 .Nm sqlite3_overload_function
-.Nd Overload A Function For A Virtual Table
+.Nd overload a function for a virtual table
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_overload_function
 .Fa "sqlite3*"
 .Fa "const char *zFuncName"
@@ -25,5 +26,11 @@ be thrown.
 So the new function is not good for anything by itself.
 Its only purpose is to be a placeholder function that can be overloaded
 by a virtual table.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 7542.
+.Bd -literal
+SQLITE_API int sqlite3_overload_function(sqlite3*, const char *zFuncName, int nArg);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_module 3

@@ -1,10 +1,11 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_SNAPSHOT 3
 .Os
 .Sh NAME
 .Nm sqlite3_snapshot
-.Nd Database Snapshot
+.Nd database snapshot
 .Sh SYNOPSIS
+.In sqlite3.h
 .Vt typedef struct sqlite3_snapshot { unsigned char hidden[48]; } sqlite3_snapshot;
 .Sh DESCRIPTION
 An instance of the snapshot object records the state of a WAL mode
@@ -23,5 +24,13 @@ The sqlite3_snapshot object records state information about an historical
 version of the database file so that it is possible to later open a
 new read transaction that sees that historical version of the database
 rather than the most recent version.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 10334.
+.Bd -literal
+typedef struct sqlite3_snapshot {
+  unsigned char hidden[48];
+} sqlite3_snapshot;
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3 3

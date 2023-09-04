@@ -1,16 +1,17 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_TRACE_V2 3
 .Os
 .Sh NAME
 .Nm sqlite3_trace_v2
-.Nd SQL Trace Hook
+.Nd SQL trace hook
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_trace_v2
 .Fa "sqlite3*"
 .Fa "unsigned uMask"
 .Fa "int(*xCallback)(unsigned,void*,void*,void*)"
-.Fa "void *pCtx "
+.Fa "void *pCtx"
 .Fc
 .Sh DESCRIPTION
 The sqlite3_trace_v2(D,M,X,P) interface registers a trace callback
@@ -21,8 +22,10 @@ disabled.
 The M argument should be the bitwise OR-ed combination of zero or more
 SQLITE_TRACE constants.
 .Pp
-Each call to either sqlite3_trace() or sqlite3_trace_v2() overrides
-(cancels) any prior calls to sqlite3_trace() or sqlite3_trace_v2().
+Each call to either sqlite3_trace(D,X,P) or sqlite3_trace_v2(D,M,X,P)
+overrides (cancels) all prior calls to sqlite3_trace(D,X,P) or sqlite3_trace_v2(D,M,X,P)
+for the database connection D.
+Each database connection may have at most one trace callback.
 .Pp
 The X callback is invoked whenever any of the events identified by
 mask M occur.
@@ -37,8 +40,22 @@ The C argument is a copy of the context pointer.
 The P and X arguments are pointers whose meanings depend on T.
 .Pp
 The sqlite3_trace_v2() interface is intended to replace the legacy
-interfaces sqlite3_trace() and sqlite3_profile(),
+interfaces
+.Fn sqlite3_trace
+and
+.Fn sqlite3_profile ,
 both of which are deprecated.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 3383.
+.Bd -literal
+SQLITE_API int sqlite3_trace_v2(
+  sqlite3*,
+  unsigned uMask,
+  int(*xCallback)(unsigned,void*,void*,void*),
+  void *pCtx
+);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
 .Xr sqlite3_trace 3 ,

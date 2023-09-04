@@ -1,11 +1,12 @@
-.Dd December 19, 2018
+.Dd August 24, 2023
 .Dt SQLITE3_RELEASE_MEMORY 3
 .Os
 .Sh NAME
 .Nm sqlite3_release_memory
-.Nd Attempt To Free Heap Memory
+.Nd attempt to free heap memory
 .Sh SYNOPSIS
-.Ft int 
+.In sqlite3.h
+.Ft int
 .Fo sqlite3_release_memory
 .Fa "int"
 .Fc
@@ -20,5 +21,11 @@ which might be more or less than the amount requested.
 The sqlite3_release_memory() routine is a no-op returning zero if SQLite
 is not compiled with SQLITE_ENABLE_MEMORY_MANAGEMENT.
 .Pp
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 6835.
+.Bd -literal
+SQLITE_API int sqlite3_release_memory(int);
+.Ed
 .Sh SEE ALSO
 .Xr sqlite3_db_release_memory 3
