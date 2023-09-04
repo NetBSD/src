@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/12/19 22:21:13 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2023/09/04 20:52:44 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -234,6 +234,8 @@ sqlite3session_diff.3 \
 sqlite3session_enable.3 \
 sqlite3session_indirect.3 \
 sqlite3session_isempty.3 \
+sqlite3session_memory_used.3 \
+sqlite3session_object_config.3 \
 sqlite3session_patchset.3 \
 sqlite3session_table_filter.3 \
 sqlite_int64.3
