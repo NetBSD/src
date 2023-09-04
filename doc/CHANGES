@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2997 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2998 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -223,4 +223,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		implemented around kqueue(2). Contributed by
 		Theodore Preduta. [christos 20230819]
 	acpi(4): Updated ACPICA to 20230628. [christos 20230901] 
-
+	sqlite3(1): Import 3.34.0. [christos 20230904]
