@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.239 2023/07/18 03:01:35 rin Exp $
+# $NetBSD: HACKS,v 1.240 2023/09/04 21:01:15 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1099,4 +1099,17 @@ descr
 	https://github.com/openssl/openssl/blob/master/INSTALL.md#enable-ec_nistp_64_gcc_128
 	This feature (for LP64) does not support big-endian machines.
 	Note that sparc64 does not use this (port-sparc64/57472).
+kcah
+
+hack	GCC: Disable "-Warray-bounds" for x86 curcpu() and curlwp()
+cdate	Mon Sep  4 13:59:32 PDT 2023
+who	mrg
+port	i386 amd64
+file	src/sys/arch/amd64/include/cpu.h : 1.71
+file	src/sys/arch/i386/include/cpu.h : 1.184
+descr
+	These functions trigger eg:
+	./machine/cpu.h:57:9: error: array subscript 0 is outside array bounds of 'struct cpu_info * const[0]' [-Werror=array-bounds]
+	   56 |         __asm("movq %%gs:%1, %0" :
+	and can't easily be worked around.
 kcah
