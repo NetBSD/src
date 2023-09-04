@@ -1,4 +1,4 @@
-/* $NetBSD: hashhl.c,v 1.7 2014/09/24 13:18:52 christos Exp $ */
+/* $NetBSD: hashhl.c,v 1.8 2023/09/04 20:51:39 mrg Exp $ */
 
 /*
  * ----------------------------------------------------------------------------
@@ -61,7 +61,7 @@ WA(FNPREFIX(Data),CONCAT(_,FNPREFIX(Data)))
 #endif /* !MIN */
 
 char *
-FNPREFIX(End)(HASH_CTX *ctx, char *buf)
+FNPREFIX(End)(HASH_CTX *ctx, char buf[HASH_STRLEN])
 {
 	int i;
 	unsigned char digest[HASH_LEN];
@@ -130,7 +130,7 @@ FNPREFIX(File)(const char *filename, char *buf)
 }
 
 char *
-FNPREFIX(Data)(const unsigned char *data, size_t len, char *buf)
+FNPREFIX(Data)(const unsigned char *data, size_t len, char buf[HASH_STRLEN])
 {
 	HASH_CTX ctx;
 
