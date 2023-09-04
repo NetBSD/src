@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.17 2023/08/18 01:21:08 rin Exp $
+$NetBSD: README.gcc12,v 1.18 2023/09/04 23:40:05 mrg Exp $
 
 
 new stuff:
@@ -29,7 +29,7 @@ atf:		does atf run / compare well
 switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 
-architecture	tools	kernels	libgcc	native-gcc/sani	make release[2]	runs	atf	switched
+architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
 aarch64		y	y	y	y	y[17]	y		y	y	?
 aarch64eb	y	y	y	y	y[17]	y		y	y	?
@@ -70,7 +70,6 @@ riscv64		y	y	y	y	b	y		y	y	?
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
-[2]: while libsanitizer is not re-ported, "make release" does not include it.
 [3]: GENERIC.SKI boots just as well as GCC 10.
 [4]: rs6000 has a new generator for rs6000-builtins.cc and rs6000-builtins.h rs6000-vecdefines.h
 [5]: GCC itself fails to build:
@@ -80,12 +79,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
      In file included from sys/arch/powerpc/oea/pmap64.c:4:
      sys/arch/powerpc/oea/pmap.c:2186:2: error: #error PPC_OEA64 not supported
 [11]: sanitizers don't build yet.
-[12]: sanitizers crash early:
-      (gdb) bt
-      #0  0x0000f8ae19f9f424 in __sanitizer::CheckASLR () at /usr/src/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_linux.cpp:2179
-      #1  0x0000f8ae19ee1668 in __asan::AsanInitInternal () at /usr/src/external/gpl3/gcc/dist/libsanitizer/asan/asan_rtl.cpp:445
-      #2  0x0000f8ae19ee1834 in __asan::AsanInitInternal () at /usr/src/external/gpl3/gcc/dist/libsanitizer/asan/asan_rtl.cpp:394
-      #3  0x0000f8ae19f19e40 in __interceptor_pthread_mutex_lock (m=0xf8ae19c102c8 <__gthread_active_mutex.0>)
 [13]: on amd64, with very basic test, lsan, ubsan, and asan work, but tsan crashes at start up:
       ThreadSanitizer: CHECK failed: tsan_rtl.cpp:149 "((reinterpret_cast<uptr>(this) % 64)) == ((0))" (0x10, 0x0) (tid=21499)
       ThreadSanitizer:DEADLYSIGNAL
