@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.95 2023/08/23 18:24:11 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.96 2023/09/04 17:56:39 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2092,4 +2092,12 @@ sys/net/npf/npf_ruleset.c			1.52
 
 	npf(7): PR 56990: fix handling of dynamic groups.
 	[kardel, ticket #1725]
+
+sys/dev/pci/if_wm.c				1.783,1.784 (patch)
+sys/dev/pci/if_wmvar.h				1.50
+
+	wm(4): delay sending LINK_STATE_UP to prevent dropping packets
+	on I35[04] and I21[01].
+	Print debug message correctly when WM_DEBUG is set.
+	[msaitoh, ticket #1726]
 
