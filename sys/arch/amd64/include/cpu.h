@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71 2023/04/09 08:17:56 riastradh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.72 2023/09/04 20:58:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,6 +48,14 @@
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 
+/*
+ * XXXGCC12 has:
+ * ./machine/cpu.h:57:9: error: array subscript 0 is outside array bounds of 'struct cpu_info * const[0]' [-Werror=array-bounds]
+ *    56 |         __asm("movq %%gs:%1, %0" :
+ */
+#pragma GCC push_options
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
 __inline __always_inline static struct cpu_info * __unused __nomsan
 x86_curcpu(void)
 {
@@ -71,6 +79,8 @@ x86_curlwp(void)
 	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_curlwp)));
 	return l;
 }
+
+#pragma GCC pop_options
 
 #endif	/* __GNUC__ && !_MODULE */
 
