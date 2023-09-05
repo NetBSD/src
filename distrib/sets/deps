@@ -342,6 +342,7 @@ games-utils-bin base-games-usr
 games-utils-catman base-man-share
 games-utils-man base-man-share
 games-utils-share base-games-share
+gpu-firmware-base base-sys-root
 man-adosfs-catman base-man-share
 man-adosfs-man base-man-share
 man-amd-catman base-man-share
