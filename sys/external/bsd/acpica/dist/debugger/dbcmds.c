@@ -48,7 +48,9 @@
 #include "acnamesp.h"
 #include "acresrc.h"
 #include "actables.h"
+#ifndef _KERNEL
 #include "limits.h"
+#endif
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbcmds")
