@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: t_certctl.sh,v 1.8 2023/09/02 17:42:01 riastradh Exp $
+#	$NetBSD: t_certctl.sh,v 1.9 2023/09/05 12:31:33 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -150,11 +150,15 @@ checks()
 		done
 	done
 
-	# Verify the certificate bundle is there and delete it.
+	# Verify the certificate bundle is there with the right
+	# permissions (0644) and delete it.
 	#
 	# XXX Verify its content.
 	atf_check -s exit:0 test -f certs/ca-certificates.crt
 	atf_check -s exit:0 test ! -h certs/ca-certificates.crt
+	atf_expect_fail "wrong permissions on ca-certificates.crt"
+	atf_check -s exit:0 -o inline:'100644\n' \
+	    stat -f %p certs/ca-certificates.crt
 	rm certs/ca-certificates.crt
 
 	# Make sure after deleting everything there's nothing left.
