@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.11 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: ti_com.c,v 1.12 2023/09/05 02:59:07 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.11 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.12 2023/09/05 02:59:07 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,7 +95,7 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_type = COM_TYPE_NORMAL;
+	sc->sc_type = COM_TYPE_OMAP;
 
 	error = bus_space_map(bst, addr, size, 0, &bsh);
 	if (error) {
