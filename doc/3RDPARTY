@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1952 2023/09/04 17:07:04 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1953 2023/09/05 21:22:57 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -451,7 +451,7 @@ There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
 Version:	10.5.0
-Current Vers:	10.5.0/11.4.0/12.3.0/13.1.0
+Current Vers:	10.5.0/12.3.0/13.1.0
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	https://www.gnu.org/software/gcc/
@@ -473,7 +473,7 @@ Before importing a new version of external/gpl3/gcc:
 	- delete all .cvsignore and .gitignore files
 	- delete java ada fortran their libraries and testsuites
 	- delete libffi zlib boehm-gc
-	- update gcc/version.c for the NetBSD GCC date
+	- update tools/gcc/gcc-version.mk for the NetBSD GCC date
 	- use core/c++/objc/testsuite tarballs
 	- you can use the gcc2netbsd script for the above (except version)
 	- update tools/gcc/gcc-version.mk
