@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2023/09/05 04:22:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2023/09/05 22:14:08 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -48,7 +48,7 @@ SRCS.t_chacha+=	chacha_sse2.c
 SRCS.t_chacha+=	chacha_sse2_impl.c
 COPTS.chacha_sse2.c+=	-msse -msse2
 # XXXGCC12 - believes subkey[] is maybe uninitialised, but it is not.
-COPTS.chacha_sse2.c+=	-Wno-maybe-uninitialized
+COPTS.chacha_sse2.c+=	${${ACTIVE_CC} == "gcc":? -Wno-maybe-uninitialized :}
 
 .endif				# x86
 
