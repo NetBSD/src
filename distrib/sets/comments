@@ -246,6 +246,7 @@ comp-util-man manual pages source for programming utilities
 comp-util-sbin system development utilities
 comp-util-share reference files for programming utilities
 dtb-base-boot devicetree blobs
+gpu-firmware-base firmware for graphics cards
 etc-amd-rc startup script for auto-mounter daemon
 etc-audio-rc startup script for audio mixer control utility
 etc-bind-etc configuration files for BIND DNS server

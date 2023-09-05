@@ -568,6 +568,7 @@ games-utils-bin	miscellaneous utilities from /usr/games
 games-utils-catman	formatted manual pages for miscellaneous utilities from /usr/games
 games-utils-man	manual pages source for miscellaneous utilities from /usr/games
 games-utils-share	shared data files for miscellaneous utilities from /usr/games
+gpu-firmware-base	firmware for graphics cards
 man-adosfs-catman	formatted manual pages for AmigaDOS file system support
 man-adosfs-man	manual pages source for AmigaDOS file system support
 man-amd-catman	formatted manual pages for the amd(8) auto-mounting daemon
