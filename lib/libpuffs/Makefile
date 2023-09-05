@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2023/03/31 04:51:32 rillig Exp $
+#	$NetBSD: Makefile,v 1.30 2023/09/05 00:12:14 mrg Exp $
 #
 
 .include <bsd.own.mk>
@@ -19,5 +19,9 @@ INCSDIR=	/usr/include
 LINTFLAGS+=-S -w
 LINTFLAGS+=	-X 351		# extern declaration outside header
 LINTFLAGS+=	-X 352		# nested extern declaration
+
+# XXXGCC12 - accesses struct puffs_cc* via stack pointers, returns the
+# address to caller
+COPTS.callcontext.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-dangling-pointer :}
 
 .include <bsd.lib.mk>
