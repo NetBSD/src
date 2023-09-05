@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.81 2022/09/28 16:43:00 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.82 2023/09/05 05:55:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.81 2022/09/28 16:43:00 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.82 2023/09/05 05:55:12 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1759,6 +1759,8 @@ pms_synaptics_input(void *vsc, int data)
 			return;
 		}
 	}
+	if (psc->inputstate >= sizeof(psc->packet))
+		panic("inputstate should never be %d", psc->inputstate);
 
 	psc->packet[psc->inputstate++] = data & 0xff;
 	if (psc->inputstate == 6) {
