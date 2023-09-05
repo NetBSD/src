@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8.2.1 2023/08/11 13:42:56 martin Exp $
+# $NetBSD: Makefile,v 1.8.2.2 2023/09/05 17:11:34 martin Exp $
 
 NOLINT=
 .include <bsd.own.mk>
@@ -32,6 +32,7 @@ ecdh.c \
 eddsa.c \
 err.c \
 es256.c \
+es384.c \
 hid.c \
 hid_netbsd.c \
 hid_unix.c \
@@ -43,7 +44,12 @@ log.c \
 pin.c \
 random.c \
 reset.c \
+rs1.c \
 rs256.c \
+time.c \
+tpm.c \
+touch.c \
+types.c \
 u2f.c
 
 SRCS+= \
@@ -60,6 +66,7 @@ fido/credman.h \
 fido/eddsa.h \
 fido/err.h \
 fido/es256.h \
+fido/es384.h \
 fido/param.h \
 fido/rs256.h \
 fido/types.h
@@ -69,6 +76,7 @@ INCSDIR=/usr/include
 MAN+= \
 eddsa_pk_new.3 \
 es256_pk_new.3 \
+es384_pk_new.3 \
 fido_assert_allow_cred.3 \
 fido_assert_new.3 \
 fido_assert_set_authdata.3 \
@@ -96,7 +104,7 @@ fido_init.3 \
 fido_strerr.3 \
 rs256_pk_new.3
 
-SHLIB_MAJOR=4
+SHLIB_MAJOR=5
 SHLIB_MINOR=0
 
 .SUFFIXES: .in
@@ -117,6 +125,7 @@ COPTS.cbor.c+=-Wno-error=deprecated-declarations
 COPTS.cred.c+=-Wno-error=deprecated-declarations
 COPTS.ecdh.c+=-Wno-error=deprecated-declarations
 COPTS.es256.c+=-Wno-error=deprecated-declarations
+COPTS.es384.c+=-Wno-error=deprecated-declarations
 COPTS.rs256.c+=-Wno-error=deprecated-declarations
 
 .include <bsd.lib.mk>

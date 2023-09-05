@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2425.2.1 2023/08/11 13:42:54 martin Exp $
+#	$NetBSD: mi,v 1.2425.2.2 2023/09/05 17:11:34 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -958,6 +958,7 @@
 ./usr/include/fido/eddsa.h			comp-c-include
 ./usr/include/fido/err.h			comp-c-include
 ./usr/include/fido/es256.h			comp-c-include
+./usr/include/fido/es384.h			comp-c-include
 ./usr/include/fido/param.h			comp-c-include
 ./usr/include/fido/rs256.h			comp-c-include
 ./usr/include/fido/types.h			comp-c-include
