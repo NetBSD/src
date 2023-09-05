@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.115 2023/09/04 17:47:44 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.116 2023/09/05 17:27:55 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11494,4 +11494,266 @@ sys/dev/pci/if_wmvar.h				1.50
 	on I35[04] and I21[01].
 	Print debug message correctly when WM_DEBUG is set.
 	[msaitoh, ticket #344]
+
+external/bsd/libfido2/dist/fuzz/clock.c         up to 1.1.1.1
+external/bsd/libfido2/dist/fuzz/fuzz_pcsc.c     up to 1.1.1.1
+external/bsd/libfido2/dist/fuzz/pcsc.c          up to 1.1.1.1
+external/bsd/libfido2/dist/man/check.sh         up to 1.1.1.1
+external/bsd/libfido2/dist/man/es384_pk_new.3   up to 1.1.1.1
+external/bsd/libfido2/dist/openbsd-compat/bsd-asprintf.c up to 1.1.1.1
+external/bsd/libfido2/dist/openbsd-compat/strsep.c up to 1.1.1.1
+external/bsd/libfido2/dist/regress/compress.c   up to 1.1.1.1
+external/bsd/libfido2/dist/regress/eddsa.c      up to 1.1.1.1
+external/bsd/libfido2/dist/regress/es256.c      up to 1.1.1.1
+external/bsd/libfido2/dist/regress/es384.c      up to 1.1.1.1
+external/bsd/libfido2/dist/regress/rs256.c      up to 1.1.1.1
+external/bsd/libfido2/dist/src/fido/es384.h     up to 1.1.1.1
+external/bsd/libfido2/dist/src/es384.c          up to 1.1.1.1
+external/bsd/libfido2/dist/src/fallthrough.h    up to 1.1.1.1
+external/bsd/libfido2/dist/src/nfc.c            up to 1.1.1.1
+external/bsd/libfido2/dist/src/pcsc.c           up to 1.1.1.1
+external/bsd/libfido2/dist/src/rs1.c            up to 1.1.1.1
+external/bsd/libfido2/dist/src/time.c           up to 1.1.1.1
+external/bsd/libfido2/dist/src/touch.c          up to 1.1.1.1
+external/bsd/libfido2/dist/src/tpm.c            up to 1.1.1.1
+external/bsd/libfido2/dist/src/types.c          up to 1.1.1.1
+external/bsd/libfido2/dist/src/util.c           up to 1.1.1.1
+external/bsd/libfido2/dist/src/webauthn.h       up to 1.1.1.1
+external/bsd/libfido2/dist/windows/const.ps1    up to 1.1.1.1
+external/bsd/libfido2/dist/windows/cygwin.gpg   up to 1.1.1.1
+external/bsd/libfido2/dist/windows/cygwin.ps1   up to 1.1.1.1
+external/bsd/libfido2/dist/windows/release.ps1  up to 1.1.1.1
+external/bsd/libfido2/dist/SECURITY.md          up to 1.1.1.1
+external/bsd/libfido2/dist/openbsd-compat/hkdf.c delete
+external/bsd/libfido2/dist/openbsd-compat/hkdf.h delete
+external/bsd/libfido2/dist/CMakeLists.txt       up to 1.1.1.5
+external/bsd/libfido2/dist/LICENSE              up to 1.1.1.3
+external/bsd/libfido2/dist/NEWS                 up to 1.1.1.5
+external/bsd/libfido2/dist/README.adoc          up to 1.1.1.5
+external/bsd/libfido2/dist/examples/CMakeLists.txt up to 1.1.1.4
+external/bsd/libfido2/dist/examples/README.adoc up to 1.1.1.5
+external/bsd/libfido2/dist/examples/assert.c    up to 1.1.1.4
+external/bsd/libfido2/dist/examples/cred.c      up to 1.1.1.5
+external/bsd/libfido2/dist/examples/extern.h    up to 1.1.1.3
+external/bsd/libfido2/dist/examples/info.c      up to 1.1.1.5
+external/bsd/libfido2/dist/examples/manifest.c  up to 1.1.1.4
+external/bsd/libfido2/dist/examples/reset.c     up to 1.1.1.4
+external/bsd/libfido2/dist/examples/retries.c   up to 1.1.1.4
+external/bsd/libfido2/dist/examples/select.c    up to 1.1.1.3
+external/bsd/libfido2/dist/examples/setpin.c    up to 1.1.1.4
+external/bsd/libfido2/dist/examples/util.c      up to 1.1.1.4
+external/bsd/libfido2/dist/fuzz/CMakeLists.txt  up to 1.1.1.4
+external/bsd/libfido2/dist/fuzz/Dockerfile      up to 1.1.1.4
+external/bsd/libfido2/dist/fuzz/Makefile        up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/README          up to 1.1.1.4
+external/bsd/libfido2/dist/fuzz/build-coverage  up to 1.1.1.4
+external/bsd/libfido2/dist/fuzz/dummy.h         up to 1.1.1.3
+external/bsd/libfido2/dist/fuzz/export.gnu      up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/functions.txt   up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/fuzz_assert.c   up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/fuzz_bio.c      up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/fuzz_cred.c     up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/fuzz_credman.c  up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/fuzz_hid.c      up to 1.1.1.3
+external/bsd/libfido2/dist/fuzz/fuzz_largeblob.c up to 1.1.1.2
+external/bsd/libfido2/dist/fuzz/fuzz_mgmt.c     up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/fuzz_netlink.c  up to 1.1.1.2
+external/bsd/libfido2/dist/fuzz/libfuzzer.c     up to 1.1.1.3
+external/bsd/libfido2/dist/fuzz/mutator_aux.c   up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/mutator_aux.h   up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/preload-fuzz.c  up to 1.1.1.2
+external/bsd/libfido2/dist/fuzz/preload-snoop.c up to 1.1.1.2
+external/bsd/libfido2/dist/fuzz/report.tgz      up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/summary.txt     up to 1.1.1.5
+external/bsd/libfido2/dist/fuzz/udev.c          up to 1.1.1.2
+external/bsd/libfido2/dist/fuzz/wiredata_fido2.h up to 1.1.1.3
+external/bsd/libfido2/dist/fuzz/wiredata_u2f.h  up to 1.1.1.2
+external/bsd/libfido2/dist/fuzz/wrap.c          up to 1.1.1.3
+external/bsd/libfido2/dist/fuzz/wrapped.sym     up to 1.1.1.4
+external/bsd/libfido2/dist/man/CMakeLists.txt   up to 1.1.1.5
+external/bsd/libfido2/dist/man/eddsa_pk_new.3   up to 1.1.1.2
+external/bsd/libfido2/dist/man/es256_pk_new.3   up to 1.1.1.2
+external/bsd/libfido2/dist/man/fido2-assert.1   up to 1.1.1.5
+external/bsd/libfido2/dist/man/fido2-cred.1     up to 1.1.1.5
+external/bsd/libfido2/dist/man/fido2-token.1    up to 1.1.1.5
+external/bsd/libfido2/dist/man/fido_assert_allow_cred.3 up to 1.1.1.2
+external/bsd/libfido2/dist/man/fido_assert_new.3 up to 1.1.1.5
+external/bsd/libfido2/dist/man/fido_assert_set_authdata.3 up to 1.1.1.4
+external/bsd/libfido2/dist/man/fido_assert_verify.3 up to 1.1.1.2
+external/bsd/libfido2/dist/man/fido_bio_dev_get_info.3 up to 1.1.1.4
+external/bsd/libfido2/dist/man/fido_bio_enroll_new.3 up to 1.1.1.2
+external/bsd/libfido2/dist/man/fido_bio_info_new.3 up to 1.1.1.2
+external/bsd/libfido2/dist/man/fido_bio_template.3 up to 1.1.1.4
+external/bsd/libfido2/dist/man/fido_cbor_info_new.3 up to 1.1.1.5
+external/bsd/libfido2/dist/man/fido_cred_exclude.3 up to 1.1.1.2
+external/bsd/libfido2/dist/man/fido_cred_new.3  up to 1.1.1.4
+external/bsd/libfido2/dist/man/fido_cred_set_authdata.3 up to 1.1.1.4
+external/bsd/libfido2/dist/man/fido_cred_verify.3 up to 1.1.1.4
+external/bsd/libfido2/dist/man/fido_credman_metadata_new.3 up to 1.1.1.5
+external/bsd/libfido2/dist/man/fido_dev_enable_entattest.3 up to 1.1.1.3
+external/bsd/libfido2/dist/man/fido_dev_get_assert.3 up to 1.1.1.2
+external/bsd/libfido2/dist/man/fido_dev_get_touch_begin.3 up to 1.1.1.2
+external/bsd/libfido2/dist/man/fido_dev_info_manifest.3 up to 1.1.1.2
+external/bsd/libfido2/dist/man/fido_dev_largeblob_get.3 up to 1.1.1.2
+external/bsd/libfido2/dist/man/fido_dev_make_cred.3 up to 1.1.1.3
+external/bsd/libfido2/dist/man/fido_dev_open.3  up to 1.1.1.5
+external/bsd/libfido2/dist/man/fido_dev_set_io_functions.3 up to 1.1.1.3
+external/bsd/libfido2/dist/man/fido_dev_set_pin.3 up to 1.1.1.3
+external/bsd/libfido2/dist/man/fido_init.3      up to 1.1.1.3
+external/bsd/libfido2/dist/man/fido_strerr.3    up to 1.1.1.2
+external/bsd/libfido2/dist/man/rs256_pk_new.3   up to 1.1.1.2
+external/bsd/libfido2/dist/openbsd-compat/clock_gettime.c up to 1.1.1.2
+external/bsd/libfido2/dist/openbsd-compat/endian_win32.c up to 1.1.1.2
+external/bsd/libfido2/dist/openbsd-compat/openbsd-compat.h up to 1.1.1.4
+external/bsd/libfido2/dist/regress/CMakeLists.txt up to 1.1.1.2
+external/bsd/libfido2/dist/regress/assert.c     up to 1.1.1.4
+external/bsd/libfido2/dist/regress/cred.c       up to 1.1.1.5
+external/bsd/libfido2/dist/regress/dev.c        up to 1.1.1.3
+external/bsd/libfido2/dist/src/CMakeLists.txt   up to 1.1.1.5
+external/bsd/libfido2/dist/src/aes256.c         up to 1.1.1.3
+external/bsd/libfido2/dist/src/assert.c         up to 1.3
+external/bsd/libfido2/dist/src/authkey.c        up to 1.1.1.3
+external/bsd/libfido2/dist/src/bio.c            up to 1.1.1.4
+external/bsd/libfido2/dist/src/blob.c           up to 1.1.1.3
+external/bsd/libfido2/dist/src/blob.h           up to 1.1.1.3
+external/bsd/libfido2/dist/src/buf.c            up to 1.1.1.3
+external/bsd/libfido2/dist/src/cbor.c           up to 1.1.1.5
+external/bsd/libfido2/dist/src/compress.c       up to 1.1.1.2
+external/bsd/libfido2/dist/src/config.c         up to 1.1.1.3
+external/bsd/libfido2/dist/src/cred.c           up to 1.3
+external/bsd/libfido2/dist/src/credman.c        up to 1.1.1.5
+external/bsd/libfido2/dist/src/dev.c            up to 1.1.1.5
+external/bsd/libfido2/dist/src/diff_exports.sh  up to 1.1.1.3
+external/bsd/libfido2/dist/src/ecdh.c           up to 1.1.1.3
+external/bsd/libfido2/dist/src/eddsa.c          up to 1.1.1.4
+external/bsd/libfido2/dist/src/err.c            up to 1.1.1.4
+external/bsd/libfido2/dist/src/es256.c          up to 1.1.1.4
+external/bsd/libfido2/dist/src/export.gnu       up to 1.1.1.5
+external/bsd/libfido2/dist/src/export.llvm      up to 1.1.1.5
+external/bsd/libfido2/dist/src/export.msvc      up to 1.1.1.5
+external/bsd/libfido2/dist/src/extern.h         up to 1.1.1.5
+external/bsd/libfido2/dist/src/fido.h           up to 1.1.1.5
+external/bsd/libfido2/dist/src/hid.c            up to 1.1.1.4
+external/bsd/libfido2/dist/src/hid_freebsd.c    up to 1.1.1.2
+external/bsd/libfido2/dist/src/hid_hidapi.c     up to 1.1.1.4
+external/bsd/libfido2/dist/src/hid_linux.c      up to 1.1.1.5
+external/bsd/libfido2/dist/src/hid_netbsd.c     up to 1.4
+external/bsd/libfido2/dist/src/hid_openbsd.c    up to 1.1.1.4
+external/bsd/libfido2/dist/src/hid_osx.c        up to 1.1.1.4
+external/bsd/libfido2/dist/src/hid_unix.c       up to 1.1.1.2
+external/bsd/libfido2/dist/src/hid_win.c        up to 1.1.1.4
+external/bsd/libfido2/dist/src/info.c           up to 1.1.1.5
+external/bsd/libfido2/dist/src/io.c             up to 1.1.1.5
+external/bsd/libfido2/dist/src/iso7816.c        up to 1.1.1.4
+external/bsd/libfido2/dist/src/iso7816.h        up to 1.1.1.3
+external/bsd/libfido2/dist/src/largeblob.c      up to 1.1.1.3
+external/bsd/libfido2/dist/src/log.c            up to 1.1.1.4
+external/bsd/libfido2/dist/src/netlink.c        up to 1.1.1.2
+external/bsd/libfido2/dist/src/netlink.h        up to 1.1.1.2
+external/bsd/libfido2/dist/src/nfc_linux.c      up to 1.1.1.2
+external/bsd/libfido2/dist/src/packed.h         up to 1.1.1.2
+external/bsd/libfido2/dist/src/pin.c            up to 1.1.1.5
+external/bsd/libfido2/dist/src/random.c         up to 1.1.1.2
+external/bsd/libfido2/dist/src/reset.c          up to 1.1.1.3
+external/bsd/libfido2/dist/src/rs256.c          up to 1.1.1.3
+external/bsd/libfido2/dist/src/u2f.c            up to 1.1.1.5
+external/bsd/libfido2/dist/src/winhello.c       up to 1.1.1.2
+external/bsd/libfido2/dist/src/fido/bio.h       up to 1.1.1.2
+external/bsd/libfido2/dist/src/fido/config.h    up to 1.1.1.2
+external/bsd/libfido2/dist/src/fido/credman.h   up to 1.1.1.3
+external/bsd/libfido2/dist/src/fido/eddsa.h     up to 1.1.1.2
+external/bsd/libfido2/dist/src/fido/err.h       up to 1.1.1.4
+external/bsd/libfido2/dist/src/fido/es256.h     up to 1.1.1.2
+external/bsd/libfido2/dist/src/fido/param.h     up to 1.1.1.4
+external/bsd/libfido2/dist/src/fido/rs256.h     up to 1.1.1.2
+external/bsd/libfido2/dist/src/fido/types.h     up to 1.1.1.5
+external/bsd/libfido2/dist/tools/CMakeLists.txt up to 1.1.1.4
+external/bsd/libfido2/dist/tools/assert_get.c   up to 1.1.1.4
+external/bsd/libfido2/dist/tools/assert_verify.c up to 1.1.1.4
+external/bsd/libfido2/dist/tools/base64.c       up to 1.1.1.3
+external/bsd/libfido2/dist/tools/bio.c          up to 1.1.1.3
+external/bsd/libfido2/dist/tools/config.c       up to 1.1.1.2
+external/bsd/libfido2/dist/tools/cred_make.c    up to 1.1.1.4
+external/bsd/libfido2/dist/tools/cred_verify.c  up to 1.1.1.3
+external/bsd/libfido2/dist/tools/credman.c      up to 1.1.1.5
+external/bsd/libfido2/dist/tools/extern.h       up to 1.1.1.5
+external/bsd/libfido2/dist/tools/fido2-assert.c up to 1.1.1.4
+external/bsd/libfido2/dist/tools/fido2-attach.sh up to 1.1.1.2
+external/bsd/libfido2/dist/tools/fido2-cred.c   up to 1.1.1.4
+external/bsd/libfido2/dist/tools/fido2-detach.sh up to 1.1.1.2
+external/bsd/libfido2/dist/tools/fido2-token.c  up to 1.1.1.5
+external/bsd/libfido2/dist/tools/fido2-unprot.sh up to 1.1.1.2
+external/bsd/libfido2/dist/tools/include_check.sh up to 1.1.1.3
+external/bsd/libfido2/dist/tools/largeblob.c    up to 1.1.1.2
+external/bsd/libfido2/dist/tools/pin.c          up to 1.1.1.3
+external/bsd/libfido2/dist/tools/test.sh        up to 1.1.1.4
+external/bsd/libfido2/dist/tools/token.c        up to 1.1.1.5
+external/bsd/libfido2/dist/tools/util.c         up to 1.4
+external/bsd/libfido2/dist/udev/70-u2f.rules    up to 1.1.1.4
+external/bsd/libfido2/dist/udev/CMakeLists.txt  up to 1.1.1.2
+external/bsd/libfido2/dist/udev/check.sh        up to 1.1.1.2
+external/bsd/libfido2/dist/udev/fidodevs        up to 1.1.1.3
+external/bsd/libfido2/dist/udev/genrules.awk    up to 1.1.1.2
+external/bsd/libfido2/dist/windows/build.ps1    up to 1.1.1.5
+distrib/sets/lists/base/shl.mi			1.960
+distrib/sets/lists/comp/mi			1.2447
+distrib/sets/lists/comp/mi			1.2448
+distrib/sets/lists/debug/shl.mi			1.321
+distrib/sets/lists/man/mi			1.1763
+external/bsd/libfido2/lib/Makefile		1.11
+
+	libfido2: Update from 1.8.0 to 1.13.0.
+	[riastradh, ticket #345]
+
+crypto/external/bsd/heimdal/lib/libgssapi/shlib_version 1.3
+crypto/external/bsd/heimdal/lib/libhdb/shlib_version 1.3
+crypto/external/bsd/heimdal/lib/libheimntlm/shlib_version 1.3
+crypto/external/bsd/heimdal/lib/libhx509/shlib_version 1.3
+crypto/external/bsd/heimdal/lib/libkadm5clnt/shlib_version 1.3
+crypto/external/bsd/heimdal/lib/libkadm5srv/shlib_version 1.3
+crypto/external/bsd/heimdal/lib/libkafs/shlib_version 1.3
+crypto/external/bsd/heimdal/lib/libkdc/shlib_version 1.3
+crypto/external/bsd/heimdal/lib/libkrb5/shlib_version 1.3
+crypto/external/bsd/heimdal/lib/libsl/shlib_version 1.3
+crypto/external/bsd/libsaslc/lib/shlib_version	1.2
+crypto/external/bsd/netpgp/lib/netpgp/shlib_version 1.3
+crypto/external/bsd/netpgp/libpaa/shlib_version	1.2
+crypto/external/cpl/tpm-tools/lib/libtpm_unseal/Makefile 1.4
+crypto/external/cpl/trousers/lib/libtspi/Makefile 1.5
+distrib/sets/lists/base/shl.mi			1.965-1.967
+distrib/sets/lists/debug/shl.mi			1.325-1.327
+external/bsd/fetch/lib/shlib_version		1.4
+external/bsd/libarchive/lib/libarchive/shlib_version 1.3
+external/bsd/libevent/Makefile.inc		1.5
+external/bsd/lutok/lib/liblutok/shlib_version	1.3
+external/bsd/openldap/lib/libldap/shlib_version	1.8
+external/bsd/openldap/lib/libldap_r/shlib_version 1.8
+external/bsd/unbound/lib/libunbound/shlib_version 1.4
+external/mpl/bind/lib/libbind9/shlib_version	1.12
+external/mpl/bind/lib/libdns/shlib_version	1.12
+external/mpl/bind/lib/libirs/shlib_version	1.12
+external/mpl/bind/lib/libisc/shlib_version	1.12
+external/mpl/bind/lib/libisccc/shlib_version	1.12
+external/mpl/bind/lib/libisccfg/shlib_version	1.12
+external/mpl/bind/lib/libns/shlib_version	1.12
+lib/libradius/shlib_version			1.6
+						(all via patch)
+
+	Recursively revbump all dependents of libcrypto,
+	libterminfo and liblutok.
+	[riastradh, ticket #346]
+
+distrib/sets/lists/base/shl.mi			1.968
+distrib/sets/lists/debug/shl.mi			1.328
+
+	Remove bogus shlib obsolete lines for libfido2.
+	[riastradh, ticket #347]
+
+distrib/sets/lists/base/shl.mi			1.969 (patch)
+distrib/sets/lists/debug/shl.mi			1.329 (patch)
+distrib/sets/lists/xbase/shl.mi			1.103 (patch)
+distrib/sets/lists/xdebug/shl.mi		1.69 (patch)
+
+	Remove various bogus shlib obsolete lines.
+	[riastradh, ticket #348]
 
