@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2020/09/08 17:35:27 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.7 2023/09/05 04:22:44 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -47,6 +47,8 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/crypto/chacha/arch/x86
 SRCS.t_chacha+=	chacha_sse2.c
 SRCS.t_chacha+=	chacha_sse2_impl.c
 COPTS.chacha_sse2.c+=	-msse -msse2
+# XXXGCC12 - believes subkey[] is maybe uninitialised, but it is not.
+COPTS.chacha_sse2.c+=	-Wno-maybe-uninitialized
 
 .endif				# x86
 
