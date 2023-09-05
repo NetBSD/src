@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.102 2022/11/12 04:00:57 mrg Exp $
+# $NetBSD: shl.mi,v 1.102.2.1 2023/09/05 17:26:24 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -39,8 +39,6 @@
 ./usr/X11R7/lib/libICE.so.7			xbase-libICE-lib		xorg,compatx11file
 ./usr/X11R7/lib/libICE.so.7.0			xbase-libICE-lib		xorg,compatx11file
 ./usr/X11R7/lib/libOSMesa.so			xbase-obsolete		obsolete
-./usr/X11R7/lib/libOSMesa.so.7			xbase-obsolete		obsolete
-./usr/X11R7/lib/libOSMesa.so.7.0		xbase-obsolete		obsolete
 ./usr/X11R7/lib/libSM.so			xbase-libSM-lib		xorg,compatx11file
 ./usr/X11R7/lib/libSM.so.7			xbase-libSM-lib		xorg,compatx11file
 ./usr/X11R7/lib/libSM.so.7.0			xbase-libSM-lib		xorg,compatx11file
@@ -54,8 +52,6 @@
 ./usr/X11R7/lib/libXRes.so.2			xbase-libXres-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXRes.so.2.0			xbase-libXres-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXTrap.so			xbase-obsolete	obsolete
-./usr/X11R7/lib/libXTrap.so.7			xbase-obsolete	obsolete
-./usr/X11R7/lib/libXTrap.so.7.0			xbase-obsolete	obsolete
 ./usr/X11R7/lib/libXau.so			xbase-libXau-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXau.so.7			xbase-libXau-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXau.so.7.0			xbase-libXau-lib		xorg,compatx11file
@@ -66,8 +62,6 @@
 ./usr/X11R7/lib/libXaw7.so.10			xbase-libXaw-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXaw7.so.10.0			xbase-libXaw7-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXaw8.so			xbase-obsolete		obsolete
-./usr/X11R7/lib/libXaw8.so.9			xbase-obsolete		obsolete
-./usr/X11R7/lib/libXaw8.so.9.0			xbase-obsolete		obsolete
 ./usr/X11R7/lib/libXcomposite.so		xbase-libXcomposite-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXcomposite.so.2		xbase-libXcomposite-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXcomposite.so.2.0		xbase-libXcomposite-lib		xorg,compatx11file
@@ -84,8 +78,6 @@
 ./usr/X11R7/lib/libXdmcp.so.7			xbase-libXdmcp-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXdmcp.so.7.0			xbase-libXdmcp-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXevie.so			xbase-obsolete	obsolete
-./usr/X11R7/lib/libXevie.so.2			xbase-obsolete	obsolete
-./usr/X11R7/lib/libXevie.so.2.0			xbase-obsolete	obsolete
 ./usr/X11R7/lib/libXext.so			xbase-libXext-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXext.so.7			xbase-libXext-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXext.so.7.1			xbase-libXext-lib		xorg,compatx11file
@@ -114,8 +106,6 @@
 ./usr/X11R7/lib/libXmuu.so.2			xbase-libXmuu-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXmuu.so.2.0			xbase-libXmuu-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXp.so			xbase-obsolete		obsolete
-./usr/X11R7/lib/libXp.so.7			xbase-obsolete		obsolete
-./usr/X11R7/lib/libXp.so.7.0			xbase-obsolete		obsolete
 ./usr/X11R7/lib/libXpm.so			xbase-libXpm-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXpm.so.5			xbase-libXpm-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXpm.so.5.0			xbase-libXpm-lib		xorg,compatx11file
@@ -123,11 +113,7 @@
 ./usr/X11R7/lib/libXpresent.so.1		xbase-libXpresent-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXpresent.so.1.0		xbase-libXpresent-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXprintAppUtil.so		xbase-obsolete		obsolete
-./usr/X11R7/lib/libXprintAppUtil.so.2		xbase-obsolete		obsolete
-./usr/X11R7/lib/libXprintAppUtil.so.2.0		xbase-obsolete		obsolete
 ./usr/X11R7/lib/libXprintUtil.so		xbase-obsolete		obsolete
-./usr/X11R7/lib/libXprintUtil.so.2		xbase-obsolete		obsolete
-./usr/X11R7/lib/libXprintUtil.so.2.0		xbase-obsolete		obsolete
 ./usr/X11R7/lib/libXrandr.so			xbase-libXrandr-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXrandr.so.3			xbase-libXrandr-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXrandr.so.3.2		xbase-libXrandr-lib		xorg,compatx11file
@@ -135,8 +121,6 @@
 ./usr/X11R7/lib/libXrender.so.2			xbase-libXrender-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXrender.so.2.0		xbase-libXrender-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXres.so			xbase-obsolete		obsolete
-./usr/X11R7/lib/libXres.so.1			xbase-obsolete		obsolete
-./usr/X11R7/lib/libXres.so.1.0			xbase-obsolete		obsolete
 ./usr/X11R7/lib/libXss.so			xbase-libXss-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXss.so.2			xbase-libXss-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXss.so.2.0			xbase-libXss-lib		xorg,compatx11file
@@ -174,8 +158,6 @@
 ./usr/X11R7/lib/libepoxy.so.0			xbase-libepoxy-lib		xorg,compatx11file
 ./usr/X11R7/lib/libepoxy.so.0.1			xbase-libepoxy-lib		xorg,compatx11file
 ./usr/X11R7/lib/libexpat.so			xbase-obsolete		obsolete
-./usr/X11R7/lib/libexpat.so.2			xbase-obsolete		obsolete
-./usr/X11R7/lib/libexpat.so.2.0			xbase-obsolete		obsolete
 ./usr/X11R7/lib/libfontconfig.so		xbase-fontconfig-lib		xorg,compatx11file
 ./usr/X11R7/lib/libfontconfig.so.2		xbase-fontconfig-lib		xorg,compatx11file
 ./usr/X11R7/lib/libfontconfig.so.2.3		xbase-fontconfig-lib		xorg,compatx11file
@@ -192,11 +174,7 @@
 ./usr/X11R7/lib/libglapi.so.1			xbase-libglapi-lib		xorg,compatx11file
 ./usr/X11R7/lib/libglapi.so.1.0			xbase-libglapi-lib		xorg,compatx11file
 ./usr/X11R7/lib/libglut.so			xbase-obsolete		obsolete
-./usr/X11R7/lib/libglut.so.4			xbase-obsolete		obsolete
-./usr/X11R7/lib/libglut.so.4.0			xbase-obsolete		obsolete
 ./usr/X11R7/lib/liblbxutil.so			xbase-obsolete		obsolete
-./usr/X11R7/lib/liblbxutil.so.2			xbase-obsolete		obsolete
-./usr/X11R7/lib/liblbxutil.so.2.0		xbase-obsolete		obsolete
 ./usr/X11R7/lib/libpciaccess.so			xbase-libpciaccess-lib		xorg,compatx11file
 ./usr/X11R7/lib/libpciaccess.so.0		xbase-libpciaccess-lib		xorg,compatx11file
 ./usr/X11R7/lib/libpciaccess.so.0.4		xbase-libpciaccess-lib		xorg,compatx11file
@@ -276,8 +254,6 @@
 ./usr/X11R7/lib/libxcb-sync.so.1		xbase-libxcb-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-sync.so.1.0		xbase-libxcb-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xevie.so			xbase-obsolete		obsolete
-./usr/X11R7/lib/libxcb-xevie.so.0		xbase-obsolete		obsolete
-./usr/X11R7/lib/libxcb-xevie.so.0.1		xbase-obsolete		obsolete
 ./usr/X11R7/lib/libxcb-xf86dri.so		xbase-libxcb-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xf86dri.so.0		xbase-libxcb-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xf86dri.so.0.1		xbase-libxcb-lib		xorg,compatx11file
