@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.298.2.8 2023/09/05 17:18:20 martin Exp $
+# $NetBSD: shl.mi,v 1.298.2.9 2023/09/05 17:23:09 martin Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -120,7 +120,6 @@
 ./usr/libdata/debug/usr/lib/libexecinfo.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libexpat.so.2.3.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libfetch.so.4.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libfido2.so.4.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/libfido2.so.5.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libform.so.6.0.debug		comp-sys-debug	debug,obsolete,compatfile
 ./usr/libdata/debug/usr/lib/libform.so.7.0.debug		comp-sys-debug	debug,obsolete,compatfile
