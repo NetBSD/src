@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.40 2022/10/28 23:40:37 riastradh Exp $ */
+/* $NetBSD: pms.c,v 1.41 2023/09/05 05:55:12 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.40 2022/10/28 23:40:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.41 2023/09/05 05:55:12 mrg Exp $");
 
 #include "opt_pms.h"
 
@@ -561,6 +561,8 @@ pmsinput(void *vsc, int data)
 		if ((data & 0xc0) != 0)
 			return;	/* not in sync yet, discard input */
 	}
+	if (sc->inputstate >= sizeof(sc->packet))
+		panic("inputstate should never be %d", sc->inputstate);
 
 	sc->packet[sc->inputstate++] = data & 0xff;
 	switch (sc->inputstate) {
