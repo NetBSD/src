@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3.10.1 2023/08/11 15:07:06 martin Exp $
+# $NetBSD: Makefile,v 1.3.10.2 2023/09/05 17:18:21 martin Exp $
 .include "../Makefile.inc"
 
 CPPFLAGS+=-DAPPID=\"TSPI\" -DVAR_PREFIX=\"/var\" -DETC_PREFIX=\"/etc\"
@@ -24,7 +24,7 @@ TSPI=${DIST}/src/tspi
 TRSPI=${DIST}/src/trspi 
 .PATH.c: ${TSPI} ${TSPI}/rpc ${TSPI}/rpc/tcstp ${TSPI}/ps ${TRSPI} ${TRSPI}/crypto/${EXTERNAL_OPENSSL_SUBDIR}
 
-SHLIB_MAJOR=3
+SHLIB_MAJOR=4
 SHLIB_MINOR=0
 
 LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
