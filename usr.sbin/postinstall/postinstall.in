@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.55 2023/09/03 18:31:36 riastradh Exp $
+# $NetBSD: postinstall.in,v 1.56 2023/09/06 13:38:54 riastradh Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1668,7 +1668,7 @@ do_named()
 additem opensslcertsconf "ensure TLS trust anchor configuration exists"
 do_opensslcertsconf()
 {
-	local certsdir certsconf defaultconf
+	local certsdir certsconf defaultconf manualmsg
 
 	[ -n "$1" ] || err 3 "USAGE: do_opensslcertsconf fix|check"
 
@@ -1701,15 +1701,40 @@ do_opensslcertsconf()
 			    -maxdepth 0 -type d -empty -exit 1)
 		then
 			msg "/etc/openssl/certs appears manually configured"
-			cat <<EOF >${certsconf}.tmp
-netbsd-certctl 20230816
-
-# existing /etc/openssl/certs configuration detected by postinstall(8)
-manual
-EOF
+			manualmsg="[existing /etc/openssl/certs configuration"
+			manualmsg="$manualmsg detected by postinstall(8)]"
+                        # Change the commented-out `#manual' line to
+                        # uncommented `manual', or print an error
+                        # message if there is no `#manual' line and put
+                        # `manual' at the end.
+                        awk -v defaultconf="$defaultconf" \
+			    -v manualmsg="$manualmsg" '
+				BEGIN {
+					manual = 0
+				}
+				/^#manual/ && !manual {
+					manual = 1
+					sub(/^#/, "")
+					print
+					print "#", manualmsg
+					next
+				}
+				{
+					print
+				}
+				END {
+					if (!manual) {
+						printf "warning: %s %s?\n", \
+						    "corrupt", defaultconf \
+						    >"/dev/stderr"
+						print "manual"
+						print "#", manualmsg
+					}
+				}
+			' <$defaultconf >${certsconf}.tmp
 		else
 			msg "installing default /etc/openssl/certs.conf"
-			cp -- "$defaultconf" "${certsconf}.tmp"
+			cat <$defaultconf >${certsconf}.tmp
 		fi && mv -f -- "${certsconf}.tmp" "$certsconf"
 		;;
 	*)	err 3 "USAGE: do_opensslcerts fix|check"
