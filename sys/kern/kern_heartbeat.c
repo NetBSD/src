@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.9 2023/09/02 17:44:41 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.10 2023/09/06 12:29:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.9 2023/09/02 17:44:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.10 2023/09/06 12:29:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -132,21 +132,26 @@ void *heartbeat_sih			__read_mostly;
  *
  *	Called after the current CPU has been marked offline but before
  *	it has stopped running, or after IPL has been raised for
- *	polling-mode console input.  Caller must have preemption
- *	disabled.  Non-nestable.  Reversed by heartbeat_resume.
+ *	polling-mode console input.  Binds to the current CPU as a side
+ *	effect.  Nestable (but only up to 2^32 times, so don't do this
+ *	in a loop).  Reversed by heartbeat_resume.
  */
 void
 heartbeat_suspend(void)
 {
-	struct cpu_info *ci = curcpu();
-	int s;
+	unsigned *p;
 
-	KASSERT(curcpu_stable());
-	KASSERT((ci->ci_schedstate.spc_flags & SPCF_HEARTBEATSUSPENDED) == 0);
-
-	s = splsched();
-	ci->ci_schedstate.spc_flags |= SPCF_HEARTBEATSUSPENDED;
-	splx(s);
+	/*
+	 * We could use curlwp_bind, but we'd have to record whether we
+	 * were already bound or not to pass to curlwp_bindx in
+	 * heartbeat_resume.  Using kpreempt_disable is simpler and
+	 * unlikely to have any adverse consequences, since this only
+	 * happens when we're about to go into a tight polling loop at
+	 * raised IPL anyway.
+	 */
+	kpreempt_disable();
+	p = &curcpu()->ci_heartbeat_suspend;
+	atomic_store_relaxed(p, *p + 1);
 }
 
 /*
@@ -180,26 +185,26 @@ heartbeat_resume_cpu(struct cpu_info *ci)
  *
  *	Called after the current CPU has started running but before it
  *	has been marked online, or when ending polling-mode input
- *	before IPL is restored.  Caller must have preemption disabled.
+ *	before IPL is restored.  Reverses heartbeat_suspend.
  */
 void
 heartbeat_resume(void)
 {
 	struct cpu_info *ci = curcpu();
+	unsigned *p;
 	int s;
 
-	KASSERT(curcpu_stable());
-	KASSERT(ci->ci_schedstate.spc_flags & SPCF_HEARTBEATSUSPENDED);
-
 	/*
-	 * Block heartbeats while we reset the state so we don't
-	 * spuriously think we had a heart attack in the middle of
-	 * resetting the count and the uptime stamp.
+	 * Reset the state so nobody spuriously thinks we had a heart
+	 * attack as soon as the heartbeat checks resume.
 	 */
 	s = splsched();
-	ci->ci_schedstate.spc_flags &= ~SPCF_HEARTBEATSUSPENDED;
 	heartbeat_resume_cpu(ci);
 	splx(s);
+
+	p = &ci->ci_heartbeat_suspend;
+	atomic_store_relaxed(p, *p - 1);
+	kpreempt_enable();
 }
 
 /*
@@ -223,10 +228,8 @@ heartbeat_timecounter_suspended(void)
 	 * iterating over all CPUs.
 	 */
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (CPU_IS_PRIMARY(ci)) {
-			return ci->ci_schedstate.spc_flags &
-			    SPCF_HEARTBEATSUSPENDED;
-		}
+		if (CPU_IS_PRIMARY(ci))
+			return atomic_load_relaxed(&ci->ci_heartbeat_suspend);
 	}
 
 	/*
@@ -551,7 +554,7 @@ select_patient(void)
 	 * in the iteration order.
 	 */
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (ci->ci_schedstate.spc_flags & SPCF_HEARTBEATSUSPENDED)
+		if (atomic_load_relaxed(&ci->ci_heartbeat_suspend))
 			continue;
 		if (passedcur) {
 			/*
@@ -628,8 +631,7 @@ heartbeat(void)
 	period_secs = atomic_load_relaxed(&heartbeat_max_period_secs);
 	if (__predict_false(period_ticks == 0) ||
 	    __predict_false(period_secs == 0) ||
-	    __predict_false(curcpu()->ci_schedstate.spc_flags &
-		SPCF_HEARTBEATSUSPENDED))
+	    __predict_false(curcpu()->ci_heartbeat_suspend))
 		return;
 
 	/*
@@ -716,8 +718,7 @@ heartbeat(void)
 	d = uptime - atomic_load_relaxed(&patient->ci_heartbeat_uptime_cache);
 	if (__predict_false(d > period_secs) &&
 	    __predict_false(d < UINT_MAX/2) &&
-	    ((patient->ci_schedstate.spc_flags & SPCF_HEARTBEATSUSPENDED)
-		== 0))
+	    atomic_load_relaxed(&patient->ci_heartbeat_suspend) == 0)
 		defibrillate(patient, d);
 }
 
@@ -737,16 +738,6 @@ db_read_unsigned(const volatile unsigned *p)
 	return x;
 }
 
-static int
-db_read_signed(const volatile int *p)
-{
-	int x;
-
-	db_read_bytes((db_addr_t)(uintptr_t)p, sizeof(x), (char *)&x);
-
-	return x;
-}
-
 void
 heartbeat_dump(void)
 {
@@ -754,13 +745,12 @@ heartbeat_dump(void)
 
 	db_printf("Heartbeats:\n");
 	for (ci = db_cpu_first(); ci != NULL; ci = db_cpu_next(ci)) {
-		db_printf("cpu%u: count %u uptime %u stamp %u%s\n",
+		db_printf("cpu%u: count %u uptime %u stamp %u suspend %u\n",
 		    db_read_unsigned(&ci->ci_index),
 		    db_read_unsigned(&ci->ci_heartbeat_count),
 		    db_read_unsigned(&ci->ci_heartbeat_uptime_cache),
 		    db_read_unsigned(&ci->ci_heartbeat_uptime_stamp),
-		    (db_read_signed(&ci->ci_schedstate.spc_flags) &
-			SPCF_HEARTBEATSUSPENDED ? " (suspended)" : ""));
+		    db_read_unsigned(&ci->ci_heartbeat_suspend));
 	}
 }
 #endif
