@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.195 2023/09/04 18:00:03 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.196 2023/09/06 08:04:43 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3863,4 +3863,9 @@ sys/dev/pci/if_wmvar.h				1.50
 	on I35[04] and I21[01].
 	Print debug message correctly when WM_DEBUG is set.
 	[msaitoh, ticket #1894]
+
+crypto/external/bsd/openssl/dist/crypto/sparccpuid.S 1.11
+
+	openssl: PR 57594: fix SPARC v8/v9 detection code.
+	[mrg, ticket #1895]
 
