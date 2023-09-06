@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.29 2021/08/07 16:18:57 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.30 2023/09/06 08:14:42 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.30 2023/09/06 08:14:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,8 @@ struct cuda_softc {
 	/* time */
 	uint32_t sc_tod;
 	uint32_t sc_autopoll;
-	uint32_t sc_todev;
+	kcondvar_t sc_todev;
+	kmutex_t sc_todevmtx;
 	/* ADB */
 	void (*sc_adb_handler)(void *, int, uint8_t *);
 	void *sc_adb_cookie;
@@ -196,6 +197,9 @@ cuda_attach(device_t parent, device_t self, void *aux)
 	sc->sc_state = CUDA_NOTREADY;
 	sc->sc_error = 0;
 	sc->sc_i2c_read_len = 0;
+
+	cv_init(&sc->sc_todev, "cuda_event");
+	mutex_init(&sc->sc_todevmtx, MUTEX_DEFAULT, IPL_NONE);
 
 	if (bus_space_map(sc->sc_memt, ca->ca_reg[0] + ca->ca_baseaddr,
 	    ca->ca_reg[1], 0, &sc->sc_memh) != 0) {
@@ -728,7 +732,8 @@ cuda_error_handler(void *cookie, int len, uint8_t *data)
 	 * byte 3 seems to be the failed command
 	 */
 	sc->sc_error = 1;
-	wakeup(&sc->sc_todev);
+	DPRINTF("cuda error %02x %02x %02x %02x\n", data[0], data[1], data[2], data[3]);
+	cv_signal(&sc->sc_todev);
 	return 0;
 }
 
@@ -763,7 +768,7 @@ cuda_todr_handler(void *cookie, int len, uint8_t *data)
 			sc->sc_iic_done = len;
 			break;
 	}
-	wakeup(&sc->sc_todev);
+	cv_signal(&sc->sc_todev);
 	return 0;
 }
 
@@ -781,7 +786,10 @@ cuda_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 		cuda_send(sc, 0, 2, cmd);
 
 		while ((sc->sc_tod == 0) && (cnt < 10)) {
-			tsleep(&sc->sc_todev, 0, "todr", 10);
+			mutex_enter(&sc->sc_todevmtx);
+			cv_timedwait(&sc->sc_todev, &sc->sc_todevmtx, hz);
+			mutex_exit(&sc->sc_todevmtx);
+
 			cnt++;
 		}
 
@@ -817,7 +825,9 @@ cuda_todr_set(todr_chip_handle_t tch, struct timeval *tvp)
 	sc->sc_tod = 0;
 	if (cuda_send(sc, 0, 6, cmd) == 0) {
 		while (sc->sc_tod == 0) {
-			tsleep(&sc->sc_todev, 0, "todr", 10);
+			mutex_enter(&sc->sc_todevmtx);
+			cv_timedwait(&sc->sc_todev, &sc->sc_todevmtx, hz);
+			mutex_exit(&sc->sc_todevmtx);
 		}
 		return 0;
 	}
@@ -874,8 +884,11 @@ cuda_autopoll(void *cookie, int flag)
 	while(sc->sc_autopoll == -1) {
 		if (sc->sc_polling || cold) {
 			cuda_poll(sc);
-		} else
-			tsleep(&sc->sc_todev, 0, "autopoll", 100);
+		} else {
+			mutex_enter(&sc->sc_todevmtx);
+			cv_timedwait(&sc->sc_todev, &sc->sc_todevmtx, hz);
+			mutex_exit(&sc->sc_todevmtx);
+		}
 	}
 }
 	
@@ -962,8 +975,11 @@ cuda_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
 	while ((sc->sc_iic_done == 0) && (sc->sc_error == 0)) {
 		if (sc->sc_polling || cold) {
 			cuda_poll(sc);
-		} else
-			tsleep(&sc->sc_todev, 0, "i2c", 1000);
+		} else {
+			mutex_enter(&sc->sc_todevmtx);
+			cv_timedwait(&sc->sc_todev, &sc->sc_todevmtx, hz);
+			mutex_exit(&sc->sc_todevmtx);
+		}
 	}
 
 	if (sc->sc_error) {
@@ -988,8 +1004,11 @@ cuda_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
 		while ((sc->sc_iic_done == 0) && (sc->sc_error == 0)) {
 			if (sc->sc_polling || cold) {
 				cuda_poll(sc);
-			} else
-				tsleep(&sc->sc_todev, 0, "i2c", 1000);
+			} else {
+				mutex_enter(&sc->sc_todevmtx);
+				cv_timedwait(&sc->sc_todev, &sc->sc_todevmtx, hz);
+				mutex_exit(&sc->sc_todevmtx);
+			}
 		}
 
 		if (sc->sc_error) {
