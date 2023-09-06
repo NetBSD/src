@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.31 2023/09/06 20:16:04 christos Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.32 2023/09/06 22:08:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.31 2023/09/06 20:16:04 christos Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.32 2023/09/06 22:08:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ deliver(int fd, char *name, int lockfile)
 	struct stat sb, nsb;
 	struct passwd pwres, *pw;
 	char pwbuf[1024];
-	int created = 0, mbfd = -1, nr, nw, off, rval=EX_OK, lfd = -1;
+	int created = 0, mbfd = -1, nr, nw, off, rval = EX_ERR, lfd = -1;
 	char biffmsg[100], buf[8*1024], path[MAXPATHLEN], lpath[MAXPATHLEN];
 	off_t curoff;
 
