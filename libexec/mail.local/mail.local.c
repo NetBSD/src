@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.30 2023/09/06 08:12:09 shm Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.31 2023/09/06 20:16:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.30 2023/09/06 08:12:09 shm Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.31 2023/09/06 20:16:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 		if (eval == EX_OK && rval != EX_OK)
 			eval = rval;
 	}
-	exit (eval);
+	return eval;
 }
 
 static int
@@ -173,7 +173,7 @@ store(const char *from)
 	if ((fd = dup(fd)) == -1) 
 		logerr(EX_OSERR, "dup failed");
 	(void)fclose(fp);
-	return(fd);
+	return fd;
 }
 
 static bool
@@ -207,11 +207,11 @@ deliver(int fd, char *name, int lockfile)
 	 */
 	if ((getpwnam_r(name, &pwres, pwbuf, sizeof(pwbuf), &pw)) != 0) {
 		logwarn("unable to find user %s: %s", name, strerror(errno));
-		return(EX_TEMPFAIL);
+		return EX_TEMPFAIL;
 	}
 	if (pw == NULL) {
 		logwarn("unknown name: %s", name);
-		return(EX_NOUSER);
+		return EX_NOUSER;
 	}
 
 	(void)snprintf(path, sizeof path, "%s/%s", _PATH_MAILDIR, name);
@@ -222,21 +222,19 @@ deliver(int fd, char *name, int lockfile)
 
 		if((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL,
 		    S_IRUSR|S_IWUSR)) < 0) {
-			logwarn("%s: %s", lpath, strerror(errno));
-			return(EX_OSERR);
+			logwarn("%s: can't create: %s", lpath, strerror(errno));
+			return EX_OSERR;
 		}
 	}
 
 	if (lstat(path, &sb) == -1) {
-	    if (errno != ENOENT) {
-		logwarn("%s: %s", path, strerror(errno));
-		rval = EX_OSERR;
-		goto bad;
-	    }
-	    memset(&sb, 0, sizeof(sb));
-	    sb.st_dev = NODEV;
+		if (errno != ENOENT) {
+			logwarn("%s: can't stat: %s", path, strerror(errno));
+			goto bad;
+		}
+		memset(&sb, 0, sizeof(sb));
+		sb.st_dev = NODEV;
 	} else if (badfile(path, &sb)) {
-		rval = EX_OSERR;
 		goto bad;
 	}
 	
@@ -246,57 +244,55 @@ deliver(int fd, char *name, int lockfile)
 		if (errno != ENOENT ||
 		   (mbfd = open(path, O_APPEND|O_CREAT|O_WRONLY|O_EXLOCK|O_EXCL,
 		     S_IRUSR|S_IWUSR)) == -1) {
-			logwarn("%s: %s", path, strerror(errno));
-			rval = EX_OSERR;
+			logwarn("%s: can't create: %s", path, strerror(errno));
 			goto bad;
 		}
 		created = 1;
 	} else {
 		/* opened existing file, check for TOCTTOU */
 		if (fstat(mbfd, &nsb) == -1) {
-			rval = EX_OSERR;
+			logwarn("%s: can't stat: %s", path, strerror(errno));
 			goto bad;
 		}
 
 		if (badfile(path, &nsb)) {
-			rval = EX_OSERR;
 			goto bad;
 		}
 
 		/* file is not what we expected */
 		if (nsb.st_ino != sb.st_ino || nsb.st_dev != sb.st_dev) {
 			logwarn("%s: file has changed", path);
-			rval = EX_OSERR;
 			goto bad;
 		}
 	}
 
 	if ((curoff = lseek(mbfd, 0, SEEK_END)) == (off_t)-1) {
-		logwarn("%s: %s", path, strerror(errno));
-		rval = EX_OSERR;
+		logwarn("%s: can't seek: %s", path, strerror(errno));
 		goto bad;
 	}
 
 	(void)snprintf(biffmsg, sizeof biffmsg, "%s@%lld\n", name,
 	    (long long)curoff);
 	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
-		logwarn("temporary file: %s", strerror(errno));
-		rval = EX_OSERR;
+		logwarn("can't seek: %s", strerror(errno));
 		goto bad;
 	}
 
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
 		for (off = 0; off < nr;  off += nw)
 			if ((nw = write(mbfd, buf + off, nr - off)) < 0) {
-				logwarn("%s: %s", path, strerror(errno));
+				logwarn("%s: can't write: %s", path,
+				    strerror(errno));
 				goto trunc;
 			}
+
 	if (nr < 0) {
-		logwarn("temporary file: %s", strerror(errno));
+		logwarn("can't read: %s", strerror(errno));
 trunc:		(void)ftruncate(mbfd, curoff);
-		rval = EX_OSERR;
+		goto bad;
 	}
 
+	rval = EX_OK;
 	/*
 	 * Set the owner and group.  Historically, binmail repeated this at
 	 * each mail delivery.  We no longer do this, assuming that if the
