@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.144 2021/12/31 14:19:57 riastradh Exp $	*/
+/*	$NetBSD: libkern.h,v 1.145 2023/09/06 19:14:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -335,7 +335,7 @@ tolower(int ch)
  *	};
  *
  *	struct bar b;
- *	struct foo *fp = b.b_foo;
+ *	struct foo *fp = &b.b_foo;
  *
  * Now we can get at b from fp by:
  *
