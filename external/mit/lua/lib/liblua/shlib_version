@@ -1,3 +1,4 @@
-# $NetBSD: shlib_version,v 1.4 2023/06/08 21:12:08 nikita Exp $
+# $NetBSD: shlib_version,v 1.5 2023/09/06 12:48:15 riastradh Exp $
+#
 major=6
 minor=1
