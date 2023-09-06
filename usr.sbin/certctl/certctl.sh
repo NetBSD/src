@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: certctl.sh,v 1.4.2.2 2023/09/04 17:33:27 martin Exp $
+#	$NetBSD: certctl.sh,v 1.4.2.3 2023/09/06 15:04:33 martin Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -493,7 +493,8 @@ rehash()
 	vbundle=$(printf '%s' "$bundle" | vis -M)
 	$vflag && printf '# create %s\n' "$vbundle"
 	if ! $nflag; then
-		cp -- "$tmpfile" "$bundle"
+		(umask 0022; cat <$tmpfile >${bundle}.tmp)
+		mv -f -- "${bundle}.tmp" "$bundle"
 		rm -f -- "$tmpfile"
 		tmpfile=
 	fi
