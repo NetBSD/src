@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.116 2023/09/05 17:27:55 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.117 2023/09/06 08:01:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11756,4 +11756,9 @@ distrib/sets/lists/xdebug/shl.mi		1.69 (patch)
 
 	Remove various bogus shlib obsolete lines.
 	[riastradh, ticket #348]
+
+crypto/external/bsd/openssl/dist/crypto/sparccpuid.S 1.11
+
+	openssl: PR 57594: fix SPARC v8/v9 detection code.
+	[mrg, ticket #349]
 
