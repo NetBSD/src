@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.970 2023/09/04 21:36:31 riastradh Exp $
+# $NetBSD: shl.mi,v 1.971 2023/09/06 12:44:45 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -242,8 +242,8 @@
 ./usr/lib/libbluetooth.so.4			base-sys-shlib		compatfile
 ./usr/lib/libbluetooth.so.4.2			base-sys-shlib		compatfile
 ./usr/lib/libbozohttpd.so 			base-sys-shlib		compatfile
-./usr/lib/libbozohttpd.so.0			base-sys-shlib		compatfile
-./usr/lib/libbozohttpd.so.0.0			base-sys-shlib		compatfile
+./usr/lib/libbozohttpd.so.1			base-sys-shlib		compatfile
+./usr/lib/libbozohttpd.so.1.0			base-sys-shlib		compatfile
 ./usr/lib/libbsdmalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libbsdmalloc.so.0			base-sys-shlib		compatfile
 ./usr/lib/libbsdmalloc.so.0.1			base-sys-shlib		compatfile
