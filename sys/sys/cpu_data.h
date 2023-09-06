@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.54 2023/07/13 12:06:20 riastradh Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.55 2023/09/06 12:29:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -194,6 +194,7 @@ struct cpu_data {
 	unsigned	cpu_heartbeat_uptime_cache;	/* last time_uptime */
 	unsigned	cpu_heartbeat_uptime_stamp;	/* heartbeats since
 							 * uptime changed */
+	unsigned	cpu_heartbeat_suspend;		/* suspend depth */
 };
 
 #define	ci_schedstate		ci_data.cpu_schedstate
@@ -225,6 +226,7 @@ struct cpu_data {
 #define	ci_heartbeat_count		ci_data.cpu_heartbeat_count
 #define	ci_heartbeat_uptime_cache	ci_data.cpu_heartbeat_uptime_cache
 #define	ci_heartbeat_uptime_stamp	ci_data.cpu_heartbeat_uptime_stamp
+#define	ci_heartbeat_suspend		ci_data.cpu_heartbeat_suspend
 
 #define	cpu_nsyscall		cpu_counts[CPU_COUNT_NSYSCALL]
 #define	cpu_ntrap		cpu_counts[CPU_COUNT_NTRAP]
