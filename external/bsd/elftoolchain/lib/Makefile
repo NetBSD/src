@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2021/04/07 20:31:16 jkoshy Exp $
-SUBDIR=		libelf
-SUBDIR+=	.WAIT		# Process 'libelf' before 'libdwarf'.
-SUBDIR+=	libdwarf
+#	$NetBSD: Makefile,v 1.3 2023/09/06 23:44:43 riastradh Exp $
+
+.include "Makefile.subdir"
 
 .include <bsd.subdir.mk>

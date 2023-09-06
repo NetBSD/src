@@ -1,0 +1,8 @@
+#	$NetBSD: Makefile.subdir,v 1.1 2023/09/06 23:44:43 riastradh Exp $
+
+SUBDIR+=	${OPENLDAPLIB}liblber
+SUBDIR+=	.WAIT
+SUBDIR+=	${OPENLDAPLIB}libldap
+SUBDIR+=	${OPENLDAPLIB}libldap_r
+SUBDIR+=	${OPENLDAPLIB}liblutil
+SUBDIR+=	# librewrite liblunicode slapd
