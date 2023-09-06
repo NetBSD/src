@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.117 2023/09/06 08:01:09 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.118 2023/09/06 15:14:20 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11761,4 +11761,35 @@ crypto/external/bsd/openssl/dist/crypto/sparccpuid.S 1.11
 
 	openssl: PR 57594: fix SPARC v8/v9 detection code.
 	[mrg, ticket #349]
+
+tests/usr.sbin/certctl/t_certctl.sh		1.9,1.10
+usr.sbin/certctl/certctl.sh			1.5
+
+	certctl(8): Fix permissions on ca-certificates.crt
+	[riastradh, ticket #350]
+
+distrib/sets/lists/base/shl.mi			1.971 (patch)
+distrib/sets/lists/debug/shl.mi			1.332 (patch)
+libexec/httpd/libbozohttpd/shlib_version	1.2 (patch)
+libexec/httpd/lua/shlib_version			1.2 (patch)
+
+	libbozohttpd(3): Bump major for openssl3.
+	[riastradh, ticket #351]
+
+distrib/sets/lists/base/ad.aarch64		1.45 (patch)
+distrib/sets/lists/base/ad.arm			1.87 (patch)
+distrib/sets/lists/base/ad.mips			1.93 (patch)
+distrib/sets/lists/base/md.i386			1.159 (patch)
+distrib/sets/lists/base/shl.mi			1.945,1.970 (patch)
+distrib/sets/lists/comp/shl.mi			1.354 (patch)
+distrib/sets/lists/debug/ad.aarch64		1.37 (patch)
+distrib/sets/lists/debug/ad.arm			1.81 (patch)
+distrib/sets/lists/debug/ad.mips		1.83 (patch)
+distrib/sets/lists/debug/md.i386		1.21 (patch)
+distrib/sets/lists/debug/shl.mi			1.330,1.331 (patch)
+distrib/sets/lists/xdebug/md.amd64		1.64 (patch)
+distrib/sets/lists/xdebug/md.i386		1.61 (patch)
+
+	lists: more shlib obsolete fixes
+	[riastradh, ticket #352]
 
