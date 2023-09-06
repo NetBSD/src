@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.20 2020/10/16 11:09:32 rin Exp $
+# $NetBSD: md.i386,v 1.20.8.1 2023/09/06 15:11:27 martin Exp $
 ./usr/lib/libi386_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libm387_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libpmc_g.a				comp-obsolete		obsolete
@@ -8,7 +8,6 @@
 ./usr/libdata/debug/usr/bin/pmc.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/libi386.so.2.0.debug	comp-sys-debug	pic,debug
 ./usr/libdata/debug/usr/lib/libm387.so.0.1.debug	comp-sys-debug	pic,debug
-./usr/libdata/debug/usr/lib/libpmc.so.1.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug

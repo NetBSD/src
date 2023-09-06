@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.36.2.2 2023/08/11 16:22:06 martin Exp $
+# $NetBSD: ad.aarch64,v 1.36.2.3 2023/09/06 15:11:27 martin Exp $
 ./lib/eabi					base-compat-lib		compat,llvm
 ./lib/eabi/npf					base-compat-lib		compat,llvm
 ./lib/eabihf					base-compat-lib		compat,llvm
@@ -42,10 +42,6 @@
 ./usr/lib/eabihf/security			base-compat-lib		compat,llvm
 ./usr/lib/oabi					base-obsolete		obsolete
 ./usr/lib/oabi/i18n				base-obsolete		obsolete
-./usr/lib/oabi/libarm.so.0			base-obsolete		obsolete
-./usr/lib/oabi/libarm.so.0.0			base-obsolete		obsolete
-./usr/lib/oabi/libc_vfp.so.0			base-obsolete		obsolete
-./usr/lib/oabi/libc_vfp.so.0.0			base-obsolete		obsolete
 ./usr/lib/oabi/lua				base-obsolete		obsolete
 ./usr/lib/oabi/lua/5.4				base-obsolete		obsolete
 ./usr/lib/oabi/security				base-obsolete		obsolete

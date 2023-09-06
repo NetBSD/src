@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.349 2021/10/27 18:19:12 christos Exp $
+# $NetBSD: shl.mi,v 1.349.2.1 2023/09/06 15:11:27 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -55,8 +55,6 @@
 ./usr/lib/libgcc_eh_pic.a			comp-obsolete		obsolete
 ./usr/lib/libgcc_pic.a				comp-obsolete		obsolete
 ./usr/lib/libgmp.so				comp-obsolete		obsolete
-./usr/lib/libgmp.so.10				comp-obsolete		obsolete
-./usr/lib/libgmp.so.10.2			comp-obsolete		obsolete
 ./usr/lib/libgmp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libgnuctf.so.0			base-sys-shlib		compatfile,binutils=234
 ./usr/lib/libgnuctf.so.0.0			base-sys-shlib		compatfile,binutils=234
@@ -100,12 +98,8 @@
 ./usr/lib/libmenu_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libmj_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libmpc.so				comp-obsolete		obsolete
-./usr/lib/libmpc.so.2				comp-obsolete		obsolete
-./usr/lib/libmpc.so.2.0				comp-obsolete		obsolete
 ./usr/lib/libmpc_pic.a				comp-obsolete		obsolete
 ./usr/lib/libmpfr.so				comp-obsolete		obsolete
-./usr/lib/libmpfr.so.4				comp-obsolete		obsolete
-./usr/lib/libmpfr.so.4.1			comp-obsolete		obsolete
 ./usr/lib/libmpfr_pic.a				comp-obsolete		obsolete
 ./usr/lib/libmudflap.so				comp-c-shlib		compatfile,gcc=48
 ./usr/lib/libmudflap.so.0			comp-c-shlib		compatfile,gcc=48
