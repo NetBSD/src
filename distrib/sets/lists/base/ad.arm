@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.86 2021/06/07 17:11:16 christos Exp $
+# $NetBSD: ad.arm,v 1.86.2.1 2023/09/06 15:11:27 martin Exp $
 ./libexec/ld.elf_so-oabi			base-obsolete		obsolete
 ./sbin/ldconfig					base-sysutil-root	pic,endian=1234
 ./usr/bin/fdformat				base-util-bin
@@ -6,10 +6,6 @@
 ./usr/lib/libarm.so.0				base-sys-shlib		pic,compatfile
 ./usr/lib/libarm.so.0.0				base-sys-shlib		pic,compatfile
 ./usr/lib/libpmc.so				base-obsolete		obsolete
-./usr/lib/libpmc.so.1				base-obsolete		obsolete
-./usr/lib/libpmc.so.1.0				base-obsolete		obsolete
-./usr/lib/oabi/libc_vfp.so.0			base-obsolete		obsolete
-./usr/lib/oabi/libc_vfp.so.0.0			base-obsolete		obsolete
 ./usr/libexec/ld.elf_so-oabi			base-obsolete		obsolete
 ./usr/libexec/ld.so				base-sys-shlib		pic,endian=1234
 ./usr/mdec/BBBB					base-obsolete		obsolete

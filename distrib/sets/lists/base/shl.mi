@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.942.2.10 2023/09/06 15:07:37 martin Exp $
+# $NetBSD: shl.mi,v 1.942.2.11 2023/09/06 15:11:27 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -385,9 +385,9 @@
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi,compatfile
-./usr/lib/libisns.so				base-isns-shlib		obsolete,compatfile
-./usr/lib/libisns.so.0				base-isns-shlib		obsolete,compatfile
-./usr/lib/libisns.so.0.0			base-isns-shlib		obsolete,compatfile
+./usr/lib/libisns.so				base-isns-shlib		compatfile
+./usr/lib/libisns.so.0				base-isns-shlib		compatfile
+./usr/lib/libisns.so.0.0			base-isns-shlib		compatfile
 ./usr/lib/libjemalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libjemalloc.so.0			base-sys-shlib		compatfile
 ./usr/lib/libjemalloc.so.0.0			base-sys-shlib		compatfile
@@ -927,8 +927,6 @@
 ./usr/lib/libuutil.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libuutil.so.0.0			base-zfs-shlib		compatfile,zfs
 ./usr/lib/libuv.so				base-obsolete		compatfile,obsolete
-./usr/lib/libuv.so.1				base-obsolete		compatfile,obsolete
-./usr/lib/libuv.so.1.0				base-obsolete		compatfile,obsolete
 ./usr/lib/libwind.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libwind.so.1				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libwind.so.1.0			base-krb5-shlib		compatfile,kerberos
