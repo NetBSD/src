@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.361 2023/08/28 15:50:17 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.362 2023/09/06 19:56:57 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -357,6 +357,7 @@ DAB	digital audio broadcasting
 DAC	digital [to] analog converter
 DAC	discretionary access control
 DAD	duplicate address detection
+DAE	deterministic authenticated encryption
 DANE	DNS-based Authentication of Named Entities
 DAO	disk at once
 DAP	Directory Access Protocol
