@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.29 2022/05/17 11:18:58 kre Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.30 2023/09/06 08:12:09 shm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.29 2022/05/17 11:18:58 kre Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.30 2023/09/06 08:12:09 shm Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: mail.local.c,v 1.29 2022/05/17 11:18:58 kre Exp $");
 #include <pwd.h>
 #include <netdb.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -137,7 +138,7 @@ store(const char *from)
 
 	tn = strdup(_PATH_LOCTMP);
 	if (!tn)
-		logerr(EX_OSERR, "not enough core");
+		logerr(EX_OSERR, "not enough memory");
 	if ((fd = mkstemp(tn)) == -1 || !(fp = fdopen(fd, "w+")))
 		logerr(EX_OSERR, "unable to open temporary file");
 	(void)unlink(tn);
@@ -175,13 +176,28 @@ store(const char *from)
 	return(fd);
 }
 
+static bool
+badfile(const char *path, const struct stat *sb)
+{
+	if (!S_ISREG(sb->st_mode)) {
+		logwarn("%s: not a regular file", path);
+		return true;
+	}
+
+	if (sb->st_nlink != 1) {
+		logwarn("%s: linked file", path);
+		return true;
+	}
+	return false;
+}
+
 static int
 deliver(int fd, char *name, int lockfile)
 {
 	struct stat sb, nsb;
 	struct passwd pwres, *pw;
 	char pwbuf[1024];
-	int created = 0, mbfd, nr, nw, off, rval=EX_OK, lfd = -1;
+	int created = 0, mbfd = -1, nr, nw, off, rval=EX_OK, lfd = -1;
 	char biffmsg[100], buf[8*1024], path[MAXPATHLEN], lpath[MAXPATHLEN];
 	off_t curoff;
 
@@ -211,10 +227,17 @@ deliver(int fd, char *name, int lockfile)
 		}
 	}
 
-	if ((lstat(path, &sb) != -1) &&
-	    (sb.st_nlink != 1 || S_ISLNK(sb.st_mode))) {
-		logwarn("%s: linked file", path);
-		return(EX_OSERR);
+	if (lstat(path, &sb) == -1) {
+	    if (errno != ENOENT) {
+		logwarn("%s: %s", path, strerror(errno));
+		rval = EX_OSERR;
+		goto bad;
+	    }
+	    memset(&sb, 0, sizeof(sb));
+	    sb.st_dev = NODEV;
+	} else if (badfile(path, &sb)) {
+		rval = EX_OSERR;
+		goto bad;
 	}
 	
 	if ((mbfd = open(path, O_APPEND|O_WRONLY|O_EXLOCK|O_NOFOLLOW,
@@ -235,8 +258,14 @@ deliver(int fd, char *name, int lockfile)
 			goto bad;
 		}
 
+		if (badfile(path, &nsb)) {
+			rval = EX_OSERR;
+			goto bad;
+		}
+
 		/* file is not what we expected */
 		if (nsb.st_ino != sb.st_ino || nsb.st_dev != sb.st_dev) {
+			logwarn("%s: file has changed", path);
 			rval = EX_OSERR;
 			goto bad;
 		}
