@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_socket.c,v 1.303 2023/08/05 09:25:39 andvar Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.304 2023/09/07 20:12:33 ad Exp $	*/
 
 /*
- * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.303 2023/08/05 09:25:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.304 2023/09/07 20:12:33 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -559,7 +559,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 		sofree(so);
 		return error;
 	}
-	so->so_cred = kauth_cred_dup(l->l_cred);
+	kauth_cred_hold(so->so_cred = l->l_cred);
 	sounlock(so);
 
 	*aso = so;
