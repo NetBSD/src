@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.71 2023/07/17 12:54:29 riastradh Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.72 2023/09/07 20:05:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.71 2023/07/17 12:54:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.72 2023/09/07 20:05:42 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -586,7 +586,7 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 void
 rw_downgrade(krwlock_t *rw)
 {
-	uintptr_t owner, curthread, newown, next;
+	uintptr_t owner, newown, next, curthread __diagused;
 	turnstile_t *ts;
 	int rcnt, wcnt;
 	lwp_t *l;
@@ -597,9 +597,6 @@ rw_downgrade(krwlock_t *rw)
 	RW_ASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
 	RW_ASSERT(rw, RW_OWNER(rw) == curthread);
 	RW_UNLOCKED(rw, RW_WRITER);
-#if !defined(DIAGNOSTIC)
-	__USE(curthread);
-#endif
 
 	membar_release();
 	for (owner = rw->rw_owner;; owner = next) {
@@ -800,27 +797,4 @@ rw_owner(wchan_t obj)
 		return NULL;
 
 	return (void *)(owner & RW_THREAD);
-}
-
-/*
- * rw_owner_running:
- *
- *	Return true if a RW lock is unheld, or write held and the owner is
- *	running on a CPU.  For the pagedaemon.
- */
-bool
-rw_owner_running(const krwlock_t *rw)
-{
-#ifdef MULTIPROCESSOR
-	uintptr_t owner;
-	bool rv;
-
-	kpreempt_disable();
-	owner = rw->rw_owner;
-	rv = (owner & RW_THREAD) == 0 || rw_oncpu(owner);
-	kpreempt_enable();
-	return rv;
-#else
-	return rw_owner(rw) == curlwp;
-#endif
 }

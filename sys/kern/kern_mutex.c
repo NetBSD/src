@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.108 2023/07/17 12:54:29 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.109 2023/09/07 20:05:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.108 2023/07/17 12:54:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.109 2023/09/07 20:05:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -752,6 +752,8 @@ mutex_vector_exit(kmutex_t *mtx)
 	 * Avoid having to take the turnstile chain lock every time
 	 * around.  Raise the priority level to splhigh() in order
 	 * to disable preemption and so make the following atomic.
+	 * This also blocks out soft interrupts that could set the
+	 * waiters bit.
 	 */
 	{
 		int s = splhigh();
@@ -839,31 +841,6 @@ mutex_owner(wchan_t wchan)
 
 	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx->mtx_owner));
 	return (struct lwp *)MUTEX_OWNER(mtx->mtx_owner);
-}
-
-/*
- * mutex_owner_running:
- *
- *	Return true if an adaptive mutex is unheld, or held and the owner is
- *	running on a CPU.  For the pagedaemon only - do not document or use
- *	in other code.
- */
-bool
-mutex_owner_running(const kmutex_t *mtx)
-{
-#ifdef MULTIPROCESSOR
-	uintptr_t owner;
-	bool rv;
-
-	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx->mtx_owner));
-	kpreempt_disable();
-	owner = mtx->mtx_owner;
-	rv = !MUTEX_OWNED(owner) || mutex_oncpu(MUTEX_OWNER(owner));
-	kpreempt_enable();
-	return rv;
-#else
-	return mutex_owner(mtx) == curlwp;
-#endif
 }
 
 /*
