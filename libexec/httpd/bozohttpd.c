@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.143 2023/06/07 20:12:31 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.144 2023/09/07 06:40:56 shm Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -2728,6 +2728,11 @@ bozo_cleanup(bozohttpd_t *httpd, bozoprefs_t *prefs)
 	free(httpd->errorbuf);
 	free(httpd->getln_buffer);
 	free(httpd->slashdir);
+	free(httpd->bindport);
+	free(httpd->pidfile);
+	free(httpd->cgibin);
+	free(httpd->virtbase);
+	free(httpd->dynamic_content_map);
 #define bozo_unconst(x) ((void *)(uintptr_t)x)
 	free(bozo_unconst(httpd->server_software));
 	free(bozo_unconst(httpd->index_html));
