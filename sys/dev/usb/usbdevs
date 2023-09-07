@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.808 2023/05/14 22:30:13 pgoyette Exp $
+$NetBSD: usbdevs,v 1.809 2023/09/07 20:04:18 ad Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -520,6 +520,7 @@ vendor CONCEPTRONIC	0x14b2	Conceptronic
 vendor SUPERTOP		0x14cd	SuperTop
 vendor PLANEX3		0x14ea	Planex Communications
 vendor SILICONPORTALS	0x1527	Silicon Portals
+vendor TOPPING		0x152a	TOPPING Electronics & Technology co.
 vendor JMICRON		0x152d	JMicron
 vendor OQO		0x1557	OQO
 vendor UMEDIA		0x157e	U-MEDIA Communications
@@ -3418,6 +3419,9 @@ product TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard Reader
 
 /* Topfield Co. Ltd products */
 product TOPFIELD TF5000PVR	0x1000	TF5000PVR Digital Video Recorder
+
+/* TOPPING Electronics & Technology co. */
+product TOPPING DX3_PRO		0x8750	DX3 Pro
 
 /* Toshiba Corporation products */
 product TOSHIBA POCKETPC_E740	0x0706	PocketPC e740
