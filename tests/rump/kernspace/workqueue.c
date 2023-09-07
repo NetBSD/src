@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.c,v 1.6.16.1 2023/09/04 16:57:56 martin Exp $	*/
+/*	$NetBSD: workqueue.c,v 1.6.16.2 2023/09/07 08:05:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: workqueue.c,v 1.6.16.1 2023/09/04 16:57:56 martin Exp $");
+__RCSID("$NetBSD: workqueue.c,v 1.6.16.2 2023/09/07 08:05:13 martin Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -162,10 +162,11 @@ rumptest_workqueue_wait_pause(void)
 		workqueue_enqueue(sc->wq, &sc->wk, NULL);
 		kpause("tstwk2", /*intr*/false, /*timo*/1, /*lock*/NULL);
 		workqueue_wait(sc->wq, &sc->wk);
-		KASSERT(sc->counter == (i + 1));
+		workqueue_wait(sc->wq, &wk);
+		KASSERT(sc->counter == (i + 2));
 	}
 
-	KASSERT(sc->counter == ITERATIONS);
+	KASSERT(sc->counter == 2*ITERATIONS);
 
 	/* Wait for a work that is not enqueued. Just return immediately. */
 	workqueue_wait(sc->wq, &dummy);
