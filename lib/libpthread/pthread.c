@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.182 2023/03/24 14:18:18 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.183 2023/09/07 19:59:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.182 2023/03/24 14:18:18 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.183 2023/09/07 19:59:20 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1125,7 +1125,7 @@ pthread__errorfunc(const char *file, int line, const char *function,
 		syslog(LOG_DEBUG | LOG_USER, "%s", buf);
 
 	if (pthread__diagassert & DIAGASSERT_ABORT) {
-		(void)_lwp_kill(_lwp_self(), SIGABRT);
+		(void)raise(SIGABRT);
 		_exit(1);
 	}
 }
