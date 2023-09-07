@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.72 2023/06/24 05:25:04 msaitoh Exp $	*/
+/*	$NetBSD: util.c,v 1.73 2023/09/07 16:38:08 riastradh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1524,8 +1524,13 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	}
 
 	/* Configure the system */
-	if (set_status[SET_BASE] & SET_INSTALLED)
+	if (set_status[SET_BASE] & SET_INSTALLED) {
 		run_makedev();
+		if (!update) {
+			run_program(RUN_CHROOT|RUN_DISPLAY,
+			    "/usr/sbin/certctl rehash");
+		}
+	}
 
 	if (!update) {
 		struct stat sb1, sb2;
