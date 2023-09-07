@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.118 2023/09/06 15:14:20 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.119 2023/09/07 08:22:19 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11792,4 +11792,15 @@ distrib/sets/lists/xdebug/md.i386		1.61 (patch)
 
 	lists: more shlib obsolete fixes
 	[riastradh, ticket #352]
+
+tests/rump/kernspace/workqueue.c		1.10
+
+	workqueue(9) tests: PR 5757: fix mistake in test.
+	[riastradh, ticket #353]
+
+sys/arch/arm/dts/rk3328-nanopi-r2s.dts		1.1
+
+	Enable rkv1crypto on nanopi-r2s.
+	[gutteridge, ticket #355]
+
 
