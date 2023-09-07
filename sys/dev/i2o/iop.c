@@ -1,7 +1,7 @@
-/*	$NetBSD: iop.c,v 1.92 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: iop.c,v 1.93 2023/09/07 20:07:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002, 2007, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.92 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.93 2023/09/07 20:07:03 ad Exp $");
 
 #include "iop.h"
 
@@ -106,7 +106,7 @@ const struct cdevsw iop_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER,
+	.d_flag = D_OTHER | D_MPSAFE,
 };
 
 #define	IC_CONFIGURE	0x01
@@ -2438,16 +2438,23 @@ int
 iopopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct iop_softc *sc;
+	int rv;
 
 	if ((sc = device_lookup_private(&iop_cd, minor(dev))) == NULL)
 		return (ENXIO);
-	if ((sc->sc_flags & IOP_ONLINE) == 0)
-		return (ENXIO);
-	if ((sc->sc_flags & IOP_OPEN) != 0)
-		return (EBUSY);
-	sc->sc_flags |= IOP_OPEN;
 
-	return (0);
+	mutex_enter(&sc->sc_conflock);
+	if ((sc->sc_flags & IOP_ONLINE) == 0)
+		rv = ENXIO;
+	else if ((sc->sc_flags & IOP_OPEN) != 0)
+		rv = EBUSY;
+	else {
+		sc->sc_flags |= IOP_OPEN;
+		rv = 0;
+	}
+	mutex_exit(&sc->sc_conflock);
+
+	return (rv);
 }
 
 int
@@ -2457,7 +2464,10 @@ iopclose(dev_t dev, int flag, int mode,
 	struct iop_softc *sc;
 
 	sc = device_lookup_private(&iop_cd, minor(dev));
+
+	mutex_enter(&sc->sc_conflock);
 	sc->sc_flags &= ~IOP_OPEN;
+	mutex_exit(&sc->sc_conflock);
 
 	return (0);
 }
@@ -2472,14 +2482,19 @@ iopioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	sc = device_lookup_private(&iop_cd, minor(dev));
 	rv = 0;
 
+	mutex_enter(&sc->sc_conflock);
 	switch (cmd) {
 	case IOPIOCPT:
 		rv = kauth_authorize_device_passthru(l->l_cred, dev,
 		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
-		if (rv)
+		if (rv) {
+			mutex_exit(&sc->sc_conflock);
 			return (rv);
+		}
 
-		return (iop_passthrough(sc, (struct ioppt *)data, l->l_proc));
+		rv = iop_passthrough(sc, (struct ioppt *)data, l->l_proc);
+		mutex_exit(&sc->sc_conflock);
+		return (rv);
 
 	case IOPIOCGSTATUS:
 		iov = (struct iovec *)data;
@@ -2490,6 +2505,7 @@ iopioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			iov->iov_len = i;
 		if ((rv = iop_status_get(sc, 0)) == 0)
 			rv = copyout(&sc->sc_status, iov->iov_base, i);
+		mutex_exit(&sc->sc_conflock);
 		return (rv);
 
 	case IOPIOCGLCT:
@@ -2501,10 +2517,9 @@ iopioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #if defined(DIAGNOSTIC) || defined(I2ODEBUG)
 		printf("%s: unknown ioctl %lx\n", device_xname(sc->sc_dev), cmd);
 #endif
+		mutex_exit(&sc->sc_conflock);
 		return (ENOTTY);
 	}
-
-	mutex_enter(&sc->sc_conflock);
 
 	switch (cmd) {
 	case IOPIOCGLCT:
@@ -2543,6 +2558,8 @@ iop_passthrough(struct iop_softc *sc, struct ioppt *pt, struct proc *p)
 	struct i2o_msg *mf;
 	struct ioppt_buf *ptb;
 	int rv, i, mapped;
+
+	KASSERT(mutex_owned(&sc->sc_conflock));
 
 	mf = NULL;
 	im = NULL;

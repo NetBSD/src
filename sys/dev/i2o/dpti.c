@@ -1,7 +1,7 @@
-/*	$NetBSD: dpti.c,v 1.50 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: dpti.c,v 1.51 2023/09/07 20:07:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2007, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.50 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.51 2023/09/07 20:07:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.50 2018/09/03 16:29:31 riastradh Exp $");
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/endian.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/kauth.h>
@@ -150,7 +150,7 @@ const struct cdevsw dpti_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER,
+	.d_flag = D_OTHER | D_MPSAFE,
 };
 
 CFATTACH_DECL_NEW(dpti, sizeof(struct dpti_softc),
@@ -242,6 +242,7 @@ dptiioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		linux = 0;
 	}
 
+	mutex_enter(&iop->sc_conflock);
 	switch (cmd) {
 	case DPT_SIGNATURE:
 		if (size > sizeof(dpti_sig))
@@ -283,13 +284,11 @@ dptiioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (rv)
 			break;
 
-		mutex_enter(&iop->sc_conflock);
 		if (linux) {
 			rv = dpti_passthrough(sc, data, l->l_proc);
 		} else {
 			rv = dpti_passthrough(sc, *(void **)data, l->l_proc);
 		}
-		mutex_exit(&iop->sc_conflock);
 		break;
 
 	case DPT_I2ORESETCMD:
@@ -299,15 +298,14 @@ dptiioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 
 	case DPT_I2ORESCANCMD:
-		mutex_enter(&iop->sc_conflock);
 		rv = iop_reconfigure(iop, 0);
-		mutex_exit(&iop->sc_conflock);
 		break;
 
 	default:
 		rv = ENOTTY;
 		break;
 	}
+	mutex_exit(&iop->sc_conflock);
 
 	return (rv);
 }
@@ -644,13 +642,7 @@ dpti_passthrough(struct dpti_softc *sc, void *data, struct proc *proc)
 			}
 
 			bufs[nbuf].db_size = sz;
-			bufs[nbuf].db_ptr = malloc(sz, M_DEVBUF, M_WAITOK);
-			if (bufs[nbuf].db_ptr == NULL) {
-				DPRINTF(("%s: allocation failure\n",
-				    device_xname(sc->sc_dev)));
-				rv = ENOMEM;
-				goto bad;
-			}
+			bufs[nbuf].db_ptr = kmem_zalloc(sz, KM_SLEEP);
 
 			for (i = 0, sz = 0; i < bufs[nbuf].db_nfrag; i++) {
 				rv = copyin(bufs[nbuf].db_frags[i].iov_base,
@@ -744,7 +736,7 @@ dpti_passthrough(struct dpti_softc *sc, void *data, struct proc *proc)
 		}
 
 		if (bufs[i].db_ptr != NULL)
-			free(bufs[i].db_ptr, M_DEVBUF);
+			kmem_free(bufs[i].db_ptr, bufs[i].db_size);
 	}
 
 	return (rv);
