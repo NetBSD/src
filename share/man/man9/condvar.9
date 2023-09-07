@@ -1,6 +1,6 @@
-.\"	$NetBSD: condvar.9,v 1.30 2020/08/27 14:14:00 fcambus Exp $
+.\"	$NetBSD: condvar.9,v 1.31 2023/09/07 20:01:43 ad Exp $
 .\"
-.\" Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2006, 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 2, 2020
+.Dd September 7, 2023
 .Dt CONDVAR 9
 .Os
 .Sh NAME
@@ -265,10 +265,12 @@ LWP may be awoken.
 This can be used to avoid a "thundering herd" problem, where a large
 number of LWPs are awoken following an event, but only one LWP can
 process the event.
+.Pp
 The mutex passed to the wait function
 .Po Fa mtx Pc
-must also be held when calling
-.Fn cv_signal .
+should be held or have been released immediately before
+.Fn cv_signal
+is called.
 .Pp
 (Note that
 .Fn cv_signal
@@ -277,10 +279,14 @@ sense to LWPs waiting on a CV.)
 .It Fn cv_broadcast "cv"
 .Pp
 Awaken all LWPs waiting on the specified condition variable.
-The mutex passed to the wait function
+.Pp
+As with
+.Fn cv_signal ,
+the mutex passed to the wait function
 .Po Fa mtx Pc
-must also be held when calling
-.Fn cv_broadcast .
+should be held or have been released immediately before
+.Fn cv_broadcast
+is called.
 .It Fn cv_has_waiters "cv"
 .Pp
 Return
