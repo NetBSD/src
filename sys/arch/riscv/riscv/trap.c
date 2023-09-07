@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 2023/08/22 07:11:15 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.24 2023/09/07 12:48:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.23 2023/08/22 07:11:15 rin Exp $");
+__RCSID("$NetBSD: trap.c,v 1.24 2023/09/07 12:48:49 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -358,6 +358,12 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 		npte = opte;
 
 		switch (cause) {
+		case CAUSE_LOAD_PAGE_FAULT:
+			if ((npte & PTE_R) == 0) {
+				npte |= PTE_A;
+				attr |= VM_PAGEMD_REFERENCED;
+			}
+			break;
 		case CAUSE_STORE_ACCESS:
 			if ((npte & PTE_W) != 0) {
 				npte |= PTE_A | PTE_D;
@@ -380,8 +386,8 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 #endif
 			break;
 		default:
-			panic("%s: Unhandled cause! 0x%016lx (%s)", __func__,
-			    (long)cause, cause_name(cause));
+			panic("%s: Unhandled cause (%#" PRIxREGISTER
+			    ") for addr %lx", __func__, cause, addr);
 		}
 		if (attr == 0)
 			return false;
