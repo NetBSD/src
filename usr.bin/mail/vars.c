@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.18 2007/10/27 15:14:51 christos Exp $	*/
+/*	$NetBSD: vars.c,v 1.19 2023/09/08 14:22:04 shm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: vars.c,v 1.18 2007/10/27 15:14:51 christos Exp $");
+__RCSID("$NetBSD: vars.c,v 1.19 2023/09/08 14:22:04 shm Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,14 +86,12 @@ vcopy(const char str[])
 PUBLIC int
 hash(const char *name)
 {
-	int h = 0;
+	unsigned int h = 0;
 
 	while (*name) {
 		h <<= 2;
 		h += *name++;
 	}
-	if (h < 0 && (h = -h) < 0)
-		h = 0;
 	return h % HSHSIZE;
 }
 
