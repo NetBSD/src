@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2021/12/28 17:05:43 christos Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2023/09/08 09:03:54 martin Exp $
 
-SUBDIR=	liblber .WAIT libldap libldap_r liblutil # librewrite liblunicode slapd
+.include "Makefile.subdir"
 
 .include <bsd.subdir.mk>

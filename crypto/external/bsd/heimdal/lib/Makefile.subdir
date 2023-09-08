@@ -1,0 +1,26 @@
+#	$NetBSD: Makefile.subdir,v 1.1.2.2 2023/09/08 09:03:53 martin Exp $
+
+.if (${MKKERBEROS} != "no")
+SUBDIR+=	${HEIMDALLIB}libheimbase
+SUBDIR+=	${HEIMDALLIB}libcom_err
+SUBDIR+=	${HEIMDALLIB}libroken
+SUBDIR+=	${HEIMDALLIB}libvers
+SUBDIR+=	.WAIT
+SUBDIR+=	${HEIMDALLIB}libsl
+SUBDIR+=	.WAIT
+SUBDIR+=	${HEIMDALLIB}libasn1
+SUBDIR+=	${HEIMDALLIB}libwind
+SUBDIR+=	.WAIT
+SUBDIR+=	${HEIMDALLIB}libhx509
+SUBDIR+=	.WAIT
+SUBDIR+=	${HEIMDALLIB}libkrb5
+SUBDIR+=	.WAIT
+SUBDIR+=	${HEIMDALLIB}libhdb
+SUBDIR+=	${HEIMDALLIB}libkafs
+SUBDIR+=	${HEIMDALLIB}libheimntlm
+SUBDIR+=	.WAIT
+SUBDIR+=	${HEIMDALLIB}libkdc
+SUBDIR+=	${HEIMDALLIB}libgssapi
+SUBDIR+=	${HEIMDALLIB}libkadm5srv
+SUBDIR+=	${HEIMDALLIB}libkadm5clnt
+.endif	# MKKERBEROS != no

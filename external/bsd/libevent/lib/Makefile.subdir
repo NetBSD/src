@@ -1,0 +1,6 @@
+#	$NetBSD: Makefile.subdir,v 1.1.2.2 2023/09/08 09:03:53 martin Exp $
+
+SUBDIR+=	${LIBEVENTLIB}libevent
+SUBDIR+=	.WAIT
+SUBDIR+=	${LIBEVENTLIB}libevent_openssl
+SUBDIR+=	${LIBEVENTLIB}libevent_pthreads
