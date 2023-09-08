@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.17 2022/08/07 10:12:19 andvar Exp $	*/
+/*	$NetBSD: format.c,v 1.18 2023/09/08 14:34:02 shm Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.17 2022/08/07 10:12:19 andvar Exp $");
+__RCSID("$NetBSD: format.c,v 1.18 2023/09/08 14:34:02 shm Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -54,13 +54,21 @@ __RCSID("$NetBSD: format.c,v 1.17 2022/08/07 10:12:19 andvar Exp $");
 static void
 check_bufsize(char **buf, size_t *bufsize, char **p, size_t cnt)
 {
-	char *q;
-	if (*p + cnt < *buf + *bufsize)
+	size_t offset = (size_t)(*p - *buf);
+
+	/* enough buffer allocated already */
+	if (cnt < *bufsize - offset)
 		return;
-	*bufsize *= 2;
-	q = erealloc(*buf, *bufsize);
-	*p = q + (*p - *buf);
-	*buf = q;
+
+	/* expand buffer till it's sufficient to handle the data */
+	while (cnt >= *bufsize - offset) {
+		if (*bufsize > SIZE_MAX/2)
+			errx(1, "out of memory");
+		*bufsize *= 2;
+	}
+
+	*buf = erealloc(*buf, *bufsize);
+	*p = *buf + offset;
 }
 
 static const char *
