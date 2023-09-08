@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.92 2023/04/21 23:01:59 tsutsui Exp $	*/
+/*	$NetBSD: dcm.c,v 1.93 2023/09/08 22:51:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.92 2023/04/21 23:01:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.93 2023/09/08 22:51:54 andvar Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1162,7 +1162,7 @@ dcmstart(struct tty *tp)
 	char buf[16];
 	int s;
 #ifdef DCMSTATS
-	struct dcmstats *dsp = &sc->sc_stats;
+	struct dcmstats *dsp;
 	int tch = 0;
 #endif
 
@@ -1172,6 +1172,9 @@ dcmstart(struct tty *tp)
 
 	sc = device_lookup_private(&dcm_cd, board);
 	dcm = sc->sc_dcm;
+#ifdef DCMSTATS
+	dsp = &sc->sc_stats;
+#endif
 
 	s = spltty();
 #ifdef DCMSTATS
