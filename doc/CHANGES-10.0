@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.119 2023/09/07 08:22:19 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.120 2023/09/08 09:07:19 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11803,4 +11803,25 @@ sys/arch/arm/dts/rk3328-nanopi-r2s.dts		1.1
 	Enable rkv1crypto on nanopi-r2s.
 	[gutteridge, ticket #355]
 
+crypto/external/bsd/heimdal/lib/Makefile	1.3
+crypto/external/bsd/heimdal/lib/Makefile.subdir	1.1
+crypto/external/bsd/netpgp/lib/Makefile		1.18
+crypto/external/bsd/netpgp/lib/Makefile.subdir	1.1
+external/bsd/atf/lib/Makefile			1.3
+external/bsd/atf/lib/Makefile.subdir		1.1
+external/bsd/elftoolchain/lib/Makefile		1.3
+external/bsd/elftoolchain/lib/Makefile.subdir	1.1
+external/bsd/libevent/lib/Makefile		1.5
+external/bsd/libevent/lib/Makefile.subdir	1.1
+external/bsd/openldap/lib/Makefile		1.3
+external/bsd/openldap/lib/Makefile.subdir	1.1
+lib/Makefile					1.297
+
+	lib: handle various external lib directories with build_install.
+	[riastradh, ticket #356]
+
+lib/libpam/modules/pam_ksu/pam_ksu.c		1.11
+
+	pam_ksu(8): allow homedir access during kuserok.
+	[riastradh, ticket #357]
 
