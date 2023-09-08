@@ -1,4 +1,4 @@
-/*	$NetBSD: once.h,v 1.7 2019/03/19 08:16:51 ryo Exp $	*/
+/*	$NetBSD: once.h,v 1.8 2023/09/08 23:25:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -30,6 +30,9 @@
 #ifndef _SYS_ONCE_H_
 #define	_SYS_ONCE_H_
 
+#include <sys/stdint.h>
+#include <sys/systm.h>
+
 typedef struct {
 	int o_error;
 	uint16_t o_refcnt;
@@ -50,7 +53,7 @@ void _fini_once(once_t *, void (*)(void));
 	};
 
 #define	RUN_ONCE(o, fn) \
-    (__predict_true((o)->o_status == ONCE_DONE) ? \
+    (ASSERT_SLEEPABLE(), __predict_true((o)->o_status == ONCE_DONE) ? \
       ((o)->o_error) : _init_once((o), (fn)))
 
 #define	INIT_ONCE(o, fn)	_init_once((o), (fn))
