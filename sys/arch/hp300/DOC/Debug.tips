@@ -1,4 +1,4 @@
-$NetBSD: Debug.tips,v 1.5 2005/12/11 12:17:13 christos Exp $
+$NetBSD: Debug.tips,v 1.6 2023/09/08 19:04:28 andvar Exp $
 
 NOTE: this description applies to the hp300 system with the old BSD
 virtual memory system.  It has not been updated to reflect the new,
@@ -13,9 +13,9 @@ Some quick notes on the HPBSD VM layout and kernel debugging.
 Physical memory:
 
 Physical memory always ends at the top of the 32 bit address space; i.e. the
-last addressible byte is at 0xFFFFFFFF.  Hence, the start of physical memory
+last addressable byte is at 0xFFFFFFFF.  Hence, the start of physical memory
 varies depending on how much memory is installed.  The kernel variable "lowram"
-contains the starting locatation of memory as provided by the ROM.
+contains the starting location of memory as provided by the ROM.
 
 The low 128k (I think) of the physical address space is occupied by the ROM.
 This is accessible via /dev/mem *only* if the kernel is compiled with DEBUG.
@@ -157,7 +157,7 @@ the user page table.  Look at the last 256 entries of this page
 was intended to be a read-only page to protect the user structure from the
 kernel stack.  Currently it is read/write and actually allocated.  Hence
 it can wind up being a second page for the kernel stack.  The third is the
-kernel stack.  The last 253 should be zero.  Hence, indirecing through the
+kernel stack.  The last 253 should be zero.  Hence, indirecting through the
 third of these last 256 PTEs will give you the kernel stack page.
 
 An alternate way to do this is to use the p_addr field of the proc structure
@@ -172,7 +172,7 @@ useful information.  This dates back to the days when I was debugging the
 exception handling code and had no kernel adb or even kernel crash dump code.
 "trap type" (decimal) is as defined in hp300/trap.h, it doesn't really
 correlate with anything useful.  "code" (hex) is only useful for MMU
-(trap type 8) errors.  It is the concatination of the MMU status register
+(trap type 8) errors.  It is the concatenation of the MMU status register
 (see hp300/cpu.h) in the high 16 bits and the 68020 special status word
 (see the 020 manual page 6-17) in the low 16.  "v" (hex) is the virtual
 address which caused the fault.  "pid" (decimal) is the ID of the process

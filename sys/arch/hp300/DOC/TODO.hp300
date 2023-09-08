@@ -1,4 +1,4 @@
-$NetBSD: TODO.hp300,v 1.3 2022/04/12 21:05:37 andvar Exp $
+$NetBSD: TODO.hp300,v 1.4 2023/09/08 19:04:28 andvar Exp $
 
 1. Create and use an interrupt stack.
    Well actually, use the master SP for kernel stacks instead of
@@ -15,7 +15,7 @@ $NetBSD: TODO.hp300,v 1.3 2022/04/12 21:05:37 andvar Exp $
    however.
 
 3. Sendsig/sigreturn are pretty bogus.
-   Currently we can call a signal handler even if an excpetion
+   Currently we can call a signal handler even if an exception
    occurs in the middle of an instruction.  This causes the handler
    to return right back to the middle of the offending instruction
    which will most likely lead to another exception/signal.
@@ -43,7 +43,7 @@ $NetBSD: TODO.hp300,v 1.3 2022/04/12 21:05:37 andvar Exp $
    it does eat up a significant piece of kernel address space.
 
 6. Create a 32-bit timer.
-   Timers 2 and 3 on the MC6840 clock chip can be concatonated together to
+   Timers 2 and 3 on the MC6840 clock chip can be concatenated together to
    get a 32-bit countdown timer.  There are at least three uses for this:
    1. Monitoring the interval timer ("clock") to detect lost "ticks".
       (Idea from Scott Marovich)
