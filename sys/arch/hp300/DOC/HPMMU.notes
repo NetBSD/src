@@ -1,4 +1,4 @@
-$NetBSD: HPMMU.notes,v 1.5 2002/02/11 10:44:39 wiz Exp $
+$NetBSD: HPMMU.notes,v 1.6 2023/09/08 18:51:19 andvar Exp $
 
 Overview:
 --------
@@ -82,7 +82,7 @@ Hardware registers:
 		bit 13: If 1, indicates a protection fault (write to RO page)
 		bit 6:	MC68881 enable.  Tied to chip enable line.
 			(set this bit to enable)
-		bit 5:	MC68020 instruction cache enable.  Tied to Insruction
+		bit 5:	MC68020 instruction cache enable.  Tied to Instruction
 			cache disable line.  (set this bit to enable)
 		bit 3:	If 1, indicates an MMU related bus error occurred.
 			Bits 13-15 are now valid.
