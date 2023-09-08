@@ -1,0 +1,5 @@
+#	$NetBSD: Makefile.subdir,v 1.1.2.2 2023/09/08 09:03:54 martin Exp $
+
+SUBDIR+=	${ELFTOOLCHAINLIB}libelf
+SUBDIR+=	.WAIT		# Process 'libelf' before 'libdwarf'.
+SUBDIR+=	${ELFTOOLCHAINLIB}libdwarf

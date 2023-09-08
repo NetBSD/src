@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.2 2014/02/08 19:15:33 jmmv Exp $
+# $NetBSD: Makefile,v 1.2.36.1 2023/09/08 09:03:54 martin Exp $
 
-SUBDIR= libatf-c .WAIT libatf-c++ tools
+.include "Makefile.subdir"
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.294.2.1 2023/08/11 13:43:41 martin Exp $
+#	$NetBSD: Makefile,v 1.294.2.2 2023/09/08 09:03:53 martin Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -69,7 +69,8 @@ SUBDIR+=	../external/bsd/am-utils/lib
 
 SUBDIR+=	../external/bsd/flex/lib
 SUBDIR+=	../external/bsd/tre/lib
-SUBDIR+=	../external/bsd/elftoolchain/lib
+ELFTOOLCHAINLIB=../external/bsd/elftoolchain/lib/
+.include "${ELFTOOLCHAINLIB}Makefile.subdir"
 SUBDIR+=	../external/bsd/liblzf/lib
 SUBDIR+=	../external/bsd/libpcap/lib
 
@@ -208,7 +209,8 @@ SUBDIR+=	npf		# depends on libnpf
 .endif
 
 .if (${MKATF} != "no")
-SUBDIR+=	../external/bsd/atf/lib		# depends on libstdc++
+ATFLIB=	../external/bsd/atf/lib/
+.include "${ATFLIB}Makefile.subdir"		# depends on libstdc++
 .endif
 
 .if (${MKKYUA} != "no")
@@ -224,20 +226,25 @@ SUBDIR+=	librump		# depends on librumpuser
 .endif
 
 .if (${MKKERBEROS} != "no")
-SUBDIR+=	../crypto/external/bsd/heimdal/lib	# depends on libcrypto
+# heimdal depends on libcrypto, libedit, libterminfo
+HEIMDALLIB=	../crypto/external/bsd/heimdal/lib/
+.include "${HEIMDALLIB}Makefile.subdir"			# depends on libcrypto
 							# libedit, libterminfo,
 .endif
 
 SUBDIR+=	../external/bsd/libfido2/lib	# depends on libcbor
-SUBDIR+=	../crypto/external/bsd/netpgp/lib  # depends on libcrypto, ...
-SUBDIR+=	../external/bsd/libevent/lib	# depends on libcrypto
+NETPGPLIB=	../crypto/external/bsd/netpgp/lib/
+.include "${NETPGPLIB}Makefile.subdir"		# depends on libcrypto, ...
+LIBEVENTLIB=	../external/bsd/libevent/lib/
+.include "${LIBEVENTLIB}Makefile.subdir"	# depends on libcrypto
 .if ${MKDTRACE} != "no"
 SUBDIR+=	../external/bsd/libproc/lib	# depends on libstdc++, libctf
 .endif
 SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
 
 .if (${MKLDAP} != "no")
-SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
+OPENLDAPLIB=	../external/bsd/openldap/lib/	# depends on libcrypto, ...
+.include "${OPENLDAPLIB}Makefile.subdir"
 .endif
 
 .if (${MKZFS} != "no")
