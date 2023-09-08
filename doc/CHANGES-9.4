@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.97 2023/09/06 08:03:07 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.98 2023/09/08 09:09:08 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2105,4 +2105,9 @@ crypto/external/bsd/openssl/dist/crypto/sparccpuid.S 1.11
 
 	openssl: PR 57594: fix SPARC v8/v9 detection code.
 	[mrg, ticket #1727]
+
+lib/libpam/modules/pam_ksu/pam_ksu.c		1.11
+
+	pam_ksu(8): allow homedir access during kuserok.
+	[riastradh, ticket #1728]
 
