@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.25 2017/11/09 20:27:50 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.26 2023/09/08 20:37:07 shm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.25 2017/11/09 20:27:50 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.26 2023/09/08 20:37:07 shm Exp $");
 #endif
 #endif /* not lint */
 
@@ -456,13 +456,15 @@ skin(char *name)
 	char *cp, *cp2;
 	char *bufend;
 	int gotlt, lastsp;
-	char nbuf[LINESIZE];
+	char *nbuf, *ret;
 
 	if (name == NULL)
 		return NULL;
 	if (strchr(name, '(') == NULL && strchr(name, '<') == NULL
 	    && strchr(name, ' ') == NULL)
 		return name;
+
+	nbuf = emalloc(strlen(name) + 1); 
 	gotlt = 0;
 	lastsp = 0;
 	bufend = nbuf;
@@ -545,8 +547,11 @@ skin(char *name)
 		}
 	}
 	*cp2 = 0;
+	
+	ret = savestr(nbuf);
+	free(nbuf);
 
-	return savestr(nbuf);
+	return ret;
 }
 
 /*
