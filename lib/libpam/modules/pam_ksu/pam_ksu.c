@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ksu.c,v 1.9.36.1 2023/06/21 22:05:30 martin Exp $	*/
+/*	$NetBSD: pam_ksu.c,v 1.9.36.2 2023/09/08 09:06:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jacques A. Vidrine <nectar@FreeBSD.org>
@@ -29,7 +29,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ksu/pam_ksu.c,v 1.5 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ksu.c,v 1.9.36.1 2023/06/21 22:05:30 martin Exp $");
+__RCSID("$NetBSD: pam_ksu.c,v 1.9.36.2 2023/09/08 09:06:21 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -92,7 +92,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 		goto out;
 	}
 	PAM_LOG("kuserok: %s -> %s", su_principal_name, user);
+	(void)krb5_set_home_dir_access(NULL, TRUE); /* ~user/.k5login */
 	rv = krb5_kuserok(context, su_principal, user);
+	(void)krb5_set_home_dir_access(NULL, FALSE);
 	pamret = rv ? auth_krb5(pamh, context, su_principal_name, su_principal) : PAM_AUTH_ERR;
 	free(su_principal_name);
 	krb5_free_principal(context, su_principal);
