@@ -41,6 +41,12 @@ gdb_ptrace (PTRACE_TYPE_ARG1 request, ptid_t ptid, PTRACE_TYPE_ARG3 addr,
 	    PTRACE_TYPE_ARG4 data)
 {
 #ifdef __NetBSD__
+  /*
+   * On NetBSD the data field of PT_STEP contains the thread
+   * to be stepped; all other threads are continued if this value is > 0
+   */
+  if (request == PT_STEP)
+     data = ptid.lwp ();
   return ptrace (request, ptid.pid (), addr, data);
 #else
   pid_t pid = get_ptrace_pid (ptid);
