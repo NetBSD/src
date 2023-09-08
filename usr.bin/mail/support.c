@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.26 2023/09/08 20:37:07 shm Exp $	*/
+/*	$NetBSD: support.c,v 1.27 2023/09/08 20:46:45 shm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.26 2023/09/08 20:37:07 shm Exp $");
+__RCSID("$NetBSD: support.c,v 1.27 2023/09/08 20:46:45 shm Exp $");
 #endif
 #endif /* not lint */
 
@@ -537,7 +537,7 @@ skin(char *name)
 				*cp2++ = ' ';
 			}
 			*cp2++ = c;
-			if (c == ',' && !gotlt) {
+			if (c == ',' && *cp == ' ' && !gotlt) {
 				*cp2++ = ' ';
 				for (/*EMPTY*/; *cp == ' '; cp++)
 					continue;
