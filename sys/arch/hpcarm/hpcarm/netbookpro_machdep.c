@@ -1,4 +1,4 @@
-/*	$NetBSD: netbookpro_machdep.c,v 1.3 2023/04/21 15:00:27 skrll Exp $	*/
+/*	$NetBSD: netbookpro_machdep.c,v 1.4 2023/09/09 07:07:03 andvar Exp $	*/
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbookpro_machdep.c,v 1.3 2023/04/21 15:00:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbookpro_machdep.c,v 1.4 2023/09/09 07:07:03 andvar Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -70,7 +70,7 @@ const struct pmap_devmap machdep_devmap[] = {
 		0x14000000,
 		0x14000000,
 		0x00400000
-	},
+	),
 	DEVMAP_ENTRY_END
 };
 
