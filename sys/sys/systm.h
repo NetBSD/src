@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.303 2023/09/08 23:25:39 riastradh Exp $	*/
+/*	$NetBSD: systm.h,v 1.304 2023/09/09 00:15:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -762,7 +762,7 @@ void assert_sleepable(void);
 #if defined(DEBUG)
 #define	ASSERT_SLEEPABLE()	assert_sleepable()
 #else /* defined(DEBUG) */
-#define	ASSERT_SLEEPABLE()	__nothing
+#define	ASSERT_SLEEPABLE()	do {} while (0)
 #endif /* defined(DEBUG) */
 
 
