@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.594 2023/09/09 01:30:59 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.595 2023/09/09 04:38:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.594 2023/09/09 01:30:59 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.595 2023/09/09 04:38:48 mrg Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -414,7 +414,7 @@ MainParseArgJobs(const char *argvalue)
 			d = 0;
 		if (d > 0) {
 			p = strchr(argvalue, 0);
-			opts.maxJobs = sysconf(_SC_NPROCESSORS_ONLN);
+			opts.maxJobs = (int)sysconf(_SC_NPROCESSORS_ONLN);
 			opts.maxJobs = (int)(d * (double)opts.maxJobs);
 		}
 	}
