@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.76 2021/06/29 10:22:35 nia Exp $
+# $NetBSD: VR41XX,v 1.77 2023/09/09 09:38:02 andvar Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.76 $"
+#ident 		"GENERIC-$Revision: 1.77 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -451,6 +451,7 @@ scsibus* at umass? channel ?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
+midi*	at midibus?
 
 # USB MIDI
 umidi* at uhub? port ? configuration ?
