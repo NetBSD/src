@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.127 2021/07/27 03:01:48 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.127.10.1 2023/09/09 14:54:38 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.127 2021/07/27 03:01:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.127.10.1 2023/09/09 14:54:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -897,24 +897,11 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 
 		rf_DrainReconEventQueue(reconDesc);
 
-		/* XXX  As much as we'd like to free the recon control structure
-		   and the reconDesc, we have no way of knowing if/when those will
-		   be touched by IO that has yet to occur.  It is rather poor to be
-		   basically causing a 'memory leak' here, but there doesn't seem to be
-		   a cleaner alternative at this time.  Perhaps when the reconstruct code
-		   gets a makeover this problem will go away.
-		*/
-#if 0
 		rf_FreeReconControl(raidPtr);
-#endif
-
 #if RF_ACC_TRACE > 0
 		RF_Free(raidPtr->recon_tracerecs, raidPtr->numCol * sizeof(RF_AccTraceEntry_t));
 #endif
-		/* XXX see comment above */
-#if 0
 		FreeReconDesc(reconDesc);
-#endif
 
 		return (1);
 	}
