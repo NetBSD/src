@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.369 2023/09/09 01:30:59 sjg Exp $
+.\"	$NetBSD: make.1,v 1.370 2023/09/09 16:41:04 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -977,6 +977,11 @@ making it easier to track the degree of parallelism being achieved.
 The argument to the
 .Fl j
 option.
+.It Va .MAKE.JOBS.C
+A read-only boolean that indicates wether the
+.Fl j
+option supports use of
+.Ql C .
 .It Va .MAKE.LEVEL
 The recursion depth of
 .Nm .
