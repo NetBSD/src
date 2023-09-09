@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.120 2023/09/08 09:07:19 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.121 2023/09/09 15:02:43 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11824,4 +11824,23 @@ lib/libpam/modules/pam_ksu/pam_ksu.c		1.11
 
 	pam_ksu(8): allow homedir access during kuserok.
 	[riastradh, ticket #357]
+
+usr.sbin/sysinst/util.c				1.73
+
+	sysinst: set up trust anchors on fresh installs.
+	[riastradh, ticket #358]
+
+sys/dev/raidframe/rf_reconstruct.c		1.128
+
+	raidframe: fix memory leaks (prevent diagnostic on shutdown).
+	[oster, ticket #359]
+
+sys/arch/sparc64/dev/fdc.c			1.52
+sys/arch/sparc64/include/intr.h			1.32
+sys/arch/sparc64/include/psl.h			1.64
+sys/arch/sparc64/sparc64/autoconf.c		1.239
+
+	sparc64: fix interrupt level mapping for disk and and parallel devices
+	on SBUS-based machines
+	[jdc, ticket #360]
 
