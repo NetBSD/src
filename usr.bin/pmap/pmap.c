@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.57 2022/08/21 07:46:52 mlelstv Exp $ */
+/*	$NetBSD: pmap.c,v 1.58 2023/09/09 18:27:59 ad Exp $ */
 
 /*
- * Copyright (c) 2002, 2003, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003, 2020, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.57 2022/08/21 07:46:52 mlelstv Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.58 2023/09/09 18:27:59 ad Exp $");
 #endif
 
 #include <string.h>
@@ -874,7 +874,7 @@ search_cache(kvm_t *kd, struct vnode *vp, char **name, char *buf, size_t blen)
 			    (vi.vi_vnode.v_vflag & VV_ROOT) != 0)
 				break;
 			/* Otherwise pull first NCHNAMLEN chars of name. */
-			nlen = MIN((size_t)nc.nc_nlen, NCHNAMLEN);
+			nlen = MIN(NC_NLEN(&nc), NCHNAMLEN);
 			/* too small */
 			if ((size_t)(o - buf) < nlen + (o != e ? 1 : 0))
 				break;
