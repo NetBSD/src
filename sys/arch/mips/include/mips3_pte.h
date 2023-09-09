@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.31 2020/08/17 03:19:35 mrg Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.32 2023/09/09 18:49:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,7 +77,7 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 #define	MIPS3_PG_ODDPG	(MIPS3_PG_SVPN ^ MIPS3_PG_HVPN)
 #elif PGSHIFT == 13
 #ifdef MIPS3_4100
-#define	8KB page size is not supported on the MIPS3_4100
+#error	8KB page size is not supported on the MIPS3_4100
 #endif
 #define	MIPS3_PG_SVPN	(~0UL << 13)	/* Software page no mask */
 #define	MIPS3_PG_HVPN	(~0UL << 13)	/* Hardware page no mask */
