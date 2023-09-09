@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.368 2023/08/20 19:58:15 sjg Exp $
+.\"	$NetBSD: make.1,v 1.369 2023/09/09 01:30:59 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd August 20, 2023
+.Dd September 9, 2023
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -267,6 +267,12 @@ cooperate to avoid overloading the system.
 Specify the maximum number of jobs that
 .Nm
 may have running at any one time.
+If
+.Ar max_jobs
+is a floating point number, or ends with
+.Ql C ,
+then the value is multiplied by the number of CPUs reported online by
+.Xr sysconf 3 .
 The value of
 .Ar max_jobs
 is saved in
