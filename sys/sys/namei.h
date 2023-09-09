@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.115 2021/06/29 22:40:06 dholland Exp $	*/
+/*	$NetBSD: namei.h,v 1.116 2023/09/09 18:28:48 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.60 2021/06/29 22:39:21 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.61 2023/09/09 18:27:59 ad Exp 
  */
 
 /*
@@ -208,12 +208,24 @@ struct nameidata {
 #define	NCHNAMLEN	sizeof(((struct namecache *)NULL)->nc_name)
 
 /*
+ * The uintptr_t-sized key value computed for each name consists of name
+ * length and a hash value.  On 32-bit platforms the top NC_NLEN_BITS of
+ * the 32-bit hash value is lobbed off.
+ */
+
+#define	NC_NLEN_BITS	11
+#define	NC_NLEN_MASK	((1 << NC_NLEN_BITS) - 1)
+#define	NC_NLEN(ncp)	((ncp)->nc_key & NC_NLEN_MASK)
+
+/*
  * Namecache entry.
  *
  * This structure describes the elements in the cache of recent names looked
- * up by namei.  It's carefully sized to take up 128 bytes on _LP64, to make
- * good use of space and the CPU caches.  Items used during RB tree lookup
- * (nc_tree, nc_key) are clustered at the start of the structure.
+ * up by namei.  It's carefully sized to take up 128 bytes on _LP64 and 64
+ * bytes on 32-bit machines, to make good use of space and the CPU caches.
+ *
+ * Items used during RB tree lookup (nc_tree, nc_key) are clustered at the
+ * start of the structure to minimise cache misses during lookup.
  *
  * Field markings and their corresponding locks:
  *
@@ -224,17 +236,20 @@ struct nameidata {
  */
 struct namecache {
 	struct	rb_node nc_tree;	/* d  red-black tree, must be first */
-	uint64_t nc_key;		/* -  hashed key value */
+	uintptr_t nc_key;		/* -  hashed key value */
 	TAILQ_ENTRY(namecache) nc_list;	/* v  nc_vp's list of cache entries */
 	TAILQ_ENTRY(namecache) nc_lru;	/* l  pseudo-lru chain */
 	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
 	struct	vnode *nc_vp;		/* -  vnode the name refers to */
-	int	nc_lrulist;		/* l  which LRU list it's on */
-	u_short	nc_nlen;		/* -  length of the name */
-	char	nc_whiteout;		/* -  true if a whiteout */
-	char	nc_name[41];		/* -  segment name */
-};
+	u_char	nc_lrulist;		/* l  LRU list entry is on */
+	u_char	nc_whiteout;		/* -  whiteout indicator */
+#ifdef _LP64
+	char	nc_name[46];		/* -  segment name */
+#else
+	char	nc_name[22];		/* -  segment name */
 #endif
+};
+#endif /* __NAMECACHE_PRIVATE */
 
 #ifdef _KERNEL
 #include <sys/pool.h>
