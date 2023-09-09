@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.257 2023/08/01 04:20:14 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.258 2023/09/09 20:13:54 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.257 2023/08/01 04:20:14 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.258 2023/09/09 20:13:54 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.257 2023/08/01 04:20:14 simonb Exp $");
 #include <sys/kernhist.h>
 #include <sys/vnode.h>
 #include <sys/vnode_impl.h>
+#include <sys/uidinfo.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_stat.h>
@@ -1885,12 +1886,6 @@ enum hashtype {			/* from <sys/systm.h> */
 	HASH_PSLIST
 };
 
-struct uidinfo {		/* XXX: no kernel header file */
-	LIST_ENTRY(uidinfo) ui_hash;
-	uid_t	ui_uid;
-	long	ui_proccnt;
-};
-
 struct kernel_hash {
 	const char *	description;	/* description */
 	int		hashsize;	/* nlist index for hash size */
@@ -1910,7 +1905,7 @@ struct kernel_hash {
 	}, {
 		"user info (uid -> used processes) hash",
 		X_UIHASH, X_UIHASHTBL,
-		HASH_LIST, offsetof(struct uidinfo, ui_hash),
+		HASH_SLIST, offsetof(struct uidinfo, ui_hash),
 	}, {
 		"vnode cache hash",
 		X_VCACHEHASH, X_VCACHETBL,
