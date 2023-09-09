@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.227 2020/09/20 12:51:57 skrll Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.228 2023/09/09 16:01:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.227 2020/09/20 12:51:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.228 2023/09/09 16:01:09 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -1064,6 +1064,8 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	int pid, elem_size, elem_count;
 	int buflen, needed, error;
 	bool gotit;
+
+	hash_value_ensure_initialized();
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
