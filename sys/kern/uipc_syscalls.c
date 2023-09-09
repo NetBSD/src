@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.206 2022/07/01 22:30:51 riastradh Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.207 2023/09/09 18:30:56 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.206 2022/07/01 22:30:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.207 2023/09/09 18:30:56 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -242,7 +242,7 @@ do_sys_accept(struct lwp *l, int sock, struct sockaddr *name,
 	else
 		so2->so_state &= ~SS_NBIO;
 	error = soaccept(so2, name);
-	so2->so_cred = kauth_cred_dup(so->so_cred);
+	kauth_cred_hold(so2->so_cred = so->so_cred);
 	sounlock(so);
 	if (error) {
 		/* an error occurred, free the file descriptor and mbuf */
@@ -1697,7 +1697,7 @@ do_sys_peeloff(struct socket *head, void *data)
 	so->so_state &= ~SS_NOFDREF;
 	so->so_state &= ~SS_ISCONNECTING;
 	so->so_head = NULL;
-	so->so_cred = kauth_cred_dup(head->so_cred);
+	kauth_cred_hold(so->so_cred = head->so_cred);
 	nfp->f_socket = so;
 	nfp->f_flag = FREAD|FWRITE;
 	nfp->f_ops = &socketops;
