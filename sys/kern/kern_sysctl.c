@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.269 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.270 2023/09/09 16:01:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #define __COMPAT_SYSCTL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.269 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.270 2023/09/09 16:01:09 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -2843,9 +2843,15 @@ random_address_init(void)
 }
 
 void
-hash_value(void *d, size_t ds, const void *s, size_t ss)
+hash_value_ensure_initialized(void)
 {
 
 	RUN_ONCE(&random_inithook, random_address_init);
+}
+
+void
+hash_value(void *d, size_t ds, const void *s, size_t ss)
+{
+
 	blake2s(d, ds, address_key, sizeof(address_key), s, ss);
 }
