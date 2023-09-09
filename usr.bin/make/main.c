@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.593 2023/03/28 14:39:31 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.594 2023/09/09 01:30:59 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.593 2023/03/28 14:39:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.594 2023/09/09 01:30:59 sjg Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -398,18 +398,37 @@ static void
 MainParseArgJobs(const char *argvalue)
 {
 	char *p;
+	char v[12];
 
 	forceJobs = true;
 	opts.maxJobs = (int)strtol(argvalue, &p, 0);
+#ifdef _SC_NPROCESSORS_ONLN
+	if (*p != '\0') {
+		double d;
+
+		if (*p == 'C') {
+			d = (opts.maxJobs > 0) ? opts.maxJobs : 1;
+		} else if (*p == '.') {
+			d = strtod(argvalue, &p);
+		} else
+			d = 0;
+		if (d > 0) {
+			p = strchr(argvalue, 0);
+			opts.maxJobs = sysconf(_SC_NPROCESSORS_ONLN);
+			opts.maxJobs = (int)(d * (double)opts.maxJobs);
+		}
+	}
+#endif
 	if (*p != '\0' || opts.maxJobs < 1) {
 		(void)fprintf(stderr,
 		    "%s: illegal argument to -j -- must be positive integer!\n",
 		    progname);
 		exit(2);	/* Not 1 so -q can distinguish error */
 	}
+	snprintf(v, sizeof(v), "%d", opts.maxJobs);
 	Global_Append(MAKEFLAGS, "-j");
-	Global_Append(MAKEFLAGS, argvalue);
-	Global_Set(".MAKE.JOBS", argvalue);
+	Global_Append(MAKEFLAGS, v);
+	Global_Set(".MAKE.JOBS", v);
 	maxJobTokens = opts.maxJobs;
 }
 
