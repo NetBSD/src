@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_through.c,v 1.4 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: bus_space_through.c,v 1.5 2023/09/09 21:01:57 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_through.c,v 1.4 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_through.c,v 1.5 2023/09/09 21:01:57 andvar Exp $");
 
 #include <sys/systm.h>
 #include <machine/bus.h>
@@ -388,28 +388,28 @@ void
 bs_through_bs_rrs_1(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t offset, u_int8_t *addr, bus_size_t count)
 {
-	bus_space_read_reagion_stream_1(t->bs_base, bsh, offset, addr, count);
+	bus_space_read_region_stream_1(t->bs_base, bsh, offset, addr, count);
 }
 
 void
 bs_through_bs_rrs_2(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t offset, u_int16_t *addr, bus_size_t count)
 {
-	bus_space_read_reagion_stream_2(t->bs_base, bsh, offset, addr, count);
+	bus_space_read_region_stream_2(t->bs_base, bsh, offset, addr, count);
 }
 
 void
 bs_through_bs_rrs_4(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t offset, u_int32_t *addr, bus_size_t count)
 {
-	bus_space_read_reagion_stream_4(t->bs_base, bsh, offset, addr, count);
+	bus_space_read_region_stream_4(t->bs_base, bsh, offset, addr, count);
 }
 
 void
 bs_through_bs_rrs_8(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t offset, u_int64_t *addr, bus_size_t count)
 {
-	bus_space_read_reagion_stream_8(t->bs_base, bsh, offset, addr, count);
+	bus_space_read_region_stream_8(t->bs_base, bsh, offset, addr, count);
 }
 
 
