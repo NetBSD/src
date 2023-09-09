@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.238 2022/01/22 11:49:17 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.238.4.1 2023/09/09 15:01:24 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.238 2022/01/22 11:49:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.238.4.1 2023/09/09 15:01:24 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -165,19 +165,22 @@ int kernel_dtlb_slots;
 int kernel_itlb_slots;
 
 /* Global interrupt mappings for all device types.  Match against the OBP
- * 'device_type' property. 
+ * 'device_type' property.  Note, that the resulting PIL must be higher than
+ * the highest soft interrupt level (IPL_SOFTSERIAL).
  */
 struct intrmap intrmap[] = {
 	{ "block",	PIL_FD },	/* Floppy disk */
 	{ "serial",	PIL_SER },	/* zs */
-	{ "scsi",	PIL_SCSI },
-	{ "scsi-2",	PIL_SCSI },
+	{ "scsi",	PIL_BIO },
+	{ "scsi-2",	PIL_BIO },
 	{ "network",	PIL_NET },
 	{ "display",	PIL_VIDEO },
 	{ "audio",	PIL_AUD },
-	{ "ide",	PIL_SCSI },
+	{ "ide",	PIL_BIO },
+	{ "socal",	PIL_BIO },
 /* The following devices don't have device types: */
 	{ "SUNW,CS4231",	PIL_AUD },
+	{ "SUNW,bpp",	PIL_BIO },
 	{ NULL,		0 }
 };
 

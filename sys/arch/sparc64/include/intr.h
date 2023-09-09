@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.31 2012/07/27 05:36:12 matt Exp $ */
+/*	$NetBSD: intr.h,v 1.31.70.1 2023/09/09 15:01:24 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,6 @@
 #define	IPL_HIGH	PIL_HIGH	/* everything */
 #define	IPL_HALT	5		/* cpu stop-self */
 #define	IPL_PAUSE	13		/* pause cpu */
-#define	IPL_FDSOFT	PIL_FDSOFT	/* floppy */
 
 /*
  * IPL_SAFEPRI is a safe priority for sleep to set for a spin-wait

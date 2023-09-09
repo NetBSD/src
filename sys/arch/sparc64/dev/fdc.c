@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.51 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: fdc.c,v 1.51.6.1 2023/09/09 15:01:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.51 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.51.6.1 2023/09/09 15:01:24 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -825,7 +825,7 @@ fdcattach(struct fdc_softc *fdc, int pri)
 #ifdef SUN4
 	printf(" softpri %d: chip 8207%c\n", IPL_SOFTFDC, code);
 #elif SUN4U
-	printf(" softpri %d: chip 8207%c", PIL_FDSOFT, code);
+	printf(" softpri %d: chip 8207%c", IPL_BIO, code);
 	if (fdc->sc_flags & FDC_NOEJECT)
 		printf(": manual eject");
 	printf("\n");

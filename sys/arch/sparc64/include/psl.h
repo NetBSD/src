@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.62.4.1 2023/08/09 17:42:03 martin Exp $ */
+/*	$NetBSD: psl.h,v 1.62.4.2 2023/09/09 15:01:24 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,9 +73,6 @@
 #define PSR_BITS "\20\16EC\15EF\10S\7PS\6ET"
 
 /* Interesting spl()s */
-#define PIL_SCSI	3
-#define PIL_FDSOFT	4
-#define PIL_AUSOFT	4
 #define PIL_BIO		5
 #define PIL_VIDEO	5
 #define PIL_TTY		6
@@ -513,12 +510,6 @@ SPLHOLD(splsoftint, 1)
 #define	splsoftnet	splsoftint
 
 SPLHOLD(splsoftserial, 4)
-
-/* audio software interrupts are at software level 4 */
-SPLHOLD(splausoft, PIL_AUSOFT)
-
-/* floppy software interrupts are at software level 4 too */
-SPLHOLD(splfdsoft, PIL_FDSOFT)
 
 /*
  * Memory allocation (must be as high as highest network, tty, or disk device)
