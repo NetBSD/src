@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.57 2021/10/15 18:12:48 jmcneill Exp $	*/
+/*	$NetBSD: tsc.c,v 1.58 2023/09/09 18:37:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.57 2021/10/15 18:12:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.58 2023/09/09 18:37:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,7 +406,7 @@ tsc_delay(unsigned int us)
 static u_int
 tsc_get_timecount(struct timecounter *tc)
 {
-#ifdef _LP64 /* requires atomic 64-bit store */
+#if defined(_LP64) && defined(DIAGNOSTIC) /* requires atomic 64-bit store */
 	static __cpu_simple_lock_t lock = __SIMPLELOCK_UNLOCKED;
 	static int lastwarn;
 	uint64_t cur, prev;
@@ -421,19 +421,17 @@ tsc_get_timecount(struct timecounter *tc)
 	 */
 	prev = l->l_md.md_tsc;
 	cur = cpu_counter();
-	if (__predict_false(cur < prev)) {
-		if ((cur >> 63) == (prev >> 63) &&
-		    __cpu_simple_lock_try(&lock)) {
-			ticks = getticks();
-			if (ticks - lastwarn >= hz) {
-				printf(
-				    "WARNING: TSC time went backwards by %u - "
-				    "change sysctl(7) kern.timecounter?\n",
-				    (unsigned)(prev - cur));
-				lastwarn = ticks;
-			}
-			__cpu_simple_unlock(&lock);
+	if (__predict_false(cur < prev) && (cur >> 63) == (prev >> 63) &&
+	    __cpu_simple_lock_try(&lock)) {
+		ticks = getticks();
+		if (ticks - lastwarn >= hz) {
+			printf(
+			    "WARNING: %s TSC went backwards by %u - "
+			    "change sysctl(7) kern.timecounter?\n",
+			    cpu_name(curcpu()), (unsigned)(prev - cur));
+			lastwarn = ticks;
 		}
+		__cpu_simple_unlock(&lock);
 	}
 	l->l_md.md_tsc = cur;
 	return (uint32_t)cur;
