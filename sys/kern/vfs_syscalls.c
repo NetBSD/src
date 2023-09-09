@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.560 2023/07/10 02:31:55 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.561 2023/09/09 18:34:44 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2019, 2020, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.560 2023/07/10 02:31:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.561 2023/09/09 18:34:44 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3134,11 +3134,12 @@ do_sys_accessat(struct lwp *l, int fdat, const char *path,
 	NDINIT(&nd, LOOKUP, nd_flag, pb);
 
 	/* Override default credentials */
-	cred = kauth_cred_dup(l->l_cred);
 	if (!(flags & AT_EACCESS)) {
+		cred = kauth_cred_dup(l->l_cred);
 		kauth_cred_seteuid(cred, kauth_cred_getuid(l->l_cred));
 		kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
-	}
+	} else
+		cred = l->l_cred;
 	nd.ni_cnd.cn_cred = cred;
 
 	if ((error = fd_nameiat(l, fdat, &nd)) != 0) {
@@ -3164,7 +3165,8 @@ do_sys_accessat(struct lwp *l, int fdat, const char *path,
 	}
 	vput(vp);
 out:
-	kauth_cred_free(cred);
+	if (!(flags & AT_EACCESS))
+		kauth_cred_free(cred);
 	return (error);
 }
 
