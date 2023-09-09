@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.98 2023/09/08 09:09:08 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.99 2023/09/09 14:57:22 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2110,4 +2110,9 @@ lib/libpam/modules/pam_ksu/pam_ksu.c		1.11
 
 	pam_ksu(8): allow homedir access during kuserok.
 	[riastradh, ticket #1728]
+
+sys/dev/raidframe/rf_reconstruct.c		1.128
+
+	raidframe: fix memory leaks (prevent diagnostic on shutdown).
+	[oster, ticket #1729]
 
