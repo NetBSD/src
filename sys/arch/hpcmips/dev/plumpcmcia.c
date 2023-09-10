@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.30 2021/08/07 16:18:54 thorpej Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.31 2023/09/10 14:28:57 andvar Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.30 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.31 2023/09/10 14:28:57 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,9 +375,9 @@ plumpcmcia_chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
 	pcmhp->size = size;
 	pcmhp->realsize = realsize;
 
-	DPRINTF(("plumpcmcia_chip_mem_alloc: size %#x->%#x addr %#x->%#x\n", 
+	DPRINTF("plumpcmcia_chip_mem_alloc: size %#x->%#x addr %#x->%#x\n", 
 	    (unsigned)size, (unsigned)realsize, (unsigned)pcmhp->addr,
-	    (unsigned)pcmhp->memh));
+	    (unsigned)pcmhp->memh);
 
 	return (0);
 }
@@ -409,7 +409,7 @@ plumpcmcia_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
 		}
 	}
 	if (win == -1) {
-		DPRINTF(("plumpcmcia_chip_mem_map: no window\n"));
+		DPRINTF("plumpcmcia_chip_mem_map: no window\n");
 		return (1);
 	}
 
@@ -421,10 +421,10 @@ plumpcmcia_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
 	*windowp = win;
 	card_offset = (((int32_t)card_addr) - ((int32_t)busaddr));
 
-	DPRINTF(("plumpcmcia_chip_mem_map window %d bus %#x(kv:%#x)+%#x"
+	DPRINTF("plumpcmcia_chip_mem_map window %d bus %#x(kv:%#x)+%#x"
 	    " size %#x at card addr %#x offset %#x\n", win,
 	    (unsigned)busaddr, (unsigned)pcmhp->memh, (unsigned)*offsetp,
-	    (unsigned)size, (unsigned)card_addr, (unsigned)card_offset));
+	    (unsigned)size, (unsigned)card_addr, (unsigned)card_offset);
 
 	ph->ph_mem[win].pm_addr = busaddr;
 	ph->ph_mem[win].pm_size = size;
@@ -480,8 +480,8 @@ plumpcmcia_chip_do_mem_map(struct plumpcmcia_handle *ph, int win)
 	reg |= PLUM_PCMCIA_WINEN_MEM(win);
 	plum_conf_write(regt, regh, PLUM_PCMCIA_WINEN, reg);
 	
-	DPRINTF(("plumpcmcia_chip_do_mem_map: window:%d %#x(%#x)+%#x\n",
-	    win, offset, addr, size));
+	DPRINTF("plumpcmcia_chip_do_mem_map: window:%d %#x(%#x)+%#x\n",
+	    win, offset, addr, size);
 
 	delay(100);
 }
@@ -508,31 +508,31 @@ plumpcmcia_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
 {
 	struct plumpcmcia_handle *ph = (void*)pch;
 
-	DPRINTF(("plumpcmcia_chip_io_alloc: start=%#x size=%#x ",
-	    (unsigned)start, (unsigned)size));
+	DPRINTF("plumpcmcia_chip_io_alloc: start=%#x size=%#x ",
+	    (unsigned)start, (unsigned)size);
 	if (start) {
 		if (bus_space_map(ph->ph_iot, ph->ph_iobase + start, 
 		    size, 0, &pcihp->ioh)) {
-			DPRINTF(("bus_space_map failed\n"));
+			DPRINTF("bus_space_map failed\n");
 			return (1);
 		}
 		pcihp->flags = 0;
 		pcihp->addr = start;
-		DPRINTF(("(mapped) %#x+%#x\n", (unsigned)start,
-		    (unsigned)size));
+		DPRINTF("(mapped) %#x+%#x\n", (unsigned)start,
+		    (unsigned)size);
 	} else {
 		if (bus_space_alloc(ph->ph_iot, ph->ph_iobase,
 		    ph->ph_iobase + ph->ph_iosize, size, 
 		    align, 0, 0, 0, &pcihp->ioh)) {
-			DPRINTF(("bus_space_alloc failed\n"));
+			DPRINTF("bus_space_alloc failed\n");
 			return 1;
 		}
 		/* Address offset from IO area base */
 		pcihp->addr = pcihp->ioh - ph->ph_iobase - 
 		    ((struct bus_space_tag_hpcmips*)ph->ph_iot)->base;
 		pcihp->flags = PCMCIA_IO_ALLOCATED;
-		DPRINTF(("(allocated) %#x+%#x\n", (unsigned)pcihp->addr,
-		    (unsigned)size));
+		DPRINTF("(allocated) %#x+%#x\n", (unsigned)pcihp->addr,
+		    (unsigned)size);
 	}
 	
 	pcihp->iot = ph->ph_iot;
@@ -547,7 +547,7 @@ plumpcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width,
     struct pcmcia_io_handle *pcihp, int *windowp)
 {
 #ifdef PLUMPCMCIA_DEBUG
-	static char *width_names[] = { "auto", "io8", "io16" };
+	static const char *width_names[] = { "auto", "io8", "io16" };
 #endif /* PLUMPCMCIA_DEBUG */
 	struct plumpcmcia_handle *ph = (void*)pch;
 	bus_addr_t winofs;
@@ -568,7 +568,7 @@ plumpcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width,
 		}
 	}
 	if (win == -1) {
-		DPRINTF(("plumpcmcia_chip_io_map: no window\n"));
+		DPRINTF("plumpcmcia_chip_io_map: no window\n");
 		return (1);
 	}
 	*windowp = win;
@@ -579,9 +579,9 @@ plumpcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width,
 
 	plumpcmcia_chip_do_io_map(ph, win);
 
-	DPRINTF(("plumpcmcia_chip_io_map: %#x(kv:%#x)+%#x %s\n", 
+	DPRINTF("plumpcmcia_chip_io_map: %#x(kv:%#x)+%#x %s\n", 
 	    (unsigned)offset, (unsigned)pcihp->ioh, (unsigned)size,
-	    width_names[width]));
+	    width_names[width]);
 
 	return (0);
 }
@@ -646,8 +646,8 @@ plumpcmcia_chip_io_free(pcmcia_chipset_handle_t pch,
 		bus_space_unmap(pcihp->iot, pcihp->ioh, pcihp->size);
 	}
 
-	DPRINTF(("plumpcmcia_chip_io_free %#x+%#x\n", pcihp->ioh, 
-	    (unsigned)pcihp->size));
+	DPRINTF("plumpcmcia_chip_io_free %#lx+%#x\n", pcihp->ioh, 
+	    (unsigned)pcihp->size);
 }
 
 static void
@@ -804,9 +804,9 @@ plumpcmcia_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
 	else
 		reg |= PLUM_PCMCIA_GENCTRL_CARDTYPE_MEM;
 
-	DPRINTF(("%s: plumpcmcia_chip_socket_enable type %s %02x\n",
+	DPRINTF("%s: plumpcmcia_chip_socket_enable type %s %02x\n",
 	    device_xname(ph->ph_parent), 
-	    ((cardtype == PCMCIA_IFTYPE_IO) ? "io" : "mem"), reg));
+	    ((type == PCMCIA_IFTYPE_IO) ? "io" : "mem"), reg);
 
 	plum_conf_write(regt, regh, PLUM_PCMCIA_GENCTRL, reg);
 }
@@ -874,10 +874,10 @@ plum_csc_intr(void *arg)
 	/* read and clear interrupt status */
 	reg = plum_conf_read(regt, regh, PLUM_PCMCIA_CSCINT_STAT);
 	if (reg & PLUM_PCMCIA_CSCINT_CARD_DETECT) {
-		DPRINTF(("%s: card status change.\n", __func__));
+		DPRINTF("%s: card status change.\n", __func__);
 	} else {
-		DPRINTF(("%s: unhandled csc event. 0x%02x\n",
-		    __func__, reg));
+		DPRINTF("%s: unhandled csc event. 0x%02x\n",
+		    __func__, reg);
 		return (0);
 	}
 
@@ -945,11 +945,11 @@ plumpcmcia_event_thread(void *arg)
 				printf("%s: unknown event.\n", __func__);
 				break;
 			case PLUM_PCMCIA_EVENT_INSERT:
-				DPRINTF(("%s: insert event.\n", __func__));
+				DPRINTF("%s: insert event.\n", __func__);
 				pcmcia_card_attach(pe->pe_ph->ph_pcmcia);
 				break;
 			case PLUM_PCMCIA_EVENT_REMOVE:
-				DPRINTF(("%s: remove event.\n", __func__));
+				DPRINTF("%s: remove event.\n", __func__);
 				pcmcia_card_detach(pe->pe_ph->ph_pcmcia,
 				    DETACH_FORCE);
 				break;
@@ -974,7 +974,7 @@ plumpcmcia_power(void *ctx, int type, long id, void *msg)
 
 	switch (why) {
 	case PWR_RESUME:
-		DPRINTF(("%s: ON\n", device_xname(sc->sc_dev)));
+		DPRINTF("%s: ON\n", device_xname(sc->sc_dev));
 		/* power on */
 		plum_conf_write(regt, regh, PLUM_PCMCIA_CARDPWRCTRL,
 		    PLUM_PCMCIA_CARDPWRCTRL_ON);
@@ -984,7 +984,7 @@ plumpcmcia_power(void *ctx, int type, long id, void *msg)
 	case PWR_STANDBY:
 		plum_conf_write(regt, regh, PLUM_PCMCIA_CARDPWRCTRL,
 		    PLUM_PCMCIA_CARDPWRCTRL_OFF);
-		DPRINTF(("%s: OFF\n", device_xname(sc->sc_dev)));
+		DPRINTF("%s: OFF\n", device_xname(sc->sc_dev));
 		break;
 	}
 
