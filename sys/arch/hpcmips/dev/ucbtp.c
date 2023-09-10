@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.23 2021/08/07 16:18:54 thorpej Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.24 2023/09/10 15:18:51 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.23 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.24 2023/09/10 15:18:51 andvar Exp $");
 
 #include "opt_use_poll.h"
 
@@ -64,13 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.23 2021/08/07 16:18:54 thorpej Exp $");
 #include <dev/hpc/video_subr.h> /* debug */
 
 #ifdef UCBTPDEBUG
-int	ucbtp_debug = 0;
-#define	DPRINTF(arg) if (ucbtp_debug) printf arg;
-#define	DPRINTFN(n, arg) if (ucbtp_debug > (n)) printf arg;
-#else
-#define	DPRINTF(arg)
-#define DPRINTFN(n, arg)
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	ucbtp_debug
 #endif
+#include <machine/debug.h>
 
 enum ucbts_stat {
 	UCBTS_STAT_DISABLE,
@@ -259,7 +256,7 @@ ucbtp_calibration(struct ucbtp_softc *sc)
 	tpcalib_init(&sc->sc_tpcalib);
 
 	if (!(cs = calibration_sample_lookup())) {
-		DPRINTF(("no calibration data"));
+		DPRINTF("no calibration data");
 		return (1);
 	}
 
@@ -389,7 +386,7 @@ ucbtp_adc_async(void *arg)
 	txreg_t reg;
 	u_int16_t reg16;
 
-	DPRINTFN(9, ("state: %d\n", sc->sm_state));
+	DPRINTFN(9, "state: %d\n", sc->sm_state);
 
 	switch (sc->sm_state) {
 	default:
@@ -514,15 +511,15 @@ ucbtp_adc_async(void *arg)
 			switch (sc->sm_measurement) {
 			case UCBADC_MEASUREMENT_X:
 				sc->sc_x = UCB1200_ADCDATA(reg16);
-				DPRINTFN(9, ("x=%d\n", sc->sc_x));
+				DPRINTFN(9, "x=%d\n", sc->sc_x);
 				break;
 			case UCBADC_MEASUREMENT_Y:			
 				sc->sc_y = UCB1200_ADCDATA(reg16);
-				DPRINTFN(9, ("y=%d\n", sc->sc_y));
+				DPRINTFN(9, "y=%d\n", sc->sc_y);
 				break;
 			case UCBADC_MEASUREMENT_PRESSURE:
 				sc->sc_p = UCB1200_ADCDATA(reg16);
-				DPRINTFN(9, ("p=%d\n", sc->sc_p));
+				DPRINTFN(9, "p=%d\n", sc->sc_p);
 				break;
 			}
 			
@@ -590,7 +587,7 @@ ucbtp_adc_async(void *arg)
 			} else {
 				sc->sm_reg = reg;
 				sc->sm_read_state = TXSIB_REGREAD_INIT;
-				DPRINTFN(9, ("%08x\n", reg));
+				DPRINTFN(9, "%08x\n", reg);
 				if (sc->sm_writing)
 					sc->sm_state = UCBADC_REGWRITE;
 				else
@@ -642,15 +639,15 @@ ucbtp_input(struct ucbtp_softc *sc)
 	p = sc->sc_p;
 
 	if (!sc->sc_calibrated) {
-		DPRINTFN(2, ("x=%4d y=%4d p=%4d\n", rx, ry, p));
-		DPRINTF(("ucbtp_input: no calibration data\n"));
+		DPRINTFN(2, "x=%4d y=%4d p=%4d\n", rx, ry, p);
+		DPRINTF("ucbtp_input: no calibration data\n");
 	}
 
 	if (p < UCBTS_PRESS_THRESHOLD || rx == 0x3ff || ry == 0x3ff ||
 	    rx == 0 || ry == 0) {
 		sc->sc_stat = UCBTS_STAT_RELEASE;
 		if (sc->sc_polling < UCBTS_TAP_THRESHOLD) {
-			DPRINTFN(2, ("TAP!\n"));
+			DPRINTFN(2, "TAP!\n");
 			/* button 0 DOWN */
 			wsmouse_input(sc->sc_wsmousedev, 1, 0, 0, 0, 0, 0);
 			/* button 0 UP */
@@ -661,7 +658,7 @@ ucbtp_input(struct ucbtp_softc *sc)
 			    WSMOUSE_INPUT_ABSOLUTE_X |
 			    WSMOUSE_INPUT_ABSOLUTE_Y);
 
-			DPRINTFN(2, ("RELEASE\n"));
+			DPRINTFN(2, "RELEASE\n");
 		}
 		sc->sc_polling = 0;
 
@@ -673,8 +670,8 @@ ucbtp_input(struct ucbtp_softc *sc)
 	else
 		tpcalib_trans(&sc->sc_tpcalib, rx, ry, &x, &y);
 		
-	DPRINTFN(2, ("x: %4d->%4d y: %4d->%4d pressure=%4d\n",
-	    rx, x, ry, y, p));
+	DPRINTFN(2, "x: %4d->%4d y: %4d->%4d pressure=%4d\n",
+	    rx, x, ry, y, p);
 
 	/* debug draw */	
 	if (sc->sc_tc->tc_videot) {
@@ -715,7 +712,7 @@ ucbtp_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ucbtp_softc *sc = v;
 
-	DPRINTF(("%s(%d): ucbtp_ioctl(%08lx)\n", __FILE__, __LINE__, cmd));
+	DPRINTF("%s(%d): ucbtp_ioctl(%08lx)\n", __FILE__, __LINE__, cmd);
 
 	switch (cmd) {
 	case WSMOUSEIO_SRES:
