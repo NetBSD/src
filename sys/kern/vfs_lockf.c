@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.78 2022/11/25 16:15:39 riastradh Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.79 2023/09/10 14:45:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.78 2022/11/25 16:15:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.79 2023/09/10 14:45:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.78 2022/11/25 16:15:39 riastradh Exp
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
 #include <sys/atomic.h>
@@ -69,6 +69,7 @@ struct lockf {
 	kcondvar_t lf_cv;	 /* Signalling */
 	short	lf_flags;	 /* Lock semantics: F_POSIX, F_FLOCK, F_WAIT */
 	short	lf_type;	 /* Lock type: F_RDLCK, F_WRLCK */
+	uid_t	lf_uid;		 /* User ID responsible */
 	off_t	lf_start;	 /* The byte # of the start of the lock */
 	off_t	lf_end;		 /* The byte # of the end of the lock (-1=EOF)*/
 	void	*lf_id;		 /* process or file description holding lock */
@@ -76,14 +77,13 @@ struct lockf {
 	struct	lockf *lf_next;	 /* Next lock on this vnode, or blocking lock */
 	struct  locklist lf_blkhd; /* List of requests blocked on this lock */
 	TAILQ_ENTRY(lockf) lf_block;/* A request waiting for a lock */
-	uid_t	lf_uid;		 /* User ID responsible */
+	struct	uidinfo *lf_uip; /* Cached pointer to uidinfo */
 };
 
 /* Maximum length of sleep chains to traverse to try and detect deadlock. */
 #define MAXDEPTH 50
 
-static pool_cache_t lockf_cache;
-static kmutex_t *lockf_lock;
+static kmutex_t lockf_lock __cacheline_aligned;
 static char lockstr[] = "lockf";
 
 /*
@@ -205,39 +205,20 @@ lf_alloc(int allowfail)
 		return NULL;
 	}
 
-	lock = pool_cache_get(lockf_cache, PR_WAITOK);
+	lock = kmem_alloc(sizeof(*lock), KM_SLEEP);
 	lock->lf_uid = uid;
+	lock->lf_uip = uip;
+	cv_init(&lock->lf_cv, lockstr);
 	return lock;
 }
 
 static void
 lf_free(struct lockf *lock)
 {
-	struct uidinfo *uip;
 
-	uip = uid_find(lock->lf_uid);
-	atomic_dec_ulong(&uip->ui_lockcnt);
-	pool_cache_put(lockf_cache, lock);
-}
-
-static int
-lf_ctor(void *arg, void *obj, int flag)
-{
-	struct lockf *lock;
-
-	lock = obj;
-	cv_init(&lock->lf_cv, lockstr);
-
-	return 0;
-}
-
-static void
-lf_dtor(void *arg, void *obj)
-{
-	struct lockf *lock;
-
-	lock = obj;
+	atomic_dec_ulong(&lock->lf_uip->ui_lockcnt);
 	cv_destroy(&lock->lf_cv);
+	kmem_free(lock, sizeof(*lock));
 }
 
 /*
@@ -811,7 +792,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	struct flock *fl = ap->a_fl;
 	struct lockf *lock = NULL;
 	struct lockf *sparelock;
-	kmutex_t *interlock = lockf_lock;
+	kmutex_t *interlock = &lockf_lock;
 	off_t start, end;
 	int error = 0;
 
@@ -972,18 +953,4 @@ quit:
 		lf_free(sparelock);
 
 	return error;
-}
-
-/*
- * Initialize subsystem.   XXX We use a global lock.  This could be the
- * vnode interlock, but the deadlock detection code may need to inspect
- * locks belonging to other files.
- */
-void
-lf_init(void)
-{
-
-	lockf_cache = pool_cache_init(sizeof(struct lockf), 0, 0, 0, "lockf",
- 	    NULL, IPL_NONE, lf_ctor, lf_dtor, NULL);
-        lockf_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 }
