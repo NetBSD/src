@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.219 2023/08/07 10:31:42 riastradh Exp $	*/
+/*	$NetBSD: lwp.h,v 1.220 2023/09/10 14:31:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -554,12 +554,10 @@ KPREEMPT_ENABLE(lwp_t *l)
 	KASSERTMSG(l == (l1 = curlwp), "l=%p curlwp=%p", l, l1);
 	KASSERT(l->l_nopreempt > 0);
 	__insn_barrier();
-	if (--l->l_nopreempt != 0)
-		return;
+	l->l_nopreempt--;
 	__insn_barrier();
 	if (__predict_false(l->l_dopreempt))
 		kpreempt(0);
-	__insn_barrier();
 }
 
 /* For lwp::l_dopreempt */
