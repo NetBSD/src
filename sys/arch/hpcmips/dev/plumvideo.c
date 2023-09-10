@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.44 2022/04/16 17:35:57 andvar Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.45 2023/09/10 15:03:56 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.44 2022/04/16 17:35:57 andvar Exp $");
-
-#undef PLUMVIDEODEBUG
+__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.45 2023/09/10 15:03:56 andvar Exp $");
 
 #include "plumohci.h" /* Plum2 OHCI shared memory allocated on V-RAM */
 #include "bivideo.h"
@@ -73,13 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.44 2022/04/16 17:35:57 andvar Exp $"
 #endif
 
 #ifdef PLUMVIDEODEBUG
-int	plumvideo_debug = 1;
-#define	DPRINTF(arg) if (plumvideo_debug) printf arg;
-#define	DPRINTFN(n, arg) if (plumvideo_debug > (n)) printf arg;
-#else
-#define	DPRINTF(arg)
-#define DPRINTFN(n, arg)
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	plumvideo_debug
 #endif
+#include <machine/debug.h>
 
 struct plumvideo_softc {
 	device_t sc_dev;
@@ -766,14 +761,14 @@ plumvideo_power(void *ctx, int type, long id, void *msg)
 		if (!sc->sc_console)
 			return (0); /* serial console */
 
-		DPRINTF(("%s: ON\n", device_xname(sc->sc_dev)));
+		DPRINTF("%s: ON\n", device_xname(sc->sc_dev));
 		/* power on */
 		plumvideo_backlight(sc, 1);
 		break;
 	case PWR_SUSPEND:
 		/* FALLTHROUGH */
 	case PWR_STANDBY:
-		DPRINTF(("%s: OFF\n", device_xname(sc->sc_dev)));
+		DPRINTF("%s: OFF\n", device_xname(sc->sc_dev));
 		/* power off */
 		plumvideo_backlight(sc, 0);
 		break;
