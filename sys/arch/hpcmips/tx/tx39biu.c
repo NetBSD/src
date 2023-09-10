@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39biu.c,v 1.17 2021/08/07 16:18:54 thorpej Exp $ */
+/*	$NetBSD: tx39biu.c,v 1.18 2023/09/10 20:41:57 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.17 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.18 2023/09/10 20:41:57 andvar Exp $");
 
 #include "opt_tx39_watchdogtimer.h"
 #include "opt_tx39biu_debug.h"
@@ -163,12 +163,11 @@ tx39biu_intr(void *arg)
 
 #ifdef TX39BIU_DEBUG
 void
-tx39biu_dump(tc)
-	tx_chipset_tag_t tc;	
+tx39biu_dump(tx_chipset_tag_t tc)	
 {
-	char *rowsel[] = {"18,17:9", "22,18,20,19,17:9", "20,22,21,19,17:9",
+	const char *rowsel[] = {"18,17:9", "22,18,20,19,17:9", "20,22,21,19,17:9",
 			  "22,23,21,19,17:9"};
-	char *colsel[] = {"22,20,18,8:1", "19,18,8:2", "21,20,18,8:2",
+	const char *colsel[] = {"22,20,18,8:1", "19,18,8:2", "21,20,18,8:2",
 			  "23,22,20,18,8:2", "24,22,20,18,8:2",
 			  "18,p,X,8:0","22,p,X,21,8:0", "18,p,X,21,8:1",
 			  "22,p,X,23,21,8:1", "24,23,21,8:2"};
