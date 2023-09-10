@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.17 2023/08/01 20:11:13 riastradh Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.18 2023/09/10 15:23:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.17 2023/08/01 20:11:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.18 2023/09/10 15:23:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -800,7 +800,6 @@ xen_timer_handler(void *cookie, struct clockframe *frame)
 #if defined(XENPV)
 	frame = NULL; /* We use values cached in curcpu()  */
 #endif
-again:
 	/*
 	 * Find how many nanoseconds of Xen system time has elapsed
 	 * since the last hardclock tick.
@@ -817,7 +816,11 @@ again:
 		    last - now);
 #endif
 		ci->ci_xen_systime_backwards_hardclock_evcnt.ev_count++;
-		now = last;
+		/*
+		 * we've lost track of time. Just pretends that one
+		 * tick elapsed, and reset our idea of last tick.
+		 */
+		ci->ci_xen_hardclock_systime_ns = last = now - ns_per_tick;
 	}
 	delta = now - last;
 
@@ -845,6 +848,9 @@ again:
 			    xen_timecounter.tc_counter_mask);
 			ci->ci_xen_timecounter_jump_evcnt.ev_count++;
 		}
+		/* don't try to catch up more than one second at once */
+		if (delta > 1000000000UL)
+			delta = 1000000000UL;
 	}
 	while (delta >= ns_per_tick) {
 		ci->ci_xen_hardclock_systime_ns += ns_per_tick;
@@ -859,13 +865,19 @@ again:
 
 	/*
 	 * Re-arm the timer.  If it fails, it's probably because the
-	 * time is in the past, so update our idea of what the Xen
-	 * system time is and try again.
+	 * time is in the past, possibly because we're in the
+	 * process of catching up missed hardclock calls.
+	 * In this case schedule a tick in the nead future.
 	 */
 	next = ci->ci_xen_hardclock_systime_ns + ns_per_tick;
 	error = HYPERVISOR_set_timer_op(next);
-	if (error)
-		goto again;
+	if (error) {
+		next = xen_vcputime_systime_ns() + ns_per_tick / 2;
+		error = HYPERVISOR_set_timer_op(next);
+		if (error) {
+			panic("failed to re-arm Xen timer %d", error);
+		}
+	}
 
 	/* Success!  */
 	return 0;
