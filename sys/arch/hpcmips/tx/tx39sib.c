@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.23 2021/08/07 16:18:54 thorpej Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.24 2023/09/10 20:55:30 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,9 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.23 2021/08/07 16:18:54 thorpej Exp $");
-
-#undef TX39SIBDEBUG
+__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.24 2023/09/10 20:55:30 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.23 2021/08/07 16:18:54 thorpej Exp $")
 #include "locators.h"
 
 #ifdef TX39SIBDEBUG
-int	tx39sibdebug = 0;
-#define	DPRINTF(arg) if (tx39sibdebug) printf arg;
-#else
-#define	DPRINTF(arg)
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	tx39sibdebug
 #endif
+#include <machine/debug.h>
 
 int	tx39sib_match(device_t, cfdata_t, void *);
 void	tx39sib_attach(device_t, device_t, void *);
