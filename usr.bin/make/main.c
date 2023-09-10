@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.597 2023/09/10 10:18:05 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.598 2023/09/10 11:41:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.597 2023/09/10 10:18:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.598 2023/09/10 11:41:32 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -424,8 +424,9 @@ MainParseArgJobs(const char *arg)
 #endif
 	if (*p != '\0' || opts.maxJobs < 1) {
 		(void)fprintf(stderr,
-		    "%s: illegal argument to -j -- must be positive integer!\n",
-		    progname);
+		    "%s: argument '%s' to option '-j' "
+		    "must be a positive number\n",
+		    progname, arg);
 		exit(2);	/* Not 1 so -q can distinguish error */
 	}
 	snprintf(v, sizeof(v), "%d", opts.maxJobs);
