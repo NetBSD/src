@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.191 2023/07/08 20:02:10 riastradh Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.192 2023/09/10 14:45:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.191 2023/07/08 20:02:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.192 2023/09/10 14:45:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.191 2023/07/08 20:02:10 riastrad
  */
 rlim_t			maxdmap = MAXDSIZ;
 rlim_t			maxsmap = MAXSSIZ;
-
-static pool_cache_t	plimit_cache	__read_mostly;
-static pool_cache_t	pstats_cache	__read_mostly;
 
 static kauth_listener_t	resource_listener;
 static struct sysctllog	*proc_sysctllog;
@@ -140,11 +137,6 @@ resource_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 void
 resource_init(void)
 {
-
-	plimit_cache = pool_cache_init(sizeof(struct plimit), 0, 0, 0,
-	    "plimitpl", NULL, IPL_NONE, NULL, NULL, NULL);
-	pstats_cache = pool_cache_init(sizeof(struct pstats), 0, 0, 0,
-	    "pstatspl", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	resource_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
 	    resource_listener_cb, NULL);
@@ -690,7 +682,7 @@ lim_copy(struct plimit *lim)
 	char *corename;
 	size_t alen, len;
 
-	newlim = pool_cache_get(plimit_cache, PR_WAITOK);
+	newlim = kmem_alloc(sizeof(*newlim), KM_SLEEP);
 	mutex_init(&newlim->pl_lock, MUTEX_DEFAULT, IPL_NONE);
 	newlim->pl_writeable = false;
 	newlim->pl_refcnt = 1;
@@ -811,7 +803,7 @@ lim_free(struct plimit *lim)
 		}
 		sv_lim = lim->pl_sv_limit;
 		mutex_destroy(&lim->pl_lock);
-		pool_cache_put(plimit_cache, lim);
+		kmem_free(lim, sizeof(*lim));
 	} while ((lim = sv_lim) != NULL);
 }
 
@@ -821,7 +813,7 @@ pstatscopy(struct pstats *ps)
 	struct pstats *nps;
 	size_t len;
 
-	nps = pool_cache_get(pstats_cache, PR_WAITOK);
+	nps = kmem_alloc(sizeof(*nps), KM_SLEEP);
 
 	len = (char *)&nps->pstat_endzero - (char *)&nps->pstat_startzero;
 	memset(&nps->pstat_startzero, 0, len);
@@ -836,7 +828,7 @@ void
 pstatsfree(struct pstats *ps)
 {
 
-	pool_cache_put(pstats_cache, ps);
+	kmem_free(ps, sizeof(*ps));
 }
 
 /*
