@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39ir.c,v 1.10 2012/10/27 17:17:54 chs Exp $ */
+/*	$NetBSD: tx39ir.c,v 1.11 2023/09/10 20:28:25 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,9 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39ir.c,v 1.10 2012/10/27 17:17:54 chs Exp $");
-
-#undef TX39IRDEBUG
+__KERNEL_RCSID(0, "$NetBSD: tx39ir.c,v 1.11 2023/09/10 20:28:25 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: tx39ir.c,v 1.10 2012/10/27 17:17:54 chs Exp $");
 #include <hpcmips/tx/tx39clockreg.h> /* XXX */
 
 #ifdef TX39IRDEBUG
-int	tx39ir_debug = 1;
-#define	DPRINTF(arg) if (vrpiu_debug) printf arg;
-#else
-#define	DPRINTF(arg)
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	tx39ir_debug
 #endif
+#include <machine/debug.h>
 
 int	tx39ir_match(device_t, cfdata_t, void *);
 void	tx39ir_attach(device_t, device_t, void *);
