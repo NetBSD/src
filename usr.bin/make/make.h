@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.324 2023/06/24 07:02:24 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.325 2023/09/10 11:52:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -1193,7 +1193,7 @@ pp_skip_hspace(char **pp)
 
 #if defined(lint)
 void do_not_define_rcsid(void); /* for lint */
-# define MAKE_RCSID(id) extern void do_not_define_rcsid(void)
+# define MAKE_RCSID(id) void do_not_define_rcsid(void)
 #elif defined(MAKE_NATIVE)
 # include <sys/cdefs.h>
 # define MAKE_RCSID(id) __RCSID(id)
@@ -1202,7 +1202,7 @@ void do_not_define_rcsid(void); /* for lint */
 # define MAKE_RCSID(id) static volatile char \
 	MAKE_RCSID_CONCAT(rcsid_, __COUNTER__)[] = id
 #elif defined(MAKE_ALL_IN_ONE)
-# define MAKE_RCSID(id) extern void do_not_define_rcsid(void)
+# define MAKE_RCSID(id) void do_not_define_rcsid(void)
 #else
 # define MAKE_RCSID(id) static volatile char rcsid[] = id
 #endif
