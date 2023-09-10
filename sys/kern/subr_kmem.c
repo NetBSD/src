@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_kmem.c,v 1.88 2023/04/09 08:50:20 riastradh Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.89 2023/09/10 14:29:13 ad Exp $	*/
 
 /*
- * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.88 2023/04/09 08:50:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.89 2023/09/10 14:29:13 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -325,6 +325,8 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 			return NULL;
 		}
 		FREECHECK_OUT(&kmem_freecheck, p);
+		KASSERT(size < coherency_unit ||
+		    ALIGNED_POINTER(p, coherency_unit));
 		return p;
 	}
 
@@ -334,6 +336,8 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 		kasan_mark(p, origsize, size, KASAN_KMEM_REDZONE);
 		return p;
 	}
+
+	KASSERT(size < coherency_unit || ALIGNED_POINTER(p, coherency_unit));
 	return p;
 }
 
