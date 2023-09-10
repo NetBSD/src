@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.31 2023/09/10 14:28:57 andvar Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.32 2023/09/10 21:13:20 andvar Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.31 2023/09/10 14:28:57 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.32 2023/09/10 21:13:20 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -646,7 +646,7 @@ plumpcmcia_chip_io_free(pcmcia_chipset_handle_t pch,
 		bus_space_unmap(pcihp->iot, pcihp->ioh, pcihp->size);
 	}
 
-	DPRINTF("plumpcmcia_chip_io_free %#lx+%#x\n", pcihp->ioh, 
+	DPRINTF("plumpcmcia_chip_io_free %#x+%#x\n", (unsigned)pcihp->ioh, 
 	    (unsigned)pcihp->size);
 }
 
