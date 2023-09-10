@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.23 2012/10/27 17:17:54 chs Exp $ */
+/*	$NetBSD: tx39io.c,v 1.24 2023/09/10 14:11:33 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.23 2012/10/27 17:17:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.24 2023/09/10 14:11:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ mfio_out(hpcio_chip_t arg, int port, int onoff)
 static int
 mfio_in(hpcio_chip_t arg, int port)
 {
-	struct tx39io_softc *sc __attribute__((__unused__)) = arg->hc_sc ;
+	struct tx39io_softc *sc __attribute__((__unused__)) = arg->hc_sc;
 
 	DPRINTF("port #%d\n", port);
 	return (tx_conf_read(sc->sc_tc, TX39_IOMFIODATAIN_REG) & (1 << port));
