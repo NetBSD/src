@@ -1,4 +1,4 @@
-/*	$NetBSD: plumicu.c,v 1.12 2012/10/27 17:17:52 chs Exp $ */
+/*	$NetBSD: plumicu.c,v 1.13 2023/09/10 11:30:13 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumicu.c,v 1.12 2012/10/27 17:17:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumicu.c,v 1.13 2023/09/10 11:30:13 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,10 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: plumicu.c,v 1.12 2012/10/27 17:17:52 chs Exp $");
 #include <hpcmips/dev/plumicureg.h>
 
 #ifdef PLUMICUDEBUG
-#define	DPRINTF(arg) printf arg
-#else
-#define	DPRINTF(arg)
+#define	DPRINTF_ENABLE
+#define	DPRINTF_DEBUG plumicu_debug
 #endif
+#include <machine/debug.h>
 
 int plumicu_match(device_t, cfdata_t, void *);
 void plumicu_attach(device_t, device_t, void *);
@@ -271,8 +271,8 @@ plum_intr_establish(plum_chipset_tag_t pc, int line, int mode, int level,
 	}
 
 	/* Enable redirect to TX39 core */
-	DPRINTF(("plum_intr_establish: %d (count=%d)\n", line,
-		 sc->sc_enable_count));
+	DPRINTF("plum_intr_establish: %d (count=%d)\n", line,
+		 sc->sc_enable_count);
 
 	if (sc->sc_enable_count++ == 0)
 		plum_ei(pc);
@@ -298,8 +298,8 @@ plum_intr_disestablish(plum_chipset_tag_t pc, void *arg)
 		pi = &sc->sc_intr[i];
 		if (pi->pi_fun != arg)
 			continue;
-		DPRINTF(("plum_intr_disestablish: %d (count=%d)\n",
-			 pi->pi_line, sc->sc_enable_count - 1));
+		DPRINTF("plum_intr_disestablish: %d (count=%d)\n",
+			 pi->pi_line, sc->sc_enable_count - 1);
 		goto found;
 	}
 	panic("plum_intr_disestablish: can't find entry.");
