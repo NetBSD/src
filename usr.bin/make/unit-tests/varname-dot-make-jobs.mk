@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-make-jobs.mk,v 1.4 2023/09/09 01:30:59 sjg Exp $
+# $NetBSD: varname-dot-make-jobs.mk,v 1.5 2023/09/10 16:25:32 sjg Exp $
 #
 # Tests for the special .MAKE.JOBS variable, which is defined in jobs mode
 # only.  There it contains the number of jobs that may run in parallel.
@@ -15,15 +15,12 @@ all:
 	@${MAKE} -r -f ${MAKEFILE} echo -j20
 	@${MAKE} -r -f ${MAKEFILE} echo -j00000000000000000000000000000001
 
-.if !make(echo)
+.if !make(echo) && ${.MAKE.JOBS.C} == "yes"
 # These results will not be static, we need NCPU
 # to compute expected results.
-# We only support -jC if _SC_NPROCESSORS_ONLN is defined,
-# otherwise we will get NCPU=0
-NCPU!= ${MAKE} -r -f /dev/null -jC -V .MAKE.JOBS 2> /dev/null || echo 0
-
-.if ${NCPU} > 0
 all:	jC
+
+NCPU!= ${MAKE} -r -f /dev/null -jC -V .MAKE.JOBS
 
 # If -j arg is floating point or ends in C;
 # .MAKE.JOBS is a multiple of _SC_NPROCESSORS_ONLN
@@ -37,7 +34,6 @@ jC:
 	test $$g = $$e || echo "$$g != $$e"; \
 	done
 
-.endif
 .endif
 
 # expect: undefined

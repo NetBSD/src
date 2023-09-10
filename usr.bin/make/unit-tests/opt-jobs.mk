@@ -1,4 +1,4 @@
-# $NetBSD: opt-jobs.mk,v 1.4 2023/09/10 11:41:33 rillig Exp $
+# $NetBSD: opt-jobs.mk,v 1.5 2023/09/10 16:25:32 sjg Exp $
 #
 # Tests for the -j command line option, which creates the targets in parallel.
 
@@ -39,7 +39,7 @@ EXPECT..5e1C=	<integer>		# unlikely to occur in practice
 EXPECT.07.5C=	<integer>
 EXPECT.08.5C=	argument '08.5C' to option '-j' must be a positive number (exit 2)
 
-.if ${.MAKE.JOBS.C}
+.if ${.MAKE.JOBS.C} == "yes"
 .  for arg in ${ARGS}
 OUTPUT!=	${MAKE} -r -f /dev/null -j ${arg} -v .MAKE.JOBS 2>&1 || echo "(exit $$?)"
 .    if ${OUTPUT:C,^[0-9]+$,numeric,W} == numeric
