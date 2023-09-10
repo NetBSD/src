@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.257 2023/04/22 14:23:59 riastradh Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.258 2023/09/10 14:44:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.257 2023/04/22 14:23:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.258 2023/09/10 14:44:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1226,12 +1226,18 @@ fd_abort(proc_t *p, file_t *fp, unsigned fd)
 static int
 file_ctor(void *arg, void *obj, int flags)
 {
+	/*
+	 * It's easy to exhaust the open file limit on a system with many
+	 * CPUs due to caching.  Allow a bit of leeway to reduce the element
+	 * of surprise.
+	 */
+	u_int slop = PCG_NOBJECTS_NORMAL * (ncpu - 1);
 	file_t *fp = obj;
 
 	memset(fp, 0, sizeof(*fp));
 
 	mutex_enter(&filelist_lock);
-	if (__predict_false(nfiles >= maxfiles)) {
+	if (__predict_false(nfiles >= slop + maxfiles)) {
 		mutex_exit(&filelist_lock);
 		tablefull("file", "increase kern.maxfiles or MAXFILES");
 		return ENFILE;
