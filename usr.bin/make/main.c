@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.598 2023/09/10 11:41:32 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.599 2023/09/10 21:52:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.598 2023/09/10 11:41:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.599 2023/09/10 21:52:36 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1377,7 +1377,7 @@ main_Init(int argc, char **argv)
 #endif
 	Global_Set(".MAKE.MAKEFILE_PREFERENCE", MAKEFILE_PREFERENCE_LIST);
 	Global_Set(".MAKE.DEPENDFILE", ".depend");
-	/* Tell makefiles like jobs.mk wether we support -jC */
+	/* Tell makefiles like jobs.mk whether we support -jC */
 #ifdef _SC_NPROCESSORS_ONLN
 	Global_Set_ReadOnly(".MAKE.JOBS.C", "yes");
 #else
