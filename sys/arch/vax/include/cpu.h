@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.106 2022/12/11 18:02:40 oster Exp $      */
+/*      $NetBSD: cpu.h,v 1.106.2.1 2023/09/11 13:42:08 martin Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -156,10 +156,15 @@ extern int cpu_printfataltraps;
 #define	curcpu()		(curlwp->l_cpu + 0)
 #define	curlwp			((struct lwp *)mfpr(PR_SSP))
 #define	cpu_number()		(curcpu()->ci_cpuid)
+/* XXX RESCHED_REMOTE isn't the right flag name to be used here,
+but we need to set ci_want_resched to '1' to make things work 
+on vax.  See PR#55415 */
 #define	cpu_need_resched(ci, l, flags)		\
 	do {							\
 		struct pcb *pcb = lwp_getpcb(curlwp);		\
 		__USE(flags);					\
+		/* XXX RESCHED_REMOTE isn't the right flag */   \
+		(ci)->ci_want_resched = RESCHED_REMOTE;		\
 		pcb->P0LR = (pcb->P0LR & ~AST_MASK) | AST_ON;	\
 		mtpr(AST_OK,PR_ASTLVL);				\
 	} while (/*CONSTCOND*/ 0)
