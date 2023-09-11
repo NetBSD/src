@@ -6,28 +6,45 @@
 	.file	"sparc_v8.S"
 .section	".text"
 
-/*--- .umul ---*/
+
+/*
+ * unsigned .umul(unsigned a, unsigned b)
+ *
+ *     This function computes a * b with unsigned integer
+ *     multiplication.  When .umul returns, the caller's register %o0
+ *     contains the least significant 32 bits of the 64-bit result;
+ *     register %o1 holds the most significant 32 bits of the result.
+ *     Upon return, the integer condition codes and registers %o2
+ *     through %o5 have unspecified values.
+ */
 	.align 4
 	.global .umul
 	.type	 .umul,@function
-
 .umul:
-	!#PROLOGUE# 0
-	!#PROLOGUE# 1
+	umul	%o0, %o1, %o0
 	retl
-	 umul	%o0, %o1, %o0
+	 rd	%y, %o1
 .LLfe1:
 	.size	 .umul,.LLfe1-.umul
 
-/*--- .mul ---*/
+
+/*
+ * int .mul(int a, int b)
+ *
+ *     This function computes a * b with signed integer
+ *     multiplication.  When .mul returns, the caller's register %o0
+ *     contains the least significant 32 bits of the 64-bit result;
+ *     register %o1 holds the most significant 32 bits of the result.
+ *     Upon return, the integer condition codes and registers %o2
+ *     through %o5 have unspecified values.
+ */
 	.align 4
 	.global .mul
 	.type	 .mul,@function
 .mul:
-	!#PROLOGUE# 0
-	!#PROLOGUE# 1
+	smul	%o0, %o1, %o0
 	retl
-	 smul	%o0, %o1, %o0
+	 rd	%y, %o1
 .LLfe2:
 	.size	 .mul,.LLfe2-.mul
 
