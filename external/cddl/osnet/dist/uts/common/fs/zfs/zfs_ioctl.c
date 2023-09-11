@@ -7062,29 +7062,6 @@ nb_zvol_strategy(struct buf *bp)
 	(void) zvol_strategy(bp);
 }
 
-static int
-nb_zvol_psize(dev_t dev)
-{
-	minor_t minor = getminor(dev);
-	off_t nbytes;
-	unsigned bytespersector;
-
-	if (minor == 0)		/* /dev/zfs */
-		return -1;
-
-	if (zvol_ioctl(dev, DIOCGMEDIASIZE, (intptr_t)&nbytes, 0,
-		NOCRED, NULL))
-		return -1;
-	if (zvol_ioctl(dev, DIOCGSECTORSIZE, (intptr_t)&bytespersector, 0,
-		NOCRED, NULL))
-		return -1;
-	if (bytespersector == 0) /* paranoia */
-		return -1;
-	if (nbytes/bytespersector > INT_MAX) /* paranoia */
-		return -1;
-	return nbytes/bytespersector;
-}
-
 static const struct fileops zfs_fileops = {
 	.fo_name = "zfs",
 	.fo_read = fbadop_read,
@@ -7104,7 +7081,7 @@ const struct bdevsw zfs_bdevsw = {
 	.d_strategy = nb_zvol_strategy,
 	.d_ioctl = nb_zfsdev_ioctl,
 	.d_dump = nodump,
-	.d_psize = nb_zvol_psize,
+	.d_psize = nosize,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
