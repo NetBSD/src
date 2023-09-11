@@ -1,4 +1,4 @@
-/*	$NetBSD: efipxe.c,v 1.2 2018/11/15 23:52:33 jmcneill Exp $	*/
+/*	$NetBSD: efipxe.c,v 1.2.32.1 2023/09/11 13:30:36 martin Exp $	*/
 /*	$OpenBSD: efipxe.c,v 1.3 2018/01/30 20:19:06 naddy Exp $	*/
 
 /*
@@ -64,7 +64,8 @@ efi_pxe_probe(void)
 		if (EFI_ERROR(status))
 			continue;
 
-		depth = efi_device_path_depth(efi_bootdp, MEDIA_DEVICE_PATH);
+		depth = efi_device_path_depth(efi_bootdp,
+		    MESSAGING_DEVICE_PATH);
 		if (efi_device_path_ncmp(efi_bootdp, dp, depth))
 			continue;
 
