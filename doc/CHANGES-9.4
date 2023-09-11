@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.99 2023/09/09 14:57:22 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.100 2023/09/11 14:45:05 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2115,4 +2115,9 @@ sys/dev/raidframe/rf_reconstruct.c		1.128
 
 	raidframe: fix memory leaks (prevent diagnostic on shutdown).
 	[oster, ticket #1729]
+
+build.sh					1.374
+
+	build.sh: add support for git worktree.
+	[khorben, ticket #1730]
 
