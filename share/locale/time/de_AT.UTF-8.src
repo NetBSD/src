@@ -1,4 +1,4 @@
-# $NetBSD: de_AT.UTF-8.src,v 1.2 2013/08/11 22:09:42 joerg Exp $
+# $NetBSD: de_AT.UTF-8.src,v 1.2.36.1 2023/09/11 14:54:54 martin Exp $
 #
 # Locale: de_AT
 # Character set: UTF-8
@@ -48,7 +48,7 @@ Samstag
 #
 # Short month names (abmon)
 #
-Jän
+Jän.
 Feb.
 Mär.
 Apr.
