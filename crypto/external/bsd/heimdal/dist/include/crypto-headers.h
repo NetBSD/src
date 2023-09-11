@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-headers.h,v 1.6 2023/06/19 23:10:48 christos Exp $	*/
+/*	$NetBSD: crypto-headers.h,v 1.7 2023/09/11 15:12:12 christos Exp $	*/
 
 #ifndef __crypto_header__
 #define __crypto_header__
@@ -33,9 +33,6 @@
 #  define BN_set_negative(bn, flag) ((bn)->neg=(flag)?1:0)
 #  define BN_is_negative(bn) ((bn)->neg != 0)
 # endif
-#if OPENSSL_VERSION_NUMBER >= 0x30000000UL
-# define EVP_rc4() EVP_CIPHER_fetch(NULL, "rc4", "provider=legacy")
-#endif
 #endif
 
 #include <hcrypto/ui.h>
