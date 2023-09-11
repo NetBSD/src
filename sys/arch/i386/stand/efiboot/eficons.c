@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.12 2021/10/28 06:13:13 kim Exp $	*/
+/*	$NetBSD: eficons.c,v 1.12.4.1 2023/09/11 13:25:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -28,6 +28,8 @@
 
 #include <sys/bitops.h>
 #include <sys/stdint.h>
+
+#include <comio_direct.h>
 
 #include "efiboot.h"
 
@@ -60,6 +62,8 @@ static u_char serbuf[16];
 static int serbuf_read = 0;
 static int serbuf_write = 0;
 
+static int raw_com_addr = 0;
+
 static void eficons_init_video(void);
 static void efi_switch_video_to_text_mode(void);
 
@@ -75,6 +79,12 @@ static int efi_com_getc(void);
 static int efi_com_putc(int);
 static int efi_com_status(int);
 static int efi_com_waitforinputevent(uint64_t);
+
+static int raw_com_init(int, int);
+static int raw_com_getc(void);
+static int raw_com_putc(int);
+static int raw_com_status(int);
+static int raw_com_waitforinputevent(uint64_t);
 
 static int efi_find_gop_mode(char *);
 
@@ -134,11 +144,8 @@ ok:
 	case CONSDEV_COM3:
 		iodev = dev;
 		btinfo_console.addr = ioport;
-		if (btinfo_console.addr == 0) {
-			if (!efi_valid_com(iodev))
-				goto nocom;
+		if (btinfo_console.addr == 0)
 			btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
-		}
 		if (speed != 0)
 			btinfo_console.speed = speed;
 		efi_com_init(btinfo_console.addr, btinfo_console.speed);
@@ -149,8 +156,6 @@ ok:
 	case CONSDEV_COM2KBD:
 	case CONSDEV_COM3KBD:
 		iodev = dev - CONSDEV_COM0KBD + CONSDEV_COM0;
-		if (!efi_valid_com(iodev))
-			goto nocom;
 		btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
 
 		efi_cons_putc('0' + iodev - CONSDEV_COM0);
@@ -869,7 +874,7 @@ efi_com_init(int addr, int speed)
 		return 0;
 
 	if (!efi_valid_com(iodev))
-		return 0;
+		return raw_com_init(addr, speed);
 
 	serio = serios[iodev - CONSDEV_COM0];
 
@@ -885,6 +890,7 @@ efi_com_init(int addr, int speed)
 		}
 	}
 
+	raw_com_addr = 0;
 	default_comspeed = speed;
 	internal_getchar = efi_com_getc;
 	internal_putchar = efi_com_putc;
@@ -1018,4 +1024,66 @@ efi_com_waitforinputevent(uint64_t timeout)
 	if (status == EFI_TIMEOUT)
 		return ETIMEDOUT;
 	return EINVAL;
+}
+
+static int
+raw_com_init(int addr, int speed)
+{
+
+	if (addr == 0 || speed <= 0)
+		return 0;
+
+	speed = cominit_d(addr, speed);
+
+	raw_com_addr = addr;
+	default_comspeed = speed;
+	internal_getchar = raw_com_getc;
+	internal_putchar = raw_com_putc;
+	internal_iskey = raw_com_status;
+	internal_waitforinputevent = raw_com_waitforinputevent;
+
+	return speed;
+}
+
+static int
+raw_com_getc(void)
+{
+
+	if (raw_com_addr == 0)
+		panic("%s: Invalid serial port", __func__);
+	return comgetc_d(raw_com_addr);
+}
+
+static int
+raw_com_putc(int c)
+{
+
+	if (raw_com_addr == 0)
+		panic("%s: Invalid serial port", __func__);
+	return computc_d(c, raw_com_addr);
+}
+
+static int
+raw_com_status(int intr)
+{
+
+	if (raw_com_addr == 0)
+		panic("%s: Invalid serial port", __func__);
+	return comstatus_d(raw_com_addr);
+}
+
+static int
+raw_com_waitforinputevent(uint64_t timeout /* in 0.1 usec */)
+{
+	uint64_t ms;
+
+	if (raw_com_addr == 0)
+		panic("%s: Invalid serial port", __func__);
+
+	for (ms = howmany(timeout, 10 * 1000); ms != 0; ms--) {
+		if (raw_com_status(0))
+			return 0;
+		uefi_call_wrapper(BS->Stall, 1, 1000);
+	}
+	return ETIMEDOUT;
 }
