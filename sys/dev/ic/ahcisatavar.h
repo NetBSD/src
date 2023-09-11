@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.27 2021/11/19 23:46:55 rin Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.27.4.1 2023/09/11 14:39:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -59,7 +59,6 @@ struct ahci_softc {
 #define AHCI_PCI_QUIRK_BAD64	__BIT(1)  /* broken 64-bit DMA */
 #define AHCI_QUIRK_BADPMP	__BIT(2)  /* broken PMP support, ignore */
 #define AHCI_QUIRK_BADNCQ	__BIT(3)  /* possibly broken NCQ support, ignore */
-#define AHCI_QUIRK_EXTRA_DELAY	__BIT(4)  /* needs extra delay */
 
 	uint32_t sc_ahci_cap;	/* copy of AHCI_CAP */
 	int sc_ncmds; /* number of command slots */

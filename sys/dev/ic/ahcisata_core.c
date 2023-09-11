@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.107 2022/08/01 07:37:18 mlelstv Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.107.4.1 2023/09/11 14:39:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.107 2022/08/01 07:37:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.107.4.1 2023/09/11 14:39:21 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -119,15 +119,11 @@ static const struct scsipi_bustype ahci_atapi_bustype = {
 #define	AHCISATA_EXTRA_DELAY_MS	500	/* XXX need to adjust */
 #endif
 
-#ifdef AHCISATA_EXTRA_DELAY
+#if !defined(AHCISATA_REMOVE_EXTRA_DELAY) && AHCISATA_EXTRA_DELAY_MS > 0
 #define	AHCISATA_DO_EXTRA_DELAY(sc, chp, msg, flags)			\
     ata_delay(chp, AHCISATA_EXTRA_DELAY_MS, msg, flags)
 #else
-#define	AHCISATA_DO_EXTRA_DELAY(sc, chp, msg, flags)			\
-    do {								\
-	if ((sc)->sc_ahci_quirks & AHCI_QUIRK_EXTRA_DELAY)		\
-		ata_delay(chp, AHCISATA_EXTRA_DELAY_MS, msg, flags);	\
-    } while (0)
+#define	AHCISATA_DO_EXTRA_DELAY(sc, chp, msg, flags) do { } while (0)
 #endif
 
 const struct ata_bustype ahci_ata_bustype = {
