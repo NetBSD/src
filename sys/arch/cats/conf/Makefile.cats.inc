@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.36 2018/12/31 13:30:17 christos Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.36.30.1 2023/09/11 13:35:38 martin Exp $
 
 MACHINE_ARCH?=	arm
 CPPFLAGS+=	-D${MACHINE}
@@ -27,14 +27,8 @@ ${KERNLDSCRIPT}: \
 	  OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
 		${SYSTEM_OBJ} ; \
 	  cat ${ARM}/conf/kern.ldscript.tail ) > $@
-.if ${HAVE_BINUTILS} == 227
-SYSTEM_LD_TAIL_EXTRA+=; \
-	echo "${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout"; \
-	${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout
-.else
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo "${ARM_ELF2AOUT} $@ $@.aout"; \
 	${ARM_ELF2AOUT} $@ $@.aout
-.endif
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.295 2022/08/27 20:37:49 rillig Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.295.4.1 2023/09/11 13:35:37 martin Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -245,14 +245,27 @@ LINKFLAGS?=	${LINKFORMAT} ${LINKSCRIPT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
 LINKFLAGS_DEBUG?=	-X
 KERNEL_CONFIG?=	${KERNEL_BUILD:T}
 
-SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c && \
-		${SIZE} $@ && ${SYSTEM_CTFMERGE} && chmod 755 $@
-SYSTEM_LD_TAIL+= && runit() { echo $$@; $$@; }
+SYSTEM_LD_TAIL?=	@${_MKSHECHO}
+OBJCOPY_STRIPFLAGS?=	-g
+
+# Strip some architecture-defined symbols from kernel image, while
+# keep them in netbsd.gdb.
+.if defined(ARCH_STRIP_SYMBOLS)
+.if empty(DEBUG:M-g*)
+SYSTEM_LD_TAIL+=	&& ${OBJCOPY} -w ${ARCH_STRIP_SYMBOLS} $@
+.endif
+OBJCOPY_STRIPFLAGS+=	-w ${ARCH_STRIP_SYMBOLS}
+.endif
+
+SYSTEM_LD_TAIL+= && ${TOOL_SED} \
+	'/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c && \
+	${SIZE} $@ && ${SYSTEM_CTFMERGE} && chmod 755 $@ && \
+	runit() { echo $$@; $$@; }
 
 SYSTEM_LD_TAIL_DEBUG?=&& \
 	runit mv -f $@ $@.gdb && \
 	runit ${OBJCOPY} --only-keep-debug $@.gdb $@-${KERNEL_CONFIG}.debug && \
-	runit ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+	runit ${OBJCOPY} ${OBJCOPY_STRIPFLAGS} -p -R .gnu_debuglink \
 	    --add-gnu-debuglink=$@-${KERNEL_CONFIG}.debug $@.gdb $@ && \
 	runit chmod 755 $@ $@.gdb $@-${KERNEL_CONFIG}.debug
 
