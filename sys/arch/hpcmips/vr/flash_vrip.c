@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.13 2020/11/21 21:23:48 thorpej Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.14 2023/09/11 22:09:28 andvar Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.13 2020/11/21 21:23:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.14 2023/09/11 22:09:28 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -188,15 +188,15 @@ flash_probe(device_t parent, cfdata_t match, void *aux)
 	if (bus_space_map(va->va_iot, va->va_addr, va->va_size, 0, &ioh))
 		return 0;
 	if (!probe_cfi(va->va_iot, ioh)) {
-		DPRINTF("CFI ID str and command set recognized\n");
+		DPRINTF(("CFI ID str and command set recognized\n"));
 		goto detect;
 	}
 	if (!i28f128_probe(va->va_iot, ioh)) {
-		DPRINTF("28F128 detected\n");
+		DPRINTF(("28F128 detected\n"));
 		goto detect;
 	}
 	if (!mbm29160_probe(va->va_iot, ioh)) {
-		DPRINTF("29LV160 detected\n");
+		DPRINTF(("29LV160 detected\n"));
 		goto detect;
 	}
 	return 0;
