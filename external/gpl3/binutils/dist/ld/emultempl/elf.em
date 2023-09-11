@@ -81,6 +81,8 @@ gld${EMULATION_NAME}_before_parse (void)
 {
   ldfile_set_output_arch ("${OUTPUT_ARCH}", bfd_arch_`echo ${ARCH} | sed -e 's/:.*//'`);
   input_flags.dynamic = ${DYNAMIC_LINK-true};
+  /* XXX For NetBSD, ----copy-dt-needed-entries by default.  */
+  input_flags.add_DT_NEEDED_for_dynamic = true;
   config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo true ; else echo false ; fi`;
   config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo true ; else echo false ; fi`;
   link_info.check_relocs_after_open_input = true;
