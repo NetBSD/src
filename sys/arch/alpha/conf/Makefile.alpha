@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.87 2021/05/05 15:39:39 thorpej Exp $
+#	$NetBSD: Makefile.alpha,v 1.87.14.1 2023/09/11 13:35:37 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -65,7 +65,7 @@ TEXTADDR?=	fffffc0000a00000
 ENTRYPOINT=	__transfer
 KERNLDSCRIPT?=	${ALPHA}/conf/kern.ldscript
 EXTRA_LINKFLAGS=	-G 4
-STRIPFLAGS=	-g -X
+OBJCOPY_STRIPFLAGS=	-g -X
 
 ##
 ## (6) port specific target dependencies

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.riscv,v 1.8 2022/09/28 05:02:02 skrll Exp $
+#	$NetBSD: Makefile.riscv,v 1.8.4.1 2023/09/11 13:35:38 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -76,7 +76,7 @@ TEXTADDR?=		0x80200000
 KERNLDSCRIPT?=		${RISCV}/conf/kern.ldscript
 EXTRA_LINKFLAGS=	${LDOPTS} --relax
 LINKFLAGS_NORMAL=	-X
-STRIPFLAGS=		-g -X
+OBJCOPY_STRIPFLAGS=	-g -X
 
 # Set the physical load address (aka LMA) to the address that OpenSBI's
 # fw_jump jumps to.  This allows us to load the kernel with the -kernel flag
