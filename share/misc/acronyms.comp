@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.362 2023/09/06 19:56:57 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.363 2023/09/11 15:07:52 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1357,6 +1357,7 @@ RAS	remote access service
 RAS	restartable atomic sequence
 RAS	row address strobe
 RAT	register allocation table
+RAT	remote access trojan
 RBF	radial basis function
 RBL     reputation block list
 RBL     real-time blackhole list
