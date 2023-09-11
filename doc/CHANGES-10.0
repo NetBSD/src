@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.121 2023/09/09 15:02:43 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.122 2023/09/11 14:58:56 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11843,4 +11843,72 @@ sys/arch/sparc64/sparc64/autoconf.c		1.239
 	sparc64: fix interrupt level mapping for disk and and parallel devices
 	on SBUS-based machines
 	[jdc, ticket #360]
+
+sys/arch/i386/stand/efiboot/Makefile.efiboot	1.22
+sys/arch/i386/stand/efiboot/eficons.c		1.13
+sys/arch/i386/stand/efiboot/eficpufunc.c	1.1
+sys/arch/i386/stand/efiboot/eficpufunc.h	1.1
+
+	efiboot/x86: PR 57523: add serial console support via raw I/O port
+	access.
+	[rin, ticket #361]
+
+sys/arch/i386/stand/efiboot/efipxe.c		1.2
+sys/stand/efiboot/efipxe.c			1.3
+
+	MI and x86 efiboot: fix device path type for PXE boot device.
+	[rin, ticket #362]
+
+sys/arch/aarch64/conf/Makefile.aarch64		1.24,1.25
+sys/arch/alpha/conf/Makefile.alpha		1.88
+sys/arch/arm/conf/Makefile.arm			1.56,1.57
+sys/arch/cats/conf/Makefile.cats.inc		1.37
+sys/arch/mips/conf/Makefile.mips		1.73
+sys/arch/riscv/conf/Makefile.riscv		1.10
+sys/arch/shark/conf/Makefile.shark.inc		1.28
+sys/conf/Makefile.kern.inc			1.298,1.299
+
+	PR 57146: fix kernel size inflation with COPY_SYMTAB.
+	[rin, ticket #363]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_ioctl.c 1.26
+
+	zfs: disable swap/dump on zvol.
+	[riastradh, ticket #364]
+
+
+sys/arch/vax/include/cpu.h			1.107
+
+	vax: PR 55415: work around ci_want_resched fallout on vax.
+	[oster, ticket #365]
+
+sys/conf/files					1.1309
+sys/dev/ic/ahcisata_core.c			1.108
+sys/dev/ic/ahcisatavar.h			1.28
+sys/dev/pci/ahcisata_pci.c			1.70
+
+	ahcisata(4): PR 56737: rework AHCI extra delay options.
+	[abs, ticket #366]
+
+build.sh					1.374
+
+	build.sh: add support for git worktree.
+	[khorben, ticket #367]
+
+share/locale/ctype/en_US.UTF-8.src		1.8-1.10
+share/locale/ctype/gen_ctype_utf8.pl		1.1,1.2
+tests/lib/libc/locale/t_mbstowcs.c		1.3
+
+	Update unicode tables.
+	[wiz, ticket #368]
+
+share/locale/time/de_AT.UTF-8.src		1.3
+
+	Add missing dot in abbreviation.
+	[wiz, ticket #369]
+
+tests/lib/libc/hash/t_hmac.c			1.3
+
+	libc: disable md4 hmac tests.
+	[riastradh, ticket #370]
 
