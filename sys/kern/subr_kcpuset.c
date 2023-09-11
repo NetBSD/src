@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.17 2023/09/10 14:45:52 ad Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.18 2023/09/11 08:55:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2023 The NetBSD Foundation, Inc.
@@ -41,12 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.17 2023/09/10 14:45:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.18 2023/09/11 08:55:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/atomic.h>
+#include <sys/intr.h>
 #include <sys/sched.h>
 #include <sys/kcpuset.h>
 #include <sys/kmem.h>
