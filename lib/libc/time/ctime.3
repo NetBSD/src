@@ -1,9 +1,9 @@
-.\" $NetBSD: ctime.3,v 1.69 2022/12/11 17:57:23 christos Exp $
+.\" $NetBSD: ctime.3,v 1.70 2023/09/12 21:56:05 dholland Exp $
 .\"
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
 .\"
-.Dd October 22, 2022
+.Dd September 12, 2023
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -139,40 +139,6 @@ The
 function returns the difference between two calendar times,
 .Fa ( time1 No - Fa time0 ) ,
 expressed in seconds.
-.Pp
-The
-.Fn ctime_r ,
-.Fn localtime_r ,
-.Fn gmtime_r ,
-and
-.Fn asctime_r
-functions
-are like their unsuffixed counterparts, except that they accept an
-additional argument specifying where to store the result if successful.
-.Pp
-The
-.Fn ctime_rz ,
-.Fn localtime_rz ,
-and
-.Fn mktime_z
-functions
-are like their unsuffixed counterparts, except that they accept an
-extra initial
-.Ar zone
-argument specifying the timezone to be used for conversion.
-If
-.Fa zone
-is
-.Dv NULL ,
-UT is used; otherwise,
-.Fa zone
-should have been allocated by
-.Fn tzalloc
-and should not be freed until after all uses (e.g., by calls to
-.Fn strftime )
-of the filled-in
-.Fn tm_zone
-fields.
 .It Fn gmtime "clock"
 The
 .Fn gmtime
@@ -415,6 +381,40 @@ variable is optional; also, there is no guarantee that
 .Dv tzname
 will
 continue to exist in this form in future releases of this code.
+.Pp
+The
+.Fn ctime_r ,
+.Fn localtime_r ,
+.Fn gmtime_r ,
+and
+.Fn asctime_r
+functions
+are like their unsuffixed counterparts, except that they accept an
+additional argument specifying where to store the result if successful.
+.Pp
+The
+.Fn ctime_rz ,
+.Fn localtime_rz ,
+and
+.Fn mktime_z
+functions
+are like their unsuffixed counterparts, except that they accept an
+extra initial
+.Ar zone
+argument specifying the timezone to be used for conversion.
+If
+.Fa zone
+is
+.Dv NULL ,
+UT is used; otherwise,
+.Fa zone
+should have been allocated by
+.Fn tzalloc
+and should not be freed until after all uses (e.g., by calls to
+.Fn strftime )
+of the filled-in
+.Fn tm_zone
+fields.
 .Sh RETURN VALUES
 .Bl -bullet
 .It
