@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.408 2023/09/10 14:45:53 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.409 2023/09/12 16:17:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.408 2023/09/10 14:45:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.409 2023/09/12 16:17:22 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -142,6 +142,12 @@ UVMMAP_EVCNT_DEFINE(mlk_tree)
 UVMMAP_EVCNT_DEFINE(mlk_treeloop)
 
 const char vmmapbsy[] = "vmmapbsy";
+
+/*
+ * cache for vmspace structures.
+ */
+
+static struct pool_cache uvm_vmspace_cache;
 
 /*
  * cache for dynamically-allocated map entries.
@@ -925,6 +931,8 @@ uvm_map_init_caches(void)
 	pool_cache_bootstrap(&uvm_map_entry_cache, sizeof(struct vm_map_entry),
 	    coherency_unit, 0, PR_LARGECACHE, "vmmpepl", NULL, IPL_NONE, NULL,
 	    NULL, NULL);
+	pool_cache_bootstrap(&uvm_vmspace_cache, sizeof(struct vmspace),
+	    0, 0, 0, "vmsppl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -4104,7 +4112,7 @@ uvmspace_alloc(vaddr_t vmin, vaddr_t vmax, bool topdown)
 	struct vmspace *vm;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	vm = kmem_alloc(sizeof(*vm), KM_SLEEP);
+	vm = pool_cache_get(&uvm_vmspace_cache, PR_WAITOK);
 	uvmspace_init(vm, NULL, vmin, vmax, topdown);
 	UVMHIST_LOG(maphist,"<- done (vm=%#jx)", (uintptr_t)vm, 0, 0, 0);
 	return (vm);
@@ -4360,7 +4368,7 @@ uvmspace_free(struct vmspace *vm)
 	rw_destroy(&map->lock);
 	cv_destroy(&map->cv);
 	pmap_destroy(map->pmap);
-	kmem_free(vm, sizeof(*vm));
+	pool_cache_put(&uvm_vmspace_cache, vm);
 }
 
 static struct vm_map_entry *
