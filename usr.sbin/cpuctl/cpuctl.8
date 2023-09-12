@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpuctl.8,v 1.21 2023/03/06 01:28:54 kre Exp $
+.\"	$NetBSD: cpuctl.8,v 1.22 2023/09/12 20:45:17 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012, 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 17, 2019
+.Dd September 12, 2023
 .Dt CPUCTL 8
 .Os
 .Sh NAME
@@ -51,9 +51,13 @@ Valid commands are:
 .It identify Ar cpu Op Ar cpu ...
 Output information on the specified CPU's features and capabilities.
 Not available on all architectures.
+.It intr Ar cpu Op Ar cpu ...
+Enable interrupts for the specified CPUs if supported.
 .It list
 For each CPU in the system, display the current state and time of the last
 state change.
+.It nointr Ar cpu Op Ar cpu ...
+Disable interrupts for the specified CPUs if supported.
 .It offline Ar cpu Op Ar cpu ...
 Set the specified CPUs off line.
 .Pp
@@ -79,22 +83,28 @@ already exists on the CPU in question are ignored.
 If
 .Ar cpu
 is not specified or \-1, all CPUs are updated.
+(AMD CPU updates need to be update all CPUs at once.)
 If
 .Ar cpu
 is \-2, the current CPUs are updated.
 The default filename is used if no filename is specified.
+The
+.Ar file
+pathname containing the ucode updates are searched relative to the
+default firmware path found in
+.Xr sysctl 7
+.Pa hw.firmware.path .
 The
 .Cm identify
 command prints the installed version on the specified CPUs.
 On success the
 .Cm identify
 command shows different ucode versions before and after this command.
-The ucode updates are found in the default firmware path found in
-sysctl hw.firmware.path.
-.It intr Ar cpu Op Ar cpu ...
-Enable interrupts for the specified CPUs if supported.
-.It nointr Ar cpu Op Ar cpu ...
-Disable interrupts for the specified CPUs if supported.
+.Pp
+Some problems will only be reported in the kernel message buffer,
+so check
+.Xr dmesg 8
+in case of errors.
 .El
 .Pp
 Valid flags are:
