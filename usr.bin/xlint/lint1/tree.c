@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.579 2023/09/12 07:23:27 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.580 2023/09/12 22:01:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.579 2023/09/12 07:23:27 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.580 2023/09/12 22:01:05 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1649,7 +1649,7 @@ use(const tnode_t *tn)
 		break;
 	default:
 		use(tn->tn_left);
-		if (is_binary(tn))
+		if (is_binary(tn) || tn->tn_op == PUSH)
 			use(tn->tn_right);
 	}
 }
