@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.7 2023/09/12 21:50:11 andvar Exp $
+# 	$NetBSD: DEBUG,v 1.8 2023/09/12 22:07:33 andvar Exp $
 #
 
 include 	"arch/hpcsh/conf/GENERIC"
@@ -11,11 +11,11 @@ options 	DDB			# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 #options 	KGDB_DEVRATE=19200
 # HP Jornada
-#options 	"KGDB_DEVNAME=\"scif\""
+#options 	KGDB_DEVNAME="\"scif\""
 # HITACHI PERSONA (SH3)
-#options 	"KGDB_DEVNAME=\"hd64461uart\""
+#options 	KGDB_DEVNAME="\"hd64461uart\""
 # HITACHI PERSONA (SH4)
-#options 	"KGDB_DEVNAME=\"hd64465uart\""
+#options 	KGDB_DEVNAME="\"hd64465uart\""
 
 #options 	HPC_DEBUG_INTERRUPT_MONITOR
 #options 	KSTACK_DEBUG
