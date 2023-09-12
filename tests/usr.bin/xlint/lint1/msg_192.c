@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_192.c,v 1.7 2023/09/12 06:51:02 rillig Exp $	*/
+/*	$NetBSD: msg_192.c,v 1.8 2023/09/12 07:23:27 rillig Exp $	*/
 # 3 "msg_192.c"
 
 // Test for message: '%s' unused in function '%s' [192]
@@ -16,13 +16,15 @@ example(int param)
 
 void assertion_failed(const char *);
 
+/*
+ * The symbol '__func__' only occurs in an unreachable branch.  It is
+ * nevertheless marked as used.
+ */
 void
 assert_true(void)
 {
 	sizeof(char) == 1
 	    ? (void)0
-/* FIXME: '__func__' is used, the code is just not reachable. */
-/* expect+1: warning: '__func__' unused in function 'assert_true' [192] */
 	    : assertion_failed(__func__);
 }
 

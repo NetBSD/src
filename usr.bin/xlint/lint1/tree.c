@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.578 2023/08/26 10:43:53 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.579 2023/09/12 07:23:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.578 2023/08/26 10:43:53 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.579 2023/09/12 07:23:27 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1635,6 +1635,25 @@ fold_float(tnode_t *tn)
 	return build_constant(tn->tn_type, v);
 }
 
+static void
+use(const tnode_t *tn)
+{
+	if (tn == NULL)
+		return;
+	switch (tn->tn_op) {
+	case NAME:
+		mark_as_used(tn->tn_sym, false /* XXX */, false /* XXX */);
+		break;
+	case CON:
+	case STRING:
+		break;
+	default:
+		use(tn->tn_left);
+		if (is_binary(tn))
+			use(tn->tn_right);
+	}
+}
+
 /*
  * Create a tree node for a binary operator and its two operands. Also called
  * for unary operators; in that case rn is NULL.
@@ -1809,6 +1828,8 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 				ntn = fold(ntn);
 			}
 		} else if (op == QUEST && ln->tn_op == CON) {
+			use(ln->tn_val.u.integer != 0
+			    ? rn->tn_right : rn->tn_left);
 			ntn = ln->tn_val.u.integer != 0
 			    ? rn->tn_left : rn->tn_right;
 		}
