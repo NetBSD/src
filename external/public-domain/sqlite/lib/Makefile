@@ -1,13 +1,10 @@
-# $NetBSD: Makefile,v 1.18 2023/09/04 17:05:25 christos Exp $
+# $NetBSD: Makefile,v 1.19 2023/09/12 22:11:08 rillig Exp $
 
-NOLINT=yes	# XXX: broken
 LIB=		sqlite3
 INCS=		sqlite3.h sqlite3ext.h
 INCSDIR=	/usr/include
 
 SRCS=		sqlite3.c
-
-CFLAGS+=	-DNDEBUG
 
 LDADD+=		-lm
 DPADD+=		${LIBM}
