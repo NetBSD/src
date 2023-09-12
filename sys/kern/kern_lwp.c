@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lwp.c,v 1.253 2023/09/10 14:45:52 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.254 2023/09/12 16:17:21 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
+ * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.253 2023/09/10 14:45:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.254 2023/09/12 16:17:21 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -397,8 +397,7 @@ lwp_ctor(void *arg, void *obj, int flags)
 	l->l_stat = LSIDL;
 	l->l_cpu = curcpu();
 	l->l_mutex = l->l_cpu->ci_schedstate.spc_lwplock;
-	l->l_ts = kmem_alloc(sizeof(*l->l_ts), flags == PR_WAITOK ?
-	    KM_SLEEP : KM_NOSLEEP);
+	l->l_ts = pool_get(&turnstile_pool, flags);
 
 	if (l->l_ts == NULL) {
 		return ENOMEM;
@@ -423,7 +422,7 @@ lwp_dtor(void *arg, void *obj)
 	 * so if it comes up just drop it quietly and move on.
 	 */
 	if (l->l_ts != &turnstile0)
-		kmem_free(l->l_ts, sizeof(*l->l_ts));
+		pool_put(&turnstile_pool, l->l_ts);
 }
 
 /*
