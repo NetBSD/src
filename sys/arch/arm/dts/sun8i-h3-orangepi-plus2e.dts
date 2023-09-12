@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3-orangepi-plus2e.dts,v 1.4 2019/05/21 22:31:39 jmcneill Exp $ */
+/* $NetBSD: sun8i-h3-orangepi-plus2e.dts,v 1.5 2023/09/12 12:56:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,6 @@
  */
 
 #include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/sun8i-h3-orangepi-plus2e.dts"
-#include "sun8i-h3.dtsi"
 
 / {
 	cpus {
