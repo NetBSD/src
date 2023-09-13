@@ -3754,7 +3754,7 @@ mDNSexport mStatus mDNSSendDNSMessage(mDNS *const m, DNSMessage *const msg, mDNS
         m->UnicastPacketsSent++;
 #endif // APPLE_OSX_mDNSResponder
 
-    // Zero-length message data is okay (e.g. for a DNS Update ack, where all we need is an ID and an error code
+    // Zero-length message data is okay (e.g. for a DNS Update ack, where all we need is an ID and an error code)
     if (end < msg->data || end - msg->data > AbsoluteMaxDNSMessageData)
     {
         LogMsg("mDNSSendDNSMessage: invalid message %p %p %d", msg->data, end, end - msg->data);
