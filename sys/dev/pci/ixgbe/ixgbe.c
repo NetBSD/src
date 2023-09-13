@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.328 2023/09/13 07:38:31 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.329 2023/09/13 08:05:23 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.328 2023/09/13 07:38:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.329 2023/09/13 08:05:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1638,8 +1638,19 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	for (i = 0; i < queue_counters; i++) {
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_QPRC(i), qprc[i]);
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_QPTC(i), qptc[i]);
-		if (hw->mac.type >= ixgbe_mac_82599EB)
+		if (hw->mac.type >= ixgbe_mac_82599EB) {
+			IXGBE_EVC_ADD(&stats->qbrc[i],
+			    IXGBE_READ_REG(hw, IXGBE_QBRC_L(i)) +
+			    ((u64)IXGBE_READ_REG(hw, IXGBE_QBRC_H(i)) << 32));
+			IXGBE_EVC_ADD(&stats->qbtc[i],
+			    IXGBE_READ_REG(hw, IXGBE_QBTC_L(i)) +
+			    ((u64)IXGBE_READ_REG(hw, IXGBE_QBTC_H(i)) << 32));
 			IXGBE_EVC_REGADD(hw, stats, IXGBE_QPRDC(i), qprdc[i]);
+		} else {
+			/* 82598 */
+			IXGBE_EVC_REGADD(hw, stats, IXGBE_QBRC(i), qbrc[i]);
+			IXGBE_EVC_REGADD(hw, stats, IXGBE_QBTC(i), qbtc[i]);
+		}
 	}
 
 	/* 8 registers exist */
