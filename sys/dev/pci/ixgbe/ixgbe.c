@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.327 2023/09/13 07:28:51 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.328 2023/09/13 07:38:31 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.327 2023/09/13 07:28:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.328 2023/09/13 07:38:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1948,14 +1948,14 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		if (i < __arraycount(stats->qbtc))
 			evcnt_attach_dynamic(&stats->qbtc[i], EVCNT_TYPE_MISC,
 			    NULL, adapter->queues[i].evnamebuf,
-			    "qbtc");
+			    "Queue Bytes Transmitted (reg)");
 		evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue Packets Transmitted");
+		    "Queue Packets Transmitted (soft)");
 		if (i < __arraycount(stats->qptc))
 			evcnt_attach_dynamic(&stats->qptc[i], EVCNT_TYPE_MISC,
 			    NULL, adapter->queues[i].evnamebuf,
-			    "qptc");
+			    "Queue Packets Transmitted (reg)");
 #ifndef IXGBE_LEGACY_TX
 		evcnt_attach_dynamic(&txr->pcq_drops, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
@@ -1969,24 +1969,24 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 
 		evcnt_attach_dynamic(&rxr->rx_bytes, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue Bytes Received");
+		    "Queue Bytes Received (soft)");
 		if (i < __arraycount(stats->qbrc))
 			evcnt_attach_dynamic(&stats->qbrc[i], EVCNT_TYPE_MISC,
 			    NULL, adapter->queues[i].evnamebuf,
-			    "qbrc");
+			    "Queue Bytes Received (reg)");
 		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue Packets Received");
+		    "Queue Packets Received (soft)");
 		if (i < __arraycount(stats->qprc))
 			evcnt_attach_dynamic(&stats->qprc[i], EVCNT_TYPE_MISC,
 			    NULL, adapter->queues[i].evnamebuf,
-			    "qprc");
+			    "Queue Packets Received (reg)");
 		if ((i < __arraycount(stats->qprdc)) &&
 		    (hw->mac.type >= ixgbe_mac_82599EB))
 				evcnt_attach_dynamic(&stats->qprdc[i],
 				    EVCNT_TYPE_MISC, NULL,
 				    adapter->queues[i].evnamebuf,
-				    "qprdc");
+				    "Queue Packets Received Drop");
 
 		evcnt_attach_dynamic(&rxr->no_mbuf, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Rx no mbuf");
