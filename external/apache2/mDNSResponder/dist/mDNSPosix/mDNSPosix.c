@@ -1266,6 +1266,8 @@ mDNSlocal mStatus WatchForInterfaceChange(mDNS *const m)
     err = OpenIfNotifySocket(&pChgRec->NotifySD);
     if (err == 0)
         err = mDNSPosixAddFDToEventLoop(pChgRec->NotifySD, InterfaceChangeCallback, pChgRec);
+    if (err)
+        mDNSPlatformMemFree(pChgRec);
 
     return err;
 }
