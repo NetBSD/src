@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.30 2018/12/11 06:34:00 thorpej Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.31 2023/09/13 17:08:14 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.30 2018/12/11 06:34:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.31 2023/09/13 17:08:14 andvar Exp $");
 
 #include "opt_kgdb.h"
 
@@ -141,7 +141,7 @@ hd64461uart_kgdb_init(void)
 
 	hd64461uart_init();
 
-	hd64461uart_init_regs(&regs, hd64461uart_chip.io_tag, NULL, 0x0);
+	hd64461uart_init_regs(&regs, hd64461uart_chip.io_tag, 0x0, 0x0);
 	if (com_kgdb_attach1(&regs,
 	    kgdb_rate, COM_FREQ, COM_TYPE_NORMAL, CONMODE) != 0) {
 		printf("%s: KGDB console open failed.\n", __func__);
