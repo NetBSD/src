@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.140 2023/09/12 20:43:38 wiz Exp $	*/
+/*	$NetBSD: i386.c,v 1.141 2023/09/13 06:53:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.140 2023/09/12 20:43:38 wiz Exp $");
+__RCSID("$NetBSD: i386.c,v 1.141 2023/09/13 06:53:23 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2584,8 +2584,8 @@ ucodeupdate_check(int fd, struct cpu_ucode *uc)
 
 	switch (loader_version) {
 	case CPU_UCODE_LOADER_AMD:
-                if (uc->cpu_nr != -1) {
-                        warnx("ucode updates on AMD can only be done on all CPUs at once");
+	        if (uc->cpu_nr != -1) {
+	                warnx("ucode updates on AMD can only be done on all CPUs at once");
 			return -1;
 		}
 		uc->cpu_nr = CPU_UCODE_ALL_CPUS;

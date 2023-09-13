@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.34 2023/09/12 20:43:38 wiz Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.35 2023/09/13 06:53:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012, 2015 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.34 2023/09/12 20:43:38 wiz Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.35 2023/09/13 06:53:23 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -247,8 +247,8 @@ cpu_ucode(char **argv)
 		cpuset_destroy(cpuset);
 	}
 	error = ioctl(fd, IOC_CPU_UCODE_APPLY, &uc);
-        if (error < 0 && (verbose || errno != EEXIST)) {
-                warnx("please also check dmesg(8) output for additional error information");
+	if (error < 0 && (verbose || errno != EEXIST)) {
+		warnx("please also check dmesg(8) output for additional error information");
 		if (uc.fwname[0])
 			err(EXIT_FAILURE, "%s", uc.fwname);
 		else
