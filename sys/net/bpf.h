@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.78 2022/06/20 08:20:09 yamaguchi Exp $	*/
+/*	$NetBSD: bpf.h,v 1.78.4.1 2023/09/13 09:50:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -204,7 +204,10 @@ struct bpf_hdr32 {
  * XXX fail-safe: on new machines, we just use the 'safe' sizeof.
  */
 #ifdef _KERNEL
-#if defined(__arm32__) || defined(__i386__) || defined(__m68k__) || \
+#if defined(__mips64)
+#define SIZEOF_BPF_HDR sizeof(struct bpf_hdr)
+#define SIZEOF_BPF_HDR32 18
+#elif defined(__arm32__) || defined(__i386__) || defined(__m68k__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__vax__) || \
     defined(__sh__) || (defined(__sparc__) && !defined(__sparc64__))
 #define SIZEOF_BPF_HDR 18
