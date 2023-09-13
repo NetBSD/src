@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.363 2023/09/11 15:07:52 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.364 2023/09/13 14:12:21 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -315,6 +315,7 @@ CR	carriage return
 CRC	cyclic redundancy check
 CRDT	conflict-free replicated data type
 CRL	carrier recovery loop
+CRQC	cryptanalytically relevant quantum computer
 CRLF	carriage return line feed
 CSPM	cloud security posture management
 CSU	C start up
