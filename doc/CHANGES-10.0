@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.122 2023/09/11 14:58:56 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.123 2023/09/13 09:58:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11911,4 +11911,28 @@ tests/lib/libc/hash/t_hmac.c			1.3
 
 	libc: disable md4 hmac tests.
 	[riastradh, ticket #370]
+
+sys/arch/arm/dts/sun8i-h3-orangepi-one.dts	delete
+sys/arch/arm/dts/sun8i-h3-orangepi-plus2e.dts	1.5
+
+	arm: fix FDT build for OrangePi one.
+	[bouyer, ticket #371]
+
+external/apache2/mDNSResponder/dist/mDNSCore/DNSCommon.c 1.11
+external/apache2/mDNSResponder/dist/mDNSPosix/mDNSPosix.c 1.19
+
+	mdnsd(8): fix memory leak in an error path and minor
+	language fixes in a comment.
+	[gutteridge, ticket #372]
+
+sys/net/bpf.h					1.82
+
+	bpf: Fix SIZEOF_BPF_HDR (for LP64 userland) on mips64
+	[rin, ticket #373]
+
+doc/CHANGES.prev				1.173
+(applied to doc/CHANGES)
+
+	Unicode updates were pulled up.
+	[wiz, ticket #374]
 
