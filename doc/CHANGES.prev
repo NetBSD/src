@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.172 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.173 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -13396,6 +13396,9 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	i386: Enable options DISKLABEL_EI in GENERIC kernel. [tsutsui 20221211]
 	tzcode: Updated to 2022g. [christos 20221211]
 	wbsio(4),lm(4): Add Nuvoton NCT6797D support. [msaitoh 20221215]
+	libc: Update Unicode tables to Unicode 13.0.0. [wiz 20221220]
+	libc: Update Unicode tables to Unicode 14.0.0. [wiz 20221220]
+	libc: Update Unicode tables to Unicode 15.0.0. [wiz 20221221]
 	m68k: Fix out of bounds invalidate and writeback bug in
 		bus_dmamap_sync(9) that could cause panic by POOL_REDZONE
 		assertion on mac68k with sn(4) driver. [tsutsui 20230105]

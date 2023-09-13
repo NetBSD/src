@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2999 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3000 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -26,10 +26,7 @@
 Changes from NetBSD 10.0 to NetBSD 11.0:
 	amdsmn(4): added trivial power management support [reinoud 20221218]
 	amdccp(4): added trivial power management support [reinoud 20221218]
-	libc: Update Unicode tables to Unicode 13.0.0. [wiz 20221220]
-	libc: Update Unicode tables to Unicode 14.0.0. [wiz 20221220]
 	ppp(4): Remove several non-functioning ioctls. [chs 20221221]
-	libc: Update Unicode tables to Unicode 15.0.0. [wiz 20221221]
 	dse(4): Added Dayna SCSI/Link ethernet driver. [nat 20221222]
 	binutils: Updated to FSF binutils 2.39. [christos 20221224]
 	cribbage(6): Add -y option to keep playing without asking
