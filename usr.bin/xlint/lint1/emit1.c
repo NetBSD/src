@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.76 2023/08/12 21:32:16 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.77 2023/09/13 20:31:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.76 2023/08/12 21:32:16 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.77 2023/09/13 20:31:58 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -338,8 +338,8 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	 * the function
 	 */
 	narg = 0;
-	args = tn->tn_right;
-	for (arg = args; arg != NULL; arg = arg->tn_right)
+	args = tn_ck_right(tn);
+	for (arg = args; arg != NULL; arg = tn_ck_right(arg))
 		narg++;
 	/* information about arguments */
 	for (n = 1; n <= narg; n++) {
@@ -379,7 +379,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	outchar((char)(retval_discarded ? 'd' : retval_used ? 'u' : 'i'));
 
 	/* name of the called function */
-	outname(tn->tn_left->tn_left->tn_sym->s_name);
+	outname(tn_ck_left(tn->tn_left)->tn_sym->s_name);
 
 	/* types of arguments */
 	outchar('f');
