@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.43 2023/08/12 18:05:51 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.44 2023/09/13 20:31:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -133,6 +133,8 @@ type_properties(tspec_t t) {
 #define is_arithmetic(t)	(type_properties(t)->tt_is_arithmetic)
 #define is_complex(t)		(type_properties(t)->tt_is_complex)
 #define is_scalar(t)		(type_properties(t)->tt_is_scalar)
+
+#define has_operands(tn)	(modtab[(tn)->tn_op].m_has_operands)
 
 
 typedef	enum {

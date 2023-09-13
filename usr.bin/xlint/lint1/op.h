@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.21 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.22 2023/09/13 20:31:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -56,6 +56,7 @@ typedef	struct {
 	bool	m_valid_on_enum: 1;
 	bool	m_bad_on_enum: 1;
 	bool	m_warn_if_operand_eq: 1;
+	bool	m_has_operands: 1;
 	const char *m_name;
 } mod_t;
 
@@ -68,7 +69,8 @@ extern const mod_t modtab[];
 		can_fold, is_value, unused, balances_operands, \
 		side_effects, left_unsigned, right_unsigned, \
 		precedence_confusion, is_comparison, \
-		valid_on_enum, bad_on_enum, warn_if_eq) \
+		valid_on_enum, bad_on_enum, warn_if_eq, \
+		has_operands) \
 	name,
 #define end_ops() } op_t;
 #include "ops.def"

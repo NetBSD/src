@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.580 2023/09/12 22:01:05 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.581 2023/09/13 20:31:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.580 2023/09/12 22:01:05 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.581 2023/09/13 20:31:58 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -794,6 +794,7 @@ fold(tnode_t *tn)
 	val_t *v = xcalloc(1, sizeof(*v));
 	v->v_tspec = tn->tn_type->t_tspec;
 
+	lint_assert(has_operands(tn));
 	tspec_t t = tn->tn_left->tn_type->t_tspec;
 	bool utyp = !is_integer(t) || is_uinteger(t);
 	int64_t sl = tn->tn_left->tn_val.u.integer, sr = 0;
@@ -1250,7 +1251,7 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 static bool
 is_cast_redundant(const tnode_t *tn)
 {
-	const type_t *ntp = tn->tn_type, *otp = tn->tn_left->tn_type;
+	const type_t *ntp = tn->tn_type, *otp = tn_ck_left(tn)->tn_type;
 	tspec_t nt = ntp->t_tspec, ot = otp->t_tspec;
 
 	if (nt == BOOL || ot == BOOL)
@@ -1485,6 +1486,7 @@ fold_bool(tnode_t *tn)
 	v->v_tspec = tn->tn_type->t_tspec;
 	lint_assert(v->v_tspec == INT || (Tflag && v->v_tspec == BOOL));
 
+	lint_assert(has_operands(tn));
 	bool l = constant_is_nonzero(tn->tn_left);
 	bool r = is_binary(tn) && constant_is_nonzero(tn->tn_right);
 
@@ -1564,6 +1566,7 @@ fold_float(tnode_t *tn)
 	v->v_tspec = t;
 
 	lint_assert(is_floating(t));
+	lint_assert(has_operands(tn));
 	lint_assert(t == tn->tn_left->tn_type->t_tspec);
 	lint_assert(!is_binary(tn) || t == tn->tn_right->tn_type->t_tspec);
 
@@ -1648,6 +1651,7 @@ use(const tnode_t *tn)
 	case STRING:
 		break;
 	default:
+		lint_assert(has_operands(tn));
 		use(tn->tn_left);
 		if (is_binary(tn) || tn->tn_op == PUSH)
 			use(tn->tn_right);
@@ -1828,6 +1832,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 				ntn = fold(ntn);
 			}
 		} else if (op == QUEST && ln->tn_op == CON) {
+			lint_assert(has_operands(rn));
 			use(ln->tn_val.u.integer != 0
 			    ? rn->tn_right : rn->tn_left);
 			ntn = ln->tn_val.u.integer != 0
@@ -2702,11 +2707,12 @@ is_const_char_pointer(const tnode_t *tn)
 static bool
 is_first_arg_const_char_pointer(const tnode_t *tn)
 {
+	lint_assert(has_operands(tn));
 	const tnode_t *an = tn->tn_right;
 	if (an == NULL)
 		return false;
 
-	while (an->tn_right != NULL)
+	while (tn_ck_right(an) != NULL)
 		an = an->tn_right;
 	return is_const_char_pointer(an->tn_left);
 }
@@ -2721,11 +2727,11 @@ is_const_pointer(const tnode_t *tn)
 static bool
 is_second_arg_const_pointer(const tnode_t *tn)
 {
-	const tnode_t *an = tn->tn_right;
-	if (an == NULL || an->tn_right == NULL)
+	const tnode_t *an = tn_ck_right(tn);
+	if (an == NULL || tn_ck_right(an) == NULL)
 		return false;
 
-	while (an->tn_right->tn_right != NULL)
+	while (tn_ck_right(an->tn_right) != NULL)
 		an = an->tn_right;
 	return is_const_pointer(an->tn_left);
 }
@@ -4260,7 +4266,7 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 
 	/* get # of arguments in the function call */
 	int narg = 0;
-	for (const tnode_t *arg = args; arg != NULL; arg = arg->tn_right)
+	for (const tnode_t *arg = args; arg != NULL; arg = tn_ck_right(arg))
 		narg++;
 
 	const sym_t *param = ftp->t_params;
@@ -4462,6 +4468,7 @@ expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while)
 static void
 check_array_index(tnode_t *tn, bool amper)
 {
+	lint_assert(has_operands(tn));
 	const tnode_t *ln = tn->tn_left;
 	const tnode_t *rn = tn->tn_right;
 
@@ -4582,7 +4589,7 @@ check_expr_call(const tnode_t *tn, const tnode_t *ln,
 		outcall(tn, vctx || cond, retval_discarded);
 }
 
-static bool
+static void
 check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
 	      bool szof, bool fcall, bool vctx, bool cond,
 	      bool retval_discarded, bool eqwarn)
@@ -4624,14 +4631,9 @@ check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
 			/* operator '==' found where '=' was expected */
 			warning(160);
 		break;
-	case CON:
-	case NAME:
-	case STRING:
-		return false;
 	default:
 		break;
 	}
-	return true;
 }
 
 /*
@@ -4655,16 +4657,17 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 
 	if (tn == NULL)
 		return;
-
-	tnode_t *ln = tn->tn_left;
-	tnode_t *rn = tn->tn_right;
 	op_t op = tn->tn_op;
-	const mod_t *mp = &modtab[op];
-
-	if (!check_expr_op(tn, op, ln,
-	    szof, fcall, vctx, cond, retval_discarded, eqwarn))
+	if (op == NAME || op == CON || op == STRING)
 		return;
 
+	lint_assert(has_operands(tn));
+	tnode_t *ln = tn->tn_left;
+	tnode_t *rn = tn->tn_right;
+	check_expr_op(tn, op, ln,
+	    szof, fcall, vctx, cond, retval_discarded, eqwarn);
+
+	const mod_t *mp = &modtab[op];
 	bool cvctx = mp->m_value_context;
 	bool ccond = mp->m_compares_with_zero;
 	bool eq = mp->m_warn_if_operand_eq &&

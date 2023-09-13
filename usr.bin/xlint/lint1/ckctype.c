@@ -1,4 +1,4 @@
-/* $NetBSD: ckctype.c,v 1.6 2023/08/02 18:51:25 rillig Exp $ */
+/* $NetBSD: ckctype.c,v 1.7 2023/09/13 20:31:58 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckctype.c,v 1.6 2023/08/02 18:51:25 rillig Exp $");
+__RCSID("$NetBSD: ckctype.c,v 1.7 2023/09/13 20:31:58 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -126,7 +126,7 @@ check_ctype_function_call(const tnode_t *func, const tnode_t *args)
 	if (func->tn_op == NAME &&
 	    is_ctype_function(func->tn_sym->s_name) &&
 	    args != NULL &&
-	    args->tn_left != NULL &&
+	    tn_ck_left(args) != NULL &&
 	    args->tn_right == NULL)
 		check_ctype_arg(func->tn_sym->s_name, args->tn_left);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.200 2023/08/26 10:43:53 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.201 2023/09/13 20:31:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -501,6 +501,20 @@ typedef enum {
 		if (!(cond))						\
 			assert_failed(__FILE__, __LINE__, __func__, #cond); \
 	} while (false)
+
+static inline tnode_t *
+tn_ck_left(const tnode_t *tn)
+{
+	lint_assert(has_operands(tn));
+	return tn->tn_left;
+}
+
+static inline tnode_t *
+tn_ck_right(const tnode_t *tn)
+{
+	lint_assert(has_operands(tn));
+	return tn->tn_right;
+}
 
 #ifdef DEBUG
 #  include "err-msgs.h"
