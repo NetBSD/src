@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.100 2023/09/11 14:45:05 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.101 2023/09/13 09:49:14 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2120,4 +2120,11 @@ build.sh					1.374
 
 	build.sh: add support for git worktree.
 	[khorben, ticket #1730]
+
+external/apache2/mDNSResponder/dist/mDNSCore/DNSCommon.c 1.11
+external/apache2/mDNSResponder/dist/mDNSPosix/mDNSPosix.c 1.19
+
+	mdnsd(8): fix memory leak in an error path and minor
+	language fixes in a comment.
+	[gutteridge, ticket #1731]
 
