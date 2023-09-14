@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.97 2023/07/14 23:28:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.98 2023/09/14 03:17:02 rin Exp $
 #
 
 NOSANITIZER=	# defined
@@ -17,7 +17,7 @@ ARCHSUBDIR=	${PTHREAD_MACHINE_ARCH}
 ARCHSUBDIR=	${PTHREAD_MACHINE_CPU}
 .elif exists(${.CURDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=	${MACHINE_ARCH}
-.elif exists(${.CURDIR}/arch/${MACHINE_CPU}) 
+.elif exists(${.CURDIR}/arch/${MACHINE_CPU})
 ARCHSUBDIR=	${MACHINE_CPU}
 .else
 .BEGIN:
@@ -53,7 +53,7 @@ PTHREAD_MAKELWP?=	pthread_makelwp_netbsd.c
 # gets a reference to a symbol in that file.  Otherwise, Unix's stupid static
 # library semantics will end up discarding potentially important objects.
 #
-SRCS=	pthread.c 
+SRCS=	pthread.c
 SRCS+=	pthread_attr.c
 SRCS+=	pthread_barrier.c
 # used by rumprun-posix to work around symbol collisions
@@ -62,7 +62,7 @@ SRCS+=	pthread_cancelstub.c
 .endif
 SRCS+=	pthread_cond.c
 SRCS+=	pthread_getcpuclockid.c
-SRCS+=	pthread_lock.c 
+SRCS+=	pthread_lock.c
 SRCS+=	${PTHREAD_MAKELWP}
 SRCS+=	pthread_misc.c
 SRCS+=	pthread_mutex.c
@@ -195,7 +195,7 @@ MLINKS+=	pthread_mutex.3 pthread_mutex_trylock.3
 MLINKS+=	pthread_mutex.3 pthread_mutex_unlock.3
 MLINKS+=	pthread_mutex.3 pthread_mutex_timedlock.3
 MLINKS+=	pthread_mutex.3	pthread_mutex_getprioceiling.3
-MLINKS+=	pthread_mutex.3	pthread_mutex_setprioceiling.3 
+MLINKS+=	pthread_mutex.3	pthread_mutex_setprioceiling.3
 
 MLINKS+=	pthread_mutexattr.3 pthread_mutexattr_init.3
 MLINKS+=	pthread_mutexattr.3 pthread_mutexattr_destroy.3
@@ -206,7 +206,7 @@ MLINKS+=	pthread_mutexattr.3 pthread_mutexattr_gettype.3
 MLINKS+=	pthread_mutexattr.3 pthread_mutexattr_getprotocol.3
 MLINKS+=	pthread_mutexattr.3 pthread_mutexattr_setprotocol.3
 MLINKS+=	pthread_mutexattr.3 pthread_mutexattr_getprioceiling.3
-MLINKS+=	pthread_mutexattr.3 pthread_mutexattr_setprioceiling.3	
+MLINKS+=	pthread_mutexattr.3 pthread_mutexattr_setprioceiling.3
 
 MLINKS+=	pthread_rwlock.3 pthread_rwlock_init.3
 MLINKS+=	pthread_rwlock.3 pthread_rwlock_destroy.3
