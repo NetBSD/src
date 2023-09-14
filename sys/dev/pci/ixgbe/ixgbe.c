@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.329 2023/09/13 08:05:23 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.330 2023/09/14 08:47:24 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.329 2023/09/13 08:05:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.330 2023/09/14 08:47:24 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1861,20 +1861,20 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 			evcnt_attach_dynamic(&stats->pxontxc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
 			    "pxontxc");
-			evcnt_attach_dynamic(&stats->pxonrxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
-			    "pxonrxc");
 			evcnt_attach_dynamic(&stats->pxofftxc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
 			    "pxofftxc");
-			evcnt_attach_dynamic(&stats->pxoffrxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
-			    "pxoffrxc");
 			if (hw->mac.type >= ixgbe_mac_82599EB)
 				evcnt_attach_dynamic(&stats->pxon2offc[i],
 				    EVCNT_TYPE_MISC, NULL,
 				    adapter->tcs[i].evnamebuf,
 				    "pxon2offc");
+			evcnt_attach_dynamic(&stats->pxonrxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "pxonrxc");
+			evcnt_attach_dynamic(&stats->pxoffrxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "pxoffrxc");
 		}
 	}
 
@@ -2057,10 +2057,10 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "Receive Length Errors");
 	evcnt_attach_dynamic(&stats->lxontxc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Link XON Transmitted");
-	evcnt_attach_dynamic(&stats->lxonrxc, EVCNT_TYPE_MISC, NULL,
-	    stats->namebuf, "Link XON Received");
 	evcnt_attach_dynamic(&stats->lxofftxc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Link XOFF Transmitted");
+	evcnt_attach_dynamic(&stats->lxonrxc, EVCNT_TYPE_MISC, NULL,
+	    stats->namebuf, "Link XON Received");
 	evcnt_attach_dynamic(&stats->lxoffrxc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Link XOFF Received");
 
