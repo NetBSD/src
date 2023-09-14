@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.22 2023/09/13 20:31:58 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.23 2023/09/14 21:08:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -34,7 +34,7 @@
 #include <stdbool.h>
 
 /*
- * Various information about operators; see ops.def.
+ * Various information about operators.
  */
 typedef	struct {
 	bool	m_binary: 1;
@@ -60,17 +60,87 @@ typedef	struct {
 	const char *m_name;
 } mod_t;
 
-extern const mod_t modtab[];
+typedef enum {
+	NOOP,
+	ARROW,
+	POINT,
+	NOT,
+	COMPL,
+	INC,			/* does not appear in the tree */
+	DEC,			/* does not appear in the tree */
+	INCBEF,
+	DECBEF,
+	INCAFT,
+	DECAFT,
+	UPLUS,
+	UMINUS,
+	INDIR,
+	ADDR,
 
-#define begin_ops() typedef enum {
-#define op(name, repr, \
-		is_binary, is_logical, takes_bool, requires_bool, \
-		is_integer, is_complex, is_arithmetic, is_scalar, \
-		can_fold, is_value, unused, balances_operands, \
-		side_effects, left_unsigned, right_unsigned, \
-		precedence_confusion, is_comparison, \
-		valid_on_enum, bad_on_enum, warn_if_eq, \
-		has_operands) \
-	name,
-#define end_ops() } op_t;
-#include "ops.def"
+	MULT,
+	DIV,
+	MOD,
+	PLUS,
+	MINUS,
+	SHL,
+	SHR,
+
+	LT,
+	LE,
+	GT,
+	GE,
+	EQ,
+	NE,
+
+	BITAND,
+	BITXOR,
+	BITOR,
+	LOGAND,
+	LOGOR,
+	QUEST,
+	COLON,
+
+	ASSIGN,
+	MULASS,
+	DIVASS,
+	MODASS,
+	ADDASS,
+	SUBASS,
+	SHLASS,
+	SHRASS,
+	ANDASS,
+	XORASS,
+	ORASS,
+
+	NAME,
+	CON,
+	STRING,
+	FSEL,
+	CALL,
+	COMMA,
+	CVT,
+	ICALL,
+	LOAD,
+	/*
+	 * PUSH is a virtual node that is used to concatenate arguments in a
+	 * function call expression.  The PUSH nodes are ordered from right to
+	 * left.  For example, the function call f(17, 23) is represented as
+	 * CALL(f, PUSH(23, PUSH(17, NULL))).
+	 */
+	PUSH,
+	RETURN,
+	REAL,
+	IMAG,
+
+	INIT,			/* does not appear in the tree */
+	CASE,			/* does not appear in the tree */
+	/*
+	 * FARG is only used temporarily in check_prototype_argument to check
+	 * type compatibility and conversion for function arguments.
+	 */
+	FARG,			/* does not appear in the tree */
+} op_t;
+
+#define NOPS ((int)FARG + 1)
+
+extern const mod_t modtab[NOPS];

@@ -1,4 +1,4 @@
-/*	$NetBSD: oper.c,v 1.12 2023/09/13 20:31:58 rillig Exp $	*/
+/*	$NetBSD: oper.c,v 1.13 2023/09/14 21:08:12 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -29,32 +29,110 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include "op.h"
 #include "param.h"
 
-const mod_t modtab[NOPS] =
-#define begin_ops() {
-#define op(name, repr, \
-		is_binary, is_logical, takes_bool, requires_bool, \
-		is_integer, is_complex, is_arithmetic, is_scalar, \
-		can_fold, is_value, unused, balances_operands, \
-		side_effects, left_unsigned, right_unsigned, \
-		precedence_confusion, is_comparison, \
-		valid_on_enum, bad_on_enum, warn_if_eq, has_operands) \
-	{ \
-		is_binary	+ 0 > 0, is_logical		+ 0 > 0, \
-		takes_bool	+ 0 > 0, requires_bool		+ 0 > 0, \
-		is_integer	+ 0 > 0, is_complex		+ 0 > 0, \
-		is_arithmetic	+ 0 > 0, is_scalar		+ 0 > 0, \
-		can_fold	+ 0 > 0, is_value		+ 0 > 0, \
-		balances_operands + 0 > 0, \
-		side_effects	+ 0 > 0, left_unsigned		+ 0 > 0, \
-		right_unsigned	+ 0 > 0, precedence_confusion	+ 0 > 0, \
-		is_comparison	+ 0 > 0, valid_on_enum		+ 0 > 0, \
-		bad_on_enum	+ 0 > 0, warn_if_eq		+ 0 > 0, \
-		has_operands	+ 0 > 0, \
-		repr, \
-	},
-#define end_ops(n) };
-#include "ops.def"
+#define X true
+#define _ false
+
+const mod_t modtab[NOPS] = {
+
+/*-
+ * Operator properties:
+ *
+ *	 b   binary
+ *	   l   logical
+ *	     b   takes _Bool
+ *	       z   compares with zero
+ *		 i   requires integer
+ *		   c   requires integer or complex
+ *		     a   requires arithmetic
+ *		       s   requires scalar
+ *			 f   fold constant operands
+ *			   v   value context
+ *			     b   balance operands
+ *			       s   has side effects
+ *				 l   warn if left operand unsigned
+ *				   r   warn if right operand unsigned
+ *				     p   possible precedence confusion
+ *				       c   comparison
+ *					 e   valid on enum
+ *					   e   bad on enum
+ *					     =   warn if operand '='
+ *					       o   has operands
+ */
+
+/*	 b l b z i c a s f v b s l r p c e e = o */
+	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_, "no-op" },
+	{X,_,X,_,_,_,_,_,_,X,_,_,_,_,_,_,_,_,_,X, "->" },
+	{X,_,X,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X, "." },
+	{_,X,X,X,_,_,_,X,X,_,_,_,_,_,_,_,_,X,_,X, "!" },
+	{_,_,_,_,_,X,_,_,X,X,_,_,_,_,_,_,_,X,X,X, "~" },
+	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X, "++" },
+	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X, "--" },
+	/*
+	 * The '++' and '--' operators are conceptually unary operators, but
+	 * lint implements them as binary operators due to the pre-multiplied
+	 * pointer arithmetics, see build_prepost_incdec and build_plus_minus.
+	 */
+	{_,_,_,_,_,_,_,X,_,_,_,X,_,_,_,_,_,X,_,X, "++x" },
+	{_,_,_,_,_,_,_,X,_,_,_,X,_,_,_,_,_,X,_,X, "--x" },
+	{_,_,_,_,_,_,_,X,_,_,_,X,_,_,_,_,_,X,_,X, "x++" },
+	{_,_,_,_,_,_,_,X,_,_,_,X,_,_,_,_,_,X,_,X, "x--" },
+	{_,_,_,_,_,_,X,_,X,X,_,_,_,_,_,_,_,X,X,X, "+" },
+	{_,_,_,_,_,_,X,_,X,X,_,_,X,_,_,_,_,X,X,X, "-" },
+	{_,_,_,_,_,_,_,_,_,X,_,_,_,_,_,_,_,_,_,X, "*" },
+	{_,_,X,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X, "&" },
+/*	 b l b z i c a s f v b s l r p c e e = o */
+	{X,_,_,_,_,_,X,_,X,X,X,_,_,X,_,_,_,X,X,X, "*" },
+	{X,_,_,_,_,_,X,_,X,X,X,_,X,X,_,_,_,X,X,X, "/" },
+	{X,_,_,_,X,_,_,_,X,X,X,_,X,X,_,_,_,X,X,X, "%" },
+	{X,_,_,_,_,_,_,X,X,X,X,_,_,_,_,_,_,X,_,X, "+" },
+	{X,_,_,_,_,_,_,X,X,X,X,_,_,_,_,_,_,X,_,X, "-" },
+	{X,_,_,_,X,_,_,_,X,X,_,_,_,_,X,_,_,X,X,X, "<<" },
+	{X,_,_,_,X,_,_,_,X,X,_,_,X,_,X,_,_,X,X,X, ">>" },
+/*	 b l b z i c a s f v b s l r p c e e = o */
+	{X,X,_,_,_,_,_,X,X,X,X,_,X,X,_,X,X,_,X,X, "<" },
+	{X,X,_,_,_,_,_,X,X,X,X,_,X,X,_,X,X,_,X,X, "<=" },
+	{X,X,_,_,_,_,_,X,X,X,X,_,X,X,_,X,X,_,X,X, ">" },
+	{X,X,_,_,_,_,_,X,X,X,X,_,X,X,_,X,X,_,X,X, ">=" },
+	{X,X,X,_,_,_,_,X,X,X,X,_,_,_,_,X,X,_,X,X, "==" },
+	{X,X,X,_,_,_,_,X,X,X,X,_,_,_,_,X,X,_,X,X, "!=" },
+/*	 b l b z i c a s f v b s l r p c e e = o */
+	{X,_,X,_,X,_,_,_,X,X,X,_,_,_,X,_,_,X,_,X, "&" },
+	{X,_,X,_,X,_,_,_,X,X,X,_,_,_,X,_,_,X,_,X, "^" },
+	{X,_,X,_,X,_,_,_,X,X,X,_,_,_,X,_,_,X,_,X, "|" },
+	{X,X,X,X,_,_,_,X,X,_,_,_,_,_,_,_,_,X,_,X, "&&" },
+	{X,X,X,X,_,_,_,X,X,_,_,_,_,_,X,_,_,X,_,X, "||" },
+	{X,_,_,X,_,_,_,_,X,_,_,_,_,_,_,_,_,_,_,X, "?" },
+	{X,_,X,_,_,_,_,_,_,X,X,_,_,_,_,_,X,_,_,X, ":" },
+/*	 b l b z i c a s f v b s l r p c e e = o */
+	{X,_,X,_,_,_,_,_,_,_,_,X,_,_,_,_,X,_,_,X, "=" },
+	{X,_,_,_,_,_,X,_,_,_,_,X,_,_,_,_,_,X,_,X, "*=" },
+	{X,_,_,_,_,_,X,_,_,_,_,X,_,X,_,_,_,X,_,X, "/=" },
+	{X,_,_,_,X,_,_,_,_,_,_,X,_,X,_,_,_,X,_,X, "%=" },
+	{X,_,_,_,_,_,_,X,_,_,_,X,_,_,_,_,_,X,_,X, "+=" },
+	{X,_,_,_,_,_,_,X,_,_,_,X,_,_,_,_,_,X,_,X, "-=" },
+	{X,_,_,_,X,_,_,_,_,_,_,X,_,_,_,_,_,X,_,X, "<<=" },
+	{X,_,_,_,X,_,_,_,_,_,_,X,_,_,_,_,_,X,_,X, ">>=" },
+	{X,_,X,_,X,_,_,_,_,_,_,X,_,_,_,_,_,X,_,X, "&=" },
+	{X,_,X,_,X,_,_,_,_,_,_,X,_,_,_,_,_,X,_,X, "^=" },
+	{X,_,X,_,X,_,_,_,_,_,_,X,_,_,_,_,_,X,_,X, "|=" },
+/*	 b l b z i c a s f v b s l r p c e e = o */
+	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_, "name" },
+	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_, "constant" },
+	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_, "string" },
+	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X, "fsel" },
+	{X,_,_,_,_,_,_,_,_,_,_,X,_,_,_,_,_,_,_,X, "call" },
+	{X,_,X,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X,X, "," },
+	{_,_,_,_,_,_,_,_,_,X,_,_,_,_,_,_,_,_,_,X, "convert" },
+	{X,_,_,_,_,_,_,_,_,_,_,X,_,_,_,_,_,_,_,X, "icall" },
+	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X, "load" },
+	{_,_,_,_,_,_,_,_,_,X,_,_,_,_,_,_,_,_,_,X, "push" },
+	{X,_,X,_,_,_,_,_,_,_,_,X,_,_,_,_,X,_,_,X, "return" },
+	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X, "real" },
+	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X, "imag" },
+	{X,_,X,_,_,_,_,_,_,_,_,X,_,_,_,_,X,_,_,X, "init" },
+	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_, "case" },
+	{X,_,X,_,_,_,_,_,_,_,_,_,_,_,_,_,X,_,_,X, "farg" },
+};

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.201 2023/09/13 20:31:58 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.202 2023/09/14 21:08:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -111,7 +111,7 @@ typedef struct {
 	 * Set if an integer constant is unsigned only in C90 and later, but
 	 * not in traditional C.
 	 *
-	 * See the operators table in ops.def, columns "l r".
+	 * See the operators table in oper.c, columns "l r".
 	 */
 	bool	v_unsigned_since_c90;
 	bool	v_char_constant;
