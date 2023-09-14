@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.74 2023/02/23 14:56:00 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.75 2023/09/14 03:37:01 rin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,6 +71,9 @@
 #define	__SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
 #endif	/* __ASSEMBLER__ */
 
+#ifndef GPROF
+#define	_MIPS_ASM_MCOUNT(x)
+#else
 /*
  * Define -pg profile entry code.
  * Must always be noreorder, must never use a macro instruction.
@@ -81,7 +84,7 @@
  * stack and the final addiu to t9 must always equal the size of this
  * _MIPS_ASM_MCOUNT.
  */
-#define	_MIPS_ASM_MCOUNT					\
+#define	_MIPS_ASM_MCOUNT(x)					\
 	.set	push;						\
 	.set	noreorder;					\
 	.set	noat;						\
@@ -104,7 +107,8 @@
  * call _mcount().  For the no abicalls case, skip the reloc dance.
  */
 #ifdef __mips_abicalls
-#define	_MIPS_ASM_MCOUNT					\
+#if defined(__mips_n32)		/* n32 */
+#define	_MIPS_ASM_MCOUNT(x)					\
 	.set	push;						\
 	.set	noreorder;					\
 	.set	noat;						\
@@ -118,8 +122,28 @@
 	lw	t9,8(sp);					\
 	addiu	sp,16;						\
 	.set	pop;
+#else				/* n64 */
+#define	_MIPS_ASM_MCOUNT(x)					\
+	.set	push;						\
+	.set	noreorder;					\
+	.set	noat;						\
+	dsubu	sp,16;						\
+	sd	gp,0(sp);					\
+	sd	t9,8(sp);					\
+	move	AT,ra;						\
+	lui	gp,%hi(%neg(%gp_rel(x)));			\
+	daddiu	gp,%lo(%neg(%gp_rel(x)));			\
+	daddu	gp,gp,t9;					\
+	ld	t9,%call16(_mcount)(gp);			\
+	jalr	t9;						\
+	 nop;							\
+	ld	gp,0(sp);					\
+	ld	t9,8(sp);					\
+	daddiu	sp,16;						\
+	.set	pop;
+#endif
 #else /* !__mips_abicalls */
-#define	_MIPS_ASM_MCOUNT					\
+#define	_MIPS_ASM_MCOUNT(x)					\
 	.set	push;						\
 	.set	noreorder;					\
 	.set	noat;						\
@@ -129,12 +153,7 @@
 	.set	pop;
 #endif /* !__mips_abicalls */
 #endif /* n32/n64 */
-
-#ifdef GPROF
-#define	MCOUNT _MIPS_ASM_MCOUNT
-#else
-#define	MCOUNT
-#endif
+#endif /* GPROF */
 
 #ifdef USE_AENT
 #define	AENT(x)				\
@@ -187,7 +206,7 @@ _C_LABEL(x): ;				\
  */
 #define	STATIC_LEAF(x)			\
 	STATIC_LEAF_NOPROFILE(x);	\
-	MCOUNT
+	_MIPS_ASM_MCOUNT(x)
 
 /*
  * LEAF
@@ -198,7 +217,7 @@ _C_LABEL(x): ;				\
  */
 #define	LEAF(x)				\
 	LEAF_NOPROFILE(x);		\
-	MCOUNT
+	_MIPS_ASM_MCOUNT(x)
 
 /*
  * STATIC_XLEAF
@@ -241,7 +260,7 @@ _C_LABEL(x): ;						\
  */
 #define	NESTED(x, fsize, retpc)			\
 	NESTED_NOPROFILE(x, fsize, retpc);	\
-	MCOUNT
+	_MIPS_ASM_MCOUNT(x)
 
 /*
  * STATIC_NESTED
@@ -249,7 +268,7 @@ _C_LABEL(x): ;						\
  */
 #define	STATIC_NESTED(x, fsize, retpc)			\
 	STATIC_NESTED_NOPROFILE(x, fsize, retpc);	\
-	MCOUNT
+	_MIPS_ASM_MCOUNT(x)
 
 /*
  * XNESTED
