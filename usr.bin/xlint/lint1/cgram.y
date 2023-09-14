@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.473 2023/09/14 21:53:02 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.474 2023/09/14 22:20:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.473 2023/09/14 21:53:02 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.474 2023/09/14 22:20:08 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -138,6 +138,7 @@ is_either(const char *s, const char *a, const char *b)
 	val_t	*y_val;
 	sbuf_t	*y_name;
 	sym_t	*y_sym;
+	bool	y_inc;
 	op_t	y_op;
 	scl_t	y_scl;
 	tspec_t	y_tspec;
@@ -168,6 +169,7 @@ is_either(const char *s, const char *a, const char *b)
 	debug_sym("", $$, "");
 	debug_pop_indented(indented);
 } <y_sym>
+%printer { fprintf(yyo, "%s", $$ ? "++" : "--"); } <y_inc>
 %printer { fprintf(yyo, "%s", op_name($$)); } <y_op>
 %printer { fprintf(yyo, "%s", scl_name($$)); } <y_scl>
 %printer { fprintf(yyo, "%s", tspec_name($$)); } <y_tspec>
@@ -197,7 +199,7 @@ is_either(const char *s, const char *a, const char *b)
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
 %token			T_POINT T_ARROW
 %token			T_COMPLEMENT T_LOGNOT
-%token	<y_op>		T_INCDEC
+%token	<y_inc>		T_INCDEC
 %token			T_SIZEOF
 %token			T_BUILTIN_OFFSETOF
 %token			T_TYPEOF
@@ -551,7 +553,7 @@ postfix_expression:
 		$$ = build_member_access($1, $2, $3, $4);
 	}
 |	postfix_expression T_INCDEC sys {
-		$$ = build_unary($2 == INC ? INCAFT : DECAFT, $3, $1);
+		$$ = build_unary($2 ? INCAFT : DECAFT, $3, $1);
 	}
 |	T_LPAREN type_name T_RPAREN {	/* C99 6.5.2.5 "Compound literals" */
 		sym_t *tmp = mktempsym($2);
@@ -643,7 +645,7 @@ argument_expression_list:
 unary_expression:
 	postfix_expression
 |	T_INCDEC sys unary_expression {
-		$$ = build_unary($1 == INC ? INCBEF : DECBEF, $2, $3);
+		$$ = build_unary($1 ? INCBEF : DECBEF, $2, $3);
 	}
 |	T_AMPER sys cast_expression {
 		$$ = build_unary(ADDR, $2, $3);
@@ -2244,6 +2246,7 @@ cgram_to_string(int token, YYSTYPE val)
 
 	switch (token) {
 	case T_INCDEC:
+		return val.y_inc ? "++" : "--";
 	case T_MULTIPLICATIVE:
 	case T_ADDITIVE:
 	case T_SHIFT:
