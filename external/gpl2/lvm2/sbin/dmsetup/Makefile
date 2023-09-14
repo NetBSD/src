@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2011/05/26 12:56:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2023/09/14 19:52:09 rillig Exp $
 
 USE_FORT?=	no
-NOLINT=		#defined
+NOLINT=		# dmsetup.c has a '?:' operator in line 255
 CWARNFLAGS.clang+=	-Wno-parentheses -Wno-unused-value
 
 .include "../../lvm2tools.mk"
