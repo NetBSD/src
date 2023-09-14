@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2020/05/30 14:16:56 rmind Exp $
+# $NetBSD: Makefile,v 1.16 2023/09/14 20:03:56 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,5 @@ LDADD+=		-lnpf -lpcap -lutil -ly
 DPADD+=		${LIBNPF} ${LIBUTIL} ${LIBPCAP} ${LIBUTIL} ${LIBY}
 
 WARNS=		5
-NOLINT=		# disabled deliberately
 
 .include <bsd.prog.mk>
