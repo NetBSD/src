@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.378 2023/08/26 10:43:53 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.379 2023/09/14 21:53:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.378 2023/08/26 10:43:53 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.379 2023/09/14 21:53:02 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1113,7 +1113,7 @@ declare_member(sym_t *dsym)
 	 */
 	int sz = length_in_bits(dsym->s_type, dsym->s_name);
 	if (sz == 0 && t == ARRAY && dsym->s_type->t_dim == 0) {
-		/* zero-sized array '%s' in struct is a C99 extension */
+		/* zero-sized array '%s' in struct requires C99 or later */
 		c99ism(39, dsym->s_name);
 	}
 
@@ -1252,7 +1252,7 @@ block_derive_array(type_t *stp, bool dim, int len)
 		/* negative array dimension (%d) */
 		error(20, len);
 	} else if (len == 0 && dim) {
-		/* zero sized array is a C99 extension */
+		/* zero sized array requires C99 or later */
 		c99ism(322);
 	} else if (len == 0 && !dim)
 		tp->t_incomplete_array = true;

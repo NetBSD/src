@@ -1,13 +1,13 @@
-/*	$NetBSD: msg_343.c,v 1.9 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_343.c,v 1.10 2023/09/14 21:53:02 rillig Exp $	*/
 # 3 "msg_343.c"
 
-/* Test for message: static array size is a C11 extension [343] */
+/* Test for message: static array size requires C11 or later [343] */
 
 /* lint1-flags: -Sw -X 351 */
 
 void takes_int_pointer(int []);
 void takes_int_pointer_with_ignored_size(int [3]);
-/* expect+1: error: static array size is a C11 extension [343] */
+/* expect+1: error: static array size requires C11 or later [343] */
 void takes_int_array(int[static 3]);
 /* expect+1: error: syntax error '3' [249] */
 void takes_volatile_int_array(int[volatile 3]);
@@ -25,7 +25,7 @@ returns_int_pointer_with_ignored_size(int a[3])
 }
 
 int
-/* expect+1: error: static array size is a C11 extension [343] */
+/* expect+1: error: static array size requires C11 or later [343] */
 returns_int_array(int a[static 3])
 {
 	return a[0];
@@ -45,5 +45,5 @@ returns_volatile_int_array(int a[volatile 3])
  * message does not make it into the actual diagnostic.
  */
 /* expect+2: error: syntax error ']' [249] */
-/* expect+1: error: static array size is a C11 extension [343] */
+/* expect+1: error: static array size requires C11 or later [343] */
 void invalid_storage_class(int a[const typedef 3]);
