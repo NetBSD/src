@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.330 2023/09/14 08:47:24 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.331 2023/09/14 08:48:29 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.330 2023/09/14 08:47:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.331 2023/09/14 08:48:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1860,21 +1860,21 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		if (i < __arraycount(stats->pxontxc)) {
 			evcnt_attach_dynamic(&stats->pxontxc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
-			    "pxontxc");
+			    "Priority XON Transmitted");
 			evcnt_attach_dynamic(&stats->pxofftxc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
-			    "pxofftxc");
+			    "Priority XOFF Transmitted");
 			if (hw->mac.type >= ixgbe_mac_82599EB)
 				evcnt_attach_dynamic(&stats->pxon2offc[i],
 				    EVCNT_TYPE_MISC, NULL,
 				    adapter->tcs[i].evnamebuf,
-				    "pxon2offc");
+				    "Priority XON to XOFF");
 			evcnt_attach_dynamic(&stats->pxonrxc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
-			    "pxonrxc");
+			    "Priority XON Received");
 			evcnt_attach_dynamic(&stats->pxoffrxc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
-			    "pxoffrxc");
+			    "Priority XOFF Received");
 		}
 	}
 
