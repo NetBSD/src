@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2019/04/13 17:54:13 maya Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2023/09/14 03:58:50 rin Exp $
 
 SRCS+=	__setjmp14.S __sigsetjmp14.S _setjmp.S
 SRCS+=	bswap16.c bswap32.c bswap64.c
@@ -23,7 +23,7 @@ SRCS+=	fpgetsticky.c fpsetsticky.c
 
 CPPFLAGS._lwp.c	+= -D_LIBC_SOURCE
 
-LSRCS.powerpc.gen=Lint_swapcontext.c
-LSRCS+=		${LSRCS.powerpc.gen}
-DPSRCS+=	${LSRCS.powerpc.gen}
-CLEANFILES+=	${LSRCS.powerpc.gen}
+LSRCS.riscv.gen=Lint_swapcontext.c
+LSRCS+=		${LSRCS.riscv.gen}
+DPSRCS+=	${LSRCS.riscv.gen}
+CLEANFILES+=	${LSRCS.riscv.gen}
