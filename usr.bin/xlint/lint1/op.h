@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.24 2023/09/14 22:20:08 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.25 2023/09/14 22:48:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -57,7 +57,7 @@ typedef	struct {
 	bool	m_bad_on_enum: 1;
 	bool	m_warn_if_operand_eq: 1;
 	bool	m_has_operands: 1;
-	const char *m_name;
+	const char m_name[8];
 } mod_t;
 
 typedef enum {
