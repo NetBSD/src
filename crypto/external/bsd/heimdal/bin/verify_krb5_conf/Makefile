@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2023/06/22 22:39:23 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2023/09/14 19:29:52 rillig Exp $
 
 WARNS?=	2	# XXX -Wextra
-
-NOLINT= # defined
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
