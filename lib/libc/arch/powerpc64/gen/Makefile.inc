@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2009/12/06 07:12:17 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2023/09/14 03:58:50 rin Exp $
 
 SRCS+=	__setjmp14.S __sigsetjmp14.S _setjmp.S
 SRCS+=	bswap16.c bswap32.c bswap64.c
@@ -21,7 +21,7 @@ SRCS+=	fpgetround.c fpsetround.c fpgetmask.c fpsetmask.c
 SRCS+=	fpgetsticky.c fpsetsticky.c
 .endif
 
-LSRCS.powerpc.gen=Lint_swapcontext.c
-LSRCS+=		${LSRCS.powerpc.gen}
-DPSRCS+=	${LSRCS.powerpc.gen}
-CLEANFILES+=	${LSRCS.powerpc.gen}
+LSRCS.powerpc64.gen=	Lint_swapcontext.c
+LSRCS+=			${LSRCS.powerpc64.gen}
+DPSRCS+=		${LSRCS.powerpc64.gen}
+CLEANFILES+=		${LSRCS.powerpc64.gen}
