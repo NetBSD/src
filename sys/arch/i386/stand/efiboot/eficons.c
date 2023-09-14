@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.13 2023/07/24 01:56:59 rin Exp $	*/
+/*	$NetBSD: eficons.c,v 1.14 2023/09/14 03:05:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -26,6 +26,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/bitops.h>
 #include <sys/stdint.h>
 
