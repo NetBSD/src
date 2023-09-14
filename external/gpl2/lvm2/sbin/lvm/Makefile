@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.12 2014/01/14 20:22:35 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2023/09/14 19:54:41 rillig Exp $
 
 USE_FORT?=	no
-NOLINT=		#defined
+NOLINT=		# reporter.c uses a '?:' operator
 CWARNFLAGS.clang+=	-Wno-parentheses
 
 .include "../../lvm2tools.mk"
