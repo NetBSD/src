@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.217 2023/08/26 10:43:53 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.218 2023/09/14 21:53:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.217 2023/08/26 10:43:53 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.218 2023/09/14 21:53:02 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -94,7 +94,7 @@ static const char *const msgs[] = {
 	"illegal bit-field size: %d",				      /* 36 */
 	"zero size bit-field",					      /* 37 */
 	"function illegal in structure or union",		      /* 38 */
-	"zero-sized array '%s' in struct is a C99 extension",	      /* 39 */
+	"zero-sized array '%s' in struct requires C99 or later",      /* 39 */
 	"",			/* never used */		      /* 40 */
 	"bit-field in union is very unusual",			      /* 41 */
 	"forward reference to enum type",			      /* 42 */
@@ -377,7 +377,7 @@ static const char *const msgs[] = {
 	"compound literals are a C99/GCC extension",		      /* 319 */
 	"'({ ... })' is a GCC extension",			      /* 320 */
 	"array initializer with designators is a C99 feature",	      /* 321 */
-	"zero sized array is a C99 extension",			      /* 322 */
+	"zero sized array requires C99 or later",		      /* 322 */
 	"continue in 'do ... while (0)' loop",			      /* 323 */
 	"suggest cast from '%s' to '%s' on op '%s' to avoid overflow", /* 324 */
 	"variable declaration in for loop",			      /* 325 */
@@ -398,7 +398,7 @@ static const char *const msgs[] = {
 	"initialization with '[a...b]' is a GCC extension",	      /* 340 */
 	"argument to '%s' must be 'unsigned char' or EOF, not '%s'",  /* 341 */
 	"argument to '%s' must be cast to 'unsigned char', not to '%s'", /* 342 */
-	"static array size is a C11 extension",			      /* 343 */
+	"static array size requires C11 or later",		      /* 343 */
 	"bit-field of type plain 'int' has implementation-defined signedness", /* 344 */
 	"generic selection requires C11 or later",		      /* 345 */
 	"call to '%s' effectively discards 'const' from argument",    /* 346 */

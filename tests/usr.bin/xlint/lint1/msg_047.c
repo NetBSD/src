@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_047.c,v 1.5 2022/06/20 21:13:36 rillig Exp $	*/
+/*	$NetBSD: msg_047.c,v 1.6 2023/09/14 21:53:02 rillig Exp $	*/
 # 3 "msg_047.c"
 
 /* Test for message: zero sized %s is a C99 feature [47] */
@@ -11,8 +11,8 @@ struct empty {
 /* expect-1: error: zero sized struct is a C99 feature [47] */
 
 struct zero_sized {
-	/* expect+2: error: zero sized array is a C99 extension [322] */
-	/* expect+1: error: zero-sized array 'dummy' in struct is a C99 extension [39] */
+	/* expect+2: error: zero sized array requires C99 or later [322] */
+	/* expect+1: error: zero-sized array 'dummy' in struct requires C99 or later [39] */
 	char dummy[0];
 };
 /* expect-1: error: zero sized struct is a C99 feature [47] */
