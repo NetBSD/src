@@ -44,8 +44,6 @@
 #include <clocale>
 #ifndef __NetBSD__
 #include <xlocale.h>
-#else
-#include <cstdio>
 #endif
 
 #define _GLIBCXX_NUM_CATEGORIES 0
