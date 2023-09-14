@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.262 2022/03/13 17:50:55 andvar Exp $	*/
+/*	$NetBSD: trap.c,v 1.263 2023/09/14 03:24:07 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.262 2022/03/13 17:50:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.263 2023/09/14 03:24:07 rin Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -604,7 +604,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			ksi.ksi_trap = type & ~T_USER;
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_addr = (void *)va;
-			ksi.ksi_code = TRAP_TRACE;
+			ksi.ksi_code = TRAP_BRKPT;
 
 			if ((insn.JType.op == OP_SPECIAL) &&
 			    (insn.RType.func == OP_BREAK)) {
@@ -662,7 +662,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_addr = (void *)va;
-		ksi.ksi_code = TRAP_BRKPT;
+		ksi.ksi_code = TRAP_TRACE;
 		break; /* SIGNAL */
 	}
 	case T_DSP+T_USER:
