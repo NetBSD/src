@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.23 2023/09/14 21:08:12 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.24 2023/09/14 22:20:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -66,8 +66,6 @@ typedef enum {
 	POINT,
 	NOT,
 	COMPL,
-	INC,			/* does not appear in the tree */
-	DEC,			/* does not appear in the tree */
 	INCBEF,
 	DECBEF,
 	INCAFT,

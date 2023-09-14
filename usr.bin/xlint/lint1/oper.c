@@ -1,4 +1,4 @@
-/*	$NetBSD: oper.c,v 1.13 2023/09/14 21:08:12 rillig Exp $	*/
+/*	$NetBSD: oper.c,v 1.14 2023/09/14 22:20:08 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -68,8 +68,6 @@ const mod_t modtab[NOPS] = {
 	{X,_,X,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X, "." },
 	{_,X,X,X,_,_,_,X,X,_,_,_,_,_,_,_,_,X,_,X, "!" },
 	{_,_,_,_,_,X,_,_,X,X,_,_,_,_,_,_,_,X,X,X, "~" },
-	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X, "++" },
-	{_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,X, "--" },
 	/*
 	 * The '++' and '--' operators are conceptually unary operators, but
 	 * lint implements them as binary operators due to the pre-multiplied
