@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.6.22.1 2023/08/11 13:40:00 martin Exp $	*/
+/*	$NetBSD: context.c,v 1.6.22.2 2023/09/15 15:34:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2010 Kungliga Tekniska Högskolan
@@ -38,6 +38,9 @@
 #include "krb5_locl.h"
 #include <assert.h>
 #include <krb5/com_err.h>
+#if OPENSSL_VERSION_NUMBER >= 0x30000000UL
+#include <openssl/provider.h>
+#endif
 
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
@@ -396,6 +399,9 @@ init_context_once(void *ctx)
 	krb5_config_free_strings(dirs);
 
     bindtextdomain(HEIMDAL_TEXTDOMAIN, HEIMDAL_LOCALEDIR);
+#if OPENSSL_VERSION_NUMBER >= 0x30000000UL
+    OSSL_PROVIDER_load(NULL, "legacy");
+#endif
 }
 
 
