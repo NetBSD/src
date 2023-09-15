@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.101 2023/09/13 09:49:14 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.102 2023/09/15 15:42:58 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2127,4 +2127,12 @@ external/apache2/mDNSResponder/dist/mDNSPosix/mDNSPosix.c 1.19
 	mdnsd(8): fix memory leak in an error path and minor
 	language fixes in a comment.
 	[gutteridge, ticket #1731]
+
+sys/arch/i386/stand/efiboot/Makefile.efiboot	1.22
+sys/arch/i386/stand/efiboot/eficons.c		1.13,1.14
+sys/arch/i386/stand/efiboot/eficpufunc.c	1.1
+sys/arch/i386/stand/efiboot/eficpufunc.h	1.1
+
+	efiboot/x86: add serial console support via raw I/O port access.
+	[rin, ticket #1732]
 
