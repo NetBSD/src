@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.197 2023/09/08 09:10:54 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.198 2023/09/15 15:45:19 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3873,4 +3873,12 @@ lib/libpam/modules/pam_ksu/pam_ksu.c		1.11
 
 	pam_ksu(8): allow homedir access during kuserok.
 	[riastradh, ticket #1896]
+
+sys/arch/i386/stand/efiboot/Makefile.efiboot	1.22
+sys/arch/i386/stand/efiboot/eficons.c		1.13,1.14
+sys/arch/i386/stand/efiboot/eficpufunc.c	1.1
+sys/arch/i386/stand/efiboot/eficpufunc.h	1.1
+
+	efiboot/x86: add serial console support via raw I/O port access.
+	[rin, ticket #1897]
 
