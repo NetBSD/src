@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.15.2.1 2019/09/17 19:32:00 martin Exp $
+# $NetBSD: Makefile.efiboot,v 1.15.2.2 2023/09/15 15:40:22 martin Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -14,9 +14,11 @@ AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 SOURCES= start.S boot.c conf.c devopen.c dev_net.c self_reloc.c panic.c
 SOURCES+= efiboot.c efichar.c eficons.c efidelay.c efidev.c
+SOURCES+= eficpufunc.c
 SOURCES+= efidisk.c efidisk_ll.c efigetsecs.c efimemory.c
 SOURCES+= efinet.c efipxe.c
 LIBI386SRCS= biosdisk.c bootinfo.c bootinfo_biosgeom.c bootmenu.c
+LIBI386SRCS+= comio_direct.c
 LIBI386SRCS+= diskbuf.c exec.c menuutils.c parseutils.c pread.c
 LIBI386SRCS+= exec_multiboot1.c exec_multiboot2.c
 # use our own nfs implementation
