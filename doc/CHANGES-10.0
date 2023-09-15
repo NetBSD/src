@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.123 2023/09/13 09:58:37 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.124 2023/09/15 15:35:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11935,4 +11935,10 @@ doc/CHANGES.prev				1.173
 
 	Unicode updates were pulled up.
 	[wiz, ticket #374]
+
+crypto/external/bsd/heimdal/dist/include/crypto-headers.h 1.7
+crypto/external/bsd/heimdal/dist/lib/krb5/context.c 1.8
+
+	kerberos(8): explicitly load the openssl legacy provider.
+	[christos, ticket #375]
 
