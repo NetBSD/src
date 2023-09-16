@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.63 2020/11/21 17:25:52 thorpej Exp $ */
+/* $NetBSD: sci.c,v 1.64 2023/09/16 18:56:39 andvar Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.63 2020/11/21 17:25:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.64 2023/09/16 18:56:39 andvar Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -118,6 +118,13 @@ __KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.63 2020/11/21 17:25:52 thorpej Exp $");
 #include <sh3/pfcreg.h>
 #include <sh3/tmureg.h>
 #include <sh3/exception.h>
+
+#ifdef SCI_DEBUG
+int sci_debug = 1;
+#define DPRINTF(x)	if (sci_debug) printf x
+#else
+#define DPRINTF(x)
+#endif
 
 static void	scistart(struct tty *);
 static int	sciparam(struct tty *, struct termios *);
@@ -573,10 +580,7 @@ sciparam(struct tty *tp, struct termios *t)
 
 	splx(s);
 
-#ifdef SCI_DEBUG
-	if (sci_debug)
-		scistatus(sc, "sciparam ");
-#endif
+	DPRINTF(("%s: sciparam\n", device_xname(sc->sc_dev)));
 
 	if (!ISSET(t->c_cflag, CHWFLOW)) {
 		if (sc->sc_tx_stopped) {
@@ -692,10 +696,7 @@ sciopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sci_hwiflow(sc);
 #endif
 
-#ifdef SCI_DEBUG
-		if (sci_debug)
-			scistatus(sc, "sciopen  ");
-#endif
+		DPRINTF(("%s: sciopen\n", device_xname(sc->sc_dev)));
 
 		splx(s2);
 	}
@@ -1025,10 +1026,7 @@ sci_stsoft(struct sci_softc *sc, struct tty *tp)
 		}
 	}
 
-#ifdef SCI_DEBUG
-	if (sci_debug)
-		scistatus(sc, "sci_stsoft");
-#endif
+	DPRINTF(("%s: sci_stsoft\n", device_xname(sc->sc_dev)));
 #endif
 }
 
@@ -1217,10 +1215,8 @@ sciintr(void *arg)
 		if (ISSET(~msr, sc->sc_msr_mask)) {
 			sc->sc_tbc = 0;
 			sc->sc_heldtbc = 0;
-#ifdef SCI_DEBUG
-			if (sci_debug)
-				scistatus(sc, "sciintr  ");
-#endif
+			
+			DPRINTF(("%s: sciintr\n", device_xname(sc->sc_dev)));
 		}
 
 		sc->sc_st_check = 1;
