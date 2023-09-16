@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.69 2023/09/15 20:59:56 andvar Exp $ */
+/*	$NetBSD: scif.c,v 1.70 2023/09/16 15:42:01 andvar Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.69 2023/09/15 20:59:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.70 2023/09/16 15:42:01 andvar Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -177,10 +177,11 @@ struct scif_softc {
 };
 
 #ifdef SCIF_DEBUG
-#define DPRINTF_ENABLE
-#define DPRINTF_DEBUG	scif_debug
+int scif_debug = 1;
+#define DPRINTF(x)	if (scif_debug) printf x
+#else
+#define DPRINTF(x)
 #endif
-#include <machine/debug.h>
 
 static int scif_match(device_t, cfdata_t, void *);
 static void scif_attach(device_t, device_t, void *);
@@ -688,7 +689,7 @@ scifparam(struct tty *tp, struct termios *t)
 
 	splx(s);
 
-	DPRINTF("%s: scifparam\n", device_xname(sc->sc_dev));
+	DPRINTF(("%s: scifparam\n", device_xname(sc->sc_dev)));
 
 	if (!ISSET(t->c_cflag, CHWFLOW)) {
 		if (sc->sc_tx_stopped) {
@@ -799,7 +800,7 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 		scif_hwiflow(sc);
 #endif
 
-		DPRINTF("%s: scifopen\n", device_xname(sc->sc_dev));
+		DPRINTF(("%s: scifopen\n", device_xname(sc->sc_dev)));
 
 		splx(s2);
 	}
@@ -1147,7 +1148,7 @@ scif_stsoft(struct scif_softc *sc, struct tty *tp)
 		}
 	}
 
-	DPRINTF("%s: scif_stsoft\n", device_xname(sc->sc_dev));
+	DPRINTF(("%s: scif_stsoft\n", device_xname(sc->sc_dev)));
 }
 #endif /* 0 */
 
@@ -1343,7 +1344,7 @@ scifintr(void *arg)
 		if (ISSET(~msr, sc->sc_msr_mask)) {
 			sc->sc_tbc = 0;
 			sc->sc_heldtbc = 0;
-			DPRINTF("%s: scifintr\n", device_xname(sc->sc_dev));
+			DPRINTF(("%s: scifintr\n", device_xname(sc->sc_dev)));
 		}
 
 		sc->sc_st_check = 1;
