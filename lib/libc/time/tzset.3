@@ -1,7 +1,7 @@
-.\"	$NetBSD: tzset.3,v 1.45 2022/12/11 17:57:23 christos Exp $
+.\"	$NetBSD: tzset.3,v 1.46 2023/09/16 18:40:26 christos Exp $
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
-.Dd Auguset 23, 2021
+.Dd September 16, 2023
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -409,6 +409,8 @@ local timezone information directory
 .\" .It Pa /usr/share/zoneinfo/localtime
 .\" local timezone file
 .It Pa /usr/share/zoneinfo/posixrules
+default DST rules (obsolete,
+and can cause bugs if present)
 used with POSIX-style TZ
 .It Pa /usr/share/zoneinfo/GMT
 for UTC leap seconds

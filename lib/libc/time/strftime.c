@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.51 2022/12/11 17:57:23 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.52 2023/09/16 18:40:26 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.51 2022/12/11 17:57:23 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.52 2023/09/16 18:40:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -134,7 +134,8 @@ strftime_z(const timezone_t sp, char * __restrict s, size_t maxsize,
 
 #if HAVE_STRFTIME_L
 size_t
-strftime_l(char *s, size_t maxsize, char const *format, struct tm const *t,
+strftime_l(char *restrict s, size_t maxsize, char const *restrict format,
+	   struct tm const *restrict t,
 	   ATTRIBUTE_MAYBE_UNUSED locale_t locale)
 {
   /* Just call strftime, as only the C locale is supported.  */
@@ -731,7 +732,8 @@ label:
 }
 
 size_t
-strftime(char *s, size_t maxsize, const char *format, const struct tm *t)
+strftime(char *restrict s, size_t maxsize, char const *restrict format,
+	 struct tm const *restrict t)
 {
 	size_t r;
 	

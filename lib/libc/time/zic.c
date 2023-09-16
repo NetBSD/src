@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.89 2023/01/17 13:18:03 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.90 2023/09/16 18:40:26 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.89 2023/01/17 13:18:03 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.90 2023/09/16 18:40:26 christos Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -79,8 +79,10 @@ enum { FORMAT_LEN_GROWTH_BOUND = 5 };
 # define MKDIR_UMASK 0755
 #endif
 
-/* The minimum alignment of a type, for pre-C23 platforms.  */
-#if __STDC_VERSION__ < 201112
+/* The minimum alignment of a type, for pre-C23 platforms.
+   The __SUNPRO_C test is because Oracle Developer Studio 12.6 lacks
+   <stdalign.h> even though __STDC_VERSION__ == 201112.  */
+#if __STDC_VERSION__ < 201112 || defined __SUNPRO_C
 # define alignof(type) offsetof(struct { char a; type b; }, b)
 #elif __STDC_VERSION__ < 202311
 # include <stdalign.h>
@@ -490,11 +492,10 @@ size_sum(size_t a, size_t b)
 {
 #ifdef ckd_add
   ptrdiff_t sum;
-  if (!ckd_add(&sum, a, b) && sum <= (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX))
+  if (!ckd_add(&sum, a, b) && sum <= INDEX_MAX)
     return sum;
 #else
-  ptrdiff_t sum_max = (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX);
-  if (a <= sum_max && b <= sum_max - a)
+  if (a <= INDEX_MAX && b <= INDEX_MAX - a)
     return a + b;
 #endif
   size_overflow();
@@ -505,10 +506,10 @@ size_product(ptrdiff_t nitems, ptrdiff_t itemsize)
 {
 #ifdef ckd_mul
   ptrdiff_t product;
-  if (!ckd_mul(&product, nitems, itemsize) && product <= (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX))
+  if (!ckd_mul(&product, nitems, itemsize) && product <= INDEX_MAX)
     return product;
 #else
-  ptrdiff_t nitems_max = (ptrdiff_t)(min(PTRDIFF_MAX, SIZE_MAX) / itemsize);
+  ptrdiff_t nitems_max = INDEX_MAX / itemsize;
   if (nitems <= nitems_max)
     return nitems * itemsize;
 #endif
@@ -564,12 +565,10 @@ grow_nitems_alloc(ptrdiff_t *nitems_alloc, ptrdiff_t itemsize)
 #if defined ckd_add && defined ckd_mul
   ptrdiff_t product;
   if (!ckd_add(nitems_alloc, *nitems_alloc, addend)
-      && !ckd_mul(&product, *nitems_alloc, itemsize)
-      && product <= (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX))
+      && !ckd_mul(&product, *nitems_alloc, itemsize) && product <= INDEX_MAX)
     return product;
 #else
-  ptrdiff_t amax = (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX);
-  if (*nitems_alloc <= ((amax - 1) / 3 * 2) / itemsize) {
+  if (*nitems_alloc <= ((INDEX_MAX - 1) / 3 * 2) / itemsize) {
     *nitems_alloc += addend;
     return *nitems_alloc * itemsize;
   }
@@ -1414,7 +1413,7 @@ static char *
 relname(char const *target, char const *linkname)
 {
   size_t i, taillen, dir_len = 0, dotdots = 0;
-  ptrdiff_t dotdotetcsize, linksize = (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX);
+  ptrdiff_t dotdotetcsize, linksize = INDEX_MAX;
   char const *f = target;
   char *result = NULL;
   if (*linkname == '/') {
@@ -1689,8 +1688,7 @@ infile(int fnum, char const *name)
 	wantcont = false;
 	for (num = 1; ; ++num) {
 		enum { bufsize_bound
-		  = (min(INT_MAX, (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX))
-		     / FORMAT_LEN_GROWTH_BOUND) };
+		  = (min(INT_MAX, INDEX_MAX) / FORMAT_LEN_GROWTH_BOUND) };
 		char buf[min(_POSIX2_LINE_MAX, bufsize_bound)];
 		int nfields;
 		char *fields[MAX_FIELDS];
