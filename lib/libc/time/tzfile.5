@@ -1,9 +1,9 @@
-.\"	$NetBSD: tzfile.5,v 1.33 2022/12/11 17:57:23 christos Exp $
+.\"	$NetBSD: tzfile.5,v 1.34 2023/09/16 18:40:26 christos Exp $
 .\"
 .\" @(#)tzfile.5	8.3
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
-.Dd August 16, 2022
+.Dd September 16, 2023
 .Dt TZFILE 5
 .Os
 .Sh NAME
@@ -231,7 +231,7 @@ if there is no POSIX-style representation for such instants.
 If nonempty, the POSIX-style TZ string must agree with the local time
 type after the last transition time if present in the eight-byte data;
 for example, given the string
-.Dq WET0WEST,M3.5.0,M10.5.0/3
+.Dq WET0WEST,M3.5.0/1,M10.5.0
 then if a last transition time is in July, the transition's local time
 type must specify a daylight-saving time abbreviated
 .Dq WEST

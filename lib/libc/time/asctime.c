@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.28 2022/08/16 10:56:21 christos Exp $	*/
+/*	$NetBSD: asctime.c,v 1.29 2023/09/16 18:40:26 christos Exp $	*/
 
 /* asctime and asctime_r a la POSIX and ISO C, except pad years before 1000.  */
 
@@ -18,7 +18,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.28 2022/08/16 10:56:21 christos Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.29 2023/09/16 18:40:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -27,6 +27,8 @@ __RCSID("$NetBSD: asctime.c,v 1.28 2022/08/16 10:56:21 christos Exp $");
 #include "namespace.h"
 #include "private.h"
 #include <stdio.h>
+
+#ifndef __LIBC12_SOURCE__
 
 #ifdef __weak_alias
 __weak_alias(asctime_r,_asctime_r)
@@ -54,6 +56,8 @@ static char const ASCTIME_FMT[] = "%s %s%3d %.2d:%.2d:%.2d %-4s\n";
 static char const ASCTIME_FMT_B[] = "%s %s%3d %.2d:%.2d:%.2d     %s\n";
 
 enum { STD_ASCTIME_BUF_SIZE = 26 };
+#endif
+
 /*
 ** Big enough for something such as
 ** ??? ???-2147483648 -2147483648:-2147483648:-2147483648     -2147483648\n
@@ -66,8 +70,19 @@ enum { STD_ASCTIME_BUF_SIZE = 26 };
 */
 static char buf_asctime[2*3 + 5*INT_STRLEN_MAXIMUM(int) + 7 + 2 + 1 + 1];
 
+/* A similar buffer for ctime.
+   C89 requires that they be the same buffer.
+   This requirement was removed in C99, so support it only if requested,
+   as support is more likely to lead to bugs in badly written programs.  */
+#if SUPPORT_C89
+# define buf_ctime buf_asctime
+#else
+static char buf_ctime[sizeof buf_asctime];
+#endif
+
+#ifndef __LIBC12_SOURCE__
 char *
-asctime_r(const struct tm *timeptr, char *buf)
+asctime_r(struct tm const *restrict timeptr, char *restrict buf)
 {
 	static const char	wday_name[][4] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -105,7 +120,8 @@ asctime_r(const struct tm *timeptr, char *buf)
 		timeptr->tm_mday, timeptr->tm_hour,
 		timeptr->tm_min, timeptr->tm_sec,
 		year);
-	if (strlen(result) < STD_ASCTIME_BUF_SIZE || buf == buf_asctime)
+	if (strlen(result) < STD_ASCTIME_BUF_SIZE
+	    || buf == buf_ctime || buf == buf_asctime)
 		return strcpy(buf, result);
 	else {
 		errno = EOVERFLOW;
@@ -117,4 +133,28 @@ char *
 asctime(const struct tm *timeptr)
 {
 	return asctime_r(timeptr, buf_asctime);
+}
+
+#endif /* !__LIBC12_SOURCE__ */
+
+char *
+ctime_rz(timezone_t sp, const time_t *timep, char *buf)
+{
+  struct tm mytm;
+  struct tm *tmp = localtime_rz(sp, timep, &mytm);
+  return tmp ? asctime_r(tmp, buf) : NULL;
+}
+
+char *
+ctime_r(const time_t *timep, char *buf)
+{
+  struct tm mytm;
+  struct tm *tmp = localtime_r(timep, &mytm);
+  return tmp ? asctime_r(tmp, buf) : NULL;
+}
+
+char *
+ctime(const time_t *timep)
+{
+  return ctime_r(timep, buf_ctime);
 }

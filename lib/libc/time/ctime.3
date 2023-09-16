@@ -1,9 +1,9 @@
-.\" $NetBSD: ctime.3,v 1.70 2023/09/12 21:56:05 dholland Exp $
+.\" $NetBSD: ctime.3,v 1.71 2023/09/16 18:40:26 christos Exp $
 .\"
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
 .\"
-.Dd September 12, 2023
+.Dd September 16, 2023
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -26,11 +26,11 @@
 .Sh SYNOPSIS
 .In time.h
 .Vt extern char *tzname[2];
-.Ft char *
+.Ft [[deprecated]] char *
 .Fn asctime "const struct tm *tm"
 .Ft char *
 .Fn asctime_r "const struct tm *restrict tm" "char * restrict buf"
-.Ft char *
+.Ft [[deprecated]] char *
 .Fn ctime "const time_t *clock"
 .Ft char *
 .Fn ctime_r "const time_t *clock"  "char *buf"
@@ -73,6 +73,11 @@ The
 .Fa tm
 structure is described in
 .Xr tm 3 .
+.Pp
+This function is deprecated starting in C23.
+Callers can use
+.Fn strftime
+instead.
 .It Fn asctime_r "tm" "buf"
 The
 .Fn asctime_r
@@ -110,6 +115,15 @@ Many implementations extend POSIX by allowing negative time stamps,
 and can therefore represent time stamps that predate the
 introduction of UTC and are some other flavor of Universal Time (UT).
 Some implementations support leap seconds, in contradiction to POSIX.
+.Pp
+The
+.Fn ctime
+function is deprecated starting in C23.
+Callers can use
+.Fn localtime_r
+and
+.Fn strftime
+instead.
 .It Fn ctime_r "clock" "buf"
 The
 .Fn ctime_r
@@ -500,7 +514,8 @@ timezone information directory
 .It Pa /usr/share/zoneinfo/localtime
 local timezone file
 .It Pa /usr/share/zoneinfo/posixrules
-used with POSIX-style TZ's
+default DST rules (obsolete,
+and can cause bugs if present)
 .It Pa /usr/share/zoneinfo/GMT
 for UTC leap seconds
 .El
