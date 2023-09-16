@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.11 2010/09/15 16:11:28 christos Exp $ */
+/*	$NetBSD: ieee.h,v 1.12 2023/09/16 13:37:10 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)ieee.h	8.1 (Berkeley) 6/11/93
  */
+#ifndef _X86_IEEE_H_
+#define _X86_IEEE_H_
 
 /*
  * ieee.h defines the machine-dependent layout of the machine's IEEE
@@ -115,3 +117,5 @@ union ieee_ext_u {
 
 #define LDBL_NBIT	0x80000000
 #define mask_nbit_l(u)	((u).extu_frach &= ~LDBL_NBIT)
+
+#endif /* _X86_IEEE_H_ */
