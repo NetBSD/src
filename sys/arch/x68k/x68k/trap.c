@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.110 2021/09/25 19:16:31 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.111 2023/09/16 20:53:18 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 2021/09/25 19:16:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2023/09/16 20:53:18 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -85,8 +85,8 @@ void	trap(struct frame *, int, u_int, u_int);
 
 #if defined(M68040) || defined(M68060)
 #ifdef DEBUG
-static void dumpssw(u_short);
-static void dumpwb(int, u_short, u_int, u_int);
+void dumpssw(u_short);
+void dumpwb(int, u_short, u_int, u_int);
 #endif
 #endif
 
