@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.364 2023/09/13 14:12:21 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.365 2023/09/16 21:18:29 gutteridge Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -212,6 +212,7 @@ CAD	computer-aided design
 CAM	computer assisted manufacturing
 CAM	conditional access module
 CAM	content addressable memory
+CAN	controller area network
 CARP	Common Address Redundancy Protocol
 CAS	column address strobe
 CAS	compare and swap
@@ -1128,6 +1129,7 @@ OBO	off by one
 OBOE	off by one error
 OCL	object constraint language
 OCR	optical character recognition
+ODBC	Open Database Connectivity
 ODE	offline device environment
 ODI	open data-link interface
 ODM	object data manager
