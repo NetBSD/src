@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.412 2023/06/15 09:15:54 hannken Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.413 2023/09/16 23:38:57 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.412 2023/06/15 09:15:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.413 2023/09/16 23:38:57 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -3771,8 +3771,7 @@ rf_get_component_caches(RF_Raid_t *raidPtr, int *data)
 		 * Check any non-dead disk, even when currently being
 		 * reconstructed.
 		 */
-		if (!RF_DEAD_DISK(raidPtr->Disks[c].status)
-		    || raidPtr->Disks[c].status == rf_ds_reconstructing) {
+		if (!RF_DEAD_DISK(raidPtr->Disks[c].status)) {
 			error = VOP_IOCTL(raidPtr->raid_cinfo[c].ci_vp,
 			    DIOCGCACHE, &dkpart, FREAD, NOCRED);
 			if (error) {
