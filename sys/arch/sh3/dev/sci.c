@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.64 2023/09/16 18:56:39 andvar Exp $ */
+/* $NetBSD: sci.c,v 1.65 2023/09/17 14:22:28 andvar Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.64 2023/09/16 18:56:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.65 2023/09/17 14:22:28 andvar Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -1215,7 +1215,7 @@ sciintr(void *arg)
 		if (ISSET(~msr, sc->sc_msr_mask)) {
 			sc->sc_tbc = 0;
 			sc->sc_heldtbc = 0;
-			
+
 			DPRINTF(("%s: sciintr\n", device_xname(sc->sc_dev)));
 		}
 
