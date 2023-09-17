@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.40 2019/12/27 07:41:23 msaitoh Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.41 2023/09/17 13:14:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.40 2019/12/27 07:41:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.41 2023/09/17 13:14:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -132,12 +132,12 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 
 	if ((sval & 0xf000) != 0xf000) {
 		DPRINTF(("%s: not coproc. insn.: opcode=0x%x\n",
-		    __func__, word));
+		    __func__, sval));
 		fpe_abort(frame, ksi, SIGILL, ILL_ILLOPC);
 	}
 
 	if ((sval & 0x0E00) != 0x0200) {
-		DPRINTF(("%s: bad coproc. id: opcode=0x%x\n", __func__, word));
+		DPRINTF(("%s: bad coproc. id: opcode=0x%x\n", __func__, sval));
 		fpe_abort(frame, ksi, SIGILL, ILL_ILLOPC);
 	}
 
