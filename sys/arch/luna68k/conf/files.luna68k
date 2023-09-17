@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.30 2022/06/10 21:42:23 tsutsui Exp $
+#	$NetBSD: files.luna68k,v 1.31 2023/09/17 12:30:00 andvar Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -16,6 +16,7 @@ file arch/luna68k/luna68k/pmap_bootstrap.c
 file arch/luna68k/luna68k/trap.c
 file arch/m68k/m68k/cacheops.c
 file arch/m68k/m68k/db_memrw.c		ddb | kgdb
+file arch/m68k/m68k/kgdb_machdep.c	kgdb
 file arch/m68k/m68k/fpu.c		compile-with "${M68K_KERN_FPU}"
 file arch/m68k/m68k/m68k_trap.c
 file arch/m68k/m68k/pmap_motorola.c
