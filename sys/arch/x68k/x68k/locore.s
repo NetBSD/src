@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.121 2022/05/30 09:56:03 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.122 2023/09/17 07:22:17 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -209,8 +209,10 @@ Lstart1:
 	jra	Lstart2
 1:
 #endif
+#if defined(M68030)
 	movl	#_C_LABEL(busaddrerr2030),%a2@(8)
 	movl	#_C_LABEL(busaddrerr2030),%a2@(12)
+#endif
 
 Lstart2:
 /* initialize source/destination control registers for movs */
