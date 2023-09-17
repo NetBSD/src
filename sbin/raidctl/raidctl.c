@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.78 2022/06/14 08:06:18 kre Exp $   */
+/*      $NetBSD: raidctl.c,v 1.79 2023/09/17 20:07:39 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.78 2022/06/14 08:06:18 kre Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.79 2023/09/17 20:07:39 oster Exp $");
 #endif
 
 
@@ -64,6 +64,10 @@ __RCSID("$NetBSD: raidctl.c,v 1.78 2022/06/14 08:06:18 kre Exp $");
 #include "rf_configure.h"
 #include "prog_ops.h"
 
+#ifndef RAIDFRAME_REMOVE_COMPONENT
+#define RAIDFRAME_REMOVE_COMPONENT RAIDFRAME_REMOVE_HOT_SPARE
+#endif
+
 #define	CONFIGURE_TEST	1	/* must be different from any raidframe ioctl */
 
 void	do_ioctl(int, u_long, void *, const char *);
@@ -79,7 +83,7 @@ static  void set_component_label(int, char *);
 static  void init_component_labels(int, int);
 static  void set_autoconfig(int, int, char *);
 static  void add_hot_spare(int, char *);
-static  void remove_hot_spare(int, char *);
+static  void remove_component(int, char *);
 static  void rebuild_in_place(int, char *);
 static  void check_status(int,int);
 static  void check_parity(int,int, char *);
@@ -236,7 +240,7 @@ main(int argc,char *argv[])
 			num_options++;
 			break;
 		case 'r':
-			action = RAIDFRAME_REMOVE_HOT_SPARE;
+			action = RAIDFRAME_REMOVE_COMPONENT;
 			get_comp(component, optarg, sizeof(component));
 			num_options++;
 			break;
@@ -319,8 +323,8 @@ main(int argc,char *argv[])
 	case RAIDFRAME_ADD_HOT_SPARE:
 		add_hot_spare(fd, component);
 		break;
-	case RAIDFRAME_REMOVE_HOT_SPARE:
-		remove_hot_spare(fd, component);
+	case RAIDFRAME_REMOVE_COMPONENT:
+		remove_component(fd, component);
 		break;
 	case RAIDFRAME_CONFIGURE:
 		rf_configure(fd, config_filename, force);
@@ -918,22 +922,22 @@ add_hot_spare(int fd, char *component)
 }
 
 static void
-remove_hot_spare(int fd, char *component)
+remove_component(int fd, char *component)
 {
-	RF_SingleComponent_t hot_spare;
+	RF_SingleComponent_t comp;
 	int component_num;
 	int num_cols;
 
 	get_component_number(fd, component, &component_num, &num_cols);
 
-	hot_spare.row = component_num / num_cols;
-	hot_spare.column = component_num % num_cols;
+	comp.row = component_num / num_cols;
+	comp.column = component_num % num_cols;
 
-	strncpy(hot_spare.component_name, component, 
-		sizeof(hot_spare.component_name));
+	strncpy(comp.component_name, component, 
+		sizeof(comp.component_name));
 	
-	do_ioctl( fd, RAIDFRAME_REMOVE_HOT_SPARE, &hot_spare,
-		  "RAIDFRAME_REMOVE_HOT_SPARE");
+	do_ioctl( fd, RAIDFRAME_REMOVE_COMPONENT, &comp,
+		  "RAIDFRAME_REMOVE_COMPONENT");
 }
 
 static void

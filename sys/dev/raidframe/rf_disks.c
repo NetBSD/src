@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.93 2022/08/10 01:16:38 mrg Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.94 2023/09/17 20:07:39 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,12 +60,13 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.93 2022/08/10 01:16:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.94 2023/09/17 20:07:39 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_raid.h"
 #include "rf_alloclist.h"
+#include "rf_driver.h"
 #include "rf_utils.h"
 #include "rf_general.h"
 #include "rf_options.h"
@@ -336,6 +337,14 @@ rf_AllocDiskStructures(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 		ret = ENOMEM;
 		goto fail;
 	}
+
+	raidPtr->abortRecon = RF_MallocAndAdd(
+	    entries * sizeof(int), raidPtr->cleanupList);
+	if (raidPtr->abortRecon == NULL) {
+		ret = ENOMEM;
+		goto fail;
+	}
+
 
 	return(0);
 fail:
@@ -977,8 +986,8 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 int
 rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 {
-	RF_RaidDisk_t *disks;
 	RF_DiskQueue_t *spareQueues;
+	RF_RaidDisk_t *disks;
 	int ret;
 	unsigned int bs;
 	int spare_number;
@@ -991,10 +1000,10 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 	}
 
 	rf_lock_mutex2(raidPtr->mutex);
-	while (raidPtr->adding_hot_spare == 1) {
-		rf_wait_cond2(raidPtr->adding_hot_spare_cv, raidPtr->mutex);
+	while (raidPtr->changing_components == 1) {
+		rf_wait_cond2(raidPtr->changing_components_cv, raidPtr->mutex);
 	}
-	raidPtr->adding_hot_spare = 1;
+	raidPtr->changing_components = 1;
 	rf_unlock_mutex2(raidPtr->mutex);
 
 	/* the beginning of the spares... */
@@ -1054,25 +1063,43 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 		}
 	}
 
-	spareQueues = &raidPtr->Queues[raidPtr->numCol];
-	ret = rf_ConfigureDiskQueue( raidPtr, &spareQueues[spare_number],
-				 raidPtr->numCol + spare_number,
-				 raidPtr->qType,
-				 raidPtr->sectorsPerDisk,
-				 raidPtr->Disks[raidPtr->numCol +
-						  spare_number].dev,
-				 raidPtr->maxOutstanding,
-				 &raidPtr->shutdownList,
-				 raidPtr->cleanupList);
+	/*
+	 * We only grow one initialized diskQueue at a time
+	 * spare_number can be lower than raidPtr->maxQueue (update)
+	 * or they can be equal (initialize new queue)
+	 */
+	RF_ASSERT(spare_number <= raidPtr->maxQueue);
 
-	rf_lock_mutex2(raidPtr->mutex);
-	raidPtr->numSpare++;
-	rf_unlock_mutex2(raidPtr->mutex);
+	spareQueues = &raidPtr->Queues[raidPtr->numCol];
+	if (spare_number == raidPtr->maxQueue) {
+		ret = rf_ConfigureDiskQueue(raidPtr, &spareQueues[spare_number],
+					    raidPtr->numCol + spare_number,
+					    raidPtr->qType,
+					    raidPtr->sectorsPerDisk,
+					    raidPtr->Disks[raidPtr->numCol +
+							  spare_number].dev,
+					    raidPtr->maxOutstanding,
+					    &raidPtr->shutdownList,
+					    raidPtr->cleanupList);
+		if (ret)
+			goto fail;
+		rf_lock_mutex2(raidPtr->mutex);
+		raidPtr->maxQueue++;
+		rf_unlock_mutex2(raidPtr->mutex);
+	} else {
+		(void)rf_UpdateDiskQueue(&spareQueues[spare_number],
+			                 &disks[spare_number]);
+	}
 
 fail:
 	rf_lock_mutex2(raidPtr->mutex);
-	raidPtr->adding_hot_spare = 0;
-	rf_signal_cond2(raidPtr->adding_hot_spare_cv);
+
+	if (ret == 0) {
+		raidPtr->numSpare++;
+	}
+
+	raidPtr->changing_components = 0;
+	rf_signal_cond2(raidPtr->changing_components_cv);
 	rf_unlock_mutex2(raidPtr->mutex);
 
 	return(ret);
@@ -1081,56 +1108,140 @@ fail:
 int
 rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 {
-#if 0
 	int spare_number;
-#endif
+	int i;
+	RF_RaidDisk_t *disk;
+	struct vnode *vp;
+	int ret = EINVAL;
 
-	if (raidPtr->numSpare==0) {
-		printf("No spares to remove!\n");
-		return(EINVAL);
+	spare_number = sparePtr->column - raidPtr->numCol;
+	if (spare_number < 0 || spare_number > raidPtr->numSpare)
+		return(ret);
+
+	rf_lock_mutex2(raidPtr->mutex);
+	while (raidPtr->changing_components == 1) {
+		rf_wait_cond2(raidPtr->changing_components_cv, raidPtr->mutex);
+	}
+	raidPtr->changing_components = 1;
+	rf_unlock_mutex2(raidPtr->mutex);
+
+	rf_SuspendNewRequestsAndWait(raidPtr);
+
+	disk = &raidPtr->Disks[raidPtr->numCol + spare_number];
+	if (disk->status != rf_ds_spare &&
+	    disk->status != rf_ds_failed) {
+		printf("Spare is in use %d\n", disk->status);
+		ret = EBUSY;
+		goto out;
 	}
 
-	return(EINVAL); /* XXX not implemented yet */
-#if 0
-	spare_number = sparePtr->column;
+	vp = raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp;
+	raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp = NULL;
+	raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_dev = 0;
 
-	if (spare_number < 0 || spare_number > raidPtr->numSpare) {
-		return(EINVAL);
+	/* This component was not automatically configured */
+	disk->auto_configured = 0;
+	disk->dev = 0;
+	disk->numBlocks = 0;
+	disk->status = rf_ds_failed;
+	snprintf(disk->devname, sizeof(disk->devname),
+		 "absent_spare%d", spare_number);
+	rf_close_component(raidPtr, vp, 0);
+
+	rf_lock_mutex2(raidPtr->mutex);
+
+	/* at this point we know spare_number is to be pushed all the way to the end of the array... */
+
+	for (i = raidPtr->numCol + spare_number; i < raidPtr->numCol+raidPtr->numSpare-1; i++) {
+		/* now we work our way up the spare array, swaping the current one for the next one */
+		rf_swap_components(raidPtr, i, i+1);
 	}
-
-	/* verify that this spare isn't in use... */
-
-
-
-
-	/* it's gone.. */
-
+	
 	raidPtr->numSpare--;
+	rf_unlock_mutex2(raidPtr->mutex);
 
-	return(0);
-#endif
+	rf_ResumeNewRequests(raidPtr);
+
+	ret = 0;
+
+out:
+
+	rf_lock_mutex2(raidPtr->mutex);		
+	raidPtr->changing_components = 0;
+	rf_signal_cond2(raidPtr->changing_components_cv);
+	rf_unlock_mutex2(raidPtr->mutex);
+
+	return(ret);
 }
 
-
+/*
+ * Delete a non hot spare component
+ */
 int
 rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 {
-#if 0
-	RF_RaidDisk_t *disks;
-#endif
+	RF_RaidDisk_t *disk;
+	RF_RowCol_t col = component->column;
+	struct vnode *vp;
+	int ret = EINVAL;
 
-	if ((component->column < 0) ||
-	    (component->column >= raidPtr->numCol)) {
-		return(EINVAL);
+	if (col < 0 || col >= raidPtr->numCol)
+		return(ret);
+
+	rf_lock_mutex2(raidPtr->mutex);
+	while (raidPtr->changing_components == 1) {
+		rf_wait_cond2(raidPtr->changing_components_cv, raidPtr->mutex);
+	}
+	raidPtr->changing_components = 1;
+	rf_unlock_mutex2(raidPtr->mutex);
+
+	disk = &raidPtr->Disks[col];
+
+	/* 1. This component must be marked as failed or spared  */
+	switch (disk->status) {
+	case rf_ds_failed:
+	case rf_ds_dist_spared:
+	case rf_ds_spared:
+		break;
+	default:
+		ret = EBUSY;
+		goto out;
 	}
 
-#if 0
-	disks = &raidPtr->Disks[component->column];
-#endif
+	vp = raidPtr->raid_cinfo[col].ci_vp;
+	raidPtr->raid_cinfo[col].ci_vp = NULL;
+	raidPtr->raid_cinfo[col].ci_dev = 0;
 
-	/* 1. This component must be marked as 'failed' */
+	/* This component was not automatically configured */
+	disk->auto_configured = 0;
+	disk->dev = 0;
+	disk->numBlocks = 0;
+	snprintf(disk->devname, sizeof(disk->devname), "component%d", col);
 
-	return(EINVAL); /* Not implemented yet. */
+	rf_close_component(raidPtr, vp, 0);
+
+	ret = 0;
+out:
+	rf_lock_mutex2(raidPtr->mutex);
+	raidPtr->changing_components = 0;
+	rf_signal_cond2(raidPtr->changing_components_cv);
+	rf_unlock_mutex2(raidPtr->mutex);
+
+	return(ret);
+}
+
+int
+rf_remove_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
+{
+	RF_RowCol_t col = component->column;
+
+	if (col < 0 || col >= raidPtr->numCol + raidPtr->numSpare)
+		return(EINVAL);
+
+	if (col >= raidPtr->numCol)
+		return rf_remove_hot_spare(raidPtr, component);
+	else
+		return rf_delete_component(raidPtr, component);
 }
 
 int
@@ -1143,3 +1254,48 @@ rf_incorporate_hot_spare(RF_Raid_t *raidPtr,
 
 	return(EINVAL); /* Not implemented yet. */
 }
+
+void
+rf_swap_components(RF_Raid_t *raidPtr, int a, int b)
+{
+	char tmpdevname[56]; /* 56 is from raidframevar.h */
+	RF_ComponentLabel_t tmp_ci_label;
+	dev_t tmp_ci_dev, tmp_dev;
+	int tmp_status;
+	struct vnode *tmp_ci_vp;
+
+
+	/* This function *MUST* be called with all IO suspended. */
+	RF_ASSERT(raidPtr->accesses_suspended == 0);
+	
+	/* Swap the component names... */
+	snprintf(tmpdevname, sizeof(tmpdevname),raidPtr->Disks[a].devname);
+	snprintf(raidPtr->Disks[a].devname, sizeof(raidPtr->Disks[a].devname), raidPtr->Disks[b].devname);
+	snprintf(raidPtr->Disks[b].devname, sizeof(raidPtr->Disks[b].devname), tmpdevname);
+
+	/* and the vp */
+	tmp_ci_vp = raidPtr->raid_cinfo[a].ci_vp;
+	raidPtr->raid_cinfo[a].ci_vp = raidPtr->raid_cinfo[b].ci_vp;
+	raidPtr->raid_cinfo[b].ci_vp = tmp_ci_vp;
+
+	/* and the ci dev */
+	tmp_ci_dev = raidPtr->raid_cinfo[a].ci_dev;
+	raidPtr->raid_cinfo[a].ci_dev = raidPtr->raid_cinfo[b].ci_dev;
+	raidPtr->raid_cinfo[b].ci_dev = tmp_ci_dev;
+
+	/* the dev itself */
+	tmp_dev = raidPtr->Disks[a].dev;
+	raidPtr->Disks[a].dev = raidPtr->Disks[b].dev;
+	raidPtr->Disks[b].dev = tmp_dev;
+
+	/* the component label */
+	tmp_ci_label = raidPtr->raid_cinfo[a].ci_label;
+	raidPtr->raid_cinfo[a].ci_label = raidPtr->raid_cinfo[b].ci_label;
+	raidPtr->raid_cinfo[b].ci_label = tmp_ci_label;
+
+	/* and the status */
+	tmp_status = raidPtr->Disks[a].status;
+	raidPtr->Disks[a].status = raidPtr->Disks[b].status;
+	raidPtr->Disks[b].status = tmp_status;
+}
+

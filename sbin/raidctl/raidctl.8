@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.79 2022/06/14 08:06:18 kre Exp $
+.\"     $NetBSD: raidctl.8,v 1.80 2023/09/17 20:07:39 oster Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd June 13, 2022
+.Dd September 16, 2023
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -322,9 +322,10 @@ if necessary, and immediately begins a reconstruction back to
 This is useful for reconstructing back onto a component after
 it has been replaced following a failure.
 .It Fl r Ar component Ar dev
-Remove the spare disk specified by
+Remove the specified
 .Ar component
-from the set of available spare components.
+from the RAID. The component must be in the failed, spare, or spared state
+in order to be removed.
 .It Fl S Ar dev
 Check the status of parity re-writing, component reconstruction, and
 component copyback.
@@ -1005,10 +1006,9 @@ option will show:
 .Bd -literal -offset indent
 Components:
            /dev/sd1e: optimal
-           /dev/sd2e: spared
+           /dev/sd4e: optimal
            /dev/sd3e: optimal
-Spares:
-           /dev/sd4e: used_spare
+No spares.
 [...]
 Parity status: clean
 Reconstruction is 100% complete.
@@ -1016,62 +1016,10 @@ Parity Re-write is 100% complete.
 Copyback is 100% complete.
 .Ed
 .Pp
-At this point there are at least two options.
-First, if
+as
 .Pa /dev/sd2e
-is known to be good (i.e., the failure was either caused by
-.Fl f
-or
-.Fl F ,
-or the failed disk was replaced), then a copyback of the data can
-be initiated with the
-.Fl B
-option.
-In this example, this would copy the entire contents of
-.Pa /dev/sd4e
-to
-.Pa /dev/sd2e .
-Once the copyback procedure is complete, the
-status of the device would be (in part):
-.Bd -literal -offset indent
-Components:
-           /dev/sd1e: optimal
-           /dev/sd2e: optimal
-           /dev/sd3e: optimal
-Spares:
-           /dev/sd4e: spare
-.Ed
-.Pp
-and the system is back to normal operation.
-.Pp
-The second option after the reconstruction is to simply use
-.Pa /dev/sd4e
-in place of
-.Pa /dev/sd2e
-in the configuration file.
-For example, the configuration file (in part) might now look like:
-.Bd -literal -offset indent
-START array
-3 0
-
-START disks
-/dev/sd1e
-/dev/sd4e
-/dev/sd3e
-.Ed
-.Pp
-This can be done as
-.Pa /dev/sd4e
-is completely interchangeable with
-.Pa /dev/sd2e
-at this point.
-Note that extreme care must be taken when
-changing the order of the drives in a configuration.
-This is one of the few instances where the devices and/or
-their orderings can be changed without loss of data!
-In general, the ordering of components in a configuration file should
-.Em never
-be changed.
+has been removed and replaced with
+.Pa /dev/sd4e .
 .Pp
 If a component fails and there are no hot spares
 available on-line, the status of the RAID set might (in part) look like:
@@ -1101,7 +1049,7 @@ Spares:
 .Pp
 Reconstruction could then take place using
 .Fl F
-as describe above.
+as described above.
 .Pp
 A second option is to rebuild directly onto
 .Pa /dev/sd2e .
