@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.124 2023/09/15 15:35:27 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.125 2023/09/18 18:59:30 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11941,4 +11941,10 @@ crypto/external/bsd/heimdal/dist/lib/krb5/context.c 1.8
 
 	kerberos(8): explicitly load the openssl legacy provider.
 	[christos, ticket #375]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.413
+
+	raid(4): avoid panic from DIOCGCACHE ioctl while reconstruction
+	is in progress.
+	[oster, ticket #376]
 
