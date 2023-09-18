@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.102 2023/09/15 15:42:58 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.103 2023/09/18 19:01:14 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2135,4 +2135,10 @@ sys/arch/i386/stand/efiboot/eficpufunc.h	1.1
 
 	efiboot/x86: add serial console support via raw I/O port access.
 	[rin, ticket #1732]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.413
+
+	raid(4): avoid panic from DIOCGCACHE ioctl while reconstruction
+	is in progress.
+	[oster, ticket #1733]
 
