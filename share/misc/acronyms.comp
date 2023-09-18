@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.365 2023/09/16 21:18:29 gutteridge Exp $
+$NetBSD: acronyms.comp,v 1.366 2023/09/18 15:19:33 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -237,6 +237,7 @@ CDN	content delivery network
 CDP	Cisco Discovery Protocol
 CDRAM	cache dynamic random access memory
 CER	canonical encoding rules
+CERT	computer emergency response team
 CE	customer edge
 CF	compact flash
 CFB	cipher feedback
@@ -318,6 +319,7 @@ CRDT	conflict-free replicated data type
 CRL	carrier recovery loop
 CRQC	cryptanalytically relevant quantum computer
 CRLF	carriage return line feed
+CSIRT	computer security incident response team
 CSPM	cloud security posture management
 CSU	C start up
 CRT	cathode ray tube
@@ -1534,6 +1536,7 @@ SIMM	single inline memory module
 SIP	Session Initiation Protocol
 SIR	signal-to-interference ratio
 SIR	slow infrared
+SIRT	security incident response team
 SISD	single instruction, single data
 SIV	synthetic intialization vector
 SLAAC	stateless address auto-configuration
@@ -1572,6 +1575,7 @@ SNAP	Sub-Network Access Protocol
 SNIA	Storage Networking Industry Association
 SNMP	Simple Network Management Protocol
 SNR	signal-to-noise ratio
+SOC	security operations center
 SOA	service oriented architecture
 SOAP	Simple Object Access Protocol
 SOC	system on chip
