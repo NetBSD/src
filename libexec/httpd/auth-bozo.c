@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.27 2021/05/05 07:41:48 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.28 2023/09/19 07:51:43 shm Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -67,6 +67,11 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 		if (bozo_check_special_files(request, basename, true))
 			return 1;
 	}
+
+	/* we might be called from cgi code again with the hr_authrealm
+	 * already set */
+	if (request->hr_authrealm)
+		free(request->hr_authrealm);
 	request->hr_authrealm = bozostrdup(httpd, request, dir);
 
 	if ((size_t)snprintf(authfile, sizeof(authfile), "%s/%s", dir,
