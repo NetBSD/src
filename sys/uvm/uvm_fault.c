@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.235 2023/09/01 10:57:20 andvar Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.236 2023/09/19 22:14:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.235 2023/09/01 10:57:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.236 2023/09/19 22:14:25 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1605,7 +1605,6 @@ uvm_fault_upper_promote(
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
-	cpu_count(CPU_COUNT_FLT_ACOW, 1);
 
 	/* promoting requires a write lock. */
 	error = uvm_fault_upper_upgrade(ufi, flt, amap, NULL);
@@ -1613,6 +1612,8 @@ uvm_fault_upper_promote(
 		return error;
 	}
 	KASSERT(rw_write_held(amap->am_lock));
+
+	cpu_count(CPU_COUNT_FLT_ACOW, 1);
 
 	error = uvmfault_promote(ufi, oanon, PGO_DONTCARE, &anon,
 	    &flt->anon_spare);
@@ -2127,9 +2128,6 @@ uvm_fault_lower_io(
 	int advice;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	/* update rusage counters */
-	curlwp->l_ru.ru_majflt++;
-
 	/* grab everything we need from the entry before we unlock */
 	uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
 	access_type = flt->access_type & MASK(ufi->entry);
@@ -2144,6 +2142,9 @@ uvm_fault_lower_io(
 		return error;
 	}
 	uvmfault_unlockall(ufi, amap, NULL);
+
+	/* update rusage counters */
+	curlwp->l_ru.ru_majflt++;
 
 	/* Locked: uobj(write) */
 	KASSERT(rw_write_held(uobj->vmobjlock));
