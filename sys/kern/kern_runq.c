@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.69 2020/05/23 21:24:41 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.70 2023/09/19 22:15:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.69 2020/05/23 21:24:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.70 2023/09/19 22:15:32 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -227,7 +227,7 @@ sched_enqueue(struct lwp *l)
 				TAILQ_INSERT_HEAD(q_head, l, l_runq);
 			}
 			break;
-		default: /* SCHED_OTHER */
+		default:
 			panic("sched_enqueue: LWP %p has class %d\n",
 			    l, l->l_class);
 		}
