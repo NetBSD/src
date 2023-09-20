@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.366 2023/09/18 15:19:33 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.367 2023/09/20 15:22:41 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -563,6 +563,7 @@ EOL	end of line
 EOT	end of transmission
 EPIC	explicitly parallel instruction computing
 EPP	enhanced parallel port
+EPP	extensible provisioning protocol (RFC5730)
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
 EPT	extended page tables
