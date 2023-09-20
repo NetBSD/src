@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.54 2021/04/08 07:02:12 rillig Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.55 2023/09/20 07:09:14 shm Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -185,15 +185,13 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 	/* CGI programs should perform their own timeouts */
 	while ((rbytes = read(in, buf, sizeof buf)) > 0) {
 		ssize_t wbytes;
-		char *bp = buf;
 
 		while (rbytes) {
 			wbytes = bozo_write(httpd, STDOUT_FILENO, buf,
 					    (size_t)rbytes);
-			if (wbytes > 0) {
+			if (wbytes > 0)
 				rbytes -= wbytes;
-				bp += wbytes;
-			} else
+			else
 				bozoerr(httpd, 1,
 					"cgi output write failed: %s",
 					strerror(errno));
@@ -656,14 +654,13 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	/* CGI programs should perform their own timeouts */
 	while ((rbytes = bozo_read(httpd, STDIN_FILENO, buf, sizeof buf)) > 0) {
 		ssize_t wbytes;
-		char *bp = buf;
+		/* char *bp = buf; */
 
 		while (rbytes) {
 			wbytes = write(sv[0], buf, (size_t)rbytes);
-			if (wbytes > 0) {
+			if (wbytes > 0)
 				rbytes -= wbytes;
-				bp += wbytes;
-			} else
+			else
 				bozoerr(httpd, 1, "write failed: %s",
 					strerror(errno));
 		}		
