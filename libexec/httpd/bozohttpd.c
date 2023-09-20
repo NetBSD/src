@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.144 2023/09/07 06:40:56 shm Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.145 2023/09/20 07:13:35 shm Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1564,9 +1564,14 @@ bozo_decode_url_percent(bozo_httpreq_t *request, char *str)
 				*t++ = *s++;
 			break;
 		}
-		debug((httpd, DEBUG_EXPLODING,
-			"fu_%%: got s == %%, s[1]s[2] == %c%c",
-			s[1], s[2]));
+		if (&s[2] < end)
+			debug((httpd, DEBUG_EXPLODING,
+				"fu_%%: got s == %%, s[1]s[2] == %c%c",
+				s[1], s[2]));
+		else
+			debug((httpd, DEBUG_EXPLODING,
+			    "fu_%%: got s == %%, s[1] == %c s[2] is not set",
+				s[1]));
 		if (s[1] == '\0' || s[2] == '\0')
 			return bozo_http_error(httpd, 400, request,
 			    "percent hack missing two chars afterwards");
