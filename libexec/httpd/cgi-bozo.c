@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.55 2023/09/20 07:09:14 shm Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.56 2023/09/20 08:41:35 shm Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -654,7 +654,6 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	/* CGI programs should perform their own timeouts */
 	while ((rbytes = bozo_read(httpd, STDIN_FILENO, buf, sizeof buf)) > 0) {
 		ssize_t wbytes;
-		/* char *bp = buf; */
 
 		while (rbytes) {
 			wbytes = write(sv[0], buf, (size_t)rbytes);
