@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.57 2022/01/24 09:42:14 andvar Exp $ */
+/* $NetBSD: ispmbox.h,v 1.58 2023/09/21 09:31:50 msaitoh Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Mailbox and Queue Entry Definitions for for Qlogic ISP SCSI adapters.
+ * Mailbox and Queue Entry Definitions for Qlogic ISP SCSI adapters.
  */
 #ifndef	_ISPMBOX_H
 #define	_ISPMBOX_H

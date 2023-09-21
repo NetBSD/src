@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.7 2019/06/03 05:59:01 msaitoh Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.8 2023/09/21 09:31:50 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tadpole Computer Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.7 2019/06/03 05:59:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.8 2023/09/21 09:31:50 msaitoh Exp $");
 
 #define __PMAP_PRIVATE
 
@@ -179,7 +179,7 @@ mips3_wired_enter_region(vaddr_t va, paddr_t pa, vsize_t size)
 {
 	vaddr_t	vend;
 	/*
-	 * This routine allows for for wired mappings to be set up,
+	 * This routine allows for wired mappings to be set up,
 	 * and handles previously defined mappings and mapping
 	 * overlaps reasonably well.  However, caution should be used
 	 * not to attempt to change the mapping for a page unless you
