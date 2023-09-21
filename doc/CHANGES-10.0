@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.125 2023/09/18 18:59:30 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.126 2023/09/21 13:23:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -11947,4 +11947,10 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.413
 	raid(4): avoid panic from DIOCGCACHE ioctl while reconstruction
 	is in progress.
 	[oster, ticket #376]
+
+sys/netinet/tcp_output.c			1.219
+
+	tcp: handle EHOSTDOWN the same way as EHOSTUNREACH and ENETDOWN for
+	established connections.
+	[bouyer, ticket #377]
 
