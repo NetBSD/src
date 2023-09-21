@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.80 2023/09/21 01:40:44 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.81 2023/09/21 01:48:41 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.80 2023/09/21 01:40:44 oster Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.81 2023/09/21 01:48:41 oster Exp $");
 #endif
 
 
@@ -144,7 +144,6 @@ main(int argc,char *argv[])
 	if (argc > 5) {
 		/* we have at least 5 args, so it might be a simplified config */
 		
-		/* XXX NEW CODE XXX */
 		strlcpy(name, argv[1], sizeof(name));
 		fd = opendisk(name, openmode, dev_name, sizeof(dev_name), 0);
 		if (fd != -1) {
@@ -159,7 +158,6 @@ main(int argc,char *argv[])
 				rf_simple_create(fd,argc-3,&argv[3]);
 				
 				/* set serial number, set autoconfig, init parity */
-				/* XXX need to grok a random number for the serial number here */
 
 				if (gettimeofday(&tv,NULL) == -1) {
 					serial_number = 12345777;
