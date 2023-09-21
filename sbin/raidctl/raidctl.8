@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.80 2023/09/17 20:07:39 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.81 2023/09/21 01:40:44 oster Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,13 +53,17 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd September 16, 2023
+.Dd September 20, 2023
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
 .Nm raidctl
 .Nd configuration utility for the RAIDframe disk driver
 .Sh SYNOPSIS
+.Nm
+.Ar dev
+.Ar command
+.Op Ar arg Op ...
 .Nm
 .Op Fl v
 .Fl A Op yes | no | forceroot | softroot
@@ -148,7 +152,27 @@ For more information about the RAIDframe disk device, see
 This document assumes the reader has at least rudimentary knowledge of
 RAID and RAID concepts.
 .Pp
-The command-line options for
+The simplified command-line options for
+.Nm
+are as follows:
+.Bl -tag -width indent
+.It Ic create Ar level Ar component1 Ar component2 Ar ...
+where
+.Ar level
+specifies the RAID level and is one of
+.Ar 0
+,
+.Ar 1 
+(or
+.Ar mirror
+), or
+.Ar 5
+and each of
+.Ar componentN
+specify the devices to be configured into the RAID set.
+.El
+.Pp
+The advanced command-line options for
 .Nm
 are as follows:
 .Bl -tag -width indent
@@ -370,6 +394,38 @@ for many others, or just simply
 .Pa /dev/rraid0[cd] ) .
 It is recommended that the partitions used to represent the
 RAID device are not used for file systems.
+.Ss Simple RAID configuration
+For simple RAID configurations using RAID levels 0 (simple striping),
+1 (mirroring), or 5 (striping with distributed parity)
+.Nm
+supports command-line configuration of RAID setups without
+the use of a configuration file.  For example,
+.Bd -literal -offset indent
+raidctl raid0 create 0 /dev/wd0e /dev/wd1e /dev/wd2e
+.Ed
+.Pp
+will create a RAID level 0 set on the device named
+.Pa raid0
+using the components
+.Pa /dev/wd0e ,
+.Pa /dev/wd1e ,
+and
+.Pa /dev/wd2e .
+Similarly,
+.Bd -literal -offset indent
+raidctl raid0 create mirror absent /dev/wd1e
+.Ed
+.Pp
+will create a RAID level 1 (mirror) set with an absent first component
+and
+.Pa /dev/wd1e
+as the second component.  In all cases the resulting RAID device will
+be marked as auto-configurable, will have a serial number set (based
+on the current time), and parity will be initialized (if the RAID level
+has parity and sufficent components are present).  Reasonable
+performance values are automatically used by default for other
+parameters normally specified in the configuration file.
+.Pp
 .Ss Configuration file
 The format of the configuration file is complex, and
 only an abbreviated treatment is given here.
@@ -540,6 +596,10 @@ for a more complete configuration file example.
 device special files.
 .El
 .Sh EXAMPLES
+The examples given in this section are for more complex
+setups than can be configured with the simplified command-line
+configuration option described early.
+.Pp
 It is highly recommended that before using the RAID driver for real
 file systems that the system administrator(s) become quite familiar
 with the use of
