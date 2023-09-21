@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.75 2022/04/12 20:51:42 andvar Exp $ */
+/* $NetBSD: ispvar.h,v 1.76 2023/09/21 09:31:50 msaitoh Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -55,7 +55,7 @@
  *  SUCH DAMAGE.
  */
 /*
- * Soft Definitions for for Qlogic ISP SCSI adapters.
+ * Soft Definitions for Qlogic ISP SCSI adapters.
  */
 
 #ifndef	_ISPVAR_H

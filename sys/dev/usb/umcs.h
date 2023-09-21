@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.h,v 1.4 2021/07/31 20:29:37 andvar Exp $ */
+/* $NetBSD: umcs.h,v 1.5 2023/09/21 09:31:50 msaitoh Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.h 252123 2013-06-23 20:19:51Z thomas $ */
 
 /*-
@@ -45,7 +45,7 @@
  *   All these registers are documented only in full datasheet,
  * which can be requested from MosChip tech support.
  */
-#define	MCS7840_DEV_REG_SP1		0x00	/* Options for for UART 1, R/W */
+#define	MCS7840_DEV_REG_SP1		0x00	/* Options for UART 1, R/W */
 #define	MCS7840_DEV_REG_CONTROL1	0x01	/* Control bits for UART 1,
 						 * R/W */
 #define	MCS7840_DEV_REG_PINPONGHIGH	0x02	/* High bits of ping-pong

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.149 2023/07/28 18:19:01 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.150 2023/09/21 09:31:50 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.149 2023/07/28 18:19:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.150 2023/09/21 09:31:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ extern const struct filterops fs_filtops;	/* vfs_syscalls.c */
 extern const struct filterops sig_filtops;	/* kern_sig.c */
 
 /*
- * Table for for all system-defined filters.
+ * Table for all system-defined filters.
  * These should be listed in the numeric order of the EVFILT_* defines.
  * If filtops is NULL, the filter isn't implemented in NetBSD.
  * End of list is when name is NULL.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.87 2021/06/24 09:17:53 riastradh Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.88 2023/09/21 09:31:50 msaitoh Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.87 2021/06/24 09:17:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.88 2023/09/21 09:31:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -3033,7 +3033,7 @@ iwm_send_paging_cmd(struct iwm_softc *sc, const struct iwm_fw_sects *fws)
 		size -= (sizeof(uint64_t) - sizeof(uint32_t)) *
 		    IWM_NUM_OF_FW_PAGING_BLOCKS;
 
-	/* loop for for all paging blocks + CSS block */
+	/* loop for all paging blocks + CSS block */
 	for (blk_idx = 0; blk_idx < sc->num_of_paging_blk + 1; blk_idx++) {
 		bus_addr_t dev_phy_addr =
 		    sc->fw_paging_db[blk_idx].fw_paging_block.paddr;

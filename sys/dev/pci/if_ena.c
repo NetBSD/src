@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.33 2022/05/23 13:53:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.34 2023/09/21 09:31:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3142,7 +3142,7 @@ ena_calc_io_queue_num(struct pci_attach_args *pa,
 	io_queue_num = min_t(int, mp_ncpus, ENA_MAX_NUM_IO_QUEUES);
 	io_queue_num = min_t(int, io_queue_num, io_sq_num);
 	io_queue_num = min_t(int, io_queue_num, io_cq_num);
-	/* 1 IRQ for for mgmnt and 1 IRQ for each TX/RX pair */
+	/* 1 IRQ for mgmnt and 1 IRQ for each TX/RX pair */
 	io_queue_num = min_t(int, io_queue_num,
 	    pci_msix_count(pa->pa_pc, pa->pa_tag) - 1);
 #ifdef	RSS

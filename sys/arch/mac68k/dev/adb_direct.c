@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.68 2019/01/08 19:41:09 jdolecek Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.69 2023/09/21 09:31:49 msaitoh Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.68 2019/01/08 19:41:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.69 2023/09/21 09:31:49 msaitoh Exp $");
 
 #include "opt_adb.h"
 
@@ -157,7 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.68 2019/01/08 19:41:09 jdolecek Exp
 
 /*
  * This is the delay that is required (in uS) between certain
- * ADB transactions. The actual timing delay for for each uS is
+ * ADB transactions. The actual timing delay for each uS is
  * calculated at boot time to account for differences in machine speed.
  */
 #define ADB_DELAY	150
