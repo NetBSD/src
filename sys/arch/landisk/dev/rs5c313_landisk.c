@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313_landisk.c,v 1.5 2010/04/06 15:29:19 nonaka Exp $	*/
+/*	$NetBSD: rs5c313_landisk.c,v 1.6 2023/09/21 09:24:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313_landisk.c,v 1.5 2010/04/06 15:29:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313_landisk.c,v 1.6 2023/09/21 09:24:09 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ rtc_ce(struct rs5c313_softc *sc, int onoff)
 
 
 /*
- * SCLK pin is connnected to SPB0DT.
+ * SCLK pin is connected to SPB0DT.
  * SPB0DT is always in output mode, we set SPB0IO in rtc_begin.
  */
 static void
