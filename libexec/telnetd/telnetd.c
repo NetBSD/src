@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.58 2022/08/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.59 2023/09/21 14:00:34 shm Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.58 2022/08/26 19:30:44 dholland Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.59 2023/09/21 14:00:34 shm Exp $");
 #endif
 #endif /* not lint */
 
@@ -400,6 +400,7 @@ main(int argc, char *argv[])
 	    (void) dup2(ns, 0);
 	    (void) close(ns);
 	    (void) close(s);
+	    freeaddrinfo(res);
 	} else if (argc > 0) {
 		usage();
 		/* NOT REACHED */
