@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.218 2022/11/04 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.218.2.1 2023/09/21 13:22:46 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.218 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.218.2.1 2023/09/21 13:22:46 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1612,8 +1612,8 @@ out:
 			TCP_STATINC(TCP_STAT_SELFQUENCH);
 			tcp_quench(tp->t_inpcb);
 			error = 0;
-		} else if ((error == EHOSTUNREACH || error == ENETDOWN) &&
-		    TCPS_HAVERCVDSYN(tp->t_state)) {
+		} else if ((error == EHOSTUNREACH || error == ENETDOWN ||
+		    error == EHOSTDOWN) && TCPS_HAVERCVDSYN(tp->t_state)) {
 			tp->t_softerror = error;
 			error = 0;
 		}
