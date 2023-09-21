@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.79 2023/09/17 20:07:39 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.80 2023/09/21 01:40:44 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.79 2023/09/17 20:07:39 oster Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.80 2023/09/21 01:40:44 oster Exp $");
 #endif
 
 
@@ -92,6 +92,7 @@ static  void get_bar(char *, double, int);
 static  void get_time_string(char *, size_t, int);
 static  void rf_output_pmstat(int, int);
 static  void rf_pm_configure(int, int, char *, int[]);
+static  void rf_simple_create(int, int, char *[]);
 static  unsigned int xstrtouint(const char *);
 
 int verbose;
@@ -128,7 +129,8 @@ main(int argc,char *argv[])
 	int force;
 	int openmode;
 	int last_unit;
-
+	struct timeval tv;
+	
 	num_options = 0;
 	action = 0;
 	do_output = 0;
@@ -139,6 +141,45 @@ main(int argc,char *argv[])
 	last_unit = 0;
 	openmode = O_RDWR;	/* default to read/write */
 
+	if (argc > 5) {
+		/* we have at least 5 args, so it might be a simplified config */
+		
+		/* XXX NEW CODE XXX */
+		strlcpy(name, argv[1], sizeof(name));
+		fd = opendisk(name, openmode, dev_name, sizeof(dev_name), 0);
+		if (fd != -1) {
+			/* we were able to open the device... */
+			if (fstat(fd, &st) == -1)
+				err(1, "stat failure on: %s", dev_name);
+			if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
+				err(1, "invalid device: %s", dev_name);
+			
+			raidID = DISKUNIT(st.st_rdev);
+			if (strncmp(argv[2],"create",6)==0) {
+				rf_simple_create(fd,argc-3,&argv[3]);
+				
+				/* set serial number, set autoconfig, init parity */
+				/* XXX need to grok a random number for the serial number here */
+
+				if (gettimeofday(&tv,NULL) == -1) {
+					serial_number = 12345777;
+				} else {
+					serial_number = tv.tv_sec;
+				}
+				init_component_labels(fd, serial_number);
+				strlcpy(autoconf, "yes", sizeof(autoconf));
+				set_autoconfig(fd, raidID, autoconf);
+				
+			} else
+				usage();
+			
+			close(fd);
+			exit(0);
+		}
+
+		/* otherwise we go back to regular parsing */
+	}
+		
 	while ((ch = getopt(argc, argv,
 	    "a:A:Bc:C:f:F:g:GiI:l:LmM:r:R:sSpPt:uU:v")) != -1)
 		switch (ch) {
@@ -899,11 +940,12 @@ set_autoconfig(int fd, int raidID, char *autoconf)
 	do_ioctl(fd, RAIDFRAME_SET_ROOT, &root_config,
 		 "RAIDFRAME_SET_ROOT");
 
-	printf("raid%d: Autoconfigure: %s\n", raidID,
-	       auto_config ? "Yes" : "No");
-
-	if (auto_config == 1) {
-		printf("raid%d: Root: %s\n", raidID, rootpart[root_config]);
+	if (verbose) {
+		printf("raid%d: Autoconfigure: %s\n", raidID,
+		       auto_config ? "Yes" : "No");
+		if (auto_config == 1) {
+			printf("raid%d: Root: %s\n", raidID, rootpart[root_config]);
+		}
 	}
 }
 
@@ -1214,14 +1256,123 @@ get_time_string(char *string, size_t len, int simple_time)
 	
 }
 
+/* Simplified RAID creation with a single command line... */
+static void
+rf_simple_create(int fd, int argc, char *argv[])
+{
+	int i;
+	int level;
+	int num_components;
+	char *components[RF_MAXCOL];
+	void *generic;
+	RF_Config_t cfg;
+
+	/* 
+	 * Note the extra level of redirection needed here, since
+	 * what we really want to pass in is a pointer to the pointer to 
+	 * the configuration structure. 
+	 */
+
+	
+	if (strcmp(argv[0],"mirror")==0) {
+		level = 1;
+	} else
+		level = atoi(argv[0]);
+
+	if (level != 0 && level != 1 && level !=5)
+		usage();
+
+	/* remaining args must be components */
+	num_components = 0;
+	for (i=1 ; i<argc ; i++) {
+		components[i-1] = argv[i];
+		num_components++;
+	}
+
+	/* Level 0 must have at least two components.
+	   Level 1 must have exactly two components.
+	   Level 5 must have at least three components. */
+	if ((level == 0 && num_components < 2) ||
+	    (level == 1 && num_components != 2) ||
+	    (level == 5 && num_components < 3))
+		usage();
+
+	/* build a config... */
+
+	memset(&cfg, 0, sizeof(cfg));
+
+	cfg.numCol = num_components;
+	cfg.numSpare = 0;
+
+	for (i=0 ; i<num_components; i++) {
+		strlcpy(cfg.devnames[0][i], components[i],
+			sizeof(cfg.devnames[0][i]));
+	}
+
+	/* pick some reasonable values for sectPerSU, etc. */
+	if (level == 0) {
+		if (num_components == 2) {
+			/* 64 blocks (32K) per component - 64K data per stripe */
+			cfg.sectPerSU = 64;
+		} else if (num_components == 3 || num_components == 4) {
+			/* 32 blocks (16K) per component - 64K data per strip for
+			   the 4-component case. */
+			cfg.sectPerSU = 32;
+		} else {
+			/* 16 blocks (8K) per component */
+			cfg.sectPerSU = 16;
+		}
+	} else if (level == 1) {
+		/* 128 blocks (64K per compnent) - 64K per stripe */
+		cfg.sectPerSU = 128;
+	} else if (level == 5) {
+		if (num_components == 3) {
+			/* 64 blocks (32K) per disk - 64K data per stripe */
+			cfg.sectPerSU = 64;
+		} else if (num_components >= 4 && num_components < 9) {
+			/* 4 components makes 3 data components.  No power of 2 is 
+			   evenly divisible by 3 so performance will be lousy
+			   regardless of what number we choose here.  5 components is
+			   what we are really hoping for here, as 5 components with 4
+			   data components on RAID 5 means 32 blocks (16K) per data
+			   component, or 64K per stripe */
+			cfg.sectPerSU = 32;
+		} else {
+			/* 9 components here is optimal for 16 blocks (8K) per data
+			   component */
+			cfg.sectPerSU = 16;
+		}
+	} else
+		usage();	
+	
+	cfg.SUsPerPU = 1;
+	cfg.SUsPerRU = 1;
+	cfg.parityConfig = '0' + level;
+	strlcpy(cfg.diskQueueType, "fifo", sizeof(cfg.diskQueueType));
+	cfg.maxOutstandingDiskReqs = 1;
+	cfg.force = 1;
+
+	/* configure... */
+
+	generic = &cfg;
+	do_ioctl(fd, RAIDFRAME_CONFIGURE, &generic, "RAIDFRAME_CONFIGURE");
+
+	if (level == 1 || level == 5) 
+		do_ioctl(fd, RAIDFRAME_REWRITEPARITY, NULL, 
+			 "RAIDFRAME_REWRITEPARITY");
+}
+	
+
 static void
 usage(void)
 {
 	const char *progname = getprogname();
 
 	fprintf(stderr,
-	    "usage: %s [-v] -A [yes | no | softroot | hardroot] dev\n",
-	    progname);
+		"usage: %s dev create [0 | 1 | mirror | 5] component component ...\n",
+		progname);
+	fprintf(stderr, "       %s [-v] -A [yes | no | softroot | hardroot] dev\n",
+		progname);
 	fprintf(stderr, "       %s [-v] -a component dev\n", progname);
 	fprintf(stderr, "       %s [-v] -B dev\n", progname);
 	fprintf(stderr, "       %s [-v] -C config_file dev\n", progname);
