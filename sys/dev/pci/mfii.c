@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.28 2022/09/29 10:27:02 bouyer Exp $ */
+/* $NetBSD: mfii.c,v 1.29 2023/09/22 14:14:00 christos Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.28 2022/09/29 10:27:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.29 2023/09/22 14:14:00 christos Exp $");
 
 #include "bio.h"
 
@@ -1460,6 +1460,7 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 		if (old == -1 && nld != -1) {
 			printf("%s: logical drive %d added (target %d)\n",
 			    DEVNAME(sc), i, nld);
+			sc->sc_ld[i].ld_present = 1;
 
 			// XXX scsi_probe_target(sc->sc_scsibus, i);
 
@@ -1468,6 +1469,7 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 		} else if (nld == -1 && old != -1) {
 			printf("%s: logical drive %d removed (target %d)\n",
 			    DEVNAME(sc), i, old);
+			sc->sc_ld[i].ld_present = 0;
 
 			scsipi_target_detach(&sc->sc_chan, i, 0, DETACH_FORCE);
 			sysmon_envsys_sensor_detach(sc->sc_sme,
