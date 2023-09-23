@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.57 2023/09/23 12:29:24 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.58 2023/09/23 12:48:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.57 2023/09/23 12:29:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.58 2023/09/23 12:48:23 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -639,7 +639,7 @@ zs_set_speed(struct zs_chanstate *cs, int bps)
 		}
 	}
 #ifdef ZSMACDEBUG
-	printf("Checking for rate %d. Found source #%d.\n",bps, src);
+	printf("Checking for rate %d. Found source #%d.\n", bps, src);
 #endif
 	if (src == -1)
 		return (EINVAL); /* no can do */
@@ -688,10 +688,10 @@ zs_set_speed(struct zs_chanstate *cs, int bps)
 	splx(s);
 	
 #ifdef ZSMACDEBUG
-	printf("Rate is %7d, tc is %7d, source no. %2d, flags %4x\n", \
+	printf("Rate is %7d, tc is %7d, source no. %2d, flags %4x\n",
 	    bps, tc, src, sf);
 	printf("Registers are: 4 %x, 11 %x, 14 %x\n\n",
-		cs->cs_preg[4], cs->cs_preg[11], cs->cs_preg[14]);
+	    cs->cs_preg[4], cs->cs_preg[11], cs->cs_preg[14]);
 #endif
 
 	cs->cs_preg[5] |= ZSWR5_RTS;	/* Make sure the drivers are on! */
