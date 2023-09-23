@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_rwlock_obj.c,v 1.11 2023/09/12 16:17:21 ad Exp $	*/
+/*	$NetBSD: kern_rwlock_obj.c,v 1.12 2023/09/23 18:21:11 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2019, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock_obj.c,v 1.11 2023/09/12 16:17:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock_obj.c,v 1.12 2023/09/23 18:21:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/rwlock.h>
 
 /* Mutex cache */
@@ -43,40 +43,9 @@ struct krwobj {
 	krwlock_t	ro_lock;
 	u_int		ro_magic;
 	u_int		ro_refcnt;
+	uint8_t		mo_pad[COHERENCY_UNIT - sizeof(krwlock_t) -
+	    sizeof(u_int) * 2];
 };
-
-static int	rw_obj_ctor(void *, void *, int);
-
-static pool_cache_t	rw_obj_cache	__read_mostly;
-
-/*
- * rw_obj_init:
- *
- *	Initialize the rw object store.
- */
-void
-rw_obj_init(void)
-{
-
-	rw_obj_cache = pool_cache_init(sizeof(struct krwobj),
-	    coherency_unit, 0, 0, "rwlock", NULL, IPL_NONE, rw_obj_ctor,
-	    NULL, NULL);
-}
-
-/*
- * rw_obj_ctor:
- *
- *	Initialize a new lock for the cache.
- */
-static int
-rw_obj_ctor(void *arg, void *obj, int flags)
-{
-	struct krwobj * ro = obj;
-
-	ro->ro_magic = RW_OBJ_MAGIC;
-
-	return 0;
-}
 
 /*
  * rw_obj_alloc:
@@ -88,8 +57,10 @@ rw_obj_alloc(void)
 {
 	struct krwobj *ro;
 
-	ro = pool_cache_get(rw_obj_cache, PR_WAITOK);
+	ro = kmem_alloc(sizeof(*ro), KM_SLEEP);
+	KASSERT(ALIGNED_POINTER(ro, coherency_unit));
 	_rw_init(&ro->ro_lock, (uintptr_t)__builtin_return_address(0));
+	ro->ro_magic = RW_OBJ_MAGIC;
 	ro->ro_refcnt = 1;
 
 	return (krwlock_t *)ro;
@@ -105,9 +76,11 @@ rw_obj_tryalloc(void)
 {
 	struct krwobj *ro;
 
-	ro = pool_cache_get(rw_obj_cache, PR_NOWAIT);
+	ro = kmem_alloc(sizeof(*ro), KM_NOSLEEP);
+	KASSERT(ALIGNED_POINTER(ro, coherency_unit));
 	if (__predict_true(ro != NULL)) {
 		_rw_init(&ro->ro_lock, (uintptr_t)__builtin_return_address(0));
+		ro->ro_magic = RW_OBJ_MAGIC;
 		ro->ro_refcnt = 1;
 	}
 
@@ -151,7 +124,7 @@ rw_obj_free(krwlock_t *lock)
 	}
 	membar_acquire();
 	rw_destroy(&ro->ro_lock);
-	pool_cache_put(rw_obj_cache, ro);
+	kmem_free(ro, sizeof(*ro));
 	return true;
 }
 
