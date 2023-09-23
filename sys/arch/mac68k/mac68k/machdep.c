@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.364 2022/12/26 01:05:35 nat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.365 2023/09/23 13:45:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.364 2022/12/26 01:05:35 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.365 2023/09/23 13:45:50 andvar Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -846,7 +846,7 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #ifdef COMPAT_NOMID
 	/* Check to see if MID == 0. */
 	if (((struct exec *)epp->ep_hdr)->a_midmag == ZMAGIC)
-		return exec_aout_prep_oldzmagic(l->l_proc, epp);
+		return exec_aout_prep_oldzmagic(l, epp);
 #endif
 
 	return error;
