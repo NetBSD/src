@@ -1,7 +1,8 @@
-/*	$NetBSD: sys_select.c,v 1.61 2023/07/17 12:54:29 riastradh Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.62 2023/09/23 18:48:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020, 2023
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -84,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.61 2023/07/17 12:54:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.62 2023/09/23 18:48:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +146,7 @@ static const int sel_flag[] = {
 syncobj_t select_sobj = {
 	.sobj_name	= "select",
 	.sobj_flag	= SOBJ_SLEEPQ_LIFO,
+	.sobj_boostpri  = PRI_KERNEL,
 	.sobj_unsleep	= sleepq_unsleep,
 	.sobj_changepri	= sleepq_changepri,
 	.sobj_lendpri	= sleepq_lendpri,
@@ -320,7 +322,6 @@ state_check:
 		}
 		/* Nothing happen, therefore - sleep. */
 		l->l_selflag = SEL_BLOCKING;
-		l->l_kpriority = true;
 		sleepq_enter(&sc->sc_sleepq, l, lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, opname, &select_sobj, true);
 		error = sleepq_block(timo, true, &select_sobj);

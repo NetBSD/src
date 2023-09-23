@@ -1,7 +1,8 @@
-/*	$NetBSD: kern_sleepq.c,v 1.74 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.75 2023/09/23 18:48:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020, 2023
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.74 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.75 2023/09/23 18:48:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,6 +212,25 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 }
 
 /*
+ * sleepq_enter:
+ *
+ *	Prepare to block on a sleep queue, after which any interlock can be
+ *	safely released.
+ */
+void
+sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
+{
+
+	/*
+	 * Acquire the per-LWP mutex and lend it our sleep queue lock.
+	 * Once interlocked, we can release the kernel lock.
+	 */
+	lwp_lock(l);
+	lwp_unlock_to(l, mp);
+	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
+}
+
+/*
  * sleepq_enqueue:
  *
  *	Enter an LWP into the sleep queue and prepare for sleep.  The sleep
@@ -303,7 +323,7 @@ sleepq_uncatch(lwp_t *l)
  *	timo is a timeout in ticks.  timo = 0 specifies an infinite timeout.
  */
 int
-sleepq_block(int timo, bool catch_p, struct syncobj *syncobj)
+sleepq_block(int timo, bool catch_p, syncobj_t *syncobj)
 {
 	int error = 0, sig;
 	struct proc *p;

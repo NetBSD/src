@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_synch.c,v 1.358 2023/07/17 12:54:29 riastradh Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.359 2023/09/23 18:48:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020, 2023
  *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.358 2023/07/17 12:54:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.359 2023/09/23 18:48:04 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_ddb.h"
@@ -115,6 +115,7 @@ static void	sched_lendpri(struct lwp *, pri_t);
 syncobj_t sleep_syncobj = {
 	.sobj_name	= "sleep",
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
+	.sobj_boostpri  = PRI_KERNEL,
 	.sobj_unsleep	= sleepq_unsleep,
 	.sobj_changepri	= sleepq_changepri,
 	.sobj_lendpri	= sleepq_lendpri,
@@ -124,6 +125,7 @@ syncobj_t sleep_syncobj = {
 syncobj_t sched_syncobj = {
 	.sobj_name	= "sched",
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
+	.sobj_boostpri  = PRI_USER,
 	.sobj_unsleep	= sched_unsleep,
 	.sobj_changepri	= sched_changepri,
 	.sobj_lendpri	= sched_lendpri,
@@ -133,6 +135,7 @@ syncobj_t sched_syncobj = {
 syncobj_t kpause_syncobj = {
 	.sobj_name	= "kpause",
 	.sobj_flag	= SOBJ_SLEEPQ_NULL,
+	.sobj_boostpri  = PRI_KERNEL,
 	.sobj_unsleep	= sleepq_unsleep,
 	.sobj_changepri	= sleepq_changepri,
 	.sobj_lendpri	= sleepq_lendpri,
@@ -193,7 +196,6 @@ tsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo)
 		return 0;
 	}
 
-	l->l_kpriority = true;
 	catch_p = priority & PCATCH;
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
 	sleepq_enter(sq, l, mp);
@@ -219,7 +221,6 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 		return 0;
 	}
 
-	l->l_kpriority = true;
 	catch_p = priority & PCATCH;
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
 	sleepq_enter(sq, l, mp);
@@ -249,7 +250,6 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 
 	if (mtx != NULL)
 		mutex_exit(mtx);
-	l->l_kpriority = true;
 	lwp_lock(l);
 	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
 	sleepq_enqueue(NULL, l, wmesg, &kpause_syncobj, intr);
@@ -293,8 +293,6 @@ yield(void)
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
 
-	/* Voluntary - ditch kpriority boost. */
-	l->l_kpriority = false;
 	spc_lock(l->l_cpu);
 	mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
@@ -307,7 +305,6 @@ yield(void)
  *
  * - It's counted differently (involuntary vs. voluntary).
  * - Realtime threads go to the head of their runqueue vs. tail for yield().
- * - Priority boost is retained unless LWP has exceeded timeslice.
  */
 void
 preempt(void)
@@ -321,10 +318,6 @@ preempt(void)
 	KASSERT(l->l_stat == LSONPROC);
 
 	spc_lock(l->l_cpu);
-	/* Involuntary - keep kpriority boost unless a CPU hog. */
-	if ((l->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) != 0) {
-		l->l_kpriority = false;
-	}
 	l->l_pflag |= LP_PREEMPTING;
 	mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
@@ -431,7 +424,6 @@ kpreempt(uintptr_t where)
 			kpreempt_ev_immed.ev_count++;
 		}
 		lwp_lock(l);
-		/* Involuntary - keep kpriority boost. */
 		l->l_pflag |= LP_PREEMPTING;
 		spc_lock(l->l_cpu);
 		mi_switch(l);

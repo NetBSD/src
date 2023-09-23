@@ -1,7 +1,7 @@
-/*	$NetBSD: sleepq.h,v 1.36 2022/10/26 23:24:59 riastradh Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.37 2023/09/23 18:48:05 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020, 2023
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -46,13 +46,14 @@
  */
 
 typedef struct sleepq sleepq_t;
+typedef struct syncobj const syncobj_t;
 
 void	sleepq_init(sleepq_t *);
 void	sleepq_remove(sleepq_t *, lwp_t *);
-void	sleepq_enqueue(sleepq_t *, wchan_t, const char *, struct syncobj *,
-	    bool);
+void	sleepq_enter(sleepq_t *, lwp_t *, kmutex_t *);
+void	sleepq_enqueue(sleepq_t *, wchan_t, const char *, syncobj_t *, bool);
 void	sleepq_transfer(lwp_t *, sleepq_t *, sleepq_t *, wchan_t, const char *,
-	    struct syncobj *, kmutex_t *, bool);
+	    syncobj_t *, kmutex_t *, bool);
 void	sleepq_uncatch(lwp_t *);
 void	sleepq_unsleep(lwp_t *, bool);
 void	sleepq_timeout(void *);
@@ -60,7 +61,7 @@ void	sleepq_wake(sleepq_t *, wchan_t, u_int, kmutex_t *);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(lwp_t *, pri_t);
 void	sleepq_lendpri(lwp_t *, pri_t);
-int	sleepq_block(int, bool, struct syncobj *);
+int	sleepq_block(int, bool, syncobj_t *);
 
 #ifdef _KERNEL
 
@@ -83,24 +84,7 @@ sleepq_dontsleep(lwp_t *l)
 	return cold || (doing_shutdown && (panicstr || CURCPU_IDLE_P()));
 }
 
-/*
- * Prepare to block on a sleep queue, after which any interlock can be
- * safely released.
- */
-static __inline void
-sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
-{
-
-	/*
-	 * Acquire the per-LWP mutex and lend it ours sleep queue lock.
-	 * Once interlocked, we can release the kernel lock.
-	 */
-	lwp_lock(l);
-	lwp_unlock_to(l, mp);
-	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
-}
-
-#endif
+#endif	/* _KERNEL */
 
 #include <sys/sleeptab.h>
 
