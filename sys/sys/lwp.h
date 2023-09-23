@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.221 2023/09/23 18:48:05 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.222 2023/09/23 20:23:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -112,6 +112,7 @@ struct lwp {
 	u_int		l_slpticksum;	/* l: Sum of ticks spent sleeping */
 	int		l_biglocks;	/* l: biglock count before sleep */
 	int		l_class;	/* l: scheduling class */
+	pri_t		l_boostpri;	/* l: boosted priority after blocking */
 	pri_t		l_priority;	/* l: scheduler priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
 	pri_t		l_protectprio;	/* l: for PTHREAD_PRIO_PROTECT */

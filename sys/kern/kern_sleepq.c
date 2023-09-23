@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.75 2023/09/23 18:48:04 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.76 2023/09/23 20:23:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.75 2023/09/23 18:48:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.76 2023/09/23 20:23:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -368,6 +368,7 @@ sleepq_block(int timo, bool catch_p, syncobj_t *syncobj)
 			l->l_flag &= ~LW_STIMO;
 			callout_schedule(&l->l_timeout_ch, timo);
 		}
+		l->l_boostpri = l->l_syncobj->sobj_boostpri;
 		spc_lock(l->l_cpu);
 		mi_switch(l);
 
