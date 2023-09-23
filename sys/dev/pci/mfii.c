@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.29 2023/09/22 14:14:00 christos Exp $ */
+/* $NetBSD: mfii.c,v 1.30 2023/09/23 13:01:16 christos Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.29 2023/09/22 14:14:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.30 2023/09/23 13:01:16 christos Exp $");
 
 #include "bio.h"
 
@@ -528,6 +528,8 @@ static const char *mfi_bbu_indicators[] = {
 	"periodic learn req'd"
 };
 #endif
+
+#define MFI_BBU_SENSORS 4
 
 static void	mfii_init_ld_sensor(struct mfii_softc *, envsys_data_t *, int);
 static void	mfii_refresh_ld_sensor(struct mfii_softc *, envsys_data_t *);
@@ -1427,7 +1429,7 @@ static void
 mfii_aen_ld_update(struct mfii_softc *sc)
 {
 	union mfi_mbox mbox;
-	int i, target, old, nld;
+	int i, j, target, old, nld;
 	int newlds[MFII_MAX_LD_EXT];
 
 	memset(&mbox, 0, sizeof(mbox));
@@ -1464,8 +1466,9 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 
 			// XXX scsi_probe_target(sc->sc_scsibus, i);
 
-			mfii_init_ld_sensor(sc, &sc->sc_sensors[i], i);
-			mfii_attach_sensor(sc, &sc->sc_sensors[i]);
+			j = i + MFI_BBU_SENSORS;
+			mfii_init_ld_sensor(sc, &sc->sc_sensors[j], i);
+			mfii_attach_sensor(sc, &sc->sc_sensors[j]);
 		} else if (nld == -1 && old != -1) {
 			printf("%s: logical drive %d removed (target %d)\n",
 			    DEVNAME(sc), i, old);
@@ -1473,7 +1476,7 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 
 			scsipi_target_detach(&sc->sc_chan, i, 0, DETACH_FORCE);
 			sysmon_envsys_sensor_detach(sc->sc_sme,
-			    &sc->sc_sensors[i]);
+			    &sc->sc_sensors[i + MFI_BBU_SENSORS]);
 		}
 	}
 
@@ -3834,8 +3837,6 @@ freeme:
 
 #endif /* NBIO > 0 */
 
-#define MFI_BBU_SENSORS 4
-
 static void
 mfii_bbu(struct mfii_softc *sc, envsys_data_t *edata)
 {
@@ -3935,7 +3936,7 @@ mfii_attach_sensor(struct mfii_softc *sc, envsys_data_t *s)
 static int
 mfii_create_sensors(struct mfii_softc *sc)
 {
-	int i, rv;
+	int i, j, rv;
 	const int nsensors = MFI_BBU_SENSORS + MFII_MAX_LD_EXT;
 
 	sc->sc_sme = sysmon_envsys_create();
@@ -3973,8 +3974,9 @@ mfii_create_sensors(struct mfii_softc *sc)
 	}
 
 	for (i = 0; i < sc->sc_ld_list.mll_no_ld; i++) {
-		mfii_init_ld_sensor(sc, &sc->sc_sensors[i + MFI_BBU_SENSORS], i);
-		mfii_attach_sensor(sc, &sc->sc_sensors[i + MFI_BBU_SENSORS]);
+		j = i + MFI_BBU_SENSORS;
+		mfii_init_ld_sensor(sc, &sc->sc_sensors[j], i);
+		mfii_attach_sensor(sc, &sc->sc_sensors[j]);
 	}
 
 	sc->sc_sme->sme_name = DEVNAME(sc);
