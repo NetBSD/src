@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.63 2023/09/12 16:17:21 ad Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.64 2023/09/23 18:21:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.63 2023/09/12 16:17:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.64 2023/09/23 18:21:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -103,8 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.63 2023/09/12 16:17:21 ad Exp $");
 #endif
 
 SDT_PROVIDER_DEFINE(vfs);
-
-pool_cache_t pnbuf_cache;
 
 /*
  * These vnodeopv_descs are listed here because they are not
@@ -406,13 +404,6 @@ vfsinit(void)
 	 * Attach sysctl nodes
 	 */
 	sysctl_vfs_setup();
-
-	/*
-	 * Initialize the namei pathname buffer pool and cache.
-	 */
-	pnbuf_cache = pool_cache_init(MAXPATHLEN, 0, 0, 0, "pnbufpl",
-	    NULL, IPL_NONE, NULL, NULL, NULL);
-	KASSERT(pnbuf_cache != NULL);
 
 	/*
 	 * Initialize the vnode table

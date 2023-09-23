@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.58 2023/09/12 16:17:22 ad Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.59 2023/09/23 18:21:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.58 2023/09/12 16:17:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.59 2023/09/23 18:21:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,6 @@ uvm_init(void)
 	 * so initialize that first.
 	 */
 
-	rw_obj_init();
 	uao_create(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS,
 	    UAO_FLAG_KERNSWAP);
 

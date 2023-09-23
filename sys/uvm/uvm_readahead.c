@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.15 2023/09/12 16:17:22 ad Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.16 2023/09/23 18:21:12 ad Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005, 2009 YAMAMOTO Takashi,
@@ -40,10 +40,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.15 2023/09/12 16:17:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.16 2023/09/23 18:21:12 ad Exp $");
 
 #include <sys/param.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
@@ -83,8 +83,6 @@ static off_t ra_startio(struct uvm_object *, off_t, size_t);
 static struct uvm_ractx *ra_allocctx(void);
 static void ra_freectx(struct uvm_ractx *);
 
-static struct pool_cache ractx_cache;
-
 /*
  * uvm_ra_init: initialize readahead module.
  */
@@ -93,22 +91,20 @@ void
 uvm_ra_init(void)
 {
 
-	pool_cache_bootstrap(&ractx_cache, sizeof(struct uvm_ractx), 0, 0, 0,
-	    "ractx", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 static struct uvm_ractx *
 ra_allocctx(void)
 {
 
-	return pool_cache_get(&ractx_cache, PR_NOWAIT);
+	return kmem_alloc(sizeof(struct uvm_ractx), KM_NOSLEEP);
 }
 
 static void
 ra_freectx(struct uvm_ractx *ra)
 {
 
-	pool_cache_put(&ractx_cache, ra);
+	kmem_free(ra, sizeof(struct uvm_ractx));
 }
 
 /*

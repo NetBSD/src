@@ -1,7 +1,7 @@
-/*	$NetBSD: init_main.c,v 1.545 2023/09/12 16:17:21 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.546 2023/09/23 18:21:11 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2019, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.545 2023/09/12 16:17:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.546 2023/09/23 18:21:11 ad Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -327,9 +327,6 @@ main(void)
 
 	percpu_init();
 
-	/* Initialize lock caches. */
-	mutex_obj_init();
-
 	/* Initialize radix trees (used by numerous subsystems). */
 	radix_tree_init();
 
@@ -507,9 +504,6 @@ main(void)
 
 	/* Initialize the file descriptor system. */
 	fd_sys_init();
-
-	/* Initialize cwd structures */
-	cwd_sys_init();
 
 	/* Initialize kqueue. */
 	kqueue_init();

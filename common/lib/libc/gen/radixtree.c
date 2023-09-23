@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.31 2023/09/12 16:17:21 ad Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.32 2023/09/23 18:21:11 ad Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
  *
  * Intermediate nodes are automatically allocated and freed internally and
  * basically users don't need to care about them.  The allocation is done via
- * pool_cache_get(9) for _KERNEL, malloc(3) for userland, and alloc() for
+ * kmem_zalloc(9) for _KERNEL, malloc(3) for userland, and alloc() for
  * _STANDALONE environment.  Only radix_tree_insert_node function can allocate
  * memory for intermediate nodes and thus can fail for ENOMEM.
  *
@@ -112,17 +112,17 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.31 2023/09/12 16:17:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.32 2023/09/23 18:21:11 ad Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/radixtree.h>
 #include <lib/libkern/libkern.h>
 #if defined(_STANDALONE)
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.31 2023/09/12 16:17:21 ad Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.32 2023/09/23 18:21:11 ad Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -303,18 +303,6 @@ radix_tree_node_init(struct radix_tree_node *n)
 }
 
 #if defined(_KERNEL)
-pool_cache_t radix_tree_node_cache __read_mostly;
-
-static int
-radix_tree_node_ctor(void *dummy, void *item, int flags)
-{
-	struct radix_tree_node *n = item;
-
-	KASSERT(dummy == NULL);
-	radix_tree_node_init(n);
-	return 0;
-}
-
 /*
  * radix_tree_init:
  *
@@ -325,10 +313,7 @@ void
 radix_tree_init(void)
 {
 
-	radix_tree_node_cache = pool_cache_init(sizeof(struct radix_tree_node),
-	    coherency_unit, 0, PR_LARGECACHE, "radixnode", NULL, IPL_NONE,
-	    radix_tree_node_ctor, NULL, NULL);
-	KASSERT(radix_tree_node_cache != NULL);
+	/* nothing right now */
 }
 
 /*
@@ -346,10 +331,11 @@ radix_tree_await_memory(void)
 	int i;
 
 	for (i = 0; i < __arraycount(nodes); i++) {
-		nodes[i] = pool_cache_get(radix_tree_node_cache, PR_WAITOK);
+		nodes[i] = kmem_intr_alloc(sizeof(struct radix_tree_node),
+		    KM_SLEEP);
 	}
 	while (--i >= 0) {
-		pool_cache_put(radix_tree_node_cache, nodes[i]);
+		kmem_free(nodes[i], sizeof(struct radix_tree_node));
 	}
 }
 
@@ -424,11 +410,10 @@ radix_tree_alloc_node(void)
 
 #if defined(_KERNEL)
 	/*
-	 * note that pool_cache_get can block.
+	 * note that kmem_alloc can block.
 	 */
-	n = pool_cache_get(radix_tree_node_cache, PR_NOWAIT);
-#else /* defined(_KERNEL) */
-#if defined(_STANDALONE)
+	n = kmem_intr_alloc(sizeof(struct radix_tree_node), KM_SLEEP);
+#elif defined(_STANDALONE)
 	n = alloc(sizeof(*n));
 #else /* defined(_STANDALONE) */
 	n = malloc(sizeof(*n));
@@ -436,7 +421,6 @@ radix_tree_alloc_node(void)
 	if (n != NULL) {
 		radix_tree_node_init(n);
 	}
-#endif /* defined(_KERNEL) */
 	KASSERT(n == NULL || radix_tree_sum_node(n) == 0);
 	return n;
 }
@@ -447,7 +431,7 @@ radix_tree_free_node(struct radix_tree_node *n)
 
 	KASSERT(radix_tree_sum_node(n) == 0);
 #if defined(_KERNEL)
-	pool_cache_put(radix_tree_node_cache, n);
+	kmem_intr_free(n, sizeof(struct radix_tree_node));
 #elif defined(_STANDALONE)
 	dealloc(n, sizeof(*n));
 #else

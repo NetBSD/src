@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_mutex_obj.c,v 1.13 2023/09/12 16:17:21 ad Exp $	*/
+/*	$NetBSD: kern_mutex_obj.c,v 1.14 2023/09/23 18:21:11 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2019, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.13 2023/09/12 16:17:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.14 2023/09/23 18:21:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/mutex.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 
 /* Mutex cache */
 #define	MUTEX_OBJ_MAGIC	0x5aa3c85d
@@ -43,40 +43,9 @@ struct kmutexobj {
 	kmutex_t	mo_lock;
 	u_int		mo_magic;
 	u_int		mo_refcnt;
+	uint8_t		mo_pad[COHERENCY_UNIT - sizeof(kmutex_t) -
+	    sizeof(u_int) * 2];
 };
-
-static int	mutex_obj_ctor(void *, void *, int);
-
-static pool_cache_t	mutex_obj_cache		__read_mostly;
-
-/*
- * mutex_obj_init:
- *
- *	Initialize the mutex object store.
- */
-void
-mutex_obj_init(void)
-{
-
-	mutex_obj_cache = pool_cache_init(sizeof(struct kmutexobj),
-	    coherency_unit, 0, 0, "mutex", NULL, IPL_NONE, mutex_obj_ctor,
-	    NULL, NULL);
-}
-
-/*
- * mutex_obj_ctor:
- *
- *	Initialize a new lock for the cache.
- */
-static int
-mutex_obj_ctor(void *arg, void *obj, int flags)
-{
-	struct kmutexobj * mo = obj;
-
-	mo->mo_magic = MUTEX_OBJ_MAGIC;
-
-	return 0;
-}
 
 /*
  * mutex_obj_alloc:
@@ -88,9 +57,11 @@ mutex_obj_alloc(kmutex_type_t type, int ipl)
 {
 	struct kmutexobj *mo;
 
-	mo = pool_cache_get(mutex_obj_cache, PR_WAITOK);
+	mo = kmem_alloc(sizeof(*mo), KM_SLEEP);
+	KASSERT(ALIGNED_POINTER(mo, coherency_unit));
 	_mutex_init(&mo->mo_lock, type, ipl,
 	    (uintptr_t)__builtin_return_address(0));
+	mo->mo_magic = MUTEX_OBJ_MAGIC;
 	mo->mo_refcnt = 1;
 
 	return (kmutex_t *)mo;
@@ -106,10 +77,12 @@ mutex_obj_tryalloc(kmutex_type_t type, int ipl)
 {
 	struct kmutexobj *mo;
 
-	mo = pool_cache_get(mutex_obj_cache, PR_NOWAIT);
+	mo = kmem_alloc(sizeof(*mo), KM_NOSLEEP);
+	KASSERT(ALIGNED_POINTER(mo, coherency_unit));
 	if (__predict_true(mo != NULL)) {
 		_mutex_init(&mo->mo_lock, type, ipl,
 		    (uintptr_t)__builtin_return_address(0));
+		mo->mo_magic = MUTEX_OBJ_MAGIC;
 		mo->mo_refcnt = 1;
 	}
 
@@ -161,7 +134,7 @@ mutex_obj_free(kmutex_t *lock)
 	}
 	membar_acquire();
 	mutex_destroy(&mo->mo_lock);
-	pool_cache_put(mutex_obj_cache, mo);
+	kmem_free(mo, sizeof(*mo));
 	return true;
 }
 

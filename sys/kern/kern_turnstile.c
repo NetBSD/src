@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_turnstile.c,v 1.48 2023/09/12 16:17:21 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.49 2023/09/23 18:21:11 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020
+ * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020, 2023
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -61,11 +61,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.48 2023/09/12 16:17:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.49 2023/09/23 18:21:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
-#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/sleepq.h>
 #include <sys/sleeptab.h>
@@ -81,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.48 2023/09/12 16:17:21 ad Exp $
 #define	TS_HASH(obj)	(((uintptr_t)(obj) >> 6) & TS_HASH_MASK)
 
 static tschain_t	turnstile_chains[TS_HASH_SIZE] __cacheline_aligned;
-struct pool		turnstile_pool;
 
 static union {
 	kmutex_t	lock;
@@ -102,9 +100,6 @@ turnstile_init(void)
 		LIST_INIT(&turnstile_chains[i]);
 		mutex_init(&turnstile_locks[i].lock, MUTEX_DEFAULT, IPL_SCHED);
 	}
-
-	pool_init(&turnstile_pool, sizeof(turnstile_t), coherency_unit,
-	    0, 0, "tstile", NULL, IPL_NONE);
 
 	turnstile_ctor(&turnstile0);
 }
