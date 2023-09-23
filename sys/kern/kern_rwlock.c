@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_rwlock.c,v 1.72 2023/09/07 20:05:42 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.73 2023/09/23 18:48:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020, 2023
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.72 2023/09/07 20:05:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.73 2023/09/23 18:48:04 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -120,9 +120,14 @@ lockops_t rwlock_lockops = {
 	.lo_dump = rw_dump,
 };
 
+/*
+ * Give rwlock holders an extra-high priority boost on-blocking due to
+ * direct handoff.  XXX To be revisited.
+ */
 syncobj_t rw_syncobj = {
 	.sobj_name	= "rw",
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
+	.sobj_boostpri  = PRI_KTHREAD,
 	.sobj_unsleep	= turnstile_unsleep,
 	.sobj_changepri	= turnstile_changepri,
 	.sobj_lendpri	= sleepq_lendpri,

@@ -1,7 +1,8 @@
-/*	$NetBSD: kern_condvar.c,v 1.55 2023/07/17 12:54:29 riastradh Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.56 2023/09/23 18:48:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2019, 2020, 2023
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.55 2023/07/17 12:54:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.56 2023/09/23 18:48:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +73,7 @@ static inline void	cv_wakeup_all(kcondvar_t *);
 syncobj_t cv_syncobj = {
 	.sobj_name	= "cv",
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
+	.sobj_boostpri  = PRI_KERNEL,
 	.sobj_unsleep	= cv_unsleep,
 	.sobj_changepri	= sleepq_changepri,
 	.sobj_lendpri	= sleepq_lendpri,
@@ -127,7 +129,6 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, bool catch_p)
 	KASSERT(!cpu_intr_p());
 	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
-	l->l_kpriority = true;
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
 	sleepq_enter(sq, l, mp);

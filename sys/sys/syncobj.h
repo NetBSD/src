@@ -1,7 +1,7 @@
-/*	$NetBSD: syncobj.h,v 1.15 2023/07/17 12:54:53 riastradh Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.16 2023/09/23 18:48:05 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,11 +44,12 @@ typedef volatile const void *wchan_t;
 typedef struct syncobj {
 	char	sobj_name[16];
 	u_int	sobj_flag;
+	int	sobj_boostpri;
 	void	(*sobj_unsleep)(struct lwp *, bool);
 	void	(*sobj_changepri)(struct lwp *, pri_t);
 	void	(*sobj_lendpri)(struct lwp *, pri_t);
 	struct lwp *(*sobj_owner)(wchan_t);
-} syncobj_t;
+} const syncobj_t;
 
 struct lwp *syncobj_noowner(wchan_t);
 

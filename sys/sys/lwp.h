@@ -1,7 +1,7 @@
-/*	$NetBSD: lwp.h,v 1.220 2023/09/10 14:31:24 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.221 2023/09/23 18:48:05 ad Exp $	*/
 
 /*
- * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
+ * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020, 2023
  *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -81,6 +81,7 @@ static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 
 #include <sys/pcu.h>
 
+typedef struct syncobj const syncobj_t;
 struct lockdebug;
 struct sysent;
 
@@ -111,8 +112,6 @@ struct lwp {
 	u_int		l_slpticksum;	/* l: Sum of ticks spent sleeping */
 	int		l_biglocks;	/* l: biglock count before sleep */
 	int		l_class;	/* l: scheduling class */
-	int		l_kpriority;	/* !: has kernel priority boost */
-	pri_t		l_kpribase;	/* !: kernel priority base level */
 	pri_t		l_priority;	/* l: scheduler priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
 	pri_t		l_protectprio;	/* l: for PTHREAD_PRIO_PROTECT */
@@ -131,7 +130,7 @@ struct lwp {
 	kcpuset_t	*l_affinity;	/* l: CPU set for affinity */
 
 	/* Synchronisation. */
-	struct syncobj	*l_syncobj;	/* l: sync object operations set */
+	syncobj_t	*l_syncobj;	/* l: sync object operations set */
 	LIST_ENTRY(lwp) l_sleepchain;	/* l: sleep queue */
 	wchan_t		l_wchan;	/* l: sleep address */
 	const char	*l_wmesg;	/* l: reason for sleep */
@@ -351,10 +350,15 @@ void	lwp0_init(void);
 void	lwp_startup(lwp_t *, lwp_t *);
 void	startlwp(void *);
 
+void	lwp_lock(lwp_t *);
+void	lwp_unlock(lwp_t *);
+pri_t	lwp_eprio(lwp_t *);
 int	lwp_locked(lwp_t *, kmutex_t *);
 kmutex_t *lwp_setlock(lwp_t *, kmutex_t *);
 void	lwp_unlock_to(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
+void	lwp_changepri(lwp_t *, pri_t);
+void	lwp_lendpri(lwp_t *, pri_t);
 void	lwp_addref(lwp_t *);
 void	lwp_delref(lwp_t *);
 void	lwp_delref2(lwp_t *);
@@ -402,67 +406,6 @@ int	lwp_unpark(const lwpid_t *, const u_int);
 
 /* DDB. */
 void	lwp_whatis(uintptr_t, void (*)(const char *, ...) __printflike(1, 2));
-
-/*
- * Lock an LWP. XXX _MODULE
- */
-static __inline void
-lwp_lock(lwp_t *l)
-{
-	kmutex_t *old = atomic_load_consume(&l->l_mutex);
-
-	/*
-	 * Note: mutex_spin_enter() will have posted a read barrier.
-	 * Re-test l->l_mutex.  If it has changed, we need to try again.
-	 */
-	mutex_spin_enter(old);
-	while (__predict_false(atomic_load_relaxed(&l->l_mutex) != old)) {
-		mutex_spin_exit(old);
-		old = atomic_load_consume(&l->l_mutex);
-		mutex_spin_enter(old);
-	}
-}
-
-/*
- * Unlock an LWP. XXX _MODULE
- */
-static __inline void
-lwp_unlock(lwp_t *l)
-{
-	mutex_spin_exit(l->l_mutex);
-}
-
-static __inline void
-lwp_changepri(lwp_t *l, pri_t pri)
-{
-	KASSERT(mutex_owned(l->l_mutex));
-
-	if (l->l_priority == pri)
-		return;
-
-	(*l->l_syncobj->sobj_changepri)(l, pri);
-	KASSERT(l->l_priority == pri);
-}
-
-static __inline void
-lwp_lendpri(lwp_t *l, pri_t pri)
-{
-	KASSERT(mutex_owned(l->l_mutex));
-
-	(*l->l_syncobj->sobj_lendpri)(l, pri);
-	KASSERT(l->l_inheritedprio == pri);
-}
-
-static __inline pri_t
-lwp_eprio(lwp_t *l)
-{
-	pri_t pri;
-
-	pri = l->l_priority;
-	if ((l->l_flag & LW_SYSTEM) == 0 && l->l_kpriority && pri < PRI_KERNEL)
-		pri = (pri >> 1) + l->l_kpribase;
-	return MAX(l->l_auxprio, pri);
-}
 
 int lwp_create(lwp_t *, struct proc *, vaddr_t, int, void *, size_t,
     void (*)(void *), void *, lwp_t **, int, const sigset_t *, const stack_t *);

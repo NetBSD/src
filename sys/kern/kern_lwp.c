@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.255 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.256 2023/09/23 18:48:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.255 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.256 2023/09/23 18:48:04 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -851,13 +851,6 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 		return EAGAIN;
 	}
 
-	/*
-	 * If vfork(), we want the LWP to run fast and on the same CPU
-	 * as its parent, so that it can reuse the VM context and cache
-	 * footprint on the local CPU.
-	 */
-	l2->l_kpriority = ((flags & LWP_VFORK) ? true : false);
-	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
 	l2->l_protectprio = -1;
@@ -1619,34 +1612,124 @@ lwp_unsleep(lwp_t *l, bool unlock)
 }
 
 /*
+ * Lock an LWP.
+ */
+void
+lwp_lock(lwp_t *l)
+{
+	kmutex_t *old = atomic_load_consume(&l->l_mutex);
+
+	/*
+	 * Note: mutex_spin_enter() will have posted a read barrier.
+	 * Re-test l->l_mutex.  If it has changed, we need to try again.
+	 */
+	mutex_spin_enter(old);
+	while (__predict_false(atomic_load_relaxed(&l->l_mutex) != old)) {
+		mutex_spin_exit(old);
+		old = atomic_load_consume(&l->l_mutex);
+		mutex_spin_enter(old);
+	}
+}
+
+/*
+ * Unlock an LWP.
+ */
+void
+lwp_unlock(lwp_t *l)
+{
+
+	mutex_spin_exit(l->l_mutex);
+}
+
+void
+lwp_changepri(lwp_t *l, pri_t pri)
+{
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	if (l->l_priority == pri)
+		return;
+
+	(*l->l_syncobj->sobj_changepri)(l, pri);
+	KASSERT(l->l_priority == pri);
+}
+
+void
+lwp_lendpri(lwp_t *l, pri_t pri)
+{
+	KASSERT(mutex_owned(l->l_mutex));
+
+	(*l->l_syncobj->sobj_lendpri)(l, pri);
+	KASSERT(l->l_inheritedprio == pri);
+}
+
+pri_t
+lwp_eprio(lwp_t *l)
+{
+	pri_t boostpri = l->l_syncobj->sobj_boostpri;
+	pri_t pri = l->l_priority;
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	/*
+	 * Timeshared/user LWPs get a temporary priority boost for blocking
+	 * in kernel.  This is key to good interactive response on a loaded
+	 * system: without it, things will seem very sluggish to the user. 
+	 *
+	 * The function of the boost is to get the LWP onto a CPU and
+	 * running quickly.  Once that happens the LWP loses the priority
+	 * boost and could be preempted very quickly by another LWP but that
+	 * won't happen often enough to be a annoyance.
+	 */
+	if (pri <= MAXPRI_USER && boostpri > PRI_USER)
+		pri = (pri >> 1) + boostpri;
+
+	return MAX(l->l_auxprio, pri);
+}
+
+/*
  * Handle exceptions for mi_userret().  Called if a member of LW_USERRET is
- * set.
+ * set or a preemption is required.
  */
 void
 lwp_userret(struct lwp *l)
 {
 	struct proc *p;
-	int sig;
+	int sig, f;
 
 	KASSERT(l == curlwp);
 	KASSERT(l->l_stat == LSONPROC);
 	p = l->l_proc;
 
-	/*
-	 * It is safe to do this read unlocked on a MP system..
-	 */
-	while ((l->l_flag & LW_USERRET) != 0) {
+	for (;;) {
+		/*
+		 * This is the main location that user preemptions are
+		 * processed.
+		 */
+		preempt_point();
+
+		/*
+		 * It is safe to do this unlocked and without raised SPL,
+		 * since whenever a flag of interest is added to l_flag the
+		 * LWP will take an AST and come down this path again.  If a
+		 * remote CPU posts the AST, it will be done with an IPI
+		 * (strongly synchronising).
+		 */
+		if ((f = atomic_load_relaxed(&l->l_flag) & LW_USERRET) == 0) {
+			return;
+		}
+
 		/*
 		 * Process pending signals first, unless the process
 		 * is dumping core or exiting, where we will instead
 		 * enter the LW_WSUSPEND case below.
 		 */
-		if ((l->l_flag & (LW_PENDSIG | LW_WCORE | LW_WEXIT)) ==
-		    LW_PENDSIG) {
+		if ((f & (LW_PENDSIG | LW_WCORE | LW_WEXIT)) == LW_PENDSIG) {
 			mutex_enter(p->p_lock);
 			while ((sig = issignal(l)) != 0)
 				postsig(sig);
 			mutex_exit(p->p_lock);
+			continue;
 		}
 
 		/*
@@ -1660,7 +1743,7 @@ lwp_userret(struct lwp *l)
 		 * p->p_lwpcv so that sigexit() will write the core file out
 		 * once all other LWPs are suspended.  
 		 */
-		if ((l->l_flag & LW_WSUSPEND) != 0) {
+		if ((f & LW_WSUSPEND) != 0) {
 			pcu_save_all(l);
 			mutex_enter(p->p_lock);
 			p->p_nrlwps--;
@@ -1672,23 +1755,30 @@ lwp_userret(struct lwp *l)
 			lwp_lock(l);
 			spc_lock(l->l_cpu);
 			mi_switch(l);
+			continue;
 		}
 
-		/* Process is exiting. */
-		if ((l->l_flag & LW_WEXIT) != 0) {
+		/*
+		 * Process is exiting.  The core dump and signal cases must
+		 * be handled first.
+		 */
+		if ((f & LW_WEXIT) != 0) {
 			lwp_exit(l);
 			KASSERT(0);
 			/* NOTREACHED */
 		}
 
-		/* update lwpctl processor (for vfork child_return) */
-		if (l->l_flag & LW_LWPCTL) {
+		/*
+		 * Update lwpctl processor (for vfork child_return).
+		 */
+		if ((f & LW_LWPCTL) != 0) {
 			lwp_lock(l);
 			KASSERT(kpreempt_disabled());
 			l->l_lwpctl->lc_curcpu = (int)cpu_index(l->l_cpu);
 			l->l_lwpctl->lc_pctr++;
 			l->l_flag &= ~LW_LWPCTL;
 			lwp_unlock(l);
+			continue;
 		}
 	}
 }

@@ -1,7 +1,8 @@
-/*	$NetBSD: sys_lwp.c,v 1.84 2023/07/17 12:54:29 riastradh Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.85 2023/09/23 18:48:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020, 2023
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.84 2023/07/17 12:54:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.85 2023/09/23 18:48:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +58,14 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.84 2023/07/17 12:54:29 riastradh Exp $
 
 static const stack_t lwp_ss_init = SS_INIT;
 
+/*
+ * Parked LWPs get no priority boost on awakening as they blocked on
+ * user space objects.  Maybe revisit?
+ */
 syncobj_t lwp_park_syncobj = {
 	.sobj_name	= "lwp_park",
 	.sobj_flag	= SOBJ_SLEEPQ_NULL,
+	.sobj_boostpri  = PRI_USER,
 	.sobj_unsleep	= sleepq_unsleep,
 	.sobj_changepri	= sleepq_changepri,
 	.sobj_lendpri	= sleepq_lendpri,

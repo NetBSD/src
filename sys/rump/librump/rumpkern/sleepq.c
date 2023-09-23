@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.23 2022/06/30 07:47:07 knakahara Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.24 2023/09/23 18:48:04 ad Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.23 2022/06/30 07:47:07 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.24 2023/09/23 18:48:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -57,6 +57,15 @@ sleepq_destroy(sleepq_t *sq)
 }
 
 void
+sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
+{
+
+	lwp_lock(l);
+	lwp_unlock_to(l, mp);
+	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
+}
+
+void
 sleepq_enqueue(sleepq_t *sq, wchan_t wc, const char *wmsg, syncobj_t *sob,
     bool catch_p)
 {
@@ -69,7 +78,7 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wc, const char *wmsg, syncobj_t *sob,
 }
 
 int
-sleepq_block(int timo, bool catch, struct syncobj *syncobj __unused)
+sleepq_block(int timo, bool catch, syncobj_t *syncobj __unused)
 {
 	struct lwp *l = curlwp;
 	int error = 0;
@@ -165,4 +174,46 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 	old = l->l_mutex;
 	atomic_store_release(&l->l_mutex, new);
 	mutex_spin_exit(old);
+}
+
+void
+lwp_lock(lwp_t *l)
+{
+	kmutex_t *old = atomic_load_consume(&l->l_mutex);
+
+	mutex_spin_enter(old);
+	while (__predict_false(atomic_load_relaxed(&l->l_mutex) != old)) {
+		mutex_spin_exit(old);
+		old = atomic_load_consume(&l->l_mutex);
+		mutex_spin_enter(old);
+	}
+}
+
+void
+lwp_unlock(lwp_t *l)
+{
+
+	mutex_spin_exit(l->l_mutex);
+}
+
+void
+lwp_changepri(lwp_t *l, pri_t pri)
+{
+
+	/* fuck */
+}
+
+void
+lwp_lendpri(lwp_t *l, pri_t pri)
+{
+
+	/* you */
+}
+
+pri_t
+lwp_eprio(lwp_t *l)
+{
+
+	/* Antti */
+	return l->l_priority;
 }
