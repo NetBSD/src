@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.256 2023/09/23 18:48:04 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.257 2023/09/23 20:23:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.256 2023/09/23 18:48:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.257 2023/09/23 20:23:07 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -851,7 +851,13 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 		return EAGAIN;
 	}
 
-	l2->l_priority = l1->l_priority;
+	/*
+	 * If vfork(), we want the LWP to run fast and on the same CPU
+	 * as its parent, so that it can reuse the VM context and cache
+	 * footprint on the local CPU.
+	 */
+	l2->l_boostpri = ((flags & LWP_VFORK) ? PRI_KERNEL : PRI_USER);
+ 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
 	l2->l_protectprio = -1;
 	l2->l_auxprio = -1;
@@ -1666,7 +1672,6 @@ lwp_lendpri(lwp_t *l, pri_t pri)
 pri_t
 lwp_eprio(lwp_t *l)
 {
-	pri_t boostpri = l->l_syncobj->sobj_boostpri;
 	pri_t pri = l->l_priority;
 
 	KASSERT(mutex_owned(l->l_mutex));
@@ -1681,8 +1686,8 @@ lwp_eprio(lwp_t *l)
 	 * boost and could be preempted very quickly by another LWP but that
 	 * won't happen often enough to be a annoyance.
 	 */
-	if (pri <= MAXPRI_USER && boostpri > PRI_USER)
-		pri = (pri >> 1) + boostpri;
+	if (pri <= MAXPRI_USER && l->l_boostpri > MAXPRI_USER)
+		pri = (pri >> 1) + l->l_boostpri;
 
 	return MAX(l->l_auxprio, pri);
 }

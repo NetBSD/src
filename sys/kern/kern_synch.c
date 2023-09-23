@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.359 2023/09/23 18:48:04 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.360 2023/09/23 20:23:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.359 2023/09/23 18:48:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.360 2023/09/23 20:23:07 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_ddb.h"
@@ -561,6 +561,7 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 		KASSERT(newl->l_cpu == ci);
 		newl->l_stat = LSONPROC;
 		newl->l_pflag |= LP_RUNNING;
+		newl->l_boostpri = PRI_NONE;
 		spc->spc_curpriority = lwp_eprio(newl);
 		spc->spc_flags &= ~(SPCF_SWITCHCLEAR | SPCF_IDLE);
 		lwp_setlock(newl, spc->spc_lwplock);
