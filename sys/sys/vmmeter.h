@@ -1,4 +1,4 @@
-/*	$NetBSD: vmmeter.h,v 1.19 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: vmmeter.h,v 1.20 2023/09/23 14:19:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -52,43 +52,5 @@ struct vmtotal
 	int32_t	t_armshr;	/* active shared real memory */
 	int32_t	t_free;		/* free memory pages */
 };
-
-/*
- * Optional instrumentation.
- */
-#ifdef PGINPROF
-
-#define	NDMON	128
-#define	NSMON	128
-
-#define	DRES	20
-#define	SRES	5
-
-#define	PMONMIN	20
-#define	PRES	50
-#define	NPMON	64
-
-#define	RMONMIN	130
-#define	RRES	5
-#define	NRMON	64
-
-/* data and stack size distribution counters */
-u_int	dmon[NDMON+1];
-u_int	smon[NSMON+1];
-
-/* page in time distribution counters */
-u_int	pmon[NPMON+2];
-
-/* reclaim time distribution counters */
-u_int	rmon[NRMON+2];
-
-int	pmonmin;
-int	pres;
-int	rmonmin;
-int	rres;
-
-u_int rectime;		/* accumulator for reclaim times */
-u_int pgintime;		/* accumulator for page in times */
-#endif /* PGINPROF */
 
 #endif /* !_SYS_VMMETER_H_ */
