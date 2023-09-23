@@ -1,7 +1,8 @@
-/*	$NetBSD: kern_kthread.c,v 1.48 2023/07/17 10:55:27 riastradh Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.49 2023/09/23 14:40:42 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2007, 2009, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2007, 2009, 2019, 2023
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.48 2023/07/17 10:55:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.49 2023/09/23 14:40:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -114,9 +115,9 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 		if (ci != l->l_cpu) {
 			lwp_unlock_to(l, ci->ci_schedstate.spc_lwplock);
 			lwp_lock(l);
+			l->l_cpu = ci;
 		}
 		l->l_pflag |= LP_BOUND;
-		l->l_cpu = ci;
 	}
 
 	if ((flag & KTHREAD_MUSTJOIN) != 0) {
@@ -160,6 +161,11 @@ kthread_exit(int ecode)
 	const char *name;
 	lwp_t *l = curlwp;
 
+	/* If the kernel lock is held, we need to drop it now. */
+	if ((l->l_pflag & LP_MPSAFE) == 0) {
+		KERNEL_UNLOCK_LAST(l);
+	}
+
 	/* We can't do much with the exit code, so just report it. */
 	if (ecode != 0) {
 		if ((name = l->l_name) == NULL)
@@ -180,11 +186,6 @@ kthread_exit(int ecode)
 		*exitedp = true;
 		cv_broadcast(&kthread_cv);
 		mutex_exit(&kthread_lock);
-	}
-
-	/* If the kernel lock is held, we need to drop it now. */
-	if ((l->l_pflag & LP_MPSAFE) == 0) {
-		KERNEL_UNLOCK_LAST(l);
 	}
 
 	/* And exit.. */
