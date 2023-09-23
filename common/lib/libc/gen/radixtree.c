@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.32 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.33 2023/09/23 19:17:38 ad Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.32 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.33 2023/09/23 19:17:38 ad Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/kmem.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.32 2023/09/23 18:21:11 ad Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.32 2023/09/23 18:21:11 ad Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.33 2023/09/23 19:17:38 ad Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -335,7 +335,7 @@ radix_tree_await_memory(void)
 		    KM_SLEEP);
 	}
 	while (--i >= 0) {
-		kmem_free(nodes[i], sizeof(struct radix_tree_node));
+		kmem_intr_free(nodes[i], sizeof(struct radix_tree_node));
 	}
 }
 
