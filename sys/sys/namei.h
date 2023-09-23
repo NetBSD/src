@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.118 2023/09/12 16:17:21 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.119 2023/09/23 18:21:43 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.61 2023/09/09 18:27:59 ad Exp 
+ *   from: NetBSD: namei.src,v 1.64 2023/09/23 18:21:12 ad Exp 
  */
 
 /*
@@ -252,15 +252,13 @@ struct namecache {
 #endif /* __NAMECACHE_PRIVATE */
 
 #ifdef _KERNEL
-#include <sys/pool.h>
+#include <sys/kmem.h>
 
 struct mount;
 struct cpu_info;
 
-extern pool_cache_t pnbuf_cache;	/* pathname buffer cache */
-
-#define	PNBUF_GET()	((char *)pool_cache_get(pnbuf_cache, PR_WAITOK))
-#define	PNBUF_PUT(pnb)	pool_cache_put(pnbuf_cache, (void *)(pnb))
+#define	PNBUF_GET()	((char *)kmem_alloc(MAXPATHLEN, KM_SLEEP))
+#define	PNBUF_PUT(pnb)	kmem_free((pnb), MAXPATHLEN)
 
 /*
  * Typesafe flags for namei_simple/nameiat_simple.
