@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.62 2021/12/05 07:13:48 msaitoh Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.63 2023/09/23 21:26:16 andvar Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.62 2021/12/05 07:13:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.63 2023/09/23 21:26:16 andvar Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -270,7 +270,9 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 
 	restore_ofmap();
 
+#if NWSDISPLAY > 0
 	rascons_finalize();
+#endif
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_addsyms_elf((int)((uintptr_t)endsym - (uintptr_t)startsym), startsym, endsym);
