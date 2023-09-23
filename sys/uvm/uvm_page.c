@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.253 2023/07/17 12:55:37 riastradh Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.254 2023/09/23 18:20:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.253 2023/07/17 12:55:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.254 2023/09/23 18:20:20 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -670,23 +670,6 @@ uvm_page_physget(paddr_t *paddrp)
 	return (false);
 }
 #endif /* PMAP_STEAL_MEMORY */
-
-/*
- * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
- * back from an I/O mapping (ugh!).   used in some MD code as well.
- */
-struct vm_page *
-uvm_phys_to_vm_page(paddr_t pa)
-{
-	paddr_t pf = atop(pa);
-	paddr_t	off;
-	uvm_physseg_t	upm;
-
-	upm = uvm_physseg_find(pf, &off);
-	if (upm != UVM_PHYSSEG_TYPE_INVALID)
-		return uvm_physseg_get_pg(upm, off);
-	return(NULL);
-}
 
 paddr_t
 uvm_vm_page_to_phys(const struct vm_page *pg)
