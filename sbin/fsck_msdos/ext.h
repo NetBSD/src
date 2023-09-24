@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.13 2009/04/11 07:14:50 lukem Exp $	*/
+/*	$NetBSD: ext.h,v 1.14 2023/09/24 20:41:52 gutteridge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -69,7 +69,7 @@ int checkfilesys(const char *);
 #define FSFIXFAT	64		/* Fix file system FAT */
 
 /*
- * read a boot block in a machine independend fashion and translate
+ * Read a boot block in a machine independent fashion and translate
  * it into our struct bootblock.
  */
 int readboot(int, struct bootblock *);
