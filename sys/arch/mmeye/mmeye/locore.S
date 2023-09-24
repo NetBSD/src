@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2011/02/19 10:46:29 kiyohara Exp $	*/
+/*	$NetBSD: locore.S,v 1.12 2023/09/24 19:57:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -119,7 +119,8 @@ start1:
 #ifdef ROMIMAGE
 	/* Initialize BUS State Control Regs. */
 	mov.l	_ROM_START, r3
-	mov.l	_C_LABEL(ram_start), r4
+	mov.l	XL_ram_start, r4
+	mov.l	@r4, r4
 	sub	r3, r4
 	/* Set Bus State Controller */
 	mov.l	XLInitializeBsc, r0
@@ -140,7 +141,8 @@ start1:
 	add	r3, r1		/* src address */
 	mov.l	___start, r3
 	sub	r2, r3
-	mov.l	_C_LABEL(ram_start), r4
+	mov.l	XL_ram_start, r4
+	mov.l	@r4, r4
 	add	r4, r3		/* dest address */
 1:
 	mov.l	@r1+, r4
@@ -157,6 +159,8 @@ start1:
 	.align	2
 LXstart_in_RAM:
 	.long	start_in_RAM
+XL_ram_start:
+	.long	_C_LABEL(ram_start)
 #else /* ROMIMAGE */
 	/* Set Bus State Controller */
 	mov.l	XLInitializeBsc, r0
