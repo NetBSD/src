@@ -1,4 +1,4 @@
-/*	$NetBSD: valkyriefb.c,v 1.8 2022/02/16 23:49:26 riastradh Exp $	*/
+/*	$NetBSD: valkyriefb.c,v 1.9 2023/09/24 10:51:28 andvar Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.8 2022/02/16 23:49:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.9 2023/09/24 10:51:28 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ valkyriefb_attach(device_t parent, device_t self, void *aux)
 	aprint_verbose_dev(sc->sc_dev, "waiting for videopll...\n");
 	sc->sc_base = (uint8_t *)ca->ca_reg[0];
 #ifdef VALKYRIEFB_DEBUG
-	for (i = 0; i < 0x40; i += 8) {
+	for (int i = 0; i < 0x40; i += 8) {
 		aprint_error_dev(sc->sc_dev, "%02x: %02x\n", i,
 		    valkyriefb_read_reg(sc, i));
 	}
