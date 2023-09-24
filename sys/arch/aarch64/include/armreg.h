@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.64 2023/05/06 21:53:26 andvar Exp $ */
+/* $NetBSD: armreg.h,v 1.65 2023/09/24 10:13:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -229,7 +229,13 @@ AARCH64REG_READ_INLINE(clidr_el1)
 #define	 CLIDR_TYPE_IDCACHE	 3		//  Separate inst and data caches
 #define	 CLIDR_TYPE_UNIFIEDCACHE 4		//  Unified cache
 
+AARCH64REG_READ_INLINE(contextidr_el1)
+AARCH64REG_WRITE_INLINE(contextidr_el1)
+
 AARCH64REG_READ_INLINE(currentel)
+
+#define	CURRENTEL_EL		__BITS(3,2)	// Current exception Level
+
 AARCH64REG_READ_INLINE(id_aa64afr0_el1)
 AARCH64REG_READ_INLINE(id_aa64afr1_el1)
 AARCH64REG_READ_INLINE(id_aa64dfr0_el1)
@@ -661,6 +667,8 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 #define	 ESR_EC_CP14_DT		 0x06	// A32: LDC/STC access to CP14
 #define	 ESR_EC_FP_ACCESS	 0x07	// AXX: Access to SIMD/FP Registers
 #define	 ESR_EC_FPID		 0x08	// A32: MCR/MRC access to CP10 !EC=7
+#define	 ESR_EC_PAUTH		 0x09	// A64: Pointer auth trap (FEAT_PAUTH)
+#define	 ESR_EC_LS64		 0x0a	// AXX: LD64B/ST64B instruction (FEAT_LS64)		// XXXNH
 #define	 ESR_EC_CP14_RRT	 0x0c	// A32: MRRC access to CP14
 #define	 ESR_EC_BTE_A64		 0x0d	// A64: Branch Target Exception (V8.5)
 #define	 ESR_EC_ILL_STATE	 0x0e	// AXX: Illegal Execution State
@@ -671,29 +679,54 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 #define	 ESR_EC_HVC_A64		 0x16	// A64: HVC Instruction Execution
 #define	 ESR_EC_SMC_A64		 0x17	// A64: SMC Instruction Execution
 #define	 ESR_EC_SYS_REG		 0x18	// A64: MSR/MRS/SYS instruction (!EC0/1/7)
-#define	 ESR_EC_INSN_ABT_EL0	 0x20	// AXX: Instruction Abort (EL0)
-#define	 ESR_EC_INSN_ABT_EL1	 0x21	// AXX: Instruction Abort (EL1)
+#define	 ESR_EC_SVE		 0x19	// AXX: SVE Instruction Execution (FEAT_SVE)
+#define	 ESR_EC_PAUTH_ERET	 0x1a	// A64: ERET/ERETAA/ERETAB (FEAT_PAUTH and FEAT_NV)
+#define	 ESR_EC_TME		 0x1b	// A64: TSTART instruction (FEAT_TME)
+#define	 ESR_EC_FRAC		 0x1c	// A64: Pointer auth trap (FEAT_FPAC)
+#define	 ESR_EC_SME		 0x1d	// AXX: Access to SME (FEAT_SME)
+#define	 ESR_EC_RME		 0x1e	// A64: Granule Protection  Check (FEAT_RME)
+#define	 ESR_EC_INSN_ABT_EL_LOW	 0x20	// AXX: Instruction Abort from lower level
+#define	 ESR_EC_INSN_ABT_EL_CUR	 0x21	// AXX: Instruction Abort from current level
 #define	 ESR_EC_PC_ALIGNMENT	 0x22	// AXX: Misaligned PC
-#define	 ESR_EC_DATA_ABT_EL0	 0x24	// AXX: Data Abort (EL0)
-#define	 ESR_EC_DATA_ABT_EL1	 0x25	// AXX: Data Abort (EL1)
-#define	 ESR_EC_SP_ALIGNMENT 	 0x26	// AXX: Misaligned SP
+#define	 ESR_EC_DATA_ABT_EL_LOW	 0x24	// AXX: Data Abort from lower level
+#define	 ESR_EC_DATA_ABT_EL_CUR	 0x25	// AXX: Data Abort from current level
+#define	 ESR_EC_SP_ALIGNMENT	 0x26	// AXX: Misaligned SP
+#define	 ESR_EC_MOPS		 0x27	// A64: Memory Operation Exception (FEAT_MOPS)
 #define	 ESR_EC_FP_TRAP_A32	 0x28	// A32: FP Exception
 #define	 ESR_EC_FP_TRAP_A64	 0x2c	// A64: FP Exception
-#define	 ESR_EC_SERROR	 	 0x2f	// AXX: SError Interrupt
-#define	 ESR_EC_BRKPNT_EL0	 0x30	// AXX: Breakpoint Exception (EL0)
-#define	 ESR_EC_BRKPNT_EL1	 0x31	// AXX: Breakpoint Exception (EL1)
-#define	 ESR_EC_SW_STEP_EL0	 0x32	// AXX: Software Step (EL0)
-#define	 ESR_EC_SW_STEP_EL1	 0x33	// AXX: Software Step (EL1)
-#define	 ESR_EC_WTCHPNT_EL0	 0x34	// AXX: Watchpoint (EL0)
-#define	 ESR_EC_WTCHPNT_EL1	 0x35	// AXX: Watchpoint (EL1)
+#define	 ESR_EC_SERROR		 0x2f	// AXX: SError Interrupt
+#define	 ESR_EC_BRKPNT_EL_LOW	 0x30	// AXX: Breakpoint Exception from lower level
+#define	 ESR_EC_BRKPNT_EL_CUR	 0x31	// AXX: Breakpoint Exception from current level
+#define	 ESR_EC_SW_STEP_EL_LOW	 0x32	// AXX: Software Step from lower level
+#define	 ESR_EC_SW_STEP_EL_CUR	 0x33	// AXX: Software Step from current level
+#define	 ESR_EC_WTCHPNT_EL_LOW	 0x34	// AXX: Watchpoint from lower level
+#define	 ESR_EC_WTCHPNT_EL_CUR	 0x35	// AXX: Watchpoint from current level
 #define	 ESR_EC_BKPT_INSN_A32	 0x38	// A32: BKPT Instruction Execution
 #define	 ESR_EC_VECTOR_CATCH	 0x3a	// A32: Vector Catch Exception
 #define	 ESR_EC_BKPT_INSN_A64	 0x3c	// A64: BKPT Instruction Execution
+/* alias for EL1 kernel */
+#define	 ESR_EC_INSN_ABT_EL0	 ESR_EC_INSN_ABT_EL_LOW
+#define	 ESR_EC_INSN_ABT_EL1	 ESR_EC_INSN_ABT_EL_CUR
+#define	 ESR_EC_DATA_ABT_EL0	 ESR_EC_DATA_ABT_EL_LOW
+#define	 ESR_EC_DATA_ABT_EL1	 ESR_EC_DATA_ABT_EL_CUR
+#define	 ESR_EC_BRKPNT_EL0	 ESR_EC_BRKPNT_EL_LOW
+#define	 ESR_EC_BRKPNT_EL1	 ESR_EC_BRKPNT_EL_CUR
+#define	 ESR_EC_SW_STEP_EL0	 ESR_EC_SW_STEP_EL_LOW
+#define	 ESR_EC_SW_STEP_EL1	 ESR_EC_SW_STEP_EL_CUR
+#define	 ESR_EC_WTCHPNT_EL0	 ESR_EC_WTCHPNT_EL_LOW
+#define	 ESR_EC_WTCHPNT_EL1	 ESR_EC_WTCHPNT_EL_CUR
 #define	ESR_IL			__BIT(25)	// Instruction Length (1=32-bit)
 #define	ESR_ISS			__BITS(24,0)	// Instruction Specific Syndrome
 #define	ESR_ISS_CV		__BIT(24)	// common
 #define	ESR_ISS_COND		__BITS(23,20)	// common
 #define	ESR_ISS_WFX_TRAP_INSN	__BIT(0)	// for ESR_EC_WFX
+#define	ESR_ISS_SYSREG_OP0	__BITS(21,20)	// for ESR_EC_SYS_REG
+#define	ESR_ISS_SYSREG_OP2	__BITS(19,17)	// for ESR_EC_SYS_REG
+#define	ESR_ISS_SYSREG_OP1	__BITS(16,14)	// for ESR_EC_SYS_REG
+#define	ESR_ISS_SYSREG_CRN	__BITS(13,10)	// for ESR_EC_SYS_REG
+#define	ESR_ISS_SYSREG_RT	__BITS(9,5)	// for ESR_EC_SYS_REG
+#define	ESR_ISS_SYSREG_CRM	__BITS(4,1)	// for ESR_EC_SYS_REG
+#define	ESR_ISS_SYSREG_DIRECTION __BIT(0)	// for ESR_EC_SYS_REG
 #define	ESR_ISS_MRC_OPC2	__BITS(19,17)	// for ESR_EC_CP15_RT
 #define	ESR_ISS_MRC_OPC1	__BITS(16,14)	// for ESR_EC_CP15_RT
 #define	ESR_ISS_MRC_CRN		__BITS(13,10)	// for ESR_EC_CP15_RT
@@ -713,7 +746,7 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 #define	ESR_ISS_DATAABORT_ISV	__BIT(24)	// for ESC_RC_DATA_ABT_EL[01]
 #define	ESR_ISS_DATAABORT_SAS	__BITS(23,22)	// for ESC_RC_DATA_ABT_EL[01]
 #define	ESR_ISS_DATAABORT_SSE	__BIT(21)	// for ESC_RC_DATA_ABT_EL[01]
-#define	ESR_ISS_DATAABORT_SRT	__BITS(19,16)	// for ESC_RC_DATA_ABT_EL[01]
+#define	ESR_ISS_DATAABORT_SRT	__BITS(20,16)	// for ESC_RC_DATA_ABT_EL[01]
 #define	ESR_ISS_DATAABORT_SF	__BIT(15)	// for ESC_RC_DATA_ABT_EL[01]
 #define	ESR_ISS_DATAABORT_AR	__BIT(14)	// for ESC_RC_DATA_ABT_EL[01]
 #define	ESR_ISS_DATAABORT_EA	__BIT(9)	// for ESC_RC_DATA_ABT_EL[01]
@@ -758,6 +791,101 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 
 AARCH64REG_READ_INLINE(far_el1)		// Fault Address Register
 AARCH64REG_WRITE_INLINE(far_el1)
+AARCH64REG_READ_INLINE(far_el2)
+AARCH64REG_WRITE_INLINE(far_el2)
+
+AARCH64REG_READ_INLINE(hcr_el2)		// Hypervisor Configuration Register
+AARCH64REG_WRITE_INLINE(hcr_el2)
+
+#define	HCR_EL2_TWEDEL		__BITS(63,60)	// TWE Delay (FEAT_TWED)
+#define	HCR_EL2_TWEDEN		__BIT(59)	// TWE Delay Enable (FEAT_TWED)
+#define	HCR_EL2_TID5		__BIT(58)	// Trap ID group 5 (FEAT_MTE2)
+#define	HCR_EL2_DCT		__BIT(57)	// Default Cacheability Tagging (FEAT_MTE2)
+#define	HCR_EL2_ATA		__BIT(56)	// Allocation Tag Access (FEAT_MTE2)
+#define	HCR_EL2_TTLBOS		__BIT(55)	// Trap TLB maintenance OS (FEAT_EVT)
+#define	HCR_EL2_TTLBIS		__BIT(54)	// Trap TLB maintenance IS (FEAT_EVT)
+#define	HCR_EL2_ENSCXT		__BIT(53)	// Enable SCXTNUM_EL[01] access (FEAT_CSV2)
+#define	HCR_EL2_TOCU		__BIT(52)	// Trap PoU cache maintenance
+#define	HCR_EL2_AMVOFFEN	__BIT(51)	// Activity Monitors Virtual Offsets Enable (FEAT_AMUv1p1)
+#define	HCR_EL2_TICAB		__BIT(50)	// Trap IC all broadcast maintenance.
+#define	HCR_EL2_TID4		__BIT(49)	// Trap ID group 4 (FEAT_EVT)
+#define	HCR_EL2_GPF		__BIT(48)	// Granule Protection Faults (FEAT_RME)
+#define	HCR_EL2_FIEN		__BIT(47)	// Fault Injection Enable (FEAT_RASv1p1)
+#define	HCR_EL2_FWB		__BIT(46)	// Forced Write-Back (FEAT_S2FWB)
+#define	HCR_EL2_NV2		__BIT(45)	// Nested Virtualization (FEAT_NV2)
+#define	HCR_EL2_AT		__BIT(44)	// Address Translation (FEAT_NV)
+#define	HCR_EL2_NV1		__BIT(43)	// Nested Virtualization (FEAT_NV2/FEAT_NV)
+#define	HCR_EL2_NV		__BIT(42)	// Nested Virtualization (FEAT_NV2/FEAT_NV)
+#define	HCR_EL2_API		__BIT(41)	// Pointer Authentication instruction (FEAT_PAuth)
+#define	HCR_EL2_APK		__BIT(40)	// Pointer Authentication key (FEAT_PAuth)
+#define	HCR_EL2_TME		__BIT(39)	// TME enable (FEAT_TME)
+#define	HCR_EL2_MIOCNCE		__BIT(38)	// Mismatched Inner/Outer Cacheable Non-Coherency Enable,
+#define	HCR_EL2_TEA		__BIT(37)	// Route synchronous External abort exceptions to EL2 (FEAT_RAS)
+#define	HCR_EL2_TERR		__BIT(36)	// Trap accesses of Error Record registers (FEAT_RAS)
+#define	HCR_EL2_TLOR		__BIT(35)	// Trap LOR registers (FEAT_LOR)
+#define	HCR_EL2_VHE		__BIT(34)	// EL2 Host (FEAT_VHE)
+#define	HCR_EL2_ID		__BIT(33)	// stage2 IC disable
+#define	HCR_EL2_CD		__BIT(32)	// stage2 DC disable
+#define	HCR_EL2_RW		__BIT(31)	// register width
+#define	HCR_EL2_TRVM		__BIT(30)	// trap VM control regs read
+#define	HCR_EL2_HCD		__BIT(29)	// HVC disable
+#define	HCR_EL2_TDZ		__BIT(28)	// trap DC ZVA
+#define	HCR_EL2_TGE		__BIT(27)	// trap general exceptions
+#define	HCR_EL2_TVM		__BIT(26)	// trap VM control regs write
+#define	HCR_EL2_TTLB		__BIT(25)	// trap TLB maintanance op
+#define	HCR_EL2_TPU		__BIT(24)	// trap IC {IVAU,IALLU,IALLUIS},DC CVAU
+#define	HCR_EL2_TPC		__BIT(23)	// trap DC {IVAC,CIVAC,CVAC}
+#define	HCR_EL2_TSW		__BIT(22)	// trap DC {ISW,CSW,CISW}
+#define	HCR_EL2_TACR		__BIT(21)	// trap ACTRL_EL1 access
+#define	HCR_EL2_TIDCP		__BIT(20)	// trap IMPLEMENTATION DEFINED system regs
+#define	HCR_EL2_TSC		__BIT(19)	// trap SMC
+#define	HCR_EL2_TID3		__BIT(18)	// trap ID group3 regs
+#define	HCR_EL2_TID2		__BIT(17)	// trap ID group2 regs
+#define	HCR_EL2_TID1		__BIT(16)	// trap ID group1 regs
+#define	HCR_EL2_TID0		__BIT(15)	// trap ID group0 regs
+#define	HCR_EL2_TWE		__BIT(14)	// trap WFE
+#define	HCR_EL2_TWI		__BIT(13)	// trap WFI
+#define	HCR_EL2_DC		__BIT(12)	// default cacheablility
+#define	HCR_EL2_BSU		__BITS(11,10)	// barrier shareability upgrade
+#define	HCR_EL2_FB		__BIT(9)	// force broadcast TLBI and IC
+#define	HCR_EL2_VSE		__BIT(8)	// inject Virtual SError
+#define	HCR_EL2_VI		__BIT(7)	// inject Virtual IRQ
+#define	HCR_EL2_VF		__BIT(6)	// inject Virtual FIQ
+#define	HCR_EL2_AMO		__BIT(5)	// trap SError/AsyncAbort
+#define	HCR_EL2_IMO		__BIT(4)	// trap IRQ
+#define	HCR_EL2_FMO		__BIT(3)	// trap FIQ
+#define	HCR_EL2_PTW		__BIT(2)	// Protect table walk
+#define	HCR_EL2_SWIO		__BIT(1)	// override DC ISW to DC CISW
+#define	HCR_EL2_VM		__BIT(0)	// enable stage2 translation
+
+AARCH64REG_READ_INLINE(hpfar_el2)		// Hypervisor IPA Fault Address Register
+AARCH64REG_WRITE_INLINE(hpfar_el2)
+
+#define HPFAR_EL2_NS		__BIT(63)	// Faulting IPA address space (FEAT_SEL2)
+#define HPFAR_EL2_FIPA_D128	__BITS(47,4)	// Faulting Intermediate Physical Address Bits [55:12]
+#define HPFAR_EL2_FIPA		__BITS(43,4)    // Faulting Intermediate Physical Address Bits [51:12]
+#define HPFAR_EL2_FIPA_BITSHIFT	12
+
+
+AARCH64REG_READ_INLINE(hstr_el2)		// Hypervisor System Trap Register
+AARCH64REG_WRITE_INLINE(hstr_el2)
+
+#define	HSTR_EL2_T15	__BIT(15)
+//			__BIT(14) Res0
+#define	HSTR_EL2_T13	__BIT(13)
+#define	HSTR_EL2_T12	__BIT(12)
+#define	HSTR_EL2_T11	__BIT(11)
+#define	HSTR_EL2_T10	__BIT(10)
+#define	HSTR_EL2_T9	__BIT(9)
+#define	HSTR_EL2_T8	__BIT(8)
+#define	HSTR_EL2_T7	__BIT(7)
+#define	HSTR_EL2_T6	__BIT(6)
+#define	HSTR_EL2_T5	__BIT(5)
+//			__BIT(4) Res0
+#define	HSTR_EL2_T3	__BIT(3)
+#define	HSTR_EL2_T2	__BIT(2)
+#define	HSTR_EL2_T1	__BIT(1)
+#define	HSTR_EL2_T0	__BIT(0)
 
 AARCH64REG_READ_INLINE2(l2ctlr_el1, s3_1_c11_c0_2)  // Cortex-A53,57,72,73
 AARCH64REG_WRITE_INLINE2(l2ctlr_el1, s3_1_c11_c0_2) // Cortex-A53,57,72,73
@@ -770,6 +898,12 @@ AARCH64REG_WRITE_INLINE2(l2ctlr_el1, s3_1_c11_c0_2) // Cortex-A53,57,72,73
 
 AARCH64REG_READ_INLINE(mair_el1) // Memory Attribute Indirection Register
 AARCH64REG_WRITE_INLINE(mair_el1)
+AARCH64REG_READ_INLINE(mair_el2)
+AARCH64REG_WRITE_INLINE(mair_el2)
+AARCH64REG_READ_INLINE(amair_el1)	// Auxiliary MAIR
+AARCH64REG_WRITE_INLINE(amair_el1)
+AARCH64REG_READ_INLINE(amair_el2)
+AARCH64REG_WRITE_INLINE(amair_el2)
 
 #define	MAIR_ATTR0		 __BITS(7,0)
 #define	MAIR_ATTR1		 __BITS(15,8)
@@ -791,6 +925,7 @@ AARCH64REG_WRITE_INLINE(par_el1)
 #define	PAR_ATTR		__BITS(63,56)	// F=0 memory attributes
 #define	PAR_PA			__BITS(51,12)	// F=0 physical address
 #define	PAR_PA_SHIFT		12
+#define	PAR_PA_LOWMASK		__BITS(11,0)
 #define	PAR_NS			__BIT(9)	// F=0 non-secure
 #define	PAR_SH			__BITS(8,7)	// F=0 shareability attribute
 #define	 PAR_SH_NONE		 0
@@ -808,13 +943,19 @@ AARCH64REG_WRITE_INLINE(rmr_el1)
 AARCH64REG_READ_INLINE(rvbar_el1)	// Reset Vector Base Address Register
 AARCH64REG_WRITE_INLINE(rvbar_el1)
 
-AARCH64REG_ATWRITE_INLINE(s1e0r);	// Address Translate Stages 1
-AARCH64REG_ATWRITE_INLINE(s1e0w);
-AARCH64REG_ATWRITE_INLINE(s1e1r);
-AARCH64REG_ATWRITE_INLINE(s1e1w);
+AARCH64REG_ATWRITE_INLINE(s1e0r)	// Address Translate Stages 1 EL0
+AARCH64REG_ATWRITE_INLINE(s1e0w)
+AARCH64REG_ATWRITE_INLINE(s1e1r)	// Address Translate Stages 1 EL1
+AARCH64REG_ATWRITE_INLINE(s1e1w)
+AARCH64REG_ATWRITE_INLINE(s12e0r)	// Address Translate Stages 1 and 2 EL0
+AARCH64REG_ATWRITE_INLINE(s12e0w)
+AARCH64REG_ATWRITE_INLINE(s12e1r)	// Address Translate Stages 1 and 2 EL1
+AARCH64REG_ATWRITE_INLINE(s12e1w)
 
 AARCH64REG_READ_INLINE(sctlr_el1)	// System Control Register
 AARCH64REG_WRITE_INLINE(sctlr_el1)
+AARCH64REG_READ_INLINE(sctlr_el2)
+AARCH64REG_WRITE_INLINE(sctlr_el2)
 
 #define	SCTLR_RES0		0xc8222400	// Reserved ARMv8.0, write 0
 #define	SCTLR_RES1		0x30d00800	// Reserved ARMv8.0, write 1
@@ -869,6 +1010,8 @@ reg_sp_read(void)
 
 AARCH64REG_READ_INLINE(sp_el0)		// EL0 Stack Pointer
 AARCH64REG_WRITE_INLINE(sp_el0)
+AARCH64REG_READ_INLINE(sp_el1)		// EL1 Stack Pointer
+AARCH64REG_WRITE_INLINE(sp_el1)
 
 AARCH64REG_READ_INLINE(spsel)		// Stack Pointer Select
 AARCH64REG_WRITE_INLINE(spsel)
@@ -921,9 +1064,11 @@ AARCH64REG_WRITE_INLINE(spsr_el1)
 #define	 SPSR_M_FIQ32		 0x11
 #define	 SPSR_M_USR32		 0x10
 
+#define	SPSR_USER_P(spsr)	(((spsr) & (SPSR_M & ~SPSR_A32)) == 0)
+#define	SPSR_PRIVILEGED_P(spsr) (!SPSR_USER_P((spsr)))
+
 AARCH64REG_READ_INLINE(tcr_el1)		// Translation Control Register
 AARCH64REG_WRITE_INLINE(tcr_el1)
-
 
 /* TCR_EL1 - Translation Control Register */
 #define TCR_TCMA1		__BIT(58)		/* ARMv8.5-MemTag control when ADDR[59:55] = 0b11111 */
@@ -999,15 +1144,60 @@ AARCH64REG_WRITE_INLINE(tcr_el1)
 #define TCR_EPD0		__BIT(7)		/* Walk Disable for TTBR0 */
 #define TCR_T0SZ		__BITS(5,0)		/* Size offset for TTBR0_EL1 */
 
+AARCH64REG_READ_INLINE(tcr_el2)		// Translation Control Register EL2
+AARCH64REG_WRITE_INLINE(tcr_el2)
+
+/* TCR_EL2 - Translation Control Register */
+//				__BITS(63, 34) 	// Res0
+#define TCR_EL2_MTX		__BIT(33)	// Extended memory tag checking
+#define TCR_EL2_DS		__BIT(32)	// 52-bit output address (FEAT_LPA2)
+//				__BIT(31)	// Res1
+#define TCR_EL2_TCMA		__BIT(30)	// Unchecked accesses control (FEAT_MTE2)
+#define TCR_EL2_TBID		__BIT(29)	// Top Byte Instruction ddress matching (FEAT_PAuth)
+#define TCR_EL2_HWU62		__BIT(28)	// Hardware use bit 62 (FEAT_HPDS2)
+#define TCR_EL2_HWU61		__BIT(27)	// Hardware use bit 61 (FEAT_HPDS2)
+#define TCR_EL2_HWU60		__BIT(26)	// Hardware use bit 60 (FEAT_HPDS2)
+#define TCR_EL2_HWU59		__BIT(25)	// Hardware use bit 59 (FEAT_HPDS2)
+#define TCR_EL2_HPD		__BIT(24)	// Hierarchical Permission Disables (FEAT_HPDS)
+//				__BIT(23)	// Res1
+#define TCR_EL2_HD		__BIT(22)	// Hardware management of dirty state (FEAT_HAFDBS)
+#define TCR_EL2_HA		__BIT(21)	// Hardware Access flag update (FEAT_HAFDBS)
+#define TCR_EL2_TBI		__BIT(20)	// Top Byte Ignored
+//				__BIT(19)	// Res1
+#define TCR_EL2_PS		__BITS(18,16)	// Physical Address Size
+#define TCR_EL2_TG0		__BITS(15,14)	// TTBR0_EL2 Granule size
+#define  TCR_EL2_TG0_4KB	__SHIFTIN(0,TCR_EL2_TG0)	//   4KB page size
+#define  TCR_EL2_TG0_64KB	__SHIFTIN(1,TCR_EL2_TG0)	//  64KB page size
+#define  TCR_EL2_TG0_16KB	__SHIFTIN(2,TCR_EL2_TG0)	//  16KB page size
+#define TCR_EL2_SH0		__BITS(13,12)	// TTBR0_EL2 Shareability attribute
+#define  TCR_EL2_SH0_NONE	__SHIFTIN(0,TCR_EL2_SH0)	//  non-shareable
+#define  TCR_EL2_SH0_OUTER	__SHIFTIN(2,TCR_EL2_SH0)	//  Outer shareable
+#define  TCR_EL2_SH0_INNER	__SHIFTIN(3,TCR_EL2_SH0)	//  Inner shareable
+#define TCR_EL2_ORGN0		__BITS(11,10)	// TTBR0_EL2 Outer cacheability attribute
+#define  TCR_EL2_ORGN0_NC	__SHIFTIN(0,TCR_EL2_ORGN0)	//  Non Cacheable
+#define  TCR_EL2_ORGN0_WB_WA	__SHIFTIN(1,TCR_EL2_ORGN0)	//  WriteBack WriteAllocate
+#define  TCR_EL2_ORGN0_WT	__SHIFTIN(2,TCR_EL2_ORGN0)	//  WriteThrough
+#define  TCR_EL2_ORGN0_WB	__SHIFTIN(3,TCR_EL2_ORGN0)	//  WriteBack
+#define TCR_EL2_IRGN0		__BITS(9,8)	// TTBR0_EL2 Inner cacheability attribute
+#define  TCR_EL2_IRGN0_NC	__SHIFTIN(0,TCR_EL2_IRGN0)	//  Non Cacheable
+#define  TCR_EL2_IRGN0_WB_WA	__SHIFTIN(1,TCR_EL2_IRGN0)	//  WriteBack WriteAllocate
+#define  TCR_EL2_IRGN0_WT	__SHIFTIN(2,TCR_EL2_IRGN0)	//  WriteThrough
+#define  TCR_EL2_IRGN0_WB	__SHIFTIN(3,TCR_EL2_IRGN0)	//  WriteBack
+#define TCR_EL2_T0SZ		__BITS(5,0)	// TTBR0_EL2 Size offset
+
 AARCH64REG_READ_INLINE(tpidr_el1)	// Thread ID Register (EL1)
 AARCH64REG_WRITE_INLINE(tpidr_el1)
+AARCH64REG_READ_INLINE(tpidr_el2)	// Thread ID Register (EL2)
+AARCH64REG_WRITE_INLINE(tpidr_el2)
 
 AARCH64REG_WRITE_INLINE(tpidrro_el0)	// Thread ID Register (RO for EL0)
 
-AARCH64REG_READ_INLINE(ttbr0_el1) // Translation Table Base Register 0 EL1
+AARCH64REG_READ_INLINE(ttbr0_el1)	// Translation Table Base Register 0 EL1
 AARCH64REG_WRITE_INLINE(ttbr0_el1)
+AARCH64REG_READ_INLINE(ttbr0_el2)	// Translation Table Base Register 0 EL2
+AARCH64REG_WRITE_INLINE(ttbr0_el2)
 
-AARCH64REG_READ_INLINE(ttbr1_el1) // Translation Table Base Register 1 EL1
+AARCH64REG_READ_INLINE(ttbr1_el1)	// Translation Table Base Register 1 EL1
 AARCH64REG_WRITE_INLINE(ttbr1_el1)
 
 #define TTBR_ASID		__BITS(63,48)
@@ -1015,6 +1205,53 @@ AARCH64REG_WRITE_INLINE(ttbr1_el1)
 
 AARCH64REG_READ_INLINE(vbar_el1)	// Vector Base Address Register
 AARCH64REG_WRITE_INLINE(vbar_el1)
+AARCH64REG_READ_INLINE(vbar_el2)
+AARCH64REG_WRITE_INLINE(vbar_el2)
+
+AARCH64REG_READ_INLINE(vpidr_el2)	// Virtualization Processor ID Register
+AARCH64REG_WRITE_INLINE(vpidr_el2)
+AARCH64REG_READ_INLINE(vmpidr_el2)	// Virtualization Multiprocessor ID Register
+AARCH64REG_WRITE_INLINE(vmpidr_el2)
+AARCH64REG_READ_INLINE(vtcr_el2)	// Virtualization Translation Control Register
+AARCH64REG_WRITE_INLINE(vtcr_el2)
+
+#define VTCR_EL2_HAFT		__BIT(44)	// Hardware managed Access Flag (FEAT_HAFT)
+//				__BITS(43, 42) 	// Res0
+#define VTCR_EL2_TL0		__BIT(41)	// TopLevel0 permission attribute control (FEAT_THE)
+#define VTCR_EL2_GCSH		__BIT(40)	// Assured translations for guarded control stacks (FEAT_THE+FEAT_GCS)
+//				__BIT(39)	// Res0
+#define VTCR_EL2_D128		__BIT(38)	// VMSAv9-128 (FEAT_D128)
+#define VTCR_EL2_S2POE		__BIT(37)	// Enable stage 2 Permission Overlay (FEAT_S2POE)
+#define VTCR_EL2_S2PIE		__BIT(36)	// Select Permission Model. (FEAT_S2PIE)
+#define VTCR_EL2_TL1		__BIT(35)	// TopLevel1 permission attribute control (FEAT_THE)
+#define VTCR_EL2_AO		__BIT(34)	// AssuredOnly attribute enable (FEAT_THE)
+#define VTCR_EL2_SL2		__BIT(33)	// Stage 2 starting level (FEAT_LPA2)
+#define VTCR_EL2_DS		__BIT(32)	// 52-bit output address (FEAT_LPA2)
+//				__BIT(31)	// Res1
+#define VTCR_EL2_NSA		__BIT(30)	// Non-secure S2 translation output address space (FEAT_SEL2)
+#define VTCR_EL2_NSW		__BIT(29)	// Non-secure S2 translation table address space (FEAT_SEL2)
+#define VTCR_EL2_HWU62		__BIT(28)	// Hardware use bit 62 (FEAT_HPDS2)
+#define VTCR_EL2_HWU61		__BIT(27)	// Hardware use bit 61 (FEAT_HPDS2)
+#define VTCR_EL2_HWU60		__BIT(26)	// Hardware use bit 60 (FEAT_HPDS2)
+#define VTCR_EL2_HWU59		__BIT(25)	// Hardware use bit 59 (FEAT_HPDS2)
+//				__BITS(24, 23) 	// Res0
+#define VTCR_EL2_HD		__BIT(22)	// Hardware Dirty state management (FEAT_HAFDBS)
+#define VTCR_EL2_HA		__BIT(21)	// Hardware Access flag management (FEAT_HAFDBS)
+#define VTCR_EL2_VS		__BIT(19)	// VMID size (FEAT_VMID16)
+#define VTCR_EL2_PS		__BITS(18,16)	// Physical address Size
+#define VTCR_EL2_TG0		__BITS(15,14)	// VTTBR_EL2 Granule size
+#define VTCR_EL2_SH0		__BITS(13,12)	// V{,S}TTBR_EL2 shareability attribute
+#define VTCR_EL2_ORGN0		__BITS(11,10)	// V{,S}TTBR_EL2 outer cacheability
+#define VTCR_EL2_IRGN0		__BITS(9,8)	// V{,S}TTBR_EL2 inner cacheability
+#define VTCR_EL2_SL0		__BITS(7,6)	// Start Level of S2 translation lookup.
+#define VTCR_EL2_T0SZ		__BITS(5,0)	// VTTBR_EL2 Size offset
+
+
+AARCH64REG_READ_INLINE(vttbr_el2)	// Virtualization Translation Table Base Register
+AARCH64REG_WRITE_INLINE(vttbr_el2)
+
+#define VTTBR_VIMD		__BITS(55,48)
+#define VTTBR_BADDR		__BITS(47,0)
 
 /*
  * From here on, these are DEBUG registers
