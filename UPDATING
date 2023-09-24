@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.343 2023/08/28 22:25:49 riastradh Exp $
+$NetBSD: UPDATING,v 1.344 2023/09/24 16:33:41 gutteridge Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -321,7 +321,7 @@ Recent changes:
 	cd sys/arch/i386/stand/efiboot && make clean
 
 20190723:
-	The jemalloc allocator in libc is now build without extended
+	The jemalloc allocator in libc is now built without extended
 	debugging (for performance reasons). In update builds make sure
 	to rebuild it completely, by removing all affected object files,
 	including compat builds, something like:
@@ -341,7 +341,7 @@ Recent changes:
 
 20180713:
 	On amd64 and i386 static binaries are now build position
-	independend. This requires recompilation of all object
+	independent. This requires recompilation of all object
 	files used to create the crunched /rescue binary.
 	Clean the rescue directory in your obj directory before
 	doing an update build, otherwise linking will fail.
