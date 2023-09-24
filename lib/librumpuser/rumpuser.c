@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.67 2015/08/16 11:05:06 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.68 2023/09/24 09:33:26 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.67 2015/08/16 11:05:06 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.68 2023/09/24 09:33:26 martin Exp $");
 #endif /* !lint */
 
 #include <sys/stat.h>
@@ -267,4 +267,10 @@ rumpuser_kill(int64_t pid, int rumpsig)
 	if (sig > 0)
 		raise(sig);
 	return 0;
+}
+
+unsigned long
+rumpuser_getpagesize(void)
+{
+	return sysconf(_SC_PAGESIZE);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.196 2023/04/22 13:53:53 riastradh Exp $	*/
+/*	$NetBSD: vm.c,v 1.197 2023/09/24 09:33:26 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.196 2023/04/22 13:53:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.197 2023/09/24 09:33:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -375,11 +375,9 @@ uvm_init(void)
 	uvmexp.pagemask = PAGE_MASK;
 	uvmexp.pageshift = PAGE_SHIFT;
 #else
-#define FAKE_PAGE_SHIFT 12
-	uvmexp.pageshift = FAKE_PAGE_SHIFT;
-	uvmexp.pagesize = 1<<FAKE_PAGE_SHIFT;
-	uvmexp.pagemask = (1<<FAKE_PAGE_SHIFT)-1;
-#undef FAKE_PAGE_SHIFT
+	uvmexp.pagesize = rumpuser_getpagesize();
+	uvmexp.pagemask = uvmexp.pagesize-1;
+	uvmexp.pageshift = ffs(uvmexp.pagesize)-1;
 #endif
 
 	mutex_init(&pagermtx, MUTEX_DEFAULT, IPL_NONE);

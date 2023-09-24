@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.116 2020/03/22 13:30:10 pgoyette Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.117 2023/09/24 09:33:26 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -166,6 +166,11 @@ void rumpuser_dprintf(const char *, ...) __printflike(1, 2);
 #define RUMPUSER_RANDOM_HARD	0x01
 #define RUMPUSER_RANDOM_NOWAIT	0x02
 int rumpuser_getrandom(void *, size_t, int, size_t *);
+
+/*
+ * for architectures with non-constant page size
+ */
+unsigned long rumpuser_getpagesize(void);
 
 /*
  * threads, scheduling (host) and synchronization
