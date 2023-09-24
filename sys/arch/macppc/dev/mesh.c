@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.42 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: mesh.c,v 1.43 2023/09/24 08:20:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.42 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.43 2023/09/24 08:20:06 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -694,7 +694,7 @@ mesh_msgin(struct mesh_softc *sc, struct mesh_scb *scb)
 gotit:
 #ifdef MESH_DEBUG
 	printf("msgin:");
-	for (i = 0; i < sc->sc_imsglen; i++)
+	for (int i = 0; i < sc->sc_imsglen; i++)
 		printf(" 0x%02x", sc->sc_imsg[i]);
 	printf("\n");
 #endif
