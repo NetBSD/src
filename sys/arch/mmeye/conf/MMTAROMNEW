@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.56 2023/02/09 14:09:49 abs Exp $
+#	$NetBSD: MMTAROMNEW,v 1.57 2023/09/24 13:59:38 andvar Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -18,6 +18,7 @@ options 	ROMIMAGE
 maxusers	32		# estimated number of users
 
 options		SH3
+options 	SH7708R			# 100MHz
 options 	PCLOCK=33330000		# 33.33MHz
 options 	MMEYE_NEW_INT=0xb000000e
 #options 	MMEYE_NO_CACHE
@@ -182,15 +183,15 @@ wd*	at atabus? drive ?
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
 
 # MII/PHY support
-exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
-inphy*	at mii? phy ?			# Intel 82555 PHYs
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
-nsphy*	at mii? phy ?			# NS83840 PHYs
-qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+#exphy*	at mii? phy ?			# 3Com internal PHYs
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+#inphy*	at mii? phy ?			# Intel 82555 PHYs
+#lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+#nsphy*	at mii? phy ?			# NS83840 PHYs
+#qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+#sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #tlphy*	at mii? phy ?			# ThunderLAN PHYs
-ukphy*	at mii? phy ?			# generic unknown PHYs
+#ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # Pseudo-Devices
 
@@ -209,7 +210,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #pseudo-device	tun			# network tunneling over tty
 
 # miscellaneous pseudo-devices
-#pseudo-device	pty			# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
 
 # rnd is EXPERIMENTAL at this point.
