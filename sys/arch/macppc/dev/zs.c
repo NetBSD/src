@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.58 2023/09/23 12:48:23 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.59 2023/09/24 10:59:24 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.58 2023/09/23 12:48:23 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.59 2023/09/24 10:59:24 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -259,7 +259,7 @@ zsc_attach(device_t parent, device_t self, void *aux)
 #ifdef ZS_TXDMA
 		zsc->zsc_txdmareg[channel] = mapiodev(regs[2], regs[3], false);
 		zsc->zsc_txdmacmd[channel] =
-			dbdma_alloc(sizeof(dbdma_command_t) * 3);
+			dbdma_alloc(sizeof(dbdma_command_t) * 3, NULL);
 		memset(zsc->zsc_txdmacmd[channel], 0,
 			sizeof(dbdma_command_t) * 3);
 		dbdma_reset(zsc->zsc_txdmareg[channel]);
