@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.57 2023/06/04 01:24:58 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.58 2023/09/24 11:08:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.57 2023/06/04 01:24:58 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.58 2023/09/24 11:08:32 martin Exp $");
 #endif /* not lint */
 
 #include <machine/elf_support.h>
@@ -384,7 +384,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 #ifdef RTLD_DEBUG_RELOC
 		if (RELOC_RESOLVE_SYMBOL(type)) {
 			rdbg(("%s %s in %s --> %p in %s", reloc_names[type],
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->strtab + obj->symtab[ELF_R_SYM(rela->r_info)].st_name,
 			    obj->path, (void *)value, defobj->path));
 		} else {
 			rdbg(("%s in %s --> %p", reloc_names[type],
