@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2023/09/24 19:57:10 andvar Exp $	*/
+/*	$NetBSD: locore.S,v 1.13 2023/09/24 20:17:26 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,18 +73,18 @@
  */
 
 #include "opt_cputype.h"
-#include "opt_memsize.h"	
+#include "opt_memsize.h"
 #include "assym.h"
 
-#if defined(SH3) && defined(SH4)	
-#error "mmeye port don't support SH3,SH4 common kernel."	
+#if defined(SH3) && defined(SH4)
+#error "mmeye port don't support SH3,SH4 common kernel."
 #endif
 
 #include <sh3/asm.h>
 #include <sh3/locore.h>
 #include <sh3/exception.h>
 #include <sh3/cache_sh3.h>
-#include <sh3/cache_sh4.h>	
+#include <sh3/cache_sh4.h>
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
@@ -106,14 +106,14 @@ ALTENTRY(kernel_text)
 	ldc	r0, sr
 
 	xor	r0, r0
-	MOV	(MMUCR, r2)	
+	MOV	(MMUCR, r2)
 	mov.l	r0, @r2		/* MMU OFF */
 
 	bra	start1
 	nop
 	.align	2
 SR_init:	.long	0x500000F0
-REG_SYMBOL(MMUCR)	
+REG_SYMBOL(MMUCR)
 start1:
 
 #ifdef ROMIMAGE
