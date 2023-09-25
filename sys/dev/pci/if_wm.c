@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.786 2023/09/25 07:11:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.787 2023/09/25 07:12:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.786 2023/09/25 07:11:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.787 2023/09/25 07:12:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -3400,8 +3400,9 @@ alloc_retry:
 	    NULL, xname, "Multicast Packets Tx");
 	evcnt_attach_dynamic(&sc->sc_ev_bptc, EVCNT_TYPE_MISC,
 	    NULL, xname, "Broadcast Packets Tx");
-	evcnt_attach_dynamic(&sc->sc_ev_iac, EVCNT_TYPE_MISC,
-	    NULL, xname, "Interrupt Assertion");
+	if (sc->sc_type >= WM_T_82571) /* PCIe, 80003 and ICH/PCHs */
+		evcnt_attach_dynamic(&sc->sc_ev_iac, EVCNT_TYPE_MISC,
+		    NULL, xname, "Interrupt Assertion");
 	if (sc->sc_type < WM_T_82575) {
 		evcnt_attach_dynamic(&sc->sc_ev_icrxptc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Intr. Cause Rx Pkt Timer Expire");
@@ -3603,7 +3604,8 @@ wm_detach(device_t self, int flags __unused)
 	evcnt_detach(&sc->sc_ev_ptc1522);
 	evcnt_detach(&sc->sc_ev_mptc);
 	evcnt_detach(&sc->sc_ev_bptc);
-	evcnt_detach(&sc->sc_ev_iac);
+	if (sc->sc_type >= WM_T_82571)
+		evcnt_detach(&sc->sc_ev_iac);
 	if (sc->sc_type < WM_T_82575) {
 		evcnt_detach(&sc->sc_ev_icrxptc);
 		evcnt_detach(&sc->sc_ev_icrxatc);
@@ -6706,7 +6708,8 @@ wm_update_stats(struct wm_softc *sc)
 	WM_EVCNT_ADD(&sc->sc_ev_ptc1522, CSR_READ(sc, WMREG_PTC1522));
 	WM_EVCNT_ADD(&sc->sc_ev_mptc, CSR_READ(sc, WMREG_MPTC));
 	WM_EVCNT_ADD(&sc->sc_ev_bptc, CSR_READ(sc, WMREG_BPTC));
-	WM_EVCNT_ADD(&sc->sc_ev_iac, CSR_READ(sc, WMREG_IAC));
+	if (sc->sc_type >= WM_T_82571)
+		WM_EVCNT_ADD(&sc->sc_ev_iac, CSR_READ(sc, WMREG_IAC));
 	if (sc->sc_type < WM_T_82575) {
 		WM_EVCNT_ADD(&sc->sc_ev_icrxptc, CSR_READ(sc, WMREG_ICRXPTC));
 		WM_EVCNT_ADD(&sc->sc_ev_icrxatc, CSR_READ(sc, WMREG_ICRXATC));
@@ -6893,7 +6896,8 @@ wm_clear_evcnt(struct wm_softc *sc)
 	WM_EVCNT_STORE(&sc->sc_ev_ptc1522, 0);
 	WM_EVCNT_STORE(&sc->sc_ev_mptc, 0);
 	WM_EVCNT_STORE(&sc->sc_ev_bptc, 0);
-	WM_EVCNT_STORE(&sc->sc_ev_iac, 0);
+	if (sc->sc_type >= WM_T_82571)
+		WM_EVCNT_STORE(&sc->sc_ev_iac, 0);
 	if (sc->sc_type < WM_T_82575) {
 		WM_EVCNT_STORE(&sc->sc_ev_icrxptc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_icrxatc, 0);
