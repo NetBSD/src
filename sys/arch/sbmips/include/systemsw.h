@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.h,v 1.9 2011/02/20 07:47:38 matt Exp $ */
+/* $NetBSD: systemsw.h,v 1.10 2023/09/25 14:56:56 riastradh Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -36,6 +36,8 @@
 #define	_SBMIPS_SYSTEMSW_H_
 
 #include <sys/types.h>
+
+#include <sys/stdbool.h>
 
 struct systemsw {
 	/* ordered to match likely locality. */
