@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.784 2023/08/25 09:38:50 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.785 2023/09/25 06:18:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.784 2023/08/25 09:38:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.785 2023/09/25 06:18:09 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -3461,6 +3461,10 @@ alloc_retry:
 		    NULL, xname, "Host Good Octets Tx");
 		evcnt_attach_dynamic(&sc->sc_ev_lenerrs, EVCNT_TYPE_MISC,
 		    NULL, xname, "Length Errors");
+		evcnt_attach_dynamic(&sc->sc_ev_scvpc, EVCNT_TYPE_MISC,
+		    NULL, xname, "SerDes/SGMII Code Violation Packet");
+		evcnt_attach_dynamic(&sc->sc_ev_hrmpc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Header Redirection Missed Packet");
 	}
 	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		evcnt_attach_dynamic(&sc->sc_ev_tlpic, EVCNT_TYPE_MISC,
@@ -3475,10 +3479,6 @@ alloc_retry:
 		    NULL, xname, "BMC2OS Packets sent by BMC");
 		evcnt_attach_dynamic(&sc->sc_ev_o2bgptc, EVCNT_TYPE_MISC,
 		    NULL, xname, "OS2BMC Packets received by BMC");
-		evcnt_attach_dynamic(&sc->sc_ev_scvpc, EVCNT_TYPE_MISC,
-		    NULL, xname, "SerDes/SGMII Code Violation Packet");
-		evcnt_attach_dynamic(&sc->sc_ev_hrmpc, EVCNT_TYPE_MISC,
-		    NULL, xname, "Header Redirection Missed Packet");
 	}
 #endif /* WM_EVENT_COUNTERS */
 
@@ -3626,6 +3626,8 @@ wm_detach(device_t self, int flags __unused)
 		evcnt_detach(&sc->sc_ev_hgorc);
 		evcnt_detach(&sc->sc_ev_hgotc);
 		evcnt_detach(&sc->sc_ev_lenerrs);
+		evcnt_detach(&sc->sc_ev_scvpc);
+		evcnt_detach(&sc->sc_ev_hrmpc);
 	}
 	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		evcnt_detach(&sc->sc_ev_tlpic);
@@ -3634,8 +3636,6 @@ wm_detach(device_t self, int flags __unused)
 		evcnt_detach(&sc->sc_ev_o2bspc);
 		evcnt_detach(&sc->sc_ev_b2ospc);
 		evcnt_detach(&sc->sc_ev_o2bgptc);
-		evcnt_detach(&sc->sc_ev_scvpc);
-		evcnt_detach(&sc->sc_ev_hrmpc);
 	}
 #endif /* WM_EVENT_COUNTERS */
 
@@ -6735,6 +6735,8 @@ wm_update_stats(struct wm_softc *sc)
 		    CSR_READ(sc, WMREG_HGOTCL) +
 		    ((uint64_t)CSR_READ(sc, WMREG_HGOTCH) << 32));
 		WM_EVCNT_ADD(&sc->sc_ev_lenerrs, CSR_READ(sc, WMREG_LENERRS));
+		WM_EVCNT_ADD(&sc->sc_ev_scvpc, CSR_READ(sc, WMREG_SCVPC));
+		WM_EVCNT_ADD(&sc->sc_ev_hrmpc, CSR_READ(sc, WMREG_HRMPC));
 	}
 	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		WM_EVCNT_ADD(&sc->sc_ev_tlpic, CSR_READ(sc, WMREG_TLPIC));
@@ -6749,8 +6751,6 @@ wm_update_stats(struct wm_softc *sc)
 			WM_EVCNT_ADD(&sc->sc_ev_o2bgptc,
 			    CSR_READ(sc, WMREG_O2BGPTC));
 		}
-		WM_EVCNT_ADD(&sc->sc_ev_scvpc, CSR_READ(sc, WMREG_SCVPC));
-		WM_EVCNT_ADD(&sc->sc_ev_hrmpc, CSR_READ(sc, WMREG_HRMPC));
 	}
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if_statadd_ref(nsr, if_collisions, colc);
@@ -6916,6 +6916,8 @@ wm_clear_evcnt(struct wm_softc *sc)
 		WM_EVCNT_STORE(&sc->sc_ev_hgorc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_hgotc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_lenerrs, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_scvpc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_hrmpc, 0);
 	}
 	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		WM_EVCNT_STORE(&sc->sc_ev_tlpic, 0);
@@ -6924,8 +6926,6 @@ wm_clear_evcnt(struct wm_softc *sc)
 		WM_EVCNT_STORE(&sc->sc_ev_o2bspc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_b2ospc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_o2bgptc, 0);
-		WM_EVCNT_STORE(&sc->sc_ev_scvpc, 0);
-		WM_EVCNT_STORE(&sc->sc_ev_hrmpc, 0);
 	}
 #endif
 }
