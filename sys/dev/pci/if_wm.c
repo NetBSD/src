@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.787 2023/09/25 07:12:25 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.788 2023/09/25 08:18:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.787 2023/09/25 07:12:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.788 2023/09/25 08:18:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -3308,15 +3308,15 @@ alloc_retry:
 
 	if (sc->sc_type >= WM_T_82542_2_1) {
 		evcnt_attach_dynamic(&sc->sc_ev_tx_xoff, EVCNT_TYPE_MISC,
-		    NULL, xname, "tx_xoff");
+		    NULL, xname, "XOFF Transmitted");
 		evcnt_attach_dynamic(&sc->sc_ev_tx_xon, EVCNT_TYPE_MISC,
-		    NULL, xname, "tx_xon");
+		    NULL, xname, "XON Transmitted");
 		evcnt_attach_dynamic(&sc->sc_ev_rx_xoff, EVCNT_TYPE_MISC,
-		    NULL, xname, "rx_xoff");
+		    NULL, xname, "XOFF Received");
 		evcnt_attach_dynamic(&sc->sc_ev_rx_xon, EVCNT_TYPE_MISC,
-		    NULL, xname, "rx_xon");
+		    NULL, xname, "XON Received");
 		evcnt_attach_dynamic(&sc->sc_ev_rx_macctl, EVCNT_TYPE_MISC,
-		    NULL, xname, "rx_macctl");
+		    NULL, xname, "FC Received Unsupported");
 	}
 
 	evcnt_attach_dynamic(&sc->sc_ev_scc, EVCNT_TYPE_MISC,
