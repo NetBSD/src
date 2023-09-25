@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.222 2023/09/23 20:23:07 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.223 2023/09/25 17:09:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -81,7 +81,6 @@ static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 
 #include <sys/pcu.h>
 
-typedef struct syncobj const syncobj_t;
 struct lockdebug;
 struct sysent;
 
@@ -131,7 +130,7 @@ struct lwp {
 	kcpuset_t	*l_affinity;	/* l: CPU set for affinity */
 
 	/* Synchronisation. */
-	syncobj_t	*l_syncobj;	/* l: sync object operations set */
+	struct syncobj	*l_syncobj;	/* l: sync object operations set */
 	LIST_ENTRY(lwp) l_sleepchain;	/* l: sleep queue */
 	wchan_t		l_wchan;	/* l: sleep address */
 	const char	*l_wmesg;	/* l: reason for sleep */
