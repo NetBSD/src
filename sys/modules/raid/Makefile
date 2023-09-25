@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2019/02/17 04:05:57 rin Exp $
+#	$NetBSD: Makefile,v 1.7 2023/09/25 21:59:38 oster Exp $
 
 .include "../Makefile.inc"
 
@@ -9,7 +9,7 @@ IOCONF=	raid.ioconf
 KMOD=	raid
 
 SRCS+=	rf_acctrace.c           rf_alloclist.c         rf_aselect.c
-SRCS+=	rf_callback.c           rf_chaindecluster.c    rf_copyback.c
+SRCS+=	rf_callback.c           rf_chaindecluster.c
 SRCS+=	rf_cvscan.c             rf_dagdegrd.c          rf_dagdegwr.c
 SRCS+=	rf_dagffrd.c            rf_dagffwr.c           rf_dagfuncs.c
 SRCS+=	rf_dagutils.c           rf_debugMem.c          rf_debugprint.c

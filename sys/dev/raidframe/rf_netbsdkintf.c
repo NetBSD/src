@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.414 2023/09/17 20:07:39 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.415 2023/09/25 21:59:38 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.414 2023/09/17 20:07:39 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.415 2023/09/25 21:59:38 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -136,7 +136,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.414 2023/09/17 20:07:39 oster E
 #include <dev/raidframe/rf_paritymap.h>
 
 #include "rf_raid.h"
-#include "rf_copyback.h"
 #include "rf_dag.h"
 #include "rf_dagflags.h"
 #include "rf_desc.h"
@@ -296,7 +295,6 @@ static void rf_set_geometry(struct raid_softc *, RF_Raid_t *);
 
 static void rf_ReconThread(struct rf_recon_req_internal *);
 static void rf_RewriteParityThread(RF_Raid_t *raidPtr);
-static void rf_CopybackThread(RF_Raid_t *raidPtr);
 static void rf_ReconstructInPlaceThread(struct rf_recon_req_internal *);
 static int rf_autoconfig(device_t);
 static int rf_rescan(void);
@@ -1069,8 +1067,7 @@ raid_detach_unlocked(struct raid_softc *rs)
 
 	if (DK_BUSY(dksc, 0) ||
 	    raidPtr->recon_in_progress != 0 ||
-	    raidPtr->parity_rewrite_in_progress != 0 ||
-	    raidPtr->copyback_in_progress != 0)
+	    raidPtr->parity_rewrite_in_progress != 0)
 		return EBUSY;
 
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
@@ -1511,8 +1508,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		if (DK_BUSY(dksc, pmask) ||
 		    raidPtr->recon_in_progress != 0 ||
-		    raidPtr->parity_rewrite_in_progress != 0 ||
-		    raidPtr->copyback_in_progress != 0)
+		    raidPtr->parity_rewrite_in_progress != 0)
 			retcode = EBUSY;
 		else {
 			/* detach and free on close */
@@ -1652,22 +1648,9 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case RAIDFRAME_FAIL_DISK:
 		return rf_fail_disk(raidPtr, data);
 
-		/* invoke a copyback operation after recon on whatever disk
-		 * needs it, if any */
+		/* copyback is no longer supported */
 	case RAIDFRAME_COPYBACK:
-
-		if (raidPtr->Layout.map->faultsTolerated == 0) {
-			/* This makes no sense on a RAID 0!! */
-			return EINVAL;
-		}
-
-		if (raidPtr->copyback_in_progress == 1) {
-			/* Copyback is already in progress! */
-			return EINVAL;
-		}
-
-		return RF_CREATE_THREAD(raidPtr->copyback_thread,
-		    rf_CopybackThread, raidPtr, "raid_copyback");
+		return EINVAL;
 
 		/* return the percentage completion of reconstruction */
 	case RAIDFRAME_CHECK_RECON_STATUS:
@@ -1698,17 +1681,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return 0;
 
 	case RAIDFRAME_CHECK_COPYBACK_STATUS:
-		if (raidPtr->Layout.map->faultsTolerated == 0) {
-			/* This makes no sense on a RAID 0 */
-			*(int *) data = 100;
-			return 0;
-		}
-		if (raidPtr->copyback_in_progress == 1) {
-			*(int *) data = 100 * raidPtr->copyback_stripes_done /
-				raidPtr->Layout.numStripe;
-		} else {
-			*(int *) data = 100;
-		}
+		*(int *) data = 100;
 		return 0;
 
 	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
@@ -2790,23 +2763,6 @@ rf_RewriteParityThread(RF_Raid_t *raidPtr)
 	/* That's all... */
 	kthread_exit(0);	/* does not return */
 }
-
-
-static void
-rf_CopybackThread(RF_Raid_t *raidPtr)
-{
-	int s;
-
-	raidPtr->copyback_in_progress = 1;
-	s = splbio();
-	rf_CopybackReconstructedData(raidPtr);
-	splx(s);
-	raidPtr->copyback_in_progress = 0;
-
-	/* That's all... */
-	kthread_exit(0);	/* does not return */
-}
-
 
 static void
 rf_ReconstructInPlaceThread(struct rf_recon_req_internal *req)
@@ -3900,16 +3856,9 @@ rf_check_copyback_status_ext(RF_Raid_t *raidPtr, RF_ProgressInfo_t *info)
 {
 
 	memset(info, 0, sizeof(*info));
-
-	if (raidPtr->copyback_in_progress == 1) {
-		info->total = raidPtr->Layout.numStripe;
-		info->completed = raidPtr->copyback_stripes_done;
-		info->remaining = info->total - info->completed;
-	} else {
-		info->remaining = 0;
-		info->completed = 100;
-		info->total = 100;
-	}
+	info->remaining = 0;
+	info->completed = 100;
+	info->total = 100;
 }
 
 /* Fill in config with the current info */

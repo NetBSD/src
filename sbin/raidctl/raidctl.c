@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.81 2023/09/21 01:48:41 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.82 2023/09/25 21:59:38 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.81 2023/09/21 01:48:41 oster Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.82 2023/09/25 21:59:38 oster Exp $");
 #endif
 
 
@@ -189,10 +189,6 @@ main(int argc,char *argv[])
 		case 'A':
 			action = RAIDFRAME_SET_AUTOCONFIG;
 			strlcpy(autoconf, optarg, sizeof(autoconf));
-			num_options++;
-			break;
-		case 'B':
-			action = RAIDFRAME_COPYBACK;
 			num_options++;
 			break;
 		case 'c':
@@ -370,15 +366,6 @@ main(int argc,char *argv[])
 		break;
 	case RAIDFRAME_SET_AUTOCONFIG:
 		set_autoconfig(fd, raidID, autoconf);
-		break;
-	case RAIDFRAME_COPYBACK:
-		printf("Copyback.\n");
-		do_ioctl(fd, RAIDFRAME_COPYBACK, NULL, "RAIDFRAME_COPYBACK");
-		if (verbose) {
-			sleep(3); /* XXX give the copyback a chance to start */
-			printf("Copyback status:\n");
-			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS_EXT);
-		}
 		break;
 	case RAIDFRAME_FAIL_DISK:
 		rf_fail_disk(fd, component, do_recon);
@@ -1059,7 +1046,6 @@ check_status(int fd, int meter)
 {
 	int recon_percent_done = 0;
 	int parity_percent_done = 0;
-	int copyback_percent_done = 0;
 
 	do_ioctl(fd, RAIDFRAME_CHECK_RECON_STATUS, &recon_percent_done, 
 		 "RAIDFRAME_CHECK_RECON_STATUS");
@@ -1068,9 +1054,6 @@ check_status(int fd, int meter)
 		 &parity_percent_done, 
 		 "RAIDFRAME_CHECK_PARITYREWRITE_STATUS");
 	printf("Parity Re-write is %d%% complete.\n", parity_percent_done);
-	do_ioctl(fd, RAIDFRAME_CHECK_COPYBACK_STATUS, &copyback_percent_done, 
-		 "RAIDFRAME_CHECK_COPYBACK_STATUS");
-	printf("Copyback is %d%% complete.\n", copyback_percent_done);
 
 	if (meter) {
 		/* These 3 should be mutually exclusive at this point */
@@ -1080,9 +1063,6 @@ check_status(int fd, int meter)
 		} else if (parity_percent_done < 100) {
 			printf("Parity Re-write status:\n");
 			do_meter(fd,RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT);
-		} else if (copyback_percent_done < 100) {
-			printf("Copyback status:\n");
-			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS_EXT);
 		}
 	}
 }

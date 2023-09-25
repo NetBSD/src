@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.81 2023/09/21 01:40:44 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.82 2023/09/25 21:59:38 oster Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd September 20, 2023
+.Dd September 25, 2023
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -71,9 +71,6 @@
 .Nm
 .Op Fl v
 .Fl a Ar component Ar dev
-.Nm
-.Op Fl v
-.Fl B Ar dev
 .Nm
 .Op Fl v
 .Fl C Ar config_file Ar dev
@@ -223,11 +220,6 @@ component within a particular RAID set) are automatically added to the
 hot spare after it has been used and are not required for
 .Ar component
 before it is used.
-.It Fl B Ar dev
-Initiate a copyback of reconstructed data from a spare disk to
-its original disk.
-This is performed after a component has failed,
-and the failed drive has been reconstructed onto a spare drive.
 .It Fl C Ar config_file Ar dev
 As for
 .Fl c ,
@@ -351,8 +343,7 @@ Remove the specified
 from the RAID. The component must be in the failed, spare, or spared state
 in order to be removed.
 .It Fl S Ar dev
-Check the status of parity re-writing, component reconstruction, and
-component copyback.
+Check the status of parity re-writing and component reconstruction.
 The output indicates the amount of progress
 achieved in each of these areas.
 .It Fl s Ar dev
@@ -374,9 +365,8 @@ Unconfigure the RAIDframe device.
 This does not remove any component labels or change any configuration
 settings (e.g. auto-configuration settings) for the RAID set.
 .It Fl v
-Be more verbose.
-For operations such as reconstructions, parity
-re-writing, and copybacks, provide a progress indicator.
+Be more verbose, and provide a progress indicator for operations such
+as reconstructions and parity re-writing.
 .El
 .Pp
 The device used by
@@ -965,7 +955,6 @@ Component label for /dev/sd3e:
 Parity status: clean
 Reconstruction is 100% complete.
 Parity Re-write is 100% complete.
-Copyback is 100% complete.
 .Ed
 .Pp
 This indicates that all is well with the RAID set.
@@ -1051,7 +1040,6 @@ Spares:
 Parity status: clean
 Reconstruction is 10% complete.
 Parity Re-write is 100% complete.
-Copyback is 100% complete.
 .Ed
 .Pp
 This indicates that a reconstruction is in progress.
@@ -1073,7 +1061,6 @@ No spares.
 Parity status: clean
 Reconstruction is 100% complete.
 Parity Re-write is 100% complete.
-Copyback is 100% complete.
 .Ed
 .Pp
 as

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.26 2019/02/09 03:34:00 christos Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.27 2023/09/25 21:59:38 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.26 2019/02/09 03:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.27 2023/09/25 21:59:38 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.26 2019/02/09 03:34:00 christos E
 #include "rf_general.h"
 #include "rf_kintf.h"
 #include "rf_shutdown.h"
-#include "rf_copyback.h"
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
 
@@ -350,8 +349,7 @@ rf_MapSectorDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 	/* remap to distributed spare space if indicated */
 	if (remap) {
-		RF_ASSERT(raidPtr->Disks[*col].status == rf_ds_reconstructing || raidPtr->Disks[*col].status == rf_ds_dist_spared ||
-		    (rf_copyback_in_progress && raidPtr->Disks[*col].status == rf_ds_optimal));
+		RF_ASSERT(raidPtr->Disks[*col].status == rf_ds_reconstructing || raidPtr->Disks[*col].status == rf_ds_dist_spared);
 		rf_remap_to_spare_space(layoutPtr, info, FullTableID, TableID, BlockID, (base_suid) ? 1 : 0, SpareRegion, col, &outSU);
 	} else {
 
@@ -411,8 +409,7 @@ rf_MapParityDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	*col = info->LayoutTable[BlockID][RepIndex];
 
 	if (remap) {
-		RF_ASSERT(raidPtr->Disks[*col].status == rf_ds_reconstructing || raidPtr->Disks[*col].status == rf_ds_dist_spared ||
-		    (rf_copyback_in_progress && raidPtr->Disks[*col].status == rf_ds_optimal));
+		RF_ASSERT(raidPtr->Disks[*col].status == rf_ds_reconstructing || raidPtr->Disks[*col].status == rf_ds_dist_spared);
 		rf_remap_to_spare_space(layoutPtr, info, FullTableID, TableID, BlockID, (base_suid) ? 1 : 0, SpareRegion, col, &outSU);
 	} else {
 
