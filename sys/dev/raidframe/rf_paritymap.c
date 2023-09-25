@@ -1,4 +1,4 @@
-/* $NetBSD: rf_paritymap.c,v 1.10 2020/09/27 21:39:08 christos Exp $ */
+/* $NetBSD: rf_paritymap.c,v 1.11 2023/09/25 21:59:38 oster Exp $ */
 
 /*-
  * Copyright (c) 2009 Jed Davis.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.10 2020/09/27 21:39:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.11 2023/09/25 21:59:38 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -727,7 +727,7 @@ rf_paritymap_attach(RF_Raid_t *raidPtr, int force)
 
 /*
  * For initializing the parity-map fields of a component label, both on
- * initial creation and on reconstruct/copyback/etc.  */
+ * initial creation and on reconstruct.  */
 void
 rf_paritymap_init_label(struct rf_paritymap *pm, RF_ComponentLabel_t *clabel)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.141 2023/09/17 20:07:39 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.142 2023/09/25 21:59:38 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.141 2023/09/17 20:07:39 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.142 2023/09/25 21:59:38 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.141 2023/09/17 20:07:39 oster Exp $"
 #include "rf_engine.h"
 #include "rf_mcpair.h"
 #include "rf_nwayxor.h"
-#include "rf_copyback.h"
 #include "rf_driver.h"
 #include "rf_options.h"
 #include "rf_shutdown.h"
@@ -322,7 +321,6 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 #endif
 		DO_INIT_CONFIGURE(rf_ConfigureNWayXor);
 		DO_INIT_CONFIGURE(rf_ConfigureDAGFuncs);
-		DO_INIT_CONFIGURE(rf_ConfigureCopyback);
 		isconfigged = 1;
 	}
 	rf_unlock_mutex2(configureMutex);
@@ -400,7 +398,6 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	}
 #endif
 	raidPtr->numNewFailures = 0;
-	raidPtr->copyback_in_progress = 0;
 	raidPtr->parity_rewrite_in_progress = 0;
 	raidPtr->changing_components = 0;
 	raidPtr->recon_in_progress = 0;
