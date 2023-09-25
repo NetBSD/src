@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.94 2023/09/17 20:07:39 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.95 2023/09/25 16:16:50 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.94 2023/09/17 20:07:39 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.95 2023/09/25 16:16:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1269,9 +1269,9 @@ rf_swap_components(RF_Raid_t *raidPtr, int a, int b)
 	RF_ASSERT(raidPtr->accesses_suspended == 0);
 	
 	/* Swap the component names... */
-	snprintf(tmpdevname, sizeof(tmpdevname),raidPtr->Disks[a].devname);
-	snprintf(raidPtr->Disks[a].devname, sizeof(raidPtr->Disks[a].devname), raidPtr->Disks[b].devname);
-	snprintf(raidPtr->Disks[b].devname, sizeof(raidPtr->Disks[b].devname), tmpdevname);
+	snprintf(tmpdevname, sizeof(tmpdevname), "%s", raidPtr->Disks[a].devname);
+	snprintf(raidPtr->Disks[a].devname, sizeof(raidPtr->Disks[a].devname), "%s", raidPtr->Disks[b].devname);
+	snprintf(raidPtr->Disks[b].devname, sizeof(raidPtr->Disks[b].devname), "%s", tmpdevname);
 
 	/* and the vp */
 	tmp_ci_vp = raidPtr->raid_cinfo[a].ci_vp;
