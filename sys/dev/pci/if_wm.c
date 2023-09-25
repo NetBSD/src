@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.785 2023/09/25 06:18:09 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.786 2023/09/25 07:11:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.785 2023/09/25 06:18:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.786 2023/09/25 07:11:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -3361,13 +3361,13 @@ alloc_retry:
 	evcnt_attach_dynamic(&sc->sc_ev_rnbc, EVCNT_TYPE_MISC,
 	    NULL, xname, "Rx No Buffers");
 	evcnt_attach_dynamic(&sc->sc_ev_ruc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Rx Undersize");
+	    NULL, xname, "Rx Undersize (valid CRC)");
 	evcnt_attach_dynamic(&sc->sc_ev_rfc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Rx Fragment");
+	    NULL, xname, "Rx Fragment (bad CRC)");
 	evcnt_attach_dynamic(&sc->sc_ev_roc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Rx Oversize");
+	    NULL, xname, "Rx Oversize (valid CRC)");
 	evcnt_attach_dynamic(&sc->sc_ev_rjc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Rx Jabber");
+	    NULL, xname, "Rx Jabber (bad CRC)");
 	if (sc->sc_type >= WM_T_82540) {
 		evcnt_attach_dynamic(&sc->sc_ev_mgtprc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Management Packets RX");
@@ -3460,7 +3460,7 @@ alloc_retry:
 		evcnt_attach_dynamic(&sc->sc_ev_hgotc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Host Good Octets Tx");
 		evcnt_attach_dynamic(&sc->sc_ev_lenerrs, EVCNT_TYPE_MISC,
-		    NULL, xname, "Length Errors");
+		    NULL, xname, "Length Errors (length/type <= 1500)");
 		evcnt_attach_dynamic(&sc->sc_ev_scvpc, EVCNT_TYPE_MISC,
 		    NULL, xname, "SerDes/SGMII Code Violation Packet");
 		evcnt_attach_dynamic(&sc->sc_ev_hrmpc, EVCNT_TYPE_MISC,
