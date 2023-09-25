@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.788 2023/09/25 08:18:13 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.789 2023/09/25 09:15:48 rin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.788 2023/09/25 08:18:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.789 2023/09/25 09:15:48 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -779,13 +779,13 @@ do {									\
 #define WM_Q_EVCNT_ADD(qname, evname, val)		\
 	WM_EVCNT_ADD(&(qname)->qname##_ev_##evname, (val))
 #else /* !WM_EVENT_COUNTERS */
-#define	WM_EVCNT_INCR(ev)	/* nothing */
-#define	WM_EVCNT_STORE(ev, val)	/* nothing */
-#define	WM_EVCNT_ADD(ev, val)	/* nothing */
+#define	WM_EVCNT_INCR(ev)	__nothing
+#define	WM_EVCNT_STORE(ev, val)	__nothing
+#define	WM_EVCNT_ADD(ev, val)	__nothing
 
-#define WM_Q_EVCNT_INCR(qname, evname)		/* nothing */
-#define WM_Q_EVCNT_STORE(qname, evname, val)	/* nothing */
-#define WM_Q_EVCNT_ADD(qname, evname, val)	/* nothing */
+#define WM_Q_EVCNT_INCR(qname, evname)		__nothing
+#define WM_Q_EVCNT_STORE(qname, evname, val)	__nothing
+#define WM_Q_EVCNT_ADD(qname, evname, val)	__nothing
 #endif /* !WM_EVENT_COUNTERS */
 
 #define	CSR_READ(sc, reg)						\
