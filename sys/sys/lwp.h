@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.223 2023/09/25 17:09:27 riastradh Exp $	*/
+/*	$NetBSD: lwp.h,v 1.224 2023/09/25 18:30:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -130,7 +130,7 @@ struct lwp {
 	kcpuset_t	*l_affinity;	/* l: CPU set for affinity */
 
 	/* Synchronisation. */
-	struct syncobj	*l_syncobj;	/* l: sync object operations set */
+	const struct syncobj *l_syncobj;/* l: sync object operations set */
 	LIST_ENTRY(lwp) l_sleepchain;	/* l: sleep queue */
 	wchan_t		l_wchan;	/* l: sleep address */
 	const char	*l_wmesg;	/* l: reason for sleep */
