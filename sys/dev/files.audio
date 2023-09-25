@@ -1,6 +1,7 @@
-#	$NetBSD: files.audio,v 1.16 2022/06/04 20:12:10 pgoyette Exp $
+#	$NetBSD: files.audio,v 1.17 2023/09/25 08:42:05 macallan Exp $
 
 defparam opt_audio.h	AUDIO_BLK_MS
+defflag opt_audio.h AUDIO_DEBUG
 
 define	audiobus	{ }
 define	midibus		{ }
