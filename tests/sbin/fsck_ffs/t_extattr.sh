@@ -1,4 +1,4 @@
-# $NetBSD: t_extattr.sh,v 1.4 2022/11/30 07:20:36 martin Exp $
+# $NetBSD: t_extattr.sh,v 1.5 2023/09/26 12:15:44 kre Exp $
 #
 #  Copyright (c) 2021 The NetBSD Foundation, Inc.
 #  All rights reserved.
@@ -38,8 +38,8 @@ atf_test_case fsck_extattr_disable cleanup
 cleanup()
 {
 	echo in cleanup
-	umount -f ${MNT} > /dev/null 2>&1 || true
-	vnconfig -u ${VND} > /dev/null 2>&1 || true
+	umount -f "${MNT}" > /dev/null 2>&1 || true
+	vnconfig -u "${VND}" > /dev/null 2>&1 || true
 }
 
 fsck_extattr_enable_head()
@@ -50,32 +50,32 @@ fsck_extattr_enable_head()
 
 fsck_extattr_enable_body()
 {
-	atf_check mkdir -p ${MNT}
+	atf_check mkdir -p "${MNT}"
 
-	atf_check -o ignore newfs -O2 -s 4m -F ${IMG}
-	atf_check vnconfig ${VND} ${IMG}
+	atf_check -o ignore newfs -O2 -s 4m -F "${IMG}"
+	atf_check vnconfig "${VND}" "${IMG}"
 
 	# Verify that extattrs are disabled.
 	atf_check -o ignore -e 'match:POSIX1e ACLs not supported by this fs' \
-		tunefs -p enable ${CDEV}
-	atf_check mount -t ffs ${BDEV} ${MNT}
-	atf_check touch ${MNT}/file
-	atf_check -s exit:1 -e ignore setextattr user name1 value1 ${MNT}/file
-	atf_check umount ${MNT}
+		tunefs -p enable "${CDEV}"
+	atf_check mount -t ffs "${BDEV}" "${MNT}"
+	atf_check touch "${MNT}/file"
+	atf_check -s exit:1 -e ignore setextattr user name1 value1 "${MNT}/file"
+	atf_check umount "${MNT}"
 
 	# Enable extattrs.
 	atf_check -o 'match:ENABLING EXTATTR SUPPORT' \
-		fsck_ffs -c ea ${CDEV}
+		fsck_ffs -c ea "${CDEV}"
 
 	# Verify that extattrs are now enabled.
 	atf_check -o 'match:POSIX1e ACLs set' -e ignore \
-		tunefs -p enable ${CDEV}
-	atf_check mount -t ffs ${BDEV} ${MNT}
-	atf_check touch ${MNT}/file
-	atf_check setextattr user testname testvalue ${MNT}/file
-	atf_check -o 'match:testvalue' getextattr user testname ${MNT}/file
-	atf_check umount ${MNT}
-	atf_check vnconfig -u ${VND}
+		tunefs -p enable "${CDEV}"
+	atf_check mount -t ffs "${BDEV}" "${MNT}"
+	atf_check touch "${MNT}/file"
+	atf_check setextattr user testname testvalue "${MNT}/file"
+	atf_check -o 'match:testvalue' getextattr user testname "${MNT}/file"
+	atf_check umount "${MNT}"
+	atf_check vnconfig -u "${VND}"
 }
 
 fsck_extattr_enable_cleanup()
@@ -91,49 +91,55 @@ fsck_extattr_enable_corrupted_head()
 
 fsck_extattr_enable_corrupted_body()
 {
-	atf_check mkdir -p ${MNT}
+	atf_check mkdir -p "${MNT}"
 
 	# Create an fs with extattrs enabled and set an extattr on the test file.
-	atf_check -o ignore newfs -O2ea -b 8k -f 1k -s 4m -F ${IMG}
-	atf_check vnconfig ${VND} ${IMG}
+	atf_check -o ignore newfs -O2ea -b 8k -f 1k -s 4m -F "${IMG}"
+	atf_check vnconfig "${VND}" "${IMG}"
 
-	atf_check mount -t ffs ${BDEV} ${MNT}
-	atf_check touch ${MNT}/file
-	atf_check setextattr user testname testvalue ${MNT}/file
-	atf_check -o 'match:testvalue' getextattr user testname ${MNT}/file
-	atf_check umount ${MNT}
+	atf_check mount -t ffs "${BDEV}" "${MNT}"
+	atf_check touch "${MNT}/file"
+	atf_check setextattr user testname testvalue "${MNT}/file"
+	atf_check -o 'match:testvalue' getextattr user testname "${MNT}/file"
+	atf_check umount "${MNT}"
 
 	# Find the location and size of the extattr block.
-	extb0=$(printf 'cd file\niptrs\n' | fsdb -n $CDEV | grep 'di_extb 0' |
+	extb0=$(printf 'cd file\niptrs\n' |
+		fsdb -n "$CDEV" |
+		grep 'di_extb 0' |
 		awk '{print $3}')
-	extsize=$(printf 'cd file\n' | fsdb -n $CDEV | grep EXTSIZE | tail -1 |
-		awk '{print $4}' | sed 's,.*=,,')
-	atf_check [ $extb0 != 0 ]
-	atf_check [ $extsize != 0 ]
+	extsize=$(printf 'cd file\n' |
+		fsdb -n "$CDEV" |
+		grep EXTSIZE |
+		tail -n 1 |
+		awk '{print $4}' |
+		sed 's,.*=,,')
+	atf_check [ "$extb0" != 0 ]
+	atf_check [ "$extsize" != 0 ]
 
 	# Recreate the fs with extattrs disabled and set the extattr block
 	# size/location of the new test file to the same values as the old
 	# test file.  This simulates extattrs having been created in a
 	# UFS2-non-ea file system before UFS2ea was invented.
-	atf_check -o ignore newfs -O2 -b 8k -f 1k -s 4m -F ${IMG}
-	atf_check mount -t ffs ${BDEV} ${MNT}
-	atf_check touch ${MNT}/file
-	atf_check umount ${MNT}
-	printf "cd file\nchextb 0 $extb0\n" | fsdb -N $CDEV
-	printf "cd file\nchextsize $extsize\n" | fsdb -N $CDEV
+	atf_check -o ignore newfs -O2 -b 8k -f 1k -s 4m -F "${IMG}"
+	atf_check mount -t ffs "${BDEV}" "${MNT}"
+	atf_check touch "${MNT}/file"
+	atf_check umount "${MNT}"
+	printf "cd file\nchextb 0 $extb0\n" | fsdb -N "$CDEV"
+	printf "cd file\nchextsize $extsize\n" | fsdb -N "$CDEV"
 
 	# Convert to enable extattrs.
 	atf_check -o 'match:CLEAR EXTATTR FIELDS' \
 		  -o 'match:ENABLING EXTATTR SUPPORT' \
-		  fsck_ffs -y -c ea ${CDEV}
+		  fsck_ffs -y -c ea "${CDEV}"
 
 	# Verify that the test file does not have the extattr.
-	atf_check -o ignore fsck_ffs -n ${CDEV}
-	atf_check mount -t ffs ${BDEV} ${MNT}
+	atf_check -o ignore fsck_ffs -n "${CDEV}"
+	atf_check mount -t ffs "${BDEV}" "${MNT}"
 	atf_check -s exit:1 -e 'match:Attribute not found' \
-		  getextattr user testname ${MNT}/file
-	atf_check umount ${MNT}
-	atf_check vnconfig -u ${VND}
+		  getextattr user testname "${MNT}/file"
+	atf_check umount "${MNT}"
+	atf_check vnconfig -u "${VND}"
 }
 
 fsck_extattr_enable_corrupted_cleanup()
@@ -149,42 +155,43 @@ fsck_extattr_disable_head()
 
 fsck_extattr_disable_body()
 {
-	atf_check mkdir -p ${MNT}
+	atf_check mkdir -p "${MNT}"
 
 	# Create an fs with extattrs enabled and set an extattr on the test file.
-	atf_check -o ignore newfs -O2ea -b 8k -f 1k -s 4m -F ${IMG}
-	atf_check vnconfig ${VND} ${IMG}
+	atf_check -o ignore newfs -O2ea -b 8k -f 1k -s 4m -F "${IMG}"
+	atf_check vnconfig "${VND}" "${IMG}"
 
-	atf_check mount -t ffs ${BDEV} ${MNT}
-	atf_check touch ${MNT}/file
-	atf_check setextattr user testname testvalue ${MNT}/file
-	atf_check -o 'match:testvalue' getextattr user testname ${MNT}/file
-	atf_check umount ${MNT}
+	atf_check mount -t ffs "${BDEV}" "${MNT}"
+	atf_check touch "${MNT}/file"
+	atf_check setextattr user testname testvalue "${MNT}/file"
+	atf_check -o 'match:testvalue' getextattr user testname "${MNT}/file"
+	atf_check umount "${MNT}"
 
 	# Convert to disable extattrs.
 	atf_check -o 'match:CLEAR EXTATTR FIELDS' \
 		  -o 'match:DISABLING EXTATTR SUPPORT' \
-		  fsck_ffs -y -c no-ea ${CDEV}
+		  fsck_ffs -y -c no-ea "${CDEV}"
 
 	# Verify that the test file does not have the test extattr.
-	atf_check -o ignore fsck_ffs -n ${CDEV}
-	atf_check mount -t ffs ${BDEV} ${MNT}
-	atf_check -s exit:1 -e 'match:getextattr: mnt/file: failed: Operation not supported' \
-		  getextattr user testname ${MNT}/file
-	atf_check umount ${MNT}
+	atf_check -o ignore fsck_ffs -n "${CDEV}"
+	atf_check mount -t ffs "${BDEV}" "${MNT}"
+	atf_check -s exit:1 \
+	    -e 'match:getextattr: mnt/file: failed: Operation not supported' \
+		  getextattr user testname "${MNT}/file"
+	atf_check umount "${MNT}"
 
 	# Convert to enable extattrs again.
 	atf_check -o 'match:ENABLING EXTATTR SUPPORT' \
 		  fsck_ffs -y -c ea ${CDEV}
 
 	# Verify that the test extattr is still gone.
-	atf_check -o ignore fsck_ffs -n ${CDEV}
-	atf_check mount -t ffs ${BDEV} ${MNT}
+	atf_check -o ignore fsck_ffs -n "${CDEV}"
+	atf_check mount -t ffs "${BDEV}" "${MNT}"
 	atf_check -s exit:1 -e 'match:Attribute not found' \
-		  getextattr user testname ${MNT}/file
-	atf_check umount ${MNT}
+		  getextattr user testname "${MNT}/file"
+	atf_check umount "${MNT}"
 
-	atf_check vnconfig -u ${VND}
+	atf_check vnconfig -u "${VND}"
 }
 
 fsck_extattr_disable_cleanup()
