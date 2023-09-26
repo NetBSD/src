@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.19 2020/03/30 10:41:53 martin Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.20 2023/09/26 15:48:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.19 2020/03/30 10:41:53 martin Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.20 2023/09/26 15:48:30 kre Exp $");
 #endif
 
 #include <err.h>
@@ -80,6 +80,7 @@ static const struct {
 	{ GPT_ENT_TYPE_LINUX_LVM, "linux-lvm", "Linux LVM" },
 	{ GPT_ENT_TYPE_MS_BASIC_DATA, "windows", "Windows basic data" },
 	{ GPT_ENT_TYPE_MS_RESERVED, "windows-reserved", "Windows reserved" },
+	{ GPT_ENT_TYPE_MS_RECOVERY, "windows-recovery", "Windows recovery" },
 	{ GPT_ENT_TYPE_NETBSD_CCD, "ccd", "NetBSD ccd component" },
 	{ GPT_ENT_TYPE_NETBSD_CGD, "cgd", "NetBSD Cryptographic Disk" },
 	{ GPT_ENT_TYPE_NETBSD_FFS, "ffs", "NetBSD FFSv1/FFSv2" },
