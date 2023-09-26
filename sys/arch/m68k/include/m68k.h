@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.24 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.25 2023/09/26 12:46:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,7 +110,7 @@ int 	getsfc(void);
 /* switch_subr.s */
 void	lwp_trampoline(void);
 void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *); 
+void	m68881_restore(struct fpframe *);
 void	savectx(struct pcb *);
 
 /* w16copy.s */

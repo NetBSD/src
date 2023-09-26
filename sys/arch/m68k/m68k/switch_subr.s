@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.34 2020/01/08 20:59:18 skrll Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.35 2023/09/26 12:46:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -109,21 +109,21 @@ ENTRY(cpu_switchto)
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
 	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	.Lcpu_switch_savfp60                
-#endif  
+	jeq	.Lcpu_switch_savfp60
+#endif
 	tstb	(%a2)			| null state frame?
 	jeq	.Lcpu_switch_nofpsave	| yes, all done
 	fmovem	%fp0-%fp7,FPF_REGS(%a2) | save FP general registers
 	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a2) | save FP control registers
 #if defined(M68060)
-	jra	.Lcpu_switch_nofpsave 
-#endif  
-#endif  
+	jra	.Lcpu_switch_nofpsave
+#endif
+#endif
 #if defined(M68060)
 .Lcpu_switch_savfp60:
 	tstb	2(%a2)			| null state frame?
-	jeq	.Lcpu_switch_nofpsave	| yes, all done 
-	fmovem	%fp0-%fp7,FPF_REGS(%a2) | save FP general registers 
+	jeq	.Lcpu_switch_nofpsave	| yes, all done
+	fmovem	%fp0-%fp7,FPF_REGS(%a2) | save FP general registers
 	fmovem	%fpcr,FPF_FPCR(%a2)	| save FP control registers
 	fmovem	%fpsr,FPF_FPSR(%a2)
 	fmovem	%fpi,FPF_FPI(%a2)
@@ -220,7 +220,7 @@ ENTRY(cpu_switchto)
 #if defined(M68060)
 	cmpl	#FPU_68060,_C_LABEL(fputype)
 	jeq	.Lcpu_switch_resfp60rest1
-#endif  
+#endif
 	tstb	(%a0)			| null state frame?
 	jeq	.Lcpu_switch_resfprest	| yes, easy
 	fmovem	FPF_FPCR(%a0),%fpcr/%fpsr/%fpi | restore FP control registers
@@ -277,7 +277,7 @@ ENTRY(savectx)
 #if defined(M68060)
 	cmpl	#FPU_68060,_C_LABEL(fputype)
 	jeq	.Lsavectx_savfp60
-#endif  
+#endif
 	tstb	(%a0)			| null state frame?
 	jeq	.Lsavectx_nofpsave	| yes, all done
 	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
@@ -285,7 +285,7 @@ ENTRY(savectx)
 #if defined(M68060)
 	jra	.Lsavectx_nofpsave
 #endif
-#endif  
+#endif
 #if defined(M68060)
 .Lsavectx_savfp60:
 	tstb	2(%a0)			| null state frame?
@@ -294,7 +294,7 @@ ENTRY(savectx)
 	fmovem	%fpcr,FPF_FPCR(%a0)	| save FP control registers
 	fmovem	%fpsr,FPF_FPSR(%a0)
 	fmovem	%fpi,FPF_FPI(%a0)
-#endif  
+#endif
 .Lsavectx_nofpsave:
 #endif /* FPCOPROC */
 #endif /* !_M68K_CUSTOM_FPU_CTX */
@@ -345,7 +345,7 @@ ENTRY(m68881_save)
 	cmpl	#FPU_68060,_C_LABEL(fputype)
 	jeq	.Lm68060fpsave
 #endif
-.Lm68881fpsave:  
+.Lm68881fpsave:
 	tstb	(%a0)			| null state frame?
 	jeq	.Lm68881sdone		| yes, all done
 	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
@@ -359,11 +359,11 @@ ENTRY(m68881_save)
 	jeq	.Lm68060sdone		| yes, all done
 	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
 	fmovem	%fpcr,FPF_FPCR(%a0)	| save FP control registers
-	fmovem	%fpsr,FPF_FPSR(%a0)           
+	fmovem	%fpsr,FPF_FPSR(%a0)
 	fmovem	%fpi,FPF_FPI(%a0)
-.Lm68060sdone:   
+.Lm68060sdone:
         rts
-#endif  
+#endif
 
 ENTRY(m68881_restore)
 	movl	4(%sp),%a0		| save area pointer

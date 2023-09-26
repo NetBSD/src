@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.15 2013/08/01 13:42:52 matt Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.16 2023/09/26 12:46:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,11 +76,11 @@ ASENTRY(faultstkadj)
 /* for new 68060 Branch Prediction Error handler */
 _ASM_LABEL(faultstkadjnotrap2):
 	movl	FR_SP(%sp),%a0		| restore user SP
-	movl	%a0,%usp		|   from save area 
+	movl	%a0,%usp		|   from save area
 	movw	FR_ADJ(%sp),%d0	| need to adjust stack?
-	jne	1f			| yes, go to it 
+	jne	1f			| yes, go to it
 	moveml	(%sp)+,#0x7FFF		| no, restore most user regs
-	addql	#8,%sp			| toss SSP and stkadj 
+	addql	#8,%sp			| toss SSP and stkadj
 	jra	_ASM_LABEL(rei)		| all done
 1:
 	lea	FR_HW(%sp),%a1		| pointer to HW frame

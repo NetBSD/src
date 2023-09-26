@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.31 2019/02/18 01:12:23 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.32 2023/09/26 12:46:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -128,8 +128,8 @@
 
 #define FSLW_SIZE	0x00600000
 /*
- * We better define the FSLW_SIZE values here, as the table given in the 
- * MC68060UM/AD rev. 0/1 p. 8-23 is wrong, and was corrected in the errata 
+ * We better define the FSLW_SIZE values here, as the table given in the
+ * MC68060UM/AD rev. 0/1 p. 8-23 is wrong, and was corrected in the errata
  * document.
  */
 #define FSLW_SIZE_LONG	0x00000000

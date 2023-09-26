@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.77 2022/07/31 17:11:41 chs Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.78 2023/09/26 12:46:30 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.77 2022/07/31 17:11:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.78 2023/09/26 12:46:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,7 @@ pa_to_pvh(paddr_t pa)
 {
 	uvm_physseg_t bank = 0;	/* XXX gcc4 -Wuninitialized */
 	psize_t pg = 0;
-	
+
 	bank = uvm_physseg_find(atop((pa)), &pg);
 	return &uvm_physseg_get_pmseg(bank)->pvheader[pg];
 }
@@ -1076,7 +1076,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (pmap->pm_ptab == NULL) {
 		pmap->pm_ptab = (pt_entry_t *)
 		    uvm_km_alloc(pt_map, M68K_MAX_PTSIZE, 0,
-		    UVM_KMF_VAONLY | 
+		    UVM_KMF_VAONLY |
 		    (can_fail ? UVM_KMF_NOWAIT : UVM_KMF_WAITVA));
 		if (pmap->pm_ptab == NULL)
 			return ENOMEM;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuframe.h,v 1.8 2021/12/05 02:53:51 msaitoh Exp $	*/
+/*	$NetBSD: cpuframe.h,v 1.9 2023/09/26 12:46:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,7 @@ struct frame {
 			u_int	f_fa;
 			u_int	f_fslw;
 			/* for 060FP type 4 FP disabled frames: */
-#define 		f_fea	f_fa	
+#define 		f_fea	f_fa
 #define 		f_pcfi	f_fslw
 		} F_fmt4;
 
@@ -187,8 +187,8 @@ struct fpframe {
 #define fpf_busy	FPF_u2.FPF_busy
 #define fpf_unimp	FPF_u2.FPF_unimp
 
-/* 
- * This is incompatible with the earlier one; especially, an earlier frame 
+/*
+ * This is incompatible with the earlier one; especially, an earlier frame
  * must not be FRESTOREd on a 060 or vv, because a frame error exception is
  * not guaranteed.
  */

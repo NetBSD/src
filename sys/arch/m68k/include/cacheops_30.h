@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_30.h,v 1.9 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: cacheops_30.h,v 1.10 2023/09/26 12:46:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@ TBIA_30(void)
 	__asm volatile (" pflusha;"
 			  " movc %0,%%cacr" : : "d" (tmp));
 }
-	
+
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
