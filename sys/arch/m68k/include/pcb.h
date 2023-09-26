@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.10 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: pcb.h,v 1.11 2023/09/26 14:33:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 struct pcb {
 	short	pcb_flags;	/* misc. process flags */
-	short	pcb_ps; 	/* processor status word */
+	short	pcb_ps;		/* processor status word */
 	int	__pcb_spare0;
 	int	pcb_usp;	/* user stack pointer */
 	int	pcb_regs[12];	/* D2-D7, A2-A7 */

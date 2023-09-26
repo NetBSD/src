@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.62 2023/09/26 12:46:30 tsutsui Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.63 2023/09/26 14:33:55 tsutsui Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.62 2023/09/26 12:46:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.63 2023/09/26 14:33:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,7 +66,7 @@ const struct db_variable db_regs[] = {
 	{ "a6",	(long *)&ddb_regs.tf_regs[8+6],	FCN_NULL, NULL },
 	{ "sp",	(long *)&ddb_regs.tf_regs[8+7],	FCN_NULL, NULL },
 	/* misc. */
-	{ "pc",	(long *)&ddb_regs.tf_pc, 	FCN_NULL, NULL },
+	{ "pc",	(long *)&ddb_regs.tf_pc,	FCN_NULL, NULL },
 	{ "sr",	(long *)&ddb_regs.tf_sr,	db_var_short, NULL }
 };
 const struct db_variable * const db_eregs =

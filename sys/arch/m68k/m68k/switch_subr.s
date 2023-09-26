@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.35 2023/09/26 12:46:30 tsutsui Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.36 2023/09/26 14:33:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -154,7 +154,7 @@ ENTRY(cpu_switchto)
 #else
 	/* Use this inline version on sun3x when not debugging the pmap. */
 	lea	_C_LABEL(kernel_crp),%a3 | our CPU Root Ptr. (CRP)
-	movl	VM_PMAP(%a2),%a2 	| pmap = vm->vm_map.pmap
+	movl	VM_PMAP(%a2),%a2	| pmap = vm->vm_map.pmap
 	movl	PM_A_PHYS(%a2),%d0	| phys = pmap->pm_a_phys
 	cmpl	4(%a3),%d0		|  == kernel_crp.rp_addr ?
 	jeq	.Lsame_mmuctx		| skip loadcrp/flush

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.32 2023/09/26 12:46:30 tsutsui Exp $	*/
+/*	$NetBSD: frame.h,v 1.33 2023/09/26 14:33:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -147,17 +147,17 @@
 #define FSLW_PBE	0x00004000
 #define FSLW_SBE	0x00002000
 #define FSLW_PTA	0x00001000
-#define FSLW_PTB 	0x00000800
-#define FSLW_IL 	0x00000400
-#define FSLW_PF 	0x00000200
-#define FSLW_SP 	0x00000100
-#define FSLW_WP 	0x00000080
-#define FSLW_TWE 	0x00000040
-#define FSLW_RE 	0x00000020
-#define FSLW_WE 	0x00000010
-#define FSLW_TTR 	0x00000008
-#define FSLW_BPE 	0x00000004
-#define FSLW_SEE 	0x00000001
+#define FSLW_PTB	0x00000800
+#define FSLW_IL		0x00000400
+#define FSLW_PF		0x00000200
+#define FSLW_SP		0x00000100
+#define FSLW_WP		0x00000080
+#define FSLW_TWE	0x00000040
+#define FSLW_RE		0x00000020
+#define FSLW_WE		0x00000010
+#define FSLW_TTR	0x00000008
+#define FSLW_BPE	0x00000004
+#define FSLW_SEE	0x00000001
 
 /* struct fpframe060 */
 #define FPF6_FMT_NULL	0x00
@@ -236,7 +236,7 @@ do {									\
 	if (! CLKF_USERMODE(cfp) &&					\
 	    (CLKF_PC(cfp) < (u_long)&_atomic_cas_ras_end &&		\
 	     CLKF_PC(cfp) > (u_long)&_atomic_cas_ras_start)) {		\
-	    	(cfp)->cf_pc = (u_long)&_atomic_cas_ras_start;		\
+		(cfp)->cf_pc = (u_long)&_atomic_cas_ras_start;		\
 	}								\
 } while (/*CONSTCOND*/0)
 #else

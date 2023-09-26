@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuframe.h,v 1.9 2023/09/26 12:46:30 tsutsui Exp $	*/
+/*	$NetBSD: cpuframe.h,v 1.10 2023/09/26 14:33:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,8 +64,8 @@ struct frame {
 			u_int	f_fa;
 			u_int	f_fslw;
 			/* for 060FP type 4 FP disabled frames: */
-#define 		f_fea	f_fa
-#define 		f_pcfi	f_fslw
+#define			f_fea	f_fa
+#define			f_pcfi	f_fslw
 		} F_fmt4;
 
 		struct fmt7 {

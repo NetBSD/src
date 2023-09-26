@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_sigcode.s,v 1.6 2013/08/01 13:42:52 matt Exp $	*/
+/*	$NetBSD: sunos_sigcode.s,v 1.7 2023/09/26 14:33:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,8 +48,8 @@
  *	#endif
  */
 
- 	.data
- 	.align	2
+	.data
+	.align	2
 GLOBAL(sunos_sigcode)
 	movl	12(%sp),%a0	| signal handler addr	(4 bytes)
 	jsr	(%a0)		| call signal handler	(2 bytes)

@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.49 2020/06/30 16:20:01 maxv Exp $	*/
+/*	$NetBSD: copy.s,v 1.50 2023/09/26 14:33:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
@@ -392,5 +392,5 @@ ENTRY(_ustore_32)
 .Lufetchstore_success:
 	clrl	%d0			| return 0
 .Lufetchstore_fault:
-	clrl	PCB_ONFAULT(%a1) 	| clear fault handler
+	clrl	PCB_ONFAULT(%a1)	| clear fault handler
 	rts
