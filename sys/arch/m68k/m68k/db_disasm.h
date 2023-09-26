@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.h,v 1.10 2021/04/06 16:05:17 simonb Exp $	*/
+/*	$NetBSD: db_disasm.h,v 1.11 2023/09/26 12:46:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -34,7 +34,7 @@
 	((b7 << 7) | (b6 << 6) | (b5 << 5) | (b4 << 4) | \
 	(b3 << 3) | (b2 << 2) | (b1 << 1) | (b0))
 
-	
+
 #define ENCW(b15,b14,b13,b12,b11,b10,b9,b8,b7,b6,b5,b4,b3,b2,b1,b0) \
 	((ENCB(b15,b14,b13,b12,b11,b10,b9,b8) << 8) |\
 	ENCB(b7,b6,b5,b4,b3,b2,b1,b0))
@@ -120,7 +120,7 @@
 
 /*
  * Group misc. (0100)
- */     
+ */
 #define BGND_MASK	0xffff
 #define ILLEGAL_MASK	0xffff
 #define MOVEFRC_MASK	0xffff
@@ -170,7 +170,7 @@
 
 #define TRAP_MASK	ENCW(1,1,1,1, 1,1,1,1, 1,1,1,1, 0,0,0,0)
 #define TRAP_INST	ENCW(0,1,0,0, 1,1,1,0, 0,1,0,0, 0,0,0,0)
-	                                                  
+
 #define DIVSL_MASK	ENCW(1,1,1,1, 1,1,1,1, 1,1,0,0, 0,0,0,0)
 #define DIVUL_MASK	ENCW(1,1,1,1, 1,1,1,1, 1,1,0,0, 0,0,0,0)
 #define JMP_MASK	ENCW(1,1,1,1, 1,1,1,1, 1,1,0,0, 0,0,0,0)
@@ -326,14 +326,14 @@
 #define ABCDD_MASK	ENCW(1,1,1,1, 0,0,0,1, 1,1,1,1, 1,0,0,0)
 #define ABCDA_INST	ENCW(1,1,0,0, 0,0,0,1, 0,0,0,0, 1,0,0,0)
 #define ABCDD_INST	ENCW(1,1,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,0)
-	
+
 #define MULSW_MASK	ENCW(1,1,1,1, 0,0,0,1, 1,1,0,0, 0,0,0,0)
 #define MULUW_MASK	ENCW(1,1,1,1, 0,0,0,1, 1,1,0,0, 0,0,0,0)
 #define MULSW_INST	ENCW(1,1,0,0, 0,0,0,1, 1,1,0,0, 0,0,0,0)
 #define MULUW_INST	ENCW(1,1,0,0, 0,0,0,0, 1,1,0,0, 0,0,0,0)
 
 #define EXG_MASK	ENCW(1,1,1,1, 0,0,0,1, 0,0,1,1, 0,0,0,0)
-#define EXG_INST	ENCW(1,1,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,0)	
+#define EXG_INST	ENCW(1,1,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,0)
 
 #define AND_MASK	ENCW(1,1,1,1, 0,0,0,0, 0,0,0,0, 0,0,0,0)
 #define AND_INST	ENCW(1,1,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0)

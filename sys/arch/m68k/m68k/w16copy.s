@@ -1,4 +1,4 @@
-/*	$NetBSD: w16copy.s,v 1.3 2013/08/01 13:42:52 matt Exp $	*/
+/*	$NetBSD: w16copy.s,v 1.4 2023/09/26 12:46:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * Function to zero a region of memory using only 
+ * Function to zero a region of memory using only
  * properly aligned 8- and 16-bit accesses.
  */
 ENTRY(w16zero)
@@ -82,7 +82,7 @@ ENTRY(w16zero)
 
 /*
  * Function to copy a region of memory to a nonoverlapping
- * region of memory using only properly aligned 8- and 
+ * region of memory using only properly aligned 8- and
  * 16-bit accesses.
  */
 ENTRY(w16copy)
@@ -103,7 +103,7 @@ ENTRY(w16copy)
 	btst	#0, %d1			| is %a1 even?
 	bne	4f			| if not, skip ahead
 
-| %a1 is also aligned to a 16-bit boundary, so we can copy 
+| %a1 is also aligned to a 16-bit boundary, so we can copy
 | the easy way, 32 bits at a time:
 	movl	%d0, %d1		| copy count into %d1
 	lsrl	#2, %d1			| turn %d1 into long count

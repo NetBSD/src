@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap_motorola.h,v 1.37 2021/09/19 10:34:09 andvar Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.38 2023/09/26 12:46:30 tsutsui Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Copyright (c) 1987 Carnegie-Mellon University
  *
  * This code is derived from software contributed to Berkeley by
@@ -142,7 +142,7 @@ struct pmap {
 #define NBSEG		((mmutype == MMU_68040) ? NBSEG40 : NBSEG30)
 #endif
 
-#define SEGOFSET	(NBSEG - 1)	/* byte offset into segment */ 
+#define SEGOFSET	(NBSEG - 1)	/* byte offset into segment */
 
 #define	m68k_round_seg(x)	((((vaddr_t)(x)) + SEGOFSET) & ~SEGOFSET)
 #define	m68k_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)

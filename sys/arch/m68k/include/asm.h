@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.34 2020/04/17 14:19:43 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.35 2023/09/26 12:46:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@
 
 /*
  * The m68k ALTENTRY macro is very different than the traditional
- * implementation used by other NetBSD ports.  Usually ALTENTRY 
+ * implementation used by other NetBSD ports.  Usually ALTENTRY
  * simply provides an alternate function entry point.  The m68k
  * definition takes a second argument and jumps inside the second
  * function when profiling is enabled.

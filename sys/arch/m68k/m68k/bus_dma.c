@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.39 2023/01/05 18:27:48 tsutsui Exp $ */
+/* $NetBSD: bus_dma.c,v 1.40 2023/09/26 12:46:30 tsutsui Exp $ */
 
 /*
  * This file was taken from alpha/common/bus_dma.c
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.39 2023/01/05 18:27:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2023/09/26 12:46:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ _bus_dmamap_mapsize(int const nsegments)
 	KASSERT(nsegments > 0);
 	return sizeof(struct m68k_bus_dmamap) +
 	   (sizeof(bus_dma_segment_t) * (nsegments - 1));
-}              
+}
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific

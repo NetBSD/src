@@ -1,12 +1,12 @@
-/*	$NetBSD: copypage.s,v 1.16 2013/09/07 19:06:29 chs Exp $	*/
+/*	$NetBSD: copypage.s,v 1.17 2023/09/26 12:46:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by J.T. Conklin <jtc@NetBSD.org> and 
- * by Hiroshi Horitomo <horimoto@cs-aoi.cs.sist.ac.jp> 
+ * by J.T. Conklin <jtc@NetBSD.org> and
+ * by Hiroshi Horitomo <horimoto@cs-aoi.cs.sist.ac.jp>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -80,12 +80,12 @@ ENTRY(copypage)
 	movl	(%a0)+,(%a1)+
 	movl	(%a0)+,(%a1)+
 	dbf	%d0,.Lmlloop
-#else	/* __mc68010__ */	
+#else	/* __mc68010__ */
 	movw	#PAGE_SIZE/4-1,%d0	| number of 4 byte chunks - 1
 .Lmlloop:
 	movl	(%a0)+,(%a1)+
 	dbf	%d0,.Lmlloop		| use the 68010 loop mode
-#endif	/* __mc68010__ */	
+#endif	/* __mc68010__ */
 	rts
 
 /*
