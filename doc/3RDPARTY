@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1954 2023/09/16 18:41:57 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1955 2023/09/26 21:38:11 gutteridge Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -613,16 +613,19 @@ sync with ipsec-tools-0_7-branch)
 
 Package:	jemalloc
 Version:	5.1.0
-Current Vers:	5.2.1
+Current Vers:	5.3.0
 Maintainer:	Jason Evans
 Archive Site:	https://github.com/jemalloc/jemalloc
 Home Page:	https://jemalloc.net
-Date:		2021-03-01
+Date:		2023-09-26
 Mailing List:	
 Responsible:	christos
 License:	BSD
 Location:	external/bsd/jemalloc
 Notes:
+There are two versions of this in-tree, the principal one tracking the
+modern upstream, and a much older one found directly at src/lib/libc/stdlib
+which is still in use and receiving local updates as well.
 
 Package:	KAME IPv6
 Version:	KAME/NetBSD SNAP kit
