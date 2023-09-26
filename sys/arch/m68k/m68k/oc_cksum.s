@@ -1,4 +1,4 @@
-|	$NetBSD: oc_cksum.s,v 1.10 2023/09/26 12:46:30 tsutsui Exp $
+|	$NetBSD: oc_cksum.s,v 1.11 2023/09/26 14:33:55 tsutsui Exp $
 
 | Copyright (c) 1988 Regents of the University of California.
 | All rights reserved.
@@ -72,10 +72,10 @@
 |
 | The processors tested and their average time to checksum 1024 bytes
 | of random data were:
-| 	Sun 3/50 (15MHz)	190 us/KB
-| 	Sun 3/180 (16.6MHz)	175 us/KB
-| 	Sun 3/60 (20MHz)	134 us/KB
-| 	Sun 3/280 (25MHz)	 95 us/KB
+|	Sun 3/50 (15MHz)	190 us/KB
+|	Sun 3/180 (16.6MHz)	175 us/KB
+|	Sun 3/60 (20MHz)	134 us/KB
+|	Sun 3/280 (25MHz)	 95 us/KB
 |
 | The cost of calling this routine was typically 10% of the per-
 | kilobyte cost.  E.g., checksumming zero bytes on a 3/60 cost 9us

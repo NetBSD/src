@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_60.h,v 1.13 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: cacheops_60.h,v 1.14 2023/09/26 14:33:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ TBIAS_60(void)
 			  " movc  %%cacr,%0;"
 			  " orl   %1,%0;"
 			  " movc  %0,%%cacr" /* clear all branch cache
-			 		        entries */
+					        entries */
 			  : "=d" (tmp) : "i" (IC60_CABC) );
 }
 
@@ -93,7 +93,7 @@ TBIAU_60(void)
 			  " movc  %%cacr,%0;"
 			  " orl   %1,%0;"
 			  " movc  %0,%%cacr" /* clear all branch cache
-			 		        entries */
+					        entries */
 			  : "=d" (tmp) : "i" (IC60_CUBC) );
 }
 

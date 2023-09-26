@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.78 2023/09/26 12:46:30 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.79 2023/09/26 14:33:55 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.78 2023/09/26 12:46:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.79 2023/09/26 14:33:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -863,7 +863,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	/*
 	 * In a couple of cases, we don't need to worry about flushing
 	 * the VAC:
-	 * 	1. if this is a kernel mapping,
+	 *	1. if this is a kernel mapping,
 	 *	   we have already done it
 	 *	2. if it is a user mapping not for the current process,
 	 *	   it won't be there
@@ -1495,7 +1495,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	/*
 	 * In a couple of cases, we don't need to worry about flushing
 	 * the VAC:
-	 * 	1. if this is a kernel mapping,
+	 *	1. if this is a kernel mapping,
 	 *	   we have already done it
 	 *	2. if it is a user mapping not for the current process,
 	 *	   it won't be there

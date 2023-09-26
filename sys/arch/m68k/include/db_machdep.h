@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.34 2023/09/26 12:46:30 tsutsui Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.35 2023/09/26 14:33:55 tsutsui Exp $	*/
 
 /*
  * Mach Operating System
@@ -102,7 +102,7 @@ typedef long kgdb_reg_t;
 
 void	Debugger(void);		/* XXX */
 void	kdb_kintr(db_regs_t *);
-int 	kdb_trap(int, db_regs_t *);
+int	kdb_trap(int, db_regs_t *);
 
 #endif /* _KERNEL */
 

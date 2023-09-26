@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.46 2021/07/24 21:31:33 andvar Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.47 2023/09/26 14:33:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.46 2021/07/24 21:31:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.47 2023/09/26 14:33:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -242,7 +242,7 @@ opcode_bitmanip(dis_buffer_t *dbuf, u_short opc)
 		break;
 	case ORITOSR_INST:
 		tmp = "oriw\t";
-	 	break;
+		break;
 	}
 	if (tmp) {
 		addstr(dbuf, tmp);
@@ -2789,7 +2789,7 @@ make_cond(dis_buffer_t *dbuf, int bit, const char *base)
 static void
 print_fcond(dis_buffer_t *dbuf, char cp)
 {
-	addstr(dbuf,fpcc_table[cp&31]); 	/* XXX - not 63 ?*/
+	addstr(dbuf,fpcc_table[cp&31]);		/* XXX - not 63 ?*/
 }
 
 static void

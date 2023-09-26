@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 2013/10/25 20:53:02 martin Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.40 2023/09/26 14:33:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 2013/10/25 20:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.40 2023/09/26 14:33:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	struct pmap *upmap, *kpmap __unused;
 	vaddr_t uva;		/* User VA (map from) */
 	vaddr_t kva;		/* Kernel VA (new to) */
-	paddr_t pa; 		/* physical address */
+	paddr_t pa;		/* physical address */
 	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
