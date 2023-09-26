@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.84 2022/11/22 00:25:52 mlelstv Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.85 2023/09/26 15:55:46 kre Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1239,13 +1239,62 @@ const char *
 gpt_attr_list(char *buf, size_t len, uint64_t attributes)
 {
 	size_t i;
+	/*
+	 * a uint64_t (attributes) has at most 16 hex digits
+	 * in its representation, add 2 for "0x", and 2 more
+	 * for surrounding [ ], plus one for a trailing \0,
+	 * and we need 21 bytes, round that up to 24
+	 */
+	char xbuf[24];
+
 	strlcpy(buf, "", len);	
 
-	for (i = 0; i < __arraycount(gpt_attr); i++)
+	for (i = 0; i < __arraycount(gpt_attr); i++) {
+		/*
+		 * if the attribute is specified in one of bits
+		 * 48..63, it should depend upon the defining
+		 * partition type for that attribute.   Currently
+		 * we have no idea what that is, so...
+		 *
+		 * Also note that for some partition types, these
+		 * fields are not a single bit boolean, but several
+		 * bits to form a numeric value.  That we could handle.
+		 */
+
 		if (attributes & gpt_attr[i].mask) {
 			strlcat(buf, buf[0] ? ", " : "", len); 
 			strlcat(buf, gpt_attr[i].name, len);
+#if 0
+	/*
+	 * there are none currently defined, so this is untestable
+	 * (it does build however).
+	 */
+			if (gpt_attr[i].mask & (gpt_attr[i].mask - 1)) {
+				/* This only happens in bits 46..63 */
+
+				/*
+				 * xbuf is big enough for "=65535\0"
+				 * which is the biggest possible value
+				 */
+				snprintf(xbuf, sizeof xbuf, "=%ju",
+				    (uintmax_t) (
+				      (attributes & gpt_attr[i].mask) >>
+				      (ffs((int)(gpt_attr[i].mask >> 48)) + 47)
+				    ));
+
+				strlcat(buf, xbuf, len);
+			}
+#endif
+			attributes &=~ gpt_attr[i].mask;
 		}
+	}
+
+	if (attributes != 0) {
+		snprintf(xbuf, sizeof xbuf, "[%#jx]", (uintmax_t)attributes);
+		strlcat(buf, buf[0] ? ", " : "", len);
+		strlcat(buf, xbuf, len);
+	}
+
 	return buf;
 }
 
