@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.117 2023/02/03 13:53:40 mlelstv Exp $
+# $NetBSD: Makefile,v 1.118 2023/09/27 00:24:13 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ CONFIGFILES=\
 		CRITLOCALMOUNTED DAEMON DISKS LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd automount automountd autounmountd \
 		bluetooth bootconf.sh bootparams \
-		ccd cgd clearcritlocal cleartmp cron \
+		ccd certctl_init cgd clearcritlocal cleartmp cron \
 		devpubd dhcpcd dhcpd dhcpd6 dhcrelay dmesg \
 		downinterfaces \
 		entropy envsys \
