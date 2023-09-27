@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.20 2023/09/26 15:48:30 kre Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.21 2023/09/27 09:44:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.20 2023/09/26 15:48:30 kre Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.21 2023/09/27 09:44:10 riastradh Exp $");
 #endif
 
 #include <err.h>
@@ -65,6 +65,7 @@ static const struct {
 	const char *n;
 	const char *d;
 } gpt_nv[] = {
+	/* Must match the gpt_type_t enum in gpt_uuid.h */
 	{ GPT_ENT_TYPE_APPLE_HFS, "apple", "Apple HFS" },
 	{ GPT_ENT_TYPE_APPLE_UFS, "apple-ufs", "Apple UFS" },
 	{ GPT_ENT_TYPE_BIOS, "bios", "BIOS Boot" },
