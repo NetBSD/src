@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.272 2023/08/28 23:57:18 riastradh Exp $
+# $NetBSD: mi,v 1.273 2023/09/27 00:24:12 riastradh Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -204,6 +204,7 @@
 ./etc/rc.d/bthcid				etc-obsolete		obsolete
 ./etc/rc.d/btuartd				etc-obsolete		obsolete
 ./etc/rc.d/ccd					etc-sys-rc
+./etc/rc.d/certctl_init				etc-sys-rc
 ./etc/rc.d/cgd					etc-sys-rc
 ./etc/rc.d/clearcritlocal				etc-sys-rc
 ./etc/rc.d/cleartmp				etc-sys-rc
