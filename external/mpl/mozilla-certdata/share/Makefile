@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2023/09/02 17:39:52 riastradh Exp $
+#	$NetBSD: Makefile,v 1.3 2023/09/27 00:28:32 riastradh Exp $
 #
 
 MOZCERTS=	/usr/share/certs/mozilla
@@ -65,6 +65,7 @@ regen: .PHONY
 	rm -f certs/*.pem
 	rm -f ${TRUSTDOMAINS:=.trust}
 	mkdir tmp
+	env LC_ALL=C \
 	awk -f certdata.awk \
 		-v CERTDIR=certs \
 		-v CODETRUST=code.trust \
