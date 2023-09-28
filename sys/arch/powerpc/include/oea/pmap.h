@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2022/05/07 07:10:46 rin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.38 2023/09/28 06:19:19 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #ifndef	_POWERPC_OEA_PMAP_H_
 #define	_POWERPC_OEA_PMAP_H_
 
-#ifdef _LOCORE          
+#ifdef _LOCORE
 #error use assym.h instead
 #endif
 
