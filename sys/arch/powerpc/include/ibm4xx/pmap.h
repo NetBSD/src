@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2020/03/14 14:05:43 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 2023/09/28 06:19:19 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #ifndef	_IBM4XX_PMAP_H_
 #define	_IBM4XX_PMAP_H_
 
-#ifdef _LOCORE          
+#ifdef _LOCORE
 #error use assym.h instead
 #endif
 
@@ -132,7 +132,7 @@
 #define	STIDX(v)	((v) >> (PGSHIFT + 12))
 
 
-/* 
+/*
  * Extra flags to pass to pmap_enter() -- make sure they don't conflict
  * w/PMAP_CANFAIL or PMAP_WIRED
  */
