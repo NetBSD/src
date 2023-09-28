@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.58 2022/05/03 10:09:40 jmcneill Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.59 2023/09/28 15:46:55 manu Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -105,6 +105,7 @@
 struct biosdisk {
 	struct biosdisk_ll ll;
 	daddr_t         boff;
+	daddr_t         size;
 	char            buf[BIOSDISK_BUFSIZE];
 #if !defined(NO_DISKLABEL) || !defined(NO_GPT)
 	struct biosdisk_partition part[BIOSDISKNPART];
@@ -666,6 +667,7 @@ read_label(struct biosdisk *d, daddr_t offset)
 	dflt_lbl.d_npartitions = 8;
 
 	d->boff = 0;
+	d->size = 0;
 
 	if (d->ll.type != BIOSDISK_TYPE_HD)
 		/* No label on floppy and CD */
@@ -1208,7 +1210,7 @@ add_biosdisk_bootinfo(void)
 #endif
 
 #ifndef NO_GPT
-static daddr_t
+static void
 raidframe_part_offset(struct biosdisk *d, int part)
 {
 	struct biosdisk raidframe;
@@ -1221,8 +1223,10 @@ raidframe_part_offset(struct biosdisk *d, int part)
 
 	rf_offset = d->part[part].offset + RF_PROTECTED_SECTORS;
 	rf_size = d->part[part].size;
-	if (read_gpt(&raidframe, rf_offset, rf_size) != 0)
-		return RF_PROTECTED_SECTORS;
+	if (read_gpt(&raidframe, rf_offset, rf_size) != 0) {
+		d->boff += RF_PROTECTED_SECTORS;
+		return;
+	}
 
 	candidate = 0;
 	for (i = 0; i < BIOSDISKNPART; i++) {
@@ -1231,12 +1235,20 @@ raidframe_part_offset(struct biosdisk *d, int part)
 		if (raidframe.part[i].fstype == FS_UNUSED)
 			continue;
 #ifndef NO_GPT
-		if (raidframe.part[i].attr & GPT_ENT_ATTR_BOOTME)
+		if (raidframe.part[i].attr & GPT_ENT_ATTR_BOOTME) {
 			candidate = i;
+			break;
+		}
 #endif
+		if (raidframe.part[i].fstype == FS_BSDFFS ||
+		    raidframe.part[i].fstype == FS_BSDLFS) {
+			if (candidate == 0)
+				candidate = i;
+		}
 	}
 
-	return RF_PROTECTED_SECTORS + raidframe.part[candidate].offset;
+	d->boff += RF_PROTECTED_SECTORS + raidframe.part[candidate].offset;
+	d->size = raidframe.part[candidate].size;
 }
 #endif
 
@@ -1285,17 +1297,18 @@ biosdisk_open(struct open_file *f, ...)
 	}
 
 	d->boff = d->part[partition].offset;
+	d->size = d->part[partition].size;
 
 	if (d->part[partition].fstype == FS_RAID)
 #ifndef NO_GPT
-		d->boff += raidframe_part_offset(d, partition);
+		raidframe_part_offset(d, partition);
 #else
 		d->boff += RF_PROTECTED_SECTORS;
 #endif
 
 #ifdef _STANDALONE
-	bi_wedge.startblk = d->part[partition].offset;
-	bi_wedge.nblks = d->part[partition].size;
+	bi_wedge.startblk = d->boff;
+	bi_wedge.nblks = d->size;
 #endif
 
 nolabel:
@@ -1389,6 +1402,8 @@ next_disk:
 
 #ifndef NO_RAIDFRAME
 	for (i = 0; i < raidframe_count; i++) {
+		int first_bootme = -1;
+		int first_ffs = -1;
 		int candidate = -1;
 
 		if ((d = alloc_biosdisk(raidframe[i].biosdev)) == NULL) {
@@ -1402,11 +1417,19 @@ next_disk:
 			goto next_raidframe;
 
 		for (part = 0; part < BIOSDISKNPART; part++) {
-			bool bootme = d->part[part].attr & GPT_ENT_ATTR_BOOTME;
 			if (d->part[part].size == 0)
 				continue;
 			if (d->part[part].fstype == FS_UNUSED)
 				continue;
+
+			if (first_bootme == -1 && 
+			    d->part[part].attr & GPT_ENT_ATTR_BOOTME)
+				first_bootme = part;
+
+			if (first_ffs == -1 && 
+			    (d->part[part].fstype == FS_BSDFFS ||
+			     d->part[part].fstype == FS_BSDLFS))
+				first_ffs = part;
 
 			if (d->part[part].part_name != NULL &&
 			    strcmp(d->part[part].part_name, name) == 0) {
@@ -1418,11 +1441,13 @@ next_disk:
 				ret = 0;
 				goto out;
 			}
-			if (strcmp(raidframe[i].parent_name, name) == 0) {
-				if (candidate == -1 || bootme)
-					candidate = part;
-				continue;
-			}
+		}
+
+		if (strcmp(raidframe[i].parent_name, name) == 0) {
+			if (first_bootme != -1)
+				candidate = first_bootme;
+			else if (first_ffs != -1)
+				candidate = first_ffs;
 		}
 
 		if (candidate != -1) {
@@ -1514,6 +1539,10 @@ next_disk:
 	}
 
 	for (i = 0; i < raidframe_count; i++) {
+		int first_bootme = -1;
+		int first_ffs = -1;
+		int candidate = -1;
+
 		if (raidframe[i].last_unit != target_unit)
 			continue;
 
@@ -1532,6 +1561,15 @@ next_disk:
 				continue;
 			if (d->part[part].fstype == FS_UNUSED)
 				continue;
+
+			if (first_bootme == -1 &&
+			    d->part[part].attr & GPT_ENT_ATTR_BOOTME)
+				first_bootme = part;
+
+			if (first_ffs == -1 &&
+			    (d->part[part].fstype == FS_BSDFFS ||
+			     d->part[part].fstype == FS_BSDLFS))
+				first_ffs = part;
 			if (part == target_part) {
 				*biosdev = raidframe[i].biosdev;
 				*offset = raidframe[i].offset
@@ -1542,6 +1580,22 @@ next_disk:
 				goto out;
 			}
 		}
+
+		if (first_bootme != -1)
+			candidate = first_bootme;
+		else if (first_ffs != -1)
+			candidate = first_ffs;
+
+		if (candidate != -1) {
+			*biosdev = raidframe[i].biosdev;
+			*offset = raidframe[i].offset
+				+ RF_PROTECTED_SECTORS
+				+ d->part[candidate].offset;
+			*size = d->part[candidate].size;
+			ret = 0;
+			goto out;
+		}
+
 next_raidframe:
 		dealloc_biosdisk(d);
 		d = NULL;
@@ -1567,11 +1621,11 @@ biosdisk_open_name(struct open_file *f, const char *name)
 	int error = -1;
 
 #ifndef NO_GPT
-	if (strstr(name, "NAME=") == name)
+	if (error && strstr(name, "NAME=") == name)
 		error = biosdisk_find_name(name, &biosdev, &offset, &size);
 #endif
 #ifndef NO_RAIDFRAME
-	if (strstr(name, "raid") == name)
+	if (error && strstr(name, "raid") == name)
 		error = biosdisk_find_raid(name, &biosdev, &offset, &size);
 #endif
 
