@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.415 2023/09/25 21:59:38 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.416 2023/09/28 15:50:23 manu Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.415 2023/09/25 21:59:38 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.416 2023/09/28 15:50:23 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -156,6 +156,8 @@ int     rf_kdebug_level = 0;
 #else				/* DEBUG */
 #define db1_printf(a) { }
 #endif				/* DEBUG */
+
+#define DEVICE_XNAME(dev) dev ? device_xname(dev) : "null"
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 static rf_declare_mutex2(rf_sparet_wait_mutex);
@@ -522,6 +524,134 @@ rf_rescan(void)
 	return 0;
 }
 
+/*
+ * Example setup:
+ * dk1 at wd0: "raid@wd0", 171965 blocks at 32802, type: raidframe
+ * dk3 at wd1: "raid@wd1", 171965 blocks at 32802, type: raidframz
+ * raid1: Components: /dev/dk1 /dev/dk3
+ * dk4 at raid1: "empty@raid1", 8192 blocks at 34, type: msdos
+ * dk5 at raid1: "root@raid1", 163517 blocks at 8226, type: ffs
+ * 
+ * If booted from wd0, booted_device will be 
+ * disk wd0, startblk = 41092, nblks = 163517
+ *
+ * That is, dk5 with startblk computed from the beginning of wd0
+ * instead of beginning of raid1:
+ * 32802 + 64 (RF_PROTECTED_SECTORS) + 8226 = 41092
+ * 
+ * In order to find the boot wedge, we must iterate on each component, 
+ * find its offset from disk beginning, abd look for the boot wedge with 
+ * startblck adjusted.
+ */
+static device_t
+rf_find_bootwedge(struct raid_softc *rsc)
+{
+	RF_Raid_t *r = &rsc->sc_r;
+	const char *bootname;
+	size_t len;
+	device_t rdev = NULL;
+
+	if (booted_device == NULL)
+		goto out;
+		
+	bootname = device_xname(booted_device);
+	len = strlen(bootname);
+
+	aprint_debug("%s: booted_device %s, startblk = %"PRId64", "
+		     "nblks = %"PRId64"\n", __func__,
+		     bootname, booted_startblk, booted_nblks);
+
+	for (int col = 0; col < r->numCol; col++) {
+		const char *devname = r->Disks[col].devname;
+		const char *parent;
+		struct disk *dk;
+		u_int nwedges;
+		struct dkwedge_info *dkwi;
+		struct dkwedge_list dkwl;
+		size_t dkwi_len;
+		int i;
+
+		devname += sizeof("/dev/") - 1;
+		if (strncmp(devname, "dk", 2) != 0) 
+			continue;
+
+		parent = dkwedge_get_parent_name(r->Disks[col].dev);
+		if (parent == NULL) {
+			aprint_debug("%s: cannot find parent for "
+				     "component /dev/%s", __func__, devname); 
+			continue;
+		}
+
+		if (strncmp(parent, bootname, len) != 0)
+			continue;
+
+		aprint_debug("%s: looking up wedge %s in device %s\n",
+			     __func__, devname, parent);
+
+		dk = disk_find(parent);
+		nwedges = dk->dk_nwedges;
+		dkwi_len = sizeof(*dkwi) * nwedges;
+		dkwi = RF_Malloc(dkwi_len);
+
+		dkwl.dkwl_buf = dkwi;
+		dkwl.dkwl_bufsize = dkwi_len;
+		dkwl.dkwl_nwedges = 0;
+		dkwl.dkwl_ncopied = 0;
+
+		if (dkwedge_list(dk, &dkwl, curlwp) == 0) {
+			daddr_t startblk;
+
+			for (i = 0; i < dkwl.dkwl_ncopied; i++) {
+				if (strcmp(dkwi[i].dkw_devname, devname) == 0)
+					break;
+			}
+
+			KASSERT(i < dkwl.dkwl_ncopied);
+
+			aprint_debug("%s: wedge %s, "
+				     "startblk = %"PRId64", "
+				     "nblks = %"PRId64"\n",
+				     __func__,
+				     dkwi[i].dkw_devname,
+				     dkwi[i].dkw_offset,
+				     dkwi[i].dkw_size);
+
+			startblk = booted_startblk
+				 - dkwi[i].dkw_offset
+				 - RF_PROTECTED_SECTORS;
+			
+			aprint_debug("%s: looking for wedge in %s, "
+				     "startblk = %"PRId64", "
+				     "nblks = %"PRId64"\n",
+				     __func__,
+				     DEVICE_XNAME(rsc->sc_dksc.sc_dev),
+				     startblk, booted_nblks);
+
+			rdev = dkwedge_find_partition(rsc->sc_dksc.sc_dev,
+						      startblk,
+						      booted_nblks);
+			if (rdev) {
+				aprint_debug("%s: root candidate wedge %s "
+					     "shifted from %s\n", __func__,
+					     device_xname(rdev), 
+					     dkwi[i].dkw_devname);
+				goto done;
+			} else {
+				aprint_debug("%s: not found\n", __func__);
+			}
+		}
+
+		aprint_debug("%s: nothing found for col %d\n", __func__, col);
+done:
+		RF_Free(dkwi, dkwi_len);
+	}
+
+out:
+	if (!rdev)
+		aprint_debug("%s: nothing found\n", __func__);
+
+	return rdev;
+}
 
 static void
 rf_buildroothack(RF_ConfigSet_t *config_sets)
@@ -585,49 +715,33 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	}
 
 	/* we found something bootable... */
-
-	/*
-	 * XXX: The following code assumes that the root raid
-	 * is the first ('a') partition. This is about the best
-	 * we can do with a BSD disklabel, but we might be able
-	 * to do better with a GPT label, by setting a specified
-	 * attribute to indicate the root partition. We can then
-	 * stash the partition number in the r->root_partition
-	 * high bits (the bottom 2 bits are already used). For
-	 * now we just set booted_partition to 0 when we override
-	 * root.
-	 */
 	if (num_root == 1) {
-		device_t candidate_root;
+		device_t candidate_root = NULL;
 		dksc = &rsc->sc_dksc;
+
 		if (dksc->sc_dkdev.dk_nwedges != 0) {
-			char cname[sizeof(cset->ac->devname)];
-			/* XXX: assume partition 'a' first */
-			snprintf(cname, sizeof(cname), "%s%c",
-			    device_xname(dksc->sc_dev), 'a');
-			candidate_root = dkwedge_find_by_wname(cname);
-			aprint_debug("%s: candidate wedge root=%s\n", __func__,
-			    cname);
+
+			/* Find the wedge we booted from */
+			candidate_root = rf_find_bootwedge(rsc);
+
+			/* Try first partition */
 			if (candidate_root == NULL) {
-				/*
-				 * If that is not found, because we don't use
-				 * disklabel, return the first dk child
-				 * XXX: we can skip the 'a' check above
-				 * and always do this...
-				 */
 				size_t i = 0;
 				candidate_root = dkwedge_find_by_parent(
 				    device_xname(dksc->sc_dev), &i);
 			}
-			aprint_debug("%s: candidate wedge root=%p\n", __func__,
-			    candidate_root);
-		} else
+			aprint_debug("%s: candidate wedge root %s\n",
+			    __func__, DEVICE_XNAME(candidate_root));
+		} else {
 			candidate_root = dksc->sc_dev;
-		aprint_debug("%s: candidate root=%p booted_device=%p "
-			     "root_partition=%d contains_boot=%d\n",
-		    __func__, candidate_root, booted_device,
-		    rsc->sc_r.root_partition,
+		}
+
+		aprint_debug("%s: candidate root = %s, booted_device = %s, "
+			     "root_partition = %d, contains_boot=%d\n",
+		    __func__, DEVICE_XNAME(candidate_root),
+		    DEVICE_XNAME(booted_device), rsc->sc_r.root_partition,
 		    rf_containsboot(&rsc->sc_r, booted_device));
+
 		/* XXX the check for booted_device == NULL can probably be
 		 * dropped, now that rf_containsboot handles that case.
 		 */
@@ -637,12 +751,12 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			booted_device = candidate_root;
 			booted_method = "raidframe/single";
 			booted_partition = 0;	/* XXX assume 'a' */
-			aprint_debug("%s: set booted_device=%s(%p)\n", __func__,
-			    device_xname(booted_device), booted_device);
+			aprint_debug("%s: set booted_device = %s\n", __func__,
+			    DEVICE_XNAME(booted_device));
 		}
 	} else if (num_root > 1) {
-		aprint_debug("%s: many roots=%d, %p\n", __func__, num_root,
-		    booted_device);
+		aprint_debug("%s: many roots=%d, %s\n", __func__, num_root,
+		    DEVICE_XNAME(booted_device));
 
 		/*
 		 * Maybe the MD code can help. If it cannot, then

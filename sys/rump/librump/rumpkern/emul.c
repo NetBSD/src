@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.199 2023/04/22 13:53:44 riastradh Exp $	*/
+/*	$NetBSD: emul.c,v 1.200 2023/09/28 15:50:24 manu Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.199 2023/04/22 13:53:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.200 2023/09/28 15:50:24 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -83,6 +83,8 @@ int mem_no = 2;
 
 device_t booted_device;
 device_t booted_wedge;
+daddr_t booted_startblk;
+uint64_t booted_nblks;
 int booted_partition;
 const char *booted_method;
 
