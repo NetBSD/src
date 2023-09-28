@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_coldfire.h,v 1.5 2023/09/28 06:23:43 skrll Exp $	*/
+/*	$NetBSD: pmap_coldfire.h,v 1.6 2023/09/28 06:34:22 skrll Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -65,7 +65,7 @@
 
 #define	KERNEL_PID	0
 
-#define	PMAP_TLB_MAX			  1
+#define	PMAP_TLB_MAX			1
 #define	PMAP_TLB_NUM_PIDS		256
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)0xfeeddead)
 
