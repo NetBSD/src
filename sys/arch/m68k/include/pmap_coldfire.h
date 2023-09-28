@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_coldfire.h,v 1.4 2020/12/20 16:38:25 skrll Exp $	*/
+/*	$NetBSD: pmap_coldfire.h,v 1.5 2023/09/28 06:23:43 skrll Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -59,13 +59,13 @@
 
 #define	NBSEG		(NBPG*NPTEPG)
 #define	SEGSHIFT	(PGSHIFT + PGSHIFT - 2)
-#define SEGOFSET	((1 << SEGSHIFT) - 1)
-#define PMAP_SEGTABSIZE	(1 << (32 - SEGSHIFT))
+#define	SEGOFSET	((1 << SEGSHIFT) - 1)
+#define	PMAP_SEGTABSIZE	(1 << (32 - SEGSHIFT))
 #define	NPTEPG		(NBPG >> 2)
 
 #define	KERNEL_PID	0
 
-#define PMAP_TLB_MAX			  1
+#define	PMAP_TLB_MAX			  1
 #define	PMAP_TLB_NUM_PIDS		256
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)0xfeeddead)
 

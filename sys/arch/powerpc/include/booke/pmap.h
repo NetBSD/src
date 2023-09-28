@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.24 2020/12/20 16:38:25 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25 2023/09/28 06:24:37 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,8 +66,8 @@
 
 #define	NBSEG		(NBPG*NPTEPG)
 #define	SEGSHIFT	(PGSHIFT + PGSHIFT - 2)
-#define SEGOFSET	((1 << SEGSHIFT) - 1)
-#define PMAP_SEGTABSIZE	(1 << (32 - SEGSHIFT))
+#define	SEGOFSET	((1 << SEGSHIFT) - 1)
+#define	PMAP_SEGTABSIZE	(1 << (32 - SEGSHIFT))
 #define	NPTEPG		(NBPG >> 2)
 
 #define	KERNEL_PID	0
