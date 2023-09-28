@@ -1,4 +1,4 @@
-/* $NetBSD: t_strfmon.c,v 1.3 2021/08/02 17:41:07 andvar Exp $ */
+/* $NetBSD: t_strfmon.c,v 1.4 2023/09/28 13:31:11 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,21 +30,21 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strfmon.c,v 1.3 2021/08/02 17:41:07 andvar Exp $");
+__RCSID("$NetBSD: t_strfmon.c,v 1.4 2023/09/28 13:31:11 christos Exp $");
 
 #include <atf-c.h>
 #include <locale.h>
 #include <monetary.h>
 
-ATF_TC(strfmon);
+ATF_TC(strfmon_locale);
 
-ATF_TC_HEAD(strfmon, tc)
+ATF_TC_HEAD(strfmon_locale, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 		"Checks strfmon_l under different locales");
 }
 
-ATF_TC_BODY(strfmon, tc)
+ATF_TC_BODY(strfmon_locale, tc)
 {
 	const struct {
 		const char *locale;
@@ -67,10 +67,27 @@ ATF_TC_BODY(strfmon, tc)
 	}
 }
 
+ATF_TC(strfmon_pad);
+
+ATF_TC_HEAD(strfmon_pad, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks strfmon padding");
+}
+
+ATF_TC_BODY(strfmon_pad, tc)
+{
+    char string[1024];
+
+    ATF_REQUIRE(setlocale(LC_MONETARY, "en_US.UTF-8") != NULL);
+    strfmon(string, sizeof(string), "[%8n] [%8n]", 123.45, 123.45);
+    ATF_REQUIRE_STREQ(string, "[ $123.45] [ $123.45]"); 
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, strfmon);
+	ATF_TP_ADD_TC(tp, strfmon_locale);
+	ATF_TP_ADD_TC(tp, strfmon_pad);
 
 	return atf_no_error();
 }
