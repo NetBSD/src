@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2023/09/28 21:45:43 andvar Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 2023/09/29 05:25:15 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,13 +81,11 @@
 #endif
 
 #include <sh3/asm.h>
-#include <sh3/psl.h>
+#include <sh3/cache_sh3.h>
 #include <sh3/exception.h>
 #include <sh3/locore.h>
 #include <sh3/mmu_sh3.h>
-#include <sh3/mmu_sh4.h>
-#include <sh3/cache_sh3.h>
-#include <sh3/cache_sh4.h>
+#include <sh3/psl.h>
 
 #define	INIT_STACK							\
 	((IOM_RAM_BEGIN + IOM_RAM_SIZE - 0x00001000) | 0x80000000)
