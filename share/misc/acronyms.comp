@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.368 2023/09/21 13:38:03 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.369 2023/09/29 18:56:14 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1800,6 +1800,7 @@ VCM	virtual channel memory
 VCO	voltage-controlled oscillator
 VCP	virtual chassis port
 VCS	version control system
+VDP	vulnerability disclosure policy
 VDPAU	Video Decode and Presentation API for Unix
 VES	virtual execution system
 VESA	Video Electronics Standards Association
