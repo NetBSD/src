@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.25 2021/08/07 16:19:00 thorpej Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.26 2023/09/29 21:23:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.25 2021/08/07 16:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.26 2023/09/29 21:23:33 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -538,15 +538,14 @@ mmeyepcmcia_intr_socket(struct mmeyepcmcia_handle *h)
 		   MMEYEPCMCIA_CSC_BATTDEAD);
 
 	if (cscreg & MMEYEPCMCIA_CSC_GPI) {
-		DPRINTF(("%s: %02x GPI\n", device_xname(h->sc->dev), h->sock));
+		DPRINTF(("%s: GPI\n", device_xname(h->sc->dev)));
 	}
 	if (cscreg & MMEYEPCMCIA_CSC_CD) {
 		int statreg;
 
 		statreg = mmeyepcmcia_read(h, MMEYEPCMCIA_IF_STATUS);
 
-		DPRINTF(("%s: %02x CD %x\n", device_xname(h->sc->dev), h->sock,
-		    statreg));
+		DPRINTF(("%s: CD %x\n", device_xname(h->sc->dev), statreg));
 
 		if ((statreg & MMEYEPCMCIA_IF_STATUS_CARDDETECT_MASK) ==
 		    MMEYEPCMCIA_IF_STATUS_CARDDETECT_PRESENT) {
@@ -572,14 +571,14 @@ mmeyepcmcia_intr_socket(struct mmeyepcmcia_handle *h)
 		}
 	}
 	if (cscreg & MMEYEPCMCIA_CSC_READY) {
-		DPRINTF(("%s: %02x READY\n", device_xname(h->sc->dev), h->sock));
+		DPRINTF(("%s: READY\n", device_xname(h->sc->dev)));
 		/* shouldn't happen */
 	}
 	if (cscreg & MMEYEPCMCIA_CSC_BATTWARN) {
-		DPRINTF(("%s: %02x BATTWARN\n", device_xname(h->sc->dev), h->sock));
+		DPRINTF(("%s: BATTWARN\n", device_xname(h->sc->dev)));
 	}
 	if (cscreg & MMEYEPCMCIA_CSC_BATTDEAD) {
-		DPRINTF(("%s: %02x BATTDEAD\n", device_xname(h->sc->dev), h->sock));
+		DPRINTF(("%s: BATTDEAD\n", device_xname(h->sc->dev)));
 	}
 	return cscreg ? 1 : 0;
 }
@@ -791,17 +790,18 @@ mmeyepcmcia_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
     bus_size_t size, bus_size_t align, struct pcmcia_io_handle *pcihp)
 {
 	struct mmeyepcmcia_handle *h = (struct mmeyepcmcia_handle *) pch;
+	bus_addr_t ioaddr;
 
 	/*
 	 * Allocate some arbitrary I/O space.
 	 */
-
-	DPRINTF(("mmeyepcmcia_chip_io_alloc alloc port %lx+%lx\n",
-	    (u_long) ioaddr, (u_long) size));
+       ioaddr = h->sc->iobase + start;
+       DPRINTF(("mmeyepcmcia_chip_io_alloc alloc port %lx+%lx\n",
+            ioaddr, size));
 
 	pcihp->iot = h->sc->memt;
 	pcihp->ioh = 0;
-	pcihp->addr = h->sc->iobase + start;
+	pcihp->addr = ioaddr;
 	pcihp->size = size;
 
 	return 0;
@@ -822,7 +822,7 @@ mmeyepcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width,
 	bus_addr_t busaddr;
 	int i, win;
 #ifdef MMEYEPCMCIADEBUG
-	static char *width_names[] = { "auto", "io8", "io16" };
+	static const char *width_names[] = { "auto", "io8", "io16" };
 #endif
 
 	/* I/O width is hardwired to 16bit mode on mmeye. */
