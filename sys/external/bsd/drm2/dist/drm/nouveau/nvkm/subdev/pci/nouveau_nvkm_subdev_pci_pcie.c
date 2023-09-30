@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pci_pcie.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pci_pcie.c,v 1.4 2023/09/30 10:38:31 mrg Exp $	*/
 
 /*
  * Copyright 2015 Karol Herbst <nouveau@karolherbst.de>
@@ -24,7 +24,7 @@
  * Authors: Karol Herbst <git@karolherbst.de>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_pcie.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_pcie.c,v 1.4 2023/09/30 10:38:31 mrg Exp $");
 
 #include "priv.h"
 
@@ -48,7 +48,7 @@ nvkm_pcie_speed(enum pci_bus_speed speed)
 		/* XXX 0x16 is 8_0, assume 0x17 will be 16_0 for now */
 		if (speed == 0x17)
 			return NVKM_PCIE_SPEED_8_0;
-		return -1;
+		return NVKM_PCIE_SPEED_2_5;
 	}
 }
 
