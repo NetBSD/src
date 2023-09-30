@@ -1,4 +1,4 @@
-	$NetBSD: VMEbus-RAM,v 1.4 2005/12/11 12:18:17 christos Exp $
+	$NetBSD: VMEbus-RAM,v 1.5 2023/09/30 20:15:54 andvar Exp $
 
 NetBSD/mvme68k: VMEbus RAM card configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -31,7 +31,7 @@ then you'll have to locate it elsewhere. Typically, you may find it
 responds to A24D16 only, in which case the CPU-relative address you need
 to specify below will be in the 16MB region starting at 0xZZZZZZZZ.
 
-For A32D32, choose an address which is resonably close to the end of the
+For A32D32, choose an address which is reasonably close to the end of the
 MVME board's RAM. That is, if you have 32MB of onboard RAM, set the
 VMEbus RAM board to appear at A32:02000000.
 
