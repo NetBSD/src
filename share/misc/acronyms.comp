@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.369 2023/09/29 18:56:14 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.370 2023/09/30 13:26:31 riastradh Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -239,6 +239,7 @@ CDRAM	cache dynamic random access memory
 CER	canonical encoding rules
 CERT	computer emergency response team
 CE	customer edge
+CET	control flow enforcement technology
 CF	compact flash
 CFB	cipher feedback
 CFG	context-free grammar
@@ -434,6 +435,7 @@ DLL	dynamic link library
 DLNA	digital living network alliance
 DLP	discrete logarithm problem
 DMA	direct memory access
+DMB	data memory barrier (Arm)
 DMI	desktop management interface
 DMS	document management system
 DMT	discrete multitone modulation
@@ -474,6 +476,7 @@ DS9K	DeathStation 9000
 DSA	digital signature algorithm
 DSAP	destination service access point
 DSB	double-sideband modulation
+DSB	data synchronization barrier (Arm)
 DSCP	differentiated services code point
 DSDT	differentiated system descriptor table
 DSF	device special file
@@ -707,6 +710,7 @@ HFS	hierarchical file system
 HID	human interface device
 HKDF	HMAC-based key derivation function
 HKP	HTTP Keyserver Protocol
+HLE	hardware lock elision (Intel)
 HLL	high-level language
 HMA	high memory area
 HMI	human-machine interface
@@ -717,7 +721,7 @@ HPC	high performance computing
 HPD	hot plug detection
 HPET	high precision event timer
 HSM	hardware security module
-HSM	hierarchical storage management 
+HSM	hierarchical storage management
 HSRP	hot standby router protocol
 HT	hyper-threading
 HTC	hardware thermal control
@@ -740,6 +744,7 @@ IBM	International Business Machines
 IBPI	international blinking pattern interpretation
 IBS	instruction based sampling
 IBSS	independent basic service set
+IBT	indirect branch tracking
 IC	integrated circuit
 ICA	independent computer architecture
 ICACLS	integrity control access control lists
@@ -818,6 +823,7 @@ IRTF	Internet Research Task Force
 IS	information system
 ISA	industry standard architecture
 ISA	instruction set architecture
+ISB	instruction synchronization barrier (Arm)
 ISE	instant secure erase
 ISDN	integrated services digital network
 ISI	inter-symbol interference
@@ -983,6 +989,7 @@ MDI-X	Medium Dependent Interface Crossover
 MDIO	Management Data Input/Output
 MDMX	MIPS Digital Media eXtension
 MDRAM	multibank dynamic random access memory
+MDS	microarchitectural data sampling
 MESI	modified, exclusive, shared, invalid
 MFC	merge from current
 MFC	Microsoft Foundation Classes
@@ -1441,6 +1448,7 @@ RTF	rich text format
 RTL	register transfer language
 RTL	resistor-transistor logic
 RTL	right to left
+RTM	restricted transactional memory (Intel)
 RTOS	real time operating system
 RTP	Real-time Transport Protocol
 RTS	request to send
@@ -1500,7 +1508,7 @@ SDEI	software delegated exception interface
 SDI	symbol deinterleave
 SDK	software development kit
 SDL	Simple Declarative Language
-SDL	Simple Direct-media Layer 
+SDL	Simple Direct-media Layer
 SDLC	{software,system,systems} development life cycle
 SDN	software defined networking
 SDP	Session Description Protocol
@@ -1617,6 +1625,9 @@ SS	stack segment
 SSA	static single assignment
 SSAP	source service access point
 SSB	single-sideband modulation
+SSB	speculative store bypass
+SSBB	speculative store bypass barrier (Arm)
+SSBD	speculative store bypass disable (Intel)
 SSC	spread spectrum clock
 SSD	solid state drive
 SSE	streaming SIMD extensions
@@ -1650,6 +1661,7 @@ SWIG	simplified wrapper [and] interface generator
 SYR	symbol timing recovery
 TA	test assertion
 TA	transmitter address
+TAA	transactional asynchronous abort (Intel)
 TACACS	terminal access controller access-control system
 TAI	international atomic time
 TAO	track at once
@@ -1729,6 +1741,7 @@ TSP	time synchronization protocol
 TSP	traveling salesman problem
 TSS	task state segment
 TSV	tab-separated values
+TSX	transaction synchronization extensions (Intel)
 TTL	time to live
 TTL	transistor-transistor logic
 TTM	translation table maps
