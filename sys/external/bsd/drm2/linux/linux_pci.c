@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.26 2023/09/04 21:31:58 mrg Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.27 2023/09/30 10:46:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.26 2023/09/04 21:31:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.27 2023/09/30 10:46:46 mrg Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -169,6 +169,17 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev, device_t parent,
 	pdev->bus->pb_pc = pa->pa_pc;
 	pdev->bus->pb_dev = parent;
 	pdev->bus->number = pa->pa_bus;
+	/*
+	 * NetBSD doesn't have an easy "am I PCIe" or "give me PCIe speed
+	 * from capability" function, but we already emulate the Linux
+	 * versions that do.
+	 */
+	if (pci_is_pcie(pdev)) {
+		pdev->bus->max_bus_speed = pcie_get_speed_cap(pdev);
+	} else {
+		/* XXX: Do AGP/PCI-X, etc.? */
+		pdev->bus->max_bus_speed = PCI_SPEED_UNKNOWN;
+	}
 	pdev->bus->self = alloc_fake_parent_device(parent, pa);
 	pdev->devfn = PCI_DEVFN(pa->pa_device, pa->pa_function);
 	pdev->vendor = PCI_VENDOR(pa->pa_id);

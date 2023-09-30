@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.19 2023/05/25 12:07:43 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.20 2023/09/30 10:46:45 mrg Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.19 2023/05/25 12:07:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.20 2023/09/30 10:46:45 mrg Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
@@ -3091,7 +3091,6 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 		DRM_INFO("PCI I/O BAR is not found.\n");
 
 	/* enable PCIE atomic ops */
-#ifndef __NetBSD__		/* XXX amdgpu pcie atomics */
 	r = pci_enable_atomic_ops_to_root(adev->pdev,
 					  PCI_EXP_DEVCAP2_ATOMIC_COMP32 |
 					  PCI_EXP_DEVCAP2_ATOMIC_COMP64);
@@ -3101,7 +3100,6 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 	} else {
 		adev->have_atomics_support = true;
 	}
-#endif
 
 	amdgpu_device_get_pcie_info(adev);
 
