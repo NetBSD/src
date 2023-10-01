@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.17 2011/02/08 20:20:18 rmind Exp $
+|	$NetBSD: vectors.s,v 1.18 2023/10/01 21:04:10 andvar Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990 Regents of the University of California.
@@ -89,7 +89,7 @@ GLOBAL(vectab)
 #ifdef COMPAT_16
 	VECTOR(trap3)		/* 35: compat_16_sigreturn */
 #else
-	VECTOR(illinst)	
+	VECTOR(illinst)
 #endif
 	VECTOR(illinst)		/* 36: TRAP instruction vector */
 	VECTOR(illinst)		/* 37: TRAP instruction vector */
@@ -104,21 +104,21 @@ GLOBAL(vectab)
 	VECTOR(illinst)		/* 46: TRAP instruction vector */
 	VECTOR(trap15)		/* 47: TRAP instruction vector */
 #ifdef FPSP
- 	ASVECTOR(bsun)		/* 48: FPCP branch/set on unordered cond */
- 	ASVECTOR(inex)		/* 49: FPCP inexact result */
- 	ASVECTOR(dz)		/* 50: FPCP divide by zero */
- 	ASVECTOR(unfl)		/* 51: FPCP underflow */
- 	ASVECTOR(operr)		/* 52: FPCP operand error */
- 	ASVECTOR(ovfl)		/* 53: FPCP overflow */
- 	ASVECTOR(snan)		/* 54: FPCP signalling NAN */
+	ASVECTOR(bsun)		/* 48: FPCP branch/set on unordered cond */
+	ASVECTOR(inex)		/* 49: FPCP inexact result */
+	ASVECTOR(dz)		/* 50: FPCP divide by zero */
+	ASVECTOR(unfl)		/* 51: FPCP underflow */
+	ASVECTOR(operr)		/* 52: FPCP operand error */
+	ASVECTOR(ovfl)		/* 53: FPCP overflow */
+	ASVECTOR(snan)		/* 54: FPCP signalling NAN */
 #else
- 	VECTOR(fpfault)		/* 48: FPCP branch/set on unordered cond */
- 	VECTOR(fpfault)		/* 49: FPCP inexact result */
- 	VECTOR(fpfault)		/* 50: FPCP divide by zero */
- 	VECTOR(fpfault)		/* 51: FPCP underflow */
- 	VECTOR(fpfault)		/* 52: FPCP operand error */
- 	VECTOR(fpfault)		/* 53: FPCP overflow */
- 	VECTOR(fpfault)		/* 54: FPCP signalling NAN */
+	VECTOR(fpfault)		/* 48: FPCP branch/set on unordered cond */
+	VECTOR(fpfault)		/* 49: FPCP inexact result */
+	VECTOR(fpfault)		/* 50: FPCP divide by zero */
+	VECTOR(fpfault)		/* 51: FPCP underflow */
+	VECTOR(fpfault)		/* 52: FPCP operand error */
+	VECTOR(fpfault)		/* 53: FPCP overflow */
+	VECTOR(fpfault)		/* 54: FPCP signalling NAN */
 #endif
 	VECTOR(fpunsupp)	/* 55: FPCP unimplemented data type */
 	VECTOR(badtrap)		/* 56: unassigned, reserved */
