@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.144 2023/06/05 16:26:05 mlelstv Exp $	*/
+/*	$NetBSD: audio.c,v 1.145 2023/10/01 09:34:28 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.144 2023/06/05 16:26:05 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.145 2023/10/01 09:34:28 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -9222,7 +9222,6 @@ audio_mixsample_to_linear(audio_filter_arg_t *arg)
 	const aint2_t *m;
 	uint8_t *p;
 	u_int sample_count;
-	bool swap;
 	aint2_t v, xor;
 	u_int i, bps;
 	bool little;
@@ -9235,48 +9234,150 @@ audio_mixsample_to_linear(audio_filter_arg_t *arg)
 	m = arg->src;
 	p = arg->dst;
 	sample_count = arg->count * fmt->channels;
-	swap = arg->dstfmt->encoding == AUDIO_ENCODING_SLINEAR_OE;
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-	little = !swap;
-#endif
-#if BYTE_ORDER == BIG_ENDIAN
-	little = swap;
-#endif
+	little = arg->dstfmt->encoding == AUDIO_ENCODING_SLINEAR_LE;
 
 	bps = fmt->stride / NBBY;
+	xor = audio_format2_is_signed(fmt) ? 0 : (aint2_t)1 << 31;
 
-	xor = audio_format2_is_signed(fmt)
-	   ? 0 : 1 << (fmt->stride - 1);
-
-	for (i=0; i<sample_count; ++i) {
-		v = *m++;
-
-		/* scale up to 32bit and then down to target size */
-		v <<= 32 - AUDIO_INTERNAL_BITS;
-		v >>= (4 - bps) * NBBY;
-
-		/* signed -> unsigned */
-		v ^= xor;
-
-		if (little) {
-			switch (bps) {
-			case 4: *p++ = v; v >>= 8; /* FALLTHROUGH */
-			case 3: *p++ = v; v >>= 8; /* FALLTHROUGH */
-			case 2: *p++ = v; v >>= 8; /* FALLTHROUGH */
-			case 1: *p++ = v; /* FALLTHROUGH */
+#if AUDIO_INTERNAL_BITS == 16
+	if (little) {
+		switch (bps) {
+		case 4:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = 0;
+				*p++ = 0;
+				*p++ = v;
+				*p++ = v >> 8;
 			}
-		} else {
-			switch (bps) {
-			case 4: *p++ = v >> 24; v <<= 8; /* FALLTHROUGH */
-			case 3: *p++ = v >> 24; v <<= 8; /* FALLTHROUGH */
-			case 2: *p++ = v >> 24; v <<= 8; /* FALLTHROUGH */
-			case 1: *p++ = v >> 24; /* FALLTHROUGH */
+			break;
+		case 3:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = 0;
+				*p++ = v;
+				*p++ = v >> 8;
 			}
+			break;
+		case 2:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v;
+				*p++ = v >> 8;
+			}
+			break;
+		case 1:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 8;
+			}
+			break;
+		}
+	} else {
+		switch (bps) {
+		case 4:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 8;
+				*p++ = v;
+				*p++ = 0;
+				*p++ = 0;
+			}
+			break;
+		case 3:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 8;
+				*p++ = v;
+				*p++ = 0;
+			}
+			break;
+		case 2:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 8;
+				*p++ = v;
+			}
+			break;
+		case 1:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 8;
+			}
+			break;
 		}
 	}
-}
+#elif AUDIO_INTERNAL_BITS == 32
+	if (little) {
+		switch (bps) {
+		case 4:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v;
+				*p++ = v >> 8;
+				*p++ = v >> 16;
+				*p++ = v >> 24;
+			}
+			break;
+		case 3:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 8;
+				*p++ = v >> 16;
+				*p++ = v >> 24;
+			}
+			break;
+		case 2:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 16;
+				*p++ = v >> 24;
+			}
+			break;
+		case 1:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 24;
+			}
+			break;
+		}
+	} else {
+		switch (bps) {
+		case 4:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 24;
+				*p++ = v >> 16;
+				*p++ = v >> 8;
+				*p++ = v;
+			}
+			break;
+		case 3:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 24;
+				*p++ = v >> 16;
+				*p++ = v >> 8;
+			}
+			break;
+		case 2:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 24;
+				*p++ = v >> 16;
+			}
+			break;
+		case 1:
+			for (i=0; i<sample_count; ++i) {
+				v = *m++ ^ xor;
+				*p++ = v >> 24;
+			}
+			break;
+		}
+	}
+#endif /* AUDIO_INTERNAL_BITS */
 
+}
 
 #endif /* NAUDIO > 0 */
 
