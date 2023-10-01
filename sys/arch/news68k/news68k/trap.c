@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 2023/04/22 10:09:12 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.75 2023/10/01 19:28:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2023/04/22 10:09:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2023/10/01 19:28:36 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2023/04/22 10:09:12 tsutsui Exp $");
 #include <sys/syscall.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
+#include <sys/kgdb.h>
 
 #include <m68k/frame.h>
 #include <m68k/cacheops.h>
@@ -281,7 +282,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		s = splhigh();
 #ifdef KGDB
 		/* If connected, step or cont returns 1 */
-		if (kgdb_trap(type, fp))
+		if (kgdb_trap(type, (db_regs_t *)fp))
 			goto kgdb_cont;
 #endif
 #ifdef DDB
