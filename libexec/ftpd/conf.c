@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.64 2012/11/04 20:46:46 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.64.40.1 2023/10/02 17:21:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.64 2012/11/04 20:46:46 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.64.40.1 2023/10/02 17:21:07 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -909,7 +909,7 @@ count_users(void)
 		goto cleanup_count;
 	if (fstat(fd, &sb) == -1)
 		goto cleanup_count;
-	if ((pids = malloc(sb.st_size + sizeof(pid_t))) == NULL)
+	if ((pids = calloc(sb.st_size + sizeof(pid_t), 1)) == NULL)
 		goto cleanup_count;
 /* XXX: implement a better read loop */
 	scount = read(fd, pids, sb.st_size);
