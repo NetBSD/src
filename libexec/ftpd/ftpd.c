@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpd.c,v 1.204.4.2 2023/10/02 17:11:21 martin Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.204.4.3 2023/10/02 17:13:33 martin Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.204.4.2 2023/10/02 17:11:21 martin Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.204.4.3 2023/10/02 17:13:33 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1300,7 +1300,12 @@ end_login(void)
 	quietmessages = 0;
 	gidcount = 0;
 	curclass.type = CLASS_REAL;
-	(void) seteuid((uid_t)0);
+	if (!dropprivs) {
+		if (seteuid((uid_t)0) < 0) {
+			syslog(LOG_NOTICE, "end_login: can't seteuid 0: %m");
+			fatal("Can't reset privileges.");
+		}
+	}
 #ifdef	LOGIN_CAP
 	setusercontext(NULL, getpwuid(0), 0,
 		       LOGIN_SETPRIORITY|LOGIN_SETRESOURCES|LOGIN_SETUMASK);
@@ -1441,8 +1446,8 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 
 	login_attempts = 0;		/* this time successful */
 	if (setegid((gid_t)pw->pw_gid) < 0) {
-		reply(550, "Can't set gid.");
-		goto bad;
+		syslog(LOG_NOTICE, "user %s: can't setegid: %m", pw->pw_name);
+		fatal("Can't drop privileges.");
 	}
 #ifdef	LOGIN_CAP
 	if ((lc = login_getpwclass(pw)) != NULL) {
@@ -1615,17 +1620,17 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 	    ntohs(ctrl_addr.su_port) > IPPORT_RESERVED + 1)) {
 		dropprivs++;
 		if (setgid((gid_t)pw->pw_gid) < 0) {
-			reply(550, "Can't set gid.");
-			goto bad_perms;
+			syslog(LOG_NOTICE, "user %s: can't setgid: %m", pw->pw_name);
+			fatal("Can't drop privileges.");
 		}
 		if (setuid((uid_t)pw->pw_uid) < 0) {
-			reply(550, "Can't set uid.");
-			goto bad_perms;
+			syslog(LOG_NOTICE, "user %s: can't setuid: %m", pw->pw_name);
+			fatal("Can't drop privileges.");
 		}
 	} else {
 		if (seteuid((uid_t)pw->pw_uid) < 0) {
-			reply(550, "Can't set uid.");
-			goto bad_perms;
+			syslog(LOG_NOTICE, "user %s: can't seteuid: %m", pw->pw_name);
+			fatal("Can't drop privileges.");
 		}
 	}
 	setenv("HOME", homedir, 1);
@@ -1684,11 +1689,6 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 #endif
 			/* Forget all about it... */
 	end_login();
-	return;
-
-bad_perms:
-	syslog(LOG_NOTICE, "user %s: can't setuid/gid: %m", pw->pw_name);
-	fatal("Can't drop privileges.");
 }
 
 void
@@ -1924,8 +1924,12 @@ getdatasock(const char *fmode)
 	on = 1;
 	if (data >= 0)
 		return (fdopen(data, fmode));
-	if (! dropprivs)
-		(void) seteuid((uid_t)0);
+	if (! dropprivs) {
+		if (seteuid((uid_t)0) < 0) {
+			syslog(LOG_NOTICE, "getdatasock: can't seteuid 0: %m");
+			fatal("Can't reset privileges.");
+		}
+	}
 	s = socket(ctrl_addr.su_family, SOCK_STREAM, 0);
 	if (s < 0)
 		goto bad;
@@ -1960,8 +1964,12 @@ getdatasock(const char *fmode)
 			goto bad;
 		sleep(tries);
 	}
-	if (! dropprivs)
-		(void) seteuid((uid_t)pw->pw_uid);
+	if (! dropprivs) {
+		if (seteuid((uid_t)pw->pw_uid) < 0) {
+			syslog(LOG_NOTICE, "user %s: can't seteuid: %m", pw->pw_name);
+			fatal("Can't drop privileges.");
+		}
+	}
 #ifdef IP_TOS
 	if (!mapped && ctrl_addr.su_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
@@ -1974,8 +1982,12 @@ getdatasock(const char *fmode)
  bad:
 		/* Return the real value of errno (close may change it) */
 	t = errno;
-	if (! dropprivs)
-		(void) seteuid((uid_t)pw->pw_uid);
+	if (! dropprivs) {
+		if (seteuid((uid_t)pw->pw_uid) < 0) {
+			syslog(LOG_NOTICE, "user %s: can't seteuid: %m", pw->pw_name);
+			fatal("Can't drop privileges.");
+		}
+	}
 	if (s >= 0)
 		(void) close(s);
 	errno = t;
@@ -2048,13 +2060,13 @@ dataconn(const char *name, off_t size, const char *fmode)
 		if (file == NULL) {
 			char hbuf[NI_MAXHOST];
 			char pbuf[NI_MAXSERV];
-
+			conerrno = errno;
 			if (getnameinfo((struct sockaddr *)&data_source.si_su,
 			    data_source.su_len, hbuf, sizeof(hbuf), pbuf,
 			    sizeof(pbuf), NI_NUMERICHOST | NI_NUMERICSERV))
 				strlcpy(hbuf, "?", sizeof(hbuf));
 			reply(425, "Can't create data socket (%s,%s): %s.",
-			      hbuf, pbuf, strerror(errno));
+			      hbuf, pbuf, strerror(conerrno));
 			return (NULL);
 		}
 		data = fileno(file);
