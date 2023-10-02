@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.59 2023/09/28 15:46:55 manu Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.60 2023/10/02 00:02:33 manu Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -328,7 +328,6 @@ guid_is_equal(const struct uuid *a, const struct uuid *b)
 	return (memcmp(a, b, sizeof(*a)) == 0 ? true : false);
 }
 
-#ifndef NO_GPT
 static void
 part_name_utf8(const uint16_t *utf16_src, size_t utf16_srclen,
 	       char *utf8_dst, size_t utf8_dstlen)
@@ -351,7 +350,6 @@ part_name_utf8(const uint16_t *utf16_src, size_t utf16_srclen,
 
 	return;
 }
-#endif
 
 static int
 check_gpt(struct biosdisk *d, daddr_t rf_offset, daddr_t sector)
@@ -1562,14 +1560,17 @@ next_disk:
 			if (d->part[part].fstype == FS_UNUSED)
 				continue;
 
+#ifndef NO_GPT
 			if (first_bootme == -1 &&
 			    d->part[part].attr & GPT_ENT_ATTR_BOOTME)
 				first_bootme = part;
+#endif
 
 			if (first_ffs == -1 &&
 			    (d->part[part].fstype == FS_BSDFFS ||
 			     d->part[part].fstype == FS_BSDLFS))
 				first_ffs = part;
+
 			if (part == target_part) {
 				*biosdev = raidframe[i].biosdev;
 				*offset = raidframe[i].offset
