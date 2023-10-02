@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.82 2023/02/24 11:02:27 riastradh Exp $ */
+/* $NetBSD: kern_auth.c,v 1.83 2023/10/02 20:59:12 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.82 2023/02/24 11:02:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.83 2023/10/02 20:59:12 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -409,14 +409,14 @@ kauth_cred_groupmember(kauth_cred_t cred, gid_t gid)
 	KASSERT(cred != NOCRED);
 	KASSERT(cred != FSCRED);
 
+	if (kauth_cred_getegid(cred) == gid)
+		return 0;
+
 	error = kauth_cred_ismember_gid(cred, gid, &ismember);
 	if (error)
 		return error;
 
-	if (kauth_cred_getegid(cred) == gid || ismember)
-		return 0;
-
-	return -1;
+	return ismember ? 0 : -1;
 }
 
 u_int
