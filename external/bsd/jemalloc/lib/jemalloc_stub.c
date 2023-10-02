@@ -26,6 +26,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if HAVE_JEMALLOC > 100
 #include <malloc.h>
 
 void *__je_mallocx(size_t, int);
@@ -139,3 +141,4 @@ void malloc_conf_set(const char *m)
 {
 	__je_malloc_conf_set(m);
 }
+#endif /* HAVE_JEMALLOC > 100 */

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3.12.1 2023/07/14 08:33:25 martin Exp $
+# $NetBSD: Makefile,v 1.3.12.2 2023/10/02 17:38:23 martin Exp $
 
 WARNS?= 5
 .include <bsd.init.mk>
@@ -6,8 +6,7 @@ WARNS?= 5
 LIB=jemalloc
 
 # The symbols from the stub only exist in newer jemalloc.
-.if ${HAVE_JEMALLOC:U0} != 100
-SRCS=jemalloc_stub.c
-.endif
+CPPFLAGS+=	-DHAVE_JEMALLOC=${HAVE_JEMALLOC:U0}
+SRCS=		jemalloc_stub.c
 
 .include <bsd.lib.mk>
