@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_unnumbered.sh,v 1.1 2022/11/25 08:43:16 knakahara Exp $
+#	$NetBSD: t_ipsec_unnumbered.sh,v 1.1.2.1 2023/10/02 12:58:50 martin Exp $
 #
 # Copyright (c) 2022 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -73,7 +73,7 @@ add_sa()
 	local tmpfile=./tmp
 	local spi=10000
 	local algo_args="$(generate_algo_args esp $algo)"
-	local uniq=8200 # 8192(reqid_base) + 2 * 4(lo0, shmif0, shmif1 and ipsec0)
+	local uniq=8192 # 8192(reqid_base) + 2 * 0(unit id of "ipsec0")
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	cat > $tmpfile <<-EOF
