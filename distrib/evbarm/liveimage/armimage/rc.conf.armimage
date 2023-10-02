@@ -1,4 +1,4 @@
-# $NetBSD: rc.conf.armimage,v 1.1 2021/07/24 14:00:08 jmcneill Exp $
+# $NetBSD: rc.conf.armimage,v 1.1.2.1 2023/10/02 13:26:04 martin Exp $
 
 is_ec2() {
 	val=NO
@@ -23,6 +23,7 @@ is_ec2() {
 	printf $val
 }
 
+certctl_init=YES
 resize_gpt=YES
 resize_root=YES
 resize_root_flags="-p"
