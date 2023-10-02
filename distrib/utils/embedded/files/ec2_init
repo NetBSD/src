@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ec2_init,v 1.5 2022/10/15 18:32:30 jmcneill Exp $
+# $NetBSD: ec2_init,v 1.5.2.1 2023/10/02 13:27:41 martin Exp $
 #
 # PROVIDE: ec2_init
 # REQUIRE: NETWORKING
@@ -15,7 +15,7 @@ stop_cmd=":"
 
 CLOUD_TYPE=EC2	# default
 
-case "$(/sbin/sysctl -n machdep.dmi.chassis-asset-tag)" in
+case "$(/sbin/sysctl -n machdep.dmi.chassis-asset-tag 2>/dev/null)" in
 OracleCloud*)
 	CLOUD_TYPE=OCI
 	;;
