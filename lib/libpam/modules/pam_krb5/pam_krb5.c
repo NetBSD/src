@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.30.2.1 2023/06/21 21:54:12 martin Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.30.2.2 2023/10/02 13:05:41 martin Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.30.2.1 2023/06/21 21:54:12 martin Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.30.2.2 2023/10/02 13:05:41 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -341,7 +341,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	krbret = verify_krb_v5_tgt(pam_context, ccache, srvdup,
 	    debug,
 	    auth_service, auth_princ, auth_phost, &auth_data);
-	free(srvdup);
 	if (krbret == -1) {
 		PAM_VERBOSE_ERROR("Kerberos 5 error");
 		krb5_cc_destroy(pam_context, ccache);
@@ -955,6 +954,7 @@ verify_krb_v5_tgt_begin(krb5_context context, char *pam_service, int debug,
 	const char *services[3], **service;
 
 	*servicep = NULL;
+	*princp = NULL;
 
 	if (debug)
 		openlog_r("pam_krb5", LOG_PID, LOG_AUTHPRIV, datap);
@@ -996,6 +996,8 @@ verify_krb_v5_tgt_begin(krb5_context context, char *pam_service, int debug,
 		    &keyblock);
 		if (retval != 0)
 			continue;
+		*servicep = *service;
+		*princp = princ;
 		break;
 	}
 	if (keyblock)
