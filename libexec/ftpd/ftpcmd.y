@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.94 2015/08/10 07:45:50 shm Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.94.26.1 2023/10/02 17:15:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.94 2015/08/10 07:45:50 shm Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.94.26.1 2023/10/02 17:15:33 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -855,7 +855,8 @@ cmd
 		
 	| MLST check_login CRLF
 		{
-			mlst(NULL);
+			if ($2)
+				mlst(NULL);
 		}
 
 	| MLSD check_login SP pathname CRLF
@@ -868,7 +869,8 @@ cmd
 		
 	| MLSD check_login CRLF
 		{
-			mlsd(NULL);
+			if ($2)
+				mlsd(NULL);
 		}
 
 	| error CRLF
