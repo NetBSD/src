@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.206.2.1 2023/10/02 13:45:42 martin Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.206.2.2 2023/10/02 17:24:44 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2023 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.206.2.1 2023/10/02 13:45:42 martin Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.206.2.2 2023/10/02 17:24:44 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -3896,6 +3896,7 @@ auth_pam(void)
 	int e;
 	ftpd_cred_t auth_cred = { curname, 0 };
 	struct pam_conv conv = { &auth_conv, &auth_cred };
+	struct sockaddr_storage ss;
 
 	e = pam_start("ftpd", curname, &conv, &pamh);
 	if (e != PAM_SUCCESS) {
@@ -3918,7 +3919,9 @@ auth_pam(void)
 		return -1;
 	}
 
-	e = pam_set_item(pamh, PAM_SOCKADDR, &his_addr);
+	memset(&ss, 0, sizeof(ss));
+	memcpy(&ss, &his_addr.si_su, his_addr.su_len);
+	e = pam_set_item(pamh, PAM_SOCKADDR, &ss);
 	if (e != PAM_SUCCESS) {
 		syslog(LOG_ERR, "pam_set_item(PAM_SOCKADDR): %s",
 			pam_strerror(pamh, e));
