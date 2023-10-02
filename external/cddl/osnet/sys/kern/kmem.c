@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.c,v 1.3 2020/11/11 03:31:04 chs Exp $	*/
+/*	$NetBSD: kmem.c,v 1.3.6.1 2023/10/02 13:29:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ void
 kmem_cache_reap_now(kmem_cache_t *km)
 {
 
-	pool_cache_invalidate(km->km_pool);
+	pool_cache_reclaim(km->km_pool);
 }
 
 #undef kmem_alloc
