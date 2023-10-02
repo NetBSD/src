@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.155 2023/09/09 18:27:59 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.156 2023/10/02 21:50:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020, 2023 The NetBSD Foundation, Inc.
@@ -164,11 +164,11 @@
  *	held.  See definition of "struct namecache" in src/sys/namei.src,
  *	and the definition of "struct vnode" for the particulars.
  *
- *	Per-CPU statistics, and LRU list totals are read unlocked, since
- *	an approximate value is OK.  We maintain 32-bit sized per-CPU
- *	counters and 64-bit global counters under the theory that 32-bit
- *	sized counters are less likely to be hosed by nonatomic increment
- *	(on 32-bit platforms).
+ *	Per-CPU statistics, and LRU list totals are read unlocked, since an
+ *	approximate value is OK.  We maintain 32-bit sized per-CPU counters
+ *	and 64-bit global counters since 32-bit sized counters can be
+ *	observed locklessly while the global counters are protected by a
+ *	mutex.
  *
  *	The lock order is:
  *
@@ -182,7 +182,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.155 2023/09/09 18:27:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.156 2023/10/02 21:50:18 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -437,8 +437,8 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
 
 	/*
 	 * Search the RB tree for the key.  This is an inlined lookup
-	 * tailored for exactly what's needed here (64-bit key and so on)
-	 * that is quite a bit faster than using rb_tree_find_node().
+	 * tailored for exactly what's needed here that turns out to be
+	 * quite a bit faster than using rb_tree_find_node().
 	 *
 	 * For a matching key memcmp() needs to be called once to confirm
 	 * that the correct name has been found.  Very rarely there will be
