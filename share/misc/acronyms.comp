@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.370 2023/09/30 13:26:31 riastradh Exp $
+$NetBSD: acronyms.comp,v 1.371 2023/10/02 00:16:42 riastradh Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1526,6 +1526,7 @@ SES	SCSI enclosure services
 SFC	sequential function chart
 SFI	simple firmware interface
 SFI	software fault isolation
+SFP	small form-factor pluggable
 SFTP	SSH File Transfer Protocol
 SFTP	Serial File Transfer Protocol
 SFTP	Simple File Transfer Protocol
