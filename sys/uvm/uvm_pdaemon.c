@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.133 2021/04/17 21:37:21 mrg Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.133.16.1 2023/10/02 13:01:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.133 2021/04/17 21:37:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.133.16.1 2023/10/02 13:01:46 martin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -416,7 +416,7 @@ uvmpd_page_owner_lock(struct vm_page *pg)
 krwlock_t *
 uvmpd_trylockowner(struct vm_page *pg)
 {
-	krwlock_t *slock, *heldslock;
+	krwlock_t *slock, *heldslock = NULL;
 
 	KASSERT(mutex_owned(&pg->interlock));
 
@@ -453,9 +453,7 @@ uvmpd_trylockowner(struct vm_page *pg)
 	if (heldslock != slock) {
 		rw_exit(heldslock);
 		slock = NULL;
-	}
-	rw_obj_free(heldslock);
-	if (slock != NULL) {
+	} else {
 success:
 		/*
 		 * Set PG_ANON if it isn't set already.
@@ -468,6 +466,9 @@ success:
 		}
 	}
 	mutex_exit(&pg->interlock);
+	if (heldslock != NULL) {
+		rw_obj_free(heldslock);
+	}
 	return slock;
 }
 
