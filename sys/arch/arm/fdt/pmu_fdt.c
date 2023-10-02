@@ -1,4 +1,4 @@
-/* $NetBSD: pmu_fdt.c,v 1.11 2022/11/09 19:03:38 ryo Exp $ */
+/* $NetBSD: pmu_fdt.c,v 1.12 2023/10/02 08:42:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.11 2022/11/09 19:03:38 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.12 2023/10/02 08:42:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,7 +136,7 @@ pmu_fdt_init(device_t self)
 		error = arm_pmu_init();
 		if (error) {
 			aprint_error_dev(self,
-			    "couldn't initialise PMU event counter");
+			    "couldn't initialise PMU event counter\n");
 			return;
 		}
 	}
