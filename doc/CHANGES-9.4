@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.103 2023/09/18 19:01:14 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.104 2023/10/02 17:40:28 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2141,4 +2141,59 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.413
 	raid(4): avoid panic from DIOCGCACHE ioctl while reconstruction
 	is in progress.
 	[oster, ticket #1733]
+
+lib/libpam/modules/pam_krb5/pam_krb5.c		1.32
+
+	pam_krb5: PR lib/57631: fix double-free and use of uninitialized
+	memory.
+	[riastradh, ticket #1734]
+
+external/cddl/osnet/sys/kern/kmem.c		1.4
+
+	solaris: PR 57558: use pool_cache_reclaim, not pool_cache_invalidate.
+	[riastradh, ticket #1735]
+
+share/examples/wpa_supplicant/wpa_supplicant.conf 1.4
+
+	wpa_supplicant.conf: fix connection string for Eduroam example config.
+	[gutteridge, ticket #1736]
+
+libexec/ftpd/extern.h				1.65
+libexec/ftpd/ftpd.c				1.205
+
+	ftpd(8): increase some buffer sizes.
+	[lukem, ticket #1737]
+
+libexec/ftpd/ftpd.c				1.206
+
+	ftpd(8): improve error handling to fix CVE-2020-7468.
+	[lukem, ticket #1738]
+
+libexec/ftpd/ftpd.c				1.207
+libexec/ftpd/version.h				1.78
+
+	ftpd(8): improve seteuid error handling.
+	[lukem, ticket #1739]
+
+libexec/ftpd/ftpcmd.y				1.95
+
+	ftpd(8): fix MLSD/MLST auth checks.
+	[lukem, ticket #1740]
+
+libexec/ftpd/conf.c				1.65
+
+	ftpd(8): fix uninitialized memory usage in count_users().
+	[lukem, ticket #1741]
+
+libexec/ftpd/ftpd.c				1.208
+
+	ftpd(8): use correct sockaddr in PAM auth.
+	[lukem, ticket #1742]
+
+libexec/ftpd/version.h				1.80
+
+	ftp: update version to "NetBSD-ftpd 20230930" for changes:
+	- fix uninitialized memory usage in count_users()
+	- fix pam_set_item call with proper struct passed as PAM_SOCKADDR
+	[lukem, ticket #1743]
 
