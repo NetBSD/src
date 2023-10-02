@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# $NetBSD: certctl_init,v 1.1.2.2 2023/10/02 13:26:04 martin Exp $
+#
+# PROVIDE: certctl_init
+# REQUIRE: mountcritremote
+#
+# This script ensures that we run `certctl rehash' on first boot of a
+# live image to configure TLS trust anchors for OpenSSL in
+# /etc/openssl/certs.  We do this only on first boot by testing whether
+# /etc/openssl/certs is an empty directory.
+#
+# Requires mountcritremote for /usr/sbin/certctl.
+#
+# This is a stop-gap measure to ensure we get TLS trust anchors with
+# live images, which we can't prepare at build time because the
+# preparation requires running openssl(1) as a tool.  This stop-gap
+# measure should perhaps be replaced by a more general-purpose way to
+# run postinstall on first boot of the image, but that's a riskier
+# proposition to implement on short notice for netbsd-10.
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="certctl_init"
+rcvar=${name}
+start_cmd="certctl_init"
+stop_cmd=":"
+
+certctl_init()
+{
+	local certsdir
+
+	certsdir=/etc/openssl/certs
+
+	# If /etc/openssl/certs is a symlink, or exists but is not a
+	# directory, or is a directory but is nonempty, then we're not
+	# in the first boot's initial configuration.  So do nothing.
+	if [ -h "$certsdir" ] ||
+	    [ -e "$certsdir" -a ! -d "$certsdir" ] ||
+	    ([ -d "$certsdir" ] &&
+		find -f "$certsdir" -- \
+		    -maxdepth 0 -type d -empty -exit 1)
+        then
+		return
+	fi
+
+	# Otherwise, if /etc/openssl/certs is nonexistent or is an
+	# empty directory, run `certctl rehash'.
+	echo "Configuring TLS trust anchors."
+	certctl rehash
+}
+
+load_rc_config $name
+run_rc_command "$1"
