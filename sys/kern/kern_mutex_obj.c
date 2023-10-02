@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex_obj.c,v 1.14 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: kern_mutex_obj.c,v 1.15 2023/10/02 21:03:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.14 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.15 2023/10/02 21:03:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -57,7 +57,7 @@ mutex_obj_alloc(kmutex_type_t type, int ipl)
 {
 	struct kmutexobj *mo;
 
-	mo = kmem_alloc(sizeof(*mo), KM_SLEEP);
+	mo = kmem_intr_alloc(sizeof(*mo), KM_SLEEP);
 	KASSERT(ALIGNED_POINTER(mo, coherency_unit));
 	_mutex_init(&mo->mo_lock, type, ipl,
 	    (uintptr_t)__builtin_return_address(0));
@@ -77,7 +77,7 @@ mutex_obj_tryalloc(kmutex_type_t type, int ipl)
 {
 	struct kmutexobj *mo;
 
-	mo = kmem_alloc(sizeof(*mo), KM_NOSLEEP);
+	mo = kmem_intr_alloc(sizeof(*mo), KM_NOSLEEP);
 	KASSERT(ALIGNED_POINTER(mo, coherency_unit));
 	if (__predict_true(mo != NULL)) {
 		_mutex_init(&mo->mo_lock, type, ipl,
@@ -134,7 +134,7 @@ mutex_obj_free(kmutex_t *lock)
 	}
 	membar_acquire();
 	mutex_destroy(&mo->mo_lock);
-	kmem_free(mo, sizeof(*mo));
+	kmem_intr_free(mo, sizeof(*mo));
 	return true;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock_obj.c,v 1.12 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: kern_rwlock_obj.c,v 1.13 2023/10/02 21:03:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock_obj.c,v 1.12 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock_obj.c,v 1.13 2023/10/02 21:03:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -57,7 +57,7 @@ rw_obj_alloc(void)
 {
 	struct krwobj *ro;
 
-	ro = kmem_alloc(sizeof(*ro), KM_SLEEP);
+	ro = kmem_intr_alloc(sizeof(*ro), KM_SLEEP);
 	KASSERT(ALIGNED_POINTER(ro, coherency_unit));
 	_rw_init(&ro->ro_lock, (uintptr_t)__builtin_return_address(0));
 	ro->ro_magic = RW_OBJ_MAGIC;
@@ -76,7 +76,7 @@ rw_obj_tryalloc(void)
 {
 	struct krwobj *ro;
 
-	ro = kmem_alloc(sizeof(*ro), KM_NOSLEEP);
+	ro = kmem_intr_alloc(sizeof(*ro), KM_NOSLEEP);
 	KASSERT(ALIGNED_POINTER(ro, coherency_unit));
 	if (__predict_true(ro != NULL)) {
 		_rw_init(&ro->ro_lock, (uintptr_t)__builtin_return_address(0));
@@ -124,7 +124,7 @@ rw_obj_free(krwlock_t *lock)
 	}
 	membar_acquire();
 	rw_destroy(&ro->ro_lock);
-	kmem_free(ro, sizeof(*ro));
+	kmem_intr_free(ro, sizeof(*ro));
 	return true;
 }
 
