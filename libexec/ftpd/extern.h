@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.63 2013/03/21 05:53:01 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.63.22.1 2023/10/03 10:03:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -330,7 +330,7 @@ GLOBAL	char		proctitle[BUFSIZ];	/* initial part of title */
 GLOBAL	struct passwd  *pw;
 GLOBAL	int		quietmessages;
 GLOBAL	char		remotehost[MAXHOSTNAMELEN+1];
-GLOBAL	char		remoteloghost[2 * MAXHOSTNAMELEN+1];
+GLOBAL	char		remoteloghost[2 * MAXHOSTNAMELEN + 4];
 GLOBAL	off_t		restart_point;
 GLOBAL	char		tmpline[FTP_BUFLEN];
 GLOBAL	int		type;
