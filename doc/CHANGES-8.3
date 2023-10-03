@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.199 2023/10/02 17:41:04 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.200 2023/10/03 10:15:31 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3892,4 +3892,50 @@ share/examples/wpa_supplicant/wpa_supplicant.conf 1.4
 
 	wpa_supplicant.conf: fix connection string for Eduroam example config.
 	[gutteridge, ticket #1899]
+
+libexec/ftpd/ftpd.8				1.87
+libexec/ftpd/ftpd.c				1.204
+
+	ftpd(8): PR 53221: add -f option to ftpd to stay in foreground
+	with -D.
+	[lukem, ticket #1900]
+
+libexec/ftpd/extern.h				1.65
+libexec/ftpd/ftpd.c				1.205
+
+	ftpd(8): increase some buffer sizes.
+	[lukem, ticket #1901]
+
+libexec/ftpd/ftpd.c				1.206
+
+	ftpd(8): improve error handling to fix CVE-2020-7468.
+	[lukem, ticket #1902]
+
+libexec/ftpd/ftpd.c				1.207
+libexec/ftpd/version.h				1.78
+
+	ftpd(8): improve seteuid error handling.
+	[lukem, ticket #1903]
+
+libexec/ftpd/ftpcmd.y				1.95
+
+	ftpd(8): fix MLSD/MLST auth checks.
+	[lukem, ticket #1904]
+
+libexec/ftpd/conf.c				1.65
+
+	ftpd(8): fix uninitialized memory usage in count_users().
+	[lukem, ticket #1905]
+
+libexec/ftpd/ftpd.c				1.208
+
+	ftpd(8): use correct sockaddr in PAM auth.
+	[lukem, ticket #1906]
+
+libexec/ftpd/version.h				1.80
+
+	ftp: update version to "NetBSD-ftpd 20230930" for changes:
+	- fix uninitialized memory usage in count_users()
+	- fix pam_set_item call with proper struct passed as PAM_SOCKADDR
+	[lukem, ticket #1907]
 
