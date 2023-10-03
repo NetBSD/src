@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.75.22.1 2023/10/03 10:07:45 martin Exp $	*/
+/*	$NetBSD: version.h,v 1.75.22.2 2023/10/03 10:14:13 martin Exp $	*/
 /*-
  * Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,5 +29,5 @@
  */
 
 #ifndef FTPD_VERSION
-#define	FTPD_VERSION	"NetBSD-ftpd 20230902"
+#define	FTPD_VERSION	"NetBSD-ftpd 20230930"
 #endif
