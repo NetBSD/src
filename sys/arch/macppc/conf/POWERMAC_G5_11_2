@@ -155,9 +155,13 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # PCI USB controllers
 ohci*	at pci? dev ? function ?	# USB Open Host Controller
 ehci*	at pci? dev ? function ?	# USB Enhanced Host Controller
+# No G5 ships with USB 3.0 but xhci 1.0 cards have been confirmed working
+# in PCIe models
+xhci*	at pci? dev ? function ?	# USB 3.0
 
 usb*	at ohci?					# USB bus support
 usb*	at ehci?					# USB bus support
+usb*	at xhci?					# USB bus support
 uhub*	at usb?						# USB Hubs
 uhub*	at uhub? port ?
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
