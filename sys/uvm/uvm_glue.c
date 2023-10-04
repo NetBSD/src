@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.181 2020/06/14 21:41:42 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.182 2023/10/04 20:34:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.181 2020/06/14 21:41:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.182 2023/10/04 20:34:19 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -529,6 +529,5 @@ uvm_idle(void)
 
 	KASSERT(kpreempt_disabled());
 
-	if (!ci->ci_want_resched)
-		uvmpdpol_idle(ucpu);
+	uvmpdpol_idle(ucpu);
 }
