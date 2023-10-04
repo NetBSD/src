@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.259 2023/10/04 20:42:38 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.260 2023/10/04 20:44:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.259 2023/10/04 20:42:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.260 2023/10/04 20:44:15 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1003,6 +1003,7 @@ lwp_start(lwp_t *l, int flags)
 	if ((flags & LWP_SUSPENDED) != 0) {
 		/* It'll suspend itself in lwp_userret(). */
 		l->l_flag |= LW_WSUSPEND;
+		lwp_need_userret(l);
 	}
 	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
 		KASSERT(l->l_wchan == NULL);
