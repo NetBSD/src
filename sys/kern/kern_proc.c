@@ -1,7 +1,8 @@
-/*	$NetBSD: kern_proc.c,v 1.271 2023/09/04 09:13:23 simonb Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.272 2023/10/04 20:28:06 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.271 2023/09/04 09:13:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.272 2023/10/04 20:28:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2755,7 +2756,7 @@ void
 fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie, bool allowaddr)
 {
 	struct tty *tp;
-	struct lwp *l, *l2;
+	struct lwp *l;
 	struct timeval ut, st, rt;
 	sigset_t ss1, ss2;
 	struct rusage ru;
@@ -2909,13 +2910,9 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie, bool allowaddr)
 		ki->p_ustime_usec = st.tv_usec;
 
 		memcpy(&ru, &p->p_stats->p_ru, sizeof(ru));
-		ki->p_uru_nvcsw = 0;
-		ki->p_uru_nivcsw = 0;
-		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
-			ki->p_uru_nvcsw += (l2->l_ncsw - l2->l_nivcsw);
-			ki->p_uru_nivcsw += l2->l_nivcsw;
-			ruadd(&ru, &l2->l_ru);
-		}
+		rulwps(p, &ru);
+		ki->p_uru_nvcsw = ru.ru_nvcsw;
+		ki->p_uru_nivcsw = ru.ru_nivcsw;
 		ki->p_uru_maxrss = ru.ru_maxrss;
 		ki->p_uru_ixrss = ru.ru_ixrss;
 		ki->p_uru_idrss = ru.ru_idrss;

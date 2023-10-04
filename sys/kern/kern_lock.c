@@ -1,7 +1,8 @@
-/*	$NetBSD: kern_lock.c,v 1.186 2023/07/07 18:02:52 riastradh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.187 2023/10/04 20:28:06 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020, 2023
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.186 2023/07/07 18:02:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.187 2023/10/04 20:28:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -67,9 +68,8 @@ __cpu_simple_lock_t kernel_lock[CACHE_LINE_SIZE / sizeof(__cpu_simple_lock_t)]
 void
 assert_sleepable(void)
 {
-	struct lwp *l = curlwp;
 	const char *reason;
-	uint64_t ncsw;
+	long pctr;
 	bool idle;
 
 	if (__predict_false(panicstr != NULL)) {
@@ -83,11 +83,9 @@ assert_sleepable(void)
 	 * routine may be called in delicate situations.
 	 */
 	do {
-		ncsw = l->l_ncsw;
-		__insn_barrier();
+		pctr = lwp_pctr();
 		idle = CURCPU_IDLE_P();
-		__insn_barrier();
-	} while (__predict_false(ncsw != l->l_ncsw));
+	} while (__predict_false(pctr != lwp_pctr()));
 
 	reason = NULL;
 	if (__predict_false(idle) && !cold) {

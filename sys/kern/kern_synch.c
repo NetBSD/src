@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.360 2023/09/23 20:23:07 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.361 2023/10/04 20:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.360 2023/09/23 20:23:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.361 2023/10/04 20:28:06 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_ddb.h"
@@ -742,10 +742,11 @@ mi_switch(lwp_t *l)
 
 		/* Count the context switch. */
 		CPU_COUNT(CPU_COUNT_NSWTCH, 1);
-		l->l_ncsw++;
 		if ((l->l_pflag & LP_PREEMPTING) != 0) {
-			l->l_nivcsw++;
+			l->l_ru.ru_nivcsw++;
 			l->l_pflag &= ~LP_PREEMPTING;
+		} else {
+			l->l_ru.ru_nvcsw++;
 		}
 
 		/*

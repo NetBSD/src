@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.425 2023/07/26 21:45:28 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.426 2023/10/04 20:28:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.425 2023/07/26 21:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.426 2023/10/04 20:28:06 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -822,7 +822,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2, pd_entry_t **ptepp,
 	}
 	KASSERT(ci->ci_tlbstate == TLBSTATE_VALID);
 #ifdef DIAGNOSTIC
-	pmap->pm_ncsw = lwp_pctr();
+	pmap->pm_pctr = lwp_pctr();
 #endif
 	*ptepp = PTE_BASE;
 
@@ -861,7 +861,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap * pmap2)
 	ci = l->l_cpu;
 
 	KASSERT(mutex_owned(&pmap->pm_lock));
-	KASSERT(pmap->pm_ncsw == lwp_pctr());
+	KASSERT(pmap->pm_pctr == lwp_pctr());
 
 #if defined(XENPV) && defined(__x86_64__)
 	KASSERT(ci->ci_normal_pdes[PTP_LEVELS - 2] != L4_BASE);
@@ -3573,7 +3573,7 @@ pmap_load(void)
 	struct cpu_info *ci;
 	struct pmap *pmap, *oldpmap;
 	struct lwp *l;
-	uint64_t ncsw;
+	uint64_t pctr;
 	int ilevel __diagused;
 	u_long psl __diagused;
 
@@ -3585,7 +3585,7 @@ pmap_load(void)
 		return;
 	}
 	l = ci->ci_curlwp;
-	ncsw = l->l_ncsw;
+	pctr = lwp_pctr();
 	__insn_barrier();
 
 	/* should be able to take ipis. */
@@ -3624,7 +3624,7 @@ pmap_load(void)
 
 	pmap_destroy(oldpmap);
 	__insn_barrier();
-	if (l->l_ncsw != ncsw) {
+	if (lwp_pctr() != pctr) {
 		goto retry;
 	}
 

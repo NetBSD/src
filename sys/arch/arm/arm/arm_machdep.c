@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.67 2021/02/21 08:47:13 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.68 2023/10/04 20:28:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.67 2021/02/21 08:47:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.68 2023/10/04 20:28:05 ad Exp $");
 
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -284,20 +284,18 @@ cpu_intr_p(void)
 #ifdef __HAVE_PIC_FAST_SOFTINTS
 	int cpl;
 #endif
-	uint64_t ncsw;
 	int idepth;
+	long pctr;
 	lwp_t *l;
 
 	l = curlwp;
 	do {
-		ncsw = l->l_ncsw;
-		__insn_barrier();
+		pctr = lwp_pctr();
 		idepth = l->l_cpu->ci_intr_depth;
 #ifdef __HAVE_PIC_FAST_SOFTINTS
 		cpl = l->l_cpu->ci_cpl;
 #endif
-		__insn_barrier();
-	} while (__predict_false(ncsw != l->l_ncsw));
+	} while (__predict_false(pctr != lwp_pctr()));
 
 #ifdef __HAVE_PIC_FAST_SOFTINTS
 	if (cpl < IPL_VM)

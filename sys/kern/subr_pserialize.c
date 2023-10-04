@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_pserialize.c,v 1.23 2023/04/16 04:52:19 riastradh Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.24 2023/10/04 20:28:06 ad Exp $	*/
 
 /*-
- * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2011, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.23 2023/04/16 04:52:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.24 2023/10/04 20:28:06 ad Exp $");
 
 #include <sys/param.h>
 
@@ -174,21 +174,18 @@ pserialize_in_read_section(void)
 bool
 pserialize_not_in_read_section(void)
 {
-	struct lwp *l = curlwp;
-	uint64_t ncsw;
 	bool notin;
+	long pctr;
 
-	ncsw = l->l_ncsw;
-	__insn_barrier();
+	pctr = lwp_pctr();
 	notin = __predict_true(curcpu()->ci_psz_read_depth == 0);
-	__insn_barrier();
 
 	/*
 	 * If we had a context switch, we're definitely not in a
 	 * pserialize read section because pserialize read sections
 	 * block preemption.
 	 */
-	if (__predict_false(ncsw != l->l_ncsw))
+	if (__predict_false(pctr != lwp_pctr()))
 		notin = true;
 
 	return notin;

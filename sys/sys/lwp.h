@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.224 2023/09/25 18:30:44 riastradh Exp $	*/
+/*	$NetBSD: lwp.h,v 1.225 2023/10/04 20:28:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -121,8 +121,6 @@ struct lwp {
 	psetid_t	l_psid;		/* l: assigned processor-set ID */
 	fixpt_t		l_pctcpu;	/* p: %cpu during l_swtime */
 	fixpt_t		l_estcpu;	/* l: cpu time for SCHED_4BSD */
-	volatile uint64_t l_ncsw;	/* l: total context switches */
-	volatile uint64_t l_nivcsw;	/* l: involuntary context switches */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
 	struct cpu_info *l_target_cpu;	/* l: target CPU to migrate */
 	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
@@ -381,7 +379,7 @@ lwp_t *	lwp_find(proc_t *, int);
 void	lwp_userret(lwp_t *);
 void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
-uint64_t lwp_pctr(void);
+long	lwp_pctr(void);
 int	lwp_setprivate(lwp_t *, void *);
 int	do_lwp_create(lwp_t *, void *, u_long, lwp_t **, const sigset_t *,
     const stack_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.257 2023/09/23 20:23:07 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.258 2023/10/04 20:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.257 2023/09/23 20:23:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.258 2023/10/04 20:28:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1297,8 +1297,6 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		p->p_pctcpu += l->l_pctcpu;
 		ru = &p->p_stats->p_ru;
 		ruadd(ru, &l->l_ru);
-		ru->ru_nvcsw += (l->l_ncsw - l->l_nivcsw);
-		ru->ru_nivcsw += l->l_nivcsw;
 		LIST_REMOVE(l, l_sibling);
 		p->p_nlwps--;
 		p->p_nzlwps--;
@@ -2139,11 +2137,11 @@ lwp_ctl_exit(void)
  * preemption across operations that can tolerate preemption without
  * crashing, but which may generate incorrect results if preempted.
  */
-uint64_t
+long
 lwp_pctr(void)
 {
 
-	return curlwp->l_ncsw;
+	return curlwp->l_ru.ru_nvcsw + curlwp->l_ru.ru_nivcsw;
 }
 
 /*
