@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.27 2020/08/01 22:30:57 riastradh Exp $	*/
+/*	$NetBSD: threads.c,v 1.28 2023/10/04 21:56:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.27 2020/08/01 22:30:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.28 2023/10/04 21:56:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -376,4 +376,11 @@ lwp_userret(struct lwp *l)
 	/* ok, so we should die */
 	rump_unschedule();
 	rumpuser_thread_exit();
+}
+
+void
+lwp_need_userret(struct lwp *l)
+{
+
+	/* do what? */
 }
