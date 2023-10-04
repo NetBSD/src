@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.56 2023/09/23 18:48:04 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.57 2023/10/04 20:29:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020, 2023
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.56 2023/09/23 18:48:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.57 2023/10/04 20:29:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,11 +119,12 @@ cv_destroy(kcondvar_t *cv)
  *	Look up and lock the sleep queue corresponding to the given
  *	condition variable, and increment the number of waiters.
  */
-static inline void
+static inline int
 cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, bool catch_p)
 {
 	sleepq_t *sq;
 	kmutex_t *mp;
+	int nlocks;
 
 	KASSERT(cv_is_valid(cv));
 	KASSERT(!cpu_intr_p());
@@ -131,10 +132,11 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, bool catch_p)
 
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
-	sleepq_enter(sq, l, mp);
+	nlocks = sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, cv, CV_WMESG(cv), &cv_syncobj, catch_p);
 	mutex_exit(mtx);
 	KASSERT(cv_has_waiters(cv));
+	return nlocks;
 }
 
 /*
@@ -169,11 +171,12 @@ void
 cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 {
 	lwp_t *l = curlwp;
+	int nlocks;
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l, false);
-	(void)sleepq_block(0, false, &cv_syncobj);
+	nlocks = cv_enter(cv, mtx, l, false);
+	(void)sleepq_block(0, false, &cv_syncobj, nlocks);
 	mutex_enter(mtx);
 }
 
@@ -189,12 +192,12 @@ int
 cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 {
 	lwp_t *l = curlwp;
-	int error;
+	int error, nlocks;
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l, true);
-	error = sleepq_block(0, true, &cv_syncobj);
+	nlocks = cv_enter(cv, mtx, l, true);
+	error = sleepq_block(0, true, &cv_syncobj, nlocks);
 	mutex_enter(mtx);
 	return error;
 }
@@ -212,12 +215,12 @@ int
 cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 {
 	lwp_t *l = curlwp;
-	int error;
+	int error, nlocks;
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l, false);
-	error = sleepq_block(timo, false, &cv_syncobj);
+	nlocks = cv_enter(cv, mtx, l, false);
+	error = sleepq_block(timo, false, &cv_syncobj, nlocks);
 	mutex_enter(mtx);
 	return error;
 }
@@ -237,12 +240,12 @@ int
 cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 {
 	lwp_t *l = curlwp;
-	int error;
+	int error, nlocks;
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l, true);
-	error = sleepq_block(timo, true, &cv_syncobj);
+	nlocks = cv_enter(cv, mtx, l, true);
+	error = sleepq_block(timo, true, &cv_syncobj, nlocks);
 	mutex_enter(mtx);
 	return error;
 }

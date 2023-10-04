@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.50 2023/09/23 18:48:04 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.51 2023/10/04 20:29:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020, 2023
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.50 2023/09/23 18:48:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.51 2023/10/04 20:29:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -372,6 +372,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	kmutex_t *lock;
 	sleepq_t *sq;
 	u_int hash;
+	int nlocks;
 
 	hash = TS_HASH(obj);
 	tc = &turnstile_chains[hash];
@@ -414,7 +415,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 
 	sq = &ts->ts_sleepq[q];
 	ts->ts_waiters[q]++;
-	sleepq_enter(sq, l, lock);
+	nlocks = sleepq_enter(sq, l, lock);
 	LOCKDEBUG_BARRIER(lock, 1);
 	sleepq_enqueue(sq, obj, "tstile", sobj, false);
 
@@ -426,7 +427,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	KPREEMPT_DISABLE(l);
 	KASSERT(lock == l->l_mutex);
 	turnstile_lendpri(l);
-	sleepq_block(0, false, sobj);
+	sleepq_block(0, false, sobj, nlocks);
 	KPREEMPT_ENABLE(l);
 }
 

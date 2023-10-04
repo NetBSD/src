@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.62 2023/09/23 18:48:04 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.63 2023/10/04 20:29:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.62 2023/09/23 18:48:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.63 2023/10/04 20:29:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,9 +322,10 @@ state_check:
 		}
 		/* Nothing happen, therefore - sleep. */
 		l->l_selflag = SEL_BLOCKING;
-		sleepq_enter(&sc->sc_sleepq, l, lock);
+		KASSERT(l->l_blcnt == 0);
+		(void)sleepq_enter(&sc->sc_sleepq, l, lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, opname, &select_sobj, true);
-		error = sleepq_block(timo, true, &select_sobj);
+		error = sleepq_block(timo, true, &select_sobj, 0);
 		if (error != 0) {
 			break;
 		}

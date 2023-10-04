@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.24 2023/09/23 18:48:04 ad Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.25 2023/10/04 20:29:18 ad Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.24 2023/09/23 18:48:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.25 2023/10/04 20:29:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -56,13 +56,15 @@ sleepq_destroy(sleepq_t *sq)
 	cv_destroy(&sq->sq_cv);
 }
 
-void
+int
 sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
 {
+	int nlocks;
 
 	lwp_lock(l);
 	lwp_unlock_to(l, mp);
-	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
+	KERNEL_UNLOCK_ALL(NULL, &nlocks);
+	return nlocks;
 }
 
 void
@@ -78,12 +80,11 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wc, const char *wmsg, syncobj_t *sob,
 }
 
 int
-sleepq_block(int timo, bool catch, syncobj_t *syncobj __unused)
+sleepq_block(int timo, bool catch, syncobj_t *syncobj __unused, int nlocks)
 {
 	struct lwp *l = curlwp;
 	int error = 0;
 	kmutex_t *mp = l->l_mutex;
-	int biglocks = l->l_biglocks;
 
 	while (l->l_wchan) {
 		l->l_mutex = mp; /* keep sleepq lock until woken up */
@@ -98,8 +99,8 @@ sleepq_block(int timo, bool catch, syncobj_t *syncobj __unused)
 	}
 	mutex_spin_exit(mp);
 
-	if (biglocks)
-		KERNEL_LOCK(biglocks, curlwp);
+	if (nlocks)
+		KERNEL_LOCK(nlocks, curlwp);
 
 	return error;
 }

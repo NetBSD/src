@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.55 2023/10/04 20:28:06 ad Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.56 2023/10/04 20:29:18 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.55 2023/10/04 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.56 2023/10/04 20:29:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -470,6 +470,7 @@ void
 rump_lwproc_switch(struct lwp *newlwp)
 {
 	struct lwp *l = curlwp;
+	int nlocks;
 
 	KASSERT(!(l->l_flag & LW_WEXIT) || newlwp);
 
@@ -488,7 +489,7 @@ rump_lwproc_switch(struct lwp *newlwp)
 		fd_free();
 	}
 
-	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
+	KERNEL_UNLOCK_ALL(NULL, &nlocks);
 	lwproc_curlwpop(RUMPUSER_LWP_CLEAR, l);
 
 	newlwp->l_cpu = newlwp->l_target_cpu = l->l_cpu;
@@ -497,7 +498,7 @@ rump_lwproc_switch(struct lwp *newlwp)
 
 	lwproc_curlwpop(RUMPUSER_LWP_SET, newlwp);
 	curcpu()->ci_curlwp = newlwp;
-	KERNEL_LOCK(newlwp->l_biglocks, NULL);
+	KERNEL_LOCK(nlocks, NULL);
 
 	/*
 	 * Check if the thread should get a signal.  This is

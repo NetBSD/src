@@ -1,7 +1,8 @@
-/*	$NetBSD: kern_exit.c,v 1.294 2023/10/04 20:28:06 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.295 2023/10/04 20:29:18 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020, 2023
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.294 2023/10/04 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.295 2023/10/04 20:29:18 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -234,7 +235,7 @@ exit1(struct lwp *l, int exitcode, int signo)
 	 * If we have been asked to stop on exit, do so now.
 	 */
 	if (__predict_false(p->p_sflag & PS_STOPEXIT)) {
-		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
+		KASSERT(l->l_blcnt == 0);
 		sigclearall(p, &contsigmask, &kq);
 
 		if (!mutex_tryenter(&proc_lock)) {

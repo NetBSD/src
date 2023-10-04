@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.361 2023/10/04 20:28:06 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.362 2023/10/04 20:29:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.361 2023/10/04 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.362 2023/10/04 20:29:18 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_ddb.h"
@@ -186,6 +186,7 @@ tsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo)
 	sleepq_t *sq;
 	kmutex_t *mp;
 	bool catch_p;
+	int nlocks;
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
 	KASSERT(ident != &lbolt);
@@ -198,9 +199,9 @@ tsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo)
 
 	catch_p = priority & PCATCH;
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
-	sleepq_enter(sq, l, mp);
+	nlocks = sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj, catch_p);
-	return sleepq_block(timo, catch_p, &sleep_syncobj);
+	return sleepq_block(timo, catch_p, &sleep_syncobj, nlocks);
 }
 
 int
@@ -211,7 +212,7 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	sleepq_t *sq;
 	kmutex_t *mp;
 	bool catch_p;
-	int error;
+	int error, nlocks;
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
 	KASSERT(ident != &lbolt);
@@ -223,10 +224,10 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 
 	catch_p = priority & PCATCH;
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
-	sleepq_enter(sq, l, mp);
+	nlocks = sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj, catch_p);
 	mutex_exit(mtx);
-	error = sleepq_block(timo, catch_p, &sleep_syncobj);
+	error = sleepq_block(timo, catch_p, &sleep_syncobj, nlocks);
 
 	if ((priority & PNORELOCK) == 0)
 		mutex_enter(mtx);
@@ -241,7 +242,7 @@ int
 kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 {
 	struct lwp *l = curlwp;
-	int error;
+	int error, nlocks;
 
 	KASSERT(timo != 0 || intr);
 
@@ -251,9 +252,9 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 	if (mtx != NULL)
 		mutex_exit(mtx);
 	lwp_lock(l);
-	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
+	KERNEL_UNLOCK_ALL(NULL, &nlocks);
 	sleepq_enqueue(NULL, l, wmesg, &kpause_syncobj, intr);
-	error = sleepq_block(timo, intr, &kpause_syncobj);
+	error = sleepq_block(timo, intr, &kpause_syncobj, nlocks);
 	if (mtx != NULL)
 		mutex_enter(mtx);
 
@@ -286,8 +287,9 @@ void
 yield(void)
 {
 	struct lwp *l = curlwp;
+	int nlocks;
 
-	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
+	KERNEL_UNLOCK_ALL(l, &nlocks);
 	lwp_lock(l);
 
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
@@ -295,7 +297,7 @@ yield(void)
 
 	spc_lock(l->l_cpu);
 	mi_switch(l);
-	KERNEL_LOCK(l->l_biglocks, l);
+	KERNEL_LOCK(nlocks, l);
 }
 
 /*
@@ -310,8 +312,9 @@ void
 preempt(void)
 {
 	struct lwp *l = curlwp;
+	int nlocks;
 
-	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
+	KERNEL_UNLOCK_ALL(l, &nlocks);
 	lwp_lock(l);
 
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
@@ -320,7 +323,7 @@ preempt(void)
 	spc_lock(l->l_cpu);
 	l->l_pflag |= LP_PREEMPTING;
 	mi_switch(l);
-	KERNEL_LOCK(l->l_biglocks, l);
+	KERNEL_LOCK(nlocks, l);
 }
 
 /*
