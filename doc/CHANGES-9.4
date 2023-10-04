@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.104 2023/10/02 17:40:28 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.105 2023/10/04 15:14:00 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2197,3 +2197,19 @@ libexec/ftpd/version.h				1.80
 	- fix pam_set_item call with proper struct passed as PAM_SOCKADDR
 	[lukem, ticket #1743]
 
+xsrc/external/mit/libXpm/dist/src/CrPFrBuf.c		(apply patch)
+xsrc/external/mit/libXpm/dist/src/CrPFrDat.c		(apply patch)
+xsrc/external/mit/libXpm/dist/src/CrPFrI.c		(apply patch)
+xsrc/external/mit/libXpm/dist/src/RdFToP.c		(apply patch)
+xsrc/external/mit/libXpm/dist/src/XpmI.h		(apply patch)
+xsrc/external/mit/libXpm/dist/src/create.c		(apply patch)
+xsrc/external/mit/libXpm/dist/src/data.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/CrPixmap.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/ImUtil.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/PutImage.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/xkb/XKBGetMap.c	(apply patch)
+
+	Backport of upstream libX11 and libXpm 2023-10 security updates,
+	fixing: CVE-2023-43785, CVE-2023-43786, CVE-2023-43787, CVE-2023-43788,
+	CVE-2023-43789
+	[mrg, ticket #1744]
