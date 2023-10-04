@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.262 2023/10/04 20:46:33 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.263 2023/10/04 22:17:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.262 2023/10/04 20:46:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.263 2023/10/04 22:17:09 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -377,8 +377,7 @@ lwp0_init(void)
 	cv_init(&l->l_sigcv, "sigwait");
 	cv_init(&l->l_waitcv, "vfork");
 
-	kauth_cred_hold(proc0.p_cred);
-	l->l_cred = proc0.p_cred;
+	l->l_cred = kauth_cred_hold(proc0.p_cred);
 
 	kdtrace_thread_ctor(NULL, l);
 	lwp_initspecific(l);
@@ -899,7 +898,6 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	kdtrace_thread_ctor(NULL, l2);
 	lwp_initspecific(l2);
 	sched_lwp_fork(l1, l2);
-	lwp_update_creds(l2);
 	callout_init(&l2->l_timeout_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&l2->l_timeout_ch, sleepq_timeout, l2);
 	cv_init(&l2->l_sigcv, "sigwait");
@@ -923,6 +921,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	uvm_lwp_fork(l1, l2, stack, stacksize, func, (arg != NULL) ? arg : l2);
 
 	mutex_enter(p2->p_lock);
+	l2->l_cred = kauth_cred_hold(p2->p_cred);
 	if ((flags & LWP_DETACHED) != 0) {
 		l2->l_prflag = LPR_DETACHED;
 		p2->p_ndlwps++;

@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.89 2023/01/05 18:29:45 jakllsch Exp $ */
+/* $NetBSD: kauth.h,v 1.90 2023/10/04 22:17:09 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -509,7 +509,7 @@ void kauth_cred_setgid(kauth_cred_t, gid_t);
 void kauth_cred_setegid(kauth_cred_t, gid_t);
 void kauth_cred_setsvgid(kauth_cred_t, gid_t);
 
-void kauth_cred_hold(kauth_cred_t);
+kauth_cred_t kauth_cred_hold(kauth_cred_t);
 u_int kauth_cred_getrefcnt(kauth_cred_t);
 
 int kauth_cred_setgroups(kauth_cred_t, const gid_t *, size_t, uid_t,

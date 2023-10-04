@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.261 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.262 2023/10/04 22:17:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.261 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.262 2023/10/04 22:17:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1139,8 +1139,7 @@ fd_allocfile(file_t **resultfp, int *resultfd)
 	cred = curlwp->l_cred;
 	if (__predict_false(cred != fp->f_cred)) {
 		kauth_cred_free(fp->f_cred);
-		kauth_cred_hold(cred);
-		fp->f_cred = cred;
+		fp->f_cred = kauth_cred_hold(cred);
 	}
 
 	/*
@@ -1245,8 +1244,7 @@ file_ctor(void *arg, void *obj, int flags)
 	nfiles++;
 	LIST_INSERT_HEAD(&filehead, fp, f_list);
 	mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
-	fp->f_cred = curlwp->l_cred;
-	kauth_cred_hold(fp->f_cred);
+	fp->f_cred = kauth_cred_hold(curlwp->l_cred);
 	mutex_exit(&filelist_lock);
 
 	return 0;
