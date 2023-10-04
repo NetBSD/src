@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.56 2022/04/21 21:31:11 andvar Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.57 2023/10/04 20:42:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.56 2022/04/21 21:31:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.57 2023/10/04 20:42:38 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -569,6 +569,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	if (sigispending(l, 0)) {
 		lwp_lock(l);
 		l->l_flag |= LW_PENDSIG;
+		lwp_need_userret(l);
 		lwp_unlock(l);
 	}
 out:
@@ -617,6 +618,7 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 		 */
 		lwp_lock(l);
 		l->l_flag |= LW_PENDSIG;
+		lwp_need_userret(l);
 		lwp_unlock(l);
 	}
 	return 0;
@@ -655,6 +657,7 @@ sigsuspendsetup(struct lwp *l, const sigset_t *ss)
 	if (sigispending(l, 0)) {
 		lwp_lock(l);
 		l->l_flag |= LW_PENDSIG;
+		lwp_need_userret(l);
 		lwp_unlock(l);
 	}
 	mutex_exit(p->p_lock);
@@ -671,6 +674,7 @@ sigsuspendteardown(struct lwp *l)
 		if (sigispending(l, 0)) {
 			lwp_lock(l);
 			l->l_flag |= LW_PENDSIG;
+			lwp_need_userret(l);
 			lwp_unlock(l);
 		} else {
 			l->l_sigrestore = 0;

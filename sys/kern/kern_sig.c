@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.406 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.407 2023/10/04 20:42:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.406 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.407 2023/10/04 20:42:38 ad Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -2266,6 +2266,7 @@ sigexit(struct lwp *l, int signo)
 	if ((p->p_sflag & PS_WCORE) != 0) {
 		lwp_lock(l);
 		l->l_flag |= (LW_WCORE | LW_WEXIT | LW_WSUSPEND);
+		lwp_need_userret(l);
 		lwp_unlock(l);
 		mutex_exit(p->p_lock);
 		lwp_userret(l);
@@ -2297,6 +2298,7 @@ sigexit(struct lwp *l, int signo)
 					continue;
 				}
 				t->l_flag |= (LW_WCORE | LW_WEXIT);
+				lwp_need_userret(t);
 				lwp_suspend(l, t);
 			}
 
