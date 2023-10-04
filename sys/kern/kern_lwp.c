@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.260 2023/10/04 20:44:15 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.261 2023/10/04 20:45:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.260 2023/10/04 20:44:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.261 2023/10/04 20:45:13 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -612,10 +612,11 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		 * First off, drain any detached LWP that is waiting to be
 		 * reaped.
 		 */
-		while ((l2 = p->p_zomblwp) != NULL) {
+		if ((l2 = p->p_zomblwp) != NULL) {
 			p->p_zomblwp = NULL;
 			lwp_free(l2, false, false);/* releases proc mutex */
 			mutex_enter(p->p_lock);
+			continue;
 		}
 
 		/*
