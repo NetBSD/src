@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.296 2023/10/04 20:42:38 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.297 2023/10/04 20:48:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020, 2023
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.296 2023/10/04 20:42:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.297 2023/10/04 20:48:13 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -836,50 +836,57 @@ match_process(const struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
 	struct proc *p = *q;
 	int rv = 1;
 
-	mutex_enter(p->p_lock);
 	switch (idtype) {
 	case P_ALL:
+		mutex_enter(p->p_lock);
 		break;
 	case P_PID:
 		if (p->p_pid != (pid_t)id) {
-			mutex_exit(p->p_lock);
 			p = *q = proc_find_raw((pid_t)id);
 			if (p == NULL || p->p_stat == SIDL || p->p_pptr != pp) {
 				*q = NULL;
 				return -1;
 			}
-			mutex_enter(p->p_lock);
 		}
+		mutex_enter(p->p_lock);
 		rv++;
 		break;
 	case P_PGID:
 		if (p->p_pgid != (pid_t)id)
-			goto out;
+			return 0;
+		mutex_enter(p->p_lock);
 		break;
 	case P_SID:
 		if (p->p_session->s_sid != (pid_t)id)
-			goto out;
+			return 0;
+		mutex_enter(p->p_lock);
 		break;
 	case P_UID:
-		if (kauth_cred_geteuid(p->p_cred) != (uid_t)id)
-			goto out;
+		mutex_enter(p->p_lock);
+		if (kauth_cred_geteuid(p->p_cred) != (uid_t)id) {
+			mutex_exit(p->p_lock);
+			return 0;
+		}
 		break;
 	case P_GID:
-		if (kauth_cred_getegid(p->p_cred) != (gid_t)id)
-			goto out;
+		mutex_enter(p->p_lock);
+		if (kauth_cred_getegid(p->p_cred) != (gid_t)id) {
+			mutex_exit(p->p_lock);
+			return 0;
+		}
 		break;
 	case P_CID:
 	case P_PSETID:
 	case P_CPUID:
 		/* XXX: Implement me */
 	default:
-	out:
-		mutex_exit(p->p_lock);
 		return 0;
 	}
 
-	if ((options & WEXITED) == 0 && p->p_stat == SZOMB)
-		goto out;
+	if ((options & WEXITED) == 0 && p->p_stat == SZOMB) {
+		mutex_exit(p->p_lock);
+		return 0;
+	}
 
 	if (siginfo != NULL) {
 		siginfo->si_errno = 0;
@@ -1024,9 +1031,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 	}
 
 	if ((pid_t)id == WAIT_MYPGRP && (idtype == P_PID || idtype == P_PGID)) {
-		mutex_enter(parent->p_lock);
 		id = (id_t)parent->p_pgid;
-		mutex_exit(parent->p_lock);
 		idtype = P_PGID;
 	}
 
