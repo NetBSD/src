@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.161 2023/10/04 22:12:23 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.162 2023/10/04 22:19:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.161 2023/10/04 22:12:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.162 2023/10/04 22:19:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,19 +348,13 @@ pipelock(struct pipe *pipe, bool catch_p)
 	KASSERT(mutex_owned(pipe->pipe_lock));
 
 	while (pipe->pipe_state & PIPE_LOCKFL) {
-		pipe->pipe_waiters++;
-		KASSERT(pipe->pipe_waiters != 0); /* just in case */
 		if (catch_p) {
 			error = cv_wait_sig(&pipe->pipe_lkcv, pipe->pipe_lock);
 			if (error != 0) {
-				KASSERT(pipe->pipe_waiters > 0);
-				pipe->pipe_waiters--;
 				return error;
 			}
 		} else
 			cv_wait(&pipe->pipe_lkcv, pipe->pipe_lock);
-		KASSERT(pipe->pipe_waiters > 0);
-		pipe->pipe_waiters--;
 	}
 
 	pipe->pipe_state |= PIPE_LOCKFL;
@@ -378,9 +372,7 @@ pipeunlock(struct pipe *pipe)
 	KASSERT(pipe->pipe_state & PIPE_LOCKFL);
 
 	pipe->pipe_state &= ~PIPE_LOCKFL;
-	if (pipe->pipe_waiters > 0) {
-		cv_signal(&pipe->pipe_lkcv);
-	}
+	cv_signal(&pipe->pipe_lkcv);
 }
 
 /*
