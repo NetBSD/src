@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.83 2023/10/02 20:59:12 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.84 2023/10/04 22:17:09 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.83 2023/10/02 20:59:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.84 2023/10/04 22:17:09 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,7 +122,7 @@ kauth_cred_alloc(void)
 }
 
 /* Increment reference count to cred. */
-void
+kauth_cred_t
 kauth_cred_hold(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
@@ -131,6 +131,7 @@ kauth_cred_hold(kauth_cred_t cred)
 	KASSERT(cred->cr_refcnt > 0);
 
 	atomic_inc_uint(&cred->cr_refcnt);
+	return cred;
 }
 
 /* Decrease reference count to cred. If reached zero, free it. */
@@ -237,8 +238,7 @@ kauth_proc_fork(struct proc *parent, struct proc *child)
 {
 
 	mutex_enter(parent->p_lock);
-	kauth_cred_hold(parent->p_cred);
-	child->p_cred = parent->p_cred;
+	child->p_cred = kauth_cred_hold(parent->p_cred);
 	mutex_exit(parent->p_lock);
 
 	/* XXX: relies on parent process stalling during fork() */

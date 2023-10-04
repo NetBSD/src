@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.519 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.520 2023/10/04 22:17:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.519 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.520 2023/10/04 22:17:09 ad Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1119,11 +1119,9 @@ credexec(struct lwp *l, struct execve_data *data)
 	/* Update the master credentials. */
 	if (l->l_cred != p->p_cred) {
 		kauth_cred_t ocred;
-
-		kauth_cred_hold(l->l_cred);
 		mutex_enter(p->p_lock);
 		ocred = p->p_cred;
-		p->p_cred = l->l_cred;
+		p->p_cred = kauth_cred_hold(l->l_cred);
 		mutex_exit(p->p_lock);
 		kauth_cred_free(ocred);
 	}
@@ -2754,11 +2752,9 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	/* Update the master credentials. */
 	if (l2->l_cred != p2->p_cred) {
 		kauth_cred_t ocred;
-
-		kauth_cred_hold(l2->l_cred);
 		mutex_enter(p2->p_lock);
 		ocred = p2->p_cred;
-		p2->p_cred = l2->l_cred;
+		p2->p_cred = kauth_cred_hold(l2->l_cred);
 		mutex_exit(p2->p_lock);
 		kauth_cred_free(ocred);
 	}
