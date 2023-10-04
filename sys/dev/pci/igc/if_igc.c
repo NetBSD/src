@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.3 2023/10/04 07:41:55 rin Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.2 2023/10/04 07:35:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.3 2023/10/04 07:41:55 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -363,8 +363,17 @@ igc_attach(device_t parent, device_t self, void *aux)
 
 	sc->osdep.os_sc = sc;
 	sc->osdep.os_pa = *pa;
+#ifdef __aarch64__
+	/*
+	 * XXX PR port-arm/57643
+	 * 64-bit DMA does not work at least for LX2K with 32/64GB memory.
+	 * smmu(4) support may be required.
+	 */
+	sc->osdep.os_dmat = pa->pa_dmat;
+#else
 	sc->osdep.os_dmat = pci_dma64_available(pa) ?
 	    pa->pa_dmat64 : pa->pa_dmat;
+#endif
 
 	/* Determine hardware and mac info */
 	igc_identify_hardware(sc);
