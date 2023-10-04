@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.371 2023/10/02 00:16:42 riastradh Exp $
+$NetBSD: acronyms.comp,v 1.372 2023/10/04 22:34:23 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -448,9 +448,12 @@ DNSBL   Domain Name System Block List
 DNSSEC	DNS Security Extensions
 DOE	distributed object environment
 DOF	data over fibre
+DOH	DNS over HTTPS
 DOM	document object model
+DOQ	DNS over QUIC
 DOS	denial of service
 DOS	disk operating system
+DOT	DNS over TLS
 DP	DisplayPort
 DPAA	data path acceleration architecture
 DPC	deferred procedure call
@@ -468,6 +471,7 @@ DRBG	deterministic random bit generator
 DRI	direct rendering infrastructure
 DRM	digital rights management
 DRM	direct rendering manager
+DRN	Discovery of Network-designated Resolvers
 DRRS	display refresh rate switching
 DS	debug store
 DS	differentiated services
@@ -1353,6 +1357,7 @@ QDI	quasi delay insensitive
 QCIF	quarter common intermediate format
 QOI	quality of implementation
 QOI	quick order interface
+QUIC	Quick UDP Internet Connections
 QOS	quality of service
 QVL	qualified vendor list
 R/O	read only
