@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_pipe.c,v 1.162 2023/10/04 22:19:58 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.163 2023/10/04 22:41:56 ad Exp $	*/
 
 /*-
- * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.162 2023/10/04 22:19:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.163 2023/10/04 22:41:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ static const struct fileops pipeops = {
  * Limit the number of "big" pipes
  */
 #define	LIMITBIGPIPES	32
-static u_int	maxbigpipes = LIMITBIGPIPES;
+static u_int	maxbigpipes __read_mostly = LIMITBIGPIPES;
 static u_int	nbigpipe = 0;
 
 /*
@@ -141,7 +141,7 @@ static u_int	amountpipekva = 0;
 
 static void	pipeclose(struct pipe *);
 static void	pipe_free_kmem(struct pipe *);
-static int	pipe_create(struct pipe **, pool_cache_t);
+static int	pipe_create(struct pipe **, pool_cache_t, struct timespec *);
 static int	pipelock(struct pipe *, bool);
 static inline void pipeunlock(struct pipe *);
 static void	pipeselwakeup(struct pipe *, struct pipe *, int);
@@ -220,6 +220,7 @@ int
 pipe1(struct lwp *l, int *fildes, int flags)
 {
 	struct pipe *rpipe, *wpipe;
+	struct timespec nt;
 	file_t *rf, *wf;
 	int fd, error;
 	proc_t *p;
@@ -228,8 +229,9 @@ pipe1(struct lwp *l, int *fildes, int flags)
 		return EINVAL;
 	p = curproc;
 	rpipe = wpipe = NULL;
-	if ((error = pipe_create(&rpipe, pipe_rd_cache)) ||
-	    (error = pipe_create(&wpipe, pipe_wr_cache))) {
+	getnanotime(&nt);
+	if ((error = pipe_create(&rpipe, pipe_rd_cache, &nt)) ||
+	    (error = pipe_create(&wpipe, pipe_wr_cache, &nt))) {
 		goto free2;
 	}
 	rpipe->pipe_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
@@ -312,7 +314,7 @@ pipespace(struct pipe *pipe, int size)
  * Initialize and allocate VM and memory for pipe.
  */
 static int
-pipe_create(struct pipe **pipep, pool_cache_t cache)
+pipe_create(struct pipe **pipep, pool_cache_t cache, struct timespec *nt)
 {
 	struct pipe *pipe;
 	int error;
@@ -321,8 +323,7 @@ pipe_create(struct pipe **pipep, pool_cache_t cache)
 	KASSERT(pipe != NULL);
 	*pipep = pipe;
 	error = 0;
-	getnanotime(&pipe->pipe_btime);
-	pipe->pipe_atime = pipe->pipe_mtime = pipe->pipe_btime;
+	pipe->pipe_atime = pipe->pipe_mtime = pipe->pipe_btime = *nt;
 	pipe->pipe_lock = NULL;
 	if (cache == pipe_rd_cache) {
 		error = pipespace(pipe, PIPE_SIZE);
