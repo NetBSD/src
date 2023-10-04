@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.295 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.296 2023/10/04 20:42:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020, 2023
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.295 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.296 2023/10/04 20:42:38 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -632,6 +632,7 @@ retry:
 			continue;
 		lwp_lock(l2);
 		l2->l_flag |= LW_WEXIT;
+		lwp_need_userret(l2);
 		if ((l2->l_stat == LSSLEEP && (l2->l_flag & LW_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
 			l2->l_flag &= ~LW_DBGSUSPEND;
@@ -639,7 +640,6 @@ retry:
 			setrunnable(l2);
 			continue;
 		}
-		lwp_need_userret(l2);
 		lwp_unlock(l2);
 	}
 

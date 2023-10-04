@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.258 2023/10/04 20:28:06 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.259 2023/10/04 20:42:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.258 2023/10/04 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.259 2023/10/04 20:42:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -468,6 +468,7 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 
 	case LSSLEEP:
 		t->l_flag |= LW_WSUSPEND;
+		lwp_need_userret(t);
 
 		/*
 		 * Kick the LWP and try to get it to the kernel boundary
@@ -486,6 +487,7 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 
 	case LSSTOP:
 		t->l_flag |= LW_WSUSPEND;
+		lwp_need_userret(t);
 		setrunnable(t);
 		break;
 
@@ -960,6 +962,11 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 			l2->l_affinity = l1->l_affinity;
 		}
 		lwp_unlock(l1);
+	}
+
+	/* Ensure a trip through lwp_userret() if needed. */
+	if ((l2->l_flag & LW_USERRET) != 0) {
+		lwp_need_userret(l2);
 	}
 
 	/* This marks the end of the "must be atomic" section. */
@@ -1794,7 +1801,7 @@ lwp_need_userret(struct lwp *l)
 {
 
 	KASSERT(!cpu_intr_p());
-	KASSERT(lwp_locked(l, NULL));
+	KASSERT(lwp_locked(l, NULL) || l->l_stat == LSIDL);
 
 	/*
 	 * If the LWP is in any state other than LSONPROC, we know that it
