@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.127 2023/10/02 17:39:38 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.128 2023/10/04 12:31:48 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12042,3 +12042,99 @@ external/bsd/jemalloc/lib/jemalloc_stub.c	1.2-1.4
 	libjemalloc: Compile in empty jemalloc_stub.c for HAVE_JEMALLOC=100.
 	[rin, ticket #391]
 
+xsrc/external/mit/libX11/dist/man/xkb/XkbKeyKeyTypeIndex.man up to 1.1.1.1
+xsrc/external/mit/libX11/dist/man/xkb/XkbKeyKeyType.man up to 1.1.1.1
+xsrc/external/mit/libX11/dist/man/xkb/XkbActionSetCtrls.man up to 1.1.1.1
+xsrc/external/mit/libX11/dist/man/xkb/XkbAllocDeviceLedInfo.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbChangeIndicators.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbGetAccessXTimeout.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbGetBounceKeysDelay.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbGetIndicatorChanges.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbGetNameChanges.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbGetSlowKeysDelay.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbGetStickyKeysOptions.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbKeySymsOffset.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbKeyType.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbKeyTypeIndex.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbNoteIndicatorChanges.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbSAActionSetCtrls.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbSetAccessXTimeout.man delete
+xsrc/external/mit/libX11/dist/man/xkb/XkbSetBounceKeysDelay.man delete
+xsrc/external/mit/libX11/dist/ChangeLog              up to 1.6
+xsrc/external/mit/libX11/dist/README.md              up to 1.5
+xsrc/external/mit/libX11/dist/configure              up to 1.6
+xsrc/external/mit/libX11/dist/configure.ac           up to 1.6
+xsrc/external/mit/libX11/dist/include/X11/Xutil.h    up to 1.1.1.6
+xsrc/external/mit/libX11/dist/man/xkb/Makefile.am    up to 1.1.1.7
+xsrc/external/mit/libX11/dist/man/xkb/Makefile.in    up to 1.1.1.27
+xsrc/external/mit/libX11/dist/man/xkb/XkbAllocDeviceInfo.man up to 1.1.1.6
+xsrc/external/mit/libX11/dist/man/xkb/XkbChangeControls.man up to 1.1.1.7
+xsrc/external/mit/libX11/dist/man/xkb/XkbGetKeyTypes.man up to 1.1.1.5
+xsrc/external/mit/libX11/dist/nls/am_ET.UTF-8/Compose.pre up to 1.1.1.5
+xsrc/external/mit/libX11/dist/nls/en_US.UTF-8/Compose.pre up to 1.13
+xsrc/external/mit/libX11/dist/specs/XKB/ch08.xml     up to 1.1.1.5
+xsrc/external/mit/libX11/dist/specs/XKB/ch10.xml     up to 1.1.1.4
+xsrc/external/mit/libX11/dist/specs/XKB/ch15.xml     up to 1.1.1.4
+xsrc/external/mit/libX11/dist/specs/XKB/ch16.xml     up to 1.1.1.4
+xsrc/external/mit/libX11/dist/specs/XKB/ch18.xml     up to 1.1.1.4
+xsrc/external/mit/libX11/dist/specs/XKB/ch21.xml     up to 1.1.1.4
+xsrc/external/mit/libX11/dist/src/CrPixmap.c         up to 1.1.1.3
+xsrc/external/mit/libX11/dist/src/ImUtil.c           up to 1.1.1.10
+xsrc/external/mit/libX11/dist/src/OpenDis.c          up to 1.4
+xsrc/external/mit/libX11/dist/src/PutImage.c         up to 1.1.1.10
+xsrc/external/mit/libX11/dist/src/xkb/XKBGetMap.c    up to 1.1.1.8
+xsrc/external/mit/libXpm/dist/test/rgb.txt           up to 1.1.1.1
+xsrc/external/mit/libXpm/dist/test/rgb.c             up to 1.1.1.2
+xsrc/external/mit/libXpm/dist/ChangeLog              up to 1.1.1.11
+xsrc/external/mit/libXpm/dist/Makefile.in            up to 1.1.1.10
+xsrc/external/mit/libXpm/dist/aclocal.m4             up to 1.1.1.11
+xsrc/external/mit/libXpm/dist/compile                up to 1.1.1.5
+xsrc/external/mit/libXpm/dist/config.guess           up to 1.1.1.9
+xsrc/external/mit/libXpm/dist/config.h.in            up to 1.1.1.8
+xsrc/external/mit/libXpm/dist/config.sub             up to 1.1.1.10
+xsrc/external/mit/libXpm/dist/configure              up to 1.1.1.11
+xsrc/external/mit/libXpm/dist/configure.ac           up to 1.1.1.11
+xsrc/external/mit/libXpm/dist/depcomp                up to 1.1.1.7
+xsrc/external/mit/libXpm/dist/install-sh             up to 1.1.1.7
+xsrc/external/mit/libXpm/dist/ltmain.sh              up to 1.1.1.11
+xsrc/external/mit/libXpm/dist/missing                up to 1.1.1.8
+xsrc/external/mit/libXpm/dist/tap-driver.sh          up to 1.1.1.2
+xsrc/external/mit/libXpm/dist/test-driver            up to 1.1.1.2
+xsrc/external/mit/libXpm/dist/cxpm/Makefile.in       up to 1.1.1.10
+xsrc/external/mit/libXpm/dist/doc/Makefile.in        up to 1.1.1.8
+xsrc/external/mit/libXpm/dist/include/Makefile.in    up to 1.1.1.8
+xsrc/external/mit/libXpm/dist/include/X11/xpm.h      up to 1.1.1.4
+xsrc/external/mit/libXpm/dist/m4/libtool.m4          up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/m4/ltoptions.m4        up to 1.1.1.5
+xsrc/external/mit/libXpm/dist/m4/ltsugar.m4          up to 1.1.1.5
+xsrc/external/mit/libXpm/dist/m4/ltversion.m4        up to 1.1.1.5
+xsrc/external/mit/libXpm/dist/m4/lt~obsolete.m4      up to 1.1.1.5
+xsrc/external/mit/libXpm/dist/man/Makefile.in        up to 1.1.1.7
+xsrc/external/mit/libXpm/dist/src/CrDatFrI.c         up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/src/CrPFrBuf.c         up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/src/CrPFrDat.c         up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/src/CrPFrI.c           up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/src/Makefile.in        up to 1.1.1.10
+xsrc/external/mit/libXpm/dist/src/RdFToBuf.c         up to 1.1.1.7
+xsrc/external/mit/libXpm/dist/src/RdFToI.c           up to 1.1.1.7
+xsrc/external/mit/libXpm/dist/src/RdFToP.c           up to 1.1.1.4
+xsrc/external/mit/libXpm/dist/src/WrFFrBuf.c         up to 1.1.1.5
+xsrc/external/mit/libXpm/dist/src/WrFFrI.c           up to 1.1.1.9
+xsrc/external/mit/libXpm/dist/src/XpmI.h             up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/src/create.c           up to 1.7
+xsrc/external/mit/libXpm/dist/src/data.c             up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/src/parse.c            up to 1.1.1.9
+xsrc/external/mit/libXpm/dist/src/rgb.c              up to 1.1.1.5
+xsrc/external/mit/libXpm/dist/sxpm/Makefile.in       up to 1.1.1.10
+xsrc/external/mit/libXpm/dist/test/Makefile.am       up to 1.1.1.2
+xsrc/external/mit/libXpm/dist/test/Makefile.in       up to 1.1.1.2
+xsrc/external/mit/libXpm/dist/test/TestAllFiles.h    up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/test/XpmCreate.c       up to 1.1.1.2
+xsrc/external/mit/libXpm/dist/test/XpmMisc.c         up to 1.1.1.2
+xsrc/external/mit/libXpm/dist/test/XpmRead.c         up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/test/XpmWrite.c        up to 1.1.1.3
+
+	libX11, libXpm: 2023-10 security updates, fixing:
+	CVE-2023-43785, CVE-2023-43786, CVE-2023-43787, CVE-2023-43788,
+	CVE-2023-43789
+	[mrg, ticket #392]
