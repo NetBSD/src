@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.73 2023/09/23 18:48:04 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.74 2023/10/04 20:39:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.73 2023/09/23 18:48:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.74 2023/10/04 20:39:35 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -125,7 +125,7 @@ lockops_t rwlock_lockops = {
  * direct handoff.  XXX To be revisited.
  */
 syncobj_t rw_syncobj = {
-	.sobj_name	= "rw",
+	.sobj_name	= "rwlock",
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
 	.sobj_boostpri  = PRI_KTHREAD,
 	.sobj_unsleep	= turnstile_unsleep,
