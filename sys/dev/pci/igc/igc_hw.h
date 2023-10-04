@@ -1,3 +1,4 @@
+/*	$NetBSD: igc_hw.h,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
 /*	$OpenBSD: igc_hw.h,v 1.2 2022/05/11 06:14:15 kevlo Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
@@ -10,45 +11,38 @@
 #ifndef _IGC_HW_H_
 #define _IGC_HW_H_
 
-#include "bpfilter.h"
+#ifdef _KERNEL_OPT
 #include "vlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sockio.h>
+#include <sys/bus.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/endian.h>
-#include <sys/intrmap.h>
 
+#include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/toeplitz.h>
+#include <net/if_ether.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
-
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/pci/igc_base.h>
-#include <dev/pci/igc_defines.h>
-#include <dev/pci/igc_i225.h>
-#include <dev/pci/igc_mac.h>
-#include <dev/pci/igc_nvm.h>
-#include <dev/pci/igc_phy.h>
-#include <dev/pci/igc_regs.h>
+#include <dev/pci/igc/igc_base.h>
+#include <dev/pci/igc/igc_defines.h>
+#include <dev/pci/igc/igc_i225.h>
+#include <dev/pci/igc/igc_mac.h>
+#include <dev/pci/igc/igc_nvm.h>
+#include <dev/pci/igc/igc_phy.h>
+#include <dev/pci/igc/igc_regs.h>
 
 struct igc_hw;
 
@@ -56,6 +50,8 @@ struct igc_hw;
 
 #define IGC_ALT_MAC_ADDRESS_OFFSET_LAN0	0
 #define IGC_ALT_MAC_ADDRESS_OFFSET_LAN1	3
+
+#define IGC_MAX_NQUEUES	4
 
 enum igc_mac_type {
 	igc_undefined = 0,
@@ -137,7 +133,7 @@ enum igc_smart_speed {
 /* Receive Descriptor */
 struct igc_rx_desc {
 	uint64_t buffer_addr;	/* Address of the descriptor's data buffer */
-	uint64_t length;	/* Length of data DMAed into data buffer */
+	uint16_t length;	/* Length of data DMAed into data buffer */
 	uint16_t csum;		/* Packet checksum */
 	uint8_t  status;	/* Descriptor status */
 	uint8_t  errors;	/* Descriptor errors */
@@ -362,7 +358,7 @@ struct igc_dev_spec_i225 {
 struct igc_hw {
 	void			*back;
 
-	uint8_t			*hw_addr;
+	bus_addr_t		hw_addr;
 
 	struct igc_mac_info	mac;
 	struct igc_fc_info	fc;

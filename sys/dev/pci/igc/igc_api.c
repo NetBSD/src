@@ -1,3 +1,4 @@
+/*	$NetBSD: igc_api.c,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
 /*	$OpenBSD: igc_api.c,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
@@ -5,8 +6,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <dev/pci/igc_api.h>
-#include <dev/pci/igc_hw.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: igc_api.c,v 1.2 2023/10/04 07:35:27 rin Exp $");
+
+#include <dev/pci/igc/igc_api.h>
+#include <dev/pci/igc/igc_hw.h>
 
 /**
  *  igc_init_mac_params - Initialize MAC function pointers
@@ -117,6 +121,7 @@ igc_set_mac_type(struct igc_hw *hw)
 	case PCI_PRODUCT_INTEL_I226_BLANK_NVM:
 	case PCI_PRODUCT_INTEL_I226_IT:
 	case PCI_PRODUCT_INTEL_I226_LM:
+	case PCI_PRODUCT_INTEL_I226_LMVP:
 	case PCI_PRODUCT_INTEL_I226_K:
 	case PCI_PRODUCT_INTEL_I226_V:
 		mac->type = igc_i225;

@@ -1,3 +1,4 @@
+/*	$NetBSD: igc_defines.h,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
 /*	$OpenBSD: igc_defines.h,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
 
 /*-
@@ -908,7 +909,7 @@
 /* PHY 1000 MII Register/Bit Definitions */
 /* PHY Registers defined by IEEE */
 #define PHY_CONTROL		0x00 /* Control Register */
-#define PHY_STATUS		0x01 /* Status Register */
+/*  PHY_STATUS is removed to avoid conflict the same definition in miivar.h */
 #define PHY_ID1			0x02 /* Phy Id Reg (word 1) */
 #define PHY_ID2			0x03 /* Phy Id Reg (word 2) */
 #define PHY_AUTONEG_ADV		0x04 /* Autoneg Advertisement */
@@ -968,6 +969,7 @@
 /* NVM Word Offsets */
 #define NVM_COMPAT			0x0003
 #define NVM_ID_LED_SETTINGS		0x0004
+#define NVM_VERSION			0x0005
 #define NVM_FUTURE_INIT_WORD1		0x0019
 #define NVM_COMPAT_VALID_CSUM		0x0001
 #define NVM_FUTURE_INIT_WORD1_VALID_CSUM	0x0040
@@ -994,6 +996,11 @@
 
 /* Mask bits for fields in Word 0x03 of the EEPROM */
 #define NVM_COMPAT_LOM			0x0800
+
+/* NVM Version field (in 0x05) */
+#define NVM_VERSION_MAJOR		0xf000
+#define NVM_VERSION_MAJOR_SHIFT		12
+#define NVM_VERSION_MINOR		0x00ff
 
 /* length of string needed to store PBA number */
 #define IGC_PBANUM_LENGTH		11
@@ -1086,6 +1093,7 @@
 #define IFE_PLUS_E_PHY_ID	0x02A80320
 #define IFE_C_E_PHY_ID		0x02A80310
 #define I225_I_PHY_ID		0x67C9DC00
+#define I226_LM_PHY_ID		0x67C9DC10
 
 /* M88IGC Specific Registers */
 #define M88IGC_PHY_SPEC_CTRL		0x10  /* PHY Specific Control Reg */

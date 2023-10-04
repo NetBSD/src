@@ -1,3 +1,4 @@
+/*	$NetBSD: igc_i225.h,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
 /*	$OpenBSD: igc_i225.h,v 1.2 2023/02/03 11:31:52 mbuhl Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
@@ -10,7 +11,7 @@
 #ifndef _IGC_I225_H_
 #define _IGC_I225_H_
 
-#include <dev/pci/igc_hw.h>
+#include <dev/pci/igc/igc_hw.h>
 
 bool	igc_get_flash_presence_i225(struct igc_hw *);
 int	igc_update_flash_i225(struct igc_hw *);

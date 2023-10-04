@@ -1,3 +1,4 @@
+/*	$NetBSD: igc_i225.c,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
 /*	$OpenBSD: igc_i225.c,v 1.4 2023/02/03 11:31:52 mbuhl Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
@@ -5,7 +6,10 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <dev/pci/igc_api.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: igc_i225.c,v 1.2 2023/10/04 07:35:27 rin Exp $");
+
+#include <dev/pci/igc/igc_api.h>
 
 int	igc_init_nvm_params_i225(struct igc_hw *);
 int	igc_init_mac_params_i225(struct igc_hw *);

@@ -1,3 +1,4 @@
+/*	$NetBSD: igc_mac.c,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
 /*	$OpenBSD: igc_mac.c,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
@@ -5,7 +6,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <dev/pci/igc_api.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: igc_mac.c,v 1.2 2023/10/04 07:35:27 rin Exp $");
+
+#include <dev/pci/igc/igc_api.h>
+#include <dev/mii/mii.h>
 
 /**
  *  igc_init_mac_ops_generic - Initialize MAC function pointers
@@ -310,6 +315,7 @@ igc_clear_hw_cntrs_base_generic(struct igc_hw *hw)
 	DEBUGFUNC("igc_clear_hw_cntrs_base_generic");
 
 	IGC_READ_REG(hw, IGC_CRCERRS);
+	IGC_READ_REG(hw, IGC_ALGNERRC);
 	IGC_READ_REG(hw, IGC_MPC);
 	IGC_READ_REG(hw, IGC_SCC);
 	IGC_READ_REG(hw, IGC_ECOL);
@@ -318,12 +324,20 @@ igc_clear_hw_cntrs_base_generic(struct igc_hw *hw)
 	IGC_READ_REG(hw, IGC_COLC);
 	IGC_READ_REG(hw, IGC_RERC);
 	IGC_READ_REG(hw, IGC_DC);
+	IGC_READ_REG(hw, IGC_TNCRS);
+	IGC_READ_REG(hw, IGC_HTDPMC);
 	IGC_READ_REG(hw, IGC_RLEC);
 	IGC_READ_REG(hw, IGC_XONRXC);
 	IGC_READ_REG(hw, IGC_XONTXC);
 	IGC_READ_REG(hw, IGC_XOFFRXC);
 	IGC_READ_REG(hw, IGC_XOFFTXC);
 	IGC_READ_REG(hw, IGC_FCRUC);
+	IGC_READ_REG(hw, IGC_PRC64);
+	IGC_READ_REG(hw, IGC_PRC127);
+	IGC_READ_REG(hw, IGC_PRC255);
+	IGC_READ_REG(hw, IGC_PRC511);
+	IGC_READ_REG(hw, IGC_PRC1023);
+	IGC_READ_REG(hw, IGC_PRC1522);
 	IGC_READ_REG(hw, IGC_GPRC);
 	IGC_READ_REG(hw, IGC_BPRC);
 	IGC_READ_REG(hw, IGC_MPRC);
@@ -337,17 +351,33 @@ igc_clear_hw_cntrs_base_generic(struct igc_hw *hw)
 	IGC_READ_REG(hw, IGC_RFC);
 	IGC_READ_REG(hw, IGC_ROC);
 	IGC_READ_REG(hw, IGC_RJC);
+	IGC_READ_REG(hw, IGC_MGTPRC);
+	IGC_READ_REG(hw, IGC_MGTPDC);
+	IGC_READ_REG(hw, IGC_MGTPTC);
 	IGC_READ_REG(hw, IGC_TORL);
 	IGC_READ_REG(hw, IGC_TORH);
 	IGC_READ_REG(hw, IGC_TOTL);
 	IGC_READ_REG(hw, IGC_TOTH);
 	IGC_READ_REG(hw, IGC_TPR);
 	IGC_READ_REG(hw, IGC_TPT);
+	IGC_READ_REG(hw, IGC_PTC64);
+	IGC_READ_REG(hw, IGC_PTC127);
+	IGC_READ_REG(hw, IGC_PTC255);
+	IGC_READ_REG(hw, IGC_PTC511);
+	IGC_READ_REG(hw, IGC_PTC1023);
+	IGC_READ_REG(hw, IGC_PTC1522);
 	IGC_READ_REG(hw, IGC_MPTC);
 	IGC_READ_REG(hw, IGC_BPTC);
+	IGC_READ_REG(hw, IGC_TSCTC);
+	IGC_READ_REG(hw, IGC_IAC);
+	IGC_READ_REG(hw, IGC_RXDMTC);
+	IGC_READ_REG(hw, IGC_HGORCL);
+	IGC_READ_REG(hw, IGC_HGORCH);
+	IGC_READ_REG(hw, IGC_HGOTCL);
+	IGC_READ_REG(hw, IGC_HGOTCH);
+	IGC_READ_REG(hw, IGC_LENERRS);
 	IGC_READ_REG(hw, IGC_TLPIC);
 	IGC_READ_REG(hw, IGC_RLPIC);
-	IGC_READ_REG(hw, IGC_RXDMTC);
 }
 
 /**
@@ -566,10 +596,10 @@ igc_config_fc_after_link_up_generic(struct igc_hw *hw)
 		 * has completed.  We read this twice because this reg has
 		 * some "sticky" (latched) bits.
 		 */
-		ret_val = hw->phy.ops.read_reg(hw, PHY_STATUS, &mii_status_reg);
+		ret_val = hw->phy.ops.read_reg(hw, MII_BMSR, &mii_status_reg);
 		if (ret_val)
 			return ret_val;
-		ret_val = hw->phy.ops.read_reg(hw, PHY_STATUS, &mii_status_reg);
+		ret_val = hw->phy.ops.read_reg(hw, MII_BMSR, &mii_status_reg);
 		if (ret_val)
 			return ret_val;
 
