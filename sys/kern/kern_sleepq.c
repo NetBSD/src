@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.76 2023/09/23 20:23:07 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.77 2023/10/04 20:29:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.76 2023/09/23 20:23:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.77 2023/10/04 20:29:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -217,9 +217,10 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
  *	Prepare to block on a sleep queue, after which any interlock can be
  *	safely released.
  */
-void
+int
 sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
 {
+	int nlocks;
 
 	/*
 	 * Acquire the per-LWP mutex and lend it our sleep queue lock.
@@ -227,7 +228,8 @@ sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
 	 */
 	lwp_lock(l);
 	lwp_unlock_to(l, mp);
-	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
+	KERNEL_UNLOCK_ALL(NULL, &nlocks);
+	return nlocks;
 }
 
 /*
@@ -323,13 +325,12 @@ sleepq_uncatch(lwp_t *l)
  *	timo is a timeout in ticks.  timo = 0 specifies an infinite timeout.
  */
 int
-sleepq_block(int timo, bool catch_p, syncobj_t *syncobj)
+sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 {
 	int error = 0, sig;
 	struct proc *p;
 	lwp_t *l = curlwp;
 	bool early = false;
-	int biglocks = l->l_biglocks;
 
 	ktrcsw(1, 0, syncobj);
 
@@ -420,8 +421,8 @@ sleepq_block(int timo, bool catch_p, syncobj_t *syncobj)
 	}
 
 	ktrcsw(0, 0, syncobj);
-	if (__predict_false(biglocks != 0)) {
-		KERNEL_LOCK(biglocks, NULL);
+	if (__predict_false(nlocks != 0)) {
+		KERNEL_LOCK(nlocks, NULL);
 	}
 	return error;
 }

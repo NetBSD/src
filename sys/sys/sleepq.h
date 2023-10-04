@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.38 2023/09/25 18:55:53 riastradh Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.39 2023/10/04 20:29:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -51,7 +51,7 @@ typedef struct sleepq sleepq_t;
 
 void	sleepq_init(sleepq_t *);
 void	sleepq_remove(sleepq_t *, lwp_t *);
-void	sleepq_enter(sleepq_t *, lwp_t *, kmutex_t *);
+int	sleepq_enter(sleepq_t *, lwp_t *, kmutex_t *);
 void	sleepq_enqueue(sleepq_t *, wchan_t, const char *,
 	    const struct syncobj *, bool);
 void	sleepq_transfer(lwp_t *, sleepq_t *, sleepq_t *, wchan_t, const char *,
@@ -63,7 +63,7 @@ void	sleepq_wake(sleepq_t *, wchan_t, u_int, kmutex_t *);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(lwp_t *, pri_t);
 void	sleepq_lendpri(lwp_t *, pri_t);
-int	sleepq_block(int, bool, const struct syncobj *);
+int	sleepq_block(int, bool, const struct syncobj *, int);
 
 #ifdef _KERNEL
 
