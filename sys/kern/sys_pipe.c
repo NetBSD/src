@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.160 2023/04/22 13:53:02 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.161 2023/10/04 22:12:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.160 2023/04/22 13:53:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.161 2023/10/04 22:12:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,6 +433,23 @@ pipe_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	size_t size;
 	size_t ocnt;
 	unsigned int wakeup_state = 0;
+
+	/*
+	 * Try to avoid locking the pipe if we have nothing to do.
+	 *
+	 * There are programs which share one pipe amongst multiple processes
+	 * and perform non-blocking reads in parallel, even if the pipe is
+	 * empty.  This in particular is the case with BSD make, which when
+	 * spawned with a high -j number can find itself with over half of the
+	 * calls failing to find anything.
+	 */
+	if ((fp->f_flag & FNONBLOCK) != 0) {
+		if (__predict_false(uio->uio_resid == 0))
+			return (0);
+		if (atomic_load_relaxed(&bp->cnt) == 0 &&
+		    (atomic_load_relaxed(&rpipe->pipe_state) & PIPE_EOF) == 0)
+			return (EAGAIN);
+	}
 
 	mutex_enter(lock);
 	++rpipe->pipe_busy;
