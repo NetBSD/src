@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.261 2023/10/04 20:45:13 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.262 2023/10/04 20:46:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.261 2023/10/04 20:45:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.262 2023/10/04 20:46:33 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1219,10 +1219,10 @@ lwp_exit(struct lwp *l)
 	}
 	lwp_unlock(l);
 	p->p_nrlwps--;
-	cv_broadcast(&p->p_lwpcv);
 	if (l->l_lwpctl != NULL)
 		l->l_lwpctl->lc_curcpu = LWPCTL_CPU_EXITED;
 	mutex_exit(p->p_lock);
+	cv_broadcast(&p->p_lwpcv);
 
 	/*
 	 * We can no longer block.  At this point, lwp_free() may already
@@ -1311,13 +1311,13 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		p->p_nzlwps--;
 		if ((l->l_prflag & LPR_DETACHED) != 0)
 			p->p_ndlwps--;
+		mutex_exit(p->p_lock);
 
 		/*
 		 * Have any LWPs sleeping in lwp_wait() recheck for
 		 * deadlock.
 		 */
 		cv_broadcast(&p->p_lwpcv);
-		mutex_exit(p->p_lock);
 
 		/* Free the LWP ID. */
 		mutex_enter(&proc_lock);
@@ -1759,11 +1759,11 @@ lwp_userret(struct lwp *l)
 			pcu_save_all(l);
 			mutex_enter(p->p_lock);
 			p->p_nrlwps--;
-			cv_broadcast(&p->p_lwpcv);
 			lwp_lock(l);
 			l->l_stat = LSSUSPENDED;
 			lwp_unlock(l);
 			mutex_exit(p->p_lock);
+			cv_broadcast(&p->p_lwpcv);
 			lwp_lock(l);
 			spc_lock(l->l_cpu);
 			mi_switch(l);
