@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.51 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.52 2023/10/04 20:39:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020, 2023
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.51 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.52 2023/10/04 20:39:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -417,7 +417,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	ts->ts_waiters[q]++;
 	nlocks = sleepq_enter(sq, l, lock);
 	LOCKDEBUG_BARRIER(lock, 1);
-	sleepq_enqueue(sq, obj, "tstile", sobj, false);
+	sleepq_enqueue(sq, obj, sobj->sobj_name, sobj, false);
 
 	/*
 	 * Disable preemption across this entire block, as we may drop
