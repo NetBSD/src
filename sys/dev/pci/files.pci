@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.446 2023/04/12 06:39:15 riastradh Exp $
+#	$NetBSD: files.pci,v 1.447 2023/10/04 07:35:27 rin Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -648,6 +648,22 @@ attach	gsip at pci
 device	stge: ether, ifnet, arp, mii, mii_bitbang
 attach	stge at pci
 file	dev/pci/if_stge.c		stge
+
+# Intel I225/I226 2.5-Gigabit Ethernet
+device	igc: ether, ifnet, arp, mii, mii_phy
+attach	igc at pci
+file	dev/pci/igc/if_igc.c		igc
+file	dev/pci/igc/igc_api.c		igc
+file	dev/pci/igc/igc_base.c		igc
+file	dev/pci/igc/igc_i225.c		igc
+file	dev/pci/igc/igc_mac.c		igc
+file	dev/pci/igc/igc_nvm.c		igc
+file	dev/pci/igc/igc_phy.c		igc
+defparam opt_if_igc.h	IGC_TX_PROCESS_LIMIT_DEFAULT
+			IGC_TX_INTR_PROCESS_LIMIT_DEFAULT
+			IGC_RX_PROCESS_LIMIT_DEFAULT
+			IGC_RX_INTR_PROCESS_LIMIT_DEFAULT
+			IGC_DISABLE_MSIX IGC_DISABLE_MSI
 
 # Intel i82598 & i82599 10-Gigabit Ethernet
 device	ixg: ether, ifnet, arp, mii, mii_phy

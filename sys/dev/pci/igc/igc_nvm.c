@@ -1,3 +1,4 @@
+/*	$NetBSD: igc_nvm.c,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
 /*	$OpenBSD: igc_nvm.c,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
@@ -5,7 +6,10 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <dev/pci/igc_api.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: igc_nvm.c,v 1.2 2023/10/04 07:35:27 rin Exp $");
+
+#include <dev/pci/igc/igc_api.h>
 
 /**
  *  igc_init_nvm_ops_generic - Initialize NVM function pointers

@@ -1,3 +1,4 @@
+/*	$NetBSD: igc_phy.c,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
 /*	$OpenBSD: igc_phy.c,v 1.3 2023/02/03 11:31:52 mbuhl Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
@@ -5,7 +6,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <dev/pci/igc_api.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: igc_phy.c,v 1.2 2023/10/04 07:35:27 rin Exp $");
+
+#include <dev/pci/igc/igc_api.h>
+#include <dev/mii/mii.h>
 
 /**
  *  igc_init_phy_ops_generic - Initialize PHY function pointers
@@ -281,7 +286,7 @@ igc_write_phy_reg_mdic(struct igc_hw *hw, uint32_t offset, uint16_t data)
  *  return successful.  Otherwise, setup advertisement and flow control to
  *  the appropriate values for the wanted auto-negotiation.
  **/
-int
+static int
 igc_phy_setup_autoneg(struct igc_hw *hw)
 {
 	struct igc_phy_info *phy = &hw->phy;
@@ -459,7 +464,7 @@ igc_phy_setup_autoneg(struct igc_hw *hw)
  *  and restart the negotiation process between the link partner.  If
  *  autoneg_wait_to_complete, then wait for autoneg to complete before exiting.
  **/
-int
+static int
 igc_copper_link_autoneg(struct igc_hw *hw)
 {
 	struct igc_phy_info *phy = &hw->phy;
@@ -614,10 +619,10 @@ igc_wait_autoneg(struct igc_hw *hw)
 
 	/* Break after autoneg completes or PHY_AUTO_NEG_LIMIT expires. */
 	for (i = PHY_AUTO_NEG_LIMIT; i > 0; i--) {
-		ret_val = hw->phy.ops.read_reg(hw, PHY_STATUS, &phy_status);
+		ret_val = hw->phy.ops.read_reg(hw, MII_BMSR, &phy_status);
 		if (ret_val)
 			break;
-		ret_val = hw->phy.ops.read_reg(hw, PHY_STATUS, &phy_status);
+		ret_val = hw->phy.ops.read_reg(hw, MII_BMSR, &phy_status);
 		if (ret_val)
 			break;
 		if (phy_status & MII_SR_AUTONEG_COMPLETE)
@@ -653,11 +658,11 @@ igc_phy_has_link_generic(struct igc_hw *hw, uint32_t iterations,
 		return IGC_SUCCESS;
 
 	for (i = 0; i < iterations; i++) {
-		/* Some PHYs require the PHY_STATUS register to be read
+		/* Some PHYs require the MII_BMSR register to be read
 		 * twice due to the link bit being sticky.  No harm doing
 		 * it across the board.
 		 */
-		ret_val = hw->phy.ops.read_reg(hw, PHY_STATUS, &phy_status);
+		ret_val = hw->phy.ops.read_reg(hw, MII_BMSR, &phy_status);
 		if (ret_val) {
 			/* If the first read fails, another entity may have
 			 * ownership of the resources, wait and try again to
@@ -668,7 +673,7 @@ igc_phy_has_link_generic(struct igc_hw *hw, uint32_t iterations,
 			else
 				DELAY(usec_interval);
 		}
-		ret_val = hw->phy.ops.read_reg(hw, PHY_STATUS, &phy_status);
+		ret_val = hw->phy.ops.read_reg(hw, MII_BMSR, &phy_status);
 		if (ret_val)
 			break;
 		if (phy_status & MII_SR_LINK_STATUS)
@@ -858,7 +863,7 @@ igc_read_phy_reg_gpy(struct igc_hw *hw, uint32_t offset, uint16_t *data)
  *  @data: pointer to value to read/write from/to the XMDIO address
  *  @read: boolean flag to indicate read or write
  **/
-int
+static int
 __igc_access_xmdio_reg(struct igc_hw *hw, uint16_t address, uint8_t dev_addr,
     uint16_t *data, bool read)
 {

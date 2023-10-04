@@ -1,3 +1,4 @@
+/*	$NetBSD: if_igc.h,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
 /*	$OpenBSD: if_igc.h,v 1.2 2022/01/09 05:42:50 jsg Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -33,8 +34,20 @@
 #ifndef _IGC_H_
 #define _IGC_H_
 
-#include <dev/pci/igc_api.h>
-#include <dev/pci/igc_i225.h>
+#ifdef _KERNEL_OPT
+#include "opt_if_igc.h"
+#endif
+
+#include <sys/types.h>
+#include <sys/pcq.h>
+#include <sys/workqueue.h>
+
+#include <dev/pci/igc/igc_api.h>
+#include <dev/pci/igc/igc_i225.h>
+
+#ifdef __HAVE_ATOMIC64_OPS
+#define	IGC_EVENT_COUNTERS
+#endif
 
 /*
  * IGC_MAX_TXD: Maximum number of Transmit Descriptors
@@ -188,7 +201,6 @@
 #define DEBUGFUNC(F)		DEBUGOUT(F "\n")
 
 /* Compatibility glue. */
-#define roundup2(size, unit)	(((size) + (unit) - 1) & ~((unit) - 1))
 #define msec_delay(x)		DELAY(1000 * (x))
 
 #define IGC_MAX_SCATTER		40
@@ -196,6 +208,8 @@
 
 #define MAX_INTS_PER_SEC	8000
 #define DEFAULT_ITR		(1000000000/(MAX_INTS_PER_SEC * 256))
+
+#define IGC_MAX_INTRS		(IGC_MAX_NQUEUES + 1)
 
 /* Forward declaration. */
 struct igc_hw;
@@ -229,7 +243,7 @@ struct igc_rx_buf {
  * Bus dma allocation structure used by igc_dma_malloc and igc_dma_free.
  */
 struct igc_dma_alloc {
-	caddr_t			dma_vaddr;
+	void			*dma_vaddr;
 	bus_dma_tag_t		dma_tag;
 	bus_dmamap_t		dma_map;
 	bus_dma_segment_t	dma_seg;
@@ -246,11 +260,21 @@ struct igc_queue {
 	uint32_t		msix;
 	uint32_t		eims;
 	uint32_t		eitr_setting;
-	char			name[16];
 	pci_intr_handle_t	ih;
 	void			*tag;
 	struct tx_ring		*txr;
 	struct rx_ring		*rxr;
+
+	void			*igcq_si;
+	bool			igcq_workqueue;
+	struct work		igcq_wq_cookie;
+
+#ifdef IGC_EVENT_COUNTERS
+	uint64_t		*igcq_driver_counters;
+
+	struct evcnt		*igcq_queue_evcnts;
+	char			igcq_queue_evname[EVCNT_STRING_MAX];
+#endif
 };
 
 /*
@@ -267,6 +291,12 @@ struct tx_ring {
 	uint32_t		next_avail_desc;
 	uint32_t		next_to_clean;
 	bus_dma_tag_t		txtag;
+
+	pcq_t			*txr_interq;
+
+	kmutex_t		txr_lock;
+
+	struct igc_queue	*txr_igcq;
 };
 
 /*
@@ -274,34 +304,44 @@ struct tx_ring {
  */
 struct rx_ring {
 	struct igc_softc	*sc;
-	struct ifiqueue		*ifiq;
 	uint32_t		me;
 	union igc_adv_rx_desc	*rx_base;
 	struct igc_rx_buf	*rx_buffers;
 	struct igc_dma_alloc	rxdma;
 	uint32_t		last_desc_filled;
 	uint32_t		next_to_check;
-	struct timeout		rx_refill;
+#if IF_RXR
 	struct if_rxring	rx_ring;
+#endif
+
+	kmutex_t		rxr_lock;
+
+	struct igc_queue	*rxr_igcq;
 };
 
 /* Our adapter structure. */
 struct igc_softc {
-	struct device		sc_dev;
-	struct arpcom		sc_ac;
+	device_t		sc_dev;
+	struct ethercom		sc_ec;
 	struct ifmedia		media;
+#if 1
+	pci_intr_type_t		sc_intr_type;
+	int			sc_nintrs;
+	pci_intr_handle_t	*sc_intrs;
+	void			*sc_ihs[IGC_MAX_INTRS];
+#else
 	struct intrmap		*sc_intrmap;
+#endif
 
 	struct igc_osdep	osdep;
 	struct igc_hw		hw;
 
+	uint16_t		sc_if_flags;
 	uint16_t		fc;
 	uint16_t		link_active;
 	uint16_t		link_speed;
 	uint16_t		link_duplex;
 	uint32_t		dmac;
-
-	void			*tag;
 
 	int			num_tx_desc;
 	int			num_rx_desc;
@@ -312,14 +352,37 @@ struct igc_softc {
 	uint32_t		msix_linkmask;
 	uint32_t		msix_queuesmask;
 
+	struct if_percpuq	*sc_ipq;
 	unsigned int		sc_nqueues;
 	struct igc_queue	*queues;
+	bool			sc_txrx_workqueue;
+	struct workqueue	*sc_queue_wq;
+
+	u_int			sc_rx_intr_process_limit;
+	u_int			sc_tx_intr_process_limit;
+	u_int			sc_rx_process_limit;
+	u_int			sc_tx_process_limit;
 
 	struct tx_ring		*tx_rings;
 	struct rx_ring		*rx_rings;
 
 	/* Multicast array memory */
+#define	IGC_MTA_LEN	(ETHER_ADDR_LEN * MAX_NUM_MULTICAST_ADDRESSES)
 	uint8_t			*mta;
+
+	kmutex_t		sc_core_lock;
+
+	callout_t		sc_tick_ch;
+	bool			sc_core_stopping;
+
+#ifdef IGC_EVENT_COUNTERS
+	struct evcnt		*sc_global_evcnts;
+
+	struct evcnt		*sc_driver_evcnts;
+
+	struct evcnt		*sc_mac_evcnts;
+	char			sc_mac_evname[EVCNT_STRING_MAX];
+#endif
 };
 
 #define DEVNAME(_sc)    ((_sc)->sc_dev.dv_xname)

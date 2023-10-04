@@ -1,3 +1,4 @@
+/*	$NetBSD: igc_regs.h,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
 /*	$OpenBSD: igc_regs.h,v 1.2 2023/08/15 08:27:30 miod Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
@@ -183,7 +184,7 @@
 #define IGC_PRC64		0x0405C  /* Packets Rx (64 bytes) - R/clr */
 #define IGC_PRC127		0x04060  /* Packets Rx (65-127 bytes) - R/clr */
 #define IGC_PRC255		0x04064  /* Packets Rx (128-255 bytes) - R/clr */
-#define IGC_PRC511		0x04068  /* Packets Rx (255-511 bytes) - R/clr */
+#define IGC_PRC511		0x04068  /* Packets Rx (256-511 bytes) - R/clr */
 #define IGC_PRC1023		0x0406C  /* Packets Rx (512-1023 bytes) - R/clr */
 #define IGC_PRC1522		0x04070  /* Packets Rx (1024-1522 bytes) - R/clr */
 #define IGC_GPRC		0x04074  /* Good Packets Rx Count - R/clr */
@@ -213,7 +214,7 @@
 #define IGC_PTC255		0x040E0  /* Packets Tx (128-255 bytes) - R/clr */
 #define IGC_PTC511		0x040E4  /* Packets Tx (256-511 bytes) - R/clr */
 #define IGC_PTC1023		0x040E8  /* Packets Tx (512-1023 bytes) - R/clr */
-#define IGC_PTC1522		0x040EC  /* Packets Tx (1024-1522 Bytes) - R/clr */
+#define IGC_PTC1522		0x040EC  /* Packets Tx (1024-1522 bytes) - R/clr */
 #define IGC_MPTC		0x040F0  /* Multicast Packets Tx Count - R/clr */
 #define IGC_BPTC		0x040F4  /* Broadcast Packets Tx Count - R/clr */
 #define IGC_TSCTC		0x040F8  /* TCP Segmentation Context Tx - R/clr */

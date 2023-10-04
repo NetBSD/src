@@ -1,3 +1,4 @@
+/*	$NetBSD: igc_api.h,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
 /*	$OpenBSD: igc_api.h,v 1.2 2022/05/11 06:14:15 kevlo Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
@@ -10,8 +11,8 @@
 #ifndef _IGC_API_H_
 #define _IGC_API_H_
 
-#include <dev/pci/if_igc.h>
-#include <dev/pci/igc_hw.h>
+#include <dev/pci/igc/if_igc.h>
+#include <dev/pci/igc/igc_hw.h>
 
 extern void	igc_init_function_pointers_i225(struct igc_hw *);
 
