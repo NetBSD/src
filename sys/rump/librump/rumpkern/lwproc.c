@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.54 2023/02/22 21:44:45 riastradh Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.55 2023/10/04 20:28:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.54 2023/02/22 21:44:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.55 2023/10/04 20:28:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -513,6 +513,7 @@ rump_lwproc_switch(struct lwp *newlwp)
 	l->l_pflag &= ~LP_RUNNING;
 	l->l_flag &= ~LW_PENDSIG;
 	l->l_stat = LSRUN;
+	l->l_ru.ru_nvcsw++;
 
 	if (l->l_flag & LW_WEXIT) {
 		l->l_stat = LSIDL;
@@ -581,4 +582,11 @@ rump_lwproc_sysent_usenative()
 	if (!rump_i_know_what_i_am_doing_with_sysents)
 		panic("don't use rump_lwproc_sysent_usenative()");
 	curproc->p_emul = &emul_netbsd;
+}
+
+long
+lwp_pctr(void)
+{
+
+	return curlwp->l_ru.ru_nvcsw;
 }

@@ -1,7 +1,7 @@
-/* $NetBSD: trap.c,v 1.49 2023/07/16 21:36:40 riastradh Exp $ */
+/* $NetBSD: trap.c,v 1.50 2023/10/04 20:28:05 ad Exp $ */
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.49 2023/07/16 21:36:40 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.50 2023/10/04 20:28:05 ad Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -1034,8 +1034,8 @@ do_trapsignal1(
 bool
 cpu_intr_p(void)
 {
-	uint64_t ncsw;
 	int idepth;
+	long pctr;
 	lwp_t *l;
 
 #ifdef __HAVE_PIC_FAST_SOFTINTS
@@ -1050,11 +1050,9 @@ cpu_intr_p(void)
 		return false;
 	}
 	do {
-		ncsw = l->l_ncsw;
-		__insn_barrier();
+		pctr = lwp_pctr();
 		idepth = l->l_cpu->ci_intr_depth;
-		__insn_barrier();
-	} while (__predict_false(ncsw != l->l_ncsw));
+	} while (__predict_false(pctr != lwp_pctr()));
 
 	return idepth > 0;
 }

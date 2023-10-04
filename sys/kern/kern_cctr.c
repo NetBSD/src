@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cctr.c,v 1.12 2020/10/10 18:18:04 thorpej Exp $	*/
+/*	$NetBSD: kern_cctr.c,v 1.13 2023/10/04 20:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2020 Jason R. Thorpe
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.12 2020/10/10 18:18:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.13 2023/10/04 20:28:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -184,20 +184,14 @@ u_int
 cc_get_timecount(struct timecounter *tc)
 {
 #if defined(MULTIPROCESSOR)
-	int64_t rcc, ncsw;
+	int64_t rcc;
+	long pctr;
 
- retry:
- 	ncsw = curlwp->l_ncsw;
-
- 	__insn_barrier();
-	/* N.B. the delta is always 0 on the primary. */
-	rcc = cpu_counter32() - curcpu()->ci_cc.cc_delta;
- 	__insn_barrier();
-
- 	if (ncsw != curlwp->l_ncsw) {
- 		/* Was preempted */ 
- 		goto retry;
-	}
+	do {
+	 	pctr = lwp_pctr();
+		/* N.B. the delta is always 0 on the primary. */
+		rcc = cpu_counter32() - curcpu()->ci_cc.cc_delta;
+	} while (pctr != lwp_pctr());
 
 	return rcc;
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.65 2023/08/05 11:21:24 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.66 2023/10/04 20:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.65 2023/08/05 11:21:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.66 2023/10/04 20:28:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -156,7 +156,7 @@ struct entropy_cpu {
  */
 struct entropy_cpu_lock {
 	int		ecl_s;
-	uint64_t	ecl_ncsw;
+	long		ecl_pctr;
 };
 
 /*
@@ -541,7 +541,7 @@ entropy_cpu_get(struct entropy_cpu_lock *lock)
 	lock->ecl_s = splsoftserial();
 	KASSERT(!ec->ec_locked);
 	ec->ec_locked = true;
-	lock->ecl_ncsw = curlwp->l_ncsw;
+	lock->ecl_pctr = lwp_pctr();
 	__insn_barrier();
 
 	return ec;
@@ -555,7 +555,7 @@ entropy_cpu_put(struct entropy_cpu_lock *lock, struct entropy_cpu *ec)
 	KASSERT(ec->ec_locked);
 
 	__insn_barrier();
-	KASSERT(lock->ecl_ncsw == curlwp->l_ncsw);
+	KASSERT(lock->ecl_pctr == lwp_pctr());
 	ec->ec_locked = false;
 	splx(lock->ecl_s);
 	percpu_putref(entropy_percpu);

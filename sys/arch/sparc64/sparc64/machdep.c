@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.306 2022/10/26 23:38:08 riastradh Exp $ */
+/*	$NetBSD: machdep.c,v 1.307 2023/10/04 20:28:05 ad Exp $ */
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2019, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.306 2022/10/26 23:38:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307 2023/10/04 20:28:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2668,17 +2668,15 @@ cpu_signotify(struct lwp *l)
 bool
 cpu_intr_p(void)
 {
-	uint64_t ncsw;
 	int idepth;
+	long pctr;
 	lwp_t *l;
 
 	l = curlwp;
 	do {
-		ncsw = l->l_ncsw;
-		__insn_barrier();
+		pctr = lwp_pctr();
 		idepth = l->l_cpu->ci_idepth;
-		__insn_barrier();
-	} while (__predict_false(ncsw != l->l_ncsw));
+	} while (__predict_false(pctr != lwp_pctr()));
 
 	return idepth >= 0;
 }

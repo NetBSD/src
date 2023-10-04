@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.293 2021/12/05 08:13:12 msaitoh Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.294 2023/10/04 20:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.293 2021/12/05 08:13:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.294 2023/10/04 20:28:06 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -1194,8 +1194,6 @@ proc_free(struct proc *p, struct wrusage *wru)
 	 * This cannot be done any earlier else it might get done twice.
 	 */
 	l = LIST_FIRST(&p->p_lwps);
-	p->p_stats->p_ru.ru_nvcsw += (l->l_ncsw - l->l_nivcsw);
-	p->p_stats->p_ru.ru_nivcsw += l->l_nivcsw;
 	ruadd(&p->p_stats->p_ru, &l->l_ru);
 	ruadd(&p->p_stats->p_ru, &p->p_stats->p_cru);
 	ruadd(&parent->p_stats->p_cru, &p->p_stats->p_ru);

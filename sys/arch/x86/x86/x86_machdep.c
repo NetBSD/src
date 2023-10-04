@@ -1,8 +1,8 @@
-/*	$NetBSD: x86_machdep.c,v 1.153 2022/12/23 16:05:44 bouyer Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.154 2023/10/04 20:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
- * Copyright (c) 2005, 2008, 2009, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2008, 2009, 2019, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.153 2022/12/23 16:05:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.154 2023/10/04 20:28:06 ad Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -380,8 +380,8 @@ cpu_need_proftick(struct lwp *l)
 bool
 cpu_intr_p(void)
 {
-	uint64_t ncsw;
 	int idepth;
+	long pctr;
 	lwp_t *l;
 
 	l = curlwp;
@@ -390,11 +390,9 @@ cpu_intr_p(void)
 		return false;
 	}
 	do {
-		ncsw = l->l_ncsw;
-		__insn_barrier();
+		pctr = lwp_pctr();
 		idepth = l->l_cpu->ci_idepth;
-		__insn_barrier();
-	} while (__predict_false(ncsw != l->l_ncsw));
+	} while (__predict_false(pctr != lwp_pctr()));
 
 	return idepth >= 0;
 }

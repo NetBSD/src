@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.194 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.195 2023/10/04 20:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.194 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.195 2023/10/04 20:28:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -665,8 +665,6 @@ rulwps(proc_t *p, struct rusage *ru)
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		ruadd(ru, &l->l_ru);
-		ru->ru_nvcsw += (l->l_ncsw - l->l_nivcsw);
-		ru->ru_nivcsw += l->l_nivcsw;
 	}
 }
 

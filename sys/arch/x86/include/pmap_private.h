@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_private.h,v 1.4 2022/09/24 11:05:18 riastradh Exp $	*/
+/*	$NetBSD: pmap_private.h,v 1.5 2023/10/04 20:28:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -197,7 +197,7 @@ struct pmap {
 					 of pmap */
 	kcpuset_t *pm_xen_ptp_cpus;	/* mask of CPUs which have this pmap's
 					 ptp mapped */
-	uint64_t pm_ncsw;		/* for assertions */
+	long pm_pctr;			/* for assertions */
 	LIST_HEAD(,vm_page) pm_gc_ptp;	/* PTPs queued for free */
 
 	/* Used by NVMM and Xen */

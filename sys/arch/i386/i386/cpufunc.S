@@ -1,7 +1,7 @@
-/*	$NetBSD: cpufunc.S,v 1.49 2020/07/19 07:35:08 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.50 2023/10/04 20:28:05 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2007, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2020, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.49 2020/07/19 07:35:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.50 2023/10/04 20:28:05 ad Exp $");
 
 #include "opt_xen.h"
 
@@ -174,12 +174,13 @@ END(msr_onfault)
 ENTRY(cpu_ ## counter ## _ ## fence)	;\
 	pushl	%ebx			;\
 	movl	CPUVAR(CURLWP), %ecx	;\
+	leal	L_RU+RU_NIVCSW(%ecx), %ecx ;\
 1:					;\
-	movl	L_NCSW(%ecx), %ebx	;\
+	movl	(%ecx), %ebx		;\
 	SERIALIZE_ ## fence		;\
 	rdtsc				;\
 	ADD_ ## counter			;\
-	cmpl	%ebx, L_NCSW(%ecx)	;\
+	cmpl	%ebx, (%ecx)		;\
 	jne	2f			;\
 	popl	%ebx			;\
 	ret				;\
@@ -197,15 +198,16 @@ ENTRY(cpu_ ## counter ## _cpuid)	;\
 	pushl	%ebx			;\
 	pushl	%esi			;\
 	movl	CPUVAR(CURLWP), %ecx	;\
+	leal	L_RU+RU_NIVCSW(%ecx), %ecx ;\
 1:					;\
-	movl	L_NCSW(%ecx), %esi	;\
+	movl	(%ecx), %esi		;\
 	pushl	%ecx			;\
 	xor	%eax, %eax		;\
 	cpuid				;\
 	rdtsc				;\
 	ADD_ ## counter			;\
 	popl	%ecx			;\
-	cmpl	%esi, L_NCSW(%ecx)	;\
+	cmpl	%esi, (%ecx)		;\
 	jne	2f			;\
 	popl	%esi			;\
 	popl	%ebx			;\
