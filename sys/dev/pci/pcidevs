@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1492 2023/08/10 06:22:47 andvar Exp $
+$NetBSD: pcidevs,v 1.1493 2023/10/04 03:09:42 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4303,6 +4303,7 @@ product INTEL I350_DA4	 	0x1546	I350 Quad port Gigabit Connection
 product INTEL 82599_SFP_SF_QP	0x154a	82599 10 GbE Controller
 product INTEL XL710_VF		0x154c	XL710 Ethernet Virtual Function
 product INTEL 82599_SFP_SF2	0x154d	82599 (SFP+) 10 GbE Controller
+product INTEL 82599_LS		0x154f	82599 LS 10G Ethernet
 product INTEL 82599EN_SFP	0x1557	82599 10 GbE Controller
 product INTEL 82599_QSFP_SF_QP	0x1558	X520 10 GbE QSFP+
 product INTEL I218_V		0x1559	I218-V Ethernet Connection
