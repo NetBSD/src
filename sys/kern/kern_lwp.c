@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.263 2023/10/04 22:17:09 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.264 2023/10/05 13:05:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.263 2023/10/04 22:17:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.264 2023/10/05 13:05:18 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -2144,12 +2144,23 @@ lwp_ctl_exit(void)
  * Return the current LWP's "preemption counter".  Used to detect
  * preemption across operations that can tolerate preemption without
  * crashing, but which may generate incorrect results if preempted.
+ *
+ * We do arithmetic in unsigned long to avoid undefined behaviour in
+ * the event of arithmetic overflow on LP32, and issue __insn_barrier()
+ * on both sides so this can safely be used to detect changes to the
+ * preemption counter in loops around other memory accesses even in the
+ * event of whole-program optimization (e.g., gcc -flto).
  */
 long
 lwp_pctr(void)
 {
+	unsigned long pctr;
 
-	return curlwp->l_ru.ru_nvcsw + curlwp->l_ru.ru_nivcsw;
+	__insn_barrier();
+	pctr = curlwp->l_ru.ru_nvcsw;
+	pctr += curlwp->l_ru.ru_nivcsw;
+	__insn_barrier();
+	return pctr;
 }
 
 /*
