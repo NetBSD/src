@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.68 2022/12/20 04:57:01 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.69 2023/10/05 06:15:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.68 2022/12/20 04:57:01 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.69 2023/10/05 06:15:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -584,6 +584,8 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 				return ERR;
 			__CTRACE(__CTRACE_INPUT,
 			    "_cursesi_addwchar: do a scroll\n");
+			if (!__NONL)
+				*x = 0;
 			scroll(win);
 		}
 		newx = win->maxx - 1 + win->ch_off;
