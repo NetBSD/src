@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.74 2021/09/15 11:03:24 rin Exp $	*/
+/*	$NetBSD: exception.c,v 1.75 2023/10/05 19:41:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.74 2021/09/15 11:03:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.75 2023/10/05 19:41:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -165,7 +165,6 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	if (usermode) {
 		KDASSERT(l->l_md.md_regs == tf); /* check exception depth */
 		expevt |= EXP_USER;
-		LWP_CACHE_CREDS(l, l->l_proc);
 	}
 
 	switch (expevt) {
@@ -329,7 +328,6 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			ksi.ksi_code = SEGV_ACCERR;
 			ksi.ksi_addr = (void *)va;
 			splx(tf->tf_ssr & PSL_IMASK);
-			LWP_CACHE_CREDS(l, l->l_proc);
 			goto user_fault;
 		} else {
 			TLB_ASSERT(l && onfault != NULL,
@@ -377,8 +375,6 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 
 	/* Page not found. call fault handler */
 	splx(tf->tf_ssr & PSL_IMASK);
-	if (usermode)
-		LWP_CACHE_CREDS(l, l->l_proc);
 	pcb->pcb_onfault = NULL;
 	err = uvm_fault(map, va, ftype);
 	pcb->pcb_onfault = onfault;

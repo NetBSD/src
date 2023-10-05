@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.54 2018/08/10 21:44:58 pgoyette Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.55 2023/10/05 19:41:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.54 2018/08/10 21:44:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.55 2023/10/05 19:41:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,6 @@ linux_syscall(struct trapframe *frame)
 	register_t code, args[6], rval[2];
 
 	l = curlwp;
-	LWP_CACHE_CREDS(l, l->l_proc);
 
 	code = frame->tf_eax & (LINUX_SYS_NSYSENT - 1);
 	callp = linux_sysent;

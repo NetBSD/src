@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.56 2023/10/04 20:29:18 ad Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.57 2023/10/05 19:41:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.56 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.57 2023/10/05 19:41:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -96,25 +96,6 @@ lwp_find(struct proc *p, lwpid_t id)
 		l = NULL;
 
 	return l;
-}
-
-void
-lwp_update_creds(struct lwp *l)
-{
-	struct proc *p;
-	kauth_cred_t oldcred;
-
-	p = l->l_proc;
-	oldcred = l->l_cred;
-	l->l_prflag &= ~LPR_CRMOD;
-
-	mutex_enter(p->p_lock);
-	kauth_cred_hold(p->p_cred);
-	l->l_cred = p->p_cred;
-	mutex_exit(p->p_lock);
-
-	if (oldcred != NULL)
-		kauth_cred_free(oldcred);
 }
 
 void
@@ -374,7 +355,7 @@ lwproc_makelwp(struct proc *p, bool doswitch, bool procmake)
 	TAILQ_INIT(&l->l_ld_locks);
 	mutex_exit(p->p_lock);
 
-	lwp_update_creds(l);
+	l->l_cred = kauth_cred_hold(p->p_cred);
 	lwp_initspecific(l);
 	PSREF_DEBUG_INIT_LWP(l);
 

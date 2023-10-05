@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.101 2022/10/05 08:18:00 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.102 2023/10/05 19:41:05 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2022/10/05 08:18:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2023/10/05 19:41:05 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -150,7 +150,6 @@ trap(struct trapframe *tf)
 	KASSERT(l->l_stat == LSONPROC);
 
 	if (tf->tf_srr1 & PSL_PR) {
-		LWP_CACHE_CREDS(l, p);
 		type |= EXC_USER;
 	}
 

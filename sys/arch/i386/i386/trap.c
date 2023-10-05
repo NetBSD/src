@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.308 2022/08/20 23:48:50 riastradh Exp $	*/
+/*	$NetBSD: trap.c,v 1.309 2023/10/05 19:41:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.308 2022/08/20 23:48:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.309 2023/10/05 19:41:04 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -314,7 +314,6 @@ trap(struct trapframe *frame)
 		type |= T_USER;
 		l->l_md.md_regs = frame;
 		pcb->pcb_cr2 = 0;
-		LWP_CACHE_CREDS(l, p);
 	}
 
 #ifdef KDTRACE_HOOKS

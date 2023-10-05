@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.77 2023/09/17 12:30:00 andvar Exp $ */
+/* $NetBSD: trap.c,v 1.78 2023/10/05 19:41:04 ad Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77 2023/09/17 12:30:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2023/10/05 19:41:04 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,7 +242,6 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		l->l_md.md_regs = fp->f_regs;
-		LWP_CACHE_CREDS(l, p);
 	}
 	switch (type) {
 

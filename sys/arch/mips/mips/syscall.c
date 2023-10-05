@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.50 2020/08/09 06:43:29 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.51 2023/10/05 19:41:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.50 2020/08/09 06:43:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.51 2023/10/05 19:41:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -137,8 +137,6 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 	size_t nregs = _MIPS_SIM_NEWABI_P(abi) ? 8 : 4;
 	size_t i;
 #endif
-
-	LWP_CACHE_CREDS(l, p);
 
 	curcpu()->ci_data.cpu_nsyscall++;
 

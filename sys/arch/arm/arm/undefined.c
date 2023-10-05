@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.74 2022/01/08 09:01:00 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.75 2023/10/05 19:41:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,7 +50,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.74 2022/01/08 09:01:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.75 2023/10/05 19:41:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -340,7 +340,6 @@ undefinedinstruction(trapframe_t *tf)
 
 	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
 		user = 1;
-		LWP_CACHE_CREDS(l, l->l_proc);
 	} else
 		user = 0;
 

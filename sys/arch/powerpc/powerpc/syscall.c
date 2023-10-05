@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.57 2020/07/06 11:07:39 rin Exp $	*/
+/*	$NetBSD: syscall.c,v 1.58 2023/10/05 19:41:05 ad Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -59,7 +59,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.57 2020/07/06 11:07:39 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.58 2023/10/05 19:41:05 ad Exp $");
 
 void
 md_child_return(struct lwp *l)
@@ -90,8 +90,6 @@ EMULNAME(syscall)(struct trapframe *tf)
 	register_t args[10];
 	int error;
 	int n;
-
-	LWP_CACHE_CREDS(l, p);
 
 	curcpu()->ci_ev_scalls.ev_count++;
 

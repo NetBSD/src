@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.6 2019/04/06 17:42:28 kre Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.7 2023/10/05 19:41:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.6 2019/04/06 17:42:28 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.7 2023/10/05 19:41:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,6 @@ freebsd_syscall(struct trapframe *frame)
 
 	l = curlwp;
 	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_eax;
 	callp = p->p_emul->e_sysent;

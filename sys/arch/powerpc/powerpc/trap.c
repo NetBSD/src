@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.163 2020/07/15 08:58:52 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.164 2023/10/05 19:41:05 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #define	__UCAS_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2020/07/15 08:58:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.164 2023/10/05 19:41:05 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -111,7 +111,6 @@ trap(struct trapframe *tf)
 			panic("trap: user trap %d with lwp = %p, proc = %p",
 			    type, l, p);
 #endif
-		LWP_CACHE_CREDS(l, p);
 	}
 
 	ci->ci_data.cpu_ntrap++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2023/05/07 12:41:49 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5 2023/10/05 19:41:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2023/05/07 12:41:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2023/10/05 19:41:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -87,8 +87,6 @@ EMULNAME(syscall)(struct trapframe *tf)
 	const bool pk32_p = (p->p_flag & PK_32) != 0;
 	register_t copyargs[EMULNAME(SYS_MAXSYSARGS)];
 #endif
-
-	LWP_CACHE_CREDS(l, p);
 
 	curcpu()->ci_data.cpu_nsyscall++;
 

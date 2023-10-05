@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.54 2019/04/06 11:54:20 kamil Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.55 2023/10/05 19:41:04 ad Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.54 2019/04/06 11:54:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.55 2023/10/05 19:41:04 ad Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -119,7 +119,6 @@ syscall(register_t code, struct frame frame)
 	p = l->l_proc;
 	sticks = p->p_sticks;
 	l->l_md.md_regs = frame.f_regs;
-	LWP_CACHE_CREDS(l, p);
 
 	(p->p_md.md_syscall)(code, l, &frame);
 

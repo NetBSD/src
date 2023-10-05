@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.122 2023/07/23 10:09:36 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.123 2023/10/05 19:41:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2023/07/23 10:09:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2023/10/05 19:41:04 ad Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -603,8 +603,6 @@ trap(int type, struct trapframe *frame)
 	KASSERT(curlwp != NULL);
 	l = curlwp;
 	p = l->l_proc;
-	if ((type & T_USER) != 0)
-		LWP_CACHE_CREDS(l, p);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -1294,7 +1292,6 @@ syscall(struct trapframe *frame, int *args)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 	code = frame->tf_t1;
-	LWP_CACHE_CREDS(l, p);
 
 	/*
 	 * Restarting a system call is touchy on the HPPA, because syscall

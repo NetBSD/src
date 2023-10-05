@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.116 2021/02/01 19:31:34 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.117 2023/10/05 19:41:03 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.116 2021/02/01 19:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.117 2023/10/05 19:41:03 ad Exp $");
 
 #include <sys/param.h>
 
@@ -268,8 +268,6 @@ data_abort_handler(trapframe_t *tf)
 
 	/* Data abort came from user mode? */
 	bool user = (TRAP_USERMODE(tf) != 0);
-	if (user)
-		LWP_CACHE_CREDS(l, l->l_proc);
 
 	/* Grab the current pcb */
 	struct pcb * const pcb = lwp_getpcb(l);
@@ -821,9 +819,6 @@ prefetch_abort_handler(trapframe_t *tf)
 
 	l = curlwp;
 	pcb = lwp_getpcb(l);
-
-	if ((user = TRAP_USERMODE(tf)) != 0)
-		LWP_CACHE_CREDS(l, l->l_proc);
 
 	/*
 	 * Enable IRQ's (disabled by the abort) This always comes

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.273 2023/10/04 22:17:09 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.274 2023/10/05 19:41:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.273 2023/10/04 22:17:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.274 2023/10/05 19:41:07 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1839,14 +1839,17 @@ proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, bool sugid)
 	if (scred != NULL) {
 		p->p_cred = scred;
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
-			if (l2 != l)
-				l2->l_prflag |= LPR_CRMOD;
+			if (l2 != l) {
+				lwp_lock(l2);
+				l2->l_flag |= LW_CACHECRED;
+				lwp_need_userret(l2);
+				lwp_unlock(l2);
+			}
 		}
 
 		/* Ensure the LWP cached credentials are up to date. */
 		if ((oc = l->l_cred) != scred) {
-			kauth_cred_hold(scred);
-			l->l_cred = scred;
+			l->l_cred = kauth_cred_hold(scred);
 		}
 	} else
 		oc = NULL;	/* XXXgcc */

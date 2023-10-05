@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.263 2023/09/14 03:24:07 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.264 2023/10/05 19:41:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.263 2023/09/14 03:24:07 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.264 2023/10/05 19:41:04 ad Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -194,7 +194,6 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	if (USERMODE(status)) {
 		tf = utf;
 		type |= T_USER;
-		LWP_CACHE_CREDS(l, p);
 	}
 
 #ifdef KDTRACE_HOOKS

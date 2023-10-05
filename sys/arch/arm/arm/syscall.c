@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.68 2021/02/01 19:31:34 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.69 2023/10/05 19:41:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.68 2021/02/01 19:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.69 2023/10/05 19:41:03 ad Exp $");
 
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -167,7 +167,6 @@ swi_handler(trapframe_t *tf)
 
 	curcpu()->ci_data.cpu_nsyscall++;
 
-	LWP_CACHE_CREDS(l, l->l_proc);
 	(*l->l_proc->p_md.md_syscall)(tf, l, insn);
 }
 

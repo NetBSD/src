@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.226 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.227 2023/10/05 19:41:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -263,6 +263,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LW_WEXIT	0x00100000 /* Exit before return to user */
 #define	LW_PENDSIG	0x01000000 /* Pending signal for us */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
+#define	LW_CACHECRED	0x04000000 /* Cache new process credential */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
 #define	LW_RUMP_CLEAR	0x40000000 /* Clear curlwp in RUMP scheduler */
@@ -295,15 +296,14 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
  * with p_lock held.
  */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */
-#define	LPR_CRMOD	0x00000100 /* Credentials modified */
 #define	LPR_DRAINING	0x80000000 /* Draining references before exiting */
 
 /*
  * Mask indicating that there is "exceptional" work to be done on return to
  * user.
  */
-#define	LW_USERRET	\
-    (LW_WEXIT | LW_PENDSIG | LW_WREBOOT | LW_WSUSPEND | LW_WCORE | LW_LWPCTL)
+#define	LW_USERRET	(LW_WEXIT | LW_PENDSIG | LW_WREBOOT | LW_WSUSPEND \
+    | LW_WCORE | LW_LWPCTL | LW_CACHECRED)
 
 /*
  * Status values.
@@ -334,13 +334,6 @@ lwp_getpcb(struct lwp *l)
 #endif /* _KERNEL || _KMEMUSER */
 
 #ifdef _KERNEL
-#define	LWP_CACHE_CREDS(l, p)						\
-do {									\
-	(void)p;							\
-	if (__predict_false((l)->l_prflag & LPR_CRMOD))			\
-		lwp_update_creds(l);					\
-} while (/* CONSTCOND */ 0)
-
 void	lwpinit(void);
 void	lwp0_init(void);
 
@@ -371,7 +364,6 @@ void	lwp_exit(lwp_t *);
 int	lwp_suspend(lwp_t *, lwp_t *);
 int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);
 void	lwp_start(lwp_t *, int);
-void	lwp_update_creds(lwp_t *);
 void	lwp_migrate(lwp_t *, struct cpu_info *);
 lwp_t *	lwp_find2(pid_t, lwpid_t);
 lwp_t *	lwp_find(proc_t *, int);
