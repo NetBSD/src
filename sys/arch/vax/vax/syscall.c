@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.26 2019/04/06 11:54:21 kamil Exp $     */
+/*	$NetBSD: syscall.c,v 1.27 2023/10/05 19:41:06 ad Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -28,7 +28,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.26 2019/04/06 11:54:21 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.27 2023/10/05 19:41:06 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -76,8 +76,6 @@ syscall(struct trapframe *tf)
 
 	curcpu()->ci_data.cpu_nsyscall++;
  
- 	LWP_CACHE_CREDS(l, p);
-
 	l->l_md.md_utf = tf;
 
 	if ((unsigned long) tf->tf_code >= emul->e_nsysent)

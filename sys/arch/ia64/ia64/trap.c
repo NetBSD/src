@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.15 2021/07/24 21:31:33 andvar Exp $ */
+/* $NetBSD: trap.c,v 1.16 2023/10/05 19:41:04 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Marcel Moolenaar
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.15 2021/07/24 21:31:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16 2023/10/05 19:41:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,7 +397,6 @@ trap(int vector, struct trapframe *tf)
 		ia64_set_fpsr(IA64_FPSR_DEFAULT);
 		p = l->l_proc;
 		l->l_md.md_tf = tf;
-		LWP_CACHE_CREDS(l, p);
 	} else {
 		p = NULL;
 	}

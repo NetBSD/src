@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.33 2015/03/07 18:51:44 christos Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.34 2023/10/05 19:41:03 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.33 2015/03/07 18:51:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.34 2023/10/05 19:41:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,6 @@ linux_syscall_plain(struct lwp *l, uint64_t code, struct trapframe *framep)
 	uint64_t *args, copyargs[10];				/* XXX */
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
-
-	LWP_CACHE_CREDS(l, p);
 
 	curcpu()->ci_data.cpu_nsyscall++;
 	l->l_md.md_tf = framep;
@@ -230,8 +228,6 @@ linux_syscall_fancy(struct lwp *l, uint64_t code, struct trapframe *framep)
 	uint64_t *args, copyargs[10];
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
-
-	LWP_CACHE_CREDS(l, p);
 
 	curcpu()->ci_data.cpu_nsyscall++;
 	l->l_md.md_tf = framep;

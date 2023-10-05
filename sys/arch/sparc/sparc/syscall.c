@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.32 2023/03/20 11:19:29 hannken Exp $ */
+/*	$NetBSD: syscall.c,v 1.33 2023/10/05 19:41:05 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2023/03/20 11:19:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33 2023/10/05 19:41:05 ad Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -224,7 +224,6 @@ syscall(register_t code, struct trapframe *tf, register_t pc)
 	curcpu()->ci_data.cpu_nsyscall++;	/* XXXSMP */
 	l = curlwp;
 	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
 
 	sticks = p->p_sticks;
 	l->l_md.md_tf = tf;

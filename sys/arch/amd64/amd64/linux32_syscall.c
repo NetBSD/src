@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.32 2015/03/07 18:41:40 christos Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.33 2023/10/05 19:41:03 ad Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.32 2015/03/07 18:41:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.33 2023/10/05 19:41:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,6 @@ linux32_syscall(struct trapframe *frame)
 	p = l->l_proc;
 
 	code = frame->tf_rax;
-
-	LWP_CACHE_CREDS(l, p);
 
 	callp = p->p_emul->e_sysent;
 

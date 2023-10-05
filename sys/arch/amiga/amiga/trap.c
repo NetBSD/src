@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.139 2020/08/10 10:51:21 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.140 2023/10/05 19:41:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2020/08/10 10:51:21 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140 2023/10/05 19:41:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,7 +522,6 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		l->l_md.md_regs = fp->f_regs;
-		LWP_CACHE_CREDS(l, p);
 	}
 
 #ifdef DDB

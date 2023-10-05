@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.194 2022/05/16 21:28:05 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.195 2023/10/05 19:41:06 ad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.194 2022/05/16 21:28:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.195 2023/10/05 19:41:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -571,7 +571,6 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 	}
 	l = curlwp;
 	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	pcb = lwp_getpcb(l);
 	l->l_md.md_tf = tf;	/* for ptrace/signals */
@@ -1093,7 +1092,6 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	p = l->l_proc;
 	pcb = lwp_getpcb(l);
 	onfault = (vaddr_t)pcb->pcb_onfault;
-	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	tstate = tf->tf_tstate;
 
@@ -1373,7 +1371,6 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 
 	l = curlwp;
 	pcb = lwp_getpcb(l);
-	LWP_CACHE_CREDS(l, l->l_proc);
 	sticks = l->l_proc->p_sticks;
 
 	printf("data error type %x sfsr=%lx sfva=%lx afsr=%lx afva=%lx tf=%p\n",
@@ -1501,7 +1498,6 @@ text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	tstate = tf->tf_tstate;
 	va = trunc_page(pc);
@@ -1620,7 +1616,6 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 
 	tstate = tf->tf_tstate;

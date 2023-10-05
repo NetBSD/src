@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.200 2021/01/24 07:36:54 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.201 2023/10/05 19:41:05 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.200 2021/01/24 07:36:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.201 2023/10/05 19:41:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_sunos.h"
@@ -307,7 +307,6 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 	if ((l = curlwp) == NULL)
 		l = &lwp0;
 	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	pcb = lwp_getpcb(l);
 	l->l_md.md_tf = tf;	/* for ptrace/signals */
@@ -779,7 +778,6 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 	pcb = lwp_getpcb(l);
 	onfault = (vaddr_t)pcb->pcb_onfault;
 
-	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 
 #ifdef FPU_DEBUG
@@ -994,7 +992,6 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 
 	l = curlwp;
 	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	pcb = lwp_getpcb(l);
 	onfault = (vaddr_t)pcb->pcb_onfault;

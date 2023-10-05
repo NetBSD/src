@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.264 2023/10/05 13:05:18 riastradh Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.265 2023/10/05 19:41:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.264 2023/10/05 13:05:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.265 2023/10/05 19:41:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1534,32 +1534,6 @@ lwp_find(struct proc *p, lwpid_t id)
 }
 
 /*
- * Update an LWP's cached credentials to mirror the process' master copy.
- *
- * This happens early in the syscall path, on user trap, and on LWP
- * creation.  A long-running LWP can also voluntarily choose to update
- * its credentials by calling this routine.  This may be called from
- * LWP_CACHE_CREDS(), which checks l->l_prflag & LPR_CRMOD beforehand.
- */
-void
-lwp_update_creds(struct lwp *l)
-{
-	kauth_cred_t oc;
-	struct proc *p;
-
-	p = l->l_proc;
-	oc = l->l_cred;
-
-	mutex_enter(p->p_lock);
-	kauth_cred_hold(p->p_cred);
-	l->l_cred = p->p_cred;
-	l->l_prflag &= ~LPR_CRMOD;
-	mutex_exit(p->p_lock);
-	if (oc != NULL)
-		kauth_cred_free(oc);
-}
-
-/*
  * Verify that an LWP is locked, and optionally verify that the lock matches
  * one we specify.
  */
@@ -1728,6 +1702,20 @@ lwp_userret(struct lwp *l)
 		 */
 		if ((f = atomic_load_relaxed(&l->l_flag) & LW_USERRET) == 0) {
 			return;
+		}
+
+		/*
+		 * Start out with the correct credentials.
+		 */
+		if ((f & LW_CACHECRED) != 0) {
+			kauth_cred_t oc = l->l_cred;
+			mutex_enter(p->p_lock);
+			l->l_cred = kauth_cred_hold(p->p_cred);
+			lwp_lock(l);
+			l->l_flag &= ~LW_CACHECRED;
+			lwp_unlock(l);
+			mutex_exit(p->p_lock);
+			kauth_cred_free(oc);
 		}
 
 		/*

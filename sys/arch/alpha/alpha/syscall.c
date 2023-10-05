@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.44 2019/04/06 11:54:19 kamil Exp $ */
+/* $NetBSD: syscall.c,v 1.45 2023/10/05 19:41:03 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2019/04/06 11:54:19 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.45 2023/10/05 19:41:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,8 +136,6 @@ syscall(struct lwp *l, uint64_t code, struct trapframe *tf)
 	uint64_t *args, copyargs[10];
 	u_int hidden, nargs;
 	struct proc * const p = l->l_proc;
-
-	LWP_CACHE_CREDS(l, p);
 
 	curcpu()->ci_data.cpu_nsyscall++;
 	l->l_md.md_tf = tf;
