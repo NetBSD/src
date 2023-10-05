@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.56 2022/06/26 11:14:36 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.57 2023/10/05 12:30:59 riastradh Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.56 2022/06/26 11:14:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.57 2023/10/05 12:30:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -320,7 +320,7 @@ armgic_irq_handler(void *tf)
 	struct armgic_softc * const sc = &armgic_softc;
 	const int old_ipl = ci->ci_cpl;
 	const int old_mtx_count = ci->ci_mtx_count;
-	const int old_l_biglocks = ci->ci_curlwp->l_biglocks;
+	const int old_l_blcnt = ci->ci_curlwp->l_blcnt;
 #ifdef DEBUG
 	size_t n = 0;
 #endif
@@ -407,7 +407,7 @@ armgic_irq_handler(void *tf)
 	pic_do_pending_ints(I32_bit, old_ipl, tf);
 	KASSERTMSG(ci->ci_cpl == old_ipl, "ci_cpl %d old_ipl %d", ci->ci_cpl, old_ipl);
 	KASSERT(old_mtx_count == ci->ci_mtx_count);
-	KASSERT(old_l_biglocks == ci->ci_curlwp->l_biglocks);
+	KASSERT(old_l_blcnt == ci->ci_curlwp->l_blcnt);
 }
 
 void
