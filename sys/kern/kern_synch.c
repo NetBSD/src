@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.362 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.363 2023/10/05 19:28:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.362 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.363 2023/10/05 19:28:30 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_ddb.h"
@@ -251,8 +251,7 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 
 	if (mtx != NULL)
 		mutex_exit(mtx);
-	lwp_lock(l);
-	KERNEL_UNLOCK_ALL(NULL, &nlocks);
+	nlocks = sleepq_enter(NULL, l, NULL);
 	sleepq_enqueue(NULL, l, wmesg, &kpause_syncobj, intr);
 	error = sleepq_block(timo, intr, &kpause_syncobj, nlocks);
 	if (mtx != NULL)
