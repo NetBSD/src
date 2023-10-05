@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.407 2023/10/04 20:42:38 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.408 2023/10/05 19:06:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.407 2023/10/04 20:42:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.408 2023/10/05 19:06:30 ad Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -1776,7 +1776,6 @@ static void
 sigswitch_unlock_and_switch_away(struct lwp *l)
 {
 	struct proc *p;
-	int nlocks;
 
 	p = l->l_proc;
 
@@ -1785,9 +1784,8 @@ sigswitch_unlock_and_switch_away(struct lwp *l)
 
 	KASSERT(l->l_stat == LSONPROC);
 	KASSERT(p->p_nrlwps > 0);
+	KASSERT(l->l_blcnt == 0);
 
-	/* XXXAD in 2023 kernel_lock should not be held here, audit it... */
-	KERNEL_UNLOCK_ALL(l, &nlocks);
 	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
 		p->p_nrlwps--;
 		lwp_lock(l);
@@ -1800,7 +1798,6 @@ sigswitch_unlock_and_switch_away(struct lwp *l)
 	lwp_lock(l);
 	spc_lock(l->l_cpu);
 	mi_switch(l);
-	KERNEL_LOCK(nlocks, l);
 }
 
 /*
@@ -2255,7 +2252,7 @@ sigexit(struct lwp *l, int signo)
 	p = l->l_proc;
 
 	KASSERT(mutex_owned(p->p_lock));
-	KERNEL_UNLOCK_ALL(l, NULL);
+	KASSERT(l->l_blcnt == 0);
 
 	/*
 	 * Don't permit coredump() multiple times in the same process.
