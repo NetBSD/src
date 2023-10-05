@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.25 2022/12/21 05:19:15 nonaka Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.26 2023/10/05 21:43:02 mrg Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.25 2022/12/21 05:19:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.26 2023/10/05 21:43:02 mrg Exp $");
 
 #include <sys/types.h>
 
@@ -107,8 +107,10 @@ void		rge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 int		rge_allocmem(struct rge_softc *);
 int		rge_newbuf(struct rge_softc *, int);
 void		rge_discard_rxbuf(struct rge_softc *, int);
-int		rge_rx_list_init(struct rge_softc *);
-void		rge_tx_list_init(struct rge_softc *);
+static int	rge_rx_list_init(struct rge_softc *);
+static void	rge_rx_list_fini(struct rge_softc *);
+static void	rge_tx_list_init(struct rge_softc *);
+static void	rge_tx_list_fini(struct rge_softc *);
 int		rge_rxeof(struct rge_softc *);
 int		rge_txeof(struct rge_softc *);
 void		rge_reset(struct rge_softc *);
@@ -650,7 +652,7 @@ rge_init(struct ifnet *ifp)
 {
 	struct rge_softc *sc = ifp->if_softc;
 	uint32_t val;
-	int i;
+	unsigned i;
 
 	rge_stop(ifp, 0);
 
@@ -661,11 +663,12 @@ rge_init(struct ifnet *ifp)
 	RGE_WRITE_2(sc, RGE_RXMAXSIZE, RGE_JUMBO_FRAMELEN);
 
 	/* Initialize RX descriptors list. */
-	if (rge_rx_list_init(sc) == ENOBUFS) {
+	int error = rge_rx_list_init(sc);
+	if (error != 0) {
 		device_printf(sc->sc_dev,
 		    "init failed: no memory for RX buffers\n");
 		rge_stop(ifp, 1);
-		return (ENOBUFS);
+		return error;
 	}
 
 	/* Initialize TX descriptors. */
@@ -836,7 +839,6 @@ void
 rge_stop(struct ifnet *ifp, int disable)
 {
 	struct rge_softc *sc = ifp->if_softc;
-	int i;
 
 	if (disable) {
 		callout_halt(&sc->sc_timeout, NULL);
@@ -870,25 +872,8 @@ rge_stop(struct ifnet *ifp, int disable)
 		sc->rge_head = sc->rge_tail = NULL;
 	}
 
-	/* Free the TX list buffers. */
-	for (i = 0; i < RGE_TX_LIST_CNT; i++) {
-		if (sc->rge_ldata.rge_txq[i].txq_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->rge_ldata.rge_txq[i].txq_dmamap);
-			m_freem(sc->rge_ldata.rge_txq[i].txq_mbuf);
-			sc->rge_ldata.rge_txq[i].txq_mbuf = NULL;
-		}
-	}
-
-	/* Free the RX list buffers. */
-	for (i = 0; i < RGE_RX_LIST_CNT; i++) {
-		if (sc->rge_ldata.rge_rxq[i].rxq_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->rge_ldata.rge_rxq[i].rxq_dmamap);
-			m_freem(sc->rge_ldata.rge_rxq[i].rxq_mbuf);
-			sc->rge_ldata.rge_rxq[i].rxq_mbuf = NULL;
-		}
-	}
+	rge_tx_list_fini(sc);
+	rge_rx_list_fini(sc);
 }
 
 /*
@@ -1172,17 +1157,19 @@ rge_discard_rxbuf(struct rge_softc *sc, int idx)
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
-int
+static int
 rge_rx_list_init(struct rge_softc *sc)
 {
-	int i;
+	unsigned i;
 
 	memset(sc->rge_ldata.rge_rx_list, 0, RGE_RX_LIST_SZ);
 
 	for (i = 0; i < RGE_RX_LIST_CNT; i++) {
 		sc->rge_ldata.rge_rxq[i].rxq_mbuf = NULL;
-		if (rge_newbuf(sc, i) == ENOBUFS)
+		if (rge_newbuf(sc, i) != 0) {
+			rge_rx_list_fini(sc);
 			return (ENOBUFS);
+		}
 	}
 
 	sc->rge_ldata.rge_rxq_prodidx = sc->rge_ldata.rge_rxq_considx = 0;
@@ -1191,10 +1178,26 @@ rge_rx_list_init(struct rge_softc *sc)
 	return (0);
 }
 
-void
+static void
+rge_rx_list_fini(struct rge_softc *sc)
+{
+	unsigned i;
+
+	/* Free the RX list buffers. */
+	for (i = 0; i < RGE_RX_LIST_CNT; i++) {
+		if (sc->rge_ldata.rge_rxq[i].rxq_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat,
+			    sc->rge_ldata.rge_rxq[i].rxq_dmamap);
+			m_freem(sc->rge_ldata.rge_rxq[i].rxq_mbuf);
+			sc->rge_ldata.rge_rxq[i].rxq_mbuf = NULL;
+		}
+	}
+}
+
+static void
 rge_tx_list_init(struct rge_softc *sc)
 {
-	int i;
+	unsigned i;
 
 	memset(sc->rge_ldata.rge_tx_list, 0, RGE_TX_LIST_SZ);
 
@@ -1206,6 +1209,22 @@ rge_tx_list_init(struct rge_softc *sc)
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	sc->rge_ldata.rge_txq_prodidx = sc->rge_ldata.rge_txq_considx = 0;
+}
+
+static void
+rge_tx_list_fini(struct rge_softc *sc)
+{
+	unsigned i;
+
+	/* Free the TX list buffers. */
+	for (i = 0; i < RGE_TX_LIST_CNT; i++) {
+		if (sc->rge_ldata.rge_txq[i].txq_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat,
+			    sc->rge_ldata.rge_txq[i].txq_dmamap);
+			m_freem(sc->rge_ldata.rge_txq[i].txq_mbuf);
+			sc->rge_ldata.rge_txq[i].txq_mbuf = NULL;
+		}
+	}
 }
 
 int
@@ -1268,7 +1287,7 @@ rge_rxeof(struct rge_softc *sc)
 		 * reload the current one.
 		 */
 
-		if (rge_newbuf(sc, i) == ENOBUFS) {
+		if (rge_newbuf(sc, i) != 0) {
 			if (sc->rge_head != NULL) {
 				m_freem(sc->rge_head);
 				sc->rge_head = sc->rge_tail = NULL;
