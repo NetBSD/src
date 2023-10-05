@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.34 2020/09/05 16:30:12 riastradh Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.35 2023/10/05 19:10:18 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.34 2020/09/05 16:30:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.35 2023/10/05 19:10:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -48,6 +48,8 @@ idle_loop(void *dummy)
 	struct schedstate_percpu *spc;
 	struct lwp *l = curlwp;
 
+	KASSERT(l->l_blcnt == 0);
+
 	lwp_lock(l);
 	spc = &ci->ci_schedstate;
 	KASSERT(lwp_locked(l, spc->spc_lwplock));
@@ -65,7 +67,6 @@ idle_loop(void *dummy)
 	 * in which case we took an odd route to get here.
 	 */
 	spl0();
-	KERNEL_UNLOCK_ALL(l, NULL);
 
 	for (;;) {
 		LOCKDEBUG_BARRIER(NULL, 0);
