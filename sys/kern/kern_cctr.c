@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cctr.c,v 1.13 2023/10/04 20:28:06 ad Exp $	*/
+/*	$NetBSD: kern_cctr.c,v 1.14 2023/10/05 12:05:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 Jason R. Thorpe
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.13 2023/10/04 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.14 2023/10/05 12:05:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -188,7 +188,7 @@ cc_get_timecount(struct timecounter *tc)
 	long pctr;
 
 	do {
-	 	pctr = lwp_pctr();
+		pctr = lwp_pctr();
 		/* N.B. the delta is always 0 on the primary. */
 		rcc = cpu_counter32() - curcpu()->ci_cc.cc_delta;
 	} while (pctr != lwp_pctr());
