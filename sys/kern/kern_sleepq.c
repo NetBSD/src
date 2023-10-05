@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.77 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.78 2023/10/05 19:28:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.77 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.78 2023/10/05 19:28:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -222,13 +222,19 @@ sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
 {
 	int nlocks;
 
+	KASSERT((sq != NULL) == (mp != NULL));
+
 	/*
 	 * Acquire the per-LWP mutex and lend it our sleep queue lock.
 	 * Once interlocked, we can release the kernel lock.
 	 */
 	lwp_lock(l);
-	lwp_unlock_to(l, mp);
-	KERNEL_UNLOCK_ALL(NULL, &nlocks);
+	if (mp != NULL) {
+		lwp_unlock_to(l, mp);
+	}
+	if (__predict_false((nlocks = l->l_blcnt) != 0)) {
+		KERNEL_UNLOCK_ALL(NULL, NULL);
+	}
 	return nlocks;
 }
 

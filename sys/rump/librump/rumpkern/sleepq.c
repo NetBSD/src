@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.25 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.26 2023/10/05 19:28:30 ad Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.25 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.26 2023/10/05 19:28:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -62,8 +62,12 @@ sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
 	int nlocks;
 
 	lwp_lock(l);
-	lwp_unlock_to(l, mp);
-	KERNEL_UNLOCK_ALL(NULL, &nlocks);
+	if (mp != NULL) {
+		lwp_unlock_to(l, mp);
+	}
+	if ((nlocks = l->l_blcnt) != 0) {
+		KERNEL_UNLOCK_ALL(NULL, NULL);
+	}
 	return nlocks;
 }
 
