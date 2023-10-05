@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.163 2023/10/04 22:41:56 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.164 2023/10/05 19:44:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -52,23 +52,10 @@
  * This file contains a high-performance replacement for the socket-based
  * pipes scheme originally used.  It does not support all features of
  * sockets, but does do everything that pipes normally do.
- *
- * This code has two modes of operation, a small write mode and a large
- * write mode.  The small write mode acts like conventional pipes with
- * a kernel buffer.  If the buffer is less than PIPE_MINDIRECT, then the
- * "normal" pipe buffering is done.  If the buffer is between PIPE_MINDIRECT
- * and PIPE_SIZE in size it is mapped read-only into the kernel address space
- * using the UVM page loan facility from where the receiving process can copy
- * the data directly from the pages in the sending process.
- *
- * The constant PIPE_MINDIRECT is chosen to make sure that buffering will
- * happen for small transfers so that the system will not spend all of
- * its time context switching.  PIPE_SIZE is constrained by the
- * amount of kernel virtual memory.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.163 2023/10/04 22:41:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.164 2023/10/05 19:44:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -746,8 +733,6 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 
 	/*
 	 * We have something to offer, wake up select/poll.
-	 * wmap->cnt is always 0 in this point (direct write
-	 * is only done synchronously), so check only wpipe->pipe_buffer.cnt
 	 */
 	if (bp->cnt)
 		pipeselwakeup(wpipe, wpipe, POLL_IN);
