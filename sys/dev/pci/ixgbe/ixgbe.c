@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.334 2023/10/06 14:40:06 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.335 2023/10/06 14:42:51 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.334 2023/10/06 14:40:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.335 2023/10/06 14:42:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -370,12 +370,12 @@ SYSCTL_INT(_hw_ix, OID_AUTO, num_queues, CTLFLAG_RDTUN, &ixgbe_num_queues, 0,
  * setting higher than RX as this seems
  * the better performing choice.
  */
-static int ixgbe_txd = PERFORM_TXD;
+static int ixgbe_txd = DEFAULT_TXD;
 SYSCTL_INT(_hw_ix, OID_AUTO, txd, CTLFLAG_RDTUN, &ixgbe_txd, 0,
     "Number of transmit descriptors per queue");
 
 /* Number of RX descriptors per ring */
-static int ixgbe_rxd = PERFORM_RXD;
+static int ixgbe_rxd = DEFAULT_RXD;
 SYSCTL_INT(_hw_ix, OID_AUTO, rxd, CTLFLAG_RDTUN, &ixgbe_rxd, 0,
     "Number of receive descriptors per queue");
 

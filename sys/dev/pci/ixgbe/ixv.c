@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.186 2023/10/06 14:37:04 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.187 2023/10/06 14:42:51 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.186 2023/10/06 14:37:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.187 2023/10/06 14:42:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -217,11 +217,11 @@ static bool ixv_txrx_workqueue = false;
  * setting higher than RX as this seems
  * the better performing choice.
  */
-static int ixv_txd = PERFORM_TXD;
+static int ixv_txd = DEFAULT_TXD;
 TUNABLE_INT("hw.ixv.txd", &ixv_txd);
 
 /* Number of RX descriptors per ring */
-static int ixv_rxd = PERFORM_RXD;
+static int ixv_rxd = DEFAULT_RXD;
 TUNABLE_INT("hw.ixv.rxd", &ixv_rxd);
 
 /* Legacy Transmit (single queue) */
