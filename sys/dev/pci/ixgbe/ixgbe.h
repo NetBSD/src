@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.90 2023/10/06 14:38:03 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.91 2023/10/06 14:42:51 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -119,19 +119,18 @@
 /* Tunables */
 
 /*
- * TxDescriptors Valid Range: 64-4096 Default Value: 256 This value is the
+ * TxDescriptors Valid Range: 64-4096 Default Value: 2048 This value is the
  * number of transmit descriptors allocated by the driver. Increasing this
  * value allows the driver to queue more transmits. Each descriptor is 16
  * bytes. Performance tests have show the 2K value to be optimal for top
  * performance.
  */
-#define DEFAULT_TXD	1024
-#define PERFORM_TXD	2048
+#define DEFAULT_TXD	2048
 #define MAX_TXD		4096
 #define MIN_TXD		64
 
 /*
- * RxDescriptors Valid Range: 64-4096 Default Value: 256 This value is the
+ * RxDescriptors Valid Range: 64-4096 Default Value: 2048 This value is the
  * number of receive descriptors allocated for each RX queue. Increasing this
  * value allows the driver to buffer more incoming packets. Each descriptor
  * is 16 bytes.  A receive buffer is also allocated for each descriptor.
@@ -140,8 +139,7 @@
  *	against the system mbuf pool limit, you can tune nmbclusters
  *	to adjust for this.
  */
-#define DEFAULT_RXD	1024
-#define PERFORM_RXD	2048
+#define DEFAULT_RXD	2048
 #define MAX_RXD		4096
 #define MIN_RXD		64
 
