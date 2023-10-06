@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.45 2023/10/06 14:37:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.46 2023/10/06 14:41:24 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.45 2023/10/06 14:37:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.46 2023/10/06 14:41:24 msaitoh Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -4296,10 +4296,25 @@ s32 ixgbe_check_mac_link_generic(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 			links_reg = IXGBE_READ_REG(hw, IXGBE_LINKS);
 		}
 	} else {
-		if (links_reg & IXGBE_LINKS_UP)
+		if (links_reg & IXGBE_LINKS_UP) {
+			if (ixgbe_need_crosstalk_fix(hw)) {
+				/* Check the link state again after a delay
+				 * to filter out spurious link up
+				 * notifications.
+				 */
+				msec_delay(5);
+				links_reg = IXGBE_READ_REG(hw, IXGBE_LINKS);
+				if (!(links_reg & IXGBE_LINKS_UP)) {
+					*link_up = false;
+					*speed = IXGBE_LINK_SPEED_UNKNOWN;
+					return IXGBE_SUCCESS;
+				}
+
+			}
 			*link_up = TRUE;
-		else
+		} else {
 			*link_up = FALSE;
+		}
 	}
 
 	switch (links_reg & IXGBE_LINKS_SPEED_82599) {
