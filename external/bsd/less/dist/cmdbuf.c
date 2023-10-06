@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdbuf.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
+/*	$NetBSD: cmdbuf.c,v 1.6 2023/10/06 07:05:59 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2023  Mark Nudelman
@@ -20,9 +20,6 @@
 #include "charset.h"
 #if HAVE_STAT
 #include <sys/stat.h>
-#endif
-#if HAVE_ERRNO_H
-#include <errno.h>
 #endif
 
 extern int sc_width;
