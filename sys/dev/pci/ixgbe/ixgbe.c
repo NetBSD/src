@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.336 2023/10/06 14:44:08 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.337 2023/10/06 14:46:31 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.336 2023/10/06 14:44:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.337 2023/10/06 14:46:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4294,9 +4294,6 @@ ixgbe_init_locked(struct ixgbe_softc *sc)
 	/* OK to schedule workqueues. */
 	sc->schedule_wqs_ok = true;
 
-	/* And now turn on interrupts */
-	ixgbe_enable_intr(sc);
-
 	/* Enable the use of the MBX by the VF's */
 	if (sc->feat_en & IXGBE_FEATURE_SRIOV) {
 		ctrl_ext = IXGBE_READ_REG(hw, IXGBE_CTRL_EXT);
@@ -4308,8 +4305,11 @@ ixgbe_init_locked(struct ixgbe_softc *sc)
 	sc->if_flags = ifp->if_flags;
 	sc->ec_capenable = sc->osdep.ec.ec_capenable;
 
-	/* Now inform the stack we're ready */
+	/* Inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
+
+	/* And now turn on interrupts */
+	ixgbe_enable_intr(sc);
 
 	return;
 } /* ixgbe_init_locked */
