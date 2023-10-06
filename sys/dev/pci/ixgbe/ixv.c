@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.188 2023/10/06 14:44:08 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.189 2023/10/06 14:46:31 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.188 2023/10/06 14:44:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.189 2023/10/06 14:46:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -823,16 +823,16 @@ ixv_init_locked(struct ixgbe_softc *sc)
 	/* OK to schedule workqueues. */
 	sc->schedule_wqs_ok = true;
 
-	/* And now turn on interrupts */
-	ixv_enable_intr(sc);
-
 	/* Update saved flags. See ixgbe_ifflags_cb() */
 	sc->if_flags = ifp->if_flags;
 	sc->ec_capenable = sc->osdep.ec.ec_capenable;
 
-	/* Now inform the stack we're ready */
+	/* Inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	/* And now turn on interrupts */
+	ixv_enable_intr(sc);
 
 	return;
 } /* ixv_init_locked */
