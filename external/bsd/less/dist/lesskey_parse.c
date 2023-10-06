@@ -1,3 +1,5 @@
+/*	$NetBSD: lesskey_parse.c,v 1.2 2023/10/06 05:49:49 simonb Exp $	*/
+
 /*
  * Copyright (C) 1984-2023  Mark Nudelman
  *

@@ -1,7 +1,7 @@
-/*	$NetBSD: edit.c,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
+/*	$NetBSD: edit.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
 
 /*
- * Copyright (C) 1984-2012  Mark Nudelman
+ * Copyright (C) 1984-2023  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -11,24 +11,34 @@
 
 
 #include "less.h"
+#include "position.h"
 #if HAVE_STAT
 #include <sys/stat.h>
 #endif
+#if HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
+/* #if OS2     XXX should add a HAVE_SIGNAL_H */
+#include <signal.h>
+/* #endif      XXX should add a HAVE_SIGNAL_H */
 
 public int fd0 = 0;
 
 extern int new_file;
-extern int errmsgs;
 extern int cbufs;
 extern char *every_first_cmd;
-extern int any_display;
 extern int force_open;
 extern int is_tty;
 extern int sigs;
+extern int hshift;
+extern int want_filesize;
+extern int consecutive_nulls;
+extern int modelines;
+extern int show_preproc_error;
 extern IFILE curr_ifile;
 extern IFILE old_ifile;
 extern struct scrpos initial_scrpos;
-extern void *constant ml_examine;
+extern void *ml_examine;
 #if SPACES_IN_FILENAMES
 extern char openquote;
 extern char closequote;
@@ -45,15 +55,6 @@ public dev_t curr_dev;
 public ino_t curr_ino;
 #endif
 
-char *curr_altfilename = NULL;
-static void *curr_altpipe;
-
-
-static void close_file __P((void));
-static int edit_istep __P((IFILE, int, int));
-static int edit_inext __P((IFILE, int));
-static int edit_iprev __P((IFILE, int));
-
 /*
  * Textlist functions deal with a list of words separated by spaces.
  * init_textlist sets up a textlist structure.
@@ -61,17 +62,14 @@ static int edit_iprev __P((IFILE, int));
  * words, returning each one as a standard null-terminated string.
  * back_textlist does the same, but runs thru the list backwards.
  */
-	public void
-init_textlist(tlist, str)
-	struct textlist *tlist;
-	char *str;
+public void init_textlist(struct textlist *tlist, char *str)
 {
 	char *s;
 #if SPACES_IN_FILENAMES
 	int meta_quoted = 0;
 	int delim_quoted = 0;
 	char *esc = get_meta_escape();
-	int esclen = strlen(esc);
+	int esclen = (int) strlen(esc);
 #endif
 	
 	tlist->string = skipsp(str);
@@ -105,10 +103,7 @@ init_textlist(tlist, str)
 	}
 }
 
-	public char *
-forw_textlist(tlist, prev)
-	struct textlist *tlist;
-	char *prev;
+public char * forw_textlist(struct textlist *tlist, char *prev)
 {
 	char *s;
 	
@@ -129,10 +124,7 @@ forw_textlist(tlist, prev)
 	return (s);
 }
 
-	public char *
-back_textlist(tlist, prev)
-	struct textlist *tlist;
-	char *prev;
+public char * back_textlist(struct textlist *tlist, char *prev)
 {
 	char *s;
 	
@@ -156,12 +148,211 @@ back_textlist(tlist, prev)
 }
 
 /*
+ * Parse a single option setting in a modeline.
+ */
+static void modeline_option(char *str, int opt_len)
+{
+	struct mloption { char *opt_name; void (*opt_func)(char*,int); };
+	struct mloption options[] = {
+		{ "ts=",         set_tabs },
+		{ "tabstop=",    set_tabs },
+		{ NULL, NULL }
+	};
+	struct mloption *opt;
+	for (opt = options;  opt->opt_name != NULL;  opt++)
+	{
+		int name_len = strlen(opt->opt_name);
+		if (opt_len > name_len && strncmp(str, opt->opt_name, name_len) == 0)
+		{
+			(*opt->opt_func)(str + name_len, opt_len - name_len);
+			break;
+		}
+	}
+}
+
+/*
+ * String length, terminated by option separator (space or colon).
+ * Space/colon can be escaped with backspace.
+ */
+static int modeline_option_len(char *str)
+{
+	int esc = FALSE;
+	char *s;
+	for (s = str;  *s != '\0';  s++)
+	{
+		if (esc)
+			esc = FALSE;
+		else if (*s == '\\')
+			esc = TRUE;
+		else if (*s == ' ' || *s == ':') /* separator */
+			break;
+	}
+	return (s - str);
+}
+
+/*
+ * Parse colon- or space-separated option settings in a modeline.
+ */
+static void modeline_options(char *str, char end_char)
+{
+	for (;;)
+	{
+		int opt_len;
+		str = skipsp(str);
+		if (*str == '\0' || *str == end_char)
+			break;
+		opt_len = modeline_option_len(str);
+		modeline_option(str, opt_len);
+		str += opt_len;
+		if (*str != '\0')
+			str += 1; /* skip past the separator */
+	}
+}
+
+/*
+ * See if there is a modeline string in a line.
+ */
+static void check_modeline(char *line)
+{
+#if HAVE_STRSTR
+	static char *pgms[] = { "less:", "vim:", "vi:", "ex:", NULL };
+	char **pgm;
+	for (pgm = pgms;  *pgm != NULL;  ++pgm)
+	{
+		char *pline = line;
+		for (;;)
+		{
+			char *str;
+			pline = strstr(pline, *pgm);
+			if (pline == NULL) /* pgm is not in this line */
+				break;
+			str = skipsp(pline + strlen(*pgm));
+			if (pline == line || pline[-1] == ' ')
+			{
+				if (strncmp(str, "set ", 4) == 0)
+					modeline_options(str+4, ':');
+				else if (pgm != &pgms[0]) /* "less:" requires "set" */
+					modeline_options(str, '\0');
+				break;
+			}
+			/* Continue searching the rest of the line. */
+			pline = str;
+		}
+	}
+#endif /* HAVE_STRSTR */
+}
+
+/*
+ * Read lines from start of file and check if any are modelines.
+ */
+static void check_modelines(void)
+{
+	POSITION pos = ch_zero();
+	int i;
+	for (i = 0;  i < modelines;  i++)
+	{
+		char *line;
+		int line_len;
+		if (ABORT_SIGS())
+			return;
+		pos = forw_raw_line(pos, &line, &line_len);
+		if (pos == NULL_POSITION)
+			break;
+		check_modeline(line);
+	}
+}
+
+/*
+ * Close a pipe opened via popen.
+ */
+static void close_pipe(FILE *pipefd)
+{
+	int status;
+	PARG parg;
+
+	if (pipefd == NULL)
+		return;
+#if OS2
+	/*
+	 * The pclose function of OS/2 emx sometimes fails.
+	 * Send SIGINT to the piped process before closing it.
+	 */
+	kill(pipefd->_pid, SIGINT);
+#endif
+	status = pclose(pipefd);
+	if (status == -1)
+	{
+		/* An internal error in 'less', not a preprocessor error.  */
+		parg.p_string = errno_message("pclose");
+		error("%s", &parg);
+		free(parg.p_string);
+		return;
+	}
+	if (!show_preproc_error)
+		return;
+#if defined WIFEXITED && defined WEXITSTATUS
+	if (WIFEXITED(status))
+	{
+		int s = WEXITSTATUS(status);
+		if (s != 0)
+		{
+			parg.p_int = s;
+			error("Input preprocessor failed (status %d)", &parg);
+		}
+		return;
+	}
+#endif
+#if defined WIFSIGNALED && defined WTERMSIG && HAVE_STRSIGNAL
+	if (WIFSIGNALED(status))
+	{
+		int sig = WTERMSIG(status);
+		if (sig != SIGPIPE || ch_length() != NULL_POSITION)
+		{
+			parg.p_string = signal_message(sig);
+			error("Input preprocessor terminated: %s", &parg);
+		}
+		return;
+	}
+#endif
+	if (status != 0)
+	{
+		parg.p_int = status;
+		error("Input preprocessor exited with status %x", &parg);
+	}
+}
+
+/*
+ * Drain and close an input pipe if needed.
+ */
+public void close_altpipe(IFILE ifile)
+{
+	FILE *altpipe = get_altpipe(ifile);
+	if (altpipe != NULL && !(ch_getflags() & CH_KEEPOPEN))
+	{
+		close_pipe(altpipe);
+		set_altpipe(ifile, NULL);
+	}
+}
+
+/*
+ * Check for error status from the current altpipe.
+ * May or may not close the pipe.
+ */
+public void check_altpipe_error(void)
+{
+	if (!show_preproc_error)
+		return;
+	if (curr_ifile != NULL_IFILE && get_altfilename(curr_ifile) != NULL)
+		close_altpipe(curr_ifile);
+}
+
+/*
  * Close the current input file.
  */
-	static void
-close_file()
+static void close_file(void)
 {
 	struct scrpos scrpos;
+	char *altfilename;
 	
 	if (curr_ifile == NULL_IFILE)
 		return;
@@ -170,7 +361,7 @@ close_file()
 	 * Save the current position so that we can return to
 	 * the same position if we edit this file again.
 	 */
-	get_scrpos(&scrpos);
+	get_scrpos(&scrpos, TOP);
 	if (scrpos.pos != NULL_POSITION)
 	{
 		store_pos(curr_ifile, &scrpos);
@@ -184,12 +375,12 @@ close_file()
 	 * If we opened a file using an alternate name,
 	 * do special stuff to close it.
 	 */
-	if (curr_altfilename != NULL)
+	altfilename = get_altfilename(curr_ifile);
+	if (altfilename != NULL)
 	{
-		close_altfile(curr_altfilename, get_filename(curr_ifile),
-				curr_altpipe);
-		free(curr_altfilename);
-		curr_altfilename = NULL;
+		close_altpipe(curr_ifile);
+		close_altfile(altfilename, get_filename(curr_ifile));
+		set_altfilename(curr_ifile, NULL);
 	}
 	curr_ifile = NULL_IFILE;
 #if HAVE_STAT_INO
@@ -202,9 +393,7 @@ close_file()
  * Filename == "-" means standard input.
  * Filename == NULL means just close the current file.
  */
-	public int
-edit(filename)
-	char *filename;
+public int edit(char *filename)
 {
 	if (filename == NULL)
 		return (edit_ifile(NULL_IFILE));
@@ -212,22 +401,46 @@ edit(filename)
 }
 	
 /*
+ * Clean up what edit_ifile did before error return.
+ */
+static int edit_error(char *filename, char *alt_filename, void *altpipe, IFILE ifile, IFILE was_curr_ifile)
+{
+	if (alt_filename != NULL)
+	{
+		close_pipe(altpipe);
+		close_altfile(alt_filename, filename);
+		free(alt_filename);
+	}
+	del_ifile(ifile);
+	free(filename);
+	/*
+	 * Re-open the current file.
+	 */
+	if (was_curr_ifile == ifile)
+	{
+		/*
+		 * Whoops.  The "current" ifile is the one we just deleted.
+		 * Just give up.
+		 */
+		quit(QUIT_ERROR);
+	}
+	reedit_ifile(was_curr_ifile);
+	return (1);
+}
+
+/*
  * Edit a new file (given its IFILE).
  * ifile == NULL means just close the current file.
  */
-	public int
-edit_ifile(ifile)
-	IFILE ifile;
+public int edit_ifile(IFILE ifile)
 {
 	int f;
 	int answer;
-	int no_display;
 	int chflags;
 	char *filename;
 	char *open_filename;
-	char *qopen_filename;
 	char *alt_filename;
-	void *alt_pipe;
+	void *altpipe;
 	IFILE was_curr_ifile;
 	PARG parg;
 		
@@ -277,109 +490,117 @@ edit_ifile(ifile)
 	}
 
 	filename = save(get_filename(ifile));
+
 	/*
 	 * See if LESSOPEN specifies an "alternate" file to open.
 	 */
-	alt_pipe = NULL;
-	alt_filename = open_altfile(filename, &f, &alt_pipe);
-	open_filename = (alt_filename != NULL) ? alt_filename : filename;
-	qopen_filename = shell_unquote(open_filename);
+	altpipe = get_altpipe(ifile);
+	if (altpipe != NULL)
+	{
+		/*
+		 * File is already open.
+		 * chflags and f are not used by ch_init if ifile has 
+		 * filestate which should be the case if we're here. 
+		 * Set them here to avoid uninitialized variable warnings.
+		 */
+		chflags = 0; 
+		f = -1;
+		alt_filename = get_altfilename(ifile);
+		open_filename = (alt_filename != NULL) ? alt_filename : filename;
+	} else
+	{
+		if (strcmp(filename, FAKE_HELPFILE) == 0 ||
+			 strcmp(filename, FAKE_EMPTYFILE) == 0)
+			alt_filename = NULL;
+		else
+			alt_filename = open_altfile(filename, &f, &altpipe);
 
-	chflags = 0;
-	if (alt_pipe != NULL)
-	{
-		/*
-		 * The alternate "file" is actually a pipe.
-		 * f has already been set to the file descriptor of the pipe
-		 * in the call to open_altfile above.
-		 * Keep the file descriptor open because it was opened 
-		 * via popen(), and pclose() wants to close it.
-		 */
-		chflags |= CH_POPENED;
-	} else if (strcmp(open_filename, "-") == 0)
-	{
-		/* 
-		 * Use standard input.
-		 * Keep the file descriptor open because we can't reopen it.
-		 */
-		f = fd0;
-		chflags |= CH_KEEPOPEN;
-		/*
-		 * Must switch stdin to BINARY mode.
-		 */
-		SET_BINARY(f);
+		open_filename = (alt_filename != NULL) ? alt_filename : filename;
+
+		chflags = 0;
+		if (altpipe != NULL)
+		{
+			/*
+			 * The alternate "file" is actually a pipe.
+			 * f has already been set to the file descriptor of the pipe
+			 * in the call to open_altfile above.
+			 * Keep the file descriptor open because it was opened 
+			 * via popen(), and pclose() wants to close it.
+			 */
+			chflags |= CH_POPENED;
+			if (strcmp(filename, "-") == 0)
+				chflags |= CH_KEEPOPEN;
+		} else if (strcmp(filename, "-") == 0)
+		{
+			/* 
+			 * Use standard input.
+			 * Keep the file descriptor open because we can't reopen it.
+			 */
+			f = fd0;
+			chflags |= CH_KEEPOPEN;
+			/*
+			 * Must switch stdin to BINARY mode.
+			 */
+			SET_BINARY(f);
 #if MSDOS_COMPILER==DJGPPC
-		/*
-		 * Setting stdin to binary by default causes
-		 * Ctrl-C to not raise SIGINT.  We must undo
-		 * that side-effect.
-		 */
-		__djgpp_set_ctrl_c(1);
+			/*
+			 * Setting stdin to binary by default causes
+			 * Ctrl-C to not raise SIGINT.  We must undo
+			 * that side-effect.
+			 */
+			__djgpp_set_ctrl_c(1);
 #endif
-	} else if (strcmp(open_filename, FAKE_EMPTYFILE) == 0)
-	{
-		f = -1;
-		chflags |= CH_NODATA;
-	} else if (strcmp(open_filename, FAKE_HELPFILE) == 0)
-	{
-		f = -1;
-		chflags |= CH_HELPFILE;
-	} else if ((parg.p_string = bad_file(open_filename)) != NULL)
-	{
-		/*
-		 * It looks like a bad file.  Don't try to open it.
-		 */
-		error("%s", &parg);
-		free((void *)parg.p_string);
-	    err1:
-		if (alt_filename != NULL)
+		} else if (strcmp(open_filename, FAKE_EMPTYFILE) == 0)
 		{
-			close_altfile(alt_filename, filename, alt_pipe);
-			free(alt_filename);
-		}
-		del_ifile(ifile);
-		free(qopen_filename);
-		free(filename);
-		/*
-		 * Re-open the current file.
-		 */
-		if (was_curr_ifile == ifile)
+			f = -1;
+			chflags |= CH_NODATA;
+		} else if (strcmp(open_filename, FAKE_HELPFILE) == 0)
+		{
+			f = -1;
+			chflags |= CH_HELPFILE;
+		} else if ((parg.p_string = bad_file(open_filename)) != NULL)
 		{
 			/*
-			 * Whoops.  The "current" ifile is the one we just deleted.
-			 * Just give up.
+			 * It looks like a bad file.  Don't try to open it.
 			 */
-			quit(QUIT_ERROR);
-		}
-		reedit_ifile(was_curr_ifile);
-		return (1);
-	} else if ((f = open(qopen_filename, OPEN_READ)) < 0)
-	{
-		/*
-		 * Got an error trying to open it.
-		 */
-		parg.p_string = errno_message(filename);
-		error("%s", &parg);
-		free((void *)parg.p_string);
-	    	goto err1;
-	} else 
-	{
-		chflags |= CH_CANSEEK;
-		if (!force_open && !opened(ifile) && bin_file(f))
+			error("%s", &parg);
+			free(parg.p_string);
+			return edit_error(filename, alt_filename, altpipe, ifile, was_curr_ifile);
+		} else if ((f = open(open_filename, OPEN_READ)) < 0)
 		{
 			/*
-			 * Looks like a binary file.  
-			 * Ask user if we should proceed.
+			 * Got an error trying to open it.
 			 */
-			parg.p_string = filename;
-			answer = query("\"%s\" may be a binary file.  See it anyway? ",
-				&parg);
-			if (answer != 'y' && answer != 'Y')
+			parg.p_string = errno_message(filename);
+			error("%s", &parg);
+			free(parg.p_string);
+			return edit_error(filename, alt_filename, altpipe, ifile, was_curr_ifile);
+		} else 
+		{
+			chflags |= CH_CANSEEK;
+			if (!force_open && !opened(ifile) && bin_file(f))
 			{
-				close(f);
-				goto err1;
+				/*
+				 * Looks like a binary file.  
+				 * Ask user if we should proceed.
+				 */
+				parg.p_string = filename;
+				answer = query("\"%s\" may be a binary file.  See it anyway? ",
+					&parg);
+				if (answer != 'y' && answer != 'Y')
+				{
+					close(f);
+					return edit_error(filename, alt_filename, altpipe, ifile, was_curr_ifile);
+				}
 			}
 		}
+	}
+	if (!force_open && f >= 0 && isatty(f))
+	{
+		PARG parg;
+		parg.p_string = filename;
+		error("%s is a terminal (use -f to open it)", &parg);
+		return edit_error(filename, alt_filename, altpipe, ifile, was_curr_ifile);
 	}
 
 	/*
@@ -392,12 +613,14 @@ edit_ifile(ifile)
 		unsave_ifile(was_curr_ifile);
 	}
 	curr_ifile = ifile;
-	curr_altfilename = alt_filename;
-	curr_altpipe = alt_pipe;
+	set_altfilename(curr_ifile, alt_filename);
+	set_altpipe(curr_ifile, altpipe);
 	set_open(curr_ifile); /* File has been opened */
 	get_pos(curr_ifile, &initial_scrpos);
 	new_file = TRUE;
 	ch_init(f, chflags);
+	consecutive_nulls = 0;
+	check_modelines();
 
 	if (!(chflags & CH_HELPFILE))
 	{
@@ -407,9 +630,10 @@ edit_ifile(ifile)
 #endif
 #if HAVE_STAT_INO
 		/* Remember the i-number and device of the opened file. */
+		if (strcmp(open_filename, "-") != 0)
 		{
 			struct stat statbuf;
-			int r = stat(qopen_filename, &statbuf);
+			int r = stat(open_filename, &statbuf);
 			if (r == 0)
 			{
 				curr_ino = statbuf.st_ino;
@@ -418,13 +642,13 @@ edit_ifile(ifile)
 		}
 #endif
 		if (every_first_cmd != NULL)
+		{
 			ungetsc(every_first_cmd);
+			ungetcc_back(CHAR_END_COMMAND);
+		}
 	}
 
-	free(qopen_filename);
-	no_display = !any_display;
 	flush();
-	any_display = TRUE;
 
 	if (is_tty)
 	{
@@ -440,18 +664,15 @@ edit_ifile(ifile)
 #if HILITE_SEARCH
 		clr_hilite();
 #endif
-		cmd_addhist(ml_examine, filename);
-		if (no_display && errmsgs > 0)
+		hshift = 0;
+		if (strcmp(filename, FAKE_HELPFILE) && strcmp(filename, FAKE_EMPTYFILE))
 		{
-			/*
-			 * We displayed some messages on error output
-			 * (file descriptor 2; see error() function).
-			 * Before erasing the screen contents,
-			 * display the file name and wait for a keystroke.
-			 */
-			parg.p_string = filename;
-			error("%s", &parg);
+			char *qfilename = shell_quote(filename);
+			cmd_addhist(ml_examine, qfilename, 1);
+			free(qfilename);
 		}
+		if (want_filesize)
+			scan_eof();
 	}
 	free(filename);
 	return (0);
@@ -462,15 +683,14 @@ edit_ifile(ifile)
  * For each filename in the list, enter it into the ifile list.
  * Then edit the first one.
  */
-	public int
-edit_list(filelist)
-	char *filelist;
+public int edit_list(char *filelist)
 {
 	IFILE save_ifile;
 	char *good_filename;
 	char *filename;
 	char *gfilelist;
 	char *gfilename;
+	char *qfilename;
 	struct textlist tl_files;
 	struct textlist tl_gfiles;
 
@@ -492,8 +712,10 @@ edit_list(filelist)
 		gfilename = NULL;
 		while ((gfilename = forw_textlist(&tl_gfiles, gfilename)) != NULL)
 		{
-			if (edit(gfilename) == 0 && good_filename == NULL)
+			qfilename = shell_unquote(gfilename);
+			if (edit(qfilename) == 0 && good_filename == NULL)
 				good_filename = get_filename(curr_ifile);
+			free(qfilename);
 		}
 		free(gfilelist);
 	}
@@ -520,9 +742,10 @@ edit_list(filelist)
 /*
  * Edit the first file in the command line (ifile) list.
  */
-	public int
-edit_first()
+public int edit_first(void)
 {
+	if (nifile() == 0)
+		return (edit_stdin());
 	curr_ifile = NULL_IFILE;
 	return (edit_next(1));
 }
@@ -530,8 +753,7 @@ edit_first()
 /*
  * Edit the last file in the command line (ifile) list.
  */
-	public int
-edit_last()
+public int edit_last(void)
 {
 	curr_ifile = NULL_IFILE;
 	return (edit_prev(1));
@@ -541,11 +763,7 @@ edit_last()
 /*
  * Edit the n-th next or previous file in the command line (ifile) list.
  */
-	static int
-edit_istep(h, n, dir)
-	IFILE h;
-	int n;
-	int dir;
+static int edit_istep(IFILE h, int n, int dir)
 {
 	IFILE next;
 
@@ -583,32 +801,22 @@ edit_istep(h, n, dir)
 	return (0);
 }
 
-	static int
-edit_inext(h, n)
-	IFILE h;
-	int n;
+static int edit_inext(IFILE h, int n)
 {
 	return (edit_istep(h, n, +1));
 }
 
-	public int
-edit_next(n)
-	int n;
+public int edit_next(int n)
 {
 	return edit_istep(curr_ifile, n, +1);
 }
 
-	static int
-edit_iprev(h, n)
-	IFILE h;
-	int n;
+static int edit_iprev(IFILE h, int n)
 {
 	return (edit_istep(h, n, -1));
 }
 
-	public int
-edit_prev(n)
-	int n;
+public int edit_prev(int n)
 {
 	return edit_istep(curr_ifile, n, -1);
 }
@@ -616,9 +824,7 @@ edit_prev(n)
 /*
  * Edit a specific file in the command line (ifile) list.
  */
-	public int
-edit_index(n)
-	int n;
+public int edit_index(int n)
 {
 	IFILE h;
 
@@ -637,17 +843,14 @@ edit_index(n)
 	return (edit_ifile(h));
 }
 
-	public IFILE
-save_curr_ifile()
+public IFILE save_curr_ifile(void)
 {
 	if (curr_ifile != NULL_IFILE)
 		hold_ifile(curr_ifile, 1);
 	return (curr_ifile);
 }
 
-	public void
-unsave_ifile(save_ifile)
-	IFILE save_ifile;
+public void unsave_ifile(IFILE save_ifile)
 {
 	if (save_ifile != NULL_IFILE)
 		hold_ifile(save_ifile, -1);
@@ -656,9 +859,7 @@ unsave_ifile(save_ifile)
 /*
  * Reedit the ifile which was previously open.
  */
-	public void
-reedit_ifile(save_ifile)
-	IFILE save_ifile;
+public void reedit_ifile(IFILE save_ifile)
 {
 	IFILE next;
 	IFILE prev;
@@ -690,8 +891,7 @@ reedit_ifile(save_ifile)
 	quit(QUIT_ERROR);
 }
 
-	public void
-reopen_curr_ifile()
+public void reopen_curr_ifile(void)
 {
 	IFILE save_ifile = save_curr_ifile();
 	close_file();
@@ -701,8 +901,7 @@ reopen_curr_ifile()
 /*
  * Edit standard input.
  */
-	public int
-edit_stdin()
+public int edit_stdin(void)
 {
 	if (isatty(fd0))
 	{
@@ -716,10 +915,9 @@ edit_stdin()
  * Copy a file directly to standard output.
  * Used if standard output is not a tty.
  */
-	public void
-cat_file()
+public void cat_file(void)
 {
-	register int c;
+	int c;
 
 	while ((c = ch_forw_get()) != EOI)
 		putchr(c);
@@ -728,17 +926,17 @@ cat_file()
 
 #if LOGFILE
 
+#define OVERWRITE_OPTIONS "Overwrite, Append, Don't log, or Quit?"
+
 /*
  * If the user asked for a log file and our input file
  * is standard input, create the log file.  
  * We take care not to blindly overwrite an existing file.
  */
-	public void
-use_logfile(filename)
-	char *filename;
+public void use_logfile(char *filename)
 {
-	register int exists;
-	register int answer;
+	int exists;
+	int answer;
 	PARG parg;
 
 	if (ch_getflags() & CH_CANSEEK)
@@ -750,7 +948,6 @@ use_logfile(filename)
 	/*
 	 * {{ We could use access() here. }}
 	 */
-	filename = shell_unquote(filename);
 	exists = open(filename, OPEN_READ);
 	if (exists >= 0)
 		close(exists);
@@ -772,7 +969,7 @@ use_logfile(filename)
 		 * Ask user what to do.
 		 */
 		parg.p_string = filename;
-		answer = query("Warning: \"%s\" exists; Overwrite, Append or Don't log? ", &parg);
+		answer = query("Warning: \"%s\" exists; "OVERWRITE_OPTIONS" ", &parg);
 	}
 
 loop:
@@ -782,7 +979,7 @@ loop:
 		/*
 		 * Overwrite: create the file.
 		 */
-		logfile = creat(filename, 0644);
+		logfile = creat(filename, CREAT_RW);
 		break;
 	case 'A': case 'a':
 		/*
@@ -799,16 +996,13 @@ loop:
 		/*
 		 * Don't do anything.
 		 */
-		free(filename);
 		return;
-	case 'q':
-		quit(QUIT_OK);
-		/*NOTREACHED*/
 	default:
 		/*
 		 * Eh?
 		 */
-		answer = query("Overwrite, Append, or Don't log? (Type \"O\", \"A\", \"D\" or \"q\") ", NULL_PARG);
+
+		answer = query(OVERWRITE_OPTIONS" (Type \"O\", \"A\", \"D\" or \"Q\") ", NULL_PARG);
 		goto loop;
 	}
 
@@ -819,10 +1013,8 @@ loop:
 		 */
 		parg.p_string = filename;
 		error("Cannot write to \"%s\"", &parg);
-		free(filename);
 		return;
 	}
-	free(filename);
 	SET_BINARY(logfile);
 }
 

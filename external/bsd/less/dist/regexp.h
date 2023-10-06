@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.h,v 1.3 2013/09/04 19:44:21 tron Exp $	*/
+/*	$NetBSD: regexp.h,v 1.4 2023/10/06 05:49:49 simonb Exp $	*/
 
 /*
  * Definitions etc. for regexp(3) routines.
@@ -12,13 +12,13 @@
 
 #define NSUBEXP  10
 typedef struct regexp {
-	char *startp[NSUBEXP];
-	char *endp[NSUBEXP];
-	char regstart;		/* Internal use only. */
-	char reganch;		/* Internal use only. */
-	char *regmust;		/* Internal use only. */
-	int regmlen;		/* Internal use only. */
-	char program[1];	/* Unwarranted chumminess with compiler. */
+        char *startp[NSUBEXP];
+        char *endp[NSUBEXP];
+        char regstart;          /* Internal use only. */
+        char reganch;           /* Internal use only. */
+        char *regmust;          /* Internal use only. */
+        int regmlen;            /* Internal use only. */
+        char program[1];        /* Unwarranted chumminess with compiler. */
 } regexp;
 
 #if defined(__STDC__) || defined(__cplusplus)

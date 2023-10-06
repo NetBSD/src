@@ -1,7 +1,7 @@
-/*	$NetBSD: linenum.c,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
+/*	$NetBSD: linenum.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
 
 /*
- * Copyright (C) 1984-2012  Mark Nudelman
+ * Copyright (C) 1984-2023  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -42,11 +42,11 @@
  */
 struct linenum_info
 {
-	struct linenum_info *next;	/* Link to next in the list */
-	struct linenum_info *prev;	/* Line to previous in the list */
-	POSITION pos;			/* File position */
-	POSITION gap;			/* Gap between prev and next */
-	LINENUM line;			/* Line number */
+	struct linenum_info *next;      /* Link to next in the list */
+	struct linenum_info *prev;      /* Line to previous in the list */
+	POSITION pos;                   /* File position */
+	POSITION gap;                   /* Gap between prev and next */
+	LINENUM line;                   /* Line number */
 };
 /*
  * "gap" needs some explanation: the gap of any particular line number
@@ -57,19 +57,22 @@ struct linenum_info
  * when we have a new one to insert and the table is full.
  */
 
-#define	NPOOL	200			/* Size of line number pool */
+#define NPOOL   200                     /* Size of line number pool */
 
-#define	LONGTIME	(2)		/* In seconds */
+#define LONGTIME        (2)             /* In seconds */
 
-static struct linenum_info anchor;	/* Anchor of the list */
-static struct linenum_info *freelist;	/* Anchor of the unused entries */
-static struct linenum_info pool[NPOOL];	/* The pool itself */
-static struct linenum_info *spare;		/* We always keep one spare entry */
+static struct linenum_info anchor;      /* Anchor of the list */
+static struct linenum_info *freelist;   /* Anchor of the unused entries */
+static struct linenum_info pool[NPOOL]; /* The pool itself */
+static struct linenum_info *spare;      /* We always keep one spare entry */
+public int scanning_eof = FALSE;
 
 extern int linenums;
 extern int sigs;
 extern int sc_height;
 extern int screen_trashed;
+extern int header_lines;
+extern int nonum_headers;
 
 static void calcgap __P((struct linenum_info *));
 static void longloopmessage __P((void));
@@ -78,10 +81,9 @@ static void longish __P((void));
 /*
  * Initialize the line number structures.
  */
-	public void
-clr_linenum()
+public void clr_linenum(void)
 {
-	register struct linenum_info *p;
+	struct linenum_info *p;
 
 	/*
 	 * Put all the entries on the free list.
@@ -106,9 +108,7 @@ clr_linenum()
 /*
  * Calculate the gap for an entry.
  */
-	static void
-calcgap(p)
-	register struct linenum_info *p;
+static void calcgap(struct linenum_info *p)
 {
 	/*
 	 * Don't bother to compute a gap for the anchor.
@@ -126,16 +126,13 @@ calcgap(p)
  * The specified position (pos) should be the file position of the
  * FIRST character in the specified line.
  */
-	public void
-add_lnum(linenum, pos)
-	LINENUM linenum;
-	POSITION pos;
+public void add_lnum(LINENUM linenum, POSITION pos)
 {
-	register struct linenum_info *p;
-	register struct linenum_info *new;
-	register struct linenum_info *nextp;
-	register struct linenum_info *prevp;
-	register POSITION mingap;
+	struct linenum_info *p;
+	struct linenum_info *new;
+	struct linenum_info *nextp;
+	struct linenum_info *prevp;
+	POSITION mingap;
 
 	/*
 	 * Find the proper place in the list for the new one.
@@ -214,19 +211,17 @@ add_lnum(linenum, pos)
  * If we get stuck in a long loop trying to figure out the
  * line number, print a message to tell the user what we're doing.
  */
-	static void
-longloopmessage()
+static void longloopmessage(void)
 {
 	ierror("Calculating line numbers", NULL_PARG);
 }
 
 static int loopcount;
 #if HAVE_TIME
-static long startime;
+static time_type startime;
 #endif
 
-	static void
-longish()
+static void longish(void)
 {
 #if HAVE_TIME
 	if (loopcount >= 0 && ++loopcount > 100)
@@ -251,9 +246,10 @@ longish()
  * Turn off line numbers because the user has interrupted
  * a lengthy line number calculation.
  */
-	static void
-abort_long()
+static void abort_long(void)
 {
+	if (loopcount >= 0)
+		return;
 	if (linenums == OPT_ONPLUS)
 		/*
 		 * We were displaying line numbers, so need to repaint.
@@ -267,12 +263,10 @@ abort_long()
  * Find the line number associated with a given position.
  * Return 0 if we can't figure it out.
  */
-	public LINENUM
-find_linenum(pos)
-	POSITION pos;
+public LINENUM find_linenum(POSITION pos)
 {
-	register struct linenum_info *p;
-	register LINENUM linenum;
+	struct linenum_info *p;
+	LINENUM linenum;
 	POSITION cpos;
 
 	if (!linenums)
@@ -314,6 +308,7 @@ find_linenum(pos)
 #if HAVE_TIME
 	startime = get_time();
 #endif
+	loopcount = 0;
 	if (p == &anchor || pos - p->prev->pos < p->pos - pos)
 	{
 		/*
@@ -322,7 +317,6 @@ find_linenum(pos)
 		p = p->prev;
 		if (ch_seek(p->pos))
 			return (0);
-		loopcount = 0;
 		for (linenum = p->line, cpos = p->pos;  cpos < pos;  linenum++)
 		{
 			/*
@@ -354,7 +348,6 @@ find_linenum(pos)
 		 */
 		if (ch_seek(p->pos))
 			return (0);
-		loopcount = 0;
 		for (linenum = p->line, cpos = p->pos;  cpos > pos;  linenum--)
 		{
 			/*
@@ -374,7 +367,7 @@ find_linenum(pos)
 		 */
 		add_lnum(linenum, cpos);
 	}
-
+	loopcount = 0;
 	return (linenum);
 }
 
@@ -382,11 +375,9 @@ find_linenum(pos)
  * Find the position of a given line number.
  * Return NULL_POSITION if we can't figure it out.
  */
-	public POSITION
-find_pos(linenum)
-	LINENUM linenum;
+public POSITION find_pos(LINENUM linenum)
 {
-	register struct linenum_info *p;
+	struct linenum_info *p;
 	POSITION cpos;
 	LINENUM clinenum;
 
@@ -455,9 +446,7 @@ find_pos(linenum)
  * The argument "where" tells which line is to be considered
  * the "current" line (e.g. TOP, BOTTOM, MIDDLE, etc).
  */
-	public LINENUM
-currline(where)
-	int where;
+public LINENUM currline(int where)
 {
 	POSITION pos;
 	POSITION len;
@@ -473,4 +462,43 @@ currline(where)
 	if (pos == len)
 		linenum--;
 	return (linenum);
+}
+
+/*
+ * Scan entire file, counting line numbers.
+ */
+public void scan_eof(void)
+{
+	POSITION pos = ch_zero();
+	LINENUM linenum = 0;
+
+	if (ch_seek(0))
+		return;
+	ierror("Determining length of file", NULL_PARG);
+	/*
+	 * scanning_eof prevents the "Waiting for data" message from 
+	 * overwriting "Determining length of file".
+	 */
+	scanning_eof = TRUE;
+	while (pos != NULL_POSITION)
+	{
+		/* For efficiency, only add one every 256 line numbers. */
+		if ((linenum++ % 256) == 0)
+			add_lnum(linenum, pos);
+		pos = forw_raw_line(pos, (char **)NULL, (int *)NULL);
+		if (ABORT_SIGS())
+			break;
+	}
+	scanning_eof = FALSE;
+}
+
+/*
+ * Return a line number adjusted for display
+ * (handles the --no-number-headers option).
+ */
+public LINENUM vlinenum(LINENUM linenum)
+{
+	if (nonum_headers)
+		linenum = (linenum < header_lines) ? 0 : linenum - header_lines;
+	return linenum;
 }

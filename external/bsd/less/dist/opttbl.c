@@ -1,7 +1,7 @@
-/*	$NetBSD: opttbl.c,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
+/*	$NetBSD: opttbl.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
 
 /*
- * Copyright (C) 1984-2012  Mark Nudelman
+ * Copyright (C) 1984-2023  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -21,6 +21,7 @@
  * Variables controlled by command line options.
  */
 public int quiet;		/* Should we suppress the audible bell? */
+public int no_vbell;		/* Should we suppress the visual bell? */
 public int how_search;		/* Where should forward searches start? */
 public int top_scroll;		/* Repaint screen from top?
 				   (alternative is scroll from bottom) */
@@ -44,23 +45,49 @@ public int swindow;		/* Size of scrolling window */
 public int jump_sline;		/* Screen line of "jump target" */
 public long jump_sline_fraction = -1;
 public long shift_count_fraction = -1;
-public int chopline;		/* Truncate displayed lines at screen width */
-public int no_init;		/* Disable sending ti/te termcap strings */
-public int no_keypad;		/* Disable sending ks/ke termcap strings */
+public int chopline;            /* Truncate displayed lines at screen width */
+public int wordwrap;            /* Wrap lines at space */
+public int no_init;             /* Disable sending ti/te termcap strings */
+public int no_keypad;           /* Disable sending ks/ke termcap strings */
 public int twiddle;             /* Show tildes after EOF */
-public int show_attn;		/* Hilite first unread line */
-public int shift_count;		/* Number of positions to shift horizontally */
-public int status_col;		/* Display a status column */
-public int use_lessopen;	/* Use the LESSOPEN filter */
-public int quit_on_intr;	/* Quit on interrupt */
-public int follow_mode;		/* F cmd Follows file desc or file name? */
-public int oldbot;		/* Old bottom of screen behavior {{REMOVE}} */
-public int opt_use_backslash;	/* Use backslash escaping in option parsing */
+public int show_attn;           /* Hilite first unread line */
+public int shift_count;         /* Number of positions to shift horizontally */
+public int status_col;          /* Display a status column */
+public int use_lessopen;        /* Use the LESSOPEN filter */
+public int quit_on_intr;        /* Quit on interrupt */
+public int follow_mode;         /* F cmd Follows file desc or file name? */
+public int oldbot;              /* Old bottom of screen behavior {{REMOVE}} */
+public int opt_use_backslash;   /* Use backslash escaping in option parsing */
+public char rscroll_char;       /* Char which marks chopped lines with -S */
+public int rscroll_attr;        /* Attribute of rscroll_char */
+public int no_hist_dups;        /* Remove dups from history list */
+public int mousecap;            /* Allow mouse for scrolling */
+public int wheel_lines;         /* Number of lines to scroll on mouse wheel scroll */
+public int perma_marks;         /* Save marks in history file */
+public int linenum_width;       /* Width of line numbers */
+public int status_col_width;    /* Width of status column */
+public int incr_search;         /* Incremental search */
+public int use_color;           /* Use UI color */
+public int want_filesize;       /* Scan to EOF if necessary to get file size */
+public int status_line;         /* Highlight entire marked lines */
+public int header_lines;        /* Freeze header lines at top of screen */
+public int header_cols;         /* Freeze header columns at left of screen */
+public int nonum_headers;       /* Don't give headers line numbers */
+public int nosearch_headers;    /* Don't search in header lines or columns */
+public int redraw_on_quit;      /* Redraw last screen after term deinit */
+public int def_search_type;     /* */
+public int exit_F_on_close;     /* Exit F command when input closes */
+public int modelines;           /* Lines to read looking for modelines */
+public int show_preproc_error;  /* Display msg when preproc exits with error */
+public int proc_backspace;      /* Special handling of backspace */
+public int proc_tab;            /* Special handling of tab */
+public int proc_return;         /* Special handling of carriage return */
+public char intr_char = CONTROL('X'); /* Char to interrupt reads */
 #if HILITE_SEARCH
-public int hilite_search;	/* Highlight matched search patterns? */
+public int hilite_search;       /* Highlight matched search patterns? */
 #endif
 
-public int less_is_more = 0;	/* Make compatible with POSIX more */
+public int less_is_more = 0;    /* Make compatible with POSIX more */
 
 /*
  * Long option names.
@@ -70,9 +97,7 @@ static struct optname b_optname      = { "buffers",              NULL };
 static struct optname B__optname     = { "auto-buffers",         NULL };
 static struct optname c_optname      = { "clear-screen",         NULL };
 static struct optname d_optname      = { "dumb",                 NULL };
-#if MSDOS_COMPILER
 static struct optname D__optname     = { "color",                NULL };
-#endif
 static struct optname e_optname      = { "quit-at-eof",          NULL };
 static struct optname f_optname      = { "force",                NULL };
 static struct optname F__optname     = { "quit-if-one-screen",   NULL };
@@ -85,6 +110,9 @@ static struct optname j_optname      = { "jump-target",          NULL };
 static struct optname J__optname     = { "status-column",        NULL };
 #if USERFILE
 static struct optname k_optname      = { "lesskey-file",         NULL };
+#if HAVE_LESSKEYSRC 
+static struct optname ks_optname     = { "lesskey-src",          NULL };
+#endif /* HAVE_LESSKEYSRC */
 #endif
 static struct optname K__optname     = { "quit-on-intr",         NULL };
 static struct optname L__optname     = { "no-lessopen",          NULL };
@@ -120,6 +148,34 @@ static struct optname keypad_optname = { "no-keypad",            NULL };
 static struct optname oldbot_optname = { "old-bot",              NULL };
 static struct optname follow_optname = { "follow-name",          NULL };
 static struct optname use_backslash_optname = { "use-backslash", NULL };
+static struct optname rscroll_optname = { "rscroll", NULL };
+static struct optname nohistdups_optname = { "no-histdups",      NULL };
+static struct optname mousecap_optname = { "mouse",              NULL };
+static struct optname wheel_lines_optname = { "wheel-lines",     NULL };
+static struct optname perma_marks_optname = { "save-marks",      NULL };
+static struct optname linenum_width_optname = { "line-num-width", NULL };
+static struct optname status_col_width_optname = { "status-col-width", NULL };
+static struct optname incr_search_optname = { "incsearch",       NULL };
+static struct optname use_color_optname = { "use-color",         NULL };
+static struct optname want_filesize_optname = { "file-size",     NULL };
+static struct optname status_line_optname = { "status-line",     NULL };
+static struct optname header_optname = { "header",               NULL };
+static struct optname nonum_headers_optname = { "no-number-headers", NULL };
+static struct optname nosearch_headers_optname = { "no-search-headers", NULL };
+static struct optname redraw_on_quit_optname = { "redraw-on-quit", NULL };
+static struct optname search_type_optname = { "search-options", NULL };
+static struct optname exit_F_on_close_optname = { "exit-follow-on-close", NULL };
+static struct optname modelines_optname = { "modelines", NULL };
+static struct optname no_vbell_optname = { "no-vbell", NULL };
+static struct optname intr_optname = { "intr", NULL };
+static struct optname wordwrap_optname = { "wordwrap", NULL };
+static struct optname show_preproc_error_optname = { "show-preproc-errors", NULL };
+static struct optname proc_backspace_optname = { "proc-backspace", NULL };
+static struct optname proc_tab_optname = { "proc-tab", NULL };
+static struct optname proc_return_optname = { "proc-return", NULL };
+#if LESSTEST
+static struct optname ttyin_name_optname = { "tty",              NULL };
+#endif /*LESSTEST*/
 
 
 /*
@@ -185,16 +241,14 @@ static struct loption option[] =
 			NULL
 		}
 	},
-#if MSDOS_COMPILER
 	{ 'D', &D__optname,
 		STRING|REPAINT|NO_QUERY, 0, NULL, opt_D,
 		{
 			"color desc: ", 
-			"Ddknsu0123456789.",
+			NULL,
 			NULL
 		}
 	},
-#endif
 	{ 'e', &e_optname,
 		TRIPLE, OPT_OFF, &quit_at_eof, NULL,
 		{
@@ -266,6 +320,12 @@ static struct loption option[] =
 		STRING|NO_TOGGLE|NO_QUERY, 0, NULL, opt_k,
 		{ NULL, NULL, NULL }
 	},
+#if HAVE_LESSKEYSRC 
+	{ OLETTER_NONE, &ks_optname,
+		STRING|NO_TOGGLE|NO_QUERY, 0, NULL, opt_ks,
+		{ NULL, NULL, NULL }
+	},
+#endif /* HAVE_LESSKEYSRC */
 #endif
 	{ 'K', &K__optname,
 		BOOL, OPT_OFF, &quit_on_intr, NULL,
@@ -329,8 +389,8 @@ static struct loption option[] =
 		TRIPLE|REPAINT, OPT_OFF, &ctldisp, NULL,
 		{
 			"Display control characters as ^X",
-			"Display control characters directly",
-			"Display control characters directly, processing ANSI sequences"
+			"Display control characters directly (not recommended)",
+			"Display ANSI sequences directly, other control characters as ^X"
 		}
 	},
 	{ 's', &s_optname,
@@ -360,7 +420,7 @@ static struct loption option[] =
 	},
 #endif
 	{ 'u', &u_optname,
-		TRIPLE|REPAINT, OPT_OFF, &bs_mode, NULL,
+		TRIPLE|REPAINT|HL_REPAINT, OPT_OFF, &bs_mode, NULL,
 		{
 			"Display underlined text in underline mode",
 			"Backspaces cause overstrike",
@@ -467,6 +527,208 @@ static struct loption option[] =
 			NULL
 		}
 	},
+	{ OLETTER_NONE, &rscroll_optname,
+		STRING|REPAINT|INIT_HANDLER, 0, NULL, opt_rscroll,
+		{ "rscroll character: ", NULL, NULL }
+	},
+	{ OLETTER_NONE, &nohistdups_optname,
+		BOOL, OPT_OFF, &no_hist_dups, NULL,
+		{
+			"Allow duplicates in history list",
+			"Remove duplicates from history list",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &mousecap_optname,
+		TRIPLE, OPT_OFF, &mousecap, opt_mousecap,
+		{
+			"Ignore mouse input",
+			"Use the mouse for scrolling",
+			"Use the mouse for scrolling (reverse)"
+		}
+	},
+	{ OLETTER_NONE, &wheel_lines_optname,
+		NUMBER|INIT_HANDLER, 0, &wheel_lines, opt_wheel_lines,
+		{
+			"Lines to scroll on mouse wheel: ",
+			"Scroll %d line(s) on mouse wheel",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &perma_marks_optname,
+		BOOL, OPT_OFF, &perma_marks, NULL,
+		{
+			"Don't save marks in history file",
+			"Save marks in history file",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &linenum_width_optname,
+		NUMBER|REPAINT, MIN_LINENUM_WIDTH, &linenum_width, opt_linenum_width,
+		{
+			"Line number width: ",
+			"Line number width is %d chars",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &status_col_width_optname,
+		NUMBER|REPAINT, 2, &status_col_width, opt_status_col_width,
+		{
+			"Status column width: ",
+			"Status column width is %d chars",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &incr_search_optname,
+		BOOL, OPT_OFF, &incr_search, NULL,
+		{
+			"Incremental search is off",
+			"Incremental search is on",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &use_color_optname,
+		BOOL|REPAINT, OPT_OFF, &use_color, NULL,
+		{
+			"Don't use color",
+			"Use color",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &want_filesize_optname,
+		BOOL|REPAINT, OPT_OFF, &want_filesize, opt_filesize,
+		{
+			"Don't get size of each file",
+			"Get size of each file",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &status_line_optname,
+		BOOL|REPAINT, OPT_OFF, &status_line, NULL,
+		{
+			"Don't color each line with its status column color",
+			"Color each line with its status column color",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &header_optname,
+		STRING|REPAINT, 0, NULL, opt_header,
+		{
+			"Header lines: ",
+			NULL,
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &nonum_headers_optname,
+		BOOL|REPAINT, 0, &nonum_headers, NULL,
+		{
+			"Number header lines",
+			"Don't number header lines",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &nosearch_headers_optname,
+		BOOL|HL_REPAINT, 0, &nosearch_headers, NULL,
+		{
+			"Search includes header lines",
+			"Search does not include header lines",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &redraw_on_quit_optname,
+		BOOL, OPT_OFF, &redraw_on_quit, NULL,
+		{
+			"Don't redraw screen when quitting",
+			"Redraw last screen when quitting",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &search_type_optname,
+		STRING, 0, NULL, opt_search_type,
+		{
+			"Search options: ",
+			NULL,
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &exit_F_on_close_optname,
+		BOOL, OPT_OFF, &exit_F_on_close, NULL,
+		{
+			"Don't exit F command when input closes",
+			"Exit F command when input closes",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &no_vbell_optname,
+		BOOL, OPT_OFF, &no_vbell, NULL,
+		{
+			"Display visual bell",
+			"Don't display visual bell",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &modelines_optname,
+		NUMBER, 0, &modelines, NULL,
+		{
+			"Lines to read looking for modelines: ",
+			"Read %d lines looking for modelines",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &intr_optname,
+		STRING, 0, NULL, opt_intr,
+		{ "interrupt character: ", NULL, NULL }
+	},
+	{ OLETTER_NONE, &wordwrap_optname,
+		BOOL|REPAINT, OPT_OFF, &wordwrap, NULL,
+		{
+			"Wrap lines at any character",
+			"Wrap lines at spaces",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &show_preproc_error_optname,
+		BOOL, OPT_OFF, &show_preproc_error, NULL,
+		{
+			"Don't show error message if preprocessor fails",
+			"Show error message if preprocessor fails",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &proc_backspace_optname,
+		TRIPLE|REPAINT|HL_REPAINT, OPT_OFF, &proc_backspace, NULL,
+		{
+			"Backspace handling is specified by the -U option",
+			"Display underline text in underline mode",
+			"Print backspaces as ^H"
+		}
+	},
+	{ OLETTER_NONE, &proc_tab_optname,
+		TRIPLE|REPAINT|HL_REPAINT, OPT_OFF, &proc_tab, NULL,
+		{
+			"Tab handling is specified by the -U option",
+			"Expand tabs to spaces",
+			"Print tabs as ^I"
+		}
+	},
+	{ OLETTER_NONE, &proc_return_optname,
+		TRIPLE|REPAINT|HL_REPAINT, OPT_OFF, &proc_return, NULL,
+		{
+			"Carriage return handling is specified by the -U option",
+			"Delete carriage return before newline",
+			"Print carriage return as ^M"
+		}
+	},
+#if LESSTEST
+	{ OLETTER_NONE, &ttyin_name_optname,
+		STRING|NO_TOGGLE, 0, NULL, opt_ttyin_name,
+		{
+			NULL,
+			NULL,
+			NULL
+		}
+	},
+#endif /*LESSTEST*/
 	{ '\0', NULL, NOVAR, 0, NULL, NULL, { NULL, NULL, NULL } }
 };
 
@@ -474,14 +736,13 @@ static struct loption option[] =
 /*
  * Initialize each option to its default value.
  */
-	public void
-init_option()
+public void init_option(void)
 {
-	register struct loption *o;
+	struct loption *o;
 	char *p;
 
 	p = lgetenv("LESS_IS_MORE");
-	if (p != NULL && *p != '\0')
+	if (!isnullenv(p))
 		less_is_more = 1;
 
 	for (o = option;  o->oletter != '\0';  o++)
@@ -499,11 +760,9 @@ init_option()
 /*
  * Find an option in the option table, given its option letter.
  */
-	public struct loption *
-findopt(c)
-	int c;
+public struct loption * findopt(int c)
 {
-	register struct loption *o;
+	struct loption *o;
 
 	for (o = option;  o->oletter != '\0';  o++)
 	{
@@ -518,9 +777,7 @@ findopt(c)
 /*
  *
  */
-	static int
-is_optchar(c)
-	char c;
+static int is_optchar(char c)
 {
 	if (ASCII_IS_UPPER(c))
 		return 1;
@@ -537,16 +794,12 @@ is_optchar(c)
  * is updated to point after the matched name.
  * p_oname if non-NULL is set to point to the full option name.
  */
-	public struct loption *
-findopt_name(p_optname, p_oname, p_err)
-	char **p_optname;
-	char **p_oname;
-	int *p_err;
+public struct loption * findopt_name(char **p_optname, char **p_oname, int *p_err)
 {
 	char *optname = *p_optname;
-	register struct loption *o;
-	register struct optname *oname;
-	register int len;
+	struct loption *o;
+	struct optname *oname;
+	int len;
 	int uppercase;
 	struct loption *maxo = NULL;
 	struct optname *maxoname = NULL;
