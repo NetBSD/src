@@ -1022,9 +1022,11 @@ dhcp6_makemessage(struct interface *ifp)
 						n--;
 					while (n-- > 0)
 						*ep++ = *pp--;
-					if (u8)
+					n = (size_t)(ep - exb);
+					if (u8) {
 						*ep = (uint8_t)(*pp << u8);
-					n++;
+						n++;
+					}
 					COPYIN(D6_OPTION_PD_EXCLUDE, exb,
 					    (uint16_t)n);
 					ia_na_len = (uint16_t)
@@ -1628,6 +1630,7 @@ dhcp6_startdiscover(void *arg)
 	struct interface *ifp;
 	struct dhcp6_state *state;
 	int llevel;
+	struct ipv6_addr *ia;
 
 	ifp = arg;
 	state = D6_STATE(ifp);
@@ -1651,6 +1654,14 @@ dhcp6_startdiscover(void *arg)
 	free(state->new);
 	state->new = NULL;
 	state->new_len = 0;
+
+	/* If we fail to renew or confirm, our requested addreses will
+	 * be marked as stale.
+	 To re-request them, just mark them as not stale. */
+	TAILQ_FOREACH(ia, &state->addrs, next) {
+		if (ia->flags & IPV6_AF_REQUEST)
+			ia->flags &= ~IPV6_AF_STALE;
+	}
 
 	if (dhcp6_makemessage(ifp) == -1)
 		logerr("%s: %s", __func__, ifp->name);
@@ -2268,9 +2279,7 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 		} else {
 			if (!(a->flags & IPV6_AF_DELEGATEDPFX))
 				a->flags |= IPV6_AF_NEW | IPV6_AF_DELEGATEDPFX;
-			a->flags &= ~(IPV6_AF_STALE |
-				      IPV6_AF_EXTENDED |
-				      IPV6_AF_REQUEST);
+			a->flags &= ~(IPV6_AF_STALE | IPV6_AF_EXTENDED);
 			if (a->prefix_vltime != pdp.vltime)
 				a->flags |= IPV6_AF_NEW;
 		}

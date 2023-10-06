@@ -125,6 +125,8 @@ dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
 		printf(" binhex");
 	else if (opt->type & OT_STRING)
 		printf(" string");
+	else if (opt->type & OT_URI)
+		printf(" uri");
 	if (opt->type & OT_RFC3361)
 		printf(" rfc3361");
 	if (opt->type & OT_RFC3442)
@@ -518,6 +520,10 @@ print_string(char *dst, size_t len, int type, const uint8_t *data, size_t dl)
 			errno = EINVAL;
 			break;
 		}
+		if (type & OT_URI && isspace(c)) {
+			errno = EINVAL;
+			break;
+		}
 		if ((type & (OT_ESCSTRING | OT_ESCFILE) &&
 		    (c == '\\' || !isascii(c) || !isprint(c))) ||
 		    (type & OT_ESCFILE && (c == '/' || c == ' ')))
@@ -675,7 +681,58 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 		return print_rfc3442(fp, data, dl);
 #endif
 
-	if (opt->type & OT_STRING) {
+	/* Produces a space separated list of URIs.
+	 * This is valid as a URI cannot contain a space. */
+	if ((opt->type & (OT_ARRAY | OT_URI)) == (OT_ARRAY | OT_URI)) {
+#ifdef SMALL
+		errno = ENOTSUP;
+		return -1;
+#else
+		char buf[UINT16_MAX + 1];
+		uint16_t sz;
+		bool first = true;
+
+		while (dl) {
+			if (dl < 2) {
+				errno = EINVAL;
+				goto err;
+			}
+
+			memcpy(&u16, data, sizeof(u16));
+			sz = ntohs(u16);
+			data += sizeof(u16);
+			dl -= sizeof(u16);
+
+			if (sz == 0)
+				continue;
+			if (sz > dl) {
+				errno = EINVAL;
+				goto err;
+			}
+
+			if (print_string(buf, sizeof(buf),
+			    opt->type, data, sz) == -1)
+				goto err;
+
+			if (first)
+				first = false;
+			else if (fputc(' ', fp) == EOF)
+				goto err;
+
+			if (fprintf(fp, "%s", buf) == -1)
+				goto err;
+
+			data += sz;
+			dl -= sz;
+		}
+
+		if (fputc('\0', fp) == EOF)
+			goto err;
+		return 0;
+#endif
+	}
+
+	if (opt->type & (OT_STRING | OT_URI)) {
 		char buf[1024];
 
 		if (print_string(buf, sizeof(buf), opt->type, data, dl) == -1)
