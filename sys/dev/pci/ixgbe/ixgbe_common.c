@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.46 2023/10/06 14:41:24 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.47 2023/10/06 14:48:08 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.46 2023/10/06 14:41:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.47 2023/10/06 14:48:08 msaitoh Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -1904,7 +1904,6 @@ static s32 ixgbe_get_eeprom_semaphore(struct ixgbe_hw *hw)
 
 	DEBUGFUNC("ixgbe_get_eeprom_semaphore");
 
-
 	/* Get SMBI software semaphore between device drivers first */
 	for (i = 0; i < timeout; i++) {
 		/*
@@ -3388,7 +3387,6 @@ s32 ixgbe_disable_sec_rx_path_generic(struct ixgbe_hw *hw)
 	int secrxreg;
 
 	DEBUGFUNC("ixgbe_disable_sec_rx_path_generic");
-
 
 	secrxreg = IXGBE_READ_REG(hw, IXGBE_SECRXCTRL);
 	secrxreg |= IXGBE_SECRXCTRL_RX_DIS;
