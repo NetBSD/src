@@ -1,4 +1,4 @@
-/*	$NetBSD: linenum.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
+/*	$NetBSD: linenum.c,v 1.6 2023/10/06 06:25:22 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2023  Mark Nudelman
@@ -73,10 +73,6 @@ extern int sc_height;
 extern int screen_trashed;
 extern int header_lines;
 extern int nonum_headers;
-
-static void calcgap __P((struct linenum_info *));
-static void longloopmessage __P((void));
-static void longish __P((void));
 
 /*
  * Initialize the line number structures.
