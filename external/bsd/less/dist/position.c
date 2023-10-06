@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
+/*	$NetBSD: position.c,v 1.6 2023/10/06 07:33:49 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2023  Mark Nudelman
@@ -102,7 +102,6 @@ public void pos_clear(void)
 public void pos_init(void)
 {
 	struct scrpos scrpos;
-	scrpos.pos = scrpos.ln = 0;	/* XXX: GCC */
 
 	if (sc_height <= table_size)
 		return;
