@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.89 2023/10/06 14:37:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.90 2023/10/06 14:38:03 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -691,19 +691,6 @@ struct ixgbe_softc {
 	"\t1 - rx pause\n" \
 	"\t2 - tx pause\n" \
 	"\t3 - tx and rx pause"
-
-/* Workaround to make 8.0 buildable */
-#if __FreeBSD_version >= 800000 && __FreeBSD_version < 800504
-static __inline int
-drbr_needs_enqueue(struct ifnet *ifp, struct buf_ring *br)
-{
-#ifdef ALTQ
-	if (ALTQ_IS_ENABLED(&ifp->if_snd))
-		return (1);
-#endif
-	return (!buf_ring_empty(br));
-}
-#endif
 
 /*
  * Find the number of unrefreshed RX descriptors
