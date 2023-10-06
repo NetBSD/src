@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.21 2023/09/03 08:48:20 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.22 2023/10/06 08:48:49 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 
 #define	PMAP_HWPAGEWALKER		1
 #define	PMAP_TLB_MAX			1
+#define	PMAP_TLB_ALWAYS_ASIDS		false
 #ifdef _LP64
 #define	PMAP_INVALID_PDETAB_ADDRESS	((pmap_pdetab_t *)(VM_MIN_KERNEL_ADDRESS - PAGE_SIZE))
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)(VM_MIN_KERNEL_ADDRESS - PAGE_SIZE))
