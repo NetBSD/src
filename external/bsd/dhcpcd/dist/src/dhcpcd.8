@@ -452,9 +452,9 @@ variable for use in
 .Pa /libexec/dhcpcd-run-hooks .
 .It Fl p , Fl Fl persistent
 .Nm
-normally de-configures the
+de-configures the
 .Ar interface
-when it exits.
+when it exits unless this option is enabled.
 Sometimes, this isn't desirable if, for example, you have root mounted over
 NFS or SSH clients connect to this host and they need to be notified of
 the host shutting down.

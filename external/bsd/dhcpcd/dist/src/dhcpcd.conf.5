@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 31, 2022
+.Dd October 4, 2023
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -927,6 +927,10 @@ A fixed value (1) to indicate that the option is present, 0 bytes.
 An RFC 3397 encoded string.
 .It Ic dname
 An RFC 1035 validated string.
+.It Ic uri
+If an array then the first two bytes are the URI length inside the option data.
+Otherwise, the whole option data is the URI.
+As a space is not allowed in the URI encoding, the URIs are space separated.
 .It Ic binhex Op : Ic length
 Binary data expressed as hexadecimal.
 .It Ic embed

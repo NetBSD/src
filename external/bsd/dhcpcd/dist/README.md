@@ -78,8 +78,8 @@ which only apply to calling dhcpcd from the command line.
 
 
 ## Compatibility
-dhcpcd-5 is only fully command line compatible with dhcpcd-4
-For compatibility with older versions, use dhcpcd-4
+dhcpcd-5 is only fully command line compatible with dhcpcd-4. 
+For compatibility with older versions, use dhcpcd-4.
 
 ## Upgrading
 dhcpcd-7 defaults the database directory to `/var/db/dhcpcd` instead of
@@ -87,7 +87,7 @@ dhcpcd-7 defaults the database directory to `/var/db/dhcpcd` instead of
 in /etc.
 
 dhcpcd-9 defaults the run directory to `/var/run/dhcpcd` instead of
-`/var/run` and the prefix of dhcpcd has been removed from the files.
+`/var/run` and the prefix of dhcpcd has been removed from the files therein.
 
 ## ChangeLog
 We no longer supply a ChangeLog.

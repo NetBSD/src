@@ -115,7 +115,7 @@
 
 #define PS_ROOT_FD(ctx) ((ctx)->ps_root ? (ctx)->ps_root->psp_fd : -1)
 
-#ifdef __linux__
+#if !defined(DISABLE_SECCOMP) && defined(__linux__)
 # include <linux/version.h>
 # if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
 #  define HAVE_SECCOMP
