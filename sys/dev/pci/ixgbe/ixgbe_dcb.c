@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_dcb.c,v 1.14 2023/10/06 14:45:27 msaitoh Exp $ */
+/* $NetBSD: ixgbe_dcb.c,v 1.15 2023/10/06 14:48:08 msaitoh Exp $ */
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_dcb.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb.c,v 1.14 2023/10/06 14:45:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb.c,v 1.15 2023/10/06 14:48:08 msaitoh Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_dcb.h"
@@ -297,7 +297,7 @@ void ixgbe_dcb_unpack_map_cee(struct ixgbe_dcb_config *cfg, int direction,
 }
 
 /**
- * ixgbe_dcb_config - Struct containing DCB settings.
+ * ixgbe_dcb_check_config_cee - Struct containing DCB settings.
  * @dcb_config: Pointer to DCB config structure
  *
  * This function checks DCB rules for DCB settings.

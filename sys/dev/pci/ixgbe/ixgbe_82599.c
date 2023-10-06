@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82599.c,v 1.31 2023/10/06 14:40:06 msaitoh Exp $ */
+/* $NetBSD: ixgbe_82599.c,v 1.32 2023/10/06 14:48:08 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.31 2023/10/06 14:40:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.32 2023/10/06 14:48:08 msaitoh Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -630,7 +630,6 @@ s32 ixgbe_start_mac_link_82599(struct ixgbe_hw *hw,
 	bool got_lock = FALSE;
 
 	DEBUGFUNC("ixgbe_start_mac_link_82599");
-
 
 	/*  reset_pipeline requires us to hold this lock as it writes to
 	 *  AUTOC.

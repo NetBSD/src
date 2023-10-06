@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.91 2023/10/06 14:42:51 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.92 2023/10/06 14:48:08 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -199,11 +199,6 @@
  */
 #define IXGBE_82599_SCATTER_MAX	(40 - IXGBE_TX_WTHRESH - 2)
 #define IXGBE_SCATTER_DEFAULT	33
-
-/* Keep older OS drivers building... */
-#if !defined(SYSCTL_ADD_UQUAD)
-#define SYSCTL_ADD_UQUAD SYSCTL_ADD_QUAD
-#endif
 
 /* Defines for printing debug information */
 #define DEBUG_INIT  0

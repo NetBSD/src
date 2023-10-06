@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_bypass.h,v 1.4 2023/10/06 14:37:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe_bypass.h,v 1.5 2023/10/06 14:48:08 msaitoh Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2020, Intel Corporation
@@ -35,7 +35,6 @@
 
 #ifndef _IXGBE_BYPASS_H_
 #define _IXGBE_BYPASS_H_
-
 
 /*
  * The bypass driver needs to set FW to a epoc of the number of

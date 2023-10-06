@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.337 2023/10/06 14:46:31 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.338 2023/10/06 14:48:08 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.337 2023/10/06 14:46:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.338 2023/10/06 14:48:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -764,8 +764,6 @@ ixgbe_initialize_transmit_units(struct ixgbe_softc *sc)
 		rttdcs &= ~IXGBE_RTTDCS_ARBDIS;
 		IXGBE_WRITE_REG(hw, IXGBE_RTTDCS, rttdcs);
 	}
-
-	return;
 } /* ixgbe_initialize_transmit_units */
 
 static void
