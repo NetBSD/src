@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82599.c,v 1.30 2023/10/04 04:31:25 msaitoh Exp $ */
+/* $NetBSD: ixgbe_82599.c,v 1.31 2023/10/06 14:40:06 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.30 2023/10/04 04:31:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.31 2023/10/06 14:40:06 msaitoh Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -570,6 +570,9 @@ enum ixgbe_media_type ixgbe_get_media_type_82599(struct ixgbe_hw *hw)
 		break;
 	case IXGBE_DEV_ID_82599_T3_LOM:
 		media_type = ixgbe_media_type_copper;
+		break;
+	case IXGBE_DEV_ID_82599_LS:
+		media_type = ixgbe_media_type_fiber_lco;
 		break;
 	case IXGBE_DEV_ID_82599_QSFP_SF_QP:
 		media_type = ixgbe_media_type_fiber_qsfp;

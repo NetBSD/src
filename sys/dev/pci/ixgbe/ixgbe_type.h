@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.58 2023/10/06 14:37:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.59 2023/10/06 14:40:06 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -108,6 +108,7 @@
 #define IXGBE_DEV_ID_82599_KR			0x1517
 #define IXGBE_DEV_ID_82599_COMBO_BACKPLANE	PCI_PRODUCT_INTEL_82599_COMBO_BACKPLANE
 #define IXGBE_SUBDEV_ID_82599_KX4_KR_MEZZ	0x000C
+#define IXGBE_DEV_ID_82599_LS			0x154F
 #define IXGBE_DEV_ID_82599_CX4			PCI_PRODUCT_INTEL_82599_CX4
 #define IXGBE_DEV_ID_82599_SFP			PCI_PRODUCT_INTEL_82599_SFP
 #define IXGBE_SUBDEV_ID_82599_SFP_WOL0		0x1071
@@ -3796,6 +3797,7 @@ enum ixgbe_media_type {
 	ixgbe_media_type_fiber,
 	ixgbe_media_type_fiber_fixed,
 	ixgbe_media_type_fiber_qsfp,
+	ixgbe_media_type_fiber_lco,
 	ixgbe_media_type_copper,
 	ixgbe_media_type_backplane,
 	ixgbe_media_type_cx4,
