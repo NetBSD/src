@@ -1,4 +1,4 @@
-/*	$NetBSD: decode.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
+/*	$NetBSD: decode.c,v 1.6 2023/10/06 07:09:15 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2023  Mark Nudelman
@@ -240,6 +240,7 @@ static struct tablelist *list_fcmd_tables = NULL;
 static struct tablelist *list_ecmd_tables = NULL;
 static struct tablelist *list_var_tables = NULL;
 static struct tablelist *list_sysvar_tables = NULL;
+
 
 /*
  * Expand special key abbreviations in a command table.
