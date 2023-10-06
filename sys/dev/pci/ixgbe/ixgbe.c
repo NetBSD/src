@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.331 2023/09/14 08:48:29 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.332 2023/10/06 14:35:25 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.331 2023/09/14 08:48:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.332 2023/10/06 14:35:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4551,8 +4551,6 @@ ixgbe_set_rxfilter(struct adapter *adapter)
 	} else
 		fctrl &= ~(IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
 
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, fctrl);
-
 	/* Update multicast filter entries only when it's not ALLMULTI */
 	if ((ec->ec_flags & ETHER_F_ALLMULTI) == 0) {
 		ETHER_UNLOCK(ec);
@@ -4561,6 +4559,8 @@ ixgbe_set_rxfilter(struct adapter *adapter)
 		    ixgbe_mc_array_itr, TRUE);
 	} else
 		ETHER_UNLOCK(ec);
+
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, fctrl);
 } /* ixgbe_set_rxfilter */
 
 /************************************************************************
