@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.4 2017/11/06 03:47:47 christos Exp $ */
+/* $NetBSD: db_machdep.h,v 1.5 2023/10/06 11:45:37 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -76,8 +76,8 @@ extern db_regs_t	*ddb_regp;	/* pointer to current register state */
 
 #define ADDR_SLOT0(addr)	( (addr) & ~(0xFUL) )
 #define SLOT_ADDR(addr)		( (addr) & (0xFUL) )
-/* breakpoint address. 
- * Check for violations of pseudo offsets above 2. 
+/* breakpoint address.
+ * Check for violations of pseudo offsets above 2.
  * Adjust for 32 bit shift within Bundle.
  */
 

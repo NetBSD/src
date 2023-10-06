@@ -178,10 +178,10 @@ void pmap_procwr(struct proc *, vaddr_t, vsize_t);
 struct vm_page_md {
 	TAILQ_HEAD(,pv_entry)	pv_list;
 	vm_memattr_t		memattr;
-#if 0 /* XXX freebsd */	
+#if 0 /* XXX freebsd */
 	uint8_t		pv_flags;
 	uint8_t		aflags;
-#endif	
+#endif
 };
 
 #define	VM_MDPAGE_INIT(pg)						\

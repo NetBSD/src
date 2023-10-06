@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.9 2022/02/12 17:17:53 riastradh Exp $	*/
+/*	$NetBSD: lock.h,v 1.10 2023/10/06 11:45:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 	uint8_t val;
 
 	val = __SIMPLELOCK_LOCKED;
-	__asm volatile ("xchg1 %0=[%1],%2" : 
+	__asm volatile ("xchg1 %0=[%1],%2" :
 	    "=r" (val)
 	    :"r" (lockp), "r" (val)
 	    :"memory");

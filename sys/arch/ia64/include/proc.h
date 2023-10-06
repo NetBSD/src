@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.10 2018/12/29 20:06:49 scole Exp $	*/
+/*	$NetBSD: proc.h,v 1.11 2023/10/06 11:45:37 skrll Exp $	*/
 
 #ifndef _IA64_PROC_H_
 #define _IA64_PROC_H_
@@ -8,7 +8,7 @@
 /*
  * Process u-area is organised as follows:
  *
- *   ------------------------------------------- 
+ *   -------------------------------------------
  *  |                      |         |    |     |
  *  |  bspstore       sp   | 16bytes | TF | PCB |
  *  |  ---->        <---   |         |    |     |

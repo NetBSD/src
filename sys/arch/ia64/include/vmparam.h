@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 2019/03/29 16:04:54 scole Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 2023/10/06 11:45:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -123,7 +123,7 @@
 #define IA64_PBVM_PAGE_SHIFT    16      /* 64KB */
 #define IA64_PBVM_PAGE_SIZE     (1 << IA64_PBVM_PAGE_SHIFT)
 #define IA64_PBVM_PAGE_MASK     (IA64_PBVM_PAGE_SIZE - 1)
-  
+
 #define	IA64_ID_PAGE_SHIFT	28		/* 256M */
 #define	IA64_ID_PAGE_SIZE	(1 << IA64_ID_PAGE_SHIFT)
 #define	IA64_ID_PAGE_MASK	(IA64_ID_PAGE_SIZE-1)

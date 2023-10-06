@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2022/05/31 08:43:14 andvar Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 2023/10/06 11:45:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ struct clockframe {
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid. XXX:Fixme.... On the ia64 I haven't yet figured 
+ * buffer pages are invalid. XXX:Fixme.... On the ia64 I haven't yet figured
  * out what to do about this.. XXX.
  */
 /* extern void	cpu_need_proftick(struct lwp *l); */

@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.1 2009/07/20 04:41:37 kiyohara Exp $	*/
+ /*	$NetBSD: userret.h,v 1.2 2023/10/06 11:45:37 skrll Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.

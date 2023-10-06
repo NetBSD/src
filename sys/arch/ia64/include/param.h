@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11 2021/05/31 14:38:55 simonb Exp $	*/
+ /*	$NetBSD: param.h,v 1.12 2023/10/06 11:45:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,10 +118,10 @@
 
 #define ia64_round_page(x)   ((((unsigned long)(x)) + NBPG - 1) & ~(NBPG - 1))
 #define ia64_trunc_page(x)   ((unsigned long)(x) & ~(NBPG - 1))
-                
+
 #define ia64_btop(x)            ((unsigned long)(x) >> PGSHIFT)
-#define ia64_ptob(x)            ((unsigned long)(x) << PGSHIFT) 
-                
+#define ia64_ptob(x)            ((unsigned long)(x) << PGSHIFT)
+
 #ifdef _KERNEL
 #ifndef _LOCORE
 
