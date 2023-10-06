@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.42 2022/04/09 23:38:32 riastradh Exp $ */
+/* $NetBSD: pmap.c,v 1.43 2023/10/06 11:45:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2022/04/09 23:38:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2023/10/06 11:45:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -450,7 +450,7 @@ pmap_bootstrap(void)
 	memset((void *)ia64_kptdir, 0, PAGE_SIZE);
 	nkpt = 0;
 	kernel_vm_end = VM_INIT_KERNEL_ADDRESS;
-	
+
 	/*
 	 * Determine a valid (mappable) VHPT size.
 	 */
@@ -466,7 +466,7 @@ pmap_bootstrap(void)
 	size = 1UL << pmap_vhpt_log2size;
 	/* XXX add some retries here */
 	base = pmap_steal_vhpt_memory(size);
-	
+
 	curcpu()->ci_vhpt = base;
 
 	if (base == 0)
@@ -493,7 +493,7 @@ pmap_bootstrap(void)
 	 virtual_avail = VM_INIT_KERNEL_ADDRESS;
 	 virtual_end = VM_MAX_KERNEL_ADDRESS;
 	*/
-	
+
 	/*
 	 * Initialize the kernel pmap (which is statically allocated).
 	 */
@@ -548,18 +548,18 @@ pmap_invalidate_page(vaddr_t va)
 	u_int vhpt_ofs;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-	
+
 	critical_enter();
 
 	vhpt_ofs = ia64_thash(va) - curcpu()->ci_vhpt;
-	
+
 	tag = ia64_ttag(va);
 
 	for (CPU_INFO_FOREACH(cii,ci)) {
 		pte = (struct ia64_lpte *)(ci->ci_vhpt + vhpt_ofs);
 		atomic_cmpset_64(&pte->tag, tag, 1UL << 63);
 	}
-	
+
 	mutex_spin_enter(&pmap_ptc_mutex);
 
 	ia64_ptc_ga(va, PAGE_SHIFT << 2);
@@ -567,7 +567,7 @@ pmap_invalidate_page(vaddr_t va)
 	ia64_srlz_i();
 
 	mutex_spin_exit(&pmap_ptc_mutex);
-	
+
 	ia64_invala();
 
 	critical_exit();
@@ -580,7 +580,7 @@ pmap_invalidate_all(void)
 	int i, j;
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	
+
 	addr = pmap_ptc_e_base;
 	for (i = 0; i < pmap_ptc_e_count1; i++) {
 		for (j = 0; j < pmap_ptc_e_count2; j++) {
@@ -599,7 +599,7 @@ pmap_allocate_rid(void)
 	int rid;
 
 	mutex_enter(&pmap_ridmutex);
-	
+
 	if (pmap_ridcount == pmap_ridmax)
 		panic("pmap_allocate_rid: All Region IDs used");
 
@@ -622,7 +622,7 @@ pmap_allocate_rid(void)
 	pmap_ridcount++;
 
 	mutex_exit(&pmap_ridmutex);
-	
+
 	return rid;
 }
 
@@ -853,7 +853,7 @@ free_pv_chunk(struct pv_chunk *pc)
 
 	/* XXX might to need locks/other checks here, uvm_unwire, pmap_kremove... */
 	uvm_pagefree(m);
-#endif	
+#endif
 	vm_page_free1(m);
 }
 
@@ -901,7 +901,7 @@ retry:
 
 	/* No free items, allocate another chunk */
 	m = vm_page_alloc1();
-	
+
 	if (m == NULL) {
 		if (try) {
 			pv_entry_count--;
@@ -912,7 +912,7 @@ retry:
 		if (m == NULL)
 			goto retry;
 	}
-	
+
 	PV_STAT(pc_chunk_count++);
 	PV_STAT(pc_chunk_allocs++);
 	pc = (struct pv_chunk *)IA64_PHYS_TO_RR7(VM_PAGE_TO_PHYS(m));
@@ -1053,7 +1053,7 @@ pmap_remove_entry(pmap_t pmap, struct vm_page *m, vaddr_t va, pv_entry_t pv)
 	KASSERT(rw_write_held(&pvh_global_lock));
 	if (!pv) {
 		TAILQ_FOREACH(pv, &m->mdpage.pv_list, pv_list) {
-			if (pmap == PV_PMAP(pv) && va == pv->pv_va) 
+			if (pmap == PV_PMAP(pv) && va == pv->pv_va)
 				break;
 		}
 	}
@@ -1116,12 +1116,12 @@ pmap_find_kpte(vaddr_t va)
 		    KPTE_DIR0_INDEX(va), KPTE_DIR1_INDEX(va), KPTE_PTE_INDEX(va), 0);
 	UVMHIST_LOG(maphist, "(dir1=%p, leaf=%p ret=%p)",
 		    dir1, leaf, &leaf[KPTE_PTE_INDEX(va)], 0);
-	
+
 	return (&leaf[KPTE_PTE_INDEX(va)]);
 }
 
 /*
- * Find a pte suitable for mapping a user-space address. If one exists 
+ * Find a pte suitable for mapping a user-space address. If one exists
  * in the VHPT, that one will be returned, otherwise a new pte is
  * allocated.
  */
@@ -1224,7 +1224,7 @@ pmap_remove_pte(pmap_t pmap, struct ia64_lpte *pte, vaddr_t va,
 	 */
 	error = pmap_remove_vhpt(va);
 	KASSERTMSG(error == 0, "%s: pmap_remove_vhpt returned %d",__func__, error);
-	
+
 	pmap_invalidate_page(va);
 
 	if (pmap_wired(pte))
@@ -1256,25 +1256,25 @@ void
 pmap_init(void)
 {
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	
+
 	pmap_pool_cache = pool_cache_init(sizeof(struct pmap), 0, 0, 0,
 					  "pmap_pool_cache", NULL, IPL_VM,
 					  NULL, NULL, NULL);
 	if (pmap_pool_cache == NULL)
 		panic("%s cannot allocate pmap pool", __func__);
-	
+
 	pte_pool_cache = pool_cache_init(sizeof(struct ia64_lpte), 0, 0, 0,
 					 "pte_pool_cache", NULL, IPL_VM,
 					 NULL, NULL, NULL);
 	if (pte_pool_cache == NULL)
 		panic("%s cannot allocate pte pool", __func__);
 
-	
+
 	pmap_initialized = true;
 
 #if DEBUG
 	if (0) pmap_testout();
-#endif	
+#endif
 }
 
 /*
@@ -1383,7 +1383,7 @@ pmap_steal_vhpt_memory(vsize_t size)
 		if (uvm_physseg_get_avail_start(upm) != uvm_physseg_get_start(upm) || /* XXX: ??? */
 		    uvm_physseg_get_avail_start(upm) >= uvm_physseg_get_avail_end(upm))
 			continue;
-		
+
 		/* Break off a VHPT sized, aligned chunk off this segment. */
 
 		start1 = uvm_physseg_get_avail_start(upm);
@@ -1484,7 +1484,7 @@ pmap_create(void)
 
 	if (pmap == NULL)
 		panic("%s no pool", __func__);
-	
+
 	PMAP_LOCK_INIT(pmap);
 
 	for (i = 0; i < IA64_VM_MINKERN_REGION; i++)
@@ -1498,7 +1498,7 @@ pmap_create(void)
 	pmap->pm_refcount = 1;
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "(pm=%p)", pmap, 0, 0, 0);	
+	UVMHIST_LOG(maphist, "(pm=%p)", pmap, 0, 0, 0);
 
 	return pmap;
 }
@@ -1535,7 +1535,7 @@ pmap_destroy(pmap_t pmap)
 
 	/*PMAP_UNLOCK(pmap);*/ /* XXX hmm */
 	PMAP_LOCK_DESTROY(pmap);
-	
+
 	pool_cache_put(pmap_pool_cache, pmap);
 }
 
@@ -1588,7 +1588,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	paddr_t pa;
 	vaddr_t va;
 #endif
-	
+
 	/* XXX this function may still need serious fixin' */
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(va=%#lx, nkpt=%ld, kvm_end=%#lx before)", maxkvaddr, nkpt, kernel_vm_end, 0);
@@ -1609,7 +1609,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			/* FreeBSD does it this way... */
 			nkpg = vm_page_alloc(NULL, nkpt++, VM_ALLOC_NOOBJ|VM_ALLOC_INTERRUPT|VM_ALLOC_WIRED);
 			pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE|UVM_PGA_ZERO);
-#endif			
+#endif
 			pg = vm_page_alloc1();
 			if (!pg)
 				panic("%s: cannot add dir1 page", __func__);
@@ -1618,7 +1618,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 #if 0
 			dir1 = (struct ia64_lpte **)pmap_page_to_va(nkpg);
 			bzero(dir1, PAGE_SIZE);
-#endif			
+#endif
 			dir1 = (struct ia64_lpte **)pmap_page_to_va(pg);
 
 			ia64_kptdir[KPTE_DIR0_INDEX(kernel_vm_end)] = dir1;
@@ -1627,15 +1627,15 @@ pmap_growkernel(vaddr_t maxkvaddr)
 #if 0
 		nkpg = vm_page_alloc(NULL, nkpt++, VM_ALLOC_NOOBJ|VM_ALLOC_INTERRUPT|VM_ALLOC_WIRED);
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE|UVM_PGA_ZERO);
-#endif		
+#endif
 		pg = vm_page_alloc1();
 		if (!pg)
 			panic("%s: cannot add PTE page", __func__);
 		nkpt++;
-#if 0		
+#if 0
 		leaf = (struct ia64_lpte *)pmap_page_to_va(nkpg);
 		bzero(leaf, PAGE_SIZE);
-#endif		
+#endif
 		leaf = (struct ia64_lpte *)pmap_page_to_va(pg);
 
 		dir1[KPTE_DIR1_INDEX(kernel_vm_end)] = leaf;
@@ -1668,7 +1668,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/* vm_memattr_t ma; */
 
 	/* XXX this needs work */
-	
+
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(pm=%p, va=%#lx, pa=%p, prot=%#x)", pmap, va, pa, prot);
 
@@ -1677,7 +1677,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	canfail = (flags & PMAP_CANFAIL) != 0;
 
 	/* ma = pmap_flags_to_memattr(flags); */
-	
+
 	rw_enter(&pvh_global_lock, RW_WRITER);
 	PMAP_LOCK(pmap);
 	oldpmap = pmap_switch(pmap);
@@ -1717,7 +1717,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/* XXX hmm
 	pa = VM_PAGE_TO_PHYS(m);
 	*/
-	
+
 	m = PHYS_TO_VM_PAGE(pa);
 	if (m == NULL) {
 		/* implies page not managed? */
@@ -1770,10 +1770,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * Enter on the PV list if part of our managed memory.
 	 */
 	if (vm_page_is_managed(m)) {
-#if 0		
+#if 0
 		KASSERTMSG(va < kmi.clean_sva || va >= kmi.clean_eva,
 			   ("pmap_enter: managed mapping within the clean submap"));
-#endif		
+#endif
 		pmap_insert_entry(pmap, va, m);
 		managed = true;
 	}
@@ -1897,7 +1897,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		panic("pmap_protect: unaligned addresses");
 	sva = trunc_page(sva);
 	eva = round_page(eva) - 1;
-	
+
 	PMAP_LOCK(pmap);
 	oldpmap = pmap_switch(pmap);
 	for ( ; sva < eva; sva += PAGE_SIZE) {
@@ -1913,7 +1913,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		/* wired pages unaffected by prot changes */
 		if (pmap_wired(pte))
 			continue;
-		
+
 		if ((prot & VM_PROT_WRITE) == 0 &&
 		    pmap_managed(pte) && pmap_dirty(pte)) {
 			paddr_t pa = pmap_ppn(pte);
@@ -1960,13 +1960,13 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	/* XXX panic if no pte or not wired? */
 	if (pte == NULL)
 		panic("pmap_unwire: %lx not found in vhpt", va);
-	
+
 	if (!pmap_wired(pte))
 		panic("pmap_unwire: pte %p isn't wired", pte);
-	
+
 	pmap->pm_stats.wired_count--;
 	pmap_clear_wired(pte);
-	
+
 	pmap_switch(oldpmap);
 	PMAP_UNLOCK(pmap);
 }
@@ -2001,7 +2001,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		*pap = pa;
 
 	UVMHIST_LOG(maphist, "(pa=%#lx)", pa, 0, 0, 0);
-	
+
 	return (pa != 0);
 }
 /*
@@ -2018,7 +2018,7 @@ pmap_kextract(vaddr_t va)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(va=%#lx)", va, 0, 0, 0);
-	
+
 	KASSERTMSG(va >= VM_MAXUSER_ADDRESS, "Must be kernel VA");
 
 	/* Regions 6 and 7 are direct mapped. */
@@ -2084,12 +2084,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	vm_memattr_t attr;
 	const bool managed = false;  /* don't gather ref/mod info */
 	const bool wired = true;     /* pmap_kenter_pa always wired */
-	
+
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(va=%#lx, pa=%#lx, prot=%p, flags=%p)", va, pa, prot, flags);
 
 	KASSERT(va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS);
-	
+
 	attr = pmap_flags_to_memattr(flags);
 
 	pte = pmap_find_kpte(va);
@@ -2116,7 +2116,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 {
 	struct ia64_lpte *pte;
 	vaddr_t eva = va + size;
-	
+
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(va=%#lx)", va, 0, 0, 0);
 
@@ -2179,7 +2179,7 @@ pmap_activate(struct lwp *l)
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(lwp=%p)", l, 0, 0, 0);
 	KASSERT(l == curlwp);
-#if 0	
+#if 0
 	/* pmap_switch(vmspace_pmap(td->td_proc->p_vmspace)); */
 	pmap_switch(vm_map_pmap(&l->l_proc->p_vmspace->vm_map));
 #else
@@ -2226,7 +2226,7 @@ pmap_zero_page(paddr_t phys)
 {
 	struct vm_page *m;
 	vaddr_t va;
-	
+
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(pa=%p)", phys, 0, 0, 0);
 
@@ -2261,11 +2261,11 @@ pmap_copy_page(paddr_t psrc, paddr_t pdst)
 	md = PHYS_TO_VM_PAGE(pdst);
 	ms = PHYS_TO_VM_PAGE(psrc);
 	KASSERT(md != NULL && ms != NULL);
-	
+
 	dst_va = pmap_page_to_va(md);
 	src_va = pmap_page_to_va(ms);
 	KASSERT(trunc_page(dst_va) == dst_va && trunc_page(src_va) == src_va);
-	
+
 	memcpy((void *)dst_va, (void *)src_va, PAGE_SIZE);
 }
 
@@ -2286,7 +2286,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	pmap_t pmap;
 	pv_entry_t pv;
 	vaddr_t va;
-	
+
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(m=%p, prot=%p)", pg, prot, 0, 0);
 
@@ -2310,7 +2310,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		vm_page_aflag_clear(pg, PGA_WRITEABLE);
 		*/
 		pg->flags |= PG_RDONLY;
-		
+
 		rw_exit(&pvh_global_lock);
 	} else {
 		pmap_remove_all_phys(pg);
@@ -2337,7 +2337,7 @@ pmap_clear_modify(struct vm_page *pg)
 		   __func__, pg);
 
 	rv = false;
-	
+
 	//VM_OBJECT_ASSERT_WLOCKED(m->object);
 	//KASSERT(!vm_page_xbusied(m),
 	//    ("pmap_clear_modify: page %p is exclusive busied", m));
@@ -2353,7 +2353,7 @@ pmap_clear_modify(struct vm_page *pg)
 		return;
 	if (pg->flags & PG_RDONLY)
 		return (rv);
-#endif	
+#endif
 	rw_enter(&pvh_global_lock, RW_WRITER);
 	TAILQ_FOREACH(pv, &pg->mdpage.pv_list, pv_list) {
 		pmap = PV_PMAP(pv);
@@ -2399,7 +2399,7 @@ pmap_clear_reference(struct vm_page *pg)
 		   __func__, pg);
 
 	rv = false;
-	
+
 	rw_enter(&pvh_global_lock, RW_WRITER);
 	TAILQ_FOREACH(pv, &pg->mdpage.pv_list, pv_list) {
 		pmap = PV_PMAP(pv);
@@ -2417,7 +2417,7 @@ pmap_clear_reference(struct vm_page *pg)
 	}
 
 	rw_exit(&pvh_global_lock);
-	return (rv);	
+	return (rv);
 }
 
 /*
@@ -2488,7 +2488,7 @@ pmap_is_referenced(struct vm_page *pg)
 
 	KASSERTMSG(vm_page_is_managed(pg), "%s: page %p is not managed",
 		__func__, pg);
-	
+
 	rv = false;
 	rw_enter(&pvh_global_lock, RW_WRITER);
 	TAILQ_FOREACH(pv, &pg->mdpage.pv_list, pv_list) {
@@ -2496,7 +2496,7 @@ pmap_is_referenced(struct vm_page *pg)
 		PMAP_LOCK(pmap);
 		oldpmap = pmap_switch(pmap);
 		pte = pmap_find_vhpt(pv->pv_va);
-		KASSERTMSG(pte != NULL, "pte");		
+		KASSERTMSG(pte != NULL, "pte");
 		rv = pmap_accessed(pte) ? true : false;
 		pmap_switch(oldpmap);
 		PMAP_UNLOCK(pmap);
@@ -2505,7 +2505,7 @@ pmap_is_referenced(struct vm_page *pg)
 	}
 
 	rw_exit(&pvh_global_lock);
-	return (rv);	
+	return (rv);
 }
 
 /*
@@ -2571,7 +2571,7 @@ pmap_procwr(struct proc *p, vaddr_t va, vsize_t sz)
 	vsize_t len;
 
 	struct pmap * const pm = p->p_vmspace->vm_map.pmap;
-	
+
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(pm=%p, va=%#lx, sz=%#lx)", pm, va, sz, 0);
 
@@ -2635,7 +2635,7 @@ pmap_remove_all_phys(struct vm_page *m)
 		pmap_switch(oldpmap);
 		PMAP_UNLOCK(pmap);
 	}
-	/* XXX freebsd 
+	/* XXX freebsd
 	vm_page_aflag_clear(m, PGA_WRITEABLE);
 	*/
 	m->flags |= PG_RDONLY;
@@ -2652,7 +2652,7 @@ static struct vm_page
 *vm_page_alloc1(void)
 {
 	struct vm_page *pg;
-	
+
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (pg) {
 		pg->wire_count = 1;	/* no mappings yet */
@@ -2689,13 +2689,13 @@ pmap_flags_to_memattr(u_int flags)
 {
 	u_int cacheflags = flags & PMAP_CACHE_MASK;
 
-#if 0	
+#if 0
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(PMAP_NOCACHE=%u, PMAP_WRITE_COMBINE=%u, "
 		    "PMAP_WRITE_BACK=%u, PMAP_NOCACHE_OVR=%u)",
 		    (flags & PMAP_NOCACHE) != 0, (flags & PMAP_WRITE_COMBINE) != 0,
 		    (flags & PMAP_WRITE_BACK) != 0, (flags & PMAP_NOCACHE_OVR) != 0);
-#endif	
+#endif
 	switch (cacheflags) {
 	case PMAP_NOCACHE:
 		return VM_MEMATTR_UNCACHEABLE;
@@ -2726,7 +2726,7 @@ pmap_testout(void)
 	struct vm_page *pg;
 	int ref, mod;
 	bool extracted;
-	
+
 	/* Allocate a page */
 	va = (vaddr_t)uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
 	KASSERT(va != 0);

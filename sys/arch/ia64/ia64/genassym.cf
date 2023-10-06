@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2019/05/02 17:31:56 scole Exp $
+#	$NetBSD: genassym.cf,v 1.17 2023/10/06 11:45:16 skrll Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ define	SIZEOF_SPECIAL		sizeof(struct _special)
 define	MC_SPECIAL		offsetof(struct __mcontext, mc_special)
 define	UC_MCONTEXT		offsetof(struct __ucontext, uc_mcontext)
 
-# general constants 
+# general constants
 define	VM_MAX_ADDRESS		VM_MAX_ADDRESS
 
 # Important offsets into the user struct & associated constants
@@ -127,5 +127,5 @@ define	UPAGES			UPAGES
 
 define	FRAME_SYSCALL		FRAME_SYSCALL
 
-define	PC_CURLWP		offsetof(struct cpu_info, ci_curlwp) 
-define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault) 
+define	PC_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)

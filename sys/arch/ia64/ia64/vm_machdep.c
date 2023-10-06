@@ -1,11 +1,11 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 2023/02/23 14:55:47 riastradh Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 2023/10/06 11:45:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  *
- * Author: 
+ * Author:
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -103,9 +103,9 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 
 	/* required for lwp_startup, copy oldlwp into r9, "mov r9=in0" */
 	__asm __volatile("mov %0=%1" : "=r"(reg9) : "r"(oldlwp));
-	
+
 	/* XXX handle RAS eventually */
-	
+
 	if (oldlwp == NULL) {
 		restorectx(newpcb);
 	} else {
@@ -120,7 +120,7 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * lwp_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
@@ -177,7 +177,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_astpending = 0;
 	l2->l_md.user_stack = NULL;
 	l2->l_md.user_stack_size = 0;
-	
+
         /*
 	 * Copy the trapframe.
 	 */

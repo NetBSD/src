@@ -1,5 +1,5 @@
-/*	$NetBSD: locore.S,v 1.9 2018/11/20 20:36:24 scole Exp $	*/
-	
+/*	$NetBSD: locore.S,v 1.10 2023/10/06 11:45:16 skrll Exp $	*/
+
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -42,7 +42,7 @@
 kstack:	.space KSTACK_PAGES * PAGE_SIZE
 	.global kstack_top
 kstack_top:
-	
+
 	.text
 
 /*
@@ -81,7 +81,7 @@ ENTRY_NOPROFILE(start, 1)
 	movl	r16=pa_bootinfo
 	;;
 }
-{	.mmi	
+{	.mmi
 	st8	[r16]=r8		// save the PA of the bootinfo block
 	loadrs				// invalidate regs
 	mov     r17=IA64_DCR_DEFAULT
@@ -94,18 +94,18 @@ ENTRY_NOPROFILE(start, 1)
 	;;
 }
 {	.mmi
-	srlz.d	
+	srlz.d
 	alloc	r16=ar.pfs,0,0,1,0
-	mov	out0=r0			// we are linked at the right address 
+	mov	out0=r0			// we are linked at the right address
 	;;				// we just need to process fptrs
 	}
-#if 0  /* XXX: Look into relocs */	
+#if 0  /* XXX: Look into relocs */
 {	.mib
 	nop	0
 	nop	0
 	br.call.sptk.many rp=_reloc
 }
-#endif	
+#endif
 {	.mib
 	nop	0
 	nop	0
@@ -261,7 +261,7 @@ END(os_boot_rendez)
 /*STATIC_ENTRY(_reloc, 1)
 	alloc	loc0=ar.pfs,1,2,0,0
 	mov	loc1=rp
-	;; 
+	;;
 	movl	r15=@gprel(_DYNAMIC)	// find _DYNAMIC etc.
 	movl	r2=@gprel(fptr_storage)
 	movl	r3=@gprel(fptr_storage_end)
@@ -276,34 +276,34 @@ END(os_boot_rendez)
 	;;
 	cmp.eq	p6,p0=DT_NULL,r16	// done?
 (p6)	br.cond.dpnt.few 2f
-	;; 
+	;;
 	cmp.eq	p6,p0=DT_RELA,r16
-	;; 
+	;;
 (p6)	add	r18=r17,in0		// found rela section
-	;; 
+	;;
 	cmp.eq	p6,p0=DT_RELASZ,r16
-	;; 
+	;;
 (p6)	mov	r19=r17			// found rela size
-	;; 
+	;;
 	cmp.eq	p6,p0=DT_SYMTAB,r16
-	;; 
+	;;
 (p6)	add	r20=r17,in0		// found symbol table
-	;; 
+	;;
 (p6)	setf.sig f8=r20
-	;; 
+	;;
 	cmp.eq	p6,p0=DT_SYMENT,r16
-	;; 
+	;;
 (p6)	setf.sig f9=r17			// found symbol entry size
-	;; 
+	;;
 	cmp.eq	p6,p0=DT_RELAENT,r16
-	;; 
+	;;
 (p6)	mov	r22=r17			// found rela entry size
 	;;
 	br.sptk.few 1b
-	
-2:	
+
+2:
 	ld8	r15=[r18],8		// read r_offset
-	;; 
+	;;
 	ld8	r16=[r18],8		// read r_info
 	add	r15=r15,in0		// relocate r_offset
 	;;
@@ -320,7 +320,7 @@ END(os_boot_rendez)
 	;;
 
 	extr.u	r16=r16,32,32		// ELF64_R_SYM(r16)
-	;; 
+	;;
 	setf.sig f10=r16		// so we can multiply
 	;;
 	xma.lu	f10=f10,f9,f8		// f10=symtab + r_sym*syment

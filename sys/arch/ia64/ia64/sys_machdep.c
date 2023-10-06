@@ -1,11 +1,11 @@
-/*	$NetBSD: sys_machdep.c,v 1.6 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.7 2023/10/06 11:45:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  *
- * Author: 
+ * Author:
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.6 2009/07/20 04:41:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.7 2023/10/06 11:45:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

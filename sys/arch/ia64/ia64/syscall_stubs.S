@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall_stubs.S,v 1.6 2019/05/02 17:34:01 scole Exp $	*/
+/*	$NetBSD: syscall_stubs.S,v 1.7 2023/10/06 11:45:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Marcel Moolenaar
@@ -74,10 +74,10 @@
  * information they need and we have the freedom to move code around.
  */
 
-/* XXX fix */	
-#define syscall		0	
+/* XXX fix */
+#define syscall		0
 #define SYS_sigreturn	0
-	
+
 	.section	.text.gateway, "ax"
 	.align		PAGE_SIZE
 	.global		ia64_gateway_page
@@ -222,12 +222,12 @@ ENTRY_NOPROFILE(epc_sigtramp, 0)
         ;;
 }
         add             out0=16,sp
-/* XXX fix */	
+/* XXX fix */
 #if 0
         CALLSYS_NOERROR(sigreturn)
         mov             out0=ret0
         CALLSYS_NOERROR(exit)
-#endif	
+#endif
 END(epc_sigtramp)
 
         .align          PAGE_SIZE
@@ -546,7 +546,7 @@ epc_syscall_setup_ia32:
         mov             r13=r0
         ;;
 }
- 
+
         ld8             r24=[r14],32
         ld8             r27=[r15],16
         ;;

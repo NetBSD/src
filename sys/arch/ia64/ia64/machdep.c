@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2023/02/23 14:55:47 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2023/10/06 11:45:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -124,7 +124,7 @@
 #else
 #define	DPRINTF(fmt, args...)	((void)0)
 #endif
-     
+
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
@@ -273,7 +273,7 @@ map_vhpt(uintptr_t vhpt)
 	 * exactly sure why this is needed with GCC 7.4
 	 */
 	register uint64_t log2size = pmap_vhpt_log2size << 2;
-	
+
         pte = PTE_PRESENT | PTE_MA_WB | PTE_ACCESSED | PTE_DIRTY |
 		PTE_PL_KERN | PTE_AR_RW;
         pte |= vhpt & PTE_PPN_MASK;
@@ -620,11 +620,11 @@ ia64_init(void)
 
 	lwp0.l_md.user_stack = NULL;
 	lwp0.l_md.user_stack_size = 0;
-	
+
 	pcb0 = lwp_getpcb(&lwp0);
 	pcb0->pcb_special.sp = v + UAREA_SP_OFFSET;
 	pcb0->pcb_special.bspstore = v + UAREA_BSPSTORE_OFFSET;
-	
+
 	/*
 	 * Setup global data for the bootstrap cpu.
 	 */
@@ -672,7 +672,7 @@ ia64_init(void)
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap();
-	
+
 	/*
 	 * Initialize debuggers, and break into them if appropriate.
 	 */
@@ -688,7 +688,7 @@ ia64_init(void)
 
 	ret.bspstore = pcb0->pcb_special.bspstore;
 	ret.sp = pcb0->pcb_special.sp;
-	
+
 	return (ret);
 }
 
