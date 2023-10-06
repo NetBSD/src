@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.122 2021/12/05 07:53:57 msaitoh Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.123 2023/10/06 11:53:26 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.122 2021/12/05 07:53:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.123 2023/10/06 11:53:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	l2->l_md.md_tf = l1->l_md.md_tf;
 	l2->l_md.md_flags = l1->l_md.md_flags & MDLWP_FP_C;
-	l2->l_md.md_astpending = 0;
+	KASSERT(l2->l_md.md_astpending == 0);
 
 	/*
 	 * Cache the physical address of the pcb, so we can

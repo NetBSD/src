@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 2023/10/06 11:45:16 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 2023/10/06 11:53:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -174,9 +174,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
 	l2->l_md.md_tf = (struct trapframe *)(ua2 + UAREA_TF_OFFSET);
-	l2->l_md.md_astpending = 0;
 	l2->l_md.user_stack = NULL;
 	l2->l_md.user_stack_size = 0;
+	KASSERT(l2->l_md.md_astpending == 0);
 
         /*
 	 * Copy the trapframe.

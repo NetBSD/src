@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.82 2022/05/24 06:28:00 andvar Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.83 2023/10/06 11:53:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82 2022/05/24 06:28:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83 2023/10/06 11:53:27 skrll Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -147,7 +147,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	sh3_setup_uarea(l2);
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
-	l2->l_md.md_astpending = 0;
+	KASSERT(l2->l_md.md_astpending == 0);
 
 	/* Copy user context, may be give a different stack */
 	memcpy(l2->l_md.md_regs, l1->l_md.md_regs, sizeof(struct trapframe));
