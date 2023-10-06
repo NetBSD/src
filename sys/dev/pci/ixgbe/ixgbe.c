@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.335 2023/10/06 14:42:51 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.336 2023/10/06 14:44:08 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.335 2023/10/06 14:42:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.336 2023/10/06 14:44:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -967,14 +967,26 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	/* Do descriptor calc and sanity checks */
 	if (((ixgbe_txd * sizeof(union ixgbe_adv_tx_desc)) % DBA_ALIGN) != 0 ||
 	    ixgbe_txd < MIN_TXD || ixgbe_txd > MAX_TXD) {
-		aprint_error_dev(dev, "TXD config issue, using default!\n");
+		aprint_error_dev(dev, "Invalid TX ring size (%d). "
+		    "It must be between %d and %d, "
+		    "inclusive, and must be a multiple of %zu. "
+		    "Using default value of %d instead.\n",
+		    ixgbe_txd, MIN_TXD, MAX_TXD,
+		    DBA_ALIGN / sizeof(union ixgbe_adv_tx_desc),
+		    DEFAULT_TXD);
 		sc->num_tx_desc = DEFAULT_TXD;
 	} else
 		sc->num_tx_desc = ixgbe_txd;
 
 	if (((ixgbe_rxd * sizeof(union ixgbe_adv_rx_desc)) % DBA_ALIGN) != 0 ||
 	    ixgbe_rxd < MIN_RXD || ixgbe_rxd > MAX_RXD) {
-		aprint_error_dev(dev, "RXD config issue, using default!\n");
+		aprint_error_dev(dev, "Invalid RX ring size (%d). "
+		    "It must be between %d and %d, "
+		    "inclusive, and must be a multiple of %zu. "
+		    "Using default value of %d instead.\n",
+		    ixgbe_rxd, MIN_RXD, MAX_RXD,
+		    DBA_ALIGN / sizeof(union ixgbe_adv_rx_desc),
+		    DEFAULT_RXD);
 		sc->num_rx_desc = DEFAULT_RXD;
 	} else
 		sc->num_rx_desc = ixgbe_rxd;
