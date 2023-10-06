@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.117 2023/10/05 19:41:03 ad Exp $	*/
+/*	$NetBSD: fault.c,v 1.118 2023/10/06 09:53:02 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.117 2023/10/05 19:41:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.118 2023/10/06 09:53:02 martin Exp $");
 
 #include <sys/param.h>
 
@@ -819,13 +819,14 @@ prefetch_abort_handler(trapframe_t *tf)
 
 	l = curlwp;
 	pcb = lwp_getpcb(l);
+	user = TRAP_USERMODE(tf) != 0;
 
 	/*
 	 * Enable IRQ's (disabled by the abort) This always comes
 	 * from user mode so we know interrupts were not disabled.
 	 * But we check anyway.
 	 */
-	KASSERT(!TRAP_USERMODE(tf) || VALID_PSR(tf->tf_spsr));
+	KASSERT(!user || VALID_PSR(tf->tf_spsr));
 #ifdef __NO_FIQ
 	if (__predict_true((tf->tf_spsr & I32_bit) != I32_bit))
 		restore_interrupts(tf->tf_spsr & IF32_bits);
