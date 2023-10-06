@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.23 2023/10/01 18:50:53 andvar Exp $
+#	$NetBSD: Makefile.news68k,v 1.24 2023/10/06 21:10:12 andvar Exp $
 #
 # Makefile for NetBSD
 #
@@ -46,8 +46,6 @@ OPT_MODULAR=	%MODULAR%
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-# for the Motorola 68040 Floating Point Software Product
-.include "$S/arch/m68k/fpsp/Makefile.inc"
 
 MD_OBJS=	locore.o
 MD_LIBS=	${FPSP}
