@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
+/*	$NetBSD: os.c,v 1.6 2023/10/06 07:31:30 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2023  Mark Nudelman
@@ -158,10 +158,6 @@ public int supports_ctrl_x(void)
 	return (FALSE);
 #endif /* USE_POLL */
 }
-
-#if !HAVE_STRERROR
-static char *strerror __P((int));
-#endif
 
 /*
  * Like read() system call, but is deliberately interruptible.
