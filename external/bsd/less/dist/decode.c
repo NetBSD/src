@@ -1,4 +1,4 @@
-/*	$NetBSD: decode.c,v 1.6 2023/10/06 07:09:15 simonb Exp $	*/
+/*	$NetBSD: decode.c,v 1.7 2023/10/06 07:13:13 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2023  Mark Nudelman
@@ -915,7 +915,7 @@ public int editchar(int c, int flags)
 {
 	int action;
 	int nch;
-	char *s = NULL;	/* XXX: GCC */
+	char *s;
 	char usercmd[MAX_CMDLEN+1];
 	
 	/*
