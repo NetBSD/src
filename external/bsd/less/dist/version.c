@@ -1,7 +1,7 @@
-/*	$NetBSD: version.c,v 1.3 2013/09/04 19:44:21 tron Exp $	*/
+/*	$NetBSD: version.c,v 1.4 2023/10/06 05:49:49 simonb Exp $	*/
 
 /*
- * Copyright (C) 1984-2012  Mark Nudelman
+ * Copyright (C) 1984-2023  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -764,6 +764,237 @@ v455  11/5/12   Fix typo.
 v456  11/8/12   Fix option string incompatibility.
 v457  12/8/12   Use new option string syntax only after --use-backslash.
 v458  4/4/13    Fix display bug in using up/down in cmd buffer.
+-----------------------------------------------------------------
+v459  5/6/13    Fix ++ bug.
+v460  6/19/13   Automate construction of Unicode tables.
+v461  6/21/13   Collapse multiple CRs before LF.
+v462  11/26/13  Don't overwrite history file, just append to it.
+v463  7/13/14   Misc. fixes.
+v464  7/19/14   Fix bugs & improve performance in & filtering
+                (thanks to John Sullivan).
+v465  8/9/14    More fixes from John Sullivan.
+v466  8/23/14   Add colon to LESSANSIMIDCHARS.
+v467  9/18/14   Misc. fixes.
+v468  9/18/14   Fix typo
+v469  10/2/14   Allow extra string in command to append to a multichar
+                cmd without executing it; fix bug using GNU regex.
+v470  10/5/14   Fix some compiler warnings.
+v471  12/14/14  Fix unget issues with prompt. Allow disabling history
+                when compiled value of LESSHISTFILE = "-".
+v473  12/19/14  Fix prompt bug with stdin and -^P in lesskey extra string.
+v474  1/30/15   Fix bug in backwards search with match on bottom line.
+                Make follow mode reopen file if file shrinks.
+v475  3/2/15    Fix possible buffer overrun with invalid UTF-8; 
+                fix bug when compiled with no regex; fix non-match search.
+v476  5/3/15    Update man pages.
+v477  5/19/15   Fix off-by-one in jump_forw_buffered;
+                don't add FAKE_* files to cmd history.
+v478  5/21/15   Fix nonportable pointer usage in hilite tree.
+v479  7/6/15    Allow %% escapes in LESSOPEN variable.
+v480  7/24/15   Fix bug in no-regex searches; support MSVC v1900.
+v481  8/20/15   Fix broken -g option.
+-----------------------------------------------------------------
+v482  2/25/16   Update Unicode database to "2015-06-16, 20:24:00 GMT [KW]".
+v483  2/27/16   Regenerate hilite when change search caselessness.
+                (Thanks to Jason Hood)
+                Fix bug when terminal has no "cm". (Thanks to Noel Cragg)
+v484  9/20/16   Update to Unicode 9.0.0 database.
+v485  10/21/16  Fix "nothing to search" bug when top/bottom line is empty;
+                Display line numbers in bold. (thanks to Jason Hood);
+                Fix incorrect display when entering double-width chars in 
+                search string.
+v486  10/22/16  New commands ESC-{ and ESC-} to shift to start/end of 
+                displayed lines; new option -Da in Windows version to 
+                enable SGR mode (thanks to Jason Hood).
+v487  10/23/16  configure --help formatting.
+-----------------------------------------------------------------
+v488  2/23/17   Fix memory leaks in search (thanks to John Brooks).
+v489  3/30/17   Make -F not do init/deinit if file fits on one screen
+                (thanks to Jindrich Novy).
+v490  4/5/17    Switch to ANSI prototypes in funcs.h; remove "register".
+v491  4/7/17    Fix signed char bug.
+v492  4/21/17   Handle SIGTERM.
+v493  6/22/17   Fix bug initializing charset in MSDOS build.
+v494  6/26/17   Update Unicode tables; make Cf chars composing not binary.
+v495  7/3/17    Improve binary file detection (thanks to Bela Lubkin);
+                do -R filter when matching tags (thanks to Matthew Malcomson).
+v496  7/5/17    Add LESSRSCROLL marker.
+v497  7/5/17    Sync.
+v498  7/7/17    Fix early truncation of text if last char is double-width.
+v499  7/10/17   Misc fixes.
+v500  7/11/17   Fix bug where certain env variables couldn't be set in lesskey.
+v501  7/12/17   Make sure rscroll char is standout by default.
+v502  7/13/17   Control rscroll char via command line option not env variable.
+v503  7/13/17   Switch to git.
+v504  7/13/17   Call opt_rscroll at startup; change mkhelp.c to mkhelp.pl.
+v505  7/17/17   Add M and ESC-M commands; 
+                fix buffer handling with stdin and LESSOPEN.
+v506  7/17/17   On Windows, convert UTF-8 to multibyte if console is not UTF-8;
+                handle extended chars on input (thanks to Jason Hood).
+v507  7/18/17   Fix some bugs handling filenames containing shell metachars.
+v508  7/19/17   Fix bugs when using LESSOPEN to read stdin.
+v509  7/19/17   Fix another stdin bug.
+v510  7/20/17   Fix bug in determining when to reopen a file.
+v511  7/25/17   Fix bugs in recent MSDOS changes (thanks to Jason Hood).
+v512  7/26/17   Fix MSDOS build.
+v513  7/26/17   Fix switch to normal attr at end of line with -R and rscroll.
+v514  7/27/17   Fix bug in fcomplete when pattern does not match a file.
+v515  7/28/17   Allow 'u' in -D option on Windows.
+v516  7/29/17   Fix bug using LESSOPEN with filename containing metachars.
+v517  7/30/17   Status column shows matches even if hiliting is disabled via -G.
+v518  8/1/17    Use underline in sgr mode in MSDOS (thanks to Jason Hood).
+v519  8/10/17   Fix rscroll bug when last char of line starts coloration.
+v520  9/3/17    Fix compiler warning.
+v521  10/20/17  Fix binary file warning in UTF-8 files with SGI sequences.
+v522  10/20/17  Handle keypad ENTER key properly.
+v523  10/23/17  Cleanup.
+v524  10/24/17  Fix getcc bug.
+v525  10/24/17  Change M command to mark last displayed line.
+v526  10/25/17  Fix search hilite bug introduced in v517.
+v527  10/30/17  Fix search hilite bug on last page with -a.
+v528  11/3/17   Make second ESC-u clear status column.
+v529  11/12/17  Display Unicode formatting chars in hex if -U is set.
+v530  12/2/17   Minor doc change and add missing VOID_PARAM.
+-----------------------------------------------------------------
+v531  5/13/18   Fix bug with v on empty file; fix bug with v on file with 
+                metachars in name; add --nohistdups option.
+v532  7/27/18   Redraw screen on SIGWINCH even if screen size doesn't change.
+v533  8/1/18    Shell escape filenames in history; use PCRE_UTF8 flag; 
+                use wide-chars for Windows console title (thanks to Jason Hood).
+v534  8/9/18    Support PCRE2.
+v535  8/16/18   Don't count lines of initial screen if using -X with -F
+                (thanks to Linus Torvalds).
+v536  8/31/18   Use descriptive error messages for PCRE2.
+v537  8/31/18   Support mingw build system (thanks to Mike Soyka).
+v538  9/3/18    Clean up some WIN32 code.
+v539  9/13/18   Fix spurious input on Windows with CAPSLOCK.
+v540  10/29/18  Add --mouse option.
+v541  10/30/18  Add --MOUSE option.
+v542  11/6/18   Add mouse support for WIN32; add --wheel-lines option.
+                (thanks to Jason Hood).
+v543  11/12/18  Code cleanup.
+v544  11/16/18  Don't init/deinit keyboard/mouse if quit due to -F.
+v545  11/22/18  Fix Windows build, memory leaks.
+v546  11/29/18  Add --save-marks option.
+v547  11/30/18  Fix some bugs with saved marks.
+v548  12/14/18  Ignore mouse input when line editing.
+v549  2/10/19   Support X11 mouse extension 1006;
+                Win32 fixes (thanks to Jason Hood).
+v550  2/16/19   Fix Win32 build; don't enable mouse unless --mouse is set.
+v551  6/10/19   Doc changes.
+-----------------------------------------------------------------
+v552  7/8/19    Update Unicode tables.
+v553  10/17/19  Support tinfow; handle zero-width Hangul chars.
+v554  1/19/20   Remove erroneous free().
+v555  3/15/20   Display error msg immediately when toggle -o without stdin.
+v556  3/15/20   Update copyright.
+v557  3/21/20   Fix memory corruption with libtermcap.
+v558  4/17/20   Don't init terminal if -F and file fits on one screen (WIN32).
+v559  4/19/20   Handle deinit correctly on WIN32.
+v560  5/3/20    Fix regression when command results in no movement;
+                fix some less.nro issues (thanks to Bjarni I. Gislason).
+v561  5/11/20   Fix erroneous EOF calculation when F command is interrupted.
+v562  5/19/20   Update Unicode tables; minor doc formatting.
+v563  6/13/20   Fix crash due to realpath() incompatibility.
+v564  8/25/20   Handle realpath consistently; update docs.
+v565  11/3/20   Add ESC-U command, optimize calls to realpath().
+v566  11/25/20  Fix crash when reopening a file while using LESSOPEN;
+                support OSC 8 hyperlinks.
+v567  11/25/20  Fix typo.
+v568  11/29/20  Fix some hyperlink bugs; add ^W search modifier
+                (thanks to Arminius); allow Makefile.aut to use Python 
+                instead of Perl (thanks to Charlie Lin).
+v569  12/1/20   Allow multiple & filters (thanks to Mattias Johansson),
+                allow ^X to exit F command.
+v570  12/12/20  Better handling of multiple + or -p options;
+                fix bugs in horizontal scrolling.
+v571  12/30/20  Add --line-num-width and --status-col-width options.
+v572  1/4/21    Save lastmark in history file; don't toggle mouse reporting;
+                implement termcap delays.
+v573  1/9/21    Limit eof bell to 1 per second.
+v574  1/13/21   Add incremental search.
+v575  1/17/21   Fix build without HILITE_SEARCH;
+                fix bug with ^K in lesskey extra string.
+v576  2/4/21    Make sure search result is visible; add --use-color and --color.
+v577  2/9/21    Use ttyname to get name of tty device.
+v578  2/9/21    Doc
+v579  2/14/21   Fix double-width char bugs and non-match search crash.
+v580  3/2/21    Some color fixes; fix compiler warnings; some lesstest support.
+v581  4/6/21    Ignore SIGTSTP in secure mode; don't print "skipping" when filtering.
+v582  4/21/21   Less now reads lesskey source file rather than binary;
+                fix bug in finding tags with backslashes.
+v583  4/21/21   Use XDG_CONFIG_HOME and XDG_DATA_HOME to find files.
+v584  4/30/21   Add --file-size option.
+v585  5/2/21    Allow color desc W per man page.
+v586  5/7/21    Doc changes.
+v587  5/27/21   Fix --with-secure; fix --file-size message on Windows; 
+                fix colored search hilite in colored text; don't exit
+                if -F and screen is resized; fix memcpy usage.
+v588  5/27/21   Fix release.
+v589  5/29/21   Copyright & build changes.
+v590  6/3/21    Fix non-autoconf Makefiles.
+v591  8/8/21    Use \kB for backspace key in lesskey; add more \k codes;
+                handle multibyte chars in prompt.
+v592  8/24/21   Add --status-line option; limit use of /proc kludge; add --header.
+v593  8/30/21   Add header columns, --no-number-headers.
+v594  10/1/21   Let regex library handle caseless; add --redraw-on-quit option;
+                add #version to lesskey.
+v595  10/12/21  Add H color type; add += to lesskey var section; 
+                add --search-options.
+v596  11/8/21   Look for lesskey in $HOME/.config.
+v597  11/16/21  Fix bugs in --header.
+v598  12/6/21   Look for lesshst in $XDG_STATE_HOME and $HOME/.local/state.
+v599  12/28/21  Defer moving to lower left in some cases; 
+                suppress TAB expansion in some cases.
+v600  1/7/22    Use /dev/tty if cannot open ttyname().
+v601  1/31/22   Add --exit-follow-on-close option.
+v602  3/1/22    Doc changes.
+v603  3/14/22   Fix --header.
+v604  5/14/22   Fix termlib detection; fix non-ASCII input on Windows.
+v605  6/14/22   Update version number.
+v606  7/17/22   Fix bug with multibyte chars and --incsearch;
+                escape filenames in LESSCLOSE; fix bin_file overrun.
+v607  7/19/22   Update Unicode tables.
+v608  7/22/22   Fix highlighting on colored text boundaries.
+v609  11/10/22  Add LESSUTFCHARDEF; fix overstrike color bug;
+                fix procfs bug; fix signal race.
+v610  11/14/22  Update Unicode tables; fix again-search after filter;
+                improve ^X to interrupt F command.
+v611  11/16/22  Fix EOF bug related to ^X change.
+v612  11/18/22  Fix more bugs related to ^X change.
+v613  11/28/22  Even more ^X issues.
+v614  11/28/22  Add ^X to wait message.
+v615  11/30/22  Add --no-vbell option.
+v616  12/9/22   Don't open tty as input file without -f.
+v617  12/10/22  Support poll on newer versions of MacOS.
+v618  12/29/22  Add --no-search-headers option; use C89 function definitions.
+v619  12/30/22  Fix bug using 'n' before '/'.
+v620  1/12/23   Add --modelines option; add --intr option;
+                add subpattern coloring.
+v621  1/15/23   Add --wordwrap option; add LESS_LINES & LESS_COLUMNS.
+v622  1/27/23   Add --show-preproc-errors option.
+v623  2/2/23    Add # command; add ^S search modifier.
+v624  2/11/23   Add --proc-backspace, --proc-tab and --proc-return options.
+v625  2/16/23   Minor fixes.
+v626  2/19/23   Fix rare crash in add_attr_normal.
+v627  2/19/23   Doc.
+v628  2/20/23   Don't require newline after +&...
+v629  2/26/23   Delay "waiting for data" message for 500 ms.
+v630  3/18/23   Add LESS_DATA_DELAY.
+v631  3/26/23   Fix input of dead keys on Windows.
+v632  4/6/23    Make lesstest work on MacOS; minor fixes.
+v633  5/3/23    Fix build on systems with ncurses/termcap.h or ncursesw/termcap.h.
+v634  5/29/23   Allow program piping into less to access tty;
+                fix search modifier ^E after ^W.
+v635  6/2/23    Fix crash with ! search modifier.
+v636  6/18/23   Fix -D in MS-DOS build; fix mouse wheel in MS-DOS build.
+v637  6/28/23   Fix early EOF when SIGWINCH is received.
+v638  6/29/23   Fix compile error with ECHONL.
+v639  6/29/23   Fix SIGWINCH while reading tty.
+v640  7/10/23   Add lesstest to release.
+v641  7/10/23   Fix release.
+v642  7/10/23   Fix release.
+v643  7/20/23   Fix crash on Windows with -o.
 */
 
-char version[] = "458";
+char version[] = "643";

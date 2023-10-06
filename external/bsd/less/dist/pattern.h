@@ -1,7 +1,7 @@
-/*	$NetBSD: pattern.h,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
+/*	$NetBSD: pattern.h,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
 
 /*
- * Copyright (C) 1984-2012  Mark Nudelman
+ * Copyright (C) 1984-2023  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -12,50 +12,72 @@
 #if HAVE_GNU_REGEX
 #define __USE_GNU 1
 #include <regex.h>
-#define DEFINE_PATTERN(name)  struct re_pattern_buffer *name
-#define CLEAR_PATTERN(name)   name = NULL
+#define PATTERN_TYPE             struct re_pattern_buffer *
+#define SET_NULL_PATTERN(name)   name = NULL
 #endif
 
+/* ---- POSIX ---- */
 #if HAVE_POSIX_REGCOMP
 #include <regex.h>
 #ifdef REG_EXTENDED
 extern int more_mode;
 #define	REGCOMP_FLAG	(more_mode ? 0 : REG_EXTENDED)
 #else
-#define	REGCOMP_FLAG	0
+#define REGCOMP_FLAG             0
 #endif
-#define DEFINE_PATTERN(name)  regex_t *name
-#define CLEAR_PATTERN(name)   name = NULL
+#define PATTERN_TYPE             regex_t *
+#define SET_NULL_PATTERN(name)   name = NULL
+#define re_handles_caseless      TRUE
 #endif
 
+/* ---- PCRE ---- */
 #if HAVE_PCRE
 #include <pcre.h>
-#define DEFINE_PATTERN(name)  pcre *name
-#define CLEAR_PATTERN(name)   name = NULL
+#define PATTERN_TYPE             pcre *
+#define SET_NULL_PATTERN(name)   name = NULL
+#define re_handles_caseless      TRUE
 #endif
 
+/* ---- PCRE2 ---- */
+#if HAVE_PCRE2
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
+#define PATTERN_TYPE             pcre2_code *
+#define SET_NULL_PATTERN(name)   name = NULL
+#define re_handles_caseless      TRUE
+#endif
+
+/* ---- RE_COMP  ---- */
 #if HAVE_RE_COMP
-char *re_comp();
-int re_exec();
-#define DEFINE_PATTERN(name)  int name
-#define CLEAR_PATTERN(name)   name = 0
+char *re_comp(char*);
+int re_exec(char*);
+#define PATTERN_TYPE             int
+#define SET_NULL_PATTERN(name)   name = 0
 #endif
 
+/* ---- REGCMP  ---- */
 #if HAVE_REGCMP
-char *regcmp();
-char *regex();
+char *regcmp(char*);
+char *regex(char**, char*);
 extern char *__loc1;
-#define DEFINE_PATTERN(name)  char *name
-#define CLEAR_PATTERN(name)   name = NULL
+#define PATTERN_TYPE             char **
+#define SET_NULL_PATTERN(name)   name = NULL
 #endif
 
+/* ---- REGCOMP  ---- */
 #if HAVE_V8_REGCOMP
 #include "regexp.h"
-#define DEFINE_PATTERN(name)  struct regexp *name
-#define CLEAR_PATTERN(name)   name = NULL
+extern int reg_show_error;
+#define PATTERN_TYPE             struct regexp *
+#define SET_NULL_PATTERN(name)   name = NULL
 #endif
 
+/* ---- NONE  ---- */
 #if NO_REGEX
-#define DEFINE_PATTERN(name)  
-#define CLEAR_PATTERN(name)   
+#define PATTERN_TYPE             void *
+#define SET_NULL_PATTERN(name)   
+#endif
+
+#ifndef re_handles_caseless
+#define re_handles_caseless      FALSE
 #endif

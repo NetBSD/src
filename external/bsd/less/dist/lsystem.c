@@ -1,7 +1,7 @@
-/*	$NetBSD: lsystem.c,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
+/*	$NetBSD: lsystem.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
 
 /*
- * Copyright (C) 1984-2012  Mark Nudelman
+ * Copyright (C) 1984-2023  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -21,11 +21,16 @@
 
 #if MSDOS_COMPILER
 #include <dos.h>
+#if MSDOS_COMPILER==WIN32C && defined(MINGW)
+#include <direct.h>
+#define setdisk(n) _chdrive((n)+1)
+#else
 #ifdef _MSC_VER
 #include <direct.h>
 #define setdisk(n) _chdrive((n)+1)
 #else
 #include <dir.h>
+#endif
 #endif
 #endif
 
@@ -39,15 +44,12 @@ extern IFILE curr_ifile;
  * Pass the specified command to a shell to be executed.
  * Like plain "system()", but handles resetting terminal modes, etc.
  */
-	public void
-lsystem(cmd, donemsg)
-	char *cmd;
-	char *donemsg;
+public void lsystem(char *cmd, char *donemsg)
 {
-	register int inp;
+	int inp;
 #if HAVE_SHELL
-	register char *shell;
-	register char *p;
+	char *shell;
+	char *p;
 #endif
 	IFILE save_ifile;
 #if MSDOS_COMPILER && MSDOS_COMPILER!=WIN32C
@@ -94,7 +96,7 @@ lsystem(cmd, donemsg)
 	 * De-initialize the terminal and take out of raw mode.
 	 */
 	deinit();
-	flush();	/* Make sure the deinit chars get out */
+	flush();         /* Make sure the deinit chars get out */
 	raw_mode(0);
 #if MSDOS_COMPILER==WIN32C
 	close_getchr();
@@ -113,11 +115,8 @@ lsystem(cmd, donemsg)
 	 */
 	inp = dup(0);
 	close(0);
-#if OS2
-	/* The __open() system call translates "/dev/tty" to "con". */
-	if (__open("/dev/tty", OPEN_READ) < 0)
-#else
-	if (open("/dev/tty", OPEN_READ) < 0)
+#if !MSDOS_COMPILER
+	if (open_tty() < 0)
 #endif
 		dup(inp);
 #endif
@@ -139,7 +138,7 @@ lsystem(cmd, donemsg)
 			char *esccmd = shell_quote(cmd);
 			if (esccmd != NULL)
 			{
-				int len = strlen(shell) + strlen(esccmd) + 5;
+				int len = (int) (strlen(shell) + strlen(esccmd) + 5);
 				p = (char *) ecalloc(len, sizeof(char));
 				SNPRINTF3(p, len, "%s %s %s", shell, shell_coption(), esccmd);
 				free(esccmd);
@@ -166,7 +165,7 @@ lsystem(cmd, donemsg)
 	 * also makes trouble with some DPMI servers).
 	 */
 	__djgpp_exception_toggle();
-  	system(cmd);
+	system(cmd);
 	__djgpp_exception_toggle();
 #else
 	system(cmd);
@@ -251,10 +250,7 @@ lsystem(cmd, donemsg)
  * If the mark is on the current screen, or if the mark is ".",
  * the whole current screen is piped.
  */
-	public int
-pipe_mark(c, cmd)
-	int c;
-	char *cmd;
+public int pipe_mark(int c, char *cmd)
 {
 	POSITION mpos, tpos, bpos;
 
@@ -271,28 +267,24 @@ pipe_mark(c, cmd)
 		tpos = ch_zero();
 	bpos = position(BOTTOM);
 
- 	if (c == '.') 
- 		return (pipe_data(cmd, tpos, bpos));
- 	else if (mpos <= tpos)
- 		return (pipe_data(cmd, mpos, bpos));
- 	else if (bpos == NULL_POSITION)
- 		return (pipe_data(cmd, tpos, bpos));
- 	else
- 		return (pipe_data(cmd, tpos, mpos));
+	if (c == '.') 
+		return (pipe_data(cmd, tpos, bpos));
+	else if (mpos <= tpos)
+		return (pipe_data(cmd, mpos, bpos));
+	else if (bpos == NULL_POSITION)
+		return (pipe_data(cmd, tpos, bpos));
+	else
+		return (pipe_data(cmd, tpos, mpos));
 }
 
 /*
  * Create a pipe to the given shell command.
  * Feed it the file contents between the positions spos and epos.
  */
-	public int
-pipe_data(cmd, spos, epos)
-	char *cmd;
-	POSITION spos;
-	POSITION epos;
+public int pipe_data(char *cmd, POSITION spos, POSITION epos)
 {
-	register FILE *f;
-	register int c;
+	FILE *f;
+	int c;
 
 	/*
 	 * This is structured much like lsystem().
@@ -343,14 +335,14 @@ pipe_data(cmd, spos, epos)
 	/*
 	 * Finish up the last line.
 	 */
- 	while (c != '\n' && c != EOI ) 
- 	{
- 		c = ch_forw_get();
- 		if (c == EOI)
- 			break;
- 		if (putc(c, f) == EOF)
- 			break;
- 	}
+	while (c != '\n' && c != EOI ) 
+	{
+		c = ch_forw_get();
+		if (c == EOI)
+			break;
+		if (putc(c, f) == EOF)
+			break;
+	}
 
 	pclose(f);
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: brac.c,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
+/*	$NetBSD: brac.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
 
 /*
- * Copyright (C) 1984-2012  Mark Nudelman
+ * Copyright (C) 1984-2023  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -25,17 +25,12 @@
  * The characters which serve as "open bracket" and 
  * "close bracket" are given.
  */
-	public void
-match_brac(obrac, cbrac, forwdir, n)
-	register int obrac;
-	register int cbrac;
-	int forwdir;
-	int n;
+public void match_brac(char obrac, char cbrac, int forwdir, int n)
 {
-	register int c;
-	register int nest;
+	int c;
+	int nest;
 	POSITION pos;
-	int (*chget) __P((void));
+	int (*chget)(void);
 
 	/*
 	 * Seek to the line containing the open bracket.
@@ -84,7 +79,11 @@ match_brac(obrac, cbrac, forwdir, n)
 	while ((c = (*chget)()) != EOI)
 	{
 		if (c == obrac)
+		{
+			if (nest == INT_MAX)
+				break;
 			nest++;
+		}
 		else if (c == cbrac && --nest < 0)
 		{
 			/*

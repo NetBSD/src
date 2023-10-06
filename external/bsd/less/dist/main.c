@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
 
 /*
- * Copyright (C) 1984-2012  Mark Nudelman
+ * Copyright (C) 1984-2023  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -16,60 +16,62 @@
 
 #include "less.h"
 #if MSDOS_COMPILER==WIN32C
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
 
-public char *	every_first_cmd = NULL;
-public int	new_file;
-public int	is_tty;
-public IFILE	curr_ifile = NULL_IFILE;
-public IFILE	old_ifile = NULL_IFILE;
+public char *   every_first_cmd = NULL;
+public int      new_file;
+public int      is_tty;
+public IFILE    curr_ifile = NULL_IFILE;
+public IFILE    old_ifile = NULL_IFILE;
 public struct scrpos initial_scrpos;
-public int	any_display = FALSE;
-public POSITION	start_attnpos = NULL_POSITION;
-public POSITION	end_attnpos = NULL_POSITION;
-public int	wscroll;
-public char *	progname;
-public int	quitting;
-public int	secure;
-public int	dohelp;
-public int	more_mode = 0;
+public POSITION start_attnpos = NULL_POSITION;
+public POSITION end_attnpos = NULL_POSITION;
+public int      wscroll;
+public char *   progname;
+public int      quitting;
+public int      secure;
+public int      dohelp;
+public int      more_mode = 0;
 
 #if LOGFILE
-public int	logfile = -1;
-public int	force_logfile = FALSE;
-public char *	namelogfile = NULL;
+public int      logfile = -1;
+public int      force_logfile = FALSE;
+public char *   namelogfile = NULL;
 #endif
 
 #if EDITOR
-public char *	editor;
-public char *	editproto;
+public char *   editor;
+public char *   editproto;
 #endif
 
 #if TAGS
-extern char *	tags;
-extern char *	tagoption;
-extern int	jump_sline;
+extern char *   tags;
+extern char *   tagoption;
+extern int      jump_sline;
 #endif
 
 #ifdef WIN32
 static char consoleTitle[256];
 #endif
 
-extern int	less_is_more;
-extern int	missing_cap;
-extern int	know_dumb;
-extern int	quit_if_one_screen;
-extern int	pr_type;
-
+public int      one_screen;
+extern int      less_is_more;
+extern int      missing_cap;
+extern int      know_dumb;
+extern int      pr_type;
+extern int      quit_if_one_screen;
+extern int      no_init;
+extern int      errmsgs;
+extern int      redraw_on_quit;
+extern int      term_init_done;
+extern int      first_time;
 
 /*
  * Entry point.
  */
-int
-main(argc, argv)
-	int argc;
-	char *argv[];
+int main(int argc, char *argv[])
 {
 	IFILE ifile;
 	char *s;
@@ -82,10 +84,14 @@ main(argc, argv)
 	progname = *argv++;
 	argc--;
 
+#if SECURE
+	secure = 1;
+#else
 	secure = 0;
 	s = lgetenv("LESSSECURE");
-	if (s != NULL && *s != '\0')
+	if (!isnullenv(s))
 		secure = 1;
+#endif
 
 #ifdef WIN32
 	if (getenv("HOME") == NULL)
@@ -117,8 +123,10 @@ main(argc, argv)
 		more_mode = 1;
 
 	is_tty = isatty(1);
-	get_term();
+	init_mark();
 	init_cmds();
+	init_poll();
+	get_term();
 	init_charset();
 	init_line();
 	init_cmdhist();
@@ -129,11 +137,7 @@ main(argc, argv)
 	 * If the name of the executable program is "more",
 	 * act like LESS_IS_MORE is set.
 	 */
-	for (s = progname + strlen(progname);  s > progname;  s--)
-	{
-		if (s[-1] == PATHNAME_SEP[0])
-			break;
-	}
+	s = last_component(progname);
 	if (strcmp(s, "more") == 0)
 		less_is_more = 1;
 
@@ -141,9 +145,9 @@ main(argc, argv)
 
 	s = lgetenv(less_is_more ? "MORE" : "LESS");
 	if (s != NULL)
-		scan_option(save(s));
+		scan_option(s);
 
-#define	isoptstring(s)	(((s)[0] == '-' || (s)[0] == '+') && (s)[1] != '\0')
+#define isoptstring(s)  (((s)[0] == '-' || (s)[0] == '+') && (s)[1] != '\0')
 	while (argc > 0 && (isoptstring(*argv) || isoptpending()))
 	{
 		s = *argv++;
@@ -164,20 +168,19 @@ main(argc, argv)
 		quit(QUIT_OK);
 	}
 
-	if (less_is_more && get_quit_at_eof())
-		quit_if_one_screen = TRUE;
+	expand_cmd_tables();
 
 #if EDITOR
 	editor = lgetenv("VISUAL");
 	if (editor == NULL || *editor == '\0')
 	{
 		editor = lgetenv("EDITOR");
-		if (editor == NULL || *editor == '\0')
+		if (isnullenv(editor))
 			editor = EDIT_PGM;
 	}
 	editproto = lgetenv("LESSEDIT");
-	if (editproto == NULL || *editproto == '\0')
-		editproto = "%E ?lm+%lm. %f";
+	if (isnullenv(editproto))
+		editproto = "%E ?lm+%lm. %g";
 #endif
 
 	/*
@@ -189,7 +192,6 @@ main(argc, argv)
 		ifile = get_ifile(FAKE_HELPFILE, ifile);
 	while (argc-- > 0)
 	{
-		char *filename;
 #if (MSDOS_COMPILER && MSDOS_COMPILER != DJGPPC)
 		/*
 		 * Because the "shell" doesn't expand filename patterns,
@@ -198,25 +200,24 @@ main(argc, argv)
 		 * Expand the pattern and iterate over the expanded list.
 		 */
 		struct textlist tlist;
+		char *filename;
 		char *gfilename;
+		char *qfilename;
 		
 		gfilename = lglob(*argv++);
 		init_textlist(&tlist, gfilename);
 		filename = NULL;
 		while ((filename = forw_textlist(&tlist, filename)) != NULL)
 		{
-			(void) get_ifile(filename, ifile);
+			qfilename = shell_unquote(filename);
+			(void) get_ifile(qfilename, ifile);
+			free(qfilename);
 			ifile = prev_ifile(NULL_IFILE);
 		}
 		free(gfilename);
 #else
-		filename = shell_quote(*argv);
-		if (filename == NULL)
-			filename = *argv;
-		argv++;
-		(void) get_ifile(filename, ifile);
+		(void) get_ifile(*argv++, ifile);
 		ifile = prev_ifile(NULL_IFILE);
-		free(filename);
 #endif
 	}
 	/*
@@ -228,12 +229,9 @@ main(argc, argv)
 		 * Output is not a tty.
 		 * Just copy the input file(s) to output.
 		 */
+		set_output(1); /* write to stdout */
 		SET_BINARY(1);
-		if (nifile() == 0)
-		{
-			if (edit_stdin() == 0)
-				cat_file();
-		} else if (edit_first() == 0)
+		if (edit_first() == 0)
 		{
 			do {
 				cat_file();
@@ -244,7 +242,6 @@ main(argc, argv)
 
 	if (missing_cap && !know_dumb && !more_mode)
 		error("WARNING: terminal is not fully functional", NULL_PARG);
-	init_mark();
 	open_getchr();
 	raw_mode(1);
 	init_signals(1);
@@ -279,16 +276,35 @@ main(argc, argv)
 		initial_scrpos.ln = jump_sline;
 	} else
 #endif
-	if (nifile() == 0)
 	{
-		if (edit_stdin())  /* Edit standard input */
+		if (edit_first())
 			quit(QUIT_ERROR);
-	} else 
-	{
-		if (edit_first())  /* Edit first valid file in cmd line */
-			quit(QUIT_ERROR);
+		/*
+		 * See if file fits on one screen to decide whether 
+		 * to send terminal init. But don't need this 
+		 * if -X (no_init) overrides this (see init()).
+		 */
+		if (quit_if_one_screen)
+		{
+			if (nifile() > 1) /* If more than one file, -F cannot be used */
+				quit_if_one_screen = FALSE;
+			else if (!no_init)
+				one_screen = get_one_screen();
+		}
 	}
 
+	if (errmsgs > 0)
+	{
+		/*
+		 * We displayed some messages on error output
+		 * (file descriptor 2; see flush()).
+		 * Before erasing the screen contents, wait for a keystroke.
+		 */
+		less_printf("Press RETURN to continue ", NULL_PARG);
+		get_return();
+		putchr('\n');
+	}
+	set_output(1);
 	init();
 	commands();
 	quit(QUIT_OK);
@@ -300,45 +316,41 @@ main(argc, argv)
  * Copy a string to a "safe" place
  * (that is, to a buffer allocated by calloc).
  */
-	public char *
-save(s)
-	char *s;
+public char * save(constant char *s)
 {
-	register char *p;
+	char *p;
 
 	p = (char *) ecalloc(strlen(s)+1, sizeof(char));
 	strcpy(p, s);
 	return (p);
 }
 
+public void out_of_memory(void)
+{
+	error("Cannot allocate memory", NULL_PARG);
+	quit(QUIT_ERROR);
+}
+
 /*
  * Allocate memory.
  * Like calloc(), but never returns an error (NULL).
  */
-	public VOID_POINTER
-ecalloc(count, size)
-	int count;
-	unsigned int size;
+public void * ecalloc(int count, unsigned int size)
 {
-	register VOID_POINTER p;
+	void * p;
 
-	p = (VOID_POINTER) calloc(count, size);
-	if (p != NULL)
-		return (p);
-	error("Cannot allocate memory", NULL_PARG);
-	quit(QUIT_ERROR);
-	/*NOTREACHED*/
-	return (NULL);
+	p = (void *) calloc(count, size);
+	if (p == NULL)
+		out_of_memory();
+	return p;
 }
 
 /*
  * Skip leading spaces in a string.
  */
-	public char *
-skipsp(s)
-	register char *s;
+public char * skipsp(char *s)
 {
-	while (*s == ' ' || *s == '\t')	
+	while (*s == ' ' || *s == '\t')
 		s++;
 	return (s);
 }
@@ -348,15 +360,11 @@ skipsp(s)
  * If uppercase is true, the first string must begin with an uppercase
  * character; the remainder of the first string may be either case.
  */
-	public int
-sprefix(ps, s, uppercase)
-	char *ps;
-	char *s;
-	int uppercase;
+public int sprefix(char *ps, char *s, int uppercase)
 {
-	register int c;
-	register int sc;
-	register int len = 0;
+	int c;
+	int sc;
+	int len = 0;
 
 	for ( ;  *s != '\0';  s++, ps++)
 	{
@@ -381,9 +389,7 @@ sprefix(ps, s, uppercase)
 /*
  * Exit the program.
  */
-	public void
-quit(status)
-	int status;
+public void quit(int status)
 {
 	static int save_status;
 
@@ -396,12 +402,24 @@ quit(status)
 	else
 		save_status = status;
 	quitting = 1;
-	edit((char*)NULL);
-	save_cmdhist();
-	if (any_display && is_tty)
+	check_altpipe_error();
+	if (interactive())
 		clear_bot();
 	deinit();
 	flush();
+	if (redraw_on_quit && term_init_done)
+	{
+		/*
+		 * The last file text displayed might have been on an 
+		 * alternate screen, which now (since deinit) cannot be seen.
+		 * redraw_on_quit tells us to redraw it on the main screen.
+		 */
+		first_time = 1; /* Don't print "skipping" or tildes */
+		repaint();
+		flush();
+	}
+	edit((char*)NULL);
+	save_cmdhist();
 	raw_mode(0);
 #if MSDOS_COMPILER && MSDOS_COMPILER != DJGPPC
 	/* 

@@ -1,7 +1,7 @@
-/*	$NetBSD: prompt.c,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
+/*	$NetBSD: prompt.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
 
 /*
- * Copyright (C) 1984-2012  Mark Nudelman
+ * Copyright (C) 1984-2023  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -31,6 +31,7 @@ extern int hshift;
 extern int sc_height;
 extern int jump_sline;
 extern int less_is_more;
+extern int header_lines;
 extern IFILE curr_ifile;
 #if EDITOR
 extern char *editor;
@@ -64,22 +65,10 @@ public char constant *wproto = w_proto;
 static char message[PROMPT_SIZE];
 static char *mp;
 
-static void ap_pos __P((POSITION));
-static void ap_int __P((int));
-static void ap_str __P((char *));
-static void ap_char __P((int));
-static void ap_quest __P((void));
-static POSITION curr_byte __P((int));
-static int cond __P((int, int));
-static void protochar __P((int, int, int));
-static const char *skipcond __P((const char *));
-static const char *wherechar __P((const char *, int *));
-
 /*
  * Initialize the prompt prototype strings.
  */
-	public void
-init_prompt()
+public void init_prompt(void)
 {
 	prproto[0] = save(s_proto);
 	prproto[1] = save(less_is_more ? more_proto : m_proto);
@@ -92,15 +81,13 @@ init_prompt()
 /*
  * Append a string to the end of the message.
  */
-	static void
-ap_str(s)
-	char *s;
+static void ap_str(char *s)
 {
 	int len;
 
-	len = strlen(s);
+	len = (int) strlen(s);
 	if (mp + len >= message + PROMPT_SIZE)
-		len = message + PROMPT_SIZE - mp - 1;
+		len = (int) (message + PROMPT_SIZE - mp - 1);
 	strncpy(mp, s, len);
 	mp += len;
 	*mp = '\0';
@@ -109,12 +96,9 @@ ap_str(s)
 /*
  * Append a character to the end of the message.
  */
-	static void
-ap_char(i)
-	int i;
+static void ap_char(char c)
 {
 	char buf[2];
-	char c = (char)i;
 
 	buf[0] = c;
 	buf[1] = '\0';
@@ -124,47 +108,40 @@ ap_char(i)
 /*
  * Append a POSITION (as a decimal integer) to the end of the message.
  */
-	static void
-ap_pos(pos)
-	POSITION pos;
+static void ap_pos(POSITION pos)
 {
 	char buf[INT_STRLEN_BOUND(pos) + 2];
 
-	postoa(pos, buf);
+	postoa(pos, buf, 10);
 	ap_str(buf);
 }
 
 /*
  * Append a line number to the end of the message.
  */
- 	static void
-ap_linenum(linenum)
-	LINENUM linenum;
+static void ap_linenum(LINENUM linenum)
 {
 	char buf[INT_STRLEN_BOUND(linenum) + 2];
 
-	linenumtoa(linenum, buf);
+	linenumtoa(linenum, buf, 10);
 	ap_str(buf);
 }
 
 /*
  * Append an integer to the end of the message.
  */
-	static void
-ap_int(num)
-	int num;
+static void ap_int(int num)
 {
 	char buf[INT_STRLEN_BOUND(num) + 2];
 
-	inttoa(num, buf);
+	inttoa(num, buf, 10);
 	ap_str(buf);
 }
 
 /*
  * Append a question mark to the end of the message.
  */
-	static void
-ap_quest()
+static void ap_quest(void)
 {
 	ap_str("?");
 }
@@ -172,9 +149,7 @@ ap_quest()
 /*
  * Return the "current" byte offset in the file.
  */
-	static POSITION
-curr_byte(where)
-	int where;
+static POSITION curr_byte(int where)
 {
 	POSITION pos;
 
@@ -192,54 +167,54 @@ curr_byte(where)
  * question mark followed by a single letter.
  * Here we decode that letter and return the appropriate boolean value.
  */
-	static int
-cond(c, where)
-	char c;
-	int where;
+static int cond(char c, int where)
 {
 	POSITION len;
 
 	switch (c)
 	{
-	case 'a':	/* Anything in the message yet? */
+	case 'a': /* Anything in the message yet? */
 		return (mp > message);
-	case 'b':	/* Current byte offset known? */
+	case 'b': /* Current byte offset known? */
 		return (curr_byte(where) != NULL_POSITION);
 	case 'c':
 		return (hshift != 0);
-	case 'e':	/* At end of file? */
+	case 'e': /* At end of file? */
 		return (eof_displayed());
-	case 'f':	/* Filename known? */
+	case 'f': /* Filename known? */
+	case 'g':
 		return (strcmp(get_filename(curr_ifile), "-") != 0);
-	case 'l':	/* Line number known? */
-	case 'd':	/* Same as l */
-		return (linenums);
-	case 'L':	/* Final line number known? */
-	case 'D':	/* Final page number known? */
+	case 'l': /* Line number known? */
+	case 'd': /* Same as l */
+		if (!linenums)
+			return 0;
+		return (currline(where) != 0);
+	case 'L': /* Final line number known? */
+	case 'D': /* Final page number known? */
 		return (linenums && ch_length() != NULL_POSITION);
-	case 'm':	/* More than one file? */
+	case 'm': /* More than one file? */
 #if TAGS
 		return (ntags() ? (ntags() > 1) : (nifile() > 1));
 #else
 		return (nifile() > 1);
 #endif
-	case 'n':	/* First prompt in a new file? */
+	case 'n': /* First prompt in a new file? */
 #if TAGS
 		return (ntags() ? 1 : new_file);
 #else
 		return (new_file);
 #endif
-	case 'p':	/* Percent into file (bytes) known? */
+	case 'p': /* Percent into file (bytes) known? */
 		return (curr_byte(where) != NULL_POSITION && 
 				ch_length() > 0);
-	case 'P':	/* Percent into file (lines) known? */
+	case 'P': /* Percent into file (lines) known? */
 		return (currline(where) != 0 &&
 				(len = ch_length()) > 0 &&
 				find_linenum(len) != 0);
-	case 's':	/* Size of file known? */
+	case 's': /* Size of file known? */
 	case 'B':
 		return (ch_length() != NULL_POSITION);
-	case 'x':	/* Is there a "next" file? */
+	case 'x': /* Is there a "next" file? */
 #if TAGS
 		if (ntags())
 			return (0);
@@ -256,11 +231,7 @@ cond(c, where)
  * Here we decode that letter and take the appropriate action,
  * usually by appending something to the message being built.
  */
-	static void
-protochar(c, where, iseditproto)
-	int c;
-	int where;
-	int iseditproto;
+static void protochar(int c, int where, int iseditproto)
 {
 	POSITION pos;
 	POSITION len;
@@ -268,13 +239,14 @@ protochar(c, where, iseditproto)
 	LINENUM linenum;
 	LINENUM last_linenum;
 	IFILE h;
+	char *s;
 
 #undef  PAGE_NUM
-#define PAGE_NUM(linenum)  ((((linenum) - 1) / (sc_height - 1)) + 1)
+#define PAGE_NUM(linenum)  ((((linenum) - 1) / (sc_height - header_lines - 1)) + 1)
 
 	switch (c)
 	{
-	case 'b':	/* Current byte offset */
+	case 'b': /* Current byte offset */
 		pos = curr_byte(where);
 		if (pos != NULL_POSITION)
 			ap_pos(pos);
@@ -284,14 +256,14 @@ protochar(c, where, iseditproto)
 	case 'c':
 		ap_int(hshift);
 		break;
-	case 'd':	/* Current page number */
+	case 'd': /* Current page number */
 		linenum = currline(where);
-		if (linenum > 0 && sc_height > 1)
+		if (linenum > 0 && sc_height > header_lines + 1)
 			ap_linenum(PAGE_NUM(linenum));
 		else
 			ap_quest();
 		break;
-	case 'D':	/* Final page number */
+	case 'D': /* Final page number */
 		/* Find the page number of the last byte in the file (len-1). */
 		len = ch_length();
 		if (len == NULL_POSITION)
@@ -309,17 +281,22 @@ protochar(c, where, iseditproto)
 		}
 		break;
 #if EDITOR
-	case 'E':	/* Editor name */
+	case 'E': /* Editor name */
 		ap_str(editor);
 		break;
 #endif
-	case 'f':	/* File name */
+	case 'f': /* File name */
 		ap_str(get_filename(curr_ifile));
 		break;
-	case 'F':	/* Last component of file name */
+	case 'F': /* Last component of file name */
 		ap_str(last_component(get_filename(curr_ifile)));
 		break;
-	case 'i':	/* Index into list of files */
+	case 'g': /* Shell-escaped file name */
+		s = shell_quote(get_filename(curr_ifile));
+		ap_str(s);
+		free(s);
+		break;
+	case 'i': /* Index into list of files */
 #if TAGS
 		if (ntags())
 			ap_int(curr_tag());
@@ -327,22 +304,22 @@ protochar(c, where, iseditproto)
 #endif
 			ap_int(get_index(curr_ifile));
 		break;
-	case 'l':	/* Current line number */
+	case 'l': /* Current line number */
 		linenum = currline(where);
 		if (linenum != 0)
-			ap_linenum(linenum);
+			ap_linenum(vlinenum(linenum));
 		else
 			ap_quest();
 		break;
-	case 'L':	/* Final line number */
+	case 'L': /* Final line number */
 		len = ch_length();
 		if (len == NULL_POSITION || len == ch_zero() ||
 		    (linenum = find_linenum(len)) <= 0)
 			ap_quest();
 		else
-			ap_linenum(linenum-1);
+			ap_linenum(vlinenum(linenum-1));
 		break;
-	case 'm':	/* Number of files */
+	case 'm': /* Number of files */
 #if TAGS
 		n = ntags();
 		if (n)
@@ -351,7 +328,7 @@ protochar(c, where, iseditproto)
 #endif
 			ap_int(nifile());
 		break;
-	case 'p':	/* Percent into file (bytes) */
+	case 'p': /* Percent into file (bytes) */
 		pos = curr_byte(where);
 		len = ch_length();
 		if (pos != NULL_POSITION && len > 0)
@@ -359,7 +336,7 @@ protochar(c, where, iseditproto)
 		else
 			ap_quest();
 		break;
-	case 'P':	/* Percent into file (lines) */
+	case 'P': /* Percent into file (lines) */
 		linenum = currline(where);
 		if (linenum == 0 ||
 		    (len = ch_length()) == NULL_POSITION || len == ch_zero() ||
@@ -368,7 +345,7 @@ protochar(c, where, iseditproto)
 		else
 			ap_int(percentage(linenum, last_linenum));
 		break;
-	case 's':	/* Size of file */
+	case 's': /* Size of file */
 	case 'B':
 		len = ch_length();
 		if (len != NULL_POSITION)
@@ -376,12 +353,12 @@ protochar(c, where, iseditproto)
 		else
 			ap_quest();
 		break;
-	case 't':	/* Truncate trailing spaces in the message */
+	case 't': /* Truncate trailing spaces in the message */
 		while (mp > message && mp[-1] == ' ')
 			mp--;
 		*mp = '\0';
 		break;
-	case 'T':	/* Type of list */
+	case 'T': /* Type of list */
 #if TAGS
 		if (ntags())
 			ap_str("tag");
@@ -389,7 +366,7 @@ protochar(c, where, iseditproto)
 #endif
 			ap_str("file");
 		break;
-	case 'x':	/* Name of next file */
+	case 'x': /* Name of next file */
 		h = next_ifile(curr_ifile);
 		if (h != NULL_IFILE)
 			ap_str(get_filename(h));
@@ -406,11 +383,9 @@ protochar(c, where, iseditproto)
  * where to resume parsing the string.
  * We must keep track of nested IFs and skip them properly.
  */
-	static constant char *
-skipcond(p)
-	register constant char *p;
+static constant char * skipcond(constant char *p)
 {
-	register int iflevel;
+	int iflevel;
 
 	/*
 	 * We came in here after processing a ? or :,
@@ -448,7 +423,8 @@ skipcond(p)
 		/*
 		 * Backslash escapes the next character.
 		 */
-		++p;
+		if (p[1] != '\0')
+			++p;
 		break;
 	case '\0':
 		/*
@@ -464,22 +440,19 @@ skipcond(p)
 /*
  * Decode a char that represents a position on the screen.
  */
-	static constant char *
-wherechar(p, wp)
-	char constant *p;
-	int *wp;
+static constant char * wherechar(char constant *p, int *wp)
 {
 	switch (*p)
 	{
 	case 'b': case 'd': case 'l': case 'p': case 'P':
 		switch (*++p)
 		{
-		case 't':   *wp = TOP;			break;
-		case 'm':   *wp = MIDDLE;		break;
-		case 'b':   *wp = BOTTOM;		break;
-		case 'B':   *wp = BOTTOM_PLUS_ONE;	break;
-		case 'j':   *wp = adjsline(jump_sline);	break;
-		default:    *wp = TOP;  p--;		break;
+		case 't':   *wp = TOP;                  break;
+		case 'm':   *wp = MIDDLE;               break;
+		case 'b':   *wp = BOTTOM;               break;
+		case 'B':   *wp = BOTTOM_PLUS_ONE;      break;
+		case 'j':   *wp = sindex_from_sline(jump_sline); break;
+		default:    *wp = TOP;  p--;            break;
 		}
 	}
 	return (p);
@@ -488,13 +461,10 @@ wherechar(p, wp)
 /*
  * Construct a message based on a prototype string.
  */
-	public char *
-pr_expand(proto, maxwidth)
-	constant char *proto;
-	int maxwidth;
+public char * pr_expand(constant char *proto)
 {
-	register constant char *p;
-	register int c;
+	constant char *p;
+	int c;
 	int where;
 
 	mp = message;
@@ -506,14 +476,14 @@ pr_expand(proto, maxwidth)
 	{
 		switch (*p)
 		{
-		default:	/* Just put the character in the message */
+		default: /* Just put the character in the message */
 			ap_char(*p);
 			break;
-		case '\\':	/* Backslash escapes the next character */
-			p++;
-			ap_char(*p);
+		case '\\': /* Backslash escapes the next character */
+			if (p[1] != '\0')
+				ap_char(*++p);
 			break;
-		case '?':	/* Conditional (IF) */
+		case '?': /* Conditional (IF) */
 			if ((c = *++p) == '\0')
 				--p;
 			else
@@ -524,12 +494,12 @@ pr_expand(proto, maxwidth)
 					p = skipcond(p);
 			}
 			break;
-		case ':':	/* ELSE */
+		case ':': /* ELSE */
 			p = skipcond(p);
 			break;
-		case '.':	/* ENDIF */
+		case '.': /* ENDIF */
 			break;
-		case '%':	/* Percent escape */
+		case '%': /* Percent escape */
 			if ((c = *++p) == '\0')
 				--p;
 			else
@@ -550,24 +520,15 @@ pr_expand(proto, maxwidth)
 
 	if (mp == message)
 		return ("");
-	if (maxwidth > 0 && mp >= message + maxwidth)
-	{
-		/*
-		 * Message is too long.
-		 * Return just the final portion of it.
-		 */
-		return (mp - maxwidth);
-	}
 	return (message);
 }
 
 /*
  * Return a message suitable for printing by the "=" command.
  */
-	public char *
-eq_message()
+public char * eq_message(void)
 {
-	return (pr_expand(eqproto, 0));
+	return (pr_expand(eqproto));
 }
 
 /*
@@ -576,16 +537,14 @@ eq_message()
  * If we can't come up with an appropriate prompt, return NULL
  * and the caller will prompt with a colon.
  */
-	public char *
-pr_string()
+public char * pr_string(void)
 {
 	char *prompt;
 	int type;
 
 	type = (!less_is_more) ? pr_type : pr_type ? 0 : 1;
 	prompt = pr_expand((ch_getflags() & CH_HELPFILE) ?
-				hproto : prproto[type],
-			sc_width-so_s_width-so_e_width-2);
+				hproto : prproto[type]);
 	new_file = 0;
 	return (prompt);
 }
@@ -593,8 +552,7 @@ pr_string()
 /*
  * Return a message suitable for printing while waiting in the F command.
  */
-	public char *
-wait_message()
+public char * wait_message(void)
 {
-	return (pr_expand(wproto, sc_width-so_s_width-so_e_width-2));
+	return (pr_expand(wproto));
 }
