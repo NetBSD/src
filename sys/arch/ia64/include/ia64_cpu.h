@@ -1,4 +1,4 @@
-/*	$NetBSD: ia64_cpu.h,v 1.3 2016/08/08 12:25:35 scole Exp $	*/
+/*	$NetBSD: ia64_cpu.h,v 1.4 2023/10/06 11:45:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Marcel Moolenaar
@@ -312,7 +312,7 @@ ia64_ld1(uint8_t *p)
 }
 
 static __inline uint16_t
-ia64_ld2(uint16_t *p)        
+ia64_ld2(uint16_t *p)
 {
 	uint16_t v;
 
@@ -321,7 +321,7 @@ ia64_ld2(uint16_t *p)
 }
 
 static __inline uint32_t
-ia64_ld4(uint32_t *p)        
+ia64_ld4(uint32_t *p)
 {
 	uint32_t v;
 
@@ -330,7 +330,7 @@ ia64_ld4(uint32_t *p)
 }
 
 static __inline uint64_t
-ia64_ld8(uint64_t *p)        
+ia64_ld8(uint64_t *p)
 {
 	uint64_t v;
 

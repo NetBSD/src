@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.3 2014/08/06 21:57:49 joerg Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.4 2023/10/06 11:45:37 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ extern	vsize_t ia64_unwindtablen;
 #ifdef _STANDALONE
 
 /* XXX: cherry: This whole thing is glue between the NetBSD pread/vpbcopy etc. etc
- *      and the FreeBSD kern_pread/bzero etc. etc. Needs to be cleaned up 
+ *      and the FreeBSD kern_pread/bzero etc. etc. Needs to be cleaned up
  *      after discussion.
  */
 
