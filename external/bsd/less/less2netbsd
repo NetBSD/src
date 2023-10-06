@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: less2netbsd,v 1.6 2023/10/06 05:58:21 simonb Exp $
+#	$NetBSD: less2netbsd,v 1.7 2023/10/06 06:05:07 simonb Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,8 +43,10 @@
 #	$ cvs -d cvs.netbsd.org:/cvsroot import src/external/bsd/less/dist \
 #		GREENWOODSOFTWARE LESS-xyz
 #	   Enter the new NEWS portion as your commit message
+#	   Check for any conflicts, merge, fix and commit them
 #	$ cd ../../../../../less-xyz
 #	$ ./configure
+#	   Add "/*	$NetBSD: less2netbsd,v 1.7 2023/10/06 06:05:07 simonb Exp $	*/" to new defines.h
 #	$ cp defines.h /usr/src/external/bsd/less/include
 #	$ cd /usr/src/external/bsd/less
 #	$ cvs update
