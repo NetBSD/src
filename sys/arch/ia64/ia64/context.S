@@ -1,4 +1,4 @@
-/*	$NetBSD: context.S,v 1.8 2017/04/08 17:38:43 scole Exp $	*/
+/*	$NetBSD: context.S,v 1.9 2023/10/06 11:45:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Marcel Moolenaar
@@ -657,7 +657,7 @@ ENTRY(restore_high_fp, 1)
 	ldf.fill	f32=[r32],32
 	;;
 	ldf.fill	f33=[r31],32
-	ldf.fill	f34=[r32],32	
+	ldf.fill	f34=[r32],32
 	;;
 	ldf.fill	f35=[r31],32
 	ldf.fill	f36=[r32],32

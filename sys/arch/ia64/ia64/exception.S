@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.6 2017/04/08 17:42:47 scole Exp $ */
+/*	$NetBSD: exception.S,v 1.7 2023/10/06 11:45:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -31,7 +31,7 @@
 /* __FBSDID("$FreeBSD: releng/10.1/sys/ia64/ia64/exception.S 268200 2014-07-02 23:47:43Z marcel $"); */
 
 #include "assym.h"
-	
+
 /*
  * Nested TLB restart tokens. These are used by the
  * nested TLB handler for jumping back to the code
@@ -54,7 +54,7 @@
 	.size	ia64_kptdir, 8
 ia64_kptdir:	data8	0
 
-	
+
 #ifdef XTRACE
 
 	.align	8
@@ -747,7 +747,7 @@ ENTRY_NOPROFILE(exception_restore, 0)
 {	.mmi
 	mov		ar.rsc=r31		// setup for loadrs
 	mov		ar.k7=r16
-	addl		r29=NTLBRT_RESTORE,r0	// 22-bit restart token 
+	addl		r29=NTLBRT_RESTORE,r0	// 22-bit restart token
 	;;
 }
 
@@ -873,7 +873,7 @@ IVT_ENTRY(Instruction_TLB, 0x0400)
 	;;
 	add	r21=16,r18		// tag
 	add	r20=24,r18		// collision chain
-	;; 
+	;;
 	ld8	r21=[r21]		// check VHPT tag
 	ld8	r20=[r20]		// bucket head
 	;;
@@ -909,7 +909,7 @@ IVT_ENTRY(Instruction_TLB, 0x0400)
 	or	r21=r21,r22
 	;;
 	st8	[r20]=r21,8
-	;; 
+	;;
 	ld8	r22=[r20]		// read rest of pte
 	;;
 	dep	r18=0,r18,61,3		// convert vhpt ptr to physical
@@ -932,7 +932,7 @@ IVT_ENTRY(Instruction_TLB, 0x0400)
 	;;
 	itc.i	r21			// and place in TLB
 	ssm	psr.dt
-	;; 
+	;;
 	srlz.d
 	mov	pr=r17,0x1ffff		// restore predicates
 	rfi
@@ -946,7 +946,7 @@ IVT_ENTRY(Instruction_TLB, 0x0400)
 	mov	pr=r17,0x1ffff		// restore predicates
 	;;
 	srlz.d
-	;; 
+	;;
 	CALL(trap, 20, cr.ifa)		// Page Not Present trap
 IVT_END(Instruction_TLB)
 
@@ -959,7 +959,7 @@ IVT_ENTRY(Data_TLB, 0x0800)
 	;;
 	add	r21=16,r18		// tag
 	add	r20=24,r18		// collision chain
-	;; 
+	;;
 	ld8	r21=[r21]		// check VHPT tag
 	ld8	r20=[r20]		// bucket head
 	;;
@@ -975,7 +975,7 @@ IVT_ENTRY(Data_TLB, 0x0800)
 	;;
 1:	rsm	psr.dt			// turn off data translations
 	dep	r20=0,r20,61,3		// convert vhpt ptr to physical
-	;; 
+	;;
 	srlz.d				// serialize
 	ld8	r20=[r20]		// first entry
 	;;
@@ -995,7 +995,7 @@ IVT_ENTRY(Data_TLB, 0x0800)
 	or	r21=r21,r22
 	;;
 	st8	[r20]=r21,8
-	;; 
+	;;
 	ld8	r22=[r20]		// read rest of pte
 	;;
 	dep	r18=0,r18,61,3		// convert vhpt ptr to physical
@@ -1018,7 +1018,7 @@ IVT_ENTRY(Data_TLB, 0x0800)
 	;;
 	itc.d	r21			// and place in TLB
 	ssm	psr.dt
-	;; 
+	;;
 	srlz.d
 	mov	pr=r17,0x1ffff		// restore predicates
 	rfi
@@ -1032,7 +1032,7 @@ IVT_ENTRY(Data_TLB, 0x0800)
 	mov	pr=r17,0x1ffff		// restore predicates
 	;;
 	srlz.d
-	;; 
+	;;
 	CALL(trap, 20, cr.ifa)		// Page Not Present trap
 IVT_END(Data_TLB)
 
@@ -1262,7 +1262,7 @@ IVT_ENTRY(Dirty_Bit, 0x2000)
 	;;
 	ttag	r19=r16
 	add	r20=24,r18		// collision chain
-	;; 
+	;;
 	ld8	r20=[r20]		// bucket head
 	;;
 	rsm	psr.dt			// turn off data translations
@@ -1287,7 +1287,7 @@ IVT_ENTRY(Dirty_Bit, 0x2000)
 	or	r21=r22,r21		// set dirty & access bit
 	;;
 	st8	[r20]=r21,8		// store back
-	;; 
+	;;
 	ld8	r22=[r20]		// read rest of pte
 	;;
 	dep	r18=0,r18,61,3		// convert vhpt ptr to physical
@@ -1310,7 +1310,7 @@ IVT_ENTRY(Dirty_Bit, 0x2000)
 	;;
 	itc.d	r21			// and place in TLB
 	ssm	psr.dt
-	;; 
+	;;
 	srlz.d
 	mov	pr=r17,0x1ffff		// restore predicates
 	rfi
@@ -1336,7 +1336,7 @@ IVT_ENTRY(Instruction_Access_Bit, 0x2400)
 	;;
 	ttag	r19=r16
 	add	r20=24,r18		// collision chain
-	;; 
+	;;
 	ld8	r20=[r20]		// bucket head
 	;;
 	rsm	psr.dt			// turn off data translations
@@ -1384,7 +1384,7 @@ IVT_ENTRY(Instruction_Access_Bit, 0x2400)
 	;;
 	itc.i	r21			// and place in TLB
 	ssm	psr.dt
-	;; 
+	;;
 	srlz.d
 	mov	pr=r17,0x1ffff		// restore predicates
 	rfi				// walker will retry the access
@@ -1435,7 +1435,7 @@ IVT_ENTRY(Data_Access_Bit, 0x2800)
 	or	r21=r22,r21		// set accessed bit
 	;;
 	st8	[r20]=r21,8		// store back
-	;; 
+	;;
 	ld8	r22=[r20]		// read rest of pte
 	;;
 	dep	r18=0,r18,61,3		// convert vhpt ptr to physical
@@ -1458,7 +1458,7 @@ IVT_ENTRY(Data_Access_Bit, 0x2800)
 	;;
 	itc.d	r21			// and place in TLB
 	ssm	psr.dt
-	;; 
+	;;
 	srlz.d
 	mov	pr=r17,0x1ffff		// restore predicates
 	rfi				// walker will retry the access

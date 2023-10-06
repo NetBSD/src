@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.5 2016/07/31 19:10:54 dholland Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.6 2023/10/06 11:45:16 skrll Exp $	*/
 
 /* Inspired by reading alpha/db_trace.c */
 
@@ -122,7 +122,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 
 	} else (*pr) ("Unwind from arbitrary addresses unimplemented. \n");
-		
+
 
 		if (trace_thread) {
 			(*pr)("trace by pid unimplemented. \n");
@@ -139,14 +139,14 @@ extern vsize_t ia64_unwindtablen;
 
 
 /* Generates initial unwind frame context based on the contents
- * of the trap frame, by consulting the Unwind library 
+ * of the trap frame, by consulting the Unwind library
  * staterecord. If a register is of type enum UNSAVED, we fetch
  * the live value of the register from the trapframe.
  */
 
 void
 initunwindframe(struct unwind_frame *uwf, struct trapframe *tf)
-		 
+
 {
 
 	uwf->rp = tf->tf_special.rp;
@@ -165,10 +165,10 @@ initunwindframe(struct unwind_frame *uwf, struct trapframe *tf)
 
 
 }
-		
 
 
-/* Single step the frame backward. 
+
+/* Single step the frame backward.
  * Assumes unwind_frame is setup already.
  */
 
@@ -185,7 +185,7 @@ rewindframe(struct unwind_frame *uwf, db_addr_t ip)
 	debug_frame_dump_XXX(uwf);
 #endif
 
-	/* Stomp on rp and pfs 
+	/* Stomp on rp and pfs
 	 */
 	KASSERT(ip >= kernstart);
 	patchunwindframe(uwf, ip - kernstart, kernstart);
