@@ -1,4 +1,4 @@
-/*	$NetBSD: opttbl.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
+/*	$NetBSD: opttbl.c,v 1.6 2023/10/06 07:29:42 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2023  Mark Nudelman
@@ -20,29 +20,29 @@
 /*
  * Variables controlled by command line options.
  */
-public int quiet;		/* Should we suppress the audible bell? */
-public int no_vbell;		/* Should we suppress the visual bell? */
-public int how_search;		/* Where should forward searches start? */
-public int top_scroll;		/* Repaint screen from top?
-				   (alternative is scroll from bottom) */
-public int pr_type;		/* Type of prompt (short, medium, long) */
-public int bs_mode;		/* How to process backspaces */
-public int know_dumb;		/* Don't complain about dumb terminals */
-public int quit_at_eof;		/* Quit after hitting end of file twice */
-public int quit_if_one_screen;	/* Quit if EOF on first screen */
-public int be_helpful;		/* more(1) style -d */
-public int squeeze;		/* Squeeze multiple blank lines into one */
-public int tabstop;		/* Tab settings */
-public int back_scroll;		/* Repaint screen on backwards movement */
-public int forw_scroll;		/* Repaint screen on forward movement */
-public int caseless;		/* Do "caseless" searches */
-public int linenums;		/* Use line numbers */
-public int autobuf;		/* Automatically allocate buffers as needed */
-public int bufspace;		/* Max buffer space per file (K) */
-public int ctldisp;		/* Send control chars to screen untranslated */
-public int force_open;		/* Open the file even if not regular file */
-public int swindow;		/* Size of scrolling window */
-public int jump_sline;		/* Screen line of "jump target" */
+public int quiet;               /* Should we suppress the audible bell? */
+public int no_vbell;            /* Should we suppress the visual bell? */
+public int how_search;          /* Where should forward searches start? */
+public int top_scroll;          /* Repaint screen from top?
+                                   (alternative is scroll from bottom) */
+public int pr_type;             /* Type of prompt (short, medium, long) */
+public int bs_mode;             /* How to process backspaces */
+public int know_dumb;           /* Don't complain about dumb terminals */
+public int quit_at_eof;         /* Quit after hitting end of file twice */
+public int quit_if_one_screen;  /* Quit if EOF on first screen */
+public int be_helpful;          /* more(1) style -d */
+public int squeeze;             /* Squeeze multiple blank lines into one */
+public int tabstop;             /* Tab settings */
+public int back_scroll;         /* Repaint screen on backwards movement */
+public int forw_scroll;         /* Repaint screen on forward movement */
+public int caseless;            /* Do "caseless" searches */
+public int linenums;            /* Use line numbers */
+public int autobuf;             /* Automatically allocate buffers as needed */
+public int bufspace;            /* Max buffer space per file (K) */
+public int ctldisp;             /* Send control chars to screen untranslated */
+public int force_open;          /* Open the file even if not regular file */
+public int swindow;             /* Size of scrolling window */
+public int jump_sline;          /* Screen line of "jump target" */
 public long jump_sline_fraction = -1;
 public long shift_count_fraction = -1;
 public int chopline;            /* Truncate displayed lines at screen width */
