@@ -1833,6 +1833,8 @@ err_sla:
 			t |= OT_ADDRIPV6;
 		else if (strcasecmp(arg, "string") == 0)
 			t |= OT_STRING;
+		else if (strcasecmp(arg, "uri") == 0)
+			t |= OT_URI;
 		else if (strcasecmp(arg, "byte") == 0)
 			t |= OT_UINT8;
 		else if (strcasecmp(arg, "bitflags") == 0)
