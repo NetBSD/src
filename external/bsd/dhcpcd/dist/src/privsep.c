@@ -412,7 +412,6 @@ ps_startprocess(struct ps_process *psp,
 		return pid;
 	}
 
-
 #ifdef PLUGIN_DEV
 	/* If we are not the root process, stop listening to devices. */
 	if (ctx->ps_root != psp)
@@ -541,11 +540,11 @@ ps_stopprocess(struct ps_process *psp)
 			err = -1;
 		}
 #endif
-		psp->psp_fd = -1;
 	}
 
 	/* Don't wait for the process as it may not respond to the shutdown
-	 * request. We'll reap the process on receipt of SIGCHLD. */
+	 * request. We'll reap the process on receipt of SIGCHLD where we
+	 * also close the fd. */
 	return err;
 }
 
@@ -1200,7 +1199,7 @@ ps_newprocess(struct dhcpcd_ctx *ctx, struct ps_id *psid)
 #endif
 
 	if (!(ctx->options & DHCPCD_MANAGER))
-		strlcpy(psp->psp_ifname, ctx->ifv[0], sizeof(psp->psp_name));
+		strlcpy(psp->psp_ifname, ctx->ifv[0], sizeof(psp->psp_ifname));
 	TAILQ_INSERT_TAIL(&ctx->ps_processes, psp, next);
 	return psp;
 }

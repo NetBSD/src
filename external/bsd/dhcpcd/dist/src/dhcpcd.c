@@ -75,6 +75,9 @@ static const char dhcpcd_copyright[] = "Copyright (c) 2006-2023 Roy Marples";
 #ifdef HAVE_CAPSICUM
 #include <sys/capsicum.h>
 #endif
+#ifdef HAVE_OPENSSL
+#include <openssl/crypto.h>
+#endif
 #ifdef HAVE_UTIL_H
 #include <util.h>
 #endif
@@ -1411,6 +1414,7 @@ dhcpcd_renew(struct dhcpcd_ctx *ctx)
 
 #ifdef USE_SIGNALS
 #define sigmsg "received %s, %s"
+static volatile bool dhcpcd_exiting = false;
 void
 dhcpcd_signal_cb(int sig, void *arg)
 {
@@ -1483,9 +1487,20 @@ dhcpcd_signal_cb(int sig, void *arg)
 		return;
 	}
 
+	/*
+	 * Privsep has a mini-eloop for reading data from other processes.
+	 * This mini-eloop processes signals as well so we can reap children.
+	 * During teardown we don't want to process SIGTERM or SIGINT again,
+	 * as that could trigger memory issues.
+	 */
+	if (dhcpcd_exiting)
+		return;
+
+	dhcpcd_exiting = true;
 	if (!(ctx->options & DHCPCD_TEST))
 		stop_all_interfaces(ctx, opts);
 	eloop_exit(ctx->eloop, exit_code);
+	dhcpcd_exiting = false;
 }
 #endif
 
@@ -1495,7 +1510,7 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
 {
 	struct interface *ifp;
 	unsigned long long opts;
-	int opt, oi, do_reboot, do_renew, af = AF_UNSPEC;
+	int opt, oi, oifind, do_reboot, do_renew, af = AF_UNSPEC;
 	size_t len, l, nifaces;
 	char *tmp, *p;
 
@@ -1511,7 +1526,7 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
 		return control_queue(fd, UNCONST(fd->ctx->cffile),
 		    strlen(fd->ctx->cffile) + 1);
 	} else if (strcmp(*argv, "--getinterfaces") == 0) {
-		optind = argc = 0;
+		oifind = argc = 0;
 		goto dumplease;
 	} else if (strcmp(*argv, "--listen") == 0) {
 		fd->flags |= FD_LISTEN;
@@ -1574,6 +1589,9 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
 		}
 	}
 
+	/* store the index; the optind will change when a getopt get called */
+	oifind = optind;
+
 	if (opts & DHCPCD_DUMPLEASE) {
 		ctx->options |= DHCPCD_DUMPLEASE;
 dumplease:
@@ -1581,11 +1599,11 @@ dumplease:
 		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 			if (!ifp->active)
 				continue;
-			for (oi = optind; oi < argc; oi++) {
+			for (oi = oifind; oi < argc; oi++) {
 				if (strcmp(ifp->name, argv[oi]) == 0)
 					break;
 			}
-			if (optind == argc || oi < argc) {
+			if (oifind == argc || oi < argc) {
 				opt = send_interface(NULL, ifp, af);
 				if (opt == -1)
 					goto dumperr;
@@ -1597,11 +1615,11 @@ dumplease:
 		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 			if (!ifp->active)
 				continue;
-			for (oi = optind; oi < argc; oi++) {
+			for (oi = oifind; oi < argc; oi++) {
 				if (strcmp(ifp->name, argv[oi]) == 0)
 					break;
 			}
-			if (optind == argc || oi < argc) {
+			if (oifind == argc || oi < argc) {
 				if (send_interface(fd, ifp, af) == -1)
 					goto dumperr;
 			}
@@ -1620,12 +1638,12 @@ dumperr:
 	}
 
 	if (opts & (DHCPCD_EXITING | DHCPCD_RELEASE)) {
-		if (optind == argc) {
+		if (oifind == argc) {
 			stop_all_interfaces(ctx, opts);
 			eloop_exit(ctx->eloop, EXIT_SUCCESS);
 			return 0;
 		}
-		for (oi = optind; oi < argc; oi++) {
+		for (oi = oifind; oi < argc; oi++) {
 			if ((ifp = if_find(ctx->ifaces, argv[oi])) == NULL)
 				continue;
 			if (!ifp->active)
@@ -1639,11 +1657,11 @@ dumperr:
 	}
 
 	if (do_renew) {
-		if (optind == argc) {
+		if (oifind == argc) {
 			dhcpcd_renew(ctx);
 			return 0;
 		}
-		for (oi = optind; oi < argc; oi++) {
+		for (oi = oifind; oi < argc; oi++) {
 			if ((ifp = if_find(ctx->ifaces, argv[oi])) == NULL)
 				continue;
 			dhcpcd_ifrenew(ifp);
@@ -1653,7 +1671,7 @@ dumperr:
 
 	reload_config(ctx);
 	/* XXX: Respect initial commandline options? */
-	reconf_reboot(ctx, do_reboot, argc, argv, optind - 1);
+	reconf_reboot(ctx, do_reboot, argc, argv, oifind);
 	return 0;
 }
 
@@ -1822,7 +1840,7 @@ dhcpcd_stderr_cb(void *arg, unsigned short events)
 	if (!(events & ELE_READ))
 		return;
 
-	len = read(ctx->stderr_fd, log, sizeof(log));
+	len = read(ctx->stderr_fd, log, sizeof(log) - 1);
 	if (len == -1) {
 		if (errno != ECONNRESET)
 			logerr(__func__);
@@ -2195,6 +2213,11 @@ printpidfile:
 			goto run_loop;
 		}
 	}
+#endif
+
+#ifdef HAVE_OPENSSL
+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS |
+	    OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
 
 #ifdef PRIVSEP
