@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 2021/03/28 10:29:05 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.46 2023/10/06 11:53:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45 2021/03/28 10:29:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46 2023/10/06 11:53:27 skrll Exp $");
 
 #include "opt_mtrr.h"
 
@@ -204,7 +204,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	}
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
-	l2->l_md.md_astpending = 0;
+	KASSERT(l2->l_md.md_astpending == 0);
 
 	sf = (struct switchframe *)tf - 1;
 
