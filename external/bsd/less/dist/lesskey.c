@@ -1,4 +1,4 @@
-/*	$NetBSD: lesskey.c,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
+/*	$NetBSD: lesskey.c,v 1.6 2023/10/06 07:26:47 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2023  Mark Nudelman
@@ -243,8 +243,6 @@ static void parse_args(int argc, char **argv)
 	 */
 	if (argc > 0)
 		infile = *argv;
-	else
-		infile = homefile(DEF_LESSKEYINFILE);
 }
 
 /*
