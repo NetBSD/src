@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.68 2022/05/30 09:56:03 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.69 2023/10/06 21:10:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
-#include "opt_fpsp.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
