@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.184 2023/09/13 07:28:51 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.185 2023/10/06 14:34:23 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.184 2023/09/13 07:28:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.185 2023/10/06 14:34:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -558,6 +558,13 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	adapter->mta = malloc(sizeof(*adapter->mta) *
 	    IXGBE_MAX_VF_MC, M_DEVBUF, M_WAITOK);
 
+	/* Check if VF was disabled by PF */
+	error = hw->mac.ops.get_link_state(hw, &adapter->link_enabled);
+	if (error) {		
+		/* PF is not capable of controlling VF state. Enable the link. */
+		adapter->link_enabled = TRUE;
+	}
+
 	/* Do the stats setup */
 	ixv_init_stats(adapter);
 	ixv_add_stats_sysctls(adapter);
@@ -786,6 +793,13 @@ ixv_init_locked(struct adapter *adapter)
 	ixv_init_stats(adapter);
 
 	/* Config/Enable Link */
+	error = hw->mac.ops.get_link_state(hw, &adapter->link_enabled);
+	if (error) {		
+		/* PF is not capable of controlling VF state. Enable the link. */
+		adapter->link_enabled = TRUE;
+	} else if (adapter->link_enabled == FALSE)
+		device_printf(dev, "VF is disabled by PF\n");
+
 	hw->mac.get_link_status = TRUE;
 	hw->mac.ops.check_link(hw, &adapter->link_speed, &adapter->link_up,
 	    FALSE);
@@ -1382,7 +1396,7 @@ ixv_update_link_status(struct adapter *adapter)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
-	if (adapter->link_up) {
+	if (adapter->link_up && adapter->link_enabled) {
 		if (adapter->link_active != LINK_STATE_UP) {
 			if (bootverbose) {
 				const char *bpsmsg;

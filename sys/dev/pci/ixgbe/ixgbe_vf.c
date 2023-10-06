@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_vf.c,v 1.32 2023/10/06 14:32:05 msaitoh Exp $ */
+/* $NetBSD: ixgbe_vf.c,v 1.33 2023/10/06 14:34:23 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_vf.c,v 1.32 2023/10/06 14:32:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_vf.c,v 1.33 2023/10/06 14:34:23 msaitoh Exp $");
 
 #include "ixgbe_api.h"
 #include "ixgbe_type.h"
@@ -85,6 +85,7 @@ s32 ixgbe_init_ops_vf(struct ixgbe_hw *hw)
 	hw->mac.ops.init_rx_addrs = NULL;
 	hw->mac.ops.update_mc_addr_list = ixgbe_update_mc_addr_list_vf;
 	hw->mac.ops.update_xcast_mode = ixgbevf_update_xcast_mode;
+	hw->mac.ops.get_link_state = ixgbe_get_link_state_vf;
 	hw->mac.ops.enable_mc = NULL;
 	hw->mac.ops.disable_mc = NULL;
 	hw->mac.ops.clear_vfta = NULL;
@@ -494,6 +495,34 @@ s32 ixgbevf_update_xcast_mode(struct ixgbe_hw *hw, int xcast_mode)
 	    && (xcast_mode != msgbuf[1]))
 		return IXGBE_ERR_NOT_TRUSTED;
 	return IXGBE_SUCCESS;
+}
+
+/**
+ * ixgbe_get_link_state_vf - Get VF link state from PF
+ * @hw: pointer to the HW structure
+ * @link_state: link state storage
+ *
+ * Returns state of the operation error or success.
+ **/
+s32 ixgbe_get_link_state_vf(struct ixgbe_hw *hw, bool *link_state)
+{
+	u32 msgbuf[2];
+	s32 err;
+	s32 ret_val;
+
+	msgbuf[0] = IXGBE_VF_GET_LINK_STATE;
+	msgbuf[1] = 0x0;
+
+	err = ixgbevf_write_msg_read_ack(hw, msgbuf, msgbuf, 2);
+
+	if (err || (msgbuf[0] & IXGBE_VT_MSGTYPE_FAILURE)) {
+		ret_val = IXGBE_ERR_MBX;
+	} else {
+		ret_val = IXGBE_SUCCESS;
+		*link_state = msgbuf[1];
+	}
+
+	return ret_val;
 }
 
 /**

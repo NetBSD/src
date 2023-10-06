@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.87 2023/09/13 07:28:51 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.88 2023/10/06 14:34:23 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -511,6 +511,7 @@ struct adapter {
 	u16			num_segs;
 	u32			link_speed;
 	bool			link_up;
+	bool                    link_enabled;
 	u32			vector;
 	u16			dmac;
 	u32			phy_layer;
