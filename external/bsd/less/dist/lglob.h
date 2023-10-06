@@ -1,4 +1,4 @@
-/*	$NetBSD: lglob.h,v 1.5 2023/10/06 05:49:49 simonb Exp $	*/
+/*	$NetBSD: lglob.h,v 1.6 2023/10/06 06:25:22 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2023  Mark Nudelman
@@ -35,12 +35,12 @@
 #else
 #if MSDOS_COMPILER==DJGPPC
 
-#define DECL_GLOB_LIST(list)		glob_t list;  size_t i;
-#define	GLOB_LIST(filename,list)	glob(filename,GLOB_NOCHECK,0,&list)
-#define	GLOB_LIST_FAILED(list)		0
-#define	SCAN_GLOB_LIST(list,p)		i = 0;  i < list.gl_pathc;  i++
-#define	INIT_GLOB_LIST(list,p)		p = list.gl_pathv[i]
-#define	GLOB_LIST_DONE(list)		globfree(&list)
+#define DECL_GLOB_LIST(list)            glob_t list;  size_t i;
+#define GLOB_LIST(filename,list)        glob(filename,GLOB_NOCHECK,0,&list)
+#define GLOB_LIST_FAILED(list)          0
+#define SCAN_GLOB_LIST(list,p)          i = 0;  i < list.gl_pathc;  i++
+#define INIT_GLOB_LIST(list,p)          p = list.gl_pathv[i]
+#define GLOB_LIST_DONE(list)            globfree(&list)
 
 #else
 #if MSDOS_COMPILER==MSOFTC || MSDOS_COMPILER==BORLANDC
