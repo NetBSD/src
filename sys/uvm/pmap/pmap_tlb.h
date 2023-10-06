@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.16 2022/10/26 07:35:20 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.17 2023/10/06 08:48:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,10 @@
 # endif
 #endif
 
+#if !defined(PMAP_TLB_ALWAYS_ASIDS)
+#define	PMAP_TLB_ALWAYS_ASIDS	true
+#endif
+
 /*
  * Per TLB (normally same as CPU) asid info
  */
@@ -97,7 +101,7 @@ struct pmap_asid_info {
 #define	TLBINFO_LOCK(ti)		mutex_spin_enter((ti)->ti_lock)
 #define	TLBINFO_UNLOCK(ti)		mutex_spin_exit((ti)->ti_lock)
 #define	TLBINFO_OWNED(ti)		mutex_owned((ti)->ti_lock)
-#define	PMAP_PAI_ASIDVALID_P(pai, ti)	((pai)->pai_asid != 0)
+#define	PMAP_PAI_ASIDVALID_P(pai, ti)	(!tlbinfo_asids_p(ti) || (pai)->pai_asid != 0)
 #define	PMAP_PAI(pmap, ti)		(&(pmap)->pm_pai[tlbinfo_index(ti)])
 #define	PAI_PMAP(pai, ti)	\
 	((pmap_t)((intptr_t)(pai) \
@@ -187,6 +191,12 @@ void	pmap_tlb_asid_check(void);
 
 /* for ddb */
 void pmap_db_tlb_print(struct pmap *, void (*)(const char *, ...) __printflike(1, 2));
+
+static inline bool
+tlbinfo_asids_p(struct pmap_tlb_info *ti)
+{
+	return PMAP_TLB_ALWAYS_ASIDS || (ti)->ti_asid_max != 0;
+}
 
 #endif	/* _KERNEL */
 #endif	/* _UVM_PMAP_PMAP_TLB_H_ */
