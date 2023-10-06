@@ -3314,7 +3314,8 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			state->reason = "TEST";
 			script_runreason(ifp, state->reason);
 			eloop_exit(ifp->ctx->eloop, EXIT_SUCCESS);
-			state->bpf->bpf_flags |= BPF_EOF;
+			if (state->bpf)
+				state->bpf->bpf_flags |= BPF_EOF;
 			return;
 		}
 		eloop_timeout_delete(ifp->ctx->eloop, send_discover, ifp);

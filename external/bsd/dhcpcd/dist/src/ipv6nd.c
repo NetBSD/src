@@ -1238,7 +1238,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 	old_lifetime = rap->lifetime;
 	rap->lifetime = ntohs(nd_ra->nd_ra_router_lifetime);
 	if (!new_rap && rap->lifetime == 0 && old_lifetime != 0)
-		logwarnx("%s: %s: no longer a default router",
+		logwarnx("%s: %s: no longer a default router (lifetime = 0)",
 		    ifp->name, rap->sfrom);
 	if (nd_ra->nd_ra_curhoplimit != 0)
 		rap->hoplimit = nd_ra->nd_ra_curhoplimit;

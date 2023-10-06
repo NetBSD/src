@@ -32,7 +32,7 @@
 #else
 #define INITDEFINES	     128
 #define INITDEFINENDS	       7
-#define INITDEFINE6S	      72
+#define INITDEFINE6S	      74
 #endif
 
 extern const char dhcpcd_embedded_conf[];

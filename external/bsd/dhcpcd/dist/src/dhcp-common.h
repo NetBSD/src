@@ -80,6 +80,7 @@
 #define	OT_ESCFILE		(1 << 26)
 #define	OT_BITFLAG		(1 << 27)
 #define	OT_RESERVED		(1 << 28)
+#define	OT_URI			(1 << 29)
 
 #define	DHC_REQ(r, n, o) \
 	(has_option_mask((r), (o)) && !has_option_mask((n), (o)))
