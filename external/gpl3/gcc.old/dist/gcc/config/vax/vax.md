@@ -733,7 +733,7 @@
 	(minus:QI (const_int 32)
 		  (match_dup 4)))
    (set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
+	(zero_extract:SI (match_operand:SI 1 "general_operand" "g")
 			 (match_dup 3)
 			 (match_operand:SI 2 "register_operand" "g")))]
   ""
@@ -741,6 +741,10 @@
 {
   operands[3] = gen_reg_rtx (QImode);
   operands[4] = gen_lowpart (QImode, operands[2]);
+  operands[4] = gen_rtx_MINUS (QImode, GEN_INT (32), operands[4]);
+  emit_move_insn (operands[3], operands[4]);
+  emit_insn (gen_extzv (operands[0], operands[1], operands[3], operands[2]));
+  DONE;
 }")
 
 ;; Rotate right on the VAX works by negating the shift count.
