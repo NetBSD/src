@@ -1058,12 +1058,36 @@
 }")
 
 (define_expand "insv"
-  [(set (zero_extract:SI (match_operand:SI 0 "general_operand" "")
+  [(set (zero_extract:SI (match_dup 4)
 			 (match_operand:QI 1 "general_operand" "")
 			 (match_operand:SI 2 "general_operand" ""))
 	(match_operand:SI 3 "general_operand" ""))]
   ""
-  "")
+  "{
+    /*
+     * If the destination operand is a memory reference, and the address
+     * is a symbol, and we're in PIC mode, load the address into a
+     * register.  Don't evaluate the field start or width at this time.
+     */
+    operands[4] = operands[0];
+    if (flag_pic
+     /*	&& !reload_completed */
+	&& MEM_P (operands[0])
+	&& !mode_dependent_address_p (XEXP (operands[0], 0),
+				       MEM_ADDR_SPACE (operands[0]))
+	&& SYMBOL_REF_P (XEXP (operands[0], 0))
+	&& !SYMBOL_REF_LOCAL_P (XEXP (operands[0], 0))
+       )
+      {
+	rtx address = XEXP (operands[0], 0);
+	rtx temp = gen_reg_rtx (Pmode);
+	emit_move_insn (temp, address);
+	/* copy the original memory reference, replacing the address */
+	operands[4] = change_address (operands[0], VOIDmode, temp);
+	set_mem_align (operands[4], MEM_ALIGN (operands[0]));
+      }
+
+  }")
 
 (define_insn ""
   [(set (zero_extract:SI (match_operand:QI 0 "memory_operand" "+g")
