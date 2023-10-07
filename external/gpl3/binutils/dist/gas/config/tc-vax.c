@@ -282,6 +282,29 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
   if (fixP->fx_subsy != (symbolS *) NULL)
     as_bad_subtract (fixP);
 
+  if (fixP->fx_pcrel)
+    {
+      switch (fixP->fx_r_type)
+	{
+	case BFD_RELOC_32:
+	  /* change the relocation type to 32 bit PC-relative */
+	  fixP->fx_r_type = BFD_RELOC_32_PCREL;
+	  if (fixP->fx_addsy != NULL)
+	    {
+	      /* Hack around bfd_install_relocation brain damage.  */
+	      value += fixP->fx_frag->fr_address + fixP->fx_where;
+	    }
+	  if (fixP->fx_addsy == abs_section_sym)
+	    fixP->fx_done = 1;
+	  break;
+	default:
+	  break;
+	}
+    }
+
+  /*
+   * Common code for pc-relative and non-pc-relative cases
+   */
   if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
 
@@ -3524,6 +3547,11 @@ tc_vax_regname_to_dw2regnum (char *regname)
 void
 vax_cfi_emit_pcrel_expr (expressionS *expP, unsigned int nbytes)
 {
+  expressionS tmp = *expP;
+
+  tmp.X_op = O_subtract;
+  tmp.X_op_symbol = symbol_temp_new_now ();
+  expP = &tmp;
   expP->X_add_number += nbytes;
   emit_expr (expP, nbytes);
 }
