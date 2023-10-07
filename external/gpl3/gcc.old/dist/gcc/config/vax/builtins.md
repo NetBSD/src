@@ -82,7 +82,7 @@
 
   label = gen_label_rtx ();
   emit_move_insn (operands[0], const1_rtx);
-  emit_jump_insn (gen_jbbssi<mode> (operands[1], const0_rtx, label, operands[1]));
+  emit_jump_insn (gen_jbbssi<mode> (operands[1], const0_rtx, label));
   emit_move_insn (operands[0], const0_rtx);
   emit_label (label);
   DONE;
@@ -92,13 +92,13 @@
   [(parallel
     [(set (pc)
 	  (if_then_else
-	    (ne (zero_extract:SI (match_operand:QI 0 "volatile_mem_operand" "g")
+	    (ne (zero_extract:SI (match_operand:QI 0 "volatile_mem_operand" "+g")
 				 (const_int 1)
 				 (match_operand:SI 1 "general_operand" "nrm"))
 		(const_int 0))
 	    (label_ref (match_operand 2 "" ""))
 	    (pc)))
-     (set (zero_extract:SI (match_operand:QI 3 "volatile_mem_operand" "+0")
+     (set (zero_extract:SI (match_dup 0)
 			   (const_int 1)
 			   (match_dup 1))
 	  (const_int 1))])]
@@ -109,13 +109,13 @@
   [(parallel
     [(set (pc)
 	  (if_then_else
-	    (ne (zero_extract:SI (match_operand:HI 0 "volatile_mem_operand" "Q")
+	    (ne (zero_extract:SI (match_operand:HI 0 "volatile_mem_operand" "+Q")
 				 (const_int 1)
 				 (match_operand:SI 1 "general_operand" "nrm"))
 		(const_int 0))
 	    (label_ref (match_operand 2 "" ""))
 	    (pc)))
-     (set (zero_extract:SI (match_operand:HI 3 "volatile_mem_operand" "+0")
+     (set (zero_extract:SI (match_dup 0)
 			   (const_int 1)
 			   (match_dup 1))
 	  (const_int 1))])]
@@ -126,13 +126,13 @@
   [(parallel
     [(set (pc)
 	  (if_then_else
-	    (ne (zero_extract:SI (match_operand:SI 0 "volatile_mem_operand" "Q")
+	    (ne (zero_extract:SI (match_operand:SI 0 "volatile_mem_operand" "+Q")
 				 (const_int 1)
 				 (match_operand:SI 1 "general_operand" "nrm"))
 		(const_int 0))
 	    (label_ref (match_operand 2 "" ""))
 	    (pc)))
-     (set (zero_extract:SI (match_operand:SI 3 "volatile_mem_operand" "+0")
+     (set (zero_extract:SI (match_dup 0)
 			   (const_int 1)
 			   (match_dup 1))
 	  (const_int 1))])]
