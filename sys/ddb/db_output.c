@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.36 2020/01/26 01:42:55 uwe Exp $	*/
+/*	$NetBSD: db_output.c,v 1.37 2023/10/07 20:00:39 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.36 2020/01/26 01:42:55 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.37 2023/10/07 20:00:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,4 +253,14 @@ db_format_hex(char *buf, size_t bufsiz, quad_t val, int altflag)
 		++fmt;
 
 	snprintf(buf, bufsiz, fmt, val);
+}
+
+/*
+ * Print out a timespec value.
+ */
+void
+db_print_timespec(struct timespec *ts)
+{
+
+	db_printf("%" PRIu64 ".%09ld", (uint64_t)ts->tv_sec, ts->tv_nsec);
 }

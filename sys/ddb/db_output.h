@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.h,v 1.22 2020/06/28 04:06:14 simonb Exp $	*/
+/*	$NetBSD: db_output.h,v 1.23 2023/10/07 20:00:39 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -45,6 +45,7 @@ void	db_vprintf(const char *, va_list) __printflike(1, 0);
 void	db_format_radix(char *, size_t, quad_t, int);
 void	db_format_hex(char *, size_t, quad_t, int);
 void	db_end_line(void);
+void	db_print_timespec(struct timespec *);
 
 extern int	db_max_line;
 extern int	db_max_width;
