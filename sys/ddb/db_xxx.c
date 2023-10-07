@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.75 2020/05/23 23:42:42 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.76 2023/10/07 20:27:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.75 2020/05/23 23:42:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.76 2023/10/07 20:27:20 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -69,6 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.75 2020/05/23 23:42:42 ad Exp $");
 #include <sys/module.h>
 #include <sys/cpu.h>
 #include <sys/vmem.h>
+#include <sys/condvar.h>
+#include <sys/sleepq.h>
+#include <sys/selinfo.h>
 
 #include <ddb/ddb.h>
 #include <ddb/db_user.h>
@@ -324,4 +327,53 @@ db_show_panic(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 
 	(void)splx(s);
 #endif
+}
+
+void
+db_show_condvar(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
+{
+	kcondvar_t *cv = (kcondvar_t *)addr;
+	char buf[9], *wmesg;
+
+	/* XXX messing with kcondvar_t guts without defs */
+	db_read_bytes((db_addr_t)&cv->cv_opaque[1], sizeof(wmesg),
+	    (char *)&wmesg);
+	db_read_bytes((db_addr_t)wmesg, sizeof(buf) - 1, buf);
+	buf[sizeof(buf) - 1] = '\0';
+	db_printf("wmesg=%s ", buf);
+	db_show_sleepq((db_addr_t)&cv->cv_opaque[0], false, 0, modif);
+}
+
+void
+db_show_sleepq(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
+{
+	sleepq_t sq;
+	lwp_t *lp;
+
+	db_read_bytes(addr, sizeof(lp), (char *)&sq);
+	db_printf("sleepq=");
+	if ((lp = LIST_FIRST(&sq)) == NULL) {
+		db_printf("<empty>");
+	}
+	while (lp != NULL) {
+		db_printf("%p", lp);
+		db_read_bytes((db_addr_t)&lp->l_sleepchain.le_next, sizeof(lp),
+		    (char *)&lp);
+		if (lp != NULL)
+			db_printf(",");
+	}
+	db_printf("\n");
+}
+
+void
+db_show_selinfo(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
+{
+	struct selinfo sel;
+
+	db_read_bytes(addr, sizeof(sel), (char *)&sel);
+
+	db_printf("collision=%llx klist=%p cluster=%p lwp=%p fdinfo=%lx "
+	    "sel_chain=%p\n", (long long)sel.sel_collision,
+	    SLIST_FIRST(&sel.sel_klist), sel.sel_cluster, sel.sel_lwp,
+	    (long)sel.sel_fdinfo, sel.sel_chain.sle_next);
 }

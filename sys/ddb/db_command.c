@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.185 2023/07/17 12:55:03 riastradh Exp $	*/
+/*	$NetBSD: db_command.c,v 1.186 2023/10/07 20:27:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.185 2023/07/17 12:55:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.186 2023/10/07 20:27:20 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -249,6 +249,8 @@ static const struct db_command db_show_cmds[] = {
 	/* added from all sub cmds */
 	{ DDB_ADD_CMD("callout",  db_show_callout,
 	    0 ,"List all used callout functions.",NULL,NULL) },
+	{ DDB_ADD_CMD("condvar", db_show_condvar,
+	    0 ,"Show the contents of a condition variable.",NULL,NULL) },
 	{ DDB_ADD_CMD("devices", db_show_all_devices,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("event",	db_event_print_cmd,	0,
 	    "Print all the non-zero evcnt(9) event counters.", "[/fitm]",NULL) },
@@ -317,6 +319,10 @@ static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("sched_qs",	db_show_sched_qs,	0,
 	    "Print the state of the scheduler's run queues.",
 	    NULL,NULL) },
+	{ DDB_ADD_CMD("selinfo", db_show_selinfo,
+	    0 ,"Show the contents of a selinfo.",NULL,NULL) },
+	{ DDB_ADD_CMD("sleepq", db_show_sleepq,
+	    0 ,"Show the contents of a sleep queue.",NULL,NULL) },
 	{ DDB_ADD_CMD("socket",	db_socket_print_cmd,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("tstiles", db_show_all_tstiles,
 	    0, "Show who's holding up tstiles", "[/t]", NULL) },
