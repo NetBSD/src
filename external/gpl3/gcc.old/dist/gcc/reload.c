@@ -4529,6 +4529,50 @@ find_reloads (rtx_insn *insn, int replace, int ind_levels, int live_known,
       }
   }
 
+#if NB_FIX_VAX_BACKEND
+  /*
+   * Scan the reloads again looking for a case where there is
+   * precisely one RELOAD_FOR_OPERAND_ADDRESS reload and one
+   * RELOAD_FOR_OPADDR_ADDR reload BUT they are for different
+   * operands.  choose_reload_regs assumes that the
+   * RELOAD_FOR_OPADDR_ADDR and RELOAD_FOR_OPERAND_ADDRESS reloads are
+   * a pair operating on the same operand and will choose the same
+   * register for both, which is not what is wanted.
+   */
+  {
+    int n_operand_address_reloads = 0,
+	n_opaddr_addr_reloads = 0;
+    int reloadnum_for_operand_address_reload = -1,
+	reloadnum_for_opaddr_addr_reload = -1;
+
+    for (i = 0; i < n_reloads; i++)
+      {
+	switch (rld[i].when_needed)
+	  {
+	  case RELOAD_FOR_OPADDR_ADDR:
+	    n_opaddr_addr_reloads++;
+	    reloadnum_for_opaddr_addr_reload = i;
+	    break;
+	  case RELOAD_FOR_OPERAND_ADDRESS:
+	    n_operand_address_reloads++;
+	    reloadnum_for_operand_address_reload = i;
+	    break;
+	  default:
+	    break;
+	  }
+      }
+
+    if (n_operand_address_reloads == 1
+	&& n_opaddr_addr_reloads == 1
+	&& rld[reloadnum_for_opaddr_addr_reload].opnum
+	   != rld[reloadnum_for_operand_address_reload].opnum)
+      {
+	rld[reloadnum_for_opaddr_addr_reload].when_needed
+	= RELOAD_FOR_OPERAND_ADDRESS;
+      }
+  }
+#endif
+
   /* See if we have any reloads that are now allowed to be merged
      because we've changed when the reload is needed to
      RELOAD_FOR_OPERAND_ADDRESS or RELOAD_FOR_OTHER_ADDRESS.  Only
