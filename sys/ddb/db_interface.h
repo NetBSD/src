@@ -1,7 +1,7 @@
-/*	$NetBSD: db_interface.h,v 1.40 2021/04/18 01:28:50 mrg Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.41 2023/10/07 20:27:20 ad Exp $	*/
 
 /*-
- * Copyright (c) 1995 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -52,7 +52,7 @@ void		db_show_all_procs(db_expr_t, bool, db_expr_t, const char *);
 void		db_show_all_pools(db_expr_t, bool, db_expr_t, const char *);
 void		db_show_sched_qs(db_expr_t, bool, db_expr_t, const char *);
 
-/* kern/kern_clock.c */
+/* kern/kern_timeout.c */
 void		db_show_callout(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/subr_log.c */
@@ -79,6 +79,15 @@ void		db_show_all_device(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/subr_disk.c, dev/dksubr.c */
 void		db_show_disk(db_expr_t, bool, db_expr_t, const char *);
+
+/* kern/kern_sleepq.c */
+void		db_show_sleepq(db_expr_t, bool, db_expr_t, const char *);
+
+/* kern/kern_condvar.c */
+void		db_show_condvar(db_expr_t, bool, db_expr_t, const char *);
+
+/* kern/sys_select.c */
+void		db_show_selinfo(db_expr_t, bool, db_expr_t, const char *);
 
 /* The db_stacktrace_print macro may be overridden by an MD macro */
 #ifndef db_stacktrace_print
