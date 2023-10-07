@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.50 2023/07/16 22:20:54 rjs Exp $
+# $NetBSD: Makefile,v 1.51 2023/10/07 12:15:52 rin Exp $
 
 # Link the gallium mega driver.
 
@@ -1426,10 +1426,6 @@ SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHL
 
 .if ${MACHINE_ARCH} == "sparc" || ${COMMON_MACHINE_ARCH:U} == "sparc"
 COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
-.endif
-
-.if ${MACHINE_ARCH} == "vax"
-COPTS.nir.c += -O1
 .endif
 
 COPTS.u_atomic.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-builtin-declaration-mismatch :}

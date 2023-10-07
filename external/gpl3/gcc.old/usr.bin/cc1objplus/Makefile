@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2023/02/20 02:12:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2023/10/07 12:15:51 rin Exp $
 
 # XXX: Pull this (G_OBJCXX_OBJS) out with mknative-gcc.  Needs some
 # minor re-org of cc1plus and perhaps cc1obj.  G_CXX_AND_OBJCXX_OBJS
@@ -68,18 +68,6 @@ COPTS.c-typeck.c+=			-Wno-stack-protector
 COPTS.objc-act.c+=			-Wno-stack-protector
 COPTS.objc-gnu-runtime-abi-01.c+=	-Wno-stack-protector
 COPTS.objc-next-runtime-abi-01.c+=	-Wno-stack-protector
-
-.if ${MACHINE_ARCH} == "vax"
-COPTS.c-decl.c+=-O0
-COPTS.c-typeck.c+=-O0
-COPTS.c-array-notation.c+=-O0
-COPTS.c-common.c+=-O0
-COPTS.c-ada-spec.c+=-O0
-COPTS.cilk.c+=-O0
-COPTS.c-ubsan.c+=-O0
-COPTS.cc1obj-checksum.c+=-O0
-COPTS.decl.c+=-O0
-.endif
 
 .if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
 COPTS.c-common.c+=-O3

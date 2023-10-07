@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2013/11/09 21:39:27 christos Exp $
+# $NetBSD: Makefile,v 1.9 2023/10/07 12:15:49 rin Exp $
 # Build ping without IPSEC
 
 .include <bsd.own.mk>
@@ -11,10 +11,6 @@ NOMAN=		# defined
 CPPFLAGS+=	-I${SRCDIR} -DCRUNCHOPS
 DPADD=		${LIBM}
 LDADD=		-lm
-
-.if ${MACHINE_ARCH} == "vax"
-COPTS.ping.c=-O0
-.endif
 
 .include <bsd.prog.mk>
 
