@@ -3919,6 +3919,20 @@ passed along.",
  int, (const_rtx x, unsigned flags),
  default_unspec_may_trap_p)
 
+/* Return nonzero if evaluating SIGN_EXTRACT X or ZERO_EXTRACT X might
+   cause a trap.  FLAGS has the same meaning as in rtlanal.c:
+   may_trap_p_1. */
+DEFHOOK
+(bitfield_may_trap_p,
+ "This target hook returns nonzero if @var{x}, an @code{sign_extract} or\n\
+@code{zero_extract} operation, might cause a trap.  Targets can use\n\
+this hook to enhance precision of analysis for @code{sign_extract} and\n\
+@code{zero_extract} operations.  You may call @code{may_trap_p_1}\n\
+to analyze inner elements of @var{x} in which case @var{flags} should be\n\
+passed along.",
+ int, (const_rtx x, unsigned flags),
+ default_bitfield_may_trap_p)
+
 /* Given a register, this hook should return a parallel of registers
    to represent where to find the register pieces.  Define this hook
    if the register and its mode are represented in Dwarf in
