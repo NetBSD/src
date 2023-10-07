@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2023/08/08 06:27:31 mrg Exp $
+# $NetBSD: Makefile,v 1.8 2023/10/07 12:15:52 rin Exp $
 
 # Transparent struct/union broken
 NOLINT=yes
@@ -1209,10 +1209,6 @@ SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHL
 
 .if ${MACHINE_ARCH} == "sparc" || ${COMMON_MACHINE_ARCH:U} == "sparc"
 COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
-.endif
-
-.if ${MACHINE_ARCH} == "vax"
-COPTS.nir.c += -O1
 .endif
 
 # XXXGCC12

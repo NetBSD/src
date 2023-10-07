@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2022/05/17 18:55:41 christos Exp $
+# $NetBSD: Makefile.inc,v 1.2 2023/10/07 12:15:49 rin Exp $
 
 ARGON2DIR=	${NETBSDSRCDIR}/external/apache2/argon2/dist/phc-winner-argon2
 
@@ -15,8 +15,4 @@ SRCS+=	thread.c
 CFLAGS+=	-pthread
 LDADD+=-lpthread
 DPADD+=${LIBPTHREAD}
-.endif
-
-.if ${MACHINE} == "vax"
-COPTS.blake2b.c+=	-O0
 .endif
