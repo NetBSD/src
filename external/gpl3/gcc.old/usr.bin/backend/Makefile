@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2023/07/14 19:46:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2023/10/07 12:13:36 rin Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -621,4 +621,8 @@ CFLAGS+= -fno-exceptions -fno-rtti -fasynchronous-unwind-tables
 .PATH: ${DIST}/gcc/analyzer
 .if ${MACHINE_CPU} == "aarch64"
 .PATH: ${DIST}/gcc/config/arm
+.endif
+
+.if ${MACHINE} == "vax"
+CPPFLAGS+=	-DNB_FIX_VAX_BACKEND
 .endif
