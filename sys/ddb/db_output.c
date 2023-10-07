@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.37 2023/10/07 20:00:39 ad Exp $	*/
+/*	$NetBSD: db_output.c,v 1.38 2023/10/07 20:22:53 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,11 +35,12 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.37 2023/10/07 20:00:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.38 2023/10/07 20:22:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/stdarg.h>
+#include <sys/time.h>
 
 #include <dev/cons.h>
 

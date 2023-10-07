@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.h,v 1.23 2023/10/07 20:00:39 ad Exp $	*/
+/*	$NetBSD: db_output.h,v 1.24 2023/10/07 20:22:53 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,6 +33,8 @@
 #define _DDB_DB_OUTPUT_H_
 
 #include <sys/stdarg.h>
+
+struct timespec;
 
 /*
  * Printing routines for kernel debugger.
