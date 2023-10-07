@@ -182,20 +182,28 @@ vax_expand_prologue (void)
   HOST_WIDE_INT size;
   rtx insn;
 
-  offset = 20;
   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
     if (df_regs_ever_live_p (regno) && !call_used_or_fixed_reg_p (regno))
       {
         mask |= 1 << regno;
-        offset += 4;
       }
+
+  if (crtl->calls_eh_return)
+    {
+      mask |= 0
+	| ( 1 << EH_RETURN_DATA_REGNO(0) )
+	| ( 1 << EH_RETURN_DATA_REGNO(1) )
+	| ( 1 << EH_RETURN_DATA_REGNO(2) )
+	| ( 1 << EH_RETURN_DATA_REGNO(3) )
+	;
+    }
 
   insn = emit_insn (gen_procedure_entry_mask (GEN_INT (mask)));
   RTX_FRAME_RELATED_P (insn) = 1;
 
   /* The layout of the CALLG/S stack frame is follows:
 
-		<- CFA, AP
+		<- AP
 	r11
 	r10
 	...	Registers saved as specified by MASK
@@ -205,15 +213,10 @@ vax_expand_prologue (void)
 	old fp
 	old ap
 	old psw
-	zero
-		<- FP, SP
+	condition handler	<- CFA, FP, SP
+	  (initially zero)
 
      The rest of the prologue will adjust the SP for the local frame.  */
-
-  add_reg_note (insn, REG_CFA_DEF_CFA,
-                plus_constant (Pmode, frame_pointer_rtx, offset));
-  insn = emit_insn (gen_blockage ());
-  RTX_FRAME_RELATED_P (insn) = 1;
 
 #ifdef notyet
   /*
@@ -226,14 +229,21 @@ vax_expand_prologue (void)
   vax_add_reg_cfa_offset (insn, 12, frame_pointer_rtx);
   vax_add_reg_cfa_offset (insn, 16, pc_rtx);
 
-  offset = 20;
+  offset = 5 * UNITS_PER_WORD;	/* PSW, AP &c */
   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
     if (mask & (1 << regno))
       {
 	vax_add_reg_cfa_offset (insn, offset, gen_rtx_REG (SImode, regno));
-	offset += 4;
+	offset += 1 * UNITS_PER_WORD;
       }
 
+  /* Because add_reg_note pushes the notes, adding this last means that
+     it will be processed first.  This is required to allow the other
+     notes to be interpreted properly.  */
+  /* The RTX here must match the instantiation of the CFA vreg */
+  add_reg_note (insn, REG_CFA_DEF_CFA,
+		plus_constant (Pmode, frame_pointer_rtx,
+			       FRAME_POINTER_CFA_OFFSET(current_function_decl)));
   /* Allocate the local stack frame.  */
   size = get_frame_size ();
   size -= vax_starting_frame_offset ();
