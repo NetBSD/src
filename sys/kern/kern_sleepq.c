@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.79 2023/10/07 14:12:29 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.80 2023/10/07 20:48:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.79 2023/10/07 14:12:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.80 2023/10/07 20:48:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -319,7 +319,7 @@ void
 sleepq_uncatch(lwp_t *l)
 {
 
-	l->l_flag = ~(LW_SINTR | LW_CATCHINTR | LW_STIMO);
+	l->l_flag &= ~(LW_SINTR | LW_CATCHINTR | LW_STIMO);
 }
 
 /*
