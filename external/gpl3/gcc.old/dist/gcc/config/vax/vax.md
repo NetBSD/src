@@ -982,7 +982,40 @@
   ""
   "cmpzv %2,%1,%0,%3")
 
-(define_insn "extv"
+(define_expand "extv"
+  [(set (match_operand:SI 0 "general_operand" "")
+	(sign_extract:SI (match_dup 4)
+			 (match_operand:QI 2 "general_operand" "")
+			 (match_operand:SI 3 "general_operand" ""))
+   )]
+  ""
+  "{
+      /*
+       * If the source operand is a memory reference, and the address
+       * is a symbol, and we're in PIC mode, load the address into a
+       * register.  Don't evaluate the field start or width at this time.
+       */
+      operands[4] = operands[1];
+      if (flag_pic
+       /* && !reload_completed */
+	  && MEM_P (operands[1])
+	  && !mode_dependent_address_p (XEXP (operands[1], 0),
+					MEM_ADDR_SPACE (operands[1]))
+          && SYMBOL_REF_P (XEXP (operands[1], 0))
+	  && !SYMBOL_REF_LOCAL_P (XEXP (operands[1], 0))
+	 )
+	{
+	  rtx address = XEXP (operands[1], 0);
+	  rtx temp = gen_reg_rtx (Pmode);
+	  emit_move_insn (temp, address);
+	  /* copy the original memory reference, replacing the address */
+	  operands[4] = change_address (operands[1], VOIDmode, temp);
+	  set_mem_align (operands[4], MEM_ALIGN (operands[1]));
+	}
+  }"
+)
+
+(define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(sign_extract:SI (match_operand:QI 1 "memory_operand" "m")
 			 (match_operand:QI 2 "general_operand" "g")
