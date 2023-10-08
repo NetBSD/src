@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.81 2023/10/08 11:12:47 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.82 2023/10/08 13:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.81 2023/10/08 11:12:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.82 2023/10/08 13:23:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -105,10 +105,17 @@ sleepq_init(sleepq_t *sq)
 /*
  * sleepq_remove:
  *
- *	Remove an LWP from a sleep queue and wake it up.
+ *	Remove an LWP from a sleep queue and wake it up.  Distinguish
+ *	between deliberate wakeups (which are a valuable information) and
+ *	"unsleep" (an out-of-band action must be taken).
+ *
+ *	For wakeup, convert any interruptable wait into non-interruptable
+ *	one before waking the LWP.  Otherwise, if only one LWP is awoken it
+ *	could fail to do something useful with the wakeup due to an error
+ *	return and the caller of e.g. cv_signal() may not expect this.
  */
 void
-sleepq_remove(sleepq_t *sq, lwp_t *l)
+sleepq_remove(sleepq_t *sq, lwp_t *l, bool wakeup)
 {
 	struct schedstate_percpu *spc;
 	struct cpu_info *ci;
@@ -125,7 +132,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	l->l_syncobj = &sched_syncobj;
 	l->l_wchan = NULL;
 	l->l_sleepq = NULL;
-	l->l_flag &= ~LW_SINTR;
+	l->l_flag &= wakeup ? ~(LW_SINTR|LW_CATCHINTR|LW_STIMO) : ~LW_SINTR;
 
 	ci = l->l_cpu;
 	spc = &ci->ci_schedstate;
@@ -409,7 +416,6 @@ sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 	 */
 	flag = atomic_load_relaxed(&l->l_flag);
 	if (__predict_false((flag & mask) != 0)) {
-		p = l->l_proc;
 		if ((flag & LW_CATCHINTR) == 0 && error != 0)
 			/* nothing */;
 		else if ((flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
@@ -422,6 +428,7 @@ sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 			 * on locks are non-interruptable and we will
 			 * not recurse again.
 			 */
+			p = l->l_proc;
 			mutex_enter(p->p_lock);
 			if (((sig = sigispending(l, 0)) != 0 &&
 			    (sigprop[sig] & SA_STOP) == 0) ||
@@ -456,7 +463,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 		next = LIST_NEXT(l, l_sleepchain);
 		if (l->l_wchan != wchan)
 			continue;
-		sleepq_remove(sq, l);
+		sleepq_remove(sq, l, true);
 		if (--expected == 0)
 			break;
 	}
@@ -480,7 +487,7 @@ sleepq_unsleep(lwp_t *l, bool unlock)
 	KASSERT(lwp_locked(l, mp));
 	KASSERT(l->l_wchan != NULL);
 
-	sleepq_remove(sq, l);
+	sleepq_remove(sq, l, false);
 	if (unlock) {
 		mutex_spin_exit(mp);
 	}
@@ -503,8 +510,12 @@ sleepq_timeout(void *arg)
 	 */
 	lwp_lock(l);
 
-	if (l->l_wchan == NULL) {
-		/* Somebody beat us to it. */
+	if (l->l_wchan == NULL || l->l_syncobj == &callout_syncobj) {
+		/*
+		 * Somebody beat us to it, or the LWP is blocked in
+		 * callout_halt() waiting for us to finish here.  In
+		 * neither case should the LWP produce EWOULDBLOCK.
+		 */
 		lwp_unlock(l);
 		return;
 	}

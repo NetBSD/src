@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.52 2023/10/04 20:39:35 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.53 2023/10/08 13:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020, 2023
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.52 2023/10/04 20:39:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.53 2023/10/08 13:23:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -149,7 +149,7 @@ turnstile_remove(turnstile_t *ts, lwp_t *l, int q)
 	}
 
 	ts->ts_waiters[q]--;
-	sleepq_remove(&ts->ts_sleepq[q], l);
+	sleepq_remove(&ts->ts_sleepq[q], l, true);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: syncobj.h,v 1.16 2023/09/23 18:48:05 ad Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.17 2023/10/08 13:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ struct lwp *syncobj_noowner(wchan_t);
 #define	SOBJ_SLEEPQ_LIFO	0x04
 #define	SOBJ_SLEEPQ_NULL	0x08
 
+extern syncobj_t	callout_syncobj;
 extern syncobj_t	cv_syncobj;
 extern syncobj_t	kpause_syncobj;
 extern syncobj_t	lwp_park_syncobj;

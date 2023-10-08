@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.57 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.58 2023/10/08 13:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020, 2023
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.57 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.58 2023/10/08 13:23:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,27 +478,13 @@ cv_wakeup_one(kcondvar_t *cv)
 	kmutex_t *mp;
 	lwp_t *l;
 
-	/*
-	 * Keep waking LWPs until a non-interruptable waiter is found.  An
-	 * interruptable waiter could fail to do something useful with the
-	 * wakeup due to an error return from cv_[timed]wait_sig(), and the
-	 * caller of cv_signal() may not expect such a scenario.
-	 *
-	 * This isn't a problem for non-interruptable waits (untimed and
-	 * timed), because if such a waiter is woken here it will not return
-	 * an error.
-	 */
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
-	while ((l = LIST_FIRST(sq)) != NULL) {
+	if (__predict_true((l = LIST_FIRST(sq)) != NULL)) {
 		KASSERT(l->l_sleepq == sq);
 		KASSERT(l->l_mutex == mp);
 		KASSERT(l->l_wchan == cv);
-		if ((l->l_flag & LW_SINTR) == 0) {
-			sleepq_remove(sq, l);
-			break;
-		} else
-			sleepq_remove(sq, l);
+		sleepq_remove(sq, l, true);
 	}
 	mutex_spin_exit(mp);
 }
@@ -539,7 +525,7 @@ cv_wakeup_all(kcondvar_t *cv)
 		KASSERT(l->l_sleepq == sq);
 		KASSERT(l->l_mutex == mp);
 		KASSERT(l->l_wchan == cv);
-		sleepq_remove(sq, l);
+		sleepq_remove(sq, l, true);
 	}
 	mutex_spin_exit(mp);
 }
