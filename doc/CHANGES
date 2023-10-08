@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2940.2.4 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2940.2.5 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -796,4 +796,6 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	aq(4): add support for AQC113-116 [ryo 20230114]
 	lua: Import version 5.4.6.
 		Bumped shlib minor because of API/ABI changes. [nikita 20230608]
+	igc(4): Add initial support to Intel I225/I226 series Ethernet devices.
+		[knakahara, rin, msaitoh 20231006]
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DHT,v 1.4 2022/10/15 04:47:37 rin Exp $
+#	$NetBSD: DHT,v 1.4.2.1 2023/10/08 13:19:33 martin Exp $
 #
 #	DHT --- DHT Walnut 405GP Evaluation Board
 #		(Digital Home Technologies PCB 01070201 Rev. 1.1)
@@ -8,7 +8,7 @@ include 	"arch/evbppc/conf/std.dht"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DHT-$Revision: 1.4 $"
+#ident 		"DHT-$Revision: 1.4.2.1 $"
 
 maxusers	32
 
@@ -184,6 +184,8 @@ wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
 igphy*	at mii? phy ?			# Intel IGP01E1000
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
+
+igc*	at pci? dev ? function ?	# Intel 22x 2.5 gigabit
 
 xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
 usb*	at xhci?

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1757.2.4 2023/09/05 17:11:34 martin Exp $
+# $NetBSD: mi,v 1.1757.2.5 2023/10/08 13:19:33 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1348,6 +1348,7 @@
 ./usr/share/man/cat4/ieee80211.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ifmedia.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ifpci.0			man-obsolete		obsolete
+./usr/share/man/cat4/igc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/igmafb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/igphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/igpio.0			man-sys-catman		.cat
@@ -4708,6 +4709,7 @@
 ./usr/share/man/html4/ieee80211.html		man-sys-htmlman		html
 ./usr/share/man/html4/ifmedia.html		man-sys-htmlman		html
 ./usr/share/man/html4/ifpci.html		man-obsolete		obsolete
+./usr/share/man/html4/igc.html			man-sys-htmlman		html
 ./usr/share/man/html4/igmafb.html		man-sys-htmlman		html
 ./usr/share/man/html4/igphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/igpio.html		man-sys-htmlman		html
@@ -7902,6 +7904,7 @@
 ./usr/share/man/man4/ieee80211.4		man-sys-man		.man
 ./usr/share/man/man4/ifmedia.4			man-sys-man		.man
 ./usr/share/man/man4/ifpci.4			man-obsolete		obsolete
+./usr/share/man/man4/igc.4			man-sys-man		.man
 ./usr/share/man/man4/igmafb.4			man-sys-man		.man
 ./usr/share/man/man4/igphy.4			man-sys-man		.man
 ./usr/share/man/man4/igpio.4			man-sys-man		.man
