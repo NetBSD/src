@@ -298,7 +298,11 @@ public:
 /* Return a bitmask with the first N low bits set.  */
 
 static unsigned HOST_WIDE_INT
+#ifdef NB_FIX_VAX_BACKEND
+lowpart_bitmask (unsigned int n)
+#else
 lowpart_bitmask (int n)
+#endif
 {
   unsigned HOST_WIDE_INT mask = HOST_WIDE_INT_M1U;
 #ifdef NB_FIX_VAX_BACKEND
@@ -1346,7 +1350,7 @@ all_positions_needed_p (store_info *s_info, poly_int64 start,
       return true;
     }
 #ifdef NB_FIX_VAX_BACKEND
-  if (const_start >= HOST_BITS_PER_WIDE_INT || const_start < 0)
+  else if (const_start >= HOST_BITS_PER_WIDE_INT || const_start < 0)
     return true;
 #endif
   else
