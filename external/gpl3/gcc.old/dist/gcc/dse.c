@@ -1350,7 +1350,7 @@ all_positions_needed_p (store_info *s_info, poly_int64 start,
       return true;
     }
 #ifdef NB_FIX_VAX_BACKEND
-  if (const_start >= HOST_BITS_PER_WIDE_INT || const_start < 0)
+  else if (const_start >= HOST_BITS_PER_WIDE_INT || const_start < 0)
     return true;
 #endif
   else
