@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.63 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.64 2023/10/08 13:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.63 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.64 2023/10/08 13:23:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -807,7 +807,7 @@ selnotify(struct selinfo *sip, int events, long knhint)
 			 */
 			if (oflag == SEL_BLOCKING && l->l_mutex == lock) {
 				KASSERT(l->l_wchan == sc);
-				sleepq_unsleep(l, false);
+				sleepq_remove(l->l_sleepq, l, true);
 			}
 		}
 		mutex_spin_exit(lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.86 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.87 2023/10/08 13:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.86 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.87 2023/10/08 13:23:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,6 +466,7 @@ int
 lwp_unpark(const lwpid_t *tp, const u_int ntargets)
 {
 	u_int target;
+	kmutex_t *mp;
 	int error, s;
 	proc_t *p;
 	lwp_t *t;
@@ -484,11 +485,10 @@ lwp_unpark(const lwpid_t *tp, const u_int ntargets)
 		KASSERT(lwp_locked(t, NULL));
 
 		if (__predict_true(t->l_syncobj == &lwp_park_syncobj)) {
-			/*
-			 * As expected it's parked, so wake it up. 
-			 * lwp_unsleep() will release the LWP lock.
-			 */
-			lwp_unsleep(t, true);
+			/* As expected it's parked, so wake it up. */
+			mp = t->l_mutex;
+			sleepq_remove(NULL, t, true);
+			mutex_spin_exit(mp);
 		} else if (__predict_false(t->l_stat == LSZOMB)) {
 			lwp_unlock(t);
 			error = ESRCH;

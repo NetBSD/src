@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.78 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.79 2023/10/08 13:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019, 2023
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.78 2023/10/04 20:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.79 2023/10/08 13:23:05 ad Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -245,6 +245,16 @@ SDT_PROBE_DEFINE5(sdt, kernel, callout, halt__done,
     "void *"/*arg*/,
     "unsigned"/*flags*/,
     "bool"/*expired*/);
+
+syncobj_t callout_syncobj = {
+	.sobj_name	= "callout",
+	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
+	.sobj_boostpri  = PRI_KERNEL,
+	.sobj_unsleep	= sleepq_unsleep,
+	.sobj_changepri	= sleepq_changepri,
+	.sobj_lendpri	= sleepq_lendpri,
+	.sobj_owner	= syncobj_noowner,
+};
 
 static inline kmutex_t *
 callout_lock(callout_impl_t *c)
@@ -612,8 +622,8 @@ callout_wait(callout_impl_t *c, void *interlock, kmutex_t *lock)
 			cc->cc_ev_block.ev_count++;
 			nlocks = sleepq_enter(&cc->cc_sleepq, l, cc->cc_lock);
 			sleepq_enqueue(&cc->cc_sleepq, cc, "callout",
-			    &sleep_syncobj, false);
-			sleepq_block(0, false, &sleep_syncobj, nlocks);
+			    &callout_syncobj, false);
+			sleepq_block(0, false, &callout_syncobj, nlocks);
 		}
 
 		/*

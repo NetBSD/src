@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.39 2023/10/04 20:29:18 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.40 2023/10/08 13:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -50,7 +50,7 @@ struct syncobj;
 typedef struct sleepq sleepq_t;
 
 void	sleepq_init(sleepq_t *);
-void	sleepq_remove(sleepq_t *, lwp_t *);
+void	sleepq_remove(sleepq_t *, lwp_t *, bool);
 int	sleepq_enter(sleepq_t *, lwp_t *, kmutex_t *);
 void	sleepq_enqueue(sleepq_t *, wchan_t, const char *,
 	    const struct syncobj *, bool);
