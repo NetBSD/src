@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.520 2023/10/04 22:17:09 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.521 2023/10/08 12:38:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.520 2023/10/04 22:17:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.521 2023/10/08 12:38:58 ad Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1314,7 +1314,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		lp = p->p_vforklwp;
 		p->p_vforklwp = NULL;
 		l->l_lwpctl = NULL; /* was on loan from blocked parent */
-		cv_broadcast(&lp->l_waitcv);
 
 		/* Clear flags after cv_broadcast() (scheduler needs them). */
 		p->p_lflag &= ~PL_PPWAIT;
@@ -1322,6 +1321,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 		/* If parent is still on same CPU, teleport curlwp elsewhere. */
 		samecpu = (lp->l_cpu == curlwp->l_cpu);
+		cv_broadcast(&lp->l_waitcv);
 		mutex_exit(&proc_lock);
 
 		/* Give the parent its CPU back - find a new home. */
