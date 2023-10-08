@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.55 2023/06/21 19:28:12 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.56 2023/10/08 15:19:31 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.88.2.55 2023/06/21 19:28:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.88.2.56 2023/10/08 15:19:31 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1601,8 +1601,19 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	for (i = 0; i < queue_counters; i++) {
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_QPRC(i), qprc[i]);
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_QPTC(i), qptc[i]);
-		if (hw->mac.type >= ixgbe_mac_82599EB)
+		if (hw->mac.type >= ixgbe_mac_82599EB) {
+			IXGBE_EVC_ADD(&stats->qbrc[i],
+			    IXGBE_READ_REG(hw, IXGBE_QBRC_L(i)) +
+			    ((u64)IXGBE_READ_REG(hw, IXGBE_QBRC_H(i)) << 32));
+			IXGBE_EVC_ADD(&stats->qbtc[i],
+			    IXGBE_READ_REG(hw, IXGBE_QBTC_L(i)) +
+			    ((u64)IXGBE_READ_REG(hw, IXGBE_QBTC_H(i)) << 32));
 			IXGBE_EVC_REGADD(hw, stats, IXGBE_QPRDC(i), qprdc[i]);
+		} else {
+			/* 82598 */
+			IXGBE_EVC_REGADD(hw, stats, IXGBE_QBRC(i), qbrc[i]);
+			IXGBE_EVC_REGADD(hw, stats, IXGBE_QBTC(i), qbtc[i]);
+		}
 	}
 
 	/* 8 registers exist */
@@ -1813,28 +1824,28 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		if (i < __arraycount(stats->pxontxc)) {
 			evcnt_attach_dynamic(&stats->pxontxc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
-			    "pxontxc");
-			evcnt_attach_dynamic(&stats->pxonrxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
-			    "pxonrxc");
+			    "Priority XON Transmitted");
 			evcnt_attach_dynamic(&stats->pxofftxc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
-			    "pxofftxc");
-			evcnt_attach_dynamic(&stats->pxoffrxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
-			    "pxoffrxc");
+			    "Priority XOFF Transmitted");
 			if (hw->mac.type >= ixgbe_mac_82599EB)
 				evcnt_attach_dynamic(&stats->pxon2offc[i],
 				    EVCNT_TYPE_MISC, NULL,
 				    adapter->tcs[i].evnamebuf,
-				    "pxon2offc");
+				    "Priority XON to XOFF");
+			evcnt_attach_dynamic(&stats->pxonrxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "Priority XON Received");
+			evcnt_attach_dynamic(&stats->pxoffrxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "Priority XOFF Received");
 		}
 	}
 
 	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 #ifdef LRO
 		struct lro_ctrl *lro = &rxr->lro;
-#endif /* LRO */
+#endif
 
 		snprintf(adapter->queues[i].evnamebuf,
 		    sizeof(adapter->queues[i].evnamebuf), "%s q%d", xname, i);
@@ -1874,27 +1885,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
-		evcnt_attach_dynamic(&adapter->queues[i].irqs, EVCNT_TYPE_INTR,
-		    NULL, adapter->queues[i].evnamebuf, "IRQs on queue");
-		evcnt_attach_dynamic(&adapter->queues[i].handleq,
-		    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-		    "Handled queue in softint");
-		evcnt_attach_dynamic(&adapter->queues[i].req, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Requeued in softint");
-		evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "TSO");
-		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf,
-		    "TX Queue No Descriptor Available");
-		evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue Packets Transmitted");
-#ifndef IXGBE_LEGACY_TX
-		evcnt_attach_dynamic(&txr->pcq_drops, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf,
-		    "Packets dropped in pcq");
-#endif
-
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_nxck",
 		    SYSCTL_DESCR("Receive Descriptor next to check"),
@@ -1923,33 +1913,62 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
-		if (i < __arraycount(stats->qprc)) {
-			evcnt_attach_dynamic(&stats->qprc[i], EVCNT_TYPE_MISC,
-			    NULL, adapter->queues[i].evnamebuf, "qprc");
-			evcnt_attach_dynamic(&stats->qptc[i], EVCNT_TYPE_MISC,
-			    NULL, adapter->queues[i].evnamebuf, "qptc");
-			evcnt_attach_dynamic(&stats->qbrc[i], EVCNT_TYPE_MISC,
-			    NULL, adapter->queues[i].evnamebuf, "qbrc");
+		evcnt_attach_dynamic(&adapter->queues[i].irqs, EVCNT_TYPE_INTR,
+		    NULL, adapter->queues[i].evnamebuf, "IRQs on queue");
+		evcnt_attach_dynamic(&adapter->queues[i].handleq,
+		    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
+		    "Handled queue in softint");
+		evcnt_attach_dynamic(&adapter->queues[i].req, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Requeued in softint");
+		if (i < __arraycount(stats->qbtc))
 			evcnt_attach_dynamic(&stats->qbtc[i], EVCNT_TYPE_MISC,
-			    NULL, adapter->queues[i].evnamebuf, "qbtc");
-			if (hw->mac.type >= ixgbe_mac_82599EB)
-				evcnt_attach_dynamic(&stats->qprdc[i],
-				    EVCNT_TYPE_MISC, NULL,
-				    adapter->queues[i].evnamebuf, "qprdc");
-		}
-
-		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
+			    NULL, adapter->queues[i].evnamebuf,
+			    "Queue Bytes Transmitted (reg)");
+		evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue Packets Received");
+		    "Queue Packets Transmitted (soft)");
+		if (i < __arraycount(stats->qptc))
+			evcnt_attach_dynamic(&stats->qptc[i], EVCNT_TYPE_MISC,
+			    NULL, adapter->queues[i].evnamebuf,
+			    "Queue Packets Transmitted (reg)");
+#ifndef IXGBE_LEGACY_TX
+		evcnt_attach_dynamic(&txr->pcq_drops, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Packets dropped in pcq");
+#endif
+		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf,
+		    "TX Queue No Descriptor Available");
+		evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "TSO");
+
 		evcnt_attach_dynamic(&rxr->rx_bytes, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue Bytes Received");
-		evcnt_attach_dynamic(&rxr->rx_copies, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Copied RX Frames");
+		    "Queue Bytes Received (soft)");
+		if (i < __arraycount(stats->qbrc))
+			evcnt_attach_dynamic(&stats->qbrc[i], EVCNT_TYPE_MISC,
+			    NULL, adapter->queues[i].evnamebuf,
+			    "Queue Bytes Received (reg)");
+		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Queue Packets Received (soft)");
+		if (i < __arraycount(stats->qprc))
+			evcnt_attach_dynamic(&stats->qprc[i], EVCNT_TYPE_MISC,
+			    NULL, adapter->queues[i].evnamebuf,
+			    "Queue Packets Received (reg)");
+		if ((i < __arraycount(stats->qprdc)) &&
+		    (hw->mac.type >= ixgbe_mac_82599EB))
+				evcnt_attach_dynamic(&stats->qprdc[i],
+				    EVCNT_TYPE_MISC, NULL,
+				    adapter->queues[i].evnamebuf,
+				    "Queue Packets Received Drop");
+
 		evcnt_attach_dynamic(&rxr->no_mbuf, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Rx no mbuf");
 		evcnt_attach_dynamic(&rxr->rx_discarded, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Rx discarded");
+		evcnt_attach_dynamic(&rxr->rx_copies, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Copied RX Frames");
 #ifdef LRO
 		SYSCTL_ADD_INT(ctx, queue_list, OID_AUTO, "lro_queued",
 				CTLFLAG_RD, &lro->lro_queued, 0,
@@ -2002,10 +2021,10 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "Receive Length Errors");
 	evcnt_attach_dynamic(&stats->lxontxc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Link XON Transmitted");
-	evcnt_attach_dynamic(&stats->lxonrxc, EVCNT_TYPE_MISC, NULL,
-	    stats->namebuf, "Link XON Received");
 	evcnt_attach_dynamic(&stats->lxofftxc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Link XOFF Transmitted");
+	evcnt_attach_dynamic(&stats->lxonrxc, EVCNT_TYPE_MISC, NULL,
+	    stats->namebuf, "Link XON Received");
 	evcnt_attach_dynamic(&stats->lxoffrxc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Link XOFF Received");
 
@@ -2121,12 +2140,12 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 		IXGBE_EVC_STORE(&adapter->queues[i].irqs, 0);
 		IXGBE_EVC_STORE(&adapter->queues[i].handleq, 0);
 		IXGBE_EVC_STORE(&adapter->queues[i].req, 0);
-		IXGBE_EVC_STORE(&txr->no_desc_avail, 0);
 		IXGBE_EVC_STORE(&txr->total_packets, 0);
-		IXGBE_EVC_STORE(&txr->tso_tx, 0);
 #ifndef IXGBE_LEGACY_TX
 		IXGBE_EVC_STORE(&txr->pcq_drops, 0);
 #endif
+		IXGBE_EVC_STORE(&txr->no_desc_avail, 0);
+		IXGBE_EVC_STORE(&txr->tso_tx, 0);
 		txr->q_efbig_tx_dma_setup = 0;
 		txr->q_mbuf_defrag_failed = 0;
 		txr->q_efbig2_tx_dma_setup = 0;
@@ -3700,12 +3719,12 @@ ixgbe_detach(device_t dev, int flags)
 		evcnt_detach(&adapter->queues[i].irqs);
 		evcnt_detach(&adapter->queues[i].handleq);
 		evcnt_detach(&adapter->queues[i].req);
-		evcnt_detach(&txr->no_desc_avail);
 		evcnt_detach(&txr->total_packets);
-		evcnt_detach(&txr->tso_tx);
 #ifndef IXGBE_LEGACY_TX
 		evcnt_detach(&txr->pcq_drops);
 #endif
+		evcnt_detach(&txr->no_desc_avail);
+		evcnt_detach(&txr->tso_tx);
 
 		if (i < __arraycount(stats->qprc)) {
 			evcnt_detach(&stats->qprc[i]);
@@ -4450,13 +4469,13 @@ ixgbe_set_rxfilter(struct adapter *adapter)
 	} else
 		fctrl &= ~(IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
 
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, fctrl);
-
 	if (mcnt <= MAX_NUM_MULTICAST_ADDRESSES) {
 		update_ptr = (u8 *)mta;
 		ixgbe_update_mc_addr_list(&adapter->hw, update_ptr, mcnt,
 		    ixgbe_mc_array_itr, TRUE);
 	}
+
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, fctrl);
 } /* ixgbe_set_rxfilter */
 
 /************************************************************************

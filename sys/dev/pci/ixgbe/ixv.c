@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.56.2.40 2023/01/23 14:07:25 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.56.2.41 2023/10/08 15:19:32 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.40 2023/01/23 14:07:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.41 2023/10/08 15:19:32 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -557,6 +557,13 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	adapter->mta = malloc(sizeof(*adapter->mta) *
 	    IXGBE_MAX_VF_MC, M_DEVBUF, M_WAITOK);
 
+	/* Check if VF was disabled by PF */
+	error = hw->mac.ops.get_link_state(hw, &adapter->link_enabled);
+	if (error) {		
+		/* PF is not capable of controlling VF state. Enable the link. */
+		adapter->link_enabled = TRUE;
+	}
+
 	/* Do the stats setup */
 	ixv_init_stats(adapter);
 	ixv_add_stats_sysctls(adapter);
@@ -674,12 +681,12 @@ ixv_detach(device_t dev, int flags)
 		evcnt_detach(&adapter->queues[i].irqs);
 		evcnt_detach(&adapter->queues[i].handleq);
 		evcnt_detach(&adapter->queues[i].req);
-		evcnt_detach(&txr->no_desc_avail);
 		evcnt_detach(&txr->total_packets);
-		evcnt_detach(&txr->tso_tx);
 #ifndef IXGBE_LEGACY_TX
 		evcnt_detach(&txr->pcq_drops);
 #endif
+		evcnt_detach(&txr->no_desc_avail);
+		evcnt_detach(&txr->tso_tx);
 
 		evcnt_detach(&rxr->rx_packets);
 		evcnt_detach(&rxr->rx_bytes);
@@ -809,6 +816,13 @@ ixv_init_locked(struct adapter *adapter)
 	ixv_init_stats(adapter);
 
 	/* Config/Enable Link */
+	error = hw->mac.ops.get_link_state(hw, &adapter->link_enabled);
+	if (error) {		
+		/* PF is not capable of controlling VF state. Enable the link. */
+		adapter->link_enabled = TRUE;
+	} else if (adapter->link_enabled == FALSE)
+		device_printf(dev, "VF is disabled by PF\n");
+
 	hw->mac.get_link_status = TRUE;
 	hw->mac.ops.check_link(hw, &adapter->link_speed, &adapter->link_up,
 	    FALSE);
@@ -1383,7 +1397,7 @@ ixv_update_link_status(struct adapter *adapter)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
-	if (adapter->link_up) {
+	if (adapter->link_up && adapter->link_enabled) {
 		if (adapter->link_active != LINK_STATE_UP) {
 			if (bootverbose) {
 				const char *bpsmsg;
@@ -2525,6 +2539,10 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 	    NULL, xname, "Admin MSI-X IRQ Handled");
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+#ifdef LRO
+		struct lro_ctrl *lro = &rxr->lro;
+#endif
+
 		snprintf(adapter->queues[i].evnamebuf,
 		    sizeof(adapter->queues[i].evnamebuf), "%s q%d", xname, i);
 		snprintf(adapter->queues[i].namebuf,
@@ -2563,31 +2581,6 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
-		evcnt_attach_dynamic(&adapter->queues[i].irqs, EVCNT_TYPE_INTR,
-		    NULL, adapter->queues[i].evnamebuf, "IRQs on queue");
-		evcnt_attach_dynamic(&adapter->queues[i].handleq,
-		    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-		    "Handled queue in softint");
-		evcnt_attach_dynamic(&adapter->queues[i].req, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Requeued in softint");
-		evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "TSO");
-		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf,
-		    "TX Queue No Descriptor Available");
-		evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue Packets Transmitted");
-#ifndef IXGBE_LEGACY_TX
-		evcnt_attach_dynamic(&txr->pcq_drops, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf,
-		    "Packets dropped in pcq");
-#endif
-
-#ifdef LRO
-		struct lro_ctrl *lro = &rxr->lro;
-#endif /* LRO */
-
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_nxck",
 		    SYSCTL_DESCR("Receive Descriptor next to check"),
@@ -2616,18 +2609,39 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
-		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
+		evcnt_attach_dynamic(&adapter->queues[i].irqs, EVCNT_TYPE_INTR,
+		    NULL, adapter->queues[i].evnamebuf, "IRQs on queue");
+		evcnt_attach_dynamic(&adapter->queues[i].handleq,
+		    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
+		    "Handled queue in softint");
+		evcnt_attach_dynamic(&adapter->queues[i].req, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Requeued in softint");
+		evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
-		    "Queue Packets Received");
+		    "Queue Packets Transmitted");
+#ifndef IXGBE_LEGACY_TX
+		evcnt_attach_dynamic(&txr->pcq_drops, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Packets dropped in pcq");
+#endif
+		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf,
+		    "TX Queue No Descriptor Available");
+		evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "TSO");
+
 		evcnt_attach_dynamic(&rxr->rx_bytes, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
 		    "Queue Bytes Received");
-		evcnt_attach_dynamic(&rxr->rx_copies, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Copied RX Frames");
+		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Queue Packets Received");
 		evcnt_attach_dynamic(&rxr->no_mbuf, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Rx no mbuf");
 		evcnt_attach_dynamic(&rxr->rx_discarded, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Rx discarded");
+		evcnt_attach_dynamic(&rxr->rx_copies, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Copied RX Frames");
 #ifdef LRO
 		SYSCTL_ADD_INT(ctx, queue_list, OID_AUTO, "lro_queued",
 				CTLFLAG_RD, &lro->lro_queued, 0,
@@ -2703,12 +2717,12 @@ ixv_clear_evcnt(struct adapter *adapter)
 		IXGBE_EVC_STORE(&adapter->queues[i].irqs, 0);
 		IXGBE_EVC_STORE(&adapter->queues[i].handleq, 0);
 		IXGBE_EVC_STORE(&adapter->queues[i].req, 0);
-		IXGBE_EVC_STORE(&txr->tso_tx, 0);
-		IXGBE_EVC_STORE(&txr->no_desc_avail, 0);
 		IXGBE_EVC_STORE(&txr->total_packets, 0);
 #ifndef IXGBE_LEGACY_TX
 		IXGBE_EVC_STORE(&txr->pcq_drops, 0);
 #endif
+		IXGBE_EVC_STORE(&txr->no_desc_avail, 0);
+		IXGBE_EVC_STORE(&txr->tso_tx, 0);
 		txr->q_efbig_tx_dma_setup = 0;
 		txr->q_mbuf_defrag_failed = 0;
 		txr->q_efbig2_tx_dma_setup = 0;
