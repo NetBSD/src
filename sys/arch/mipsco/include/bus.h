@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.23 2021/04/23 06:15:16 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.24 2023/10/08 22:10:49 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -342,7 +342,7 @@ int	mipsco_bus_space_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t,
 /*
  * Utility macros; do not use outside this file.
  */
-#define	__BS_TYPENAME(BITS)		__CONCAT3(u_int,BITS,_t)
+#define	__BS_TYPENAME(BITS)		__CONCAT3(uint,BITS,_t)
 #define __BS_OFFSET(t, o, BYTES)	((o) << (t)->bs_stride)
 #define __BS_FUNCTION(func,BYTES)	__CONCAT3(func,_,BYTES)
 
@@ -480,14 +480,14 @@ __bus_space_write(8,64)
 #define __bus_space_write_multi(BYTES,BITS)				\
 static __inline void __BS_FUNCTION(bus_space_write_multi,BYTES)       	\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__BS_TYPENAME(BITS) *, size_t);					\
+	const __BS_TYPENAME(BITS) *, size_t);				\
 									\
 static __inline void							\
 __BS_FUNCTION(bus_space_write_multi,BYTES)(				\
 	bus_space_tag_t t,						\
 	bus_space_handle_t h,						\
 	bus_size_t o,							\
-	__BS_TYPENAME(BITS) *a,						\
+	const __BS_TYPENAME(BITS) *a,					\
 	size_t c)							\
 {									\
 									\

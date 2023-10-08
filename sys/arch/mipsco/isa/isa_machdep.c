@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.19 2021/08/07 16:19:00 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.20 2023/10/08 22:10:49 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19 2021/08/07 16:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.20 2023/10/08 22:10:49 andvar Exp $");
+
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
