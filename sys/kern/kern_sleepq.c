@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.82 2023/10/08 13:23:05 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.83 2023/10/08 13:37:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.82 2023/10/08 13:23:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.83 2023/10/08 13:37:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -416,7 +416,7 @@ sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 	 */
 	flag = atomic_load_relaxed(&l->l_flag);
 	if (__predict_false((flag & mask) != 0)) {
-		if ((flag & LW_CATCHINTR) == 0 && error != 0)
+		if ((flag & LW_CATCHINTR) == 0 || error != 0)
 			/* nothing */;
 		else if ((flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
