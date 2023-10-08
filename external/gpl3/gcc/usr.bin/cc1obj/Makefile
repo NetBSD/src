@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2021/04/23 22:50:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.18.6.1 2023/10/08 14:35:23 martin Exp $
 
 MYOBJS=		${G_OBJC_OBJS} ${G_C_AND_OBJC_OBJS} 
 PROG=		cc1obj
@@ -43,17 +43,6 @@ COPTS.c-typeck.c+=			-Wno-stack-protector
 COPTS.objc-act.c+=			-Wno-stack-protector
 COPTS.objc-gnu-runtime-abi-01.c+=	-Wno-stack-protector
 COPTS.objc-next-runtime-abi-01.c+=	-Wno-stack-protector
-
-.if ${MACHINE_ARCH} == "vax"
-COPTS.c-decl.c+=-O0
-COPTS.c-typeck.c+=-O0
-COPTS.c-array-notation.c+=-O0
-COPTS.c-common.c+=-O0
-COPTS.c-ada-spec.c+=-O0
-COPTS.cilk.c+=-O0
-COPTS.c-ubsan.c+=-O0
-COPTS.cc1obj-checksum.c+=-O0
-.endif
 
 .if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
 COPTS.c-common.c+=-O3

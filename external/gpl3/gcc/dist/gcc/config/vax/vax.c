@@ -46,6 +46,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "target-def.h"
 
 static void vax_option_override (void);
+static void vax_init_builtins (void);
 static bool vax_legitimate_address_p (machine_mode, rtx, bool);
 static void vax_file_start (void);
 static void vax_init_libfuncs (void);
@@ -63,6 +64,7 @@ static void vax_trampoline_init (rtx, tree, rtx);
 static poly_int64 vax_return_pops_args (tree, tree, poly_int64);
 static bool vax_mode_dependent_address_p (const_rtx, addr_space_t);
 static HOST_WIDE_INT vax_starting_frame_offset (void);
+static int vax_bitfield_may_trap_p (const_rtx, unsigned);
 
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
@@ -75,6 +77,9 @@ static HOST_WIDE_INT vax_starting_frame_offset (void);
 
 #undef TARGET_INIT_LIBFUNCS
 #define TARGET_INIT_LIBFUNCS vax_init_libfuncs
+
+#undef TARGET_INIT_BUILTINS
+#define TARGET_INIT_BUILTINS vax_init_builtins
 
 #undef TARGET_ASM_OUTPUT_MI_THUNK
 #define TARGET_ASM_OUTPUT_MI_THUNK vax_output_mi_thunk
@@ -136,6 +141,9 @@ vax_elf_binds_local_p (const_tree exp)
 #undef TARGET_HAVE_SPECULATION_SAFE_VALUE
 #define TARGET_HAVE_SPECULATION_SAFE_VALUE speculation_safe_value_not_needed
 
+#undef TARGET_BITFIELD_MAY_TRAP_P
+#define TARGET_BITFIELD_MAY_TRAP_P vax_bitfield_may_trap_p
+
 struct gcc_target targetm = TARGET_INITIALIZER;
 
 /* Set global variables as needed for the options enabled.  */
@@ -147,10 +155,17 @@ vax_option_override (void)
   if (TARGET_G_FLOAT)
     REAL_MODE_FORMAT (DFmode) = &vax_g_format;
 
-  flag_dwarf2_cfi_asm = 0;
-
 #ifdef SUBTARGET_OVERRIDE_OPTIONS
   SUBTARGET_OVERRIDE_OPTIONS;
+#endif
+}
+/* Implement the TARGET_INIT_BUILTINS target hook.  */
+
+static void
+vax_init_builtins (void)
+{
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
 #endif
 }
 
@@ -182,20 +197,28 @@ vax_expand_prologue (void)
   HOST_WIDE_INT size;
   rtx insn;
 
-  offset = 20;
   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
     if (df_regs_ever_live_p (regno) && !call_used_or_fixed_reg_p (regno))
       {
         mask |= 1 << regno;
-        offset += 4;
       }
+
+  if (crtl->calls_eh_return)
+    {
+      mask |= 0
+	| ( 1 << EH_RETURN_DATA_REGNO(0) )
+	| ( 1 << EH_RETURN_DATA_REGNO(1) )
+	| ( 1 << EH_RETURN_DATA_REGNO(2) )
+	| ( 1 << EH_RETURN_DATA_REGNO(3) )
+	;
+    }
 
   insn = emit_insn (gen_procedure_entry_mask (GEN_INT (mask)));
   RTX_FRAME_RELATED_P (insn) = 1;
 
   /* The layout of the CALLG/S stack frame is follows:
 
-		<- CFA, AP
+		<- AP
 	r11
 	r10
 	...	Registers saved as specified by MASK
@@ -205,15 +228,10 @@ vax_expand_prologue (void)
 	old fp
 	old ap
 	old psw
-	zero
-		<- FP, SP
+	condition handler	<- CFA, FP, SP
+	  (initially zero)
 
      The rest of the prologue will adjust the SP for the local frame.  */
-
-  add_reg_note (insn, REG_CFA_DEF_CFA,
-                plus_constant (Pmode, frame_pointer_rtx, offset));
-  insn = emit_insn (gen_blockage ());
-  RTX_FRAME_RELATED_P (insn) = 1;
 
 #ifdef notyet
   /*
@@ -226,14 +244,21 @@ vax_expand_prologue (void)
   vax_add_reg_cfa_offset (insn, 12, frame_pointer_rtx);
   vax_add_reg_cfa_offset (insn, 16, pc_rtx);
 
-  offset = 20;
+  offset = 5 * UNITS_PER_WORD;	/* PSW, AP &c */
   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
     if (mask & (1 << regno))
       {
 	vax_add_reg_cfa_offset (insn, offset, gen_rtx_REG (SImode, regno));
-	offset += 4;
+	offset += 1 * UNITS_PER_WORD;
       }
 
+  /* Because add_reg_note pushes the notes, adding this last means that
+     it will be processed first.  This is required to allow the other
+     notes to be interpreted properly.  */
+  /* The RTX here must match the instantiation of the CFA vreg */
+  add_reg_note (insn, REG_CFA_DEF_CFA,
+		plus_constant (Pmode, frame_pointer_rtx,
+			       FRAME_POINTER_CFA_OFFSET(current_function_decl)));
   /* Allocate the local stack frame.  */
   size = get_frame_size ();
   size -= vax_starting_frame_offset ();
@@ -577,7 +602,7 @@ print_operand (FILE *file, rtx x, int code)
   else if (code == 'b' && CONST_INT_P (x))
     fprintf (file, "$%d", (int) (0xff & - INTVAL (x)));
   else if (code == 'M' && CONST_INT_P (x))
-    fprintf (file, "$%d", ~((1 << INTVAL (x)) - 1));
+    fprintf (file, "$%d", ((~0) << (INTVAL (x))));
   else if (code == 'x' && CONST_INT_P (x))
     fprintf (file, HOST_WIDE_INT_PRINT_HEX, INTVAL (x));
   else if (REG_P (x))
@@ -1633,13 +1658,67 @@ vax_output_int_subtract (rtx_insn *insn, rtx *operands, machine_mode mode)
 	      {
 		/* Negation is tricky.  It's basically complement and increment.
 		   Negate hi, then lo, and subtract the carry back.  */
-		if ((MEM_P (low[0]) && GET_CODE (XEXP (low[0], 0)) == POST_INC)
-		    || (MEM_P (operands[0])
-			&& GET_CODE (XEXP (operands[0], 0)) == POST_INC))
-		  fatal_insn ("illegal operand detected", insn);
-		output_asm_insn ("mnegl %2,%0", operands);
+
+		/*
+		 * If the source *or* the destination operands are
+		 * indirect memory references with post-increment
+		 * addressing, an memory reference using the base
+		 * register plus an offset must be constructed to
+		 * address the high word of the source or result.
+		 *
+		 * pre-decrement memory references are rejected by the
+		 * illegal_addsub_di_memory_operand predicate
+		 */
+
+		rtx earlyhiw[3];
+
+		/* high word - destination */
+		if (MEM_P (operands[0])
+		    && GET_CODE (XEXP (operands[0], 0)) == POST_INC)
+		  {
+		    const enum machine_mode mode = GET_MODE (operands[0]);
+		    rtx x = XEXP (XEXP (operands[0], 0), 0);
+		    x = plus_constant (Pmode, x, GET_MODE_SIZE (mode));
+		    x = gen_rtx_MEM (mode, x);
+		    earlyhiw[0] = x;
+		  }
+		else
+		  earlyhiw[0] = operands[0];
+
+		earlyhiw[1] = operands[1]; /* easy, this is const0_rtx */
+
+		/* high word - source */
+		if (MEM_P (operands[2])
+		    && GET_CODE (XEXP (operands[2], 0)) == POST_INC)
+		  {
+		    const enum machine_mode mode = GET_MODE (operands[2]);
+		    rtx x = XEXP (XEXP (operands[2], 0), 0);
+		    x = plus_constant (Pmode, x, GET_MODE_SIZE (mode));
+		    x = gen_rtx_MEM (mode, x);
+		    earlyhiw[2] = x;
+		  }
+		else
+		  earlyhiw[2] = operands[2];
+
+		output_asm_insn ("mnegl %2,%0", earlyhiw);
 		output_asm_insn ("mnegl %2,%0", low);
-		return "sbwc $0,%0";
+
+		if (earlyhiw[2] != operands[2])
+		  {
+		    rtx ops[3];
+		    const enum machine_mode mode = GET_MODE (operands[2]);
+
+		    output_asm_insn ("sbwc $0,%0", operands);
+		    /* update the source operand's base register to
+		       point to the following word */
+		    ops[0] = XEXP (XEXP (operands[2], 0), 0);
+		    ops[1] = const0_rtx;
+		    ops[2] = gen_int_mode (GET_MODE_SIZE (mode), SImode);
+		    output_asm_insn ("addl2 %2,%0", ops);
+		    return "";
+		  }
+		else
+		  return "sbwc $0,%0";
 	      }
 	    gcc_assert (rtx_equal_p (operands[0], operands[1]));
 	    gcc_assert (rtx_equal_p (low[0], low[1]));
@@ -2040,6 +2119,46 @@ vax_mode_dependent_address_p (const_rtx x, addr_space_t as ATTRIBUTE_UNUSED)
 }
 
 static rtx
+decompose_address_operand(rtx addr)
+{
+  enum rtx_code code = GET_CODE (addr);
+
+  switch (code)
+    {
+    case CONST:
+      return decompose_address_operand (XEXP (addr, 0));
+    case PLUS:
+    case MULT:
+      {
+	rtx op0, op1;
+	rtx temp;
+	/*
+	 * Generate a temporary register, assign the result of
+	 * decomposing op0 to it, then generate an op code opping (PLUS
+	 * or MULT) the result of decomposing op1 to it.
+	 * Return the temporary register.
+	 */
+	temp = gen_reg_rtx (Pmode);
+	op0 = decompose_address_operand (XEXP (addr, 0));
+	op1 = decompose_address_operand (XEXP (addr, 1));
+
+	emit_move_insn (temp, op0);
+
+	if (code == PLUS)
+	  temp = gen_rtx_PLUS (Pmode, temp, op1);
+	else if (code == MULT)
+	  temp = gen_rtx_MULT (Pmode, temp, op1);
+
+	return temp;
+      }
+      break;
+    default:
+      break;
+    }
+  return addr;
+}
+
+static rtx
 fixup_mathdi_operand (rtx x, machine_mode mode)
 {
   if (illegal_addsub_di_memory_operand (x, mode))
@@ -2054,7 +2173,7 @@ fixup_mathdi_operand (rtx x, machine_mode mode)
 	  addr = XEXP (XEXP (addr, 0), 0);
 	}
 #endif
-      emit_move_insn (temp, addr);
+      emit_move_insn (temp, decompose_address_operand (addr));
       if (offset)
 	temp = gen_rtx_PLUS (Pmode, temp, offset);
       x = gen_rtx_MEM (DImode, temp);
@@ -2392,4 +2511,35 @@ vax_decomposed_dimode_operand_p (rtx lo, rtx hi)
     }
 
   return rtx_equal_p(lo, hi) && lo_offset + 4 == hi_offset;
+}
+
+/* Return 1 if a bitfield instruction (extv/extzv) may trap */
+static int
+vax_bitfield_may_trap_p (const_rtx x, unsigned flags)
+{
+  /* per the VARM
+   * Bitfield instructions may trap if
+   * size (arg1) GTRU 32
+   * size (arg1) NEQ 0, pos (arg 2) GTRU 31 and the field is in a register
+   * i.e. REG_P(operands[0]) is true
+   *
+   * GCC can only determine that a bitfield instruction will not trap
+   * if the size and position arguments are constants; if they aren't,
+   * the instruction must be assumed to trap.
+   */
+  rtx field = XEXP (x, 0);
+  rtx size = XEXP (x, 1);
+  rtx pos = XEXP (x, 2);
+  int retval = 0;
+
+  if (!CONST_INT_P (size) || !CONST_INT_P (pos))
+    retval = 1;
+  else if (INTVAL (size) < 0 || INTVAL (size) > GET_MODE_BITSIZE ( SImode ))
+    retval = 1;
+  else if (REG_P (field) && INTVAL (size) != 0
+	   && (INTVAL (pos) < 0 || INTVAL (pos) >= GET_MODE_BITSIZE ( SImode )))
+    retval = 1;
+  else
+    retval = 0;
+  return retval;
 }

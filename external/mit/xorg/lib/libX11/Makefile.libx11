@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libx11,v 1.25 2022/10/28 09:43:58 wiz Exp $
+#	$NetBSD: Makefile.libx11,v 1.25.2.1 2023/10/08 14:35:21 martin Exp $
 
 LIB=	X11
 .PATH:	${X11SRCDIR.${LIB}}/src
@@ -470,11 +470,6 @@ COPTS.Font.c+=		-Wno-error	# XXX xf86bigfstr.h
 COPTS.OpenDis.c+=	-Wno-error	# XXX xf86bigfstr.h
 COPTS.XlibInt.c+=	-Wno-error	# XXX xcmiscstr.h
 COPTS.XKBBind.c+=	-Wno-deprecated-declarations	# uses XKeycodeToKeysym
-
-# XXX
-.if ${MACHINE} == "vax"
-COPTS.lcWrap.c+=	-O0
-.endif
 
 CWARNFLAGS.clang+=	-Wno-string-plus-int
 

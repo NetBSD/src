@@ -282,6 +282,29 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
   if (fixP->fx_subsy != (symbolS *) NULL)
     as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
 
+  if (fixP->fx_pcrel)
+    {
+      switch (fixP->fx_r_type)
+	{
+	case BFD_RELOC_32:
+	  /* change the relocation type to 32 bit PC-relative */
+	  fixP->fx_r_type = BFD_RELOC_32_PCREL;
+	  if (fixP->fx_addsy != NULL)
+	    {
+	      /* Hack around bfd_install_relocation brain damage.  */
+	      value += fixP->fx_frag->fr_address + fixP->fx_where;
+	    }
+	  if (fixP->fx_addsy == abs_section_sym)
+	    fixP->fx_done = 1;
+	  break;
+	default:
+	  break;
+	}
+    }
+
+  /*
+   * Common code for pc-relative and non-pc-relative cases
+   */
   if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
 
@@ -2332,18 +2355,19 @@ md_create_short_jump (char *ptr,
 
 void
 md_create_long_jump (char *ptr,
-		     addressT from_addr ATTRIBUTE_UNUSED,
+		     addressT from_addr,
 		     addressT to_addr,
-		     fragS *frag,
-		     symbolS *to_symbol)
+		     fragS *frag ATTRIBUTE_UNUSED,
+		     symbolS *to_symbol ATTRIBUTE_UNUSED)
 {
   valueT offset;
 
-  offset = to_addr - S_GET_VALUE (to_symbol);
-  *ptr++ = VAX_JMP;		/* Arbitrary jump.  */
-  *ptr++ = VAX_ABSOLUTE_MODE;
+  /* Account for 1 byte instruction, 1 byte of address specifier and
+     4 bytes of offset from PC.  */
+  offset = to_addr - (from_addr + 1 + 1 + 4);
+  *ptr++ = VAX_JMP;
+  *ptr++ = VAX_PC_RELATIVE_MODE;
   md_number_to_chars (ptr, offset, 4);
-  fix_new (frag, ptr - frag->fr_literal, 4, to_symbol, (long) 0, 0, NO_RELOC);
 }
 
 #ifdef OBJ_VMS
@@ -3557,12 +3581,39 @@ void
 vax_cons_fix_new (fragS *frag, int where, unsigned int nbytes, expressionS *exp,
 		  bfd_reloc_code_real_type r)
 {
-  if (r == NO_RELOC)
+  int pcrel;
+  // fix PC relative frags too ...
+  switch (r)
+    {
+    case BFD_RELOC_8_PCREL:
+    case BFD_RELOC_16_PCREL:
+    case BFD_RELOC_32_PCREL:
+      pcrel = 1;
+      /*
+       * Displacement mode addressing (of which PC relative is one
+       * type) uses the updated contents of the register as the base
+       * address.  VARM, Leonard 1987, pp34
+       */
+      switch (exp->X_op)
+	{
+	case O_constant:
+	case O_symbol:
+	  exp->X_add_number += nbytes;
+	  break;
+	}
+      break;
+    case NO_RELOC:
     r = (nbytes == 1 ? BFD_RELOC_8
 	 : nbytes == 2 ? BFD_RELOC_16
 	 : BFD_RELOC_32);
+      pcrel = 0;
+      break;
+    default:
+      pcrel = 0;
+      break;
+    }
 
-  fix_new_exp (frag, where, (int) nbytes, exp, 0, r);
+  fix_new_exp (frag, where, (int) nbytes, exp, pcrel, r);
 }
 
 const char *
@@ -3600,6 +3651,11 @@ tc_vax_regname_to_dw2regnum (char *regname)
 void
 vax_cfi_emit_pcrel_expr (expressionS *expP, unsigned int nbytes)
 {
+  expressionS tmp = *expP;
+
+  tmp.X_op = O_subtract;
+  tmp.X_op_symbol = symbol_temp_new_now ();
+  expP = &tmp;
   expP->X_add_number += nbytes;
   emit_expr (expP, nbytes);
 }

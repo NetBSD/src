@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2019/09/29 23:44:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.20.8.1 2023/10/08 14:35:23 martin Exp $
 
 USE_FORT?= yes	# data driven bugs?
 
@@ -14,11 +14,6 @@ SRCS=		blocksort.c huffman.c crctable.c randtable.c compress.c \
 		decompress.c bzlib.c
 INCS=		bzlib.h
 INCSDIR=	/usr/include
-
-# XXX huffman.c gets mis-compiled with 2.95.3
-.if ${MACHINE_ARCH} == "vax"
-COPTS+=		-O0
-.endif
 
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS+=		-Wno-error=implicit-fallthrough

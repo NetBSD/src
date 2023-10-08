@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2022/12/04 22:35:15 jakllsch Exp $
+#	$NetBSD: Makefile.inc,v 1.12.2.1 2023/10/08 14:35:22 martin Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
@@ -43,11 +43,4 @@ SRCS+=	dmisc.c \
 # XXX no hexadecimal floating-point string conversion for VAX FP yet
 .if ${MACHINE_ARCH} != "vax"
 SRCS+=	strtord.c
-.endif
-
-# XXX revisit with newer GCC.
-# Ensure numbers like 0xffff319f5fa95963 print correctly
-# ("999999999999999.98", not garbage like "?A>C>@>C:BA;A><.:<")
-.if ${MACHINE_ARCH} == "vax" && defined(HAVE_GCC)
-COPTS.misc.c+=	-O0
 .endif

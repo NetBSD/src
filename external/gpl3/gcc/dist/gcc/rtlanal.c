@@ -2953,6 +2953,15 @@ may_trap_p_1 (const_rtx x, unsigned flags)
       /* These operations don't trap even with floating point.  */
       break;
 
+    case SIGN_EXTRACT:
+      if (targetm.have_extv ())
+	return targetm.bitfield_may_trap_p (x, flags);
+      break;
+    case ZERO_EXTRACT:
+      if (targetm.have_extzv ())
+	return targetm.bitfield_may_trap_p (x, flags);
+      break;
+
     default:
       /* Any floating arithmetic may trap.  */
       if (FLOAT_MODE_P (GET_MODE (x)) && flag_trapping_math)

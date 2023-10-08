@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2021/04/23 01:56:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2023/10/08 14:35:19 martin Exp $
 
 PROG=		lto-dump
 # XXX pullout from LTO_DUMP_OBJS
@@ -23,11 +23,6 @@ COPTS.lto-common.c+=	-Wno-stack-protector
 .include "../Makefile.libcpp"
 .include "../Makefile.backtrace"
 .include "../Makefile.libdecnumber"
-
-.if ${MACHINE_ARCH} == "vax"
-COPTS.lto-lang.c+=-O0
-COPTS.lto-symtab.c+=-O0
-.endif
 
 LDADD+=	${LIBIBERTY} ${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm
 DPADD+=	${LIBIBERTY} ${LIBMPC} ${LIBMPFR} ${LIBGMP} ${LIBINTL} ${LIBZ} ${LIBM}

@@ -11803,6 +11803,15 @@ to analyze inner elements of @var{x} in which case @var{flags} should be
 passed along.
 @end deftypefn
 
+@deftypefn {Target Hook} int TARGET_BITFIELD_MAY_TRAP_P (const_rtx @var{x}, unsigned @var{flags})
+This target hook returns nonzero if @var{x}, an @code{sign_extract} or
+@code{zero_extract} operation, might cause a trap.  Targets can use
+this hook to enhance precision of analysis for @code{sign_extract} and
+@code{zero_extract} operations.  You may call @code{may_trap_p_1}
+to analyze inner elements of @var{x} in which case @var{flags} should be
+passed along.
+@end deftypefn
+
 @deftypefn {Target Hook} void TARGET_SET_CURRENT_FUNCTION (tree @var{decl})
 The compiler invokes this hook whenever it changes its current function
 context (@code{cfun}).  You can define this function if
