@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.27 2023/01/23 14:07:24 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.28 2023/10/08 15:19:31 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.24.2.27 2023/01/23 14:07:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.24.2.28 2023/10/08 15:19:31 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1341,11 +1341,6 @@ ixgbe_setup_hw_rsc(struct rx_ring *rxr)
  *      exhaustion are unnecessary, if an mbuf cannot be obtained
  *      it just returns, keeping its placeholder, thus it can simply
  *      be recalled to try again.
- *
- *   XXX NetBSD TODO:
- *    - The ixgbe_rxeof() function always preallocates mbuf cluster,
- *      so the ixgbe_refresh_mbufs() function can be simplified.
- *
  ************************************************************************/
 static void
 ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)

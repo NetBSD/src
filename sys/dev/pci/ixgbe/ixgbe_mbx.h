@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_mbx.h,v 1.10.8.5 2022/01/31 17:38:36 martin Exp $ */
+/* $NetBSD: ixgbe_mbx.h,v 1.10.8.6 2023/10/08 15:19:31 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -156,6 +156,7 @@ enum ixgbe_pfvf_api_rev {
 #define IXGBE_VF_GET_RETA      0x0a    /* VF request for RETA */
 #define IXGBE_VF_GET_RSS_KEY	0x0b    /* get RSS key */
 #define IXGBE_VF_UPDATE_XCAST_MODE	0x0c
+#define IXGBE_VF_GET_LINK_STATE 0x10 /* get vf link state */
 
 /* mode choices for IXGBE_VF_UPDATE_XCAST_MODE */
 enum ixgbevf_xcast_modes {

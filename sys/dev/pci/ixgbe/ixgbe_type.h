@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.22.2.18 2023/06/21 19:28:12 martin Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.22.2.19 2023/10/08 15:19:31 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -4076,6 +4076,7 @@ struct ixgbe_mac_operations {
 	s32 (*update_mc_addr_list)(struct ixgbe_hw *, u8 *, u32,
 				   ixgbe_mc_addr_itr, bool clear);
 	s32 (*update_xcast_mode)(struct ixgbe_hw *, int);
+	s32 (*get_link_state)(struct ixgbe_hw *hw, bool *link_state);
 	s32 (*enable_mc)(struct ixgbe_hw *);
 	s32 (*disable_mc)(struct ixgbe_hw *);
 	s32 (*clear_vfta)(struct ixgbe_hw *);
