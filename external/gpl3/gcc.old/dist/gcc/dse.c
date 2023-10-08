@@ -298,7 +298,11 @@ public:
 /* Return a bitmask with the first N low bits set.  */
 
 static unsigned HOST_WIDE_INT
+#ifdef NB_FIX_VAX_BACKEND
+lowpart_bitmask (unsigned int n)
+#else
 lowpart_bitmask (int n)
+#endif
 {
   unsigned HOST_WIDE_INT mask = HOST_WIDE_INT_M1U;
 #ifdef NB_FIX_VAX_BACKEND
