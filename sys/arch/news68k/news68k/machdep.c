@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2021/10/09 20:00:42 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 2023/10/08 03:57:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2021/10/09 20:00:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2023/10/08 03:57:47 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1001,7 +1001,7 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 	 */
 	memend = lowram + ctob(physmem);
 
-	if (lowram <= pa && pa < memend) 
+	if (lowram <= pa && pa < memend)
 		return 0;
 
 	return EFAULT;
