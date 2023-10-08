@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.297 2023/10/04 20:48:13 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.298 2023/10/08 12:38:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020, 2023
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.297 2023/10/04 20:48:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.298 2023/10/08 12:38:58 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -548,9 +548,6 @@ exit1(struct lwp *l, int exitcode, int signo)
 	calcru(p, &p->p_stats->p_ru.ru_utime, &p->p_stats->p_ru.ru_stime,
 	    NULL, NULL);
 
-	if (wakeinit)
-		cv_broadcast(&initproc->p_waitcv);
-
 	callout_destroy(&l->l_timeout_ch);
 
 	/*
@@ -558,7 +555,6 @@ exit1(struct lwp *l, int exitcode, int signo)
 	 */
 	pcu_discard_all(l);
 
-	mutex_enter(p->p_lock);
 	/*
 	 * Notify other processes tracking us with a knote that
 	 * we're exiting.
@@ -568,6 +564,7 @@ exit1(struct lwp *l, int exitcode, int signo)
 	 * knote_proc_exit() expects that p->p_lock is already
 	 * held (and will assert so).
 	 */
+	mutex_enter(p->p_lock);
 	if (!SLIST_EMPTY(&p->p_klist)) {
 		knote_proc_exit(p);
 	}
@@ -592,9 +589,11 @@ exit1(struct lwp *l, int exitcode, int signo)
 	 * Signal the parent to collect us, and drop the proclist lock.
 	 * Drop debugger/procfs lock; no new references can be gained.
 	 */
-	cv_broadcast(&p->p_pptr->p_waitcv);
 	rw_exit(&p->p_reflock);
+	cv_broadcast(&p->p_pptr->p_waitcv);
 	mutex_exit(&proc_lock);
+	if (wakeinit)
+		cv_broadcast(&initproc->p_waitcv);
 
 	/*
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
