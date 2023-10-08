@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_vf.c,v 1.31 2021/12/24 05:11:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe_vf.c,v 1.31.4.1 2023/10/08 14:57:53 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_vf.c,v 1.31 2021/12/24 05:11:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_vf.c,v 1.31.4.1 2023/10/08 14:57:53 martin Exp $");
 
 #include "ixgbe_api.h"
 #include "ixgbe_type.h"
@@ -85,6 +85,7 @@ s32 ixgbe_init_ops_vf(struct ixgbe_hw *hw)
 	hw->mac.ops.init_rx_addrs = NULL;
 	hw->mac.ops.update_mc_addr_list = ixgbe_update_mc_addr_list_vf;
 	hw->mac.ops.update_xcast_mode = ixgbevf_update_xcast_mode;
+	hw->mac.ops.get_link_state = ixgbe_get_link_state_vf;
 	hw->mac.ops.enable_mc = NULL;
 	hw->mac.ops.disable_mc = NULL;
 	hw->mac.ops.clear_vfta = NULL;
@@ -497,6 +498,34 @@ s32 ixgbevf_update_xcast_mode(struct ixgbe_hw *hw, int xcast_mode)
 }
 
 /**
+ * ixgbe_get_link_state_vf - Get VF link state from PF
+ * @hw: pointer to the HW structure
+ * @link_state: link state storage
+ *
+ * Returns state of the operation error or success.
+ **/
+s32 ixgbe_get_link_state_vf(struct ixgbe_hw *hw, bool *link_state)
+{
+	u32 msgbuf[2];
+	s32 err;
+	s32 ret_val;
+
+	msgbuf[0] = IXGBE_VF_GET_LINK_STATE;
+	msgbuf[1] = 0x0;
+
+	err = ixgbevf_write_msg_read_ack(hw, msgbuf, msgbuf, 2);
+
+	if (err || (msgbuf[0] & IXGBE_VT_MSGTYPE_FAILURE)) {
+		ret_val = IXGBE_ERR_MBX;
+	} else {
+		ret_val = IXGBE_SUCCESS;
+		*link_state = msgbuf[1];
+	}
+
+	return ret_val;
+}
+
+/**
  * ixgbe_set_vfta_vf - Set/Unset vlan filter table address
  * @hw: pointer to the HW structure
  * @vlan: 12 bit VLAN ID
@@ -624,7 +653,9 @@ s32 ixgbe_check_mac_link_vf(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 	struct ixgbe_mbx_info *mbx = &hw->mbx;
 	struct ixgbe_mac_info *mac = &hw->mac;
 	s32 ret_val = IXGBE_SUCCESS;
+	u32 in_msg = 0;
 	u32 links_reg;
+
 	UNREFERENCED_1PARAMETER(autoneg_wait_to_complete);
 
 	/* If we were hit with a reset drop the link */
@@ -682,27 +713,26 @@ s32 ixgbe_check_mac_link_vf(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 		*speed = IXGBE_LINK_SPEED_UNKNOWN;
 	}
 
-	if (hw->api_version < ixgbe_mbox_api_15) {
-		u32 in_msg = 0;
+	/* if the read failed it could just be a mailbox collision, best wait
+	 * until we are called again and don't report an error
+	 */
+	if (ixgbe_read_mbx(hw, &in_msg, 1, 0)) {
+		if (hw->api_version >= ixgbe_mbox_api_15)
+			mac->get_link_status = FALSE;
+		goto out;
+	}
 
-		/* if the read failed it could just be a mailbox collision, best wait
-		 * until we are called again and don't report an error
-		 */
-		if (ixgbe_read_mbx(hw, &in_msg, 1, 0))
-			goto out;
+	if (!(in_msg & IXGBE_VT_MSGTYPE_CTS)) {
+		/* msg is not CTS and is NACK we must have lost CTS status */
+		if (in_msg & IXGBE_VT_MSGTYPE_FAILURE)
+			ret_val = IXGBE_ERR_MBX;
+		goto out;
+	}
 
-		if (!(in_msg & IXGBE_VT_MSGTYPE_CTS)) {
-			/* msg is not CTS and is NACK we must have lost CTS status */
-			if (in_msg & IXGBE_VT_MSGTYPE_FAILURE)
-				ret_val = IXGBE_ERR_MBX;
-			goto out;
-		}
-
-		/* the pf is talking, if we timed out in the past we reinit */
-		if (!mbx->timeout) {
-			ret_val = IXGBE_ERR_TIMEOUT;
-			goto out;
-		}
+	/* the pf is talking, if we timed out in the past we reinit */
+	if (!mbx->timeout) {
+		ret_val = IXGBE_ERR_TIMEOUT;
+		goto out;
 	}
 
 	/* if we passed all the tests above then the link is up and we no
