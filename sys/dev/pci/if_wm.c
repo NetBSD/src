@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.767.2.3 2023/09/04 17:45:24 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.767.2.4 2023/10/08 15:23:26 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767.2.3 2023/09/04 17:45:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767.2.4 2023/10/08 15:23:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -779,13 +779,13 @@ do {									\
 #define WM_Q_EVCNT_ADD(qname, evname, val)		\
 	WM_EVCNT_ADD(&(qname)->qname##_ev_##evname, (val))
 #else /* !WM_EVENT_COUNTERS */
-#define	WM_EVCNT_INCR(ev)	/* nothing */
-#define	WM_EVCNT_STORE(ev, val)	/* nothing */
-#define	WM_EVCNT_ADD(ev, val)	/* nothing */
+#define	WM_EVCNT_INCR(ev)	__nothing
+#define	WM_EVCNT_STORE(ev, val)	__nothing
+#define	WM_EVCNT_ADD(ev, val)	__nothing
 
-#define WM_Q_EVCNT_INCR(qname, evname)		/* nothing */
-#define WM_Q_EVCNT_STORE(qname, evname, val)	/* nothing */
-#define WM_Q_EVCNT_ADD(qname, evname, val)	/* nothing */
+#define WM_Q_EVCNT_INCR(qname, evname)		__nothing
+#define WM_Q_EVCNT_STORE(qname, evname, val)	__nothing
+#define WM_Q_EVCNT_ADD(qname, evname, val)	__nothing
 #endif /* !WM_EVENT_COUNTERS */
 
 #define	CSR_READ(sc, reg)						\
@@ -3308,15 +3308,15 @@ alloc_retry:
 
 	if (sc->sc_type >= WM_T_82542_2_1) {
 		evcnt_attach_dynamic(&sc->sc_ev_tx_xoff, EVCNT_TYPE_MISC,
-		    NULL, xname, "tx_xoff");
+		    NULL, xname, "XOFF Transmitted");
 		evcnt_attach_dynamic(&sc->sc_ev_tx_xon, EVCNT_TYPE_MISC,
-		    NULL, xname, "tx_xon");
+		    NULL, xname, "XON Transmitted");
 		evcnt_attach_dynamic(&sc->sc_ev_rx_xoff, EVCNT_TYPE_MISC,
-		    NULL, xname, "rx_xoff");
+		    NULL, xname, "XOFF Received");
 		evcnt_attach_dynamic(&sc->sc_ev_rx_xon, EVCNT_TYPE_MISC,
-		    NULL, xname, "rx_xon");
+		    NULL, xname, "XON Received");
 		evcnt_attach_dynamic(&sc->sc_ev_rx_macctl, EVCNT_TYPE_MISC,
-		    NULL, xname, "rx_macctl");
+		    NULL, xname, "FC Received Unsupported");
 	}
 
 	evcnt_attach_dynamic(&sc->sc_ev_scc, EVCNT_TYPE_MISC,
@@ -3361,13 +3361,13 @@ alloc_retry:
 	evcnt_attach_dynamic(&sc->sc_ev_rnbc, EVCNT_TYPE_MISC,
 	    NULL, xname, "Rx No Buffers");
 	evcnt_attach_dynamic(&sc->sc_ev_ruc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Rx Undersize");
+	    NULL, xname, "Rx Undersize (valid CRC)");
 	evcnt_attach_dynamic(&sc->sc_ev_rfc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Rx Fragment");
+	    NULL, xname, "Rx Fragment (bad CRC)");
 	evcnt_attach_dynamic(&sc->sc_ev_roc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Rx Oversize");
+	    NULL, xname, "Rx Oversize (valid CRC)");
 	evcnt_attach_dynamic(&sc->sc_ev_rjc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Rx Jabber");
+	    NULL, xname, "Rx Jabber (bad CRC)");
 	if (sc->sc_type >= WM_T_82540) {
 		evcnt_attach_dynamic(&sc->sc_ev_mgtprc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Management Packets RX");
@@ -3400,8 +3400,9 @@ alloc_retry:
 	    NULL, xname, "Multicast Packets Tx");
 	evcnt_attach_dynamic(&sc->sc_ev_bptc, EVCNT_TYPE_MISC,
 	    NULL, xname, "Broadcast Packets Tx");
-	evcnt_attach_dynamic(&sc->sc_ev_iac, EVCNT_TYPE_MISC,
-	    NULL, xname, "Interrupt Assertion");
+	if (sc->sc_type >= WM_T_82571) /* PCIe, 80003 and ICH/PCHs */
+		evcnt_attach_dynamic(&sc->sc_ev_iac, EVCNT_TYPE_MISC,
+		    NULL, xname, "Interrupt Assertion");
 	if (sc->sc_type < WM_T_82575) {
 		evcnt_attach_dynamic(&sc->sc_ev_icrxptc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Intr. Cause Rx Pkt Timer Expire");
@@ -3460,7 +3461,11 @@ alloc_retry:
 		evcnt_attach_dynamic(&sc->sc_ev_hgotc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Host Good Octets Tx");
 		evcnt_attach_dynamic(&sc->sc_ev_lenerrs, EVCNT_TYPE_MISC,
-		    NULL, xname, "Length Errors");
+		    NULL, xname, "Length Errors (length/type <= 1500)");
+		evcnt_attach_dynamic(&sc->sc_ev_scvpc, EVCNT_TYPE_MISC,
+		    NULL, xname, "SerDes/SGMII Code Violation Packet");
+		evcnt_attach_dynamic(&sc->sc_ev_hrmpc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Header Redirection Missed Packet");
 	}
 	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		evcnt_attach_dynamic(&sc->sc_ev_tlpic, EVCNT_TYPE_MISC,
@@ -3475,10 +3480,6 @@ alloc_retry:
 		    NULL, xname, "BMC2OS Packets sent by BMC");
 		evcnt_attach_dynamic(&sc->sc_ev_o2bgptc, EVCNT_TYPE_MISC,
 		    NULL, xname, "OS2BMC Packets received by BMC");
-		evcnt_attach_dynamic(&sc->sc_ev_scvpc, EVCNT_TYPE_MISC,
-		    NULL, xname, "SerDes/SGMII Code Violation Packet");
-		evcnt_attach_dynamic(&sc->sc_ev_hrmpc, EVCNT_TYPE_MISC,
-		    NULL, xname, "Header Redirection Missed Packet");
 	}
 #endif /* WM_EVENT_COUNTERS */
 
@@ -3603,7 +3604,8 @@ wm_detach(device_t self, int flags __unused)
 	evcnt_detach(&sc->sc_ev_ptc1522);
 	evcnt_detach(&sc->sc_ev_mptc);
 	evcnt_detach(&sc->sc_ev_bptc);
-	evcnt_detach(&sc->sc_ev_iac);
+	if (sc->sc_type >= WM_T_82571)
+		evcnt_detach(&sc->sc_ev_iac);
 	if (sc->sc_type < WM_T_82575) {
 		evcnt_detach(&sc->sc_ev_icrxptc);
 		evcnt_detach(&sc->sc_ev_icrxatc);
@@ -3626,6 +3628,8 @@ wm_detach(device_t self, int flags __unused)
 		evcnt_detach(&sc->sc_ev_hgorc);
 		evcnt_detach(&sc->sc_ev_hgotc);
 		evcnt_detach(&sc->sc_ev_lenerrs);
+		evcnt_detach(&sc->sc_ev_scvpc);
+		evcnt_detach(&sc->sc_ev_hrmpc);
 	}
 	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		evcnt_detach(&sc->sc_ev_tlpic);
@@ -3634,8 +3638,6 @@ wm_detach(device_t self, int flags __unused)
 		evcnt_detach(&sc->sc_ev_o2bspc);
 		evcnt_detach(&sc->sc_ev_b2ospc);
 		evcnt_detach(&sc->sc_ev_o2bgptc);
-		evcnt_detach(&sc->sc_ev_scvpc);
-		evcnt_detach(&sc->sc_ev_hrmpc);
 	}
 #endif /* WM_EVENT_COUNTERS */
 
@@ -6706,7 +6708,8 @@ wm_update_stats(struct wm_softc *sc)
 	WM_EVCNT_ADD(&sc->sc_ev_ptc1522, CSR_READ(sc, WMREG_PTC1522));
 	WM_EVCNT_ADD(&sc->sc_ev_mptc, CSR_READ(sc, WMREG_MPTC));
 	WM_EVCNT_ADD(&sc->sc_ev_bptc, CSR_READ(sc, WMREG_BPTC));
-	WM_EVCNT_ADD(&sc->sc_ev_iac, CSR_READ(sc, WMREG_IAC));
+	if (sc->sc_type >= WM_T_82571)
+		WM_EVCNT_ADD(&sc->sc_ev_iac, CSR_READ(sc, WMREG_IAC));
 	if (sc->sc_type < WM_T_82575) {
 		WM_EVCNT_ADD(&sc->sc_ev_icrxptc, CSR_READ(sc, WMREG_ICRXPTC));
 		WM_EVCNT_ADD(&sc->sc_ev_icrxatc, CSR_READ(sc, WMREG_ICRXATC));
@@ -6735,6 +6738,8 @@ wm_update_stats(struct wm_softc *sc)
 		    CSR_READ(sc, WMREG_HGOTCL) +
 		    ((uint64_t)CSR_READ(sc, WMREG_HGOTCH) << 32));
 		WM_EVCNT_ADD(&sc->sc_ev_lenerrs, CSR_READ(sc, WMREG_LENERRS));
+		WM_EVCNT_ADD(&sc->sc_ev_scvpc, CSR_READ(sc, WMREG_SCVPC));
+		WM_EVCNT_ADD(&sc->sc_ev_hrmpc, CSR_READ(sc, WMREG_HRMPC));
 	}
 	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		WM_EVCNT_ADD(&sc->sc_ev_tlpic, CSR_READ(sc, WMREG_TLPIC));
@@ -6749,8 +6754,6 @@ wm_update_stats(struct wm_softc *sc)
 			WM_EVCNT_ADD(&sc->sc_ev_o2bgptc,
 			    CSR_READ(sc, WMREG_O2BGPTC));
 		}
-		WM_EVCNT_ADD(&sc->sc_ev_scvpc, CSR_READ(sc, WMREG_SCVPC));
-		WM_EVCNT_ADD(&sc->sc_ev_hrmpc, CSR_READ(sc, WMREG_HRMPC));
 	}
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if_statadd_ref(nsr, if_collisions, colc);
@@ -6893,7 +6896,8 @@ wm_clear_evcnt(struct wm_softc *sc)
 	WM_EVCNT_STORE(&sc->sc_ev_ptc1522, 0);
 	WM_EVCNT_STORE(&sc->sc_ev_mptc, 0);
 	WM_EVCNT_STORE(&sc->sc_ev_bptc, 0);
-	WM_EVCNT_STORE(&sc->sc_ev_iac, 0);
+	if (sc->sc_type >= WM_T_82571)
+		WM_EVCNT_STORE(&sc->sc_ev_iac, 0);
 	if (sc->sc_type < WM_T_82575) {
 		WM_EVCNT_STORE(&sc->sc_ev_icrxptc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_icrxatc, 0);
@@ -6916,6 +6920,8 @@ wm_clear_evcnt(struct wm_softc *sc)
 		WM_EVCNT_STORE(&sc->sc_ev_hgorc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_hgotc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_lenerrs, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_scvpc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_hrmpc, 0);
 	}
 	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		WM_EVCNT_STORE(&sc->sc_ev_tlpic, 0);
@@ -6924,8 +6930,6 @@ wm_clear_evcnt(struct wm_softc *sc)
 		WM_EVCNT_STORE(&sc->sc_ev_o2bspc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_b2ospc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_o2bgptc, 0);
-		WM_EVCNT_STORE(&sc->sc_ev_scvpc, 0);
-		WM_EVCNT_STORE(&sc->sc_ev_hrmpc, 0);
 	}
 #endif
 }
