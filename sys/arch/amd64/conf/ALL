@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.174.4.1 2023/07/30 12:01:54 martin Exp $
+# $NetBSD: ALL,v 1.174.4.2 2023/10/08 13:19:33 martin Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.174.4.1 $"
+#ident		"ALL-$Revision: 1.174.4.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -990,6 +990,7 @@ gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 iavf*	at pci? dev ? function ?	# Intel Adaptive Virtual Function
+igc*	at pci? dev ? function ?	# Intel I225 2.5 gigabit
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx

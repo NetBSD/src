@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.197 2022/08/07 02:52:23 simonb Exp $
+# $NetBSD: XEN3_DOM0,v 1.197.4.1 2023/10/08 13:19:33 martin Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -14,7 +14,7 @@ include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"XEN3_DOM0-$Revision: 1.197 $"
+#ident		"XEN3_DOM0-$Revision: 1.197.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -841,6 +841,7 @@ gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 iavf*	at pci? dev ? function ?	# Intel Adaptive Virtual Function
+igc*	at pci? dev ? function ?	# Intel I225 2.5 gigabit
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwm*	at pci? dev ? function ?	# Intel Centrino 7260
