@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.105 2023/10/04 15:14:00 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.106 2023/10/08 15:30:06 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2213,3 +2213,32 @@ xsrc/external/mit/libX11/dist/src/xkb/XKBGetMap.c	(apply patch)
 	fixing: CVE-2023-43785, CVE-2023-43786, CVE-2023-43787, CVE-2023-43788,
 	CVE-2023-43789
 	[mrg, ticket #1744]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.101
+sys/dev/pci/ixgbe/ixgbe.c			1.327-1.332
+sys/dev/pci/ixgbe/ixgbe.h			1.87,1.88
+sys/dev/pci/ixgbe/ixgbe_82599.c 		1.30
+sys/dev/pci/ixgbe/ixgbe_mbx.h			1.20
+sys/dev/pci/ixgbe/ixgbe_type.h			1.57
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.32,1.33
+sys/dev/pci/ixgbe/ixgbe_vf.h			1.18
+sys/dev/pci/ixgbe/ixv.c 			1.184,1.185
+
+	ixg(4):
+	- Reorder some event counters for readability.
+	- Rename some descriptions of event counters.
+	- Count Queue Bytes {Transmit, Receive} counter.
+	- Improve error check in ixgbe_check_mac_link_vf().
+	- Add new IXGBE_VF_GET_LINK_STATE message support.
+	  The VF's link state can be forced to down by PF.
+	- Update FCTRL after writing multicast filter.
+	- Update comments.
+	[msaitoh, ticket #1745]
+
+sys/dev/pci/if_wm.c				1.785-1.789
+
+	wm(4):
+	- Count SCVPC, HRMPC and IAC correctly.
+	- Modify some event counters' descriptions to clarify meaning.
+	[msaitoh, ticket #1746]
+
