@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.210 2019/04/27 23:04:32 kamil Exp $
+#  $NetBSD: Makefile,v 1.210.2.1 2023/10/08 18:49:54 martin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -204,6 +204,7 @@ COMMON_SRCS+= s_rintl.c
     && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
 COMMON_SRCS+= s_nexttoward.c
 .endif
+COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
 .elif (${LIBC_MACHINE_CPU} == "sh3")
 .PATH:	${.CURDIR}/arch/sh3
