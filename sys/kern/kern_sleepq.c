@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.80 2023/10/07 20:48:50 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.81 2023/10/08 11:12:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.80 2023/10/07 20:48:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.81 2023/10/08 11:12:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -334,7 +334,8 @@ sleepq_uncatch(lwp_t *l)
 int
 sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 {
-	int error = 0, sig;
+	const int mask = LW_CANCELLED|LW_WEXIT|LW_WCORE|LW_PENDSIG;
+	int error = 0, sig, flag;
 	struct proc *p;
 	lwp_t *l = curlwp;
 	bool early = false;
@@ -406,11 +407,14 @@ sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 	 * considering it is only meaningful here inside this function,
 	 * and is set to reflect intent upon entry.
 	 */
-	if ((l->l_flag & LW_CATCHINTR) != 0 && error == 0) {
+	flag = atomic_load_relaxed(&l->l_flag);
+	if (__predict_false((flag & mask) != 0)) {
 		p = l->l_proc;
-		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
+		if ((flag & LW_CATCHINTR) == 0 && error != 0)
+			/* nothing */;
+		else if ((flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
-		else if ((l->l_flag & LW_PENDSIG) != 0) {
+		else if ((flag & LW_PENDSIG) != 0) {
 			/*
 			 * Acquiring p_lock may cause us to recurse
 			 * through the sleep path and back into this
