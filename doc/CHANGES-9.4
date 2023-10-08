@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.106 2023/10/08 15:30:06 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.107 2023/10/08 18:50:46 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2241,4 +2241,11 @@ sys/dev/pci/if_wm.c				1.785-1.789
 	- Count SCVPC, HRMPC and IAC correctly.
 	- Modify some event counters' descriptions to clarify meaning.
 	[msaitoh, ticket #1746]
+
+distrib/evbmips/instkernel/ramdisk/Makefile	1.19
+lib/libm/Makefile				1.222
+
+	libm: add fma() functions for mips.
+	Bump ramdisk size slightly.
+	[he, ticket #1747]
 
