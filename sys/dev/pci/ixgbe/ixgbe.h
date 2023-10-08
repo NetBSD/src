@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.56.2.9 2022/06/02 10:45:12 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.56.2.10 2023/10/08 15:13:09 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -390,10 +390,10 @@ struct tx_ring {
 	u64			bytes;  /* Used for AIM */
 	u64			packets;
 	/* Soft Stats */
-	struct evcnt		tso_tx;
-	struct evcnt		no_desc_avail;
 	struct evcnt		total_packets;
 	struct evcnt		pcq_drops;
+	struct evcnt		no_desc_avail;
+	struct evcnt		tso_tx;
 	/* Per queue conters.  The adapter total is in struct adapter */
 	u64              q_efbig_tx_dma_setup;
 	u64              q_mbuf_defrag_failed;
@@ -507,6 +507,7 @@ struct adapter {
 	u16			num_segs;
 	u32			link_speed;
 	bool			link_up;
+	bool                    link_enabled;
 	u32			vector;
 	u16			dmac;
 	u32			phy_layer;

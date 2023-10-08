@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82599.c,v 1.21.4.4 2022/01/31 17:36:25 martin Exp $ */
+/* $NetBSD: ixgbe_82599.c,v 1.21.4.5 2023/10/08 15:13:09 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.21.4.4 2022/01/31 17:36:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.21.4.5 2023/10/08 15:13:09 martin Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -1829,7 +1829,7 @@ s32 ixgbe_fdir_set_input_mask_82599(struct ixgbe_hw *hw,
 
 		switch (input_mask->formatted.tunnel_type & 0xFFFF) {
 		case 0x0:
-			/* Mask turnnel type, fall through */
+			/* Mask tunnel type, fall through */
 			fdirip6m |= IXGBE_FDIRIP6M_TUNNEL_TYPE;
 		case 0xFFFF:
 			break;
