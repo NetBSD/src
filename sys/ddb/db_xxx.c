@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.76 2023/10/07 20:27:20 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.77 2023/10/08 15:03:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.76 2023/10/07 20:27:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.77 2023/10/08 15:03:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -332,7 +332,7 @@ db_show_panic(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 void
 db_show_condvar(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 {
-	kcondvar_t *cv = (kcondvar_t *)addr;
+	kcondvar_t *cv = (kcondvar_t *)(uintptr_t)addr;
 	char buf[9], *wmesg;
 
 	/* XXX messing with kcondvar_t guts without defs */
