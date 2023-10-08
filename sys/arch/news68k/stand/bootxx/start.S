@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.3 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: start.S,v 1.4 2023/10/08 03:57:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Izumi Tsutsui.  All rights reserved.
@@ -30,7 +30,7 @@
 	.align	4
 
 ASENTRY_NOPROFILE(start)
-	jra	1f	
+	jra	1f
 	.word	0
 	.word	0
 	.word	0
