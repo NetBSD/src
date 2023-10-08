@@ -33,6 +33,8 @@
 			    ; insn in the code.
   VUNSPEC_SYNC_ISTREAM      ; sequence of insns to sync the I-stream
   VUNSPEC_PEM		    ; 'procedure_entry_mask' insn.
+
+  VUNSPEC_EH_RETURN
 ])
 
 (define_constants
@@ -438,7 +440,7 @@
   "vax_expand_addsub_di_operands (operands, MINUS); DONE;")
 
 (define_insn "sbcdi3"
-  [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=Rr,Rr")
+  [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=&Rr,&Rr")
 	(minus:DI (match_operand:DI 1 "general_addsub_di_operand" "0,I")
 		  (match_operand:DI 2 "general_addsub_di_operand" "nRr,Rr")))]
   "TARGET_QMATH"
@@ -731,7 +733,7 @@
 	(minus:QI (const_int 32)
 		  (match_dup 4)))
    (set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
+	(zero_extract:SI (match_operand:SI 1 "general_operand" "g")
 			 (match_dup 3)
 			 (match_operand:SI 2 "register_operand" "g")))]
   ""
@@ -739,6 +741,10 @@
 {
   operands[3] = gen_reg_rtx (QImode);
   operands[4] = gen_lowpart (QImode, operands[2]);
+  operands[4] = gen_rtx_MINUS (QImode, GEN_INT (32), operands[4]);
+  emit_move_insn (operands[3], operands[4]);
+  emit_insn (gen_extzv (operands[0], operands[1], operands[3], operands[2]));
+  DONE;
 }")
 
 ;; Rotate right on the VAX works by negating the shift count.
@@ -821,32 +827,87 @@
   return \"movw %3,%0\";
 }")
 
-(define_insn ""
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=&g")
-	(zero_extract:SI (match_operand:SI 1 "register_operand" "ro")
+;;
+;; Register source, field width is either 8 or 16, field start
+;; is zero - simple, this is a mov[bl].
+;;
+(define_insn "*extzvQISI"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
 			 (match_operand:QI 2 "const_int_operand" "n")
 			 (match_operand:SI 3 "const_int_operand" "n")))]
-  "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
-   && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
-   && (REG_P (operands[1])
-       || (MEM_P (operands[1])
-          && ! mode_dependent_address_p (XEXP (operands[1], 0),
-				      MEM_ADDR_SPACE (operands[1]))))"
+  "INTVAL (operands[3]) == 0
+    && INTVAL (operands[2]) == GET_MODE_BITSIZE ( QImode )"
+  "movzbl %1, %0"
+)
+
+(define_insn "*extzvHISI"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
+			 (match_operand:QI 2 "const_int_operand" "n")
+			 (match_operand:SI 3 "const_int_operand" "n")))]
+  "INTVAL (operands[3]) == 0
+    && INTVAL (operands[2]) == GET_MODE_BITSIZE ( HImode )"
+  "movzwl %1, %0"
+)
+
+;;
+;; Register source, field width is the entire register
+;;
+(define_insn "*extzvSISI"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
+			 (match_operand:QI 2 "const_int_operand" "n")
+			 (match_operand:SI 3 "const_int_operand" "n")
+
+			 ))]
+  "INTVAL (operands[3]) == 0
+   && INTVAL (operands[2]) == GET_MODE_BITSIZE ( SImode )"
   "*
 {
-  if (REG_P (operands[1]))
-    {
-      if (INTVAL (operands[3]) != 0)
-	return \"extzv %3,%2,%1,%0\";
-    }
-  else
-    operands[1]
-      = adjust_address (operands[1],
-			INTVAL (operands[2]) == 8 ? QImode : HImode,
-			INTVAL (operands[3]) / 8);
+  if (rtx_equal_p (operands[0], operands[1]))
+    return \"\";  /* no-op */
+  return \"movl %1,%0\";
+}")
 
-  if (INTVAL (operands[2]) == 8)
-    return \"movzbl %1,%0\";
+;; Register source, non-zero field start is handled elsewhere
+
+;; Offsettable memory, field width 8 or 16, field start on
+;; boundary matching the field width.
+
+(define_insn "*extzvQISI2"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(zero_extract:SI (match_operand:SI 1 "memory_operand" "o")
+			 (match_operand:QI 2 "const_int_operand" "n")
+			 (match_operand:SI 3 "const_int_operand" "n")))]
+  "INTVAL (operands[2]) == 8
+   && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
+   && ! mode_dependent_address_p (XEXP (operands[1], 0),
+				  MEM_ADDR_SPACE (operands[1]))"
+  "*
+{
+  operands[1]
+    = adjust_address (operands[1],
+		      QImode,
+		      INTVAL (operands[3]) / 8);
+  return \"movzbl %1,%0\";
+}")
+
+(define_insn "*extzvHISI2"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(zero_extract:SI (match_operand:SI 1 "memory_operand" "o")
+			 (match_operand:QI 2 "const_int_operand" "n")
+			 (match_operand:SI 3 "const_int_operand" "n")))]
+  "INTVAL (operands[2]) == 16
+   && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
+   && ! mode_dependent_address_p (XEXP (operands[1], 0),
+				  MEM_ADDR_SPACE (operands[1]))"
+  "*
+{
+  operands[1]
+    = adjust_address (operands[1],
+                      HImode,
+                      INTVAL (operands[3]) / 8);
   return \"movzwl %1,%0\";
 }")
 
@@ -923,17 +984,26 @@
   return \"rotl %R3,%1,%0\;cvtwl %0,%0\";
 }")
 
+;; When the field position and size are constant and the destination
+;; is a register, extv and extzv are much slower than a rotate followed
+;; by a bicl or sign extension.  Because we might end up choosing ext[z]v
+;; anyway, we can't allow immediate values for the primary source operand.
+
+;; Because some of the instruction sequences generated by this pattern
+;; overwrite the output operand part way through, the output operand
+;; must be marked earlyclobber, may only be a register or memory
+;; operand and must not have any side effects (e.g. pre/post increment)
+;;
 (define_insn ""
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extract:SI (match_operand:SI 1 "register_operand" "ro")
-			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "nrmT")))]
-  ""
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=&ro")
+	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
+			 (match_operand:QI 2 "const_int_operand" "n")
+			 (match_operand:SI 3 "const_int_operand" "n")
+
+			 ))]
+  "INTVAL (operands[3]) != 0"
   "*
 {
-  if (! CONST_INT_P (operands[3]) || ! CONST_INT_P (operands[2])
-      || ! REG_P (operands[0]))
-    return \"extzv %3,%2,%1,%0\";
   if (INTVAL (operands[2]) == 8)
     return \"rotl %R3,%1,%0\;movzbl %0,%0\";
   if (INTVAL (operands[2]) == 16)
@@ -941,7 +1011,14 @@
   if (INTVAL (operands[3]) & 31)
     return \"rotl %R3,%1,%0\;bicl2 %M2,%0\";
   if (rtx_equal_p (operands[0], operands[1]))
-    return \"bicl2 %M2,%0\";
+    {
+      if (INTVAL (operands[2]) == 32)
+	return \"\";  /* no-op */
+      else
+	return \"bicl2 %M2,%0\";
+    }
+  if (INTVAL (operands[2]) == 32)
+    return \"movl %1,%0\";
   return \"bicl3 %M2,%1,%0\";
 }")
 
@@ -969,7 +1046,40 @@
   ""
   "cmpzv %2,%1,%0,%3")
 
-(define_insn "extv"
+(define_expand "extv"
+  [(set (match_operand:SI 0 "general_operand" "")
+	(sign_extract:SI (match_dup 4)
+			 (match_operand:QI 2 "general_operand" "")
+			 (match_operand:SI 3 "general_operand" ""))
+   )]
+  ""
+  "{
+      /*
+       * If the source operand is a memory reference, and the address
+       * is a symbol, and we're in PIC mode, load the address into a
+       * register.  Don't evaluate the field start or width at this time.
+       */
+      operands[4] = operands[1];
+      if (flag_pic
+       /* && !reload_completed */
+	  && MEM_P (operands[1])
+	  && !mode_dependent_address_p (XEXP (operands[1], 0),
+					MEM_ADDR_SPACE (operands[1]))
+          && SYMBOL_REF_P (XEXP (operands[1], 0))
+	  && !SYMBOL_REF_LOCAL_P (XEXP (operands[1], 0))
+	 )
+	{
+	  rtx address = XEXP (operands[1], 0);
+	  rtx temp = gen_reg_rtx (Pmode);
+	  emit_move_insn (temp, address);
+	  /* copy the original memory reference, replacing the address */
+	  operands[4] = change_address (operands[1], VOIDmode, temp);
+	  set_mem_align (operands[4], MEM_ALIGN (operands[1]));
+	}
+  }"
+)
+
+(define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(sign_extract:SI (match_operand:QI 1 "memory_operand" "m")
 			 (match_operand:QI 2 "general_operand" "g")
@@ -995,13 +1105,70 @@
   [(set (match_operand:SI 0 "general_operand" "")
 	(zero_extract:SI (match_operand:SI 1 "general_operand" "")
 			 (match_operand:QI 2 "general_operand" "")
-			 (match_operand:SI 3 "general_operand" "")))]
+			 (match_operand:SI 3 "general_operand" ""))
+   )]
   ""
-  "")
+  "{
+    if (CONST_INT_P (operands[1]))
+      {
+	/*
+	 * extzv of a constant doesn't work, so load the constant
+	 * into a register.
+	 */
+	rtx temp = gen_reg_rtx (SImode);
+	emit_move_insn (temp, operands[1]);
+	operands[1] = temp;
+      }
+
+
+    /*
+     * If the source operand is a memory reference, and the address
+     * is a symbol, and we're in PIC mode, load the address into a
+     * register.  Don't evaluate the field start or width at this time.
+     */
+    if (flag_pic
+     /*	&& !reload_completed */
+	&& MEM_P (operands[1])
+	&& !mode_dependent_address_p (XEXP (operands[1], 0),
+				      MEM_ADDR_SPACE (operands[1]))
+	&& SYMBOL_REF_P (XEXP (operands[1], 0))
+	&& !SYMBOL_REF_LOCAL_P (XEXP (operands[1], 0))
+       )
+      {
+	rtx address = XEXP (operands[1], 0);
+	rtx temp = gen_reg_rtx (Pmode);
+	emit_move_insn (temp, address);
+	/* copy the original memory reference, replacing the address */
+	operands[1] = change_address (operands[1], VOIDmode, temp);
+	set_mem_align (operands[1], MEM_ALIGN (operands[1]));
+      }
+    else
+      if ((MEM_P (operands[1]) && !CONST_INT_P (operands[2]))
+	  || SUBREG_P (operands[1])
+	 )
+	{
+	  /* Memory addresses for extzv are bytes, so load the source
+	     operand into a register */
+	  rtx temp = gen_reg_rtx (SImode);
+	  emit_move_insn (temp, operands[1]);
+	  operands[1] = temp;
+	}
+      else if (address_operand (operands[1], SImode))
+	{
+	  operands[1] = force_reg (SImode, operands[1]);
+	}
+
+  }"
+)
+
+;;
+;; Operand 1 must not, under any circumstances, be an indexed operand
+;; as extzv computes indices based on the size of a byte.
+;;
 
 (define_insn ""
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extract:SI (match_operand:QI 1 "memory_operand" "m")
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=&g")
+	(zero_extract:SI (match_operand:SI 1 "nonimmediate_operand" "rQ")
 			 (match_operand:QI 2 "general_operand" "g")
 			 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
@@ -1010,10 +1177,7 @@
   if (! REG_P (operands[0]) || ! CONST_INT_P (operands[2])
       || ! CONST_INT_P (operands[3])
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
-      || side_effects_p (operands[1])
-      || (MEM_P (operands[1])
-	  && mode_dependent_address_p (XEXP (operands[1], 0),
-				       MEM_ADDR_SPACE (operands[1]))))
+      || side_effects_p (operands[1]))
     return \"extzv %3,%2,%1,%0\";
   if (INTVAL (operands[2]) == 8)
     return \"rotl %R3,%1,%0\;movzbl %0,%0\";
@@ -1045,12 +1209,36 @@
 }")
 
 (define_expand "insv"
-  [(set (zero_extract:SI (match_operand:SI 0 "general_operand" "")
+  [(set (zero_extract:SI (match_dup 4)
 			 (match_operand:QI 1 "general_operand" "")
 			 (match_operand:SI 2 "general_operand" ""))
 	(match_operand:SI 3 "general_operand" ""))]
   ""
-  "")
+  "{
+    /*
+     * If the destination operand is a memory reference, and the address
+     * is a symbol, and we're in PIC mode, load the address into a
+     * register.  Don't evaluate the field start or width at this time.
+     */
+    operands[4] = operands[0];
+    if (flag_pic
+     /*	&& !reload_completed */
+	&& MEM_P (operands[0])
+	&& !mode_dependent_address_p (XEXP (operands[0], 0),
+				       MEM_ADDR_SPACE (operands[0]))
+	&& SYMBOL_REF_P (XEXP (operands[0], 0))
+	&& !SYMBOL_REF_LOCAL_P (XEXP (operands[0], 0))
+       )
+      {
+	rtx address = XEXP (operands[0], 0);
+	rtx temp = gen_reg_rtx (Pmode);
+	emit_move_insn (temp, address);
+	/* copy the original memory reference, replacing the address */
+	operands[4] = change_address (operands[0], VOIDmode, temp);
+	set_mem_align (operands[4], MEM_ALIGN (operands[0]));
+      }
+
+  }")
 
 (define_insn ""
   [(set (zero_extract:SI (match_operand:QI 0 "memory_operand" "+g")
@@ -1469,6 +1657,36 @@
   emit_jump_insn (gen_return ());
   DONE;
 }")
+
+;; Exception handling
+;; This is used when compiling the stack unwinding routines.
+(define_expand "eh_return"
+  [(use (match_operand 0 "general_operand"))]
+  ""
+{
+  if (GET_MODE (operands[0]) != word_mode)
+    operands[0] = convert_to_mode (word_mode, operands[0], 0);
+  emit_insn (gen_eh_set_retaddr (operands[0]));
+  DONE;
+})
+
+(define_insn_and_split "eh_set_retaddr"
+  [(unspec [(match_operand:SI 0 "general_operand")] VUNSPEC_EH_RETURN)
+   (clobber (match_scratch:SI 1 "=&r"))
+   ]
+  ""
+  "#"
+  "reload_completed"
+  [(const_int 0)]
+{
+  /* the return address for the current frame is always at 0x10(%fp) */
+  rtx tmp = plus_constant(Pmode, frame_pointer_rtx, 4 * UNITS_PER_WORD);
+  tmp = gen_rtx_MEM (word_mode, tmp);
+  MEM_VOLATILE_P(tmp) = 1;
+  tmp = gen_rtx_SET(tmp, operands[0]);
+  emit_insn(tmp);
+  DONE;
+})
 
 (define_insn "nop"
   [(const_int 0)]

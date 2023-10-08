@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2019/03/11 00:15:38 christos Exp $
+# $NetBSD: Makefile,v 1.12.10.1 2023/10/08 14:35:20 martin Exp $
 
 LIBISPRIVATE=	yes
 
@@ -38,11 +38,6 @@ tbl_layout.c \
 tbl_opts.c
 
 MAN=	mandoc.3
-
-# XXX
-.if ${MACHINE} == "vax"
-COPTS.mdoc_macro.c+=-O0
-.endif
 
 COPTS.man_validate.c+=-Wno-error=array-bounds
 

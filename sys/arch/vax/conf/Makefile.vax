@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.85 2020/09/15 05:08:07 mrg Exp $
+#	$NetBSD: Makefile.vax,v 1.85.20.1 2023/10/08 14:35:23 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,6 @@ GENASSYM_CONF=	${VAX}/vax/genassym.cf
 CPPFLAGS+=	-D_VAX_INLINE_
 AFLAGS+=	-x assembler-with-cpp -fno-pic
 CFLAGS+=	-fno-pic
-COPTS.wsmux.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -O1 :}
 
 
 ##

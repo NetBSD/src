@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2021/04/12 00:05:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.19.6.1 2023/10/08 14:35:20 martin Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 LIBISCXX = yes
@@ -25,10 +25,6 @@ UBSAN_SRCS= \
 .for _s in ubsan_handlers_cxx ubsan_type_hash ubsan_type_hash_itanium
 COPTS.${_s}.cc+=-frtti
 .endfor
-
-.if ${MACHINE_ARCH} == "vax"
-COPTS.sanitizer_file.cc += -O1
-.endif
 
 LIB=	ubsan
 SRCS+=	${UBSAN_SRCS}

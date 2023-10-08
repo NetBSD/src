@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2020/09/14 15:01:57 kamil Exp $
+# $NetBSD: Makefile,v 1.8.6.1 2023/10/08 14:35:24 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -15,11 +15,6 @@ LSAN_SRCS+= \
 	lsan_interceptors.cc \
 	lsan_linux.cc \
 	lsan_thread.cc
-
-.if ${MACHINE_ARCH} == "vax"
-COPTS.lsan_allocator.cc += -O1
-COPTS.sanitizer_file.cc += -O1
-.endif
 
 LIB=	lsan
 SRCS+=	${LSAN_SRCS}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2020/09/07 03:09:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.17.20.1 2023/10/08 14:35:24 martin Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../ufs/lfs
@@ -17,9 +17,6 @@ SRCS+=	ulfs_bmap.c ulfs_dirhash.c ulfs_extattr.c 			\
 
 
 CFLAGS+=        -DLFS_KERNEL_RFW
-.if ${MACHINE_ARCH} == "vax"
-COPTS.lfs_inode.c+=-O0
-.endif
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

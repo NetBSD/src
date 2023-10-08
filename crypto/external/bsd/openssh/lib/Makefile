@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34.6.3 2023/08/11 18:13:07 martin Exp $
+#	$NetBSD: Makefile,v 1.34.6.4 2023/10/08 14:35:22 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -116,12 +116,6 @@ COPTS.${f}.c+=	-Wno-pointer-sign
 
 # XXX
 COPTS.channels.c+=	-fno-strict-aliasing
-
-# XXX
-.if ${MACHINE} == "vax"
-COPTS.poly1305.c+=	-O0
-COPTS.umac.c+=		-O0
-.endif
 
 COPTS.hostfile.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.sshkey.c+=	${GCC_NO_FORMAT_TRUNCATION}

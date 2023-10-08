@@ -126,6 +126,12 @@ default_unspec_may_trap_p (const_rtx x, unsigned flags)
   return 0;
 }
 
+int
+default_bitfield_may_trap_p (const_rtx x, unsigned flags)
+{
+  return 0;
+}
+
 machine_mode
 default_promote_function_mode (const_tree type ATTRIBUTE_UNUSED,
 			       machine_mode mode,

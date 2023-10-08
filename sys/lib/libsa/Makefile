@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95 2021/05/27 06:54:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.95.12.1 2023/10/08 14:35:20 martin Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -96,7 +96,3 @@ SRCS+=	ufs.c
 lib${LIB}.o:: ${OBJS:O} __buildstdlib
 
 CPPFLAGS+=	-Wno-pointer-sign
-
-.if defined(HAVE_GCC) && ${MACHINE_ARCH} == "vax"
-COPTS.bootp.c+=	-O0
-.endif

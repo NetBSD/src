@@ -45,7 +45,9 @@ along with GCC; see the file COPYING3.  If not see
    count pushed by the CALLS and before the start of the saved registers.  */
 #define INCOMING_FRAME_SP_OFFSET 0
 
-/* Offset from the frame pointer register value to the top of the stack.  */
+/* Offset from the frame pointer register value to the DWARF Canonical Frame
+   Address. */
+#undef FRAME_POINTER_CFA_OFFSET
 #define FRAME_POINTER_CFA_OFFSET(FNDECL) 0
 
 /* We use R2-R5 (call-clobbered) registers for exceptions.  */
@@ -56,14 +58,14 @@ along with GCC; see the file COPYING3.  If not see
   gen_rtx_MEM (SImode,							\
 	       plus_constant (Pmode,					\
 			      gen_rtx_REG (Pmode, FRAME_POINTER_REGNUM),\
-			      -4))
+			      -1 * UNITS_PER_WORD))
 
 /* Simple store the return handler into the call frame.  */
 #define EH_RETURN_HANDLER_RTX						\
   gen_rtx_MEM (Pmode,							\
 	       plus_constant (Pmode,					\
 			      gen_rtx_REG (Pmode, FRAME_POINTER_REGNUM),\
-			      16))
+			      RETURN_ADDRESS_OFFSET))
 
 
 /* The VAX wants no space between the case instruction and the jump table.  */
@@ -104,5 +106,5 @@ along with GCC; see the file COPYING3.  If not see
     fputs (integer_asm_op (SIZE, FALSE), FILE);		\
     fprintf (FILE, "%%pcrel%d(", SIZE * 8);		\
     assemble_name (FILE, LABEL);			\
-    fprintf (FILE, "%+d)", SIZE);			\
+    fputc (')', FILE);					\
   } while (0)

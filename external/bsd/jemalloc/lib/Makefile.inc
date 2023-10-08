@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2021/08/15 12:41:40 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.15.2.1 2023/10/08 14:35:21 martin Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -52,12 +52,6 @@ COPTS.background_thread.c+=-Wno-error=stack-protector
 COPTS.ctl.c+=-Wno-error=stack-protector
 COPTS.stats.c+=-Wno-error=stack-protector
 COPTS.tcache.c+=-Wno-error=stack-protector
-
-.if ${MACHINE_ARCH} == "vax"
-# in merge_overlapping_regs, at regrename.c
-COPTS.arena.c+=-O0
-COPTS.extent.c+=-O0
-.endif
 
 SRCS+=${JEMALLOC_SRCS}
 

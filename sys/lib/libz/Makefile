@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2018/06/05 00:57:47 christos Exp $
+#	$NetBSD: Makefile,v 1.23.32.1 2023/10/08 14:35:20 martin Exp $
 
 LIB=	z
 LIBISPRIVATE=	yes
@@ -25,7 +25,3 @@ CLEANFILES+= lib${LIB}.o
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS:O} __buildstdlib
-
-.if defined(HAVE_GCC) && ${MACHINE_ARCH} == "vax"
-COPTS.inftrees.c+=	-O0
-.endif
