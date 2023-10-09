@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.304 2022/11/25 08:39:32 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.305 2023/10/09 11:55:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -459,7 +459,15 @@ typedef struct ifnet {
 #define	IFF_RUNNING	0x0040		/* resources allocated */
 #define	IFF_NOARP	0x0080		/* no address resolution protocol */
 #define	IFF_PROMISC	0x0100		/* receive all packets */
-#define	IFF_ALLMULTI	0x0200		/* receive all multicast packets */
+#define	IFF_ALLMULTI	0x0200		/* OBSOLETE -- DO NOT USE */
+/*
+ * IFF_ALLMULTI obsoleted on 2019-05-15 -- existing non-MP-safe drivers
+ * can use it for themselves under IFNET_LOCK, but they should be
+ * converted to use ETHER_F_ALLMULTI under ETHER_LOCK instead.  For
+ * compatibility with existing drivers, if_ethersubr and if_arcsubr
+ * will set IFF_ALLMULTI according to other flags, but you should not
+ * rely on this.
+ */
 #define	IFF_OACTIVE	0x0400		/* transmission in progress */
 #define	IFF_SIMPLEX	0x0800		/* can't hear own transmissions */
 #define	IFF_LINK0	0x1000		/* per link layer defined bit */
