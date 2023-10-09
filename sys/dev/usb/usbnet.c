@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.116 2023/10/09 17:42:09 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.117 2023/10/09 17:43:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.116 2023/10/09 17:42:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.117 2023/10/09 17:43:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1130,6 +1130,7 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
+	KASSERTMSG(ifp->if_flags & IFF_RUNNING, "%s", ifp->if_xname);
 
 	/*
 	 * For drivers with hardware multicast filter update callbacks:
@@ -1320,14 +1321,17 @@ usbnet_if_init(struct ifnet *ifp)
 		return EIO;
 
 	/*
-	 * If we're already running, nothing to do.
+	 * If we're already running, stop the interface first -- we're
+	 * reinitializing it.
 	 *
-	 * XXX This should be an assertion, but it may require some
-	 * analysis -- and possibly some tweaking -- of sys/net to
-	 * ensure.
+	 * XXX Grody for sys/net to call if_init to reinitialize.  This
+	 * should be an assertion, not a branch, but it will require
+	 * some tweaking of sys/net to avoid.  See also the comment in
+	 * usbnet_ifflags_cb about if_init vs uno_mcast on reinitalize.
 	 */
 	if (ifp->if_flags & IFF_RUNNING)
-		return 0;
+		usbnet_stop(un, ifp, /*disable*/1/*XXX???*/);
+	KASSERTMSG((ifp->if_flags & IFF_RUNNING) == 0, "%s", ifp->if_xname);
 
 	error = uno_init(un, ifp);
 	if (error)
