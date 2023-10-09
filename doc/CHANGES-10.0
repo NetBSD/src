@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.133 2023/10/09 13:37:57 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.134 2023/10/09 23:35:42 snj Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12291,4 +12291,60 @@ sys/arch/powerpc/oea/pmap.c			1.115
 
 	powerpc/oea: pmap: Use pool_allocator_nointr() for pmap_pool.
 	[rin, ticket #400]
+
+lib/libc/Makefile.inc				(apply patch)
+sys/modules/Makefile.inc			(apply patch)
+sys/arch/amd64/conf/GENERIC			(apply patch)
+sys/arch/amd64/conf/XEN3_DOM0			(apply patch)
+sys/arch/amd64/conf/XEN3_DOMU			(apply patch)
+sys/arch/cobalt/conf/GENERIC			(apply patch)
+sys/arch/evbarm/conf/ADI_BRH			(apply patch)
+sys/arch/evbarm/conf/ARMADAXP			(apply patch)
+sys/arch/evbarm/conf/ARMADILLO9			(apply patch)
+sys/arch/evbarm/conf/BCM5301X			(apply patch)
+sys/arch/evbarm/conf/BCM56340			(apply patch)
+sys/arch/evbarm/conf/CP3100			(apply patch)
+sys/arch/evbarm/conf/CUBOX			(apply patch)
+sys/arch/evbarm/conf/DNS323			(apply patch)
+sys/arch/evbarm/conf/GEMINI			(apply patch)
+sys/arch/evbarm/conf/GEMINI_MASTER		(apply patch)
+sys/arch/evbarm/conf/GEMINI_SLAVE		(apply patch)
+sys/arch/evbarm/conf/GENERIC.common		(apply patch)
+sys/arch/evbarm/conf/GUMSTIX			(apply patch)
+sys/arch/evbarm/conf/HPT5325			(apply patch)
+sys/arch/evbarm/conf/IMX31LITE			(apply patch)
+sys/arch/evbarm/conf/IQ31244			(apply patch)
+sys/arch/evbarm/conf/IQ80310			(apply patch)
+sys/arch/evbarm/conf/IQ80321			(apply patch)
+sys/arch/evbarm/conf/IXDP425			(apply patch)
+sys/arch/evbarm/conf/IXM1200			(apply patch)
+sys/arch/evbarm/conf/KUROBOX_PRO		(apply patch)
+sys/arch/evbarm/conf/KURONAS_X4			(apply patch)
+sys/arch/evbarm/conf/LUBBOCK			(apply patch)
+sys/arch/evbarm/conf/MMNET_GENERIC		(apply patch)
+sys/arch/evbarm/conf/MPCSA_GENERIC		(apply patch)
+sys/arch/evbarm/conf/NSLU2			(apply patch)
+sys/arch/evbarm/conf/OPENBLOCKS_A6		(apply patch)
+sys/arch/evbarm/conf/OPENBLOCKS_AX3		(apply patch)
+sys/arch/evbarm/conf/SHEEVAPLUG			(apply patch)
+sys/arch/evbarm/conf/SMDK2800			(apply patch)
+sys/arch/evbarm/conf/TEAMASA_NPWR		(apply patch)
+sys/arch/evbarm/conf/TEAMASA_NPWR_FC		(apply patch)
+sys/arch/evbarm/conf/TS7200			(apply patch)
+sys/arch/evbarm/conf/TWINTAIL			(apply patch)
+sys/arch/evbarm/conf/VIPER			(apply patch)
+sys/arch/evbarm/conf/ZAO425			(apply patch)
+sys/arch/i386/conf/GENERIC			(apply patch)
+sys/arch/i386/conf/XEN3PAE_DOM0			(apply patch)
+sys/arch/i386/conf/XEN3PAE_DOMU			(apply patch)
+sys/arch/mvmeppc/conf/GENERIC			(apply patch)
+sys/arch/pmax/conf/GENERIC			(apply patch)
+sys/arch/shark/conf/GENERIC			(apply patch)
+sys/arch/shark/conf/OFWGENCFG			(apply patch)
+sys/arch/sparc/conf/GENERIC			(apply patch)
+sys/arch/sparc64/conf/GENERIC			(apply patch)
+sys/arch/zaurus/conf/GENERIC			(apply patch)
+
+	Remove options DIAGNOSTIC/DEBUG.
+	[martin, ticket #401]
 
