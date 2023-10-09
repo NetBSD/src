@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.114 2023/07/15 21:41:26 andvar Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.115 2023/10/09 17:42:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.114 2023/07/15 21:41:26 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.115 2023/10/09 17:42:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -867,6 +867,8 @@ usbnet_init_rx_tx(struct usbnet * const un)
 	 */
 	if (un->un_ops->uno_mcast) {
 		mutex_enter(&unp->unp_mcastlock);
+		KASSERTMSG(!unp->unp_mcastactive, "%s", ifp->if_xname);
+		unp->unp_if_flags = ifp->if_flags;
 		(*un->un_ops->uno_mcast)(ifp);
 		unp->unp_mcastactive = true;
 		mutex_exit(&unp->unp_mcastlock);
@@ -1000,6 +1002,13 @@ usbnet_media_upd(struct ifnet *ifp)
 
 /* ioctl */
 
+/*
+ * usbnet_ifflags_cb(ec)
+ *
+ *	Called by if_ethersubr when interface flags change
+ *	(SIOCSIFFLAGS), or ethernet capabilities change
+ *	(SIOCSETHERCAP), on a running interface.
+ */
 static int
 usbnet_ifflags_cb(struct ethercom *ec)
 {
@@ -1120,7 +1129,9 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	 */
 	if (un->un_ops->uno_mcast) {
 		mutex_enter(&unp->unp_mcastlock);
+		KASSERTMSG(unp->unp_mcastactive, "%p", ifp->if_xname);
 		unp->unp_mcastactive = false;
+		unp->unp_if_flags = 0;
 		mutex_exit(&unp->unp_mcastlock);
 	}
 
