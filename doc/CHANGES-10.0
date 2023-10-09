@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.131 2023/10/09 07:39:56 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.132 2023/10/09 12:45:35 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12279,4 +12279,11 @@ tools/gcc/gcc-version.mk			1.25
 
 	gcc: bump version to "nb3 20231008" for all the vax updates.
 	[mrg, ticket #398]
+
+external/gpl3/gcc.old/lib/libgcc/arch/vax/auto-target.h 1.11
+external/gpl3/gcc.old/lib/libstdc++-v3/arch/vax/gstdint.h 1.15
+external/gpl3/gcc.old/usr.bin/gcc/arch/vax/configargs.h 1.17
+
+	gcc: vax: mknative for PR port-vax/57646.
+	[rin, ticket #399]
 
