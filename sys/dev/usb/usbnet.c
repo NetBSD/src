@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.117 2023/10/09 17:43:01 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.118 2023/10/09 17:44:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.117 2023/10/09 17:43:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.118 2023/10/09 17:44:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1030,7 +1030,7 @@ usbnet_ifflags_cb(struct ethercom *ec)
 
 	/*
 	 * Otherwise, cache the flags change so we can read the flags
-	 * under uno_mcastlock for multicast updates in SIOCADDMULTI or
+	 * under unp_mcastlock for multicast updates in SIOCADDMULTI or
 	 * SIOCDELMULTI without IFNET_LOCK.
 	 */
 	mutex_enter(&unp->unp_mcastlock);
