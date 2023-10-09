@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.142 2023/09/25 21:59:38 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.143 2023/10/09 22:00:38 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.142 2023/09/25 21:59:38 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.143 2023/10/09 22:00:38 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -949,7 +949,7 @@ rf_alloc_mutex_cond(RF_Raid_t *raidPtr)
 
 	rf_init_cond2(raidPtr->waitForReconCond, "rfrcnw");
 
-	rf_init_cond2(raidPtr->changing_components_cv, "raidhs");
+	rf_init_cond2(raidPtr->changing_components_cv, "rfcc");
 }
 
 static void
