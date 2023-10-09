@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 2022/05/09 11:39:44 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.114.4.1 2023/10/09 13:36:58 martin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2022/05/09 11:39:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114.4.1 2023/10/09 13:36:58 martin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3448,7 +3448,7 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 	pool_setlowat(&pmap_pvo_pool, 1008);
 
 	pool_init(&pmap_pool, sizeof(struct pmap),
-	    sizeof(void *), 0, 0, "pmap_pl", &pmap_pool_allocator,
+	    sizeof(void *), 0, 0, "pmap_pl", &pool_allocator_nointr,
 	    IPL_NONE);
 
 #if defined(PMAP_NEED_MAPKERNEL)
