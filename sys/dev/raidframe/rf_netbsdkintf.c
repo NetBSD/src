@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.416 2023/09/28 15:50:23 manu Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.417 2023/10/09 21:55:48 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.416 2023/09/28 15:50:23 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.417 2023/10/09 21:55:48 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -3998,10 +3998,10 @@ rf_get_info(RF_Raid_t *raidPtr, RF_DeviceConfig_t *config)
 	}
 	for (i = 0; i < config->nspares; i++) {
 		config->spares[i] = raidPtr->Disks[raidPtr->numCol + i];
-                if (config->spares[i].status == rf_ds_rebuilding_spare) {
-                        /* raidctl(8) expects to see this as a used spare */
-                        config->spares[i].status = rf_ds_used_spare;
-                }
+		if (config->spares[i].status == rf_ds_rebuilding_spare) {
+			/* raidctl(8) expects to see this as a used spare */
+			config->spares[i].status = rf_ds_used_spare;
+		}
 	}
 	return 0;
 }
