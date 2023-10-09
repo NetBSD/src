@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.50.4.1 2023/02/08 16:38:01 martin Exp $
+#	$NetBSD: GENERIC.common,v 1.50.4.2 2023/10/09 23:33:45 snj Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -117,7 +117,7 @@ options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 options 	KDTRACE_HOOKS	# kernel DTrace hooks
 #options 	LOCKDEBUG

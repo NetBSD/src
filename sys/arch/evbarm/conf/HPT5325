@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.53 2022/08/07 02:52:25 simonb Exp $
+#	$NetBSD: HPT5325,v 1.53.4.1 2023/10/09 23:33:45 snj Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -125,7 +125,7 @@ options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

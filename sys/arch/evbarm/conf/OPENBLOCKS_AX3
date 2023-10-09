@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.36 2022/08/07 02:52:25 simonb Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.36.4.1 2023/10/09 23:33:45 snj Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -130,8 +130,8 @@ options 	USBVERBOSE	# Verbose USB device auto configuration messages
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
-options 	DEBUG
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger

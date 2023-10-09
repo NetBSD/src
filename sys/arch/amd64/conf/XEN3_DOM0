@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.197.4.1 2023/10/08 13:19:33 martin Exp $
+# $NetBSD: XEN3_DOM0,v 1.197.4.2 2023/10/09 23:33:45 snj Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -14,7 +14,7 @@ include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"XEN3_DOM0-$Revision: 1.197.4.1 $"
+#ident		"XEN3_DOM0-$Revision: 1.197.4.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -107,7 +107,7 @@ powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# inexpensive kernel consistency checks
+#options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support

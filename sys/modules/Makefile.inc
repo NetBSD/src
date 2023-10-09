@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2019/02/17 04:05:41 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.8.30.1 2023/10/09 23:33:47 snj Exp $
 
 S!=		cd ${.PARSEDIR}/..;pwd
 CPPFLAGS+=	-I${NETBSDSRCDIR}/common/include
@@ -7,7 +7,7 @@ WARNS?=		5
 
 # inexpensive kernel consistency checks
 # XXX to be commented out on release branch
-CPPFLAGS+=	-DDIAGNOSTIC
+#CPPFLAGS+=	-DDIAGNOSTIC
 
 .if !empty(IOCONF)
 _BSD_IOCONF_MK_USER_=1

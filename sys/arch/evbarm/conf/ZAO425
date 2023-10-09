@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.69 2022/08/07 02:52:25 simonb Exp $
+#	$NetBSD: ZAO425,v 1.69.4.1 2023/10/09 23:33:45 snj Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -114,7 +114,7 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
