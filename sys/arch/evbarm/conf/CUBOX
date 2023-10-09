@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX,v 1.21 2022/08/07 02:52:25 simonb Exp $
+# $NetBSD: CUBOX,v 1.21.4.1 2023/10/09 23:33:45 snj Exp $
 #
 #	CUBOX -- SolidRun Ltd. Cubox kernel
 #
@@ -48,7 +48,7 @@ options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
-options 	DIAGNOSTIC	# internally consistency checks
+#options 	DIAGNOSTIC	# internally consistency checks
 
 #options 	DEBUG
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems

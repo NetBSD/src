@@ -1,4 +1,4 @@
-#	$NetBSD: KURONAS_X4,v 1.5 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: KURONAS_X4,v 1.5.20.1 2023/10/09 23:33:45 snj Exp $
 #
 #  KUROBOX_PRO -- KUROUTOSHIKOU. KURO-BOX/PRO platform kernel
 #
@@ -18,8 +18,8 @@ config		netbsd-wd0	root on wd0 type ffs
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
-options 	DEBUG
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

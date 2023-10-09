@@ -1,4 +1,4 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.18 2022/08/07 02:52:26 simonb Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.18.4.1 2023/10/09 23:33:46 snj Exp $
 
 include 	"arch/i386/conf/std.xen"
 
@@ -51,7 +51,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# inexpensive kernel consistency checks
+#options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
