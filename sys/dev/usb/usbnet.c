@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.115 2023/10/09 17:42:00 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.116 2023/10/09 17:42:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.115 2023/10/09 17:42:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.116 2023/10/09 17:42:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1016,34 +1016,43 @@ usbnet_ifflags_cb(struct ethercom *ec)
 	struct ifnet *ifp = &ec->ec_if;
 	struct usbnet *un = ifp->if_softc;
 	struct usbnet_private * const unp = un->un_pri;
-	int rv = 0;
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
 	const u_short changed = ifp->if_flags ^ unp->unp_if_flags;
-	if ((changed & ~(IFF_CANTCHANGE | IFF_DEBUG)) == 0) {
-		mutex_enter(&unp->unp_mcastlock);
-		unp->unp_if_flags = ifp->if_flags;
-		mutex_exit(&unp->unp_mcastlock);
-		/*
-		 * XXX Can we just do uno_mcast synchronously here
-		 * instead of resetting the whole interface?
-		 *
-		 * Not yet, because some usbnet drivers (e.g., aue(4))
-		 * initialize the hardware differently in uno_init
-		 * depending on IFF_PROMISC.  But some (again, aue(4))
-		 * _also_ need to know whether IFF_PROMISC is set in
-		 * uno_mcast and do something different with it there.
-		 * Maybe the logic can be unified, but it will require
-		 * an audit and testing of all the usbnet drivers.
-		 */
-		if (changed & IFF_PROMISC)
-			rv = ENETRESET;
-	} else {
-		rv = ENETRESET;
-	}
 
-	return rv;
+	/*
+	 * If any user-settable flags have changed other than
+	 * IFF_DEBUG, just reset the interface.
+	 */
+	if ((changed & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
+		return ENETRESET;
+
+	/*
+	 * Otherwise, cache the flags change so we can read the flags
+	 * under uno_mcastlock for multicast updates in SIOCADDMULTI or
+	 * SIOCDELMULTI without IFNET_LOCK.
+	 */
+	mutex_enter(&unp->unp_mcastlock);
+	unp->unp_if_flags = ifp->if_flags;
+	mutex_exit(&unp->unp_mcastlock);
+
+	/*
+	 * If we're switching on or off promiscuous mode, reprogram the
+	 * hardware multicast filter now.
+	 *
+	 * XXX Actually, reset the interface, because some usbnet
+	 * drivers (e.g., aue(4)) initialize the hardware differently
+	 * in uno_init depending on IFF_PROMISC.  But some (again,
+	 * aue(4)) _also_ need to know whether IFF_PROMISC is set in
+	 * uno_mcast and do something different with it there.  Maybe
+	 * the logic can be unified, but it will require an audit and
+	 * testing of all the usbnet drivers.
+	 */
+	if (changed & IFF_PROMISC)
+		return ENETRESET;
+
+	return 0;
 }
 
 bool
