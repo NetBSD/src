@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.11 2023/10/08 22:10:49 andvar Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.12 2023/10/09 05:56:24 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  * Types provided to machine-independent ISA code.
  */
 struct mipsco_isa_chipset {
-        struct evcnt		ic_intrcnt; /* Interrupt counter */
+	struct evcnt		ic_intrcnt; /* Interrupt counter */
 	bus_space_tag_t		ic_bst; /* bus_space tag */
 	bus_space_handle_t	ic_bsh; /* interrupt control register */
 	LIST_HEAD(,mipsco_intrhand)
