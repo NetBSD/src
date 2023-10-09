@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.130 2023/10/08 18:49:12 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.131 2023/10/09 07:39:56 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12274,4 +12274,9 @@ lib/libm/Makefile				1.222
 	libm: add fma() functions for mips.
 	Bump ramdisk size slightly.
 	[he, ticket #397]
+
+tools/gcc/gcc-version.mk			1.25
+
+	gcc: bump version to "nb3 20231008" for all the vax updates.
+	[mrg, ticket #398]
 
