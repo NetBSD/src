@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.141 2023/09/02 17:40:45 riastradh Exp $
+.\"	$NetBSD: hier.7,v 1.142 2023/10/10 21:51:01 riastradh Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -586,6 +586,30 @@ Architecture-independent files, mostly text.
 .It Pa calendar/
 A variety of calendar files; see
 .Xr calendar 1 .
+.It Pa certs/mozilla/
+X.509 certificates from Mozilla's curated set of certificate
+authorities (CAs),
+.Pa certdata.txt ,
+in PEM format.
+See
+.%U https://wiki.mozilla.org/CA/Included_Certificates
+for details.
+Used by
+.Xr certctl 8
+to populate OpenSSL trust anchors at
+.Pa /etc/openssl/certs .
+.Bl -tag -width "server/" -compact
+.It Pa all/
+Certificates of all CAs in Mozilla
+.Pa certdata.txt ,
+for all purposes, including CAs Mozilla may no longer trust.
+.It Pa code/
+Certificates of CAs trusted by Mozilla for code-signing.
+.It Pa email/
+Certificates of CAs trusted by Mozilla for email with S/MIME.
+.It Pa code/
+Certificates of CAs trusted by Mozilla for TLS server authentication.
+.El
 .It Pa dict/
 Word lists;
 see
