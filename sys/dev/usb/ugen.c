@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.173 2023/07/31 17:41:18 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.174 2023/10/10 10:58:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.173 2023/07/31 17:41:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.174 2023/10/10 10:58:03 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -529,7 +529,7 @@ ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 		if (err)
 			goto out;
 		for (endptno = 0; endptno < nendpt; endptno++) {
-			ed = usbd_interface2endpoint_descriptor(iface,endptno);
+			ed = usbd_interface2endpoint_descriptor(iface, endptno);
 			KASSERT(ed != NULL);
 			endpt = ed->bEndpointAddress;
 			dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
@@ -1346,8 +1346,8 @@ ugenintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	ibuf = sce->ibuf;
 
-	DPRINTFN(5, "xfer=%#jx status=%d count=%d",
-		     (uintptr_t)xfer, status, count, 0);
+	DPRINTFN(5, "xfer=%p status=%d count=%d",
+		     xfer, status, count, 0);
 	DPRINTFN(5, "          data = %02x %02x %02x",
 		     ibuf[0], ibuf[1], ibuf[2], 0);
 
@@ -1595,7 +1595,7 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 	ugen_clear_endpoints(sc);
 
 	for (endptno = 0; endptno < nendpt; endptno++) {
-		ed = usbd_interface2endpoint_descriptor(iface,endptno);
+		ed = usbd_interface2endpoint_descriptor(iface, endptno);
 		KASSERT(ed != NULL);
 		endpt = ed->bEndpointAddress;
 		dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
