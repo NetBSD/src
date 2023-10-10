@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.372 2023/10/04 22:34:23 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.373 2023/10/10 01:17:19 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -865,6 +865,7 @@ KB	kilobyte
 KBD	keyboard
 KBD	kilobaud
 KCS	keyboard controller style
+KEK	key encryption key
 KEM	key encapsulation mechanism
 KLOC	thousand lines of code
 KMS	kernel-mode setting
