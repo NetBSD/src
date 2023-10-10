@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.135 2023/10/10 13:04:40 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.136 2023/10/10 13:18:53 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12348,4 +12348,13 @@ sys/arch/zaurus/conf/GENERIC			(apply patch)
 
 	Remove options DIAGNOSTIC/DEBUG.
 	[martin, ticket #401]
+
+lib/libcurses/addbytes.c			1.69
+lib/libcurses/tty.c				1.50
+tests/lib/libcurses/check_files/addstr3.chk	1.5
+tests/lib/libcurses/check_files/waddstr2.chk	1.2
+
+	libcurses: fix for PR 56467: scrolling does not work in some curses
+	applications (like sysinst).
+	[kim, ticket #402]
 
