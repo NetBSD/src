@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.70 2023/09/10 14:04:28 abs Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.71 2023/10/10 16:46:56 abs Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.70 2023/09/10 14:04:28 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.71 2023/10/10 16:46:56 abs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
@@ -197,6 +197,8 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	{ PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_11,
 	    AHCI_PCI_QUIRK_FORCE },
 	{ PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_12,
+	    AHCI_PCI_QUIRK_FORCE },
+	{ PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1062_JMB575,
 	    AHCI_PCI_QUIRK_FORCE },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_SATA,
 	    AHCI_PCI_QUIRK_FORCE },
