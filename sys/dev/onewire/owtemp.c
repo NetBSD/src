@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.20 2023/08/27 13:20:09 kardel Exp $	*/
+/*	$NetBSD: owtemp.c,v 1.21 2023/10/10 19:21:38 kardel Exp $	*/
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.20 2023/08/27 13:20:09 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.21 2023/10/10 19:21:38 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ owtemp_decode_ds1920(const uint8_t *buf)
 	return (temp + 273150000);
 }
 
-MODULE(MODULE_CLASS_DRIVER, owtemp, NULL);
+MODULE(MODULE_CLASS_DRIVER, owtemp, "onewire");
 
 #ifdef _MODULE
 #include "ioconf.c"
