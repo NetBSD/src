@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.136 2023/10/10 13:18:53 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.137 2023/10/10 18:54:07 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12268,6 +12268,7 @@ sys/dev/pci/if_wm.c				1.785-1.789
 	- Modify some event counters' descriptions to clarify meaning.
 	[msaitoh, ticket #396]
 
+sys/arch/evbmips/conf/INSTALL_CI20		1.3
 sys/arch/evbmips/conf/INSTALL_OMSAL400		1.4
 distrib/evbmips/instkernel/ramdisk/Makefile	1.19
 lib/libm/Makefile				1.222
