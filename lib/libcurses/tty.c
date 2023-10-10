@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.49 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: tty.c,v 1.49.2.1 2023/10/10 13:17:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.49 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: tty.c,v 1.49.2.1 2023/10/10 13:17:46 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -113,7 +113,7 @@ _cursesi_gettmode(SCREEN *screen)
 
 	if (tcgetattr(fileno(screen->infd), &screen->orig_termios)) {
 		/* if the input fd is not a tty try the output */
-		if (tcgetattr(fileno(screen->infd), &screen->orig_termios)) {
+		if (tcgetattr(fileno(screen->outfd), &screen->orig_termios)) {
 			/* not a tty ... we will disable tty related stuff */
 			screen->notty = TRUE;
 			__GT = 0;
