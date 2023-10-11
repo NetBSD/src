@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.345 2023/05/28 10:33:13 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.346 2023/10/11 14:08:17 riastradh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -206,11 +206,11 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 LIBKRB5_LDADD+= -lkrb5 -lcom_err \
 	-lhx509 -lcrypto -lasn1 \
 	-lwind -lheimbase -lcom_err -lroken \
-	-lsqlite3 -lm -lcrypt -lutil
+	-lm -lcrypt -lutil
 LIBKRB5_DPADD+= ${LIBKRB5} ${LIBCOM_ERR} \
 	${LIBHX509} ${LIBCRYPTO} ${LIBASN1} \
 	${LIBWIND} ${LIBHEIMBASE} ${LIBCOM_ERR} ${LIBROKEN} \
-	${LIBSQLITE3} ${LIBM} ${LIBCRYPT} ${LIBUTIL}
+	${LIBM} ${LIBCRYPT} ${LIBUTIL}
 LIBGSSAPI_LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD}
 LIBGSSAPI_DPADD+= ${LIBGSSAPI} ${LIBHEIMNTLM} ${LIBKRB5_DPADD}
 .endif
