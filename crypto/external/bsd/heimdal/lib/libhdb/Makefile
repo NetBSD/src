@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2023/06/19 23:56:55 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2023/10/11 12:34:42 riastradh Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -18,7 +18,8 @@ LIBDPLIBS+=	hx509		${HEIMBASE}/lib/libhx509	\
 		com_err		${HEIMBASE}/lib/libcom_err	\
 		roken		${HEIMBASE}/lib/libroken	\
 		wind		${HEIMBASE}/lib/libwind		\
-		heimbase	${HEIMBASE}/lib/libheimbase
+		heimbase	${HEIMBASE}/lib/libheimbase	\
+		sqlite3		${NETBSDSRCDIR}/external/public-domain/sqlite/lib
 
 HEIMSRCS= hdb_err.et hdb.asn1
 ASN1_OPTS.hdb.asn1+= --one-code-file --sequence=HDB-Ext-KeySet --sequence=Keys
