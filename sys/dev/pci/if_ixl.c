@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.89 2023/03/26 19:10:33 andvar Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.90 2023/10/11 04:24:24 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.89 2023/03/26 19:10:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.90 2023/10/11 04:24:24 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -446,6 +446,7 @@ struct ixl_atq {
 	struct ixl_aq_desc	 iatq_desc;
 	void			(*iatq_fn)(struct ixl_softc *,
 				    const struct ixl_aq_desc *);
+	bool			 iatq_inuse;
 };
 SIMPLEQ_HEAD(ixl_atq_list, ixl_atq);
 
@@ -3604,6 +3605,9 @@ ixl_get_link_status(void *xsc)
 
 	mutex_enter(&sc->sc_atq_lock);
 
+	if (sc->sc_link_state_atq.iatq_inuse)
+		goto done;
+
 	iaq = &sc->sc_link_state_atq.iatq_desc;
 	memset(iaq, 0, sizeof(*iaq));
 	iaq->iaq_opcode = htole16(IXL_AQ_OP_PHY_LINK_STATUS);
@@ -3617,6 +3621,7 @@ ixl_get_link_status(void *xsc)
 		ixl_get_link_status_done(sc, iaq);
 	}
 
+done:
 	mutex_exit(&sc->sc_atq_lock);
 }
 
@@ -3766,6 +3771,7 @@ ixl_atq_post_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
 
 	sc->sc_atq_prod = prod_next;
 	ixl_wr(sc, sc->sc_aq_regs->atq_tail, sc->sc_atq_prod);
+	iatq->iatq_inuse = true;
 
 	return 0;
 }
@@ -3799,6 +3805,7 @@ ixl_atq_done_locked(struct ixl_softc *sc)
 
 		iatq = (struct ixl_atq *)((intptr_t)slot->iaq_cookie);
 		iatq->iatq_desc = *slot;
+		iatq->iatq_inuse = false;
 
 		memset(slot, 0, sizeof(*slot));
 
