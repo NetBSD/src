@@ -1,4 +1,4 @@
-.\"	$NetBSD: agr.4,v 1.9 2013/07/13 10:54:00 njoly Exp $
+.\"	$NetBSD: agr.4,v 1.10 2023/10/11 06:46:33 yamaguchi Exp $
 .\"
 .\" Copyright (c)2005, 2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -37,6 +37,12 @@
 .Cd pseudo-device agr
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
+.Em The driver described in this manual page is obsolete
+.Em and will be removed from a future version of the system.
+.Em
+.Xr lagg 4
+.Em should be used instead.
+.Pp
 The
 .Nm
 driver provides link aggregation functionality (a.k.a. L2 trunking
@@ -106,6 +112,7 @@ Destroy an interface created in the above example.
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr ifconfig 8
+.Xr lagg 4
 .\" ------------------------------------------------------------
 .Sh STANDARDS
 IEEE 802.3ad Aggregation of Multiple Link Segments
