@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.213 2023/10/04 07:48:55 rin Exp $
+#	$NetBSD: GENERIC64,v 1.214 2023/10/11 07:49:29 rin Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -286,6 +286,7 @@ bge*		at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
 igc*		at pci? dev ? function ?	# Intel 22x 2.5 gigabit
 ixg* 		at pci? dev ? function ?	# Intel 8259x 10 gigabit
+ixl* 		at pci? dev ? function ?	# Intel Ethernet 700 series
 ixv* 		at pci? dev ? function ?	# Intel 8259x 10G virtual function
 mcx*		at pci? dev ? function ?	# Mellanox 5th generation Ethernet
 mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
