@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.279 2022/09/01 18:32:17 riastradh Exp $	*/
+/*	$NetBSD: nd6.c,v 1.280 2023/10/11 09:13:51 msaitoh Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279 2022/09/01 18:32:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.280 2023/10/11 09:13:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1224,7 +1224,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		OND.flags = ifndi->flags;
 		break;
 	case OSIOCSIFINFO_IN6_90:
-		/* Allow userland to set Neighour Unreachability Detection
+		/* Allow userland to set Neighbor Unreachability Detection
 		 * timers. */
 		if (OND.chlim != 0)
 			ifndi->chlim = OND.chlim;
@@ -1250,7 +1250,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		ND.flags = ifndi->flags;
 		break;
 	case SIOCSIFINFO_IN6:
-		/* Allow userland to set Neighour Unreachability Detection
+		/* Allow userland to set Neighbor Unreachability Detection
 		 * timers. */
 		if (ND.chlim != 0)
 			ifndi->chlim = ND.chlim;
