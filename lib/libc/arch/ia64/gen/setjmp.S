@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.2 2023/10/11 06:15:36 skrll Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.3 2023/10/11 09:12:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #define _LOCORE
 #include <machine/asm.h>
 
-RCSID("$NetBSD: setjmp.S,v 1.2 2023/10/11 06:15:36 skrll Exp $")
+RCSID("$NetBSD: setjmp.S,v 1.3 2023/10/11 09:12:20 skrll Exp $")
 
 #include    <machine/setjmp.h>
 
@@ -49,7 +49,7 @@ ENTRY(__setjmp14, 1)
 	alloc	loc0=ar.pfs,1,2,3,0
 	mov	loc1=rp
 	;;
-	mov	out0=1				// how = SIG_BLOCK
+	mov	out0=0				// how is ignored
 	mov	out1=0				// set = NULL
 	add	out2=J_SIGSET,in0		// oset = &jb[J_SIGSET]
 	br.call.sptk.few rp=_sys___sigprocmask14

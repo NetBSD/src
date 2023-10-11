@@ -1,10 +1,10 @@
-/*	$NetBSD: __setjmp14.S,v 1.1 2014/09/03 19:34:25 matt Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.2 2023/10/11 09:12:21 skrll Exp $	*/
 
 #include "SYS.h"
 #include "assym.h"
 
 #if defined(LIBC_SCCS)
-__RCSID("$NetBSD: __setjmp14.S,v 1.1 2014/09/03 19:34:25 matt Exp $")
+__RCSID("$NetBSD: __setjmp14.S,v 1.2 2023/10/11 09:12:21 skrll Exp $")
 #endif
 
 /*
@@ -36,7 +36,7 @@ ENTRY(__setjmp14)
 	l.sw	JB_MAGIC(r3), r4	/* note we saved sigmask */
 	l.addi	r5, r3, JB_SIGMASK	# &sigmask
 	l.xor	r4, r4, r4
-	l.addi	r3, r0, SIG_BLOCK
+	l.addi	r3, r0, 0
 	_DOSYSCALL(__sigprocmask14)	# assume no error	XXX
 	l.xor	r11, r11, r11
 	l.jr	lr

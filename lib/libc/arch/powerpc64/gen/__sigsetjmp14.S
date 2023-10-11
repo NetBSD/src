@@ -1,18 +1,18 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.3 2014/08/23 02:24:22 matt Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.4 2023/10/11 09:12:21 skrll Exp $	*/
 
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$NetBSD: __sigsetjmp14.S,v 1.3 2014/08/23 02:24:22 matt Exp $"
+	.asciz "$NetBSD: __sigsetjmp14.S,v 1.4 2023/10/11 09:12:21 skrll Exp $"
 #endif
 
 ENTRY(__sigsetjmp14)
 	mr	%r6,%r3
 	or.	%r7,%r4,%r4
 	beq	1f
-	li	%r3,1			# SIG_BLOCK
-	li	%r4,0
+	li	%r3,0			# how is ignored
+	li	%r4,0			# set = NULL
 	addi	%r5,%r6,100		# &sigmask
 	_DOSYSCALL(__sigprocmask14)	# assume no error	XXX
 1:

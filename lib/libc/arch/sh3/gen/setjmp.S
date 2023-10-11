@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.10 2006/01/05 19:21:37 uwe Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.11 2023/10/11 09:12:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: setjmp.S,v 1.10 2006/01/05 19:21:37 uwe Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.11 2023/10/11 09:12:21 skrll Exp $")
 #endif
 
 /*
@@ -58,10 +58,10 @@ ENTRY(__setjmp14)
 
 	mov.l	.L___sigprocmask14_1, r0
 	mov	r4, r6
-	mov	#1, r4			/* how = SIG_BLOCK */
-	mov	#0, r5			/* new = NULL */
+	mov	#0, r4			/* how is ignored */
+	mov	#0, r5			/* set = NULL */
 1:	CALL	r0
-	 add	#(_JB_SIGMASK * 4), r6	/* old = &sigmask */
+	 add	#(_JB_SIGMASK * 4), r6	/* oset = &sigmask */
 
 	mov.l	@sp+, r4
 	lds.l	@sp+, pr

@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.13 2023/09/03 21:41:45 mrg Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.14 2023/10/11 09:12:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.13 2023/09/03 21:41:45 mrg Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.14 2023/10/11 09:12:21 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,10 +64,10 @@ ENTRY(__setjmp14)
 	 * local vars on stack: struct sigstack foo @ offset 0x48
 	 * Note: sc_g1 is not used; sc_o0 is set in longjmp()
 	 */
-	mov	1, %o0		/* SIG_BLOCK */
+	mov	0, %o0		/* 0 - is ignored */
 	add	%i0, 32, %o2	/* build sigcontext sc.sc_mask */
 	call	_C_LABEL(__sigprocmask14)
-	 clr	%o1		/* sigprocmask(SIG_BLOCK, NULL, &sc.sc_mask) */
+	 clr	%o1		/* sigprocmask(0, NULL, &sc.sc_mask) */
 
 	add	%sp, 0x48, %o1	/* (foo being in arg dump area) */
 	call	_C_LABEL(__sigaltstack14)
