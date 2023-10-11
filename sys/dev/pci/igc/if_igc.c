@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.4 2023/10/10 06:21:09 msaitoh Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.5 2023/10/11 18:19:43 riastradh Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.4 2023/10/10 06:21:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.5 2023/10/11 18:19:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3842,7 +3842,7 @@ igc_print_devinfo(struct igc_softc *sc)
 	/* Get PHY FW version */
 	phy->ops.read_reg(hw, 0x1e, &phy_ver);
 
-	aprint_normal_dev(dev, "ROM image version %x.%02hx",
+	aprint_normal_dev(dev, "ROM image version %x.%02x",
 	    (nvm_ver & NVM_VERSION_MAJOR) >> NVM_VERSION_MAJOR_SHIFT,
 	    (nvm_ver & NVM_VERSION_MINOR));
 	aprint_debug("(0x%04hx)", nvm_ver);
