@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.374 2023/10/11 01:15:16 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.375 2023/10/11 01:21:21 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -322,6 +322,7 @@ CRQC	cryptanalytically relevant quantum computer
 CRLF	carriage return line feed
 CSIRT	computer security incident response team
 CSPM	cloud security posture management
+CSRF	cross-site request forgery
 CSU	C start up
 CRT	cathode ray tube
 CRTP	curiously recurring template pattern
