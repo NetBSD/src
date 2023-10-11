@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.60 2023/10/06 14:48:08 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.61 2023/10/11 09:43:17 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -2552,6 +2552,10 @@ enum {
 #define IXGBE_DEVICE_CAPS_WOL_PORT0_1	0x4 /* WoL supported on ports 0 & 1 */
 #define IXGBE_DEVICE_CAPS_WOL_PORT0	0x8 /* WoL supported on port 0 */
 #define IXGBE_DEVICE_CAPS_WOL_MASK	0xC /* Mask for WoL capabilities */
+
+#define IXGBE_DEVICE_CAPS_FLAGS		"\20"				     \
+	"\1ALLOW_ANY_SFP" "\2FCOE_OFFLOAD" "\3WOL_PORT0_1" "\4WOL_PORT0"     \
+							"\10NO_CROSSTALK_WR"
 
 /* PCI Bus Info */
 #define IXGBE_PCI_DEVICE_STATUS		0xAA

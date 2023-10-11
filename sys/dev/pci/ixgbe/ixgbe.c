@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.339 2023/10/11 03:48:35 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.340 2023/10/11 09:43:17 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.339 2023/10/11 03:48:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.340 2023/10/11 09:43:17 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -809,7 +809,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	struct ixgbe_hw *hw;
 	int		error = -1;
 	u32		ctrl_ext;
-	u16		high, low, nvmreg;
+	u16		high, low, nvmreg, dev_caps;
 	pcireg_t	id, subid;
 	const ixgbe_vendor_info_t *ent;
 	struct pci_attach_args *pa = aux;
@@ -1277,10 +1277,15 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	if (sc->feat_en & IXGBE_FEATURE_NETMAP)
 		ixgbe_netmap_attach(sc);
 
+	/* Print some flags */
 	snprintb(buf, sizeof(buf), IXGBE_FEATURE_FLAGS, sc->feat_cap);
 	aprint_verbose_dev(dev, "feature cap %s\n", buf);
 	snprintb(buf, sizeof(buf), IXGBE_FEATURE_FLAGS, sc->feat_en);
 	aprint_verbose_dev(dev, "feature ena %s\n", buf);
+	if (ixgbe_get_device_caps(hw, &dev_caps) == 0) {
+		snprintb(buf, sizeof(buf), IXGBE_DEVICE_CAPS_FLAGS, dev_caps);
+		aprint_verbose_dev(dev, "device cap %s\n", buf);
+	}
 
 	if (pmf_device_register(dev, ixgbe_suspend, ixgbe_resume))
 		pmf_class_network_register(dev, sc->ifp);
