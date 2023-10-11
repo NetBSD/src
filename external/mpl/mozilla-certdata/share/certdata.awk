@@ -160,7 +160,7 @@ function addtrust(trustfile, desc) {
 		return
 	}
 	trust_lineno[desc":"lolab] = NR
-	if ($3 == "CKT_NSS_TRUSTED" || $3 == "CKT_NSS_TRUSTED_DELEGATOR") {
+	if ($3 == "CKT_NSS_TRUSTED_DELEGATOR") {
 		if (distrusted[lolab]) {
 			if (VERBOSE) {
 				printf "line %d: distrusted for %s\n", \
@@ -173,11 +173,12 @@ function addtrust(trustfile, desc) {
 			}
 			printf "%s\n", label >trustfile
 		}
-	} else if ($3 == "CKT_NSS_MUST_VERIFY_TRUST" ||
+	} else if ($3 == "CKT_NSS_TRUSTED" ||
+	    $3 == "CKT_NSS_MUST_VERIFY_TRUST" ||
 	    $3 == "CKT_NSS_UNTRUSTED" ||
 	    $3 == "CKT_NSS_NOT_TRUSTED") {
 		if (VERBOSE) {
-			printf "line %d: untrusted for %s\n", \
+			printf "line %d: untrusted as CA for %s\n", \
 			    NR, desc
 		}
 	} else {
