@@ -1,10 +1,10 @@
-/*	$NetBSD: __setjmp14.S,v 1.4 2023/05/07 12:41:47 skrll Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.5 2023/10/11 09:12:21 skrll Exp $	*/
 
 #include "SYS.h"
 #include "assym.h"
 
 #if defined(LIBC_SCCS)
-__RCSID("$NetBSD: __setjmp14.S,v 1.4 2023/05/07 12:41:47 skrll Exp $")
+__RCSID("$NetBSD: __setjmp14.S,v 1.5 2023/10/11 09:12:21 skrll Exp $")
 #endif
 
 /*
@@ -54,8 +54,8 @@ ENTRY(__setjmp14)
 #endif
 
 	addi	a2, a0, JB_SIGMASK	/* &sigmask */
-	li	a1, 0
-	li	a0, SIG_BLOCK
+	li	a1, 0			/* set = NULL */
+	li	a0, 0			/* how is ignored */
 	SYSTRAP_NOERROR(__sigprocmask14)	/* assume no error */
 	li	a0, 0	/* success */	/* indicate success */
 	ret				/* return */
