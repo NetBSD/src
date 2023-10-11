@@ -1,9 +1,9 @@
-/*	$NetBSD: __setjmp14.S,v 1.3 2014/08/23 02:24:22 matt Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.4 2023/10/11 06:15:57 skrll Exp $	*/
 
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-__RCSID("$NetBSD: __setjmp14.S,v 1.3 2014/08/23 02:24:22 matt Exp $")
+__RCSID("$NetBSD: __setjmp14.S,v 1.4 2023/10/11 06:15:57 skrll Exp $")
 #endif
 
 /*
@@ -68,7 +68,7 @@ ENTRY(__longjmp14)
 	ld	%r16,72(%r6)
 	ld	%r17,80(%r6)
 	ld	%r18,88(%r6)
-	ld	%r19,96(%r6)				   
+	ld	%r19,96(%r6)
 	ld	%r20,104(%r6)
 	ld	%r21,112(%r6)
 	ld	%r22,120(%r6)

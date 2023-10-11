@@ -1,21 +1,21 @@
-/*	$NetBSD: setjmp.S,v 1.1 2015/04/17 12:51:05 martin Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.2 2023/10/11 06:15:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -30,7 +30,7 @@
 #define _LOCORE
 #include <machine/asm.h>
 
-RCSID("$NetBSD: setjmp.S,v 1.1 2015/04/17 12:51:05 martin Exp $")
+RCSID("$NetBSD: setjmp.S,v 1.2 2023/10/11 06:15:36 skrll Exp $")
 
 #include    <machine/setjmp.h>
 
@@ -66,7 +66,7 @@ END(__setjmp14)
 ENTRY(__longjmp14, 2)
 	alloc	loc0=ar.pfs,2,2,3,0
 	mov	loc1=rp
-	;; 
+	;;
 	mov	out0=3				// how = SIG_SETMASK
 	add	out1=J_SIGSET,in0		// set = &jb[J_SIGSET]
 	mov	out2=0				// oset = NULL
