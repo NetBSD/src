@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.338 2023/10/06 14:48:08 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.339 2023/10/11 03:48:35 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.338 2023/10/06 14:48:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.339 2023/10/11 03:48:35 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2822,7 +2822,7 @@ static int
 ixgbe_msix_que(void *arg)
 {
 	struct ix_queue	*que = arg;
-	struct ixgbe_softc	*sc = que->sc;
+	struct ixgbe_softc *sc = que->sc;
 	struct ifnet	*ifp = sc->ifp;
 	struct tx_ring	*txr = que->txr;
 	struct rx_ring	*rxr = que->rxr;
@@ -3336,7 +3336,7 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct ix_queue *que = (struct ix_queue *)node.sysctl_data;
-	struct ixgbe_softc	*sc;
+	struct ixgbe_softc *sc;
 	uint32_t reg, usec, rate;
 	int error;
 
@@ -4615,7 +4615,7 @@ ixgbe_local_timer(void *arg)
 static void
 ixgbe_handle_timer(struct work *wk, void *context)
 {
-	struct ixgbe_softc	*sc = context;
+	struct ixgbe_softc *sc = context;
 	struct ixgbe_hw *hw = &sc->hw;
 	device_t	dev = sc->dev;
 	struct ix_queue	*que = sc->queues;
@@ -4796,7 +4796,7 @@ ixgbe_handle_recovery_mode_timer(struct work *wk, void *context)
 static void
 ixgbe_handle_mod(void *context, bool int_en)
 {
-	struct ixgbe_softc	*sc = context;
+	struct ixgbe_softc *sc = context;
 	struct ixgbe_hw *hw = &sc->hw;
 	device_t	dev = sc->dev;
 	enum ixgbe_sfp_type last_sfp_type;
@@ -4887,7 +4887,7 @@ out:
 static void
 ixgbe_handle_msf(void *context)
 {
-	struct ixgbe_softc	*sc = context;
+	struct ixgbe_softc *sc = context;
 	struct ixgbe_hw *hw = &sc->hw;
 	u32		autoneg;
 	bool		negotiate;
@@ -4909,7 +4909,7 @@ ixgbe_handle_msf(void *context)
 static void
 ixgbe_handle_phy(void *context)
 {
-	struct ixgbe_softc	*sc = context;
+	struct ixgbe_softc *sc = context;
 	struct ixgbe_hw *hw = &sc->hw;
 	int error;
 
@@ -4929,7 +4929,7 @@ ixgbe_handle_phy(void *context)
 static void
 ixgbe_handle_admin(struct work *wk, void *context)
 {
-	struct ixgbe_softc	*sc = context;
+	struct ixgbe_softc *sc = context;
 	struct ifnet	*ifp = sc->ifp;
 	struct ixgbe_hw *hw = &sc->hw;
 	u32		task_requests;
@@ -5013,7 +5013,7 @@ static void
 ixgbe_stop_locked(void *arg)
 {
 	struct ifnet	*ifp;
-	struct ixgbe_softc	*sc = arg;
+	struct ixgbe_softc *sc = arg;
 	struct ixgbe_hw *hw = &sc->hw;
 
 	ifp = sc->ifp;
