@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.92 2023/10/11 04:44:20 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.93 2023/10/11 07:44:53 rin Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.92 2023/10/11 04:44:20 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.93 2023/10/11 07:44:53 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1039,6 +1039,8 @@ ixl_attach(device_t parent, device_t self, void *aux)
 
 	ixl_pci_csr_setup(pa->pa_pc, pa->pa_tag);
 
+	pci_aprint_devinfo(pa, "Ethernet controller");
+
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, IXL_PCIREG);
 	if (pci_mapreg_map(pa, IXL_PCIREG, memtype, 0,
 	    &sc->sc_memt, &sc->sc_memh, NULL, &sc->sc_mems)) {
@@ -1063,7 +1065,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	port &= I40E_PFGEN_PORTNUM_PORT_NUM_MASK;
 	port >>= I40E_PFGEN_PORTNUM_PORT_NUM_SHIFT;
 	sc->sc_port = port;
-	aprint_normal(": port %u", sc->sc_port);
+	aprint_normal_dev(self, "port %u", sc->sc_port);
 
 	ari = ixl_rd(sc, I40E_GLPCI_CAPSUP);
 	ari &= I40E_GLPCI_CAPSUP_ARI_EN_MASK;
