@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.373 2023/10/10 01:17:19 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.374 2023/10/11 01:15:16 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1642,6 +1642,7 @@ SSFDC	solid state floppy disc card
 SSH	secure shell
 SSI	server side includes
 SSID	service set identifier
+SSRF	server-side request forgery
 SSTP 	secure socket tunneling protocol
 SSL	secure sockets layer
 SSP	stack smashing protection
