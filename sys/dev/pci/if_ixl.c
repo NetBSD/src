@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.90 2023/10/11 04:24:24 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.91 2023/10/11 04:29:47 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.90 2023/10/11 04:24:24 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.91 2023/10/11 04:29:47 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3840,7 +3840,7 @@ ixl_wakeup(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 
 	KASSERT(mutex_owned(&sc->sc_atq_lock));
 
-	cv_signal(&sc->sc_atq_cv);
+	cv_broadcast(&sc->sc_atq_cv);
 }
 
 static int
@@ -3869,8 +3869,12 @@ ixl_atq_exec_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
 	if (error)
 		return error;
 
-	error = cv_timedwait(&sc->sc_atq_cv, &sc->sc_atq_lock,
-	    IXL_ATQ_EXEC_TIMEOUT);
+	do {
+		error = cv_timedwait(&sc->sc_atq_cv, &sc->sc_atq_lock,
+		    IXL_ATQ_EXEC_TIMEOUT);
+		if (error == EWOULDBLOCK)
+			break;
+	} while (iatq->iatq_inuse);
 
 	return error;
 }
