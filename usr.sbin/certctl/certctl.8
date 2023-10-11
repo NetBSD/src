@@ -1,4 +1,4 @@
-.\"	$NetBSD: certctl.8,v 1.2 2023/09/02 17:41:17 riastradh Exp $
+.\"	$NetBSD: certctl.8,v 1.3 2023/10/11 15:28:05 riastradh Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,9 +82,7 @@ for files called
 .Pa *.crt ,
 or
 .Pa *.pem
-in PEM format, except for those that have been excluded by
-.Nm Cm untrust ,
-and keeps
+in PEM format, and keeps
 .Ar certsdir
 .Pq default: Pa /etc/openssl/certs
 populated with:
@@ -106,11 +104,20 @@ concatenating all the certificates in PEM format.
 .El
 .Pp
 .Nm
+will exclude from
+.Ar certsdir
+any certificates that have been marked untrustworthy with
+.Nm Cm untrust ,
+which are persistently maintained in the private state directory
+.Ar distrustdir
+.Pq default: Pa /etc/openssl/untrusted .
+.Pp
+.Nm
 treats
 .Ar config
 and
 .Ar distrustdir
-as configuration, and
+as configuration, and treats
 .Ar certsdir
 strictly as a cache that can be safely deleted and rebuilt with
 .Nm Cm rehash .
@@ -121,19 +128,19 @@ at all by putting
 .Cm manual
 in
 .Ar config .
-.
 .\""""""""""""""""""""""""""""""""""""""
 .Ss Commands
 .Bl -tag -width Cm
 .\""""""""""""""""""
 .It Cm list
-List absolute paths to trusted certificates, one per line, in
-.Xr vis 1
-format to encode any shell metacharacters, that
+List absolute paths to trusted certificates.
 .Nm Cm rehash
-would use to populate the
+will populate
 .Ar certsdir
-cache.
+with these.
+Paths are printed one per line, encoded in
+.Xr vis 1
+format to escape any shell metacharacters.
 .\""""""""""""""""""
 .It Cm rehash
 Populate
@@ -144,8 +151,10 @@ with all trusted certificates, excluding any from
 .It Cm trust Ar cert
 Allow
 .Ar cert
-to be included in the certificate cache if it is in the certificate
-search path, and rehash the certificate cache.
+to be included in
+.Ar certsdir
+if it is in the certificate search path, and rehash to make it
+effective immediately.
 In other words, reverse the persistent effect of
 .Nm Cm untrust Ar cert .
 .Pp
@@ -160,23 +169,24 @@ directory in the search path.
 .\""""""""""""""""""
 .It Cm untrust Ar cert
 Persistently prevent
-.Ar
-from being included in the certificate cache, and rehash the
-certificate cache.
+.Ar cert
+from being included in
+.Ar certsdir ,
+and rehash to make it effective immediately.
 .Pp
 .Ar cert
 must be the full absolute path to a certificate that is in the
 certificate search path.
 .\""""""""""""""""""
 .It Cm untrusted
-List absolute paths to untrusted certificates, one per line, in
-.Xr vis 1
-format to encode any shell metacharacters, that have been excluded by
-.Nm Cm untrust
-so that
+List absolute paths to certificates that have been excluded by
+.Nm Cm untrust .
 .Nm Cm rehash
-will not put them in
+will not put these in
 .Ar certsdir .
+Paths are printed one per line, encoded in
+.Xr vis 1
+format to escape any shell metacharacters.
 .\""""""""""""""""""
 .El
 .\""""""""""""""""""""""""""""""""""""""
@@ -220,8 +230,11 @@ will
 .Em not
 modify
 .Ar certsdir ,
-but may still check consistency of the configuration when run and
-update
+but may still check consistency of the configuration when run, and
+.Nm Cm untrust
+and
+.Nm Cm trust
+will still update
 .Ar distrustdir .
 .\""""""""""""""""""
 .El
@@ -236,7 +249,7 @@ Default single-file TLS CA certificate bundle.
 Default configuration file for TLS CA certificates.
 .It Pa /etc/openssl/untrusted
 Default
-.Ar untrusted
+.Ar distrustdir
 directory of excluded TLS CA certificates.
 .It Pa /usr/share/certs/mozilla/all
 All root CA certificates published by Mozilla, including untrustworthy
@@ -264,6 +277,7 @@ netbsd-certctl 20230816
 # under these directories.
 path /usr/share/certs/mozilla/server
 path /usr/pkg/share/chromium-cacerts
+path /etc/openssl/certs.local
 
 # If the next line is uncommented, certctl(8) will decline to
 # touch /etc/openssl/certs.
