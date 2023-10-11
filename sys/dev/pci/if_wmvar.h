@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.50 2023/08/25 08:14:14 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.51 2023/10/11 15:05:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -163,6 +163,7 @@ typedef enum {
 	WM_T_PCH_LPT,			/* PCH "Lynx Point" LAN (I217, I218) */
 	WM_T_PCH_SPT,			/* PCH "Sunrise Point" LAN (I219) */
 	WM_T_PCH_CNP,			/* (I219) */
+	WM_T_PCH_TGP			/* (I219) */
 } wm_chip_type;
 
 /*
