@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.140 2022/11/08 01:43:09 uwe Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.141 2023/10/11 23:22:13 uwe Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.140 2022/11/08 01:43:09 uwe Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.141 2023/10/11 23:22:13 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -1777,7 +1777,7 @@ check_timestamp(unsigned char *from_buf, char **to_buf,
 			 	 */
 				*to_buf = strdup("-");
 			} else {
-				/* with BSD Syslog the field is reqired
+				/* with BSD Syslog the field is required
 				 * so replace it with current time
 				 */
 				*to_buf = make_timestamp(NULL, false, 0);
