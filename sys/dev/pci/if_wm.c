@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.790 2023/10/11 15:05:26 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.791 2023/10/11 15:14:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.790 2023/10/11 15:05:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.791 2023/10/11 15:14:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -1752,6 +1752,12 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM19,
 	  "I219 LM (19) Ethernet Connection",
 	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* MTP */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM22,
+	  "I219 LM (22) Ethernet Connection",
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP(RPL) */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM23,
+	  "I219 LM (23) Ethernet Connection",
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP(RPL) */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V,
 	  "I219 V Ethernet Connection",
 	  WM_T_PCH_SPT,		WMP_F_COPPER },
@@ -1806,6 +1812,12 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V19,
 	  "I219 V (19) Ethernet Connection",
 	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* MTP */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V22,
+	  "I219 V (22) Ethernet Connection",
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP(RPL) */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V23,
+	  "I219 V (23) Ethernet Connection",
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP(RPL) */
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
