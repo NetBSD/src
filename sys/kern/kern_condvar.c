@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.58 2023/10/08 13:23:05 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.59 2023/10/12 23:51:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020, 2023
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.58 2023/10/08 13:23:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.59 2023/10/12 23:51:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,8 +451,9 @@ cv_timedwaitbt_sig(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 /*
  * cv_signal:
  *
- *	Wake the highest priority LWP waiting on a condition variable.
- *	Must be called with the interlocking mutex held.
+ *	Wake the highest priority LWP waiting on a condition variable.  Must
+ *	be called with the interlocking mutex held or just after it has been
+ *	released (so the awoken LWP will see the changed condition).
  */
 void
 cv_signal(kcondvar_t *cv)
@@ -460,8 +461,13 @@ cv_signal(kcondvar_t *cv)
 
 	KASSERT(cv_is_valid(cv));
 
-	if (__predict_false(!LIST_EMPTY(CV_SLEEPQ(cv))))
+	if (__predict_false(!LIST_EMPTY(CV_SLEEPQ(cv)))) {
+		/*
+		 * Compiler turns into a tail call usually, i.e. jmp,
+		 * because the arguments are the same and no locals.
+		 */
 		cv_wakeup_one(cv);
+	}
 }
 
 /*
@@ -492,8 +498,9 @@ cv_wakeup_one(kcondvar_t *cv)
 /*
  * cv_broadcast:
  *
- *	Wake all LWPs waiting on a condition variable.  Must be called
- *	with the interlocking mutex held.
+ *	Wake all LWPs waiting on a condition variable.  Must be called with
+ *	the interlocking mutex held or just after it has been released (so
+ *	the awoken LWP will see the changed condition).
  */
 void
 cv_broadcast(kcondvar_t *cv)
@@ -501,8 +508,13 @@ cv_broadcast(kcondvar_t *cv)
 
 	KASSERT(cv_is_valid(cv));
 
-	if (__predict_false(!LIST_EMPTY(CV_SLEEPQ(cv))))  
+	if (__predict_false(!LIST_EMPTY(CV_SLEEPQ(cv)))) {
+		/*
+		 * Compiler turns into a tail call usually, i.e. jmp,
+		 * because the arguments are the same and no locals.
+		 */
 		cv_wakeup_all(cv);
+	}
 }
 
 /*
