@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2023/06/22 22:39:39 christos Exp $
+# $NetBSD: Makefile,v 1.6 2023/10/12 17:18:39 riastradh Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -27,5 +27,5 @@ PROGDPLIBS+= ${DPLIBHDB}
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
 
-LDADD+=${KRB5LDADD}
-DPADD+=${KRB5DPADD}
+LDADD+=${KRB5LDADD} ${HDBLDADD}
+DPADD+=${KRB5DPADD} ${HDBDPADD}
