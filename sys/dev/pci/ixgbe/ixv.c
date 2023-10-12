@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.189 2023/10/06 14:46:31 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.190 2023/10/12 03:43:55 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.189 2023/10/06 14:46:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.190 2023/10/12 03:43:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1603,7 +1603,7 @@ ixv_free_deferred_handlers(struct ixgbe_softc *sc)
 static void
 ixv_free_pci_resources(struct ixgbe_softc *sc)
 {
-	struct		ix_queue *que = sc->queues;
+	struct ix_queue *que = sc->queues;
 	int		rid;
 
 	/*
@@ -3377,7 +3377,7 @@ ixv_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 {
 	device_t	dev = sc->dev;
 	struct ix_queue *que = sc->queues;
-	struct		tx_ring *txr = sc->tx_rings;
+	struct tx_ring	*txr = sc->tx_rings;
 	int		error, msix_ctrl, rid, vector = 0;
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
