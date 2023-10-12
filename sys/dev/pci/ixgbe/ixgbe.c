@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.342 2023/10/12 05:50:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.343 2023/10/12 08:06:13 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.342 2023/10/12 05:50:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.343 2023/10/12 08:06:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3379,9 +3379,9 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 			    && (reg < IXGBE_MIN_RSC_EITR_10G1G))
 				return EINVAL;
 		}
-		ixgbe_max_interrupt_rate = rate;
+		sc->max_interrupt_rate = rate;
 	} else
-		ixgbe_max_interrupt_rate = 0;
+		sc->max_interrupt_rate = 0;
 	ixgbe_eitr_write(sc, que->msix, reg);
 
 	return (0);
@@ -3486,6 +3486,7 @@ ixgbe_add_device_sysctls(struct ixgbe_softc *sc)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	sc->enable_aim = ixgbe_enable_aim;
+	sc->max_interrupt_rate = ixgbe_max_interrupt_rate;
 	if (sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_BOOL, "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
 	    NULL, 0, &sc->enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
@@ -4394,8 +4395,8 @@ ixgbe_configure_ivars(struct ixgbe_softc *sc)
 	struct ix_queue *que = sc->queues;
 	u32		newitr;
 
-	if (ixgbe_max_interrupt_rate > 0)
-		newitr = (4000000 / ixgbe_max_interrupt_rate) & 0x0FF8;
+	if (sc->max_interrupt_rate > 0)
+		newitr = (4000000 / sc->max_interrupt_rate) & 0x0FF8;
 	else {
 		/*
 		 * Disable DMA coalescing if interrupt moderation is
