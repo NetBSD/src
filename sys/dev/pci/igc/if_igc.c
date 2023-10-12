@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.5 2023/10/11 18:19:43 riastradh Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.6 2023/10/12 04:08:44 rin Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.5 2023/10/11 18:19:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.6 2023/10/12 04:08:44 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1541,16 +1541,16 @@ igc_init_locked(struct igc_softc *sc)
 		mutex_exit(&rxr->rxr_lock);
 	}
 
-	igc_enable_intr(sc);
-
 	sc->sc_core_stopping = false;
-
-	callout_schedule(&sc->sc_tick_ch, hz);
 
 	ifp->if_flags |= IFF_RUNNING;
 
 	/* Save last flags for the callback */
 	sc->sc_if_flags = ifp->if_flags;
+
+	callout_schedule(&sc->sc_tick_ch, hz);
+
+	igc_enable_intr(sc);
 
 	return 0;
 }
