@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.52 2023/04/20 08:28:03 skrll Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.53 2023/10/12 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.52 2023/04/20 08:28:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.53 2023/10/12 11:33:37 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -327,10 +327,6 @@ brh_hardclock_hook(void)
 vaddr_t
 initarm(void *arg)
 {
-	extern vaddr_t xscale_cache_clean_addr;
-#ifdef DIAGNOSTIC
-	extern vsize_t xscale_minidata_clean_size;
-#endif
 	int loop;
 	int loop1;
 	u_int l1pagetable;

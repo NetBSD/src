@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.439 2023/04/20 08:28:03 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.440 2023/10/12 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.439 2023/04/20 08:28:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.440 2023/10/12 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7594,8 +7594,6 @@ pmap_pte_init_xscale(void)
 void
 xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 {
-	extern vaddr_t xscale_minidata_clean_addr;
-	extern vsize_t xscale_minidata_clean_size; /* already initialized */
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
 	vsize_t size;
 	uint32_t auxctl;

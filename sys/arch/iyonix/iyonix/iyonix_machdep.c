@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.33 2023/09/13 19:45:37 andvar Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.34 2023/10/12 11:33:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.33 2023/09/13 19:45:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.34 2023/10/12 11:33:39 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -414,10 +414,6 @@ vaddr_t
 initarm(void *arg)
 {
 	struct bootconfig *passed_bootconfig = arg;
-	extern vaddr_t xscale_cache_clean_addr;
-#ifdef DIAGNOSTIC
-	extern vsize_t xscale_minidata_clean_size;
-#endif
 	extern char _end[];
 	int loop;
 	int loop1;
