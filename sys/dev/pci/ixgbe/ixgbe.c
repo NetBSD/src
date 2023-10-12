@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.340 2023/10/11 09:43:17 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.341 2023/10/12 03:43:55 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.340 2023/10/11 09:43:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.341 2023/10/12 03:43:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -5307,7 +5307,7 @@ ixgbe_legacy_irq(void *arg)
 	struct ixgbe_softc *sc = que->sc;
 	struct ixgbe_hw	*hw = &sc->hw;
 	struct ifnet	*ifp = sc->ifp;
-	struct		tx_ring *txr = sc->tx_rings;
+	struct tx_ring	*txr = sc->tx_rings;
 	u32		eicr;
 	u32		eims_orig;
 	u32		eims_enable = 0;
@@ -6868,8 +6868,8 @@ static int
 ixgbe_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 {
 	device_t	dev = sc->dev;
-	struct		ix_queue *que = sc->queues;
-	struct		tx_ring *txr = sc->tx_rings;
+	struct ix_queue	*que = sc->queues;
+	struct tx_ring	*txr = sc->tx_rings;
 	pci_chipset_tag_t pc;
 	char		intrbuf[PCI_INTRSTR_LEN];
 	char		intr_xname[32];
