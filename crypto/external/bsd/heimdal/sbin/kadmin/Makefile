@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2023/06/22 22:39:38 christos Exp $
+# $NetBSD: Makefile,v 1.7 2023/10/12 17:18:39 riastradh Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -49,5 +49,5 @@ CLEANFILES+=kadmin.8
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
 
-LDADD+= -lutil -ledit -lterminfo ${KRB5LDADD}
-DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMINFO} ${KRB5DPADD}
+LDADD+= -lutil -ledit -lterminfo ${KRB5LDADD} ${HDBLDADD}
+DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMINFO} ${KRB5DPADD} ${HDBDPADD}
