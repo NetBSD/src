@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.341 2023/10/12 03:43:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.342 2023/10/12 05:50:55 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.341 2023/10/12 03:43:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.342 2023/10/12 05:50:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -7120,9 +7120,6 @@ ixgbe_configure_interrupts(struct ixgbe_softc *sc)
 	else
 		queues = uimin(queues,
 		    uimin(mac->max_tx_queues, mac->max_rx_queues));
-
-	/* reflect correct sysctl value */
-	ixgbe_num_queues = queues;
 
 	/*
 	 * Want one vector (RX/TX pair) per queue
