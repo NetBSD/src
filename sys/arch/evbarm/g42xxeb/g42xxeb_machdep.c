@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.40 2023/04/20 08:28:03 skrll Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.41 2023/10/12 11:33:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.
@@ -385,16 +385,12 @@ static const struct pmap_devmap g42xxeb_devmap[] = {
 vaddr_t
 initarm(void *arg)
 {
-	extern vaddr_t xscale_cache_clean_addr;
 	int loop;
 	int loop1;
 	u_int l1pagetable;
 	paddr_t memstart;
 	psize_t memsize;
 	int led_data = 1;
-#ifdef DIAGNOSTIC
-	extern vsize_t xscale_minidata_clean_size; /* used in KASSERT */
-#endif
 
 #define LEDSTEP_P() ioreg8_write(G42XXEB_PLDREG_BASE+G42XXEB_LED, led_data++)
 #define LEDSTEP() pldreg8_write(G42XXEB_LED, led_data++);

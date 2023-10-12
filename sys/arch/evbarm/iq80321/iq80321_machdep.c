@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.65 2023/04/20 08:28:04 skrll Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.66 2023/10/12 11:33:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.65 2023/04/20 08:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.66 2023/10/12 11:33:38 skrll Exp $");
 
 #include "opt_console.h"
 #include "opt_ddb.h"
@@ -353,10 +353,6 @@ iq80321_hardclock_hook(void)
 vaddr_t
 initarm(void *arg)
 {
-	extern vaddr_t xscale_cache_clean_addr;
-#ifdef DIAGNOSTIC
-	extern vsize_t xscale_minidata_clean_size;
-#endif
 	int loop;
 	int loop1;
 	u_int l1pagetable;

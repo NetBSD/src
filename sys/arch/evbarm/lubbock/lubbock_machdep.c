@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.44 2023/06/19 03:59:24 nisimura Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.45 2023/10/12 11:33:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.44 2023/06/19 03:59:24 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.45 2023/10/12 11:33:38 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -398,16 +398,12 @@ static const struct pmap_devmap lubbock_devmap[] = {
 vaddr_t
 initarm(void *arg)
 {
-	extern vaddr_t xscale_cache_clean_addr;
 	int loop;
 	int loop1;
 	u_int l1pagetable;
 	paddr_t memstart;
 	psize_t memsize;
 	int led_data = 0;
-#ifdef DIAGNOSTIC
-	extern vsize_t xscale_minidata_clean_size; /* used in KASSERT */
-#endif
 #define LEDSTEP_P() 	ioreg_write(LUBBOCK_OBIO_PBASE+LUBBOCK_HEXLED, led_data++)
 #define LEDSTEP() hex_led(led_data++)
 
