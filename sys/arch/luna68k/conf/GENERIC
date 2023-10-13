@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.136 2023/02/12 14:50:40 abs Exp $
+# $NetBSD: GENERIC,v 1.137 2023/10/13 16:35:14 tsutsui Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -22,7 +22,7 @@ include 	"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.136 $"
+#ident 		"GENERIC-$Revision: 1.137 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
