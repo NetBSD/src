@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: npf,v 1.7 2020/09/08 12:52:18 martin Exp $
+# $NetBSD: npf,v 1.7.6.1 2023/10/13 18:04:49 martin Exp $
 #
 # Public Domain.
 #
@@ -14,8 +14,6 @@ $_rc_subr_loaded . /etc/rc.subr
 name="npf"
 rcvar=$name
 
-config="/etc/npf.conf"
-
 start_cmd="npf_start"
 stop_cmd="npf_stop"
 
@@ -23,19 +21,11 @@ reload_cmd="npf_reload"
 status_cmd="npf_status"
 extra_commands="reload status"
 
-npf_cfg_check()
-{
-	if [ ! -f ${config} ]; then
-		warn "${config} is not readable; failed."
-		exit 1
-	fi
-}
 
 npf_start()
 {
-	echo "Enabling NPF."
-	npf_cfg_check
-	/sbin/npfctl reload
+	echo "Enabling NPF $npf_rules"
+	/sbin/npfctl reload "$npf_rules"
 
 	# The npf_boot script has enabled npf already.
 	if [ "$autoboot" != "yes" ]; then
@@ -52,9 +42,8 @@ npf_stop()
 
 npf_reload()
 {
-	echo "Reloading NPF ruleset."
-	npf_cfg_check
-	/sbin/npfctl reload
+	echo "Reloading NPF ruleset $npf_rules"
+	/sbin/npfctl reload "$npf_rules"
 }
 
 npf_status()
