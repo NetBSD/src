@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_disksubr.c,v 1.6 2021/05/17 19:31:38 mrg Exp $	*/
+/*	$NetBSD: ufs_disksubr.c,v 1.7 2023/10/13 16:10:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -85,7 +85,7 @@
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.
