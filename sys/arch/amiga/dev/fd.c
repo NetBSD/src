@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.102 2023/08/26 21:20:48 andvar Exp $ */
+/*	$NetBSD: fd.c,v 1.103 2023/10/13 22:20:46 andvar Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.102 2023/08/26 21:20:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.103 2023/10/13 22:20:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1182,7 +1182,7 @@ fdstart(struct fd_softc *sc)
 #endif
 
 	/*
-	 * if DMA'ing just return. we must have been called from fdstartegy.
+	 * if DMA'ing just return. we must have been called from fdstrategy.
 	 */
 	if (fdc_indma)
 		return;
