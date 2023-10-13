@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.227 2023/10/05 19:41:07 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.228 2023/10/13 18:48:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -266,6 +266,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LW_CACHECRED	0x04000000 /* Cache new process credential */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
+#define	LW_RESTART	0x20000000 /* Return ERESTART after waking */
 #define	LW_RUMP_CLEAR	0x40000000 /* Clear curlwp in RUMP scheduler */
 #define	LW_RUMP_QEXIT	0x80000000 /* LWP should exit ASAP */
 
