@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.86 2023/07/16 23:12:17 riastradh Exp $	*/
+/*	$NetBSD: locks.c,v 1.87 2023/10/13 18:48:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.86 2023/07/16 23:12:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.87 2023/10/13 18:48:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -481,6 +481,13 @@ cv_signal(kcondvar_t *cv)
 
 void
 cv_broadcast(kcondvar_t *cv)
+{
+
+	rumpuser_cv_broadcast(RUMPCV(cv));
+}
+
+void
+cv_fdrestart(kcondvar_t *cv)
 {
 
 	rumpuser_cv_broadcast(RUMPCV(cv));
