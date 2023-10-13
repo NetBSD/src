@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_dcb.c,v 1.13 2021/12/24 05:02:11 msaitoh Exp $ */
+/* $NetBSD: ixgbe_dcb.c,v 1.13.4.1 2023/10/13 18:55:12 martin Exp $ */
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_dcb.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb.c,v 1.13 2021/12/24 05:02:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb.c,v 1.13.4.1 2023/10/13 18:55:12 martin Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_dcb.h"
@@ -297,7 +297,7 @@ void ixgbe_dcb_unpack_map_cee(struct ixgbe_dcb_config *cfg, int direction,
 }
 
 /**
- * ixgbe_dcb_config - Struct containing DCB settings.
+ * ixgbe_dcb_check_config_cee - Struct containing DCB settings.
  * @dcb_config: Pointer to DCB config structure
  *
  * This function checks DCB rules for DCB settings.
@@ -412,10 +412,8 @@ s32 ixgbe_dcb_get_tc_stats(struct ixgbe_hw *hw, struct ixgbe_hw_stats *stats,
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
-#if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_get_tc_stats_82599(hw, stats, tc_count);
 		break;
-#endif
 	default:
 		break;
 	}
@@ -443,10 +441,8 @@ s32 ixgbe_dcb_get_pfc_stats(struct ixgbe_hw *hw, struct ixgbe_hw_stats *stats,
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
-#if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_get_pfc_stats_82599(hw, stats, tc_count);
 		break;
-#endif
 	default:
 		break;
 	}
@@ -485,11 +481,9 @@ s32 ixgbe_dcb_config_rx_arbiter_cee(struct ixgbe_hw *hw,
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
-#if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_rx_arbiter_82599(hw, refill, max, bwgid,
 							tsa, map);
 		break;
-#endif
 	default:
 		break;
 	}
@@ -527,11 +521,9 @@ s32 ixgbe_dcb_config_tx_desc_arbiter_cee(struct ixgbe_hw *hw,
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
-#if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_tx_desc_arbiter_82599(hw, refill, max,
 							     bwgid, tsa);
 		break;
-#endif
 	default:
 		break;
 	}
@@ -571,12 +563,10 @@ s32 ixgbe_dcb_config_tx_data_arbiter_cee(struct ixgbe_hw *hw,
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
-#if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_tx_data_arbiter_82599(hw, refill, max,
 							     bwgid, tsa,
 							     map);
 		break;
-#endif
 	default:
 		break;
 	}
@@ -609,10 +599,8 @@ s32 ixgbe_dcb_config_pfc_cee(struct ixgbe_hw *hw,
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
-#if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_pfc_82599(hw, pfc_en, map);
 		break;
-#endif
 	default:
 		break;
 	}
@@ -638,10 +626,8 @@ s32 ixgbe_dcb_config_tc_stats(struct ixgbe_hw *hw)
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
-#if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_tc_stats_82599(hw, NULL);
 		break;
-#endif
 	default:
 		break;
 	}
@@ -686,7 +672,6 @@ s32 ixgbe_dcb_hw_config_cee(struct ixgbe_hw *hw,
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
-#if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ixgbe_dcb_config_82599(hw, dcb_config);
 		ret = ixgbe_dcb_hw_config_82599(hw, dcb_config->link_speed,
 						refill, max, bwgid,
@@ -694,7 +679,6 @@ s32 ixgbe_dcb_hw_config_cee(struct ixgbe_hw *hw,
 
 		ixgbe_dcb_config_tc_stats_82599(hw, dcb_config);
 		break;
-#endif
 	default:
 		break;
 	}
@@ -721,10 +705,8 @@ s32 ixgbe_dcb_config_pfc(struct ixgbe_hw *hw, u8 pfc_en, u8 *map)
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
-#if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_pfc_82599(hw, pfc_en, map);
 		break;
-#endif
 	default:
 		break;
 	}
@@ -747,7 +729,6 @@ s32 ixgbe_dcb_hw_config(struct ixgbe_hw *hw, u16 *refill, u16 *max,
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
 	case ixgbe_mac_X550EM_a:
-#if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ixgbe_dcb_config_rx_arbiter_82599(hw, refill, max, bwg_id,
 						  tsa, map);
 		ixgbe_dcb_config_tx_desc_arbiter_82599(hw, refill, max, bwg_id,
@@ -755,7 +736,6 @@ s32 ixgbe_dcb_hw_config(struct ixgbe_hw *hw, u16 *refill, u16 *max,
 		ixgbe_dcb_config_tx_data_arbiter_82599(hw, refill, max, bwg_id,
 						       tsa, map);
 		break;
-#endif
 	default:
 		break;
 	}

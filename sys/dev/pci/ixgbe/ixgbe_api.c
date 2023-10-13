@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_api.c,v 1.28 2022/06/06 02:16:37 msaitoh Exp $ */
+/* $NetBSD: ixgbe_api.c,v 1.28.4.1 2023/10/13 18:55:12 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_api.c,v 1.28 2022/06/06 02:16:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_api.c,v 1.28.4.1 2023/10/13 18:55:12 martin Exp $");
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -879,7 +879,7 @@ s32 ixgbe_validate_eeprom_checksum(struct ixgbe_hw *hw, u16 *checksum_val)
 }
 
 /**
- * ixgbe_eeprom_update_checksum - Updates the EEPROM checksum
+ * ixgbe_update_eeprom_checksum - Updates the EEPROM checksum
  * @hw: pointer to hardware structure
  **/
 s32 ixgbe_update_eeprom_checksum(struct ixgbe_hw *hw)
@@ -1162,8 +1162,6 @@ s32 ixgbe_set_fw_drv_ver(struct ixgbe_hw *hw, u8 maj, u8 minr, u8 build,
 			       build, ver, len, driver_ver),
 			       IXGBE_NOT_IMPLEMENTED);
 }
-
-
 
 /**
  * ixgbe_dmac_config - Configure DMA Coalescing registers.

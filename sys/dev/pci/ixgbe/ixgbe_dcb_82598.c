@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_dcb_82598.c,v 1.12 2021/12/24 05:02:11 msaitoh Exp $ */
+/* $NetBSD: ixgbe_dcb_82598.c,v 1.12.4.1 2023/10/13 18:55:12 martin Exp $ */
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_dcb_82598.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb_82598.c,v 1.12 2021/12/24 05:02:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb_82598.c,v 1.12.4.1 2023/10/13 18:55:12 martin Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_dcb.h"
@@ -363,7 +363,6 @@ s32 ixgbe_dcb_hw_config_82598(struct ixgbe_hw *hw, int link_speed,
 	ixgbe_dcb_config_tx_data_arbiter_82598(hw, refill, max, bwg_id,
 					       tsa);
 	ixgbe_dcb_config_tc_stats_82598(hw);
-
 
 	return IXGBE_SUCCESS;
 }

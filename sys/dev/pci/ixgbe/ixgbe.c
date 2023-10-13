@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.324.2.3 2023/10/13 18:16:51 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.324.2.4 2023/10/13 18:55:12 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.324.2.3 2023/10/13 18:16:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.324.2.4 2023/10/13 18:55:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -117,6 +117,7 @@ static const ixgbe_vendor_info_t ixgbe_vendor_info_array[] =
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_XAUI_LOM, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_CX4, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_T3_LOM, 0, 0, 0},
+	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_LS, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_COMBO_BACKPLANE, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_BACKPLANE_FCOE, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_SF2, 0, 0, 0},
@@ -369,12 +370,12 @@ SYSCTL_INT(_hw_ix, OID_AUTO, num_queues, CTLFLAG_RDTUN, &ixgbe_num_queues, 0,
  * setting higher than RX as this seems
  * the better performing choice.
  */
-static int ixgbe_txd = PERFORM_TXD;
+static int ixgbe_txd = DEFAULT_TXD;
 SYSCTL_INT(_hw_ix, OID_AUTO, txd, CTLFLAG_RDTUN, &ixgbe_txd, 0,
     "Number of transmit descriptors per queue");
 
 /* Number of RX descriptors per ring */
-static int ixgbe_rxd = PERFORM_RXD;
+static int ixgbe_rxd = DEFAULT_RXD;
 SYSCTL_INT(_hw_ix, OID_AUTO, rxd, CTLFLAG_RDTUN, &ixgbe_rxd, 0,
     "Number of receive descriptors per queue");
 
@@ -763,8 +764,6 @@ ixgbe_initialize_transmit_units(struct ixgbe_softc *sc)
 		rttdcs &= ~IXGBE_RTTDCS_ARBDIS;
 		IXGBE_WRITE_REG(hw, IXGBE_RTTDCS, rttdcs);
 	}
-
-	return;
 } /* ixgbe_initialize_transmit_units */
 
 static void
@@ -966,14 +965,26 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	/* Do descriptor calc and sanity checks */
 	if (((ixgbe_txd * sizeof(union ixgbe_adv_tx_desc)) % DBA_ALIGN) != 0 ||
 	    ixgbe_txd < MIN_TXD || ixgbe_txd > MAX_TXD) {
-		aprint_error_dev(dev, "TXD config issue, using default!\n");
+		aprint_error_dev(dev, "Invalid TX ring size (%d). "
+		    "It must be between %d and %d, "
+		    "inclusive, and must be a multiple of %zu. "
+		    "Using default value of %d instead.\n",
+		    ixgbe_txd, MIN_TXD, MAX_TXD,
+		    DBA_ALIGN / sizeof(union ixgbe_adv_tx_desc),
+		    DEFAULT_TXD);
 		sc->num_tx_desc = DEFAULT_TXD;
 	} else
 		sc->num_tx_desc = ixgbe_txd;
 
 	if (((ixgbe_rxd * sizeof(union ixgbe_adv_rx_desc)) % DBA_ALIGN) != 0 ||
 	    ixgbe_rxd < MIN_RXD || ixgbe_rxd > MAX_RXD) {
-		aprint_error_dev(dev, "RXD config issue, using default!\n");
+		aprint_error_dev(dev, "Invalid RX ring size (%d). "
+		    "It must be between %d and %d, "
+		    "inclusive, and must be a multiple of %zu. "
+		    "Using default value of %d instead.\n",
+		    ixgbe_rxd, MIN_RXD, MAX_RXD,
+		    DBA_ALIGN / sizeof(union ixgbe_adv_rx_desc),
+		    DEFAULT_RXD);
 		sc->num_rx_desc = DEFAULT_RXD;
 	} else
 		sc->num_rx_desc = ixgbe_rxd;
@@ -4281,9 +4292,6 @@ ixgbe_init_locked(struct ixgbe_softc *sc)
 	/* OK to schedule workqueues. */
 	sc->schedule_wqs_ok = true;
 
-	/* And now turn on interrupts */
-	ixgbe_enable_intr(sc);
-
 	/* Enable the use of the MBX by the VF's */
 	if (sc->feat_en & IXGBE_FEATURE_SRIOV) {
 		ctrl_ext = IXGBE_READ_REG(hw, IXGBE_CTRL_EXT);
@@ -4295,8 +4303,11 @@ ixgbe_init_locked(struct ixgbe_softc *sc)
 	sc->if_flags = ifp->if_flags;
 	sc->ec_capenable = sc->osdep.ec.ec_capenable;
 
-	/* Now inform the stack we're ready */
+	/* Inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
+
+	/* And now turn on interrupts */
+	ixgbe_enable_intr(sc);
 
 	return;
 } /* ixgbe_init_locked */

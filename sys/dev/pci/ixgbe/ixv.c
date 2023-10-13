@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.183.4.2 2023/10/13 18:16:51 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.183.4.3 2023/10/13 18:55:12 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.183.4.2 2023/10/13 18:16:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.183.4.3 2023/10/13 18:55:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -217,11 +217,11 @@ static bool ixv_txrx_workqueue = false;
  * setting higher than RX as this seems
  * the better performing choice.
  */
-static int ixv_txd = PERFORM_TXD;
+static int ixv_txd = DEFAULT_TXD;
 TUNABLE_INT("hw.ixv.txd", &ixv_txd);
 
 /* Number of RX descriptors per ring */
-static int ixv_rxd = PERFORM_RXD;
+static int ixv_rxd = DEFAULT_RXD;
 TUNABLE_INT("hw.ixv.rxd", &ixv_rxd);
 
 /* Legacy Transmit (single queue) */
@@ -501,14 +501,26 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	/* Do descriptor calc and sanity checks */
 	if (((ixv_txd * sizeof(union ixgbe_adv_tx_desc)) % DBA_ALIGN) != 0 ||
 	    ixv_txd < MIN_TXD || ixv_txd > MAX_TXD) {
-		aprint_error_dev(dev, "TXD config issue, using default!\n");
+		aprint_error_dev(dev, "Invalid TX ring size (%d). "
+		    "It must be between %d and %d, "
+		    "inclusive, and must be a multiple of %zu. "
+		    "Using default value of %d instead.\n",
+		    ixv_txd, MIN_TXD, MAX_TXD,
+		    DBA_ALIGN / sizeof(union ixgbe_adv_tx_desc),
+		    DEFAULT_TXD);
 		sc->num_tx_desc = DEFAULT_TXD;
 	} else
 		sc->num_tx_desc = ixv_txd;
 
 	if (((ixv_rxd * sizeof(union ixgbe_adv_rx_desc)) % DBA_ALIGN) != 0 ||
 	    ixv_rxd < MIN_RXD || ixv_rxd > MAX_RXD) {
-		aprint_error_dev(dev, "RXD config issue, using default!\n");
+		aprint_error_dev(dev, "Invalid RX ring size (%d). "
+		    "It must be between %d and %d, "
+		    "inclusive, and must be a multiple of %zu. "
+		    "Using default value of %d instead.\n",
+		    ixv_rxd, MIN_RXD, MAX_RXD,
+		    DBA_ALIGN / sizeof(union ixgbe_adv_rx_desc),
+		    DEFAULT_RXD);
 		sc->num_rx_desc = DEFAULT_RXD;
 	} else
 		sc->num_rx_desc = ixv_rxd;
@@ -811,16 +823,16 @@ ixv_init_locked(struct ixgbe_softc *sc)
 	/* OK to schedule workqueues. */
 	sc->schedule_wqs_ok = true;
 
-	/* And now turn on interrupts */
-	ixv_enable_intr(sc);
-
 	/* Update saved flags. See ixgbe_ifflags_cb() */
 	sc->if_flags = ifp->if_flags;
 	sc->ec_capenable = sc->osdep.ec.ec_capenable;
 
-	/* Now inform the stack we're ready */
+	/* Inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	/* And now turn on interrupts */
+	ixv_enable_intr(sc);
 
 	return;
 } /* ixv_init_locked */
