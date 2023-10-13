@@ -1,7 +1,7 @@
-/*	$NetBSD: socketvar.h,v 1.165 2022/04/09 23:52:23 riastradh Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.166 2023/10/13 18:50:39 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -197,7 +197,6 @@ struct socket {
 #define	SS_CANTRCVMORE		0x020	/* can't receive more data from peer */
 #define	SS_RCVATMARK		0x040	/* at mark on input */
 #define	SS_ISABORTING		0x080	/* aborting fd references - close() */
-#define	SS_RESTARTSYS		0x100	/* restart blocked system calls */
 #define	SS_POLLRDBAND		0x200	/* poll should return POLLRDBAND */
 #define	SS_MORETOCOME		0x400	/*
 					 * hint from sosend to lower layer;
