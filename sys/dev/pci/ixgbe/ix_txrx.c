@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.100.4.2 2023/10/13 18:16:51 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.100.4.3 2023/10/13 18:55:12 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.100.4.2 2023/10/13 18:16:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.100.4.3 2023/10/13 18:55:12 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -838,7 +838,6 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	u16                              etype;
 	u8                               ipproto = 0;
 	char                             *l3d;
-
 
 	/* First check if TSO is to be used */
 	if (mp->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) {
@@ -1733,9 +1732,9 @@ ixgbe_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m,
             (CSUM_DATA_VALID | CSUM_PSEUDO_HDR)) {
                 /*
                  * Send to the stack if:
-                 **  - LRO not enabled, or
-                 **  - no LRO resources, or
-                 **  - lro enqueue fails
+                 *  - LRO not enabled, or
+                 *  - no LRO resources, or
+                 *  - lro enqueue fails
                  */
                 if (rxr->lro.lro_cnt != 0)
                         if (tcp_lro_rx(&rxr->lro, m, 0) == 0)

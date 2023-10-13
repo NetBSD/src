@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.86.4.2 2023/10/13 18:16:51 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.86.4.3 2023/10/13 18:55:12 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -119,19 +119,18 @@
 /* Tunables */
 
 /*
- * TxDescriptors Valid Range: 64-4096 Default Value: 256 This value is the
+ * TxDescriptors Valid Range: 64-4096 Default Value: 2048 This value is the
  * number of transmit descriptors allocated by the driver. Increasing this
  * value allows the driver to queue more transmits. Each descriptor is 16
  * bytes. Performance tests have show the 2K value to be optimal for top
  * performance.
  */
-#define DEFAULT_TXD	1024
-#define PERFORM_TXD	2048
+#define DEFAULT_TXD	2048
 #define MAX_TXD		4096
 #define MIN_TXD		64
 
 /*
- * RxDescriptors Valid Range: 64-4096 Default Value: 256 This value is the
+ * RxDescriptors Valid Range: 64-4096 Default Value: 2048 This value is the
  * number of receive descriptors allocated for each RX queue. Increasing this
  * value allows the driver to buffer more incoming packets. Each descriptor
  * is 16 bytes.  A receive buffer is also allocated for each descriptor.
@@ -140,8 +139,7 @@
  *	against the system mbuf pool limit, you can tune nmbclusters
  *	to adjust for this.
  */
-#define DEFAULT_RXD	1024
-#define PERFORM_RXD	2048
+#define DEFAULT_RXD	2048
 #define MAX_RXD		4096
 #define MIN_RXD		64
 
@@ -201,11 +199,6 @@
  */
 #define IXGBE_82599_SCATTER_MAX	(40 - IXGBE_TX_WTHRESH - 2)
 #define IXGBE_SCATTER_DEFAULT	33
-
-/* Keep older OS drivers building... */
-#if !defined(SYSCTL_ADD_UQUAD)
-#define SYSCTL_ADD_UQUAD SYSCTL_ADD_QUAD
-#endif
 
 /* Defines for printing debug information */
 #define DEBUG_INIT  0
@@ -691,19 +684,6 @@ struct ixgbe_softc {
 	"\t1 - rx pause\n" \
 	"\t2 - tx pause\n" \
 	"\t3 - tx and rx pause"
-
-/* Workaround to make 8.0 buildable */
-#if __FreeBSD_version >= 800000 && __FreeBSD_version < 800504
-static __inline int
-drbr_needs_enqueue(struct ifnet *ifp, struct buf_ring *br)
-{
-#ifdef ALTQ
-	if (ALTQ_IS_ENABLED(&ifp->if_snd))
-		return (1);
-#endif
-	return (!buf_ring_empty(br));
-}
-#endif
 
 /*
  * Find the number of unrefreshed RX descriptors

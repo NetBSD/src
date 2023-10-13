@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_x540.c,v 1.23 2021/12/24 05:11:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe_x540.c,v 1.23.4.1 2023/10/13 18:55:12 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x540.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_x540.c,v 1.23 2021/12/24 05:11:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x540.c,v 1.23.4.1 2023/10/13 18:55:12 martin Exp $");
 
 #include "ixgbe_x540.h"
 #include "ixgbe_type.h"
@@ -74,7 +74,6 @@ s32 ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 
 	ret_val = ixgbe_init_phy_ops_generic(hw);
 	ret_val = ixgbe_init_ops_generic(hw);
-
 
 	/* EEPROM */
 	eeprom->ops.init_params = ixgbe_init_eeprom_params_X540;
@@ -134,7 +133,6 @@ s32 ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 	mac->ops.bypass_valid_rd = ixgbe_bypass_valid_rd_generic;
 	mac->ops.bypass_set = ixgbe_bypass_set_generic;
 	mac->ops.bypass_rd_eep = ixgbe_bypass_rd_eep_generic;
-
 
 	mac->mcft_size		= IXGBE_X540_MC_TBL_SIZE;
 	mac->vft_size		= IXGBE_X540_VFT_TBL_SIZE;

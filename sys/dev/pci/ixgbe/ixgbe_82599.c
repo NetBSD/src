@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82599.c,v 1.29.4.1 2023/10/08 14:57:53 martin Exp $ */
+/* $NetBSD: ixgbe_82599.c,v 1.29.4.2 2023/10/13 18:55:12 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.29.4.1 2023/10/08 14:57:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.29.4.2 2023/10/13 18:55:12 martin Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -571,6 +571,9 @@ enum ixgbe_media_type ixgbe_get_media_type_82599(struct ixgbe_hw *hw)
 	case IXGBE_DEV_ID_82599_T3_LOM:
 		media_type = ixgbe_media_type_copper;
 		break;
+	case IXGBE_DEV_ID_82599_LS:
+		media_type = ixgbe_media_type_fiber_lco;
+		break;
 	case IXGBE_DEV_ID_82599_QSFP_SF_QP:
 		media_type = ixgbe_media_type_fiber_qsfp;
 		break;
@@ -627,7 +630,6 @@ s32 ixgbe_start_mac_link_82599(struct ixgbe_hw *hw,
 	bool got_lock = FALSE;
 
 	DEBUGFUNC("ixgbe_start_mac_link_82599");
-
 
 	/*  reset_pipeline requires us to hold this lock as it writes to
 	 *  AUTOC.
