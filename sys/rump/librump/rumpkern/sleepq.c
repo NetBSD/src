@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.27 2023/10/08 13:23:05 ad Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.28 2023/10/13 18:23:54 ad Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.27 2023/10/08 13:23:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.28 2023/10/13 18:23:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -150,7 +150,7 @@ void
 sleepq_remove(sleepq_t *sq, struct lwp *l, bool wakeup)
 {
 
-	sleepq_unsleep(l, true);
+	sleepq_unsleep(l, false);
 }
 
 /*
