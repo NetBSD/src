@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.94 2023/10/13 02:22:20 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.95 2023/10/13 04:43:35 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.94 2023/10/13 02:22:20 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.95 2023/10/13 04:43:35 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -166,7 +166,8 @@ struct ixl_softc; /* defined */
 
 #define IXL_MCLBYTES			(MCLBYTES - ETHER_ALIGN)
 #define IXL_MTU_ETHERLEN		ETHER_HDR_LEN		\
-					+ ETHER_CRC_LEN
+					+ ETHER_CRC_LEN		\
+					+ ETHER_VLAN_ENCAP_LEN
 #if 0
 #define IXL_MAX_MTU			(9728 - IXL_MTU_ETHERLEN)
 #else
@@ -3067,8 +3068,8 @@ ixl_rxr_config(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 
 	memset(&rxq, 0, sizeof(rxq));
 	rxmax = ifp->if_mtu + IXL_MTU_ETHERLEN;
-	if (ISSET(sc->sc_ec.ec_capenable, ETHERCAP_VLAN_MTU))
-		rxmax += ETHER_VLAN_ENCAP_LEN;
+	if (!ISSET(sc->sc_ec.ec_capenable, ETHERCAP_VLAN_MTU))
+		rxmax -= ETHER_VLAN_ENCAP_LEN;
 
 	rxq.head = htole16(rxr->rxr_cons);
 	rxq.base = htole64(IXL_DMA_DVA(&rxr->rxr_mem) / IXL_HMC_RXQ_BASE_UNIT);
