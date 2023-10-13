@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_fdir.h,v 1.2.8.2 2022/01/30 15:58:28 martin Exp $ */
+/* $NetBSD: ixgbe_fdir.h,v 1.2.8.3 2023/10/13 18:20:30 martin Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2020, Intel Corporation
@@ -45,7 +45,7 @@
  */
 int fdir_pballoc = 1;
 
-void ixgbe_init_fdir(struct adapter *);
+void ixgbe_init_fdir(struct ixgbe_softc *);
 
 #else
 

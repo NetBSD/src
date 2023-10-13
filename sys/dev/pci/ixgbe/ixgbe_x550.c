@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_x550.c,v 1.15.2.6 2022/06/02 10:45:12 martin Exp $ */
+/* $NetBSD: ixgbe_x550.c,v 1.15.2.7 2023/10/13 18:20:30 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x550.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.15.2.6 2022/06/02 10:45:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.15.2.7 2023/10/13 18:20:30 martin Exp $");
 
 #include "ixgbe_x550.h"
 #include "ixgbe_x540.h"
@@ -457,8 +457,7 @@ static s32 ixgbe_identify_phy_x550em(struct ixgbe_hw *hw)
 		/* set up for CS4227 usage */
 		ixgbe_setup_mux_ctl(hw);
 		ixgbe_check_cs4227(hw);
-		/* Fallthrough */
-
+		/* fall through */
 	case IXGBE_DEV_ID_X550EM_A_SFP_N:
 		return ixgbe_identify_sfp_module_X550em(hw);
 		break;
