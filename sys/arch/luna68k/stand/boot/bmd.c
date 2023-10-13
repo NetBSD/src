@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.8 2019/06/30 05:04:49 tsutsui Exp $	*/
+/*	$NetBSD: bmd.c,v 1.9 2023/10/13 16:30:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -471,7 +471,7 @@ bmdclear(void)
 
 
 /*
- *  charactor operation routines
+ *  character operation routines
  */
 
 static void
