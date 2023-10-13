@@ -117,7 +117,7 @@
 ;
 ;  +4.b STAT_RESET
 ;        ファームウェア転送で 0　にされる。
-;        リセット位置の実行のたびに +1 
+;        リセット位置の実行のたびに +1
 ;        すなわち何もなければ 1 になっている。
 ;  +5.3 align
 ;  +8.w PRT0_TIMER
@@ -1491,7 +1491,7 @@ PAM_DRIVER_MAP:
 	DW	136		;CYCLE_CLK
 	DB	36		;REPT_CLK
 	DB	38		;REPT_MAX
-	
+
 
 
 PAM_DRIVER_MAP_LEN:	.EQU	$-PAM_DRIVER_MAP
