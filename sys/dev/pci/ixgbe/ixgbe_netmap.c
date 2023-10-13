@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netmap.c,v 1.5 2021/12/10 11:27:17 msaitoh Exp $ */
+/* $NetBSD: ixgbe_netmap.c,v 1.5.4.1 2023/10/13 18:16:51 martin Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_netmap.c,v 1.5 2021/12/10 11:27:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_netmap.c,v 1.5.4.1 2023/10/13 18:16:51 martin Exp $");
 
 #ifdef DEV_NETMAP
 /*
@@ -156,21 +156,21 @@ static int
 ixgbe_netmap_reg(struct netmap_adapter *na, int onoff)
 {
 	struct ifnet *ifp = na->ifp;
-	struct adapter *adapter = ifp->if_softc;
+	struct ixgbe_softc *sc = ifp->if_softc;
 
-	IXGBE_CORE_LOCK(adapter);
-	adapter->stop_locked(adapter);
+	IXGBE_CORE_LOCK(sc);
+	sc->stop_locked(sc);
 
-	set_crcstrip(&adapter->hw, onoff);
+	set_crcstrip(&sc->hw, onoff);
 	/* enable or disable flags and callbacks in na and ifp */
 	if (onoff) {
 		nm_set_native_flags(na);
 	} else {
 		nm_clear_native_flags(na);
 	}
-	adapter->init_locked(adapter);	/* also enables intr */
-	set_crcstrip(&adapter->hw, onoff); // XXX why twice ?
-	IXGBE_CORE_UNLOCK(adapter);
+	sc->init_locked(sc);	/* also enables intr */
+	set_crcstrip(&sc->hw, onoff); // XXX why twice ?
+	IXGBE_CORE_UNLOCK(sc);
 	return (ifp->if_drv_flags & IFF_DRV_RUNNING ? 0 : 1);
 }
 
@@ -207,8 +207,8 @@ ixgbe_netmap_txsync(struct netmap_kring *kring, int flags)
 	u_int report_frequency = kring->nkr_num_slots >> 1;
 
 	/* device-specific */
-	struct adapter *adapter = ifp->if_softc;
-	struct tx_ring *txr = &adapter->tx_rings[kring->ring_id];
+	struct ixgbe_softc *sc = ifp->if_softc;
+	struct tx_ring *txr = &sc->tx_rings[kring->ring_id];
 	int reclaim_tx;
 
 	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
@@ -302,7 +302,7 @@ ixgbe_netmap_txsync(struct netmap_kring *kring, int flags)
 			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* (re)start the tx unit up to slot nic_i (excluded) */
-		IXGBE_WRITE_REG(&adapter->hw, txr->tail, nic_i);
+		IXGBE_WRITE_REG(&sc->hw, txr->tail, nic_i);
 	}
 
 	/*
@@ -346,7 +346,7 @@ ixgbe_netmap_txsync(struct netmap_kring *kring, int flags)
 		 * REPORT_STATUS in a few slots so TDH is the only
 		 * good way.
 		 */
-		nic_i = IXGBE_READ_REG(&adapter->hw, IXGBE_TDH(kring->ring_id));
+		nic_i = IXGBE_READ_REG(&sc->hw, IXGBE_TDH(kring->ring_id));
 		if (nic_i >= kring->nkr_num_slots) { /* XXX can it happen ? */
 #ifdef D
 			D("TDH wrap %d", nic_i);
@@ -391,8 +391,8 @@ ixgbe_netmap_rxsync(struct netmap_kring *kring, int flags)
 	int force_update = (flags & NAF_FORCE_READ) || kring->nr_kflags & NKR_PENDINTR;
 
 	/* device-specific */
-	struct adapter *adapter = ifp->if_softc;
-	struct rx_ring *rxr = &adapter->rx_rings[kring->ring_id];
+	struct ixgbe_softc *sc = ifp->if_softc;
+	struct rx_ring *rxr = &sc->rx_rings[kring->ring_id];
 
 	if (head > lim)
 		return netmap_ring_reinit(kring);
@@ -490,7 +490,7 @@ ixgbe_netmap_rxsync(struct netmap_kring *kring, int flags)
 		 * so move nic_i back by one unit
 		 */
 		nic_i = nm_prev(nic_i, lim);
-		IXGBE_WRITE_REG(&adapter->hw, rxr->tail, nic_i);
+		IXGBE_WRITE_REG(&sc->hw, rxr->tail, nic_i);
 	}
 
 	return 0;
@@ -508,20 +508,20 @@ ring_reset:
  * operate in standard mode.
  */
 void
-ixgbe_netmap_attach(struct adapter *adapter)
+ixgbe_netmap_attach(struct ixgbe_softc *sc)
 {
 	struct netmap_adapter na;
 
 	bzero(&na, sizeof(na));
 
-	na.ifp = adapter->ifp;
+	na.ifp = sc->ifp;
 	na.na_flags = NAF_BDG_MAYSLEEP;
-	na.num_tx_desc = adapter->num_tx_desc;
-	na.num_rx_desc = adapter->num_rx_desc;
+	na.num_tx_desc = sc->num_tx_desc;
+	na.num_rx_desc = sc->num_rx_desc;
 	na.nm_txsync = ixgbe_netmap_txsync;
 	na.nm_rxsync = ixgbe_netmap_rxsync;
 	na.nm_register = ixgbe_netmap_reg;
-	na.num_tx_rings = na.num_rx_rings = adapter->num_queues;
+	na.num_tx_rings = na.num_rx_rings = sc->num_queues;
 	netmap_attach(&na);
 }
 

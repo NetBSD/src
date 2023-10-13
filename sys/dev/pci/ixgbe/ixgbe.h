@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.86.4.1 2023/10/08 14:57:53 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.86.4.2 2023/10/13 18:16:51 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -329,7 +329,7 @@ struct ixgbe_mc_addr {
  *                      for the associated tx and rx ring.
  */
 struct ix_queue {
-	struct adapter   *adapter;
+	struct ixgbe_softc *sc;
 	u32              msix;           /* This queue's MSI-X vector */
 	u32              eitr_setting;
 	u32              me;
@@ -362,7 +362,7 @@ struct ix_queue {
  * The transmit ring, one per queue
  */
 struct tx_ring {
-	struct adapter		*adapter;
+	struct ixgbe_softc	*sc;
 	kmutex_t		tx_mtx;
 	u32			me;
 	u32			tail;
@@ -410,7 +410,7 @@ struct tx_ring {
  * The Receive ring, one per rx queue
  */
 struct rx_ring {
-	struct adapter		*adapter;
+	struct ixgbe_softc	*sc;
 	kmutex_t		rx_mtx;
 	u32			me;
 	u32			tail;
@@ -470,7 +470,7 @@ struct ixgbe_tc {
 };
 
 /* Our adapter structure */
-struct adapter {
+struct ixgbe_softc {
 	struct ixgbe_hw		hw;
 	struct ixgbe_osdep	osdep;
 
@@ -593,7 +593,7 @@ struct adapter {
 	struct ixgbe_bp_data    bypass;
 
 	/* Netmap */
-	void			(*init_locked)(struct adapter *);
+	void			(*init_locked)(struct ixgbe_softc *);
 	void			(*stop_locked)(void *);
 
 	/* Firmware error check */
@@ -751,15 +751,15 @@ ixv_check_ether_addr(u8 *addr)
 }
 
 /*
- * This checks the adapter->recovery_mode software flag which is
+ * This checks the sc->recovery_mode software flag which is
  * set by ixgbe_fw_recovery_mode().
  *
  */
 static inline bool
-ixgbe_fw_recovery_mode_swflag(struct adapter *adapter)
+ixgbe_fw_recovery_mode_swflag(struct ixgbe_softc *sc)
 {
-	return (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE) &&
-	    atomic_load_acq_uint(&adapter->recovery_mode);
+	return (sc->feat_en & IXGBE_FEATURE_RECOVERY_MODE) &&
+	    atomic_load_acq_uint(&sc->recovery_mode);
 }
 
 /* Shared Prototypes */
@@ -769,14 +769,14 @@ int  ixgbe_mq_start(struct ifnet *, struct mbuf *);
 int  ixgbe_mq_start_locked(struct ifnet *, struct tx_ring *);
 void ixgbe_deferred_mq_start(void *);
 void ixgbe_deferred_mq_start_work(struct work *, void *);
-void ixgbe_drain_all(struct adapter *);
+void ixgbe_drain_all(struct ixgbe_softc *);
 
-int  ixgbe_allocate_queues(struct adapter *);
-void ixgbe_free_queues(struct adapter *);
-int  ixgbe_setup_transmit_structures(struct adapter *);
-void ixgbe_free_transmit_structures(struct adapter *);
-int  ixgbe_setup_receive_structures(struct adapter *);
-void ixgbe_free_receive_structures(struct adapter *);
+int  ixgbe_allocate_queues(struct ixgbe_softc *);
+void ixgbe_free_queues(struct ixgbe_softc *);
+int  ixgbe_setup_transmit_structures(struct ixgbe_softc *);
+void ixgbe_free_transmit_structures(struct ixgbe_softc *);
+int  ixgbe_setup_receive_structures(struct ixgbe_softc *);
+void ixgbe_free_receive_structures(struct ixgbe_softc *);
 bool ixgbe_txeof(struct tx_ring *);
 bool ixgbe_rxeof(struct ix_queue *);
 
@@ -790,7 +790,7 @@ bool ixgbe_rxeof(struct ix_queue *);
 #define IXGBE_REQUEST_TASK_LSC		0x80
 
 /* For NetBSD */
-const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
+const struct sysctlnode *ixgbe_sysctl_instance(struct ixgbe_softc *);
 
 #include "ixgbe_bypass.h"
 #include "ixgbe_fdir.h"
