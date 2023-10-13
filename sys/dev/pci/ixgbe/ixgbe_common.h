@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.h,v 1.7.8.6 2022/01/30 16:06:35 martin Exp $ */
+/* $NetBSD: ixgbe_common.h,v 1.7.8.7 2023/10/13 18:32:38 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -123,7 +123,7 @@ s32 ixgbe_setup_fc_generic(struct ixgbe_hw *hw);
 s32 ixgbe_validate_mac_addr(u8 *mac_addr);
 s32 ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, u32 mask);
 void ixgbe_release_swfw_sync(struct ixgbe_hw *hw, u32 mask);
-s32 ixgbe_disable_pcie_master(struct ixgbe_hw *hw);
+s32 ixgbe_disable_pcie_primary(struct ixgbe_hw *hw);
 
 s32 prot_autoc_read_generic(struct ixgbe_hw *hw, bool *, u32 *reg_val);
 s32 prot_autoc_write_generic(struct ixgbe_hw *hw, u32 reg_val, bool locked);

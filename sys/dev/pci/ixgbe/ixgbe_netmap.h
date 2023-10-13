@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netmap.h,v 1.1.4.3 2021/09/15 16:38:01 martin Exp $ */
+/* $NetBSD: ixgbe_netmap.h,v 1.1.4.4 2023/10/13 18:32:38 martin Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -50,7 +50,7 @@ extern int ix_crcstrip;
  * support that extend the standard driver.  See additional
  * comments in ixgbe_netmap.c.
  */
-void ixgbe_netmap_attach(struct adapter *adapter);
+void ixgbe_netmap_attach(struct ixgbe_softc *);
 
 #else
 #define ixgbe_netmap_attach(a)	do { } while (/*CONSTCOND*/false)
