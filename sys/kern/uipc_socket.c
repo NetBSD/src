@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.305 2023/10/04 22:17:09 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.306 2023/10/13 18:50:39 ad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.305 2023/10/04 22:17:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.306 2023/10/13 18:50:39 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -895,7 +895,6 @@ sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
 	struct mbuf **mp, *m;
 	long space, len, resid, clen, mlen;
 	int error, s, dontroute, atomic;
-	short wakeup_state = 0;
 
 	clen = 0;
 
@@ -968,17 +967,11 @@ sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
 				goto release;
 			}
 			sbunlock(&so->so_snd);
-			if (wakeup_state & SS_RESTARTSYS) {
-				error = ERESTART;
-				goto out;
-			}
 			error = sbwait(&so->so_snd);
 			if (error)
 				goto out;
-			wakeup_state = so->so_state;
 			goto restart;
 		}
-		wakeup_state = 0;
 		mp = &top;
 		space -= clen;
 		do {
@@ -1160,7 +1153,6 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct mbuf *nextrecord;
 	int mbuf_removed = 0;
 	const struct domain *dom;
-	short wakeup_state = 0;
 
 	pr = so->so_proto;
 	atomic = pr->pr_flags & PR_ATOMIC;
@@ -1271,16 +1263,12 @@ restart:
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 1");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
 		sbunlock(&so->so_rcv);
-		if (wakeup_state & SS_RESTARTSYS)
-			error = ERESTART;
-		else
-			error = sbwait(&so->so_rcv);
+		error = sbwait(&so->so_rcv);
 		if (error != 0) {
 			sounlock(so);
 			splx(s);
 			return error;
 		}
-		wakeup_state = so->so_state;
 		goto restart;
 	}
 
@@ -1457,7 +1445,6 @@ dontblock:
 #endif
 
 		so->so_state &= ~SS_RCVATMARK;
-		wakeup_state = 0;
 		len = uio->uio_resid;
 		if (so->so_oobmark && len > so->so_oobmark - offset)
 			len = so->so_oobmark - offset;
@@ -1600,10 +1587,7 @@ dontblock:
 				(*pr->pr_usrreqs->pr_rcvd)(so, flags, l);
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
-			if (wakeup_state & SS_RESTARTSYS)
-				error = ERESTART;
-			else
-				error = sbwait(&so->so_rcv);
+			error = sbwait(&so->so_rcv);
 			if (error != 0) {
 				sbunlock(&so->so_rcv);
 				sounlock(so);
@@ -1612,7 +1596,6 @@ dontblock:
 			}
 			if ((m = so->so_rcv.sb_mb) != NULL)
 				nextrecord = m->m_nextpkt;
-			wakeup_state = so->so_state;
 		}
 	}
 
@@ -1680,6 +1663,7 @@ soshutdown(struct socket *so, int how)
 void
 sorestart(struct socket *so)
 {
+
 	/*
 	 * An application has called close() on an fd on which another
 	 * of its threads has called a socket system call.
@@ -1689,10 +1673,9 @@ sorestart(struct socket *so)
 	 * Any other fd will block again on the 2nd syscall.
 	 */
 	solock(so);
-	so->so_state |= SS_RESTARTSYS;
-	cv_broadcast(&so->so_cv);
-	cv_broadcast(&so->so_snd.sb_cv);
-	cv_broadcast(&so->so_rcv.sb_cv);
+	cv_fdrestart(&so->so_cv);
+	cv_fdrestart(&so->so_snd.sb_cv);
+	cv_fdrestart(&so->so_rcv.sb_cv);
 	sounlock(so);
 }
 
