@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_bypass.h,v 1.1.4.4 2022/01/30 16:06:35 martin Exp $ */
+/* $NetBSD: ixgbe_bypass.h,v 1.1.4.5 2023/10/13 18:32:38 martin Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2020, Intel Corporation
@@ -47,6 +47,6 @@
 #define LEAP_YR(y)      ((y % 400 == 0) || ((y % 4 == 0) && (y % 100 != 0)))
 #define SEC_THIS_YEAR(y)        (LEAP_YR(y) ? SEC_PER_LYEAR : SEC_PER_YEAR)
 
-void ixgbe_bypass_init(struct adapter *);
+void ixgbe_bypass_init(struct ixgbe_softc *);
 
 #endif /* _IXGBE_BYPASS_H_ */
