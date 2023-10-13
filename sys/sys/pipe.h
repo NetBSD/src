@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.39 2023/10/04 22:19:58 ad Exp $ */
+/*	$NetBSD: pipe.h,v 1.40 2023/10/13 19:07:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -75,34 +75,34 @@ struct pipebuf {
 /*
  * Bits in pipe_state.
  */
-#define PIPE_ASYNC	0x001	/* Async I/O */
-#define PIPE_EOF	0x010	/* Pipe is in EOF condition */
-#define PIPE_SIGNALR	0x020	/* Do selwakeup() on read(2) */
-#define	PIPE_LOCKFL	0x100	/* Process has exclusive access to
-				   pointers/data. */
-/*	unused  	0x200	*/
-#define	PIPE_RESTART	0x400	/* Return ERESTART to blocked syscalls */
+#define PIPE_RDASYNC	0x001	/* Async I/O on reader side */
+#define PIPE_WRASYNC	0x002	/* Async I/O on writer side */
+#define PIPE_RDOPEN	0x010	/* Reader side open */
+#define PIPE_WROPEN	0x020	/* Writer side open */
+#define PIPE_EOF	0x100	/* Pipe is in EOF condition */
+#define PIPE_SIGNALR	0x200	/* Do selwakeup() on read(2) */
+#define	PIPE_RESIZED	0x400	/* Attempted to resize */
 
 /*
  * Per-pipe data structure.
  * Two of these are linked together to produce bi-directional pipes.
  */
 struct pipe {
-	kmutex_t *pipe_lock;		/* pipe mutex */
-	kcondvar_t pipe_rcv;		/* cv for readers */
-	kcondvar_t pipe_wcv;		/* cv for writers */
-	kcondvar_t pipe_draincv;	/* cv for close */
-	kcondvar_t pipe_lkcv;		/* locking */
-	struct	pipebuf pipe_buffer;	/* data storage */
-	struct	selinfo pipe_sel;	/* for compat with select */
-	struct	timespec pipe_atime;	/* time of last access */
-	struct	timespec pipe_mtime;	/* time of last modify */
-	struct	timespec pipe_btime;	/* time of creation */
-	struct	pipe *pipe_peer;	/* link with other direction */
-	pid_t	pipe_pgid;		/* process group for sigio */
-	u_int	pipe_state;		/* pipe status info */
-	int	pipe_busy;		/* busy flag, to handle rundown */
-	vaddr_t	pipe_kmem;		/* preallocated PIPE_SIZE buffer */
+	kmutex_t	*pipe_lock;		/* pipe mutex */
+	struct lwp	*pipe_owner;		/* who holds the pipe busy */
+	u_int		pipe_state;		/* pipe status info */
+	struct pipebuf	pipe_buffer;		/* data storage */
+	kcondvar_t	pipe_read;		/* cv for readers */
+	kcondvar_t	pipe_write;		/* cv for writers */
+	kcondvar_t	pipe_busy;		/* cv for locking */
+	struct selinfo	pipe_wrsel;		/* for compat with select */
+	struct selinfo	pipe_rdsel;		/* for compat with select */
+	struct timespec	pipe_atime;		/* time of last access */
+	struct timespec	pipe_mtime;		/* time of last modify */
+	struct timespec	pipe_btime;		/* time of creation */
+	pid_t		pipe_wrpgid;		/* process group for sigio */
+	pid_t		pipe_rdpgid;		/* process group for sigio */
+	vaddr_t		pipe_kmem;		/* preallocated PIPE_SIZE buffer */
 };
 
 /*

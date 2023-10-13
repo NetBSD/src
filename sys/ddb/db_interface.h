@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.41 2023/10/07 20:27:20 ad Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.42 2023/10/13 19:07:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2023 The NetBSD Foundation, Inc.
@@ -85,6 +85,9 @@ void		db_show_sleepq(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/kern_condvar.c */
 void		db_show_condvar(db_expr_t, bool, db_expr_t, const char *);
+
+/* kern/sys_pipe.c */
+void		db_show_pipe(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/sys_select.c */
 void		db_show_selinfo(db_expr_t, bool, db_expr_t, const char *);
