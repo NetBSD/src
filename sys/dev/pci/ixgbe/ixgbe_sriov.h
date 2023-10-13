@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_sriov.h,v 1.5 2021/12/24 05:02:11 msaitoh Exp $ */
+/* $NetBSD: ixgbe_sriov.h,v 1.5.4.1 2023/10/13 18:16:51 martin Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2020, Intel Corporation
@@ -70,12 +70,12 @@
 int  ixgbe_add_vf(device_t, u16, const nvlist_t *);
 int  ixgbe_init_iov(device_t, u16, const nvlist_t *);
 void ixgbe_uninit_iov(device_t);
-void ixgbe_initialize_iov(struct adapter *);
-void ixgbe_recalculate_max_frame(struct adapter *);
-void ixgbe_ping_all_vfs(struct adapter *);
+void ixgbe_initialize_iov(struct ixgbe_softc *);
+void ixgbe_recalculate_max_frame(struct ixgbe_softc *);
+void ixgbe_ping_all_vfs(struct ixgbe_softc *);
 int  ixgbe_pci_iov_detach(device_t);
 void ixgbe_define_iov_schemas(device_t, int *);
-void ixgbe_align_all_queue_indices(struct adapter *);
+void ixgbe_align_all_queue_indices(struct ixgbe_softc *);
 int  ixgbe_vf_que_index(int, int, int);
 u32  ixgbe_get_mtqc(int);
 u32  ixgbe_get_mrqc(int);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_bypass.c,v 1.9 2021/08/17 22:00:32 andvar Exp $ */
+/* $NetBSD: if_bypass.c,v 1.9.4.1 2023/10/13 18:16:51 martin Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -34,7 +34,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_bypass.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bypass.c,v 1.9 2021/08/17 22:00:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bypass.c,v 1.9.4.1 2023/10/13 18:16:51 martin Exp $");
 
 #include "ixgbe.h"
 
@@ -46,11 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_bypass.c,v 1.9 2021/08/17 22:00:32 andvar Exp $")
  *   over other threads.
  ************************************************************************/
 static void
-ixgbe_bypass_mutex_enter(struct adapter *adapter)
+ixgbe_bypass_mutex_enter(struct ixgbe_softc *sc)
 {
-	while (atomic_cas_uint(&adapter->bypass.low, 0, 1) != 0)
+	while (atomic_cas_uint(&sc->bypass.low, 0, 1) != 0)
 		usec_delay(3000);
-	while (atomic_cas_uint(&adapter->bypass.high, 0, 1) != 0)
+	while (atomic_cas_uint(&sc->bypass.high, 0, 1) != 0)
 		usec_delay(3000);
 	return;
 } /* ixgbe_bypass_mutex_enter */
@@ -59,11 +59,11 @@ ixgbe_bypass_mutex_enter(struct adapter *adapter)
  * ixgbe_bypass_mutex_clear
  ************************************************************************/
 static void
-ixgbe_bypass_mutex_clear(struct adapter *adapter)
+ixgbe_bypass_mutex_clear(struct ixgbe_softc *sc)
 {
-	while (atomic_cas_uint(&adapter->bypass.high, 1, 0) != 1)
+	while (atomic_cas_uint(&sc->bypass.high, 1, 0) != 1)
 		usec_delay(6000);
-	while (atomic_cas_uint(&adapter->bypass.low, 1, 0) != 1)
+	while (atomic_cas_uint(&sc->bypass.low, 1, 0) != 1)
 		usec_delay(6000);
 	return;
 } /* ixgbe_bypass_mutex_clear */
@@ -74,9 +74,9 @@ ixgbe_bypass_mutex_clear(struct adapter *adapter)
  *   Watchdog entry is allowed to simply grab the high priority
  ************************************************************************/
 static void
-ixgbe_bypass_wd_mutex_enter(struct adapter *adapter)
+ixgbe_bypass_wd_mutex_enter(struct ixgbe_softc *sc)
 {
-	while (atomic_cas_uint(&adapter->bypass.high, 0, 1) != 0)
+	while (atomic_cas_uint(&sc->bypass.high, 0, 1) != 0)
 		usec_delay(3000);
 	return;
 } /* ixgbe_bypass_wd_mutex_enter */
@@ -85,9 +85,9 @@ ixgbe_bypass_wd_mutex_enter(struct adapter *adapter)
  * ixgbe_bypass_wd_mutex_clear
  ************************************************************************/
 static void
-ixgbe_bypass_wd_mutex_clear(struct adapter *adapter)
+ixgbe_bypass_wd_mutex_clear(struct ixgbe_softc *sc)
 {
-	while (atomic_cas_uint(&adapter->bypass.high, 1, 0) != 1)
+	while (atomic_cas_uint(&sc->bypass.high, 1, 0) != 1)
 		usec_delay(6000);
 	return;
 } /* ixgbe_bypass_wd_mutex_clear */
@@ -119,13 +119,13 @@ static int
 ixgbe_bp_version(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	struct adapter  *adapter = (struct adapter *)node.sysctl_data;
-	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_softc  *sc = (struct ixgbe_softc *)node.sysctl_data;
+	struct ixgbe_hw *hw = &sc->hw;
 	int             error = 0;
 	static int      featversion = 0;
 	u32             cmd;
 
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	cmd = BYPASS_PAGE_CTL2 | BYPASS_WE;
 	cmd |= (BYPASS_EEPROM_VER_ADD << BYPASS_CTL2_OFFSET_SHIFT) &
 	    BYPASS_CTL2_OFFSET_M;
@@ -135,13 +135,13 @@ ixgbe_bp_version(SYSCTLFN_ARGS)
 	cmd &= ~BYPASS_WE;
 	if ((error = hw->mac.ops.bypass_rw(hw, cmd, &featversion) != 0))
 		goto err;
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	featversion &= BYPASS_CTL2_DATA_M;
 	node.sysctl_data = &featversion;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	return (error);
 err:
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	return (error);
 
 } /* ixgbe_bp_version */
@@ -161,16 +161,16 @@ static int
 ixgbe_bp_set_state(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	struct adapter  *adapter = (struct adapter *)node.sysctl_data;
-	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_softc  *sc = (struct ixgbe_softc *)node.sysctl_data;
+	struct ixgbe_hw *hw = &sc->hw;
 	int             error = 0;
 	static int      state = 0;
 
 	/* Get the current state */
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_rw(hw,
 	    BYPASS_PAGE_CTL0, &state);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	if (error != 0)
 		return (error);
 	state = (state >> BYPASS_STATUS_OFF_SHIFT) & 0x3;
@@ -189,7 +189,7 @@ ixgbe_bp_set_state(SYSCTLFN_ARGS)
 	default:
 		return (EINVAL);
 	}
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	if ((error = hw->mac.ops.bypass_set(hw, BYPASS_PAGE_CTL0,
 	    BYPASS_MODE_OFF_M, state) != 0))
 		goto out;
@@ -197,7 +197,7 @@ ixgbe_bp_set_state(SYSCTLFN_ARGS)
 	error = hw->mac.ops.bypass_set(hw, BYPASS_PAGE_CTL0,
 	    BYPASS_MODE_OFF_M, BYPASS_AUTO);
 out:
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	usec_delay(6000);
 	return (error);
 } /* ixgbe_bp_set_state */
@@ -225,15 +225,15 @@ static int
 ixgbe_bp_timeout(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	struct adapter  *adapter = (struct adapter *)node.sysctl_data;
-	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_softc  *sc = (struct ixgbe_softc *)node.sysctl_data;
+	struct ixgbe_hw *hw = &sc->hw;
 	int             error = 0;
 	static int      timeout = 0;
 
 	/* Get the current value */
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_rw(hw, BYPASS_PAGE_CTL0, &timeout);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	if (error)
 		return (error);
 	timeout = (timeout >> BYPASS_WDTIMEOUT_SHIFT) & 0x3;
@@ -255,10 +255,10 @@ ixgbe_bp_timeout(SYSCTLFN_ARGS)
 	}
 
 	/* Set the new state */
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_set(hw, BYPASS_PAGE_CTL0,
 	    BYPASS_WDTIMEOUT_M, timeout << BYPASS_WDTIMEOUT_SHIFT);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	usec_delay(6000);
 	return (error);
 } /* ixgbe_bp_timeout */
@@ -270,15 +270,15 @@ static int
 ixgbe_bp_main_on(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	struct adapter  *adapter = (struct adapter *)node.sysctl_data;
-	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_softc  *sc = (struct ixgbe_softc *)node.sysctl_data;
+	struct ixgbe_hw *hw = &sc->hw;
 	int             error = 0;
 	static int      main_on = 0;
 
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_rw(hw, BYPASS_PAGE_CTL0, &main_on);
 	main_on = (main_on >> BYPASS_MAIN_ON_SHIFT) & 0x3;
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	if (error)
 		return (error);
 
@@ -299,10 +299,10 @@ ixgbe_bp_main_on(SYSCTLFN_ARGS)
 	}
 
 	/* Set the new state */
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_set(hw, BYPASS_PAGE_CTL0,
 	    BYPASS_MAIN_ON_M, main_on << BYPASS_MAIN_ON_SHIFT);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	usec_delay(6000);
 	return (error);
 } /* ixgbe_bp_main_on */
@@ -314,14 +314,14 @@ static int
 ixgbe_bp_main_off(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	struct adapter  *adapter = (struct adapter *)node.sysctl_data;
-	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_softc  *sc = (struct ixgbe_softc *)node.sysctl_data;
+	struct ixgbe_hw *hw = &sc->hw;
 	int             error = 0;
 	static int      main_off = 0;
 
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_rw(hw, BYPASS_PAGE_CTL0, &main_off);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	if (error)
 		return (error);
 	main_off = (main_off >> BYPASS_MAIN_OFF_SHIFT) & 0x3;
@@ -343,10 +343,10 @@ ixgbe_bp_main_off(SYSCTLFN_ARGS)
 	}
 
 	/* Set the new state */
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_set(hw, BYPASS_PAGE_CTL0,
 	    BYPASS_MAIN_OFF_M, main_off << BYPASS_MAIN_OFF_SHIFT);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	usec_delay(6000);
 	return (error);
 } /* ixgbe_bp_main_off */
@@ -358,14 +358,14 @@ static int
 ixgbe_bp_aux_on(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	struct adapter  *adapter = (struct adapter *)node.sysctl_data;
-	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_softc  *sc = (struct ixgbe_softc *)node.sysctl_data;
+	struct ixgbe_hw *hw = &sc->hw;
 	int             error = 0;
 	static int      aux_on = 0;
 
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_rw(hw, BYPASS_PAGE_CTL0, &aux_on);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	if (error)
 		return (error);
 	aux_on = (aux_on >> BYPASS_AUX_ON_SHIFT) & 0x3;
@@ -387,10 +387,10 @@ ixgbe_bp_aux_on(SYSCTLFN_ARGS)
 	}
 
 	/* Set the new state */
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_set(hw, BYPASS_PAGE_CTL0,
 	    BYPASS_AUX_ON_M, aux_on << BYPASS_AUX_ON_SHIFT);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	usec_delay(6000);
 	return (error);
 } /* ixgbe_bp_aux_on */
@@ -402,14 +402,14 @@ static int
 ixgbe_bp_aux_off(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	struct adapter  *adapter = (struct adapter *)node.sysctl_data;
-	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_softc  *sc = (struct ixgbe_softc *)node.sysctl_data;
+	struct ixgbe_hw *hw = &sc->hw;
 	int             error = 0;
 	static int      aux_off = 0;
 
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_rw(hw, BYPASS_PAGE_CTL0, &aux_off);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	if (error)
 		return (error);
 	aux_off = (aux_off >> BYPASS_AUX_OFF_SHIFT) & 0x3;
@@ -431,10 +431,10 @@ ixgbe_bp_aux_off(SYSCTLFN_ARGS)
 	}
 
 	/* Set the new state */
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_set(hw, BYPASS_PAGE_CTL0,
 	    BYPASS_AUX_OFF_M, aux_off << BYPASS_AUX_OFF_SHIFT);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	usec_delay(6000);
 	return (error);
 } /* ixgbe_bp_aux_off */
@@ -451,16 +451,16 @@ static int
 ixgbe_bp_wd_set(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	struct adapter  *adapter = (struct adapter *)node.sysctl_data;
-	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_softc  *sc = (struct ixgbe_softc *)node.sysctl_data;
+	struct ixgbe_hw *hw = &sc->hw;
 	int             error, tmp;
 	static int      timeout = 0;
 	u32             mask, arg;
 
 	/* Get the current hardware value */
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_rw(hw, BYPASS_PAGE_CTL0, &tmp);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	if (error)
 		return (error);
 	/*
@@ -508,9 +508,9 @@ ixgbe_bp_wd_set(SYSCTLFN_ARGS)
 	}
 
 	/* Set the new watchdog */
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	error = hw->mac.ops.bypass_set(hw, BYPASS_PAGE_CTL0, mask, arg);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 
 	return (error);
 } /* ixgbe_bp_wd_set */
@@ -524,8 +524,8 @@ static int
 ixgbe_bp_wd_reset(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	struct adapter  *adapter = (struct adapter *)node.sysctl_data;
-	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_softc  *sc = (struct ixgbe_softc *)node.sysctl_data;
+	struct ixgbe_hw *hw = &sc->hw;
 	u32             sec, year;
 	int             cmd, count = 0, error = 0;
 	int             reset_wd = 0;
@@ -543,7 +543,7 @@ ixgbe_bp_wd_reset(SYSCTLFN_ARGS)
 	cmd |= (sec & BYPASS_CTL1_TIME_M) | BYPASS_CTL1_VALID;
 	cmd |= BYPASS_CTL1_OFFTRST;
 
-	ixgbe_bypass_wd_mutex_enter(adapter);
+	ixgbe_bypass_wd_mutex_enter(sc);
 	error = hw->mac.ops.bypass_rw(hw, cmd, &reset_wd);
 
 	/* Read until it matches what we wrote, or we time out */
@@ -560,7 +560,7 @@ ixgbe_bp_wd_reset(SYSCTLFN_ARGS)
 	} while (!hw->mac.ops.bypass_valid_rd(cmd, reset_wd));
 
 	reset_wd = 0;
-	ixgbe_bypass_wd_mutex_clear(adapter);
+	ixgbe_bypass_wd_mutex_clear(sc);
 	return (error);
 } /* ixgbe_bp_wd_reset */
 
@@ -573,8 +573,8 @@ static int
 ixgbe_bp_log(SYSCTLFN_ARGS)
 {
 	struct sysctlnode          node = *rnode;
-	struct adapter           *adapter = (struct adapter *)node.sysctl_data;
-	struct ixgbe_hw            *hw = &adapter->hw;
+	struct ixgbe_softc         *sc = (struct ixgbe_softc *)node.sysctl_data;
+	struct ixgbe_hw            *hw = &sc->hw;
 	u32                        cmd, base, head;
 	u32                        log_off, count = 0;
 	static int                 status = 0;
@@ -588,10 +588,10 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 		return (error);
 
 	/* Keep the log display single-threaded */
-	while (atomic_cas_uint(&adapter->bypass.log, 0, 1) != 0)
+	while (atomic_cas_uint(&sc->bypass.log, 0, 1) != 0)
 		usec_delay(3000);
 
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 
 	/* Find Current head of the log eeprom offset */
 	cmd = BYPASS_PAGE_CTL2 | BYPASS_WE;
@@ -609,7 +609,7 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 	if (error)
 		goto unlock_err;
 
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 
 	base = status & BYPASS_CTL2_DATA_M;
 	head = (status & BYPASS_CTL2_HEAD_M) >> BYPASS_CTL2_HEAD_SHIFT;
@@ -624,19 +624,19 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 
 		/* Log 5 bytes store in on u32 and a u8 */
 		for (i = 0; i < 4; i++) {
-			ixgbe_bypass_mutex_enter(adapter);
+			ixgbe_bypass_mutex_enter(sc);
 			error = hw->mac.ops.bypass_rd_eep(hw, log_off + i,
 			    &data);
-			ixgbe_bypass_mutex_clear(adapter);
+			ixgbe_bypass_mutex_clear(sc);
 			if (error)
 				return (EINVAL);
 			eeprom[count].logs += data << (8 * i);
 		}
 
-		ixgbe_bypass_mutex_enter(adapter);
+		ixgbe_bypass_mutex_enter(sc);
 		error = hw->mac.ops.bypass_rd_eep(hw,
 		    log_off + i, &eeprom[count].actions);
-		ixgbe_bypass_mutex_clear(adapter);
+		ixgbe_bypass_mutex_clear(sc);
 		if (error)
 			return (EINVAL);
 
@@ -692,7 +692,7 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 		time %= (60 * 60);
 		min = time / 60;
 		sec = time % 60;
-		device_printf(adapter->dev,
+		device_printf(sc->dev,
 		    "UT %02d/%02d %02d:%02d:%02d %8.8s -> %7.7s\n",
 		    mon, days, hours, min, sec, event_str[event],
 		    action_str[action]);
@@ -701,14 +701,14 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 		    << BYPASS_CTL2_OFFSET_SHIFT) & BYPASS_CTL2_OFFSET_M;
 		cmd |= ((eeprom[count].logs & ~BYPASS_LOG_CLEAR_M) >> 24);
 
-		ixgbe_bypass_mutex_enter(adapter);
+		ixgbe_bypass_mutex_enter(sc);
 
 		error = hw->mac.ops.bypass_rw(hw, cmd, &status);
 
 		/* wait for the write to stick */
 		msec_delay(100);
 
-		ixgbe_bypass_mutex_clear(adapter);
+		ixgbe_bypass_mutex_clear(sc);
 
 		if (error)
 			return (EINVAL);
@@ -716,14 +716,14 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 
 	status = 0; /* reset */
 	/* Another log command can now run */
-	while (atomic_cas_uint(&adapter->bypass.log, 1, 0) != 1)
+	while (atomic_cas_uint(&sc->bypass.log, 1, 0) != 1)
 		usec_delay(3000);
 	return (error);
 
 unlock_err:
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 	status = 0; /* reset */
-	while (atomic_cas_uint(&adapter->bypass.log, 1, 0) != 1)
+	while (atomic_cas_uint(&sc->bypass.log, 1, 0) != 1)
 		usec_delay(3000);
 	return (EINVAL);
 } /* ixgbe_bp_log */
@@ -735,15 +735,15 @@ unlock_err:
  *   only enabled for the first port of a bypass adapter.
  ************************************************************************/
 void
-ixgbe_bypass_init(struct adapter *adapter)
+ixgbe_bypass_init(struct ixgbe_softc *sc)
 {
-	struct ixgbe_hw        *hw = &adapter->hw;
-	device_t               dev = adapter->dev;
+	struct ixgbe_hw        *hw = &sc->hw;
+	device_t               dev = sc->dev;
 	struct                 sysctllog **log;
 	const struct sysctlnode *rnode, *cnode;
 	u32                    mask, value, sec, year;
 
-	if (!(adapter->feat_cap & IXGBE_FEATURE_BYPASS))
+	if (!(sc->feat_cap & IXGBE_FEATURE_BYPASS))
 		return;
 
 	/* First set up time for the hardware */
@@ -757,13 +757,13 @@ ixgbe_bypass_init(struct adapter *adapter)
 	      | BYPASS_CTL1_VALID
 	      | BYPASS_CTL1_OFFTRST;
 
-	ixgbe_bypass_mutex_enter(adapter);
+	ixgbe_bypass_mutex_enter(sc);
 	hw->mac.ops.bypass_set(hw, BYPASS_PAGE_CTL1, mask, value);
-	ixgbe_bypass_mutex_clear(adapter);
+	ixgbe_bypass_mutex_clear(sc);
 
 	/* Now set up the SYSCTL infrastructure */
-	log = &adapter->sysctllog;
-	if ((rnode = ixgbe_sysctl_instance(adapter)) == NULL) {
+	log = &sc->sysctllog;
+	if ((rnode = ixgbe_sysctl_instance(sc)) == NULL) {
 		aprint_error_dev(dev, "could not create sysctl root\n");
 		return;
 	}
@@ -775,7 +775,7 @@ ixgbe_bypass_init(struct adapter *adapter)
 	 */
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "bypass_log", SYSCTL_DESCR("Bypass Log"),
-	    ixgbe_bp_log, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL);
+	    ixgbe_bp_log, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	/* All other setting are hung from the 'bypass' node */
 	sysctl_createv(log, 0, &rnode, &rnode, 0,
@@ -784,40 +784,40 @@ ixgbe_bypass_init(struct adapter *adapter)
 
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READONLY,
 	    CTLTYPE_INT, "version", SYSCTL_DESCR("Bypass Version"),
-	    ixgbe_bp_version, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL);
+	    ixgbe_bp_version, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "state", SYSCTL_DESCR("Bypass State"),
-	    ixgbe_bp_set_state, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL);
+	    ixgbe_bp_set_state, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "timeout", SYSCTL_DESCR("Bypass Timeout"),
-	    ixgbe_bp_timeout, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL);
+	    ixgbe_bp_timeout, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "main_on", SYSCTL_DESCR("Bypass Main On"),
-	    ixgbe_bp_main_on, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL);
+	    ixgbe_bp_main_on, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "main_off", SYSCTL_DESCR("Bypass Main Off"),
-	    ixgbe_bp_main_off, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL);
+	    ixgbe_bp_main_off, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "aux_on", SYSCTL_DESCR("Bypass Aux On"),
-	    ixgbe_bp_aux_on, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL);
+	    ixgbe_bp_aux_on, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "aux_off", SYSCTL_DESCR("Bypass Aux Off"),
-	    ixgbe_bp_aux_off, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL);
+	    ixgbe_bp_aux_off, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "wd_set", SYSCTL_DESCR("Set BP Watchdog"),
-	    ixgbe_bp_wd_set, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL);
+	    ixgbe_bp_wd_set, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "wd_reset", SYSCTL_DESCR("Bypass WD Reset"),
-	    ixgbe_bp_wd_reset, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL);
+	    ixgbe_bp_wd_reset, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
-	adapter->feat_en |= IXGBE_FEATURE_BYPASS;
+	sc->feat_en |= IXGBE_FEATURE_BYPASS;
 } /* ixgbe_bypass_init */
 

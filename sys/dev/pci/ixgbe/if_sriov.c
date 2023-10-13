@@ -1,4 +1,4 @@
-/* $NetBSD: if_sriov.c,v 1.17 2021/12/24 05:11:04 msaitoh Exp $ */
+/* $NetBSD: if_sriov.c,v 1.17.4.1 2023/10/13 18:16:51 martin Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -34,7 +34,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_sriov.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.17 2021/12/24 05:11:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.17.4.1 2023/10/13 18:16:51 martin Exp $");
 
 #include "ixgbe.h"
 #include "ixgbe_sriov.h"
@@ -80,15 +80,15 @@ ixgbe_define_iov_schemas(device_t dev, int *error)
  * ixgbe_align_all_queue_indices
  ************************************************************************/
 inline void
-ixgbe_align_all_queue_indices(struct adapter *adapter)
+ixgbe_align_all_queue_indices(struct ixgbe_softc *sc)
 {
 	int i;
 	int index;
 
-	for (i = 0; i < adapter->num_queues; i++) {
-		index = ixgbe_vf_que_index(adapter->iov_mode, adapter->pool, i);
-		adapter->rx_rings[i].me = index;
-		adapter->tx_rings[i].me = index;
+	for (i = 0; i < sc->num_queues; i++) {
+		index = ixgbe_vf_que_index(sc->iov_mode, sc->pool, i);
+		sc->rx_rings[i].me = index;
+		sc->tx_rings[i].me = index;
 	}
 }
 
@@ -103,24 +103,24 @@ ixgbe_send_vf_msg(struct ixgbe_hw *hw, struct ixgbe_vf *vf, u32 msg)
 }
 
 static inline void
-ixgbe_send_vf_ack(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
+ixgbe_send_vf_ack(struct ixgbe_softc *sc, struct ixgbe_vf *vf, u32 msg)
 {
 	msg &= IXGBE_VT_MSG_MASK;
-	ixgbe_send_vf_msg(&adapter->hw, vf, msg | IXGBE_VT_MSGTYPE_SUCCESS);
+	ixgbe_send_vf_msg(&sc->hw, vf, msg | IXGBE_VT_MSGTYPE_SUCCESS);
 }
 
 static inline void
-ixgbe_send_vf_nack(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
+ixgbe_send_vf_nack(struct ixgbe_softc *sc, struct ixgbe_vf *vf, u32 msg)
 {
 	msg &= IXGBE_VT_MSG_MASK;
-	ixgbe_send_vf_msg(&adapter->hw, vf, msg | IXGBE_VT_MSGTYPE_FAILURE);
+	ixgbe_send_vf_msg(&sc->hw, vf, msg | IXGBE_VT_MSGTYPE_FAILURE);
 }
 
 static inline void
-ixgbe_process_vf_ack(struct adapter *adapter, struct ixgbe_vf *vf)
+ixgbe_process_vf_ack(struct ixgbe_softc *sc, struct ixgbe_vf *vf)
 {
 	if (!(vf->flags & IXGBE_VF_CTS))
-		ixgbe_send_vf_nack(adapter, vf, 0);
+		ixgbe_send_vf_nack(sc, vf, 0);
 }
 
 static inline bool
@@ -150,10 +150,10 @@ ixgbe_vf_que_index(int mode, int vfnum, int num)
 }
 
 static inline void
-ixgbe_update_max_frame(struct adapter * adapter, int max_frame)
+ixgbe_update_max_frame(struct ixgbe_softc * sc, int max_frame)
 {
-	if (adapter->max_frame_size < max_frame)
-		adapter->max_frame_size = max_frame;
+	if (sc->max_frame_size < max_frame)
+		sc->max_frame_size = max_frame;
 }
 
 inline u32
@@ -202,26 +202,26 @@ ixgbe_get_mtqc(int iov_mode)
 }
 
 void
-ixgbe_ping_all_vfs(struct adapter *adapter)
+ixgbe_ping_all_vfs(struct ixgbe_softc *sc)
 {
 	struct ixgbe_vf *vf;
 
-	for (int i = 0; i < adapter->num_vfs; i++) {
-		vf = &adapter->vfs[i];
+	for (int i = 0; i < sc->num_vfs; i++) {
+		vf = &sc->vfs[i];
 		if (vf->flags & IXGBE_VF_ACTIVE)
-			ixgbe_send_vf_msg(&adapter->hw, vf, IXGBE_PF_CONTROL_MSG);
+			ixgbe_send_vf_msg(&sc->hw, vf, IXGBE_PF_CONTROL_MSG);
 	}
 } /* ixgbe_ping_all_vfs */
 
 
 static void
-ixgbe_vf_set_default_vlan(struct adapter *adapter, struct ixgbe_vf *vf,
+ixgbe_vf_set_default_vlan(struct ixgbe_softc *sc, struct ixgbe_vf *vf,
                           uint16_t tag)
 {
 	struct ixgbe_hw *hw;
 	uint32_t vmolr, vmvir;
 
-	hw = &adapter->hw;
+	hw = &sc->hw;
 
 	vf->vlan_tag = tag;
 
@@ -255,14 +255,14 @@ ixgbe_vf_set_default_vlan(struct adapter *adapter, struct ixgbe_vf *vf,
 
 
 static void
-ixgbe_clear_vfmbmem(struct adapter *adapter, struct ixgbe_vf *vf)
+ixgbe_clear_vfmbmem(struct ixgbe_softc *sc, struct ixgbe_vf *vf)
 {
-	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_hw *hw = &sc->hw;
 	uint32_t vf_index = IXGBE_VF_INDEX(vf->pool);
 	uint16_t mbx_size = hw->mbx.size;
 	uint16_t i;
 
-	IXGBE_CORE_LOCK_ASSERT(adapter);
+	IXGBE_CORE_LOCK_ASSERT(sc);
 
 	for (i = 0; i < mbx_size; ++i)
 		IXGBE_WRITE_REG_ARRAY(hw, IXGBE_PFMBMEM(vf_index), i, 0x0);
@@ -270,7 +270,7 @@ ixgbe_clear_vfmbmem(struct adapter *adapter, struct ixgbe_vf *vf)
 
 
 static bool
-ixgbe_vf_frame_size_compatible(struct adapter *adapter, struct ixgbe_vf *vf)
+ixgbe_vf_frame_size_compatible(struct ixgbe_softc *sc, struct ixgbe_vf *vf)
 {
 
 	/*
@@ -278,7 +278,7 @@ ixgbe_vf_frame_size_compatible(struct adapter *adapter, struct ixgbe_vf *vf)
 	 * 82599-based cards.  X540 and later support any combination of jumbo
 	 * frames on PFs and VFs.
 	 */
-	if (adapter->hw.mac.type != ixgbe_mac_82599EB)
+	if (sc->hw.mac.type != ixgbe_mac_82599EB)
 		return (TRUE);
 
 	switch (vf->api_ver) {
@@ -288,7 +288,7 @@ ixgbe_vf_frame_size_compatible(struct adapter *adapter, struct ixgbe_vf *vf)
 		 * On legacy (1.0 and older) VF versions, we don't support jumbo
 		 * frames on either the PF or the VF.
 		 */
-		if (adapter->max_frame_size > ETHER_MAX_LEN ||
+		if (sc->max_frame_size > ETHER_MAX_LEN ||
 		    vf->max_frame_size > ETHER_MAX_LEN)
 			return (FALSE);
 
@@ -308,7 +308,7 @@ ixgbe_vf_frame_size_compatible(struct adapter *adapter, struct ixgbe_vf *vf)
 		 * Jumbo frames only work with VFs if the PF is also using jumbo
 		 * frames.
 		 */
-		if (adapter->max_frame_size <= ETHER_MAX_LEN)
+		if (sc->max_frame_size <= ETHER_MAX_LEN)
 			return (TRUE);
 
 		return (FALSE);
@@ -317,27 +317,27 @@ ixgbe_vf_frame_size_compatible(struct adapter *adapter, struct ixgbe_vf *vf)
 
 
 static void
-ixgbe_process_vf_reset(struct adapter *adapter, struct ixgbe_vf *vf)
+ixgbe_process_vf_reset(struct ixgbe_softc *sc, struct ixgbe_vf *vf)
 {
-	ixgbe_vf_set_default_vlan(adapter, vf, vf->default_vlan);
+	ixgbe_vf_set_default_vlan(sc, vf, vf->default_vlan);
 
 	// XXX clear multicast addresses
 
-	ixgbe_clear_rar(&adapter->hw, vf->rar_index);
-	ixgbe_clear_vfmbmem(adapter, vf);
-	ixgbe_toggle_txdctl(&adapter->hw, IXGBE_VF_INDEX(vf->pool));
+	ixgbe_clear_rar(&sc->hw, vf->rar_index);
+	ixgbe_clear_vfmbmem(sc, vf);
+	ixgbe_toggle_txdctl(&sc->hw, IXGBE_VF_INDEX(vf->pool));
 
 	vf->api_ver = IXGBE_API_VER_UNKNOWN;
 } /* ixgbe_process_vf_reset */
 
 
 static void
-ixgbe_vf_enable_transmit(struct adapter *adapter, struct ixgbe_vf *vf)
+ixgbe_vf_enable_transmit(struct ixgbe_softc *sc, struct ixgbe_vf *vf)
 {
 	struct ixgbe_hw *hw;
 	uint32_t vf_index, vfte;
 
-	hw = &adapter->hw;
+	hw = &sc->hw;
 
 	vf_index = IXGBE_VF_INDEX(vf->pool);
 	vfte = IXGBE_READ_REG(hw, IXGBE_VFTE(vf_index));
@@ -347,16 +347,16 @@ ixgbe_vf_enable_transmit(struct adapter *adapter, struct ixgbe_vf *vf)
 
 
 static void
-ixgbe_vf_enable_receive(struct adapter *adapter, struct ixgbe_vf *vf)
+ixgbe_vf_enable_receive(struct ixgbe_softc *sc, struct ixgbe_vf *vf)
 {
 	struct ixgbe_hw *hw;
 	uint32_t vf_index, vfre;
 
-	hw = &adapter->hw;
+	hw = &sc->hw;
 
 	vf_index = IXGBE_VF_INDEX(vf->pool);
 	vfre = IXGBE_READ_REG(hw, IXGBE_VFRE(vf_index));
-	if (ixgbe_vf_frame_size_compatible(adapter, vf))
+	if (ixgbe_vf_frame_size_compatible(sc, vf))
 		vfre |= IXGBE_VF_BIT(vf->pool);
 	else
 		vfre &= ~IXGBE_VF_BIT(vf->pool);
@@ -365,25 +365,25 @@ ixgbe_vf_enable_receive(struct adapter *adapter, struct ixgbe_vf *vf)
 
 
 static void
-ixgbe_vf_reset_msg(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
+ixgbe_vf_reset_msg(struct ixgbe_softc *sc, struct ixgbe_vf *vf, uint32_t *msg)
 {
 	struct ixgbe_hw *hw;
 	uint32_t ack;
 	uint32_t resp[IXGBE_VF_PERMADDR_MSG_LEN];
 
-	hw = &adapter->hw;
+	hw = &sc->hw;
 
-	ixgbe_process_vf_reset(adapter, vf);
+	ixgbe_process_vf_reset(sc, vf);
 
 	if (ixgbe_validate_mac_addr(vf->ether_addr) == 0) {
-		ixgbe_set_rar(&adapter->hw, vf->rar_index, vf->ether_addr,
+		ixgbe_set_rar(&sc->hw, vf->rar_index, vf->ether_addr,
 		    vf->pool, TRUE);
 		ack = IXGBE_VT_MSGTYPE_SUCCESS;
 	} else
 		ack = IXGBE_VT_MSGTYPE_FAILURE;
 
-	ixgbe_vf_enable_transmit(adapter, vf);
-	ixgbe_vf_enable_receive(adapter, vf);
+	ixgbe_vf_enable_transmit(sc, vf);
+	ixgbe_vf_enable_receive(sc, vf);
 
 	vf->flags |= IXGBE_VF_CTS;
 
@@ -395,7 +395,7 @@ ixgbe_vf_reset_msg(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
 
 
 static void
-ixgbe_vf_set_mac(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
+ixgbe_vf_set_mac(struct ixgbe_softc *sc, struct ixgbe_vf *vf, uint32_t *msg)
 {
 	uint8_t *mac;
 
@@ -403,21 +403,21 @@ ixgbe_vf_set_mac(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
 
 	/* Check that the VF has permission to change the MAC address. */
 	if (!(vf->flags & IXGBE_VF_CAP_MAC) && ixgbe_vf_mac_changed(vf, mac)) {
-		ixgbe_send_vf_nack(adapter, vf, msg[0]);
+		ixgbe_send_vf_nack(sc, vf, msg[0]);
 		return;
 	}
 
 	if (ixgbe_validate_mac_addr(mac) != 0) {
-		ixgbe_send_vf_nack(adapter, vf, msg[0]);
+		ixgbe_send_vf_nack(sc, vf, msg[0]);
 		return;
 	}
 
 	bcopy(mac, vf->ether_addr, ETHER_ADDR_LEN);
 
-	ixgbe_set_rar(&adapter->hw, vf->rar_index, vf->ether_addr, vf->pool,
+	ixgbe_set_rar(&sc->hw, vf->rar_index, vf->ether_addr, vf->pool,
 	    TRUE);
 
-	ixgbe_send_vf_ack(adapter, vf, msg[0]);
+	ixgbe_send_vf_ack(sc, vf, msg[0]);
 } /* ixgbe_vf_set_mac */
 
 
@@ -426,7 +426,7 @@ ixgbe_vf_set_mac(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
  * 1 of 128 32 bit addresses (4096 possible).
  */
 static void
-ixgbe_vf_set_mc_addr(struct adapter *adapter, struct ixgbe_vf *vf, u32 *msg)
+ixgbe_vf_set_mc_addr(struct ixgbe_softc *sc, struct ixgbe_vf *vf, u32 *msg)
 {
 	u16	*list = (u16*)&msg[1];
 	int	entries;
@@ -435,7 +435,7 @@ ixgbe_vf_set_mc_addr(struct adapter *adapter, struct ixgbe_vf *vf, u32 *msg)
 	entries = (msg[0] & IXGBE_VT_MSGINFO_MASK) >> IXGBE_VT_MSGINFO_SHIFT;
 	entries = uimin(entries, IXGBE_MAX_VF_MC);
 
-	vmolr = IXGBE_READ_REG(&adapter->hw, IXGBE_VMOLR(vf->pool));
+	vmolr = IXGBE_READ_REG(&sc->hw, IXGBE_VMOLR(vf->pool));
 
 	vf->num_mc_hashes = entries;
 
@@ -444,56 +444,56 @@ ixgbe_vf_set_mc_addr(struct adapter *adapter, struct ixgbe_vf *vf, u32 *msg)
 		vf->mc_hash[i] = list[i];
 		vec_reg = (vf->mc_hash[i] >> 5) & 0x7F;
 		vec_bit = vf->mc_hash[i] & 0x1F;
-		mta_reg = IXGBE_READ_REG(&adapter->hw, IXGBE_MTA(vec_reg));
+		mta_reg = IXGBE_READ_REG(&sc->hw, IXGBE_MTA(vec_reg));
 		mta_reg |= (1 << vec_bit);
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_MTA(vec_reg), mta_reg);
+		IXGBE_WRITE_REG(&sc->hw, IXGBE_MTA(vec_reg), mta_reg);
 	}
 
 	vmolr |= IXGBE_VMOLR_ROMPE;
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VMOLR(vf->pool), vmolr);
-	ixgbe_send_vf_ack(adapter, vf, msg[0]);
+	IXGBE_WRITE_REG(&sc->hw, IXGBE_VMOLR(vf->pool), vmolr);
+	ixgbe_send_vf_ack(sc, vf, msg[0]);
 } /* ixgbe_vf_set_mc_addr */
 
 
 static void
-ixgbe_vf_set_vlan(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
+ixgbe_vf_set_vlan(struct ixgbe_softc *sc, struct ixgbe_vf *vf, uint32_t *msg)
 {
 	struct ixgbe_hw *hw;
 	int enable;
 	uint16_t tag;
 
-	hw = &adapter->hw;
+	hw = &sc->hw;
 	enable = IXGBE_VT_MSGINFO(msg[0]);
 	tag = msg[1] & IXGBE_VLVF_VLANID_MASK;
 
 	if (!(vf->flags & IXGBE_VF_CAP_VLAN)) {
-		ixgbe_send_vf_nack(adapter, vf, msg[0]);
+		ixgbe_send_vf_nack(sc, vf, msg[0]);
 		return;
 	}
 
 	/* It is illegal to enable vlan tag 0. */
 	if (tag == 0 && enable != 0) {
-		ixgbe_send_vf_nack(adapter, vf, msg[0]);
+		ixgbe_send_vf_nack(sc, vf, msg[0]);
 		return;
 	}
 
 	ixgbe_set_vfta(hw, tag, vf->pool, enable, false);
-	ixgbe_send_vf_ack(adapter, vf, msg[0]);
+	ixgbe_send_vf_ack(sc, vf, msg[0]);
 } /* ixgbe_vf_set_vlan */
 
 
 static void
-ixgbe_vf_set_lpe(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
+ixgbe_vf_set_lpe(struct ixgbe_softc *sc, struct ixgbe_vf *vf, uint32_t *msg)
 {
 	struct ixgbe_hw *hw;
 	uint32_t vf_max_size, pf_max_size, mhadd;
 
-	hw = &adapter->hw;
+	hw = &sc->hw;
 	vf_max_size = msg[1];
 
 	if (vf_max_size < ETHER_CRC_LEN) {
 		/* We intentionally ACK invalid LPE requests. */
-		ixgbe_send_vf_ack(adapter, vf, msg[0]);
+		ixgbe_send_vf_ack(sc, vf, msg[0]);
 		return;
 	}
 
@@ -501,43 +501,43 @@ ixgbe_vf_set_lpe(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
 
 	if (vf_max_size > IXGBE_MAX_FRAME_SIZE) {
 		/* We intentionally ACK invalid LPE requests. */
-		ixgbe_send_vf_ack(adapter, vf, msg[0]);
+		ixgbe_send_vf_ack(sc, vf, msg[0]);
 		return;
 	}
 
 	vf->max_frame_size = vf_max_size;
-	ixgbe_update_max_frame(adapter, vf->max_frame_size);
+	ixgbe_update_max_frame(sc, vf->max_frame_size);
 
 	/*
 	 * We might have to disable reception to this VF if the frame size is
 	 * not compatible with the config on the PF.
 	 */
-	ixgbe_vf_enable_receive(adapter, vf);
+	ixgbe_vf_enable_receive(sc, vf);
 
 	mhadd = IXGBE_READ_REG(hw, IXGBE_MHADD);
 	pf_max_size = (mhadd & IXGBE_MHADD_MFS_MASK) >> IXGBE_MHADD_MFS_SHIFT;
 
-	if (pf_max_size < adapter->max_frame_size) {
+	if (pf_max_size < sc->max_frame_size) {
 		mhadd &= ~IXGBE_MHADD_MFS_MASK;
-		mhadd |= adapter->max_frame_size << IXGBE_MHADD_MFS_SHIFT;
+		mhadd |= sc->max_frame_size << IXGBE_MHADD_MFS_SHIFT;
 		IXGBE_WRITE_REG(hw, IXGBE_MHADD, mhadd);
 	}
 
-	ixgbe_send_vf_ack(adapter, vf, msg[0]);
+	ixgbe_send_vf_ack(sc, vf, msg[0]);
 } /* ixgbe_vf_set_lpe */
 
 
 static void
-ixgbe_vf_set_macvlan(struct adapter *adapter, struct ixgbe_vf *vf,
+ixgbe_vf_set_macvlan(struct ixgbe_softc *sc, struct ixgbe_vf *vf,
                      uint32_t *msg)
 {
 	//XXX implement this
-	ixgbe_send_vf_nack(adapter, vf, msg[0]);
+	ixgbe_send_vf_nack(sc, vf, msg[0]);
 } /* ixgbe_vf_set_macvlan */
 
 
 static void
-ixgbe_vf_api_negotiate(struct adapter *adapter, struct ixgbe_vf *vf,
+ixgbe_vf_api_negotiate(struct ixgbe_softc *sc, struct ixgbe_vf *vf,
     uint32_t *msg)
 {
 
@@ -545,37 +545,37 @@ ixgbe_vf_api_negotiate(struct adapter *adapter, struct ixgbe_vf *vf,
 	case IXGBE_API_VER_1_0:
 	case IXGBE_API_VER_1_1:
 		vf->api_ver = msg[1];
-		ixgbe_send_vf_ack(adapter, vf, msg[0]);
+		ixgbe_send_vf_ack(sc, vf, msg[0]);
 		break;
 	default:
 		vf->api_ver = IXGBE_API_VER_UNKNOWN;
-		ixgbe_send_vf_nack(adapter, vf, msg[0]);
+		ixgbe_send_vf_nack(sc, vf, msg[0]);
 		break;
 	}
 } /* ixgbe_vf_api_negotiate */
 
 
 static void
-ixgbe_vf_get_queues(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
+ixgbe_vf_get_queues(struct ixgbe_softc *sc, struct ixgbe_vf *vf, uint32_t *msg)
 {
 	struct ixgbe_hw *hw;
 	uint32_t resp[IXGBE_VF_GET_QUEUES_RESP_LEN];
 	int num_queues;
 
-	hw = &adapter->hw;
+	hw = &sc->hw;
 
 	/* GET_QUEUES is not supported on pre-1.1 APIs. */
 	switch (msg[0]) {
 	case IXGBE_API_VER_1_0:
 	case IXGBE_API_VER_UNKNOWN:
-		ixgbe_send_vf_nack(adapter, vf, msg[0]);
+		ixgbe_send_vf_nack(sc, vf, msg[0]);
 		return;
 	}
 
 	resp[0] = IXGBE_VF_GET_QUEUES | IXGBE_VT_MSGTYPE_SUCCESS |
 	    IXGBE_VT_MSGTYPE_CTS;
 
-	num_queues = ixgbe_vf_queues(adapter->iov_mode);
+	num_queues = ixgbe_vf_queues(sc->iov_mode);
 	resp[IXGBE_VF_TX_QUEUES] = num_queues;
 	resp[IXGBE_VF_RX_QUEUES] = num_queues;
 	resp[IXGBE_VF_TRANS_VLAN] = (vf->default_vlan != 0);
@@ -586,13 +586,13 @@ ixgbe_vf_get_queues(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
 
 
 static void
-ixgbe_process_vf_msg(struct adapter *adapter, struct ixgbe_vf *vf)
+ixgbe_process_vf_msg(struct ixgbe_softc *sc, struct ixgbe_vf *vf)
 {
 	struct ixgbe_hw *hw;
 	uint32_t msg[IXGBE_VFMAILBOX_SIZE];
 	int error;
 
-	hw = &adapter->hw;
+	hw = &sc->hw;
 
 	error = hw->mbx.ops[vf->pool].read(hw, msg, IXGBE_VFMAILBOX_SIZE,
 	    vf->pool);
@@ -600,42 +600,42 @@ ixgbe_process_vf_msg(struct adapter *adapter, struct ixgbe_vf *vf)
 	if (error != 0)
 		return;
 
-	CTR3(KTR_MALLOC, "%s: received msg %x from %d", adapter->ifp->if_xname,
-	    msg[0], vf->pool);
+	CTR3(KTR_MALLOC, "%s: received msg %x from %d",
+	    sc->ifp->if_xname, msg[0], vf->pool);
 	if (msg[0] == IXGBE_VF_RESET) {
-		ixgbe_vf_reset_msg(adapter, vf, msg);
+		ixgbe_vf_reset_msg(sc, vf, msg);
 		return;
 	}
 
 	if (!(vf->flags & IXGBE_VF_CTS)) {
-		ixgbe_send_vf_nack(adapter, vf, msg[0]);
+		ixgbe_send_vf_nack(sc, vf, msg[0]);
 		return;
 	}
 
 	switch (msg[0] & IXGBE_VT_MSG_MASK) {
 	case IXGBE_VF_SET_MAC_ADDR:
-		ixgbe_vf_set_mac(adapter, vf, msg);
+		ixgbe_vf_set_mac(sc, vf, msg);
 		break;
 	case IXGBE_VF_SET_MULTICAST:
-		ixgbe_vf_set_mc_addr(adapter, vf, msg);
+		ixgbe_vf_set_mc_addr(sc, vf, msg);
 		break;
 	case IXGBE_VF_SET_VLAN:
-		ixgbe_vf_set_vlan(adapter, vf, msg);
+		ixgbe_vf_set_vlan(sc, vf, msg);
 		break;
 	case IXGBE_VF_SET_LPE:
-		ixgbe_vf_set_lpe(adapter, vf, msg);
+		ixgbe_vf_set_lpe(sc, vf, msg);
 		break;
 	case IXGBE_VF_SET_MACVLAN:
-		ixgbe_vf_set_macvlan(adapter, vf, msg);
+		ixgbe_vf_set_macvlan(sc, vf, msg);
 		break;
 	case IXGBE_VF_API_NEGOTIATE:
-		ixgbe_vf_api_negotiate(adapter, vf, msg);
+		ixgbe_vf_api_negotiate(sc, vf, msg);
 		break;
 	case IXGBE_VF_GET_QUEUES:
-		ixgbe_vf_get_queues(adapter, vf, msg);
+		ixgbe_vf_get_queues(sc, vf, msg);
 		break;
 	default:
-		ixgbe_send_vf_nack(adapter, vf, msg[0]);
+		ixgbe_send_vf_nack(sc, vf, msg[0]);
 	}
 } /* ixgbe_process_vf_msg */
 
@@ -644,40 +644,40 @@ ixgbe_process_vf_msg(struct adapter *adapter, struct ixgbe_vf *vf)
 void
 ixgbe_handle_mbx(void *context)
 {
-	struct adapter *adapter = context;
+	struct ixgbe_softc *sc = context;
 	struct ixgbe_hw *hw;
 	struct ixgbe_vf *vf;
 	int i;
 
-	KASSERT(mutex_owned(&adapter->core_mtx));
+	KASSERT(mutex_owned(&sc->core_mtx));
 
-	hw = &adapter->hw;
+	hw = &sc->hw;
 
-	for (i = 0; i < adapter->num_vfs; i++) {
-		vf = &adapter->vfs[i];
+	for (i = 0; i < sc->num_vfs; i++) {
+		vf = &sc->vfs[i];
 
 		if ((vf->flags & IXGBE_VF_ACTIVE) == 0)
 			continue;
 
 		if (hw->mbx.ops[vf->pool].check_for_rst(hw, vf->pool) == 0)
-			ixgbe_process_vf_reset(adapter, vf);
+			ixgbe_process_vf_reset(sc, vf);
 
 		if (hw->mbx.ops[vf->pool].check_for_msg(hw, vf->pool) == 0)
-			ixgbe_process_vf_msg(adapter, vf);
+			ixgbe_process_vf_msg(sc, vf);
 
 		if (hw->mbx.ops[vf->pool].check_for_ack(hw, vf->pool) == 0)
-			ixgbe_process_vf_ack(adapter, vf);
+			ixgbe_process_vf_ack(sc, vf);
 	}
 } /* ixgbe_handle_mbx */
 
 int
 ixgbe_init_iov(device_t dev, u16 num_vfs, const nvlist_t *config)
 {
-	struct adapter *adapter;
+	struct ixgbe_softc *sc;
 	int retval = 0;
 
-	adapter = device_get_softc(dev);
-	adapter->iov_mode = IXGBE_NO_VM;
+	sc = device_get_softc(dev);
+	sc->iov_mode = IXGBE_NO_VM;
 
 	if (num_vfs == 0) {
 		/* Would we ever get num_vfs = 0? */
@@ -692,65 +692,65 @@ ixgbe_init_iov(device_t dev, u16 num_vfs, const nvlist_t *config)
 	 * With 32 VFs, you can have up to four queues per VF.
 	 */
 	if (num_vfs >= IXGBE_32_VM)
-		adapter->iov_mode = IXGBE_64_VM;
+		sc->iov_mode = IXGBE_64_VM;
 	else
-		adapter->iov_mode = IXGBE_32_VM;
+		sc->iov_mode = IXGBE_32_VM;
 
 	/* Again, reserving 1 VM's worth of queues for the PF */
-	adapter->pool = adapter->iov_mode - 1;
+	sc->pool = sc->iov_mode - 1;
 
-	if ((num_vfs > adapter->pool) || (num_vfs >= IXGBE_64_VM)) {
+	if ((num_vfs > sc->pool) || (num_vfs >= IXGBE_64_VM)) {
 		retval = ENOSPC;
 		goto err_init_iov;
 	}
 
-	IXGBE_CORE_LOCK(adapter);
+	IXGBE_CORE_LOCK(sc);
 
-	adapter->vfs = malloc(sizeof(*adapter->vfs) * num_vfs, M_IXGBE_SRIOV,
+	sc->vfs = malloc(sizeof(*sc->vfs) * num_vfs, M_IXGBE_SRIOV,
 	    M_NOWAIT | M_ZERO);
 
-	if (adapter->vfs == NULL) {
+	if (sc->vfs == NULL) {
 		retval = ENOMEM;
-		IXGBE_CORE_UNLOCK(adapter);
+		IXGBE_CORE_UNLOCK(sc);
 		goto err_init_iov;
 	}
 
-	adapter->num_vfs = num_vfs;
-	ixgbe_init_mbx_params_pf(&adapter->hw);
+	sc->num_vfs = num_vfs;
+	ixgbe_init_mbx_params_pf(&sc->hw);
 
 	/* set the SRIOV flag now as it's needed
 	 * by ixgbe_init_locked() */
-	adapter->feat_en |= IXGBE_FEATURE_SRIOV;
-	adapter->init_locked(adapter);
+	sc->feat_en |= IXGBE_FEATURE_SRIOV;
+	sc->init_locked(sc);
 
-	IXGBE_CORE_UNLOCK(adapter);
+	IXGBE_CORE_UNLOCK(sc);
 
-	return (retval);
+	return retval;
 
 err_init_iov:
-	adapter->num_vfs = 0;
-	adapter->pool = 0;
-	adapter->iov_mode = IXGBE_NO_VM;
+	sc->num_vfs = 0;
+	sc->pool = 0;
+	sc->iov_mode = IXGBE_NO_VM;
 
-	return (retval);
+	return retval;
 } /* ixgbe_init_iov */
 
 void
 ixgbe_uninit_iov(device_t dev)
 {
 	struct ixgbe_hw *hw;
-	struct adapter *adapter;
+	struct ixgbe_softc *sc;
 	uint32_t pf_reg, vf_reg;
 
-	adapter = device_get_softc(dev);
-	hw = &adapter->hw;
+	sc = device_get_softc(dev);
+	hw = &sc->hw;
 
-	IXGBE_CORE_LOCK(adapter);
+	IXGBE_CORE_LOCK(sc);
 
 	/* Enable rx/tx for the PF and disable it for all VFs. */
-	pf_reg = IXGBE_VF_INDEX(adapter->pool);
-	IXGBE_WRITE_REG(hw, IXGBE_VFRE(pf_reg), IXGBE_VF_BIT(adapter->pool));
-	IXGBE_WRITE_REG(hw, IXGBE_VFTE(pf_reg), IXGBE_VF_BIT(adapter->pool));
+	pf_reg = IXGBE_VF_INDEX(sc->pool);
+	IXGBE_WRITE_REG(hw, IXGBE_VFRE(pf_reg), IXGBE_VF_BIT(sc->pool));
+	IXGBE_WRITE_REG(hw, IXGBE_VFTE(pf_reg), IXGBE_VF_BIT(sc->pool));
 
 	if (pf_reg == 0)
 		vf_reg = 1;
@@ -761,23 +761,23 @@ ixgbe_uninit_iov(device_t dev)
 
 	IXGBE_WRITE_REG(hw, IXGBE_VT_CTL, 0);
 
-	free(adapter->vfs, M_IXGBE_SRIOV);
-	adapter->vfs = NULL;
-	adapter->num_vfs = 0;
-	adapter->feat_en &= ~IXGBE_FEATURE_SRIOV;
+	free(sc->vfs, M_IXGBE_SRIOV);
+	sc->vfs = NULL;
+	sc->num_vfs = 0;
+	sc->feat_en &= ~IXGBE_FEATURE_SRIOV;
 
-	IXGBE_CORE_UNLOCK(adapter);
+	IXGBE_CORE_UNLOCK(sc);
 } /* ixgbe_uninit_iov */
 
 static void
-ixgbe_init_vf(struct adapter *adapter, struct ixgbe_vf *vf)
+ixgbe_init_vf(struct ixgbe_softc *sc, struct ixgbe_vf *vf)
 {
 	struct ixgbe_hw *hw;
 	uint32_t vf_index, pfmbimr;
 
-	IXGBE_CORE_LOCK_ASSERT(adapter);
+	IXGBE_CORE_LOCK_ASSERT(sc);
 
-	hw = &adapter->hw;
+	hw = &sc->hw;
 
 	if (!(vf->flags & IXGBE_VF_ACTIVE))
 		return;
@@ -787,32 +787,32 @@ ixgbe_init_vf(struct adapter *adapter, struct ixgbe_vf *vf)
 	pfmbimr |= IXGBE_VF_BIT(vf->pool);
 	IXGBE_WRITE_REG(hw, IXGBE_PFMBIMR(vf_index), pfmbimr);
 
-	ixgbe_vf_set_default_vlan(adapter, vf, vf->vlan_tag);
+	ixgbe_vf_set_default_vlan(sc, vf, vf->vlan_tag);
 
 	// XXX multicast addresses
 
 	if (ixgbe_validate_mac_addr(vf->ether_addr) == 0) {
-		ixgbe_set_rar(&adapter->hw, vf->rar_index,
+		ixgbe_set_rar(&sc->hw, vf->rar_index,
 		    vf->ether_addr, vf->pool, TRUE);
 	}
 
-	ixgbe_vf_enable_transmit(adapter, vf);
-	ixgbe_vf_enable_receive(adapter, vf);
+	ixgbe_vf_enable_transmit(sc, vf);
+	ixgbe_vf_enable_receive(sc, vf);
 
-	ixgbe_send_vf_msg(&adapter->hw, vf, IXGBE_PF_CONTROL_MSG);
+	ixgbe_send_vf_msg(&sc->hw, vf, IXGBE_PF_CONTROL_MSG);
 } /* ixgbe_init_vf */
 
 void
-ixgbe_initialize_iov(struct adapter *adapter)
+ixgbe_initialize_iov(struct ixgbe_softc *sc)
 {
-	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_hw *hw = &sc->hw;
 	uint32_t mrqc, mtqc, vt_ctl, vf_reg, gcr_ext, gpie;
 	int i;
 
-	if (adapter->iov_mode == IXGBE_NO_VM)
+	if (sc->iov_mode == IXGBE_NO_VM)
 		return;
 
-	IXGBE_CORE_LOCK_ASSERT(adapter);
+	IXGBE_CORE_LOCK_ASSERT(sc);
 
 	/* RMW appropriate registers based on IOV mode */
 	/* Read... */
@@ -825,7 +825,7 @@ ixgbe_initialize_iov(struct adapter *adapter)
 	gcr_ext |=  IXGBE_GCR_EXT_MSIX_EN;
 	gcr_ext &= ~IXGBE_GCR_EXT_VT_MODE_MASK;
 	gpie    &= ~IXGBE_GPIE_VTMODE_MASK;
-	switch (adapter->iov_mode) {
+	switch (sc->iov_mode) {
 	case IXGBE_64_VM:
 		mrqc    |= IXGBE_MRQC_VMDQRSS64EN;
 		mtqc    |= IXGBE_MTQC_64VF;
@@ -839,7 +839,7 @@ ixgbe_initialize_iov(struct adapter *adapter)
 		gpie    |= IXGBE_GPIE_VTMODE_32;
 		break;
 	default:
-		panic("Unexpected SR-IOV mode %d", adapter->iov_mode);
+		panic("Unexpected SR-IOV mode %d", sc->iov_mode);
 	}
 	/* Write... */
 	IXGBE_WRITE_REG(hw, IXGBE_MRQC, mrqc);
@@ -848,58 +848,58 @@ ixgbe_initialize_iov(struct adapter *adapter)
 	IXGBE_WRITE_REG(hw, IXGBE_GPIE, gpie);
 
 	/* Enable rx/tx for the PF. */
-	vf_reg = IXGBE_VF_INDEX(adapter->pool);
-	IXGBE_WRITE_REG(hw, IXGBE_VFRE(vf_reg), IXGBE_VF_BIT(adapter->pool));
-	IXGBE_WRITE_REG(hw, IXGBE_VFTE(vf_reg), IXGBE_VF_BIT(adapter->pool));
+	vf_reg = IXGBE_VF_INDEX(sc->pool);
+	IXGBE_WRITE_REG(hw, IXGBE_VFRE(vf_reg), IXGBE_VF_BIT(sc->pool));
+	IXGBE_WRITE_REG(hw, IXGBE_VFTE(vf_reg), IXGBE_VF_BIT(sc->pool));
 
 	/* Allow VM-to-VM communication. */
 	IXGBE_WRITE_REG(hw, IXGBE_PFDTXGSWC, IXGBE_PFDTXGSWC_VT_LBEN);
 
 	vt_ctl = IXGBE_VT_CTL_VT_ENABLE | IXGBE_VT_CTL_REPLEN;
-	vt_ctl |= (adapter->pool << IXGBE_VT_CTL_POOL_SHIFT);
+	vt_ctl |= (sc->pool << IXGBE_VT_CTL_POOL_SHIFT);
 	IXGBE_WRITE_REG(hw, IXGBE_VT_CTL, vt_ctl);
 
-	for (i = 0; i < adapter->num_vfs; i++)
-		ixgbe_init_vf(adapter, &adapter->vfs[i]);
+	for (i = 0; i < sc->num_vfs; i++)
+		ixgbe_init_vf(sc, &sc->vfs[i]);
 } /* ixgbe_initialize_iov */
 
 
 /* Check the max frame setting of all active VF's */
 void
-ixgbe_recalculate_max_frame(struct adapter *adapter)
+ixgbe_recalculate_max_frame(struct ixgbe_softc *sc)
 {
 	struct ixgbe_vf *vf;
 
-	IXGBE_CORE_LOCK_ASSERT(adapter);
+	IXGBE_CORE_LOCK_ASSERT(sc);
 
-	for (int i = 0; i < adapter->num_vfs; i++) {
-		vf = &adapter->vfs[i];
+	for (int i = 0; i < sc->num_vfs; i++) {
+		vf = &sc->vfs[i];
 		if (vf->flags & IXGBE_VF_ACTIVE)
-			ixgbe_update_max_frame(adapter, vf->max_frame_size);
+			ixgbe_update_max_frame(sc, vf->max_frame_size);
 	}
 } /* ixgbe_recalculate_max_frame */
 
 int
 ixgbe_add_vf(device_t dev, u16 vfnum, const nvlist_t *config)
 {
-	struct adapter *adapter;
+	struct ixgbe_softc *sc;
 	struct ixgbe_vf *vf;
 	const void *mac;
 
-	adapter = device_get_softc(dev);
+	sc = device_get_softc(dev);
 
-	KASSERT(vfnum < adapter->num_vfs, ("VF index %d is out of range %d",
-	    vfnum, adapter->num_vfs));
+	KASSERT(vfnum < sc->num_vfs, ("VF index %d is out of range %d",
+	    vfnum, sc->num_vfs));
 
-	IXGBE_CORE_LOCK(adapter);
-	vf = &adapter->vfs[vfnum];
+	IXGBE_CORE_LOCK(sc);
+	vf = &sc->vfs[vfnum];
 	vf->pool= vfnum;
 
 	/* RAR[0] is used by the PF so use vfnum + 1 for VF RAR. */
 	vf->rar_index = vfnum + 1;
 	vf->default_vlan = 0;
 	vf->max_frame_size = ETHER_MAX_LEN;
-	ixgbe_update_max_frame(adapter, vf->max_frame_size);
+	ixgbe_update_max_frame(sc, vf->max_frame_size);
 
 	if (nvlist_exists_binary(config, "mac-addr")) {
 		mac = nvlist_get_binary(config, "mac-addr", NULL);
@@ -915,8 +915,8 @@ ixgbe_add_vf(device_t dev, u16 vfnum, const nvlist_t *config)
 
 	vf->flags |= IXGBE_VF_ACTIVE;
 
-	ixgbe_init_vf(adapter, vf);
-	IXGBE_CORE_UNLOCK(adapter);
+	ixgbe_init_vf(sc, vf);
+	IXGBE_CORE_UNLOCK(sc);
 
 	return (0);
 } /* ixgbe_add_vf */

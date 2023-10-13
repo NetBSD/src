@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.c,v 1.8 2021/12/24 05:02:11 msaitoh Exp $ */
+/* $NetBSD: ixgbe_osdep.c,v 1.8.4.1 2023/10/13 18:16:51 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_osdep.c,v 1.8 2021/12/24 05:02:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_osdep.c,v 1.8.4.1 2023/10/13 18:16:51 martin Exp $");
 
 #include "ixgbe_osdep.h"
 #include "ixgbe.h"
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixgbe_osdep.c,v 1.8 2021/12/24 05:02:11 msaitoh Exp 
 inline device_t
 ixgbe_dev_from_hw(struct ixgbe_hw *hw)
 {
-	return ((struct adapter *)hw->back)->dev;
+	return ((struct ixgbe_softc *)hw->back)->dev;
 }
 
 u16
@@ -92,39 +92,39 @@ ixgbe_write_pci_cfg(struct ixgbe_hw *hw, u32 reg, u16 value)
 inline u32
 ixgbe_read_reg(struct ixgbe_hw *hw, u32 reg)
 {
-	return bus_space_read_4(((struct adapter *)hw->back)->osdep.mem_bus_space_tag,
-	    ((struct adapter *)hw->back)->osdep.mem_bus_space_handle, reg);
+	return bus_space_read_4(((struct ixgbe_softc *)hw->back)->osdep.mem_bus_space_tag,
+	    ((struct ixgbe_softc *)hw->back)->osdep.mem_bus_space_handle, reg);
 }
 
 inline void
 ixgbe_write_reg(struct ixgbe_hw *hw, u32 reg, u32 val)
 {
-	bus_space_write_4(((struct adapter *)hw->back)->osdep.mem_bus_space_tag,
-	    ((struct adapter *)hw->back)->osdep.mem_bus_space_handle,
+	bus_space_write_4(((struct ixgbe_softc *)hw->back)->osdep.mem_bus_space_tag,
+	    ((struct ixgbe_softc *)hw->back)->osdep.mem_bus_space_handle,
 	    reg, val);
 }
 
 inline u32
 ixgbe_read_reg_array(struct ixgbe_hw *hw, u32 reg, u32 offset)
 {
-	return bus_space_read_4(((struct adapter *)hw->back)->osdep.mem_bus_space_tag,
-	    ((struct adapter *)hw->back)->osdep.mem_bus_space_handle,
+	return bus_space_read_4(((struct ixgbe_softc *)hw->back)->osdep.mem_bus_space_tag,
+	    ((struct ixgbe_softc *)hw->back)->osdep.mem_bus_space_handle,
 	    reg + (offset << 2));
 }
 
 inline void
 ixgbe_write_reg_array(struct ixgbe_hw *hw, u32 reg, u32 offset, u32 val)
 {
-	bus_space_write_4(((struct adapter *)hw->back)->osdep.mem_bus_space_tag,
-	    ((struct adapter *)hw->back)->osdep.mem_bus_space_handle,
+	bus_space_write_4(((struct ixgbe_softc *)hw->back)->osdep.mem_bus_space_tag,
+	    ((struct ixgbe_softc *)hw->back)->osdep.mem_bus_space_handle,
 	    reg + (offset << 2), val);
 }
 
 inline void
 ixgbe_write_barrier(struct ixgbe_hw *hw)
 {
-	bus_space_barrier(((struct adapter *)hw->back)->osdep.mem_bus_space_tag,
-	    ((struct adapter *)hw->back)->osdep.mem_bus_space_handle,
-	    0, ((struct adapter *)hw->back)->osdep.mem_size,
+	bus_space_barrier(((struct ixgbe_softc *)hw->back)->osdep.mem_bus_space_tag,
+	    ((struct ixgbe_softc *)hw->back)->osdep.mem_bus_space_handle,
+	    0, ((struct ixgbe_softc *)hw->back)->osdep.mem_size,
 	    BUS_SPACE_BARRIER_WRITE);
 }
