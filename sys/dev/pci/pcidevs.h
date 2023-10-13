@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.27 2023/08/21 12:38:44 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.28 2023/10/13 17:56:23 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.27 2023/08/21 12:37:34 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.28 2023/10/13 17:54:46 martin Exp
  */
 
 /*
@@ -1517,6 +1517,7 @@
 #define	PCI_PRODUCT_ASMEDIA_ASM1061_02	0x0602		/* ASM1061 AHCI SATA III Controller */
 #define	PCI_PRODUCT_ASMEDIA_ASM1061_11	0x0611		/* ASM1061 AHCI SATA III Controller */
 #define	PCI_PRODUCT_ASMEDIA_ASM1061_12	0x0612		/* ASM1061 AHCI SATA III Controller */
+#define	PCI_PRODUCT_ASMEDIA_ASM1062_JMB575	0x0624		/* ASM1062 + JMB575 Port Multiplier */
 #define	PCI_PRODUCT_ASMEDIA_ASM106X	0x0625		/* ASM106x AHCI SATA III Controller */
 #define	PCI_PRODUCT_ASMEDIA_ASM1042	0x1042		/* ASM1042 USB 3.0 Host Controller */
 #define	PCI_PRODUCT_ASMEDIA_ASM1083	0x1080		/* ASM1083/1085 PCIe-PCI Bridge */
