@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.60 2023/10/14 19:36:17 ad Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.61 2023/10/14 19:37:24 ad Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -111,7 +111,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */
-__RCSID("$NetBSD: jemalloc.c,v 1.60 2023/10/14 19:36:17 ad Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.61 2023/10/14 19:37:24 ad Exp $");
 
 #include "namespace.h"
 #include <sys/mman.h>
@@ -1685,8 +1685,8 @@ arena_run_reg_dalloc(arena_run_t *run, arena_bin_t *bin, void *ptr, size_t size)
 			 */
 			regind = (unsigned)(diff / size);
 		}
-	} else if (size <= ((sizeof(size_invs) / sizeof(unsigned))
-	    << QUANTUM_2POW_MIN) + 2) {
+	} else if (size <= (((sizeof(size_invs) / sizeof(unsigned)) + 2)
+	    << QUANTUM_2POW_MIN)) {
 		regind = size_invs[(size >> QUANTUM_2POW_MIN) - 3] * diff;
 		regind >>= SIZE_INV_SHIFT;
 	} else {
