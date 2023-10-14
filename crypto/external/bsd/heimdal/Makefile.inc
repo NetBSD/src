@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6.6.1 2023/08/11 13:39:44 martin Exp $
+# $NetBSD: Makefile.inc,v 1.6.6.2 2023/10/14 06:56:35 martin Exp $
 
 HEIMBASE?=	${NETBSDSRCDIR}/crypto/external/bsd/heimdal
 HEIMDIST=	${HEIMBASE}/dist
@@ -22,8 +22,10 @@ DPLIBROKEN=	roken ${HEIMBASE}/lib/libroken
 DPLIBSL=	sl ${HEIMBASE}/lib/libsl
 DPLIBVERS=	vers ${HEIMBASE}/lib/libvers
 DPLIBWIND=	wind ${HEIMBASE}/lib/libwind
-KRB5LDADD=	-lsqlite3 -lcrypto -lcrypt -lm
-KRB5DPADD=	${LIBSQLITE3} ${LIBCRYPTO} ${LIBCRYPT} ${LIBM}
+KRB5LDADD=	-lcrypto -lcrypt
+KRB5DPADD=	${LIBCRYPTO} ${LIBCRYPT}
+HDBLDADD=	-lsqlite3 -lm
+HDBDPADD=	${LIBSQLITE3} ${LIBM}
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=     cd ${HEIMBASE}/lib/libcom_err/compile_et && ${PRINTOBJDIR}

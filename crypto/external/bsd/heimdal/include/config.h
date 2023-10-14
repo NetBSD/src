@@ -754,7 +754,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_SA_FAMILY_T 1
 
 /* Define if you want support for cache in sqlite. */
-#define HAVE_SCC 1
+/* #undef HAVE_SCC */
 
 /* Define to 1 if you have the <search.h> header file. */
 #define HAVE_SEARCH_H 1
