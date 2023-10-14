@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.59 2023/10/14 06:29:10 mrg Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.60 2023/10/14 19:36:17 ad Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -111,7 +111,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */
-__RCSID("$NetBSD: jemalloc.c,v 1.59 2023/10/14 06:29:10 mrg Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.60 2023/10/14 19:36:17 ad Exp $");
 
 #include "namespace.h"
 #include <sys/mman.h>
@@ -174,10 +174,10 @@ static inline int
 ptrcmp(const void *pa, const void *pb)
 {
 #ifdef _LP64
-	const intptr_t a = (intptr_t)pa, b = (intptr_t)pb;
-	const intptr_t diff = a - b;
+	const uintptr_t a = (uintptr_t)pa, b = (uintptr_t)pb;
+	const uintptr_t diff = a - b;
 	assert(((a | b) & 1) == 0);
-	return (int)(diff >> 32) | ((int)diff >> 1);
+	return (int)(diff >> 32) | ((unsigned)diff >> 1);
 #else
 	return (intptr_t)pa - (intptr_t)pb;
 #endif
