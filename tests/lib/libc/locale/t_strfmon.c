@@ -1,7 +1,8 @@
-/* $NetBSD: t_strfmon.c,v 1.4 2023/09/28 13:31:11 christos Exp $ */
+/* $NetBSD: t_strfmon.c,v 1.5 2023/10/14 20:19:31 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
+ * Copyright (C) 2018 Conrad Meyer <cem@FreeBSD.org>
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strfmon.c,v 1.4 2023/09/28 13:31:11 christos Exp $");
+__RCSID("$NetBSD: t_strfmon.c,v 1.5 2023/10/14 20:19:31 christos Exp $");
 
 #include <atf-c.h>
+#include <stdio.h>
 #include <locale.h>
 #include <monetary.h>
 
@@ -83,11 +85,215 @@ ATF_TC_BODY(strfmon_pad, tc)
     ATF_REQUIRE_STREQ(string, "[ $123.45] [ $123.45]"); 
 }
 
+ATF_TC(strfmon_locale_thousands);
+
+ATF_TC_HEAD(strfmon_locale_thousands, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks strfmon locale thousands separator");
+}
+
+ATF_TC_BODY(strfmon_locale_thousands, tc)
+{
+	char actual[40], expected[40];
+	struct lconv *lc;
+	const char *ts;
+	double n;
+
+	setlocale(LC_MONETARY, "sv_SE.UTF-8");
+
+	lc = localeconv();
+
+	ts = lc->mon_thousands_sep;
+	if (strlen(ts) == 0)
+		ts = lc->thousands_sep;
+
+	if (strlen(ts) < 2)
+		atf_tc_skip("multi-byte thousands-separator not found");
+
+	n = 1234.56;
+	strfmon(actual, sizeof(actual) - 1, "%i", n);
+
+	strcpy(expected, "1");
+	strlcat(expected, ts, sizeof(expected));
+	strlcat(expected, "234", sizeof(expected));
+
+	/* We're just testing the thousands separator, not all of strfmon. */
+	actual[strlen(expected)] = '\0';
+	ATF_CHECK_STREQ(expected, actual);
+}
+
+ATF_TC(strfmon_examples);
+ATF_TC_HEAD(strfmon_examples, tc) {
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks strfmon field formats");
+}
+
+ATF_TC_BODY(strfmon_examples, tc)
+{
+	const struct {
+		const char *format;
+		const char *expected;
+	} tests[] = {
+	    { "%n", "[$123.45] [-$123.45] [$3,456.78]" },
+	    { "%11n", "[    $123.45] [   -$123.45] [  $3,456.78]" },
+	    { "%#5n", "[ $   123.45] [-$   123.45] [ $ 3,456.78]" },
+	    { "%=*#5n", "[ $***123.45] [-$***123.45] [ $*3,456.78]" },
+	    { "%=0#5n", "[ $000123.45] [-$000123.45] [ $03,456.78]" },
+	    { "%^#5n", "[ $  123.45] [-$  123.45] [ $ 3456.78]" },
+	    { "%^#5.0n", "[ $  123] [-$  123] [ $ 3457]" },
+	    { "%^#5.4n", "[ $  123.4500] [-$  123.4500] [ $ 3456.7810]" },
+	    { "%(#5n", "[ $   123.45 ] [($   123.45)] [ $ 3,456.78 ]" },
+	    { "%!(#5n", "[    123.45 ] [(   123.45)] [  3,456.78 ]" },
+	    { "%-14#5.4n", "[ $   123.4500 ] [-$   123.4500 ] [ $ 3,456.7810 ]" },
+	    { "%14#5.4n", "[  $   123.4500] [ -$   123.4500] [  $ 3,456.7810]" },
+	};
+	size_t i;
+	char actual[100], format[50];
+
+	if (setlocale(LC_MONETARY, "en_US.UTF-8") == NULL)
+		atf_tc_skip("unable to setlocale()");
+
+	for (i = 0; i < __arraycount(tests); ++i) {
+		snprintf(format, sizeof(format), "[%s] [%s] [%s]",
+		    tests[i].format, tests[i].format, tests[i].format);
+		strfmon(actual, sizeof(actual) - 1,
+		    fmtcheck(format, "%n %n %n"),
+		    123.45, -123.45, 3456.781);
+		ATF_CHECK_STREQ_MSG(tests[i].expected, actual,
+		    "[%s]", tests[i].format);
+	}
+}
+
+ATF_TC(strfmon_cs_precedes_0);
+
+ATF_TC_HEAD(strfmon_cs_precedes_0, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "sep_by_space x sign_posn when cs_precedes = 0");
+}
+
+ATF_TC_BODY(strfmon_cs_precedes_0, tc)
+{
+	const struct {
+		const char *expected;
+	} tests[] = {
+	    /* sep_by_space x sign_posn */
+	    { "[(123.00$)] [-123.00$] [123.00$-] [123.00-$] [123.00$-]" },
+	    { "[(123.00 $)] [-123.00 $] [123.00 $-] [123.00 -$] [123.00 $-]" },
+	    { "[(123.00$)] [- 123.00$] [123.00$ -] [123.00- $] [123.00$ -]" },
+	};
+	size_t i, j;
+	struct lconv *lc;
+	char actual[100], buf[100];
+
+	if (setlocale(LC_MONETARY, "en_US.UTF-8") == NULL)
+		atf_tc_skip("unable to setlocale()");
+
+	lc = localeconv();
+	lc->n_cs_precedes = 0;
+
+	for (i = 0; i < __arraycount(tests); ++i) {
+		actual[0] = '\0';
+		lc->n_sep_by_space = i;
+
+		for (j = 0; j < 5; ++j) {
+			lc->n_sign_posn = j;
+
+			strfmon(buf, sizeof(buf) - 1, "[%n] ", -123.0);
+			strlcat(actual, buf, sizeof(actual));
+		}
+
+		actual[strlen(actual) - 1] = '\0';
+		ATF_CHECK_STREQ_MSG(tests[i].expected, actual,
+		    "sep_by_space = %zu", i);
+	}
+}
+
+ATF_TC(strfmon_cs_precedes_1);
+
+ATF_TC_HEAD(strfmon_cs_precedes_1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "sep_by_space x sign_posn when cs_precedes = 1");
+}
+
+ATF_TC_BODY(strfmon_cs_precedes_1, tc)
+{
+	const struct {
+		const char *expected;
+	} tests[] = {
+	    /* sep_by_space x sign_posn */
+	    { "[($123.00)] [-$123.00] [$123.00-] [-$123.00] [$-123.00]" },
+	    { "[($ 123.00)] [-$ 123.00] [$ 123.00-] [-$ 123.00] [$- 123.00]" },
+	    { "[($123.00)] [- $123.00] [$123.00 -] [- $123.00] [$ -123.00]" },
+	};
+	size_t i, j;
+	struct lconv *lc;
+	char actual[100], buf[100];
+
+	if (setlocale(LC_MONETARY, "en_US.UTF-8") == NULL)
+		atf_tc_skip("unable to setlocale()");
+
+	lc = localeconv();
+	lc->n_cs_precedes = 1;
+
+	for (i = 0; i < __arraycount(tests); ++i) {
+		actual[0] = '\0';
+		lc->n_sep_by_space = i;
+
+		for (j = 0; j < 5; ++j) {
+			lc->n_sign_posn = j;
+
+			strfmon(buf, sizeof(buf) - 1, "[%n] ", -123.0);
+			strlcat(actual, buf, sizeof(actual));
+		}
+
+		actual[strlen(actual) - 1] = '\0';
+		ATF_CHECK_STREQ_MSG(tests[i].expected, actual,
+		    "sep_by_space = %zu", i);
+	}
+}
+
+ATF_TC(strfmon_international_currency_code);
+ATF_TC_HEAD(strfmon_international_currency_code, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "checks strfmon international currency code");
+}
+
+ATF_TC_BODY(strfmon_international_currency_code, tc)
+{
+	const struct {
+		const char *locale;
+		const char *expected;
+	} tests[] = {
+	    { "en_US.UTF-8", "[USD123.45]" },
+	    { "de_DE.UTF-8", "[123,45 EUR]" },
+	    { "C", "[123.45]" },
+	};
+	size_t i;
+	char actual[100];
+
+	for (i = 0; i < __arraycount(tests); ++i) {
+		if (setlocale(LC_MONETARY, tests[i].locale) == NULL)
+			atf_tc_skip("unable to setlocale()");
+
+		strfmon(actual, sizeof(actual) - 1, "[%i]", 123.45);
+		ATF_CHECK_STREQ(tests[i].expected, actual);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, strfmon_locale);
 	ATF_TP_ADD_TC(tp, strfmon_pad);
+	ATF_TP_ADD_TC(tp, strfmon_locale_thousands);
+	ATF_TP_ADD_TC(tp, strfmon_examples);
+	ATF_TP_ADD_TC(tp, strfmon_cs_precedes_0);
+	ATF_TP_ADD_TC(tp, strfmon_cs_precedes_1);
+	ATF_TP_ADD_TC(tp, strfmon_international_currency_code);
 
 	return atf_no_error();
 }
