@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.72 2022/10/29 13:10:25 jmcneill Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.72.2.1 2023/10/14 06:52:15 martin Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -381,7 +381,6 @@ initarm(void *arg)
 	 * 0xa0000000 - 0xa3ffffff    SDRAM Bank 0 (64MB or 128MB)
 	 * 0xc0000000 - 0xc3ffffff    KERNEL_BASE
 	 */
-	extern vaddr_t xscale_cache_clean_addr;
 	xscale_cache_clean_addr = 0xff000000U;
 
 	cpu_reset_address = NULL;

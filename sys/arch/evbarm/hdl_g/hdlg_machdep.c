@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_machdep.c,v 1.33 2022/01/04 10:38:04 skrll Exp $	*/
+/*	$NetBSD: hdlg_machdep.c,v 1.33.4.1 2023/10/14 06:52:17 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.33 2022/01/04 10:38:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.33.4.1 2023/10/14 06:52:17 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -227,8 +227,6 @@ hardclock_hook(void)
 vaddr_t
 initarm(void *arg)
 {
-	extern vaddr_t xscale_cache_clean_addr;
-	extern vsize_t xscale_minidata_clean_size;
 	int loop;
 	int loop1;
 	u_int l1pagetable;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.30 2021/08/17 22:00:29 andvar Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.30.4.1 2023/10/14 06:52:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.30 2021/08/17 22:00:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.30.4.1 2023/10/14 06:52:16 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -236,10 +236,6 @@ read_ttb(void)
 vaddr_t
 init_pxa2x0(int argc, char **argv, struct bootinfo *bi)
 {
-#ifdef DIAGNOSTIC
-	extern vsize_t xscale_minidata_clean_size; /* used in KASSERT */
-#endif
-	extern vaddr_t xscale_cache_clean_addr;
 	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
 	vaddr_t freemempos;
