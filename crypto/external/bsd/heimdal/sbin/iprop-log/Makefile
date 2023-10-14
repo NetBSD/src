@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.56.1 2023/08/11 13:40:09 martin Exp $
+# $NetBSD: Makefile,v 1.2.56.2 2023/10/14 06:56:34 martin Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -17,5 +17,5 @@ PROGDPLIBS += ${DPLIBKADM5SRV} ${DPLIBHDB} ${DPLIBSL}
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
 
-LDADD+= -ledit -lterminfo ${KRB5LDADD}
-DPADD+= ${LIBEDIT} ${LIBTERMINFO} ${KRB5DPADD}
+LDADD+= -ledit -lterminfo ${KRB5LDADD} ${HDBLDADD}
+DPADD+= ${LIBEDIT} ${LIBTERMINFO} ${KRB5DPADD} ${HDBDPADD}

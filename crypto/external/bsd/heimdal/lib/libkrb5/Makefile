@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11.22.1 2023/08/11 13:40:07 martin Exp $
+# $NetBSD: Makefile,v 1.11.22.2 2023/10/14 06:56:34 martin Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -23,7 +23,6 @@ LIBDPLIBS+=	\
 	roken		${HEIMBASE}/lib/libroken	\
 	wind		${HEIMBASE}/lib/libwind		\
 	heimbase	${HEIMBASE}/lib/libheimbase	\
-	sqlite3		${NETBSDSRCDIR}/external/public-domain/sqlite/lib \
 	crypt		${NETBSDSRCDIR}/lib/libcrypt
 
 HEIMSRCS= krb_err.et krb5_err.et heim_err.et k524_err.et
