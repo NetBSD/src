@@ -1,4 +1,4 @@
-/*	$NetBSD: npwr_fc_machdep.c,v 1.29 2021/08/17 22:00:29 andvar Exp $	*/
+/*	$NetBSD: npwr_fc_machdep.c,v 1.29.4.1 2023/10/14 06:52:17 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npwr_fc_machdep.c,v 1.29 2021/08/17 22:00:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npwr_fc_machdep.c,v 1.29.4.1 2023/10/14 06:52:17 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -344,10 +344,6 @@ static const struct pmap_devmap iq80321_devmap[] = {
 vaddr_t
 initarm(void *arg)
 {
-	extern vaddr_t xscale_cache_clean_addr;
-#ifdef DIAGNOSTIC
-	extern vsize_t xscale_minidata_clean_size;
-#endif
 	int loop;
 	int loop1;
 	u_int l1pagetable;

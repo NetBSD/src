@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.33 2021/08/17 22:00:29 andvar Exp $ */
+/*	$NetBSD: viper_machdep.c,v 1.33.4.1 2023/10/14 06:52:17 martin Exp $ */
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.33 2021/08/17 22:00:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.33.4.1 2023/10/14 06:52:17 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -381,13 +381,9 @@ static const struct pmap_devmap viper_devmap[] = {
 vaddr_t
 initarm(void *arg)
 {
-	extern vaddr_t xscale_cache_clean_addr;
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-#ifdef DIAGNOSTIC
-	extern vsize_t xscale_minidata_clean_size; /* used in KASSERT */
-#endif
 
 	/* Register devmap for devices we mapped in start */
 	pmap_devmap_register(viper_devmap);

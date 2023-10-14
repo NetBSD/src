@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.46 2021/08/17 22:00:28 andvar Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.46.4.1 2023/10/14 06:52:18 martin Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.46 2021/08/17 22:00:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.46.4.1 2023/10/14 06:52:18 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -370,10 +370,6 @@ static const struct pmap_devmap ixp425_devmap[] = {
 vaddr_t
 initarm(void *arg)
 {
-	extern vaddr_t xscale_cache_clean_addr;
-#ifdef DIAGNOSTIC
-	extern vsize_t xscale_minidata_clean_size;
-#endif
 	int loop;
 	int loop1;
 	u_int kerneldatasize;
