@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.24.4.1 2022/12/21 09:36:42 martin Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.24.4.2 2023/10/14 06:59:43 martin Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.24.4.1 2022/12/21 09:36:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.24.4.2 2023/10/14 06:59:43 martin Exp $");
 
 #include <sys/types.h>
 
@@ -838,10 +838,7 @@ rge_stop(struct ifnet *ifp, int disable)
 	struct rge_softc *sc = ifp->if_softc;
 	int i;
 
-	if (disable) {
-		callout_halt(&sc->sc_timeout, NULL);
-	} else
-		callout_stop(&sc->sc_timeout);
+	callout_halt(&sc->sc_timeout, NULL);
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
