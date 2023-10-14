@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.138 2023/10/13 18:57:25 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.139 2023/10/14 07:07:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12424,4 +12424,88 @@ sys/dev/pci/ixgbe/ixv.c				1.187-1.189
         - Enable interrupt after setting IFF_RUNNING.
         - Cleanup the code.
 	[msaitoh, ticket #407]
+
+share/man/man4/agr.4				1.10-1.12
+
+	agr(4): mark the driver as obsolete.
+	[yamaguchi, ticket #408]
+
+sys/arch/evbarm/conf/GENERIC64			1.214
+sys/dev/pci/if_ixl.c				1.90-1.93
+
+	ixl(4):
+	- move link status updates to workqueue.
+	- print device info on attach
+	- add to aarch64 GENERIC kernel
+	[yamaguchi, ticket #409]
+
+sys/dev/pci/igc/if_igc.c			1.4-1.6
+
+	igc(4):
+	- fix half duplex setting.
+	- fix clang build
+	- enable interrupt after everything is set up
+	[rin, ticket #410]
+
+sys/arch/arm/arm32/pmap.c			1.440
+sys/arch/arm/include/arm32/pmap.h		1.177
+sys/arch/evbarm/adi_brh/brh_machdep.c		1.53
+sys/arch/evbarm/g42xxeb/g42xxeb_machdep.c	1.41
+sys/arch/evbarm/gumstix/gumstix_machdep.c	1.75
+sys/arch/evbarm/hdl_g/hdlg_machdep.c		1.35
+sys/arch/evbarm/iq80310/iq80310_machdep.c	1.96
+sys/arch/evbarm/iq80321/iq80321_machdep.c	1.66
+sys/arch/evbarm/ixdp425/ixdp425_machdep.c	1.47
+sys/arch/evbarm/iyonix/iyonix_machdep.c		1.5
+sys/arch/evbarm/lubbock/lubbock_machdep.c	1.45
+sys/arch/evbarm/npwr_fc/npwr_fc_machdep.c	1.30
+sys/arch/evbarm/nslu2/nslu2_machdep.c		1.41
+sys/arch/evbarm/viper/viper_machdep.c		1.34
+sys/arch/hpcarm/hpcarm/pxa2x0_hpc_machdep.c	1.33
+sys/arch/iyonix/iyonix/iyonix_machdep.c		1.34
+sys/arch/zaurus/zaurus/machdep.c		1.52
+
+	Fix non-DIAGNOSTIC builds.
+	[skrll, ticket #411]
+
+crypto/external/bsd/heimdal/Makefile.inc	1.9-1.11
+crypto/external/bsd/heimdal/include/config.h	1.12
+crypto/external/bsd/heimdal/lib/libhdb/Makefile	1.6
+crypto/external/bsd/heimdal/lib/libkrb5/Makefile 1.16
+crypto/external/bsd/heimdal/libexec/digest-service/Makefile 1.6
+crypto/external/bsd/heimdal/libexec/hpropd/Makefile 1.6
+crypto/external/bsd/heimdal/libexec/ipropd-master/Makefile 1.6
+crypto/external/bsd/heimdal/libexec/ipropd-slave/Makefile 1.6
+crypto/external/bsd/heimdal/libexec/kadmind/Makefile 1.8
+crypto/external/bsd/heimdal/libexec/kpasswdd/Makefile 1.6
+crypto/external/bsd/heimdal/sbin/hprop/Makefile	1.6
+crypto/external/bsd/heimdal/sbin/iprop-log/Makefile 1.6
+crypto/external/bsd/heimdal/sbin/kadmin/Makefile 1.7
+crypto/external/bsd/heimdal/sbin/kdc/Makefile	1.6
+crypto/external/bsd/heimdal/sbin/kstash/Makefile 1.6
+share/mk/bsd.prog.mk				1.346,1.347
+
+	heimdal: Disable sqlite3 credential cache (SCC).
+	[riastradh, ticket #412]
+
+sys/dev/usb/if_ure.c				1.59
+
+	ure(4): fix multicast filter hash for promisc mode.
+	[riastradh, ticket #413]
+
+sys/dev/pci/if_rge.c				1.27
+
+	rge(4): correctly halt periodic timer on interface down.
+	[riastradh, ticket #414]
+
+sys/dev/usb/usbnet.c				1.115-1.118
+
+	usbnet(9): PR 57645: fix management of interface flags changes.
+	[riastradh, ticket #415]
+
+sys/dev/usb/if_urndis.c				1.49
+
+	urndis(4): PR 55273: handle devices which do not provide a
+	CDC union descriptor.
+	[abs, ticket #416]
 
