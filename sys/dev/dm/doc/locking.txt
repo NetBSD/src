@@ -214,7 +214,7 @@ dm_table_unbusy(dm_table_head_t *head)
         mutex_exit(&head->table_mtx);
 }
 
-Device-mapper betwwen ioctl device synchronisation 
+Device-mapper between ioctl device synchronisation 
 
 
 Every ioctl user have to find dm_device with name, uuid, minor number. 
