@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2022/03/28 12:38:57 riastradh Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2023/10/14 08:05:25 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2022/03/28 12:38:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2023/10/14 08:05:25 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ matchname(const char *fp, const char *sp)
 /*
  * use config_search_ia to find appropriate device, then call that device
  * directly with NULL device variable storage.  A device can then
- * always tell the difference betwean the real and console init
+ * always tell the difference between the real and console init
  * by checking for NULL.
  */
 int
