@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.173 2022/05/30 09:56:03 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.174 2023/10/14 15:31:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -133,16 +133,10 @@ ASLOCAL(tmpstk)
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
  */
-#ifdef __STDC__
 #define	IMMEDIATE		#
 #define	_RELOC(var, ar)			\
 	movel	IMMEDIATE var,ar;	\
 	addl	%a5,ar
-#else
-#define	_RELOC(var, ar)			\
-	movel	#var,ar;		\
-	addl	%a5,ar
-#endif /* __STDC__ */
 
 #define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
 #define	ASRELOC(var, ar)	_RELOC(_ASM_LABEL(var), ar)
@@ -176,11 +170,7 @@ ASENTRY_NOPROFILE(start)
 	ASRELOC(tmpstk, %a0)
 	movl	%a0,%sp			| give ourselves a temporary stack
 	RELOC(esym, %a0)
-#if 1
 	movl	%a4,%a0@		| store end of symbol table
-#else
-	clrl	%a0@			| no symbol table, yet
-#endif
 	RELOC(lowram, %a0)
 	movl	%a5,%a0@		| store start of physical memory
 	movl	#CACHE_OFF,%d0
@@ -388,13 +378,8 @@ Lstart1:
 	 *	vectab+12	address error
 	 */
 	RELOC(cputype, %a0)
-#if 0
-	/* XXX assembler/linker feature/bug */
-	RELOC(vectab, %a2)
-#else
 	movl	#_C_LABEL(vectab),%a2
 	addl	%a5,%a2
-#endif
 #if defined(M68040)
 	cmpl	#CPU_68040,%a0@		| 68040?
 	jne	1f			| no, skip
