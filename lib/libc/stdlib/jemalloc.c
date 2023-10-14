@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.58 2023/10/13 20:57:30 ad Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.59 2023/10/14 06:29:10 mrg Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -111,7 +111,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */
-__RCSID("$NetBSD: jemalloc.c,v 1.58 2023/10/13 20:57:30 ad Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.59 2023/10/14 06:29:10 mrg Exp $");
 
 #include "namespace.h"
 #include <sys/mman.h>
@@ -179,7 +179,7 @@ ptrcmp(const void *pa, const void *pb)
 	assert(((a | b) & 1) == 0);
 	return (int)(diff >> 32) | ((int)diff >> 1);
 #else
-	return (intptr_t)a - (intptr_t)b;
+	return (intptr_t)pa - (intptr_t)pb;
 #endif
 }
 
