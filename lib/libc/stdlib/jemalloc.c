@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.62 2023/10/14 19:38:51 ad Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.63 2023/10/14 19:39:33 ad Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -111,7 +111,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */
-__RCSID("$NetBSD: jemalloc.c,v 1.62 2023/10/14 19:38:51 ad Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.63 2023/10/14 19:39:33 ad Exp $");
 
 #include "namespace.h"
 #include <sys/mman.h>
@@ -3699,7 +3699,7 @@ calloc(size_t num, size_t size)
 	ret = icalloc(num_size);
 
 RETURN:
-	if (ret == NULL) {
+	if (__predict_false(ret == NULL)) {
 		if (OPT(xmalloc)) {
 			_malloc_message(getprogname(),
 			    ": (malloc) Error in calloc(): out of memory\n", "",
@@ -3734,7 +3734,7 @@ realloc(void *ptr, size_t size)
 
 		ret = iralloc(ptr, size);
 
-		if (ret == NULL) {
+		if (__predict_false(ret == NULL)) {
 			if (OPT(xmalloc)) {
 				_malloc_message(getprogname(),
 				    ": (malloc) Error in realloc(): out of "
@@ -3749,7 +3749,7 @@ realloc(void *ptr, size_t size)
 		else
 			ret = imalloc(size);
 
-		if (ret == NULL) {
+		if (__predict_false(ret == NULL)) {
 			if (OPT(xmalloc)) {
 				_malloc_message(getprogname(),
 				    ": (malloc) Error in realloc(): out of "
@@ -3770,7 +3770,7 @@ free(void *ptr)
 {
 
 	UTRACE(ptr, 0, 0);
-	if (ptr != NULL) {
+	if (__predict_true(ptr != NULL)) {
 		assert(malloc_initialized);
 
 		idalloc(ptr);
