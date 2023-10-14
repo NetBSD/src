@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.47.4.1 2023/02/17 17:36:26 martin Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.47.4.2 2023/10/14 07:05:39 martin Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.47.4.1 2023/02/17 17:36:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.47.4.2 2023/10/14 07:05:39 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -901,8 +901,9 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	struct usbd_interface		*iface_ctl;
 	const usb_cdc_union_descriptor_t *ud;
 	const usb_cdc_header_descriptor_t *desc;
+	const usb_interface_assoc_descriptor_t *ad;
 	usbd_desc_iter_t		 iter;
-	int				 if_ctl, if_data;
+	int				 if_ctl, if_data, if_data_ia;
 	int				 i, j, altcnt;
 	void				*buf;
 	size_t				 bufsz;
@@ -934,10 +935,23 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	if_ctl = id->bInterfaceNumber;
 	sc->sc_ifaceno_ctl = if_ctl;
 	if_data = -1;
+	if_data_ia = -1;
 
+	/*
+	 * Use a matching Interface Association Descriptor
+	 * as a fallback if no CDC Union Descriptor is found.
+	 */
 	usb_desc_iter_init(un->un_udev, &iter);
 	while ((desc = (const void *)usb_desc_iter_next(&iter)) != NULL) {
-
+		if (desc->bDescriptorType == UDESC_INTERFACE_ASSOC) {
+			if (desc->bLength < sizeof(*ad))
+				continue;
+			ad = (const usb_interface_assoc_descriptor_t *)desc;
+			if (ad->bFirstInterface == if_ctl &&
+			    ad->bInterfaceCount > 1)
+				if_data_ia = if_ctl + 1;
+			continue;
+		}
 		if (desc->bDescriptorType != UDESC_CS_INTERFACE) {
 			continue;
 		}
@@ -950,6 +964,8 @@ urndis_attach(device_t parent, device_t self, void *aux)
 			break;
 		}
 	}
+	if (if_data == -1 && if_data_ia != -1)
+		if_data = if_data_ia;
 
 	if (if_data == -1) {
 		DPRINTF(("urndis_attach: no union interface\n"));
