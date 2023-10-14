@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.113 2022/09/22 07:02:21 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.113.4.1 2023/10/14 07:03:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.113 2022/09/22 07:02:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.113.4.1 2023/10/14 07:03:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -867,6 +867,8 @@ usbnet_init_rx_tx(struct usbnet * const un)
 	 */
 	if (un->un_ops->uno_mcast) {
 		mutex_enter(&unp->unp_mcastlock);
+		KASSERTMSG(!unp->unp_mcastactive, "%s", ifp->if_xname);
+		unp->unp_if_flags = ifp->if_flags;
 		(*un->un_ops->uno_mcast)(ifp);
 		unp->unp_mcastactive = true;
 		mutex_exit(&unp->unp_mcastlock);
@@ -1000,6 +1002,13 @@ usbnet_media_upd(struct ifnet *ifp)
 
 /* ioctl */
 
+/*
+ * usbnet_ifflags_cb(ec)
+ *
+ *	Called by if_ethersubr when interface flags change
+ *	(SIOCSIFFLAGS), or ethernet capabilities change
+ *	(SIOCSETHERCAP), on a running interface.
+ */
 static int
 usbnet_ifflags_cb(struct ethercom *ec)
 {
@@ -1007,34 +1016,43 @@ usbnet_ifflags_cb(struct ethercom *ec)
 	struct ifnet *ifp = &ec->ec_if;
 	struct usbnet *un = ifp->if_softc;
 	struct usbnet_private * const unp = un->un_pri;
-	int rv = 0;
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
 	const u_short changed = ifp->if_flags ^ unp->unp_if_flags;
-	if ((changed & ~(IFF_CANTCHANGE | IFF_DEBUG)) == 0) {
-		mutex_enter(&unp->unp_mcastlock);
-		unp->unp_if_flags = ifp->if_flags;
-		mutex_exit(&unp->unp_mcastlock);
-		/*
-		 * XXX Can we just do uno_mcast synchronously here
-		 * instead of resetting the whole interface?
-		 *
-		 * Not yet, because some usbnet drivers (e.g., aue(4))
-		 * initialize the hardware differently in uno_init
-		 * depending on IFF_PROMISC.  But some (again, aue(4))
-		 * _also_ need to know whether IFF_PROMISC is set in
-		 * uno_mcast and do something different with it there.
-		 * Maybe the logic can be unified, but it will require
-		 * an audit and testing of all the usbnet drivers.
-		 */
-		if (changed & IFF_PROMISC)
-			rv = ENETRESET;
-	} else {
-		rv = ENETRESET;
-	}
 
-	return rv;
+	/*
+	 * If any user-settable flags have changed other than
+	 * IFF_DEBUG, just reset the interface.
+	 */
+	if ((changed & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
+		return ENETRESET;
+
+	/*
+	 * Otherwise, cache the flags change so we can read the flags
+	 * under unp_mcastlock for multicast updates in SIOCADDMULTI or
+	 * SIOCDELMULTI without IFNET_LOCK.
+	 */
+	mutex_enter(&unp->unp_mcastlock);
+	unp->unp_if_flags = ifp->if_flags;
+	mutex_exit(&unp->unp_mcastlock);
+
+	/*
+	 * If we're switching on or off promiscuous mode, reprogram the
+	 * hardware multicast filter now.
+	 *
+	 * XXX Actually, reset the interface, because some usbnet
+	 * drivers (e.g., aue(4)) initialize the hardware differently
+	 * in uno_init depending on IFF_PROMISC.  But some (again,
+	 * aue(4)) _also_ need to know whether IFF_PROMISC is set in
+	 * uno_mcast and do something different with it there.  Maybe
+	 * the logic can be unified, but it will require an audit and
+	 * testing of all the usbnet drivers.
+	 */
+	if (changed & IFF_PROMISC)
+		return ENETRESET;
+
+	return 0;
 }
 
 bool
@@ -1112,6 +1130,7 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
+	KASSERTMSG(ifp->if_flags & IFF_RUNNING, "%s", ifp->if_xname);
 
 	/*
 	 * For drivers with hardware multicast filter update callbacks:
@@ -1120,7 +1139,9 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	 */
 	if (un->un_ops->uno_mcast) {
 		mutex_enter(&unp->unp_mcastlock);
+		KASSERTMSG(unp->unp_mcastactive, "%p", ifp->if_xname);
 		unp->unp_mcastactive = false;
+		unp->unp_if_flags = 0;
 		mutex_exit(&unp->unp_mcastlock);
 	}
 
@@ -1300,14 +1321,17 @@ usbnet_if_init(struct ifnet *ifp)
 		return EIO;
 
 	/*
-	 * If we're already running, nothing to do.
+	 * If we're already running, stop the interface first -- we're
+	 * reinitializing it.
 	 *
-	 * XXX This should be an assertion, but it may require some
-	 * analysis -- and possibly some tweaking -- of sys/net to
-	 * ensure.
+	 * XXX Grody for sys/net to call if_init to reinitialize.  This
+	 * should be an assertion, not a branch, but it will require
+	 * some tweaking of sys/net to avoid.  See also the comment in
+	 * usbnet_ifflags_cb about if_init vs uno_mcast on reinitalize.
 	 */
 	if (ifp->if_flags & IFF_RUNNING)
-		return 0;
+		usbnet_stop(un, ifp, /*disable*/1/*XXX???*/);
+	KASSERTMSG((ifp->if_flags & IFF_RUNNING) == 0, "%s", ifp->if_xname);
 
 	error = uno_init(un, ifp);
 	if (error)
