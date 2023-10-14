@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.61 2023/10/14 19:37:24 ad Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.62 2023/10/14 19:38:51 ad Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -111,7 +111,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */
-__RCSID("$NetBSD: jemalloc.c,v 1.61 2023/10/14 19:37:24 ad Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.62 2023/10/14 19:38:51 ad Exp $");
 
 #include "namespace.h"
 #include <sys/mman.h>
@@ -3632,6 +3632,15 @@ posix_memalign(void **memptr, size_t alignment, size_t size)
 			goto RETURN;
 		}
 
+		if (size == 0) {
+			if (NOT_OPT(sysv))
+				size = 1;
+			else {
+				result = NULL;
+				ret = 0;
+				goto RETURN;
+			}
+		}
 		result = ipalloc(alignment, size);
 	}
 
