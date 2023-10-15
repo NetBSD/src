@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.229 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: lwp.h,v 1.230 2023/10/15 10:29:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -36,16 +36,17 @@
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/queue.h>
+
 #include <sys/callout.h>
+#include <sys/condvar.h>
 #include <sys/kcpuset.h>
 #include <sys/mutex.h>
-#include <sys/condvar.h>
-#include <sys/signalvar.h>
-#include <sys/sched.h>
-#include <sys/specificdata.h>
+#include <sys/queue.h>
 #include <sys/resource.h>
+#include <sys/sched.h>
+#include <sys/signalvar.h>
+#include <sys/specificdata.h>
+#include <sys/time.h>
 #include <sys/wchan.h>
 
 #if defined(_KERNEL)
