@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.75 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.76 2023/10/15 10:28:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -45,24 +45,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.75 2023/10/15 10:27:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.76 2023/10/15 10:28:48 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 
 #define	__RWLOCK_PRIVATE
 
 #include <sys/param.h>
+
+#include <sys/atomic.h>
+#include <sys/cpu.h>
+#include <sys/lock.h>
+#include <sys/lockdebug.h>
 #include <sys/proc.h>
+#include <sys/pserialize.h>
 #include <sys/rwlock.h>
 #include <sys/sched.h>
 #include <sys/sleepq.h>
-#include <sys/systm.h>
-#include <sys/lockdebug.h>
-#include <sys/cpu.h>
-#include <sys/atomic.h>
-#include <sys/lock.h>
-#include <sys/pserialize.h>
 #include <sys/syncobj.h>
+#include <sys/systm.h>
 
 #include <dev/lockstat.h>
 
