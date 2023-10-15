@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.17 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.18 2023/10/15 18:15:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.17 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.18 2023/10/15 18:15:20 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -237,7 +237,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQCreateLargeWriteDAG)
 	    rf_RegularPQFunc, RF_FALSE);
 }
 
-int
+void
 rf_RegularONQFunc(RF_DagNode_t *node)
 {
 	int     np = node->numParams;
@@ -279,7 +279,6 @@ rf_RegularONQFunc(RF_DagNode_t *node)
 	tracerec->q_us += RF_ETIMER_VAL_US(timer);
 	rf_GenericWakeupFunc(node, 0);	/* call wake func explicitly since no
 					 * I/O in this node */
-	return (0);
 }
 /*
    See the SimpleXORFunc for the difference between a simple and regular func.
@@ -301,7 +300,7 @@ rf_RegularONQFunc(RF_DagNode_t *node)
    raidPtr
 */
 
-int
+void
 rf_SimpleONQFunc(RF_DagNode_t *node)
 {
 	int     np = node->numParams;
@@ -341,7 +340,6 @@ rf_SimpleONQFunc(RF_DagNode_t *node)
 	tracerec->q_us += RF_ETIMER_VAL_US(timer);
 	rf_GenericWakeupFunc(node, 0);	/* call wake func explicitly since no
 					 * I/O in this node */
-	return (0);
 }
 RF_CREATE_DAG_FUNC_DECL(rf_PQCreateSmallWriteDAG)
 {
@@ -453,21 +451,20 @@ DegrQSubr(RF_DagNode_t *node)
    corrupt the input for the q calculation.
 */
 
-int
+void
 rf_RegularPQFunc(RF_DagNode_t *node)
 {
 	RegularQSubr(node, node->results[1]);
-	return (rf_RegularXorFunc(node));	/* does the wakeup */
+	rf_RegularXorFunc(node);	/* does the wakeup */
 }
 
-int
+void
 rf_RegularQFunc(RF_DagNode_t *node)
 {
 	/* Almost ... adjust Qsubr args */
 	RegularQSubr(node, node->results[0]);
 	rf_GenericWakeupFunc(node, 0);	/* call wake func explicitly since no
 					 * I/O in this node */
-	return (0);
 }
 /*
    Called by singly degraded write code to compute the new parity and the new q.
@@ -530,14 +527,14 @@ rf_Degraded_100_PQFunc(RF_DagNode_t *node)
  *
  *
  */
-int
+void
 rf_RecoveryQFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
 	RF_RaidLayout_t *layoutPtr = (RF_RaidLayout_t *) & raidPtr->Layout;
 	RF_PhysDiskAddr_t *failedPDA = (RF_PhysDiskAddr_t *) node->params[node->numParams - 2].p;
 	int     i;
-	RF_PhysDiskAddr_t *pda;
+	RF_PhysDiskAddr_t *pda = NULL;
 	RF_RaidAddr_t suoffset, failedSUOffset = rf_StripeUnitOffset(layoutPtr, failedPDA->startSector);
 	char   *srcbuf, *destbuf;
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
@@ -566,15 +563,15 @@ rf_RecoveryQFunc(RF_DagNode_t *node)
 	RF_ETIMER_EVAL(timer);
 	tracerec->q_us += RF_ETIMER_VAL_US(timer);
 	rf_GenericWakeupFunc(node, 0);
-	return (0);
 }
 
-int
+void
 rf_RecoveryPQFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
 	printf("raid%d: Recovery from PQ not implemented.\n",raidPtr->raidid);
-	return (1);
+	/* XXX: Was: */
+	/* return (1); */
 }
 /*
    Degraded write Q subroutine.
@@ -721,6 +718,7 @@ QDelta(
     unsigned length,
     unsigned char coeff)
 {
+#ifndef _KERNEL
 	unsigned long a, d, new;
 	unsigned long a1, a2;
 	unsigned int *q = &(rf_qfor[28 - coeff][0]);
@@ -728,7 +726,7 @@ QDelta(
 
 	r = a1 = a2 = new = d = a = 0; /* XXX for now... */
 	q = NULL; /* XXX for now */
-
+#endif
 #ifdef _KERNEL
 	/* PQ in kernel currently not supported because the encoding/decoding
 	 * table is not present */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.16 2021/08/07 16:19:15 thorpej Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.17 2023/10/15 18:15:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.16 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.17 2023/10/15 18:15:20 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.16 2021/08/07 16:19:15 thorpej Ex
 
 static void
 applyPDA(RF_Raid_t * raidPtr, RF_PhysDiskAddr_t * pda, RF_PhysDiskAddr_t * ppda,
-    RF_PhysDiskAddr_t * qpda, void *bp);
+    RF_PhysDiskAddr_t * qpda, const struct buf *bp);
 
 /*
    Two data drives have failed, and we are doing a read that covers one of them.
@@ -121,7 +121,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQ_DoubleDegRead)
 }
 
 static void
-applyPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda, RF_PhysDiskAddr_t *ppda, RF_PhysDiskAddr_t *qpda, void *bp)
+applyPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda, RF_PhysDiskAddr_t *ppda, RF_PhysDiskAddr_t *qpda, const struct buf *bp)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_RaidAddr_t s0off = rf_StripeUnitOffset(layoutPtr, ppda->startSector);
@@ -156,7 +156,8 @@ applyPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda, RF_PhysDiskAddr_t *ppda, RF
 			len = s0len + s0off - suoffset;
 
 		/* src, dest, len */
-		rf_bxor(buf, pbuf, rf_RaidAddressToByte(raidPtr, len), bp);
+		/* rf_bxor(buf, pbuf, rf_RaidAddressToByte(raidPtr, len), bp); */
+		rf_bxor(buf, pbuf, rf_RaidAddressToByte(raidPtr, len));
 
 		/* dest, src, len, coeff */
 		rf_IncQ((unsigned long *) qbuf, (unsigned long *) buf, rf_RaidAddressToByte(raidPtr, len), coeff);
@@ -182,7 +183,7 @@ applyPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda, RF_PhysDiskAddr_t *ppda, RF
 */
 
 
-int
+void
 rf_PQDoubleRecoveryFunc(RF_DagNode_t *node)
 {
 	int     np = node->numParams;
@@ -191,11 +192,11 @@ rf_PQDoubleRecoveryFunc(RF_DagNode_t *node)
 	RF_RaidLayout_t *layoutPtr = (RF_RaidLayout_t *) & (raidPtr->Layout);
 	int     d, i;
 	unsigned coeff;
-	RF_RaidAddr_t sosAddr, suoffset;
-	RF_SectorCount_t len, secPerSU = layoutPtr->sectorsPerStripeUnit;
+	RF_RaidAddr_t sosAddr; /* , suoffset; */
+	RF_SectorCount_t secPerSU = layoutPtr->sectorsPerStripeUnit;
 	int     two = 0;
-	RF_PhysDiskAddr_t *ppda, *ppda2, *qpda, *qpda2, *pda, npda;
-	char   *buf;
+	RF_PhysDiskAddr_t *ppda, *qpda, *pda, npda;
+	/* char   *buf; */
 	int     numDataCol = layoutPtr->numDataCol;
 	RF_Etimer_t timer;
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
@@ -206,9 +207,9 @@ rf_PQDoubleRecoveryFunc(RF_DagNode_t *node)
 	    (asmap->failedPDAs[1]->numSector + asmap->failedPDAs[0]->numSector < secPerSU)) {
 		RF_ASSERT(0);
 		ppda = node->params[np - 6].p;
-		ppda2 = node->params[np - 5].p;
+		/*		ppda2 = node->params[np - 5].p; */
 		qpda = node->params[np - 4].p;
-		qpda2 = node->params[np - 3].p;
+		/* 		qpda2 = node->params[np - 3].p; */
 		d = (np - 6);
 		two = 1;
 	} else {
@@ -219,9 +220,9 @@ rf_PQDoubleRecoveryFunc(RF_DagNode_t *node)
 
 	for (i = 0; i < d; i++) {
 		pda = node->params[i].p;
-		buf = pda->bufPtr;
-		suoffset = rf_StripeUnitOffset(layoutPtr, pda->startSector);
-		len = pda->numSector;
+		/* 		buf = pda->bufPtr; */
+		/* 		suoffset = rf_StripeUnitOffset(layoutPtr, pda->startSector); */
+		/* 		len = pda->numSector; */
 		coeff = rf_RaidAddressToStripeUnitID(layoutPtr, pda->raidAddress);
 		/* compute the data unit offset within the column */
 		coeff = (coeff % raidPtr->Layout.numDataCol);
@@ -245,9 +246,9 @@ rf_PQDoubleRecoveryFunc(RF_DagNode_t *node)
 		coeff = (coeff % raidPtr->Layout.numDataCol);
 		for (i = 0; i < numDataCol; i++) {
 			npda.raidAddress = sosAddr + (i * secPerSU);
-			(raidPtr->Layout.map->MapSector) (raidPtr, npda.raidAddress, &(npda.row), &(npda.col), &(npda.startSector), 0);
+			(raidPtr->Layout.map->MapSector) (raidPtr, npda.raidAddress, &(npda.col), &(npda.startSector), 0);
 			/* skip over dead disks */
-			if (RF_DEAD_DISK(raidPtr->Disks[npda.row][npda.col].status))
+			if (RF_DEAD_DISK(raidPtr->Disks[npda.col].status))
 				if (i != coeff)
 					break;
 		}
@@ -267,10 +268,9 @@ rf_PQDoubleRecoveryFunc(RF_DagNode_t *node)
 	if (tracerec)
 		tracerec->q_us += RF_ETIMER_VAL_US(timer);
 	rf_GenericWakeupFunc(node, 0);
-	return (0);
 }
 
-int
+void
 rf_PQWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 {
 	/* The situation:
@@ -327,9 +327,9 @@ rf_PQWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 	coeff = (coeff % raidPtr->Layout.numDataCol);
 	for (i = 0; i < numDataCol; i++) {
 		npda.raidAddress = sosAddr + (i * secPerSU);
-		(raidPtr->Layout.map->MapSector) (raidPtr, npda.raidAddress, &(npda.row), &(npda.col), &(npda.startSector), 0);
+		(raidPtr->Layout.map->MapSector) (raidPtr, npda.raidAddress, &(npda.col), &(npda.startSector), 0);
 		/* skip over dead disks */
-		if (RF_DEAD_DISK(raidPtr->Disks[npda.row][npda.col].status))
+		if (RF_DEAD_DISK(raidPtr->Disks[npda.col].status))
 			if (i != coeff)
 				break;
 	}
@@ -351,7 +351,8 @@ rf_PQWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 	RF_ASSERT(asmap->numStripeUnitsAccessed == 1);
 	/* dest, src, len, coeff */
 	rf_IncQ((unsigned long *) qpda->bufPtr, (unsigned long *) asmap->failedPDAs[0]->bufPtr, rf_RaidAddressToByte(raidPtr, qpda->numSector), coeff);
-	rf_bxor(asmap->failedPDAs[0]->bufPtr, ppda->bufPtr, rf_RaidAddressToByte(raidPtr, ppda->numSector), node->dagHdr->bp);
+	/* rf_bxor(asmap->failedPDAs[0]->bufPtr, ppda->bufPtr, rf_RaidAddressToByte(raidPtr, ppda->numSector), node->dagHdr->bp); */
+	rf_bxor(asmap->failedPDAs[0]->bufPtr, ppda->bufPtr, rf_RaidAddressToByte(raidPtr, ppda->numSector));
 
 	/* now apply all the recovery data */
 	for (i = 0; i < numDataCol - 2; i++)
@@ -363,7 +364,6 @@ rf_PQWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 		tracerec->q_us += RF_ETIMER_VAL_US(timer);
 
 	rf_GenericWakeupFunc(node, 0);
-	return (0);
 }
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_DDLargeWrite)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.36 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.37 2023/10/15 18:15:19 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.36 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.37 2023/10/15 18:15:19 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -382,8 +382,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	/* fill in the Wnq Node */
 	if (nfaults == 2) {
 		{
-			parityPA = RF_MallocAndAdd(sizeof(*parityPA),
-			    allocList);
+			parityPDA = RF_MallocAndAdd(sizeof(*parityPDA), allocList);
 			parityPDA->col = asmap->qInfo->col;
 			parityPDA->startSector = ((asmap->qInfo->startSector / sectorsPerSU)
 			    * sectorsPerSU) + (failedPDA->startSector % sectorsPerSU);
@@ -566,7 +565,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
   pda_p->numSector = num; \
   pda_p->next = NULL; \
   pda_p->bufPtr = BUF_ALLOC(num)
-#if (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_EVENODD > 0)
+#if (RF_INCLUDE_RAID6 > 0) || (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_EVENODD > 0)
 void
 rf_WriteGenerateFailedAccessASMs(
     RF_Raid_t * raidPtr,
