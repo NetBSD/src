@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.75 2023/08/03 12:24:46 nia Exp $
+# $NetBSD: Makefile,v 1.76 2023/10/15 13:22:52 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -9,6 +9,7 @@ TESTSDIR=	${TESTSBASE}/kernel
 TESTS_SUBDIRS+=	kqueue
 #TESTS_C=	t_epoll
 TESTS_C+=	t_fcntl
+TESTS_C+=	t_fdrestart
 TESTS_C+=	t_lock
 TESTS_C+=	t_lockf
 TESTS_C+=	t_pty
@@ -49,6 +50,13 @@ PROGS+=		h_fpufork
 
 SCRIPTSDIR=	${TESTSDIR}
 SCRIPTS=	h_interpreter.sh
+
+LDADD.t_fdrestart+=	-lpthread
+LDADD.t_fdrestart+=	-lrumpnet_local
+LDADD.t_fdrestart+=	-lrumpnet_net
+LDADD.t_fdrestart+=	-lrumpnet_netinet
+LDADD.t_fdrestart+=	-lrumpnet
+LDADD.t_fdrestart+=	${LIBRUMPBASE}
 
 LDADD.t_mqueue+= -lrt
 
