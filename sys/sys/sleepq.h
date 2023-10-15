@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.41 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.42 2023/10/15 10:30:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -33,12 +33,13 @@
 #ifndef	_SYS_SLEEPQ_H_
 #define	_SYS_SLEEPQ_H_
 
+#include <sys/param.h>
+
 #include <sys/lwp.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/sched.h>
-#include <sys/param.h>
 #include <sys/wchan.h>
 
 struct syncobj;
