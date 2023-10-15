@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.123 2021/10/07 13:04:18 msaitoh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.124 2023/10/15 13:13:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.123 2021/10/07 13:04:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.124 2023/10/15 13:13:22 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -769,8 +769,13 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	/* Get features and maximum size of the save area */
 	x86_cpuid(0xd, descs);
-	if (descs[2] > sizeof(struct fxsave))
+	if (descs[2] > sizeof(struct fxsave)) {
+		if (descs[2] > sizeof(union savefpu)) {
+			panic("CPU's FPU save size too large: %u > %zu",
+			    descs[2], sizeof(union savefpu));
+		}
 		x86_fpu_save_size = descs[2];
+	}
 
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
 
