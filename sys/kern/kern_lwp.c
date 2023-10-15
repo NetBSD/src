@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.266 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.267 2023/10/15 10:28:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.266 2023/10/15 10:27:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.267 2023/10/15 10:28:14 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -226,34 +226,35 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.266 2023/10/15 10:27:11 riastradh Exp
 #define _LWP_API_PRIVATE
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/cpu.h>
-#include <sys/pool.h>
-#include <sys/proc.h>
-#include <sys/syscallargs.h>
-#include <sys/syscall_stats.h>
-#include <sys/kauth.h>
-#include <sys/sleepq.h>
-#include <sys/lockdebug.h>
-#include <sys/kmem.h>
-#include <sys/pset.h>
-#include <sys/intr.h>
-#include <sys/lwpctl.h>
+
 #include <sys/atomic.h>
+#include <sys/cprng.h>
+#include <sys/cpu.h>
+#include <sys/dtrace_bsd.h>
 #include <sys/filedesc.h>
 #include <sys/fstrans.h>
-#include <sys/dtrace_bsd.h>
-#include <sys/sdt.h>
-#include <sys/ptrace.h>
-#include <sys/xcall.h>
-#include <sys/uidinfo.h>
-#include <sys/sysctl.h>
-#include <sys/psref.h>
-#include <sys/msan.h>
-#include <sys/kcov.h>
-#include <sys/cprng.h>
 #include <sys/futex.h>
+#include <sys/intr.h>
+#include <sys/kauth.h>
+#include <sys/kcov.h>
+#include <sys/kmem.h>
+#include <sys/lockdebug.h>
+#include <sys/lwpctl.h>
+#include <sys/msan.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/pset.h>
+#include <sys/psref.h>
+#include <sys/ptrace.h>
+#include <sys/sdt.h>
+#include <sys/sleepq.h>
 #include <sys/syncobj.h>
+#include <sys/syscall_stats.h>
+#include <sys/syscallargs.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/uidinfo.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
