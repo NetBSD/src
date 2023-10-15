@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.88 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.89 2023/10/15 10:29:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020, 2023
@@ -36,22 +36,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.88 2023/10/15 10:27:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.89 2023/10/15 10:29:24 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/pool.h>
-#include <sys/proc.h>
-#include <sys/types.h>
-#include <sys/syscallargs.h>
+
+#include <sys/cpu.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/lwpctl.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/pserialize.h>
 #include <sys/ptrace.h>
 #include <sys/sleepq.h>
-#include <sys/lwpctl.h>
-#include <sys/cpu.h>
-#include <sys/pserialize.h>
 #include <sys/syncobj.h>
+#include <sys/syscallargs.h>
+#include <sys/systm.h>
+#include <sys/types.h>
 
 #include <uvm/uvm_extern.h>
 
