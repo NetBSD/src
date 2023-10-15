@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.111 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.112 2023/10/15 10:28:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019, 2023
@@ -41,23 +41,24 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.111 2023/10/15 10:27:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.112 2023/10/15 10:28:23 riastradh Exp $");
 
 #include <sys/param.h>
+
 #include <sys/atomic.h>
-#include <sys/proc.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/lock.h>
+#include <sys/lockdebug.h>
 #include <sys/mutex.h>
+#include <sys/proc.h>
+#include <sys/pserialize.h>
 #include <sys/sched.h>
 #include <sys/sleepq.h>
-#include <sys/systm.h>
-#include <sys/lockdebug.h>
-#include <sys/kernel.h>
-#include <sys/intr.h>
-#include <sys/lock.h>
-#include <sys/types.h>
-#include <sys/cpu.h>
-#include <sys/pserialize.h>
 #include <sys/syncobj.h>
+#include <sys/systm.h>
+#include <sys/types.h>
 
 #include <dev/lockstat.h>
 
