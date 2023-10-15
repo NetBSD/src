@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.57 2023/10/05 19:41:07 ad Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.58 2023/10/15 11:11:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.57 2023/10/05 19:41:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.58 2023/10/15 11:11:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.57 2023/10/05 19:41:07 ad Exp $");
 #include <sys/resourcevar.h>
 #include <sys/uidinfo.h>
 #include <sys/psref.h>
+#include <sys/syncobj.h>
 
 #include <rump-sys/kern.h>
 
