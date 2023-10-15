@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.81 2022/07/01 01:04:59 riastradh Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.82 2023/10/15 18:13:37 oster Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.81 2022/07/01 01:04:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.82 2023/10/15 18:13:37 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -1224,8 +1224,9 @@ seq_timer_waitabs(struct sequencer_softc *sc, uint32_t divs)
 		    seq_timeout, sc);
 	}
 #ifdef SEQUENCER_DEBUG
-	else if (tick < 0)
+	else if (tick < 0) {
 		DPRINTF(("%s: ticks = %d\n", __func__, ticks));
+	}
 #endif
 }
 
