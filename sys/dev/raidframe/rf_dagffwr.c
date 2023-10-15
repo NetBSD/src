@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.37 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.38 2023/10/15 18:15:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.37 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.38 2023/10/15 18:15:20 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -229,7 +229,7 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	if (nfaults == 2) {
-		wnqNode = rf_AllocDAGNode();
+		wnqNode = rf_AllocDAGNode(raidPtr);
 	} else {
 		wnqNode = NULL;
 	}
@@ -850,7 +850,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 					    7, 1, dag_h, qname, allocList);
 				tmpqNode->params[0] = tmpreadDataNode->params[0];
 				tmpqNode->params[1] = tmpreadDataNode->params[1];
-				tmpqNode->params[2] = tmpreadQNode->.params[0];
+				tmpqNode->params[2] = tmpreadQNode->params[0];
 				tmpqNode->params[3] = tmpreadQNode->params[1];
 				tmpqNode->params[4] = tmpwriteDataNode->params[0];
 				tmpqNode->params[5] = tmpwriteDataNode->params[1];
@@ -858,7 +858,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 				/* use old Q buf as target buf */
 				tmpqNode->results[0] = tmpreadQNode->params[1].p;
 				tmpqNode = tmpqNode->list_next;
-				tmpreadQNodes = tmpreadQNodes->list_next;
+				tmpreadQNode = tmpreadQNode->list_next;
 			}
 #endif
 			tmpxorNode = tmpxorNode->list_next;
@@ -1078,7 +1078,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			tmpqNode = qNodes;
 			for (j = 0; j < numParityNodes; j++) {
 				tmpreadQNode->succedents[j] = tmpqNode;
-				tmpqNode->antecedents[numDataNodes + i] = tmpreadQNodes;
+				tmpqNode->antecedents[numDataNodes + i] = tmpreadQNode;
 				tmpqNode->antType[numDataNodes + i] = rf_trueData;
 				tmpqNode = tmpqNode->list_next;
 			}

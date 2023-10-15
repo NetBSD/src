@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdeg.c,v 1.9 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_pqdeg.c,v 1.10 2023/10/15 18:15:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pqdeg.c,v 1.9 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pqdeg.c,v 1.10 2023/10/15 18:15:20 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -127,7 +127,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQ_100_CreateWriteDAG)
 		RF_PANIC();
 	rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp,
 		      flags, allocList, 2,
-		      (int (*) (RF_DagNode_t *)) rf_Degraded_100_PQFunc,
+		      (void (*) (RF_DagNode_t *)) rf_Degraded_100_PQFunc,
 		      RF_FALSE);
 }
 /* Dead  P - act like a RAID 5 small write with parity = Q */
@@ -201,7 +201,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQ_110_CreateWriteDAG)
 	asmap->qInfo = temp;
 	rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
 		      allocList, 1,
-		      (int (*) (RF_DagNode_t *)) rf_PQ_DegradedWriteQFunc,
+		      (void (*) (RF_DagNode_t *)) rf_PQ_DegradedWriteQFunc,
 		      RF_FALSE);
 	/* is the regular Q func the right one to call? */
 }

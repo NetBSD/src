@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.h,v 1.3 1999/02/05 00:06:15 oster Exp $	*/
+/*	$NetBSD: rf_pqdegdags.h,v 1.4 2023/10/15 18:15:20 oster Exp $	*/
 /*
  * rf_pqdegdags.h
  */
@@ -39,8 +39,8 @@
 #include "rf_dag.h"
 
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_DoubleDegRead);
-int     rf_PQDoubleRecoveryFunc(RF_DagNode_t * node);
-int     rf_PQWriteDoubleRecoveryFunc(RF_DagNode_t * node);
+void rf_PQDoubleRecoveryFunc(RF_DagNode_t * node);
+void rf_PQWriteDoubleRecoveryFunc(RF_DagNode_t * node);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_DDLargeWrite);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_DDSimpleSmallWrite);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_200_CreateWriteDAG);
