@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.363 2023/10/05 19:28:30 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.364 2023/10/15 10:27:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.363 2023/10/05 19:28:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.364 2023/10/15 10:27:11 riastradh Exp $");
 
 #include "opt_kstack.h"
 #include "opt_ddb.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.363 2023/10/05 19:28:30 ad Exp $");
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
 #include <sys/syslog.h>
+#include <sys/syncobj.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.228 2023/10/13 18:48:56 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.229 2023/10/15 10:27:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -45,8 +45,8 @@
 #include <sys/signalvar.h>
 #include <sys/sched.h>
 #include <sys/specificdata.h>
-#include <sys/syncobj.h>
 #include <sys/resource.h>
+#include <sys/wchan.h>
 
 #if defined(_KERNEL)
 struct lwp;

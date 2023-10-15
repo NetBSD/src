@@ -1,8 +1,11 @@
-/*	$NetBSD: db_syncobj.h,v 1.2 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: wchan.h,v 1.1 2023/10/15 10:27:11 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2023 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,14 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_DDB_DB_SYNCOBJ_H
-#define	_DDB_DB_SYNCOBJ_H
+#ifndef	_SYS_WCHAN_H_
+#define	_SYS_WCHAN_H_
 
-#include <sys/wchan.h>
+typedef volatile const void *wchan_t;
 
-struct lwp;
-struct syncobj;
-
-struct lwp *db_syncobj_owner(struct syncobj *, wchan_t);
-
-#endif	/* _DDB_DB_SYNCOBJ_H */
+#endif	/* _SYS_WCHAN_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.84 2023/10/13 18:48:56 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.85 2023/10/15 10:27:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.84 2023/10/13 18:48:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.85 2023/10/15 10:27:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.84 2023/10/13 18:48:56 ad Exp $");
 #include <sys/systm.h>
 #include <sys/sleepq.h>
 #include <sys/ktrace.h>
+#include <sys/syncobj.h>
 
 /*
  * for sleepq_abort:

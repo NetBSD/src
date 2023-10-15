@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.87 2023/10/08 13:23:05 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.88 2023/10/15 10:27:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.87 2023/10/08 13:23:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.88 2023/10/15 10:27:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.87 2023/10/08 13:23:05 ad Exp $");
 #include <sys/lwpctl.h>
 #include <sys/cpu.h>
 #include <sys/pserialize.h>
+#include <sys/syncobj.h>
 
 #include <uvm/uvm_extern.h>
 

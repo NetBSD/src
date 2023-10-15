@@ -1,4 +1,4 @@
-/*	$NetBSD: sleeptab.h,v 1.2 2020/11/01 21:00:20 christos Exp $	*/
+/*	$NetBSD: sleeptab.h,v 1.3 2023/10/15 10:27:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -32,6 +32,10 @@
 
 #ifndef	_SYS_SLEEPTAB_H_
 #define	_SYS_SLEEPTAB_H_
+
+#include <sys/wchan.h>
+
+struct syncobj;
 
 #define	SLEEPTAB_HASH_SHIFT	7
 #define	SLEEPTAB_HASH_SIZE	(1 << SLEEPTAB_HASH_SHIFT)
@@ -121,7 +125,7 @@ void	turnstile_init(void);
 turnstile_t	*turnstile_lookup(wchan_t);
 void	turnstile_ctor(turnstile_t *);
 void	turnstile_exit(wchan_t);
-void	turnstile_block(turnstile_t *, int, wchan_t, syncobj_t *);
+void	turnstile_block(turnstile_t *, int, wchan_t, const struct syncobj *);
 void	turnstile_wakeup(turnstile_t *, int, int, lwp_t *);
 void	turnstile_print(volatile void *, void (*)(const char *, ...)
     __printflike(1, 2));
