@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.61 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.62 2023/10/15 10:28:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020, 2023
@@ -35,17 +35,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.61 2023/10/15 10:27:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.62 2023/10/15 10:28:00 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/lwp.h>
+
 #include <sys/condvar.h>
-#include <sys/sleepq.h>
-#include <sys/lockdebug.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
+#include <sys/lockdebug.h>
+#include <sys/lwp.h>
+#include <sys/sleepq.h>
 #include <sys/syncobj.h>
+#include <sys/systm.h>
 
 /*
  * Accessors for the private contents of the kcondvar_t data type.
