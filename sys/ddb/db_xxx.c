@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.78 2023/10/13 19:07:08 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.79 2023/10/15 10:40:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.78 2023/10/13 19:07:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.79 2023/10/15 10:40:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -369,7 +369,7 @@ db_show_sleepq(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 void
 db_show_pipe(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 {
-	struct pipe pipe, *ppipe = (struct pipe *)addr;
+	struct pipe pipe, *ppipe = (struct pipe *)(uintptr_t)addr;
 
 	db_read_bytes(addr, sizeof(pipe), (char *)&pipe);
 
