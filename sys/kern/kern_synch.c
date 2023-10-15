@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.364 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.365 2023/10/15 10:29:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.364 2023/10/15 10:27:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.365 2023/10/15 10:29:10 riastradh Exp $");
 
 #include "opt_kstack.h"
 #include "opt_ddb.h"
@@ -78,30 +78,31 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.364 2023/10/15 10:27:11 riastradh E
 #define	__MUTEX_PRIVATE
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/kernel.h>
+
+#include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/dtrace_bsd.h>
+#include <sys/evcnt.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/lockdebug.h>
+#include <sys/lwpctl.h>
+#include <sys/proc.h>
 #include <sys/pserialize.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/rwlock.h>
 #include <sys/sched.h>
-#include <sys/syscall_stats.h>
 #include <sys/sleepq.h>
-#include <sys/lockdebug.h>
-#include <sys/evcnt.h>
-#include <sys/intr.h>
-#include <sys/lwpctl.h>
-#include <sys/atomic.h>
-#include <sys/syslog.h>
 #include <sys/syncobj.h>
+#include <sys/syscall_stats.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/lockstat.h>
 
-#include <sys/dtrace_bsd.h>
 int                             dtrace_vtime_active=0;
 dtrace_vtime_switch_func_t      dtrace_vtime_switch_func;
 
