@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdrestart.c,v 1.1 2023/10/15 13:22:52 riastradh Exp $	*/
+/*	$NetBSD: t_fdrestart.c,v 1.2 2023/10/15 14:30:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* ERESTART */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdrestart.c,v 1.1 2023/10/15 13:22:52 riastradh Exp $");
+__RCSID("$NetBSD: t_fdrestart.c,v 1.2 2023/10/15 14:30:51 riastradh Exp $");
 
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -86,6 +86,7 @@ dowrite(struct fdrestart *F)
 	    strerror(error));
 
 	nwrit = rump_sys_write(F->fd, buf, sizeof(buf));
+	ATF_REQUIRE_EQ_MSG(nwrit, -1, "nwrit=%zd", nwrit);
 	error = errno;
 	ATF_REQUIRE_EQ_MSG(error, EBADF, "errno=%d (%s)", error,
 	    strerror(error));
