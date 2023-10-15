@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.54 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.55 2023/10/15 10:30:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020, 2023
@@ -61,10 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.54 2023/10/15 10:27:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.55 2023/10/15 10:30:20 riastradh Exp $");
 
 #include <sys/param.h>
+
 #include <sys/lockdebug.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/sleepq.h>
 #include <sys/sleeptab.h>
