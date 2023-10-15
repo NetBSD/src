@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.65 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.66 2023/10/15 10:29:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -85,28 +85,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.65 2023/10/15 10:27:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.66 2023/10/15 10:29:34 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/filedesc.h>
+
+#include <sys/atomic.h>
+#include <sys/bitops.h>
+#include <sys/cpu.h>
 #include <sys/file.h>
-#include <sys/proc.h>
-#include <sys/socketvar.h>
-#include <sys/signalvar.h>
-#include <sys/uio.h>
+#include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/lwp.h>
-#include <sys/poll.h>
 #include <sys/mount.h>
-#include <sys/syscallargs.h>
-#include <sys/cpu.h>
-#include <sys/atomic.h>
-#include <sys/socketvar.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/sleepq.h>
-#include <sys/sysctl.h>
-#include <sys/bitops.h>
+#include <sys/socketvar.h>
+#include <sys/socketvar.h>
 #include <sys/syncobj.h>
+#include <sys/syscallargs.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
 
 /* Flags for lwp::l_selflag. */
 #define	SEL_RESET	0	/* awoken, interrupted, or not yet polling */
