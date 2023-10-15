@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdrestart.c,v 1.2 2023/10/15 14:30:51 riastradh Exp $	*/
+/*	$NetBSD: t_fdrestart.c,v 1.3 2023/10/15 15:18:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,8 +29,9 @@
 #define	_KMEMUSER		/* ERESTART */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdrestart.c,v 1.2 2023/10/15 14:30:51 riastradh Exp $");
+__RCSID("$NetBSD: t_fdrestart.c,v 1.3 2023/10/15 15:18:17 riastradh Exp $");
 
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
@@ -51,48 +52,6 @@ struct fdrestart {
 };
 
 static void
-doread(struct fdrestart *F)
-{
-	char c;
-	ssize_t nread;
-	int error;
-
-	nread = rump_sys_read(F->fd, &c, sizeof(c));
-	ATF_REQUIRE_EQ_MSG(nread, -1, "nread=%zd", nread);
-	error = errno;
-	ATF_REQUIRE_EQ_MSG(error, ERESTART, "errno=%d (%s)", error,
-	    strerror(error));
-
-	nread = rump_sys_read(F->fd, &c, sizeof(c));
-	ATF_REQUIRE_EQ_MSG(nread, -1, "nread=%zd", nread);
-	error = errno;
-	ATF_REQUIRE_EQ_MSG(error, EBADF, "errno=%d (%s)", error,
-	    strerror(error));
-}
-
-static void
-dowrite(struct fdrestart *F)
-{
-	static const char buf[1024*1024]; /* XXX >BIG_PIPE_SIZE */
-	ssize_t nwrit;
-	int error;
-
-	nwrit = rump_sys_write(F->fd, buf, sizeof(buf));
-	if (nwrit != -1)	/* filled buffer, try again */
-		nwrit = rump_sys_write(F->fd, buf, sizeof(buf));
-	ATF_REQUIRE_EQ_MSG(nwrit, -1, "nwrit=%zd", nwrit);
-	error = errno;
-	ATF_REQUIRE_EQ_MSG(error, ERESTART, "errno=%d (%s)", error,
-	    strerror(error));
-
-	nwrit = rump_sys_write(F->fd, buf, sizeof(buf));
-	ATF_REQUIRE_EQ_MSG(nwrit, -1, "nwrit=%zd", nwrit);
-	error = errno;
-	ATF_REQUIRE_EQ_MSG(error, EBADF, "errno=%d (%s)", error,
-	    strerror(error));
-}
-
-static void
 waitforbarrier(struct fdrestart *F, const char *caller)
 {
 	int error;
@@ -108,12 +67,90 @@ waitforbarrier(struct fdrestart *F, const char *caller)
 	}
 }
 
+static void
+doread(struct fdrestart *F)
+{
+	char c;
+	ssize_t nread;
+	int error;
+
+	/*
+	 * Wait for the other thread to be ready.
+	 */
+	waitforbarrier(F, "reader");
+
+	/*
+	 * Start a read.  This should block, and then, when the other
+	 * thread closes the fd, should be woken to fail with ERESTART.
+	 */
+	nread = rump_sys_read(F->fd, &c, sizeof(c));
+	ATF_REQUIRE_EQ_MSG(nread, -1, "nread=%zd", nread);
+	error = errno;
+	ATF_REQUIRE_EQ_MSG(error, ERESTART, "errno=%d (%s)", error,
+	    strerror(error));
+
+	/*
+	 * Now further attempts at I/O should fail with EBADF because
+	 * the fd has been closed.
+	 */
+	nread = rump_sys_read(F->fd, &c, sizeof(c));
+	ATF_REQUIRE_EQ_MSG(nread, -1, "nread=%zd", nread);
+	error = errno;
+	ATF_REQUIRE_EQ_MSG(error, EBADF, "errno=%d (%s)", error,
+	    strerror(error));
+}
+
+static void
+dowrite(struct fdrestart *F)
+{
+	static const char buf[1024*1024]; /* XXX >BIG_PIPE_SIZE */
+	ssize_t nwrit;
+	int error;
+
+	/*
+	 * Make sure the pipe's buffer is full first.
+	 */
+	for (;;) {
+		int nspace;
+
+		RL(rump_sys_ioctl(F->fd, FIONSPACE, &nspace));
+		ATF_REQUIRE_MSG(nspace >= 0, "nspace=%d", nspace);
+		if (nspace == 0)
+			break;
+		RL(rump_sys_write(F->fd, buf, (size_t)nspace));
+	}
+
+	/*
+	 * Wait for the other thread to be ready.
+	 */
+	waitforbarrier(F, "writer");
+
+	/*
+	 * Start a write.  This should block, and then, when the other
+	 * thread closes the fd, should be woken to fail with ERESTART.
+	 */
+	nwrit = rump_sys_write(F->fd, buf, sizeof(buf));
+	ATF_REQUIRE_EQ_MSG(nwrit, -1, "nwrit=%zd", nwrit);
+	error = errno;
+	ATF_REQUIRE_EQ_MSG(error, ERESTART, "errno=%d (%s)", error,
+	    strerror(error));
+
+	/*
+	 * Now further attempts at I/O should fail with EBADF because
+	 * the fd has been closed.
+	 */
+	nwrit = rump_sys_write(F->fd, buf, sizeof(buf));
+	ATF_REQUIRE_EQ_MSG(nwrit, -1, "nwrit=%zd", nwrit);
+	error = errno;
+	ATF_REQUIRE_EQ_MSG(error, EBADF, "errno=%d (%s)", error,
+	    strerror(error));
+}
+
 static void *
 doit(void *cookie)
 {
 	struct fdrestart *F = cookie;
 
-	waitforbarrier(F, "user");
 	(*F->op)(F);
 
 	return NULL;
@@ -138,9 +175,10 @@ testfdrestart(struct fdrestart *F)
 	RZ(pthread_create(&t, NULL, &doit, F));
 	waitforbarrier(F, "closer");	/* wait for thread to start */
 	(void)sleep(1);			/* wait for op to start */
-	(void)alarm(1);
-	RL(rump_sys_close(F->fd));
-	RZ(pthread_join(t, NULL));
+	(void)alarm(1);			/* set a deadline */
+	RL(rump_sys_close(F->fd));	/* wake op in other thread */
+	RZ(pthread_join(t, NULL));	/* wait for op to wake and fail */
+	(void)alarm(0);			/* clear the deadline */
 }
 
 ATF_TC(pipe_read);
