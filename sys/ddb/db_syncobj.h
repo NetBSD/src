@@ -1,4 +1,4 @@
-/*	$NetBSD: db_syncobj.h,v 1.2 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: db_syncobj.h,v 1.3 2023/10/15 10:27:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -34,6 +34,6 @@
 struct lwp;
 struct syncobj;
 
-struct lwp *db_syncobj_owner(struct syncobj *, wchan_t);
+struct lwp *db_syncobj_owner(const struct syncobj *, wchan_t);
 
 #endif	/* _DDB_DB_SYNCOBJ_H */

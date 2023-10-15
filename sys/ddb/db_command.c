@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.187 2023/10/13 19:07:08 ad Exp $	*/
+/*	$NetBSD: db_command.c,v 1.188 2023/10/15 10:27:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.187 2023/10/13 19:07:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.188 2023/10/15 10:27:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -1401,7 +1401,7 @@ db_show_all_tstiles(db_expr_t addr, bool have_addr,
 			const char *wmesg = NULL;
 			char wmesgbuf[sizeof("tstile")] = "";
 			lwpid_t lid = -1;
-			struct syncobj *sobj = NULL;
+			const struct syncobj *sobj = NULL;
 			struct lwp *owner = NULL;
 			char sobjname[sizeof(sobj->sobj_name)] = "";
 
