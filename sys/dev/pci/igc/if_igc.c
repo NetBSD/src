@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.6 2023/10/12 04:08:44 rin Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.7 2023/10/15 22:36:52 oster Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.6 2023/10/12 04:08:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.7 2023/10/15 22:36:52 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2095,7 +2095,9 @@ igc_rxeof(struct rx_ring *rxr, u_int limit)
 		const bool eop = staterr & IGC_RXD_STAT_EOP;
 		const uint16_t len = le16toh(rxdesc->wb.upper.length);
 
+#if NVLAN > 0
 		const uint16_t vtag = le16toh(rxdesc->wb.upper.vlan);
+#endif
 
 		const uint32_t ptype = le32toh(rxdesc->wb.lower.lo_dword.data) &
 		    IGC_PKTTYPE_MASK;
