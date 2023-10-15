@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.265 2023/10/05 19:41:06 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.266 2023/10/15 10:27:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.265 2023/10/05 19:41:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.266 2023/10/15 10:27:11 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -253,6 +253,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.265 2023/10/05 19:41:06 ad Exp $");
 #include <sys/kcov.h>
 #include <sys/cprng.h>
 #include <sys/futex.h>
+#include <sys/syncobj.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>

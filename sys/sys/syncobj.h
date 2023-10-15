@@ -1,4 +1,4 @@
-/*	$NetBSD: syncobj.h,v 1.17 2023/10/08 13:23:05 ad Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.18 2023/10/15 10:27:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
@@ -32,9 +32,9 @@
 #if !defined(_SYS_SYNCOBJ_H_)
 #define	_SYS_SYNCOBJ_H_
 
-struct lwp;
+#include <sys/wchan.h>
 
-typedef volatile const void *wchan_t;
+struct lwp;
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 

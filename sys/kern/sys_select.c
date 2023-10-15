@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.64 2023/10/08 13:23:05 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.65 2023/10/15 10:27:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.64 2023/10/08 13:23:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.65 2023/10/15 10:27:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.64 2023/10/08 13:23:05 ad Exp $");
 #include <sys/sleepq.h>
 #include <sys/sysctl.h>
 #include <sys/bitops.h>
+#include <sys/syncobj.h>
 
 /* Flags for lwp::l_selflag. */
 #define	SEL_RESET	0	/* awoken, interrupted, or not yet polling */

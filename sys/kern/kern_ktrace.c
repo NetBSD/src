@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.182 2022/07/01 01:07:56 riastradh Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.183 2023/10/15 10:27:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.182 2022/07/01 01:07:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.183 2023/10/15 10:27:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.182 2022/07/01 01:07:56 riastradh 
 #include <sys/callout.h>
 #include <sys/kauth.h>
 #include <sys/cpu.h>
+#include <sys/syncobj.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
