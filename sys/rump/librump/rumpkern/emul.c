@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.200 2023/09/28 15:50:24 manu Exp $	*/
+/*	$NetBSD: emul.c,v 1.201 2023/10/15 11:11:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.200 2023/09/28 15:50:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.201 2023/10/15 11:11:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.200 2023/09/28 15:50:24 manu Exp $");
 #ifdef LOCKDEBUG
 #include <sys/sleepq.h>
 #endif
+#include <sys/syncobj.h>
 
 #include <dev/cons.h>
 
