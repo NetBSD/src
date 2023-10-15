@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.188 2023/10/15 10:27:25 riastradh Exp $	*/
+/*	$NetBSD: db_command.c,v 1.189 2023/10/15 10:27:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.188 2023/10/15 10:27:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.189 2023/10/15 10:27:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -1398,8 +1398,6 @@ db_show_all_tstiles(db_expr_t addr, bool have_addr,
 		while (l != NULL) {
 			wchan_t wchan = NULL;
 			char wchanname[128] = "";
-			const char *wmesg = NULL;
-			char wmesgbuf[sizeof("tstile")] = "";
 			lwpid_t lid = -1;
 			const struct syncobj *sobj = NULL;
 			struct lwp *owner = NULL;
@@ -1411,15 +1409,6 @@ db_show_all_tstiles(db_expr_t addr, bool have_addr,
 				goto next;
 			db_symstr(wchanname, sizeof(wchanname),
 			    (db_expr_t)(uintptr_t)wchan, DB_STGY_ANY);
-			db_read_bytes((db_addr_t)&l->l_wmesg, sizeof(wmesg),
-			    (char *)&wmesg);
-			if (wmesg != NULL) {
-				db_read_bytes((db_addr_t)wmesg,
-				    sizeof(wmesgbuf), wmesgbuf);
-			}
-
-			if (strncmp(wmesgbuf, "tstile", sizeof("tstile")) != 0)
-				goto next;
 
 			db_read_bytes((db_addr_t)&l->l_lid, sizeof(lid),
 			    (char *)&lid);
