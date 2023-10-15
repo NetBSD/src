@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.182 2023/08/03 12:24:46 nia Exp $
+#	$NetBSD: Makefile,v 1.183 2023/10/15 13:04:15 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -48,7 +48,7 @@ INCS=	acct.h acl.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h \
 	ttydefaults.h ttydev.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h utsname.h uuid.h \
 	verified_exec.h videoio.h vmmeter.h vnode.h vnode_if.h vnode_impl.h \
-	wait.h wapbl.h wapbl_replay.h wdog.h xattr.h
+	wait.h wapbl.h wapbl_replay.h wchan.h wdog.h xattr.h
 
 INCSYMLINKS=\
 	sys/cdbr.h /usr/include/cdbr.h \

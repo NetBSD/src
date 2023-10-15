@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2449 2023/09/04 17:08:00 christos Exp $
+#	$NetBSD: mi,v 1.2450 2023/10/15 13:04:15 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3626,6 +3626,7 @@
 ./usr/include/sys/wait.h			comp-c-include
 ./usr/include/sys/wapbl.h			comp-c-include
 ./usr/include/sys/wapbl_replay.h		comp-c-include
+./usr/include/sys/wchan.h			comp-c-include
 ./usr/include/sys/wdog.h			comp-c-include
 ./usr/include/sys/xattr.h			comp-c-include
 ./usr/include/sysexits.h			comp-c-include
