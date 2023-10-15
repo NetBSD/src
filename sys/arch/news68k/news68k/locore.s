@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.70 2023/10/08 17:42:58 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.71 2023/10/15 10:46:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,7 +89,6 @@ ASLOCAL(monitor)
 /*
  * LED control for DEBUG.
  */
-#ifdef __STDC__
 #define	IMMEDIATE	#
 #define	SETLED(func)	\
 	movl	IMMEDIATE func,%d0; \
@@ -98,15 +97,6 @@ ASLOCAL(monitor)
 #define	SETLED2(func)	\
 	movl	IMMEDIATE func,%d0; \
 	jmp	debug_led2
-#else
-#define	SETLED(func)	\
-	movl	#func,%d0; \
-	jmp	debug_led
-
-#define	SETLED2(func)	\
-	movl	#func,%d0; \
-	jmp	debug_led2
-#endif /* __STDC__ */
 
 #define	TOMONITOR	\
 	moveal	_ASM_LABEL(monitor), %a0; \
@@ -342,11 +332,7 @@ Lstart2:
 	andl	#PG_FRAME,%d2		| round to a page
 	movl	%d2,%a4
 	addl	%a5,%a4			| convert to PA
-#if 0
-	movl	#0x0, %sp@-		| firstpa
-#else
-	pea	%a5@
-#endif
+	pea	%a5@			| firstpa
 	pea	%a4@			| nextpa
 	RELOC(pmap_bootstrap,%a0)
 	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
