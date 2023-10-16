@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.196 2023/07/16 19:55:43 riastradh Exp $	*/
+/*	$NetBSD: locore.S,v 1.197 2023/10/16 17:29:31 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.196 2023/07/16 19:55:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.197 2023/10/16 17:29:31 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1142,7 +1142,7 @@ begin:
 	/* Copy the necessary stuff from start_info structure. */
 	/* We need to copy shared_info early, so that sti/cli work */
 	movl	$RELOC(start_info_union),%edi
-	movl	$128,%ecx
+	movl	$(PAGE_SIZE / 4),%ecx
 	rep
 	movsl
 
