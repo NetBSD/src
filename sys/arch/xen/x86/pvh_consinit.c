@@ -1,4 +1,4 @@
-/* $NetBSD: pvh_consinit.c,v 1.4 2023/07/22 19:13:17 mrg Exp $ */
+/* $NetBSD: pvh_consinit.c,v 1.5 2023/10/16 17:31:18 bouyer Exp $ */
 
 /*
  * Copyright (c) 2020 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.4 2023/07/22 19:13:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.5 2023/10/16 17:31:18 bouyer Exp $");
 
 #include "xencons.h"
 #include <sys/param.h>
@@ -42,16 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.4 2023/07/22 19:13:17 mrg Exp $")
 #include <xen/include/public/hvm/params.h>
 
 #include "xen_def_cons.h"
-
-static int pvh_xenconscn_getc(dev_t);
-static void pvh_xenconscn_putc(dev_t, int);
-static void pvh_xenconscn_pollc(dev_t, int);
-
-static struct consdev pvh_xencons = {
-        NULL, NULL, pvh_xenconscn_getc, pvh_xenconscn_putc, pvh_xenconscn_pollc,
-	NULL, NULL, NULL, NODEV, CN_NORMAL
-};
-
 
 int
 xen_pvh_consinit(void)
@@ -76,7 +66,7 @@ xen_pvh_consinit(void)
 	}
 	if (initted == 0 && !xendomain_is_dom0()) {
 		/* pmap not up yet, fall back to printk() */
-		cn_tab = &pvh_xencons;
+		xen_early_console();
 		initted++;
 		return 1;
 	} else if (initted > 1) {
@@ -115,24 +105,4 @@ xen_pvh_consinit(void)
 	xenconscn_attach();
 #endif
 	return 1;
-}
-
-static int
-pvh_xenconscn_getc(dev_t dev)
-{
-	while(1)
-		;
-	return -1;
-}
-
-static void
-pvh_xenconscn_putc(dev_t dev, int c)
-{
-	printk("%c", c);
-}
-
-static void
-pvh_xenconscn_pollc(dev_t dev, int on)
-{
-	return;
 }

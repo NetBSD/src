@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.58 2023/10/16 17:29:31 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.59 2023/10/16 17:31:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -213,5 +213,7 @@ hypervisor_notify_via_evtchn(unsigned int port)
 
 void xen_init_ksyms(void);
 void xen_map_vcpu(struct cpu_info *);
+
+void xen_early_console(void);
 
 #endif /* _XEN_HYPERVISOR_H_ */
