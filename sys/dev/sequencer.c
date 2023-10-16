@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.82 2023/10/15 18:13:37 oster Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.83 2023/10/16 13:31:33 oster Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.82 2023/10/15 18:13:37 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.83 2023/10/16 13:31:33 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -122,12 +122,12 @@ extern struct cfdriver sequencer_cd;
 	)
 
 #ifdef AUDIO_DEBUG
-#define DPRINTF(x)	if (sequencerdebug) printf x
-#define DPRINTFN(n,x)	if (sequencerdebug >= (n)) printf x
+#define DPRINTF(x)	do { if (sequencerdebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (sequencerdebug >= (n)) printf x; } while (0)
 int	sequencerdebug = 0;
 #else
-#define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTF(x)	do { } while (0)	
+#define DPRINTFN(n,x)	do { } while (0)
 #endif
 
 #define SEQ_NOTE_MAX 128
@@ -1224,9 +1224,8 @@ seq_timer_waitabs(struct sequencer_softc *sc, uint32_t divs)
 		    seq_timeout, sc);
 	}
 #ifdef SEQUENCER_DEBUG
-	else if (tick < 0) {
+	else if (tick < 0)
 		DPRINTF(("%s: ticks = %d\n", __func__, ticks));
-	}
 #endif
 }
 
