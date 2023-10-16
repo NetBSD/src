@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.49 2023/10/16 07:49:01 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.50 2023/10/16 08:25:57 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.49 2023/10/16 07:49:01 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.50 2023/10/16 08:25:57 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -444,11 +444,13 @@ lagg_clone_destroy(struct ifnet *ifp)
 
 	lagg_stop(ifp, 1);
 
+	IFNET_LOCK(ifp);
 	LAGG_LOCK(sc);
 	while ((lp = LAGG_PORTS_FIRST(sc)) != NULL) {
 		lagg_port_teardown(sc, lp, false);
 	}
 	LAGG_UNLOCK(sc);
+	IFNET_UNLOCK(ifp);
 
 	switch (ifp->if_type) {
 	case IFT_ETHER:
