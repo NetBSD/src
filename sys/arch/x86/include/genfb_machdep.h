@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.h,v 1.5 2021/01/28 01:57:31 jmcneill Exp $ */
+/* $NetBSD: genfb_machdep.h,v 1.6 2023/10/16 17:27:02 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,5 +33,9 @@ int	x86_genfb_init(void);
 int	x86_genfb_cnattach(void);
 void	x86_genfb_set_console_dev(device_t);
 void	x86_genfb_ddb_trap_callback(int);
+
+extern int acpi_md_vesa_modenum;
+extern int acpi_md_vbios_reset;
+extern struct vcons_screen x86_genfb_console_screen;
 
 #endif /* !_X86_GENFB_MACHDEP_H */

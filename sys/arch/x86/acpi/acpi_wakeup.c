@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.55 2023/08/25 08:05:18 riastradh Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.56 2023/10/16 17:27:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.55 2023/08/25 08:05:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.56 2023/10/16 17:27:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.55 2023/08/25 08:05:18 riastradh E
 #include <x86/cpuvar.h>
 #include <x86/x86/tsc.h>
 #include <x86/fpu.h>
+#include <arch/x86/include/genfb_machdep.h>
 
 #include "opt_vga.h"
 
@@ -111,8 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.55 2023/08/25 08:05:18 riastradh E
 static paddr_t acpi_wakeup_paddr = 3 * PAGE_SIZE;
 static vaddr_t acpi_wakeup_vaddr;
 
-int acpi_md_vbios_reset = 0; /* Referenced by dev/pci/vga_pci.c */
-int acpi_md_vesa_modenum = 0; /* Referenced by arch/x86/x86/genfb_machdep.c */
 static int acpi_md_beep_on_reset = 0;
 
 static int	acpi_md_s4bios(void);

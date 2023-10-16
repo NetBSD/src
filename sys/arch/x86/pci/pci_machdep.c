@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.95 2023/08/25 08:05:18 riastradh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.96 2023/10/16 17:27:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.95 2023/08/25 08:05:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.96 2023/10/16 17:27:02 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -309,11 +309,6 @@ static struct pci_conf_lock cl0 = {
 };
 
 static struct pci_conf_lock * const cl = &cl0;
-
-#if NGENFB > 0 && NACPICA > 0 && defined(VGA_POST) && !defined(XENPV)
-extern int acpi_md_vbios_reset;
-extern int acpi_md_vesa_modenum;
-#endif
 
 static struct genfb_colormap_callback gfb_cb;
 static struct genfb_pmf_callback pmf_cb;
@@ -1113,7 +1108,6 @@ static void
 populate_fbinfo(device_t dev, prop_dictionary_t dict)
 {
 #if NWSDISPLAY > 0 && NGENFB > 0
-	extern struct vcons_screen x86_genfb_console_screen;
 	struct rasops_info *ri = &x86_genfb_console_screen.scr_ri;
 #endif
 	const void *fbptr = lookup_bootinfo(BTINFO_FRAMEBUFFER);
@@ -1267,7 +1261,6 @@ device_pci_register(device_t dev, void *aux)
 
 			prop_dictionary_set_bool(dict, "clear-screen", false);
 #if NWSDISPLAY > 0 && NGENFB > 0
-			extern struct vcons_screen x86_genfb_console_screen;
 			prop_dictionary_set_uint16(dict, "cursor-row",
 			    x86_genfb_console_screen.scr_ri.ri_crow);
 #endif
