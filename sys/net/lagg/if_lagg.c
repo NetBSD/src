@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.48 2022/06/26 17:55:24 riastradh Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.49 2023/10/16 07:49:01 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.48 2022/06/26 17:55:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.49 2023/10/16 07:49:01 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -727,8 +727,8 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		LAGG_UNLOCK(sc);
 		break;
 	case SIOCSIFMTU:
-		LAGG_LOCK(sc);
 		/* set the MTU to each port */
+		LAGG_LOCK(sc);
 		LAGG_PORTS_FOREACH(sc, lp) {
 			error = lagg_lp_ioctl(lp, cmd, (void *)ifr);
 
@@ -742,6 +742,7 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				break;
 			}
 		}
+		LAGG_UNLOCK(sc);
 
 		/* set the MTU to the lagg interface */
 		if (error == 0)
@@ -750,12 +751,14 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if (error != 0) {
 			/* undo the changed MTU */
 			ifr->ifr_mtu = ifp->if_mtu;
+
+			LAGG_LOCK(sc);
 			LAGG_PORTS_FOREACH(sc, lp) {
 				if (lp->lp_ioctl != NULL)
 					lagg_lp_ioctl(lp, cmd, (void *)ifr);
 			}
+			LAGG_UNLOCK(sc);
 		}
-		LAGG_UNLOCK(sc);
 		break;
 	case SIOCADDMULTI:
 		if (sc->sc_if.if_type == IFT_ETHER) {
