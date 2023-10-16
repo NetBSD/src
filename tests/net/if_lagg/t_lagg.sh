@@ -1,4 +1,4 @@
-#	$NetBSD: t_lagg.sh,v 1.8 2022/03/31 03:26:33 yamaguchi Exp $
+#	$NetBSD: t_lagg.sh,v 1.9 2023/10/16 07:57:40 yamaguchi Exp $
 #
 # Copyright (c) 2021 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -407,6 +407,7 @@ lagg_mtu_body()
 	atf_check -s exit:0 -o match:"mtu *$mtu_small" rump.ifconfig shmif2
 
 	# change MTU of lagg0
+	$atf_ifconfig lagg0 up
 	$atf_ifconfig lagg0 mtu 1500
 	atf_check -s exit:0 -o match:"mtu *1500" rump.ifconfig lagg0
 	atf_check -s exit:0 -o match:"mtu *1500" rump.ifconfig shmif0
