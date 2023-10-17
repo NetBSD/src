@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_reg.h,v 1.6 2022/08/24 19:21:41 ryo Exp $ */
+/* $NetBSD: dwc_eqos_reg.h,v 1.7 2023/10/17 10:23:00 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -94,7 +94,7 @@
 #define	GMAC_MAC_DEBUG				0x0114
 #define	GMAC_MAC_HW_FEATURE(n)			(0x011C + 0x4 * (n))
 #define	 GMAC_MAC_HW_FEATURE1_TXFIFOSIZE	__BITS(10,6)
-#define	 GMAC_MAC_HW_FEATURE1_RXFIFOSIZE	__BITS(5,0)
+#define	 GMAC_MAC_HW_FEATURE1_RXFIFOSIZE	__BITS(4,0)
 #define	 GMAC_MAC_HW_FEATURE1_ADDR64_SHIFT	14
 #define	 GMAC_MAC_HW_FEATURE1_ADDR64_MASK	(0x3U << GMAC_MAC_HW_FEATURE1_ADDR64_SHIFT)
 #define	 GMAC_MAC_HW_FEATURE1_ADDR64_32BIT	(0x0U << GMAC_MAC_HW_FEATURE1_ADDR64_SHIFT)
