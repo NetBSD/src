@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.170 2023/09/29 09:08:16 msaitoh Exp $
+$NetBSD: miidevs,v 1.171 2023/10/17 14:07:51 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -284,6 +284,7 @@ model INTEL2 GPY211		0x0000 MaxLinear GPY21[125] 2.5G media interface
 model INTEL2 I226_1		0x0001 I226 2.5G media interface (1)
 model INTEL2 I226_2		0x0005 I226 2.5G media interface (2)
 model INTEL2 I225		0x000c I225 2.5G media interface
+model INTEL2 GPY115		0x0030 MaxLinear GPY115 Gigabit PHY
 
 /* JMicron PHYs */
 model JMICRON JMP211		0x0021 JMP211 10/100/1000 media interface
