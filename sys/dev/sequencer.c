@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.83 2023/10/16 13:31:33 oster Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.84 2023/10/17 09:59:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.83 2023/10/16 13:31:33 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.84 2023/10/17 09:59:46 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -126,7 +126,7 @@ extern struct cfdriver sequencer_cd;
 #define DPRINTFN(n,x)	do { if (sequencerdebug >= (n)) printf x; } while (0)
 int	sequencerdebug = 0;
 #else
-#define DPRINTF(x)	do { } while (0)	
+#define DPRINTF(x)	do { } while (0)
 #define DPRINTFN(n,x)	do { } while (0)
 #endif
 
