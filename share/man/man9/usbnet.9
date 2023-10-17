@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.20 2022/08/20 23:50:41 riastradh Exp $
+.\"	$NetBSD: usbnet.9,v 1.21 2023/10/17 03:12:35 mrg Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -795,7 +795,7 @@ only code that inspects the result of the interrupt transfer.
 .It Common errors
 It's common to forget to set link active on devices with MII.
 Be sure to call
-.Fn usbent_set_link
+.Fn usbnet_set_link
 during any status change event.
 .Pp
 Many locking issues are hidden without
