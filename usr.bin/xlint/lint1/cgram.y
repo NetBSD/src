@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.475 2023/10/17 19:29:09 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.476 2023/10/17 19:33:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.475 2023/10/17 19:29:09 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.476 2023/10/17 19:33:16 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -132,7 +132,7 @@ is_either(const char *s, const char *a, const char *b)
 
 %}
 
-%expect 104
+%expect 103
 
 %union {
 	val_t	*y_val;
@@ -386,7 +386,9 @@ is_either(const char *s, const char *a, const char *b)
 /* No type for init_rbrace. */
 %type	<y_name>	asm_or_symbolrename_opt
 /* No type for statement. */
+/* No type for no_attr_statement. */
 /* No type for non_expr_statement. */
+/* No type for no_attr_non_expr_statement. */
 /* No type for labeled_statement. */
 /* No type for label. */
 /* No type for compound_statement. */
@@ -1752,9 +1754,20 @@ statement:
 |	non_expr_statement
 ;
 
+/* Helper to avoid shift/reduce conflict in 'label: __attribute__ ;'. */
+no_attr_statement:
+	expression_statement
+|	no_attr_non_expr_statement
+;
+
 non_expr_statement:		/* helper for C99 6.8 */
 	gcc_attribute_specifier /* ((__fallthrough__)) */ T_SEMI
-|	labeled_statement
+|	no_attr_non_expr_statement
+;
+
+/* Helper to avoid shift/reduce conflict in 'label: __attribute__ ;'. */
+no_attr_non_expr_statement:
+	labeled_statement
 |	compound_statement
 |	selection_statement
 |	iteration_statement
@@ -1765,7 +1778,7 @@ non_expr_statement:		/* helper for C99 6.8 */
 ;
 
 labeled_statement:		/* C99 6.8.1 */
-	label gcc_attribute_specifier_list_opt statement
+	label gcc_attribute_specifier_list_opt no_attr_statement
 ;
 
 label:
