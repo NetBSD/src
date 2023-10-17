@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.419 2023/10/15 13:22:52 riastradh Exp $
+# $NetBSD: mi,v 1.420 2023/10/17 13:45:37 rjs Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2432,8 +2432,8 @@
 ./usr/libdata/debug/usr/tests/net/if_tap/rump_open_tap.debug	tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/if_vlan/bpfopen.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/if_vlan/siocXmulti.debug	tests-net-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/net/inpcb/broadcast_bind.debug	tests-net-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/net/inpcb/inpcb_bind.debug	tests-net-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/net/inpcb/broadcast_bind.debug	tests-net-debug		debug,atf,rump,compattestfile
+./usr/libdata/debug/usr/tests/net/inpcb/inpcb_bind.debug	tests-net-debug		debug,atf,rump,compattestfile
 ./usr/libdata/debug/usr/tests/net/in_cksum/in_cksum.debug	tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/ipsec/natt_terminator.debug	tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/mcast/mcast.debug		tests-net-debug		debug,atf,rump
