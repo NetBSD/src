@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.h,v 1.40 2023/10/13 19:07:09 ad Exp $	*/
+/*	$NetBSD: pipe.h,v 1.41 2023/10/17 10:28:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -24,7 +24,7 @@
  */
 
 #ifndef _SYS_PIPE_H_
-#define _SYS_PIPE_H_
+#define	_SYS_PIPE_H_
 
 #include <sys/selinfo.h>		/* for struct selinfo */
 #include <sys/time.h>			/* for struct timespec */
@@ -35,11 +35,11 @@
  * Pipe buffer size, keep moderate in value, pipes take kva space.
  */
 #ifndef PIPE_SIZE
-#define PIPE_SIZE	16384
+#define	PIPE_SIZE	16384
 #endif
 
 #ifndef BIG_PIPE_SIZE
-#define BIG_PIPE_SIZE	(4*PIPE_SIZE)
+#define	BIG_PIPE_SIZE	(4*PIPE_SIZE)
 #endif
 
 /*
@@ -48,7 +48,7 @@
  * size.
  */
 #ifndef PIPE_DIRECT_CHUNK
-#define PIPE_DIRECT_CHUNK	(1*1024*1024)
+#define	PIPE_DIRECT_CHUNK	(1*1024*1024)
 #endif
 
 /*
@@ -56,7 +56,7 @@
  * than PIPE_BUF.
  */
 #ifndef PIPE_MINDIRECT
-#define PIPE_MINDIRECT	8192
+#define	PIPE_MINDIRECT	8192
 #endif
 
 /*
@@ -75,12 +75,12 @@ struct pipebuf {
 /*
  * Bits in pipe_state.
  */
-#define PIPE_RDASYNC	0x001	/* Async I/O on reader side */
-#define PIPE_WRASYNC	0x002	/* Async I/O on writer side */
-#define PIPE_RDOPEN	0x010	/* Reader side open */
-#define PIPE_WROPEN	0x020	/* Writer side open */
-#define PIPE_EOF	0x100	/* Pipe is in EOF condition */
-#define PIPE_SIGNALR	0x200	/* Do selwakeup() on read(2) */
+#define	PIPE_RDASYNC	0x001	/* Async I/O on reader side */
+#define	PIPE_WRASYNC	0x002	/* Async I/O on writer side */
+#define	PIPE_RDOPEN	0x010	/* Reader side open */
+#define	PIPE_WROPEN	0x020	/* Writer side open */
+#define	PIPE_EOF	0x100	/* Pipe is in EOF condition */
+#define	PIPE_SIGNALR	0x200	/* Do selwakeup() on read(2) */
 #define	PIPE_RESIZED	0x400	/* Attempted to resize */
 
 /*
