@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.474 2023/09/14 22:20:08 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.475 2023/10/17 19:29:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.474 2023/09/14 22:20:08 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.475 2023/10/17 19:29:09 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -159,7 +159,7 @@ is_either(const char *s, const char *a, const char *b)
 /* for Bison:
 %printer {
 	if (is_integer($$->v_tspec))
-		fprintf(yyo, "%lld", (unsigned long long)$$->u.integer);
+		fprintf(yyo, "%lld", (long long)$$->u.integer);
 	else
 		fprintf(yyo, "%Lg", $$->u.floating);
 } <y_val>
@@ -2280,8 +2280,8 @@ cgram_declare(sym_t *decl, bool has_initializer, sbuf_t *renaming)
 }
 
 /*
- * Discard all input tokens up to and including the next
- * unmatched right paren
+ * Discard all input tokens up to and including the next unmatched right
+ * parenthesis.
  */
 static void
 read_until_rparen(void)

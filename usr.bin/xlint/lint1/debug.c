@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.62 2023/09/13 20:31:58 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.63 2023/10/17 19:29:09 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.62 2023/09/13 20:31:58 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.63 2023/10/17 19:29:09 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -187,16 +187,15 @@ debug_type(const type_t *tp)
 void
 debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 {
-	op_t op;
 
 	if (tn == NULL) {
 		debug_step("null");
 		return;
 	}
 
-	op = tn->tn_op;
+	op_t op = tn->tn_op;
 	debug_printf("'%s'",
-	    op == CVT && !tn->tn_cast ? "convert" : op_name(op));
+	    op == CVT && tn->tn_cast ? "cast" : op_name(op));
 	if (op == NAME)
 		debug_printf(" '%s' with %s",
 		    tn->tn_sym->s_name,
