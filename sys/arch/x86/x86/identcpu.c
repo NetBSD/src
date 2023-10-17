@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.126 2023/10/17 11:11:49 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.127 2023/10/17 11:12:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.126 2023/10/17 11:11:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.127 2023/10/17 11:12:33 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.126 2023/10/17 11:11:49 riastradh Exp
 #include <machine/specialreg.h>
 #include <machine/pio.h>
 #include <machine/cpu.h>
+#include <machine/pcb.h>
 
 #include <x86/cputypes.h>
 #include <x86/cacheinfo.h>
@@ -769,8 +770,16 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	/* Get features and maximum size of the save area */
 	x86_cpuid(0xd, descs);
-	if (descs[2] > sizeof(struct fxsave))
+	if (descs[2] > sizeof(struct fxsave)) {
+		CTASSERT(offsetof(struct pcb, pcb_savefpu) < PAGE_SIZE);
+		const unsigned max_fpu_save_size =
+		    PAGE_SIZE - offsetof(struct pcb, pcb_savefpu);
+		if (descs[2] > max_fpu_save_size) {
+			panic("CPU's FPU save size too large: %u > %u",
+			    descs[2], max_fpu_save_size);
+		}
 		x86_fpu_save_size = descs[2];
+	}
 
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
 
