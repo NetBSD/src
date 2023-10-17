@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.76 2023/10/15 13:22:52 riastradh Exp $
+# $NetBSD: Makefile,v 1.77 2023/10/17 13:51:52 rjs Exp $
 
 NOMAN=		# defined
 
@@ -9,7 +9,9 @@ TESTSDIR=	${TESTSBASE}/kernel
 TESTS_SUBDIRS+=	kqueue
 #TESTS_C=	t_epoll
 TESTS_C+=	t_fcntl
+.if ${MKRUMP} != "no"
 TESTS_C+=	t_fdrestart
+.endif
 TESTS_C+=	t_lock
 TESTS_C+=	t_lockf
 TESTS_C+=	t_pty
