@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.28 2023/10/16 17:31:18 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.29 2023/10/17 10:24:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.28 2023/10/16 17:31:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.29 2023/10/17 10:24:11 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -466,7 +466,7 @@ early_xenconscn_getc(dev_t dev)
 	return -1;
 }
 
-static void 
+static void
 early_xenconscn_putc(dev_t dev, int c)
 {
 	printk("%c", c);
