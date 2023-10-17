@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_thmap.c,v 1.13 2023/04/11 13:06:21 riastradh Exp $	*/
+/*	$NetBSD: subr_thmap.c,v 1.14 2023/10/17 11:55:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
@@ -112,7 +112,7 @@
 #include "utils.h"
 #endif
 
-THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.13 2023/04/11 13:06:21 riastradh Exp $");
+THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.14 2023/10/17 11:55:28 riastradh Exp $");
 
 #include <crypto/blake2/blake2s.h>
 
@@ -987,11 +987,11 @@ thmap_create(uintptr_t baseptr, const thmap_ops_t *ops, unsigned flags)
 	if ((thmap->flags & THMAP_SETROOT) == 0) {
 		/* Allocate the root level. */
 		root = thmap->ops->alloc(THMAP_ROOT_LEN);
-		thmap->root = THMAP_GETPTR(thmap, root);
-		if (!thmap->root) {
+		if (!root) {
 			kmem_free(thmap, sizeof(thmap_t));
 			return NULL;
 		}
+		thmap->root = THMAP_GETPTR(thmap, root);
 		memset(thmap->root, 0, THMAP_ROOT_LEN);
 	}
 
