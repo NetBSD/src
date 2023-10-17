@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.59 2023/08/01 07:58:41 mrg Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.60 2023/10/17 11:52:45 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.59 2023/08/01 07:58:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.60 2023/10/17 11:52:45 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -722,7 +722,7 @@ xenbus_probe_init(void *unused)
 
 		DELAY(1000);
 #else /* DOM0OPS */
-		kthread_exit(0); /* can't get a working xenstore in this case */
+		panic("dom0 support not compiled in");
 #endif /* DOM0OPS */
 	}
 
