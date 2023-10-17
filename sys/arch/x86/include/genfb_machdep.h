@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.h,v 1.6 2023/10/16 17:27:02 bouyer Exp $ */
+/* $NetBSD: genfb_machdep.h,v 1.7 2023/10/17 12:07:42 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,6 +33,8 @@ int	x86_genfb_init(void);
 int	x86_genfb_cnattach(void);
 void	x86_genfb_set_console_dev(device_t);
 void	x86_genfb_ddb_trap_callback(int);
+
+const struct btinfo_framebuffer * xen_genfb_getbtinfo(void);
 
 extern int acpi_md_vesa_modenum;
 extern int acpi_md_vbios_reset;
