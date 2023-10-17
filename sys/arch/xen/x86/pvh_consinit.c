@@ -1,4 +1,4 @@
-/* $NetBSD: pvh_consinit.c,v 1.5 2023/10/16 17:31:18 bouyer Exp $ */
+/* $NetBSD: pvh_consinit.c,v 1.6 2023/10/17 13:27:58 bouyer Exp $ */
 
 /*
  * Copyright (c) 2020 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.5 2023/10/16 17:31:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.6 2023/10/17 13:27:58 bouyer Exp $");
 
 #include "xencons.h"
 #include <sys/param.h>
@@ -51,6 +51,11 @@ xen_pvh_consinit(void)
 	 * boot stage.
 	 */
 	static int initted = 0;
+
+	if (initted == 0) {
+		/* fall back to printk() until we can setup our console */
+		xen_early_console();
+	}
 	if (xendomain_is_dom0()) {
 		union xen_cmdline_parseinfo xcp;
 		xen_parse_cmdline(XEN_PARSE_CONSOLE, &xcp);
@@ -61,12 +66,12 @@ xen_pvh_consinit(void)
 		if (strcmp(xcp.xcp_console, "tty0") == 0 || /* linux name */
 		    strcmp(xcp.xcp_console, "pc") == 0) { /* NetBSD name */
 #endif /* CONS_OVERRIDE */
+			initted++;
 			return 0; /* native console code will do it */
 		}
 	}
 	if (initted == 0 && !xendomain_is_dom0()) {
-		/* pmap not up yet, fall back to printk() */
-		xen_early_console();
+		/* pmap not up yet */
 		initted++;
 		return 1;
 	} else if (initted > 1) {
