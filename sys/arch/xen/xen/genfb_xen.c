@@ -1,4 +1,4 @@
-/*      $NetBSD: genfb_xen.c,v 1.1 2023/10/17 12:07:42 bouyer Exp $      */
+/*      $NetBSD: genfb_xen.c,v 1.2 2023/10/17 16:09:12 bouyer Exp $      */
 
 /*
  * Copyright (c) 2023 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_xen.c,v 1.1 2023/10/17 12:07:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_xen.c,v 1.2 2023/10/17 16:09:12 bouyer Exp $");
 
 
 #include <sys/device.h>
@@ -42,6 +42,7 @@ const struct btinfo_framebuffer *
 xen_genfb_getbtinfo(void)
 {
 	dom0_vga_console_info_t *d0_consi;
+	int info_size;
 
 	if (!xendomain_is_dom0())
 		return NULL;
@@ -49,8 +50,21 @@ xen_genfb_getbtinfo(void)
 	if (_xen_genfb_btinfo.common.type == BTINFO_FRAMEBUFFER)
 		return &_xen_genfb_btinfo;
 
+#ifdef XENPVHVM
+	struct xen_platform_op op = {
+		.cmd = XENPF_get_dom0_console,
+	};
+	info_size = HYPERVISOR_platform_op(&op);
+	if (info_size < sizeof(dom0_vga_console_info_t)) {
+		printf("XENPF_get_dom0_console fail %d\n", info_size);
+		return NULL;
+	}
+	d0_consi = &op.u.dom0_console;
+#else
 	d0_consi = (void *)((char *)&xen_start_info +
 	    xen_start_info.console.dom0.info_off);
+	info_size = xen_start_info.console.dom0.info_size;
+#endif
 
 	if (d0_consi->video_type != XEN_VGATYPE_VESA_LFB &&
 	    d0_consi->video_type != XEN_VGATYPE_EFI_LFB)
@@ -59,7 +73,7 @@ xen_genfb_getbtinfo(void)
 	_xen_genfb_btinfo.common.type = BTINFO_FRAMEBUFFER;
 	_xen_genfb_btinfo.common.len = sizeof(struct btinfo_framebuffer);
 	_xen_genfb_btinfo.physaddr = d0_consi->u.vesa_lfb.lfb_base;
-	if (xen_start_info.console.dom0.info_size >=
+	if (info_size >=
 	    offsetof(dom0_vga_console_info_t, u.vesa_lfb.ext_lfb_base)) {
 		_xen_genfb_btinfo.physaddr |=
 		    (uint64_t)d0_consi->u.vesa_lfb.ext_lfb_base << 32;
