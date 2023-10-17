@@ -615,6 +615,15 @@ typedef struct xenpf_symdata xenpf_symdata_t;
 DEFINE_XEN_GUEST_HANDLE(xenpf_symdata_t);
 
 /*
+ * Fetch the video console information and mode setup by Xen.  A non-
+ * negative return value indicates the size of the (part of the) structure
+ * which was filled.
+ */
+#define XENPF_get_dom0_console 64
+typedef struct dom0_vga_console_info xenpf_dom0_console_t;
+DEFINE_XEN_GUEST_HANDLE(xenpf_dom0_console_t);
+
+/*
  * ` enum neg_errnoval
  * ` HYPERVISOR_platform_op(const struct xen_platform_op*);
  */
@@ -644,6 +653,7 @@ struct xen_platform_op {
         struct xenpf_core_parking      core_parking;
         struct xenpf_resource_op       resource_op;
         struct xenpf_symdata           symdata;
+        xenpf_dom0_console_t           dom0_console;
         uint8_t                        pad[128];
     } u;
 };
