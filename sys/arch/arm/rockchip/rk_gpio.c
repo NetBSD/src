@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gpio.c,v 1.5 2021/08/07 16:18:45 thorpej Exp $ */
+/* $NetBSD: rk_gpio.c,v 1.6 2023/10/17 15:09:18 tnn Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_gpio.c,v 1.5 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gpio.c,v 1.6 2023/10/17 15:09:18 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,30 +90,12 @@ static void	rk_gpio_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(rk_gpio, sizeof(struct rk_gpio_softc),
 	rk_gpio_match, rk_gpio_attach, NULL, NULL);
 
-static int
-rk_gpio_ctl(struct rk_gpio_softc *sc, u_int pin, int flags)
-{
-	uint32_t ddr;
-
-	KASSERT(mutex_owned(&sc->sc_lock));
-
-	ddr = RD4(sc, GPIO_SWPORTA_DDR_REG);
-	if (flags & GPIO_PIN_INPUT)
-		ddr &= ~__BIT(pin);
-	else if (flags & GPIO_PIN_OUTPUT)
-		ddr |= __BIT(pin);
-	WR4(sc, GPIO_SWPORTA_DDR_REG, ddr);
-
-	return 0;
-}
-
 static void *
 rk_gpio_acquire(device_t dev, const void *data, size_t len, int flags)
 {
 	struct rk_gpio_softc * const sc = device_private(dev);
 	struct rk_gpio_pin *gpin;
 	const u_int *gpio = data;
-	int error;
 
 	if (len != 12)
 		return NULL;
@@ -124,12 +106,7 @@ rk_gpio_acquire(device_t dev, const void *data, size_t len, int flags)
 	if (pin >= __arraycount(sc->sc_pins))
 		return NULL;
 
-	mutex_enter(&sc->sc_lock);
-	error = rk_gpio_ctl(sc, pin, flags);
-	mutex_exit(&sc->sc_lock);
-
-	if (error != 0)
-		return NULL;
+	sc->sc_gp.gp_pin_ctl(sc, pin, flags);
 
 	gpin = kmem_zalloc(sizeof(*gpin), KM_SLEEP);
 	gpin->pin_sc = sc;
@@ -146,9 +123,9 @@ rk_gpio_release(device_t dev, void *priv)
 	struct rk_gpio_softc * const sc = device_private(dev);
 	struct rk_gpio_pin *pin = priv;
 
-	mutex_enter(&sc->sc_lock);
-	rk_gpio_ctl(pin->pin_sc, pin->pin_nr, GPIO_PIN_INPUT);
-	mutex_exit(&sc->sc_lock);
+	KASSERT(sc == pin->pin_sc);
+
+	sc->sc_gp.gp_pin_ctl(sc, pin->pin_nr, GPIO_PIN_INPUT);
 
 	kmem_free(pin, sizeof(*pin));
 }
@@ -158,16 +135,11 @@ rk_gpio_read(device_t dev, void *priv, bool raw)
 {
 	struct rk_gpio_softc * const sc = device_private(dev);
 	struct rk_gpio_pin *pin = priv;
-	uint32_t data;
 	int val;
 
 	KASSERT(sc == pin->pin_sc);
 
-	const uint32_t data_mask = __BIT(pin->pin_nr);
-
-	/* No lock required for reads */
-	data = RD4(sc, GPIO_EXT_PORTA_REG);
-	val = __SHIFTOUT(data, data_mask);
+	val = sc->sc_gp.gp_pin_read(sc, pin->pin_nr);
 	if (!raw && pin->pin_actlo)
 		val = !val;
 
@@ -179,23 +151,13 @@ rk_gpio_write(device_t dev, void *priv, int val, bool raw)
 {
 	struct rk_gpio_softc * const sc = device_private(dev);
 	struct rk_gpio_pin *pin = priv;
-	uint32_t data;
 
 	KASSERT(sc == pin->pin_sc);
-
-	const uint32_t data_mask = __BIT(pin->pin_nr);
 
 	if (!raw && pin->pin_actlo)
 		val = !val;
 
-	mutex_enter(&sc->sc_lock);
-	data = RD4(sc, GPIO_SWPORTA_DR_REG);
-	if (val)
-		data |= data_mask;
-	else
-		data &= ~data_mask;
-	WR4(sc, GPIO_SWPORTA_DR_REG, data);
-	mutex_exit(&sc->sc_lock);
+	sc->sc_gp.gp_pin_write(sc, pin->pin_nr, val);
 }
 
 static struct fdtbus_gpio_controller_func rk_gpio_funcs = {
@@ -247,11 +209,17 @@ static void
 rk_gpio_pin_ctl(void *priv, int pin, int flags)
 {
 	struct rk_gpio_softc * const sc = priv;
+	uint32_t ddr;
 
 	KASSERT(pin < __arraycount(sc->sc_pins));
 
 	mutex_enter(&sc->sc_lock);
-	rk_gpio_ctl(sc, pin, flags);
+	ddr = RD4(sc, GPIO_SWPORTA_DDR_REG);
+	if (flags & GPIO_PIN_INPUT)
+		ddr &= ~__BIT(pin);
+	else if (flags & GPIO_PIN_OUTPUT)
+		ddr |= __BIT(pin);
+	WR4(sc, GPIO_SWPORTA_DDR_REG, ddr);
 	mutex_exit(&sc->sc_lock);
 }
 
