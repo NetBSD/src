@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3588_cru.c,v 1.1 2022/08/23 05:39:06 ryo Exp $	*/
+/*	$NetBSD: rk3588_cru.c,v 1.2 2023/10/17 19:13:05 tnn Exp $	*/
 
 /*-
  * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3588_cru.c,v 1.1 2022/08/23 05:39:06 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3588_cru.c,v 1.2 2023/10/17 19:13:05 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -636,7 +636,7 @@ static struct rk_cru_clk rk3588_cru_clks[] = {
 	    CLKSEL_CON(BIGCORE0, 1),	/* div1_reg */
 	    __BITS(4,0),		/* div1_mask */
 	    armclk_b01_rates),
-	RK_CPU_CORE2(RK3588_ARMCLK_B01, "armclk_b23", mux_armclkb23_parents,
+	RK_CPU_CORE2(RK3588_ARMCLK_B23, "armclk_b23", mux_armclkb23_parents,
 	    CLKSEL_CON(BIGCORE1, 0),	/* reg */
 	    __BITS(7,6), 2, 1,		/* mux_mask, mux_main, mux_alt */
 	    CLKSEL_CON(BIGCORE1, 0),	/* div0_reg */
@@ -672,7 +672,6 @@ static struct rk_cru_clk rk3588_cru_clks[] = {
 	RK_GATE(RK3588_CLK_CORE_BIGCORE1_PVTM, "clk_core_bigcore1_pvtm",
 	    "armclk_b23",
 	    CLKGATE_CON(BIGCORE1, 0), 13),
-
 
 	RK_COMPOSITE(RK3588_CLK_50M_SRC, "clk_50m_src",
 	    gpll_cpll_parents,
