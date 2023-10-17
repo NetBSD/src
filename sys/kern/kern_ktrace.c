@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.183 2023/10/15 10:27:11 riastradh Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.184 2023/10/17 10:27:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,26 +61,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.183 2023/10/15 10:27:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.184 2023/10/17 10:27:34 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
+
+#include <sys/callout.h>
+#include <sys/cpu.h>
 #include <sys/file.h>
-#include <sys/kernel.h>
-#include <sys/kthread.h>
-#include <sys/ktrace.h>
-#include <sys/kmem.h>
-#include <sys/syslog.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
-#include <sys/callout.h>
 #include <sys/kauth.h>
-#include <sys/cpu.h>
-#include <sys/syncobj.h>
-
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/ktrace.h>
 #include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/syncobj.h>
 #include <sys/syscallargs.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
 
 /*
  * TODO:
