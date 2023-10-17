@@ -1,6 +1,6 @@
-#	$NetBSD: files.xen,v 1.188 2023/10/17 12:07:42 bouyer Exp $
+#	$NetBSD: files.xen,v 1.189 2023/10/17 16:06:36 bouyer Exp $
 
-defflag	opt_xen.h			XEN XENPVH XENPVHVM PAE DOM0OPS
+defflag	opt_xen.h			XEN XENPVHVM PAE DOM0OPS
 
 file	arch/xen/x86/hypervisor_machdep.c	xen
 file	arch/xen/x86/xen_intr.c			xen

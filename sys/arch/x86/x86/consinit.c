@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.37 2023/10/17 12:07:42 bouyer Exp $	*/
+/*	$NetBSD: consinit.c,v 1.38 2023/10/17 16:06:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.37 2023/10/17 12:07:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.38 2023/10/17 16:06:36 bouyer Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_puc.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.37 2023/10/17 12:07:42 bouyer Exp $")
 #endif
 
 #ifdef XENPVHVM
+#include <xen/hypervisor.h>
 #include <xen/xen.h>
 #endif
 
@@ -189,7 +190,7 @@ consinit(void)
 		consinfo = &default_consinfo;
 
 #if (NGENFB > 0)
-#if defined(XENPVH) && defined(DOM0OPS)
+#if defined(XENPVHVM) && defined(DOM0OPS)
 	if (vm_guest == VM_GUEST_XENPVH && xendomain_is_dom0())
 		fbinfo = xen_genfb_getbtinfo();
 	else
