@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5.4.2 2023/08/09 17:25:00 martin Exp $	*/
+/*	$NetBSD: misc.c,v 1.5.4.3 2023/10/18 12:16:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -91,6 +91,18 @@ vn_is_readonly(vnode_t *vp)
 {
 
 	return (vp->v_mount->mnt_flag & MNT_RDONLY);
+}
+
+#undef thread_create
+kthread_t *thread_create(void *, size_t, void (*)(void *), void *, size_t,
+    proc_t *, int, pri_t);
+kthread_t *
+thread_create(void *stk, size_t stksize, void (*proc)(), void *arg,
+    size_t len, proc_t *pp, int state, pri_t pri)
+{
+
+	return solaris__thread_create(stk, stksize, proc, arg, len, pp, state,
+	    pri, "zfs");
 }
 
 kthread_t *
