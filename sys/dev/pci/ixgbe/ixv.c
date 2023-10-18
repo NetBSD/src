@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.191 2023/10/12 08:06:13 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.192 2023/10/18 03:52:55 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.191 2023/10/12 08:06:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.192 2023/10/18 03:52:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -573,7 +573,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	/* Check if VF was disabled by PF */
 	error = hw->mac.ops.get_link_state(hw, &sc->link_enabled);
-	if (error) {		
+	if (error) {
 		/* PF is not capable of controlling VF state. Enable the link. */
 		sc->link_enabled = TRUE;
 	}
@@ -807,7 +807,7 @@ ixv_init_locked(struct ixgbe_softc *sc)
 
 	/* Config/Enable Link */
 	error = hw->mac.ops.get_link_state(hw, &sc->link_enabled);
-	if (error) {		
+	if (error) {
 		/* PF is not capable of controlling VF state. Enable the link. */
 		sc->link_enabled = TRUE;
 	} else if (sc->link_enabled == FALSE)

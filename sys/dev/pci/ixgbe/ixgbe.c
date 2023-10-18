@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.343 2023/10/12 08:06:13 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.344 2023/10/18 03:52:55 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.343 2023/10/12 08:06:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.344 2023/10/18 03:52:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -5080,7 +5080,7 @@ ixgbe_update_link_status(struct ixgbe_softc *sc)
 			for (int i = 0; i < sc->num_queues; i++, que++)
 				que->eitr_setting = 0;
 
-			if (sc->link_speed == IXGBE_LINK_SPEED_10GB_FULL){
+			if (sc->link_speed == IXGBE_LINK_SPEED_10GB_FULL) {
 				/*
 				 *  Discard count for both MAC Local Fault and
 				 * Remote Fault because those registers are
@@ -6043,7 +6043,7 @@ ixgbe_sysctl_phy_overtemp_occurred(SYSCTLFN_ARGS)
 		return (EPERM);
 
 	if ((hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) &&
-	    (hw->device_id != IXGBE_DEV_ID_X550EM_A_10G_T)){
+	    (hw->device_id != IXGBE_DEV_ID_X550EM_A_10G_T)) {
 		device_printf(sc->dev,
 		    "Device has no supported external thermal sensor.\n");
 		return (ENODEV);
