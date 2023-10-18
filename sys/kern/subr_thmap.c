@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_thmap.c,v 1.12 2022/04/09 23:51:57 riastradh Exp $	*/
+/*	$NetBSD: subr_thmap.c,v 1.12.4.1 2023/10/18 15:03:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
@@ -112,7 +112,7 @@
 #include "utils.h"
 #endif
 
-THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.12 2022/04/09 23:51:57 riastradh Exp $");
+THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.12.4.1 2023/10/18 15:03:12 martin Exp $");
 
 #include <crypto/blake2/blake2s.h>
 
@@ -212,11 +212,17 @@ typedef struct {
 	uint32_t	hashval;	// current hash value
 } thmap_query_t;
 
-typedef struct {
-	uintptr_t	addr;
+union thmap_align {
+	void *		p;
+	uint64_t	v;
+};
+
+typedef struct thmap_gc thmap_gc_t;
+struct thmap_gc {
 	size_t		len;
-	void *		next;
-} thmap_gc_t;
+	thmap_gc_t *	next;
+	char		data[] __aligned(sizeof(union thmap_align));
+};
 
 #define	THMAP_ROOT_LEN	(sizeof(thmap_ptr_t) * ROOT_SIZE)
 
@@ -251,6 +257,34 @@ static const thmap_ops_t thmap_default_ops = {
 	.alloc = alloc_wrapper,
 	.free = free_wrapper
 };
+
+static uintptr_t
+gc_alloc(const thmap_t *thmap, size_t len)
+{
+	const size_t alloclen = offsetof(struct thmap_gc, data[len]);
+	const uintptr_t gcaddr = thmap->ops->alloc(alloclen);
+
+	if (!gcaddr)
+		return 0;
+
+	thmap_gc_t *const gc = THMAP_GETPTR(thmap, gcaddr);
+	gc->len = len;
+	return THMAP_GETOFF(thmap, &gc->data[0]);
+}
+
+static void
+gc_free(const thmap_t *thmap, uintptr_t addr, size_t len)
+{
+	const size_t alloclen = offsetof(struct thmap_gc, data[len]);
+	char *const ptr = THMAP_GETPTR(thmap, addr);
+	thmap_gc_t *const gc = container_of(ptr, struct thmap_gc, data[0]);
+	const uintptr_t gcaddr = THMAP_GETOFF(thmap, gc);
+
+	KASSERTMSG(gc->len == len, "thmap=%p ops=%p addr=%p len=%zu"
+	    " gc=%p gc->len=%zu",
+	    thmap, thmap->ops, (void *)addr, len, gc, gc->len);
+	thmap->ops->free(gcaddr, alloclen);
+}
 
 /*
  * NODE LOCKING.
@@ -395,7 +429,7 @@ node_create(thmap_t *thmap, thmap_inode_t *parent)
 	thmap_inode_t *node;
 	uintptr_t p;
 
-	p = thmap->ops->alloc(THMAP_INODE_LEN);
+	p = gc_alloc(thmap, THMAP_INODE_LEN);
 	if (!p) {
 		return NULL;
 	}
@@ -456,7 +490,7 @@ leaf_create(const thmap_t *thmap, const void *key, size_t len, void *val)
 	thmap_leaf_t *leaf;
 	uintptr_t leaf_off, key_off;
 
-	leaf_off = thmap->ops->alloc(sizeof(thmap_leaf_t));
+	leaf_off = gc_alloc(thmap, sizeof(thmap_leaf_t));
 	if (!leaf_off) {
 		return NULL;
 	}
@@ -467,9 +501,9 @@ leaf_create(const thmap_t *thmap, const void *key, size_t len, void *val)
 		/*
 		 * Copy the key.
 		 */
-		key_off = thmap->ops->alloc(len);
+		key_off = gc_alloc(thmap, len);
 		if (!key_off) {
-			thmap->ops->free(leaf_off, sizeof(thmap_leaf_t));
+			gc_free(thmap, leaf_off, sizeof(thmap_leaf_t));
 			return NULL;
 		}
 		memcpy(THMAP_GETPTR(thmap, key_off), key, len);
@@ -487,9 +521,9 @@ static void
 leaf_free(const thmap_t *thmap, thmap_leaf_t *leaf)
 {
 	if ((thmap->flags & THMAP_NOCOPY) == 0) {
-		thmap->ops->free(leaf->key, leaf->len);
+		gc_free(thmap, leaf->key, leaf->len);
 	}
-	thmap->ops->free(THMAP_GETOFF(thmap, leaf), sizeof(thmap_leaf_t));
+	gc_free(thmap, THMAP_GETOFF(thmap, leaf), sizeof(thmap_leaf_t));
 }
 
 static thmap_leaf_t *
@@ -547,7 +581,7 @@ root_try_put(thmap_t *thmap, const thmap_query_t *query, thmap_leaf_t *leaf)
 	nptr = THMAP_GETOFF(thmap, node);
 again:
 	if (atomic_load_relaxed(&thmap->root[i])) {
-		thmap->ops->free(nptr, THMAP_INODE_LEN);
+		gc_free(thmap, nptr, THMAP_INODE_LEN);
 		return EEXIST;
 	}
 	/* Release to subsequent consume in find_edge_node(). */
@@ -927,11 +961,13 @@ thmap_del(thmap_t *thmap, const void *key, size_t len)
 static void
 stage_mem_gc(thmap_t *thmap, uintptr_t addr, size_t len)
 {
+	char *const ptr = THMAP_GETPTR(thmap, addr);
 	thmap_gc_t *head, *gc;
 
-	gc = kmem_intr_alloc(sizeof(thmap_gc_t), KM_NOSLEEP);
-	gc->addr = addr;
-	gc->len = len;
+	gc = container_of(ptr, struct thmap_gc, data[0]);
+	KASSERTMSG(gc->len == len,
+	    "thmap=%p ops=%p ptr=%p len=%zu gc=%p gc->len=%zu",
+	    thmap, thmap->ops, (char *)addr, len, gc, gc->len);
 retry:
 	head = atomic_load_relaxed(&thmap->gc_list);
 	gc->next = head; // not yet published
@@ -958,8 +994,7 @@ thmap_gc(thmap_t *thmap, void *ref)
 
 	while (gc) {
 		thmap_gc_t *next = gc->next;
-		thmap->ops->free(gc->addr, gc->len);
-		kmem_intr_free(gc, sizeof(thmap_gc_t));
+		gc_free(thmap, THMAP_GETOFF(thmap, &gc->data[0]), gc->len);
 		gc = next;
 	}
 }
@@ -989,12 +1024,12 @@ thmap_create(uintptr_t baseptr, const thmap_ops_t *ops, unsigned flags)
 
 	if ((thmap->flags & THMAP_SETROOT) == 0) {
 		/* Allocate the root level. */
-		root = thmap->ops->alloc(THMAP_ROOT_LEN);
-		thmap->root = THMAP_GETPTR(thmap, root);
-		if (!thmap->root) {
+		root = gc_alloc(thmap, THMAP_ROOT_LEN);
+		if (!root) {
 			kmem_free(thmap, sizeof(thmap_t));
 			return NULL;
 		}
+		thmap->root = THMAP_GETPTR(thmap, root);
 		memset(thmap->root, 0, THMAP_ROOT_LEN);
 	}
 
@@ -1029,7 +1064,7 @@ thmap_destroy(thmap_t *thmap)
 	thmap_gc(thmap, ref);
 
 	if ((thmap->flags & THMAP_SETROOT) == 0) {
-		thmap->ops->free(root, THMAP_ROOT_LEN);
+		gc_free(thmap, root, THMAP_ROOT_LEN);
 	}
 	kmem_free(thmap, sizeof(thmap_t));
 }
