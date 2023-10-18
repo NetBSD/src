@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.139 2023/10/14 07:07:10 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.140 2023/10/18 15:31:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12415,7 +12415,8 @@ sys/dev/pci/ixgbe/ixgbe_common.h		1.18
 sys/dev/pci/ixgbe/ixgbe_dcb.c			1.14,1.15
 sys/dev/pci/ixgbe/ixgbe_dcb_82598.c		1.13
 sys/dev/pci/ixgbe/ixgbe_type.h			1.59,1.60
-sys/dev/pci/ixgbe/ixgbe_x540.c			1.24,1.28
+sys/dev/pci/ixgbe/ixgbe_x540.c			1.24
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.28
 sys/dev/pci/ixgbe/ixv.c				1.187-1.189
 
         - Add 82599 LS support once again.
@@ -12508,4 +12509,106 @@ sys/dev/usb/if_urndis.c				1.49
 	urndis(4): PR 55273: handle devices which do not provide a
 	CDC union descriptor.
 	[abs, ticket #416]
+
+sys/dev/pci/if_ixl.c				1.94,1.95
+
+	ixl(4): PR 57652: add ETHERCAP_VLAN_MTU support.
+	[yamaguchi, ticket #417]
+
+sys/arch/i386/stand/lib/biosdisk.c		1.59,1.60
+sys/dev/raidframe/rf_netbsdkintf.c		1.416
+sys/rump/librump/rumpkern/emul.c		1.200
+
+	raid(4): align the behavior of different boot methods.
+	[manu, ticket #418]
+
+sys/arch/arm/ti/ti_com.c			1.12
+
+	PR 57598: fix com ports on some arm boards.
+	[gutteridge, ticket #419]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.104
+sys/dev/pci/ixgbe/ixgbe.c			1.340-1.344
+sys/dev/pci/ixgbe/ixgbe.h			1.93
+sys/dev/pci/ixgbe/ixgbe_type.h			1.61
+sys/dev/pci/ixgbe/ixv.c 			1.190-1.192
+
+	- ixg(4): Print DEVICE_CAPS register.
+	- ixg(4): Fix a bug that the number of queues is unintentionally
+	  limited to a small number or wrong error message may be printed
+	  when two devices' number of MSI-X vectors are different.
+	- Fix a bug that changing hw.ix[gv]X.qY.interrupt_rate would change
+	  all devices all queues default interrupt rate.
+	- Whitespace fixes.
+	[msaitoh, ticket #420]
+
+sys/dev/pci/if_wm.c				1.790,1.791
+sys/dev/pci/if_wmvar.h				1.51
+sys/dev/pci/pcidevs				1.1497
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	- Add new workaround for Tiger Lake and newer to avoid
+	  packet loss.
+	- Add I219{V,LM}({22,23}) devices (Raptor Lake).
+	[msaitoh, ticket #421]
+
+tests/sbin/ifconfig/t_capabilities.sh		1.2,1.3
+
+	Skip the ifconfig/t_capabilities test by default.
+	It modifies the interface configuration on the host.
+	[rin, ticket #422]
+
+sys/kern/subr_thmap.c				1.14,1.15
+
+	thmap(9): PR 57666, PR 57208: fix allocation failure issues.
+	[riastradh, ticket #423]
+
+sys/ufs/ffs/ffs_vfsops.c			1.382
+
+	ffs_sync: PR 57606: avoid unlocked access to v_numoutput/v_dirtyblkhd.
+	[riastradh, ticket #424]
+
+sys/arch/x86/acpi/acpi_machdep.c		1.36
+sys/arch/x86/acpi/acpi_wakeup.c			1.56
+sys/arch/x86/include/genfb_machdep.h		1.6
+sys/arch/x86/pci/pci_machdep.c			1.96
+sys/arch/x86/x86/genfb_machdep.c		1.21
+sys/arch/x86/x86/hyperv.c			1.16
+
+	genfb(4): move some declarations to genfb_machdep.h.
+	[bouyer, ticket #425]
+
+sys/arch/xen/xenbus/xenbus_probe.c		1.60
+
+	xenbus: if dom0 support is not compiled in, panic with a usefull
+	message instead of waiting for an event which will never happen.
+	[bouyer, ticket #426]
+
+sys/arch/amd64/amd64/locore.S			1.224
+sys/arch/i386/i386/locore.S			1.197
+sys/arch/xen/include/hypervisor.h		1.58
+
+	Adjust for Xen's start_info_t changes.
+	[bouyer, ticket #427]
+
+sys/arch/amd64/conf/XEN3_DOM0			1.201
+sys/arch/i386/conf/XEN3PAE_DOM0			1.41
+sys/arch/x86/include/genfb_machdep.h		1.7
+sys/arch/x86/pci/pci_machdep.c			1.97
+sys/arch/x86/x86/consinit.c			1.37,1.38
+sys/arch/x86/x86/genfb_machdep.c		1.22
+sys/arch/xen/conf/files.xen			1.188,1.189
+sys/arch/xen/include/hypervisor.h		1.59
+sys/arch/xen/x86/autoconf.c			1.26
+sys/arch/xen/x86/consinit.c			1.18
+sys/arch/xen/x86/pvh_consinit.c			1.5,1.6
+sys/arch/xen/xen/genfb_xen.c			1.1
+sys/arch/xen/xen/genfb_xen.c			1.2
+sys/arch/xen/xen/xen_machdep.c			1.28
+sys/external/mit/xen-include-public/dist/xen/include/public/platform.h 1.2
+sys/external/mit/xen-include-public/dist/xen/include/public/xen.h 1.2
+
+	Xen: add genfb(4) support.
+	[bouyer, ticket #428]
 
