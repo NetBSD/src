@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.86.4.3 2023/10/13 18:55:12 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.86.4.4 2023/10/18 11:53:22 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -499,6 +499,7 @@ struct ixgbe_softc {
 	/* Info about the interface */
 	int			advertise;  /* link speeds */
 	bool			enable_aim; /* adaptive interrupt moderation */
+	int			max_interrupt_rate;
 	int			link_active; /* Use LINK_STATE_* value */
 	u16			max_frame_size;
 	u16			num_segs;

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.324.2.4 2023/10/13 18:55:12 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.324.2.5 2023/10/18 11:53:21 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.324.2.4 2023/10/13 18:55:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.324.2.5 2023/10/18 11:53:21 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -809,7 +809,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	struct ixgbe_hw *hw;
 	int		error = -1;
 	u32		ctrl_ext;
-	u16		high, low, nvmreg;
+	u16		high, low, nvmreg, dev_caps;
 	pcireg_t	id, subid;
 	const ixgbe_vendor_info_t *ent;
 	struct pci_attach_args *pa = aux;
@@ -1277,10 +1277,15 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	if (sc->feat_en & IXGBE_FEATURE_NETMAP)
 		ixgbe_netmap_attach(sc);
 
+	/* Print some flags */
 	snprintb(buf, sizeof(buf), IXGBE_FEATURE_FLAGS, sc->feat_cap);
 	aprint_verbose_dev(dev, "feature cap %s\n", buf);
 	snprintb(buf, sizeof(buf), IXGBE_FEATURE_FLAGS, sc->feat_en);
 	aprint_verbose_dev(dev, "feature ena %s\n", buf);
+	if (ixgbe_get_device_caps(hw, &dev_caps) == 0) {
+		snprintb(buf, sizeof(buf), IXGBE_DEVICE_CAPS_FLAGS, dev_caps);
+		aprint_verbose_dev(dev, "device cap %s\n", buf);
+	}
 
 	if (pmf_device_register(dev, ixgbe_suspend, ixgbe_resume))
 		pmf_class_network_register(dev, sc->ifp);
@@ -3374,9 +3379,9 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 			    && (reg < IXGBE_MIN_RSC_EITR_10G1G))
 				return EINVAL;
 		}
-		ixgbe_max_interrupt_rate = rate;
+		sc->max_interrupt_rate = rate;
 	} else
-		ixgbe_max_interrupt_rate = 0;
+		sc->max_interrupt_rate = 0;
 	ixgbe_eitr_write(sc, que->msix, reg);
 
 	return (0);
@@ -3481,6 +3486,7 @@ ixgbe_add_device_sysctls(struct ixgbe_softc *sc)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	sc->enable_aim = ixgbe_enable_aim;
+	sc->max_interrupt_rate = ixgbe_max_interrupt_rate;
 	if (sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_BOOL, "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
 	    NULL, 0, &sc->enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
@@ -4389,8 +4395,8 @@ ixgbe_configure_ivars(struct ixgbe_softc *sc)
 	struct ix_queue *que = sc->queues;
 	u32		newitr;
 
-	if (ixgbe_max_interrupt_rate > 0)
-		newitr = (4000000 / ixgbe_max_interrupt_rate) & 0x0FF8;
+	if (sc->max_interrupt_rate > 0)
+		newitr = (4000000 / sc->max_interrupt_rate) & 0x0FF8;
 	else {
 		/*
 		 * Disable DMA coalescing if interrupt moderation is
@@ -5074,7 +5080,7 @@ ixgbe_update_link_status(struct ixgbe_softc *sc)
 			for (int i = 0; i < sc->num_queues; i++, que++)
 				que->eitr_setting = 0;
 
-			if (sc->link_speed == IXGBE_LINK_SPEED_10GB_FULL){
+			if (sc->link_speed == IXGBE_LINK_SPEED_10GB_FULL) {
 				/*
 				 *  Discard count for both MAC Local Fault and
 				 * Remote Fault because those registers are
@@ -5302,7 +5308,7 @@ ixgbe_legacy_irq(void *arg)
 	struct ixgbe_softc *sc = que->sc;
 	struct ixgbe_hw	*hw = &sc->hw;
 	struct ifnet	*ifp = sc->ifp;
-	struct		tx_ring *txr = sc->tx_rings;
+	struct tx_ring	*txr = sc->tx_rings;
 	u32		eicr;
 	u32		eims_orig;
 	u32		eims_enable = 0;
@@ -6037,7 +6043,7 @@ ixgbe_sysctl_phy_overtemp_occurred(SYSCTLFN_ARGS)
 		return (EPERM);
 
 	if ((hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) &&
-	    (hw->device_id != IXGBE_DEV_ID_X550EM_A_10G_T)){
+	    (hw->device_id != IXGBE_DEV_ID_X550EM_A_10G_T)) {
 		device_printf(sc->dev,
 		    "Device has no supported external thermal sensor.\n");
 		return (ENODEV);
@@ -6863,8 +6869,8 @@ static int
 ixgbe_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 {
 	device_t	dev = sc->dev;
-	struct		ix_queue *que = sc->queues;
-	struct		tx_ring *txr = sc->tx_rings;
+	struct ix_queue	*que = sc->queues;
+	struct tx_ring	*txr = sc->tx_rings;
 	pci_chipset_tag_t pc;
 	char		intrbuf[PCI_INTRSTR_LEN];
 	char		intr_xname[32];
@@ -7115,9 +7121,6 @@ ixgbe_configure_interrupts(struct ixgbe_softc *sc)
 	else
 		queues = uimin(queues,
 		    uimin(mac->max_tx_queues, mac->max_rx_queues));
-
-	/* reflect correct sysctl value */
-	ixgbe_num_queues = queues;
 
 	/*
 	 * Want one vector (RX/TX pair) per queue
