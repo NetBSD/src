@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.41.2.10 2023/10/13 18:20:30 martin Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.41.2.11 2023/10/18 14:05:27 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -108,6 +108,7 @@
 #define IXGBE_DEV_ID_82599_KR			0x1517
 #define IXGBE_DEV_ID_82599_COMBO_BACKPLANE	PCI_PRODUCT_INTEL_82599_COMBO_BACKPLANE
 #define IXGBE_SUBDEV_ID_82599_KX4_KR_MEZZ	0x000C
+#define IXGBE_DEV_ID_82599_LS			0x154F
 #define IXGBE_DEV_ID_82599_CX4			PCI_PRODUCT_INTEL_82599_CX4
 #define IXGBE_DEV_ID_82599_SFP			PCI_PRODUCT_INTEL_82599_SFP
 #define IXGBE_SUBDEV_ID_82599_SFP_WOL0		0x1071
@@ -2552,6 +2553,10 @@ enum {
 #define IXGBE_DEVICE_CAPS_WOL_PORT0	0x8 /* WoL supported on port 0 */
 #define IXGBE_DEVICE_CAPS_WOL_MASK	0xC /* Mask for WoL capabilities */
 
+#define IXGBE_DEVICE_CAPS_FLAGS		"\20"				     \
+	"\1ALLOW_ANY_SFP" "\2FCOE_OFFLOAD" "\3WOL_PORT0_1" "\4WOL_PORT0"     \
+							"\10NO_CROSSTALK_WR"
+
 /* PCI Bus Info */
 #define IXGBE_PCI_DEVICE_STATUS		0xAA
 #define IXGBE_PCI_DEVICE_STATUS_TRANSACTION_PENDING	0x0020
@@ -3628,8 +3633,8 @@ union ixgbe_atr_input {
 	 * bkt_hash	- 2 bytes
 	 */
 	struct {
-		u8     vm_pool;
-		u8     flow_type;
+		u8 vm_pool;
+		u8 flow_type;
 		__be16 vlan_id;
 		__be32 dst_ip[4];
 		__be32 src_ip[4];
@@ -3659,7 +3664,6 @@ union ixgbe_atr_hash_dword {
 	__be16 flex_bytes;
 	__be32 dword;
 };
-
 
 #define IXGBE_MVALS_INIT(m)	\
 	IXGBE_CAT(EEC, m),		\
@@ -3796,6 +3800,7 @@ enum ixgbe_media_type {
 	ixgbe_media_type_fiber,
 	ixgbe_media_type_fiber_fixed,
 	ixgbe_media_type_fiber_qsfp,
+	ixgbe_media_type_fiber_lco,
 	ixgbe_media_type_copper,
 	ixgbe_media_type_backplane,
 	ixgbe_media_type_cx4,
@@ -4165,11 +4170,11 @@ struct ixgbe_link_info {
 };
 
 struct ixgbe_eeprom_info {
-	struct ixgbe_eeprom_operations	ops;
-	enum ixgbe_eeprom_type		type;
-	u32				semaphore_delay;
-	u16				word_size;
-	u16				address_bits;
+	struct ixgbe_eeprom_operations ops;
+	enum ixgbe_eeprom_type type;
+	u32 semaphore_delay;
+	u16 word_size;
+	u16 address_bits;
 	u16 word_page_size;
 	u16 ctrl_word_3;
 	u8  nvm_image_ver_high;
@@ -4178,34 +4183,34 @@ struct ixgbe_eeprom_info {
 
 #define IXGBE_FLAGS_DOUBLE_RESET_REQUIRED	0x01
 struct ixgbe_mac_info {
-	struct ixgbe_mac_operations	ops;
-	enum ixgbe_mac_type		type;
-	u8				addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
-	u8				perm_addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
-	u8				san_addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
+	struct ixgbe_mac_operations ops;
+	enum ixgbe_mac_type type;
+	u8 addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
+	u8 perm_addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
+	u8 san_addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
 	/* prefix for World Wide Node Name (WWNN) */
-	u16				wwnn_prefix;
+	u16 wwnn_prefix;
 	/* prefix for World Wide Port Name (WWPN) */
-	u16				wwpn_prefix;
+	u16 wwpn_prefix;
 #define IXGBE_MAX_MTA			128
-	u32				mta_shadow[IXGBE_MAX_MTA];
-	s32				mc_filter_type;
-	u32				mcft_size;
-	u32				vft_size;
-	u32				num_rar_entries;
-	u32				rar_highwater;
-	u32				rx_pb_size;
-	u32				max_tx_queues;
-	u32				max_rx_queues;
-	u32				orig_autoc;
+	u32 mta_shadow[IXGBE_MAX_MTA];
+	s32 mc_filter_type;
+	u32 mcft_size;
+	u32 vft_size;
+	u32 num_rar_entries;
+	u32 rar_highwater;
+	u32 rx_pb_size;
+	u32 max_tx_queues;
+	u32 max_rx_queues;
+	u32 orig_autoc;
 	u8  san_mac_rar_index;
 	bool get_link_status;
-	u32				orig_autoc2;
+	u32 orig_autoc2;
 	u16 max_msix_vectors;
 	bool arc_subsystem_valid;
-	bool				orig_link_settings_stored;
-	bool				autotry_restart;
-	u8				flags;
+	bool orig_link_settings_stored;
+	bool autotry_restart;
+	u8 flags;
 	struct ixgbe_dmac_config dmac_config;
 	bool set_lben;
 	u32  max_link_up_time;
@@ -4213,25 +4218,25 @@ struct ixgbe_mac_info {
 };
 
 struct ixgbe_phy_info {
-	struct ixgbe_phy_operations	ops;
-	enum ixgbe_phy_type		type;
-	u32				addr;
-	u32				id;
-	enum ixgbe_sfp_type		sfp_type;
-	bool				sfp_setup_needed;
-	u32				revision;
-	enum ixgbe_media_type		media_type;
+	struct ixgbe_phy_operations ops;
+	enum ixgbe_phy_type type;
+	u32 addr;
+	u32 id;
+	enum ixgbe_sfp_type sfp_type;
+	bool sfp_setup_needed;
+	u32 revision;
+	enum ixgbe_media_type media_type;
 	u32 phy_semaphore_mask;
-	bool				reset_disable;
-	bool				force_10_100_autonego;
-	ixgbe_autoneg_advertised	autoneg_advertised;
+	bool reset_disable;
+	bool force_10_100_autonego;
+	ixgbe_autoneg_advertised autoneg_advertised;
 	ixgbe_link_speed speeds_supported;
 	ixgbe_link_speed eee_speeds_supported;
 	ixgbe_link_speed eee_speeds_advertised;
-	enum ixgbe_smart_speed		smart_speed;
-	bool				smart_speed_active;
-	bool				multispeed_fiber;
-	bool				reset_if_overtemp;
+	enum ixgbe_smart_speed smart_speed;
+	bool smart_speed_active;
+	bool multispeed_fiber;
+	bool reset_if_overtemp;
 	bool qsfp_shared_i2c_bus;
 	u32 nw_mng_if_sel;
 };
@@ -4240,21 +4245,21 @@ struct ixgbe_phy_info {
 
 struct ixgbe_hw {
 	struct ixgbe_softc *back;
-	struct ixgbe_mac_info		mac;
-	struct ixgbe_addr_filter_info	addr_ctrl;
-	struct ixgbe_fc_info		fc;
-	struct ixgbe_phy_info		phy;
+	struct ixgbe_mac_info mac;
+	struct ixgbe_addr_filter_info addr_ctrl;
+	struct ixgbe_fc_info fc;
+	struct ixgbe_phy_info phy;
 	struct ixgbe_link_info link;
-	struct ixgbe_eeprom_info	eeprom;
-	struct ixgbe_bus_info		bus;
-	struct ixgbe_mbx_info		mbx;
+	struct ixgbe_eeprom_info eeprom;
+	struct ixgbe_bus_info bus;
+	struct ixgbe_mbx_info mbx;
 	const u32 *mvals;
-	u16				device_id;
-	u16				vendor_id;
-	u16				subsystem_device_id;
-	u16				subsystem_vendor_id;
-	u8				revision_id;
-	bool				adapter_stopped;
+	u16 device_id;
+	u16 vendor_id;
+	u16 subsystem_device_id;
+	u16 subsystem_vendor_id;
+	u8 revision_id;
+	bool adapter_stopped;
 	int api_version;
 	bool force_full_reset;
 	bool allow_unsupported_sfp;
@@ -4265,7 +4270,6 @@ struct ixgbe_hw {
 
 #define ixgbe_call_func(hw, func, params, error) \
 		(func != NULL) ? func params : error
-
 
 /* Error Codes */
 #define IXGBE_SUCCESS				0
@@ -4316,7 +4320,6 @@ struct ixgbe_hw {
 #define IXGBE_ERR_NOT_IN_PROMISC		-51 /* XXX NetBSD */
 
 #define IXGBE_NOT_IMPLEMENTED			0x7FFFFFFF
-
 
 #define BYPASS_PAGE_CTL0	0x00000000
 #define BYPASS_PAGE_CTL1	0x40000000

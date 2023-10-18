@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.25.2.8 2023/10/13 18:20:30 martin Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.25.2.9 2023/10/18 14:05:27 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.25.2.8 2023/10/13 18:20:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.25.2.9 2023/10/18 14:05:27 martin Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -1904,7 +1904,6 @@ static s32 ixgbe_get_eeprom_semaphore(struct ixgbe_hw *hw)
 
 	DEBUGFUNC("ixgbe_get_eeprom_semaphore");
 
-
 	/* Get SMBI software semaphore between device drivers first */
 	for (i = 0; i < timeout; i++) {
 		/*
@@ -3389,7 +3388,6 @@ s32 ixgbe_disable_sec_rx_path_generic(struct ixgbe_hw *hw)
 
 	DEBUGFUNC("ixgbe_disable_sec_rx_path_generic");
 
-
 	secrxreg = IXGBE_READ_REG(hw, IXGBE_SECRXCTRL);
 	secrxreg |= IXGBE_SECRXCTRL_RX_DIS;
 	IXGBE_WRITE_REG(hw, IXGBE_SECRXCTRL, secrxreg);
@@ -4313,10 +4311,25 @@ s32 ixgbe_check_mac_link_generic(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 			links_reg = IXGBE_READ_REG(hw, IXGBE_LINKS);
 		}
 	} else {
-		if (links_reg & IXGBE_LINKS_UP)
+		if (links_reg & IXGBE_LINKS_UP) {
+			if (ixgbe_need_crosstalk_fix(hw)) {
+				/* Check the link state again after a delay
+				 * to filter out spurious link up
+				 * notifications.
+				 */
+				msec_delay(5);
+				links_reg = IXGBE_READ_REG(hw, IXGBE_LINKS);
+				if (!(links_reg & IXGBE_LINKS_UP)) {
+					*link_up = false;
+					*speed = IXGBE_LINK_SPEED_UNKNOWN;
+					return IXGBE_SUCCESS;
+				}
+
+			}
 			*link_up = TRUE;
-		else
+		} else {
 			*link_up = FALSE;
+		}
 	}
 
 	switch (links_reg & IXGBE_LINKS_SPEED_82599) {

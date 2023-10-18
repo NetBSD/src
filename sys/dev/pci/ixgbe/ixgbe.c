@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.28 2023/10/13 18:20:30 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.29 2023/10/18 14:05:27 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.28 2023/10/13 18:20:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.29 2023/10/18 14:05:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -117,6 +117,7 @@ static const ixgbe_vendor_info_t ixgbe_vendor_info_array[] =
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_XAUI_LOM, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_CX4, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_T3_LOM, 0, 0, 0},
+	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_LS, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_COMBO_BACKPLANE, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_BACKPLANE_FCOE, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_SF2, 0, 0, 0},
@@ -368,12 +369,12 @@ SYSCTL_INT(_hw_ix, OID_AUTO, num_queues, CTLFLAG_RDTUN, &ixgbe_num_queues, 0,
  * setting higher than RX as this seems
  * the better performing choice.
  */
-static int ixgbe_txd = PERFORM_TXD;
+static int ixgbe_txd = DEFAULT_TXD;
 SYSCTL_INT(_hw_ix, OID_AUTO, txd, CTLFLAG_RDTUN, &ixgbe_txd, 0,
     "Number of transmit descriptors per queue");
 
 /* Number of RX descriptors per ring */
-static int ixgbe_rxd = PERFORM_RXD;
+static int ixgbe_rxd = DEFAULT_RXD;
 SYSCTL_INT(_hw_ix, OID_AUTO, rxd, CTLFLAG_RDTUN, &ixgbe_rxd, 0,
     "Number of receive descriptors per queue");
 
@@ -760,8 +761,6 @@ ixgbe_initialize_transmit_units(struct ixgbe_softc *sc)
 		rttdcs &= ~IXGBE_RTTDCS_ARBDIS;
 		IXGBE_WRITE_REG(hw, IXGBE_RTTDCS, rttdcs);
 	}
-
-	return;
 } /* ixgbe_initialize_transmit_units */
 
 /************************************************************************
@@ -780,7 +779,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	struct ixgbe_hw *hw;
 	int		error = -1;
 	u32		ctrl_ext;
-	u16		high, low, nvmreg;
+	u16		high, low, nvmreg, dev_caps;
 	pcireg_t	id, subid;
 	const ixgbe_vendor_info_t *ent;
 	struct pci_attach_args *pa = aux;
@@ -927,14 +926,26 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	/* Do descriptor calc and sanity checks */
 	if (((ixgbe_txd * sizeof(union ixgbe_adv_tx_desc)) % DBA_ALIGN) != 0 ||
 	    ixgbe_txd < MIN_TXD || ixgbe_txd > MAX_TXD) {
-		aprint_error_dev(dev, "TXD config issue, using default!\n");
+		aprint_error_dev(dev, "Invalid TX ring size (%d). "
+		    "It must be between %d and %d, "
+		    "inclusive, and must be a multiple of %zu. "
+		    "Using default value of %d instead.\n",
+		    ixgbe_txd, MIN_TXD, MAX_TXD,
+		    DBA_ALIGN / sizeof(union ixgbe_adv_tx_desc),
+		    DEFAULT_TXD);
 		sc->num_tx_desc = DEFAULT_TXD;
 	} else
 		sc->num_tx_desc = ixgbe_txd;
 
 	if (((ixgbe_rxd * sizeof(union ixgbe_adv_rx_desc)) % DBA_ALIGN) != 0 ||
 	    ixgbe_rxd < MIN_RXD || ixgbe_rxd > MAX_RXD) {
-		aprint_error_dev(dev, "RXD config issue, using default!\n");
+		aprint_error_dev(dev, "Invalid RX ring size (%d). "
+		    "It must be between %d and %d, "
+		    "inclusive, and must be a multiple of %zu. "
+		    "Using default value of %d instead.\n",
+		    ixgbe_rxd, MIN_RXD, MAX_RXD,
+		    DBA_ALIGN / sizeof(union ixgbe_adv_rx_desc),
+		    DEFAULT_RXD);
 		sc->num_rx_desc = DEFAULT_RXD;
 	} else
 		sc->num_rx_desc = ixgbe_rxd;
@@ -1243,10 +1254,15 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	if (sc->feat_en & IXGBE_FEATURE_NETMAP)
 		ixgbe_netmap_attach(sc);
 
+	/* Print some flags */
 	snprintb(buf, sizeof(buf), IXGBE_FEATURE_FLAGS, sc->feat_cap);
 	aprint_verbose_dev(dev, "feature cap %s\n", buf);
 	snprintb(buf, sizeof(buf), IXGBE_FEATURE_FLAGS, sc->feat_en);
 	aprint_verbose_dev(dev, "feature ena %s\n", buf);
+	if (ixgbe_get_device_caps(hw, &dev_caps) == 0) {
+		snprintb(buf, sizeof(buf), IXGBE_DEVICE_CAPS_FLAGS, dev_caps);
+		aprint_verbose_dev(dev, "device cap %s\n", buf);
+	}
 
 	if (pmf_device_register(dev, ixgbe_suspend, ixgbe_resume))
 		pmf_class_network_register(dev, sc->ifp);
@@ -3319,9 +3335,9 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 			    && (reg < IXGBE_MIN_RSC_EITR_10G1G))
 				return EINVAL;
 		}
-		ixgbe_max_interrupt_rate = rate;
+		sc->max_interrupt_rate = rate;
 	} else
-		ixgbe_max_interrupt_rate = 0;
+		sc->max_interrupt_rate = 0;
 	ixgbe_eitr_write(sc, que->msix, reg);
 
 	return (0);
@@ -3426,6 +3442,7 @@ ixgbe_add_device_sysctls(struct ixgbe_softc *sc)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	sc->enable_aim = ixgbe_enable_aim;
+	sc->max_interrupt_rate = ixgbe_max_interrupt_rate;
 	if (sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 	    CTLTYPE_BOOL, "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
 	    NULL, 0, &sc->enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
@@ -4237,9 +4254,6 @@ ixgbe_init_locked(struct ixgbe_softc *sc)
 	/* Setup DMA Coalescing */
 	ixgbe_config_dmac(sc);
 
-	/* And now turn on interrupts */
-	ixgbe_enable_intr(sc);
-
 	/* Enable the use of the MBX by the VF's */
 	if (sc->feat_en & IXGBE_FEATURE_SRIOV) {
 		ctrl_ext = IXGBE_READ_REG(hw, IXGBE_CTRL_EXT);
@@ -4251,8 +4265,11 @@ ixgbe_init_locked(struct ixgbe_softc *sc)
 	sc->if_flags = ifp->if_flags;
 	sc->ec_capenable = sc->osdep.ec.ec_capenable;
 
-	/* Now inform the stack we're ready */
+	/* Inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
+
+	/* And now turn on interrupts */
+	ixgbe_enable_intr(sc);
 
 	return;
 } /* ixgbe_init_locked */
@@ -4334,8 +4351,8 @@ ixgbe_configure_ivars(struct ixgbe_softc *sc)
 	struct ix_queue *que = sc->queues;
 	u32		newitr;
 
-	if (ixgbe_max_interrupt_rate > 0)
-		newitr = (4000000 / ixgbe_max_interrupt_rate) & 0x0FF8;
+	if (sc->max_interrupt_rate > 0)
+		newitr = (4000000 / sc->max_interrupt_rate) & 0x0FF8;
 	else {
 		/*
 		 * Disable DMA coalescing if interrupt moderation is
@@ -4922,7 +4939,7 @@ ixgbe_update_link_status(struct ixgbe_softc *sc)
 			for (int i = 0; i < sc->num_queues; i++, que++)
 				que->eitr_setting = 0;
 
-			if (sc->link_speed == IXGBE_LINK_SPEED_10GB_FULL){
+			if (sc->link_speed == IXGBE_LINK_SPEED_10GB_FULL) {
 				/*
 				 *  Discard count for both MAC Local Fault and
 				 * Remote Fault because those registers are
@@ -5150,7 +5167,7 @@ ixgbe_legacy_irq(void *arg)
 	struct ixgbe_softc *sc = que->sc;
 	struct ixgbe_hw	*hw = &sc->hw;
 	struct ifnet	*ifp = sc->ifp;
-	struct		tx_ring *txr = sc->tx_rings;
+	struct tx_ring	*txr = sc->tx_rings;
 	u32		eicr;
 	u32		eims_orig;
 	u32		eims_enable = 0;
@@ -6709,8 +6726,8 @@ static int
 ixgbe_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 {
 	device_t	dev = sc->dev;
-	struct		ix_queue *que = sc->queues;
-	struct		tx_ring *txr = sc->tx_rings;
+	struct ix_queue	*que = sc->queues;
+	struct tx_ring	*txr = sc->tx_rings;
 	pci_chipset_tag_t pc;
 	char		intrbuf[PCI_INTRSTR_LEN];
 	char		intr_xname[32];
@@ -6974,9 +6991,6 @@ ixgbe_configure_interrupts(struct ixgbe_softc *sc)
 	else
 		queues = uimin(queues,
 		    uimin(mac->max_tx_queues, mac->max_rx_queues));
-
-	/* reflect correct sysctl value */
-	ixgbe_num_queues = queues;
 
 	/*
 	 * Want one vector (RX/TX pair) per queue
