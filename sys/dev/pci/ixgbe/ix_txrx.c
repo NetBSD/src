@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.100.4.3 2023/10/13 18:55:12 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.100.4.4 2023/10/18 11:53:22 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.100.4.3 2023/10/13 18:55:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.100.4.4 2023/10/18 11:53:22 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1274,9 +1274,9 @@ ixgbe_rsc_count(union ixgbe_adv_rx_desc *rx)
 static void
 ixgbe_setup_hw_rsc(struct rx_ring *rxr)
 {
-	struct	ixgbe_softc *sc = rxr->sc;
-	struct	ixgbe_hw *hw = &sc->hw;
-	u32              rscctrl, rdrxctl;
+	struct ixgbe_softc *sc = rxr->sc;
+	struct ixgbe_hw	*hw = &sc->hw;
+	u32		rscctrl, rdrxctl;
 
 	/* If turning LRO/RSC off we need to disable it */
 	if ((sc->ifp->if_capenable & IFCAP_LRO) == 0) {

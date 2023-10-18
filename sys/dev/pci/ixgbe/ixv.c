@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.183.4.3 2023/10/13 18:55:12 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.183.4.4 2023/10/18 11:53:22 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.183.4.3 2023/10/13 18:55:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.183.4.4 2023/10/18 11:53:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -550,6 +550,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	/* hw.ix defaults init */
 	sc->enable_aim = ixv_enable_aim;
+	sc->max_interrupt_rate = ixv_max_interrupt_rate;
 
 	sc->txrx_use_workqueue = ixv_txrx_workqueue;
 
@@ -572,7 +573,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	/* Check if VF was disabled by PF */
 	error = hw->mac.ops.get_link_state(hw, &sc->link_enabled);
-	if (error) {		
+	if (error) {
 		/* PF is not capable of controlling VF state. Enable the link. */
 		sc->link_enabled = TRUE;
 	}
@@ -806,7 +807,7 @@ ixv_init_locked(struct ixgbe_softc *sc)
 
 	/* Config/Enable Link */
 	error = hw->mac.ops.get_link_state(hw, &sc->link_enabled);
-	if (error) {		
+	if (error) {
 		/* PF is not capable of controlling VF state. Enable the link. */
 		sc->link_enabled = TRUE;
 	} else if (sc->link_enabled == FALSE)
@@ -1603,7 +1604,7 @@ ixv_free_deferred_handlers(struct ixgbe_softc *sc)
 static void
 ixv_free_pci_resources(struct ixgbe_softc *sc)
 {
-	struct		ix_queue *que = sc->queues;
+	struct ix_queue *que = sc->queues;
 	int		rid;
 
 	/*
@@ -2529,9 +2530,9 @@ ixv_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 			    && (reg < IXGBE_MIN_RSC_EITR_10G1G))
 				return EINVAL;
 		}
-		ixv_max_interrupt_rate = rate;
+		sc->max_interrupt_rate = rate;
 	} else
-		ixv_max_interrupt_rate = 0;
+		sc->max_interrupt_rate = 0;
 	ixv_eitr_write(sc, que->msix, reg);
 
 	return (0);
@@ -3377,7 +3378,7 @@ ixv_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 {
 	device_t	dev = sc->dev;
 	struct ix_queue *que = sc->queues;
-	struct		tx_ring *txr = sc->tx_rings;
+	struct tx_ring	*txr = sc->tx_rings;
 	int		error, msix_ctrl, rid, vector = 0;
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
