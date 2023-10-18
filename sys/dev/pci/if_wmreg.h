@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.98.6.17 2023/06/27 18:36:53 martin Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.98.6.18 2023/10/18 14:41:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1465,6 +1465,8 @@ struct livengood_tcpip_ctxdesc {
 #define	FEXTNVM9_IOSFSB_CLKREQ_DIS __BIT(12)
 #define	WMREG_FEXTNVM11	0x5bbc	/* Future Extended NVM 11 */
 #define	FEXTNVM11_DIS_MULRFIX	__BIT(13)	/* Disable MULR fix */
+
+#define	WMREG_FFLT_DBG	0x05F04 /* Debug Register */
 
 #define	WMREG_CRC_OFFSET 0x5f50
 
