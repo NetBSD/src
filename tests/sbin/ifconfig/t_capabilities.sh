@@ -1,4 +1,4 @@
-# $NetBSD: t_capabilities.sh,v 1.2 2023/10/18 08:25:14 rin Exp $
+# $NetBSD: t_capabilities.sh,v 1.3 2023/10/18 08:52:46 rin Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -112,7 +112,7 @@ basic_head() {
 basic_body() {
 
 	if ! [ $(atf_config_get "run_unsafe" "no") = "yes" ]; then
-		atf_skip "modify if_capabilities for real interfaces"
+		atf_skip "modify if_capenable for real interfaces"
 	fi
 
 	for i in $(ifconfig -l); do
