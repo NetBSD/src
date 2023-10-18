@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1383.2.20 2023/10/13 18:41:17 martin Exp $
+$NetBSD: pcidevs,v 1.1383.2.21 2023/10/18 14:29:18 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3936,6 +3936,10 @@ product INTEL I219_LM10		0x0d4e	I219-LM (10) Ethernet Connection
 product INTEL I219_V10		0x0d4f	I219-V (10) Ethernet Connection
 product INTEL I219_LM12		0x0d53	I219-LM (12) Ethernet Connection
 product INTEL I219_V12		0x0d55	I219-V (12) Ethernet Connection
+product INTEL I219_LM23		0x0dc5	I219-LM (23) Ethernet Connection
+product INTEL I219_V23		0x0dc6	I219-V (23) Ethernet Connection
+product INTEL I219_LM22		0x0dc7	I219-LM (22) Ethernet Connection
+product INTEL I219_V22		0x0dc8	I219-V (22) Ethernet Connection
 product INTEL E5V2_DMI2		0x0e00	E5 v2 DMI2
 product INTEL E5V2_PCIE_1	0x0e01	E5 v2 PCIe x4 (DMI2 Mode)
 product INTEL E5V2_PCIE_2	0x0e02	E5 v2 PCIe
