@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.15 2022/05/20 13:55:16 nonaka Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.15.4.1 2023/10/18 15:14:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.15 2022/05/20 13:55:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.15.4.1 2023/10/18 15:14:24 martin Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -1048,7 +1048,6 @@ static void
 populate_fbinfo(device_t dev, prop_dictionary_t dict)
 {
 #if NWSDISPLAY > 0 && NGENFB > 0
-	extern struct vcons_screen x86_genfb_console_screen;
 	struct rasops_info *ri = &x86_genfb_console_screen.scr_ri;
 #endif
 	const void *fbptr = lookup_bootinfo(BTINFO_FRAMEBUFFER);
@@ -1140,7 +1139,6 @@ device_hyperv_register(device_t dev, void *aux)
 
 			prop_dictionary_set_bool(dict, "clear-screen", false);
 #if NWSDISPLAY > 0 && NGENFB > 0
-			extern struct vcons_screen x86_genfb_console_screen;
 			prop_dictionary_set_uint16(dict, "cursor-row",
 			    x86_genfb_console_screen.scr_ri.ri_crow);
 #endif
