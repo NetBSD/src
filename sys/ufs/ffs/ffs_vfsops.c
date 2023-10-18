@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.378.2.2 2023/06/21 16:55:02 martin Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.378.2.3 2023/10/18 15:10:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.378.2.2 2023/06/21 16:55:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.378.2.3 2023/10/18 15:10:41 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2019,14 +2019,25 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
-	if (waitfor != MNT_LAZY && (ump->um_devvp->v_numoutput > 0 ||
-	    !LIST_EMPTY(&ump->um_devvp->v_dirtyblkhd))) {
-		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = VOP_FSYNC(ump->um_devvp, cred,
-		    (waitfor == MNT_WAIT ? FSYNC_WAIT : 0) | FSYNC_NOLOG,
-		    0, 0)) != 0)
-			allerror = error;
-		VOP_UNLOCK(ump->um_devvp);
+	if (waitfor != MNT_LAZY)  {
+		bool need_devvp_fsync;
+
+		mutex_enter(ump->um_devvp->v_interlock);
+		need_devvp_fsync = (ump->um_devvp->v_numoutput > 0 ||
+		    !LIST_EMPTY(&ump->um_devvp->v_dirtyblkhd));
+		mutex_exit(ump->um_devvp->v_interlock);
+		if (need_devvp_fsync) {
+			int flags = FSYNC_NOLOG;
+
+			if (waitfor == MNT_WAIT)
+				flags |= FSYNC_WAIT;
+
+			vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
+			if ((error = VOP_FSYNC(ump->um_devvp, cred, flags, 0,
+				    0)) != 0)
+				allerror = error;
+			VOP_UNLOCK(ump->um_devvp);
+		}
 	}
 #if defined(QUOTA) || defined(QUOTA2)
 	qsync(mp);
