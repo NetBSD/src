@@ -1,4 +1,4 @@
-/* $NetBSD: pvh_consinit.c,v 1.2.20.1 2023/03/30 11:45:34 martin Exp $ */
+/* $NetBSD: pvh_consinit.c,v 1.2.20.2 2023/10/18 16:53:03 martin Exp $ */
 
 /*
  * Copyright (c) 2020 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.2.20.1 2023/03/30 11:45:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.2.20.2 2023/10/18 16:53:03 martin Exp $");
 
 #include "xencons.h"
 #include <sys/param.h>
@@ -41,16 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.2.20.1 2023/03/30 11:45:34 martin
 #include <xen/include/public/hvm/hvm_op.h>
 #include <xen/include/public/hvm/params.h>
 
-static int pvh_xenconscn_getc(dev_t);
-static void pvh_xenconscn_putc(dev_t, int);
-static void pvh_xenconscn_pollc(dev_t, int);
-
-static struct consdev pvh_xencons = {
-        NULL, NULL, pvh_xenconscn_getc, pvh_xenconscn_putc, pvh_xenconscn_pollc,
-	NULL, NULL, NULL, NODEV, CN_NORMAL
-};
-
-
 int
 xen_pvh_consinit(void)
 {
@@ -59,6 +49,11 @@ xen_pvh_consinit(void)
 	 * boot stage.
 	 */
 	static int initted = 0;
+
+	if (initted == 0) {
+		/* fall back to printk() until we can setup our console */
+		xen_early_console();
+	}
 	if (xendomain_is_dom0()) {
 		union xen_cmdline_parseinfo xcp;
 		xen_parse_cmdline(XEN_PARSE_CONSOLE, &xcp);
@@ -69,12 +64,12 @@ xen_pvh_consinit(void)
 		if (strcmp(xcp.xcp_console, "tty0") == 0 || /* linux name */
 		    strcmp(xcp.xcp_console, "pc") == 0) { /* NetBSD name */
 #endif /* CONS_OVERRIDE */
+			initted++;
 			return 0; /* native console code will do it */
 		}
 	}
 	if (initted == 0 && !xendomain_is_dom0()) {
-		/* pmap not up yet, fall back to printk() */
-		cn_tab = &pvh_xencons;
+		/* pmap not up yet */
 		initted++;
 		return 1;
 	} else if (initted > 1) {
@@ -113,24 +108,4 @@ xen_pvh_consinit(void)
 	xenconscn_attach();
 #endif
 	return 1;
-}
-
-static int
-pvh_xenconscn_getc(dev_t dev)
-{
-	while(1)
-		;
-	return -1;
-}
-
-static void
-pvh_xenconscn_putc(dev_t dev, int c)
-{
-	printk("%c", c);
-}
-
-static void
-pvh_xenconscn_pollc(dev_t dev, int on)
-{
-	return;
 }

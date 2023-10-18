@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.16 2012/10/13 17:58:55 jdc Exp $	*/
+/*	$NetBSD: consinit.c,v 1.16.68.1 2023/10/18 16:53:03 martin Exp $	*/
 /*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.16 2012/10/13 17:58:55 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.16.68.1 2023/10/18 16:53:03 martin Exp $");
 
 #include "opt_kgdb.h"
 
@@ -37,11 +37,13 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.16 2012/10/13 17:58:55 jdc Exp $");
 #include <sys/device.h>
 #include <sys/bus.h>
 #include <machine/bootinfo.h>
+#include <arch/x86/include/genfb_machdep.h>
 
 #include "xencons.h"
 #include "vga.h"
 #include "ega.h"
 #include "pcdisplay.h"
+#include "genfb.h"
 #if (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
@@ -68,6 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.16 2012/10/13 17:58:55 jdc Exp $");
 #include "ukbd.h"
 #if (NUKBD > 0)
 #include <dev/usb/ukbdvar.h>
+#endif
+
+#if (NGENFB > 0)
+#include <dev/wsfb/genfbvar.h>
 #endif
 
 #include "opt_xen.h"
@@ -145,14 +151,26 @@ consinit(void)
 {
 	static int initted = 0;
 	union xen_cmdline_parseinfo xcp;
+#if (NGENFB > 0)
+        const struct btinfo_framebuffer *fbinfo = NULL;
+#endif
+
 
 	if (initted) {
 		return;
 	}
+
+	xen_early_console();
+
+#if (NGENFB > 0) && defined(DOM0OPS)
+	if (xendomain_is_dom0())
+		fbinfo = xen_genfb_getbtinfo();
+#endif
+
 	initted = 1;
 	xen_parse_cmdline(XEN_PARSE_CONSOLE, &xcp);
 	
-#if (NVGA > 0)
+#if (NVGA > 0) || (NGENFB > 0)
 	if (xendomain_is_privileged()) {
 #ifdef CONS_OVERRIDE
 		if (strcmp(default_consinfo.devname, "tty0") == 0 ||
@@ -162,9 +180,26 @@ consinit(void)
 		    strcmp(xcp.xcp_console, "pc") == 0) { /* NetBSD name */
 #endif /* CONS_OVERRIDE */
 			int error;
+
+#if (NGENFB > 0)
+			if (fbinfo && fbinfo->physaddr > 0) {
+				if (x86_genfb_cnattach() == -1) {
+					initted = 0; /* defer */
+					return;
+				}
+				genfb_cnattach();
+				goto dokbd;
+			} else {
+				genfb_disable();
+			}
+#endif
 			vga_cnattach(x86_bus_space_io, x86_bus_space_mem,
 			    -1, 1);
+#if (NGENFB > 0)
+dokbd:
+#endif
 			error = ENODEV;
+
 #if (NPCKBC > 0)
 			error = pckbc_cnattach(x86_bus_space_io, IO_KBD, KBCMDP,
 			    PCKBC_KBD_SLOT, 0);

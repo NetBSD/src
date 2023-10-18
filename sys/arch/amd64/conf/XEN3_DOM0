@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.197.4.2 2023/10/09 23:33:45 snj Exp $
+# $NetBSD: XEN3_DOM0,v 1.197.4.3 2023/10/18 16:53:04 martin Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -14,7 +14,7 @@ include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"XEN3_DOM0-$Revision: 1.197.4.2 $"
+#ident		"XEN3_DOM0-$Revision: 1.197.4.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -439,8 +439,8 @@ options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 options 	PMS_ALPS_TOUCHPAD	# Enable support for Alps Touchpads
 vga*		at pci? dev ? function ?
-#genfb*		at pci? dev ? function ?# Needs acpi_md_vesa_modenum
-					# in acpi_wakeup.c (!xenpv)
+genfb*		at pci? dev ? function ?
+
 #options 	VCONS_DRAW_INTR
 #wsdisplay*	at vga? console ?
 wsdisplay*	at wsemuldisplaydev?

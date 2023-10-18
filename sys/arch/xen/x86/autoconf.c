@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2020/05/02 16:44:36 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.20.1 2023/10/18 16:53:03 martin Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2020/05/02 16:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.20.1 2023/10/18 16:53:03 martin Exp $");
 
 #include "opt_xen.h"
 #include "opt_multiprocessor.h"
@@ -81,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2020/05/02 16:44:36 bouyer Exp $")
 #include <machine/gdt.h>
 #include <machine/pcb.h>
 #include <machine/bootinfo.h>
+
+#include <x86/autoconf.h>
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
@@ -227,6 +229,12 @@ dom0_bootstatic_callback(struct nfs_diskless *nd)
 void
 device_register(device_t dev, void *aux)
 {
+	device_t isaboot, pciboot;
+	device_t found = NULL;
+
+	isaboot = device_isa_register(dev, aux);
+	pciboot = device_pci_register(dev, aux);
+
 	/*
 	 * Handle network interfaces here, the attachment information is
 	 * not available driver independently later.
@@ -250,60 +258,25 @@ device_register(device_t dev, void *aux)
 		if (strncmp(xcp.xcp_bootdev, device_xname(dev),
 		    sizeof(xcp.xcp_bootdev)) == 0)
 		{
-			goto found;
+			found = dev;
 		}
 	}
 #endif
-	if (device_class(dev) == DV_IFNET) {
-		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
-		if (bin == NULL)
+	if (found == NULL) {
+		if (isaboot != NULL) 
+			found = isaboot;
+		else if (pciboot != NULL)
+			found = pciboot;
+	}
+
+	if (found) {
+		if (booted_device) {
+			/* XXX should be a "panic()" */
+			printf("warning: double match for boot device (%s, %s)\n",
+			    device_xname(booted_device), device_xname(dev));
 			return;
-
-		/*
-		 * We don't check the driver name against the device name
-		 * passed by the boot ROM. The ROM should stay usable
-		 * if the driver gets obsoleted.
-		 * The physical attachment information (checked below)
-		 * must be sufficient to identify the device.
-		 */
-
-		if (bin->bus == BI_BUS_ISA &&
-		    device_is_a(device_parent(dev), "isa")) {
-			struct isa_attach_args *iaa = aux;
-
-			/* compare IO base address */
-			/* XXXJRT what about multiple I/O addrs? */
-			if (iaa->ia_nio > 0 &&
-			    bin->addr.iobase == iaa->ia_io[0].ir_addr)
-				goto found;
 		}
-#if NPCI > 0
-		if (bin->bus == BI_BUS_PCI &&
-		    device_is_a(device_parent(dev), "pci")) {
-			struct pci_attach_args *paa = aux;
-			int b, d, f;
-
-			/*
-			 * Calculate BIOS representation of:
-			 *
-			 *	<bus,device,function>
-			 *
-			 * and compare.
-			 */
-			pci_decompose_tag(paa->pa_pc, paa->pa_tag, &b, &d, &f);
-			if (bin->addr.tag == ((b << 8) | (d << 3) | f))
-				goto found;
-		}
-#endif
+		booted_device = found;
+		booted_method = "device/register";
 	}
-	return;
-
-found:
-	if (booted_device) {
-		/* XXX should be a "panic()" */
-		printf("warning: double match for boot device (%s, %s)\n",
-		    device_xname(booted_device), device_xname(dev));
-		return;
-	}
-	booted_device = dev;
 }
