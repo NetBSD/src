@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.50 2023/10/16 08:25:57 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.51 2023/10/18 06:37:08 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.50 2023/10/16 08:25:57 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.51 2023/10/18 06:37:08 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2243,10 +2243,11 @@ lagg_port_setup(struct lagg_softc *sc,
 			lagg_port_setsadl(lp, NULL);
 	} else {
 		lagg_port_setsadl(lp, CLLADDR(ifp->if_sadl));
-		error = lagg_setmtu(ifp_port, ifp->if_mtu);
-		if (error != 0)
-			goto restore_sadl;
 	}
+
+	error = lagg_setmtu(ifp_port, ifp->if_mtu);
+	if (error != 0)
+		goto restore_sadl;
 
 	error = lagg_proto_allocport(sc, lp);
 	if (error != 0)
@@ -2263,9 +2264,6 @@ lagg_port_setup(struct lagg_softc *sc,
 	IFNET_UNLOCK(ifp_port);
 
 	if (is_1st_port) {
-		error = lagg_setmtu(ifp, lp->lp_mtu);
-		if (error != 0)
-			goto restore_ifp_port;
 		if (lp->lp_iftype == IFT_ETHER &&
 		    lagg_lladdr_equal(sc->sc_lladdr_rand,
 		    CLLADDR(ifp->if_sadl))) {
@@ -2285,11 +2283,6 @@ lagg_port_setup(struct lagg_softc *sc,
 
 	return 0;
 
-restore_ifp_port:
-	IFNET_LOCK(ifp_port);
-	if (stopped) {
-		if_stop(ifp_port, 0);
-	}
 free_port:
 	KASSERT(IFNET_LOCKED(ifp_port));
 	lagg_proto_freeport(sc, lp);
