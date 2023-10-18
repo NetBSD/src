@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.767.2.4 2023/10/08 15:23:26 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.767.2.5 2023/10/18 14:27:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767.2.4 2023/10/08 15:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767.2.5 2023/10/18 14:27:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -1733,25 +1733,31 @@ static const struct wm_product {
 	  WM_T_PCH_SPT,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM13,
 	  "I219 LM (13) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM14,
 	  "I219 LM (14) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM15,
 	  "I219 LM (15) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM16,
 	  "I219 LM (16) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM17,
 	  "I219 LM (17) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM18,
 	  "I219 LM (18) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* MTP */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM19,
 	  "I219 LM (19) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* MTP */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM22,
+	  "I219 LM (22) Ethernet Connection",
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP(RPL) */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM23,
+	  "I219 LM (23) Ethernet Connection",
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP(RPL) */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V,
 	  "I219 V Ethernet Connection",
 	  WM_T_PCH_SPT,		WMP_F_COPPER },
@@ -1787,25 +1793,31 @@ static const struct wm_product {
 	  WM_T_PCH_SPT,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V13,
 	  "I219 V (13) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V14,
 	  "I219 V (14) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V15,
 	  "I219 V (15) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V16,
 	  "I219 V (16) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V17,
 	  "I219 V (17) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V18,
 	  "I219 V (18) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* MTP */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V19,
 	  "I219 V (19) Ethernet Connection",
-	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* MTP */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V22,
+	  "I219 V (22) Ethernet Connection",
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP(RPL) */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V23,
+	  "I219 V (23) Ethernet Connection",
+	  WM_T_PCH_TGP,		WMP_F_COPPER }, /* ADP(RPL) */
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -2311,7 +2323,8 @@ alloc_retry:
 		    && (sc->sc_type != WM_T_PCH2)
 		    && (sc->sc_type != WM_T_PCH_LPT)
 		    && (sc->sc_type != WM_T_PCH_SPT)
-		    && (sc->sc_type != WM_T_PCH_CNP)) {
+		    && (sc->sc_type != WM_T_PCH_CNP)
+		    && (sc->sc_type != WM_T_PCH_TGP)) {
 			/* ICH* and PCH* have no PCIe capability registers */
 			if (pci_get_capability(pa->pa_pc, pa->pa_tag,
 				PCI_CAP_PCIEXPRESS, &sc->sc_pcixe_capoff,
@@ -2556,6 +2569,7 @@ alloc_retry:
 		break;
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		sc->nvm.read = wm_nvm_read_spt;
 		/* SPT has no GFPREG; flash registers mapped through BAR0 */
 		sc->sc_flags |= WM_F_EEPROM_FLASH;
@@ -2683,6 +2697,7 @@ alloc_retry:
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		apme_mask = WUC_APME;
 		eeprom_data = CSR_READ(sc, WMREG_WUC);
 		if ((eeprom_data & apme_mask) != 0)
@@ -2817,6 +2832,7 @@ alloc_retry:
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		/* Already checked before wm_reset () */
 		apme_mask = eeprom_data = 0;
 		break;
@@ -2977,6 +2993,7 @@ alloc_retry:
 	    || sc->sc_type == WM_T_ICH10 || sc->sc_type == WM_T_PCH
 	    || sc->sc_type == WM_T_PCH2 || sc->sc_type == WM_T_PCH_LPT
 	    || sc->sc_type == WM_T_PCH_SPT || sc->sc_type == WM_T_PCH_CNP
+	    || sc->sc_type == WM_T_PCH_TGP
 	    || sc->sc_type == WM_T_82573
 	    || sc->sc_type == WM_T_82574 || sc->sc_type == WM_T_82583) {
 		/* Copper only */
@@ -3178,6 +3195,7 @@ alloc_retry:
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		/* XXX limited to 9234 */
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 		break;
@@ -4292,6 +4310,7 @@ wm_set_ral(struct wm_softc *sc, const uint8_t *enaddr, int idx)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		if (idx == 0) {
 			CSR_WRITE(sc, WMREG_CORDOVA_RAL(idx), ral_lo);
 			CSR_WRITE_FLUSH(sc);
@@ -4349,7 +4368,8 @@ wm_mchash(struct wm_softc *sc, const uint8_t *enaddr)
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
 	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT)
-	    || (sc->sc_type == WM_T_PCH_SPT) || (sc->sc_type == WM_T_PCH_CNP)){
+	    || (sc->sc_type == WM_T_PCH_SPT) || (sc->sc_type == WM_T_PCH_CNP)
+	    || (sc->sc_type == WM_T_PCH_TGP)) {
 		hash = (enaddr[4] >> ich8_lo_shift[sc->sc_mchash_type]) |
 		    (((uint16_t)enaddr[5]) << ich8_hi_shift[sc->sc_mchash_type]);
 		return (hash & 0x3ff);
@@ -4384,6 +4404,7 @@ wm_rar_count(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		size = WM_RAL_TABSIZE_PCH_LPT;
 		break;
 	case WM_T_82575:
@@ -4450,8 +4471,8 @@ wm_set_filter(struct wm_softc *sc)
 	size = wm_rar_count(sc);
 	wm_set_ral(sc, CLLADDR(ifp->if_sadl), 0);
 
-	if ((sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT)
-	    || (sc->sc_type == WM_T_PCH_CNP)) {
+	if ((sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT) ||
+	    (sc->sc_type == WM_T_PCH_CNP) || (sc->sc_type == WM_T_PCH_TGP)) {
 		i = __SHIFTOUT(CSR_READ(sc, WMREG_FWSM), FWSM_WLOCK_MAC);
 		switch (i) {
 		case 0:
@@ -4476,7 +4497,8 @@ wm_set_filter(struct wm_softc *sc)
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
 	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT)
-	    || (sc->sc_type == WM_T_PCH_SPT) || (sc->sc_type == WM_T_PCH_CNP))
+	    || (sc->sc_type == WM_T_PCH_SPT) || (sc->sc_type == WM_T_PCH_CNP)
+	    || (sc->sc_type == WM_T_PCH_TGP))
 		size = WM_ICH8_MC_TABSIZE;
 	else
 		size = WM_MC_TABSIZE;
@@ -4511,7 +4533,8 @@ wm_set_filter(struct wm_softc *sc)
 		    || (sc->sc_type == WM_T_PCH2)
 		    || (sc->sc_type == WM_T_PCH_LPT)
 		    || (sc->sc_type == WM_T_PCH_SPT)
-		    || (sc->sc_type == WM_T_PCH_CNP))
+		    || (sc->sc_type == WM_T_PCH_CNP)
+		    || (sc->sc_type == WM_T_PCH_TGP))
 			reg &= 0x1f;
 		else
 			reg &= 0x7f;
@@ -4664,6 +4687,7 @@ wm_lan_init_done(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		for (i = 0; i < WM_ICH8_LAN_INIT_TIMEOUT; i++) {
 			reg = CSR_READ(sc, WMREG_STATUS);
 			if ((reg & STATUS_LAN_INIT_DONE) != 0)
@@ -4750,6 +4774,7 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		delay(10*1000);
 		if (sc->sc_type >= WM_T_ICH10)
 			wm_lan_init_done(sc);
@@ -4897,6 +4922,7 @@ wm_init_lcd_from_nvm(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		sw_cfg_mask = FEXTNVM_SW_CONFIG_ICH8M;
 		break;
 	default:
@@ -5182,6 +5208,7 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 		case WM_T_PCH_LPT:
 		case WM_T_PCH_SPT:
 		case WM_T_PCH_CNP:
+		case WM_T_PCH_TGP:
 			/* TARC0 */
 			if (sc->sc_type == WM_T_ICH8) {
 				/* Set TARC0 bits 29 and 28 */
@@ -5518,6 +5545,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 1500 ?
 		    PBA_12K : PBA_26K;
 		break;
@@ -5644,6 +5672,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		reg = CSR_READ(sc, WMREG_CTRL) | CTRL_RST;
 		if (wm_phy_resetisblocked(sc) == false) {
 			/*
@@ -5790,6 +5819,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		break;
 	default:
 		panic("%s: unknown type\n", __func__);
@@ -5838,7 +5868,8 @@ wm_reset(struct wm_softc *sc)
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
 	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT)
-	    || (sc->sc_type == WM_T_PCH_SPT) || (sc->sc_type == WM_T_PCH_CNP)){
+	    || (sc->sc_type == WM_T_PCH_SPT) || (sc->sc_type == WM_T_PCH_CNP)
+	    || (sc->sc_type == WM_T_PCH_TGP)) {
 		reg = CSR_READ(sc, WMREG_KABGTXD);
 		reg |= KABGTXD_BGSQLBIAS;
 		CSR_WRITE(sc, WMREG_KABGTXD, reg);
@@ -7035,6 +7066,13 @@ wm_init_locked(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_GCR, reg);
 	}
 
+	/* Ungate DMA clock to avoid packet loss */
+	if (sc->sc_type >= WM_T_PCH_TGP) {
+		reg = CSR_READ(sc, WMREG_FFLT_DBG);
+		reg |= (1 << 12);
+		CSR_WRITE(sc, WMREG_FFLT_DBG, reg);
+	}
+
 	if ((sc->sc_type >= WM_T_ICH8)
 	    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER)
 	    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3)) {
@@ -7107,7 +7145,8 @@ wm_init_locked(struct ifnet *ifp)
 	if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9)
 	    && (sc->sc_type != WM_T_ICH10) && (sc->sc_type != WM_T_PCH)
 	    && (sc->sc_type != WM_T_PCH2) && (sc->sc_type != WM_T_PCH_LPT)
-	    && (sc->sc_type != WM_T_PCH_SPT) && (sc->sc_type != WM_T_PCH_CNP)){
+	    && (sc->sc_type != WM_T_PCH_SPT) && (sc->sc_type != WM_T_PCH_CNP)
+	    && (sc->sc_type != WM_T_PCH_TGP)) {
 		CSR_WRITE(sc, WMREG_FCAL, FCAL_CONST);
 		CSR_WRITE(sc, WMREG_FCAH, FCAH_CONST);
 		CSR_WRITE(sc, WMREG_FCT, ETHERTYPE_FLOWCONTROL);
@@ -7143,6 +7182,7 @@ wm_init_locked(struct ifnet *ifp)
 		case WM_T_PCH_LPT:
 		case WM_T_PCH_SPT:
 		case WM_T_PCH_CNP:
+		case WM_T_PCH_TGP:
 			/*
 			 * Set the mac to wait the maximum time between each
 			 * iteration and increase the max iterations when
@@ -7485,6 +7525,7 @@ wm_init_locked(struct ifnet *ifp)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		reg = CSR_READ(sc, WMREG_PBECCSTS);
 		reg |= PBECCSTS_UNCORR_ECC_ENABLE;
 		CSR_WRITE(sc, WMREG_PBECCSTS, reg);
@@ -10453,7 +10494,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 	 * aggressive resulting in many collisions. To avoid this, increase
 	 * the IPG and reduce Rx latency in the PHY.
 	 */
-	if ((sc->sc_type >= WM_T_PCH2) && (sc->sc_type <= WM_T_PCH_CNP)
+	if ((sc->sc_type >= WM_T_PCH2) && (sc->sc_type <= WM_T_PCH_TGP)
 	    && link) {
 		uint32_t tipg_reg;
 		uint32_t speed = __SHIFTOUT(status, STATUS_SPEED);
@@ -11277,6 +11318,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		/* Generic reset */
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
 		CSR_WRITE_FLUSH(sc);
@@ -11336,6 +11378,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		wm_phy_post_reset(sc);
 		break;
 	default:
@@ -11577,7 +11620,7 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 		new_readreg = wm_gmii_bm_readreg;
 		new_writereg = wm_gmii_bm_writereg;
 	}
-	if ((sc->sc_type >= WM_T_PCH) && (sc->sc_type <= WM_T_PCH_CNP)) {
+	if ((sc->sc_type >= WM_T_PCH) && (sc->sc_type <= WM_T_PCH_TGP)) {
 		/* All PCH* use _hv_ */
 		new_readreg = wm_gmii_hv_readreg;
 		new_writereg = wm_gmii_hv_writereg;
@@ -11699,7 +11742,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	/* get PHY control from SMBus to PCIe */
 	if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)
 	    || (sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT)
-	    || (sc->sc_type == WM_T_PCH_CNP))
+	    || (sc->sc_type == WM_T_PCH_CNP) || (sc->sc_type == WM_T_PCH_TGP))
 		wm_init_phy_workarounds_pchlan(sc);
 
 	wm_gmii_reset(sc);
@@ -11763,9 +11806,9 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	 * If the MAC is PCH2 or PCH_LPT and failed to detect MII PHY, call
 	 * wm_set_mdio_slow_mode_hv() for a workaround and retry.
 	 */
-	if (((sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT)
-		|| (sc->sc_type == WM_T_PCH_SPT)
-		|| (sc->sc_type == WM_T_PCH_CNP))
+	if (((sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT) ||
+		(sc->sc_type == WM_T_PCH_SPT) || (sc->sc_type == WM_T_PCH_CNP)
+		|| (sc->sc_type == WM_T_PCH_TGP))
 	    && (LIST_FIRST(&mii->mii_phys) == NULL)) {
 		wm_set_mdio_slow_mode_hv(sc);
 		mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
@@ -14424,6 +14467,7 @@ wm_nvm_valid_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 	switch (sc->sc_type) {
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		bank1_offset = sc->sc_ich8_flash_bank_size * 2;
 		act_offset = ICH_NVM_SIG_WORD * 2;
 
@@ -15075,8 +15119,8 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 		return 0;
 
 #ifdef WM_DEBUG
-	if ((sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT)
-	    || (sc->sc_type == WM_T_PCH_CNP)) {
+	if ((sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT) ||
+	    (sc->sc_type == WM_T_PCH_CNP) || (sc->sc_type == WM_T_PCH_TGP)) {
 		csum_wordaddr = NVM_OFF_COMPAT;
 		valid_checksum = NVM_COMPAT_VALID_CHECKSUM;
 	} else {
@@ -15212,6 +15256,7 @@ wm_nvm_version(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		check_version = true;
 		have_build = true;
 		have_uid = false;
@@ -15857,6 +15902,7 @@ wm_check_mng_mode(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		rv = wm_check_mng_mode_ich8lan(sc);
 		break;
 	case WM_T_82574:
@@ -15977,6 +16023,7 @@ wm_phy_resetisblocked(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		do {
 			reg = CSR_READ(sc, WMREG_FWSM);
 			if ((reg & FWSM_RSPCIPHY) == 0) {
@@ -16095,6 +16142,7 @@ wm_init_phy_workarounds_pchlan(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		if (wm_phy_is_accessible_pchlan(sc))
 			break;
 
@@ -16266,6 +16314,7 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		sc->sc_flags |= WM_F_HAS_AMT;
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
 		break;
@@ -16545,7 +16594,7 @@ wm_suspend_workarounds_ich8lan(struct wm_softc *sc)
 	phy_ctrl = CSR_READ(sc, WMREG_PHY_CTRL);
 	phy_ctrl |= PHY_CTRL_GBE_DIS;
 
-	KASSERT((sc->sc_type >= WM_T_ICH8) && (sc->sc_type <= WM_T_PCH_CNP));
+	KASSERT((sc->sc_type >= WM_T_ICH8) && (sc->sc_type <= WM_T_PCH_TGP));
 
 	if (sc->sc_phytype == WMPHY_I217) {
 		uint16_t devid = sc->sc_pcidevid;
@@ -16734,7 +16783,8 @@ wm_enable_wakeup(struct wm_softc *sc)
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9) ||
 	    (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH) ||
 	    (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT) ||
-	    (sc->sc_type == WM_T_PCH_SPT) || (sc->sc_type == WM_T_PCH_CNP))
+	    (sc->sc_type == WM_T_PCH_SPT) || (sc->sc_type == WM_T_PCH_CNP) ||
+	    (sc->sc_type == WM_T_PCH_TGP))
 		wm_suspend_workarounds_ich8lan(sc);
 
 #if 0	/* For the multicast packet */
@@ -16880,6 +16930,7 @@ wm_lplu_d0_disable(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
+	case WM_T_PCH_TGP:
 		wm_gmii_hv_readreg(sc->sc_dev, 1, HV_OEM_BITS, &phyval);
 		phyval &= ~(HV_OEM_BITS_A1KDIS | HV_OEM_BITS_LPLU);
 		if (wm_phy_resetisblocked(sc) == false)
@@ -18138,7 +18189,7 @@ wm_legacy_irq_quirk_spt(struct wm_softc *sc)
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	KASSERT((sc->sc_type == WM_T_PCH_SPT)
-	    || (sc->sc_type == WM_T_PCH_CNP));
+	    || (sc->sc_type == WM_T_PCH_CNP) || (sc->sc_type == WM_T_PCH_TGP));
 
 	reg = CSR_READ(sc, WMREG_FEXTNVM7);
 	reg |= FEXTNVM7_SIDE_CLK_UNGATE;
