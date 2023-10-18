@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.214.4.1 2023/05/13 13:26:57 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.214.4.2 2023/10/18 15:19:09 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -939,7 +939,7 @@ longmode_hi:
 	/* Copy start_info to a safe place. */
 	movq	%rbx,%rsi
 	movq	$_C_LABEL(start_info_union),%rdi
-	movq	$64,%rcx
+	movq	$(PAGE_SIZE / 8),%rcx
 	rep
 	movsq
 
