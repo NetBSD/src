@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.88.4.1 2023/10/14 06:43:06 martin Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.88.4.2 2023/10/18 11:30:29 martin Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.88.4.1 2023/10/14 06:43:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.88.4.2 2023/10/18 11:30:29 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -166,7 +166,8 @@ struct ixl_softc; /* defined */
 
 #define IXL_MCLBYTES			(MCLBYTES - ETHER_ALIGN)
 #define IXL_MTU_ETHERLEN		ETHER_HDR_LEN		\
-					+ ETHER_CRC_LEN
+					+ ETHER_CRC_LEN		\
+					+ ETHER_VLAN_ENCAP_LEN
 #if 0
 #define IXL_MAX_MTU			(9728 - IXL_MTU_ETHERLEN)
 #else
@@ -1322,6 +1323,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 #endif
 	ether_set_vlan_cb(&sc->sc_ec, ixl_vlan_cb);
 	sc->sc_ec.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWFILTER;
 
@@ -3066,6 +3068,8 @@ ixl_rxr_config(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 
 	memset(&rxq, 0, sizeof(rxq));
 	rxmax = ifp->if_mtu + IXL_MTU_ETHERLEN;
+	if (!ISSET(sc->sc_ec.ec_capenable, ETHERCAP_VLAN_MTU))
+		rxmax -= ETHER_VLAN_ENCAP_LEN;
 
 	rxq.head = htole16(rxr->rxr_cons);
 	rxq.base = htole64(IXL_DMA_DVA(&rxr->rxr_mem) / IXL_HMC_RXQ_BASE_UNIT);
@@ -5671,14 +5675,14 @@ ixl_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ixl_softc *sc = ifp->if_softc;
-	int rv, change;
+	int rv, change, reset_bits;
 
 	mutex_enter(&sc->sc_cfg_lock);
 
 	change = ec->ec_capenable ^ sc->sc_cur_ec_capenable;
-
-	if (ISSET(change, ETHERCAP_VLAN_HWTAGGING)) {
-		sc->sc_cur_ec_capenable ^= ETHERCAP_VLAN_HWTAGGING;
+	reset_bits = change & (ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU);
+	if (reset_bits != 0) {
+		sc->sc_cur_ec_capenable ^= reset_bits;
 		rv = ENETRESET;
 		goto out;
 	}
