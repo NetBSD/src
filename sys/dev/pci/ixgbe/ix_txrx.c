@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.29 2023/10/13 18:32:38 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.30 2023/10/18 14:23:15 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.24.2.29 2023/10/13 18:32:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.24.2.30 2023/10/18 14:23:15 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -846,7 +846,6 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	u8                               ipproto = 0;
 	char                             *l3d;
 
-
 	/* First check if TSO is to be used */
 	if (mp->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) {
 		int rv = ixgbe_tso_setup(txr, mp, cmd_type_len, olinfo_status);
@@ -1282,9 +1281,9 @@ ixgbe_rsc_count(union ixgbe_adv_rx_desc *rx)
 static void
 ixgbe_setup_hw_rsc(struct rx_ring *rxr)
 {
-	struct	ixgbe_softc *sc = rxr->sc;
-	struct	ixgbe_hw *hw = &sc->hw;
-	u32              rscctrl, rdrxctl;
+	struct ixgbe_softc *sc = rxr->sc;
+	struct ixgbe_hw	*hw = &sc->hw;
+	u32		rscctrl, rdrxctl;
 
 	/* If turning LRO/RSC off we need to disable it */
 	if ((sc->ifp->if_capenable & IFCAP_LRO) == 0) {
@@ -1746,9 +1745,9 @@ ixgbe_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m,
             (CSUM_DATA_VALID | CSUM_PSEUDO_HDR)) {
                 /*
                  * Send to the stack if:
-                 **  - LRO not enabled, or
-                 **  - no LRO resources, or
-                 **  - lro enqueue fails
+                 *  - LRO not enabled, or
+                 *  - no LRO resources, or
+                 *  - lro enqueue fails
                  */
                 if (rxr->lro.lro_cnt != 0)
                         if (tcp_lro_rx(&rxr->lro, m, 0) == 0)
