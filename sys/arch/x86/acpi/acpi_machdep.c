@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.34 2022/10/28 21:58:27 riastradh Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.34.2.1 2023/10/18 15:14:24 martin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.34 2022/10/28 21:58:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.34.2.1 2023/10/18 15:14:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.34 2022/10/28 21:58:27 riastradh 
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <arch/x86/include/genfb_machdep.h>
 
 #include "ioapic.h"
 
@@ -594,6 +595,8 @@ acpi_md_callback(struct acpi_softc *sc)
 }
 
 #ifndef XENPV
+int acpi_md_vbios_reset = 0;
+
 void
 device_acpi_register(device_t dev, void *aux)
 {
@@ -609,8 +612,6 @@ device_acpi_register(device_t dev, void *aux)
 	device_is_isa = device_is_a(parent, "isa");
 
 	if (device_is_vga && (device_is_pci || device_is_isa)) {
-		extern int acpi_md_vbios_reset;
-
 		acpi_md_vbios_reset = VBIOS_RESET_DEFAULT;
 	}
 }
