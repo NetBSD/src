@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.29 2023/10/13 18:46:04 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.30 2023/10/18 14:42:54 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.29 2023/10/13 18:44:59 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.30 2023/10/18 14:41:55 martin Exp
  */
 
 /*
@@ -3941,6 +3941,10 @@
 #define	PCI_PRODUCT_INTEL_I219_V10	0x0d4f		/* I219-V (10) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM12	0x0d53		/* I219-LM (12) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V12	0x0d55		/* I219-V (12) Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_LM23	0x0dc5		/* I219-LM (23) Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_V23	0x0dc6		/* I219-V (23) Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_LM22	0x0dc7		/* I219-LM (22) Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_V22	0x0dc8		/* I219-V (22) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_E5V2_DMI2	0x0e00		/* E5 v2 DMI2 */
 #define	PCI_PRODUCT_INTEL_E5V2_PCIE_1	0x0e01		/* E5 v2 PCIe x4 (DMI2 Mode) */
 #define	PCI_PRODUCT_INTEL_E5V2_PCIE_2	0x0e02		/* E5 v2 PCIe */
