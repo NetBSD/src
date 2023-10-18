@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_x550.c,v 1.5.6.13 2023/10/13 18:32:38 martin Exp $ */
+/* $NetBSD: ixgbe_x550.c,v 1.5.6.14 2023/10/18 14:23:15 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x550.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.5.6.13 2023/10/13 18:32:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.5.6.14 2023/10/18 14:23:15 martin Exp $");
 
 #include "ixgbe_x550.h"
 #include "ixgbe_x540.h"
@@ -786,7 +786,6 @@ s32 ixgbe_init_ops_X550EM(struct ixgbe_hw *hw)
 	if (mac->ops.get_media_type(hw) != ixgbe_media_type_copper)
 		phy->ops.set_phy_power = NULL;
 
-
 	/* EEPROM */
 	eeprom->ops.init_params = ixgbe_init_eeprom_params_X540;
 	eeprom->ops.read = ixgbe_read_ee_hostif_X550;
@@ -922,7 +921,7 @@ out:
 }
 
 /**
- * ixgbe_fc_autoneg_fw _ Set up flow control for FW-controlled PHYs
+ * ixgbe_fc_autoneg_fw - Set up flow control for FW-controlled PHYs
  * @hw: pointer to hardware structure
  *
  * Called at init time to set up flow control.
@@ -2048,7 +2047,7 @@ void ixgbe_init_mac_link_ops_X550em(struct ixgbe_hw *hw)
 }
 
 /**
- * ixgbe_get_link_capabilities_x550em - Determines link capabilities
+ * ixgbe_get_link_capabilities_X550em - Determines link capabilities
  * @hw: pointer to hardware structure
  * @speed: pointer to link speed
  * @autoneg: TRUE when autoneg or autotry is enabled
@@ -2058,7 +2057,6 @@ s32 ixgbe_get_link_capabilities_X550em(struct ixgbe_hw *hw,
 				       bool *autoneg)
 {
 	DEBUGFUNC("ixgbe_get_link_capabilities_X550em");
-
 
 	if (hw->phy.type == ixgbe_phy_fw) {
 		*autoneg = TRUE;
@@ -3416,7 +3414,7 @@ out:
 }
 
 /**
- * ixgbe_write_ee_hostif_X550 - Write EEPROM word using hostif
+ * ixgbe_write_ee_hostif_data_X550 - Write EEPROM word using hostif
  * @hw: pointer to hardware structure
  * @offset: offset of  word in the EEPROM to write
  * @data: word write to the EEPROM
@@ -3883,7 +3881,7 @@ u64 ixgbe_get_supported_physical_layer_X550em(struct ixgbe_hw *hw)
 }
 
 /**
- * ixgbe_get_bus_info_x550em - Set PCI bus info
+ * ixgbe_get_bus_info_X550em - Set PCI bus info
  * @hw: pointer to hardware structure
  *
  * Sets bus link width and speed to unknown because X550em is
@@ -3948,7 +3946,7 @@ void ixgbe_disable_rx_x550(struct ixgbe_hw *hw)
 }
 
 /**
- * ixgbe_enter_lplu_x550em - Transition to low power states
+ * ixgbe_enter_lplu_t_x550em - Transition to low power states
  * @hw: pointer to hardware structure
  *
  * Configures Low Power Link Up on transition to low power states
@@ -4056,7 +4054,7 @@ s32 ixgbe_enter_lplu_t_x550em(struct ixgbe_hw *hw)
 }
 
 /**
- * ixgbe_get_lcd_x550em - Determine lowest common denominator
+ * ixgbe_get_lcd_t_x550em - Determine lowest common denominator
  * @hw: pointer to hardware structure
  * @lcd_speed: pointer to lowest common link speed
  *

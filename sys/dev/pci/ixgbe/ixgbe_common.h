@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.h,v 1.7.8.7 2023/10/13 18:32:38 martin Exp $ */
+/* $NetBSD: ixgbe_common.h,v 1.7.8.8 2023/10/18 14:23:15 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -45,12 +45,10 @@
 		IXGBE_WRITE_REG(hw, reg + 4, (u32) (value >> 32)); \
 	} while (0)
 #define IXGBE_REMOVED(a) (0)
-#if !defined(NO_READ_PBA_RAW) || !defined(NO_WRITE_PBA_RAW)
 struct ixgbe_pba {
 	u16 word[2];
 	u16 *pba_block;
 };
-#endif
 
 void ixgbe_dcb_get_rtrup2tc_generic(struct ixgbe_hw *hw, u8 *map);
 

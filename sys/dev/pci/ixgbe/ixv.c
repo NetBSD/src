@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.56.2.42 2023/10/13 18:32:38 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.56.2.43 2023/10/18 14:23:15 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.42 2023/10/13 18:32:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.43 2023/10/18 14:23:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -216,11 +216,11 @@ static bool ixv_txrx_workqueue = false;
  * setting higher than RX as this seems
  * the better performing choice.
  */
-static int ixv_txd = PERFORM_TXD;
+static int ixv_txd = DEFAULT_TXD;
 TUNABLE_INT("hw.ixv.txd", &ixv_txd);
 
 /* Number of RX descriptors per ring */
-static int ixv_rxd = PERFORM_RXD;
+static int ixv_rxd = DEFAULT_RXD;
 TUNABLE_INT("hw.ixv.rxd", &ixv_rxd);
 
 /* Legacy Transmit (single queue) */
@@ -500,14 +500,26 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	/* Do descriptor calc and sanity checks */
 	if (((ixv_txd * sizeof(union ixgbe_adv_tx_desc)) % DBA_ALIGN) != 0 ||
 	    ixv_txd < MIN_TXD || ixv_txd > MAX_TXD) {
-		aprint_error_dev(dev, "TXD config issue, using default!\n");
+		aprint_error_dev(dev, "Invalid TX ring size (%d). "
+		    "It must be between %d and %d, "
+		    "inclusive, and must be a multiple of %zu. "
+		    "Using default value of %d instead.\n",
+		    ixv_txd, MIN_TXD, MAX_TXD,
+		    DBA_ALIGN / sizeof(union ixgbe_adv_tx_desc),
+		    DEFAULT_TXD);
 		sc->num_tx_desc = DEFAULT_TXD;
 	} else
 		sc->num_tx_desc = ixv_txd;
 
 	if (((ixv_rxd * sizeof(union ixgbe_adv_rx_desc)) % DBA_ALIGN) != 0 ||
 	    ixv_rxd < MIN_RXD || ixv_rxd > MAX_RXD) {
-		aprint_error_dev(dev, "RXD config issue, using default!\n");
+		aprint_error_dev(dev, "Invalid RX ring size (%d). "
+		    "It must be between %d and %d, "
+		    "inclusive, and must be a multiple of %zu. "
+		    "Using default value of %d instead.\n",
+		    ixv_rxd, MIN_RXD, MAX_RXD,
+		    DBA_ALIGN / sizeof(union ixgbe_adv_rx_desc),
+		    DEFAULT_RXD);
 		sc->num_rx_desc = DEFAULT_RXD;
 	} else
 		sc->num_rx_desc = ixv_rxd;
@@ -537,6 +549,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	/* hw.ix defaults init */
 	sc->enable_aim = ixv_enable_aim;
+	sc->max_interrupt_rate = ixv_max_interrupt_rate;
 
 	sc->txrx_use_workqueue = ixv_txrx_workqueue;
 
@@ -559,7 +572,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	/* Check if VF was disabled by PF */
 	error = hw->mac.ops.get_link_state(hw, &sc->link_enabled);
-	if (error) {		
+	if (error) {
 		/* PF is not capable of controlling VF state. Enable the link. */
 		sc->link_enabled = TRUE;
 	}
@@ -817,7 +830,7 @@ ixv_init_locked(struct ixgbe_softc *sc)
 
 	/* Config/Enable Link */
 	error = hw->mac.ops.get_link_state(hw, &sc->link_enabled);
-	if (error) {		
+	if (error) {
 		/* PF is not capable of controlling VF state. Enable the link. */
 		sc->link_enabled = TRUE;
 	} else if (sc->link_enabled == FALSE)
@@ -830,15 +843,15 @@ ixv_init_locked(struct ixgbe_softc *sc)
 	/* Start watchdog */
 	callout_reset(&sc->timer, hz, ixv_local_timer, sc);
 
-	/* And now turn on interrupts */
-	ixv_enable_intr(sc);
-
 	/* Update saved flags. See ixgbe_ifflags_cb() */
 	sc->if_flags = ifp->if_flags;
 
-	/* Now inform the stack we're ready */
+	/* Inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	/* And now turn on interrupts */
+	ixv_enable_intr(sc);
 
 	return;
 } /* ixv_init_locked */
@@ -1551,7 +1564,7 @@ map_err:
 static void
 ixv_free_pci_resources(struct ixgbe_softc *sc)
 {
-	struct		ix_queue *que = sc->queues;
+	struct ix_queue *que = sc->queues;
 	int		rid;
 
 	/*
@@ -2401,9 +2414,9 @@ ixv_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 			    && (reg < IXGBE_MIN_RSC_EITR_10G1G))
 				return EINVAL;
 		}
-		ixv_max_interrupt_rate = rate;
+		sc->max_interrupt_rate = rate;
 	} else
-		ixv_max_interrupt_rate = 0;
+		sc->max_interrupt_rate = 0;
 	ixv_eitr_write(sc, que->msix, reg);
 
 	return (0);
@@ -3229,7 +3242,7 @@ ixv_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 {
 	device_t	dev = sc->dev;
 	struct ix_queue *que = sc->queues;
-	struct		tx_ring *txr = sc->tx_rings;
+	struct tx_ring	*txr = sc->tx_rings;
 	int		error, msix_ctrl, rid, vector = 0;
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
