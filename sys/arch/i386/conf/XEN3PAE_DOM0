@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.36.4.1 2023/10/09 23:33:46 snj Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.36.4.2 2023/10/18 16:53:03 martin Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -526,6 +526,7 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 #vga0		at isa?
 vga*		at pci? dev ? function ?
+genfb*		at pci? dev ? function ?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 #machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
 wsdisplay*	at vga? console ?

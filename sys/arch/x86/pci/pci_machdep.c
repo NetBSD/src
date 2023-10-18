@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.93.4.2 2023/10/18 15:14:24 martin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.93.4.3 2023/10/18 16:53:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.93.4.2 2023/10/18 15:14:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.93.4.3 2023/10/18 16:53:03 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,6 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.93.4.2 2023/10/18 15:14:24 martin 
 
 #include <dev/wsfb/genfbvar.h>
 #include <arch/x86/include/genfb_machdep.h>
+#include <arch/xen/include/hypervisor.h>
+#include <arch/xen/include/xen.h>
 #include <dev/ic/vgareg.h>
 
 #include "acpica.h"
@@ -116,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.93.4.2 2023/10/18 15:14:24 martin 
 #include "pci.h"
 #include "wsdisplay.h"
 #include "com.h"
+#include "opt_xen.h"
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -1110,8 +1113,17 @@ populate_fbinfo(device_t dev, prop_dictionary_t dict)
 #if NWSDISPLAY > 0 && NGENFB > 0
 	struct rasops_info *ri = &x86_genfb_console_screen.scr_ri;
 #endif
-	const void *fbptr = lookup_bootinfo(BTINFO_FRAMEBUFFER);
+	const void *fbptr = NULL;
 	struct btinfo_framebuffer fbinfo;
+
+
+#if NWSDISPLAY > 0 && NGENFB > 0 && defined(XEN) && defined(DOM0OPS)
+	if ((vm_guest == VM_GUEST_XENPVH || vm_guest == VM_GUEST_XENPV) &&
+	    xendomain_is_dom0())
+		fbptr = xen_genfb_getbtinfo();
+#endif
+	if (fbptr == NULL)
+		fbptr = lookup_bootinfo(BTINFO_FRAMEBUFFER);
 
 	if (fbptr == NULL)
 		return;
