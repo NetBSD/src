@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.55.4.1 2023/07/31 15:23:02 martin Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.55.4.2 2023/10/18 15:19:08 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -57,6 +57,8 @@
 #include "opt_xen.h"
 #include "isa.h"
 #include "pci.h"
+
+#include <machine/vmparam.h>
 
 struct cpu_info;
 
@@ -134,10 +136,12 @@ struct xen_npx_attach_args {
 union start_info_union
 {
     start_info_t start_info;
-    char padding[512];
+    char padding[PAGE_SIZE];
 };
 extern union start_info_union start_info_union;
 #define xen_start_info (start_info_union.start_info)
+
+CTASSERT(sizeof(start_info_t) <= PAGE_SIZE);
 
 extern struct hvm_start_info *hvm_start_info;
 
