@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.56 2023/09/06 13:38:54 riastradh Exp $
+# $NetBSD: postinstall.in,v 1.57 2023/10/18 13:10:34 riastradh Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1763,7 +1763,7 @@ do_opensslcertsrehash()
 	check)	# Create a scratch rehash for comparison.
 		mtreekeys="type,link"
 		scratchdir="${SCRATCHDIR}/opensslcerts"
-		certctl -c "$scratchdir" rehash || return $?
+		/usr/sbin/certctl -c "$scratchdir" rehash || return $?
 
 		# This will create ${scratchdir}/.certctl unless the
 		# configuration is manual.  If the configuration is
@@ -1782,7 +1782,7 @@ do_opensslcertsrehash()
 		# that we report a failure if /etc/openssl/certs
 		# appears to be managed manually, but `manual' was not
 		# specified in /etc/openssl/certs.conf.
-		certctl -n rehash || return $?
+		/usr/sbin/certctl -n rehash || return $?
 
 		# Compare the trees with mtree(8).  Inconveniently,
 		# mtree returns status zero even if there are missing
@@ -1810,7 +1810,7 @@ do_opensslcertsrehash()
 			return 1
 			;;
 		esac
-		certctl rehash
+		/usr/sbin/certctl rehash
 		;;
 	*)	err 3 "USAGE: do_opensslcerts fix|check"
 		;;
