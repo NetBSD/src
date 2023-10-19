@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.56 2023/10/16 17:27:02 bouyer Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.57 2023/10/19 14:59:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.56 2023/10/16 17:27:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.57 2023/10/19 14:59:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.56 2023/10/16 17:27:02 bouyer Exp 
 
 #ifdef XENPV
 #error acpi_wakeup.c (acpi_md_vesa_modenum) users must be adapted for Xen
+#else
+int acpi_md_vesa_modenum = 0;
 #endif
 
 /* Address is also hard-coded in acpi_wakecode.S */
