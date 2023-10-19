@@ -69,8 +69,7 @@ ps_ctl_recvmsg(void *arg, unsigned short events)
 {
 	struct ps_process *psp = arg;
 
-	if (ps_recvpsmsg(psp->psp_ctx, psp->psp_fd, events,
-	    NULL, psp->psp_ctx) == -1)
+	if (ps_recvpsmsg(psp->psp_ctx, psp->psp_fd, events, NULL, NULL) == -1)
 		logerr(__func__);
 }
 

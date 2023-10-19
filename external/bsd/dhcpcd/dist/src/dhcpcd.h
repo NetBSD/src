@@ -265,6 +265,7 @@ extern const char *dhcpcd_default_script;
 
 int dhcpcd_ifafwaiting(const struct interface *);
 int dhcpcd_afwaiting(const struct dhcpcd_ctx *);
+void dhcpcd_daemonised(struct dhcpcd_ctx *);
 void dhcpcd_daemonise(struct dhcpcd_ctx *);
 
 void dhcpcd_signal_cb(int, void *);
