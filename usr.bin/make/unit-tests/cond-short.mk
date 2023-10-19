@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.20 2023/03/04 13:42:36 rillig Exp $
+# $NetBSD: cond-short.mk,v 1.21 2023/10/19 18:24:33 rillig Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -177,6 +177,23 @@ INDIR_UNDEF=	${UNDEF}
 .if defined(UNDEF) && ${INDIR_UNDEF:U2} < ${NUMBER}
 .  error
 .endif
+
+
+# Since cond.c 1.76 from 2020.06.28 and before var.c 1.225 from 2020.07.01,
+# the following snippet resulted in the error message 'Variable VAR is
+# recursive'.  The condition '0' evaluated to false, which made the right-hand
+# side of the '&&' irrelevant.  Back then, irrelevant condition parts were
+# still evaluated, but in "irrelevant mode", which allowed undefined variables
+# to occur in expressions.  In this mode, the variable name 'VAR' was
+# unnecessarily evaluated, resulting in the expression '${VAR${:U1}}'.  In
+# this expression, the variable name was 'VAR${:U1}', and of this variable
+# name, only the fixed part 'VAR' was evaluated, without the part '${:U1}'.
+# This partial evaluation led to the wrong error message about 'VAR' being
+# recursive.
+VAR=	${VAR${:U1}}
+.if 0 && !empty(VAR)
+.endif
+
 
 # Enclosing the expression in double quotes changes how that expression is
 # evaluated.  In irrelevant expressions that are enclosed in double quotes,

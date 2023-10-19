@@ -1,4 +1,4 @@
-# $NetBSD: varmod-gmtime.mk,v 1.19 2023/08/19 11:53:10 rillig Exp $
+# $NetBSD: varmod-gmtime.mk,v 1.20 2023/10/19 18:24:33 rillig Exp $
 #
 # Tests for the :gmtime variable modifier, which formats a timestamp
 # using strftime(3) in UTC.
@@ -173,5 +173,16 @@ TIMESTAMPS+= $t
 .    warning timestamp $a > $b
 .  endif
 .endfor
+
+
+.if ${year=%Y month=%m day=%d:L:gmtime=1459494000} != "year=2016 month=04 day=01"
+.  error
+.endif
+# Slightly contorted syntax to convert a UTC timestamp from an expression to a
+# formatted timestamp.
+.if ${%Y%m%d:L:${gmtime=${:U1459494000}:L}} != "20160401"
+.  error
+.endif
+
 
 all:

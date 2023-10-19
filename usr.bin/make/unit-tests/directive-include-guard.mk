@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.12 2023/08/11 04:56:31 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.13 2023/10/19 18:24:33 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -15,8 +15,9 @@
 #	.endif
 #
 # When such a file is included for the second or later time, and the guard
-# variable or the guard target is defined, including the file has no effect,
-# as all its content is skipped.
+# variable or the guard target is defined, the file is skipped completely, as
+# including it would not have any effect, not even on the special variable
+# '.MAKE.MAKEFILES', as that variable skips duplicate pathnames.
 #
 # See also:
 #	https://gcc.gnu.org/onlinedocs/cppinternals/Guard-Macros.html
@@ -45,6 +46,25 @@ LINES.variable-ifndef-reuse= \
 	'.endif'
 # expect: Parse_PushInput: file variable-ifndef-reuse.tmp, line 1
 # expect: Skipping 'variable-ifndef-reuse.tmp' because 'VARIABLE_IFNDEF' is defined
+
+# The guard variable cannot be a number, as numbers are interpreted
+# differently from bare words.
+INCS+=	variable-ifndef-zero
+LINES.variable-ifndef-zero= \
+	'.ifndef 0e0' \
+	'syntax error' \
+	'.endif'
+# expect: Parse_PushInput: file variable-ifndef-zero.tmp, line 1
+# expect: Parse_PushInput: file variable-ifndef-zero.tmp, line 1
+
+# The guard variable cannot be a number, as numbers are interpreted
+# differently from bare words.
+INCS+=	variable-ifndef-one
+LINES.variable-ifndef-one= \
+	'.ifndef 1' \
+	'.endif'
+# expect: Parse_PushInput: file variable-ifndef-one.tmp, line 1
+# expect: Parse_PushInput: file variable-ifndef-one.tmp, line 1
 
 # Comments and empty lines do not affect the multiple-inclusion guard.
 INCS+=	comments
@@ -124,10 +144,10 @@ LINES.variable-name-exclamation= \
 # expect: Parse_PushInput: file variable-name-exclamation.tmp, line 1
 # expect: Parse_PushInput: file variable-name-exclamation.tmp, line 1
 
-# A variable name can contain a '!' in the middle, as that character is
-# interpreted as an ordinary character in conditions as well as on the left
-# side of a variable assignment.  For guard variable names, the '!' is not
-# supported in any place, though.
+# In general, a variable name can contain a '!' in the middle, as that
+# character is interpreted as an ordinary character in conditions as well as
+# on the left side of a variable assignment.  For guard variable names, the
+# '!' is not supported in any place, though.
 INCS+=	variable-name-exclamation-middle
 LINES.variable-name-exclamation-middle= \
 	'.ifndef VARIABLE_NAME!MIDDLE' \
