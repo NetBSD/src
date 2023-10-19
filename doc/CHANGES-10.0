@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.140 2023/10/18 15:31:09 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.141 2023/10/19 07:24:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12611,4 +12611,11 @@ sys/external/mit/xen-include-public/dist/xen/include/public/xen.h 1.2
 
 	Xen: add genfb(4) support.
 	[bouyer, ticket #428]
+
+share/man/man4/lagg.4				1.5
+sys/net/lagg/if_lagg.c				1.49-1.51
+tests/net/if_lagg/t_lagg.sh			1.9,1.10
+
+	lagg(4): PR 57650: locking fixes and documentation updates.
+	[yamaguchi, ticket #429]
 
