@@ -55,6 +55,7 @@
 #define	PS_CTL_EOF		0x0019
 #define	PS_LOGREOPEN		0x0020
 #define	PS_STOPPROCS		0x0021
+#define	PS_DAEMONISED		0x0022
 
 /* Domains */
 #define	PS_ROOT			0x0101
@@ -203,6 +204,7 @@ int ps_stop(struct dhcpcd_ctx *);
 int ps_stopwait(struct dhcpcd_ctx *);
 int ps_entersandbox(const char *, const char **);
 int ps_managersandbox(struct dhcpcd_ctx *, const char *);
+ssize_t ps_daemonised(struct dhcpcd_ctx *);
 
 int ps_unrollmsg(struct msghdr *, struct ps_msghdr *, const void *, size_t);
 ssize_t ps_sendpsmmsg(struct dhcpcd_ctx *, int,

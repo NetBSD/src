@@ -682,33 +682,42 @@ send_interface(struct fd_list *fd, const struct interface *ifp, int af)
 }
 
 static int
+script_status(const char *script, int status)
+{
+
+	if (WIFEXITED(status)) {
+		if (WEXITSTATUS(status))
+			logerrx("%s: %s: WEXITSTATUS %d",
+			    __func__, script, WEXITSTATUS(status));
+	} else if (WIFSIGNALED(status))
+		logerrx("%s: %s: %s",
+		    __func__, script, strsignal(WTERMSIG(status)));
+
+	return WEXITSTATUS(status);
+}
+
+static int
 script_run(struct dhcpcd_ctx *ctx, char **argv)
 {
 	pid_t pid;
-	int status = 0;
+	int status;
 
 	pid = script_exec(argv, ctx->script_env);
-	if (pid == -1)
+	if (pid == -1) {
 		logerr("%s: %s", __func__, argv[0]);
-	else if (pid != 0) {
-		/* Wait for the script to finish */
-		while (waitpid(pid, &status, 0) == -1) {
-			if (errno != EINTR) {
-				logerr("%s: waitpid", __func__);
-				status = 0;
-				break;
-			}
-		}
-		if (WIFEXITED(status)) {
-			if (WEXITSTATUS(status))
-				logerrx("%s: %s: WEXITSTATUS %d",
-				    __func__, argv[0], WEXITSTATUS(status));
-		} else if (WIFSIGNALED(status))
-			logerrx("%s: %s: %s",
-			    __func__, argv[0], strsignal(WTERMSIG(status)));
-	}
+		return -1;
+	} else if (pid == 0)
+		return 0;
 
-	return WEXITSTATUS(status);
+	/* Wait for the script to finish */
+	while (waitpid(pid, &status, 0) == -1) {
+		if (errno != EINTR) {
+			logerr("%s: waitpid", __func__);
+			status = 0;
+			break;
+		}
+	}
+	return script_status(argv[0], status);
 }
 
 int
@@ -762,10 +771,14 @@ script_runreason(const struct interface *ifp, const char *reason)
 	logdebugx("%s: executing: %s %s", ifp->name, argv[0], reason);
 
 #ifdef PRIVSEP
-	if (ctx->options & DHCPCD_PRIVSEP) {
-		if (ps_root_script(ctx,
-		    ctx->script_buf, (size_t)buflen) == -1)
+	if (IN_PRIVSEP(ctx)) {
+		ssize_t err;
+
+		err = ps_root_script(ctx, ctx->script_buf, (size_t)buflen);
+		if (err == -1)
 			logerr(__func__);
+		else
+			script_status(ctx->script, (int)err);
 		goto send_listeners;
 	}
 #endif
