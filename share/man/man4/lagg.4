@@ -1,4 +1,4 @@
-.\"	$NetBSD: lagg.4,v 1.4 2022/05/24 20:50:18 andvar Exp $
+.\"	$NetBSD: lagg.4,v 1.4.2.1 2023/10/19 07:23:51 martin Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -150,8 +150,10 @@ most easily done with the
 .Cm create
 command.
 .Pp
-The MTU of the first interface to be added is used as the lagg MTU.
-All additional interfaces are required to have exactly the same value.
+The MTU of the
+.Xr lagg 4
+is applied to each physical interfaces.
+And the physical interfaces can not change its MTU directly.
 .Sh EXAMPLES
 Create a link aggregation using LACP with two
 .Xr wm 4
@@ -171,9 +173,10 @@ Gigabit Ethernet interfaces and set each priority:
 # ifconfig wm0 up
 # ifconfig wm1 up
 # ifconfig lagg0 create
-# ifconfig lagg0 laggproto failover \e
-	laggport wm0 pri 1000 laggport wm1 pri 2000 \e
-	192.168.1.1 netmask 255.255.255.0
+# ifconfig lagg0 laggproto failover
+# ifconfig lagg0 laggport wm0 pri 1000
+# ifconfig lagg0 laggport wm1 pri 2000
+# ifconfig lagg0 inet 192.168.1.1 netmask 255.255.255.0
 .Ed
 .Sh SEE ALSO
 .Xr ifconfig 8
