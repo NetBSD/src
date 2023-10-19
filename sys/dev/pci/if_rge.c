@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.27 2023/10/09 11:55:22 riastradh Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.28 2023/10/19 23:43:40 mrg Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.27 2023/10/09 11:55:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.28 2023/10/19 23:43:40 mrg Exp $");
 
 #include <sys/types.h>
 
@@ -106,7 +106,6 @@ int		rge_ifmedia_upd(struct ifnet *);
 void		rge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 int		rge_allocmem(struct rge_softc *);
 int		rge_newbuf(struct rge_softc *, int);
-void		rge_discard_rxbuf(struct rge_softc *, int);
 static int	rge_rx_list_init(struct rge_softc *);
 static void	rge_rx_list_fini(struct rge_softc *);
 static void	rge_tx_list_init(struct rge_softc *);
@@ -976,6 +975,9 @@ rge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 /*
  * Allocate memory for RX/TX rings.
+ *
+ * XXX There is no tear-down for this if it any part fails, so everything
+ * remains allocated.
  */
 int
 rge_allocmem(struct rge_softc *sc)
@@ -1071,10 +1073,13 @@ rge_allocmem(struct rge_softc *sc)
 		return (error);
 	}
 
-	/* Create DMA maps for RX buffers. */
+	/*
+	 * Create DMA maps for RX buffers.  Use BUS_DMA_ALLOCNOW to avoid any
+	 * potential failure in bus_dmamap_load_mbuf() in the RX path.
+	 */
 	for (i = 0; i < RGE_RX_LIST_CNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, RGE_JUMBO_FRAMELEN, 1,
-		    RGE_JUMBO_FRAMELEN, 0, 0,
+		    RGE_JUMBO_FRAMELEN, 0, BUS_DMA_ALLOCNOW,
 		    &sc->rge_ldata.rge_rxq[i].rxq_dmamap);
 		if (error) {
 			aprint_error_dev(sc->sc_dev, "can't create DMA map for RX\n");
@@ -1086,15 +1091,39 @@ rge_allocmem(struct rge_softc *sc)
 }
 
 /*
+ * Set an RX descriptor and sync it.
+ */
+static void
+rge_load_rxbuf(struct rge_softc *sc, int idx)
+{
+	struct rge_rx_desc *r = &sc->rge_ldata.rge_rx_list[idx];
+	struct rge_rxq *rxq = &sc->rge_ldata.rge_rxq[idx];
+	bus_dmamap_t rxmap = rxq->rxq_dmamap;
+	uint32_t cmdsts;
+
+	cmdsts = rxmap->dm_segs[0].ds_len | RGE_RDCMDSTS_OWN;
+	if (idx == RGE_RX_LIST_CNT - 1)
+		cmdsts |= RGE_RDCMDSTS_EOR;
+
+	r->hi_qword0.rge_addr = htole64(rxmap->dm_segs[0].ds_addr);
+	r->hi_qword1.rx_qword4.rge_extsts = 0;
+	r->hi_qword1.rx_qword4.rge_cmdsts = htole32(cmdsts);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->rge_ldata.rge_rx_list_map,
+	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+}
+
+/*
  * Initialize the RX descriptor and attach an mbuf cluster.
  */
 int
 rge_newbuf(struct rge_softc *sc, int idx)
 {
 	struct mbuf *m;
-	struct rge_rx_desc *r;
 	struct rge_rxq *rxq;
 	bus_dmamap_t rxmap;
+	int error __diagused;
 
 	m = MCLGETL(NULL, M_DONTWAIT, RGE_JUMBO_FRAMELEN);
 	if (m == NULL)
@@ -1105,53 +1134,22 @@ rge_newbuf(struct rge_softc *sc, int idx)
 	rxq = &sc->rge_ldata.rge_rxq[idx];
 	rxmap = rxq->rxq_dmamap;
 
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, rxmap, m, BUS_DMA_NOWAIT))
-		goto out;
+	if (rxq->rxq_mbuf != NULL)
+		bus_dmamap_unload(sc->sc_dmat, rxq->rxq_dmamap);
+
+	/* This map was created with BUS_DMA_ALLOCNOW so should never fail. */
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, rxmap, m, BUS_DMA_NOWAIT);
+	KASSERTMSG(error == 0, "error=%d", error);
 
 	bus_dmamap_sync(sc->sc_dmat, rxmap, 0, rxmap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
 	/* Map the segments into RX descriptors. */
-	r = &sc->rge_ldata.rge_rx_list[idx];
 
 	rxq->rxq_mbuf = m;
+	rge_load_rxbuf(sc, idx);
 
-	r->hi_qword1.rx_qword4.rge_extsts = 0;
-	r->hi_qword0.rge_addr = htole64(rxmap->dm_segs[0].ds_addr);
-
-	r->hi_qword1.rx_qword4.rge_cmdsts = htole32(rxmap->dm_segs[0].ds_len);
-	if (idx == RGE_RX_LIST_CNT - 1)
-		r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_EOR);
-
-	r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_OWN);
-
-	bus_dmamap_sync(sc->sc_dmat, sc->rge_ldata.rge_rx_list_map,
-	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	return (0);
-out:
-	if (m != NULL)
-		m_freem(m);
-	return (ENOMEM);
-}
-
-void
-rge_discard_rxbuf(struct rge_softc *sc, int idx)
-{
-	struct rge_rx_desc *r;
-
-	r = &sc->rge_ldata.rge_rx_list[idx];
-
-	r->hi_qword1.rx_qword4.rge_cmdsts = htole32(RGE_JUMBO_FRAMELEN);
-	r->hi_qword1.rx_qword4.rge_extsts = 0;
-	if (idx == RGE_RX_LIST_CNT - 1)
-		r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_EOR);
-	r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_OWN);
-
-	bus_dmamap_sync(sc->sc_dmat, sc->rge_ldata.rge_rx_list_map,
-	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	return 0;
 }
 
 static int
@@ -1251,17 +1249,16 @@ rge_rxeof(struct rge_softc *sc)
 		total_len = RGE_RXBYTES(cur_rx);
 		rxq = &sc->rge_ldata.rge_rxq[i];
 		m = rxq->rxq_mbuf;
-		rxq->rxq_mbuf = NULL;
 		rx = 1;
 
-		/* Invalidate the RX mbuf and unload its map. */
+		/* Invalidate the RX mbuf. */
 		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_dmamap, 0,
 		    rxq->rxq_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat, rxq->rxq_dmamap);
 
 		if ((rxstat & (RGE_RDCMDSTS_SOF | RGE_RDCMDSTS_EOF)) !=
 		    (RGE_RDCMDSTS_SOF | RGE_RDCMDSTS_EOF)) {
-			rge_discard_rxbuf(sc, i);
+			if_statinc(ifp, if_ierrors);
+			rge_load_rxbuf(sc, i);
 			continue;
 		}
 
@@ -1271,11 +1268,11 @@ rge_rxeof(struct rge_softc *sc)
 			 * If this is part of a multi-fragment packet,
 			 * discard all the pieces.
 			 */
-			 if (sc->rge_head != NULL) {
+			if (sc->rge_head != NULL) {
 				m_freem(sc->rge_head);
 				sc->rge_head = sc->rge_tail = NULL;
 			}
-			rge_discard_rxbuf(sc, i);
+			rge_load_rxbuf(sc, i);
 			continue;
 		}
 
@@ -1283,13 +1280,13 @@ rge_rxeof(struct rge_softc *sc)
 		 * If allocating a replacement mbuf fails,
 		 * reload the current one.
 		 */
-
 		if (rge_newbuf(sc, i) != 0) {
+			if_statinc(ifp, if_iqdrops);
 			if (sc->rge_head != NULL) {
 				m_freem(sc->rge_head);
 				sc->rge_head = sc->rge_tail = NULL;
 			}
-			rge_discard_rxbuf(sc, i);
+			rge_load_rxbuf(sc, i);
 			continue;
 		}
 
