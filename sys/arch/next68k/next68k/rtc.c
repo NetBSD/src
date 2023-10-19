@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.19 2023/02/03 23:13:01 tsutsui Exp $        */
+/*      $NetBSD: rtc.c,v 1.20 2023/10/19 22:07:13 andvar Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.19 2023/02/03 23:13:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.20 2023/10/19 22:07:13 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>          /* for panic */
@@ -321,7 +321,7 @@ settime_old(todr_chip_handle_t tcr, struct clock_ymdhms *dt)
 	rtc_write(RTC_CONTROL, rtc_read(RTC_CONTROL) & ~RTC_START);
 
 #ifdef RTC_DEBUG
-	printf("Setting RTC to 0x%08x.  Regs before:\n", secs);
+	printf("Regs before:\n");
 	rtc_print();
 #endif
 
@@ -352,7 +352,7 @@ settime_old(todr_chip_handle_t tcr, struct clock_ymdhms *dt)
 	rtc_write(RTC_YR, bintobcd(dt->dt_year % 100));
 
 #ifdef RTC_DEBUG
-	printf("Regs after:\n", secs);
+	printf("Regs after:\n");
 	rtc_print();
 #endif
 
@@ -380,7 +380,7 @@ settime_new(todr_chip_handle_t tch, struct timeval *tvp)
 	rtc_write(RTC_CONTROL, rtc_read(RTC_CONTROL) & ~RTC_START);
 
 #ifdef RTC_DEBUG
-	printf("Setting RTC to 0x%08x.  Regs before:\n", tvp->tv_sec);
+	printf("Setting RTC to 0x%08llx.  Regs before:\n", tvp->tv_sec);
 	rtc_print();
 #endif
 
@@ -390,7 +390,7 @@ settime_new(todr_chip_handle_t tch, struct timeval *tvp)
 	rtc_write(RTC_CNTR3, (tvp->tv_sec) & 0xff);
 
 #ifdef RTC_DEBUG
-	printf("Regs after:\n", secs);
+	printf("Regs after:\n");
 	rtc_print();
 #endif
 
