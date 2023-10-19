@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.22 2023/06/01 20:56:35 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.23 2023/10/19 18:24:33 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -193,11 +193,12 @@ INDIRECT=	direct
 # should skip the whole loop.  As of 2023-05-09, the loop is expanded as
 # usual.
 # expect+1: Unknown modifier "Z"
-.for var in word1 ${:Uword2:Z} word3
-.  info XXX: Not reached ${var}
+.for var in word1 before-${:Uword2:Z}-after word3
+.  info XXX: Should not reach ${var}
 .endfor
-# expect-2: XXX: Not reached word1
-# expect-3: XXX: Not reached word3
+# expect-2: XXX: Should not reach word1
+# expect-3: XXX: Should not reach before--after
+# expect-4: XXX: Should not reach word3
 
 
 # An empty list of variables to the left of the 'in' is a parse error.

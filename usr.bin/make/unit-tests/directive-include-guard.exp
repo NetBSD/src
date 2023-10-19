@@ -2,6 +2,10 @@ Parse_PushInput: file variable-ifndef.tmp, line 1
 Skipping 'variable-ifndef.tmp' because 'VARIABLE_IFNDEF' is defined
 Parse_PushInput: file variable-ifndef-reuse.tmp, line 1
 Skipping 'variable-ifndef-reuse.tmp' because 'VARIABLE_IFNDEF' is defined
+Parse_PushInput: file variable-ifndef-zero.tmp, line 1
+Parse_PushInput: file variable-ifndef-zero.tmp, line 1
+Parse_PushInput: file variable-ifndef-one.tmp, line 1
+Parse_PushInput: file variable-ifndef-one.tmp, line 1
 Parse_PushInput: file comments.tmp, line 1
 Skipping 'comments.tmp' because 'COMMENTS' is defined
 Parse_PushInput: file variable-if.tmp, line 1
