@@ -329,6 +329,36 @@ dhcpcd_ipwaited(struct dhcpcd_ctx *ctx)
 	return 1;
 }
 
+#ifndef THERE_IS_NO_FORK
+void
+dhcpcd_daemonised(struct dhcpcd_ctx *ctx)
+{
+	unsigned int logopts = loggetopts();
+
+	/*
+	 * Stop writing to stderr.
+	 * On the happy path, only the manager process writes to stderr,
+	 * so this just stops wasting fprintf calls to nowhere.
+	 * All other calls - ie errors in privsep processes or script output,
+	 * will error when printing.
+	 * If we *really* want to fix that, then we need to suck
+	 * stderr/stdout in the manager process and either discard it or pass
+	 * it to the launcher process and then to stderr.
+	 */
+	logopts &= ~LOGERR_ERR;
+	logsetopts(logopts);
+
+	/*
+	 * We need to do something with stdout/stderr to avoid SIGPIPE
+	 * We know that stdin is already mapped to /dev/null
+	 */
+	dup2(STDIN_FILENO, STDOUT_FILENO);
+	dup2(STDIN_FILENO, STDERR_FILENO);
+
+	ctx->options |= DHCPCD_DAEMONISED;
+}
+#endif
+
 /* Returns the pid of the child, otherwise 0. */
 void
 dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
@@ -363,6 +393,13 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 	if (!(logopts & LOGERR_QUIET) && ctx->stderr_valid)
 		(void)fprintf(stderr,
 		    "forked to background, child pid %d\n", getpid());
+
+#ifdef PRIVSEP
+	ps_daemonised(ctx);
+#else
+	dhcpcd_daemonised(ctx);
+#endif
+
 	i = EXIT_SUCCESS;
 	if (write(ctx->fork_fd, &i, sizeof(i)) == -1)
 		logerr("write");
@@ -370,19 +407,6 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 	eloop_event_delete(ctx->eloop, ctx->fork_fd);
 	close(ctx->fork_fd);
 	ctx->fork_fd = -1;
-
-	/*
-	 * Stop writing to stderr.
-	 * On the happy path, only the manager process writes to stderr,
-	 * so this just stops wasting fprintf calls to nowhere.
-	 * All other calls - ie errors in privsep processes or script output,
-	 * will error when printing.
-	 * If we *really* want to fix that, then we need to suck
-	 * stderr/stdout in the manager process and either disacrd it or pass
-	 * it to the launcher process and then to stderr.
-	 */
-	logopts &= ~LOGERR_ERR;
-	logsetopts(logopts);
 #endif
 }
 
@@ -1869,6 +1893,22 @@ dhcpcd_pidfile_timeout(void *arg)
 		    dhcpcd_pidfile_timeout, ctx);
 }
 
+static int dup_null(int fd)
+{
+	int fd_null = open(_PATH_DEVNULL, O_WRONLY);
+	int err;
+
+	if (fd_null == -1) {
+		logwarn("open %s", _PATH_DEVNULL);
+		return -1;
+	}
+
+	if ((err = dup2(fd_null, fd)) == -1)
+		logwarn("dup2 %d", fd);
+	close(fd_null);
+	return err;
+}
+
 int
 main(int argc, char **argv, char **envp)
 {
@@ -1971,6 +2011,15 @@ main(int argc, char **argv, char **envp)
 	ctx.stdin_valid =  fcntl(STDIN_FILENO,  F_GETFD) != -1;
 	ctx.stdout_valid = fcntl(STDOUT_FILENO, F_GETFD) != -1;
 	ctx.stderr_valid = fcntl(STDERR_FILENO, F_GETFD) != -1;
+
+	/* Even we if we don't have input/outputs, we need to
+	 * ensure they are setup for shells. */
+	if (!ctx.stdin_valid)
+		dup_null(STDIN_FILENO);
+	if (!ctx.stdout_valid)
+		dup_null(STDOUT_FILENO);
+	if (!ctx.stderr_valid)
+		dup_null(STDERR_FILENO);
 
 	logopts = LOGERR_LOG | LOGERR_LOG_DATE | LOGERR_LOG_PID;
 	if (ctx.stderr_valid)
@@ -2341,8 +2390,10 @@ printpidfile:
 	}
 
 	loginfox(PACKAGE "-" VERSION " starting");
-	if (ctx.stdin_valid && freopen(_PATH_DEVNULL, "w", stdin) == NULL)
-		logwarn("freopen stdin");
+
+	// We don't need stdin past this point
+	if (ctx.stdin_valid)
+		dup_null(STDIN_FILENO);
 
 #if defined(USE_SIGNALS) && !defined(THERE_IS_NO_FORK)
 	if (!(ctx.options & DHCPCD_DAEMONISE))
@@ -2385,10 +2436,9 @@ printpidfile:
 				logerr("dup2");
 			close(stderr_fd[0]);
 			close(stderr_fd[1]);
-		} else if (ctx.stdout_valid) {
-			if (freopen(_PATH_DEVNULL, "w", stdout) == NULL)
-				logerr("freopen stdout");
-		}
+		} else if (ctx.stdout_valid)
+			dup_null(STDOUT_FILENO);
+
 		if (setsid() == -1) {
 			logerr("%s: setsid", __func__);
 			goto exit_failure;

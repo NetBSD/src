@@ -1100,6 +1100,26 @@ ps_recvmsg(int rfd, unsigned short events, uint16_t cmd, int wfd)
 }
 
 ssize_t
+ps_daemonised(struct dhcpcd_ctx *ctx)
+{
+	struct ps_process *psp;
+	ssize_t err = 0;
+
+	dhcpcd_daemonised(ctx);
+
+	/* Echo the message to all processes */
+	TAILQ_FOREACH(psp, &ctx->ps_processes, next) {
+		if (psp->psp_pid == getpid())
+			continue;
+		if (ps_sendcmd(psp->psp_ctx, psp->psp_fd, PS_DAEMONISED,
+		    0, NULL, 0) == -1)
+			err = -1;
+	}
+
+	return err;
+}
+
+ssize_t
 ps_recvpsmsg(struct dhcpcd_ctx *ctx, int fd, unsigned short events,
     ssize_t (*callback)(void *, struct ps_msghdr *, struct msghdr *),
     void *cbctx)
@@ -1131,6 +1151,9 @@ ps_recvpsmsg(struct dhcpcd_ctx *ctx, int fd, unsigned short events,
 		if (psm.psm_hdr.ps_cmd == PS_STOP) {
 			stop = true;
 			len = 0;
+		} else if (psm.psm_hdr.ps_cmd == PS_DAEMONISED) {
+			ps_daemonised(ctx);
+			return 0;
 		}
 	}
 
