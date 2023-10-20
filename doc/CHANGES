@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2940.2.6 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2940.2.7 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -800,4 +800,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[rin 20231007]
 	igc(4): Add initial support to Intel I225/I226 series Ethernet devices.
 		[knakahara, rin, msaitoh 20231006]
+	build: Force MKSTRIPSYM=no if MKDEBUG=yes. [lukem 20231020]
 
