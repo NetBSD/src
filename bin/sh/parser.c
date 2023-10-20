@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.180 2023/04/07 10:34:13 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.181 2023/10/20 22:08:52 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.180 2023/04/07 10:34:13 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.181 2023/10/20 22:08:52 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2689,6 +2689,7 @@ expandonstack(char *ps, int cmdsub, int lineno)
 	struct jmploc jmploc;
 	struct jmploc *const savehandler = handler;
 	struct parsefile *const savetopfile = getcurrentfile();
+	char * const save_ps = ps;
 	const int save_x = xflag;
 	const int save_e_s = errors_suppressed;
 	struct parse_state new_state = init_parse_state;
@@ -2740,7 +2741,7 @@ expandonstack(char *ps, int cmdsub, int lineno)
 	errors_suppressed = save_e_s;
 
 	if (result == NULL)
-		result = ps;
+		result = save_ps;
 
 	return result;
 }
