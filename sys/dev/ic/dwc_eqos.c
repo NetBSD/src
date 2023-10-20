@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.20 2023/10/20 09:58:11 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.21 2023/10/20 13:29:51 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.20 2023/10/20 09:58:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.21 2023/10/20 13:29:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,7 +90,7 @@ unsigned int eqos_debug;
 #define	CALLOUT_FLAGS		0
 #endif
 
-#define	DESC_BOUNDARY		(1ULL << 32)
+#define	DESC_BOUNDARY		((sizeof(bus_size_t) > 4) ? (1ULL << 32) : 0)
 #define	DESC_ALIGN		sizeof(struct eqos_dma_desc)
 #define	TX_DESC_COUNT		EQOS_DMA_DESC_COUNT
 #define	TX_DESC_SIZE		(TX_DESC_COUNT * DESC_ALIGN)
@@ -272,10 +272,12 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 		++sc->sc_tx.queued;
 	}
 
-	KASSERT(!EQOS_HW_FEATURE_ADDR64_32BIT(sc) || (paddr >> 32) == 0);
+	KASSERT(!EQOS_HW_FEATURE_ADDR64_32BIT(sc) ||
+	    ((uint64_t)paddr >> 32) == 0);
 
 	sc->sc_tx.desc_ring[index].tdes0 = htole32((uint32_t)paddr);
-	sc->sc_tx.desc_ring[index].tdes1 = htole32((uint32_t)(paddr >> 32));
+	sc->sc_tx.desc_ring[index].tdes1
+	    = htole32((uint32_t)((uint64_t)paddr >> 32));
 	sc->sc_tx.desc_ring[index].tdes2 = htole32(tdes2 | len);
 	sc->sc_tx.desc_ring[index].tdes3 = htole32(tdes3 | total_len);
 	DPRINTF(EDEB_TXRING, "preparing desc %u\n", index);
@@ -359,7 +361,8 @@ eqos_setup_rxdesc(struct eqos_softc *sc, int index, bus_addr_t paddr)
 {
 
 	sc->sc_rx.desc_ring[index].tdes0 = htole32((uint32_t)paddr);
-	sc->sc_rx.desc_ring[index].tdes1 = htole32((uint32_t)(paddr >> 32));
+	sc->sc_rx.desc_ring[index].tdes1 =
+	    htole32((uint32_t)((uint64_t)paddr >> 32));
 	sc->sc_rx.desc_ring[index].tdes2 = htole32(0);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx.desc_map,
 	    DESC_OFF(index), offsetof(struct eqos_dma_desc, tdes3),
@@ -541,7 +544,7 @@ eqos_init_rings(struct eqos_softc *sc, int qid)
 	sc->sc_rx_receiving_m_last = NULL;
 
 	WR4(sc, GMAC_DMA_CHAN0_TX_BASE_ADDR_HI,
-	    (uint32_t)(sc->sc_tx.desc_ring_paddr >> 32));
+	    (uint32_t)((uint64_t)sc->sc_tx.desc_ring_paddr >> 32));
 	WR4(sc, GMAC_DMA_CHAN0_TX_BASE_ADDR,
 	    (uint32_t)sc->sc_tx.desc_ring_paddr);
 	WR4(sc, GMAC_DMA_CHAN0_TX_RING_LEN, TX_DESC_COUNT - 1);
@@ -550,7 +553,7 @@ eqos_init_rings(struct eqos_softc *sc, int qid)
 
 	sc->sc_rx.cur = sc->sc_rx.next = sc->sc_rx.queued = 0;
 	WR4(sc, GMAC_DMA_CHAN0_RX_BASE_ADDR_HI,
-	    (uint32_t)(sc->sc_rx.desc_ring_paddr >> 32));
+	    (uint32_t)((uint64_t)sc->sc_rx.desc_ring_paddr >> 32));
 	WR4(sc, GMAC_DMA_CHAN0_RX_BASE_ADDR,
 	    (uint32_t)sc->sc_rx.desc_ring_paddr);
 	WR4(sc, GMAC_DMA_CHAN0_RX_RING_LEN, RX_DESC_COUNT - 1);
