@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.142 2023/10/20 16:06:56 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.143 2023/10/20 16:14:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12625,4 +12625,11 @@ share/mk/bsd.own.mk				1.1345
 
 	bsd.own.mk: do not strip local symbols with MKDEBUG=yes.
 	[mrg, ticket #430]
+
+sys/arch/evbarm/evbarm/autoconf.c		1.24
+sys/arch/evbarm/fdt/fdt_machdep.c		1.100,1.101
+sys/arch/evbarm/include/types.h			1.16
+
+	evbarm: fix root detection when raid(4) is involved.
+	[mrg, ticket #431]
 
