@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.173 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.174 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -13429,3 +13429,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[nia 20230211]
 	u3g(4): Add support for ZTE MF112 and D-Link DWM222 3G USB
 		modems [manu 20230213]
+	build: Force MKSTRIPSYM=no if MKDEBUG=yes. [lukem 20230723]
