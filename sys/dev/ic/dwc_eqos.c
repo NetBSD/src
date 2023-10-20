@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.18 2023/10/20 09:51:49 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.19 2023/10/20 09:53:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.18 2023/10/20 09:51:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.19 2023/10/20 09:53:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1398,6 +1398,8 @@ eqos_attach(struct eqos_softc *sc)
 	} else if (sc->sc_csr_clock < 250000000) {
 		sc->sc_clock_range = GMAC_MAC_MDIO_ADDRESS_CR_150_250;
 	} else if (sc->sc_csr_clock < 300000000) {
+		sc->sc_clock_range = GMAC_MAC_MDIO_ADDRESS_CR_250_300;
+	} else if (sc->sc_csr_clock < 500000000) {
 		sc->sc_clock_range = GMAC_MAC_MDIO_ADDRESS_CR_300_500;
 	} else if (sc->sc_csr_clock < 800000000) {
 		sc->sc_clock_range = GMAC_MAC_MDIO_ADDRESS_CR_500_800;
