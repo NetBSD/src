@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.447 2023/10/04 07:35:27 rin Exp $
+#	$NetBSD: files.pci,v 1.448 2023/10/20 10:09:43 msaitoh Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1171,6 +1171,10 @@ attach	ena at pci
 file	dev/pci/if_ena.c			ena
 file	external/bsd/ena-com/ena_com.c		ena
 file	external/bsd/ena-com/ena_eth_com.c	ena
+
+# PCI based DesignWare Ethernet QoS
+attach	eqos at pci with eqos_pci
+file	dev/pci/if_eqos_pci.c eqos_pci
 
 # Intel QuickAssist
 device qat: opencrypto, firmload
