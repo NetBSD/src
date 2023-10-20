@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.141 2023/10/19 07:24:45 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.142 2023/10/20 16:06:56 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12618,4 +12618,11 @@ tests/net/if_lagg/t_lagg.sh			1.9,1.10
 
 	lagg(4): PR 57650: locking fixes and documentation updates.
 	[yamaguchi, ticket #429]
+
+doc/CHANGES					1.2984 (adjusted)
+share/man/man5/mk.conf.5			1.108
+share/mk/bsd.own.mk				1.1345
+
+	bsd.own.mk: do not strip local symbols with MKDEBUG=yes.
+	[mrg, ticket #430]
 
