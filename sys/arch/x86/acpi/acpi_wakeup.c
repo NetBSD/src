@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.54.12.1 2023/10/18 15:14:24 martin Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.54.12.2 2023/10/20 18:35:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.54.12.1 2023/10/18 15:14:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.54.12.2 2023/10/20 18:35:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.54.12.1 2023/10/18 15:14:24 martin
 #include "opt_vga.h"
 
 #include "acpi_wakecode.h"
+
+#ifdef XENPV
+#error acpi_wakeup.c (acpi_md_vesa_modenum) users must be adapted for Xen
+#else
+int acpi_md_vesa_modenum = 0;
+#endif
 
 /* Address is also hard-coded in acpi_wakecode.S */
 static paddr_t acpi_wakeup_paddr = 3 * PAGE_SIZE;
