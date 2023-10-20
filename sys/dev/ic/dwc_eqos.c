@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.19 2023/10/20 09:53:27 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.20 2023/10/20 09:58:11 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -28,12 +28,17 @@
 
 /*
  * DesignWare Ethernet Quality-of-Service controller
+ *
+ * TODO:
+ *	Multiqueue support.
+ *	Add watchdog timer.
+ *	Add detach function.
  */
 
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.19 2023/10/20 09:53:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.20 2023/10/20 09:58:11 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1378,11 +1383,11 @@ eqos_attach(struct eqos_softc *sc)
 	    GMAC_MAC_VERSION_USERVER_SHIFT;
 	snpsver = ver & GMAC_MAC_VERSION_SNPSVER_MASK;
 
-	if (snpsver != 0x51) {
-		aprint_error(": EQOS version 0x%02xx not supported\n",
-		    snpsver);
-		return ENXIO;
-	}
+	if ((snpsver < 0x51) || (snpsver > 0x52)) {
+	       aprint_error(": EQOS version 0x%02xx not supported\n",
+		   snpsver);
+	       return ENXIO;
+       }	
 
 	if (sc->sc_csr_clock < 20000000) {
 		aprint_error(": CSR clock too low\n");
