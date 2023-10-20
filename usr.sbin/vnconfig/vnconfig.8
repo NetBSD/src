@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.46 2021/01/09 23:54:26 wiz Exp $
+.\"	$NetBSD: vnconfig.8,v 1.47 2023/10/20 12:45:17 gdt Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,6 +99,12 @@ The
 .Ar vnode_disk
 is a special file of raw partition or name of vnode disk like
 .Pa vnd0 .
+.Pp
+By default, accesses to the file bypass normal mechanisms.  This
+behavior results in not updating the modification timestamp of the
+file.  Also, file contents read through the filesystem may not be the
+correct values of ciphertext, which can lead to corrupted backups of
+the backing file.
 .Pp
 Options indicate an action to be performed:
 .Bl -tag -width indent
