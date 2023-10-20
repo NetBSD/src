@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.99 2022/11/04 10:51:17 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.99.2.1 2023/10/20 16:13:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.99 2022/11/04 10:51:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.99.2.1 2023/10/20 16:13:04 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -741,16 +741,7 @@ delay(u_int us)
 static void
 fdt_detect_root_device(device_t dev)
 {
-	struct mbr_sector mbr;
-	uint8_t buf[DEV_BSIZE];
-	uint8_t hash[16];
-	const uint8_t *rhash;
-	char rootarg[64];
-	struct vnode *vp;
-	MD5_CTX md5ctx;
 	int error, len;
-	size_t resid;
-	u_int part;
 
 	const int chosen = OF_finddevice("/chosen");
 	if (chosen < 0)
@@ -758,6 +749,14 @@ fdt_detect_root_device(device_t dev)
 
 	if (of_hasprop(chosen, "netbsd,mbr") &&
 	    of_hasprop(chosen, "netbsd,partition")) {
+		struct mbr_sector mbr;
+		uint8_t buf[DEV_BSIZE];
+		uint8_t hash[16];
+		const uint8_t *rhash;
+		struct vnode *vp;
+		MD5_CTX md5ctx;
+		size_t resid;
+		u_int part;
 
 		/*
 		 * The bootloader has passed in a partition index and MD5 hash
@@ -787,22 +786,29 @@ fdt_detect_root_device(device_t dev)
 		MD5Update(&md5ctx, (void *)&mbr, sizeof(mbr));
 		MD5Final(hash, &md5ctx);
 
-		if (memcmp(rhash, hash, 16) != 0)
-			return;
+		if (memcmp(rhash, hash, 16) == 0) {
+			booted_device = dev;
+			booted_partition = part;
+		}
 
-		snprintf(rootarg, sizeof(rootarg), " root=%s%c", device_xname(dev), part + 'a');
-		strcat(boot_args, rootarg);
+		return;
 	}
 
 	if (of_hasprop(chosen, "netbsd,gpt-guid")) {
-		char guidbuf[UUID_STR_LEN];
-		const struct uuid *guid = fdtbus_get_prop(chosen, "netbsd,gpt-guid", &len);
+		const struct uuid *guid =
+		    fdtbus_get_prop(chosen, "netbsd,gpt-guid", &len);
+
 		if (guid == NULL || len != 16)
 			return;
 
-		uuid_snprintf(guidbuf, sizeof(guidbuf), guid);
-		snprintf(rootarg, sizeof(rootarg), " root=wedge:%s", guidbuf);
-		strcat(boot_args, rootarg);
+		char guidstr[UUID_STR_LEN];
+		uuid_snprintf(guidstr, sizeof(guidstr), guid);
+
+		device_t dv = dkwedge_find_by_wname(guidstr);
+		if (dv != NULL)
+			booted_device = dv;
+
+		return;
 	}
 
 	if (of_hasprop(chosen, "netbsd,gpt-label")) {
@@ -813,14 +819,19 @@ fdt_detect_root_device(device_t dev)
 		device_t dv = dkwedge_find_by_wname(label);
 		if (dv != NULL)
 			booted_device = dv;
+
+		return;
 	}
 
 	if (of_hasprop(chosen, "netbsd,booted-mac-address")) {
-		const uint8_t *macaddr = fdtbus_get_prop(chosen, "netbsd,booted-mac-address", &len);
+		const uint8_t *macaddr =
+		    fdtbus_get_prop(chosen, "netbsd,booted-mac-address", &len);
+		struct ifnet *ifp;
+
 		if (macaddr == NULL || len != 6)
 			return;
+
 		int s = pserialize_read_enter();
-		struct ifnet *ifp;
 		IFNET_READER_FOREACH(ifp) {
 			if (memcmp(macaddr, CLLADDR(ifp->if_sadl), len) == 0) {
 				device_t dv = device_find_by_xname(ifp->if_xname);
@@ -830,6 +841,8 @@ fdt_detect_root_device(device_t dev)
 			}
 		}
 		pserialize_read_exit(s);
+
+		return;
 	}
 }
 
@@ -878,7 +891,6 @@ fdt_cpu_rootconf(void)
 {
 	device_t dev;
 	deviter_t di;
-	char *ptr;
 
 	if (booted_device != NULL)
 		return;
@@ -887,11 +899,10 @@ fdt_cpu_rootconf(void)
 		if (device_class(dev) != DV_DISK)
 			continue;
 
-		if (get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr) != 0)
-			break;
+		fdt_detect_root_device(dev);
 
-		if (device_is_a(dev, "ld") || device_is_a(dev, "sd") || device_is_a(dev, "wd"))
-			fdt_detect_root_device(dev);
+		if (booted_device != NULL)
+			break;
 	}
 	deviter_release(&di);
 }
