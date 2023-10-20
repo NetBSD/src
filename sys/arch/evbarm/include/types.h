@@ -1,7 +1,9 @@
-/*	$NetBSD: types.h,v 1.15 2021/04/01 04:35:45 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.15.16.1 2023/10/20 16:13:04 martin Exp $	*/
 
 #ifndef _EVBARM_TYPES_H_
 #define	_EVBARM_TYPES_H_
+
+#define	__HAVE_CPU_BOOTCONF
 
 #ifdef __aarch64__
 #include <aarch64/types.h>

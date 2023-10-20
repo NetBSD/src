@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 2020/12/19 21:54:00 mrg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23.18.1 2023/10/20 16:13:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2020/12/19 21:54:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23.18.1 2023/10/20 16:13:03 martin Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -108,6 +108,9 @@ set_root_device(void)
 	char *ptr, *end, *buf;
 	size_t len;
 
+	if (booted_device)
+		return;
+
 	if (boot_args == NULL)
 		return;
 
@@ -118,7 +121,7 @@ set_root_device(void)
 		return;
 
 	/* NUL-terminate string, get_bootconf_option doesn't */
-	for (end=ptr; *end != '\0'; ++end) {
+	for (end = ptr; *end != '\0'; ++end) {
 		if (*end == ' ' || *end == '\t') {
 			break;
 		}
@@ -144,16 +147,25 @@ set_root_device(void)
 #endif
 
 /*
- * Set up the root device from the boot args
+ * Set up the root device from the boot args.
+ *
+ * cpu_bootconf() is called before RAIDframe root detection,
+ * and cpu_rootconf() is called after.
  */
+void
+cpu_bootconf(void)
+{
+#ifndef MEMORY_DISK_IS_ROOT
+	set_root_device();
+	if (evbarm_cpu_rootconf)
+		(*evbarm_cpu_rootconf)();
+#endif
+}
+
 void
 cpu_rootconf(void)
 {
-#ifndef MEMORY_DISK_IS_ROOT
-	if (evbarm_cpu_rootconf)
-		(*evbarm_cpu_rootconf)();
-	set_root_device();
-#endif
+	cpu_bootconf();
 	aprint_normal("boot device: %s\n",
 	    booted_device != NULL ? device_xname(booted_device) : "<unknown>");
 	rootconf();
