@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.144 2023/10/20 18:37:28 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.145 2023/10/21 13:01:00 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12638,4 +12638,11 @@ sys/arch/x86/x86/genfb_machdep.c		1.23 (patch)
 
 	Allow building kernels with acpi(4) but no framebuffer devices.
 	[bouyer, ticket #432]
+
+sys/arch/x86/pci/pci_machdep.c			(apply patch)
+sys/arch/x86/x86/genfb_machdep.c		(apply patch)
+
+	Fix build of XEN kernels with genfb(4).
+	Fixes fallout from ticket #432.
+	[bouyer, ticket #433]
 
