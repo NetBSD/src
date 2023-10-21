@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3009 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3010 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -221,12 +221,34 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	acpi(4): Updated ACPICA to 20230628. [christos 20230901] 
 	sqlite3(1): Import 3.34.0. [christos 20230904]
 	namecache: Tune the namecache for 32-bit systems [ad 20230909]
+	mips: Add initial support for n64 userland to gprof(1).
+		[rin 20230914]
 	tzcode: Updated to 2023c. [christos 20230916]
+	raidctl(8): Implement command-line configuration of simple RAID sets.
+		[oster 20230921]
+	rc.conf(5): Add support for npf_rules to override the default
+		rules file for npf(7). [abs 20231005]
 	igc(4): Add initial support to Intel I225/I226 series Ethernet devices.
 		[knakahara, rin, msaitoh 20231006]
 	less: Updated to version 643.  [simonb 20231006]
 	gcc.old: Initial import of major vax toolchain fix by Kalvis Duckmanton.
 		[rin 20231007]
+	ddb(4): Add some simple show commands: condvar, selinfo, sleepq
+		[ad 20231007]
+	mips: Add fma(3) to libm. [he 20231008]
+	heimdal: Disable sqlite3 credential cache (SCC), remove sqlite3
+		dependency. [riastradh 20231011]
+	pipe(2): Improve performance, reduce lock contention. [ad 20231013]
+	vax: Reduce the object size of the malloc(3) code by converting
+		to rbtree, also improve performance and locking.
+		[ad 20231013]
+	uhid(4): Improve hid matching to allow better recognition of
+		collections. [nat 20231017]
+	xen: Support genfb(4) as a console device for dom0, necessary for
+		graphical console on EFI-ony hardware. [bouyer 20231017]
+	lagg(4): Copy MTU of lagg to a interface added to lagg
+		[yamaguchi 20231018]
 	dhcpcd: Import version 10.0.4. [roy 20231019]
 	eqos(4): Add support for Intel Elkhart Lake internal Ethernet devices.
 		[msaitoh 20231019]
+	top(1): Add network in & out bytes to the top display. [mrg 20231021]
