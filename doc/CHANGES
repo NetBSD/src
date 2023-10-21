@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3010 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3011 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -245,8 +245,8 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	uhid(4): Improve hid matching to allow better recognition of
 		collections. [nat 20231017]
 	xen: Support genfb(4) as a console device for dom0, necessary for
-		graphical console on EFI-ony hardware. [bouyer 20231017]
-	lagg(4): Copy MTU of lagg to a interface added to lagg
+		graphical console on EFI-only hardware. [bouyer 20231017]
+	lagg(4): Copy the MTU of lagg to interfaces added to lagg
 		[yamaguchi 20231018]
 	dhcpcd: Import version 10.0.4. [roy 20231019]
 	eqos(4): Add support for Intel Elkhart Lake internal Ethernet devices.
