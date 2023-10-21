@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.21 2023/10/20 13:29:51 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.22 2023/10/21 14:49:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.21 2023/10/20 13:29:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.22 2023/10/21 14:49:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1390,7 +1390,7 @@ eqos_attach(struct eqos_softc *sc)
 	       aprint_error(": EQOS version 0x%02xx not supported\n",
 		   snpsver);
 	       return ENXIO;
-       }	
+       }
 
 	if (sc->sc_csr_clock < 20000000) {
 		aprint_error(": CSR clock too low\n");
