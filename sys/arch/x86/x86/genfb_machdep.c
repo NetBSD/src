@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.19.4.3 2023/10/20 18:35:54 martin Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.19.4.4 2023/10/21 12:59:25 martin Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.19.4.3 2023/10/20 18:35:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.19.4.4 2023/10/21 12:59:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -137,7 +137,7 @@ x86_genfb_init(void)
 		return 0;
 	}
 
-#if NACPICA > 0
+#if NACPICA > 0 && !defined(XENPV)
 	acpi_md_vesa_modenum = fbinfo->vbemode;
 #endif
 
