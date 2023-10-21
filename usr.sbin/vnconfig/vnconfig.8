@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.48 2023/10/20 13:04:21 wiz Exp $
+.\"	$NetBSD: vnconfig.8,v 1.49 2023/10/21 23:38:26 gdt Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,12 +100,21 @@ The
 is a special file of raw partition or name of vnode disk like
 .Pa vnd0 .
 .Pp
-By default, accesses to the file bypass normal mechanisms.
-This behavior results in not updating the modification timestamp
-of the file.
-Also, file contents read through the filesystem may not be the
-correct values of ciphertext, which can lead to corrupted backups of
-the backing file.
+By default, accesses to the file bypass normal mechanisms and thus
+do not read from or fill the filesystem cache.
+Because the typical approach is to access the file only via
+.Xr vnd 4 ,
+or at least to have regular accesses and
+.Xr vnd 4
+accesses separated in time, this is generally not problematic.
+This bypassing behavior results in not updating the modification
+timestamp of the file.
+Also, file contents read through the filesystem (and thus the
+filesystem's caching layer) may not be the correct values of
+ciphertext, so caution is in order for backups.
+The
+.Fl i
+option may be useful if it is necessary to avoid inconsistent caching.
 .Pp
 Options indicate an action to be performed:
 .Bl -tag -width indent
