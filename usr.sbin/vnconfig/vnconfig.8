@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.49 2023/10/21 23:38:26 gdt Exp $
+.\"	$NetBSD: vnconfig.8,v 1.50 2023/10/21 23:42:03 gdt Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,8 +110,8 @@ accesses separated in time, this is generally not problematic.
 This bypassing behavior results in not updating the modification
 timestamp of the file.
 Also, file contents read through the filesystem (and thus the
-filesystem's caching layer) may not be the correct values of
-ciphertext, so caution is in order for backups.
+filesystem's caching layer) may not be the contents written via this
+interface, so caution is in order for backups.
 The
 .Fl i
 option may be useful if it is necessary to avoid inconsistent caching.
