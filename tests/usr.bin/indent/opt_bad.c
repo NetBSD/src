@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bad.c,v 1.12 2023/06/26 14:54:40 rillig Exp $ */
+/* $NetBSD: opt_bad.c,v 1.13 2023/10/22 21:03:08 rillig Exp $ */
 
 /*
  * Tests for the options '-bad' and '-nbad'.
@@ -174,7 +174,7 @@ initializer_with_blank(void)
 	/* comment */
 	int decl2;
 	// $ If the declaration is followed by a '}' that terminates the block
-	// $ statement, * there is no need for a blank line before the '}'.
+	// $ statement, there is no need for a blank line before the '}'.
 }
 //indent end
 

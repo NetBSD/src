@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_unary_op.c,v 1.12 2023/06/17 22:09:24 rillig Exp $ */
+/* $NetBSD: lsym_unary_op.c,v 1.13 2023/10/22 21:03:08 rillig Exp $ */
 
 /*
  * Tests for the token lsym_unary_op, which represents a unary operator.
@@ -50,8 +50,8 @@ int same = + + + + +- - - - -3;
 
 
 /*
- * A special kind of unary operator is '->', which additionally suppresses the
- * next space.
+ * The operator '->' is special as it additionally suppresses the space between
+ * the operator and its right operand.
  */
 //indent input
 int var = p -> member;
