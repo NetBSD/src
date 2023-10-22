@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.19 2023/10/15 07:03:17 skrll Exp $
+$NetBSD: README.gcc12,v 1.20 2023/10/22 00:09:20 mrg Exp $
 
 
 new stuff:
@@ -65,11 +65,12 @@ sparc		y	y	y	y	n[21]	y		y	y	?
 sparc64		y	b	y	y	n[16]	y		y	?	?
 vax		y	y	y	y	n[23]	n		n[24,25] ?	?
 x86_64		y	y	y	y	y[13]	y		y	y	?
-riscv32		y	y	y	y	b	y		?	?	?
+riscv32		y	y	y	y	b	y		n[2]	?	?
 riscv64		y	y	y	y	b	y		y	y	?
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
+[2]: riscv32 kernels are not really implemented yet, not GCC 12 issue.
 [3]: GENERIC.SKI boots just as well as GCC 10.
 [4]: rs6000 has a new generator for rs6000-builtins.cc and rs6000-builtins.h rs6000-vecdefines.h
 [7]: fails to build kernels:
