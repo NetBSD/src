@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.27 2023/10/21 06:30:23 mrg Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.28 2023/10/22 14:44:09 simonb Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -45,12 +45,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.27 2023/10/21 06:30:23 mrg Exp $
+ * $Id: m_netbsd.c,v 1.28 2023/10/22 14:44:09 simonb Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.27 2023/10/21 06:30:23 mrg Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.28 2023/10/22 14:44:09 simonb Exp $");
 #endif
 
 #include <sys/param.h>
@@ -179,7 +179,7 @@ const char *memorynames[] = {
 
 long swap_stats[9];
 const char *swapnames[] = {
-	"K Total, ", "K Used, ", "K Free ", " Pools: ", "K Used, ",
+	"K Total, ", "K Used, ", "K Free ", " Pools: ", "K Used ",
 	" Network: ", "K In, ", "K Out, ",
 	NULL
 };
