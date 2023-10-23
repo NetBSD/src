@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.23 2023/10/23 14:54:53 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.24 2023/10/23 15:11:47 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.23 2023/10/23 14:54:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.24 2023/10/23 15:11:47 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -257,6 +257,8 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 {
 	uint32_t tdes2, tdes3;
 
+	DPRINTF(EDEB_TXRING, "preparing desc %u\n", index);
+
 	if (paddr == 0 || len == 0) {
 		DPRINTF(EDEB_TXRING,
 		    "tx for desc %u done!\n", index);
@@ -278,7 +280,6 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 	    = htole32((uint32_t)((uint64_t)paddr >> 32));
 	sc->sc_tx.desc_ring[index].tdes2 = htole32(tdes2 | len);
 	sc->sc_tx.desc_ring[index].tdes3 = htole32(tdes3 | total_len);
-	DPRINTF(EDEB_TXRING, "preparing desc %u\n", index);
 }
 
 static int
@@ -288,6 +289,8 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 	int error, nsegs, cur, i;
 	uint32_t flags;
 	bool nospace;
+
+	DPRINTF(EDEB_TXRING, "preparing desc %u\n", index);
 
 	/* at least one descriptor free ? */
 	if (sc->sc_tx.queued >= TX_DESC_COUNT - 1)
@@ -358,6 +361,8 @@ static void
 eqos_setup_rxdesc(struct eqos_softc *sc, int index, bus_addr_t paddr)
 {
 
+	DPRINTF(EDEB_RXRING, "preparing desc %u\n", index);
+
 	sc->sc_rx.desc_ring[index].tdes0 = htole32((uint32_t)paddr);
 	sc->sc_rx.desc_ring[index].tdes1 =
 	    htole32((uint32_t)((uint64_t)paddr >> 32));
@@ -373,6 +378,8 @@ static int
 eqos_setup_rxbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 {
 	int error;
+
+	DPRINTF(EDEB_RXRING, "preparing desc %u\n", index);
 
 #if MCLBYTES >= (EQOS_RXDMA_SIZE + ETHER_ALIGN)
 	m_adj(m, ETHER_ALIGN);
@@ -886,6 +893,8 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 	sc->sc_rx_receiving_m = m0;
 	sc->sc_rx_receiving_m_last = mprev;
 
+	DPRINTF(EDEB_RXRING, "sc_rx.cur %u -> %u\n",
+	    sc->sc_rx.cur, index);
 	sc->sc_rx.cur = index;
 
 	if (pkts != 0) {
