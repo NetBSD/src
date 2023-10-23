@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.22 2023/10/21 14:49:12 skrll Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.23 2023/10/23 14:54:53 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.22 2023/10/21 14:49:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.23 2023/10/23 14:54:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,7 +72,7 @@ CTASSERT(MCLBYTES >= EQOS_RXDMA_SIZE);
 #ifdef EQOS_DEBUG
 unsigned int eqos_debug;
 #define	DPRINTF(FLAG, FORMAT, ...)	\
-	if (eqos_debug & FLAG) 		\
+	if (eqos_debug & FLAG)		\
 		device_printf(sc->sc_dev, "%s: " FORMAT, \
 		    __func__, ##__VA_ARGS__)
 #else
@@ -133,8 +133,7 @@ eqos_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	addr = sc->sc_clock_range |
 	    (phy << GMAC_MAC_MDIO_ADDRESS_PA_SHIFT) |
 	    (reg << GMAC_MAC_MDIO_ADDRESS_RDA_SHIFT) |
-	    GMAC_MAC_MDIO_ADDRESS_GOC_READ |
-	    GMAC_MAC_MDIO_ADDRESS_GB;
+	    GMAC_MAC_MDIO_ADDRESS_GOC_READ | GMAC_MAC_MDIO_ADDRESS_GB;
 	WR4(sc, GMAC_MAC_MDIO_ADDRESS, addr);
 
 	delay(10000);
@@ -168,8 +167,7 @@ eqos_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 	addr = sc->sc_clock_range |
 	    (phy << GMAC_MAC_MDIO_ADDRESS_PA_SHIFT) |
 	    (reg << GMAC_MAC_MDIO_ADDRESS_RDA_SHIFT) |
-	    GMAC_MAC_MDIO_ADDRESS_GOC_WRITE |
-	    GMAC_MAC_MDIO_ADDRESS_GB;
+	    GMAC_MAC_MDIO_ADDRESS_GOC_WRITE | GMAC_MAC_MDIO_ADDRESS_GB;
 	WR4(sc, GMAC_MAC_MDIO_ADDRESS, addr);
 
 	delay(10000);
@@ -409,6 +407,7 @@ eqos_alloc_mbufcl(struct eqos_softc *sc)
 static void
 eqos_enable_intr(struct eqos_softc *sc)
 {
+
 	WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE,
 	    GMAC_DMA_CHAN0_INTR_ENABLE_NIE |
 	    GMAC_DMA_CHAN0_INTR_ENABLE_AIE |
@@ -420,6 +419,7 @@ eqos_enable_intr(struct eqos_softc *sc)
 static void
 eqos_disable_intr(struct eqos_softc *sc)
 {
+
 	WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, 0);
 }
 
@@ -445,6 +445,7 @@ eqos_tick(void *softc)
 static uint32_t
 eqos_bitrev32(uint32_t x)
 {
+
 	x = (((x & 0xaaaaaaaa) >> 1) | ((x & 0x55555555) << 1));
 	x = (((x & 0xcccccccc) >> 2) | ((x & 0x33333333) << 2));
 	x = (((x & 0xf0f0f0f0) >> 4) | ((x & 0x0f0f0f0f) << 4));
@@ -799,7 +800,8 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 			    "b\x13" "DE\0"	/* 19 */
 			    "b\x0f" "ES\0"	/* 15 */
 			    "\0", tdes3);
-			DPRINTF(EDEB_NOTE, "rxdesc[%d].tdes3=%s\n", index, buf);
+			DPRINTF(EDEB_NOTE,
+			    "rxdesc[%d].tdes3=%s\n", index, buf);
 #endif
 			if_statinc(ifp, if_ierrors);
 			if (m0 != NULL) {
@@ -1061,7 +1063,7 @@ eqos_intr_mtl(struct eqos_softc *sc, uint32_t mtl_status)
 		}
 		if (new_status) {
 			new_status |= (ictrl &
-			    (GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS_RXOIE|
+			    (GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS_RXOIE |
 			     GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS_TXUIE));
 			WR4(sc, GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS, new_status);
 		}
@@ -1387,10 +1389,10 @@ eqos_attach(struct eqos_softc *sc)
 	snpsver = ver & GMAC_MAC_VERSION_SNPSVER_MASK;
 
 	if ((snpsver < 0x51) || (snpsver > 0x52)) {
-	       aprint_error(": EQOS version 0x%02xx not supported\n",
-		   snpsver);
-	       return ENXIO;
-       }
+		aprint_error(": EQOS version 0x%02xx not supported\n",
+		    snpsver);
+		return ENXIO;
+	}
 
 	if (sc->sc_csr_clock < 20000000) {
 		aprint_error(": CSR clock too low\n");
@@ -1447,7 +1449,8 @@ eqos_attach(struct eqos_softc *sc)
 	callout_setfunc(&sc->sc_stat_ch, eqos_tick, sc);
 
 	eqos_get_eaddr(sc, eaddr);
-	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n", ether_sprintf(eaddr));
+	aprint_normal_dev(sc->sc_dev,
+	    "Ethernet address %s\n", ether_sprintf(eaddr));
 
 	/* Soft reset EMAC core */
 	error = eqos_reset(sc);
@@ -1460,7 +1463,8 @@ eqos_attach(struct eqos_softc *sc)
 
 	/* Setup DMA descriptors */
 	if (eqos_setup_dma(sc, 0) != 0) {
-		aprint_error_dev(sc->sc_dev, "failed to setup DMA descriptors\n");
+		aprint_error_dev(sc->sc_dev,
+		    "failed to setup DMA descriptors\n");
 		return EINVAL;
 	}
 
