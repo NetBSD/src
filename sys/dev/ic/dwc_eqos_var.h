@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_var.h,v 1.4 2022/08/24 19:22:37 ryo Exp $ */
+/* $NetBSD: dwc_eqos_var.h,v 1.5 2023/10/23 15:29:38 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -43,6 +43,7 @@ struct eqos_bufmap {
 };
 
 struct eqos_ring {
+	struct eqos_softc	*sc;
 	bus_dmamap_t		desc_map;
 	bus_dma_segment_t	desc_dmaseg;
 	struct eqos_dma_desc	*desc_ring;
@@ -77,6 +78,8 @@ struct eqos_softc {
 	struct mbuf		*sc_rx_receiving_m_last;
 
 	krndsource_t		sc_rndsource;
+	struct sysctllog	*sc_sysctllog;
+	uint32_t		sc_debug;
 
 	/* Indents indicate groups within evcnt. */
 	struct evcnt		sc_ev_intr;

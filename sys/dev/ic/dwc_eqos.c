@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.24 2023/10/23 15:11:47 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.25 2023/10/23 15:29:38 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.24 2023/10/23 15:11:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.25 2023/10/23 15:29:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.24 2023/10/23 15:11:47 msaitoh Exp $"
 #include <sys/callout.h>
 #include <sys/cprng.h>
 #include <sys/evcnt.h>
+#include <sys/sysctl.h>
 
 #include <sys/rndsource.h>
 
@@ -70,18 +71,18 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.24 2023/10/23 15:11:47 msaitoh Exp $"
 CTASSERT(MCLBYTES >= EQOS_RXDMA_SIZE);
 
 #ifdef EQOS_DEBUG
-unsigned int eqos_debug;
-#define	DPRINTF(FLAG, FORMAT, ...)	\
-	if (eqos_debug & FLAG)		\
+#define	EDEB_NOTE		(1U << 0)
+#define	EDEB_INTR		(1U << 1)
+#define	EDEB_RXRING		(1U << 2)
+#define	EDEB_TXRING		(1U << 3)
+unsigned int eqos_debug;	/* Default vaule */
+#define	DPRINTF(FLAG, FORMAT, ...)			 \
+	if (sc->sc_debug & FLAG)			 \
 		device_printf(sc->sc_dev, "%s: " FORMAT, \
 		    __func__, ##__VA_ARGS__)
 #else
 #define	DPRINTF(FLAG, FORMAT, ...)	((void)0)
 #endif
-#define	EDEB_NOTE		1U<<0
-#define	EDEB_INTR		1U<<1
-#define	EDEB_RXRING		1U<<2
-#define	EDEB_TXRING		1U<<3
 
 #ifdef NET_MPSAFE
 #define	EQOS_MPSAFE		1
@@ -122,6 +123,15 @@ unsigned int eqos_debug;
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 #define	WR4(sc, reg, val)		\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+
+static void	eqos_init_sysctls(struct eqos_softc *);
+static int	eqos_sysctl_tx_cur_handler(SYSCTLFN_PROTO);
+static int	eqos_sysctl_tx_end_handler(SYSCTLFN_PROTO);
+static int	eqos_sysctl_rx_cur_handler(SYSCTLFN_PROTO);
+static int	eqos_sysctl_rx_end_handler(SYSCTLFN_PROTO);
+#ifdef EQOS_DEBUG
+static int	eqos_sysctl_debug_handler(SYSCTLFN_PROTO);
+#endif
 
 static int
 eqos_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
@@ -1285,6 +1295,10 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 	struct mbuf *m;
 	int error, nsegs, i;
 
+	/* Set back pointer */
+	sc->sc_tx.sc = sc;
+	sc->sc_rx.sc = sc;
+
 	/* Setup TX ring */
 	error = bus_dmamap_create(sc->sc_dmat, TX_DESC_SIZE, 1, TX_DESC_SIZE,
 	    DESC_BOUNDARY, BUS_DMA_WAITOK, &sc->sc_tx.desc_map);
@@ -1391,6 +1405,11 @@ eqos_attach(struct eqos_softc *sc)
 	int mii_flags = 0;
 	int error;
 	int n;
+
+#ifdef EQOS_DEBUG
+	/* Load the default debug flags. */
+	sc->sc_debug = eqos_debug;
+#endif
 
 	const uint32_t ver = RD4(sc, GMAC_MAC_VERSION);
 	userver = (ver & GMAC_MAC_VERSION_USERVER_MASK) >>
@@ -1560,8 +1579,229 @@ eqos_attach(struct eqos_softc *sc)
 	/* Attach ethernet interface */
 	ether_ifattach(ifp, eaddr);
 
+	eqos_init_sysctls(sc);
+
 	rnd_attach_source(&sc->sc_rndsource, ifp->if_xname, RND_TYPE_NET,
 	    RND_FLAG_DEFAULT);
 
 	return 0;
 }
+
+static void
+eqos_init_sysctls(struct eqos_softc *sc)
+{
+	struct sysctllog **log;
+	const struct sysctlnode *rnode, *qnode, *cnode;
+	const char *dvname;
+	int i, rv;
+
+	log = &sc->sc_sysctllog;
+	dvname = device_xname(sc->sc_dev);
+
+	rv = sysctl_createv(log, 0, NULL, &rnode,
+	    0, CTLTYPE_NODE, dvname,
+	    SYSCTL_DESCR("eqos information and settings"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+	if (rv != 0)
+		goto err;
+
+	for (i = 0; i < 1; i++) {
+		struct eqos_ring *txr = &sc->sc_tx;
+		struct eqos_ring *rxr = &sc->sc_rx;
+		const unsigned char *name = "q0";
+
+		if (sysctl_createv(log, 0, &rnode, &qnode,
+		    0, CTLTYPE_NODE,
+		    name, SYSCTL_DESCR("Queue Name"),
+		    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txs_cur", SYSCTL_DESCR("TX cur"),
+		    NULL, 0, &txr->cur,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txs_next", SYSCTL_DESCR("TX next"),
+		    NULL, 0, &txr->next,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txs_queued", SYSCTL_DESCR("TX queued"),
+		    NULL, 0, &txr->queued,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txr_cur", SYSCTL_DESCR("TX descriptor cur"),
+		    eqos_sysctl_tx_cur_handler, 0, (void *)txr,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txr_end", SYSCTL_DESCR("TX descriptor end"),
+		    eqos_sysctl_tx_end_handler, 0, (void *)txr,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "rxs_cur", SYSCTL_DESCR("RX cur"),
+		    NULL, 0, &rxr->cur,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "rxs_next", SYSCTL_DESCR("RX next"),
+		    NULL, 0, &rxr->next,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "rxs_queued", SYSCTL_DESCR("RX queued"),
+		    NULL, 0, &rxr->queued,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "rxr_cur", SYSCTL_DESCR("RX descriptor cur"),
+		    eqos_sysctl_rx_cur_handler, 0, (void *)rxr,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "rxr_end", SYSCTL_DESCR("RX descriptor end"),
+		    eqos_sysctl_rx_end_handler, 0, (void *)rxr,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+	}
+
+#ifdef EQOS_DEBUG
+	rv = sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "debug_flags",
+	    SYSCTL_DESCR(
+		    "Debug flags:\n"	\
+		    "\t0x01 NOTE\n"	\
+		    "\t0x02 INTR\n"	\
+		    "\t0x04 RX RING\n"	\
+		    "\t0x08 TX RING\n"),
+	    eqos_sysctl_debug_handler, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
+#endif
+
+	return;
+
+err:
+	sc->sc_sysctllog = NULL;
+	device_printf(sc->sc_dev, "%s: sysctl_createv failed, rv = %d\n",
+	    __func__, rv);
+}
+
+static int
+eqos_sysctl_tx_cur_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct eqos_ring *txq = (struct eqos_ring *)node.sysctl_data;
+	struct eqos_softc *sc = txq->sc;
+	uint32_t reg, index;
+
+	reg = RD4(sc, GMAC_DMA_CHAN0_CUR_TX_DESC);
+#if 0
+	printf("head  = %08x\n", (uint32_t)sc->sc_tx.desc_ring_paddr);
+	printf("cdesc = %08x\n", reg);
+	printf("index = %zu\n",
+	    (reg - (uint32_t)sc->sc_tx.desc_ring_paddr) /
+	    sizeof(struct eqos_dma_desc));
+#endif
+	if (reg == 0)
+		index = 0;
+	else {
+		index = (reg - (uint32_t)sc->sc_tx.desc_ring_paddr) /
+		    sizeof(struct eqos_dma_desc);
+	}
+	node.sysctl_data = &index;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static int
+eqos_sysctl_tx_end_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct eqos_ring *txq = (struct eqos_ring *)node.sysctl_data;
+	struct eqos_softc *sc = txq->sc;
+	uint32_t reg, index;
+
+	reg = RD4(sc, GMAC_DMA_CHAN0_TX_END_ADDR);
+	if (reg == 0)
+		index = 0;
+	else {
+		index = (reg - (uint32_t)sc->sc_tx.desc_ring_paddr) /
+		    sizeof(struct eqos_dma_desc);
+	}
+	node.sysctl_data = &index;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static int
+eqos_sysctl_rx_cur_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct eqos_ring *rxq = (struct eqos_ring *)node.sysctl_data;
+	struct eqos_softc *sc = rxq->sc;
+	uint32_t reg, index;
+
+	reg = RD4(sc, GMAC_DMA_CHAN0_CUR_RX_DESC);
+	if (reg == 0)
+		index = 0;
+	else {
+		index = (reg - (uint32_t)sc->sc_rx.desc_ring_paddr) /
+		    sizeof(struct eqos_dma_desc);
+	}
+	node.sysctl_data = &index;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static int
+eqos_sysctl_rx_end_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct eqos_ring *rxq = (struct eqos_ring *)node.sysctl_data;
+	struct eqos_softc *sc = rxq->sc;
+	uint32_t reg, index;
+
+	reg = RD4(sc, GMAC_DMA_CHAN0_RX_END_ADDR);
+	if (reg == 0)
+		index = 0;
+	else {
+		index = (reg - (uint32_t)sc->sc_rx.desc_ring_paddr) /
+		    sizeof(struct eqos_dma_desc);
+	}
+	node.sysctl_data = &index;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+#ifdef EQOS_DEBUG
+static int
+eqos_sysctl_debug_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct eqos_softc *sc = (struct eqos_softc *)node.sysctl_data;
+	uint32_t dflags;
+	int error;
+
+	dflags = sc->sc_debug;
+	node.sysctl_data = &dflags;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	sc->sc_debug = dflags;
+#if 0
+	/* Addd debug code here if you want. */
+#endif
+
+	return 0;
+}
+#endif
