@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.607 2023/10/20 10:09:43 msaitoh Exp $
+# $NetBSD: GENERIC,v 1.608 2023/10/23 01:43:56 msaitoh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.607 $"
+#ident		"GENERIC-$Revision: 1.608 $"
 
 maxusers	64		# estimated number of users
 
@@ -827,7 +827,7 @@ dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 ena*	at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-eqos*	at pci? dev ? function ?	# DesignWare Ethernet QoS
+#eqos*	at pci? dev ? function ?	# DesignWare Ethernet QoS
 et*	at pci? dev ? function ?	# Agere/LSI ET1310/ET1301 Gigabit
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
