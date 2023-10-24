@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.11 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.12 2023/10/24 19:05:07 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.11 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.12 2023/10/24 19:05:07 andvar Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/param.h>
@@ -148,8 +148,8 @@ zs_kgdb_init(void)
 
 	/* Note: (ttya,ttyb) on zsc1, and (ttyc,ttyd) on zsc0 */
 	channel = kgdb_dev & 1;
-	printf("zs_kgdb_init: attaching tty0%c at %d baud\n",
-		   '0' + (kgdb_dev & 3), kgdb_rate);
+	printf("zs_kgdb_init: attaching Serial(%lld) at %d baud\n",
+		   (kgdb_dev & 3), kgdb_rate);
 
 	if (!zsinited)
 		zs_init();
@@ -254,9 +254,6 @@ zs_kgdb_rxint(struct zs_chanstate *cs)
 static void
 zs_kgdb_txint(struct zs_chanstate *cs)
 {
-	int rr0;
-
-	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
 }
 

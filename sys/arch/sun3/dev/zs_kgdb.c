@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.26 2012/10/13 06:35:54 tsutsui Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.27 2023/10/24 19:05:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.26 2012/10/13 06:35:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.27 2023/10/24 19:05:06 andvar Exp $");
 
 #include "opt_kgdb.h"
 
@@ -245,9 +245,6 @@ zs_kgdb_rxint(struct zs_chanstate *cs)
 static void 
 zs_kgdb_txint(struct zs_chanstate *cs)
 {
-	int rr0;
-
-	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
 }
 

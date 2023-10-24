@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.14 2009/10/26 19:16:57 cegger Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.15 2023/10/24 19:05:07 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.14 2009/10/26 19:16:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.15 2023/10/24 19:05:07 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ zs_setparam(struct zs_chanstate *cs, int iena, int rate)
 #ifndef KGDB_DEVNAME
 #define KGDB_DEVNAME "scca"
 #endif
-char *zs_kgdb_devname = KGDB_DEVNAME;
+const char *zs_kgdb_devname = KGDB_DEVNAME;
 /*
  * Set up for kgdb; called at boot time before configuration.
  * KGDB interrupts will be enabled later when zs0 is configured.
@@ -252,9 +252,6 @@ zs_kgdb_rxint(struct zs_chanstate *cs)
 static void
 zs_kgdb_txint(register struct zs_chanstate *cs)
 {
-	register int rr0;
-
-	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
 }
 
