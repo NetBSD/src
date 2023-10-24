@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.24 2020/07/06 11:05:54 rin Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.25 2023/10/24 20:21:12 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.24 2020/07/06 11:05:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.25 2023/10/24 20:21:12 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -84,7 +84,10 @@ kgdb_acc(vaddr_t va, size_t len)
 	paddr_t   pa;
 	u_int msr;
 #if defined (PPC_OEA) || defined (PPC_OEA601) || defined (PPC_OEA64_BRIDGE)
-	u_int batu, batl;
+	u_int batu;
+#ifdef PPC_OEA601
+	u_int batl;
+#endif
 #endif
 
 	/* If translation is off, everything is fair game */
