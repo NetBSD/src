@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.264 2023/10/05 19:41:04 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.265 2023/10/24 18:08:16 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.264 2023/10/05 19:41:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.265 2023/10/24 18:08:16 andvar Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -282,10 +282,10 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			 * that db_machdep.h macros will work with it, and
 			 * allow gdb to alter the PC.
 			 */
-			db_set_ddb_regs(type, tf);
+			db_set_ddb_regs(type, &tf->tf_registers);
 			PC_BREAK_ADVANCE(regs);
 			if (kgdb_trap(type, regs)) {
-				tf->tf_regs[TF_EPC] = regs->r_regs[_R_PC];
+				tf->tf_regs[_R_PC] = regs->r_regs[_R_PC];
 				return;
 			}
 		}
