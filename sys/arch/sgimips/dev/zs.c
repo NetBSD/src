@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.42 2021/09/11 20:28:05 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.43 2023/10/24 20:37:16 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.42 2021/09/11 20:28:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.43 2023/10/24 20:37:16 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -119,6 +119,9 @@ static void zscninit (struct consdev *);
 static int  zscngetc (dev_t);
 static void zscnputc (dev_t, int);
 static void zscnpollc (dev_t, int);
+#ifdef KGDB
+void zskgdb (struct zs_chanstate *);
+#endif
 
 static int  cons_port;
 
