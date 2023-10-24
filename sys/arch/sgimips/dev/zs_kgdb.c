@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.16 2023/10/24 19:05:07 andvar Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.17 2023/10/24 21:45:49 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.16 2023/10/24 19:05:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.17 2023/10/24 21:45:49 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,8 +136,8 @@ zs_kgdb_init(void)
 
 	unit = (kgdb_dev & 2) ? 1 : 0;	/* XXX ??? */
 	channel = kgdb_dev & 1;
-	printf("zs_kgdb_init: attaching to Serial(%lld) at %d baud\n",
-		   (kgdb_dev & 3), kgdb_rate);
+	printf("zs_kgdb_init: attaching to Serial(%d) at %d baud\n",
+		   ((int)kgdb_dev & 3), kgdb_rate);
 
 	zc = zs_get_chan_addr(unit, channel);
 
