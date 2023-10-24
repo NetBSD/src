@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.18 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.19 2023/10/24 18:01:31 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.18 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.19 2023/10/24 18:01:31 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -81,9 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.18 2016/07/11 16:15:36 matt Exp $
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/locore.h>
 #include <mips/pte.h>
 #include <mips/cpu.h>
-#include <mips/locore.h>
 #include <mips/mips_opcode.h>
 #include <mips/reg.h>
 #include <mips/trap.h>
@@ -105,7 +105,7 @@ kvacc(vaddr_t kva)
 		return 0;
 
 	const pt_entry_t * const ptep = pmap_pte_lookup(pmap_kernel(), kva);
-	return ptep != NULL && pte_valid_p(*pte);
+	return ptep != NULL && pte_valid_p(*ptep);
 }
 
 /*
