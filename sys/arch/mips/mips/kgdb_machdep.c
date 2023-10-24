@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.19 2023/10/24 18:01:31 andvar Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.20 2023/10/24 22:04:24 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.19 2023/10/24 18:01:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.20 2023/10/24 22:04:24 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -185,6 +185,16 @@ kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 	gdb_regs[ 5] = regs->r_regs[_R_A1];	/* A1 */
 	gdb_regs[ 6] = regs->r_regs[_R_A2];	/* A2 */
 	gdb_regs[ 7] = regs->r_regs[_R_A3];	/* A3 */
+#if defined(__mips_n32) || defined(__mips_n64)
+        gdb_regs[ 8] = regs->r_regs[_R_A4];     /* A4 */
+        gdb_regs[ 9] = regs->r_regs[_R_A5];     /* A5 */
+        gdb_regs[10] = regs->r_regs[_R_A6];     /* A6 */
+        gdb_regs[11] = regs->r_regs[_R_A7];     /* A7 */
+        gdb_regs[12] = regs->r_regs[_R_T0];     /* T0 */
+        gdb_regs[13] = regs->r_regs[_R_T1];     /* T1 */
+        gdb_regs[14] = regs->r_regs[_R_T2];     /* T2 */
+        gdb_regs[15] = regs->r_regs[_R_T3];     /* T3 */
+#else
 	gdb_regs[ 8] = regs->r_regs[_R_T0];	/* T0 */
 	gdb_regs[ 9] = regs->r_regs[_R_T1];	/* T1 */
 	gdb_regs[10] = regs->r_regs[_R_T2];	/* T2 */
@@ -193,6 +203,7 @@ kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 	gdb_regs[13] = regs->r_regs[_R_T5];	/* T5 */
 	gdb_regs[14] = regs->r_regs[_R_T6];	/* T6 */
 	gdb_regs[15] = regs->r_regs[_R_T7];	/* T7 */
+#endif /* __mips_n32 || __mips_n64 */
 	gdb_regs[16] = regs->r_regs[_R_S0];	/* S0 */
 	gdb_regs[17] = regs->r_regs[_R_S1];	/* S1 */
 	gdb_regs[18] = regs->r_regs[_R_S2];	/* S2 */
