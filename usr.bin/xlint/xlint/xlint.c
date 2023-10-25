@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.114 2023/07/13 08:40:38 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.115 2023/10/25 23:05:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.114 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.115 2023/10/25 23:05:14 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -90,31 +90,14 @@ static struct {
 	char	*outlib;	/* output library that will be created */
 } lint2;
 
-/* directory for temporary files */
-static	const char *tmpdir;
-
-/* default libraries */
-static	list	deflibs;
-
-/* additional libraries */
-static	list	libs;
-
-/* search path for libraries */
-static	list	libsrchpath;
-
+static const char *tmpdir;
+static list default_libraries;
+static list additional_libraries;
+static list library_search_path;
 static const char *libexec_dir;
-
-/* flags */
-static	bool	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag;
-
-/* print the commands executed to run the stages of compilation */
-static	bool	Vflag;
-
-/* filename for oflag */
-static	char	*outputfn;
-
-/* reset after first .c source has been processed */
-static	bool	first = true;
+static bool Cflag, dflag, Fflag, iflag, oflag, sflag, tflag, Vflag;
+static char *outputfn;		/* filename for oflag */
+static bool seen_c_source;
 
 /*
  * name of a file which is currently written by a child and should
@@ -204,7 +187,7 @@ set_tmpdir(void)
 }
 
 /* Clean up after a signal or at the regular end. */
-static void __attribute__((__noreturn__))
+__dead static void
 terminate(int signo)
 {
 
@@ -235,7 +218,7 @@ terminate(int signo)
 	exit(signo != 0 ? 1 : 0);
 }
 
-static void __attribute__((__noreturn__, __format__(__printf__, 1, 2)))
+__dead __printflike(1, 2) static void
 usage(const char *fmt, ...)
 {
 	va_list ap;
@@ -313,7 +296,6 @@ needs_quoting:
 static void
 run_child(const char *path, list *args, const char *crfn, int fdout)
 {
-	int status, rv, signo;
 
 	if (Vflag) {
 		print_sh_quoted(args->items[0]);
@@ -350,7 +332,9 @@ run_child(const char *path, list *args, const char *crfn, int fdout)
 		/* NOTREACHED */
 	}
 
-	while ((rv = wait(&status)) == -1 && errno == EINTR) ;
+	int status, rv, signo;
+	while ((rv = wait(&status)) == -1 && errno == EINTR)
+		continue;
 	if (rv == -1) {
 		warn("wait");
 		terminate(-1);
@@ -432,13 +416,9 @@ run_lint1(const char *out_fname)
 static void
 handle_filename(const char *name)
 {
-	const char *bn, *suff;
-	char *ofn;
-	size_t len;
-	int fd;
 
-	bn = lbasename(name, '/');
-	suff = lbasename(bn, '.');
+	const char *base = lbasename(name, '/');
+	const char *suff = lbasename(base, '.');
 
 	if (strcmp(suff, "ln") == 0) {
 		/* only for lint2 */
@@ -448,25 +428,28 @@ handle_filename(const char *name)
 	}
 
 	if (strcmp(suff, "c") != 0 &&
-	    (strncmp(bn, "llib-l", 6) != 0 || bn != suff)) {
+	    (strncmp(base, "llib-l", 6) != 0 || base != suff)) {
 		warnx("unknown file type: %s", name);
 		return;
 	}
 
-	if (!iflag || !first)
-		(void)printf("%s:\n", Fflag ? name : bn);
+	if (!iflag || seen_c_source)
+		(void)printf("%s:\n", Fflag ? name : base);
 
 	/* build the name of the output file of lint1 */
+	char *ofn;
 	if (oflag) {
 		ofn = outputfn;
 		outputfn = NULL;
 		oflag = false;
 	} else if (iflag) {
-		len = bn == suff ? strlen(bn) : (size_t)((suff - 1) - bn);
-		ofn = xasprintf("%.*s.ln", (int)len, bn);
+		size_t len = base == suff
+		    ? strlen(base)
+		    : (size_t)((suff - 1) - base);
+		ofn = xasprintf("%.*s.ln", (int)len, base);
 	} else {
 		ofn = xasprintf("%slint1.XXXXXX", tmpdir);
-		fd = mkstemp(ofn);
+		int fd = mkstemp(ofn);
 		if (fd == -1) {
 			warn("can't make temp");
 			terminate(-1);
@@ -488,13 +471,9 @@ file_is_readable(const char *path)
 {
 	struct stat sbuf;
 
-	if (stat(path, &sbuf) == -1)
-		return false;
-	if (!S_ISREG(sbuf.st_mode))
-		return false;
-	if (access(path, R_OK) == -1)
-		return false;
-	return true;
+	return stat(path, &sbuf) == 0
+	    && S_ISREG(sbuf.st_mode)
+	    && access(path, R_OK) == 0;
 }
 
 static void
@@ -502,8 +481,8 @@ find_lib(const char *lib)
 {
 	char *lfn;
 
-	for (size_t i = 0; i < libsrchpath.len; i++) {
-		const char *dir = libsrchpath.items[i];
+	for (size_t i = 0; i < library_search_path.len; i++) {
+		const char *dir = library_search_path.items[i];
 		lfn = xasprintf("%s/llib-l%s.ln", dir, lib);
 		if (file_is_readable(lfn))
 			goto found;
@@ -611,7 +590,7 @@ main(int argc, char *argv[])
 	list_add(&cpp.flags, "-D__lint");
 	list_add(&cpp.flags, "-D__lint__");
 
-	list_add(&deflibs, "c");
+	list_add(&default_libraries, "c");
 
 	if (signal(SIGHUP, terminate) == SIG_IGN)
 		(void)signal(SIGHUP, SIG_IGN);
@@ -662,13 +641,13 @@ main(int argc, char *argv[])
 			break;
 
 		case 'n':
-			list_clear(&deflibs);
+			list_clear(&default_libraries);
 			break;
 
 		case 'p':
-			if (deflibs.len > 0) {
-				list_clear(&deflibs);
-				list_add(&deflibs, "c");
+			if (default_libraries.len > 0) {
+				list_clear(&default_libraries);
+				list_add(&default_libraries, "c");
 			}
 			list_add_flag(&lint1.flags, c);
 			break;
@@ -730,7 +709,7 @@ main(int argc, char *argv[])
 			list_add_flag(&lint2.flags, c);
 			list_add(&lint2.flags, optarg);
 			lint2.outlib = xasprintf("llib-l%s.ln", optarg);
-			list_clear(&deflibs);
+			list_clear(&default_libraries);
 			break;
 
 		case 'd':
@@ -751,7 +730,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'l':
-			list_add_unique(&libs, optarg);
+			list_add_unique(&additional_libraries, optarg);
 			break;
 
 		case 'o':
@@ -765,7 +744,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'L':
-			list_add_unique(&libsrchpath, optarg);
+			list_add_unique(&library_search_path, optarg);
 			break;
 
 		case 'B':
@@ -802,9 +781,9 @@ main(int argc, char *argv[])
 			list *lp;
 
 			if (arg[1] == 'l')
-				lp = &libs;
+				lp = &additional_libraries;
 			else if (arg[1] == 'L')
-				lp = &libsrchpath;
+				lp = &library_search_path;
 			else
 				usage("Unknown late option '%s'", arg);
 
@@ -817,11 +796,11 @@ main(int argc, char *argv[])
 				usage("Missing argument for l or L");
 		} else {
 			handle_filename(arg);
-			first = false;
+			seen_c_source = true;
 		}
 	}
 
-	if (first)
+	if (!seen_c_source)
 		usage("Missing filename");
 
 	if (iflag)
@@ -831,9 +810,9 @@ main(int argc, char *argv[])
 		const char *ks = getenv("LIBDIR");
 		if (ks == NULL || ks[0] == '\0')
 			ks = PATH_LINTLIB;
-		list_add(&libsrchpath, ks);
-		find_libs(&libs);
-		find_libs(&deflibs);
+		list_add(&library_search_path, ks);
+		find_libs(&additional_libraries);
+		find_libs(&default_libraries);
 	}
 
 	run_lint2();
