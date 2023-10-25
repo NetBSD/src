@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2023/05/11 01:31:54 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2023/10/25 17:17:51 christos Exp $
 
 .include "bsd.own.mk"
 
@@ -8,7 +8,7 @@ CRYPTODIST=${NETBSDSRCDIR}/crypto
 regen:
 	for i in $$(find ${OPENSSLSRC} -name \*arm\*.pl); do \
 		case $$i in \
-		(*/charmap.pl|*/arm-xlate.pl|*/*v4*);; \
+		(*/charmap.pl|*/arm-xlate.pl|*/*v4*|*/bsaes-armv7.pl);; \
 		(*) perl -I${OPENSSLSRC}/crypto/perlasm \
 		-I${OPENSSLSRC}/crypto/bn/asm $$i linux64 /dev/stdout \
 		> $$(basename $$i .pl).S;; \
