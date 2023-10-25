@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.63 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.64 2023/10/25 08:19:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -328,7 +328,8 @@
 #define	_SC_RTSIG_MAX			95
 
 /* Extensions found in Solaris and Linux. */
-#define	_SC_PHYS_PAGES		121
+#define	_SC_PHYS_PAGES			121
+#define	_SC_AVPHYS_PAGES		122
 
 #ifdef _NETBSD_SOURCE
 /* Commonly provided sysconf() extensions */

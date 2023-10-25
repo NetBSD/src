@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.35 2013/12/19 19:11:50 rmind Exp $	*/
+/*	$NetBSD: getconf.c,v 1.36 2023/10/25 08:19:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.35 2013/12/19 19:11:50 rmind Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.36 2023/10/25 08:19:34 simonb Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -176,6 +176,10 @@ static const struct conf_variable conf_table[] =
   /* POSIX.1-2001 TSF Configurable System Variables */
   { "GETGR_R_SIZE_MAX",		SYSCONF,	_SC_GETGR_R_SIZE_MAX	},
   { "GETPW_R_SIZE_MAX",		SYSCONF,	_SC_GETPW_R_SIZE_MAX	},
+
+  /* Extensions found in Solaris and Linux. */
+  { "SC_PHYS_PAGES",		SYSCONF,	_SC_PHYS_PAGES		},
+  { "SC_AVPHYS_PAGES",		SYSCONF,	_SC_AVPHYS_PAGES	},
 
 #ifdef _NETBSD_SOURCE
   /* Commonly provided extensions */
