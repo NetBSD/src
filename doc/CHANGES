@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3012 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3013 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -253,3 +253,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[msaitoh 20231019]
 	top(1): Add network in & out bytes to the top display. [mrg 20231021]
 	OpenSSL: Imported 3.0.12. [christos 20231025]
+	OpenSSH: Import 9.5. [christos 20231025]
