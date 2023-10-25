@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.17 2009/09/26 21:16:55 dsl Exp $	*/
+/*	$NetBSD: fsort.h,v 1.18 2023/10/25 05:51:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -74,5 +74,5 @@
  * Note that no more than MAXNUM records are stored in the buffer,
  * even if the buffer is not full yet.
  */
-#define DEFBUFSIZE	(1 << 20)	/* 1MB */
-#define MAXBUFSIZE	(8 << 20)	/* 10 MB */
+#define DEFBUFSIZE	(1 << 20)	/* 1 MB */
+#define MAXBUFSIZE	(8 << 20)	/* 8 MB */
