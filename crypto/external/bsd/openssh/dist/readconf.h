@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.h,v 1.150 2023/01/13 02:58:20 dtucker Exp $ */
+/* $OpenBSD: readconf.h,v 1.152 2023/08/28 03:31:16 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -70,6 +70,7 @@ typedef struct {
 	char   *kex_algorithms;	/* SSH2 kex methods in order of preference. */
 	char   *ca_sign_algorithms;	/* Allowed CA signature algorithms */
 	char   *hostname;	/* Real host to connect. */
+	char   *tag;		/* Configuration tag name. */
 	char   *host_key_alias;	/* hostname alias for .ssh/known_hosts */
 	char   *proxy_command;	/* Proxy command for connecting the host. */
 	char   *user;		/* User to log in as. */
@@ -179,6 +180,7 @@ typedef struct {
 
 	int	required_rsa_size;	/* minimum size of RSA keys */
 	int	enable_escape_commandline;	/* ~C commandline */
+	int	obscure_keystroke_timing_interval;
 
 	char	*ignored_unknown; /* Pattern list of unknown tokens to ignore */
 }       Options;
@@ -220,6 +222,11 @@ typedef struct {
 #define SSH_STRICT_HOSTKEY_NEW	1
 #define SSH_STRICT_HOSTKEY_YES	2
 #define SSH_STRICT_HOSTKEY_ASK	3
+
+/* ObscureKeystrokes parameters */
+#define SSH_KEYSTROKE_DEFAULT_INTERVAL_MS	20
+#define SSH_KEYSTROKE_CHAFF_MIN_MS		1024
+#define SSH_KEYSTROKE_CHAFF_RNG_MS		2048
 
 const char *kex_default_pk_alg(void);
 char	*ssh_connection_hash(const char *thishost, const char *host,

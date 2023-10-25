@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.585 2023/02/10 04:40:28 djm Exp $ */
+/* $OpenBSD: ssh.c,v 1.594 2023/09/03 23:59:32 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -114,10 +114,11 @@ int tty_flag = 0;
  * Flag indicating that the current process should be backgrounded and
  * a new mux-client launched in the foreground for ControlPersist.
  */
-int need_controlpersist_detach = 0;
+static int need_controlpersist_detach = 0;
 
 /* Copies of flags for ControlPersist foreground mux-client */
-int ostdin_null_flag, osession_type, otty_flag, orequest_tty;
+static int ostdin_null_flag, osession_type, otty_flag, orequest_tty;
+static int ofork_after_authentication;
 
 /*
  * General data structure for command line options and options configurable
@@ -163,13 +164,13 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-"usage: ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-B bind_interface]\n"
-"           [-b bind_address] [-c cipher_spec] [-D [bind_address:]port]\n"
-"           [-E log_file] [-e escape_char] [-F configfile] [-I pkcs11]\n"
-"           [-i identity_file] [-J [user@]host[:port]] [-L address]\n"
-"           [-l login_name] [-m mac_spec] [-O ctl_cmd] [-o option] [-p port]\n"
-"           [-Q query_option] [-R address] [-S ctl_path] [-W host:port]\n"
-"           [-w local_tun[:remote_tun]] destination [command [argument ...]]\n"
+"usage: ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-B bind_interface] [-b bind_address]\n"
+"           [-c cipher_spec] [-D [bind_address:]port] [-E log_file]\n"
+"           [-e escape_char] [-F configfile] [-I pkcs11] [-i identity_file]\n"
+"           [-J destination] [-L address] [-l login_name] [-m mac_spec]\n"
+"           [-O ctl_cmd] [-o option] [-P tag] [-p port] [-Q query_option]\n"
+"           [-R address] [-S ctl_path] [-W host:port] [-w local_tun[:remote_tun]]\n"
+"           destination [command [argument ...]]\n"
 	);
 	exit(255);
 }
@@ -445,7 +446,7 @@ resolve_canonicalize(char **hostp, int port)
 	 * a proxy unless the user specifically requests so.
 	 */
 	direct = option_clear_or_none(options.proxy_command) &&
-	    options.jump_host == NULL;
+	    option_clear_or_none(options.jump_host);
 	if (!direct &&
 	    options.canonicalize_hostname != SSH_CANONICALISE_ALWAYS)
 		return NULL;
@@ -682,7 +683,7 @@ main(int ac, char **av)
 
  again:
 	while ((opt = getopt(ac, av, "1246ab:c:e:fgi:kl:m:no:p:qstvx"
-	    "AB:CD:E:F:GI:J:KL:MNO:PQ:R:S:TVw:W:XYy")) != -1) { /* HUZdhjruz */
+	    "AB:CD:E:F:GI:J:KL:MNO:P:Q:R:S:TVw:W:XYy")) != -1) { /* HUZdhjruz */
 		switch (opt) {
 		case '1':
 			fatal("SSH protocol v.1 is no longer supported");
@@ -746,7 +747,9 @@ main(int ac, char **av)
 			else
 				fatal("Invalid multiplex command.");
 			break;
-		case 'P':	/* deprecated */
+		case 'P':
+			if (options.tag == NULL)
+				options.tag = xstrdup(optarg);
 			break;
 		case 'Q':
 			cp = NULL;
@@ -767,8 +770,10 @@ main(int ac, char **av)
 				cp = sshkey_alg_list(1, 0, 0, '\n');
 			else if (strcmp(optarg, "key-plain") == 0)
 				cp = sshkey_alg_list(0, 1, 0, '\n');
+			else if (strcmp(optarg, "key-ca-sign") == 0 ||
+			    strcasecmp(optarg, "CASignatureAlgorithms") == 0)
+				cp = sshkey_alg_list(0, 1, 1, '\n');
 			else if (strcmp(optarg, "key-sig") == 0 ||
-			    strcasecmp(optarg, "CASignatureAlgorithms") == 0 ||
 			    strcasecmp(optarg, "PubkeyAcceptedKeyTypes") == 0 || /* deprecated name */
 			    strcasecmp(optarg, "PubkeyAcceptedAlgorithms") == 0 ||
 			    strcasecmp(optarg, "HostKeyAlgorithms") == 0 ||
@@ -879,7 +884,9 @@ main(int ac, char **av)
 			if (muxclient_command != 0)
 				fatal("Cannot specify stdio forward with -O");
 			if (parse_forward(&fwd, optarg, 1, 0)) {
-				options.stdio_forward_host = fwd.listen_host;
+				options.stdio_forward_host =
+				    fwd.listen_port == PORT_STREAMLOCAL ?
+				    fwd.listen_path : fwd.listen_host;
 				options.stdio_forward_port = fwd.listen_port;
 				free(fwd.connect_host);
 			} else {
@@ -1179,7 +1186,7 @@ main(int ac, char **av)
 	 * CanonicalizeHostname=always
 	 */
 	direct = option_clear_or_none(options.proxy_command) &&
-	    options.jump_host == NULL;
+	    option_clear_or_none(options.jump_host);
 	if (addrs == NULL && config_has_permitted_cnames(&options) && (direct ||
 	    options.canonicalize_hostname == SSH_CANONICALISE_ALWAYS)) {
 		if ((addrs = resolve_host(host, options.port,
@@ -1398,6 +1405,14 @@ main(int ac, char **av)
 		free(p);
 		free(options.identity_agent);
 		options.identity_agent = cp;
+	}
+
+	if (options.revoked_host_keys != NULL) {
+		p = tilde_expand_filename(options.revoked_host_keys, getuid());
+		cp = default_client_percent_dollar_expand(p, cinfo);
+		free(p);
+		free(options.revoked_host_keys);
+		options.revoked_host_keys = cp;
 	}
 
 	if (options.forward_agent_sock_path != NULL) {
@@ -1722,16 +1737,20 @@ control_persist_detach(void)
 		/* Child: master process continues mainloop */
 		break;
 	default:
-		/* Parent: set up mux client to connect to backgrounded master */
+		/*
+		 * Parent: set up mux client to connect to backgrounded
+		 * master.
+		 */
 		debug2_f("background process is %ld", (long)pid);
 		options.stdin_null = ostdin_null_flag;
 		options.request_tty = orequest_tty;
 		tty_flag = otty_flag;
+		options.fork_after_authentication = ofork_after_authentication;
 		options.session_type = osession_type;
 		close(muxserver_sock);
 		muxserver_sock = -1;
 		options.control_master = SSHCTL_MASTER_NO;
-		muxclient(options.control_path);
+		(void)muxclient(options.control_path);
 		/* muxclient() doesn't return on success. */
 		fatal("Failed to connect to new control master");
 	}
@@ -2100,7 +2119,7 @@ ssh_session2_open(struct ssh *ssh)
 static int
 ssh_session2(struct ssh *ssh, const struct ssh_conn_info *cinfo)
 {
-	int r, id = -1;
+	int r, interactive, id = -1;
 	char *cp, *tun_fwd_ifname = NULL;
 
 	/* XXX should be pre-session */
@@ -2138,11 +2157,11 @@ ssh_session2(struct ssh *ssh, const struct ssh_conn_info *cinfo)
 		osession_type = options.session_type;
 		orequest_tty = options.request_tty;
 		otty_flag = tty_flag;
+		ofork_after_authentication = options.fork_after_authentication;
 		options.stdin_null = 1;
 		options.session_type = SESSION_TYPE_NONE;
 		tty_flag = 0;
-		if (!options.fork_after_authentication &&
-		    (osession_type != SESSION_TYPE_NONE ||
+		if ((osession_type != SESSION_TYPE_NONE ||
 		    options.stdio_forward_host != NULL))
 			need_controlpersist_detach = 1;
 		options.fork_after_authentication = 1;
@@ -2157,8 +2176,11 @@ ssh_session2(struct ssh *ssh, const struct ssh_conn_info *cinfo)
 	if (options.session_type != SESSION_TYPE_NONE)
 		id = ssh_session2_open(ssh);
 	else {
-		ssh_packet_set_interactive(ssh,
-		    options.control_master == SSHCTL_MASTER_NO,
+		interactive = options.control_master == SSHCTL_MASTER_NO;
+		/* ControlPersist may have clobbered ControlMaster, so check */
+		if (need_controlpersist_detach)
+			interactive = otty_flag != 0;
+		ssh_packet_set_interactive(ssh, interactive,
 		    options.ip_qos_interactive, options.ip_qos_bulk);
 	}
 

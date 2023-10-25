@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.297 2023/03/09 21:06:24 jcs Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.300 2023/07/19 13:56:33 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -836,8 +836,8 @@ process_sign_request2(SocketEntry *e)
 	}
 	/* Success */
 	ok = 0;
- send:
 	debug_f("good signature");
+ send:
 	notify_complete(notifier, "User presence confirmed");
 
 	if (ok == 0) {
@@ -2022,8 +2022,8 @@ main(int ac, char **av)
 	sanitise_stdfd();
 
 	/* drop */
-	setegid(getgid());
-	setgid(getgid());
+	(void)setegid(getgid());
+	(void)setgid(getgid());
 
 	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
 		fatal("%s: getrlimit: %s", __progname, strerror(errno));

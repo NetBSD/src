@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.235 2023/02/17 04:22:50 dtucker Exp $ */
+/* $OpenBSD: monitor.c,v 1.237 2023/08/16 16:14:11 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -110,9 +110,6 @@ int mm_answer_keyverify(struct ssh *, int, struct sshbuf *);
 int mm_answer_pty(struct ssh *, int, struct sshbuf *);
 int mm_answer_pty_cleanup(struct ssh *, int, struct sshbuf *);
 int mm_answer_term(struct ssh *, int, struct sshbuf *);
-int mm_answer_rsa_keyallowed(struct ssh *, int, struct sshbuf *);
-int mm_answer_rsa_challenge(struct ssh *, int, struct sshbuf *);
-int mm_answer_rsa_response(struct ssh *, int, struct sshbuf *);
 int mm_answer_sesskey(struct ssh *, int, struct sshbuf *);
 int mm_answer_sessid(struct ssh *, int, struct sshbuf *);
 
@@ -281,6 +278,11 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
 				auth2_update_session_info(authctxt,
 				    auth_method, auth_submethod);
 			}
+		}
+		if (authctxt->failures > options.max_authtries) {
+			/* Shouldn't happen */
+			fatal_f("privsep child made too many authentication "
+			    "attempts");
 		}
 	}
 
