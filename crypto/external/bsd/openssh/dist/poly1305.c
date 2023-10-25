@@ -1,11 +1,12 @@
+/*	$NetBSD: poly1305.c,v 1.6 2023/10/25 20:19:57 christos Exp $	*/
+/* $OpenBSD: poly1305.c,v 1.4 2023/07/17 05:26:38 djm Exp $ */
 /* 
  * Public Domain poly1305 from Andrew Moon
  * poly1305-donna-unrolled.c from https://github.com/floodyberry/poly1305-donna
  */
 
-/* $OpenBSD: poly1305.c,v 1.3 2013/12/19 22:57:13 djm Exp $ */
 #include "includes.h"
-__RCSID("$NetBSD: poly1305.c,v 1.5 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: poly1305.c,v 1.6 2023/10/25 20:19:57 christos Exp $");
 
 #include <sys/types.h>
 #include <stdint.h>
