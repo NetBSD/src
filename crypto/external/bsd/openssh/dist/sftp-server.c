@@ -1,5 +1,6 @@
-/*	$NetBSD: sftp-server.c,v 1.29 2023/07/26 17:58:15 christos Exp $	*/
-/* $OpenBSD: sftp-server.c,v 1.146 2023/03/07 05:37:26 djm Exp $ */
+/*	$NetBSD: sftp-server.c,v 1.30 2023/10/25 20:19:57 christos Exp $	*/
+/* $OpenBSD: sftp-server.c,v 1.147 2023/04/12 08:53:54 jsg Exp $ */
+
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -17,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-server.c,v 1.29 2023/07/26 17:58:15 christos Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.30 2023/10/25 20:19:57 christos Exp $");
 
 #include <sys/param.h>	/* MIN */
 #include <sys/types.h>
@@ -602,7 +603,7 @@ send_handle(u_int32_t id, int handle)
 	int hlen;
 
 	handle_to_string(handle, &string, &hlen);
-	debug("request %u: sent handle handle %d", id, handle);
+	debug("request %u: sent handle %d", id, handle);
 	send_data_or_handle(SSH2_FXP_HANDLE, id, string, hlen);
 	free(string);
 }

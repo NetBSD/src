@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-pam.h,v 1.9 2019/04/20 17:16:40 christos Exp $	*/
+/*	$NetBSD: auth-pam.h,v 1.10 2023/10/25 20:19:57 christos Exp $	*/
 /*
  * Copyright (c) 2000 Damien Miller.  All rights reserved.
  *

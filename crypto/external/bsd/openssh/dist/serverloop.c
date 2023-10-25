@@ -1,5 +1,6 @@
-/*	$NetBSD: serverloop.c,v 1.34 2023/07/26 17:58:15 christos Exp $	*/
-/* $OpenBSD: serverloop.c,v 1.236 2023/03/08 04:43:12 guenther Exp $ */
+/*	$NetBSD: serverloop.c,v 1.35 2023/10/25 20:19:57 christos Exp $	*/
+/* $OpenBSD: serverloop.c,v 1.237 2023/08/21 04:59:54 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.34 2023/07/26 17:58:15 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.35 2023/10/25 20:19:57 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -269,7 +270,7 @@ wait_until_can_do_something(struct ssh *ssh,
 	/* ClientAliveInterval probing */
 	if (client_alive_scheduled) {
 		if (ret == 0 &&
-		    now > last_client_time + options.client_alive_interval) {
+		    now >= last_client_time + options.client_alive_interval) {
 			/* ppoll timed out and we're due to probe */
 			client_alive_check(ssh);
 			last_client_time = now;
