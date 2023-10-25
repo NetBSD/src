@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.20 2023/10/24 22:04:24 andvar Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.21 2023/10/25 06:01:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.20 2023/10/24 22:04:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.21 2023/10/25 06:01:29 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -100,7 +100,7 @@ kvacc(vaddr_t kva)
 {
 	if (pmap_md_direct_mapped_vaddr_p(kva))
 		return 1;
-	
+
 	if (kva < VM_MIN_KERNEL_ADDRESS || kva >= VM_MAX_KERNEL_ADDRESS)
 		return 0;
 
@@ -132,7 +132,7 @@ kgdb_acc(vaddr_t va, size_t len)
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
  */
-int 
+int
 kgdb_signal(int type)
 {
 	switch (type) {
@@ -162,7 +162,7 @@ kgdb_signal(int type)
 	case T_FPE+T_USER:
 	case T_OVFLOW+T_USER:
 		return (SIGFPE);
-		
+
 	default:
 		return (SIGEMT);
 	}
@@ -233,7 +233,7 @@ void
 kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 	regs->r_regs[_R_PC] = gdb_regs[37];   /* PC */
-}	
+}
 
 /*
  * Trap into kgdb to wait for debugger to connect,
