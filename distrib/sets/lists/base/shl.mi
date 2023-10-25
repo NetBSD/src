@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.971 2023/09/06 12:44:45 riastradh Exp $
+# $NetBSD: shl.mi,v 1.972 2023/10/25 20:22:00 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -877,7 +877,8 @@
 ./usr/lib/libss.so				base-obsolete		obsolete
 ./usr/lib/libssh.so				base-secsh-shlib	compatfile
 ./usr/lib/libssh.so.45				base-secsh-shlib	compatfile
-./usr/lib/libssh.so.45.0			base-secsh-shlib	compatfile
+./usr/lib/libssh.so.45.0			base-obsolete		obsolete
+./usr/lib/libssh.so.45.1			base-secsh-shlib	compatfile
 ./usr/lib/libssl.so				base-crypto-shlib	compatfile
 ./usr/lib/libssl.so.12				base-crypto-shlib	compatfile,openssl=10
 ./usr/lib/libssl.so.12.0			base-crypto-shlib	compatfile,openssl=10
