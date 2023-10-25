@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.43 2019/12/15 20:25:25 joerg Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.44 2023/10/25 08:19:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.43 2019/12/15 20:25:25 joerg Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.44 2023/10/25 08:19:34 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: sysconf.c,v 1.43 2019/12/15 20:25:25 joerg Exp $");
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <uvm/uvm_extern.h>
 
 #include <errno.h>
 #include <limits.h>
@@ -79,6 +80,7 @@ sysconf(int name)
 	int mib[CTL_MAXNAME], value;
 	unsigned int mib_len;
 	struct clockinfo tmpclock;
+	struct uvmexp_sysctl uvmexp;
 	static int clk_tck;
 
 	len = sizeof(value);
@@ -379,6 +381,13 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 		mib[1] = HW_PHYSMEM64;
 		return sysctl(mib, 2, &mem, &len, NULL, 0) == -1 ? -1 : 
 		    (long)(mem / _getpagesize()); 
+
+	case _SC_AVPHYS_PAGES:
+		len = sizeof(uvmexp);
+		mib[0] = CTL_VM;
+		mib[1] = VM_UVMEXP2;
+		return sysctl(mib, 2, &uvmexp, &len, NULL, 0) == -1 ? -1 : 
+		    (long)(uvmexp.free);
 
 /* Native */
 	case _SC_SCHED_RT_TS:
