@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.64 2023/10/25 08:19:34 simonb Exp $	*/
+/*	$NetBSD: unistd.h,v 1.65 2023/10/25 08:22:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -227,121 +227,121 @@
  * XXX The value of _SC_CLK_TCK is embedded in <time.h>.
  * XXX The value of _SC_PAGESIZE is embedded in <sys/shm.h>.
  */
-#define	_SC_ARG_MAX		 1
-#define	_SC_CHILD_MAX		 2
-#define	_O_SC_CLK_TCK		 3 /* Old version, always 100 */
-#define	_SC_NGROUPS_MAX		 4
-#define	_SC_OPEN_MAX		 5
-#define	_SC_JOB_CONTROL		 6
-#define	_SC_SAVED_IDS		 7
-#define	_SC_VERSION		 8
-#define	_SC_BC_BASE_MAX		 9
-#define	_SC_BC_DIM_MAX		10
-#define	_SC_BC_SCALE_MAX	11
-#define	_SC_BC_STRING_MAX	12
-#define	_SC_COLL_WEIGHTS_MAX	13
-#define	_SC_EXPR_NEST_MAX	14
-#define	_SC_LINE_MAX		15
-#define	_SC_RE_DUP_MAX		16
-#define	_SC_2_VERSION		17
-#define	_SC_2_C_BIND		18
-#define	_SC_2_C_DEV		19
-#define	_SC_2_CHAR_TERM		20
-#define	_SC_2_FORT_DEV		21
-#define	_SC_2_FORT_RUN		22
-#define	_SC_2_LOCALEDEF		23
-#define	_SC_2_SW_DEV		24
-#define	_SC_2_UPE		25
-#define	_SC_STREAM_MAX		26
-#define	_SC_TZNAME_MAX		27
-#define	_SC_PAGESIZE		28
-#define	_SC_PAGE_SIZE		_SC_PAGESIZE	/* 1170 compatibility */
-#define	_SC_FSYNC		29
-#define	_SC_XOPEN_SHM		30
-#define	_SC_SYNCHRONIZED_IO	31
-#define	_SC_IOV_MAX		32
-#define	_SC_MAPPED_FILES	33
-#define	_SC_MEMLOCK		34
-#define	_SC_MEMLOCK_RANGE	35
-#define	_SC_MEMORY_PROTECTION	36
-#define	_SC_LOGIN_NAME_MAX	37
-#define	_SC_MONOTONIC_CLOCK	38
-#define	_SC_CLK_TCK		39 /* New, variable version */
-#define	_SC_ATEXIT_MAX		40
-#define	_SC_THREADS		41
-#define	_SC_SEMAPHORES		42
-#define	_SC_BARRIERS		43
-#define	_SC_TIMERS		44
-#define	_SC_SPIN_LOCKS		45
-#define	_SC_READER_WRITER_LOCKS	46
-#define	_SC_GETGR_R_SIZE_MAX	47
-#define	_SC_GETPW_R_SIZE_MAX	48
-#define	_SC_CLOCK_SELECTION	49
-#define	_SC_ASYNCHRONOUS_IO	50
-#define	_SC_AIO_LISTIO_MAX	51
-#define	_SC_AIO_MAX		52
-#define	_SC_MESSAGE_PASSING	53
-#define	_SC_MQ_OPEN_MAX		54
-#define	_SC_MQ_PRIO_MAX		55
-#define	_SC_PRIORITY_SCHEDULING	56
-#define	_SC_THREAD_DESTRUCTOR_ITERATIONS 57
-#define	_SC_THREAD_KEYS_MAX		58
-#define	_SC_THREAD_STACK_MIN		59
-#define	_SC_THREAD_THREADS_MAX		60
-#define	_SC_THREAD_ATTR_STACKADDR	61
-#define	_SC_THREAD_ATTR_STACKSIZE 	62
-#define	_SC_THREAD_PRIORITY_SCHEDULING	63
-#define	_SC_THREAD_PRIO_INHERIT 	64
-#define	_SC_THREAD_PRIO_PROTECT		65
-#define	_SC_THREAD_PROCESS_SHARED	66
-#define	_SC_THREAD_SAFE_FUNCTIONS	67
-#define	_SC_TTY_NAME_MAX		68
-#define	_SC_HOST_NAME_MAX		69
-#define	_SC_PASS_MAX			70
-#define	_SC_REGEXP			71
-#define	_SC_SHELL			72
-#define	_SC_SYMLOOP_MAX			73
+#define	_SC_ARG_MAX			   1
+#define	_SC_CHILD_MAX			   2
+#define	_O_SC_CLK_TCK			   3 /* Old version, always 100 */
+#define	_SC_NGROUPS_MAX			   4
+#define	_SC_OPEN_MAX			   5
+#define	_SC_JOB_CONTROL			   6
+#define	_SC_SAVED_IDS			   7
+#define	_SC_VERSION			   8
+#define	_SC_BC_BASE_MAX			   9
+#define	_SC_BC_DIM_MAX			  10
+#define	_SC_BC_SCALE_MAX		  11
+#define	_SC_BC_STRING_MAX		  12
+#define	_SC_COLL_WEIGHTS_MAX		  13
+#define	_SC_EXPR_NEST_MAX		  14
+#define	_SC_LINE_MAX			  15
+#define	_SC_RE_DUP_MAX			  16
+#define	_SC_2_VERSION			  17
+#define	_SC_2_C_BIND			  18
+#define	_SC_2_C_DEV			  19
+#define	_SC_2_CHAR_TERM			  20
+#define	_SC_2_FORT_DEV			  21
+#define	_SC_2_FORT_RUN			  22
+#define	_SC_2_LOCALEDEF			  23
+#define	_SC_2_SW_DEV			  24
+#define	_SC_2_UPE			  25
+#define	_SC_STREAM_MAX			  26
+#define	_SC_TZNAME_MAX			  27
+#define	_SC_PAGESIZE			  28
+#define	_SC_PAGE_SIZE			  _SC_PAGESIZE	/* 1170 compatibility */
+#define	_SC_FSYNC			  29
+#define	_SC_XOPEN_SHM			  30
+#define	_SC_SYNCHRONIZED_IO		  31
+#define	_SC_IOV_MAX			  32
+#define	_SC_MAPPED_FILES		  33
+#define	_SC_MEMLOCK			  34
+#define	_SC_MEMLOCK_RANGE		  35
+#define	_SC_MEMORY_PROTECTION		  36
+#define	_SC_LOGIN_NAME_MAX		  37
+#define	_SC_MONOTONIC_CLOCK		  38
+#define	_SC_CLK_TCK			  39 /* New, variable version */
+#define	_SC_ATEXIT_MAX			  40
+#define	_SC_THREADS			  41
+#define	_SC_SEMAPHORES			  42
+#define	_SC_BARRIERS			  43
+#define	_SC_TIMERS			  44
+#define	_SC_SPIN_LOCKS			  45
+#define	_SC_READER_WRITER_LOCKS		  46
+#define	_SC_GETGR_R_SIZE_MAX		  47
+#define	_SC_GETPW_R_SIZE_MAX		  48
+#define	_SC_CLOCK_SELECTION		  49
+#define	_SC_ASYNCHRONOUS_IO		  50
+#define	_SC_AIO_LISTIO_MAX		  51
+#define	_SC_AIO_MAX			  52
+#define	_SC_MESSAGE_PASSING		  53
+#define	_SC_MQ_OPEN_MAX			  54
+#define	_SC_MQ_PRIO_MAX			  55
+#define	_SC_PRIORITY_SCHEDULING		  56
+#define	_SC_THREAD_DESTRUCTOR_ITERATIONS  57
+#define	_SC_THREAD_KEYS_MAX		  58
+#define	_SC_THREAD_STACK_MIN		  59
+#define	_SC_THREAD_THREADS_MAX		  60
+#define	_SC_THREAD_ATTR_STACKADDR	  61
+#define	_SC_THREAD_ATTR_STACKSIZE 	  62
+#define	_SC_THREAD_PRIORITY_SCHEDULING	  63
+#define	_SC_THREAD_PRIO_INHERIT 	  64
+#define	_SC_THREAD_PRIO_PROTECT		  65
+#define	_SC_THREAD_PROCESS_SHARED	  66
+#define	_SC_THREAD_SAFE_FUNCTIONS	  67
+#define	_SC_TTY_NAME_MAX		  68
+#define	_SC_HOST_NAME_MAX		  69
+#define	_SC_PASS_MAX			  70
+#define	_SC_REGEXP			  71
+#define	_SC_SHELL			  72
+#define	_SC_SYMLOOP_MAX			  73
 
 /* Actually, they are not supported or implemented yet */
-#define	_SC_V6_ILP32_OFF32		74
-#define	_SC_V6_ILP32_OFFBIG		75
-#define	_SC_V6_LP64_OFF64		76
-#define	_SC_V6_LPBIG_OFFBIG		77
-#define	_SC_2_PBS			80
-#define	_SC_2_PBS_ACCOUNTING		81
-#define	_SC_2_PBS_CHECKPOINT		82
-#define	_SC_2_PBS_LOCATE		83
-#define	_SC_2_PBS_MESSAGE		84
-#define	_SC_2_PBS_TRACK			85
+#define	_SC_V6_ILP32_OFF32		  74
+#define	_SC_V6_ILP32_OFFBIG		  75
+#define	_SC_V6_LP64_OFF64		  76
+#define	_SC_V6_LPBIG_OFFBIG		  77
+#define	_SC_2_PBS			  80
+#define	_SC_2_PBS_ACCOUNTING		  81
+#define	_SC_2_PBS_CHECKPOINT		  82
+#define	_SC_2_PBS_LOCATE		  83
+#define	_SC_2_PBS_MESSAGE		  84
+#define	_SC_2_PBS_TRACK			  85
 
 /* These are implemented */
-#define	_SC_SPAWN			86
-#define	_SC_SHARED_MEMORY_OBJECTS	87
+#define	_SC_SPAWN			  86
+#define	_SC_SHARED_MEMORY_OBJECTS	  87
 
-#define	_SC_TIMER_MAX			88
-#define	_SC_SEM_NSEMS_MAX		89
-#define	_SC_CPUTIME			90
-#define	_SC_THREAD_CPUTIME		91
-#define	_SC_DELAYTIMER_MAX		92
-#define	_SC_SIGQUEUE_MAX		93
-#define	_SC_REALTIME_SIGNALS		94
-#define	_SC_RTSIG_MAX			95
+#define	_SC_TIMER_MAX			  88
+#define	_SC_SEM_NSEMS_MAX		  89
+#define	_SC_CPUTIME			  90
+#define	_SC_THREAD_CPUTIME		  91
+#define	_SC_DELAYTIMER_MAX		  92
+#define	_SC_SIGQUEUE_MAX		  93
+#define	_SC_REALTIME_SIGNALS		  94
+#define	_SC_RTSIG_MAX			  95
 
 /* Extensions found in Solaris and Linux. */
-#define	_SC_PHYS_PAGES			121
-#define	_SC_AVPHYS_PAGES		122
+#define	_SC_PHYS_PAGES			 121
+#define	_SC_AVPHYS_PAGES		 122
 
 #ifdef _NETBSD_SOURCE
 /* Commonly provided sysconf() extensions */
-#define	_SC_NPROCESSORS_CONF	1001
-#define	_SC_NPROCESSORS_ONLN	1002
+#define	_SC_NPROCESSORS_CONF		1001
+#define	_SC_NPROCESSORS_ONLN		1002
 /* Native variables */
-#define	_SC_SCHED_RT_TS		2001
-#define	_SC_SCHED_PRI_MIN	2002
-#define	_SC_SCHED_PRI_MAX	2003
+#define	_SC_SCHED_RT_TS			2001
+#define	_SC_SCHED_PRI_MIN		2002
+#define	_SC_SCHED_PRI_MAX		2003
 #endif	/* _NETBSD_SOURCE */
 
 /* configurable system strings */
-#define	_CS_PATH		 1
+#define	_CS_PATH			   1
 
 #endif /* !_SYS_UNISTD_H_ */
