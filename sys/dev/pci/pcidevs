@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1497 2023/10/11 14:54:58 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1498 2023/10/26 03:42:41 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7667,6 +7667,7 @@ product MELLANOX MT28800VF	0x101a	ConnectX-5 Ex VF
 product MELLANOX MT28908	0x101b	ConnectX-6
 product MELLANOX MT28908VF	0x101c	ConnectX-6 VF
 product MELLANOX MT2892		0x101d	ConnectX-6 Dx
+product MELLANOX MT2894		0x101f	ConnectX-6 Lx
 product MELLANOX MT23108	0x5a44	InfiniHost (Tavor)
 product MELLANOX MT23108_PCI	0x5a46	InfiniHost PCI Bridge (Tavor)
 product MELLANOX MT25204_OLD	0x5e8c	InfiniHost III Lx (old Sinai)
