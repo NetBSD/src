@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.375 2023/10/11 01:21:21 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.376 2023/10/26 13:43:17 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -417,6 +417,7 @@ DFS	distributed file system
 DFSAN	Data Flow Sanitizer
 DFT	diagnostic function test
 DFT	discrete Fourier transform
+DFZ	default-free zone
 DGL	data generation language
 DGEMM	double precision general matrix multiply
 DH	Diffie-Hellman
