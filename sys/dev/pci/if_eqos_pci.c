@@ -1,4 +1,4 @@
-/* $NetBSD: if_eqos_pci.c,v 1.1 2023/10/20 10:09:43 msaitoh Exp $ */
+/* $NetBSD: if_eqos_pci.c,v 1.2 2023/10/26 18:02:51 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2023 Masanobu SAITOH <msaitoh@netbsd.org>
@@ -35,7 +35,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eqos_pci.c,v 1.1 2023/10/20 10:09:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eqos_pci.c,v 1.2 2023/10/26 18:02:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,6 +105,7 @@ eqos_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa =aux;
 	const pci_chipset_tag_t pc = pa->pa_pc;
 	const pcitag_t tag = pa->pa_tag;
+	prop_dictionary_t prop;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	int counts[PCI_INTR_TYPE_SIZE];
@@ -112,6 +113,7 @@ eqos_pci_attach(device_t parent, device_t self, void *aux)
 	bus_size_t memsize;
 	pcireg_t memtype;
 	const char *intrstr;
+	uint32_t dma_pbl = 0;
 
 	psc->sc_pc = pc;
 	psc->sc_tag = tag;
@@ -126,6 +128,7 @@ eqos_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bst = memt;
 	sc->sc_bsh = memh;
+	prop = device_properties(sc->sc_dev);
 
 #if 0 /* I don't know why dmat64 doesn't work... */
 	if (pci_dma64_available(pa)) {
@@ -142,6 +145,7 @@ eqos_pci_attach(device_t parent, device_t self, void *aux)
 	switch (psc->sc_pcidevid) {
 	case PCI_PRODUCT_INTEL_EHL_ETH:
 		sc->sc_csr_clock = 204800000;
+		dma_pbl = 32;
 		break;
 	case PCI_PRODUCT_INTEL_EHL_PSE_ETH_0_RGMII:
 	case PCI_PRODUCT_INTEL_EHL_PSE_ETH_1_RGMII:
@@ -150,10 +154,21 @@ eqos_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_EHL_PSE_ETH_0_SGMII_2_5G:
 	case PCI_PRODUCT_INTEL_EHL_PSE_ETH_1_SGMII_2_5G:
 		sc->sc_csr_clock = 200000000;
+		dma_pbl = 32;
 		break;
+#if 0
+	case PCI_PRODUCT_INTEL_QUARTK_ETH:
+		dma_pbl = 16;
+#endif
 	default:
 		sc->sc_csr_clock = 200000000; /* XXX */
 	}
+	/* Defaults */
+	if (dma_pbl != 0) {
+		prop = device_properties(sc->sc_dev);
+		prop_dictionary_set_uint32(prop, "snps,pbl", dma_pbl);
+	}
+
 	if (eqos_attach(sc) != 0) {
 		aprint_error_dev(sc->sc_dev, "failed in eqos_attach()\n");
 		return;

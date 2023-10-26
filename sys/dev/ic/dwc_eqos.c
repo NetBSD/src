@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.26 2023/10/26 13:00:13 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.27 2023/10/26 18:02:50 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.26 2023/10/26 13:00:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.27 2023/10/26 18:02:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -612,12 +612,16 @@ eqos_init_locked(struct eqos_softc *sc)
 	val |= GMAC_DMA_CHAN0_CONTROL_PBLX8;
 	WR4(sc, GMAC_DMA_CHAN0_CONTROL, val);
 	val = RD4(sc, GMAC_DMA_CHAN0_TX_CONTROL);
+	val &= ~GMAC_DMA_CHAN0_TX_CONTROL_TXPBL_MASK;
+	val |= (sc->sc_dma_txpbl << GMAC_DMA_CHAN0_TX_CONTROL_TXPBL_SHIFT);
 	val |= GMAC_DMA_CHAN0_TX_CONTROL_OSP;
 	val |= GMAC_DMA_CHAN0_TX_CONTROL_START;
 	WR4(sc, GMAC_DMA_CHAN0_TX_CONTROL, val);
 	val = RD4(sc, GMAC_DMA_CHAN0_RX_CONTROL);
-	val &= ~GMAC_DMA_CHAN0_RX_CONTROL_RBSZ_MASK;
+	val &= ~(GMAC_DMA_CHAN0_RX_CONTROL_RBSZ_MASK |
+	    GMAC_DMA_CHAN0_RX_CONTROL_RXPBL_MASK);
 	val |= (MCLBYTES << GMAC_DMA_CHAN0_RX_CONTROL_RBSZ_SHIFT);
+	val |= (sc->sc_dma_rxpbl << GMAC_DMA_CHAN0_RX_CONTROL_RXPBL_SHIFT);
 	val |= GMAC_DMA_CHAN0_RX_CONTROL_START;
 	WR4(sc, GMAC_DMA_CHAN0_RX_CONTROL, val);
 
@@ -1259,6 +1263,24 @@ eqos_get_eaddr(struct eqos_softc *sc, uint8_t *eaddr)
 }
 
 static void
+eqos_get_dma_pbl(struct eqos_softc *sc)
+{
+	prop_dictionary_t prop = device_properties(sc->sc_dev);
+	uint32_t pbl;
+
+	/* Set default values. */
+	sc->sc_dma_txpbl = sc->sc_dma_rxpbl = EQOS_DMA_PBL_DEFAULT;
+
+	/* Get values from props. */
+	if (prop_dictionary_get_uint32(prop, "snps,pbl", &pbl) && pbl)
+		sc->sc_dma_txpbl = sc->sc_dma_rxpbl = pbl;
+	if (prop_dictionary_get_uint32(prop, "snps,txpbl", &pbl) && pbl)
+		sc->sc_dma_txpbl = pbl;
+	if (prop_dictionary_get_uint32(prop, "snps,rxpbl", &pbl) && pbl)
+		sc->sc_dma_rxpbl = pbl;
+}
+
+static void
 eqos_axi_configure(struct eqos_softc *sc)
 {
 	prop_dictionary_t prop = device_properties(sc->sc_dev);
@@ -1492,6 +1514,9 @@ eqos_attach(struct eqos_softc *sc)
 	if (error != 0) {
 		return error;
 	}
+
+	/* Get DMA burst length */
+	eqos_get_dma_pbl(sc);
 
 	/* Configure AXI Bus mode parameters */
 	eqos_axi_configure(sc);
