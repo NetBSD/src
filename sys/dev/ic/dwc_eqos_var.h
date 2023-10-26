@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_var.h,v 1.5 2023/10/23 15:29:38 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos_var.h,v 1.6 2023/10/26 18:02:50 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -36,6 +36,7 @@
 #include <dev/ic/dwc_eqos_reg.h>
 
 #define	EQOS_DMA_DESC_COUNT	256
+#define	EQOS_DMA_PBL_DEFAULT	8
 
 struct eqos_bufmap {
 	bus_dmamap_t		map;
@@ -60,8 +61,9 @@ struct eqos_softc {
 	int			sc_phy_id;
 	uint32_t		sc_csr_clock;
 	uint32_t		sc_clock_range;
-
 	uint32_t		sc_hw_feature[4];
+	uint32_t		sc_dma_txpbl;
+	uint32_t		sc_dma_rxpbl;
 
 	struct ethercom		sc_ec;
 	struct mii_data		sc_mii;
