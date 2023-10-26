@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.204 2023/10/18 14:46:35 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.205 2023/10/26 15:14:28 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4063,4 +4063,11 @@ sys/dev/pci/if_wmvar.h			1.51
 	- Add new workaround for Tiger Lake and newer to avoid packet loss.
 	- Add I219{V,LM}({22,23}) devices (Raptor Lake).
 	[msaitoh, ticket #1915]
+
+sys/dev/pci/mpii.c				1.30
+
+	mpii(4): PR 57133: fix a regression introduce in rev. 1.22.
+	Do not reset xs->resid when encountering a
+	MPII_SCSIIO_STATUS_CHECK_COND condition.
+	[buhrow, ticket #1916]
 
