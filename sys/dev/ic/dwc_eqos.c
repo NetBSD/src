@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.25 2023/10/23 15:29:38 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.26 2023/10/26 13:00:13 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.25 2023/10/23 15:29:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.26 2023/10/26 13:00:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -268,6 +268,8 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 	uint32_t tdes2, tdes3;
 
 	DPRINTF(EDEB_TXRING, "preparing desc %u\n", index);
+
+	EQOS_ASSERT_TXLOCKED(sc);
 
 	if (paddr == 0 || len == 0) {
 		DPRINTF(EDEB_TXRING,
@@ -924,6 +926,7 @@ eqos_txintr(struct eqos_softc *sc, int qid)
 	DPRINTF(EDEB_INTR, "qid: %u\n", qid);
 
 	EQOS_ASSERT_LOCKED(sc);
+	EQOS_ASSERT_TXLOCKED(sc);
 
 	for (i = sc->sc_tx.next; sc->sc_tx.queued > 0; i = TX_NEXT(i)) {
 		KASSERT(sc->sc_tx.queued > 0);
@@ -1128,7 +1131,9 @@ eqos_intr(void *arg)
 	}
 
 	if ((dma_status & GMAC_DMA_CHAN0_STATUS_TI) != 0) {
+		EQOS_TXLOCK(sc);
 		eqos_txintr(sc, 0);
+		EQOS_TXUNLOCK(sc);
 		if_schedule_deferred_start(ifp);
 		sc->sc_ev_txintr.ev_count++;
 	}
@@ -1336,7 +1341,9 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 			    "cannot create TX buffer map\n");
 			return error;
 		}
+		EQOS_TXLOCK(sc);
 		eqos_setup_txdesc(sc, i, 0, 0, 0, 0);
+		EQOS_TXUNLOCK(sc);
 	}
 
 	/* Setup RX ring */
