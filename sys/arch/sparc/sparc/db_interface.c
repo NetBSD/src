@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.97 2022/10/26 23:38:08 riastradh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.98 2023/10/26 10:41:03 andvar Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.97 2022/10/26 23:38:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.98 2023/10/26 10:41:03 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -66,6 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.97 2022/10/26 23:38:08 riastradh 
 #include <ddb/db_variables.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
+#include <ddb/db_interface.h>
+#endif
+#ifdef KGDB
 #include <ddb/db_interface.h>
 #endif
 
@@ -221,7 +224,7 @@ ddb_suspend(struct trapframe *tf)
 }
 #endif /* MULTIPROCESSOR */
 
-#if defined(DDB)
+#if defined(DDB) || defined(KGDB)
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
@@ -286,7 +289,7 @@ kdb_trap(int type, struct trapframe *tf)
 
 	return (1);
 }
-#endif /* DDB */
+#endif /* DDB || KGDB */
 
 #ifdef _KERNEL
 void
@@ -388,7 +391,7 @@ db_page_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("pa %llx pg %p\n", (unsigned long long)addr,
 	    PHYS_TO_VM_PAGE(addr));
 }
-#endif
+#endif /* _KERNEL */
 
 #if defined(MULTIPROCESSOR)
 
@@ -456,8 +459,7 @@ const struct db_command db_machine_command_table[] = {
 #endif
 	{ DDB_END_CMD },
 };
-#endif /* DDB */
-
+#endif /* DDB || _KMEMUSER */
 
 /*
  * support for SOFTWARE_SSTEP:
