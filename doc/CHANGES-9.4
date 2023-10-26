@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.111 2023/10/18 15:08:41 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.112 2023/10/26 15:13:05 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2349,4 +2349,11 @@ sys/kern/subr_thmap.c				1.14,1.15
 
 	thmap(9): PR 57666, PR 57208: fix allocation failure issues.
 	[riastradh, ticket #1755]
+
+sys/dev/pci/mpii.c				1.30
+
+	mpii(4): PR 57133: fix a regression introduce in rev. 1.22.
+	Do not reset xs->resid when encountering a
+	MPII_SCSIIO_STATUS_CHECK_COND condition.
+	[buhrow, ticket #1756]
 
