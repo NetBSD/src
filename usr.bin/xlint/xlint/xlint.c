@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.116 2023/10/26 19:56:31 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.117 2023/10/26 20:21:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.116 2023/10/26 19:56:31 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.117 2023/10/26 20:21:13 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -97,7 +97,7 @@ static list library_search_path;
 static const char *libexec_dir;
 static bool Cflag, dflag, Fflag, iflag, sflag, tflag, Vflag;
 static char *output_filename;	/* filename for -o */
-static bool seen_c_source;
+static bool seen_filename;
 
 /*
  * name of a file which is currently written by a child and should
@@ -427,13 +427,13 @@ handle_filename(const char *name)
 		return;
 	}
 
-	if (strcmp(suff, "c") != 0 &&
-	    (strncmp(base, "llib-l", 6) != 0 || base != suff)) {
+	if (!(strcmp(suff, "c") == 0 ||
+	    (strncmp(base, "llib-l", 6) == 0 && base == suff))) {
 		warnx("unknown file type: %s", name);
 		return;
 	}
 
-	if (!iflag || seen_c_source)
+	if (!iflag || seen_filename)
 		(void)printf("%s:\n", Fflag ? name : base);
 
 	/* build the name of the output file of lint1 */
@@ -794,11 +794,11 @@ main(int argc, char *argv[])
 				usage("Missing argument for l or L");
 		} else {
 			handle_filename(arg);
-			seen_c_source = true;
+			seen_filename = true;
 		}
 	}
 
-	if (!seen_c_source)
+	if (!seen_filename)
 		usage("Missing filename");
 
 	if (iflag)
