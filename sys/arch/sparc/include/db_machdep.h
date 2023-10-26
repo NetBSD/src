@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.29 2021/01/24 07:36:54 mrg Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.30 2023/10/26 10:41:03 andvar Exp $ */
 
 /*
  * Mach Operating System
@@ -58,12 +58,7 @@ extern db_regs_t	*ddb_regp;
 #define	DDB_TF		(&ddb_regp->db_tf)
 #define	DDB_FR		(&ddb_regp->db_fr)
 
-
-#if defined(lint)
 #define	PC_REGS(regs)	((regs)->db_tf.tf_pc)
-#else
-#define	PC_REGS(regs)	((db_addr_t)(regs)->db_tf.tf_pc)
-#endif
 #define	PC_ADVANCE(regs) do {				\
 	int n = (regs)->db_tf.tf_npc;			\
 	(regs)->db_tf.tf_pc = n;			\
