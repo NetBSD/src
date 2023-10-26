@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.8.10.7 2022/09/29 14:38:24 snj Exp $ */
+/* $NetBSD: mpii.c,v 1.8.10.8 2023/10/26 15:13:38 martin Exp $ */
 /*	OpenBSD: mpii.c,v 1.115 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.8.10.7 2022/09/29 14:38:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.8.10.8 2023/10/26 15:13:38 martin Exp $");
 
 #include "bio.h"
 
@@ -3225,7 +3225,6 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	}
 	
 	KASSERT(xs->error == XS_NOERROR);
-	KASSERT(xs->resid == xs->datalen);
 	KASSERT(xs->status == SCSI_OK);
 	
 	if (ccb->ccb_rcb == NULL) {
@@ -3284,7 +3283,6 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 			break;
 
 		case MPII_SCSIIO_STATUS_CHECK_COND:
-			xs->resid = 0;
 			xs->error = XS_SENSE;
 			break;
 
