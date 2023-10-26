@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.115 2023/10/25 23:05:14 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.116 2023/10/26 19:56:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.115 2023/10/25 23:05:14 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.116 2023/10/26 19:56:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -95,8 +95,8 @@ static list default_libraries;
 static list additional_libraries;
 static list library_search_path;
 static const char *libexec_dir;
-static bool Cflag, dflag, Fflag, iflag, oflag, sflag, tflag, Vflag;
-static char *outputfn;		/* filename for oflag */
+static bool Cflag, dflag, Fflag, iflag, sflag, tflag, Vflag;
+static char *output_filename;	/* filename for -o */
 static bool seen_c_source;
 
 /*
@@ -438,10 +438,9 @@ handle_filename(const char *name)
 
 	/* build the name of the output file of lint1 */
 	char *ofn;
-	if (oflag) {
-		ofn = outputfn;
-		outputfn = NULL;
-		oflag = false;
+	if (output_filename != NULL) {
+		ofn = output_filename;
+		output_filename = NULL;
 	} else if (iflag) {
 		size_t len = base == suff
 		    ? strlen(base)
@@ -702,7 +701,7 @@ main(int argc, char *argv[])
 		case 'C':
 			if (Cflag)
 				usage("%c flag already specified", 'C');
-			if (oflag || iflag)
+			if (output_filename != NULL || iflag)
 				usage("%c and %s flags cannot be specified "
 				    "together", 'C', "o or i");
 			Cflag = true;
@@ -734,13 +733,12 @@ main(int argc, char *argv[])
 			break;
 
 		case 'o':
-			if (oflag)
+			if (output_filename != NULL)
 				usage("%c flag already specified", 'o');
 			if (Cflag)
 				usage("%c and %s flags cannot be specified "
 				    "together", 'C', "o");
-			oflag = true;
-			outputfn = xstrdup(optarg);
+			output_filename = xstrdup(optarg);
 			break;
 
 		case 'L':
@@ -806,7 +804,7 @@ main(int argc, char *argv[])
 	if (iflag)
 		terminate(0);
 
-	if (!oflag) {
+	if (output_filename == NULL) {
 		const char *ks = getenv("LIBDIR");
 		if (ks == NULL || ks[0] == '\0')
 			ks = PATH_LINTLIB;
@@ -817,8 +815,8 @@ main(int argc, char *argv[])
 
 	run_lint2();
 
-	if (oflag)
-		cat(&lint2.infiles, outputfn);
+	if (output_filename != NULL)
+		cat(&lint2.infiles, output_filename);
 
 	if (Cflag)
 		lint2.outlib = NULL;
