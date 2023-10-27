@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdbr.3,v 1.6 2018/12/01 02:43:43 kamil Exp $
+.\"	$NetBSD: cdbr.3,v 1.7 2023/10/27 04:05:55 simonb Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,6 +41,7 @@
 .Nm cdbr_close
 .Nd constant database access methods
 .Sh SYNOPSIS
+.In cdbr.h
 .Ft "struct cdbr *"
 .Fn cdbr_open "const char *path" "int flags"
 .Ft "struct cdbr *"
