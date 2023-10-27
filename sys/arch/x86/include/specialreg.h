@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.208 2023/07/27 00:34:07 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.209 2023/10/27 06:31:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -1362,6 +1362,10 @@
 #define 	NB_CFG_DISIOREQLOCK	0x0000000000000008ULL
 #define 	NB_CFG_DISDATMSK	0x0000001000000000ULL
 #define 	NB_CFG_INITAPICCPUIDLO	(1ULL << 54)
+
+/* AMD Errata 1474. */
+#define MSR_CC6_CFG	0xc0010296
+#define 	CC6_CFG_DISABLE_BITS	(__BIT(22) | __BIT(14) | __BIT(6))
 
 #define MSR_LS_CFG	0xc0011020
 #define 	LS_CFG_ERRATA_1033	__BIT(4)
