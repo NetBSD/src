@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.376 2023/10/26 13:43:17 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.377 2023/10/27 21:28:14 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1429,6 +1429,7 @@ RMPM	rapid memory power management
 RMS	root mean square
 RMW	read, modify, write
 RNG	random number generator
+ROA	route origin authorization
 ROM	read only memory
 ROP	return-oriented programming
 RPC	remote procedure call
