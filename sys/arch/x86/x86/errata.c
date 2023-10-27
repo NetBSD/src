@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.33 2023/07/28 05:02:13 mrg Exp $	*/
+/*	$NetBSD: errata.c,v 1.34 2023/10/27 03:06:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.33 2023/07/28 05:02:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.34 2023/10/27 03:06:04 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ typedef struct errata {
 	const uint8_t	*e_set;
 	bool		(*e_act)(struct cpu_info *, struct errata *);
 	uint64_t	e_data2;
+	const char	*e_name;	/* use if e_num == 0 */
 } errata_t;
 
 /* These names match names from various AMD Errata/Revision Guides. */
@@ -248,7 +249,7 @@ static const uint8_t x86_errata_set15[] = {
 	KB_A1, ML_A1, OINK
 };
 
-static const uint8_t x86_errata_set16[] = {
+static const uint8_t x86_errata_zen2[] = {
 	Rome_B0, Z2_XB, Z2_Ren, Z2_Luc, Z2_Mat, Z2_VG, Z2_Men, OINK
 };
 
@@ -262,21 +263,21 @@ static errata_t errata[] = {
 	 */
 	{
 		81, FALSE, MSR_DC_CFG, x86_errata_set5,
-		x86_errata_testmsr, DC_CFG_DIS_SMC_CHK_BUF
+		x86_errata_testmsr, DC_CFG_DIS_SMC_CHK_BUF, NULL
 	},
 	/*
 	 * 86: DRAM Data Masking Feature Can Cause ECC Failures
 	 */
 	{
 		86, FALSE, MSR_NB_CFG, x86_errata_set1,
-		x86_errata_testmsr, NB_CFG_DISDATMSK
+		x86_errata_testmsr, NB_CFG_DISDATMSK, NULL
 	},
 	/*
 	 * 89: Potential Deadlock With Locked Transactions
 	 */
 	{
 		89, FALSE, MSR_NB_CFG, x86_errata_set8,
-		x86_errata_testmsr, NB_CFG_DISIOREQLOCK
+		x86_errata_testmsr, NB_CFG_DISIOREQLOCK, NULL
 	},
 	/*
 	 * 94: Sequential Prefetch Feature May Cause Incorrect
@@ -284,7 +285,7 @@ static errata_t errata[] = {
 	 */
 	{
 		94, FALSE, MSR_IC_CFG, x86_errata_set1,
-		x86_errata_testmsr, IC_CFG_DIS_SEQ_PREFETCH
+		x86_errata_testmsr, IC_CFG_DIS_SEQ_PREFETCH, NULL
 	},
 	/*
 	 * 97: 128-Bit Streaming Stores May Cause Coherency
@@ -296,7 +297,7 @@ static errata_t errata[] = {
 	 */
 	{
 		97, FALSE, MSR_DC_CFG, x86_errata_set6,
-		x86_errata_testmsr, DC_CFG_DIS_CNV_WC_SSO
+		x86_errata_testmsr, DC_CFG_DIS_CNV_WC_SSO, NULL
 	},
 	/*
 	 * 104: DRAM Data Masking Feature Causes ChipKill ECC
@@ -304,14 +305,14 @@ static errata_t errata[] = {
 	 */
 	{
 		104, FALSE, MSR_NB_CFG, x86_errata_set7,
-		x86_errata_testmsr, NB_CFG_DISDATMSK
+		x86_errata_testmsr, NB_CFG_DISDATMSK, NULL
 	},
 	/*
 	 * 113: Enhanced Write-Combining Feature Causes System Hang
 	 */
 	{
 		113, FALSE, MSR_BU_CFG, x86_errata_set3,
-		x86_errata_setmsr, BU_CFG_WBENHWSBDIS
+		x86_errata_setmsr, BU_CFG_WBENHWSBDIS, NULL
 	},
 	/*
 	 * 69: Multiprocessor Coherency Problem with Hardware
@@ -319,7 +320,7 @@ static errata_t errata[] = {
 	 */
 	{
 		69, FALSE, MSR_BU_CFG, x86_errata_set5,
-		x86_errata_setmsr, BU_CFG_WBPFSMCCHKDIS
+		x86_errata_setmsr, BU_CFG_WBPFSMCCHKDIS, NULL
 	},
 	/*
 	 * 101: DRAM Scrubber May Cause Data Corruption When Using
@@ -327,7 +328,7 @@ static errata_t errata[] = {
 	 */
 	{
 		101, FALSE, 0, x86_errata_set2,
-		NULL, 0
+		NULL, 0, NULL
 	},
 	/*
 	 * 106: Potential Deadlock with Tightly Coupled Semaphores
@@ -335,7 +336,7 @@ static errata_t errata[] = {
 	 */
 	{
 		106, FALSE, MSR_LS_CFG, x86_errata_set2,
-		x86_errata_testmsr, LS_CFG_DIS_LS2_SQUISH
+		x86_errata_testmsr, LS_CFG_DIS_LS2_SQUISH, NULL
 	},
 	/*
 	 * 107: Possible Multiprocessor Coherency Problem with
@@ -343,7 +344,7 @@ static errata_t errata[] = {
 	 */
 	{
 		107, FALSE, MSR_BU_CFG, x86_errata_set2,
-		x86_errata_testmsr, BU_CFG_THRL2IDXCMPDIS
+		x86_errata_testmsr, BU_CFG_THRL2IDXCMPDIS, NULL
 	},
 	/*
 	 * 122: TLB Flush Filter May Cause Coherency Problem in
@@ -351,14 +352,14 @@ static errata_t errata[] = {
 	 */
 	{
 		122, FALSE, MSR_HWCR, x86_errata_set4,
-		x86_errata_setmsr, HWCR_FFDIS
+		x86_errata_setmsr, HWCR_FFDIS, NULL
 	},
 	/*
 	 * 254: Internal Resource Livelock Involving Cached TLB Reload
 	 */
 	{
 		254, FALSE, MSR_BU_CFG, x86_errata_set9,
-		x86_errata_testmsr, BU_CFG_ERRATA_254
+		x86_errata_testmsr, BU_CFG_ERRATA_254, NULL
 	},
 	/*
 	 * 261: Processor May Stall Entering Stop-Grant Due to Pending Data
@@ -366,7 +367,7 @@ static errata_t errata[] = {
 	 */
 	{
 		261, FALSE, MSR_DC_CFG, x86_errata_set10,
-		x86_errata_testmsr, DC_CFG_ERRATA_261
+		x86_errata_testmsr, DC_CFG_ERRATA_261, NULL
 	},
 	/*
 	 * 298: L2 Eviction May Occur During Processor Operation To Set
@@ -374,11 +375,11 @@ static errata_t errata[] = {
 	 */
 	{
 		298, FALSE, MSR_HWCR, x86_errata_set9,
-		x86_errata_testmsr, HWCR_TLBCACHEDIS
+		x86_errata_testmsr, HWCR_TLBCACHEDIS, NULL
 	},
 	{
 		298, FALSE, MSR_BU_CFG, x86_errata_set9,
-		x86_errata_testmsr, BU_CFG_ERRATA_298
+		x86_errata_testmsr, BU_CFG_ERRATA_298, NULL
 	},
 	/*
 	 * 309: Processor Core May Execute Incorrect Instructions on
@@ -386,14 +387,14 @@ static errata_t errata[] = {
 	 */
 	{
 		309, FALSE, MSR_BU_CFG, x86_errata_set9,
-		x86_errata_testmsr, BU_CFG_ERRATA_309
+		x86_errata_testmsr, BU_CFG_ERRATA_309, NULL
 	},
 	/*
 	 * 721: Processor May Incorrectly Update Stack Pointer
 	 */
 	{
 		721, FALSE, MSR_DE_CFG, x86_errata_set11,
-		x86_errata_setmsr, DE_CFG_ERRATA_721
+		x86_errata_setmsr, DE_CFG_ERRATA_721, NULL
 	},
 	/*
 	 * 776: Incorrect Processor Branch Prediction for Two Consecutive
@@ -401,7 +402,7 @@ static errata_t errata[] = {
 	 */
 	{
 		776, FALSE, MSR_IC_CFG, x86_errata_set12,
-		x86_errata_setmsr, IC_CFG_ERRATA_776
+		x86_errata_setmsr, IC_CFG_ERRATA_776, NULL
 	},
 	/*
 	 * 793: Specific Combination of Writes to Write Combined Memory
@@ -409,7 +410,7 @@ static errata_t errata[] = {
 	 */
 	{
 		793, FALSE, MSR_LS_CFG, x86_errata_set15,
-		x86_errata_setmsr, LS_CFG_ERRATA_793
+		x86_errata_setmsr, LS_CFG_ERRATA_793, NULL
 	},
 	/*
 	 * 1021: Load Operation May Receive Stale Data From Older Store
@@ -417,21 +418,21 @@ static errata_t errata[] = {
 	 */
 	{
 		1021, FALSE, MSR_DE_CFG, x86_errata_set13,
-		x86_errata_setmsr, DE_CFG_ERRATA_1021
+		x86_errata_setmsr, DE_CFG_ERRATA_1021, NULL
 	},
 	/*
 	 * 1033: A Lock Operation May Cause the System to Hang
 	 */
 	{
 		1033, FALSE, MSR_LS_CFG, x86_errata_set14,
-		x86_errata_setmsr, LS_CFG_ERRATA_1033
+		x86_errata_setmsr, LS_CFG_ERRATA_1033, NULL
 	},
 	/*
 	 * 1049: FCMOV Instruction May Not Execute Correctly
 	 */
 	{
 		1049, FALSE, MSR_FP_CFG, x86_errata_set13,
-		x86_errata_setmsr, FP_CFG_ERRATA_1049
+		x86_errata_setmsr, FP_CFG_ERRATA_1049, NULL
 	},
 #if 0	/* Should we apply this errata? The other OSes don't. */
 	/*
@@ -440,7 +441,7 @@ static errata_t errata[] = {
 	 */
 	{
 		1091, FALSE, MSR_LS_CFG2, x86_errata_set13,
-		x86_errata_setmsr, LS_CFG2_ERRATA_1091
+		x86_errata_setmsr, LS_CFG2_ERRATA_1091, NULL
 	},
 #endif
 	/*
@@ -449,7 +450,7 @@ static errata_t errata[] = {
 	 */
 	{
 		1095, FALSE, MSR_LS_CFG, x86_errata_set13,
-		x86_errata_setmsr, LS_CFG_ERRATA_1095
+		x86_errata_setmsr, LS_CFG_ERRATA_1095, NULL
 	},
 	/*
 	 * Zenbleed:
@@ -458,10 +459,21 @@ static errata_t errata[] = {
 	 * https://lock.cmpxchg8b.com/zenbleed.html
 	 */
 	{
-		-1, FALSE, MSR_DE_CFG, x86_errata_set16,
+		0, FALSE, MSR_DE_CFG, x86_errata_zen2,
 		x86_errata_setmsr, DE_CFG_ERRATA_ZENBLEED,
+		"ZenBleed"
 	},
 };
+
+static void
+x86_errata_log(device_t dev, errata_t *e, const char *msg)
+{
+
+	if (e->e_num == 0)
+		aprint_debug_dev(dev, "erratum '%s' %s\n", e->e_name, msg);
+	else
+		aprint_debug_dev(dev, "erratum %u %s\n", e->e_num, msg);
+}
 
 static bool
 x86_errata_testmsr(struct cpu_info *ci, errata_t *e)
@@ -489,8 +501,7 @@ x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 	if ((val & e->e_data2) != 0)
 		return FALSE;
 	wrmsr_locked(e->e_data1, val | e->e_data2);
-	aprint_debug_dev(ci->ci_dev, "erratum %d patched\n",
-	    e->e_num);
+	x86_errata_log(ci->ci_dev, e, "patched");
 
 	return FALSE;
 }
@@ -541,16 +552,14 @@ x86_errata(void)
 				continue;
 		}
 
-		aprint_debug_dev(ci->ci_dev, "testing for erratum %d\n",
-		    e->e_num);
+		x86_errata_log(ci->ci_dev, e, "testing");
 
 		if (e->e_act == NULL)
 			e->e_reported = TRUE;
 		else if ((*e->e_act)(ci, e) == FALSE)
 			continue;
 
-		aprint_verbose_dev(ci->ci_dev, "erratum %d present\n",
-		    e->e_num);
+		x86_errata_log(ci->ci_dev, e, "present");
 		upgrade = 1;
 	}
 
