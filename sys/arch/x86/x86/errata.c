@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.34 2023/10/27 03:06:04 mrg Exp $	*/
+/*	$NetBSD: errata.c,v 1.35 2023/10/27 05:45:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,10 +47,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.34 2023/10/27 03:06:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.35 2023/10/27 05:45:00 mrg Exp $");
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/xcall.h>
+#include <sys/kthread.h>
+#include <sys/clock.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -255,6 +258,7 @@ static const uint8_t x86_errata_zen2[] = {
 
 static bool x86_errata_setmsr(struct cpu_info *, errata_t *);
 static bool x86_errata_testmsr(struct cpu_info *, errata_t *);
+static bool x86_errata_amd_1474(struct cpu_info *, errata_t *);
 
 static errata_t errata[] = {
 	/*
@@ -453,6 +457,13 @@ static errata_t errata[] = {
 		x86_errata_setmsr, LS_CFG_ERRATA_1095, NULL
 	},
 	/*
+	 * 1474: A CPU core may hang after about 1044 days
+	 */
+	{
+		1474, FALSE, MSR_CC6_CFG, x86_errata_zen2,
+		x86_errata_amd_1474, CC6_CFG_DISABLE_BITS, NULL
+	},
+	/*
 	 * Zenbleed:
 	 * https://www.amd.com/en/resources/product-security/bulletin/amd-sb-7008.html
 	 * https://github.com/google/security-research/security/advisories/GHSA-v6wh-rxpg-cmm8
@@ -464,6 +475,96 @@ static errata_t errata[] = {
 		"ZenBleed"
 	},
 };
+
+/*
+ * 1474: A CPU core may hang after about 1044 days
+ *
+ * This requires disabling CC6 power level, which can be a performance
+ * issue since it stops full turbo in some implementations (eg, half the
+ * cores must be in CC6 to achieve the highest boost level.)  Set a timer
+ * to fire in 1000 days -- except NetBSD timers end up having a signed
+ * 32-bit hz-based value, which rolls over in under 25 days with HZ=1000,
+ * and doing xcall(9) or kthread(9) from a callout is not allowed anyway,
+ * so just have a kthread wait 1 day for 1000 times.
+ */
+
+#define AMD_ERRATA_1474_WARN_DAYS	 950
+#define AMD_ERRATA_1474_BAD_DAYS	1000
+
+static void
+amd_errata_1474_disable_cc6(void *a1, void *a2)
+{
+	errata_t *e = a1;
+	uint64_t val;
+
+	val = rdmsr_locked(e->e_data1);
+	if ((val & e->e_data2) == 0)
+		return;
+	wrmsr_locked(e->e_data1, val & ~e->e_data2);
+	aprint_debug_dev(curcpu()->ci_dev, "erratum %u patched\n",
+	    e->e_num);
+}
+
+static void
+amd_errata_1474_thread(void *arg)
+{
+	int loops = 0;
+	int ticks;
+
+	ticks = hz * SECS_PER_DAY;
+#ifdef X86_ERRATA_TEST_AMD_1474
+	/*
+	 * Make this trigger warning after 50 seconds, and workaround
+	 * at 100 seconds, for easy testing.
+	 */
+	ticks = hz;
+	loops = 900;
+#endif
+
+	while (loops++ < AMD_ERRATA_1474_BAD_DAYS) {
+		if (loops == AMD_ERRATA_1474_WARN_DAYS) {
+			printf("warning: AMD Errata 1474 workaround scheduled "
+			       "for %u days.\n", AMD_ERRATA_1474_BAD_DAYS -
+						 AMD_ERRATA_1474_WARN_DAYS);
+			printf("warning: reboot required to avoid.\n");
+		}
+		kpause("amd1474", false, ticks, NULL);
+	}
+
+	/* Been 1000 days, disable CC6 and warn about it. */
+	uint64_t xc = xc_broadcast(0, amd_errata_1474_disable_cc6, arg, NULL);
+	xc_wait(xc);
+
+	printf("warning: AMD CC6 disabled due to errata 1474.\n");
+	printf("warning: reboot required to restore full turbo speeds.\n");
+
+	kthread_exit(0);
+}
+
+static bool
+x86_errata_amd_1474(struct cpu_info *ci, errata_t *e)
+{
+	int error;
+
+	/* Don't do anything on non-primary CPUs. */
+	if (!CPU_IS_PRIMARY(ci))
+		return FALSE;
+
+	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+	    amd_errata_1474_thread, e, NULL, "amd1474");
+	if (error) {
+		printf("WARNING: Unable to disable AMD errata 1474!\n");
+		printf("WARNING: reboot system after %u days to avoid CPU "
+		    "hangs.\n", AMD_ERRATA_1474_BAD_DAYS);
+	} else {
+		aprint_debug_dev(ci->ci_dev, "workaround for erratum %u "
+		    "scheduled for %u days\n", e->e_num,
+		    AMD_ERRATA_1474_BAD_DAYS);
+	}
+
+	/* Do own warning here, it's not like most others. */
+	return FALSE;
+}
 
 static void
 x86_errata_log(device_t dev, errata_t *e, const char *msg)
