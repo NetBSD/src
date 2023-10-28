@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.29 2021/08/07 16:19:01 thorpej Exp $	*/
+/*	$NetBSD: fb.c,v 1.30 2023/10/28 19:55:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.29 2021/08/07 16:19:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.30 2023/10/28 19:55:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,18 +56,19 @@ struct fb_softc {
 	int sc_nscreens;
 };
 
-int fb_match(device_t, cfdata_t, void *);
-void fb_attach(device_t, device_t, void *);
+static int fb_match(device_t, cfdata_t, void *);
+static void fb_attach(device_t, device_t, void *);
 
-int fb_common_init(struct fb_devconfig *);
-int fb_is_console(void);
+static int fb_common_init(struct fb_devconfig *);
+static int fb_is_console(void);
 
-int fb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
-paddr_t fb_mmap(void *, void *, off_t, int);
-int fb_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
-    int *, long *);
-void fb_free_screen(void *, void *);
-int fb_show_screen(void *, void *, int, void (*)(void *, int, int), void *);
+static int fb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static paddr_t fb_mmap(void *, void *, off_t, int);
+static int fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
+    int *, int *, long *);
+static void fb_free_screen(void *, void *);
+static int fb_show_screen(void *, void *, int, void (*)(void *, int, int),
+    void *);
 
 void fb_cnattach(void);
 
@@ -76,9 +77,9 @@ static void fb253_init(void);
 CFATTACH_DECL_NEW(fb, sizeof(struct fb_softc),
     fb_match, fb_attach, NULL, NULL);
 
-struct fb_devconfig fb_console_dc;
+static struct fb_devconfig fb_console_dc;
 
-struct wsdisplay_accessops fb_accessops = {
+static struct wsdisplay_accessops fb_accessops = {
 	fb_ioctl,
 	fb_mmap,
 	fb_alloc_screen,
@@ -87,7 +88,7 @@ struct wsdisplay_accessops fb_accessops = {
 	NULL	/* load_font */
 };
 
-struct wsscreen_descr fb_stdscreen = {
+static struct wsscreen_descr fb_stdscreen = {
 	"std",
 	0, 0,
 	0,
@@ -95,11 +96,11 @@ struct wsscreen_descr fb_stdscreen = {
 	WSSCREEN_REVERSE
 };
 
-const struct wsscreen_descr *fb_scrlist[] = {
+static const struct wsscreen_descr *fb_scrlist[] = {
 	&fb_stdscreen
 };
 
-struct wsscreen_list fb_screenlist = {
+static struct wsscreen_list fb_screenlist = {
 	__arraycount(fb_scrlist), fb_scrlist
 };
 
@@ -109,7 +110,7 @@ struct wsscreen_list fb_screenlist = {
 
 static const char *devname[8] = { "NWB-512", "NWB-518", "NWE-501" }; /* XXX ? */
 
-int
+static int
 fb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
@@ -125,7 +126,7 @@ fb_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-void
+static void
 fb_attach(device_t parent, device_t self, void *aux)
 {
 	struct fb_softc *sc = device_private(self);
@@ -171,7 +172,7 @@ fb_attach(device_t parent, device_t self, void *aux)
 	config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
-int
+static int
 fb_common_init(struct fb_devconfig *dc)
 {
 	struct rasops_info *ri = &dc->dc_ri;
@@ -223,7 +224,7 @@ fb_common_init(struct fb_devconfig *dc)
 	return 0;
 }
 
-int
+static int
 fb_is_console(void)
 {
 	volatile u_int *dipsw = (void *)DIP_SWITCH;
@@ -234,7 +235,7 @@ fb_is_console(void)
 	return 0;
 }
 
-int
+static int
 fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct fb_softc *sc = v;
@@ -273,7 +274,7 @@ fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	return EPASSTHROUGH;
 }
 
-paddr_t
+static paddr_t
 fb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct fb_softc *sc = v;
@@ -285,7 +286,7 @@ fb_mmap(void *v, void *vs, off_t offset, int prot)
 	return mips_btop((int)dc->dc_fbbase + offset);
 }
 
-int
+static int
 fb_alloc_screen(void *v, const struct wsscreen_descr *scrdesc, void **cookiep,
     int *ccolp, int *crowp, long *attrp)
 {
@@ -305,7 +306,7 @@ fb_alloc_screen(void *v, const struct wsscreen_descr *scrdesc, void **cookiep,
 	return 0;
 }
 
-void
+static void
 fb_free_screen(void *v, void *cookie)
 {
 	struct fb_softc *sc = v;
@@ -316,7 +317,7 @@ fb_free_screen(void *v, void *cookie)
 	sc->sc_nscreens--;
 }
 
-int
+static int
 fb_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
     void *cbarg)
 {
