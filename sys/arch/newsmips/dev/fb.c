@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.32 2023/10/28 20:05:45 tsutsui Exp $	*/
+/*	$NetBSD: fb.c,v 1.33 2023/10/28 21:06:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.32 2023/10/28 20:05:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.33 2023/10/28 21:06:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -220,7 +220,7 @@ fb_common_init(struct fb_devconfig *dc)
 	ri->ri_bits = dc->dc_fbbase + xoff + ri->ri_stride * yoff;
 
 	fb_stdscreen.nrows = ri->ri_rows;
-	fb_stdscreen.ncols = ri->ri_cols; 
+	fb_stdscreen.ncols = ri->ri_cols;
 	fb_stdscreen.textops = &ri->ri_ops;
 	fb_stdscreen.capabilities = ri->ri_caps;
 
@@ -472,7 +472,7 @@ initfont(struct rasops_info *ri)
 		x = ((c & 0x1f) | ((c & 0xe0) << 2)) << 7;
 		memcpy(fontarea16 + c, (uint8_t *)0xb8e00000 + x + 96, 32);
 		memcpy(fontarea24 + c, (uint8_t *)0xb8e00000 + x, 96);
-	}		      
+	}
 
 	newsrom8x16.name = "rom8x16";
 	newsrom8x16.firstchar = 32;
