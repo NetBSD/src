@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.318 2023/10/28 21:18:15 riastradh Exp $ */
+/*	$NetBSD: ehci.c,v 1.319 2023/10/28 21:18:31 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.318 2023/10/28 21:18:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.319 2023/10/28 21:18:31 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -826,7 +826,7 @@ ehci_doorbell(void *addr)
 	if (sc->sc_doorbelllwp == NULL)
 		DPRINTF("spurious doorbell interrupt", 0, 0, 0, 0);
 	sc->sc_doorbelllwp = NULL;
-	cv_signal(&sc->sc_doorbell);
+	cv_broadcast(&sc->sc_doorbell);
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -2279,7 +2279,7 @@ ehci_sync_hc(ehci_softc_t *sc)
 		now = getticks();
 		if (now - starttime >= delta) {
 			sc->sc_doorbelllwp = NULL;
-			cv_signal(&sc->sc_doorbell);
+			cv_broadcast(&sc->sc_doorbell);
 			DPRINTF("doorbell timeout", 0, 0, 0, 0);
 #ifdef DIAGNOSTIC		/* XXX DIAGNOSTIC abuse, do this differently */
 			printf("ehci_sync_hc: timed out\n");
