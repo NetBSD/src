@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.317 2023/07/30 12:17:02 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.318 2023/10/28 21:18:15 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.317 2023/07/30 12:17:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.318 2023/10/28 21:18:15 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2277,7 +2277,7 @@ ehci_sync_hc(ehci_softc_t *sc)
 	 */
 	while (sc->sc_doorbelllwp == curlwp) {
 		now = getticks();
-		if (endtime - now > delta) {
+		if (now - starttime >= delta) {
 			sc->sc_doorbelllwp = NULL;
 			cv_signal(&sc->sc_doorbell);
 			DPRINTF("doorbell timeout", 0, 0, 0, 0);
