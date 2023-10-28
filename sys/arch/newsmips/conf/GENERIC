@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.144 2023/10/28 19:34:44 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.145 2023/10/28 19:46:49 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,9 @@ include 	"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.144 $"
+#ident 		"GENERIC-$Revision: 1.145 $"
+
+makeoptions	COPTS="-O2 -fno-unwind-tables"
 
 maxusers	16
 
