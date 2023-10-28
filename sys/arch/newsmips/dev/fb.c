@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.31 2023/10/28 20:00:04 tsutsui Exp $	*/
+/*	$NetBSD: fb.c,v 1.32 2023/10/28 20:05:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.31 2023/10/28 20:00:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.32 2023/10/28 20:05:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,20 +80,22 @@ CFATTACH_DECL_NEW(fb, sizeof(struct fb_softc),
 static struct fb_devconfig fb_console_dc;
 
 static struct wsdisplay_accessops fb_accessops = {
-	fb_ioctl,
-	fb_mmap,
-	fb_alloc_screen,
-	fb_free_screen,
-	fb_show_screen,
-	NULL	/* load_font */
+	.ioctl        = fb_ioctl,
+	.mmap         = fb_mmap,
+	.alloc_screen = fb_alloc_screen,
+	.free_screen  = fb_free_screen,
+	.show_screen  = fb_show_screen,
+	.load_font    = NULL
 };
 
 static struct wsscreen_descr fb_stdscreen = {
-	"std",
-	0, 0,
-	0,
-	0, 0,
-	WSSCREEN_REVERSE
+	.name = "std",
+	.ncols = 0,
+	.nrows = 0,
+	.textops = NULL,
+	.fontwidth = 0,
+	.fontheight = 0,
+	.capabilities = WSSCREEN_REVERSE
 };
 
 static const struct wsscreen_descr *fb_scrlist[] = {
@@ -101,7 +103,8 @@ static const struct wsscreen_descr *fb_scrlist[] = {
 };
 
 static struct wsscreen_list fb_screenlist = {
-	__arraycount(fb_scrlist), fb_scrlist
+	.nscreens = __arraycount(fb_scrlist),
+	.screens  = fb_scrlist
 };
 
 #define NWB253_VRAM   ((uint8_t *) 0x88000000)
