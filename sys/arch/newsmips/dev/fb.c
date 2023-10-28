@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.30 2023/10/28 19:55:18 tsutsui Exp $	*/
+/*	$NetBSD: fb.c,v 1.31 2023/10/28 20:00:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.30 2023/10/28 19:55:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.31 2023/10/28 20:00:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.30 2023/10/28 19:55:18 tsutsui Exp $");
 #include <dev/rasops/rasops.h>
 
 struct fb_devconfig {
-	u_char *dc_fbbase;		/* VRAM base address */
+	uint8_t *dc_fbbase;		/* VRAM base address */
 	struct rasops_info dc_ri;
 };
 
@@ -134,7 +134,7 @@ fb_attach(device_t parent, device_t self, void *aux)
 	struct fb_devconfig *dc;
 	struct rasops_info *ri;
 	int console;
-	volatile u_short *ctlreg = NWB253_CTLREG;
+	volatile uint16_t *ctlreg = NWB253_CTLREG;
 	int id;
 
 	sc->sc_dev = self;
@@ -261,7 +261,7 @@ fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case WSDISPLAYIO_SVIDEO:
 		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF) {
-			volatile u_short *ctlreg = NWB253_CTLREG;
+			volatile uint16_t *ctlreg = NWB253_CTLREG;
 			*ctlreg = 0;			/* stop crtc */
 		} else
 			fb253_init();
@@ -457,8 +457,8 @@ fb253_init(void)
 #if 0
 static struct wsdisplay_font newsrom8x16;
 static struct wsdisplay_font newsrom12x24;
-static char fontarea16[96][32];
-static char fontarea24[96][96];
+static uint8_t fontarea16[96][32];
+static uint8_t fontarea24[96][96];
 
 void
 initfont(struct rasops_info *ri)
@@ -467,8 +467,8 @@ initfont(struct rasops_info *ri)
 
 	for (c = 0; c < 96; c++) {
 		x = ((c & 0x1f) | ((c & 0xe0) << 2)) << 7;
-		memcpy(fontarea16 + c, (char *)0xb8e00000 + x + 96, 32);
-		memcpy(fontarea24 + c, (char *)0xb8e00000 + x, 96);
+		memcpy(fontarea16 + c, (uint8_t *)0xb8e00000 + x + 96, 32);
+		memcpy(fontarea24 + c, (uint8_t *)0xb8e00000 + x, 96);
 	}		      
 
 	newsrom8x16.name = "rom8x16";
