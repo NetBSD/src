@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.143 2023/02/12 14:50:41 abs Exp $
+# $NetBSD: GENERIC,v 1.144 2023/10/28 19:34:44 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.143 $"
+#ident 		"GENERIC-$Revision: 1.144 $"
 
 maxusers	16
 
@@ -126,7 +126,8 @@ options 	NFS_BOOT_DHCP
 # wscons options
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
-options 	FONT_GALLANT12x22
+#options 	FONT_GALLANT12x22
+options 	FONT_SONY12x24
 
 config	netbsd	root on ? type ?
 
