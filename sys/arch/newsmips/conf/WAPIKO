@@ -1,15 +1,15 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.50 2023/10/28 19:34:44 tsutsui Exp $
+# 	$NetBSD: WAPIKO,v 1.51 2023/10/28 19:46:49 tsutsui Exp $
 #
 include 	"arch/newsmips/conf/std.newsmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-maxusers	16
+makeoptions	COPTS="-O2 -fno-unwind-tables"
 
-makeoptions	COPTS="-O2 -pipe"
+maxusers	16
 
 options 	news3400
 options 	MIPS1			# R2000/R3000 support

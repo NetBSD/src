@@ -1,10 +1,12 @@
-# 	$NetBSD: DEJIKO,v 1.36 2023/10/28 19:34:44 tsutsui Exp $
+# 	$NetBSD: DEJIKO,v 1.37 2023/10/28 19:46:49 tsutsui Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
 include 	"arch/newsmips/conf/std.newsmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+makeoptions	COPTS="-O2 -fno-unwind-tables"
 
 maxusers	16
 
