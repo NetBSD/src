@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2023/03/30 15:03:35 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2023/10/29 08:04:18 skrll Exp $
 
 .if defined(LIB)
 
@@ -18,6 +18,7 @@ SRCS+=	atomic_add_32_cas.c atomic_add_32_nv_cas.c \
 .  if (${LIB} == "c" || ${LIB} == "pthread")
 
 SRCS+=	atomic_init_testset.c
+CPPFLAGS+= -D__HAVE_ATOMIC_CAS_64_UP
 SRCS+=	atomic_cas_up.S
 CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_UP
 CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_16_UP
