@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.148 2023/10/29 16:52:17 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.149 2023/10/29 18:03:23 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12782,4 +12782,15 @@ sys/arch/evbarm/evbarm/autoconf.c		1.25
 	evbarm: PR 57324: allow "root=xxx" command line to override platform
 	defaults.
 	[mrg, ticket #437]
+
+xsrc/external/mit/xorg-server.old/dist/Xi/xiproperty.c 1.2
+xsrc/external/mit/xorg-server.old/dist/dix/enterleave.h 1.2
+xsrc/external/mit/xorg-server.old/dist/include/eventstr.h 1.2
+xsrc/external/mit/xorg-server.old/dist/mi/mipointer.c 1.2
+xsrc/external/mit/xorg-server.old/dist/os/auth.c	1.4
+xsrc/external/mit/xorg-server.old/dist/randr/rrproperty.c 1.2
+
+	Merge security fixes from xorg-server 21.1.9 into xorg-server 1.10.6.
+	Fixes CVE-2023-5367 and CVE-2023-5380.
+	[mrg, ticket #438]
 
