@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.147 2023/10/26 15:24:13 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.148 2023/10/29 16:52:17 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12776,4 +12776,10 @@ share/mk/bsd.x11.mk				1.151
 	Import of xorg-server-21.1.9.
 	Fixes CVE-2023-5367 and CVE-2023-5380.
 	[mrg, ticket #436]
+
+sys/arch/evbarm/evbarm/autoconf.c		1.25
+
+	evbarm: PR 57324: allow "root=xxx" command line to override platform
+	defaults.
+	[mrg, ticket #437]
 
