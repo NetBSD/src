@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.112 2023/10/26 15:13:05 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.113 2023/10/29 16:49:54 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2356,4 +2356,26 @@ sys/dev/pci/mpii.c				1.30
 	Do not reset xs->resid when encountering a
 	MPII_SCSIIO_STATUS_CHECK_COND condition.
 	[buhrow, ticket #1756]
+
+xsrc/external/mit/xorg-server.old/dist/Xi/xiproperty.c 1.2
+xsrc/external/mit/xorg-server.old/dist/dix/enterleave.h 1.2
+xsrc/external/mit/xorg-server.old/dist/include/eventstr.h 1.2
+xsrc/external/mit/xorg-server.old/dist/mi/mipointer.c 1.2
+xsrc/external/mit/xorg-server.old/dist/os/auth.c	1.4
+xsrc/external/mit/xorg-server.old/dist/randr/rrproperty.c 1.2
+
+	Merge security fixes from xorg-server 21.1.9 into xorg-server 1.10.6.
+	Fixes CVE-2023-5367 and CVE-2023-5380.
+	[mrg, ticket #1757]
+
+xsrc/external/mit/xorg-server/dist/Xi/xiproperty.c	(apply patch)
+xsrc/external/mit/xorg-server/dist/dix/enterleave.h	(apply patch)
+xsrc/external/mit/xorg-server/dist/include/eventstr.h	(apply patch)
+xsrc/external/mit/xorg-server/dist/mi/mipointer.c	(apply patch)
+xsrc/external/mit/xorg-server/dist/os/auth.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/randr/rrproperty.c	(apply patch)
+
+	Merge security fixes from xorg-server 21.1.9 into xorg-server 1.20.5.
+	Fixes CVE-2023-5367 and CVE-2023-5380.
+	[mrg, ticket #1758]
 
