@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.27 2023/10/26 18:02:50 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.28 2023/10/29 14:55:16 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.27 2023/10/26 18:02:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.28 2023/10/29 14:55:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -203,7 +203,7 @@ eqos_update_link(struct eqos_softc *sc)
 {
 	struct mii_data * const mii = &sc->sc_mii;
 	uint64_t baudrate;
-	uint32_t conf;
+	uint32_t conf, flow;
 
 	baudrate = ifmedia_baudrate(mii->mii_media_active);
 
@@ -227,13 +227,28 @@ eqos_update_link(struct eqos_softc *sc)
 		break;
 	}
 
+	/* Set duplex. */
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
 		conf |= GMAC_MAC_CONFIGURATION_DM;
 	} else {
 		conf &= ~GMAC_MAC_CONFIGURATION_DM;
 	}
-
 	WR4(sc, GMAC_MAC_CONFIGURATION, conf);
+
+	/* Set TX flow control. */
+	if (mii->mii_media_active & IFM_ETH_TXPAUSE) {
+		flow = GMAC_MAC_Q0_TX_FLOW_CTRL_TFE;
+		flow |= 0xFFFFU << GMAC_MAC_Q0_TX_FLOW_CTRL_PT_SHIFT;
+	} else
+		flow = 0;
+	WR4(sc, GMAC_MAC_Q0_TX_FLOW_CTRL, flow);
+
+	/* Set RX flow control. */
+	if (mii->mii_media_active & IFM_ETH_RXPAUSE)
+		flow = GMAC_MAC_RX_FLOW_CTRL_RFE;
+	else
+		flow = 0;
+	WR4(sc, GMAC_MAC_RX_FLOW_CTRL, flow);
 }
 
 static void
@@ -658,14 +673,12 @@ eqos_init_locked(struct eqos_softc *sc)
 	val |= __SHIFTIN(rqs, GMAC_MTL_RXQ0_OPERATION_MODE_RQS);
 	WR4(sc, GMAC_MTL_RXQ0_OPERATION_MODE, val);
 
-	/* Enable flow control */
-	val = RD4(sc, GMAC_MAC_Q0_TX_FLOW_CTRL);
-	val |= 0xFFFFU << GMAC_MAC_Q0_TX_FLOW_CTRL_PT_SHIFT;
-	val |= GMAC_MAC_Q0_TX_FLOW_CTRL_TFE;
-	WR4(sc, GMAC_MAC_Q0_TX_FLOW_CTRL, val);
-	val = RD4(sc, GMAC_MAC_RX_FLOW_CTRL);
-	val |= GMAC_MAC_RX_FLOW_CTRL_RFE;
-	WR4(sc, GMAC_MAC_RX_FLOW_CTRL, val);
+	/*
+	 * Disable flow control.
+	 * It'll be configured later from the negotiated result.
+	 */
+	WR4(sc, GMAC_MAC_Q0_TX_FLOW_CTRL, 0);
+	WR4(sc, GMAC_MAC_RX_FLOW_CTRL, 0);
 
 	/* set RX queue mode. must be in DCB mode. */
 	val = __SHIFTIN(GMAC_RXQ_CTRL0_EN_DCB, GMAC_RXQ_CTRL0_EN_MASK);
@@ -1431,7 +1444,6 @@ eqos_attach(struct eqos_softc *sc)
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	u_int userver, snpsver;
-	int mii_flags = 0;
 	int error;
 	int n;
 
@@ -1556,7 +1568,7 @@ eqos_attach(struct eqos_softc *sc)
 	mii->mii_writereg = eqos_mii_writereg;
 	mii->mii_statchg = eqos_mii_statchg;
 	mii_attach(sc->sc_dev, mii, 0xffffffff, sc->sc_phy_id, MII_OFFSET_ANY,
-	    mii_flags);
+	    MIIF_DOPAUSE);
 
 	if (LIST_EMPTY(&mii->mii_phys)) {
 		aprint_error_dev(sc->sc_dev, "no PHY found!\n");
