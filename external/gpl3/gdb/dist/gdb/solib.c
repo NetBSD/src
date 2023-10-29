@@ -482,7 +482,7 @@ solib_bfd_open (const char *pathname)
 	  char buf[SO_NAME_MAX_PATH_SIZE], arch[128], *colon;
           struct stat st;
 
-	  strlcpy(arch, b->printable_name, sizeof(arch));
+	  snprintf(arch, sizeof(arch), "%s", b->printable_name);
 	  if ((colon = strchr(arch, ':')) != NULL)
 		*colon = '\0';
 	  snprintf(buf, sizeof(buf), "%.*s/%s/%s",
