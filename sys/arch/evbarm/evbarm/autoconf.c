@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23.18.1 2023/10/20 16:13:03 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23.18.2 2023/10/29 16:51:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23.18.1 2023/10/20 16:13:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23.18.2 2023/10/29 16:51:28 martin Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -107,9 +107,6 @@ set_root_device(void)
 {
 	char *ptr, *end, *buf;
 	size_t len;
-
-	if (booted_device)
-		return;
 
 	if (boot_args == NULL)
 		return;
