@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.344 2023/10/18 03:52:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.345 2023/10/30 02:46:28 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.344 2023/10/18 03:52:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.345 2023/10/30 02:46:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -723,7 +723,7 @@ ixgbe_initialize_transmit_units(struct ixgbe_softc *sc)
 
 		txr->txr_no_space = false;
 
-		/* Disable Head Writeback */
+		/* Disable relax ordering */
 		/*
 		 * Note: for X550 series devices, these registers are actually
 		 * prefixed with TPH_ instead of DCA_, but the addresses and
