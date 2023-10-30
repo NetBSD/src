@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.71 2023/07/28 12:03:33 wiz Exp $	*/
+/*	$NetBSD: iostat.c,v 1.72 2023/10/30 19:43:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.71 2023/07/28 12:03:33 wiz Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.72 2023/10/30 19:43:33 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -357,8 +357,11 @@ main(int argc, char *argv[])
 	do_header = 1;
 
 	for (hdrcnt = 1;;) {
-		if (ISSET(todo, SHOW_STATS_X | SHOW_STATS_3 | SHOW_STATS_Y)) {
+		if (ISSET(todo, SHOW_STATS_X | SHOW_STATS_Y)) {
 			lines = ndrives;
+			hdroffset = 3;
+		} else if (ISSET(todo, SHOW_STATS_3)) {
+			lines = 1;
 			hdroffset = 3;
 		} else {
 			lines = 1;
