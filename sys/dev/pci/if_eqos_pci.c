@@ -1,4 +1,4 @@
-/* $NetBSD: if_eqos_pci.c,v 1.2 2023/10/26 18:02:51 msaitoh Exp $ */
+/* $NetBSD: if_eqos_pci.c,v 1.3 2023/10/31 13:57:08 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2023 Masanobu SAITOH <msaitoh@netbsd.org>
@@ -35,7 +35,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eqos_pci.c,v 1.2 2023/10/26 18:02:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eqos_pci.c,v 1.3 2023/10/31 13:57:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,17 +130,11 @@ eqos_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bsh = memh;
 	prop = device_properties(sc->sc_dev);
 
-#if 0 /* I don't know why dmat64 doesn't work... */
-	if (pci_dma64_available(pa)) {
-		aprint_verbose(", 64-bit DMA");
+	if (pci_dma64_available(pa))
 		sc->sc_dmat = pa->pa_dmat64;
-	} else  {
-		aprint_verbose(", 32-bit DMA");
+	else
 		sc->sc_dmat = pa->pa_dmat;
-	}
-#else
-	sc->sc_dmat = pa->pa_dmat;
-#endif
+
 	sc->sc_phy_id = MII_PHY_ANY;
 	switch (psc->sc_pcidevid) {
 	case PCI_PRODUCT_INTEL_EHL_ETH:
@@ -153,6 +147,7 @@ eqos_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_EHL_PSE_ETH_1_SGMII_1G:
 	case PCI_PRODUCT_INTEL_EHL_PSE_ETH_0_SGMII_2_5G:
 	case PCI_PRODUCT_INTEL_EHL_PSE_ETH_1_SGMII_2_5G:
+		sc->sc_dmat = pa->pa_dmat; /* 32bit DMA only */
 		sc->sc_csr_clock = 200000000;
 		dma_pbl = 32;
 		break;
@@ -163,6 +158,12 @@ eqos_pci_attach(device_t parent, device_t self, void *aux)
 	default:
 		sc->sc_csr_clock = 200000000; /* XXX */
 	}
+
+	if (sc->sc_dmat == pa->pa_dmat64)
+		aprint_verbose(", 64-bit DMA");
+	else
+		aprint_verbose(", 32-bit DMA");
+
 	/* Defaults */
 	if (dma_pbl != 0) {
 		prop = device_properties(sc->sc_dev);
