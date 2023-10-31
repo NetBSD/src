@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.78 2023/07/15 21:18:06 gutteridge Exp $
+.\" $NetBSD: gpt.8,v 1.79 2023/10/31 12:09:48 martin Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -160,7 +160,7 @@ or
 .Sq S
 then size is in sectors, otherwise size is in bytes which must be
 a multiple of the device's sector size.
-Accepted suffix units are
+Accepted suffix units (case insensitive) are
 .Sq b
 to denote bytes,
 .Sq k
@@ -168,7 +168,13 @@ to denote kilobytes,
 .Sq m
 to denote megabytes and
 .Sq g
-to denote gigabytes.
+to denote gigabytes,
+.Sq t
+to denote terabytes,
+.Sq p
+to denote petabytes, and
+.Sq e
+to denote exabytes.
 The minimum size is 1 sector.
 .Pp
 The
