@@ -1,5 +1,6 @@
-/*	$NetBSD: channels.c,v 1.38.2.1 2023/08/11 15:36:39 martin Exp $	*/
-/* $OpenBSD: channels.c,v 1.430 2023/03/10 03:01:51 dtucker Exp $ */
+/*	$NetBSD: channels.c,v 1.38.2.2 2023/11/02 22:15:21 sborrill Exp $	*/
+/* $OpenBSD: channels.c,v 1.433 2023/09/04 00:01:46 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.38.2.1 2023/08/11 15:36:39 martin Exp $");
+__RCSID("$NetBSD: channels.c,v 1.38.2.2 2023/11/02 22:15:21 sborrill Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -154,7 +155,7 @@ struct permission_set {
 /* Used to record timeouts per channel type */
 struct ssh_channel_timeout {
 	char *type_pattern;
-	u_int timeout_secs;
+	int timeout_secs;
 };
 
 /* Master structure for channels state */
@@ -313,11 +314,11 @@ channel_lookup(struct ssh *ssh, int id)
  */
 void
 channel_add_timeout(struct ssh *ssh, const char *type_pattern,
-    u_int timeout_secs)
+    int timeout_secs)
 {
 	struct ssh_channels *sc = ssh->chanctxt;
 
-	debug2_f("channel type \"%s\" timeout %u seconds",
+	debug2_f("channel type \"%s\" timeout %d seconds",
 	    type_pattern, timeout_secs);
 	sc->timeouts = xrecallocarray(sc->timeouts, sc->ntimeouts,
 	    sc->ntimeouts + 1, sizeof(*sc->timeouts));
@@ -341,7 +342,7 @@ channel_clear_timeouts(struct ssh *ssh)
 	sc->ntimeouts = 0;
 }
 
-static u_int
+static int
 lookup_timeout(struct ssh *ssh, const char *type)
 {
 	struct ssh_channels *sc = ssh->chanctxt;
@@ -1654,7 +1655,7 @@ channel_decode_socks5(Channel *c, struct sshbuf *input, struct sshbuf *output)
 
 Channel *
 channel_connect_stdio_fwd(struct ssh *ssh,
-    const char *host_to_connect, u_short port_to_connect,
+    const char *host_to_connect, int port_to_connect,
     int in, int out, int nonblock)
 {
 	Channel *c;
@@ -1671,7 +1672,8 @@ channel_connect_stdio_fwd(struct ssh *ssh,
 	c->force_drain = 1;
 
 	channel_register_fds(ssh, c, in, out, -1, 0, 1, 0);
-	port_open_helper(ssh, c, "direct-tcpip");
+	port_open_helper(ssh, c, port_to_connect == PORT_STREAMLOCAL ?
+	    "direct-streamlocal@openssh.com" : "direct-tcpip");
 
 	return c;
 }
@@ -2890,8 +2892,9 @@ channel_after_poll(struct ssh *ssh, struct pollfd *pfd, u_int npfd)
 
 /*
  * Enqueue data for channels with open or draining c->input.
+ * Returns non-zero if a packet was enqueued.
  */
-static void
+static int
 channel_output_poll_input_open(struct ssh *ssh, Channel *c)
 {
 	size_t len, plen;
@@ -2914,7 +2917,7 @@ channel_output_poll_input_open(struct ssh *ssh, Channel *c)
 			else
 				chan_ibuf_empty(ssh, c);
 		}
-		return;
+		return 0;
 	}
 
 	if (!c->have_remote_id)
@@ -2931,7 +2934,7 @@ channel_output_poll_input_open(struct ssh *ssh, Channel *c)
 		 */
 		if (plen > c->remote_window || plen > c->remote_maxpacket) {
 			debug("channel %d: datagram too big", c->self);
-			return;
+			return 0;
 		}
 		/* Enqueue it */
 		if ((r = sshpkt_start(ssh, SSH2_MSG_CHANNEL_DATA)) != 0 ||
@@ -2940,7 +2943,7 @@ channel_output_poll_input_open(struct ssh *ssh, Channel *c)
 		    (r = sshpkt_send(ssh)) != 0)
 			fatal_fr(r, "channel %i: send datagram", c->self);
 		c->remote_window -= plen;
-		return;
+		return 1;
 	}
 
 	/* Enqueue packet for buffered data. */
@@ -2949,7 +2952,7 @@ channel_output_poll_input_open(struct ssh *ssh, Channel *c)
 	if (len > c->remote_maxpacket)
 		len = c->remote_maxpacket;
 	if (len == 0)
-		return;
+		return 0;
 	if ((r = sshpkt_start(ssh, SSH2_MSG_CHANNEL_DATA)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
 	    (r = sshpkt_put_string(ssh, sshbuf_ptr(c->input), len)) != 0 ||
@@ -2958,19 +2961,21 @@ channel_output_poll_input_open(struct ssh *ssh, Channel *c)
 	if ((r = sshbuf_consume(c->input, len)) != 0)
 		fatal_fr(r, "channel %i: consume", c->self);
 	c->remote_window -= len;
+	return 1;
 }
 
 /*
  * Enqueue data for channels with open c->extended in read mode.
+ * Returns non-zero if a packet was enqueued.
  */
-static void
+static int
 channel_output_poll_extended_read(struct ssh *ssh, Channel *c)
 {
 	size_t len;
 	int r;
 
 	if ((len = sshbuf_len(c->extended)) == 0)
-		return;
+		return 0;
 
 	debug2("channel %d: rwin %u elen %zu euse %d", c->self,
 	    c->remote_window, sshbuf_len(c->extended), c->extended_usage);
@@ -2979,7 +2984,7 @@ channel_output_poll_extended_read(struct ssh *ssh, Channel *c)
 	if (len > c->remote_maxpacket)
 		len = c->remote_maxpacket;
 	if (len == 0)
-		return;
+		return 0;
 	if (!c->have_remote_id)
 		fatal_f("channel %d: no remote id", c->self);
 	if ((r = sshpkt_start(ssh, SSH2_MSG_CHANNEL_EXTENDED_DATA)) != 0 ||
@@ -2992,15 +2997,20 @@ channel_output_poll_extended_read(struct ssh *ssh, Channel *c)
 		fatal_fr(r, "channel %i: consume", c->self);
 	c->remote_window -= len;
 	debug2("channel %d: sent ext data %zu", c->self, len);
+	return 1;
 }
 
-/* If there is data to send to the connection, enqueue some of it now. */
-void
+/*
+ * If there is data to send to the connection, enqueue some of it now.
+ * Returns non-zero if data was enqueued.
+ */
+int
 channel_output_poll(struct ssh *ssh)
 {
 	struct ssh_channels *sc = ssh->chanctxt;
 	Channel *c;
 	u_int i;
+	int ret = 0;
 
 	for (i = 0; i < sc->channels_alloc; i++) {
 		c = sc->channels[i];
@@ -3023,12 +3033,13 @@ channel_output_poll(struct ssh *ssh)
 		/* Get the amount of buffered data for this channel. */
 		if (c->istate == CHAN_INPUT_OPEN ||
 		    c->istate == CHAN_INPUT_WAIT_DRAIN)
-			channel_output_poll_input_open(ssh, c);
+			ret |= channel_output_poll_input_open(ssh, c);
 		/* Send extended data, i.e. stderr */
 		if (!(c->flags & CHAN_EOF_SENT) &&
 		    c->extended_usage == CHAN_EXTENDED_READ)
-			channel_output_poll_extended_read(ssh, c);
+			ret |= channel_output_poll_extended_read(ssh, c);
 	}
+	return ret;
 }
 
 /* -- mux proxy support  */

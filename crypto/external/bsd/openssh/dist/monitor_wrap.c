@@ -1,5 +1,6 @@
-/*	$NetBSD: monitor_wrap.c,v 1.31.2.1 2023/08/11 15:36:39 martin Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.126 2023/01/06 02:47:18 djm Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.31.2.2 2023/11/02 22:15:21 sborrill Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.128 2023/03/31 00:44:29 dtucker Exp $ */
+
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.31.2.1 2023/08/11 15:36:39 martin Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.31.2.2 2023/11/02 22:15:21 sborrill Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -563,10 +564,8 @@ mm_pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, size_t namebuflen)
 	if ((tmp1 = dup(pmonitor->m_recvfd)) == -1 ||
 	    (tmp2 = dup(pmonitor->m_recvfd)) == -1) {
 		error_f("cannot allocate fds for pty");
-		if (tmp1 > 0)
+		if (tmp1 >= 0)
 			close(tmp1);
-		if (tmp2 > 0)
-			close(tmp2);
 		return 0;
 	}
 	close(tmp1);

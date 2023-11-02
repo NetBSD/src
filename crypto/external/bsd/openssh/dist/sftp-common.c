@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-common.c,v 1.13 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: sftp-common.c,v 1.33 2022/09/19 10:41:58 djm Exp $ */
+/*	$NetBSD: sftp-common.c,v 1.13.2.1 2023/11/02 22:15:22 sborrill Exp $	*/
+/* $OpenBSD: sftp-common.c,v 1.34 2023/03/31 04:00:37 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-common.c,v 1.13 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: sftp-common.c,v 1.13.2.1 2023/11/02 22:15:22 sborrill Exp $");
 
 #include <sys/param.h>	/* MAX */
 #include <sys/types.h>
@@ -140,6 +140,8 @@ decode_attrib(struct sshbuf *b, Attrib *a)
 
 		if ((r = sshbuf_get_u32(b, &count)) != 0)
 			return r;
+		if (count > 0x100000)
+			return SSH_ERR_INVALID_FORMAT;
 		for (i = 0; i < count; i++) {
 			if ((r = sshbuf_get_cstring(b, &type, NULL)) != 0 ||
 			    (r = sshbuf_get_string(b, &data, &dlen)) != 0)

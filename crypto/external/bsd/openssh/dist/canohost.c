@@ -1,5 +1,6 @@
-/*	$NetBSD: canohost.c,v 1.14.6.1 2023/08/11 15:36:39 martin Exp $	*/
-/* $OpenBSD: canohost.c,v 1.76 2023/03/03 05:00:34 djm Exp $ */
+/*	$NetBSD: canohost.c,v 1.14.6.2 2023/11/02 22:15:21 sborrill Exp $	*/
+/* $OpenBSD: canohost.c,v 1.77 2023/03/31 04:42:29 dtucker Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: canohost.c,v 1.14.6.1 2023/08/11 15:36:39 martin Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.14.6.2 2023/11/02 22:15:21 sborrill Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -133,6 +134,8 @@ get_sock_port(int sock, int local)
 	char strport[NI_MAXSERV];
 	int r;
 
+	if (sock < 0)
+		return -1;
 	/* Get IP address of client. */
 	fromlen = sizeof(from);
 	memset(&from, 0, sizeof(from));

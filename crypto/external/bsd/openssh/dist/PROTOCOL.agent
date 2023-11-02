@@ -1,6 +1,6 @@
-$NetBSD: PROTOCOL.agent,v 1.13 2022/10/05 22:39:36 christos Exp $
+$NetBSD: PROTOCOL.agent,v 1.13.2.1 2023/11/02 22:15:21 sborrill Exp $
 The SSH agent protocol is described in
-https://tools.ietf.org/html/draft-miller-ssh-agent-04
+https://tools.ietf.org/html/draft-miller-ssh-agent
 
 This file documents OpenSSH's extensions to the agent protocol.
 
@@ -32,7 +32,7 @@ should be bound for user authentication or forwarding.
 When an agent received this message, it will verify the signature and
 check the consistency of its contents, including refusing to accept
 a duplicate session identifier, or any attempt to bind a connection
-previously bound for authentication. It will then then record the
+previously bound for authentication. It will then record the
 binding for the life of the connection for use later in testing per-key
 destination constraints.
 
@@ -82,4 +82,4 @@ the constraint is:
 
 This option is only valid for XMSS keys.
 
-$OpenBSD: PROTOCOL.agent,v 1.18 2022/09/21 22:26:50 dtucker Exp $
+$OpenBSD: PROTOCOL.agent,v 1.20 2023/10/03 23:56:10 djm Exp $

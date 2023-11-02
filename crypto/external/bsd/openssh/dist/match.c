@@ -1,5 +1,5 @@
-/*	$NetBSD: match.c,v 1.15 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: match.c,v 1.43 2020/11/03 22:53:12 djm Exp $ */
+/*	$NetBSD: match.c,v 1.15.6.1 2023/11/02 22:15:21 sborrill Exp $	*/
+/* $OpenBSD: match.c,v 1.44 2023/04/06 03:19:32 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: match.c,v 1.15 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: match.c,v 1.15.6.1 2023/11/02 22:15:21 sborrill Exp $");
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -243,6 +243,9 @@ match_user(const char *user, const char *host, const char *ipaddr,
 			return -1;
 		return 0;
 	}
+
+	if (user == NULL)
+		return 0; /* shouldn't happen */
 
 	if ((p = strchr(pattern, '@')) == NULL)
 		return match_pattern(user, pattern);

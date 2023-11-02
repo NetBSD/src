@@ -1,5 +1,6 @@
-/*	$NetBSD: sshkey.c,v 1.29.2.1 2023/08/11 15:36:40 martin Exp $	*/
-/* $OpenBSD: sshkey.c,v 1.134 2022/10/28 02:47:04 djm Exp $ */
+/*	$NetBSD: sshkey.c,v 1.29.2.2 2023/11/02 22:15:22 sborrill Exp $	*/
+/* $OpenBSD: sshkey.c,v 1.138 2023/08/21 04:36:46 djm Exp $ */
+
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -26,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey.c,v 1.29.2.1 2023/08/11 15:36:40 martin Exp $");
+__RCSID("$NetBSD: sshkey.c,v 1.29.2.2 2023/11/02 22:15:22 sborrill Exp $");
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -41,6 +42,7 @@ __RCSID("$NetBSD: sshkey.c,v 1.29.2.1 2023/08/11 15:36:40 martin Exp $");
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <util.h>
 #include <limits.h>
@@ -71,7 +73,7 @@ __RCSID("$NetBSD: sshkey.c,v 1.29.2.1 2023/08/11 15:36:40 martin Exp $");
 #define AUTH_MAGIC		"openssh-key-v1"
 #define SALT_LEN		16
 #define DEFAULT_CIPHERNAME	"aes256-ctr"
-#define	DEFAULT_ROUNDS		16
+#define	DEFAULT_ROUNDS		24
 
 /* Version identification string for SSH v1 identity files. */
 #define LEGACY_BEGIN		"SSH PRIVATE KEY FILE FORMAT 1.1\n"
@@ -322,7 +324,7 @@ sshkey_alg_list(int certs_only, int plain_only, int include_sigonly, char sep)
 }
 
 int
-sshkey_names_valid2(const char *names, int allow_wildcard)
+sshkey_names_valid2(const char *names, int allow_wildcard, int plain_only)
 {
 	char *s, *cp, *p;
 	const struct sshkey_impl *impl;
@@ -353,6 +355,9 @@ sshkey_names_valid2(const char *names, int allow_wildcard)
 				if (impl != NULL)
 					continue;
 			}
+			free(s);
+			return 0;
+		} else if (plain_only && sshkey_type_is_cert(type)) {
 			free(s);
 			return 0;
 		}
@@ -2713,7 +2718,6 @@ sshkey_private_to_blob2(struct sshkey *prv, struct sshbuf *blob,
 {
 	u_char *cp, *key = NULL, *pubkeyblob = NULL;
 	u_char salt[SALT_LEN];
-	char *b64 = NULL;
 	size_t i, pubkeylen, keylen, ivlen, blocksize, authlen;
 	u_int check;
 	int r = SSH_ERR_INTERNAL_ERROR;
@@ -2830,8 +2834,6 @@ sshkey_private_to_blob2(struct sshkey *prv, struct sshbuf *blob,
 		freezero(key, keylen + ivlen);
 	if (pubkeyblob != NULL)
 		freezero(pubkeyblob, pubkeylen);
-	if (b64 != NULL)
-		freezero(b64, strlen(b64));
 	return r;
 }
 

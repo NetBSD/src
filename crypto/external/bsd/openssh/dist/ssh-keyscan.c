@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.30.2.1 2023/08/11 15:36:40 martin Exp $	*/
-/* $OpenBSD: ssh-keyscan.c,v 1.151 2023/02/10 06:41:53 jmc Exp $ */
+/*	$NetBSD: ssh-keyscan.c,v 1.30.2.2 2023/11/02 22:15:22 sborrill Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.153 2023/06/21 05:06:04 djm Exp $ */
+
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -9,7 +10,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.30.2.1 2023/08/11 15:36:40 martin Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.30.2.2 2023/11/02 22:15:22 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -23,6 +24,7 @@ __RCSID("$NetBSD: ssh-keyscan.c,v 1.30.2.1 2023/08/11 15:36:40 martin Exp $");
 #endif
 
 #include <errno.h>
+#include <limits.h>
 #include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -131,10 +133,10 @@ fdlim_get(int hard)
 
 	if (getrlimit(RLIMIT_NOFILE, &rlfd) == -1)
 		return (-1);
-	if ((hard ? rlfd.rlim_max : rlfd.rlim_cur) == RLIM_INFINITY)
+	if ((hard ? rlfd.rlim_max : rlfd.rlim_cur) == RLIM_INFINITY ||
+	    (hard ? rlfd.rlim_max : rlfd.rlim_cur) > INT_MAX)
 		return sysconf(_SC_OPEN_MAX);
-	else
-		return hard ? rlfd.rlim_max : rlfd.rlim_cur;
+	return hard ? rlfd.rlim_max : rlfd.rlim_cur;
 }
 
 static int
@@ -299,6 +301,7 @@ keyprint_one(const char *host, struct sshkey *key)
 {
 	char *hostport = NULL, *hashed = NULL;
 	const char *known_host;
+	int r = 0;
 
 	found_one = 1;
 
@@ -313,9 +316,9 @@ keyprint_one(const char *host, struct sshkey *key)
 		fatal("host_hash failed");
 	known_host = hash_hosts ? hashed : hostport;
 	if (!get_cert)
-		fprintf(stdout, "%s ", known_host);
-	sshkey_write(key, stdout);
-	fputs("\n", stdout);
+		r = fprintf(stdout, "%s ", known_host);
+	if (r >= 0 && sshkey_write(key, stdout) == 0)
+		(void)fputs("\n", stdout);
 	free(hashed);
 	free(hostport);
 }

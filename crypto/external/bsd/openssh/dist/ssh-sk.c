@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-sk.c,v 1.7 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: ssh-sk.c,v 1.39 2022/07/20 03:29:14 djm Exp $ */
+/*	$NetBSD: ssh-sk.c,v 1.7.2.1 2023/11/02 22:15:22 sborrill Exp $	*/
+/* $OpenBSD: ssh-sk.c,v 1.40 2023/07/19 14:02:27 djm Exp $ */
 
 /*
  * Copyright (c) 2019 Google LLC
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-sk.c,v 1.7 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: ssh-sk.c,v 1.7.2.1 2023/11/02 22:15:22 sborrill Exp $");
 
 /* #define DEBUG_SK 1 */
 
@@ -117,15 +117,18 @@ sshsk_open(const char *path)
 		ret->sk_load_resident_keys = ssh_sk_load_resident_keys;
 		return ret;
 	}
+	if (lib_contains_symbol(path, "sk_api_version") != 0) {
+		error("provider %s is not an OpenSSH FIDO library", path);
+		goto fail;
+	}
 	if ((ret->dlhandle = dlopen(path, RTLD_NOW)) == NULL) {
 		error("Provider \"%s\" dlopen failed: %s", path, dlerror());
 		goto fail;
 	}
 	if ((ret->sk_api_version = dlsym(ret->dlhandle,
 	    "sk_api_version")) == NULL) {
-		error("Provider \"%s\" dlsym(sk_api_version) failed: %s",
+		fatal("Provider \"%s\" dlsym(sk_api_version) failed: %s",
 		    path, dlerror());
-		goto fail;
 	}
 	version = ret->sk_api_version();
 	debug_f("provider %s implements version 0x%08lx", ret->path,

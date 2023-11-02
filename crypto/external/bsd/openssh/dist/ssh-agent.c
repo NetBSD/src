@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-agent.c,v 1.34.2.1 2023/08/11 15:36:40 martin Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.297 2023/03/09 21:06:24 jcs Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.34.2.2 2023/11/02 22:15:22 sborrill Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.300 2023/07/19 13:56:33 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.34.2.1 2023/08/11 15:36:40 martin Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.34.2.2 2023/11/02 22:15:22 sborrill Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -842,8 +843,8 @@ process_sign_request2(SocketEntry *e)
 	}
 	/* Success */
 	ok = 0;
- send:
 	debug_f("good signature");
+ send:
 	notify_complete(notifier, "User presence confirmed");
 
 	if (ok == 0) {
@@ -2054,8 +2055,8 @@ main(int ac, char **av)
 	sanitise_stdfd();
 
 	/* drop */
-	setegid(getgid());
-	setgid(getgid());
+	(void)setegid(getgid());
+	(void)setgid(getgid());
 
 	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
 		fatal("%s: getrlimit: %s", __progname, strerror(errno));

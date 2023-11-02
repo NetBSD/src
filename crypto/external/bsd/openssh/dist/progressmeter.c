@@ -1,5 +1,6 @@
-/*	$NetBSD: progressmeter.c,v 1.13.8.1 2023/08/11 15:36:39 martin Exp $	*/
-/* $OpenBSD: progressmeter.c,v 1.52 2023/03/08 04:43:12 guenther Exp $ */
+/*	$NetBSD: progressmeter.c,v 1.13.8.2 2023/11/02 22:15:21 sborrill Exp $	*/
+/* $OpenBSD: progressmeter.c,v 1.53 2023/04/12 14:22:04 jsg Exp $ */
+
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
  *
@@ -25,14 +26,13 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: progressmeter.c,v 1.13.8.1 2023/08/11 15:36:39 martin Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.13.8.2 2023/11/02 22:15:21 sborrill Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>

@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.24.2.1 2023/08/11 15:36:39 martin Exp $	*/
-/* $OpenBSD: misc.h,v 1.102 2023/03/03 02:37:58 dtucker Exp $ */
+/*	$NetBSD: misc.h,v 1.24.2.2 2023/11/02 22:15:21 sborrill Exp $	*/
+/* $OpenBSD: misc.h,v 1.105 2023/08/28 03:31:16 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <signal.h>
 
 /* Data structure for representing a forwarding request. */
 struct Forward {
@@ -58,7 +59,7 @@ char	*get_rdomain(int);
 int	 set_rdomain(int, const char *);
 int	 get_sock_af(int);
 void	 set_sock_tos(int, int);
-int	 waitrfd(int, int *);
+int	 waitrfd(int, int *, volatile sig_atomic_t *);
 int	 timeout_connect(int, const struct sockaddr *, socklen_t, int *);
 int	 a2port(const char *);
 int	 a2tun(const char *, int *);
@@ -98,6 +99,7 @@ int	 parse_absolute_time(const char *, uint64_t *);
 void	 format_absolute_time(uint64_t, char *, size_t);
 int	 path_absolute(const char *);
 int	 stdfd_devnull(int, int, int);
+int	 lib_contains_symbol(const char *, const char *);
 
 int	bcrypt_pbkdf(const char *, size_t, const u_int8_t *, size_t,
     u_int8_t *, size_t, unsigned int);
@@ -215,6 +217,7 @@ struct timespec;
 void ptimeout_init(struct timespec *pt);
 void ptimeout_deadline_sec(struct timespec *pt, long sec);
 void ptimeout_deadline_ms(struct timespec *pt, long ms);
+void ptimeout_deadline_monotime_tsp(struct timespec *pt, struct timespec *when);
 void ptimeout_deadline_monotime(struct timespec *pt, time_t when);
 int ptimeout_get_ms(struct timespec *pt);
 struct timespec *ptimeout_get_tsp(struct timespec *pt);
