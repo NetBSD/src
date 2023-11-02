@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.345 2023/10/30 02:46:28 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.346 2023/11/02 05:07:57 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.345 2023/10/30 02:46:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.346 2023/11/02 05:07:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3611,7 +3611,7 @@ static int
 ixgbe_allocate_pci_resources(struct ixgbe_softc *sc,
     const struct pci_attach_args *pa)
 {
-	pcireg_t	memtype, csr;
+	pcireg_t memtype, csr;
 	device_t dev = sc->dev;
 	bus_addr_t addr;
 	int flags;

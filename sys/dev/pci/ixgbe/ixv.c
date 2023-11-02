@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.192 2023/10/18 03:52:55 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.193 2023/11/02 05:07:57 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.192 2023/10/18 03:52:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.193 2023/11/02 05:07:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1519,8 +1519,8 @@ static int
 ixv_allocate_pci_resources(struct ixgbe_softc *sc,
     const struct pci_attach_args *pa)
 {
-	pcireg_t	memtype, csr;
-	device_t	dev = sc->dev;
+	pcireg_t memtype, csr;
+	device_t dev = sc->dev;
 	bus_addr_t addr;
 	int flags;
 

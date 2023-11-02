@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.104 2023/10/12 03:43:55 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.105 2023/11/02 05:07:57 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.104 2023/10/12 03:43:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.105 2023/11/02 05:07:57 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -123,7 +123,7 @@ static int           ixgbe_dma_malloc(struct ixgbe_softc *, bus_size_t,
                                       struct ixgbe_dma_alloc *, int);
 static void          ixgbe_dma_free(struct ixgbe_softc *, struct ixgbe_dma_alloc *);
 
-static void	ixgbe_setup_hw_rsc(struct rx_ring *);
+static void	     ixgbe_setup_hw_rsc(struct rx_ring *);
 
 /************************************************************************
  * ixgbe_legacy_start_locked - Transmit entry point
@@ -406,7 +406,7 @@ ixgbe_drain_all(struct ixgbe_softc *sc)
 static int
 ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 {
-	struct ixgbe_softc          *sc = txr->sc;
+	struct ixgbe_softc      *sc = txr->sc;
 	struct ixgbe_tx_buf     *txbuf;
 	union ixgbe_adv_tx_desc *txd = NULL;
 	struct ifnet	        *ifp = sc->ifp;
@@ -765,7 +765,7 @@ ixgbe_free_transmit_structures(struct ixgbe_softc *sc)
 static void
 ixgbe_free_transmit_buffers(struct tx_ring *txr)
 {
-	struct ixgbe_softc      *sc = txr->sc;
+	struct ixgbe_softc  *sc = txr->sc;
 	struct ixgbe_tx_buf *tx_buffer;
 	int                 i;
 
