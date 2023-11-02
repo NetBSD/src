@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.28 2023/10/29 14:55:16 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.29 2023/11/02 02:32:41 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.28 2023/10/29 14:55:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.29 2023/11/02 02:32:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,7 +75,7 @@ CTASSERT(MCLBYTES >= EQOS_RXDMA_SIZE);
 #define	EDEB_INTR		(1U << 1)
 #define	EDEB_RXRING		(1U << 2)
 #define	EDEB_TXRING		(1U << 3)
-unsigned int eqos_debug;	/* Default vaule */
+unsigned int eqos_debug;	/* Default value */
 #define	DPRINTF(FLAG, FORMAT, ...)			 \
 	if (sc->sc_debug & FLAG)			 \
 		device_printf(sc->sc_dev, "%s: " FORMAT, \
