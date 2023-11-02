@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.153 2023/11/02 14:12:18 sborrill Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.154 2023/11/02 19:33:36 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12832,4 +12832,1053 @@ usr.sbin/sysinst/msg.mi.de			1.45
 	could overflow a 80 wide char display with some partitioning
 	schemes (e.g. disklabel).
 	[martin, ticket #443]
+
+crypto/external/bsd/openssl/dist/test/certs/sm2-pub.key up to 1.1.1.1
+crypto/external/bsd/openssl/dist/test/recipes/90-test_store_cases.t up to 1.1.1.1
+crypto/external/bsd/openssl/dist/test/recipes/90-test_store_cases_data/garbage-pkcs12.p12 up to 1.1.1.1
+crypto/external/bsd/openssl/dist/appveyor.yml   delete
+crypto/external/bsd/openssl/dist/CHANGES.md     up to 1.1.1.3
+crypto/external/bsd/openssl/dist/Configure      up to 1.34
+crypto/external/bsd/openssl/dist/INSTALL.md     up to 1.1.1.2
+crypto/external/bsd/openssl/dist/NEWS.md        up to 1.1.1.3
+crypto/external/bsd/openssl/dist/README-FIPS.md up to 1.1.1.2
+crypto/external/bsd/openssl/dist/README.md      up to 1.1.1.2
+crypto/external/bsd/openssl/dist/VERSION.dat    up to 1.1.1.3
+crypto/external/bsd/openssl/dist/Configurations/10-main.conf up to 1.1.1.15
+crypto/external/bsd/openssl/dist/Configurations/README.md up to 1.1.1.2
+crypto/external/bsd/openssl/dist/Configurations/unix-Makefile.tmpl up to 1.1.1.15
+crypto/external/bsd/openssl/dist/apps/ca.c      up to 1.24
+crypto/external/bsd/openssl/dist/apps/cmp.c     up to 1.4
+crypto/external/bsd/openssl/dist/apps/cms.c     up to 1.1.1.17
+crypto/external/bsd/openssl/dist/apps/dgst.c    up to 1.1.1.19
+crypto/external/bsd/openssl/dist/apps/dhparam.c up to 1.1.1.14
+crypto/external/bsd/openssl/dist/apps/dsaparam.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/apps/enc.c     up to 1.1.1.20
+crypto/external/bsd/openssl/dist/apps/gendsa.c  up to 1.1.1.9
+crypto/external/bsd/openssl/dist/apps/genpkey.c up to 1.1.1.8
+crypto/external/bsd/openssl/dist/apps/genrsa.c  up to 1.1.1.12
+crypto/external/bsd/openssl/dist/apps/pkeyutl.c up to 1.1.1.11
+crypto/external/bsd/openssl/dist/apps/req.c     up to 1.6
+crypto/external/bsd/openssl/dist/apps/s_client.c up to 1.28
+crypto/external/bsd/openssl/dist/apps/s_server.c up to 1.29
+crypto/external/bsd/openssl/dist/apps/speed.c   up to 1.23
+crypto/external/bsd/openssl/dist/apps/lib/apps.c up to 1.5
+crypto/external/bsd/openssl/dist/crypto/LPdir_unix.c up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/arm_arch.h up to 1.10
+crypto/external/bsd/openssl/dist/crypto/build.info up to 1.1.1.7
+crypto/external/bsd/openssl/dist/crypto/core_namemap.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/ex_data.c up to 1.9
+crypto/external/bsd/openssl/dist/crypto/mem.c   up to 1.14
+crypto/external/bsd/openssl/dist/crypto/param_build_set.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/params.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/provider_core.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/threads_pthread.c up to 1.7
+crypto/external/bsd/openssl/dist/crypto/aes/asm/aesv8-armx.pl up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/asn1/a_strnid.c up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/asn1/asn1_gen.c up to 1.1.1.7
+crypto/external/bsd/openssl/dist/crypto/asn1/asn_mime.c up to 1.15
+crypto/external/bsd/openssl/dist/crypto/bn/bn_gcd.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/crypto/bn/bn_recp.c up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/chacha/asm/chacha-ia64.pl up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/cmp/cmp_asn.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/cmp/cmp_client.c up to 1.1.1.3
+crypto/external/bsd/openssl/dist/crypto/cmp/cmp_status.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/cms/cms_enc.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/crypto/cms/cms_env.c up to 1.1.1.16
+crypto/external/bsd/openssl/dist/crypto/cms/cms_err.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/crypto/cms/cms_lib.c up to 1.1.1.14
+crypto/external/bsd/openssl/dist/crypto/cms/cms_local.h up to 1.1.1.3
+crypto/external/bsd/openssl/dist/crypto/cms/cms_rsa.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/cms/cms_sd.c up to 1.1.1.13
+crypto/external/bsd/openssl/dist/crypto/conf/conf_mod.c up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/conf/conf_sap.c up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/dh/dh_check.c up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/dh/dh_key.c up to 1.1.1.14
+crypto/external/bsd/openssl/dist/crypto/dh/dh_lib.c up to 1.8
+crypto/external/bsd/openssl/dist/crypto/dsa/dsa_check.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/dsa/dsa_lib.c up to 1.7
+crypto/external/bsd/openssl/dist/crypto/dsa/dsa_ossl.c up to 1.1.1.16
+crypto/external/bsd/openssl/dist/crypto/encode_decode/decoder_lib.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/encode_decode/decoder_pkey.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/engine/eng_lib.c up to 1.12
+crypto/external/bsd/openssl/dist/crypto/engine/eng_list.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/crypto/engine/eng_local.h up to 1.1.1.4
+crypto/external/bsd/openssl/dist/crypto/engine/eng_pkey.c up to 1.1.1.6
+crypto/external/bsd/openssl/dist/crypto/engine/eng_table.c up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/err/openssl.txt up to 1.1.1.13
+crypto/external/bsd/openssl/dist/crypto/evp/ctrl_params_translate.c up to 1.1.1.3
+crypto/external/bsd/openssl/dist/crypto/evp/evp_enc.c up to 1.17
+crypto/external/bsd/openssl/dist/crypto/evp/legacy_sha.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/evp/p5_crpt2.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/crypto/evp/p_lib.c up to 1.1.1.15
+crypto/external/bsd/openssl/dist/crypto/evp/pmeth_lib.c up to 1.1.1.14
+crypto/external/bsd/openssl/dist/crypto/ffc/ffc_key_validate.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/http/http_client.c up to 1.1.1.3
+crypto/external/bsd/openssl/dist/crypto/http/http_lib.c up to 1.1.1.3
+crypto/external/bsd/openssl/dist/crypto/lhash/lhash.c up to 1.12
+crypto/external/bsd/openssl/dist/crypto/modes/asm/ghashv8-armx.pl up to 1.1.1.7
+crypto/external/bsd/openssl/dist/crypto/objects/obj_dat.c up to 1.1.1.13
+crypto/external/bsd/openssl/dist/crypto/pem/pem_pkey.c up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/perlasm/arm-xlate.pl up to 1.1.1.4
+crypto/external/bsd/openssl/dist/crypto/pkcs12/p12_crt.c up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/pkcs12/p12_mutl.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/crypto/poly1305/asm/poly1305-armv8.pl up to 1.1.1.7
+crypto/external/bsd/openssl/dist/crypto/poly1305/asm/poly1305-x86_64.pl up to 1.1.1.6
+crypto/external/bsd/openssl/dist/crypto/property/property.c up to 1.1.1.3
+crypto/external/bsd/openssl/dist/crypto/property/property_parse.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/rand/rand_lib.c up to 1.1.1.19
+crypto/external/bsd/openssl/dist/crypto/rc4/build.info up to 1.1.1.6
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_ameth.c up to 1.1.1.18
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_backend.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_lib.c up to 1.9
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_pmeth.c up to 1.1.1.14
+crypto/external/bsd/openssl/dist/crypto/sha/asm/keccak1600-avx2.pl up to 1.1.1.4
+crypto/external/bsd/openssl/dist/crypto/sha/asm/keccak1600-avx512.pl up to 1.1.1.4
+crypto/external/bsd/openssl/dist/crypto/sha/asm/keccak1600-avx512vl.pl up to 1.1.1.4
+crypto/external/bsd/openssl/dist/crypto/srp/srp_vfy.c up to 1.1.1.15
+crypto/external/bsd/openssl/dist/crypto/store/store_lib.c up to 1.1.1.6
+crypto/external/bsd/openssl/dist/crypto/store/store_result.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/x509/by_dir.c up to 1.1.1.14
+crypto/external/bsd/openssl/dist/crypto/x509/v3_ist.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/x509/v3_purp.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/x509/x509_att.c up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/x509/x509_cmp.c up to 1.1.1.19
+crypto/external/bsd/openssl/dist/crypto/x509/x509_err.c up to 1.1.1.11
+crypto/external/bsd/openssl/dist/crypto/x509/x509_vpm.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/doc/man1/openssl-cmp.pod.in up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man1/openssl-cms.pod.in up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man1/openssl-dhparam.pod.in up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man1/openssl-genpkey.pod.in up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man1/openssl-genrsa.pod.in up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man1/openssl-kdf.pod.in up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man1/openssl-rsautl.pod.in up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man1/openssl-s_client.pod.in up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man1/openssl-ts.pod.in up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man1/openssl-verification-options.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man1/openssl-x509.pod.in up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/ASN1_aux_cb.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/ASN1_item_sign.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/ASYNC_WAIT_CTX_new.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/BIO_s_core.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/BIO_s_mem.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/BN_rand.pod up to 1.1.1.6
+crypto/external/bsd/openssl/dist/doc/man3/CMS_add1_signer.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/CMS_sign.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/CONF_modules_load_file.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/DH_generate_parameters.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/DH_get0_pqg.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/DSA_generate_parameters.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/EVP_EncryptInit.pod up to 1.1.1.10
+crypto/external/bsd/openssl/dist/doc/man3/EVP_KDF.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/EVP_KEYMGMT.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/EVP_MAC.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/EVP_PKEY2PKCS8.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/EVP_PKEY_decapsulate.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/EVP_PKEY_derive.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/EVP_PKEY_encapsulate.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/EVP_PKEY_get_default_digest_nid.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_PKEY_gettable_params.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/EVP_PKEY_new.pod up to 1.1.1.6
+crypto/external/bsd/openssl/dist/doc/man3/EVP_PKEY_todata.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/EVP_SIGNATURE.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/EVP_aes_128_gcm.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/EVP_aria_128_gcm.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/EVP_bf_cbc.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/EVP_blake2b512.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_camellia_128_ecb.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/EVP_cast5_cbc.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/EVP_chacha20.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/EVP_des_cbc.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/EVP_desx_cbc.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_idea_cbc.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/EVP_md2.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_md4.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_md5.pod up to 1.1.1.6
+crypto/external/bsd/openssl/dist/doc/man3/EVP_mdc2.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_rc2_cbc.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/EVP_rc4.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_rc5_32_12_16_cbc.pod up to 1.1.1.6
+crypto/external/bsd/openssl/dist/doc/man3/EVP_ripemd160.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_seed_cbc.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/EVP_sha1.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_sha224.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_sha3_224.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_sm3.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EVP_sm4_cbc.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/EVP_whirlpool.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/OCSP_resp_find_status.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/OCSP_sendreq_new.pod up to 1.1.1.6
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_CMP_CTX_new.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_CMP_exec_certreq.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_CMP_log_open.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_DECODER.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_DECODER_CTX_new_for_pkey.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_ENCODER.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_ENCODER_CTX.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_ESS_check_signing_certs.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_HTTP_REQ_CTX.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_HTTP_parse_url.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_HTTP_transfer.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_PARAM.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_PARAM_int.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_PROVIDER.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_SELF_TEST_new.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_STORE_LOADER.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/OSSL_trace_set_channel.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/PKCS12_create.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/PKCS12_decrypt_skey.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/PKCS12_gen_mac.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/PKCS5_PBKDF2_HMAC.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/RAND_bytes.pod up to 1.1.1.6
+crypto/external/bsd/openssl/dist/doc/man3/RSA_get0_key.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/SSL_CONF_CTX_set_ssl_ctx.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/SSL_CTX_new.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/SSL_CTX_set_info_callback.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man3/SSL_CTX_set_tmp_dh_callback.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/SSL_get_verify_result.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/SSL_new.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/X509_STORE_CTX_new.pod up to 1.1.1.8
+crypto/external/bsd/openssl/dist/doc/man3/X509_VERIFY_PARAM_set_flags.pod up to 1.1.1.7
+crypto/external/bsd/openssl/dist/doc/man3/X509_add_cert.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/X509_digest.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/X509_dup.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/d2i_PKCS8PrivateKey_bio.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/d2i_RSAPrivateKey.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/d2i_X509.pod up to 1.1.1.8
+crypto/external/bsd/openssl/dist/doc/man5/config.pod up to 1.1.1.7
+crypto/external/bsd/openssl/dist/doc/man5/x509v3_config.pod up to 1.1.1.5
+crypto/external/bsd/openssl/dist/doc/man7/EVP_KDF-PKCS12KDF.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man7/EVP_PKEY-EC.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man7/EVP_PKEY-RSA.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man7/OSSL_PROVIDER-FIPS.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man7/crypto.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man7/fips_module.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man7/life_cycle-pkey.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man7/migration_guide.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man7/openssl-glossary.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man7/provider-kdf.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man7/provider-object.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/engines/e_loader_attic.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/fuzz/build.info up to 1.1.1.4
+crypto/external/bsd/openssl/dist/fuzz/x509.c    up to 1.1.1.6
+crypto/external/bsd/openssl/dist/include/crypto/x509err.h up to 1.1.1.2
+crypto/external/bsd/openssl/dist/include/openssl/cmserr.h up to 1.1.1.5
+crypto/external/bsd/openssl/dist/include/openssl/dh.h up to 1.1.1.5
+crypto/external/bsd/openssl/dist/include/openssl/evp.h up to 1.1.1.10
+crypto/external/bsd/openssl/dist/include/openssl/pkcs7.h.in up to 1.1.1.2
+crypto/external/bsd/openssl/dist/include/openssl/x509err.h up to 1.1.1.5
+crypto/external/bsd/openssl/dist/providers/fips-sources.checksums up to 1.1.1.3
+crypto/external/bsd/openssl/dist/providers/fips.checksum up to 1.1.1.3
+crypto/external/bsd/openssl/dist/providers/common/securitycheck.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/fips/self_test.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/ciphers/cipher_aes_siv.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/ciphers/cipher_chacha20.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/ciphers/cipher_rc4_hmac_md5.h up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/encode_decode/decode_der2key.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/encode_decode/decode_msblob2key.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/encode_decode/decode_pvk2key.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/encode_decode/encode_key2any.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/encode_decode/encode_key2text.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/keymgmt/dh_kmgmt.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/keymgmt/dsa_kmgmt.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/keymgmt/ecx_kmgmt.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/keymgmt/mac_legacy_kmgmt.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/macs/kmac_prov.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/providers/implementations/storemgmt/file_store.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/ssl/ssl_lib.c  up to 1.24
+crypto/external/bsd/openssl/dist/ssl/ssl_sess.c up to 1.13
+crypto/external/bsd/openssl/dist/ssl/t1_lib.c   up to 1.38
+crypto/external/bsd/openssl/dist/ssl/statem/extensions.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/ssl/statem/extensions_srvr.c up to 1.1.1.9
+crypto/external/bsd/openssl/dist/ssl/statem/statem_lib.c up to 1.1.1.13
+crypto/external/bsd/openssl/dist/test/README-dev.md up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/build.info up to 1.1.1.16
+crypto/external/bsd/openssl/dist/test/chacha_internal_test.c up to 1.1.1.4
+crypto/external/bsd/openssl/dist/test/cmp_asn_test.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/cmp_protect_test.c up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/cmsapitest.c up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/dhtest.c  up to 1.7
+crypto/external/bsd/openssl/dist/test/endecode_test.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/evp_extra_test.c up to 1.14
+crypto/external/bsd/openssl/dist/test/evp_test.c up to 1.11
+crypto/external/bsd/openssl/dist/test/ffc_internal_test.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/pbetest.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/pemtest.c up to 1.1.1.4
+crypto/external/bsd/openssl/dist/test/pkcs12_format_test.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/property_test.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/provider_internal_test.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/rsa_test.c up to 1.11
+crypto/external/bsd/openssl/dist/test/ssl_old_test.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/sslapitest.c up to 1.1.1.15
+crypto/external/bsd/openssl/dist/test/certs/sm2-pub.key up to 1.1.1.1
+crypto/external/bsd/openssl/dist/test/helpers/ssltestlib.c up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/helpers/ssltestlib.h up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/recipes/05-test_rand.t up to 1.1.1.4
+crypto/external/bsd/openssl/dist/test/recipes/15-test_rsapss.t up to 1.1.1.5
+crypto/external/bsd/openssl/dist/test/recipes/20-test_cli_fips.t up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/recipes/20-test_pkeyutl.t up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/recipes/25-test_req.t up to 1.1.1.7
+crypto/external/bsd/openssl/dist/test/recipes/30-test_defltfips.t up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/recipes/30-test_evp.t up to 1.1.1.5
+crypto/external/bsd/openssl/dist/test/recipes/70-test_tls13hrr.t up to 1.1.1.4
+crypto/external/bsd/openssl/dist/test/recipes/80-test_cms.t up to 1.1.1.7
+crypto/external/bsd/openssl/dist/test/recipes/90-test_store_cases.t up to 1.1.1.1
+crypto/external/bsd/openssl/dist/test/recipes/99-test_fuzz_x509.t up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/recipes/30-test_evp_data/evpciph_aes_siv.txt up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/recipes/30-test_evp_data/evppkey_dsa.txt up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/recipes/90-test_store_cases_data/garbage-pkcs12.p12 up to 1.1.1.1
+crypto/external/bsd/openssl/dist/test/ssl-tests/14-curves.cnf up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/ssl-tests/14-curves.cnf.in up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/testutil/main.c up to 1.7
+crypto/external/bsd/openssl/dist/test/testutil/provider.c up to 1.4
+crypto/external/bsd/openssl/dist/util/missingssl.txt up to 1.1.1.2
+crypto/external/bsd/openssl/include/openssl/opensslv.h			1.3
+crypto/external/bsd/openssl/lib/libcrypto/arch/aarch64/Makefile		1.4
+crypto/external/bsd/openssl/lib/libcrypto/arch/aarch64/aesv8-armx.S	1.7
+crypto/external/bsd/openssl/lib/libcrypto/arch/aarch64/ghashv8-armx.S	1.6
+crypto/external/bsd/openssl/lib/libcrypto/arch/aarch64/poly1305-armv8.S	1.5
+crypto/external/bsd/openssl/lib/libcrypto/arch/arm/bsaes-armv7.S	1.8
+crypto/external/bsd/openssl/lib/libcrypto/arch/arm/poly1305-armv8.S	1.6
+crypto/external/bsd/openssl/lib/libcrypto/arch/sparc64/Makefile		1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/ADMISSIONS.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_ITEM_lookup.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_STRING_TABLE_add.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_security_bits.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/DH_new_by_nid.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/DTLS_get_data_mtu.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/DTLS_set_timer_cb.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_CTX_set1_pbe_pass.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_CTX_set_rsa_pss_keygen_md.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_CTX_set_scrypt_N.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_meth_get_count.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_meth_new.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_bf_cbc.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_blake2b512.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_cast5_cbc.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_chacha20.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_desx_cbc.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_idea_cbc.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_md2.3			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_md4.3			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_md5.3			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_mdc2.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_rc2_cbc.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_rc4.3			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_rc5_32_12_16_cbc.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_ripemd160.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_seed_cbc.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_sha1.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_sha224.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_sha3_224.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_sm3.3			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_sm4_cbc.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_whirlpool.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_fork_prepare.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_STORE_INFO.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_STORE_LOADER.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_STORE_SEARCH.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_STORE_expect.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_STORE_open.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/PEM_bytes_read_bio.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/PEM_read_bio_ex.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/RAND.7			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA-PSS.7			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set0_CA_list.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_client_hello_cb.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_keylog_callback.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_num_tickets.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_record_padding_callback.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_session_ticket_cb.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_stateless_cookie_generate_cb.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_tlsext_servername_callback.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_is_resumable.3			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_alloc_buffers.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_peer_signature_nid.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_in_init.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_key_update.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_read_early_data.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/UI_UTIL_read_pw.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/X25519.7			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_LOOKUP_meth_new.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_STORE_add_cert.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_check_private_key.3	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_cmp_time.3		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/bio.7			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/crypto.7			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/ct.7			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/evp.7			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl_config.5		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/ossl_store-file.7		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/ossl_store.7		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/passphrase-encoding.7	1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/ssl.7			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/x509.7			1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/x509v3_config.5		1.6
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_EXTERN_FUNCS.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_INTEGER_new.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_aux_cb.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_item_d2i_bio.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_item_new.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_item_sign.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_f_prefix.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_f_readbuffer.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_s_core.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_s_datagram.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_socket_wait.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_mod_exp_mont.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_EncryptedData_decrypt.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_EncryptedData_encrypt.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_EnvelopedData_create.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_data_create.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_digest_create.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/CRYPTO_memcmp.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/ECDSA_sign.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/ERR_new.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_ASYM_CIPHER-RSA.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_ASYM_CIPHER-SM2.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_ASYM_CIPHER_free.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-AES.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-ARIA.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-BLOWFISH.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-CAMELLIA.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-CAST.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-CHACHA.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-DES.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-IDEA.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-RC2.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-RC4.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-RC5.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-SEED.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-SM4.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER_CTX_get_original_iv.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-HKDF.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-KB.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-KRB5KDF.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-PBKDF1.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-PBKDF2.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-PKCS12KDF.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-SCRYPT.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-SS.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-SSHKDF.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-TLS13_KDF.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-TLS1_PRF.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-X942-ASN1.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-X942-CONCAT.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF-X963.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KDF.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KEM-RSA.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KEM_free.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KEYEXCH-DH.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KEYEXCH-ECDH.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KEYEXCH-X25519.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KEYEXCH_free.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_KEYMGMT.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MAC-BLAKE2.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MAC-CMAC.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MAC-GMAC.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MAC-HMAC.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MAC-KMAC.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MAC-Poly1305.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MAC-Siphash.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MAC.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-BLAKE2.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-MD2.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-MD4.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-MD5-SHA1.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-MD5.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-MDC2.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-RIPEMD160.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-SHA1.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-SHA2.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-SHA3.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-SHAKE.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-SM3.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-WHIRLPOOL.7	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-common.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PBE_CipherInit.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY-DH.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY-DSA.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY-EC.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY-FFC.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY-HMAC.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY-RSA.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY-SM2.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY-X25519.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY2PKCS8.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_CTX_get0_libctx.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_CTX_get0_pkey.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_CTX_set_params.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_check.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_copy_parameters.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_decapsulate.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_digestsign_supports_digest.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_encapsulate.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_fromdata.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_get_field_type.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_get_group_name.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_get_size.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_gettable_params.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_is_a.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_set1_encoded_public_key.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_set_type.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_settable_params.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_todata.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_RAND-CTR-DRBG.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_RAND-HASH-DRBG.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_RAND-HMAC-DRBG.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_RAND-SEED-SRC.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_RAND-TEST-RAND.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_RAND.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_RAND.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_SIGNATURE-DSA.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_SIGNATURE-ECDSA.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_SIGNATURE-ED25519.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_SIGNATURE-HMAC.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_SIGNATURE-RSA.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_SIGNATURE.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_aes_128_gcm.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_aria_128_gcm.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_camellia_128_ecb.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_des_cbc.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_set_default_properties.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/NCONF_new_ex.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_FILE.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_gmtime.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_hexchar2int.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_s390xcap.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_strcasecmp.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_ALGORITHM.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CALLBACK.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CMP_CTX_new.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CMP_HDR_get0_transactionID.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CMP_ITAV_set0.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CMP_MSG_get0_header.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CMP_MSG_http_perform.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CMP_SRV_CTX_new.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CMP_STATUSINFO_new.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CMP_exec_certreq.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CMP_log_open.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CMP_validate_msg.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CORE_MAKE_FUNC.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CRMF_MSG_get0_tmpl.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CRMF_MSG_set0_validity.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CRMF_MSG_set1_regCtrl_regToken.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CRMF_MSG_set1_regInfo_certReq.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_CRMF_pbmp_new.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_DECODER.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_DECODER_CTX.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_DECODER_CTX_new_for_pkey.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_DECODER_from_bio.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_DISPATCH.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_ENCODER.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_ENCODER_CTX.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_ENCODER_CTX_new_for_pkey.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_ENCODER_to_bio.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_ESS_check_signing_certs.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_HTTP_REQ_CTX.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_HTTP_parse_url.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_HTTP_transfer.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_ITEM.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_LIB_CTX.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_PARAM.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_PARAM_BLD.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_PARAM_allocate_from_text.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_PARAM_dup.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_PARAM_int.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_PROVIDER-FIPS.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_PROVIDER-base.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_PROVIDER-default.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_PROVIDER-legacy.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_PROVIDER-null.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_PROVIDER.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_SELF_TEST_new.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_SELF_TEST_set_callback.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_STORE_attach.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_trace_enabled.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_trace_get_category_num.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OSSL_trace_set_channel.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/OpenSSL_version.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PEM_X509_INFO_read_bio_ex.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_PBE_keyivgen.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_SAFEBAG_create_cert.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_SAFEBAG_get0_attrs.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_SAFEBAG_get1_cert.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_add1_attr_by_NID.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_add_CSPName_asc.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_add_cert.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_add_friendlyname_asc.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_add_localkeyid.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_add_safe.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_decrypt_skey.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_gen_mac.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_get_friendlyname.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_init.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_item_decrypt_d2i.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_key_gen_utf8_ex.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_pack_p7encdata.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS5_PBE_keyivgen.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS7_get_octet_string.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS7_type_is_other.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS8_encrypt.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS8_pkey_add1_attr.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/RAND_get0_primary.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/RAND_set_DRBG_type.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SMIME_read_ASN1.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SMIME_write_ASN1.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SRP_Calc_B.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SRP_VBASE_new.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SRP_create_verifier.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SRP_user_pwd_new.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_srp_password.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_tmp_ecdh.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_certificate.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_group_to_name.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_set_async_callback.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_set_retry_verify.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/TS_RESP_CTX_new.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/TS_VERIFY_CTX_set_certs.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/X509V3_set_ctx.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_LOOKUP.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_add_cert.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_check_purpose.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_cmp.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_get0_distinguishing_id.3	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_load_http.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_verify.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/b2i_PVK_bio_ex.3			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/d2i_RSAPrivateKey.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/fips_config.5			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/fips_module.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/life_cycle-cipher.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/life_cycle-digest.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/life_cycle-kdf.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/life_cycle-mac.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/life_cycle-pkey.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/life_cycle-rand.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/migration_guide.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl-core.h.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl-core_dispatch.h.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl-core_names.h.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl-env.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl-format-options.1		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl-glossary.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl-namedisplay-options.1	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl-passphrase-options.1	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl-threads.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl-verification-options.1	1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/property.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-asym_cipher.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-base.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-cipher.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-decoder.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-digest.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-encoder.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-kdf.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-kem.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-keyexch.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-keymgmt.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-mac.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-object.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-rand.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-signature.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider-storemgmt.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/provider.7			1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/proxy-certificates.7		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/s2i_ASN1_IA5STRING.3		1.3
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_INTEGER_get_int64.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_TYPE_get.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/ASYNC_WAIT_CTX_new.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/ASYNC_start_job.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/BF_encrypt.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_ADDR.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_ADDRINFO.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_connect.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_get_data.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_get_ex_new_index.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_meth_new.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_parse_hostserv.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_printf.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/BUF_MEM_new.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/CRYPTO_THREAD_run_once.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/CRYPTO_get_ex_new_index.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/CTLOG_STORE_get0_log_by_id.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/CTLOG_STORE_new.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/CTLOG_new.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/CT_POLICY_EVAL_CTX_new.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/DEFINE_STACK_OF.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/DES_random_key.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/DH_get0_pqg.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/DH_get_1024_160.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/DH_meth_new.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/DSA_get0_pqg.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/DSA_meth_new.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/DTLSv1_listen.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/ECDSA_SIG_new.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/ECPKParameters_print.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/EC_KEY_get_enc_flags.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/ENGINE_add.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER_CTX_get_cipher_data.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER_meth_new.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD_meth_new.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_ASN1_METHOD.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_CTX_set_hkdf_md.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_CTX_set_tls1_prf_md.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_asn1_get_count.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_get_default_digest_nid.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/MDC2_Init.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OCSP_REQUEST_new.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OCSP_cert_to_id.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OCSP_request_add1_nonce.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OCSP_resp_find_status.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OCSP_response_status.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OCSP_sendreq_new.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_LH_COMPFUNC.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_LH_stats.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_init_crypto.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_init_ssl.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_malloc.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_secure_malloc.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/PEM_read.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/PEM_read_CMS.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/PEM_read_bio_PrivateKey.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_newpass.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS5_PBKDF2_HMAC.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/RC4_set_key.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/RIPEMD160_Init.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_get0_key.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_meth_new.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SCT_new.3				1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SCT_print.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SCT_validate.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SHA256_Init.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_config.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_dane_enable.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_has_client_custom_ext.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set1_sigalgs.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_ct_validation_callback.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_ctlog_list_file.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_min_proto_version.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_security_level.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_split_send_fragment.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_tlsext_use_srtp.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_get0_cipher.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_get0_hostname.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_get0_id_context.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_get0_peer.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_get_compress_id.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_get_protocol_version.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_has_ticket.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_print.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_set1_id.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_export_keying_material.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_extension_supported.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get0_peer_scts.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_all_async_fds.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_client_random.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_extms_support.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_shared_sigalgs.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_set1_host.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/UI_STRING.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/UI_create_method.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/UI_new.3				1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509V3_get_d2i.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_ALGOR_dup.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_CRL_get0_by_serial.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_EXTENSION_set_object.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_LOOKUP_hash_dir.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_NAME_get0_der.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_PUBKEY_new.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_SIG_get0.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_STORE_get0_param.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_STORE_new.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_check_ca.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_check_issued.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_digest.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_dup.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_get0_notBefore.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_get0_signature.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_get0_uids.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_get_extension_flags.3	1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_get_pubkey.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_get_serialNumber.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_get_subject_name.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_get_version.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_sign.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/X509v3_get_ext_by_NID.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/d2i_PKCS8PrivateKey_bio.3		1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/i2d_re_X509_tbs.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/o2i_SCT_LIST.3			1.7
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_OBJECT_new.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_STRING_length.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_STRING_new.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_STRING_print_ex.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_generate_nconf.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_ctrl.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_f_base64.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_f_buffer.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_f_cipher.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_f_md.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_f_null.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_f_ssl.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_find_type.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_new.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_new_CMS.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_push.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_read.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_s_accept.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_s_bio.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_s_connect.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_s_fd.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_s_file.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_s_mem.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_s_null.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_s_socket.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_set_callback.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BIO_should_retry.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_BLINDING_new.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_CTX_new.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_CTX_start.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_add.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_add_word.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_bn2bin.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_cmp.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_copy.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_generate_prime.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_mod_inverse.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_mod_mul_montgomery.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_mod_mul_reciprocal.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_new.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_num_bytes.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_rand.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_set_bit.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_swap.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/BN_zero.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_add0_cert.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_add1_recipient_cert.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_compress.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_decrypt.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_encrypt.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_final.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_get0_RecipientInfos.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_get0_SignerInfos.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_get0_type.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_get1_ReceiptRequest.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_sign.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_sign_receipt.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_uncompress.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_verify.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_verify_receipt.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CONF_modules_free.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/CONF_modules_load_file.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DH_generate_key.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DH_generate_parameters.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DH_new.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DH_set_method.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DH_size.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DSA_SIG_new.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DSA_do_sign.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DSA_dup_DH.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DSA_generate_key.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DSA_generate_parameters.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DSA_new.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DSA_set_method.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DSA_sign.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/DSA_size.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ERR_GET_LIB.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ERR_clear_error.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ERR_error_string.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ERR_get_error.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ERR_load_crypto_strings.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ERR_load_strings.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ERR_print_errors.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ERR_put_error.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ERR_remove_state.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ERR_set_mark.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_BytesToKey.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_DigestInit.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_DigestSignInit.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_DigestVerifyInit.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_EncryptInit.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_OpenInit.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_CTX_ctrl.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_CTX_new.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_decrypt.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_derive.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_encrypt.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_keygen.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_new.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_print_private.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_set1_RSA.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_sign.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_verify.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_SealInit.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_SignInit.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_VerifyInit.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/OBJ_nid2obj.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_Applink.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_config.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_load_builtin_modules.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/OpenSSL_add_all_algorithms.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/PEM_write_bio_CMS_stream.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/PEM_write_bio_PKCS7_stream.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_create.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS12_parse.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS7_decrypt.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS7_encrypt.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS7_sign.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS7_sign_add_signer.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/PKCS7_verify.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RAND_add.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RAND_bytes.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RAND_cleanup.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RAND_egd.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RAND_load_file.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RAND_set_rand_method.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_blinding_on.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_check_key.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_generate_key.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_new.3				1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_padding_add_PKCS1_type_1.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_print.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_private_encrypt.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_public_encrypt.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_set_method.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_sign.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_sign_ASN1_OCTET_STRING.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/RSA_size.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SMIME_read_CMS.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SMIME_read_PKCS7.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SMIME_write_CMS.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SMIME_write_PKCS7.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CIPHER_get_name.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_COMP_add_compression_method.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_add_extra_chain_cert.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_add_session.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_ctrl.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_flush_sessions.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_free.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_get_verify_mode.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_load_verify_locations.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_new.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_sess_number.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_sess_set_cache_size.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_sess_set_get_cb.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_sessions.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_cert_store.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_cert_verify_callback.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_cipher_list.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_client_cert_cb.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_default_passwd_cb.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_generate_session_id.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_info_callback.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_max_cert_list.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_mode.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_msg_callback.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_options.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_psk_client_callback.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_quiet_shutdown.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_session_cache_mode.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_session_id_context.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_ssl_version.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_timeout.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_tmp_dh_callback.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_verify.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_use_certificate.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_use_psk_identity_hint.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_free.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_SESSION_get_time.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_accept.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_alert_type_string.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_clear.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_connect.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_do_handshake.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_free.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_SSL_CTX.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_ciphers.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_current_cipher.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_default_timeout.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_error.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_fd.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_peer_cert_chain.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_peer_certificate.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_psk_identity.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_rbio.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_session.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_verify_result.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_version.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_library_init.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_load_client_CA_file.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_new.3	1			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_pending.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_rstate_string.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_session_reused.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_set_bio.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_set_connect_state.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_set_fd.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_set_session.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_set_shutdown.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_set_verify_result.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_shutdown.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_state_string.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_want.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_write.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_NAME_ENTRY_get_object.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_NAME_add_entry_by_txt.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_NAME_get_index_by_NID.3	1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_NAME_print_ex.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_new.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/d2i_SSL_SESSION.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/d2i_X509.3			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/des_modes.7			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/i2d_CMS_bio_stream.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/i2d_PKCS7_bio_stream.3		1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl_CA.pl.1			1.23
+crypto/external/bsd/openssl/lib/libcrypto/man/ASN1_TIME_set.3			1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/EC_GFp_simple_method.3		1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/EC_GROUP_copy.3			1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/EC_GROUP_new.3			1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/EC_KEY_new.3			1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/EC_POINT_add.3			1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/EC_POINT_new.3			1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/HMAC.3				1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/MD5.3				1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_instrument_bus.3		1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CONF_CTX_new.3		1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CONF_CTX_set1_prefix.3	1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CONF_CTX_set_flags.3		1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CONF_CTX_set_ssl_ctx.3	1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CONF_cmd.3			1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CONF_cmd_argv.3		1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_add1_chain_cert.3		1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_get0_param.3		1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set1_curves.3		1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set1_verify_cert_store.3	1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_alpn_select_cb.3	1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_cert_cb.3		1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_use_serverinfo.3		1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_check_chain.3			1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_check_host.3			1.8
+crypto/external/bsd/openssl/lib/libcrypto/man/CMS_add1_signer.3			1.12
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_CIPHER-NULL.7			1.2
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_MD-NULL.7			1.2
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_EncodeInit.3			1.10
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_tlsext_status_cb.3	1.10
+crypto/external/bsd/openssl/lib/libcrypto/man/d2i_PrivateKey.3			1.10
+crypto/external/bsd/openssl/lib/libcrypto/man/EVP_PKEY_verify_recover.3		1.18
+crypto/external/bsd/openssl/lib/libcrypto/man/OPENSSL_ia32cap.3			1.25
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_read_ahead.3		1.11
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_CTX_set_tlsext_ticket_key_cb.3	1.13
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_get_peer_tmp_key.3		1.5
+crypto/external/bsd/openssl/lib/libcrypto/man/SSL_read.3			1.24
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl_tsget.1			1.24
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_STORE_CTX_get_error.3	1.22
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_STORE_CTX_new.3		1.22
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_STORE_CTX_set_verify_cb.3	1.22
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_STORE_set_verify_cb_func.3	1.22
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_VERIFY_PARAM_set_flags.3	1.22
+crypto/external/bsd/openssl/lib/libcrypto/man/X509_verify_cert.3		1.22
+crypto/external/bsd/openssl/lib/libcrypto/man/openssl.1				1.22
+
+	openssl(3): update to OpenSSL-3.0.12
+	[ticket #444, martin]
 
