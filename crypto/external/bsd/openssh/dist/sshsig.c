@@ -1,5 +1,5 @@
-/*	$NetBSD: sshsig.c,v 1.10 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: sshsig.c,v 1.30 2022/08/19 03:06:30 djm Exp $ */
+/*	$NetBSD: sshsig.c,v 1.10.2.1 2023/11/02 22:15:22 sborrill Exp $	*/
+/* $OpenBSD: sshsig.c,v 1.33 2023/09/06 23:18:15 djm Exp $ */
 
 /*
  * Copyright (c) 2019 Google LLC
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshsig.c,v 1.10 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: sshsig.c,v 1.10.2.1 2023/11/02 22:15:22 sborrill Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: sshsig.c,v 1.10 2022/10/05 22:39:36 christos Exp $");
 #define SIG_VERSION		0x01
 #define MAGIC_PREAMBLE		"SSHSIG"
 #define MAGIC_PREAMBLE_LEN	(sizeof(MAGIC_PREAMBLE) - 1)
-#define BEGIN_SIGNATURE		"-----BEGIN SSH SIGNATURE-----\n"
+#define BEGIN_SIGNATURE		"-----BEGIN SSH SIGNATURE-----"
 #define END_SIGNATURE		"-----END SSH SIGNATURE-----"
 #define RSA_SIGN_ALG		"rsa-sha2-512" /* XXX maybe make configurable */
 #define RSA_SIGN_ALLOWED	"rsa-sha2-512,rsa-sha2-256"
@@ -61,8 +61,7 @@ sshsig_armor(const struct sshbuf *blob, struct sshbuf **out)
 		goto out;
 	}
 
-	if ((r = sshbuf_put(buf, BEGIN_SIGNATURE,
-	    sizeof(BEGIN_SIGNATURE)-1)) != 0) {
+	if ((r = sshbuf_putf(buf, "%s\n", BEGIN_SIGNATURE)) != 0) {
 		error_fr(r, "sshbuf_putf");
 		goto out;
 	}
@@ -101,23 +100,35 @@ sshsig_dearmor(struct sshbuf *sig, struct sshbuf **out)
 		return SSH_ERR_ALLOC_FAIL;
 	}
 
+	/* Expect and consume preamble + lf/crlf */
 	if ((r = sshbuf_cmp(sbuf, 0,
 	    BEGIN_SIGNATURE, sizeof(BEGIN_SIGNATURE)-1)) != 0) {
 		error("Couldn't parse signature: missing header");
 		goto done;
 	}
-
 	if ((r = sshbuf_consume(sbuf, sizeof(BEGIN_SIGNATURE)-1)) != 0) {
 		error_fr(r, "consume");
 		goto done;
 	}
-
+	if ((r = sshbuf_cmp(sbuf, 0, "\r\n", 2)) == 0)
+		eoffset = 2;
+	else if ((r = sshbuf_cmp(sbuf, 0, "\n", 1)) == 0)
+		eoffset = 1;
+	else {
+		r = SSH_ERR_INVALID_FORMAT;
+		error_f("no header eol");
+		goto done;
+	}
+	if ((r = sshbuf_consume(sbuf, eoffset)) != 0) {
+		error_fr(r, "consume eol");
+		goto done;
+	}
+	/* Find and consume lf + suffix (any prior cr would be ignored) */
 	if ((r = sshbuf_find(sbuf, 0, "\n" END_SIGNATURE,
-	    sizeof("\n" END_SIGNATURE)-1, &eoffset)) != 0) {
+	    sizeof(END_SIGNATURE), &eoffset)) != 0) {
 		error("Couldn't parse signature: missing footer");
 		goto done;
 	}
-
 	if ((r = sshbuf_consume_end(sbuf, sshbuf_len(sbuf)-eoffset)) != 0) {
 		error_fr(r, "consume");
 		goto done;
@@ -979,7 +990,7 @@ sshsig_check_allowed_keys(const char *path, const struct sshkey *sign_key,
 	char *line = NULL;
 	size_t linesize = 0;
 	u_long linenum = 0;
-	int r = SSH_ERR_INTERNAL_ERROR, oerrno;
+	int r = SSH_ERR_KEY_NOT_FOUND, oerrno;
 
 	/* Check key and principal against file */
 	if ((f = fopen(path, "r")) == NULL) {
@@ -1009,7 +1020,7 @@ sshsig_check_allowed_keys(const char *path, const struct sshkey *sign_key,
 	/* Either we hit an error parsing or we simply didn't find the key */
 	fclose(f);
 	free(line);
-	return r == 0 ? SSH_ERR_KEY_NOT_FOUND : r;
+	return r;
 }
 
 int
@@ -1020,7 +1031,7 @@ sshsig_find_principals(const char *path, const struct sshkey *sign_key,
 	char *line = NULL;
 	size_t linesize = 0;
 	u_long linenum = 0;
-	int r = SSH_ERR_INTERNAL_ERROR, oerrno;
+	int r = SSH_ERR_KEY_NOT_FOUND, oerrno;
 
 	if ((f = fopen(path, "r")) == NULL) {
 		oerrno = errno;
@@ -1030,7 +1041,6 @@ sshsig_find_principals(const char *path, const struct sshkey *sign_key,
 		return SSH_ERR_SYSTEM_ERROR;
 	}
 
-	r = SSH_ERR_KEY_NOT_FOUND;
 	while (getline(&line, &linesize, f) != -1) {
 		linenum++;
 		r = check_allowed_keys_line(path, linenum, line,
@@ -1058,7 +1068,7 @@ sshsig_find_principals(const char *path, const struct sshkey *sign_key,
 		return SSH_ERR_SYSTEM_ERROR;
 	}
 	fclose(f);
-	return r == 0 ? SSH_ERR_KEY_NOT_FOUND : r;
+	return r;
 }
 
 int

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.28.2.1 2023/08/11 15:36:39 martin Exp $
+.\"	$NetBSD: sshd.8,v 1.28.2.2 2023/11/02 22:15:22 sborrill Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,8 +34,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.324 2023/02/10 06:39:27 jmc Exp $
-.Dd February 10 2023
+.\" $OpenBSD: sshd.8,v 1.325 2023/09/19 20:37:07 deraadt Exp $
+.Dd September 19 2023
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -294,7 +294,7 @@ forwarding TCP connections, or forwarding the authentication agent
 connection over the secure channel.
 .Pp
 After this, the client either requests an interactive shell or execution
-or a non-interactive command, which
+of a non-interactive command, which
 .Nm
 will execute via the user's shell using its
 .Fl c

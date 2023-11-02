@@ -1,5 +1,6 @@
-/*	$NetBSD: packet.c,v 1.47.2.1 2023/08/11 15:36:39 martin Exp $	*/
-/* $OpenBSD: packet.c,v 1.309 2023/03/03 10:23:42 dtucker Exp $ */
+/*	$NetBSD: packet.c,v 1.47.2.2 2023/11/02 22:15:21 sborrill Exp $	*/
+/* $OpenBSD: packet.c,v 1.312 2023/08/28 03:31:16 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +40,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.47.2.1 2023/08/11 15:36:39 martin Exp $");
+__RCSID("$NetBSD: packet.c,v 1.47.2.2 2023/11/02 22:15:21 sborrill Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
@@ -1039,6 +1040,8 @@ int
 ssh_packet_log_type(u_char type)
 {
 	switch (type) {
+	case SSH2_MSG_PING:
+	case SSH2_MSG_PONG:
 	case SSH2_MSG_CHANNEL_DATA:
 	case SSH2_MSG_CHANNEL_EXTENDED_DATA:
 	case SSH2_MSG_CHANNEL_WINDOW_ADJUST:
@@ -1666,7 +1669,7 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 		goto out;
 	if (ssh_packet_log_type(*typep))
 		debug3("receive packet: type %u", *typep);
-	if (*typep < SSH2_MSG_MIN || *typep >= SSH2_MSG_LOCAL_MIN) {
+	if (*typep < SSH2_MSG_MIN) {
 		if ((r = sshpkt_disconnect(ssh,
 		    "Invalid ssh2 packet type: %d", *typep)) != 0 ||
 		    (r = ssh_packet_write_wait(ssh)) < 0)
@@ -1701,6 +1704,8 @@ ssh_packet_read_poll_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 	u_int reason, seqnr;
 	int r;
 	u_char *msg;
+	const u_char *d;
+	size_t len;
 
 	for (;;) {
 		msg = NULL;
@@ -1743,6 +1748,21 @@ ssh_packet_read_poll_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 				return r;
 			debug("Received SSH2_MSG_UNIMPLEMENTED for %u",
 			    seqnr);
+			break;
+		case SSH2_MSG_PING:
+			if ((r = sshpkt_get_string_direct(ssh, &d, &len)) != 0)
+				return r;
+			DBG(debug("Received SSH2_MSG_PING len %zu", len));
+			if ((r = sshpkt_start(ssh, SSH2_MSG_PONG)) != 0 ||
+			    (r = sshpkt_put_string(ssh, d, len)) != 0 ||
+			    (r = sshpkt_send(ssh)) != 0)
+				return r;
+			break;
+		case SSH2_MSG_PONG:
+			if ((r = sshpkt_get_string_direct(ssh,
+			    NULL, &len)) != 0)
+				return r;
+			DBG(debug("Received SSH2_MSG_PONG len %zu", len));
 			break;
 		default:
 			return 0;
@@ -1882,7 +1902,7 @@ sshpkt_vfatal(struct ssh *ssh, int r, const char *fmt, va_list ap)
 	case SSH_ERR_NO_COMPRESS_ALG_MATCH:
 	case SSH_ERR_NO_KEX_ALG_MATCH:
 	case SSH_ERR_NO_HOSTKEY_ALG_MATCH:
-		if (ssh && ssh->kex && ssh->kex->failed_choice) {
+		if (ssh->kex && ssh->kex->failed_choice) {
 			ssh_packet_clear_keys(ssh);
 			errno = oerrno;
 			logdie("Unable to negotiate with %s: %s. "
@@ -2057,6 +2077,18 @@ ssh_packet_not_very_much_data_to_write(struct ssh *ssh)
 		return sshbuf_len(ssh->state->output) < 16384;
 	else
 		return sshbuf_len(ssh->state->output) < 128 * 1024;
+}
+
+/*
+ * returns true when there are at most a few keystrokes of data to write
+ * and the connection is in interactive mode.
+ */
+
+int
+ssh_packet_interactive_data_to_write(struct ssh *ssh)
+{
+	return ssh->state->interactive_mode &&
+	    sshbuf_len(ssh->state->output) < 256;
 }
 
 void

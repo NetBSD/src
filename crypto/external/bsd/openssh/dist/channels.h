@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.h,v 1.23.2.1 2023/08/11 15:36:39 martin Exp $	*/
-/* $OpenBSD: channels.h,v 1.149 2023/03/04 03:22:59 dtucker Exp $ */
+/*	$NetBSD: channels.h,v 1.23.2.2 2023/11/02 22:15:21 sborrill Exp $	*/
+/* $OpenBSD: channels.h,v 1.152 2023/09/04 00:01:46 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -211,7 +211,7 @@ struct Channel {
 	/* Last traffic seen for OPEN channels */
 	time_t			lastused;
 	/* Inactivity timeout deadline in seconds (0 = no timeout) */
-	u_int			inactive_deadline;
+	int			inactive_deadline;
 };
 
 #define CHAN_EXTENDED_IGNORE		0
@@ -311,7 +311,7 @@ int	 channel_close_fd(struct ssh *, Channel *, int *);
 void	 channel_send_window_changes(struct ssh *);
 
 /* channel inactivity timeouts */
-void channel_add_timeout(struct ssh *, const char *, u_int);
+void channel_add_timeout(struct ssh *, const char *, int);
 void channel_clear_timeouts(struct ssh *);
 
 /* mux proxy support */
@@ -338,7 +338,7 @@ struct timespec;
 void	 channel_prepare_poll(struct ssh *, struct pollfd **,
 	    u_int *, u_int *, u_int, struct timespec *);
 void	 channel_after_poll(struct ssh *, struct pollfd *, u_int);
-void     channel_output_poll(struct ssh *);
+int	 channel_output_poll(struct ssh *);
 
 int      channel_not_very_much_buffered_data(struct ssh *);
 void     channel_close_all(struct ssh *);
@@ -361,7 +361,7 @@ Channel	*channel_connect_to_port(struct ssh *, const char *, u_short,
 Channel *channel_connect_to_path(struct ssh *, const char *, const char *,
 	    const char *);
 Channel	*channel_connect_stdio_fwd(struct ssh *, const char *,
-	    u_short, int, int, int);
+	    int, int, int, int);
 Channel	*channel_connect_by_listen_address(struct ssh *, const char *,
 	    u_short, const char *, const char *);
 Channel	*channel_connect_by_listen_path(struct ssh *, const char *,

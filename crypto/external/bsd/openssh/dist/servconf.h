@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.h,v 1.28.2.1 2023/08/11 15:36:40 martin Exp $	*/
-/* $OpenBSD: servconf.h,v 1.159 2023/01/17 09:44:48 djm Exp $ */
+/*	$NetBSD: servconf.h,v 1.28.2.2 2023/11/02 22:15:21 sborrill Exp $	*/
+/* $OpenBSD: servconf.h,v 1.160 2023/09/06 23:35:35 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -24,8 +24,6 @@
 #include <sys/queue.h>
 
 #define MAX_PORTS		256	/* Max # ports. */
-
-#define MAX_SUBSYSTEMS		256	/* Max # subsystems. */
 
 /* permit_root_login */
 #define	PERMIT_NOT_SET		-1
@@ -178,9 +176,9 @@ typedef struct {
 	char   **deny_groups;
 
 	u_int num_subsystems;
-	char   *subsystem_name[MAX_SUBSYSTEMS];
-	char   *subsystem_command[MAX_SUBSYSTEMS];
-	char   *subsystem_args[MAX_SUBSYSTEMS];
+	char   **subsystem_name;
+	char   **subsystem_command;
+	char   **subsystem_args;
 
 	u_int num_accept_env;
 	char   **accept_env;
@@ -314,6 +312,9 @@ TAILQ_HEAD(include_list, include_item);
 		M_CP_STRARRAYOPT(permitted_listens, num_permitted_listens); \
 		M_CP_STRARRAYOPT(channel_timeouts, num_channel_timeouts); \
 		M_CP_STRARRAYOPT(log_verbose, num_log_verbose); \
+		M_CP_STRARRAYOPT(subsystem_name, num_subsystems); \
+		M_CP_STRARRAYOPT(subsystem_command, num_subsystems); \
+		M_CP_STRARRAYOPT(subsystem_args, num_subsystems); \
 	} while (0)
 
 struct connection_info *get_connection_info(struct ssh *, int, int);
@@ -330,6 +331,7 @@ void	 parse_server_match_config(ServerOptions *,
 	    struct include_list *includes, struct connection_info *);
 int	 parse_server_match_testspec(struct connection_info *, char *);
 int	 server_match_spec_complete(struct connection_info *);
+void	 servconf_merge_subsystems(ServerOptions *, ServerOptions *);
 void	 copy_set_server_options(ServerOptions *, ServerOptions *, int);
 void	 dump_config(ServerOptions *);
 char	*derelativise_path(const char *);

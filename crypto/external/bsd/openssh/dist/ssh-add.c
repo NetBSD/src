@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-add.c,v 1.27.2.1 2023/08/11 15:36:40 martin Exp $	*/
-/* $OpenBSD: ssh-add.c,v 1.167 2023/03/08 00:05:58 djm Exp $ */
+/*	$NetBSD: ssh-add.c,v 1.27.2.2 2023/11/02 22:15:22 sborrill Exp $	*/
+/* $OpenBSD: ssh-add.c,v 1.168 2023/07/06 22:17:59 dtucker Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.27.2.1 2023/08/11 15:36:40 martin Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.27.2.2 2023/11/02 22:15:22 sborrill Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -860,7 +861,7 @@ main(int argc, char **argv)
 			confirm = 1;
 			break;
 		case 'm':
-			minleft = (int)strtonum(optarg, 1, UINT_MAX, NULL);
+			minleft = (u_int)strtonum(optarg, 1, UINT_MAX, NULL);
 			if (minleft == 0) {
 				usage();
 				ret = 1;
@@ -868,7 +869,7 @@ main(int argc, char **argv)
 			}
 			break;
 		case 'M':
-			maxsign = (int)strtonum(optarg, 1, UINT_MAX, NULL);
+			maxsign = (u_int)strtonum(optarg, 1, UINT_MAX, NULL);
 			if (maxsign == 0) {
 				usage();
 				ret = 1;

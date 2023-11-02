@@ -1,5 +1,5 @@
-/*	$NetBSD: addr.c,v 1.4.2.1 2023/08/11 15:36:39 martin Exp $	*/
-/* $OpenBSD: addr.c,v 1.6 2022/10/28 02:29:34 djm Exp $ */
+/*	$NetBSD: addr.c,v 1.4.2.2 2023/11/02 22:15:21 sborrill Exp $	*/
+/* $OpenBSD: addr.c,v 1.7 2023/03/27 03:31:05 djm Exp $ */
 
 /*
  * Copyright (c) 2004-2008 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: addr.c,v 1.4.2.1 2023/08/11 15:36:39 martin Exp $");
+__RCSID("$NetBSD: addr.c,v 1.4.2.2 2023/11/02 22:15:21 sborrill Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -443,7 +443,7 @@ addr_ntop(const struct xaddr *n, char *p, size_t len)
 	if (p == NULL || len == 0)
 		return -1;
 	if (getnameinfo(_SA(&ss), slen, p, len, NULL, 0,
-	    NI_NUMERICHOST) == -1)
+	    NI_NUMERICHOST) != 0)
 		return -1;
 
 	return 0;

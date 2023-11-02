@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.39.2.1 2023/08/11 15:36:39 martin Exp $
+.\"	$NetBSD: sshd_config.5,v 1.39.2.2 2023/11/02 22:15:22 sborrill Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,8 +34,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd_config.5,v 1.348 2023/03/03 04:36:20 djm Exp $
-.Dd March 3 2023
+.\" $OpenBSD: sshd_config.5,v 1.350 2023/07/28 05:42:36 jmc Exp $
+.Dd July 28 2023
 .Dt SSHD_CONFIG 5
 .Os
 .Sh NAME
@@ -2057,6 +2057,10 @@ which are expanded at runtime:
 .It %%
 A literal
 .Sq % .
+.It \&%C
+Identifies the connection endpoints, containing
+four space-separated values: client address, client port number,
+server address, and server port number.
 .It \&%D
 The routing domain in which the incoming connection was received.
 .It %F
@@ -2084,13 +2088,13 @@ The username.
 .El
 .Pp
 .Cm AuthorizedKeysCommand
-accepts the tokens %%, %f, %h, %k, %t, %U, and %u.
+accepts the tokens %%, %C, %D, %f, %h, %k, %t, %U, and %u.
 .Pp
 .Cm AuthorizedKeysFile
 accepts the tokens %%, %h, %U, and %u.
 .Pp
 .Cm AuthorizedPrincipalsCommand
-accepts the tokens %%, %F, %f, %h, %i, %K, %k, %s, %T, %t, %U, and %u.
+accepts the tokens %%, %C, %D, %F, %f, %h, %i, %K, %k, %s, %T, %t, %U, and %u.
 .Pp
 .Cm AuthorizedPrincipalsFile
 accepts the tokens %%, %h, %U, and %u.
