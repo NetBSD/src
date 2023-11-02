@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.46 2022/12/15 15:32:04 martin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.46.2.1 2023/11/02 14:08:17 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -143,7 +143,7 @@ message sectors
 {sectors}
 
 message mountpoint
-{mount point (or 'none')}
+{mount point (or '-')}
 
 message cylname
 {cyl}

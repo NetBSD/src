@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.45 2022/12/15 15:32:04 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.45.2.1 2023/11/02 14:08:17 sborrill Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -147,7 +147,7 @@ message sectors
 {sektory}
 
 message mountpoint
-{punkt montowania (lub 'zaden')}
+{punkt montowania (lub '-')}
 
 message cylname
 {cyl}
