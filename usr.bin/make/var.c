@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1067 2023/11/02 05:55:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1068 2023/11/02 06:09:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1067 2023/11/02 05:55:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1068 2023/11/02 06:09:07 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3382,10 +3382,19 @@ SubNumDesc(const void *sa, const void *sb)
 }
 
 static int
+Substring_Cmp(Substring a, Substring b)
+{
+	for (; a.start < a.end && b.start < b.end; a.start++, b.start++)
+		if (a.start[0] != b.start[0])
+			return (unsigned char)a.start[0]
+			    - (unsigned char)b.start[0];
+	return (int)((a.end - a.start) - (b.end - b.start));
+}
+
+static int
 SubStrAsc(const void *sa, const void *sb)
 {
-	return strcmp(
-	    ((const Substring *)sa)->start, ((const Substring *)sb)->start);
+	return Substring_Cmp(*(const Substring *)sa, *(const Substring *)sb);
 }
 
 static int
