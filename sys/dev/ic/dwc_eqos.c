@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.31 2023/11/02 13:49:49 riastradh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.32 2023/11/02 13:50:02 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.31 2023/11/02 13:49:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.32 2023/11/02 13:50:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -509,10 +509,10 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 		  GMAC_MAC_PACKET_FILTER_PCF_MASK);
 	hash[0] = hash[1] = ~0U;
 
-	if ((ifp->if_flags & IFF_PROMISC) != 0) {
+	if (sc->sc_promisc) {
 		pfil |= GMAC_MAC_PACKET_FILTER_PR |
 			GMAC_MAC_PACKET_FILTER_PCF_ALL;
-	} else if ((ifp->if_flags & IFF_ALLMULTI) != 0) {
+	} else if (sc->sc_allmulti) {
 		pfil |= GMAC_MAC_PACKET_FILTER_PM;
 	} else {
 		hash[0] = hash[1] = 0;
@@ -617,6 +617,8 @@ eqos_init_locked(struct eqos_softc *sc)
 	eqos_init_rings(sc, 0);
 
 	/* Setup RX filter */
+	sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
+	sc->sc_allmulti = ifp->if_flags & IFF_ALLMULTI; /* XXX */
 	eqos_setup_rxfilter(sc);
 
 	WR4(sc, GMAC_MAC_1US_TIC_COUNTER, (sc->sc_csr_clock / 1000000) - 1);
@@ -1232,9 +1234,10 @@ eqos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = (*ifp->if_init)(ifp);
 		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
-		else if ((ifp->if_flags & IFF_RUNNING) != 0) {
+		else {
 			EQOS_LOCK(sc);
-			eqos_setup_rxfilter(sc);
+			if (sc->sc_running)
+				eqos_setup_rxfilter(sc);
 			EQOS_UNLOCK(sc);
 		}
 		break;
