@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.150 2023/10/30 17:46:05 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.151 2023/11/02 14:03:58 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12808,4 +12808,9 @@ sys/dev/usb/ehci.c				1.318,1.319
 
 	ehci(4): fix timeout logic.
 	[riastradh, ticket #440]
+
+sbin/gpt/gpt.8					1.79
+	Add missing suffixes for size values and clarify that they are
+	case-independent.
+	[martin, ticket #441]
 
