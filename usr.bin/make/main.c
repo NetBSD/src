@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.601 2023/11/02 04:50:44 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.602 2023/11/02 05:40:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.601 2023/11/02 04:50:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.602 2023/11/02 05:40:49 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -121,7 +121,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 CmdOpts opts;
 time_t now;			/* Time at start of make */
 GNode *defaultNode;		/* .DEFAULT node */
-bool allPrecious;		/* .PRECIOUS given on line by itself */
+bool allPrecious;		/* .PRECIOUS given on a line by itself */
 bool deleteOnError;		/* .DELETE_ON_ERROR: set */
 
 static int maxJobTokens;	/* -j argument */
@@ -148,7 +148,7 @@ static HashTable cached_realpaths;
 
 /*
  * For compatibility with the POSIX version of MAKEFLAGS that includes
- * all the options without '-', convert 'flags' to '-f -l -a -g -s'.
+ * all the options without '-', convert 'flags' to '-f -l -a -g -s '.
  */
 static char *
 explode(const char *flags)
@@ -439,7 +439,6 @@ MainParseArgJobs(const char *arg)
 static void
 MainParseArgSysInc(const char *argvalue)
 {
-	/* look for magic parent directory search string */
 	if (strncmp(".../", argvalue, 4) == 0) {
 		char *found_path = Dir_FindHereOrAbove(curdir, argvalue + 4);
 		if (found_path == NULL)
@@ -1015,20 +1014,14 @@ InitVarMachineArch(void)
 
 #ifndef NO_PWD_OVERRIDE
 /*
- * All this code is so that we know where we are when we start up
- * on a different machine with pmake.
- *
- * XXX: Make no longer has "local" and "remote" mode.  Is this code still
- * necessary?
- *
  * Overriding getcwd() with $PWD totally breaks MAKEOBJDIRPREFIX
  * since the value of curdir can vary depending on how we got
- * here.  Ie sitting at a shell prompt (shell that provides $PWD)
- * or via subdir.mk in which case its likely a shell which does
+ * here.  That is, sitting at a shell prompt (shell that provides $PWD)
+ * or via subdir.mk, in which case it's likely a shell which does
  * not provide it.
  *
  * So, to stop it breaking this case only, we ignore PWD if
- * MAKEOBJDIRPREFIX is set or MAKEOBJDIR contains a variable expression.
+ * MAKEOBJDIRPREFIX is set or MAKEOBJDIR contains an expression.
  */
 static void
 HandlePWD(const struct stat *curdir_st)
@@ -1346,22 +1339,12 @@ main_Init(int argc, char **argv)
 		exit(2);
 	}
 
-	/*
-	 * Get the name of this type of MACHINE from utsname
-	 * so we can share an executable for similar machines.
-	 * (i.e. m68k: amiga hp300, mac68k, sun3, ...)
-	 *
-	 * Note that both MACHINE and MACHINE_ARCH are decided at
-	 * run-time.
-	 */
 	machine = InitVarMachine(&utsname);
 	machine_arch = InitVarMachineArch();
 
 	myPid = getpid();	/* remember this for vFork() */
 
-	/*
-	 * Just in case MAKEOBJDIR wants us to do something tricky.
-	 */
+	/* Just in case MAKEOBJDIR wants us to do something tricky. */
 	Targ_Init();
 	Var_Init();
 	Global_Set_ReadOnly(".MAKE.OS", utsname.sysname);
@@ -1370,7 +1353,7 @@ main_Init(int argc, char **argv)
 #ifdef MAKE_VERSION
 	Global_Set("MAKE_VERSION", MAKE_VERSION);
 #endif
-	Global_Set_ReadOnly(".newline", "\n");	/* handy for :@ loops */
+	Global_Set_ReadOnly(".newline", "\n");
 #ifndef MAKEFILE_PREFERENCE_LIST
 	/* This is the traditional preference for makefiles. */
 # define MAKEFILE_PREFERENCE_LIST "makefile Makefile"

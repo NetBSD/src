@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1065 2023/11/02 05:14:58 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1066 2023/11/02 05:40:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1065 2023/11/02 05:14:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1066 2023/11/02 05:40:49 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -213,8 +213,8 @@ typedef struct Var {
 	/*
 	 * At the point where this variable was exported, it contained an
 	 * unresolved reference to another variable.  Before any child
-	 * process is started, it needs to be exported again, in the hope
-	 * that the referenced variable can then be resolved.
+	 * process is started, it needs to be actually exported, resolving
+	 * the referenced variable just in time.
 	 */
 	bool reexport:1;
 } Var;
@@ -1198,11 +1198,11 @@ Var_ExistsExpand(GNode *scope, const char *name)
 
 /*
  * Return the unexpanded value of the given variable in the given scope,
- * or the usual scopes.
+ * falling back to the command, global and environment scopes, in this order,
+ * but see the -e option.
  *
  * Input:
- *	scope		scope in which to search for it
- *	name		name to find, is not expanded any further
+ *	name		the name to find, is not expanded any further
  *
  * Results:
  *	The value if the variable exists, NULL if it doesn't.
@@ -1227,9 +1227,7 @@ Var_Value(GNode *scope, const char *name)
 	return FStr_InitOwn(value);
 }
 
-/*
- * set readOnly attribute of specified var if it exists
- */
+/* Set or clear the read-only attribute of the specified var if it exists. */
 void
 Var_ReadOnly(const char *name, bool bf)
 {
@@ -1932,8 +1930,8 @@ FormatTime(const char *fmt, time_t t, bool gmt)
  * parsing position is well-known in ApplyModifiers.)
  *
  * If parsing fails and the SysV modifier ${VAR:from=to} should not be used
- * as a fallback, either issue an error message using Error or Parse_Error
- * and then return AMR_CLEANUP, or return AMR_BAD for the default error
+ * as a fallback, issue an error message using Parse_Error (preferred over
+ * Error) and then return AMR_CLEANUP, or return AMR_BAD for the default error
  * message.  Both of these return values will stop processing the variable
  * expression.  (XXX: As of 2020-08-23, evaluation of the whole string
  * continues nevertheless after skipping a few bytes, which essentially is
@@ -1950,19 +1948,19 @@ FormatTime(const char *fmt, time_t t, bool gmt)
  *
  * Evaluating the modifier usually takes the current value of the variable
  * expression from ch->expr->value, or the variable name from ch->var->name
- * and stores the result back in expr->value via Expr_SetValueOwn or
+ * and stores the result back in ch->expr->value via Expr_SetValueOwn or
  * Expr_SetValueRefer.
  *
  * If evaluating fails (as of 2020-08-23), an error message is printed using
- * Error.  This function has no side-effects, it really just prints the error
+ * Error.  This function has no side effects, it really just prints the error
  * message.  Processing the expression continues as if everything were ok.
- * XXX: This should be fixed by adding proper error handling to Var_Subst,
+ * TODO: This should be fixed by adding proper error handling to Var_Subst,
  * Var_Parse, ApplyModifiers and ModifyWords.
  *
  * Housekeeping
  *
  * Some modifiers such as :D and :U turn undefined expressions into defined
- * expressions (see Expr_Define).
+ * expressions using Expr_Define.
  *
  * Some modifiers need to free some memory.
  */
@@ -2033,10 +2031,10 @@ typedef struct ModChain {
 	char const_member startc;
 	/* '\0' or '}' or ')' */
 	char const_member endc;
-	/* Word separator in expansions (see the :ts modifier). */
+	/* Word separator when joining words (see the :ts modifier). */
 	char sep;
 	/*
-	 * True if some modifiers that otherwise split the variable value
+	 * Whether some modifiers that otherwise split the variable value
 	 * into words, like :S and :C, treat the variable value as a single
 	 * big word, possibly containing spaces.
 	 */
@@ -2143,8 +2141,8 @@ ParseModifierPartExpr(const char **pp, LazyBuf *part, const ModChain *ch,
  * In a part of a modifier, parse some text that looks like a subexpression.
  * If the text starts with '$(', any '(' and ')' must be balanced.
  * If the text starts with '${', any '{' and '}' must be balanced.
- * If the text starts with '$', that '$' is copied, it is not parsed as a
- * short-name variable expression.
+ * If the text starts with '$', that '$' is copied verbatim, it is not parsed
+ * as a short-name variable expression.
  */
 static void
 ParseModifierPartBalanced(const char **pp, LazyBuf *part)
@@ -2184,13 +2182,13 @@ ParseModifierPartSubst(
     ModChain *ch,
     LazyBuf *part,
     /*
-     * For the first part of the modifier ':S', set anchorEnd if the last
+     * For the first part of the ':S' modifier, set anchorEnd if the last
      * character of the pattern is a $.
      */
     PatternFlags *out_pflags,
     /*
-     * For the second part of the :S modifier, allow ampersands to be escaped
-     * and replace unescaped ampersands with subst->lhs.
+     * For the second part of the ':S' modifier, allow ampersands to be
+     * escaped and replace unescaped ampersands with subst->lhs.
      */
     struct ModifyWord_SubstArgs *subst
 )
@@ -2260,7 +2258,7 @@ ParseModifierPart(
     const char **pp,
     /* Parsing stops at this delimiter */
     char delim,
-    /* Mode for evaluating nested variables. */
+    /* Mode for evaluating nested expressions. */
     VarEvalMode emode,
     ModChain *ch,
     LazyBuf *part
@@ -2461,8 +2459,7 @@ ParseModifier_Defined(const char **pp, ModChain *ch, bool shouldEval,
 		 * ParseModifierPart.
 		 */
 
-		/* Escaped delimiter or other special character */
-		/* See Buf_AddEscaped in for.c. */
+		/* See Buf_AddEscaped in for.c for the counterpart. */
 		if (*p == '\\') {
 			char c = p[1];
 			if ((IsDelimiter(c, ch) && c != '\0') ||
@@ -2474,7 +2471,6 @@ ParseModifier_Defined(const char **pp, ModChain *ch, bool shouldEval,
 			}
 		}
 
-		/* Nested variable expression */
 		if (*p == '$') {
 			FStr val = Var_Parse(&p, ch->expr->scope,
 			    shouldEval ? ch->expr->emode : VARE_PARSE_ONLY);
@@ -2485,7 +2481,6 @@ ParseModifier_Defined(const char **pp, ModChain *ch, bool shouldEval,
 			continue;
 		}
 
-		/* Ordinary text */
 		if (shouldEval)
 			LazyBuf_Add(buf, *p);
 		p++;
@@ -3105,7 +3100,7 @@ ApplyModifier_ToSep(const char **pp, ModChain *ch)
 		goto ok;
 	}
 
-	/* ":ts<unrecognised><unrecognised>". */
+	/* ":ts<unrecognized><unrecognized>". */
 	if (sep[0] != '\\') {
 		(*pp)++;	/* just for backwards compatibility */
 		return AMR_BAD;
@@ -3135,7 +3130,7 @@ ApplyModifier_ToSep(const char **pp, ModChain *ch)
 			p++;
 		} else if (!ch_isdigit(sep[1])) {
 			(*pp)++;	/* just for backwards compatibility */
-			return AMR_BAD;	/* ":ts<backslash><unrecognised>". */
+			return AMR_BAD;	/* ":ts<backslash><unrecognized>". */
 		}
 
 		if (!TryParseChar(&p, base, &ch->sep)) {
@@ -3231,7 +3226,7 @@ ApplyModifier_To(const char **pp, ModChain *ch)
 		return AMR_OK;
 	}
 
-	/* Found ":t<unrecognised>:" or ":t<unrecognised><endc>". */
+	/* Found ":t<unrecognized>:" or ":t<unrecognized><endc>". */
 	*pp = mod + 1;		/* XXX: unnecessary but observable */
 	return AMR_BAD;
 }
@@ -3562,7 +3557,7 @@ ApplyModifier_Assign(const char **pp, ModChain *ch)
 		goto found_op;
 	if ((op[0] == '+' || op[0] == '?' || op[0] == '!') && op[1] == '=')
 		goto found_op;
-	return AMR_UNKNOWN;	/* "::<unrecognised>" */
+	return AMR_UNKNOWN;	/* "::<unrecognized>" */
 
 found_op:
 	if (expr->name[0] == '\0') {
@@ -3632,7 +3627,7 @@ ApplyModifier_Remember(const char **pp, ModChain *ch)
 		/*
 		 * XXX: This ad-hoc call to strcspn deviates from the usual
 		 * behavior defined in ParseModifierPart.  This creates an
-		 * unnecessary, undocumented inconsistency in make.
+		 * unnecessary and undocumented inconsistency in make.
 		 */
 		const char *arg = mod + 2;
 		size_t argLen = strcspn(arg, ":)}");
@@ -4218,7 +4213,7 @@ ParseVarname(const char **pp, char startc, char endc,
 	     LazyBuf *buf)
 {
 	const char *p = *pp;
-	int depth = 0;		/* Track depth so we can spot parse errors. */
+	int depth = 0;
 
 	LazyBuf_Init(buf, p);
 
@@ -4230,7 +4225,7 @@ ParseVarname(const char **pp, char startc, char endc,
 		if (*p == endc)
 			depth--;
 
-		/* A variable inside a variable, expand. */
+		/* An expression inside an expression, expand. */
 		if (*p == '$') {
 			FStr nested_val = Var_Parse(&p, scope, emode);
 			/* TODO: handle errors */
