@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.602 2023/11/02 05:40:49 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.603 2023/11/02 05:55:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,8 +111,8 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.602 2023/11/02 05:40:49 rillig Exp $");
-#if defined(MAKE_NATIVE) && !defined(lint)
+MAKE_RCSID("$NetBSD: main.c,v 1.603 2023/11/02 05:55:22 rillig Exp $");
+#if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
 	    "All rights reserved.");
@@ -439,7 +439,7 @@ MainParseArgJobs(const char *arg)
 static void
 MainParseArgSysInc(const char *argvalue)
 {
-	if (strncmp(".../", argvalue, 4) == 0) {
+	if (strncmp(argvalue, ".../", 4) == 0) {
 		char *found_path = Dir_FindHereOrAbove(curdir, argvalue + 4);
 		if (found_path == NULL)
 			return;
@@ -686,18 +686,18 @@ Main_ParseArgLine(const char *line)
 {
 	Words words;
 	char *buf;
+	const char *p;
 
 	if (line == NULL)
 		return;
-	/* XXX: don't use line as an iterator variable */
-	for (; *line == ' '; line++)
+	for (p = line; *p == ' '; p++)
 		continue;
-	if (line[0] == '\0')
+	if (p[0] == '\0')
 		return;
 
 	{
 		FStr argv0 = Var_Value(SCOPE_GLOBAL, ".MAKE");
-		buf = str_concat3(argv0.str, " ", line);
+		buf = str_concat3(argv0.str, " ", p);
 		FStr_Done(&argv0);
 	}
 
