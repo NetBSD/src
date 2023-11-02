@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.708 2023/11/02 05:40:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.709 2023/11/02 05:55:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.708 2023/11/02 05:40:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.709 2023/11/02 05:55:22 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -235,7 +235,7 @@ static StringList targCmds = LST_INIT;
  */
 static GNode *order_pred;
 
-static int parseErrors = 0;
+static int parseErrors;
 
 /*
  * The include chain of makefiles.  At index 0 is the top-level makefile from
@@ -858,7 +858,8 @@ MaybeUpdateMainTarget(void)
 	for (ln = targets->first; ln != NULL; ln = ln->next) {
 		GNode *gn = ln->datum;
 		if (GNode_IsMainCandidate(gn)) {
-			DEBUG1(MAKE, "Setting main node to \"%s\"\n", gn->name);
+			DEBUG1(MAKE, "Setting main node to \"%s\"\n",
+			    gn->name);
 			mainNode = gn;
 			return;
 		}
@@ -880,31 +881,31 @@ InvalidLineType(const char *line, const char *unexpanded_line)
 	} else if (strcmp(line, unexpanded_line) == 0)
 		Parse_Error(PARSE_FATAL, "Invalid line '%s'", line);
 	else
-		Parse_Error(PARSE_FATAL, "Invalid line '%s', expanded to '%s'",
+		Parse_Error(PARSE_FATAL,
+		    "Invalid line '%s', expanded to '%s'",
 		    unexpanded_line, line);
 }
 
 static void
 ParseDependencyTargetWord(char **pp, const char *lstart)
 {
-	const char *cp = *pp;
+	const char *p = *pp;
 
-	while (*cp != '\0') {
-		if ((ch_isspace(*cp) || *cp == '!' || *cp == ':' ||
-		     *cp == '(') &&
-		    !IsEscaped(lstart, cp))
+	while (*p != '\0') {
+		if ((ch_isspace(*p) || *p == '!' || *p == ':' || *p == '(')
+		    && !IsEscaped(lstart, p))
 			break;
 
-		if (*cp == '$') {
-			FStr val = Var_Parse(&cp, SCOPE_CMDLINE,
+		if (*p == '$') {
+			FStr val = Var_Parse(&p, SCOPE_CMDLINE,
 			    VARE_PARSE_ONLY);
 			/* TODO: handle errors */
 			FStr_Done(&val);
 		} else
-			cp++;
+			p++;
 	}
 
-	*pp += cp - *pp;
+	*pp += p - *pp;
 }
 
 /*
@@ -1331,6 +1332,7 @@ ParseDependencySourceSpecial(ParseSpecial special, const char *word,
 		Suff_AddSuffix(word);
 		break;
 	case SP_PATH:
+	case SP_SYSPATH:
 		AddToPaths(word, paths);
 		break;
 	case SP_INCLUDES:
@@ -1351,9 +1353,6 @@ ParseDependencySourceSpecial(ParseSpecial special, const char *word,
 	case SP_READONLY:
 		Var_ReadOnly(word, true);
 		break;
-	case SP_SYSPATH:
-		AddToPaths(word, paths);
-		break;
 	default:
 		break;
 	}
@@ -1364,7 +1363,7 @@ ApplyDependencyTarget(char *name, char *nameEnd, ParseSpecial *inout_special,
 		      GNodeType *inout_targetAttr,
 		      SearchPathList **inout_paths)
 {
-	char savec = *nameEnd;
+	char savedNameEnd = *nameEnd;
 	*nameEnd = '\0';
 
 	if (!HandleDependencyTarget(name, inout_special,
@@ -1376,7 +1375,7 @@ ApplyDependencyTarget(char *name, char *nameEnd, ParseSpecial *inout_special,
 	else if (*inout_special == SP_PATH && *name != '.' && *name != '\0')
 		Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", name);
 
-	*nameEnd = savec;
+	*nameEnd = savedNameEnd;
 	return true;
 }
 
@@ -1438,17 +1437,17 @@ static void
 ParseDependencySourcesSpecial(char *start,
 			      ParseSpecial special, SearchPathList *paths)
 {
-	char savec;
 
 	while (*start != '\0') {
+		char savedEnd;
 		char *end = start;
 		while (*end != '\0' && !ch_isspace(*end))
 			end++;
-		savec = *end;
+		savedEnd = *end;
 		*end = '\0';
 		ParseDependencySourceSpecial(special, start, paths);
-		*end = savec;
-		if (savec != '\0')
+		*end = savedEnd;
+		if (savedEnd != '\0')
 			end++;
 		pp_skip_whitespace(&end);
 		start = end;
@@ -1477,17 +1476,13 @@ ParseDependencySourcesMundane(char *start,
 		 * rest of the line is the value.
 		 */
 		if (Parse_IsVar(start, &var)) {
-			/*
-			 * Check if this makefile has disabled
-			 * setting local variables.
-			 */
-			bool target_vars = GetBooleanExpr(
+			bool targetVarsEnabled = GetBooleanExpr(
 			    "${.MAKE.TARGET_LOCAL_VARIABLES}", true);
 
-			if (target_vars)
+			if (targetVarsEnabled)
 				LinkVarToTargets(&var);
 			free(var.varname);
-			if (target_vars)
+			if (targetVarsEnabled)
 				return true;
 		}
 
@@ -1792,14 +1787,14 @@ Parse_IsVar(const char *p, VarAssign *out_var)
  * Check for syntax errors such as unclosed expressions or unknown modifiers.
  */
 static void
-VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *scope)
+VarCheckSyntax(VarAssignOp op, const char *uvalue, GNode *scope)
 {
 	if (opts.strict) {
-		if (type != VAR_SUBST && strchr(uvalue, '$') != NULL) {
-			char *expandedValue = Var_Subst(uvalue,
+		if (op != VAR_SUBST && strchr(uvalue, '$') != NULL) {
+			char *parsedValue = Var_Subst(uvalue,
 			    scope, VARE_PARSE_ONLY);
 			/* TODO: handle errors */
-			free(expandedValue);
+			free(parsedValue);
 		}
 	}
 }
@@ -1976,21 +1971,12 @@ GNode_AddCommand(GNode *gn, char *cmd)
 			gn->type |= OP_SUBMAKE;
 		RememberLocation(gn);
 	} else {
-#if 0
-		/* XXX: We cannot do this until we fix the tree */
-		Lst_Append(&gn->commands, cmd);
-		Parse_Error(PARSE_WARNING,
-		    "overriding commands for target \"%s\"; "
-		    "previous commands defined at %s: %u ignored",
-		    gn->name, gn->fname, gn->lineno);
-#else
 		Parse_Error(PARSE_WARNING,
 		    "duplicate script for target \"%s\" ignored",
 		    gn->name);
 		ParseErrorInternal(gn, PARSE_WARNING,
 		    "using previous script for \"%s\" defined here",
 		    gn->name);
-#endif
 	}
 }
 
@@ -2017,10 +2003,7 @@ ParseInclude(char *directive)
 		return;
 	}
 
-	if (*p++ == '<')
-		endc = '>';
-	else
-		endc = '"';
+	endc = *p++ == '<' ? '>' : '"';
 	file = FStr_InitRefer(p);
 
 	while (*p != '\0' && *p != endc)

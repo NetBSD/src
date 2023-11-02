@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1066 2023/11/02 05:40:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1067 2023/11/02 05:55:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1066 2023/11/02 05:40:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1067 2023/11/02 05:55:22 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -706,9 +706,9 @@ Var_ReexportVars(void)
 	 * We allow the makefiles to update MAKELEVEL and ensure
 	 * children see a correctly incremented value.
 	 */
-	char tmp[21];
-	snprintf(tmp, sizeof tmp, "%d", makelevel + 1);
-	setenv(MAKE_LEVEL_ENV, tmp, 1);
+	char level_buf[21];
+	snprintf(level_buf, sizeof level_buf, "%d", makelevel + 1);
+	setenv(MAKE_LEVEL_ENV, level_buf, 1);
 
 	if (var_exportedVars == VAR_EXPORTED_NONE)
 		return;
@@ -2618,11 +2618,11 @@ ApplyModifier_Path(const char **pp, ModChain *ch)
 	Expr_Define(expr);
 
 	gn = Targ_FindNode(expr->name);
-	if (gn == NULL || gn->type & OP_NOPATH) {
+	if (gn == NULL || gn->type & OP_NOPATH)
 		path = NULL;
-	} else if (gn->path != NULL) {
+	else if (gn->path != NULL)
 		path = bmake_strdup(gn->path);
-	} else {
+	else {
 		SearchPath *searchPath = Suff_FindPath(gn);
 		path = Dir_FindFile(expr->name, searchPath);
 	}
@@ -3372,7 +3372,7 @@ SubNumAsc(const void *sa, const void *sb)
 
 	a = num_val(*((const Substring *)sa));
 	b = num_val(*((const Substring *)sb));
-	return (a > b) ? 1 : (b > a) ? -1 : 0;
+	return a > b ? 1 : b > a ? -1 : 0;
 }
 
 static int
@@ -3677,7 +3677,7 @@ ApplyModifier_Unique(const char **pp, ModChain *ch)
 	words = Expr_Words(ch->expr);
 
 	if (words.len > 1) {
-		size_t si, di;
+		size_t di, si;
 
 		di = 0;
 		for (si = 1; si < words.len; si++) {
