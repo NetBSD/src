@@ -1,8 +1,8 @@
-# $NetBSD: varmod-match-escape.mk,v 1.10 2023/06/23 04:56:54 rillig Exp $
+# $NetBSD: varmod-match-escape.mk,v 1.11 2023/11/02 05:14:58 rillig Exp $
 #
 # As of 2020-08-01, the :M and :N modifiers interpret backslashes differently,
 # depending on whether there was a variable expression somewhere before the
-# first backslash or not.  See ApplyModifier_Match, "copy = true".
+# first backslash or not.  See ParseModifier_Match, "copy = true".
 #
 # Apart from the different and possibly confusing debug output, there is no
 # difference in behavior.  When parsing the modifier text, only \{, \} and \:
@@ -34,7 +34,7 @@ SPECIALS=	\: : \\ * \*
 # Therefore the escaped ':' is kept as-is, and the final pattern becomes
 # ':\:'.
 #
-# If ApplyModifier_Match had used the same parsing algorithm as Var_Subst,
+# If ParseModifier_Match had used the same parsing algorithm as Var_Subst,
 # both patterns would end up as '::'.
 #
 VALUES=		: :: :\:
@@ -53,7 +53,7 @@ VALUES=		: :: :\:
 .endif
 
 # XXX: As of 2020-11-01, unlike all other variable modifiers, '\$' is not
-# parsed as an escaped '$'.  Instead, ApplyModifier_Match first scans for
+# parsed as an escaped '$'.  Instead, ParseModifier_Match first scans for
 # the ':' at the end of the modifier, which results in the pattern '\$'.
 # No unescaping takes place since the pattern neither contained '\:' nor
 # '\{' nor '\}'.  But the text is expanded, and a lonely '$' at the end

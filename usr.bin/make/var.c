@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1064 2023/08/19 19:59:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1065 2023/11/02 05:14:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1064 2023/08/19 19:59:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1065 2023/11/02 05:14:58 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2457,7 +2457,7 @@ ParseModifier_Defined(const char **pp, ModChain *ch, bool shouldEval,
 
 		/*
 		 * XXX: This code is similar to the one in Var_Parse. See if
-		 * the code can be merged. See also ApplyModifier_Match and
+		 * the code can be merged. See also ParseModifier_Match and
 		 * ParseModifierPart.
 		 */
 
