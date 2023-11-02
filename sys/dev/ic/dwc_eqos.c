@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.32 2023/11/02 13:50:02 riastradh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.33 2023/11/02 13:50:14 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.32 2023/11/02 13:50:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.33 2023/11/02 13:50:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -509,17 +509,29 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 		  GMAC_MAC_PACKET_FILTER_PCF_MASK);
 	hash[0] = hash[1] = ~0U;
 
+	ETHER_LOCK(ec);
 	if (sc->sc_promisc) {
+		ec->ec_flags |= ETHER_F_ALLMULTI;
 		pfil |= GMAC_MAC_PACKET_FILTER_PR |
 			GMAC_MAC_PACKET_FILTER_PCF_ALL;
-	} else if (sc->sc_allmulti) {
-		pfil |= GMAC_MAC_PACKET_FILTER_PM;
 	} else {
-		hash[0] = hash[1] = 0;
 		pfil |= GMAC_MAC_PACKET_FILTER_HMC;
-		ETHER_LOCK(ec);
+		hash[0] = hash[1] = 0;
+		ec->ec_flags &= ~ETHER_F_ALLMULTI;
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+				ETHER_ADDR_LEN) != 0) {
+				ec->ec_flags |= ETHER_F_ALLMULTI;
+				pfil &= ~GMAC_MAC_PACKET_FILTER_HMC;
+				pfil |= GMAC_MAC_PACKET_FILTER_PM;
+				/*
+				 * Shouldn't matter if we clear HMC but
+				 * let's avoid using different values.
+				 */
+				hash[0] = hash[1] = 0xffffffff;
+				break;
+			}
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 			crc &= 0x7f;
 			crc = eqos_bitrev32(~crc) >> 26;
@@ -528,8 +540,8 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 			hash[hashreg] |= (1 << hashbit);
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		ETHER_UNLOCK(ec);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* Write our unicast address */
 	eaddr = CLLADDR(ifp->if_sadl);
@@ -618,7 +630,6 @@ eqos_init_locked(struct eqos_softc *sc)
 
 	/* Setup RX filter */
 	sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
-	sc->sc_allmulti = ifp->if_flags & IFF_ALLMULTI; /* XXX */
 	eqos_setup_rxfilter(sc);
 
 	WR4(sc, GMAC_MAC_1US_TIC_COUNTER, (sc->sc_csr_clock / 1000000) - 1);
