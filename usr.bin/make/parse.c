@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.706 2023/08/19 11:09:02 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.707 2023/11/02 04:50:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.706 2023/08/19 11:09:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.707 2023/11/02 04:50:44 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -2012,17 +2012,6 @@ GNode_AddCommand(GNode *gn, char *cmd)
 #endif
 	}
 }
-
-/*
- * Add a directory to the path searched for included makefiles bracketed
- * by double-quotes.
- */
-void
-Parse_AddIncludeDir(const char *dir)
-{
-	(void)SearchPath_Add(parseIncPath, dir);
-}
-
 
 /*
  * Parse a directive like '.include' or '.-include'.
