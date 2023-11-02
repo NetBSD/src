@@ -1,4 +1,4 @@
-# $NetBSD: varmod-defined.mk,v 1.14 2023/11/02 05:14:58 rillig Exp $
+# $NetBSD: varmod-defined.mk,v 1.15 2023/11/02 05:40:49 rillig Exp $
 #
 # Tests for the :D variable modifier, which returns the given string
 # if the variable is defined.  It is closely related to the :U modifier.
@@ -106,7 +106,7 @@ VAR:=		${VAR:@var@${8_DOLLARS}@}
 
 
 # Before var.c 1.1030 from 2022-08-24, the following expression caused an
-# out-of-bounds read when parsing the indirect ':D' modifier.
+# out-of-bounds read when parsing the indirect ':U' modifier.
 M_U_backslash:=	${:UU\\}
 .if ${:${M_U_backslash}} != "\\"
 .  error

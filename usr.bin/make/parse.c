@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.707 2023/11/02 04:50:44 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.708 2023/11/02 05:40:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.707 2023/11/02 04:50:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.708 2023/11/02 05:40:49 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -550,7 +550,7 @@ ParseErrorInternal(const GNode *gn,
 }
 
 /*
- * Print a parse error message, including location information.
+ * Print a message, including location information.
  *
  * If the level is PARSE_FATAL, continue parsing until the end of the
  * current top-level makefile, then exit (see Parse_File).
@@ -605,8 +605,7 @@ HandleMessage(ParseErrorLevel level, const char *levelName, const char *umsg)
 
 /*
  * Add the child to the parent's children, and for non-special targets, vice
- * versa.  Special targets such as .END do not need to be informed once the
- * child target has been made.
+ * versa.
  */
 static void
 LinkSource(GNode *pgn, GNode *cgn, bool isSpecial)
@@ -617,7 +616,10 @@ LinkSource(GNode *pgn, GNode *cgn, bool isSpecial)
 	Lst_Append(&pgn->children, cgn);
 	pgn->unmade++;
 
-	/* Special targets like .END don't need any children. */
+	/*
+	 * Special targets like .END do not need to be informed once the child
+	 * target has been made.
+	 */
 	if (!isSpecial)
 		Lst_Append(&cgn->parents, pgn);
 
@@ -656,10 +658,9 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 	if (op == OP_DOUBLEDEP && (gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
 		/*
 		 * If the node was on the left-hand side of a '::' operator,
-		 * we need to create a new instance of it for the children
-		 * and commands on this dependency line since each of these
-		 * dependency groups has its own attributes and commands,
-		 * separate from the others.
+		 * create a new node for the children and commands on this
+		 * dependency line, since each of these dependency groups has
+		 * its own attributes and commands, separate from the others.
 		 *
 		 * The new instance is placed on the 'cohorts' list of the
 		 * initial one (note the initial one is not on its own
@@ -678,7 +679,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 		if (doing_depend)
 			RememberLocation(cohort);
 		/*
-		 * Make the cohort invisible as well to avoid duplicating it
+		 * Make the cohort invisible to avoid duplicating it
 		 * into other variables. True, parents of this target won't
 		 * tend to do anything with their local variables, but better
 		 * safe than sorry.
@@ -693,11 +694,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 		snprintf(cohort->cohort_num, sizeof cohort->cohort_num, "#%d",
 		    (unsigned int)gn->unmade_cohorts % 1000000);
 	} else {
-		/*
-		 * We don't want to nuke any previous flags (whatever they
-		 * were) so we just OR the new operator into the old.
-		 */
-		gn->type |= op;
+		gn->type |= op;	/* preserve any previous flags */
 	}
 
 	return true;
@@ -714,12 +711,12 @@ ApplyDependencyOperator(GNodeType op)
 }
 
 /*
- * We add a .WAIT node in the dependency list. After any dynamic dependencies
+ * Add a .WAIT node in the dependency list. After any dynamic dependencies
  * (and filename globbing) have happened, it is given a dependency on each
  * previous child, back until the previous .WAIT node. The next child won't
  * be scheduled until the .WAIT node is built.
  *
- * We give each .WAIT node a unique name (mainly for diagnostics).
+ * Give each .WAIT node a unique name (mainly for diagnostics).
  */
 static void
 ApplyDependencySourceWait(bool isSpecial)
@@ -803,9 +800,7 @@ ApplyDependencySourceOrder(const char *src)
 			Targ_PrintNode(gn, 0);
 		}
 	}
-	/*
-	 * The current source now becomes the predecessor for the next one.
-	 */
+	/* The current source now becomes the predecessor for the next one. */
 	order_pred = gn;
 }
 
@@ -901,16 +896,9 @@ ParseDependencyTargetWord(char **pp, const char *lstart)
 			break;
 
 		if (*cp == '$') {
-			/*
-			 * Must be a dynamic source (would have been expanded
-			 * otherwise).
-			 *
-			 * There should be no errors in this, as they would
-			 * have been discovered in the initial Var_Subst and
-			 * we wouldn't be here.
-			 */
 			FStr val = Var_Parse(&cp, SCOPE_CMDLINE,
 			    VARE_PARSE_ONLY);
+			/* TODO: handle errors */
 			FStr_Done(&val);
 		} else
 			cp++;
@@ -1578,7 +1566,6 @@ ParseDependencySources(char *p, GNodeType targetAttr,
 		return;
 	}
 
-	/* Now go for the sources. */
 	switch (special) {
 	case SP_INCLUDES:
 	case SP_LIBS:
@@ -1825,7 +1812,7 @@ VarAssign_EvalSubst(GNode *scope, const char *name, const char *uvalue,
 	char *evalue;
 
 	/*
-	 * make sure that we set the variable the first time to nothing
+	 * Make sure that we set the variable the first time to nothing
 	 * so that it gets substituted.
 	 *
 	 * TODO: Add a test that demonstrates why this code is needed,
@@ -1975,16 +1962,10 @@ MaybeSubMake(const char *cmd)
 	return false;
 }
 
-/*
- * Append the command to the target node.
- *
- * The node may be marked as a submake node if the command is determined to
- * be that.
- */
+/* Append the command to the target node. */
 static void
 GNode_AddCommand(GNode *gn, char *cmd)
 {
-	/* Add to last (ie current) cohort for :: targets */
 	if ((gn->type & OP_DOUBLEDEP) && gn->cohorts.last != NULL)
 		gn = gn->cohorts.last->datum;
 
@@ -2042,7 +2023,6 @@ ParseInclude(char *directive)
 		endc = '"';
 	file = FStr_InitRefer(p);
 
-	/* Skip to matching delimiter */
 	while (*p != '\0' && *p != endc)
 		p++;
 
@@ -2318,9 +2298,8 @@ ParseGmakeExport(char *line)
 #endif
 
 /*
- * Called when EOF is reached in the current file. If we were reading an
- * include file or a .for loop, the includes stack is popped and things set
- * up to go back to reading the previous file at the previous location.
+ * When the end of the current file or .for loop is reached, continue reading
+ * the previous file at the previous location.
  *
  * Results:
  *	true to continue parsing, i.e. it had only reached the end of an
@@ -2583,23 +2562,9 @@ SkipIrrelevantBranches(void)
 {
 	const char *line;
 
-	while ((line = ReadLowLevelLine(LK_DOT)) != NULL) {
+	while ((line = ReadLowLevelLine(LK_DOT)) != NULL)
 		if (Cond_EvalLine(line) == CR_TRUE)
 			return true;
-		/*
-		 * TODO: Check for typos in .elif directives such as .elsif
-		 * or .elseif.
-		 *
-		 * This check will probably duplicate some of the code in
-		 * ParseLine.  Most of the code there cannot apply, only
-		 * ParseVarassign and ParseDependencyLine can, and to prevent
-		 * code duplication, these would need to be called with a
-		 * flag called onlyCheckSyntax.
-		 *
-		 * See directive-elif.mk for details.
-		 */
-	}
-
 	return false;
 }
 
@@ -2638,9 +2603,9 @@ ParseForLoop(const char *line)
 /*
  * Read an entire line from the input file.
  *
- * Empty lines, .if and .for are completely handled by this function,
- * leaving only variable assignments, other directives, dependency lines
- * and shell commands to the caller.
+ * Empty lines, .if and .for are handled by this function, while variable
+ * assignments, other directives, dependency lines and shell commands are
+ * handled by the caller.
  *
  * Return a line without trailing whitespace, or NULL for EOF.  The returned
  * string will be freed at the end of including the file.
@@ -2871,10 +2836,6 @@ FindSemicolon(char *p)
 	return p;
 }
 
-/*
- * dependency	-> [target...] op [source...] [';' command]
- * op		-> ':' | '::' | '!'
- */
 static void
 ParseDependencyLine(char *line)
 {
@@ -2882,11 +2843,6 @@ ParseDependencyLine(char *line)
 	char *expanded_line;
 	const char *shellcmd = NULL;
 
-	/*
-	 * For some reason - probably to make the parser impossible -
-	 * a ';' can be used to separate commands from dependencies.
-	 * Attempt to skip over ';' inside substitution patterns.
-	 */
 	{
 		char *semicolon = FindSemicolon(line);
 		if (*semicolon != '\0') {
@@ -2897,7 +2853,7 @@ ParseDependencyLine(char *line)
 	}
 
 	/*
-	 * We now know it's a dependency line so it needs to have all
+	 * We now know it's a dependency line, so it needs to have all
 	 * variables expanded before being parsed.
 	 *
 	 * XXX: Ideally the dependency line would first be split into
@@ -2965,9 +2921,6 @@ ParseLine(char *line)
 
 #ifdef SYSVINCLUDE
 	if (IsSysVInclude(line)) {
-		/*
-		 * It's an S3/S5-style "include".
-		 */
 		ParseTraditionalInclude(line);
 		return;
 	}
@@ -2976,9 +2929,6 @@ ParseLine(char *line)
 #ifdef GMAKEEXPORT
 	if (strncmp(line, "export", 6) == 0 && ch_isspace(line[6]) &&
 	    strchr(line, ':') == NULL) {
-		/*
-		 * It's a Gmake "export".
-		 */
 		ParseGmakeExport(line);
 		return;
 	}
@@ -2992,10 +2942,7 @@ ParseLine(char *line)
 	ParseDependencyLine(line);
 }
 
-/*
- * Parse a top-level makefile, incorporating its content into the global
- * dependency graph.
- */
+/* Interpret a top-level makefile. */
 void
 Parse_File(const char *name, int fd)
 {
@@ -3016,7 +2963,6 @@ Parse_File(const char *name, int fd)
 			    CurFile()->lineno, line);
 			ParseLine(line);
 		}
-		/* Reached EOF, but it may be just EOF of an include file. */
 	} while (ParseEOF());
 
 	FinishDependencyGroup();
