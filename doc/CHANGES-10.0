@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.154 2023/11/02 19:33:36 sborrill Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.155 2023/11/02 22:17:48 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -13878,7 +13878,90 @@ crypto/external/bsd/openssl/lib/libcrypto/man/X509_STORE_set_verify_cb_func.3	1.
 crypto/external/bsd/openssl/lib/libcrypto/man/X509_VERIFY_PARAM_set_flags.3	1.22
 crypto/external/bsd/openssl/lib/libcrypto/man/X509_verify_cert.3		1.22
 crypto/external/bsd/openssl/lib/libcrypto/man/openssl.1				1.22
+doc/3RDPARTY					1.1961 via patch
 
 	openssl(3): update to OpenSSL-3.0.12
 	[ticket #444, martin]
+
+crypto/external/bsd/openssh/dist/PROTOCOL       up to 1.22
+crypto/external/bsd/openssh/dist/PROTOCOL.agent up to 1.14
+crypto/external/bsd/openssh/dist/PROTOCOL.krl   up to 1.1.1.5
+crypto/external/bsd/openssh/dist/addr.c         up to 1.6
+crypto/external/bsd/openssh/dist/auth-options.c up to 1.29
+crypto/external/bsd/openssh/dist/auth-pam.c     up to 1.21
+crypto/external/bsd/openssh/dist/auth2-gss.c    up to 1.17
+crypto/external/bsd/openssh/dist/auth2-pubkey.c up to 1.34
+crypto/external/bsd/openssh/dist/auth2.c        up to 1.28
+crypto/external/bsd/openssh/dist/canohost.c     up to 1.16
+crypto/external/bsd/openssh/dist/chacha.c       up to 1.6
+crypto/external/bsd/openssh/dist/channels.c     up to 1.41
+crypto/external/bsd/openssh/dist/channels.h     up to 1.25
+crypto/external/bsd/openssh/dist/cipher-chachapoly-libcrypto.c up to 1.3
+crypto/external/bsd/openssh/dist/cipher-chachapoly.c up to 1.7
+crypto/external/bsd/openssh/dist/clientloop.c   up to 1.38
+crypto/external/bsd/openssh/dist/kex.c          up to 1.33
+crypto/external/bsd/openssh/dist/kex.h          up to 1.23
+crypto/external/bsd/openssh/dist/kexgexs.c      up to 1.23
+crypto/external/bsd/openssh/dist/krl.c          up to 1.23
+crypto/external/bsd/openssh/dist/krl.h          up to 1.6
+crypto/external/bsd/openssh/dist/match.c        up to 1.16
+crypto/external/bsd/openssh/dist/misc.c         up to 1.34
+crypto/external/bsd/openssh/dist/misc.h         up to 1.26
+crypto/external/bsd/openssh/dist/moduli         up to 1.10
+crypto/external/bsd/openssh/dist/monitor.c      up to 1.43
+crypto/external/bsd/openssh/dist/monitor_wrap.c up to 1.33
+crypto/external/bsd/openssh/dist/mux.c          up to 1.34
+crypto/external/bsd/openssh/dist/packet.c       up to 1.49
+crypto/external/bsd/openssh/dist/packet.h       up to 1.25
+crypto/external/bsd/openssh/dist/poly1305.c     up to 1.6
+crypto/external/bsd/openssh/dist/progressmeter.c up to 1.15
+crypto/external/bsd/openssh/dist/readconf.c     up to 1.42
+crypto/external/bsd/openssh/dist/readconf.h     up to 1.32
+crypto/external/bsd/openssh/dist/scp.c          up to 1.40
+crypto/external/bsd/openssh/dist/servconf.c     up to 1.43
+crypto/external/bsd/openssh/dist/servconf.h     up to 1.30
+crypto/external/bsd/openssh/dist/serverloop.c   up to 1.35
+crypto/external/bsd/openssh/dist/session.c      up to 1.38
+crypto/external/bsd/openssh/dist/sftp-client.c  up to 1.34
+crypto/external/bsd/openssh/dist/sftp-client.h  up to 1.18
+crypto/external/bsd/openssh/dist/sftp-common.c  up to 1.14
+crypto/external/bsd/openssh/dist/sftp-glob.c    up to 1.15
+crypto/external/bsd/openssh/dist/sftp-server.c  up to 1.30
+crypto/external/bsd/openssh/dist/sftp-usergroup.c up to 1.3
+crypto/external/bsd/openssh/dist/sftp.c         up to 1.39
+crypto/external/bsd/openssh/dist/sk-usbhid.c    up to 1.9
+crypto/external/bsd/openssh/dist/ssh-add.c      up to 1.29
+crypto/external/bsd/openssh/dist/ssh-agent.1    up to 1.19
+crypto/external/bsd/openssh/dist/ssh-agent.c    up to 1.36
+crypto/external/bsd/openssh/dist/ssh-keygen.1   up to 1.34
+crypto/external/bsd/openssh/dist/ssh-keygen.c   up to 1.46
+crypto/external/bsd/openssh/dist/ssh-keyscan.c  up to 1.32
+crypto/external/bsd/openssh/dist/ssh-pkcs11-client.c up to 1.18
+crypto/external/bsd/openssh/dist/ssh-pkcs11.c   up to 1.26
+crypto/external/bsd/openssh/dist/ssh-sk.c       up to 1.8
+crypto/external/bsd/openssh/dist/ssh.1          up to 1.37
+crypto/external/bsd/openssh/dist/ssh.c          up to 1.44
+crypto/external/bsd/openssh/dist/ssh2.h         up to 1.14
+crypto/external/bsd/openssh/dist/ssh_config     up to 1.16
+crypto/external/bsd/openssh/dist/ssh_config.5   up to 1.38
+crypto/external/bsd/openssh/dist/sshconnect2.c  up to 1.45
+crypto/external/bsd/openssh/dist/sshd.8         up to 1.31
+crypto/external/bsd/openssh/dist/sshd_config.5  up to 1.42
+crypto/external/bsd/openssh/dist/sshkey.c       up to 1.31
+crypto/external/bsd/openssh/dist/sshkey.h       up to 1.19
+crypto/external/bsd/openssh/dist/sshsig.c       up to 1.11
+crypto/external/bsd/openssh/dist/version.h      up to 1.43
+crypto/external/bsd/openssh/dist/moduli-gen/moduli.2048 up to 1.15
+crypto/external/bsd/openssh/dist/moduli-gen/moduli.3072 up to 1.17
+crypto/external/bsd/openssh/dist/moduli-gen/moduli.4096 up to 1.17
+crypto/external/bsd/openssh/dist/moduli-gen/moduli.6144 up to 1.17
+crypto/external/bsd/openssh/dist/moduli-gen/moduli.7680 up to 1.17
+crypto/external/bsd/openssh/dist/moduli-gen/moduli.8192 up to 1.17
+crypto/external/bsd/openssh/lib/shlib_version	1.35
+distrib/sets/lists/base/shl.mi			1.972 via patch
+distrib/sets/lists/debug/shl.mi			1.333
+doc/3RDPARTY					1.1962 via patch
+
+	ssh(1): update to OpenSSH 9.5
+	[martin, ticket #445]
 
