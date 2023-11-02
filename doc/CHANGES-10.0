@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.152 2023/11/02 14:08:40 sborrill Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.153 2023/11/02 14:12:18 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12825,4 +12825,11 @@ usr.sbin/sysinst/msg.mi.pl			1.46
 	"no mount point" in all translations and adjust the code
 	accordingly.
 	[martin, ticket #442]
+
+usr.sbin/sysinst/msg.mi.de			1.45
+
+	Shorten the Use_Different_Part_Scheme message - the old version
+	could overflow a 80 wide char display with some partitioning
+	schemes (e.g. disklabel).
+	[martin, ticket #443]
 
