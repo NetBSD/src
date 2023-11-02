@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.325 2023/11/02 09:36:27 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.326 2023/11/02 09:40:47 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.325 2023/11/02 09:36:27 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.326 2023/11/02 09:40:47 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1051,7 +1051,8 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->_if_input = ether_input;
-	ifp->if_bpf_mtap = ether_bpf_mtap;
+	if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING)
+		ifp->if_bpf_mtap = ether_bpf_mtap;
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(10);		/* just a default */
 

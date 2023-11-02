@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.346 2023/11/02 05:07:57 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.347 2023/11/02 09:40:47 yamaguchi Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.346 2023/11/02 05:07:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.347 2023/11/02 09:40:47 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1411,14 +1411,10 @@ ixgbe_setup_interface(device_t dev, struct ixgbe_softc *sc)
 
 	if_initialize(ifp);
 	sc->ipq = if_percpuq_create(&sc->osdep.ec.ec_if);
-	ether_ifattach(ifp, sc->hw.mac.addr);
-	aprint_normal_dev(dev, "Ethernet address %s\n",
-	    ether_sprintf(sc->hw.mac.addr));
 	/*
 	 * We use per TX queue softint, so if_deferred_start_init() isn't
 	 * used.
 	 */
-	ether_set_ifflags_cb(ec, ixgbe_ifflags_cb);
 
 	sc->max_frame_size = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
 
@@ -1441,6 +1437,11 @@ ixgbe_setup_interface(device_t dev, struct ixgbe_softc *sc)
 
 	/* Enable the above capabilities by default */
 	ec->ec_capenable = ec->ec_capabilities;
+
+	ether_ifattach(ifp, sc->hw.mac.addr);
+	aprint_normal_dev(dev, "Ethernet address %s\n",
+	    ether_sprintf(sc->hw.mac.addr));
+	ether_set_ifflags_cb(ec, ixgbe_ifflags_cb);
 
 	/*
 	 * Don't turn this on by default, if vlans are
