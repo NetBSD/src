@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.29 2023/11/02 02:32:41 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.30 2023/11/02 13:49:37 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.29 2023/11/02 02:32:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.30 2023/11/02 13:49:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -468,7 +468,8 @@ eqos_tick(void *softc)
 
 	EQOS_LOCK(sc);
 	mii_tick(mii);
-	callout_schedule(&sc->sc_stat_ch, hz);
+	if (sc->sc_running)
+		callout_schedule(&sc->sc_stat_ch, hz);
 	EQOS_UNLOCK(sc);
 
 #ifndef EQOS_MPSAFE
@@ -697,6 +698,7 @@ eqos_init_locked(struct eqos_softc *sc)
 	/* Enable interrupts */
 	eqos_enable_intr(sc);
 
+	sc->sc_running = true;
 	ifp->if_flags |= IFF_RUNNING;
 
 	mii_mediachg(mii);
@@ -729,7 +731,8 @@ eqos_stop_locked(struct eqos_softc *sc, int disable)
 
 	EQOS_ASSERT_LOCKED(sc);
 
-	callout_stop(&sc->sc_stat_ch);
+	sc->sc_running = false;
+	callout_halt(&sc->sc_stat_ch, &sc->sc_lock);
 
 	mii_down(&sc->sc_mii);
 
