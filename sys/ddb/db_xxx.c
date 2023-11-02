@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.79 2023/10/15 10:40:52 martin Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.80 2023/11/02 10:31:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.79 2023/10/15 10:40:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.80 2023/11/02 10:31:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.79 2023/10/15 10:40:52 martin Exp $");
 #include <sys/condvar.h>
 #include <sys/sleepq.h>
 #include <sys/selinfo.h>
-#include <sys/pipe.h>
 
 #include <ddb/ddb.h>
 #include <ddb/db_user.h>
@@ -364,51 +363,6 @@ db_show_sleepq(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 			db_printf(",");
 	}
 	db_printf("\n");
-}
-
-void
-db_show_pipe(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
-{
-	struct pipe pipe, *ppipe = (struct pipe *)(uintptr_t)addr;
-
-	db_read_bytes(addr, sizeof(pipe), (char *)&pipe);
-
-	db_printf("pipe_lock\t\t%p\n", pipe.pipe_lock);
-
-	db_printf("pipe_read\t\t");
-	db_show_condvar((db_addr_t)&ppipe->pipe_read, false, 0, modif);
-
-	db_printf("pipe_write\t\t");
-	db_show_condvar((db_addr_t)&ppipe->pipe_write, false, 0, modif);
-
-	db_printf("pipe_busy\t\t");
-	db_show_condvar((db_addr_t)&ppipe->pipe_busy, false, 0, modif);
-
-	db_printf("pipe_buffer.cnt\t\t%ld\n", (long)pipe.pipe_buffer.cnt);
-	db_printf("pipe_buffer.in\t\t%d\n", pipe.pipe_buffer.in);
-	db_printf("pipe_buffer.out\t\t%d\n", pipe.pipe_buffer.out);
-	db_printf("pipe_buffer.size\t%ld\n", (long)pipe.pipe_buffer.size);
-	db_printf("pipe_buffer.buffer\t%p\n", pipe.pipe_buffer.buffer);
-
-	db_printf("pipe_wrsel\t\t");
-	db_show_selinfo((db_addr_t)&ppipe->pipe_wrsel, false, 0, modif);
-	db_printf("pipe_rdsel\t\t");
-	db_show_selinfo((db_addr_t)&ppipe->pipe_rdsel, false, 0, modif);
-
-	db_printf("pipe_atime\t\t");
-	db_print_timespec(&pipe.pipe_atime);
-
-	db_printf("\npipe_mtime\t\t");
-	db_print_timespec(&pipe.pipe_mtime);
-
-	db_printf("\npipe_btime\t\t");
-	db_print_timespec(&pipe.pipe_btime);
-
-	db_printf("\npipe_kmem\t\t%lx\n", (long)pipe.pipe_kmem);
-	db_printf("pipe_owner\t\t%p\n", pipe.pipe_owner);
-	db_printf("pipe_wrpgid\t\t%d\n", pipe.pipe_wrpgid);
-	db_printf("pipe_rdpgid\t\t%d\n", pipe.pipe_rdpgid);
-	db_printf("pipe_state\t\t%#08x\n", pipe.pipe_state);
 }
 
 void

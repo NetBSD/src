@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.119 2023/10/13 19:07:09 ad Exp $	*/
+/*	$NetBSD: fstat.c,v 1.120 2023/11/02 10:31:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.119 2023/10/13 19:07:09 ad Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.120 2023/11/02 10:31:55 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1271,7 +1271,6 @@ static void
 ptrans(struct file *fp, struct pipe *cpipe, int i)
 {
 	struct pipe cp;
-	int flag;
 
 	PREFIX(i);
 	
@@ -1282,12 +1281,12 @@ ptrans(struct file *fp, struct pipe *cpipe, int i)
 	}
 
 	/* pipe descriptor is either read or write, never both */
-	flag = (fp->f_flag & FWRITE) ? PIPE_WRASYNC : PIPE_RDASYNC;
-	(void)printf("* pipe %p %s %s%s%s", cpipe,
+	(void)printf("* pipe %p %s %p %s%s%s", cpipe,
 		(fp->f_flag & FWRITE) ? "->" : "<-",
+		cp.pipe_peer,
 		(fp->f_flag & FWRITE) ? "w" : "r",
 		(fp->f_flag & FNONBLOCK) ? "n" : "",
-		(cp.pipe_state & flag) ? "a" : "");
+		(cp.pipe_state & PIPE_ASYNC) ? "a" : "");
 	oprint(fp, "\n");
 	return;
 bad:

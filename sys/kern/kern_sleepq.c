@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.86 2023/10/15 10:29:02 riastradh Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.87 2023/11/02 10:31:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.86 2023/10/15 10:29:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.87 2023/11/02 10:31:55 martin Exp $");
 
 #include <sys/param.h>
 
@@ -343,7 +343,7 @@ sleepq_uncatch(lwp_t *l)
 int
 sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 {
-	const int mask = LW_CANCELLED|LW_WEXIT|LW_WCORE|LW_PENDSIG|LW_RESTART;
+	const int mask = LW_CANCELLED|LW_WEXIT|LW_WCORE|LW_PENDSIG;
 	int error = 0, sig, flag;
 	struct proc *p;
 	lwp_t *l = curlwp;
@@ -360,20 +360,16 @@ sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 	 * while we are sleeping.  It is independent from LW_SINTR because
 	 * we don't want to leave LW_SINTR set when the LWP is not asleep.
 	 */
-	flag = l->l_flag;
 	if (catch_p) {
-		if ((flag & mask) != 0) {
-			if ((flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
-				l->l_flag = flag & ~LW_CANCELLED;
-				error = EINTR;
-				early = true;
-			} else if ((flag & LW_PENDSIG) != 0 &&
-			    sigispending(l, 0))
-				early = true;
-		}
-		l->l_flag = (flag | LW_CATCHINTR) & ~LW_RESTART;
+		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
+			l->l_flag &= ~LW_CANCELLED;
+			error = EINTR;
+			early = true;
+		} else if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0))
+			early = true;
+		l->l_flag |= LW_CATCHINTR;
 	} else
-		l->l_flag = flag & ~(LW_CATCHINTR | LW_RESTART);
+		l->l_flag &= ~LW_CATCHINTR;
 
 	if (early) {
 		/* lwp_unsleep() will release the lock */
@@ -441,8 +437,7 @@ sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 			    (sig = issignal(l)) != 0)
 				error = sleepq_sigtoerror(l, sig);
 			mutex_exit(p->p_lock);
-		} else if ((flag & LW_RESTART) != 0)
-			error = ERESTART;
+		}
 	}
 
 	ktrcsw(0, 0, syncobj);
