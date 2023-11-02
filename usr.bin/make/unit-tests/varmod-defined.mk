@@ -1,4 +1,4 @@
-# $NetBSD: varmod-defined.mk,v 1.13 2022/08/24 20:22:10 rillig Exp $
+# $NetBSD: varmod-defined.mk,v 1.14 2023/11/02 05:14:58 rillig Exp $
 #
 # Tests for the :D variable modifier, which returns the given string
 # if the variable is defined.  It is closely related to the :U modifier.
@@ -58,7 +58,7 @@ DEF=	defined
 # Any other text is written without any further escaping.  In contrast
 # to the :M modifier, parentheses and braces do not need to be nested.
 # Instead, the :D modifier is implemented sanely by parsing nested
-# expressions as such, without trying any shortcuts. See ApplyModifier_Match
+# expressions as such, without trying any shortcuts. See ParseModifier_Match
 # for an inferior variant.
 #
 .if ${DEF:D!&((((} != "!&(((("

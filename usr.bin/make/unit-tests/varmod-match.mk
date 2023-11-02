@@ -1,9 +1,9 @@
-# $NetBSD: varmod-match.mk,v 1.15 2023/06/23 04:56:54 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.16 2023/11/02 05:14:58 rillig Exp $
 #
 # Tests for the :M variable modifier, which filters words that match the
 # given pattern.
 #
-# See ApplyModifier_Match and ModifyWord_Match for the implementation.
+# See ApplyModifier_Match, ParseModifier_Match and ModifyWord_Match.
 
 .MAKEFLAGS: -dc
 
