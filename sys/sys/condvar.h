@@ -1,7 +1,7 @@
-/*	$NetBSD: condvar.h,v 1.18 2023/10/13 18:48:56 ad Exp $	*/
+/*	$NetBSD: condvar.h,v 1.19 2023/11/02 10:31:55 martin Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,6 @@ int	cv_timedwaitbt_sig(kcondvar_t *, struct kmutex *, struct bintime *,
 
 void	cv_signal(kcondvar_t *);
 void	cv_broadcast(kcondvar_t *);
-void	cv_fdrestart(kcondvar_t *);
 
 bool	cv_has_waiters(kcondvar_t *);
 bool	cv_is_valid(kcondvar_t *);

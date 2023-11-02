@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.62 2023/10/15 10:28:00 riastradh Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.63 2023/11/02 10:31:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020, 2023
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.62 2023/10/15 10:28:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.63 2023/11/02 10:31:55 martin Exp $");
 
 #include <sys/param.h>
 
@@ -540,43 +540,6 @@ cv_wakeup_all(kcondvar_t *cv)
 		KASSERT(l->l_mutex == mp);
 		KASSERT(l->l_wchan == cv);
 		sleepq_remove(sq, l, true);
-	}
-	mutex_spin_exit(mp);
-}
-
-/*
- * cv_fdrestart:
- *
- *	Like cv_broadcast(), but make any LWPs that share the same file
- *	descriptor table as the caller return ERESTART when resuming.  Used
- *	to dislodge LWPs waiting for I/O that prevent a file descriptor from
- *	being closed, without upsetting access to the file (not descriptor)
- *	made from another direction.  Rarely used thus no fast path
- *	provided.
- */
-void
-cv_fdrestart(kcondvar_t *cv)
-{
-	sleepq_t *sq;
-	kmutex_t *mp;
-	lwp_t *l;
-
-	KASSERT(cv_is_valid(cv));
-
-	if (LIST_EMPTY(CV_SLEEPQ(cv)))
-		return;
-
-	mp = sleepq_hashlock(cv);
-	sq = CV_SLEEPQ(cv);
-	while ((l = LIST_FIRST(sq)) != NULL) {
-		KASSERT(l->l_sleepq == sq);
-		KASSERT(l->l_mutex == mp);
-		KASSERT(l->l_wchan == cv);
-		/* l_fd stable at this point so no special locking needed. */
-		if (l->l_fd == curlwp->l_fd) {
-			l->l_flag |= LW_RESTART;
-			sleepq_remove(sq, l, false);
-		}
 	}
 	mutex_spin_exit(mp);
 }

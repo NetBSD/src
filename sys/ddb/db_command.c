@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.189 2023/10/15 10:27:33 riastradh Exp $	*/
+/*	$NetBSD: db_command.c,v 1.190 2023/11/02 10:31:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.189 2023/10/15 10:27:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.190 2023/11/02 10:31:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -301,8 +301,6 @@ static const struct db_command db_show_cmds[] = {
 	    0 ,"List all used memory pages.",NULL,NULL) },
 	{ DDB_ADD_CMD("panic",	db_show_panic,	0,
 	    "Print the current panic string",NULL,NULL) },
-	{ DDB_ADD_CMD("pipe", db_show_pipe,
-	    0 ,"Show the contents of a pipe.",NULL,NULL) },
 	{ DDB_ADD_CMD("pool",	db_pool_print_cmd,	0,
 	    "Print the pool at address.", "[/clp] address",NULL) },
 	/* added from all sub cmds */
