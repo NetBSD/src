@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.151 2023/11/02 14:03:58 sborrill Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.152 2023/11/02 14:08:40 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -12813,4 +12813,16 @@ sbin/gpt/gpt.8					1.79
 	Add missing suffixes for size values and clarify that they are
 	case-independent.
 	[martin, ticket #441]
+
+usr.sbin/sysinst/label.c			1.49
+usr.sbin/sysinst/msg.mi.de			1.44
+usr.sbin/sysinst/msg.mi.en			1.47
+usr.sbin/sysinst/msg.mi.es			1.40
+usr.sbin/sysinst/msg.mi.fr			1.45
+usr.sbin/sysinst/msg.mi.pl			1.46
+
+	Switch to "-" (single minus) as input denotation for
+	"no mount point" in all translations and adjust the code
+	accordingly.
+	[martin, ticket #442]
 
