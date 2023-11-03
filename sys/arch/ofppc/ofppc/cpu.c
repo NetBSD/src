@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.16 2011/06/29 06:13:09 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.17 2023/11/03 20:25:13 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2011/06/29 06:13:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2023/11/03 20:25:13 andvar Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -238,9 +238,7 @@ int
 md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 {
 	int i;
-	u_int msr;
 
-	msr = mfmsr();
 	h->hatch_running = -1;
 	cpu_spinstart_cpunum = ci->ci_cpuid;
 	__asm volatile("dcbf 0,%0"::"r"(&cpu_spinstart_cpunum):"memory");
