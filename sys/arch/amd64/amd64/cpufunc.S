@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.66 2023/10/04 20:28:05 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.67 2023/11/03 09:07:56 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 
+#include "opt_dtrace.h"
 #include "opt_xen.h"
 #include "opt_svs.h"
 
@@ -176,6 +177,18 @@ ENTRY(smap_disable)
 	SMAP_DISABLE
 	ret
 END(smap_disable)
+
+#ifdef KDTRACE_HOOKS
+ENTRY(dtrace_smap_enable)
+	SMAP_ENABLE
+	ret
+END(dtrace_smap_enable)
+
+ENTRY(dtrace_smap_disable)
+	SMAP_DISABLE
+	ret
+END(dtrace_smap_disable)
+#endif
 
 /*
  * %rdi = name
