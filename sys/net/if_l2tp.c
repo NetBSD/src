@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.48 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.48.4.1 2023/11/03 10:10:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.48 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.48.4.1 2023/11/03 10:10:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -281,6 +281,12 @@ int
 l2tpattach0(struct l2tp_softc *sc)
 {
 
+	sc->l2tp_ec.ec_capabilities = 0;
+	sc->l2tp_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
+	sc->l2tp_ec.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+
+	ether_ifattach(&sc->l2tp_ec.ec_if, NULL);
+
 	sc->l2tp_ec.ec_if.if_addrlen = 0;
 	sc->l2tp_ec.ec_if.if_mtu    = L2TP_MTU;
 	sc->l2tp_ec.ec_if.if_flags  = IFF_POINTOPOINT|IFF_MULTICAST|IFF_SIMPLEX;
@@ -296,23 +302,6 @@ l2tpattach0(struct l2tp_softc *sc)
 	sc->l2tp_ec.ec_if._if_input = ether_input;
 	IFQ_SET_READY(&sc->l2tp_ec.ec_if.if_snd);
 
-#ifdef MBUFTRACE
-	struct ethercom *ec = &sc->l2tp_ec;
-	struct ifnet *ifp = &sc->l2tp_ec.ec_if;
-
-	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
-	    sizeof(ec->ec_tx_mowner.mo_name));
-	strlcpy(ec->ec_tx_mowner.mo_descr, "tx",
-	    sizeof(ec->ec_tx_mowner.mo_descr));
-	strlcpy(ec->ec_rx_mowner.mo_name, ifp->if_xname,
-	    sizeof(ec->ec_rx_mowner.mo_name));
-	strlcpy(ec->ec_rx_mowner.mo_descr, "rx",
-	    sizeof(ec->ec_rx_mowner.mo_descr));
-	MOWNER_ATTACH(&ec->ec_tx_mowner);
-	MOWNER_ATTACH(&ec->ec_rx_mowner);
-	ifp->if_mowner = &ec->ec_tx_mowner;
-#endif
-
 	/* XXX
 	 * It may improve performance to use if_initialize()/if_register()
 	 * so that l2tp_input() calls if_input() instead of
@@ -322,7 +311,6 @@ l2tpattach0(struct l2tp_softc *sc)
 	if_attach(&sc->l2tp_ec.ec_if);
 	if_link_state_change(&sc->l2tp_ec.ec_if, LINK_STATE_DOWN);
 	if_alloc_sadl(&sc->l2tp_ec.ec_if);
-	bpf_attach(&sc->l2tp_ec.ec_if, DLT_EN10MB, sizeof(struct ether_header));
 
 	return 0;
 }
@@ -351,6 +339,8 @@ l2tp_clone_destroy(struct ifnet *ifp)
 	struct l2tp_softc *sc = container_of(ifp, struct l2tp_softc,
 	    l2tp_ec.ec_if);
 
+	ether_ifdetach(ifp);
+
 	l2tp_clear_session(sc);
 	l2tp_delete_tunnel(&sc->l2tp_ec.ec_if);
 	/*
@@ -368,8 +358,6 @@ l2tp_clone_destroy(struct ifnet *ifp)
 	mutex_enter(&l2tp_softcs.lock);
 	LIST_REMOVE(sc, l2tp_list);
 	mutex_exit(&l2tp_softcs.lock);
-
-	bpf_detach(ifp);
 
 	if_detach(ifp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.170 2022/06/20 08:14:48 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.170.4.1 2023/11/03 10:10:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.170 2022/06/20 08:14:48 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.170.4.1 2023/11/03 10:10:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.170 2022/06/20 08:14:48 yamaguchi Exp 
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/kmem.h>
+#include <sys/cprng.h>
 #include <sys/cpu.h>
 #include <sys/pserialize.h>
 #include <sys/psref.h>
@@ -149,6 +150,7 @@ struct ifvlan_linkmib {
 
 struct ifvlan {
 	struct ethercom ifv_ec;
+	uint8_t ifv_lladdr[ETHER_ADDR_LEN];
 	struct ifvlan_linkmib *ifv_mib;	/*
 					 * reader must use vlan_getref_linkmib()
 					 * instead of direct dereference
@@ -187,6 +189,15 @@ const struct vlan_multisw vlan_ether_multisw = {
 	.vmsw_addmulti = vlan_ether_addmulti,
 	.vmsw_delmulti = vlan_ether_delmulti,
 	.vmsw_purgemulti = vlan_ether_purgemulti,
+};
+
+static void	vlan_multi_nothing(struct ifvlan *);
+static int	vlan_multi_nothing_ifreq(struct ifvlan *, struct ifreq *);
+
+const struct vlan_multisw vlan_nothing_multisw = {
+	.vmsw_addmulti = vlan_multi_nothing_ifreq,
+	.vmsw_delmulti = vlan_multi_nothing_ifreq,
+	.vmsw_purgemulti = vlan_multi_nothing,
 };
 
 static int	vlan_clone_create(struct if_clone *, int);
@@ -327,6 +338,9 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	mib = kmem_zalloc(sizeof(struct ifvlan_linkmib), KM_SLEEP);
 	ifp = &ifv->ifv_if;
 	LIST_INIT(&ifv->ifv_mc_listhead);
+	cprng_fast(ifv->ifv_lladdr, sizeof(ifv->ifv_lladdr));
+	ifv->ifv_lladdr[0] &= 0xFE; /* clear I/G bit */
+	ifv->ifv_lladdr[0] |= 0x02; /* set G/L bit */
 
 	mib->ifvm_ifvlan = ifv;
 	mib->ifvm_p = NULL;
@@ -394,7 +408,10 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	struct ifvlan_linkmib *omib = NULL;
 	struct ifvlan_linkmib *checkmib;
 	struct psref_target *nmib_psref = NULL;
+	struct ethercom *ec;
 	const uint16_t vid = EVL_VLANOFTAG(tag);
+	const uint8_t *lla;
+	u_char ifv_iftype;
 	int error = 0;
 	int idx;
 	bool omib_cleanup = false;
@@ -428,57 +445,70 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 
 	switch (p->if_type) {
 	case IFT_ETHER:
-	    {
-		struct ethercom *ec = (void *)p;
-
 		nmib->ifvm_msw = &vlan_ether_multisw;
 		nmib->ifvm_mintu = ETHERMIN;
-
-		error = ether_add_vlantag(p, tag, NULL);
-		if (error != 0)
-			goto done;
-
-		if (ec->ec_capenable & ETHERCAP_VLAN_MTU) {
-			nmib->ifvm_mtufudge = 0;
-		} else {
-			/*
-			 * Fudge the MTU by the encapsulation size. This
-			 * makes us incompatible with strictly compliant
-			 * 802.1Q implementations, but allows us to use
-			 * the feature with other NetBSD
-			 * implementations, which might still be useful.
-			 */
-			nmib->ifvm_mtufudge = ETHER_VLAN_ENCAP_LEN;
-		}
-
-		/*
-		 * If the parent interface can do hardware-assisted
-		 * VLAN encapsulation, then propagate its hardware-
-		 * assisted checksumming flags and tcp segmentation
-		 * offload.
-		 */
-		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING) {
-			ifp->if_capabilities = p->if_capabilities &
-			    (IFCAP_TSOv4 | IFCAP_TSOv6 |
-				IFCAP_CSUM_IPv4_Tx  | IFCAP_CSUM_IPv4_Rx |
-				IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
-				IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
-				IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_TCPv6_Rx |
-				IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_UDPv6_Rx);
-		}
 
 		/*
 		 * We inherit the parent's Ethernet address.
 		 */
-		ether_ifattach(ifp, CLLADDR(p->if_sadl));
-		ifp->if_hdrlen = sizeof(struct ether_vlan_header); /* XXX? */
+		lla = CLLADDR(p->if_sadl);
+
+		/*
+		 * Inherit the if_type from the parent.  This allows us
+		 * to participate in bridges of that type.
+		 */
+		ifv_iftype = p->if_type;
 		break;
-	    }
+
+	case IFT_L2TP:
+		nmib->ifvm_msw = &vlan_nothing_multisw;
+		nmib->ifvm_mintu = ETHERMIN;
+		/* use random Ethernet address. */
+		lla = ifv->ifv_lladdr;
+		ifv_iftype = IFT_ETHER;
+		break;
 
 	default:
 		error = EPROTONOSUPPORT;
 		goto done;
 	}
+
+	error = ether_add_vlantag(p, tag, NULL);
+	if (error != 0)
+		goto done;
+
+	ec = (struct ethercom *)p;
+	if (ec->ec_capenable & ETHERCAP_VLAN_MTU) {
+		nmib->ifvm_mtufudge = 0;
+	} else {
+		/*
+		 * Fudge the MTU by the encapsulation size. This
+		 * makes us incompatible with strictly compliant
+		 * 802.1Q implementations, but allows us to use
+		 * the feature with other NetBSD
+		 * implementations, which might still be useful.
+		 */
+		nmib->ifvm_mtufudge = ETHER_VLAN_ENCAP_LEN;
+	}
+
+	/*
+	 * If the parent interface can do hardware-assisted
+	 * VLAN encapsulation, then propagate its hardware-
+	 * assisted checksumming flags and tcp segmentation
+	 * offload.
+	 */
+	if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING) {
+		ifp->if_capabilities = p->if_capabilities &
+		    (IFCAP_TSOv4 | IFCAP_TSOv6 |
+			IFCAP_CSUM_IPv4_Tx  | IFCAP_CSUM_IPv4_Rx |
+			IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+			IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
+			IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_TCPv6_Rx |
+			IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_UDPv6_Rx);
+	}
+
+	ether_ifattach(ifp, lla);
+	ifp->if_hdrlen = sizeof(struct ether_vlan_header); /* XXX? */
 
 	nmib->ifvm_p = p;
 	nmib->ifvm_tag = vid;
@@ -486,11 +516,8 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	ifv->ifv_if.if_flags = p->if_flags &
 	    (IFF_UP | IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
 
-	/*
-	 * Inherit the if_type from the parent.  This allows us
-	 * to participate in bridges of that type.
-	 */
-	ifv->ifv_if.if_type = p->if_type;
+	/*XXX need to update the if_type in if_sadl if it is changed */
+	ifv->ifv_if.if_type = ifv_iftype;
 
 	PSLIST_ENTRY_INIT(ifv, ifv_hash);
 	idx = vlan_tag_hash(vid, ifv_hash.mask);
@@ -587,32 +614,26 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	(*nmib->ifvm_msw->vmsw_purgemulti)(ifv);
 
 	/* Disconnect from parent. */
-	switch (p->if_type) {
-	case IFT_ETHER:
-	    {
-		(void)ether_del_vlantag(p, nmib->ifvm_tag);
+	KASSERT(
+	    p->if_type == IFT_ETHER ||
+	    p->if_type == IFT_L2TP);
+	(void)ether_del_vlantag(p, nmib->ifvm_tag);
 
-		/* XXX ether_ifdetach must not be called with IFNET_LOCK */
-		ifv->ifv_stopping = true;
-		mutex_exit(&ifv->ifv_lock);
-		IFNET_UNLOCK(ifp);
-		ether_ifdetach(ifp);
-		IFNET_LOCK(ifp);
-		mutex_enter(&ifv->ifv_lock);
-		ifv->ifv_stopping = false;
+	/* XXX ether_ifdetach must not be called with IFNET_LOCK */
+	ifv->ifv_stopping = true;
+	mutex_exit(&ifv->ifv_lock);
+	IFNET_UNLOCK(ifp);
+	ether_ifdetach(ifp);
+	IFNET_LOCK(ifp);
+	mutex_enter(&ifv->ifv_lock);
+	ifv->ifv_stopping = false;
 
-		/* if_free_sadl must be called with IFNET_LOCK */
-		if_free_sadl(ifp, 1);
+	/* if_free_sadl must be called with IFNET_LOCK */
+	if_free_sadl(ifp, 1);
 
-		/* Restore vlan_ioctl overwritten by ether_ifdetach */
-		ifp->if_ioctl = vlan_ioctl;
-		vlan_reset_linkname(ifp);
-		break;
-	    }
-
-	default:
-		panic("%s: impossible", __func__);
-	}
+	/* Restore vlan_ioctl overwritten by ether_ifdetach */
+	ifp->if_ioctl = vlan_ioctl;
+	vlan_reset_linkname(ifp);
 
 	nmib->ifvm_p = NULL;
 	ifv->ifv_if.if_mtu = 0;
@@ -1190,6 +1211,18 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 	}
 }
 
+static int
+vlan_multi_nothing_ifreq(struct ifvlan *v __unused, struct ifreq *r __unused)
+{
+	/* do nothing */
+	return 0;
+}
+static void
+vlan_multi_nothing(struct ifvlan *v __unused)
+{
+	/* do nothing */
+}
+
 static void
 vlan_start(struct ifnet *ifp)
 {
@@ -1253,13 +1286,10 @@ vlan_start(struct ifnet *ifp)
 		 * the address family/header pointer in the pktattr.
 		 */
 		if (ALTQ_IS_ENABLED(&p->if_snd)) {
-			switch (p->if_type) {
-			case IFT_ETHER:
-				altq_etherclassify(&p->if_snd, m);
-				break;
-			default:
-				panic("%s: impossible (altq)", __func__);
-			}
+			KASSERT(
+			    p->if_type == IFT_ETHER ||
+			    p->if_type == IFT_L2TP);
+			altq_etherclassify(&p->if_snd, m);
 		}
 		KERNEL_UNLOCK_ONE(NULL);
 #endif /* ALTQ */
@@ -1275,20 +1305,15 @@ vlan_start(struct ifnet *ifp)
 			/*
 			 * insert the tag ourselves
 			 */
-
-			switch (p->if_type) {
-			case IFT_ETHER:
-				(void)ether_inject_vlantag(&m,
-				    ETHERTYPE_VLAN, mib->ifvm_tag);
-				if (m == NULL) {
-					printf("%s: unable to inject VLAN tag",
-					    p->if_xname);
-					continue;
-				}
-				break;
-
-			default:
-				panic("%s: impossible", __func__);
+			KASSERT(
+			    p->if_type == IFT_ETHER ||
+			    p->if_type == IFT_L2TP);
+			(void)ether_inject_vlantag(&m,
+			    ETHERTYPE_VLAN, mib->ifvm_tag);
+			if (m == NULL) {
+				printf("%s: unable to inject VLAN tag",
+				    p->if_xname);
+				continue;
 			}
 		}
 
@@ -1376,20 +1401,16 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 		/*
 		 * insert the tag ourselves
 		 */
-		switch (p->if_type) {
-		case IFT_ETHER:
-			error = ether_inject_vlantag(&m,
-			    ETHERTYPE_VLAN, mib->ifvm_tag);
-			if (error != 0) {
-				KASSERT(m == NULL);
-				printf("%s: unable to inject VLAN tag",
-				    p->if_xname);
-				goto out;
-			}
-			break;
-
-		default:
-			panic("%s: impossible", __func__);
+		KASSERT(
+		    p->if_type == IFT_ETHER ||
+		    p->if_type == IFT_L2TP);
+		error = ether_inject_vlantag(&m,
+		    ETHERTYPE_VLAN, mib->ifvm_tag);
+		if (error != 0) {
+			KASSERT(m == NULL);
+			printf("%s: unable to inject VLAN tag",
+			    p->if_xname);
+			goto out;
 		}
 	}
 
