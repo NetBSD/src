@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.24 2021/08/19 03:27:05 yamaguchi Exp $
+#	$NetBSD: t_vlan.sh,v 1.24.2.1 2023/11/03 10:10:49 martin Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -1035,6 +1035,139 @@ vlan_promisc_cleanup()
 	cleanup
 }
 
+vlan_l2tp_body_common()
+{
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
+
+	local af=$1
+	local ping_cmd="rump.ping -c 1"
+	local pfx=24
+	local local0=$IP_LOCAL0
+	local local1=$IP_LOCAL1
+	local remote0=$IP_REMOTE0
+	local remote1=$IP_REMOTE1
+	local sysctl_param="net.inet.ip.dad_count=0"
+	local vid0=10
+	local vid1=11
+
+	local l2tp_laddr=10.222.222.1
+	local l2tp_lsession=1001
+	local l2tp_raddr=10.222.222.2
+	local l2tp_rsession=1002
+
+	if [ x"$af" = x"inet6" ]; then
+		ping_cmd="rump.ping6 -c 1"
+		rumplib="netinet6"
+		pfx=64
+		local0=$IP6_LOCAL0
+		local1=$IP6_LOCAL1
+		remote0=$IP6_REMOTE0
+		remote1=$IP6_REMOTE1
+		sysctl_param="net.inet6.ip6.dad_count=0"
+	fi
+
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+	rump_server_add_iface $SOCK_LOCAL l2tp0
+	rump_server_add_iface $SOCK_LOCAL vlan0
+	rump_server_add_iface $SOCK_LOCAL vlan1
+
+	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS
+	rump_server_add_iface $SOCK_REMOTE l2tp0
+	rump_server_add_iface $SOCK_REMOTE vlan0
+	rump_server_add_iface $SOCK_REMOTE vlan1
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.sysctl -w $sysctl_param
+	$atf_ifconfig shmif0 $l2tp_laddr/24
+	$atf_ifconfig l2tp0 tunnel  $l2tp_laddr $l2tp_raddr
+	$atf_ifconfig l2tp0 session $l2tp_lsession $l2tp_rsession
+	$atf_ifconfig l2tp0 up
+
+	export RUMP_SERVER=$SOCK_REMOTE
+	atf_check -s exit:0 -o ignore rump.sysctl -w $sysctl_param
+	$atf_ifconfig shmif0 $l2tp_raddr/24
+	$atf_ifconfig l2tp0 tunnel  $l2tp_raddr $l2tp_laddr
+	$atf_ifconfig l2tp0 session $l2tp_rsession $l2tp_lsession
+	$atf_ifconfig l2tp0 up
+
+	# configure vlans on l2tp(4)
+	export RUMP_SERVER=$SOCK_LOCAL
+	$atf_ifconfig vlan0 vlan $vid0 vlanif l2tp0
+	$atf_ifconfig vlan0 $af $local0/$pfx
+	$atf_ifconfig vlan1 vlan $vid1 vlanif l2tp0
+	$atf_ifconfig vlan1 $af $local1/$pfx
+	export RUMP_SERVER=$SOCK_REMOTE
+	$atf_ifconfig vlan0 vlan $vid0 vlanif l2tp0
+	$atf_ifconfig vlan0 $af $remote0/$pfx
+	$atf_ifconfig vlan1 vlan $vid1 vlanif l2tp0
+	$atf_ifconfig vlan1 $af $remote1/$pfx
+
+	# test for VLAN frame transfer
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore $ping_cmd $remote0
+	atf_check -s exit:0 -o ignore $ping_cmd $remote1
+
+	# unconfig vlans
+	export RUMP_SERVER=$SOCK_LOCAL
+	$atf_ifconfig vlan0 -vlanif
+	export RUMP_SERVER=$SOCK_REMOTE
+	$atf_ifconfig vlan0 -vlanif
+
+	# remove l2tp0 that has vlan1
+	export RUMP_SERVER=$SOCK_LOCAL
+	$atf_ifconfig l2tp0 destroy
+	export RUMP_SERVER=$SOCK_REMOTE
+	$atf_ifconfig l2tp0 destroy
+}
+
+atf_test_case vlan_l2tp cleanup
+vlan_l2tp_head()
+{
+
+	atf_set "descr" "tests of vlan(IPv4) over l2tp(IPv4)"
+	atf_set "require.progs" "rump_server"
+}
+
+vlan_l2tp_body()
+{
+
+	rump_server_start $SOCK_LOCAL  vlan l2tp
+	rump_server_start $SOCK_REMOTE vlan l2tp
+
+	vlan_l2tp_body_common "inet"
+}
+
+vlan_l2tp_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case vlan_l2tp6 cleanup
+vlan_l2tp6_head()
+{
+
+	atf_set "descr" "tests of vlan(IPv6) over l2tp(IPv4)"
+	atf_set "require.progs" "rump_server"
+}
+
+vlan_l2tp6_body()
+{
+
+	rump_server_start $SOCK_LOCAL  vlan l2tp netinet6
+	rump_server_start $SOCK_REMOTE vlan l2tp netinet6
+
+	vlan_l2tp_body_common "inet6"
+}
+
+vlan_l2tp6_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -1046,6 +1179,7 @@ atf_init_test_cases()
 	atf_add_test_case vlan_bridge
 	atf_add_test_case vlan_multicast
 	atf_add_test_case vlan_promisc
+	atf_add_test_case vlan_l2tp
 
 	atf_add_test_case vlan_create_destroy6
 	atf_add_test_case vlan_basic6
@@ -1054,4 +1188,5 @@ atf_init_test_cases()
 	atf_add_test_case vlan_configs6
 	atf_add_test_case vlan_bridge6
 	atf_add_test_case vlan_multicast6
+	atf_add_test_case vlan_l2tp6
 }

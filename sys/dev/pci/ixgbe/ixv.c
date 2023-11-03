@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.183.4.4 2023/10/18 11:53:22 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.183.4.5 2023/11/03 10:10:49 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.183.4.4 2023/10/18 11:53:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.183.4.5 2023/11/03 10:10:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1678,14 +1678,10 @@ ixv_setup_interface(device_t dev, struct ixgbe_softc *sc)
 
 	if_initialize(ifp);
 	sc->ipq = if_percpuq_create(&sc->osdep.ec.ec_if);
-	ether_ifattach(ifp, sc->hw.mac.addr);
-	aprint_normal_dev(dev, "Ethernet address %s\n",
-	    ether_sprintf(sc->hw.mac.addr));
 	/*
 	 * We use per TX queue softint, so if_deferred_start_init() isn't
 	 * used.
 	 */
-	ether_set_ifflags_cb(ec, ixv_ifflags_cb);
 
 	sc->max_frame_size = ifp->if_mtu + IXGBE_MTU_HDR;
 
@@ -1708,6 +1704,11 @@ ixv_setup_interface(device_t dev, struct ixgbe_softc *sc)
 
 	/* Enable the above capabilities by default */
 	ec->ec_capenable = ec->ec_capabilities;
+
+	ether_ifattach(ifp, sc->hw.mac.addr);
+	aprint_normal_dev(dev, "Ethernet address %s\n",
+	    ether_sprintf(sc->hw.mac.addr));
+	ether_set_ifflags_cb(ec, ixv_ifflags_cb);
 
 	/* Don't enable LRO by default */
 #if 0
