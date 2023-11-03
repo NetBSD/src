@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.26 2022/03/25 21:23:00 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.26.4.1 2023/11/03 09:59:04 martin Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -133,6 +133,7 @@ LIBKERN= ${KERNLIB}
 ### find out what to use for libz
 Z_AS= library
 .include "${S}/lib/libz/Makefile.inc"
+CPPFLAGS+=	-I${S}/lib/libz -I${S}/../common/dist/zlib
 LIBZ= ${ZLIB}
 
 ### find out what to use for libgnuefi
