@@ -1,4 +1,4 @@
-/*	$NetBSD: efimemory.c,v 1.9 2019/09/13 02:19:45 manu Exp $	*/
+/*	$NetBSD: efimemory.c,v 1.9.26.1 2023/11/03 10:01:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -221,7 +221,7 @@ efi_memory_get_memmap(struct bi_memmap_entry **memmapp, size_t *num)
 
 		next = NextMemoryDescriptor(md, DescriptorSize);
 	}
-	
+
 	*memmapp = memmap;
 	*num = NoEntries;
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.21.4.1 2023/05/13 13:26:56 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.21.4.2 2023/11/03 10:01:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -483,7 +483,7 @@ command_dev(char *arg)
 	if (*arg == '\0') {
 		efi_disk_show();
 		efi_net_show();
-	
+
 		if (default_part_name != NULL)
 			printf("default NAME=%s\n", default_part_name);
 		else
@@ -647,7 +647,7 @@ void
 command_reloc(char *arg)
 {
 	char *ep;
-	
+
 	if (*arg == '\0') {
 		switch (efi_reloc_type) {
 		case RELOC_NONE:
