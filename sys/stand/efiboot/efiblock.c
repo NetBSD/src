@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.19 2022/04/24 06:49:38 mlelstv Exp $ */
+/* $NetBSD: efiblock.c,v 1.19.4.1 2023/11/03 09:59:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -442,7 +442,7 @@ efi_block_find_partitions_gpt(struct efi_block_dev *bdev)
 	}
 
 	for (entry = 0; entry < le32toh(hdr.hdr_entries); entry++) {
-		memcpy(&ent, buf + (entry * le32toh(hdr.hdr_entsz)),
+		memcpy(&ent, (UINT8 *)buf + (entry * le32toh(hdr.hdr_entsz)),
 			sizeof(ent));
 		efi_block_find_partitions_gpt_entry(bdev, &hdr, &ent, entry);
 	}
