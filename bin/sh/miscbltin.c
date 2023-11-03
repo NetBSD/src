@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.53 2022/12/11 08:23:10 kre Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.53.2.1 2023/11/03 10:07:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.53 2022/12/11 08:23:10 kre Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.53.2.1 2023/11/03 10:07:09 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,8 @@ readcmd(int argc, char **argv)
 	int is_ifs;
 	int saveall = 0;
 	ptrdiff_t wordlen = 0;
+	char *newifs = NULL;
+	struct stackmark mk;
 
 	end = '\n';				/* record delimiter */
 	rflag = 0;
@@ -132,6 +134,7 @@ readcmd(int argc, char **argv)
 	if ((ifs = bltinlookup("IFS", 1)) == NULL)
 		ifs = " \t\n";
 
+	setstackmark(&mk);
 	status = 0;
 	startword = 2;
 	STARTSTACKSTR(p);
@@ -198,8 +201,22 @@ readcmd(int argc, char **argv)
 			continue;
 		}
 
-		STACKSTRNUL(p);
-		setvar(*ap, stackblock(), 0);
+		if (equal(*ap, "IFS")) {
+			/*
+			 * we must not alter the value of IFS, as our
+			 * local "ifs" var is (perhaps) pointing at it,
+			 * at best we would be using data after free()
+			 * the next time we reference ifs - but that mem
+			 * may have been reused for something different.
+			 *
+			 * note that this might occur several times
+			 */
+			STPUTC('\0', p);
+			newifs = grabstackstr(p);
+		} else {
+			STACKSTRNUL(p);
+			setvar(*ap, stackblock(), 0);
+		}
 		ap++;
 		STARTSTACKSTR(p);
 		wordlen = 0;
@@ -217,11 +234,25 @@ readcmd(int argc, char **argv)
 			/* Don't remove non-whitespace unless it was naked */
 			break;
 	}
+
+	/*
+	 * If IFS was one of the variables named, we can finally set it now
+	 * (no further references to ifs will be made)
+	 */
+	if (newifs != NULL)
+		setvar("IFS", newifs, 0);
+
+	/*
+	 * Now we can assign to the final variable (which might
+	 * also be IFS, hence the ordering here)
+	 */
 	setvar(*ap, stackblock(), 0);
 
 	/* Set any remaining args to "" */
 	while (*++ap != NULL)
 		setvar(*ap, nullstr, 0);
+
+	popstackmark(&mk);
 	return status;
 }
 
