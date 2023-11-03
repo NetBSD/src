@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.16.4.1 2023/11/03 08:56:36 martin Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.16.4.2 2023/11/03 10:04:55 martin Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.16.4.1 2023/11/03 08:56:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.16.4.2 2023/11/03 10:04:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -468,7 +468,8 @@ eqos_tick(void *softc)
 
 	EQOS_LOCK(sc);
 	mii_tick(mii);
-	callout_schedule(&sc->sc_stat_ch, hz);
+	if (sc->sc_running)
+		callout_schedule(&sc->sc_stat_ch, hz);
 	EQOS_UNLOCK(sc);
 
 #ifndef EQOS_MPSAFE
@@ -508,17 +509,29 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 		  GMAC_MAC_PACKET_FILTER_PCF_MASK);
 	hash[0] = hash[1] = ~0U;
 
-	if ((ifp->if_flags & IFF_PROMISC) != 0) {
+	ETHER_LOCK(ec);
+	if (sc->sc_promisc) {
+		ec->ec_flags |= ETHER_F_ALLMULTI;
 		pfil |= GMAC_MAC_PACKET_FILTER_PR |
 			GMAC_MAC_PACKET_FILTER_PCF_ALL;
-	} else if ((ifp->if_flags & IFF_ALLMULTI) != 0) {
-		pfil |= GMAC_MAC_PACKET_FILTER_PM;
 	} else {
-		hash[0] = hash[1] = 0;
 		pfil |= GMAC_MAC_PACKET_FILTER_HMC;
-		ETHER_LOCK(ec);
+		hash[0] = hash[1] = 0;
+		ec->ec_flags &= ~ETHER_F_ALLMULTI;
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+				ETHER_ADDR_LEN) != 0) {
+				ec->ec_flags |= ETHER_F_ALLMULTI;
+				pfil &= ~GMAC_MAC_PACKET_FILTER_HMC;
+				pfil |= GMAC_MAC_PACKET_FILTER_PM;
+				/*
+				 * Shouldn't matter if we clear HMC but
+				 * let's avoid using different values.
+				 */
+				hash[0] = hash[1] = 0xffffffff;
+				break;
+			}
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 			crc &= 0x7f;
 			crc = eqos_bitrev32(~crc) >> 26;
@@ -527,8 +540,8 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 			hash[hashreg] |= (1 << hashbit);
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		ETHER_UNLOCK(ec);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* Write our unicast address */
 	eaddr = CLLADDR(ifp->if_sadl);
@@ -616,6 +629,7 @@ eqos_init_locked(struct eqos_softc *sc)
 	eqos_init_rings(sc, 0);
 
 	/* Setup RX filter */
+	sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
 	eqos_setup_rxfilter(sc);
 
 	WR4(sc, GMAC_MAC_1US_TIC_COUNTER, (sc->sc_csr_clock / 1000000) - 1);
@@ -697,6 +711,10 @@ eqos_init_locked(struct eqos_softc *sc)
 	/* Enable interrupts */
 	eqos_enable_intr(sc);
 
+	EQOS_ASSERT_TXLOCKED(sc);
+	sc->sc_txrunning = true;
+
+	sc->sc_running = true;
 	ifp->if_flags |= IFF_RUNNING;
 
 	mii_mediachg(mii);
@@ -729,7 +747,12 @@ eqos_stop_locked(struct eqos_softc *sc, int disable)
 
 	EQOS_ASSERT_LOCKED(sc);
 
-	callout_stop(&sc->sc_stat_ch);
+	EQOS_TXLOCK(sc);
+	sc->sc_txrunning = false;
+	EQOS_TXUNLOCK(sc);
+
+	sc->sc_running = false;
+	callout_halt(&sc->sc_stat_ch, &sc->sc_lock);
 
 	mii_down(&sc->sc_mii);
 
@@ -1007,7 +1030,7 @@ eqos_start_locked(struct eqos_softc *sc)
 
 	EQOS_ASSERT_TXLOCKED(sc);
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	if (!sc->sc_txrunning)
 		return;
 
 	for (cnt = 0, start = sc->sc_tx.cur; ; cnt++) {
@@ -1222,9 +1245,10 @@ eqos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = (*ifp->if_init)(ifp);
 		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
-		else if ((ifp->if_flags & IFF_RUNNING) != 0) {
+		else {
 			EQOS_LOCK(sc);
-			eqos_setup_rxfilter(sc);
+			if (sc->sc_running)
+				eqos_setup_rxfilter(sc);
 			EQOS_UNLOCK(sc);
 		}
 		break;
