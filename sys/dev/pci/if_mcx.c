@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.25 2022/08/28 07:54:03 skrll Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.25.4.1 2023/11/03 08:59:29 martin Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.25 2022/08/28 07:54:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.25.4.1 2023/11/03 08:59:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2678,7 +2678,8 @@ static const struct {
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28800 },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28800VF },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28908 },
-	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT2892  },
+	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT2892 },
+	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT2894 },
 };
 
 struct mcx_eth_proto_capability {
