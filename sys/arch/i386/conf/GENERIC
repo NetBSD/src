@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1243.2.2 2023/10/09 23:33:46 snj Exp $
+# $NetBSD: GENERIC,v 1.1243.2.3 2023/11/03 08:56:36 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1243.2.2 $"
+#ident		"GENERIC-$Revision: 1.1243.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -978,6 +978,7 @@ bwfm*	at pci? dev ? function ?	# Broadcom FullMAC
 dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
+#eqos*	at pci? dev ? function ?	# DesignWare Ethernet QoS
 et*	at pci? dev ? function ?	# Agere/LSI ET1310/ET1301 Gigabit
 ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
