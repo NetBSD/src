@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.50 2023/10/04 20:28:05 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.51 2023/11/03 09:07:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2020, 2023 The NetBSD Foundation, Inc.
@@ -38,8 +38,10 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.50 2023/10/04 20:28:05 ad Exp $");
+#include <machine/frameasm.h>
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.51 2023/11/03 09:07:56 chs Exp $");
 
+#include "opt_dtrace.h"
 #include "opt_xen.h"
 
 #include <machine/specialreg.h>
@@ -71,6 +73,18 @@ ENTRY(lidt)
 	lidt	(%eax)
 	ret
 END(lidt)
+
+#ifdef KDTRACE_HOOKS
+ENTRY(dtrace_smap_enable)
+	SMAP_ENABLE
+	ret
+END(dtrace_smap_enable)
+
+ENTRY(dtrace_smap_disable)
+	SMAP_DISABLE
+	ret
+END(dtrace_smap_disable)
+#endif
 
 ENTRY(x86_hotpatch)
 	/* save EFLAGS, and disable intrs */
