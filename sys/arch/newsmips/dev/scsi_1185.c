@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.24 2023/06/24 05:31:04 msaitoh Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.25 2023/11/04 18:13:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.24 2023/06/24 05:31:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.25 2023/11/04 18:13:25 tsutsui Exp $");
 
 #define	__INTR_PRIVATE
 #include <sys/param.h>
@@ -116,10 +116,9 @@ __KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.24 2023/06/24 05:31:04 msaitoh Exp $
 #define	splscsi splsc
 
 #if defined(__mips__) && defined(CPU_SINGLE)
-#define nops(x)		{ int __i; for (__i = 0; __i < (x); __i++) ; }
-#define	DMAC_WAIT0	;
+#define	DMAC_WAIT0	__nothing
 #else
-#define	DMAC_WAIT0	DMAC_WAIT
+#define	DMAC_WAIT0	DMAC_WAIT	/* see MODIFY HISTORY comment above */
 #endif
 
 #ifdef DMAC_MAP_INIT
