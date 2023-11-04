@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.48 2023/10/28 19:46:49 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.49 2023/11/04 15:30:52 tsutsui Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -81,7 +81,8 @@ zsc0	at ap?
 zstty0	at zsc0 channel 0		# tty00
 zstty1	at zsc0 channel 1		# tty01
 
-fb0	at hb0 addr 0x88000000		# frame buffer
+fb0	at hb0 addr 0x88000000		# NWB-253 frame buffer
+fb0	at hb0 addr 0x90200000		# LCD-MONO on NWS-32x0
 
 xafb*	at ap?
 kb0	at ap?
