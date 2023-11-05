@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.38 2023/11/05 18:21:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.39 2023/11/05 18:23:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2243,13 +2243,6 @@ ena_up(struct ena_adapter *adapter)
 	if (!ENA_FLAG_ISSET(ENA_FLAG_DEV_UP, adapter)) {
 		device_printf(adapter->pdev, "device is going UP\n");
 
-		/* setup interrupts for IO queues */
-		rc = ena_request_io_irq(adapter);
-		if (unlikely(rc != 0)) {
-			ena_trace(ENA_ALERT, "err_req_irq");
-			goto err_req_irq;
-		}
-
 		/* allocate transmit descriptors */
 		rc = ena_setup_all_tx_resources(adapter);
 		if (unlikely(rc != 0)) {
@@ -2270,6 +2263,13 @@ ena_up(struct ena_adapter *adapter)
 			ena_trace(ENA_ALERT,
 			    "create IO queues failed");
 			goto err_io_que;
+		}
+
+		/* setup interrupts for IO queues */
+		rc = ena_request_io_irq(adapter);
+		if (unlikely(rc != 0)) {
+			ena_trace(ENA_ALERT, "err_req_irq");
+			goto err_req_irq;
 		}
 
 		if (unlikely(ENA_FLAG_ISSET(ENA_FLAG_LINK_UP, adapter)))
