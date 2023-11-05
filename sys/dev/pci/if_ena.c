@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.35 2023/11/05 18:15:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.36 2023/11/05 18:17:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ static void	ena_free_all_io_rings_resources(struct ena_adapter *);
 static int	ena_get_dev_offloads(struct ena_com_dev_get_features_ctx *);
 static int	ena_setup_ifnet(device_t, struct ena_adapter *,
 		    struct ena_com_dev_get_features_ctx *);
+static void	ena_rss_init_default(device_t);
 
 static inline void	ena_alloc_counters_rx(struct ena_adapter *,
 			    struct ena_stats_rx *, int);
@@ -217,8 +218,6 @@ static void	ena_rx_hash_mbuf(struct ena_ring *, struct ena_com_rx_ctx *,
     struct mbuf *);
 static uint64_t	ena_get_counter(struct ifnet *, ift_counter);
 static void	ena_qflush(struct ifnet *);
-static int	ena_rss_init_default(struct ena_adapter *);
-static void	ena_rss_init_default_deferred(void *);
 #endif
 
 static const char ena_version[] =
@@ -693,9 +692,6 @@ ena_setup_tx_resources(struct ena_adapter *adapter, int qid)
 	struct ena_que *que = &adapter->que[qid];
 	struct ena_ring *tx_ring = que->tx_ring;
 	int size, i, err;
-#ifdef	RSS
-	cpuset_t cpu_mask;
-#endif
 
 	size = sizeof(struct ena_tx_buffer) * tx_ring->ring_size;
 	tx_ring->tx_buffer_info = kmem_zalloc(size, KM_SLEEP);
@@ -739,20 +735,6 @@ ena_setup_tx_resources(struct ena_adapter *adapter, int qid)
 		i = tx_ring->ring_size;
 		goto err_buf_info_unmap;
 	}
-
-#if 0
-	/* RSS set cpu for thread */
-#ifdef RSS
-	CPU_SETOF(que->cpu, &cpu_mask);
-	taskqueue_start_threads_cpuset(&tx_ring->enqueue_tq, 1, IPL_NET,
-	    &cpu_mask, "%s tx_ring enq (bucket %d)",
-	    device_xname(adapter->pdev), que->cpu);
-#else /* RSS */
-	taskqueue_start_threads(&tx_ring->enqueue_tq, 1, IPL_NET,
-	    "%s txeq %d", device_xname(adapter->pdev), que->cpu);
-#endif /* RSS */
-#endif
-
 	return (0);
 
 err_buf_info_unmap:
@@ -886,9 +868,6 @@ ena_setup_rx_resources(struct ena_adapter *adapter, unsigned int qid)
 	struct ena_que *que = &adapter->que[qid];
 	struct ena_ring *rx_ring = que->rx_ring;
 	int size, err, i;
-#ifdef	RSS
-	cpuset_t cpu_mask;
-#endif
 
 	size = sizeof(struct ena_rx_buffer) * rx_ring->ring_size;
 
@@ -950,19 +929,6 @@ ena_setup_rx_resources(struct ena_adapter *adapter, unsigned int qid)
 		    "Unable to create workqueue for RX completion task\n");
 		goto err_buf_info_unmap;
 	}
-
-#if 0
-	/* RSS set cpu for thread */
-#ifdef RSS
-	CPU_SETOF(que->cpu, &cpu_mask);
-	taskqueue_start_threads_cpuset(&rx_ring->cmpl_tq, 1, IPL_NET, &cpu_mask,
-	    "%s rx_ring cmpl (bucket %d)",
-	    device_xname(adapter->pdev), que->cpu);
-#else
-	taskqueue_start_threads(&rx_ring->cmpl_tq, 1, IPL_NET,
-	    "%s rx_ring cmpl %d", device_xname(adapter->pdev), que->cpu);
-#endif
-#endif
 
 	return (0);
 
@@ -3071,24 +3037,8 @@ ena_mq_start(struct ifnet *ifp, struct mbuf *m)
 	 * same bucket that the current CPU we're on is.
 	 * It should improve performance.
 	 */
-#if 0
-	if (M_HASHTYPE_GET(m) != M_HASHTYPE_NONE) {
-#ifdef	RSS
-		if (rss_hash2bucket(m->m_pkthdr.flowid,
-		    M_HASHTYPE_GET(m), &i) == 0) {
-			i = i % adapter->num_queues;
+	i = cpu_index(curcpu()) % adapter->num_queues;
 
-		} else
-#endif
-		{
-			i = m->m_pkthdr.flowid % adapter->num_queues;
-		}
-	} else {
-#endif
-		i = cpu_index(curcpu()) % adapter->num_queues;
-#if 0
-	}
-#endif
 	tx_ring = &adapter->tx_ring[i];
 
 	/* Check if drbr is empty before putting packet */
@@ -3151,9 +3101,6 @@ ena_calc_io_queue_num(struct pci_attach_args *pa,
 	/* 1 IRQ for mgmnt and 1 IRQ for each TX/RX pair */
 	io_queue_num = min_t(int, io_queue_num,
 	    pci_msix_count(pa->pa_pc, pa->pa_tag) - 1);
-#ifdef	RSS
-	io_queue_num = min_t(int, io_queue_num, rss_getnumbuckets());
-#endif
 
 	return (io_queue_num);
 }
@@ -3197,10 +3144,10 @@ ena_calc_queue_size(struct ena_adapter *adapter, uint16_t *max_tx_sgl_size,
 	return (queue_size);
 }
 
-#if 0
-static int
-ena_rss_init_default(struct ena_adapter *adapter)
+static void
+ena_rss_init_default(device_t self)
 {
+	struct ena_adapter *adapter = device_private(self);
 	struct ena_com_dev *ena_dev = adapter->ena_dev;
 	device_t dev = adapter->pdev;
 	int qid, rc, i;
@@ -3208,16 +3155,11 @@ ena_rss_init_default(struct ena_adapter *adapter)
 	rc = ena_com_rss_init(ena_dev, ENA_RX_RSS_TABLE_LOG_SIZE);
 	if (unlikely(rc != 0)) {
 		device_printf(dev, "Cannot init indirect table\n");
-		return (rc);
+		return;
 	}
 
 	for (i = 0; i < ENA_RX_RSS_TABLE_SIZE; i++) {
-#ifdef	RSS
-		qid = rss_get_indirection_to_bucket(i);
-		qid = qid % adapter->num_queues;
-#else
 		qid = i % adapter->num_queues;
-#endif
 		rc = ena_com_indirect_table_fill_entry(ena_dev, i,
 		    ENA_IO_RXQ_IDX(qid));
 		if (unlikely((rc != 0) && (rc != EOPNOTSUPP))) {
@@ -3239,44 +3181,14 @@ ena_rss_init_default(struct ena_adapter *adapter)
 		goto err_rss_destroy;
 	}
 
-	return (0);
+	adapter->rss_support = true;
+	return;
 
 err_rss_destroy:
 	ena_com_rss_destroy(ena_dev);
-	return (rc);
+	adapter->rss_support = false;
+	return;
 }
-
-static void
-ena_rss_init_default_deferred(void *arg)
-{
-	struct ena_adapter *adapter;
-	devclass_t dc;
-	int max;
-	int rc;
-
-	dc = devclass_find("ena");
-	if (unlikely(dc == NULL)) {
-		ena_trace(ENA_ALERT, "No devclass ena\n");
-		return;
-	}
-
-	max = devclass_get_maxunit(dc);
-	while (max-- >= 0) {
-		adapter = devclass_get_softc(dc, max);
-		if (adapter != NULL) {
-			rc = ena_rss_init_default(adapter);
-			adapter->rss_support = true;
-			if (unlikely(rc != 0)) {
-				device_printf(adapter->pdev,
-				    "WARNING: RSS was not properly initialized,"
-				    " it will affect bandwidth\n");
-				adapter->rss_support = false;
-			}
-		}
-	}
-}
-SYSINIT(ena_rss_init, SI_SUB_KICK_SCHEDULER, SI_ORDER_SECOND, ena_rss_init_default_deferred, NULL);
-#endif
 
 static void
 ena_config_host_info(struct ena_com_dev *ena_dev)
@@ -3923,6 +3835,8 @@ ena_attach(device_t parent, device_t self, void *aux)
 #if 0
 	ena_sysctl_add_nodes(adapter);
 #endif
+
+	config_interrupts(self, ena_rss_init_default);
 
 	/* Tell the stack that the interface is not active */
 	if_setdrvflagbits(adapter->ifp, IFF_OACTIVE, IFF_RUNNING);
