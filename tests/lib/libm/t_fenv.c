@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.7 2023/11/05 15:27:40 riastradh Exp $ */
+/* $NetBSD: t_fenv.c,v 1.8 2023/11/05 15:28:17 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,13 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.7 2023/11/05 15:27:40 riastradh Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.8 2023/11/05 15:28:17 riastradh Exp $");
 
 #include <atf-c.h>
 
 #include <fenv.h>
 #ifdef __HAVE_FENV
 
+#include <float.h>
 #include <ieeefp.h>
 #include <stdlib.h>
 
@@ -67,6 +68,39 @@ __RCSID("$NetBSD: t_fenv.c,v 1.7 2023/11/05 15:27:40 riastradh Exp $");
 #endif
 
 
+static int
+feround_to_fltrounds(int feround)
+{
+
+	/*
+	 * C99, Sec. 5.2.4.2.2 Characteristics of floating types
+	 * <float.h>, p. 24, clause 7
+	 */
+	switch (feround) {
+	case FE_TOWARDZERO:
+		return 0;
+	case FE_TONEAREST:
+		return 1;
+	case FE_UPWARD:
+		return 2;
+	case FE_DOWNWARD:
+		return 3;
+	default:
+		return -1;
+	}
+}
+
+static void
+checkfltrounds(void)
+{
+	int feround = fegetround();
+	int expected = feround_to_fltrounds(feround);
+
+	ATF_CHECK_EQ_MSG(FLT_ROUNDS, expected,
+	    "FLT_ROUNDS=%d expected=%d fegetround()=%d",
+	    FLT_ROUNDS, expected, feround);
+}
+
 ATF_TC(fegetround);
 
 ATF_TC_HEAD(fegetround, tc)
@@ -84,18 +118,25 @@ ATF_TC_BODY(fegetround, tc)
 	ATF_CHECK_EQ_MSG(fegetround(), FE_TOWARDZERO,
 	    "fegetround()=%d FE_TOWARDZERO=%d",
 	    fegetround(), FE_TOWARDZERO);
+	checkfltrounds();
+
 	fpsetround(FP_RM);
 	ATF_CHECK_EQ_MSG(fegetround(), FE_DOWNWARD,
 	    "fegetround()=%d FE_DOWNWARD=%d",
 	    fegetround(), FE_DOWNWARD);
+	checkfltrounds();
+
 	fpsetround(FP_RN);
 	ATF_CHECK_EQ_MSG(fegetround(), FE_TONEAREST,
 	    "fegetround()=%d FE_TONEAREST=%d",
 	    fegetround(), FE_TONEAREST);
+	checkfltrounds();
+
 	fpsetround(FP_RP);
 	ATF_CHECK_EQ_MSG(fegetround(), FE_UPWARD,
 	    "fegetround()=%d FE_UPWARD=%d",
 	    fegetround(), FE_UPWARD);
+	checkfltrounds();
 }
 
 ATF_TC(fesetround);
@@ -115,18 +156,25 @@ ATF_TC_BODY(fesetround, tc)
 	ATF_CHECK_EQ_MSG(fpgetround(), FP_RZ,
 	    "fpgetround()=%d FP_RZ=%d",
 	    (int)fpgetround(), (int)FP_RZ);
+	checkfltrounds();
+
 	fesetround(FE_DOWNWARD);
 	ATF_CHECK_EQ_MSG(fpgetround(), FP_RM,
 	    "fpgetround()=%d FP_RM=%d",
 	    (int)fpgetround(), (int)FP_RM);
+	checkfltrounds();
+
 	fesetround(FE_TONEAREST);
 	ATF_CHECK_EQ_MSG(fpgetround(), FP_RN,
 	    "fpgetround()=%d FP_RN=%d",
 	    (int)fpgetround(), (int)FP_RN);
+	checkfltrounds();
+
 	fesetround(FE_UPWARD);
 	ATF_CHECK_EQ_MSG(fpgetround(), FP_RP,
 	    "fpgetround()=%d FP_RP=%d",
 	    (int)fpgetround(), (int)FP_RP);
+	checkfltrounds();
 }
 
 ATF_TC(fegetexcept);
