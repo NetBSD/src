@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.142.4.1 2023/11/05 17:17:03 martin Exp $
+# $NetBSD: GENERIC,v 1.142.4.2 2023/11/05 17:43:58 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.142.4.1 $"
+#ident 		"GENERIC-$Revision: 1.142.4.2 $"
 
 makeoptions	COPTS="-O2 -fno-unwind-tables"
 
@@ -170,6 +170,7 @@ zstty4	at zsc2 channel 0		# tty04
 zstty5	at zsc2 channel 1		# tty05
 
 fb0	at hb0 addr 0x88000000		# NWB-253 frame buffer
+fb0	at hb0 addr 0x90200000		# LCD-MONO on NWS-32x0
 wsdisplay0 at fb? console ?
 
 xafb*	at ap?				# "XA" frame buffer
