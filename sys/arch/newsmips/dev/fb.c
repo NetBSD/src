@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.29 2021/08/07 16:19:01 thorpej Exp $	*/
+/*	$NetBSD: fb.c,v 1.29.6.1 2023/11/05 17:43:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,9 +25,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*-
+ * Copyright (c) 2023 Izumi Tsutsui.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.29 2021/08/07 16:19:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.29.6.1 2023/11/05 17:43:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,8 +69,16 @@ __KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.29 2021/08/07 16:19:01 thorpej Exp $");
 #include <dev/rasops/rasops.h>
 
 struct fb_devconfig {
-	u_char *dc_fbbase;		/* VRAM base address */
+	uint8_t *dc_fbbase;		/* VRAM base address */
 	struct rasops_info dc_ri;
+	int dc_model;
+#define NWB253	0
+#define LCDM	1
+	int dc_displayid;
+#define NWP512	0
+#define NWP518	1
+#define NWE501	2
+	int dc_size;
 };
 
 struct fb_softc {
@@ -56,60 +87,83 @@ struct fb_softc {
 	int sc_nscreens;
 };
 
-int fb_match(device_t, cfdata_t, void *);
-void fb_attach(device_t, device_t, void *);
+static int fb_match(device_t, cfdata_t, void *);
+static void fb_attach(device_t, device_t, void *);
 
-int fb_common_init(struct fb_devconfig *);
-int fb_is_console(void);
+static int fb_common_init(struct fb_devconfig *);
+static int fb_is_console(void);
 
-int fb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
-paddr_t fb_mmap(void *, void *, off_t, int);
-int fb_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
-    int *, long *);
-void fb_free_screen(void *, void *);
-int fb_show_screen(void *, void *, int, void (*)(void *, int, int), void *);
+static int fb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static paddr_t fb_mmap(void *, void *, off_t, int);
+static int fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
+    int *, int *, long *);
+static void fb_free_screen(void *, void *);
+static int fb_show_screen(void *, void *, int, void (*)(void *, int, int),
+    void *);
 
 void fb_cnattach(void);
 
+static int fb_set_state(struct fb_softc *, int);
+
+static bool fb253_probe(void);
+static bool fblcdm_probe(void);
+static bool fb_probe_model(struct fb_devconfig *);
+static void fb_init(struct fb_devconfig *);
 static void fb253_init(void);
+static void fblcdm_init(void);
 
 CFATTACH_DECL_NEW(fb, sizeof(struct fb_softc),
     fb_match, fb_attach, NULL, NULL);
 
-struct fb_devconfig fb_console_dc;
+static struct fb_devconfig fb_console_dc;
 
-struct wsdisplay_accessops fb_accessops = {
-	fb_ioctl,
-	fb_mmap,
-	fb_alloc_screen,
-	fb_free_screen,
-	fb_show_screen,
-	NULL	/* load_font */
+static struct wsdisplay_accessops fb_accessops = {
+	.ioctl        = fb_ioctl,
+	.mmap         = fb_mmap,
+	.alloc_screen = fb_alloc_screen,
+	.free_screen  = fb_free_screen,
+	.show_screen  = fb_show_screen,
+	.load_font    = NULL
 };
 
-struct wsscreen_descr fb_stdscreen = {
-	"std",
-	0, 0,
-	0,
-	0, 0,
-	WSSCREEN_REVERSE
+static struct wsscreen_descr fb_stdscreen = {
+	.name = "std",
+	.ncols = 0,
+	.nrows = 0,
+	.textops = NULL,
+	.fontwidth = 0,
+	.fontheight = 0,
+	.capabilities = WSSCREEN_REVERSE
 };
 
-const struct wsscreen_descr *fb_scrlist[] = {
+static const struct wsscreen_descr *fb_scrlist[] = {
 	&fb_stdscreen
 };
 
-struct wsscreen_list fb_screenlist = {
-	__arraycount(fb_scrlist), fb_scrlist
+static struct wsscreen_list fb_screenlist = {
+	.nscreens = __arraycount(fb_scrlist),
+	.screens  = fb_scrlist
 };
 
-#define NWB253_VRAM   ((uint8_t *) 0x88000000)
+#define NWB253_VRAM   0x88000000
 #define NWB253_CTLREG ((uint16_t *)0xb8ff0000)
 #define NWB253_CRTREG ((uint16_t *)0xb8fe0000)
 
-static const char *devname[8] = { "NWB-512", "NWB-518", "NWE-501" }; /* XXX ? */
+static const char *nwb253dispname[8] = {
+	[NWP512] = "NWB-512",
+	[NWP518] = "NWB-518",
+	[NWE501] = "NWE-501"
+}; /* XXX ? */
 
-int
+#define LCDM_VRAM	0x90200000
+#define LCDM_PORT	((uint32_t *)0xb0000000)
+#define LCDM_DIMMER	((uint32_t *)0xb0100000)
+#define LCDM_DIMMER_ON	0xf0
+#define LCDM_DIMMER_OFF	0xf1
+#define LCDM_CTRL	((uint8_t *)0xbff50000)	/* XXX no macro in 4.4BSD */
+#define LCDM_CRTC	((uint8_t *)0xbff60000)
+
+static int
 fb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
@@ -117,15 +171,15 @@ fb_match(device_t parent, cfdata_t cf, void *aux)
 	if (strcmp(ha->ha_name, "fb") != 0)
 		return 0;
 
-	if (hb_badaddr(NWB253_CTLREG, 2) || hb_badaddr(NWB253_CRTREG, 2))
-		return 0;
-	if ((*(volatile uint16_t *)NWB253_CTLREG & 7) != 4)
-		return 0;
+	if (fb253_probe() && ha->ha_addr == NWB253_VRAM)
+		return 1;
+	if (fblcdm_probe() && ha->ha_addr == LCDM_VRAM)
+		return 1;
 
-	return 1;
+	return 0;
 }
 
-void
+static void
 fb_attach(device_t parent, device_t self, void *aux)
 {
 	struct fb_softc *sc = device_private(self);
@@ -133,8 +187,7 @@ fb_attach(device_t parent, device_t self, void *aux)
 	struct fb_devconfig *dc;
 	struct rasops_info *ri;
 	int console;
-	volatile u_short *ctlreg = NWB253_CTLREG;
-	int id;
+	const char *devname;
 
 	sc->sc_dev = self;
 
@@ -148,19 +201,30 @@ fb_attach(device_t parent, device_t self, void *aux)
 	} else {
 		dc = kmem_zalloc(sizeof(struct fb_devconfig), KM_SLEEP);
 
-		dc->dc_fbbase = NWB253_VRAM;
+		fb_probe_model(dc);
 		fb_common_init(dc);
 		ri = &dc->dc_ri;
 
 		/* clear screen */
 		(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, 0);
 
-		fb253_init();
+		fb_init(dc);
 	}
 	sc->sc_dc = dc;
 
-	id = (*ctlreg >> 8) & 0xf;
-	aprint_normal(": %s, %d x %d, %dbpp\n", devname[id],
+	switch (dc->dc_model) {
+	case NWB253:
+		devname = nwb253dispname[dc->dc_displayid];
+		break;
+	case LCDM:
+		devname = "LCD-MONO";
+		break;
+	default:
+		/* should not be here */
+		devname = "unknown";
+		break;
+	}
+	aprint_normal(": %s, %d x %d, %dbpp\n", devname,
 	    ri->ri_width, ri->ri_height, ri->ri_depth);
 
 	waa.console = console;
@@ -171,34 +235,94 @@ fb_attach(device_t parent, device_t self, void *aux)
 	config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
-int
+static bool
+fb253_probe(void)
+{
+
+	if (hb_badaddr(NWB253_CTLREG, 2) || hb_badaddr(NWB253_CRTREG, 2))
+		return false;
+	if ((*(volatile uint16_t *)NWB253_CTLREG & 7) != 4)
+		return false;
+
+	return true;
+}
+
+static bool
+fblcdm_probe(void)
+{
+
+	if (hb_badaddr(LCDM_CTRL, 1))
+		return false;
+	if (*(volatile uint8_t *)LCDM_CTRL != 0xff)
+		return false;
+
+	return true;
+}
+
+static bool
+fb_probe_model(struct fb_devconfig *dc)
+{
+
+	if (fb253_probe()) {
+		volatile uint16_t *ctlreg = NWB253_CTLREG;
+
+		dc->dc_model = NWB253;
+		dc->dc_displayid = (*ctlreg >> 8) & 0xf;
+		return true;
+	}
+	if (fblcdm_probe()) {
+		dc->dc_model = LCDM;
+		dc->dc_displayid = 0;	/* no variant */
+		return true;
+	}
+
+	return false;
+}
+
+static int
 fb_common_init(struct fb_devconfig *dc)
 {
 	struct rasops_info *ri = &dc->dc_ri;
-	volatile uint16_t *ctlreg = NWB253_CTLREG;
-	int id;
-	int width, height, xoff, yoff, cols, rows;
+	int width, height, stride, xoff, yoff, cols, rows;
 
-	id = (*ctlreg >> 8) & 0xf;
+	switch (dc->dc_model) {
+	case NWB253:
+		dc->dc_fbbase = (uint8_t *)NWB253_VRAM;
+
+		switch (dc->dc_displayid) {
+		case NWP512:
+			width = 816;
+			height = 1024;
+			break;
+		case NWP518:
+		case NWE501:
+		default:
+			width = 1024;
+			height = 768;
+			break;
+		}
+		stride = 2048 / 8;
+		dc->dc_size = stride * 2048;
+		break;
+
+	case LCDM:
+		dc->dc_fbbase = (uint8_t *)LCDM_VRAM;
+		width = 1120;
+		height = 780;
+		stride = width / 8;
+		dc->dc_size = stride * height;
+		break;
+
+	default:
+		panic("fb: no valid framebuffer");
+	}
 
 	/* initialize rasops */
-	switch (id) {
-	case 0:
-		width = 816;
-		height = 1024;
-		break;
-	case 1:
-	case 2:
-	default:
-		width = 1024;
-		height = 768;
-		break;
-	}
 
 	ri->ri_width = width;
 	ri->ri_height = height;
 	ri->ri_depth = 1;
-	ri->ri_stride = 2048 / 8;
+	ri->ri_stride = stride;
 	ri->ri_bits = dc->dc_fbbase;
 	ri->ri_flg = RI_FULLCLEAR;
 	if (dc == &fb_console_dc)
@@ -216,14 +340,14 @@ fb_common_init(struct fb_devconfig *dc)
 	ri->ri_bits = dc->dc_fbbase + xoff + ri->ri_stride * yoff;
 
 	fb_stdscreen.nrows = ri->ri_rows;
-	fb_stdscreen.ncols = ri->ri_cols; 
+	fb_stdscreen.ncols = ri->ri_cols;
 	fb_stdscreen.textops = &ri->ri_ops;
 	fb_stdscreen.capabilities = ri->ri_caps;
 
 	return 0;
 }
 
-int
+static int
 fb_is_console(void)
 {
 	volatile u_int *dipsw = (void *)DIP_SWITCH;
@@ -234,7 +358,7 @@ fb_is_console(void)
 	return 0;
 }
 
-int
+static int
 fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct fb_softc *sc = v;
@@ -251,7 +375,7 @@ fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		wdf->height = dc->dc_ri.ri_height;
 		wdf->width = dc->dc_ri.ri_width;
 		wdf->depth = dc->dc_ri.ri_depth;
-		wdf->cmsize = 2;
+		wdf->cmsize = 0;
 		return 0;
 
 	case WSDISPLAYIO_LINEBYTES:
@@ -259,12 +383,7 @@ fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		return 0;
 
 	case WSDISPLAYIO_SVIDEO:
-		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF) {
-			volatile u_short *ctlreg = NWB253_CTLREG;
-			*ctlreg = 0;			/* stop crtc */
-		} else
-			fb253_init();
-		return 0;
+		return fb_set_state(sc, *(int *)data);
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
@@ -273,19 +392,53 @@ fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	return EPASSTHROUGH;
 }
 
-paddr_t
+static int
+fb_set_state(struct fb_softc *sc, int state)
+{
+	struct fb_devconfig *dc = sc->sc_dc;
+	volatile uint16_t *ctlreg;
+	volatile uint32_t *dimmerreg;
+
+	if (state != WSDISPLAYIO_VIDEO_OFF && state != WSDISPLAYIO_VIDEO_ON)
+		return EINVAL;
+
+	switch (dc->dc_model) {
+	case NWB253:
+		if (state == WSDISPLAYIO_VIDEO_OFF) {
+			ctlreg = NWB253_CTLREG;
+			*ctlreg = 0;			/* stop crtc */
+		} else {
+			fb253_init();
+		}
+		break;
+	case LCDM:
+		dimmerreg = LCDM_DIMMER;
+		if (state == WSDISPLAYIO_VIDEO_OFF) {
+			*dimmerreg = LCDM_DIMMER_OFF;
+		} else {
+			*dimmerreg = LCDM_DIMMER_ON;
+		}
+		break;
+	default:
+		/* should not be here */
+		break;
+	}
+	return 0;
+}
+
+static paddr_t
 fb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct fb_softc *sc = v;
 	struct fb_devconfig *dc = sc->sc_dc;
 
-	if (offset >= 2048 * 2048 / 8 || offset < 0)
+	if (offset >= dc->dc_size || offset < 0)
 		return -1;
 
 	return mips_btop((int)dc->dc_fbbase + offset);
 }
 
-int
+static int
 fb_alloc_screen(void *v, const struct wsscreen_descr *scrdesc, void **cookiep,
     int *ccolp, int *crowp, long *attrp)
 {
@@ -305,7 +458,7 @@ fb_alloc_screen(void *v, const struct wsscreen_descr *scrdesc, void **cookiep,
 	return 0;
 }
 
-void
+static void
 fb_free_screen(void *v, void *cookie)
 {
 	struct fb_softc *sc = v;
@@ -316,7 +469,7 @@ fb_free_screen(void *v, void *cookie)
 	sc->sc_nscreens--;
 }
 
-int
+static int
 fb_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
     void *cbarg)
 {
@@ -334,11 +487,37 @@ fb_cnattach(void)
 	if (!fb_is_console())
 		return;
 
-	dc->dc_fbbase = NWB253_VRAM;
+	if (!fb_probe_model(dc))
+		return;
+
 	fb_common_init(dc);
+	fb_init(dc);
+
+	/*
+	 * Wait CRTC output or LCD backlight become settled
+	 * before starting to print kernel greeting messages.
+	 */
+	delay(500 * 1000);
 
 	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&fb_stdscreen, ri, 0, ri->ri_rows - 1, defattr);
+}
+
+static void
+fb_init(struct fb_devconfig *dc)
+{
+
+	switch (dc->dc_model) {
+	case NWB253:
+		fb253_init();
+		break;
+	case LCDM:
+		fblcdm_init();
+		break;
+	default:
+		/* should not be here */
+		break;
+	}
 }
 
 static const uint8_t
@@ -453,11 +632,47 @@ fb253_init(void)
 	}
 }
 
+static const uint8_t lcdcrtc_data[] = {
+	 0, 47,
+	 1, 35,
+	 9,  0,
+	10,  0,
+	11,  0,
+	12,  0,
+	13,  0,
+	14,  0,
+	15,  0,
+	18, 35,
+	19, 0x01,
+	20, 0x85,
+	21,  0,
+	22, 0x10
+};
+
+static void
+fblcdm_init(void)
+{
+	volatile uint8_t *crtcreg = LCDM_CRTC;
+	volatile uint32_t *portreg = LCDM_PORT;
+	volatile uint32_t *dimmerreg = LCDM_DIMMER;
+	int i;
+
+	/* initialize crtc */
+	for (i = 0; i < 28; i++) {
+		*crtcreg++ = lcdcrtc_data[i];
+		delay(10);
+	}
+
+	delay(1000);
+	*portreg = 1;
+	*dimmerreg = LCDM_DIMMER_ON;
+}
+
 #if 0
 static struct wsdisplay_font newsrom8x16;
 static struct wsdisplay_font newsrom12x24;
-static char fontarea16[96][32];
-static char fontarea24[96][96];
+static uint8_t fontarea16[96][32];
+static uint8_t fontarea24[96][96];
 
 void
 initfont(struct rasops_info *ri)
@@ -466,9 +681,9 @@ initfont(struct rasops_info *ri)
 
 	for (c = 0; c < 96; c++) {
 		x = ((c & 0x1f) | ((c & 0xe0) << 2)) << 7;
-		memcpy(fontarea16 + c, (char *)0xb8e00000 + x + 96, 32);
-		memcpy(fontarea24 + c, (char *)0xb8e00000 + x, 96);
-	}		      
+		memcpy(fontarea16 + c, (uint8_t *)0xb8e00000 + x + 96, 32);
+		memcpy(fontarea24 + c, (uint8_t *)0xb8e00000 + x, 96);
+	}
 
 	newsrom8x16.name = "rom8x16";
 	newsrom8x16.firstchar = 32;
