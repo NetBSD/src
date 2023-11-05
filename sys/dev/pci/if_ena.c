@@ -36,15 +36,15 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.34 2023/09/21 09:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.35 2023/11/05 18:15:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
 #include <sys/endian.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/module.h>
 #include <sys/socket.h>
@@ -698,10 +698,10 @@ ena_setup_tx_resources(struct ena_adapter *adapter, int qid)
 #endif
 
 	size = sizeof(struct ena_tx_buffer) * tx_ring->ring_size;
-	tx_ring->tx_buffer_info = malloc(size, M_DEVBUF, M_WAITOK | M_ZERO);
+	tx_ring->tx_buffer_info = kmem_zalloc(size, KM_SLEEP);
 
 	size = sizeof(uint16_t) * tx_ring->ring_size;
-	tx_ring->free_tx_ids = malloc(size, M_DEVBUF, M_WAITOK | M_ZERO);
+	tx_ring->free_tx_ids = kmem_zalloc(size, KM_SLEEP);
 
 	/* Req id stack for TX OOO completions */
 	for (i = 0; i < tx_ring->ring_size; i++)
@@ -760,9 +760,11 @@ err_buf_info_unmap:
 		bus_dmamap_destroy(adapter->sc_dmat,
 		    tx_ring->tx_buffer_info[i].map);
 	}
-	free(tx_ring->free_tx_ids, M_DEVBUF);
+	size = sizeof(uint16_t) * tx_ring->ring_size;
+	kmem_free(tx_ring->free_tx_ids, size);
 	tx_ring->free_tx_ids = NULL;
-	free(tx_ring->tx_buffer_info, M_DEVBUF);
+	size = sizeof(struct ena_tx_buffer) * tx_ring->ring_size;
+	kmem_free(tx_ring->tx_buffer_info, size);
 	tx_ring->tx_buffer_info = NULL;
 
 	return (ENOMEM);
@@ -802,10 +804,11 @@ ena_free_tx_resources(struct ena_adapter *adapter, int qid)
 	}
 
 	/* And free allocated memory. */
-	free(tx_ring->tx_buffer_info, M_DEVBUF);
+	kmem_free(tx_ring->tx_buffer_info,
+	    sizeof(struct ena_tx_buffer) * tx_ring->ring_size);
 	tx_ring->tx_buffer_info = NULL;
 
-	free(tx_ring->free_tx_ids, M_DEVBUF);
+	kmem_free(tx_ring->free_tx_ids, sizeof(uint16_t) * tx_ring->ring_size);
 	tx_ring->free_tx_ids = NULL;
 }
 
@@ -895,10 +898,10 @@ ena_setup_rx_resources(struct ena_adapter *adapter, unsigned int qid)
 	 */
 	size += sizeof(struct ena_rx_buffer);
 
-	rx_ring->rx_buffer_info = malloc(size, M_DEVBUF, M_WAITOK | M_ZERO);
+	rx_ring->rx_buffer_info = kmem_zalloc(size, KM_SLEEP);
 
 	size = sizeof(uint16_t) * rx_ring->ring_size;
-	rx_ring->free_rx_ids = malloc(size, M_DEVBUF, M_WAITOK);
+	rx_ring->free_rx_ids = kmem_zalloc(size, KM_SLEEP);
 
 	for (i = 0; i < rx_ring->ring_size; i++)
 		rx_ring->free_rx_ids[i] = i;
@@ -969,9 +972,11 @@ err_buf_info_unmap:
 		    rx_ring->rx_buffer_info[i].map);
 	}
 
-	free(rx_ring->free_rx_ids, M_DEVBUF);
+	size = sizeof(uint16_t) * rx_ring->ring_size;
+	kmem_free(rx_ring->free_rx_ids, size);
 	rx_ring->free_rx_ids = NULL;
-	free(rx_ring->rx_buffer_info, M_DEVBUF);
+	size = sizeof(struct ena_rx_buffer) * (rx_ring->ring_size + 1);
+	kmem_free(rx_ring->rx_buffer_info, size);
 	rx_ring->rx_buffer_info = NULL;
 	return (ENOMEM);
 }
@@ -1008,10 +1013,11 @@ ena_free_rx_resources(struct ena_adapter *adapter, unsigned int qid)
 #endif
 
 	/* free allocated memory */
-	free(rx_ring->rx_buffer_info, M_DEVBUF);
+	kmem_free(rx_ring->rx_buffer_info,
+	    sizeof(struct ena_rx_buffer) * (rx_ring->ring_size + 1));
 	rx_ring->rx_buffer_info = NULL;
 
-	free(rx_ring->free_rx_ids, M_DEVBUF);
+	kmem_free(rx_ring->free_rx_ids, sizeof(uint16_t) * rx_ring->ring_size);
 	rx_ring->free_rx_ids = NULL;
 }
 
@@ -3811,13 +3817,11 @@ ena_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Allocate memory for ena_dev structure */
-	ena_dev = malloc(sizeof(struct ena_com_dev), M_DEVBUF,
-	    M_WAITOK | M_ZERO);
+	ena_dev = kmem_zalloc(sizeof(struct ena_com_dev), KM_SLEEP);
 
 	adapter->ena_dev = ena_dev;
 	ena_dev->dmadev = self;
-	ena_dev->bus = malloc(sizeof(struct ena_bus), M_DEVBUF,
-	    M_WAITOK | M_ZERO);
+	ena_dev->bus = kmem_zalloc(sizeof(struct ena_bus), KM_SLEEP);
 
 	/* Store register resources */
 	((struct ena_bus*)(ena_dev->bus))->reg_bar_t = adapter->sc_btag;
@@ -3941,8 +3945,8 @@ err_com_free:
 	ena_com_delete_host_info(ena_dev);
 	ena_com_mmio_reg_read_request_destroy(ena_dev);
 err_bus_free:
-	free(ena_dev->bus, M_DEVBUF);
-	free(ena_dev, M_DEVBUF);
+	kmem_free(ena_dev->bus, sizeof(struct ena_bus));
+	kmem_free(ena_dev, sizeof(struct ena_com_dev));
 	ena_free_pci_resources(adapter);
 }
 
@@ -4030,10 +4034,10 @@ ena_detach(device_t pdev, int flags)
 	mutex_destroy(&adapter->global_mtx);
 
 	if (ena_dev->bus != NULL)
-		free(ena_dev->bus, M_DEVBUF);
+		kmem_free(ena_dev->bus, sizeof(struct ena_bus));
 
 	if (ena_dev != NULL)
-		free(ena_dev, M_DEVBUF);
+		kmem_free(ena_dev, sizeof(struct ena_com_dev));
 
 	return 0;
 }
