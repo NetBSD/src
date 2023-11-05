@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.113 2023/10/29 16:49:54 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.114 2023/11/05 17:48:58 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2378,4 +2378,30 @@ xsrc/external/mit/xorg-server/dist/randr/rrproperty.c	(apply patch)
 	Merge security fixes from xorg-server 21.1.9 into xorg-server 1.20.5.
 	Fixes CVE-2023-5367 and CVE-2023-5380.
 	[mrg, ticket #1758]
+
+sys/arch/newsmips/dev/zs_hb.c			1.30
+
+	newsmips: fix zs(4) attachment kernel messages.
+	[tsutsui, ticket #1760]
+
+sys/arch/newsmips/conf/DEJIKO			1.36
+sys/arch/newsmips/conf/GENERIC			1.144
+sys/arch/newsmips/conf/WAPIKO			1.50
+
+	Use FONT_SONY12x24 for Sony fans, rather than Gallant fonts used
+	on Sun.
+	[tsutsui, ticket #1759]
+
+share/examples/npf/host-npf.conf		1.12
+share/examples/npf/soho_gw-npf.conf		1.21
+
+	npf(7): fix examples.
+	[tsutsui, ticket #1762]
+
+sys/arch/newsmips/conf/GENERIC			1.146
+sys/arch/newsmips/conf/INSTALL			1.49
+sys/arch/newsmips/dev/fb.c			1.30-1.34
+
+	newsmips: add NWS-3260 LCD-MONO support.
+	[tsutsui, ticket #1763]
 
