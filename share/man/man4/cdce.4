@@ -1,4 +1,4 @@
-.\" $NetBSD: cdce.4,v 1.18 2023/11/03 18:24:41 wiz Exp $
+.\" $NetBSD: cdce.4,v 1.19 2023/11/05 17:52:09 mrg Exp $
 .\"
 .\" Copyright (c) 2004 Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 3, 2023
+.Dd November 5, 2023
 .Dt CDCE 4
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ NetChip EthernetGadget
 .It
 Prolific PL-2501
 .It
-Realtek RTL8152B Ethernet controller
+Realtek RTL8152B, RTL8156, and RTL8156B Ethernet controllers
 .It
 Sharp Zaurus
 .El
@@ -74,8 +74,8 @@ transporting Ethernet frames.
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Pp
-USB 1.x bridges support speeds of up to 12Mbps, and USB 2.0 speeds of
-up to 480Mbps.
+USB 1.x bridges support speeds of up to 12Mbps, USB 2.0 speeds of
+up to 480Mbps, and USB 3.0 speeds of up to 5Gbps.
 .Pp
 Packets are
 received and transmitted over separate USB bulk transfer endpoints.
