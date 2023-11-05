@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.570.2.1 2023/05/13 14:04:04 martin Exp $
+.\"	$NetBSD: main,v 1.570.2.2 2023/11/05 18:14:43 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -843,6 +843,14 @@ before booting the updated system multi-user for the first time.
 .Em Note that you do not need to do anything special if you never did run any affected kernel,
 especially if you have never run
 .Nx -current .
+.Pp
+The display drivers used for modern GPUs and the whole subsystem supporting
+it (DRM/KMS) have been updated to a newer version.
+Unfortunately not all issues with this have been resolved before the
+.Nx 10.0 release.
+You can find a list of issues in the
+.Lk https://wiki.netbsd.org/releng/netbsd-10/ "Open issues with new DRM/KMS"
+section of the release engineering wiki page.
 .Pp
 A number of things have been removed from the
 .Nx
