@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.27 2016/07/21 19:49:58 christos Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.27.20.1 2023/11/05 17:08:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.27 2016/07/21 19:49:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.27.20.1 2023/11/05 17:08:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ zs_hb_attach(device_t parent, device_t self, void *aux)
 #endif
 	}
 
-	aprint_error(" level %d\n", intlevel);
+	aprint_normal(" level %d\n", intlevel);
 
 	zs_delay = zs_hb_delay;
 
