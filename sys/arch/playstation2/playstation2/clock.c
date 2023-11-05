@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2014/11/20 16:34:25 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 2023/11/05 21:54:27 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2014/11/20 16:34:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2023/11/05 21:54:27 andvar Exp $");
 
 #include "debug_playstation2.h"
 
@@ -93,7 +93,7 @@ get_bootinfo_tod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	utc = clock_ymdhms_to_secs(dt) - 9*60*60;
 	clock_secs_to_ymdhms(utc, dt);
 #ifdef DEBUG
-        printf("bootinfo: %d/%d/%d/%d/%d/%d rtc_offset %d\n", dt->dt_year,
+        printf("bootinfo: %lld/%d/%d/%d/%d/%d rtc_offset %d\n", dt->dt_year,
 	    dt->dt_mon, dt->dt_day, dt->dt_hour, dt->dt_min, dt->dt_sec,
 	    rtc_offset);
 #endif
