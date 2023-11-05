@@ -1,15 +1,15 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.49 2018/08/01 20:04:13 maxv Exp $
+# 	$NetBSD: WAPIKO,v 1.49.30.1 2023/11/05 17:17:03 martin Exp $
 #
 include 	"arch/newsmips/conf/std.newsmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-maxusers	16
+makeoptions	COPTS="-O2 -fno-unwind-tables"
 
-makeoptions	COPTS="-O2 -pipe"
+maxusers	16
 
 options 	news3400
 options 	MIPS1			# R2000/R3000 support
@@ -84,7 +84,8 @@ sd*	at scsibus? target ? lun ?	# SCSI disks
 
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
-options 	FONT_GALLANT12x22
+#options 	FONT_GALLANT12x22
+options 	FONT_SONY12x24
 
 wsdisplay0 at fb? console ?
 wskbd0	at kb? console ?
