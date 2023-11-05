@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.9 2023/11/05 16:06:27 riastradh Exp $ */
+/* $NetBSD: t_fenv.c,v 1.10 2023/11/05 16:28:05 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,17 +29,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.9 2023/11/05 16:06:27 riastradh Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.10 2023/11/05 16:28:05 riastradh Exp $");
 
 #include <atf-c.h>
 
 #include <fenv.h>
 #ifdef __HAVE_FENV
 
+/* XXXGCC gcc lacks #pragma STDC FENV_ACCESS */
+/* XXXCLANG clang lacks #pragma STDC FENV_ACCESS on some ports */
+#if !defined(__GNUC__)
+#pragma STDC FENV_ACCESS ON
+#endif
+
 #include <float.h>
 #include <ieeefp.h>
 #include <stdlib.h>
 
+#if FLT_RADIX != 2
+#error This test assumes binary floating-point arithmetic.
+#endif
 
 #if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
