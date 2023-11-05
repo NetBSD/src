@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.35 2022/09/18 13:03:51 thorpej Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.36 2023/11/05 21:50:27 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.35 2022/09/18 13:03:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.36 2023/11/05 21:50:27 andvar Exp $");
 
 #include "debug_playstation2.h"
 
@@ -712,7 +712,7 @@ void
 __smap_status(int msg)
 {
 	static int cnt;
-	__gsfb_print(1, "%d: tx=%d rx=%d txcnt=%d free=%d cnt=%d\n", msg,
+	DPRINTF("%d: tx=%d rx=%d txcnt=%d free=%d cnt=%d\n", msg,
 	    _reg_read_1(SMAP_TXFIFO_FRAME_REG8),
 	    _reg_read_1(SMAP_RXFIFO_FRAME_REG8), __sc->tx_desc_cnt,
 	    __sc->tx_buf_freesize, cnt++);
