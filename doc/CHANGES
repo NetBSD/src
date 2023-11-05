@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3014 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3015 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -256,3 +256,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	OpenSSH: Import 9.5. [christos 20231025]
 	newsmips: Add support for LCD-MONO framebuffer on NWS-32x0 laptop
 		machines. [tsutsui 20231104]
+	ena(4): MP-enable always, add RSS support, and reliability fixes.
+		[jdolecek 20231105]
