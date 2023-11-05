@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.39 2023/11/05 18:23:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.40 2023/11/05 18:26:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3885,6 +3885,7 @@ ena_detach(device_t pdev, int flags)
 		return (EBUSY);
 	}
 
+	ena_com_set_admin_running_state(ena_dev, false);
 	ENA_CORE_MTX_LOCK(adapter);
 	ena_down(adapter);
 	ENA_CORE_MTX_UNLOCK(adapter);
