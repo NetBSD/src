@@ -306,6 +306,7 @@ struct ena_com_mmio_read {
 struct ena_rss {
 	/* Indirect table */
 	u16 *host_rss_ind_tbl;
+	size_t host_rss_ind_tbl_size;
 	struct ena_admin_rss_ind_table_entry *rss_ind_tbl;
 	dma_addr_t rss_ind_tbl_dma_addr;
 	ena_mem_handle_t rss_ind_tbl_mem_handle;
