@@ -1584,13 +1584,20 @@ void ena_com_admin_destroy(struct ena_com_dev *ena_dev)
 	struct ena_com_admin_sq *sq = &admin_queue->sq;
 	struct ena_com_aenq *aenq = &ena_dev->aenq;
 	u16 size;
-
-	ENA_WAIT_EVENT_DESTROY(admin_queue->comp_ctx->wait_event);
+	int i;
 
 	ENA_SPINLOCK_DESTROY(admin_queue->q_lock);
 
 	if (admin_queue->comp_ctx) {
-		size_t s = admin_queue->q_depth * sizeof(struct ena_comp_ctx);
+		size_t s;
+
+		for (i = 0; i < admin_queue->q_depth; i++) {
+			struct ena_comp_ctx *comp_ctx = get_comp_ctxt(admin_queue, i, false);
+			if (comp_ctx != NULL)
+				ENA_WAIT_EVENT_DESTROY(comp_ctx->wait_event);
+		}
+
+		s = admin_queue->q_depth * sizeof(struct ena_comp_ctx);
 		ENA_MEM_FREE(ena_dev->dmadev, admin_queue->comp_ctx, s);
 	}
 	admin_queue->comp_ctx = NULL;
