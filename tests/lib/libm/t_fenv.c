@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.6 2019/04/25 20:48:54 kamil Exp $ */
+/* $NetBSD: t_fenv.c,v 1.7 2023/11/05 15:27:40 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.6 2019/04/25 20:48:54 kamil Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.7 2023/11/05 15:27:40 riastradh Exp $");
 
 #include <atf-c.h>
 
@@ -81,13 +81,21 @@ ATF_TC_BODY(fegetround, tc)
 	FPU_RND_PREREQ();
 
 	fpsetround(FP_RZ);
-	ATF_CHECK(fegetround() == FE_TOWARDZERO);
+	ATF_CHECK_EQ_MSG(fegetround(), FE_TOWARDZERO,
+	    "fegetround()=%d FE_TOWARDZERO=%d",
+	    fegetround(), FE_TOWARDZERO);
 	fpsetround(FP_RM);
-	ATF_CHECK(fegetround() == FE_DOWNWARD);
+	ATF_CHECK_EQ_MSG(fegetround(), FE_DOWNWARD,
+	    "fegetround()=%d FE_DOWNWARD=%d",
+	    fegetround(), FE_DOWNWARD);
 	fpsetround(FP_RN);
-	ATF_CHECK(fegetround() == FE_TONEAREST);
+	ATF_CHECK_EQ_MSG(fegetround(), FE_TONEAREST,
+	    "fegetround()=%d FE_TONEAREST=%d",
+	    fegetround(), FE_TONEAREST);
 	fpsetround(FP_RP);
-	ATF_CHECK(fegetround() == FE_UPWARD);
+	ATF_CHECK_EQ_MSG(fegetround(), FE_UPWARD,
+	    "fegetround()=%d FE_UPWARD=%d",
+	    fegetround(), FE_UPWARD);
 }
 
 ATF_TC(fesetround);
@@ -104,13 +112,21 @@ ATF_TC_BODY(fesetround, tc)
 	FPU_RND_PREREQ();
 
 	fesetround(FE_TOWARDZERO);
-	ATF_CHECK(fpgetround() == FP_RZ);
+	ATF_CHECK_EQ_MSG(fpgetround(), FP_RZ,
+	    "fpgetround()=%d FP_RZ=%d",
+	    (int)fpgetround(), (int)FP_RZ);
 	fesetround(FE_DOWNWARD);
-	ATF_CHECK(fpgetround() == FP_RM);
+	ATF_CHECK_EQ_MSG(fpgetround(), FP_RM,
+	    "fpgetround()=%d FP_RM=%d",
+	    (int)fpgetround(), (int)FP_RM);
 	fesetround(FE_TONEAREST);
-	ATF_CHECK(fpgetround() == FP_RN);
+	ATF_CHECK_EQ_MSG(fpgetround(), FP_RN,
+	    "fpgetround()=%d FP_RN=%d",
+	    (int)fpgetround(), (int)FP_RN);
 	fesetround(FE_UPWARD);
-	ATF_CHECK(fpgetround() == FP_RP);
+	ATF_CHECK_EQ_MSG(fpgetround(), FP_RP,
+	    "fpgetround()=%d FP_RP=%d",
+	    (int)fpgetround(), (int)FP_RP);
 }
 
 ATF_TC(fegetexcept);
@@ -127,26 +143,38 @@ ATF_TC_BODY(fegetexcept, tc)
 	FPU_EXC_PREREQ();
 
 	fpsetmask(0);
-	ATF_CHECK(fegetexcept() == 0);
+	ATF_CHECK_EQ_MSG(fegetexcept(), 0,
+	    "fegetexcept()=%d",
+	    fegetexcept());
 
 	fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
 	ATF_CHECK(fegetexcept() == (FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW
 	    |FE_UNDERFLOW|FE_INEXACT));
 
 	fpsetmask(FP_X_INV);
-	ATF_CHECK(fegetexcept() == FE_INVALID);
+	ATF_CHECK_EQ_MSG(fegetexcept(), FE_INVALID,
+	    "fegetexcept()=%d FE_INVALID=%d",
+	    fegetexcept(), FE_INVALID);
 
 	fpsetmask(FP_X_DZ);
-	ATF_CHECK(fegetexcept() == FE_DIVBYZERO);
+	ATF_CHECK_EQ_MSG(fegetexcept(), FE_DIVBYZERO,
+	    "fegetexcept()=%d FE_DIVBYZERO=%d",
+	    fegetexcept(), FE_DIVBYZERO);
 
 	fpsetmask(FP_X_OFL);
-	ATF_CHECK(fegetexcept() == FE_OVERFLOW);
+	ATF_CHECK_EQ_MSG(fegetexcept(), FE_OVERFLOW,
+	    "fegetexcept()=%d FE_OVERFLOW=%d",
+	    fegetexcept(), FE_OVERFLOW);
 
 	fpsetmask(FP_X_UFL);
-	ATF_CHECK(fegetexcept() == FE_UNDERFLOW);
+	ATF_CHECK_EQ_MSG(fegetexcept(), FE_UNDERFLOW,
+	    "fegetexcept()=%d FE_UNDERFLOW=%d",
+	    fegetexcept(), FE_UNDERFLOW);
 
 	fpsetmask(FP_X_IMP);
-	ATF_CHECK(fegetexcept() == FE_INEXACT);
+	ATF_CHECK_EQ_MSG(fegetexcept(), FE_INEXACT,
+	    "fegetexcept()=%d FE_INEXACT=%d",
+	    fegetexcept(), FE_INEXACT);
 }
 
 ATF_TC(feenableexcept);
@@ -163,26 +191,38 @@ ATF_TC_BODY(feenableexcept, tc)
 	FPU_EXC_PREREQ();
 
 	fedisableexcept(FE_ALL_EXCEPT);
-	ATF_CHECK(fpgetmask() == 0);
+	ATF_CHECK_EQ_MSG(fpgetmask(), 0,
+	    "fpgetmask()=%d",
+	    (int)fpgetmask());
 
 	feenableexcept(FE_UNDERFLOW);
-	ATF_CHECK(fpgetmask() == FP_X_UFL);
+	ATF_CHECK_EQ_MSG(fpgetmask(), FP_X_UFL,
+	    "fpgetmask()=%d FP_X_UFL=%d",
+	    (int)fpgetmask(), (int)FP_X_UFL);
 
 	fedisableexcept(FE_ALL_EXCEPT);
 	feenableexcept(FE_OVERFLOW);
-	ATF_CHECK(fpgetmask() == FP_X_OFL);
+	ATF_CHECK_EQ_MSG(fpgetmask(), FP_X_OFL,
+	    "fpgetmask()=%d FP_X_OFL=%d",
+	    (int)fpgetmask(), (int)FP_X_OFL);
 
 	fedisableexcept(FE_ALL_EXCEPT);
 	feenableexcept(FE_DIVBYZERO);
-	ATF_CHECK(fpgetmask() == FP_X_DZ);
+	ATF_CHECK_EQ_MSG(fpgetmask(), FP_X_DZ,
+	    "fpgetmask()=%d FP_X_DZ=%d",
+	    (int)fpgetmask(), (int)FP_X_DZ);
 
 	fedisableexcept(FE_ALL_EXCEPT);
 	feenableexcept(FE_INEXACT);
-	ATF_CHECK(fpgetmask() == FP_X_IMP);
+	ATF_CHECK_EQ_MSG(fpgetmask(), FP_X_IMP,
+	    "fpgetmask()=%d FP_X_IMP=%d",
+	    (int)fpgetmask(), (int)FP_X_IMP);
 
 	fedisableexcept(FE_ALL_EXCEPT);
 	feenableexcept(FE_INVALID);
-	ATF_CHECK(fpgetmask() == FP_X_INV);
+	ATF_CHECK_EQ_MSG(fpgetmask(), FP_X_INV,
+	    "fpgetmask()=%d FP_X_INV=%d",
+	    (int)fpgetmask(), (int)FP_X_INV);
 }
 
 ATF_TP_ADD_TCS(tp)
