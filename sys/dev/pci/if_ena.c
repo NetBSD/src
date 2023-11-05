@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.37 2023/11/05 18:18:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.38 2023/11/05 18:21:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3896,20 +3896,7 @@ ena_detach(device_t pdev, int flags)
 	workqueue_destroy(adapter->reset_tq);
 	adapter->reset_tq = NULL;
 
-	if (adapter->ifp != NULL) {
-		ether_ifdetach(adapter->ifp);
-		if_detach(adapter->ifp);
-	}
-	ifmedia_fini(&adapter->media);
-
 	ena_free_all_io_rings_resources(adapter);
-
-	ena_free_counters((struct evcnt *)&adapter->hw_stats,
-	    sizeof(struct ena_hw_stats),
-	    offsetof(struct ena_hw_stats, rx_packets));
-	ena_free_counters((struct evcnt *)&adapter->dev_stats,
-	    sizeof(struct ena_stats_dev),
-            offsetof(struct ena_stats_dev, wd_expired));
 
 	if (likely(adapter->rss_support))
 		ena_com_rss_destroy(ena_dev);
@@ -3943,6 +3930,19 @@ ena_detach(device_t pdev, int flags)
 	ena_com_mmio_reg_read_request_destroy(ena_dev);
 
 	ena_free_pci_resources(adapter);
+
+	ena_free_counters((struct evcnt *)&adapter->hw_stats,
+	    sizeof(struct ena_hw_stats),
+	    offsetof(struct ena_hw_stats, rx_packets));
+	ena_free_counters((struct evcnt *)&adapter->dev_stats,
+	    sizeof(struct ena_stats_dev),
+            offsetof(struct ena_stats_dev, wd_expired));
+
+	if (adapter->ifp != NULL) {
+		ether_ifdetach(adapter->ifp);
+		if_detach(adapter->ifp);
+	}
+	ifmedia_fini(&adapter->media);
 
 	mutex_destroy(&adapter->global_mtx);
 

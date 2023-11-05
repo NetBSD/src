@@ -1392,6 +1392,12 @@ void ena_com_wait_for_abort_completion(struct ena_com_dev *ena_dev)
 	struct ena_com_admin_queue *admin_queue = &ena_dev->admin_queue;
 	unsigned long flags;
 
+	/*
+	 * XXX: workaround for missing synchronization mechanism of AENQ handler
+	 * Wait 20ms for safety though it have not panicked actually.
+	 */
+	ENA_MSLEEP(20);
+
 	ENA_SPINLOCK_LOCK(admin_queue->q_lock, flags);
 	while (ATOMIC32_READ(&admin_queue->outstanding_cmds) != 0) {
 		ENA_SPINLOCK_UNLOCK(admin_queue->q_lock, flags);
