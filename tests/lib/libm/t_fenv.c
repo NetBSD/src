@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.8 2023/11/05 15:28:17 riastradh Exp $ */
+/* $NetBSD: t_fenv.c,v 1.9 2023/11/05 16:06:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.8 2023/11/05 15:28:17 riastradh Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.9 2023/11/05 16:06:27 riastradh Exp $");
 
 #include <atf-c.h>
 
@@ -101,6 +101,45 @@ checkfltrounds(void)
 	    FLT_ROUNDS, expected, feround);
 }
 
+static void
+checkrounding(int feround)
+{
+	volatile double ulp1 = DBL_EPSILON;
+	double y1 = -1 + ulp1/4;
+	double y2 = 1 + 3*(ulp1/2);
+
+	switch (feround) {
+	case FE_TONEAREST: {
+		double z1 = -1;
+		double z2 = 1 + 2*ulp1;
+		ATF_CHECK_EQ_MSG(y1, z1, "expected=%a actual=%a", y1, z1);
+		ATF_CHECK_EQ_MSG(y2, z2, "expected=%a actual=%a", y1, z2);
+		break;
+	}
+	case FE_TOWARDZERO: {
+		double z1 = -1 + ulp1/2;
+		double z2 = 1 + ulp1;
+		ATF_CHECK_EQ_MSG(y1, z1, "expected=%a actual=%a", y1, z1);
+		ATF_CHECK_EQ_MSG(y2, z2, "expected=%a actual=%a", y1, z2);
+		break;
+	}
+	case FE_UPWARD: {
+		double z1 = -1 + ulp1/2;
+		double z2 = 1 + 2*ulp1;
+		ATF_CHECK_EQ_MSG(y1, z1, "expected=%a actual=%a", y1, z1);
+		ATF_CHECK_EQ_MSG(y2, z2, "expected=%a actual=%a", y1, z2);
+		break;
+	}
+	case FE_DOWNWARD: {
+		double z1 = -1;
+		double z2 = 1 + ulp1;
+		ATF_CHECK_EQ_MSG(y1, z1, "expected=%a actual=%a", y1, z1);
+		ATF_CHECK_EQ_MSG(y2, z2, "expected=%a actual=%a", y1, z2);
+		break;
+	}
+	}
+}
+
 ATF_TC(fegetround);
 
 ATF_TC_HEAD(fegetround, tc)
@@ -114,29 +153,35 @@ ATF_TC_BODY(fegetround, tc)
 {
 	FPU_RND_PREREQ();
 
+	checkrounding(FE_TONEAREST);
+
 	fpsetround(FP_RZ);
 	ATF_CHECK_EQ_MSG(fegetround(), FE_TOWARDZERO,
 	    "fegetround()=%d FE_TOWARDZERO=%d",
 	    fegetround(), FE_TOWARDZERO);
 	checkfltrounds();
+	checkrounding(FE_TOWARDZERO);
 
 	fpsetround(FP_RM);
 	ATF_CHECK_EQ_MSG(fegetround(), FE_DOWNWARD,
 	    "fegetround()=%d FE_DOWNWARD=%d",
 	    fegetround(), FE_DOWNWARD);
 	checkfltrounds();
+	checkrounding(FE_DOWNWARD);
 
 	fpsetround(FP_RN);
 	ATF_CHECK_EQ_MSG(fegetround(), FE_TONEAREST,
 	    "fegetround()=%d FE_TONEAREST=%d",
 	    fegetround(), FE_TONEAREST);
 	checkfltrounds();
+	checkrounding(FE_TONEAREST);
 
 	fpsetround(FP_RP);
 	ATF_CHECK_EQ_MSG(fegetround(), FE_UPWARD,
 	    "fegetround()=%d FE_UPWARD=%d",
 	    fegetround(), FE_UPWARD);
 	checkfltrounds();
+	checkrounding(FE_UPWARD);
 }
 
 ATF_TC(fesetround);
@@ -152,29 +197,35 @@ ATF_TC_BODY(fesetround, tc)
 {
 	FPU_RND_PREREQ();
 
+	checkrounding(FE_TONEAREST);
+
 	fesetround(FE_TOWARDZERO);
 	ATF_CHECK_EQ_MSG(fpgetround(), FP_RZ,
 	    "fpgetround()=%d FP_RZ=%d",
 	    (int)fpgetround(), (int)FP_RZ);
 	checkfltrounds();
+	checkrounding(FE_TOWARDZERO);
 
 	fesetround(FE_DOWNWARD);
 	ATF_CHECK_EQ_MSG(fpgetround(), FP_RM,
 	    "fpgetround()=%d FP_RM=%d",
 	    (int)fpgetround(), (int)FP_RM);
 	checkfltrounds();
+	checkrounding(FE_DOWNWARD);
 
 	fesetround(FE_TONEAREST);
 	ATF_CHECK_EQ_MSG(fpgetround(), FP_RN,
 	    "fpgetround()=%d FP_RN=%d",
 	    (int)fpgetround(), (int)FP_RN);
 	checkfltrounds();
+	checkrounding(FE_TONEAREST);
 
 	fesetround(FE_UPWARD);
 	ATF_CHECK_EQ_MSG(fpgetround(), FP_RP,
 	    "fpgetround()=%d FP_RP=%d",
 	    (int)fpgetround(), (int)FP_RP);
 	checkfltrounds();
+	checkrounding(FE_UPWARD);
 }
 
 ATF_TC(fegetexcept);
