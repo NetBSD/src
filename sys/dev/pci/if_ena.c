@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.36 2023/11/05 18:17:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.37 2023/11/05 18:18:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,14 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.36 2023/11/05 18:17:41 jdolecek Exp $")
 #include <net/if_vlanvar.h>
 
 #include <dev/pci/if_enavar.h>
-
-#ifdef NET_MPSAFE
-#define	WQ_FLAGS	WQ_MPSAFE
-#define	CALLOUT_FLAGS	CALLOUT_MPSAFE
-#else
-#define	WQ_FLAGS	0
-#define	CALLOUT_FLAGS	0
-#endif
 
 /*********************************************************
  *  Function prototypes
@@ -728,7 +720,7 @@ ena_setup_tx_resources(struct ena_adapter *adapter, int qid)
 
 	/* Allocate workqueues */
 	int rc = workqueue_create(&tx_ring->enqueue_tq, "ena_tx_enq",
-	    ena_deferred_mq_start, tx_ring, 0, IPL_NET, WQ_PERCPU | WQ_FLAGS);
+	    ena_deferred_mq_start, tx_ring, 0, IPL_NET, WQ_PERCPU | WQ_MPSAFE);
 	if (unlikely(rc != 0)) {
 		ena_trace(ENA_ALERT,
 		    "Unable to create workqueue for enqueue task\n");
@@ -923,7 +915,7 @@ ena_setup_rx_resources(struct ena_adapter *adapter, unsigned int qid)
 
 	/* Allocate workqueues */
 	int rc = workqueue_create(&rx_ring->cleanup_tq, "ena_rx_comp",
-	    ena_cleanup, que, 0, IPL_NET, WQ_PERCPU | WQ_FLAGS);
+	    ena_cleanup, que, 0, IPL_NET, WQ_PERCPU | WQ_MPSAFE);
 	if (unlikely(rc != 0)) {
 		ena_trace(ENA_ALERT,
 		    "Unable to create workqueue for RX completion task\n");
@@ -2013,6 +2005,9 @@ ena_request_mgmnt_irq(struct ena_adapter *adapter)
 	KASSERT(adapter->sc_intrs != NULL);
 	KASSERT(adapter->sc_ihs[irq_slot] == NULL);
 
+	pci_intr_setattr(pc, &adapter->sc_intrs[irq_slot],
+	    PCI_INTR_MPSAFE, true);
+
 	snprintf(intr_xname, sizeof(intr_xname), "%s mgmnt",
 	    device_xname(adapter->pdev));
 	intrstr = pci_intr_string(pc, adapter->sc_intrs[irq_slot],
@@ -2057,6 +2052,9 @@ ena_request_io_irq(struct ena_adapter *adapter)
 
 		KASSERT((void *)adapter->sc_intrs[irq_slot] != NULL);
 		KASSERT(adapter->sc_ihs[irq_slot] == NULL);
+
+		pci_intr_setattr(pc, &adapter->sc_intrs[irq_slot],
+		    PCI_INTR_MPSAFE, true);
 
 		snprintf(intr_xname, sizeof(intr_xname), "%s ioq%d",
 		    device_xname(adapter->pdev), i);
@@ -2552,6 +2550,7 @@ ena_setup_ifnet(device_t pdev, struct ena_adapter *adapter,
 	if_setsoftc(ifp, adapter);
 
 	if_setflags(ifp, IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
+	ifp->if_extflags = IFEF_MPSAFE;
 	if_setinitfn(ifp, ena_init);
 	ifp->if_stop = ena_stop;
 	if_settransmitfn(ifp, ena_mq_start);
@@ -3817,12 +3816,12 @@ ena_attach(device_t parent, device_t self, void *aux)
 		goto err_ifp_free;
 	}
 
-	callout_init(&adapter->timer_service, CALLOUT_FLAGS);
+	callout_init(&adapter->timer_service, CALLOUT_MPSAFE);
 	callout_setfunc(&adapter->timer_service, ena_timer_service, adapter);
 
 	/* Initialize reset task queue */
 	rc = workqueue_create(&adapter->reset_tq, "ena_reset_enq",
-	    ena_reset_task, adapter, 0, IPL_NET, WQ_PERCPU | WQ_FLAGS);
+	    ena_reset_task, adapter, 0, IPL_NET, WQ_PERCPU | WQ_MPSAFE);
 	if (unlikely(rc != 0)) {
 		ena_trace(ENA_ALERT,
 		    "Unable to create workqueue for reset task\n");
