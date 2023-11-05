@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.35 2018/08/01 20:04:13 maxv Exp $
+# 	$NetBSD: DEJIKO,v 1.35.4.1 2023/11/05 17:30:38 martin Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -45,7 +45,8 @@ include 	"conf/compat_netbsd14.config"
 # wscons options
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
-options 	FONT_GALLANT12x22
+#options 	FONT_GALLANT12x22
+options 	FONT_SONY12x24
 
 config	netbsd root on ? type ?
 

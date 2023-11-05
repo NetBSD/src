@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.49 2018/08/01 20:04:13 maxv Exp $
+# 	$NetBSD: WAPIKO,v 1.49.4.1 2023/11/05 17:30:38 martin Exp $
 #
 include 	"arch/newsmips/conf/std.newsmips"
 
@@ -84,7 +84,8 @@ sd*	at scsibus? target ? lun ?	# SCSI disks
 
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
-options 	FONT_GALLANT12x22
+#options 	FONT_GALLANT12x22
+options 	FONT_SONY12x24
 
 wsdisplay0 at fb? console ?
 wskbd0	at kb? console ?
