@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.149 2023/02/24 11:02:27 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.150 2023/11/06 12:17:50 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.149 2023/02/24 11:02:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.150 2023/11/06 12:17:50 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -539,6 +539,8 @@ lru_requeue(vnode_t *vp, vnodelst_t *listhd)
 	if ((d > 0 && numvnodes > desiredvnodes) ||
 	    listhd == &lru_list[LRU_VRELE])
 		cv_signal(&vdrain_cv);
+	if (d > 0 && numvnodes > desiredvnodes + desiredvnodes / 16)
+		kpause("vnfull", false, mstohz(10), &vdrain_lock);
 	mutex_exit(&vdrain_lock);
 }
 
@@ -689,7 +691,7 @@ vdrain_thread(void *cookie)
 
 	for (;;) {
 		vdrain_retry = false;
-		target = desiredvnodes - desiredvnodes/10;
+		target = desiredvnodes - desiredvnodes / 16;
 
 		for (i = 0; i < LRU_COUNT; i++) {
 			TAILQ_INSERT_HEAD(&lru_list[i], marker, vi_lrulist);
