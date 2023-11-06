@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.11 2023/11/05 21:13:06 riastradh Exp $ */
+/* $NetBSD: t_fenv.c,v 1.12 2023/11/06 13:48:00 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.11 2023/11/05 21:13:06 riastradh Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.12 2023/11/06 13:48:00 riastradh Exp $");
 
 #include <atf-c.h>
 
@@ -114,8 +114,19 @@ static void
 checkrounding(int feround, const char *name)
 {
 	volatile double ulp1 = DBL_EPSILON;
-	double y1 = -1 + ulp1/4;
-	double y2 = 1 + 3*(ulp1/2);
+
+	/*
+	 * XXX These must be volatile to force rounding to double when
+	 * the intermediate quantities are evaluated in long double
+	 * precision, e.g. on 32-bit x86 with x87 long double.  Under
+	 * the C standard (C99, C11, C17, &c.), cast and assignment
+	 * operators are required to remove all extra range and
+	 * precision, i.e., round double to long double.  But we build
+	 * this code with -std=gnu99, which diverges from this
+	 * requirement -- unless you add a volatile qualifier.
+	 */
+	volatile double y1 = -1 + ulp1/4;
+	volatile double y2 = 1 + 3*(ulp1/2);
 
 	switch (feround) {
 	case FE_TONEAREST: {
