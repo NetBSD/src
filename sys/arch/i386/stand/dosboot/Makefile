@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2023/11/06 06:53:52 rin Exp $
+#	$NetBSD: Makefile,v 1.35 2023/11/06 07:02:17 rin Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -33,6 +33,9 @@ I386MISCMAKEFLAGS= I386_INCLUDE_DOS=yes
 
 # DOS command line arguments are located at 0x0000.
 COPTS.doscommain.c+= -fno-delete-null-pointer-checks
+
+# Do not page-align data segment.
+LDFLAGS+= -Wl,-N
 
 VERSIONFILE= ${.CURDIR}/version
 
