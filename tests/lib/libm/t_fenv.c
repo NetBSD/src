@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.12 2023/11/06 13:48:00 riastradh Exp $ */
+/* $NetBSD: t_fenv.c,v 1.13 2023/11/06 13:48:12 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.12 2023/11/06 13:48:00 riastradh Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.13 2023/11/06 13:48:12 riastradh Exp $");
 
 #include <atf-c.h>
 
@@ -128,52 +128,33 @@ checkrounding(int feround, const char *name)
 	volatile double y1 = -1 + ulp1/4;
 	volatile double y2 = 1 + 3*(ulp1/2);
 
+	double z1, z2;
+
 	switch (feround) {
-	case FE_TONEAREST: {
-		double z1 = -1;
-		double z2 = 1 + 2*ulp1;
-		ATF_CHECK_EQ_MSG(y1, z1, "%s[-1 + ulp(1)/4]"
-		    " expected=%a actual=%a",
-		    name, y1, z1);
-		ATF_CHECK_EQ_MSG(y2, z2, "%s[1 + 3*(ulp(1)/2)]"
-		    " expected=%a actual=%a",
-		    name, y2, z2);
+	case FE_TONEAREST:
+		z1 = -1;
+		z2 = 1 + 2*ulp1;
 		break;
-	}
-	case FE_TOWARDZERO: {
-		double z1 = -1 + ulp1/2;
-		double z2 = 1 + ulp1;
-		ATF_CHECK_EQ_MSG(y1, z1, "%s[-1 + ulp(1)/4]"
-		    " expected=%a actual=%a",
-		    name, y1, z1);
-		ATF_CHECK_EQ_MSG(y2, z2, "%s[1 + 3*(ulp(1)/2)]"
-		    " expected=%a actual=%a",
-		    name, y2, z2);
+	case FE_TOWARDZERO:
+		z1 = -1 + ulp1/2;
+		z2 = 1 + ulp1;
 		break;
-	}
-	case FE_UPWARD: {
-		double z1 = -1 + ulp1/2;
-		double z2 = 1 + 2*ulp1;
-		ATF_CHECK_EQ_MSG(y1, z1, "%s[-1 + ulp(1)/4]"
-		    " expected=%a actual=%a",
-		    name, y1, z1);
-		ATF_CHECK_EQ_MSG(y2, z2, "%s[1 + 3*(ulp(1)/2)]"
-		    " expected=%a actual=%a",
-		    name, y2, z2);
+	case FE_UPWARD:
+		z1 = -1 + ulp1/2;
+		z2 = 1 + 2*ulp1;
 		break;
-	}
-	case FE_DOWNWARD: {
-		double z1 = -1;
-		double z2 = 1 + ulp1;
-		ATF_CHECK_EQ_MSG(y1, z1, "%s[-1 + ulp(1)/4]"
-		    " expected=%a actual=%a",
-		    name, y1, z1);
-		ATF_CHECK_EQ_MSG(y2, z2, "%s[1 + 3*(ulp(1)/2)]"
-		    " expected=%a actual=%a",
-		    name, y2, z2);
+	case FE_DOWNWARD:
+		z1 = -1;
+		z2 = 1 + ulp1;
 		break;
+	default:
+		atf_tc_fail("unknown rounding mode %d (%s)", feround, name);
 	}
-	}
+
+	ATF_CHECK_EQ_MSG(y1, z1, "%s[-1 + ulp(1)/4] expected=%a actual=%a",
+	    name, y1, z1);
+	ATF_CHECK_EQ_MSG(y2, z2, "%s[1 + 3*(ulp(1)/2)] expected=%a actual=%a",
+	    name, y2, z2);
 }
 
 ATF_TC(fegetround);
