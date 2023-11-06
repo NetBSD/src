@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2023/11/06 07:02:17 rin Exp $
+#	$NetBSD: Makefile,v 1.36 2023/11/06 07:09:08 rin Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -10,7 +10,7 @@ RELOC=		0x100
 
 SRCS= main.c devopen.c exec.c exec_multiboot1.c exec_multiboot2.c
 
-CPPFLAGS+= -DSLOW	# for libz
+#CPPFLAGS+= -DSLOW	# for libz; no longer available
 CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
 CPPFLAGS+= -DXMS
 CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
