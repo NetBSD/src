@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.174 2023/10/10 10:58:03 simonb Exp $	*/
+/*	$NetBSD: ugen.c,v 1.175 2023/11/06 12:16:52 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.174 2023/10/10 10:58:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.175 2023/11/06 12:16:52 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1346,8 +1346,8 @@ ugenintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	ibuf = sce->ibuf;
 
-	DPRINTFN(5, "xfer=%p status=%d count=%d",
-		     xfer, status, count, 0);
+	DPRINTFN(5, "xfer=%#jx status=%d count=%d",
+		     (uintptr_t)xfer, status, count, 0);
 	DPRINTFN(5, "          data = %02x %02x %02x",
 		     ibuf[0], ibuf[1], ibuf[2], 0);
 
