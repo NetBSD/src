@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.68 2023/01/07 19:41:30 chs Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.69 2023/11/06 12:18:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.68 2023/01/07 19:41:30 chs Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.69 2023/11/06 12:18:59 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -410,6 +410,11 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 	    fs->fs_journallocs[0], fs->fs_journallocs[1]);
 	printf("\tloc2 %" PRIu64 "\tloc3 %" PRIu64 "\n",
 	    fs->fs_journallocs[2], fs->fs_journallocs[3]);
+	printf("snapshot inodes");
+	for (int s = 0; s < FSMAXSNAP; s++) {
+		printf(" %u", fs->fs_snapinum[s]);
+	}
+	printf("\n");
 	printf("usrquota %" PRIu64 "\tgrpquota %" PRIu64 "\n",
 		fs->fs_quotafile[USRQUOTA], fs->fs_quotafile[GRPQUOTA]);
 	printf("flags\t");
