@@ -1,4 +1,4 @@
-/* $NetBSD: smccc.c,v 1.3 2021/08/08 13:43:09 jmcneill Exp $ */
+/* $NetBSD: smccc.c,v 1.4 2023/11/07 13:31:26 rin Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smccc.c,v 1.3 2021/08/08 13:43:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smccc.c,v 1.4 2023/11/07 13:31:26 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -36,7 +36,11 @@ __KERNEL_RCSID(0, "$NetBSD: smccc.c,v 1.3 2021/08/08 13:43:09 jmcneill Exp $");
 #include <arm/arm/smccc.h>
 
 #if defined(__arm__)
+#  if defined(__clang__)
+#define	SMCCC_ARCH_ATTRIBUTE  __attribute__ ((target("armv7ve")))
+#  else /* gcc */
 #define	SMCCC_ARCH_ATTRIBUTE  __attribute__ ((target("arch=armv7ve")))
+#  endif
 #else
 #define	SMCCC_ARCH_ATTRIBUTE
 #endif
