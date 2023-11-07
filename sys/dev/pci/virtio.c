@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.78 2023/04/21 02:17:32 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.79 2023/11/07 13:38:01 rin Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.78 2023/04/21 02:17:32 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.79 2023/11/07 13:38:01 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,8 +276,15 @@ virtio_read_device_config_le_2(struct virtio_softc *sc, int index)
 	uint16_t val;
 
 	val = bus_space_read_2(iot, ioh, index);
+#if !defined(__aarch64__) && !defined(__arm__)
+	/*
+	 * For big-endian aarch64/armv7, bus endian is always LSB, but
+	 * byte-order is automatically swapped by bus_space(9) (see also
+	 * comments in virtio_pci.c). Therefore, no need to swap here.
+	 */
 	if (sc->sc_bus_endian != LITTLE_ENDIAN)
 		val = bswap16(val);
+#endif
 
 	DPRINTFR("read_le_2", "%04x", val, index, 2);
 	DPRINTFR2("read_le_2", "%04x",
@@ -294,8 +301,11 @@ virtio_read_device_config_le_4(struct virtio_softc *sc, int index)
 	uint32_t val;
 
 	val = bus_space_read_4(iot, ioh, index);
+#if !defined(__aarch64__) && !defined(__arm__)
+	/* See virtio_read_device_config_le_2() above. */
 	if (sc->sc_bus_endian != LITTLE_ENDIAN)
 		val = bswap32(val);
+#endif
 
 	DPRINTFR("read_le_4", "%08x", val, index, 4);
 	DPRINTFR2("read_le_4", "%08x",
