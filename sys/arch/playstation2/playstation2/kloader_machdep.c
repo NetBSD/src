@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.5 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.6 2023/11/07 21:19:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.5 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.6 2023/11/07 21:19:04 andvar Exp $");
 
 #include "debug_kloader.h"
 
@@ -66,7 +66,7 @@ kloader_playstation2_jump(kloader_bootfunc_t func, vaddr_t sp,
 }
 
 void
-kloader_playstation2_reset()
+kloader_playstation2_reset(void)
 {
 
 	((void (*)(void))0xbfc00000)();
