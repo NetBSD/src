@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.60 2021/08/08 20:54:49 nia Exp $	*/
+/*	$NetBSD: un.h,v 1.61 2023/11/08 19:27:13 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -44,12 +44,20 @@ typedef __sa_family_t	sa_family_t;
 #endif
 
 /*
+ * Historically, (struct sockaddr) needed to fit inside an mbuf.
+ * For this reason, UNIX domain sockets were therefore limited to
+ * 104 bytes. While this limit is no longer necessary, it is kept for
+ * binary compatibility reasons.
+ */
+#define	SUNPATHLEN	104
+
+/*
  * Definitions for UNIX IPC domain.
  */
 struct	sockaddr_un {
-	uint8_t		sun_len;	/* total sockaddr length */
-	sa_family_t	sun_family;	/* AF_LOCAL */
-	char		sun_path[104];	/* path name (gag) */
+	uint8_t		sun_len;		/* total sockaddr length */
+	sa_family_t	sun_family;		/* AF_LOCAL */
+	char		sun_path[SUNPATHLEN];	/* path name (gag) */
 };
 
 /*
