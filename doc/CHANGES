@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3016 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3017 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -261,3 +261,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	gpioirq(4): allow multiple pins per gpioirq instance, add the ability
 	to use a /dev/gpioirqN device to get pin interrupts into userland.
 		[brad 20231105]
+	gpiosim(4): Simulated interrupts
+		[brad 20231108]
