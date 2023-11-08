@@ -31,7 +31,7 @@ USAGE
 	exit 1
 }
 
-umask 002
+umask 022
 # handle args
 while getopts a:I:m:p:s: ch; do
 	case ${ch} in

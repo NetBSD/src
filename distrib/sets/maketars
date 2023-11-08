@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.97 2023/11/08 12:58:04 christos Exp $
+# $NetBSD: maketars,v 1.98 2023/11/08 13:02:47 christos Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -69,7 +69,7 @@ msg()
 	$quiet || echo $*
 }
 
-umask 002
+umask 022
 # handle args
 while getopts L:bxi:a:m:qs:F:SM:N:Ud:t:T: ch; do
 	case ${ch} in
