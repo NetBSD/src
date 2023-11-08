@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.32 2022/08/21 07:10:03 lukem Exp $
+# $NetBSD: makeobsolete,v 1.33 2023/11/08 12:58:04 christos Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -29,6 +29,7 @@ USAGE
 	exit 1
 }
 
+umask 002
 while getopts L:bxa:m:s:t: ch; do
 	case ${ch} in
 	L)
