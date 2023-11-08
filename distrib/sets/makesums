@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makesums,v 1.17 2018/09/28 15:04:20 martin Exp $
+# $NetBSD: makesums,v 1.18 2023/11/08 12:58:04 christos Exp $
 #
 # Make checksum files for files in ``tardir''.  Usage:
 # makesums [-a] [-t tardir] [setname [...]]
@@ -40,6 +40,7 @@ USAGE
 	exit 1
 }
 
+umask 002
 # handle args
 while getopts aAt: ch; do
 	case ${ch} in
