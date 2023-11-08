@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-10.0,v 1.1.2.158 2023/11/05 18:30:08 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.159 2023/11/08 10:37:54 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14082,3 +14082,7 @@ external/gpl2/groff/tmac/mdoc.local		(manually edited)
 sys/sys/param.h					(manually edited)
 
 	Welcome to 10.0_RC1
+
+doc/3RDPARTY					(manually edited)
+
+	Adjust libfido2 entry for ticket #345.
