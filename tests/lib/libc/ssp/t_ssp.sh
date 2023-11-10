@@ -1,4 +1,4 @@
-# $NetBSD: t_ssp.sh,v 1.7 2014/04/06 19:28:59 christos Exp $
+# $NetBSD: t_ssp.sh,v 1.8 2023/11/10 23:03:25 christos Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -284,6 +284,19 @@ getcwd_body()
 	h_fail "$prog 1025"
 }
 
+atf_test_case getcwd2
+getcwd2_head()
+{
+	atf_set "descr" "Checks getcwd(3) override"
+}
+getcwd2_body()
+{
+	prog="$(atf_get_srcdir)/h_getcwd2"
+
+	atf_check -s exit:1 -o ignore \
+	    -e 'match:.*getcwd failed: Function not implemented$' $prog
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case sprintf
@@ -305,4 +318,5 @@ atf_init_test_cases()
 	atf_add_test_case read
 	atf_add_test_case readlink
 	atf_add_test_case getcwd
+	atf_add_test_case getcwd2
 }
