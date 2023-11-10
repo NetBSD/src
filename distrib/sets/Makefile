@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.109 2023/06/10 16:08:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.110 2023/11/10 21:05:23 christos Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -19,6 +19,7 @@ COMPRESS_PROGRAM=${"${USE_XZ_SETS:Uno}"!="no":?${TOOL_XZ}:${TOOL_GZIP}}
 TAR_SUFF=${"${USE_XZ_SETS:Uno}"!="no":?tar.xz:tgz}
 XZ_OPT=		-9
 GZIP_FLAGS=	${GZIP_N_FLAG}
+UMASK=		umask 022
 
 SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} \
@@ -252,7 +253,7 @@ makesrctars: .PRECIOUS .PHONY check_RELEASEDIR
 
 makesums: .PRECIOUS .PHONY check_RELEASEDIR .WAIT \
 		${MAKETARSETS:@.TARS.@do-sum-${.TARS.}@}
-	for i in MD5 SHA512; do \
+	${UMASK} && for i in MD5 SHA512; do \
 		mv ${TARDIR}/$$i.tmp ${TARDIR}/$$i; \
 	done
 
@@ -260,7 +261,7 @@ makesums: .PRECIOUS .PHONY check_RELEASEDIR .WAIT \
 do-sum-${tar}: .PHONY do-${tar}
 	${_MKMSG_CREATE} "${tar} checksums"
 	${MAKESUMS} -t ${TARDIR} ${tar}.${TAR_SUFF}
-	for i in MD5 SHA512; do \
+	${UMASK} && for i in MD5 SHA512; do \
 		${TOOL_CAT} ${TARDIR}/$$i >> ${TARDIR}/$$i.tmp; \
 	done
 .endfor
@@ -325,6 +326,7 @@ makedeps: .PHONY
 # sorted together.
 #
 sortlists: .PHONY
+	${UMASK} && \
 	find ${.CURDIR}/lists \! \( -name CVS -prune \) \! -name .#\* \
 	    -type f -print \
 	| while read f ; do \
