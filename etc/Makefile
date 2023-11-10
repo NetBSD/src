@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.468 2023/11/08 13:02:03 christos Exp $
+#	$NetBSD: Makefile,v 1.469 2023/11/10 20:44:58 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -589,7 +589,7 @@ build_kernels: .PHONY
 .for configfile in ${ALL_KERNELS:O:u}					# {
 build_kernels: kern-${configfile}
 kern-${configfile}: .PHONY .MAKE
-	umask 022
+	umask 022 && \
 	cd ${KERNCONFDIR} && ${TOOL_CONFIG} ${CONFIGOPTS} -s ${KERNSRCDIR} \
 	    ${MKDEBUGKERNEL == "yes" :? -DDEBUG=-g :} \
 	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
@@ -616,7 +616,7 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
 	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.${TAR_SUFF}; \
 	pax_cmd="GZIP=${GZIP_FLAGS:Q} XZ_OPT=${XZ_OPT:Q} ${TOOL_PAX} ${PAX_TIMESTAMP} --use-compress-program ${COMPRESS_PROGRAM:Q} -O -w -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
-	umask 022;
+	umask 022 && \
 	cd $${kerndir} && { \
 		kernels=; newest=; \
 		for kernel in $${kernlist}; do \
@@ -679,7 +679,7 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
 	dest="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel"; \
-	umask 022; \
+	umask 022 && \
 	cd $${kerndir} && {	\
 		for kernel in $${kernlist}; do \
 			for s in "" $${kernsuffixes}; do \
