@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1295 2023/10/17 13:51:52 rjs Exp $
+# $NetBSD: mi,v 1.1296 2023/11/10 23:04:50 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3166,6 +3166,7 @@
 ./usr/tests/lib/libc/ssp/Kyuafile			tests-lib-tests		compattestfile,atf,ssp,kyua
 ./usr/tests/lib/libc/ssp/h_fgets			tests-lib-tests		compattestfile,atf,ssp
 ./usr/tests/lib/libc/ssp/h_getcwd			tests-lib-tests		compattestfile,atf,ssp
+./usr/tests/lib/libc/ssp/h_getcwd2			tests-lib-tests		compattestfile,atf,ssp
 ./usr/tests/lib/libc/ssp/h_gets				tests-lib-tests		compattestfile,atf,ssp
 ./usr/tests/lib/libc/ssp/h_memcpy			tests-lib-tests		compattestfile,atf,ssp
 ./usr/tests/lib/libc/ssp/h_memmove			tests-lib-tests		compattestfile,atf,ssp
