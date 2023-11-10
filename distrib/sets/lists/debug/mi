@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.422 2023/11/06 08:56:12 rin Exp $
+# $NetBSD: mi,v 1.423 2023/11/10 23:04:50 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2095,6 +2095,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp/t_threadjmp.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_fgets.debug		tests-lib-debug		debug,atf,ssp,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_getcwd.debug		tests-lib-debug		debug,atf,ssp,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_getcwd2.debug		tests-lib-debug		debug,atf,ssp,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_gets.debug			tests-lib-debug		debug,atf,ssp,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memcpy.debug		tests-lib-debug		debug,atf,ssp,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memmove.debug		tests-lib-debug		debug,atf,ssp,compattestfile
