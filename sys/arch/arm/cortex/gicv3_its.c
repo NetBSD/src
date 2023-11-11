@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.34 2021/10/31 17:24:11 skrll Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.35 2023/11/11 17:35:45 tnn Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.34 2021/10/31 17:24:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.35 2023/11/11 17:35:45 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -117,6 +117,11 @@ gits_command(struct gicv3_its *its, const struct gicv3_its_command *cmd)
 
 	cwriter = gits_read_8(its, GITS_CWRITER);
 	woff = cwriter & GITS_CWRITER_Offset;
+#ifdef DIAGNOSTIC
+	uint64_t creadr = gits_read_8(its, GITS_CREADR);
+	KASSERT(!ISSET(creadr, GITS_CREADR_Stalled));
+	KASSERT(((woff + sizeof(cmd->dw)) & (its->its_cmd.len - 1)) != (creadr & GITS_CREADR_Offset));
+#endif
 
 	uint64_t *dw = (uint64_t *)(its->its_cmd.base + woff);
 	for (int i = 0; i < __arraycount(cmd->dw); i++)
@@ -256,6 +261,26 @@ gits_command_sync(struct gicv3_its *its, uint64_t rdbase)
 	gits_command(its, &cmd);
 }
 
+#if 0
+static inline void
+gits_command_int(struct gicv3_its *its, uint32_t deviceid, uint32_t eventid)
+{
+	struct gicv3_its_command cmd;
+
+	/*
+	 * Translate the deviceid and eventid into an icid and pintid through
+	 * the device table and ITT. Mark the pintid as pending
+	 * on the redistributor.
+	 * If the interrupt is not configured the command queue stalls.
+	 */
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.dw[0] = GITS_CMD_INT | ((uint64_t)deviceid << 32);
+	cmd.dw[1] = eventid;
+
+	gits_command(its, &cmd);
+}
+#endif
+
 static inline int
 gits_wait(struct gicv3_its *its)
 {
@@ -358,8 +383,10 @@ gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 	 * Map the device to the ITT
 	 */
 	const u_int id_bits = __SHIFTOUT(typer, GITS_TYPER_ID_bits) + 1;
+	mutex_enter(its->its_lock);
 	gits_command_mapd(its, devid, dev->dev_itt.segs[0].ds_addr, id_bits - 1, true);
 	gits_wait(its);
+	mutex_exit(its->its_lock);
 
 	return 0;
 }
@@ -391,6 +418,7 @@ gicv3_its_msi_enable(struct gicv3_its *its, int lpi, int count)
 		pci_conf_write(pc, tag, off + PCI_MSI_MDATA64,
 		    lpi - its->its_pic->pic_irqbase);
 	} else {
+		KASSERT((addr >> 32) == 0);
 		pci_conf_write(pc, tag, off + PCI_MSI_MADDR,
 		    addr & 0xffffffff);
 		pci_conf_write(pc, tag, off + PCI_MSI_MDATA,
@@ -485,8 +513,10 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
 		return NULL;
 
 	vectors = kmem_alloc(sizeof(*vectors) * *count, KM_SLEEP);
+	mutex_enter(its->its_lock);
 	for (n = 0; n < *count; n++) {
 		const int lpi = gicv3_its_msi_alloc_lpi(its, pa);
+		KASSERT(lpi >= 0);
 		vectors[n] = ARM_PCI_INTR_MSI |
 		    __SHIFTIN(lpi, ARM_PCI_INTR_IRQ) |
 		    __SHIFTIN(n, ARM_PCI_INTR_MSI_VEC) |
@@ -508,6 +538,7 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
 		gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
 	}
 	gits_wait(its);
+	mutex_exit(its->its_lock);
 
 	return vectors;
 }
@@ -555,8 +586,10 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 	}
 
 	vectors = kmem_alloc(sizeof(*vectors) * *count, KM_SLEEP);
+	mutex_enter(its->its_lock);
 	for (n = 0; n < *count; n++) {
 		const int lpi = gicv3_its_msi_alloc_lpi(its, pa);
+		KASSERT(lpi >= 0);
 		const int msix_vec = table_indexes ? table_indexes[n] : n;
 		vectors[msix_vec] = ARM_PCI_INTR_MSIX |
 		    __SHIFTIN(lpi, ARM_PCI_INTR_IRQ) |
@@ -578,6 +611,7 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 		gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
 	}
 	gits_wait(its);
+	mutex_exit(its->its_lock);
 
 	bus_space_unmap(bst, bsh, bsz);
 
@@ -638,14 +672,17 @@ gicv3_its_command_init(struct gicv3_softc *sc, struct gicv3_its *its)
 
 	gicv3_dma_alloc(sc, &its->its_cmd, GITS_COMMANDS_SIZE, GITS_COMMANDS_ALIGN);
 
+	KASSERT((gits_read_4(its, GITS_CTLR) & GITS_CTLR_Enabled) == 0);
+	KASSERT((gits_read_4(its, GITS_CTLR) & GITS_CTLR_Quiescent) != 0);
+
 	cbaser = its->its_cmd.segs[0].ds_addr;
 	cbaser |= __SHIFTIN(GITS_Cache_NORMAL_NC, GITS_CBASER_InnerCache);
 	cbaser |= __SHIFTIN(GITS_Shareability_NS, GITS_CBASER_Shareability);
 	cbaser |= __SHIFTIN((its->its_cmd.len / 4096) - 1, GITS_CBASER_Size);
 	cbaser |= GITS_CBASER_Valid;
 
-	gits_write_8(its, GITS_CBASER, cbaser);
 	gits_write_8(its, GITS_CWRITER, 0);
+	gits_write_8(its, GITS_CBASER, cbaser);
 }
 
 static void
@@ -692,7 +729,7 @@ gicv3_its_table_init(struct gicv3_softc *sc, struct gicv3_its *its)
 			break;
 		case GITS_Page_Size_16KB:
 			page_size = 16384;
-			table_align = 4096;
+			table_align = 16384;
 			break;
 		case GITS_Page_Size_64KB:
 		default:
@@ -838,8 +875,10 @@ gicv3_its_set_affinity(void *priv, size_t irq, const kcpuset_t *affinity)
 
 	if (its->its_cpuonline[cpu_index(ci)] == true) {
 		const uint32_t devid = gicv3_its_devid(pa->pa_pc, pa->pa_tag);
+		mutex_enter(its->its_lock);
 		gits_command_movi(its, devid, irq, cpu_index(ci));
 		gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
+		mutex_exit(its->its_lock);
 	}
 
 	return 0;
