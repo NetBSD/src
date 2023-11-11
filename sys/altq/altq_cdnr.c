@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.22 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.22.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.22 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.22.6.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -144,7 +144,7 @@ altq_cdnr_input(struct mbuf *m, int af)
 		/* traffic conditioner is not enabled on this interface */
 		return (1);
 
-	top = ifp->if_snd.altq_cdnr;
+	top = ifp->if_snd.ifq_altq->altq_cdnr;
 
 	ip = mtod(m, struct ip *);
 #ifdef INET6
@@ -841,10 +841,10 @@ cdnrcmd_if_attach(char *ifname)
 	if ((ifp = ifunit(ifname)) == NULL)
 		return (EBADF);
 
-	if (ifp->if_snd.altq_cdnr != NULL)
+	if (ifp->if_snd.ifq_altq->altq_cdnr != NULL)
 		return (EBUSY);
 
-	if ((top = top_create(&ifp->if_snd)) == NULL)
+	if ((top = top_create(ifp->if_snd.ifq_altq)) == NULL)
 		return (ENOMEM);
 	return (0);
 }

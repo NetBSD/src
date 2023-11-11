@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.189 2022/07/29 07:58:18 skrll Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.189.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.189 2022/07/29 07:58:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.189.6.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1497,7 +1497,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	 */
 	if (ALTQ_IS_ENABLED(&dst_ifp->if_snd)) {
 		/* XXX IFT_ETHER */
-		altq_etherclassify(&dst_ifp->if_snd, m);
+		altq_etherclassify(dst_ifp->if_snd.ifq_altq, m);
 	}
 	KERNEL_UNLOCK_ONE(NULL);
 #endif /* ALTQ */

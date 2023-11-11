@@ -1,3 +1,0 @@
-host-darwin.o : $(srcdir)/config/host-darwin.cc
-	$(COMPILE) $<
-	$(POSTCOMPILE)

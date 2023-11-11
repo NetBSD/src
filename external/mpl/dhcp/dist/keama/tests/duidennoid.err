@@ -1,5 +1,0 @@
-# bad (no identifier) EN server duid config
-
-# EN server duid declaration
-server-duid en 2495;
-

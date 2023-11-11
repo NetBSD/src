@@ -1,4 +1,0 @@
-#	$NetBSD: NetBSD.dist.dtb,v 1.1 2020/05/18 21:19:34 jmcneill Exp $
-
-./boot
-./boot/dtb

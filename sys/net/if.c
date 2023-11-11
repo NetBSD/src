@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.529 2023/02/24 11:02:45 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.529.2.1 2023/11/11 13:16:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529 2023/02/24 11:02:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -220,7 +220,7 @@ static kauth_listener_t if_listener;
 
 static int doifioctl(struct socket *, u_long, void *, struct lwp *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
-    struct ifaltq *);
+    struct ifqueue *);
 static void if_slowtimo_intr(void *);
 static void if_slowtimo_work(struct work *, void *);
 static int sysctl_if_watchdog(SYSCTLFN_PROTO);
@@ -742,11 +742,7 @@ if_initialize(ifnet_t *ifp)
 	ifp->if_csum_flags_rx = 0;
 
 #ifdef ALTQ
-	ifp->if_snd.altq_type = 0;
-	ifp->if_snd.altq_disc = NULL;
-	ifp->if_snd.altq_flags &= ALTQF_CANTCHANGE;
-	ifp->if_snd.altq_tbr  = NULL;
-	ifp->if_snd.altq_ifp  = ifp;
+	altq_alloc(&ifp->if_snd, ifp);
 #endif
 
 	IFQ_LOCK_INIT(&ifp->if_snd);
@@ -1389,9 +1385,10 @@ if_detach(struct ifnet *ifp)
 
 #ifdef ALTQ
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
-		altq_disable(&ifp->if_snd);
+		altq_disable(ifp->if_snd.ifq_altq);
 	if (ALTQ_IS_ATTACHED(&ifp->if_snd))
-		altq_detach(&ifp->if_snd);
+		altq_detach(ifp->if_snd.ifq_altq);
+	altq_free(&ifp->if_snd);
 #endif
 
 #if NCARP > 0
@@ -3991,7 +3988,7 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 
 static void
 sysctl_sndq_setup(struct sysctllog **clog, const char *ifname,
-    struct ifaltq *ifq)
+    struct ifqueue *ifq)
 {
 	const struct sysctlnode *cnode, *rnode;
 

@@ -1,8 +1,0 @@
-{
-  # DHCPv4 use ISC DHCP default lifetimes but not when configured.
-  "Dhcp6": {
-    "min-valid-lifetime": 3600,
-    "valid-lifetime": 7200,
-    "max-valid-lifetime": 14400
-  }
-}

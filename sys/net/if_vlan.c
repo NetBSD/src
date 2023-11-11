@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.171 2023/11/02 09:48:29 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.171.2.1 2023/11/11 13:16:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.171 2023/11/02 09:48:29 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.171.2.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1289,7 +1289,7 @@ vlan_start(struct ifnet *ifp)
 			KASSERT(
 			    p->if_type == IFT_ETHER ||
 			    p->if_type == IFT_L2TP);
-			altq_etherclassify(&p->if_snd, m);
+			altq_etherclassify(p->if_snd.ifq_altq, m);
 		}
 		KERNEL_UNLOCK_ONE(NULL);
 #endif /* ALTQ */

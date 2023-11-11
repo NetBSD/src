@@ -1,3 +1,0 @@
-driver-native.o : $(srcdir)/config/s390/driver-native.cc \
-  $(CONFIG_H) $(SYSTEM_H)
-	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<

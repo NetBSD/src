@@ -1,4 +1,0 @@
-# $NetBSD: md.mac68k,v 1.47 2022/09/08 05:16:45 rillig Exp $
-./usr/lkm/iwmfd.o				base-obsolete	obsolete
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share

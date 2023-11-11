@@ -1,9 +1,0 @@
-kargs="example.com"
-kmatch=""
-kret=0
-cargs="-d 1w -m 2w example.com"
-cmatch=""
-cret=0
-warn=0
-error=0
-ok=4

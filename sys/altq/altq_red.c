@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.35 2021/12/05 04:43:57 msaitoh Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.35.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.35 2021/12/05 04:43:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.35.6.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -823,7 +823,7 @@ redioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 			break;
 		}
 
-		rqp->rq_ifq = &ifp->if_snd;
+		rqp->rq_ifq = ifp->if_snd.ifq_altq;
 		qtail(rqp->rq_q) = NULL;
 		qlen(rqp->rq_q) = 0;
 		qlimit(rqp->rq_q) = RED_LIMIT;
@@ -1017,7 +1017,7 @@ red_enqueue(struct ifaltq *ifq, struct mbuf *m)
 
 	if (red_addq(rqp->rq_red, rqp->rq_q, m, &pktattr) < 0)
 		return ENOBUFS;
-	ifq->ifq_len++;
+	ALTQ_INC_LEN(ifq);
 	return 0;
 }
 
@@ -1041,7 +1041,7 @@ red_dequeue(struct ifaltq *ifq, int op)
 	/* op == ALTDQ_REMOVE */
 	m =  red_getq(rqp->rq_red, rqp->rq_q);
 	if (m != NULL)
-		ifq->ifq_len--;
+		ALTQ_DEC_LEN(ifq);
 	return (m);
 }
 
@@ -1063,7 +1063,7 @@ red_purgeq(red_queue_t *rqp)
 {
 	_flushq(rqp->rq_q);
 	if (ALTQ_IS_ENABLED(rqp->rq_ifq))
-		rqp->rq_ifq->ifq_len = 0;
+		ALTQ_SET_LEN(rqp->rq_ifq, 0);
 }
 
 #ifdef ALTQ_FLOWVALVE

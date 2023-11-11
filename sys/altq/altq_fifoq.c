@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.18 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.18.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.12 2003/07/10 12:07:48 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.18 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.18.6.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -173,7 +173,7 @@ fifoqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 			break;
 		}
 
-		q->q_ifq = &ifp->if_snd;
+		q->q_ifq = ifp->if_snd.ifq_altq;
 		q->q_head = q->q_tail = NULL;
 		q->q_len = 0;
 		q->q_limit = FIFOQ_LIMIT;
@@ -281,7 +281,7 @@ fifoq_enqueue(struct ifaltq *ifq, struct mbuf *m)
 		q->q_tail->m_nextpkt = m;
 	q->q_tail = m;
 	q->q_len++;
-	ifq->ifq_len++;
+	ALTQ_INC_LEN(ifq);
 	return 0;
 }
 
@@ -316,7 +316,7 @@ fifoq_dequeue(struct ifaltq *ifq, int op)
 		q->q_tail = NULL;
 	m->m_nextpkt = NULL;
 	q->q_len--;
-	ifq->ifq_len--;
+	ALTQ_DEC_LEN(ifq);
 #ifdef FIFOQ_STATS
 	PKTCNTR_ADD(&q->q_stats.xmit_cnt, m_pktlen(m));
 	if (q->q_len == 0)
@@ -385,7 +385,7 @@ fifoq_purge(fifoq_state_t *q)
 	q->q_tail = NULL;
 	q->q_len = 0;
 	if (ALTQ_IS_ENABLED(q->q_ifq))
-		q->q_ifq->ifq_len = 0;
+		ALTQ_SET_LEN(q->q_ifq, 0);
 }
 
 #ifdef KLD_MODULE

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.28 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.28.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.28 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.28.6.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -277,7 +277,7 @@ priq_purge(struct priq_if *pif)
 			priq_purgeq(cl);
 	}
 	if (ALTQ_IS_ENABLED(pif->pif_ifq))
-		pif->pif_ifq->ifq_len = 0;
+		ALTQ_SET_LEN(pif->pif_ifq, 0);
 }
 
 static struct priq_class *
@@ -471,7 +471,7 @@ priq_enqueue(struct ifaltq *ifq, struct mbuf *m)
 		PKTCNTR_ADD(&cl->cl_dropcnt, len);
 		return (ENOBUFS);
 	}
-	IFQ_INC_LEN(ifq);
+	ALTQ_INC_LEN(ifq);
 
 	/* successfully queued. */
 	return (0);
@@ -494,7 +494,7 @@ priq_dequeue(struct ifaltq *ifq, int op)
 	struct mbuf *m;
 	int pri;
 
-	if (IFQ_IS_EMPTY(ifq))
+	if (ALTQ_IS_EMPTY(ifq))
 		/* no packet in the queue */
 		return (NULL);
 
@@ -506,7 +506,7 @@ priq_dequeue(struct ifaltq *ifq, int op)
 
 			m = priq_getq(cl);
 			if (m != NULL) {
-				IFQ_DEC_LEN(ifq);
+				ALTQ_DEC_LEN(ifq);
 				if (qempty(cl->cl_q))
 					cl->cl_period++;
 				PKTCNTR_ADD(&cl->cl_xmitcnt, m_pktlen(m));
@@ -801,13 +801,13 @@ priqcmd_if_attach(struct priq_interface *ap)
 	if ((ifp = ifunit(ap->ifname)) == NULL)
 		return (ENXIO);
 
-	if ((pif = priq_attach(&ifp->if_snd, ap->arg)) == NULL)
+	if ((pif = priq_attach(ifp->if_snd.ifq_altq, ap->arg)) == NULL)
 		return (ENOMEM);
 
 	/*
 	 * set PRIQ to this ifnet structure.
 	 */
-	if ((error = altq_attach(&ifp->if_snd, ALTQT_PRIQ, pif,
+	if ((error = altq_attach(ifp->if_snd.ifq_altq, ALTQT_PRIQ, pif,
 				 priq_enqueue, priq_dequeue, priq_request,
 				 &pif->pif_classifier, acc_classify)) != 0)
 		priq_detach(pif);

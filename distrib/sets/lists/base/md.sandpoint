@@ -1,9 +1,0 @@
-# $NetBSD: md.sandpoint,v 1.12 2022/09/08 05:16:45 rillig Exp $
-./dev/pms0					base-obsolete		obsolete
-./usr/mdec/altboot				base-sysutil-bin
-./usr/mdec/altboot.bin				base-sysutil-bin
-./usr/mdec/altboot.img				base-sysutil-bin
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share

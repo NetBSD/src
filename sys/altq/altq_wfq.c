@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.23 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.23.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.14 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.23 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.23.6.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -142,7 +142,7 @@ wfq_ifattach(struct wfq_interface *ifacep)
 	}
 
 	/* keep the ifq */
-	new_wfqp->ifq = &ifp->if_snd;
+	new_wfqp->ifq = ifp->if_snd.ifq_altq;
 	new_wfqp->nums = DEFAULT_QSIZE;
 	new_wfqp->hwm = HWM;
 	new_wfqp->bytes = 0;
@@ -161,7 +161,7 @@ wfq_ifattach(struct wfq_interface *ifacep)
 	/*
 	 * set WFQ to this ifnet structure.
 	 */
-	if ((error = altq_attach(&ifp->if_snd, ALTQT_WFQ, new_wfqp,
+	if ((error = altq_attach(ifp->if_snd.ifq_altq, ALTQT_WFQ, new_wfqp,
 				 wfq_ifenqueue, wfq_ifdequeue, wfq_request,
 				 new_wfqp, wfq_classify)) != 0) {
 		free(queue, M_DEVBUF);
@@ -233,7 +233,7 @@ wfq_flush(struct ifaltq *ifq)
 	while ((mp = wfq_ifdequeue(ifq, ALTDQ_REMOVE)) != NULL)
 		m_freem(mp);
 	if (ALTQ_IS_ENABLED(ifq))
-		ifq->ifq_len = 0;
+		ALTQ_SET_LEN(ifq, 0);
 	return 0;
 }
 
@@ -269,7 +269,7 @@ wfq_ifenqueue(struct ifaltq *ifq, struct mbuf *mp)
 	byte = mp->m_pkthdr.len;
 	queue->bytes += byte;
 	wfqp->bytes += byte;
-	ifq->ifq_len++;
+	ALTQ_INC_LEN(ifq);
 
 	if (queue->next == NULL) {
 		/* this queue gets active. add the queue to the active list */
@@ -303,7 +303,7 @@ wfq_ifenqueue(struct ifaltq *ifq, struct mbuf *mp)
 		PKTCNTR_ADD(&drop_queue->drop_cnt, byte);
 		wfqp->bytes -= byte;
 		m_freem(mp);
-		ifq->ifq_len--;
+		ALTQ_DEC_LEN(ifq);
 		if(drop_queue == queue)
 			/* the queue for this flow is selected to drop */
 			error = ENOBUFS;
@@ -482,7 +482,7 @@ wfq_ifdequeue(struct ifaltq *ifq, int op)
 				PKTCNTR_ADD(&queue->xmit_cnt, byte);
 				wfqp->bytes -= byte;
 				if (ALTQ_IS_ENABLED(ifq))
-					ifq->ifq_len--;
+					ALTQ_DEC_LEN(ifq);
 			}
 			return mp;
 

@@ -1,3 +1,0 @@
-# $NetBSD: spec.armimage,v 1.2 2021/07/24 14:00:08 jmcneill Exp $
-./etc/rc.d/ec2_init			type=file mode=0555 uname=root gname=wheel
-./etc/rc.d/resize_gpt			type=file mode=0555 uname=root gname=wheel

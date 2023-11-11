@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.26 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.26.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: altq_blue.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.26 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.26.6.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -221,7 +221,7 @@ blueioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 			break;
 		}
 
-		rqp->rq_ifq = &ifp->if_snd;
+		rqp->rq_ifq = ifp->if_snd.ifq_altq;
 		qtail(rqp->rq_q) = NULL;
 		qlen(rqp->rq_q) = 0;
 		qlimit(rqp->rq_q) = BLUE_LIMIT;
@@ -397,7 +397,7 @@ blue_enqueue(struct ifaltq *ifq, struct mbuf *m)
 	pktattr.pattr_hdr = m->m_pkthdr.pattr_hdr;
 
 	if (blue_addq(rqp->rq_blue, rqp->rq_q, m, &pktattr) == 0)
-		ifq->ifq_len++;
+		ALTQ_INC_LEN(ifq);
 	else
 		error = ENOBUFS;
 	return error;
@@ -618,7 +618,7 @@ blue_dequeue(struct ifaltq * ifq, int op)
 
 	m = blue_getq(rqp->rq_blue, rqp->rq_q);
 	if (m != NULL)
-		ifq->ifq_len--;
+		ALTQ_DEC_LEN(ifq);
 	return m;
 }
 
@@ -652,7 +652,7 @@ blue_request(struct ifaltq *ifq, int req, void *arg)
 	case ALTRQ_PURGE:
 		_flushq(rqp->rq_q);
 		if (ALTQ_IS_ENABLED(ifq))
-			ifq->ifq_len = 0;
+			ALTQ_SET_LEN(ifq, 0);
 		break;
 	}
 	return (0);

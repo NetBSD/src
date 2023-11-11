@@ -1,4 +1,0 @@
-include start
-call OK addnstr "abcdefg" 5
-call OK refresh
-compare addnstr.chk

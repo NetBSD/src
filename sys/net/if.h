@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.305 2023/10/09 11:55:34 riastradh Exp $	*/
+/*	$NetBSD: if.h,v 1.305.2.1 2023/11/11 13:16:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -237,12 +237,13 @@ struct if_status_description {
  * Structure defining a queue for a network interface.
  */
 struct ifqueue {
-	struct		mbuf *ifq_head;
-	struct		mbuf *ifq_tail;
+	kmutex_t	*ifq_lock;
+	struct mbuf	*ifq_head;
+	struct mbuf	*ifq_tail;
+	struct ifaltq	*ifq_altq;
 	int		ifq_len;
 	int		ifq_maxlen;
 	uint64_t	ifq_drops;
-	kmutex_t	*ifq_lock;
 };
 
 #ifdef _KERNEL
@@ -274,7 +275,7 @@ typedef unsigned short if_index_t;
  * Interface.  Field markings and the corresponding locks:
  *
  * i:	IFNET_LOCK (a.k.a., if_ioctl_lock)
- * q:	ifq_lock (struct ifaltq)
+ * q:	ifq_lock (struct ifqueue)
  * a:	if_afdata_lock
  * 6:	in6_multilock (global lock)
  * ::	unlocked, stable
@@ -342,7 +343,7 @@ typedef struct ifnet {
 			    (struct ifnet *);
 	void		(*if_bpf_mtap)	/* :: bpf routine */
 			    (struct bpf_if *, struct mbuf *, u_int);
-	struct ifaltq	if_snd;		/* q: output queue (includes altq) */
+	struct ifqueue	if_snd;		/* q: output queue */
 	struct ifaddr	*if_dl;		/* i: identity of this interface. */
 	const struct sockaddr_dl
 			*if_sadl;	/* i: pointer to sockaddr_dl of if_dl */
@@ -1001,7 +1002,7 @@ do {									\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
 	if (TBR_IS_ENABLED(ifq))					\
-		(m) = tbr_dequeue((ifq), ALTDQ_REMOVE);			\
+		(m) = tbr_dequeue((ifq)->ifq_altq, ALTDQ_REMOVE);	\
 	else if (ALTQ_IS_ENABLED(ifq))					\
 		ALTQ_DEQUEUE((ifq), (m));				\
 	else								\
@@ -1013,7 +1014,7 @@ do {									\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
 	if (TBR_IS_ENABLED(ifq))					\
-		(m) = tbr_dequeue((ifq), ALTDQ_POLL);			\
+		(m) = tbr_dequeue((ifq)->ifq_altq, ALTDQ_POLL);		\
 	else if (ALTQ_IS_ENABLED(ifq))					\
 		ALTQ_POLL((ifq), (m));					\
 	else								\
@@ -1031,10 +1032,7 @@ do {									\
 	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
-#define	IFQ_SET_READY(ifq)						\
-do {									\
-	(ifq)->altq_flags |= ALTQF_READY;				\
-} while (/*CONSTCOND*/ 0)
+#define	IFQ_SET_READY(ifq)	altq_set_ready(ifq)
 
 #define	IFQ_CLASSIFY(ifq, m, af)					\
 do {									\
@@ -1042,8 +1040,9 @@ do {									\
 	mutex_enter((ifq)->ifq_lock);					\
 	if (ALTQ_IS_ENABLED(ifq)) {					\
 		if (ALTQ_NEEDS_CLASSIFY(ifq))				\
-			(m)->m_pkthdr.pattr_class = (*(ifq)->altq_classify) \
-				((ifq)->altq_clfier, (m), (af));	\
+			(m)->m_pkthdr.pattr_class =			\
+			    (*(ifq)->ifq_altq->altq_classify)		\
+			    ((ifq)->ifq_altq->altq_clfier, (m), (af));	\
 		(m)->m_pkthdr.pattr_af = (af);				\
 		(m)->m_pkthdr.pattr_hdr = mtod((m), void *);		\
 	}								\

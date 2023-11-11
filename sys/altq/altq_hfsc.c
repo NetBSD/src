@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.30 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.30.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.26 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.30 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.30.6.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -377,7 +377,7 @@ hfsc_purge(struct hfsc_if *hif)
 		if (!qempty(cl->cl_q))
 			hfsc_purgeq(cl);
 	if (ALTQ_IS_ENABLED(hif->hif_ifq))
-		hif->hif_ifq->ifq_len = 0;
+		ALTQ_SET_LEN(hif->hif_ifq, 0);
 }
 
 struct hfsc_class *
@@ -712,7 +712,7 @@ hfsc_enqueue(struct ifaltq *ifq, struct mbuf *m)
 		PKTCNTR_ADD(&cl->cl_stats.drop_cnt, len);
 		return (ENOBUFS);
 	}
-	IFQ_INC_LEN(ifq);
+	ALTQ_INC_LEN(ifq);
 	cl->cl_hif->hif_packets++;
 
 	/* successfully queued. */
@@ -806,7 +806,7 @@ hfsc_dequeue(struct ifaltq *ifq, int op)
 		panic("hfsc_dequeue:");
 	len = m_pktlen(m);
 	cl->cl_hif->hif_packets--;
-	IFQ_DEC_LEN(ifq);
+	ALTQ_DEC_LEN(ifq);
 	PKTCNTR_ADD(&cl->cl_stats.xmit_cnt, len);
 
 	update_vf(cl, len, cur_time);
@@ -889,7 +889,7 @@ hfsc_purgeq(struct hfsc_class *cl)
 		PKTCNTR_ADD(&cl->cl_stats.drop_cnt, m_pktlen(m));
 		m_freem(m);
 		cl->cl_hif->hif_packets--;
-		IFQ_DEC_LEN(cl->cl_hif->hif_ifq);
+		ALTQ_DEC_LEN(cl->cl_hif->hif_ifq);
 	}
 	ASSERT(qlen(cl->cl_q) == 0);
 
@@ -2007,13 +2007,13 @@ hfsccmd_if_attach(struct hfsc_attach *ap)
 	if ((ifp = ifunit(ap->iface.hfsc_ifname)) == NULL)
 		return (ENXIO);
 
-	if ((hif = hfsc_attach(&ifp->if_snd, ap->bandwidth)) == NULL)
+	if ((hif = hfsc_attach(ifp->if_snd.ifq_altq, ap->bandwidth)) == NULL)
 		return (ENOMEM);
 
 	/*
 	 * set HFSC to this ifnet structure.
 	 */
-	if ((error = altq_attach(&ifp->if_snd, ALTQT_HFSC, hif,
+	if ((error = altq_attach(ifp->if_snd.ifq_altq, ALTQT_HFSC, hif,
 				 hfsc_enqueue, hfsc_dequeue, hfsc_request,
 				 &hif->hif_classifier, acc_classify)) != 0)
 		hfsc_detach(hif);

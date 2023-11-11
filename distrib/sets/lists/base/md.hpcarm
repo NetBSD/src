@@ -1,9 +1,0 @@
-# $NetBSD: md.hpcarm,v 1.13 2022/01/12 15:35:51 martin Exp $
-./dev/beep					base-obsolete		obsolete
-./dev/mouse-qms0				base-obsolete		obsolete
-./dev/pms0					base-obsolete		obsolete
-./dev/qms0					base-obsolete		obsolete
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share

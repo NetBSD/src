@@ -1,9 +1,0 @@
-# ddns-domainname (aka qualifying-suffix)
-
-ddns-domainname ".biz";
-ddns-updates true;
-
-# embedded
-class "foo" {
-    ddns-domainname ".bar";
-}

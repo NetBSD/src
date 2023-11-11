@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.22 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.22.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: altq_conf.c,v 1.24 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.22 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.22.6.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -237,18 +237,18 @@ altqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag, struct lwp *l)
 			typereq = (struct altqreq *)addr;
 			if ((ifp = ifunit(typereq->ifname)) == NULL)
 				return (EINVAL);
-			typereq->arg = (u_long)ifp->if_snd.altq_type;
+			typereq->arg = (u_long)ifp->if_snd.ifq_altq->altq_type;
 			return (0);
 		case ALTQTBRSET:
 			tbrreq = (struct tbrreq *)addr;
 			if ((ifp = ifunit(tbrreq->ifname)) == NULL)
 				return (EINVAL);
-			return tbr_set(&ifp->if_snd, &tbrreq->tb_prof);
+			return tbr_set(ifp->if_snd.ifq_altq, &tbrreq->tb_prof);
 		case ALTQTBRGET:
 			tbrreq = (struct tbrreq *)addr;
 			if ((ifp = ifunit(tbrreq->ifname)) == NULL)
 				return (EINVAL);
-			return tbr_get(&ifp->if_snd, &tbrreq->tb_prof);
+			return tbr_get(ifp->if_snd.ifq_altq, &tbrreq->tb_prof);
 		default:
 			return (EINVAL);
 		}

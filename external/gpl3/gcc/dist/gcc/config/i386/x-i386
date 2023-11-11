@@ -1,3 +1,0 @@
-driver-i386.o : $(srcdir)/config/i386/driver-i386.cc
-	$(COMPILE) $<
-	$(POSTCOMPILE)

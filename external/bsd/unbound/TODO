@@ -1,8 +1,0 @@
-- convert man pages to mdoc
-- make optional features:
-	- without crypto
-	- non-pthreads
-	- without ipv6
-- consider adding:
-	- generating keys by default
-	- enabling control by default

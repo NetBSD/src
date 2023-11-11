@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.39 2021/12/31 20:22:48 andvar Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.39.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.39 2021/12/31 20:22:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.39.6.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -542,7 +542,7 @@ cbq_enqueue(struct ifaltq *ifq, struct mbuf *m)
 
 	/* successfully queued. */
 	++cbqp->cbq_qlen;
-	IFQ_INC_LEN(ifq);
+	ALTQ_INC_LEN(ifq);
 	return (0);
 }
 
@@ -556,7 +556,7 @@ cbq_dequeue(struct ifaltq *ifq, int op)
 
 	if (m && op == ALTDQ_REMOVE) {
 		--cbqp->cbq_qlen;  /* decrement # of packets in cbq */
-		IFQ_DEC_LEN(ifq);
+		ALTQ_DEC_LEN(ifq);
 
 		/* Update the class. */
 		rmc_update_class_util(&cbqp->ifnp);
@@ -602,7 +602,7 @@ cbq_purge(cbq_state_t *cbqp)
 		if ((cl = cbqp->cbq_class_tbl[i]) != NULL)
 			rmc_dropall(cl);
 	if (ALTQ_IS_ENABLED(cbqp->ifnp.ifq_))
-		cbqp->ifnp.ifq_->ifq_len = 0;
+		ALTQ_SET_LEN(cbqp->ifnp.ifq_, 0);
 }
 #ifdef ALTQ3_COMPAT
 
@@ -909,12 +909,12 @@ cbq_ifattach(struct cbq_interface *ifacep)
  	CALLOUT_INIT(&new_cbqp->cbq_callout);
 
 	new_cbqp->cbq_qlen = 0;
-	new_cbqp->ifnp.ifq_ = &ifp->if_snd;	    /* keep the ifq */
+	new_cbqp->ifnp.ifq_ = ifp->if_snd.ifq_altq;    /* keep the ifq */
 
 	/*
 	 * set CBQ to this ifnet structure.
 	 */
-	error = altq_attach(&ifp->if_snd, ALTQT_CBQ, new_cbqp,
+	error = altq_attach(ifp->if_snd.ifq_altq, ALTQT_CBQ, new_cbqp,
 			    cbq_enqueue, cbq_dequeue, cbq_request,
 			    &new_cbqp->cbq_classifier, acc_classify);
 	if (error) {
