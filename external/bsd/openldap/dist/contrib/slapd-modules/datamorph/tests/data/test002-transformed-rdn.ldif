@@ -1,5 +1,0 @@
-dn: ou=New Unit,dc=www+number=1,dc=example,dc=com
-changetype: add
-objectClass: organizationalUnit
-ou: New Unit
-

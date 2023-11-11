@@ -1,6 +1,0 @@
-# Testing searches against attribute supertypes...
-dn: ou=Groups,dc=example,dc=com
-objectClass: organizationalUnit
-ou: Groups
-st: Alumni Association
-

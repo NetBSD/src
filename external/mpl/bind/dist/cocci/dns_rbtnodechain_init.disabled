@@ -1,7 +1,0 @@
-@@
-expression C;
-expression M;
-@@
-
-- dns_rbtnodechain_init(C, M);
-+ dns_rbtnodechain_init(C);

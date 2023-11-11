@@ -1,3 +1,0 @@
-driver-arm.o: $(srcdir)/config/arm/driver-arm.cc \
-  $(CONFIG_H) $(SYSTEM_H)
-	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<

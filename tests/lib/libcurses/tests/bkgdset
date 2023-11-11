@@ -1,9 +1,0 @@
-include start
-# background attributes set to underline and A for space
-call OK bkgdset `\002A`
-call OK erase
-call OK refresh
-compare background1.chk
-call OK addstr "this is a test"
-call OK refresh
-compare bkgdset1.chk

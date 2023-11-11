@@ -1,7 +1,0 @@
-# $NetBSD: md.alpha,v 1.6 2020/02/11 11:36:53 uki Exp $
-./@MODULEDIR@/cac_eisa				base-obsolete		obsolete
-./@MODULEDIR@/cac_eisa/cac_eisa.kmod		base-obsolete		obsolete
-./@MODULEDIR@/exec_elf64			modules-base-kernel	kmod
-./@MODULEDIR@/exec_elf64/exec_elf64.kmod	modules-base-kernel	kmod
-./@MODULEDIR@/mlx_eisa				base-obsolete		obsolete
-./@MODULEDIR@/mlx_eisa/mlx_eisa.kmod		base-obsolete		obsolete

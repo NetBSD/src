@@ -1,8 +1,0 @@
-include start
-call3 OK 0 0 attr_get
-call OK attr_set ($REVERSE | $BOLD) 2
-call3 OK ($ACS_IS_WACS | $REVERSE | $BOLD) 2 attr_get 
-call 1 standout
-call3 OK ($ACS_IS_WACS | $REVERSE | $BOLD | $STANDOUT) 2 attr_get
-call 1 standend
-call3 OK $NORMAL 0 attr_get

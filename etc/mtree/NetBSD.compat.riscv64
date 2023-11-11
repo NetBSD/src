@@ -1,4 +1,0 @@
-# $NetBSD: NetBSD.compat.riscv64,v 1.3 2023/05/16 13:21:59 christos Exp $
-
-./usr/include/g++/bits/riscv32
-./usr/include/g++/bits/riscv64

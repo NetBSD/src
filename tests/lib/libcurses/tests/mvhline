@@ -1,5 +1,0 @@
-include start
-call OK mvhline 5 10 `\000A` 15
-call OK mvhline 7 10 `\004B` 15
-call OK refresh
-compare hline.chk

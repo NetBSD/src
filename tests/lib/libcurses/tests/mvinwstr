@@ -1,5 +1,0 @@
-include start
-wchar WSTR ["A"*3, 0x3401, "A"*2]
-call OK mvaddwstr 0 73 $WSTR
-call OK refresh
-call2 OK $WSTR mvinwstr 0 73

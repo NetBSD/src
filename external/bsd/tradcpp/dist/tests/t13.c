@@ -1,4 +1,0 @@
-/*
-#define FOO BAR
-*/
-FOO

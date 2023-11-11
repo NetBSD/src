@@ -1,5 +1,0 @@
-# $NetBSD: md.playstation2,v 1.6 2022/01/15 16:05:19 martin Exp $
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share

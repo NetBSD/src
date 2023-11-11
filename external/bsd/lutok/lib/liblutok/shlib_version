@@ -1,4 +1,0 @@
-# $NetBSD: shlib_version,v 1.4 2023/09/06 12:48:15 riastradh Exp $
-#
-major=3
-minor=0

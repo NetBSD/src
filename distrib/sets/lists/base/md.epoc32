@@ -1,5 +1,0 @@
-# $NetBSD: md.epoc32,v 1.1 2022/01/12 15:35:51 martin Exp $
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share

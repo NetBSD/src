@@ -1,3 +1,0 @@
-host-i386-darwin.o : $(srcdir)/config/i386/host-i386-darwin.cc
-	$(COMPILE) $<
-	$(POSTCOMPILE)

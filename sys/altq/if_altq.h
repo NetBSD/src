@@ -1,4 +1,4 @@
-/*	$NetBSD: if_altq.h,v 1.16 2022/10/24 08:11:24 msaitoh Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.16.4.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: if_altq.h,v 1.12 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -36,18 +36,11 @@
 struct altq_pktattr; struct tb_regulator; struct top_cdnr;
 
 /*
- * Structure defining a queue for a network interface.
+ * Structure defining a complex queue for a network interface.
  */
-struct	ifaltq {
-	/* fields compatible with struct ifqueue */
-	struct	mbuf *ifq_head;
-	struct	mbuf *ifq_tail;
-	int	ifq_len;
-	int	ifq_maxlen;
-	uint64_t ifq_drops;
-	kmutex_t *ifq_lock;
-
-	/* alternate queueing related fields */
+struct ifaltq {
+	struct ifaltq *ifq_altq;	/* pointer back to self */
+	struct ifqueue *altq_ifq;	/* pointer back to base queue */
 	int	altq_type;		/* discipline type */
 	int	altq_flags;		/* flags (e.g. ready, in-use) */
 	void	*altq_disc;		/* for discipline-specific use */
@@ -136,25 +129,52 @@ struct tb_regulator {
 /* altq request types (currently only purge is defined) */
 #define	ALTRQ_PURGE		1	/* purge all packets */
 
-#define	ALTQ_IS_READY(ifq)		((ifq)->altq_flags & ALTQF_READY)
-#define	ALTQ_IS_ENABLED(ifq)		((ifq)->altq_flags & ALTQF_ENABLED)
-#define	ALTQ_NEEDS_CLASSIFY(ifq)	((ifq)->altq_flags & ALTQF_CLASSIFY)
-#define	ALTQ_IS_CNDTNING(ifq)		((ifq)->altq_flags & ALTQF_CNDTNING)
+#define	ALTQ_INC_LEN(altq)	(altq)->altq_ifq->ifq_len++
+#define	ALTQ_DEC_LEN(altq)	(altq)->altq_ifq->ifq_len--
+#define	ALTQ_GET_LEN(altq)	(altq)->altq_ifq->ifq_len
+#define	ALTQ_SET_LEN(altq, v)	(altq)->altq_ifq->ifq_len = (v)
+#define	ALTQ_IS_EMPTY(altq)	((altq)->altq_ifq->ifq_len == 0)
 
-#define	ALTQ_SET_CNDTNING(ifq)		((ifq)->altq_flags |= ALTQF_CNDTNING)
-#define	ALTQ_CLEAR_CNDTNING(ifq)	((ifq)->altq_flags &= ~ALTQF_CNDTNING)
-#define	ALTQ_IS_ATTACHED(ifq)		((ifq)->altq_disc != NULL)
+#define	_ALTQ_FLAGS(ifq)	((ifq)->ifq_altq != NULL ?		\
+				 (ifq)->ifq_altq->altq_flags : 0)
+
+#define	ALTQ_IS_READY(ifq)		(_ALTQ_FLAGS(ifq) & ALTQF_READY)
+#define	ALTQ_IS_ENABLED(ifq)		(_ALTQ_FLAGS(ifq) & ALTQF_ENABLED)
+#define	ALTQ_NEEDS_CLASSIFY(ifq)	(_ALTQ_FLAGS(ifq) & ALTQF_CLASSIFY)
+#define	ALTQ_IS_CNDTNING(ifq)		(_ALTQ_FLAGS(ifq) & ALTQF_CNDTNING)
+
+#define	ALTQ_SET_CNDTNING(ifq)						\
+do {									\
+	if ((ifq)->ifq_altq != NULL) {					\
+		(ifq)->ifq_altq->altq_flags |= ALTQF_CNDTNING;		\
+	}								\
+} while (/*CONSTCOND*/0)
+
+#define	ALTQ_CLEAR_CNDTNING(ifq)					\
+do {									\
+	if ((ifq)->ifq_altq != NULL) {					\
+		(ifq)->ifq_altq->altq_flags &= ~ALTQF_CNDTNING;		\
+	}								\
+} while (/*CONSTCOND*/0)
+
+#define	ALTQ_IS_ATTACHED(ifq)		((ifq)->ifq_altq != NULL &&	\
+					 (ifq)->ifq_altq->altq_disc != NULL)
 
 #define	ALTQ_ENQUEUE(ifq, m, err)					\
-	(err) = (*(ifq)->altq_enqueue)((ifq),(m))
+	(err) = (*(ifq)->ifq_altq->altq_enqueue)((ifq)->ifq_altq,(m))
 #define	ALTQ_DEQUEUE(ifq, m)						\
-	(m) = (*(ifq)->altq_dequeue)((ifq), ALTDQ_REMOVE)
+	(m) = (*(ifq)->ifq_altq->altq_dequeue)((ifq)->ifq_altq, ALTDQ_REMOVE)
 #define	ALTQ_POLL(ifq, m)						\
-	(m) = (*(ifq)->altq_dequeue)((ifq), ALTDQ_POLL)
+	(m) = (*(ifq)->ifq_altq->altq_dequeue)((ifq)->ifq_altq, ALTDQ_POLL)
 #define	ALTQ_PURGE(ifq)							\
-	(void)(*(ifq)->altq_request)((ifq), ALTRQ_PURGE, (void *)0)
-#define	ALTQ_IS_EMPTY(ifq)		((ifq)->ifq_len == 0)
-#define	TBR_IS_ENABLED(ifq)		((ifq)->altq_tbr != NULL)
+	(void)(*(ifq)->ifq_altq->altq_request)((ifq)->ifq_altq, ALTRQ_PURGE, (void *)0)
+
+#define	TBR_IS_ENABLED(ifq)		((ifq)->ifq_altq != NULL &&	\
+					 (ifq)->ifq_altq->altq_tbr != NULL)
+
+extern void altq_alloc(struct ifqueue *, struct ifnet *);
+extern void altq_free(struct ifqueue *);
+extern void altq_set_ready(struct ifqueue *);
 
 extern int altq_attach(struct ifaltq *, int, void *,
 		       int (*)(struct ifaltq *, struct mbuf *),

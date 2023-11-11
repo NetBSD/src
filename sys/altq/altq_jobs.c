@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.12 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.12.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.12 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.12.6.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -251,7 +251,7 @@ jobs_purge(struct jobs_if *jif)
 			jobs_purgeq(cl);
 	}
 	if (ALTQ_IS_ENABLED(jif->jif_ifq))
-		jif->jif_ifq->ifq_len = 0;
+		ALTQ_SET_LEN(jif->jif_ifq, 0);
 }
 
 static struct jobs_class *
@@ -510,7 +510,7 @@ jobs_enqueue(struct ifaltq *ifq, struct mbuf *m)
 
 	/* proceed with packet enqueuing */
 
-	if (IFQ_IS_EMPTY(ifq)) {
+	if (ALTQ_IS_EMPTY(ifq)) {
 		for (pri=0; pri <= jif->jif_maxpri; pri++) {
 			scan = jif->jif_classes[pri];
 			if (scan != NULL) {
@@ -601,7 +601,7 @@ jobs_enqueue(struct ifaltq *ifq, struct mbuf *m)
 	if (jobs_addq(cl, m, jif) != 0)
 		return_flag = ENOBUFS; /* signals there's a buffer overflow */
 	else
-		IFQ_INC_LEN(ifq);
+		ALTQ_INC_LEN(ifq);
 
 	/* successfully queued. */
 
@@ -669,7 +669,7 @@ jobs_dequeue(struct ifaltq *ifq, int op)
 	now = read_machclk();
 	tstamp1 = now;
 
-	if (IFQ_IS_EMPTY(ifq)) {
+	if (ALTQ_IS_EMPTY(ifq)) {
 		/* no packet in the queue */
 		for (pri=0; pri <= jif->jif_maxpri; pri++) {
 		  cl = jif->jif_classes[pri];
@@ -738,7 +738,7 @@ jobs_dequeue(struct ifaltq *ifq, int op)
 		m = NULL;
 
 	if (m != NULL) {
-		IFQ_DEC_LEN(ifq);
+		ALTQ_DEC_LEN(ifq);
 		if (qempty(cl->cl_q))
 			cl->cl_period++;
 
@@ -799,7 +799,7 @@ jobs_addq(struct jobs_class *cl, struct mbuf *m, struct jobs_if *jif)
 		return (-1);
 
 	} else if (!jif->jif_separate
-		   && jif->jif_ifq->ifq_len >= jif->jif_qlimit) {
+		   && ALTQ_GET_LEN(jif->jif_ifq) >= jif->jif_qlimit) {
 		/* shared buffer: supports guarantees on losses */
 		if (!cl->concerned_rlc) {
 			if (!cl->concerned_alc) {
@@ -1480,7 +1480,7 @@ assign_rate_drops_adc(struct jobs_if *jif)
 								cl->current_loss += (len << SCALE_LOSS)/cl->cl_arrival.bytes;
 								m_freem(pkt); /* the packet is trashed here */
 								tslist_drop(cl);
-								IFQ_DEC_LEN(cl->cl_jif->jif_ifq);
+								ALTQ_DEC_LEN(cl->cl_jif->jif_ifq);
 							}
 						} else
 							keep_going = 0; /* NOTREACHED */
@@ -2134,7 +2134,7 @@ get_class_stats(struct class_stats *sp, struct jobs_class *cl)
 	PKTCNTR_RESET(&cl->st_rin);
 	PKTCNTR_RESET(&cl->st_rout);
 
-	sp->totallength = cl->cl_jif->jif_ifq->ifq_len;
+	sp->totallength = ALTQ_GET_LEN(cl->cl_jif->jif_ifq);
 	sp->lastdel = ticks_to_secs(GRANULARITY*cl->cl_lastdel);
 	sp->avgdel = cl->cl_avgdel;
 

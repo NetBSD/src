@@ -1,5 +1,0 @@
-# DHCPv6 range declaration in root config
-
-# DHCPv6 range declaration must be in a subnet declaration
-range6 2001::/64;
-

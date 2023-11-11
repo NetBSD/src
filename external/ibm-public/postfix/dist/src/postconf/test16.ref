@@ -1,2 +1,0 @@
-./postconf: warning: open ./master.cf: No such file or directory
-config_directory = .

@@ -1,6 +1,0 @@
-include addchstr
-call OK move 0 2
-call2 OK `\004c\004d\004e\006f\006g` inchnstr 6
-call OK move 0 74
-call2 OK `\000 \000 \000 \000 \000 \000 ` inchnstr 10
-call2 OK `\000 \000 \000 \000 \000 \000 ` inchstr

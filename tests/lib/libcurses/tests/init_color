@@ -1,6 +1,0 @@
-include start
-call OK start_color
-# init_color is not implemented, it will return ERR
-call ERR init_color $COLOR_CYAN 1000 500 300
-# but we should be able to read back the settings
-call4 OK 1000 500 300 color_content $COLOR_CYAN

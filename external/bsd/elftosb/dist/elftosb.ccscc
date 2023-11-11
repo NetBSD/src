@@ -1,7 +1,0 @@
-..\elftosb\elftosb.vcproj
-..\unittests\unittests.vcproj
-..\generatekeys\generatekeys.vcproj
-..\decrypt\decrypt.vcproj
-..\elftosb2\elftosb2.vcproj
-..\sbtool\sbtool.vcproj
-..\keygen\keygen.vcproj

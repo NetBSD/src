@@ -1,2 +1,0 @@
-#define BOO BOO
-BOO

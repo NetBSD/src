@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.33 2017/03/14 09:03:08 ozaki-r Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.33.46.1 2023/11/11 13:16:30 thorpej Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.33 2017/03/14 09:03:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.33.46.1 2023/11/11 13:16:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.33 2017/03/14 09:03:08 ozaki-r Exp $
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
@@ -109,6 +110,53 @@ static void 	ip4f_free(struct ip4_frag *);
  * alternate queueing support routines
  */
 
+/*
+ * Allocate an ifaltq and associate it with the specified ifqueue and
+ * ifnet.
+ */
+void
+altq_alloc(struct ifqueue *ifq, struct ifnet *ifp)
+{
+	if (ifq->ifq_altq == NULL) {
+		ifq->ifq_altq = kmem_zalloc(sizeof(*ifq->ifq_altq), KM_SLEEP);
+		ifq->ifq_altq->altq_ifq = ifq;
+
+		/*
+		 * This allows the ALTQ_*() mcaros to work with either
+		 * an ifqueue or an ifaltq argument.  Yes, it's a hack,
+		 * but it results in less code churn.
+		 */
+		ifq->ifq_altq->ifq_altq = ifq->ifq_altq;
+	}
+	if (ifp != NULL) {
+		ifq->ifq_altq->altq_ifp = ifp;
+	}
+}
+
+/*
+ * Free the ifaltq structure associated with an ifqueue.
+ */
+void
+altq_free(struct ifqueue *ifq)
+{
+	if (ifq->ifq_altq != NULL) {
+		ifq->ifq_altq->altq_ifp = NULL;
+		kmem_free(ifq->ifq_altq, sizeof(*ifq->ifq_altq));
+		ifq->ifq_altq = NULL;
+	}
+}
+
+/*
+ * Mark's a device's send queue as being ready for (as in
+ * "knowledgeable about") ALTQ processing.
+ */
+void
+altq_set_ready(struct ifqueue *ifq)
+{
+	altq_alloc(ifq, NULL);
+	ifq->ifq_altq->altq_flags = ALTQF_READY;
+}
+
 /* look up the queue state by the interface name and the queueing type. */
 void *
 altq_lookup(char *name, int type)
@@ -116,8 +164,9 @@ altq_lookup(char *name, int type)
 	struct ifnet *ifp;
 
 	if ((ifp = ifunit(name)) != NULL) {
-		if (type != ALTQT_NONE && ifp->if_snd.altq_type == type)
-			return (ifp->if_snd.altq_disc);
+		struct ifaltq *altq = ifp->if_snd.ifq_altq;
+		if (type != ALTQT_NONE && altq->altq_type == type)
+			return (altq->altq_disc);
 	}
 
 	return NULL;
@@ -198,8 +247,8 @@ altq_enable(struct ifaltq *ifq)
 		return 0;
 
 	s = splnet();
-	IFQ_PURGE(ifq);
-	ASSERT(ifq->ifq_len == 0);
+	IFQ_PURGE(ifq->altq_ifq);
+	ASSERT(ALTQ_GET_LEN(ifq) == 0);
 	ifq->altq_flags |= ALTQF_ENABLED;
 	if (ifq->altq_clfier != NULL)
 		ifq->altq_flags |= ALTQF_CLASSIFY;
@@ -217,8 +266,8 @@ altq_disable(struct ifaltq *ifq)
 		return 0;
 
 	s = splnet();
-	IFQ_PURGE(ifq);
-	ASSERT(ifq->ifq_len == 0);
+	IFQ_PURGE(ifq->altq_ifq);
+	ASSERT(ALTQ_GET_LEN(ifq) == 0);
 	ifq->altq_flags &= ~(ALTQF_ENABLED|ALTQF_CLASSIFY);
 	splx(s);
 	return 0;
@@ -280,9 +329,9 @@ tbr_dequeue(struct ifaltq *ifq, int op)
 		m = (*ifq->altq_dequeue)(ifq, op);
 	else {
 		if (op == ALTDQ_POLL)
-			IF_POLL(ifq, m);
+			IF_POLL(ifq->altq_ifq, m);
 		else
-			IF_DEQUEUE(ifq, m);
+			IF_DEQUEUE(ifq->altq_ifq, m);
 	}
 
 	if (m != NULL && op == ALTDQ_REMOVE)

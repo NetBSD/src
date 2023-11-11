@@ -1,3 +1,0 @@
-setenv KEA4 /tmp/kea/src/bin/dhcp4/kea-dhcp4
-setenv KEA6 /tmp/kea/src/bin/dhcp6/kea-dhcp6
-setenv HOOK /tmp/kea/premium/src/hooks/dhcp/flex_id/.libs/

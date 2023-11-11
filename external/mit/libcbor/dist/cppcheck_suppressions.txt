@@ -1,4 +1,0 @@
-memleak:src/cbor/arrays.c:126
-mismatchSize:src/cbor/ints.c
-mismatchSize:src/cbor/floats_ctrls.c
-*:test/cmocka/*
