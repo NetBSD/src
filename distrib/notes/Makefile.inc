@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.57 2021/12/08 13:06:44 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.58 2023/11/13 21:01:51 christos Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -59,12 +59,12 @@ PRESET+=	-rnextminor=${nextmin}
 .endif
 .endif
 .if defined(BUILDID) && "${BUILDID:M20*Z}" != ""
-curdate!=	env LANG="C" date -d "${BUILDID:C/[0-9][0-9][0-9][0-9]Z$//}" "+%b %d, %Y"
+curdate!=	env LANG="C" ${TOOL_DATE} -d "${BUILDID:C/[0-9][0-9][0-9][0-9]Z$//}" "+%b %d, %Y"
 .else
 .if ${NETBSD_OFFICIAL_RELEASE:Uno} == "yes"
 .error "No release date could be derived from BUILDID"
 .else
-curdate!=	env LANG="C" date ${DATE_TIMESTAMP} "+%b %d, %Y"
+curdate!=	env LANG="C" ${TOOL_DATE} ${DATE_TIMESTAMP} "+%b %d, %Y"
 .endif
 .endif
 PRESET+=	-dcur_date="${curdate}"
