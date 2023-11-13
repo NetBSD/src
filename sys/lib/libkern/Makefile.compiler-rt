@@ -1,6 +1,6 @@
-# $NetBSD: Makefile.compiler-rt,v 1.13 2021/06/16 05:21:09 rin Exp $
+# $NetBSD: Makefile.compiler-rt,v 1.14 2023/11/13 19:07:00 mrg Exp $
 
-COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
+COMPILER_RT_DIR=	${.PARSEDIR}/../../external/bsd/compiler_rt
 COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
 
 .if ${MACHINE_ARCH} == "powerpc"
