@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.33 2023/11/02 13:50:14 riastradh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.34 2023/11/13 15:07:19 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.33 2023/11/02 13:50:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.34 2023/11/13 15:07:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -545,7 +545,7 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 
 	/* Write our unicast address */
 	eaddr = CLLADDR(ifp->if_sadl);
-	val = eaddr[4] | (eaddr[5] << 8);
+	val = eaddr[4] | (eaddr[5] << 8) | GMAC_MAC_ADDRESS0_HIGH_AE;
 	WR4(sc, GMAC_MAC_ADDRESS0_HIGH, val);
 	val = eaddr[0] | (eaddr[1] << 8) | (eaddr[2] << 16) |
 	    (eaddr[3] << 24);

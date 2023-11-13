@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_reg.h,v 1.8 2023/10/26 18:02:50 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos_reg.h,v 1.9 2023/11/13 15:07:19 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -120,6 +120,7 @@
 #define	GMAC_MAC_MDIO_DATA			0x0204
 #define	GMAC_MAC_CSR_SW_CTRL			0x0230
 #define	GMAC_MAC_ADDRESS0_HIGH			0x0300
+#define	 GMAC_MAC_ADDRESS0_HIGH_AE		(1U << 31)
 #define	GMAC_MAC_ADDRESS0_LOW			0x0304
 #define	GMAC_MMC_CONTROL			0x0700
 #define	 GMAC_MMC_CONTROL_UCDBC			(1U << 8)
