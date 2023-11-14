@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.106 2023/11/14 02:31:46 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.107 2023/11/14 03:03:18 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.106 2023/11/14 02:31:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.107 2023/11/14 03:03:18 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -487,8 +487,8 @@ retry:
 	}
 
 	/*
-	 * Set up the appropriate offload context
-	 * this will consume the first descriptor
+	 * Set up the appropriate offload context if requested,
+	 * this may consume one TX descriptor.
 	 */
 	error = ixgbe_tx_ctx_setup(txr, m_head, &cmd_type_len, &olinfo_status);
 	if (__predict_false(error)) {
