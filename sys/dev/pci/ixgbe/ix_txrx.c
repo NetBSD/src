@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.105 2023/11/02 05:07:57 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.106 2023/11/14 02:31:46 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.105 2023/11/02 05:07:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.106 2023/11/14 02:31:46 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -854,9 +854,6 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	/* Indicate the whole packet as payload when not doing TSO */
 	*olinfo_status |= mp->m_pkthdr.len << IXGBE_ADVTXD_PAYLEN_SHIFT;
 
-	/* Now ready a context descriptor */
-	TXD = (struct ixgbe_adv_tx_context_desc *)&txr->tx_base[ctxd];
-
 	/*
 	 * In advanced descriptors the vlan tag must
 	 * be placed into the context descriptor. Hence
@@ -958,6 +955,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 
 no_offloads:
 	type_tucmd_mlhl |= IXGBE_ADVTXD_DCMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
+
+	/* Now ready a context descriptor */
+	TXD = (struct ixgbe_adv_tx_context_desc *)&txr->tx_base[ctxd];
 
 	/* Now copy bits into descriptor */
 	TXD->vlan_macip_lens = htole32(vlan_macip_lens);
