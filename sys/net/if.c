@@ -1,7 +1,7 @@
-/*	$NetBSD: if.c,v 1.529.2.1 2023/11/11 13:16:30 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.529.2.1.2.1 2023/11/14 14:47:03 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2008, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1 2023/11/11 13:16:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1.2.1 2023/11/14 14:47:03 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1 2023/11/11 13:16:30 thorpej Exp $")
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/condvar.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -199,6 +200,7 @@ static struct workqueue		*ifnet_link_state_wq __read_mostly;
 static struct workqueue		*if_slowtimo_wq __read_mostly;
 
 static kmutex_t			if_clone_mtx;
+static kcondvar_t		ifq_stop_cond;
 
 struct ifnet *lo0ifp;
 int	ifqmaxlen = IFQ_MAXLEN;
@@ -330,6 +332,7 @@ ifinit1(void)
 #endif
 
 	mutex_init(&if_clone_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&ifq_stop_cond, "ifq_stop");
 
 	TAILQ_INIT(&ifnet_list);
 	mutex_init(&ifnet_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -728,9 +731,6 @@ if_initialize(ifnet_t *ifp)
 	 * if_alloc_sadl().
 	 */
 
-	if (ifp->if_snd.ifq_maxlen == 0)
-		ifp->if_snd.ifq_maxlen = ifqmaxlen;
-
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
 
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
@@ -745,7 +745,10 @@ if_initialize(ifnet_t *ifp)
 	altq_alloc(&ifp->if_snd, ifp);
 #endif
 
-	IFQ_LOCK_INIT(&ifp->if_snd);
+	if (ifp->if_snd.ifq_lock == NULL) {
+		ifq_init(&ifp->if_snd, ifqmaxlen);
+	}
+	KASSERT(ifp->if_snd.ifq_lock != NULL);
 
 	ifp->if_pfil = pfil_head_create(PFIL_TYPE_IFNET, ifp);
 	pfil_run_ifhooks(if_pfil, PFIL_IFNET_ATTACH, ifp);
@@ -1535,7 +1538,7 @@ restart:
 
 	mutex_obj_free(ifp->if_ioctl_lock);
 	ifp->if_ioctl_lock = NULL;
-	mutex_obj_free(ifp->if_snd.ifq_lock);
+	ifq_fini(&ifp->if_snd);
 	if_stats_fini(ifp);
 	KASSERT(!simplehook_has_hooks(ifp->if_linkstate_hooks));
 	simplehook_destroy(ifp->if_linkstate_hooks);
@@ -3821,8 +3824,599 @@ if_transmit_lock(struct ifnet *ifp, struct mbuf *m)
 }
 
 /*
+ * ifq_init --
+ *
+ *	Initialize an interface queue.
+ */
+void
+ifq_init(struct ifqueue * const ifq, unsigned int maxqlen)
+{
+#ifdef ALTQ
+	/*
+	 * ALTQ data can be allocated via IFQ_SET_READY() which
+	 * can be called before if_initialize(), which in turn
+	 * calls ifq_init().  Preserve it.
+	 */
+	struct ifaltq *altq = ifq->ifq_altq;
+#endif
+
+	/*
+	 * XXX Temporary measure to handle drivers that set ifq_maxqlen
+	 * XXX before calling if_attach().
+	 */
+	if (ifq->ifq_maxlen != 0) {
+		maxqlen = ifq->ifq_maxlen;
+	}
+
+	memset(ifq, 0, sizeof(*ifq));
+#ifdef ALTQ
+	ifq->ifq_altq = altq;
+#endif
+	ifq->ifq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	ifq_set_maxlen(ifq, maxqlen);
+	ifq->ifq_state = IFQ_STATE_INVALID;	/* transitional */
+}
+
+/*
+ * ifq_fini --
+ *
+ *	Tear down an interface queue.
+ */
+void
+ifq_fini(struct ifqueue * const ifq)
+{
+	if (ifq->ifq_lock != NULL) {
+		ifq_purge(ifq);
+		mutex_obj_free(ifq->ifq_lock);
+		ifq->ifq_lock = NULL;
+	}
+	ifq->ifq_state = IFQ_STATE_DEAD;
+}
+
+/*
+ * ifq_start --
+ *
+ *	Record that the Tx process is ready to run.  Called from
+ *	an interface's init routine.
+ */
+void
+ifq_start(struct ifqueue * const ifq)
+{
+	mutex_enter(ifq->ifq_lock);
+	KASSERT(ifq->ifq_state == IFQ_STATE_STOPPED ||
+		ifq->ifq_state == IFQ_STATE_INVALID);
+	ifq->ifq_state = IFQ_STATE_READY;
+	mutex_exit(ifq->ifq_lock);
+}
+
+/*
+ * ifq_stop --
+ *
+ *	Request that the Tx process stop and wait for it to do so.
+ *	Called from an interface's stop routine.
+ */
+void
+ifq_stop(struct ifqueue * const ifq)
+{
+	ASSERT_SLEEPABLE();
+
+	mutex_enter(ifq->ifq_lock);
+	switch (ifq->ifq_state) {
+	case IFQ_STATE_INVALID:		/* transitional */
+	case IFQ_STATE_STOPPED:
+		break;
+
+	case IFQ_STATE_READY:
+		ifq->ifq_state = IFQ_STATE_STOPPED;
+		break;
+
+	case IFQ_STATE_BUSY:
+		ifq->ifq_state = IFQ_STATE_WAIT_STOP;
+		/* FALLTHROUGH */
+
+	default:
+		KASSERT(ifq->ifq_state == IFQ_STATE_WAIT_STOP);
+		while (ifq->ifq_state != IFQ_STATE_STOPPED) {
+			cv_wait(&ifq_stop_cond, ifq->ifq_lock);
+		}
+		break;
+	}
+	mutex_exit(ifq->ifq_lock);
+}
+
+__CTASSERT(IFQ_MAXLEN <= INT_MAX);
+
+/*
+ * ifq_set_maxlen --
+ *
+ *	Set the max queue length on the specified interface queue.
+ *	Silently saturates to the system limits.
+ */
+void
+ifq_set_maxlen(struct ifqueue * const ifq, unsigned int maxqlen)
+{
+	if (maxqlen > IFQ_MAXLEN) {
+		maxqlen = IFQ_MAXLEN;
+	} else if (maxqlen == 0) {
+		KASSERT(ifqmaxlen > 0);
+		maxqlen = ifqmaxlen;
+	}
+	mutex_enter(ifq->ifq_lock);
+	ifq->ifq_maxlen = (int)maxqlen;
+	mutex_exit(ifq->ifq_lock);
+}
+
+/*
+ * ifq_maxlen --
+ *
+ *	Return the max queue length for the specified interface
+ *	queue.
+ */
+unsigned int
+ifq_maxlen(struct ifqueue * const ifq)
+{
+	unsigned int rv;
+
+	mutex_enter(ifq->ifq_lock);
+	rv = ifq->ifq_maxlen;
+	mutex_exit(ifq->ifq_lock);
+
+	return rv;
+}
+
+/*
+ * ifq_drops --
+ *
+ *	Return the current drop count on the specified interface
+ *	queue.
+ */
+uint64_t
+ifq_drops(struct ifqueue * const ifq)
+{
+	uint64_t rv;
+
+	mutex_enter(ifq->ifq_lock);
+	rv = ifq->ifq_drops;
+	mutex_exit(ifq->ifq_lock);
+
+	return rv;
+}
+
+#ifdef ALTQ
+/*
+ * ifq_nextpkt_slow --
+ *
+ *	Internal helper for ifq_get() and ifq_stage().  This handles
+ *	the ALTQ case, which must take the KERNEL_LOCK.
+ */
+static struct mbuf *
+ifq_nextpkt_slow(struct ifqueue * const ifq, bool const staging)
+{
+	struct mbuf *m;
+
+	/*
+	 * We have to acquire the KERNEL_LOCK, so we need to
+	 * drop the ifq_lock temporarily so that we can acquire
+	 * them in the correct order.
+	 *
+	 * Once we've done that, we need to check everything again.
+	 */
+	mutex_exit(ifq->ifq_lock);
+	KERNEL_LOCK(1, NULL);
+	mutex_enter(ifq->ifq_lock);
+
+	if (ifq->ifq_staged != NULL) {
+		m = ifq->ifq_staged;
+	} else if (TBR_IS_ENABLED(ifq)) {
+		m = tbr_dequeue(ifq->ifq_altq, ALTDQ_REMOVE);
+	} else if (ALTQ_IS_ENABLED(ifq)) {
+		ALTQ_DEQUEUE(ifq, m);
+	} else {
+		IF_DEQUEUE(ifq, m);
+	}
+	KERNEL_UNLOCK_ONE(NULL);
+
+	KASSERT(ifq->ifq_staged == NULL || ifq->ifq_staged == m);
+	if (__predict_true(staging)) {
+		ifq->ifq_staged = m;
+	} else {
+		ifq->ifq_staged = NULL;
+	}
+
+	return m;
+}
+#endif /* ALTQ */
+
+/*
+ * ifq_get_nextstate --
+ *
+ *	Perform the state transition for ifq_get() (BUSY -> READY or
+ *	WAIT_STOP -> STOPPED).  The same state transitions are used
+ *	for ifq_stage() and ifq_continue().
+ */
+static inline void
+ifq_get_nextstate(struct ifqueue * const ifq)
+{
+	switch (ifq->ifq_state) {
+	case IFQ_STATE_INVALID:		/* transitional */
+		break;
+
+	case IFQ_STATE_BUSY:
+		ifq->ifq_state = IFQ_STATE_READY;
+		break;
+
+	default:
+		KASSERTMSG(ifq->ifq_state == IFQ_STATE_WAIT_STOP,
+		    "invalid state=%d\n", (int)ifq->ifq_state);
+		ifq->ifq_state = IFQ_STATE_STOPPED;
+		cv_broadcast(&ifq_stop_cond);
+		break;
+	}
+}
+
+/*
+ * ifq_get --
+ *
+ *	Get the next packet of off the specified interface queue.
+ *	The packet is removed from the queue, and the caller is
+ *	responsible for disposing of it.
+ */
+struct mbuf *
+ifq_get(struct ifqueue * const ifq)
+{
+	struct mbuf *m;
+
+	mutex_enter(ifq->ifq_lock);
+
+	if ((m = ifq->ifq_staged) != NULL)
+		ifq->ifq_staged = NULL;
+	else
+#ifdef ALTQ
+	if (__predict_false(ALTQ_IS_ENABLED(ifq)))
+		m = ifq_nextpkt_slow(ifq, false);
+	else
+#endif /* ALTQ */
+		IF_DEQUEUE(ifq, m);
+
+	if (m == NULL) {
+		ifq_get_nextstate(ifq);
+	}
+
+	mutex_exit(ifq->ifq_lock);
+
+	return m;
+}
+
+/*
+ * ifq_stage --
+ *
+ *	Stage a packet on the specified interface queue for processing.
+ *	If a packet is already in the staging area, then we return that
+ *	one, otherwise we get the next one from the queue and place it
+ *	into the staging area.
+ */
+struct mbuf *
+ifq_stage(struct ifqueue * const ifq)
+{
+	struct mbuf *m;
+
+	mutex_enter(ifq->ifq_lock);
+
+	if (ifq->ifq_staged != NULL)
+		m = ifq->ifq_staged;
+	else
+#ifdef ALTQ
+	if (__predict_false(ALTQ_IS_ENABLED(ifq)))
+		m = ifq_nextpkt_slow(ifq, true);
+	else
+#endif /* ALTQ */
+	{
+		IF_DEQUEUE(ifq, m);
+		ifq->ifq_staged = m;
+	}
+
+	if (m == NULL) {
+		ifq_get_nextstate(ifq);
+	}
+
+	mutex_exit(ifq->ifq_lock);
+
+	return m;
+}
+
+#ifdef ALTQ
+/*
+ * ifq_put_slow --
+ *
+ *	This handles the ALTQ case, which must take the KERNEL_LOCK.
+ */
+static int
+ifq_put_slow(struct ifqueue * const ifq, struct mbuf *m)
+{
+	int error;
+
+	/*
+	 * We have to acquire the KERNEL_LOCK, so we need to
+	 * drop the ifq_lock temporarily so that we can acquire
+	 * them in the correct order.
+	 *
+	 * Once we've done that, we need to check everything again.
+	 */
+	mutex_exit(ifq->ifq_lock);
+	KERNEL_LOCK(1, NULL);
+	mutex_enter(ifq->ifq_lock);
+
+	if (__predict_false(ALTQ_IS_ENABLED(ifq))) {
+		ALTQ_ENQUEUE(ifq, m, error);
+	} else {
+		if (__predict_false(IF_QFULL(ifq))) {
+			error = ENOBUFS;
+		} else {
+			IF_ENQUEUE(ifq, m);
+			error = 0;
+		}
+	}
+	KERNEL_UNLOCK_ONE(NULL);
+
+	return error;
+}
+#endif /* ALTQ */
+
+/*
+ * ifq_put --
+ *
+ *	Put a packet into the specified interface queue.
+ *	If the queue is full, or any other error occurs,
+ *	the packet is dropped.
+ */
+int
+ifq_put(struct ifqueue * const ifq, struct mbuf *m)
+{
+	int error;
+
+	KASSERT(m != NULL);
+
+	mutex_enter(ifq->ifq_lock);
+
+#ifdef ALTQ
+	if (__predict_false(ALTQ_IS_ENABLED(ifq)))
+		error = ifq_put_slow(ifq, m);
+	else
+#endif /* ALTQ */
+	{
+		if (__predict_false(IF_QFULL(ifq))) {
+			error = ENOBUFS;
+		} else {
+			IF_ENQUEUE(ifq, m);
+			error = 0;
+		}
+	}
+
+	if (__predict_false(error != 0)) {
+		ifq->ifq_drops++;
+		mutex_exit(ifq->ifq_lock);
+		m_freem(m);
+	} else {
+		mutex_exit(ifq->ifq_lock);
+	}
+
+	return error;
+}
+
+/*
+ * ifq_restage --
+ *
+ *	Re-stage a packet in the specified interface queue.
+ *	This is used when a packet has been previously staged,
+ *	but after some processing work, we need to postpone
+ *	processing and replace the previous buffer (e.g. after
+ *	allocating a new copy of the packet, for example).
+ */
+void
+ifq_restage(struct ifqueue * const ifq, struct mbuf *m0, struct mbuf *m)
+{
+	KASSERT(m0 != NULL);
+	KASSERT(m != NULL);
+
+	mutex_enter(ifq->ifq_lock);
+
+	KASSERT(ifq->ifq_staged == m0);
+	if (m == ifq->ifq_staged) {
+		m0 = NULL;
+	} else {
+		m0 = ifq->ifq_staged;
+		ifq->ifq_staged = m;
+	}
+
+	mutex_exit(ifq->ifq_lock);
+
+	if (m0 != NULL) {
+		m_freem(m0);
+	}
+}
+
+/*
+ * ifq_commit --
+ *
+ *	Commit the specified packet.  An assertion is made that the
+ *	specified packet is the packet currently in the staging area.
+ *	The caller is repsonsible for disposing of it.
+ */
+void
+ifq_commit(struct ifqueue * const ifq, struct mbuf * const m __diagused)
+{
+	mutex_enter(ifq->ifq_lock);
+
+	KASSERT(ifq->ifq_staged != NULL);
+	KASSERT(ifq->ifq_staged == m);
+	ifq->ifq_staged = NULL;
+
+	mutex_exit(ifq->ifq_lock);
+}
+
+/*
+ * ifq_abort --
+ *
+ *	Abort the specified packet.  An assertion is made that the
+ *	specified packet is the packet currently in the staging area.
+ *	The packet is freed.
+ */
+void
+ifq_abort(struct ifqueue * const ifq, struct mbuf * const m __diagused)
+{
+	mutex_enter(ifq->ifq_lock);
+
+	KASSERT(ifq->ifq_staged != NULL);
+	KASSERT(ifq->ifq_staged == m);
+	ifq->ifq_staged = NULL;
+
+	mutex_exit(ifq->ifq_lock);
+
+	m_freem(m);
+}
+
+/*
+ * ifq_continue --
+ *
+ *	Check that processing of the queue should continue after
+ *	being busy.  Returns true if (*if_start)() should be scheduled.
+ */
+bool
+ifq_continue(struct ifqueue * const ifq)
+{
+	mutex_enter(ifq->ifq_lock);
+
+	ifq_get_nextstate(ifq);
+
+	const bool do_start = (ifq->ifq_state == IFQ_STATE_READY) && (
+#ifdef ALTQ
+	    ALTQ_IS_ENABLED(ifq) ||
+#endif
+	    ifq->ifq_len != 0 ||
+	    ifq->ifq_staged != NULL);
+
+	mutex_exit(ifq->ifq_lock);
+
+	return do_start;
+}
+
+#ifdef ALTQ
+/*
+ * ifq_purge_slow --
+ *
+ *	Internal helper routine for ifq_purge().  This handles the ALTQ case,
+ *	which must take the KERNEL_LOCK.
+ */
+static struct mbuf *
+ifq_purge_slow(struct ifqueue * const ifq)
+{
+	struct mbuf *m;
+
+	/*
+	 * We have to acquire the KERNEL_LOCK, so we need to
+	 * drop the ifq_lock temporarily so that we can acquire
+	 * them in the correct order.
+	 *
+	 * Once we've done that, we need to check everything again.
+	 */
+	mutex_exit(ifq->ifq_lock);
+	KERNEL_LOCK(1, NULL);
+	mutex_enter(ifq->ifq_lock);
+
+	if (__predict_false(ALTQ_IS_ENABLED(ifq))) {
+		ALTQ_PURGE(ifq);
+		m = NULL;
+	} else {
+		m = ifq->ifq_head;
+		ifq->ifq_head = ifq->ifq_tail = NULL;
+		ifq->ifq_len = 0;
+	}
+	KERNEL_UNLOCK_ONE(NULL);
+
+	return m;
+}
+#endif /* ALTQ */
+
+/*
+ * ifq_purge --
+ *
+ *	Purge all of the packets from the specified interface queue.
+ */
+void
+ifq_purge(struct ifqueue * const ifq)
+{
+	struct mbuf *m, *nextm;
+
+	mutex_enter(ifq->ifq_lock);
+
+#ifdef ALTQ
+	if (__predict_false(ALTQ_IS_ENABLED(ifq)))
+		m = ifq_purge_slow(ifq);
+	else
+#endif /* ALTQ */
+	{
+		m = ifq->ifq_head;
+		ifq->ifq_head = ifq->ifq_tail = NULL;
+		ifq->ifq_len = 0;
+	}
+
+	if (ifq->ifq_staged != NULL) {
+		ifq->ifq_staged->m_nextpkt = m;
+		m = ifq->ifq_staged;
+		ifq->ifq_staged = NULL;
+	}
+
+	mutex_exit(ifq->ifq_lock);
+
+	for (; m != NULL; m = nextm) {
+		nextm = m->m_nextpkt;
+		m->m_nextpkt = NULL;
+		m_freem(m);
+	}
+}
+
+/*
+ * ifq_classify_packet --
+ *
+ *	Decorate a packet with classificaiton information per the
+ *	queue's queueing discipline.
+ *
+ *	XXX This should be a private function.  It's unfortunate that
+ *	XXX it's called from where it's called.
+ */
+void
+ifq_classify_packet(struct ifqueue * const ifq, struct mbuf * const m,
+		    sa_family_t af)
+{
+	KASSERT(((m)->m_flags & M_PKTHDR) != 0);
+#ifdef ALTQ
+	mutex_enter((ifq)->ifq_lock);
+	if (ALTQ_IS_ENABLED(ifq)) {
+		mutex_exit((ifq)->ifq_lock);
+		KERNEL_LOCK(1, NULL);
+		mutex_enter((ifq)->ifq_lock);
+
+		if (ALTQ_IS_ENABLED(ifq)) {
+			if (ALTQ_NEEDS_CLASSIFY(ifq)) {
+				struct ifaltq * const altq = ifq->ifq_altq;
+				(m)->m_pkthdr.pattr_class =
+				    (*altq->altq_classify)
+					(altq->altq_clfier, m, af);
+			}
+			m->m_pkthdr.pattr_af = af;
+			m->m_pkthdr.pattr_hdr = mtod(m, void *);
+		}
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+	mutex_exit((ifq)->ifq_lock);
+#endif /* ALTQ */
+}
+
+/*
  * Queue message on interface, and start output if interface
  * not yet active.
+ *
+ * XXX Should be renamed if_enqueue().
  */
 int
 ifq_enqueue(struct ifnet *ifp, struct mbuf *m)
@@ -3831,33 +4425,75 @@ ifq_enqueue(struct ifnet *ifp, struct mbuf *m)
 	return if_transmit_lock(ifp, m);
 }
 
+#ifdef ALTQ
+static void
+ifq_lock2(struct ifqueue * const ifq0, struct ifqueue * const ifq1)
+{
+	KASSERT(ifq0 != ifq1);
+	if (ifq0 < ifq1) {
+		mutex_enter(ifq0->ifq_lock);
+		mutex_enter(ifq1->ifq_lock);
+	} else {
+		mutex_enter(ifq1->ifq_lock);
+		mutex_enter(ifq0->ifq_lock);
+	}
+}
+#endif /* ALTQ */
+
 /*
  * Queue message on interface, possibly using a second fast queue
+ *
+ * N.B. Unlike ifq_enqueue(), this does *not* start transmission on
+ * the interface.
+ *
+ * XXX Should be renamed if_enqueue2().
  */
 int
 ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m)
 {
+	struct ifqueue * const ifq0 = &ifp->if_snd;
 	int error = 0;
 
-	if (ifq != NULL
-#ifdef ALTQ
-	    && ALTQ_IS_ENABLED(&ifp->if_snd) == 0
-#endif
-	    ) {
-		if (IF_QFULL(ifq)) {
-			IF_DROP(&ifp->if_snd);
-			m_freem(m);
-			if (error == 0)
-				error = ENOBUFS;
-		} else
-			IF_ENQUEUE(ifq, m);
-	} else
-		IFQ_ENQUEUE(&ifp->if_snd, m, error);
-	if (error != 0) {
-		if_statinc(ifp, if_oerrors);
-		return error;
+	KASSERT(ifq == NULL || ifq->ifq_lock != NULL);
+
+	if (__predict_true(ifq == NULL)) {
+		error = ifq_put(ifq0, m);
+		goto done;
 	}
-	return 0;
+
+#ifdef ALTQ
+	ifq_lock2(ifq0, ifq);
+	if (__predict_false(ALTQ_IS_ENABLED(ifq0))) {
+		/*
+	 	 * ALTQ is enabled on the base send queue; use it for
+		 * traffic shaping, not the "fast queue".
+		 */
+		mutex_exit(ifq->ifq_lock);
+		error = ifq_put_slow(ifq0, m);
+		mutex_exit(ifq0->ifq_lock);
+	 } else {
+		/* Put the packet into the "fast queue". */
+		mutex_exit(ifq0->ifq_lock);
+		if (__predict_false(IF_QFULL(ifq))) {
+			error = ENOBUFS;
+		} else {
+			IF_ENQUEUE(ifq, m);
+			error = 0;
+		}
+		mutex_exit(ifq->ifq_lock);
+	}
+	if (__predict_false(error != 0)) {
+		m_freem(m);
+	}
+#else
+	error = ifq_put(ifq, m);
+#endif /* ALTQ */
+
+ done:
+	if (__predict_false(error != 0)) {
+		if_statinc(ifp, if_oerrors);
+	}
+	return error;
 }
 
 int
