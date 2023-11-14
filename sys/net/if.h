@@ -1,7 +1,7 @@
-/*	$NetBSD: if.h,v 1.305.2.1 2023/11/11 13:16:30 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.305.2.1.2.1 2023/11/14 14:47:03 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -234,13 +234,71 @@ struct if_status_description {
 }
 
 /*
+ * Interface transmit process states:
+ *
+ * ==> IFQ_STATE_INVALID	Initial state, and used as a transitional
+ *				measure until all drivers are converted to
+ *				the new mechanism (opts queue out of the
+ *				automatic state transitions).
+ *
+ * ==> IFQ_STATE_STOPPED	Tx process is stopped.
+ *
+ * ==> IFQ_STATE_READY		Tx process is ready to run the queue.
+ *
+ * ==> IFQ_STATE_BUSY		Tx process is busy transmitting packets.
+ *
+ * ==> IFQ_STATE_WAIT_STOP	Someone is waiting for the Tx process to stop.
+ *
+ * ==> IFQ_STATE_DEAD		Terminal state before interface is detached.
+ *
+ * Transitions:
+ *
+ * IFQ_STATE_INVALID		Initial state
+ *	--> IFQ_STATE_READY	Result of calling ifq_start().
+ *	--> IFQ_STATE_DEAD	Result of calling ifq_fini().
+ *
+ * IFQ_STATE_STOPPED		Initial state
+ *	--> IFQ_STATE_READY	Result of calling ifq_start().
+ *	--> IFQ_STATE_DEAD	Result of calling ifq_fini().
+ *
+ * IFQ_STATE_READY
+ *	--> IFQ_STATE_STOPPED	Result of calling ifq_stop().
+ *	--> IFQ_STATE_BUSY	(*if_start)() has been called and is
+ *				processing packets.
+ *
+ * IFQ_STATE_BUSY
+ *	--> IFQ_STATE_READY	Tx process has finished processing the queue.
+ *	--> IFQ_STATE_WAIT_STOP	Result of calling ifq_stop().
+ *
+ * IFQ_STATE_WAIT_STOP
+ *	--> IFQ_STATE_STOPPED	By way of noticing WAIT_STOP before
+ *				transitioning from BUSY to READY.
+ *
+ * IFQ_STATE_DEAD		Terminal state
+ */
+typedef enum {
+	IFQ_STATE_INVALID	=	-1,	/* transitional */
+	IFQ_STATE_STOPPED	=	0,
+	IFQ_STATE_READY		=	1,
+	IFQ_STATE_BUSY		=	2,
+	IFQ_STATE_WAIT_STOP	=	3,
+	IFQ_STATE_DEAD		=	0xdeadbeef,
+} ifq_state_t;
+
+#define	IFQ_ASSERT_RUNNABLE(ifq)					\
+	KASSERT((ifq)->ifq_state == IFQ_STATE_BUSY ||			\
+		(ifq)->ifq_state == IFQ_STATE_WAIT_STOP)
+
+/*
  * Structure defining a queue for a network interface.
  */
 struct ifqueue {
 	kmutex_t	*ifq_lock;
 	struct mbuf	*ifq_head;
 	struct mbuf	*ifq_tail;
+	struct mbuf	*ifq_staged;
 	struct ifaltq	*ifq_altq;
+	ifq_state_t	ifq_state;
 	int		ifq_len;
 	int		ifq_maxlen;
 	uint64_t	ifq_drops;
@@ -252,6 +310,36 @@ struct ifqueue {
 #include <sys/rwlock.h>
 #include <sys/workqueue.h>
 
+static inline bool
+_ifq_start_enter(struct ifqueue * const ifq)
+{
+	/* We return true if the caller should proceed with (*if_start)(). */
+	bool rv = true;
+
+	mutex_enter(ifq->ifq_lock);
+	switch (ifq->ifq_state) {
+	case IFQ_STATE_INVALID:		/* transitional */
+		break;
+
+	case IFQ_STATE_STOPPED:
+	case IFQ_STATE_BUSY:
+		rv = false;
+		break;
+
+	case IFQ_STATE_READY:
+		ifq->ifq_state = IFQ_STATE_BUSY;
+		break;
+
+	default:
+		KASSERTMSG(ifq->ifq_state == IFQ_STATE_WAIT_STOP,
+		    "invalid state=%d", (int)ifq->ifq_state);
+		rv = false;
+		break;
+	}
+	mutex_exit(ifq->ifq_lock);
+
+	return rv;
+}
 #endif /* _KERNEL */
 
 /*
@@ -546,6 +634,10 @@ if_output_lock(struct ifnet *cifp, struct ifnet *ifp, struct mbuf *m,
 static __inline void
 if_start_lock(struct ifnet *ifp)
 {
+
+	if (!_ifq_start_enter(&ifp->if_snd)) {
+		return;
+	}
 
 	if (if_is_mpsafe(ifp)) {
 		(*ifp->if_start)(ifp);
@@ -1159,6 +1251,24 @@ ifnet_t *if_get_bylla(const void *, unsigned char, struct psref *);
 void	if_put(const struct ifnet *, struct psref *);
 void	if_acquire(struct ifnet *, struct psref *);
 #define	if_release	if_put
+
+void		ifq_init(struct ifqueue *, unsigned int);
+void		ifq_fini(struct ifqueue *);
+void		ifq_start(struct ifqueue *);
+void		ifq_stop(struct ifqueue *);
+void		ifq_set_maxlen(struct ifqueue *, unsigned int);
+unsigned int	ifq_maxlen(struct ifqueue *);
+uint64_t	ifq_drops(struct ifqueue *);
+struct mbuf *	ifq_get(struct ifqueue *);
+struct mbuf *	ifq_stage(struct ifqueue *);
+int		ifq_put(struct ifqueue *, struct mbuf *);
+void		ifq_restage(struct ifqueue *, struct mbuf *, struct mbuf *);
+void		ifq_commit(struct ifqueue *, struct mbuf *);
+void		ifq_abort(struct ifqueue *, struct mbuf *);
+bool		ifq_continue(struct ifqueue *);
+void		ifq_purge(struct ifqueue *);
+void		ifq_classify_packet(struct ifqueue *, struct mbuf *,
+				    sa_family_t);
 
 int if_tunnel_check_nesting(struct ifnet *, struct mbuf *, int);
 percpu_t *if_tunnel_alloc_ro_percpu(void);
