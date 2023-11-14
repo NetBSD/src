@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.77 2023/08/01 07:04:16 mrg Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.77.2.1 2023/11/14 02:29:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.77 2023/08/01 07:04:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.77.2.1 2023/11/14 02:29:11 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3852,7 +3852,7 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 #ifdef ALTQ
-	bool altq = atomic_load_relaxed(&ifp->if_snd.altq_flags)
+	bool altq = atomic_load_relaxed(&ifp->if_snd.ifq_altq->altq_flags)
 	    & ALTQF_ENABLED;
 	if (altq)
 		IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
