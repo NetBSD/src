@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp_redirect.c,v 1.1 2023/11/15 03:15:28 christos Exp $	*/
+/*	$NetBSD: ssp_redirect.c,v 1.2 2023/11/15 03:35:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -34,17 +34,16 @@
 #define __ssp_inline
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ssp_redirect.c,v 1.1 2023/11/15 03:15:28 christos Exp $");
+__RCSID("$NetBSD: ssp_redirect.c,v 1.2 2023/11/15 03:35:04 christos Exp $");
 
 #include <unistd.h>
 
-int ssp_use(void);
 
 /*
  * Provide definitions of the redirect functions in libc.
  */
-int
-ssp_use(void)
+static int __used
+__ssp_use(void)
 {
 	if (getcwd(NULL, 0) == NULL)
 		return -1;
