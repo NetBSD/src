@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.305.2.1.2.1 2023/11/14 14:47:03 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.305.2.1.2.2 2023/11/15 02:08:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2023 The NetBSD Foundation, Inc.
@@ -1352,8 +1352,8 @@ void	if_clone_detach(struct if_clone *);
 
 int	if_transmit_lock(struct ifnet *, struct mbuf *);
 
-int	ifq_enqueue(struct ifnet *, struct mbuf *);
-int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf *);
+int	if_enqueue(struct ifnet *, struct mbuf *);
+int	if_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf *);
 
 int	loioctl(struct ifnet *, u_long, void *);
 void	loopattach(int);

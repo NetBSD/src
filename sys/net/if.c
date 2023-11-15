@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.529.2.1.2.1 2023/11/14 14:47:03 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.529.2.1.2.2 2023/11/15 02:08:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008, 2023 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1.2.1 2023/11/14 14:47:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1.2.2 2023/11/15 02:08:33 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4415,11 +4415,9 @@ ifq_classify_packet(struct ifqueue * const ifq, struct mbuf * const m,
 /*
  * Queue message on interface, and start output if interface
  * not yet active.
- *
- * XXX Should be renamed if_enqueue().
  */
 int
-ifq_enqueue(struct ifnet *ifp, struct mbuf *m)
+if_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 
 	return if_transmit_lock(ifp, m);
@@ -4445,11 +4443,9 @@ ifq_lock2(struct ifqueue * const ifq0, struct ifqueue * const ifq1)
  *
  * N.B. Unlike ifq_enqueue(), this does *not* start transmission on
  * the interface.
- *
- * XXX Should be renamed if_enqueue2().
  */
 int
-ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m)
+if_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m)
 {
 	struct ifqueue * const ifq0 = &ifp->if_snd;
 	int error = 0;

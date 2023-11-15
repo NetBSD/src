@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.85 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.85.8.1 2023/11/15 02:08:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.85 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.85.8.1 2023/11/15 02:08:34 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -278,7 +278,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			ah->arc_flag = rsflag;
 			ah->arc_seqid = ac->ac_seqid;
 
-			if ((error = ifq_enqueue(ifp, m)) != 0)
+			if ((error = if_enqueue(ifp, m)) != 0)
 				return (error);
 
 			m = m1;
@@ -326,7 +326,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		ah->arc_shost = myself;
 	}
 
-	return ifq_enqueue(ifp, m);
+	return if_enqueue(ifp, m);
 
 bad:
 	if (m1)
