@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.77.2.1 2023/11/14 02:29:11 thorpej Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.77.2.1.2.1 2023/11/15 12:39:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.77.2.1 2023/11/14 02:29:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.77.2.1.2.1 2023/11/15 12:39:46 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3851,12 +3851,7 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto out0;
 	}
 
-#ifdef ALTQ
-	bool altq = atomic_load_relaxed(&ifp->if_snd.ifq_altq->altq_flags)
-	    & ALTQF_ENABLED;
-	if (altq)
-		IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
-#endif
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 
 	bpf_mtap_af(ifp, dst->sa_family, m, BPF_D_OUT);
 
@@ -3896,18 +3891,24 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	/* There's an established session.  Toss it in the queue.  */
 #ifdef ALTQ
-	if (altq) {
+	/* XXX This is a mess. */
+	mutex_enter(ifp->if_snd.ifq_lock);
+	if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
+		struct ifqueue * const ifq = &ifp->if_snd;
+		mutex_exit(ifp->if_snd.ifq_lock);
+		KERNEL_LOCK(1, NULL);
 		mutex_enter(ifp->if_snd.ifq_lock);
-		if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
+		if (ALTQ_IS_ENABLED(ifq)) {
 			M_SETCTX(m, wgp);
 			ALTQ_ENQUEUE(&ifp->if_snd, m, error);
 			m = NULL; /* consume */
 		}
-		mutex_exit(ifp->if_snd.ifq_lock);
-		if (m == NULL) {
-			wg_start(ifp);
-			goto out2;
-		}
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+	mutex_exit(ifp->if_snd.ifq_lock);
+	if (m == NULL) {
+		wg_start(ifp);
+		goto out2;
 	}
 #endif
 	kpreempt_disable();
