@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.305.2.1.2.2 2023/11/15 02:08:34 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.305.2.1.2.3 2023/11/15 02:19:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2023 The NetBSD Foundation, Inc.
@@ -1269,6 +1269,11 @@ bool		ifq_continue(struct ifqueue *);
 void		ifq_purge(struct ifqueue *);
 void		ifq_classify_packet(struct ifqueue *, struct mbuf *,
 				    sa_family_t);
+
+#ifdef __IFQ_PRIVATE
+struct mbuf *	ifq_purge_locked(struct ifqueue *);
+void		ifq_purge_free(struct mbuf *);
+#endif /* __IFQ_PRIVATE */
 
 int if_tunnel_check_nesting(struct ifnet *, struct mbuf *, int);
 percpu_t *if_tunnel_alloc_ro_percpu(void);

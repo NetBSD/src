@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.33.46.1 2023/11/11 13:16:30 thorpej Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.33.46.1.2.1 2023/11/15 02:19:00 thorpej Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,13 +28,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.33.46.1 2023/11/11 13:16:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.33.46.1.2.1 2023/11/15 02:19:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
 #include "opt_inet.h"
 #include "pf.h"
 #endif
+
+#define	__IFQ_PRIVATE
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -140,6 +142,13 @@ void
 altq_free(struct ifqueue *ifq)
 {
 	if (ifq->ifq_altq != NULL) {
+		/*
+		 * No need to pre-flight these calls; both can handle
+		 * the not-enabled / not-attached scenarios.
+		 */
+		altq_disable(ifq->ifq_altq);
+		altq_detach(ifq->ifq_altq);
+
 		ifq->ifq_altq->altq_ifp = NULL;
 		kmem_free(ifq->ifq_altq, sizeof(*ifq->ifq_altq));
 		ifq->ifq_altq = NULL;
@@ -154,7 +163,7 @@ void
 altq_set_ready(struct ifqueue *ifq)
 {
 	altq_alloc(ifq, NULL);
-	ifq->ifq_altq->altq_flags = ALTQF_READY;
+	ifq->ifq_altq->altq_flags |= ALTQF_READY;
 }
 
 /* look up the queue state by the interface name and the queueing type. */
@@ -173,14 +182,21 @@ altq_lookup(char *name, int type)
 }
 
 int
-altq_attach(struct ifaltq *ifq, int type, void *discipline,
+altq_attach(struct ifaltq *altq, int type, void *discipline,
     int (*enqueue)(struct ifaltq *, struct mbuf *),
     struct mbuf *(*dequeue)(struct ifaltq *, int),
     int (*request)(struct ifaltq *, int, void *),
     void *clfier, void *(*classify)(void *, struct mbuf *, int))
 {
-	if (!ALTQ_IS_READY(ifq))
-		return ENXIO;
+	struct ifqueue *ifq = altq->altq_ifq;
+	int error = 0;
+
+	mutex_enter(ifq->ifq_lock);
+
+	if (!ALTQ_IS_READY(ifq)) {
+		error = ENXIO;
+		goto out;
+	}
 
 #ifdef ALTQ3_COMPAT
 	/*
@@ -188,88 +204,123 @@ altq_attach(struct ifaltq *ifq, int type, void *discipline,
 	 * check these if clfier is not NULL (which implies altq3).
 	 */
 	if (clfier != NULL) {
-		if (ALTQ_IS_ENABLED(ifq))
-			return EBUSY;
-		if (ALTQ_IS_ATTACHED(ifq))
-			return EEXIST;
+		if (ALTQ_IS_ENABLED(ifq)) {
+			error = EBUSY;
+			goto out;
+		}
+		if (ALTQ_IS_ATTACHED(ifq)) {
+			error = EEXIST;
+			goto out;
+		}
 	}
 #endif
-	ifq->altq_type     = type;
-	ifq->altq_disc     = discipline;
-	ifq->altq_enqueue  = enqueue;
-	ifq->altq_dequeue  = dequeue;
-	ifq->altq_request  = request;
-	ifq->altq_clfier   = clfier;
-	ifq->altq_classify = classify;
-	ifq->altq_flags &= (ALTQF_CANTCHANGE|ALTQF_ENABLED);
+	altq->altq_type     = type;
+	altq->altq_disc     = discipline;
+	altq->altq_enqueue  = enqueue;
+	altq->altq_dequeue  = dequeue;
+	altq->altq_request  = request;
+	altq->altq_clfier   = clfier;
+	altq->altq_classify = classify;
+	altq->altq_flags   &= (ALTQF_CANTCHANGE|ALTQF_ENABLED);
 #ifdef ALTQ3_COMPAT
 #ifdef ALTQ_KLD
 	altq_module_incref(type);
 #endif
 #endif
-	return 0;
+ out:
+	mutex_exit(ifq->ifq_lock);
+	return error;
 }
 
 int
-altq_detach(struct ifaltq *ifq)
+altq_detach(struct ifaltq *altq)
 {
-	if (!ALTQ_IS_READY(ifq))
-		return ENXIO;
-	if (ALTQ_IS_ENABLED(ifq))
-		return EBUSY;
-	if (!ALTQ_IS_ATTACHED(ifq))
-		return (0);
+	struct ifqueue *ifq = altq->altq_ifq;
+	int error = 0;
+
+	mutex_enter(ifq->ifq_lock);
+
+	if (!ALTQ_IS_READY(ifq)) {
+		error = ENXIO;
+		goto out;
+	}
+	if (ALTQ_IS_ENABLED(ifq)) {
+		error = EBUSY;
+		goto out;
+	}
+	if (!ALTQ_IS_ATTACHED(ifq)) {
+		goto out;
+	}
+
 #ifdef ALTQ3_COMPAT
 #ifdef ALTQ_KLD
 	altq_module_declref(ifq->altq_type);
 #endif
 #endif
 
-	ifq->altq_type     = ALTQT_NONE;
-	ifq->altq_disc     = NULL;
-	ifq->altq_enqueue  = NULL;
-	ifq->altq_dequeue  = NULL;
-	ifq->altq_request  = NULL;
-	ifq->altq_clfier   = NULL;
-	ifq->altq_classify = NULL;
-	ifq->altq_flags &= ALTQF_CANTCHANGE;
-	return 0;
+	altq->altq_type     = ALTQT_NONE;
+	altq->altq_disc     = NULL;
+	altq->altq_enqueue  = NULL;
+	altq->altq_dequeue  = NULL;
+	altq->altq_request  = NULL;
+	altq->altq_clfier   = NULL;
+	altq->altq_classify = NULL;
+	altq->altq_flags   &= ALTQF_CANTCHANGE;
+ out:
+	mutex_exit(ifq->ifq_lock);
+	return error;
 }
 
 int
-altq_enable(struct ifaltq *ifq)
+altq_enable(struct ifaltq *altq)
 {
-	int s;
+	struct ifqueue *ifq = altq->altq_ifq;
+	struct mbuf *m = NULL;
+	int error = 0;
 
-	if (!ALTQ_IS_READY(ifq))
-		return ENXIO;
-	if (ALTQ_IS_ENABLED(ifq))
-		return 0;
+	mutex_enter(ifq->ifq_lock);
 
-	s = splnet();
-	IFQ_PURGE(ifq->altq_ifq);
-	ASSERT(ALTQ_GET_LEN(ifq) == 0);
-	ifq->altq_flags |= ALTQF_ENABLED;
-	if (ifq->altq_clfier != NULL)
-		ifq->altq_flags |= ALTQF_CLASSIFY;
-	splx(s);
+	if (!ALTQ_IS_READY(ifq)) {
+		error = ENXIO;
+		goto out;
+	}
+	if (ALTQ_IS_ENABLED(ifq)) {
+		goto out;
+	}
 
-	return 0;
+	m = ifq_purge_locked(ifq);
+	ASSERT(ALTQ_GET_LEN(altq) == 0);
+	altq->altq_flags |= ALTQF_ENABLED;
+	if (altq->altq_clfier != NULL)
+		altq->altq_flags |= ALTQF_CLASSIFY;
+ out:
+	mutex_exit(ifq->ifq_lock);
+	if (m != NULL) {
+		ifq_purge_free(m);
+	}
+	return error;
 }
 
 int
-altq_disable(struct ifaltq *ifq)
+altq_disable(struct ifaltq *altq)
 {
-	int s;
+	struct ifqueue *ifq = altq->altq_ifq;
+	struct mbuf *m = NULL;
 
-	if (!ALTQ_IS_ENABLED(ifq))
-		return 0;
+	mutex_enter(ifq->ifq_lock);
 
-	s = splnet();
-	IFQ_PURGE(ifq->altq_ifq);
-	ASSERT(ALTQ_GET_LEN(ifq) == 0);
-	ifq->altq_flags &= ~(ALTQF_ENABLED|ALTQF_CLASSIFY);
-	splx(s);
+	if (!ALTQ_IS_ENABLED(ifq)) {
+		goto out;
+	}
+
+	m = ifq_purge_locked(ifq);
+	ASSERT(ALTQ_GET_LEN(altq) == 0);
+	altq->altq_flags &= ~(ALTQF_ENABLED|ALTQF_CLASSIFY);
+ out:
+ 	mutex_exit(ifq->ifq_lock);
+	if (m != NULL) {
+		ifq_purge_free(m);
+	}
 	return 0;
 }
 
