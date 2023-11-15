@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.347 2023/11/02 09:40:47 yamaguchi Exp $ */
+/* $NetBSD: ixgbe.c,v 1.348 2023/11/15 03:50:22 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.347 2023/11/02 09:40:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.348 2023/11/15 03:50:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4157,6 +4157,7 @@ ixgbe_init_locked(struct ixgbe_softc *sc)
 		txdctl = IXGBE_READ_REG(hw, IXGBE_TXDCTL(txr->me));
 		txdctl |= IXGBE_TXDCTL_ENABLE;
 		/* Set WTHRESH to 8, burst writeback */
+		txdctl &= ~IXGBE_TXDCTL_WTHRESH_MASK;
 		txdctl |= IXGBE_TX_WTHRESH << IXGBE_TXDCTL_WTHRESH_SHIFT;
 		/*
 		 * When the internal queue falls below PTHRESH (32),

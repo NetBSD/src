@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.61 2023/10/11 09:43:17 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.62 2023/11/15 03:50:22 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -2625,6 +2625,7 @@ enum {
 /* Transmit Config masks */
 #define IXGBE_TXDCTL_ENABLE		0x02000000 /* Ena specific Tx Queue */
 #define IXGBE_TXDCTL_SWFLSH		0x04000000 /* Tx Desc. wr-bk flushing */
+#define IXGBE_TXDCTL_WTHRESH_MASK	0x007f0000
 #define IXGBE_TXDCTL_WTHRESH_SHIFT	16 /* shift to WTHRESH bits */
 /* Enable short packet padding to 64 bytes */
 #define IXGBE_TX_PAD_ENABLE		0x00000400
