@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/11/28 22:33:43 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2023/11/15 22:11:17 christos Exp $
 
 NOLINT=	# defined
 
@@ -6,7 +6,7 @@ NOLINT=	# defined
 
 LIB=status
 SRCS=status.c
-CPPFLAGS+=-I${NETBSDSRCDIR}/dist/pppd/pppd
+CPPFLAGS+=-I${PPPD}
 
 LIBPREFIX=
 SHLIB_FULLVERSION=
