@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.377 2023/10/27 21:28:14 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.378 2023/11/15 14:03:19 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1132,6 +1132,7 @@ NRZ	non-return to zero
 NSA	nation-state adversary
 NSA	no such agency
 NSA	National Security Agency
+NTA	negative trust anchor
 NTM	non-deterministic Turing machine
 NTP	Network Time Protocol
 NUMA	non-uniform memory access
