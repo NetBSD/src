@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.194 2023/11/02 09:40:47 yamaguchi Exp $ */
+/* $NetBSD: ixv.c,v 1.195 2023/11/15 02:43:38 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.194 2023/11/02 09:40:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.195 2023/11/15 02:43:38 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -830,7 +830,6 @@ ixv_init_locked(struct ixgbe_softc *sc)
 
 	/* Inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* And now turn on interrupts */
 	ixv_enable_intr(sc);
@@ -1495,7 +1494,7 @@ ixv_stop_locked(void *arg)
 	ixv_disable_intr(sc);
 
 	/* Tell the stack that the interface is no longer active */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 
 	hw->mac.ops.reset_hw(hw);
 	sc->hw.adapter_stopped = FALSE;
