@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.529.2.1.2.2 2023/11/15 02:08:33 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.529.2.1.2.3 2023/11/15 02:19:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008, 2023 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1.2.2 2023/11/15 02:08:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1.2.3 2023/11/15 02:19:00 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -100,6 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1.2.2 2023/11/15 02:08:33 thorpej Exp
 #include "opt_net_mpsafe.h"
 #include "opt_mrouting.h"
 #endif
+
+#define	__IFQ_PRIVATE
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -1387,10 +1389,6 @@ if_detach(struct ifnet *ifp)
 	if_down_deactivated(ifp);
 
 #ifdef ALTQ
-	if (ALTQ_IS_ENABLED(&ifp->if_snd))
-		altq_disable(ifp->if_snd.ifq_altq);
-	if (ALTQ_IS_ATTACHED(&ifp->if_snd))
-		altq_detach(ifp->if_snd.ifq_altq);
 	altq_free(&ifp->if_snd);
 #endif
 
@@ -4342,12 +4340,10 @@ ifq_purge_slow(struct ifqueue * const ifq)
  *
  *	Purge all of the packets from the specified interface queue.
  */
-void
-ifq_purge(struct ifqueue * const ifq)
+struct mbuf *
+ifq_purge_locked(struct ifqueue * const ifq)
 {
-	struct mbuf *m, *nextm;
-
-	mutex_enter(ifq->ifq_lock);
+	struct mbuf *m;
 
 #ifdef ALTQ
 	if (__predict_false(ALTQ_IS_ENABLED(ifq)))
@@ -4366,13 +4362,31 @@ ifq_purge(struct ifqueue * const ifq)
 		ifq->ifq_staged = NULL;
 	}
 
-	mutex_exit(ifq->ifq_lock);
+	return m;
+}
+
+void
+ifq_purge_free(struct mbuf *m)
+{
+	struct mbuf *nextm;
 
 	for (; m != NULL; m = nextm) {
 		nextm = m->m_nextpkt;
 		m->m_nextpkt = NULL;
 		m_freem(m);
 	}
+}
+
+void
+ifq_purge(struct ifqueue * const ifq)
+{
+	struct mbuf *m;
+
+	mutex_enter(ifq->ifq_lock);
+	m = ifq_purge_locked(ifq);
+	mutex_exit(ifq->ifq_lock);
+
+	ifq_purge_free(m);
 }
 
 /*

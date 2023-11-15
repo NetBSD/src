@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.22.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.22.6.1.2.1 2023/11/15 02:19:00 thorpej Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.22.6.1 2023/11/11 13:16:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.22.6.1.2.1 2023/11/15 02:19:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -138,11 +138,16 @@ altq_cdnr_input(struct mbuf *m, int af)
 	struct tc_action	*tca;
 	struct cdnr_block	*cb;
 	struct cdnr_pktinfo	pktinfo;
+	bool			is_cnding = false;
 
 	ifp = m_get_rcvif_NOMPSAFE(m);
-	if (!ALTQ_IS_CNDTNING(&ifp->if_snd))
+	mutex_enter(ifp->if_snd.ifq_lock);
+	is_cnding = ALTQ_IS_CNDTNING(&ifp->if_snd);
+	mutex_exit(ifp->if_snd.ifq_lock);
+	if (!is_cnding) {
 		/* traffic conditioner is not enabled on this interface */
 		return (1);
+	}
 
 	top = ifp->if_snd.ifq_altq->altq_cdnr;
 
@@ -428,9 +433,11 @@ top_destroy(struct top_cdnr *top)
 {
 	struct cdnr_block *cb;
 
+	mutex_enter(top->tc_ifq->altq_ifq->ifq_lock);
 	if (ALTQ_IS_CNDTNING(top->tc_ifq))
 		ALTQ_CLEAR_CNDTNING(top->tc_ifq);
 	top->tc_ifq->altq_cdnr = NULL;
+	mutex_exit(top->tc_ifq->altq_ifq->ifq_lock);
 
 	/*
 	 * destroy all the conditioner elements belonging to this interface
@@ -448,10 +455,17 @@ top_destroy(struct top_cdnr *top)
 
 	/* if there is no active conditioner, remove the input hook */
 	if (altq_input != NULL) {
-		LIST_FOREACH(top, &tcb_list, tc_next)
+		bool is_cnding = false;
+
+		LIST_FOREACH(top, &tcb_list, tc_next) {
+			mutex_enter(top->tc_ifq->altq_ifq->ifq_lock);
 			if (ALTQ_IS_CNDTNING(top->tc_ifq))
+				is_cnding = true;
+			mutex_exit(top->tc_ifq->altq_ifq->ifq_lock);
+			if (is_cnding)
 				break;
-		if (top == NULL)
+		}
+		if (!is_cnding)
 			altq_input = NULL;
 	}
 
@@ -1220,19 +1234,30 @@ cdnrioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 		switch (cmd) {
 
 		case CDNR_ENABLE:
+			mutex_enter(top->tc_ifq->altq_ifq->ifq_lock);
 			ALTQ_SET_CNDTNING(top->tc_ifq);
+			mutex_exit(top->tc_ifq->altq_ifq->ifq_lock);
 			if (altq_input == NULL)
 				altq_input = altq_cdnr_input;
 			break;
 
-		case CDNR_DISABLE:
+		case CDNR_DISABLE: {
+			bool is_cnding = false;
+			mutex_enter(top->tc_ifq->altq_ifq->ifq_lock);
 			ALTQ_CLEAR_CNDTNING(top->tc_ifq);
-			LIST_FOREACH(top, &tcb_list, tc_next)
+			mutex_exit(top->tc_ifq->altq_ifq->ifq_lock);
+			LIST_FOREACH(top, &tcb_list, tc_next) {
+				mutex_enter(top->tc_ifq->altq_ifq->ifq_lock);
 				if (ALTQ_IS_CNDTNING(top->tc_ifq))
+					is_cnding = true;
+				mutex_exit(top->tc_ifq->altq_ifq->ifq_lock);
+				if (is_cnding)
 					break;
-			if (top == NULL)
+			}
+			if (!is_cnding)
 				altq_input = NULL;
 			break;
+		    }
 		}
 		break;
 
