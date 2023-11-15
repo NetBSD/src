@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.13 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: can.c,v 1.13.6.1 2023/11/15 02:08:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.13 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.13.6.1 2023/11/15 02:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,7 @@ can_output(struct mbuf *m, struct canpcb *canp)
 
 	if (m->m_len <= ifp->if_mtu) {
 		can_output_cnt++;
-		return ifq_enqueue(ifp, m);
+		return if_enqueue(ifp, m);
 	} else
 		return EMSGSIZE;
 }

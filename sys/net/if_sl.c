@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.136 2022/10/26 23:42:42 riastradh Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.136.6.1 2023/11/15 02:08:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.136 2022/10/26 23:42:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.136.6.1 2023/11/15 02:08:34 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -528,7 +528,7 @@ sloutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	if ((ip->ip_tos & IPTOS_LOWDELAY) != 0)
 		ifq = &sc->sc_fastq;
 #endif
-	if ((error = ifq_enqueue2(ifp, ifq, m)) != 0) {
+	if ((error = if_enqueue2(ifp, ifq, m)) != 0) {
 		splx(s);
 		return error;
 	}

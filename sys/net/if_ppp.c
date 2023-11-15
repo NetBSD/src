@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.172 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.172.8.1 2023/11/15 02:08:34 thorpej Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.172 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.172.8.1 2023/11/15 02:08:34 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -1019,7 +1019,7 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		sc->sc_npqtail = &m0->m_nextpkt;
 	} else {
 		ifq = (m0->m_flags & M_HIGHPRI) ? &sc->sc_fastq : NULL;
-		if ((error = ifq_enqueue2(&sc->sc_if, ifq, m0)) != 0) {
+		if ((error = if_enqueue2(&sc->sc_if, ifq, m0)) != 0) {
 			splx(s);
 			if_statinc(&sc->sc_if, if_oerrors);
 			sc->sc_stats.ppp_oerrors++;
@@ -1071,7 +1071,7 @@ ppp_requeue(struct ppp_softc *sc)
 			*mpp = m->m_nextpkt;
 			m->m_nextpkt = NULL;
 			ifq = (m->m_flags & M_HIGHPRI) ? &sc->sc_fastq : NULL;
-			if ((error = ifq_enqueue2(&sc->sc_if, ifq, m)) != 0) {
+			if ((error = if_enqueue2(&sc->sc_if, ifq, m)) != 0) {
 				if_statinc(&sc->sc_if, if_oerrors);
 				sc->sc_stats.ppp_oerrors++;
 			}
