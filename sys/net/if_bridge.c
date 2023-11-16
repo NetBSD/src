@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.189.6.1 2023/11/11 13:16:30 thorpej Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.189.6.1.2.1 2023/11/16 05:02:23 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.189.6.1 2023/11/11 13:16:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.189.6.1.2.1 2023/11/16 05:02:23 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1488,18 +1488,18 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	}
 
 #ifdef ALTQ
-	KERNEL_LOCK(1, NULL);
 	/*
 	 * If ALTQ is enabled on the member interface, do
 	 * classification; the queueing discipline might
 	 * not require classification, but might require
 	 * the address family/header pointer in the pktattr.
 	 */
+	mutex_enter(dst_ifp->if_snd.ifq_lock);
 	if (ALTQ_IS_ENABLED(&dst_ifp->if_snd)) {
 		/* XXX IFT_ETHER */
-		altq_etherclassify(dst_ifp->if_snd.ifq_altq, m);
+		altq_etherclassify(&dst_ifp->if_snd, m);
 	}
-	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(dst_ifp->if_snd.ifq_lock);
 #endif /* ALTQ */
 
 	if (vlan_has_tag(m) &&

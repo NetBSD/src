@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.171.2.1 2023/11/11 13:16:30 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.171.2.1.2.1 2023/11/16 05:02:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.171.2.1 2023/11/11 13:16:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.171.2.1.2.1 2023/11/16 05:02:23 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1275,23 +1275,19 @@ vlan_start(struct ifnet *ifp)
 
 #ifdef ALTQ
 		/*
-		 * KERNEL_LOCK is required for ALTQ even if NET_MPSAFE is
-		 * defined.
-		 */
-		KERNEL_LOCK(1, NULL);
-		/*
 		 * If ALTQ is enabled on the parent interface, do
 		 * classification; the queueing discipline might
 		 * not require classification, but might require
 		 * the address family/header pointer in the pktattr.
 		 */
+		mutex_enter(p->if_snd.ifq_lock);
 		if (ALTQ_IS_ENABLED(&p->if_snd)) {
 			KASSERT(
 			    p->if_type == IFT_ETHER ||
 			    p->if_type == IFT_L2TP);
-			altq_etherclassify(p->if_snd.ifq_altq, m);
+			altq_etherclassify(&p->if_snd, m);
 		}
-		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(p->if_snd.ifq_lock);
 #endif /* ALTQ */
 
 		bpf_mtap(ifp, m, BPF_D_OUT);
