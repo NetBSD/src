@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.18 2022/06/26 17:55:24 riastradh Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.18.8.1 2023/11/16 05:13:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -245,7 +245,7 @@ static inline int
 lagg_port_xmit(struct lagg_port *lp, struct mbuf *m)
 {
 
-	return if_transmit_lock(lp->lp_ifp, m);
+	return if_enqueue(lp->lp_ifp, m);
 }
 
 static inline bool

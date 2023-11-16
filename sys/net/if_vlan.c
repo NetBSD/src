@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.171.2.1.2.1 2023/11/16 05:02:23 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.171.2.1.2.2 2023/11/16 05:13:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.171.2.1.2.1 2023/11/16 05:02:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.171.2.1.2.2 2023/11/16 05:13:13 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1318,7 +1318,7 @@ vlan_start(struct ifnet *ifp)
 			continue;
 		}
 
-		error = if_transmit_lock(p, m);
+		error = if_enqueue(p, m);
 		if (error) {
 			/* mbuf is already freed */
 			if_statinc(ifp, if_oerrors);
@@ -1416,7 +1416,7 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 		goto out;
 	}
 
-	error = if_transmit_lock(p, m);
+	error = if_enqueue(p, m);
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (error) {
 		/* mbuf is already freed */

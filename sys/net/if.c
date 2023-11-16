@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.529.2.1.2.3 2023/11/15 02:19:00 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.529.2.1.2.4 2023/11/16 05:13:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008, 2023 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1.2.3 2023/11/15 02:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1.2.4 2023/11/16 05:13:13 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3796,31 +3796,6 @@ out:
 	return error;
 }
 
-int
-if_transmit_lock(struct ifnet *ifp, struct mbuf *m)
-{
-	int error;
-
-	kmsan_check_mbuf(m);
-
-#ifdef ALTQ
-	KERNEL_LOCK(1, NULL);
-	if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
-		error = if_transmit(ifp, m);
-		KERNEL_UNLOCK_ONE(NULL);
-	} else {
-		KERNEL_UNLOCK_ONE(NULL);
-		error = (*ifp->if_transmit)(ifp, m);
-		/* mbuf is already freed */
-	}
-#else /* !ALTQ */
-	error = (*ifp->if_transmit)(ifp, m);
-	/* mbuf is already freed */
-#endif /* !ALTQ */
-
-	return error;
-}
-
 /*
  * ifq_init --
  *
@@ -4426,17 +4401,6 @@ ifq_classify_packet(struct ifqueue * const ifq, struct mbuf * const m,
 #endif /* ALTQ */
 }
 
-/*
- * Queue message on interface, and start output if interface
- * not yet active.
- */
-int
-if_enqueue(struct ifnet *ifp, struct mbuf *m)
-{
-
-	return if_transmit_lock(ifp, m);
-}
-
 #ifdef ALTQ
 static void
 ifq_lock2(struct ifqueue * const ifq0, struct ifqueue * const ifq1)
@@ -4451,6 +4415,35 @@ ifq_lock2(struct ifqueue * const ifq0, struct ifqueue * const ifq1)
 	}
 }
 #endif /* ALTQ */
+
+/*
+ * Queue message on interface, and start output if interface
+ * not yet active.
+ */
+int
+if_enqueue(struct ifnet *ifp, struct mbuf *m)
+{
+	int error;
+
+	kmsan_check_mbuf(m);
+
+#ifdef ALTQ
+	KERNEL_LOCK(1, NULL);
+	if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
+		error = if_transmit(ifp, m);
+		KERNEL_UNLOCK_ONE(NULL);
+	} else {
+		KERNEL_UNLOCK_ONE(NULL);
+		error = (*ifp->if_transmit)(ifp, m);
+		/* mbuf is already freed */
+	}
+#else /* !ALTQ */
+	error = (*ifp->if_transmit)(ifp, m);
+	/* mbuf is already freed */
+#endif /* !ALTQ */
+
+	return error;
+}
 
 /*
  * Queue message on interface, possibly using a second fast queue

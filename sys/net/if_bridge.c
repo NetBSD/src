@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.189.6.1.2.1 2023/11/16 05:02:23 thorpej Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.189.6.1.2.2 2023/11/16 05:13:13 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.189.6.1.2.1 2023/11/16 05:02:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.189.6.1.2.2 2023/11/16 05:13:13 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1515,7 +1515,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	len = m->m_pkthdr.len;
 	mflags = m->m_flags;
 
-	error = if_transmit_lock(dst_ifp, m);
+	error = if_enqueue(dst_ifp, m);
 	if (error) {
 		/* mbuf is already freed */
 		if_statinc(&sc->sc_if, if_oerrors);
