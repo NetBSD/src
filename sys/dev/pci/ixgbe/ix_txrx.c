@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.107 2023/11/14 03:03:18 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.108 2023/11/16 05:39:08 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.107 2023/11/14 03:03:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.108 2023/11/16 05:39:08 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1506,10 +1506,10 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	ixgbe_free_receive_ring(rxr);
 
 	/* Now replenish the mbufs */
-	for (int j = 0; j != rxr->num_desc; ++j) {
+	for (int i = 0; i < rxr->num_desc; i++) {
 		struct mbuf *mp;
 
-		rxbuf = &rxr->rx_buffers[j];
+		rxbuf = &rxr->rx_buffers[i];
 
 #ifdef DEV_NETMAP
 		/*
@@ -1520,14 +1520,14 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		 * an mbuf, so end the block with a continue;
 		 */
 		if ((sc->feat_en & IXGBE_FEATURE_NETMAP) && slot) {
-			int sj = netmap_idx_n2k(na->rx_rings[rxr->me], j);
+			int sj = netmap_idx_n2k(na->rx_rings[rxr->me], i);
 			uint64_t paddr;
 			void *addr;
 
 			addr = PNMB(na, slot + sj, &paddr);
 			netmap_load_map(na, rxr->ptag, rxbuf->pmap, addr);
 			/* Update descriptor and the cached value */
-			rxr->rx_base[j].read.pkt_addr = htole64(paddr);
+			rxr->rx_base[i].read.pkt_addr = htole64(paddr);
 			rxbuf->addr = htole64(paddr);
 			continue;
 		}
@@ -1559,7 +1559,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		bus_dmamap_sync(rxr->ptag->dt_dmat, rxbuf->pmap,
 		    0, mp->m_pkthdr.len, BUS_DMASYNC_PREREAD);
 		/* Update the descriptor and the cached value */
-		rxr->rx_base[j].read.pkt_addr =
+		rxr->rx_base[i].read.pkt_addr =
 		    htole64(rxbuf->pmap->dm_segs[0].ds_addr);
 		rxbuf->addr = htole64(rxbuf->pmap->dm_segs[0].ds_addr);
 	}
