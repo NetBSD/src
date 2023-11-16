@@ -1,4 +1,4 @@
-/*	$NetBSD: if_altq.h,v 1.16.4.1 2023/11/11 13:16:30 thorpej Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.16.4.1.2.1 2023/11/16 05:02:23 thorpej Exp $	*/
 /*	$KAME: if_altq.h,v 1.12 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ extern int altq_disable(struct ifaltq *);
 extern struct mbuf *tbr_dequeue(struct ifaltq *, int);
 extern int (*altq_input)(struct mbuf *, int);
 #if 1 /* ALTQ3_CLFIER_COMPAT */
-void altq_etherclassify(struct ifaltq *, struct mbuf *);
+void altq_etherclassify(struct ifqueue *, struct mbuf *);
 #endif
 #endif /* _KERNEL */
 

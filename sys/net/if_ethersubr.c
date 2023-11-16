@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.326.2.1.2.1 2023/11/15 02:08:34 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.326.2.1.2.2 2023/11/16 05:02:23 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.326.2.1.2.1 2023/11/15 02:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.326.2.1.2.2 2023/11/16 05:02:23 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -447,16 +447,16 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #endif
 
 #ifdef ALTQ
-	KERNEL_LOCK(1, NULL);
 	/*
 	 * If ALTQ is enabled on the parent interface, do
 	 * classification; the queueing discipline might not
 	 * require classification, but might require the
 	 * address family/header pointer in the pktattr.
 	 */
+	mutex_enter(ifp->if_snd.ifq_lock);
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
-		altq_etherclassify(ifp->if_snd.ifq_altq, m);
-	KERNEL_UNLOCK_ONE(NULL);
+		altq_etherclassify(&ifp->if_snd, m);
+	mutex_exit(ifp->if_snd.ifq_lock);
 #endif
 	return if_enqueue(ifp, m);
 
@@ -477,8 +477,9 @@ bad:
  * is indeed contiguous, then to read the LLC and so on.
  */
 void
-altq_etherclassify(struct ifaltq *ifq, struct mbuf *m)
+altq_etherclassify(struct ifqueue *ifq, struct mbuf *m)
 {
+	struct ifaltq *altq = ifq->ifq_altq;
 	struct ether_header *eh;
 	struct mbuf *mtop = m;
 	uint16_t ether_type;
@@ -486,6 +487,18 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m)
 	void *hdr;
 
 	KASSERT((mtop->m_flags & M_PKTHDR) != 0);
+
+	/*
+	 * Release the ifqueue lock so that we can acquire the
+	 * KERNEL_LOCK in the right order.
+	 */
+	mutex_exit(ifq->ifq_lock);
+	KERNEL_LOCK(1, NULL);
+	mutex_enter(ifq->ifq_lock);
+
+	if (!ALTQ_IS_ENABLED(ifq)) {
+		goto bad;
+	}
 
 	hlen = ETHER_HDR_LEN;
 	eh = mtod(m, struct ether_header *);
@@ -552,7 +565,7 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m)
 
 	if (ALTQ_NEEDS_CLASSIFY(ifq)) {
 		mtop->m_pkthdr.pattr_class =
-		    (*ifq->altq_classify)(ifq->altq_clfier, m, af);
+		    (*altq->altq_classify)(altq->altq_clfier, m, af);
 	}
 	mtop->m_pkthdr.pattr_af = af;
 	mtop->m_pkthdr.pattr_hdr = hdr;
@@ -560,9 +573,11 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m)
 	m->m_data -= hlen;
 	m->m_len += hlen;
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return;
 
 bad:
+	KERNEL_UNLOCK_ONE(NULL);
 	mtop->m_pkthdr.pattr_class = NULL;
 	mtop->m_pkthdr.pattr_hdr = NULL;
 	mtop->m_pkthdr.pattr_af = AF_UNSPEC;
