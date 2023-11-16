@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.529.2.1.2.4 2023/11/16 05:13:13 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.529.2.1.2.5 2023/11/16 14:45:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008, 2023 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1.2.4 2023/11/16 05:13:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529.2.1.2.5 2023/11/16 14:45:40 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -231,7 +231,7 @@ static int sysctl_if_watchdog(SYSCTLFN_PROTO);
 static void sysctl_watchdog_setup(struct ifnet *);
 static void if_attachdomain1(struct ifnet *);
 static int ifconf(u_long, void *);
-static int if_transmit(struct ifnet *, struct mbuf *);
+static int if_transmit_default(struct ifnet *, struct mbuf *);
 static int if_clone_create(const char *);
 static int if_clone_destroy(const char *);
 static void if_link_state_change_work(struct work *, void *);
@@ -809,7 +809,7 @@ if_register(ifnet_t *ifp)
 	}
 
 	if (ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit)
-		ifp->if_transmit = if_transmit;
+		ifp->if_transmit = if_transmit_default;
 
 	IFNET_GLOBAL_LOCK();
 	TAILQ_INSERT_TAIL(&ifnet_list, ifp, if_list);
@@ -1067,7 +1067,7 @@ if_snd_is_used(struct ifnet *ifp)
 {
 
 	return ALTQ_IS_ENABLED(&ifp->if_snd) ||
-	    ifp->if_transmit == if_transmit ||
+	    ifp->if_transmit == if_transmit_default ||
 	    ifp->if_transmit == NULL ||
 	    ifp->if_transmit == if_nulltransmit;
 }
@@ -3765,38 +3765,6 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 }
 
 /*
- * wrapper function for the drivers which doesn't have if_transmit().
- */
-static int
-if_transmit(struct ifnet *ifp, struct mbuf *m)
-{
-	int error;
-	size_t pktlen = m->m_pkthdr.len;
-	bool mcast = (m->m_flags & M_MCAST) != 0;
-
-	const int s = splnet();
-
-	IFQ_ENQUEUE(&ifp->if_snd, m, error);
-	if (error != 0) {
-		/* mbuf is already freed */
-		goto out;
-	}
-
-	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statadd_ref(nsr, if_obytes, pktlen);
-	if (mcast)
-		if_statinc_ref(nsr, if_omcasts);
-	IF_STAT_PUTREF(ifp);
-
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		if_start_lock(ifp);
-out:
-	splx(s);
-
-	return error;
-}
-
-/*
  * ifq_init --
  *
  *	Initialize an interface queue.
@@ -4401,6 +4369,97 @@ ifq_classify_packet(struct ifqueue * const ifq, struct mbuf * const m,
 #endif /* ALTQ */
 }
 
+static void
+if_transmit_tail(struct ifnet *ifp, size_t pktlen, bool mcast)
+{
+	const int s = splnet();			/* XXX */
+
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_obytes, pktlen);
+	if (mcast)
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(ifp);
+
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		if_start_lock(ifp);
+
+	splx(s);
+}
+
+/*
+ * wrapper function for the drivers which doesn't have if_transmit().
+ */
+static int
+if_transmit_default(struct ifnet *ifp, struct mbuf *m)
+{
+	int error;
+	size_t pktlen = m->m_pkthdr.len;
+	bool mcast = (m->m_flags & M_MCAST) != 0;
+
+	error = ifq_put(&ifp->if_snd, m);
+	if (error == 0) {
+		if_transmit_tail(ifp, pktlen, mcast);
+	}
+
+	return error;
+}
+
+/*
+ * Queue message on interface, and start output if interface
+ * not yet active.
+ */
+int
+if_enqueue(struct ifnet *ifp, struct mbuf *m)
+{
+	kmsan_check_mbuf(m);
+
+#ifdef ALTQ
+	mutex_enter(ifp->if_snd.ifq_lock);
+	if (__predict_false(ALTQ_IS_ENABLED(&ifp->if_snd))) {
+		size_t pktlen = m->m_pkthdr.len;
+		bool mcast = (m->m_flags & M_MCAST) != 0;
+		int error;
+
+		/*
+		 * All of this amounts to an elaborate ifq_put_slow()
+		 * that kicks the output queue.
+		 */
+
+		mutex_exit(ifp->if_snd.ifq_lock);
+		KERNEL_LOCK(1, NULL);
+		mutex_enter(ifp->if_snd.ifq_lock);
+		if (__predict_true(ALTQ_IS_ENABLED(&ifp->if_snd))) {
+			ALTQ_ENQUEUE(&ifp->if_snd, m, error);
+			KERNEL_UNLOCK_ONE(NULL);
+			goto finish;
+		}
+		KERNEL_UNLOCK_ONE(NULL);
+		
+		if (__predict_true(ifp->if_transmit == if_transmit_default)) {
+			if (__predict_false(IF_QFULL(&ifp->if_snd))) {
+				error = ENOBUFS;
+			} else {
+				IF_ENQUEUE(&ifp->if_snd, m);
+				error = 0;
+			}
+ finish:
+ 			if (__predict_false(error != 0)) {
+				ifp->if_snd.ifq_drops++;
+				mutex_exit(ifp->if_snd.ifq_lock);
+				m_freem(m);
+				return error;
+			}
+			mutex_exit(ifp->if_snd.ifq_lock);
+			if_transmit_tail(ifp, pktlen, mcast);
+			return 0;
+		}
+	}
+	mutex_exit(ifp->if_snd.ifq_lock);
+#endif /* ALTQ */
+
+	return (*ifp->if_transmit)(ifp, m);
+}
+
 #ifdef ALTQ
 static void
 ifq_lock2(struct ifqueue * const ifq0, struct ifqueue * const ifq1)
@@ -4415,35 +4474,6 @@ ifq_lock2(struct ifqueue * const ifq0, struct ifqueue * const ifq1)
 	}
 }
 #endif /* ALTQ */
-
-/*
- * Queue message on interface, and start output if interface
- * not yet active.
- */
-int
-if_enqueue(struct ifnet *ifp, struct mbuf *m)
-{
-	int error;
-
-	kmsan_check_mbuf(m);
-
-#ifdef ALTQ
-	KERNEL_LOCK(1, NULL);
-	if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
-		error = if_transmit(ifp, m);
-		KERNEL_UNLOCK_ONE(NULL);
-	} else {
-		KERNEL_UNLOCK_ONE(NULL);
-		error = (*ifp->if_transmit)(ifp, m);
-		/* mbuf is already freed */
-	}
-#else /* !ALTQ */
-	error = (*ifp->if_transmit)(ifp, m);
-	/* mbuf is already freed */
-#endif /* !ALTQ */
-
-	return error;
-}
 
 /*
  * Queue message on interface, possibly using a second fast queue
