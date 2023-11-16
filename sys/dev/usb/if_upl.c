@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.77 2022/03/03 05:56:28 riastradh Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.77.8.1 2023/11/16 04:30:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.77 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.77.8.1 2023/11/16 04:30:21 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -270,7 +270,7 @@ upl_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	DPRINTFN(10,("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
 	/* If the queueing discipline needs packet classification, do it now. */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 
 	/*
 	 * Queue message on interface, and start output if interface

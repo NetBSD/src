@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.37.6.1 2023/11/15 02:08:33 thorpej Exp $	*/
+/*	$NetBSD: uhso.c,v 1.37.6.2 2023/11/16 04:30:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.37.6.1 2023/11/15 02:08:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.37.6.2 2023/11/16 04:30:21 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2353,7 +2353,7 @@ uhso_ifnet_output(struct ifnet *ifp, struct mbuf *m,
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return EIO;
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 
 	switch (dst->sa_family) {
 #ifdef INET

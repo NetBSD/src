@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.29 2022/04/04 19:33:45 andvar Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.29.8.1 2023/11/16 04:30:21 thorpej Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.29 2022/04/04 19:33:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.29.8.1 2023/11/16 04:30:21 thorpej Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -771,7 +771,7 @@ dmcoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		goto bad;
 	}
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 
 	switch (dst->sa_family) {
 #ifdef	INET

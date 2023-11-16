@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.85.8.1 2023/11/15 02:08:34 thorpej Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.85.8.2 2023/11/16 04:30:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.85.8.1 2023/11/15 02:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.85.8.2 2023/11/16 04:30:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -134,7 +134,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 * if the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 
 	switch (dst->sa_family) {
 #ifdef INET

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.35 2023/09/26 03:43:27 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.35.4.1 2023/11/16 04:30:22 thorpej Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.35 2023/09/26 03:43:27 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.35.4.1 2023/11/16 04:30:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -621,7 +621,7 @@ if_ipsec_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	int error;
 	int bound;
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 
 	error = if_ipsec_check_nesting(ifp, m);
 	if (error) {

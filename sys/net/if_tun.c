@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.173 2022/03/28 12:33:22 riastradh Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.173.8.1 2023/11/16 04:30:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.173 2022/03/28 12:33:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.173.8.1 2023/11/16 04:30:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -578,7 +578,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 * if the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m0, dst->sa_family);
 
 	bpf_mtap_af(ifp, dst->sa_family, m0, BPF_D_OUT);
 

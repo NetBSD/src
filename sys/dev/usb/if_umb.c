@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.25 2022/08/20 11:32:08 riastradh Exp $ */
+/*	$NetBSD: if_umb.c,v 1.25.8.1 2023/11/16 04:30:21 thorpej Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.25 2022/08/20 11:32:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.25.8.1 2023/11/16 04:30:21 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -873,7 +873,7 @@ umb_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	 * if the queueing discipline needs packet classification,
 	 * do it now.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 
 	/*
 	 * Queue message on interface, and start output if interface

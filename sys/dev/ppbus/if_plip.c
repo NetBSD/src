@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.38 2022/09/04 15:59:08 rjs Exp $ */
+/* $NetBSD: if_plip.c,v 1.38.8.1 2023/11/16 04:30:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.38 2022/09/04 15:59:08 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.38.8.1 2023/11/16 04:30:21 thorpej Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -730,7 +730,7 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto endoutput;
 	}
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 	IFQ_ENQUEUE(&ifp->if_snd, m, err);
 	if (err == 0) {
 		if ((ifp->if_flags & IFF_OACTIVE) == 0)

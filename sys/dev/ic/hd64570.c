@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.57 2022/09/03 02:48:00 thorpej Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.57.8.1 2023/11/16 04:30:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.57 2022/09/03 02:48:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.57.8.1 2023/11/16 04:30:21 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -811,7 +811,7 @@ sca_output(
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 
 	/*
 	 * determine address family, and priority for this packet

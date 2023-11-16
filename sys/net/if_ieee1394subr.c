@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.69 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.69.8.1 2023/11/16 04:30:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.69 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.69.8.1 2023/11/16 04:30:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -104,7 +104,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m0, dst->sa_family);
 
 	/*
 	 * For unicast, we make a tag to store the lladdr of the
