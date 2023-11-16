@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.136.6.1 2023/11/15 02:08:34 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.136.6.2 2023/11/16 04:30:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.136.6.1 2023/11/15 02:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.136.6.2 2023/11/16 04:30:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -477,7 +477,7 @@ sloutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct ifqueue *ifq = NULL;
 	int s, error;
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 
 	/*
 	 * `Cannot happen' (see slioctl).  Someday we will extend

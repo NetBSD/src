@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.305.2.1.2.3 2023/11/15 02:19:00 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.305.2.1.2.4 2023/11/16 04:30:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2023 The NetBSD Foundation, Inc.
@@ -1125,21 +1125,6 @@ do {									\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_SET_READY(ifq)	altq_set_ready(ifq)
-
-#define	IFQ_CLASSIFY(ifq, m, af)					\
-do {									\
-	KASSERT(((m)->m_flags & M_PKTHDR) != 0);			\
-	mutex_enter((ifq)->ifq_lock);					\
-	if (ALTQ_IS_ENABLED(ifq)) {					\
-		if (ALTQ_NEEDS_CLASSIFY(ifq))				\
-			(m)->m_pkthdr.pattr_class =			\
-			    (*(ifq)->ifq_altq->altq_classify)		\
-			    ((ifq)->ifq_altq->altq_clfier, (m), (af));	\
-		(m)->m_pkthdr.pattr_af = (af);				\
-		(m)->m_pkthdr.pattr_hdr = mtod((m), void *);		\
-	}								\
-	mutex_exit((ifq)->ifq_lock);					\
-} while (/*CONSTCOND*/ 0)
 #else /* ! ALTQ */
 #define	IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
@@ -1178,8 +1163,6 @@ do {									\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_SET_READY(ifq)	/* nothing */
-
-#define	IFQ_CLASSIFY(ifq, m, af) /* nothing */
 
 #endif /* ALTQ */
 

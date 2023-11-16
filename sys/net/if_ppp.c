@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.172.8.1 2023/11/15 02:08:34 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.172.8.2 2023/11/16 04:30:22 thorpej Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.172.8.1 2023/11/15 02:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.172.8.2 2023/11/16 04:30:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -887,7 +887,7 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		    goto bad;
 	    }
 
-	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m0, dst->sa_family);
 
 	/*
 	 * Compute PPP header.

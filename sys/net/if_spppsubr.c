@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.267.4.1 2023/11/15 02:08:34 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.267.4.2 2023/11/16 04:30:22 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.267.4.1 2023/11/15 02:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.267.4.2 2023/11/16 04:30:22 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -852,7 +852,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 
 #ifdef INET
 	if (dst->sa_family == AF_INET) {

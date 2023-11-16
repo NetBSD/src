@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.49 2023/11/02 09:43:46 yamaguchi Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.49.4.1 2023/11/16 04:30:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.49 2023/11/02 09:43:46 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.49.4.1 2023/11/16 04:30:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -418,7 +418,7 @@ l2tp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		return ENETDOWN;
 	}
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	ifq_classify_packet(&ifp->if_snd, m, dst->sa_family);
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
