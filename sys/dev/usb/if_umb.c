@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.25.8.1 2023/11/16 04:30:21 thorpej Exp $ */
+/*	$NetBSD: if_umb.c,v 1.25.8.2 2023/11/16 05:13:13 thorpej Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.25.8.1 2023/11/16 04:30:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.25.8.2 2023/11/16 05:13:13 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -879,7 +879,7 @@ umb_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	error = if_transmit_lock(ifp, m);
+	error = if_enqueue(ifp, m);
 
 	return error;
 }

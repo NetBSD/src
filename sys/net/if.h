@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.305.2.1.2.4 2023/11/16 04:30:22 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.305.2.1.2.5 2023/11/16 05:13:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2023 The NetBSD Foundation, Inc.
@@ -1337,8 +1337,6 @@ void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
-
-int	if_transmit_lock(struct ifnet *, struct mbuf *);
 
 int	if_enqueue(struct ifnet *, struct mbuf *);
 int	if_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf *);
