@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.175 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.176 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -13429,6 +13429,40 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[nia 20230211]
 	u3g(4): Add support for ZTE MF112 and D-Link DWM222 3G USB
 		modems [manu 20230213]
+	ftp(1): Add option sslnoverify to control validation of SSL
+		certificates. Certificate validation is now enabled
+		by default. [mlelstv 20230225]
+	ftp(1): Add netrc processing to fetch-mode (URL on command line) to
+		enable options and autologin via netrc. [mlelstv 20230225]
+	tzdata: updated to 2023a (using the 2023agtz fork) [kre 20230323]
+	tzdata: updated to 2023b (using the 2023bgtz fork) [kre 20230324]
+	tzdata: updated to 2023c (using the 2023cgtz fork) [kre 20230331]
+	ftp(1): Add timeout for SSL connection setup, defaulting to 60 seconds.
+		[lukem 20230505]
+	openssl(1): Imported 3.0.8. [christos 20230510]
+	mips: Bump the maximum text size for binaries from 64MB
+		to 128MB. [he 20230514]
+	OpenSSL: Imported 3.0.9. [christos 20230531]
+	pam(8): Disable pam_krb5, pam_ksu by default. [riastradh 20230620]
+	gcc(1): Import GCC 10.5.  [mrg 20230710]
+	amdgpu(4): Enable display core logic. [riastradh 20230714]
 	build: Force MKSTRIPSYM=no if MKDEBUG=yes. [lukem 20230723]
+	x86: Add serial console support to efiboot via raw I/O port
+		access. [rin 20230724]
+	OpenSSH: Import 9.3. [christos 20230726]
+	u3g(4): Add support for D-Link DWM-222 4G LTS USB adapter.
+		[manu 20230804]
+	amd64: Build legacy VIA DRM UMS driver module by default,
+		this allows basic acceleration on VIA integrated graphics
+		with modload(8) viadrmums. [andvar 20230809]
+	libfido2: Import 1.13.0 [christos 20230811]
+	igc(4): Add initial support to Intel I225/I226 series Ethernet devices.
+		[knakahara,rin,msaitoh 20231006]
+	gcc.old: Initial import of major vax toolchain fix by Kalvis Duckmanton.
+		[rin 20231007]
+	eqos(4): Add support for Intel Elkhart Lake internal Ethernet devices.
+		[msaitoh 20231019]
+	OpenSSL: Imported 3.0.12. [christos 20231025]
+	OpenSSH: Import 9.5. [christos 20231025]
 	newsmips: Add support for LCD-MONO framebuffer on NWS-32x0 laptop
 		machines. [tsutsui 20231104]
