@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3018 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3019 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -229,7 +229,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	rc.conf(5): Add support for npf_rules to override the default
 		rules file for npf(7). [abs 20231005]
 	igc(4): Add initial support to Intel I225/I226 series Ethernet devices.
-		[knakahara, rin, msaitoh 20231006]
+		[knakahara,rin,msaitoh 20231006]
 	less: Updated to version 643.  [simonb 20231006]
 	gcc.old: Initial import of major vax toolchain fix by Kalvis Duckmanton.
 		[rin 20231007]
@@ -257,7 +257,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	ena(4): MP-enable always, add RSS support, and reliability fixes.
 		[jdolecek 20231105]
 	gpioirq(4): allow multiple pins per gpioirq instance, add the ability
-	to use a /dev/gpioirqN device to get pin interrupts into userland.
-		[brad 20231105]
-	gpiosim(4): Simulated interrupts
-		[brad 20231108]
+		to use a /dev/gpioirqN device to get pin interrupts into
+		userland. [brad 20231105]
+	gpiosim(4): Simulated interrupts [brad 20231108]
