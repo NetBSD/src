@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3020 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3021 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -42,11 +42,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		prohibit PKE, Protection Key Enable, which requires
 		some additional management of CPU state by nvmm. 
 		[riastradh 20230223]
-	ftp(1): Add option sslnoverify to control validation of SSL
-		certificates. Certificate validation is now enabled
-		by default. [mlelstv 20230225]
-	ftp(1): Add netrc processing to fetch-mode (URL on command line) to
-		enable options and autologin via netrc. [mlelstv 20230225]
 	aarch64: Audit use of curcpu(9). [riastradh 20230225]
 	xen: Memory barrier audit. Reduce unnecessary membars.
 		[riastradh 20230225]
@@ -58,15 +53,12 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		Issue 8 requirements. [kre 20230306]
 	libm: Add more long double transcendental functions (as aliases of
 		double functions) from C99. [riastradh 20230313]
-	tzdata: updated to 2023a (using the 2023agtz fork) [kre 20230323]
-	tzdata: updated to 2023b (using the 2023bgtz fork) [kre 20230324]
 	xen: Allow a PVH dom0 to use VGA as console. [bouyer 20230324]
 	vioscsi(4), viornd(4), viomb(4): Mark VirtIO drivers as MPSAFE.
 		[mlelstv 20230325]
 	amiga: Fix bootblocks for Kickstart 3.2. [abs 20230325]
 	libc: Add __atomic_is_lock_free to help stdatomic.h usage with
 		GCC. [riastradh 20230330]
-	tzdata: updated to 2023c (using the 2023cgtz fork) [kre 20230331]
 	vacation(1): Check 'Auto-Submitted:' header in addition to
 		'Precedence:', and set 'Precedence:' in addition to
 		'Auto-Submitted:'.  [hauke 20230411]
@@ -87,18 +79,13 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	chown(8): Add a -d flag to avoid changing a file's owner/group to the
 		current value.  This avoids some unnecessary operations on the
 		file. [pgoyette 20230504]
-	ftp(1): Add timeout for SSL connection setup, defaulting to 60 seconds.
-		[lukem 20230505]
 	riscv: Add RISC-V support that works on QEMU with a single hart.
 		[skrll 20230507]
 	riscv: Add Google Goldfish RTC driver. [skrll 20230508]
-	openssl(1): Imported 3.0.8. [christos 20230510]
 	make(1): Make :mtime operate on each word in variable
 		value. [sjg 20230510]
 	worms(6): When using -H, make the appearance of the worm head
 		depend upon the body (more than it did before). [kre 20230512]
-	mips: Bump the maximum text size for binaries from 64MB
-		to 128MB. [he 20230514]
 	amiga: Update loadbsd source and distribution binary to version 3.3.
 		[phx 20230514]
 	i386: Add /dev/efi device. [riastradh 20230522]
@@ -112,7 +99,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	pax(1): Exit 0 if stdin filelist is used and no files are supplied.
 		Don't overwrite existing destination files if -r -w copy
 		fails for any reason. [lukem 20230528]
-	OpenSSL: Imported 3.0.9. [christos 20230531]
 	date(1): Add -R option for displaying time in RFC 5322 format,
 		similar to GNU date. [kim 20230531]
 	mk.conf(5): Obsolete non-MK variants MANZ UNPRIVED UPDATE
@@ -126,7 +112,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	indent(1): Remove support for handling ASCII backspace characters
 		in C code. [rillig 20230618]
 	make(1): Recognize include guards. [rillig 20230619]
-	pam(8): Disable pam_krb5, pam_ksu by default. [riastradh 20230620]
 	editline(3): Install pkg-config files, same as the portable version.
 		[wiz 20230620]
 	make(1): Speed up pattern matching in the ':M' and ':N' modifiers.
@@ -169,22 +154,17 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[rin 20230710]
 	kern: Add memfd_create(2) system call from GSoC 2023 by
 		Theodore Preduta.  [christos 20230710]
-	gcc(1): Import GCC 10.5.  [mrg 20230710]
 	refuse(3): Allow programs using the 3.5, 3.6, and 3.7 FUSE APIs
 		to function at runtime. [pho 20230714]
-	amdgpu(4): Enable display core logic. [riastradh 20230714]
 	pckbd(4): Work around buggy Chromebook PS/2 keyboard firmware.
 		(from Vladimir 'phcoder' Serbinenko). [christos 20230716]
 	acpiec(4): New ACPIEC_DEBUG option. [riastradh 20230718]
 	dhcpcd: Import version 10.0.2. [roy 20230719]
 	bta2dpd(8): Add throttle when playing from file. [nat 20230720]
 	xen: Enable MKCTF=yes by default. [riastradh 20230721]
-	x86: Add serial console support to efiboot via raw I/O port
-		access. [rin 20230724]
 	x86: Turn off Zenbleed chicken bit on Zen2 CPUs. [mrg 20230725]
 	evbmips: Allow ramdisk to handle GPT wedges. [gutteridge 20230725]
 	xbd(4): Properly handle 4k sector size backends. [bouyer 20230725]
-	OpenSSH: Import 9.3. [christos 20230726]
 	iostat(8): Add -X option, limited alternative statistics.
 		This is like the "-D" option, except it skips the xfers/s, and
 		reports MB/s instead of KB/s.  Allows for ~50% more devices to
@@ -197,14 +177,8 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	libc: Add wmempcpy(3).  [christos 20230731]
 	libc: Add companion mempcpy(3) to wmempcpy(3).
 		[christos 20230801]
-	u3g(4): Add support for D-Link DWM-222 4G LTS USB adapter.
-		[manu 20230804]
-	amd64: Build legacy VIA DRM UMS driver module by default,
-		this allows basic acceleration on VIA integrated graphics
-		with modload(8) viadrmums. [andvar 20230809]
 	all: Fix many small bugs found by GCC 12. [mrg 20230810]
 	gdb(1): Updated to 13.2. [christos 20230811]
-	libfido2: Import 1.13.0 [christos 20230811]
 	vis(3): Fixed many implementation issues, expand tests.
 		[riastradh 20230812]
 	libpcap: Import 1.10.4. [christos 20230817]
@@ -227,11 +201,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[oster 20230921]
 	rc.conf(5): Add support for npf_rules to override the default
 		rules file for npf(7). [abs 20231005]
-	igc(4): Add initial support to Intel I225/I226 series Ethernet devices.
-		[knakahara,rin,msaitoh 20231006]
 	less: Updated to version 643.  [simonb 20231006]
-	gcc.old: Initial import of major vax toolchain fix by Kalvis Duckmanton.
-		[rin 20231007]
 	ddb(4): Add some simple show commands: condvar, selinfo, sleepq
 		[ad 20231007]
 	mips: Add fma(3) to libm. [he 20231008]
@@ -248,11 +218,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	lagg(4): Copy the MTU of lagg to interfaces added to lagg
 		[yamaguchi 20231018]
 	dhcpcd: Import version 10.0.4. [roy 20231019]
-	eqos(4): Add support for Intel Elkhart Lake internal Ethernet devices.
-		[msaitoh 20231019]
 	top(1): Add network in & out bytes to the top display. [mrg 20231021]
-	OpenSSL: Imported 3.0.12. [christos 20231025]
-	OpenSSH: Import 9.5. [christos 20231025]
 	ena(4): MP-enable always, add RSS support, and reliability fixes.
 		[jdolecek 20231105]
 	gpioirq(4): allow multiple pins per gpioirq instance, add the ability
