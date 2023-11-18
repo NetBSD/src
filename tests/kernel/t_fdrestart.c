@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdrestart.c,v 1.3 2023/10/15 15:18:17 riastradh Exp $	*/
+/*	$NetBSD: t_fdrestart.c,v 1.4 2023/11/18 19:46:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* ERESTART */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdrestart.c,v 1.3 2023/10/15 15:18:17 riastradh Exp $");
+__RCSID("$NetBSD: t_fdrestart.c,v 1.4 2023/11/18 19:46:55 riastradh Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -198,7 +198,6 @@ ATF_TC_BODY(pipe_read, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &doread;
 	F->fd = fd[0];
-	atf_tc_expect_fail("PR kern/57659");
 	testfdrestart(F);
 }
 
@@ -240,7 +239,6 @@ ATF_TC_BODY(socketpair_read, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &doread;
 	F->fd = fd[0];
-	atf_tc_expect_fail("PR kern/57659");
 	testfdrestart(F);
 }
 
@@ -261,7 +259,6 @@ ATF_TC_BODY(socketpair_write, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &dowrite;
 	F->fd = fd[0];
-	atf_tc_expect_fail("PR kern/57659");
 	testfdrestart(F);
 }
 
