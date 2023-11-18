@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1068 2023/11/02 06:09:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1069 2023/11/18 20:19:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1068 2023/11/02 06:09:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1069 2023/11/18 20:19:08 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3236,7 +3236,6 @@ static ApplyModifierResult
 ApplyModifier_Words(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
-	const char *estr;
 	int first, last;
 	const char *p;
 	LazyBuf estrBuf;
@@ -3246,7 +3245,7 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 	if (!ParseModifierPart(pp, ']', expr->emode, ch, &estrBuf))
 		return AMR_CLEANUP;
 	festr = LazyBuf_DoneGet(&estrBuf);
-	estr = festr.str;
+	p = festr.str;
 
 	if (!IsDelimiter(**pp, ch))
 		goto bad_modifier;		/* Found junk after ']' */
@@ -3254,13 +3253,13 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 	if (!ModChain_ShouldEval(ch))
 		goto ok;
 
-	if (estr[0] == '\0')
-		goto bad_modifier;			/* Found ":[]". */
+	if (p[0] == '\0')
+		goto bad_modifier;		/* Found ":[]". */
 
-	if (estr[0] == '#' && estr[1] == '\0') {	/* Found ":[#]" */
-		if (ch->oneBigWord) {
+	if (strcmp(p, "#") == 0) {		/* Found ":[#]" */
+		if (ch->oneBigWord)
 			Expr_SetValueRefer(expr, "1");
-		} else {
+		else {
 			Buffer buf;
 
 			SubstringWords words = Expr_Words(expr);
@@ -3275,49 +3274,37 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 		goto ok;
 	}
 
-	if (estr[0] == '*' && estr[1] == '\0') {	/* Found ":[*]" */
+	if (strcmp(p, "*") == 0) {		/* ":[*]" */
 		ch->oneBigWord = true;
 		goto ok;
 	}
 
-	if (estr[0] == '@' && estr[1] == '\0') {	/* Found ":[@]" */
+	if (strcmp(p, "@") == 0) {		/* ":[@]" */
 		ch->oneBigWord = false;
 		goto ok;
 	}
 
-	/*
-	 * We expect estr to contain a single integer for :[N], or two
-	 * integers separated by ".." for :[start..end].
-	 */
-	p = estr;
+	/* Expect ":[N]" or ":[start..end]" */
 	if (!TryParseIntBase0(&p, &first))
-		goto bad_modifier;	/* Found junk instead of a number */
+		goto bad_modifier;
 
-	if (p[0] == '\0') {		/* Found only one integer in :[N] */
+	if (p[0] == '\0')			/* ":[N]" */
 		last = first;
-	} else if (p[0] == '.' && p[1] == '.' && p[2] != '\0') {
-		/* Expecting another integer after ".." */
+	else if (strncmp(p, "..", 2) == 0) {
 		p += 2;
 		if (!TryParseIntBase0(&p, &last) || *p != '\0')
-			goto bad_modifier; /* Found junk after ".." */
+			goto bad_modifier;
 	} else
-		goto bad_modifier;	/* Found junk instead of ".." */
+		goto bad_modifier;
 
-	/*
-	 * Now first and last are properly filled in, but we still have to
-	 * check for 0 as a special case.
-	 */
-	if (first == 0 && last == 0) {
-		/* ":[0]" or perhaps ":[0..0]" */
+	if (first == 0 && last == 0) {		/* ":[0]" or ":[0..0]" */
 		ch->oneBigWord = true;
 		goto ok;
 	}
 
-	/* ":[0..N]" or ":[N..0]" */
-	if (first == 0 || last == 0)
+	if (first == 0 || last == 0)		/* ":[0..N]" or ":[N..0]" */
 		goto bad_modifier;
 
-	/* Normal case: select the words described by first and last. */
 	Expr_SetValueOwn(expr,
 	    VarSelectWords(Expr_Str(expr), first, last,
 		ch->sep, ch->oneBigWord));
