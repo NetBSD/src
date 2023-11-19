@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1069 2023/11/18 20:19:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1070 2023/11/19 09:45:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1069 2023/11/18 20:19:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1070 2023/11/19 09:45:19 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -615,13 +615,8 @@ ExportVarEnv(Var *v)
 		return true;
 	}
 
-	if (v->inUse) {
-		/*
-		 * We recursed while exporting in a child.
-		 * This isn't going to end well, just skip it.
-		 */
-		return false;
-	}
+	if (v->inUse)
+		return false;	/* see EMPTY_SHELL in directive-export.mk */
 
 	/* XXX: name is injected without escaping it */
 	expr = str_concat3("${", name, "}");
