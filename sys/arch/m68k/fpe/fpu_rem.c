@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.17 2015/02/05 12:22:06 isaki Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.18 2023/11/19 03:58:15 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.17 2015/02/05 12:22:06 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.18 2023/11/19 03:58:15 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.17 2015/02/05 12:22:06 isaki Exp $");
  *                signQ := signX EOR signY. Record whether MOD or REM
  *                is requested.
  *
- *       Step 2.  Set L := expo(X)-expo(Y), k := 0, Q := 0.
+ *       Step 2.  Set L := expo(X)-expo(Y), Q := 0.
  *                If (L < 0) then
  *                   R := X, go to Step 4.
  *                else
@@ -59,8 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.17 2015/02/05 12:22:06 isaki Exp $");
  *            3.1 If R = Y, then { Q := Q + 1, R := 0, go to Step 7. }
  *            3.2 If R > Y, then { R := R - Y, Q := Q + 1}
  *            3.3 If j = 0, go to Step 4.
- *            3.4 k := k + 1, j := j - 1, Q := 2Q, R := 2R. Go to
- *                Step 3.1.
+ *            3.4 j := j - 1, Q := 2Q, R := 2R. Go to Step 3.1.
  *
  *       Step 4.  R := signX*R.
  *
@@ -105,7 +104,7 @@ __fpu_modrem(struct fpemu *fe, int is_mod)
 	static struct fpn X, Y;
 	struct fpn *x, *y, *r;
 	uint32_t signX, signY, signQ;
-	int j, k, l, q;
+	int j, l, q;
 	int cmp;
 
 	if (ISNAN(&fe->fe_f1) || ISNAN(&fe->fe_f2))
@@ -138,7 +137,6 @@ __fpu_modrem(struct fpemu *fe, int is_mod)
 	 * Step 2
 	 */
 	l = x->fp_exp - y->fp_exp;
-	k = 0;
 	CPYFPN(r, x);
 	if (l >= 0) {
 		r->fp_exp -= l;
@@ -168,7 +166,6 @@ __fpu_modrem(struct fpemu *fe, int is_mod)
 				goto Step4;
 
 			/* Step 3.4 */
-			k++;
 			j--;
 			q += q;
 			r->fp_exp++;
