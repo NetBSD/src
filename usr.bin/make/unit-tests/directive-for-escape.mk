@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.22 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.23 2023/11/19 22:32:44 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -156,7 +156,7 @@ NUMBERS=	one two three
 .endfor
 
 # Before for.c 1.173 from 2023-05-08, the name of the iteration variable
-# could contain braces, which allowed to replace sequences of variable
+# could contain braces, which allowed to replace sequences of
 # expressions.  This possibility was neither intended nor documented.
 BASENAME=	one
 EXT=		.c

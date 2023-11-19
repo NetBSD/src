@@ -1,4 +1,4 @@
-# $NetBSD: dep-var.mk,v 1.9 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: dep-var.mk,v 1.10 2023/11/19 22:32:44 rillig Exp $
 #
 # Tests for variable references in dependency declarations.
 #
@@ -63,7 +63,7 @@ INDIRECT_3=	indirect
 UNDEF1=	undef1
 DEF2=	def2
 
-# Cover the code in SuffExpandChildren that deals with malformed variable
+# Cover the code in SuffExpandChildren that deals with malformed
 # expressions.
 #
 # This seems to be an edge case that never happens in practice, and it would

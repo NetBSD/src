@@ -1,4 +1,4 @@
-# $NetBSD: varparse-errors.mk,v 1.10 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: varparse-errors.mk,v 1.11 2023/11/19 22:32:44 rillig Exp $
 
 # Tests for parsing and evaluating all kinds of expressions.
 #
@@ -17,7 +17,7 @@ INDIRECT=	An ${:Uindirect} value.
 
 REF_UNDEF=	A reference to an ${UNDEF}undefined variable.
 
-ERR_UNCLOSED=	An ${UNCLOSED variable expression.
+ERR_UNCLOSED=	An ${UNCLOSED expression.
 
 ERR_BAD_MOD=	An ${:Uindirect:Z} expression with an unknown modifier.
 
