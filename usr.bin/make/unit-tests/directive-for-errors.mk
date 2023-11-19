@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-errors.mk,v 1.6 2023/06/01 20:56:35 rillig Exp $
+# $NetBSD: directive-for-errors.mk,v 1.7 2023/11/19 21:47:52 rillig Exp $
 #
 # Tests for error handling in .for loops.
 
@@ -35,7 +35,7 @@
 #
 # The '$$' was not replaced with the values '1' or '3' from the .for loop,
 # instead it was kept as-is, and when the .info directive expanded its
-# argument, each '$$' got replaced with a single '$'.  The "long variable
+# argument, each '$$' got replaced with a single '$'.  The "long
 # expression" ${$} got replaced though, even though this would be a parse
 # error everywhere outside a .for loop.
 ${:U\$}=	dollar		# see whether the "variable" '$' is local

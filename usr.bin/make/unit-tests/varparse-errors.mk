@@ -1,6 +1,6 @@
-# $NetBSD: varparse-errors.mk,v 1.9 2023/06/01 20:56:35 rillig Exp $
+# $NetBSD: varparse-errors.mk,v 1.10 2023/11/19 21:47:52 rillig Exp $
 
-# Tests for parsing and evaluating all kinds of variable expressions.
+# Tests for parsing and evaluating all kinds of expressions.
 #
 # This is the basis for redesigning the error handling in Var_Parse and
 # Var_Subst, collecting typical and not so typical use cases.
@@ -23,7 +23,7 @@ ERR_BAD_MOD=	An ${:Uindirect:Z} expression with an unknown modifier.
 
 ERR_EVAL=	An evaluation error ${:Uvalue:C,.,\3,}.
 
-# In a conditional, a variable expression that is not enclosed in quotes is
+# In a conditional, an expression that is not enclosed in quotes is
 # expanded using the mode VARE_UNDEFERR.
 # The variable itself must be defined.
 # It may refer to undefined variables though.

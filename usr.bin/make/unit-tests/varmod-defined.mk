@@ -1,4 +1,4 @@
-# $NetBSD: varmod-defined.mk,v 1.15 2023/11/02 05:40:49 rillig Exp $
+# $NetBSD: varmod-defined.mk,v 1.16 2023/11/19 21:47:52 rillig Exp $
 #
 # Tests for the :D variable modifier, which returns the given string
 # if the variable is defined.  It is closely related to the :U modifier.
@@ -46,10 +46,10 @@ DEF=	defined
 .  error
 .endif
 
-# Like in several other places in variable expressions, when
+# Like in several other places in expressions, when
 # ApplyModifier_Defined calls Var_Parse, double dollars lead to a parse
 # error that is silently ignored.  This makes all dollar signs disappear,
-# except for the last, which is a well-formed variable expression.
+# except for the last, which is a well-formed expression.
 #
 .if ${DEF:D$$$$$${DEF}} != "defined"
 .  error

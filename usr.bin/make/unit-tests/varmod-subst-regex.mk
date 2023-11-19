@@ -1,4 +1,4 @@
-# $NetBSD: varmod-subst-regex.mk,v 1.7 2021/06/21 08:17:39 rillig Exp $
+# $NetBSD: varmod-subst-regex.mk,v 1.8 2023/11/19 21:47:52 rillig Exp $
 #
 # Tests for the :C,from,to, variable modifier.
 
@@ -10,7 +10,7 @@ all: mod-regex-limits
 all: mod-regex-errors
 all: unmatched-subexpression
 
-# The variable expression expands to 4 words.  Of these words, none matches
+# The expression expands to 4 words.  Of these words, none matches
 # the regular expression "a b" since these words don't contain any
 # whitespace.
 .if ${:Ua b b c:C,a b,,} != "a b b c"
@@ -18,7 +18,7 @@ all: unmatched-subexpression
 .endif
 
 # Using the '1' modifier does not change anything.  The '1' modifier just
-# means to apply at most 1 replacement in the whole variable expression.
+# means to apply at most 1 replacement in the whole expression.
 .if ${:Ua b b c:C,a b,,1} != "a b b c"
 .  error
 .endif
@@ -86,7 +86,7 @@ all: unmatched-subexpression
 
 # Multiple asterisks form an invalid regular expression.  This produces an
 # error message and (as of 2020-08-28) stops parsing in the middle of the
-# variable expression.  The unparsed part of the expression is then copied
+# expression.  The unparsed part of the expression is then copied
 # verbatim to the output, which is unexpected and can lead to strange shell
 # commands being run.
 mod-regex-compile-error:
@@ -109,7 +109,7 @@ mod-regex-errors:
 
 	# If the replacement pattern produces a parse error because of an
 	# unknown modifier, the parse error is ignored in ParseModifierPart
-	# and the faulty variable expression expands to "".
+	# and the faulty expression expands to "".
 	@echo $@: ${word:L:C,.*,x${:U:Z}y,W}
 
 # In regular expressions with alternatives, not all capturing groups are

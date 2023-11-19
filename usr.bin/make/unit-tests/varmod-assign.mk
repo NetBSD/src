@@ -1,4 +1,4 @@
-# $NetBSD: varmod-assign.mk,v 1.15 2022/02/09 21:09:24 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.16 2023/11/19 21:47:52 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
@@ -116,7 +116,7 @@ APPEND.dollar=		$${APPEND.indirect}
 .endif
 
 
-# The assignment modifier can be used in a variable expression that is
+# The assignment modifier can be used in an expression that is
 # enclosed in parentheses.  In such a case, parsing stops at the first ')',
 # not at the first '}'.
 VAR=	previous
