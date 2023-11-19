@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1073 2023/11/19 12:11:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1074 2023/11/19 22:06:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1073 2023/11/19 12:11:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1074 2023/11/19 22:06:15 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3972,8 +3972,8 @@ ApplyModifiersIndirect(ModChain *ch, const char **pp)
 	if (*p == ':')
 		p++;
 	else if (*p == '\0' && ch->endc != '\0') {
-		Error("Unclosed variable expression after indirect "
-		      "modifier, expecting '%c' for variable \"%s\"",
+		Error("Unclosed expression after indirect modifier, "
+		      "expecting '%c' for variable \"%s\"",
 		    ch->endc, expr->name);
 		*pp = p;
 		return AMIR_OUT;
@@ -4025,7 +4025,7 @@ ApplySingleModifier(const char **pp, ModChain *ch)
 
 	if (*p == '\0' && ch->endc != '\0') {
 		Error(
-		    "Unclosed variable expression, expecting '%c' for "
+		    "Unclosed expression, expecting '%c' for "
 		    "modifier \"%.*s\" of variable \"%s\" with value \"%s\"",
 		    ch->endc,
 		    (int)(p - mod), mod,
@@ -4083,7 +4083,7 @@ ApplyModifiers(
 
 	if (*p == '\0' && endc != '\0') {
 		Error(
-		    "Unclosed variable expression (expecting '%c') for \"%s\"",
+		    "Unclosed expression, expecting '%c' for \"%s\"",
 		    ch.endc, expr->name);
 		goto cleanup;
 	}

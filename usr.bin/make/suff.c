@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.368 2023/02/14 21:38:31 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.369 2023/11/19 22:06:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.368 2023/02/14 21:38:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.369 2023/11/19 22:06:15 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1316,7 +1316,7 @@ ExpandChildrenRegular(char *cp, GNode *pgn, GNodeList *members)
 			/* TODO: handle errors */
 			if (junk.str == var_Error) {
 				Parse_Error(PARSE_FATAL,
-				    "Malformed variable expression at \"%s\"",
+				    "Malformed expression at \"%s\"",
 				    cp);
 				cp++;
 			} else {
