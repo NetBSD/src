@@ -1,4 +1,4 @@
-# $NetBSD: varmod-mtime.mk,v 1.7 2023/11/19 11:47:49 rillig Exp $
+# $NetBSD: varmod-mtime.mk,v 1.8 2023/11/19 12:11:34 rillig Exp $
 #
 # Tests for the ':mtime' variable modifier, which maps each word of the
 # expression to that file's modification time.
@@ -84,9 +84,36 @@ _!=	rm -f ${COOKIE}
 .endif
 
 
+# Only the word 'error' can be used as a fallback argument to the modifier.
+# expect+2: Invalid argument 'warn' for modifier ':mtime'
+# expect+1: Malformed conditional (${MAKEFILE:mtime=warn} > 0)
+.if ${MAKEFILE:mtime=warn} > 0
+.  error
+.else
+.  error
+.endif
+
+
 # Ensure that the fallback for a missing modification time is indeed the
 # current time, and not any later time.
 end:=	${%s:L:gmtime}
 .if ${not_found_mtime} > ${end}
+.  error
+.endif
+
+
+# If the expression is irrelevant, the ':mtime' modifier is only parsed, it
+# does not perform any filesystem operations.
+.if 0 && ${anything:L:mtime}
+.  error
+.endif
+
+
+# If there is a typo in the modifier name, it does not match.
+# expect+2: Unknown modifier "mtim"
+# expect+1: Malformed conditional (${anything:L:mtim})
+.if ${anything:L:mtim}
+.  error
+.else
 .  error
 .endif

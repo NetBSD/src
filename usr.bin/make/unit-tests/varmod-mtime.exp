@@ -5,6 +5,10 @@ make: "varmod-mtime.mk" line 70: Cannot determine mtime for 'no/such/file2': <EN
 make: "varmod-mtime.mk" line 70: Malformed conditional (${no/such/file1 no/such/file2:L:mtime=error})
 make: "varmod-mtime.mk" line 81: Invalid argument 'errorhandler-no' for modifier ':mtime'
 make: "varmod-mtime.mk" line 81: Malformed conditional (${MAKEFILE:mtime=errorhandler-no} > 0)
+make: "varmod-mtime.mk" line 90: Invalid argument 'warn' for modifier ':mtime'
+make: "varmod-mtime.mk" line 90: Malformed conditional (${MAKEFILE:mtime=warn} > 0)
+make: "varmod-mtime.mk" line 115: Unknown modifier "mtim"
+make: "varmod-mtime.mk" line 115: Malformed conditional (${anything:L:mtim})
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
