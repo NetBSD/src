@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.709 2023/11/02 05:55:22 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.710 2023/11/19 22:50:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.709 2023/11/02 05:55:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.710 2023/11/19 22:50:11 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -1918,7 +1918,7 @@ Parse_Var(VarAssign *var, GNode *scope)
 
 
 /*
- * See if the command possibly calls a sub-make by using the variable
+ * See if the command possibly calls a sub-make by using the
  * expressions ${.MAKE}, ${MAKE} or the plain word "make".
  */
 static bool
@@ -2847,7 +2847,7 @@ ParseDependencyLine(char *line)
 	 * as well.
 	 *
 	 * Parsing the line first would also prevent that targets
-	 * generated from variable expressions are interpreted as the
+	 * generated from expressions are interpreted as the
 	 * dependency operator, such as in "target${:U\:} middle: source",
 	 * in which the middle is interpreted as a source, not a target.
 	 */
