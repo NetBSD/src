@@ -1,5 +1,5 @@
-make: Bad conditional expression 'variable expression == "literal"' in 'variable expression == "literal"?bad:bad'
-make: "varmod-ifelse.mk" line 28: Malformed conditional (${${:Uvariable expression} == "literal":?bad:bad})
+make: Bad conditional expression 'bare words == "literal"' in 'bare words == "literal"?bad:bad'
+make: "varmod-ifelse.mk" line 28: Malformed conditional (${${:Ubare words} == "literal":?bad:bad})
 make: Bad conditional expression ' == ""' in ' == ""?bad-assign:bad-assign'
 make: Bad conditional expression ' == ""' in ' == ""?bad-cond:bad-cond'
 make: "varmod-ifelse.mk" line 46: Malformed conditional (${${UNDEF} == "":?bad-cond:bad-cond})

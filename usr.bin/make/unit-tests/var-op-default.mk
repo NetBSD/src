@@ -1,4 +1,4 @@
-# $NetBSD: var-op-default.mk,v 1.3 2020/12/07 21:35:43 rillig Exp $
+# $NetBSD: var-op-default.mk,v 1.4 2023/11/19 21:47:52 rillig Exp $
 #
 # Tests for the ?= variable assignment operator, which only assigns
 # if the variable is still undefined.
@@ -61,8 +61,8 @@ VAR.${:Uparam}?=	not used
 
 # Now demonstrate that the variable name is indeed expanded exactly once.
 # This is tricky to measure correctly since there are many inconsistencies
-# in and around the code that expands variable expressions in the various
-# places where variable expressions can occur.  If in doubt, enable the
+# in and around the code that expands expressions in the various
+# places where expressions can occur.  If in doubt, enable the
 # following debug flags to see what happens:
 #.MAKEFLAGS: -dcpv
 EXPAND_NAME=		EXPAND.$$$$	# The full variable name is EXPAND.$$

@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.17 2023/06/01 20:56:35 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.18 2023/11/19 21:47:52 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -16,7 +16,7 @@ MOD.M-paren=	${INP.M-paren:M(*)}
 EXP.M-paren=	(parentheses) ()
 
 # The first closing brace matches the opening parenthesis.
-# The second closing brace actually ends the variable expression.
+# The second closing brace actually ends the expression.
 #
 # XXX: This is unexpected but rarely occurs in practice.
 TESTS+=		M-mixed
@@ -40,7 +40,7 @@ EXP.M-unescape=	\(\{}\):
 # as open_parens + open_braces == closing_parens + closing_braces. This
 # means that ( and } form a matching pair.
 #
-# Nested variable expressions are not parsed as such. Instead, only the
+# Nested expressions are not parsed as such. Instead, only the
 # parentheses and braces are counted. This leads to a parse error since
 # the nested expression is not "${:U*)}" but only "${:U*)", which is
 # missing the closing brace. The expression is evaluated anyway.

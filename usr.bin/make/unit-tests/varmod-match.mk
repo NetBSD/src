@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.16 2023/11/02 05:14:58 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.17 2023/11/19 21:47:52 rillig Exp $
 #
 # Tests for the :M variable modifier, which filters words that match the
 # given pattern.
@@ -285,7 +285,7 @@ WORDS=		[x- x x- y yyyyy
 .endif
 
 
-# The pattern can come from a variable expression.  For single-letter
+# The pattern can come from an expression.  For single-letter
 # variables, either the short form or the long form can be used, just as
 # everywhere else.
 PRIMES=	2 3 5 7 11

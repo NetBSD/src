@@ -1,4 +1,4 @@
-# $NetBSD: dep-var.mk,v 1.8 2023/05/10 15:53:32 rillig Exp $
+# $NetBSD: dep-var.mk,v 1.9 2023/11/19 21:47:52 rillig Exp $
 #
 # Tests for variable references in dependency declarations.
 #
@@ -9,7 +9,7 @@
 
 # expect: Var_Parse: ${UNDEF1} (eval-defined)
 # Even though undefined expressions should lead to errors, no error message is
-# generated for this line.  The variable expression ${UNDEF1} simply expands
+# generated for this line.  The expression ${UNDEF1} simply expands
 # to an empty string.
 all: ${UNDEF1}
 
@@ -25,7 +25,7 @@ all: $${DEF2} a-$${DEF2}-b
 # XXX: The -dv log says later when expanding the sources of 'all':
 #	Var_Parse: ${UNDEF3} (eval-defined)
 # but no error message is generated for this line, just like for UNDEF1.
-# The variable expression ${UNDEF3} simply expands to an empty string.
+# The expression ${UNDEF3} simply expands to an empty string.
 all: $${UNDEF3}
 
 # Try out how many levels of indirection are really expanded in dependency
