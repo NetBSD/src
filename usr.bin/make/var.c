@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1071 2023/11/19 11:30:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1072 2023/11/19 11:47:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1071 2023/11/19 11:30:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1072 2023/11/19 11:47:49 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2888,22 +2888,25 @@ ApplyModifier_Mtime(const char **pp, ModChain *ch)
 	if (args.use_fallback) {
 		p++;
 		if (TryParseTime(&p, &args.fallback)) {
-		} else if (strncmp(p, "error", 5) == 0
-		    && IsDelimiter(p[5], ch)) {
+		} else if (strncmp(p, "error", 5) == 0) {
 			p += 5;
 			args.error = true;
-		} else {
-			Parse_Error(PARSE_FATAL,
-			    "Invalid argument '%.*s' for modifier ':mtime'",
-			    (int)strcspn(p, ":{}()"), p);
-			return AMR_CLEANUP;
-		}
+		} else
+			goto invalid_argument;
+		if (!IsDelimiter(*p, ch))
+			goto invalid_argument;
 		*pp = p;
 	}
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 	ModifyWords(ch, ModifyWord_Mtime, &args, ch->oneBigWord);
 	return args.rc;
+
+invalid_argument:
+	Parse_Error(PARSE_FATAL,
+	    "Invalid argument '%.*s' for modifier ':mtime'",
+	    (int)strcspn(*pp + 1, ":{}()"), *pp + 1);
+	return AMR_CLEANUP;
 }
 
 static void

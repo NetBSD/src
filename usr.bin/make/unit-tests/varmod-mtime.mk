@@ -1,4 +1,4 @@
-# $NetBSD: varmod-mtime.mk,v 1.6 2023/11/19 11:37:44 rillig Exp $
+# $NetBSD: varmod-mtime.mk,v 1.7 2023/11/19 11:47:49 rillig Exp $
 #
 # Tests for the ':mtime' variable modifier, which maps each word of the
 # expression to that file's modification time.
@@ -42,7 +42,7 @@ not_found_mtime:=	${no/such/file:L:mtime}
 
 
 # The fallback timestamp must only be an integer, without trailing characters.
-# expect+2: Unknown modifier "x"
+# expect+2: Invalid argument '123x' for modifier ':mtime'
 # expect+1: Malformed conditional (${no/such/file:L:mtime=123x})
 .if ${no/such/file:L:mtime=123x}
 .  error
