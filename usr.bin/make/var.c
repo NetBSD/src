@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1074 2023/11/19 22:06:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1075 2023/11/19 22:50:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -98,9 +98,9 @@
  *	Var_Value	Return the unexpanded value of a variable, or NULL if
  *			the variable is undefined.
  *
- *	Var_Subst	Substitute all variable expressions in a string.
+ *	Var_Subst	Substitute all expressions in a string.
  *
- *	Var_Parse	Parse a variable expression such as ${VAR:Mpattern}.
+ *	Var_Parse	Parse an expression such as ${VAR:Mpattern}.
  *
  *	Var_Delete
  *			Delete a variable.
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1074 2023/11/19 22:06:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1075 2023/11/19 22:50:11 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -158,7 +158,7 @@ MAKE_RCSID("$NetBSD: var.c,v 1.1074 2023/11/19 22:06:15 rillig Exp $");
  * Environment variables are short-lived.  They are returned by VarFind, and
  * after using them, they must be freed using VarFreeShortLived.
  *
- * Undefined variables occur during evaluation of variable expressions such
+ * Undefined variables occur during evaluation of expressions such
  * as ${UNDEF:Ufallback} in Var_Parse and ApplyModifiers.
  */
 typedef struct Var {
@@ -1337,7 +1337,7 @@ SepBuf_DoneData(SepBuf *buf)
 
 
 /*
- * This callback for ModifyWords gets a single word from a variable expression
+ * This callback for ModifyWords gets a single word from an expression
  * and typically adds a modification of this word to the buffer. It may also
  * do nothing or add several words.
  *
@@ -1927,7 +1927,7 @@ FormatTime(const char *fmt, time_t t, bool gmt)
  * If parsing fails and the SysV modifier ${VAR:from=to} should not be used
  * as a fallback, issue an error message using Parse_Error (preferred over
  * Error) and then return AMR_CLEANUP, or return AMR_BAD for the default error
- * message.  Both of these return values will stop processing the variable
+ * message.  Both of these return values will stop processing the
  * expression.  (XXX: As of 2020-08-23, evaluation of the whole string
  * continues nevertheless after skipping a few bytes, which essentially is
  * undefined behavior.  Not in the sense of C, but still the resulting string
@@ -1936,12 +1936,12 @@ FormatTime(const char *fmt, time_t t, bool gmt)
  * Evaluating the modifier
  *
  * After parsing, the modifier is evaluated.  The side effects from evaluating
- * nested variable expressions in the modifier text often already happen
+ * nested expressions in the modifier text often already happen
  * during parsing though.  For most modifiers this doesn't matter since their
  * only noticeable effect is that they update the value of the expression.
  * Some modifiers such as ':sh' or '::=' have noticeable side effects though.
  *
- * Evaluating the modifier usually takes the current value of the variable
+ * Evaluating the modifier usually takes the current value of the
  * expression from ch->expr->value, or the variable name from ch->var->name
  * and stores the result back in ch->expr->value via Expr_SetValueOwn or
  * Expr_SetValueRefer.
@@ -1961,12 +1961,12 @@ FormatTime(const char *fmt, time_t t, bool gmt)
  */
 
 typedef enum ExprDefined {
-	/* The variable expression is based on a regular, defined variable. */
+	/* The expression is based on a regular, defined variable. */
 	DEF_REGULAR,
-	/* The variable expression is based on an undefined variable. */
+	/* The expression is based on an undefined variable. */
 	DEF_UNDEF,
 	/*
-	 * The variable expression started as an undefined expression, but one
+	 * The expression started as an undefined expression, but one
 	 * of the modifiers (such as ':D' or ':U') has turned the expression
 	 * from undefined to defined.
 	 */
@@ -2137,7 +2137,7 @@ ParseModifierPartExpr(const char **pp, LazyBuf *part, const ModChain *ch,
  * If the text starts with '$(', any '(' and ')' must be balanced.
  * If the text starts with '${', any '{' and '}' must be balanced.
  * If the text starts with '$', that '$' is copied verbatim, it is not parsed
- * as a short-name variable expression.
+ * as a short-name expression.
  */
 static void
 ParseModifierPartBalanced(const char **pp, LazyBuf *part)
@@ -3729,7 +3729,7 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 		return AMR_CLEANUP;
 
 	/*
-	 * The SysV modifier lasts until the end of the variable expression.
+	 * The SysV modifier lasts until the end of the expression.
 	 */
 	if (!ParseModifierPart(pp, ch->endc, expr->emode, ch, &rhsBuf)) {
 		LazyBuf_Done(&lhsBuf);
@@ -3930,16 +3930,16 @@ typedef enum ApplyModifiersIndirectResult {
 } ApplyModifiersIndirectResult;
 
 /*
- * While expanding a variable expression, expand and apply indirect modifiers,
+ * While expanding an expression, expand and apply indirect modifiers,
  * such as in ${VAR:${M_indirect}}.
  *
- * All indirect modifiers of a group must come from a single variable
+ * All indirect modifiers of a group must come from a single
  * expression.  ${VAR:${M1}} is valid but ${VAR:${M1}${M2}} is not.
  *
  * Multiple groups of indirect modifiers can be chained by separating them
  * with colons.  ${VAR:${M1}:${M2}} contains 2 indirect modifiers.
  *
- * If the variable expression is not followed by ch->endc or ':', fall
+ * If the expression is not followed by ch->endc or ':', fall
  * back to trying the SysV modifier, such as in ${VAR:${FROM}=${TO}}.
  */
 static ApplyModifiersIndirectResult
@@ -4428,7 +4428,7 @@ ParseVarnameLong(
 		}
 
 		/*
-		 * The variable expression is based on an undefined variable.
+		 * The expression is based on an undefined variable.
 		 * Nevertheless it needs a Var, for modifiers that access the
 		 * variable name, such as :L or :?.
 		 *
@@ -4504,7 +4504,7 @@ Var_Parse_FastLane(const char **pp, VarEvalMode emode, FStr *out_value)
 }
 
 /*
- * Given the start of a variable expression (such as $v, $(VAR),
+ * Given the start of an expression (such as $v, $(VAR),
  * ${VAR:Mpattern}), extract the variable name and value, and the modifiers,
  * if any.  While doing that, apply the modifiers to the value of the
  * expression, forming its final value.  A few of the modifiers such as :!cmd!
@@ -4524,7 +4524,7 @@ Var_Parse_FastLane(const char **pp, VarEvalMode emode, FStr *out_value)
  *			point to some random character in the string, to the
  *			location of the parse error, or at the end of the
  *			string.
- *	return		The value of the variable expression, never NULL.
+ *	return		The value of the expression, never NULL.
  *	return		var_Error if there was a parse error.
  *	return		var_Error if the base variable of the expression was
  *			undefined, emode is VARE_UNDEFERR, and none of
@@ -4732,8 +4732,8 @@ VarSubstExpr(const char **pp, Buffer *buf, GNode *scope,
 }
 
 /*
- * Skip as many characters as possible -- either to the end of the string
- * or to the next dollar sign (variable expression).
+ * Skip as many characters as possible -- either to the end of the string,
+ * or to the next dollar sign, which may start an expression.
  */
 static void
 VarSubstPlain(const char **pp, Buffer *res)
@@ -4748,11 +4748,11 @@ VarSubstPlain(const char **pp, Buffer *res)
 }
 
 /*
- * Expand all variable expressions like $V, ${VAR}, $(VAR:Modifiers) in the
+ * Expand all expressions like $V, ${VAR}, $(VAR:Modifiers) in the
  * given string.
  *
  * Input:
- *	str		The string in which the variable expressions are
+ *	str		The string in which the expressions are
  *			expanded.
  *	scope		The scope in which to start searching for
  *			variables.  The other scopes are searched as well.

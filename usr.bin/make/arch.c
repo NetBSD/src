@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.213 2023/02/14 21:08:00 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.214 2023/11/19 22:50:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.213 2023/02/14 21:08:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.214 2023/11/19 22:50:11 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -205,7 +205,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 	FStr lib;		/* Library-part of specification */
 	FStr mem;		/* Member-part of specification */
 	char saveChar;		/* Ending delimiter of member-name */
-	bool expandLib;		/* Whether the parsed lib contains variable
+	bool expandLib;		/* Whether the parsed lib contains
 				 * expressions that need to be expanded */
 
 	spec = *pp;
@@ -214,7 +214,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 
 	for (cp = lib.str; *cp != '(' && *cp != '\0';) {
 		if (*cp == '$') {
-			/* Expand nested variable expressions. */
+			/* Expand nested expressions. */
 			/* XXX: This code can probably be shortened. */
 			const char *nested_p = cp;
 			FStr result;
@@ -251,7 +251,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 		mem = FStr_InitRefer(cp);
 		while (*cp != '\0' && *cp != ')' && !ch_isspace(*cp)) {
 			if (*cp == '$') {
-				/* Expand nested variable expressions. */
+				/* Expand nested expressions. */
 				/*
 				 * XXX: This code can probably be shortened.
 				 */
