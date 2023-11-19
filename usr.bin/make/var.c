@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1070 2023/11/19 09:45:19 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1071 2023/11/19 11:30:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1070 2023/11/19 09:45:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1071 2023/11/19 11:30:28 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3687,6 +3687,26 @@ ApplyModifier_Unique(const char **pp, ModChain *ch)
 }
 
 #ifdef SYSVVARSUB
+/* Test whether the modifier has the form '<lhs>=<rhs>'. */
+static bool
+IsSysVModifier(const char *p, char startc, char endc)
+{
+	bool eqFound = false;
+
+	int depth = 1;
+	while (*p != '\0' && depth > 0) {
+		if (*p == '=')	/* XXX: should also test depth == 1 */
+			eqFound = true;
+		else if (*p == endc)
+			depth--;
+		else if (*p == startc)
+			depth++;
+		if (depth > 0)
+			p++;
+	}
+	return *p == endc && eqFound;
+}
+
 /* :from=to */
 static ApplyModifierResult
 ApplyModifier_SysV(const char **pp, ModChain *ch)
@@ -3699,26 +3719,8 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 	const char *lhsSuffix;
 
 	const char *mod = *pp;
-	bool eqFound = false;
 
-	/*
-	 * First we make a pass through the string trying to verify it is a
-	 * SysV-make-style translation. It must be: <lhs>=<rhs>
-	 */
-	int depth = 1;
-	const char *p = mod;
-	while (*p != '\0' && depth > 0) {
-		if (*p == '=') {	/* XXX: should also test depth == 1 */
-			eqFound = true;
-			/* continue looking for ch->endc */
-		} else if (*p == ch->endc)
-			depth--;
-		else if (*p == ch->startc)
-			depth++;
-		if (depth > 0)
-			p++;
-	}
-	if (*p != ch->endc || !eqFound)
+	if (!IsSysVModifier(mod, ch->startc, ch->endc))
 		return AMR_UNKNOWN;
 
 	if (!ParseModifierPart(pp, '=', expr->emode, ch, &lhsBuf))
