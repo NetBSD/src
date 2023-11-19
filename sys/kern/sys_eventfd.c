@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_eventfd.c,v 1.10 2023/11/19 04:13:37 riastradh Exp $	*/
+/*	$NetBSD: sys_eventfd.c,v 1.11 2023/11/19 17:16:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.10 2023/11/19 04:13:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.11 2023/11/19 17:16:00 riastradh Exp $");
 
 /*
  * eventfd
@@ -196,9 +196,7 @@ eventfd_wake(struct eventfd * const efd, bool const is_write)
 		sel = &efd->efd_write_sel;
 		pollev = POLLOUT | POLLWRNORM;
 	}
-	if (waitcv != NULL) {
-		cv_broadcast(waitcv);
-	}
+	cv_broadcast(waitcv);
 	selnotify(sel, pollev, NOTE_SUBMIT);
 }
 
