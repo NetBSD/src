@@ -9,12 +9,12 @@ make: Unknown modifier "Z"
 VAR:Z=before-inner}-after
 
 unclosed-direct:
-want: Unclosed variable expression, expecting '}' for modifier "S,V,v," of variable "VAR" with value "Thevariable"
+want: Unclosed expression, expecting '}' for modifier "S,V,v," of variable "VAR" with value "Thevariable"
 make: Unclosed expression, expecting '}' for modifier "S,V,v," of variable "VAR" with value "Thevariable"
 VAR:S,V,v,=Thevariable
 
 unclosed-indirect:
-want: Unclosed variable expression after indirect modifier, expecting '}' for variable "VAR"
+want: Unclosed expression after indirect modifier, expecting '}' for variable "VAR"
 make: Unclosed expression after indirect modifier, expecting '}' for variable "VAR"
 VAR:S,V,v,=Thevariable
 

@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.22 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: cond-short.mk,v 1.23 2023/11/19 22:32:44 rillig Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -11,7 +11,7 @@
 # Var_Parse got a new parameter named 'wantit'.  Since then it would have been
 # possible to skip evaluation of irrelevant expressions and only
 # parse them.  They were still evaluated though, the only difference to
-# relevant expressions was that in the irrelevant variable
+# relevant expressions was that in the irrelevant
 # expressions, undefined variables were allowed.  This allowed for conditions
 # like 'defined(VAR) && ${VAR:S,from,to,} != ""', which no longer produced an
 # error message 'Malformed conditional', but the irrelevant expression was
