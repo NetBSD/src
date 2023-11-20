@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.378 2023/11/15 14:03:19 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.379 2023/11/20 21:11:20 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1026,6 +1026,7 @@ ML	machine learning
 ML	mailing list
 ML	markup language
 ML	maximum likelihood
+ML-KEM	module-lattice based key-encapsulation mechanism
 MLAG	multi-chassis link aggregation group
 MLC	multi-level cell
 MLD	multicast listener discovery
