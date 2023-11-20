@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.49 2020/10/19 17:47:37 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.50 2023/11/20 03:05:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.49 2020/10/19 17:47:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.50 2023/11/20 03:05:48 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
@@ -396,7 +396,7 @@ process_machdep_doxstate(struct lwp *curl, struct lwp *l, struct uio *uio)
 	/* l:			 traced */
 {
 	int error;
-	struct xstate r;
+	struct xstate r;	/* XXX FIXME big stack object */
 	char *kv;
 	ssize_t kl;
 
