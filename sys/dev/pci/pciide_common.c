@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.68 2023/11/20 15:16:46 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.69 2023/11/20 21:45:34 thorpej Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.68 2023/11/20 15:16:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.69 2023/11/20 21:45:34 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -735,31 +735,6 @@ pciide_dma_dmamap_setup(struct pciide_softc *sc, int channel, int drive,
 		}
 		}
 #endif
-		/*
-		 * Some controllers get really upset if the length
-		 * of any DMA segment is odd.  This isn't something
-		 * that's going to happen in normal steady-state
-		 * operation (reading VM pages, etc.), but physio users
-		 * don't have as many guard rails.
-		 *
-		 * Consider an 8K read request that starts at an odd
-		 * offset within a page.  At first blush, all of the
-		 * checks pass because it's a sector-rounded size, but
-		 * unless the buffer spans 2 physically contiguous pages,
-		 * it's going to result in 2 odd-length DMA segments.
-		 */
-		if (dma_maps->dmamap_xfer->dm_segs[seg].ds_len & 1) {
-			unsigned long long phys =
-			    dma_maps->dmamap_xfer->dm_segs[seg].ds_addr;
-			unsigned long long len =
-			    dma_maps->dmamap_xfer->dm_segs[seg].ds_len;
-			aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-			    "ODD segment length: "
-			    "seg %d addr 0x%llx len 0x%llx\n",
-			    seg, phys, len);
-			bus_dmamap_unload(sc->sc_dmat, dma_maps->dmamap_xfer);
-			return EIO;
-		}
 		dma_maps->dma_table[seg].base_addr =
 		    htole32(dma_maps->dmamap_xfer->dm_segs[seg].ds_addr);
 		dma_maps->dma_table[seg].byte_count =
