@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.23 2008/03/26 17:50:32 matt Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.24 2023/11/20 04:26:34 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -10,11 +10,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.23 2008/03/26 17:50:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.24 2023/11/20 04:26:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -36,16 +37,13 @@ int
 cy_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	struct cy_softc sc;
-	int found;
+	struct cy_softc *sc;
+	int found = 0;
 
 	if (ia->ia_niomem < 1)
 		return (0);
 	if (ia->ia_nirq < 1)
 		return (0);
-
-	sc.sc_memt = ia->ia_memt;
-	sc.sc_bustype = CY_BUSTYPE_ISA;
 
 	/* Disallow wildcarded memory address. */
 	if (ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM)
@@ -53,13 +51,18 @@ cy_isa_probe(device_t parent, cfdata_t match, void *aux)
 	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return 0;
 
+	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
+
+	sc->sc_memt = ia->ia_memt;
+	sc->sc_bustype = CY_BUSTYPE_ISA;
+
 	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr, CY_MEMSIZE, 0,
-	    &sc.sc_bsh) != 0)
-		return 0;
+	    &sc->sc_bsh) != 0)
+		goto out;
 
-	found = cy_find(&sc);
+	found = cy_find(sc);
 
-	bus_space_unmap(ia->ia_memt, sc.sc_bsh, CY_MEMSIZE);
+	bus_space_unmap(ia->ia_memt, sc->sc_bsh, CY_MEMSIZE);
 
 	if (found) {
 		ia->ia_niomem = 1;
@@ -70,6 +73,8 @@ cy_isa_probe(device_t parent, cfdata_t match, void *aux)
 		ia->ia_nio = 0;
 		ia->ia_ndrq = 0;
 	}
+ out:
+	kmem_free(sc, sizeof(*sc));
 	return (found);
 }
 
