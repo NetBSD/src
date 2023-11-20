@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.379 2023/11/20 21:11:20 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.380 2023/11/20 21:16:41 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -68,19 +68,19 @@ AOS	add or subtract
 AOT	ahead of time
 AP	access point
 AP	application processor
+APEI	ACPI platform error interface
 APFS	Apple file system
 API	application programming interface
-APEI	ACPI platform error interface
 APIC	advanced programmable interrupt controller
 APIPA	automatic private IP addressing
 APM	advanced power management
 APM	application performance management
-APU	accelerated processing unit
 APT	advanced persistent threat
+APU	accelerated processing unit
 AQM	active queue management
 ARAT	always running APIC timer
-ARC	adaptive replacement cache
 ARC	Advanced RISC Computing
+ARC	adaptive replacement cache
 ARC	automatic reference counting
 ARM	Advanced RISC Machines
 ARP	Address Resolution Protocol
@@ -104,8 +104,8 @@ ASP	active server pages
 ASP	auxiliary storage pool
 ASPM	active state power management
 ASQ	automated software quality
-ASR	address space register
 ASR	Apple software restore
+ASR	address space register
 AST	abstract syntax tree
 AST	asynchronous system trap
 AT	access time
@@ -159,9 +159,9 @@ BLE	Bluetooth low energy
 BLOB	binary large object
 BM	bus master
 BMC	baseboard management controller
+BMIC	bus master interface controller
 BMP	basic multilingual plane
 BMP	bitmap image file
-BMIC	bus master interface controller
 BN	boundary neutral
 BNF	Backus-Naur form
 BO	binary output
@@ -202,9 +202,9 @@ BTM	bus transport mechanism
 BTR	bit test [and] reset
 BTS	bit test [and] set
 BTS	bug tracking system
+BUAG	big ugly ASCII graphic
 BW	bandwidth
 BWM	block-write mode
-BUAG	big ugly ASCII graphic
 CA	certificate authority
 CAC	cryptographic access control
 CACLS	change access control lists
@@ -236,9 +236,9 @@ CDMA	code division multiple access
 CDN	content delivery network
 CDP	Cisco Discovery Protocol
 CDRAM	cache dynamic random access memory
+CE	customer edge
 CER	canonical encoding rules
 CERT	computer emergency response team
-CE	customer edge
 CET	control flow enforcement technology
 CF	compact flash
 CFB	cipher feedback
@@ -273,15 +273,15 @@ CLUT	color look-up table
 CLV	constant linear velocity
 CM	configuration management
 CMA	concert multithread architecture
+CMC	certificate management over CMS
 CMC	chassis management controller
 CMC	corrected machine check
-CMC	certificate management over CMS
-CMS	{configuration,content,course} management system
-CMS	cryptographic message syntax
 CMI	control {management,method} interface
 CMOS	complementary metal-oxide-semiconductor
 CMP	chip multi-processing
 CMS	content management system
+CMS	cryptographic message syntax
+CMS	{configuration,content,course} management system
 CMYK	cyan magenta yellow black
 CN	{common,canonical} name
 CNA	CVE Numbering Authority
@@ -318,12 +318,8 @@ CR	carriage return
 CRC	cyclic redundancy check
 CRDT	conflict-free replicated data type
 CRL	carrier recovery loop
-CRQC	cryptanalytically relevant quantum computer
 CRLF	carriage return line feed
-CSIRT	computer security incident response team
-CSPM	cloud security posture management
-CSRF	cross-site request forgery
-CSU	C start up
+CRQC	cryptanalytically relevant quantum computer
 CRT	cathode ray tube
 CRTP	curiously recurring template pattern
 CRUD	create, read, update, and delete
@@ -334,17 +330,21 @@ CS	computer science
 CSDL	{common,conceptual} schema definition language
 CSI	channel state information
 CSI	common system interface
+CSIRT	computer security incident response team
 CSMA	carrier sense multiple access
 CSMA/CA	carrier sense multiple access with collision avoidance
 CSMA/CD	carrier sense multiple access with collision detection
 CSP	communicating sequential processes
-CSP	content security policy
 CSP	constrain satisfaction problems
+CSP	content security policy
 CSP	cryptographic service provider
+CSPM	cloud security posture management
 CSR	control [and] status registers
+CSRF	cross-site request forgery
 CSRG	Computer Systems Research Group
 CSS	cascading style sheets
 CST	common spanning tree
+CSU	C start up
 CSV	comma-separated values
 CTF	compact c type format
 CTM	close to metal
@@ -418,8 +418,8 @@ DFSAN	Data Flow Sanitizer
 DFT	diagnostic function test
 DFT	discrete Fourier transform
 DFZ	default-free zone
-DGL	data generation language
 DGEMM	double precision general matrix multiply
+DGL	data generation language
 DH	Diffie-Hellman
 DHCP	Dynamic Host Configuration Protocol
 DIA	dedicated Internet access
@@ -481,8 +481,8 @@ DS9000	DeathStation 9000
 DS9K	DeathStation 9000
 DSA	digital signature algorithm
 DSAP	destination service access point
-DSB	double-sideband modulation
 DSB	data synchronization barrier (Arm)
+DSB	double-sideband modulation
 DSCP	differentiated services code point
 DSDT	differentiated system descriptor table
 DSF	device special file
@@ -508,8 +508,8 @@ DVB	digital video broadcasting
 DVCS	distributed version control system
 DVD	digital versatile disc
 DVFS	dynamic voltage and frequency scaling
-DVI	device independent
 DVI	Digital Visual Interface
+DVI	device independent
 DVR	digital video recorder
 DWARF	Debugging With Attributed Record Formats
 E-XER	extended XML encoding rules
@@ -538,15 +538,14 @@ ECS	enhanced chip set
 ECS	extended configuration space
 EDAC	error detection and correction
 EDAT	enhanced dynamic acceleration technology
-EdDSA	Edwards curve digital signature algorithm
 EDGE	explicit data graph execution
 EDID	extended display identification data
 EDO	extended data out
 EDS	electronical data sheet
 EDSAC	electronic delay storage automatic calculator
 EDVAC	electronic discrete variable automatic computer
-EEE	energy efficient ethernet
 EEE	embrace, extend, extinguish
+EEE	energy efficient ethernet
 EEPROM	electrically erasable programmable read only memory
 EFI	extensible firmware interface
 EFL	emitter follower logic
@@ -556,14 +555,14 @@ EGA	Enhanced Graphics Adapter
 EGP	exterior gateway protocol
 EH	extension header
 EIDE	enhanced IDE
-EISA	extended industry standard architecture
 EINJ	error injection table
+EISA	extended industry standard architecture
 ELF	executable and linking format
 ELS	entry level system
+EMACS	Editor MACroS
 EMI	electro-magnetic interference
 EMP	electro-magnetic pulse
 EMR	electro-magnetic radiation
-EMACS	Editor MACroS
 ENIAC	electronic numerical integrator and computer
 EOF	end of file
 EOI	end of interrupt
@@ -594,6 +593,7 @@ EST	enhanced speedstep
 ETL	extract, transform, load
 EU	execution unit
 EULA	end user license agreement
+EdDSA	Edwards curve digital signature algorithm
 FAT	file allocation table
 FBRAM	frame buffer random access memory
 FCIF	full common intermediate format
@@ -736,15 +736,15 @@ HTML	HyperText Markup Language
 HTT	hyper-threading technology
 HTTP	Hypertext Transfer Protocol
 HTTPS	Hypertext Transfer Protocol Secure
-HVM	hardware virtual machine
 HVDS	High-Voltage Differential Signaling
+HVM	hardware virtual machine
 HWASAN	Hardware-assisted Address Sanitizer
 HZ	Hertz
 I2O	intelligent input/output
 IA	information assurance
 IAAS	infrastructure as a service
-IANA	Internet Assigned Numbers Authority
 IAB	Internet Architecture Board
+IANA	Internet Assigned Numbers Authority
 IBC	iterated block cipher
 IBM	International Business Machines
 IBPI	international blinking pattern interpretation
@@ -788,10 +788,10 @@ ILM	internal loopback mode
 ILOM	integrated lights-out management
 ILP	instruction level parallelism
 IM	instant messaging
-IME	input method editor
 IMAP	Internet Message Access Protocol
 IMC	integrated memory controller
 IMCR	interrupt mode configuration register
+IME	input method editor
 IMR	interrupt mask register
 IMS	information management system
 IMSI	international mobile subscriber identity
@@ -818,10 +818,10 @@ IPNG	Internet Protocol, Next Generation
 IPS	in-plane switching
 IPS	intrusion prevention system
 IPSEC	Internet Protocol Security
+IR	intermediate representation
 IRC	Internet Relay Chat
 IRDA	infrared data association
 IRDP	ICMP Router Discovery Protocol
-IR	intermediate representation
 IRQ	interrupt request
 IRQL	interrupt request level
 IRR	interrupt request register
@@ -830,8 +830,8 @@ IS	information system
 ISA	industry standard architecture
 ISA	instruction set architecture
 ISB	instruction synchronization barrier (Arm)
-ISE	instant secure erase
 ISDN	integrated services digital network
+ISE	instant secure erase
 ISI	inter-symbol interference
 ISL	initial system load
 ISM	industrial, scientific, [and] medical
@@ -930,8 +930,8 @@ LMP	link management protocol
 LNO	loop nest optimization
 LOC	lines of code
 LOM	lights-out management
-LPE	Linux performance events
 LPC	low pin count
+LPE	Linux performance events
 LPS	local positioning system
 LRC	longitudinal redundancy check
 LRM	left-to-right mark
@@ -953,22 +953,22 @@ LTCC	low temperature co-fired ceramic
 LTO	linear tape-open
 LTO	link time optimization
 LTR	left to right
-LTR	load task register
 LTR	letter(-sized paper)
+LTR	load task register
 LTS	long term support
 LUA	Lua Uppercase Accident
 LUN	logical unit number
 LV	logical volume
+LVDS	Low-Voltage Differential Signaling
 LVM	logical volume management
 LVT	local vector table
-LVDS	Low-Voltage Differential Signaling
 LWP	light-weight process
 LZSS	Lempel Ziv Storer Szymanski
 LZW	Lempel Ziv Welch
 MAB	MAC authentication bypass
 MAC	mandatory access control
-MAC	{media,medium} access control
 MAC	message authentication {check,code}
+MAC	{media,medium} access control
 MADT	multiple APIC descriptor table
 MAMR	microwave-assisted magnetic recording
 MB	megabyte
@@ -976,8 +976,8 @@ MBA	multi-boot agent
 MBR	master boot record
 MBS	megabits per second
 MC	memory controller
-MCA	machine check architecture
 MCA	MicroChannel architecture
+MCA	machine check architecture
 MCC	multiversion concurrency control
 MCE	machine check exception
 MCGA	Multi-Color Graphics Array
@@ -985,11 +985,11 @@ MCH	memory controller hub
 MCLAG	multi-chassis link aggregation group
 MCM	multi-chip module
 MCQ	memory controlled queue
-MD	machine-dependent
 MD	MiniDisc
+MD	machine-dependent
 MD-SAL	model-driven service abstraction layer
-MDA	mail delivery agent
 MDA	Monochrome Display Adapter
+MDA	mail delivery agent
 MDC	Management Data Clock
 MDI	Medium Dependent Interface
 MDI-X	Medium Dependent Interface Crossover
@@ -998,14 +998,14 @@ MDMX	MIPS Digital Media eXtension
 MDRAM	multibank dynamic random access memory
 MDS	microarchitectural data sampling
 MESI	modified, exclusive, shared, invalid
-MFC	merge from current
 MFC	Microsoft Foundation Classes
+MFC	merge from current
 MFM	modified frequency modulation
 MFU	most frequently used
 MGCP	media gateway control protocol
 MHU	message handling unit
-MI	machine-independent
 MI	machine interface
+MI	machine-independent
 MIB	management information base
 MIC	message integrity {check,code}
 MID	mobile Internet device
@@ -1016,8 +1016,8 @@ MIM	man in the middle
 MIMD	multiple instruction, multiple data
 MIME	Multipurpose Internet Mail Extensions
 MIMO	multiple input multiple output
-MIPS	million instructions per second
 MIPS	Microprocessor without Interlocked Pipeline Stages
+MIPS	million instructions per second
 MISD	multiple instruction, single data
 MIT	Massachusetts Institute of Technology
 MITM	man in the middle
@@ -1099,8 +1099,8 @@ NC	numerical control
 NC-SI	network controller sideband interface
 NCO	numerically-controlled oscillator
 NCP	Network Control Protocol
-NCSI	network connectivity status indicator
 NCQ	native command queuing
+NCSI	network connectivity status indicator
 ND	neighbor discovery
 NDFA	nondeterministic finite automaton
 NDIS	network driver interface specification
@@ -1122,17 +1122,17 @@ NIS	network information service
 NIST	National Institute of Standards and Technology
 NLS	native language support
 NMI	non-maskable interrupt
-NNTP	Network News Transfer Protocol
 NMR	nonce-misuse resistance
+NNTP	Network News Transfer Protocol
 NOC	network operations center
 NOP	no operation
 NOS	network operating system
 NP	nondeterministic polynomial time
 NRND	not recommended for new designs
 NRZ	non-return to zero
+NSA	National Security Agency
 NSA	nation-state adversary
 NSA	no such agency
-NSA	National Security Agency
 NTA	negative trust anchor
 NTM	non-deterministic Turing machine
 NTP	Network Time Protocol
@@ -1150,10 +1150,10 @@ OBOE	off by one error
 OCL	object constraint language
 OCR	optical character recognition
 ODBC	Open Database Connectivity
+ODCM	on-demand clock modulation
 ODE	offline device environment
 ODI	open data-link interface
 ODM	object data manager
-ODCM	on-demand clock modulation
 ODMR	on-demand mail relay
 ODT	on-die termination
 OEM	original equipment manufacturer
@@ -1219,9 +1219,9 @@ PBR	partition boot record
 PBX	private branch exchange
 PC	personal computer
 PC	program counter
+PCB	Protocol Control Block
 PCB	printed circuit board
 PCB	process control block
-PCB	Protocol Control Block
 PCBC	propagating cipher block chaining
 PCC	Portable C Compiler
 PCD	page-level cache disable
@@ -1245,9 +1245,9 @@ PDN	pull-down network
 PDP	page {descriptor,directory} page
 PDS	product data sheet
 PDU	protocol data unit
+PE	portable executable
 PE	protection enable
 PE	provider edge
-PE	portable executable
 PEAP	Protected EAP
 PECI	platform environment control interface
 PEP	protocol extension protocol
@@ -1270,8 +1270,8 @@ PIM	personal information manager
 PIM	platform-independent model
 PIO	programmed input/output
 PIPT	physically indexed, physically tagged
-PIR	private information retrieval
 PIQ	prefetch input queue
+PIR	private information retrieval
 PIT	programmable interrupt timer
 PIV	personal identity verification
 PIX	Private Internet eXchange
@@ -1309,8 +1309,8 @@ POWER	Performance Optimization With Enhanced RISC
 POWERPC	Performance Optimization With Enhanced RISC - Performance Computing
 PP	pair programming
 PPB	PCI [to] PCI bridge
-PPC	PowerPC
 PPC	Power Performance Computing
+PPC	PowerPC
 PPI	pixels per inch
 PPM	pages per minute
 PPP	Point-to-Point Protocol
@@ -1323,8 +1323,8 @@ PPU	physics processing unit
 PQC	post-quantum cryptography
 PRAM	Parameter RAM
 PRBS	pseudorandom bit sequence
-PRG	pseudorandom generator
 PRF	pseudorandom function [family]
+PRG	pseudorandom generator
 PRML	partial response, maximum likelihood
 PRN	pseudorandom {noise,number}
 PRNG	pseudorandom number generator
@@ -1358,12 +1358,12 @@ QAM	quadrature amplitude modulation
 QAM	quality assurance management
 QBE	query by example
 QC	quality control
-QDI	quasi delay insensitive
 QCIF	quarter common intermediate format
+QDI	quasi delay insensitive
 QOI	quality of implementation
 QOI	quick order interface
-QUIC	Quick UDP Internet Connections
 QOS	quality of service
+QUIC	Quick UDP Internet Connections
 QVL	qualified vendor list
 R/O	read only
 R/W	read/write
@@ -1383,8 +1383,8 @@ RAS	row address strobe
 RAT	register allocation table
 RAT	remote access trojan
 RBF	radial basis function
-RBL     reputation block list
 RBL     real-time blackhole list
+RBL     reputation block list
 RBNF	routing backus-naur form
 RBT	red-black tree
 RC	release candidate
@@ -1448,8 +1448,8 @@ RSA	Rivest, Shamir, [and] Adleman
 RSC	Receive Segment Coalescing
 RSIP	Realm Specific IP
 RSN	Robust Secure Network
-RSS	really simple syndication
 RSS	Receive Side Scaling
+RSS	really simple syndication
 RSS	residual sum of squares
 RSTP	Rapid Spanning Tree Protocol
 RT	real time
@@ -1528,9 +1528,9 @@ SDRAM	synchronous dynamic random access memory
 SDS	software defined storage
 SDT	syntax-directed translation
 SEA	synchronous external abort
-SEGV	segmentation violation
 SED	self-encrypting drive
 SED	stream editor
+SEGV	segmentation violation
 SEMB	serial ATA enclosure management bridge
 SEO	search engine optimization
 SES	SCSI enclosure services
@@ -1597,9 +1597,9 @@ SNAP	Sub-Network Access Protocol
 SNIA	Storage Networking Industry Association
 SNMP	Simple Network Management Protocol
 SNR	signal-to-noise ratio
-SOC	security operations center
 SOA	service oriented architecture
 SOAP	Simple Object Access Protocol
+SOC	security operations center
 SOC	system on chip
 SOF	start of frame
 SOH	start of header
@@ -1647,10 +1647,10 @@ SSFDC	solid state floppy disc card
 SSH	secure shell
 SSI	server side includes
 SSID	service set identifier
-SSRF	server-side request forgery
-SSTP 	secure socket tunneling protocol
 SSL	secure sockets layer
 SSP	stack smashing protection
+SSRF	server-side request forgery
+SSTP 	secure socket tunneling protocol
 STC	software thermal control
 STD	state transition diagram
 STM	software transactional memory
@@ -1715,8 +1715,8 @@ TLS	thread local storage
 TLS	transport layer security
 TM	Turing machine
 TM	thermal monitor
-TMG	transmogrifier
 TMDS	transition minimized differential signaling
+TMG	transmogrifier
 TMO	timeout
 TOD	time of day
 TOE	TCP offload engine
@@ -1745,9 +1745,9 @@ TSC	time stamp counter
 TSD	time stamp disable
 TSDB	time series database
 TSL	test, set, lock
-TSO	time sharing option
 TSO	TCP segmentation offload
 TSO	Total Store Ordering
+TSO	time sharing option
 TSP	Time-Stamp Protocol
 TSP	Tunnel Setup Protocol
 TSP	time synchronization protocol
@@ -1771,8 +1771,8 @@ UAT	user acceptance testing
 UB	undefined behavior
 UBSAN	Undefined Behavior Sanitizer
 UC	uncacheable
-UCS	uniform-cost search
 UCS	unified computing system
+UCS	uniform-cost search
 UCS	universal coded character set
 UDI	uniform driver interface
 UDMA	ultra DMA
@@ -1870,8 +1870,8 @@ WAMP	Web Application Messaging Protocol
 WAN	wide area network
 WAP	Wireless Application Protocol
 WAP	wireless access point
-WDM	Windows Driver Model
 WDDM	Windows Display Driver Model
+WDM	Windows Driver Model
 WDT	watchdog timer
 WEP	Wired Equivalent Privacy
 WFI	wait for interrupt
