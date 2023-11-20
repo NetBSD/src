@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.26 2020/05/30 08:41:23 maxv Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.27 2023/11/20 03:05:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -162,7 +162,7 @@
 #define PT32_GETXSTATE		PT_GETXSTATE
 #define COREDUMP_MACHDEP_LWP_NOTES(l, ns, name)				\
 {									\
-	struct xstate xstate;						\
+	struct xstate xstate;	/* XXX FIXME big stack object */	\
 	memset(&xstate, 0, sizeof(xstate));				\
 	if (!process_read_xstate(l, &xstate))				\
 	{								\
