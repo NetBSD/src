@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.791 2023/10/11 15:14:28 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.792 2023/11/21 23:09:40 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.791 2023/10/11 15:14:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.792 2023/11/21 23:09:40 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -11146,9 +11146,9 @@ wm_linkintr_msix(void *arg)
 	/*
 	 * XXX 82574 MSI-X mode workaround
 	 *
-	 * 82574 MSI-X mode causes receive overrun(RXO) interrupt as ICR_OTHER
-	 * MSI-X vector, furthermore it does not cause neigher ICR_RXQ(0) nor
-	 * ICR_RXQ(1) vector. So, we generate ICR_RXQ(0) and ICR_RXQ(1)
+	 * 82574 MSI-X mode causes a receive overrun(RXO) interrupt as an
+	 * ICR_OTHER MSI-X vector; furthermore it causes neither ICR_RXQ(0)
+	 * nor ICR_RXQ(1) vectors. So, we generate ICR_RXQ(0) and ICR_RXQ(1)
 	 * interrupts by writing WMREG_ICS to process receive packets.
 	 */
 	if (sc->sc_type == WM_T_82574 && ((reg & ICR_RXO) != 0)) {
