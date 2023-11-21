@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.34 2023/11/21 18:57:29 thorpej Exp $ */
+/* $NetBSD: db_trace.c,v 1.35 2023/11/21 19:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.34 2023/11/21 18:57:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35 2023/11/21 19:59:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,39 +59,6 @@ struct prologue_info {
 	int	pi_reg_offset[32]; /* offset of registers in stack frame */
 	uint32_t pi_regmask;	   /* which registers are in frame */
 	int	pi_frame_size;	   /* frame size */
-};
-
-/*
- * We use several symbols to take special action:
- *
- *	Trap vectors, which use a different (fixed-size) stack frame:
- *
- *		XentArith
- *		XentIF
- *		XentInt
- *		XentMM
- *		XentSys
- *		XentUna
- */
-
-static struct special_symbol {
-	vaddr_t ss_val;
-	const char *ss_note;
-} special_symbols[] = {
-	{ (vaddr_t)&XentArith,		"arithmetic trap" },
-	{ (vaddr_t)&XentIF,		"instruction fault" },
-	{ (vaddr_t)&XentInt,		"interrupt" },
-	{ (vaddr_t)&XentMM,		"memory management fault" },
-	{ (vaddr_t)&XentSys,		"syscall" },
-	{ (vaddr_t)&XentUna,		"unaligned access fault" },
-	{ (vaddr_t)&XentRestart,	"console restart" },
-
-	/*
-	 * We'll not know what trap we took, but we'll find the
-	 * trap frame, at least...
-	 */
-	{ (vaddr_t)&exception_return,	"(exception return)" },
-	{ 0 }
 };
 
 /*
@@ -165,38 +132,11 @@ do {									\
 	}
 }
 
-static bool
-db_alpha_sym_is_trapsymbol(vaddr_t v)
+static void
+decode_syscall(int number, struct proc *p, void (*pr)(const char *, ...))
 {
-	int i;
 
-	for (i = 0; special_symbols[i].ss_val != 0; ++i)
-		if (v == special_symbols[i].ss_val)
-			return true;
-	return false;
-}
-
-static bool
-db_alpha_sym_is_backstop(vaddr_t v)
-{
-	return v == (vaddr_t)&alpha_kthread_backstop;
-}
-
-static const char *
-db_alpha_trap_description(vaddr_t v)
-{
-	int i;
-
-	for (i = 0; special_symbols[i].ss_val != 0; ++i)
-		if (v == special_symbols[i].ss_val)
-			return special_symbols[i].ss_note;
-	return "(? trap ?)";
-}
-
-static bool
-db_alpha_trap_is_syscall(vaddr_t v)
-{
-	return v == (vaddr_t)&XentSys;
+	(*pr)(" (%d)", number);
 }
 
 static unsigned long
@@ -207,13 +147,6 @@ db_alpha_tf_reg(struct trapframe *tf, unsigned int regno)
 	db_read_bytes((db_addr_t)&tf->tf_regs[regno], sizeof(reg),
 	    (char *)&reg);
 	return reg;
-}
-
-static void
-decode_syscall(int number, struct proc *p, void (*pr)(const char *, ...))
-{
-
-	(*pr)(" (%d)", number);
 }
 
 void
@@ -352,13 +285,13 @@ db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
 		 * If we are in a trap vector, frame points to a
 		 * trapframe.
 		 */
-		if (db_alpha_sym_is_trapsymbol(symval)) {
+		if (db_alpha_sym_is_trap(symval)) {
 			tf = (struct trapframe *)frame;
 
-			(*pr)("--- %s", db_alpha_trap_description(symval));
+			(*pr)("--- %s", db_alpha_trapsym_description(symval));
 
 			tfps = db_alpha_tf_reg(tf, FRAME_PS);
-			if (db_alpha_trap_is_syscall(symval)) {
+			if (db_alpha_sym_is_syscall(symval)) {
 				decode_syscall(db_alpha_tf_reg(tf, FRAME_V0),
 				    p, pr);
 			}
