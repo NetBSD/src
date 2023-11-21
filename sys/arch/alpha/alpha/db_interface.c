@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.39 2023/11/21 21:23:56 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.40 2023/11/21 21:53:06 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.39 2023/11/21 21:23:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.40 2023/11/21 21:53:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -105,44 +105,52 @@ static int db_alpha_regop(const struct db_variable *, db_expr_t *, int);
 
 #define	dbreg(xx)	((long *)(xx))
 
+#define	DBREG(n, r)						\
+	{	.name = __STRING(n),				\
+		.valuep = ((long *)(r)),			\
+		.fcn = db_alpha_regop,				\
+		.modif = NULL, }
+
 const struct db_variable db_regs[] = {
-	{	"v0",	dbreg(FRAME_V0),	db_alpha_regop	},
-	{	"t0",	dbreg(FRAME_T0),	db_alpha_regop	},
-	{	"t1",	dbreg(FRAME_T1),	db_alpha_regop	},
-	{	"t2",	dbreg(FRAME_T2),	db_alpha_regop	},
-	{	"t3",	dbreg(FRAME_T3),	db_alpha_regop	},
-	{	"t4",	dbreg(FRAME_T4),	db_alpha_regop	},
-	{	"t5",	dbreg(FRAME_T5),	db_alpha_regop	},
-	{	"t6",	dbreg(FRAME_T6),	db_alpha_regop	},
-	{	"t7",	dbreg(FRAME_T7),	db_alpha_regop	},
-	{	"s0",	dbreg(FRAME_S0),	db_alpha_regop	},
-	{	"s1",	dbreg(FRAME_S1),	db_alpha_regop	},
-	{	"s2",	dbreg(FRAME_S2),	db_alpha_regop	},
-	{	"s3",	dbreg(FRAME_S3),	db_alpha_regop	},
-	{	"s4",	dbreg(FRAME_S4),	db_alpha_regop	},
-	{	"s5",	dbreg(FRAME_S5),	db_alpha_regop	},
-	{	"s6",	dbreg(FRAME_S6),	db_alpha_regop	},
-	{	"a0",	dbreg(FRAME_A0),	db_alpha_regop	},
-	{	"a1",	dbreg(FRAME_A1),	db_alpha_regop	},
-	{	"a2",	dbreg(FRAME_A2),	db_alpha_regop	},
-	{	"a3",	dbreg(FRAME_A3),	db_alpha_regop	},
-	{	"a4",	dbreg(FRAME_A4),	db_alpha_regop	},
-	{	"a5",	dbreg(FRAME_A5),	db_alpha_regop	},
-	{	"t8",	dbreg(FRAME_T8),	db_alpha_regop	},
-	{	"t9",	dbreg(FRAME_T9),	db_alpha_regop	},
-	{	"t10",	dbreg(FRAME_T10),	db_alpha_regop	},
-	{	"t11",	dbreg(FRAME_T11),	db_alpha_regop	},
-	{	"ra",	dbreg(FRAME_RA),	db_alpha_regop	},
-	{	"t12",	dbreg(FRAME_T12),	db_alpha_regop	},
-	{	"at",	dbreg(FRAME_AT),	db_alpha_regop	},
-	{	"gp",	dbreg(FRAME_GP),	db_alpha_regop	},
-	{	"sp",	dbreg(FRAME_SP),	db_alpha_regop	},
-	{	"pc",	dbreg(FRAME_PC),	db_alpha_regop	},
-	{	"ps",	dbreg(FRAME_PS),	db_alpha_regop	},
-	{	"ai",	dbreg(FRAME_T11),	db_alpha_regop	},
-	{	"pv",	dbreg(FRAME_T12),	db_alpha_regop	},
+	DBREG(v0,	FRAME_V0),
+	DBREG(t0,	FRAME_T0),
+	DBREG(t1,	FRAME_T1),
+	DBREG(t2,	FRAME_T2),
+	DBREG(t3,	FRAME_T3),
+	DBREG(t4,	FRAME_T4),
+	DBREG(t5,	FRAME_T5),
+	DBREG(t6,	FRAME_T6),
+	DBREG(t7,	FRAME_T7),
+	DBREG(s0,	FRAME_S0),
+	DBREG(s1,	FRAME_S1),
+	DBREG(s2,	FRAME_S2),
+	DBREG(s3,	FRAME_S3),
+	DBREG(s4,	FRAME_S4),
+	DBREG(s5,	FRAME_S5),
+	DBREG(s6,	FRAME_S6),
+	DBREG(a0,	FRAME_A0),
+	DBREG(a1,	FRAME_A1),
+	DBREG(a2,	FRAME_A2),
+	DBREG(a3,	FRAME_A3),
+	DBREG(a4,	FRAME_A4),
+	DBREG(a5,	FRAME_A5),
+	DBREG(t8,	FRAME_T8),
+	DBREG(t9,	FRAME_T9),
+	DBREG(t10,	FRAME_T10),
+	DBREG(t11,	FRAME_T11),
+	DBREG(ra,	FRAME_RA),
+	DBREG(t12,	FRAME_T12),
+	DBREG(at,	FRAME_AT),
+	DBREG(gp,	FRAME_GP),
+	DBREG(sp,	FRAME_SP),
+	DBREG(pc,	FRAME_PC),
+	DBREG(ps,	FRAME_PS),
+	DBREG(ai,	FRAME_T11),
+	DBREG(pv,	FRAME_T12),
 };
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+
+#undef DBREG
 
 static int
 db_alpha_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
