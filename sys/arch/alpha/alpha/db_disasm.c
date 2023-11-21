@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.18 2021/06/21 02:10:46 thorpej Exp $ */
+/* $NetBSD: db_disasm.c,v 1.19 2023/11/21 22:19:12 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -48,13 +48,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.18 2021/06/21 02:10:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19 2023/11/21 22:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <machine/db_machdep.h>
-#include <alpha/alpha/db_instruction.h>
+#include <machine/alpha_instruction.h>
 
 #include <machine/pal.h>
 

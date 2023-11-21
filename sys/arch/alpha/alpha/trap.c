@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.139 2023/10/05 19:41:03 ad Exp $ */
+/* $NetBSD: trap.c,v 1.140 2023/11/21 22:19:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2021 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2023/10/05 19:41:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140 2023/11/21 22:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2023/10/05 19:41:03 ad Exp $");
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
-#include <alpha/alpha/db_instruction.h>
+#include <machine/alpha_instruction.h>
 #include <machine/userret.h>
 
 static int unaligned_fixup(u_long, u_long, u_long, struct lwp *);

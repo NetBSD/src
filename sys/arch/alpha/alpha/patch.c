@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.7 2021/07/13 01:59:10 thorpej Exp $	*/
+/*	$NetBSD: patch.c,v 1.8 2023/11/21 22:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.7 2021/07/13 01:59:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.8 2023/11/21 22:19:12 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.7 2021/07/13 01:59:10 thorpej Exp $");
 #include <machine/alpha.h>
 #include <machine/intr.h>
 
-#include <alpha/alpha/db_instruction.h>
+#include <machine/alpha_instruction.h>
 
 void	_membar_producer(void);
 void	_membar_producer_end(void);

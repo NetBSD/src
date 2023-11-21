@@ -1,4 +1,4 @@
-/* $NetBSD: db_instruction.h,v 1.13 2021/07/20 02:42:10 thorpej Exp $ */
+/* $NetBSD: alpha_instruction.h,v 1.1 2023/11/21 22:19:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

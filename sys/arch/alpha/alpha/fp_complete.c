@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.30 2022/05/22 11:27:33 andvar Exp $ */
+/* $NetBSD: fp_complete.c,v 1.31 2023/11/21 22:19:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.30 2022/05/22 11:27:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.31 2023/11/21 22:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.30 2022/05/22 11:27:33 andvar Exp 
 #include <machine/fpu.h>
 #include <machine/reg.h>
 #include <machine/alpha.h>
-#include <alpha/alpha/db_instruction.h>
+#include <machine/alpha_instruction.h>
 
 #include <lib/libkern/softfloat.h>
 
