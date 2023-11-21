@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.86 2023/11/21 00:09:18 riastradh Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.87 2023/11/21 12:12:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.86 2023/11/21 00:09:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.87 2023/11/21 12:12:26 martin Exp $");
 
 #include "opt_pax.h"
 
@@ -162,7 +162,7 @@ static int
 vmcmd_get_prot(struct lwp *l, const struct exec_vmcmd *cmd, vm_prot_t *prot,
     vm_prot_t *maxprot)
 {
-	vm_prot_t extraprot = PROT_MPROTECT_EXTRACT(cmd->ev_prot);
+	vm_prot_t extraprot __unused = PROT_MPROTECT_EXTRACT(cmd->ev_prot);
 
 	*prot = cmd->ev_prot & UVM_PROT_ALL;
 	*maxprot = PAX_MPROTECT_MAXPROTECT(l, *prot, extraprot, UVM_PROT_ALL);
