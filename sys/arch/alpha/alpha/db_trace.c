@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.38 2023/11/21 21:23:56 thorpej Exp $ */
+/* $NetBSD: db_trace.c,v 1.39 2023/11/21 22:19:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.38 2023/11/21 21:23:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39 2023/11/21 22:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.38 2023/11/21 21:23:56 thorpej Exp $"
 #include <machine/alpha.h>
 #include <machine/db_machdep.h>
 
-#include <alpha/alpha/db_instruction.h>
+#include <machine/alpha_instruction.h>
 
 #include <ddb/db_sym.h>
 #include <ddb/db_access.h>
