@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.8 2023/11/20 13:05:17 riastradh Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.9 2023/11/21 00:09:18 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.8 2023/11/20 13:05:17 riastradh Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.9 2023/11/21 00:09:18 riastradh Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -633,9 +633,6 @@ ATF_TC_BODY(setrlimit_stack_growshrink, tc)
 	 */
 	res.rlim_cur = 2*n;
 	RL(setrlimit(RLIMIT_STACK, &res));
-
-	atf_tc_expect_fail("PR kern/57711:"
-	    " setrlimit(RLIMIT_STACK) fails to increase usable stack size");
 
 	/*
 	 * Verify that we can now get at pages past the end of the new
