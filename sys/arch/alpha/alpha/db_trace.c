@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.33 2023/11/21 14:35:01 riastradh Exp $ */
+/* $NetBSD: db_trace.c,v 1.34 2023/11/21 18:57:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.33 2023/11/21 14:35:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.34 2023/11/21 18:57:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ do {									\
 } while (0)
 
 	for (pc = func; pc < callpc; pc += sizeof(alpha_instruction)) {
-		ins.bits = *(unsigned int *)pc;
+		db_read_bytes(pc, sizeof(ins.bits), (char *)&ins.bits);
 
 		if (ins.mem_format.opcode == op_lda &&
 		    ins.mem_format.ra == 30 &&
@@ -199,6 +199,16 @@ db_alpha_trap_is_syscall(vaddr_t v)
 	return v == (vaddr_t)&XentSys;
 }
 
+static unsigned long
+db_alpha_tf_reg(struct trapframe *tf, unsigned int regno)
+{
+	unsigned long reg;
+
+	db_read_bytes((db_addr_t)&tf->tf_regs[regno], sizeof(reg),
+	    (char *)&reg);
+	return reg;
+}
+
 static void
 decode_syscall(int number, struct proc *p, void (*pr)(const char *, ...))
 {
@@ -248,7 +258,7 @@ db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
 		p = curproc;
 		addr = DDB_REGS->tf_regs[FRAME_SP] - FRAME_SIZE * 8;
 		tf = (struct trapframe *)addr;
-		callpc = tf->tf_regs[FRAME_PC];
+		callpc = db_alpha_tf_reg(tf, FRAME_PC);
 		frame = (db_addr_t)tf + FRAME_SIZE * 8;
 		ra_from_tf = true;
 	} else {
@@ -347,9 +357,11 @@ db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
 
 			(*pr)("--- %s", db_alpha_trap_description(symval));
 
-			tfps = tf->tf_regs[FRAME_PS];
-			if (db_alpha_trap_is_syscall(symval))
-				decode_syscall(tf->tf_regs[FRAME_V0], p, pr);
+			tfps = db_alpha_tf_reg(tf, FRAME_PS);
+			if (db_alpha_trap_is_syscall(symval)) {
+				decode_syscall(db_alpha_tf_reg(tf, FRAME_V0),
+				    p, pr);
+			}
 			if ((tfps & ALPHA_PSL_IPL_MASK) != last_ipl) {
 				last_ipl = tfps & ALPHA_PSL_IPL_MASK;
 				if (symval != (vaddr_t)&XentSys)
@@ -360,7 +372,7 @@ db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
 				(*pr)("--- user mode ---\n");
 				break;	/* Terminate search.  */
 			}
-			callpc = tf->tf_regs[FRAME_PC];
+			callpc = db_alpha_tf_reg(tf, FRAME_PC);
 			frame = (db_addr_t)tf + FRAME_SIZE * 8;
 			ra_from_tf = true;
 			continue;
@@ -380,14 +392,19 @@ db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
 			 * in a leaf call).  If not, we've found the
 			 * root of the call graph.
 			 */
-			if (ra_from_tf)
-				callpc = tf->tf_regs[FRAME_RA];
-			else {
+			if (ra_from_tf) {
+				callpc = db_alpha_tf_reg(tf, FRAME_RA);
+			} else {
 				(*pr)("--- root of call graph ---\n");
 				break;
 			}
-		} else
-			callpc = *(u_long *)(frame + pi.pi_reg_offset[26]);
+		} else {
+			unsigned long reg;
+
+			db_read_bytes(frame + pi.pi_reg_offset[26],
+			    sizeof(reg), (char *)&reg);
+			callpc = reg;
+		}
 		frame += pi.pi_frame_size;
 		ra_from_tf = false;
 	}
