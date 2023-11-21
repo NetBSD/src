@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_instruction.h,v 1.1 2023/11/21 22:19:12 thorpej Exp $ */
+/* $NetBSD: alpha_instruction.h,v 1.2 2023/11/21 22:27:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -746,7 +746,6 @@ typedef union {
 #define	op_cvtgd_su	0x5ad
 #define	op_cvtgqg_sv	0x5af
 
-#ifdef _KERNEL
 struct alpha_print_instruction_context {
 	unsigned long pc;	/* address of insn */
 	alpha_instruction insn;	/* instruction bits */
@@ -755,6 +754,7 @@ struct alpha_print_instruction_context {
 	size_t	cursor;		/* current next output location */
 };
 
+#ifdef _KERNEL
 int	alpha_print_instruction(struct alpha_print_instruction_context *);
 #endif /* _KERNEL */
 
