@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.38 2023/11/21 19:59:07 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.39 2023/11/21 21:23:56 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.38 2023/11/21 19:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.39 2023/11/21 21:23:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -567,6 +567,21 @@ db_branch_taken(int ins, db_addr_t pc, db_regs_t *regs)
 	}
 
 	return (newpc);
+}
+
+unsigned long
+db_alpha_read_saved_reg(unsigned long *regp)
+{
+	unsigned long reg;
+
+	db_read_bytes((db_addr_t)regp, sizeof(reg), (char *)&reg);
+	return reg;
+}
+
+unsigned long
+db_alpha_tf_reg(struct trapframe *tf, unsigned int regno)
+{
+	return db_alpha_read_saved_reg(&tf->tf_regs[regno]);
 }
 
 /*
