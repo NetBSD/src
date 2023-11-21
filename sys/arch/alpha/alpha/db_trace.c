@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.36 2023/11/21 20:29:47 thorpej Exp $ */
+/* $NetBSD: db_trace.c,v 1.37 2023/11/21 20:40:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.36 2023/11/21 20:29:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.37 2023/11/21 20:40:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,9 +133,8 @@ do {									\
 }
 
 static void
-decode_syscall(int number, struct proc *p, void (*pr)(const char *, ...))
+decode_syscall(int number, void (*pr)(const char *, ...))
 {
-
 	(*pr)(" (%d)", number);
 }
 
@@ -175,8 +174,6 @@ db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
 	struct trapframe *tf;
 	bool ra_from_tf;
 	u_long last_ipl = ~0L;
-	struct proc *p = NULL;
-	struct lwp *l = NULL;
 	char c;
 	bool trace_thread = false;
 	bool lwpaddr = false;
@@ -188,13 +185,15 @@ db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
 	}
 
 	if (!have_addr) {
-		p = curproc;
 		addr = DDB_REGS->tf_regs[FRAME_SP] - FRAME_SIZE * 8;
 		tf = (struct trapframe *)addr;
 		callpc = db_alpha_tf_reg(tf, FRAME_PC);
 		frame = (db_addr_t)tf + FRAME_SIZE * 8;
 		ra_from_tf = true;
 	} else {
+		struct proc *p = NULL;
+		struct lwp *l = NULL;
+
 		if (trace_thread) {
 			if (lwpaddr) {
 				l = (struct lwp *)addr;
@@ -293,7 +292,7 @@ db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
 			tfps = db_alpha_tf_reg(tf, FRAME_PS);
 			if (db_alpha_sym_is_syscall(symval)) {
 				decode_syscall(db_alpha_tf_reg(tf, FRAME_V0),
-				    p, pr);
+				    pr);
 			}
 			if ((tfps & ALPHA_PSL_IPL_MASK) != last_ipl) {
 				last_ipl = tfps & ALPHA_PSL_IPL_MASK;
