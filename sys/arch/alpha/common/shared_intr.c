@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.29 2021/07/04 22:36:43 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.30 2023/11/21 17:52:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.29 2021/07/04 22:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.30 2023/11/21 17:52:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -122,14 +122,11 @@ int
 alpha_shared_intr_dispatch(struct alpha_shared_intr *intr, unsigned int num)
 {
 	struct alpha_shared_intrhand *ih;
-	int rv, handled;
+	int rv = 0;
 
 	atomic_add_long(&intr[num].intr_evcnt.ev_count, 1);
 
-	ih = intr[num].intr_q.tqh_first;
-	handled = 0;
-	while (ih != NULL) {
-
+	TAILQ_FOREACH(ih, &intr[num].intr_q, ih_q) {
 		/*
 		 * The handler returns one of three values:
 		 *   0:	This interrupt wasn't for me.
@@ -137,14 +134,10 @@ alpha_shared_intr_dispatch(struct alpha_shared_intr *intr, unsigned int num)
 		 *  -1: This interrupt might have been for me, but I can't say
 		 *      for sure.
 		 */
-
-		rv = (*ih->ih_fn)(ih->ih_arg);
-
-		handled = handled || (rv != 0);
-		ih = ih->ih_q.tqe_next;
+		rv |= (*ih->ih_fn)(ih->ih_arg);
 	}
 
-	return (handled);
+	return (rv ? 1 : 0);
 }
 
 static int
@@ -246,7 +239,7 @@ alpha_shared_intr_link(struct alpha_shared_intr *intr,
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE) {
-			if (intr[num].intr_q.tqh_first == NULL) {
+			if (TAILQ_FIRST(&intr[num].intr_q) == NULL) {
 				printf("alpha_shared_intr_establish: %s irq %d: warning: using %s on %s\n",
 				    basename, num, intr_typename(type),
 				    intr_typename(intr[num].intr_sharetype));
@@ -321,15 +314,16 @@ int
 alpha_shared_intr_isactive(struct alpha_shared_intr *intr, unsigned int num)
 {
 
-	return (intr[num].intr_q.tqh_first != NULL);
+	return TAILQ_FIRST(&intr[num].intr_q) != NULL;
 }
 
 int
 alpha_shared_intr_firstactive(struct alpha_shared_intr *intr, unsigned int num)
 {
+	struct alpha_shared_intrhand *ih;
 
-	return (intr[num].intr_q.tqh_first != NULL &&
-		intr[num].intr_q.tqh_first->ih_q.tqe_next == NULL);
+	return (ih = TAILQ_FIRST(&intr[num].intr_q)) != NULL &&
+	       TAILQ_NEXT(ih, ih_q) == NULL;
 }
 
 void
