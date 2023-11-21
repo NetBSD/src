@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.37 2022/10/26 23:38:05 riastradh Exp $ */
+/* $NetBSD: db_interface.c,v 1.38 2023/11/21 19:59:07 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -47,12 +47,14 @@
  *	NASA Ames Research Center
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#endif
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37 2022/10/26 23:38:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.38 2023/11/21 19:59:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -565,4 +567,73 @@ db_branch_taken(int ins, db_addr_t pc, db_regs_t *regs)
 	}
 
 	return (newpc);
+}
+
+/*
+ * Alpha special symbol handling.
+ */
+db_alpha_nlist db_alpha_nl[] = {
+	DB_ALPHA_SYM(SYM_XentArith, XentArith),
+	DB_ALPHA_SYM(SYM_XentIF, XentIF),
+	DB_ALPHA_SYM(SYM_XentInt, XentInt),
+	DB_ALPHA_SYM(SYM_XentMM, XentMM),
+	DB_ALPHA_SYM(SYM_XentSys, XentSys),
+	DB_ALPHA_SYM(SYM_XentUna, XentUna),
+	DB_ALPHA_SYM(SYM_XentRestart, XentRestart),
+	DB_ALPHA_SYM(SYM_exception_return, exception_return),
+	DB_ALPHA_SYM(SYM_alpha_kthread_backstop, alpha_kthread_backstop),
+	DB_ALPHA_SYM_EOL
+};
+
+static int
+db_alpha_nlist_lookup(db_addr_t addr)
+{
+	int i;
+
+	for (i = 0; i < SYM___eol; i++) {
+		if (db_alpha_nl[i].n_value == addr) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+bool
+db_alpha_sym_is_trap(db_addr_t addr)
+{
+	int i = db_alpha_nlist_lookup(addr);
+	return i >= SYM_XentArith && i <= SYM_exception_return;
+}
+
+bool
+db_alpha_sym_is_backstop(db_addr_t addr)
+{
+	return db_alpha_nlist_lookup(addr) == SYM_alpha_kthread_backstop;
+}
+
+bool
+db_alpha_sym_is_syscall(db_addr_t addr)
+{
+	return db_alpha_nlist_lookup(addr) == SYM_XentSys;
+}
+
+const char *
+db_alpha_trapsym_description(db_addr_t addr)
+{
+	static const char * const trap_descriptions[] = {
+	[SYM_XentArith]		=	"arithmetic trap",
+	[SYM_XentIF]		=	"instruction fault",
+	[SYM_XentInt]		=	"interrupt",
+	[SYM_XentMM]		=	"memory management fault",
+	[SYM_XentSys]		=	"syscall",
+	[SYM_XentUna]		=	"unaligned access fault",
+	[SYM_XentRestart]	=	"console restart",
+	[SYM_exception_return]	=	"(exception return)",
+	};
+
+	int i = db_alpha_nlist_lookup(addr);
+	if (i >= SYM_XentArith && i <= SYM_exception_return) {
+		return trap_descriptions[i];
+	}
+	return "??? trap ???";
 }

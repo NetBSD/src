@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.20 2023/11/21 14:35:01 riastradh Exp $ */
+/* $NetBSD: db_machdep.h,v 1.21 2023/11/21 19:59:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -182,6 +182,34 @@ typedef long		kgdb_reg_t;
 
 /* Too much?  Must be large enough for register transfer. */
 #define	KGDB_BUFLEN	1024
+
+/*
+ * Private alpha ddb internals.
+ */
+#define	SYM_XentArith			0
+#define	SYM_XentIF			1
+#define	SYM_XentInt			2
+#define	SYM_XentMM			3
+#define	SYM_XentSys			4
+#define	SYM_XentUna			5
+#define	SYM_XentRestart			6
+#define	SYM_exception_return		7
+#define	SYM_alpha_kthread_backstop	8
+#define	SYM___eol			(SYM_alpha_kthread_backstop + 1)
+
+struct db_alpha_nlist {
+	vaddr_t		n_value;
+};
+
+typedef struct db_alpha_nlist db_alpha_nlist;
+
+#define	DB_ALPHA_SYM(i, x)	[(i)] = { .n_value = (vaddr_t)&(x) }
+#define	DB_ALPHA_SYM_EOL	[SYM___eol] = { .n_value = 0 }
+
+bool		db_alpha_sym_is_trap(db_addr_t);
+bool		db_alpha_sym_is_backstop(db_addr_t);
+bool		db_alpha_sym_is_syscall(db_addr_t);
+const char *	db_alpha_trapsym_description(db_addr_t);
 
 /*
  * Extra ddb options.
