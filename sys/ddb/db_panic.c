@@ -1,4 +1,4 @@
-/*	$NetBSD: db_panic.c,v 1.11 2021/10/06 12:18:20 uwe Exp $	*/
+/*	$NetBSD: db_panic.c,v 1.12 2023/11/21 14:35:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002, 2006, 2007, 2009, 2013 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.11 2021/10/06 12:18:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.12 2023/11/21 14:35:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,7 +52,9 @@ db_panic(void)
 			intrace = 1;
 			printf("cpu%u: Begin traceback...\n",
 			    cpu_index(curcpu()));
-			db_stack_trace_print(
+			db_stack_trace_print_ra(
+			    (db_expr_t)(intptr_t)__builtin_return_address(0),
+			    true,
 			    (db_expr_t)(intptr_t)__builtin_frame_address(0),
 			    true, db_panicstackframes, "", printf);
 			printf("cpu%u: End traceback...\n",
