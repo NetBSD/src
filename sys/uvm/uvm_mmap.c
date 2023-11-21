@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.184 2022/07/07 11:29:18 rin Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.185 2023/11/21 14:35:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.184 2022/07/07 11:29:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.185 2023/11/21 14:35:36 riastradh Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -282,9 +282,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	struct file *fp = NULL;
 	struct uvm_object *uobj;
 	int error;
-#ifdef PAX_ASLR
 	vaddr_t orig_addr;
-#endif /* PAX_ASLR */
 
 	/*
 	 * first, extract syscall args from the uap.
@@ -298,9 +296,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
 
-#ifdef PAX_ASLR
 	orig_addr = addr;
-#endif /* PAX_ASLR */
 
 	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
 		return EINVAL;
