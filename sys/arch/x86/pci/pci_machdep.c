@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.97 2023/10/17 12:07:42 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.98 2023/11/21 23:22:23 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.97 2023/10/17 12:07:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.98 2023/11/21 23:22:23 gutteridge Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -228,7 +228,7 @@ const struct {
 
 /* arch/xen does not support MSI/MSI-X yet. */
 #ifdef __HAVE_PCI_MSI_MSIX
-#define PCI_QUIRK_DISABLE_MSI	1 /* Neigher MSI nor MSI-X work */
+#define PCI_QUIRK_DISABLE_MSI	1 /* Neither MSI nor MSI-X work */
 #define PCI_QUIRK_DISABLE_MSIX	2 /* MSI-X does not work */
 #define PCI_QUIRK_ENABLE_MSI_VM	3 /* Older chipset in VM where MSI and MSI-X works */
 
@@ -507,7 +507,7 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 	 * support it than the other way around, so be conservative
 	 * here.  So we don't enable MSI if we don't find a host
 	 * bridge there.  We also deliberately don't enable MSI on
-	 * chipsets from low-end manifacturers like VIA and SiS.
+	 * chipsets from low-end manufacturers like VIA and SiS.
 	 */
 	for (i = 0; i <= 7; i++) {
 		tag = pci_make_tag(pc, 0, 0, i);
