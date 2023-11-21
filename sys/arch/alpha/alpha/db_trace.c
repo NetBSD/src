@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.35 2023/11/21 19:59:07 thorpej Exp $ */
+/* $NetBSD: db_trace.c,v 1.36 2023/11/21 20:29:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35 2023/11/21 19:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.36 2023/11/21 20:29:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ decode_prologue(db_addr_t callpc, db_addr_t func,
 {
 	long signed_immediate;
 	alpha_instruction ins;
-	db_expr_t pc;
+	db_addr_t pc;
 
 	pi->pi_regmask = 0;
 	pi->pi_frame_size = 0;
@@ -297,8 +297,9 @@ db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
 			}
 			if ((tfps & ALPHA_PSL_IPL_MASK) != last_ipl) {
 				last_ipl = tfps & ALPHA_PSL_IPL_MASK;
-				if (symval != (vaddr_t)&XentSys)
+				if (! db_alpha_sym_is_syscall(symval)) {
 					(*pr)(" (from ipl %ld)", last_ipl);
+				}
 			}
 			(*pr)(" ---\n");
 			if (tfps & ALPHA_PSL_USERMODE) {
