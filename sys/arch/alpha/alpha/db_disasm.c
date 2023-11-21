@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.19 2023/11/21 22:19:12 thorpej Exp $ */
+/* $NetBSD: db_disasm.c,v 1.20 2023/11/21 22:25:16 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19 2023/11/21 22:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20 2023/11/21 22:25:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ static const struct tbl pal_op_tbl[] = {
 static const char *
 pal_opname(int op)
 {
-	static char unk[8];
+	static char unk[11];
 	int i;
 
 	for (i = 0; pal_op_tbl[i].name != NULL; i++) {
@@ -199,7 +199,7 @@ pal_opname(int op)
 			return (pal_op_tbl[i].name);
 	}
 
-	snprintf(unk, sizeof(unk), "0x%x", op);
+	snprintf(unk, sizeof(unk), "0x%08x", op);
 	return (unk);
 }
 
@@ -813,6 +813,9 @@ insn_printf(struct alpha_print_instruction_context *ctx,
  * next instruction.
  */
 
+#ifndef _KERNEL
+static
+#endif
 int
 alpha_print_instruction(struct alpha_print_instruction_context *ctx)
 {
