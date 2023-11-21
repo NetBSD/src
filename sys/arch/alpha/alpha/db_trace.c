@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.37 2023/11/21 20:40:24 thorpej Exp $ */
+/* $NetBSD: db_trace.c,v 1.38 2023/11/21 21:23:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.37 2023/11/21 20:40:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.38 2023/11/21 21:23:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,16 +138,6 @@ decode_syscall(int number, void (*pr)(const char *, ...))
 	(*pr)(" (%d)", number);
 }
 
-static unsigned long
-db_alpha_tf_reg(struct trapframe *tf, unsigned int regno)
-{
-	unsigned long reg;
-
-	db_read_bytes((db_addr_t)&tf->tf_regs[regno], sizeof(reg),
-	    (char *)&reg);
-	return reg;
-}
-
 void
 db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif, void (*pr)(const char *, ...))
@@ -191,15 +181,27 @@ db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
 		frame = (db_addr_t)tf + FRAME_SIZE * 8;
 		ra_from_tf = true;
 	} else {
+#ifdef _KERNEL
 		struct proc *p = NULL;
 		struct lwp *l = NULL;
+#else
+		struct proc pstore, *p = &pstore;
+		struct lwp lstore, *l = &lstore;
+#endif /* _KERNEL */
 
 		if (trace_thread) {
 			if (lwpaddr) {
+#ifdef _KERNEL
 				l = (struct lwp *)addr;
 				p = l->l_proc;
+#else
+				db_read_bytes(addr, sizeof(*l), (char *)l);
+				db_read_bytes((db_addr_t)l->l_proc,
+				    sizeof(*p), (char *)p);
+#endif /* _KERNEL */
 				(*pr)("trace: pid %d ", p->p_pid);
 			} else {
+#ifdef _KERNEL
 				(*pr)("trace: pid %d ", (int)addr);
 				p = proc_find_raw(addr);
 				if (p == NULL) {
@@ -208,11 +210,15 @@ db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
 				}
 				l = LIST_FIRST(&p->p_lwps);
 				KASSERT(l != NULL);
+#else
+				(*pr)("no proc_find_raw() in crash\n");
+				return;
+#endif /* _KERNEL */
 			}
 			(*pr)("lid %d ", l->l_lid);
 			pcbp = lwp_getpcb(l);
-			addr = (db_expr_t)pcbp->pcb_hw.apcb_ksp;
-			callpc = pcbp->pcb_context[7];
+			addr = db_alpha_read_saved_reg(&pcbp->pcb_hw.apcb_ksp);
+			callpc = db_alpha_read_saved_reg(&pcbp->pcb_context[7]);
 			(*pr)("at 0x%lx\n", addr);
 		} else if (have_ra) {
 			callpc = ra;

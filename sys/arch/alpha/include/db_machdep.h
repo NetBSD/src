@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.21 2023/11/21 19:59:07 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.22 2023/11/21 21:23:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -210,6 +210,9 @@ bool		db_alpha_sym_is_trap(db_addr_t);
 bool		db_alpha_sym_is_backstop(db_addr_t);
 bool		db_alpha_sym_is_syscall(db_addr_t);
 const char *	db_alpha_trapsym_description(db_addr_t);
+
+unsigned long	db_alpha_read_saved_reg(unsigned long *);
+unsigned long	db_alpha_tf_reg(struct trapframe *, unsigned int);
 
 /*
  * Extra ddb options.
