@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.27 2020/01/23 10:21:14 ad Exp $ */
+/* $NetBSD: pax.h,v 1.28 2023/11/21 14:35:36 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -53,53 +53,80 @@ struct vmspace;
 extern int pax_aslr_debug;
 #endif
 
-void	pax_segvguard_cleanup(struct vnode *);
-
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 void pax_init(void);
 void pax_set_flags(struct exec_package *, struct proc *);
 void pax_setup_elf_flags(struct exec_package *, uint32_t);
 #else
-# define pax_init()
-# define pax_set_flags(e, p)
-# define pax_setup_elf_flags(e, flags) __USE(flags)
+static inline void
+pax_init(void)
+{
+}
+static inline void
+pax_set_flags(struct exec_package *epp, struct proc *p)
+{
+}
+static inline void
+pax_setup_elf_flags(struct exec_package *epp, uint32_t flags)
+{
+}
 #endif
+
+#ifdef PAX_MPROTECT
 
 vm_prot_t pax_mprotect_maxprotect(
-#ifdef PAX_MPROTECT_DEBUG
+# ifdef PAX_MPROTECT_DEBUG
     const char *, size_t,
-#endif
+# endif
     struct lwp *, vm_prot_t, vm_prot_t, vm_prot_t);
 int pax_mprotect_validate(
-#ifdef PAX_MPROTECT_DEBUG
-    const char *, size_t,
-#endif
-    struct lwp *, vm_prot_t);
-
-#ifndef PAX_MPROTECT
-# define PAX_MPROTECT_MAXPROTECT(l, active, extra, max) (max)
-# define PAX_MPROTECT_VALIDATE(l, prot) (0)
-# define pax_mprotect_prot(l)	0
-#else
 # ifdef PAX_MPROTECT_DEBUG
-#  define PAX_MPROTECT_MAXPROTECT(l, active, extra, max) \
-    pax_mprotect_maxprotect(__FILE__, __LINE__, (l), (active), (extra), (max))
-#  define PAX_MPROTECT_VALIDATE(l, prot) \
-    pax_mprotect_validate(__FILE__, __LINE__, (l), (prot))
-# else
-#  define PAX_MPROTECT_MAXPROTECT(l, active, extra, max) \
-    pax_mprotect_maxprotect((l), (active), (extra), (max))
-#  define PAX_MPROTECT_VALIDATE(l, prot) \
-    pax_mprotect_validate((l), (prot))
+    const char *, size_t,
 # endif
+    struct lwp *, vm_prot_t);
 int pax_mprotect_prot(struct lwp *);
-#endif
-int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 
-#define	PAX_ASLR_DELTA(delta, lsb, len)	\
-    (((delta) & ((1UL << (len)) - 1)) << (lsb))
+#else
+
+static inline vm_prot_t
+pax_mprotect_maxprotect(struct lwp *l, vm_prot_t prot, vm_prot_t extra,
+    vm_prot_t max)
+{
+	return max;
+}
+static inline vm_prot_t
+pax_mprotect_validate(struct lwp *l, vm_prot_t prot)
+{
+	return 0;
+}
+static inline int
+pax_mprotect_prot(struct lwp *l)
+{
+	return 0;
+}
+
+#endif
+
+#if defined(PAX_MPROTECT) && defined(PAX_MPROTECT_DEBUG)
+# define PAX_MPROTECT_MAXPROTECT(l, active, extra, max) \
+   pax_mprotect_maxprotect(__FILE__, __LINE__, (l), (active), (extra), (max))
+# define PAX_MPROTECT_VALIDATE(l, prot) \
+   pax_mprotect_validate(__FILE__, __LINE__, (l), (prot))
+#else
+# define PAX_MPROTECT_MAXPROTECT(l, active, extra, max) \
+   pax_mprotect_maxprotect((l), (active), (extra), (max))
+# define PAX_MPROTECT_VALIDATE(l, prot) \
+   pax_mprotect_validate((l), (prot))
+#endif
+
+#ifdef PAX_SEGVGUARD
+int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
+void pax_segvguard_cleanup(struct vnode *);
+#endif
 
 #ifdef PAX_ASLR
+#define	PAX_ASLR_DELTA(delta, lsb, len)	\
+    (((delta) & ((1UL << (len)) - 1)) << (lsb))
 void pax_aslr_init_vm(struct lwp *, struct vmspace *, struct exec_package *);
 void pax_aslr_stack(struct exec_package *, vsize_t *);
 uint32_t pax_aslr_stack_gap(struct exec_package *);
@@ -107,12 +134,33 @@ vaddr_t pax_aslr_exec_offset(struct exec_package *, vaddr_t);
 voff_t pax_aslr_rtld_offset(struct exec_package *, vaddr_t, int);
 void pax_aslr_mmap(struct lwp *, vaddr_t *, vaddr_t, int);
 #else
-# define pax_aslr_init_vm(l, v, e)
-# define pax_aslr_stack(e, o)
-# define pax_aslr_stack_gap(e)	0
-# define pax_aslr_exec_offset(e, a) MAX(a, PAGE_SIZE)
-# define pax_aslr_rtld_offset(e, a, u) 0
-# define pax_aslr_mmap(l, a, b, c)
+static inline void
+pax_aslr_init_vm(struct lwp *l, struct vmspace *vm, struct exec_package *epp)
+{
+}
+static inline void
+pax_aslr_stack(struct exec_package *epp, vsize_t *max_stack_size)
+{
+}
+static inline uint32_t
+pax_aslr_stack_gap(struct exec_package *epp)
+{
+	return 0;
+}
+static inline vaddr_t
+pax_aslr_exec_offset(struct exec_package *epp, vaddr_t align)
+{
+	return MAX(align, PAGE_SIZE);
+}
+static inline voff_t
+pax_aslr_rtld_offset(struct exec_package *epp, vaddr_t align, int use_topdown)
+{
+	return 0;
+}
+static inline void
+pax_aslr_mmap(struct lwp *l, vaddr_t *addr, vaddr_t orig_addr, int flags)
+{
+}
 #endif
 
 #endif /* !_SYS_PAX_H_ */
