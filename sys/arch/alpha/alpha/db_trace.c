@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.32 2022/07/21 01:52:28 thorpej Exp $ */
+/* $NetBSD: db_trace.c,v 1.33 2023/11/21 14:35:01 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.32 2022/07/21 01:52:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.33 2023/11/21 14:35:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,6 +210,17 @@ void
 db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif, void (*pr)(const char *, ...))
 {
+
+	db_stack_trace_print_ra(/*ra*/0, /*have_ra*/false, addr, have_addr,
+	    count, modif, pr);
+}
+
+void
+db_stack_trace_print_ra(db_expr_t ra, bool have_ra,
+    db_expr_t addr, bool have_addr,
+    db_expr_t count,
+    const char *modif, void (*pr)(const char *, ...))
+{
 	db_addr_t callpc, frame, symval;
 	struct prologue_info pi;
 	db_expr_t diff;
@@ -261,6 +272,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			addr = (db_expr_t)pcbp->pcb_hw.apcb_ksp;
 			callpc = pcbp->pcb_context[7];
 			(*pr)("at 0x%lx\n", addr);
+		} else if (have_ra) {
+			callpc = ra;
+			(*pr)("at 0x%lx pc 0x%lx\n", addr, callpc);
 		} else {
 			(*pr)("alpha trace requires known PC =eject=\n");
 			return;

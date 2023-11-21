@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.43 2023/11/02 10:31:55 martin Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.44 2023/11/21 14:35:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2023 The NetBSD Foundation, Inc.
@@ -89,11 +89,19 @@ void		db_show_condvar(db_expr_t, bool, db_expr_t, const char *);
 /* kern/sys_select.c */
 void		db_show_selinfo(db_expr_t, bool, db_expr_t, const char *);
 
+#ifndef __HAVE_DB_STACK_TRACE_PRINT_RA
+#define	db_stack_trace_print_ra(ra, have_ra, addr, have_addr, c, m, pr)	      \
+	((void)(ra), (void)(have_ra),					      \
+	    db_stack_trace_print(addr, have_addr, c, m, pr))
+#endif
+
 /* The db_stacktrace_print macro may be overridden by an MD macro */
 #ifndef db_stacktrace_print
 #define	db_stacktrace_print(prfunc) \
-    db_stack_trace_print((db_expr_t)(intptr_t)__builtin_frame_address(0), \
-	true, 65535, "", prfunc)
+	db_stack_trace_print_ra(					      \
+	    (db_expr_t)(intptr_t)__builtin_return_address(0), true,	      \
+	    (db_expr_t)(intptr_t)__builtin_frame_address(0), true,	      \
+	    65535, "", prfunc)
 #endif	/* !db_stacktrace_print */
 
 #define	db_stacktrace()		db_stacktrace_print(printf);

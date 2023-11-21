@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.19 2017/11/06 03:47:45 christos Exp $ */
+/* $NetBSD: db_machdep.h,v 1.20 2023/11/21 14:35:01 riastradh Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -182,5 +182,12 @@ typedef long		kgdb_reg_t;
 
 /* Too much?  Must be large enough for register transfer. */
 #define	KGDB_BUFLEN	1024
+
+/*
+ * Extra ddb options.
+ */
+#define	__HAVE_DB_STACK_TRACE_PRINT_RA
+void db_stack_trace_print_ra(db_expr_t, bool, db_expr_t, bool,
+    db_expr_t, const char *, void (*)(const char *, ...));
 
 #endif	/* _ALPHA_DB_MACHDEP_H_ */
