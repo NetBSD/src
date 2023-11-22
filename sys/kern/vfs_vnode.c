@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.150 2023/11/06 12:17:50 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.151 2023/11/22 13:19:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.150 2023/11/06 12:17:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.151 2023/11/22 13:19:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -540,7 +540,7 @@ lru_requeue(vnode_t *vp, vnodelst_t *listhd)
 	    listhd == &lru_list[LRU_VRELE])
 		cv_signal(&vdrain_cv);
 	if (d > 0 && numvnodes > desiredvnodes + desiredvnodes / 16)
-		kpause("vnfull", false, mstohz(10), &vdrain_lock);
+		kpause("vnfull", false, MAX(1, mstohz(10)), &vdrain_lock);
 	mutex_exit(&vdrain_lock);
 }
 
