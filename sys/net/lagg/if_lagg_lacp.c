@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.25 2022/04/10 09:50:46 andvar Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.26 2023/11/22 03:23:54 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.25 2022/04/10 09:50:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.26 2023/11/22 03:23:54 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -1855,7 +1855,7 @@ lacp_sm_ptx_schedule(struct lacp_port *lacpp)
 	if (LACP_TIMER_ISARMED(lacpp, LACP_TIMER_PERIODIC))
 		return;
 
-	timeout = ISSET(lacpp->lp_actor.lpi_state, LACP_STATE_TIMEOUT) ?
+	timeout = ISSET(lacpp->lp_partner.lpi_state, LACP_STATE_TIMEOUT) ?
 		LACP_FAST_PERIODIC_TIME : LACP_SLOW_PERIODIC_TIME;
 
 	LACP_TIMER_ARM(lacpp, LACP_TIMER_PERIODIC, timeout);
