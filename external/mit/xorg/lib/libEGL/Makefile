@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2023/07/16 22:20:54 rjs Exp $
+#	$NetBSD: Makefile,v 1.9 2023/11/22 17:48:35 rjs Exp $
 
 .include <bsd.own.mk>
 
@@ -32,7 +32,9 @@ SRCS.egl= \
 SRCS.drivers/dri2= \
 	egl_dri2.c \
 	platform_x11.c \
-	platform_drm.c
+	platform_device.c \
+	platform_drm.c \
+	platform_surfaceless.c
 
 # XXX notyet
 #SRCS.drivers/dri2+= \
@@ -42,7 +44,11 @@ SRCS.drivers/dri2= \
 BUILDSYMLINKS+= ${X11SRCDIR.Mesa}/src/util/debug.c UTILdebug.c
 SRCS.util=      \
 	UTILdebug.c \
+	mesa-sha1.c \
 	os_file.c \
+	os_misc.c \
+	ralloc.c \
+	u_printf.cpp \
 	u_process.c
 
 .for file in ${SRCS.util}

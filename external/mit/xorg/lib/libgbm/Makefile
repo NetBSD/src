@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2023/07/16 22:20:54 rjs Exp $
+#	$NetBSD: Makefile,v 1.10 2023/11/22 17:48:35 rjs Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,10 @@ SRCS.dri=	\
 BUILDSYMLINKS+= ${X11SRCDIR.Mesa}/src/util/debug.c UTILdebug.c
 SRCS.util=      \
 	UTILdebug.c \
+	ralloc.c \
+	mesa-sha1.c \
+	os_file.c \
+	u_printf.cpp \
 	u_process.c
 CPPFLAGS.UTILdebug.c+=          -I${X11SRCDIR.Mesa}/src/util \
 				-I${X11SRCDIR.Mesa}/src/mesa \
