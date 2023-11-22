@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.9 2023/11/21 00:09:18 riastradh Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.10 2023/11/22 02:20:34 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.9 2023/11/21 00:09:18 riastradh Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.10 2023/11/22 02:20:34 riastradh Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -534,7 +534,7 @@ ATF_TC_HEAD(setrlimit_stack_growshrink, tc)
 }
 
 /*
- * checkstack(n, ok)
+ * checkstack(n, expectsegv)
  *
  *	Check whether we can allocate an array of size n on the stack.
  *
@@ -579,7 +579,7 @@ checkstack(size_t n, int expectsegv)
 		    WTERMSIG(status));
 	} else {
 		ATF_REQUIRE_MSG(!WIFSIGNALED(status),
-		    "expected normal exit but termintaed on signal %d",
+		    "expected normal exit but terminated on signal %d",
 		    WTERMSIG(status));
 		ATF_REQUIRE_MSG(WIFEXITED(status), "status=0x%x", status);
 		ATF_REQUIRE_EQ_MSG(WEXITSTATUS(status), 0, "exitstatus=%d",
