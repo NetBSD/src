@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.104 2021/08/14 17:51:18 ryo Exp $ */
+/* $NetBSD: cpu.h,v 1.105 2023/11/22 01:56:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -88,6 +88,10 @@
 #include <sys/cctr.h>
 #include <sys/intr.h>
 #include <machine/frame.h>
+
+#ifndef _KERNEL
+#include <stddef.h>
+#endif /* ! _KERNEL */
 
 /*
  * Machine check information.
