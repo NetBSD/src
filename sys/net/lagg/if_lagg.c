@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.53 2023/11/22 03:30:57 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.54 2023/11/22 03:49:13 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.53 2023/11/22 03:30:57 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.54 2023/11/22 03:49:13 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1217,11 +1217,60 @@ lagg_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	imr->ifm_active = IFM_ETHER | IFM_AUTO;
 
 	LAGG_LOCK(sc);
+
+	imr->ifm_active |= sc->sc_media_active;
+
 	LAGG_PORTS_FOREACH(sc, lp) {
 		if (lagg_portactive(lp))
 			imr->ifm_status |= IFM_ACTIVE;
 	}
 	LAGG_UNLOCK(sc);
+}
+
+static uint64_t
+lagg_search_media_type(uint64_t linkspeed)
+{
+
+	if (linkspeed == IF_Gbps(40))
+		return IFM_40G_T | IFM_FDX;
+
+	if (linkspeed == IF_Gbps(25))
+		return IFM_25G_T | IFM_FDX;
+
+	if (linkspeed == IF_Gbps(10))
+		return IFM_10G_T | IFM_FDX;
+
+	if (linkspeed == IF_Gbps(5))
+		return IFM_5000_T | IFM_FDX;
+
+	if (linkspeed == IF_Mbps(2500))
+		return IFM_2500_T | IFM_FDX;
+
+	if (linkspeed == IF_Gbps(1))
+		return IFM_1000_T | IFM_FDX;
+
+	if (linkspeed == IF_Mbps(100))
+		return IFM_100_TX | IFM_FDX;
+
+	if (linkspeed == IF_Mbps(10))
+		return IFM_10_T | IFM_FDX;
+
+	return 0;
+}
+
+void
+lagg_set_linkspeed(struct lagg_softc *sc, uint64_t linkspeed)
+{
+	struct ifnet *ifp;
+
+	ifp = &sc->sc_if;
+
+	KASSERT(LAGG_LOCKED(sc));
+
+	ifp->if_baudrate = linkspeed;
+
+	sc->sc_media_active =
+	    lagg_search_media_type(linkspeed);
 }
 
 static int
@@ -1630,6 +1679,8 @@ lagg_pr_attach(struct lagg_softc *sc, lagg_proto pr)
 		lagg_proto_detach(oldvar);
 		cleanup_oldvar = true;
 	}
+
+	lagg_set_linkspeed(sc, 0);
 done:
 	LAGG_UNLOCK(sc);
 
