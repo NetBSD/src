@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2023/07/09 17:10:47 riastradh Exp $
+#	$NetBSD: Makefile,v 1.50 2023/11/22 02:01:07 thorpej Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -21,11 +21,14 @@ DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
     || ${MACHINE_CPU} == "arm" \
     || ${MACHINE_CPU} == "aarch64" \
     || ${MACHINE_CPU} == "mips" \
+    || ${MACHINE_ARCH} == "alpha" \
     || ${MACHINE_ARCH} == "m68k" \
     || ${MACHINE_ARCH} == "powerpc" \
     || ${MACHINE_ARCH} == "powerpc64"
 SRCS+=	db_trace.c
-.if ${MACHINE_CPU} == "mips"
+.if ${MACHINE_ARCH} == "alpha"
+SRCS+=	db_interface.c
+.elif ${MACHINE_CPU} == "mips"
 SRCS+=	db_interface.c mips_stacktrace.c
 CPPFLAGS+=	-DDDB
 .elif ${MACHINE_ARCH} != "m68k" \
