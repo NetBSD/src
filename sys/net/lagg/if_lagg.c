@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.51 2023/10/18 06:37:08 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.52 2023/11/22 03:28:57 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.51 2023/10/18 06:37:08 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.52 2023/11/22 03:28:57 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1055,6 +1055,11 @@ lagg_output(struct lagg_softc *sc, struct lagg_port *lp, struct mbuf *m)
 	ifp = &sc->sc_if;
 	len = m->m_pkthdr.len;
 	mflags = m->m_flags;
+
+	error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT);
+	if (error != 0)
+		return;
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	error = lagg_port_xmit(lp, m);
 	if (error) {
