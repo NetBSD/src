@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.52 2023/11/22 03:28:57 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.53 2023/11/22 03:30:57 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.52 2023/11/22 03:28:57 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.53 2023/11/22 03:30:57 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -365,6 +365,7 @@ lagg_clone_create(struct if_clone *ifc, int unit)
 {
 	struct lagg_softc *sc;
 	struct ifnet *ifp;
+	struct ethercom *ec;
 	int error;
 
 	sc = lagg_softc_alloc(lagg_iftype);
@@ -406,11 +407,19 @@ lagg_clone_create(struct if_clone *ifc, int unit)
 
 	switch (lagg_iftype) {
 	case LAGG_IF_TYPE_ETHERNET:
+		ec = (struct ethercom *)ifp;
 		cprng_fast(sc->sc_lladdr_rand, sizeof(sc->sc_lladdr_rand));
 		sc->sc_lladdr_rand[0] &= 0xFE; /* clear I/G bit */
 		sc->sc_lladdr_rand[0] |= 0x02; /* set G/L bit */
 		lagg_lladdr_cpy(sc->sc_lladdr, sc->sc_lladdr_rand);
-		ether_set_vlan_cb((struct ethercom *)ifp, lagg_vlan_cb);
+		ether_set_vlan_cb(ec, lagg_vlan_cb);
+
+		/*
+		 * notify ETHERCAP_VLAN_HWTAGGING to ether_ifattach
+		 * to handle VLAN tag, stripped by hardware, in bpf(4)
+		 */
+		ec->ec_capabilities = ETHERCAP_VLAN_HWTAGGING;
+
 		ether_ifattach(ifp, sc->sc_lladdr_rand);
 		break;
 	default:
@@ -1972,30 +1981,30 @@ lagg_ethercap_update(struct lagg_softc *sc)
 	if (sc->sc_if.if_type != IFT_ETHER)
 		return;
 
-	/* Get common enabled capabilities for the lagg ports */
-	ena = ~0;
-	cap = ~0;
-	LAGG_PORTS_FOREACH(sc, lp) {
-		switch (lp->lp_iftype) {
-		case IFT_ETHER:
-			ec = (struct ethercom *)lp->lp_ifp;
-			ena &= ec->ec_capenable;
-			cap &= ec->ec_capabilities;
-			break;
-		case IFT_L2TP:
-			ena &= (ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU);
-			cap &= (ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU);
-			break;
-		default:
-			ena = 0;
-			cap = 0;
+	if (SIMPLEQ_EMPTY(&sc->sc_ports)) {
+		ena = 0;
+		cap = ETHERCAP_VLAN_HWTAGGING;
+	} else {
+		/* Get common enabled capabilities for the lagg ports */
+		ena = ~0;
+		cap = ~0;
+		LAGG_PORTS_FOREACH(sc, lp) {
+			switch (lp->lp_iftype) {
+			case IFT_ETHER:
+				ec = (struct ethercom *)lp->lp_ifp;
+				ena &= ec->ec_capenable;
+				cap &= ec->ec_capabilities;
+				break;
+			case IFT_L2TP:
+				ena &= (ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU);
+				cap &= (ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU);
+				break;
+			default:
+				ena = 0;
+				cap = 0;
+			}
 		}
 	}
-
-	if (ena == ~0)
-		ena = 0;
-	if (cap == ~0)
-		cap = 0;
 
 	/*
 	 * Apply common enabled capabilities back to the lagg ports.
