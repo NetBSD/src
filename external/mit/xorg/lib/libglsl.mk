@@ -1,4 +1,4 @@
-#	$NetBSD: libglsl.mk,v 1.7 2023/07/16 22:20:54 rjs Exp $
+#	$NetBSD: libglsl.mk,v 1.8 2023/11/22 17:48:35 rjs Exp $
 
 LIBGLSL_GENERATED_CXX_FILES = \
 	glsl_lexer.cpp \
@@ -56,6 +56,7 @@ LIBGLSL_FILES = \
 	ir_function_detect_recursion.cpp \
 	ir_hierarchical_visitor.cpp \
 	ir_hv_accept.cpp \
+	ir_builder_print_visitor.cpp \
 	ir_print_visitor.cpp \
 	ir_reader.cpp \
 	ir_rvalue_visitor.cpp \
@@ -159,10 +160,10 @@ NIR_GENERATED_FILES = \
 	nir_opcodes.c \
 	nir_opt_algebraic.c
 
-#BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/compiler/nir/nir.c nir_nir.c
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/compiler/nir/nir.c nir_nir.c
 
 NIR_FILES = \
-	nir.c \
+	nir_nir.c \
 	nir_builtin_builder.c \
 	nir_clone.c \
 	nir_control_flow.c \
@@ -187,6 +188,7 @@ NIR_FILES = \
 	nir_lower_atomics_to_ssbo.c \
 	nir_lower_bit_size.c \
 	nir_lower_bitmap.c \
+	nir_lower_blend.c \
 	nir_lower_bool_to_float.c \
 	nir_lower_bool_to_int32.c \
 	nir_lower_clamp_color_outputs.c \
@@ -199,6 +201,7 @@ NIR_FILES = \
 	nir_lower_flatshade.c \
 	nir_lower_flrp.c \
 	nir_lower_fp16_conv.c \
+	nir_lower_fragcolor.c \
 	nir_lower_fragcoord_wtrans.c \
 	nir_lower_frexp.c \
 	nir_lower_global_vars_to_local.c \
@@ -209,6 +212,7 @@ NIR_FILES = \
 	nir_lower_indirect_derefs.c \
 	nir_lower_int64.c \
 	nir_lower_int_to_float.c \
+	nir_lower_interpolation.c \
 	nir_lower_io.c \
 	nir_lower_io_arrays_to_elements.c \
 	nir_lower_io_to_scalar.c \
@@ -228,6 +232,7 @@ NIR_FILES = \
 	nir_lower_returns.c \
 	nir_lower_samplers.c \
 	nir_lower_scratch.c \
+	nir_lower_ssbo.c \
 	nir_lower_subgroups.c \
 	nir_lower_system_values.c \
 	nir_lower_sysvals_to_varyings.c \
@@ -236,6 +241,7 @@ NIR_FILES = \
 	nir_lower_to_source_mods.c \
 	nir_lower_two_sided_color.c \
 	nir_lower_ubo_vec4.c \
+	nir_lower_undef_to_zero.c \
 	nir_lower_uniforms_to_ubo.c \
 	nir_lower_var_copies.c \
 	nir_lower_variable_initializers.c \
@@ -244,6 +250,7 @@ NIR_FILES = \
 	nir_lower_viewport_transform.c \
 	nir_lower_wpos_center.c \
 	nir_lower_wpos_ytransform.c \
+	nir_lower_wrmasks.c \
 	nir_metadata.c \
 	nir_move_vec_src_uses_to_dest.c \
 	nir_normalize_cubemap_coords.c \

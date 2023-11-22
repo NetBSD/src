@@ -1,4 +1,4 @@
-#	$NetBSD: driver.mk,v 1.5 2023/07/16 22:20:54 rjs Exp $
+#	$NetBSD: driver.mk,v 1.6 2023/11/22 17:48:35 rjs Exp $
 
 # stuff both dri and gallium drivers need.
 
@@ -28,6 +28,7 @@ SRCS.util=	\
 	mesa-sha1.c \
 	os_file.c \
 	os_memory_fd.c \
+	os_misc.c \
 	os_time.c \
 	ralloc.c \
 	UTILdebug.c \
@@ -39,6 +40,7 @@ SRCS.util=	\
 	set.c \
 	slab.c \
 	softfloat.c \
+	sparse_array.c \
 	string_buffer.c \
 	strtod.c \
 	u_atomic.c \
