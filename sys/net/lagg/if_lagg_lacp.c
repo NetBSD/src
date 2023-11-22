@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.28 2023/11/22 03:49:13 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.29 2023/11/22 03:52:58 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.28 2023/11/22 03:49:13 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.29 2023/11/22 03:52:58 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -2077,8 +2077,11 @@ lacp_disable_distributing(struct lacp_softc *lsc, struct lacp_port *lacpp)
 
 	KASSERT(LACP_LOCKED(lsc));
 
-	LACP_DPRINTF((lsc, lacpp, "distributing disabled\n"));
-	CLR(lacpp->lp_actor.lpi_state, LACP_STATE_DISTRIBUTING);
+	if (ISSET(lacpp->lp_actor.lpi_state, LACP_STATE_DISTRIBUTING)) {
+		LAGG_LOG(lsc->lsc_softc, LOG_INFO,
+		    "disable distributing on %s\n", LACP_PORT_XNAME(lacpp));
+		CLR(lacpp->lp_actor.lpi_state, LACP_STATE_DISTRIBUTING);
+	}
 
 	s = pserialize_read_enter();
 	act = LACP_PORTMAP_ACTIVE(lsc);
@@ -2105,7 +2108,8 @@ lacp_enable_distributing(struct lacp_softc *lsc, struct lacp_port *lacpp)
 
 	KASSERT(lacp_isactive(lsc, lacpp));
 
-	LACP_DPRINTF((lsc, lacpp, "distributing enabled\n"));
+	LAGG_LOG(lsc->lsc_softc, LOG_INFO,
+	    "enable distributing on %s\n", LACP_PORT_XNAME(lacpp));
 	SET(lacpp->lp_actor.lpi_state, LACP_STATE_DISTRIBUTING);
 	lacp_suppress_distributing(lsc);
 	lacp_update_portmap(lsc);
@@ -2365,6 +2369,8 @@ static void
 lacp_selected_update(struct lacp_softc *lsc, struct lacp_aggregator *la)
 {
 	struct lacp_port *lacpp;
+	enum lacp_selected next_selected;
+	const char *msg;
 	size_t nselected;
 	uint64_t linkspeed;
 
@@ -2377,23 +2383,31 @@ lacp_selected_update(struct lacp_softc *lsc, struct lacp_aggregator *la)
 	linkspeed = lacpp->lp_linkspeed;
 	nselected = 0;
 	LIST_FOREACH(lacpp, &la->la_ports, lp_entry_la) {
-		if (nselected >= lsc->lsc_max_ports ||
-		    (!lsc->lsc_multi_linkspeed && linkspeed != lacpp->lp_linkspeed)) {
-			if (lacpp->lp_selected == LACP_SELECTED)
-				lacpp->lp_selected = LACP_STANDBY;
+		if (lacpp->lp_selected == LACP_UNSELECTED)
+			continue;
+
+		next_selected = LACP_SELECTED;
+		msg = " is selected";
+
+		if (nselected >= lsc->lsc_max_ports) {
+			next_selected = LACP_STANDBY;
+			msg = " is standby because of too many active ports";
 		}
 
-		switch (lacpp->lp_selected) {
-		case LACP_STANDBY:
-			lacpp->lp_selected = LACP_SELECTED;
-			/* fall through */
-		case LACP_SELECTED:
-			nselected++;
-			break;
-		default:
-			/* do nothing */
-			break;
+		if (!lsc->lsc_multi_linkspeed &&
+		    linkspeed != lacpp->lp_linkspeed) {
+			next_selected = LACP_STANDBY;
+			msg = " is standby because of link speed mismatch";
 		}
+
+		if (lacpp->lp_selected != next_selected) {
+			lacpp->lp_selected = next_selected;
+			LAGG_LOG(lsc->lsc_softc, LOG_INFO,
+			    "%s%s\n", LACP_PORT_XNAME(lacpp), msg);
+		}
+
+		if (lacpp->lp_selected == LACP_SELECTED)
+			nselected++;
 	}
 }
 
