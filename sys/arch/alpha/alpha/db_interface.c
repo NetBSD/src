@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.41 2023/11/21 22:19:12 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.42 2023/11/22 01:58:02 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.41 2023/11/21 22:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42 2023/11/22 01:58:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.41 2023/11/21 22:19:12 thorpej Ex
 
 #include <machine/alpha_instruction.h>
 
+#include <ddb/db_user.h>
 #include <ddb/db_active.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
@@ -78,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.41 2023/11/21 22:19:12 thorpej Ex
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
-
 
 #if 0
 extern char *trap_type[];
@@ -159,10 +159,13 @@ db_alpha_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
 	unsigned long zeroval = 0;
 	struct trapframe *f = NULL;
 
+#ifdef _KERNEL			/* XXX ?? */
 	if (vp->modif != NULL && *vp->modif == 'u') {
 		if (curlwp != NULL)
 			f = curlwp->l_md.md_tf;
-	} else	f = DDB_REGS;
+	} else
+#endif /* _KERNEL */
+		f = DDB_REGS;
 	tfaddr = f == NULL ? &zeroval : &f->tf_regs[(u_long)vp->valuep];
 	switch (opcode) {
 	case DB_VAR_GET:
@@ -174,12 +177,16 @@ db_alpha_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
 		break;
 
 	default:
+#ifdef _KERNEL
 		panic("db_alpha_regop: unknown op %d", opcode);
+#endif
+		break;
 	}
 
 	return (0);
 }
 
+#ifdef _KERNEL
 /*
  * ddb_trap - field a kernel trap
  */
@@ -269,6 +276,7 @@ cpu_Debugger(void)
 
 	__asm volatile("call_pal 0x81");		/* bugchk */
 }
+#endif /* _KERNEL */
 
 /*
  * Alpha-specific ddb commands:
@@ -372,6 +380,7 @@ db_register_value(db_regs_t *regs, int regno)
 	return (regs->tf_regs[reg_to_frame[regno]]);
 }
 
+#ifdef _KERNEL
 /*
  * Support functions for software single-step.
  */
@@ -576,6 +585,7 @@ db_branch_taken(int ins, db_addr_t pc, db_regs_t *regs)
 
 	return (newpc);
 }
+#endif /* _KERNEL */
 
 unsigned long
 db_alpha_read_saved_reg(unsigned long *regp)
@@ -605,6 +615,9 @@ db_alpha_nlist db_alpha_nl[] = {
 	DB_ALPHA_SYM(SYM_XentRestart, XentRestart),
 	DB_ALPHA_SYM(SYM_exception_return, exception_return),
 	DB_ALPHA_SYM(SYM_alpha_kthread_backstop, alpha_kthread_backstop),
+#ifndef _KERNEL
+	DB_ALPHA_SYM(SYM_dumppcb, dumppcb),
+#endif /* _KERNEL */
 	DB_ALPHA_SYM_EOL
 };
 
