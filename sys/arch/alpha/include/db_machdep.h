@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.22 2023/11/21 21:23:56 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.23 2023/11/22 01:58:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -37,6 +37,8 @@
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
 #include <machine/frame.h>
+
+#include <ddb/db_user.h>
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 #define	DDB_EXPR_FMT	"l"		/* expression is long */
@@ -195,8 +197,14 @@ typedef long		kgdb_reg_t;
 #define	SYM_XentRestart			6
 #define	SYM_exception_return		7
 #define	SYM_alpha_kthread_backstop	8
+#ifdef _KERNEL
 #define	SYM___eol			(SYM_alpha_kthread_backstop + 1)
+#else
+#define	SYM_dumppcb			9
+#define	SYM___eol			(SYM_dumppcb + 1)
+#endif /* _KERNEL */
 
+#ifdef _KERNEL
 struct db_alpha_nlist {
 	vaddr_t		n_value;
 };
@@ -205,6 +213,14 @@ typedef struct db_alpha_nlist db_alpha_nlist;
 
 #define	DB_ALPHA_SYM(i, x)	[(i)] = { .n_value = (vaddr_t)&(x) }
 #define	DB_ALPHA_SYM_EOL	[SYM___eol] = { .n_value = 0 }
+#else
+#include <nlist.h>
+
+typedef struct nlist db_alpha_nlist;
+
+#define	DB_ALPHA_SYM(i, x)	[(i)] = { .n_name = __STRING(x) }
+#define	DB_ALPHA_SYM_EOL	[SYM___eol] = { .n_name = NULL }
+#endif /* _KERNEL */
 
 bool		db_alpha_sym_is_trap(db_addr_t);
 bool		db_alpha_sym_is_backstop(db_addr_t);
