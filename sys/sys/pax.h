@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.28 2023/11/21 14:35:36 riastradh Exp $ */
+/* $NetBSD: pax.h,v 1.29 2023/11/22 12:15:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -150,7 +150,7 @@ pax_aslr_stack_gap(struct exec_package *epp)
 static inline vaddr_t
 pax_aslr_exec_offset(struct exec_package *epp, vaddr_t align)
 {
-	return MAX(align, PAGE_SIZE);
+	return MAX(align, (vaddr_t)PAGE_SIZE);
 }
 static inline voff_t
 pax_aslr_rtld_offset(struct exec_package *epp, vaddr_t align, int use_topdown)
