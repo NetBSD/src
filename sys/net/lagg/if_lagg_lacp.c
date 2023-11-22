@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.26 2023/11/22 03:23:54 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.27 2023/11/22 03:27:00 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.26 2023/11/22 03:23:54 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.27 2023/11/22 03:27:00 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -1689,6 +1689,8 @@ lacp_sm_rx_record_default(struct lacp_softc *lsc, struct lacp_port *lacpp)
 		LACP_STATE_STR(pi->lpi_state, buf, sizeof(buf));
 		LACP_DPRINTF((lsc, lacpp, "newpstate %s\n", buf));
 	}
+
+	lacp_sm_ptx_update_timeout(lacpp, oldpstate);
 }
 
 static inline bool
@@ -1764,12 +1766,17 @@ lacp_sm_rx_record_peerinfo(struct lacp_softc *lsc, struct lacp_port *lacpp,
 static void
 lacp_sm_rx_set_expired(struct lacp_port *lacpp)
 {
+	uint8_t oldpstate;
+
+	oldpstate = lacpp->lp_partner.lpi_state;
 
 	CLR(lacpp->lp_partner.lpi_state, LACP_STATE_SYNC);
 	SET(lacpp->lp_partner.lpi_state, LACP_STATE_TIMEOUT);
 	LACP_TIMER_ARM(lacpp, LACP_TIMER_CURRENT_WHILE,
 	    LACP_SHORT_TIMEOUT_TIME);
 	SET(lacpp->lp_actor.lpi_state, LACP_STATE_EXPIRED);
+
+	lacp_sm_ptx_update_timeout(lacpp, oldpstate);
 }
 
 static void
