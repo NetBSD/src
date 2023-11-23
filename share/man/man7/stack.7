@@ -1,4 +1,4 @@
-.\"	$NetBSD: stack.7,v 1.1 2023/11/23 21:20:49 riastradh Exp $
+.\"	$NetBSD: stack.7,v 1.2 2023/11/23 21:27:08 riastradh Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -243,6 +243,11 @@ guardsize is the value of the
 .Li vm.guard_size
 .Xr sysctl 7
 knob at the time of program startup.
+(Note that this means the
+.Xr pthread 3
+view of the main thread's stack guard may not coincide with the actual
+stack guard \(em it may overlap with, or lie entirely in, the
+inaccessible pages of the stack reserved on program start.)
 However, if the program changes its soft stack rlimit with
 .Xr setrlimit 2 ,
 this snapshot may become stale.
