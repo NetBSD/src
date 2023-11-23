@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.26 2022/07/26 20:08:56 andvar Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.27 2023/11/23 20:40:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,12 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26 2022/07/26 20:08:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.27 2023/11/23 20:40:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <mips/cache.h>
 
@@ -483,12 +484,10 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	extern paddr_t avail_start, avail_end;
-
 	return (_bus_dmamem_alloc_range_common(t, size, alignment, boundary,
 					       segs, nsegs, rsegs, flags,
-					       avail_start /*low*/,
-					       avail_end - 1 /*high*/));
+					       pmap_limits.avail_start /*low*/,
+					       pmap_limits.avail_end - 1 /*high*/));
 }
 
 /*
