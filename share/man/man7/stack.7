@@ -1,4 +1,4 @@
-.\"	$NetBSD: stack.7,v 1.3 2023/11/23 21:30:03 riastradh Exp $
+.\"	$NetBSD: stack.7,v 1.4 2023/11/23 21:44:55 riastradh Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,12 +83,12 @@ grows down:
 +--------------------+ USRSTACK
 | stack gap          |
 +--------------------+ stack base
-| accessible stack   |
+| accessible pages   |
 | .                  |
 | .                  | <-- stack pointer (varies during execution)
 | .                  |
 +--------------------+ (stack base) - (soft stack rlimit)
-| inaccessible stack |
+| inaccessible pages |
 +--------------------+ (stack base) - (hard stack rlimit)
 | guard/redzone      |
 +--------------------+ USRSTACK - MAXSSIZ
