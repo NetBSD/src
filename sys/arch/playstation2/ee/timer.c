@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.9 2021/06/05 21:38:37 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.10 2023/11/23 20:40:08 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.9 2021/06/05 21:38:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.10 2023/11/23 20:40:08 andvar Exp $");
 
 #include "debug_playstation2.h"
 
+#include <sys/intr.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 
