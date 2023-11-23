@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2023/11/23 21:16:13 riastradh Exp $
+#	$NetBSD: Makefile,v 1.39 2023/11/23 23:29:42 rin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.init.mk>
@@ -28,6 +28,7 @@ MAN+=	security.7
 MAN+=	setuid.7
 MAN+=	signal.7
 MAN+=	src.7
+MAN+=	stack.7
 MAN+=	sticky.7
 MAN+=	symlink.7
 MAN+=	sysctl.7
