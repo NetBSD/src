@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.380 2023/11/20 21:16:41 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.381 2023/11/24 21:17:49 alnsn Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -197,6 +197,8 @@ BSSID	basic service set identifier
 BT	BitTorrent
 BT	Bluetooth
 BT	bit test
+BTB	branch target buffer
+BTB	board-to-board
 BTC	bit test [and] complement
 BTM	bus transport mechanism
 BTR	bit test [and] reset
