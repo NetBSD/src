@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rnd.c,v 1.12 2023/11/24 16:35:51 riastradh Exp $	*/
+/*	$NetBSD: t_rnd.c,v 1.13 2023/11/24 16:36:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rnd.c,v 1.12 2023/11/24 16:35:51 riastradh Exp $");
+__RCSID("$NetBSD: t_rnd.c,v 1.13 2023/11/24 16:36:23 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -81,7 +81,7 @@ ATF_TC_BODY(RNDADDDATA2, tc)
 	fd = rump_sys_open("/dev/random", O_RDWR, 0);
 	if (fd == -1)
 		atf_tc_fail_errno("cannot open /dev/random");
-		
+
 	rd.entropy = 1;
 	rd.len = -1;
 	ATF_REQUIRE_ERRNO(EINVAL, rump_sys_ioctl(fd, RNDADDDATA, &rd) == -1);
