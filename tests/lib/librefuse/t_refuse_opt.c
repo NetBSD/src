@@ -1,4 +1,4 @@
-/*	$NetBSD: t_refuse_opt.c,v 1.9 2021/12/04 06:42:39 pho Exp $ */
+/*	$NetBSD: t_refuse_opt.c,v 1.10 2023/11/24 17:31:03 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_refuse_opt.c,v 1.9 2021/12/04 06:42:39 pho Exp $");
+__RCSID("$NetBSD: t_refuse_opt.c,v 1.10 2023/11/24 17:31:03 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -47,8 +47,8 @@ ATF_TC_BODY(t_fuse_opt_add_arg, tc)
 {
 	struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
 
-	RZ(fuse_opt_add_arg(&args, "foo"));
-	RZ(fuse_opt_add_arg(&args, "bar"));
+	RL(fuse_opt_add_arg(&args, "foo"));
+	RL(fuse_opt_add_arg(&args, "bar"));
 
 	ATF_REQUIRE_EQ(args.argc, 2);
 	ATF_CHECK_STREQ(args.argv[0], "foo");
@@ -66,8 +66,8 @@ ATF_TC_BODY(t_fuse_opt_insert_arg, tc)
 {
 	struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
 
-	RZ(fuse_opt_insert_arg(&args, 0, "foo"));
-	RZ(fuse_opt_insert_arg(&args, 0, "bar"));
+	RL(fuse_opt_insert_arg(&args, 0, "foo"));
+	RL(fuse_opt_insert_arg(&args, 0, "bar"));
 
 	ATF_REQUIRE_EQ(args.argc, 2);
 	ATF_CHECK_STREQ(args.argv[0], "bar");
@@ -85,10 +85,10 @@ ATF_TC_BODY(t_fuse_opt_add_opt, tc)
 {
 	char* opt = NULL;
 
-	RZ(fuse_opt_add_opt(&opt, "fo\\o"));
+	RL(fuse_opt_add_opt(&opt, "fo\\o"));
 	ATF_CHECK_STREQ(opt, "fo\\o");
 
-	RZ(fuse_opt_add_opt(&opt, "ba,r"));
+	RL(fuse_opt_add_opt(&opt, "ba,r"));
 	ATF_CHECK_STREQ(opt, "fo\\o,ba,r");
 }
 
@@ -102,10 +102,10 @@ ATF_TC_BODY(t_fuse_opt_add_opt_escaped, tc)
 {
 	char* opt = NULL;
 
-	RZ(fuse_opt_add_opt_escaped(&opt, "fo\\o"));
+	RL(fuse_opt_add_opt_escaped(&opt, "fo\\o"));
 	ATF_CHECK_STREQ(opt, "fo\\\\o");
 
-	RZ(fuse_opt_add_opt_escaped(&opt, "ba,r"));
+	RL(fuse_opt_add_opt_escaped(&opt, "ba,r"));
 	ATF_CHECK_STREQ(opt, "fo\\\\o,ba\\,r");
 }
 
@@ -207,10 +207,10 @@ ATF_TC_BODY(t_fuse_opt_parse_null_opts, tc)
 	struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
 	struct foofs_config config;
 
-	RZ(fuse_opt_add_arg(&args, "foofs"));
-	RZ(fuse_opt_add_arg(&args, "-o"));
-	RZ(fuse_opt_add_arg(&args, "number=1,string=foo"));
-	RZ(fuse_opt_add_arg(&args, "bar"));
+	RL(fuse_opt_add_arg(&args, "foofs"));
+	RL(fuse_opt_add_arg(&args, "-o"));
+	RL(fuse_opt_add_arg(&args, "number=1,string=foo"));
+	RL(fuse_opt_add_arg(&args, "bar"));
 
 	memset(&config, 0, sizeof(config));
 	ATF_CHECK(fuse_opt_parse(&args, &config, NULL, NULL) == 0);
@@ -236,10 +236,10 @@ ATF_TC_BODY(t_fuse_opt_parse_null_proc, tc)
 	struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
 	struct foofs_config config;
 
-	RZ(fuse_opt_add_arg(&args, "foofs"));
-	RZ(fuse_opt_add_arg(&args, "-o"));
-	RZ(fuse_opt_add_arg(&args, "number=1,string=foo"));
-	RZ(fuse_opt_add_arg(&args, "bar"));
+	RL(fuse_opt_add_arg(&args, "foofs"));
+	RL(fuse_opt_add_arg(&args, "-o"));
+	RL(fuse_opt_add_arg(&args, "number=1,string=foo"));
+	RL(fuse_opt_add_arg(&args, "bar"));
 
 	memset(&config, 0, sizeof(config));
 	ATF_CHECK(fuse_opt_parse(&args, &config, foofs_opts, NULL) == 0);
@@ -264,10 +264,10 @@ ATF_TC_BODY(t_fuse_opt_parse, tc)
 
     /* Standard form */
 	fuse_opt_free_args(&args);
-	RZ(fuse_opt_add_arg(&args, "foofs"));
-	RZ(fuse_opt_add_arg(&args, "-o"));
-	RZ(fuse_opt_add_arg(&args, "number=1,string=foo"));
-	RZ(fuse_opt_add_arg(&args, "bar"));
+	RL(fuse_opt_add_arg(&args, "foofs"));
+	RL(fuse_opt_add_arg(&args, "-o"));
+	RL(fuse_opt_add_arg(&args, "number=1,string=foo"));
+	RL(fuse_opt_add_arg(&args, "bar"));
 
 	memset(&config, 0, sizeof(config));
 	ATF_CHECK(fuse_opt_parse(&args, &config, foofs_opts, foo_opt_proc) == 0);
@@ -279,9 +279,9 @@ ATF_TC_BODY(t_fuse_opt_parse, tc)
 
     /* Concatenated -o */
 	fuse_opt_free_args(&args);
-	RZ(fuse_opt_add_arg(&args, "foofs"));
-	RZ(fuse_opt_add_arg(&args, "-onumber=1,unknown,string=foo"));
-	RZ(fuse_opt_add_arg(&args, "bar"));
+	RL(fuse_opt_add_arg(&args, "foofs"));
+	RL(fuse_opt_add_arg(&args, "-onumber=1,unknown,string=foo"));
+	RL(fuse_opt_add_arg(&args, "bar"));
 
 	memset(&config, 0, sizeof(config));
 	ATF_CHECK(fuse_opt_parse(&args, &config, foofs_opts, foo_opt_proc) == 0);
@@ -295,15 +295,15 @@ ATF_TC_BODY(t_fuse_opt_parse, tc)
 
 	/* Sparse -o */
 	fuse_opt_free_args(&args);
-	RZ(fuse_opt_add_arg(&args, "foofs"));
-	RZ(fuse_opt_add_arg(&args, "bar"));
-	RZ(fuse_opt_add_arg(&args, "baz"));
-	RZ(fuse_opt_add_arg(&args, "-o"));
-	RZ(fuse_opt_add_arg(&args, "number=1"));
-	RZ(fuse_opt_add_arg(&args, "-o"));
-	RZ(fuse_opt_add_arg(&args, "unknown"));
-	RZ(fuse_opt_add_arg(&args, "-o"));
-	RZ(fuse_opt_add_arg(&args, "string=foo"));
+	RL(fuse_opt_add_arg(&args, "foofs"));
+	RL(fuse_opt_add_arg(&args, "bar"));
+	RL(fuse_opt_add_arg(&args, "baz"));
+	RL(fuse_opt_add_arg(&args, "-o"));
+	RL(fuse_opt_add_arg(&args, "number=1"));
+	RL(fuse_opt_add_arg(&args, "-o"));
+	RL(fuse_opt_add_arg(&args, "unknown"));
+	RL(fuse_opt_add_arg(&args, "-o"));
+	RL(fuse_opt_add_arg(&args, "string=foo"));
 
 	memset(&config, 0, sizeof(config));
 	ATF_CHECK(fuse_opt_parse(&args, &config, foofs_opts, foo_opt_proc) == 0);
@@ -318,9 +318,9 @@ ATF_TC_BODY(t_fuse_opt_parse, tc)
 
 	/* Separate -n %i */
 	fuse_opt_free_args(&args);
-	RZ(fuse_opt_add_arg(&args, "foofs"));
-	RZ(fuse_opt_add_arg(&args, "-n"));
-	RZ(fuse_opt_add_arg(&args, "3"));
+	RL(fuse_opt_add_arg(&args, "foofs"));
+	RL(fuse_opt_add_arg(&args, "-n"));
+	RL(fuse_opt_add_arg(&args, "3"));
 
 	memset(&config, 0, sizeof(config));
 	ATF_CHECK(fuse_opt_parse(&args, &config, foofs_opts, foo_opt_proc) == 0);
@@ -332,8 +332,8 @@ ATF_TC_BODY(t_fuse_opt_parse, tc)
 
 	/* Concatenated -n %i */
 	fuse_opt_free_args(&args);
-	RZ(fuse_opt_add_arg(&args, "foofs"));
-	RZ(fuse_opt_add_arg(&args, "-n3"));
+	RL(fuse_opt_add_arg(&args, "foofs"));
+	RL(fuse_opt_add_arg(&args, "-n3"));
 
 	memset(&config, 0, sizeof(config));
 	ATF_CHECK(fuse_opt_parse(&args, &config, foofs_opts, foo_opt_proc) == 0);
@@ -345,9 +345,9 @@ ATF_TC_BODY(t_fuse_opt_parse, tc)
 
 	/* -o constant */
 	fuse_opt_free_args(&args);
-	RZ(fuse_opt_add_arg(&args, "foofs"));
-	RZ(fuse_opt_add_arg(&args, "-o"));
-	RZ(fuse_opt_add_arg(&args, "number2"));
+	RL(fuse_opt_add_arg(&args, "foofs"));
+	RL(fuse_opt_add_arg(&args, "-o"));
+	RL(fuse_opt_add_arg(&args, "number2"));
 
 	memset(&config, 0, sizeof(config));
 	ATF_CHECK(fuse_opt_parse(&args, &config, foofs_opts, foo_opt_proc) == 0);
@@ -359,8 +359,8 @@ ATF_TC_BODY(t_fuse_opt_parse, tc)
 
 	/* -x constant */
 	fuse_opt_free_args(&args);
-	RZ(fuse_opt_add_arg(&args, "foofs"));
-	RZ(fuse_opt_add_arg(&args, "--number=four"));
+	RL(fuse_opt_add_arg(&args, "foofs"));
+	RL(fuse_opt_add_arg(&args, "--number=four"));
 
 	memset(&config, 0, sizeof(config));
 	ATF_CHECK(fuse_opt_parse(&args, &config, foofs_opts, foo_opt_proc) == 0);
@@ -372,10 +372,10 @@ ATF_TC_BODY(t_fuse_opt_parse, tc)
 
 	/* end-of-options "--" marker */
 	fuse_opt_free_args(&args);
-	RZ(fuse_opt_add_arg(&args, "foofs"));
-    RZ(fuse_opt_add_arg(&args, "--"));
-	RZ(fuse_opt_add_arg(&args, "-onumber=1"));
-	RZ(fuse_opt_add_arg(&args, "-ostring=foo"));
+	RL(fuse_opt_add_arg(&args, "foofs"));
+    RL(fuse_opt_add_arg(&args, "--"));
+	RL(fuse_opt_add_arg(&args, "-onumber=1"));
+	RL(fuse_opt_add_arg(&args, "-ostring=foo"));
 
 	memset(&config, 0, sizeof(config));
 	ATF_CHECK(fuse_opt_parse(&args, &config, foofs_opts, foo_opt_proc) == 0);
@@ -389,9 +389,9 @@ ATF_TC_BODY(t_fuse_opt_parse, tc)
 
 	/* The "--" marker at the last of outargs should be removed */
 	fuse_opt_free_args(&args);
-	RZ(fuse_opt_add_arg(&args, "foofs"));
-    RZ(fuse_opt_add_arg(&args, "--"));
-	RZ(fuse_opt_add_arg(&args, "-onumber=1"));
+	RL(fuse_opt_add_arg(&args, "foofs"));
+    RL(fuse_opt_add_arg(&args, "--"));
+	RL(fuse_opt_add_arg(&args, "-onumber=1"));
 
 	memset(&config, 0, sizeof(config));
 	ATF_CHECK(fuse_opt_parse(&args, &config, foofs_opts, foo_opt_proc) == 0);

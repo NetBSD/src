@@ -1,4 +1,4 @@
-/*	$NetBSD: t_memfd_create.c,v 1.2 2023/07/29 16:24:35 rin Exp $	*/
+/*	$NetBSD: t_memfd_create.c,v 1.3 2023/11/24 17:31:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_memfd_create.c,v 1.2 2023/07/29 16:24:35 rin Exp $");
+__RCSID("$NetBSD: t_memfd_create.c,v 1.3 2023/11/24 17:31:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -109,7 +109,7 @@ ATF_TC_BODY(read_write, tc)
 	    "File offset not set after write (%jd != %zu)", (intmax_t)offset,
 	    sizeof(write_buf));
 
-	RZ(lseek(fd, 0, SEEK_SET));
+	RL(lseek(fd, 0, SEEK_SET));
 
 	RL(read(fd, read_buf, sizeof(read_buf)));
 	offset = lseek(fd, 0, SEEK_CUR);
@@ -158,7 +158,7 @@ ATF_TC_BODY(truncate, tc)
 	    "Truncate did not grow size to %zu (is %jd)", sizeof(read_buf),
 	    (intmax_t)st.st_size);
 
-	RZ(lseek(fd, 0, SEEK_SET));
+	RL(lseek(fd, 0, SEEK_SET));
 	RL(read(fd, read_buf, sizeof(read_buf)));
 
 	for (size_t i = 0; i < sizeof(read_buf)/2; i++)
@@ -255,7 +255,7 @@ test_all_seals_except(int fd, int except)
 	}
 
 	if (except & ~(F_SEAL_WRITE|F_SEAL_FUTURE_WRITE)) {
-		RZ(lseek(fd, 0, SEEK_SET));
+		RL(lseek(fd, 0, SEEK_SET));
 		rv = write(fd, write_buf, sizeof(write_buf));
 		if (rv == -1) {
 			ATF_REQUIRE_MSG(errno != EPERM,

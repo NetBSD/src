@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fd.c,v 1.8 2023/08/03 20:45:50 andvar Exp $	*/
+/*	$NetBSD: t_fd.c,v 1.9 2023/11/24 17:31:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ ATF_TC_BODY(bigenough, tc)
 {
 	struct stat sb;
 
-	RZ(system("rump_server " RUMPSERV));
+	RL(system("rump_server " RUMPSERV));
 	RL(setenv("RUMP_SERVER", RUMPSERV, 1));
 
 	RL(dup2(0, 10));
@@ -109,7 +109,7 @@ ATF_TC_BODY(sigio, tc)
 	int sc;
 
 	signal(SIGIO, gotsig);
-	RZ(system("rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet "
+	RL(system("rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet "
 	    RUMPSERV));
 	RL(setenv("RUMP_SERVER", RUMPSERV, 1));
 
