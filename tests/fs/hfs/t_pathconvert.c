@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pathconvert.c,v 1.7 2019/07/09 16:24:01 maya Exp $	*/
+/*	$NetBSD: t_pathconvert.c,v 1.8 2023/11/24 17:31:03 riastradh Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -42,10 +42,10 @@ ATF_TC_BODY(colonslash, tc)
 
 	snprintf(thecmd, sizeof(thecmd), "uudecode %s/colon.hfs.bz2.uue",
 	    atf_tc_get_config_var(tc, "srcdir"));
-	RZ(system(thecmd));
+	RL(system(thecmd));
 
 	snprintf(thecmd, sizeof(thecmd), "bunzip2 " IMGNAME ".bz2");
-	RZ(system(thecmd));
+	RL(system(thecmd));
 
 	memset(&args, 0, sizeof args);
 	args.fspec = __UNCONST(FAKEBLK);
