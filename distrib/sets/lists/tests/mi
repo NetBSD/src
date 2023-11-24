@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1296 2023/11/10 23:04:50 christos Exp $
+# $NetBSD: mi,v 1.1297 2023/11/24 16:21:17 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4032,6 +4032,7 @@
 ./usr/tests/lib/libpthread/t_sigmask			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_sigsuspend			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_sleep			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_stack			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_status			tests-obsolete		obsolete
 ./usr/tests/lib/libpthread/t_swapcontext		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_thrd			tests-lib-tests		compattestfile,atf
