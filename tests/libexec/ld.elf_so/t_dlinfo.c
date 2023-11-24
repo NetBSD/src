@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlinfo.c,v 1.7 2023/11/24 17:40:09 riastradh Exp $	*/
+/*	$NetBSD: t_dlinfo.c,v 1.8 2023/11/24 17:40:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ ATF_TC_BODY(rtld_dlinfo_linkmap_self, tc)
 	int rv;
 
 	rv = dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &map);
-	ATF_CHECK_EQ(rv, 0);
+	ATF_REQUIRE_EQ_MSG(rv, 0, "dlinfo: %s", dlerror());
 	ATF_CHECK((strstr(map->l_name, "t_dlinfo") != NULL));
 }
 
@@ -61,7 +61,7 @@ ATF_TC_BODY(rtld_dlinfo_linkmap_inval, tc)
 	int rv;
 
 	rv = dlinfo(NULL, RTLD_DI_LINKMAP, &v);
-	ATF_CHECK_EQ(rv, -1);
+	ATF_CHECK_EQ_MSG(rv, -1, "rv=%d", rv);
 }
 
 ATF_TC(rtld_dlinfo_linkmap_dlopen);
@@ -76,12 +76,12 @@ ATF_TC_BODY(rtld_dlinfo_linkmap_dlopen, tc)
 	int rv;
 
 	handle = dlopen("libutil.so", RTLD_LAZY);
-	ATF_CHECK(handle);
+	ATF_REQUIRE_MSG(handle, "dlopen: %s", dlerror());
 
 	rv = dlinfo(handle, RTLD_DI_LINKMAP, &map);
-	ATF_CHECK_EQ(rv, 0);
+	ATF_REQUIRE_EQ_MSG(rv, 0, "dlinfo: %s", dlerror());
 	ATF_CHECK((strstr(map->l_name, "libutil.so") != NULL));
-	dlclose(handle);
+	ATF_CHECK_EQ_MSG(dlclose(handle), 0, "dlclose: %s", dlerror());
 }
 
 ATF_TC(rtld_dlinfo_linkmap_dlopen_iter);
@@ -95,7 +95,7 @@ ATF_TC_BODY(rtld_dlinfo_linkmap_dlopen_iter, tc)
 	void *handle;
 
 	handle = dlopen("libutil.so", RTLD_LAZY);
-	ATF_CHECK(handle);
+	ATF_REQUIRE_MSG(handle, "dlopen: %s", dlerror());
 
 	ATF_REQUIRE_EQ_MSG(dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &map), 0,
 	    "dlinfo: %s", dlerror());
@@ -105,10 +105,10 @@ ATF_TC_BODY(rtld_dlinfo_linkmap_dlopen_iter, tc)
 	for (; map; map = map->l_prev)
 		if (strstr(map->l_name, "libutil.so") != NULL)
 			break;
-	
+
 	ATF_REQUIRE_MSG(map, "dlopen()d object not found from linkmap");
 	ATF_REQUIRE_MSG(dlopen(map->l_name, RTLD_LAZY) != NULL,
-	    "could not dlopen() name in linkmap");
+	    "could not dlopen() name in linkmap: %s", dlerror());
 }
 
 ATF_TP_ADD_TCS(tp)

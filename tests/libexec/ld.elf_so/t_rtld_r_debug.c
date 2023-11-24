@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.4 2023/11/24 17:40:09 riastradh Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.5 2023/11/24 17:40:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -104,7 +104,9 @@ check_r_debug_return_link_map(const char *name, struct link_map **rmap)
 	loader = NULL;
 	debug = get_rtld_r_debug();
 	ATF_CHECK(debug != NULL);
-	ATF_CHECK(debug->r_version == R_DEBUG_VERSION);
+	ATF_CHECK_EQ_MSG(debug->r_version, R_DEBUG_VERSION,
+	    "debug->r_version=%d R_DEBUG_VERSION=%d",
+	    debug->r_version, R_DEBUG_VERSION);
 	map = debug->r_map;
 	ATF_CHECK(map != NULL);
 
@@ -120,8 +122,12 @@ check_r_debug_return_link_map(const char *name, struct link_map **rmap)
 	ATF_CHECK(found);
 	ATF_CHECK(loader != NULL);
 	ATF_CHECK(debug->r_brk != NULL);
-	ATF_CHECK(debug->r_state == RT_CONSISTENT);
-	ATF_CHECK(debug->r_ldbase == loader);
+	ATF_CHECK_EQ_MSG(debug->r_state, RT_CONSISTENT,
+	    "debug->r_state=%d RT_CONSISTENT=%d",
+	    debug->r_state, RT_CONSISTENT);
+	ATF_CHECK_EQ_MSG(debug->r_ldbase, loader,
+	    "debug->r_ldbase=%p loader=%p",
+	    debug->r_ldbase, loader);
 }
 
 ATF_TC(self);
@@ -146,15 +152,15 @@ ATF_TC_BODY(dlopen, tc)
 	struct link_map *map, *r_map;
 
 	handle = dlopen("libutil.so", RTLD_LAZY);
-	ATF_CHECK(handle);
+	ATF_REQUIRE_MSG(handle, "dlopen: %s", dlerror());
 
 	check_r_debug_return_link_map("libutil.so", &r_map);
 
 	ATF_REQUIRE_EQ_MSG(dlinfo(handle, RTLD_DI_LINKMAP, &map), 0,
 	    "dlinfo: %s", dlerror());
 
-	ATF_CHECK(map == r_map);
-	dlclose(handle);
+	ATF_CHECK_EQ_MSG(map, r_map, "map=%p r_map=%p", map, r_map);
+	ATF_CHECK_EQ_MSG(dlclose(handle), 0, "dlclose: %s", dlerror());
 }
 
 ATF_TP_ADD_TCS(tp)
