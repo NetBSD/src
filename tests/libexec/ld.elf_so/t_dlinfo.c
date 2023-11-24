@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlinfo.c,v 1.6 2019/07/09 16:24:01 maya Exp $	*/
+/*	$NetBSD: t_dlinfo.c,v 1.7 2023/11/24 17:40:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,8 @@ ATF_TC_BODY(rtld_dlinfo_linkmap_dlopen_iter, tc)
 	handle = dlopen("libutil.so", RTLD_LAZY);
 	ATF_CHECK(handle);
 
-	RZ(dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &map));
+	ATF_REQUIRE_EQ_MSG(dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &map), 0,
+	    "dlinfo: %s", dlerror());
 
 	for (; map->l_next; map = map->l_next)
 		continue;
