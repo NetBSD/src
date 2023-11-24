@@ -1,4 +1,4 @@
-.\" $NetBSD: gpiosim.4,v 1.7 2023/11/08 23:46:54 brad Exp $
+.\" $NetBSD: gpiosim.4,v 1.8 2023/11/24 15:13:35 brad Exp $
 .\"
 .\" Copyright (c) 2009, 2013 Marc Balmer <marc@msys.ch>
 .\" All rights reserved.
@@ -38,7 +38,8 @@ variable, where "<N>" denotes the number of the
 .Nm
 instance.
 .Pp
-Both edge and level interrupts are simulated.  The "hw.gpiosim<N>.ms"
+Both edge and level interrupts are simulated.
+The "hw.gpiosim<N>.ms"
 .Xr sysctl 8
 variable will change the amount of time between
 .Xr callout 9

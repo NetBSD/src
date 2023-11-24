@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.25 2023/11/08 23:46:54 brad Exp $ */
+/* $NetBSD: gpiosim.c,v 1.26 2023/11/24 15:13:35 brad Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ static void *   gpiosim_intr_establish(void *, int, int, int,
 static void     gpiosim_intr_disestablish(void *, void *);
 static bool     gpiosim_gpio_intrstr(void *, int, int, char *, size_t);
 
-void            gpiosim_wq(struct work *,void *);
+void            gpiosim_wq(struct work *, void *);
 void            gpiosim_co(void *);
 
 CFATTACH_DECL_NEW(gpiosim, sizeof(struct gpiosim_softc), gpiosim_match,
@@ -149,7 +149,8 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
 		sc->sc_gpio_irqs[i].sc_gpio_irqtriggered = false;
 
 		/* read initial state */
-		sc->sc_gpio_pins[i].pin_flags = GPIO_PIN_INPUT;}
+		sc->sc_gpio_pins[i].pin_flags = GPIO_PIN_INPUT;
+	}
 
 	sc->sc_state = 0;
 	sc->sc_ms = GPIOSIM_MS;
@@ -200,14 +201,20 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
             gpiosim_ms_sysctl, 0, &sc->sc_ms, 0,
 	    CTL_CREATE, CTL_EOL);
 
-	error = workqueue_create(&sc->sc_wq,"gsimwq",gpiosim_wq,sc,PRI_NONE,IPL_VM,WQ_MPSAFE);
+	error = workqueue_create(&sc->sc_wq,
+	    "gsimwq",
+	    gpiosim_wq,
+	    sc,
+	    PRI_NONE,
+	    IPL_VM,
+	    WQ_MPSAFE);
 	if (error != 0) {
 		aprint_error(": can't create workqueue for interrupts\n");
                 return;
 	}
 
-	callout_init(&sc->sc_co,CALLOUT_MPSAFE);
-	callout_setfunc(&sc->sc_co,gpiosim_co, sc);
+	callout_init(&sc->sc_co, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_co, gpiosim_co, sc);
 	sc->sc_co_running = false;
 	sc->sc_co_init = true;
 
@@ -242,7 +249,7 @@ gpiosim_detach(device_t self, int flags)
 
 	/* Destroy any callouts */
 	if (sc->sc_co_init) {
-		callout_halt(&sc->sc_co,NULL);
+		callout_halt(&sc->sc_co, NULL);
 		callout_destroy(&sc->sc_co);
 	}
 	return 0;
@@ -308,7 +315,7 @@ gpiosim_sysctl(SYSCTLFN_ARGS)
 	mutex_exit(&sc->sc_intr_mutex);
 
 	if (t > 0) {
-		workqueue_enqueue(sc->sc_wq,(struct work *)&gpiosim_work,NULL);
+		workqueue_enqueue(sc->sc_wq, (struct work *)&gpiosim_work, NULL);
 	}
 
 	return 0;
@@ -327,6 +334,7 @@ gpiosim_ms_sysctl(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
+	/* Make sure that this can not be zero */
 	if (t < 1)
 		return (EINVAL);
 
@@ -389,7 +397,7 @@ gpiosim_intr_establish(void *vsc, int pin, int ipl, int irqmode,
 	if (((irqmode & GPIO_INTR_HIGH_LEVEL) ||
 	    (irqmode & GPIO_INTR_LOW_LEVEL)) &&
 	    (sc->sc_co_running == false)) {
-		callout_schedule(&sc->sc_co,mstohz(sc->sc_ms));
+		callout_schedule(&sc->sc_co, mstohz(sc->sc_ms));
 		sc->sc_co_running = true;
 	}
 
@@ -488,7 +496,7 @@ gpiosim_co(void *arg)
 	mutex_exit(&sc->sc_intr_mutex);
 
 	if (sc->sc_co_running == true) {
-		callout_schedule(&sc->sc_co,mstohz(sc->sc_ms));
+		callout_schedule(&sc->sc_co, mstohz(sc->sc_ms));
 	}
 }
 
@@ -497,7 +505,7 @@ MODULE(MODULE_CLASS_DRIVER, gpiosim, "gpio");
 
 #ifdef _MODULE
 static const struct cfiattrdata gpiobus_iattrdata = {
-	"gpiobus", 0, { { NULL, NULL, 0 },}
+	"gpiobus", 0, { { NULL, NULL, 0 }, }
 };
 static const struct cfiattrdata *const gpiosim_attrs[] = {
 	&gpiobus_iattrdata, NULL
