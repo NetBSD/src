@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.3 2020/09/29 16:35:42 roy Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.4 2023/11/24 17:40:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -150,7 +150,8 @@ ATF_TC_BODY(dlopen, tc)
 
 	check_r_debug_return_link_map("libutil.so", &r_map);
 
-	RZ(dlinfo(handle, RTLD_DI_LINKMAP, &map));
+	ATF_REQUIRE_EQ_MSG(dlinfo(handle, RTLD_DI_LINKMAP, &map), 0,
+	    "dlinfo: %s", dlerror());
 
 	ATF_CHECK(map == r_map);
 	dlclose(handle);
