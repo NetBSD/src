@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rnd.c,v 1.11 2017/04/16 18:24:23 riastradh Exp $	*/
+/*	$NetBSD: t_rnd.c,v 1.12 2023/11/24 16:35:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rnd.c,v 1.11 2017/04/16 18:24:23 riastradh Exp $");
+__RCSID("$NetBSD: t_rnd.c,v 1.12 2023/11/24 16:35:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -106,7 +106,7 @@ ATF_TC_BODY(read_random, tc)
 		alarm(2);
 		RL(fd = rump_sys_open("/dev/random", RUMP_O_RDONLY));
 		RL(rump_sys_read(fd, buf, sizeof(buf)));
-		RZ(rump_sys_close(fd));
+		RL(rump_sys_close(fd));
 	}
 }
 
