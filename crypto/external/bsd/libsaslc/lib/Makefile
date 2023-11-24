@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2023/05/09 02:19:32 christos Exp $
+# $NetBSD: Makefile,v 1.11 2023/11/24 18:45:46 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -59,7 +59,8 @@ LIBDPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/l
 .if (${MKKERBEROS} != "no")
 LIBDPLIBS+= gssapi ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libgssapi
 
-COPTS.crypto.c+=-Wno-error=deprecated-declarations
 .endif
+
+COPTS.crypto.c+=-Wno-error=deprecated-declarations
 
 .include <bsd.lib.mk>
