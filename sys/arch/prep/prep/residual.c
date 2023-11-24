@@ -1,4 +1,4 @@
-/*      $NetBSD: residual.c,v 1.18 2014/03/27 18:22:56 christos Exp $     */
+/*      $NetBSD: residual.c,v 1.19 2023/11/24 16:49:59 christos Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.18 2014/03/27 18:22:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.19 2023/11/24 16:49:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -935,6 +935,7 @@ large_vendor_pcibridge_subr(struct _L4_PPCPack *p, void *v, int size)
 	printf("    PCI Bridge Slot Data\n");
 	for (i = 0; i < numslots; i++) {
 		int j, first, l;
+		char *t;
 
 		if (pi->map[i].slotnum)
 			printf("      PCI Slot %d", pi->map[i].slotnum);
