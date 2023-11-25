@@ -37,6 +37,8 @@
 
 #ifdef OBJ_ELF
 #define TARGET_FORMAT "elf32-vax"
+#define DIFF_EXPR_OK 1
+#define CFI_DIFF_EXPR_OK 0
 #endif
 
 #define TARGET_ARCH	bfd_arch_vax
