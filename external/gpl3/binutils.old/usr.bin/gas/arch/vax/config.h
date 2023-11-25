@@ -103,7 +103,7 @@
 
 /* Define to 1 if you have the declaration of `mempcpy', and to 0 if you
    don't. */
-#define HAVE_DECL_MEMPCPY 0
+#define HAVE_DECL_MEMPCPY 1
 
 /* Define to 1 if you have the declaration of `realloc', and to 0 if you
    don't. */

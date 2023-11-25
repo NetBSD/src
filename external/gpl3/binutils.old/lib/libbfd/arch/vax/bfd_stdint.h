@@ -2,7 +2,7 @@
 /* Generated from: NetBSD: mknative-binutils,v 1.13 2020/04/04 01:34:53 christos Exp  */
 /* Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp  */
 
-/* generated for  vax--netbsdelf-gcc (NetBSD nb1 20210411) 10.3.0 */
+/* generated for  vax--netbsdelf-gcc (NetBSD nb3 20231008) 10.5.0 */
 
 #ifndef GCC_GENERATED_STDINT_H
 #define GCC_GENERATED_STDINT_H 1
