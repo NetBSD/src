@@ -2332,18 +2332,19 @@ md_create_short_jump (char *ptr,
 
 void
 md_create_long_jump (char *ptr,
-		     addressT from_addr ATTRIBUTE_UNUSED,
+		     addressT from_addr,
 		     addressT to_addr,
-		     fragS *frag,
-		     symbolS *to_symbol)
+		     fragS *frag ATTRIBUTE_UNUSED,
+		     symbolS *to_symbol ATTRIBUTE_UNUSED)
 {
   valueT offset;
 
-  offset = to_addr - S_GET_VALUE (to_symbol);
-  *ptr++ = VAX_JMP;		/* Arbitrary jump.  */
-  *ptr++ = VAX_ABSOLUTE_MODE;
+  /* Account for 1 byte instruction, 1 byte of address specifier and
+     4 bytes of offset from PC.  */
+  offset = to_addr - (from_addr + 1 + 1 + 4);
+  *ptr++ = VAX_JMP;
+  *ptr++ = VAX_PC_RELATIVE_MODE;
   md_number_to_chars (ptr, offset, 4);
-  fix_new (frag, ptr - frag->fr_literal, 4, to_symbol, (long) 0, 0, NO_RELOC);
 }
 
 #ifdef OBJ_VMS
