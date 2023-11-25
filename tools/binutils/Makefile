@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2023/01/18 12:52:55 christos Exp $
+#	$NetBSD: Makefile,v 1.38 2023/11/25 12:11:27 rin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -41,6 +41,9 @@ LDADDFLAGS=	-L${DESTDIR}/lib -L${DESTDIR}/usr/lib
 CONFIGURE_ENV+= ac_cv_path_mkdir="${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install -d"
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
+.if ${EXTERNAL_BINUTILS_SUBDIR} == "binutils.old"
+MKNATIVE=	${.CURDIR}/mknative-binutils.old
+.endif
 MKNATIVE?=	${.CURDIR}/mknative-binutils
 
 native-binutils: .native/.configure_done
