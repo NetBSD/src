@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.52 2023/11/22 17:48:35 rjs Exp $
+# $NetBSD: Makefile,v 1.53 2023/11/25 20:00:25 rjs Exp $
 
 # Link the gallium mega driver.
 
@@ -343,8 +343,12 @@ GALLIUM_SOURCES.auxiliary/util= \
 GALLIUM_SOURCES.auxiliary/nir = \
 	nir_draw_helpers.c \
 	nir_to_tgsi.c \
-	nir_to_tgsi_info.c \
 	tgsi_to_nir.c
+
+.if ${MKLLVMRT} != "no"
+GALLIUM_SOURCES.auxiliary/nir+=	nir_to_tgsi_info.c
+.endif
+
 GALLIUM_SOURCES.auxiliary/vl= \
 	vl_bicubic_filter.c \
 	vl_compositor.c \
@@ -384,6 +388,7 @@ CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/util
 GALLIUM_SOURCES.auxiliary/renderonly= \
 	renderonly.c
 
+.if ${MKLLVMRT} != "no"
 GALLIUM_SOURCES.auxiliary/gallivm= \
 	lp_bld_arit.c \
 	lp_bld_arit_overflow.c \
@@ -422,8 +427,9 @@ GALLIUM_SOURCES.auxiliary/gallivm= \
 	lp_bld_tgsi.c \
 	lp_bld_tgsi_info.c \
 	lp_bld_tgsi_soa.c \
-	lp_bld_type.c
-	#lp_bld_debug.cpp
+	lp_bld_type.c \
+	lp_bld_debug.cpp
+.endif
 
 .for _f in ${GALLIUM_SOURCES.auxiliary/gallivm}
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/gallium/auxiliary/util
@@ -735,6 +741,8 @@ GALLIUM_SOURCES.drivers/r300 = \
 	r300_transfer.c \
 	r300_vs.c \
 	r300_vs_draw.c
+
+CPPFLAGS.r300_state_derived.c = ${CC_WNO_STRINGOP_OVERREAD}
 
 GALLIUM_SOURCES.drivers/r300/compiler = \
 	memory_pool.c \
