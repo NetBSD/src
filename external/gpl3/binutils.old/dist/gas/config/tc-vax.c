@@ -3581,12 +3581,39 @@ void
 vax_cons_fix_new (fragS *frag, int where, unsigned int nbytes, expressionS *exp,
 		  bfd_reloc_code_real_type r)
 {
-  if (r == NO_RELOC)
+  int pcrel;
+  // fix PC relative frags too ...
+  switch (r)
+    {
+    case BFD_RELOC_8_PCREL:
+    case BFD_RELOC_16_PCREL:
+    case BFD_RELOC_32_PCREL:
+      pcrel = 1;
+      /*
+       * Displacement mode addressing (of which PC relative is one
+       * type) uses the updated contents of the register as the base
+       * address.  VARM, Leonard 1987, pp34
+       */
+      switch (exp->X_op)
+	{
+	case O_constant:
+	case O_symbol:
+	  exp->X_add_number += nbytes;
+	  break;
+	}
+      break;
+    case NO_RELOC:
     r = (nbytes == 1 ? BFD_RELOC_8
 	 : nbytes == 2 ? BFD_RELOC_16
 	 : BFD_RELOC_32);
+      pcrel = 0;
+      break;
+    default:
+      pcrel = 0;
+      break;
+    }
 
-  fix_new_exp (frag, where, (int) nbytes, exp, 0, r);
+  fix_new_exp (frag, where, (int) nbytes, exp, pcrel, r);
 }
 
 const char *
