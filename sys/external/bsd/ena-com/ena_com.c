@@ -857,7 +857,7 @@ static void ena_com_io_queue_free(struct ena_com_dev *ena_dev,
 
 	if (io_sq->bounce_buf_ctrl.base_buffer) {
 		size = io_sq->llq_info.desc_list_entry_size * ENA_COM_BOUNCE_BUFFER_CNTRL_CNT;
-		ENA_MEM_FREE(ena_dev->dmadev, io_sq->bounce_buf_ctrl.base_buffer);
+		ENA_MEM_FREE(ena_dev->dmadev, io_sq->bounce_buf_ctrl.base_buffer, size);
 		io_sq->bounce_buf_ctrl.base_buffer = NULL;
 	}
 }
@@ -1054,9 +1054,9 @@ static int ena_com_indirect_table_allocate(struct ena_com_dev *ena_dev,
 	if (unlikely(!rss->rss_ind_tbl))
 		goto mem_err1;
 
-	tbl_size = (1ULL << log_size) * sizeof(u16);
+	rss->host_rss_ind_tbl_size = (1ULL << log_size) * sizeof(u16);
 	rss->host_rss_ind_tbl =
-		ENA_MEM_ALLOC(ena_dev->dmadev, tbl_size);
+		ENA_MEM_ALLOC(ena_dev->dmadev, rss->host_rss_ind_tbl_size);
 	if (unlikely(!rss->host_rss_ind_tbl))
 		goto mem_err2;
 
@@ -1094,7 +1094,8 @@ static void ena_com_indirect_table_destroy(struct ena_com_dev *ena_dev)
 	rss->rss_ind_tbl = NULL;
 
 	if (rss->host_rss_ind_tbl)
-		ENA_MEM_FREE(ena_dev->dmadev, rss->host_rss_ind_tbl);
+		ENA_MEM_FREE(ena_dev->dmadev, rss->host_rss_ind_tbl,
+		    rss->host_rss_ind_tbl_size);
 	rss->host_rss_ind_tbl = NULL;
 }
 
@@ -1391,6 +1392,12 @@ void ena_com_wait_for_abort_completion(struct ena_com_dev *ena_dev)
 	struct ena_com_admin_queue *admin_queue = &ena_dev->admin_queue;
 	unsigned long flags;
 
+	/*
+	 * XXX: workaround for missing synchronization mechanism of AENQ handler
+	 * Wait 20ms for safety though it have not panicked actually.
+	 */
+	ENA_MSLEEP(20);
+
 	ENA_SPINLOCK_LOCK(admin_queue->q_lock, flags);
 	while (ATOMIC32_READ(&admin_queue->outstanding_cmds) != 0) {
 		ENA_SPINLOCK_UNLOCK(admin_queue->q_lock, flags);
@@ -1577,13 +1584,22 @@ void ena_com_admin_destroy(struct ena_com_dev *ena_dev)
 	struct ena_com_admin_sq *sq = &admin_queue->sq;
 	struct ena_com_aenq *aenq = &ena_dev->aenq;
 	u16 size;
-
-	ENA_WAIT_EVENT_DESTROY(admin_queue->comp_ctx->wait_event);
+	int i;
 
 	ENA_SPINLOCK_DESTROY(admin_queue->q_lock);
 
-	if (admin_queue->comp_ctx)
-		ENA_MEM_FREE(ena_dev->dmadev, admin_queue->comp_ctx);
+	if (admin_queue->comp_ctx) {
+		size_t s;
+
+		for (i = 0; i < admin_queue->q_depth; i++) {
+			struct ena_comp_ctx *comp_ctx = get_comp_ctxt(admin_queue, i, false);
+			if (comp_ctx != NULL)
+				ENA_WAIT_EVENT_DESTROY(comp_ctx->wait_event);
+		}
+
+		s = admin_queue->q_depth * sizeof(struct ena_comp_ctx);
+		ENA_MEM_FREE(ena_dev->dmadev, admin_queue->comp_ctx, s);
+	}
 	admin_queue->comp_ctx = NULL;
 	size = ADMIN_SQ_SIZE(admin_queue->q_depth);
 	if (sq->entries)
@@ -2810,8 +2826,11 @@ int ena_com_update_nonadaptive_moderation_interval_rx(struct ena_com_dev *ena_de
 
 void ena_com_destroy_interrupt_moderation(struct ena_com_dev *ena_dev)
 {
+	size_t size;
+
+	size = sizeof(struct ena_intr_moder_entry) * ENA_INTR_MAX_NUM_OF_LEVELS;
 	if (ena_dev->intr_moder_tbl)
-		ENA_MEM_FREE(ena_dev->dmadev, ena_dev->intr_moder_tbl);
+		ENA_MEM_FREE(ena_dev->dmadev, ena_dev->intr_moder_tbl, size);
 	ena_dev->intr_moder_tbl = NULL;
 }
 

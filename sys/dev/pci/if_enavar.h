@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enavar.h,v 1.8 2021/07/19 21:16:33 jmcneill Exp $	*/
+/*	$NetBSD: if_enavar.h,v 1.8.10.1 2023/11/26 11:37:02 bouyer Exp $	*/
 
 /*-
  * BSD LICENSE
@@ -388,6 +388,7 @@ struct ena_adapter {
 	/* RSS*/
 	uint8_t	rss_ind_tbl[ENA_RX_RSS_TABLE_SIZE];
 	bool rss_support;
+	int initialized;
 
 	uint8_t mac_addr[ETHER_ADDR_LEN];
 	/* mdio and phy*/
