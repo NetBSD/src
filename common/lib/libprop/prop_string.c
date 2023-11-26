@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.17 2022/08/03 21:13:46 riastradh Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.17.2.1 2023/11/26 12:29:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -247,12 +247,18 @@ _prop_string_instantiate(int const flags, const char * const str,
 				 */
 				prop_object_retain(ops);
 				_PROP_MUTEX_UNLOCK(_prop_string_tree_mutex);
+				if ((flags & PS_F_NOCOPY) == 0) {
+					_PROP_FREE(ps->ps_mutable,
+					    M_PROP_STRING);
+				}
 				_PROP_POOL_PUT(_prop_string_pool, ps);
 				ps = ops;
 			} else {
 				_PROP_MUTEX_UNLOCK(_prop_string_tree_mutex);
 			}
 		}
+	} else if ((flags & PS_F_NOCOPY) == 0) {
+		_PROP_FREE(__UNCONST(str), M_PROP_STRING);
 	}
 
 	return (ps);
@@ -311,7 +317,6 @@ prop_string_create_cstring_nocopy(const char *str)
 prop_string_t __printflike(1, 2)
 prop_string_create_format(const char *fmt, ...)
 {
-	prop_string_t ps;
 	char *str = NULL;
 	int len;
 	size_t nlen;
@@ -335,11 +340,7 @@ prop_string_create_format(const char *fmt, ...)
 	vsnprintf(str, nlen, fmt, ap);
 	va_end(ap);
 
-	ps = _prop_string_instantiate(0, str, (size_t)len);
-	if (ps == NULL)
-		_PROP_FREE(str, M_PROP_STRING);
-
-	return (ps);
+	return _prop_string_instantiate(0, str, (size_t)len);
 }
 
 /*
@@ -374,7 +375,6 @@ prop_string_create_nocopy(const char *str)
 prop_string_t
 prop_string_copy(prop_string_t ops)
 {
-	prop_string_t ps;
 	char *cp;
 
 	if (! prop_object_is_string(ops))
@@ -391,11 +391,7 @@ prop_string_copy(prop_string_t ops)
 
 	strcpy(cp, prop_string_contents(ops));
 
-	ps = _prop_string_instantiate(PS_F_MUTABLE, cp, ops->ps_size);
-	if (ps == NULL)
-		_PROP_FREE(cp, M_PROP_STRING);
-
-	return (ps);
+	return _prop_string_instantiate(PS_F_MUTABLE, cp, ops->ps_size);
 }
 
 _PROP_DEPRECATED(prop_string_copy_mutable,
@@ -404,7 +400,6 @@ _PROP_DEPRECATED(prop_string_copy_mutable,
 prop_string_t
 prop_string_copy_mutable(prop_string_t ops)
 {
-	prop_string_t ps;
 	char *cp;
 
 	if (! prop_object_is_string(ops))
@@ -416,11 +411,7 @@ prop_string_copy_mutable(prop_string_t ops)
 
 	strcpy(cp, prop_string_contents(ops));
 
-	ps = _prop_string_instantiate(PS_F_MUTABLE, cp, ops->ps_size);
-	if (ps == NULL)
-		_PROP_FREE(cp, M_PROP_STRING);
-
-	return (ps);
+	return _prop_string_instantiate(PS_F_MUTABLE, cp, ops->ps_size);
 }
 
 /*
@@ -655,7 +646,6 @@ bool
 _prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
     struct _prop_object_internalize_context *ctx)
 {
-	prop_string_t string;
 	char *str;
 	size_t len, alen;
 
@@ -691,10 +681,6 @@ _prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
 		return (true);
 	}
 
-	string = _prop_string_instantiate(0, str, len);
-	if (string == NULL)
-		_PROP_FREE(str, M_PROP_STRING);
-
-	*obj = string;
+	*obj = _prop_string_instantiate(0, str, len);
 	return (true);
 }
