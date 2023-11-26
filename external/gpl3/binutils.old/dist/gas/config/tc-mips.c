@@ -6440,8 +6440,8 @@ insns_between (const struct mips_cl_insn *insn1,
       /* Itbl support may require additional care here. FIXME!
 	 Need to modify this to include knowledge about
 	 user specified delays!  */
-      else if ((!cop_interlocks && (pinfo1 & INSN_COPROC_MOVE))
-	       || (!cop_mem_interlocks && (pinfo1 & INSN_COPROC_MEMORY_DELAY)))
+      if ((!cop_interlocks && (pinfo1 & INSN_COPROC_MOVE))
+	 || (!cop_mem_interlocks && (pinfo1 & INSN_COPROC_MEMORY_DELAY)))
 	{
 	  /* Handle cases where INSN1 writes to a known general coprocessor
 	     register.  There must be a one instruction delay before INSN2
