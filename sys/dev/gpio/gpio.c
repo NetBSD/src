@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.72 2022/12/13 21:50:43 jakllsch Exp $ */
+/* $NetBSD: gpio.c,v 1.72.2.1 2023/11/26 11:45:16 bouyer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.72 2022/12/13 21:50:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.72.2.1 2023/11/26 11:45:16 bouyer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -616,6 +616,14 @@ gpio_intr_str(void *gpio, struct gpio_pinmap *map, int pin, int irqmode,
 	(void) snprintf(intrstr, intrstrlen, "%s (%s)", hwstr, mode);
 	
 	return (true);
+}
+
+int
+gpio_pin_to_pin_num(void *gpio, struct gpio_pinmap *map, int pin)
+{
+	struct gpio_softc *sc = gpio;
+
+	return sc->sc_pins[map->pm_map[pin]].pin_num;
 }
 
 int
