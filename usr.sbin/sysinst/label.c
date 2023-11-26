@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.46.2.1 2023/11/02 14:08:17 sborrill Exp $	*/
+/*	$NetBSD: label.c,v 1.46.2.2 2023/11/26 12:40:50 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.46.2.1 2023/11/02 14:08:17 sborrill Exp $");
+__RCSID("$NetBSD: label.c,v 1.46.2.2 2023/11/26 12:40:50 bouyer Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1965,7 +1965,7 @@ const char *
 get_last_mounted(int fd, daddr_t partstart, uint *fs_type, uint *fs_sub_type,
     uint flags)
 {
-	static char sblk[SBLOCKSIZE];		/* is this enough? */
+	static char sblk[SBLOCKSIZE] __aligned(8);	/* is this enough? */
 	struct fs *SB = (struct fs *)sblk;
 	static const off_t sblocks[] = SBLOCKSEARCH;
 	const off_t *sbp;
