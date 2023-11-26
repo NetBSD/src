@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac_0448.h,v 1.6 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: dmac_0448.h,v 1.6.122.1 2023/11/26 11:54:31 bouyer Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -120,7 +120,7 @@ struct	dm_stat {
 	unsigned int dm_width;
 };
 
-#define	DMAC_WAIT	nops(10)
+#define	DMAC_WAIT	DELAY(1)
 
 #define PINTEN		0xbfc80001
 # define	DMA_INTEN	0x10
