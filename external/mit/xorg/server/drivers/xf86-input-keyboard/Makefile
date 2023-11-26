@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2021/12/15 15:27:30 christos Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2023/11/26 12:26:23 bouyer Exp $
 
 DRIVER=		xf86-input-keyboard
 DRIVER_NAME=	kbd_drv
@@ -16,7 +16,9 @@ CPPFLAGS+=	-DPCVT_SUPPORT
 .if ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE} == "amiga" || \
     ${MACHINE} == "evbarm" || \
+    ${MACHINE} == "ews4800mips" || \
     ${MACHINE} == "mac68k" || \
+    ${MACHINE} == "newsmips" || \
     ${MACHINE} == "pmax" || \
     ${MACHINE} == "sgimips" || \
     ${MACHINE} == "shark" || \
@@ -29,6 +31,14 @@ CPPFLAGS+=	-DDEFAULT_TO_WSKBD
 CPPFLAGS+=	-DWSCONS_SUPPORT
 CPPFLAGS+=	-DXKB
 CPPFLAGS.kbd.c=	-D__XKBDEFRULES__=${__XKBDEFRULES__}
+
+.if \
+    ${MACHINE} == "ews4800mips"	|| \
+    ${MACHINE} == "newsmips"	|| \
+    0
+CPPFLAGS+=	-DUSE_WSKBD_GETMAP
+SRCS+=		ws_KbdMap.c
+.endif
 
 X11EXTRAMANDEFS+=	-e 's,__xkb_path__,${X11LIBDIR}/xkb,g'
 
