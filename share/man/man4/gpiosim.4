@@ -1,4 +1,4 @@
-.\" $NetBSD: gpiosim.4,v 1.6 2017/07/03 21:30:58 wiz Exp $
+.\" $NetBSD: gpiosim.4,v 1.6.16.1 2023/11/26 12:13:19 bouyer Exp $
 .\"
 .\" Copyright (c) 2009, 2013 Marc Balmer <marc@msys.ch>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd May 20, 2013
+.Dd November 8, 2013
 .Dt GPIOSIM 4
 .Os
 .Sh NAME
@@ -37,12 +37,21 @@ For this purpose, access the "hw.gpiosim<N>.value"
 variable, where "<N>" denotes the number of the
 .Nm
 instance.
+.Pp
+Both edge and level interrupts are simulated.  The "hw.gpiosim<N>.ms"
+.Xr sysctl 8
+variable will change the amount of time between
+.Xr callout 9
+ticks for simulated level interrupts.
 .Sh SEE ALSO
 .Xr gpio 4 ,
+.Xr gpioirq 4 ,
 .Xr sysctl 8
 .Sh AUTHORS
 .An -nosplit
 The
 .Nm
 driver was written by
-.An Marc Balmer Aq Mt marc@msys.ch .
+.An Marc Balmer Aq Mt marc@msys.ch
+Simulated interrupts added by
+.An Brad Spencer Aq Mt brad@anduin.eldar.org .
