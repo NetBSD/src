@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_eventfd.c,v 1.9 2022/02/17 16:28:29 thorpej Exp $	*/
+/*	$NetBSD: sys_eventfd.c,v 1.9.4.1 2023/11/26 12:33:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.9 2022/02/17 16:28:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.9.4.1 2023/11/26 12:33:19 bouyer Exp $");
 
 /*
  * eventfd
@@ -69,8 +69,6 @@ struct eventfd {
 	eventfd_t	efd_val;
 	int64_t		efd_nwaiters;
 	bool		efd_restarting;
-	bool		efd_has_read_waiters;
-	bool		efd_has_write_waiters;
 	bool		efd_is_semaphore;
 
 	/*
@@ -117,8 +115,6 @@ eventfd_destroy(struct eventfd * const efd)
 {
 
 	KASSERT(efd->efd_nwaiters == 0);
-	KASSERT(efd->efd_has_read_waiters == false);
-	KASSERT(efd->efd_has_write_waiters == false);
 
 	cv_destroy(&efd->efd_read_wait);
 	cv_destroy(&efd->efd_write_wait);
@@ -155,10 +151,8 @@ eventfd_wait(struct eventfd * const efd, int const fflag, bool const is_write)
 	}
 
 	if (is_write) {
-		efd->efd_has_write_waiters = true;
 		waitcv = &efd->efd_write_wait;
 	} else {
-		efd->efd_has_read_waiters = true;
 		waitcv = &efd->efd_read_wait;
 	}
 
@@ -194,17 +188,11 @@ eventfd_wake(struct eventfd * const efd, bool const is_write)
 	int pollev;
 
 	if (is_write) {
-		if (efd->efd_has_read_waiters) {
-			waitcv = &efd->efd_read_wait;
-			efd->efd_has_read_waiters = false;
-		}
+		waitcv = &efd->efd_read_wait;
 		sel = &efd->efd_read_sel;
 		pollev = POLLIN | POLLRDNORM;
 	} else {
-		if (efd->efd_has_write_waiters) {
-			waitcv = &efd->efd_write_wait;
-			efd->efd_has_write_waiters = false;
-		}
+		waitcv = &efd->efd_write_wait;
 		sel = &efd->efd_write_sel;
 		pollev = POLLOUT | POLLWRNORM;
 	}
@@ -537,14 +525,8 @@ eventfd_fop_restart(file_t * const fp)
 
 	if (efd->efd_nwaiters != 0) {
 		efd->efd_restarting = true;
-		if (efd->efd_has_read_waiters) {
-			cv_broadcast(&efd->efd_read_wait);
-			efd->efd_has_read_waiters = false;
-		}
-		if (efd->efd_has_write_waiters) {
-			cv_broadcast(&efd->efd_write_wait);
-			efd->efd_has_write_waiters = false;
-		}
+		cv_broadcast(&efd->efd_read_wait);
+		cv_broadcast(&efd->efd_write_wait);
 	}
 
 	mutex_exit(&efd->efd_lock);
