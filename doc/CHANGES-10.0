@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-10.0,v 1.1.2.159 2023/11/08 10:37:54 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.160 2023/11/26 12:55:26 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14086,3 +14086,104 @@ sys/sys/param.h					(manually edited)
 doc/3RDPARTY					(manually edited)
 
 	Adjust libfido2 entry for ticket #345.
+
+sys/dev/pci/if_ena.c				1.35-1.40
+sys/dev/pci/if_enavar.h				1.9
+sys/external/bsd/ena-com/ena_com.c		1.2-1.4
+sys/external/bsd/ena-com/ena_com.h		1.2
+sys/external/bsd/ena-com/ena_plat.h		1.10
+
+	ena(4): MP-enable always, add RSS support, and reliability fixes.
+	[jdolecek, ticket #460]
+
+etc/MAKEDEV.tmpl				1.234
+share/man/man4/gpioirq.4			1.4 via patch
+sys/conf/majors					1.103
+sys/dev/gpio/gpio.c				1.73
+sys/dev/gpio/gpioirq.c				1.2
+sys/dev/gpio/gpiovar.h				1.19
+
+	gpioirq(4): allow multiple pins per gpioirq instance, add the ability
+	to use a /dev/gpioirqN device to get pin interrupts into userland.
+	[brad, ticket #461]
+
+sys/arch/newsmips/dev/dmac_0448.h		1.7
+sys/arch/newsmips/dev/scsi_1185.c		1.25
+
+	Use DELAY(9), not empty for() loop that could be optimized out.
+	[tsutsui, ticket #462]
+
+share/man/man4/gpiosim.4			1.7
+sys/dev/gpio/gpiosim.c				1.25
+
+	Simple simulated interrupts for the simulated GPIO device gpiosim(4)
+	[brad, ticket #463]
+
+sys/dev/gpio/gpioirq.c				1.3
+
+	Support async I/O against gpioirq(4): O_NONBLOCK reads, and
+	poll(2)/select(2)
+	[brad, ticket #464]
+
+xsrc/external/mit/xf86-video-pnozz/dist/src/pnozz_exa.c 1.5, 1.6
+
+	Revert r1.4.
+	The changes are minimal and they cause redraw problems (as reported by
+	Maxim Devaev on port-sparc).
+	[jdc, ticket #465]
+
+xsrc/external/mit/xf86-input-keyboard/dist/src/bsd_kbd.c 1.22
+xsrc/external/mit/xf86-input-keyboard/dist/src/bsd_kbd.h 1.5
+xsrc/external/mit/xf86-input-keyboard/dist/src/kbd.c	1.9
+xsrc/external/mit/xf86-input-keyboard/dist/src/ws_KbdMap.c 1.1
+src/external/mit/xorg/server/drivers/xf86-input-keyboard/Makefile 1.23
+
+	xf86-input-keyboard: add suppport to get keymap via
+	WSKBDIO_GETMAP ioctl(2).
+	[tsutsui, ticket #466]
+
+common/lib/libprop/prop_string.c		1.18
+
+	Fix PR lib/57699: Memory leak in libprop
+	[thorpej, ticket #467]
+
+sys/kern/sys_eventfd.c				1.10
+
+	eventfd(2): Fix kernel crash on close after read or write is
+	interrupted by signal, PR kern/57703.
+	[riastradh, ticket #468]
+
+external/gpl3/binutils.old/dist/gas/config/tc-mips.c 1.8
+external/gpl3/binutils/dist/gas/config/tc-mips.c 1.25
+
+	binutils, binutils.old: fix gas that doesn't handle MIPS1 FPR load
+	hazard correctly.  Fixes PR/57680.
+	[tsutsui, ticket #469]
+
+sys/dev/pci/pciide_common.c			1.70
+
+	pciide_dma_dmamap_setup(): If we end up with a DMA segment with an odd
+	length or odd starting address, unload the map and return EINVAL, which
+	should  cause the upper layers in the ATA code to re-try the I/O using
+	PIO.  Fixes PR port-alpha/56434
+	[thorpej, ticket #470]
+
+usr.sbin/sysinst/label.c			1.50
+usr.sbin/sysinst/util.c				1.74
+
+	Force alignment of disk buffers to at least 8 byte.
+	Fixes PR 56434.
+	[martin, ticket #471]
+
+crypto/external/bsd/libsaslc/lib/Makefile	1.11
+
+	move line to avoid deprecated declaration errors outside of the
+	kerberos block.
+	[kre, ticket #473]
+
+usr.sbin/sysinst/partman.c			1.57
+
+	PR 57698: avoid installer crashes in restricted (miniroot)
+	environments.
+	[martin, ticket #474]
+
