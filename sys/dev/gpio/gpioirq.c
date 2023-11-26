@@ -1,4 +1,4 @@
-/* $NetBSD: gpioirq.c,v 1.1.36.1 2023/11/26 11:45:16 bouyer Exp $ */
+/* $NetBSD: gpioirq.c,v 1.1.36.2 2023/11/26 12:16:31 bouyer Exp $ */
 
 /*
  * Copyright (c) 2016, 2023 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioirq.c,v 1.1.36.1 2023/11/26 11:45:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioirq.c,v 1.1.36.2 2023/11/26 12:16:31 bouyer Exp $");
 
 /*
  * GPIO driver that uses interrupts and can send that fact to userland.
@@ -34,6 +34,9 @@ __KERNEL_RCSID(0, "$NetBSD: gpioirq.c,v 1.1.36.1 2023/11/26 11:45:16 bouyer Exp 
 #include <sys/pool.h>
 #include <sys/kmem.h>
 #include <sys/condvar.h>
+#include <sys/vnode.h>
+#include <sys/select.h>
+#include <sys/poll.h>
 
 #include <dev/gpio/gpiovar.h>
 
@@ -67,6 +70,7 @@ struct gpioirq_softc {
 	kcondvar_t		sc_cond_dying;
 	pool_cache_t            sc_readpool;
 	char                    *sc_readpoolname;
+	struct  selinfo 	sc_rsel;
 	SIMPLEQ_HEAD(,gpioirq_read_q)  sc_read_queue;
 };
 
@@ -97,6 +101,7 @@ extern struct cfdriver gpioirq_cd;
 static dev_type_open(gpioirq_open);
 static dev_type_read(gpioirq_read);
 static dev_type_close(gpioirq_close);
+static dev_type_poll(gpioirq_poll);
 const struct cdevsw gpioirq_cdevsw = {
 	.d_open = gpioirq_open,
 	.d_close = gpioirq_close,
@@ -105,7 +110,7 @@ const struct cdevsw gpioirq_cdevsw = {
 	.d_ioctl = noioctl,
 	.d_stop = nostop,
 	.d_tty = notty,
-	.d_poll = nopoll,
+	.d_poll = gpioirq_poll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
@@ -189,6 +194,7 @@ gpioirq_attach(device_t parent, device_t self, void *aux)
 	sc->sc_readpool = pool_cache_init(sizeof(struct gpioirq_read_q),0,0,0,sc->sc_readpoolname,NULL,IPL_VM,NULL,NULL,NULL);
 	pool_cache_sethiwat(sc->sc_readpool,100);
 	SIMPLEQ_INIT(&sc->sc_read_queue);
+	selinit(&sc->sc_rsel);
 
 	for(int apin = 0; apin < sc->sc_npins; apin++) {
 		if (!gpio_intr_str(sc->sc_gpio, &sc->sc_map, apin, irqmode,
@@ -263,6 +269,7 @@ gpioirq_intr(void *arg)
 			q->parentunit = is->i_parentunit;
 			q->theval = val;
 			SIMPLEQ_INSERT_TAIL(&sc->sc_read_queue,q,read_q);
+			selnotify(&sc->sc_rsel, POLLIN|POLLRDNORM, NOTE_SUBMIT);
 			cv_signal(&sc->sc_condreadready);
 		} else {
 			aprint_error("Could not allocate memory for read pool\n");
@@ -304,6 +311,10 @@ gpioirq_read(dev_t dev, struct uio *uio, int flags)
 	if (!sc)
 		return (ENXIO);
 
+	if (sc->sc_dying) {
+		return EIO;
+	}
+
 	while (uio->uio_resid > 0) {
 		any = 0;
 		error = 0;
@@ -316,7 +327,11 @@ gpioirq_read(dev_t dev, struct uio *uio, int flags)
 				any = 1;
 				break;
 			} else {
-				error = cv_wait_sig(&sc->sc_condreadready,&sc->sc_read_mutex);
+				if (flags & IO_NDELAY) {
+					error = EWOULDBLOCK;
+				} else {
+					error = cv_wait_sig(&sc->sc_condreadready,&sc->sc_read_mutex);
+				}
 				if (sc->sc_dying)
 					error = EIO;
 				if (error == 0)
@@ -358,6 +373,10 @@ gpioirq_close(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	sc = device_lookup_private(&gpioirq_cd, minor(dev));
 
+	if (sc->sc_dying) {
+		return(0);
+	}
+
 	mutex_enter(&sc->sc_lock);
 	while ((q = SIMPLEQ_FIRST(&sc->sc_read_queue)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_read_queue, read_q);
@@ -367,6 +386,31 @@ gpioirq_close(dev_t dev, int flags, int fmt, struct lwp *l)
 	mutex_exit(&sc->sc_lock);
 
 	return(0);
+}
+
+static int
+gpioirq_poll(dev_t dev, int events, struct lwp *l)
+{
+        struct gpioirq_softc *sc;
+        int revents = 0;
+
+        sc = device_lookup_private(&gpioirq_cd, minor(dev));
+
+	mutex_enter(&sc->sc_read_mutex);
+	if (sc->sc_dying) {
+                mutex_exit(&sc->sc_read_mutex);
+                return POLLHUP;
+        }
+
+	if ((events & (POLLIN | POLLRDNORM)) != 0) {
+                if (!SIMPLEQ_EMPTY(&sc->sc_read_queue))
+                        revents |= events & (POLLIN | POLLRDNORM);
+                else
+                        selrecord(l, &sc->sc_rsel);
+        }
+
+	mutex_exit(&sc->sc_read_mutex);
+        return revents;
 }
 
 int
@@ -413,6 +457,7 @@ gpioirq_detach(device_t self, int flags)
 
 	mutex_destroy(&sc->sc_read_mutex);
 	mutex_destroy(&sc->sc_lock);
+	seldestroy(&sc->sc_rsel);
 
 	return (0);
 }
