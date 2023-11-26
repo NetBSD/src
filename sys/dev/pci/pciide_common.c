@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.67 2020/08/24 05:37:41 msaitoh Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.67.20.1 2023/11/26 12:38:56 bouyer Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.67 2020/08/24 05:37:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.67.20.1 2023/11/26 12:38:56 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -721,25 +721,51 @@ pciide_dma_dmamap_setup(struct pciide_softc *sc, int channel, int drive,
 	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	for (seg = 0; seg < dma_maps->dmamap_xfer->dm_nsegs; seg++) {
+		bus_addr_t phys = dma_maps->dmamap_xfer->dm_segs[seg].ds_addr;
+		bus_size_t len = dma_maps->dmamap_xfer->dm_segs[seg].ds_len;
+
 #ifdef DIAGNOSTIC
 		/* A segment must not cross a 64k boundary */
 		{
-		u_long phys = dma_maps->dmamap_xfer->dm_segs[seg].ds_addr;
-		u_long len = dma_maps->dmamap_xfer->dm_segs[seg].ds_len;
 		if ((phys & ~IDEDMA_BYTE_COUNT_MASK) !=
 		    ((phys + len - 1) & ~IDEDMA_BYTE_COUNT_MASK)) {
-			printf("pciide_dma: segment %d physical addr 0x%lx"
-			    " len 0x%lx not properly aligned\n",
-			    seg, phys, len);
+			printf("pciide_dma: seg %d addr 0x%" PRIx64
+			    " len 0x%" PRIx64 " not properly aligned\n",
+			    seg, (uint64_t)phys, (uint64_t)len);
 			panic("pciide_dma: buf align");
 		}
 		}
 #endif
-		dma_maps->dma_table[seg].base_addr =
-		    htole32(dma_maps->dmamap_xfer->dm_segs[seg].ds_addr);
+		/*
+		 * Some controllers get really upset if the length
+		 * of any DMA segment is odd.  This isn't something
+		 * that's going to happen in normal steady-state
+		 * operation (reading VM pages, etc.), but physio users
+		 * don't have as many guard rails.
+		 *
+		 * Consider an 8K read request that starts at an odd
+		 * offset within a page.  At first blush, all of the
+		 * checks pass because it's a sector-rounded size, but
+		 * unless the buffer spans 2 physically contiguous pages,
+		 * it's going to result in 2 odd-length DMA segments.
+		 *
+		 * Odd start addresses are also frowned upon, so we
+		 * catch those here, too.
+		 *
+		 * Returning EINVAL here will cause the upper layers to
+		 * fall back onto PIO.
+		 */
+		if ((phys & 1) != 0 || (len & 1) != 0) {
+			aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "Invalid DMA segment: "
+			    "seg %d addr 0x%" PRIx64 " len 0x%" PRIx64 "\n",
+			    seg, (uint64_t)phys, (uint64_t)len);
+			bus_dmamap_unload(sc->sc_dmat, dma_maps->dmamap_xfer);
+			return EINVAL;
+		}
+		dma_maps->dma_table[seg].base_addr = htole32(phys);
 		dma_maps->dma_table[seg].byte_count =
-		    htole32(dma_maps->dmamap_xfer->dm_segs[seg].ds_len &
-		    IDEDMA_BYTE_COUNT_MASK);
+		    htole32(len & IDEDMA_BYTE_COUNT_MASK);
 		ATADEBUG_PRINT(("\t seg %d len %d addr 0x%x\n",
 		   seg, le32toh(dma_maps->dma_table[seg].byte_count),
 		   le32toh(dma_maps->dma_table[seg].base_addr)), DEBUG_DMA);
