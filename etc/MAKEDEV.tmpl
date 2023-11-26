@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.232.2.1 2023/01/13 19:08:30 martin Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.232.2.2 2023/11/26 11:45:16 bouyer Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -232,6 +232,7 @@
 #	dtv*	Digital TV interface
 #	fb*	PMAX generic framebuffer pseudo-device
 #	fd	file descriptors
+#	gpioirq* Interrupts on GPIO pins
 #	gpiopps* 1PPS signals on GPIO pins
 #	grf*	graphics frame buffer device
 #	hdaudio* High Definition audio control device
@@ -830,7 +831,7 @@ all)
 	makedev srt0 srt1 srt2 srt3
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
-	makedev gpiopps0
+	makedev gpioirq0 gpiopps0
 	makedev pad pad0 pad1 pad2 pad3
 	makedev bthub
 	makedev putter
@@ -871,6 +872,10 @@ audio)
 gpio)
 	makedev gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	lndev gpio0 gpio
+	;;
+
+gpioirq)
+	makedev gpioirq0
 	;;
 
 gpiopps)
@@ -1545,6 +1550,11 @@ hdmicec[0-9]*)
 gpio[0-9]*)
 	unit=${i#gpio}
 	mkdev gpio$unit c %gpio_chr% $unit 664 $g_gpio
+	;;
+
+gpioirq[0-9]*)
+	unit=${i#gpioirq}
+	mkdev gpioirq$unit c %gpioirq_chr% $unit 444 $g_gpio
 	;;
 
 gpiopps[0-9]*)

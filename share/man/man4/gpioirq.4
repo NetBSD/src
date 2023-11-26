@@ -1,6 +1,6 @@
-.\" $NetBSD: gpioirq.4,v 1.2 2018/05/20 12:08:46 wiz Exp $
+.\" $NetBSD: gpioirq.4,v 1.2.14.1 2023/11/26 11:45:16 bouyer Exp $
 .\"
-.\" Copyright (c) 2016 Brad Spencer <brad@anduin.eldar.org>
+.\" Copyright (c) 2016, 2023 Brad Spencer <brad@anduin.eldar.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,25 +14,26 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd May 11, 2018
+.Dd November 5, 2023
 .Dt GPIOIRQ 4
 .Os
 .Sh NAME
 .Nm gpioirq
-.Nd Install an interrupt handler on a GPIO pin
+.Nd Install an interrupt handler on GPIO pins
 .Sh SYNOPSIS
 .Cd "gpioirq* at gpio? offset 0 mask 0x1 flag 0x00"
 .Sh DESCRIPTION
 The
 .Nm
-driver attaches an interrupt handler to a single GPIO pin.
+driver attaches an interrupt handler to a one or more GPIO pins.
 .Pp
-The pin number is specified in the kernel configuration file with the
+The base pin number is specified in the kernel configuration file with the
 .Ar offset
 locator.
 The
 .Ar mask
-locator should always be 0x1.
+locator can be 0x01 or greater to indicate that more pins should have an
+interrupt handler attached to them.
 .Pp
 The
 .Ar flag
@@ -49,7 +50,7 @@ edge of the pin.
 .It Dv 0x04
 Interrupt on both edges of the pin.
 .It Dv 0x08
-Assert the intrerrupt as long as the pin is high.
+Assert the interrupt as long as the pin is high.
 .It Dv 0x10
 Assert the interrupt as long as the pin is low.
 .El
@@ -80,6 +81,36 @@ is attached at runtime using the
 on the
 .Xr gpio 4
 device.
+.Sh FILES
+.Bl -tag -width "/dev/gpioirqu" -compact
+.It /dev/gpioirq Ns Ar u
+GPIOIRQ device unit
+.Ar u
+file.
+The output from this device are three uint8_t bytes every time an interrupt fires.
+The bytes contain the device unit, pin number and the current state of the pin.
+.Sh EXAMPLES
+The following example will output the device unit, pin and
+the pins current state for pins 4, 5, 6, 7, 8, 9, 10, 11, 12 on gpio0:
+.Bd -literal -offset indent
+/etc/gpio.conf contains:
+gpio0 attach gpioirq 4 0x1ff 0x04
+
+or a kernel was compiled to have the same parameters.
+
+#!/usr/pkg/bin/perl
+
+$dev = "/dev/gpioirq0";
+
+sysopen(DEV,$dev,O_RDONLY) || die "sysopen: $!";
+
+while (sysread(DEV,$b,3)) {
+    @v = unpack("CCC",$b);
+
+    print join(',',@v);
+    print "\\n";
+}
+
 .Sh SEE ALSO
 .Xr gpio 4 ,
 .Xr drvctl 8 ,
@@ -95,3 +126,22 @@ The
 .Nm
 driver was written by
 .An Brad Spencer Aq Mt brad@anduin.eldar.org .
+.Sh BUGS
+When an interrupt fires in most devices there is not any information carried
+along in the interrupt as to whether or not the pin is high or low.  Hence the
+driver reads the current state of the pin after the interrupt has fired and it is
+possible that the state of the pin could have changed between the time the interrupt
+fired and the reading of the state.  As a practical matter the only time the pin state
+will be reported wrong is if there is a very large number of interrupts happening.  The
+driver could have made some assumptions if the interrupt was only for a rising edge or falling
+edge as in those cases it would be possible to know what the pin state would have been, but
+in the case of the double edge, there really will not be any way to be sure with most hardware
+and, in any case, the
+.Xr gpio 4
+infrastructure does not support getting at that information even if it did exist.
+.Pp
+It is important that if the
+.Xr gpioirq 4
+device is opened that it be read, as it may be possible
+to run the kernel out of memory if the device is opened but not read and interrupts
+occur on a pin tied to the driver.

@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.18 2018/05/19 13:59:06 thorpej Exp $ */
+/* $NetBSD: gpiovar.h,v 1.18.34.1 2023/11/26 11:45:16 bouyer Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ void *	gpio_intr_establish(void *, struct gpio_pinmap *, int, int, int,
 void	gpio_intr_disestablish(void *, void *);
 bool	gpio_intr_str(void *, struct gpio_pinmap *, int, int,
 		      char *, size_t);
+int	gpio_pin_to_pin_num(void *, struct gpio_pinmap *, int);
 
 int	gpio_lock(void *);
 void	gpio_unlock(void *);
