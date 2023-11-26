@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.71.2.1 2023/09/09 14:50:15 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.71.2.2 2023/11/26 12:40:50 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -398,7 +398,7 @@ static int
 get_iso9660_volname(int dev, int sess, char *volname, size_t volnamelen)
 {
 	int blkno, error, last;
-	char buf[ISO_BLKSIZE];
+	static char buf[ISO_BLKSIZE] __aligned(8);
 	struct iso_volume_descriptor *vd = NULL;
 	struct iso_primary_descriptor *pd = NULL;
 
