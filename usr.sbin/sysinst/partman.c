@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.56 2022/07/10 10:52:41 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.56.2.1 2023/11/26 12:53:07 bouyer Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -817,6 +817,8 @@ pm_raid_commit(void)
 	FILE *f;
 	char f_name[STRSIZE], devname[STRSIZE];
 
+	if (!have_raid)
+		return 0;
 	for (i = 0; i < MAX_RAID; i++) {
 		if (! pm_raid_check(&raids[i]))
 			continue;
@@ -1163,6 +1165,8 @@ pm_vnd_commit(void)
 	part_id id, part_suit = NO_PART;
 	struct disk_part_info info;
 
+	if (!have_vnd)
+		return 0;
 	for (i = 0; i < MAX_VND; i++) {
 		error = 0;
 		if (! pm_vnd_check(&vnds[i]))
@@ -1454,6 +1458,8 @@ pm_cgd_commit(void)
 	char devname[STRSIZE];
 	int i, error = 0;
 
+	if (!have_cgd)
+		return 0;
 	for (i = 0; i < MAX_CGD; i++) {
 		if (! pm_cgd_check(&cgds[i]))
 			continue;
@@ -1979,6 +1985,8 @@ pm_lvm_commit(void)
 	uint used_size = 0;
 	char params[STRSIZE*3], devs[STRSIZE*3], arg[STRSIZE];
 
+	if (!have_lvm)
+		return 0;
 	for (i = 0; i < MAX_LVM_VG; i++) {
 		/* Stage 0: checks */
 		if (! pm_lvm_check(&lvms[i]))
@@ -2118,7 +2126,7 @@ pm_getrefdev(struct pm_devs *pm_cur)
 	char descr[MENUSTRSIZE], dev[MENUSTRSIZE] = "";
 
 	pm_cur->refdev = NULL;
-	if (! strncmp(pm_cur->diskdev, "cgd", 3)) {
+	if (have_cgd && strncmp(pm_cur->diskdev, "cgd", 3) == 0) {
 		dev_num = pm_cur->diskdev[3] - '0';
 		for (i = 0; i < MAX_CGD; i++)
 			if (cgds[i].blocked && cgds[i].node == dev_num) {
@@ -2130,7 +2138,7 @@ pm_getrefdev(struct pm_devs *pm_cur)
 				    sizeof(pm_cur->diskdev_descr));
 				break;
 			}
- 	} else if (! strncmp(pm_cur->diskdev, "vnd", 3)) {
+ 	} else if (have_vnd && strncmp(pm_cur->diskdev, "vnd", 3) == 0) {
  		dev_num = pm_cur->diskdev[3] - '0';
  		for (i = 0; i < MAX_VND; i++)
 			if (vnds[i].blocked && vnds[i].node == dev_num) {
@@ -2145,7 +2153,7 @@ pm_getrefdev(struct pm_devs *pm_cur)
 				    sizeof(pm_cur->diskdev_descr));
 				break;
 			}
-	} else if (! strncmp(pm_cur->diskdev, "raid", 4)) {
+	} else if (have_raid && strncmp(pm_cur->diskdev, "raid", 4) == 0) {
 		dev_num = pm_cur->diskdev[4] - '0';
  		for (i = 0; i < MAX_RAID; i++)
 			if (raids[i].blocked && raids[i].node == dev_num) {
@@ -2237,7 +2245,7 @@ pm_partusage(struct pm_devs *pm_cur, int part_num, int do_del)
 	if (id >= pm_cur->parts->num_part)
 		return 0;
 
-	for (i = 0; i < MAX_CGD; i++)
+	for (i = 0; have_cgd && i < MAX_CGD; i++)
 		if (cgds[i].enabled &&
 			cgds[i].pm == pm_cur &&
 			cgds[i].pm_part == id) {
@@ -2247,7 +2255,7 @@ pm_partusage(struct pm_devs *pm_cur, int part_num, int do_del)
 			}
 			return 1;
 		}
-	for (i = 0; i < MAX_RAID; i++)
+	for (i = 0; have_raid && i < MAX_RAID; i++)
 		for (ii = 0; ii < MAX_IN_RAID; ii++)
 			if (raids[i].enabled &&
 				raids[i].comp[ii].parts == pm_cur->parts &&
@@ -2256,7 +2264,7 @@ pm_partusage(struct pm_devs *pm_cur, int part_num, int do_del)
 						raids[i].comp[ii].parts = NULL;
 					return 1;
 			}
-	for (i = 0; i < MAX_LVM_VG; i++)
+	for (i = 0; have_lvm && i < MAX_LVM_VG; i++)
 		for (ii = 0; ii < MAX_LVM_PV; ii++)
 			if (lvms[i].enabled &&
 				lvms[i].pv[ii].pm == pm_cur &&
