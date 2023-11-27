@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2019/07/28 13:46:45 christos Exp $
+# $NetBSD: Makefile,v 1.14 2023/11/27 19:45:36 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -27,5 +27,6 @@ TESTS_C+=	t_strfmon
 COPTS.t_wctomb.c += -Wno-stack-protector
 COPTS.t_digittoint.c += -Wno-unused-variable
 COPTS.t_btowc.c += -Wno-unused-variable
+COPTS.t_strfmon.c += -Wno-format-nonliteral
 
 .include <bsd.test.mk>
