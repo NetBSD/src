@@ -1,4 +1,4 @@
-/*	$NetBSD: t_stack.c,v 1.1 2023/11/24 16:21:17 riastradh Exp $	*/
+/*	$NetBSD: t_stack.c,v 1.2 2023/11/27 22:15:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,10 +29,14 @@
 #define	_KMEMUSER		/* __MACHINE_STACK_GROWS_UP */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stack.c,v 1.1 2023/11/24 16:21:17 riastradh Exp $");
+__RCSID("$NetBSD: t_stack.c,v 1.2 2023/11/27 22:15:08 riastradh Exp $");
 
 #include <sys/mman.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/types.h>
+
+#include <uvm/uvm_param.h>	/* VM_THREAD_GUARD_SIZE */
 
 #include <atf-c.h>
 #include <pthread.h>
@@ -52,6 +56,7 @@ struct jmp_ctx {
  */
 struct ctx {
 	size_t size;		/* default stack size */
+	size_t guardsize;	/* default guard size */
 	void *addr;		/* user-allocated stack */
 	pthread_key_t jmp_key;	/* jmp_ctx to return from SIGSEGV handler */
 } ctx, *C = &ctx;
@@ -101,6 +106,34 @@ getnondefaultstacksize(void)
 }
 
 /*
+ * getdefaultguardsize()
+ *
+ *	Return the default guard size for threads created with
+ *	pthread_create.
+ */
+static size_t
+getdefaultguardsize(void)
+{
+	const int mib[2] = { CTL_VM, VM_THREAD_GUARD_SIZE };
+	unsigned guardsize;
+	size_t len = sizeof(guardsize);
+
+	RL(sysctl(mib, __arraycount(mib), &guardsize, &len, NULL, 0));
+	ATF_REQUIRE_EQ_MSG(len, sizeof(guardsize),
+	    "len=%zu sizeof(guardsize)=%zu", len, sizeof(guardsize));
+
+	/*
+	 * Verify this matches what libpthread determined.
+	 */
+	extern size_t pthread__guardsize; /* pthread_int.h */
+	ATF_CHECK_EQ_MSG(guardsize, pthread__guardsize,
+	    "guardsize=%zu pthread__guardsize=%zu",
+	    guardsize, pthread__guardsize);
+
+	return guardsize;
+}
+
+/*
  * alloc(nbytes)
  *
  *	Allocate an nbytes-long page-aligned read/write region and
@@ -124,14 +157,32 @@ alloc(size_t nbytes)
  *
  *	Initialize state used by various tests with the specified
  *	stacksize.
+ *
+ *	Make sure to allocate enough space that even if there shouldn't
+ *	be a stack guard (i.e., it should be empty), adjusting the
+ *	requested bounds by the default stack guard size will leave us
+ *	inside allocated memory.
  */
 static void
 init(size_t stacksize)
 {
 
 	C->size = stacksize;
-	C->addr = alloc(C->size);
+	C->guardsize = getdefaultguardsize();
+	C->addr = (char *)alloc(C->size + C->guardsize);
 	RZ(pthread_key_create(&C->jmp_key, NULL));
+}
+
+/*
+ * stack_pointer()
+ *
+ *	Return the stack pointer.  This is used to verify whether the
+ *	stack pointer lie within a certain address range.
+ */
+static __noinline void *
+stack_pointer(void)
+{
+	return __builtin_frame_address(0);
 }
 
 /*
@@ -276,8 +327,35 @@ checkaddraccessthread(void *cookie)
 {
 	pthread_t t = pthread_self();
 	pthread_attr_t attr;
+	void *sp;
 	void *addr;
 	size_t size, size0;
+
+	/*
+	 * Verify the stack pointer lies somewhere in the allocated
+	 * range.
+	 */
+	sp = stack_pointer();
+	ATF_CHECK_MSG(C->addr <= sp, "sp=%p not in [%p,%p + 0x%zu) = [%p,%p)",
+	    sp, C->addr, C->addr, C->size, C->addr, (char *)C->addr + C->size);
+	ATF_CHECK_MSG(sp <= (void *)((char *)C->addr + C->size),
+	    "sp=%p not in [%p,%p + 0x%zu) = [%p,%p)",
+	    sp, C->addr, C->addr, C->size, C->addr, (char *)C->addr + C->size);
+
+	/*
+	 * Verify, if not that, then the stack pointer at least lies
+	 * within the extra buffer we allocated for slop to address a
+	 * bug NetBSD libpthread used to have of spuriously adding the
+	 * guard size to a user-allocated stack address.  This is
+	 * ATF_REQUIRE, not ATF_CHECK, because if this doesn't hold, we
+	 * might be clobbering some other memory like malloc pages,
+	 * causing the whole test to crash with useless diagnostics.
+	 */
+	ATF_REQUIRE_MSG(sp <= (void *)((char *)C->addr + C->size +
+		C->guardsize),
+	    "sp=%p not even in buffer [%p,%p + 0x%zu + 0x%zu) = [%p,%p)",
+	    sp, C->addr, C->addr, C->size, C->guardsize,
+	    C->addr, (char *)C->addr + C->size + C->guardsize);
 
 	/*
 	 * Get the stack parameters -- both via pthread_attr_getstack
