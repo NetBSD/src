@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-10.0,v 1.1.2.160 2023/11/26 12:55:26 bouyer Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.161 2023/11/27 20:07:12 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14186,4 +14186,19 @@ usr.sbin/sysinst/partman.c			1.57
 	PR 57698: avoid installer crashes in restricted (miniroot)
 	environments.
 	[martin, ticket #474]
+
+sys/kern/uipc_mbuf.c				1.252
+
+	mbuf: avoid assertion failure when splitting a mbuf cluster.
+	[ozaki-r, ticket #475]
+
+sys/net/lagg/if_lagg.c				1.52,1.53
+sys/net/lagg/if_lagg_lacp.c			1.26,1.27
+
+	lagg(4):
+	- update sending interval when the partner's state changes
+	- add missing pfil_run_hooks() and bpf_mtap()
+	- set ETHERCAP_VLAN_HWTAGGING when the interface does not have
+	  physical interfaces
+	[yamaguchi, ticket #476]
 
