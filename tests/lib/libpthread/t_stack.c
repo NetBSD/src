@@ -1,4 +1,4 @@
-/*	$NetBSD: t_stack.c,v 1.2 2023/11/27 22:15:08 riastradh Exp $	*/
+/*	$NetBSD: t_stack.c,v 1.3 2023/11/27 22:17:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* __MACHINE_STACK_GROWS_UP */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stack.c,v 1.2 2023/11/27 22:15:08 riastradh Exp $");
+__RCSID("$NetBSD: t_stack.c,v 1.3 2023/11/27 22:17:41 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <sys/param.h>
@@ -169,7 +169,7 @@ init(size_t stacksize)
 
 	C->size = stacksize;
 	C->guardsize = getdefaultguardsize();
-	C->addr = (char *)alloc(C->size + C->guardsize);
+	C->addr = alloc(C->size + C->guardsize);
 	RZ(pthread_key_create(&C->jmp_key, NULL));
 }
 
