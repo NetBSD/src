@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.114 2023/11/05 17:48:58 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.115 2023/11/27 20:03:00 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2404,4 +2404,36 @@ sys/arch/newsmips/dev/fb.c			1.30-1.34
 
 	newsmips: add NWS-3260 LCD-MONO support.
 	[tsutsui, ticket #1763]
+
+sys/arch/newsmips/dev/dmac_0448.h		1.7
+sys/arch/newsmips/dev/scsi_1185.c		1.25
+
+	newsmips: fix delays in SCSI driver.
+	[tsutsui, ticket #1764]
+
+sys/dev/acpi/acpi.c				1.284
+
+	PR 57642: ACPI compatibility enhancement (especially for aarch64
+	on qemu).
+	[abs, ticket #1765]
+
+xsrc/external/mit/xf86-input-keyboard/dist/src/bsd_kbd.c 1.22
+xsrc/external/mit/xf86-input-keyboard/dist/src/bsd_kbd.h 1.5
+xsrc/external/mit/xf86-input-keyboard/dist/src/kbd.c	1.9
+xsrc/external/mit/xf86-input-keyboard/dist/src/ws_KbdMap.c 1.1
+external/mit/xorg/server/drivers/xf86-input-keyboard/Makefile 1.23 (patch)
+
+	xf86-input-keyboard: add suppport to get keymap via WSKBDIO_GETMAP
+	ioctl(2).
+	[tsutsui, ticket #1766]
+
+external/gpl3/binutils/dist/gas/config/tc-mips.c 1.25
+
+	as(1): PR 57680: handle MIPS1 FPR load hazard correctly.
+	[tsutsui, ticket #1767]
+
+sys/kern/uipc_mbuf.c				1.252
+
+	mbuf: avoid assertion failure when splitting a mbuf cluster.
+	[ozaki-r, ticket #1768]
 
