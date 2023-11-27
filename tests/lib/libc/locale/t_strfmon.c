@@ -1,4 +1,4 @@
-/* $NetBSD: t_strfmon.c,v 1.5 2023/10/14 20:19:31 christos Exp $ */
+/* $NetBSD: t_strfmon.c,v 1.6 2023/11/27 19:45:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strfmon.c,v 1.5 2023/10/14 20:19:31 christos Exp $");
+__RCSID("$NetBSD: t_strfmon.c,v 1.6 2023/11/27 19:45:36 christos Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
@@ -52,7 +52,7 @@ ATF_TC_BODY(strfmon_locale, tc)
 		const char *locale;
 		const char *expected;
 	} tests[] = {
-	    { "C", "[ **1234.57] [ **1234.57]" },
+	    { "C", "[ **1234.57 ] [ **1234.57 ]" },
 	    { "de_DE.UTF-8", "[ **1234,57 €] [ **1.234,57 EUR]" },
 	    { "en_GB.UTF-8", "[ £**1234.57] [ GBP**1,234.57]" },
 	};
@@ -157,8 +157,7 @@ ATF_TC_BODY(strfmon_examples, tc)
 	for (i = 0; i < __arraycount(tests); ++i) {
 		snprintf(format, sizeof(format), "[%s] [%s] [%s]",
 		    tests[i].format, tests[i].format, tests[i].format);
-		strfmon(actual, sizeof(actual) - 1,
-		    fmtcheck(format, "%n %n %n"),
+		strfmon(actual, sizeof(actual) - 1, format,
 		    123.45, -123.45, 3456.781);
 		ATF_CHECK_STREQ_MSG(tests[i].expected, actual,
 		    "[%s]", tests[i].format);
