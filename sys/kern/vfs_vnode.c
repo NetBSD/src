@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.152 2023/11/27 10:03:40 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.153 2023/11/27 16:13:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.152 2023/11/27 10:03:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.153 2023/11/27 16:13:59 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -709,7 +709,7 @@ vdrain_task(struct threadpool_job *job)
 	mutex_enter(&vdrain_lock);
 
 	while (!vdrain_one(target))
-		;
+		kpause("vdrain", false, 1, &vdrain_lock);
 
 	threadpool_job_done(job);
 	mutex_exit(&vdrain_lock);
