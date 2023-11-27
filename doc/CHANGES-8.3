@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.206 2023/10/29 16:49:07 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.207 2023/11/27 19:58:18 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4092,4 +4092,9 @@ xsrc/external/mit/xorg-server/dist/randr/rrproperty.c	(apply patch)
 	Merge security fixes from xorg-server 21.1.9 into xorg-server 1.18.4.
 	Fixes CVE-2023-5367 and CVE-2023-5380.
 	[mrg, ticket #1918]
+
+external/gpl3/binutils/dist/gas/config/tc-mips.c 1.25
+
+	as(1): PR 57680: handle MIPS1 FPR load hazard correctly.
+	[tsutsui, ticket #1919]
 
