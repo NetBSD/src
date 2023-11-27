@@ -1,4 +1,4 @@
-/*	$NetBSD: t_stack.c,v 1.3 2023/11/27 22:17:41 riastradh Exp $	*/
+/*	$NetBSD: t_stack.c,v 1.4 2023/11/27 22:18:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* __MACHINE_STACK_GROWS_UP */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stack.c,v 1.3 2023/11/27 22:17:41 riastradh Exp $");
+__RCSID("$NetBSD: t_stack.c,v 1.4 2023/11/27 22:18:29 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <sys/param.h>
@@ -216,8 +216,8 @@ checksigsegv(const char *p)
 	memset(&act, 0, sizeof(act));
 	act.sa_handler = &sigsegv_ok;
 
-	pthread_setspecific(C->jmp_key, &j);
 	if (setjmp(j.buf) == 0) {
+		pthread_setspecific(C->jmp_key, &j);
 		RL(sigaction(SIGSEGV, &act, &oact));
 		oactsave = oact;
 		v = *p;		/* trigger SIGSEGV */
@@ -249,8 +249,8 @@ checknosigsegv(const char *p)
 	memset(&act, 0, sizeof(act));
 	act.sa_handler = &sigsegv_ok;
 
-	pthread_setspecific(C->jmp_key, &j);
 	if (setjmp(j.buf) == 0) {
+		pthread_setspecific(C->jmp_key, &j);
 		RL(sigaction(SIGSEGV, &act, &oact));
 		oactsave = oact;
 		v = *p;		/* better not trigger SIGSEGV */
