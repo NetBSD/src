@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.115 2023/11/27 20:03:00 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.116 2023/11/28 13:12:52 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2436,4 +2436,15 @@ sys/kern/uipc_mbuf.c				1.252
 
 	mbuf: avoid assertion failure when splitting a mbuf cluster.
 	[ozaki-r, ticket #1768]
+
+sys/kern/exec_subr.c				1.86
+tests/lib/libc/sys/t_setrlimit.c		1.8,1.9
+
+	PR 57711: fix setrlimit(RLIMIT_STACK) in current process.
+	[riastradh, ticket #1769]
+
+sys/ufs/ffs/ffs_vfsops.c			1.382
+
+	PR 57606: ffs: fix minor locking error.
+	[riastradh, ticket #1770]
 
