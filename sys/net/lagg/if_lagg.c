@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.54 2023/11/22 03:49:13 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.55 2023/11/28 05:28:37 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.54 2023/11/22 03:49:13 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.55 2023/11/28 05:28:37 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -114,7 +114,7 @@ static const struct lagg_proto lagg_protos[] = {
 		.pr_startport = lagg_common_startport,
 		.pr_stopport = lagg_common_stopport,
 		.pr_portstat = lagg_fail_portstat,
-		.pr_linkstate = lagg_common_linkstate,
+		.pr_linkstate = lagg_common_linkstate_ifnet_locked,
 		.pr_ioctl = lagg_fail_ioctl,
 	},
 	[LAGG_PROTO_LOADBALANCE] = {
@@ -128,7 +128,7 @@ static const struct lagg_proto lagg_protos[] = {
 		.pr_startport = lagg_lb_startport,
 		.pr_stopport = lagg_lb_stopport,
 		.pr_portstat = lagg_lb_portstat,
-		.pr_linkstate = lagg_common_linkstate,
+		.pr_linkstate = lagg_common_linkstate_ifnet_locked,
 	},
 };
 
