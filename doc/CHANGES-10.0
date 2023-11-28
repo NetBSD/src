@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-10.0,v 1.1.2.161 2023/11/27 20:07:12 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.162 2023/11/28 13:18:32 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14201,4 +14201,19 @@ sys/net/lagg/if_lagg_lacp.c			1.26,1.27
 	- set ETHERCAP_VLAN_HWTAGGING when the interface does not have
 	  physical interfaces
 	[yamaguchi, ticket #476]
+
+sys/kern/exec_subr.c				1.86
+tests/lib/libc/sys/t_setrlimit.c		1.8,1.9
+
+	PR 57711: fix setrlimit(RLIMIT_STACK) in current process.
+	[riastradh, ticket #477]
+
+distrib/sets/lists/debug/mi			1.424
+distrib/sets/lists/tests/mi			1.1297
+lib/libpthread/pthread.c			1.184
+tests/lib/libpthread/Makefile			1.16
+tests/lib/libpthread/t_stack.c			1.1-1.6
+
+	PR 57721: fix user-allocated stack addressing.
+	[riastradh, ticket #478]
 
