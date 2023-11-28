@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.394.2.3 2023/08/11 13:42:54 martin Exp $
+# $NetBSD: mi,v 1.394.2.4 2023/11/28 13:17:11 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2361,6 +2361,7 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_sigmask.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_sigsuspend.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_sleep.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_stack.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_status.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_swapcontext.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_thrd.debug		tests-lib-tests		debug,atf,compattestfile
