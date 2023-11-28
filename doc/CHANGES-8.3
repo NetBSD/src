@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.207 2023/11/27 19:58:18 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.208 2023/11/28 13:14:41 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4097,4 +4097,15 @@ external/gpl3/binutils/dist/gas/config/tc-mips.c 1.25
 
 	as(1): PR 57680: handle MIPS1 FPR load hazard correctly.
 	[tsutsui, ticket #1919]
+
+sys/kern/exec_subr.c				1.86
+tests/lib/libc/sys/t_setrlimit.c		1.8,1.9
+
+	PR 57711: fix setrlimit(RLIMIT_STACK) in current process.
+	[riastradh, ticket #1920]
+
+sys/ufs/ffs/ffs_vfsops.c			1.382
+
+	PR 57606: ffs: fix minor locking error.
+	[riastradh, ticket #1921]
 
