@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.19 2023/11/22 03:49:13 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.20 2023/11/28 05:28:37 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -298,7 +298,7 @@ void		lagg_common_startport(struct lagg_proto_softc *,
 		    struct lagg_port *);
 void		lagg_common_stopport(struct lagg_proto_softc *,
 		    struct lagg_port *);
-void		lagg_common_linkstate(struct lagg_proto_softc *,
+void		lagg_common_linkstate_ifnet_locked(struct lagg_proto_softc *,
 		    struct lagg_port *);
 
 int		lagg_none_attach(struct lagg_softc *,

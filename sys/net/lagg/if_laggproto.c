@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.7 2023/11/22 03:49:13 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.8 2023/11/28 05:28:37 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.7 2023/11/22 03:49:13 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.8 2023/11/28 05:28:37 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -114,6 +114,8 @@ static struct lagg_port *
 static void	lagg_fail_linkspeed_work(struct lagg_work *, void *);
 static void	lagg_lb_linkspeed_work(struct lagg_work*,
 		    void *);
+static void	lagg_common_linkstate(struct lagg_proto_softc *,
+		    struct lagg_port *);
 
 static inline struct lagg_portmap *
 lagg_portmap_active(struct lagg_portmaps *maps)
@@ -364,9 +366,19 @@ lagg_common_stopport(struct lagg_proto_softc *psc, struct lagg_port *lp)
 		pport->lpp_active = false;
 	}
 }
+static void
+lagg_common_linkstate(struct lagg_proto_softc *psc, struct lagg_port *lp)
+{
+
+	IFNET_ASSERT_UNLOCKED(lp->lp_ifp);
+
+	IFNET_LOCK(lp->lp_ifp);
+	lagg_common_linkstate_ifnet_locked(psc, lp);
+	IFNET_UNLOCK(lp->lp_ifp);
+}
 
 void
-lagg_common_linkstate(struct lagg_proto_softc *psc, struct lagg_port *lp)
+lagg_common_linkstate_ifnet_locked(struct lagg_proto_softc *psc, struct lagg_port *lp)
 {
 	struct lagg_proto_port *pport;
 	struct ifnet *ifp, *ifp_port;
@@ -378,6 +390,8 @@ lagg_common_linkstate(struct lagg_proto_softc *psc, struct lagg_port *lp)
 	pport = lp->lp_proto_ctx;
 	is_active = lagg_portactive(lp);
 	ifp_port = lp->lp_ifp;
+
+	KASSERT(IFNET_LOCKED(ifp_port));
 
 	LAGG_PROTO_LOCK(psc);
 	if (!pport->lpp_running ||
