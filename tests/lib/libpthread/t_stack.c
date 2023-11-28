@@ -1,4 +1,4 @@
-/*	$NetBSD: t_stack.c,v 1.4 2023/11/27 22:18:29 riastradh Exp $	*/
+/*	$NetBSD: t_stack.c,v 1.5 2023/11/28 00:27:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* __MACHINE_STACK_GROWS_UP */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stack.c,v 1.4 2023/11/27 22:18:29 riastradh Exp $");
+__RCSID("$NetBSD: t_stack.c,v 1.5 2023/11/28 00:27:05 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <sys/param.h>
@@ -127,7 +127,7 @@ getdefaultguardsize(void)
 	 */
 	extern size_t pthread__guardsize; /* pthread_int.h */
 	ATF_CHECK_EQ_MSG(guardsize, pthread__guardsize,
-	    "guardsize=%zu pthread__guardsize=%zu",
+	    "guardsize=%u pthread__guardsize=%zu",
 	    guardsize, pthread__guardsize);
 
 	return guardsize;
