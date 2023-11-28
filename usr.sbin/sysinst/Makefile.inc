@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.45 2022/01/09 16:39:50 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.45.2.1 2023/11/28 16:19:51 snj Exp $
 #
 # Makefile for sysinst
 
@@ -106,6 +106,8 @@ CPPFLAGS+=	-DPKG_ARCH_SUBDIR="\"${MACHINE_ARCH}\""
 .if defined(NETBSD_OFFICIAL_RELEASE) && ${NETBSD_OFFICIAL_RELEASE} == "yes"
 CPPFLAGS+= -DSYSINST_FTP_HOST=\"ftp.NetBSD.org\" -DNETBSD_OFFICIAL_RELEASE
 CPPFLAGS+= -DSYSINST_HTTP_HOST=\"cdn.NetBSD.org\" -DNETBSD_OFFICIAL_RELEASE
+CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*[0-9]*$//:S/./-/}\"
+CPPFLAGS+= -DPKG_SUBDIR="\"${DISTRIBVER:C/_.*$//}\""
 .else
 CPPFLAGS+= -DSYSINST_FTP_HOST=\"nyftp.NetBSD.org\"
 CPPFLAGS+= -DSYSINST_HTTP_HOST=\"nycdn.NetBSD.org\"
