@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-10.0,v 1.1.2.163 2023/11/28 16:23:17 snj Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.164 2023/11/28 17:18:47 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14227,4 +14227,11 @@ etc/namedb/root.cache				1.26
 
 	root.cache: Update to 2023112702 (November 27, 2023).
 	[taca, ticket #480]
+
+external/nvidia-firmware/nouveau/dist/tu116/sec2/desc.bin up to 1.1.1.2
+external/nvidia-firmware/nouveau/dist/tu116/sec2/image.bin up to 1.1.1.2
+external/nvidia-firmware/nouveau/dist/tu116/sec2/sig.bin up to 1.1.1.2
+
+	nvidia: update Tu11x signed firmware to support newer Turing HW.
+	[bouyer, ticket #481]
 
