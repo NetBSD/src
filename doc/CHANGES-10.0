@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-10.0,v 1.1.2.162 2023/11/28 13:18:32 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.163 2023/11/28 16:23:17 snj Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14216,4 +14216,15 @@ tests/lib/libpthread/t_stack.c			1.1-1.6
 
 	PR 57721: fix user-allocated stack addressing.
 	[riastradh, ticket #478]
+
+usr.sbin/sysinst/Makefile.inc			1.47
+
+	Clean up PKG_PATH for official RC (and similar) versions.
+	PR 57729.
+	[martin, ticket #479]
+
+etc/namedb/root.cache				1.26
+
+	root.cache: Update to 2023112702 (November 27, 2023).
+	[taca, ticket #480]
 
