@@ -1,4 +1,4 @@
-/*	$NetBSD: t_stack.c,v 1.5 2023/11/28 00:27:05 riastradh Exp $	*/
+/*	$NetBSD: t_stack.c,v 1.6 2023/11/28 02:54:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* __MACHINE_STACK_GROWS_UP */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stack.c,v 1.5 2023/11/28 00:27:05 riastradh Exp $");
+__RCSID("$NetBSD: t_stack.c,v 1.6 2023/11/28 02:54:33 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <sys/param.h>
@@ -399,15 +399,12 @@ ATF_TC_BODY(stack1, tc)
 	 */
 	init(getnondefaultstacksize());
 
-
 	/*
 	 * Create a thread with user-allocated stack of a non-default
 	 * size to verify the stack size and access.
 	 */
 	RZ(pthread_attr_init(&attr));
 	RZ(pthread_attr_setstack(&attr, C->addr, C->size));
-	atf_tc_expect_fail("PR lib/57721: pthread_attr_setstack"
-	    " incorrectly adjusts address as if for guard page");
 	RZ(pthread_create(&t, &attr, &checkaddraccessthread, C));
 	RZ(pthread_join(t, NULL));
 
@@ -464,8 +461,6 @@ ATF_TC_BODY(stack2, tc)
 	 */
 	RZ(pthread_attr_init(&attr2));
 	RZ(pthread_attr_setstack(&attr2, C->addr, C->size));
-	atf_tc_expect_fail("PR lib/57721: pthread_attr_setstack"
-	    " incorrectly adjusts address as if for guard page");
 	RZ(pthread_create(&t2, &attr2, &checkaddraccessthread, C));
 	ATF_CHECK_EQ_MSG(t, t2, "t=%p t2=%p", t, t2); /* NetBSD recycles */
 	RZ(pthread_join(t2, NULL));
