@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.7 2020/10/13 06:58:57 rin Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.7.10.1 2023/11/28 12:56:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.7 2020/10/13 06:58:57 rin Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.7.10.1 2023/11/28 12:56:27 martin Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: t_setrlimit.c,v 1.7 2020/10/13 06:58:57 rin Exp $");
 #include <string.h>
 #include <ucontext.h>
 #include <unistd.h>
+
+#include "h_macros.h"
 
 static void		 sighandler(int);
 static const char	 path[] = "setrlimit";
@@ -524,6 +526,131 @@ ATF_TC_BODY(setrlimit_stack, tc)
 
 }
 
+ATF_TC(setrlimit_stack_growshrink);
+ATF_TC_HEAD(setrlimit_stack_growshrink, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test that setrlimit(2), RLIMIT_STACK, grows & shrinks the stack");
+}
+
+/*
+ * checkstack(n, ok)
+ *
+ *	Check whether we can allocate an array of size n on the stack.
+ *
+ *	- If expectsegv, verify that access fails with SIGSEGV.
+ *	- If not expectsegv, verify that access succeeds.
+ *
+ *	Do this in a subprocess rather than with a SIGSEGV handler,
+ *	because once we've allocated an array of size n on the stack,
+ *	in the case where the stack is inaccessible, we have just
+ *	trashed the stack pointer so badly we can't make function calls
+ *	like to a SIGSEGV handler.
+ *
+ *	(We could use an alternate signal stack, but I already wrote it
+ *	this way, and this is a little simpler and more robust than
+ *	juggling signals, setjmp/longjmp, and sigaltstack.)
+ */
+static void
+checkstack(size_t n, int expectsegv)
+{
+	pid_t forked, waited;
+	size_t i;
+	int status;
+
+	RL(forked = fork());
+	if (forked == 0) {	/* child */
+		volatile char *const x = alloca(n);
+		for (i = 0; i < n; i++)
+			x[i] = 0x1a;
+		_exit(expectsegv);
+	}
+
+	/* parent */
+	RL(waited = waitpid(forked, &status, 0));
+	ATF_REQUIRE_EQ_MSG(waited, forked, "waited=%jd forked=%jd",
+	    (intmax_t)waited, (intmax_t)forked);
+	if (expectsegv) {
+		ATF_REQUIRE_MSG(!WIFEXITED(status),
+		    "expected signal but exited normally with status %d",
+		    WEXITSTATUS(status));
+		ATF_REQUIRE_MSG(WIFSIGNALED(status), "status=0x%x", status);
+		ATF_REQUIRE_EQ_MSG(WTERMSIG(status), SIGSEGV, "termsig=%d",
+		    WTERMSIG(status));
+	} else {
+		ATF_REQUIRE_MSG(!WIFSIGNALED(status),
+		    "expected normal exit but termintaed on signal %d",
+		    WTERMSIG(status));
+		ATF_REQUIRE_MSG(WIFEXITED(status), "status=0x%x", status);
+		ATF_REQUIRE_EQ_MSG(WEXITSTATUS(status), 0, "exitstatus=%d",
+		    WEXITSTATUS(status));
+	}
+}
+
+ATF_TC_BODY(setrlimit_stack_growshrink, tc)
+{
+	struct rlimit res;
+	size_t n;
+
+	/*
+	 * Disable core dumps -- we're going to deliberately cause
+	 * SIGSEGV to test stack accessibility (which breaks even
+	 * calling a function so we can't just use a SIGSEGV handler),
+	 * so let's not waste time dumping core.
+	 */
+	res = (struct rlimit){ .rlim_cur = 0, .rlim_max = 0 };
+	RL(setrlimit(RLIMIT_CORE, &res));
+
+	/*
+	 * Get the current stack size and hard limit.
+	 */
+	RL(getrlimit(RLIMIT_STACK, &res));
+	n = res.rlim_cur;
+
+	/*
+	 * Verify that we can't get at pages past the end of the stack
+	 * right now.
+	 */
+	checkstack(n, /*expectsegv*/1);
+
+	/*
+	 * Stop if the hard limit is too small to test.  Not sure
+	 * exactly how much more space we need to verify that setrlimit
+	 * actually expands the stack without examining the current
+	 * stack pointer relative to the process's stack base, so we'll
+	 * just double the stack size -- definitely enough to test
+	 * stack growth -- and hope the hard rlimit is big enough to
+	 * let us double it.
+	 */
+	if (n > res.rlim_max/2)
+		atf_tc_skip("hard stack rlimit is too small");
+
+	/*
+	 * Double the stack size.  This way we can allocate an array of
+	 * length equal to the current stack size and be guaranteed
+	 * that (a) it can be allocated, and (b) access to it requires
+	 * the stack to have grown.
+	 */
+	res.rlim_cur = 2*n;
+	RL(setrlimit(RLIMIT_STACK, &res));
+
+	/*
+	 * Verify that we can now get at pages past the end of the new
+	 * stack but not beyond that.
+	 */
+	checkstack(n, /*expectsegv*/0);
+	if (n < SIZE_MAX/2)
+		checkstack(2*n, /*expectsegv*/1);
+
+	/*
+	 * Restore the stack size and verify that we can no longer
+	 * access an array of length equal to the whole stack size.
+	 */
+	res.rlim_cur = n;
+	RL(setrlimit(RLIMIT_STACK, &res));
+	checkstack(n, /*expectsegv*/1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -538,6 +665,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, setrlimit_perm);
 	ATF_TP_ADD_TC(tp, setrlimit_nthr);
 	ATF_TP_ADD_TC(tp, setrlimit_stack);
+	ATF_TP_ADD_TC(tp, setrlimit_stack_growshrink);
 
 	return atf_no_error();
 }

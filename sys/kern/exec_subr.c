@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.84 2020/04/13 19:23:18 ad Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.84.20.1 2023/11/28 12:56:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.84 2020/04/13 19:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.84.20.1 2023/11/28 12:56:28 martin Exp $");
 
 #include "opt_pax.h"
 
@@ -162,9 +162,10 @@ static int
 vmcmd_get_prot(struct lwp *l, const struct exec_vmcmd *cmd, vm_prot_t *prot,
     vm_prot_t *maxprot)
 {
+	vm_prot_t extraprot = PROT_MPROTECT_EXTRACT(cmd->ev_prot);
 
-	*prot = cmd->ev_prot;
-	*maxprot = PAX_MPROTECT_MAXPROTECT(l, *prot, 0, UVM_PROT_ALL);
+	*prot = cmd->ev_prot & UVM_PROT_ALL;
+	*maxprot = PAX_MPROTECT_MAXPROTECT(l, *prot, extraprot, UVM_PROT_ALL);
 
 	if ((*prot & *maxprot) != *prot)
 		return EACCES;
@@ -458,7 +459,9 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	}
 	if (noaccess_size > 0 && noaccess_size <= MAXSSIZ) {
 		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
-		    noaccess_linear_min, NULL, 0, VM_PROT_NONE, VMCMD_STACK);
+		    noaccess_linear_min, NULL, 0,
+		    VM_PROT_NONE | PROT_MPROTECT(VM_PROT_READ | VM_PROT_WRITE),
+		    VMCMD_STACK);
 	}
 	KASSERT(access_size > 0 && access_size <= MAXSSIZ);
 	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
