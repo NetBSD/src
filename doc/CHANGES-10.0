@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-10.0,v 1.1.2.165 2023/11/29 12:25:55 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.166 2023/11/29 12:36:24 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14234,4 +14234,14 @@ external/nvidia-firmware/nouveau/dist/tu116/sec2/sig.bin up to 1.1.1.2
 
 	nvidia: update Tu11x signed firmware to support newer Turing HW.
 	[bouyer, ticket #481]
+
+sys/arch/arm/acpi/gic_acpi.c			1.8
+
+	arm: gicv2: fix truncation of GICC / GICD base addresses above 4GB.
+	[jmcneill, ticket #482]
+
+sys/dev/pci/pci_resource.c			1.4
+
+	pci: Improve resource allocation for non-prefetchable BARs.
+	[jmcneill, ticket #483]
 
