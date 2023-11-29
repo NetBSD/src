@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.117 2023/11/29 12:27:49 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.118 2023/11/29 19:02:37 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2447,4 +2447,15 @@ sys/ufs/ffs/ffs_vfsops.c			1.382
 
 	PR 57606: ffs: fix minor locking error.
 	[riastradh, ticket #1770]
+
+etc/namedb/root.cache				1.26
+
+	Update root name servers to 2023112702 (November 27, 2023).
+	[taca, ticket #1771]
+
+sys/dev/wscons/wsemul_vt100.c			1.47,1.48
+
+	wscons: PR 56223: accept bell (^G) as an end of sequence in
+	"string" state.
+	[gutteridge, ticket #1772]
 
