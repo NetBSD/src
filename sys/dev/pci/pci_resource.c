@@ -1,4 +1,4 @@
-/* $NetBSD: pci_resource.c,v 1.3 2022/10/15 20:11:44 riastradh Exp $ */
+/* $NetBSD: pci_resource.c,v 1.3.2.1 2023/11/29 12:34:46 martin Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.3 2022/10/15 20:11:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.3.2.1 2023/11/29 12:34:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -684,13 +684,46 @@ pci_resource_init_device(struct pci_resources *pr,
 
 		KASSERT(pi->pi_type == PCI_MAPREG_TYPE_MEM);
 		error = ERANGE;
-		if (pi->pi_mem.prefetch && res_pmem != NULL) {
-			error = pci_resource_claim(res_pmem, pi->pi_base,
-			    pi->pi_base + pi->pi_size - 1);
-		}
-		if (error && res_mem != NULL) {
-			error = pci_resource_claim(res_mem, pi->pi_base,
-			    pi->pi_base + pi->pi_size - 1);
+		if (pi->pi_mem.prefetch) {
+			/*
+			 * Prefetchable memory must be allocated from the
+			 * bridge's prefetchable region.
+			 */
+			if (res_pmem != NULL) {
+				error = pci_resource_claim(res_pmem, pi->pi_base,
+				    pi->pi_base + pi->pi_size - 1);
+			}
+		} else if (pi->pi_mem.memtype == PCI_MAPREG_MEM_TYPE_64BIT) {
+			/*
+			 * Non-prefetchable 64-bit memory can be allocated from
+			 * any range. Prefer allocations from the prefetchable
+			 * region to save 32-bit only resources for 32-bit BARs.
+			 */
+			if (res_pmem != NULL) {
+				error = pci_resource_claim(res_pmem, pi->pi_base,
+				    pi->pi_base + pi->pi_size - 1);
+			}
+			if (error && res_mem != NULL) {
+				error = pci_resource_claim(res_mem, pi->pi_base,
+				    pi->pi_base + pi->pi_size - 1);
+			}
+		} else {
+			/*
+			 * Non-prefetchable 32-bit memory can be allocated from
+			 * any range, provided that the range is below 4GB. Try
+			 * the non-prefetchable range first, and if that fails,
+			 * make one last attempt at allocating from the
+			 * prefetchable range in case the platform provides
+			 * memory below 4GB.
+			 */
+			if (res_mem != NULL) {
+				error = pci_resource_claim(res_mem, pi->pi_base,
+				    pi->pi_base + pi->pi_size - 1);
+			}
+			if (error && res_pmem != NULL) {
+				error = pci_resource_claim(res_pmem, pi->pi_base,
+				    pi->pi_base + pi->pi_size - 1);
+			}
 		}
 		if (error) {
 			DPRINT("PCI: " PCI_SBDF_FMT " [device] mem"
