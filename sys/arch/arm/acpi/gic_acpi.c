@@ -1,4 +1,4 @@
-/* $NetBSD: gic_acpi.c,v 1.7 2021/08/07 16:18:42 thorpej Exp $ */
+/* $NetBSD: gic_acpi.c,v 1.7.6.1 2023/11/29 12:33:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_acpi.c,v 1.7 2021/08/07 16:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_acpi.c,v 1.7.6.1 2023/11/29 12:33:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,8 +102,8 @@ gic_acpi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	const bus_addr_t addr = uimin(gicd->BaseAddress, gicc->BaseAddress);
-	const bus_size_t end = uimax(gicd->BaseAddress + GICD_SIZE, gicc->BaseAddress + GICC_SIZE);
+	const bus_addr_t addr = ulmin(gicd->BaseAddress, gicc->BaseAddress);
+	const bus_size_t end = ulmax(gicd->BaseAddress + GICD_SIZE, gicc->BaseAddress + GICC_SIZE);
 	const bus_size_t size = end - addr;
 
 	error = bus_space_map(&arm_generic_bs_tag, addr, size, 0, &bsh);
