@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.214 2022/04/18 19:46:35 jkoshy Exp $
+#	$NetBSD: Makefile,v 1.215 2023/11/30 06:29:33 rin Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -239,7 +239,7 @@ SUBDIR+=	makekeys
 
 SUBDIR+= cvslatest
 
-.endif # TOOLS_BUILDRUMP != no
+.endif # TOOLS_BUILDRUMP == no
 
 check_MKTOOLS: .PHONY .NOTMAIN
 .if ${MKTOOLS:Uyes} == "no"
