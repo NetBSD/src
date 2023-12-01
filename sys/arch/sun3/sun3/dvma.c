@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.41 2017/06/01 02:45:07 chs Exp $	*/
+/*	$NetBSD: dvma.c,v 1.42 2023/12/01 23:56:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.41 2017/06/01 02:45:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.42 2023/12/01 23:56:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/core.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.41 2017/06/01 02:45:07 chs Exp $");
 #define DVMA_MAP_END	(DVMA_MAP_BASE + DVMA_MAP_AVAIL)
 
 /* Extent map used by dvma_mapin/dvma_mapout */
-struct extent *dvma_extent;
+vmem_t *dvma_arena;
 
 /* XXX: Might need to tune this... */
 vsize_t dvma_segmap_size = 6 * NBSG;
@@ -97,12 +97,17 @@ dvma_init(void)
 		panic("dvma_init: unable to allocate DVMA segments");
 
 	/*
-	 * Create the VM pool used for mapping whole segments
+	 * Create the vmem arena used for mapping whole segments
 	 * into DVMA space for the purpose of data transfer.
 	 */
-	dvma_extent = extent_create("dvma", segmap_addr,
-	    segmap_addr + (dvma_segmap_size - 1),
-	    NULL, 0, EX_NOCOALESCE|EX_NOWAIT);
+	dvma_arena = vmem_create("dvma", segmap_addr, dvma_segmap_size,
+				 PAGE_SIZE,		/* quantum */
+				 NULL,			/* importfn */
+				 NULL,			/* releasefn */
+				 NULL,			/* source */
+				 0,			/* qcache_max */
+				 VM_SLEEP,
+				 IPL_VM);
 }
 
 /*
@@ -172,10 +177,11 @@ dvma_kvtopa(void *kva, int bustype)
 void *
 dvma_mapin(void *kva, int len, int canwait /* ignored */)
 {
-	vaddr_t seg_kva, seg_dma;
+	vaddr_t seg_kva;
 	vsize_t seg_len, seg_off;
 	vaddr_t v, x;
 	int s, sme, error;
+	vmem_addr_t seg_dma;
 
 	/* Get seg-aligned address and length. */
 	seg_kva = (vaddr_t)kva;
@@ -184,31 +190,32 @@ dvma_mapin(void *kva, int len, int canwait /* ignored */)
 	seg_kva -= seg_off;
 	seg_len = sun3_round_seg(seg_len + seg_off);
 
-	s = splvm();
-
 	/* Allocate the DVMA segment(s) */
 
-	error = extent_alloc(dvma_extent, seg_len, NBSG, 0,
-	    EX_FAST | EX_NOWAIT | EX_MALLOCOK, &seg_dma);
-	if (error) {
-		splx(s);
-		return NULL;
-	}
+	const vm_flag_t vmflags = VM_INSTANTFIT |
+	    (/* canwait ? VM_SLEEP : */ VM_NOSLEEP);
 
-#ifdef	DIAGNOSTIC
-	if (seg_dma & SEGOFSET)
-		panic("dvma_mapin: seg not aligned");
-#endif
+	error = vmem_xalloc(dvma_arena, seg_len,
+			    NBSG,		/* alignment */
+			    0,			/* phase */
+			    0,			/* nocross */
+			    VMEM_ADDR_MIN,	/* minaddr */
+			    VMEM_ADDR_MAX,	/* maxaddr */
+			    vmflags,
+			    &seg_dma);
+	if (error)
+		return NULL;
+
+	KASSERT((seg_dma & SEGOFSET) == 0);
+
+	s = splvm();
 
 	/* Duplicate the mappings into DMA space. */
 	v = seg_kva;
 	x = seg_dma;
 	while (seg_len > 0) {
 		sme = get_segmap(v);
-#ifdef	DIAGNOSTIC
-		if (sme == SEGINV)
-			panic("dvma_mapin: seg not mapped");
-#endif
+		KASSERT(sme != SEGINV);
 #ifdef	HAVECACHE
 		/* flush write-back on old mappings */
 		if (cache_size)
@@ -253,10 +260,7 @@ dvma_mapout(void *dma, int len)
 	x = v + seg_len;
 	while (v < x) {
 		sme = get_segmap(v);
-#ifdef	DIAGNOSTIC
-		if (sme == SEGINV)
-			panic("dvma_mapout: seg not mapped");
-#endif
+		KASSERT(sme != SEGINV);
 #ifdef	HAVECACHE
 		/* flush write-back on the DVMA mappings */
 		if (cache_size)
@@ -266,11 +270,9 @@ dvma_mapout(void *dma, int len)
 		v += NBSG;
 	}
 
-	if (extent_free(dvma_extent, seg_dma, seg_len,
-	    EX_NOWAIT | EX_MALLOCOK))
-		panic("dvma_mapout: unable to free 0x%lx,0x%lx",
-		    seg_dma, seg_len);
 	splx(s);
+
+	vmem_xfree(dvma_arena, seg_dma, seg_len);
 }
 
 int
@@ -285,11 +287,12 @@ int
 _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
-	vaddr_t kva, dva;
+	vaddr_t kva;
+	vmem_addr_t dva;
 	vsize_t off, sgsize;
 	paddr_t pa;
 	pmap_t pmap;
-	int error, rv __diagused, s;
+	int error, rv __diagused;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -305,11 +308,18 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	sgsize = round_page(off + buflen);
 
 	/* Try to allocate DVMA space. */
-	s = splvm();
-	error = extent_alloc(dvma_extent, sgsize, PAGE_SIZE, 0,
-	    EX_FAST | ((flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT),
-	    &dva);
-	splx(s);
+
+	const vm_flag_t vmflags = VM_INSTANTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+	error = vmem_xalloc(dvma_arena, sgsize,
+			    0,			/* alignment */
+			    0,			/* phase */
+			    0,			/* nocross */
+			    VMEM_ADDR_MIN,	/* minaddr */
+			    VMEM_ADDR_MAX,	/* maxaddr */
+			    vmflags,
+			    &dva);
 	if (error)
 		return ENOMEM;
 
@@ -353,7 +363,6 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	bus_dma_segment_t *segs;
 	vaddr_t dva;
 	vsize_t sgsize;
-	int error __diagused, s;
 
 #ifdef DIAGNOSTIC
 	if (map->dm_nsegs != 1)
@@ -369,13 +378,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	pmap_update(pmap_kernel());
 
 	/* Free the DVMA addresses. */
-	s = splvm();
-	error = extent_free(dvma_extent, dva, sgsize, EX_NOWAIT);
-	splx(s);
-#ifdef DIAGNOSTIC
-	if (error)
-		panic("%s: unable to free DVMA region", __func__);
-#endif
+	vmem_xfree(dvma_arena, dva, sgsize);
 
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
