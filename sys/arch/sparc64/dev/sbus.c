@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.104 2022/01/22 11:49:17 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.105 2023/12/01 06:47:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,17 +34,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.104 2022/01/22 11:49:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.105 2023/12/01 06:47:59 thorpej Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/vmem.h>
 
 #include <sys/bus.h>
 #include <machine/openfirm.h>
@@ -269,13 +269,18 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	 * To avoid bugs we'll alloc and ignore the first entry in the IOTSB.
 	 */
 	{
-		u_long dummy;
+		vmem_addr_t dummy;
 
-		if (extent_alloc_subregion(sc->sc_is.is_dvmamap,
-		    sc->sc_is.is_dvmabase, sc->sc_is.is_dvmabase + PAGE_SIZE,
-		    PAGE_SIZE, PAGE_SIZE, 0, EX_WAITOK|EX_BOUNDZERO,
-		    (u_long *)&dummy) != 0)
+		if (vmem_xalloc(sc->sc_is.is_dvmamap, PAGE_SIZE,
+				0,		/* alignment */
+				0,		/* phase */
+				0,		/* nocross */
+				sc->sc_is.is_dvmabase,
+				sc->sc_is.is_dvmabase + PAGE_SIZE - 1,
+				VM_BESTFIT | VM_NOSLEEP,
+				&dummy) != 0) {
 			panic("sbus iommu: can't toss first dvma page");
+		}
 	}
 
 	/*
