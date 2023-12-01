@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.101 2022/01/22 11:49:16 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.102 2023/12/01 05:22:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,17 +37,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.101 2022/01/22 11:49:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.102 2023/12/01 05:22:01 thorpej Exp $");
 
 #include "opt_sparc_arch.h"
 
 #include <sys/param.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/vmem.h>
 
 #include <uvm/uvm.h>
 
@@ -74,7 +74,7 @@ struct iommu_softc {
  * our clients will run.
  */
 	struct sparc_bus_dma_tag sc_dmatag;
-	struct extent *sc_dvmamap;
+	vmem_t *sc_dvmamap;
 };
 
 /* autoconfiguration driver */
@@ -274,9 +274,16 @@ iommu_attach(device_t parent, device_t self, void *aux)
 		sc->sc_pagesize,
 		sc->sc_range >> 20);
 
-	sc->sc_dvmamap = extent_create("iommudvma",
-					IOMMU_DVMA_BASE, IOMMU_DVMA_END,
-					0, 0, EX_WAITOK);
+	sc->sc_dvmamap = vmem_create("iommudvma",
+				     IOMMU_DVMA_BASE,
+				     IOMMU_DVMA_END - IOMMU_DVMA_BASE,
+				     PAGE_SIZE,		/* quantum */
+				     NULL,		/* importfn */
+				     NULL,		/* releasefn */
+				     NULL,		/* source */
+				     0,			/* qcache_max */
+				     VM_SLEEP,
+				     IPL_VM);
 
 	devhandle_t selfh = device_handle(self);
 
@@ -493,7 +500,6 @@ iommu_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 		    bus_size_t maxsegsz, bus_size_t boundary, int flags,
 		    bus_dmamap_t *dmamp)
 {
-	struct iommu_softc *sc = t->_cookie;
 	bus_dmamap_t map;
 	int error;
 
@@ -504,11 +510,11 @@ iommu_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	if ((flags & BUS_DMA_24BIT) != 0) {
 		/* Limit this map to the range usable by `24-bit' devices */
 		map->_dm_ex_start = D24_DVMA_BASE;
-		map->_dm_ex_end = D24_DVMA_END;
+		map->_dm_ex_end = D24_DVMA_END - 1;
 	} else {
 		/* Enable allocations from the entire map */
-		map->_dm_ex_start = sc->sc_dvmamap->ex_start;
-		map->_dm_ex_end = sc->sc_dvmamap->ex_end;
+		map->_dm_ex_start = VMEM_ADDR_MIN;
+		map->_dm_ex_end = VMEM_ADDR_MAX;
 	}
 
 	*dmamp = map;
@@ -524,8 +530,9 @@ iommu_dvma_alloc(struct iommu_softc *sc, bus_dmamap_t map,
 		 bus_addr_t *dvap, bus_size_t *sgsizep)
 {
 	bus_size_t sgsize;
-	u_long align, voff, dvaddr;
-	int s, error;
+	u_long align, voff;
+	vmem_addr_t dvaddr;
+	int error;
 	int pagesz = PAGE_SIZE;
 
 	/*
@@ -541,15 +548,18 @@ iommu_dvma_alloc(struct iommu_softc *sc, bus_dmamap_t map,
 	sgsize = (len + voff + pagesz - 1) & -pagesz;
 	align = dvma_cachealign ? dvma_cachealign : map->_dm_align;
 
-	s = splhigh();
-	error = extent_alloc_subregion1(sc->sc_dvmamap,
-					map->_dm_ex_start, map->_dm_ex_end,
-					sgsize, align, va & (align-1),
-					map->_dm_boundary,
-					(flags & BUS_DMA_NOWAIT) == 0
-						? EX_WAITOK : EX_NOWAIT,
-					&dvaddr);
-	splx(s);
+	const vm_flag_t vmflags = VM_BESTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+	error = vmem_xalloc(sc->sc_dvmamap, sgsize,
+			    align,			/* alignment */
+			    va & (align-1),		/* phase */
+			    map->_dm_boundary,		/* nocross */
+			    map->_dm_ex_start,		/* minaddr */
+			    map->_dm_ex_end,		/* maxaddr */
+			    vmflags,
+			    &dvaddr);
+
 	*dvap = (bus_addr_t)dvaddr;
 	*sgsizep = sgsize;
 	return (error);
@@ -706,18 +716,14 @@ iommu_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	int nsegs = map->dm_nsegs;
 	bus_addr_t dva;
 	bus_size_t len;
-	int i, s, error;
+	int i;
 
 	for (i = 0; i < nsegs; i++) {
 		dva = segs[i].ds_addr & -PAGE_SIZE;
 		len = segs[i]._ds_sgsize;
 
 		iommu_remove(sc, dva, len);
-		s = splhigh();
-		error = extent_free(sc->sc_dvmamap, dva, len, EX_NOWAIT);
-		splx(s);
-		if (error != 0)
-			printf("warning: %ld of DVMA space lost\n", (long)len);
+		vmem_xfree(sc->sc_dvmamap, dva, len);
 	}
 
 	/* Mark the mappings as invalid. */

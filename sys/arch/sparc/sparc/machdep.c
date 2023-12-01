@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.339 2022/07/26 20:08:56 andvar Exp $ */
+/*	$NetBSD: machdep.c,v 1.340 2023/12/01 05:22:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.339 2022/07/26 20:08:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.340 2023/12/01 05:22:01 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.339 2022/07/26 20:08:56 andvar Exp $")
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 #include <sys/cpu.h>
 #include <sys/buf.h>
 #include <sys/device.h>
@@ -145,7 +145,7 @@ kmutex_t fpu_mtx;
  * dvmamap24 is used to manage DVMA memory for devices that have the upper
  * eight address bits wired to all-ones (e.g. `le' and `ie')
  */
-struct extent *dvmamap24;
+vmem_t *dvmamap24;
 
 void	dumpsys(void);
 void	stackdump(void);
@@ -310,9 +310,16 @@ cpu_startup(void)
 		 * Allocate DMA map for 24-bit devices (le, ie)
 		 * [dvma_base - dvma_end] is for VME devices..
 		 */
-		dvmamap24 = extent_create("dvmamap24",
-					  D24_DVMA_BASE, D24_DVMA_END,
-					  0, 0, EX_NOWAIT);
+		dvmamap24 = vmem_create("dvmamap24",
+					D24_DVMA_BASE,
+					D24_DVMA_END - D24_DVMA_BASE,
+					PAGE_SIZE,	/* quantum */
+					NULL,		/* importfn */
+					NULL,		/* releasefn */
+					NULL,		/* source */
+					0,		/* qcache_max */
+					VM_SLEEP,
+					IPL_VM);
 		if (dvmamap24 == NULL)
 			panic("unable to allocate DVMA map");
 	}
@@ -1589,9 +1596,17 @@ sun4_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
 no_fit:
 	sgsize = round_page(buflen + (va & (pagesz - 1)));
 
-	if (extent_alloc(dvmamap24, sgsize, pagesz, map->_dm_boundary,
-			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
-			 &dva) != 0) {
+	const vm_flag_t vmflags = VM_BESTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+	if (vmem_xalloc(dvmamap24, sgsize,
+			0,			/* alignment */
+			0,			/* phase */
+			map->_dm_boundary,	/* nocross */
+			VMEM_ADDR_MIN,		/* minaddr */
+			VMEM_ADDR_MAX,		/* maxaddr */
+			vmflags,
+			&dva) != 0) {
 		return (ENOMEM);
 	}
 
@@ -1664,11 +1679,17 @@ sun4_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 
 	/* Allocate DVMA addresses */
 	if ((map->_dm_flags & BUS_DMA_24BIT) != 0) {
-		error = extent_alloc(dvmamap24, sgsize, pagesz,
-					map->_dm_boundary,
-					(flags & BUS_DMA_NOWAIT) == 0
-						? EX_WAITOK : EX_NOWAIT,
-					&dva);
+		const vm_flag_t vmflags = VM_BESTFIT |
+		    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+		error = vmem_xalloc(dvmamap24, sgsize,
+				    0,			/* alignment */
+				    0,			/* phase */
+				    map->_dm_boundary,	/* nocross */
+				    VMEM_ADDR_MIN,	/* minaddr */
+				    VMEM_ADDR_MAX,	/* maxaddr */
+				    vmflags,
+				    &dva);
 		if (error)
 			return (error);
 	} else {
@@ -1720,7 +1741,7 @@ sun4_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	int flags = map->_dm_flags;
 	vaddr_t dva;
 	bus_size_t len;
-	int i, s, error;
+	int i;
 
 	map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 
@@ -1739,11 +1760,7 @@ sun4_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 		pmap_kremove(dva, len);
 
 		if ((flags & BUS_DMA_24BIT) != 0) {
-			s = splhigh();
-			error = extent_free(dvmamap24, dva, len, EX_NOWAIT);
-			splx(s);
-			if (error != 0)
-				printf("warning: %ld of DVMA space lost\n", len);
+			vmem_xfree(dvmamap24, dva, len);
 		} else {
 			uvm_unmap(kernel_map, dva, dva + len);
 		}
