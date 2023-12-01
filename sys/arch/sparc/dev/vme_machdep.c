@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.76 2022/01/21 19:22:56 thorpej Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.77 2023/12/01 05:22:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.76 2022/01/21 19:22:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.77 2023/12/01 05:22:01 thorpej Exp $");
 
 #include <sys/param.h>
-#include <sys/extent.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/errno.h>
+#include <sys/vmem.h>
 
 #include <sys/proc.h>
 #include <sys/syslog.h>
@@ -190,7 +190,7 @@ struct rom_range vmebus_translations[] = {
  * for DVMA space allocations. The DMA addresses returned by
  * bus_dmamap_load*() must be relocated by -VME4_DVMA_BASE.
  */
-struct extent *vme_dvmamap;
+vmem_t *vme_dvmamap;
 
 /*
  * The VME hardware on the sun4m IOMMU maps the first 8MB of 32-bit
@@ -314,8 +314,16 @@ vmeattach_mainbus(device_t parent, device_t self, void *aux)
 	sc->sc_nrange =
 		sizeof(vmebus_translations)/sizeof(vmebus_translations[0]);
 
-	vme_dvmamap = extent_create("vmedvma", VME4_DVMA_BASE, VME4_DVMA_END,
-				    0, 0, EX_WAITOK);
+	vme_dvmamap = vmem_create("vmedvma",
+				  VME4_DVMA_BASE,
+				  VME4_DVMA_END - VME4_DVMA_BASE,
+				  PAGE_SIZE,		/* quantum */
+				  NULL,			/* importfn */
+				  NULL,			/* releasefn */
+				  NULL,			/* source */
+				  0,			/* qcache_max */
+				  VM_SLEEP,
+				  IPL_VM);
 
 	printf("\n");
 	(void)config_found(self, &vba, 0, CFARGS_NONE);
@@ -828,7 +836,7 @@ sparc_vme4_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
 {
 	bus_addr_t dva;
 	bus_size_t sgsize;
-	u_long ldva;
+	vmem_addr_t ldva;
 	vaddr_t va, voff;
 	pmap_t pmap;
 	int pagesz = PAGE_SIZE;
@@ -845,12 +853,18 @@ sparc_vme4_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
 	 * covering the passed buffer.
 	 */
 	sgsize = (buflen + voff + pagesz - 1) & -pagesz;
-	error = extent_alloc(vme_dvmamap, sgsize, pagesz,
-			     map->_dm_boundary,
-			     (flags & BUS_DMA_NOWAIT) == 0
-					? EX_WAITOK
-					: EX_NOWAIT,
-			     &ldva);
+
+	const vm_flag_t vmflags = VM_BESTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+	error = vmem_xalloc(vme_dvmamap, sgsize,
+			    0,			/* alignment */
+			    0,			/* phase */
+			    map->_dm_boundary,	/* nocross */
+			    VMEM_ADDR_MIN,	/* minaddr */
+			    VMEM_ADDR_MAX,	/* maxaddr */
+			    vmflags,
+			    &ldva);
 	if (error != 0)
 		return (error);
 	dva = (bus_addr_t)ldva;
@@ -895,7 +909,7 @@ sparc_vme4_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	int nsegs = map->dm_nsegs;
 	bus_addr_t dva;
 	bus_size_t len;
-	int i, s, error;
+	int i;
 
 	for (i = 0; i < nsegs; i++) {
 		/* Go from VME to CPU view */
@@ -907,11 +921,7 @@ sparc_vme4_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 		pmap_remove(pmap_kernel(), dva, dva + len);
 
 		/* Release DVMA space */
-		s = splhigh();
-		error = extent_free(vme_dvmamap, dva, len, EX_NOWAIT);
-		splx(s);
-		if (error != 0)
-			printf("warning: %ld of DVMA space lost\n", len);
+		vmem_xfree(vme_dvmamap, dva, len);
 	}
 	pmap_update(pmap_kernel());
 
