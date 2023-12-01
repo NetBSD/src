@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.42 2023/10/25 20:19:57 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.43 2023/12/01 12:07:19 ws Exp $	*/
 /* $OpenBSD: readconf.c,v 1.381 2023/08/28 03:31:16 djm Exp $ */
 
 /*
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.42 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.43 2023/12/01 12:07:19 ws Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -160,6 +160,7 @@ typedef enum {
 	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias,
 	oDynamicForward, oPreferredAuthentications, oHostbasedAuthentication,
 	oHostKeyAlgorithms, oBindAddress, oBindInterface, oPKCS11Provider,
+	oIPv6PreferTemporary,
 	oClearAllForwardings, oNoHostAuthenticationForLocalhost,
 	oEnableSSHKeysign, oRekeyLimit, oVerifyHostKeyDNS, oConnectTimeout,
 	oAddressFamily, oGssAuthentication, oGssDelegateCreds,
@@ -303,6 +304,7 @@ static struct {
 	{ "casignaturealgorithms", oCASignatureAlgorithms },
 	{ "bindaddress", oBindAddress },
 	{ "bindinterface", oBindInterface },
+	{ "ipv6prefertemporary", oIPv6PreferTemporary },
 	{ "clearallforwardings", oClearAllForwardings },
 	{ "enablesshkeysign", oEnableSSHKeysign },
 	{ "verifyhostkeydns", oVerifyHostKeyDNS },
@@ -1474,6 +1476,10 @@ parse_char_array:
 		charptr = &options->bind_interface;
 		goto parse_string;
 
+	case oIPv6PreferTemporary:
+		intptr = &options->ipv6_prefer_temporary;
+		goto parse_flag;
+
 	case oPKCS11Provider:
 		charptr = &options->pkcs11_provider;
 		goto parse_string;
@@ -2615,6 +2621,7 @@ initialize_options(Options * options)
 	options->preferred_authentications = NULL;
 	options->bind_address = NULL;
 	options->bind_interface = NULL;
+	options->ipv6_prefer_temporary = -1;
 	options->pkcs11_provider = NULL;
 	options->sk_provider = NULL;
 	options->enable_ssh_keysign = - 1;

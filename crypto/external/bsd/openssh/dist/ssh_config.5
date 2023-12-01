@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh_config.5,v 1.38 2023/10/25 20:19:57 christos Exp $
+.\"	$NetBSD: ssh_config.5,v 1.39 2023/12/01 12:07:19 ws Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1162,6 +1162,17 @@ for interactive sessions and
 .Cm cs1
 (Lower Effort)
 for non-interactive sessions.
+.It Cm IPv6PreferTemporary
+In the absence of an explicitly specified
+.Cm BindAddress ,
+this defines whether to prefer temporary addresses as source address.
+The argument to this can by either
+.Cm yes ,
+meaning to prefer any temporary address, or
+.Cm no ,
+resulting in the use of a permanent address, if available.
+If this option isn't specified,
+the address selection depends on the OS configuration.
 .It Cm KbdInteractiveAuthentication
 Specifies whether to use keyboard-interactive authentication.
 The argument to this keyword must be

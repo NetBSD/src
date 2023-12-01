@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.h,v 1.32 2023/10/25 20:19:57 christos Exp $	*/
+/*	$NetBSD: readconf.h,v 1.33 2023/12/01 12:07:19 ws Exp $	*/
 /* $OpenBSD: readconf.h,v 1.152 2023/08/28 03:31:16 djm Exp $ */
 
 /*
@@ -99,6 +99,7 @@ typedef struct {
 	char   *preferred_authentications;
 	char   *bind_address;	/* local socket address for connection to sshd */
 	char   *bind_interface;	/* local interface for bind address */
+	int	ipv6_prefer_temporary; /* Prefer temporary IPv6 address */
 	char   *pkcs11_provider; /* PKCS#11 provider */
 	char   *sk_provider; /* Security key provider */
 	int	verify_host_key_dns;	/* Verify host key using DNS */
