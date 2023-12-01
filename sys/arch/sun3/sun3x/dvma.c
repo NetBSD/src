@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.43 2013/11/07 02:37:56 christos Exp $	*/
+/*	$NetBSD: dvma.c,v 1.44 2023/12/01 23:56:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,14 +69,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.43 2013/11/07 02:37:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.44 2023/12/01 23:56:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/core.h>
@@ -97,25 +97,28 @@ __KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.43 2013/11/07 02:37:56 christos Exp $");
 #include <sun3/sun3x/iommu.h>
 
 /*
- * Use an extent map to manage DVMA scratch-memory pages.
+ * Use an vmem arena to manage DVMA scratch-memory pages.
  * Note: SunOS says last three pages are reserved (PROM?)
  * Note: need a separate map (sub-map?) for last 1MB for
  *       use by VME slave interface.
  */
-
-/* Number of slots in dvmamap. */
-struct extent *dvma_extent;
+vmem_t *dvma_arena;
 
 void
 dvma_init(void)
 {
 
 	/*
-	 * Create the extent map for DVMA pages.
+	 * Create the vmem arena for DVMA pages.
 	 */
-	dvma_extent = extent_create("dvma", DVMA_MAP_BASE,
-	    DVMA_MAP_BASE + (DVMA_MAP_AVAIL - 1),
-	    NULL, 0, EX_NOCOALESCE|EX_NOWAIT);
+	dvma_arena = vmem_create("dvma", DVMA_MAP_BASE, DVMA_MAP_AVAIL,
+				 PAGE_SIZE,		/* quantum */
+				 NULL,			/* importfn */
+				 NULL,			/* releasefn */
+				 NULL,			/* source */
+				 0,			/* qcache_max */
+				 VM_SLEEP,
+				 IPL_VM);
 
 	/*
 	 * Enable DVMA in the System Enable register.
@@ -162,21 +165,15 @@ void *
 dvma_mapin(void *kmem_va, int len, int canwait)
 {
 	void *dvma_addr;
-	vaddr_t kva, tva;
-	int npf, s, error;
+	vaddr_t kva;
+	vmem_addr_t tva;
+	int npf, error;
 	paddr_t pa;
 	long off;
 	bool rv __debugused;
 
 	kva = (vaddr_t)kmem_va;
-#ifdef	DIAGNOSTIC
-	/*
-	 * Addresses below VM_MIN_KERNEL_ADDRESS are not part of the kernel
-	 * map and should not participate in DVMA.
-	 */
-	if (kva < VM_MIN_KERNEL_ADDRESS)
-		panic("dvma_mapin: bad kva");
-#endif
+	KASSERT(kva >= VM_MIN_KERNEL_ADDRESS);
 
 	/*
 	 * Calculate the offset of the data buffer from a page boundary.
@@ -190,10 +187,17 @@ dvma_mapin(void *kmem_va, int len, int canwait)
 	 * Try to allocate DVMA space of the appropriate size
 	 * in which to do a transfer.
 	 */
-	s = splvm();
-	error = extent_alloc(dvma_extent, len, PAGE_SIZE, 0,
-	    EX_FAST | EX_NOWAIT | (canwait ? EX_WAITSPACE : 0), &tva);
-	splx(s);
+	const vm_flag_t vmflags = VM_INSTANTFIT |
+	    (canwait ? VM_SLEEP : VM_NOSLEEP);
+
+	error = vmem_xalloc(dvma_arena, len,
+			    0,			/* alignment */
+			    0,			/* phase */
+			    0,			/* nocross */
+			    VMEM_ADDR_MIN,	/* minaddr */
+			    VMEM_ADDR_MAX,	/* maxaddr */
+			    vmflags,
+			    &tva);
 	if (error)
 		return NULL;
 
@@ -237,7 +241,7 @@ void
 dvma_mapout(void *dvma_addr, int len)
 {
 	u_long kva;
-	int s, off;
+	int off;
 
 	kva = (u_long)dvma_addr;
 	off = (int)kva & PGOFSET;
@@ -248,11 +252,7 @@ dvma_mapout(void *dvma_addr, int len)
 	pmap_kremove(kva, len);
 	pmap_update(pmap_kernel());
 
-	s = splvm();
-	if (extent_free(dvma_extent, kva, len, EX_NOWAIT | EX_MALLOCOK))
-		panic("dvma_mapout: unable to free region: 0x%lx,0x%x",
-		    kva, len);
-	splx(s);
+	vmem_xfree(dvma_arena, kva, len);
 }
 
 /*
@@ -300,11 +300,12 @@ int
 _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
-	vaddr_t kva, dva;
+	vaddr_t kva;
+	vmem_addr_t dva;
 	vsize_t off, sgsize;
 	paddr_t pa;
 	pmap_t pmap;
-	int error, rv __diagused, s;
+	int error, rv __diagused;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -320,11 +321,17 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	sgsize = round_page(off + buflen);
 
 	/* Try to allocate DVMA space. */
-	s = splvm();
-	error = extent_alloc(dvma_extent, sgsize, PAGE_SIZE, 0,
-	    EX_FAST | ((flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT),
-	    &dva);
-	splx(s);
+	const vm_flag_t vmflags = VM_INSTANTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+	error = vmem_xalloc(dvma_arena, sgsize,
+			    0,			/* alignment */
+			    0,			/* phase */
+			    0,			/* nocross */
+			    VMEM_ADDR_MIN,	/* minaddr */
+			    VMEM_ADDR_MAX,	/* maxaddr */
+			    vmflags,
+			    &dva);
 	if (error)
 		return ENOMEM;
 
@@ -369,7 +376,6 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	bus_dma_segment_t *segs;
 	vaddr_t dva;
 	vsize_t sgsize;
-	int error __diagused, s;
 
 #ifdef DIAGNOSTIC
 	if (map->dm_nsegs != 1)
@@ -386,13 +392,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	pmap_update(pmap_kernel());
 
 	/* Free the DVMA addresses. */
-	s = splvm();
-	error = extent_free(dvma_extent, dva, sgsize, EX_NOWAIT);
-	splx(s);
-#ifdef DIAGNOSTIC
-	if (error)
-		panic("%s: unable to free DVMA region", __func__);
-#endif
+	vmem_xfree(dvma_arena, dva, sgsize);
 
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
