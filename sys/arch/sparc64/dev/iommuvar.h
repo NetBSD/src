@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.25 2021/07/24 21:31:36 andvar Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.26 2023/12/01 06:47:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -29,6 +29,8 @@
 #ifndef _SPARC64_DEV_IOMMUVAR_H_
 #define _SPARC64_DEV_IOMMUVAR_H_
 
+#include <sys/vmem.h>
+
 /*
  * Streaming buffer control
  *
@@ -54,8 +56,7 @@ struct iommu_state {
 	u_int			is_dvmabase;
 	u_int			is_dvmaend;
 	int64_t			is_cr;		/* IOMMU control register value */
-	struct extent		*is_dvmamap;	/* DVMA map for this instance */
-	kmutex_t		is_lock;	/* lock for DVMA map */
+	vmem_t			*is_dvmamap;	/* DVMA map for this instance */
 	int			is_flags;
 #define IOMMU_FLUSH_CACHE	0x00000001
 #define IOMMU_TSBSIZE_IN_PTSB	0x00000002	/* PCIe */
