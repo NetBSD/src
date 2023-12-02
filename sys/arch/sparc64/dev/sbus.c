@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.105 2023/12/01 06:47:59 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.106 2023/12/02 21:02:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.105 2023/12/01 06:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.106 2023/12/02 21:02:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -268,19 +268,9 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	 * NULL DMA pointer will be translated by the first page of the IOTSB.
 	 * To avoid bugs we'll alloc and ignore the first entry in the IOTSB.
 	 */
-	{
-		vmem_addr_t dummy;
-
-		if (vmem_xalloc(sc->sc_is.is_dvmamap, PAGE_SIZE,
-				0,		/* alignment */
-				0,		/* phase */
-				0,		/* nocross */
-				sc->sc_is.is_dvmabase,
-				sc->sc_is.is_dvmabase + PAGE_SIZE - 1,
-				VM_BESTFIT | VM_NOSLEEP,
-				&dummy) != 0) {
-			panic("sbus iommu: can't toss first dvma page");
-		}
+	if (vmem_xalloc_addr(sc->sc_is.is_dvmamap, sc->sc_is.is_dvmabase,
+			    PAGE_SIZE, VM_NOSLEEP) != 0) {
+		panic("sbus iommu: can't toss first dvma page");
 	}
 
 	/*
