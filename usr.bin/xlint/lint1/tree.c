@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.582 2023/12/02 21:47:05 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.583 2023/12/02 21:53:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.582 2023/12/02 21:47:05 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.583 2023/12/02 21:53:15 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -576,6 +576,33 @@ is_out_of_char_range(const tnode_t *tn)
 		 tn->tn_val.u.integer < 1 << (CHAR_SIZE - 1));
 }
 
+static bool
+check_nonportable_char_comparison(op_t op,
+				  const tnode_t *ln, tspec_t lt,
+				  const tnode_t *rn, tspec_t rt)
+{
+	if (!(hflag || pflag))
+		return true;
+
+	if (lt == CHAR && is_out_of_char_range(rn)) {
+		char buf[128];
+		(void)snprintf(buf, sizeof(buf), "%s %d",
+		    op_name(op), (int)rn->tn_val.u.integer);
+		/* nonportable character comparison '%s' */
+		warning(230, buf);
+		return false;
+	}
+	if (rt == CHAR && is_out_of_char_range(ln)) {
+		char buf[128];
+		(void)snprintf(buf, sizeof(buf), "%d %s ?",
+		    (int)ln->tn_val.u.integer, op_name(op));
+		/* nonportable character comparison '%s' */
+		warning(230, buf);
+		return false;
+	}
+	return true;
+}
+
 static void
 check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 {
@@ -604,24 +631,8 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 		}
 	}
 
-	if (hflag || pflag) {
-		if (lt == CHAR && is_out_of_char_range(rn)) {
-			char buf[128];
-			(void)snprintf(buf, sizeof(buf), "%s %d",
-			    op_name(op), (int)rn->tn_val.u.integer);
-			/* nonportable character comparison '%s' */
-			warning(230, buf);
-			return;
-		}
-		if (rt == CHAR && is_out_of_char_range(ln)) {
-			char buf[128];
-			(void)snprintf(buf, sizeof(buf), "%d %s ?",
-			    (int)ln->tn_val.u.integer, op_name(op));
-			/* nonportable character comparison '%s' */
-			warning(230, buf);
-			return;
-		}
-	}
+	if (!check_nonportable_char_comparison(op, ln, lt, rn, rt))
+		return;
 
 	if (is_uinteger(lt) && !is_uinteger(rt) &&
 	    rn->tn_op == CON && rn->tn_val.u.integer <= 0) {
