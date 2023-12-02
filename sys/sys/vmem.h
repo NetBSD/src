@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.22 2020/06/16 06:42:36 thorpej Exp $	*/
+/*	$NetBSD: vmem.h,v 1.23 2023/12/02 19:11:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -63,9 +63,6 @@ vmem_t *	vmem_create(const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
 		    vm_flag_t, int);
 vmem_t *	vmem_xcreate(const char *, vmem_addr_t, vmem_size_t,
 		    vmem_size_t, vmem_ximport_t *, vmem_release_t *, vmem_t *,
-		    vmem_size_t, vm_flag_t, int);
-vmem_t *	vmem_init(vmem_t *, const char *, vmem_addr_t, vmem_size_t,
-		    vmem_size_t, vmem_import_t *, vmem_release_t *, vmem_t *,
 		    vmem_size_t, vm_flag_t, int);
 void		vmem_destroy(vmem_t *);
 int		vmem_alloc(vmem_t *, vmem_size_t, vm_flag_t, vmem_addr_t *);
