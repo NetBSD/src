@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.61 2023/08/26 10:43:53 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.62 2023/12/02 21:50:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.61 2023/08/26 10:43:53 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.62 2023/12/02 21:50:21 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1302,7 +1302,6 @@ types_compatible(type_t *tp1, type_t *tp2,
 		ignqual = promot = false;
 		to = t;
 		indir++;
-
 	}
 
 	return tp1 == tp2;
@@ -1329,7 +1328,6 @@ prototypes_compatible(type_t *tp1, type_t *tp2, bool *dowarn)
 
 		a1++;
 		a2++;
-
 	}
 
 	return *a1 == *a2;

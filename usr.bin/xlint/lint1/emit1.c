@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.77 2023/09/13 20:31:58 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.78 2023/12/02 21:50:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.77 2023/09/13 20:31:58 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.78 2023/12/02 21:50:20 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -374,7 +374,6 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 			outint(n);
 			outfstrg(arg->tn_left->tn_string);
 		}
-
 	}
 	outchar((char)(retval_discarded ? 'd' : retval_used ? 'u' : 'i'));
 
@@ -539,7 +538,6 @@ outfstrg(strg_t *strg)
 				}
 			}
 		}
-
 	}
 
 	outchar('"');

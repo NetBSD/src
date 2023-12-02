@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.250 2023/07/30 22:27:21 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.251 2023/12/02 21:50:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.250 2023/07/30 22:27:21 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.251 2023/12/02 21:50:20 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -598,7 +598,6 @@ warn_too_many_initializers(designator_kind kind, const type_t *tp)
 		/* too many initializers */
 		error(174);
 	}
-
 }
 
 static bool
