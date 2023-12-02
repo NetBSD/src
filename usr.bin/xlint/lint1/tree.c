@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.581 2023/09/13 20:31:58 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.582 2023/12/02 21:47:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.581 2023/09/13 20:31:58 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.582 2023/12/02 21:47:05 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -486,7 +486,7 @@ tnode_t *
 build_name(sym_t *sym, bool is_funcname)
 {
 
-	if (sym->s_scl == NOSCL && !in_gcc_attribute) {
+	if (sym->s_scl == NO_SCL && !in_gcc_attribute) {
 		sym->s_scl = EXTERN;
 		sym->s_def = DECL;
 		if (is_funcname)
@@ -1968,7 +1968,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 			return nested_mem;
 	}
 
-	if (msym->s_scl == NOSCL) {
+	if (msym->s_scl == NO_SCL) {
 		remove_unknown_member(tn, msym);
 		return msym;
 	}
