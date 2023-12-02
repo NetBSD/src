@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspcivar.h,v 1.3 2010/11/21 16:11:32 tsutsui Exp $	*/
+/*	$NetBSD: gapspcivar.h,v 1.4 2023/12/02 22:42:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -35,6 +35,8 @@
 #ifndef _DREAMCAST_GAPSPCIVAR_H_
 #define	_DREAMCAST_GAPSPCIVAR_H_
 
+#include <sys/vmem.h>
+
 struct gaps_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_memt;
@@ -45,7 +47,7 @@ struct gaps_softc {
 	struct dreamcast_bus_dma_tag sc_dmat;
 	paddr_t sc_dmabase;
 	size_t sc_dmasize;
-	struct extent *sc_dma_ex;
+	vmem_t *sc_dma_arena;
 };
 
 void	gaps_pci_init(struct gaps_softc *);
