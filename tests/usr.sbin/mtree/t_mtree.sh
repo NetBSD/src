@@ -1,4 +1,4 @@
-# $NetBSD: t_mtree.sh,v 1.9 2023/12/02 13:23:59 christos Exp $
+# $NetBSD: t_mtree.sh,v 1.10 2023/12/02 16:18:17 christos Exp $
 #
 # Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -409,42 +409,6 @@ mtree_nonemptydir_body()
 netbsd6_nonemptydir_body() 
 {
 	FLAVOR=netbsd6 nonemptydir_body
-}
-
-atf_test_case mtree_specspec_type
-mtree_specspec_type_head()
-{
-	atf_set "descr" "Test that spec comparisons detect type changes"
-}
-
-mtree_specspec_type_body()
-{
-	mkdir testdir
-
-	touch testdir/bar
-	mtree -c -p testdir > mtree1.spec
-
-	if [ ! -f mtree1.spec ]; then
-		atf_fail "mtree failed"
-	fi
-
-	rm -f testdir/bar
-	ln -s foo testdir/bar
-	# uid change is expected to be ignored as done in -C
-	chown -h operator testdir/bar
-	mtree -c -p testdir > mtree2.spec
-
-	if [ ! -f mtree2.spec ]; then
-		atf_fail "mtree failed"
-	fi
-
-	atf_check -s ignore -o save:output \
-	    -x "mtree -f mtree1.spec -f mtree2.spec"
-
-	if ! cut -f 3 output | egrep -q "bar file" || \
-	    ! cut -f 3 output | egrep -q "bar link"; then
-		atf_fail "mtree did not detect type change"
-	fi
 }
 
 atf_test_case mtree_specspec_type
