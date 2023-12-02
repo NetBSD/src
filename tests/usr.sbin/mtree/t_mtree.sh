@@ -1,4 +1,4 @@
-# $NetBSD: t_mtree.sh,v 1.8 2017/09/07 04:05:21 nakayama Exp $
+# $NetBSD: t_mtree.sh,v 1.9 2023/12/02 13:23:59 christos Exp $
 #
 # Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -411,6 +411,77 @@ netbsd6_nonemptydir_body()
 	FLAVOR=netbsd6 nonemptydir_body
 }
 
+atf_test_case mtree_specspec_type
+mtree_specspec_type_head()
+{
+	atf_set "descr" "Test that spec comparisons detect type changes"
+}
+
+mtree_specspec_type_body()
+{
+	mkdir testdir
+
+	touch testdir/bar
+	mtree -c -p testdir > mtree1.spec
+
+	if [ ! -f mtree1.spec ]; then
+		atf_fail "mtree failed"
+	fi
+
+	rm -f testdir/bar
+	ln -s foo testdir/bar
+	# uid change is expected to be ignored as done in -C
+	chown -h operator testdir/bar
+	mtree -c -p testdir > mtree2.spec
+
+	if [ ! -f mtree2.spec ]; then
+		atf_fail "mtree failed"
+	fi
+
+	atf_check -s ignore -o save:output \
+	    -x "mtree -f mtree1.spec -f mtree2.spec"
+
+	if ! cut -f 3 output | egrep -q "bar file" || \
+	    ! cut -f 3 output | egrep -q "bar link"; then
+		atf_fail "mtree did not detect type change"
+	fi
+}
+
+atf_test_case mtree_specspec_type
+mtree_specspec_type_head()
+{
+	atf_set "descr" "Test that spec comparisons detect type changes"
+}
+
+mtree_specspec_type_body()
+{
+	mkdir testdir
+
+	touch testdir/bar
+	mtree -c -p testdir > mtree1.spec
+
+	if [ ! -f mtree1.spec ]; then
+		atf_fail "mtree failed"
+	fi
+
+	rm -f testdir/bar
+	ln -s foo testdir/bar
+	# uid change is expected to be ignored as done in -C
+	chown -h operator testdir/bar
+	mtree -c -p testdir > mtree2.spec
+
+	if [ ! -f mtree2.spec ]; then
+		atf_fail "mtree failed"
+	fi
+
+	atf_check -s ignore -o save:output \
+	    -x "mtree -f mtree1.spec -f mtree2.spec"
+
+	if ! cut -f 3 output | egrep -q "bar file" || \
+	    ! cut -f 3 output | egrep -q "bar link"; then
+		atf_fail "mtree did not detect type change"
+	fi
+}
 
 atf_test_case mtree_onlyfile
 atf_test_case netbsd6_onlyfile
@@ -459,6 +530,7 @@ atf_init_test_cases()
 	atf_add_test_case mtree_ignore
 	atf_add_test_case mtree_merge
 	atf_add_test_case mtree_nonemptydir
+	atf_add_test_case mtree_specspec_type
 	atf_add_test_case mtree_onlyfile
 
 	atf_add_test_case netbsd6_create
