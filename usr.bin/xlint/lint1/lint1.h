@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.202 2023/09/14 21:08:12 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.203 2023/12/02 21:47:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -206,7 +206,7 @@ typedef	enum {
  * storage classes and related things
  */
 typedef enum {
-	NOSCL,
+	NO_SCL,
 	EXTERN,		/* external symbols (independent of decl_t) */
 	STATIC,		/* static symbols (local and global) */
 	AUTO,		/* automatic symbols (except register) */

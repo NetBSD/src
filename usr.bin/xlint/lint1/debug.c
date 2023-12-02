@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.63 2023/10/17 19:29:09 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.64 2023/12/02 21:47:05 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.63 2023/10/17 19:29:09 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.64 2023/12/02 21:47:05 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -385,7 +385,7 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 	debug_word(sym->s_osdef, "old-style");
 	debug_word(sym->s_inline, "inline");
 	debug_word(sym->s_ext_sym != NULL, "has-external");
-	debug_word(sym->s_scl != NOSCL, scl_name(sym->s_scl));
+	debug_word(sym->s_scl != NO_SCL, scl_name(sym->s_scl));
 	debug_word(sym->s_keyword == NULL, def_name(sym->s_def));
 
 	if (sym->s_def_pos.p_file != NULL)
@@ -441,7 +441,7 @@ debug_decl_level(const decl_level *dl)
 {
 
 	debug_printf("kind=%s", decl_level_kind_name(dl->d_kind));
-	if (dl->d_scl != NOSCL)
+	if (dl->d_scl != NO_SCL)
 		debug_printf(" %s", scl_name(dl->d_scl));
 	if (dl->d_type != NULL)
 		debug_printf(" '%s'", type_name(dl->d_type));

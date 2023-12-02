@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.192 2023/08/26 10:43:53 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.193 2023/12/02 21:47:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.192 2023/08/26 10:43:53 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.193 2023/12/02 21:47:05 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1394,7 +1394,7 @@ mktempsym(type_t *tp)
 	(void)snprintf(s, 64, "%.8u_tmp", n++);
 
 	scl = dcs->d_scl;
-	if (scl == NOSCL)
+	if (scl == NO_SCL)
 		scl = block_level > 0 ? AUTO : EXTERN;
 
 	sym->s_name = s;

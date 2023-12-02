@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.379 2023/09/14 21:53:02 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.380 2023/12/02 21:47:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.379 2023/09/14 21:53:02 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.380 2023/12/02 21:47:05 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -206,7 +206,7 @@ dcs_add_storage_class(scl_t sc)
 		warning(83);
 	}
 
-	if (dcs->d_scl == NOSCL)
+	if (dcs->d_scl == NO_SCL)
 		dcs->d_scl = sc;
 	else if ((dcs->d_scl == EXTERN && sc == THREAD_LOCAL)
 	    || (dcs->d_scl == THREAD_LOCAL && sc == EXTERN))
@@ -607,7 +607,7 @@ dcs_begin_type(void)
 	dcs->d_complex_mod = NO_TSPEC;
 	dcs->d_sign_mod = NO_TSPEC;
 	dcs->d_rank_mod = NO_TSPEC;
-	dcs->d_scl = NOSCL;
+	dcs->d_scl = NO_SCL;
 	dcs->d_type = NULL;
 	dcs->d_redeclared_symbol = NULL;
 	dcs->d_qual = (type_qualifiers) { .tq_const = false };
@@ -630,14 +630,14 @@ dcs_adjust_storage_class(void)
 		if (dcs->d_scl == REG || dcs->d_scl == AUTO) {
 			/* illegal storage class */
 			error(8);
-			dcs->d_scl = NOSCL;
+			dcs->d_scl = NO_SCL;
 		}
 	} else if (dcs->d_kind == DLK_OLD_STYLE_PARAMS ||
 		   dcs->d_kind == DLK_PROTO_PARAMS) {
-		if (dcs->d_scl != NOSCL && dcs->d_scl != REG) {
+		if (dcs->d_scl != NO_SCL && dcs->d_scl != REG) {
 			/* only 'register' is valid as storage class ... */
 			error(9);
-			dcs->d_scl = NOSCL;
+			dcs->d_scl = NO_SCL;
 		}
 	}
 }
@@ -1431,9 +1431,9 @@ check_function_definition(sym_t *sym, bool msg)
 sym_t *
 declarator_name(sym_t *sym)
 {
-	scl_t sc = NOSCL;
+	scl_t sc = NO_SCL;
 
-	if (sym->s_scl == NOSCL)
+	if (sym->s_scl == NO_SCL)
 		dcs->d_redeclared_symbol = NULL;
 	else if (sym->s_defparam) {
 		sym->s_defparam = false;
@@ -1458,7 +1458,7 @@ declarator_name(sym_t *sym)
 		 * or this is a function definition.
 		 */
 		sc = dcs->d_scl;
-		if (sc == NOSCL || sc == THREAD_LOCAL) {
+		if (sc == NO_SCL || sc == THREAD_LOCAL) {
 			sc = EXTERN;
 			sym->s_def = TDEF;
 		} else if (sc == STATIC)
@@ -1474,13 +1474,13 @@ declarator_name(sym_t *sym)
 		sym->s_param = true;
 		/* FALLTHROUGH */
 	case DLK_OLD_STYLE_PARAMS:
-		lint_assert(dcs->d_scl == NOSCL || dcs->d_scl == REG);
+		lint_assert(dcs->d_scl == NO_SCL || dcs->d_scl == REG);
 		sym->s_register = dcs->d_scl == REG;
 		sc = AUTO;
 		sym->s_def = DEF;
 		break;
 	case DLK_AUTO:
-		if ((sc = dcs->d_scl) == NOSCL) {
+		if ((sc = dcs->d_scl) == NO_SCL) {
 			/*
 			 * XXX somewhat ugly because we don't know whether this
 			 * is AUTO or EXTERN (functions). If we are wrong, it
@@ -1504,7 +1504,7 @@ declarator_name(sym_t *sym)
 	default:
 		lint_assert(dcs->d_kind == DLK_ABSTRACT);
 		/* try to continue after syntax errors */
-		sc = NOSCL;
+		sc = NO_SCL;
 	}
 	sym->s_scl = sc;
 
@@ -1520,7 +1520,7 @@ sym_t *
 old_style_function_parameter_name(sym_t *sym)
 {
 
-	if (sym->s_scl != NOSCL) {
+	if (sym->s_scl != NO_SCL) {
 		if (block_level == sym->s_block_level) {
 			/* redeclaration of formal parameter '%s' */
 			error(21, sym->s_name);
@@ -1619,7 +1619,7 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 	}
 
 	if (tag != NULL) {
-		if (tag->s_scl != NOSCL)
+		if (tag->s_scl != NO_SCL)
 			tag = new_tag(tag, scl, decl, semi);
 		else {
 			/* a new tag, no empty declaration */
@@ -1632,7 +1632,7 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 					warning(42);
 			}
 		}
-		if (tag->s_scl == NOSCL) {
+		if (tag->s_scl == NO_SCL) {
 			tag->s_scl = scl;
 			tag->s_type = tp =
 			    block_zero_alloc(sizeof(*tp), "type");
@@ -1739,7 +1739,7 @@ sym_t *
 enumeration_constant(sym_t *sym, int val, bool impl)
 {
 
-	if (sym->s_scl != NOSCL) {
+	if (sym->s_scl != NO_SCL) {
 		if (sym->s_block_level == block_level) {
 			/* no hflag, because this is illegal */
 			if (sym->s_param) {
@@ -2659,7 +2659,7 @@ declare_local(sym_t *dsym, bool has_initializer)
 	/* Correct a mistake done in declarator_name(). */
 	if (dsym->s_type->t_tspec == FUNC) {
 		dsym->s_def = DECL;
-		if (dcs->d_scl == NOSCL)
+		if (dcs->d_scl == NO_SCL)
 			dsym->s_scl = EXTERN;
 	}
 
@@ -3095,7 +3095,7 @@ check_global_variable(const sym_t *sym)
 	if (scl == TYPEDEF || scl == BOOL_CONST || scl == ENUM_CONST)
 		return;
 
-	if (scl == NOSCL)
+	if (scl == NO_SCL)
 		return;		/* May be caused by a syntax error. */
 
 	lint_assert(scl == EXTERN || scl == STATIC);
