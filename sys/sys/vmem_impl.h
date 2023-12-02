@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem_impl.h,v 1.5 2020/07/07 03:23:33 thorpej Exp $	*/
+/*	$NetBSD: vmem_impl.h,v 1.6 2023/12/02 19:11:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -138,5 +138,9 @@ struct vmem_btag {
 #define	BT_ISSPAN_P(bt)	((bt)->bt_type <= BT_TYPE_SPAN_STATIC)
 
 #define	BT_END(bt)	((bt)->bt_start + (bt)->bt_size - 1)
+
+vmem_t *	vmem_init(vmem_t *, const char *, vmem_addr_t, vmem_size_t,
+		    vmem_size_t, vmem_import_t *, vmem_release_t *, vmem_t *,
+		    vmem_size_t, vm_flag_t, int);
 
 #endif /* !_SYS_VMEM_IMPL_H_ */
