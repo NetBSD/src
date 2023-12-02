@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2021/08/17 22:00:31 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 2023/12/02 15:50:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2021/08/17 22:00:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2023/12/02 15:50:57 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -164,7 +164,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2021/08/17 22:00:31 andvar Exp $");
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
-#include <sys/extent.h>
+#include <sys/vmem.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/kcore.h>
@@ -253,7 +253,7 @@ label_t *nofault;
 /*
  * dvmamap is used to manage DVMA memory.
  */
-static struct extent *dvmamap;
+vmem_t *dvma_arena;
 
 /* Our private scratch page for dumping the MMU. */
 static vaddr_t dumppage;
@@ -351,10 +351,15 @@ cpu_startup(void)
 	/*
 	 * Allocate DMA map for devices on the bus.
 	 */
-	dvmamap = extent_create("dvmamap",
-	    DVMA_MAP_BASE, DVMA_MAP_BASE + DVMA_MAP_AVAIL,
-	    0, 0, EX_NOWAIT);
-	if (dvmamap == NULL)
+	dvma_arena = vmem_create("dvmamap", DVMA_MAP_BASE, DVMA_MAP_AVAIL,
+				 PAGE_SIZE,		/* quantum */
+				 NULL,			/* importfn */
+				 NULL,			/* releasefn */
+				 NULL,			/* source */
+				 0,			/* qcache_max */
+				 VM_SLEEP,
+				 IPL_VM);
+	if (dvma_arena == NULL)
 		panic("unable to allocate DVMA map");
 
 	/*
@@ -801,7 +806,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 {
 	struct vm_page *m;
 	paddr_t pa;
-	bus_addr_t dva;
+	vmem_addr_t dva;
 	bus_size_t sgsize;
 	struct pglist *mlist;
 	int pagesz = PAGE_SIZE;
@@ -831,11 +836,17 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 	 * Otherwise, we need virtual addresses in DVMA space.
 	 */
 	else {
-		error = extent_alloc(dvmamap, sgsize, pagesz,
-					map->_dm_boundary,
-					(flags & BUS_DMA_NOWAIT) == 0
-						? EX_WAITOK : EX_NOWAIT,
-					(u_long *)&dva);
+		const vm_flag_t vmflags = VM_BESTFIT |
+		    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+		error = vmem_xalloc(dvma_arena, sgsize,
+				    0,			/* alignment */
+				    0,			/* phase */
+				    map->_dm_boundary,	/* nocross */
+				    VMEM_ADDR_MIN,	/* minaddr */
+				    VMEM_ADDR_MAX,	/* maxaddr */
+				    vmflags,
+				    &dva);
 		if (error)
 			return (error);
 	}
@@ -878,7 +889,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bus_size_t sgsize;
 	vaddr_t va = (vaddr_t)buf;
 	int pagesz = PAGE_SIZE;
-	bus_addr_t dva;
+	vmem_addr_t dva;
 	pmap_t pmap;
 	int rv __diagused;
 
@@ -915,9 +926,17 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 */
 	sgsize = m68k_round_page(buflen + (va & (pagesz - 1)));
 
-	if (extent_alloc(dvmamap, sgsize, pagesz, map->_dm_boundary,
-			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
-			 (u_long *)&dva) != 0) {
+	const vm_flag_t vmflags = VM_BESTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+	if (vmem_xalloc(dvma_arena, sgsize,
+			0,			/* alignment */
+			0,			/* phase */
+			map->_dm_boundary,	/* nocross */
+			VMEM_ADDR_MIN,		/* minaddr */
+			VMEM_ADDR_MAX,		/* maxaddr */
+			vmflags,
+			&dva) != 0) {
 		return (ENOMEM);
 	}
 
@@ -982,7 +1001,6 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	int flags = map->_dm_flags;
 	bus_addr_t dva;
 	bus_size_t len;
-	int s, error;
 
 	if (nsegs != 1)
 		panic("_bus_dmamem_unload: nsegs = %d", nsegs);
@@ -1024,11 +1042,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 			 * This map was loaded using _bus_dmamap_load or
 			 * _bus_dmamap_load_raw for a non-24-bit device.
 			 */
-			s = splhigh();
-			error = extent_free(dvmamap, dva, len, EX_NOWAIT);
-			splx(s);
-			if (error != 0)
-				printf("warning: %ld of DVMA space lost\n", len);
+			vmem_xfree(dvma_arena, dva, len);
 		}
 	}
 
