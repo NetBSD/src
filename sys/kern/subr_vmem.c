@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.109 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.110 2023/12/02 19:06:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.109 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.110 2023/12/02 19:06:17 thorpej Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -112,12 +112,13 @@ VMEM_EVCNT_DEFINE(static_bt_inuse)
 
 #define	UNITTEST
 #define	KASSERT(a)		assert(a)
+#define	KASSERTMSG(a, m, ...)	assert(a)
 #define	mutex_init(a, b, c)	/* nothing */
 #define	mutex_destroy(a)	/* nothing */
 #define	mutex_enter(a)		/* nothing */
 #define	mutex_tryenter(a)	true
 #define	mutex_exit(a)		/* nothing */
-#define	mutex_owned(a)		/* nothing */
+#define	mutex_owned(a)		true
 #define	ASSERT_SLEEPABLE()	/* nothing */
 #define	panic(...)		printf(__VA_ARGS__); abort()
 #endif /* defined(_KERNEL) */
@@ -142,12 +143,12 @@ static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
 
 /* ---- misc */
 
-#define	VMEM_LOCK(vm)		mutex_enter(&vm->vm_lock)
-#define	VMEM_TRYLOCK(vm)	mutex_tryenter(&vm->vm_lock)
-#define	VMEM_UNLOCK(vm)		mutex_exit(&vm->vm_lock)
-#define	VMEM_LOCK_INIT(vm, ipl)	mutex_init(&vm->vm_lock, MUTEX_DEFAULT, ipl)
-#define	VMEM_LOCK_DESTROY(vm)	mutex_destroy(&vm->vm_lock)
-#define	VMEM_ASSERT_LOCKED(vm)	KASSERT(mutex_owned(&vm->vm_lock))
+#define	VMEM_LOCK(vm)		mutex_enter(&(vm)->vm_lock)
+#define	VMEM_TRYLOCK(vm)	mutex_tryenter(&(vm)->vm_lock)
+#define	VMEM_UNLOCK(vm)		mutex_exit(&(vm)->vm_lock)
+#define	VMEM_LOCK_INIT(vm, ipl)	mutex_init(&(vm)->vm_lock, MUTEX_DEFAULT, (ipl))
+#define	VMEM_LOCK_DESTROY(vm)	mutex_destroy(&(vm)->vm_lock)
+#define	VMEM_ASSERT_LOCKED(vm)	KASSERT(mutex_owned(&(vm)->vm_lock))
 
 #define	VMEM_ALIGNUP(addr, align) \
 	(-(-(addr) & -(align)))
@@ -158,11 +159,22 @@ static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
 #define	ORDER2SIZE(order)	((vmem_size_t)1 << (order))
 #define	SIZE2ORDER(size)	((int)ilog2(size))
 
+static void
+vmem_kick_pdaemon(void)
+{
+#if defined(_KERNEL)
+	uvm_kick_pdaemon();
+#endif
+}
+
+static void vmem_xfree_bt(vmem_t *, bt_t *);
+
 #if !defined(_KERNEL)
 #define	xmalloc(sz, flags)	malloc(sz)
 #define	xfree(p, sz)		free(p)
 #define	bt_alloc(vm, flags)	malloc(sizeof(bt_t))
 #define	bt_free(vm, bt)		free(bt)
+#define	bt_freetrim(vm, l)	/* nothing */
 #else /* defined(_KERNEL) */
 
 #define	xmalloc(sz, flags) \
@@ -193,16 +205,6 @@ static kmutex_t vmem_btag_lock;
 static LIST_HEAD(, vmem_btag) vmem_btag_freelist;
 static size_t vmem_btag_freelist_count = 0;
 static struct pool vmem_btag_pool;
-
-static void vmem_xfree_bt(vmem_t *, bt_t *);
-
-static void
-vmem_kick_pdaemon(void)
-{
-#if defined(_KERNEL)
-	uvm_kick_pdaemon();
-#endif
-}
 
 /* ---- boundary tag */
 
@@ -807,6 +809,7 @@ vmem_import(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 	return 0;
 }
 
+#if defined(_KERNEL)
 static int
 vmem_rehash(vmem_t *vm, size_t newhashsize, vm_flag_t flags)
 {
@@ -864,6 +867,7 @@ vmem_rehash(vmem_t *vm, size_t newhashsize, vm_flag_t flags)
 
 	return 0;
 }
+#endif /* _KERNEL */
 
 /*
  * vmem_fit: check if a bt can satisfy the given restrictions.
@@ -1096,7 +1100,9 @@ vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags, vmem_addr_t *addrp)
 
 	error = vmem_xalloc(vm, size, 0, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX,
 	    flags, addrp);
-out:
+#if defined(QCACHE)
+ out:
+#endif /* defined(QCACHE) */
 	KASSERTMSG(error || addrp == NULL ||
 	    (*addrp & vm->vm_quantum_mask) == 0,
 	    "vmem %s mask=0x%jx addr=0x%jx",
@@ -1353,8 +1359,10 @@ vmem_xfreeall(vmem_t *vm)
 {
 	bt_t *bt;
 
+#if defined(QCACHE)
 	/* This can't be used if the arena has a quantum cache. */
 	KASSERT(vm->vm_qcache_max == 0);
+#endif /* defined(QCACHE) */
 
 	for (;;) {
 		VMEM_LOCK(vm);
