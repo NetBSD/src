@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2450 2023/10/15 13:04:15 riastradh Exp $
+#	$NetBSD: mi,v 1.2451 2023/12/02 21:02:12 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -13097,6 +13097,7 @@
 ./usr/share/man/cat9/vmem_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vmem_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vmem_xalloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vmem_xalloc_addr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vmem_xfree.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vmem_xfreeall.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_bwrite.0		comp-sys-catman		.cat
@@ -21435,6 +21436,7 @@
 ./usr/share/man/html9/vmem_destroy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vmem_free.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vmem_xalloc.html		comp-sys-htmlman	html
+./usr/share/man/html9/vmem_xalloc_addr.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vmem_xfree.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vmem_xfreeall.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vn_bwrite.html		comp-sys-htmlman	html
@@ -30012,6 +30014,7 @@
 ./usr/share/man/man9/vmem_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/vmem_free.9		comp-sys-man		.man
 ./usr/share/man/man9/vmem_xalloc.9		comp-sys-man		.man
+./usr/share/man/man9/vmem_xalloc_addr.9		comp-sys-man		.man
 ./usr/share/man/man9/vmem_xfree.9		comp-sys-man		.man
 ./usr/share/man/man9/vmem_xfreeall.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_bwrite.9		comp-sys-man		.man

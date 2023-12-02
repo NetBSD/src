@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.110 2023/12/02 19:06:17 thorpej Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.111 2023/12/02 21:02:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.110 2023/12/02 19:06:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.111 2023/12/02 21:02:12 thorpej Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1107,6 +1107,26 @@ vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags, vmem_addr_t *addrp)
 	    (*addrp & vm->vm_quantum_mask) == 0,
 	    "vmem %s mask=0x%jx addr=0x%jx",
 	    vm->vm_name, (uintmax_t)vm->vm_quantum_mask, (uintmax_t)*addrp);
+	KASSERT(error == 0 || (flags & VM_SLEEP) == 0);
+	return error;
+}
+
+int
+vmem_xalloc_addr(vmem_t *vm, const vmem_addr_t addr, const vmem_size_t size,
+    vm_flag_t flags)
+{
+	vmem_addr_t result;
+	int error;
+
+	KASSERT((addr & vm->vm_quantum_mask) == 0);
+	KASSERT(size != 0);
+
+	flags = (flags & ~VM_INSTANTFIT) | VM_BESTFIT;
+
+	error = vmem_xalloc(vm, size, 0, 0, 0, addr, addr + size - 1,
+	    flags, &result);
+
+	KASSERT(error || result == addr);
 	KASSERT(error == 0 || (flags & VM_SLEEP) == 0);
 	return error;
 }
