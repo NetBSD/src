@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.20 2012/01/27 18:52:53 para Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.21 2023/12/02 22:42:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,20 +32,20 @@
 /*
  * Bus DMA implementation for the SEGA GAPS PCI bridge.
  *
- * NOTE: We only implement a small subset of what the bus_space(9)
+ * NOTE: We only implement a small subset of what the bus_dma(9)
  * API specifies.  Right now, the GAPS PCI bridge is only used for
  * the Dreamcast Broadband Adatper, so we only provide what the
  * pci(4) and rtk(4) drivers need.
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.20 2012/01/27 18:52:53 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.21 2023/12/02 22:42:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/mbuf.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 #include <sys/malloc.h>
 #include <sys/bus.h>
 
@@ -105,11 +105,18 @@ gaps_dma_init(struct gaps_softc *sc)
 
 	/*
 	 * The GAPS PCI bridge has 32k of DMA memory.  We manage it
-	 * with an extent map.
+	 * with a vmem arena.
 	 */
-	sc->sc_dma_ex = extent_create("gaps dma",
-	    sc->sc_dmabase, sc->sc_dmabase + (sc->sc_dmasize - 1),
-	    NULL, 0, EX_WAITOK | EXF_NOCOALESCE);
+	sc->sc_dma_arena = vmem_create("gaps dma",
+				       sc->sc_dmabase,
+				       sc->sc_dmasize,
+				       1024 /* XXX */,	/* quantum */
+				       NULL,		/* allocfn */
+				       NULL,		/* freefn */
+				       NULL,		/* arg */
+				       0,		/* qcache_max */
+				       VM_SLEEP,
+				       IPL_VM);
 
 	if (bus_space_map(sc->sc_memt, sc->sc_dmabase, sc->sc_dmasize,
 	    0, &sc->sc_dma_memh) != 0)
@@ -169,12 +176,20 @@ gaps_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->dm_maxsegsz = maxsegsz;
 
 	if (flags & BUS_DMA_ALLOCNOW) {
-		u_long res;
+		vmem_addr_t res;
 		int error;
 
-		error = extent_alloc(sc->sc_dma_ex, size, 1024 /* XXX */,
-		    map->_dm_boundary,
-		    (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK, &res);
+		const vm_flag_t vmflags = VM_BESTFIT |
+		    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+		error = vmem_xalloc(sc->sc_dma_arena, size,
+				    0,			/* alignment */
+				    0,			/* phase */
+				    0,			/* nocross */
+				    VMEM_ADDR_MIN,	/* minaddr */
+				    VMEM_ADDR_MAX,	/* maxaddr */
+				    vmflags,
+				    &res);
 		if (error) {
 			free(gmap, M_DEVBUF);
 			return error;
@@ -201,9 +216,8 @@ gaps_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	struct gaps_softc *sc = t->_cookie;
 
 	if (map->_dm_flags & BUS_DMA_ALLOCNOW) {
-		(void) extent_free(sc->sc_dma_ex,
-		    map->dm_segs[0].ds_addr,
-		    map->dm_mapsize, EX_NOWAIT);
+		vmem_xfree(sc->sc_dma_arena, map->dm_segs[0].ds_addr,
+		    map->dm_mapsize);
 	}
 	free(map, M_DMAMAP);
 }
@@ -214,7 +228,7 @@ gaps_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *addr,
 {
 	struct gaps_softc *sc = t->_cookie;
 	struct gaps_dmamap *gmap = (void *) map;
-	u_long res;
+	vmem_addr_t res;
 	int error;
 
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) == 0) {
@@ -234,9 +248,17 @@ gaps_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *addr,
 	if (size > map->_dm_size)
 		return EINVAL;
 
-	error = extent_alloc(sc->sc_dma_ex, size, 1024 /* XXX */,
-	    map->_dm_boundary,
-	    (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK, &res);
+	const vm_flag_t vmflags = VM_BESTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+	error = vmem_xalloc(sc->sc_dma_arena, size,
+			    0,			/* alignment */
+			    0,			/* phase */
+			    map->_dm_boundary,	/* nocross */
+			    VMEM_ADDR_MIN,	/* minaddr */
+			    VMEM_ADDR_MAX,	/* maxaddr */
+			    vmflags,
+			    &res);
 	if (error)
 		return error;
 
@@ -258,7 +280,7 @@ gaps_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 {
 	struct gaps_softc *sc = t->_cookie;
 	struct gaps_dmamap *gmap = (void *) map;
-	u_long res;
+	vmem_addr_t res;
 	int error;
 
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) == 0) {
@@ -279,9 +301,17 @@ gaps_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return EINVAL;
 
-	error = extent_alloc(sc->sc_dma_ex, m0->m_pkthdr.len, 1024 /* XXX */,
-	    map->_dm_boundary,
-	    (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK, &res);
+	const vm_flag_t vmflags = VM_BESTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+	error = vmem_xalloc(sc->sc_dma_arena, m0->m_pkthdr.len,
+			    0,			/* alignment */
+			    0,			/* phase */
+			    map->_dm_boundary,	/* nocross */
+			    VMEM_ADDR_MIN,	/* minaddr */
+			    VMEM_ADDR_MAX,	/* maxaddr */
+			    vmflags,
+			    &res);
 	if (error)
 		return error;
 
@@ -327,9 +357,8 @@ gaps_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	}
 
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) == 0) {
-		(void) extent_free(sc->sc_dma_ex,
-		    map->dm_segs[0].ds_addr,
-		    map->dm_mapsize, EX_NOWAIT);
+		vmem_xfree(sc->sc_dma_arena, map->dm_segs[0].ds_addr,
+		    map->dm_mapsize);
 
 		map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 		map->dm_mapsize = 0;
