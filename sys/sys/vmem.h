@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.23 2023/12/02 19:11:52 thorpej Exp $	*/
+/*	$NetBSD: vmem.h,v 1.24 2023/12/02 21:02:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -70,6 +70,7 @@ void		vmem_free(vmem_t *, vmem_addr_t, vmem_size_t);
 int		vmem_xalloc(vmem_t *, vmem_size_t, vmem_size_t, vmem_size_t,
 		    vmem_size_t, vmem_addr_t, vmem_addr_t, vm_flag_t,
 		    vmem_addr_t *);
+int		vmem_xalloc_addr(vmem_t *, vmem_addr_t, vmem_size_t, vm_flag_t);
 void		vmem_xfree(vmem_t *, vmem_addr_t, vmem_size_t);
 void		vmem_xfreeall(vmem_t *);
 int		vmem_add(vmem_t *, vmem_addr_t, vmem_size_t, vm_flag_t);

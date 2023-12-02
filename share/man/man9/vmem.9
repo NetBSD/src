@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem.9,v 1.21 2022/10/15 14:54:21 riastradh Exp $
+.\"	$NetBSD: vmem.9,v 1.22 2023/12/02 21:02:12 thorpej Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd June 15, 2020
+.Dd December 2, 2023
 .Dt VMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -59,6 +59,10 @@
 "vmem_t *vm" "vmem_size_t size" "vmem_size_t align" \
 "vmem_size_t phase" "vmem_size_t nocross" "vmem_addr_t minaddr" \
 "vmem_addr_t maxaddr" "vm_flag_t flags" "vmem_addr_t *addrp"
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Ft int
+.Fn vmem_xalloc_addr \
+"vmem_t *vm" "vmem_addr_t addr" "vmem_size_t size" "vm_flag_t flags"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn vmem_xfree "vmem_t *vm" "vmem_addr_t addr" "vmem_size_t size"
@@ -387,9 +391,40 @@ overwrites it with the start address of the allocated span.
 .El
 .Pp
 .\" ------------------------------------------------------------
+.Fn vmem_xalloc_addr
+allocates a specific address from the arena.
+The requested address must be aligned with the arena's quantum.
+.Bl -tag -offset indent -width flags
+.It Fa vm
+The arena which we allocate from.
+.It Fa addr
+The address to allocate.
+.It Fa size
+Specify the size of the allocation.
+.It Fa flags
+A sleep flag.
+Because a specific address is being allocated, any specified allocation
+strategy is ignored.
+.Pp
+The sleep flag must be one of:
+.Bl -tag -width VM_NOSLEEP
+.It Dv VM_SLEEP
+If the allocation cannot be satisfied immediately, sleep until the
+requested range can be allocated.
+.It Dv VM_NOSLEEP
+Don't sleep.
+Immediately return
+.Dv ENOMEM
+if the requested range is not available.
+.El
+.El
+.Pp
+.\" ------------------------------------------------------------
 .Fn vmem_xfree
 frees resource allocated by
 .Fn vmem_xalloc
+or
+.Fn vmem_xalloc_addr
 to the arena.
 .Bl -tag -offset indent -width addr
 .It Fa vm
@@ -397,16 +432,20 @@ The arena which we free to.
 .It Fa addr
 The resource being freed.
 It must have been allocated via
-.Fn vmem_xalloc .
+.Fn vmem_xalloc
+or
+.Fn vmem_xalloc_addr .
 Notably, it must not have been allocated via
-.Fn vmem_alloc .
-Otherwise, the behaviour is undefined.
+.Fn vmem_alloc ,
+otherwise, the behaviour is undefined.
 .It Fa size
 The size of the resource being freed.
 It must be the same as the
 .Fa size
 argument used for
-.Fn vmem_xalloc .
+.Fn vmem_xalloc
+or
+.Fn vmem_xalloc_addr .
 .El
 .Pp
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -479,8 +518,10 @@ The resource being freed.
 It must have been allocated via
 .Fn vmem_alloc .
 Notably, it must not have been allocated via
-.Fn vmem_xalloc .
-Otherwise, the behaviour is undefined.
+.Fn vmem_xalloc
+or
+.Fn vmem_xalloc addr ,
+otherwise, the behaviour is undefined.
 .It Fa size
 The size of the resource being freed.
 It must be the same as the
