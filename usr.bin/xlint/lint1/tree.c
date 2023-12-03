@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.584 2023/12/03 12:03:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.585 2023/12/03 12:24:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.584 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.585 2023/12/03 12:24:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -93,7 +93,8 @@ width_in_bits(const type_t *tp)
 }
 
 static int
-portable_rank_cmp(tspec_t t1, tspec_t t2) {
+portable_rank_cmp(tspec_t t1, tspec_t t2)
+{
 	const ttab_t *p1 = type_properties(t1), *p2 = type_properties(t2);
 	lint_assert(p1->tt_rank_kind == p2->tt_rank_kind);
 	lint_assert(p1->tt_rank_value > 0);

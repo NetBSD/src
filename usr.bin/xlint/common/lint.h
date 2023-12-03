@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.44 2023/09/13 20:31:58 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.45 2023/12/03 12:24:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -120,7 +120,8 @@ typedef	struct {
 extern	ttab_t	ttab[];
 
 static inline const ttab_t *
-type_properties(tspec_t t) {
+type_properties(tspec_t t)
+{
 	return ttab + t;
 }
 
@@ -154,12 +155,31 @@ typedef struct lint2_type type_t;
 #include "externs.h"
 
 static inline bool
-ch_isalnum(char ch) { return isalnum((unsigned char)ch) != 0; }
+ch_isalnum(char ch)
+{
+	return isalnum((unsigned char)ch) != 0;
+}
+
 static inline bool
-ch_isdigit(char ch) { return isdigit((unsigned char)ch) != 0; }
+ch_isdigit(char ch)
+{
+	return isdigit((unsigned char)ch) != 0;
+}
+
 static inline bool
-ch_isprint(char ch) { return isprint((unsigned char)ch) != 0; }
+ch_isprint(char ch)
+{
+	return isprint((unsigned char)ch) != 0;
+}
+
 static inline bool
-ch_isspace(char ch) { return isspace((unsigned char)ch) != 0; }
+ch_isspace(char ch)
+{
+	return isspace((unsigned char)ch) != 0;
+}
+
 static inline bool
-ch_isupper(char ch) { return isupper((unsigned char)ch) != 0; }
+ch_isupper(char ch)
+{
+	return isupper((unsigned char)ch) != 0;
+}
