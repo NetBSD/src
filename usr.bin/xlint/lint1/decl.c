@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.382 2023/12/03 13:12:40 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.383 2023/12/03 18:17:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.382 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.383 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -51,17 +51,17 @@ __RCSID("$NetBSD: decl.c,v 1.382 2023/12/03 13:12:40 rillig Exp $");
 const char unnamed[] = "<unnamed>";
 
 /* shared type structures for arithmetic types and void */
-static	type_t	typetab[NTSPEC];
+static type_t typetab[NTSPEC];
 
 /* value of next enumerator during declaration of enum types */
-int	enumval;
+int enumval;
 
 /*
  * Points to the innermost element of a stack that contains information about
  * nested declarations, such as struct declarations, function prototypes,
  * local variables.
  */
-decl_level	*dcs;
+decl_level *dcs;
 
 
 /*

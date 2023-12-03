@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.177 2023/12/03 13:12:40 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.178 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.177 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.178 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -50,16 +50,16 @@ __RCSID("$NetBSD: func.c,v 1.177 2023/12/03 13:12:40 rillig Exp $");
  * Contains a pointer to the symbol table entry of the current function
  * definition.
  */
-sym_t	*funcsym;
+sym_t *funcsym;
 
 /* Is set as long as a statement can be reached. Must be set at level 0. */
-bool	reached = true;
+bool reached = true;
 
 /*
  * Is true by default, can be cleared by NOTREACHED.
  * Is reset to true whenever 'reached' changes.
  */
-bool	warn_about_unreachable;
+bool warn_about_unreachable;
 
 /*
  * In conjunction with 'reached', controls printing of "fallthrough on ..."
@@ -74,7 +74,7 @@ bool	warn_about_unreachable;
  * reduction of above. This means that ** FALLTHROUGH ** after "if ..." would
  * always be ignored.
  */
-bool	suppress_fallthrough;
+bool suppress_fallthrough;
 
 /* The innermost control statement */
 static control_statement *cstmt;
@@ -85,8 +85,8 @@ static control_statement *cstmt;
  *
  * The position of the last ARGSUSED comment is stored in argsused_pos.
  */
-int	nargusg = -1;
-pos_t	argsused_pos;
+int nargusg = -1;
+pos_t argsused_pos;
 
 /*
  * Number of parameters of the following function definition whose types
@@ -94,8 +94,8 @@ pos_t	argsused_pos;
  *
  * The position of the last VARARGS comment is stored in vapos.
  */
-int	nvararg = -1;
-pos_t	vapos;
+int nvararg = -1;
+pos_t vapos;
 
 /*
  * Both printflike_argnum and scanflike_argnum contain the 1-based number
@@ -105,26 +105,26 @@ pos_t	vapos;
  * printflike_pos and scanflike_pos are the positions of the last PRINTFLIKE
  * or SCANFLIKE comment.
  */
-int	printflike_argnum = -1;
-int	scanflike_argnum = -1;
-pos_t	printflike_pos;
-pos_t	scanflike_pos;
+int printflike_argnum = -1;
+int scanflike_argnum = -1;
+pos_t printflike_pos;
+pos_t scanflike_pos;
 
 /*
  * If both plibflg and llibflg are set, prototypes are written as function
  * definitions to the output file.
  */
-bool	plibflg;
+bool plibflg;
 
 /* Temporarily suppress warnings about constants in conditional context. */
-bool	suppress_constcond;
+bool suppress_constcond;
 
 /*
  * Whether a lint library shall be created. The effect of this flag is that
  * all defined symbols are treated as used.
  * (The LINTLIBRARY comment also resets vflag.)
  */
-bool	llibflg;
+bool llibflg;
 
 /*
  * Determines the warnings that are suppressed by a LINTED directive.  For
@@ -134,13 +134,13 @@ bool	llibflg;
  * LWARN_NONE:	all warnings are suppressed
  * n >= 0:	warning n is ignored, the others are active
  */
-int	lwarn = LWARN_ALL;
+int lwarn = LWARN_ALL;
 
 /* Temporarily suppress warnings about wrong types for bit-fields. */
-bool	suppress_bitfieldtype;
+bool suppress_bitfieldtype;
 
 /* Temporarily suppress warnings about use of 'long long'. */
-bool	suppress_longlong;
+bool suppress_longlong;
 
 void
 begin_control_statement(control_statement_kind kind)

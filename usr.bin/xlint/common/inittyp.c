@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.40 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.41 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: inittyp.c,v 1.40 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.41 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #if defined(IS_LINT1)
@@ -78,7 +78,7 @@ __RCSID("$NetBSD: inittyp.c,v 1.40 2023/07/13 08:40:38 rillig Exp $");
 #endif
 
 /* various type information */
-ttab_t	ttab[NTSPEC] = {
+ttab_t ttab[NTSPEC] = {
 	typeinfo(NULL, NO_TSPEC, NO_TSPEC, 0, 0, ' '),
 	typeinfo("signed", SIGNED, UNSIGN, 0, 0, ' '),
 	typeinfo("unsigned", SIGNED, UNSIGN, 0, 0, ' '),

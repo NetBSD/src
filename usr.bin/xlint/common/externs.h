@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.30 2023/08/12 20:48:24 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.31 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -42,21 +42,21 @@ const char *tspec_name(tspec_t);
 /*
  * mem.c
  */
-void	*xmalloc(size_t);
-void	*xcalloc(size_t, size_t);
-void	*xrealloc(void *, size_t);
-char	*xstrdup(const char *);
-char	*xasprintf(const char *, ...) __printflike(1, 2);
+void *xmalloc(size_t);
+void *xcalloc(size_t, size_t);
+void *xrealloc(void *, size_t);
+char *xstrdup(const char *);
+char *xasprintf(const char *, ...) __printflike(1, 2);
 
 /*
  * emit.c
  */
 #if defined(IS_LINT1) || defined(IS_LINT2)
-void	outopen(const char *);
-void	outclose(void);
-void	outchar(char);
-void	outstrg(const char *);
-void	outint(int);
-void	outname(const char *);
-void	outsrc(const char *);
+void outopen(const char *);
+void outclose(void);
+void outchar(char);
+void outstrg(const char *);
+void outint(int);
+void outname(const char *);
+void outsrc(const char *);
 #endif

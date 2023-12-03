@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.34 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.35 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main2.c,v 1.34 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.35 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -47,14 +47,14 @@ __RCSID("$NetBSD: main2.c,v 1.34 2023/07/13 08:40:38 rillig Exp $");
 
 #include "lint2.h"
 
-bool	Cflag;
-bool	Fflag;
-bool	Hflag;
-bool	hflag;
-bool	sflag;
-bool	tflag;
-bool	uflag;
-bool	xflag;
+bool Cflag;
+bool Fflag;
+bool Hflag;
+bool hflag;
+bool sflag;
+bool tflag;
+bool uflag;
+bool xflag;
 const char *libname;
 
 /*
@@ -64,7 +64,7 @@ const char *libname;
  */
 static const char **libs;
 
-static	void	usage(void) __attribute__((noreturn));
+static void usage(void) __attribute__((noreturn));
 
 static void
 check_name_non_const(hte_t *hte)

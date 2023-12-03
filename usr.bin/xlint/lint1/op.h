@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.25 2023/09/14 22:48:49 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.26 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -36,7 +36,7 @@
 /*
  * Various information about operators.
  */
-typedef	struct {
+typedef struct {
 	bool	m_binary: 1;
 	bool	m_returns_bool: 1;
 	bool	m_takes_bool: 1;

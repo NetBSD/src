@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.36 2023/08/12 21:32:16 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.37 2023/12/03 18:17:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit2.c,v 1.36 2023/08/12 21:32:16 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.37 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include "lint2.h"
 
-static	void	outtype(type_t *);
-static	void	outdef(hte_t *, sym_t *);
-static	void	dumpname(hte_t *);
-static	void	outfiles(void);
+static void outtype(type_t *);
+static void outdef(hte_t *, sym_t *);
+static void dumpname(hte_t *);
+static void outfiles(void);
 
 /* Write type into the output file. */
 static void

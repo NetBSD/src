@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.77 2023/07/29 10:45:00 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.78 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.77 2023/07/29 10:45:00 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.78 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,37 +49,37 @@ __RCSID("$NetBSD: main1.c,v 1.77 2023/07/29 10:45:00 rillig Exp $");
 
 #include "lint1.h"
 
-int	aflag;
-bool	bflag;
-bool	cflag;
-bool	eflag;
-bool	Fflag;
-bool	hflag;
-bool	Pflag;
-bool	pflag;
-bool	rflag;
-bool	Tflag;
-bool	uflag;
-bool	vflag;
-bool	wflag;
-bool	yflag;
-bool	zflag;
+int aflag;
+bool bflag;
+bool cflag;
+bool eflag;
+bool Fflag;
+bool hflag;
+bool Pflag;
+bool pflag;
+bool rflag;
+bool Tflag;
+bool uflag;
+bool vflag;
+bool wflag;
+bool yflag;
+bool zflag;
 
 /*
  * The default language level is the one that checks for compatibility
  * between traditional C and C90.  As of 2022, this default is no longer
  * useful since most traditional C code has already been migrated.
  */
-bool	allow_trad = true;
-bool	allow_c90 = true;
-bool	allow_c99;
-bool	allow_c11;
-bool	allow_c23;
-bool	allow_gcc;
+bool allow_trad = true;
+bool allow_c90 = true;
+bool allow_c99;
+bool allow_c11;
+bool allow_c23;
+bool allow_gcc;
 
 sig_atomic_t fpe;
 
-static	void	usage(void);
+static void usage(void);
 
 static FILE *
 gcc_builtins(void)

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.476 2023/10/17 19:33:16 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.477 2023/12/03 18:17:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.476 2023/10/17 19:33:16 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.477 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -50,7 +50,7 @@ extern char *yytext;
  * Contains the level of current declaration, used for symbol table entries.
  * 0 is the top-level, > 0 is inside a function body.
  */
-int	block_level;
+int block_level;
 
 /*
  * level for memory allocation. Normally the same as block_level.
@@ -58,7 +58,7 @@ int	block_level;
  * for these can't be freed after the declaration, but symbols must
  * be removed from the symbol table after the declaration.
  */
-size_t	mem_block_level;
+size_t mem_block_level;
 
 /*
  * Save the no-warns state and restore it to avoid the problem where
@@ -67,9 +67,9 @@ size_t	mem_block_level;
 #define LWARN_NOTHING_SAVED (-3)
 static int saved_lwarn = LWARN_NOTHING_SAVED;
 
-static	void	cgram_declare(sym_t *, bool, sbuf_t *);
-static	void	read_until_rparen(void);
-static	sym_t	*symbolrename(sym_t *, sbuf_t *);
+static void cgram_declare(sym_t *, bool, sbuf_t *);
+static void read_until_rparen(void);
+static sym_t *symbolrename(sym_t *, sbuf_t *);
 
 
 /* ARGSUSED */
@@ -2299,7 +2299,7 @@ cgram_declare(sym_t *decl, bool has_initializer, sbuf_t *renaming)
 static void
 read_until_rparen(void)
 {
-	int	level;
+	int level;
 
 	if (yychar < 0)
 		yychar = yylex();
@@ -2317,7 +2317,7 @@ read_until_rparen(void)
 	yyclearin;
 }
 
-static	sym_t *
+static sym_t *
 symbolrename(sym_t *s, sbuf_t *sb)
 {
 	if (sb != NULL)

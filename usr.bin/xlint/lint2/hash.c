@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.28 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.29 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: hash.c,v 1.28 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.29 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: hash.c,v 1.28 2023/07/13 08:40:38 rillig Exp $");
 
 #define HTAB_BUCKETS		1009
 
-static	hte_t	**htab;
+static hte_t **htab;
 
 hte_t **
 htab_new(void)

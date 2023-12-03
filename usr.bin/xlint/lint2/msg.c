@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.24 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.25 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: msg.c,v 1.24 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.25 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: msg.c,v 1.24 2023/07/13 08:40:38 rillig Exp $");
 
 #include "lint2.h"
 
-static	const	char *msgs[] = {
+static const	char *msgs[] = {
 	"%s used( %s ), but not defined",			      /* 0 */
 	"%s defined( %s ), but never used",			      /* 1 */
 	"%s declared( %s ), but never used or defined",		      /* 2 */

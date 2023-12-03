@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.76 2023/12/03 13:12:40 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.77 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.76 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.77 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ struct filename {
 	const char *fn_name;
 	size_t	fn_len;
 	int	fn_id;
-	struct	filename *fn_next;
+	struct filename *fn_next;
 };
 
 static struct filename *filenames;	/* null-terminated array */

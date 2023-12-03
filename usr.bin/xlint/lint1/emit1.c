@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.80 2023/12/03 13:12:40 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.81 2023/12/03 18:17:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,13 +38,13 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.80 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.81 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include "lint1.h"
 
-static	void	outtt(sym_t *, sym_t *);
-static	void	outfstrg(strg_t *);
+static void outtt(sym_t *, sym_t *);
+static void outfstrg(strg_t *);
 
 /*
  * Write type into the output file, encoded as follows:
