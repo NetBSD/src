@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.118 2023/12/03 12:03:38 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.119 2023/12/03 13:12:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.118 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.119 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -766,8 +766,8 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	/*
-	 * To avoid modifying getopt(3)'s state engine midstream, we
-	 * explicitly accept just a few options after the first source file.
+	 * To avoid modifying getopt(3)'s state engine midstream, we explicitly
+	 * accept just a few options after the first source file.
 	 *
 	 * In particular, only -l<lib> and -L<libdir> (and these with a space
 	 * after -l or -L) are allowed.

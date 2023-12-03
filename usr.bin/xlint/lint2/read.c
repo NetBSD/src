@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.88 2023/12/03 12:03:38 rillig Exp $ */
+/* $NetBSD: read.c,v 1.89 2023/12/03 13:12:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.88 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.89 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -178,9 +178,8 @@ read_ln_line(const char *line)
 	}
 
 	/*
-	 * Index of (included) source file. If this index is
-	 * different from csrcfile, it refers to an included
-	 * file.
+	 * Index of (included) source file. If this index is different from
+	 * csrcfile, it refers to an included file.
 	 */
 	isrc = parse_int(&cp);
 	isrc = inpfns[isrc];
@@ -299,8 +298,8 @@ setfnid(int fid, const char *cp)
 		ninpfns *= 2;
 	}
 	/*
-	 * Should always be true because indices written in the output
-	 * file by lint1 are always the previous index + 1.
+	 * Should always be true because indices written in the output file by
+	 * lint1 are always the previous index + 1.
 	 */
 	if ((size_t)fid >= ninpfns)
 		errx(1, "internal error: setfnid");
@@ -517,11 +516,11 @@ decldef(pos_t pos, const char *cp)
 	sym.s_type = inptype(cp, &cp);
 
 	/*
-	 * Allocate memory for this symbol only if it was not already
-	 * declared or tentatively defined at the same location with
-	 * the same type. Works only for symbols with external linkage,
-	 * because static symbols, tentatively defined at the same location
-	 * but in different translation units are really different symbols.
+	 * Allocate memory for this symbol only if it was not already declared
+	 * or tentatively defined at the same location with the same type.
+	 * Works only for symbols with external linkage, because static
+	 * symbols, tentatively defined at the same location but in different
+	 * translation units are really different symbols.
 	 */
 	for (symp = hte->h_syms; symp != NULL; symp = symp->s_next) {
 		if (symp->s_pos.p_isrc == sym.s_pos.p_isrc &&
@@ -590,10 +589,10 @@ parse_tspec(const char **pp, char c, bool *osdef)
 	char s;
 
 	switch (c) {
-	case 's':	/* 'signed' or 'struct' or 'float' */
-	case 'u':	/* 'unsigned' or 'union' */
-	case 'l':	/* 'long double' */
-	case 'e':	/* 'enum' */
+	case 's':		/* 'signed' or 'struct' or 'float' */
+	case 'u':		/* 'unsigned' or 'union' */
+	case 'l':		/* 'long double' */
+	case 'e':		/* 'enum' */
 		s = c;
 		c = *(*pp)++;
 		break;
@@ -1176,8 +1175,8 @@ mkstatic(hte_t *hte)
 	/*
 	 * Create a new hash table entry
 	 *
-	 * XXX this entry should be put at the beginning of the list to
-	 * avoid processing the same symbol twice.
+	 * XXX this entry should be put at the beginning of the list to avoid
+	 * processing the same symbol twice.
 	 */
 	for (nhte = hte; nhte->h_link != NULL; nhte = nhte->h_link)
 		continue;
@@ -1197,8 +1196,8 @@ mkstatic(hte_t *hte)
 	nhte->h_hte = NULL;
 
 	/*
-	 * move all symbols used in this translation unit into the new
-	 * hash table entry.
+	 * move all symbols used in this translation unit into the new hash
+	 * table entry.
 	 */
 	for (symp = &hte->h_syms; (sym = *symp) != NULL; ) {
 		if (sym->s_pos.p_src == sym1->s_pos.p_src) {

@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.16 2022/05/20 21:18:55 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.17 2023/12/03 13:12:40 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckgetopt.c,v 1.16 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.17 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: ckgetopt.c,v 1.16 2022/05/20 21:18:55 rillig Exp $");
  */
 
 static struct {
-	/*
+	/*-
 	 * 0	means outside a while loop with a getopt call.
 	 * 1	means directly inside a while loop with a getopt call.
 	 * > 1	means in a nested while loop; this is used for finishing the
@@ -61,8 +61,8 @@ static struct {
 
 	/*
 	 * The options string from the getopt call.  Whenever an option is
-	 * handled by a case label, it is set to ' '.  In the end, only ' '
-	 * and ':' should remain.
+	 * handled by a case label, it is set to ' '.  In the end, only ' ' and
+	 * ':' should remain.
 	 */
 	pos_t options_pos;
 	char *options;

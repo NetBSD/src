@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.63 2023/12/03 12:03:38 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.64 2023/12/03 13:12:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.63 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.64 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -205,8 +205,8 @@ check_multiple_definitions(const hte_t *hte)
 	def1 = NULL;
 	for (sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
 		/*
-		 * C90 allows tentative definitions of the same name in
-		 * only one compilation unit.
+		 * C90 allows tentative definitions of the same name in only
+		 * one compilation unit.
 		 */
 		if (sym->s_def != DEF && (!sflag || sym->s_def != TDEF))
 			continue;
@@ -341,9 +341,8 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 
 	/*
 	 * If we find a function definition, we use this for comparison,
-	 * otherwise the first prototype we can find. If there is no
-	 * definition or prototype declaration, the first function call
-	 * is used.
+	 * otherwise the first prototype we can find. If there is no definition
+	 * or prototype declaration, the first function call is used.
 	 */
 	tp1 = NULL;
 	call1 = NULL;
@@ -386,15 +385,15 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 		} else if (def != NULL && def->s_check_only_first_args &&
 		    n >= def->s_check_num_args) {
 			/*
-			 * function definition with VARARGS; The # of
-			 * arguments of the call must be at least as large
-			 * as the parameter of VARARGS.
+			 * function definition with VARARGS; The # of arguments
+			 * of the call must be at least as large as the
+			 * parameter of VARARGS.
 			 */
 		} else if (*ap2 != NULL && tp1->t_proto && tp1->t_vararg) {
 			/*
-			 * prototype with ... and function call with
-			 * at least the same # of arguments as declared
-			 * in the prototype.
+			 * prototype with ... and function call with at least
+			 * the same # of arguments as declared in the
+			 * prototype.
 			 */
 		} else {
 			/* %s: variable # of args  \t%s  ::  %s */
@@ -447,19 +446,18 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	/*
 	 * If a function definition is available (def != NULL), we compare the
 	 * function call (call) with the definition. Otherwise, if a function
-	 * definition is available and it is not an old-style definition
-	 * (decl != NULL && TP(decl->s_type)->t_proto), we compare the call
-	 * with this declaration. Otherwise we compare it with the first
-	 * call we have found (call1).
+	 * definition is available and it is not an old-style definition (decl
+	 * != NULL && TP(decl->s_type)->t_proto), we compare the call with this
+	 * declaration. Otherwise we compare it with the first call we have
+	 * found (call1).
 	 */
 
 	/* arg1 must be promoted if it stems from an old-style definition */
 	promote = def != NULL && def->s_old_style_function;
 
 	/*
-	 * If we compare with a definition or declaration, we must perform
-	 * the same checks for qualifiers in indirected types as in
-	 * assignments.
+	 * If we compare with a definition or declaration, we must perform the
+	 * same checks for qualifiers in indirected types as in assignments.
 	 */
 	asgn = def != NULL || (decl != NULL && TP(decl->s_type)->t_proto);
 
@@ -468,21 +466,22 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	    (!sflag || !dowarn))
 		return;
 
-	/*
-	 * Other lint implementations print warnings as soon as the type
-	 * of an argument does not match exactly the expected type. The
-	 * result are lots of warnings which are really not necessary.
+	/*-
+	 * Other lint implementations print warnings as soon as the type of an
+	 * argument does not match exactly the expected type. The result are
+	 * lots of warnings which are really not necessary.
 	 * We print a warning only if
 	 *   (0) at least one type is not an integer type and types differ
 	 *   (1) hflag is set and types differ
 	 *   (2) types differ, except in signedness
+	 *
 	 * If the argument is an integer constant whose msb is not set,
-	 * signedness is ignored (e.g. 0 matches both signed and unsigned
-	 * int). This is with and without hflag.
-	 * If the argument is an integer constant with value 0 and the
-	 * expected argument is of type pointer and the width of the
-	 * integer constant is the same as the width of the pointer,
-	 * no warning is printed.
+	 * signedness is ignored (e.g. 0 matches both signed and unsigned int).
+	 * This is with and without hflag.
+	 *
+	 * If the argument is an integer constant with value 0 and the expected
+	 * argument is of type pointer and the width of the integer constant is
+	 * the same as the width of the pointer, no warning is printed.
 	 */
 	t1 = arg1->t_tspec;
 	t2 = arg2->t_tspec;
@@ -525,17 +524,17 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 
 			/*
 			 * if two calls are compared, ai1 is set to the
-			 * information for the n-th argument, if this was
-			 * a constant, otherwise to NULL
+			 * information for the n-th argument, if this was a
+			 * constant, otherwise to NULL
 			 */
 			for ( ; ai1 != NULL; ai1 = ai1->a_next) {
 				if (ai1->a_num == n)
 					break;
 			}
 			/*
-			 * ai is set to the information of the n-th arg
-			 * of the (second) call, if this was a constant,
-			 * otherwise to NULL
+			 * ai is set to the information of the n-th arg of the
+			 * (second) call, if this was a constant, otherwise to
+			 * NULL
 			 */
 			for (ai = call->f_args; ai != NULL; ai = ai->a_next) {
 				if (ai->a_num == n)
@@ -556,9 +555,9 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 				/* value (not representation) differently */
 			} else {
 				/*
-				 * two constants, one signed, one unsigned;
-				 * if the msb of one of the constants is set,
-				 * the argument is used inconsistently.
+				 * two constants, one signed, one unsigned; if
+				 * the msb of one of the constants is set, the
+				 * argument is used inconsistently.
 				 */
 				if (!ai1->a_ncon && !ai->a_ncon)
 					return;
@@ -572,8 +571,8 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 		}
 		/*
 		 * Vendor implementations of lint (e.g. HP-UX, Digital UNIX)
-		 * don't care about the size of the integer argument,
-		 * only whether or not it is zero.  We do the same.
+		 * don't care about the size of the integer argument, only
+		 * whether or not it is zero.  We do the same.
 		 */
 		if (ai != NULL && ai->a_zero)
 			return;
@@ -727,8 +726,8 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 					inconsistent_arguments(hte, call, n);
 			} else {
 				/*
-				 * SHORT is always promoted to INT, USHORT
-				 * to INT or UINT.
+				 * SHORT is always promoted to INT, USHORT to
+				 * INT or UINT.
 				 */
 				if (t1 != INT && (hflag || t1 != UINT))
 					inconsistent_arguments(hte, call, n);
@@ -921,8 +920,8 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			goto conv;
 		} else if (fc == 'X') {
 			/*
-			 * XXX valid in C90, but in NetBSD's libc imple-
-			 * mented as "lx". That's why it should be avoided.
+			 * XXX valid in C90, but in NetBSD's libc implemented
+			 * as "lx". That's why it should be avoided.
 			 */
 			if (sz != NO_TSPEC || !tflag)
 				bad_format_string(hte, call);
@@ -930,8 +929,8 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			goto conv;
 		} else if (fc == 'E') {
 			/*
-			 * XXX valid in C90, but in NetBSD's libc imple-
-			 * mented as "lf". That's why it should be avoided.
+			 * XXX valid in C90, but in NetBSD's libc implemented
+			 * as "lf". That's why it should be avoided.
 			 */
 			if (sz != NO_TSPEC || !tflag)
 				bad_format_string(hte, call);
@@ -1069,10 +1068,10 @@ check_return_values(const hte_t *hte, sym_t *def)
 
 	if (def->s_function_has_return_value) {
 		/*
-		 * XXX as soon as we are able to disable single warnings,
-		 * the following dependencies from hflag should be removed.
-		 * But for now I don't want to be bothered by these warnings
-		 * which are almost always useless.
+		 * XXX as soon as we are able to disable single warnings, the
+		 * following dependencies from hflag should be removed. But for
+		 * now I don't want to be bothered by these warnings which are
+		 * almost always useless.
 		 */
 		if (!hflag)
 			return;
@@ -1246,8 +1245,8 @@ types_compatible(type_t *tp1, type_t *tp2,
 		}
 
 		/*
-		 * XXX Handle combinations of enum and int if eflag is set.
-		 * But note: enum and 0 should be allowed.
+		 * XXX Handle combinations of enum and int if eflag is set. But
+		 * note: enum and 0 should be allowed.
 		 */
 
 		if (asgn && indir == 1) {

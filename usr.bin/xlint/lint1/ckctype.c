@@ -1,4 +1,4 @@
-/* $NetBSD: ckctype.c,v 1.8 2023/12/03 12:03:38 rillig Exp $ */
+/* $NetBSD: ckctype.c,v 1.9 2023/12/03 13:12:40 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckctype.c,v 1.8 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: ckctype.c,v 1.9 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -106,7 +106,7 @@ check_ctype_arg(const char *func, const tnode_t *arg)
 		return;
 
 	if (arg->tn_op == CVT && arg->tn_cast) {
-		/* argument to '%s' must be cast to 'unsigned char', not to '%s' */
+		/* argument to '%s' must be cast to 'unsigned char', not ... */
 		warning(342, func, type_name(arg->tn_type));
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.75 2023/12/03 12:03:38 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.76 2023/12/03 13:12:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.75 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.76 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -345,8 +345,8 @@ expr_alloc_tnode(void)
 	tnode_t *tn = expr_zero_alloc(sizeof(*tn), "tnode");
 	/*
 	 * files named *.c that are different from the main translation unit
-	 * typically contain generated code that cannot be influenced, such
-	 * as a flex lexer or a yacc parser.
+	 * typically contain generated code that cannot be influenced, such as
+	 * a flex lexer or a yacc parser.
 	 */
 	tn->tn_sys = in_system_header ||
 		     (curr_pos.p_file != csrc_pos.p_file &&
