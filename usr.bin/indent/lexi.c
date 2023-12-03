@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.239 2023/06/26 20:23:40 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.240 2023/12/03 20:42:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.239 2023/06/26 20:23:40 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.240 2023/12/03 20:42:31 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -523,6 +523,8 @@ lex_asterisk_unary(void)
 	while (*inp_p == '*' || ch_isspace(*inp_p)) {
 		if (*inp_p == '*')
 			token_add_char('*');
+		if (*inp_p == '\n')
+			line_no++;
 		inp_skip();
 	}
 
