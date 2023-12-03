@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.31 2023/12/03 07:17:11 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.32 2023/12/03 07:20:23 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -573,8 +573,8 @@ ${WORKMBR}:
 
 ${WORKGPT}: ${WORKMBR}
 	@echo create GPT image...
-	${DD} if=${WORKMBR} of=${WORKGPT} skip=$$((${IMAGESECTORS} - 2048)) \
-	    count=2048
+	${DD} if=${WORKMBR} of=${WORKGPT} \
+	    skip=$$((${IMAGESECTORS} - ${GPTSECTORS})) count=${GPTSECTORS}
 
 .if ${USE_GPT} == "no"
 ${IMGBASE}.img:	${WORKLABEL}
