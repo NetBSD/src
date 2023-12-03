@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.114 2023/12/03 15:06:45 thorpej Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.115 2023/12/03 19:34:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.114 2023/12/03 15:06:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.115 2023/12/03 19:34:08 thorpej Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -252,7 +252,8 @@ bt_refill_locked(vmem_t *vm)
 
 	mutex_enter(&vmem_btag_lock);
 	while (!LIST_EMPTY(&vmem_btag_freelist) &&
-	    vm->vm_nfreetags <= BT_MINRESERVE) {
+	    vm->vm_nfreetags <= BT_MINRESERVE &&
+	    (vm->vm_flags & VM_PRIVTAGS) == 0) {
 		bt = LIST_FIRST(&vmem_btag_freelist);
 		LIST_REMOVE(bt, bt_freelist);
 		bt->bt_flags = 0;
@@ -360,6 +361,9 @@ bt_freetrim(vmem_t *vm, int freelimit)
 		if (vm->vm_nfreetags <= freelimit) {
 			break;
 		}
+		if (bt->bt_flags & BT_F_PRIVATE) {
+			continue;
+		}
 		LIST_REMOVE(bt, bt_freelist);
 		vm->vm_nfreetags--;
 		if (bt >= static_bts
@@ -380,6 +384,24 @@ bt_freetrim(vmem_t *vm, int freelimit)
 		LIST_REMOVE(bt, bt_freelist);
 		pool_put(&vmem_btag_pool, bt);
 	}
+}
+
+/*
+ * Add private boundary tags (statically-allocated by the caller)
+ * to a vmem arena's free tag list.
+ */
+void
+vmem_add_bts(vmem_t *vm, struct vmem_btag *bts, unsigned int nbts)
+{
+	VMEM_LOCK(vm);
+	while (nbts != 0) {
+		bts->bt_flags = BT_F_PRIVATE;
+		LIST_INSERT_HEAD(&vm->vm_freetags, bts, bt_freelist);
+		vm->vm_nfreetags++;
+		bts++;
+		nbts--;
+	}
+	VMEM_UNLOCK(vm);
 }
 #endif	/* defined(_KERNEL) */
 
