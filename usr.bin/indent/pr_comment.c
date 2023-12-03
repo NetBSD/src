@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.171 2023/06/23 20:59:04 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.172 2023/12/03 21:03:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.171 2023/06/23 20:59:04 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.172 2023/12/03 21:03:58 rillig Exp $");
 
 #include <string.h>
 
@@ -227,7 +227,7 @@ copy_comment_wrap_newline(ssize_t *last_blank, bool seen_newline)
 			com_add_char(' ');
 		*last_blank = (int)com.len - 1;
 	}
-	line_no++;
+	token_end_line_no++;
 
 	/* flush any blanks and/or tabs at start of next line */
 	inp_skip();		/* '\n' */
@@ -299,6 +299,7 @@ copy_comment_wrap(int line_length, bool delim)
 	return;
 
 unterminated_comment:
+	token_start_line_no = token_end_line_no;
 	diag(1, "Unterminated comment");
 	output_line();
 }
@@ -314,13 +315,14 @@ copy_comment_nowrap(void)
 				return;
 
 			if (had_eof) {
+				token_start_line_no = token_end_line_no;
 				diag(1, "Unterminated comment");
 				output_line();
 				return;
 			}
 
 			output_line();
-			line_no++;
+			token_end_line_no++;
 			inp_skip();
 			continue;
 		}
