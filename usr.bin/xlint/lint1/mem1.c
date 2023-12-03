@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.74 2023/08/12 20:48:24 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.75 2023/12/03 12:03:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.74 2023/08/12 20:48:24 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.75 2023/12/03 12:03:38 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -329,7 +329,7 @@ str_ends_with(const char *haystack, const char *needle)
 	size_t nlen = strlen(needle);
 
 	return nlen <= hlen &&
-	       memcmp(haystack + hlen - nlen, needle, nlen) == 0;
+	    memcmp(haystack + hlen - nlen, needle, nlen) == 0;
 }
 
 /*

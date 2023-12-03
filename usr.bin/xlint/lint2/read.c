@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.87 2023/07/13 08:40:38 rillig Exp $ */
+/* $NetBSD: read.c,v 1.88 2023/12/03 12:03:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.87 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.88 2023/12/03 12:03:38 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -635,7 +635,7 @@ parse_tspec(const char **pp, char c, bool *osdef)
 		return s == 'e' ? ENUM : (s == 's' ? STRUCT : UNION);
 	case 'X':
 		return s == 's' ? FCOMPLEX
-				       : (s == 'l' ? LCOMPLEX : DCOMPLEX);
+		    : (s == 'l' ? LCOMPLEX : DCOMPLEX);
 	default:
 		inperr("tspec '%c'", c);
 		/* NOTREACHED */
@@ -698,7 +698,7 @@ inptype(const char *cp, const char **epp)
 				tp->t_proto = true;
 			narg = parse_int(&cp);
 			tp->t_args = xcalloc((size_t)narg + 1,
-					     sizeof(*tp->t_args));
+			    sizeof(*tp->t_args));
 			for (i = 0; i < narg; i++) {
 				if (i == narg - 1 && *cp == 'E') {
 					tp->t_vararg = true;

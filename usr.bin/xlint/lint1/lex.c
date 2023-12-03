@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.193 2023/12/02 21:47:05 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.194 2023/12/03 12:03:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.193 2023/12/02 21:47:05 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.194 2023/12/03 12:03:38 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -689,7 +689,7 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 			ld = ld > 0 ? FLT_MAX : -FLT_MAX;
 		}
 	} else if (typ == DOUBLE
-	    || /* CONSTCOND */LDOUBLE_SIZE == DOUBLE_SIZE) {
+	    || /* CONSTCOND */ LDOUBLE_SIZE == DOUBLE_SIZE) {
 		ld = (double)ld;
 		if (isfinite(ld) == 0) {
 			/* floating-point constant out of range */

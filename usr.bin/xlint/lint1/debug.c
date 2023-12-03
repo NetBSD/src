@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.64 2023/12/02 21:47:05 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.65 2023/12/03 12:03:38 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.64 2023/12/02 21:47:05 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.65 2023/12/03 12:03:38 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -160,7 +160,7 @@ debug_type_details(const type_t *tp)
 		    tp->t_sou->sou_incomplete ? "incomplete" : "complete");
 
 		for (const sym_t *mem = tp->t_sou->sou_first_member;
-		     mem != NULL; mem = mem->s_next) {
+		    mem != NULL; mem = mem->s_next) {
 			debug_sym("", mem, "\n");
 			debug_type_details(mem->s_type);
 		}
@@ -169,7 +169,7 @@ debug_type_details(const type_t *tp)
 	if (tp->t_is_enum) {
 		debug_indent_inc();
 		for (const sym_t *en = tp->t_enum->en_first_enumerator;
-		     en != NULL; en = en->s_next) {
+		    en != NULL; en = en->s_next) {
 			debug_sym("", en, "\n");
 		}
 		debug_indent_dec();
@@ -484,7 +484,7 @@ debug_decl_level(const decl_level *dl)
 		    dl->d_func_def_pos.p_file, dl->d_func_def_pos.p_line,
 		    dl->d_func_def_pos.p_uniq);
 	for (const sym_t *sym = dl->d_func_proto_syms;
-	     sym != NULL; sym = sym->s_next)
+	    sym != NULL; sym = sym->s_next)
 		debug_sym(" func_proto_sym(", sym, ")");
 	debug_printf("\n");
 }
