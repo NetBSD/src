@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem_impl.h,v 1.6 2023/12/02 19:11:52 thorpej Exp $	*/
+/*	$NetBSD: vmem_impl.h,v 1.7 2023/12/03 15:06:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -128,7 +128,8 @@ struct vmem_btag {
 #define	bt_freelist	bt_u.u_freelist
 	vmem_addr_t bt_start;
 	vmem_size_t bt_size;
-	int bt_type;
+	short bt_type;
+	short bt_flags;
 };
 
 #define	BT_TYPE_SPAN		1
