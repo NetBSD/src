@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.5 2022/09/29 06:42:14 skrll Exp $	*/
+/*	$NetBSD: astro.c,v 1.6 2023/12/03 02:03:18 thorpej Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -22,7 +22,7 @@
 
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 #include <sys/kmem.h>
 #include <sys/reboot.h>
 #include <sys/tree.h>
@@ -124,7 +124,7 @@ struct astro_softc {
 	uint64_t *sc_pdir;
 
 	char sc_dvmamapname[20];
-	struct extent *sc_dvmamap;
+	vmem_t *sc_dvmamap;
 	struct hppa_bus_dma_tag sc_dmatag;
 };
 
@@ -328,8 +328,17 @@ astro_attach(device_t parent, device_t self, void *aux)
 	 */
 	snprintf(sc->sc_dvmamapname, sizeof(sc->sc_dvmamapname),
 	    "%s_dvma", device_xname(sc->sc_dv));
-	sc->sc_dvmamap = extent_create(sc->sc_dvmamapname, 0, (1 << iova_bits),
-	    0, 0, EX_WAITOK);
+	sc->sc_dvmamap = vmem_create(sc->sc_dvmamapname,
+				     0,			/* base */
+				     (1 << iova_bits),	/* size */
+				     PAGE_SIZE,		/* quantum */
+				     NULL,		/* allocfn */
+				     NULL,		/* freefn */
+				     NULL,		/* source */
+				     0,			/* qcache_max */
+				     VM_SLEEP,
+				     IPL_VM);
+	KASSERT(sc->sc_dvmamap != NULL);
 
 	sc->sc_dmatag = astro_dmat;
 	sc->sc_dmatag._cookie = sc;
@@ -401,18 +410,18 @@ iommu_iomap_load_map(struct astro_softc *sc, bus_dmamap_t map, int flags)
 	struct iommu_map_state *ims = map->_dm_cookie;
 	struct iommu_page_map *ipm = &ims->ims_map;
 	struct iommu_page_entry *e;
-	int err, seg, s;
+	int err, seg;
 	paddr_t pa, paend;
 	vaddr_t va;
 	bus_size_t sgsize;
 	bus_size_t align, boundary;
-	u_long dvmaddr;
+	vmem_addr_t dvmaddr;
 	bus_addr_t dva;
 	int i;
 
 	/* XXX */
 	boundary = map->_dm_boundary;
-	align = PAGE_SIZE;
+	align = 0;	/* align to quantum */
 
 	iommu_iomap_clear_pages(ims);
 
@@ -432,12 +441,18 @@ iommu_iomap_load_map(struct astro_softc *sc, bus_dmamap_t map, int flags)
 		}
 	}
 
+	const vm_flag_t vmflags = VM_BESTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
 	sgsize = ims->ims_map.ipm_pagecnt * PAGE_SIZE;
-	/* XXXNH */
-	s = splhigh();
-	err = extent_alloc(sc->sc_dvmamap, sgsize, align, boundary,
-	    EX_NOWAIT | EX_BOUNDZERO, &dvmaddr);
-	splx(s);
+	err = vmem_xalloc(sc->sc_dvmamap, sgsize,
+			  align,		/* align */
+			  0,			/* phase */
+			  boundary,		/* nocross */
+			  VMEM_ADDR_MIN,	/* minaddr */
+			  VMEM_ADDR_MAX,	/* maxaddr */
+			  vmflags,
+			  &dvmaddr);
 	if (err)
 		return (err);
 
@@ -514,7 +529,7 @@ iommu_dvmamap_unload(void *v, bus_dmamap_t map)
 	struct iommu_map_state *ims = map->_dm_cookie;
 	struct iommu_page_map *ipm = &ims->ims_map;
 	struct iommu_page_entry *e;
-	int err, i, s;
+	int i;
 
 	/* Remove the IOMMU entries. */
 	for (i = 0, e = ipm->ipm_map; i < ipm->ipm_pagecnt; ++i, ++e)
@@ -525,14 +540,9 @@ iommu_dvmamap_unload(void *v, bus_dmamap_t map)
 
 	bus_dmamap_unload(sc->sc_dmat, map);
 
-	s = splhigh();
-	err = extent_free(sc->sc_dvmamap, ims->ims_dvmastart,
-	    ims->ims_dvmasize, EX_NOWAIT);
+	vmem_xfree(sc->sc_dvmamap, ims->ims_dvmastart, ims->ims_dvmasize);
 	ims->ims_dvmastart = 0;
 	ims->ims_dvmasize = 0;
-	splx(s);
-	if (err)
-		printf("warning: %ld of DVMA space lost\n", ims->ims_dvmasize);
 }
 
 void
@@ -736,7 +746,7 @@ iommu_enter(struct astro_softc *sc, bus_addr_t dva, paddr_t pa, vaddr_t va,
 	if (tte & IOTTE_V) {
 		printf("Overwriting valid tte entry (dva %lx pa %lx "
 		    "&tte %p tte %llx)\n", dva, pa, tte_ptr, tte);
-		extent_print(sc->sc_dvmamap);
+		/* vmem_print(sc->sc_dvmamap);		XXX */
 		panic("IOMMU overwrite");
 	}
 #endif
@@ -773,7 +783,7 @@ iommu_remove(struct astro_softc *sc, bus_addr_t dva)
 	if ((tte & IOTTE_V) == 0) {
 		printf("Removing invalid tte entry (dva %lx &tte %p "
 		    "tte %llx)\n", dva, tte_ptr, tte);
-		extent_print(sc->sc_dvmamap);
+		/* vmem_print(sc->sc_dvmamap);		XXX */
 		panic("IOMMU remove overwrite");
 	}
 #endif
