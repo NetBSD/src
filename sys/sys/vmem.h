@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.24 2023/12/02 21:02:12 thorpej Exp $	*/
+/*	$NetBSD: vmem.h,v 1.25 2023/12/03 19:34:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -93,6 +93,7 @@ void		vmem_printall(const char *, void (*)(const char *, ...)
 #define	VM_POPULATING	0x00040000
 #define	VM_LARGEIMPORT	0x00080000
 #define	VM_XIMPORT	0x00100000
+#define	VM_PRIVTAGS	0x00200000
 
 /* vmem_size typemask */
 #define VMEM_ALLOC	0x01
