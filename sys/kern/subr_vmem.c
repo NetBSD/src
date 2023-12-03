@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.112 2023/12/03 02:50:09 thorpej Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.113 2023/12/03 14:35:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.112 2023/12/03 02:50:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.113 2023/12/03 14:35:54 thorpej Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -347,15 +347,17 @@ bt_free(vmem_t *vm, bt_t *bt)
 static void
 bt_freetrim(vmem_t *vm, int freelimit)
 {
-	bt_t *t;
+	bt_t *bt, *next_bt;
 	LIST_HEAD(, vmem_btag) tofree;
 
 	VMEM_ASSERT_LOCKED(vm);
 
 	LIST_INIT(&tofree);
 
-	while (vm->vm_nfreetags > freelimit) {
-		bt_t *bt = LIST_FIRST(&vm->vm_freetags);
+	LIST_FOREACH_SAFE(bt, &vm->vm_freetags, bt_freelist, next_bt) {
+		if (vm->vm_nfreetags <= freelimit) {
+			break;
+		}
 		LIST_REMOVE(bt, bt_freelist);
 		vm->vm_nfreetags--;
 		if (bt >= static_bts
@@ -372,9 +374,9 @@ bt_freetrim(vmem_t *vm, int freelimit)
 
 	VMEM_UNLOCK(vm);
 	while (!LIST_EMPTY(&tofree)) {
-		t = LIST_FIRST(&tofree);
-		LIST_REMOVE(t, bt_freelist);
-		pool_put(&vmem_btag_pool, t);
+		bt = LIST_FIRST(&tofree);
+		LIST_REMOVE(bt, bt_freelist);
+		pool_put(&vmem_btag_pool, bt);
 	}
 }
 #endif	/* defined(_KERNEL) */
