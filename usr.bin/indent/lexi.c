@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.240 2023/12/03 20:42:31 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.241 2023/12/03 21:03:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.240 2023/12/03 20:42:31 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.241 2023/12/03 21:03:58 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -188,7 +188,7 @@ skip_line_continuation(void)
 	if (inp_p[0] == '\\' && inp_p[1] == '\n') {
 		inp_p++;
 		inp_skip();
-		line_no++;
+		token_end_line_no++;
 		return true;
 	}
 	return false;
@@ -245,7 +245,7 @@ lex_char_or_string(void)
 
 		if (token.s[token.len - 1] == '\\') {
 			if (*inp_p == '\n')
-				line_no++;
+				token_end_line_no++;
 			token_add_char(inp_next());
 		}
 	}
@@ -524,7 +524,7 @@ lex_asterisk_unary(void)
 		if (*inp_p == '*')
 			token_add_char('*');
 		if (*inp_p == '\n')
-			line_no++;
+			token_end_line_no++;
 		inp_skip();
 	}
 
@@ -579,6 +579,7 @@ lexi(void)
 		else
 			break;
 	}
+	token_start_line_no = token_end_line_no;
 
 	lexer_symbol alnum_lsym = lexi_alnum();
 	if (alnum_lsym != lsym_eof)

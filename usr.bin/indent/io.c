@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.232 2023/06/27 04:41:23 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.233 2023/12/03 21:03:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.232 2023/06/27 04:41:23 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.233 2023/12/03 21:03:58 rillig Exp $");
 
 #include <stdio.h>
 
@@ -46,6 +46,8 @@ __RCSID("$NetBSD: io.c,v 1.232 2023/06/27 04:41:23 rillig Exp $");
 
 struct buffer inp;
 const char *inp_p;
+int token_start_line_no;
+int token_end_line_no = 1;
 
 struct output_state out;
 enum indent_enabled indent_enabled;

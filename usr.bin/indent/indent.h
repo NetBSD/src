@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.204 2023/06/26 20:03:09 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.205 2023/12/03 21:03:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -249,7 +249,8 @@ extern struct options {
 
 extern bool found_err;
 extern bool had_eof;		/* whether input is exhausted */
-extern int line_no;		/* the current input line number */
+extern int token_start_line_no;
+extern int token_end_line_no;
 extern enum indent_enabled {
 	indent_on,
 	indent_off,

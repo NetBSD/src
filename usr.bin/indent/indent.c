@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.387 2023/06/27 04:41:23 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.388 2023/12/03 21:03:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.387 2023/06/27 04:41:23 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.388 2023/12/03 21:03:58 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -80,7 +80,6 @@ struct buffer com;
 
 bool found_err;
 bool had_eof;
-int line_no = 1;
 
 static struct {
 	struct parser_state *item;
@@ -158,7 +157,7 @@ diag(int level, const char *msg, ...)
 
 	va_start(ap, msg);
 	fprintf(stderr, "%s: %s:%d: ",
-	    level == 0 ? "warning" : "error", in_name, line_no);
+	    level == 0 ? "warning" : "error", in_name, token_start_line_no);
 	vfprintf(stderr, msg, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
@@ -580,7 +579,7 @@ process_newline(void)
 	output_line();
 
 stay_in_line:
-	line_no++;
+	token_end_line_no++;
 }
 
 static bool
@@ -1109,7 +1108,8 @@ indent(void)
 		lexer_symbol lsym = lexi();
 
 		debug_blank_line();
-		debug_printf("line %d: %s", line_no, lsym_name[lsym]);
+		debug_printf("line %d: %s",
+		    token_start_line_no, lsym_name[lsym]);
 		debug_print_buf("token", &token);
 		debug_buffers();
 		debug_blank_line();
