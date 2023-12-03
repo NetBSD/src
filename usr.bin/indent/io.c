@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.234 2023/12/03 21:40:44 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.235 2023/12/03 21:44:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.234 2023/12/03 21:40:44 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.235 2023/12/03 21:44:42 rillig Exp $");
 
 #include <stdio.h>
 
@@ -62,26 +62,26 @@ static int paren_indent;	/* total indentation when parenthesized */
 static void
 inp_read_next_line(void)
 {
-	buf_clear(&inp);
+	buf_clear(&in.line);
 
 	for (;;) {
-		int ch = getc(input);
+		int ch = getc(in.f);
 		if (ch == EOF) {
 			if (indent_enabled == indent_on) {
-				buf_add_char(&inp, ' ');
-				buf_add_char(&inp, '\n');
+				buf_add_char(&in.line, ' ');
+				buf_add_char(&in.line, '\n');
 			}
 			had_eof = true;
 			break;
 		}
 
 		if (ch != '\0')
-			buf_add_char(&inp, (char)ch);
+			buf_add_char(&in.line, (char)ch);
 		if (ch == '\n')
 			break;
 	}
-	buf_terminate(&inp);
-	inp_p = inp.s;
+	buf_terminate(&in.line);
+	in.p = in.line.s;
 }
 
 void
@@ -89,22 +89,22 @@ inp_read_line(void)
 {
 	if (indent_enabled == indent_on)
 		buf_clear(&out.indent_off_text);
-	buf_add_chars(&out.indent_off_text, inp.s, inp.len);
+	buf_add_chars(&out.indent_off_text, in.line.s, in.line.len);
 	inp_read_next_line();
 }
 
 void
 inp_skip(void)
 {
-	inp_p++;
-	if ((size_t)(inp_p - inp.s) >= inp.len)
+	in.p++;
+	if ((size_t)(in.p - in.line.s) >= in.line.len)
 		inp_read_line();
 }
 
 char
 inp_next(void)
 {
-	char ch = inp_p[0];
+	char ch = in.p[0];
 	inp_skip();
 	return ch;
 }

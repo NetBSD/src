@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.389 2023/12/03 21:40:44 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.390 2023/12/03 21:44:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.389 2023/12/03 21:40:44 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.390 2023/12/03 21:44:42 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -156,7 +156,7 @@ diag(int level, const char *msg, ...)
 
 	va_start(ap, msg);
 	fprintf(stderr, "%s: %s:%d: ",
-	    level == 0 ? "warning" : "error", in_name, token_start_line_no);
+	    level == 0 ? "warning" : "error", in_name, in.token_start_line);
 	vfprintf(stderr, msg, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
@@ -228,17 +228,17 @@ copy_to_bak_file(void)
 	if (bak == NULL)
 		err(1, "%s", backup_name);
 
-	while ((n = fread(buff, 1, sizeof(buff), input)) > 0)
+	while ((n = fread(buff, 1, sizeof(buff), in.f)) > 0)
 		if (fwrite(buff, 1, n, bak) != n)
 			err(1, "%s", backup_name);
-	if (fclose(input) != 0)
+	if (fclose(in.f) != 0)
 		err(1, "%s", in_name);
 	if (fclose(bak) != 0)
 		err(1, "%s", backup_name);
 
 	/* re-open the backup file as the input file */
-	input = fopen(backup_name, "r");
-	if (input == NULL)
+	in.f = fopen(backup_name, "r");
+	if (in.f == NULL)
 		err(1, "%s", backup_name);
 	/* now the original input file will be the output */
 	output = fopen(in_name, "w");
@@ -257,9 +257,9 @@ parse_command_line(int argc, char **argv)
 		if (arg[0] == '-') {
 			set_option(arg, "Command line");
 
-		} else if (input == NULL) {
+		} else if (in.f == NULL) {
 			in_name = arg;
-			if ((input = fopen(in_name, "r")) == NULL)
+			if ((in.f = fopen(in_name, "r")) == NULL)
 				err(1, "%s", in_name);
 
 		} else if (output == NULL) {
@@ -273,8 +273,8 @@ parse_command_line(int argc, char **argv)
 			errx(1, "too many arguments: %s", arg);
 	}
 
-	if (input == NULL) {
-		input = stdin;
+	if (in.f == NULL) {
+		in.f = stdin;
 		output = stdout;
 	} else if (output == NULL)
 		copy_to_bak_file();
@@ -300,7 +300,7 @@ set_initial_indentation(void)
 	inp_read_line();
 
 	int ind = 0;
-	for (const char *p = inp_p;; p++) {
+	for (const char *p = in.p;; p++) {
 		if (*p == ' ')
 			ind++;
 		else if (*p == '\t')
@@ -417,7 +417,7 @@ read_preprocessing_line(void)
 
 	buf_add_char(&lab, '#');
 
-	while (inp_p[0] != '\n' || (state == COMM && !had_eof)) {
+	while (in.p[0] != '\n' || (state == COMM && !had_eof)) {
 		buf_add_char(&lab, inp_next());
 		switch (lab.s[lab.len - 1]) {
 		case '\\':
@@ -425,9 +425,9 @@ read_preprocessing_line(void)
 				buf_add_char(&lab, inp_next());
 			break;
 		case '/':
-			if (inp_p[0] == '*' && state == PLAIN) {
+			if (in.p[0] == '*' && state == PLAIN) {
 				state = COMM;
-				buf_add_char(&lab, *inp_p++);
+				buf_add_char(&lab, *in.p++);
 			}
 			break;
 		case '"':
@@ -443,9 +443,9 @@ read_preprocessing_line(void)
 				state = CHR;
 			break;
 		case '*':
-			if (inp_p[0] == '/' && state == COMM) {
+			if (in.p[0] == '/' && state == COMM) {
 				state = PLAIN;
-				buf_add_char(&lab, *inp_p++);
+				buf_add_char(&lab, *in.p++);
 			}
 			break;
 		}
@@ -578,7 +578,7 @@ process_newline(void)
 	output_line();
 
 stay_in_line:
-	token_end_line_no++;
+	in.token_end_line++;
 }
 
 static bool
@@ -641,7 +641,7 @@ rparen_is_cast(bool paren_cast)
 		return true;
 	if (ps.spaced_expr_psym != psym_0 && ps.paren.len == 0)
 		return false;
-	return paren_cast || ch_isalpha(inp_p[0]) || inp_p[0] == '{';
+	return paren_cast || ch_isalpha(in.p[0]) || in.p[0] == '{';
 }
 
 static void
@@ -982,7 +982,7 @@ process_word(lexer_symbol lsym)
 		if (lsym == lsym_funcname) {
 			ps.in_decl = false;
 			if (opt.procnames_start_line
-			    && code.len > (*inp_p == ')' ? 1 : 0))
+			    && code.len > (*in.p == ')' ? 1 : 0))
 				output_line();
 			else if (ps.want_blank)
 				buf_add_char(&code, ' ');
@@ -1108,7 +1108,7 @@ indent(void)
 
 		debug_blank_line();
 		debug_printf("line %d: %s",
-		    token_start_line_no, lsym_name[lsym]);
+		    in.token_start_line, lsym_name[lsym]);
 		debug_print_buf("token", &token);
 		debug_buffers();
 		debug_blank_line();

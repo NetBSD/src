@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.241 2023/12/03 21:03:58 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.242 2023/12/03 21:44:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.241 2023/12/03 21:03:58 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.242 2023/12/03 21:44:42 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -185,10 +185,10 @@ token_add_char(char ch)
 static bool
 skip_line_continuation(void)
 {
-	if (inp_p[0] == '\\' && inp_p[1] == '\n') {
-		inp_p++;
+	if (in.p[0] == '\\' && in.p[1] == '\n') {
+		in.p++;
 		inp_skip();
-		token_end_line_no++;
+		in.token_end_line++;
 		return true;
 	}
 	return false;
@@ -198,7 +198,7 @@ static void
 lex_number(void)
 {
 	for (unsigned char s = 'A'; s != 'f' && s != 'i' && s != 'u';) {
-		unsigned char ch = (unsigned char)*inp_p;
+		unsigned char ch = (unsigned char)*in.p;
 		if (skip_line_continuation())
 			continue;
 		if (ch >= array_length(lex_number_row)
@@ -221,8 +221,8 @@ static void
 lex_word(void)
 {
 	for (;;) {
-		if (is_identifier_part(*inp_p))
-			token_add_char(*inp_p++);
+		if (is_identifier_part(*in.p))
+			token_add_char(*in.p++);
 		else if (skip_line_continuation())
 			continue;
 		else
@@ -234,18 +234,18 @@ static void
 lex_char_or_string(void)
 {
 	for (char delim = token.s[token.len - 1];;) {
-		if (*inp_p == '\n') {
+		if (*in.p == '\n') {
 			diag(1, "Unterminated literal");
 			return;
 		}
 
-		token_add_char(*inp_p++);
+		token_add_char(*in.p++);
 		if (token.s[token.len - 1] == delim)
 			return;
 
 		if (token.s[token.len - 1] == '\\') {
-			if (*inp_p == '\n')
-				token_end_line_no++;
+			if (*in.p == '\n')
+				in.token_end_line++;
 			token_add_char(inp_next());
 		}
 	}
@@ -264,10 +264,10 @@ probably_typename(void)
 	if (ps.prev_lsym == lsym_semicolon
 	    || ps.prev_lsym == lsym_lbrace
 	    || ps.prev_lsym == lsym_rbrace) {
-		if (inp_p[0] == '*' && inp_p[1] != '=')
+		if (in.p[0] == '*' && in.p[1] != '=')
 			return true;
 		/* XXX: is_identifier_start */
-		if (ch_isalpha(inp_p[0]))
+		if (ch_isalpha(in.p[0]))
 			return true;
 	}
 	return false;
@@ -381,15 +381,15 @@ probably_function_definition(const char *p)
 static lexer_symbol
 lexi_alnum(void)
 {
-	if (ch_isdigit(inp_p[0]) ||
-	    (inp_p[0] == '.' && ch_isdigit(inp_p[1]))) {
+	if (ch_isdigit(in.p[0]) ||
+	    (in.p[0] == '.' && ch_isdigit(in.p[1]))) {
 		lex_number();
-	} else if (is_identifier_start(inp_p[0])) {
+	} else if (is_identifier_start(in.p[0])) {
 		lex_word();
 
 		if (token.len == 1 && token.s[0] == 'L' &&
-		    (inp_p[0] == '"' || inp_p[0] == '\'')) {
-			token_add_char(*inp_p++);
+		    (in.p[0] == '"' || in.p[0] == '\'')) {
+			token_add_char(*in.p++);
 			lex_char_or_string();
 			ps.next_unary = false;
 			return lsym_word;
@@ -397,18 +397,18 @@ lexi_alnum(void)
 	} else
 		return lsym_eof;	/* just as a placeholder */
 
-	while (ch_isblank(*inp_p))
-		inp_p++;
+	while (ch_isblank(*in.p))
+		in.p++;
 
 	ps.next_unary = ps.prev_lsym == lsym_tag
 	    || ps.prev_lsym == lsym_typedef
-	    || (ps.prev_lsym == lsym_modifier && *inp_p == '*');
+	    || (ps.prev_lsym == lsym_modifier && *in.p == '*');
 
 	if (ps.prev_lsym == lsym_tag && ps.paren.len == 0)
 		return lsym_type;
 	if (ps.spaced_expr_psym == psym_for_exprs
 	    && ps.prev_lsym == lsym_lparen && ps.paren.len == 1
-	    && *inp_p == '*') {
+	    && *in.p == '*') {
 		ps.next_unary = true;
 		return lsym_type;
 	}
@@ -439,13 +439,13 @@ found_typename:
 		}
 	}
 
-	const char *p = inp_p;
+	const char *p = in.p;
 	if (*p == ')')
 		p++;
 	if (*p == '(' && ps.psyms.len < 3 && ps.ind_level == 0 &&
 	    !ps.in_func_def_params && !ps.in_init) {
 
-		bool maybe_function_definition = *inp_p == ')'
+		bool maybe_function_definition = *in.p == ')'
 		    ? ps.paren.len == 1 && ps.prev_lsym != lsym_unary_op
 		    : ps.paren.len == 0;
 		if (maybe_function_definition
@@ -467,7 +467,7 @@ found_typename:
 static void
 check_parenthesized_function_definition(void)
 {
-	const char *p = inp_p;
+	const char *p = in.p;
 	while (ch_isblank(*p))
 		p++;
 	if (is_identifier_start(*p))
@@ -487,7 +487,7 @@ check_parenthesized_function_definition(void)
 static bool
 is_asterisk_unary(void)
 {
-	const char *p = inp_p;
+	const char *p = in.p;
 	while (*p == '*' || ch_isblank(*p))
 		p++;
 	if (*p == ')')
@@ -504,7 +504,7 @@ is_asterisk_unary(void)
 static bool
 probably_in_function_definition(void)
 {
-	for (const char *p = inp_p; *p != '\n';) {
+	for (const char *p = in.p; *p != '\n';) {
 		if (ch_isspace(*p))
 			p++;
 		else if (is_identifier_start(*p)) {
@@ -520,11 +520,11 @@ probably_in_function_definition(void)
 static void
 lex_asterisk_unary(void)
 {
-	while (*inp_p == '*' || ch_isspace(*inp_p)) {
-		if (*inp_p == '*')
+	while (*in.p == '*' || ch_isspace(*in.p)) {
+		if (*in.p == '*')
 			token_add_char('*');
-		if (*inp_p == '\n')
-			token_end_line_no++;
+		if (*in.p == '\n')
+			in.token_end_line++;
 		inp_skip();
 	}
 
@@ -548,7 +548,7 @@ skip(const char **pp, const char *s)
 static void
 lex_indent_comment(void)
 {
-	const char *p = inp.s;
+	const char *p = in.line.s;
 	if (skip(&p, "/*") && skip(&p, "INDENT")) {
 		enum indent_enabled enabled;
 		if (skip(&p, "ON") || *p == '*')
@@ -572,14 +572,14 @@ lexi(void)
 	buf_clear(&token);
 
 	for (;;) {
-		if (ch_isblank(*inp_p))
-			inp_p++;
+		if (ch_isblank(*in.p))
+			in.p++;
 		else if (skip_line_continuation())
 			continue;
 		else
 			break;
 	}
-	token_start_line_no = token_end_line_no;
+	in.token_start_line = in.token_end_line;
 
 	lexer_symbol alnum_lsym = lexi_alnum();
 	if (alnum_lsym != lsym_eof)
@@ -618,7 +618,7 @@ lexi(void)
 	/* INDENT ON */
 
 	case '(':
-		if (inp_p == inp.s + 1)
+		if (in.p == in.line.s + 1)
 			check_parenthesized_function_definition();
 		lsym = lsym_lparen;
 		next_unary = true;
@@ -630,8 +630,8 @@ lexi(void)
 		next_unary = true;
 
 		/* '++' or '--' */
-		if (*inp_p == token.s[token.len - 1]) {
-			token_add_char(*inp_p++);
+		if (*in.p == token.s[token.len - 1]) {
+			token_add_char(*in.p++);
 			if (ps.prev_lsym == lsym_word ||
 			    ps.prev_lsym == lsym_rparen ||
 			    ps.prev_lsym == lsym_rbracket) {
@@ -640,11 +640,11 @@ lexi(void)
 				next_unary = false;
 			}
 
-		} else if (*inp_p == '=') {	/* '+=' or '-=' */
-			token_add_char(*inp_p++);
+		} else if (*in.p == '=') {	/* '+=' or '-=' */
+			token_add_char(*in.p++);
 
-		} else if (*inp_p == '>') {	/* '->' */
-			token_add_char(*inp_p++);
+		} else if (*in.p == '>') {	/* '->' */
+			token_add_char(*in.p++);
 			lsym = lsym_unary_op;
 			next_unary = false;
 			ps.want_blank = false;
@@ -659,8 +659,8 @@ lexi(void)
 		break;
 
 	case '*':
-		if (*inp_p == '=') {
-			token_add_char(*inp_p++);
+		if (*in.p == '=') {
+			token_add_char(*in.p++);
 			lsym = lsym_binary_op;
 		} else if (is_asterisk_unary()) {
 			lex_asterisk_unary();
@@ -673,8 +673,8 @@ lexi(void)
 	case '=':
 		if (ps.in_var_decl)
 			ps.in_init = true;
-		if (*inp_p == '=')
-			token_add_char(*inp_p++);
+		if (*in.p == '=')
+			token_add_char(*in.p++);
 		lsym = lsym_binary_op;
 		next_unary = true;
 		break;
@@ -682,10 +682,10 @@ lexi(void)
 	case '>':
 	case '<':
 	case '!':		/* ops like <, <<, <=, !=, etc. */
-		if (*inp_p == '>' || *inp_p == '<' || *inp_p == '=')
-			token_add_char(*inp_p++);
-		if (*inp_p == '=')
-			token_add_char(*inp_p++);
+		if (*in.p == '>' || *in.p == '<' || *in.p == '=')
+			token_add_char(*in.p++);
+		if (*in.p == '=')
+			token_add_char(*in.p++);
 		lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 		next_unary = true;
 		break;
@@ -699,12 +699,12 @@ lexi(void)
 
 	default:
 		if (token.s[token.len - 1] == '/'
-		    && (*inp_p == '*' || *inp_p == '/')) {
+		    && (*in.p == '*' || *in.p == '/')) {
 			enum indent_enabled prev = indent_enabled;
 			lex_indent_comment();
 			if (prev == indent_on && indent_enabled == indent_off)
 				buf_clear(&out.indent_off_text);
-			token_add_char(*inp_p++);
+			token_add_char(*in.p++);
 			lsym = lsym_comment;
 			next_unary = ps.next_unary;
 			break;
@@ -712,10 +712,10 @@ lexi(void)
 
 		/* punctuation like '%', '&&', '/', '^', '||', '~' */
 		lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
-		if (*inp_p == token.s[token.len - 1])
-			token_add_char(*inp_p++), lsym = lsym_binary_op;
-		if (*inp_p == '=')
-			token_add_char(*inp_p++), lsym = lsym_binary_op;
+		if (*in.p == token.s[token.len - 1])
+			token_add_char(*in.p++), lsym = lsym_binary_op;
+		if (*in.p == '=')
+			token_add_char(*in.p++), lsym = lsym_binary_op;
 
 		next_unary = true;
 	}

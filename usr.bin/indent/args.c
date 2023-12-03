@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.85 2023/06/15 09:19:06 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.86 2023/12/03 21:44:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: args.c,v 1.85 2023/06/15 09:19:06 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.86 2023/12/03 21:44:42 rillig Exp $");
 
 /* Read options from profile files and from the command line. */
 
@@ -168,8 +168,8 @@ set_special_option(const char *arg, const char *option_source)
 	}
 
 	if (strcmp(arg, "st") == 0) {
-		if (input == NULL)
-			input = stdin;
+		if (in.f == NULL)
+			in.f = stdin;
 		if (output == NULL)
 			output = stdout;
 		return true;

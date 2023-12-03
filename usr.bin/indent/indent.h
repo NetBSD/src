@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.206 2023/12/03 21:40:44 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.207 2023/12/03 21:44:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -160,12 +160,6 @@ extern struct input_state {
 	int token_start_line;
 	int token_end_line;
 } in;
-
-#define input in.f
-#define inp in.line
-#define inp_p in.p
-#define token_start_line_no in.token_start_line
-#define token_end_line_no in.token_end_line
 
 extern FILE *output;
 

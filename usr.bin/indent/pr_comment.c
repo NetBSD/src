@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.172 2023/12/03 21:03:58 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.173 2023/12/03 21:44:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.172 2023/12/03 21:03:58 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.173 2023/12/03 21:44:42 rillig Exp $");
 
 #include <string.h>
 
@@ -60,9 +60,9 @@ com_add_star(void)
 static bool
 fits_in_one_line(int max_line_length)
 {
-	for (const char *start = inp_p, *p = start; *p != '\n'; p++) {
+	for (const char *start = in.p, *p = start; *p != '\n'; p++) {
 		if (p[0] == '*' && p[1] == '/') {
-			while (p - inp_p >= 2
+			while (p - in.p >= 2
 			    && ch_isblank(p[-1])
 			    && ch_isblank(p[-2]))
 				p--;
@@ -78,7 +78,7 @@ fits_in_one_line(int max_line_length)
 static bool
 is_block_comment(void)
 {
-	const char *p = inp_p;
+	const char *p = in.p;
 	while (*p == '*')
 		p++;
 	return *p == '\n';
@@ -92,13 +92,13 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 	int ind;
 	int line_length = opt.max_line_length;
 
-	if (inp_p - inp.s == 2 && !opt.format_col1_comments) {
+	if (in.p - in.line.s == 2 && !opt.format_col1_comments) {
 		may_wrap = false;
 		ind = 0;
 	} else {
-		if (inp_p[0] == '-' || inp_p[0] == '*' ||
+		if (in.p[0] == '-' || in.p[0] == '*' ||
 		    token.s[token.len - 1] == '/' ||
-		    (inp_p[0] == '\n' && !opt.format_block_comments))
+		    (in.p[0] == '\n' && !opt.format_block_comments))
 			may_wrap = false;
 
 		if (com.len > 0)
@@ -111,7 +111,7 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 			if (ind <= 0)
 				ind = opt.format_col1_comments ? 0 : 1;
 			line_length = opt.block_comment_max_line_length;
-			if (may_wrap && inp_p[0] == '\n')
+			if (may_wrap && in.p[0] == '\n')
 				delim = true;
 			if (may_wrap && opt.comment_delimiter_on_blank_line)
 				delim = true;
@@ -133,13 +133,13 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 	if (!may_wrap) {
 		/* Find out how much indentation there was originally, because
 		 * that much will have to be ignored by output_line. */
-		size_t len = (size_t)(inp_p - 2 - inp.s);
-		ps.comment_shift = -ind_add(0, inp.s, len);
+		size_t len = (size_t)(in.p - 2 - in.line.s);
+		ps.comment_shift = -ind_add(0, in.line.s, len);
 	} else {
 		ps.comment_shift = 0;
-		if (!(inp_p[0] == '\t' && !ch_isblank(inp_p[1])))
-			while (ch_isblank(inp_p[0]))
-				inp_p++;
+		if (!(in.p[0] == '\t' && !ch_isblank(in.p[1])))
+			while (ch_isblank(in.p[0]))
+				in.p++;
 	}
 
 	ps.comment_ind = ind;
@@ -155,7 +155,7 @@ copy_comment_start(bool may_wrap, bool *delim, int line_length)
 	buf_add_chars(&com, token.s, token.len);	// "/*" or "//"
 
 	if (may_wrap) {
-		if (!ch_isblank(inp_p[0]))
+		if (!ch_isblank(in.p[0]))
 			com_add_char(' ');
 
 		if (*delim && fits_in_one_line(line_length))
@@ -177,7 +177,7 @@ copy_comment_wrap_text(int line_length, ssize_t *last_blank)
 			*last_blank = (ssize_t)com.len;
 		com_add_char(ch);
 		ind++;
-		if (memchr("*\n\r\t", inp_p[0], 5) != NULL)
+		if (memchr("*\n\r\t", in.p[0], 5) != NULL)
 			break;
 		if (ind >= line_length && *last_blank != -1)
 			break;
@@ -227,18 +227,18 @@ copy_comment_wrap_newline(ssize_t *last_blank, bool seen_newline)
 			com_add_char(' ');
 		*last_blank = (int)com.len - 1;
 	}
-	token_end_line_no++;
+	in.token_end_line++;
 
 	/* flush any blanks and/or tabs at start of next line */
 	inp_skip();		/* '\n' */
-	while (ch_isblank(inp_p[0]))
-		inp_p++;
-	if (inp_p[0] == '*' && inp_p[1] == '/')
+	while (ch_isblank(in.p[0]))
+		in.p++;
+	if (in.p[0] == '*' && in.p[1] == '/')
 		return false;
-	if (inp_p[0] == '*') {
-		inp_p++;
-		while (ch_isblank(inp_p[0]))
-			inp_p++;
+	if (in.p[0] == '*') {
+		in.p++;
+		while (ch_isblank(in.p[0]))
+			in.p++;
 	}
 
 	return true;
@@ -266,7 +266,7 @@ copy_comment_wrap_finish(int line_length, bool delim)
 		com.len--;
 	buf_terminate(&com);
 
-	inp_p += 2;
+	in.p += 2;
 	if (com.len > 0 && ch_isblank(com.s[com.len - 1]))
 		buf_add_chars(&com, "*/", 2);
 	else
@@ -280,14 +280,14 @@ copy_comment_wrap(int line_length, bool delim)
 	bool seen_newline = false;
 
 	for (;;) {
-		if (inp_p[0] == '\n') {
+		if (in.p[0] == '\n') {
 			if (had_eof)
 				goto unterminated_comment;
 			if (!copy_comment_wrap_newline(&last_blank,
 				seen_newline))
 				break;
 			seen_newline = true;
-		} else if (inp_p[0] == '*' && inp_p[1] == '/')
+		} else if (in.p[0] == '*' && in.p[1] == '/')
 			break;
 		else {
 			copy_comment_wrap_text(line_length, &last_blank);
@@ -299,7 +299,7 @@ copy_comment_wrap(int line_length, bool delim)
 	return;
 
 unterminated_comment:
-	token_start_line_no = token_end_line_no;
+	in.token_start_line = in.token_end_line;
 	diag(1, "Unterminated comment");
 	output_line();
 }
@@ -310,30 +310,30 @@ copy_comment_nowrap(void)
 	char kind = token.s[token.len - 1];
 
 	for (;;) {
-		if (inp_p[0] == '\n') {
+		if (in.p[0] == '\n') {
 			if (kind == '/')
 				return;
 
 			if (had_eof) {
-				token_start_line_no = token_end_line_no;
+				in.token_start_line = in.token_end_line;
 				diag(1, "Unterminated comment");
 				output_line();
 				return;
 			}
 
 			output_line();
-			token_end_line_no++;
+			in.token_end_line++;
 			inp_skip();
 			continue;
 		}
 
-		if (kind == '*' && inp_p[0] == '*' && inp_p[1] == '/') {
-			com_add_char(*inp_p++);
-			com_add_char(*inp_p++);
+		if (kind == '*' && in.p[0] == '*' && in.p[1] == '/') {
+			com_add_char(*in.p++);
+			com_add_char(*in.p++);
 			return;
 		}
 
-		com_add_char(*inp_p++);
+		com_add_char(*in.p++);
 	}
 }
 
