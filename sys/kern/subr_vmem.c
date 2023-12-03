@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.111 2023/12/02 21:02:12 thorpej Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.112 2023/12/03 02:50:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.111 2023/12/02 21:02:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.112 2023/12/03 02:50:09 thorpej Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -205,6 +205,7 @@ static kmutex_t vmem_btag_lock;
 static LIST_HEAD(, vmem_btag) vmem_btag_freelist;
 static size_t vmem_btag_freelist_count = 0;
 static struct pool vmem_btag_pool;
+static bool vmem_btag_pool_initialized __read_mostly;
 
 /* ---- boundary tag */
 
@@ -263,6 +264,7 @@ bt_refill_locked(vmem_t *vm)
 
 	while (vm->vm_nfreetags <= BT_MINRESERVE) {
 		VMEM_UNLOCK(vm);
+		KASSERT(vmem_btag_pool_initialized);
 		mutex_enter(&vmem_btag_refill_lock);
 		bt = pool_get(&vmem_btag_pool, PR_NOWAIT);
 		mutex_exit(&vmem_btag_refill_lock);
@@ -697,6 +699,7 @@ vmem_subsystem_init(vmem_t *vm)
 
 	pool_init(&vmem_btag_pool, sizeof(bt_t), coherency_unit, 0,
 	    PR_PHINPAGE, "vmembt", &pool_allocator_vmem_meta, IPL_VM);
+	vmem_btag_pool_initialized = true;
 }
 #endif /* defined(_KERNEL) */
 
