@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.19 2016/07/07 06:55:39 msaitoh Exp $ */
+/* $NetBSD: sgmap.c,v 1.20 2023/12/03 00:49:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.19 2016/07/07 06:55:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.20 2023/12/03 00:49:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,16 +89,18 @@ vax_sgmap_init(bus_dma_tag_t t, struct vax_sgmap *sgmap, const char *name,
 	}
 
 	/*
-	 * Create the extent map used to manage the virtual address
+	 * Create the arena used to manage the virtual address
 	 * space.
 	 */
-	sgmap->aps_ex = extent_create(name, sgvabase, sgvasize - 1,
-	    NULL, 0, EX_NOWAIT|EX_NOCOALESCE);
-	if (sgmap->aps_ex == NULL) {
-		printf("unable to create extent map for sgmap `%s'\n", name);
-		goto die;
-	}
-
+	sgmap->aps_arena = vmem_create(name, sgvabase, sgvasize,
+				       VAX_NBPG,	/* quantum */
+				       NULL,		/* importfn */
+				       NULL,		/* releasefn */
+				       NULL,		/* source */
+				       0,		/* qcache_max */
+				       VM_SLEEP,
+				       IPL_VM);
+	KASSERT(sgmap->aps_arena != NULL);
 	return;
  die:
 	panic("vax_sgmap_init");
@@ -131,9 +133,18 @@ vax_sgmap_alloc(bus_dmamap_t map, bus_size_t origlen, struct vax_sgmap *sgmap,
 	    (unsigned int)origlen, (unsigned int)len, (unsigned int)map->_dm_sgvalen, (unsigned int)map->_dm_boundary, 1);
 #endif
 
-	error = extent_alloc(sgmap->aps_ex, map->_dm_sgvalen, VAX_NBPG,
-	    0, (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK,
-	    &map->_dm_sgva);
+	const vm_flag_t vmflags = VM_BESTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
+	error = vmem_xalloc(sgmap->aps_arena, map->_dm_sgvalen,
+			    0,			/* alignment */
+			    0,			/* phase */
+			    map->_dm_boundary,	/* nocross */
+			    VMEM_ADDR_MIN,	/* minaddr */
+			    VMEM_ADDR_MAX,	/* maxaddr */
+			    vmflags,
+			    &map->_dm_sgva);
+
 #if DEBUG_SGMAP
 	printf("error %d _dm_sgva %lx\n", error, map->_dm_sgva);
 #endif
@@ -155,9 +166,7 @@ vax_sgmap_free(bus_dmamap_t map, struct vax_sgmap *sgmap)
 		panic("vax_sgmap_free: no sgva space to free");
 #endif
 
-	if (extent_free(sgmap->aps_ex, map->_dm_sgva, map->_dm_sgvalen,
-	    EX_NOWAIT))
-		panic("vax_sgmap_free");
+	vmem_xfree(sgmap->aps_arena, map->_dm_sgva, map->_dm_sgvalen);
 
 	map->_dm_flags &= ~DMAMAP_HAS_SGMAP;
 }
@@ -165,7 +174,7 @@ vax_sgmap_free(bus_dmamap_t map, struct vax_sgmap *sgmap)
 int
 vax_sgmap_reserve(bus_addr_t ba, bus_size_t len, struct vax_sgmap *sgmap)
 {
-	return extent_alloc_region(sgmap->aps_ex, ba, len, EX_NOWAIT);
+	return vmem_xalloc_addr(sgmap->aps_arena, ba, len, VM_NOSLEEP);
 }
 
 int

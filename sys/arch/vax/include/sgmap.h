@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.h,v 1.7 2015/07/05 02:03:36 matt Exp $ */
+/* $NetBSD: sgmap.h,v 1.8 2023/12/03 00:49:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,21 +33,21 @@
 #ifndef	_VAX_SGMAP_H
 #define	_VAX_SGMAP_H
 
-#include <sys/extent.h>
+#include <sys/vmem.h>
 #include <machine/bus.h>
 #include <machine/pte.h>
 
 /*
  * A VAX SGMAP's state information.  Nothing in the sgmap requires
- * locking[*], with the exception of the extent map.  Locking of the
- * extent map is handled within the extent manager itself.
+ * locking[*], with the exception of the vmem arena, which takes care
+ * of it on its own.
  *
  * [*] While the page table is a `global' resource, access to it is
- * controlled by the extent map; once a region has been allocated from
- * the map, that region is effectively `locked'.
+ * controlled by the arena; once a region has been allocated from
+ * the arena, that region is effectively `locked'.
  */
 struct vax_sgmap {
-	struct extent *aps_ex;		/* extent map to manage sgva space */
+	vmem_t     *aps_arena;		/* arena to manage sgva space */
 	struct pte *aps_pt;		/* page table */
 	bus_addr_t aps_sgvabase;	/* base of the sgva space */
 	bus_size_t aps_sgvasize;	/* size of the sgva space */
