@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.388 2023/12/03 21:03:58 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.389 2023/12/03 21:40:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.388 2023/12/03 21:03:58 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.389 2023/12/03 21:40:44 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -87,7 +87,6 @@ static struct {
 	size_t cap;
 } ifdef;
 
-FILE *input;
 FILE *output;
 
 static const char *in_name = "Standard Input";

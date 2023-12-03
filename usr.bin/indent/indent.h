@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.205 2023/12/03 21:03:58 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.206 2023/12/03 21:40:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -146,18 +146,28 @@ struct buffer {
 	size_t cap;
 };
 
-extern FILE *input;
-extern FILE *output;
-
 /*
- * The current line from the input file, used by the lexer to generate tokens.
- * To read from the line, start at inp_p and continue up to and including the
+ * The current input file, used by the lexer to generate tokens.
+ * To read from the input, start at p and continue up to and including the
  * next '\n'. To read beyond the '\n', call inp_skip or inp_next, which will
  * make the next line available, invalidating any pointers into the previous
  * line.
  */
-extern struct buffer inp;
-extern const char *inp_p;
+extern struct input_state {
+	FILE *f;
+	struct buffer line;
+	const char *p;
+	int token_start_line;
+	int token_end_line;
+} in;
+
+#define input in.f
+#define inp in.line
+#define inp_p in.p
+#define token_start_line_no in.token_start_line
+#define token_end_line_no in.token_end_line
+
+extern FILE *output;
 
 extern struct buffer token;	/* the current token to be processed, is
 				 * typically copied to the buffer 'code', or in
@@ -249,8 +259,6 @@ extern struct options {
 
 extern bool found_err;
 extern bool had_eof;		/* whether input is exhausted */
-extern int token_start_line_no;
-extern int token_end_line_no;
 extern enum indent_enabled {
 	indent_on,
 	indent_off,
