@@ -1,4 +1,4 @@
-$NetBSD: testframe.txt,v 1.8 2021/02/09 20:31:02 rillig Exp $
+$NetBSD: testframe.txt,v 1.9 2023/12/03 09:42:36 rillig Exp $
 
 CURSES TESTFRAME
 ----------------
@@ -231,6 +231,7 @@ performed on them when they are parsed.  This allows the tester to
 embed some control characters into the string.  Valid substitutions
 are:
 
+	\b	backspace
 	\e	escape
 	\n	new line
 	\r	carriage return
@@ -239,9 +240,6 @@ are:
 	\nnn	Where nnn is three octal digits, the character
 		represented by the octal number will be inserted into
 		the string.
-
-Any other invalid conversions will have the \ stripped and the
-subsequent characters inserted into the string.
 
 Integers may be specified by either a plain numeric (e.g. 12345) or by
 hexadecimal notation by prefixing the number with 0x (e.g. 0x3039).
