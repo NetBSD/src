@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.6 2022/09/29 06:42:14 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.7 2023/12/03 02:17:06 thorpej Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -85,7 +85,7 @@
 
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
@@ -178,7 +178,7 @@ struct uturn_softc {
 	uint32_t sc_chainid_shift;
 
 	char sc_mapname[20];
-	struct extent *sc_map;
+	vmem_t *sc_map;
 
 	struct hppa_bus_dma_tag sc_dmatag;
 };
@@ -357,8 +357,17 @@ uturnattach(device_t parent, device_t self, void *aux)
 
 	snprintf(sc->sc_mapname, sizeof(sc->sc_mapname), "%s_map",
 	    device_xname(sc->sc_dv));
-	sc->sc_map = extent_create(sc->sc_mapname, 0, (1 << iova_bits),
-	    0, 0, EX_WAITOK);
+	sc->sc_map = vmem_create(sc->sc_mapname,
+				 0,			/* base */
+				 (1 << iova_bits),	/* size */
+				 PAGE_SIZE,		/* quantum */
+				 NULL,			/* allocfn */
+				 NULL,			/* freefn */
+				 NULL,			/* source */
+				 0,			/* qcache_max */
+				 VM_SLEEP,
+				 IPL_VM);
+	KASSERT(sc->sc_map != NULL);
 
 	sc->sc_dmatag = uturn_dmat;
 	sc->sc_dmatag._cookie = sc;
@@ -539,18 +548,18 @@ uturn_iomap_load_map(struct uturn_softc *sc, bus_dmamap_t map, int flags)
 	struct uturn_map_state *ums = map->_dm_cookie;
 	struct uturn_page_map *upm = &ums->ums_map;
 	struct uturn_page_entry *e;
-	int err, seg, s;
+	int err, seg;
 	paddr_t pa, paend;
 	vaddr_t va;
 	bus_size_t sgsize;
 	bus_size_t align, boundary;
-	u_long iovaddr;
+	vmem_addr_t iovaddr;
 	bus_addr_t iova;
 	int i;
 
 	/* XXX */
 	boundary = map->_dm_boundary;
-	align = PAGE_SIZE;
+	align = 0;	/* align to quantum */
 
 	uturn_iomap_clear_pages(ums);
 
@@ -570,12 +579,18 @@ uturn_iomap_load_map(struct uturn_softc *sc, bus_dmamap_t map, int flags)
 		}
 	}
 
+	const vm_flag_t vmflags = VM_BESTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
+
 	sgsize = ums->ums_map.upm_pagecnt * PAGE_SIZE;
-	/* XXXNH */
-	s = splhigh();
-	err = extent_alloc(sc->sc_map, sgsize, align, boundary,
-	    EX_NOWAIT | EX_BOUNDZERO, &iovaddr);
-	splx(s);
+	err = vmem_xalloc(sc->sc_map, sgsize,
+			  align,		/* align */
+			  0,			/* phase */
+			  boundary,		/* nocross */
+			  VMEM_ADDR_MIN,	/* minaddr */
+			  VMEM_ADDR_MAX,	/* maxaddr */
+			  vmflags,
+			  &iovaddr);
 	if (err)
 		return (err);
 
@@ -653,7 +668,7 @@ uturn_dmamap_unload(void *v, bus_dmamap_t map)
 	struct uturn_map_state *ums = map->_dm_cookie;
 	struct uturn_page_map *upm = &ums->ums_map;
 	struct uturn_page_entry *e;
-	int err, i, s;
+	int i;
 
 	/* Remove the IOMMU entries. */
 	for (i = 0, e = upm->upm_map; i < upm->upm_pagecnt; ++i, ++e)
@@ -664,14 +679,9 @@ uturn_dmamap_unload(void *v, bus_dmamap_t map)
 
 	bus_dmamap_unload(sc->sc_dmat, map);
 
-	s = splhigh();
-	err = extent_free(sc->sc_map, ums->ums_iovastart,
-	    ums->ums_iovasize, EX_NOWAIT);
+	vmem_xfree(sc->sc_map, ums->ums_iovastart, ums->ums_iovasize);
 	ums->ums_iovastart = 0;
 	ums->ums_iovasize = 0;
-	splx(s);
-	if (err)
-		printf("warning: %ld of IOVA space lost\n", ums->ums_iovasize);
 }
 
 void
