@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.113 2023/12/03 14:35:54 thorpej Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.114 2023/12/03 15:06:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.113 2023/12/03 14:35:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.114 2023/12/03 15:06:45 thorpej Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -255,6 +255,7 @@ bt_refill_locked(vmem_t *vm)
 	    vm->vm_nfreetags <= BT_MINRESERVE) {
 		bt = LIST_FIRST(&vmem_btag_freelist);
 		LIST_REMOVE(bt, bt_freelist);
+		bt->bt_flags = 0;
 		LIST_INSERT_HEAD(&vm->vm_freetags, bt, bt_freelist);
 		vm->vm_nfreetags++;
 		vmem_btag_freelist_count--;
@@ -271,6 +272,7 @@ bt_refill_locked(vmem_t *vm)
 		VMEM_LOCK(vm);
 		if (bt == NULL)
 			break;
+		bt->bt_flags = 0;
 		LIST_INSERT_HEAD(&vm->vm_freetags, bt, bt_freelist);
 		vm->vm_nfreetags++;
 	}
