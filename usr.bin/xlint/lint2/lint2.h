@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.25 2023/12/03 12:24:49 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.26 2023/12/03 13:12:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -49,24 +49,24 @@ struct lint2_type {
 	bool	t_isuniqpos:1;	/* tag with _t_uniqpos valid */
 	union {
 		int	_t_dim;		/* if the type is an ARRAY than this
-					   is the dimension of the array. */
+					 * is the dimension of the array. */
 		struct	hte *_t_tag;	/* hash table entry of tag if
-					   t_is_enum, STRUCT or UNION */
+					 * t_is_enum, STRUCT or UNION */
 		struct	hte *_t_tynam;	/* hash table entry of typename if
-					   t_is_enum, STRUCT or UNION */
+					 * t_is_enum, STRUCT or UNION */
 		struct {
 			int p_line;
 			short p_file;
 			int p_uniq;
 		} _t_uniqpos;		/* unique position, for untagged
-					   untyped STRUCTs, UNIONS, and ENUMs,
-					   if t_isuniqpos */
+					 * untyped STRUCTs, UNIONS, and ENUMs,
+					 * if t_isuniqpos */
 		struct	lint2_type **_t_args; /* list of argument types if
-					   this is a prototype */
+					 * this is a prototype */
 	} t_u;
-	struct	lint2_type *t_subt;	/* element type (if ARRAY),
-					   return type (if FUNC),
-					   target type (if PTR) */
+	struct	lint2_type *t_subt;	/*- element type (if ARRAY),
+					 * return type (if FUNC),
+					 * target type (if PTR) */
 };
 
 #define	t_dim		t_u._t_dim
@@ -95,9 +95,8 @@ typedef	struct arginf {
  * Keeps information about position in source file.
  */
 typedef	struct {
-	unsigned short p_src;	/* index of name of translation unit
-				   (the name which was specified at the
-				   command line) */
+	unsigned short p_src;	/* index of name of translation unit (the name
+				 * which was specified at the command line) */
 	unsigned short p_line;	/* line number in p_src */
 	unsigned short p_isrc;	/* index of (included) file */
 	unsigned short p_iline;	/* line number in p_iline */

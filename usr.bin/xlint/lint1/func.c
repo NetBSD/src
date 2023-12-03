@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.176 2023/12/03 12:03:38 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.177 2023/12/03 13:12:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.176 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.177 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -219,8 +219,8 @@ begin_function(sym_t *fsym)
 	funcsym = fsym;
 
 	/*
-	 * Put all symbols declared in the parameter list back to the
-	 * symbol table.
+	 * Put all symbols declared in the parameter list back to the symbol
+	 * table.
 	 */
 	for (sym = dcs->d_func_proto_syms; sym != NULL;
 	    sym = sym->s_level_next) {
@@ -231,9 +231,9 @@ begin_function(sym_t *fsym)
 	}
 
 	/*
-	 * In old_style_function() we did not know whether it is an old
-	 * style function definition or only an old-style declaration,
-	 * if there are no parameters inside the parameter list ("f()").
+	 * In old_style_function() we did not know whether it is an old style
+	 * function definition or only an old-style declaration, if there are
+	 * no parameters inside the parameter list ("f()").
 	 */
 	if (!fsym->s_type->t_proto && fsym->u.s_old_style_params == NULL)
 		fsym->s_osdef = true;
@@ -262,8 +262,8 @@ begin_function(sym_t *fsym)
 		fsym->s_inline = true;
 
 	/*
-	 * Parameters in new-style function declarations need a name.
-	 * ('void' is already removed from the list of parameters.)
+	 * Parameters in new-style function declarations need a name. ('void'
+	 * is already removed from the list of parameters.)
 	 */
 	n = 1;
 	for (const sym_t *param = fsym->s_type->t_params;
@@ -279,8 +279,8 @@ begin_function(sym_t *fsym)
 	}
 
 	/*
-	 * We must also remember the position. s_def_pos is overwritten
-	 * if this is an old-style definition, and we had already a prototype.
+	 * We must also remember the position. s_def_pos is overwritten if this
+	 * is an old-style definition, and we had already a prototype.
 	 */
 	dcs->d_func_def_pos = fsym->s_def_pos;
 
@@ -289,9 +289,9 @@ begin_function(sym_t *fsym)
 		if (!check_redeclaration(fsym, (dowarn = false, &dowarn))) {
 
 			/*
-			 * Print nothing if the newly defined function
-			 * is defined in old style. A better warning will
-			 * be printed in check_func_lint_directives().
+			 * Print nothing if the newly defined function is
+			 * defined in old style. A better warning will be
+			 * printed in check_func_lint_directives().
 			 */
 			if (dowarn && !fsym->s_osdef) {
 				/* TODO: error in C99 mode as well? */
@@ -307,9 +307,9 @@ begin_function(sym_t *fsym)
 			copy_usage_info(fsym, rdsym);
 
 			/*
-			 * If the old symbol was a prototype and the new
-			 * one is none, overtake the position of the
-			 * declaration of the prototype.
+			 * If the old symbol was a prototype and the new one is
+			 * none, overtake the position of the declaration of
+			 * the prototype.
 			 */
 			if (fsym->s_osdef && rdsym->s_type->t_proto)
 				fsym->s_def_pos = rdsym->s_def_pos;
@@ -368,8 +368,8 @@ end_function(void)
 
 	/*
 	 * This warning is printed only if the return value was implicitly
-	 * declared to be int. Otherwise, the wrong return statement
-	 * has already printed a warning.
+	 * declared to be int. Otherwise, the wrong return statement has
+	 * already printed a warning.
 	 */
 	if (cstmt->c_had_return_noval && cstmt->c_had_return_value &&
 	    funcsym->s_return_type_implicit_int)
@@ -384,9 +384,8 @@ end_function(void)
 		check_usage_sym(dcs->d_asm, param);
 
 	/*
-	 * write the information about the function definition to the
-	 * output file
-	 * inline functions explicitly declared extern are written as
+	 * Write the information about the function definition to the output
+	 * file. Inline functions explicitly declared extern are written as
 	 * declarations only.
 	 */
 	if (dcs->d_scl == EXTERN && funcsym->s_inline) {
@@ -515,8 +514,8 @@ check_case_label(tnode_t *tn, control_statement *cs)
 	}
 
 	/*
-	 * get the value of the expression and convert it
-	 * to the type of the switch expression
+	 * get the value of the expression and convert it to the type of the
+	 * switch expression
 	 */
 	v = integer_constant(tn, true);
 	(void)memset(&nv, 0, sizeof(nv));
@@ -678,10 +677,9 @@ stmt_switch_expr(tnode_t *tn)
 	}
 
 	/*
-	 * Remember the type of the expression. Because it's possible
-	 * that (*tp) is allocated on tree memory, the type must be
-	 * duplicated. This is not too complicated because it is
-	 * only an integer type.
+	 * Remember the type of the expression. Because it's possible that
+	 * (*tp) is allocated on tree memory, the type must be duplicated. This
+	 * is not too complicated because it is only an integer type.
 	 */
 	tp = xcalloc(1, sizeof(*tp));
 	if (tn != NULL) {
@@ -740,21 +738,21 @@ stmt_switch_expr_stmt(void)
 	if (cstmt->c_break) {
 		/*
 		 * The end of the switch statement is always reached since
-		 * c_break is only set if a break statement can actually
-		 * be reached.
+		 * c_break is only set if a break statement can actually be
+		 * reached.
 		 */
 		set_reached(true);
 	} else if (cstmt->c_default ||
 		   (hflag && cstmt->c_switch_type->t_is_enum &&
 		    nenum == nclab)) {
 		/*
-		 * The end of the switch statement is reached if the end
-		 * of the last statement inside it is reached.
+		 * The end of the switch statement is reached if the end of the
+		 * last statement inside it is reached.
 		 */
 	} else {
 		/*
-		 * There are possible values that are not handled in the
-		 * switch statement.
+		 * There are possible values that are not handled in the switch
+		 * statement.
 		 */
 		set_reached(true);
 	}
@@ -793,8 +791,8 @@ stmt_while_expr_stmt(void)
 {
 
 	/*
-	 * The end of the loop can be reached if it is no endless loop
-	 * or there was a break statement which was reached.
+	 * The end of the loop can be reached if it is no endless loop or there
+	 * was a break statement which was reached.
 	 */
 	set_reached(!cstmt->c_maybe_endless || cstmt->c_break);
 
@@ -852,8 +850,8 @@ stmt_for_exprs(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 {
 
 	/*
-	 * If there is no initialization expression it is possible that
-	 * it is intended not to enter the loop at top.
+	 * If there is no initialization expression it is possible that it is
+	 * intended not to enter the loop at top.
 	 */
 	if (tn1 != NULL && !reached) {
 		/* loop not entered at top */
@@ -865,9 +863,9 @@ stmt_for_exprs(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	cstmt->c_loop = true;
 
 	/*
-	 * Store the tree memory for the reinitialization expression.
-	 * Also remember this expression itself. We must check it at
-	 * the end of the loop to get "used but not set" warnings correct.
+	 * Store the tree memory for the reinitialization expression. Also
+	 * remember this expression itself. We must check it at the end of the
+	 * loop to get "used but not set" warnings correct.
 	 */
 	cstmt->c_for_expr3_mem = expr_save_memory();
 	cstmt->c_for_expr3 = tn3;

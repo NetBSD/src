@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.79 2023/12/03 12:03:38 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.80 2023/12/03 13:12:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.79 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.80 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -176,10 +176,10 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 
 	/*
 	 * Static function declarations must also be written to the output
-	 * file. Compatibility of function declarations (for both static
-	 * and extern functions) must be checked in lint2. Lint1 can't do
-	 * this, especially not if functions are declared at block level
-	 * before their first declaration at level 0.
+	 * file. Compatibility of function declarations (for both static and
+	 * extern functions) must be checked in lint2. Lint1 can't do this,
+	 * especially not if functions are declared at block level before their
+	 * first declaration at level 0.
 	 */
 	if (sc != EXTERN && !(sc == STATIC && sym->s_type->t_tspec == FUNC))
 		return;
@@ -205,8 +205,8 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 
 	if (llibflg && def != DECL) {
 		/*
-		 * mark it as used so lint2 does not complain about
-		 * unused symbols in libraries
+		 * mark it as used so lint2 does not complain about unused
+		 * symbols in libraries
 		 */
 		outchar('u');
 	}
@@ -274,8 +274,8 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 
 	if (llibflg)
 		/*
-		 * mark it as used so lint2 does not complain about
-		 * unused symbols in libraries
+		 * mark it as used so lint2 does not complain about unused
+		 * symbols in libraries
 		 */
 		outchar('u');
 
@@ -333,9 +333,8 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	outint(curr_pos.p_line);
 
 	/*
-	 * flags; 'u' and 'i' must be last to make sure a letter
-	 * is between the numeric argument of a flag and the name of
-	 * the function
+	 * flags; 'u' and 'i' must be last to make sure a letter is between the
+	 * numeric argument of a flag and the name of the function
 	 */
 	narg = 0;
 	args = tn_ck_right(tn);
@@ -515,8 +514,8 @@ outfstrg(strg_t *strg)
 			oc = c;
 			c = *cp++;
 			/*
-			 * handle [ for scanf. [-] means that a minus sign
-			 * was found at an undefined position.
+			 * handle [ for scanf. [-] means that a minus sign was
+			 * found at an undefined position.
 			 */
 			if (oc == '[') {
 				if (c == '^')

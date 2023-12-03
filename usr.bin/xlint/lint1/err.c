@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.218 2023/09/14 21:53:02 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.219 2023/12/03 13:12:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.218 2023/09/14 21:53:02 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.219 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -586,12 +586,12 @@ assert_failed(const char *file, int line, const char *func, const char *cond)
 {
 
 	/*
-	 * After encountering a parse error in the grammar, lint often does
-	 * not properly clean up its data structures, especially in 'dcs',
-	 * the stack of declaration levels.  This often leads to assertion
-	 * failures.  These cases are not interesting though, as the purpose
-	 * of lint is to check syntactically valid code.  In such a case,
-	 * exit gracefully.  This allows a fuzzer like afl to focus on more
+	 * After encountering a parse error in the grammar, lint often does not
+	 * properly clean up its data structures, especially in 'dcs', the
+	 * stack of declaration levels.  This often leads to assertion
+	 * failures.  These cases are not interesting though, as the purpose of
+	 * lint is to check syntactically valid code.  In such a case, exit
+	 * gracefully.  This allows a fuzzer like afl to focus on more
 	 * interesting cases instead of reporting nonsense translation units
 	 * like 'f=({e:;}' or 'v(const(char););e(v){'.
 	 */

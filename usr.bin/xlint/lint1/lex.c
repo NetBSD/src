@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.194 2023/12/03 12:03:38 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.195 2023/12/03 13:12:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.194 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.195 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -547,8 +547,8 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	}
 
 	/*
-	 * If the value is too big for the current type, we must choose
-	 * another type.
+	 * If the value is too big for the current type, we must choose another
+	 * type.
 	 */
 	bool ansiu = false;
 	switch (typ) {
@@ -571,8 +571,8 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 				typ = LONG;
 			} else if (allow_trad) {
 				/*
-				 * Remember that the constant is unsigned
-				 * only in C90.
+				 * Remember that the constant is unsigned only
+				 * in C90.
 				 */
 				ansiu = true;
 			}
@@ -1321,10 +1321,10 @@ getsym(sbuf_t *sb)
 	sym_t *sym = sb->sb_sym;
 
 	/*
-	 * During member declaration it is possible that name() looked
-	 * for symbols of type FVFT, although it should have looked for
-	 * symbols of type FTAG. Same can happen for labels. Both cases
-	 * are compensated here.
+	 * During member declaration it is possible that name() looked for
+	 * symbols of type FVFT, although it should have looked for symbols of
+	 * type FTAG. Same can happen for labels. Both cases are compensated
+	 * here.
 	 */
 	if (symtyp == FMEMBER || symtyp == FLABEL) {
 		if (sym == NULL || sym->s_kind == FVFT)
@@ -1462,9 +1462,9 @@ inssym(int level, sym_t *sym)
 	symtab_add(sym);
 
 	/*
-	 * Placing the inner symbols to the beginning of the list ensures
-	 * that these symbols are preferred over symbols from the outer
-	 * blocks that happen to have the same name.
+	 * Placing the inner symbols to the beginning of the list ensures that
+	 * these symbols are preferred over symbols from the outer blocks that
+	 * happen to have the same name.
 	 */
 	const sym_t *next = sym->s_symtab_next;
 	if (next != NULL)

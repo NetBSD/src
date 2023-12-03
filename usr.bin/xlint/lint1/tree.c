@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.585 2023/12/03 12:24:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.586 2023/12/03 13:12:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.585 2023/12/03 12:24:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.586 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -464,9 +464,8 @@ build_name_call(sym_t *sym)
 
 	if (is_compiler_builtin(sym->s_name)) {
 		/*
-		 * Do not warn about these, just assume that
-		 * they are regular functions compatible with
-		 * non-prototype calling conventions.
+		 * Do not warn about these, just assume that they are regular
+		 * functions compatible with non-prototype calling conventions.
 		 */
 		if (allow_gcc && is_gcc_bool_builtin(sym->s_name))
 			sym->s_type = gettyp(BOOL);
@@ -882,8 +881,8 @@ fold(tnode_t *tn)
 		break;
 	case SHR:
 		/*
-		 * The sign must be explicitly extended because
-		 * shifts of signed values are implementation dependent.
+		 * The sign must be explicitly extended because shifts of
+		 * signed values are implementation dependent.
 		 */
 		/* TODO: warn about out-of-bounds 'sr'. */
 		si = (int64_t)(ul >> (sr & 63));
@@ -1083,8 +1082,8 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 
 	/*
 	 * If the name of the largest enum constant contains 'MAX' or 'NUM',
-	 * that constant is typically not part of the allowed enum values but
-	 * a marker for the number of actual enum values.
+	 * that constant is typically not part of the allowed enum values but a
+	 * marker for the number of actual enum values.
 	 */
 	if (max_enum_value == max_array_index + 1 &&
 	    (strstr(max_ec->s_name, "MAX") != NULL ||
@@ -1248,10 +1247,9 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 		tp = merge_qualifiers(rn->tn_type, ln->tn_type);
 	} else {
 		/*
-		 * XXX For now we simply take the left type. This is
-		 * probably wrong, if one type contains a function prototype
-		 * and the other one, at the same place, only an old-style
-		 * declaration.
+		 * XXX For now we simply take the left type. This is probably
+		 * wrong, if one type contains a function prototype and the
+		 * other one, at the same place, only an old-style declaration.
 		 */
 		tp = merge_qualifiers(ln->tn_type, rn->tn_type);
 	}
@@ -1390,8 +1388,8 @@ build_real_imag(op_t op, bool sys, tnode_t *ln)
 	lint_assert(ln != NULL);
 	if (ln->tn_op == NAME) {
 		/*
-		 * This may be too much, but it avoids wrong warnings.
-		 * See d_c99_complex_split.c.
+		 * This may be too much, but it avoids wrong warnings. See
+		 * d_c99_complex_split.c.
 		 */
 		mark_as_used(ln->tn_sym, false, false);
 		mark_as_set(ln->tn_sym);
@@ -1530,21 +1528,21 @@ floating_error_value(tspec_t t, long double lv)
 	if (t == DOUBLE)
 		return lv < 0 ? -DBL_MAX : DBL_MAX;
 	/*
-	 * When NetBSD is cross-built in MKLINT=yes mode on x86_64 for
-	 * sparc64, tools/lint checks this code while building usr.bin/xlint.
-	 * In that situation, lint uses the preprocessor for sparc64, in which
-	 * the type 'long double' is IEEE-754-binary128, affecting the macro
-	 * LDBL_MAX below. The type 'long double', as well as the strtold
+	 * When NetBSD is cross-built in MKLINT=yes mode on x86_64 for sparc64,
+	 * tools/lint checks this code while building usr.bin/xlint. In that
+	 * situation, lint uses the preprocessor for sparc64, in which the type
+	 * 'long double' is IEEE-754-binary128, affecting the macro LDBL_MAX
+	 * below. The type 'long double', as well as the strtold
 	 * implementation, comes from the host platform x86_64 though, where
 	 * 'long double' consumes 128 bits as well but only uses 80 of them.
 	 * The exponent range of the two 'long double' types is the same, but
 	 * the maximum finite value differs due to the extended precision on
 	 * sparc64.
 	 *
-	 * To properly handle the data types of the target platform, lint
-	 * would have to implement the floating-point types in a
-	 * platform-independent way, which is not worth the effort, given how
-	 * few programs practically use 'long double'.
+	 * To properly handle the data types of the target platform, lint would
+	 * have to implement the floating-point types in a platform-independent
+	 * way, which is not worth the effort, given how few programs
+	 * practically use 'long double'.
 	 */
 	/* LINTED 248: floating-point constant out of range */
 	long double max = LDBL_MAX;
@@ -1686,8 +1684,8 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 		return NULL;
 
 	/*
-	 * Apply class conversions to the left operand, but only if its
-	 * value is needed or compared with zero.
+	 * Apply class conversions to the left operand, but only if its value
+	 * is needed or compared with zero.
 	 */
 	if (mp->m_value_context || mp->m_compares_with_zero)
 		ln = cconv(ln);
@@ -1700,10 +1698,10 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 
 	/*
 	 * Print some warnings for comparisons of unsigned values with
-	 * constants lower than or equal to null. This must be done
-	 * before promote() because otherwise unsigned char and unsigned
-	 * short would be promoted to int. Types are also tested to be
-	 * CHAR, which would also become int.
+	 * constants lower than or equal to null. This must be done before
+	 * promote() because otherwise unsigned char and unsigned short would
+	 * be promoted to int. Types are also tested to be CHAR, which would
+	 * also become int.
 	 */
 	if (mp->m_comparison)
 		check_integer_comparison(op, ln, rn);
@@ -1716,9 +1714,9 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	}
 
 	/*
-	 * If the result of the operation is different for signed or
-	 * unsigned operands and one of the operands is signed only in
-	 * C90, print a warning.
+	 * If the result of the operation is different for signed or unsigned
+	 * operands and one of the operands is signed only in C90, print a
+	 * warning.
 	 */
 	if (mp->m_warn_if_left_unsigned_in_c90 &&
 	    ln->tn_op == CON && ln->tn_val.v_unsigned_since_c90) {
@@ -1820,8 +1818,8 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 		check_precedence_confusion(ntn);
 
 	/*
-	 * Print a warning if one of the operands is in a context where
-	 * it is compared with zero and if this operand is a constant.
+	 * Print a warning if one of the operands is in a context where it is
+	 * compared with zero and if this operand is a constant.
 	 */
 	if (hflag && !suppress_constcond &&
 	    mp->m_compares_with_zero &&
@@ -1952,8 +1950,8 @@ remove_unknown_member(tnode_t *tn, sym_t *msym)
 
 	msym->u.s_member.sm_containing_type = sou;
 	/*
-	 * The member sm_offset_in_bits is not needed here since this
-	 * symbol can only be used for error reporting.
+	 * The member sm_offset_in_bits is not needed here since this symbol
+	 * can only be used for error reporting.
 	 */
 }
 
@@ -1988,8 +1986,8 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	bool eq = all_members_compatible(msym);
 
 	/*
-	 * Now handle the case in which the left operand refers really
-	 * to a struct/union, but the right operand is not member of it.
+	 * Now handle the case in which the left operand refers really to a
+	 * struct/union, but the right operand is not member of it.
 	 */
 	if (sou != NULL) {
 		if (eq && !allow_c90) {
@@ -2003,8 +2001,8 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	}
 
 	/*
-	 * Now the left operand of ARROW does not point to a struct/union
-	 * or the left operand of POINT is no struct/union.
+	 * Now the left operand of ARROW does not point to a struct/union or
+	 * the left operand of POINT is no struct/union.
 	 */
 	if (eq) {
 		if (op == POINT) {
@@ -2068,8 +2066,8 @@ tnode_t *
 cconv(tnode_t *tn)
 {
 	/*
-	 * Array-lvalue (array of type T) is converted into rvalue
-	 * (pointer to type T)
+	 * Array-lvalue (array of type T) is converted into rvalue (pointer to
+	 * type T)
 	 */
 	if (tn->tn_type->t_tspec == ARRAY) {
 		if (!tn->tn_lvalue) {
@@ -2083,8 +2081,8 @@ cconv(tnode_t *tn)
 
 	/*
 	 * Expression of type function (function with return value of type T)
-	 * in rvalue-expression (pointer to function with return value
-	 * of type T)
+	 * in rvalue-expression (pointer to function with return value of type
+	 * T)
 	 */
 	if (tn->tn_type->t_tspec == FUNC)
 		tn = build_address(tn->tn_sys, tn, true);
@@ -2123,9 +2121,9 @@ typeok_point(const tnode_t *ln, const type_t *ltp, tspec_t lt)
 
 	/*
 	 * Some C dialects from before C90 tolerated any lvalue on the
-	 * left-hand side of the '.' operator, allowing things like
-	 * char st[100]; st.st_mtime, assuming that the member 'st_mtime'
-	 * only occurred in a single struct; see typeok_arrow.
+	 * left-hand side of the '.' operator, allowing things like 'char
+	 * st[100]; st.st_mtime', assuming that the member 'st_mtime' only
+	 * occurred in a single struct; see typeok_arrow.
 	 */
 	if (ln->tn_lvalue)
 		return true;
@@ -2144,9 +2142,9 @@ typeok_arrow(tspec_t lt)
 {
 	/*
 	 * C1978 Appendix A 14.1 says: <quote>In fact, any lvalue is allowed
-	 * before '.', and that lvalue is then assumed to have the form of
-	 * the structure of which the name of the right is a member. [...]
-	 * Such constructions are non-portable.</quote>
+	 * before '.', and that lvalue is then assumed to have the form of the
+	 * structure of which the name of the right is a member. [...] Such
+	 * constructions are non-portable.</quote>
 	 */
 	if (lt == PTR || (!allow_c90 && is_integer(lt)))
 		return true;
@@ -2294,8 +2292,8 @@ typeok_shr(op_t op,
 			return;
 
 		/*
-		 * The left operand is signed. This means that
-		 * the operation is (possibly) nonportable.
+		 * The left operand is signed. This means that the operation is
+		 * (possibly) nonportable.
 		 */
 		if (ln->tn_op != CON) {
 			/* bitwise '%s' on signed value possibly nonportable */
@@ -2329,18 +2327,16 @@ static void
 typeok_shl(op_t op, tspec_t lt, tspec_t rt)
 {
 	/*
-	 * C90 does not perform balancing for shift operations,
-	 * but traditional C does. If the width of the right operand
-	 * is greater than the width of the left operand, then in
-	 * traditional C the left operand would be extended to the
-	 * width of the right operand. For SHL this may result in
-	 * different results.
+	 * C90 does not perform balancing for shift operations, but traditional
+	 * C does. If the width of the right operand is greater than the width
+	 * of the left operand, then in traditional C the left operand would be
+	 * extended to the width of the right operand. For SHL this may result
+	 * in different results.
 	 */
 	if (portable_rank_cmp(lt, rt) < 0) {
 		/*
-		 * XXX If both operands are constant, make sure
-		 * that there is really a difference between
-		 * C90 and traditional C.
+		 * XXX If both operands are constant, make sure that there is
+		 * really a difference between C90 and traditional C.
 		 */
 		if (hflag && allow_trad && allow_c90)
 			/* semantics of '%s' change in C90; use ... */
@@ -2696,8 +2692,8 @@ is_const_char_pointer(const tnode_t *tn)
 {
 	/*
 	 * For traditional reasons, C99 6.4.5p5 defines that string literals
-	 * have type 'char[]'.  They are often implicitly converted to
-	 * 'char *', for example when they are passed as function arguments.
+	 * have type 'char[]'.  They are often implicitly converted to 'char
+	 * *', for example when they are passed as function arguments.
 	 *
 	 * C99 6.4.5p6 further defines that modifying a string that is
 	 * constructed from a string literal invokes undefined behavior.
@@ -3304,9 +3300,8 @@ promote(op_t op, bool farg, tnode_t *tn)
 	type_t *ntp = expr_dup_type(tn->tn_type);
 	ntp->t_tspec = nt;
 	/*
-	 * Keep t_is_enum even though t_tspec gets converted from
-	 * ENUM to INT, so we are later able to check compatibility
-	 * of enum types.
+	 * Keep t_is_enum even though t_tspec gets converted from ENUM to INT,
+	 * so we are later able to check compatibility of enum types.
 	 */
 	return convert(op, 0, ntp, tn);
 }
@@ -3378,9 +3373,9 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		return;
 
 	/*
-	 * If the type of the formal parameter is char/short, a warning
-	 * would be useless, because functions declared the old style
-	 * can't expect char/short arguments.
+	 * If the type of the formal parameter is char/short, a warning would
+	 * be useless, because functions declared the old style can't expect
+	 * char/short arguments.
 	 */
 	if (nt == CHAR || nt == SCHAR || nt == UCHAR ||
 	    nt == SHORT || nt == USHORT)
@@ -4171,8 +4166,8 @@ cast(tnode_t *tn, type_t *tp)
 
 	if (nt == VOID) {
 		/*
-		 * C90 6.3.4, C99 6.5.4p2 and C11 6.5.4p2 allow any type to
-		 * be cast to void.  The only other allowed casts are from a
+		 * C90 6.3.4, C99 6.5.4p2 and C11 6.5.4p2 allow any type to be
+		 * cast to void.  The only other allowed casts are from a
 		 * scalar type to a scalar type.
 		 */
 	} else if (nt == UNION)
@@ -4458,8 +4453,7 @@ expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while)
 	}
 	if (!modtab[tn->tn_op].m_has_side_effect) {
 		/*
-		 * for left operands of COMMA this warning is already
-		 * printed
+		 * for left operands of COMMA this warning is already printed
 		 */
 		if (tn->tn_op != COMMA && !vctx && !cond)
 			check_null_effect(tn);
@@ -4497,8 +4491,8 @@ check_array_index(tnode_t *tn, bool amper)
 		return;
 
 	/*
-	 * For incomplete array types, we can print a warning only if
-	 * the index is negative.
+	 * For incomplete array types, we can print a warning only if the index
+	 * is negative.
 	 */
 	if (is_incomplete(ln->tn_left->tn_type) && rn->tn_val.u.integer >= 0)
 		return;
@@ -4687,10 +4681,11 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 	    rn != NULL && !rn->tn_parenthesized;
 
 	/*
-	 * values of operands of ':' are not used if the type of at least
-	 * one of the operands (for gcc compatibility) is void
+	 * Values of operands of ':' are not used if the type of at least
+	 * one of the operands (for GCC compatibility) is 'void'.
+	 *
 	 * XXX test/value context of QUEST should probably be used as
-	 * context for both operands of COLON
+	 * context for both operands of COLON.
 	 */
 	if (op == COLON && tn->tn_type->t_tspec == VOID)
 		cvctx = ccond = false;
@@ -4775,8 +4770,8 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 			return true;
 		} else {
 			/*
-			 * If this were the front end of a compiler, we
-			 * would return a label instead of 0, at least if
+			 * If this were the front end of a compiler, we would
+			 * return a label instead of 0, at least if
 			 * 'tn->tn_left->tn_op == STRING'.
 			 */
 			*symp = NULL;
@@ -4791,7 +4786,7 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 			return false;
 		}
 #if 0
-		/*
+		/*-
 		 * consider:
 		 *	struct foo {
 		 *		unsigned char a;

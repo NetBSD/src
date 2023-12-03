@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.381 2023/12/03 12:03:38 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.382 2023/12/03 13:12:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.381 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.382 2023/12/03 13:12:40 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -150,10 +150,10 @@ expr_unqualified_type(const type_t *tp)
 
 	/*
 	 * In case of a struct or union type, the members should lose their
-	 * qualifiers as well, but that would require a deep copy of the
-	 * struct or union type.  This in turn would defeat the type
-	 * comparison in types_compatible, which simply tests whether
-	 * tp1->t_sou == tp2->t_sou.
+	 * qualifiers as well, but that would require a deep copy of the struct
+	 * or union type.  This in turn would defeat the type comparison in
+	 * types_compatible, which simply tests whether tp1->t_sou ==
+	 * tp2->t_sou.
 	 */
 
 	debug_step("%s '%s'", __func__, type_name(ntp));
@@ -317,7 +317,7 @@ dcs_add_type(type_t *tp)
 	debug_step("%s: %s", __func__, type_name(tp));
 	debug_dcs();
 	if (tp->t_typedef) {
-		/*
+		/*-
 		 * something like "typedef int a; int a b;"
 		 * This should not happen with current grammar.
 		 */
@@ -332,10 +332,7 @@ dcs_add_type(type_t *tp)
 
 	tspec_t t = tp->t_tspec;
 	if (is_struct_or_union(t) || t == ENUM) {
-		/*
-		 * something like "int struct a ..."
-		 * struct/union/enum with anything else is not allowed
-		 */
+		/* something like "int struct a ..." */
 		if (dcs->d_type != NULL || dcs->d_abstract_type != NO_TSPEC ||
 		    dcs->d_rank_mod != NO_TSPEC || dcs->d_sign_mod != NO_TSPEC) {
 			dcs->d_invalid_type_combination = true;
@@ -349,10 +346,7 @@ dcs_add_type(type_t *tp)
 	}
 
 	if (dcs->d_type != NULL && !dcs->d_type->t_typedef) {
-		/*
-		 * something like "struct a int"
-		 * struct/union/enum with anything else is not allowed
-		 */
+		/* something like "struct a int" */
 		dcs->d_invalid_type_combination = true;
 		return;
 	}
@@ -365,7 +359,7 @@ dcs_add_type(type_t *tp)
 		else {
 			/* invalid type for _Complex */
 			error(308);
-			t = DCOMPLEX; /* just as a fallback */
+			t = DCOMPLEX;	/* just as a fallback */
 		}
 		dcs->d_complex_mod = NO_TSPEC;
 	}
@@ -856,8 +850,8 @@ check_type(sym_t *sym)
 		type_t *tp = *tpp;
 		tspec_t t = tp->t_tspec;
 		/*
-		 * If this is the type of an old-style function definition,
-		 * a better warning is printed in begin_function().
+		 * If this is the type of an old-style function definition, a
+		 * better warning is printed in begin_function().
 		 */
 		if (t == FUNC && !tp->t_proto &&
 		    !(to == NO_TSPEC && sym->s_osdef)) {
@@ -1108,8 +1102,8 @@ declare_member(sym_t *dsym)
 
 	/*
 	 * bit-fields of length 0 are not warned about because length_in_bits
-	 * does not return the length of the bit-field but the length
-	 * of the type the bit-field is packed in (it's ok)
+	 * does not return the length of the bit-field but the length of the
+	 * type the bit-field is packed in (it's ok)
 	 */
 	int sz = length_in_bits(dsym->s_type, dsym->s_name);
 	if (sz == 0 && t == ARRAY && dsym->s_type->t_dim == 0) {
@@ -1233,14 +1227,14 @@ block_derive_array(type_t *stp, bool dim, int len)
 #if 0
 	/*
 	 * As of 2022-04-03, the implementation of the type parser (see
-	 * add_function, add_array, add_pointer) is strange.  When it sees
-	 * the type 'void *b[4]', it first creates 'void b[4]' and only later
+	 * add_function, add_array, add_pointer) is strange.  When it sees the
+	 * type 'void *b[4]', it first creates 'void b[4]' and only later
 	 * inserts the '*' in the middle of the type.  Late modifications like
 	 * these should not be done at all, instead the parser should be fixed
 	 * to process the type names in the proper syntactical order.
 	 *
-	 * Since the intermediate type would be an array of void, but the
-	 * final type is valid, this check cannot be enabled yet.
+	 * Since the intermediate type would be an array of void, but the final
+	 * type is valid, this check cannot be enabled yet.
 	 */
 	if (stp->t_tspec == VOID) {
 		/* array of incomplete type */
@@ -1378,10 +1372,10 @@ add_function(sym_t *decl, struct parameter_list params)
 
 	/*
 	 * The symbols are removed from the symbol table by
-	 * end_declaration_level after add_function. To be able to restore
-	 * them if this is a function definition, a pointer to the list of
-	 * all symbols is stored in dcs->d_enclosing->d_func_proto_syms. Also,
-	 * a list of the parameters (concatenated by s_next) is stored in
+	 * end_declaration_level after add_function. To be able to restore them
+	 * if this is a function definition, a pointer to the list of all
+	 * symbols is stored in dcs->d_enclosing->d_func_proto_syms. Also, a
+	 * list of the parameters (concatenated by s_next) is stored in
 	 * dcs->d_enclosing->d_func_params. (dcs->d_enclosing must be used
 	 * because *dcs is the declaration stack element created for the list
 	 * of params and is removed after add_function.)
@@ -1919,8 +1913,8 @@ declare_extern(sym_t *dsym, bool has_initializer, sbuf_t *renaming)
 
 	/*
 	 * Declarations of functions are marked as "tentative" in
-	 * declarator_name(). This is wrong because there are no
-	 * tentative function definitions.
+	 * declarator_name(). This is wrong because there are no tentative
+	 * function definitions.
 	 */
 	if (dsym->s_type->t_tspec == FUNC && dsym->s_def == TDEF)
 		dsym->s_def = DECL;
@@ -1938,8 +1932,8 @@ declare_extern(sym_t *dsym, bool has_initializer, sbuf_t *renaming)
 	if (plibflg && llibflg &&
 	    dsym->s_type->t_tspec == FUNC && dsym->s_type->t_proto) {
 		/*
-		 * With both LINTLIBRARY and PROTOLIB the prototype is
-		 * written as a function definition to the output file.
+		 * With both LINTLIBRARY and PROTOLIB the prototype is written
+		 * as a function definition to the output file.
 		 */
 		bool rval = dsym->s_type->t_subt->t_tspec != VOID;
 		outfdef(dsym, &dsym->s_def_pos, rval, false, NULL);
@@ -1974,8 +1968,8 @@ declare_extern(sym_t *dsym, bool has_initializer, sbuf_t *renaming)
 			}
 
 			/*
-			 * Take over the remembered params if the new symbol
-			 * is not a prototype.
+			 * Take over the remembered params if the new symbol is
+			 * not a prototype.
 			 */
 			if (rdsym->s_osdef && !dsym->s_type->t_proto) {
 				dsym->s_osdef = rdsym->s_osdef;
@@ -2103,8 +2097,8 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 		return false;
 	if (rdsym->s_scl == EXTERN && rdsym->s_def == DEF) {
 		/*
-		 * All cases except "int a = 1; static int a;" are caught
-		 * above with or without a warning
+		 * All cases except "int a = 1; static int a;" are caught above
+		 * with or without a warning
 		 */
 		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
@@ -2117,9 +2111,11 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 		print_previous_declaration(rdsym);
 		return false;
 	}
-	/*
+	/*-
 	 * Now it's one of:
-	 * "static a; int a;", "static a; int a = 1;", "static a = 1; int a;"
+	 * "static a; int a;"
+	 * "static a; int a = 1;"
+	 * "static a = 1; int a;"
 	 */
 	/* TODO: Make this an error in C99 mode as well. */
 	if (!allow_trad && !allow_c99) {
@@ -2354,9 +2350,9 @@ declare_parameter(sym_t *sym, bool has_initializer)
 		warning(269, sym->s_name);
 
 	/*
-	 * Arguments must have complete types. length_in_bits prints the
-	 * needed error messages (null dimension is impossible because arrays
-	 * are converted to pointers).
+	 * Arguments must have complete types. length_in_bits prints the needed
+	 * error messages (null dimension is impossible because arrays are
+	 * converted to pointers).
 	 */
 	if (sym->s_type->t_tspec != VOID)
 		(void)length_in_bits(sym->s_type, sym->s_name);
@@ -2499,8 +2495,8 @@ check_func_old_style_parameters(void)
 	}
 
 	/*
-	 * If this is an old-style function definition and a prototype
-	 * exists, compare the types of parameters.
+	 * If this is an old-style function definition and a prototype exists,
+	 * compare the types of parameters.
 	 */
 	if (funcsym->s_osdef && funcsym->s_type->t_proto) {
 		/*
@@ -2573,8 +2569,8 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rdsym)
 		/* no hflag, because it's illegal! */
 		if (rdsym->s_param) {
 			/*
-			 * if allow_c90, a "redeclaration of '%s'" error
-			 * is produced below
+			 * if allow_c90, a "redeclaration of '%s'" error is
+			 * produced below
 			 */
 			if (!allow_c90) {
 				if (hflag) {
@@ -2681,11 +2677,11 @@ declare_local(sym_t *dsym, bool has_initializer)
 	}
 
 	/*
-	 * functions may be declared inline at local scope, although
-	 * this has no effect for a later definition of the same
-	 * function.
-	 * XXX it should have an effect if !allow_c90 is set. this would
-	 * also be the way gcc behaves.
+	 * functions may be declared inline at local scope, although this has
+	 * no effect for a later definition of the same function.
+	 *
+	 * XXX it should have an effect if !allow_c90 is set. this would also
+	 * be the way gcc behaves.
 	 */
 	if (dcs->d_inline) {
 		if (dsym->s_type->t_tspec == FUNC)
@@ -2705,8 +2701,8 @@ declare_local(sym_t *dsym, bool has_initializer)
 
 	if (dsym->s_scl == EXTERN) {
 		/*
-		 * XXX if the static variable at level 0 is only defined
-		 * later, checking will be possible.
+		 * XXX if the static variable at level 0 is only defined later,
+		 * checking will be possible.
 		 */
 		if (dsym->s_ext_sym == NULL)
 			outsym(dsym, EXTERN, dsym->s_def);
@@ -2753,9 +2749,9 @@ abstract_name_level(bool enclosing)
 	sym->s_param = dcs->d_kind == DLK_PROTO_PARAMS;
 
 	/*
-	 * At this point, dcs->d_type contains only the basic type.  That
-	 * type will be updated later, adding pointers, arrays and functions
-	 * as necessary.
+	 * At this point, dcs->d_type contains only the basic type.  That type
+	 * will be updated later, adding pointers, arrays and functions as
+	 * necessary.
 	 */
 	sym->s_type = (enclosing ? dcs->d_enclosing : dcs)->d_type;
 	dcs->d_redeclared_symbol = NULL;
@@ -2898,8 +2894,8 @@ check_variable_usage(bool novar, const sym_t *sym)
 		return;
 
 	/*
-	 * XXX Only variables are checked, although types should
-	 * probably also be checked
+	 * XXX Only variables are checked, although types should probably also
+	 * be checked
 	 */
 	scl_t sc = sym->s_scl;
 	if (sc != EXTERN && sc != STATIC && sc != AUTO && sc != REG)
@@ -2928,14 +2924,14 @@ check_variable_usage(bool novar, const sym_t *sym)
 
 	if (sc == EXTERN) {
 		/*
-		 * information about usage is taken over into the symbol
-		 * table entry at level 0 if the symbol was locally declared
-		 * as an external symbol.
+		 * information about usage is taken over into the symbol table
+		 * entry at level 0 if the symbol was locally declared as an
+		 * external symbol.
 		 *
-		 * XXX This is wrong for symbols declared static at level 0
-		 * if the usage information stems from sizeof(). This is
-		 * because symbols at level 0 only used in sizeof() are
-		 * considered to not be used.
+		 * XXX This is wrong for symbols declared static at level 0 if
+		 * the usage information stems from sizeof(). This is because
+		 * symbols at level 0 only used in sizeof() are considered to
+		 * not be used.
 		 */
 		sym_t *xsym = sym->s_ext_sym;
 		if (xsym != NULL) {
@@ -3168,10 +3164,9 @@ to_int_constant(tnode_t *tn, bool required)
 	free(v);
 
 	/*
-	 * Abstract declarations are used inside expression. To free
-	 * the memory would be a fatal error.
-	 * We don't free blocks that are inside casts because these
-	 * will be used later to match types.
+	 * Abstract declarations are used inside expression. To free the memory
+	 * would be a fatal error. We don't free blocks that are inside casts
+	 * because these will be used later to match types.
 	 */
 	if (tn->tn_op != CON && dcs->d_kind != DLK_ABSTRACT)
 		expr_free_all();

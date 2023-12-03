@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.203 2023/12/02 21:47:05 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.204 2023/12/03 13:12:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -164,13 +164,13 @@ struct lint1_type {
 	bool	t_typeof:1;	/* type defined with GCC's __typeof__ */
 	bool	t_bitfield:1;
 	/*
-	 * Either the type is currently an enum (having t_tspec ENUM), or
-	 * it is an integer type (typically INT) that has been implicitly
-	 * converted from an enum type.  In both cases, t_enum is valid.
+	 * Either the type is currently an enum (having t_tspec ENUM), or it is
+	 * an integer type (typically INT) that has been implicitly converted
+	 * from an enum type.  In both cases, t_enum is valid.
 	 *
-	 * The information about a former enum type is retained to allow
-	 * type checks in expressions such as ((var1 & 0x0001) == var2), to
-	 * detect when var1 and var2 are from incompatible enum types.
+	 * The information about a former enum type is retained to allow type
+	 * checks in expressions such as ((var1 & 0x0001) == var2), to detect
+	 * when var1 and var2 are from incompatible enum types.
 	 */
 	bool	t_is_enum:1;
 	bool	t_packed:1;
@@ -182,7 +182,7 @@ struct lint1_type {
 	} t_u;
 	unsigned int	t_bit_field_width:8;
 	unsigned int	t_bit_field_offset:24;
-	struct	lint1_type *t_subt;	/* element type (if ARRAY),
+	struct	lint1_type *t_subt;	/*- element type (if ARRAY),
 					 * return value (if FUNC),
 					 * target type (if PTR) */
 };
@@ -196,10 +196,10 @@ struct lint1_type {
  * types of symbols
  */
 typedef	enum {
-	FVFT,		/* variables, functions, type names, enums */
-	FMEMBER,	/* members of structs or unions */
-	FTAG,		/* tags */
-	FLABEL		/* labels */
+	FVFT,			/* variables, functions, type names, enums */
+	FMEMBER,		/* members of structs or unions */
+	FTAG,			/* tags */
+	FLABEL			/* labels */
 } symt_t;
 
 /*
@@ -207,11 +207,11 @@ typedef	enum {
  */
 typedef enum {
 	NO_SCL,
-	EXTERN,		/* external symbols (independent of decl_t) */
-	STATIC,		/* static symbols (local and global) */
-	AUTO,		/* automatic symbols (except register) */
-	REG,		/* register */
-	TYPEDEF,	/* typedef */
+	EXTERN,			/* external symbols (independent of decl_t) */
+	STATIC,			/* static symbols (local and global) */
+	AUTO,			/* automatic symbols (except register) */
+	REG,			/* register */
+	TYPEDEF,		/* typedef */
 	THREAD_LOCAL,
 	STRUCT_TAG,
 	UNION_TAG,
@@ -220,7 +220,8 @@ typedef enum {
 	UNION_MEMBER,
 	BOOL_CONST,
 	ENUM_CONST,
-	ABSTRACT,	/* abstract symbol (sizeof, casts, unnamed argument) */
+	ABSTRACT,		/* abstract symbol (sizeof, casts, unnamed
+				 * argument) */
 } scl_t;
 
 /* C23 6.7.4 */
@@ -236,9 +237,9 @@ typedef	struct sym {
 	const	char *s_name;
 	const	char *s_rename;	/* renamed symbol's given name */
 	pos_t	s_def_pos;	/* position of last (prototype) definition,
-				   prototype declaration, no-prototype-def.,
-				   tentative definition or declaration,
-				   in this order */
+				 * prototype declaration, no-prototype-def.,
+				 * tentative definition or declaration, in this
+				 * order */
 	pos_t	s_set_pos;	/* position of first initialization */
 	pos_t	s_use_pos;	/* position of first use */
 	symt_t	s_kind;		/* type of symbol */
@@ -249,17 +250,17 @@ typedef	struct sym {
 	bool	s_param:1;	/* symbol is function parameter */
 	bool	s_register:1;	/* symbol is register variable */
 	bool	s_defparam:1;	/* undefined symbol in old-style function
-				   definition */
+				 * definition */
 	bool	s_return_type_implicit_int:1;
 	bool	s_osdef:1;	/* symbol stems from old-style function def. */
 	bool	s_inline:1;	/* true if this is an inline function */
 	struct	sym *s_ext_sym;	/* for locally declared external symbols, the
-				 * pointer to the external symbol with the
-				 * same name */
+				 * pointer to the external symbol with the same
+				 * name */
 	def_t	s_def;		/* declared, tentative defined, defined */
 	scl_t	s_scl;		/* storage class, more or less */
 	int	s_block_level;	/* level of declaration, -1 if not in symbol
-				   table */
+				 * table */
 	type_t	*s_type;
 	union {
 		bool s_bool_constant;
@@ -286,7 +287,7 @@ typedef	struct sym {
 	struct	sym **s_symtab_ref;	/* pointer to s_symtab_next of the
 					 * previous symbol */
 	struct	sym *s_next;	/* next struct/union member, enumerator,
-				   parameter */
+				 * parameter */
 	struct	sym *s_level_next;	/* next symbol declared on the same
 					 * level */
 } sym_t;
@@ -445,13 +446,13 @@ typedef enum {
  */
 typedef struct control_statement {
 	control_statement_kind c_kind;	/* to ensure proper nesting */
-	bool	c_loop:1;		/* 'continue' and 'break' are valid */
-	bool	c_switch:1;		/* 'case' and 'break' are valid */
-	bool	c_break:1;		/* the loop/switch has a reachable
-					 * 'break' statement */
-	bool	c_continue:1;		/* the loop has a reachable 'continue'
-					 * statement */
-	bool	c_default:1;		/* the switch has a 'default' label */
+	bool	c_loop:1;	/* 'continue' and 'break' are valid */
+	bool	c_switch:1;	/* 'case' and 'break' are valid */
+	bool	c_break:1;	/* the loop/switch has a reachable 'break'
+				 * statement */
+	bool	c_continue:1;	/* the loop has a reachable 'continue'
+				 * statement */
+	bool	c_default:1;	/* the switch has a 'default' label */
 	bool	c_maybe_endless:1;	/* the controlling expression is
 					 * always true (as in 'for (;;)' or
 					 * 'while (1)'), there may be break
@@ -461,13 +462,13 @@ typedef struct control_statement {
 	bool	c_had_return_noval:1;	/* had "return;" */
 	bool	c_had_return_value:1;	/* had "return expr;" */
 
-	type_t	*c_switch_type;		/* type of switch expression */
+	type_t	*c_switch_type;	/* type of switch expression */
 	tnode_t	*c_switch_expr;
 	case_label_t *c_case_labels;	/* list of case values */
 
 	memory_pool c_for_expr3_mem;	/* saved memory for end of loop
 					 * expression in for() */
-	tnode_t	*c_for_expr3;		/* end of loop expr in for() */
+	tnode_t	*c_for_expr3;	/* end of loop expr in for() */
 	pos_t	c_for_expr3_pos;	/* position of end of loop expr */
 	pos_t	c_for_expr3_csrc_pos;	/* same for csrc_pos */
 
@@ -475,8 +476,8 @@ typedef struct control_statement {
 } control_statement;
 
 typedef struct {
-	size_t lo;			/* inclusive */
-	size_t hi;			/* inclusive */
+	size_t lo;		/* inclusive */
+	size_t hi;		/* inclusive */
 } range_t;
 
 typedef enum {
@@ -635,8 +636,8 @@ static inline uint64_t
 bit(unsigned i)
 {
 	/*
-	 * TODO: Add proper support for INT128.
-	 * This involves changing val_t to 128 bits.
+	 * TODO: Add proper support for INT128. This involves changing val_t to
+	 * 128 bits.
 	 */
 	if (i >= 64)
 		return 0;	/* XXX: not correct for INT128 and UINT128 */
@@ -658,9 +659,9 @@ value_bits(unsigned bitsize)
 
 	/* for long double (80 or 128), double _Complex (128) */
 	/*
-	 * XXX: double _Complex does not have 128 bits of precision,
-	 * therefore it should never be necessary to query the value bits
-	 * of such a type; see d_c99_complex_split.c to trigger this case.
+	 * XXX: double _Complex does not have 128 bits of precision, therefore
+	 * it should never be necessary to query the value bits of such a type;
+	 * see d_c99_complex_split.c to trigger this case.
 	 */
 	if (bitsize >= 64)
 		return ~((uint64_t)0);
