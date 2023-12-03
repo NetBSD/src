@@ -1,4 +1,4 @@
-/* $NetBSD: fmt_expr.c,v 1.10 2023/06/16 23:19:01 rillig Exp $ */
+/* $NetBSD: fmt_expr.c,v 1.11 2023/12/03 14:26:10 rillig Exp $ */
 
 /*
  * Tests for all kinds of expressions that are not directly related to unary
@@ -56,4 +56,29 @@
 // exit 1
 // error: Standard Input:7: Unbalanced parentheses
 // warning: Standard Input:9: Extra ')'
+//indent end
+
+
+// A compound expression with an unknown type is indented other than one with
+// a known type.  Ideally, both cases should be treated the same.
+//indent input
+{
+	var = (type) { .member = value };
+	var = (type) { value, value, value };
+	var = (struct s) { .member = value };
+	var = (struct s) { value, value, value };
+}
+//indent end
+
+//indent run
+{
+	var = (type) {
+		.member = value
+	};
+	var = (type) {
+		value, value, value
+	};
+	var = (struct s){.member = value};
+	var = (struct s){value, value, value};
+}
 //indent end
