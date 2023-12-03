@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.204 2023/12/03 13:12:40 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.205 2023/12/03 18:17:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -66,7 +66,7 @@ typedef struct memory_pool {
  *  headers, see print_stack_trace.
  */
 typedef struct {
-	const	char *p_file;
+	const char *p_file;
 	int	p_line;
 	int	p_uniq;			/* uniquifier */
 } pos_t;
@@ -78,7 +78,7 @@ typedef struct {
  *
  * Strings are stored with a trailing NUL.
  */
-typedef	struct strg {
+typedef struct strg {
 	bool	st_char;	/* string doesn't have an 'L' prefix */
 	size_t	st_len;		/* length without trailing NUL */
 	void	*st_mem;	/* char[] for st_char, or wchar_t[] */
@@ -130,23 +130,23 @@ typedef struct {
  * If the structure has no tag name, its first typedef name is used to identify
  * the structure in lint2.
  */
-typedef	struct {
+typedef struct {
 	unsigned int sou_size_in_bits;
 	unsigned int sou_align_in_bits;
 	bool	sou_incomplete:1;
-	struct	sym *sou_first_member;
-	struct	sym *sou_tag;
-	struct	sym *sou_first_typedef;
+	struct sym *sou_first_member;
+	struct sym *sou_tag;
+	struct sym *sou_first_typedef;
 } struct_or_union;
 
 /*
  * same as above for enums
  */
-typedef	struct {
+typedef struct {
 	bool	en_incomplete:1;
-	struct	sym *en_first_enumerator;
-	struct	sym *en_tag;
-	struct	sym *en_first_typedef;
+	struct sym *en_first_enumerator;
+	struct sym *en_tag;
+	struct sym *en_first_typedef;
 } enumeration;
 
 /*
@@ -175,14 +175,14 @@ struct lint1_type {
 	bool	t_is_enum:1;
 	bool	t_packed:1;
 	union {
-		int	_t_dim;		/* dimension (if ARRAY) */
+		int		_t_dim;		/* dimension (if ARRAY) */
 		struct_or_union	*_t_sou;
 		enumeration	*_t_enum;
-		struct	sym *_t_params;	/* parameters (if t_proto) */
+		struct sym	*_t_params;	/* parameters (if t_proto) */
 	} t_u;
 	unsigned int	t_bit_field_width:8;
 	unsigned int	t_bit_field_offset:24;
-	struct	lint1_type *t_subt;	/*- element type (if ARRAY),
+	struct lint1_type *t_subt;	/*- element type (if ARRAY),
 					 * return value (if FUNC),
 					 * target type (if PTR) */
 };
@@ -195,7 +195,7 @@ struct lint1_type {
 /*
  * types of symbols
  */
-typedef	enum {
+typedef enum {
 	FVFT,			/* variables, functions, type names, enums */
 	FMEMBER,		/* members of structs or unions */
 	FTAG,			/* tags */
@@ -233,9 +233,9 @@ typedef enum {
 /*
  * symbol table entry
  */
-typedef	struct sym {
-	const	char *s_name;
-	const	char *s_rename;	/* renamed symbol's given name */
+typedef struct sym {
+	const char *s_name;
+	const char *s_rename;	/* renamed symbol's given name */
 	pos_t	s_def_pos;	/* position of last (prototype) definition,
 				 * prototype declaration, no-prototype-def.,
 				 * tentative definition or declaration, in this
@@ -254,7 +254,7 @@ typedef	struct sym {
 	bool	s_return_type_implicit_int:1;
 	bool	s_osdef:1;	/* symbol stems from old-style function def. */
 	bool	s_inline:1;	/* true if this is an inline function */
-	struct	sym *s_ext_sym;	/* for locally declared external symbols, the
+	struct sym *s_ext_sym;	/* for locally declared external symbols, the
 				 * pointer to the external symbol with the same
 				 * name */
 	def_t	s_def;		/* declared, tentative defined, defined */
@@ -266,7 +266,7 @@ typedef	struct sym {
 		bool s_bool_constant;
 		int s_enum_constant;	/* XXX: should be TARG_INT */
 		struct {
-			struct_or_union	*sm_containing_type;
+			struct_or_union *sm_containing_type;
 			unsigned int sm_offset_in_bits;
 		} s_member;
 		struct {
@@ -280,15 +280,15 @@ typedef	struct sym {
 				function_specifier function_specifier;
 			} u;
 		} s_keyword;
-		struct	sym *s_old_style_params;	/* parameters in an old-style
+		struct sym *s_old_style_params;	/* parameters in an old-style
 						 * function definition */
 	} u;
-	struct	sym *s_symtab_next;	/* next symbol with same hash value */
-	struct	sym **s_symtab_ref;	/* pointer to s_symtab_next of the
+	struct sym *s_symtab_next;	/* next symbol with same hash value */
+	struct sym **s_symtab_ref;	/* pointer to s_symtab_next of the
 					 * previous symbol */
-	struct	sym *s_next;	/* next struct/union member, enumerator,
+	struct sym *s_next;	/* next struct/union member, enumerator,
 				 * parameter */
-	struct	sym *s_level_next;	/* next symbol declared on the same
+	struct sym *s_level_next;	/* next symbol declared on the same
 					 * level */
 } sym_t;
 
@@ -296,8 +296,8 @@ typedef	struct sym {
  * Used to keep some information about symbols before they are entered
  * into the symbol table.
  */
-typedef	struct sbuf {
-	const	char *sb_name;		/* name of symbol */
+typedef struct sbuf {
+	const char *sb_name;		/* name of symbol */
 	size_t	sb_len;			/* length (without '\0') */
 	sym_t	*sb_sym;		/* symbol table entry */
 } sbuf_t;
@@ -306,7 +306,7 @@ typedef	struct sbuf {
 /*
  * tree node
  */
-typedef	struct tnode {
+typedef struct tnode {
 	op_t	tn_op;		/* operator */
 	type_t	*tn_type;	/* type */
 	bool	tn_lvalue:1;	/* node is lvalue */
@@ -319,8 +319,8 @@ typedef	struct tnode {
 	bool	tn_system_dependent:1; /* depends on sizeof or offsetof */
 	union {
 		struct {
-			struct	tnode *_tn_left;	/* (left) operand */
-			struct	tnode *_tn_right;	/* right operand */
+			struct tnode *_tn_left;	/* (left) operand */
+			struct tnode *_tn_right;	/* right operand */
 		} tn_s;
 		sym_t	*_tn_sym;	/* symbol if op == NAME */
 		val_t	_tn_val;	/* value if op == CON */
@@ -367,7 +367,7 @@ typedef enum decl_level_kind {
  * For nested declarations, the global 'dcs' holds all information needed for
  * the current level, the outer levels are available via 'd_enclosing'.
  */
-typedef	struct decl_level {
+typedef struct decl_level {
 	decl_level_kind d_kind;
 	tspec_t	d_abstract_type;/* VOID, BOOL, CHAR, INT or COMPLEX */
 	tspec_t	d_complex_mod;	/* FLOAT or DOUBLE */
@@ -418,16 +418,16 @@ struct parameter_list {
  * ----].  The leftmost 'const' is not included in this list, it is stored in
  * dcs->d_qual instead.
  */
-typedef	struct qual_ptr {
+typedef struct qual_ptr {
 	type_qualifiers qualifiers;
-	struct	qual_ptr *p_next;
+	struct qual_ptr *p_next;
 } qual_ptr;
 
 /*
  * The values of the 'case' labels, linked via cl_next in reverse order of
  * appearance in the code, that is from bottom to top.
  */
-typedef	struct case_label {
+typedef struct case_label {
 	val_t	cl_val;
 	struct case_label *cl_next;
 } case_label_t;

@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.89 2023/12/03 13:12:40 rillig Exp $ */
+/* $NetBSD: read.c,v 1.90 2023/12/03 18:17:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.89 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.90 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -52,22 +52,22 @@ __RCSID("$NetBSD: read.c,v 1.89 2023/12/03 13:12:40 rillig Exp $");
 
 
 /* index of current (included) source file */
-static	int	srcfile;
+static int srcfile;
 
 /*
  * The array pointed to by inpfns maps the file name indices of input files
  * to the file name indices used in lint2
  */
-static	short	*inpfns;
-static	size_t	ninpfns;
+static short *inpfns;
+static size_t ninpfns;
 
 /*
  * The array pointed to by *fnames maps file name indices to file names.
  * Indices of type short are used instead of pointers to save memory.
  */
-const	char **fnames;
-static	size_t *flines;
-static	size_t	nfnames;
+const char **fnames;
+static size_t *flines;
+static size_t nfnames;
 
 /*
  * Types are shared (to save memory for the types itself) and accessed
@@ -81,32 +81,32 @@ typedef struct thtab {
 	unsigned short th_idx;
 	struct thtab *th_next;
 } thtab_t;
-static	thtab_t	*thtab[1009];		/* hash table */
-type_t	**tlst;				/* array for indexed access */
-static	size_t	tlstlen;		/* length of tlst */
+static thtab_t *thtab[1009];		/* hash table */
+type_t **tlst;				/* array for indexed access */
+static size_t tlstlen;		/* length of tlst */
 
-static	hte_t **renametab;
+static hte_t **renametab;
 
 /* index of current C source file (as specified at the command line) */
-static	int	csrcfile;
+static int csrcfile;
 
-static	const char *readfile_line;
+static const char *readfile_line;
 
-static	void	inperr(const char *, ...)
+static void inperr(const char *, ...)
     __printflike(1, 2) __attribute__((noreturn));
-static	void	setsrc(const char *);
-static	void	setfnid(int, const char *);
-static	void	funccall(pos_t, const char *);
-static	void	decldef(pos_t, const char *);
-static	void	usedsym(pos_t, const char *);
-static	unsigned short inptype(const char *, const char **);
-static	size_t	gettlen(const char *, const char **);
-static	unsigned short findtype(const char *, size_t, int);
-static	unsigned short storetyp(type_t *, const char *, size_t, int);
-static	unsigned int thash(const char *, size_t);
-static	char	*inpqstrg(const char *, const char **);
-static	const	char *inpname(const char *, const char **);
-static	int	getfnidx(const char *);
+static void setsrc(const char *);
+static void setfnid(int, const char *);
+static void funccall(pos_t, const char *);
+static void decldef(pos_t, const char *);
+static void usedsym(pos_t, const char *);
+static unsigned short inptype(const char *, const char **);
+static size_t gettlen(const char *, const char **);
+static unsigned short findtype(const char *, size_t, int);
+static unsigned short storetyp(type_t *, const char *, size_t, int);
+static unsigned int thash(const char *, size_t);
+static char *inpqstrg(const char *, const char **);
+static const char *inpname(const char *, const char **);
+static int getfnidx(const char *);
 
 /* Allocate zero-initialized memory that doesn't need to be freed. */
 static void *

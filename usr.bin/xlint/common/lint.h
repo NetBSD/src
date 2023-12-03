@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.45 2023/12/03 12:24:48 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.46 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -92,7 +92,7 @@ typedef enum {
 /*
  * size of types, name and classification
  */
-typedef	struct {
+typedef struct {
 #ifdef IS_LINT1
 	unsigned int tt_size_in_bits;
 	enum rank_kind {
@@ -117,7 +117,7 @@ typedef	struct {
 	const char *tt_name;		/* name of the type */
 } ttab_t;
 
-extern	ttab_t	ttab[];
+extern ttab_t ttab[];
 
 static inline const ttab_t *
 type_properties(tspec_t t)
@@ -138,7 +138,7 @@ type_properties(tspec_t t)
 #define has_operands(tn)	(modtab[(tn)->tn_op].m_has_operands)
 
 
-typedef	enum {
+typedef enum {
 	NODECL,			/* not declared until now */
 	DECL,			/* declared */
 	TDEF,			/* tentative defined */

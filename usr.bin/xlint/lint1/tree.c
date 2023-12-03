@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.586 2023/12/03 13:12:40 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.587 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.586 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.587 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4242,9 +4242,9 @@ build_function_argument(tnode_t *args, tnode_t *arg)
  */
 static tnode_t *
 check_prototype_argument(
-	int	n,		/* pos of arg */
-	type_t	*tp,		/* expected type (from prototype) */
-	tnode_t	*tn)		/* argument */
+	int n,		/* pos of arg */
+	type_t *tp,		/* expected type (from prototype) */
+	tnode_t *tn)		/* argument */
 {
 	tnode_t *ln = xcalloc(1, sizeof(*ln));
 	ln->tn_type = expr_unqualified_type(tp);

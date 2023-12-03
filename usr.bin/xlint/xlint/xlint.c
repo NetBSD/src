@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.119 2023/12/03 13:12:40 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.120 2023/12/03 18:17:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.119 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.120 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -103,7 +103,7 @@ static bool seen_filename;
  * name of a file which is currently written by a child and should
  * be removed after abnormal termination of the child
  */
-static	const	char *currfn;
+static const char *currfn;
 
 #if !defined(TARGET_PREFIX)
 #define	TARGET_PREFIX	""

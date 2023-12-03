@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.219 2023/12/03 13:12:40 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.220 2023/12/03 18:17:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.219 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.220 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -47,11 +47,11 @@ __RCSID("$NetBSD: err.c,v 1.219 2023/12/03 13:12:40 rillig Exp $");
 
 #include "lint1.h"
 
-bool	seen_error;
-bool	seen_warning;
+bool seen_error;
+bool seen_warning;
 
 /* number of syntax errors */
-int	sytxerr;
+int sytxerr;
 
 
 static const char *const msgs[] = {
@@ -413,7 +413,7 @@ static const char *const msgs[] = {
 	"'_Static_assert' without message requires C23 or later",     /* 355 */
 };
 
-static bool	is_suppressed[sizeof(msgs) / sizeof(msgs[0])];
+static bool is_suppressed[sizeof(msgs) / sizeof(msgs[0])];
 
 static struct include_level {
 	const char *filename;

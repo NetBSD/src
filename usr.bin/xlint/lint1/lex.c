@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.195 2023/12/03 13:12:40 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.196 2023/12/03 18:17:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.195 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.196 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -56,13 +56,13 @@ __RCSID("$NetBSD: lex.c,v 1.195 2023/12/03 13:12:40 rillig Exp $");
 
 
 /* Current position (it's also updated when an included file is parsed) */
-pos_t	curr_pos = { "", 1, 0 };
+pos_t curr_pos = { "", 1, 0 };
 
 /*
  * Current position in C source (not updated when an included file is
  * parsed).
  */
-pos_t	csrc_pos = { "", 1, 0 };
+pos_t csrc_pos = { "", 1, 0 };
 
 bool in_gcc_attribute;
 bool in_system_header;

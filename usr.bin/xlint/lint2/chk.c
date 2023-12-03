@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.64 2023/12/03 13:12:40 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.65 2023/12/03 18:17:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.64 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.65 2023/12/03 18:17:41 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -48,26 +48,26 @@ __RCSID("$NetBSD: chk.c,v 1.64 2023/12/03 13:12:40 rillig Exp $");
 
 #include "lint2.h"
 
-static	void	check_used_not_defined(const hte_t *);
-static	void	check_defined_not_used(const hte_t *);
-static	void	check_declared_not_used_or_defined(const hte_t *);
-static	void	check_multiple_definitions(const hte_t *);
-static	void	chkvtui(const hte_t *, sym_t *, sym_t *);
-static	void	chkvtdi(const hte_t *, sym_t *, sym_t *);
-static	void	chkfaui(const hte_t *, sym_t *, sym_t *);
-static	void	chkau(const hte_t *, int, sym_t *, sym_t *, pos_t *,
+static void check_used_not_defined(const hte_t *);
+static void check_defined_not_used(const hte_t *);
+static void check_declared_not_used_or_defined(const hte_t *);
+static void check_multiple_definitions(const hte_t *);
+static void chkvtui(const hte_t *, sym_t *, sym_t *);
+static void chkvtdi(const hte_t *, sym_t *, sym_t *);
+static void chkfaui(const hte_t *, sym_t *, sym_t *);
+static void chkau(const hte_t *, int, sym_t *, sym_t *, pos_t *,
 			   fcall_t *, fcall_t *, type_t *, type_t *);
-static	void	check_return_values(const hte_t *, sym_t *);
-static	void	check_argument_declarations(const hte_t *, sym_t *, sym_t *);
-static	void	printflike(const hte_t *, fcall_t *, int, const char *, type_t **);
-static	void	scanflike(const hte_t *, fcall_t *, int, const char *, type_t **);
-static	void	bad_format_string(const hte_t *, fcall_t *);
-static	void	inconsistent_arguments(const hte_t *, fcall_t *, int);
-static	void	too_few_arguments(const hte_t *, fcall_t *);
-static	void	too_many_arguments(const hte_t *, fcall_t *);
-static	bool	types_compatible(type_t *, type_t *, bool, bool, bool, bool *);
-static	bool	prototypes_compatible(type_t *, type_t *, bool *);
-static	bool	matches_no_arg_function(type_t *, bool *);
+static void check_return_values(const hte_t *, sym_t *);
+static void check_argument_declarations(const hte_t *, sym_t *, sym_t *);
+static void printflike(const hte_t *, fcall_t *, int, const char *, type_t **);
+static void scanflike(const hte_t *, fcall_t *, int, const char *, type_t **);
+static void bad_format_string(const hte_t *, fcall_t *);
+static void inconsistent_arguments(const hte_t *, fcall_t *, int);
+static void too_few_arguments(const hte_t *, fcall_t *);
+static void too_many_arguments(const hte_t *, fcall_t *);
+static bool types_compatible(type_t *, type_t *, bool, bool, bool, bool *);
+static bool prototypes_compatible(type_t *, type_t *, bool *);
+static bool matches_no_arg_function(type_t *, bool *);
 
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.21 2023/07/13 08:40:38 rillig Exp $ */
+/* $NetBSD: externs2.h,v 1.22 2023/12/03 18:17:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,51 +35,51 @@
 /*
  * main2.c
  */
-extern	bool	Cflag;
-extern	bool	Fflag;
-extern	bool	Hflag;
-extern	bool	hflag;
-extern	bool	sflag;
-extern	bool	tflag;
-extern	bool	uflag;
-extern	bool	xflag;
-extern	const char *libname;
+extern bool Cflag;
+extern bool Fflag;
+extern bool Hflag;
+extern bool hflag;
+extern bool sflag;
+extern bool tflag;
+extern bool uflag;
+extern bool xflag;
+extern const char *libname;
 
 /*
  * hash.c
  */
 hte_t**	htab_new(void);
-hte_t	*hash_search(hte_t **, const char *, bool);
-void	symtab_init(void);
-void	symtab_forall(void (*)(hte_t *));
-void	symtab_forall_sorted(void (*)(hte_t *));
-void	hash_free(hte_t **);
+hte_t *hash_search(hte_t **, const char *, bool);
+void symtab_init(void);
+void symtab_forall(void (*)(hte_t *));
+void symtab_forall_sorted(void (*)(hte_t *));
+void hash_free(hte_t **);
 
 #define	htab_search(a, b)	hash_search(NULL, (a), (b))
 
 /*
  * read.c
  */
-extern	const	char **fnames;
-extern	type_t	**tlst;
+extern const char **fnames;
+extern type_t **tlst;
 
-void	readfile(const char *);
-void	mkstatic(hte_t *);
+void readfile(const char *);
+void mkstatic(hte_t *);
 
 /*
  * chk.c
  */
-void	mark_main_as_used(void);
-void	check_name(const hte_t *);
+void mark_main_as_used(void);
+void check_name(const hte_t *);
 
 /*
  * msg.c
  */
-void	msg(int, ...);
-const	char *mkpos(const pos_t *);
+void msg(int, ...);
+const char *mkpos(const pos_t *);
 
 /*
  * emit2.c
  */
-void	outlib(const char *);
-int	addoutfile(short);
+void outlib(const char *);
+int addoutfile(short);
