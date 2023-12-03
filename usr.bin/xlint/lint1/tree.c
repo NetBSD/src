@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.583 2023/12/02 21:53:15 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.584 2023/12/03 12:03:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.583 2023/12/02 21:53:15 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.584 2023/12/03 12:03:38 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -79,7 +79,7 @@ str_ends_with(const char *haystack, const char *needle)
 	size_t nlen = strlen(needle);
 
 	return nlen <= hlen &&
-	       memcmp(haystack + hlen - nlen, needle, nlen) == 0;
+	    memcmp(haystack + hlen - nlen, needle, nlen) == 0;
 }
 
 static unsigned
@@ -453,7 +453,7 @@ static bool
 is_gcc_bool_builtin(const char *name)
 {
 	return strncmp(name, "__builtin_", 10) == 0 &&
-	       (str_ends_with(name, "_overflow") ||
+	    (str_ends_with(name, "_overflow") ||
 		str_ends_with(name, "_overflow_p"));
 }
 
@@ -571,9 +571,9 @@ static bool
 is_out_of_char_range(const tnode_t *tn)
 {
 	return tn->tn_op == CON &&
-	       !tn->tn_val.v_char_constant &&
-	       !(0 <= tn->tn_val.u.integer &&
-		 tn->tn_val.u.integer < 1 << (CHAR_SIZE - 1));
+	    !tn->tn_val.v_char_constant &&
+	    !(0 <= tn->tn_val.u.integer &&
+		tn->tn_val.u.integer < 1 << (CHAR_SIZE - 1));
 }
 
 static bool
@@ -1173,9 +1173,9 @@ is_null_pointer(const tnode_t *tn)
 	// TODO: Investigate how other pointers are stored, in particular,
 	// whether a pointer constant can have a non-zero value.
 	// If not, simplify the code below.
-	return ((t == PTR && tn->tn_type->t_subt->t_tspec == VOID) ||
-		is_integer(t))
-	       && (tn->tn_op == CON && tn->tn_val.u.integer == 0);
+	return ((t == PTR && tn->tn_type->t_subt->t_tspec == VOID)
+		|| is_integer(t))
+	    && (tn->tn_op == CON && tn->tn_val.u.integer == 0);
 }
 
 /* Return a type based on tp1, with added qualifiers from tp2. */
@@ -1271,13 +1271,13 @@ is_cast_redundant(const tnode_t *tn)
 	if (is_integer(nt) && is_integer(ot)) {
 		unsigned int nw = width_in_bits(ntp), ow = width_in_bits(otp);
 		if (is_uinteger(nt) == is_uinteger(ot))
-		       return nw >= ow;
+			return nw >= ow;
 		return is_uinteger(ot) && nw > ow;
 	}
 
 	if (is_complex(nt) || is_complex(ot))
 		return is_complex(nt) && is_complex(ot) &&
-		       size_in_bits(nt) >= size_in_bits(ot);
+		    size_in_bits(nt) >= size_in_bits(ot);
 
 	if (is_floating(nt) && is_floating(ot))
 		return size_in_bits(nt) >= size_in_bits(ot);
@@ -1303,18 +1303,18 @@ is_assignment(op_t op)
 {
 
 	return op == ASSIGN ||
-	       op == MULASS ||
-	       op == DIVASS ||
-	       op == MODASS ||
-	       op == ADDASS ||
-	       op == SUBASS ||
-	       op == SHLASS ||
-	       op == SHRASS ||
-	       op == ANDASS ||
-	       op == XORASS ||
-	       op == ORASS ||
-	       op == RETURN ||
-	       op == INIT;
+	    op == MULASS ||
+	    op == DIVASS ||
+	    op == MODASS ||
+	    op == ADDASS ||
+	    op == SUBASS ||
+	    op == SHLASS ||
+	    op == SHRASS ||
+	    op == ANDASS ||
+	    op == XORASS ||
+	    op == ORASS ||
+	    op == RETURN ||
+	    op == INIT;
 }
 
 /* Create a node for an assignment operator (both '=' and 'op='). */
@@ -1890,14 +1890,14 @@ static bool
 all_members_compatible(const sym_t *msym)
 {
 	for (const sym_t *csym = msym;
-	     csym != NULL; csym = csym->s_symtab_next) {
+	    csym != NULL; csym = csym->s_symtab_next) {
 		if (!is_member(csym))
 			continue;
 		if (strcmp(msym->s_name, csym->s_name) != 0)
 			continue;
 
 		for (const sym_t *sym = csym->s_symtab_next;
-		     sym != NULL; sym = sym->s_symtab_next) {
+		    sym != NULL; sym = sym->s_symtab_next) {
 			if (is_member(sym)
 			    && strcmp(csym->s_name, sym->s_name) == 0
 			    && !are_members_compatible(csym, sym))
@@ -1911,7 +1911,7 @@ sym_t *
 find_member(const struct_or_union *sou, const char *name)
 {
 	for (sym_t *mem = sou->sou_first_member;
-	     mem != NULL; mem = mem->s_next) {
+	    mem != NULL; mem = mem->s_next) {
 		lint_assert(is_member(mem));
 		lint_assert(mem->u.s_member.sm_containing_type == sou);
 		if (strcmp(mem->s_name, name) == 0)
@@ -1919,7 +1919,7 @@ find_member(const struct_or_union *sou, const char *name)
 	}
 
 	for (sym_t *mem = sou->sou_first_member;
-	     mem != NULL; mem = mem->s_next) {
+	    mem != NULL; mem = mem->s_next) {
 		if (is_struct_or_union(mem->s_type->t_tspec)
 		    && mem->s_name == unnamed) {
 			sym_t *nested_mem =
@@ -2304,14 +2304,14 @@ typeok_shr(op_t op,
 			warning(120, op_name(op));
 		}
 	} else if (allow_trad && allow_c90 &&
-		   !is_uinteger(olt) && is_uinteger(ort)) {
+	    !is_uinteger(olt) && is_uinteger(ort)) {
 		/* The left operand would become unsigned in traditional C. */
 		if (hflag && (ln->tn_op != CON || ln->tn_val.u.integer < 0)) {
 			/* semantics of '%s' change in C90; use ... */
 			warning(118, op_name(op));
 		}
 	} else if (allow_trad && allow_c90 &&
-		   !is_uinteger(olt) && !is_uinteger(ort) &&
+	    !is_uinteger(olt) && !is_uinteger(ort) &&
 	    portable_rank_cmp(lt, rt) < 0) {
 		/*
 		 * In traditional C, the left operand would be extended
@@ -2561,7 +2561,7 @@ has_constant_member(const type_t *tp)
 	lint_assert(is_struct_or_union(tp->t_tspec));
 
 	for (sym_t *m = tp->t_sou->sou_first_member;
-	     m != NULL; m = m->s_next) {
+	    m != NULL; m = m->s_next) {
 		const type_t *mtp = m->s_type;
 		if (mtp->t_const)
 			return true;
@@ -2671,8 +2671,8 @@ is_direct_function_call(const tnode_t *tn, const char **out_name)
 {
 
 	if (!(tn->tn_op == CALL &&
-	      tn->tn_left->tn_op == ADDR &&
-	      tn->tn_left->tn_left->tn_op == NAME))
+	    tn->tn_left->tn_op == ADDR &&
+	    tn->tn_left->tn_left->tn_op == NAME))
 		return false;
 
 	*out_name = tn->tn_left->tn_left->tn_sym->s_name;
@@ -2684,10 +2684,10 @@ is_unconst_function(const char *name)
 {
 
 	return strcmp(name, "memchr") == 0 ||
-	       strcmp(name, "strchr") == 0 ||
-	       strcmp(name, "strpbrk") == 0 ||
-	       strcmp(name, "strrchr") == 0 ||
-	       strcmp(name, "strstr") == 0;
+	    strcmp(name, "strchr") == 0 ||
+	    strcmp(name, "strpbrk") == 0 ||
+	    strcmp(name, "strrchr") == 0 ||
+	    strcmp(name, "strstr") == 0;
 }
 
 static bool
@@ -2711,8 +2711,8 @@ is_const_char_pointer(const tnode_t *tn)
 
 	const type_t *tp = before_conversion(tn)->tn_type;
 	return tp->t_tspec == PTR &&
-	       tp->t_subt->t_tspec == CHAR &&
-	       tp->t_subt->t_const;
+	    tp->t_subt->t_tspec == CHAR &&
+	    tp->t_subt->t_const;
 }
 
 static bool
@@ -2956,7 +2956,7 @@ has_side_effect(const tnode_t *tn) /* NOLINT(misc-no-recursion) */
 
 	if (op == COLON || op == COMMA) {
 		return has_side_effect(tn->tn_left) ||
-		       has_side_effect(tn->tn_right);
+		    has_side_effect(tn->tn_right);
 	}
 
 	return false;
@@ -2967,7 +2967,7 @@ is_void_cast(const tnode_t *tn)
 {
 
 	return tn->tn_op == CVT && tn->tn_cast &&
-	       tn->tn_type->t_tspec == VOID;
+	    tn->tn_type->t_tspec == VOID;
 }
 
 static bool
@@ -2975,8 +2975,8 @@ is_local_symbol(const tnode_t *tn)
 {
 
 	return tn->tn_op == LOAD &&
-	       tn->tn_left->tn_op == NAME &&
-	       tn->tn_left->tn_sym->s_scl == AUTO;
+	    tn->tn_left->tn_op == NAME &&
+	    tn->tn_left->tn_sym->s_scl == AUTO;
 }
 
 static bool
@@ -2984,8 +2984,8 @@ is_int_constant_zero(const tnode_t *tn)
 {
 
 	return tn->tn_op == CON &&
-	       tn->tn_type->t_tspec == INT &&
-	       tn->tn_val.u.integer == 0;
+	    tn->tn_type->t_tspec == INT &&
+	    tn->tn_val.u.integer == 0;
 }
 
 static void
@@ -3197,10 +3197,10 @@ typeok_enum(op_t op, const mod_t *mp, int arg,
 	    (ltp->t_is_enum || (mp->m_binary && rtp->t_is_enum))) {
 		check_bad_enum_operation(op, ln, rn);
 	} else if (mp->m_valid_on_enum &&
-		   (ltp->t_is_enum && rtp != NULL && rtp->t_is_enum)) {
+	    (ltp->t_is_enum && rtp != NULL && rtp->t_is_enum)) {
 		check_enum_type_mismatch(op, arg, ln, rn);
 	} else if (mp->m_valid_on_enum &&
-		   (ltp->t_is_enum || (rtp != NULL && rtp->t_is_enum))) {
+	    (ltp->t_is_enum || (rtp != NULL && rtp->t_is_enum))) {
 		check_enum_int_mismatch(op, arg, ln, rn);
 	}
 }
@@ -3518,8 +3518,8 @@ struct_starts_with(const type_t *struct_tp, const type_t *member_tp)
 {
 
 	return struct_tp->t_sou->sou_first_member != NULL &&
-	       types_compatible(struct_tp->t_sou->sou_first_member->s_type,
-		   member_tp, true, false, NULL);
+	    types_compatible(struct_tp->t_sou->sou_first_member->s_type,
+		member_tp, true, false, NULL);
 }
 
 static bool
@@ -3527,14 +3527,14 @@ is_byte_array(const type_t *tp)
 {
 
 	return tp->t_tspec == ARRAY &&
-	       (tp->t_subt->t_tspec == CHAR || tp->t_subt->t_tspec == UCHAR);
+	    (tp->t_subt->t_tspec == CHAR || tp->t_subt->t_tspec == UCHAR);
 }
 
 static bool
 union_contains(const type_t *utp, const type_t *mtp)
 {
 	for (const sym_t *mem = utp->t_sou->sou_first_member;
-	     mem != NULL; mem = mem->s_next) {
+	    mem != NULL; mem = mem->s_next) {
 		if (types_compatible(mem->s_type, mtp, true, false, NULL))
 			return true;
 	}
@@ -3569,8 +3569,8 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 		const sym_t *nmem = nstp->t_sou->sou_first_member;
 		const sym_t *omem = ostp->t_sou->sou_first_member;
 		while (nmem != NULL && omem != NULL &&
-		       types_compatible(nmem->s_type, omem->s_type,
-			   true, false, NULL))
+		    types_compatible(nmem->s_type, omem->s_type,
+			true, false, NULL))
 			nmem = nmem->s_next, omem = omem->s_next;
 		if (nmem != NULL && is_byte_array(nmem->s_type))
 			return false;
@@ -3824,8 +3824,8 @@ convert_constant_check_range_bitand(size_t nsz, size_t osz,
 		warning(309, type_name(gettyp(ot)),
 		    type_name(tp), op_name(op));
 	} else if (nsz < osz &&
-		   (v->u.integer & xmask) != xmask &&
-		   (v->u.integer & xmask) != 0) {
+	    (v->u.integer & xmask) != xmask &&
+	    (v->u.integer & xmask) != 0) {
 		/* constant truncated by conversion, op '%s' */
 		warning(306, op_name(op));
 	}
@@ -3933,12 +3933,12 @@ convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 		convert_constant_check_range_bitand(
 		    nbitsz, obitsz, xmask, nv, ot, v, tp, op);
 	} else if ((nt != PTR && is_uinteger(nt)) &&
-		   (ot != PTR && !is_uinteger(ot)) &&
-		   v->u.integer < 0)
+	    (ot != PTR && !is_uinteger(ot)) &&
+	    v->u.integer < 0)
 		convert_constant_check_range_signed(op, arg);
 	else if (nv->u.integer != v->u.integer && nbitsz <= obitsz &&
-		 (v->u.integer & xmask) != 0 &&
-		 (is_uinteger(ot) || (v->u.integer & xmsk1) != xmsk1))
+	    (v->u.integer & xmask) != 0 &&
+	    (is_uinteger(ot) || (v->u.integer & xmsk1) != xmsk1))
 		warn_constant_check_range_truncated(op, arg, tp, ot);
 	else if (nv->u.integer != v->u.integer)
 		warn_constant_check_range_loss(op, arg, tp, ot);
@@ -4302,14 +4302,14 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 			return NULL;
 		}
 		if (is_struct_or_union(at) &&
-			   is_incomplete(arg->tn_left->tn_type)) {
+		    is_incomplete(arg->tn_left->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
 			error(152, n);
 			return NULL;
 		}
 		if (is_integer(at) &&
-			   arg->tn_left->tn_type->t_is_enum &&
-			   is_incomplete(arg->tn_left->tn_type)) {
+		    arg->tn_left->tn_type->t_is_enum &&
+		    is_incomplete(arg->tn_left->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
 			warning(152, n);
 		}
@@ -4418,7 +4418,7 @@ static bool
 is_constcond_false(const tnode_t *tn, tspec_t t)
 {
 	return (t == BOOL || t == INT) &&
-	       tn->tn_op == CON && tn->tn_val.u.integer == 0;
+	    tn->tn_op == CON && tn->tn_val.u.integer == 0;
 }
 
 /*
@@ -4682,8 +4682,8 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 	bool cvctx = mp->m_value_context;
 	bool ccond = mp->m_compares_with_zero;
 	bool eq = mp->m_warn_if_operand_eq &&
-	     !ln->tn_parenthesized &&
-	     rn != NULL && !rn->tn_parenthesized;
+	    !ln->tn_parenthesized &&
+	    rn != NULL && !rn->tn_parenthesized;
 
 	/*
 	 * values of operands of ':' are not used if the type of at least

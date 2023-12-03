@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.62 2023/12/02 21:50:21 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.63 2023/12/03 12:03:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.62 2023/12/02 21:50:21 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.63 2023/12/03 12:03:38 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -377,14 +377,14 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 				break;
 			n++;
 			chkau(hte, n, def, decl, pos1p, call1, call,
-			      *ap1, *ap2);
+			    *ap1, *ap2);
 			ap1++;
 			ap2++;
 		}
 		if (*ap1 == *ap2) {
 			/* equal # of arguments */
 		} else if (def != NULL && def->s_check_only_first_args &&
-			   n >= def->s_check_num_args) {
+		    n >= def->s_check_num_args) {
 			/*
 			 * function definition with VARARGS; The # of
 			 * arguments of the call must be at least as large
@@ -761,7 +761,7 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 				goto uint_conv;
 			}
 		} else if (fc == 'f' || fc == 'e' || fc == 'E' ||
-			   fc == 'g' || fc == 'G') {
+		    fc == 'g' || fc == 'G') {
 			if (sz == NO_TSPEC)
 				sz = DOUBLE;
 			if (sz != DOUBLE && sz != LDOUBLE)
@@ -980,7 +980,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 				if (t1 != PTR) {
 					inconsistent_arguments(hte, call, n);
 				} else if (t2 != CHAR && t2 != UCHAR &&
-					   t2 != SCHAR) {
+				    t2 != SCHAR) {
 					inconsistent_arguments(hte, call, n);
 				}
 			}

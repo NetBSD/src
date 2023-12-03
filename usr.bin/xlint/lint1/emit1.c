@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.78 2023/12/02 21:50:20 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.79 2023/12/03 12:03:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.78 2023/12/02 21:50:20 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.79 2023/12/03 12:03:38 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -119,13 +119,13 @@ outtype(const type_t *tp)
 		} else if (ts == FUNC && tp->t_proto) {
 			na = 0;
 			for (const sym_t *param = tp->t_params;
-			     param != NULL; param = param->s_next)
+			    param != NULL; param = param->s_next)
 				na++;
 			if (tp->t_vararg)
 				na++;
 			outint(na);
 			for (const sym_t *param = tp->t_params;
-			     param != NULL; param = param->s_next)
+			    param != NULL; param = param->s_next)
 				outtype(param->s_type);
 			if (tp->t_vararg)
 				outchar('E');
@@ -367,8 +367,8 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 				outint(n);
 			}
 		} else if (arg->tn_op == ADDR &&
-			   arg->tn_left->tn_op == STRING &&
-			   arg->tn_left->tn_string->st_char) {
+		    arg->tn_left->tn_op == STRING &&
+		    arg->tn_left->tn_string->st_char) {
 			/* constant string, write all format specifiers */
 			outchar('s');
 			outint(n);
@@ -474,7 +474,7 @@ outfstrg(strg_t *strg)
 
 		/* flags for printf and scanf and *-fieldwidth for printf */
 		while (c == '-' || c == '+' || c == ' ' ||
-		       c == '#' || c == '0' || c == '*') {
+		    c == '#' || c == '0' || c == '*') {
 			outchar(c);
 			c = *cp++;
 		}

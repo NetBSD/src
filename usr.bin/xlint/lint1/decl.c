@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.380 2023/12/02 21:47:05 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.381 2023/12/03 12:03:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.380 2023/12/02 21:47:05 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.381 2023/12/03 12:03:38 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -456,7 +456,7 @@ pack_struct_or_union(type_t *tp)
 	unsigned int bits = 0;
 	bool named = false;
 	for (const sym_t *mem = tp->t_sou->sou_first_member;
-	     mem != NULL; mem = mem->s_next) {
+	    mem != NULL; mem = mem->s_next) {
 		// TODO: Maybe update mem->u.s_member.sm_offset_in_bits.
 		if (mem->s_type->t_bitfield) {
 			bits += bit_fields_width(&mem, &named);
@@ -633,7 +633,7 @@ dcs_adjust_storage_class(void)
 			dcs->d_scl = NO_SCL;
 		}
 	} else if (dcs->d_kind == DLK_OLD_STYLE_PARAMS ||
-		   dcs->d_kind == DLK_PROTO_PARAMS) {
+	    dcs->d_kind == DLK_PROTO_PARAMS) {
 		if (dcs->d_scl != NO_SCL && dcs->d_scl != REG) {
 			/* only 'register' is valid as storage class ... */
 			error(9);
@@ -1310,7 +1310,7 @@ check_prototype_parameters(sym_t *args)
 {
 
 	for (sym_t *sym = dcs->d_first_dlsym;
-	     sym != NULL; sym = sym->s_level_next) {
+	    sym != NULL; sym = sym->s_level_next) {
 		scl_t sc = sym->s_scl;
 		if (sc == STRUCT_TAG || sc == UNION_TAG || sc == ENUM_TAG) {
 			/* dubious tag declaration '%s %s' */
@@ -1677,7 +1677,7 @@ static bool
 has_named_member(const type_t *tp)
 {
 	for (const sym_t *mem = tp->t_sou->sou_first_member;
-	     mem != NULL; mem = mem->s_next) {
+	    mem != NULL; mem = mem->s_next) {
 		if (mem->s_name != unnamed)
 			return true;
 		if (is_struct_or_union(mem->s_type->t_tspec)
@@ -1784,7 +1784,7 @@ ends_with(const char *s, const char *suffix)
 	size_t s_len = strlen(s);
 	size_t suffix_len = strlen(suffix);
 	return s_len >= suffix_len &&
-	       memcmp(s + s_len - suffix_len, suffix, suffix_len) == 0;
+	    memcmp(s + s_len - suffix_len, suffix, suffix_len) == 0;
 }
 
 void
@@ -2021,7 +2021,7 @@ declare(sym_t *decl, bool has_initializer, sbuf_t *renaming)
 	if (dcs->d_kind == DLK_EXTERN)
 		declare_extern(decl, has_initializer, renaming);
 	else if (dcs->d_kind == DLK_OLD_STYLE_PARAMS ||
-		 dcs->d_kind == DLK_PROTO_PARAMS) {
+	    dcs->d_kind == DLK_PROTO_PARAMS) {
 		if (renaming != NULL) {
 			/* symbol renaming can't be used on function ... */
 			error(310);
@@ -2147,7 +2147,7 @@ pointer_types_are_compatible(const type_t *tp1, const type_t *tp2, bool ignqual)
 {
 
 	return tp1->t_tspec == VOID || tp2->t_tspec == VOID ||
-	       qualifiers_correspond(tp1, tp2, ignqual);
+	    qualifiers_correspond(tp1, tp2, ignqual);
 }
 
 static bool
@@ -2375,8 +2375,8 @@ is_character_pointer(const type_t *tp)
 	tspec_t st;
 
 	return tp->t_tspec == PTR &&
-	       (st = tp->t_subt->t_tspec,
-		   st == CHAR || st == SCHAR || st == UCHAR);
+	    (st = tp->t_subt->t_tspec,
+		st == CHAR || st == SCHAR || st == UCHAR);
 }
 
 void
@@ -2862,7 +2862,7 @@ check_usage(const decl_level *dl)
 
 	debug_step("begin lwarn %d", lwarn);
 	for (sym_t *sym = dl->d_first_dlsym;
-	     sym != NULL; sym = sym->s_level_next)
+	    sym != NULL; sym = sym->s_level_next)
 		check_usage_sym(dl->d_asm, sym);
 	lwarn = saved_lwarn;
 	debug_step("end lwarn %d", lwarn);
@@ -3114,7 +3114,7 @@ end_translation_unit(void)
 		norecover();
 
 	for (const sym_t *sym = dcs->d_first_dlsym;
-	     sym != NULL; sym = sym->s_level_next) {
+	    sym != NULL; sym = sym->s_level_next) {
 		if (sym->s_block_level == -1)
 			continue;
 		if (sym->s_kind == FVFT)

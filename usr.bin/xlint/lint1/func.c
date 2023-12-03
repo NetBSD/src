@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.175 2023/12/02 21:50:20 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.176 2023/12/03 12:03:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.175 2023/12/02 21:50:20 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.176 2023/12/03 12:03:38 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -267,7 +267,7 @@ begin_function(sym_t *fsym)
 	 */
 	n = 1;
 	for (const sym_t *param = fsym->s_type->t_params;
-	     param != NULL; param = param->s_next) {
+	    param != NULL; param = param->s_next) {
 		if (param->s_scl == ABSTRACT) {
 			lint_assert(param->s_name == unnamed);
 			/* formal parameter #%d lacks name */
@@ -380,7 +380,7 @@ end_function(void)
 	int n = nargusg;
 	nargusg = -1;
 	for (const sym_t *param = dcs->d_func_params;
-	     param != NULL && n != 0; param = param->s_next, n--)
+	    param != NULL && n != 0; param = param->s_next, n--)
 		check_usage_sym(dcs->d_asm, param);
 
 	/*
@@ -724,7 +724,7 @@ stmt_switch_expr_stmt(void)
 		nenum = nclab = 0;
 		lint_assert(cstmt->c_switch_type->t_enum != NULL);
 		for (esym = cstmt->c_switch_type->t_enum->en_first_enumerator;
-		     esym != NULL; esym = esym->s_next) {
+		    esym != NULL; esym = esym->s_next) {
 			nenum++;
 		}
 		for (cl = cstmt->c_case_labels; cl != NULL; cl = cl->cl_next)

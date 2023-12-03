@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.26 2023/08/02 18:51:25 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.27 2023/12/03 12:03:38 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.26 2023/08/02 18:51:25 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.27 2023/12/03 12:03:38 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -58,16 +58,16 @@ static bool
 is_assignment_bool_or_other(op_t op)
 {
 	return op == ASSIGN ||
-	       op == ANDASS || op == XORASS || op == ORASS ||
-	       op == RETURN || op == INIT || op == FARG;
+	    op == ANDASS || op == XORASS || op == ORASS ||
+	    op == RETURN || op == INIT || op == FARG;
 }
 
 static bool
 is_symmetric_bool_or_other(op_t op)
 {
 	return op == EQ || op == NE ||
-	       op == BITAND || op == BITXOR || op == BITOR ||
-	       op == COLON;
+	    op == BITAND || op == BITXOR || op == BITOR ||
+	    op == COLON;
 }
 
 static bool
