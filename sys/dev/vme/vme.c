@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.29 2021/08/07 16:19:17 thorpej Exp $ */
+/* $NetBSD: vme.c,v 1.30 2023/12/04 01:49:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,13 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.29 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.30 2023/12/04 01:49:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 #include <sys/bus.h>
 
 #include <dev/vme/vmereg.h>
@@ -47,7 +47,7 @@ static int vmesubmatch1(device_t, cfdata_t, const int *, void *);
 static int vmesubmatch(device_t, cfdata_t, const int *, void *);
 int vmematch(device_t, cfdata_t, void *);
 void vmeattach(device_t, device_t, void *);
-static struct extent *vme_select_map(struct vmebus_softc*, vme_am_t);
+static vmem_t *vme_select_map(struct vmebus_softc*, vme_am_t);
 
 #define VME_SLAVE_DUMMYDRV "vme_slv"
 
@@ -180,21 +180,48 @@ vmeattach(device_t parent, device_t self, void *aux)
 	/*
 	 * set up address space accounting - assume incomplete decoding
 	 */
-	sc->vme32ext = extent_create("vme32", 0, 0xffffffff, 0, 0, 0);
-	if (!sc->vme32ext) {
-		printf("error creating A32 map\n");
+	sc->vme32_arena = vmem_create("vme32",
+				      0,		/* base */
+	/* XXX loses last byte */     0xffffffff,	/* size */
+				      1,		/* quantum */
+				      NULL,		/* allocfn */
+				      NULL,		/* releasefn */
+				      NULL,		/* source */
+				      0,		/* qcache_max */
+				      VM_SLEEP,
+				      IPL_NONE);
+	if (!sc->vme32_arena) {
+		device_printf(self, "error creating A32 map\n");
 		return;
 	}
 
-	sc->vme24ext = extent_create("vme24", 0, 0x00ffffff, 0, 0, 0);
-	if (!sc->vme24ext) {
-		printf("error creating A24 map\n");
+	sc->vme24_arena = vmem_create("vme24",
+				      0,		/* base */
+				      0x01000000,	/* size */
+				      1,		/* quantum */
+				      NULL,		/* allocfn */
+				      NULL,		/* releasefn */
+				      NULL,		/* source */
+				      0,		/* qcache_max */
+				      VM_SLEEP,
+				      IPL_NONE);
+	if (!sc->vme24_arena) {
+		device_printf(self, "error creating A24 map\n");
 		return;
 	}
 
-	sc->vme16ext = extent_create("vme16", 0, 0x0000ffff, 0, 0, 0);
-	if (!sc->vme16ext) {
-		printf("error creating A16 map\n");
+	sc->vme16_arena = vmem_create("vme16",
+				      0,		/* base */
+				      0x00010000,	/* size */
+				      1,		/* quantum */
+				      NULL,		/* allocfn */
+				      NULL,		/* releasefn */
+				      NULL,		/* source */
+				      0,		/* qcache_max */
+				      VM_SLEEP,
+				      IPL_NONE);
+	if (!sc->vme16_arena) {
+		device_printf(self, "error creating A16 map\n");
 		return;
 	}
 
@@ -207,13 +234,13 @@ vmeattach(device_t parent, device_t self, void *aux)
 	config_search(self, NULL,
 	    CFARGS(.search = vmesubmatch));
 
-#ifdef VMEDEBUG
-	if (sc->vme32ext)
-		extent_print(sc->vme32ext);
-	if (sc->vme24ext)
-		extent_print(sc->vme24ext);
-	if (sc->vme16ext)
-		extent_print(sc->vme16ext);
+#if 0	/* XXX VMEDEBUG */
+	if (sc->vme32_arena)
+		vmem_print(sc->vme32_arena);
+	if (sc->vme24_arena)
+		vmem_print(sc->vme24_arena);
+	if (sc->vme16_arena)
+		vmem_print(sc->vme16_arena);
 #endif
 }
 
@@ -230,38 +257,38 @@ vmedetach(device_t dev)
 
 	/* extent maps should be empty now */
 
-	if (sc->vme32ext) {
+	if (sc->vme32_arena) {
 #ifdef VMEDEBUG
-		extent_print(sc->vme32ext);
+		vmem_print(sc->vme32_arena);
 #endif
-		extent_destroy(sc->vme32ext);
+		vmem_destroy(sc->vme32_arena);
 	}
-	if (sc->vme24ext) {
+	if (sc->vme24_arena) {
 #ifdef VMEDEBUG
-		extent_print(sc->vme24ext);
+		vmem_print(sc->vme24_arena);
 #endif
-		extent_destroy(sc->vme24ext);
+		vmem_destroy(sc->vme24_arena);
 	}
-	if (sc->vme16ext) {
+	if (sc->vme16_arena) {
 #ifdef VMEDEBUG
-		extent_print(sc->vme16ext);
+		vmem_print(sc->vme16_arena);
 #endif
-		extent_destroy(sc->vme16ext);
+		vmem_destroy(sc->vme16_arena);
 	}
 
 	return (0);
 }
 #endif
 
-static struct extent *
+static vmem_t *
 vme_select_map(struct vmebus_softc *sc, vme_am_t ams)
 {
 	if ((ams & VME_AM_ADRSIZEMASK) == VME_AM_A32)
-		return (sc->vme32ext);
+		return (sc->vme32_arena);
 	else if ((ams & VME_AM_ADRSIZEMASK) == VME_AM_A24)
-		return (sc->vme24ext);
+		return (sc->vme24_arena);
 	else if ((ams & VME_AM_ADRSIZEMASK) == VME_AM_A16)
-		return (sc->vme16ext);
+		return (sc->vme16_arena);
 	else
 		return (0);
 }
@@ -269,41 +296,48 @@ vme_select_map(struct vmebus_softc *sc, vme_am_t ams)
 int
 _vme_space_alloc(struct vmebus_softc *sc, vme_addr_t addr, vme_size_t len, vme_am_t ams)
 {
-	struct extent *ex;
+	vmem_t *vm;
 
-	ex = vme_select_map(sc, ams);
-	if (!ex)
+	vm = vme_select_map(sc, ams);
+	if (!vm)
 		return (EINVAL);
 
-	return (extent_alloc_region(ex, addr, len, EX_NOWAIT));
+	return vmem_xalloc_addr(vm, addr, len, VM_NOSLEEP);
 }
 
 void
 _vme_space_free(struct vmebus_softc *sc, vme_addr_t addr, vme_size_t len, vme_am_t ams)
 {
-	struct extent *ex;
+	vmem_t *vm;
 
-	ex = vme_select_map(sc, ams);
-	if (!ex) {
+	vm = vme_select_map(sc, ams);
+	if (!vm) {
 		panic("vme_space_free: invalid am %x", ams);
 		return;
 	}
 
-	extent_free(ex, addr, len, EX_NOWAIT);
+	vmem_xfree(vm, addr, len);
 }
 
 int
 _vme_space_get(struct vmebus_softc *sc, vme_size_t len, vme_am_t ams, u_long align, vme_addr_t *addr)
 {
-	struct extent *ex;
-	u_long help;
+	vmem_t *vm;
+	vmem_addr_t help;
 	int res;
 
-	ex = vme_select_map(sc, ams);
-	if (!ex)
+	vm = vme_select_map(sc, ams);
+	if (!vm)
 		return (EINVAL);
 
-	res = extent_alloc(ex, len, align, EX_NOBOUNDARY, EX_NOWAIT, &help);
+	res = vmem_xalloc(vm, len,
+			  align,		/* align */
+			  0,			/* phase */
+			  0,			/* nocross */
+			  VMEM_ADDR_MIN,	/* minaddr */
+			  VMEM_ADDR_MAX,	/* maxaddr */
+			  VM_NOSLEEP,
+			  &help);
 	if (!res)
 		*addr = help;
 	return (res);
