@@ -1,4 +1,4 @@
-/* $NetBSD: vmevar.h,v 1.14 2012/10/27 17:18:38 chs Exp $ */
+/* $NetBSD: vmevar.h,v 1.15 2023/12/04 01:49:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -44,6 +44,8 @@ typedef int vme_swap_t; /* hardware swap capabilities,
 			 placeholder - contents to be specified */
 
 #ifdef _KERNEL
+
+#include <sys/vmem.h>
 
 /*
  * Generic placeholder for any resources needed for a mapping,
@@ -172,7 +174,7 @@ struct vmebus_softc {
 
 	vme_slaveconf_callback slaveconfig;
 
-	struct extent *vme32ext, *vme24ext, *vme16ext;
+	vmem_t *vme32_arena, *vme24_arena, *vme16_arena;
 };
 
 #define VME_MAXCFRANGES 3
