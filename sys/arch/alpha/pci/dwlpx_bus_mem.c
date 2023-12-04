@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_bus_mem.c,v 1.15 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: dwlpx_bus_mem.c,v 1.16 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_mem.c,v 1.15 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_mem.c,v 1.16 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,17 +46,21 @@ __KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_mem.c,v 1.15 2021/07/04 22:42:36 thorpej E
 
 #define	CHIP		dwlpx
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(1)
-#define	CHIP_D_MEM_EXTENT(v)	(((struct dwlpx_config *)(v))->cc_d_mem_ex)
-#define	CHIP_D_MEM_EX_STORE(v)						\
-	(((struct dwlpx_config *)(v))->cc_dmem_exstorage)
-#define	CHIP_D_MEM_EX_STORE_SIZE(v)					\
-	(sizeof (((struct dwlpx_config *)(v))->cc_dmem_exstorage))
-#define	CHIP_S_MEM_EXTENT(v)	(((struct dwlpx_config *)(v))->cc_s_mem_ex)
-#define	CHIP_S_MEM_EX_STORE(v)						\
-	(((struct dwlpx_config *)(v))->cc_smem_exstorage)
-#define	CHIP_S_MEM_EX_STORE_SIZE(v)					\
-	(sizeof (((struct dwlpx_config *)(v))->cc_smem_exstorage))
+#define	CHIP_D_MEM_ARENA(v)		\
+	(((struct dwlpx_config *)(v))->cc_d_mem_arena)
+#define	CHIP_D_MEM_ARENA_STORE(v)	\
+	(&(((struct dwlpx_config *)(v))->cc_d_mem_arena_store))
+#define	CHIP_D_MEM_BTAG_STORE(v)	\
+	(((struct dwlpx_config *)(v))->cc_d_mem_btag_store)
+#define	CHIP_D_MEM_BTAG_COUNT(v)	DWLPX_D_MEM_NBTS
+
+#define	CHIP_S_MEM_ARENA(v)		\
+	(((struct dwlpx_config *)(v))->cc_s_mem_arena)
+#define	CHIP_S_MEM_ARENA_STORE(v)	\
+	(&(((struct dwlpx_config *)(v))->cc_s_mem_arena_store))
+#define	CHIP_S_MEM_BTAG_STORE(v)	\
+	(((struct dwlpx_config *)(v))->cc_s_mem_btag_store)
+#define	CHIP_S_MEM_BTAG_COUNT(v)	DWLPX_S_MEM_NBTS
 
 /* Dense region 1 */
 #define	CHIP_D_MEM_W1_BUS_START(v)	0x00000000UL

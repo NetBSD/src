@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_bus_io.c,v 1.6 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: mcpcia_bus_io.c,v 1.7 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_io.c,v 1.6 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_io.c,v 1.7 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,11 +46,12 @@ __KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_io.c,v 1.6 2021/07/04 22:42:36 thorpej Ex
 
 #define	CHIP		mcpcia
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(((struct mcpcia_config *)(v))->cc_mallocsafe)
-#define	CHIP_IO_EXTENT(v)	(((struct mcpcia_config *)(v))->cc_io_ex)
-#define	CHIP_IO_EX_STORE(v)	(((struct mcpcia_config *)(v))->cc_io_exstorage)
-#define	CHIP_IO_EX_STORE_SIZE(v)					\
-	(sizeof (((struct mcpcia_config *)(v))->cc_io_exstorage))
+#define	CHIP_IO_ARENA(v)	(((struct mcpcia_config *)(v))->cc_io_arena)
+#define	CHIP_IO_ARENA_STORE(v)	\
+	(&(((struct mcpcia_config *)(v))->cc_io_arena_store))
+#define	CHIP_IO_BTAG_STORE(v)	\
+	(((struct mcpcia_config *)(v))->cc_io_btag_store)
+#define	CHIP_IO_BTAG_COUNT(v)	MCPCIA_IO_NBTS
 
 /* IO Region 1 */
 #define	CHIP_IO_W1_BUS_START(v)	0x00000000UL

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.35 2020/09/04 03:41:49 thorpej Exp $ */
+/* $NetBSD: dec_6600.c,v 1.36 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.35 2020/09/04 03:41:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.36 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ dec_6600_cons_init(void)
 	/* Console hose defaults to hose 0. */
 	tsp_console_hose = 0;
 
-	tsp = tsp_init(0, tsp_console_hose);
+	tsp = tsp_init(tsp_console_hose);
 
 	switch (ctb->ctb_term_type) {
 	case CTB_PRINTERPORT:
@@ -171,7 +171,7 @@ dec_6600_cons_init(void)
 		else {
 			/* The display PCI might be different */
 			tsp_console_hose = CTB_TURBOSLOT_HOSE(ctbslot);
-			tsp = tsp_init(0, tsp_console_hose);
+			tsp = tsp_init(tsp_console_hose);
 			pci_display_console(&tsp->pc_iot, &tsp->pc_memt,
 			    &tsp->pc_pc, CTB_TURBOSLOT_BUS(ctbslot),
 			    CTB_TURBOSLOT_SLOT(ctbslot), 0);

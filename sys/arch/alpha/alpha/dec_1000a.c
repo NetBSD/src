@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.33 2012/10/13 17:58:54 jdc Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.34 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.33 2012/10/13 17:58:54 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.34 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,13 +172,13 @@ dec_1000a_cons_init(void)
 
 	if(strcmp(platform.iobus, "cia") == 0) {
 		ccp = &cia_configuration;
-		cia_init(ccp, 0);
+		cia_init(ccp);
 		iot = &ccp->cc_iot;
 		memt = &ccp->cc_memt;
 		pcichipset = &ccp->cc_pc;
 	} else {
 		acp = &apecs_configuration;
-		apecs_init(acp, 0);
+		apecs_init(acp);
 		iot = &acp->ac_iot;
 		memt = &acp->ac_memt;
 		pcichipset = &acp->ac_pc;

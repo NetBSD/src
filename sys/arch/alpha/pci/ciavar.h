@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.22 2021/07/19 01:06:14 thorpej Exp $ */
+/* $NetBSD: ciavar.h,v 1.23 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/vmem.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
@@ -63,8 +65,9 @@ struct cia_config {
 #define	CCF_PCI_USE_BWX	0x04		/* use BWX for PCI config space */
 #define	CCF_BUS_USE_BWX	0x08		/* use BWX for bus space */
 
-	struct extent *cc_io_ex, *cc_d_mem_ex, *cc_s_mem_ex;
-	int	cc_mallocsafe;
+	vmem_t *cc_io_arena;
+	vmem_t *cc_d_mem_arena;
+	vmem_t *cc_s_mem_arena;
 
 	struct {
 		uint32_t wbase[4];
@@ -79,7 +82,7 @@ struct cia_softc {
 	struct	cia_config *sc_ccp;
 };
 
-void	cia_init(struct cia_config *, int);
+void	cia_init(struct cia_config *);
 void	cia_pci_init(pci_chipset_tag_t, void *);
 void	cia_dma_init(struct cia_config *);
 

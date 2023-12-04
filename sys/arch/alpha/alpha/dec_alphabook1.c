@@ -1,4 +1,4 @@
-/* $NetBSD: dec_alphabook1.c,v 1.28 2021/07/16 18:50:19 thorpej Exp $ */
+/* $NetBSD: dec_alphabook1.c,v 1.29 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_alphabook1.c,v 1.28 2021/07/16 18:50:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_alphabook1.c,v 1.29 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ dec_alphabook1_cons_init(void)
 	extern struct lca_config lca_configuration;
 
 	lcp = &lca_configuration;
-	lca_init(lcp, 0);
+	lca_init(lcp);
 
 	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 

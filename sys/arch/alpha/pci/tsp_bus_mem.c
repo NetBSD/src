@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_bus_mem.c,v 1.14 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: tsp_bus_mem.c,v 1.15 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.14 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.15 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,11 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.14 2021/07/04 22:42:36 thorpej Exp
 
 #define	CHIP	tsp
 
-#define	CHIP_EX_MALLOC_SAFE(v)  (((struct tsp_config *)(v))->pc_mallocsafe)
-#define CHIP_MEM_EXTENT(v)       (((struct tsp_config *)(v))->pc_mem_ex)
-#define	CHIP_MEM_EX_STORE(v)	(((struct tsp_config *)(v))->pc_mem_exstorage)
-#define	CHIP_MEM_EX_STORE_SIZE(v)					\
-	(sizeof (((struct tsp_config *)(v))->pc_mem_exstorage))
+#define	CHIP_MEM_ARENA(v)		\
+	(((struct tsp_config *)(v))->pc_mem_arena)
+#define	CHIP_MEM_ARENA_STORE(v)		\
+	(&(((struct tsp_config *)(v))->pc_mem_arena_store))
+#define	CHIP_MEM_BTAG_STORE(v)		\
+	(((struct tsp_config *)(v))->pc_mem_btag_store)
+#define	CHIP_MEM_BTAG_COUNT(v)		TSP_NBTS
 
 #define CHIP_MEM_SYS_START(v)						\
 	(((struct tsp_config *)(v))->pc_iobase | P_PCI_MEM)
@@ -84,10 +86,10 @@ tsp_bus_mem_init2(bus_space_tag_t t, void *v)
 			continue;
 		}
 
-		error = extent_alloc_region(CHIP_MEM_EXTENT(v),
+		error = vmem_xalloc_addr(CHIP_MEM_ARENA(v),
 		    WSBA_ADDR(pccsr->tsp_wsba[i].tsg_r),
 		    WSM_LEN(pccsr->tsp_wsm[i].tsg_r),
-		    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+		    VM_NOSLEEP);
 		if (error) {
 			printf("WARNING: unable to reserve DMA window "
 			    "0x%lx - 0x%lx\n",

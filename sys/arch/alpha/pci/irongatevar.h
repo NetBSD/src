@@ -1,4 +1,4 @@
-/* $NetBSD: irongatevar.h,v 1.7 2020/10/14 00:59:50 thorpej Exp $ */
+/* $NetBSD: irongatevar.h,v 1.8 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,6 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/vmem.h>
+
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 
@@ -49,8 +51,8 @@ struct irongate_config {
 
 	uint32_t ic_rev;
 
-	struct extent *ic_io_ex, *ic_mem_ex;
-	int	ic_mallocsafe;
+	vmem_t *ic_io_arena;
+	vmem_t *ic_mem_arena;
 };
 
 struct irongate_softc {
@@ -60,7 +62,7 @@ struct irongate_softc {
 };
 
 void	irongate_page_physload(unsigned long, unsigned long);
-void	irongate_init(struct irongate_config *, int);
+void	irongate_init(struct irongate_config *);
 void	irongate_pci_init(pci_chipset_tag_t, void *);
 void	irongate_dma_init(struct irongate_config *);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.57 2021/08/07 16:18:41 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.58 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.57 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.58 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ lca_probe_bcache(void)
  * Set up the chipset's function pointers.
  */
 void
-lca_init(struct lca_config *lcp, int mallocsafe)
+lca_init(struct lca_config *lcp)
 {
 
 	/*
@@ -171,7 +171,6 @@ lca_init(struct lca_config *lcp, int mallocsafe)
 		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 3;
 		alpha_bus_get_window = lca_bus_get_window;
 	}
-	lcp->lc_mallocsafe = mallocsafe;
 
 	lca_pci_init(&lcp->lc_pc, lcp);
 	alpha_pci_chipset = &lcp->lc_pc;
@@ -221,7 +220,7 @@ lcaattach(device_t parent, device_t self, void *aux)
 	 * that need to use memory allocation.
 	 */
 	lcp = sc->sc_lcp = &lca_configuration;
-	lca_init(lcp, 1);
+	lca_init(lcp);
 
 	/* XXX print chipset information */
 	aprint_normal("\n");

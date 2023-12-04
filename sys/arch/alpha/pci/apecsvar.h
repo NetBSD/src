@@ -1,4 +1,4 @@
-/* $NetBSD: apecsvar.h,v 1.11 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: apecsvar.h,v 1.12 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,8 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/vmem.h>
+
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/pci_sgmap_pte64.h>
@@ -54,11 +56,12 @@ struct apecs_config {
 
 	uint32_t ac_haxr1, ac_haxr2;
 
-	struct extent *ac_io_ex, *ac_d_mem_ex, *ac_s_mem_ex;
-	int	ac_mallocsafe;
+	vmem_t *ac_io_arena;
+	vmem_t *ac_d_mem_arena;
+	vmem_t *ac_s_mem_arena;
 };
 
-void	apecs_init(struct apecs_config *, int);
+void	apecs_init(struct apecs_config *);
 void	apecs_pci_init(pci_chipset_tag_t, void *);
 void	apecs_dma_init(struct apecs_config *);
 

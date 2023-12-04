@@ -1,4 +1,4 @@
-/* $NetBSD: cia_swiz_bus_mem.c,v 1.19 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: cia_swiz_bus_mem.c,v 1.20 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: cia_swiz_bus_mem.c,v 1.19 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cia_swiz_bus_mem.c,v 1.20 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +43,8 @@ __KERNEL_RCSID(1, "$NetBSD: cia_swiz_bus_mem.c,v 1.19 2021/07/04 22:42:36 thorpe
 
 #define	CHIP		cia_swiz
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(((struct cia_config *)(v))->cc_mallocsafe)
-#define	CHIP_D_MEM_EXTENT(v)	(((struct cia_config *)(v))->cc_d_mem_ex)
-#define	CHIP_S_MEM_EXTENT(v)	(((struct cia_config *)(v))->cc_s_mem_ex)
+#define	CHIP_D_MEM_ARENA(v)	(((struct cia_config *)(v))->cc_d_mem_arena)
+#define	CHIP_S_MEM_ARENA(v)	(((struct cia_config *)(v))->cc_s_mem_arena)
 
 /* Dense region 1 */
 #define	CHIP_D_MEM_W1_BUS_START(v)	0x00000000UL

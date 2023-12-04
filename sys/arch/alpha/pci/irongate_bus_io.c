@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_bus_io.c,v 1.8 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: irongate_bus_io.c,v 1.9 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: irongate_bus_io.c,v 1.8 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: irongate_bus_io.c,v 1.9 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,7 @@ __KERNEL_RCSID(1, "$NetBSD: irongate_bus_io.c,v 1.8 2021/07/04 22:42:36 thorpej 
 
 #define	CHIP		irongate
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(((struct irongate_config *)(v))->ic_mallocsafe)
-#define	CHIP_IO_EXTENT(v)	(((struct irongate_config *)(v))->ic_io_ex)
+#define	CHIP_IO_ARENA(v)	(((struct irongate_config *)(v))->ic_io_arena)
 
 #define	CHIP_IO_SYS_START(v)	IRONGATE_IO_BASE
 

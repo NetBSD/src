@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_bus_io.c,v 1.4 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: ttwoga_bus_io.c,v 1.5 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: ttwoga_bus_io.c,v 1.4 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ttwoga_bus_io.c,v 1.5 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,11 +47,10 @@ __KERNEL_RCSID(1, "$NetBSD: ttwoga_bus_io.c,v 1.4 2021/07/04 22:42:36 thorpej Ex
 
 #define	CHIP_V(v)		((struct ttwoga_config *)(v))
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(CHIP_V(v)->tc_mallocsafe)
-
-#define	CHIP_IO_EXTENT(v)	(CHIP_V(v)->tc_io_ex)
-#define	CHIP_IO_EX_STORE(v)	(CHIP_V(v)->tc_io_exstorage)
-#define	CHIP_IO_EX_STORE_SIZE(v) sizeof(CHIP_IO_EX_STORE(v))
+#define	CHIP_IO_ARENA(v)	(CHIP_V(v)->tc_io_arena)
+#define	CHIP_IO_ARENA_STORE(v)	(&(CHIP_V(v)->tc_io_arena_store))
+#define	CHIP_IO_BTAG_STORE(v)	(CHIP_V(v)->tc_io_btag_store)
+#define	CHIP_IO_BTAG_COUNT(v)	TTWOGA_NBTS
 
 /* IO region 1 */
 #define	CHIP_IO_W1_BUS_START(v)						\

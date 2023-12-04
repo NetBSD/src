@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_bus_mem.c,v 1.6 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: mcpcia_bus_mem.c,v 1.7 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_mem.c,v 1.6 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_mem.c,v 1.7 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,17 +46,21 @@ __KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_mem.c,v 1.6 2021/07/04 22:42:36 thorpej E
 
 #define	CHIP		mcpcia
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(((struct mcpcia_config *)(v))->cc_mallocsafe)
-#define	CHIP_D_MEM_EXTENT(v)	(((struct mcpcia_config *)(v))->cc_d_mem_ex)
-#define	CHIP_D_MEM_EX_STORE(v)						\
-	(((struct mcpcia_config *)(v))->cc_dmem_exstorage)
-#define	CHIP_D_MEM_EX_STORE_SIZE(v)					\
-	(sizeof (((struct mcpcia_config *)(v))->cc_dmem_exstorage))
-#define	CHIP_S_MEM_EXTENT(v)	(((struct mcpcia_config *)(v))->cc_s_mem_ex)
-#define	CHIP_S_MEM_EX_STORE(v)						\
-	(((struct mcpcia_config *)(v))->cc_smem_exstorage)
-#define	CHIP_S_MEM_EX_STORE_SIZE(v)					\
-	(sizeof (((struct mcpcia_config *)(v))->cc_smem_exstorage))
+#define	CHIP_D_MEM_ARENA(v)		\
+	(((struct mcpcia_config *)(v))->cc_d_mem_arena)
+#define	CHIP_D_MEM_ARENA_STORE(v)	\
+	(&(((struct mcpcia_config *)(v))->cc_d_mem_arena_store))
+#define	CHIP_D_MEM_BTAG_STORE(v)	\
+	(((struct mcpcia_config *)(v))->cc_d_mem_btag_store)
+#define	CHIP_D_MEM_BTAG_COUNT(v)	MCPCIA_D_MEM_NBTS
+
+#define	CHIP_S_MEM_ARENA(v)		\
+	(((struct mcpcia_config *)(v))->cc_s_mem_arena)
+#define	CHIP_S_MEM_ARENA_STORE(v)	\
+	(&(((struct mcpcia_config *)(v))->cc_s_mem_arena_store))
+#define	CHIP_S_MEM_BTAG_STORE(v)	\
+	(((struct mcpcia_config *)(v))->cc_s_mem_btag_store)
+#define	CHIP_S_MEM_BTAG_COUNT(v)	MCPCIA_S_MEM_NBTS
 
 /* Dense region 1 */
 #define	CHIP_D_MEM_W1_BUS_START(v)	0x00000000UL

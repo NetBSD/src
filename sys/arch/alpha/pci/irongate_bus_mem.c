@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_bus_mem.c,v 1.12 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: irongate_bus_mem.c,v 1.13 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.12 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.13 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,7 @@ __KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.12 2021/07/04 22:42:36 thorpe
 
 #define	CHIP		irongate
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(((struct irongate_config *)(v))->ic_mallocsafe)
-#define	CHIP_MEM_EXTENT(v)	(((struct irongate_config *)(v))->ic_mem_ex)
+#define	CHIP_MEM_ARENA(v)	(((struct irongate_config *)(v))->ic_mem_arena)
 
 #define	CHIP_MEM_SYS_START(v)	IRONGATE_MEM_BASE
 
@@ -73,7 +72,7 @@ irongate_bus_mem_init2(bus_space_tag_t t, void *v)
 
 	/*
 	 * Since the AMD 751 doesn't have DMA windows, we need to
-	 * allocate RAM out of the extent map.
+	 * reserve the space used by RAM in the PCI memory arena.
 	 */
 	for (i = 0; i < mem_cluster_cnt; i++) {
 		start = mem_clusters[i].start;
@@ -94,10 +93,8 @@ irongate_bus_mem_init2(bus_space_tag_t t, void *v)
 			 * taste.
 			 */
 			if (start < IOM_BEGIN) {
-				error = extent_alloc_region(CHIP_MEM_EXTENT(v),
-				    start, (IOM_BEGIN - start),
-				    EX_NOWAIT |
-				    (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+				error = vmem_xalloc_addr(CHIP_MEM_ARENA(v),
+				    start, (IOM_BEGIN - start), VM_NOSLEEP);
 				if (error) {
 					printf("WARNING: unable to reserve "
 					    "chunk from mem cluster %d "
@@ -106,10 +103,8 @@ irongate_bus_mem_init2(bus_space_tag_t t, void *v)
 				}
 			}
 			if (end > IOM_END) {
-				error = extent_alloc_region(CHIP_MEM_EXTENT(v),
-				    IOM_END, (end - IOM_END),
-				    EX_NOWAIT |
-				    (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+				error = vmem_xalloc_addr(CHIP_MEM_ARENA(v),
+				    IOM_END, (end - IOM_END), VM_NOSLEEP);
 				if (error) {
 					printf("WARNING: unable to reserve "
 					    "chunk from mem cluster %d "
@@ -118,10 +113,8 @@ irongate_bus_mem_init2(bus_space_tag_t t, void *v)
 				}
 			}
 		} else {
-			error = extent_alloc_region(CHIP_MEM_EXTENT(v),
-			    start, size,
-			    EX_NOWAIT |
-			    (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+			error = vmem_xalloc_addr(CHIP_MEM_ARENA(v),
+			    start, size, VM_NOSLEEP);
 			if (error) {
 				printf("WARNING: unable reserve mem cluster %d "
 				    "(0x%lx - 0x%lx)\n", i, start,
