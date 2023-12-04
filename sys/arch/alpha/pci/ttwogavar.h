@@ -1,4 +1,4 @@
-/* $NetBSD: ttwogavar.h,v 1.7 2021/05/08 00:08:43 thorpej Exp $ */
+/* $NetBSD: ttwogavar.h,v 1.8 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,11 +30,13 @@
  */
 
 #include <sys/extent.h>
+#include <sys/vmem_impl.h>
+
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/pci_sgmap_pte64.h>
 
-#define	_FSTORE	(EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long))
+#define	TTWOGA_NBTS	VMEM_EST_BTCOUNT(1, 8)
 
 /*
  * T2 System Address Map info.
@@ -81,12 +83,16 @@ struct ttwoga_config {
 	struct alpha_sgmap tc_sgmap;
 	int tc_use_tlb;			/* Gamma hardware bug */
 
-	long tc_io_exstorage[_FSTORE];
-	long tc_smem_exstorage[_FSTORE];
-	long tc_dmem_exstorage[_FSTORE];
+	struct vmem tc_io_arena_store;
+	struct vmem tc_d_mem_arena_store;
+	struct vmem tc_s_mem_arena_store;
+	struct vmem_btag tc_io_btag_store[TTWOGA_NBTS];
+	struct vmem_btag tc_d_mem_btag_store[TTWOGA_NBTS];
+	struct vmem_btag tc_s_mem_btag_store[TTWOGA_NBTS];
 
-	struct extent *tc_io_ex, *tc_d_mem_ex, *tc_s_mem_ex;
-	int	tc_mallocsafe;
+	vmem_t *tc_io_arena;
+	vmem_t *tc_d_mem_arena;
+	vmem_t *tc_s_mem_arena;
 
 	struct alpha_shared_intr *tc_intrtab;
 
@@ -97,7 +103,7 @@ struct ttwoga_config {
 
 extern cpuid_t ttwoga_conf_cpu;
 
-struct ttwoga_config *ttwoga_init(int, int);
+struct ttwoga_config *ttwoga_init(int);
 void	ttwoga_pci_init(pci_chipset_tag_t, void *);
 void	ttwoga_dma_init(struct ttwoga_config *);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.59 2021/08/07 16:18:41 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.60 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.59 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.60 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ apecsmatch(device_t parent, cfdata_t match, void *aux)
  * Set up the chipset's function pointers.
  */
 void
-apecs_init(struct apecs_config *acp, int mallocsafe)
+apecs_init(struct apecs_config *acp)
 {
 	acp->ac_comanche_pass2 =
 	    (REGVAL(COMANCHE_ED) & COMANCHE_ED_PASS2) != 0;
@@ -134,7 +134,6 @@ apecs_init(struct apecs_config *acp, int mallocsafe)
 		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 3;
 		alpha_bus_get_window = apecs_bus_get_window;
 	}
-	acp->ac_mallocsafe = mallocsafe;
 
 	apecs_pci_init(&acp->ac_pc, acp);
 	alpha_pci_chipset = &acp->ac_pc;
@@ -156,7 +155,7 @@ apecsattach(device_t parent, device_t self, void *aux)
 	 * (maybe), but doesn't hurt to do twice.
 	 */
 	acp = &apecs_configuration;
-	apecs_init(acp, 1);
+	apecs_init(acp);
 
 	apecs_dma_init(acp);
 

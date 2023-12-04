@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciavar.h,v 1.6 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: mcpciavar.h,v 1.7 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -30,12 +30,16 @@
  * SUCH DAMAGE.
  */
 
-#include <dev/pci/pcivar.h>
 #include <sys/extent.h>
+#include <sys/vmem_impl.h>
+
+#include <dev/pci/pcivar.h>
 
 #include <alpha/pci/pci_sgmap_pte64.h>
 
-#define	_FSTORE	(EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long))
+#define	MCPCIA_IO_NBTS		VMEM_EST_BTCOUNT(2, 8)
+#define	MCPCIA_D_MEM_NBTS	VMEM_EST_BTCOUNT(1, 8)
+#define	MCPCIA_S_MEM_NBTS	VMEM_EST_BTCOUNT(2, 8)
 
 /*
  * MPCIA configuration.
@@ -44,17 +48,19 @@ struct mcpcia_config {
 	int				cc_gid;	/* GID of this MCbus */
 	int				cc_mid;	/* MCbus Module ID */
 	int				cc_initted;
-	int				cc_mallocsafe;
 	struct alpha_bus_space		cc_iot;
 	struct alpha_bus_space		cc_memt;
-	struct extent *			cc_io_ex;
-	struct extent *			cc_d_mem_ex;
-	struct extent *			cc_s_mem_ex;
+	vmem_t *			cc_io_arena;
+	vmem_t *			cc_d_mem_arena;
+	vmem_t *			cc_s_mem_arena;
 	struct alpha_pci_chipset	cc_pc;
 	struct mcpcia_softc *		cc_sc;	/* back pointer */
-	long				cc_io_exstorage[_FSTORE];
-	long				cc_dmem_exstorage[_FSTORE];
-	long				cc_smem_exstorage[_FSTORE];
+	struct vmem			cc_io_arena_store;
+	struct vmem			cc_d_mem_arena_store;
+	struct vmem			cc_s_mem_arena_store;
+	struct vmem_btag		cc_io_btag_store[MCPCIA_IO_NBTS];
+	struct vmem_btag		cc_d_mem_btag_store[MCPCIA_D_MEM_NBTS];
+	struct vmem_btag		cc_s_mem_btag_store[MCPCIA_S_MEM_NBTS];
 	unsigned long			cc_sysbase;	/* shorthand */
 	struct alpha_bus_dma_tag	cc_dmat_direct;
 	struct alpha_bus_dma_tag	cc_dmat_pci_sgmap;

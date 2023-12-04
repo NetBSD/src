@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.68 2021/07/16 18:50:19 thorpej Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.69 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.68 2021/07/16 18:50:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.69 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ lca_preinit(void)
 {
 	extern struct lca_config lca_configuration;
 
-	lca_init(&lca_configuration, 0);
+	lca_init(&lca_configuration);
 	return &lca_configuration;
 }
 

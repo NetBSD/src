@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.48 2021/05/05 02:15:18 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.49 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,31 +63,41 @@
  * uses:
  *	CHIP		name of the 'chip' it's being compiled for.
  *	CHIP_D_MEM_W1_SYS_START	Dense Mem space base to use.
- *	CHIP_D_MEM_EX_STORE
+ *	CHIP_D_MEM_ARENA_STORE
  *			If defined, device-provided static storage area
- *			for the dense memory space extent.  If this is
- *			defined, CHIP_D_MEM_EX_STORE_SIZE must also be
- *			defined.  If this is not defined, a static area
- *			will be declared.
- *	CHIP_D_MEM_EX_STORE_SIZE
- *			Size of the device-provided static storage area
- *			for the dense memory space extent.
+ *			for the dense memory space arena.  If this is
+ *			defined, CHIP_D_MEM_BTAG_STORE and
+ *			CHIP_D_MEM_BTAG_COUNT must also be defined.  If
+ *			this is not defined, a static area will be declared.
+ *	CHIP_D_MEM_BTAG_STORE
+ *			Device-provided static storage area for the
+ *			dense memory space arena's boundary tags.  Ignored
+ *			unless CHIP_D_MEM_ARENA_STORE is defined.
+ *	CHIP_D_MEM_BTAG_COUNT
+ *			The number of device-provided static dense memory
+ *			space boundary tags.  Ignored unless
+ *			CHIP_MEM_ARENA_STORE is defined.
  *	CHIP_S_MEM_BASE	Sparse Mem space base to use.
- *	CHIP_S_MEM_EX_STORE
+ *	CHIP_S_MEM_ARENA_STORE
  *			If defined, device-provided static storage area
- *			for the sparse memory space extent.  If this is
- *			defined, CHIP_S_MEM_EX_STORE_SIZE must also be
- *			defined.  If this is not defined, a static area
- *			will be declared.
- *	CHIP_S_MEM_EX_STORE_SIZE
- *			Size of the device-provided static storage area
- *			for the sparse memory space extent.
+ *			for the sparse memory space arena.  If this is
+ *			defined, CHIP_D_MEM_BTAG_STORE and
+ *			CHIP_D_MEM_BTAG_COUNT must also be defined.  If
+ *			this is not defined, a static area will be declared.
+ *	CHIP_S_MEM_BTAG_STORE
+ *			Device-provided static storage area for the
+ *			sparse memory space arena's boundary tags.  Ignored
+ *			unless CHIP_D_MEM_ARENA_STORE is defined.
+ *	CHIP_S_MEM_BTAG_COUNT
+ *			The number of device-provided static sparse memory
+ *			space boundary tags.  Ignored unless
+ *			CHIP_MEM_ARENA_STORE is defined.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.48 2021/05/05 02:15:18 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.49 2023/12/04 00:32:10 thorpej Exp $");
 
-#include <sys/extent.h>
+#include <sys/vmem_impl.h>
 
 #define	__C(A,B)	__CONCAT(A,B)
 #define	__S(S)		__STRING(S)
@@ -213,20 +223,48 @@ static void	__C(CHIP,_mem_copy_region_8)(void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 
 #ifdef CHIP_D_MEM_W1_SYS_START
-#ifndef	CHIP_D_MEM_EX_STORE
-static long
-    __C(CHIP,_dmem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-#define	CHIP_D_MEM_EX_STORE(v)		(__C(CHIP,_dmem_ex_storage))
-#define	CHIP_D_MEM_EX_STORE_SIZE(v)	(sizeof __C(CHIP,_dmem_ex_storage))
-#endif
+#ifndef CHIP_D_MEM_ARENA_STORE
+#define	CHIP_D_MEM_BTAG_COUNT(v)	VMEM_EST_BTCOUNT(1, 8)
+#define	CHIP_D_MEM_BTAG_STORE(v)	__C(CHIP,_dmem_btag_store)
+#define	CHIP_D_MEM_ARENA_STORE(v)	(&(__C(CHIP,_dmem_arena_store)))
+
+static struct vmem __C(CHIP,_dmem_arena_store);
+static struct vmem_btag __C(CHIP,_dmem_btag_store)[CHIP_D_MEM_BTAG_COUNT(xxx)];
+#endif /* CHIP_D_MEM_ARENA_STORE */
 #endif /* CHIP_D_MEM_W1_SYS_START */
 
-#ifndef	CHIP_S_MEM_EX_STORE
-static long
-    __C(CHIP,_smem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-#define	CHIP_S_MEM_EX_STORE(v)		(__C(CHIP,_smem_ex_storage))
-#define	CHIP_S_MEM_EX_STORE_SIZE(v)	(sizeof __C(CHIP,_smem_ex_storage))
-#endif
+#ifndef	CHIP_S_MEM_ARENA_STORE
+
+#ifdef CHIP_S_MEM_W1_BUS_START
+#define	CHIP_S_MEM_W1_BUS_SPAN	1
+#else
+#define	CHIP_S_MEM_W1_BUS_SPAN	0
+#endif /* CHIP_S_MEM_W1_BUS_START */
+
+#ifdef CHIP_S_MEM_W2_BUS_START
+#define	CHIP_S_MEM_W2_BUS_SPAN	1
+#else
+#define	CHIP_S_MEM_W2_BUS_SPAN	0
+#endif /* CHIP_S_MEM_W2_BUS_START */
+
+#ifdef CHIP_S_MEM_W3_BUS_START
+#define	CHIP_S_MEM_W3_BUS_SPAN	1
+#else
+#define	CHIP_S_MEM_W3_BUS_SPAN	0
+#endif /* CHIP_S_MEM_W3_BUS_START */
+
+#define	CHIP_S_MEM_SPAN_COUNT					\
+	(CHIP_S_MEM_W1_BUS_SPAN + CHIP_S_MEM_W2_BUS_SPAN +	\
+	 CHIP_S_MEM_W3_BUS_SPAN)
+
+#define	CHIP_S_MEM_BTAG_COUNT(v)  VMEM_EST_BTCOUNT(CHIP_S_MEM_SPAN_COUNT, 8)
+#define	CHIP_S_MEM_BTAG_STORE(v)  __C(CHIP,_smem_btag_store)
+#define	CHIP_S_MEM_ARENA_STORE(v) (&(__C(CHIP,_smem_arena_store)))
+
+static struct vmem __C(CHIP,_smem_arena_store);
+static struct vmem_btag __C(CHIP,_smem_btag_store)[CHIP_S_MEM_BTAG_COUNT(xxx)];
+
+#endif /* CHIP_S_MEM_ARENA_STORE */
 
 #ifndef CHIP_ADDR_SHIFT
 #define	CHIP_ADDR_SHIFT		5
@@ -240,9 +278,10 @@ void
 __C(CHIP,_bus_mem_init)(bus_space_tag_t t, void *v)
 {
 #ifdef CHIP_D_MEM_W1_SYS_START
-	struct extent *dex;
+	vmem_t *dvm;
 #endif
-	struct extent *sex;
+	vmem_t *svm;
+	int error __diagused;
 
 	/*
 	 * Initialize the bus space tag.
@@ -327,54 +366,73 @@ __C(CHIP,_bus_mem_init)(bus_space_tag_t t, void *v)
 	t->abs_c_8 =		__C(CHIP,_mem_copy_region_8);
 
 #ifdef CHIP_D_MEM_W1_SYS_START
-	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
-	dex = extent_create(__S(__C(CHIP,_bus_dmem)), 0x0UL,
-	    0xffffffffffffffffUL,
-	    (void *)CHIP_D_MEM_EX_STORE(v), CHIP_D_MEM_EX_STORE_SIZE(v),
-	    EX_NOWAIT);
-	extent_alloc_region(dex, 0, 0xffffffffffffffffUL, EX_NOWAIT);
+	dvm = vmem_init(CHIP_D_MEM_ARENA_STORE(v),
+			__S(__C(CHIP,_bus_dmem)),	/* name */
+			0,				/* addr */
+			0,				/* size */
+			1,				/* quantum */
+			NULL,				/* importfn */
+			NULL,				/* releasefn */
+			NULL,				/* source */
+			0,				/* qcache_max */
+			VM_NOSLEEP | VM_PRIVTAGS,
+			IPL_NONE);
+	KASSERT(dvm != NULL);
+
+	vmem_add_bts(dvm, CHIP_D_MEM_BTAG_STORE(v), CHIP_D_MEM_BTAG_COUNT(v));
 
 #ifdef CHIP_D_MEM_W1_BUS_START
 #ifdef EXTENT_DEBUG
-	printf("dmem: freeing from 0x%lx to 0x%lx\n",
+	printf("dmem: adding span 0x%lx to 0x%lx\n",
 	    CHIP_D_MEM_W1_BUS_START(v), CHIP_D_MEM_W1_BUS_END(v));
 #endif
-	extent_free(dex, CHIP_D_MEM_W1_BUS_START(v),
+	error = vmem_add(dvm, CHIP_D_MEM_W1_BUS_START(v),
 	    CHIP_D_MEM_W1_BUS_END(v) - CHIP_D_MEM_W1_BUS_START(v) + 1,
-	    EX_NOWAIT);
-#endif
+	    VM_NOSLEEP);
+	KASSERT(error == 0);
+#endif /* CHIP_D_MEM_W1_BUS_START */
 
 #ifdef EXTENT_DEBUG
-	extent_print(dex);
+	/* vmem_print(dvm);			XXX */
 #endif
-	CHIP_D_MEM_EXTENT(v) = dex;
+	CHIP_D_MEM_ARENA(v) = dvm;
 #endif /* CHIP_D_MEM_W1_SYS_START */
 
-	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
-	sex = extent_create(__S(__C(CHIP,_bus_smem)), 0x0UL,
-	    0xffffffffffffffffUL,
-	    (void *)CHIP_S_MEM_EX_STORE(v), CHIP_S_MEM_EX_STORE_SIZE(v),
-	    EX_NOWAIT);
-	extent_alloc_region(sex, 0, 0xffffffffffffffffUL, EX_NOWAIT);
+	svm = vmem_init(CHIP_S_MEM_ARENA_STORE(v),
+			__S(__C(CHIP,_bus_smem)),	/* name */
+			0,				/* addr */
+			0,				/* size */
+			1,				/* quantum */
+			NULL,				/* importfn */
+			NULL,				/* releasefn */
+			NULL,				/* source */
+			0,				/* qcache_max */
+			VM_NOSLEEP | VM_PRIVTAGS,
+			IPL_NONE);
+	KASSERT(svm != NULL);
+
+	vmem_add_bts(svm, CHIP_S_MEM_BTAG_STORE(v), CHIP_S_MEM_BTAG_COUNT(v));
 
 #ifdef CHIP_S_MEM_W1_BUS_START
 #ifdef EXTENT_DEBUG
-	printf("smem: freeing from 0x%lx to 0x%lx\n",
+	printf("smem: adding span 0x%lx to 0x%lx\n",
 	    CHIP_S_MEM_W1_BUS_START(v), CHIP_S_MEM_W1_BUS_END(v));
 #endif
-	extent_free(sex, CHIP_S_MEM_W1_BUS_START(v),
+	error = vmem_add(svm, CHIP_S_MEM_W1_BUS_START(v),
 	    CHIP_S_MEM_W1_BUS_END(v) - CHIP_S_MEM_W1_BUS_START(v) + 1,
-	    EX_NOWAIT);
+	    VM_NOSLEEP);
+	KASSERT(error == 0);
 #endif
 #ifdef CHIP_S_MEM_W2_BUS_START
 	if (CHIP_S_MEM_W2_BUS_START(v) != CHIP_S_MEM_W1_BUS_START(v)) {
 #ifdef EXTENT_DEBUG
-		printf("smem: freeing from 0x%lx to 0x%lx\n",
+		printf("smem: adding span 0x%lx to 0x%lx\n",
 		    CHIP_S_MEM_W2_BUS_START(v), CHIP_S_MEM_W2_BUS_END(v));
 #endif
-		extent_free(sex, CHIP_S_MEM_W2_BUS_START(v),
+		error = vmem_add(svm, CHIP_S_MEM_W2_BUS_START(v),
 		    CHIP_S_MEM_W2_BUS_END(v) - CHIP_S_MEM_W2_BUS_START(v) + 1,
-		    EX_NOWAIT);
+		    VM_NOSLEEP);
+		KASSERT(error == 0);
 	} else {
 #ifdef EXTENT_DEBUG
 		printf("smem: window 2 (0x%lx to 0x%lx) overlaps window 1\n",
@@ -386,24 +444,25 @@ __C(CHIP,_bus_mem_init)(bus_space_tag_t t, void *v)
 	if (CHIP_S_MEM_W3_BUS_START(v) != CHIP_S_MEM_W1_BUS_START(v) &&
 	    CHIP_S_MEM_W3_BUS_START(v) != CHIP_S_MEM_W2_BUS_START(v)) {
 #ifdef EXTENT_DEBUG
-		printf("smem: freeing from 0x%lx to 0x%lx\n",
+		printf("smem: adding span 0x%lx to 0x%lx\n",
 		    CHIP_S_MEM_W3_BUS_START(v), CHIP_S_MEM_W3_BUS_END(v));
 #endif
-		extent_free(sex, CHIP_S_MEM_W3_BUS_START(v),
+		error = vmem_add(svm, CHIP_S_MEM_W3_BUS_START(v),
 		    CHIP_S_MEM_W3_BUS_END(v) - CHIP_S_MEM_W3_BUS_START(v) + 1,
-		    EX_NOWAIT);
+		    VM_NOSLEEP);
+		KASSERT(error == 0);
 	} else {
 #ifdef EXTENT_DEBUG
-		printf("smem: window 2 (0x%lx to 0x%lx) overlaps window 1\n",
-		    CHIP_S_MEM_W2_BUS_START(v), CHIP_S_MEM_W2_BUS_END(v));
+		printf("smem: window 3 (0x%lx to 0x%lx) overlaps window 1/2\n",
+		    CHIP_S_MEM_W3_BUS_START(v), CHIP_S_MEM_W3_BUS_END(v));
 #endif
 	}
 #endif
 
 #ifdef EXTENT_DEBUG
-	extent_print(sex);
+	/* vmem_print(svm);			XXX */
 #endif
-	CHIP_S_MEM_EXTENT(v) = sex;
+	CHIP_S_MEM_ARENA(v) = svm;
 }
 
 #ifdef CHIP_D_MEM_W1_SYS_START
@@ -671,14 +730,14 @@ __C(CHIP,_mem_map)(void *v, bus_addr_t memaddr, bus_size_t memsize,
 	    musts ? "need" : "want");
 #endif
 #ifdef CHIP_D_MEM_W1_SYS_START
-	errord = extent_alloc_region(CHIP_D_MEM_EXTENT(v), memaddr, memsize,
-	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+	errord = vmem_xalloc_addr(CHIP_D_MEM_ARENA(v), memaddr, memsize,
+	    VM_NOSLEEP);
 #else
 	errord = EINVAL;
 #endif
 	didd = (errord == 0);
-	errors = extent_alloc_region(CHIP_S_MEM_EXTENT(v), memaddr, memsize,
-	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+	errors = vmem_xalloc_addr(CHIP_S_MEM_ARENA(v), memaddr, memsize,
+	    VM_NOSLEEP);
 	dids = (errors == 0);
 
 #ifdef EXTENT_DEBUG
@@ -727,40 +786,30 @@ __C(CHIP,_mem_map)(void *v, bus_addr_t memaddr, bus_size_t memsize,
 		*memhp = sh;
 	return (0);
 
-bad:
+ bad:
 #ifdef EXTENT_DEBUG
 	printf("mem: failed\n");
 #endif
 #ifdef CHIP_D_MEM_W1_SYS_START
 	if (didd) {
 #ifdef EXTENT_DEBUG
-	printf("mem: freeing dense\n");
+		printf("mem: freeing dense\n");
 #endif
-		if (extent_free(CHIP_D_MEM_EXTENT(v), memaddr, memsize,
-		    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0)) != 0) {
-			printf("%s: WARNING: couldn't free dense 0x%lx-0x%lx\n",
-			    __S(__C(CHIP,_mem_map)), memaddr,
-			    memaddr + memsize - 1);
-		}
+		vmem_xfree(CHIP_D_MEM_ARENA(v), memaddr, memsize);
 	}
 #endif /* CHIP_D_MEM_W1_SYS_START */
 	if (dids) {
 #ifdef EXTENT_DEBUG
-	printf("mem: freeing sparse\n");
+		printf("mem: freeing sparse\n");
 #endif
-		if (extent_free(CHIP_S_MEM_EXTENT(v), memaddr, memsize,
-		    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0)) != 0) {
-			printf("%s: WARNING: couldn't free sparse 0x%lx-0x%lx\n",
-			    __S(__C(CHIP,_mem_map)), memaddr,
-			    memaddr + memsize - 1);
-		}
+		vmem_xfree(CHIP_S_MEM_ARENA(v), memaddr, memsize);
 	}
 
 #ifdef EXTENT_DEBUG
 #ifdef CHIP_D_MEM_W1_SYS_START
-	extent_print(CHIP_D_MEM_EXTENT(v));
+	/* vmem_print(CHIP_D_MEM_ARENA(v));		XXX */
 #endif
-	extent_print(CHIP_S_MEM_EXTENT(v));
+	/* vmem_print(CHIP_S_MEM_ARENA(v));		XXX */
 #endif
 
 	/*
@@ -830,18 +879,12 @@ __C(CHIP,_mem_unmap)(void *v, bus_space_handle_t memh,
 	    haved ? "" : "not ", haves ? "" : "not ");
 #endif
 #ifdef CHIP_D_MEM_W1_SYS_START
-	if (haved && extent_free(CHIP_D_MEM_EXTENT(v), memaddr, memsize,
-	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0)) != 0) {
-		printf("%s: WARNING: couldn't free dense 0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_mem_map)), memaddr,
-		    memaddr + memsize - 1);
+	if (haved) {
+		vmem_xfree(CHIP_D_MEM_ARENA(v), memaddr, memsize);
 	}
 #endif
-	if (haves && extent_free(CHIP_S_MEM_EXTENT(v), memaddr, memsize,
-	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0)) != 0) {
-		printf("%s: WARNING: couldn't free sparse 0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_mem_map)), memaddr,
-		    memaddr + memsize - 1);
+	if (haves) {
+		vmem_xfree(CHIP_S_MEM_ARENA(v), memaddr, memsize);
 	}
 }
 

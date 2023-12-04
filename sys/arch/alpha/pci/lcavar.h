@@ -1,4 +1,4 @@
-/* $NetBSD: lcavar.h,v 1.12 2021/07/16 18:50:19 thorpej Exp $ */
+/* $NetBSD: lcavar.h,v 1.13 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,8 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/vmem.h>
+
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/pci_sgmap_pte64.h>
@@ -50,8 +52,10 @@ struct lca_config {
 
 	bus_addr_t lc_s_mem_w2_masked_base;
 
-	struct extent *lc_io_ex, *lc_d_mem_ex, *lc_s_mem_ex;
-	int	lc_mallocsafe;
+	vmem_t *lc_io_arena;
+	vmem_t *lc_d_mem_arena;
+	vmem_t *lc_s_mem_arena;
+
 	u_int	lc_bcache_size;
 };
 
@@ -62,7 +66,7 @@ struct lca_softc {
 };
 
 void	lca_probe_bcache(void);
-void	lca_init(struct lca_config *, int);
+void	lca_init(struct lca_config *);
 void	lca_pci_init(pci_chipset_tag_t, void *);
 void	lca_dma_init(struct lca_config *);
 

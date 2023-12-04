@@ -1,4 +1,4 @@
-/* $NetBSD: jenseniovar.h,v 1.6 2020/10/14 00:59:50 thorpej Exp $ */
+/* $NetBSD: jenseniovar.h,v 1.7 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _ALPHA_JENSENIO_JENSENIOVAR_H_
 
 #include <sys/evcnt.h>
+#include <sys/vmem.h>
 
 /*
  * Arguments used to attach devices to the Jensen I/O bus.
@@ -71,9 +72,8 @@ struct jensenio_config {
 
 	struct alpha_bus_dma_tag jc_dmat_eisa, jc_dmat_isa;
 
-	struct extent *jc_io_ex, *jc_s_mem_ex;
-
-	int	jc_mallocsafe;
+	vmem_t *jc_io_arena;
+	vmem_t *jc_s_mem_arena;
 };
 
 /*
@@ -89,7 +89,7 @@ struct jensenio_scb_intrhand {
 };
 
 void	jensenio_page_physload(unsigned long, unsigned long);
-void	jensenio_init(struct jensenio_config *, int);
+void	jensenio_init(struct jensenio_config *);
 void	jensenio_bus_io_init(bus_space_tag_t, void *);
 void	jensenio_bus_intio_init(bus_space_tag_t, void *);
 void	jensenio_bus_mem_init(bus_space_tag_t, void *);

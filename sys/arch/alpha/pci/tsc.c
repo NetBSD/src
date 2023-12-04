@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.29 2021/08/07 16:18:41 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.30 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.29 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.30 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ tspattach(device_t parent, device_t self, void *aux)
 	struct tsp_config *pcp;
 
 	printf("\n");
-	pcp = tsp_init(1, t->tsp_slot);
+	pcp = tsp_init(t->tsp_slot);
 
 	tsp_dma_init(pcp);
 
@@ -234,7 +234,7 @@ tspattach(device_t parent, device_t self, void *aux)
 }
 
 struct tsp_config *
-tsp_init(int mallocsafe, int n)
+tsp_init(int n)
 	/* n:	 Pchip number */
 {
 	struct tsp_config *pcp;
@@ -265,7 +265,6 @@ tsp_init(int mallocsafe, int n)
 
 		alpha_bus_get_window = tsp_bus_get_window;
 	}
-	pcp->pc_mallocsafe = mallocsafe;
 	tsp_pci_init(&pcp->pc_pc, pcp);
 	pcp->pc_initted = 1;
 	return pcp;

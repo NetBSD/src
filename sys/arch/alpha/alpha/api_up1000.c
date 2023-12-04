@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.31 2020/10/14 00:59:50 thorpej Exp $ */
+/* $NetBSD: api_up1000.c,v 1.32 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.31 2020/10/14 00:59:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.32 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ api_up1000_cons_init(void)
 	extern struct irongate_config irongate_configuration;
 
 	icp = &irongate_configuration;
-	irongate_init(icp, 0);
+	irongate_init(icp);
 
 	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 

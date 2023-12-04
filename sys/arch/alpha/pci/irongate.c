@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.21 2021/08/07 16:18:41 thorpej Exp $ */
+/* $NetBSD: irongate.c,v 1.22 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.21 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.22 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,12 +69,10 @@ static int	irongate_bus_get_window(int, int,
  * Set up the chipset's function pointers.
  */
 void
-irongate_init(struct irongate_config *icp, int mallocsafe)
+irongate_init(struct irongate_config *icp)
 {
 	pcitag_t tag;
 	pcireg_t reg;
-
-	icp->ic_mallocsafe = mallocsafe;
 
 	/*
 	 * Set up PCI configuration space; we can only read the
@@ -138,7 +136,7 @@ irongate_attach(device_t parent, device_t self, void *aux)
 	 * that need to use memory allocation.
 	 */
 	icp = sc->sc_icp = &irongate_configuration;
-	irongate_init(icp, 1);
+	irongate_init(icp);
 
 	printf(": AMD 751 Core Logic + AGP Chipset, rev. %d\n", icp->ic_rev);
 

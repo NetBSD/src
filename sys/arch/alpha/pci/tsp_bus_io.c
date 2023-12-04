@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_bus_io.c,v 1.9 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: tsp_bus_io.c,v 1.10 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tsp_bus_io.c,v 1.9 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tsp_bus_io.c,v 1.10 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,10 @@ __KERNEL_RCSID(1, "$NetBSD: tsp_bus_io.c,v 1.9 2021/07/04 22:42:36 thorpej Exp $
 
 typedef struct tsp_config *TSPCON;
 
-#define	CHIP_EX_MALLOC_SAFE(v)  (((TSPCON)(v))->pc_mallocsafe)
-#define CHIP_IO_EXTENT(v)       (((TSPCON)(v))->pc_io_ex)
-#define	CHIP_IO_EX_STORE(v)	(((TSPCON)(v))->pc_io_exstorage)
-#define	CHIP_IO_EX_STORE_SIZE(v) (sizeof (((TSPCON)(v))->pc_io_exstorage))
+#define CHIP_IO_ARENA(v)	(((TSPCON)(v))->pc_io_arena)
+#define	CHIP_IO_ARENA_STORE(v)	(&(((TSPCON)(v))->pc_io_arena_store))
+#define	CHIP_IO_BTAG_STORE(v)	(((TSPCON)(v))->pc_io_btag_store)
+#define	CHIP_IO_BTAG_COUNT(v)	TSP_NBTS
 
 #define CHIP_IO_SYS_START(v)    (((TSPCON)(v))->pc_iobase | P_PCI_IO)
 

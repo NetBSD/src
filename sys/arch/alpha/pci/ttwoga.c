@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.20 2021/08/07 16:18:41 thorpej Exp $ */
+/* $NetBSD: ttwoga.c,v 1.21 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.20 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.21 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ ttwogaprint(void *aux, const char *pnp)
  * Set up the chipset's function pointers.
  */
 struct ttwoga_config *
-ttwoga_init(int hose, int mallocsafe)
+ttwoga_init(int hose)
 {
 	struct ttwoga_config *tcp;
 
@@ -194,7 +194,6 @@ ttwoga_init(int hose, int mallocsafe)
 		ttwoga_bus_io_init(&tcp->tc_iot, tcp);
 		ttwoga_bus_mem_init(&tcp->tc_memt, tcp);
 	}
-	tcp->tc_mallocsafe = mallocsafe;
 
 	ttwoga_pci_init(&tcp->tc_pc, tcp);
 
@@ -225,7 +224,7 @@ ttwopciattach(device_t parent, device_t self, void *aux)
 	 * set up the chipset's info; done one at console init time
 	 * (maybe), but doesn't hurt to do it twice.
 	 */
-	tcp = ttwoga_init(pba->pba_bus, 1);
+	tcp = ttwoga_init(pba->pba_bus);
 
 	ttwoga_dma_init(tcp);
 

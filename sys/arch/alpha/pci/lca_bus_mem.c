@@ -1,4 +1,4 @@
-/* $NetBSD: lca_bus_mem.c,v 1.12 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: lca_bus_mem.c,v 1.13 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: lca_bus_mem.c,v 1.12 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: lca_bus_mem.c,v 1.13 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +43,8 @@ __KERNEL_RCSID(1, "$NetBSD: lca_bus_mem.c,v 1.12 2021/07/04 22:42:36 thorpej Exp
 
 #define	CHIP	lca
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(((struct lca_config *)(v))->lc_mallocsafe)
-#define	CHIP_D_MEM_EXTENT(v)	(((struct lca_config *)(v))->lc_d_mem_ex)
-#define	CHIP_S_MEM_EXTENT(v)	(((struct lca_config *)(v))->lc_s_mem_ex)
+#define	CHIP_D_MEM_ARENA(v)	(((struct lca_config *)(v))->lc_d_mem_arena)
+#define	CHIP_S_MEM_ARENA(v)	(((struct lca_config *)(v))->lc_s_mem_arena)
 
 /* Dense region 1 */
 #define	CHIP_D_MEM_W1_BUS_START(v)	0x00000000UL

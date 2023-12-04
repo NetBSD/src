@@ -1,4 +1,4 @@
-/* $NetBSD: cia_bwx_bus_io.c,v 1.6 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: cia_bwx_bus_io.c,v 1.7 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: cia_bwx_bus_io.c,v 1.6 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cia_bwx_bus_io.c,v 1.7 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,7 @@ __KERNEL_RCSID(1, "$NetBSD: cia_bwx_bus_io.c,v 1.6 2021/07/04 22:42:36 thorpej E
 
 #define	CHIP		cia_bwx
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(((struct cia_config *)(v))->cc_mallocsafe)
-#define	CHIP_IO_EXTENT(v)	(((struct cia_config *)(v))->cc_io_ex)
+#define	CHIP_IO_ARENA(v)	(((struct cia_config *)(v))->cc_io_arena)
 
 #define	CHIP_IO_SYS_START(v)	CIA_EV56_BWIO
 

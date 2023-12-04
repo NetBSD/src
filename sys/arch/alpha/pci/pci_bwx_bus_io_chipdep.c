@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.22 2021/05/05 02:15:18 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.23 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -64,21 +64,26 @@
  * uses:
  *	CHIP		name of the 'chip' it's being compiled for.
  *	CHIP_IO_BASE	I/O space base to use.
- *	CHIP_IO_EX_STORE
+ *	CHIP_IO_ARENA_STORE
  *			If defined, device-provided static storage area
- *			for the I/O space extent.  If this is defined,
- *			CHIP_IO_EX_STORE_SIZE must also be defined.  If
- *			this is not defined, a static area will be
- *			declared.
- *	CHIP_IO_EX_STORE_SIZE
- *			Size of the device-provided static storage area
- *			for the I/O memory space extent.
+ *			for the I/O space arena.  If this is defined,
+ *			CHIP_IO_BTAG_STORE and CHIP_IO_BTAG_COUNT must
+ *			also be defined.  If this is not defined, a
+ *			static area will be declared.
+ *	CHIP_IO_BTAG_STORE
+ *			Device-provided static storage area for the
+ *			I/O space arena's boundary tags.  Ignored
+ *			unless CHIP_IO_ARENA_STORE is defined.
+ *	CHIP_IO_BTAG_COUNT
+ *			The number of device-provided static I/O
+ *			space boundary tags.  Ignored unless
+ *			CHIP_IO_ARENA_STORE is defined.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_bwx_bus_io_chipdep.c,v 1.22 2021/05/05 02:15:18 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_bwx_bus_io_chipdep.c,v 1.23 2023/12/04 00:32:10 thorpej Exp $");
 
-#include <sys/extent.h>
+#include <sys/vmem_impl.h>
 
 #include <machine/bwx.h>
 
@@ -205,19 +210,22 @@ static void	__C(CHIP,_io_copy_region_4)(void *, bus_space_handle_t,
 static void	__C(CHIP,_io_copy_region_8)(void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 
-#ifndef	CHIP_IO_EX_STORE
-static long
-    __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-#define	CHIP_IO_EX_STORE(v)		(__C(CHIP, _io_ex_storage))
-#define	CHIP_IO_EX_STORE_SIZE(v)	(sizeof __C(CHIP, _io_ex_storage))
-#endif
+#ifndef CHIP_IO_ARENA_STORE
+#define	CHIP_IO_BTAG_COUNT(v)	VMEM_EST_BTCOUNT(1, 8)
+#define	CHIP_IO_BTAG_STORE(v)	__C(CHIP,_io_btag_store)
+#define	CHIP_IO_ARENA_STORE(v)	(&(__C(CHIP,_io_arena_store)))
+
+static struct vmem __C(CHIP,_io_arena_store);
+static struct vmem_btag __C(CHIP,_io_btag_store)[CHIP_IO_BTAG_COUNT(xxx)];
+#endif /* CHIP_IO_ARENA_STORE */
 
 void
 __C(CHIP,_bus_io_init)(
 	bus_space_tag_t t,
 	void *v)
 {
-	struct extent *ex;
+	vmem_t *vm;
+	int error __diagused;
 
 	/*
 	 * Initialize the bus space tag.
@@ -301,11 +309,24 @@ __C(CHIP,_bus_io_init)(
 	t->abs_c_4 =		__C(CHIP,_io_copy_region_4);
 	t->abs_c_8 =		__C(CHIP,_io_copy_region_8);
 
-	ex = extent_create(__S(__C(CHIP,_bus_io)), 0x0UL, 0xffffffffUL,
-	    (void *)CHIP_IO_EX_STORE(v), CHIP_IO_EX_STORE_SIZE(v),
-	    EX_NOWAIT|EX_NOCOALESCE);
+	vm = vmem_init(CHIP_IO_ARENA_STORE(v),
+		       __S(__C(CHIP,_bus_io)),		/* name */
+		       0,				/* addr */
+		       0,				/* size */
+		       1,				/* quantum */
+		       NULL,				/* importfn */
+		       NULL,				/* releasefn */
+		       NULL,				/* source */
+		       0,				/* qcache_max */
+		       VM_NOSLEEP | VM_PRIVTAGS,
+		       IPL_NONE);
+	KASSERT(vm != NULL);
 
-	CHIP_IO_EXTENT(v) = ex;
+	vmem_add_bts(vm, CHIP_IO_BTAG_STORE(v), CHIP_IO_BTAG_COUNT(v));
+	error = vmem_add(vm, 0, 0x100000000UL, VM_NOSLEEP);
+	KASSERT(error == 0);
+
+	CHIP_IO_ARENA(v) = vm;
 }
 
 static int
@@ -378,12 +399,11 @@ __C(CHIP,_io_map)(
 #ifdef EXTENT_DEBUG
 	printf("io: allocating 0x%lx to 0x%lx\n", ioaddr, ioaddr + iosize - 1);
 #endif
-	error = extent_alloc_region(CHIP_IO_EXTENT(v), ioaddr, iosize,
-	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+	error = vmem_xalloc_addr(CHIP_IO_ARENA(v), ioaddr, iosize, VM_NOSLEEP);
 	if (error) {
 #ifdef EXTENT_DEBUG
 		printf("io: allocation failed (%d)\n", error);
-		extent_print(CHIP_IO_EXTENT(v));
+		/* vmem_print(CHIP_IO_ARENA(v));	XXX */
 #endif
 		return (error);
 	}
@@ -402,7 +422,6 @@ __C(CHIP,_io_unmap)(
 	int acct)
 {
 	bus_addr_t ioaddr;
-	int error;
 
 	if (acct == 0)
 		return;
@@ -416,16 +435,7 @@ __C(CHIP,_io_unmap)(
 #ifdef EXTENT_DEBUG
 	printf("io: freeing 0x%lx to 0x%lx\n", ioaddr, ioaddr + iosize - 1);
 #endif
-	error = extent_free(CHIP_IO_EXTENT(v), ioaddr, iosize,
-	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
-	if (error) {
-		printf("%s: WARNING: could not unmap 0x%lx-0x%lx (error %d)\n",
-		   __S(__C(CHIP,_io_unmap)), ioaddr, ioaddr + iosize - 1,
-		   error);
-#ifdef EXTENT_DEBUG
-		extent_print(CHIP_IO_EXTENT(v));
-#endif
-	}	
+	vmem_xfree(CHIP_IO_ARENA(v), ioaddr, iosize);
 }
 
 static int
@@ -455,7 +465,7 @@ __C(CHIP,_io_alloc)(
 {
 	struct alpha_bus_space_translation abst;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
-	bus_addr_t ioaddr;
+	vmem_addr_t ioaddr;
 	int error;
 
 	/*
@@ -470,14 +480,18 @@ __C(CHIP,_io_alloc)(
 #ifdef EXTENT_DEBUG
 	printf("io: allocating from 0x%lx to 0x%lx\n", rstart, rend);
 #endif
-	error = extent_alloc_subregion(CHIP_IO_EXTENT(v), rstart, rend,
-	    size, align, boundary,
-	    EX_FAST | EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0),
-	    &ioaddr);
+	error = vmem_xalloc(CHIP_IO_ARENA(v), size,
+			    align,		/* align */
+			    0,			/* phase */
+			    boundary,		/* nocross */
+			    rstart,		/* minaddr */
+			    rend,		/* maxaddr */
+			    VM_NOSLEEP,
+			    &ioaddr);
 	if (error) {
 #ifdef EXTENT_DEBUG
 		printf("io: allocation failed (%d)\n", error);
-		extent_print(CHIP_IO_EXTENT(v));
+		/* vmem_print(CHIP_IO_ARENA(v));	XXX */
 #endif
 		return (error);
 	}
@@ -488,8 +502,7 @@ __C(CHIP,_io_alloc)(
 
 	error = __C(CHIP,_io_translate)(v, ioaddr, size, flags, &abst);
 	if (error) {
-		(void) extent_free(CHIP_IO_EXTENT(v), ioaddr, size,
-		    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+		vmem_xfree(CHIP_IO_ARENA(v), ioaddr, size);
 		return (error);
 	}
 

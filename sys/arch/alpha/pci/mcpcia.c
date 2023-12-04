@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.35 2021/08/07 16:18:41 thorpej Exp $ */
+/* $NetBSD: mcpcia.c,v 1.36 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.35 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.36 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ static void	mcpciaattach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(mcpcia, sizeof(struct mcpcia_softc),
     mcpciamatch, mcpciaattach, NULL, NULL);
 
-void	mcpcia_init0(struct mcpcia_config *, int);
+void	mcpcia_init0(struct mcpcia_config *);
 
 /*
  * We have one statically-allocated mcpcia_config structure; this is
@@ -158,7 +158,7 @@ mcpciaattach(device_t parent, device_t self, void *aux)
 	ccp->cc_sc = mcp;
 
 	/* This initializes cc_sysbase so we can do register access. */
-	mcpcia_init0(ccp, 1);
+	mcpcia_init0(ccp);
 
 	ctl = REGVAL(MCPCIA_PCI_REV(ccp));
 	aprint_normal_dev(self,
@@ -225,7 +225,7 @@ mcpcia_init(void)
 			continue;
 
 		if (EISA_PRESENT(REGVAL(MCPCIA_PCI_REV(ccp)))) {
-			mcpcia_init0(ccp, 0);
+			mcpcia_init0(ccp);
 
 			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 2;
 			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 3;
@@ -239,7 +239,7 @@ mcpcia_init(void)
 }
 
 void
-mcpcia_init0(struct mcpcia_config *ccp, int mallocsafe)
+mcpcia_init0(struct mcpcia_config *ccp)
 {
 	uint32_t ctl;
 
@@ -248,7 +248,6 @@ mcpcia_init0(struct mcpcia_config *ccp, int mallocsafe)
 		mcpcia_bus_io_init(&ccp->cc_iot, ccp);
 		mcpcia_bus_mem_init(&ccp->cc_memt, ccp);
 	}
-	ccp->cc_mallocsafe = mallocsafe;
 
 	mcpcia_pci_init(&ccp->cc_pc, ccp);
 

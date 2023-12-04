@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_bus_io.c,v 1.15 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: dwlpx_bus_io.c,v 1.16 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_io.c,v 1.15 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_io.c,v 1.16 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,11 +46,12 @@ __KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_io.c,v 1.15 2021/07/04 22:42:36 thorpej Ex
 
 #define	CHIP		dwlpx
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(1)
-#define	CHIP_IO_EXTENT(v)	(((struct dwlpx_config *)(v))->cc_io_ex)
-#define	CHIP_IO_EX_STORE(v)	(((struct dwlpx_config *)(v))->cc_io_exstorage)
-#define	CHIP_IO_EX_STORE_SIZE(v)					\
-	(sizeof (((struct dwlpx_config *)(v))->cc_io_exstorage))
+#define	CHIP_IO_ARENA(v)	(((struct dwlpx_config *)(v))->cc_io_arena)
+#define	CHIP_IO_ARENA_STORE(v)	\
+	(&(((struct dwlpx_config *)(v))->cc_io_arena_store))
+#define	CHIP_IO_BTAG_STORE(v)	\
+	(((struct dwlpx_config *)(v))->cc_io_btag_store)
+#define	CHIP_IO_BTAG_COUNT(v)	DWLPX_IO_NBTS
 
 /* IO Region 1 */
 #define	CHIP_IO_W1_BUS_START(v)	0x00000000UL

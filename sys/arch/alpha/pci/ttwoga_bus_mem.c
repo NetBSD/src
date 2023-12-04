@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_bus_mem.c,v 1.4 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: ttwoga_bus_mem.c,v 1.5 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: ttwoga_bus_mem.c,v 1.4 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ttwoga_bus_mem.c,v 1.5 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,15 +47,15 @@ __KERNEL_RCSID(1, "$NetBSD: ttwoga_bus_mem.c,v 1.4 2021/07/04 22:42:36 thorpej E
 
 #define	CHIP_V(v)	((struct ttwoga_config *)(v))
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(CHIP_V(v)->tc_mallocsafe)
+#define	CHIP_D_MEM_ARENA(v)		(CHIP_V(v)->tc_d_mem_arena)
+#define	CHIP_D_MEM_ARENA_STORE(v)	(&(CHIP_V(v)->tc_d_mem_arena_store))
+#define	CHIP_D_MEM_BTAG_STORE(v)	(CHIP_V(v)->tc_d_mem_btag_store)
+#define	CHIP_D_MEM_BTAG_COUNT(v)	TTWOGA_NBTS
 
-#define	CHIP_D_MEM_EXTENT(v)	(CHIP_V(v)->tc_d_mem_ex)
-#define	CHIP_D_MEM_EX_STORE(v)	(CHIP_V(v)->tc_dmem_exstorage)
-#define	CHIP_D_MEM_EX_STORE_SIZE(v) sizeof(CHIP_D_MEM_EX_STORE(v))
-
-#define	CHIP_S_MEM_EXTENT(v)	(CHIP_V(v)->tc_s_mem_ex)
-#define	CHIP_S_MEM_EX_STORE(v)	(CHIP_V(v)->tc_smem_exstorage)
-#define	CHIP_S_MEM_EX_STORE_SIZE(v) sizeof(CHIP_S_MEM_EX_STORE(v))
+#define	CHIP_S_MEM_ARENA(v)		(CHIP_V(v)->tc_s_mem_arena)
+#define	CHIP_S_MEM_ARENA_STORE(v)	(&(CHIP_V(v)->tc_s_mem_arena_store))
+#define	CHIP_S_MEM_BTAG_STORE(v)	(CHIP_V(v)->tc_s_mem_btag_store)
+#define	CHIP_S_MEM_BTAG_COUNT(v)	TTWOGA_NBTS
 
 /* Dense region 1 */
 #define	CHIP_D_MEM_W1_BUS_START(v)					\

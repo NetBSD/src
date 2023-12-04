@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.22 2021/08/07 16:18:40 thorpej Exp $ */
+/* $NetBSD: jensenio.c,v 1.23 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.22 2021/08/07 16:18:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.23 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ static void	jensenio_isa_detach_hook(isa_chipset_tag_t, device_t);
  * Set up the Jensen's function pointers.
  */
 void
-jensenio_init(struct jensenio_config *jcp, int mallocsafe)
+jensenio_init(struct jensenio_config *jcp)
 {
 
 	/*
@@ -126,7 +126,6 @@ jensenio_init(struct jensenio_config *jcp, int mallocsafe)
 		jensenio_bus_intio_init(&jcp->jc_internal_iot, jcp);
 		jensenio_bus_mem_init(&jcp->jc_eisa_memt, jcp);
 	}
-	jcp->jc_mallocsafe = mallocsafe;
 }
 
 static int
@@ -160,7 +159,7 @@ jensenio_attach(device_t parent, device_t self, void *aux)
 	 * Done once at console init time, but we might need to do
 	 * additional work this time.
 	 */
-	jensenio_init(jcp, 1);
+	jensenio_init(jcp);
 
 	/*
 	 * Initialize DMA.

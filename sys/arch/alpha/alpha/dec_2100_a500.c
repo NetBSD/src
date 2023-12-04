@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a500.c,v 1.24 2020/09/04 03:41:49 thorpej Exp $ */
+/* $NetBSD: dec_2100_a500.c,v 1.25 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.24 2020/09/04 03:41:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.25 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ dec_2100_a500_cons_init(void)
 	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 	ctbslot = ctb->ctb_turboslot;
 
-	tcp = ttwoga_init(0, 0);
+	tcp = ttwoga_init(0);
 
 	switch (ctb->ctb_term_type) {
 	case CTB_PRINTERPORT:
@@ -203,7 +203,7 @@ dec_2100_a500_cons_init(void)
 
 		case CTB_TURBOSLOT_TYPE_PCI:
 			/* The display PCI might be different */
-			tcp = ttwoga_init(0, CTB_TURBOSLOT_HOSE(ctbslot));
+			tcp = ttwoga_init(CTB_TURBOSLOT_HOSE(ctbslot));
 			pci_display_console(&tcp->tc_iot, &tcp->tc_memt,
 			    &tcp->tc_pc, CTB_TURBOSLOT_BUS(ctbslot),
 			    CTB_TURBOSLOT_SLOT(ctbslot), 0);

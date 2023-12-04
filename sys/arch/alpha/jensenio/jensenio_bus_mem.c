@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_bus_mem.c,v 1.4 2021/07/04 22:42:35 thorpej Exp $ */
+/* $NetBSD: jensenio_bus_mem.c,v 1.5 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: jensenio_bus_mem.c,v 1.4 2021/07/04 22:42:35 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: jensenio_bus_mem.c,v 1.5 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,7 @@ __KERNEL_RCSID(1, "$NetBSD: jensenio_bus_mem.c,v 1.4 2021/07/04 22:42:35 thorpej
 
 #define	CHIP_V(v)		((struct jensenio_config *)(v))
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(CHIP_V(v)->jc_mallocsafe)
-#define	CHIP_S_MEM_EXTENT(v)	(CHIP_V(v)->jc_s_mem_ex)
+#define	CHIP_S_MEM_ARENA(v)	(CHIP_V(v)->jc_s_mem_arena)
 
 #define	CHIP_ADDR_SHIFT		7
 #define	CHIP_SIZE_SHIFT		5

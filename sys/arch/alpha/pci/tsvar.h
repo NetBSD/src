@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.17 2021/07/19 01:06:14 thorpej Exp $ */
+/* $NetBSD: tsvar.h,v 1.18 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -32,12 +32,14 @@
  */
 
 #include <sys/extent.h>
+#include <sys/vmem_impl.h>
+
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/i2c/i2cvar.h>
 #include <alpha/pci/pci_sgmap_pte64.h>
 
-#define	_FSTORE	(EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long))
+#define	TSP_NBTS	VMEM_EST_BTCOUNT(1, 8)
 
 #define	tsvar() { Generate ctags(1) key. }
 
@@ -62,10 +64,13 @@ struct tsp_config {
 	uint32_t pc_hae_mem;
 	uint32_t pc_hae_io;
 
-	long	pc_io_exstorage[_FSTORE];
-	long	pc_mem_exstorage[_FSTORE];
-	struct	extent *pc_io_ex, *pc_mem_ex;
-	int	pc_mallocsafe;
+	struct	vmem pc_io_arena_store;
+	struct	vmem pc_mem_arena_store;
+	struct	vmem_btag pc_io_btag_store[TSP_NBTS];
+	struct	vmem_btag pc_mem_btag_store[TSP_NBTS];
+
+	vmem_t	*pc_io_arena;
+	vmem_t	*pc_mem_arena;
 
 	struct {
 		uint64_t wsba[4];
@@ -91,7 +96,7 @@ struct tsciic_attach_args {
 
 extern int tsp_console_hose;
 
-struct	tsp_config *tsp_init(int, int);
+struct	tsp_config *tsp_init(int);
 void	tsp_pci_init(pci_chipset_tag_t, void *);
 void	tsp_dma_init(struct tsp_config *);
 

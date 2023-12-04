@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_bus_intio.c,v 1.6 2021/07/04 22:42:35 thorpej Exp $ */
+/* $NetBSD: jensenio_bus_intio.c,v 1.7 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,12 +31,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_bus_intio.c,v 1.6 2021/07/04 22:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_bus_intio.c,v 1.7 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 
 #include <sys/bus.h>
 
@@ -153,12 +153,12 @@ jensenio_intio_map(void *v, bus_addr_t ioaddr, bus_size_t iosize, int flags,
 		printf("intio: allocating 0x%lx to 0x%lx\n", ioaddr,
 		    ioaddr + iosize - 1);
 #endif
-		error = extent_alloc_region(jcp->jc_io_ex, ioaddr, iosize,
-		    EX_NOWAIT | (jcp->jc_mallocsafe ? EX_MALLOCOK : 0));
+		error = vmem_xalloc_addr(jcp->jc_io_arena, ioaddr, iosize,
+		    VM_NOSLEEP);
 		if (error) {
 #ifdef EXTENT_DEBUG
 			printf("intio: allocation failed (%d)\n", error);
-			extent_print(jcp->jc_io_ex);
+			/* vmem_print(jcp->jc_io_arena);	XXX */
 #endif
 			return (error);
 		}
@@ -174,7 +174,6 @@ jensenio_intio_unmap(void *v, bus_space_handle_t ioh, bus_size_t iosize,
 {
 	struct jensenio_config *jcp = v;
 	bus_addr_t ioaddr;
-	int error;
 
 	if (acct == 0)
 		return;
@@ -190,15 +189,7 @@ jensenio_intio_unmap(void *v, bus_space_handle_t ioh, bus_size_t iosize,
 #ifdef EXTENT_DEBUG
 	printf("intio: freeing 0x%lx to 0x%lx\n", ioaddr, ioaddr + iosize - 1);
 #endif
-	error = extent_free(jcp->jc_io_ex, ioaddr, iosize,
-	    EX_NOWAIT | (jcp->jc_mallocsafe ? EX_MALLOCOK : 0));
-	if (error) {
-		printf("WARNING: could not unmap 0x%lx-0x%lx (error %d)\n",
-		    ioaddr, ioaddr + iosize - 1, error);
-#ifdef EXTENT_DEBUG
-		extent_print(jcp->jc_io_ex);
-#endif
-	}
+	vmem_xfree(jcp->jc_io_arena, ioaddr, iosize);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxvar.h,v 1.11 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: dwlpxvar.h,v 1.12 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -30,12 +30,16 @@
  * SUCH DAMAGE.
  */
 
-#include <dev/pci/pcivar.h>
 #include <sys/extent.h>
+#include <sys/vmem_impl.h>
+
+#include <dev/pci/pcivar.h>
 
 #include <alpha/pci/pci_sgmap_pte32.h>
 
-#define	_FSTORE	(EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long))
+#define	DWLPX_IO_NBTS		VMEM_EST_BTCOUNT(2, 8)
+#define	DWLPX_D_MEM_NBTS	VMEM_EST_BTCOUNT(1, 8)
+#define	DWLPX_S_MEM_NBTS	VMEM_EST_BTCOUNT(2, 8)
 
 /*
  * DWLPX configuration.
@@ -44,14 +48,17 @@ struct dwlpx_config {
 	int				cc_initted;
 	struct alpha_bus_space		cc_iot;
 	struct alpha_bus_space		cc_memt;
-	struct extent *			cc_io_ex;
-	struct extent *			cc_d_mem_ex;
-	struct extent *			cc_s_mem_ex;
+	vmem_t *			cc_io_arena;
+	vmem_t *			cc_d_mem_arena;
+	vmem_t *			cc_s_mem_arena;
 	struct alpha_pci_chipset	cc_pc;
 	struct dwlpx_softc *		cc_sc;	/* back pointer */
-	long				cc_io_exstorage[_FSTORE];
-	long				cc_dmem_exstorage[_FSTORE];
-	long				cc_smem_exstorage[_FSTORE];
+	struct vmem			cc_io_arena_store;
+	struct vmem			cc_d_mem_arena_store;
+	struct vmem			cc_s_mem_arena_store;
+	struct vmem_btag		cc_io_btag_store[DWLPX_IO_NBTS];
+	struct vmem_btag		cc_d_mem_btag_store[DWLPX_D_MEM_NBTS];
+	struct vmem_btag		cc_s_mem_btag_store[DWLPX_S_MEM_NBTS];
 	unsigned long			cc_sysbase;	/* shorthand */
 	struct alpha_bus_dma_tag	cc_dmat_direct;
 	struct alpha_bus_dma_tag	cc_dmat_sgmap;

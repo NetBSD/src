@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a50.c,v 1.68 2020/09/04 03:41:49 thorpej Exp $ */
+/* $NetBSD: dec_2100_a50.c,v 1.69 2023/12/04 00:32:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.68 2020/09/04 03:41:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.69 2023/12/04 00:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ dec_2100_a50_cons_init(void)
 	extern struct apecs_config apecs_configuration;
 
 	acp = &apecs_configuration;
-	apecs_init(acp, 0);
+	apecs_init(acp);
 
 	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 
