@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.36 2023/12/05 14:58:01 thorpej Exp $ */
+/* $NetBSD: btvmei.c,v 1.37 2023/12/05 15:41:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.36 2023/12/05 14:58:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.37 2023/12/05 15:41:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,7 @@ b3_617_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_d
 	/* bytes in scatter table required */
 	maplen = ((vmeend - vmebase) / VME_PAGESIZE + 1) * 4;
 
-	if (vmem_alloc(sc->vme_arena, maplen, VM_BESTFIT | VM_SLEEP, &first))
+	if (vmem_alloc(sc->vme_arena, maplen, VM_BESTFIT | VM_NOSLEEP, &first))
 		return (ENOMEM);
 
 	/*
