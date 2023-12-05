@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.17 2022/02/27 19:22:29 riastradh Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.18 2023/12/05 17:38:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_llsc.S,v 1.17 2022/02/27 19:22:29 riastradh Exp $")
+RCSID("$NetBSD: lock_stubs_llsc.S,v 1.18 2023/12/05 17:38:40 andvar Exp $")
 
 #include "assym.h"
 
@@ -362,7 +362,7 @@ EXPORT_OBJECT(mips_llsc_locore_atomicvec)
 #ifdef _LP64
 	PTR_WORD	llsc_ucas_64
 #else
-			0
+	PTR_WORD	0
 #endif /* _LP64 */
 #ifdef LOCKDEBUG
 	PTR_WORD	mutex_vector_enter
