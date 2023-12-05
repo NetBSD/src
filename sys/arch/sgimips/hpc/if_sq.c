@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.55 2022/09/18 13:23:53 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.56 2023/12/05 21:54:53 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.55 2022/09/18 13:23:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.56 2023/12/05 21:54:53 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -896,10 +896,10 @@ sq_intr(void *arg)
 
 	stat = sq_hpc_read(sc, sc->hpc_regs->enetr_reset);
 
-	if ((stat & 2) == 0)
+	if ((stat & 2) == 0) {
 		SQ_DPRINTF(("%s: Unexpected interrupt!\n",
 		    device_xname(sc->sc_dev)));
-	else
+	} else
 		sq_hpc_write(sc, sc->hpc_regs->enetr_reset, (stat | 2));
 
 	/*
