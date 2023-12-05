@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.381 2023/11/24 21:17:49 alnsn Exp $
+$NetBSD: acronyms.comp,v 1.382 2023/12/05 19:28:40 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -637,6 +637,7 @@ FPR	floating point register
 FPU	floating point unit
 FQDN	fully qualified domain name
 FRR	false rejection rate
+FRR	Free Range Routing
 FRU	field replaceable unit
 FS	file system
 FSB	front side bus
@@ -1851,6 +1852,7 @@ VME	virtual mode extension
 VMX	vector multimedia extensions
 VMX	virtual machine extensions
 VNC	virtual network computing
+VNI	virtual network identifier
 VOD	video on demand
 VPD	vital product data
 VPN	virtual private network
@@ -1862,8 +1864,10 @@ VRM	voltage regulator module
 VROC	Virtual RAID On CPU
 VRRP	Virtual Router Redundancy Protocol
 VSTP	VLAN Spanning Tree Protocol
+VTEP	VXLAN tunnel endpoint
 VTP	VLAN Trunking Protocol
 VXFS	Veritas file system
+VXLAN	virtual extensible LAN
 VXVM	Veritas volume manager
 W	watt
 W3C	World Wide Web Consortium
