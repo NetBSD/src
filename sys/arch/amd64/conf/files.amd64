@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.121 2023/05/05 00:34:41 manu Exp $
+#	$NetBSD: files.amd64,v 1.122 2023/12/05 16:32:38 thorpej Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -196,5 +196,8 @@ include "dev/hyperv/files.hyperv"
 
 attach	vmbus at acpinodebus with vmbus_acpi
 file	dev/acpi/vmbus_acpi.c			vmbus_acpi
+
+# VMEbus support
+include "dev/vme/files.vme"
 
 include	"arch/amd64/conf/majors.amd64"
