@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.181 2023/10/04 07:48:55 rin Exp $
+# $NetBSD: ALL,v 1.182 2023/12/05 16:32:38 thorpej Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.181 $"
+#ident		"ALL-$Revision: 1.182 $"
 
 maxusers	64		# estimated number of users
 
@@ -488,6 +488,13 @@ cardslot*	at cbb?
 # CardBus bus support
 cardbus*	at cardslot?
 pcmcia* 	at cardslot?
+
+# VME bridge support
+btvmei*		at pci? dev ? function ?
+btvmeii*	at pci? dev ? function ?
+
+# VME bus support
+vme*		at vmebus?
 
 # Coprocessor Support
 
