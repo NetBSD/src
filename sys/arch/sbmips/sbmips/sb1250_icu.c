@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.14 2016/07/21 17:02:15 christos Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.15 2023/12/05 19:19:26 andvar Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.14 2016/07/21 17:02:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.15 2023/12/05 19:19:26 andvar Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -179,7 +179,7 @@ sb1250_lsw_send_ipi(struct cpu_info *ci, int tag)
 	struct cpu_softc * const cpu = ci->ci_softc;
 	const uint64_t mbox_mask = 1LLU << tag;
 
-	if (cpus_running & (1 << cpu_index(ci)))
+	if (kcpuset_isset(cpus_running, cpu_index(ci)))
 		WRITE_REG(cpu->sb1cpu_imr_base + R_IMR_MAILBOX_SET_CPU, mbox_mask);
 
 	return 0;
