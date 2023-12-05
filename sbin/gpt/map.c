@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.15 2020/05/24 14:42:44 jmcneill Exp $");
+__RCSID("$NetBSD: map.c,v 1.16 2023/12/05 17:23:19 tsutsui Exp $");
 #endif
 
 #include <sys/types.h>
@@ -257,7 +257,7 @@ map_resize(gpt_t gpt, map_t m, off_t size, off_t alignment)
 		gpt_warnx(gpt, "negative size or alignment");
 		return -1;
 	}
-	/* Size == 0 means delete, if the next map is unused */
+	/* Size == 0 means to use whole region of the following unused map */
 	if (size == 0) { 
 		if (n == NULL) {
 			// XXX: we could just turn the map to UNUSED!
