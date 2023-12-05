@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.23 2016/07/21 17:02:15 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.24 2023/12/05 19:19:26 andvar Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2016/07/21 17:02:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2023/12/05 19:19:26 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -150,13 +150,12 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			aprint_error(": CFE call to start failed: %d\n",
 			    status);
 		}
-		const u_long cpu_mask = 1L << cpu_index(ci);
 		for (size_t i = 0; i < 10000; i++) {
-			if (cpus_hatched & cpu_mask)
+			if (kcpuset_isset(cpus_hatched, cpu_index(ci)))
 				 break;
 			DELAY(100);
 		}
-		if ((cpus_hatched & cpu_mask) == 0) {
+		if (!kcpuset_isset(cpus_hatched, cpu_index(ci))) {
 			aprint_error(": failed to hatch!\n");
 			return;
 		}
