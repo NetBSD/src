@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.26 2021/08/07 16:19:14 thorpej Exp $ */
+/* $NetBSD: btvmeii.c,v 1.27 2023/12/05 15:58:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.26 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.27 2023/12/05 15:58:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.26 2021/08/07 16:19:14 thorpej Exp $")
 #include <dev/pci/pcidevs.h>
 
 #include <sys/bus.h>
-#include <sys/malloc.h>
-#include <sys/extent.h>
+#include <sys/kmem.h>
+#include <sys/vmem.h>
 
 #include <dev/pci/ppbreg.h>
 
@@ -110,8 +110,7 @@ struct b3_2706_softc {
 
 	int windowused[8];
 	struct b3_2706_vmemaprescs vmemaprescs[8];
-	struct extent *vmeext;
-	char vmemap[EXTENT_FIXED_STORAGE_SIZE(8)];
+	vmem_t *vme_arena;
 
 	struct vme_chipset_tag sc_vct;
 
@@ -255,10 +254,16 @@ b3_2706_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < 8; i++) {
 		sc->windowused[i] = 0;
 	}
-	sc->vmeext = extent_create("pcivme", sc->vmepbase,
-				   sc->vmepbase + 32*1024*1024 - 1, M_DEVBUF,
-				   sc->vmemap, sizeof(sc->vmemap),
-				   EX_NOCOALESCE);
+	sc->vme_arena = vmem_create("pcivme",
+				    sc->vmepbase,	/* base */
+				    32*1024*1024,	/* size */
+				    1,			/* quantum */
+				    NULL,		/* allocfn */
+				    NULL,		/* releasefn */
+				    NULL,		/* source */
+				    0,			/* qcache_max */
+				    VM_SLEEP,
+				    IPL_NONE);
 
 	sc->sc_vct.cookie = self;
 	sc->sc_vct.vct_probe = b3_2706_vme_probe;
@@ -285,8 +290,9 @@ int
 b3_2706_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_datasize_t datasizes, vme_swap_t swap, bus_space_tag_t *tag, bus_space_handle_t *handle, vme_mapresc_t *resc)
 {
 	int idx, i, wnd, res;
-	unsigned long boundary, maplen, pcibase;
+	unsigned long boundary, maplen;
 	vme_addr_t vmebase, vmeend;
+	vmem_addr_t pcibase;
 	static int windoworder[8] = {1, 2, 3, 5, 6, 7, 0, 4};
 
 	/* prefer windows with fine granularity for small mappings */
@@ -315,7 +321,15 @@ b3_2706_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_
 	/* bytes in outgoing window required */
 	maplen = vmeend - vmebase + boundary;
 
-	if (extent_alloc(sc->vmeext, maplen, boundary, 0, EX_FAST, &pcibase)) {
+	if (vmem_xalloc(sc->vme_arena,
+			maplen,			/* size */
+			boundary,		/* align */
+			0,			/* phase */
+			0,			/* boundary */
+			VMEM_ADDR_MIN,		/* minaddr */
+			VMEM_ADDR_MAX,		/* maxaddr */
+			VM_NOSLEEP,
+			&pcibase)) {
 		sc->windowused[wnd] = 0;
 		return (ENOMEM);
 	}
@@ -323,7 +337,7 @@ b3_2706_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_
 	res = univ_pci_mapvme(&sc->univdata, wnd, vmebase, maplen,
 			      am, datasizes, pcibase);
 	if (res) {
-		extent_free(sc->vmeext, pcibase, maplen, 0);
+		vmem_xfree(sc->vme_arena, pcibase, maplen);
 		sc->windowused[wnd] = 0;
 		return (res);
 	}
@@ -332,7 +346,7 @@ b3_2706_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_
 			    0, handle);
 	if (res) {
 		univ_pci_unmapvme(&sc->univdata, wnd);
-		extent_free(sc->vmeext, pcibase, maplen, 0);
+		vmem_xfree(sc->vme_arena, pcibase, maplen);
 		sc->windowused[wnd] = 0;
 		return (res);
 	}
@@ -357,7 +371,7 @@ b3_2706_unmap_vme(void *vsc, vme_mapresc_t resc)
 	struct b3_2706_vmemaprescs *r = resc;
 
 	bus_space_unmap(sc->vmet, r->handle, r->len);
-	extent_free(sc->vmeext, r->pcibase, r->maplen, 0);
+	vmem_xfree(sc->vme_arena, r->pcibase, r->maplen);
 
 	if (!sc->windowused[r->wnd])
 		panic("b3_2706_unmap_vme: bad window");
@@ -389,14 +403,17 @@ b3_2706_vme_probe(void *vsc, vme_addr_t addr, vme_size_t len, vme_am_t am, vme_d
 			switch (datasize) {
 			    case VME_D8:
 				dummy = bus_space_read_1(tag, handle, i);
+				(void)dummy;
 				i++;
 				break;
 			    case VME_D16:
 				dummy = bus_space_read_2(tag, handle, i);
+				(void)dummy;
 				i += 2;
 				break;
 			    case VME_D32:
 				dummy = bus_space_read_4(tag, handle, i);
+				(void)dummy;
 				i += 4;
 				break;
 			    default:
@@ -433,7 +450,7 @@ b3_2706_establish_vmeint(void *vsc, vme_intr_handle_t handle, int prior, int (*f
 	long lv;
 	int s;
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof *ih, KM_SLEEP);
 
 	lv = (long)handle; /* XXX */
 
@@ -466,7 +483,7 @@ b3_2706_disestablish_vmeint(void *vsc, void *cookie)
 	TAILQ_REMOVE(&(sc->intrhdls), ih, ih_next);
 	splx(s);
 
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 
 void
@@ -506,19 +523,9 @@ b3_2706_vmeint(void *vsc, int level, int vector)
 }
 
 int
-b3_2706_dmamap_create(vsc, len, am, datasize, swap,
-		      nsegs, segsz, bound,
-		      flags, mapp)
-	void *vsc;
-	vme_size_t len;
-	vme_am_t am;
-	vme_datasize_t datasize;
-	vme_swap_t swap;
-	int nsegs;
-	vme_size_t segsz;
-	vme_addr_t bound;
-	int flags;
-	bus_dmamap_t *mapp;
+b3_2706_dmamap_create(void *vsc, vme_size_t len, vme_am_t am,
+    vme_datasize_t datasize, vme_swap_t swap, int nsegs, vme_size_t segsz,
+    vme_addr_t bound, int flags, bus_dmamap_t *mapp)
 {
 	return (EINVAL);
 }
