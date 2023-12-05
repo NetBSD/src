@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeivar.h,v 1.5 2012/10/27 17:18:28 chs Exp $ */
+/* $NetBSD: btvmeivar.h,v 1.6 2023/12/05 14:58:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -25,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/vmem.h>
 
 struct b3_617_vmeintrhand {
 	TAILQ_ENTRY(b3_617_vmeintrhand) ih_next;
@@ -61,11 +63,7 @@ struct b3_617_softc {
 	/*
 	 * management of adapter mapping tables
 	 */
-	/* max fragmentation of scatter tables */
-#define NVMEMAP 20
-
-	struct extent *vmeext;
-	char vmemap[EXTENT_FIXED_STORAGE_SIZE(NVMEMAP)];
+	vmem_t *vme_arena;
 };
 
 #define read_csr_byte(sc, reg) \

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.35 2021/08/07 16:19:14 thorpej Exp $ */
+/* $NetBSD: btvmei.c,v 1.36 2023/12/05 14:58:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,17 +29,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.35 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.36 2023/12/05 14:58:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
+#include <sys/vmem.h>
 
 #include <sys/bus.h>
-#include <sys/extent.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -300,19 +300,38 @@ b3_617_init(struct b3_617_softc *sc)
 	/*
 	 * set up scatter page allocation control
 	 */
-	sc->vmeext = extent_create("pcivme", MR_PCI_VME,
-				   MR_PCI_VME + MR_PCI_VME_SIZE - 1,
-				   sc->vmemap, sizeof(sc->vmemap),
-				   EX_NOCOALESCE);
+	sc->vme_arena = vmem_create("pcivme",
+				    MR_PCI_VME,		/* base */
+				    MR_PCI_VME_SIZE,	/* size */
+				    4,			/* quantum */
+				    NULL,		/* allocfn */
+				    NULL,		/* releasefn */
+				    NULL,		/* source */
+				    0,			/* qcache_max */
+				    VM_SLEEP,
+				    IPL_NONE);
 #if 0
-	sc->pciext = extent_create("vmepci", MR_VME_PCI,
-				   MR_VME_PCI + MR_VME_PCI_SIZE - 1,
-				   sc->pcimap, sizeof(sc->pcimap),
-				   EX_NOCOALESCE);
-	sc->dmaext = extent_create("dmapci", MR_DMA_PCI,
-				   MR_DMA_PCI + MR_DMA_PCI_SIZE - 1,
-				   sc->dmamap, sizeof(sc->dmamap),
-				   EX_NOCOALESCE);
+	sc->vme_arena = vmem_create("vmepci",
+				    MR_VME_PCI,		/* base */
+				    MR_VME_PCI_SIZE,	/* size */
+				    4,			/* quantum */
+				    NULL,		/* allocfn */
+				    NULL,		/* releasefn */
+				    NULL,		/* source */
+				    0,			/* qcache_max */
+				    VM_SLEEP,
+				    IPL_NONE);
+
+	sc->dma_arena = vmem_create("dmapci",
+				    MR_DMA_PCI,		/* base */
+				    MR_DMA_PCI_SIZE,	/* size */
+				    XXX,		/* quantum */
+				    NULL,		/* allocfn */
+				    NULL,		/* releasefn */
+				    NULL,		/* source */
+				    0,			/* qcache_max */
+				    VM_SLEEP,
+				    IPL_VM);
 #endif
 
 	/*
@@ -395,7 +414,8 @@ int
 b3_617_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_datasize_t datasizes, vme_swap_t swap, bus_space_tag_t *tag, bus_space_handle_t *handle, vme_mapresc_t *resc)
 {
 	vme_addr_t vmebase, vmeend, va;
-	unsigned long maplen, first, i;
+	unsigned long maplen, i;
+	vmem_addr_t first;
 	u_int32_t mapreg;
 	bus_addr_t pcibase;
 	int res;
@@ -408,7 +428,7 @@ b3_617_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_d
 	/* bytes in scatter table required */
 	maplen = ((vmeend - vmebase) / VME_PAGESIZE + 1) * 4;
 
-	if (extent_alloc(sc->vmeext, maplen, 4, 0, EX_FAST, &first))
+	if (vmem_alloc(sc->vme_arena, maplen, VM_BESTFIT | VM_SLEEP, &first))
 		return (ENOMEM);
 
 	/*
@@ -438,7 +458,7 @@ b3_617_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_d
 	if ((res = bus_space_map(sc->sc_vmet, pcibase, len, 0, handle))) {
 		for (i = first; i < first + maplen; i += 4)
 			write_mapmem(sc, i, MR_RAM_INVALID);
-		extent_free(sc->vmeext, first, maplen, 0);
+		vmem_free(sc->vme_arena, first, maplen);
 		return (res);
 	}
 
@@ -447,7 +467,7 @@ b3_617_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_d
 	/*
 	 * save all data needed for later unmapping
 	 */
-	r = malloc(sizeof(*r), M_DEVBUF, M_WAITOK);
+	r = kmem_alloc(sizeof(*r), KM_SLEEP);
 	r->handle = *handle;
 	r->len = len;
 	r->firstpage = first;
@@ -468,9 +488,8 @@ b3_617_unmap_vme(void *vsc, vme_mapresc_t resc)
 	for (i = r->firstpage; i < r->firstpage + r->maplen; i += 4)
 		write_mapmem(sc, i, MR_RAM_INVALID);
 
-	extent_free(sc->vmeext, r->firstpage, r->maplen, 0);
-
-	free(r, M_DEVBUF);
+	vmem_free(sc->vme_arena, r->firstpage, r->maplen);
+	kmem_free(r, sizeof(*r));
 }
 
 int
@@ -500,14 +519,17 @@ b3_617_vme_probe(void *vsc, vme_addr_t addr, vme_size_t len, vme_am_t am, vme_da
 			switch (datasize) {
 			    case VME_D8:
 				dummy = bus_space_read_1(tag, handle, i);
+				(void)dummy;
 				i++;
 				break;
 			    case VME_D16:
 				dummy = bus_space_read_2(tag, handle, i);
+				(void)dummy;
 				i += 2;
 				break;
 			    case VME_D32:
 				dummy = bus_space_read_4(tag, handle, i);
+				(void)dummy;
 				i += 4;
 				break;
 			    default:
@@ -552,7 +574,7 @@ b3_617_establish_vmeint(void *vsc, vme_intr_handle_t handle, int prior, int (*fu
 	long lv;
 	int s;
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
+	ih = kmem_alloc(sizeof *ih, KM_SLEEP);
 
 	lv = (long)handle; /* XXX */
 
@@ -585,7 +607,7 @@ b3_617_disestablish_vmeint(void *vsc, void *cookie)
 	TAILQ_REMOVE(&(sc->intrhdls), ih, ih_next);
 	splx(s);
 
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof(*ih));
 }
 
 int
@@ -637,19 +659,9 @@ b3_617_intr(void *vsc)
 }
 
 int
-b3_617_dmamap_create(vsc, len, am, datasize, swap,
-		   nsegs, segsz, bound,
-		   flags, mapp)
-	void *vsc;
-	vme_size_t len;
-	vme_am_t am;
-	vme_datasize_t datasize;
-	vme_swap_t swap;
-	int nsegs;
-	vme_size_t segsz;
-	vme_addr_t bound;
-	int flags;
-	bus_dmamap_t *mapp;
+b3_617_dmamap_create(void *vsc, vme_size_t len, vme_am_t am,
+    vme_datasize_t datasize, vme_swap_t swap, int nsegs, vme_size_t segsz,
+    vme_addr_t bound, int flags, bus_dmamap_t *mapp)
 {
 	return (EINVAL);
 }
@@ -660,17 +672,9 @@ b3_617_dmamap_destroy(void *vsc, bus_dmamap_t map)
 }
 
 int
-b3_617_dmamem_alloc(vsc, len, am, datasizes, swap,
-		    segs, nsegs, rsegs, flags)
-	void *vsc;
-	vme_size_t len;
-	vme_am_t am;
-	vme_datasize_t datasizes;
-	vme_swap_t swap;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+b3_617_dmamem_alloc(void *vsc, vme_size_t len, vme_am_t am,
+    vme_datasize_t datasizes, vme_swap_t swap, bus_dma_segment_t *segs,
+    int nsegs, int *rsegs, int flags)
 {
 	return (EINVAL);
 }
