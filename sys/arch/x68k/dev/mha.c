@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.58 2022/05/26 14:33:29 tsutsui Exp $	*/
+/*	$NetBSD: mha.c,v 1.59 2023/12/05 22:24:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.58 2022/05/26 14:33:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.59 2023/12/05 22:24:40 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -1566,7 +1566,7 @@ mha_dataio_dma(int dw, int cw, struct mha_softc *sc, u_char *p, int n)
 	if (n > MAXBSIZE)
 		panic("transfer size exceeds MAXBSIZE");
 	if (sc->sc_dmasize > 0)
-		panic("DMA request while another DMA transfer is in pregress");
+		panic("DMA request while another DMA transfer is in progress");
 
 	if (cw == CMD_SEND_FROM_DMA) {
 		memcpy(sc->sc_dmabuf, p, n);
