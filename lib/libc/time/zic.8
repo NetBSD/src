@@ -1,9 +1,9 @@
-.\" $NetBSD: zic.8,v 1.43 2023/09/16 18:40:26 christos Exp $
+.\" $NetBSD: zic.8,v 1.44 2023/12/06 20:01:44 christos Exp $
 .\" @(#)zic.8	8.6
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
 .\" .TH zic 8
-.Dd September 16, 2023
+.Dd December 6, 2023
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -313,11 +313,15 @@ abbreviation must be unambiguous in context.
 .Pp
 A rule line has the form
 .Pp
-.Dl Rule	NAME	FROM	TO	\&-	IN	ON		AT		SAVE		LETTER/S
+.Bl -column -compact -offset indent "Rule" "NAME" "FROM" "1995" "\&*" "Apr" "lastSun" "2:00w" "1:00d" "LETTER/S"
+.It Rule	NAME	FROM	TO	\&-	IN	ON	AT	SAVE	LETTER/S
+.El
 .Pp
 For example:
 .Pp
-.Dl Rule	US	1967	1973	\&-	Apr	lastSun	2:00w	1:00d	D
+.Bl -column -compact -offset indent "Rule" "NAME" "FROM" "1995" "\&*" "Apr" "lastSun" "2:00w" "1:00d" "LETTER/S"
+.It Rule	US	1967	1973	\&-	Apr	lastSun	2:00w	1:00d	D
+.El
 .Pp
 The fields that make up a rule line are:
 .Bl -tag -width "LETTER/S"
@@ -507,13 +511,17 @@ If this field is
 the variable part is null.
 .El
 .Pp
-A zone line has the form
+A zone line has the form:
 .Pp
-.Dl Zone	NAME			STDOFF	RULES/SAVE	FORMAT	[UNTIL]
+.Bl -column -compact -offset indent "Zone" "Asia/Amman" "STDOFF" "RULES/SAVE" "FORMAT" "[UNTIL]"
+Zone	NAME	STDOFF	RULES/SAVE	FORMAT	[UNTIL]
+.El
 .Pp
 For example:
 .Pp
-.Dl Zone	Asia/Amman	2:00	Jordan	EE%sT	2017 Oct 27 1:00
+.Bl -column -compact -offset indent "Zone" "Asia/Amman" "STDOFF" "RULES/SAVE" "FORMAT" "[UNTIL"]
+Zone	Asia/Amman	2:00	Jordan	EE%sT	2017 Oct 27 1:00
+.El
 .Pp
 The fields that make up a zone line are:
 .Bl -tag -width "RULES/SAVE"
@@ -632,13 +640,15 @@ that would otherwise take effect in the next
 seconds is instead assumed to take effect simultaneously.
 For example:
 .Pp
-.Bl -column -compact -offset indent "# Rule" "Swiss" "FROM" "1995" "\&*" "Oct" "lastSun" "1:00u" "SAVE" "LETTER/S"
+.Bl -column -compact -offset indent "# Rule" "NAME" "FROM" "2006" "\&-" "Oct" "lastSun" "1:00" "SAVE" "LETTER/S"
 .It # Rule	NAME	FROM	TO	\&-	IN	ON	AT	SAVE	LETTER/S
 .It Rule	US	1967	2006	\&-	Oct	lastSun	2:00	0	S
 .It Rule	US	1967	1973	\&-	Apr	lastSun	2:00	1:00	D
-.It # Zone	NAME				STDOFF	RULES	FORMAT	[UNTIL]
+.El
+.Bl -column -compact -offset indent "# Zone" "America/Menominee" "STDOFF" "RULES" "FORMAT" "[UNTIL]"
+.It # Zone	NAME	STDOFF	RULES	FORMAT	[UNTIL]
 .It Zone	America/Menominee	\&-5:00	\&-	EST	1973 Apr 29 2:00
-.It						\&-6:00	US	C%sT
+.It \&	\&	\&-6:00	US	C%sT
 .El
 .Pp
 Here, an incorrect reading would be there were two clock changes on 1973-04-29,
@@ -651,11 +661,15 @@ interprets this more sensibly as a single transition from 02:00 CST (\&-05) to
 .Pp
 A link line has the form
 .Pp
-.Dl Link	TARGET			LINK-NAME
+.Bl -column -compact -offset indent "Link" "Europe/Istanbul" "Asia/Istanbul"
+.It Link	TARGET	LINK-NAME
+.El
 .Pp
 For example:
 .Pp
-.Dl Link	Europe/Istanbul	Asia/Istanbul
+.Bl -column -compact -offset indent "Link" "Europe/Istanbul" "Asia/Istanbul"
+.It Link	Europe/Istanbul	Asia/Istanbul
+.El
 .Pp
 The
 .Em TARGET
@@ -675,12 +689,12 @@ Links can chain together, although the behavior is unspecified if a
 chain of one or more links does not terminate in a Zone name.
 A link line can appear before the line that defines the link target.
 For example:
-.Bl -column -offset indent ".Sy Link" ".Sy Greenwich" ".Sy G_M_T"
-.It Sy Link Ta Sy Greenwich Ta Sy G_M_T
-.It 
-.It Link Ta Sy Etc/GMT Ta Sy Greenwich
-.It Zone Ta Sy Etc/GMT 0 Ta Sy Ta Sy \*- GMT
+.Bl -column -offset indent "Link" "Greenwich" "Greenwich"
+.It Link	Greenwich	G_M_T
+.It Link	Etc/GMT	Greenwich
+.It Zone	Etc/GMT 0	- GMT
 .El
+.Pp
 The two links are chained together, and G_M_T, Greenwich, and Etc/GMT
 all name the same zone.
 .Pp
@@ -693,11 +707,15 @@ The file that describes leap seconds can have leap lines and an
 expiration line.
 Leap lines have the following form:
 .Pp
-.Dl Leap	YEAR	MONTH	DAY	HH:MM:SS	CORR	R/S
+.Bl -column -compat -offset indent "Leap" "YEAR" "MONTH" "DAY" "HH:MM:SS" "CORR""R/S"
+.It Leap	YEAR	MONTH	DAY	HH:MM:SS	CORR	R/S
+.El
 .Pp
 For example:
 .Pp
-.Dl Leap	2016	Dec		31	23:59:60	+	S
+.Bl -column -compat -offset indent "Leap" "YEAR" "MONTH" "DAY" "HH:MM:SS" "CORR""R/S"
+.It Leap	2016	Dec	31	23:59:60	+	S
+.El
 .Pp
 The
 .Em YEAR ,
@@ -742,11 +760,15 @@ option is used.
 .Pp
 The expiration line, if present, has the form:
 .Pp
-.Dl Expires	YEAR	MONTH	DAY	HH:MM:SS
+.Bl -column -compact -offset indent "Expires" "YEAR" "MONTH" "DAY" "HH:MM:SS"
+.It Expires	YEAR	MONTH	DAY	HH:MM:SS
+.El
 .Pp
 For example:
 .Pp
-.Dl Expires	2020	Dec		28	00:00:00
+.Bl -column -compact -offset indent "Expires" "YEAR" "MONTH" "DAY" "HH:MM:SS"
+.It Expires	2020	Dec	28	00:00:00
+.El
 .Pp
 The
 .Em YEAR ,
