@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.23 2023/10/19 18:24:33 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.24 2023/12/06 22:28:20 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -25,7 +25,7 @@ NUMBERS+=	${num}
 
 
 # The .for loop also works for multiple iteration variables.
-# This is something that the modifier :@ cannot do.
+# This is something that the modifier :@ cannot do as easily.
 .for name value in VARNAME value NAME2 value2
 ${name}=	${value}
 .endfor
@@ -186,6 +186,20 @@ INDIRECT=	direct
 # If the variable name could be chosen dynamically, the iteration variable
 # might have been 'direct', thereby expanding the expression '${direct}'.
 .  info <$(INDIRECT)> <$(direct)> <$($(INDIRECT))>
+.endfor
+
+
+# Regular global variables and the "variables" from the .for loop don't
+# interfere with each other.  In the following snippet, the variable 'DIRECT'
+# is used both as a global variable, as well as an iteration variable in the
+# .for loop.  The expression '${INDIRECT}' refers to the global variable, not
+# to the one from the .for loop.
+DIRECT=		global
+INDIRECT=	${DIRECT}
+.for DIRECT in iteration
+.  if "${DIRECT} ${INDIRECT}" != "iteration global"
+.    error
+.  endif
 .endfor
 
 
