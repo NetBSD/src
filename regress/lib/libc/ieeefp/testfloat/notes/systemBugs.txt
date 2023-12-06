@@ -142,7 +142,7 @@ Some older SPARCstations appear confused about whether underflow tininess is
 detected before or after rounding.  For conversions from double precision
 to single precision, tininess is detected after rounding, while for all
 quadruple-precision operations it is detected before rounding.  Single- and
-double-precision multipies go both ways:
+double-precision multiplies go both ways:
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float32_mul, float64_mul
