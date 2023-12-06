@@ -1,4 +1,4 @@
-.\" $NetBSD: zic.8,v 1.44 2023/12/06 20:01:44 christos Exp $
+.\" $NetBSD: zic.8,v 1.45 2023/12/06 21:42:01 kre Exp $
 .\" @(#)zic.8	8.6
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
@@ -124,7 +124,7 @@ are possibly signed decimal counts of seconds since the Epoch
 (1970-01-01 00:00:00 UTC).
 Omitted counts default to extreme values.
 The output files use UT offset 0 and abbreviation
-.q "\*-00"
+.Qq "\*-00"
 in place of the omitted timestamp data.
 For example,
 .Bd -literal
@@ -441,7 +441,7 @@ equivalent to 0
 .El
 .Pp
 Although
-.I zic
+.Nm
 rounds times to the nearest integer second
 (breaking ties to the even integer), the fractions may be useful
 to other applications requiring greater precision.
@@ -464,7 +464,7 @@ in the absence of an indicator,
 local (wall clock) time is assumed.
 These forms ignore leap seconds; for example,
 if a leap second occurs at 00:59:60 local time,
-.q "1:00"
+.Qq "1:00"
 stands for 3601 seconds after local midnight instead of the usual 3600 seconds.
 The intent is that a rule line describes the instants when a
 clock/calendar set to the type of time specified in the
@@ -615,14 +615,14 @@ continuation.
 If a zone changes at the same instant that a rule would otherwise take
 effect in the earlier zone or continuation line, the rule is ignored.
 A zone or continuation line
-.I L
+.Em L
 with a named rule set starts with standard time by default:
 that is, any of
-.IR L 's
+.Em L Ns 's
 timestamps preceding
-.IR L 's
+.Em L Ns 's
 earliest rule use the rule in effect after
-.IR L 's
+.Em L Ns 's
 first transition into standard time.
 In a single zone it is an error if two rules take effect at the same
 instant, or if two zone changes take effect at the same instant.
