@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.44 2023/12/04 00:32:10 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.45 2023/12/06 01:46:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.44 2023/12/04 00:32:10 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.45 2023/12/06 01:46:34 thorpej Exp $");
 
 #include <sys/vmem_impl.h>
 
@@ -573,7 +573,7 @@ __C(CHIP,_io_alloc)(void *v, bus_addr_t rstart, bus_addr_t rend,
 			    boundary,		/* nocross */
 			    rstart,		/* minaddr */
 			    rend,		/* maxaddr */
-			    VM_NOSLEEP,
+			    VM_BESTFIT | VM_NOSLEEP,
 			    &ioaddr);
 	if (error) {
 #ifdef EXTENT_DEBUG
