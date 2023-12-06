@@ -1,4 +1,4 @@
-.\" $NetBSD: zdump.8,v 1.24 2023/12/06 20:01:44 christos Exp $
+.\" $NetBSD: zdump.8,v 1.25 2023/12/06 21:45:11 kre Exp $
 .\" @(#)zdump.8	8.2
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
@@ -48,9 +48,9 @@ For each
 on the command line,
 print the times at the two extreme time values,
 the times (if present) at and just beyond the boundaries of years that
-.BR localtime (3)
+.Xr localtime 3
 and
-.BR gmtime (3)
+.Xr gmtime 3
 can represent, and
 the times both one second before and exactly at
 each detected time discontinuity.
