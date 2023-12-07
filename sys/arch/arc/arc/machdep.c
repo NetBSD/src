@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.131 2023/08/29 21:34:50 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.132 2023/12/07 03:46:10 thorpej Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2023/08/29 21:34:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2023/12/07 03:46:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -492,8 +492,6 @@ cpu_startup(void)
 #endif
 
 	cpu_startup_common();
-
-	arc_bus_space_malloc_set_safe();
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.2 2021/04/23 06:13:05 skrll Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.3 2023/12/07 03:46:10 thorpej Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -67,19 +67,19 @@
 #define _ARC_BUS_FUNCS_H_
 #ifdef _KERNEL
 
+struct vmem;
+struct vmem_btag;
+
 /* machine dependent utility function for bus_space users */
-void	arc_bus_space_malloc_set_safe(void);
 void	arc_bus_space_init(bus_space_tag_t, const char *,
 	    paddr_t, vaddr_t, bus_addr_t, bus_size_t);
-void	arc_bus_space_init_extent(bus_space_tag_t, void *, size_t);
+void	arc_bus_space_init_arena(bus_space_tag_t, struct vmem *,
+	    struct vmem_btag *, unsigned int);
 void	arc_bus_space_set_aligned_stride(bus_space_tag_t, unsigned int);
 void	arc_sparse_bus_space_init(bus_space_tag_t, const char *,
 	    paddr_t, bus_addr_t, bus_size_t);
 void	arc_large_bus_space_init(bus_space_tag_t, const char *,
 	    paddr_t, bus_addr_t, bus_size_t);
-
-/* machine dependent utility function for bus_space implementations */
-int	arc_bus_space_extent_malloc_flag(void);
 
 /* these are provided for subclasses which override base bus_space. */
 

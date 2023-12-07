@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2019/09/23 16:17:54 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.3 2023/12/07 03:46:10 thorpej Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -67,6 +67,8 @@
 #define _ARC_BUS_DEFS_H_
 #ifdef _KERNEL
 
+#include <sys/vmem.h>
+
 /*
  * Bus address and size types
  */
@@ -116,7 +118,7 @@ typedef struct arc_bus_space *bus_space_tag_t;
 
 struct arc_bus_space {
 	const char	*bs_name;
-	struct extent	*bs_extent;
+	vmem_t		*bs_arena;
 	bus_addr_t	bs_start;
 	bus_size_t	bs_size;
 
