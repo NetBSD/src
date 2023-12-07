@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.48 2021/08/07 16:18:42 thorpej Exp $	*/
+/*	$NetBSD: necpb.c,v 1.49 2023/12/07 03:46:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.48 2021/08/07 16:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.49 2023/12/07 03:46:10 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.48 2021/08/07 16:18:42 thorpej Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
-#include <sys/extent.h>
+#include <sys/vmem_impl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -134,8 +134,14 @@ static struct necpb_intrhand	*necpb_inttbl[4];
 /* There can be only one. */
 int necpbfound;
 struct necpb_context necpb_main_context;
-static long necpb_mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(10) / sizeof(long)];
-static long necpb_io_ex_storage[EXTENT_FIXED_STORAGE_SIZE(10) / sizeof(long)];
+
+#define	NECPB_MEM_BTAG_COUNT	VMEM_EST_BTCOUNT(1, 10)
+#define	NECPB_IO_BTAG_COUNT	VMEM_EST_BTCOUNT(1, 10)
+
+static struct vmem necpb_mem_arena_store;
+static struct vmem necpb_io_arena_store;
+static struct vmem_btag necpb_mem_btag_store[NECPB_MEM_BTAG_COUNT];
+static struct vmem_btag necpb_io_btag_store[NECPB_IO_BTAG_COUNT];
 
 #define	PCI_IO_START	0x00100000
 #define	PCI_IO_END	0x01ffffff
@@ -177,13 +183,13 @@ necpb_init(struct necpb_context *ncp)
 
 	arc_large_bus_space_init(&ncp->nc_memt, "necpcimem",
 	    RD94_P_PCI_MEM, 0, RD94_S_PCI_MEM);
-	arc_bus_space_init_extent(&ncp->nc_memt, (void *)necpb_mem_ex_storage,
-	    sizeof(necpb_mem_ex_storage));
+	arc_bus_space_init_arena(&ncp->nc_memt, &necpb_mem_arena_store,
+	    necpb_mem_btag_store, NECPB_MEM_BTAG_COUNT);
 
 	arc_bus_space_init(&ncp->nc_iot, "necpciio",
 	    RD94_P_PCI_IO, RD94_V_PCI_IO, 0, RD94_S_PCI_IO);
-	arc_bus_space_init_extent(&ncp->nc_iot, (void *)necpb_io_ex_storage,
-	    sizeof(necpb_io_ex_storage));
+	arc_bus_space_init_arena(&ncp->nc_iot, &necpb_io_arena_store,
+	    necpb_io_btag_store, NECPB_IO_BTAG_COUNT);
 
 	jazz_bus_dma_tag_init(&ncp->nc_dmat);
 

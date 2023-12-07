@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map_machdep.c,v 1.7 2012/01/27 18:52:50 para Exp $	*/
+/*	$NetBSD: wired_map_machdep.c,v 1.8 2023/12/07 03:46:10 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.7 2012/01/27 18:52:50 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.8 2023/12/07 03:46:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
+#include <sys/vmem_impl.h>
 
 #include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
@@ -46,20 +46,38 @@ static bool arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap,
 static bool arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap,
     vsize_t *sizep);
 
-static struct extent *arc_wired_map_ex;
-static long wired_map_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+#define	ARC_WIRED_MAP_BTCOUNT	VMEM_EST_BTCOUNT(1, 8)
+
+static vmem_t *arc_wired_map_arena;
+static struct vmem arc_wired_map_arena_store;
+static struct vmem_btag arc_wired_map_btag_store[ARC_WIRED_MAP_BTCOUNT];
 
 void
 arc_init_wired_map(void)
 {
+	int error __diagused;
 
 	mips3_nwired_page = 0;
-	arc_wired_map_ex = extent_create("wired_map",
-	    VM_MIN_WIRED_MAP_ADDRESS, VM_MAX_WIRED_MAP_ADDRESS,
-	    (void *)wired_map_ex_storage, sizeof(wired_map_ex_storage),
-	    EX_NOWAIT);
-	if (arc_wired_map_ex == NULL)
-		panic("arc_init_wired_map: can't create extent");
+
+	arc_wired_map_arena = vmem_init(&arc_wired_map_arena_store,
+					"wired_map",	/* name */
+					0,		/* addr */
+					0,		/* size */
+					1,		/* quantum */
+					NULL,		/* importfn */
+					NULL,		/* releasefn */
+					NULL,		/* source */
+					0,		/* qcache_max */
+					VM_NOSLEEP | VM_PRIVTAGS,
+					IPL_NONE);
+	KASSERT(arc_wired_map_arena != NULL);
+
+	vmem_add_bts(arc_wired_map_arena, arc_wired_map_btag_store,
+	    ARC_WIRED_MAP_BTCOUNT);
+	error = vmem_add(arc_wired_map_arena, VM_MIN_WIRED_MAP_ADDRESS,
+	    VM_MAX_WIRED_MAP_ADDRESS - VM_MIN_WIRED_MAP_ADDRESS,
+	    VM_NOSLEEP);
+	KASSERT(error == 0);
 }
 
 void
@@ -77,7 +95,7 @@ arc_wired_enter_page(vaddr_t va, paddr_t pa, vaddr_t pg_size)
 		return;
 	}
 
-	error = extent_alloc_region(arc_wired_map_ex, va, pg_size, EX_NOWAIT);
+	error = vmem_xalloc_addr(arc_wired_map_arena, va, pg_size, VM_NOSLEEP);
 	if (error) {
 #ifdef DIAGNOSTIC
 		printf("arc_wired_enter_page: cannot allocate region.\n");
@@ -169,7 +187,7 @@ arc_contiguously_wired_mapped(paddr_t pa, vsize_t size)
 vaddr_t
 arc_map_wired(paddr_t pa, vsize_t size)
 {
-	u_long va;
+	vmem_addr_t va;
 	vsize_t off;
 	int error;
 
@@ -190,8 +208,14 @@ arc_map_wired(paddr_t pa, vsize_t size)
 		return 0; /* free wired TLB is not enough */
 	}
 
-	error = extent_alloc(arc_wired_map_ex, size, MIPS3_WIRED_SIZE,
-	    0, EX_NOWAIT, &va);
+	error = vmem_xalloc(arc_wired_map_arena, size,
+			    MIPS3_WIRED_SIZE,		/* align */
+			    0,				/* phase */
+			    0,				/* nocross */
+			    VMEM_ADDR_MIN,		/* minaddr */
+			    VMEM_ADDR_MAX,		/* maxaddr */
+			    VM_BESTFIT | VM_NOSLEEP,
+			    &va);
 	if (error) {
 #ifdef DIAGNOSTIC
 		printf("arc_map_wired: can't allocate region\n");

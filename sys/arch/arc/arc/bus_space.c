@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.12 2012/01/27 18:52:49 para Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.13 2023/12/07 03:46:10 thorpej Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -32,12 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12 2012/01/27 18:52:49 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13 2023/12/07 03:46:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
+#include <sys/vmem_impl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -316,7 +316,7 @@ arc_bus_space_init(bus_space_tag_t bst, const char *name, paddr_t paddr,
 {
 
 	bst->bs_name = name;
-	bst->bs_extent = NULL;
+	bst->bs_arena = NULL;
 	bst->bs_start = start;
 	bst->bs_size = size;
 	bst->bs_pbase = paddr;
@@ -338,16 +338,28 @@ arc_bus_space_init(bus_space_tag_t bst, const char *name, paddr_t paddr,
 }
 
 void
-arc_bus_space_init_extent(bus_space_tag_t bst, void *storage,
-    size_t storagesize)
+arc_bus_space_init_arena(bus_space_tag_t bst, struct vmem *arena_store,
+    struct vmem_btag *btag_store, unsigned int btag_count)
 {
+	int error __diagused;
 
-	bst->bs_extent = extent_create(bst->bs_name,
-	    bst->bs_start, bst->bs_start + bst->bs_size,
-	    storage, storagesize, EX_NOWAIT);
-	if (bst->bs_extent == NULL)
-		panic("arc_bus_space_init_extent: cannot create extent map %s",
-		    bst->bs_name);
+	bst->bs_arena = vmem_init(arena_store,
+				  bst->bs_name,		/* name */
+				  0,			/* addr */
+				  0,			/* size */
+				  1,			/* quantum */
+				  NULL,			/* importfn */
+				  NULL,			/* releasefn */
+				  NULL,			/* source */
+				  0,			/* qcache_max */
+				  VM_NOSLEEP | VM_PRIVTAGS,
+				  IPL_NONE);
+	KASSERT(bst->bs_arena != NULL);
+
+	vmem_add_bts(bst->bs_arena, btag_store, btag_count);
+	error = vmem_add(bst->bs_arena, bst->bs_start, bst->bs_size,
+	    VM_NOSLEEP);
+	KASSERT(error == 0);
 }
 
 void
@@ -365,22 +377,6 @@ arc_bus_space_set_aligned_stride(bus_space_tag_t bst,
 	if (alignment_shift > 0)
 		--alignment_shift;
 	bst->bs_stride_8 = alignment_shift;
-}
-
-static int malloc_safe = 0;
-
-void
-arc_bus_space_malloc_set_safe(void)
-{
-
-	malloc_safe = EX_MALLOCOK;
-}
-
-int
-arc_bus_space_extent_malloc_flag(void)
-{
-
-	return malloc_safe;
 }
 
 int
@@ -457,9 +453,8 @@ arc_bus_space_map(bus_space_tag_t bst, bus_addr_t addr, bus_size_t size,
 	if (addr < bst->bs_start || addr + size > bst->bs_start + bst->bs_size)
 		return EINVAL;
 
-	if (bst->bs_extent != NULL) {
-		err = extent_alloc_region(bst->bs_extent, addr, size,
-		    EX_NOWAIT | malloc_safe);
+	if (bst->bs_arena != NULL) {
+		err = vmem_xalloc_addr(bst->bs_arena, addr, size, VM_NOSLEEP);
 		if (err)
 			return err;
 	}
@@ -472,7 +467,7 @@ arc_bus_space_unmap(bus_space_tag_t bst, bus_space_handle_t bsh,
     bus_size_t size)
 {
 
-	if (bst->bs_extent != NULL) {
+	if (bst->bs_arena != NULL) {
 		paddr_t pa;
 		bus_addr_t addr;
 		int err;
@@ -483,8 +478,7 @@ arc_bus_space_unmap(bus_space_tag_t bst, bus_space_handle_t bsh,
 			panic("arc_bus_space_unmap: %s va 0x%qx: error %d",
 			    bst->bs_name, (unsigned long long) bsh, err);
 		addr = (bus_size_t)(pa - bst->bs_pbase) + bst->bs_start;
-		extent_free(bst->bs_extent, addr, size,
-		    EX_NOWAIT | malloc_safe);
+		vmem_xfree(bst->bs_arena, addr, size);
 	}
 	bus_space_dispose_handle(bst, bsh, size);
 }
@@ -520,19 +514,25 @@ arc_bus_space_alloc(bus_space_tag_t bst, bus_addr_t start, bus_addr_t end,
     bus_size_t size, bus_size_t align, bus_size_t boundary, int flags,
     bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
-	u_long addr;
+	vmem_addr_t addr;
 	int err;
 
-	if (bst->bs_extent == NULL)
-		panic("arc_bus_space_alloc: extent map %s not available",
+	if (bst->bs_arena == NULL)
+		panic("arc_bus_space_alloc: vmem arena %s not available",
 		    bst->bs_name);
 
 	if (start < bst->bs_start ||
 	    start + size > bst->bs_start + bst->bs_size)
 		return EINVAL;
 
-	err = extent_alloc_subregion(bst->bs_extent, start, end, size,
-	    align, boundary, EX_FAST | EX_NOWAIT | malloc_safe, &addr);
+	err = vmem_xalloc(bst->bs_arena, size,
+			  align,		/* align */
+			  0,			/* phase */
+			  boundary,		/* nocross */
+			  start,		/* minaddr */
+			  end,			/* maxaddr */
+			  VM_BESTFIT | VM_NOSLEEP,
+			  &addr);
 	if (err)
 		return err;
 
