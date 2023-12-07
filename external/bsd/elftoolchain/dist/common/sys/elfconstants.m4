@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.4 2022/05/02 20:27:43 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.5 2023/12/07 17:28:36 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -33,7 +33,7 @@ dnl 	$NetBSD: elfconstants.m4,v 1.4 2022/05/02 20:27:43 jkoshy Exp $
 # - The "Linkers and Libraries Guide", from Sun Microsystems.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 3980 2022-05-02 19:50:00Z jkoshy')
+	`$Id: elfconstants.m4,v 1.5 2023/12/07 17:28:36 jkoshy Exp $')
 
 # In the following definitions, `_' is an M4 macro that is meant to be
 # expanded later.  Its intended usage is:
@@ -1605,6 +1605,7 @@ _(R_386_GOT32,		3)
 _(R_386_PLT32,		4)
 _(R_386_COPY,		5)
 _(R_386_GLOB_DAT,	6)
+_(R_386_JMP_SLOT,	7)
 _(R_386_JUMP_SLOT,	7)
 _(R_386_RELATIVE,	8)
 _(R_386_GOTOFF,		9)
@@ -2402,6 +2403,22 @@ _(R_SPARC_GOTDATA_OP,	84)
 _(R_SPARC_H34,		85)
 ')
 
+define(`DEFINE_VAX_RELOCATIONS',`
+_(R_VAX_NONE,           0)
+_(R_VAX_32,             1)
+_(R_VAX_16,             2)
+_(R_VAX_8,              3)
+_(R_VAX_PC32,           4)
+_(R_VAX_PC16,           5)
+_(R_VAX_PC8,            6)
+_(R_VAX_GOT32,          7)
+_(R_VAX_PLT32,         13)
+_(R_VAX_COPY,          19)
+_(R_VAX_GLOB_DAT,      20)
+_(R_VAX_JMP_SLOT,      21)
+_(R_VAX_RELATIVE,      22)
+')
+
 define(`DEFINE_X86_64_RELOCATIONS',`
 _(R_X86_64_NONE,	0)
 _(R_X86_64_64,		1)
@@ -2457,6 +2474,7 @@ DEFINE_PPC32_RELOCATIONS()
 DEFINE_PPC64_RELOCATIONS()
 DEFINE_RISCV_RELOCATIONS()
 DEFINE_SPARC_RELOCATIONS()
+DEFINE_VAX_RELOCATIONS()
 DEFINE_X86_64_RELOCATIONS()
 ')
 
