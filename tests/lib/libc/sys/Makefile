@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.75 2023/11/24 17:19:55 christos Exp $
+# $NetBSD: Makefile,v 1.76 2023/12/07 16:54:44 riastradh Exp $
 
 MKMAN=	no
 
@@ -158,6 +158,5 @@ CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER} \
 
 # Explicitly breaks this
 COPTS.t_wait.c+=	${CC_WNO_ARRAY_BOUNDS} ${CC_WNO_STRINGOP_OVERFLOW}
-COPTS.t_setrlimit.c+=	-Wno-error=stack-protector
 
 .include <bsd.test.mk>

@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.10 2023/11/22 02:20:34 riastradh Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.11 2023/12/07 16:54:44 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.10 2023/11/22 02:20:34 riastradh Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.11 2023/12/07 16:54:44 riastradh Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -534,6 +534,26 @@ ATF_TC_HEAD(setrlimit_stack_growshrink, tc)
 }
 
 /*
+ * checkstackchild(n)
+ *
+ *	Allocate an array of size n on the stack, and verify it can be
+ *	used.  If it can't be used, this will crash with SIGSEGV,
+ *	deliberately.
+ */
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wstack-protector\"")
+static void
+checkstackchild(size_t n)
+{
+	volatile char *const x = alloca(n);
+	size_t i;
+
+	for (i = 0; i < n; i++)
+		x[i] = 0x1a;
+}
+_Pragma("GCC diagnostic pop")
+
+/*
  * checkstack(n, expectsegv)
  *
  *	Check whether we can allocate an array of size n on the stack.
@@ -555,14 +575,11 @@ static void
 checkstack(size_t n, int expectsegv)
 {
 	pid_t forked, waited;
-	size_t i;
 	int status;
 
 	RL(forked = fork());
 	if (forked == 0) {	/* child */
-		volatile char *const x = alloca(n);
-		for (i = 0; i < n; i++)
-			x[i] = 0x1a;
+		checkstackchild(n);
 		_exit(expectsegv);
 	}
 
