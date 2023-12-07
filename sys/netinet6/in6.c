@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.289 2023/08/03 05:44:22 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.290 2023/12/07 16:47:44 pgoyette Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.289 2023/08/03 05:44:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.290 2023/12/07 16:47:44 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -104,6 +104,17 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.289 2023/08/03 05:44:22 ozaki-r Exp $");
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/scope6_var.h>
+
+/* XXX
+ *
+ * The COMPAT_* code here, along with call-sites in nd6.c and
+ * icmp6.c, needs to be reworked to use compat hooks.  As it
+ * stands right now, the compat code only gets built if it is
+ * iincluded in the kernel at build time;  building and loading
+ * compat_* modules will not include this compat code!
+ *
+ * XXX
+ */
 
 #ifdef COMPAT_50
 #include <compat/netinet6/in6_var.h>
