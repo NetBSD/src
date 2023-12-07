@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.107 2023/01/06 10:28:27 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.108 2023/12/07 16:56:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.107 2023/01/06 10:28:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.108 2023/12/07 16:56:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -671,10 +671,10 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	init_stmem();
 
 	/*
-	 * Initialize the iomem extent for bus_space(9) to manage address
+	 * Initialize the iomem arena for bus_space(9) to manage address
 	 * spaces and allocate the physical RAM from the extent map.
 	 */
-	atari_bus_space_extent_init(0x0, 0xffffffff);
+	atari_bus_space_arena_init(0x0, 0xffffffff);
 	for (i = 0; i < NMEM_SEGS && boot_segs[i].end != 0; i++) {
 		if (atari_bus_space_alloc_physmem(boot_segs[i].start,
 		    boot_segs[i].end)) {

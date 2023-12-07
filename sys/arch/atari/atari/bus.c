@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.68 2023/01/06 10:28:27 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.69 2023/12/07 16:56:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.68 2023/01/06 10:28:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.69 2023/12/07 16:56:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.68 2023/01/06 10:28:27 tsutsui Exp $");
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/vmem_impl.h>
 
 #include <uvm/uvm.h>
 
@@ -50,16 +51,16 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.68 2023/01/06 10:28:27 tsutsui Exp $");
 #include <sys/bus.h>
 
 /*
- * Extent maps to manage all memory space, including I/O ranges.  Allocate
- * storage for 16 regions in each, initially.  Later, iomem_malloc_safe
- * will indicate that it's safe to use malloc() to dynamically allocate
- * region descriptors.
+ * Vmem arena to manage all memory space, including I/O ranges.  Allocate
+ * storage for 16 regions in each, initially.
+ *
  * This means that the fixed static storage is only used for registrating
  * the found memory regions and the bus-mapping of the console.
  */
-static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
-static struct extent *iomem_ex;
-static int iomem_malloc_safe = 0;
+#define	IOMEM_BTAG_COUNT	VMEM_EST_BTCOUNT(1, 16)
+static struct vmem iomem_arena_store;
+static struct vmem_btag iomem_btag_store[IOMEM_BTAG_COUNT];
+static vmem_t *iomem_arena;
 
 static int  _bus_dmamap_load_buffer(bus_dma_tag_t tag, bus_dmamap_t,
 		void *, bus_size_t, struct vmspace *, int, paddr_t *,
@@ -80,9 +81,12 @@ extern paddr_t avail_end;
  * very early stage of the system configuration.
  */
 static pt_entry_t	*bootm_ptep;
-static long		bootm_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) /
-								sizeof(long)];
-static struct extent	*bootm_ex;
+static vaddr_t		 bootm_start;
+static vaddr_t		 bootm_end;		/* inclusive */
+#define	BOOTM_BTAG_COUNT	VMEM_EST_BTCOUNT(1, 32)
+static struct vmem	 bootm_arena_store;
+static struct vmem_btag	 bootm_btag_store[BOOTM_BTAG_COUNT];
+static vmem_t *		 bootm_arena;
 
 static vaddr_t	bootm_alloc(paddr_t pa, u_long size, int flags);
 static int	bootm_free(vaddr_t va, u_long size);
@@ -91,10 +95,24 @@ void
 bootm_init(vaddr_t va, void *ptep, vsize_t size)
 {
 
-	bootm_ex = extent_create("bootmem", va, va + size,
-	    (void *)bootm_ex_storage, sizeof(bootm_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
+	bootm_start = va;
+	bootm_end = va + size - 1;
 	bootm_ptep = (pt_entry_t *)ptep;
+
+	bootm_arena = vmem_init(&bootm_arena_store,
+				"bootmem",		/* name */
+				0,			/* addr */
+				0,			/* size */
+				PAGE_SIZE,		/* quantum */
+				NULL,			/* importfn */
+				NULL,			/* releasefn */
+				NULL,			/* source */
+				0,			/* qcache_max */
+				VM_NOSLEEP | VM_PRIVTAGS,
+				IPL_NONE);
+
+	vmem_add_bts(bootm_arena, bootm_btag_store, BOOTM_BTAG_COUNT);
+	vmem_add(bootm_arena, va, size, VM_NOSLEEP);
 }
 
 vaddr_t
@@ -102,16 +120,17 @@ bootm_alloc(paddr_t pa, u_long size, int flags)
 {
 	pt_entry_t	*pg, *epg;
 	pt_entry_t	pg_proto;
-	vaddr_t		va, rva;
+	vmem_addr_t	rva;
+	vaddr_t		va;
 
-	if (extent_alloc(bootm_ex, size, PAGE_SIZE, 0, EX_NOWAIT, &rva) != 0) {
-		printf("bootm_alloc fails! Not enough fixed extents?\n");
+	if (vmem_alloc(bootm_arena, size, VM_NOSLEEP, &rva) != 0) {
+		printf("bootm_alloc fails! Not enough fixed boundary tags?\n");
 		printf("Requested extent: pa=%lx, size=%lx\n",
 						(u_long)pa, size);
 		return 0;
 	}
 
-	pg  = &bootm_ptep[btoc(rva - bootm_ex->ex_start)];
+	pg  = &bootm_ptep[btoc(rva - bootm_start)];
 	epg = &pg[btoc(size)];
 	va  = rva;
 	pg_proto = pa | PG_RW | PG_V;
@@ -136,51 +155,57 @@ int
 bootm_free(vaddr_t va, u_long size)
 {
 
-	if ((va < bootm_ex->ex_start) || ((va + size) > bootm_ex->ex_end))
+	if ((va < bootm_start) || ((va + size - 1) > bootm_end))
 		return 0; /* Not for us! */
-	extent_free(bootm_ex, va, size, EX_NOWAIT);
+	vmem_free(bootm_arena, va, size);
 	return 1;
 }
 
 void
-atari_bus_space_extent_init(paddr_t startpa, paddr_t endpa)
+atari_bus_space_arena_init(paddr_t startpa, paddr_t endpa)
 {
+	vmem_size_t size;
 
 	/*
-	 * Initialize the I/O mem extent map.
+	 * Initialize the I/O mem vmem arena.
+	 *
 	 * Note: we don't have to check the return value since
 	 * creation of a fixed extent map will never fail (since
 	 * descriptor storage has already been allocated).
 	 *
-	 * N.B. The iomem extent manages _all_ physical addresses
+	 * N.B. The iomem arena manages _all_ physical addresses
 	 * on the machine.  When the amount of RAM is found, all
 	 * extents of RAM are allocated from the map.
 	 */
-	iomem_ex = extent_create("iomem", startpa, endpa,
-	    (void *)iomem_ex_storage, sizeof(iomem_ex_storage),
-	    EX_NOCOALESCE | EX_NOWAIT);
+
+	iomem_arena = vmem_init(&iomem_arena_store,
+				"iomem",		/* name */
+				0,			/* addr */
+				0,			/* size */
+				1,			/* quantum */
+				NULL,			/* importfn */
+				NULL,			/* releasefn */
+				NULL,			/* source */
+				0,			/* qcache_max */
+				VM_NOSLEEP | VM_PRIVTAGS,
+				IPL_NONE);
+
+	vmem_add_bts(iomem_arena, iomem_btag_store, IOMEM_BTAG_COUNT);
+
+	/* XXX kern/57748 */
+	size = (vmem_size_t)(endpa - startpa) + 1;
+	if (size == 0) {
+		size--;
+	}
+	vmem_add(iomem_arena, startpa, size, VM_NOSLEEP);
 }
 
 int
 atari_bus_space_alloc_physmem(paddr_t startpa, paddr_t endpa)
 {
 
-	return extent_alloc_region(iomem_ex, startpa, endpa - startpa,
-	    EX_NOWAIT);
-}
-
-void
-atari_bus_space_malloc_set_safe(void)
-{
-
-	iomem_malloc_safe = EX_MALLOCOK;
-}
-
-int
-atari_bus_space_extent_malloc_flag(void)
-{
-
-	return iomem_malloc_safe;
+	return vmem_xalloc_addr(iomem_arena, startpa, endpa - startpa,
+	    VM_NOSLEEP);
 }
 
 int
@@ -193,20 +218,14 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	 * Before we go any further, let's make sure that this
 	 * region is available.
 	 */
-	error = extent_alloc_region(iomem_ex, bpa + t->base, size,
-			EX_NOWAIT | iomem_malloc_safe);
-
+	error = vmem_xalloc_addr(iomem_arena, bpa + t->base, size,
+	    VM_NOSLEEP);
 	if (error != 0)
 		return error;
 
 	error = bus_mem_add_mapping(t, bpa, size, flags, mhp);
 	if (error != 0) {
-		if (extent_free(iomem_ex, bpa + t->base, size,
-		    EX_NOWAIT | iomem_malloc_safe)) {
-			printf("%s: pa 0x%lx, size 0x%lx\n",
-			    __func__, bpa, size);
-			printf("%s: can't free region\n", __func__);
-		}
+		vmem_xfree(iomem_arena, bpa + t->base, size);
 	}
 	return error;
 }
@@ -216,27 +235,20 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
     bus_size_t size, bus_size_t alignment, bus_size_t boundary, int flags,
     bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
-	u_long bpa;
+	vmem_addr_t bpa;
 	int error;
-
-#ifdef DIAGNOSTIC
-	/*
-	 * Sanity check the allocation against the extent's boundaries.
-	 * XXX: Since we manage the whole of memory in a single map,
-	 *      this is nonsense for now! Brace it DIAGNOSTIC....
-	 */
-	if ((rstart + t->base) < iomem_ex->ex_start ||
-	    (rend + t->base) > iomem_ex->ex_end)
-		panic("%s: bad region start/end", __func__);
-#endif /* DIAGNOSTIC */
 
 	/*
 	 * Do the requested allocation.
 	 */
-	error = extent_alloc_subregion(iomem_ex, rstart + t->base,
-	    rend + t->base, size, alignment, boundary,
-	    EX_FAST | EX_NOWAIT | iomem_malloc_safe, &bpa);
-
+	error = vmem_xalloc(iomem_arena, size,
+			    alignment,		/* align */
+			    0,			/* phase */
+			    boundary,		/* boundary */
+			    rstart + t->base,	/* minaddr */
+			    rend + t->base,	/* maxaddr */
+			    VM_BESTFIT | VM_NOSLEEP,
+			    &bpa);
 	if (error != 0)
 		return error;
 
@@ -245,12 +257,7 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	 */
 	error = bus_mem_add_mapping(t, bpa, size, flags, bshp);
 	if (error != 0) {
-		if (extent_free(iomem_ex, bpa, size,
-		    EX_NOWAIT | iomem_malloc_safe) != 0) {
-			printf("%s: pa 0x%lx, size 0x%lx\n",
-			    __func__, bpa, size);
-			printf("%s: can't free region\n", __func__);
-		}
+		vmem_xfree(iomem_arena, bpa, size);
 	}
 
 	*bpap = bpa;
@@ -341,11 +348,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	/*
 	 * Mark as free in the extent map.
 	 */
-	if (extent_free(iomem_ex, bpa, size, EX_NOWAIT | iomem_malloc_safe)
-	    != 0) {
-		printf("%s: pa 0x%lx, size 0x%lx\n", __func__, bpa, size);
-		printf("%s: can't free region\n", __func__);
-	}
+	vmem_xfree(iomem_arena, bpa, size);
 }
 
 /*

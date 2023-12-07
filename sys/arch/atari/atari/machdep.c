@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.188 2022/07/03 16:03:08 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.189 2023/12/07 16:56:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 2022/07/03 16:03:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 2023/12/07 16:56:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -213,11 +213,6 @@ cpu_startup(void)
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
 	printf("avail memory = %s\n", pbuf);
-
-	/*
-	 * Alloc extent allocation to use malloc
-	 */
-	atari_bus_space_malloc_set_safe();
 }
 
 /*

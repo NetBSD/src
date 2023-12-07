@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.2 2022/07/03 16:03:08 tsutsui Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.3 2023/12/07 16:56:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,10 +62,8 @@
 
 /* machine dependent utility functions */
 void bootm_init(vaddr_t, void *, vsize_t);
-void atari_bus_space_extent_init(paddr_t, paddr_t);
+void atari_bus_space_arena_init(paddr_t, paddr_t);
 int atari_bus_space_alloc_physmem(paddr_t, paddr_t);
-void atari_bus_space_malloc_set_safe(void);
-int atari_bus_space_extent_malloc_flag(void);
 
 /* functions for machine independent bus_space(9) API */
 int	bus_space_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
