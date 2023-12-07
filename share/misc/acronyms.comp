@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.382 2023/12/05 19:28:40 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.383 2023/12/07 16:03:32 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1656,6 +1656,7 @@ SSRF	server-side request forgery
 SSTP 	secure socket tunneling protocol
 STC	software thermal control
 STD	state transition diagram
+STEK	session ticket encryption key
 STM	software transactional memory
 STOMP	Streaming Text Oriented Messaging Protocol
 STP	Spanning Tree Protocol
