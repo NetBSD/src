@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.311 2023/05/22 14:07:37 riastradh Exp $	*/
+/*	$NetBSD: tty.c,v 1.312 2023/12/07 09:00:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.311 2023/05/22 14:07:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.312 2023/12/07 09:00:32 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -102,10 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.311 2023/05/22 14:07:37 riastradh Exp $");
 #include <sys/atomic.h>
 #include <sys/condvar.h>
 #include <sys/pserialize.h>
-
-#ifdef COMPAT_60
-#include <compat/sys/ttycom.h>
-#endif /* COMPAT_60 */
 
 static int	ttnread(struct tty *);
 static void	ttyblock(struct tty *);
