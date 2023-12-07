@@ -1,4 +1,4 @@
-.\"	$NetBSD: stack.7,v 1.5 2023/12/07 17:15:48 riastradh Exp $
+.\"	$NetBSD: stack.7,v 1.6 2023/12/07 17:24:22 riastradh Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -191,14 +191,14 @@ thread's stack region by default, and their stacks cannot be resized
 after creation.
 On architectures where the stack grows down, the layout is:
 .Bd -literal
-+--------------------+ stackaddr
++--------------------+ stack base = stackaddr + stacksize + guardsize
 | stack              |
 | .                  |
 | .                  | <-- stack pointer (varies during execution)
 | .                  |
-+--------------------+ stackaddr - stacksize
++--------------------+ stackaddr
 | guard/redzone      |
-+--------------------+ stackaddr - stacksize - guardsize
++--------------------+ stackaddr - guardsize
 .Ed
 .Pp
 On architectures where the stack grows up, the layout is:
@@ -210,7 +210,7 @@ On architectures where the stack grows up, the layout is:
 | .                  | <-- stack pointer (varies during execution)
 | .                  |
 | stack              |
-+--------------------+ stackaddr
++--------------------+ stack base = stackaddr
 .Ed
 .Pp
 The parameters stackaddr, stacksize, and guardsize can be obtained from
