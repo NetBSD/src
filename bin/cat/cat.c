@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.58 2023/05/19 05:28:54 rillig Exp $	*/
+/* $NetBSD: cat.c,v 1.59 2023/12/07 20:02:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.58 2023/05/19 05:28:54 rillig Exp $");
+__RCSID("$NetBSD: cat.c,v 1.59 2023/12/07 20:02:07 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,10 +66,10 @@ static size_t bsize;
 static int rval;
 static const char *filename;
 
-void cook_args(char *argv[]);
-void cook_buf(FILE *);
-void raw_args(char *argv[]);
-void raw_cat(int);
+static void cook_args(char *argv[]);
+static void cook_buf(FILE *);
+static void raw_args(char *argv[]);
+static void raw_cat(int);
 
 int
 main(int argc, char *argv[])
