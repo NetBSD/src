@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.24 2022/09/18 16:59:35 thorpej Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.25 2023/12/08 21:46:02 andvar Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.24 2022/09/18 16:59:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.25 2023/12/08 21:46:02 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_hvn.h"
@@ -4089,7 +4089,7 @@ hvn_rndis_attach(struct hvn_softc *sc, int mtu)
 
 	if (sc->sc_rndis_agg_align < sizeof(uint32_t)) {
 		/*
-		 * The RNDIS packet messsage encap assumes that the RNDIS
+		 * The RNDIS packet message encap assumes that the RNDIS
 		 * packet message is at least 4 bytes aligned.  Fix up the
 		 * alignment here, if the remote side sets the alignment
 		 * too low.

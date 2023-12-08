@@ -1,5 +1,5 @@
 /*	$KAME: sctp_header.h,v 1.14 2005/03/06 16:04:17 itojun Exp $	*/
-/*	$NetBSD: sctp_header.h,v 1.3 2021/12/05 04:28:53 msaitoh Exp $ */
+/*	$NetBSD: sctp_header.h,v 1.4 2023/12/08 21:46:02 andvar Exp $ */
 
 #ifndef __SCTP_HEADER_H__
 #define __SCTP_HEADER_H__
@@ -259,7 +259,7 @@ struct sctp_heartbeat_chunk {
 #define sctp_heartbeat_ack_chunk	sctp_heartbeat_chunk
 
 
-/* Abort Asssociation (ABORT) */
+/* Abort Association (ABORT) */
 struct sctp_abort_chunk {
 	struct sctp_chunkhdr ch;
 	/* optional error cause may follow */

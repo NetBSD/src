@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtmsg.h,v 1.3 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: fmtmsg.h,v 1.4 2023/12/08 21:46:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #define MM_INFO		4	/* Informative message */
 
 /* `Null' values for message components. */
-#define MM_NULLMC	0L		/* `Null' classsification component */
+#define MM_NULLMC	0L		/* `Null' classification component */
 #define MM_NULLLBL	(char *)0	/* `Null' label component */
 #define MM_NULLSEV	0		/* `Null' severity component */
 #define MM_NULLTXT	(char *)0	/* `Null' text component */

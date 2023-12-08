@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.115 2023/10/09 13:01:58 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.116 2023/12/08 21:46:02 andvar Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2023/10/09 13:01:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2023/12/08 21:46:02 andvar Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -1905,7 +1905,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/*
 	 * Assume the page is cache inhibited and access is guarded unless
 	 * it's in our available memory array.  If it is in the memory array,
-	 * asssume it's in memory coherent memory.
+	 * assume it's in memory coherent memory.
 	 */
 	if (flags & PMAP_MD_PREFETCHABLE) {
 		pte_lo = 0;
@@ -2005,7 +2005,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/*
 	 * Assume the page is cache inhibited and access is guarded unless
 	 * it's in our available memory array.  If it is in the memory array,
-	 * asssume it's in memory coherent memory.
+	 * assume it's in memory coherent memory.
 	 */
 	pte_lo = PTE_IG;
 	if ((flags & PMAP_NOCACHE) == 0) {
