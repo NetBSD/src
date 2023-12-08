@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.117 2023/12/01 06:47:59 thorpej Exp $	*/
+/*	$NetBSD: iommu.c,v 1.118 2023/12/08 17:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.117 2023/12/01 06:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.118 2023/12/08 17:19:11 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1073,7 +1073,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	return (0);
 
 fail:
-	vmem_free(is->is_dvmamap, map->_dm_dvmastart, sgsize);
+	vmem_xfree(is->is_dvmamap, map->_dm_dvmastart, sgsize);
 	map->_dm_dvmastart = 0;
 	map->_dm_dvmasize = 0;
 	return (EFBIG);
