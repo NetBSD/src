@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.12 2012/01/27 18:52:59 para Exp $ 	*/
+/*	$NetBSD: bus_space.c,v 1.13 2023/12/08 01:38:20 thorpej Exp $ 	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,12 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12 2012/01/27 18:52:59 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13 2023/12/08 01:38:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -46,7 +45,7 @@ void
 mipsco_bus_space_init(bus_space_tag_t bst, const char *name, paddr_t paddr, vaddr_t vaddr, bus_addr_t start, bus_size_t size)
 {
 	bst->bs_name = name;
-	bst->bs_extent = NULL;
+	bst->bs_spare = NULL;
 	bst->bs_start = start;
 	bst->bs_size = size;
 	bst->bs_pbase = paddr;
@@ -66,17 +65,6 @@ mipsco_bus_space_init(bus_space_tag_t bst, const char *name, paddr_t paddr, vadd
 }
 
 void
-mipsco_bus_space_init_extent(bus_space_tag_t bst, void *storage, size_t storagesize)
-{
-	bst->bs_extent = extent_create(bst->bs_name,
-	    bst->bs_start, bst->bs_start + bst->bs_size,
-	    storage, storagesize, EX_NOWAIT);
-	if (bst->bs_extent == NULL)
-	    panic("mipsco_bus_space_init_extent: cannot create extent map %s",
-		  bst->bs_name);
-}
-
-void
 mipsco_bus_space_set_aligned_stride(bus_space_tag_t bst, unsigned int shift)
 	/* shift:		 log2(alignment) */
 {
@@ -91,20 +79,6 @@ mipsco_bus_space_set_aligned_stride(bus_space_tag_t bst, unsigned int shift)
 	}
 	bst->bs_offset_4 = 0;
 	bst->bs_offset_8 = 0;
-}
-
-static int malloc_safe = 0;
-
-void
-mipsco_bus_space_malloc_set_safe(void)
-{
-	malloc_safe = EX_MALLOCOK;
-}
-
-int
-mipsco_bus_space_extent_malloc_flag(void)
-{
-	return (malloc_safe);
 }
 
 int
@@ -171,17 +145,9 @@ mipsco_bus_space_paddr(bus_space_tag_t bst, bus_space_handle_t bsh, paddr_t *pap
 int
 mipsco_bus_space_map(bus_space_tag_t bst, bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
-	int err;
 
 	if (addr < bst->bs_start || addr + size > bst->bs_start + bst->bs_size)
 		return (EINVAL);
-
-	if (bst->bs_extent != NULL) {
-		err = extent_alloc_region(bst->bs_extent, addr, size,
-		    EX_NOWAIT | malloc_safe);
-		if (err)
-			return (err);
-	}
 
 	return (bus_space_compose_handle(bst, addr, size, flags, bshp));
 }
@@ -189,20 +155,6 @@ mipsco_bus_space_map(bus_space_tag_t bst, bus_addr_t addr, bus_size_t size, int 
 void
 mipsco_bus_space_unmap(bus_space_tag_t bst, bus_space_handle_t bsh, bus_size_t size)
 {
-	if (bst->bs_extent != NULL) {
-		paddr_t pa;
-		bus_addr_t addr;
-		int err;
-
-		/* bus_space_paddr() becomes unavailable after unmapping */
-		err = bus_space_paddr(bst, bsh, &pa);
-		if (err)
-			panic("mipsco_bus_space_unmap: %s va %p: error %d",
-			    bst->bs_name, (void *)bsh, err);
-		addr = (bus_size_t)(pa - bst->bs_pbase) + bst->bs_start;
-		extent_free(bst->bs_extent, addr, size,
-		    EX_NOWAIT | malloc_safe);
-	}
 	bus_space_dispose_handle(bst, bsh, size);
 }
 
@@ -232,22 +184,6 @@ mipsco_bus_space_mmap(bus_space_tag_t bst, bus_addr_t addr, off_t off, int prot,
 int
 mipsco_bus_space_alloc(bus_space_tag_t bst, bus_addr_t start, bus_addr_t end, bus_size_t size, bus_size_t align, bus_size_t boundary, int flags, bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
-	u_long addr;
-	int err;
 
-	if (bst->bs_extent == NULL)
-		panic("mipsco_bus_space_alloc: extent map %s not available",
-		    bst->bs_name);
-
-	if (start < bst->bs_start ||
-	    start + size > bst->bs_start + bst->bs_size)
-		return (EINVAL);
-
-	err = extent_alloc_subregion(bst->bs_extent, start, end, size,
-	    align, boundary, EX_FAST | EX_NOWAIT | malloc_safe, &addr);
-	if (err)
-		return (err);
-
-	*addrp = addr;
-	return (bus_space_compose_handle(bst, addr, size, flags, bshp));
+	panic("bus_space_alloc() not implemented");
 }
