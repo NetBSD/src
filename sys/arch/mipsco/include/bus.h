@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.24 2023/10/08 22:10:49 andvar Exp $	*/
+/*	$NetBSD: bus.h,v 1.25 2023/12/08 01:38:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ typedef struct mipsco_bus_space *bus_space_tag_t;
 
 struct mipsco_bus_space {
 	const char	*bs_name;
-	struct extent	*bs_extent;
+	void		*bs_spare;	/* (was previously unused extent map) */
 	bus_addr_t	bs_start;
 	bus_size_t	bs_size;
 
@@ -175,18 +175,13 @@ struct mipsco_bus_space {
 #define MIPSCO_BUS_SPACE_UNMAPPED	((vaddr_t)0)
 
 /* machine dependent utility function for bus_space users */
-void	mipsco_bus_space_malloc_set_safe(void);
 void	mipsco_bus_space_init(bus_space_tag_t, const char *,
 	    paddr_t, vaddr_t, bus_addr_t, bus_size_t);
-void	mipsco_bus_space_init_extent(bus_space_tag_t, void *, size_t);
 void	mipsco_bus_space_set_aligned_stride(bus_space_tag_t, unsigned int);
 void	mipsco_sparse_bus_space_init(bus_space_tag_t, const char *,
 	    paddr_t, bus_addr_t, bus_size_t);
 void	mipsco_large_bus_space_init(bus_space_tag_t, const char *,
 	    paddr_t, bus_addr_t, bus_size_t);
-
-/* machine dependent utility function for bus_space implementations */
-int	mipsco_bus_space_extent_malloc_flag(void);
 
 /* these are provided for subclasses which override base bus_space. */
 
