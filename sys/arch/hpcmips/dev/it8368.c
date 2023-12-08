@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.27 2021/08/07 16:18:54 thorpej Exp $ */
+/*	$NetBSD: it8368.c,v 1.28 2023/12/08 22:11:15 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it8368.c,v 1.27 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it8368.c,v 1.28 2023/12/08 22:11:15 andvar Exp $");
 
 #undef WINCE_DEFAULT_SETTING /* for debug */
 #undef IT8368DEBUG 
@@ -577,7 +577,7 @@ it8368_mode(pcmcia_chipset_handle_t pch, int io, int width)
 		DPRINTF(("it8368_mode: I/O space (%dbit) enabled\n",
 		    reg32 & TX39_MEMCONFIG3_PORT8SEL ? 8 : 16));
 	} else {
-		DPRINTF(("it8368_mode: atttribute space enabled\n"));
+		DPRINTF(("it8368_mode: attribute space enabled\n"));
 	}
 #endif /* IT8368DEBUG */
 }

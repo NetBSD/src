@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobusreg.h,v 1.3 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: plumiobusreg.h,v 1.4 2023/12/08 22:11:15 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define PLUM_IOBUS_REGBASE		0x6000
 #define PLUM_IOBUS_REGSIZE		0x1000
 
-/* I/O bus width settting */
+/* I/O bus width setting */
 #define PLUM_IOBUS_IOXBSZ_REG		0x000
 #define PLUM_IOBUS_IOXBSZ_IO5BE5	0x00000020
 #define PLUM_IOBUS_IOXBSZ_IO5BE4	0x00000010
