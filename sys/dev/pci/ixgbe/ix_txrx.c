@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.108 2023/11/16 05:39:08 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.109 2023/12/08 05:39:27 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.108 2023/11/16 05:39:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.109 2023/12/08 05:39:27 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1108,6 +1108,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	union ixgbe_adv_tx_desc *txd;
 	u32			work, processed = 0;
 	u32			limit = sc->tx_process_limit;
+	u16			avail;
 
 	KASSERT(mutex_owned(&txr->tx_mtx));
 
@@ -1151,6 +1152,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	buf = &txr->tx_buffers[work];
 	txd = &txr->tx_base[work];
 	work -= txr->num_desc; /* The distance to ring end */
+	avail = txr->tx_avail;
 	ixgbe_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
 	    BUS_DMASYNC_POSTREAD);
 
@@ -1172,8 +1174,7 @@ ixgbe_txeof(struct tx_ring *txr)
 			buf->m_head = NULL;
 		}
 		buf->eop = NULL;
-		txr->txr_no_space = false;
-		++txr->tx_avail;
+		++avail;
 
 		/* We clean the range if multi segment */
 		while (txd != eop) {
@@ -1198,7 +1199,7 @@ ixgbe_txeof(struct tx_ring *txr)
 				m_freem(buf->m_head);
 				buf->m_head = NULL;
 			}
-			++txr->tx_avail;
+			++avail;
 			buf->eop = NULL;
 
 		}
@@ -1224,6 +1225,10 @@ ixgbe_txeof(struct tx_ring *txr)
 
 	work += txr->num_desc;
 	txr->next_to_clean = work;
+	if (processed) {
+		txr->tx_avail = avail;
+		txr->txr_no_space = false;
+	}
 
 	/*
 	 * Queue Hang detection, we know there's
