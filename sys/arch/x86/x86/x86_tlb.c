@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.20 2022/08/20 23:48:51 riastradh Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.21 2023/12/08 21:46:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008-2020 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.20 2022/08/20 23:48:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.21 2023/12/08 21:46:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.20 2022/08/20 23:48:51 riastradh Exp $
  *
  * On i386 the packet is 64 bytes in size.  On amd64 it's 128 bytes.  This
  * is sized in concert with UBC_WINSIZE, otherwise excessive shootdown
- * interrupts could be isssued.
+ * interrupts could be issued.
  */
 
 #define	TP_MAXVA	16		/* for individual mappings */
