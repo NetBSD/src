@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.23 2022/05/11 14:58:00 andvar Exp $	*/
+/*	$NetBSD: pbr.S,v 1.24 2023/12/08 16:29:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -71,6 +71,10 @@
 #define MBR_AFTERBPB	62		/* BPB size in floppy master BR */
 #endif
 
+#define GPT_MAGIC	0x54504721	/* '!GPT' magic on hybrid MBR boot */
+#define GPT_ENTRY_OFF	20		/* GPT part entry in handover struct */
+#define GPT_ENT_LBA_OFF	32		/* ent_lba_start in struct gpt_ent */
+
 #ifdef TERSE_ERROR
 /*
  * Error codes. Done this way to save space.
@@ -127,7 +131,7 @@ start0:
 	mov	%cx, %sp
 	mov	%cx, %es
 #ifndef BOOT_FROM_FAT
-	cmpl	$0x54504721, %eax	/* did a GPT hybrid MBR start us? */
+	cmpl	$GPT_MAGIC, %eax	/* did a GPT hybrid MBR start us? */
 	je	boot_gpt
 #endif
 	mov	%cx, %ds
@@ -366,8 +370,9 @@ chs_read:
 
 #ifndef BOOT_FROM_FAT
 boot_gpt:
-	movl	(20+32+0)(%si), %ebp
-	movl	(20+32+4)(%si), %edi
+	/* DS:SI has a pointer to the hybrid MBR handover structure */
+	movl	(GPT_ENTRY_OFF+GPT_ENT_LBA_OFF+0)(%si), %ebp
+	movl	(GPT_ENTRY_OFF+GPT_ENT_LBA_OFF+4)(%si), %edi
 	movw	%cx, %ds
 	movl	%ebp, lba_sector + 0
 	movl	%edi, lba_sector + 4
