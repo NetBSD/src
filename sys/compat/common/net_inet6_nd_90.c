@@ -1,6 +1,6 @@
-/*	$NetBSD: net_inet6_nd_90.c,v 1.1 2023/12/09 15:21:01 pgoyette Exp $ */
+/*	$NetBSD: net_inet6_nd_90.c,v 1.2 2023/12/09 20:31:57 oster Exp $ */
 
-/*      $NetBSD: net_inet6_nd_90.c,v 1.1 2023/12/09 15:21:01 pgoyette Exp $        */
+/*      $NetBSD: net_inet6_nd_90.c,v 1.2 2023/12/09 20:31:57 oster Exp $        */
 /*      $KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $   */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_inet6_nd_90.c,v 1.1 2023/12/09 15:21:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_inet6_nd_90.c,v 1.2 2023/12/09 20:31:57 oster Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: net_inet6_nd_90.c,v 1.1 2023/12/09 15:21:01 pgoyette
 #include <sys/compat_stub.h>
 
 #include <compat/common/compat_mod.h>
+
+#ifdef INET6
 
 static struct sysctllog *nd6_clog;
 
@@ -128,3 +130,6 @@ net_inet6_nd_90_fini(void)
 	MODULE_HOOK_UNSET(net_inet6_nd_90_hook);
 	return 0;
 }
+
+#endif /* INET6 */
+

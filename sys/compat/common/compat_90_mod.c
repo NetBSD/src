@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_90_mod.c,v 1.5 2023/12/09 15:21:01 pgoyette Exp $	*/
+/*	$NetBSD: compat_90_mod.c,v 1.6 2023/12/09 20:31:57 oster Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_90_mod.c,v 1.5 2023/12/09 15:21:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_90_mod.c,v 1.6 2023/12/09 20:31:57 oster Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -50,7 +50,9 @@ int
 compat_90_init(void)
 {
 
+#ifdef INET6
 	net_inet6_nd_90_init();
+#endif
 	return vfs_syscalls_90_init();
 }
 
@@ -63,7 +65,9 @@ compat_90_fini(void)
 	if (error != 0)
 		return error;
 
+#ifdef INET6
 	net_inet6_nd_90_fini();
+#endif
 	return error;
 }
 
