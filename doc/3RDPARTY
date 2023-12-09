@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1965 2023/11/28 09:50:10 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.1966 2023/12/09 16:32:20 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -482,7 +482,7 @@ Before importing a new version of external/gpl3/gcc:
 
 Package:	gdb
 Version:	13.2
-Current Vers:	13.2
+Current Vers:	14.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
