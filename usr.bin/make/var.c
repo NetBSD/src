@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1075 2023/11/19 22:50:11 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1076 2023/12/09 00:13:38 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1075 2023/11/19 22:50:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1076 2023/12/09 00:13:38 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -994,25 +994,26 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 	 * Any variables given on the command line are automatically exported
 	 * to the environment (as per POSIX standard), except for internals.
 	 */
-	if (scope == SCOPE_CMDLINE && !(flags & VAR_SET_NO_EXPORT) &&
-	    name[0] != '.') {
+	if (scope == SCOPE_CMDLINE) {
 		v->fromCmd = true;
+		if (!(flags & VAR_SET_NO_EXPORT) && name[0] != '.') {
 
-		/*
-		 * If requested, don't export these in the environment
-		 * individually.  We still put them in .MAKEOVERRIDES so
-		 * that the command-line settings continue to override
-		 * Makefile settings.
-		 */
-		if (!opts.varNoExportEnv)
-			setenv(name, val, 1);
-		/* XXX: What about .MAKE.EXPORTED? */
-		/*
-		 * XXX: Why not just mark the variable for needing export, as
-		 * in ExportVarPlain?
-		 */
-
-		Global_Append(".MAKEOVERRIDES", name);
+			/*
+			 * If requested, don't export these in the
+			 * environment individually.  We still put
+			 * them in .MAKEOVERRIDES so that the
+			 * command-line settings continue to override 
+			 * Makefile settings.
+			 */
+			if (!opts.varNoExportEnv)
+				setenv(name, val, 1);
+			/* XXX: What about .MAKE.EXPORTED? */
+			/*
+			 * XXX: Why not just mark the variable for
+			 * needing export, as in ExportVarPlain?
+			 */
+			Global_Append(".MAKEOVERRIDES", name);
+		}
 	}
 
 	if (name[0] == '.' && strcmp(name, MAKE_SAVE_DOLLARS) == 0)
