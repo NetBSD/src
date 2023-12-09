@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.210 2023/11/29 18:54:37 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.211 2023/12/09 13:39:36 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4100,6 +4100,7 @@ external/gpl3/binutils/dist/gas/config/tc-mips.c 1.25
 
 sys/kern/exec_subr.c				1.86,1.87
 tests/lib/libc/sys/t_setrlimit.c		1.8,1.9
+tests/lib/libc/sys/Makefile			1.75
 
 	PR 57711: fix setrlimit(RLIMIT_STACK) in current process.
 	[riastradh, ticket #1920]
@@ -4113,4 +4114,20 @@ etc/namedb/root.cache				1.24-1.26
 
 	Update root name servers to 2023112702 (November 27, 2023).
 	[taca, ticket #1922]
+
+lib/libc/gen/vis.c				1.75-1.86
+tests/lib/libc/gen/t_vis.c			1.10-1.14
+
+	vis(3): PR 57573: fix buffer overruns in edge cases.
+	PR 56260: fix out-of-bounds stack read.
+	[riastradh, ticket #1923]
+
+distrib/sets/lists/debug/mi			1.424
+distrib/sets/lists/tests/mi			1.1297 (patch)
+lib/libpthread/pthread.c			1.184
+tests/lib/libpthread/Makefile			1.16
+tests/lib/libpthread/t_stack.c			1.1-1.6
+
+	pthread: PR 57721: fix user-allocated stack addressing.
+	[riastradh, ticket #1924]
 
