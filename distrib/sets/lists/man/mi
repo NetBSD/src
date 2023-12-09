@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1757.2.5 2023/10/08 13:19:33 martin Exp $
+# $NetBSD: mi,v 1.1757.2.6 2023/12/09 13:13:48 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2539,6 +2539,7 @@
 ./usr/share/man/cat7/setuid.0			man-reference-catman	.cat
 ./usr/share/man/cat7/signal.0			man-reference-catman	.cat
 ./usr/share/man/cat7/src.0			man-reference-catman	.cat
+./usr/share/man/cat7/stack.0			man-reference-catman	.cat
 ./usr/share/man/cat7/sticky.0			man-reference-catman	.cat
 ./usr/share/man/cat7/symlink.0			man-reference-catman	.cat
 ./usr/share/man/cat7/sysctl.0			man-reference-catman	.cat
@@ -5828,6 +5829,7 @@
 ./usr/share/man/html7/setuid.html		man-reference-htmlman	html
 ./usr/share/man/html7/signal.html		man-reference-htmlman	html
 ./usr/share/man/html7/src.html			man-reference-htmlman	html
+./usr/share/man/html7/stack.html		man-reference-htmlman	html
 ./usr/share/man/html7/sticky.html		man-reference-htmlman	html
 ./usr/share/man/html7/symlink.html		man-reference-htmlman	html
 ./usr/share/man/html7/sysctl.html		man-reference-htmlman	html
@@ -9094,6 +9096,7 @@
 ./usr/share/man/man7/setuid.7			man-reference-man	.man
 ./usr/share/man/man7/signal.7			man-reference-man	.man
 ./usr/share/man/man7/src.7			man-reference-man	.man
+./usr/share/man/man7/stack.7			man-reference-man	.man
 ./usr/share/man/man7/sticky.7			man-reference-man	.man
 ./usr/share/man/man7/symlink.7			man-reference-man	.man
 ./usr/share/man/man7/sysctl.7			man-reference-man	.man
