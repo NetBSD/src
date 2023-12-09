@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vis.c,v 1.9 2017/01/10 15:16:57 christos Exp $	*/
+/*	$NetBSD: t_vis.c,v 1.9.24.1 2023/12/09 13:03:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -116,6 +116,23 @@ ATF_TC_BODY(strvis_empty, tc)
 	ATF_REQUIRE(dst[0] == '\0' && dst[1] == 'a');
 }
 
+ATF_TC(strnvis_empty_empty);
+ATF_TC_HEAD(strnvis_empty_empty, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test strnvis(3) with empty source and destination");
+}
+
+ATF_TC_BODY(strnvis_empty_empty, tc)
+{
+	char dst[] = "fail";
+	int n;
+
+	n = strnvis(dst, 0, "", VIS_SAFE);
+	ATF_CHECK(memcmp(dst, "fail", sizeof(dst)) == 0);
+	ATF_CHECK_EQ_MSG(n, -1, "n=%d", n);
+}
+
 ATF_TC(strunvis_hex);
 ATF_TC_HEAD(strunvis_hex, tc)
 {
@@ -175,16 +192,95 @@ ATF_TC_BODY(strvis_locale, tc)
 }
 #endif /* VIS_NOLOCALE */
 
+#define	STRVIS_OVERFLOW_MARKER	((char)0xff)	/* Arbitrary */
+
+#ifdef VIS_NOLOCALE
+ATF_TC(strvis_overflow_mb);
+ATF_TC_HEAD(strvis_overflow_mb, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test strvis(3) multi-byte overflow");
+}
+
+ATF_TC_BODY(strvis_overflow_mb, tc)
+{
+	const char src[] = "\xf0\x9f\xa5\x91";
+	/* Extra byte to detect overflow */
+	char dst[sizeof(src) + 1];
+	unsigned i;
+	int n;
+
+	setlocale(LC_CTYPE, "en_US.UTF-8");
+
+	for (i = 0; i < sizeof(dst) - 1; i++) {
+		memset(dst, STRVIS_OVERFLOW_MARKER, sizeof(dst));
+		n = strnvis(dst, i, src, VIS_SAFE);
+		ATF_CHECK_EQ_MSG(dst[i], STRVIS_OVERFLOW_MARKER,
+		    "[%u] dst=[%02hhx %02hhx %02hhx %02hhx %02hhx]"
+		    " STRVIS_OVERFLOW_MARKER=%02hhx",
+		    i, dst[0], dst[1], dst[2], dst[3], dst[4],
+		    STRVIS_OVERFLOW_MARKER);
+		ATF_CHECK_EQ_MSG(n, -1, "[%u] n=%d", i, n);
+	}
+
+	memset(dst, STRVIS_OVERFLOW_MARKER, sizeof(dst));
+	n = strnvis(dst, sizeof(dst) - 1, src, VIS_SAFE);
+	ATF_CHECK_EQ_MSG(dst[sizeof(dst) - 1], STRVIS_OVERFLOW_MARKER,
+	    "[%u] dst=[%02hhx %02hhx %02hhx %02hhx %02hhx %02hhx]"
+	    " STRVIS_OVERFLOW_MARKER=%02hhx",
+	    i, dst[0], dst[1], dst[2], dst[3], dst[4], dst[5],
+	    STRVIS_OVERFLOW_MARKER);
+	ATF_CHECK_EQ_MSG(n, (int)sizeof(dst) - 2, "n=%d", n);
+}
+#endif
+
+ATF_TC(strvis_overflow_c);
+ATF_TC_HEAD(strvis_overflow_c, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test strvis(3) C locale overflow");
+}
+
+ATF_TC_BODY(strvis_overflow_c, tc)
+{
+	const char src[] = "AAAA";
+	/* Extra byte to detect overflow */
+	char dst[sizeof(src) + 1];
+	unsigned i;
+	int n;
+
+	for (i = 0; i < sizeof(dst) - 1; i++) {
+		memset(dst, STRVIS_OVERFLOW_MARKER, sizeof(dst));
+		n = strnvis(dst, i, src, VIS_SAFE | VIS_NOLOCALE);
+		ATF_CHECK_EQ_MSG(dst[i], STRVIS_OVERFLOW_MARKER,
+		    "[%u] dst=[%02hhx %02hhx %02hhx %02hhx %02hhx]"
+		    " STRVIS_OVERFLOW_MARKER=%02hhx",
+		    i, dst[0], dst[1], dst[2], dst[3], dst[4],
+		    STRVIS_OVERFLOW_MARKER);
+		ATF_CHECK_EQ_MSG(n, -1, "[%u] n=%d", i, n);
+	}
+
+	memset(dst, STRVIS_OVERFLOW_MARKER, sizeof(dst));
+	n = strnvis(dst, sizeof(dst) - 1, src, VIS_SAFE | VIS_NOLOCALE);
+	ATF_CHECK_EQ_MSG(dst[sizeof(dst) - 1], STRVIS_OVERFLOW_MARKER,
+	    "[%u] dst=[%02hhx %02hhx %02hhx %02hhx %02hhx %02hhx]"
+	    " STRVIS_OVERFLOW_MARKER=%02hhx",
+	    i, dst[0], dst[1], dst[2], dst[3], dst[4], dst[5],
+	    STRVIS_OVERFLOW_MARKER);
+	ATF_CHECK_EQ_MSG(n, (int)sizeof(dst) - 2, "n=%d", n);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, strvis_basic);
 	ATF_TP_ADD_TC(tp, strvis_null);
 	ATF_TP_ADD_TC(tp, strvis_empty);
+	ATF_TP_ADD_TC(tp, strnvis_empty_empty);
 	ATF_TP_ADD_TC(tp, strunvis_hex);
 #ifdef VIS_NOLOCALE
 	ATF_TP_ADD_TC(tp, strvis_locale);
+	ATF_TP_ADD_TC(tp, strvis_overflow_mb);
 #endif /* VIS_NOLOCALE */
+	ATF_TP_ADD_TC(tp, strvis_overflow_c);
 
 	return atf_no_error();
 }
