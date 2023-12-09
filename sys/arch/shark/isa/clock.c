@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 2022/04/07 19:33:37 andvar Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 2023/12/09 00:02:10 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2022/04/07 19:33:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 2023/12/09 00:02:10 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,14 +252,14 @@ unsigned fiqReason = 0;
 unsigned hatCount = 0;
 unsigned hatCount2 = 0;
 
-void hatTest(int testReason)
+static void hatTest(int testReason)
 {
 
 	fiqReason |= testReason;
 	nHats++;
 }
 
-void hatWedge(int nFIQs)
+static void hatWedge(int nFIQs)
 {
 
 	printf("Unwedging the HAT.  fiqs_happened = %d\n", nFIQs);
