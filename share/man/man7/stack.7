@@ -1,0 +1,282 @@
+.\"	$NetBSD: stack.7,v 1.6.2.2 2023/12/09 13:13:49 martin Exp $
+.\"
+.\" Copyright (c) 2023 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 23, 2023
+.Dt STACK 7
+.Os
+.Sh NAME
+.Nm stack
+.Nd layout of program execution stack memory
+.Sh DESCRIPTION
+When executing a program, with the
+.Xr execve 2
+or
+.Xr posix_spawn 3
+families of system calls,
+.Nx
+reserves a region in the new program image's virtual address space for
+the
+.Em stack ,
+which stores return addresses and local variables for nested procedure
+calls in program execution.
+Similarly, threads created with
+.Xr pthread_create 3
+have regions allocated for per-thread stacks.
+.Pp
+The stack grows from the
+.Em base ,
+where information of the outermost procedure call is stored, fixed at
+program start, to the
+.Em stack pointer ,
+a
+.Tn CPU
+register that points to information used by the current procedure call,
+varying during execution as procedures are called.
+.Pp
+On most architectures, the stack base is at higher-numbered virtual
+addresses and the stack pointer is at lower-numbered virtual addresses
+\(em on these architectures,
+.Em the stack grows down .
+On some other architectures, notably
+.Tn HP PA-RISC
+.Pq Sq hppa ,
+the stack base is at lower-numbered virtual addresses and the stack
+pointer is at higher-numbered virtual addresses, so on those
+architectures
+.Em the stack grows up .
+.Pp
+In the kernel, the C preprocessor macro
+.Dv __HAVE_MACHINE_STACK_GROWS_UP
+is defined in
+.In machine/types.h
+on architectures where the stack grows up.
+.Ss Main thread
+For single-threaded programs, and for the main thread of multi-threaded
+programs,
+.Nx
+reserves virtual addresses as follows on architectures where the stack
+grows down:
+.Bd -literal
++--------------------+ USRSTACK
+| stack gap          |
++--------------------+ stack base
+| accessible pages   |
+| .                  |
+| .                  | <-- stack pointer (varies during execution)
+| .                  |
++--------------------+ (stack base) - (soft stack rlimit)
+| inaccessible pages |
++--------------------+ (stack base) - (hard stack rlimit)
+| guard/redzone      |
++--------------------+ USRSTACK - MAXSSIZ
+.Ed
+.Pp
+On architectures where the stack grows up, the layout is:
+.Bd -literal
++--------------------+ USRSTACK + MAXSSIZ
+| guard/redzone      |
++--------------------+ (stack base) + (hard stack rlimit)
+| inaccessible pages |
++--------------------+ (stack base) + (soft stack rlimit)
+| .                  |
+| .                  | <-- stack pointer (varies during execution)
+| .                  |
+| accessible pages   |
++--------------------+ stack base
+| stack gap          |
++--------------------+ USRSTACK
+.Ed
+.Bl -bullet
+.It
+The
+.Em stack guard
+is allocated so that any access \(em read, write, or execute \(em will
+deliver
+.Dv SIGSEGV
+to the process.
+This serves to detect stack overflow and crash rather than silently
+overwrite other memory in the program's virtual address space.
+The size of the stack guard is tuned by the
+.Li vm.guard_size
+.Xr sysctl 7
+knob.
+.Pp
+The stack guard is also sometimes known as the
+.Sq redzone
+or
+.Sq red zone ,
+although the term
+.Sq red zone
+is also sometimes used to mean a fixed space
+.Em above
+the stack pointer (in the direction of stack growth) that the system
+guarantees it will not overwrite when calling a signal handler in the
+.Tn ABI
+of some architectures; see also
+.Xr sigaltstack 2
+to specify an alternate stack base for the kernel to use when invoking
+signal handlers on signal delivery.
+.It
+The
+.Em inaccessible pages
+of the stack region are allocated so that any access will also deliver
+.Dv SIGSEGV
+to the process, but they can be made accessible by changing the soft
+stack rlimit with
+.Xr setrlimit 2 .
+.It
+The
+.Em accessible pages
+of the stack region are allocated with read/write access permitted, and
+are used to store the actual data in the program stack.
+.It
+When
+.Tn PaX ASLR ,
+address space layout randomization, is enabled, the
+.Em stack gap
+is an
+.Em unallocated
+space of a size chosen unpredictably at random at program startup time.
+When
+.Tn PaX ASLR
+is disabled, the stack gap is empty.
+.El
+.Pp
+All of the boundaries \(em
+.Dv USRSTACK ,
+the stack base, and the boundaries between the accessible,
+inaccessible, and guard pages \(em are page-aligned, or rounded to be
+page-aligned even if the rlimits are not themselves page-aligned,
+rounding so that the sizes of the regions do not exceed the rlimits.
+.Pp
+The stack base is exposed to programs via the
+.Dv AT_STACKBASE
+.Xr elf 5
+auxiliary info vector entry.
+.Pp
+The per-architecture constants
+.Dv USRSTACK
+and
+.Dv MAXSSIZ
+are defined in
+.In machine/vmparam.h .
+.Ss Non-main threads
+Threads created with
+.Xr pthread_create 3
+have stacks allocated at dynamically chosen addresses outside the main
+thread's stack region by default, and their stacks cannot be resized
+after creation.
+On architectures where the stack grows down, the layout is:
+.Bd -literal
++--------------------+ stack base = stackaddr + stacksize + guardsize
+| stack              |
+| .                  |
+| .                  | <-- stack pointer (varies during execution)
+| .                  |
++--------------------+ stackaddr
+| guard/redzone      |
++--------------------+ stackaddr - guardsize
+.Ed
+.Pp
+On architectures where the stack grows up, the layout is:
+.Bd -literal
++--------------------+ stackaddr + stacksize + guardsize
+| guard/redzone      |
++--------------------+ stackaddr + stacksize
+| .                  |
+| .                  | <-- stack pointer (varies during execution)
+| .                  |
+| stack              |
++--------------------+ stack base = stackaddr
+.Ed
+.Pp
+The parameters stackaddr, stacksize, and guardsize can be obtained from
+an existing thread using
+.Xr pthread_getattr_np 3 ,
+.Xr pthread_attr_getguardsize 3 ,
+and the
+.Xr pthread_attr_getstack 3
+family of functions.
+.Pp
+When creating a thread, the stack can be manually allocated and the
+parameters can be set using
+.Xr pthread_attr_setguardsize 3
+and the
+.Xr pthread_attr_setstack 3
+family of functions.
+However, the stack parameters cannot be changed after thread creation.
+The default guard size is tuned by the
+.Li vm.thread_guard_size
+.Xr sysctl 7
+knob.
+.Pp
+For the main thread,
+.Xr pthread_getattr_np 3
+returns a
+.Em snapshot
+of the parameters as they existed at program startup, so that stackaddr
+and stacksize reflect the current accessible pages of the stack, and
+guardsize is the value of the
+.Li vm.guard_size
+.Xr sysctl 7
+knob at the time of program startup.
+.Po
+Note that this means the
+.Xr pthread 3
+view of the main thread's stack guard may not coincide with the actual
+stack guard \(em it may overlap with, or lie entirely in, the
+inaccessible pages of the stack reserved on program start.
+.Pc
+However, if the program changes its soft stack rlimit with
+.Xr setrlimit 2 ,
+this snapshot may become stale.
+.Sh SEE ALSO
+.Xr execve 2 ,
+.Xr mmap 2 ,
+.Xr mprotect 2 ,
+.Xr sigaltstack 2 ,
+.Xr ucontext 2 ,
+.Xr posix_spawn 3 ,
+.Xr pthread 3 ,
+.Xr security 7 ,
+.Xr sysctl 7 ,
+.Xr paxctl 8
+.Sh BUGS
+.Tn PaX ASLR
+doesn't actually guarantee an accessible stack reservation of length
+equal to the soft stack rlimit \(em owing to a bug (XXX which PR
+number?),
+.Nx
+may sometimes reserve less space than the soft rlimit, in which case
+the accessible pages of the stack cannot be extended.
+.Pp
+There is a race between the kernel's access of
+.Li vm.guard_size
+at exec time, and userland's access of
+.Li vm.guard_size
+in
+.Xr pthread 3
+initialization.
