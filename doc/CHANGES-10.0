@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-10.0,v 1.1.2.166 2023/11/29 12:36:24 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.167 2023/12/09 13:15:20 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14204,6 +14204,7 @@ sys/net/lagg/if_lagg_lacp.c			1.26,1.27
 
 sys/kern/exec_subr.c				1.86,1.87
 tests/lib/libc/sys/t_setrlimit.c		1.8,1.9
+tests/lib/libc/sys/Makefile			1.75
 
 	PR 57711: fix setrlimit(RLIMIT_STACK) in current process.
 	[riastradh, ticket #477]
@@ -14244,4 +14245,22 @@ sys/dev/pci/pci_resource.c			1.4
 
 	pci: Improve resource allocation for non-prefetchable BARs.
 	[jmcneill, ticket #483]
+
+sys/arch/mips/mips/lock_stubs_llsc.S		1.18
+
+	mips: fix compilation for some MP kernels (not build by default).
+	[andvar, ticket #484]
+
+lib/libc/gen/vis.c				1.76-1.86
+tests/lib/libc/gen/t_vis.c			1.10-1.14
+
+	vis(3): PR 57573: fix buffer overruns in edge cases.
+	[riastradh, ticket #485]
+
+distrib/sets/lists/man/mi			1.1767
+share/man/man7/Makefile				1.38,1.39
+share/man/man7/stack.7				1.1-1.6
+
+	stack(7): New man page to help with PR 57708 and related inquiries.
+	[riastradh, ticket #486]
 
