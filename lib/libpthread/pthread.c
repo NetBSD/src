@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.147.8.3 2017/08/31 08:32:39 bouyer Exp $	*/
+/*	$NetBSD: pthread.c,v 1.147.8.4 2023/12/09 13:36:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.147.8.3 2017/08/31 08:32:39 bouyer Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.147.8.4 2023/12/09 13:36:03 martin Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -350,7 +350,10 @@ pthread__getstack(pthread_t newthread, const pthread_attr_t *attr)
 
 	if (attr != NULL) {
 		pthread_attr_getstack(attr, &stackbase, &stacksize);
-		pthread_attr_getguardsize(attr, &guardsize);
+		if (stackbase == NULL)
+			pthread_attr_getguardsize(attr, &guardsize);
+		else
+			guardsize = 0;
 	} else {
 		stackbase = NULL;
 		stacksize = 0;
