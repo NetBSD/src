@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.5 2023/12/07 17:28:36 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.6 2023/12/09 19:42:41 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -33,7 +33,7 @@ dnl 	$NetBSD: elfconstants.m4,v 1.5 2023/12/07 17:28:36 jkoshy Exp $
 # - The "Linkers and Libraries Guide", from Sun Microsystems.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`$Id: elfconstants.m4,v 1.5 2023/12/07 17:28:36 jkoshy Exp $')
+	`$Id: elfconstants.m4,v 1.6 2023/12/09 19:42:41 jkoshy Exp $')
 
 # In the following definitions, `_' is an M4 macro that is meant to be
 # expanded later.  Its intended usage is:
@@ -188,205 +188,205 @@ _(`DT_PREINIT_ARRAYSZ',  33,
 	`size of pre-initialization array')
 _(`DT_MAXPOSTAGS',       34,
 	`the number of positive tags')
-_(`DT_LOOS',             0x6000000DUL,
+_(`DT_LOOS',             0x6000000D,
 	`start of OS-specific types')
-_(`DT_SUNW_AUXILIARY',   0x6000000DUL,
+_(`DT_SUNW_AUXILIARY',   0x6000000D,
 	`offset of string naming auxiliary filtees')
-_(`DT_SUNW_RTLDINF',     0x6000000EUL,
+_(`DT_SUNW_RTLDINF',     0x6000000E,
 	`rtld internal use')
-_(`DT_SUNW_FILTER',      0x6000000FUL,
+_(`DT_SUNW_FILTER',      0x6000000F,
 	`offset of string naming standard filtees')
-_(`DT_SUNW_CAP',         0x60000010UL,
+_(`DT_SUNW_CAP',         0x60000010,
 	`address of hardware capabilities section')
-_(`DT_SUNW_ASLR',        0x60000023UL,
+_(`DT_SUNW_ASLR',        0x60000023,
 	`Address Space Layout Randomization flag')
-_(`DT_HIOS',             0x6FFFF000UL,
+_(`DT_HIOS',             0x6FFFF000,
 	`end of OS-specific types')
-_(`DT_VALRNGLO',         0x6FFFFD00UL,
+_(`DT_VALRNGLO',         0x6FFFFD00,
 	`start of range using the d_val field')
-_(`DT_GNU_PRELINKED',    0x6FFFFDF5UL,
+_(`DT_GNU_PRELINKED',    0x6FFFFDF5,
 	`prelinking timestamp')
-_(`DT_GNU_CONFLICTSZ',   0x6FFFFDF6UL,
+_(`DT_GNU_CONFLICTSZ',   0x6FFFFDF6,
 	`size of conflict section')
-_(`DT_GNU_LIBLISTSZ',    0x6FFFFDF7UL,
+_(`DT_GNU_LIBLISTSZ',    0x6FFFFDF7,
 	`size of library list')
-_(`DT_CHECKSUM',         0x6FFFFDF8UL,
+_(`DT_CHECKSUM',         0x6FFFFDF8,
 	`checksum for the object')
-_(`DT_PLTPADSZ',         0x6FFFFDF9UL,
+_(`DT_PLTPADSZ',         0x6FFFFDF9,
 	`size of PLT padding')
-_(`DT_MOVEENT',          0x6FFFFDFAUL,
+_(`DT_MOVEENT',          0x6FFFFDFA,
 	`size of DT_MOVETAB entries')
-_(`DT_MOVESZ',           0x6FFFFDFBUL,
+_(`DT_MOVESZ',           0x6FFFFDFB,
 	`total size of the MOVETAB table')
-_(`DT_FEATURE',          0x6FFFFDFCUL,
+_(`DT_FEATURE',          0x6FFFFDFC,
 	`feature values')
-_(`DT_POSFLAG_1',        0x6FFFFDFDUL,
+_(`DT_POSFLAG_1',        0x6FFFFDFD,
 	`dynamic position flags')
-_(`DT_SYMINSZ',          0x6FFFFDFEUL,
+_(`DT_SYMINSZ',          0x6FFFFDFE,
 	`size of the DT_SYMINFO table')
-_(`DT_SYMINENT',         0x6FFFFDFFUL,
+_(`DT_SYMINENT',         0x6FFFFDFF,
 	`size of a DT_SYMINFO entry')
-_(`DT_VALRNGHI',         0x6FFFFDFFUL,
+_(`DT_VALRNGHI',         0x6FFFFDFF,
 	`end of range using the d_val field')
-_(`DT_ADDRRNGLO',        0x6FFFFE00UL,
+_(`DT_ADDRRNGLO',        0x6FFFFE00,
 	`start of range using the d_ptr field')
-_(`DT_GNU_HASH',	       0x6FFFFEF5UL,
+_(`DT_GNU_HASH',	       0x6FFFFEF5,
 	`GNU style hash tables')
-_(`DT_TLSDESC_PLT',      0x6FFFFEF6UL,
+_(`DT_TLSDESC_PLT',      0x6FFFFEF6,
 	`location of PLT entry for TLS descriptor resolver calls')
-_(`DT_TLSDESC_GOT',      0x6FFFFEF7UL,
+_(`DT_TLSDESC_GOT',      0x6FFFFEF7,
 	`location of GOT entry used by TLS descriptor resolver PLT entry')
-_(`DT_GNU_CONFLICT',     0x6FFFFEF8UL,
+_(`DT_GNU_CONFLICT',     0x6FFFFEF8,
 	`address of conflict section')
-_(`DT_GNU_LIBLIST',      0x6FFFFEF9UL,
+_(`DT_GNU_LIBLIST',      0x6FFFFEF9,
 	`address of conflict section')
-_(`DT_CONFIG',           0x6FFFFEFAUL,
+_(`DT_CONFIG',           0x6FFFFEFA,
 	`configuration file')
-_(`DT_DEPAUDIT',         0x6FFFFEFBUL,
+_(`DT_DEPAUDIT',         0x6FFFFEFB,
 	`string defining audit libraries')
-_(`DT_AUDIT',            0x6FFFFEFCUL,
+_(`DT_AUDIT',            0x6FFFFEFC,
 	`string defining audit libraries')
-_(`DT_PLTPAD',           0x6FFFFEFDUL,
+_(`DT_PLTPAD',           0x6FFFFEFD,
 	`PLT padding')
-_(`DT_MOVETAB',          0x6FFFFEFEUL,
+_(`DT_MOVETAB',          0x6FFFFEFE,
 	`address of a move table')
-_(`DT_SYMINFO',          0x6FFFFEFFUL,
+_(`DT_SYMINFO',          0x6FFFFEFF,
 	`address of the symbol information table')
-_(`DT_ADDRRNGHI',        0x6FFFFEFFUL,
+_(`DT_ADDRRNGHI',        0x6FFFFEFF,
 	`end of range using the d_ptr field')
-_(`DT_VERSYM',	       0x6FFFFFF0UL,
+_(`DT_VERSYM',	       0x6FFFFFF0,
 	`address of the version section')
-_(`DT_RELACOUNT',        0x6FFFFFF9UL,
+_(`DT_RELACOUNT',        0x6FFFFFF9,
 	`count of RELA relocations')
-_(`DT_RELCOUNT',         0x6FFFFFFAUL,
+_(`DT_RELCOUNT',         0x6FFFFFFA,
 	`count of REL relocations')
-_(`DT_FLAGS_1',          0x6FFFFFFBUL,
+_(`DT_FLAGS_1',          0x6FFFFFFB,
 	`flag values')
-_(`DT_VERDEF',	       0x6FFFFFFCUL,
+_(`DT_VERDEF',	       0x6FFFFFFC,
 	`address of the version definition segment')
-_(`DT_VERDEFNUM',	       0x6FFFFFFDUL,
+_(`DT_VERDEFNUM',	       0x6FFFFFFD,
 	`the number of version definition entries')
-_(`DT_VERNEED',	       0x6FFFFFFEUL,
+_(`DT_VERNEED',	       0x6FFFFFFE,
 	`address of section with needed versions')
-_(`DT_VERNEEDNUM',       0x6FFFFFFFUL,
+_(`DT_VERNEEDNUM',       0x6FFFFFFF,
 	`the number of version needed entries')
-_(`DT_LOPROC',           0x70000000UL,
+_(`DT_LOPROC',           0x70000000,
 	`start of processor-specific types')
-_(`DT_ARM_SYMTABSZ',     0x70000001UL,
+_(`DT_ARM_SYMTABSZ',     0x70000001,
 	`number of entries in the dynamic symbol table')
-_(`DT_SPARC_REGISTER',   0x70000001UL,
+_(`DT_SPARC_REGISTER',   0x70000001,
 	`index of an STT_SPARC_REGISTER symbol')
-_(`DT_ARM_PREEMPTMAP',   0x70000002UL,
+_(`DT_ARM_PREEMPTMAP',   0x70000002,
 	`address of the preemption map')
-_(`DT_MIPS_RLD_VERSION', 0x70000001UL,
+_(`DT_MIPS_RLD_VERSION', 0x70000001,
 	`version ID for runtime linker interface')
-_(`DT_MIPS_TIME_STAMP',  0x70000002UL,
+_(`DT_MIPS_TIME_STAMP',  0x70000002,
 	`timestamp')
-_(`DT_MIPS_ICHECKSUM',   0x70000003UL,
+_(`DT_MIPS_ICHECKSUM',   0x70000003,
 	`checksum of all external strings and common sizes')
-_(`DT_MIPS_IVERSION',    0x70000004UL,
+_(`DT_MIPS_IVERSION',    0x70000004,
 	`string table index of a version string')
-_(`DT_MIPS_FLAGS',       0x70000005UL,
+_(`DT_MIPS_FLAGS',       0x70000005,
 	`MIPS-specific flags')
-_(`DT_MIPS_BASE_ADDRESS', 0x70000006UL,
+_(`DT_MIPS_BASE_ADDRESS', 0x70000006,
 	`base address for the executable/DSO')
-_(`DT_MIPS_CONFLICT',    0x70000008UL,
+_(`DT_MIPS_CONFLICT',    0x70000008,
 	`address of .conflict section')
-_(`DT_MIPS_LIBLIST',     0x70000009UL,
+_(`DT_MIPS_LIBLIST',     0x70000009,
 	`address of .liblist section')
-_(`DT_MIPS_LOCAL_GOTNO', 0x7000000AUL,
+_(`DT_MIPS_LOCAL_GOTNO', 0x7000000A,
 	`number of local GOT entries')
-_(`DT_MIPS_CONFLICTNO',  0x7000000BUL,
+_(`DT_MIPS_CONFLICTNO',  0x7000000B,
 	`number of entries in the .conflict section')
-_(`DT_MIPS_LIBLISTNO',   0x70000010UL,
+_(`DT_MIPS_LIBLISTNO',   0x70000010,
 	`number of entries in the .liblist section')
-_(`DT_MIPS_SYMTABNO',    0x70000011UL,
+_(`DT_MIPS_SYMTABNO',    0x70000011,
 	`number of entries in the .dynsym section')
-_(`DT_MIPS_UNREFEXTNO',  0x70000012UL,
+_(`DT_MIPS_UNREFEXTNO',  0x70000012,
 	`index of first external dynamic symbol not referenced locally')
-_(`DT_MIPS_GOTSYM',      0x70000013UL,
+_(`DT_MIPS_GOTSYM',      0x70000013,
 	`index of first dynamic symbol corresponds to a GOT entry')
-_(`DT_MIPS_HIPAGENO',    0x70000014UL,
+_(`DT_MIPS_HIPAGENO',    0x70000014,
 	`number of page table entries in GOT')
-_(`DT_MIPS_RLD_MAP',     0x70000016UL,
+_(`DT_MIPS_RLD_MAP',     0x70000016,
 	`address of runtime linker map')
-_(`DT_MIPS_DELTA_CLASS', 0x70000017UL,
+_(`DT_MIPS_DELTA_CLASS', 0x70000017,
 	`Delta C++ class definition')
-_(`DT_MIPS_DELTA_CLASS_NO', 0x70000018UL,
+_(`DT_MIPS_DELTA_CLASS_NO', 0x70000018,
 	`number of entries in DT_MIPS_DELTA_CLASS')
-_(`DT_MIPS_DELTA_INSTANCE', 0x70000019UL,
+_(`DT_MIPS_DELTA_INSTANCE', 0x70000019,
 	`Delta C++ class instances')
-_(`DT_MIPS_DELTA_INSTANCE_NO', 0x7000001AUL,
+_(`DT_MIPS_DELTA_INSTANCE_NO', 0x7000001A,
 	`number of entries in DT_MIPS_DELTA_INSTANCE')
-_(`DT_MIPS_DELTA_RELOC', 0x7000001BUL,
+_(`DT_MIPS_DELTA_RELOC', 0x7000001B,
 	`Delta relocations')
-_(`DT_MIPS_DELTA_RELOC_NO', 0x7000001CUL,
+_(`DT_MIPS_DELTA_RELOC_NO', 0x7000001C,
 	`number of entries in DT_MIPS_DELTA_RELOC')
-_(`DT_MIPS_DELTA_SYM',   0x7000001DUL,
+_(`DT_MIPS_DELTA_SYM',   0x7000001D,
 	`Delta symbols referred by Delta relocations')
-_(`DT_MIPS_DELTA_SYM_NO', 0x7000001EUL,
+_(`DT_MIPS_DELTA_SYM_NO', 0x7000001E,
 	`number of entries in DT_MIPS_DELTA_SYM')
-_(`DT_MIPS_DELTA_CLASSSYM', 0x70000020UL,
+_(`DT_MIPS_DELTA_CLASSSYM', 0x70000020,
 	`Delta symbols for class declarations')
-_(`DT_MIPS_DELTA_CLASSSYM_NO', 0x70000021UL,
+_(`DT_MIPS_DELTA_CLASSSYM_NO', 0x70000021,
 	`number of entries in DT_MIPS_DELTA_CLASSSYM')
-_(`DT_MIPS_CXX_FLAGS',   0x70000022UL,
+_(`DT_MIPS_CXX_FLAGS',   0x70000022,
 	`C++ flavor flags')
-_(`DT_MIPS_PIXIE_INIT',  0x70000023UL,
+_(`DT_MIPS_PIXIE_INIT',  0x70000023,
 	`address of an initialization routine created by pixie')
-_(`DT_MIPS_SYMBOL_LIB',  0x70000024UL,
+_(`DT_MIPS_SYMBOL_LIB',  0x70000024,
 	`address of .MIPS.symlib section')
-_(`DT_MIPS_LOCALPAGE_GOTIDX', 0x70000025UL,
+_(`DT_MIPS_LOCALPAGE_GOTIDX', 0x70000025,
 	`GOT index of first page table entry for a segment')
-_(`DT_MIPS_LOCAL_GOTIDX', 0x70000026UL,
+_(`DT_MIPS_LOCAL_GOTIDX', 0x70000026,
 	`GOT index of first page table entry for a local symbol')
-_(`DT_MIPS_HIDDEN_GOTIDX', 0x70000027UL,
+_(`DT_MIPS_HIDDEN_GOTIDX', 0x70000027,
 	`GOT index of first page table entry for a hidden symbol')
-_(`DT_MIPS_PROTECTED_GOTIDX', 0x70000028UL,
+_(`DT_MIPS_PROTECTED_GOTIDX', 0x70000028,
 	`GOT index of first page table entry for a protected symbol')
-_(`DT_MIPS_OPTIONS',     0x70000029UL,
+_(`DT_MIPS_OPTIONS',     0x70000029,
 	`address of .MIPS.options section')
-_(`DT_MIPS_INTERFACE',   0x7000002AUL,
+_(`DT_MIPS_INTERFACE',   0x7000002A,
 	`address of .MIPS.interface section')
-_(`DT_MIPS_DYNSTR_ALIGN', 0x7000002BUL,
+_(`DT_MIPS_DYNSTR_ALIGN', 0x7000002B,
 	`???')
-_(`DT_MIPS_INTERFACE_SIZE', 0x7000002CUL,
+_(`DT_MIPS_INTERFACE_SIZE', 0x7000002C,
 	`size of .MIPS.interface section')
-_(`DT_MIPS_RLD_TEXT_RESOLVE_ADDR', 0x7000002DUL,
+_(`DT_MIPS_RLD_TEXT_RESOLVE_ADDR', 0x7000002D,
 	`address of _rld_text_resolve in GOT')
-_(`DT_MIPS_PERF_SUFFIX', 0x7000002EUL,
+_(`DT_MIPS_PERF_SUFFIX', 0x7000002E,
 	`default suffix of DSO to be appended by dlopen')
-_(`DT_MIPS_COMPACT_SIZE', 0x7000002FUL,
+_(`DT_MIPS_COMPACT_SIZE', 0x7000002F,
 	`size of a ucode compact relocation record (o32)')
-_(`DT_MIPS_GP_VALUE',    0x70000030UL,
+_(`DT_MIPS_GP_VALUE',    0x70000030,
 	`GP value of a specified GP relative range')
-_(`DT_MIPS_AUX_DYNAMIC', 0x70000031UL,
+_(`DT_MIPS_AUX_DYNAMIC', 0x70000031,
 	`address of an auxiliary dynamic table')
-_(`DT_MIPS_PLTGOT',      0x70000032UL,
+_(`DT_MIPS_PLTGOT',      0x70000032,
 	`address of the PLTGOT')
-_(`DT_MIPS_RLD_OBJ_UPDATE', 0x70000033UL,
+_(`DT_MIPS_RLD_OBJ_UPDATE', 0x70000033,
 	`object list update callback')
-_(`DT_MIPS_RWPLT',       0x70000034UL,
+_(`DT_MIPS_RWPLT',       0x70000034,
 	`address of a writable PLT')
-_(`DT_PPC_GOT',          0x70000000UL,
+_(`DT_PPC_GOT',          0x70000000,
 	`value of _GLOBAL_OFFSET_TABLE_')
-_(`DT_PPC_TLSOPT',       0x70000001UL,
+_(`DT_PPC_TLSOPT',       0x70000001,
 	`TLS descriptor should be optimized')
-_(`DT_PPC64_GLINK',      0x70000000UL,
+_(`DT_PPC64_GLINK',      0x70000000,
 	`address of .glink section')
-_(`DT_PPC64_OPD',        0x70000001UL,
+_(`DT_PPC64_OPD',        0x70000001,
 	`address of .opd section')
-_(`DT_PPC64_OPDSZ',      0x70000002UL,
+_(`DT_PPC64_OPDSZ',      0x70000002,
 	`size of .opd section')
-_(`DT_PPC64_TLSOPT',     0x70000003UL,
+_(`DT_PPC64_TLSOPT',     0x70000003,
 	`TLS descriptor should be optimized')
-_(`DT_AUXILIARY',        0x7FFFFFFDUL,
+_(`DT_AUXILIARY',        0x7FFFFFFD,
 	`offset of string naming auxiliary filtees')
-_(`DT_USED',             0x7FFFFFFEUL,
+_(`DT_USED',             0x7FFFFFFE,
 	`ignored')
-_(`DT_FILTER',           0x7FFFFFFFUL,
+_(`DT_FILTER',           0x7FFFFFFF,
 	`index of string naming filtees')
-_(`DT_HIPROC',           0x7FFFFFFFUL,
+_(`DT_HIPROC',           0x7FFFFFFF,
 	`end of processor-specific types')
 ')
 
