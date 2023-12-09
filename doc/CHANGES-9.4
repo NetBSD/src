@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.118 2023/11/29 19:02:37 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.119 2023/12/09 13:26:09 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2439,6 +2439,7 @@ sys/kern/uipc_mbuf.c				1.252
 
 sys/kern/exec_subr.c				1.86,1.87
 tests/lib/libc/sys/t_setrlimit.c		1.8,1.9
+tests/lib/libc/sys/Makefile			1.75
 
 	PR 57711: fix setrlimit(RLIMIT_STACK) in current process.
 	[riastradh, ticket #1769]
@@ -2458,4 +2459,25 @@ sys/dev/wscons/wsemul_vt100.c			1.47,1.48
 	wscons: PR 56223: accept bell (^G) as an end of sequence in
 	"string" state.
 	[gutteridge, ticket #1772]
+
+sys/arch/mips/mips/lock_stubs_llsc.S		1.18
+
+	mips: fix compilation for some MP kernels (not build by default).
+	[andvar, ticket #1773]
+
+lib/libc/gen/vis.c				1.75-1.86
+tests/lib/libc/gen/t_vis.c			1.10-1.14
+
+	vis(3): PR 57573: fix buffer overruns in edge cases.
+	PR 56260: fix out-of-bounds stack read.
+	[riastradh, ticket #1774]
+
+distrib/sets/lists/debug/mi			1.424
+distrib/sets/lists/tests/mi			1.1297 (patch)
+lib/libpthread/pthread.c			1.184
+tests/lib/libpthread/Makefile			1.16
+tests/lib/libpthread/t_stack.c			1.1-1.6
+
+	pthread: PR 57721: fix user-allocated stack addressing.
+	[riastradh, ticket #1775]
 
