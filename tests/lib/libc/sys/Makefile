@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.72 2022/08/01 15:48:39 kre Exp $
+# $NetBSD: Makefile,v 1.72.2.1 2023/12/09 12:40:49 martin Exp $
 
 MKMAN=	no
 
@@ -155,5 +155,7 @@ WARNS=			4
 
 CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER} \
 			${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-error=deprecated :}
+
+COPTS.t_setrlimit.c+=	-Wno-error=stack-protector
 
 .include <bsd.test.mk>
