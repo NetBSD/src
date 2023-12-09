@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.26 2023/07/31 17:41:18 christos Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.27 2023/12/09 15:21:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -401,5 +401,10 @@ MODULE_HOOK(uvm_coredump_count_segs_hook, int, (struct proc *));
 struct proc;
 struct trapframe;
 MODULE_HOOK(amd64_oosyscall_hook, int, (struct proc *, struct trapframe *));
+
+/*
+ * Hook for compat_90 to deal with removal of nd6 from the kernel
+ */
+MODULE_HOOK(net_inet6_nd_90_hook, int, (int));
 
 #endif	/* _SYS_COMPAT_STUB_H */

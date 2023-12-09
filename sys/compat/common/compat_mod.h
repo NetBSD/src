@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.9 2023/08/18 19:41:18 christos Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.10 2023/12/09 15:21:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2019 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@ int compat_90_init(void);
 int compat_90_fini(void);
 int vfs_syscalls_90_init(void);
 int vfs_syscalls_90_fini(void);
+int net_inet6_nd_90_init(void);
+int net_inet6_nd_90_fini(void);
 #endif
 
 #ifdef COMPAT_80
