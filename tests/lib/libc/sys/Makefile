@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.49.4.3 2018/03/21 10:08:03 martin Exp $
+# $NetBSD: Makefile,v 1.49.4.4 2023/12/09 12:46:06 martin Exp $
 
 MKMAN=	no
 
@@ -110,5 +110,7 @@ truncate_test.root_owned:
 	dd if=/dev/null bs=1 count=1 of=${.TARGET}
 
 WARNS=			4
+
+COPTS.t_setrlimit.c+=	-Wno-error=stack-protector
 
 .include <bsd.test.mk>
