@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.25 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.26 2023/12/10 20:12:28 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -157,17 +157,17 @@ NUMBER=		no		# not really a number
 # expect+1: no.
 .info ${${STRING} == "literal" && ${NUMBER} >= 10:?yes:no}.
 # expect+3: Comparison with '>=' requires both operands 'no' and '10' to be numeric
-# expect: make: Bad conditional expression 'string == "literal" || no >= 10' in 'string == "literal" || no >= 10?yes:no'
+# expect: make: Bad conditional expression 'string == "literal" || no >= 10' before '?yes:no'
 # expect+1: .
 .info ${${STRING} == "literal" || ${NUMBER} >= 10:?yes:no}.
 
 # The following situation occasionally occurs with MKINET6 or similar
 # variables.
 NUMBER=		# empty, not really a number either
-# expect: make: Bad conditional expression 'string == "literal" &&  >= 10' in 'string == "literal" &&  >= 10?yes:no'
+# expect: make: Bad conditional expression 'string == "literal" &&  >= 10' before '?yes:no'
 # expect+1: .
 .info ${${STRING} == "literal" && ${NUMBER} >= 10:?yes:no}.
-# expect: make: Bad conditional expression 'string == "literal" ||  >= 10' in 'string == "literal" ||  >= 10?yes:no'
+# expect: make: Bad conditional expression 'string == "literal" ||  >= 10' before '?yes:no'
 # expect+1: .
 .info ${${STRING} == "literal" || ${NUMBER} >= 10:?yes:no}.
 
