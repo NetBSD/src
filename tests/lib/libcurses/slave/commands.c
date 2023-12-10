@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.17 2021/12/06 22:45:42 rillig Exp $	*/
+/*	$NetBSD: commands.c,v 1.18 2023/12/10 15:42:29 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -194,7 +194,7 @@ report_message(data_enum_t type, const char *status)
 }
 
 /*
- * Report a string of chtype back to the director via the command pipe.
+ * Report a single chtype back to the director via the command pipe.
  */
 void
 report_byte(chtype c)
