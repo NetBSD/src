@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.26 2021/11/15 21:45:46 blymn Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.27 2023/12/10 18:04:55 rillig Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -86,7 +86,11 @@ dequote(const char *s, size_t *len)
 					    (p[2] - '0');
 					p += 3;
 				} else {
-					*q++ = *p++;
+					errx(2,
+					    "%s:%zu: Invalid escape sequence "
+					    "'\\%c' in string literal; octal "
+					    "numbers must be 3 digits wide",
+					    cur_file, line, *p);
 				}
 				continue;
 			}
