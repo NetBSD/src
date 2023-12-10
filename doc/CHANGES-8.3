@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.211 2023/12/09 13:39:36 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.212 2023/12/10 13:11:59 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4130,4 +4130,9 @@ tests/lib/libpthread/t_stack.c			1.1-1.6
 
 	pthread: PR 57721: fix user-allocated stack addressing.
 	[riastradh, ticket #1924]
+
+lib/libc/net/sethostent.c			1.21
+
+	sethostent(3): fix a couple of (not very likely) memory leaks.
+	[kre, ticket #1925]
 
