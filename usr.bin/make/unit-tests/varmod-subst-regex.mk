@@ -1,4 +1,4 @@
-# $NetBSD: varmod-subst-regex.mk,v 1.8 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: varmod-subst-regex.mk,v 1.9 2023/12/10 14:30:51 rillig Exp $
 #
 # Tests for the :C,from,to, variable modifier.
 
@@ -83,6 +83,31 @@ all: unmatched-subexpression
 .if ${:U"${.newline}":C,.,.,g} != "..."
 .  error
 .endif
+
+
+# Contrary to the ':S' modifier, the ':C' modifier matches on an expression
+# that contains no words at all, but only if the regular expression matches an
+# empty string, for example, when the regular expression is anchored at the
+# beginning or the end.
+.if "<${U:S,^,prefix,}> <${:U:C,^,prefix,}>" != "<> <prefix>"
+.  error
+.endif
+.if "<${U:S,$,suffix,}> <${:U:C,$,suffix,}>" != "<> <suffix>"
+.  error
+.endif
+.if "<${U:S,^$,whole,}> <${:U:C,^$,whole,}>" != "<> <whole>"
+.  error
+.endif
+.if "<${U:S,^,prefix,g}> <${:U:C,^,prefix,g}>" != "<> <prefix>"
+.  error
+.endif
+.if "<${U:S,$,suffix,g}> <${:U:C,$,suffix,g}>" != "<> <suffix>"
+.  error
+.endif
+.if "<${U:S,^$,whole,g}> <${:U:C,^$,whole,g}>" != "<> <whole>"
+.  error
+.endif
+
 
 # Multiple asterisks form an invalid regular expression.  This produces an
 # error message and (as of 2020-08-28) stops parsing in the middle of the

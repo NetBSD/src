@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1076 2023/12/09 00:13:38 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1077 2023/12/10 14:30:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1076 2023/12/09 00:13:38 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1077 2023/12/10 14:30:50 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1002,7 +1002,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 			 * If requested, don't export these in the
 			 * environment individually.  We still put
 			 * them in .MAKEOVERRIDES so that the
-			 * command-line settings continue to override 
+			 * command-line settings continue to override
 			 * Makefile settings.
 			 */
 			if (!opts.varNoExportEnv)
@@ -1629,7 +1629,7 @@ ok:
 	wp += (size_t)m[0].rm_eo;
 	if (args->pflags.subGlobal) {
 		flags |= REG_NOTBOL;
-		if (m[0].rm_so == 0 && m[0].rm_eo == 0) {
+		if (m[0].rm_so == 0 && m[0].rm_eo == 0 && *wp != '\0') {
 			SepBuf_AddBytes(buf, wp, 1);
 			wp++;
 		}
