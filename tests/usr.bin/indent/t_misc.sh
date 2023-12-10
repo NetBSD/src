@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.27 2023/06/05 10:12:21 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.28 2023/12/10 17:45:35 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -88,12 +88,12 @@ verbose_profile_body()
 		profile: -fc1
 	EOF
 
-	# The code in args.c function set_profile suggests that options from
-	# profile files are echoed to stdout during startup. But since the
+	# The code in args.c function load_profile suggests that options from
+	# profile files are echoed to stderr during startup. But since the
 	# command line options are handled after the profile files, a '-v' in
 	# the command line has no effect. That's why '-bacc' is not listed
-	# in stdout, but '-fc1' is. The second round of '-bacc', '-v', '-fc1'
-	# is listed because when running ATF, $HOME equals $PWD.
+	# on stderr, but '-fc1' is. The second round of '-bacc', '-v', '-fc1'
+	# is listed because when running the test via ATF, $HOME equals $PWD.
 
 	atf_check \
 	    -e 'file:stderr.exp' \
@@ -205,15 +205,17 @@ option_P_in_profile_file_body()
 atf_test_case 'option_without_hyphen'
 option_without_hyphen_body()
 {
-	# TODO: Options in profile files should be required to start with
-	#  '-', just like in the command line arguments.
+	# Ensure that options in profile files start with '-', just like
+	# command line options.
 
 	printf ' -i3 xi5 +di0\n' > .indent.pro
 
 	printf '%s\n' 'int var[] = {' '1,' '}' > code.c
 	printf '%s\n' 'int var[] = {' '     1,' '}' > code.exp
 
-	atf_check -o 'file:code.exp' \
+	atf_check \
+	    -s 'exit:1' \
+	    -e "match:/.indent.pro: option \"xi5\" must start with '-'" \
 	    "$indent" < code.c
 }
 
