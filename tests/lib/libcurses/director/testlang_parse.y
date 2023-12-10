@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.53 2021/06/13 11:06:20 rillig Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.54 2023/12/10 15:51:13 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -141,7 +141,7 @@ static void	save_slave_output(bool);
 static void	validate_type(data_enum_t, ct_data_t *, int);
 static void	set_var(data_enum_t, const char *, void *);
 static void	validate_reference(int, void *);
-static char *	numeric_or(char *, char *);
+static char *	numeric_or(const char *, const char *);
 static char *	get_numeric_var(const char *);
 static void	perform_delay(struct timespec *);
 static void	set_cchar(char *, void *);
@@ -517,7 +517,7 @@ get_numeric_var(const char *var)
  * Perform a bitwise OR on two numbers and return the result.
  */
 static char *
-numeric_or(char *n1, char *n2)
+numeric_or(const char *n1, const char *n2)
 {
 	unsigned long i1, i2, result;
 	char *ret;
