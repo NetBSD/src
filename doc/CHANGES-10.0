@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-10.0,v 1.1.2.167 2023/12/09 13:15:20 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.168 2023/12/10 13:09:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14263,4 +14263,24 @@ share/man/man7/stack.7				1.1-1.6
 
 	stack(7): New man page to help with PR 57708 and related inquiries.
 	[riastradh, ticket #486]
+
+sys/compat/common/compat_90_mod.c		1.5,1.6
+sys/compat/common/compat_mod.h			1.10
+sys/compat/common/files.common			1.11
+sys/compat/common/net_inet6_nd_90.c		1.1,1.2
+sys/kern/compat_stub.c				1.23
+sys/modules/compat_90/Makefile			1.2,1.3
+sys/netinet6/icmp6.c				1.255
+sys/netinet6/in6.c				1.290,1.291
+sys/netinet6/nd6.c				1.281
+sys/sys/compat_stub.h				1.27
+
+	Improve module handling for non INET6 enabled configurartions
+	and removal of ND6 handling.
+	[pgoyette, ticket #487]
+
+lib/libc/net/sethostent.c			1.21
+
+	sethostent(3): fix a couple of (not very likely) memory leaks.
+	[kre, ticket #488]
 
