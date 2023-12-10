@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1080 2023/12/10 20:03:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1081 2023/12/10 20:12:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1080 2023/12/10 20:03:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1081 2023/12/10 20:12:28 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3476,8 +3476,8 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 	if (cond_rc == CR_ERROR) {
 		Substring thenExpr = LazyBuf_Get(&thenBuf);
 		Substring elseExpr = LazyBuf_Get(&elseBuf);
-		Error("Bad conditional expression '%s' in '%s?%.*s:%.*s'",
-		    expr->name, expr->name,
+		Error("Bad conditional expression '%s' before '?%.*s:%.*s'",
+		    expr->name,
 		    (int)Substring_Length(thenExpr), thenExpr.start,
 		    (int)Substring_Length(elseExpr), elseExpr.start);
 		LazyBuf_Done(&thenBuf);
