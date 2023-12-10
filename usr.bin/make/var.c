@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1079 2023/12/10 19:56:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1080 2023/12/10 20:03:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1079 2023/12/10 19:56:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1080 2023/12/10 20:03:30 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -917,22 +917,10 @@ Var_UnExport(bool isEnv, const char *arg)
  * See 'scope == SCOPE_CMDLINE' in Var_SetWithFlags.
  */
 static bool
-ExistsInCmdline(const char *name, const char *val)
+ExistsInCmdline(const char *name)
 {
-	Var *v;
-
-	v = VarFind(name, SCOPE_CMDLINE, false);
-	if (v == NULL)
-		return false;
-
-	if (v->fromCmd) {
-		DEBUG3(VAR, "%s: %s = %s ignored!\n",
-		    SCOPE_GLOBAL->name, name, val);
-		return true;
-	}
-
-	VarFreeShortLived(v);
-	return false;
+	Var *v = VarFind(name, SCOPE_CMDLINE, false);
+	return v != NULL && v->fromCmd;
 }
 
 /* Set the variable to the value; the name is not expanded. */
@@ -948,8 +936,11 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		return;
 	}
 
-	if (scope == SCOPE_GLOBAL && ExistsInCmdline(name, val))
+	if (scope == SCOPE_GLOBAL && ExistsInCmdline(name)) {
+		DEBUG3(VAR, "%s: %s = %s ignored!\n",
+		    SCOPE_GLOBAL->name, name, val);
 		return;
+	}
 
 	/*
 	 * Only look for a variable in the given scope since anything set
