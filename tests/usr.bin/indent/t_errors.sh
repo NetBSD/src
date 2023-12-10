@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.37 2023/06/14 19:05:40 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.38 2023/12/10 15:39:25 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -57,8 +57,8 @@ option_bool_trailing_garbage_body()
 	    -bacchus
 }
 
-atf_test_case 'option_int_missing_argument'
-option_int_missing_argument_body()
+atf_test_case 'option_int_wrong_argument'
+option_int_wrong_argument_body()
 {
 	expect_error \
 	    'indent: Command line: argument "x" to option "-ts" must be an integer' \
@@ -468,7 +468,7 @@ atf_init_test_cases()
 {
 	atf_add_test_case 'option_unknown'
 	atf_add_test_case 'option_bool_trailing_garbage'
-	atf_add_test_case 'option_int_missing_argument'
+	atf_add_test_case 'option_int_wrong_argument'
 	atf_add_test_case 'option_profile_not_found'
 	atf_add_test_case 'option_buffer_overflow'
 	atf_add_test_case 'option_typedefs_not_found'
