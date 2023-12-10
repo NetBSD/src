@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.119 2023/12/09 13:26:09 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.120 2023/12/10 13:10:25 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2480,4 +2480,9 @@ tests/lib/libpthread/t_stack.c			1.1-1.6
 
 	pthread: PR 57721: fix user-allocated stack addressing.
 	[riastradh, ticket #1775]
+
+lib/libc/net/sethostent.c			1.21
+
+	sethostent(3): fix a couple of (not very likely) memory leaks.
+	[kre, ticket #1776]
 
