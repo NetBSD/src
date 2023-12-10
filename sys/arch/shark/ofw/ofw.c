@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.68 2018/09/03 16:29:27 riastradh Exp $	*/
+/*	$NetBSD: ofw.c,v 1.69 2023/12/10 23:19:12 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.68 2018/09/03 16:29:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.69 2023/12/10 23:19:12 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -798,7 +798,7 @@ ofw_configmem(void)
 		for (totalcnt = 0, mp = OFphysmem; totalcnt < nOFphysmem;
 		    totalcnt++, mp++) {
 #ifdef	OLDPRINTFS
-			printf("physmem: %x, %x\n", mp->start, mp->size);
+			printf("physmem: %lx, %lx\n", mp->start, mp->size);
 #endif
 			physmem += btoc(mp->size);
 		}
@@ -811,7 +811,7 @@ ofw_configmem(void)
 		for (availcnt = 0, mp = OFphysavail; availcnt < nOFphysavail;
 		    availcnt++, mp++) {
 #ifdef	OLDPRINTFS
-			printf("physavail: %x, %x\n", mp->start, mp->size);
+			printf("physavail: %lx, %lx\n", mp->start, mp->size);
 #endif
 			free_pages += btoc(mp->size);
 		}
@@ -819,7 +819,7 @@ ofw_configmem(void)
 		mp--;
 		physical_freeend = mp->start + mp->size;
 #ifdef	OLDPRINTFS
-		printf("pmap_bootstrap:  physmem = %x, free_pages = %x\n",
+		printf("pmap_bootstrap:  physmem = %lx, free_pages = %x\n",
 		    physmem, free_pages);
 #endif
 
@@ -1533,7 +1533,7 @@ ofw_getphysmeminfo(void)
 
 #ifdef	OLDPRINTFS
 		for (mp = tmp; mp->size; mp++) {
-			printf("%x, %x\n", mp->start, mp->size);
+			printf("%lx, %lx\n", mp->start, mp->size);
 		}
 #endif
 	}
