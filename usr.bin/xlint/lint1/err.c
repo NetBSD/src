@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.220 2023/12/03 18:17:41 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.221 2023/12/10 15:29:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.220 2023/12/03 18:17:41 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.221 2023/12/10 15:29:38 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -714,10 +714,11 @@ static const char *queries[] = {
 	"redundant 'extern' in function declaration of '%s'",	      /* Q13 */
 	"comparison '%s' of 'char' with plain integer %d",	      /* Q14 */
 	"implicit conversion from integer 0 to pointer '%s'",	      /* Q15 */
+	"'%s' was declared 'static', now non-'static'",		      /* Q16 */
 };
 
 bool any_query_enabled;		/* for optimizing non-query scenarios */
-static bool is_query_enabled[sizeof(queries) / sizeof(queries[0])];
+bool is_query_enabled[sizeof(queries) / sizeof(queries[0])];
 
 void
 (query_message)(int query_id, ...)

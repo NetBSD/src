@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.384 2023/12/10 14:59:47 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.385 2023/12/10 15:29:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.384 2023/12/10 14:59:47 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.385 2023/12/10 15:29:38 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1430,6 +1430,12 @@ declarator_name(sym_t *sym)
 		dcs->d_redeclared_symbol = NULL;
 	} else {
 		dcs->d_redeclared_symbol = sym;
+		if (is_query_enabled[16]
+		    && sym->s_scl == STATIC && dcs->d_scl != STATIC) {
+			/* '%s' was declared 'static', now non-'static' */
+			query_message(16, sym->s_name);
+			print_previous_declaration(sym);
+		}
 		sym = pushdown(sym);
 	}
 
