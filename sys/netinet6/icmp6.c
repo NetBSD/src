@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.254 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.254.2.1 2023/12/10 13:06:16 martin Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.254 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.254.2.1 2023/12/10 13:06:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2896,26 +2896,6 @@ icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 	}
 }
 
-#ifdef COMPAT_90
-/*
- * sysctl helper routine for the net.inet6.icmp6.nd6 nodes.  silly?
- */
-static int
-sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
-{
-	(void)&name;
-	(void)&l;
-	(void)&oname;
-
-	if (namelen != 0)
-		return (EINVAL);
-
-	return (nd6_sysctl(rnode->sysctl_num, oldp, oldlenp,
-	    /*XXXUNCONST*/
-	    __UNCONST(newp), newlen));
-}
-#endif
-
 static int
 sysctl_net_inet6_icmp6_stats(SYSCTLFN_ARGS)
 {
@@ -3098,22 +3078,6 @@ sysctl_net_inet6_icmp6_setup(struct sysctllog **clog)
 		       NULL, 0, &nd6_debug, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_DEBUG, CTL_EOL);
-#ifdef COMPAT_90
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "nd6_drlist",
-		       SYSCTL_DESCR("Default router list"),
-		       sysctl_net_inet6_icmp6_nd6, 0, NULL, 0,
-		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
-		       OICMPV6CTL_ND6_DRLIST, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "nd6_prlist",
-		       SYSCTL_DESCR("Prefix list"),
-		       sysctl_net_inet6_icmp6_nd6, 0, NULL, 0,
-		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
-		       OICMPV6CTL_ND6_PRLIST, CTL_EOL);
-#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_BOOL, "reflect_pmtu",
