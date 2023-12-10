@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.120 2023/12/03 18:17:41 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.121 2023/12/10 14:59:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.120 2023/12/03 18:17:41 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.121 2023/12/10 14:59:47 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -376,7 +376,7 @@ run_cpp(const char *name)
 	list_add(&args, name);
 	list_add_ref(&args, NULL);
 
-	/* we reuse the same tmp file for cpp output, so rewind and truncate */
+	/* Rewind after a possible previous run of cpp and lint1. */
 	if (lseek(cpp.outfd, 0, SEEK_SET) != 0) {
 		warn("lseek");
 		terminate(-1);
