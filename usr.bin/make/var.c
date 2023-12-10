@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1081 2023/12/10 20:12:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1082 2023/12/10 20:17:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1081 2023/12/10 20:12:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1082 2023/12/10 20:17:23 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -937,7 +937,9 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 	}
 
 	if (scope == SCOPE_GLOBAL && ExistsInCmdline(name)) {
-		DEBUG3(VAR, "%s: %s = %s ignored!\n",
+		DEBUG3(VAR,
+		    "%s: ignoring '%s' = '%s' "
+		    "due to a command line variable of the same name\n",
 		    SCOPE_GLOBAL->name, name, val);
 		return;
 	}
