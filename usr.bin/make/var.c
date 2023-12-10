@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1077 2023/12/10 14:30:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1078 2023/12/10 18:59:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1077 2023/12/10 14:30:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1078 2023/12/10 18:59:50 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4598,11 +4598,18 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 	}
 
 	/*
-	 * XXX: This assignment creates an alias to the current value of the
+	 * FIXME: This assignment creates an alias to the current value of the
 	 * variable.  This means that as long as the value of the expression
-	 * stays the same, the value of the variable must not change.
-	 * Using the '::=' modifier, it could be possible to trigger exactly
-	 * this situation.
+	 * stays the same, the value of the variable must not change, and the
+	 * variable must not be deleted.  Using the ':@' modifier, it is
+	 * possible (since var.c 1.212 from 2017/02/01) to delete the variable
+	 * while its value is still being used:
+	 *
+	 *	VAR=	value
+	 *	_:=	${VAR:${:U@VAR@loop@}:S,^,prefix,}
+	 *
+	 * The same effect might be achievable using the '::=' or the ':_'
+	 * modifiers.
 	 *
 	 * At the bottom of this function, the resulting value is compared to
 	 * the then-current value of the variable.  This might also invoke
