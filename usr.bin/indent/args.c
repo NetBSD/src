@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.86 2023/12/03 21:44:42 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.87 2023/12/10 17:45:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: args.c,v 1.86 2023/12/03 21:44:42 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.87 2023/12/10 17:45:35 rillig Exp $");
 
 /* Read options from profile files and from the command line. */
 
@@ -293,8 +293,13 @@ load_profile(const char *fname, bool must_exist)
 			buf[n] = '\0';
 			if (opt.verbose)
 				fprintf(stderr, "profile: %s\n", buf);
+			if (buf[0] != '-')
+				errx(1,
+				    "%s: option \"%s\" must start with '-'",
+				    fname, buf);
 			set_option(buf, fname);
-		} else if (ch == EOF)
+		}
+		if (ch == EOF)
 			break;
 	}
 	(void)fclose(f);
