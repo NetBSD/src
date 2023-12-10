@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.19 2023/07/03 15:29:42 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.20 2023/12/10 15:29:38 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -15,7 +15,7 @@
  * 	such as casts between arithmetic types.
  */
 
-/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 -X 351 */
+/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 -X 351 */
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;
@@ -445,6 +445,17 @@ Q15(void)
 
 	/* expect+1: implicit conversion from integer 0 to pointer 'pointer to void' [Q15] */
 	return 0;
+}
+
+/*
+ * Even though C99 6.2.2p4 allows a 'static' declaration followed by a
+ * non-'static' declaration, it may look confusing.
+ */
+static void Q16(void);
+/* expect+2: 'Q16' was declared 'static', now non-'static' [Q16] */
+/* expect+1: warning: static function 'Q16' unused [236] */
+void Q16(void)
+{
 }
 
 /*

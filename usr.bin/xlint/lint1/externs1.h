@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.208 2023/12/03 18:17:41 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.209 2023/12/10 15:29:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -179,6 +179,7 @@ extern bool seen_error;
 extern bool seen_warning;
 extern int sytxerr;
 extern bool any_query_enabled;
+extern bool is_query_enabled[];
 
 void msglist(void);
 void error_at(int, const pos_t *, ...);
