@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.279 2022/09/01 18:32:17 riastradh Exp $	*/
+/*	$NetBSD: nd6.c,v 1.279.4.1 2023/12/10 13:06:16 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279 2022/09/01 18:32:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279.4.1 2023/12/10 13:06:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279 2022/09/01 18:32:17 riastradh Exp $");
 #include <sys/queue.h>
 #include <sys/cprng.h>
 #include <sys/workqueue.h>
+#include <sys/compat_stub.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -77,10 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279 2022/09/01 18:32:17 riastradh Exp $");
 #include <netinet/icmp6.h>
 #include <netinet6/icmp6_private.h>
 
-#ifdef COMPAT_90
 #include <compat/netinet6/in6_var.h>
 #include <compat/netinet6/nd6.h>
-#endif
 
 #define ND6_SLOWTIMER_INTERVAL (60 * 60) /* 1 hour */
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */
@@ -1673,17 +1672,22 @@ nd6_sysctl(
     size_t newlen
 )
 {
+	int error;
 
 	if (newp)
 		return EPERM;
 
 	switch (name) {
-#ifdef COMPAT_90
+
+/* call the nd6 compat_90 hook to validate the nd6-related names */
 	case OICMPV6CTL_ND6_DRLIST: /* FALLTHROUGH */
 	case OICMPV6CTL_ND6_PRLIST:
-		*oldlenp = 0;
-		return 0;
-#endif
+		MODULE_HOOK_CALL(net_inet6_nd_90_hook, (name), ENOPROTOOPT,
+		    error);
+		if (error == 0)
+			*oldlenp = 0;
+		return error;
+
 	case ICMPV6CTL_ND6_MAXQLEN:
 		return 0;
 	default:

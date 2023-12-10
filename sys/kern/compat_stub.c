@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.22 2021/08/09 20:49:10 andvar Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.22.4.1 2023/12/10 13:06:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -286,4 +286,8 @@ struct coredump_elf64_hook_t coredump_elf64_hook;
 struct uvm_coredump_walkmap_hook_t uvm_coredump_walkmap_hook;
 struct uvm_coredump_count_segs_hook_t uvm_coredump_count_segs_hook;
 
+/*
+ * Hooks for interacting with remnants of netinet6/nd6 removal
+ */
+struct net_inet6_nd_90_hook_t net_inet6_nd_90_hook;
 
