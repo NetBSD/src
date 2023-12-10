@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.252 2023/12/03 13:12:40 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.253 2023/12/10 14:59:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.252 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.253 2023/12/10 14:59:47 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -100,7 +100,7 @@ typedef struct designator {
 
 /*
  * The path from the "current object" of a brace level to the sub-object that
- * is initialized by an expression.  Examples for designations are '.member'
+ * is initialized by an expression.  Examples of designations are '.member'
  * or '.member[123].member.member[1][1]'.
  *
  * C99 6.7.8p6, 6.7.8p7
@@ -115,7 +115,7 @@ typedef struct designation {
  * Everything that happens between a '{' and the corresponding '}', as part
  * of an initialization.
  *
- * Each brace level has a "current object".   For the outermost brace level,
+ * Each brace level has a "current object".  For the outermost brace level,
  * it is the same as the object to be initialized.  Each nested '{' begins a
  * nested brace level, for the sub-object pointed to by the designator of the
  * outer brace level.

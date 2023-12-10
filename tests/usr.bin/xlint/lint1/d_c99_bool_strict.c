@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.44 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.45 2023/12/10 14:59:47 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -160,7 +160,7 @@ enum strict_bool_constant_expressions {
 	/*
 	 * Without strict bool mode, these two variants of an expression can
 	 * occur when a preprocessor macro is either defined to 1 or left
-	 * empty (since C99), as in lint1/ops.def.
+	 * empty (since C99).
 	 *
 	 * In strict bool mode, the resulting expression can be compared
 	 * against 0 to achieve the same effect (so +0 != 0 or 1 + 0 != 0).
