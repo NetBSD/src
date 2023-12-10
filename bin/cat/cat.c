@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.59 2023/12/07 20:02:07 rillig Exp $	*/
+/* $NetBSD: cat.c,v 1.60 2023/12/10 15:31:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.59 2023/12/07 20:02:07 rillig Exp $");
+__RCSID("$NetBSD: cat.c,v 1.60 2023/12/10 15:31:53 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 	return rval;
 }
 
-void
+static void
 cook_args(char **argv)
 {
 	FILE *fp;
@@ -167,7 +167,7 @@ cook_args(char **argv)
 	} while (*argv);
 }
 
-void
+static void
 cook_buf(FILE *fp)
 {
 	int ch, gobble, line, prev;
@@ -231,7 +231,7 @@ cook_buf(FILE *fp)
 		err(EXIT_FAILURE, "stdout");
 }
 
-void
+static void
 raw_args(char **argv)
 {
 	int fd;
@@ -278,7 +278,7 @@ skipnomsg:
 	} while (*argv);
 }
 
-void
+static void
 raw_cat(int rfd)
 {
 	static char *buf;
