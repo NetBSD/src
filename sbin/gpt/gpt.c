@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.85 2023/09/26 15:55:46 kre Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.86 2023/12/11 12:45:22 mlelstv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -386,8 +386,10 @@ gpt_gpt(gpt_t gpt, off_t lba, int found)
 	uint32_t crc;
 
 	hdr = gpt_read(gpt, lba, 1);
-	if (hdr == NULL)
+	if (hdr == NULL) {
+		gpt_warn(gpt, "Read failed");
 		return -1;
+	}
 
 	if (memcmp(hdr->hdr_sig, GPT_HDR_SIG, sizeof(hdr->hdr_sig)))
 		goto fail_hdr;
@@ -540,6 +542,7 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 			gpt->secsz = 512;	/* Fixed size for files. */
 		if (gpt->mediasz == 0) {
 			if (gpt->sb.st_size % gpt->secsz) {
+				gpt_warn(gpt, "Media size not a multiple of sector size (%u)\n", gpt->secsz);
 				errno = EINVAL;
 				goto close;
 			}
@@ -602,6 +605,8 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 	if (gpt->fd != -1)
 		close(gpt->fd);
 	free(gpt);
+	if (!(flags & GPT_QUIET))
+		gpt_warn(gpt, "No GPT found");
 	return NULL;
 }
 
