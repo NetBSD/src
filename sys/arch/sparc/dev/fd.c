@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.163 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.164 2023/12/11 22:29:39 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.163 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.164 2023/12/11 22:29:39 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1948,7 +1948,9 @@ int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd;
+#ifdef FD_DEBUG
 	struct fdc_softc *fdc;
+#endif
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb *fd_formb;
@@ -1962,7 +1964,9 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return (ENXIO);
 
 	fd = device_lookup_private(&fd_cd, FDUNIT(dev));
+#ifdef FD_DEBUG
 	fdc = device_private(device_parent(fd->sc_dv));
+#endif
 
 	switch (cmd) {
 	case DIOCGDINFO:
