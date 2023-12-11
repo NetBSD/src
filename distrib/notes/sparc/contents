@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.28 2022/04/01 21:53:35 andvar Exp $
+.\"	$NetBSD: contents,v 1.29 2023/12/11 21:43:33 andvar Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -243,14 +243,14 @@ kernel, which supports the JavaStation-NC, named
 This set contains a
 .Nx*M
 \*V
-.Li MRCOFFE
+.Li MRCOFFEE
 kernel, which which supports the OpenBOOT PROM 2 JavaStation-1, named
 .Pa /netbsd .
 .It Sy kern-MRCOFFEE_OFW
 This set contains a
 .Nx*M
 \*V
-.Li MRCOFFE_OFW
+.Li MRCOFFEE_OFW
 kernel, which which supports the OpenFirmware JavaStation-1, named
 .Pa /netbsd .
 .
