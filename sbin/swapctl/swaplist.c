@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.18 2016/05/31 09:34:25 pgoyette Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.19 2023/12/11 12:47:24 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swaplist.c,v 1.18 2016/05/31 09:34:25 pgoyette Exp $");
+__RCSID("$NetBSD: swaplist.c,v 1.19 2023/12/11 12:47:24 mlelstv Exp $");
 #endif
 
 
@@ -61,8 +61,9 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 	char	szbuf[5], usbuf[5], avbuf[5]; /* size, used, avail */
 	const	char *header, *suff;
 	size_t	l;
-	int	hlen, totalsize, size, totalinuse, inuse, ncounted, pathmax;
+	int	hlen, size, inuse, ncounted, pathmax;
 	int	rnswap, nswap = swapctl(SWAP_NSWAP, 0, 0), i;
+	int64_t	totalsize, totalinuse;
 
 	if (nswap < 1) {
 		puts("no swap devices configured");
