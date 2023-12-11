@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.65 2022/06/02 16:22:27 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.66 2023/12/11 13:06:06 mlelstv Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.65 2022/06/02 16:22:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.66 2023/12/11 13:06:06 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -187,7 +187,7 @@ snapper_volume(audio_filter_arg_t *arg)
 {
 	struct snapper_softc *sc;
 	const aint_t *src;
-	aint_t *dst;
+	int16_t *dst;
 	u_int sample_count;
 	u_int i;
 
