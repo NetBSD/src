@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.31 2023/08/03 08:36:38 rin Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.32 2023/12/11 09:26:08 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.31 2023/08/03 08:36:38 rin Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.32 2023/12/11 09:26:08 mlelstv Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -2773,13 +2773,13 @@ test_mmap_len(size_t len, off_t offset, int exp)
 	reset_after_mmap();
 }
 #define f(l, o, e)	test_mmap_len(l, o, e)
-DEF(mmap_len_0)	{ f(0,   0,   0); }		/* len is 0 */
+DEF(mmap_len_0)	{ f(0,   0,   EINVAL); }	/* len is 0 */
 DEF(mmap_len_1)	{ f(1,   0,   0); }		/* len is smaller than lsize */
 DEF(mmap_len_2)	{ f(LS,  0,   0); }		/* len is the same as lsize */
 DEF(mmap_len_3)	{ f(LS1, 0,   EOVERFLOW); }	/* len is larger */
 DEF(mmap_len_4)	{ f(0,   -1,  EINVAL); }	/* offset is negative */
-DEF(mmap_len_5)	{ f(0,   LS,  0); }		/* pointless param but ok */
-DEF(mmap_len_6)	{ f(0,   LS1, EOVERFLOW); }	/* exceed */
+DEF(mmap_len_5)	{ f(0,   LS,  EINVAL); }	/* len is 0 */
+DEF(mmap_len_6)	{ f(0,   LS1, EINVAL); }	/* len is 0 */
 DEF(mmap_len_7)	{ f(1,   LS,  EOVERFLOW); }	/* exceed */
 /*
  * When you treat the offset as 32bit, offset will be 0 and thus it
