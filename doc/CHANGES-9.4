@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.120 2023/12/10 13:10:25 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.121 2023/12/11 12:35:51 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -2485,4 +2485,15 @@ lib/libc/net/sethostent.c			1.21
 
 	sethostent(3): fix a couple of (not very likely) memory leaks.
 	[kre, ticket #1776]
+
+usr.bin/systat/vmstat.c				1.92
+
+	systat(1): PR 56014: fix redraw handling.
+	[kre, ticket #1777]
+
+sys/nfs/nfs_vnops.c				1.325
+
+	NFS client: PR 57691: fix RFC 1813 compliance for
+	READDIR and READDIRPLUS cookie verifiers.
+	[schmonz, ticket #1778]
 
