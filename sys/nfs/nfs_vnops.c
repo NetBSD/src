@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.324 2022/05/24 06:28:02 andvar Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.324.4.1 2023/12/11 12:32:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.324 2022/05/24 06:28:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.324.4.1 2023/12/11 12:32:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -2422,8 +2422,13 @@ nfs_readdirrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 				txdr_cookie3(uiop->uio_offset, tl);
 			}
 			tl += 2;
-			*tl++ = dnp->n_cookieverf.nfsuquad[0];
-			*tl++ = dnp->n_cookieverf.nfsuquad[1];
+			if (uiop->uio_offset == 0) {
+				*tl++ = 0;
+				*tl++ = 0;
+			} else {
+				*tl++ = dnp->n_cookieverf.nfsuquad[0];
+				*tl++ = dnp->n_cookieverf.nfsuquad[1];
+			}
 		} else
 #endif
 		{
@@ -2632,8 +2637,13 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 			txdr_cookie3(uiop->uio_offset, tl);
 		}
 		tl += 2;
-		*tl++ = dnp->n_cookieverf.nfsuquad[0];
-		*tl++ = dnp->n_cookieverf.nfsuquad[1];
+		if (uiop->uio_offset == 0) {
+			*tl++ = 0;
+			*tl++ = 0;
+		} else {
+			*tl++ = dnp->n_cookieverf.nfsuquad[0];
+			*tl++ = dnp->n_cookieverf.nfsuquad[1];
+		}
 		*tl++ = txdr_unsigned(nmp->nm_readdirsize);
 		*tl = txdr_unsigned(nmp->nm_rsize);
 		nfsm_request(dnp, NFSPROC_READDIRPLUS, curlwp, cred);
