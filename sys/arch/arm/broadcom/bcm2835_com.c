@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_com.c,v 1.8 2021/01/29 14:11:14 skrll Exp $ */
+/* $NetBSD: bcm2835_com.c,v 1.9 2023/12/11 12:53:08 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.8 2021/01/29 14:11:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.9 2023/12/11 12:53:08 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -123,7 +123,8 @@ bcm_com_attach(device_t parent, device_t self, void *aux)
 		    intrstr);
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+	aprint_normal_dev(self, "interrupting on %s, clock %u Hz\n",
+	   intrstr, sc->sc_frequency);
 }
 
 static int
