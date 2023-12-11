@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.21 2023/10/10 19:21:38 kardel Exp $	*/
+/*	$NetBSD: owtemp.c,v 1.22 2023/12/11 13:30:33 mlelstv Exp $	*/
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.21 2023/10/10 19:21:38 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.22 2023/12/11 13:30:33 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,7 @@ owtemp_attach(device_t parent, device_t self, void *aux)
 	    "%s S/N %012" PRIx64, sc->sc_chipname, ONEWIRE_ROM_SN(sc->sc_rom));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
 		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
 		return;
 	}
 
@@ -172,6 +173,7 @@ owtemp_attach(device_t parent, device_t self, void *aux)
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error_dev(self, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
 		return;
 	}
 
@@ -183,7 +185,8 @@ owtemp_detach(device_t self, int flags)
 {
 	struct owtemp_softc *sc = device_private(self);
 
-	sysmon_envsys_unregister(sc->sc_sme);
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
 	evcnt_detach(&sc->sc_ev_rsterr);
 	evcnt_detach(&sc->sc_ev_update);
 	evcnt_detach(&sc->sc_ev_crcerr);
