@@ -1,4 +1,4 @@
-/* $NetBSD: es8316ac.c,v 1.5 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: es8316ac.c,v 1.6 2023/12/11 13:27:24 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: es8316ac.c,v 1.5 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: es8316ac.c,v 1.6 2023/12/11 13:27:24 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -298,7 +298,7 @@ escodec_swvol_codec(audio_filter_arg_t *arg)
 {
 	struct escodec_softc * const sc = arg->context;
 	const aint_t *src;
-	aint_t *dst;
+	int16_t *dst;
 	u_int sample_count;
 	u_int i;
 

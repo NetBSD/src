@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.c,v 1.10 2022/03/25 23:16:04 tnn Exp $ */
+/* $NetBSD: dw_hdmi.c,v 1.11 2023/12/11 13:29:03 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.10 2022/03/25 23:16:04 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.11 2023/12/11 13:29:03 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -729,7 +729,7 @@ dwhdmi_audio_swvol_codec(audio_filter_arg_t *arg)
 {
 	struct dwhdmi_softc * const sc = arg->context;
 	const aint_t *src;
-	aint_t *dst;
+	int16_t *dst;
 	u_int sample_count;
 	u_int i;
 

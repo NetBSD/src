@@ -1,4 +1,4 @@
-/* $NetBSD: anx_dp.c,v 1.5 2021/12/19 12:43:37 riastradh Exp $ */
+/* $NetBSD: anx_dp.c,v 1.6 2023/12/11 13:28:15 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: anx_dp.c,v 1.5 2021/12/19 12:43:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: anx_dp.c,v 1.6 2023/12/11 13:28:15 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -791,7 +791,7 @@ anxdp_audio_swvol_codec(audio_filter_arg_t *arg)
 {
 	struct anxdp_softc * const sc = arg->context;
 	const aint_t *src;
-	aint_t *dst;
+	int16_t *dst;
 	u_int sample_count;
 	u_int i;
 
