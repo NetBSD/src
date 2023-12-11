@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.15 2023/04/12 17:53:32 riastradh Exp $	*/
+/*	$NetBSD: crash.c,v 1.16 2023/12/11 14:00:47 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.15 2023/04/12 17:53:32 riastradh Exp $");
+__RCSID("$NetBSD: crash.c,v 1.16 2023/12/11 14:00:47 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,7 +93,6 @@ void lockdebug_lock_print(void) {
 	warnx("No lockdebug support compiled in");
 }
 #endif
-
 
 static void
 cleanup(void)
@@ -309,9 +308,11 @@ db_check_interrupt(void)
 int
 cngetc(void)
 {
+	char ch;
 
-	fprintf(stderr, "cngetc\n");
-	abort();
+	if (el_getc(elptr, &ch) <= 0)
+		return 0;
+	return (unsigned char)ch;
 }
 
 void
