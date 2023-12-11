@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.185 2021/04/02 07:09:11 rin Exp $
+.\"	$NetBSD: contents,v 1.186 2023/12/11 21:57:41 andvar Exp $
 .\"
 .\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -707,21 +707,21 @@ kernel, which supports only UltraSPARC systems in 32 bit mode, named
 This set contains a
 .Nx*M
 \*V
-.Li GENERIC-KRUPS
+.Li KRUPS
 kernel, which supports the JavaStation-NC, named
 .Pa /netbsd .
 .It Sy kern-MRCOFFEE
 This set contains a
 .Nx*M
 \*V
-.Li MRCOFFE
+.Li MRCOFFEE
 kernel, which which supports the OpenBOOT PROM 2 JavaStation-1, named
 .Pa /netbsd .
 .It Sy kern-MRCOFFEE_OFW
 This set contains a
 .Nx*M
 \*V
-.Li MRCOFFE_OFW
+.Li MRCOFFEE_OFW
 kernel, which which supports the OpenFirmware JavaStation-1, named
 .Pa /netbsd .
 .\}
