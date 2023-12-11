@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-10.0,v 1.1.2.169 2023/12/10 17:26:18 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.170 2023/12/11 12:33:54 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14288,4 +14288,10 @@ usr.bin/systat/vmstat.c				1.92
 
 	systat(1): PR 56014: fix redraw handling.
 	[kre, ticket #489]
+
+sys/nfs/nfs_vnops.c				1.325
+
+	NFS client: PR 57691: fix RFC 1813 compliance for
+	READDIR and READDIRPLUS cookie verifiers.
+	[schmonz, ticket #490]
 
