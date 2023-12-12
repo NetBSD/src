@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.25 2022/10/26 23:38:09 riastradh Exp $	*/
+/*	$NetBSD: zs.c,v 1.26 2023/12/12 23:38:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25 2022/10/26 23:38:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26 2023/12/12 23:38:11 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -373,9 +373,6 @@ zscheckintr(void *arg)
 }
 
 
-/*
- * We need this only for TTY_DEBUG purposes.
- */
 static void
 zssoft(void *arg)
 {
@@ -385,18 +382,7 @@ zssoft(void *arg)
 	/* Make sure we call the tty layer at spltty. */
 	s = spltty();
 	(void)zsc_intr_soft(zsc);
-#ifdef TTY_DEBUG
-	{
-		struct zstty_softc *zst0 = zsc->zsc_cs[0]->cs_private;
-		struct zstty_softc *zst1 = zsc->zsc_cs[1]->cs_private;
-		if (zst0->zst_overflows || zst1->zst_overflows ) {
-			struct trapframe *frame = arg;	/* XXX */
 
-			printf("zs silo overflow from %p\n",
-			    (long)frame->tf_pc);
-		}
-	}
-#endif
 	splx(s);
 }
 
