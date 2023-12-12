@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.213 2023/12/11 12:30:22 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.214 2023/12/12 16:49:51 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4140,4 +4140,10 @@ usr.bin/systat/vmstat.c				1.92
 
 	systat(1): PR 56014: fix redraw handling.
 	[kre, ticket #1926]
+
+sys/nfs/nfs_vnops.c				1.325
+
+	NFS client: PR 57691: fix RFC 1813 compliance for
+	READDIR and READDIRPLUS cookie verifiers.
+	[schmonz, ticket #1927]
 
