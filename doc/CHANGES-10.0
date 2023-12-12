@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-10.0,v 1.1.2.170 2023/12/11 12:33:54 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.171 2023/12/12 16:46:06 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14294,4 +14294,13 @@ sys/nfs/nfs_vnops.c				1.325
 	NFS client: PR 57691: fix RFC 1813 compliance for
 	READDIR and READDIRPLUS cookie verifiers.
 	[schmonz, ticket #490]
+
+sbin/ifconfig/lagg.c				1.4
+sys/net/lagg/if_lagg.c				1.56,1.57
+
+	lagg(4):
+	 - use sadl for lagg(4) configured by a user
+	 - eliminate unnecessary reset by the change of if_flags
+	 - fix "ifconfig lagg* lagglacp -maxports" command
+	[yamaguchi, ticket #491]
 
