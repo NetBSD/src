@@ -1,4 +1,4 @@
-/*	$NetBSD: lagg.c,v 1.3 2022/03/31 01:53:22 yamaguchi Exp $	*/
+/*	$NetBSD: lagg.c,v 1.3.2.1 2023/12/12 16:45:00 martin Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: lagg.c,v 1.3 2022/03/31 01:53:22 yamaguchi Exp $");
+__RCSID("$NetBSD: lagg.c,v 1.3.2.1 2023/12/12 16:45:00 martin Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -132,27 +132,35 @@ struct piface	 laggportpri_if = PIFACE_INITIALIZER(&laggportpri_if,
 
 static const struct kwinst	 lagglacpkw[] = {
 	  {.k_word = "dumpdu", .k_key = "lacpdumpdu",
-	   .k_type = KW_T_INT, .k_int = LAGGLACPOPT_DUMPDU}
+	   .k_type = KW_T_INT, .k_int = LAGGLACPOPT_DUMPDU,
+	   .k_exec = setlagglacp}
 	, {.k_word = "-dumpdu", .k_key = "lacpdumpdu",
-	   .k_type = KW_T_INT, .k_int = -LAGGLACPOPT_DUMPDU}
+	   .k_type = KW_T_INT, .k_int = -LAGGLACPOPT_DUMPDU,
+	   .k_exec = setlagglacp}
 	, {.k_word = "stopdu", .k_key = "lacpstopdu",
-	   .k_type = KW_T_INT, .k_int = LAGGLACPOPT_STOPDU}
+	   .k_type = KW_T_INT, .k_int = LAGGLACPOPT_STOPDU,
+	   .k_exec = setlagglacp}
 	, {.k_word = "-stopdu", .k_key = "lacpstopdu",
-	   .k_type = KW_T_INT, .k_int = -LAGGLACPOPT_STOPDU}
+	   .k_type = KW_T_INT, .k_int = -LAGGLACPOPT_STOPDU,
+	   .k_exec = setlagglacp}
 	, {.k_word = "optimistic", .k_key = "lacpoptimistic",
-	   .k_type = KW_T_INT, .k_int = LAGGLACPOPT_OPTIMISTIC}
+	   .k_type = KW_T_INT, .k_int = LAGGLACPOPT_OPTIMISTIC,
+	   .k_exec = setlagglacp}
 	, {.k_word = "-optimistic", .k_key = "lacpoptimistic",
-	   .k_type = KW_T_INT, .k_int = -LAGGLACPOPT_OPTIMISTIC}
+	   .k_type = KW_T_INT, .k_int = -LAGGLACPOPT_OPTIMISTIC,
+	   .k_exec = setlagglacp}
 	, {.k_word = "maxports", .k_nextparser = &lagglacpmaxports.pi_parser}
 	, {.k_word = "-maxports", .k_key = "lacpmaxports",
-	   .k_type = KW_T_INT, .k_int = 0}
+	   .k_type = KW_T_INT, .k_int = 0, .k_exec = setlagglacpmaxports}
 	, {.k_word = "multi-linkspeed", .k_key = "lacpmultils",
-	   .k_type = KW_T_INT, .k_int = LAGGLACPOPT_MULTILS}
+	   .k_type = KW_T_INT, .k_int = LAGGLACPOPT_MULTILS,
+	   .k_exec = setlagglacp}
 	, {.k_word = "-multi-linkspeed", .k_key = "lacpmultils",
-	   .k_type = KW_T_INT, .k_int = -LAGGLACPOPT_MULTILS}
+	   .k_type = KW_T_INT, .k_int = -LAGGLACPOPT_MULTILS,
+	   .k_exec = setlagglacp}
 };
 struct pkw	 lagglacp = PKW_INITIALIZER(&lagglacp, "lagg-lacp-option",
-		    setlagglacp, NULL, lagglacpkw, __arraycount(lagglacpkw),
+		    NULL, NULL, lagglacpkw, __arraycount(lagglacpkw),
 		    &lagglacp_root.pb_parser);
 
 static const struct kwinst	 laggfailkw[] = {
