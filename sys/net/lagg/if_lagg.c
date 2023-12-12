@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.48.4.2 2023/11/27 20:05:57 martin Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.48.4.3 2023/12/12 16:45:00 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.48.4.2 2023/11/27 20:05:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.48.4.3 2023/12/12 16:45:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -722,7 +722,6 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			if_stop(ifp, 1);
 			break;
 		case IFF_UP:
-		case IFF_UP | IFF_RUNNING:
 			error = if_init(ifp);
 			break;
 		}
@@ -2178,13 +2177,20 @@ lagg_port_setup(struct lagg_softc *sc,
 	struct ifnet *ifp;
 	u_char if_type;
 	int error;
-	bool stopped, is_1st_port;
+	bool stopped, use_lagg_sadl;
 
 	KASSERT(LAGG_LOCKED(sc));
 	IFNET_ASSERT_UNLOCKED(ifp_port);
 
 	ifp = &sc->sc_if;
-	is_1st_port = SIMPLEQ_EMPTY(&sc->sc_ports);
+
+	use_lagg_sadl = true;
+	if (SIMPLEQ_EMPTY(&sc->sc_ports) &&
+	    ifp_port->if_type == IFT_ETHER) {
+		if (lagg_lladdr_equal(CLLADDR(ifp->if_sadl),
+		    sc->sc_lladdr_rand))
+			use_lagg_sadl = false;
+	}
 
 	if (&sc->sc_if == ifp_port) {
 		LAGG_DPRINTF(sc, "cannot add a lagg to itself as a port\n");
@@ -2252,11 +2258,14 @@ lagg_port_setup(struct lagg_softc *sc,
 	ifp_port->if_ioctl = lagg_port_ioctl;
 	ifp_port->_if_input = lagg_input_ethernet;
 	ifp_port->if_output = lagg_port_output;
-	if (is_1st_port) {
+
+	/* update Link address */
+	if (use_lagg_sadl) {
+		lagg_port_setsadl(lp, CLLADDR(ifp->if_sadl));
+	} else {
+		/* update if_type in if_sadl */
 		if (lp->lp_iftype != ifp_port->if_type)
 			lagg_port_setsadl(lp, NULL);
-	} else {
-		lagg_port_setsadl(lp, CLLADDR(ifp->if_sadl));
 	}
 
 	error = lagg_setmtu(ifp_port, ifp->if_mtu);
@@ -2277,13 +2286,9 @@ lagg_port_setup(struct lagg_softc *sc,
 	/* setup of ifp_port is complete */
 	IFNET_UNLOCK(ifp_port);
 
-	if (is_1st_port) {
-		if (lp->lp_iftype == IFT_ETHER &&
-		    lagg_lladdr_equal(sc->sc_lladdr_rand,
-		    CLLADDR(ifp->if_sadl))) {
-			lagg_if_setsadl(sc, lp->lp_lladdr);
-		}
-	}
+	/* copy sadl from added port to lagg */
+	if (!use_lagg_sadl)
+		lagg_if_setsadl(sc, lp->lp_lladdr);
 
 	SIMPLEQ_INSERT_TAIL(&sc->sc_ports, lp, lp_entry);
 	sc->sc_nports++;
