@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.10 2022/05/16 17:13:28 palle Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.11 2023/12/12 21:34:34 andvar Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -1323,10 +1323,13 @@ vdsk_scsi_capacity16(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 {
 
 	struct scsipi_read_capacity_16_data rcd;
+	uint64_t capacity;
 
 	bzero(&rcd, sizeof(rcd));
 
-	_lto8b(sc->sc_vdisk_size - 1, rcd.addr);
+	capacity = sc->sc_vdisk_size - 1;
+
+	_lto8b(capacity, rcd.addr);
 	_lto4b(sc->sc_vdisk_block_size, rcd.length);
 
 	DPRINTF(("%s() capacity %lu  block size %u\n",
