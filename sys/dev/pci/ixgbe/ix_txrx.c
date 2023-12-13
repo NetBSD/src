@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.110 2023/12/08 05:42:59 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.111 2023/12/13 08:25:54 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.110 2023/12/08 05:42:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.111 2023/12/13 08:25:54 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1203,7 +1203,6 @@ ixgbe_txeof(struct tx_ring *txr)
 			buf->eop = NULL;
 
 		}
-		++txr->packets;
 		++processed;
 
 		/* Try the next packet */
@@ -1227,6 +1226,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	if (processed) {
 		txr->tx_avail = avail;
 		txr->txr_no_space = false;
+		txr->packets += processed;
 		if_statadd(ifp, if_opackets, processed);
 	}
 
