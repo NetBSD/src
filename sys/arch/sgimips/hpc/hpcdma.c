@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.21 2011/07/01 18:53:46 dyoung Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.22 2023/12/13 20:53:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.21 2011/07/01 18:53:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.22 2023/12/13 20:53:14 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 #endif
 	for (i = dmamap->dm_nsegs; i; i--) {
 #ifdef DMA_DEBUG
-		printf("%p:%ld, ", (void *)segp->ds_addr, segp->ds_len);
+		printf("%p:%lld, ", (void *)(intptr_t)segp->ds_addr, segp->ds_len);
 #endif
 		hpa += sizeof(struct hpc_dma_desc);	/* next chain desc */
 		if (sc->hpc->revision == 3) {

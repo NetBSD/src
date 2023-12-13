@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.18 2021/08/07 16:19:04 thorpej Exp $	 */
+/* $NetBSD: grtwo.c,v 1.19 2023/12/13 20:53:14 andvar Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.18 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.19 2023/12/13 20:53:14 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,7 +454,7 @@ grtwo_match(device_t parent, cfdata_t cf, void *aux)
 	 * ID.  Instead, we determine presence by looking at the HQ2 "mystery"
 	 * register, which contains a magic number.
 	 */
-	if ( platform.badaddr((void *) (ga->ga_ioh + HQ2_MYSTERY),
+	if ( platform.badaddr((void *)(intptr_t)(ga->ga_ioh + HQ2_MYSTERY),
 	    sizeof(u_int32_t)) )
 		return 0;
 

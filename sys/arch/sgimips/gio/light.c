@@ -1,4 +1,4 @@
-/*	$Id: light.c,v 1.10 2021/08/07 16:19:04 thorpej Exp $	*/
+/*	$Id: light.c,v 1.11 2023/12/13 20:53:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.10 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.11 2023/12/13 20:53:14 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ light_match(device_t parent, cfdata_t cf, void *aux)
 		return (0);
 
 	if (platform.badaddr(
-	    (void *)(ga->ga_ioh + REX_PAGE1_SET + REX_P1REG_XYOFFSET),
+	    (void *)(intptr_t)(ga->ga_ioh + REX_PAGE1_SET + REX_P1REG_XYOFFSET),
 	    sizeof(uint32_t)))
 		return (0);
 
