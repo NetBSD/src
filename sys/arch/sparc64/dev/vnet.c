@@ -1,4 +1,4 @@
-/*	$NetBSD: vnet.c,v 1.8 2023/12/13 22:53:04 andvar Exp $	*/
+/*	$NetBSD: vnet.c,v 1.9 2023/12/13 23:11:35 andvar Exp $	*/
 /*	$OpenBSD: vnet.c,v 1.62 2020/07/10 13:26:36 patrick Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
@@ -441,7 +441,9 @@ vnet_rx_intr(void *arg)
 	default:
 		DPRINTF(("%s: unhandled type %0x02/%0x02/%0x02\n",
 				 __func__, lp->type, lp->stype, lp->ctrl));
+#ifdef DDB
 		Debugger();
+#endif
 		ldc_reset(lc);
 		break;
 	}
