@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.86 2023/12/11 12:45:22 mlelstv Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.87 2023/12/13 06:51:57 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -604,9 +604,8 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
  close:
 	if (gpt->fd != -1)
 		close(gpt->fd);
+	gpt_warn(gpt, "No GPT found");
 	free(gpt);
-	if (!(flags & GPT_QUIET))
-		gpt_warn(gpt, "No GPT found");
 	return NULL;
 }
 
