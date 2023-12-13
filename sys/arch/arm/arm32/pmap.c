@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.440 2023/10/12 11:33:37 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.441 2023/12/13 06:42:40 rin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.440 2023/10/12 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.441 2023/12/13 06:42:40 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -547,7 +547,7 @@ pmap_release_page_lock(struct vm_page_md *md)
 	mutex_exit(&pmap_lock);
 }
 
-static inline int
+static inline int __diagused
 pmap_page_locked_p(struct vm_page_md *md)
 {
 	return mutex_owned(&pmap_lock);
