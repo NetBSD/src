@@ -1,4 +1,4 @@
-/*	$NetBSD: vnet.c,v 1.7 2022/09/18 13:31:08 thorpej Exp $	*/
+/*	$NetBSD: vnet.c,v 1.8 2023/12/13 22:53:04 andvar Exp $	*/
 /*	$OpenBSD: vnet.c,v 1.62 2020/07/10 13:26:36 patrick Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
@@ -1206,12 +1206,9 @@ vnet_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		if (ifp->if_bpf)
-		{
-			DPRINTF(("%s: before bpf\n", __func__));
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-			DPRINTF(("%s: after bpf\n", __func__));
-		}
+		DPRINTF(("%s: before bpf\n", __func__));
+		bpf_mtap(ifp, m, BPF_D_OUT);
+		DPRINTF(("%s: after bpf\n", __func__));
 #endif
 
 		pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
@@ -1286,8 +1283,7 @@ vnet_start_desc(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 #endif
 
 		pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
