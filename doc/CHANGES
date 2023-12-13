@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3021 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3022 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -225,3 +225,19 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		to use a /dev/gpioirqN device to get pin interrupts into
 		userland. [brad 20231105]
 	gpiosim(4): Simulated interrupts [brad 20231108]
+	sparc64: Support for virtio(4). [thorpej 20231119]
+	alpha: Support for virtio(4). [thorpej 20231119]
+	alpha: Support for crash(8). [thorpej 20231122]
+	iscsid(8): Handle IPv6 addresses. [mlelstv 20231125]
+	kernel: Replace the vdrain kernel thread with two threadpool jobs.
+		[hannken 20231127]
+	kernel: Import various bits of nouveau firmware for newer
+		nvidia graphics hardware. [bouyer 20231128]
+	kernel: Replace various usage of extent(9) with vmem(9).
+		[thorpej 20231201]
+	indent(1): Use line number of the token start in diagnostics
+		[rilling 20231203]
+	vmem(9): Add the notion of "private boundary tags", allowing vmem
+		to be used VERY early in boot. [thorpej 20231203]
+	kernel: Modularize compat90. [pgoyette 20231209]
+	libsa: Add NFSv3 support. [mlelstv 20231212]
