@@ -1454,6 +1454,13 @@ case "${targ_defvec} ${targ_selvecs}" in
     ;;
 esac
 
+# vax natively supports 64-bit integers.
+case "${targ_defvec} ${targ_selvecs}" in
+  *vax*)
+    want64=true
+    ;;
+esac
+
 case "${host64}${want64}" in
   *true*)
     targ_selvecs="${targ_selvecs} ${targ64_selvecs}"
