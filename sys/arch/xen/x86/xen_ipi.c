@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.40.4.1 2023/08/10 10:23:54 sborrill Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.40.4.2 2023/12/14 17:39:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * Based on: x86/ipi.c
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.40.4.1 2023/08/10 10:23:54 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.40.4.2 2023/12/14 17:39:35 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -149,7 +149,7 @@ xen_ipi_init(void)
 	hypervisor_unmask_event(evtchn);
 }
 
-static inline bool /* helper */
+static inline bool __diagused
 valid_ipimask(uint32_t ipimask)
 {
 	uint32_t masks = XEN_IPI_GENERIC | XEN_IPI_HVCB | XEN_IPI_XCALL |
