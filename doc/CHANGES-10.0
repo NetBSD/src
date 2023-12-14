@@ -1,5 +1,4 @@
-
-# $NetBSD: CHANGES-10.0,v 1.1.2.171 2023/12/12 16:46:06 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.172 2023/12/14 17:57:38 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14303,4 +14302,51 @@ sys/net/lagg/if_lagg.c				1.56,1.57
 	 - eliminate unnecessary reset by the change of if_flags
 	 - fix "ifconfig lagg* lagglacp -maxports" command
 	[yamaguchi, ticket #491]
+
+external/gpl3/binutils.old/dist/bfd/config.bfd	1.10
+external/gpl3/binutils.old/lib/libbfd/arch/vax/bfd.h 1.8
+external/gpl3/binutils.old/lib/libbfd/arch/vax/bfd_stdint.h 1.8
+external/gpl3/binutils.old/lib/libbfd/arch/vax/defs.mk 1.8
+			(all applied to external/gpl3/binutils/*)
+
+	binutils/bfd: require 64-bit integer support for vax.
+	[rin, ticket #492]
+
+external/apache2/mDNSResponder/dist/mDNSPosix/mDNSPosix.c 1.20
+
+	mdnsd(8): PR 57769: fix mdnsd on systems with no IPv6 support in
+	the kernel.
+	[thorpej, ticket #493]
+
+sys/arch/xen/x86/xen_ipi.c			1.42
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.86
+
+	Sprinkle __diagused to fix clang non-DIAGNOSTIC builds.
+	[rin, ticket #494]
+
+sys/arch/arm/arm/smccc.c			1.4
+sys/arch/arm/arm32/pmap.c			1.441
+
+	smccc: Adjust SMCCC_ARCH_ATTRIBUTE for clang/arm.
+	arm: pmap: Fix clang build without DIAGNOSTIC.
+	[rin, ticket #495]
+
+common/lib/libc/atomic/atomic_is_lock_free.c	1.2,1.3
+
+	Fix clang build of __atomic_is_lock_free for common/libc.
+	[rin, ticket #496]
+
+xsrc/external/mit/pixman/dist/pixman/pixman.h	1.10
+
+	Pull across a fix from upstream to fix clang builds.
+	[rin, ticket #497]
+
+sys/arch/i386/stand/Makefile.booters		1.95
+sys/arch/i386/stand/Makefile.inc		1.19
+sys/arch/i386/stand/bootxx/bootxx_msdos/Makefile 1.5
+sys/arch/i386/stand/bootxx/bootxx_ustarfs/Makefile 1.4
+sys/arch/i386/stand/dosboot/Makefile		1.34,1.35
+
+	Fix the clang build of x86 booters.
+	[rin, ticket #498]
 
