@@ -1324,7 +1324,16 @@ mDNSexport mStatus mDNSPlatformInit(mDNS *const m)
 #if HAVE_IPV6
     sa.sa_family = AF_INET6;
     m->p->unicastSocket6 = -1;
-    if (err == mStatus_NoError) err = SetupSocket(&sa, zeroIPPort, 0, &m->p->unicastSocket6);
+    if (err == mStatus_NoError)
+    {
+	err = SetupSocket(&sa, zeroIPPort, 0, &m->p->unicastSocket6);
+	if (err != mStatus_NoError)
+	{
+	    // Ignore errors configuring IPv6.
+	    m->p->unicastSocket6 = -1;
+	    err = mStatus_NoError;
+	}
+    }
 #endif
 
     // Tell mDNS core about the network interfaces on this machine.
