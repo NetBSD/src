@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.28 2023/10/22 14:44:09 simonb Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.29 2023/12/14 07:18:44 mrg Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -45,12 +45,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.28 2023/10/22 14:44:09 simonb Exp $
+ * $Id: m_netbsd.c,v 1.29 2023/12/14 07:18:44 mrg Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.28 2023/10/22 14:44:09 simonb Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.29 2023/12/14 07:18:44 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -825,18 +825,20 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 		 * status field.  threads with L_SYSTEM set are system
 		 * threads---these get ignored unless show_sysprocs is set.
 		 */
-		if (lp->l_stat != 0 && (show_system || ((lp->l_flag & LW_SYSTEM) == 0))) {
+		if (lp->l_stat != 0 &&
+		    (show_system || ((lp->l_flag & LW_SYSTEM) == 0))) {
 			total_lwps++;
 			process_states[(unsigned char) lp->l_stat]++;
 			if (lp->l_stat != LSZOMB &&
 			    (show_idle || (lp->l_pctcpu != 0) || 
-			    (lp->l_stat == LSRUN || lp->l_stat == LSONPROC)) &&
+			     (lp->l_stat == LSRUN || lp->l_stat == LSONPROC)) &&
 			    (!show_uid || uid_from_thread(lp) == sel->uid) &&
 			    (!show_command ||
-			     strstr(get_command(sel, proc_from_thread(lp)),
-				 show_command) != NULL)) {
-					*lrefp++ = lp;
-					active_lwps++;
+			     ((pp = proc_from_thread(lp)) != NULL &&
+			      strstr(get_command(sel, pp),
+				     show_command) != NULL))) {
+				*lrefp++ = lp;
+				active_lwps++;
 			}
 		}
 	}
@@ -1215,6 +1217,8 @@ compare_pid(pp1, pp2)
 		struct kinfo_lwp *l2 = *(struct kinfo_lwp **) pp2;
 		struct kinfo_proc2 *p1 = proc_from_thread(l1);
 		struct kinfo_proc2 *p2 = proc_from_thread(l2);
+		if (p1 == NULL || p2 == NULL)
+			return -1;
 		return p2->p_pid - p1->p_pid;
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
@@ -1232,6 +1236,8 @@ compare_command(pp1, pp2)
 		struct kinfo_lwp *l2 = *(struct kinfo_lwp **) pp2;
 		struct kinfo_proc2 *p1 = proc_from_thread(l1);
 		struct kinfo_proc2 *p2 = proc_from_thread(l2);
+		if (p1 == NULL || p2 == NULL)
+			return -1;
 		return strcmp(p2->p_comm, p1->p_comm);
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
@@ -1249,6 +1255,8 @@ compare_username(pp1, pp2)
 		struct kinfo_lwp *l2 = *(struct kinfo_lwp **) pp2;
 		struct kinfo_proc2 *p1 = proc_from_thread(l1);
 		struct kinfo_proc2 *p2 = proc_from_thread(l2);
+		if (p1 == NULL || p2 == NULL)
+			return -1;
 		return strcmp(p2->p_login, p1->p_login);
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
