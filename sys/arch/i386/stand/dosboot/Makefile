@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2019/09/23 13:42:36 christos Exp $
+#	$NetBSD: Makefile,v 1.33.26.1 2023/12/14 17:56:08 martin Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -30,6 +30,12 @@ CPPFLAGS+= -DSTACK_START=0x10000
 SAMISCCPPFLAGS+= -DHEAP_START=0x20000 -DHEAP_LIMIT=0x50000
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no SA_ENABLE_LS_OP=yes
 I386MISCMAKEFLAGS= I386_INCLUDE_DOS=yes
+
+# DOS command line arguments are located at 0x0000.
+COPTS.doscommain.c+= -fno-delete-null-pointer-checks
+
+# Do not page-align data segment.
+LDFLAGS+= -Wl,-N
 
 VERSIONFILE= ${.CURDIR}/version
 
