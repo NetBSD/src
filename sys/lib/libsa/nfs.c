@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.51 2023/12/12 09:12:55 mlelstv Exp $	*/
+/*	$NetBSD: nfs.c,v 1.52 2023/12/14 05:39:00 rin Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -596,9 +596,9 @@ nfs_open(const char *path, struct open_file *f)
 	char namebuf[NFS_MAXPATHLEN + 1];
 	char linkbuf[NFS_MAXPATHLEN + 1];
 	int nlinks = 0;
+	n_long fa_type;
 #endif
 	int error = 0;
-	n_long fa_type;
 
 #ifdef NFS_DEBUG
  	if (debug)
