@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 2023/12/15 09:33:29 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.119 2023/12/15 09:35:29 rin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2023/12/15 09:33:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2023/12/15 09:35:29 rin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -292,7 +292,7 @@ const struct pmap_ops PMAPNAME(ops) = {
 #endif /* !PMAPNAME */
 
 /*
- * The following structure is aligned to 32 bytes 
+ * The following structure is aligned to 32 bytes, if reasonably possible.
  */
 struct pvo_entry {
 	LIST_ENTRY(pvo_entry) pvo_vlink;	/* Link to common virt page */
@@ -317,7 +317,14 @@ struct pvo_entry {
 #define	PVO_REMOVE		6		/* PVO has been removed */
 #define	PVO_WHERE_MASK		15
 #define	PVO_WHERE_SHFT		8
-} __attribute__ ((aligned (32)));
+};
+
+#if defined(PMAP_OEA) && !defined(DIAGNOSTIC)
+#define	PMAP_PVO_ENTRY_ALIGN	32
+#else
+#define	PMAP_PVO_ENTRY_ALIGN	__alignof(struct pvo_entry)
+#endif
+
 #define	PVO_VADDR(pvo)		((pvo)->pvo_vaddr & ~ADDR_POFF)
 #define	PVO_PTEGIDX_GET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_MASK)
 #define	PVO_PTEGIDX_ISSET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_VALID)
@@ -3440,7 +3447,7 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 #endif
 
 	pool_init(&pmap_pvo_pool, sizeof(struct pvo_entry),
-	    sizeof(struct pvo_entry), 0, 0, "pmap_pvopl",
+	    PMAP_PVO_ENTRY_ALIGN, 0, 0, "pmap_pvopl",
 	    &pmap_pool_allocator, IPL_VM);
 
 	pool_setlowat(&pmap_pvo_pool, 1008);
