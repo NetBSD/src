@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.571 2023/12/14 20:46:45 abs Exp $
+.\"	$NetBSD: main,v 1.572 2023/12/15 22:09:16 gutteridge Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -815,7 +815,7 @@ In
 .Nx 9
 and earlier, filesystems listed in
 .Pa /etc/fstab
-would be mounted before non legacy
+would be mounted before non-legacy
 .Ic zfs
 filesystems. Starting from
 .Nx 10
