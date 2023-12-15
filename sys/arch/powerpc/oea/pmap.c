@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2023/12/08 21:46:02 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.117 2023/12/15 09:32:05 rin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2023/12/08 21:46:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2023/12/15 09:32:05 rin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -388,7 +388,7 @@ static void pmap_pvo_free(struct pvo_entry *);
 static void pmap_pvo_free_list(struct pvo_head *);
 static struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *); 
 static volatile struct pte *pmap_pvo_to_pte(const struct pvo_entry *, int);
-static struct pvo_entry *pmap_pvo_reclaim(struct pmap *);
+static struct pvo_entry *pmap_pvo_reclaim(void);
 static void pvo_set_exec(struct pvo_entry *);
 static void pvo_clear_exec(struct pvo_entry *);
 
@@ -1507,7 +1507,7 @@ pmap_pvo_check(const struct pvo_entry *pvo)
  */
 
 struct pvo_entry *
-pmap_pvo_reclaim(struct pmap *pm)
+pmap_pvo_reclaim(void)
 {
 	struct pvo_tqhead *pvoh;
 	struct pvo_entry *pvo;
@@ -1615,7 +1615,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	++pmap_pvo_enter_depth;
 #endif
 	if (pvo == NULL) {
-		pvo = pmap_pvo_reclaim(pm);
+		pvo = pmap_pvo_reclaim();
 		if (pvo == NULL) {
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("pmap_pvo_enter: failed");
