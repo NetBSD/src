@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120 2023/12/15 09:36:35 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121 2023/12/15 09:42:33 rin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2023/12/15 09:36:35 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2023/12/15 09:42:33 rin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -341,18 +341,6 @@ struct pvo_tqhead *pmap_pvo_table;	/* pvo entries by ptegroup index */
 
 struct pool pmap_pool;		/* pool for pmap structures */
 struct pool pmap_pvo_pool;	/* pool for pvo entries */
-
-/*
- * We keep a cache of unmanaged pages to be used for pvo entries for
- * unmanaged pages.
- */
-struct pvo_page {
-	SIMPLEQ_ENTRY(pvo_page) pvop_link;
-};
-SIMPLEQ_HEAD(pvop_head, pvo_page);
-static struct pvop_head pmap_pvop_head = SIMPLEQ_HEAD_INITIALIZER(pmap_pvop_head);
-static u_long pmap_pvop_free;
-static u_long pmap_pvop_maxfree;
 
 static void *pmap_pool_alloc(struct pool *, int);
 static void pmap_pool_free(struct pool *, void *);
@@ -1137,7 +1125,7 @@ pmap_create(void)
 	pmap_t pm;
 
 	pm = pool_get(&pmap_pool, PR_WAITOK | PR_ZERO);
-	KASSERT((vaddr_t)pm < VM_MIN_KERNEL_ADDRESS);
+	KASSERT((vaddr_t)pm < PMAP_DIRECT_MAPPED_LEN);
 	pmap_pinit(pm);
 	
 	DPRINTFN(CREATE, "pmap_create: pm %p:\n"
@@ -1381,7 +1369,7 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 
 	TAILQ_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-		if ((uintptr_t) pvo >= SEGMENT_LENGTH)
+		if ((uintptr_t) pvo >= PMAP_DIRECT_MAPPED_LEN)
 			panic("pmap_pvo_find_va: invalid pvo %p on "
 			    "list %#x (%p)", pvo, ptegidx,
 			     &pmap_pvo_table[ptegidx]);
@@ -1392,7 +1380,7 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 			return pvo;
 		}
 	}
-	if ((pm == pmap_kernel()) && (va < SEGMENT_LENGTH))
+	if ((pm == pmap_kernel()) && (va < PMAP_DIRECT_MAPPED_LEN))
 		panic("%s: returning NULL for %s pmap, va: %#" _PRIxva "\n",
 		    __func__, (pm == pmap_kernel() ? "kernel" : "user"), va);
 	return NULL;
@@ -1409,23 +1397,23 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 
 	PMAP_LOCK();
 
-	if ((uintptr_t)(pvo+1) >= SEGMENT_LENGTH)
+	if ((uintptr_t)(pvo+1) >= PMAP_DIRECT_MAPPED_LEN)
 		panic("pmap_pvo_check: pvo %p: invalid address", pvo);
 
-	if ((uintptr_t)(pvo->pvo_pmap+1) >= SEGMENT_LENGTH) {
+	if ((uintptr_t)(pvo->pvo_pmap+1) >= PMAP_DIRECT_MAPPED_LEN) {
 		printf("pmap_pvo_check: pvo %p: invalid pmap address %p\n",
 		    pvo, pvo->pvo_pmap);
 		failed = 1;
 	}
 
-	if ((uintptr_t)TAILQ_NEXT(pvo, pvo_olink) >= SEGMENT_LENGTH ||
+	if ((uintptr_t)TAILQ_NEXT(pvo, pvo_olink) >= PMAP_DIRECT_MAPPED_LEN ||
 	    (((uintptr_t)TAILQ_NEXT(pvo, pvo_olink)) & 0x1f) != 0) {
 		printf("pmap_pvo_check: pvo %p: invalid ovlink address %p\n",
 		    pvo, TAILQ_NEXT(pvo, pvo_olink));
 		failed = 1;
 	}
 
-	if ((uintptr_t)LIST_NEXT(pvo, pvo_vlink) >= SEGMENT_LENGTH ||
+	if ((uintptr_t)LIST_NEXT(pvo, pvo_vlink) >= PMAP_DIRECT_MAPPED_LEN ||
 	    (((uintptr_t)LIST_NEXT(pvo, pvo_vlink)) & 0x1f) != 0) {
 		printf("pmap_pvo_check: pvo %p: invalid ovlink address %p\n",
 		    pvo, LIST_NEXT(pvo, pvo_vlink));
@@ -2177,7 +2165,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		 * We still check the HTAB...
 		 */
 #elif defined(PMAP_OEA64_BRIDGE)
-		if (va < SEGMENT_LENGTH) {
+		if (va < PMAP_DIRECT_MAPPED_LEN) {
 			if (pap)
 				*pap = va;
 			PMAP_UNLOCK();
@@ -2846,7 +2834,7 @@ pmap_pvo_verify(void)
 	for (ptegidx = 0; ptegidx < pmap_pteg_cnt; ptegidx++) {
 		struct pvo_entry *pvo;
 		TAILQ_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
-			if ((uintptr_t) pvo >= SEGMENT_LENGTH)
+			if ((uintptr_t) pvo >= PMAP_DIRECT_MAPPED_LEN)
 				panic("pmap_pvo_verify: invalid pvo %p "
 				    "on list %#x", pvo, ptegidx);
 			pmap_pvo_check(pvo);
@@ -2856,61 +2844,89 @@ pmap_pvo_verify(void)
 }
 #endif /* PMAPCHECK */
 
+/*
+ * Queue for unmanaged pages, used before uvm.page_init_done.
+ * Reuse when pool shortage; see pmap_pool_alloc() below.
+ */
+struct pup {
+	SIMPLEQ_ENTRY(pup) pup_link;
+};
+SIMPLEQ_HEAD(pup_head, pup);
+static struct pup_head pup_head = SIMPLEQ_HEAD_INITIALIZER(pup_head);
+
+static struct pup *
+pmap_alloc_unmanaged(void)
+{
+	struct pup *pup;
+	register_t msr;
+
+	PMAP_LOCK();
+	msr = pmap_interrupts_off();
+	pup = SIMPLEQ_FIRST(&pup_head);
+	if (pup != NULL)
+		SIMPLEQ_REMOVE_HEAD(&pup_head, pup_link);
+	pmap_interrupts_restore(msr);
+	PMAP_UNLOCK();
+	return pup;
+}
+
+static void
+pmap_free_unmanaged(struct pup *pup)
+{
+	register_t msr;
+
+	PMAP_LOCK();
+	msr = pmap_interrupts_off();
+	SIMPLEQ_INSERT_HEAD(&pup_head, pup, pup_link);
+	pmap_interrupts_restore(msr);
+	PMAP_UNLOCK();
+}
+
 void *
 pmap_pool_alloc(struct pool *pp, int flags)
 {
-	struct pvo_page *pvop;
 	struct vm_page *pg;
+	paddr_t pa;
 
-	if (uvm.page_init_done != true) {
-		return (void *) uvm_pageboot_alloc(PAGE_SIZE);
-	}
+	if (__predict_false(!uvm.page_init_done))
+		return (void *)uvm_pageboot_alloc(PAGE_SIZE);
 
-	PMAP_LOCK();
-	pvop = SIMPLEQ_FIRST(&pmap_pvop_head);
-	if (pvop != NULL) {
-		pmap_pvop_free--;
-		SIMPLEQ_REMOVE_HEAD(&pmap_pvop_head, pvop_link);
-		PMAP_UNLOCK();
-		return pvop;
-	}
-	PMAP_UNLOCK();
- again:
-	pg = uvm_pagealloc_strat(NULL, 0, NULL, UVM_PGA_USERESERVE,
-	    UVM_PGA_STRAT_ONLY, VM_FREELIST_FIRST256);
+ retry:
+	pg = uvm_pagealloc_strat(NULL /*obj*/, 0 /*off*/, NULL /*anon*/,
+	    UVM_PGA_USERESERVE /*flags*/, UVM_PGA_STRAT_ONLY /*strat*/,
+	    VM_FREELIST_DIRECT_MAPPED /*free_list*/);
 	if (__predict_false(pg == NULL)) {
-		if (flags & PR_WAITOK) {
-			uvm_wait("plpg");
-			goto again;
-		} else {
-			return (0);
-		}
+		void *va = pmap_alloc_unmanaged();
+		if (va != NULL)
+			return va;
+
+		if ((flags & PR_WAITOK) == 0)
+			return NULL;
+		uvm_wait("plpg");
+		goto retry;
 	}
 	KDASSERT(VM_PAGE_TO_PHYS(pg) == (uintptr_t)VM_PAGE_TO_PHYS(pg));
-	return (void *)(uintptr_t) VM_PAGE_TO_PHYS(pg);
+	pa = VM_PAGE_TO_PHYS(pg);
+	return (void *)(uintptr_t)pa;
 }
 
 void
 pmap_pool_free(struct pool *pp, void *va)
 {
-	struct pvo_page *pvop;
+	struct vm_page *pg;
 
-	PMAP_LOCK();
-	pvop = va;
-	SIMPLEQ_INSERT_HEAD(&pmap_pvop_head, pvop, pvop_link);
-	pmap_pvop_free++;
-	if (pmap_pvop_free > pmap_pvop_maxfree)
-		pmap_pvop_maxfree = pmap_pvop_free;
-	PMAP_UNLOCK();
-#if 0
-	uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t) va));
-#endif
+	pg = PHYS_TO_VM_PAGE((paddr_t)va);
+	if (__predict_false(pg == NULL)) {
+		pmap_free_unmanaged(va);
+		return;
+	}
+	uvm_pagefree(pg);
 }
 
 /*
  * This routine in bootstraping to steal to-be-managed memory (which will
- * then be unmanaged).  We use it to grab from the first 256MB for our
- * pmap needs and above 256MB for other stuff.
+ * then be unmanaged).  We use it to grab from the first PMAP_DIRECT_MAPPED_LEN
+ * for our pmap needs and above it for other stuff.
  */
 vaddr_t
 pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
@@ -2943,7 +2959,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 		start = uvm_physseg_get_start(bank);
 		end = uvm_physseg_get_end(bank);
 		
-		if (freelist == VM_FREELIST_FIRST256 &&
+		if (freelist == VM_FREELIST_DIRECT_MAPPED &&
 		    (end - start) >= npgs) {
 			pa = ptoa(start);
 			break;
@@ -3332,8 +3348,8 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 
 
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-	if ( (uintptr_t) pmap_pteg_table + size > SEGMENT_LENGTH)
-		panic("pmap_bootstrap: pmap_pteg_table end (%p + %#" _PRIxpa ") > 256MB",
+	if ( (uintptr_t) pmap_pteg_table + size > PMAP_DIRECT_MAPPED_LEN)
+		panic("pmap_bootstrap: pmap_pteg_table end (%p + %#" _PRIxpa ") > PMAP_DIRECT_MAPPED_LEN",
 		    pmap_pteg_table, size);
 #endif
 
@@ -3348,8 +3364,8 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 	size = sizeof(pmap_pvo_table[0]) * pmap_pteg_cnt;
 	pmap_pvo_table = (void *)(uintptr_t) pmap_boot_find_memory(size, PAGE_SIZE, 0);
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-	if ( (uintptr_t) pmap_pvo_table + size > SEGMENT_LENGTH)
-		panic("pmap_bootstrap: pmap_pvo_table end (%p + %#" _PRIxpa ") > 256MB",
+	if ( (uintptr_t) pmap_pvo_table + size > PMAP_DIRECT_MAPPED_LEN)
+		panic("pmap_bootstrap: pmap_pvo_table end (%p + %#" _PRIxpa ") > PMAP_DIRECT_MAPPED_LEN",
 		    pmap_pvo_table, size);
 #endif
 
@@ -3368,17 +3384,17 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 		paddr_t pfend = atop(mp->start + mp->size);
 		if (mp->size == 0)
 			continue;
-		if (mp->start + mp->size <= SEGMENT_LENGTH) {
+		if (mp->start + mp->size <= PMAP_DIRECT_MAPPED_LEN) {
 			uvm_page_physload(pfstart, pfend, pfstart, pfend,
-				VM_FREELIST_FIRST256);
-		} else if (mp->start >= SEGMENT_LENGTH) {
+				VM_FREELIST_DIRECT_MAPPED);
+		} else if (mp->start >= PMAP_DIRECT_MAPPED_LEN) {
 			uvm_page_physload(pfstart, pfend, pfstart, pfend,
 				VM_FREELIST_DEFAULT);
 		} else {
-			pfend = atop(SEGMENT_LENGTH);
+			pfend = atop(PMAP_DIRECT_MAPPED_LEN);
 			uvm_page_physload(pfstart, pfend, pfstart, pfend,
-				VM_FREELIST_FIRST256);
-			pfstart = atop(SEGMENT_LENGTH);
+				VM_FREELIST_DIRECT_MAPPED);
+			pfstart = atop(PMAP_DIRECT_MAPPED_LEN);
 			pfend = atop(mp->start + mp->size);
 			uvm_page_physload(pfstart, pfend, pfstart, pfend,
 				VM_FREELIST_DEFAULT);
@@ -3452,8 +3468,34 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 	pool_setlowat(&pmap_pvo_pool, 1008);
 
 	pool_init(&pmap_pool, sizeof(struct pmap),
-	    sizeof(void *), 0, 0, "pmap_pl", &pool_allocator_nointr,
-	    IPL_NONE);
+	    __alignof(struct pmap), 0, 0, "pmap_pl",
+	    &pmap_pool_allocator, IPL_NONE);
+
+#if defined(PMAP_OEA64_BRIDGE)
+	{
+		struct pmap *pm = pmap_kernel();
+		uvm_physseg_t bank;
+		paddr_t pa;
+		struct pte pt;
+		unsigned int ptegidx;
+
+		for (bank = uvm_physseg_get_first();
+		     uvm_physseg_valid_p(bank);
+		     bank = uvm_physseg_get_next(bank)) {
+			if (uvm_physseg_get_free_list(bank) !=
+			    VM_FREELIST_DIRECT_MAPPED)
+				continue;
+			for (pa = uimax(ptoa(uvm_physseg_get_avail_start(bank)),
+					SEGMENT_LENGTH);
+			     pa < ptoa(uvm_physseg_get_avail_end(bank));
+			     pa += PAGE_SIZE) {
+				ptegidx = va_to_pteg(pm, pa);
+				pmap_pte_create(&pt, pm, pa, pa | PTE_M);
+				pmap_pte_insert(ptegidx, &pt);
+			}
+		}
+	}
+#endif
 
 #if defined(PMAP_NEED_MAPKERNEL)
 	{
