@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.119 2023/12/15 09:35:29 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.120 2023/12/15 09:36:35 rin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2023/12/15 09:35:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2023/12/15 09:36:35 rin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -1136,9 +1136,8 @@ pmap_create(void)
 {
 	pmap_t pm;
 
-	pm = pool_get(&pmap_pool, PR_WAITOK);
+	pm = pool_get(&pmap_pool, PR_WAITOK | PR_ZERO);
 	KASSERT((vaddr_t)pm < VM_MIN_KERNEL_ADDRESS);
-	memset((void *)pm, 0, sizeof *pm);
 	pmap_pinit(pm);
 	
 	DPRINTFN(CREATE, "pmap_create: pm %p:\n"
