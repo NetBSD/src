@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.117 2023/12/15 09:32:05 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118 2023/12/15 09:33:29 rin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2023/12/15 09:32:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2023/12/15 09:33:29 rin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -879,48 +879,35 @@ pmap_pte_insert(int ptegidx, struct pte *pvo_pt)
  * Tries to spill a page table entry from the overflow area.
  * This runs in either real mode (if dealing with a exception spill)
  * or virtual mode when dealing with manually spilling one of the
- * kernel's pte entries.  In either case, interrupts are already
- * disabled.
+ * kernel's pte entries.
  */
 
 int
-pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
+pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool isi_p)
 {
-	struct pvo_entry *source_pvo, *victim_pvo, *next_pvo;
-	struct pvo_entry *pvo;
-	/* XXX: gcc -- vpvoh is always set at either *1* or *2* */
-	struct pvo_tqhead *pvoh, *vpvoh = NULL;
-	int ptegidx, i, j;
+	struct pvo_tqhead *spvoh, *vpvoh;
+	struct pvo_entry *pvo, *source_pvo, *victim_pvo;
 	volatile struct pteg *pteg;
 	volatile struct pte *pt;
+	register_t msr, vsid, hash;
+	int ptegidx, hid, i, j;
+	int done = 0;
 
 	PMAP_LOCK();
+	msr = pmap_interrupts_off();
+
+	/* XXXRO paranoid? */
+	if (pm->pm_evictions == 0)
+		goto out;
 
 	ptegidx = va_to_pteg(pm, addr);
 
 	/*
-	 * Have to substitute some entry. Use the primary hash for this.
-	 * Use low bits of timebase as random generator.  Make sure we are
-	 * not picking a kernel pte for replacement.
+	 * Find source pvo.
 	 */
-	pteg = &pmap_pteg_table[ptegidx];
-	i = MFTB() & 7;
-	for (j = 0; j < 8; j++) {
-		pt = &pteg->pt[i];
-		if ((pt->pte_hi & PTE_VALID) == 0)
-			break;
-		if (VSID_TO_HASH((pt->pte_hi & PTE_VSID) >> PTE_VSID_SHFT)
-				< PHYSMAP_VSIDBITS)
-			break;
-		i = (i + 1) & 7;
-	}
-	KASSERT(j < 8);
-
+	spvoh = &pmap_pvo_table[ptegidx];
 	source_pvo = NULL;
-	victim_pvo = NULL;
-	pvoh = &pmap_pvo_table[ptegidx];
-	TAILQ_FOREACH(pvo, pvoh, pvo_olink) {
-
+	TAILQ_FOREACH(pvo, spvoh, pvo_olink) {
 		/*
 		 * We need to find pvo entry for this address...
 		 */
@@ -931,101 +918,105 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
 		 * a valid PTE, then we know we can't find it because all
 		 * evicted PVOs always are first in the list.
 		 */
-		if (source_pvo == NULL && (pvo->pvo_pte.pte_hi & PTE_VALID))
+		if ((pvo->pvo_pte.pte_hi & PTE_VALID) != 0)
 			break;
-		if (source_pvo == NULL && pm == pvo->pvo_pmap &&
-		    addr == PVO_VADDR(pvo)) {
 
-			/*
-			 * Now we have found the entry to be spilled into the
-			 * pteg.  Attempt to insert it into the page table.
-			 */
-			j = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
-			if (j >= 0) {
-				PVO_PTEGIDX_SET(pvo, j);
-				PMAP_PVO_CHECK(pvo);	/* sanity check */
-				PVO_WHERE(pvo, SPILL_INSERT);
-				pvo->pvo_pmap->pm_evictions--;
-				PMAPCOUNT(ptes_spilled);
-				PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
-				    ? pmap_evcnt_ptes_secondary
-				    : pmap_evcnt_ptes_primary)[j]);
-
-				/*
-				 * Since we keep the evicted entries at the
-				 * from of the PVO list, we need move this
-				 * (now resident) PVO after the evicted
-				 * entries.
-				 */
-				next_pvo = TAILQ_NEXT(pvo, pvo_olink);
-
-				/*
-				 * If we don't have to move (either we were the
-				 * last entry or the next entry was valid),
-				 * don't change our position.  Otherwise 
-				 * move ourselves to the tail of the queue.
-				 */
-				if (next_pvo != NULL &&
-				    !(next_pvo->pvo_pte.pte_hi & PTE_VALID)) {
-					TAILQ_REMOVE(pvoh, pvo, pvo_olink);
-					TAILQ_INSERT_TAIL(pvoh, pvo, pvo_olink);
-				}
-				PMAP_UNLOCK();
-				return 1;
+		if (pm == pvo->pvo_pmap && addr == PVO_VADDR(pvo)) {
+			if (isi_p) {
+				if (!PVO_EXECUTABLE_P(pvo))
+					goto out;
+#if defined(PMAP_OEA) || defined(PMAP_OEA64_BRIDGE)
+				int sr __diagused =
+				    PVO_VADDR(pvo) >> ADDR_SR_SHFT;
+				KASSERT((pm->pm_sr[sr] & SR_NOEXEC) == 0);
+#endif
 			}
+			KASSERT(!PVO_PTEGIDX_ISSET(pvo));
+			/* XXXRO where check */
 			source_pvo = pvo;
-			if (exec && !PVO_EXECUTABLE_P(source_pvo)) {
-				PMAP_UNLOCK();
-				return 0;
-			}
-			if (victim_pvo != NULL)
-				break;
-		}
-
-		/*
-		 * We also need the pvo entry of the victim we are replacing
-		 * so save the R & C bits of the PTE.
-		 */
-		if ((pt->pte_hi & PTE_HID) == 0 && victim_pvo == NULL &&
-		    pmap_pte_compare(pt, &pvo->pvo_pte)) {
-			vpvoh = pvoh;			/* *1* */
-			victim_pvo = pvo;
-			if (source_pvo != NULL)
-				break;
+			break;
 		}
 	}
-
 	if (source_pvo == NULL) {
 		PMAPCOUNT(ptes_unspilled);
-		PMAP_UNLOCK();
-		return 0;
+		goto out;
 	}
 
-	if (victim_pvo == NULL) {
-		if ((pt->pte_hi & PTE_HID) == 0)
-			panic("pmap_pte_spill: victim p-pte (%p) has "
-			    "no pvo entry!", pt);
+	/*
+	 * Now we have found the entry to be spilled into the
+	 * pteg.  Attempt to insert it into the page table.
+	 */
+	i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
+	if (i >= 0) {
+		PVO_PTEGIDX_SET(pvo, i);
+		PMAP_PVO_CHECK(pvo);	/* sanity check */
+		PVO_WHERE(pvo, SPILL_INSERT);
+		pvo->pvo_pmap->pm_evictions--;
+		PMAPCOUNT(ptes_spilled);
+		PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID) != 0
+		    ? pmap_evcnt_ptes_secondary
+		    : pmap_evcnt_ptes_primary)[i]);
 
-		/*
-		 * If this is a secondary PTE, we need to search
-		 * its primary pvo bucket for the matching PVO.
-		 */
-		vpvoh = &pmap_pvo_table[ptegidx ^ pmap_pteg_mask]; /* *2* */
-		TAILQ_FOREACH(pvo, vpvoh, pvo_olink) {
-			PMAP_PVO_CHECK(pvo);		/* sanity check */
+		TAILQ_REMOVE(spvoh, pvo, pvo_olink);
+		TAILQ_INSERT_TAIL(spvoh, pvo, pvo_olink);
 
-			/*
-			 * We also need the pvo entry of the victim we are
-			 * replacing so save the R & C bits of the PTE.
-			 */
-			if (pmap_pte_compare(pt, &pvo->pvo_pte)) {
-				victim_pvo = pvo;
-				break;
-			}
+		done = 1;
+		goto out;
+	}
+
+	/*
+	 * Have to substitute some entry. Use the primary hash for this.
+	 * Use low bits of timebase as random generator.
+	 *
+	 * XXX:
+	 * Make sure we are not picking a kernel pte for replacement.
+	 */
+	hid = 0;
+	i = MFTB() & 7;
+	pteg = &pmap_pteg_table[ptegidx];
+ retry:
+	for (j = 0; j < 8; j++, i = (i + 1) & 7) {
+		pt = &pteg->pt[i];
+
+		if ((pt->pte_hi & PTE_VALID) == 0)
+			break;
+
+		vsid = (pt->pte_hi & PTE_VSID) >> PTE_VSID_SHFT;
+		hash = VSID_TO_HASH(vsid);
+		if (hash < PHYSMAP_VSIDBITS)
+			break;
+	}
+	if (j == 8) {
+		if (hid != 0)
+			panic("%s: no victim\n", __func__);
+		hid = PTE_HID;
+		pteg = &pmap_pteg_table[ptegidx ^ pmap_pteg_mask];
+		goto retry;
+	}
+
+	/*
+	 * We also need the pvo entry of the victim we are replacing
+	 * so save the R & C bits of the PTE.
+	 */
+	if ((pt->pte_hi & PTE_HID) == hid)
+		vpvoh = spvoh;
+	else
+		vpvoh = &pmap_pvo_table[ptegidx ^ pmap_pteg_mask];
+	victim_pvo = NULL;
+	TAILQ_FOREACH(pvo, vpvoh, pvo_olink) {
+		PMAP_PVO_CHECK(pvo);		/* sanity check */
+
+		if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
+			continue;
+
+		if (pmap_pte_compare(pt, &pvo->pvo_pte)) {
+			victim_pvo = pvo;
+			break;
 		}
-		if (victim_pvo == NULL)
-			panic("pmap_pte_spill: victim s-pte (%p) has "
-			    "no pvo entry!", pt);
+	}
+	if (victim_pvo == NULL) {
+		panic("%s: victim p-pte (%p) has no pvo entry!",
+		    __func__, pt);
 	}
 
 	/*
@@ -1041,7 +1032,10 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
 	 * we lose any ref/chg bit changes contained in the TLB
 	 * entry.
 	 */
-	source_pvo->pvo_pte.pte_hi &= ~PTE_HID;
+	if (hid == 0)
+		source_pvo->pvo_pte.pte_hi &= ~PTE_HID;
+	else
+		source_pvo->pvo_pte.pte_hi |= PTE_HID;
 
 	/*
 	 * To enforce the PVO list ordering constraint that all
@@ -1050,8 +1044,8 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
 	 * victim PVO to the head of its list (which might not be
 	 * the same list, if the victim was using the secondary hash).
 	 */
-	TAILQ_REMOVE(pvoh, source_pvo, pvo_olink);
-	TAILQ_INSERT_TAIL(pvoh, source_pvo, pvo_olink);
+	TAILQ_REMOVE(spvoh, source_pvo, pvo_olink);
+	TAILQ_INSERT_TAIL(spvoh, source_pvo, pvo_olink);
 	TAILQ_REMOVE(vpvoh, victim_pvo, pvo_olink);
 	TAILQ_INSERT_HEAD(vpvoh, victim_pvo, pvo_olink);
 	pmap_pte_unset(pt, &victim_pvo->pvo_pte, victim_pvo->pvo_vaddr);
@@ -1071,8 +1065,12 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
 	PMAP_PVO_CHECK(victim_pvo);
 	PMAP_PVO_CHECK(source_pvo);
 
+	done = 1;
+
+ out:
+	pmap_interrupts_restore(msr);
 	PMAP_UNLOCK();
-	return 1;
+	return done;
 }
 
 /*
