@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.99 2023/06/23 05:03:04 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.100 2023/12/16 21:26:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.99 2023/06/23 05:03:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.100 2023/12/16 21:26:07 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -322,17 +322,13 @@ StrMatchResult
 Str_Match(const char *str, const char *pat)
 {
 	StrMatchResult res = { NULL, false };
-	const char *fixed_str, *fixed_pat;
-	bool asterisk, matched;
-
-	asterisk = false;
-	fixed_str = str;
-	fixed_pat = pat;
+	bool asterisk = false;
+	const char *fixed_str = str;
+	const char *fixed_pat = pat;
 
 match_fixed_length:
 	str = fixed_str;
 	pat = fixed_pat;
-	matched = false;
 	for (; *pat != '\0' && *pat != '*'; str++, pat++) {
 		if (*str == '\0')
 			return res;
@@ -350,7 +346,7 @@ match_fixed_length:
 			if (*pat == ']' || *pat == '\0') {
 				if (neg)
 					goto end_of_char_list;
-				goto match_done;
+				goto no_match;
 			}
 			if (*pat == *str)
 				goto end_of_char_list;
@@ -369,7 +365,7 @@ match_fixed_length:
 
 		end_of_char_list:
 			if (neg && *pat != ']' && *pat != '\0')
-				goto match_done;
+				goto no_match;
 			while (*pat != ']' && *pat != '\0')
 				pat++;
 			if (*pat == '\0')
@@ -380,42 +376,32 @@ match_fixed_length:
 		if (*pat == '\\')	/* match the next character exactly */
 			pat++;
 		if (*pat != *str)
-			goto match_done;
+			goto no_match;
 	}
-	matched = true;
 
-match_done:
-	if (!asterisk) {
-		if (!matched)
-			return res;
-		if (*pat == '\0') {
-			res.matched = *str == '\0';
-			return res;
-		}
+	if (*pat == '*') {
 		asterisk = true;
-	} else {
-		if (!matched) {
-			fixed_str++;
-			goto match_fixed_length;
-		}
+		while (*pat == '*')
+			pat++;
 		if (*pat == '\0') {
-			if (*str == '\0') {
-				res.matched = true;
-				return res;
-			}
-			fixed_str += strlen(str);
-			goto match_fixed_length;
+			res.matched = true;
+			return res;
 		}
+		fixed_str = str;
+		fixed_pat = pat;
+		goto match_fixed_length;
 	}
+	if (asterisk && *str != '\0') {
+		fixed_str += strlen(str);
+		goto match_fixed_length;
+	}
+	res.matched = *str == '\0';
+	return res;
 
-	while (*pat == '*')
-		pat++;
-	if (*pat == '\0') {
-		res.matched = true;
+no_match:
+	if (!asterisk)
 		return res;
-	}
-	fixed_str = str;
-	fixed_pat = pat;
+	fixed_str++;
 	goto match_fixed_length;
 }
 
