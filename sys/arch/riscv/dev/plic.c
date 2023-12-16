@@ -1,4 +1,4 @@
-/* $NetBSD: plic.c,v 1.2 2023/09/02 09:58:15 skrll Exp $ */
+/* $NetBSD: plic.c,v 1.3 2023/12/16 18:02:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plic.c,v 1.2 2023/09/02 09:58:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plic.c,v 1.3 2023/12/16 18:02:02 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -190,17 +190,16 @@ plic_set_threshold(struct plic_softc *sc, cpuid_t hartid, uint32_t threshold)
 int
 plic_attach_common(struct plic_softc *sc, bus_addr_t addr, bus_size_t size)
 {
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-	u_int irq;
+	const size_t szintrs = sizeof(*sc->sc_intr) * sc->sc_ndev;
+	const size_t szintrevs = sizeof(*sc->sc_intrevs) * sc->sc_ndev;
 
-	sc->sc_intr = kmem_zalloc(sizeof(*sc->sc_intr) * sc->sc_ndev,
-	    KM_SLEEP);
-	sc->sc_intrevs = kmem_zalloc(sizeof(*sc->sc_intrevs) * sc->sc_ndev,
-	    KM_SLEEP);
+	sc->sc_intr = kmem_zalloc(szintrs, KM_SLEEP);
+	sc->sc_intrevs = kmem_zalloc(szintrevs, KM_SLEEP);
 
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
-		aprint_error("couldn't map registers\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map registers\n");
+		kmem_free(sc->sc_intr, szintrs);
+		kmem_free(sc->sc_intrevs, szintrevs);
 		return -1;
 	}
 
@@ -210,10 +209,13 @@ plic_attach_common(struct plic_softc *sc, bus_addr_t addr, bus_size_t size)
 	plic_sc = sc;
 
 	/* Start with all interrupts disabled. */
+	u_int irq;
 	for (irq = PLIC_FIRST_IRQ; irq < sc->sc_ndev; irq++) {
 		plic_set_priority(sc, irq, 0);
 	}
 
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
 	/* Set priority thresholds for all interrupts to 0 (not masked). */
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		plic_set_threshold(sc, ci->ci_cpuid, 0);
