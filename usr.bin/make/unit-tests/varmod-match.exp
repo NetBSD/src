@@ -1,14 +1,14 @@
-make: "varmod-match.mk" line 236: warning: Unfinished character list in pattern 'a[' of modifier ':M'
-make: "varmod-match.mk" line 244: warning: Unfinished character list in pattern 'a[^' of modifier ':M'
-make: "varmod-match.mk" line 252: warning: Unfinished character list in pattern '[-x1-3' of modifier ':M'
-make: "varmod-match.mk" line 260: warning: Unfinished character list in pattern '*[-x1-3' of modifier ':M'
-make: "varmod-match.mk" line 269: warning: Unfinished character list in pattern '[^-x1-3' of modifier ':M'
-make: "varmod-match.mk" line 283: warning: Unfinished character list in pattern '?[\' of modifier ':M'
-make: "varmod-match.mk" line 291: warning: Unfinished character range in pattern '[x-' of modifier ':M'
-make: "varmod-match.mk" line 303: warning: Unfinished character range in pattern '[^x-' of modifier ':M'
-make: "varmod-match.mk" line 311: warning: Unfinished character list in pattern '[' of modifier ':M'
-make: "varmod-match.mk" line 311: Unknown modifier "]"
-make: "varmod-match.mk" line 311: Malformed conditional (${ ${:U\:} ${:U\:\:} :L:M[:]} != ":")
+make: "varmod-match.mk" line 238: warning: Unfinished character list in pattern 'a[' of modifier ':M'
+make: "varmod-match.mk" line 246: warning: Unfinished character list in pattern 'a[^' of modifier ':M'
+make: "varmod-match.mk" line 254: warning: Unfinished character list in pattern '[-x1-3' of modifier ':M'
+make: "varmod-match.mk" line 262: warning: Unfinished character list in pattern '*[-x1-3' of modifier ':M'
+make: "varmod-match.mk" line 271: warning: Unfinished character list in pattern '[^-x1-3' of modifier ':M'
+make: "varmod-match.mk" line 285: warning: Unfinished character list in pattern '?[\' of modifier ':M'
+make: "varmod-match.mk" line 293: warning: Unfinished character range in pattern '[x-' of modifier ':M'
+make: "varmod-match.mk" line 305: warning: Unfinished character range in pattern '[^x-' of modifier ':M'
+make: "varmod-match.mk" line 313: warning: Unfinished character list in pattern '[' of modifier ':M'
+make: "varmod-match.mk" line 313: Unknown modifier "]"
+make: "varmod-match.mk" line 313: Malformed conditional (${ ${:U\:} ${:U\:\:} :L:M[:]} != ":")
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
