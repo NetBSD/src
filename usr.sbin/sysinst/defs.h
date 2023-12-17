@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.89 2023/03/14 09:54:40 kre Exp $	*/
+/*	$NetBSD: defs.h,v 1.90 2023/12/17 18:46:42 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -599,10 +599,13 @@ extern const char *ushell;
 
 #define	XFER_FTP	0
 #define	XFER_HTTP	1
-#define	XFER_MAX	XFER_HTTP
+#define	XFER_HTTPS	2
+#define	XFER_MAX	XFER_HTTPS
+#define	XFER_HOST_MAX	XFER_HTTP	/* http and https share a server name */
+#define	XFER_HOST(XFER)	((XFER) == XFER_FTP ? 0 : 1)
 
 struct ftpinfo {
-	char xfer_host[XFER_MAX+1][STRSIZE];
+	char xfer_host[XFER_HOST_MAX+1][STRSIZE];
 	char dir[STRSIZE] ;
 	char user[SSTRSIZE];
 	char pass[STRSIZE];
