@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.326 2023/11/02 04:50:44 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.327 2023/12/17 09:02:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -1040,7 +1040,7 @@ void PrintOnError(GNode *, const char *);
 void Main_ExportMAKEFLAGS(bool);
 bool Main_SetObjdir(bool, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
 int mkTempFile(const char *, char *, size_t) MAKE_ATTR_USE;
-int str2Lst_Append(StringList *, char *);
+void AppendWords(StringList *, char *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 bool GNode_ShouldExecute(GNode *gn) MAKE_ATTR_USE;
 
