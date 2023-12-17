@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.14 2023/12/17 08:53:55 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.15 2023/12/17 09:17:16 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -111,6 +111,26 @@ LINES.variable-if-triple-negation= \
 # expect: Parse_PushInput: file variable-if-triple-negation.tmp, line 1
 # expect: Parse_PushInput: file variable-if-triple-negation.tmp, line 1
 
+# If the guard variable is enclosed in spaces, it does not have an effect, as
+# that form is not common in practice.
+CASES+=	variable-if-spaced
+LINES.variable-if-spaced= \
+	'.if !defined( VARIABLE_IF_SPACED )' \
+	'VARIABLE_IF_SPACED=' \
+	'.endif'
+# expect: Parse_PushInput: file variable-if-spaced.tmp, line 1
+# expect: Parse_PushInput: file variable-if-spaced.tmp, line 1
+
+# If the guard variable condition is enclosed in parentheses, it does not have
+# an effect, as that form is not common in practice.
+CASES+=	variable-if-parenthesized
+LINES.variable-if-parenthesized= \
+	'.if (!defined(VARIABLE_IF_PARENTHESIZED))' \
+	'VARIABLE_IF_PARENTHESIZED=' \
+	'.endif'
+# expect: Parse_PushInput: file variable-if-parenthesized.tmp, line 1
+# expect: Parse_PushInput: file variable-if-parenthesized.tmp, line 1
+
 # A conditional other than '.if' or '.ifndef' does not guard the file, even if
 # it is otherwise equivalent to the above accepted forms.
 CASES+=	variable-ifdef-negated
@@ -129,6 +149,16 @@ LINES.variable-name-mismatch= \
 	'.endif'
 # expect: Parse_PushInput: file variable-name-mismatch.tmp, line 1
 # expect: Parse_PushInput: file variable-name-mismatch.tmp, line 1
+
+# If the guard variable condition is enclosed in parentheses, it does not have
+# an effect, as that form is not common in practice.
+CASES+=	variable-ifndef-parenthesized
+LINES.variable-ifndef-parenthesized= \
+	'.ifndef (VARIABLE_IFNDEF_PARENTHESIZED)' \
+	'VARIABLE_IFNDEF_PARENTHESIZED=' \
+	'.endif'
+# expect: Parse_PushInput: file variable-ifndef-parenthesized.tmp, line 1
+# expect: Parse_PushInput: file variable-ifndef-parenthesized.tmp, line 1
 
 # The variable name '!VARNAME' cannot be used in an '.ifndef' directive, as
 # the '!' would be a negation.  It is syntactically valid in a '.if !defined'
@@ -473,7 +503,7 @@ LINES.target-indirect-PARSEFILE2= \
 # Using plain .PARSEFILE without .PARSEDIR leads to name clashes.  The include
 # guard is the same as in the test case 'target-indirect-PARSEFILE', as the
 # guard name only contains the basename but not the directory name.  So even
-# without defining the guard variable, the file is considered guarded.
+# without defining the guard target, the file is considered guarded.
 CASES+=	subdir/target-indirect-PARSEFILE
 LINES.subdir/target-indirect-PARSEFILE= \
 	'.if !target(__$${.PARSEFILE}__)' \
@@ -550,6 +580,26 @@ LINES.target-name-exclamation= \
 	'.endif'
 # expect: Parse_PushInput: file target-name-exclamation.tmp, line 1
 # expect: Parse_PushInput: file target-name-exclamation.tmp, line 1
+
+# If the guard target name is enclosed in spaces, it does not have an effect,
+# as that form is not common in practice.
+CASES+=	target-name-parenthesized
+LINES.target-name-parenthesized= \
+	'.if !target( target-name-parenthesized )' \
+	'target-name-parenthesized: .NOTMAIN' \
+	'.endif'
+# expect: Parse_PushInput: file target-name-parenthesized.tmp, line 1
+# expect: Parse_PushInput: file target-name-parenthesized.tmp, line 1
+
+# If the guard target condition is enclosed in parentheses, it does not have
+# an effect, as that form is not common in practice.
+CASES+=	target-call-parenthesized
+LINES.target-call-parenthesized= \
+	'.if (!target(target-call-parenthesized))' \
+	'target-call-parenthesized: .NOTMAIN' \
+	'.endif'
+# expect: Parse_PushInput: file target-call-parenthesized.tmp, line 1
+# expect: Parse_PushInput: file target-call-parenthesized.tmp, line 1
 
 
 # Now run all test cases by including each of the files twice and looking at
