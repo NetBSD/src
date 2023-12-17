@@ -99,4 +99,6 @@ Parse_PushInput: file target-name-parenthesized.tmp, line 1
 Parse_PushInput: file target-name-parenthesized.tmp, line 1
 Parse_PushInput: file target-call-parenthesized.tmp, line 1
 Parse_PushInput: file target-call-parenthesized.tmp, line 1
+Parse_PushInput: file multiline.tmp, line 1
+Skipping 'multiline.tmp' because 'MULTILINE' is defined
 exit status 0

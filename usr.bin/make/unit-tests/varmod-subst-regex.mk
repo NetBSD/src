@@ -1,4 +1,4 @@
-# $NetBSD: varmod-subst-regex.mk,v 1.9 2023/12/10 14:30:51 rillig Exp $
+# $NetBSD: varmod-subst-regex.mk,v 1.10 2023/12/17 14:07:22 rillig Exp $
 #
 # Tests for the :C,from,to, variable modifier.
 
@@ -85,10 +85,10 @@ all: unmatched-subexpression
 .endif
 
 
-# Contrary to the ':S' modifier, the ':C' modifier matches on an expression
+# Like the ':S' modifier, the ':C' modifier matches on an expression
 # that contains no words at all, but only if the regular expression matches an
 # empty string, for example, when the regular expression is anchored at the
-# beginning or the end.
+# beginning or the end of the word.
 .if "<${U:S,^,prefix,}> <${:U:C,^,prefix,}>" != "<> <prefix>"
 .  error
 .endif
@@ -126,7 +126,7 @@ mod-regex-limits:
 	@echo $@:22-missing:${:U1 23 456:C,(.).,\2\2,:Q}
 	@echo $@:22-ok:${:U1 23 456:C,(.)(.),\2\2,:Q}
 	# The :C modifier only handles single-digit capturing groups,
-	# which is more than enough for daily use.
+	# which is enough for all practical use cases.
 	@echo $@:capture:${:UabcdefghijABCDEFGHIJrest:C,(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.),\9\8\7\6\5\4\3\2\1\0\10\11\12,}
 
 mod-regex-errors:
