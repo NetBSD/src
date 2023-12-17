@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.5 2015/06/16 22:54:10 christos Exp $	*/
+/*	$NetBSD: command.c,v 1.6 2023/12/17 14:38:49 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: command.c,v 1.5 2015/06/16 22:54:10 christos Exp $");
+__RCSID("$NetBSD: command.c,v 1.6 2023/12/17 14:38:49 andvar Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -71,7 +71,7 @@ static struct alias {
 	{ SDP_SERVICE_CLASS_HEADSET,
 	  "HSET",	"Headset Service"				},
 	{ SDP_UUID_PROTOCOL_L2CAP,
-	  "L2CAP",	"Logical Link Control and Adapatation Protocol"	},
+	  "L2CAP",	"Logical Link Control and Adaptation Protocol"	},
 	{ SDP_SERVICE_CLASS_LAN_ACCESS_USING_PPP,
 	  "LAN",	"Lan access using PPP Service"			},
 	{ SDP_SERVICE_CLASS_NAP,
