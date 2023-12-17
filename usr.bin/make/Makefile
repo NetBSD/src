@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.125 2023/06/19 20:14:45 rillig Exp $
+#	$NetBSD: Makefile,v 1.126 2023/12/17 10:48:10 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -80,7 +80,7 @@ COPTS.filemon_dev.c+= \
 .endif
 
 SUBDIR.roff+=	PSD.doc
-.if make(obj) || make(clean)
+.if make(obj) || make(clean) || make(cleandir)
 SUBDIR+=	unit-tests
 .endif
 
