@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.100 2023/12/16 21:26:07 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.101 2023/12/17 22:46:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.100 2023/12/16 21:26:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.101 2023/12/17 22:46:44 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -375,8 +375,15 @@ match_fixed_length:
 
 		if (*pat == '\\')	/* match the next character exactly */
 			pat++;
-		if (*pat != *str)
+		if (*pat != *str) {
+			if (asterisk && str == fixed_str) {
+				while (*str != '\0' && *str != *pat)
+					str++;
+				fixed_str = str;
+				goto match_fixed_length;
+			}
 			goto no_match;
+		}
 	}
 
 	if (*pat == '*') {
