@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.59 2023/12/05 22:24:40 andvar Exp $	*/
+/*	$NetBSD: mha.c,v 1.60 2023/12/17 22:07:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.59 2023/12/05 22:24:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.60 2023/12/17 22:07:34 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -683,7 +683,7 @@ mha_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		SPC_TRACE(("[mha_scsi_cmd] "));
 		SPC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
-		    periph->periph_target));
+		    xs->xs_periph->periph_target));
 
 		flags = xs->xs_control;
 
