@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.39 2022/10/11 22:03:37 andvar Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.40 2023/12/17 14:54:49 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.39 2022/10/11 22:03:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2023/12/17 14:54:49 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -485,7 +485,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DEBUG_DMA
-	printf("dmamem_unmap: t=%p kva=%p size=%x\n", t, kva, size);
+	printf("dmamem_unmap: t=%p kva=%p size=%lx\n", t, kva, size);
 #endif	/* DEBUG_DMA */
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
