@@ -14,10 +14,16 @@ Parse_PushInput: file variable-if-reuse.tmp, line 1
 Skipping 'variable-if-reuse.tmp' because 'VARIABLE_IF' is defined
 Parse_PushInput: file variable-if-triple-negation.tmp, line 1
 Parse_PushInput: file variable-if-triple-negation.tmp, line 1
+Parse_PushInput: file variable-if-spaced.tmp, line 1
+Parse_PushInput: file variable-if-spaced.tmp, line 1
+Parse_PushInput: file variable-if-parenthesized.tmp, line 1
+Parse_PushInput: file variable-if-parenthesized.tmp, line 1
 Parse_PushInput: file variable-ifdef-negated.tmp, line 1
 Parse_PushInput: file variable-ifdef-negated.tmp, line 1
 Parse_PushInput: file variable-name-mismatch.tmp, line 1
 Parse_PushInput: file variable-name-mismatch.tmp, line 1
+Parse_PushInput: file variable-ifndef-parenthesized.tmp, line 1
+Parse_PushInput: file variable-ifndef-parenthesized.tmp, line 1
 Parse_PushInput: file variable-name-exclamation.tmp, line 1
 Parse_PushInput: file variable-name-exclamation.tmp, line 1
 Parse_PushInput: file variable-name-exclamation-middle.tmp, line 1
@@ -89,4 +95,8 @@ Parse_PushInput: file target-already-defined.tmp, line 1
 Skipping 'target-already-defined.tmp' because 'target-already-defined' is defined
 Parse_PushInput: file target-name-exclamation.tmp, line 1
 Parse_PushInput: file target-name-exclamation.tmp, line 1
+Parse_PushInput: file target-name-parenthesized.tmp, line 1
+Parse_PushInput: file target-name-parenthesized.tmp, line 1
+Parse_PushInput: file target-call-parenthesized.tmp, line 1
+Parse_PushInput: file target-call-parenthesized.tmp, line 1
 exit status 0
