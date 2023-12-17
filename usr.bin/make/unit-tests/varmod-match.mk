@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.18 2023/12/16 23:38:35 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.19 2023/12/17 00:19:11 rillig Exp $
 #
 # Tests for the ':M' modifier, which keeps only those words that match the
 # given pattern.
@@ -12,8 +12,10 @@
 # 5. Performance
 # 6. Error handling
 # 7. Historical bugs
+#
+# See ApplyModifier_Match, ParseModifier_Match, ModifyWord_Match and
+# Str_Match.
 
-NUMBERS=	One Two Three Four five six seven
 
 # 1. Pattern characters '*', '?' and '\'
 #
@@ -21,7 +23,35 @@ NUMBERS=	One Two Three Four five six seven
 #	?	matches 1 character
 #	\x	matches the character 'x'
 
-# TODO
+# The pattern is anchored both at the beginning and at the end of the word.
+# Since the pattern 'e' does not contain any pattern matching characters, it
+# matches exactly the word 'e', twice.
+.if ${a c e aa cc ee e f g:L:Me} != "e e"
+.  error
+.endif
+
+# The pattern character '?' matches exactly 1 character, the pattern character
+# '*' matches 0 or more characters.  The whole pattern matches all words that
+# start with 's' and have 3 or more characters.
+.if ${One Two Three Four five six seven:L:Ms??*} != "six seven"
+.  error
+.endif
+
+# Ensure that a pattern without placeholders only matches itself.
+.if ${a aa aaa b ba baa bab:L:Ma} != "a"
+.  error
+.endif
+
+# Ensure that a pattern that ends with '*' is properly anchored at the
+# beginning.
+.if ${a aa aaa b ba baa bab:L:Ma*} != "a aa aaa"
+.  error
+.endif
+
+# Ensure that a pattern that starts with '*' is properly anchored at the end.
+.if ${a aa aaa b ba baa bab:L:M*a} != "a aa aaa ba baa"
+.  error
+.endif
 
 
 # 2. Character lists and character ranges
@@ -32,12 +62,12 @@ NUMBERS=	One Two Three Four five six seven
 #	[z-a]	matches 1 character from the range 'a' to 'z'
 
 # Only keep words that start with an uppercase letter.
-.if ${NUMBERS:M[A-Z]*} != "One Two Three Four"
+.if ${One Two Three Four five six seven:L:M[A-Z]*} != "One Two Three Four"
 .  error
 .endif
 
 # Only keep words that start with a character other than an uppercase letter.
-.if ${NUMBERS:M[^A-Z]*} != "five six seven"
+.if ${One Two Three Four five six seven:L:M[^A-Z]*} != "five six seven"
 .  error
 .endif
 
@@ -120,9 +150,9 @@ WORDS=		- -]
 # Only keep words that don't start with s and at the same time end with
 # either of [ex].
 #
-# This test case ensures that the negation from the first character class
-# does not propagate to the second character class.
-.if ${NUMBERS:M[^s]*[ex]} != "One Three five"
+# This test case ensures that the negation from the first character list
+# '[^s]' does not propagate to the second character list '[ex]'.
+.if ${One Two Three Four five six seven:L:M[^s]*[ex]} != "One Three five"
 .  error
 .endif
 
@@ -176,8 +206,8 @@ n=	2
 
 # To match a dollar sign in a word, double it.
 #
-# This is different from the :S and :C variable modifiers, where a '$'
-# has to be escaped as '\$'.
+# This is different from the :S and :C modifiers, where a '$' has to be
+# escaped as '\$'.
 .if ${:Ua \$ sign:M*$$*} != "\$"
 .  error
 .endif
@@ -186,7 +216,7 @@ n=	2
 # interpreted as a backslash followed by whatever expression the
 # '$' starts.
 #
-# This differs from the :S, :C and several other variable modifiers.
+# This differs from the :S, :C and several other modifiers.
 ${:U*}=		asterisk
 .if ${:Ua \$ sign any-asterisk:M*\$*} != "any-asterisk"
 .  error
