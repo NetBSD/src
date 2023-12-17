@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.15 2023/12/17 09:17:16 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.16 2023/12/17 14:07:22 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -600,6 +600,20 @@ LINES.target-call-parenthesized= \
 	'.endif'
 # expect: Parse_PushInput: file target-call-parenthesized.tmp, line 1
 # expect: Parse_PushInput: file target-call-parenthesized.tmp, line 1
+
+# If the '.if' or '.ifndef' directive spans more than a single line, it is
+# still recognized as a guard condition.  This case is entirely uncommon, but
+# at the point where the guard condition is checked, line continuations have
+# already been converted to spaces.
+CASES+=	multiline
+LINES.multiline= \
+	'.\' \
+	'  ifndef \' \
+	'  MULTILINE' \
+	'MULTILINE=' \
+	'.endif'
+# expect: Parse_PushInput: file multiline.tmp, line 1
+# expect: Skipping 'multiline.tmp' because 'MULTILINE' is defined
 
 
 # Now run all test cases by including each of the files twice and looking at

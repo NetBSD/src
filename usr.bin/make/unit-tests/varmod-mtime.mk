@@ -1,4 +1,4 @@
-# $NetBSD: varmod-mtime.mk,v 1.8 2023/11/19 12:11:34 rillig Exp $
+# $NetBSD: varmod-mtime.mk,v 1.9 2023/12/17 14:07:22 rillig Exp $
 #
 # Tests for the ':mtime' variable modifier, which maps each word of the
 # expression to that file's modification time.
@@ -104,7 +104,7 @@ end:=	${%s:L:gmtime}
 
 # If the expression is irrelevant, the ':mtime' modifier is only parsed, it
 # does not perform any filesystem operations.
-.if 0 && ${anything:L:mtime}
+.if 0 && ${no/such/file:L:mtime=error}
 .  error
 .endif
 
@@ -115,5 +115,11 @@ end:=	${%s:L:gmtime}
 .if ${anything:L:mtim}
 .  error
 .else
+.  error
+.endif
+
+
+# An empty word list results in an empty mtime list.
+.if ${:U:mtime} != ""
 .  error
 .endif

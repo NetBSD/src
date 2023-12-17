@@ -1,4 +1,4 @@
-# $NetBSD: varmod-range.mk,v 1.9 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: varmod-range.mk,v 1.10 2023/12/17 14:07:22 rillig Exp $
 #
 # Tests for the :range variable modifier, which generates sequences
 # of integers from the given range.
@@ -25,12 +25,24 @@
 .  error
 .endif
 
+# An empty expression results in a sequence of a single number, even though
+# the expression contains 0 words.
+.if ${:U:range} != "1"
+.  error
+.endif
+
 # The :range modifier can be given a parameter, which makes the generated
 # range independent from the value or the name of the expression.
-#
-# XXX: As of 2020-09-27, the :range=... modifier does not turn the undefined
-# expression into a defined one.  This looks like an oversight.
 .if "${:range=5}" != ""
+.  error
+.endif
+# XXX: As of 2023-12-17, the ':range=n' modifier does not turn the undefined
+# expression into a defined one, even though it does not depend on the value
+# of the expression.  This looks like an oversight.
+# expect+1: Malformed conditional (${:range=5} != "")
+.if ${:range=5} != ""
+.  error
+.else
 .  error
 .endif
 
