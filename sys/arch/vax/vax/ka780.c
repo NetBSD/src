@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.33 2018/03/25 08:13:20 ragge Exp $ */
+/*	$NetBSD: ka780.c,v 1.34 2023/12/17 18:39:02 andvar Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.33 2018/03/25 08:13:20 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.34 2023/12/17 18:39:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,55 @@ mem_sbi_attach(device_t parent, device_t self, void *aux)
 	printf("\n");
 }
 
+#ifdef TRENDATA
+/*
+ * Figure out what chip to replace on Trendata boards.
+ * Assumes all your memory is Trendata or the non-Trendata
+ * memory never fails..
+ */
+const struct {
+	u_char	m_syndrome;
+	char	m_chip[4];
+} memlogtab[] = {
+	{0x01,	"C00"},	{0x02,	"C01"},	{0x04,	"C02"},	{0x08,	"C03"},
+	{0x10,	"C04"},	{0x19,	"L01"},	{0x1A,	"L02"},	{0x1C,	"L04"},
+	{0x1F,	"L07"},	{0x20,	"C05"},	{0x38,	"L00"},	{0x3B,	"L03"},
+	{0x3D,	"L05"},	{0x3E,	"L06"},	{0x40,	"C06"},	{0x49,	"L09"},
+	{0x4A,	"L10"},	{0x4c,	"L12"},	{0x4F,	"L15"},	{0x51,	"L17"},
+	{0x52,	"L18"},	{0x54,	"L20"},	{0x57,	"L23"},	{0x58,	"L24"},
+	{0x5B,	"L27"},	{0x5D,	"L29"},	{0x5E,	"L30"},	{0x68,	"L08"},
+	{0x6B,	"L11"},	{0x6D,	"L13"},	{0x6E,	"L14"},	{0x70,	"L16"},
+	{0x73,	"L19"},	{0x75,	"L21"},	{0x76,	"L22"},	{0x79,	"L25"},
+	{0x7A,	"L26"},	{0x7C,	"L28"},	{0x7F,	"L31"},	{0x80,	"C07"},
+	{0x89,	"U01"},	{0x8A,	"U02"},	{0x8C,	"U04"},	{0x8F,	"U07"},
+	{0x91,	"U09"},	{0x92,	"U10"},	{0x94,	"U12"},	{0x97,	"U15"},
+	{0x98,	"U16"},	{0x9B,	"U19"},	{0x9D,	"U21"},	{0x9E,	"U22"},
+	{0xA8,	"U00"},	{0xAB,	"U03"},	{0xAD,	"U05"},	{0xAE,	"U06"},
+	{0xB0,	"U08"},	{0xB3,	"U11"},	{0xB5,	"U13"},	{0xB6,	"U14"},
+	{0xB9,	"U17"},	{0xBA,	"U18"},	{0xBC,	"U20"},	{0xBF,	"U23"},
+	{0xC1,	"U25"},	{0xC2,	"U26"},	{0xC4,	"U28"},	{0xC7,	"U31"},
+	{0xE0,	"U24"},	{0xE3,	"U27"},	{0xE5,	"U29"},	{0xE6,	"U30"}
+};
+
+static void
+memlog(int m, struct mcr780 *mcr)
+{
+	int i;
+
+	for (i = 0; i < __arraycount(memlogtab); i++)
+		if ((u_char)(M780C_SYN(mcr)) == memlogtab[i].m_syndrome) {
+			printf(
+			    "mcr%d: replace %s chip in %s bank of memory"
+			    " board %d (0-15)\n",
+			    m, memlogtab[i].m_chip,
+			    (M780C_ADDR(mcr) & 0x8000) ? "upper" : "lower",
+			    (M780C_ADDR(mcr) >> 16));
+			return;
+		}
+	printf("mcr%d: multiple errors, not traceable\n", m);
+}
+#endif /* TRENDATA */
+
 /* log crd errors */
 void
 ka780_memerr(void)
@@ -249,56 +298,6 @@ ka780_memerr(void)
 		}
 	}
 }
-
-#ifdef TRENDATA
-/*
- * Figure out what chip to replace on Trendata boards.
- * Assumes all your memory is Trendata or the non-Trendata
- * memory never fails..
- */
-const struct {
-	u_char	m_syndrome;
-	char	m_chip[4];
-} memlogtab[] = {
-	0x01,	"C00",	0x02,	"C01",	0x04,	"C02",	0x08,	"C03",
-	0x10,	"C04",	0x19,	"L01",	0x1A,	"L02",	0x1C,	"L04",
-	0x1F,	"L07",	0x20,	"C05",	0x38,	"L00",	0x3B,	"L03",
-	0x3D,	"L05",	0x3E,	"L06",	0x40,	"C06",	0x49,	"L09",
-	0x4A,	"L10",	0x4c,	"L12",	0x4F,	"L15",	0x51,	"L17",
-	0x52,	"L18",	0x54,	"L20",	0x57,	"L23",	0x58,	"L24",
-	0x5B,	"L27",	0x5D,	"L29",	0x5E,	"L30",	0x68,	"L08",
-	0x6B,	"L11",	0x6D,	"L13",	0x6E,	"L14",	0x70,	"L16",
-	0x73,	"L19",	0x75,	"L21",	0x76,	"L22",	0x79,	"L25",
-	0x7A,	"L26",	0x7C,	"L28",	0x7F,	"L31",	0x80,	"C07",
-	0x89,	"U01",	0x8A,	"U02",	0x8C,	"U04",	0x8F,	"U07",
-	0x91,	"U09",	0x92,	"U10",	0x94,	"U12",	0x97,	"U15",
-	0x98,	"U16",	0x9B,	"U19",	0x9D,	"U21",	0x9E,	"U22",
-	0xA8,	"U00",	0xAB,	"U03",	0xAD,	"U05",	0xAE,	"U06",
-	0xB0,	"U08",	0xB3,	"U11",	0xB5,	"U13",	0xB6,	"U14",
-	0xB9,	"U17",	0xBA,	"U18",	0xBC,	"U20",	0xBF,	"U23",
-	0xC1,	"U25",	0xC2,	"U26",	0xC4,	"U28",	0xC7,	"U31",
-	0xE0,	"U24",	0xE3,	"U27",	0xE5,	"U29",	0xE6,	"U30"
-};
-
-int
-memlog(int m, struct mcr780 *mcr)
-{
-	int i;
-
-	for (i = 0; i < __arraycount(memlogtab); i++)
-		if ((u_char)(M780C_SYN(mcr)) == memlogtab[i].m_syndrome) {
-			printf (
-	"mcr%d: replace %s chip in %s bank of memory board %d (0-15)\n",
-				m,
-				memlogtab[i].m_chip,
-				(M780C_ADDR(mcr) & 0x8000) ? "upper" : "lower",
-				(M780C_ADDR(mcr) >> 16));
-			return;
-		}
-	printf ("mcr%d: multiple errors, not traceable\n", m);
-	break;
-}
-#endif /* TRENDATA */
 
 const char mc780[][3] = {
 	"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"
