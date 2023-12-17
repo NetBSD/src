@@ -1,4 +1,4 @@
-# $NetBSD: deptgt.mk,v 1.15 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: deptgt.mk,v 1.16 2023/12/17 09:44:00 rillig Exp $
 #
 # Tests for special targets like .BEGIN or .SUFFIXES in dependency
 # declarations.
@@ -54,7 +54,7 @@ $$$$$$$${:U:Z}:
 # expect+1: warning: Extra target (ordinary) ignored
 .PATH ordinary:
 
-# expect+1: Special and mundane targets don't mix. Mundane ones ignored
+# expect+1: warning: Special and mundane targets don't mix. Mundane ones ignored
 ordinary .PATH:
 
 all:
