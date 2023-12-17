@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.19 2023/12/17 00:19:11 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.20 2023/12/17 23:19:02 rillig Exp $
 #
 # Tests for the ':M' modifier, which keeps only those words that match the
 # given pattern.
@@ -50,6 +50,27 @@
 
 # Ensure that a pattern that starts with '*' is properly anchored at the end.
 .if ${a aa aaa b ba baa bab:L:M*a} != "a aa aaa ba baa"
+.  error
+.endif
+
+# Test the fast code path for '*' followed by a regular character.
+.if ${:U file.c file.*c file.h file\.c :M*.c} != "file.c file\\.c"
+.  error
+.endif
+# Ensure that the fast code path correctly handles the backslash.
+.if ${:U file.c file.*c file.h file\.c :M*\.c} != "file.c file\\.c"
+.  error
+.endif
+# Ensure that the fast code path correctly handles '\*'.
+.if ${:U file.c file.*c file.h file\.c :M*\*c} != "file.*c"
+.  error
+.endif
+# Ensure that the partial match '.c' doesn't confuse the fast code path.
+.if ${:U file.c.cc file.cc.cc file.cc.c :M*.cc} != "file.c.cc file.cc.cc"
+.  error
+.endif
+# Ensure that the substring '.cc' doesn't confuse the fast code path for '.c'.
+.if ${:U file.c.cc file.cc.cc file.cc.c :M*.c} != "file.cc.c"
 .  error
 .endif
 
