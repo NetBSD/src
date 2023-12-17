@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.46 2022/01/31 22:58:26 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.47 2023/12/17 08:53:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@ typedef struct HashEntry {
 	struct HashEntry *next;	/* Used to link together all the entries
 				 * associated with the same bucket. */
 	void *value;
-	unsigned int key_hash;	/* hash value of the key */
+	unsigned int hash;	/* hash value of the key */
 	char key[1];		/* key string, variable length */
 } HashEntry;
 
@@ -109,15 +109,15 @@ typedef struct HashSet {
 } HashSet;
 
 MAKE_INLINE void * MAKE_ATTR_USE
-HashEntry_Get(HashEntry *h)
+HashEntry_Get(HashEntry *he)
 {
-	return h->value;
+	return he->value;
 }
 
 MAKE_INLINE void
-HashEntry_Set(HashEntry *h, void *datum)
+HashEntry_Set(HashEntry *he, void *datum)
 {
-	h->value = datum;
+	he->value = datum;
 }
 
 /* Set things up for iterating over all entries in the hash table. */

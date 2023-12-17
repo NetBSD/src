@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.355 2023/11/19 22:50:11 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.356 2023/12/17 08:53:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.355 2023/11/19 22:50:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.356 2023/12/17 08:53:54 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -212,16 +212,16 @@ ParseWord(const char **pp, bool doEval)
 {
 	const char *p = *pp;
 	Buffer word;
-	int paren_depth;
+	int depth;
 
 	Buf_InitSize(&word, 16);
 
-	paren_depth = 0;
+	depth = 0;
 	for (;;) {
 		char ch = *p;
 		if (ch == '\0' || ch == ' ' || ch == '\t')
 			break;
-		if ((ch == '&' || ch == '|') && paren_depth == 0)
+		if ((ch == '&' || ch == '|') && depth == 0)
 			break;
 		if (ch == '$') {
 			VarEvalMode emode = doEval
@@ -238,8 +238,8 @@ ParseWord(const char **pp, bool doEval)
 			continue;
 		}
 		if (ch == '(')
-			paren_depth++;
-		else if (ch == ')' && --paren_depth < 0)
+			depth++;
+		else if (ch == ')' && --depth < 0)
 			break;
 		Buf_AddByte(&word, ch);
 		p++;
@@ -667,19 +667,19 @@ done_lhs:
 static bool
 CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 {
-	const char *cp = par->p;
+	const char *p = par->p;
 	Token tok;
 	FStr val;
 
-	if (!skip_string(&cp, "empty"))
+	if (!skip_string(&p, "empty"))
 		return false;
 
-	cpp_skip_whitespace(&cp);
-	if (*cp != '(')
+	cpp_skip_whitespace(&p);
+	if (*p != '(')
 		return false;
 
-	cp--;			/* Make cp[1] point to the '('. */
-	val = Var_Parse(&cp, SCOPE_CMDLINE,
+	p--;			/* Make p[1] point to the '('. */
+	val = Var_Parse(&p, SCOPE_CMDLINE,
 	    doEval ? VARE_WANTRES : VARE_PARSE_ONLY);
 	/* TODO: handle errors */
 
@@ -692,7 +692,7 @@ CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 
 	FStr_Done(&val);
 	*out_token = tok;
-	par->p = cp;
+	par->p = p;
 	return true;
 }
 
@@ -743,11 +743,11 @@ CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 {
 	Token t;
 	char *arg;
-	const char *cp;
+	const char *p;
 
 	/* Push anything numeric through the compare expression */
-	cp = par->p;
-	if (ch_isdigit(cp[0]) || cp[0] == '-' || cp[0] == '+')
+	p = par->p;
+	if (ch_isdigit(p[0]) || p[0] == '-' || p[0] == '+')
 		return CondParser_Comparison(par, doEval);
 
 	/*
@@ -762,12 +762,12 @@ CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 	 * XXX: In edge cases, an expression may be evaluated twice,
 	 *  see cond-token-plain.mk, keyword 'twice'.
 	 */
-	arg = ParseWord(&cp, doEval);
+	arg = ParseWord(&p, doEval);
 	assert(arg[0] != '\0');
 
-	if (*cp == '=' || *cp == '!' || *cp == '<' || *cp == '>')
+	if (*p == '=' || *p == '!' || *p == '<' || *p == '>')
 		return CondParser_Comparison(par, doEval);
-	par->p = cp;
+	par->p = p;
 
 	/*
 	 * Evaluate the argument using the default function.

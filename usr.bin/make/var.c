@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1082 2023/12/10 20:17:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1083 2023/12/17 08:53:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1082 2023/12/10 20:17:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1083 2023/12/17 08:53:55 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -789,10 +789,10 @@ Var_ExportVars(const char *varnames)
 static void
 ClearEnv(void)
 {
-	const char *cp;
+	const char *level;
 	char **newenv;
 
-	cp = getenv(MAKE_LEVEL_ENV);	/* we should preserve this */
+	level = getenv(MAKE_LEVEL_ENV);	/* we should preserve this */
 	if (environ == savedEnv) {
 		/* we have been here before! */
 		newenv = bmake_realloc(environ, 2 * sizeof(char *));
@@ -808,8 +808,8 @@ ClearEnv(void)
 	environ = savedEnv = newenv;
 	newenv[0] = NULL;
 	newenv[1] = NULL;
-	if (cp != NULL && *cp != '\0')
-		setenv(MAKE_LEVEL_ENV, cp, 1);
+	if (level != NULL && *level != '\0')
+		setenv(MAKE_LEVEL_ENV, level, 1);
 }
 
 static void
@@ -865,12 +865,12 @@ UnexportVar(Substring varname, UnexportWhat what)
 	if (what == UNEXPORT_NAMED) {
 		/* Remove the variable names from .MAKE.EXPORTED. */
 		/* XXX: v->name is injected without escaping it */
-		char *expr = str_concat3("${.MAKE.EXPORTED:N",
-		    v->name.str, "}");
-		char *cp = Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES);
+		char *expr = str_concat3(
+		    "${.MAKE.EXPORTED:N", v->name.str, "}");
+		char *filtered = Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES);
 		/* TODO: handle errors */
-		Global_Set(".MAKE.EXPORTED", cp);
-		free(cp);
+		Global_Set(".MAKE.EXPORTED", filtered);
+		free(filtered);
 		free(expr);
 	}
 }
@@ -2722,9 +2722,9 @@ ParseModifier_Match(const char **pp, const ModChain *ch)
 	 * See if the code can be merged.
 	 * See also ApplyModifier_Defined.
 	 */
-	int nest = 0;
+	int depth = 0;
 	const char *p;
-	for (p = mod + 1; *p != '\0' && !(*p == ':' && nest == 0); p++) {
+	for (p = mod + 1; *p != '\0' && !(*p == ':' && depth == 0); p++) {
 		if (*p == '\\' && p[1] != '\0' &&
 		    (IsDelimiter(p[1], ch) || p[1] == ch->startc)) {
 			if (!needSubst)
@@ -2735,10 +2735,10 @@ ParseModifier_Match(const char **pp, const ModChain *ch)
 		if (*p == '$')
 			needSubst = true;
 		if (*p == '(' || *p == '{')
-			nest++;
+			depth++;
 		if (*p == ')' || *p == '}') {
-			nest--;
-			if (nest < 0)
+			depth--;
+			if (depth < 0)
 				break;
 		}
 	}

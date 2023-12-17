@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.710 2023/11/19 22:50:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.711 2023/12/17 08:53:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.710 2023/11/19 22:50:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.711 2023/12/17 08:53:55 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -2217,7 +2217,7 @@ IsSysVInclude(const char *line)
 static void
 ParseTraditionalInclude(char *line)
 {
-	char *cp;		/* current position in file spec */
+	char *p;		/* current position in file spec */
 	bool done = false;
 	bool silent = line[0] != 'i';
 	char *file = line + (silent ? 8 : 7);
@@ -2230,13 +2230,13 @@ ParseTraditionalInclude(char *line)
 	all_files = Var_Subst(file, SCOPE_CMDLINE, VARE_WANTRES);
 	/* TODO: handle errors */
 
-	for (file = all_files; !done; file = cp + 1) {
+	for (file = all_files; !done; file = p + 1) {
 		/* Skip to end of line or next whitespace */
-		for (cp = file; *cp != '\0' && !ch_isspace(*cp); cp++)
+		for (p = file; *p != '\0' && !ch_isspace(*p); p++)
 			continue;
 
-		if (*cp != '\0')
-			*cp = '\0';
+		if (*p != '\0')
+			*p = '\0';
 		else
 			done = true;
 
@@ -2721,26 +2721,26 @@ HandleBreak(const char *arg)
 static bool
 ParseDirective(char *line)
 {
-	char *cp = line + 1;
+	char *p = line + 1;
 	const char *arg;
 	Substring dir;
 
-	pp_skip_whitespace(&cp);
-	if (IsInclude(cp, false)) {
-		ParseInclude(cp);
+	pp_skip_whitespace(&p);
+	if (IsInclude(p, false)) {
+		ParseInclude(p);
 		return true;
 	}
 
-	dir.start = cp;
-	while (ch_islower(*cp) || *cp == '-')
-		cp++;
-	dir.end = cp;
+	dir.start = p;
+	while (ch_islower(*p) || *p == '-')
+		p++;
+	dir.end = p;
 
-	if (*cp != '\0' && !ch_isspace(*cp))
+	if (*p != '\0' && !ch_isspace(*p))
 		return false;
 
-	pp_skip_whitespace(&cp);
-	arg = cp;
+	pp_skip_whitespace(&p);
+	arg = p;
 
 	if (Substring_Equals(dir, "break"))
 		HandleBreak(arg);
@@ -2801,7 +2801,7 @@ Parse_GuardEndif(void)
 static char *
 FindSemicolon(char *p)
 {
-	int level = 0;
+	int depth = 0;
 
 	for (; *p != '\0'; p++) {
 		if (*p == '\\' && p[1] != '\0') {
@@ -2810,10 +2810,10 @@ FindSemicolon(char *p)
 		}
 
 		if (*p == '$' && (p[1] == '(' || p[1] == '{'))
-			level++;
-		else if (level > 0 && (*p == ')' || *p == '}'))
-			level--;
-		else if (level == 0 && *p == ';')
+			depth++;
+		else if (depth > 0 && (*p == ')' || *p == '}'))
+			depth--;
+		else if (depth == 0 && *p == ';')
 			break;
 	}
 	return p;

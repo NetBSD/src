@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.13 2023/10/19 18:24:33 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.14 2023/12/17 08:53:55 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -28,7 +28,7 @@
 
 
 # This is the canonical form of a variable-based multiple-inclusion guard.
-INCS+=	variable-ifndef
+CASES+=	variable-ifndef
 LINES.variable-ifndef= \
 	'.ifndef VARIABLE_IFNDEF' \
 	'VARIABLE_IFNDEF=' \
@@ -39,7 +39,7 @@ LINES.variable-ifndef= \
 # A file that reuses a guard from a previous file (or whose guard is defined
 # for any other reason) is only processed once, to see whether it is guarded.
 # Its content is skipped, therefore the syntax error is not detected.
-INCS+=	variable-ifndef-reuse
+CASES+=	variable-ifndef-reuse
 LINES.variable-ifndef-reuse= \
 	'.ifndef VARIABLE_IFNDEF' \
 	'syntax error' \
@@ -49,7 +49,7 @@ LINES.variable-ifndef-reuse= \
 
 # The guard variable cannot be a number, as numbers are interpreted
 # differently from bare words.
-INCS+=	variable-ifndef-zero
+CASES+=	variable-ifndef-zero
 LINES.variable-ifndef-zero= \
 	'.ifndef 0e0' \
 	'syntax error' \
@@ -59,7 +59,7 @@ LINES.variable-ifndef-zero= \
 
 # The guard variable cannot be a number, as numbers are interpreted
 # differently from bare words.
-INCS+=	variable-ifndef-one
+CASES+=	variable-ifndef-one
 LINES.variable-ifndef-one= \
 	'.ifndef 1' \
 	'.endif'
@@ -67,7 +67,7 @@ LINES.variable-ifndef-one= \
 # expect: Parse_PushInput: file variable-ifndef-one.tmp, line 1
 
 # Comments and empty lines do not affect the multiple-inclusion guard.
-INCS+=	comments
+CASES+=	comments
 LINES.comments= \
 	'\# comment' \
 	'' \
@@ -82,7 +82,7 @@ LINES.comments= \
 # An alternative form uses the 'defined' function.  It is more verbose than
 # the canonical form but avoids the '.ifndef' directive, as that directive is
 # not commonly used.
-INCS+=	variable-if
+CASES+=	variable-if
 LINES.variable-if= \
 	'.if !defined(VARIABLE_IF)' \
 	'VARIABLE_IF=' \
@@ -93,7 +93,7 @@ LINES.variable-if= \
 # A file that reuses a guard from a previous file (or whose guard is defined
 # for any other reason) is only processed once, to see whether it is guarded.
 # Its content is skipped, therefore the syntax error is not detected.
-INCS+=	variable-if-reuse
+CASES+=	variable-if-reuse
 LINES.variable-if-reuse= \
 	'.if !defined(VARIABLE_IF)' \
 	'syntax error' \
@@ -103,7 +103,7 @@ LINES.variable-if-reuse= \
 
 # Triple negation is so uncommon that it's not recognized, even though it has
 # the same effect as a single negation.
-INCS+=	variable-if-triple-negation
+CASES+=	variable-if-triple-negation
 LINES.variable-if-triple-negation= \
 	'.if !!!defined(VARIABLE_IF_TRIPLE_NEGATION)' \
 	'VARIABLE_IF_TRIPLE_NEGATION=' \
@@ -113,7 +113,7 @@ LINES.variable-if-triple-negation= \
 
 # A conditional other than '.if' or '.ifndef' does not guard the file, even if
 # it is otherwise equivalent to the above accepted forms.
-INCS+=	variable-ifdef-negated
+CASES+=	variable-ifdef-negated
 LINES.variable-ifdef-negated= \
 	'.ifdef !VARIABLE_IFDEF_NEGATED' \
 	'VARIABLE_IFDEF_NEGATED=' \
@@ -122,7 +122,7 @@ LINES.variable-ifdef-negated= \
 # expect: Parse_PushInput: file variable-ifdef-negated.tmp, line 1
 
 # The variable names in the '.if' and the assignment must be the same.
-INCS+=	variable-name-mismatch
+CASES+=	variable-name-mismatch
 LINES.variable-name-mismatch= \
 	'.ifndef VARIABLE_NAME_MISMATCH' \
 	'VARIABLE_NAME_DIFFERENT=' \
@@ -136,7 +136,7 @@ LINES.variable-name-mismatch= \
 # accept '!' in the guard variable name. Furthermore, when defining the
 # variable, the character '!' has to be escaped, to prevent it from being
 # interpreted as the '!' dependency operator.
-INCS+=	variable-name-exclamation
+CASES+=	variable-name-exclamation
 LINES.variable-name-exclamation= \
 	'.if !defined(!VARIABLE_NAME_EXCLAMATION)' \
 	'${:U!}VARIABLE_NAME_EXCLAMATION=' \
@@ -148,7 +148,7 @@ LINES.variable-name-exclamation= \
 # character is interpreted as an ordinary character in conditions as well as
 # on the left side of a variable assignment.  For guard variable names, the
 # '!' is not supported in any place, though.
-INCS+=	variable-name-exclamation-middle
+CASES+=	variable-name-exclamation-middle
 LINES.variable-name-exclamation-middle= \
 	'.ifndef VARIABLE_NAME!MIDDLE' \
 	'VARIABLE_NAME!MIDDLE=' \
@@ -161,7 +161,7 @@ LINES.variable-name-exclamation-middle= \
 # where parentheses or braces are handled inconsistently to make this naming
 # choice a bad idea, therefore these characters are not allowed in guard
 # variable names.
-INCS+=	variable-name-parentheses
+CASES+=	variable-name-parentheses
 LINES.variable-name-parentheses= \
 	'.ifndef VARIABLE_NAME(&)PARENTHESES' \
 	'VARIABLE_NAME(&)PARENTHESES=' \
@@ -170,7 +170,7 @@ LINES.variable-name-parentheses= \
 # expect: Parse_PushInput: file variable-name-parentheses.tmp, line 1
 
 # The guard condition must consist of only the guard variable, nothing else.
-INCS+=	variable-ifndef-plus
+CASES+=	variable-ifndef-plus
 LINES.variable-ifndef-plus= \
 	'.ifndef VARIABLE_IFNDEF_PLUS && VARIABLE_IFNDEF_SECOND' \
 	'VARIABLE_IFNDEF_PLUS=' \
@@ -180,7 +180,7 @@ LINES.variable-ifndef-plus= \
 # expect: Parse_PushInput: file variable-ifndef-plus.tmp, line 1
 
 # The guard condition must consist of only the guard variable, nothing else.
-INCS+=	variable-if-plus
+CASES+=	variable-if-plus
 LINES.variable-if-plus= \
 	'.if !defined(VARIABLE_IF_PLUS) && !defined(VARIABLE_IF_SECOND)' \
 	'VARIABLE_IF_PLUS=' \
@@ -191,7 +191,7 @@ LINES.variable-if-plus= \
 
 # The variable name in an '.ifndef' guard must be given directly, it must not
 # contain any '$' expression.
-INCS+=	variable-ifndef-indirect
+CASES+=	variable-ifndef-indirect
 LINES.variable-ifndef-indirect= \
 	'.ifndef $${VARIABLE_IFNDEF_INDIRECT:L}' \
 	'VARIABLE_IFNDEF_INDIRECT=' \
@@ -201,7 +201,7 @@ LINES.variable-ifndef-indirect= \
 
 # The variable name in an '.if' guard must be given directly, it must not
 # contain any '$' expression.
-INCS+=	variable-if-indirect
+CASES+=	variable-if-indirect
 LINES.variable-if-indirect= \
 	'.if !defined($${VARIABLE_IF_INDIRECT:L})' \
 	'VARIABLE_IF_INDIRECT=' \
@@ -213,7 +213,7 @@ LINES.variable-if-indirect= \
 # characters and underscores.  The place where the guard variable is defined
 # is more flexible, as long as the variable is defined at the point where the
 # file is included the next time.
-INCS+=	variable-assign-indirect
+CASES+=	variable-assign-indirect
 LINES.variable-assign-indirect= \
 	'.ifndef VARIABLE_ASSIGN_INDIRECT' \
 	'$${VARIABLE_ASSIGN_INDIRECT:L}=' \
@@ -223,7 +223,7 @@ LINES.variable-assign-indirect= \
 
 # The time at which the guard variable is defined doesn't matter, as long as
 # it is defined at the point where the file is included the next time.
-INCS+=	variable-assign-late
+CASES+=	variable-assign-late
 LINES.variable-assign-late= \
 	'.ifndef VARIABLE_ASSIGN_LATE' \
 	'VARIABLE_ASSIGN_LATE_OTHER=' \
@@ -234,7 +234,7 @@ LINES.variable-assign-late= \
 
 # The time at which the guard variable is defined doesn't matter, as long as
 # it is defined at the point where the file is included the next time.
-INCS+=	variable-assign-nested
+CASES+=	variable-assign-nested
 LINES.variable-assign-nested= \
 	'.ifndef VARIABLE_ASSIGN_NESTED' \
 	'.  if 1' \
@@ -251,7 +251,7 @@ LINES.variable-assign-nested= \
 # skips almost all lines, as they are irrelevant, but the structure of the
 # top-level '.if/.endif' conditional can be determined reliably enough to
 # decide whether the file is guarded.
-INCS+=	variable-already-defined
+CASES+=	variable-already-defined
 LINES.variable-already-defined= \
 	'.ifndef VARIABLE_ALREADY_DEFINED' \
 	'VARIABLE_ALREADY_DEFINED=' \
@@ -264,7 +264,7 @@ VARIABLE_ALREADY_DEFINED=
 # the file is processed but its content is skipped.  If that same guard
 # variable is undefined when the file is included the second time, the file is
 # processed as usual.
-INCS+=	variable-defined-then-undefined
+CASES+=	variable-defined-then-undefined
 LINES.variable-defined-then-undefined= \
 	'.ifndef VARIABLE_DEFINED_THEN_UNDEFINED' \
 	'.endif'
@@ -278,7 +278,7 @@ UNDEF_BETWEEN.variable-defined-then-undefined= \
 # several, as each of these conditionals would require its separate guard.
 # This case is not expected to occur in practice, as the two parts would
 # rather be split into separate files.
-INCS+=	variable-two-times
+CASES+=	variable-two-times
 LINES.variable-two-times= \
 	'.ifndef VARIABLE_TWO_TIMES_1' \
 	'VARIABLE_TWO_TIMES_1=' \
@@ -295,7 +295,7 @@ LINES.variable-two-times= \
 # Choosing unique guard names is the responsibility of the makefile authors.
 # A typical pattern of guard variable names is '${PROJECT}_${DIR}_${FILE}_MK'.
 # System-provided files typically start the guard names with '_'.
-INCS+=	variable-clash
+CASES+=	variable-clash
 LINES.variable-clash= \
 	${LINES.variable-if}
 # expect: Parse_PushInput: file variable-clash.tmp, line 1
@@ -303,7 +303,7 @@ LINES.variable-clash= \
 
 # The conditional must come before the assignment, otherwise the conditional
 # is useless, as it always evaluates to false.
-INCS+=	variable-swapped
+CASES+=	variable-swapped
 LINES.variable-swapped= \
 	'SWAPPED=' \
 	'.ifndef SWAPPED' \
@@ -314,7 +314,7 @@ LINES.variable-swapped= \
 
 # If the guard variable is undefined between the first and the second time the
 # file is included, the guarded file is included again.
-INCS+=	variable-undef-between
+CASES+=	variable-undef-between
 LINES.variable-undef-between= \
 	'.ifndef VARIABLE_UNDEF_BETWEEN' \
 	'VARIABLE_UNDEF_BETWEEN=' \
@@ -326,7 +326,7 @@ UNDEF_BETWEEN.variable-undef-between= \
 
 # If the guard variable is undefined while the file is included the first
 # time, the guard does not have an effect, and the file is included again.
-INCS+=	variable-undef-inside
+CASES+=	variable-undef-inside
 LINES.variable-undef-inside= \
 	'.ifndef VARIABLE_UNDEF_INSIDE' \
 	'VARIABLE_UNDEF_INSIDE=' \
@@ -337,7 +337,7 @@ LINES.variable-undef-inside= \
 
 # If the file does not define the guard variable, the guard does not have an
 # effect, and the file is included again.
-INCS+=	variable-not-defined
+CASES+=	variable-not-defined
 LINES.variable-not-defined= \
 	'.ifndef VARIABLE_NOT_DEFINED' \
 	'.endif'
@@ -345,7 +345,7 @@ LINES.variable-not-defined= \
 # expect: Parse_PushInput: file variable-not-defined.tmp, line 1
 
 # The outermost '.if' must not have an '.elif' branch.
-INCS+=	elif
+CASES+=	elif
 LINES.elif= \
 	'.ifndef ELIF' \
 	'ELIF=' \
@@ -356,7 +356,7 @@ LINES.elif= \
 
 # When a file with an '.if/.elif/.endif' conditional at the top level is
 # included, it is never optimized, as one of its branches is taken.
-INCS+=	elif-reuse
+CASES+=	elif-reuse
 LINES.elif-reuse= \
 	'.ifndef ELIF' \
 	'syntax error' \
@@ -366,7 +366,7 @@ LINES.elif-reuse= \
 # expect: Parse_PushInput: file elif-reuse.tmp, line 1
 
 # The outermost '.if' must not have an '.else' branch.
-INCS+=	else
+CASES+=	else
 LINES.else= \
 	'.ifndef ELSE' \
 	'ELSE=' \
@@ -377,7 +377,7 @@ LINES.else= \
 
 # When a file with an '.if/.else/.endif' conditional at the top level is
 # included, it is never optimized, as one of its branches is taken.
-INCS+=	else-reuse
+CASES+=	else-reuse
 LINES.else-reuse= \
 	'.ifndef ELSE' \
 	'syntax error' \
@@ -388,7 +388,7 @@ LINES.else-reuse= \
 
 # The inner '.if' directives may have an '.elif' or '.else', and it doesn't
 # matter which of their branches are taken.
-INCS+=	inner-if-elif-else
+CASES+=	inner-if-elif-else
 LINES.inner-if-elif-else= \
 	'.ifndef INNER_IF_ELIF_ELSE' \
 	'INNER_IF_ELIF_ELSE=' \
@@ -414,7 +414,7 @@ LINES.inner-if-elif-else= \
 # usually chosen according to a pattern that doesn't interfere with real
 # target names, they don't need to be declared '.PHONY' as they don't generate
 # filesystem operations.
-INCS+=	target
+CASES+=	target
 LINES.target= \
 	'.if !target(__target.tmp__)' \
 	'__target.tmp__: .NOTMAIN' \
@@ -425,7 +425,7 @@ LINES.target= \
 # When used for system files, the target name may include '<' and '>', for
 # symmetry with the '.include <sys.mk>' directive.  The characters '<' and '>'
 # are ordinary characters.
-INCS+=	target-sys
+CASES+=	target-sys
 LINES.target-sys= \
 	'.if !target(__<target-sys.tmp>__)' \
 	'__<target-sys.tmp>__: .NOTMAIN' \
@@ -439,7 +439,7 @@ LINES.target-sys= \
 # and once for determining the guard name.  This double evaluation should not
 # matter in practice, as guard expressions are expected to be simple,
 # deterministic and without side effects.
-INCS+=	target-indirect
+CASES+=	target-indirect
 LINES.target-indirect= \
 	'.if !target($${target-indirect.tmp:L})' \
 	'target-indirect.tmp: .NOTMAIN' \
@@ -452,7 +452,7 @@ LINES.target-indirect= \
 # pattern based on the same idea, use __${.PARSEDIR}/${.PARSEFILE}__ instead.
 # This form does not work when the basename contains whitespace characters, as
 # it is not possible to define a target with whitespace, not even by cheating.
-INCS+=	target-indirect-PARSEFILE
+CASES+=	target-indirect-PARSEFILE
 LINES.target-indirect-PARSEFILE= \
 	'.if !target(__$${.PARSEFILE}__)' \
 	'__$${.PARSEFILE}__: .NOTMAIN' \
@@ -462,7 +462,7 @@ LINES.target-indirect-PARSEFILE= \
 
 # Two files with different basenames can both use the same syntactic pattern
 # for the target guard name, as the expressions expand to different strings.
-INCS+=	target-indirect-PARSEFILE2
+CASES+=	target-indirect-PARSEFILE2
 LINES.target-indirect-PARSEFILE2= \
 	'.if !target(__$${.PARSEFILE}__)' \
 	'__$${.PARSEFILE}__: .NOTMAIN' \
@@ -474,7 +474,7 @@ LINES.target-indirect-PARSEFILE2= \
 # guard is the same as in the test case 'target-indirect-PARSEFILE', as the
 # guard name only contains the basename but not the directory name.  So even
 # without defining the guard variable, the file is considered guarded.
-INCS+=	subdir/target-indirect-PARSEFILE
+CASES+=	subdir/target-indirect-PARSEFILE
 LINES.subdir/target-indirect-PARSEFILE= \
 	'.if !target(__$${.PARSEFILE}__)' \
 	'.endif'
@@ -483,7 +483,7 @@ LINES.subdir/target-indirect-PARSEFILE= \
 
 # Another common form of guard target is __${.PARSEDIR}/${.PARSEFILE}__
 # or __${.PARSEDIR:tA}/${.PARSEFILE}__ to be truly unique.
-INCS+=	target-indirect-PARSEDIR-PARSEFILE
+CASES+=	target-indirect-PARSEDIR-PARSEFILE
 LINES.target-indirect-PARSEDIR-PARSEFILE= \
 	'.if !target(__$${.PARSEDIR}/$${.PARSEFILE}__)' \
 	'__$${.PARSEDIR}/$${.PARSEFILE}__: .NOTMAIN' \
@@ -495,7 +495,7 @@ LINES.target-indirect-PARSEDIR-PARSEFILE= \
 
 # Using the combination of '.PARSEDIR' and '.PARSEFILE', a file in a
 # subdirectory gets a different guard target name than the previous one.
-INCS+=	subdir/target-indirect-PARSEDIR-PARSEFILE
+CASES+=	subdir/target-indirect-PARSEDIR-PARSEFILE
 LINES.subdir/target-indirect-PARSEDIR-PARSEFILE= \
 	'.if !target(__$${.PARSEDIR}/$${.PARSEFILE}__)' \
 	'__$${.PARSEDIR}/$${.PARSEFILE}__: .NOTMAIN' \
@@ -507,7 +507,7 @@ LINES.subdir/target-indirect-PARSEDIR-PARSEFILE= \
 
 # If the guard target is not defined when including the file the next time,
 # the file is processed again.
-INCS+=	target-unguarded
+CASES+=	target-unguarded
 LINES.target-unguarded= \
 	'.if !target(target-unguarded)' \
 	'.endif'
@@ -515,7 +515,7 @@ LINES.target-unguarded= \
 # expect: Parse_PushInput: file target-unguarded.tmp, line 1
 
 # The guard condition must consist of only the guard target, nothing else.
-INCS+=	target-plus
+CASES+=	target-plus
 LINES.target-plus= \
 	'.if !target(target-plus) && 1' \
 	'target-plus: .NOTMAIN' \
@@ -525,7 +525,7 @@ LINES.target-plus= \
 
 # If the guard target is defined before the file is included the first time,
 # the file is read once and then considered guarded.
-INCS+=	target-already-defined
+CASES+=	target-already-defined
 LINES.target-already-defined= \
 	'.if !target(target-already-defined)' \
 	'target-already-defined: .NOTMAIN' \
@@ -543,7 +543,7 @@ target-already-defined: .NOTMAIN
 # the '\' escapes the '!' from being a dependency operator, but when reading
 # the target name, the '\' is kept, resulting in the target name
 # '\!target-name-exclamation' instead of '!target-name-exclamation'.
-INCS+=	target-name-exclamation
+CASES+=	target-name-exclamation
 LINES.target-name-exclamation= \
 	'.if !target(!target-name-exclamation)' \
 	'\!target-name-exclamation: .NOTMAIN' \
@@ -557,7 +557,7 @@ LINES.target-name-exclamation= \
 # generate a 'Skipping' line, the others repeat the 'Parse_PushInput' line.
 #
 # Some debug output lines are suppressed in the .exp file, see ./Makefile.
-.for i in ${INCS}
+.for i in ${CASES}
 .  for fname in $i.tmp
 _:=	${fname:H:N.:@dir@${:!mkdir -p ${dir}!}@}
 _!=	printf '%s\n' ${LINES.$i} > ${fname}

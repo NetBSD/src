@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.459 2023/02/15 06:52:58 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.460 2023/12/17 08:53:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.459 2023/02/15 06:52:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.460 2023/12/17 08:53:55 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1766,12 +1766,12 @@ JobStart(GNode *gn, bool special)
  * itself.
  */
 static char *
-PrintFilteredOutput(char *cp, char *endp)	/* XXX: should all be const */
+PrintFilteredOutput(char *p, char *endp)	/* XXX: should all be const */
 {
-	char *ecp;		/* XXX: should be const */
+	char *ep;		/* XXX: should be const */
 
 	if (shell->noPrint == NULL || shell->noPrint[0] == '\0')
-		return cp;
+		return p;
 
 	/*
 	 * XXX: What happens if shell->noPrint occurs on the boundary of
@@ -1779,9 +1779,9 @@ PrintFilteredOutput(char *cp, char *endp)	/* XXX: should all be const */
 	 * be a proper stream filter instead of doing string matching on
 	 * selected chunks of the output.
 	 */
-	while ((ecp = strstr(cp, shell->noPrint)) != NULL) {
-		if (ecp != cp) {
-			*ecp = '\0';	/* XXX: avoid writing to the buffer */
+	while ((ep = strstr(p, shell->noPrint)) != NULL) {
+		if (ep != p) {
+			*ep = '\0';	/* XXX: avoid writing to the buffer */
 			/*
 			 * The only way there wouldn't be a newline after
 			 * this line is if it were the last in the buffer.
@@ -1789,16 +1789,16 @@ PrintFilteredOutput(char *cp, char *endp)	/* XXX: should all be const */
 			 * there must be a newline, so we don't print one.
 			 */
 			/* XXX: What about null bytes in the output? */
-			(void)fprintf(stdout, "%s", cp);
+			(void)fprintf(stdout, "%s", p);
 			(void)fflush(stdout);
 		}
-		cp = ecp + shell->noPrintLen;
-		if (cp == endp)
+		p = ep + shell->noPrintLen;
+		if (p == endp)
 			break;
-		cp++;		/* skip over the (XXX: assumed) newline */
-		pp_skip_whitespace(&cp);
+		p++;		/* skip over the (XXX: assumed) newline */
+		pp_skip_whitespace(&p);
 	}
-	return cp;
+	return p;
 }
 
 /*
@@ -1893,7 +1893,7 @@ again:
 		 */
 		job->outBuf[i] = '\0';
 		if (i >= job->curPos) {
-			char *cp;
+			char *p;
 
 			/*
 			 * FIXME: SwitchOutputTo should be here, according to
@@ -1901,23 +1901,23 @@ again:
 			 * do anything in the default shell, this bug has gone
 			 * unnoticed until now.
 			 */
-			cp = PrintFilteredOutput(job->outBuf, &job->outBuf[i]);
+			p = PrintFilteredOutput(job->outBuf, &job->outBuf[i]);
 
 			/*
 			 * There's still more in the output buffer. This time,
 			 * though, we know there's no newline at the end, so
 			 * we add one of our own free will.
 			 */
-			if (*cp != '\0') {
+			if (*p != '\0') {
 				if (!opts.silent)
 					SwitchOutputTo(job->node);
 #ifdef USE_META
 				if (useMeta) {
-					meta_job_output(job, cp,
+					meta_job_output(job, p,
 					    gotNL ? "\n" : "");
 				}
 #endif
-				(void)fprintf(stdout, "%s%s", cp,
+				(void)fprintf(stdout, "%s%s", p,
 				    gotNL ? "\n" : "");
 				(void)fflush(stdout);
 			}
