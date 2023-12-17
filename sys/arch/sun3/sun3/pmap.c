@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.174 2023/06/02 08:51:47 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.175 2023/12/17 13:28:59 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2023/06/02 08:51:47 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2023/12/17 13:28:59 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1328,15 +1328,15 @@ pv_link(pmap_t pmap, int pte, vaddr_t va)
 	paddr_t pa;
 	pv_entry_t *head, pv;
 	u_char *pv_flags;
+#ifdef HAVECACHE
 	int flags;
+#endif
 
 	if (!pv_initialized)
 		return 0;
 
 	CHECK_SPL();
 
-	/* Only the non-cached bit is of interest here. */
-	flags = (pte & PG_NC) ? PV_NC : 0;
 	pa = PG_PA(pte);
 
 #ifdef PMAP_DEBUG
@@ -1362,6 +1362,8 @@ pv_link(pmap_t pmap, int pte, vaddr_t va)
 	 * Does this new mapping cause VAC alias problems?
 	 */
 
+	/* Only the non-cached bit is of interest here. */
+	flags = (pte & PG_NC) ? PV_NC : 0;
 	*pv_flags |= flags;
 	if ((*pv_flags & PV_NC) == 0) {
 		for (pv = *head; pv != NULL; pv = pv->pv_next) {
@@ -2439,9 +2441,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	vaddr_t eva, neva, pgva, segva, segnum;
 	int pte, sme;
 	pmeg_t pmegp;
-#ifdef	HAVECACHE
 	int flush_by_page = 0;
-#endif
 	int s;
 
 	s = splvm();
@@ -2480,14 +2480,14 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		for (pgva = va; pgva < neva; pgva += PAGE_SIZE) {
 			pte = get_pte(pgva);
 			if (pte & PG_VALID) {
-#ifdef	HAVECACHE
 				if (flush_by_page) {
+#ifdef	HAVECACHE
 					cache_flush_page(pgva);
 					/* Get fresh mod/ref bits
 					   from write-back. */
 					pte = get_pte(pgva);
-				}
 #endif
+				}
 #ifdef	PMAP_DEBUG
 				if ((pmap_debug & PMD_SETPTE) ||
 				    (pgva == pmap_db_watchva)) {
@@ -3044,10 +3044,11 @@ out:
 void
 pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
-	vaddr_t pgva, segva;
+	vaddr_t pgva;
 	int pte;
-#ifdef	HAVECACHE
 	int flush_by_page = 0;
+#if defined(HAVECACHE) || defined(DIAGNOSTIC)
+	vaddr_t segva = sun3_trunc_seg(sva); 
 #endif
 
 	CHECK_SPL();
@@ -3057,21 +3058,14 @@ pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		if (pmap->pm_ctxnum != get_context())
 			panic("pmap_protect_mmu: wrong context");
 	}
-#endif
 
-	segva = sun3_trunc_seg(sva);
-
-#ifdef	DIAGNOSTIC
 	int sme = get_segmap(segva);
 	/* Make sure it is valid and known. */
 	if (sme == SEGINV)
 		panic("pmap_protect_mmu: SEGINV");
 	if (pmap->pm_segmap && (pmap->pm_segmap[VA_SEGNUM(segva)] != sme))
 		panic("pmap_protect_mmu: incorrect sme, va=0x%lx", segva);
-#endif
 
-
-#ifdef	DIAGNOSTIC
 	/* have pmeg, will travel */
 	pmeg_t pmegp = pmeg_p(sme);
 	/* Make sure we own the pmeg, right va, etc. */
@@ -3085,7 +3079,7 @@ pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		panic("pmap_protect_mmu: npages corrupted");
 	if (pmegp->pmeg_vpages == 0)
 		panic("pmap_protect_mmu: no valid pages?");
-#endif
+#endif /* DIAGNOSTIC */
 
 #ifdef	HAVECACHE
 	if (cache_size) {
@@ -3106,13 +3100,13 @@ pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	for (pgva = sva; pgva < eva; pgva += PAGE_SIZE) {
 		pte = get_pte(pgva);
 		if (pte & PG_VALID) {
-#ifdef	HAVECACHE
 			if (flush_by_page) {
+#ifdef	HAVECACHE
 				cache_flush_page(pgva);
 				/* Get fresh mod/ref bits from write-back. */
 				pte = get_pte(pgva);
-			}
 #endif
+			}
 			if (IS_MAIN_MEM(pte)) {
 				save_modref_bits(pte);
 			}
@@ -3273,9 +3267,7 @@ pmap_remove_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	pmeg_t pmegp;
 	vaddr_t pgva, segva;
 	int pte, sme;
-#ifdef	HAVECACHE
 	int flush_by_page = 0;
-#endif
 
 	CHECK_SPL();
 
@@ -3333,13 +3325,13 @@ pmap_remove_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	for (pgva = sva; pgva < eva; pgva += PAGE_SIZE) {
 		pte = get_pte(pgva);
 		if (pte & PG_VALID) {
-#ifdef	HAVECACHE
 			if (flush_by_page) {
+#ifdef	HAVECACHE
 				cache_flush_page(pgva);
 				/* Get fresh mod/ref bits from write-back. */
 				pte = get_pte(pgva);
-			}
 #endif
+			}
 			if (IS_MAIN_MEM(pte)) {
 				save_modref_bits(pte);
 				pv_unlink(pmap, pte, pgva);
@@ -3361,24 +3353,22 @@ pmap_remove_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	KASSERT(pmegp->pmeg_vpages >= 0);
 	if (pmegp->pmeg_vpages == 0) {
 		/* We are done with this pmeg. */
-		if (is_pmeg_wired(pmegp)) {
 #ifdef	PMAP_DEBUG
+		if (is_pmeg_wired(pmegp)) {
 			if (pmap_debug & PMD_WIRING) {
 				db_printf("pmap: removing wired pmeg: %p\n",
 					  pmegp);
 				Debugger();
 			}
-#endif	/* PMAP_DEBUG */
 		}
 
-#ifdef	PMAP_DEBUG
 		if (pmap_debug & PMD_SEGMAP) {
 			printf("pmap: set_segmap ctx=%d v=0x%lx old=0x%x "
 			       "new=ff (rm)\n",
 			       pmap->pm_ctxnum, segva, pmegp->pmeg_index);
 		}
 		pmeg_verify_empty(segva);
-#endif
+#endif /* PMAP_DEBUG */
 
 		/* Remove it from the MMU. */
 		if (kernel_pmap == pmap) {
