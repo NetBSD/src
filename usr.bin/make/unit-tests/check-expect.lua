@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.7 2023/06/23 04:41:24 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.8 2023/12/17 09:44:00 rillig Exp $
 
 --[[
 
@@ -131,7 +131,7 @@ local function check_mk(mk_fname)
       local found = false
       if by_location[location] ~= nil then
         for i, message in ipairs(by_location[location]) do
-          if message ~= "" and message:find(text, 1, true) then
+          if message == text then
             by_location[location][i] = ""
             found = true
             break

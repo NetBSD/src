@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-errors.mk,v 1.7 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: directive-for-errors.mk,v 1.8 2023/12/17 09:44:00 rillig Exp $
 #
 # Tests for error handling in .for loops.
 
@@ -9,7 +9,7 @@
 .fori in 1 2 3
 .  warning <${i}>
 .endfor
-# expect-2: <>
+# expect-2: warning: <>
 # expect-2: for-less endfor
 
 
@@ -89,6 +89,6 @@ ${:U\\}=	backslash	# see whether the "variable" '\' is local
 .for i in 1 2 ${:U3:Z} 4
 .  warning Should not be reached.
 .endfor
-# expect-2: Should not be reached.
-# expect-3: Should not be reached.
-# expect-4: Should not be reached.
+# expect-2: warning: Should not be reached.
+# expect-3: warning: Should not be reached.
+# expect-4: warning: Should not be reached.
