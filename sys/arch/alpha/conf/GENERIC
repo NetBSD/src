@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.418 2023/02/09 14:09:47 abs Exp $
+# $NetBSD: GENERIC,v 1.419 2023/12/17 18:48:53 andvar Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.418 $"
+ident		"GENERIC-$Revision: 1.419 $"
 
 maxusers 32
 
@@ -728,7 +728,7 @@ pseudo-device	vcoda			# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	wsfont
-pseudo-device	wsmux			# mouse and keyboad multiplexing
+pseudo-device	wsmux			# mouse and keyboard multiplexing
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
 pseudo-device	bcsp			# BlueCore Serial Protocol
