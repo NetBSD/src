@@ -1,7 +1,7 @@
-/*	$NetBSD: utarray.h,v 1.3 2020/11/18 22:23:05 jkoshy Exp $	*/
+/* $NetBSD: utarray.h,v 1.4 2023/12/17 18:59:19 jkoshy Exp $ */
 
-/*
-Copyright (c) 2008-2018, Troy D. Hanson   http://troydhanson.github.com/uthash/
+/*-
+Copyright (c) 2008-2021, Troy D. Hanson   http://troydhanson.github.com/uthash/
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef UTARRAY_H
 #define UTARRAY_H
 
-#define UTARRAY_VERSION 2.1.0
+#define UTARRAY_VERSION 2.3.0
 
 #include <stddef.h>  /* size_t */
 #include <string.h>  /* memset, etc */
@@ -234,8 +234,9 @@ typedef struct {
 
 /* last we pre-define a few icd for common utarrays of ints and strings */
 static void utarray_str_cpy(void *dst, const void *src) {
-  char *const*_src = (char*const*)src, **_dst = (char**)dst;
-  *_dst = (*_src == NULL) ? NULL : strdup(*_src);
+  char *const *srcc = (char *const *)src;
+  char **dstc = (char**)dst;
+  *dstc = (*srcc == NULL) ? NULL : strdup(*srcc);
 }
 static void utarray_str_dtor(void *elt) {
   char **eltc = (char**)elt;
