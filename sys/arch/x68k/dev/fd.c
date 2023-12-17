@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.127 2022/05/26 14:27:43 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.128 2023/12/17 21:52:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.127 2022/05/26 14:27:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.128 2023/12/17 21:52:11 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -1835,7 +1835,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
 	bp->b_data = (void *)finfo;
 
-#ifdef FD_DEBUG
+#ifdef FDDEBUG
 	printf("fdformat: blkno %" PRIx64 " count %x\n",
 	    bp->b_blkno, bp->b_bcount);
 #endif
