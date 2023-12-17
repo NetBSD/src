@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_sysctl.c,v 1.4 2023/03/26 19:10:33 andvar Exp $	*/
+/*	$NetBSD: bt_sysctl.c,v 1.5 2023/12/17 14:38:49 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_sysctl.c,v 1.4 2023/03/26 19:10:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_sysctl.c,v 1.5 2023/12/17 14:38:49 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -142,7 +142,7 @@ SYSCTL_SETUP(sysctl_net_bluetooth_setup, "sysctl net.bluetooth subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "l2cap",
-		SYSCTL_DESCR("Logical Link Control & Adapatation Protocol"),
+		SYSCTL_DESCR("Logical Link Control & Adaptation Protocol"),
 		NULL, 0, NULL, 0,
 		CTL_NET, PF_BLUETOOTH, BTPROTO_L2CAP, CTL_EOL);
 
