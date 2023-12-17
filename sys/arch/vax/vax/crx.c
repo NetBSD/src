@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.15 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: crx.c,v 1.16 2023/12/17 15:06:33 andvar Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.15 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.16 2023/12/17 15:06:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -149,7 +149,7 @@ crxrw(dev_t dev, struct uio *uio, int flags)
 #if	CRXDEBUG
 	printf("crxrw(csa%d): %s\n", 
 		rx50unit(dev), uio->uio_rw==UIO_READ?"read":"write");
-	printf("crxrw: ka820port = %x\n", ka820port_ptr->csr);
+	printf("crxrw: ka820port = %lx\n", ka820port_ptr->csr);
 #endif
 	/* enforce whole-sector I/O */
 	if ((uio->uio_offset & 511) || (uio->uio_resid & 511))
@@ -202,7 +202,7 @@ crxrw(dev_t dev, struct uio *uio, int flags)
 #endif
 #if	CRXDEBUG
 		printf("crx: going off\n");
-		printf("crxrw: ka820port = %x\n", ka820port_ptr->csr);
+		printf("crxrw: ka820port = %lx\n", ka820port_ptr->csr);
 #endif
 		rxaddr->rxgo = 0;	/* start it up */
 		ka820port_ptr->csr |= KA820PORT_RXIRQ;
@@ -210,7 +210,7 @@ crxrw(dev_t dev, struct uio *uio, int flags)
 		while ((rs->rs_flags & RS_DONE) == 0) {
 #if	CRXDEBUG
 			printf("crx: sleeping on I/O\n");
-			printf("crxopen: ka820port = %x\n", ka820port_ptr->csr);
+			printf("crxopen: ka820port = %lx\n", ka820port_ptr->csr);
 #endif
 			(void) tsleep(&rs->rs_blkno, PRIBIO, "crxrw", 0);
 		}
