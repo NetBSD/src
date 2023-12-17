@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.370 2023/11/19 22:50:11 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.371 2023/12/17 08:53:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.370 2023/11/19 22:50:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.371 2023/12/17 08:53:55 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1258,10 +1258,10 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
 		/*
 		 * Fetch next expansion off the list and find its GNode
 		 */
-		char *cp = Lst_Dequeue(&expansions);
+		char *name = Lst_Dequeue(&expansions);
 
-		DEBUG1(SUFF, "%s...", cp);
-		gn = Targ_GetNode(cp);
+		DEBUG1(SUFF, "%s...", name);
+		gn = Targ_GetNode(name);
 
 		/* Insert gn before the original child. */
 		Lst_InsertBefore(&pgn->children, cln, gn);
@@ -1290,54 +1290,54 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
  * expressions with spaces in them.
  */
 static void
-ExpandChildrenRegular(char *cp, GNode *pgn, GNodeList *members)
+ExpandChildrenRegular(char *p, GNode *pgn, GNodeList *members)
 {
 	char *start;
 
-	pp_skip_hspace(&cp);
-	start = cp;
-	while (*cp != '\0') {
-		if (*cp == ' ' || *cp == '\t') {
+	pp_skip_hspace(&p);
+	start = p;
+	while (*p != '\0') {
+		if (*p == ' ' || *p == '\t') {
 			GNode *gn;
 			/*
 			 * White-space -- terminate element, find the node,
 			 * add it, skip any further spaces.
 			 */
-			*cp++ = '\0';
+			*p++ = '\0';
 			gn = Targ_GetNode(start);
 			Lst_Append(members, gn);
-			pp_skip_hspace(&cp);
+			pp_skip_hspace(&p);
 			/* Continue at the next non-space. */
-			start = cp;
-		} else if (*cp == '$') {
+			start = p;
+		} else if (*p == '$') {
 			/* Skip over the expression. */
-			const char *nested_p = cp;
+			const char *nested_p = p;
 			FStr junk = Var_Parse(&nested_p, pgn, VARE_PARSE_ONLY);
 			/* TODO: handle errors */
 			if (junk.str == var_Error) {
 				Parse_Error(PARSE_FATAL,
 				    "Malformed expression at \"%s\"",
-				    cp);
-				cp++;
+				    p);
+				p++;
 			} else {
-				cp += nested_p - cp;
+				p += nested_p - p;
 			}
 
 			FStr_Done(&junk);
-		} else if (cp[0] == '\\' && cp[1] != '\0') {
+		} else if (p[0] == '\\' && p[1] != '\0') {
 			/* Escaped something -- skip over it. */
 			/*
 			 * XXX: In other places, escaping at this syntactical
 			 * position is done by a '$', not a '\'.  The '\' is
 			 * only used in variable modifiers.
 			 */
-			cp += 2;
+			p += 2;
 		} else {
-			cp++;
+			p++;
 		}
 	}
 
-	if (cp != start) {
+	if (p != start) {
 		/*
 		 * Stuff left over -- add it to the list too
 		 */
@@ -1361,7 +1361,7 @@ static void
 ExpandChildren(GNodeListNode *cln, GNode *pgn)
 {
 	GNode *cgn = cln->datum;
-	char *cp;		/* Expanded value */
+	char *expanded;
 
 	if (!Lst_IsEmpty(&cgn->order_pred) || !Lst_IsEmpty(&cgn->order_succ))
 		/* It is all too hard to process the result of .ORDER */
@@ -1383,7 +1383,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 	}
 
 	DEBUG1(SUFF, "Expanding \"%s\"...", cgn->name);
-	cp = Var_Subst(cgn->name, pgn, VARE_UNDEFERR);
+	expanded = Var_Subst(cgn->name, pgn, VARE_UNDEFERR);
 	/* TODO: handle errors */
 
 	{
@@ -1395,10 +1395,10 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 			 * call on the Arch module to find the nodes for us,
 			 * expanding variables in the parent's scope.
 			 */
-			char *p = cp;
-			(void)Arch_ParseArchive(&p, &members, pgn);
+			char *ap = expanded;
+			(void)Arch_ParseArchive(&ap, &members, pgn);
 		} else {
-			ExpandChildrenRegular(cp, pgn, &members);
+			ExpandChildrenRegular(expanded, pgn, &members);
 		}
 
 		/*
@@ -1420,7 +1420,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 		}
 		Lst_Done(&members);
 
-		free(cp);
+		free(expanded);
 	}
 
 	DEBUG0(SUFF, "\n");

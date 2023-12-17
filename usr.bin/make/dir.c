@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.283 2023/09/21 20:30:59 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.284 2023/12/17 08:53:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -132,7 +132,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.283 2023/09/21 20:30:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.284 2023/12/17 08:53:54 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -683,14 +683,14 @@ DirMatchFiles(const char *pattern, CachedDir *dir, StringList *expansions)
 static const char *
 closing_brace(const char *p)
 {
-	int nest = 0;
+	int depth = 0;
 	while (*p != '\0') {
-		if (*p == '}' && nest == 0)
+		if (*p == '}' && depth == 0)
 			break;
 		if (*p == '{')
-			nest++;
+			depth++;
 		if (*p == '}')
-			nest--;
+			depth--;
 		p++;
 	}
 	return p;
@@ -703,14 +703,14 @@ closing_brace(const char *p)
 static const char *
 separator_comma(const char *p)
 {
-	int nest = 0;
+	int depth = 0;
 	while (*p != '\0') {
-		if ((*p == '}' || *p == ',') && nest == 0)
+		if ((*p == '}' || *p == ',') && depth == 0)
 			break;
 		if (*p == '{')
-			nest++;
+			depth++;
 		if (*p == '}')
-			nest--;
+			depth--;
 		p++;
 	}
 	return p;

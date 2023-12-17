@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.603 2023/11/02 05:55:22 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.604 2023/12/17 08:53:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.603 2023/11/02 05:55:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.604 2023/12/17 08:53:55 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -778,13 +778,13 @@ SetVarObjdir(bool writable, const char *var, const char *suffix)
 int
 str2Lst_Append(StringList *lp, char *str)
 {
-	char *cp;
+	char *p;
 	int n;
 
 	const char *sep = " \t";
 
-	for (n = 0, cp = strtok(str, sep); cp != NULL; cp = strtok(NULL, sep)) {
-		Lst_Append(lp, cp);
+	for (n = 0, p = strtok(str, sep); p != NULL; p = strtok(NULL, sep)) {
+		Lst_Append(lp, p);
 		n++;
 	}
 	return n;
@@ -1150,7 +1150,7 @@ static void
 InitDefSysIncPath(char *syspath)
 {
 	static char defsyspath[] = _PATH_DEFSYSPATH;
-	char *start, *cp;
+	char *start, *p;
 
 	/*
 	 * If no user-supplied system path was given (through the -m option)
@@ -1162,11 +1162,11 @@ InitDefSysIncPath(char *syspath)
 	else
 		syspath = bmake_strdup(syspath);
 
-	for (start = syspath; *start != '\0'; start = cp) {
-		for (cp = start; *cp != '\0' && *cp != ':'; cp++)
+	for (start = syspath; *start != '\0'; start = p) {
+		for (p = start; *p != '\0' && *p != ':'; p++)
 			continue;
-		if (*cp == ':')
-			*cp++ = '\0';
+		if (*p == ':')
+			*p++ = '\0';
 
 		/* look for magic parent directory search string */
 		if (strncmp(start, ".../", 4) == 0) {
@@ -1257,17 +1257,17 @@ InitVpath(void)
 	/* TODO: handle errors */
 	path = vpath;
 	do {
-		char *cp;
+		char *p;
 		/* skip to end of directory */
-		for (cp = path; *cp != ':' && *cp != '\0'; cp++)
+		for (p = path; *p != ':' && *p != '\0'; p++)
 			continue;
 		/* Save terminator character so know when to stop */
-		savec = *cp;
-		*cp = '\0';
+		savec = *p;
+		*p = '\0';
 		/* Add directory to search path */
 		(void)SearchPath_Add(&dirSearchPath, path);
-		*cp = savec;
-		path = cp + 1;
+		*p = savec;
+		path = p + 1;
 	} while (savec == ':');
 	free(vpath);
 }
@@ -1708,7 +1708,7 @@ Cmd_Exec(const char *cmd, char **error)
 	Buffer buf;		/* buffer to store the result */
 	ssize_t bytes_read;
 	char *output;
-	char *cp;
+	char *p;
 	int saved_errno;
 
 	if (shellName == NULL)
@@ -1766,9 +1766,9 @@ Cmd_Exec(const char *cmd, char **error)
 		buf.data[buf.len - 1] = '\0';
 
 	output = Buf_DoneData(&buf);
-	for (cp = output; *cp != '\0'; cp++)
-		if (*cp == '\n')
-			*cp = ' ';
+	for (p = output; *p != '\0'; p++)
+		if (*p == '\n')
+			*p = ' ';
 
 	if (WIFSIGNALED(status))
 		*error = str_concat3("\"", cmd, "\" exited on a signal");
@@ -1954,13 +1954,13 @@ execDie(const char *af, const char *av)
 static void
 purge_relative_cached_realpaths(void)
 {
-	HashEntry *he, *nhe;
+	HashEntry *he, *next;
 	HashIter hi;
 
 	HashIter_Init(&hi, &cached_realpaths);
 	he = HashIter_Next(&hi);
 	while (he != NULL) {
-		nhe = HashIter_Next(&hi);
+		next = HashIter_Next(&hi);
 		if (he->key[0] != '/') {
 			DEBUG1(DIR, "cached_realpath: purging %s\n", he->key);
 			HashTable_DeleteEntry(&cached_realpaths, he);
@@ -1969,7 +1969,7 @@ purge_relative_cached_realpaths(void)
 			 * free them or document why they cannot be freed.
 			 */
 		}
-		he = nhe;
+		he = next;
 	}
 }
 
