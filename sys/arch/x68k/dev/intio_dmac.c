@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.38 2023/12/17 22:01:56 andvar Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.39 2023/12/17 22:03:50 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.38 2023/12/17 22:01:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.39 2023/12/17 22:03:50 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ dmac_start_xfer_offset(struct dmac_softc *dmac, struct dmac_dma_xfer *xf,
 #ifdef DMAC_ARRAYCHAIN
 #if defined(M68040) || defined(M68060)
 	/* flush data cache for the map */
-	if (dmamap->dm_nsegs != 1i && mmutype == MMU_68040 && c > 0)
+	if (dmamap->dm_nsegs != 1 && mmutype == MMU_68040 && c > 0)
 		dma_cachectl((void *) xf->dx_array,
 			     sizeof(struct dmac_sg_array) * c);
 #endif
