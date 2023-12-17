@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.28 2023/12/10 17:45:35 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.29 2023/12/17 10:02:09 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -211,7 +211,6 @@ option_without_hyphen_body()
 	printf ' -i3 xi5 +di0\n' > .indent.pro
 
 	printf '%s\n' 'int var[] = {' '1,' '}' > code.c
-	printf '%s\n' 'int var[] = {' '     1,' '}' > code.exp
 
 	atf_check \
 	    -s 'exit:1' \
