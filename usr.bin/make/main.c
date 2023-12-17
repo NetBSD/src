@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.604 2023/12/17 08:53:55 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.605 2023/12/17 09:02:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.604 2023/12/17 08:53:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.605 2023/12/17 09:02:26 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -772,22 +772,17 @@ SetVarObjdir(bool writable, const char *var, const char *suffix)
 }
 
 /*
- * Splits str into words, adding them to the list.
+ * Splits str into words (in-place, modifying it), adding them to the list.
  * The string must be kept alive as long as the list.
  */
-int
-str2Lst_Append(StringList *lp, char *str)
+void
+AppendWords(StringList *lp, char *str)
 {
 	char *p;
-	int n;
-
 	const char *sep = " \t";
 
-	for (n = 0, p = strtok(str, sep); p != NULL; p = strtok(NULL, sep)) {
+	for (p = strtok(str, sep); p != NULL; p = strtok(NULL, sep))
 		Lst_Append(lp, p);
-		n++;
-	}
-	return n;
 }
 
 #ifdef SIGINFO
@@ -1293,7 +1288,7 @@ ReadFirstDefaultMakefile(void)
 	    SCOPE_CMDLINE, VARE_WANTRES);
 	/* TODO: handle errors */
 
-	(void)str2Lst_Append(&makefiles, prefs);
+	AppendWords(&makefiles, prefs);
 
 	for (ln = makefiles.first; ln != NULL; ln = ln->next)
 		if (ReadMakefile(ln->datum))

@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.206 2023/08/19 00:09:17 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.207 2023/12/17 09:02:26 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -613,7 +613,7 @@ meta_mode_init(const char *make_mode)
     metaBailiwickStr = Var_Subst("${.MAKE.META.BAILIWICK:O:u:tA}",
 				 SCOPE_GLOBAL, VARE_WANTRES);
     /* TODO: handle errors */
-    str2Lst_Append(&metaBailiwick, metaBailiwickStr);
+    AppendWords(&metaBailiwick, metaBailiwickStr);
     /*
      * We ignore any paths that start with ${.MAKE.META.IGNORE_PATHS}
      */
@@ -622,7 +622,7 @@ meta_mode_init(const char *make_mode)
     metaIgnorePathsStr = Var_Subst("${" MAKE_META_IGNORE_PATHS ":O:u:tA}",
 				   SCOPE_GLOBAL, VARE_WANTRES);
     /* TODO: handle errors */
-    str2Lst_Append(&metaIgnorePaths, metaIgnorePathsStr);
+    AppendWords(&metaIgnorePaths, metaIgnorePathsStr);
 
     /*
      * We ignore any paths that match ${.MAKE.META.IGNORE_PATTERNS}
