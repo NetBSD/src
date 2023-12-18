@@ -41,7 +41,6 @@
 #define	bpf_insn		sock_filter
 #else
 #include <net/bpf.h>
-#include <net/if_vlanvar.h>
 #endif
 
 #include <errno.h>
@@ -316,34 +315,17 @@ ssize_t
 bpf_send(const struct bpf *bpf, uint16_t protocol,
     const void *data, size_t len)
 {
-	struct iovec iov[3];
+	struct iovec iov[2];
 	struct ether_header eh;
-	struct ether_vlan_header evh;
-	const struct interface *ifp = bpf->bpf_ifp;
 
-	switch(ifp->hwtype) {
+	switch(bpf->bpf_ifp->hwtype) {
 	case ARPHRD_ETHER:
-#ifdef BSD
-		loginfox("%d", ifp->vlanid);
-		if (ifp->vlanid) {
-			memset(&evh.evl_dhost, 0xff, sizeof(evh.evl_dhost));
-			memcpy(&evh.evl_shost, ifp->hwaddr,
-			    sizeof(evh.evl_shost));
-			evh.evl_proto = htons(protocol);
-			evh.evl_encap_proto = htons(ETHERTYPE_VLAN);
-			evh.evl_tag = htons(ifp->vlanid);
-			iov[0].iov_base = &evh;
-			iov[0].iov_len = sizeof(evh);
-		} else
-#endif
-		{
-			memset(&eh.ether_dhost, 0xff, sizeof(eh.ether_dhost));
-			memcpy(&eh.ether_shost, ifp->hwaddr,
-			    sizeof(eh.ether_shost));
-			eh.ether_type = htons(protocol);
-			iov[0].iov_base = &eh;
-			iov[0].iov_len = sizeof(eh);
-		}
+		memset(&eh.ether_dhost, 0xff, sizeof(eh.ether_dhost));
+		memcpy(&eh.ether_shost, bpf->bpf_ifp->hwaddr,
+		    sizeof(eh.ether_shost));
+		eh.ether_type = htons(protocol);
+		iov[0].iov_base = &eh;
+		iov[0].iov_len = sizeof(eh);
 		break;
 	default:
 		iov[0].iov_base = NULL;
@@ -712,7 +694,7 @@ int
 bpf_bootp(const struct bpf *bpf, __unused const struct in_addr *ia)
 {
 
-#ifdef BIOCSETWFx
+#ifdef BIOCSETWF
 	if (bpf_bootp_rw(bpf, true) == -1 ||
 	    bpf_bootp_rw(bpf, false) == -1 ||
 	    ioctl(bpf->bpf_fd, BIOCLOCK) == -1)
