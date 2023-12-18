@@ -1,4 +1,4 @@
-# $NetBSD: varmod-subst.mk,v 1.13 2023/12/17 14:07:22 rillig Exp $
+# $NetBSD: varmod-subst.mk,v 1.14 2023/12/18 11:13:51 rillig Exp $
 #
 # Tests for the :S,from,to, variable modifier.
 
@@ -142,8 +142,9 @@ WORDS=		sequences of letters
 .endif
 
 
-# In an empty expression, the ':S' modifier matches a single time if the
-# search string is anchored at the beginning or at the end.
+# In an empty expression, the ':S' modifier matches a single time, but only if
+# the search string is empty and anchored at either the beginning or the end
+# of the word.
 .if ${:U:S,,out-of-nothing,} != ""
 .  error
 .endif
@@ -154,6 +155,30 @@ WORDS=		sequences of letters
 .  error
 .endif
 .if ${:U:S,^$,out-of-nothing,} != "out-of-nothing"
+.  error
+.endif
+.if ${:U:S,,out-of-nothing,g} != ""
+.  error
+.endif
+.if ${:U:S,^,out-of-nothing,g} != "out-of-nothing"
+.  error
+.endif
+.if ${:U:S,$,out-of-nothing,g} != "out-of-nothing"
+.  error
+.endif
+.if ${:U:S,^$,out-of-nothing,g} != "out-of-nothing"
+.  error
+.endif
+.if ${:U:S,,out-of-nothing,W} != ""
+.  error
+.endif
+.if ${:U:S,^,out-of-nothing,W} != "out-of-nothing"
+.  error
+.endif
+.if ${:U:S,$,out-of-nothing,W} != "out-of-nothing"
+.  error
+.endif
+.if ${:U:S,^$,out-of-nothing,W} != "out-of-nothing"
 .  error
 .endif
 

@@ -1,4 +1,4 @@
-# $NetBSD: varmod-subst-regex.mk,v 1.10 2023/12/17 14:07:22 rillig Exp $
+# $NetBSD: varmod-subst-regex.mk,v 1.11 2023/12/18 11:13:51 rillig Exp $
 #
 # Tests for the :C,from,to, variable modifier.
 
@@ -88,23 +88,43 @@ all: unmatched-subexpression
 # Like the ':S' modifier, the ':C' modifier matches on an expression
 # that contains no words at all, but only if the regular expression matches an
 # empty string, for example, when the regular expression is anchored at the
-# beginning or the end of the word.
-.if "<${U:S,^,prefix,}> <${:U:C,^,prefix,}>" != "<> <prefix>"
+# beginning or the end of the word.  An unanchored regular expression that
+# matches the empty string is uncommon in practice, as it would match before
+# each character of the word.
+.if "<${:U:S,,unanchored,}> <${:U:C,.?,unanchored,}>" != "<> <unanchored>"
 .  error
 .endif
-.if "<${U:S,$,suffix,}> <${:U:C,$,suffix,}>" != "<> <suffix>"
+.if "<${:U:S,^,prefix,}> <${:U:C,^,prefix,}>" != "<prefix> <prefix>"
 .  error
 .endif
-.if "<${U:S,^$,whole,}> <${:U:C,^$,whole,}>" != "<> <whole>"
+.if "<${:U:S,$,suffix,}> <${:U:C,$,suffix,}>" != "<suffix> <suffix>"
 .  error
 .endif
-.if "<${U:S,^,prefix,g}> <${:U:C,^,prefix,g}>" != "<> <prefix>"
+.if "<${:U:S,^$,whole,}> <${:U:C,^$,whole,}>" != "<whole> <whole>"
 .  error
 .endif
-.if "<${U:S,$,suffix,g}> <${:U:C,$,suffix,g}>" != "<> <suffix>"
+.if "<${:U:S,,unanchored,g}> <${:U:C,.?,unanchored,g}>" != "<> <unanchored>"
 .  error
 .endif
-.if "<${U:S,^$,whole,g}> <${:U:C,^$,whole,g}>" != "<> <whole>"
+.if "<${:U:S,^,prefix,g}> <${:U:C,^,prefix,g}>" != "<prefix> <prefix>"
+.  error
+.endif
+.if "<${:U:S,$,suffix,g}> <${:U:C,$,suffix,g}>" != "<suffix> <suffix>"
+.  error
+.endif
+.if "<${:U:S,^$,whole,g}> <${:U:C,^$,whole,g}>" != "<whole> <whole>"
+.  error
+.endif
+.if "<${:U:S,,unanchored,W}> <${:U:C,.?,unanchored,W}>" != "<> <unanchored>"
+.  error
+.endif
+.if "<${:U:S,^,prefix,W}> <${:U:C,^,prefix,W}>" != "<prefix> <prefix>"
+.  error
+.endif
+.if "<${:U:S,$,suffix,W}> <${:U:C,$,suffix,W}>" != "<suffix> <suffix>"
+.  error
+.endif
+.if "<${:U:S,^$,whole,W}> <${:U:C,^$,whole,W}>" != "<whole> <whole>"
 .  error
 .endif
 
