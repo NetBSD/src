@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.28 2022/09/13 13:09:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.28.4.1 2023/12/18 14:15:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -235,7 +235,9 @@ get_ccb(connection_t *conn, bool waitok)
 	ccb->ccb_disp = CCBDISP_NOWAIT;
 	ccb->ccb_connection = conn;
 	ccb->ccb_num_timeouts = 0;
-	atomic_inc_uint(&conn->c_usecount);
+	mutex_enter(&conn->c_lock);
+	conn->c_usecount++;
+	mutex_exit(&conn->c_lock);
 
 	DEBC(conn, 15, (
 		"get_ccb: ccb = %p, usecount = %d\n",
@@ -264,8 +266,10 @@ free_ccb(ccb_t *ccb)
 
 	KASSERT((ccb->ccb_flags & CCBF_WAITQUEUE) == 0);
 
-	atomic_dec_uint(&conn->c_usecount);
 	ccb->ccb_connection = NULL;
+	mutex_enter(&conn->c_lock);
+	conn->c_usecount--;
+	mutex_exit(&conn->c_lock);
 
 	if (ccb->ccb_disp > CCBDISP_NOWAIT) {
 		DEBOUT(("Freeing CCB with disp %d\n",ccb->ccb_disp));

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.27 2022/09/13 13:09:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.27.4.1 2023/12/18 14:15:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -135,11 +135,10 @@
 /* Connection state */
 
 typedef enum {
-	/* first three correspond to CSG/NSG coding */
 	ST_SEC_NEG	= 0,	/* security negotiation phase */
-	ST_OP_NEG	= 1,	/* operational negotiation phase */
+	ST_SEC_FIN  	= 1,	/* switch from SEC after mutual CHAP */
+	ST_OP_NEG	= 2,	/* operational negotiation phase */
 	ST_FULL_FEATURE	= 3,	/* full feature phase */
-	/* rest is internal */
 	ST_WINDING_DOWN	= 4,	/* connection termination initiated, logging out */
 	ST_LOGOUT_SENT	= 5,	/* logout has been sent */
 	ST_SETTLING	= 6,	/* waiting for things to settle down */

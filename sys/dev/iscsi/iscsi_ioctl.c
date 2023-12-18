@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.33 2022/09/13 13:09:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.33.4.1 2023/12/18 14:15:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -728,18 +728,11 @@ create_connection(iscsi_login_parameters_t *par, session_t *sess,
 	}
 
 	rc = get_socket(par->socket, &conn->c_sock);
-	fd_close(par->socket);
+	if (rc != EBADF)
+		fd_close(par->socket);
 
 	if (rc) {
 		DEBOUT(("Invalid socket %d\n", par->socket));
-
-		callout_destroy(&conn->c_timeout);
-		rw_destroy(&conn->c_sock_rw);
-		cv_destroy(&conn->c_idle_cv);
-		cv_destroy(&conn->c_ccb_cv);
-		cv_destroy(&conn->c_pdu_cv);
-		cv_destroy(&conn->c_conn_cv);
-		mutex_destroy(&conn->c_lock);
 		free(conn, M_DEVBUF);
 		par->status = ISCSI_STATUS_INVALID_SOCKET;
 		return rc;
@@ -901,11 +894,13 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *sess,
 		DEBOUT(("Too many connections (max = %d, curr = %d)\n",
 			sess->s_MaxConnections, sess->s_active_connections));
 
-		/* Always close the desecriptor */
-		fd_close(par->socket);
+		/* Close the desecriptor */
+		rc = EIO;
+		if (fd_getfile(par->socket) != NULL)
+			rc = fd_close(par->socket);
 
 		par->status = ISCSI_STATUS_MAXED_CONNECTIONS;
-		return EIO;
+		return rc;
 	}
 
 	rw_enter(&conn->c_sock_rw, RW_WRITER);
@@ -915,7 +910,8 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *sess,
 	}
 	rc = get_socket(par->socket, &conn->c_sock);
 	rw_exit(&conn->c_sock_rw);
-	fd_close(par->socket);
+	if (rc != EBADF)
+		fd_close(par->socket);
 
 	if (rc) {
 		DEBOUT(("Invalid socket %d\n", par->socket));
@@ -1739,19 +1735,23 @@ iscsi_cleanup_thread(void *par)
 			 * the send/recv threads have been killed
 			 */
 			DEBC(conn, 5, ("Cleanup: Waiting for threads to exit\n"));
+
+			mutex_enter(&conn->c_lock);
 			while (conn->c_sendproc || conn->c_rcvproc)
-				kpause("threads", false, hz, NULL);
+				kpause("threads", false, hz, &conn->c_lock);
 
 			for (s=1; conn->c_usecount > 0 && s < 3; ++s)
-				kpause("usecount", false, hz, NULL);
+				kpause("usecount", false, hz, &conn->c_lock);
 
 			if (conn->c_usecount > 0) {
 				DEBC(conn, 5, ("Cleanup: %d CCBs busy\n", conn->c_usecount));
+				mutex_exit(&conn->c_lock);
 				/* retry later */
 				mutex_enter(&iscsi_cleanup_mtx);
 				TAILQ_INSERT_HEAD(&iscsi_cleanupc_list, conn, c_connections);
 				continue;
 			}
+			mutex_exit(&conn->c_lock);
 
 			KASSERT(!conn->c_in_session);
 
@@ -1838,7 +1838,7 @@ iscsi_cleanup_thread(void *par)
 				conn->c_timedout = TOUT_NONE;
 		}
 
-		/* Go to sleep, but wake up every 30 seconds to
+		/* Go to sleep, but wake up every 120 seconds to
 		 * check for dead event handlers */
 		rc = cv_timedwait(&iscsi_cleanup_cv, &iscsi_cleanup_mtx,
 			(TAILQ_FIRST(&event_handlers)) ? 120 * hz : 0);

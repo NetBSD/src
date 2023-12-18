@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.13 2019/04/21 11:45:08 maya Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.13.28.1 2023/12/18 14:15:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ typedef struct
 
 STATIC key_entry_t entries[] = {
 	{"AuthMethod", T_AUTH, 0},
-	{"CHAP_A", T_NUM, 5},
+	{"CHAP_A", T_NUM, ISCSI_CHAP_MD5},
 	{"CHAP_C", T_BIGNUM, 0},
 	{"CHAP_I", T_NUM, 0},
 	{"CHAP_N", T_STRING, 0},
@@ -170,14 +170,14 @@ STATIC key_entry_t entries[] = {
 /* a negotiation parameter: key and values (there may be more than 1 for lists) */
 typedef struct
 {
-	text_key_t key;				/* the key */
-	int list_num;				/* number of elements in list, doubles as */
-	bool hex_bignums;			/* whether to encode in hex or base64 */
-	/* data size for large numeric values */
+	text_key_t key;		/* the key */
+	int list_num;		/* number of elements in list, doubles as */
+				/* data size for large numeric values */
+	bool hex_bignums;	/* whether to encode in hex or base64 */
 	union
 	{
-		uint32_t nval[MAX_LIST];	/* numeric or enumeration values */
-		uint8_t *sval;				/* string or data pointer */
+		uint32_t nval[MAX_LIST];/* numeric or enumeration values */
+		uint8_t *sval;		/* string or data pointer */
 	} val;
 } negotiation_parameter_t;
 
@@ -220,7 +220,6 @@ typedef struct
 
 /*****************************************************************************/
 
-
 STATIC void
 chap_md5_response(uint8_t *buffer, uint8_t identifier, uint8_t *secret,
 				  uint8_t *challenge, int challenge_size)
@@ -233,7 +232,6 @@ chap_md5_response(uint8_t *buffer, uint8_t identifier, uint8_t *secret,
 	MD5Update(&md5, challenge, challenge_size);
 	MD5Final(buffer, &md5);
 }
-
 
 /*****************************************************************************/
 
@@ -322,6 +320,7 @@ get_bignumval(uint8_t *buf, negotiation_parameter_t *par)
 		}
 		buf++;
 		par->list_num = dp - par->val.sval;
+		par->hex_bignums = true;
 	} else if (buf[0] == '0' && (buf[1] == 'b' || buf[1] == 'B')) {
 		buf = base64_decode(&buf[2], par->val.sval, &par->list_num);
 	} else {
@@ -340,12 +339,13 @@ get_bignumval(uint8_t *buf, negotiation_parameter_t *par)
  *    Parameter:
  *          buf      The buffer pointer
  *          pval     The pointer to the result.
+ *          sep      Separator to next value.
  *
  *    Returns:    The pointer to the next parameter, NULL on error.
  */
 
 STATIC uint8_t *
-get_numval(uint8_t *buf, uint32_t *pval)
+get_numval(uint8_t *buf, uint32_t *pval, const uint8_t sep)
 {
 	uint32_t val = 0;
 	char c;
@@ -389,11 +389,11 @@ STATIC uint8_t *
 get_range(uint8_t *buf, uint32_t *pval1, uint32_t *pval2)
 {
 
-	if ((buf = get_numval(buf, pval1)) == NULL)
+	if ((buf = get_numval(buf, pval1, '~')) == NULL)
 		return NULL;
 	if (!*buf)
 		return NULL;
-	if ((buf = get_numval(buf, pval2)) == NULL)
+	if ((buf = get_numval(buf, pval2, '~')) == NULL)
 		return NULL;
 	return buf;
 }
@@ -539,6 +539,7 @@ get_parameter(uint8_t *buf, negotiation_parameter_t *par)
 
 	par->key = i;
 	par->list_num = 1;
+	par->hex_bignums = false; /* set by get_bignumval */
 
 	if (i > MAX_KEY) {
 		DEBOUT(("get_parameter: unrecognized key <%s>\n", buf));
@@ -556,7 +557,7 @@ get_parameter(uint8_t *buf, negotiation_parameter_t *par)
 
 	switch (entries[i].val) {
 	case T_NUM:
-		bp = get_numval(bp, &par->val.nval[0]);
+		bp = get_numval(bp, &par->val.nval[0], '\0');
 		break;
 
 	case T_BIGNUM:
@@ -926,6 +927,12 @@ complete_pars(negotiation_state_t *state, pdu_t *pdu)
 	len = total_size(state->pars, state->num_pars);
 
 	DEB(10, ("complete_pars: n=%d, len=%d\n", state->num_pars, len));
+
+	if (len == 0) {
+		pdu->pdu_temp_data = NULL;
+		pdu->pdu_temp_data_len = 0;
+		return 0;
+	}
 
 	if ((bp = malloc(len, M_TEMP, M_WAITOK)) == NULL) {
 		DEBOUT(("*** Out of memory in complete_pars\n"));
@@ -1313,7 +1320,6 @@ assemble_login_parameters(connection_t *conn, ccb_t *ccb, pdu_t *pdu)
 	return (next) ? 0 : -1;
 }
 
-
 /*
  * assemble_security_parameters:
  *    Assemble the security negotiation parameters.
@@ -1342,6 +1348,7 @@ assemble_security_parameters(connection_t *conn, ccb_t *ccb, pdu_t *rx_pdu,
 	int challenge_size = 0;
 	uint8_t *response = NULL;
 	int response_size = 0;
+	bool challenge_hex = iscsi_hex_bignums;
 
 	state->num_pars = 0;
 	next = 0;
@@ -1385,7 +1392,7 @@ assemble_security_parameters(connection_t *conn, ccb_t *ccb, pdu_t *rx_pdu,
 
 		case K_Auth_CHAP_Algorithm:
 			if (state->auth_state != AUTH_CHAP_ALG_SENT ||
-				rxp.val.nval[0] != 5) {
+			    rxp.val.nval[0] != ISCSI_CHAP_MD5) {
 				DEBOUT(("Bad algorithm, auth_state = %d, alg %d\n",
 						state->auth_state, rxp.val.nval[0]));
 				return ISCSI_STATUS_NEGOTIATION_ERROR;
@@ -1400,6 +1407,8 @@ assemble_security_parameters(connection_t *conn, ccb_t *ccb, pdu_t *rx_pdu,
 			}
 			challenge = rxp.val.sval;
 			challenge_size = rxp.list_num;
+			/* respond in the same format as the challenge */
+			challenge_hex = rxp.hex_bignums;
 			break;
 
 		case K_Auth_CHAP_Identifier:
@@ -1428,8 +1437,11 @@ assemble_security_parameters(connection_t *conn, ccb_t *ccb, pdu_t *rx_pdu,
 			}
 			response = rxp.val.sval;
 			response_size = rxp.list_num;
-			if (response_size != CHAP_MD5_SIZE)
+			if (response_size != CHAP_MD5_SIZE) {
+				DEBOUT(("CHAP Response, bad size %d\n",
+						response_size));
 				return ISCSI_STATUS_NEGOTIATION_ERROR;
+			}
 			break;
 
 		default:
@@ -1446,7 +1458,7 @@ assemble_security_parameters(connection_t *conn, ccb_t *ccb, pdu_t *rx_pdu,
 		return ISCSI_STATUS_NEGOTIATION_ERROR;
 
 	case AUTH_METHOD_SELECTED:
-		set_key_n(state, K_Auth_CHAP_Algorithm, 5);
+		set_key_n(state, K_Auth_CHAP_Algorithm, ISCSI_CHAP_MD5);
 		state->auth_state = AUTH_CHAP_ALG_SENT;
 		next = -1;
 		break;
@@ -1461,12 +1473,15 @@ assemble_security_parameters(connection_t *conn, ccb_t *ccb, pdu_t *rx_pdu,
 
 		set_key_s(state, K_Auth_CHAP_Name, state->user_name);
 
-		chap_md5_response(state->temp_buf, identifier, state->password,
-						  challenge, challenge_size);
+		chap_md5_response(state->temp_buf, identifier,
+		    state->password, challenge, challenge_size);
 
 		cpar = set_key_s(state, K_Auth_CHAP_Response, state->temp_buf);
-		if (cpar != NULL)
+		if (cpar != NULL) {
 			cpar->list_num = CHAP_MD5_SIZE;
+			/* respond in same format as challenge */
+			cpar->hex_bignums = challenge_hex;
+		}
 
 		if (par->auth_info.mutual_auth) {
 			if (!state->target_password[0]) {
@@ -1481,9 +1496,14 @@ assemble_security_parameters(connection_t *conn, ccb_t *ccb, pdu_t *rx_pdu,
 					  state->temp_buf[CHAP_MD5_SIZE]);
 			cpar = set_key_s(state, K_Auth_CHAP_Challenge,
 							 &state->temp_buf[CHAP_MD5_SIZE + 1]);
-			if (cpar != NULL)
+			if (cpar != NULL) {
 				cpar->list_num = CHAP_CHALLENGE_LEN;
-			next = -1;
+				/* use same format as target challenge */
+				cpar->hex_bignums = challenge_hex;
+			}
+
+			/* transitional state */
+			conn->c_state = ST_SEC_FIN;
 		}
 		state->auth_state = AUTH_CHAP_RSP_SENT;
 		break;
@@ -1496,12 +1516,13 @@ assemble_security_parameters(connection_t *conn, ccb_t *ccb, pdu_t *rx_pdu,
 		}
 
 		chap_md5_response(state->temp_buf,
-				state->temp_buf[CHAP_MD5_SIZE],
-				state->password,
-				&state->temp_buf[CHAP_MD5_SIZE + 1],
-				CHAP_CHALLENGE_LEN);
+			state->temp_buf[CHAP_MD5_SIZE],
+			state->target_password,
+			&state->temp_buf[CHAP_MD5_SIZE + 1],
+			CHAP_CHALLENGE_LEN);
 
-		if (memcmp(state->temp_buf, response, response_size)) {
+		if (response_size > sizeof(state->temp_buf) ||
+		    memcmp(state->temp_buf, response, response_size)) {
 			DEBOUT(("Mutual authentication mismatch\n"));
 			return ISCSI_STATUS_AUTHENTICATION_FAILED;
 		}
@@ -1533,9 +1554,9 @@ set_first_opnegs(connection_t *conn, negotiation_state_t *state)
 	iscsi_login_parameters_t *lpar = conn->c_login_par;
 	negotiation_parameter_t *cpar;
 
-    /* Digests - suggest None,CRC32C unless the user forces a value */
+	/* Digests - suggest None,CRC32C unless the user forces a value */
 	cpar = set_key_n(state, K_HeaderDigest,
-					 (lpar->is_present.HeaderDigest) ? lpar->HeaderDigest : 0);
+	    (lpar->is_present.HeaderDigest) ? lpar->HeaderDigest : 0);
 	if (cpar != NULL && !lpar->is_present.HeaderDigest) {
 		cpar->list_num = 2;
 		cpar->val.nval[1] = 1;
@@ -1557,16 +1578,19 @@ set_first_opnegs(connection_t *conn, negotiation_state_t *state)
 	/* First connection only */
 	if (!conn->c_session->s_TSIH) {
 		state->ErrorRecoveryLevel =
-			(lpar->is_present.ErrorRecoveryLevel) ? lpar->ErrorRecoveryLevel
-												  : 2;
+		    (lpar->is_present.ErrorRecoveryLevel) ?
+		    lpar->ErrorRecoveryLevel : 2;
 		/*
-		   Negotiate InitialR2T to FALSE and ImmediateData to TRUE, should
-		   be slightly more efficient than the default InitialR2T=TRUE.
+		 * Negotiate InitialR2T to FALSE and ImmediateData to
+		 * TRUE, should be slightly more efficient than the
+		 * default InitialR2T=TRUE.
 		 */
 		state->InitialR2T = FALSE;
 		state->ImmediateData = TRUE;
 
-		/* We don't really care about this, so don't negotiate by default */
+		/* We don't really care about this, so don't negotiate
+		 * by default
+		 */
 		state->MaxBurstLength = entries[K_MaxBurstLength].defval;
 		state->FirstBurstLength = entries[K_FirstBurstLength].defval;
 		state->MaxOutstandingR2T = entries[K_MaxOutstandingR2T].defval;
@@ -1625,7 +1649,7 @@ assemble_negotiation_parameters(connection_t *conn, ccb_t *ccb, pdu_t *rx_pdu,
 	DEBC(conn, 10, ("AsmNegParams: connState=%d, MRDSL=%d\n",
 		conn->c_state, state->MaxRecvDataSegmentLength));
 
-	if (conn->c_state == ST_SEC_NEG) {
+	if (conn->c_state == ST_SEC_NEG || conn->c_state == ST_SEC_FIN) {
 		conn->c_state = ST_OP_NEG;
 		set_first_opnegs(conn, state);
 	}
@@ -1709,6 +1733,7 @@ assemble_send_targets(pdu_t *pdu, uint8_t *val)
 	par.key = K_SendTargets;
 	par.list_num = 1;
 	par.val.sval = val;
+	par.hex_bignums = false;
 
 	len = parameter_size(&par);
 
@@ -1719,8 +1744,10 @@ assemble_send_targets(pdu_t *pdu, uint8_t *val)
 	pdu->pdu_temp_data = buf;
 	pdu->pdu_temp_data_len = len;
 
-	if (put_parameter(buf, len, &par) == 0)
+	if (put_parameter(buf, len, &par) == 0) {
+		DEBOUT(("trying to put zero sized buffer\n"));
 		return ISCSI_STATUS_PARAMETER_INVALID;
+	}
 
 	return 0;
 }
