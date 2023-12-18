@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_parse.c,v 1.4 2021/12/03 13:27:38 andvar Exp $	*/
+/*	$NetBSD: iscsic_parse.c,v 1.4.2.1 2023/12/18 14:12:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -48,50 +48,62 @@
 STATIC void
 get_address(iscsi_portal_address_t * portal, char *str, char *arg)
 {
-	char *sp, *sp2;
+	char *sp;
 	int val;
 
 	if (!str || !*str)
 		arg_error(arg, "Address is missing");
 
-	/* is there a port? don't check inside square brackets (IPv6 addr) */
-	for (sp = str + 1, val = 0; *sp && (*sp != ':' || val); sp++) {
-		if (*sp == '[')
-			val = 1;
-		else if (*sp == ']')
-			val = 0;
-	}
-
-	/* */
-	if (*sp) {
-		for (sp2 = sp + 1; *sp2 && *sp2 != ':'; sp2++);
-		/* if there's a second colon, assume it's an unbracketed IPv6 address */
-		if (!*sp2) {
-			/* truncate source, that's the address */
-			*sp++ = '\0';
-			if (sscanf(sp, "%d", &val) != 1)
-				arg_error(arg, "Bad address format: Expected port number");
-			if (val < 0 || val > 0xffff)
-				arg_error(arg, "Bad address format: Port number out of range");
-			portal->port = (uint16_t) val;
-		}
-		/* is there a group tag? */
-		for (; isdigit((unsigned char)*sp); sp++);
-		if (*sp && *sp != ',')
-			arg_error(arg, "Bad address format: Extra character(s) '%c'", *sp);
-	} else
-		for (sp = str + 1; *sp && *sp != ','; sp++);
-
-	if (*sp) {
+	/* Parse and strip trailing group tag */
+	sp = strrchr(str, ',');
+	if (sp != NULL) {
 		if (sscanf(sp + 1, "%d", &val) != 1)
 			arg_error(arg, "Bad address format: Expected group tag");
 		if (val < 0 || val > 0xffff)
 			arg_error(arg, "Bad address format: Group tag out of range");
 		portal->group_tag = (uint16_t) val;
-		/* truncate source, that's the address */
 		*sp = '\0';
 	}
-	/* only check length, don't verify correct format (too many possibilities) */
+
+	/* Skip over bracketed IPv6 address */
+	sp = strchr(str, ']');
+	if (sp != NULL)
+		sp++;
+	else
+		sp = str;
+
+	/* Parse and strip trailing port number */
+	sp = strchr(sp, ':');
+	if (sp != NULL) {
+		if (strchr(sp + 1, ':') != NULL) {
+			/*
+			 *  If there's a second colon, assume
+			 *  it's an unbracketed IPv6 address
+			 */
+			portal->port = 0;
+		} else {
+			if (sscanf(sp + 1, "%d", &val) != 1)
+				arg_error(arg, "Bad address format: Expected port number");
+			if (val < 0 || val > 0xffff)
+				arg_error(arg, "Bad address format: Port number ut  of range");
+			portal->port = (uint16_t) val;
+			*sp = '\0';
+		}
+	}
+
+	/* Remove brackets */
+	if (*str == '[') {
+		sp = strchr(str, ']');
+		if (sp != NULL && !*(sp+1)) {
+			str = str + 1;
+			*sp = '\0';
+		}
+	}
+
+	/*
+	 * only check length, don't verify correct format
+	 * (too many possibilities)
+	 */
 	if (strlen(str) >= sizeof(portal->address))
 		arg_error(arg, "Bad address format: Address string too long");
 
