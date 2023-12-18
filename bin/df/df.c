@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.101 2022/08/09 08:14:03 wiz Exp $ */
+/*	$NetBSD: df.c,v 1.101.2.1 2023/12/18 14:17:42 martin Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.101 2022/08/09 08:14:03 wiz Exp $");
+__RCSID("$NetBSD: df.c,v 1.101.2.1 2023/12/18 14:17:42 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,8 +243,13 @@ main(int argc, char *argv[])
 
 	maxwidth = 0;
 	for (i = 0; i < mntcount; i++) {
-		width = (int)strlen(Wflag && mntbuf[i].f_mntfromlabel[0] ?
-		    mntbuf[i].f_mntfromlabel : mntbuf[i].f_mntfromname);
+		width = 0;
+		if (Wflag && mntbuf[i].f_mntfromlabel[0]) {
+			/* +5 is for "NAME=" added later */
+			width = (int)strlen(mntbuf[i].f_mntfromlabel) + 5;
+		}
+		if (width == 0)
+			width = (int)strlen(mntbuf[i].f_mntfromname);
 		if (width > maxwidth)
 			maxwidth = width;
 		if (cflag)
