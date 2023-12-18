@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.172 2023/12/14 17:57:38 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.173 2023/12/18 14:18:58 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14349,4 +14349,50 @@ sys/arch/i386/stand/dosboot/Makefile		1.34,1.35
 
 	Fix the clang build of x86 booters.
 	[rin, ticket #498]
+
+distrib/notes/common/main			1.571,1.572
+
+	Add note about zfs mount behaviour change in NetBSD 10.
+	[abs, ticket #499]
+
+usr.bin/cvslatest/cvslatest.1			1.2
+
+	cvslatest(1): PR 57778: remove RETURN VALUES.
+	[wiz, ticket #500]
+
+lib/libc/stdlib/jemalloc.c			1.64
+
+	malloc_usable_size(): make it visible with old jemalloc.
+	[mrg, ticket #501]
+
+external/bsd/top/dist/machine/m_netbsd.c	1.29
+
+	top(1): avoid crashes when proc_from_thread() returns NULL.
+	[mrg, ticket #502]
+
+external/bsd/top/dist/machine/m_netbsd.c	1.27,1.28
+
+	top(1): add network in & out bytes to the top display.
+	[mrg, ticket #503]
+
+sbin/iscsictl/iscsic_parse.c			1.5
+sbin/iscsid/iscsid_driverif.c			1.9
+
+	iscsid(8), iscsictl(8): parse IPv6 targets and handle IPv6 addresses.
+	[mlelstv, ticket #504]
+
+sys/dev/iscsi/iscsi.h				1.5
+sys/dev/iscsi/iscsi_globals.h			1.28
+sys/dev/iscsi/iscsi_ioctl.c			1.34
+sys/dev/iscsi/iscsi_send.c			1.40
+sys/dev/iscsi/iscsi_text.c			1.14
+sys/dev/iscsi/iscsi_utils.c			1.29
+
+	iscsi: fix a panic in the driver and some minor problems.
+	[mlelstv, ticket #505]
+
+bin/df/df.c					1.102
+
+	df(1): correctly compute the "Filesystem" column width when using -W.
+	[kre, ticket #506]
 
