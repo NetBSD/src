@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_driverif.c,v 1.8 2016/05/29 13:35:45 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_driverif.c,v 1.8.26.1 2023/12/18 14:12:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -98,23 +98,29 @@ set_node_name(iscsid_set_node_name_req_t * par)
 static int
 bind_socket(int sock, uint8_t * addr)
 {
-	struct sockaddr_in serverAddress;
-	struct hostent *host;
+	struct addrinfo hints, *ai, *ai0;
+	int ret = FALSE;
 
 	DEB(8, ("Binding to <%s>", addr));
-	(void) memset(&serverAddress, 0x0, sizeof(serverAddress));
-	host = gethostbyname((char *)addr);
-	if (host == NULL)
-		return FALSE;
-	if (host->h_length > (int)sizeof(serverAddress.sin_addr))
-		return FALSE;
-	serverAddress.sin_family = host->h_addrtype;
-	serverAddress.sin_port = 0;
-	serverAddress.sin_len = host->h_length;
-	memcpy(&serverAddress.sin_addr, host->h_addr_list[0], host->h_length);
+	
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+	if (getaddrinfo((char *)addr, NULL, &hints, &ai0))
+		return ret;
 
-	return bind(sock, (struct sockaddr *)(void *)&serverAddress,
-				(socklen_t)sizeof(serverAddress)) >= 0;
+	for (ai = ai0; ai; ai = ai->ai_next) {
+		if (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0)
+			continue;
+
+		listen(sock, 5);
+		ret = TRUE;
+		break;
+	}
+	freeaddrinfo(ai0);
+
+	return ret;
 }
 
 
@@ -183,14 +189,13 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
 	target_t *target;
 	portal_t *portal = NULL;
 	iscsi_portal_address_t *addr;
-	struct sockaddr_in serverAddress;
-	struct hostent *host;
+	struct addrinfo hints, *ai, *ai0;
+	char portnum[6];
 	initiator_t *init;
 
 	DEB(9, ("Make Connection sess=%p, req=%p, res=%p, stid=%p",
 			 sess, req, res, stid));
 	(void) memset(&loginp, 0x0, sizeof(loginp));
-	(void) memset(&serverAddress, 0x0, sizeof(serverAddress));
 
 	/* find the target portal */
 	if (stid != NULL) {
@@ -277,69 +282,72 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
 	/* translate target address */
 	DEB(8, ("Connecting to <%s>, port %d", addr->address, addr->port));
 
-	host = gethostbyname((char *)addr->address);
-	if (host == NULL) {
-		switch (h_errno) {
-		case HOST_NOT_FOUND:
-			res->status = ISCSID_STATUS_HOST_NOT_FOUND;
-			break;
-		case TRY_AGAIN:
-			res->status = ISCSID_STATUS_HOST_TRY_AGAIN;
-			break;
-		default:
-			res->status = ISCSID_STATUS_HOST_ERROR;
-			break;
-		}
-		return NULL;
-	}
-	if (host->h_length > (int)sizeof(serverAddress.sin_addr)) {
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	snprintf(portnum, sizeof(portnum), "%u", addr->port);
+	ret = getaddrinfo((char *)addr->address, portnum, &hints, &ai0);
+	switch (ret) {
+	case 0:
+		break;
+	case EAI_NODATA:
+		res->status = ISCSID_STATUS_HOST_NOT_FOUND;
+		break;
+	case EAI_AGAIN:
+		res->status = ISCSID_STATUS_HOST_TRY_AGAIN;
+		break;
+	default:
 		res->status = ISCSID_STATUS_HOST_ERROR;
-		return NULL;
+		break;
 	}
-	DEB(8, ("Gethostbyname OK, addrtype %d, len %d, addr %x",
-			host->h_addrtype, host->h_length, *((int *) host->h_addr_list[0])));
-	serverAddress.sin_family = host->h_addrtype;
-	serverAddress.sin_port = htons((addr->port)
-		? addr->port : ISCSI_DEFAULT_PORT);
-	serverAddress.sin_len = host->h_length;
-	memcpy(&serverAddress.sin_addr, host->h_addr_list[0], host->h_length);
 
 	/* alloc the connection structure */
 	conn = calloc(1, sizeof(*conn));
 	if (conn == NULL) {
+		freeaddrinfo(ai0);
 		res->status = ISCSID_STATUS_NO_RESOURCES;
 		return NULL;
 	}
-	/* create and connect the socket */
-	sock = socket(AF_INET, SOCK_STREAM, 0);
+
+	res->status = ISCSID_STATUS_HOST_ERROR;
+	sock = -1;
+	for (ai = ai0; ai; ai = ai->ai_next) {
+		/* create and connect the socket */
+		sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		if (sock < 0) {
+			res->status = ISCSID_STATUS_SOCKET_ERROR;
+			break;
+		}
+
+		if (init) {
+			if (!bind_socket(sock, init->address)) {
+				close(sock);
+				res->status = ISCSID_STATUS_INITIATOR_BIND_ERROR;
+				break;
+			}
+		}
+
+		DEB(8, ("Connecting socket"));
+		if (connect(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
+			close(sock);
+			res->status = ISCSID_STATUS_CONNECT_ERROR;
+			continue;
+		}
+
+		res->status = ISCSID_STATUS_SUCCESS;
+		break;
+	}
+	freeaddrinfo(ai0);
+
 	if (sock < 0) {
 		free(conn);
-		res->status = ISCSID_STATUS_SOCKET_ERROR;
-		return NULL;
-	}
-
-	if (init) {
-		if (!bind_socket(sock, init->address)) {
-			close(sock);
-			free(conn);
-			res->status = ISCSID_STATUS_INITIATOR_BIND_ERROR;
-			return NULL;
-		}
-	}
-
-	DEB(8, ("Connecting socket"));
-	if (connect(sock, (struct sockaddr *)(void *)&serverAddress,
-		(socklen_t)sizeof(serverAddress)) < 0) {
-		close(sock);
-		free(conn);
-		res->status = ISCSID_STATUS_CONNECT_ERROR;
 		DEB(1, ("Connecting to socket failed (error %d), returning %d",
 				errno, res->status));
 		return NULL;
 	}
+
 	/* speed up socket processing */
 	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, (socklen_t)sizeof(yes));
-
 	/* setup login parameter structure */
 	loginp.socket = sock;
 	if (target->TargetName[0]) {
@@ -506,11 +514,10 @@ event_recover_connection(uint32_t sid, uint32_t cid)
 	portal_t *portal;
 	initiator_t *init;
 	iscsi_portal_address_t *addr;
-	struct sockaddr_in serverAddress;
-	struct hostent *host;
+	struct addrinfo hints, *ai, *ai0;
+	char portnum[6];
 
 	DEB(1, ("Event_Recover_Connection sid=%d, cid=%d", sid, cid));
-	(void) memset(&serverAddress, 0x0, sizeof(serverAddress));
 
 	LOCK_SESSIONS;
 
@@ -543,47 +550,53 @@ event_recover_connection(uint32_t sid, uint32_t cid)
 	DEB(1, ("Event_Recover_Connection Connecting to <%s>, port %d",
 			addr->address, addr->port));
 
-	if ((host = gethostbyname((char *)addr->address)) == NULL) {
-		DEB(1, ("GetHostByName failed (error %d)", h_errno));
-		return;
-	}
-	if (host->h_length > (int)sizeof(serverAddress.sin_addr)) {
-		DEB(1, ("Host address length invalid (%d)", host->h_length));
-		return;
-	}
-
-	serverAddress.sin_family = host->h_addrtype;
-	serverAddress.sin_port = htons((addr->port)
-		? addr->port : ISCSI_DEFAULT_PORT);
-	serverAddress.sin_len = host->h_length;
-	memcpy(&serverAddress.sin_addr, host->h_addr_list[0], host->h_length);
-
-	/* create and connect the socket */
-	sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock < 0) {
-		DEB(1, ("Creating socket failed (error %d)", errno));
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	snprintf(portnum, sizeof(portnum), "%u", addr->port);
+	ret = getaddrinfo((char *)addr->address, portnum, &hints, &ai0);
+	if (ret) {
+		DEB(1, ("getaddrinfo failed (%s)", gai_strerror(ret)));
 		return;
 	}
 
-	DEB(1, ("recover_connection: Socket = %d", sock));
+	sock = -1;
+	for (ai = ai0; ai; ai = ai->ai_next) {
 
-	if (init) {
-		if (!bind_socket(sock, init->address)) {
-			DEB(1, ("Binding to interface failed (error %d)", errno));
-			close(sock);
-			return;
+		/* create and connect the socket */
+		sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		if (sock < 0) {
+			DEB(1, ("Creating socket failed (error %d)", errno));
+			break;
 		}
-	}
 
-	if (connect(sock, (struct sockaddr *)(void *)&serverAddress,
-		(socklen_t)sizeof(serverAddress)) < 0) {
-		DEB(1, ("Connecting to socket failed (error %d)", errno));
-		close(sock);
-		return;
+		DEB(1, ("recover_connection: Socket = %d", sock));
+
+		if (init) {
+			if (!bind_socket(sock, init->address)) {
+				DEB(1, ("Binding to interface failed (error %d)", errno));
+				close(sock);
+				sock = -1;
+				continue;
+			}
+		}
+
+		if (connect(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
+			close(sock);
+			sock = -1;
+			DEB(1, ("Connecting to socket failed (error %d)", errno));
+			continue;
+		}
+
+		break;
 	}
+	freeaddrinfo(ai0);
+
+	if (sock < 0)
+		return;
+
 	/* speed up socket processing */
 	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, (socklen_t)sizeof(yes));
-
 	conn->loginp.socket = sock;
 	conn->loginp.status = 0;
 	ret = ioctl(driver, ISCSI_RESTORE_CONNECTION, &conn->loginp);
@@ -630,7 +643,6 @@ log_in(iscsid_login_req_t * req, iscsid_response_t * res)
 	}
 	UNLOCK_SESSIONS;
 }
-
 
 /*
  * add_connection:
