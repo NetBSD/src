@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3022 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3023 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -241,3 +241,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		to be used VERY early in boot. [thorpej 20231203]
 	kernel: Modularize compat90. [pgoyette 20231209]
 	libsa: Add NFSv3 support. [mlelstv 20231212]
+	dhcpcd: Import version 10.0.6. [roy 20231218]
+
