@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.39 2022/09/13 13:09:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.39.4.1 2023/12/18 14:15:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
 #include <sys/filedesc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/atomic.h>
 
 /*#define LUN_1  1 */
 
@@ -242,10 +241,6 @@ reassign_tasks(connection_t *oldconn)
 		/* reset timeouts */
 		ccb->ccb_num_timeouts = 0;
 
-		/* fixup reference counts */
-		oldconn->c_usecount--;
-		atomic_inc_uint(&conn->c_usecount);
-
 		DEBC(conn, 1, ("CCB %p: Copied PDU %p to %p\n",
 		   ccb, opdu, pdu));
 
@@ -255,9 +250,17 @@ reassign_tasks(connection_t *oldconn)
 		/* and free the old PDU */
 		free_pdu(opdu);
 
-		/* put ready CCB into waiting list of new connection */
 		mutex_enter(&conn->c_lock);
+
+		/* fixup reference counts */
+		mutex_enter(&oldconn->c_lock);
+		oldconn->c_usecount--;
+		conn->c_usecount++;
+		mutex_exit(&oldconn->c_lock);
+
+		/* put ready CCB into waiting list of new connection */
 		suspend_ccb(ccb, TRUE);
+
 		mutex_exit(&conn->c_lock);
 	}
 
@@ -683,6 +686,11 @@ init_login_pdu(connection_t *conn, ccb_t *ccb, pdu_t *ppdu, bool next)
 					 NEXT_PHASE(c_phase);
 	}
 
+	DEB(99, ("InitLoginPdu: Flags=%x Phase=%x->%x\n",
+		 hpdu->pduh_Flags, 
+		 (hpdu->pduh_Flags >> CSG_SHIFT) & SG_MASK,
+		 hpdu->pduh_Flags & SG_MASK));
+
 	memcpy(isid, &iscsi_InitiatorISID, 6);
 	isid->TSIH = conn->c_session->s_TSIH;
 
@@ -748,6 +756,27 @@ negotiate_login(connection_t *conn, pdu_t *rx_pdu, ccb_t *tx_ccb)
 		break;
 
 	case SG_LOGIN_OPERATIONAL_NEGOTIATION:
+	
+		if (conn->c_state == ST_SEC_FIN) {
+
+			/*
+			 * Both sides announced to continue with
+			 * operational negotation, but this is the
+			 * last target packet from mutual CHAP
+			 * that needs to be validated.
+			 */
+			rc = assemble_security_parameters(conn, tx_ccb, rx_pdu, tx_pdu);
+			if (rc)
+				break;
+
+			/*
+			 * Response was valid, drop (security) parameters
+			 * so that we start negotiating operational
+			 * parameters.
+			 */
+			rx_pdu->pdu_temp_data = NULL;
+		}
+
 		rc = assemble_negotiation_parameters(conn, tx_ccb, rx_pdu, tx_pdu);
 		break;
 
@@ -1699,13 +1728,22 @@ ccb_timeout(ccb_t *ccb)
 	DEBC(conn, 0, ("ccb_timeout: num=%d total=%d disp=%d\n",
 		ccb->ccb_num_timeouts+1, ccb->ccb_total_tries, ccb->ccb_disp));
 
+	/*
+	 * XXX can we time out after connection is closed ?
+	 */
+	if (conn == NULL) {
+		wake_ccb(ccb, ISCSI_STATUS_TIMEOUT);
+		return;
+	}
+
 	if (++ccb->ccb_num_timeouts > MAX_CCB_TIMEOUTS ||
 		ccb->ccb_total_tries > MAX_CCB_TRIES ||
 		ccb->ccb_disp <= CCBDISP_FREE ||
 		!ccb->ccb_session->s_ErrorRecoveryLevel) {
 
 		wake_ccb(ccb, ISCSI_STATUS_TIMEOUT);
-		handle_connection_error(conn, ISCSI_STATUS_TIMEOUT, RECOVER_CONNECTION);
+		handle_connection_error(conn,
+		    ISCSI_STATUS_TIMEOUT, RECOVER_CONNECTION);
 	} else {
 		if (ccb->ccb_data_in && ccb->ccb_xfer_len < ccb->ccb_data_len) {
 			/* request resend of all missing data */

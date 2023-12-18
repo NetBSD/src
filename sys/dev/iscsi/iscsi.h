@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi.h,v 1.4 2016/06/15 04:30:30 mlelstv Exp $	*/
+/*	$NetBSD: iscsi.h,v 1.4.50.1 2023/12/18 14:15:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004,2006,2011 The NetBSD Foundation, Inc.
@@ -53,6 +53,13 @@ typedef enum {
    ISCSI_AUTH_SRP
       Indicates SRP authentication (for future use).
 */
+
+typedef enum {
+	ISCSI_CHAP_MD5		= 5,
+	ISCSI_CHAP_SHA1		= 6,
+	ISCSI_CHAP_SHA256	= 7,
+	ISCSI_CHAP_SHA3_256	= 8
+} iscsi_chap_types_t;
 
 typedef struct {
 	unsigned int		mutual_auth:1;
