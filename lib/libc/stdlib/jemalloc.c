@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.55 2022/11/30 04:35:53 skrll Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.55.2.1 2023/12/18 14:05:23 martin Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -117,7 +117,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */
-__RCSID("$NetBSD: jemalloc.c,v 1.55 2022/11/30 04:35:53 skrll Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.55.2.1 2023/12/18 14:05:23 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -157,6 +157,7 @@ __RCSID("$NetBSD: jemalloc.c,v 1.55 2022/11/30 04:35:53 skrll Exp $");
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
+#include <malloc.h>
 
 #ifdef __NetBSD__
 #  include <reentrant.h>
@@ -3941,7 +3942,6 @@ free(void *ptr)
 /*
  * Begin non-standard functions.
  */
-#ifndef __NetBSD__
 size_t
 malloc_usable_size(const void *ptr)
 {
@@ -3950,7 +3950,6 @@ malloc_usable_size(const void *ptr)
 
 	return (isalloc(ptr));
 }
-#endif
 
 /*
  * End non-standard functions.
