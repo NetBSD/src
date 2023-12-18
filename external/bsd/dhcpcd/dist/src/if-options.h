@@ -285,7 +285,6 @@ struct if_options {
 	struct auth auth;
 };
 
-struct if_options *default_config(struct dhcpcd_ctx *);
 struct if_options *read_config(struct dhcpcd_ctx *,
     const char *, const char *, const char *);
 int add_options(struct dhcpcd_ctx *, const char *,

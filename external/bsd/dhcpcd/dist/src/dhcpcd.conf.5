@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 4, 2023
+.Dd December 18, 2023
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -359,6 +359,7 @@ Otherwise addresses are only assigned for each
 .Ar interface
 and
 .Ar sla_id .
+To avoid delegating to any interface, use - as the invalid interface name.
 Each assigned address will have a
 .Ar suffix ,
 defaulting to 1.
@@ -415,6 +416,7 @@ interface eth0
   ia_na 1                # request an IPv6 address
   ia_pd 2 eth1/0         # request a PD and assign it to eth1
   ia_pd 3 eth2/1 eth3/2  # req a PD and assign it to eth2 and eth3
+  ia_pd 4 -              # request a PD but don't assign it
 .Ed
 .It Ic ipv4only
 Only configure IPv4.
