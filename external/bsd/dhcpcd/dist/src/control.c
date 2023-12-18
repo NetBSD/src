@@ -106,17 +106,18 @@ control_hangup(struct fd_list *fd)
 	control_free(fd);
 }
 
-static void
+static int
 control_handle_read(struct fd_list *fd)
 {
 	char buffer[1024];
 	ssize_t bytes;
 
 	bytes = read(fd->fd, buffer, sizeof(buffer) - 1);
-	if (bytes == -1) {
+	if (bytes == -1)
 		logerr(__func__);
+	if (bytes == -1 || bytes == 0) {
 		control_hangup(fd);
-		return;
+		return -1;
 	}
 
 #ifdef PRIVSEP
@@ -128,21 +129,23 @@ control_handle_read(struct fd_list *fd)
 		fd->flags &= ~FD_SENDLEN;
 		if (err == -1) {
 			logerr(__func__);
-			return;
+			return 0;
 		}
 		if (err == 1 &&
 		    ps_ctl_sendargs(fd, buffer, (size_t)bytes) == -1) {
 			logerr(__func__);
 			control_free(fd);
+			return -1;
 		}
-		return;
+		return 0;
 	}
 #endif
 
 	control_recvdata(fd, buffer, (size_t)bytes);
+	return 0;
 }
 
-static void
+static int
 control_handle_write(struct fd_list *fd)
 {
 	struct iovec iov[2];
@@ -169,7 +172,7 @@ control_handle_write(struct fd_list *fd)
 			logerr("%s: write", __func__);
 		}
 		control_hangup(fd);
-		return;
+		return -1;
 	}
 
 	TAILQ_REMOVE(&fd->queue, data, next);
@@ -182,7 +185,7 @@ control_handle_write(struct fd_list *fd)
 #endif
 
 	if (TAILQ_FIRST(&fd->queue) != NULL)
-		return;
+		return 0;
 
 #ifdef PRIVSEP
 	if (IN_PRIVSEP_SE(fd->ctx) && !(fd->flags & FD_LISTEN)) {
@@ -195,8 +198,8 @@ control_handle_write(struct fd_list *fd)
 	if (eloop_event_add(fd->ctx->eloop, fd->fd, ELE_READ,
 	    control_handle_data, fd) == -1)
 		logerr("%s: eloop_event_add", __func__);
+	return 0;
 }
-
 
 static void
 control_handle_data(void *arg, unsigned short events)
@@ -206,10 +209,14 @@ control_handle_data(void *arg, unsigned short events)
 	if (!(events & (ELE_READ | ELE_WRITE | ELE_HANGUP)))
 		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
-	if (events & ELE_WRITE && !(events & ELE_HANGUP))
-		control_handle_write(fd);
-	if (events & ELE_READ)
-		control_handle_read(fd);
+	if (events & ELE_WRITE && !(events & ELE_HANGUP)) {
+		if (control_handle_write(fd) == -1)
+			return;
+	}
+	if (events & ELE_READ) {
+		if (control_handle_read(fd) == -1)
+			return;
+	}
 	if (events & ELE_HANGUP)
 		control_hangup(fd);
 }
