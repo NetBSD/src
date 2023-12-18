@@ -172,8 +172,7 @@ ps_dropprivs(struct dhcpcd_ctx *ctx)
 	 * Obviously this won't work if we are using a logfile
 	 * or redirecting stderr to a file. */
 	if ((ctx->options & DHC_NOCHKIO) == DHC_NOCHKIO ||
-	    (ctx->logfile == NULL &&
-	    (!ctx->stderr_valid || isatty(STDERR_FILENO) == 1)))
+	    (ctx->logfile == NULL && isatty(STDERR_FILENO) == 1))
 	{
 		if (setrlimit(RLIMIT_FSIZE, &rzero) == -1)
 			logerr("setrlimit RLIMIT_FSIZE");
@@ -300,19 +299,16 @@ ps_rights_limit_fdpair(int fd[])
 }
 
 static int
-ps_rights_limit_stdio(struct dhcpcd_ctx *ctx)
+ps_rights_limit_stdio()
 {
 	const int iebadf = CAPH_IGNORE_EBADF;
 	int error = 0;
 
-	if (ctx->stdin_valid &&
-	    caph_limit_stream(STDIN_FILENO, CAPH_READ | iebadf) == -1)
+	if (caph_limit_stream(STDIN_FILENO, CAPH_READ | iebadf) == -1)
 		error = -1;
-	if (ctx->stdout_valid &&
-	    caph_limit_stream(STDOUT_FILENO, CAPH_WRITE | iebadf) == -1)
+	if (caph_limit_stream(STDOUT_FILENO, CAPH_WRITE | iebadf) == -1)
 		error = -1;
-	if (ctx->stderr_valid &&
-	    caph_limit_stream(STDERR_FILENO, CAPH_WRITE | iebadf) == -1)
+	if (caph_limit_stream(STDERR_FILENO, CAPH_WRITE | iebadf) == -1)
 		error = -1;
 
 	return error;
@@ -456,7 +452,7 @@ ps_startprocess(struct ps_process *psp,
 			ctx->ps_log_root_fd = -1;
 		}
 #ifdef PRIVSEP_RIGHTS
-		if (ps_rights_limit_stdio(ctx) == -1) {
+		if (ps_rights_limit_stdio() == -1) {
 			logerr("ps_rights_limit_stdio");
 			goto errexit;
 		}
@@ -622,6 +618,9 @@ ps_entersandbox(const char *_pledge, const char **sandbox)
 #elif defined(HAVE_PLEDGE)
 	if (sandbox != NULL)
 		*sandbox = "pledge";
+	// There is no need to use unveil(2) because we are in an empty chroot
+	// This is encouraged by Theo de Raadt himself:
+	// https://www.mail-archive.com/misc@openbsd.org/msg171655.html
 	return pledge(_pledge, NULL);
 #elif defined(HAVE_SECCOMP)
 	if (sandbox != NULL)
@@ -667,7 +666,7 @@ ps_managersandbox(struct dhcpcd_ctx *ctx, const char *_pledge)
 #ifdef PRIVSEP_RIGHTS
 	if ((ctx->pf_inet_fd != -1 &&
 	    ps_rights_limit_ioctl(ctx->pf_inet_fd) == -1) ||
-	     ps_rights_limit_stdio(ctx) == -1)
+	     ps_rights_limit_stdio() == -1)
 	{
 		logerr("%s: cap_rights_limit", __func__);
 		return -1;
