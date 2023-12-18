@@ -8377,6 +8377,44 @@ emit_reload_insns (class insn_chain *chain)
 		reg_last_reload_reg[out_regno + k] = 0;
 	    }
 	}
+
+#ifdef NB_FIX_VAX_BACKEND
+#if AUTO_INC_DEC
+      /* Where an output register might be reloaded, and it is a
+	 memory reference, and the address is auto-incremented, any
+	 previously reloaded copy of the address must be
+	 invalidated. */
+      if (i < 0
+	  && rld[r].out != 0
+	  && MEM_P (rld[r].out))
+	{
+	  rtx out = XEXP (rld[r].out, 0); /* address expression */
+	  enum rtx_code code = GET_CODE (out);
+
+	  if (code != POST_INC && code != POST_DEC
+	      && code != PRE_INC && code != PRE_DEC)
+	    {
+	      /* do nothing */
+	    }
+	  else
+	    {
+	      int out_regno = REGNO (XEXP (out, 0));
+	      machine_mode mode = GET_MODE (XEXP (out, 0));
+
+	      /* for the moment, handle only the case where out_regno
+		 is a hardware register */
+
+	      if (HARD_REGISTER_NUM_P (out_regno))
+		{
+		  int k, out_nregs = hard_regno_nregs (out_regno, mode);
+
+		  for (k = 0; k < out_nregs; k++)
+		    reg_last_reload_reg[out_regno + k] = 0;
+		}
+	    }
+	}
+#endif /* AUTO_INC_DEC */
+#endif
     }
   reg_reloaded_dead |= reg_reloaded_died;
 }
