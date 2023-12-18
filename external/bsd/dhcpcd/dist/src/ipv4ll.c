@@ -335,6 +335,10 @@ ipv4ll_start(void *arg)
 		}
 	}
 
+	if (state->running)
+		return;
+	state->running = true;
+
 	/* RFC 3927 Section 2.1 states that the random number generator
 	 * SHOULD be seeded with a value derived from persistent information
 	 * such as the IEEE 802 MAC address so that it usually picks
@@ -435,11 +439,14 @@ ipv4ll_drop(struct interface *ifp)
 		return;
 
 	state = IPV4LL_STATE(ifp);
-	if (state && state->addr != NULL) {
-		if (ifp->options->options & DHCPCD_CONFIGURE)
-			ipv4_deladdr(state->addr, 1);
-		state->addr = NULL;
-		dropped = true;
+	if (state) {
+		state->running = false;
+		if (state->addr != NULL) {
+			if (ifp->options->options & DHCPCD_CONFIGURE)
+				ipv4_deladdr(state->addr, 1);
+			state->addr = NULL;
+			dropped = true;
+		}
 	}
 
 	/* Free any other link local addresses that might exist. */

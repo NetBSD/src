@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 31, 2022
+.Dd December 10, 2023
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -186,13 +186,16 @@ The
 .Fl w , Fl Fl waitip
 option is enabled in this instance to maintain compatibility with older
 versions.
-Using a single interface also affects the
+Using a single interface,
+optionally further limited to an address protocol,
+also affects the
 .Fl k ,
 .Fl N ,
 .Fl n
 and
 .Fl x
-options, where the same interface will need to be specified, as a lack of an
+options, where the same interface and any address protocol
+will need to be specified, as a lack of an
 interface will imply Manager mode which this is not.
 To force starting in Manager mode with only one interface, the
 .Fl M , Fl Fl manager
