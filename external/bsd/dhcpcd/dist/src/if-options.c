@@ -2407,7 +2407,7 @@ finish_config(struct if_options *ifo)
 		    ~(DHCPCD_IPV6RA_AUTOCONF | DHCPCD_IPV6RA_REQRDNSS);
 }
 
-struct if_options *
+static struct if_options *
 default_config(struct dhcpcd_ctx *ctx)
 {
 	struct if_options *ifo;

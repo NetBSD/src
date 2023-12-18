@@ -2589,20 +2589,16 @@ dhcp6_validatelease(struct interface *ifp,
 	}
 	state->has_no_binding = false;
 	nia = dhcp6_findia(ifp, m, len, sfrom, acquired);
-	if (nia == 0) {
-		if (state->state != DH6S_CONFIRM && ok_errno != 0) {
-			logerrx("%s: no useable IA found in lease", ifp->name);
-			return -1;
-		}
-
-		/* We are confirming and have an OK,
-		 * so look for ia's in our old lease.
-		 * IA's must have existed here otherwise we would
-		 * have rejected it earlier. */
-		assert(state->new != NULL && state->new_len != 0);
+	if (nia == 0 && state->state == DH6S_CONFIRM && ok_errno == 0 &&
+	    state->new && state->new_len)
+	{
 		state->has_no_binding = false;
 		nia = dhcp6_findia(ifp, state->new, state->new_len,
 		    sfrom, acquired);
+	}
+	if (nia == 0) {
+		logerrx("%s: no useable IA found in lease", ifp->name);
+		return -1;
 	}
 	return nia;
 }
@@ -2657,8 +2653,10 @@ dhcp6_readlease(struct interface *ifp, int validate)
 	/* Check to see if the lease is still valid */
 	fd = dhcp6_validatelease(ifp, &buf.dhcp6, (size_t)bytes, NULL,
 	    &state->acquired);
-	if (fd == -1)
+	if (fd == -1) {
+		bytes = 0; /* We have already reported the error */
 		goto ex;
+	}
 
 	if (state->expire != ND6_INFINITE_LIFETIME &&
 	    (time_t)state->expire < now - mtime &&
@@ -3873,8 +3871,9 @@ dhcp6_activateinterfaces(struct interface *ifp)
 			sla = &ia->sla[j];
 			ifd = if_find(ifp->ctx->ifaces, sla->ifname);
 			if (ifd == NULL) {
-				logwarn("%s: cannot delegate to %s",
-				    ifp->name, sla->ifname);
+				if (*sla->ifname != '-')
+					logwarn("%s: cannot delegate to %s",
+					    ifp->name, sla->ifname);
 				continue;
 			}
 			if (!ifd->active) {
