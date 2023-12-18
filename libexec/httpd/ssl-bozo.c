@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.33 2023/06/07 20:12:31 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.34 2023/12/18 03:48:57 riastradh Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -129,6 +129,7 @@ bozo_clear_ssl_queue(bozohttpd_t *httpd)
 			    ERR_lib_error_string(sslcode),
 			    ERR_func_error_string(sslcode),
 			    ERR_reason_error_string(sslcode));
+			fputs("\n", stderr);
 		} else {
 			syslog(LOG_ERR, sslfmt,
 			    ERR_lib_error_string(sslcode),
