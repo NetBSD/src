@@ -44,6 +44,7 @@ struct ipv4ll_state {
 	struct in_addr pickedaddr;
 	struct ipv4_addr *addr;
 	char randomstate[128];
+	bool running;
 	bool seeded;
 	bool down;
 	size_t conflicts;

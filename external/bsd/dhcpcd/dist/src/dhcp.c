@@ -1896,12 +1896,29 @@ dhcp_discover(void *arg)
 }
 
 static void
+dhcp_requestfailed(void *arg)
+{
+	struct interface *ifp = arg;
+	struct dhcp_state *state = D_STATE(ifp);
+
+	logwarnx("%s: failed to request the lease", ifp->name);
+	free(state->offer);
+	state->offer = NULL;
+	state->offer_len = 0;
+	state->interval = 0;
+	dhcp_discover(ifp);
+}
+
+static void
 dhcp_request(void *arg)
 {
 	struct interface *ifp = arg;
 	struct dhcp_state *state = D_STATE(ifp);
 
 	state->state = DHS_REQUEST;
+	// Handle the server being silent to our request.
+	eloop_timeout_add_sec(ifp->ctx->eloop, ifp->options->reboot,
+	    dhcp_requestfailed, ifp);
 	send_request(ifp);
 }
 
