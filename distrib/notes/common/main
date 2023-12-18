@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.570.2.2 2023/11/05 18:14:43 martin Exp $
+.\"	$NetBSD: main,v 1.570.2.3 2023/12/18 13:50:50 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -829,6 +829,16 @@ postinstall fix
 and thus all issues that are fixed by
 .Ic postinstall
 by default will be handled.
+.Pp
+In
+.Nx 9
+and earlier, filesystems listed in
+.Pa /etc/fstab
+would be mounted before non-legacy
+.Ic zfs
+filesystems. Starting from
+.Nx 10
+this order has been reversed.
 .Pp
 If you have ever run a version of
 .Nx -current
