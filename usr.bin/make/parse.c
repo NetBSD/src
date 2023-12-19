@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.711 2023/12/17 08:53:55 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.712 2023/12/19 19:33:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.711 2023/12/17 08:53:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.712 2023/12/19 19:33:39 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -426,8 +426,8 @@ IsEscaped(const char *line, const char *p)
 }
 
 /*
- * Add the filename and lineno to the GNode so that we remember where its
- * last command was added or where it was mentioned in a .depend file.
+ * Remember the location (filename and lineno) where the last command was
+ * added or where the node was mentioned in a .depend file.
  */
 static void
 RememberLocation(GNode *gn)
@@ -1732,10 +1732,7 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 	nameStart = p;
 	firstSpace = NULL;
 
-	/*
-	 * Scan for one of the assignment operators outside a variable
-	 * expansion.
-	 */
+	/* Scan for one of the assignment operators outside an expression. */
 	while (*p != '\0') {
 		char ch = *p++;
 		if (ch == '(' || ch == '{') {

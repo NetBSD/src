@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.73 2023/12/17 08:53:55 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.74 2023/12/19 19:33:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,12 +69,12 @@
  * SUCH DAMAGE.
  */
 
-/* Hash tables with string keys. */
+/* Hash tables with string keys and pointer values. */
 
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.73 2023/12/17 08:53:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.74 2023/12/19 19:33:39 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -207,7 +207,7 @@ HashTable_FindValueBySubstringHash(HashTable *t, Substring key, unsigned int h)
 
 /*
  * Make the hash table larger. Any bucket numbers from the old table become
- * invalid; the hash codes stay valid though.
+ * invalid; the hash values stay valid though.
  */
 static void
 HashTable_Enlarge(HashTable *t)

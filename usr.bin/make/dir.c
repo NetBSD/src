@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.284 2023/12/17 08:53:54 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.285 2023/12/19 19:33:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -132,7 +132,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.284 2023/12/17 08:53:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.285 2023/12/19 19:33:39 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -463,9 +463,7 @@ Dir_Init(void)
 	CachedDir_Assign(&dotLast, CachedDir_New(".DOTLAST"));
 }
 
-/*
- * Called by Dir_InitDir and whenever .CURDIR is assigned to.
- */
+/* Called by Dir_InitDir and whenever .CURDIR is assigned to. */
 void
 Dir_InitCur(const char *newCurdir)
 {
@@ -676,10 +674,7 @@ DirMatchFiles(const char *pattern, CachedDir *dir, StringList *expansions)
 	}
 }
 
-/*
- * Find the next closing brace in the string, taking nested braces into
- * account.
- */
+/* Find the next closing brace in 'p', taking nested braces into account. */
 static const char *
 closing_brace(const char *p)
 {
@@ -767,7 +762,7 @@ DirExpandCurly(const char *word, const char *brace, SearchPath *path,
 	const char *prefix, *middle, *piece, *middle_end, *suffix;
 	size_t prefix_len, suffix_len;
 
-	/* Split the word into prefix '{' middle '}' suffix. */
+	/* Split the word into prefix, '{', middle, '}' and suffix. */
 
 	middle = brace + 1;
 	middle_end = closing_brace(middle);
@@ -898,9 +893,7 @@ SearchPath_Expand(SearchPath *path, const char *pattern, StringList *expansions)
 
 	slash = strchr(pattern, '/');
 	if (slash == NULL) {
-		/* First the files in dot. */
 		DirMatchFiles(pattern, dot, expansions);
-		/* Then the files in every other directory on the path. */
 		DirExpandPath(pattern, path, expansions);
 		goto done;
 	}

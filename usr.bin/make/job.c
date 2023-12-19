@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.460 2023/12/17 08:53:55 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.461 2023/12/19 19:33:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,12 +70,11 @@
  */
 
 /*
- * job.c --
- *	handle the creation etc. of our child processes.
+ * Create child processes and collect their output.
  *
  * Interface:
  *	Job_Init	Called to initialize this module. In addition,
- *			the .BEGIN target is made including all of its
+ *			the .BEGIN target is made, including all of its
  *			dependencies before this function returns.
  *			Hence, the makefiles must have been parsed
  *			before this function is called.
@@ -142,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.460 2023/12/17 08:53:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.461 2023/12/19 19:33:39 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -245,9 +244,7 @@ typedef struct ShellWriter {
 
 } ShellWriter;
 
-/*
- * error handling variables
- */
+/* error handling variables */
 static int job_errors = 0;	/* number of errors reported */
 static enum {			/* Why is the make aborting? */
 	ABORT_NONE,
@@ -257,9 +254,7 @@ static enum {			/* Why is the make aborting? */
 } aborting = ABORT_NONE;
 #define JOB_TOKENS "+EI+"	/* Token to requeue for each abort state */
 
-/*
- * this tracks the number of tokens currently "out" to build jobs.
- */
+/* Tracks the number of tokens currently "out" to build jobs. */
 int jobTokensRunning = 0;
 
 typedef enum JobStartResult {
@@ -288,15 +283,15 @@ typedef enum JobStartResult {
 #define DEFSHELL_INDEX_SH     1
 #define DEFSHELL_INDEX_KSH    2
 #define DEFSHELL_INDEX_CSH    3
-#else /* !DEFSHELL_CUSTOM */
+#else
 #define DEFSHELL_INDEX_SH     0
 #define DEFSHELL_INDEX_KSH    1
 #define DEFSHELL_INDEX_CSH    2
-#endif /* !DEFSHELL_CUSTOM */
+#endif
 
 #ifndef DEFSHELL_INDEX
 #define DEFSHELL_INDEX 0	/* DEFSHELL_INDEX_CUSTOM or DEFSHELL_INDEX_SH */
-#endif /* !DEFSHELL_INDEX */
+#endif
 
 static Shell shells[] = {
 #ifdef DEFSHELL_CUSTOM
@@ -412,7 +407,7 @@ static char *shell_freeIt = NULL; /* Allocated memory for custom .SHELL */
 
 static Job *job_table;		/* The structures that describe them */
 static Job *job_table_end;	/* job_table + maxJobs */
-static unsigned int wantToken;	/* we want a token */
+static unsigned int wantToken;
 static bool lurking_children = false;
 static bool make_suspended = false; /* Whether we've seen a SIGTSTP (etc) */
 
@@ -547,7 +542,7 @@ JobCreatePipe(Job *job, int minfd)
 		Punt("Cannot create pipe: %s", strerror(errno));
 
 	for (i = 0; i < 2; i++) {
-		/* Avoid using low numbered fds */
+		/* Avoid using low-numbered fds */
 		fd = fcntl(pipe_fds[i], F_DUPFD, minfd);
 		if (fd != -1) {
 			close(pipe_fds[i]);
@@ -558,7 +553,6 @@ JobCreatePipe(Job *job, int minfd)
 	job->inPipe = pipe_fds[0];
 	job->outPipe = pipe_fds[1];
 
-	/* Set close-on-exec flag for both */
 	if (fcntl(job->inPipe, F_SETFD, FD_CLOEXEC) == -1)
 		Punt("Cannot set close-on-exec: %s", strerror(errno));
 	if (fcntl(job->outPipe, F_SETFD, FD_CLOEXEC) == -1)
@@ -681,10 +675,10 @@ JobPassSig_suspend(int signo)
 	/*
 	 * We've been continued.
 	 *
-	 * A whole host of signals continue to happen!
+	 * A whole host of signals is going to happen!
 	 * SIGCHLD for any processes that actually suspended themselves.
-	 * SIGCHLD for any processes that exited while we were alseep.
-	 * The SIGCONT that actually caused us to wakeup.
+	 * SIGCHLD for any processes that exited while we were asleep.
+	 * The SIGCONT that actually caused us to wake up.
 	 *
 	 * Since we defer passing the SIGCONT on to our children until
 	 * the main processing loop, we can be sure that all the SIGCHLD
@@ -733,7 +727,7 @@ ParseCommandFlags(char **pp, CommandFlags *out_cmdFlags)
 		else if (*p == '+')
 			out_cmdFlags->always = true;
 		else if (!ch_isspace(*p))
-			/* Ignore whitespace for compatibility with gnu make */
+			/* Ignore whitespace for compatibility with GNU make */
 			break;
 		p++;
 	}
@@ -1418,7 +1412,7 @@ JobExec(Job *job, char **argv)
 	}
 
 	/*
-	 * Some jobs produce no output and it's disconcerting to have
+	 * Some jobs produce no output, and it's disconcerting to have
 	 * no feedback of their running (since they produce no output, the
 	 * banner with their name in it never appears). This is an attempt to
 	 * provide that feedback, even if nothing follows it.
@@ -1470,9 +1464,7 @@ JobExec(Job *job, char **argv)
 			execDie("lseek to 0", "stdin");
 
 		if (job->node->type & (OP_MAKE | OP_SUBMAKE)) {
-			/*
-			 * Pass job token pipe to submakes.
-			 */
+			/* Pass job token pipe to submakes. */
 			if (fcntl(tokenWaitJob.inPipe, F_SETFD, 0) == -1)
 				execDie("clear close-on-exec",
 				    "tokenWaitJob.inPipe");
@@ -2263,9 +2255,7 @@ Job_Init(void)
 	watchfd(&childExitJob);
 
 	sigemptyset(&caught_signals);
-	/*
-	 * Install a SIGCHLD handler.
-	 */
+	/* Install a SIGCHLD handler. */
 	(void)bmake_signal(SIGCHLD, JobChildSig);
 	sigaddset(&caught_signals, SIGCHLD);
 
@@ -2396,9 +2386,7 @@ Job_ParseShell(char *line)
 
 	memset(&newShell, 0, sizeof newShell);
 
-	/*
-	 * Parse the specification by keyword
-	 */
+	/* Parse the specification by keyword. */
 	wordsList = Str_Words(line, true);
 	words = wordsList.words;
 	argc = wordsList.len;
@@ -2752,9 +2740,7 @@ clearfd(Job *job)
 		fdsLen--;
 	}
 #endif
-	/*
-	 * Move last job in table into hole made by dead job.
-	 */
+	/* Move last job in table into hole made by dead job. */
 	if (fdsLen != i) {
 		fds[i] = fds[fdsLen];
 		jobByFdIndex[i] = jobByFdIndex[fdsLen];
