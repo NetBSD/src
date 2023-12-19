@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwinder,v 1.16 2012/09/21 14:22:37 matt Exp $
+#	$NetBSD: std.netwinder,v 1.16.68.1 2023/12/19 12:49:40 martin Exp $
 #
 # standard NetBSD/netwinder options
 
@@ -15,9 +15,6 @@ options 	ARM32
 options 	_ARM32_NEED_BUS_DMA_BOUNCE
 
 options 	ARM_INTR_IMPL="<arm/footbridge/footbridge_intr.h>"
-
-makeoptions	LOADADDRESS="0xF000C000"
-makeoptions	ENTRYPOINT="nwstart"
 
 # Firmware leaves pckbc uninited
 options 	PCKBC_CNATTACH_SELFTEST

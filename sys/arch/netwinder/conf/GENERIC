@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.144 2022/09/29 10:10:08 riastradh Exp $
+# $NetBSD: GENERIC,v 1.144.4.1 2023/12/19 12:49:40 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -54,7 +54,7 @@ file-system	FFS		# UFS
 file-system	MFS		# memory file system
 file-system	NFS		# Network file system
 #file-system 	ADOSFS		# AmigaDOS-compatible file system
-file-system 	EXT2FS		# second extended file system (linux)
+#file-system 	EXT2FS		# second extended file system (linux)
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 file-system	FDESC		# /dev/fd
@@ -75,7 +75,7 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-options 	NFSSERVER	# Network File System server
+#options 	NFSSERVER	# Network File System server
 
 # Networking options
 
@@ -130,8 +130,8 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
-options 	PCIVERBOSE	# Verbose PCI descriptions
-options 	MIIVERBOSE	# Verbose MII autoconfuration messages
+#options 	PCIVERBOSE	# Verbose PCI descriptions
+#options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	DDB_KEYCODE=0x40
 options 	USERCONF	# userconf(4) support
@@ -146,8 +146,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-makeoptions	DEBUG="-g"	# compile full symbol table
-makeoptions	COPY_SYMTAB=1
+#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	COPY_SYMTAB=1	# see also ksyms below
 
 config		netbsd	root on ? type ?
 
@@ -260,8 +260,8 @@ spkr*	at audio?		# PC speaker (synthesized)
 
 # Pseudo-Devices
 
-pseudo-device 	crypto		# /dev/crypto device
-pseudo-device	swcrypto	# software crypto implementation
+#pseudo-device 	crypto		# /dev/crypto device
+#pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md			# memory disk device (ramdisk)
@@ -273,7 +273,7 @@ pseudo-device	fss			# file system snapshot device
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	vether			# Virtual Ethernet for bridge
 pseudo-device	loop			# network loopback
