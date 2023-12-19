@@ -1,4 +1,4 @@
-/* $NetBSD: if_eqos_pci.c,v 1.3 2023/10/31 13:57:08 msaitoh Exp $ */
+/* $NetBSD: if_eqos_pci.c,v 1.4 2023/12/19 09:39:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 Masanobu SAITOH <msaitoh@netbsd.org>
@@ -32,10 +32,8 @@
  *
  */
 
-#include "opt_net_mpsafe.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eqos_pci.c,v 1.3 2023/10/31 13:57:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eqos_pci.c,v 1.4 2023/12/19 09:39:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
