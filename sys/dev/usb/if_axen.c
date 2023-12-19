@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.95 2023/12/19 07:05:36 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.96 2023/12/19 08:19:42 skrll Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.95 2023/12/19 07:05:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.96 2023/12/19 08:19:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -55,11 +55,6 @@ struct axen_type {
 #define AX179A	0x0004		/* AX88179A */
 };
 
-struct axen_softc {
-	struct usbnet		axen_un;
-	uint16_t		axen_flags;
-};
-
 /*
  * Various supported device vendors/products.
  */
@@ -76,7 +71,7 @@ static const struct axen_type axen_devs[] = {
 static int	axen_match(device_t, cfdata_t, void *);
 static void	axen_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(axen, sizeof(struct axen_softc),
+CFATTACH_DECL_NEW(axen, sizeof(struct usbnet),
 	axen_match, axen_attach, usbnet_detach, usbnet_activate);
 
 static int	axen_cmd(struct usbnet *, int, int, int, void *);
@@ -578,8 +573,7 @@ static void
 axen_attach(device_t parent, device_t self, void *aux)
 {
 	USBNET_MII_DECL_DEFAULT(unm);
-	struct axen_softc * const sc = device_private(self);
-	struct usbnet * const un = &sc->axen_un;
+	struct usbnet * const un = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;
 	usbd_status err;
@@ -596,7 +590,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 
 	un->un_dev = self;
 	un->un_udev = dev;
-	un->un_sc = sc;
+	un->un_sc = un;
 	un->un_ops = &axen_ops;
 	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
 	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
@@ -610,11 +604,11 @@ axen_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->axen_flags =
+	un->un_flags =
 	    axen_lookup(uaa->uaa_vendor, uaa->uaa_product)->axen_flags;
 	if (UGETW(usbd_get_device_descriptor(dev)->bcdDevice) == 0x0200) {
-		sc->axen_flags &= ~(AX178A | AX179);
-		sc->axen_flags |= AX179A;
+		un->un_flags &= ~(AX178A | AX179);
+		un->un_flags |= AX179A;
 	}
 
 	err = usbd_device2interface_handle(dev, AXEN_IFACE_IDX, &un->un_iface);
@@ -678,7 +672,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 #define   AXEN_FW_MODE				0x08
 #define     AXEN_FW_MODE_178A179		0x0000
 #define     AXEN_FW_MODE_179A			0x0001
-	if (sc->axen_flags & AX179A) {
+	if (un->un_flags & AX179A) {
 		uint8_t bval = 0;
 		/*	    len		dir	  cmd */
 		int cmd = (1 << 12) | (1 << 8) | (AXEN_FW_MODE & 0x00FF);
@@ -687,11 +681,11 @@ axen_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* An ASIX chip was detected. Inform the world.  */
-	if (sc->axen_flags & AX178A)
+	if (un->un_flags & AX178A)
 		aprint_normal_dev(self, "AX88178a\n");
-	else if (sc->axen_flags & AX179)
+	else if (un->un_flags & AX179)
 		aprint_normal_dev(self, "AX88179\n");
-	else if (sc->axen_flags & AX179A)
+	else if (un->un_flags & AX179A)
 		aprint_normal_dev(self, "AX88179A\n");
 	else
 		aprint_normal_dev(self, "(unknown)\n");
@@ -760,7 +754,6 @@ axen_csum_flags_rx(struct ifnet *ifp, uint32_t pkt_hdr)
 static void
 axen_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
-	struct axen_softc * const sc = usbnet_softc(un);
 	struct ifnet *ifp = usbnet_ifp(un);
 	uint8_t *buf = c->unc_buf;
 	uint32_t rx_hdr, pkt_hdr;
@@ -842,7 +835,7 @@ axen_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 			goto nextpkt;
 		}
 
-		if (sc->axen_flags & AX179A) {
+		if (un->un_flags & AX179A) {
 			/* each 88179A frame doesn't contain FCS. */
 			usbnet_enqueue(un, buf + ETHER_ALIGN, pkt_len - 2,
 			       axen_csum_flags_rx(ifp, pkt_hdr), 0, 0);
