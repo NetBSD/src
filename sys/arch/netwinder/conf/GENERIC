@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.144.4.1 2023/12/19 12:49:40 martin Exp $
+# $NetBSD: GENERIC,v 1.144.4.2 2023/12/19 12:51:30 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -295,4 +295,4 @@ pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 
-include "dev/veriexec.config"
+#include "dev/veriexec.config"
