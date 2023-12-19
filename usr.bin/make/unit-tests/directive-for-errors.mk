@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-errors.mk,v 1.8 2023/12/17 09:44:00 rillig Exp $
+# $NetBSD: directive-for-errors.mk,v 1.9 2023/12/19 19:33:40 rillig Exp $
 #
 # Tests for error handling in .for loops.
 
@@ -67,7 +67,7 @@ ${:U\\}=	backslash	# see whether the "variable" '\' is local
 
 
 # The list of values after the 'in' may be empty, no matter if this emptiness
-# comes from an empty expansion or even from a syntactically empty line.
+# comes from an expanded expression or from a syntactically empty line.
 .for i in
 .  info Would be reached if there were items to loop over.
 .endfor

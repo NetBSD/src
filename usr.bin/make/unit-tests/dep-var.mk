@@ -1,4 +1,4 @@
-# $NetBSD: dep-var.mk,v 1.10 2023/11/19 22:32:44 rillig Exp $
+# $NetBSD: dep-var.mk,v 1.11 2023/12/19 19:33:40 rillig Exp $
 #
 # Tests for variable references in dependency declarations.
 #
@@ -13,7 +13,7 @@
 # to an empty string.
 all: ${UNDEF1}
 
-# Using a double dollar in order to circumvent immediate variable expansion
+# Using a double dollar in order to circumvent immediate expression expansion
 # feels like unintended behavior.  At least the manual page says nothing at
 # all about defined or undefined variables in dependency lines.
 #

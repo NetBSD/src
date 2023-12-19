@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.23 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.24 2023/12/19 19:33:40 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests an
 # expression for emptiness.
@@ -194,7 +194,7 @@ ${:U WORD }=	variable name with spaces
 # wrong variable name should have been discarded quickly after parsing it, to
 # prevent it from doing any harm.
 #
-# The expression was expanded though, and this was wrong.  The
+# The expression was expanded, and this was wrong.  The
 # expansion was done without VARE_WANTRES (called VARF_WANTRES back then)
 # though.  This had the effect that the ${:U1} from the value of VARNAME
 # expanded to an empty string.  This in turn created the seemingly recursive

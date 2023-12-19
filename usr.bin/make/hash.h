@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.47 2023/12/17 08:53:55 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.48 2023/12/19 19:33:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  *	from: @(#)hash.h	8.1 (Berkeley) 6/6/93
  */
 
-/* Hash tables with strings as keys and arbitrary pointers as values. */
+/* Hash tables with string keys and pointer values. */
 
 #ifndef MAKE_HASH_H
 #define MAKE_HASH_H
@@ -88,12 +88,11 @@ typedef struct HashEntry {
 
 /* The hash table containing the entries. */
 typedef struct HashTable {
-	HashEntry **buckets;	/* Pointers to HashEntry, one for each bucket
-				 * in the table. */
+	HashEntry **buckets;
 	unsigned int bucketsSize;
-	unsigned int numEntries; /* Number of entries in the table. */
+	unsigned int numEntries;
 	unsigned int bucketsMask; /* Used to select the bucket for a hash. */
-	unsigned int maxchain;	/* max length of chain detected */
+	unsigned int maxchain;	/* Maximum length of chain seen. */
 } HashTable;
 
 /* State of an iteration over all entries in a table. */

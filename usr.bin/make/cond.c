@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.356 2023/12/17 08:53:54 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.357 2023/12/19 19:33:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -81,8 +81,7 @@
  *			of one of the .if directives or the condition in a
  *			':?then:else' variable modifier.
  *
- *	Cond_EndFile
- *			At the end of reading a makefile, ensure that the
+ *	Cond_EndFile	At the end of reading a makefile, ensure that the
  *			conditional directives are well-balanced.
  */
 
@@ -92,7 +91,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.356 2023/12/17 08:53:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.357 2023/12/19 19:33:39 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -635,7 +634,6 @@ CondParser_Comparison(CondParser *par, bool doEval)
 	CondParser_SkipWhitespace(par);
 
 	if (!CondParser_ComparisonOp(par, &op)) {
-		/* Unknown operator, compare against an empty string or 0. */
 		t = ToToken(doEval && EvalTruthy(par, lhs.str, lhsQuoted));
 		goto done_lhs;
 	}
@@ -752,8 +750,8 @@ CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 
 	/*
 	 * Most likely we have a naked token to apply the default function to.
-	 * However ".if a == b" gets here when the "a" is unquoted and doesn't
-	 * start with a '$'. This surprises people.
+	 * However, ".if a == b" gets here when the "a" is unquoted and
+	 * doesn't start with a '$'. This surprises people.
 	 * If what follows the function argument is a '=' or '!' then the
 	 * syntax would be invalid if we did "defined(a)" - so instead treat
 	 * as an expression.
@@ -773,7 +771,7 @@ CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 	 * Evaluate the argument using the default function.
 	 * This path always treats .if as .ifdef. To get here, the character
 	 * after .if must have been taken literally, so the argument cannot
-	 * be empty - even if it contained a variable expansion.
+	 * be empty - even if it contained an expression.
 	 */
 	t = ToToken(doEval && par->evalBare(arg) != par->negateEvalBare);
 	free(arg);
@@ -1034,12 +1032,6 @@ DetermineKindOfConditional(const char **pp, bool *out_plain,
 	return true;
 
 unknown_directive:
-	/*
-	 * TODO: Add error message about unknown directive, since there is no
-	 * other known directive that starts with 'el' or 'if'.
-	 *
-	 * Example: .elifx 123
-	 */
 	return false;
 }
 
@@ -1068,7 +1060,7 @@ unknown_directive:
  *			conditional (when <cond> evaluates to true)
  *	CR_FALSE	to skip the lines after the conditional
  *			(when <cond> evaluates to false, or when a previous
- *			branch has already been taken)
+ *			branch was already taken)
  *	CR_ERROR	if the conditional was not valid, either because of
  *			a syntax error or because some variable was undefined
  *			or because the condition could not be evaluated
@@ -1115,7 +1107,7 @@ Cond_EvalLine(const char *line)
 	p++;			/* skip the leading '.' */
 	cpp_skip_hspace(&p);
 
-	if (IsEndif(p)) {	/* It is an '.endif'. */
+	if (IsEndif(p)) {
 		if (p[5] != '\0') {
 			Parse_Error(PARSE_FATAL,
 			    "The .endif directive does not take arguments");
@@ -1135,14 +1127,8 @@ Cond_EvalLine(const char *line)
 
 	/* Parse the name of the directive, such as 'if', 'elif', 'endif'. */
 	if (p[0] == 'e') {
-		if (p[1] != 'l') {
-			/*
-			 * Unknown directive.  It might still be a
-			 * transformation rule like '.err.txt',
-			 * therefore no error message here.
-			 */
+		if (p[1] != 'l')
 			return CR_ERROR;
-		}
 
 		/* Quite likely this is 'else' or 'elif' */
 		p += 2;
@@ -1176,13 +1162,8 @@ Cond_EvalLine(const char *line)
 	} else
 		isElif = false;
 
-	if (p[0] != 'i' || p[1] != 'f') {
-		/*
-		 * Unknown directive.  It might still be a transformation rule
-		 * like '.elisp.scm', therefore no error message here.
-		 */
-		return CR_ERROR;	/* Not an ifxxx or elifxxx line */
-	}
+	if (p[0] != 'i' || p[1] != 'f')
+		return CR_ERROR;
 
 	if (!DetermineKindOfConditional(&p, &plain, &evalBare, &negate))
 		return CR_ERROR;
@@ -1219,16 +1200,11 @@ Cond_EvalLine(const char *line)
 		state = cond_states[cond_depth];
 		cond_depth++;
 		if (!(state & IFS_ACTIVE)) {
-			/*
-			 * If we aren't parsing the data,
-			 * treat as always false.
-			 */
 			cond_states[cond_depth] = IFS_WAS_ACTIVE;
 			return CR_FALSE;
 		}
 	}
 
-	/* And evaluate the conditional expression */
 	res = CondEvalExpression(p, plain, evalBare, negate, true, false);
 	if (res == CR_ERROR) {
 		/* Syntax error, error message already output. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1083 2023/12/17 08:53:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1084 2023/12/19 19:33:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1083 2023/12/17 08:53:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1084 2023/12/19 19:33:39 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -222,9 +222,6 @@ typedef struct Var {
 /*
  * Exporting variables is expensive and may leak memory, so skip it if we
  * can.
- *
- * To avoid this, it might be worth encapsulating the environment variables
- * in a separate data structure called EnvVars.
  */
 typedef enum VarExportedMode {
 	VAR_EXPORTED_NONE,
@@ -3251,7 +3248,6 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 			size_t ac = words.len;
 			SubstringWords_Free(words);
 
-			/* 3 digits + '\0' is usually enough */
 			Buf_InitSize(&buf, 4);
 			Buf_AddInt(&buf, (int)ac);
 			Expr_SetValueOwn(expr, Buf_DoneData(&buf));
@@ -4583,7 +4579,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 	 * variable.  This means that as long as the value of the expression
 	 * stays the same, the value of the variable must not change, and the
 	 * variable must not be deleted.  Using the ':@' modifier, it is
-	 * possible (since var.c 1.212 from 2017/02/01) to delete the variable
+	 * possible (since var.c 1.212 from 2017-02-01) to delete the variable
 	 * while its value is still being used:
 	 *
 	 *	VAR=	value
