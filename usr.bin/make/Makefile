@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.126 2023/12/17 10:48:10 rillig Exp $
+#	$NetBSD: Makefile,v 1.127 2023/12/19 20:08:27 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -145,7 +145,11 @@ report-coverage: .PHONY
 	| perl -ne ${GCOV_PERL:Q} \
 	| sort -r -k4 \
 	| sort -nr -k1
-	@sed -i 's,^\([^:]*\): *[0-9]*:,\1: ,' *.gcov
+	@sed -i \
+	    -e '1d' \
+	    -e 's,^\([^:]*\): *[0-9]*:,\1: ,' \
+	    -e 's, *$$,,g' \
+	    *.gcov
 .endif
 
 .include <bsd.prog.mk>
