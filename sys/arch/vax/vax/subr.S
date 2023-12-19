@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.41.2.1 2023/07/31 13:36:31 martin Exp $	   */
+/*	$NetBSD: subr.S,v 1.41.2.2 2023/12/19 12:26:01 martin Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -319,7 +319,18 @@ softint_process:
 	movl	%r6,CI_CURLWP(%r8)
 	/* XXX store-before-load barrier -- see cpu_switchto */
 #endif
-
+	/* copy AST level from current LWP to pinned LWP, reset
+	   current AST level */
+	mfpr	$PR_SSP,%r4		/* current LWP */
+	movl	L_PCB(%r4),%r4		/* PCB address */
+	movl	P0LR(%r4),%r0		/* LR and ASTLVL field, current PCB */
+	movl	P0LR(%r3),%r1		/* same, pinned LWP */
+	cmpl	%r0,%r1
+	bgtru	1f			/* AST(current) >= AST(pinned) */
+	extv	$24,$3,%r0,%r0		/* ASTLVL field for current LWP */
+	insv	%r0,$24,$3,P0LR(%r3)	/* copy to pinned LWP */
+	insv	$4,$24,$3,P0LR(%r4)	/* reset AST for current LWP */
+1:
 	mtpr	PCB_PADDR(%r3),$PR_PCBB	/* restore PA of interrupted pcb */
 	ldpctx				/* implicitly updates curlwp */
 	rei
