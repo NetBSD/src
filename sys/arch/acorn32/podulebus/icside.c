@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.35 2022/04/04 19:33:44 andvar Exp $	*/
+/*	$NetBSD: icside.c,v 1.36 2023/12/20 06:13:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,12 +42,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.35 2022/04/04 19:33:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.36 2023/12/20 06:13:59 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <machine/intr.h>

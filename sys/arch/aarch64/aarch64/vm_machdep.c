@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.14 2023/02/25 08:00:35 skrll Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.15 2023/12/20 06:13:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,12 +33,11 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14 2023/02/25 08:00:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.15 2023/12/20 06:13:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/cpu.h>
 #include <sys/buf.h>

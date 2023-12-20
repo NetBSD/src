@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_pioc.c,v 1.6 2011/07/19 15:59:53 dyoung Exp $ */
+/* $NetBSD: atppc_pioc.c,v 1.7 2023/12/20 06:13:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -32,11 +32,10 @@
 #include "opt_atppc.h"
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_pioc.c,v 1.6 2011/07/19 15:59:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_pioc.c,v 1.7 2023/12/20 06:13:59 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/bus.h>
 
