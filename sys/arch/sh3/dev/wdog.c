@@ -1,4 +1,4 @@
-/*	$NetBSD: wdog.c,v 1.18 2014/07/25 08:10:34 dholland Exp $ */
+/*	$NetBSD: wdog.c,v 1.19 2023/12/20 15:34:45 thorpej Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.18 2014/07/25 08:10:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.19 2023/12/20 15:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.18 2014/07/25 08:10:34 dholland Exp $");
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/conf.h>

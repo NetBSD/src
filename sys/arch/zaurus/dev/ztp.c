@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.16 2021/08/07 16:19:08 thorpej Exp $	*/
+/*	$NetBSD: ztp.c,v 1.17 2023/12/20 15:34:46 thorpej Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.16 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.17 2023/12/20 15:34:46 thorpej Exp $");
 
 #include "lcd.h"
 #include "w100lcd.h"
@@ -27,7 +27,6 @@ __KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.16 2021/08/07 16:19:08 thorpej Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/callout.h>
 

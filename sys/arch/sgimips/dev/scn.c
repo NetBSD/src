@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.10 2022/10/26 23:59:14 riastradh Exp $ */
+/*	$NetBSD: scn.c,v 1.11 2023/12/20 15:29:07 thorpej Exp $ */
 
 /*
  * Resurrected from the old pc532 port 1/18/2009.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.10 2022/10/26 23:59:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.11 2023/12/20 15:29:07 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.10 2022/10/26 23:59:14 riastradh Exp $");
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/intr.h>
 #ifdef KGDB

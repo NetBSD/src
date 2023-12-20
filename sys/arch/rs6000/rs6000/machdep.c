@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2021/12/08 20:50:02 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2023/12/20 15:29:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2021/12/08 20:50:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2023/12/20 15:29:06 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2021/12/08 20:50:02 andvar Exp $");
 #include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/ksyms.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>

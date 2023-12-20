@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.64 2022/09/18 13:26:40 thorpej Exp $ */
+/* $NetBSD: if_mec.c,v 1.65 2023/12/20 15:29:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.64 2022/09/18 13:26:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.65 2023/12/20 15:29:07 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.64 2022/09/18 13:26:40 thorpej Exp $");
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

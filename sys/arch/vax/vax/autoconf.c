@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.100 2022/03/03 06:28:26 riastradh Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.101 2023/12/20 15:34:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100 2022/03/03 06:28:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.101 2023/12/20 15:34:45 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cputype.h"
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100 2022/03/03 06:28:26 riastradh Exp
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.33 2021/03/05 07:15:53 rin Exp $	*/
+/*	$NetBSD: esp.c,v 1.34 2023/12/20 15:29:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.33 2021/03/05 07:15:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.34 2023/12/20 15:29:04 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.33 2021/03/05 07:15:53 rin Exp $");
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-#include <sys/malloc.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

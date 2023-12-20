@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.23 2022/05/03 20:52:31 andvar Exp $	*/
+/*	$NetBSD: asc.c,v 1.24 2023/12/20 15:29:05 thorpej Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.23 2022/05/03 20:52:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.24 2023/12/20 15:29:05 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.23 2022/05/03 20:52:31 andvar Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 

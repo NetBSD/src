@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.34 2019/11/20 19:37:52 pgoyette Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.35 2023/12/20 15:34:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,13 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.34 2019/11/20 19:37:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.35 2023/12/20 15:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
 #include <sys/namei.h>

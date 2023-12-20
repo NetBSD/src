@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.41 2021/03/05 07:15:53 rin Exp $	*/
+/*	$NetBSD: kauai.c,v 1.42 2023/12/20 15:29:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,12 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.41 2021/03/05 07:15:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.42 2023/12/20 15:29:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 

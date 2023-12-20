@@ -1,4 +1,4 @@
-/* $NetBSD: xenmem.c,v 1.4 2022/09/02 05:09:49 kre Exp $ */
+/* $NetBSD: xenmem.c,v 1.5 2023/12/20 15:34:46 thorpej Exp $ */
 /*
  * Copyright (c) 2022 Manuel Bouyer.
  *
@@ -25,11 +25,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenmem.c,v 1.4 2022/09/02 05:09:49 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenmem.c,v 1.5 2023/12/20 15:34:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/extent.h>
 #include <sys/kmem.h>
 #include <uvm/uvm_physseg.h>

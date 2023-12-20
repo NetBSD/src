@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.38 2023/06/02 08:51:47 andvar Exp $ */
+/*	$NetBSD: ctu.c,v 1.39 2023/12/20 15:34:45 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.38 2023/06/02 08:51:47 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.39 2023/12/20 15:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.38 2023/06/02 08:51:47 andvar Exp $");
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 
 #include <machine/rsp.h>

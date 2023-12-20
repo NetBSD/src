@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.29 2017/10/20 07:06:07 jdolecek Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.30 2023/12/20 15:29:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.29 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.30 2023/12/20 15:29:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 
 #define __read_1(a)							\
 ({									\

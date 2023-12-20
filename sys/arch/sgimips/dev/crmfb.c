@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.49 2021/08/07 16:19:04 thorpej Exp $ */
+/* $NetBSD: crmfb.c,v 1.50 2023/12/20 15:29:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.49 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.50 2023/12/20 15:29:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <sys/bus.h>

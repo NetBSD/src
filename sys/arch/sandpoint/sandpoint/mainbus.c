@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.34 2021/08/07 16:19:04 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.35 2023/12/20 15:29:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,14 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.34 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.35 2023/12/20 15:29:07 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>

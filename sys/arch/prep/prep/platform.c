@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.28 2014/04/03 23:49:47 mrg Exp $	*/
+/*	$NetBSD: platform.c,v 1.29 2023/12/20 15:29:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.28 2014/04/03 23:49:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.29 2023/12/20 15:29:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/intr.h>
 #include <sys/inttypes.h>
 

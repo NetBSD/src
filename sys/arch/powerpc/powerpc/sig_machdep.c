@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.54 2021/11/01 05:07:15 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.55 2023/12/20 15:29:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.54 2021/11/01 05:07:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.55 2023/12/20 15:29:06 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -53,6 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.54 2021/11/01 05:07:15 thorpej Exp
 #include <powerpc/altivec.h>
 #include <powerpc/pcb.h>
 #include <powerpc/psl.h>
+
+/* Assert that the sizes of these two structures are multiples of 16. */
+CTASSERT((sizeof(siginfo_t) & (CALLFRAMELEN-1)) == 0);
+CTASSERT((sizeof(ucontext_t) & (CALLFRAMELEN-1)) == 0);
 
 /*
  * Send a signal to process.
@@ -78,17 +82,33 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Find top of stack.  */
 	sp = (onstack ? (vaddr_t)ss->ss_sp + ss->ss_size : tf->tf_fixreg[1]);
+
+	/* Ensure it is aligned. */
 	sp &= ~(CALLFRAMELEN-1);
 
 	/* Allocate space for the ucontext.  */
 	sp -= sizeof(ucontext_t);
-	ucp = sp;
 
 	/* Allocate space for the siginfo.  */
 	sp -= sizeof(siginfo_t);
-	sip = sp;
 
+#if 0	/* Not needed; see CTASSERTs above. */
+	/* Align it again. */
 	sp &= ~(CALLFRAMELEN-1);
+#endif
+
+	sip = sp;
+	ucp = sp + sizeof(siginfo_t);
+
+	KASSERT((sip & (CALLFRAMELEN-1)) == 0);
+	KASSERT((ucp & (CALLFRAMELEN-1)) == 0);
+
+	/*
+	 * Now allocate space for a call frame, so that there's
+	 * space for the ABI-mandated stack linkage area in the
+	 * event the signal handler calls a another function.
+	 */
+	sp -= CALLFRAMELEN;
 
 	/* Save register context. */
 	memset(&uc, 0, sizeof(uc));
@@ -123,7 +143,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	switch (sd->sd_vers) {
 	case __SIGTRAMP_SIGINFO_VERSION:	/* siginfo sigtramp */
-		tf->tf_fixreg[1]  = (register_t)sp - CALLFRAMELEN;
+		tf->tf_fixreg[1]  = (register_t)sp;
 		tf->tf_fixreg[3]  = (register_t)ksi->ksi_signo;
 		tf->tf_fixreg[4]  = (register_t)sip;
 		tf->tf_fixreg[5]  = (register_t)ucp;

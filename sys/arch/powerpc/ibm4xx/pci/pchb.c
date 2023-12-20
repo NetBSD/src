@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.16 2021/08/07 16:19:03 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.17 2023/12/20 15:29:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.16 2021/08/07 16:19:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.17 2023/12/20 15:29:06 thorpej Exp $");
 
 #include "pci.h"
 
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.16 2021/08/07 16:19:03 thorpej Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #define _IBM4XX_BUS_DMA_PRIVATE
 

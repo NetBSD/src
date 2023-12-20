@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.20 2023/12/03 00:49:46 thorpej Exp $ */
+/* $NetBSD: sgmap.c,v 1.21 2023/12/20 15:34:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,14 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.20 2023/12/03 00:49:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.21 2023/12/20 15:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 

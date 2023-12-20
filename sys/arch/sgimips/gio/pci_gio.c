@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.19 2021/08/07 16:19:04 thorpej Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.20 2023/12/20 15:29:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.19 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.20 2023/12/20 15:29:07 thorpej Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.19 2021/08/07 16:19:04 thorpej Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <machine/machtype.h>

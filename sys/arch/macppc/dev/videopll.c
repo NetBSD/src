@@ -1,4 +1,4 @@
-/*	$NetBSD: videopll.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: videopll.c,v 1.4 2023/12/20 15:29:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -33,13 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: videopll.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: videopll.c,v 1.4 2023/12/20 15:29:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/i2c/i2cvar.h>

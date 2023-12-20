@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.41 2022/02/16 23:49:27 riastradh Exp $ */
+/* $NetBSD: brdsetup.c,v 1.42 2023/12/20 15:29:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -715,11 +715,17 @@ kuroreset()
 void
 synosetup(struct brdprop *brd)
 {
-
+	/*
+	 * My DS107e works much better with the
+	 * default EXT_CLK_FREQ (33333333).
+	 *   --thorpej
+	 */
+#if 0
 	if (1) /* 200 and 266MHz models */
 		brd->extclk = 33164691; /* from Synology/Linux source */
 	else   /* 400MHz models XXX how to check? */
 		brd->extclk = 33165343;
+#endif
 }
 
 void

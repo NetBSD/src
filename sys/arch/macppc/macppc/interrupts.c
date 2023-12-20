@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.9 2022/12/28 06:00:26 macallan Exp $ */
+/*	$NetBSD: interrupts.c,v 1.10 2023/12/20 15:29:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,12 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.9 2022/12/28 06:00:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.10 2023/12/20 15:29:05 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 
 #include <prop/proplib.h>

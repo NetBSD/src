@@ -1,11 +1,11 @@
-/*	$NetBSD: sc_wrap.c,v 1.33 2021/08/07 16:19:01 thorpej Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.34 2023/12/20 15:29:05 thorpej Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.33 2021/08/07 16:19:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.34 2023/12/20 15:29:05 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -14,7 +14,6 @@ __KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.33 2021/08/07 16:19:01 thorpej Exp $")
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.19 2023/11/05 22:05:07 andvar Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.20 2023/12/20 15:29:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.19 2023/11/05 22:05:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20 2023/12/20 15:29:06 thorpej Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.19 2023/11/05 22:05:07 andvar Exp $"
 #endif
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>	/* uvmexp.intrs */
 

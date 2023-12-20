@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.25 2021/08/07 16:19:04 thorpej Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.26 2023/12/20 15:29:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.25 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.26 2023/12/20 15:29:07 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.25 2021/08/07 16:19:04 thorpej Exp $"
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <sys/malloc.h>
 #include <dev/pci/pciconf.h>
 
 #include <sgimips/mace/macereg.h>
