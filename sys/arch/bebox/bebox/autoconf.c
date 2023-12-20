@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 2023/06/19 08:40:29 msaitoh Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 2023/12/20 06:36:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 2023/06/19 08:40:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 2023/12/20 06:36:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 2023/06/19 08:40:29 msaitoh Exp $"
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 
 #include "pci.h"

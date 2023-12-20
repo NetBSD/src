@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map_machdep.c,v 1.8 2023/12/07 03:46:10 thorpej Exp $	*/
+/*	$NetBSD: wired_map_machdep.c,v 1.9 2023/12/20 06:36:02 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.8 2023/12/07 03:46:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.9 2023/12/20 06:36:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/vmem_impl.h>
 
 #include <uvm/uvm_extern.h>

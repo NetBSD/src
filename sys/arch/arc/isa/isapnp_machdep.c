@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.9 2011/07/01 19:25:41 dyoung Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.10 2023/12/20 06:36:02 thorpej Exp $	*/
 /*	$OpenBSD: isapnp_machdep.c,v 1.1 1997/12/27 12:13:11 niklas Exp $	*/
 /*	NetBSD: isapnp_machdep.c,v 1.5 1997/10/04 17:32:30 thorpej Exp 	*/
 
@@ -47,12 +47,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.9 2011/07/01 19:25:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.10 2023/12/20 06:36:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 

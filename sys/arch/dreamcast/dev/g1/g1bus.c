@@ -1,4 +1,4 @@
-/*	$NetBSD: g1bus.c,v 1.3 2021/08/07 16:18:48 thorpej Exp $	*/
+/*	$NetBSD: g1bus.c,v 1.4 2023/12/20 06:36:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -34,13 +34,12 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g1bus.c,v 1.3 2021/08/07 16:18:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g1bus.c,v 1.4 2023/12/20 06:36:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 

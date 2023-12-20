@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 2023/12/07 03:46:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.133 2023/12/20 06:36:02 thorpej Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2023/12/07 03:46:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2023/12/20 06:36:02 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2023/12/07 03:46:10 thorpej Exp $"
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>

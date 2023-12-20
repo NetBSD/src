@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.24 2022/09/18 15:53:24 thorpej Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.25 2023/12/20 06:36:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.24 2022/09/18 15:53:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.25 2023/12/20 06:36:03 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.24 2022/09/18 15:53:24 thorpej Exp 
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 

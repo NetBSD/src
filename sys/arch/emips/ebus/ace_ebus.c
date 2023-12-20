@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.25 2021/09/03 22:33:17 andvar Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.26 2023/12/20 06:36:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.25 2021/09/03 22:33:17 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.26 2023/12/20 06:36:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.25 2021/09/03 22:33:17 andvar Exp $")
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>

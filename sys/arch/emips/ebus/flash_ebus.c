@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.24 2021/11/27 06:47:43 skrll Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.25 2023/12/20 06:36:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.24 2021/11/27 06:47:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.25 2023/12/20 06:36:03 thorpej Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.24 2021/11/27 06:47:43 skrll Exp $"
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 #include <uvm/uvm_extern.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>

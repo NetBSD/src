@@ -1,9 +1,9 @@
-/*	$NetBSD: isadma.c,v 1.12 2011/03/06 14:58:43 tsutsui Exp $	*/
+/*	$NetBSD: isadma.c,v 1.13 2023/12/20 06:36:02 thorpej Exp $	*/
 /*	$OpenBSD: isadma.c,v 1.2 1996/11/23 21:45:34 kstailey Exp $	*/
 /*	NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp 	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.12 2011/03/06 14:58:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.13 2023/12/20 06:36:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -11,7 +11,6 @@ __KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.12 2011/03/06 14:58:43 tsutsui Exp $");
 #include <sys/file.h>
 #include <sys/buf.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
 #include <sys/uio.h>
 
 #include <uvm/uvm_extern.h>

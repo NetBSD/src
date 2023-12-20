@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_g1.c,v 1.5 2019/09/14 17:11:39 tsutsui Exp $ */
+/* $NetBSD: wdc_g1.c,v 1.6 2023/12/20 06:36:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_large.c,v 1.8 2011/07/01 19:28:00 dyoung Exp $	*/
+/*	$NetBSD: bus_space_large.c,v 1.9 2023/12/20 06:36:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,12 +48,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_large.c,v 1.8 2011/07/01 19:28:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_large.c,v 1.9 2023/12/20 06:36:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 
