@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.20 2016/07/12 23:53:18 matt Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.21 2023/12/20 06:36:02 thorpej Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -39,12 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.20 2016/07/12 23:53:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.21 2023/12/20 06:36:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
-#include <sys/extent.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>

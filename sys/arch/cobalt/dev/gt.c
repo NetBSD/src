@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.34 2021/08/07 16:18:47 thorpej Exp $	*/
+/*	$NetBSD: gt.c,v 1.35 2023/12/20 06:36:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.34 2021/08/07 16:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.35 2023/12/20 06:36:03 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.34 2021/08/07 16:18:47 thorpej Exp $");
 #include <sys/intr.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/syslog.h>

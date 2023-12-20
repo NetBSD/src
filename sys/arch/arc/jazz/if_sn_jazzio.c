@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_jazzio.c,v 1.15 2023/09/21 09:31:49 msaitoh Exp $	*/
+/*	$NetBSD: if_sn_jazzio.c,v 1.16 2023/12/20 06:36:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,12 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.15 2023/09/21 09:31:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.16 2023/12/20 06:36:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

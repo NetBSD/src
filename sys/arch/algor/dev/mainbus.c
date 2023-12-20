@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.30 2021/08/07 16:18:40 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.31 2023/12/20 06:36:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.30 2021/08/07 16:18:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31 2023/12/20 06:36:01 thorpej Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.30 2021/08/07 16:18:40 thorpej Exp $")
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
 

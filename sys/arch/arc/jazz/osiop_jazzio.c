@@ -1,4 +1,4 @@
-/* $NetBSD: osiop_jazzio.c,v 1.10 2011/07/01 19:25:42 dyoung Exp $ */
+/* $NetBSD: osiop_jazzio.c,v 1.11 2023/12/20 06:36:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,13 +25,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_jazzio.c,v 1.10 2011/07/01 19:25:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_jazzio.c,v 1.11 2023/12/20 06:36:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.17 2011/07/01 19:25:42 dyoung Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.18 2023/12/20 06:36:02 thorpej Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -29,13 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.17 2011/07/01 19:25:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.18 2023/12/20 06:36:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>

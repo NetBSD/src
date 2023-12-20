@@ -1,4 +1,4 @@
-/* $NetBSD: oosiop_jazzio.c,v 1.8 2023/05/06 21:34:39 andvar Exp $ */
+/* $NetBSD: oosiop_jazzio.c,v 1.9 2023/12/20 06:36:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.8 2023/05/06 21:34:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.9 2023/12/20 06:36:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

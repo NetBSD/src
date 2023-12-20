@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.17 2020/06/17 06:20:05 thorpej Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.18 2023/12/20 06:36:02 thorpej Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -33,11 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.17 2020/06/17 06:20:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.18 2023/12/20 06:36:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/vmem.h>
