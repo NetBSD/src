@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.32 2017/10/20 07:06:06 jdolecek Exp $	*/
+/*	$NetBSD: rapide.c,v 1.33 2023/12/20 06:13:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,13 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.32 2017/10/20 07:06:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.33 2023/12/20 06:13:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <machine/intr.h>

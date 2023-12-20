@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.30 2017/10/20 07:06:06 jdolecek Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.31 2023/12/20 06:13:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.30 2017/10/20 07:06:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.31 2023/12/20 06:13:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <machine/intr.h>

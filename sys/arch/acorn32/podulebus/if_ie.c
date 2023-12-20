@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.53 2022/09/17 18:58:49 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.54 2023/12/20 06:13:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.53 2022/09/17 18:58:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.54 2023/12/20 06:13:59 thorpej Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.53 2022/09/17 18:58:49 thorpej Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <machine/io.h>
 #include <machine/intr.h>

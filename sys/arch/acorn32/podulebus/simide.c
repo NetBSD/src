@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.32 2022/04/04 19:33:45 andvar Exp $	*/
+/*	$NetBSD: simide.c,v 1.33 2023/12/20 06:13:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,13 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.32 2022/04/04 19:33:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.33 2023/12/20 06:13:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <machine/intr.h>

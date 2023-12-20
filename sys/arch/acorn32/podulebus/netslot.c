@@ -1,4 +1,4 @@
-/*	$NetBSD: netslot.c,v 1.11 2014/10/25 10:58:12 skrll Exp $	*/
+/*	$NetBSD: netslot.c,v 1.12 2023/12/20 06:13:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -35,12 +35,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.11 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.12 2023/12/20 06:13:59 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>
 #include <machine/io.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rside.c,v 1.16 2017/10/20 07:06:05 jdolecek Exp $	*/
+/*	$NetBSD: rside.c,v 1.17 2023/12/20 06:13:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -56,13 +56,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.16 2017/10/20 07:06:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.17 2023/12/20 06:13:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <machine/intr.h>
