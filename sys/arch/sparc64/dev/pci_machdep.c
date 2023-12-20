@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.79 2022/10/01 07:59:25 charlotte Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.80 2023/12/20 05:33:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79 2022/10/01 07:59:25 charlotte Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.80 2023/12/20 05:33:58 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79 2022/10/01 07:59:25 charlotte E
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <sys/bus.h>

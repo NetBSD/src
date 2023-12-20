@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.21 2015/10/02 05:22:52 msaitoh Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.22 2023/12/20 05:33:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.21 2015/10/02 05:22:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2023/12/20 05:33:19 thorpej Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -62,7 +62,6 @@ int sparc_pci_debug = 0;
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>

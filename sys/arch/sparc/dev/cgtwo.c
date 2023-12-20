@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.57 2014/07/25 08:10:34 dholland Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.58 2023/12/20 05:33:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,14 +49,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.57 2014/07/25 08:10:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.58 2023/12/20 05:33:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>

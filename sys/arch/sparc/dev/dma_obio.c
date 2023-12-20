@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_obio.c,v 1.12 2011/07/01 18:50:41 dyoung Exp $ */
+/*	$NetBSD: dma_obio.c,v 1.13 2023/12/20 05:33:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_obio.c,v 1.12 2011/07/01 18:50:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_obio.c,v 1.13 2023/12/20 05:33:18 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: dma_obio.c,v 1.12 2011/07/01 18:50:41 dyoung Exp $")
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdesc.c,v 1.6 2015/09/07 17:14:54 uebayasi Exp $	*/
+/*	$NetBSD: mdesc.c,v 1.7 2023/12/20 05:33:59 thorpej Exp $	*/
 /*	$OpenBSD: mdesc.c,v 1.7 2014/11/30 22:26:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>

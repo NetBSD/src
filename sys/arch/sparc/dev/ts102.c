@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.21 2021/08/07 16:19:05 thorpej Exp $ */
+/*	$NetBSD: ts102.c,v 1.22 2023/12/20 05:33:18 thorpej Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * Copyright (c) 2005, Michael Lorenz.
@@ -66,7 +66,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/extent.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>

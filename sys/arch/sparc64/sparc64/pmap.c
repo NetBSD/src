@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.317 2023/06/02 08:51:47 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.318 2023/12/20 05:33:59 thorpej Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.317 2023/06/02 08:51:47 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.318 2023/12/20 05:33:59 thorpej Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.317 2023/06/02 08:51:47 andvar Exp $");
 #include "opt_modular.h"
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/msgbuf.h>

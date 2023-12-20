@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio_ebus.c,v 1.6 2015/10/06 16:40:36 martin Exp $	*/
+/*	$NetBSD: auxio_ebus.c,v 1.7 2023/12/20 05:33:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2015 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio_ebus.c,v 1.6 2015/10/06 16:40:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio_ebus.c,v 1.7 2023/12/20 05:33:58 thorpej Exp $");
 
 #include "opt_auxio.h"
 
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: auxio_ebus.c,v 1.6 2015/10/06 16:40:36 martin Exp $"
 #include <sys/callout.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>

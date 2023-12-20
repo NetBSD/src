@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.239 2023/09/02 05:51:57 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.240 2023/12/20 05:33:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.239 2023/09/02 05:51:57 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.240 2023/12/20 05:33:59 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -65,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.239 2023/09/02 05:51:57 jdc Exp $");
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/socket.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/queue.h>

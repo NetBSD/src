@@ -1,4 +1,4 @@
-/*	$NetBSD: ldc.c,v 1.7 2021/04/05 12:19:22 palle Exp $	*/
+/*	$NetBSD: ldc.c,v 1.8 2023/12/20 05:33:58 thorpej Exp $	*/
 /*	$OpenBSD: ldc.c,v 1.12 2015/03/21 18:02:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -17,7 +17,6 @@
  */
 
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 

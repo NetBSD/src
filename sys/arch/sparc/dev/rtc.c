@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.20 2020/01/02 22:32:20 thorpej Exp $ */
+/*	$NetBSD: rtc.c,v 1.21 2023/12/20 05:33:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.20 2020/01/02 22:32:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.21 2023/12/20 05:33:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #ifdef GPROF
 #include <sys/gmon.h>

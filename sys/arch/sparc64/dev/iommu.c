@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.118 2023/12/08 17:19:11 thorpej Exp $	*/
+/*	$NetBSD: iommu.c,v 1.119 2023/12/20 05:33:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,13 +59,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.118 2023/12/08 17:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.119 2023/12/20 05:33:58 thorpej Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.27 2016/04/21 17:59:18 macallan Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.28 2023/12/20 05:33:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,14 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.27 2016/04/21 17:59:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.28 2023/12/20 05:33:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>

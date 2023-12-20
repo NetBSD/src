@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.17 2009/09/19 04:52:44 tsutsui Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.18 2023/12/20 05:33:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,13 +79,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.17 2009/09/19 04:52:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.18 2023/12/20 05:33:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>

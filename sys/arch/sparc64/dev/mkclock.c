@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.12 2012/10/27 17:18:12 chs Exp $ */
+/*	$NetBSD: mkclock.c,v 1.13 2023/12/20 05:33:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.12 2012/10/27 17:18:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.13 2023/12/20 05:33:58 thorpej Exp $");
 
 /*    
  * Clock driver for 'mkclock' - Mostek MK48Txx TOD clock.
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.12 2012/10/27 17:18:12 chs Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>

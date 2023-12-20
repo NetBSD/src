@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.95 2023/06/13 10:11:17 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.96 2023/12/20 05:33:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -67,7 +67,6 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
