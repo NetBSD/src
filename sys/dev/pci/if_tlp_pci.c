@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.130 2021/05/08 00:27:02 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.131 2023/12/20 04:32:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,12 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.130 2021/05/08 00:27:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.131 2023/12/20 04:32:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -592,7 +592,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
 		sc->sc_srom_addrbits = 6;
-		sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF, M_WAITOK);
+		sc->sc_srom = kmem_alloc(TULIP_ROM_SIZE(6), KM_SLEEP);
 		TULIP_WRITE(sc, CSR_MIIROM, MIIROM_SROMCS);
 		for (i = 0; i < TULIP_ROM_SIZE(6); i++) {
 			for (j = 0; j < 10000; j++) {
@@ -608,7 +608,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	case TULIP_CHIP_82C169:
 	    {
 		sc->sc_srom_addrbits = 2;
-		sc->sc_srom = malloc(TULIP_ROM_SIZE(2), M_DEVBUF, M_WAITOK);
+		sc->sc_srom = kmem_zalloc(TULIP_ROM_SIZE(2), KM_SLEEP);
 
 		/*
 		 * The Lite-On PNIC stores the Ethernet address in
@@ -655,8 +655,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 			       ETHER_ADDR_LEN);
 
 			sc->sc_srom_addrbits = 6;
-			sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF,
-			    M_WAITOK | M_ZERO);
+			sc->sc_srom = kmem_zalloc(TULIP_ROM_SIZE(6), KM_SLEEP);
 			memcpy(sc->sc_srom, enaddr, sizeof(enaddr));
 			if (tlp_srom_debug) {
 				aprint_normal("SROM CONTENTS:");
@@ -1406,7 +1405,7 @@ tlp_smc9332dst_tmsw_init(struct tulip_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "");
 
 #define	ADD(m, c) \
-	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);		\
+	tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);			\
 	tm->tm_opmode = (c);						\
 	tm->tm_gpdata = GPP_SMC9332DST_INIT;				\
 	ifmedia_add(&mii->mii_media, (m), 0, tm)
@@ -1621,7 +1620,7 @@ tlp_cogent_em1x0_tmsw_init(struct tulip_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "");
 
 #define	ADD(m, c) \
-	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);		\
+	tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);			\
 	tm->tm_opmode = (c);						\
 	tm->tm_gpdata = GPP_COGENT_EM1x0_INIT;				\
 	ifmedia_add(&mii->mii_media, (m), 0, tm)
