@@ -1,1 +1,5 @@
+Global: delete N
+Global: delete N (readOnly)
+Global: .MAKEFLAGS =  -r -k -d v -d
+Global: .MAKEFLAGS =  -r -k -d v -d 0
 exit status 0
