@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.118 2022/08/29 07:32:46 skrll Exp $	*/
+/*	$NetBSD: if_se.c,v 1.119 2023/12/20 18:09:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,11 +59,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.118 2022/08/29 07:32:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.119 2023/12/20 18:09:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_net_mpsafe.h"
 #include "opt_atalk.h"
 #endif
 
