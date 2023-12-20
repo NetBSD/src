@@ -1,4 +1,4 @@
-/*	$NetBSD: sx.c,v 1.7 2023/06/13 10:09:31 macallan Exp $	*/
+/*	$NetBSD: sx.c,v 1.8 2023/12/20 05:33:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.7 2023/06/13 10:09:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.8 2023/12/20 05:33:18 thorpej Exp $");
 
 #include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 

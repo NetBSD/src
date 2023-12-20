@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.76 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.77 2023/12/20 05:33:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.76 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.77 2023/12/20 05:33:18 thorpej Exp $");
 
 #include "locators.h"
 
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.76 2021/08/07 16:19:05 thorpej Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #ifdef DEBUG
 #include <sys/proc.h>

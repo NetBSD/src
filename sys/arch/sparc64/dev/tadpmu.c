@@ -1,4 +1,4 @@
-/*/* $NetBSD: tadpmu.c,v 1.5 2020/05/16 07:16:14 jdc Exp $ */
+/*/* $NetBSD: tadpmu.c,v 1.6 2023/12/20 05:33:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz <macallan@netbsd.org>
@@ -34,7 +34,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/bus.h>
 #include <sys/intr.h>

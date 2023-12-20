@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.34 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.35 2023/12/20 05:33:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.34 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.35 2023/12/20 05:33:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.34 2016/07/07 06:55:38 msaitoh E
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/malloc.h>
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
