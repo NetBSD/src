@@ -6,8 +6,8 @@ Global: .TARGETS = # (empty)
 Internal: MAKEFILE = varname-empty.mk
 Global: .MAKE.MAKEFILES = varname-empty.mk
 Global: .PARSEFILE = varname-empty.mk
-Global: delete .INCLUDEDFROMDIR (not found)
-Global: delete .INCLUDEDFROMFILE (not found)
+Global: ignoring delete '.INCLUDEDFROMDIR' as it is not found
+Global: ignoring delete '.INCLUDEDFROMFILE' as it is not found
 Var_SetExpand: variable name "" expands to empty string, with value "default" - ignored
 Var_SetExpand: variable name "" expands to empty string, with value "assigned" - ignored
 SetVar: variable name is empty - ignored
