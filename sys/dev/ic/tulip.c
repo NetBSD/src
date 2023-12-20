@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.209 2023/09/04 21:54:41 mrg Exp $	*/
+/*	$NetBSD: tulip.c,v 1.210 2023/12/20 04:32:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,14 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.209 2023/09/04 21:54:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.210 2023/12/20 04:32:30 thorpej Exp $");
 
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -134,6 +134,8 @@ static void	tlp_dm9102_reset(struct tulip_softc *);
 #endif
 
 static void	tlp_2114x_nway_tick(void *);
+
+static void	tlp_ifmedia_fini(struct tulip_softc *);
 
 #define	tlp_mchash(addr, sz)						\
 	(ether_crc32_le((addr), ETHER_ADDR_LEN) & ((sz) - 1))
@@ -625,7 +627,7 @@ tlp_detach(struct tulip_softc *sc)
 	if_detach(ifp);
 
 	/* Delete all remaining media. */
-	ifmedia_fini(&sc->sc_mii.mii_media);
+	tlp_ifmedia_fini(sc);
 
 	for (i = 0; i < TULIP_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
@@ -653,8 +655,10 @@ tlp_detach(struct tulip_softc *sc)
 
 	pmf_device_deregister(self);
 
-	if (sc->sc_srom)
-		free(sc->sc_srom, M_DEVBUF);
+	if (sc->sc_srom) {
+		KASSERT(sc->sc_srom_addrbits != 0);
+		kmem_free(sc->sc_srom, TULIP_ROM_SIZE(sc->sc_srom_addrbits));
+	}
 
 	return 0;
 }
@@ -2176,10 +2180,9 @@ tlp_srom_size(struct tulip_softc *sc)
 int
 tlp_read_srom(struct tulip_softc *sc)
 {
-	int size;
 	uint32_t miirom;
 	uint16_t datain;
-	int i, x;
+	int size, i, x;
 
 	tlp_srom_idle(sc);
 
@@ -2187,7 +2190,7 @@ tlp_read_srom(struct tulip_softc *sc)
 	if (sc->sc_srom_addrbits == 0)
 		return 0;
 	size = TULIP_ROM_SIZE(sc->sc_srom_addrbits);
-	sc->sc_srom = malloc(size, M_DEVBUF, M_WAITOK);
+	sc->sc_srom = kmem_alloc(size, KM_SLEEP);
 
 	/* Select the SROM. */
 	miirom = MIIROM_SR;
@@ -3181,6 +3184,27 @@ tlp_mediachange(struct ifnet *ifp)
 	return (*sc->sc_mediasw->tmsw_set)(sc);
 }
 
+/*
+ * tlp_ifmedia_fini:
+ *
+ *	Wrapper around ifmedia_fini(), which frees any media-speific
+ *	data we may have associated with each entry.
+ */
+static void
+tlp_ifmedia_fini(struct tulip_softc *sc)
+{
+	struct ifmedia_entry *ife;
+	struct tulip_21x4x_media *tm;
+
+	TAILQ_FOREACH(ife, &sc->sc_mii.mii_media.ifm_list, ifm_list) {
+		if ((tm = ife->ifm_aux) != NULL) {
+			ife->ifm_aux = NULL;
+			kmem_free(tm, sizeof(*tm));
+		}
+	}
+	ifmedia_fini(&sc->sc_mii.mii_media);
+}
+
 /*****************************************************************************
  * Support functions for MII-attached media.
  *****************************************************************************/
@@ -3998,7 +4022,7 @@ tlp_add_srom_media(struct tulip_softc *sc, int type,
 
 	for (i = 0; i < cnt; i++) {
 		tsti = tlp_srom_to_ifmedia(list[i]);
-		tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);
+		tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);
 		tlp_srom_media_info(sc, tsti, tm);
 		tm->tm_type = type;
 		tm->tm_get = get;
@@ -4380,7 +4404,7 @@ tlp_21040_tmsw_init(struct tulip_softc *sc)
 	/*
 	 * No SROM type for External SIA.
 	 */
-	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);
+	tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);
 	tm->tm_name = "manual";
 	tm->tm_opmode = 0;
 	tm->tm_siaconn = SIACONN_21040_EXTSIA;
@@ -4495,7 +4519,7 @@ tlp_21041_tmsw_init(struct tulip_softc *sc)
 	for (; m_cnt != 0;
 	     m_cnt--, mb_offset += TULIP_ROM_MB_SIZE(mb)) {
 		mb = sc->sc_srom[mb_offset];
-		tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);
+		tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);
 		switch (mb & TULIP_ROM_MB_MEDIA_CODE) {
 		case TULIP_ROM_MB_MEDIA_TP_FDX:
 		case TULIP_ROM_MB_MEDIA_TP:
@@ -4703,7 +4727,7 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 			tlp_get_minst(sc);
 			sc->sc_media_seen |= 1 << TULIP_ROM_MB_21140_GPR;
 
-			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);
+			tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);
 
 			tm->tm_type = TULIP_ROM_MB_21140_GPR;
 			tm->tm_get = tlp_21140_gpio_get;
@@ -4748,7 +4772,7 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 		case TULIP_ROM_MB_21140_MII:
 			sc->sc_media_seen |= 1 << TULIP_ROM_MB_21140_MII;
 
-			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);
+			tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);
 
 			tm->tm_type = TULIP_ROM_MB_21140_MII;
 			tm->tm_get = tlp_mii_getmedia;
@@ -4862,7 +4886,7 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 			tlp_get_minst(sc);
 			sc->sc_media_seen |= 1 << TULIP_ROM_MB_21142_SIA;
 
-			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);
+			tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);
 
 			tm->tm_type = TULIP_ROM_MB_21142_SIA;
 			tm->tm_get = tlp_sia_get;
@@ -4904,7 +4928,7 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 		case TULIP_ROM_MB_21142_MII:
 			sc->sc_media_seen |= 1 << TULIP_ROM_MB_21142_MII;
 
-			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);
+			tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);
 
 			tm->tm_type = TULIP_ROM_MB_21142_MII;
 			tm->tm_get = tlp_mii_getmedia;
@@ -5018,7 +5042,7 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 			tlp_get_minst(sc);
 			sc->sc_media_seen |= 1 << TULIP_ROM_MB_21143_SYM;
 
-			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);
+			tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);
 
 			tm->tm_type = TULIP_ROM_MB_21143_SYM;
 			tm->tm_get = tlp_sia_get;
@@ -5110,7 +5134,7 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 		case TULIP_CHIP_MX98715A:
 		case TULIP_CHIP_MX98715AEC_X:
 		case TULIP_CHIP_MX98725:
-			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);
+			tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);
 			tm->tm_name = "auto";
 			tm->tm_get = tlp_2114x_nway_get;
 			tm->tm_set = tlp_2114x_nway_set;
@@ -5925,7 +5949,7 @@ tlp_pmac_tmsw_init(struct tulip_softc *sc)
 		tlp_add_srom_media(sc, TULIP_ROM_MB_21143_SYM,
 		    tlp_sia_get, tlp_sia_set, media + 2, 2);
 
-		tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);
+		tm = kmem_zalloc(sizeof(*tm), KM_SLEEP);
 		tm->tm_name = "auto";
 		tm->tm_get = tlp_2114x_nway_get;
 		tm->tm_set = tlp_2114x_nway_set;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.29 2021/07/24 18:50:07 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.30 2023/12/20 04:32:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,14 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.29 2021/07/24 18:50:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.30 2023/12/20 04:32:30 thorpej Exp $");
 
 #include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -221,8 +221,9 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * ...and now read the contents of the Ethernet Address ROM.
 	 */
-	sc->sc_srom = malloc(32, M_DEVBUF, M_WAITOK|M_ZERO);
-	for (i = 0; i < 32; i++)
+	sc->sc_srom_addrbits = 4;	/* 32 bytes */
+	sc->sc_srom = kmem_alloc(TULIP_ROM_SIZE(4), KM_SLEEP);
+	for (i = 0; i < TULIP_ROM_SIZE(4); i++)
 		sc->sc_srom[i] = bus_space_read_1(iot, ioh, DE425_ENETROM);
 
 	/*
