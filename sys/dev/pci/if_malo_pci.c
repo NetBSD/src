@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pci.c,v 1.8 2021/05/08 00:27:02 thorpej Exp $	*/
+/*	$NetBSD: if_malo_pci.c,v 1.9 2023/12/20 05:08:34 thorpej Exp $	*/
 /*	$OpenBSD: if_malo_pci.c,v 1.6 2010/08/28 23:19:29 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.8 2021/05/08 00:27:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.9 2023/12/20 05:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -30,7 +30,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.8 2021/05/08 00:27:02 thorpej Exp 
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/bus.h>
 

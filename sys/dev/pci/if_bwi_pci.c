@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.17 2021/05/08 00:27:02 thorpej Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.18 2023/12/20 05:08:34 thorpej Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -24,13 +24,12 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.17 2021/05/08 00:27:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.18 2023/12/20 05:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>

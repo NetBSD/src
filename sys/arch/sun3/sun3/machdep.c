@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.213 2020/09/07 23:41:38 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.214 2023/12/20 05:18:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.213 2020/09/07 23:41:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2023/12/20 05:18:00 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.213 2020/09/07 23:41:38 mrg Exp $");
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>

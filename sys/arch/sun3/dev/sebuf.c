@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.19 2021/08/07 16:19:06 thorpej Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.20 2023/12/20 05:18:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,14 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.19 2021/08/07 16:19:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.20 2023/12/20 05:18:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/tty.h>

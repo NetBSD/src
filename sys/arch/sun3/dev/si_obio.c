@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.37 2019/12/27 09:41:50 msaitoh Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.38 2023/12/20 05:18:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,13 +74,12 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.37 2019/12/27 09:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.38 2023/12/20 05:18:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>

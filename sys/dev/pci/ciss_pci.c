@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.22 2020/07/14 17:23:58 jdolecek Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.23 2023/12/20 05:08:34 thorpej Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,12 +19,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.22 2020/07/14 17:23:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.23 2023/12/20 05:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcidevs.h>

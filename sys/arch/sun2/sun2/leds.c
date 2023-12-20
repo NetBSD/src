@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.8 2018/09/03 16:29:28 riastradh Exp $	*/
+/*	$NetBSD: leds.c,v 1.9 2023/12/20 05:13:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,14 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.8 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.9 2023/12/20 05:13:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.55 2022/09/02 23:48:10 thorpej Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.56 2023/12/20 05:08:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.55 2022/09/02 23:48:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.56 2023/12/20 05:08:34 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.55 2022/09/02 23:48:10 thorpej Exp $");
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>	/* only for declaration of wakeup() used by vm.h */
 #include <sys/device.h>

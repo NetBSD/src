@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.75 2022/12/24 15:23:02 andvar Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.76 2023/12/20 05:08:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.75 2022/12/24 15:23:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.76 2023/12/20 05:08:34 thorpej Exp $");
 
 #include "midi.h"
 
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.75 2022/12/24 15:23:02 andvar Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>

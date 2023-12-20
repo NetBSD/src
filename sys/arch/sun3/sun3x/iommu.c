@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.18 2013/09/06 17:43:19 tsutsui Exp $	*/
+/*	$NetBSD: iommu.c,v 1.19 2023/12/20 05:18:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,14 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.18 2013/09/06 17:43:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.19 2023/12/20 05:18:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 
 #include <machine/autoconf.h>

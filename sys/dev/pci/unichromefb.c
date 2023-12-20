@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.21 2021/08/07 16:19:14 thorpej Exp $ */
+/* $NetBSD: unichromefb.c,v 1.22 2023/12/20 05:08:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,12 +51,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.21 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.22 2023/12/20 05:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 

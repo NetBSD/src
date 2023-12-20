@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.36 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: bw2.c,v 1.37 2023/12/20 05:18:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,14 +47,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.36 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.37 2023/12/20 05:18:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/tty.h>

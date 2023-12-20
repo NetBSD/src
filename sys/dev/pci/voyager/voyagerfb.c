@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.33 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.34 2023/12/20 05:08:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.33 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.34 2023/12/20 05:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
 
