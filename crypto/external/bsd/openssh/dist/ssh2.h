@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh2.h,v 1.14 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: ssh2.h,v 1.21 2023/08/28 03:28:43 djm Exp $ */
+/*	$NetBSD: ssh2.h,v 1.15 2023/12/20 17:15:21 christos Exp $	*/
+/* $OpenBSD: ssh2.h,v 1.22 2023/10/10 03:57:45 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -54,6 +54,7 @@
  *   Local extensions:
  *
  *     192-255  Local extensions
+ *     248-255  Local extensions (OpenSSH will never use numbers in this range)
  */
 
 /* special marker for no message */

@@ -1,5 +1,6 @@
-/*	$NetBSD: sshconnect.c,v 1.36 2023/12/01 12:07:19 ws Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.363 2023/03/10 07:17:08 dtucker Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.37 2023/12/20 17:15:21 christos Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.365 2023/11/20 02:50:00 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.36 2023/12/01 12:07:19 ws Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.37 2023/12/20 17:15:21 christos Exp $");
 
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
@@ -532,6 +533,14 @@ ssh_connect_direct(struct ssh *ssh, const char *host, struct addrinfo *aitop,
 				errno = oerrno;
 				continue;
 			}
+			if (options.address_family != AF_UNSPEC &&
+			    ai->ai_family != options.address_family) {
+				debug2_f("skipping address [%s]:%s: "
+				    "wrong address family", ntop, strport);
+				errno = EAFNOSUPPORT;
+				continue;
+			}
+
 			debug("Connecting to %.200s [%.100s] port %s.",
 				host, ntop, strport);
 
