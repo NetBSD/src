@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dse.c,v 1.3 2022/12/22 23:06:11 nat Exp $ */
+/*	$NetBSD: if_dse.c,v 1.4 2023/12/20 18:09:19 skrll Exp $ */
 
 /*
  * Driver for DaynaPORT SCSI/Link SCSI-Ethernet
@@ -40,10 +40,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-
 #include "opt_inet.h"
-#include "opt_net_mpsafe.h"
 #include "opt_atalk.h"
 
 #include <sys/types.h>

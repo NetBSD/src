@@ -28,15 +28,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef _KERNEL_OPT
-#include "opt_net_mpsafe.h"
-#endif
-
 #include <sys/cdefs.h>
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.40 2023/11/05 18:26:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.41 2023/12/20 18:09:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
