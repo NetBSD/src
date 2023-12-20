@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.57 2023/08/27 19:48:19 andvar Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.58 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.57 2023/08/27 19:48:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.58 2023/12/20 00:40:42 thorpej Exp $");
 
 #include "grfcl.h"
 #include "ite.h"
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.57 2023/08/27 19:48:19 andvar Exp $");
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/device_impl.h>	/* XXX autoconf abuse */
-#include <sys/malloc.h>
 
 #include <machine/cpu.h>
 #include <dev/cons.h>

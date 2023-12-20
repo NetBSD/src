@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.97 2023/08/30 18:20:40 andvar Exp $	*/
+/*	$NetBSD: fd.c,v 1.98 2023/12/20 00:40:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,13 +44,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.97 2023/08/30 18:20:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98 2023/12/20 00:40:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/proc.h>

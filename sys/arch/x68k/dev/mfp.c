@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.29 2021/08/07 16:19:07 thorpej Exp $	*/
+/*	$NetBSD: mfp.c,v 1.30 2023/12/20 00:40:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -36,12 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.29 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.30 2023/12/20 00:40:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>

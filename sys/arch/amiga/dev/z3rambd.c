@@ -1,4 +1,4 @@
-/*	$NetBSD: z3rambd.c,v 1.5 2021/08/07 16:18:42 thorpej Exp $ */
+/*	$NetBSD: z3rambd.c,v 1.6 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z3rambd.c,v 1.5 2021/08/07 16:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z3rambd.c,v 1.6 2023/12/20 00:40:42 thorpej Exp $");
 
 /*
  * Z3 RAM virtual block device. Supports ZorRAM, BigRamPlus and FastLane Z3 so 
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: z3rambd.c,v 1.5 2021/08/07 16:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_zbus.c,v 1.2 2016/04/23 10:15:27 skrll Exp $ */
+/*	$NetBSD: slhci_zbus.c,v 1.3 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_zbus.c,v 1.2 2016/04/23 10:15:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_zbus.c,v 1.3 2023/12/20 00:40:42 thorpej Exp $");
 
 /*
  * Thylacine driver.
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: slhci_zbus.c,v 1.2 2016/04/23 10:15:27 skrll Exp $")
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
 

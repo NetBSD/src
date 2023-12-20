@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 2021/10/09 20:00:41 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 2023/12/20 00:40:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2021/10/09 20:00:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2023/12/20 00:40:43 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2021/10/09 20:00:41 tsutsui Exp $")
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>

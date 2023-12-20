@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.20 2023/08/26 22:12:45 andvar Exp $ */
+/*	$NetBSD: p5pb.c,v 1.21 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,6 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>

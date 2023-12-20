@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.19 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.20 2023/12/20 00:40:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.19 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.20 2023/12/20 00:40:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
-#include <sys/malloc.h>
 
 #include <machine/cpu.h>
 #include <machine/iomap.h>
@@ -55,7 +54,7 @@ static MODES modes;
 
 /*
  * Ugh.. Stuff needed to allocate console structures before the VM-system
- * is running. There is no malloc() available at that time.
+ * is running.
  * Decision to use these: atari_realconfig == 0
  */
 view_t		gra_con_view;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.39 2023/09/26 14:33:55 tsutsui Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.40 2023/12/20 00:40:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.39 2023/09/26 14:33:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.40 2023/12/20 00:40:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.39 2023/09/26 14:33:55 tsutsui E
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 
 #include <sys/syscallargs.h>

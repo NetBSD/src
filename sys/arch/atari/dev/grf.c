@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.56 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: grf.c,v 1.57 2023/12/20 00:40:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -46,14 +46,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.56 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.57 2023/12/20 00:40:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>

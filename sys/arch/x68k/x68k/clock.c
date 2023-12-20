@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34 2012/05/22 04:03:03 isaki Exp $	*/
+/*	$NetBSD: clock.c,v 1.35 2023/12/20 00:40:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.34 2012/05/22 04:03:03 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35 2023/12/20 00:40:44 thorpej Exp $");
 
 #include "clock.h"
 
@@ -221,7 +221,6 @@ DELAY(int mic)
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <uvm/uvm_extern.h>	/* XXX needed? */
 #include <x68k/x68k/clockioctl.h>
 #include <sys/specdev.h>

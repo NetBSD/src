@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.210 2023/03/28 20:01:57 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211 2023/12/20 00:40:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.210 2023/03/28 20:01:57 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2023/12/20 00:40:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.210 2023/03/28 20:01:57 andvar Exp $")
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>

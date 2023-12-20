@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.43 2020/02/05 08:36:56 skrll Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.44 2023/12/20 00:40:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -40,13 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.43 2020/02/05 08:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.44 2023/12/20 00:40:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>

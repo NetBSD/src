@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.20 2022/06/26 05:11:54 tsutsui Exp $	*/
+/*	$NetBSD: vme.c,v 1.21 2023/12/20 00:40:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.20 2022/06/26 05:11:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.21 2023/12/20 00:40:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <machine/intr.h>

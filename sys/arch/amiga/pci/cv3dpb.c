@@ -1,4 +1,4 @@
-/*	$NetBSD: cv3dpb.c,v 1.6 2021/08/07 16:18:42 thorpej Exp $ */
+/*	$NetBSD: cv3dpb.c,v 1.7 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,6 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 

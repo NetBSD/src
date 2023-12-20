@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.26 2022/01/01 21:07:13 andvar Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.27 2023/12/20 00:40:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 #ifndef _SBICVAR_H_
 #define _SBICVAR_H_
-#include <sys/malloc.h>
+
 #include <sys/callout.h>
 
 /*

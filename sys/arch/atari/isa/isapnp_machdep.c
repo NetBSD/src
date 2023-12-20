@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.10 2011/07/01 20:34:06 dyoung Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.11 2023/12/20 00:40:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -74,12 +74,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.10 2011/07/01 20:34:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.11 2023/12/20 00:40:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 

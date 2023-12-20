@@ -1,4 +1,4 @@
-/*	$NetBSD: xsh.c,v 1.4 2021/08/07 16:18:42 thorpej Exp $ */
+/*	$NetBSD: xsh.c,v 1.5 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xsh.c,v 1.4 2021/08/07 16:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xsh.c,v 1.5 2023/12/20 00:40:42 thorpej Exp $");
 
 /*
  * X-Surf 100 driver. 
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: xsh.c,v 1.4 2021/08/07 16:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.58 2020/07/03 16:23:03 maxv Exp $ */
+/*	$NetBSD: clock.c,v 1.59 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.58 2020/07/03 16:23:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.59 2023/12/20 00:40:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -392,7 +392,6 @@ calibrate_delay(device_t self)
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <uvm/uvm_extern.h>
 #include <amiga/amiga/clockioctl.h>
 #include <sys/specdev.h>

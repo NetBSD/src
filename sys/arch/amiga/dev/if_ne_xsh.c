@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_xsh.c,v 1.4 2013/08/13 15:43:25 rkujawa Exp $ */
+/*	$NetBSD: if_ne_xsh.c,v 1.5 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_acafh.c,v 1.6 2017/10/20 07:06:06 jdolecek Exp $ */
+/*	$NetBSD: wdc_acafh.c,v 1.7 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003, 2013 The NetBSD Foundation, Inc.
@@ -41,12 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.6 2017/10/20 07:06:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.7 2023/12/20 00:40:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/bus.h>
 
