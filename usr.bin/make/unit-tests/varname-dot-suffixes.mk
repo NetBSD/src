@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-suffixes.mk,v 1.4 2023/12/20 08:50:10 rillig Exp $
+# $NetBSD: varname-dot-suffixes.mk,v 1.5 2023/12/20 09:03:09 rillig Exp $
 #
 # Tests for the special "variable" .SUFFIXES, which lists the suffixes that
 # have been registered for use in suffix transformation rules.  Suffixes are
@@ -61,13 +61,13 @@
 # The list of suffixes can only be modified using dependency declarations, any
 # attempt at setting the variable named '.SUFFIXES' is rejected.
 .MAKEFLAGS: -dv
-# expect: Global: .SUFFIXES = set ignored (read-only)
+# expect: Global: ignoring '.SUFFIXES = set' as it is read-only
 .SUFFIXES=	set
-# expect: Global: .SUFFIXES = append ignored (read-only)
+# expect: Global: ignoring '.SUFFIXES = append' as it is read-only
 .SUFFIXES+=	append
-# expect: Global: .SUFFIXES = assign ignored (read-only)
+# expect: Global: ignoring '.SUFFIXES = assign' as it is read-only
 _:=		${.SUFFIXES::=assign}
-# expect: Global: .SUFFIXES = preserve ignored (read-only)
+# expect: Global: ignoring '.SUFFIXES = preserve' as it is read-only
 _:=		${preserve:L:_=.SUFFIXES}
 .MAKEFLAGS: -d0
 
@@ -94,8 +94,8 @@ _:=		${preserve:L:_=.SUFFIXES}
 # the name would be '.SUFFIXES.', furthermore the name of the iteration
 # variable is typically in singular form.
 .MAKEFLAGS: -dv
-# expect: Command: .SUFFIXES = 1 ignored (read-only)
-# expect: Command: .SUFFIXES = 2 ignored (read-only)
+# expect: Command: ignoring '.SUFFIXES = 1' as it is read-only
+# expect: Command: ignoring '.SUFFIXES = 2' as it is read-only
 # expect: Command: ignoring delete '.SUFFIXES' as it is not found
 .if ${1 2:L:@.SUFFIXES@${.SUFFIXES}@} != ".c .o .1 .err .tar.gz .c .o .1 .err .tar.gz"
 .  error

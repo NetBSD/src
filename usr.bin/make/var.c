@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1085 2023/12/20 08:50:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1086 2023/12/20 09:03:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1085 2023/12/20 08:50:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1086 2023/12/20 09:03:08 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -929,15 +929,17 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 
 	assert(val != NULL);
 	if (name[0] == '\0') {
-		DEBUG0(VAR, "SetVar: variable name is empty - ignored\n");
+		DEBUG3(VAR,
+		    "%s: ignoring '%s = %s' as the variable name is empty\n",
+		    scope->name, name, val);
 		return;
 	}
 
 	if (scope == SCOPE_GLOBAL && ExistsInCmdline(name)) {
 		DEBUG3(VAR,
-		    "%s: ignoring '%s' = '%s' "
+		    "%s: ignoring '%s = %s' "
 		    "due to a command line variable of the same name\n",
-		    SCOPE_GLOBAL->name, name, val);
+		    scope->name, name, val);
 		return;
 	}
 
@@ -960,14 +962,16 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		}
 		if (strcmp(name, ".SUFFIXES") == 0) {
 			/* special: treat as read-only */
-			DEBUG3(VAR, "%s: %s = %s ignored (read-only)\n",
+			DEBUG3(VAR,
+			    "%s: ignoring '%s = %s' as it is read-only\n",
 			    scope->name, name, val);
 			return;
 		}
 		v = VarAdd(name, val, scope, flags);
 	} else {
 		if (v->readOnly && !(flags & VAR_SET_READONLY)) {
-			DEBUG3(VAR, "%s: %s = %s ignored (read-only)\n",
+			DEBUG3(VAR,
+			    "%s: ignoring '%s = %s' as it is read-only\n",
 			    scope->name, name, val);
 			return;
 		}
@@ -1036,10 +1040,10 @@ Var_SetExpand(GNode *scope, const char *name, const char *val)
 	Var_Expand(&varname, scope, VARE_WANTRES);
 
 	if (varname.str[0] == '\0') {
-		DEBUG2(VAR,
-		    "Var_SetExpand: variable name \"%s\" expands "
-		    "to empty string, with value \"%s\" - ignored\n",
-		    unexpanded_name, val);
+		DEBUG4(VAR,
+		    "%s: ignoring '%s = %s' "
+		    "as the variable name '%s' expands to empty\n",
+		    scope->name, varname.str, val, unexpanded_name);
 	} else
 		Var_SetWithFlags(scope, varname.str, val, VAR_SET_NONE);
 
@@ -1080,8 +1084,8 @@ Var_Append(GNode *scope, const char *name, const char *val)
 	if (v == NULL) {
 		Var_SetWithFlags(scope, name, val, VAR_SET_NONE);
 	} else if (v->readOnly) {
-		DEBUG1(VAR, "Ignoring append to %s since it is read-only\n",
-		    name);
+		DEBUG3(VAR, "%s: ignoring '%s += %s' as it is read-only\n",
+		    scope->name, name, val);
 	} else if (scope == SCOPE_CMDLINE || !v->fromCmd) {
 		Buf_AddByte(&v->val, ' ');
 		Buf_AddStr(&v->val, val);
@@ -1130,10 +1134,10 @@ Var_AppendExpand(GNode *scope, const char *name, const char *val)
 
 	Var_Expand(&xname, scope, VARE_WANTRES);
 	if (xname.str != name && xname.str[0] == '\0')
-		DEBUG2(VAR,
-		    "Var_AppendExpand: variable name \"%s\" expands "
-		    "to empty string, with value \"%s\" - ignored\n",
-		    name, val);
+		DEBUG4(VAR,
+		    "%s: ignoring '%s += %s' "
+		    "as the variable name '%s' expands to empty\n",
+		    scope->name, xname.str, val, name);
 	else
 		Var_Append(scope, xname.str, val);
 
