@@ -5,9 +5,9 @@ Global: VAR = added
 Global: VAR = overwritten
 Global: delete VAR
 Global: ignoring delete 'VAR' as it is not found
-Var_SetExpand: variable name "${:U}" expands to empty string, with value "empty name" - ignored
-Var_AppendExpand: variable name "${:U}" expands to empty string, with value "empty name" - ignored
-Global: ignoring 'FROM_CMDLINE' = 'overwritten' due to a command line variable of the same name
+Global: ignoring ' = empty name' as the variable name '${:U}' expands to empty
+Global: ignoring ' += empty name' as the variable name '${:U}' expands to empty
+Global: ignoring 'FROM_CMDLINE = overwritten' due to a command line variable of the same name
 Global: VAR = 1
 Global: VAR = 1 2
 Global: VAR = 1 2 3
@@ -61,7 +61,7 @@ Var_Parse: ${UNDEFINED} (eval-defined)
 make: "vardebug.mk" line 56: Malformed conditional (${UNDEFINED})
 Global: ignoring delete '.SHELL' as it is not found
 Command: .SHELL = </path/to/shell>
-Command: .SHELL = overwritten ignored (read-only)
+Command: ignoring '.SHELL = overwritten' as it is read-only
 Global: .MAKEFLAGS =  -r -k -d v -d
 Global: .MAKEFLAGS =  -r -k -d v -d 0
 make: Fatal errors encountered -- cannot continue
