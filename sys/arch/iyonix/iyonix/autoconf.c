@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2018/12/20 21:38:23 macallan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 2023/12/20 15:00:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2018/12/20 21:38:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2023/12/20 15:00:08 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2018/12/20 21:38:23 macallan Exp $
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.10 2017/10/20 07:06:06 jdolecek Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.11 2023/12/20 15:00:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.10 2017/10/20 07:06:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.11 2023/12/20 15:00:08 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <machine/intr.h>

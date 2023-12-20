@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.34 2020/08/24 05:37:40 msaitoh Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.35 2023/12/20 15:00:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.34 2020/08/24 05:37:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.35 2023/12/20 15:00:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 
