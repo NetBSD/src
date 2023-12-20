@@ -1,4 +1,4 @@
-/*	$NetBSD: ali1543.c,v 1.12 2011/07/01 17:37:26 dyoung Exp $	*/
+/*	$NetBSD: ali1543.c,v 1.13 2023/12/20 15:00:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -84,13 +84,12 @@
 /* HAYAKAWA Koichi wrote ALi 1543 PCI ICU code basing on VIA82C586 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.12 2011/07/01 17:37:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.13 2023/12/20 15:00:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 
 #include <machine/intr.h>

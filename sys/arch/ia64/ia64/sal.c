@@ -1,4 +1,4 @@
-/*	$NetBSD: sal.c,v 1.3 2011/10/01 15:59:28 chs Exp $	*/
+/*	$NetBSD: sal.c,v 1.4 2023/12/20 15:00:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -34,7 +34,6 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 
 #include <machine/efi.h>
 #include <machine/vmparam.h>

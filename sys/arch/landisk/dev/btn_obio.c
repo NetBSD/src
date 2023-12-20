@@ -1,4 +1,4 @@
-/*	$NetBSD: btn_obio.c,v 1.7 2021/07/15 05:07:50 rin Exp $	*/
+/*	$NetBSD: btn_obio.c,v 1.8 2023/12/20 15:00:08 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -28,13 +28,12 @@
 #include "pwrsw_obio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.7 2021/07/15 05:07:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.8 2023/12/20 15:00:08 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
