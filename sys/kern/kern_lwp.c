@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.267 2023/10/15 10:28:14 riastradh Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.268 2023/12/20 20:35:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -60,7 +60,7 @@
  *
  *		Runnable: the LWP is parked on a run queue, and may soon be
  *		chosen to run by an idle processor, or by a processor that
- *		has been asked to preempt a currently runnning but lower
+ *		has been asked to preempt a currently running but lower
  *		priority LWP.
  *
  *	LSIDL
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.267 2023/10/15 10:28:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.268 2023/12/20 20:35:37 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"

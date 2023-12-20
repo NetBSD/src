@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl_base.c,v 1.8 2017/10/31 12:37:23 martin Exp $ */
+/*	$NetBSD: init_sysctl_base.c,v 1.9 2023/12/20 20:35:37 andvar Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.8 2017/10/31 12:37:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.9 2023/12/20 20:35:37 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -270,7 +270,7 @@ SYSCTL_SETUP(sysctl_hwbase_setup, "sysctl hw subtree base setup")
 }
 
 /*
- * sysctl helper function for kern.hostname and kern.domainnname.
+ * sysctl helper function for kern.hostname and kern.domainname.
  * resets the relevant recorded length when the underlying name is
  * changed.
  */
