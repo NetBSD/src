@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1084 2023/12/19 19:33:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1085 2023/12/20 08:50:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1084 2023/12/19 19:33:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1085 2023/12/20 08:50:10 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -503,15 +503,14 @@ Var_Delete(GNode *scope, const char *varname)
 	Var *v;
 
 	if (he == NULL) {
-		DEBUG2(VAR, "%s: delete %s (not found)\n",
+		DEBUG2(VAR, "%s: ignoring delete '%s' as it is not found\n",
 		    scope->name, varname);
 		return;
 	}
 
-	DEBUG2(VAR, "%s: delete %s\n", scope->name, varname);
 	v = he->value;
 	if (v->readOnly) {
-		DEBUG2(VAR, "%s: delete %s (readOnly)\n",
+		DEBUG2(VAR, "%s: ignoring delete '%s' as it is read-only\n",
 		    scope->name, varname);
 		return;
 	}
@@ -522,6 +521,7 @@ Var_Delete(GNode *scope, const char *varname)
 		return;
 	}
 
+	DEBUG2(VAR, "%s: delete %s\n", scope->name, varname);
 	if (v->exported)
 		unsetenv(v->name.str);
 	if (strcmp(v->name.str, ".MAKE.EXPORTED") == 0)

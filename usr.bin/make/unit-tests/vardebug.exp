@@ -1,10 +1,10 @@
-Global: delete FROM_CMDLINE (not found)
+Global: ignoring delete 'FROM_CMDLINE' as it is not found
 Command: FROM_CMDLINE = # (empty)
 Global: .MAKEOVERRIDES =  FROM_CMDLINE
 Global: VAR = added
 Global: VAR = overwritten
 Global: delete VAR
-Global: delete VAR (not found)
+Global: ignoring delete 'VAR' as it is not found
 Var_SetExpand: variable name "${:U}" expands to empty string, with value "empty name" - ignored
 Var_AppendExpand: variable name "${:U}" expands to empty string, with value "empty name" - ignored
 Global: ignoring 'FROM_CMDLINE' = 'overwritten' due to a command line variable of the same name
@@ -59,7 +59,7 @@ Result of ${:unknown} is error (eval-defined, defined)
 make: "vardebug.mk" line 46: Malformed conditional (${:Uvariable:unknown})
 Var_Parse: ${UNDEFINED} (eval-defined)
 make: "vardebug.mk" line 56: Malformed conditional (${UNDEFINED})
-Global: delete .SHELL (not found)
+Global: ignoring delete '.SHELL' as it is not found
 Command: .SHELL = </path/to/shell>
 Command: .SHELL = overwritten ignored (read-only)
 Global: .MAKEFLAGS =  -r -k -d v -d
