@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.268 2023/12/20 20:35:37 andvar Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.269 2023/12/20 21:03:50 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.268 2023/12/20 20:35:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.269 2023/12/20 21:03:50 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1171,7 +1171,7 @@ lwp_exit(struct lwp *l)
 	 * Get rid of all references to the LWP that others (e.g. procfs)
 	 * may have, and mark the LWP as a zombie.  If the LWP is detached,
 	 * mark it waiting for collection in the proc structure.  Note that
-	 * before we can do that, we need to free any other dead, deatched
+	 * before we can do that, we need to free any other dead, detached
 	 * LWP waiting to meet its maker.
 	 *
 	 * All conditions need to be observed upon under the same hold of
@@ -1666,7 +1666,7 @@ lwp_eprio(lwp_t *l)
 	 * The function of the boost is to get the LWP onto a CPU and
 	 * running quickly.  Once that happens the LWP loses the priority
 	 * boost and could be preempted very quickly by another LWP but that
-	 * won't happen often enough to be a annoyance.
+	 * won't happen often enough to be an annoyance.
 	 */
 	if (pri <= MAXPRI_USER && l->l_boostpri > MAXPRI_USER)
 		pri = (pri >> 1) + l->l_boostpri;
