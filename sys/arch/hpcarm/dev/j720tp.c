@@ -1,4 +1,4 @@
-/*	$NetBSD: j720tp.c,v 1.14 2021/08/30 05:57:51 rin Exp $	*/
+/*	$NetBSD: j720tp.c,v 1.15 2023/12/20 14:50:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 touch-panel driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.14 2021/08/30 05:57:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.15 2023/12/20 14:50:02 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_j720tp.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.14 2021/08/30 05:57:51 rin Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/callout.h>
 #include <sys/sysctl.h>

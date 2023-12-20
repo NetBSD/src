@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.17 2021/08/07 16:18:50 thorpej Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.18 2023/12/20 13:55:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,13 +40,12 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.17 2021/08/07 16:18:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.18 2023/12/20 13:55:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 
 #include <dev/cons.h> 
 #include <dev/wscons/wsconsio.h>

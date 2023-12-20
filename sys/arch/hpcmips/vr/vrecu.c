@@ -1,4 +1,4 @@
-/* $NetBSD: vrecu.c,v 1.10 2012/10/27 17:17:56 chs Exp $ */
+/* $NetBSD: vrecu.c,v 1.11 2023/12/20 14:50:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.10 2012/10/27 17:17:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.11 2023/12/20 14:50:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 

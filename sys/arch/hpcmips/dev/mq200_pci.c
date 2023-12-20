@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_pci.c,v 1.5 2012/10/27 17:17:52 chs Exp $	*/
+/*	$NetBSD: mq200_pci.c,v 1.6 2023/12/20 14:50:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200_pci.c,v 1.5 2012/10/27 17:17:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200_pci.c,v 1.6 2023/12/20 14:50:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

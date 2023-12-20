@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.20 2018/12/08 17:46:11 thorpej Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.21 2023/12/20 14:50:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,14 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.20 2018/12/08 17:46:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.21 2023/12/20 14:50:03 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/kgdb.h>
 #include <sys/bus.h>

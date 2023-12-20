@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2021/08/02 12:56:22 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2023/12/20 14:12:25 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2021/08/02 12:56:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2023/12/20 14:12:25 thorpej Exp $");
 
 #define __INTR_PRIVATE
 
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2021/08/02 12:56:22 andvar Exp $");
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 

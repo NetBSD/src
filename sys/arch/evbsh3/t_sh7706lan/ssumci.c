@@ -1,4 +1,4 @@
-/*	$NetBSD: ssumci.c,v 1.5 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: ssumci.c,v 1.6 2023/12/20 14:50:01 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssumci.c,v 1.5 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssumci.c,v 1.6 2023/12/20 14:50:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/bus.h>

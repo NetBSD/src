@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.6 2023/12/05 19:16:48 andvar Exp $ */
+/* $NetBSD: machdep.c,v 1.7 2023/12/20 14:12:26 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2023/12/05 19:16:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2023/12/20 14:12:26 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2023/12/05 19:16:48 andvar Exp $");
 #include <sys/kcore.h>
 #include <sys/kernel.h>
 #include <sys/ksyms.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>

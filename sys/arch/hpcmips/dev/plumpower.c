@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpower.c,v 1.13 2012/10/27 17:17:53 chs Exp $ */
+/*	$NetBSD: plumpower.c,v 1.14 2023/12/20 14:50:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpower.c,v 1.13 2012/10/27 17:17:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpower.c,v 1.14 2023/12/20 14:50:02 thorpej Exp $");
 
 #undef PLUMPOWERDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

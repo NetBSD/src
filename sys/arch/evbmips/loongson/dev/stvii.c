@@ -1,4 +1,4 @@
-/*	$NetBSD: stvii.c,v 1.6 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: stvii.c,v 1.7 2023/12/20 14:12:25 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2011 Michael Lorenz.
@@ -30,13 +30,12 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stvii.c,v 1.6 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stvii.c,v 1.7 2023/12/20 14:12:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/sysctl.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>

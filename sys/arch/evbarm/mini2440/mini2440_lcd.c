@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_lcd.c,v 1.6 2021/08/07 16:18:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_lcd.c,v 1.7 2023/12/20 13:55:18 thorpej Exp $");
 
 /*
  * LCD driver for FriendlyARM MINI2440.
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: mini2440_lcd.c,v 1.6 2021/08/07 16:18:50 thorpej Exp
 #include <sys/conf.h>
 #include <sys/event.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 
 #include <dev/cons.h>
 #include <dev/wscons/wsconsio.h>

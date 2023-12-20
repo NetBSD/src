@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2021/08/03 09:25:44 rin Exp $ */
+/*	$NetBSD: machdep.c,v 1.31 2023/12/20 14:18:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2021/08/03 09:25:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2023/12/20 14:18:37 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2021/08/03 09:25:44 rin Exp $");
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/exec.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/module.h>
 #include <sys/mount.h>

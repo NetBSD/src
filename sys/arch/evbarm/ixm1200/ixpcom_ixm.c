@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpcom_ixm.c,v 1.11 2012/10/27 17:17:48 chs Exp $ */
+/*	$NetBSD: ixpcom_ixm.c,v 1.12 2023/12/20 13:55:18 thorpej Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.11 2012/10/27 17:17:48 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.12 2023/12/20 13:55:18 thorpej Exp $");
 
 /* Front-end of ixpcom */
 
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.11 2012/10/27 17:17:48 chs Exp $");
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
 
 #include <sys/termios.h>
 

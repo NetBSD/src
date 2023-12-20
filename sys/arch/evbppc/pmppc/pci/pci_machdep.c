@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 2016/10/19 00:08:41 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7 2023/12/20 14:18:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6 2016/10/19 00:08:41 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7 2023/12/20 14:18:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6 2016/10/19 00:08:41 nonaka Exp $
 #include <sys/errno.h>
 #include <sys/extent.h>
 #include <sys/intr.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/time.h>

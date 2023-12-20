@@ -1,4 +1,4 @@
-/*	$NetBSD: btn_obio.c,v 1.4 2012/10/27 17:17:47 chs Exp $	*/
+/*	$NetBSD: btn_obio.c,v 1.5 2023/12/20 13:55:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005, 2006 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,13 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.4 2012/10/27 17:17:47 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.5 2023/12/20 13:55:17 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>

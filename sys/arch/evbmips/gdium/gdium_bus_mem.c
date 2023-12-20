@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_bus_mem.c,v 1.2 2011/07/10 00:03:53 matt Exp $	*/
+/*	$NetBSD: gdium_bus_mem.c,v 1.3 2023/12/20 14:12:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,11 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_bus_mem.c,v 1.2 2011/07/10 00:03:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_bus_mem.c,v 1.3 2023/12/20 14:12:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 

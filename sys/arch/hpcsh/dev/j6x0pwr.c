@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.15 2009/04/05 02:18:59 uwe Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.16 2023/12/20 14:50:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003, 2006 Valeriy E. Ushakov
@@ -28,12 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.15 2009/04/05 02:18:59 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.16 2023/12/20 14:50:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 

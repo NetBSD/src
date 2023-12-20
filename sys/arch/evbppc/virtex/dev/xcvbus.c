@@ -1,4 +1,4 @@
-/* 	$NetBSD: xcvbus.c,v 1.3 2011/07/01 19:03:50 dyoung Exp $ */
+/* 	$NetBSD: xcvbus.c,v 1.4 2023/12/20 14:18:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,14 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcvbus.c,v 1.3 2011/07/01 19:03:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcvbus.c,v 1.4 2023/12/20 14:18:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/device.h>
-#include <sys/extent.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>

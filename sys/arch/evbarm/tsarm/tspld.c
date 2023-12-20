@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.26 2021/08/07 16:18:50 thorpej Exp $	*/
+/*	$NetBSD: tspld.c,v 1.27 2023/12/20 13:55:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.26 2021/08/07 16:18:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.27 2023/12/20 13:55:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -459,7 +459,6 @@ void
 tspld_callback(device_t self)
 {
 #if NISA > 0
-	extern void isa_bs_mallocok(void);
 	struct isabus_attach_args iba;
 
 	/*
@@ -468,7 +467,6 @@ tspld_callback(device_t self)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_iot = &isa_io_bs_tag;
 	iba.iba_memt = &isa_mem_bs_tag;
-	isa_bs_mallocok();
 	config_found(self, &iba, isabusprint,
 	    CFARGS(.iattr = "isabus"));
 #endif

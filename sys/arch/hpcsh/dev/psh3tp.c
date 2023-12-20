@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.17 2021/08/07 16:18:54 thorpej Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.18 2023/12/20 14:50:02 thorpej Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -33,7 +33,6 @@
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 
