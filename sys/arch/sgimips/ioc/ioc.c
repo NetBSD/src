@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.13 2021/08/07 16:19:04 thorpej Exp $	 */
+/* $NetBSD: ioc.c,v 1.14 2023/12/20 15:29:07 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.13 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.14 2023/12/20 15:29:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

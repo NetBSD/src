@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.20 2021/01/27 02:17:27 thorpej Exp $	*/
+/*	$NetBSD: deq.c,v 1.21 2023/12/20 15:29:04 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,13 +32,12 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.20 2021/01/27 02:17:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.21 2023/12/20 15:29:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/i2c/i2cvar.h>

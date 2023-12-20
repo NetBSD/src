@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.69 2016/11/16 19:39:38 macallan Exp $	*/
+/*	$NetBSD: bus.c,v 1.70 2023/12/20 15:29:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.69 2016/11/16 19:39:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.70 2023/12/20 15:29:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.69 2016/11/16 19:39:38 macallan Exp $");
 #include <sys/bswap.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 

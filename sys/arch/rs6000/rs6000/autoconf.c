@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2012/07/29 18:05:47 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2023/12/20 15:29:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2012/07/29 18:05:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2023/12/20 15:29:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2012/07/29 18:05:47 mlelstv Exp $")
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 
 #include <machine/pte.h>

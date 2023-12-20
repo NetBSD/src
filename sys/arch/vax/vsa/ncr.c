@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.50 2020/03/22 20:27:47 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.51 2023/12/20 15:34:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.50 2020/03/22 20:27:47 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.51 2023/12/20 15:34:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.50 2020/03/22 20:27:47 ragge Exp $");
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 
 #include <dev/scsipi/scsi_all.h>

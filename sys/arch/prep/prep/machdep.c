@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2021/02/27 01:31:24 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2023/12/20 15:29:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2021/02/27 01:31:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2023/12/20 15:29:06 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2021/02/27 01:31:24 thorpej Exp $")
 #include <sys/extent.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>

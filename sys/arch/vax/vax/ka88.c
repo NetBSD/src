@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.21 2022/03/03 06:28:26 riastradh Exp $	*/
+/*	$NetBSD: ka88.c,v 1.22 2023/12/20 15:34:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.21 2022/03/03 06:28:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.22 2023/12/20 15:34:45 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.21 2022/03/03 06:28:26 riastradh Exp $");
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/lwp.h>
 
 #include <machine/nexus.h>

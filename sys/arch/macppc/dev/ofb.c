@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.72 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: ofb.c,v 1.73 2023/12/20 15:29:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.72 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.73 2023/12/20 15:29:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.72 2021/08/07 16:18:57 thorpej Exp $");
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
 #include <sys/lwp.h>

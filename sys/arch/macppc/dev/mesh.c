@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.43 2023/09/24 08:20:06 andvar Exp $	*/
+/*	$NetBSD: mesh.c,v 1.44 2023/12/20 15:29:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,14 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.43 2023/09/24 08:20:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.44 2023/12/20 15:29:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 

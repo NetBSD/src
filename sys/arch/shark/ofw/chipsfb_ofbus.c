@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb_ofbus.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $ */
+/*	$NetBSD: chipsfb_ofbus.c,v 1.6 2023/12/20 15:34:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb_ofbus.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb_ofbus.c,v 1.6 2023/12/20 15:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/bus.h>
 #include <uvm/uvm.h>

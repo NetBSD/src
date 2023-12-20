@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.16 2022/01/22 11:49:16 thorpej Exp $	*/
+/*	$NetBSD: gpio.c,v 1.17 2023/12/20 15:29:04 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,14 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.16 2022/01/22 11:49:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.17 2023/12/20 15:29:04 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smuiic.c,v 1.10 2021/08/09 04:07:29 thorpej Exp $ */
+/*	$NetBSD: smuiic.c,v 1.11 2023/12/20 15:29:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 Phileas Fogg
@@ -29,7 +29,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/mutex.h>

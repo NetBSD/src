@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.112 2022/02/23 21:54:40 andvar Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.113 2023/12/20 15:34:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.112 2022/02/23 21:54:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.113 2023/12/20 15:34:45 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.112 2022/02/23 21:54:40 andvar Exp
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>

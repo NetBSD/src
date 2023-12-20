@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.26 2023/08/03 08:31:06 mrg Exp $	*/
+/*	$NetBSD: mace.c,v 1.27 2023/12/20 15:29:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,14 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.26 2023/08/03 08:31:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.27 2023/12/20 15:29:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

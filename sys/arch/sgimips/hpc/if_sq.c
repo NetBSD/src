@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.56 2023/12/05 21:54:53 andvar Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.57 2023/12/20 15:29:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.56 2023/12/05 21:54:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.57 2023/12/20 15:29:07 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.56 2023/12/05 21:54:53 andvar Exp $");
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

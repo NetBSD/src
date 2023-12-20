@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2021/08/07 16:19:04 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2023/12/20 15:29:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2023/12/20 15:29:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <machine/autoconf.h>

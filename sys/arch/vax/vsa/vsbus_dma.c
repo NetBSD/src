@@ -1,4 +1,4 @@
-/* $NetBSD: vsbus_dma.c,v 1.17 2022/12/12 18:22:32 jakllsch Exp $ */
+/* $NetBSD: vsbus_dma.c,v 1.18 2023/12/20 15:34:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus_dma.c,v 1.17 2022/12/12 18:22:32 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus_dma.c,v 1.18 2023/12/20 15:34:46 thorpej Exp $");
 
 #define _VAX_BUS_DMA_PRIVATE
 
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: vsbus_dma.c,v 1.17 2022/12/12 18:22:32 jakllsch Exp 
 #include <sys/systm.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 

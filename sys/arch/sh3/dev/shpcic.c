@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.22 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.23 2023/12/20 15:34:45 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.22 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.23 2023/12/20 15:34:45 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -34,7 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.22 2021/08/07 16:19:05 thorpej Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

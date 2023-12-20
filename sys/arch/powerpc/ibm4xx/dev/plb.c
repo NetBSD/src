@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.24 2021/08/07 16:19:03 thorpej Exp $ */
+/* $NetBSD: plb.c,v 1.25 2023/12/20 15:29:06 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.24 2021/08/07 16:19:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.25 2023/12/20 15:29:06 thorpej Exp $");
 
 #include "emac.h"
 #include "locators.h"
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.24 2021/08/07 16:19:03 thorpej Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 

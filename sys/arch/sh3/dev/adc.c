@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.15 2021/08/07 16:19:05 thorpej Exp $ */
+/*	$NetBSD: adc.c,v 1.16 2023/12/20 15:34:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,12 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.15 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.16 2023/12/20 15:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <sh3/adcreg.h>

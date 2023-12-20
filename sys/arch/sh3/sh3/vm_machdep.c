@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.83 2023/10/06 11:53:27 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.84 2023/12/20 15:34:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,14 +81,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83 2023/10/06 11:53:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.84 2023/12/20 15:34:45 thorpej Exp $");
 
 #include "opt_kstack_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/core.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 2022/05/22 11:27:34 andvar Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 2023/12/20 15:29:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 2022/05/22 11:27:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 2023/12/20 15:29:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 2022/05/22 11:27:34 andvar Exp $")
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 
 #include <machine/pte.h>
