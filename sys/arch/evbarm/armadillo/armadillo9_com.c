@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_com.c,v 1.6 2012/11/12 18:00:38 skrll Exp $ */
+/*	$NetBSD: armadillo9_com.c,v 1.7 2023/12/20 13:55:17 thorpej Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_com.c,v 1.6 2012/11/12 18:00:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_com.c,v 1.7 2023/12/20 13:55:17 thorpej Exp $");
 
 /* Front-end of epcom */
 
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_com.c,v 1.6 2012/11/12 18:00:38 skrll Exp
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
 
 #include <sys/termios.h>
 

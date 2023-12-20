@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_intr.c,v 1.3 2016/08/26 15:45:47 skrll Exp $	*/
+/*	$NetBSD: mach_intr.c,v 1.4 2023/12/20 14:12:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.3 2016/08/26 15:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.4 2023/12/20 14:12:25 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.3 2016/08/26 15:45:47 skrll Exp $");
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <mips/locore.h>

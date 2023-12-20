@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.33 2023/09/09 20:47:29 andvar Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.34 2023/12/20 14:50:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.33 2023/09/09 20:47:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.34 2023/12/20 14:50:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/extent.h>
 #include <sys/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gxlcd.c,v 1.5 2021/08/07 16:18:49 thorpej Exp $	*/
+/*	$NetBSD: gxlcd.c,v 1.6 2023/12/20 13:55:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -42,13 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxlcd.c,v 1.5 2021/08/07 16:18:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxlcd.c,v 1.6 2023/12/20 13:55:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 
 #include <dev/cons.h>
 #include <dev/wscons/wsconsio.h>

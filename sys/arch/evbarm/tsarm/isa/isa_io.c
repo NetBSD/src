@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.12 2018/03/16 17:56:33 ryo Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.13 2023/12/20 13:55:18 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,12 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.12 2018/03/16 17:56:33 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.13 2023/12/20 13:55:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/extent.h>
+#include <sys/vmem_impl.h>
 #include <sys/bus.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
@@ -52,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.12 2018/03/16 17:56:33 ryo Exp $");
 
 bs_protos(isa);
 bs_protos(bs_notimpl);
-void isa_bs_mallocok(void);
 
 /*
  * Declare the isa bus space tags
@@ -222,34 +220,59 @@ struct bus_space isa_mem_bs_tag = {
 	.bs_c_8 = bs_notimpl_bs_c_8,
 };
 
-static long isaio_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-static long isamem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-static int malloc_safe = 0;	
-struct extent	*isaio_ex;
-struct extent	*isamem_ex;
+#define	ISAIO_BTAG_COUNT	VMEM_EST_BTCOUNT(1, 8)
+#define	ISAMEM_BTAG_COUNT	VMEM_EST_BTCOUNT(1, 8)
 
-void
-isa_bs_mallocok(void)
-{
-	malloc_safe = 1;
-}
+static struct vmem isaio_arena_store;
+static struct vmem isamem_arena_store;
+static struct vmem_btag isaio_btag_store[ISAIO_BTAG_COUNT];
+static struct vmem_btag isamem_btag_store[ISAMEM_BTAG_COUNT];
+static vmem_t *isaio_arena;
+static vmem_t *isamem_arena;
 
 /* bus space functions */
 
 void
 isa_io_init(vaddr_t isa_io_addr, vaddr_t isa_mem_addr)
 {
+	int error __diagused;
+
 	isa_io_bs_tag.bs_cookie = (void *)isa_io_addr;
 	isa_mem_bs_tag.bs_cookie = (void *)isa_mem_addr;
 
-	isaio_ex = extent_create("isaio", 0x0, 0xffff, 
-		(void *)isaio_ex_storage, sizeof(isaio_ex_storage),
-		EX_NOWAIT|EX_NOCOALESCE);
-	isamem_ex = extent_create("isamem", 0x0, 0xfffff, 
-		(void *)isamem_ex_storage, sizeof(isamem_ex_storage),
-		EX_NOWAIT|EX_NOCOALESCE);
-	if (isaio_ex == NULL || isamem_ex == NULL)
-		panic("isa_io_init(): can't alloc extent maps");
+	isaio_arena = vmem_init(&isaio_arena_store,
+				"isaio",
+				0,			/* addr */
+				0,			/* size */
+				1,			/* quantum */
+				NULL,			/* importfn */
+				NULL,			/* releasefn */
+				NULL,			/* source */
+				0,			/* qcache_max */
+				VM_NOSLEEP | VM_PRIVTAGS,
+				IPL_NONE);
+	KASSERT(isaio_arena != NULL);
+
+	vmem_add_bts(isaio_arena, isaio_btag_store, ISAIO_BTAG_COUNT);
+	error = vmem_add(isaio_arena, 0x0, 0x10000, VM_NOSLEEP);
+	KASSERT(error == 0);
+
+	isamem_arena = vmem_init(&isamem_arena_store,
+				 "isamem",
+				 0,			/* addr */
+				 0,			/* size */
+				 1,			/* quantum */
+				 NULL,			/* importfn */
+				 NULL,			/* releasefn */
+				 NULL,			/* source */
+				 0,			/* qcache_max */
+				 VM_NOSLEEP | VM_PRIVTAGS,
+				 IPL_NONE);
+	KASSERT(isamem_arena != NULL);
+
+	vmem_add_bts(isamem_arena, isamem_btag_store, ISAMEM_BTAG_COUNT);
+	error = vmem_add(isamem_arena, 0x0, 0x100000, VM_NOSLEEP);
+	KASSERT(error == 0);
 }
 
 /*
@@ -272,16 +295,15 @@ isa_mem_data_vaddr(void)
 int
 isa_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_space_handle_t *bshp)
 {
-	struct extent *ex;
+	vmem_t *vm;
 	int err;
 
 	if (t == isa_io_bs_tag.bs_cookie) 
-		ex = isaio_ex;
+		vm = isaio_arena;
 	else
-		ex = isamem_ex;
-	
-	err = extent_alloc_region(ex, bpa, size,
-		EX_NOWAIT|(malloc_safe ? EX_MALLOCOK : 0));
+		vm = isamem_arena;
+
+	err = vmem_xalloc_addr(vm, bpa, size, VM_NOSLEEP);
 	if (err)
 		return err;
 
@@ -314,19 +336,23 @@ isa_bs_alloc(
 	bus_addr_t *bpap,
 	bus_space_handle_t *bshp)
 {
-	struct extent *ex;
-	u_long bpa;
+	vmem_t *vm;
+	vmem_addr_t bpa;
 	int err;
 
 	if (t == isa_io_bs_tag.bs_cookie) 
-		ex = isaio_ex;
+		vm = isaio_arena;
 	else
-		ex = isamem_ex;
-	
-	err = extent_alloc_subregion(ex, rstart, rend, size, alignment,
-		boundary, (EX_FAST|EX_NOWAIT|(malloc_safe ? EX_MALLOCOK : 0)), 
-		&bpa);
+		vm = isamem_arena;
 
+	err = vmem_xalloc(vm, size,
+			  alignment,		/* align */
+			  0,			/* phase */
+			  boundary,		/* nocross */
+			  rstart,		/* minaddr */
+			  rend,			/* maxaddr */
+			  VM_BESTFIT | VM_NOSLEEP,
+			  &bpa);
 	if (err)
 		return err;
 
@@ -337,15 +363,14 @@ isa_bs_alloc(
 void    
 isa_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
-	struct extent *ex;
+	vmem_t *vm;
 
 	if (t == isa_io_bs_tag.bs_cookie) 
-		ex = isaio_ex;
+		vm = isaio_arena;
 	else
-		ex = isamem_ex;
+		vm = isamem_arena;
 
-	extent_free(ex, bsh - (bus_addr_t)t, size,
-		EX_NOWAIT|(malloc_safe ? EX_MALLOCOK : 0));
+	vmem_xfree(vm, bsh - (bus_addr_t)t, size);
 }
 
 void *

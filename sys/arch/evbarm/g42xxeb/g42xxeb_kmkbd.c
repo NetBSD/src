@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.16 2021/08/07 16:18:49 thorpej Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.17 2023/12/20 13:55:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.16 2021/08/07 16:18:49 thorpej Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.17 2023/12/20 13:55:17 thorpej Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>			/* for hz */

@@ -1,4 +1,4 @@
-/*      $NetBSD: lubbock_pcic.c,v 1.7 2011/07/01 20:42:37 dyoung Exp $	*/
+/*      $NetBSD: lubbock_pcic.c,v 1.8 2023/12/20 13:55:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.7 2011/07/01 20:42:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.8 2023/12/20 13:55:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.7 2011/07/01 20:42:37 dyoung Exp 
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 

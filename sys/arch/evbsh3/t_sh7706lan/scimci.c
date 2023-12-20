@@ -1,4 +1,4 @@
-/*	$NetBSD: scimci.c,v 1.4 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: scimci.c,v 1.5 2023/12/20 14:50:01 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scimci.c,v 1.4 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scimci.c,v 1.5 2023/12/20 14:50:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/bus.h>

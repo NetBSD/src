@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.13 2014/03/08 18:08:16 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.14 2023/12/20 13:55:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.13 2014/03/08 18:08:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.14 2023/12/20 13:55:18 thorpej Exp $");
 
 #include "opt_irqstats.h"
 
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.13 2014/03/08 18:08:16 skrll Exp $
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 
 #include <sys/bus.h>

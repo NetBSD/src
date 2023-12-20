@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.25 2018/11/26 12:21:32 jmcneill Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.26 2023/12/20 13:55:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,12 +64,11 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.25 2018/11/26 12:21:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.26 2023/12/20 13:55:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <evbarm/integrator/int_bus_dma.h>

@@ -30,7 +30,6 @@
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/audioio.h>
 

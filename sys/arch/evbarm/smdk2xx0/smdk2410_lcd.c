@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_lcd.c,v 1.12 2021/08/07 16:18:50 thorpej Exp $ */
+/*	$NetBSD: smdk2410_lcd.c,v 1.13 2023/12/20 13:55:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.12 2021/08/07 16:18:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.13 2023/12/20 13:55:18 thorpej Exp $");
 
 /*
  * LCD driver for Samsung SMDK2410.
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.12 2021/08/07 16:18:50 thorpej Ex
 #include <sys/conf.h>
 #include <sys/event.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 
 #include <dev/cons.h> 
 #include <dev/wscons/wsconsio.h>

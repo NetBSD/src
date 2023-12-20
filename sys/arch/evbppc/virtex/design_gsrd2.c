@@ -1,4 +1,4 @@
-/* 	$NetBSD: design_gsrd2.c,v 1.8 2021/08/07 16:18:52 thorpej Exp $ */
+/* 	$NetBSD: design_gsrd2.c,v 1.9 2023/12/20 14:18:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -32,13 +32,12 @@
 #include "opt_virtex.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: design_gsrd2.c,v 1.8 2021/08/07 16:18:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: design_gsrd2.c,v 1.9 2023/12/20 14:18:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/extent.h>
 #include <sys/cpu.h>
 #include <sys/bus.h>

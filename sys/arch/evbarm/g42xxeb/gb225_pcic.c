@@ -36,7 +36,6 @@
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
 #include <uvm/uvm.h>
 
 #include <sys/bus.h>

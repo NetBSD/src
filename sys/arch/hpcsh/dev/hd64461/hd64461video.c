@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.57 2022/07/03 11:30:48 andvar Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.58 2023/12/20 14:50:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.57 2022/07/03 11:30:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.58 2023/12/20 14:50:02 thorpej Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.57 2022/07/03 11:30:48 andvar Exp
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <sys/conf.h> /* cdev_decl */

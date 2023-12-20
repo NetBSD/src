@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2021/08/07 16:18:51 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18 2023/12/20 14:12:25 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,16 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2021/08/07 16:18:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2023/12/20 14:12:25 thorpej Exp $");
 
 #include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#if defined(PCI_NETBSD_CONFIGURE)
-#include <sys/malloc.h>
-#endif
 
 #include <dev/pci/pcivar.h>
 #if defined(PCI_NETBSD_CONFIGURE)

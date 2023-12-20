@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.14 2021/11/05 07:39:22 skrll Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.15 2023/12/20 13:55:17 thorpej Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -68,7 +68,6 @@
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
 #include <uvm/uvm.h>
 
 #include <sys/bus.h>
