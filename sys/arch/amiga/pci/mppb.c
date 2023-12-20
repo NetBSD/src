@@ -1,4 +1,4 @@
-/*	$NetBSD: mppb.c,v 1.12 2021/08/07 16:18:42 thorpej Exp $ */
+/*	$NetBSD: mppb.c,v 1.13 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>

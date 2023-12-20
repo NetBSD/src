@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.79 2023/09/26 14:33:55 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.80 2023/12/20 00:40:43 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,12 +119,11 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.79 2023/09/26 14:33:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.80 2023/12/20 00:40:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>

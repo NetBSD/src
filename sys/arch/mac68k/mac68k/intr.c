@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.32 2021/04/02 12:11:41 rin Exp $	*/
+/*	$NetBSD: intr.c,v 1.33 2023/12/20 00:40:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -34,11 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2021/04/02 12:11:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2023/12/20 00:40:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/vmmeter.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>

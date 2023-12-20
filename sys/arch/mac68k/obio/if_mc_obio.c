@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc_obio.c,v 1.19 2021/01/24 05:20:23 rin Exp $	*/
+/*	$NetBSD: if_mc_obio.c,v 1.20 2023/12/20 00:40:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -36,13 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc_obio.c,v 1.19 2021/01/24 05:20:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc_obio.c,v 1.20 2023/12/20 00:40:43 thorpej Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 

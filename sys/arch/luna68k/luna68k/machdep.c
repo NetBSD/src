@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.109 2023/09/17 10:14:49 andvar Exp $ */
+/* $NetBSD: machdep.c,v 1.110 2023/12/20 00:40:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2023/09/17 10:14:49 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2023/12/20 00:40:43 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2023/09/17 10:14:49 andvar Exp $")
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>

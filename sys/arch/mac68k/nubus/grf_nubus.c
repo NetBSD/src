@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.78 2016/02/28 19:39:27 rjs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.79 2023/12/20 00:40:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.78 2016/02/28 19:39:27 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.79 2023/12/20 00:40:43 thorpej Exp $");
 
 #include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/systm.h>

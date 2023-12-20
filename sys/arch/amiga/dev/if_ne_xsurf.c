@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_xsurf.c,v 1.1 2012/05/15 17:35:44 rkujawa Exp $ */
+/*	$NetBSD: if_ne_xsurf.c,v 1.2 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.26 2012/10/27 17:18:04 chs Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.27 2023/12/20 00:40:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -38,13 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.26 2012/10/27 17:18:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.27 2023/12/20 00:40:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/kcore.h>
 
 #include <machine/cpu.h>

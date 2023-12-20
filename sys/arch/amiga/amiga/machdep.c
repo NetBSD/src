@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.252 2020/05/05 21:22:48 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.253 2023/12/20 00:40:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252 2020/05/05 21:22:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.253 2023/12/20 00:40:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252 2020/05/05 21:22:48 ad Exp $");
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/vnode.h>

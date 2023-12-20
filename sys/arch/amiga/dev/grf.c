@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.68 2022/05/24 20:50:18 andvar Exp $ */
+/*	$NetBSD: grf.c,v 1.69 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.68 2022/05/24 20:50:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.69 2023/12/20 00:40:42 thorpej Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.68 2022/05/24 20:50:18 andvar Exp $");
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/mman.h>

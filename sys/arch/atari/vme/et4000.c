@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.28 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: et4000.c,v 1.29 2023/12/20 00:40:43 thorpej Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,12 +45,11 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.28 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.29 2023/12/20 00:40:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.16 2023/05/06 21:34:39 andvar Exp $ */
+/*	$NetBSD: efa.c,v 1.17 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/bus.h>
 #include <sys/proc.h>

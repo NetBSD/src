@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.16 2012/05/15 17:35:44 rkujawa Exp $ */
+/*	$NetBSD: if_ne_zbus.c,v 1.17 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.16 2012/05/15 17:35:44 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.17 2023/12/20 00:40:42 thorpej Exp $");
 
 /*
  * Thanks to Village Tronic for giving me a card.
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.16 2012/05/15 17:35:44 rkujawa Exp 
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>

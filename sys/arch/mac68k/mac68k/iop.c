@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.11 2007/03/12 18:18:25 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.12 2023/12/20 00:40:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -32,13 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.11 2007/03/12 18:18:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.12 2023/12/20 00:40:43 thorpej Exp $");
 
 #include "opt_mac68k.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/systm.h>

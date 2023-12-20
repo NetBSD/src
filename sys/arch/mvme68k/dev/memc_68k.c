@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_68k.c,v 1.8 2012/10/27 17:18:04 chs Exp $	*/
+/*	$NetBSD: memc_68k.c,v 1.9 2023/12/20 00:40:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -34,13 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc_68k.c,v 1.8 2012/10/27 17:18:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_68k.c,v 1.9 2023/12/20 00:40:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

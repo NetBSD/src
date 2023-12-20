@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_buddha.c,v 1.10 2017/10/20 07:06:06 jdolecek Exp $	*/
+/*	$NetBSD: wdc_buddha.c,v 1.11 2023/12/20 00:40:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/bus.h>
 

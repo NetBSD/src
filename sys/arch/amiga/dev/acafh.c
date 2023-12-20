@@ -1,4 +1,4 @@
-/*	$NetBSD: acafh.c,v 1.6 2023/08/04 08:39:44 rin Exp $ */
+/*	$NetBSD: acafh.c,v 1.7 2023/12/20 00:40:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.6 2023/08/04 08:39:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.7 2023/12/20 00:40:42 thorpej Exp $");
 
 /*
  * Individual Computers ACA500 driver. 
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.6 2023/08/04 08:39:44 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.46 2022/05/26 14:33:29 tsutsui Exp $	*/
+/*	$NetBSD: grf.c,v 1.47 2023/12/20 00:40:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.46 2022/05/26 14:33:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.47 2023/12/20 00:40:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.46 2022/05/26 14:33:29 tsutsui Exp $");
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/conf.h>
 
 #include <machine/cpu.h>

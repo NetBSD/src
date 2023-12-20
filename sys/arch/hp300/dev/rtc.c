@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.22 2023/01/15 06:19:45 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.23 2023/12/20 00:40:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,12 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.22 2023/01/15 06:19:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.23 2023/12/20 00:40:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <hp300/dev/intiovar.h>
 #include <hp300/dev/rtcreg.h>

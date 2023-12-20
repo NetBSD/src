@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.70 2023/02/03 23:00:33 tsutsui Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.71 2023/12/20 00:40:44 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.70 2023/02/03 23:00:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.71 2023/12/20 00:40:44 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.70 2023/02/03 23:00:33 tsutsui Exp $");
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/rndsource.h>
