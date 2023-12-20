@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.42 2023/12/01 23:56:30 thorpej Exp $	*/
+/*	$NetBSD: dvma.c,v 1.43 2023/12/20 05:18:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.42 2023/12/01 23:56:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.43 2023/12/20 05:18:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vmem.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>

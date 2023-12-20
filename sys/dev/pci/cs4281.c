@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.58 2022/03/29 09:16:24 riastradh Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.59 2023/12/20 05:08:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,12 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.58 2022/03/29 09:16:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.59 2023/12/20 05:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/device.h>
 #include <sys/systm.h>

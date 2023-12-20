@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.18 2021/10/24 20:00:11 andvar Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.19 2023/12/20 05:13:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,13 +73,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.18 2021/10/24 20:00:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.19 2023/12/20 05:13:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 

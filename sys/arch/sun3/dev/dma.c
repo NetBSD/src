@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.23 2018/09/03 16:29:28 riastradh Exp $ */
+/*	$NetBSD: dma.c,v 1.24 2023/12/20 05:18:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.23 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.24 2023/12/20 05:18:00 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.23 2018/09/03 16:29:28 riastradh Exp $");
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/dvma.h>

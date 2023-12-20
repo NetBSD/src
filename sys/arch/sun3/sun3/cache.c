@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.22 2013/09/07 15:56:11 tsutsui Exp $	*/
+/*	$NetBSD: cache.c,v 1.23 2023/12/20 05:18:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,12 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.22 2013/09/07 15:56:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.23 2023/12/20 05:18:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>

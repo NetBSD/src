@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.77 2023/05/10 00:11:41 riastradh Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.78 2023/12/20 05:08:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.77 2023/05/10 00:11:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.78 2023/12/20 05:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.77 2023/05/10 00:11:41 riastradh Exp $"
 #include <sys/audioio.h>
 #include <sys/mutex.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 #include <sys/fcntl.h>
 
 #include <sys/bus.h>

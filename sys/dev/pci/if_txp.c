@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.73 2020/03/10 01:23:42 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.74 2023/12/20 05:08:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.73 2020/03/10 01:23:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.74 2023/12/20 05:08:34 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.73 2020/03/10 01:23:42 thorpej Exp $");
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>

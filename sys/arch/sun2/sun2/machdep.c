@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 2023/12/02 15:50:57 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 2023/12/20 05:13:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2023/12/02 15:50:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2023/12/20 05:13:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -170,7 +170,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2023/12/02 15:50:57 thorpej Exp $")
 #include <sys/kcore.h>
 #include <sys/kernel.h>
 #include <sys/ksyms.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/module.h>
 #include <sys/mount.h>
