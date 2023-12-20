@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_ap.c,v 1.15 2019/05/29 06:17:28 msaitoh Exp $	*/
+/*	$NetBSD: if_tlp_ap.c,v 1.16 2023/12/20 04:30:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.15 2019/05/29 06:17:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.16 2023/12/20 04:30:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
