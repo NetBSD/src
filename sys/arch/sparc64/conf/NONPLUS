@@ -1,8 +1,0 @@
-#	$NetBSD: NONPLUS,v 1.60 2018/12/19 13:57:50 maxv Exp $
-
-include 	"arch/sparc64/conf/NONPLUS64"
-include 	"arch/sparc64/conf/std.sparc64-32"
-
-#ident		"NONPLUS-$Revision: 1.60 $"
-
-no options	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
