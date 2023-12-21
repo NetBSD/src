@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.198 2023/10/17 10:22:07 riastradh Exp $	   */
+/*	$NetBSD: pmap.c,v 1.199 2023/12/21 09:09:43 mrg Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.198 2023/10/17 10:22:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.199 2023/12/21 09:09:43 mrg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -161,7 +161,7 @@ ptpinuse(void *pte)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 static kmutex_t pmap_lock;
 #define PMAP_LOCK	mutex_spin_enter(&pmap_lock);
-#define PMAP_UNLOCK	mutex_spin_enter(&pmap_lock);
+#define PMAP_UNLOCK	mutex_spin_exit(&pmap_lock);
 #else
 #define PMAP_LOCK
 #define PMAP_UNLOCK
@@ -1196,6 +1196,7 @@ pmap_enter(pmap_t pmap, vaddr_t v, paddr_t p, vm_prot_t prot, u_int flags)
 	return 0;
 
 growfail:
+	PMAP_UNLOCK;
 	if (flags & PMAP_CANFAIL)
 		return ENOMEM;
 	panic("usrptmap space leakage");
