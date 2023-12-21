@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rgereg.h,v 1.7 2022/12/21 05:19:15 nonaka Exp $	*/
+/*	$NetBSD: if_rgereg.h,v 1.8 2023/12/21 08:50:22 skrll Exp $	*/
 /*	$OpenBSD: if_rgereg.h,v 1.6 2020/12/24 01:00:00 kevlo Exp $	*/
 
 /*
@@ -358,8 +358,6 @@ struct rge_softc {
 	struct mbuf		*rge_tail;
 
 	struct rge_list_data	rge_ldata;
-
-	struct work		sc_task;
 
 	callout_t		sc_timeout;	/* tick timeout */
 

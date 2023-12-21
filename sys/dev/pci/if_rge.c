@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.29 2023/12/16 16:35:49 mlelstv Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.30 2023/12/21 08:50:22 skrll Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.29 2023/12/16 16:35:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.30 2023/12/21 08:50:22 skrll Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/types.h>
 
@@ -144,7 +148,7 @@ uint16_t	rge_read_phy(struct rge_softc *, uint16_t, uint16_t);
 void		rge_write_phy_ocp(struct rge_softc *, uint16_t, uint16_t);
 uint16_t	rge_read_phy_ocp(struct rge_softc *, uint16_t);
 int		rge_get_link_status(struct rge_softc *);
-void		rge_txstart(struct work *, void *);
+void		rge_txstart(void *);
 void		rge_tick(void *);
 void		rge_link_state(struct rge_softc *);
 
@@ -629,11 +633,7 @@ rge_start(struct ifnet *ifp)
 	ifp->if_timer = 5;
 
 	sc->rge_ldata.rge_txq_prodidx = idx;
-#if 0
-	ifq_serialize(ifq, &sc->sc_task);
-#else
-	rge_txstart(&sc->sc_task, sc);
-#endif
+	rge_txstart(sc);
 }
 
 void
@@ -1410,7 +1410,7 @@ rge_txeof(struct rge_softc *sc)
 	sc->rge_ldata.rge_txq_considx = cons;
 
 	if (free == 2)
-		rge_txstart(&sc->sc_task, sc);
+		rge_txstart(sc);
 
 	CLR(ifp->if_flags, IFF_OACTIVE);
 	ifp->if_timer = 0;
@@ -2455,7 +2455,7 @@ rge_get_link_status(struct rge_softc *sc)
 }
 
 void
-rge_txstart(struct work *wk, void *arg)
+rge_txstart(void *arg)
 {
 	struct rge_softc *sc = arg;
 
