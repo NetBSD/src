@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.174 2023/12/19 12:39:01 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.175 2023/12/22 13:51:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14423,4 +14423,14 @@ sys/arch/netwinder/conf/std.netwinder		1.17
 
 	netwinder: make GENERIC kernel bootable again.
 	[uwe, ticket #510]
+
+Makefile					1.338
+
+	Makefile: Run `postinstall -d /', not `postinstall -d //'.
+	[riastradh, ticket #513]
+
+sys/arch/xen/xen/xennetback_xenbus.c		1.124 (patch)
+
+	xennet(4) backend: sanity check the fragments we get from the guest.
+	[bouyer, ticket #514]
 
