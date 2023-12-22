@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199 2023/12/21 09:09:43 mrg Exp $	   */
+/*	$NetBSD: pmap.c,v 1.200 2023/12/22 17:55:49 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.199 2023/12/21 09:09:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.200 2023/12/22 17:55:49 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -633,6 +633,7 @@ rmspace(struct pmap *pm)
 		}
 		free_ptp((((struct pte *)ptpp)->pg_pfn << VAX_PGSHIFT));
 		*ptpp = 0;
+		mtpr((vaddr_t)br, PR_TBIS);
 	}
 	lr = pm->pm_p1lr/NPTEPG;
 	for (i = lr; i < NPTEPERREG/NPTEPG; i++) {
@@ -647,6 +648,7 @@ rmspace(struct pmap *pm)
 		}
 		free_ptp((((struct pte *)ptpp)->pg_pfn << VAX_PGSHIFT));
 		*ptpp = 0;
+		mtpr((vaddr_t)br, PR_TBIS);
 	}
 
 	if (pm->pm_p0lr != 0)
@@ -772,6 +774,7 @@ rmptep(struct pte *pte)
 #endif
 	free_ptp((((struct pte *)ptpp)->pg_pfn << VAX_PGSHIFT));
 	*ptpp = 0;
+	/* N.B. callers all do a TBIA, so TBIS not needed here. */
 }
 
 static int
