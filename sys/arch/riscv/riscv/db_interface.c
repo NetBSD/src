@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.4 2023/09/03 08:48:20 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.5 2023/12/22 08:41:59 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4 2023/09/03 08:48:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.5 2023/12/22 08:41:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -88,8 +88,6 @@ paddr_t kvtophys(vaddr_t);
 int
 kdb_trap(int type, db_regs_t *regs)
 {
-	int s;
-
 	switch (type) {
 	case CAUSE_BREAKPOINT:	/* breakpoint */
 		printf("kernel: breakpoint\n");
@@ -106,7 +104,7 @@ kdb_trap(int type, db_regs_t *regs)
 		break;
 	}
 
-	s = splhigh();
+	const int s = splhigh();
 	struct cpu_info * const ci = curcpu();
 
 #if defined(MULTIPROCESSOR)
@@ -130,9 +128,9 @@ kdb_trap(int type, db_regs_t *regs)
 	ddb_regs = *regs;
 	ci->ci_ddb_regs = &ddb_regs;
 	db_active++;
-	cnpollc(1);
+	cnpollc(true);
 	db_trap(type, 0 /*code*/);
-	cnpollc(0);
+	cnpollc(false);
 	db_active--;
 	ci->ci_ddb_regs = NULL;
 	*regs = ddb_regs;

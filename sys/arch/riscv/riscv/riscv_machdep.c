@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.34 2023/09/03 08:48:20 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.35 2023/12/22 08:41:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.34 2023/09/03 08:48:20 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.35 2023/12/22 08:41:59 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -460,13 +460,13 @@ cpu_reboot(int howto, char *bootstr)
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* for proper keyboard command handling */
+		cnpollc(true);	/* for proper keyboard command handling */
 		if (cngetc() == 0) {
 			/* no console attached, so just hlt */
 			printf("No keyboard - cannot reboot after all.\n");
 			goto spin;
 		}
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting...\n");
