@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.123 2023/08/09 08:38:57 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.124 2023/12/22 10:22:00 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.123 2023/08/09 08:38:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.124 2023/12/22 10:22:00 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -613,7 +613,7 @@ xennetback_tx_response(struct xnetback_instance *xneti, int id, int status)
 }
 
 static const char *
-xennetback_tx_check_packet(const netif_tx_request_t *txreq)
+xennetback_tx_check_packet(const netif_tx_request_t *txreq, bool first)
 {
 	if (__predict_false((txreq->flags & NETTXF_more_data) == 0 &&
 	    txreq->offset + txreq->size > PAGE_SIZE))
@@ -621,6 +621,10 @@ xennetback_tx_check_packet(const netif_tx_request_t *txreq)
 
 	if (__predict_false(txreq->size > ETHER_MAX_LEN_JUMBO))
 		return "bigger then jumbo";
+
+	if (first &&
+	    __predict_false(txreq->size < ETHER_HDR_LEN))
+		return "too short";
 
 	return NULL;
 }
@@ -786,7 +790,11 @@ xennetback_tx_m0len_fragment(struct xnetback_instance *xneti,
 	*cntp = 1;
 	do {
 		txreq = RING_GET_REQUEST(&xneti->xni_txring, req_cons);
-		KASSERT(m0_len > txreq->size);
+		if (m0_len <= txreq->size || *cntp > XEN_NETIF_NR_SLOTS_MIN)
+			return -1;
+		if (RING_REQUEST_CONS_OVERFLOW(&xneti->xni_txring, req_cons))
+			return -1;
+			
 		m0_len -= txreq->size;
 		req_cons++;
 		(*cntp)++;
@@ -805,8 +813,9 @@ xennetback_evthandler(void *arg)
 	int receive_pending;
 	int queued = 0, m0_len = 0;
 	struct xnetback_xstate *xst;
-	const bool discard = ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+	const bool nupnrun = ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
 	    (IFF_UP | IFF_RUNNING));
+	bool discard = 0;
 
 	XENPRINTF(("xennetback_evthandler "));
 again:
@@ -824,9 +833,10 @@ again:
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname,
 		    txreq.size));
 		xneti->xni_txring.req_cons++;
-		if (__predict_false(discard)) {
+		if (__predict_false(nupnrun || discard)) {
 			/* interface not up, drop all requests */
 			if_statinc(ifp, if_iqdrops);
+			discard = (txreq.flags & NETTXF_more_data) != 0;
 			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_DROPPED);
 			continue;
@@ -835,10 +845,12 @@ again:
 		/*
 		 * Do some sanity checks, and queue copy of the data.
 		 */
-		const char *msg = xennetback_tx_check_packet(&txreq);
+		const char *msg = xennetback_tx_check_packet(&txreq,
+		    m0 == NULL);
 		if (__predict_false(msg != NULL)) {
 			printf("%s: packet with size %d is %s\n",
 			    ifp->if_xname, txreq.size, msg);
+			discard = (txreq.flags & NETTXF_more_data) != 0;
 			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_ERROR);
 			if_statinc(ifp, if_ierrors);
@@ -856,6 +868,7 @@ mbuf_fail:
 			xennetback_tx_copy_abort(ifp, xneti, queued);
 			queued = 0;
 			m0 = NULL;
+			discard = (txreq.flags & NETTXF_more_data) != 0;
 			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_DROPPED);
 			if_statinc(ifp, if_ierrors);
@@ -873,6 +886,14 @@ mbuf_fail:
 			int cnt;
 			m0_len = xennetback_tx_m0len_fragment(xneti,
 			    txreq.size, xneti->xni_txring.req_cons, &cnt);
+			if (m0_len < 0) {
+				m_freem(m);
+				discard = 1;
+				xennetback_tx_response(xneti, txreq.id,
+				    NETIF_RSP_DROPPED);
+				if_statinc(ifp, if_ierrors);
+				continue;
+			}
 			m->m_len = m0_len;
 			KASSERT(cnt <= XEN_NETIF_NR_SLOTS_MIN);
 
@@ -881,7 +902,6 @@ mbuf_fail:
 				 * Flush queue if too full to fit this
 				 * new packet whole.
 				 */
-				KASSERT(m0 == NULL);
 				xennetback_tx_copy_process(ifp, xneti, queued);
 				queued = 0;
 			}
