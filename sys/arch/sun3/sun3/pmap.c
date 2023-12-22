@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.175 2023/12/17 13:28:59 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.176 2023/12/22 19:53:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2023/12/17 13:28:59 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2023/12/22 19:53:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1356,15 +1356,14 @@ pv_link(pmap_t pmap, int pte, vaddr_t va)
 			panic("pv_link: duplicate entry for PA=0x%lx", pa);
 	}
 #endif
-#ifdef HAVECACHE
 
+	flags = (pte & (PG_NC | PG_MODREF)) >> PV_SHIFT;
+	*pv_flags |= flags;
+
+#ifdef HAVECACHE
 	/*
 	 * Does this new mapping cause VAC alias problems?
 	 */
-
-	/* Only the non-cached bit is of interest here. */
-	flags = (pte & PG_NC) ? PV_NC : 0;
-	*pv_flags |= flags;
 	if ((*pv_flags & PV_NC) == 0) {
 		for (pv = *head; pv != NULL; pv = pv->pv_next) {
 			if (BADALIAS(va, pv->pv_va)) {
