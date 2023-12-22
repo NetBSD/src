@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.200 2023/12/22 17:55:49 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.201 2023/12/22 19:14:57 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.200 2023/12/22 17:55:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.201 2023/12/22 19:14:57 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1474,6 +1474,7 @@ pmap_is_modified(struct vm_page *pg)
 		if (pte[0].pg_m | pte[1].pg_m | pte[2].pg_m | pte[3].pg_m
 		    | pte[4].pg_m | pte[5].pg_m | pte[6].pg_m | pte[7].pg_m) {
 			rv = true;
+			SET(pv->pv_attr, PG_M);
 			break;
 		}
 	} while ((pv = pv->pv_next) != NULL);
