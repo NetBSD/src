@@ -5,4 +5,4 @@
 
 LANG=C; export LANG
 
-find src -name '*.[hc]' | xargs cat | comment | mantools/deroff | mantools/find-double | fgrep -vxf proto/stop.double-cc
+find src -name '*.[hc]' | xargs cat | comment | mantools/deroff | mantools/find-double | grep -F -vxf proto/stop.double-cc

@@ -2,6 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - postqueue(1) </title>
 </head> <body> <pre>
 POSTQUEUE(1)                                                      POSTQUEUE(1)
@@ -55,11 +56,9 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
 
               This feature is available with Postfix version 2.4 and later.
 
-       <b>-j</b>     Produce a queue listing in JSON format, based on output from the
-              <a href="showq.8.html">showq(8)</a> daemon.  The result is a stream of zero  or  more  JSON
-              objects,  one per queue file.  Each object is followed by a new-
-              line character to support simple streaming  parsers.  See  "<b>JSON</b>
-              <b>OBJECT FORMAT</b>" below for details.
+       <b>-j</b>     Produce  a  queue  listing in JSON LINES format, based on output
+              from the <a href="showq.8.html">showq(8)</a> daemon. See "<b>JSON  OBJECT  FORMAT</b>"  below  for
+              details.
 
               This feature is available in Postfix 3.1 and later.
 

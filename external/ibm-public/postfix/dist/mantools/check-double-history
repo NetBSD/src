@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Finds double words the HISTORY file, starting with 2022. 
+
+LANG=C; export LANG
+
+sed '1,/^2022/d' HISTORY | mantools/find-double | grep -F -vxf proto/stop.double-history

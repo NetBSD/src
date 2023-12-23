@@ -2,6 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - mysql_table(5) </title>
 </head> <body> <pre>
 MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
@@ -60,7 +61,9 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
               TCP you have to specify
                   hosts = 127.0.0.1
 
-       <b>user, password</b>
+       <b>user</b>
+
+       <b>password</b>
               The  user name and password to log into the mysql server.  Exam-
               ple:
                   user = someone
@@ -249,6 +252,11 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
        <b>tls_CApath</b>
               Directory containing X509 Certification  Authority  certificates
               in separate individual files.
+
+              This parameter is available with Postfix 2.11 and later.
+
+       <b>tls_ciphers</b>
+              The list of permissible ciphers for SSL encryption.
 
               This parameter is available with Postfix 2.11 and later.
 

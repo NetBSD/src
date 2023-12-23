@@ -2,6 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - postfix-tls(1) </title>
 </head> <body> <pre>
 POSTFIX-TLS(1)                                                  POSTFIX-TLS(1)
@@ -182,10 +183,7 @@ POSTFIX-TLS(1)                                                  POSTFIX-TLS(1)
               Enable additional Postfix SMTP client logging of TLS activity.
 
        <b><a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> (empty)</b>
-              The default SMTP TLS security level for the Postfix SMTP client;
-              when a non-empty value is specified, this overrides the obsolete
-              parameters       <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a>,       <a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a>,       and
-              <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a>.
+              The default SMTP TLS security level for the Postfix SMTP client.
 
        <b><a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> (empty)</b>
               Name of the file containing the optional Postfix SMTP client TLS

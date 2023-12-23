@@ -8,6 +8,7 @@
 <title>Postfix Before-Queue Content Filter </title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -157,6 +158,31 @@ transfer completes, so that Postfix does not have to send rejected
 mail back to the sender (which is usually forged anyway).  Mail
 that is not accepted remains the responsibility of the remote SMTP
 client. </p>
+
+<li> <p> Con: The <a href="smtpd.8.html">smtpd(8)</a> service before the <a href="postconf.5.html#smtpd_proxy_filter">smtpd_proxy_filter</a>
+cannot support features that involve header or body access, or that
+involve queue file manipulation (i.e., anything that involves
+processing by the <a href="cleanup.8.html">cleanup(8)</a> service). </p>
+
+<ul>
+
+<li> <p> No support for HOLD actions in Postfix smtpd <a href="access.5.html">access(5)</a>
+restrictions. </p>
+
+<li> <p> No support for <a href="postconf.5.html#smtpd_milters">smtpd_milters</a> features that involve message
+header or body content. </p>
+
+<li> <p> No support for <a href="postconf.5.html#receive_override_options">receive_override_options</a>.
+
+</ul>
+
+<p> Instead, specify those features with the <a href="smtpd.8.html">smtpd(8)</a> service behind
+the <a href="postconf.5.html#smtpd_proxy_filter">smtpd_proxy_filter</a>. In some cases, it may be possible to combine
+a before-filter PREPEND action that emits a unique pattern (for
+example containing the MTA domain name), with an after-filter
+<a href="postconf.5.html#header_checks">header_checks</a> action that does what you want, and with an
+<a href="postconf.5.html#smtp_header_checks">smtp_header_checks</a> IGNORE action that deletes the prepended header
+from transit mail. </p>
 
 <li> <p> Con: The remote SMTP client expects an SMTP reply within
 a deadline.  As the system load increases, fewer and fewer CPU

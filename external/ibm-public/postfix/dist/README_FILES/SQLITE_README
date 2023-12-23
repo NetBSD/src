@@ -23,8 +23,8 @@ sqlite3 library, plus the name of the standard POSIX thread library (pthread).
 For example:
 
     make -f Makefile.init makefiles \
-         'CCARGS=-DHAS_SQLITE -I/usr/local/include' \
-         'AUXLIBS_SQLITE=-L/usr/local/lib -lsqlite3 -lpthread'
+         "CCARGS=-DHAS_SQLITE -I/usr/local/include" \
+         "AUXLIBS_SQLITE=-L/usr/local/lib -lsqlite3 -lpthread"
 
 If your SQLite shared library is in a directory that the RUN-TIME linker does
 not know about, add a "-Wl,-R,/path/to/directory" option after "-lsqlite3".

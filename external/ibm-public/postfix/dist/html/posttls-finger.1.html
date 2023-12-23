@@ -2,6 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - posttls-finger(1) </title>
 </head> <body> <pre>
 POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
@@ -270,6 +271,8 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
               new server is encountered, up to 5 times or  as  specified  with
               the  <b>-m</b>  option.  By default reconnection is disabled, specify a
               positive delay to enable this behavior.
+
+       <b>-R</b>     Use SRV lookup instead of MX.
 
        <b>-s</b> <i>servername</i>
               The server name to send with  the  TLS  Server  Name  Indication

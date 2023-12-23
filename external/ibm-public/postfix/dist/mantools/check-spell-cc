@@ -5,4 +5,4 @@
 
 LANG=C; export LANG
 
-find . -name *.[hc] | xargs cat | comment | mantools/deroff | spell | fgrep -vxf proto/stop | fgrep -vxf proto/stop.spell-cc
+find . -name *.[hc] | xargs cat | comment | mantools/deroff | spell | grep -F -vxf proto/stop | grep -F -vxf proto/stop.spell-cc

@@ -4,4 +4,4 @@
 
 LANG=C; export LANG
 
-mantools/dehtml proto/*html proto/*.proto | spell | fgrep -vxf proto/stop | fgrep -vxf proto/stop.spell-proto-html
+mantools/dehtml proto/*html proto/*.proto | spell | grep -F -vxf proto/stop | grep -F -vxf proto/stop.spell-proto-html

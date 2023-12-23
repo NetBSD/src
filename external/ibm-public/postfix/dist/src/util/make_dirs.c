@@ -1,4 +1,4 @@
-/*	$NetBSD: make_dirs.c,v 1.1.1.3 2013/01/02 18:59:13 tron Exp $	*/
+/*	$NetBSD: make_dirs.c,v 1.1.1.4 2023/12/23 20:24:59 christos Exp $	*/
 
 /*++
 /* NAME
@@ -59,7 +59,7 @@ int     make_dirs(const char *path, int perms)
     int     saved_ch;
     struct stat st;
     int     ret;
-    mode_t  saved_mode = 0;
+    mode_t  saved_mode;
     gid_t   egid = -1;
 
     /*

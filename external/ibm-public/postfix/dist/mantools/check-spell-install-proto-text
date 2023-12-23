@@ -4,4 +4,4 @@
 
 LANG=C; export LANG
 
-(ls *install* proto/* | egrep -v 'stop|Makefile|html|\.proto' | mantools/deroff; cat RELEASE_NOTES) | spell | fgrep -vxf proto/stop
+(ls *install* proto/* | grep -E -v 'stop|Makefile|html|\.proto' | mantools/deroff; cat RELEASE_NOTES) | spell | grep -F -vxf proto/stop

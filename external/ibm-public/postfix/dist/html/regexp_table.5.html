@@ -2,6 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - regexp_table(5) </title>
 </head> <body> <pre>
 REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
@@ -128,8 +129,8 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
        negated patterns.
 
 <b>INLINE SPECIFICATION</b>
-       The contents of a table may be specified in the table name.  The  basic
-       syntax is:
+       The contents of a table may be specified in the table name (Postfix 3.7
+       and later).  The basic syntax is:
 
        <a href="postconf.5.html">main.cf</a>:
            <i>parameter</i> <b>= .. <a href="regexp_table.5.html">regexp</a>:{ {</b> <i>rule-1</i> <b>}, {</b> <i>rule-2</i> <b>} .. } ..</b>

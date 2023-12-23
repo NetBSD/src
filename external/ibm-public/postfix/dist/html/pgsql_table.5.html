@@ -2,6 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - pgsql_table(5) </title>
 </head> <body> <pre>
 PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
@@ -56,7 +57,9 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
               matically closed after being idle for about 1  minute,  and  are
               re-opened as necessary.
 
-       <b>user, password</b>
+       <b>user</b>
+
+       <b>password</b>
               The  user name and password to log into the pgsql server.  Exam-
               ple:
                   user = someone
@@ -64,6 +67,15 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
 
        <b>dbname</b> The database name on the servers. Example:
                   dbname = customer_database
+
+       <b>encoding</b>
+              The encoding used by the database client.  The  default  setting
+              is:
+                  encoding = UTF8
+              Historically,  the  database client was hard coded to use LATIN1
+              in an attempt to disable multibyte character support.
+
+              This feature is available in Postfix 3.8 and later.
 
        <b>query</b>  The SQL query template used to search the database, where <b>%s</b>  is
               a  substitute for the address Postfix is trying to resolve, e.g.
