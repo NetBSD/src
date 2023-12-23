@@ -1,5 +1,5 @@
-.\"	$NetBSD: loadbsd.8,v 1.6 2023/12/23 19:13:55 andvar Exp $
-.Dd February 17, 2017
+.\"	$NetBSD: loadbsd.8,v 1.7 2023/12/23 20:15:19 andvar Exp $
+.Dd December 23, 2023
 .Dt LOADBSD 8 x68k
 .Os
 .Sh NAME
@@ -8,7 +8,7 @@
 .Sh SYNOPSIS
 .Nm loadbsd.x
 .Op Fl hvV
-.Op Fl abDs
+.Op Fl abDNqs
 .Op Fl r Ar root_device
 .Ar kernel_file
 .Sh DESCRIPTION
@@ -24,6 +24,8 @@ itself) are as follows:
 .Bl -tag -width flag
 .It Fl h
 Show help and exit.
+.It Fl N
+Do not execute the kernel, if specified in combination with boot options.
 .It Fl v
 Enable verbose mode.
 .It Fl V
@@ -62,6 +64,11 @@ the same as that of
 See
 .Sx BOOT DEVICE NAMES
 below.
+.It Fl q
+Boot the system in quiet mode.
+Pass
+.Dv AB_QUIET
+boot flag to the kernel.
 .It Fl s
 Single user boot.
 Pass
