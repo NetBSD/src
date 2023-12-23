@@ -54,4 +54,4 @@ EOF
 
 # Report names from postconf that have no rule in mantools/postlink.
 
-comm -23 postconf.tmp postlink.tmp | fgrep -vx -f stoplist.tmp
+comm -23 postconf.tmp postlink.tmp | grep -F -vx -f stoplist.tmp

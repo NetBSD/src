@@ -174,9 +174,23 @@ You can read more about the following topics:
 
   * Cyrus SASL version 2.1.22 and newer additionally search in /etc/sasl2/.
 
-  * Some Postfix distributions are modified and look for the Cyrus SASL
-    configuration file in /etc/postfix/sasl/, /var/lib/sasl2/ etc. See the
-    distribution-specific documentation to determine the expected location.
+  * With Postfix 2.5 and later you can explicitly configure the search path via
+    the cyrus_sasl_config_path configuration parameter. Specify zero or more
+    colon-separated directories. If set empty (the default value) the search
+    path is the one compiled into the Cyrus SASL library.
+
+  * Some Postfix distributions employ a non-empty default value for
+    cyrus_sasl_config_path to look for the Cyrus SASL configuration file in /
+    etc/postfix/sasl/, /var/lib/sasl2/ etc. See the output of postconf
+    cyrus_sasl_config_path and/or the distribution-specific documentation to
+    determine the expected location.
+
+  * Some Debian-based Postfix distributions patch Postfix to hardcode a non-
+    default search path, making it impossible to set an alternate search path
+    via the "cyrus_sasl_config_path" parameter. This is likely to be the case
+    when the distribution documents a Postfix-specific path (e.g. /etc/postfix/
+    sasl/) that is different from the default value of "cyrus_sasl_config_path"
+    (which then is likely to be empty).
 
     NNoottee
 
@@ -1285,14 +1299,14 @@ To generate the necessary Makefiles, execute the following in the Postfix top-
 level directory:
 
     % mmaakkee ttiiddyy # if you have left-over files from a previous build
-    % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==''--DDUUSSEE__SSAASSLL__AAUUTTHH \\
-        --DDDDEEFF__SSEERRVVEERR__SSAASSLL__TTYYPPEE==\\""ddoovveeccoott\\""''
+    % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==""--DDUUSSEE__SSAASSLL__AAUUTTHH \\
+        --DDDDEEFF__SSEERRVVEERR__SSAASSLL__TTYYPPEE==\\\\\\""ddoovveeccoott\\\\\\""""
 
 After this, proceed with "make" as described in the INSTALL document.
 
 NNoottee
 
-  * The -DDEF_SERVER_SASL_TYPE=\"dovecot\" is not necessary; it just makes
+  * The -DDEF_SERVER_SASL_TYPE=\\\"dovecot\\\" is not necessary; it just makes
     Postfix configuration a little more convenient because you don't have to
     specify the SASL plug-in type in the Postfix main.cf file (but this may
     cause surprises when you switch to a later Postfix version that is built
@@ -1303,10 +1317,10 @@ NNoottee
     LDAP_README and TLS_README for details.
 
         % mmaakkee ttiiddyy # if you have left-over files from a previous build
-        % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==''--DDUUSSEE__SSAASSLL__AAUUTTHH \\
-            --DDDDEEFF__SSEERRVVEERR__SSAASSLL__TTYYPPEE==\\""ddoovveeccoott\\"" \\
-            ......CCCCAARRGGSS ooppttiioonnss ffoorr LLDDAAPP oorr TTLLSS eettcc........'' \\
-           AAUUXXLLIIBBSS==''......AAUUXXLLIIBBSS ooppttiioonnss ffoorr LLDDAAPP oorr TTLLSS eettcc........''
+        % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==""--DDUUSSEE__SSAASSLL__AAUUTTHH \\
+            --DDDDEEFF__SSEERRVVEERR__SSAASSLL__TTYYPPEE==\\\\\\""ddoovveeccoott\\\\\\"" \\
+            ......CCCCAARRGGSS ooppttiioonnss ffoorr LLDDAAPP oorr TTLLSS eettcc........"" \\
+           AAUUXXLLIIBBSS==""......AAUUXXLLIIBBSS ooppttiioonnss ffoorr LLDDAAPP oorr TTLLSS eettcc........""
 
 BBuuiillddiinngg CCyyrruuss SSAASSLL ssuuppppoorrtt
 

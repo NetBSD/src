@@ -33,8 +33,8 @@ For example:
 
     % make tidy
     % make -f Makefile.init makefiles \
-            'CCARGS=-DHAS_PGSQL -I/usr/local/include/pgsql' \
-            'AUXLIBS_PGSQL=-L/usr/local/lib -lpq'
+            "CCARGS=-DHAS_PGSQL -I/usr/local/include/pgsql" \
+            "AUXLIBS_PGSQL=-L/usr/local/lib -lpq"
 
 If your PostgreSQL shared library is in a directory that the RUN-TIME linker
 does not know about, add a "-Wl,-R,/path/to/directory" option after "-lpq".

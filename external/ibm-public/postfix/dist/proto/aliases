@@ -65,14 +65,17 @@
 #	Mail is forwarded to \fIaddress\fR, which is compatible
 #	with the RFC 822 standard.
 # .IP \fI/file/name\fR
-#	Mail is appended to \fI/file/name\fR. See \fBlocal\fR(8)
-#	for details of delivery to file.
+#	Mail is appended to \fI/file/name\fR. For details on how a
+#	file is written see the sections "EXTERNAL FILE DELIVERY"
+#	and "DELIVERY RIGHTS" in the \fBlocal\fR(8) documentation.
 #	Delivery is not limited to regular files.  For example, to dispose
 #	of unwanted mail, deflect it to \fB/dev/null\fR.
 # .IP "|\fIcommand\fR"
-#	Mail is piped into \fIcommand\fR. Commands that contain special
-#	characters, such as whitespace, should be enclosed between double
-#	quotes. See \fBlocal\fR(8) for details of delivery to command.
+#	Mail is piped into \fIcommand\fR. Commands that contain
+#	special characters, such as whitespace, should be enclosed
+#	between double quotes. For details on how a command is
+#	executed see "EXTERNAL COMMAND DELIVERY" and "DELIVERY
+#	RIGHTS" in the \fBlocal\fR(8) documentation.
 # .sp
 #	When the command fails, a limited amount of command output is
 #	mailed back to the sender.  The file \fB/usr/include/sysexits.h\fR

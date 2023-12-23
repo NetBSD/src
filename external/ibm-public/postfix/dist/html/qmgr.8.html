@@ -2,6 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - qmgr(8) </title>
 </head> <body> <pre>
 QMGR(8)                                                                QMGR(8)
@@ -110,12 +111,12 @@ QMGR(8)                                                                QMGR(8)
        constant used internally by the software):
 
        <b>D (QMGR_REQ_SCAN_DEFERRED)</b>
-              Start a <a href="QSHAPE_README.html#deferred_queue">deferred queue</a>  scan.   If  a  deferred  queue  scan  is
+              Start a <a href="QSHAPE_README.html#deferred_queue">deferred queue</a>  scan.   If  a  <a href="QSHAPE_README.html#deferred_queue">deferred  queue</a>  scan  is
               already  in  progress, that scan will be restarted as soon as it
               finishes.
 
        <b>I (QMGR_REQ_SCAN_INCOMING)</b>
-              Start an <a href="QSHAPE_README.html#incoming_queue">incoming queue</a> scan.  If  an  incoming  queue  scan  is
+              Start an <a href="QSHAPE_README.html#incoming_queue">incoming queue</a> scan.  If  an  <a href="QSHAPE_README.html#incoming_queue">incoming  queue</a>  scan  is
               already  in  progress, that scan will be restarted as soon as it
               finishes.
 
@@ -185,7 +186,7 @@ QMGR(8)                                                                QMGR(8)
               next-hop  destination, use $<a href="postconf.5.html#default_filter_nexthop">default_filter_nexthop</a> instead; when
               that value is empty, use the domain in the recipient address.
 
-<b>ACTIVE QUEUE CONTROLS</b>
+<b><a href="QSHAPE_README.html#active_queue">ACTIVE QUEUE</a> CONTROLS</b>
        <b><a href="postconf.5.html#qmgr_clog_warn_time">qmgr_clog_warn_time</a> (300s)</b>
               The minimal delay between warnings that a  specific  destination
               is clogging up the Postfix <a href="QSHAPE_README.html#active_queue">active queue</a>.
@@ -205,7 +206,7 @@ QMGR(8)                                                                QMGR(8)
               The default per-transport upper limit on the number of in-memory
               recipients.
 
-       <b>transport_recipient_limit ($<a href="postconf.5.html#default_recipient_limit">default_recipient_limit</a>)</b>
+       <b><a href="postconf.5.html#transport_recipient_limit">transport_recipient_limit</a> ($<a href="postconf.5.html#default_recipient_limit">default_recipient_limit</a>)</b>
               A transport-specific override  for  the  <a href="postconf.5.html#default_recipient_limit">default_recipient_limit</a>
               parameter  value,  where  <i>transport</i> is the <a href="master.5.html">master.cf</a> name of the
               message delivery transport.
@@ -214,7 +215,7 @@ QMGR(8)                                                                QMGR(8)
               The default value for the extra per-transport limit  imposed  on
               the number of in-memory recipients.
 
-       <b>transport_extra_recipient_limit ($<a href="postconf.5.html#default_extra_recipient_limit">default_extra_recipient_limit</a>)</b>
+       <b><a href="postconf.5.html#transport_extra_recipient_limit">transport_extra_recipient_limit</a> ($<a href="postconf.5.html#default_extra_recipient_limit">default_extra_recipient_limit</a>)</b>
               A  transport-specific  override  for  the  <a href="postconf.5.html#default_extra_recipient_limit">default_extra_recipi</a>-
               <a href="postconf.5.html#default_extra_recipient_limit">ent_limit</a> parameter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a> name
               of the message delivery transport.
@@ -225,7 +226,7 @@ QMGR(8)                                                                QMGR(8)
               The  default  per-transport  limit  on  the number of recipients
               refilled at once.
 
-       <b>transport_recipient_refill_limit ($<a href="postconf.5.html#default_recipient_refill_limit">default_recipient_refill_limit</a>)</b>
+       <b><a href="postconf.5.html#transport_recipient_refill_limit">transport_recipient_refill_limit</a> ($<a href="postconf.5.html#default_recipient_refill_limit">default_recipient_refill_limit</a>)</b>
               A   transport-specific   override   for   the    <a href="postconf.5.html#default_recipient_refill_limit">default_recipi</a>-
               <a href="postconf.5.html#default_recipient_refill_limit">ent_refill_limit</a>  parameter  value,  where <i>transport</i> is the <a href="master.5.html">mas-
               ter.cf</a> name of the message delivery transport.
@@ -234,7 +235,7 @@ QMGR(8)                                                                QMGR(8)
               The  default  per-transport  maximum  delay  between  recipients
               refills.
 
-       <b>transport_recipient_refill_delay ($<a href="postconf.5.html#default_recipient_refill_delay">default_recipient_refill_delay</a>)</b>
+       <b><a href="postconf.5.html#transport_recipient_refill_delay">transport_recipient_refill_delay</a> ($<a href="postconf.5.html#default_recipient_refill_delay">default_recipient_refill_delay</a>)</b>
               A    transport-specific   override   for   the   <a href="postconf.5.html#default_recipient_refill_delay">default_recipi</a>-
               <a href="postconf.5.html#default_recipient_refill_delay">ent_refill_delay</a> parameter value, where <i>transport</i>  is  the  <a href="master.5.html">mas-
               ter.cf</a> name of the message delivery transport.
@@ -248,18 +249,18 @@ QMGR(8)                                                                QMGR(8)
               The default maximal number of parallel deliveries  to  the  same
               destination.
 
-       <b>transport_destination_concurrency_limit   ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destination_concur</a>-</b>
+       <b><a href="postconf.5.html#transport_destination_concurrency_limit">transport_destination_concurrency_limit</a>   ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destination_concur</a>-</b>
        <b><a href="postconf.5.html#default_destination_concurrency_limit">rency_limit</a>)</b>
-              A  transport-specific  override for the default_destination_con-
-              currency_limit parameter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a>
+              A  transport-specific  override for the <a href="postconf.5.html#default_destination_concurrency_limit">default_destination_con</a>-
+              <a href="postconf.5.html#default_destination_concurrency_limit">currency_limit</a> parameter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a>
               name of the message delivery transport.
 
        Available in Postfix version 2.5 and later:
 
-       <b>transport_initial_destination_concurrency ($<a href="postconf.5.html#initial_destination_concurrency">initial_destination_concur</a>-</b>
+       <b><a href="postconf.5.html#transport_initial_destination_concurrency">transport_initial_destination_concurrency</a> ($<a href="postconf.5.html#initial_destination_concurrency">initial_destination_concur</a>-</b>
        <b><a href="postconf.5.html#initial_destination_concurrency">rency</a>)</b>
-              A  transport-specific  override for the initial_destination_con-
-              currency parameter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a>  name
+              A  transport-specific  override for the <a href="postconf.5.html#initial_destination_concurrency">initial_destination_con</a>-
+              <a href="postconf.5.html#initial_destination_concurrency">currency</a> parameter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a>  name
               of the message delivery transport.
 
        <b><a href="postconf.5.html#default_destination_concurrency_failed_cohort_limit">default_destination_concurrency_failed_cohort_limit</a> (1)</b>
@@ -267,7 +268,7 @@ QMGR(8)                                                                QMGR(8)
               failure before a specific destination is considered  unavailable
               (and further delivery is suspended).
 
-       <b>transport_destination_concurrency_failed_cohort_limit  ($<a href="postconf.5.html#default_destination_concurrency_failed_cohort_limit">default_desti</a>-</b>
+       <b><a href="postconf.5.html#transport_destination_concurrency_failed_cohort_limit">transport_destination_concurrency_failed_cohort_limit</a>  ($<a href="postconf.5.html#default_destination_concurrency_failed_cohort_limit">default_desti</a>-</b>
        <b><a href="postconf.5.html#default_destination_concurrency_failed_cohort_limit">nation_concurrency_failed_cohort_limit</a>)</b>
               A  transport-specific  override for the <a href="postconf.5.html#default_destination_concurrency_failed_cohort_limit">default_destination_con</a>-
               <a href="postconf.5.html#default_destination_concurrency_failed_cohort_limit">currency_failed_cohort_limit</a> parameter value, where <i>transport</i> is
@@ -278,10 +279,10 @@ QMGR(8)                                                                QMGR(8)
               feedback, after a delivery completes with a connection or  hand-
               shake failure.
 
-       <b>transport_destination_concurrency_negative_feedback  ($<a href="postconf.5.html#default_destination_concurrency_negative_feedback">default_destina</a>-</b>
+       <b><a href="postconf.5.html#transport_destination_concurrency_negative_feedback">transport_destination_concurrency_negative_feedback</a>  ($<a href="postconf.5.html#default_destination_concurrency_negative_feedback">default_destina</a>-</b>
        <b><a href="postconf.5.html#default_destination_concurrency_negative_feedback">tion_concurrency_negative_feedback</a>)</b>
-              A  transport-specific  override for the default_destination_con-
-              currency_negative_feedback parameter value, where  <i>transport</i>  is
+              A  transport-specific  override for the <a href="postconf.5.html#default_destination_concurrency_negative_feedback">default_destination_con</a>-
+              <a href="postconf.5.html#default_destination_concurrency_negative_feedback">currency_negative_feedback</a> parameter value, where  <i>transport</i>  is
               the <a href="master.5.html">master.cf</a> name of the message delivery transport.
 
        <b><a href="postconf.5.html#default_destination_concurrency_positive_feedback">default_destination_concurrency_positive_feedback</a> (1)</b>
@@ -289,10 +290,10 @@ QMGR(8)                                                                QMGR(8)
               feedback, after a delivery completes without connection or hand-
               shake failure.
 
-       <b>transport_destination_concurrency_positive_feedback  ($<a href="postconf.5.html#default_destination_concurrency_positive_feedback">default_destina</a>-</b>
+       <b><a href="postconf.5.html#transport_destination_concurrency_positive_feedback">transport_destination_concurrency_positive_feedback</a>  ($<a href="postconf.5.html#default_destination_concurrency_positive_feedback">default_destina</a>-</b>
        <b><a href="postconf.5.html#default_destination_concurrency_positive_feedback">tion_concurrency_positive_feedback</a>)</b>
-              A  transport-specific  override for the default_destination_con-
-              currency_positive_feedback parameter value, where  <i>transport</i>  is
+              A  transport-specific  override for the <a href="postconf.5.html#default_destination_concurrency_positive_feedback">default_destination_con</a>-
+              <a href="postconf.5.html#default_destination_concurrency_positive_feedback">currency_positive_feedback</a> parameter value, where  <i>transport</i>  is
               the <a href="master.5.html">master.cf</a> name of the message delivery transport.
 
        <b><a href="postconf.5.html#destination_concurrency_feedback_debug">destination_concurrency_feedback_debug</a> (no)</b>
@@ -303,7 +304,7 @@ QMGR(8)                                                                QMGR(8)
        <b><a href="postconf.5.html#default_destination_recipient_limit">default_destination_recipient_limit</a> (50)</b>
               The default maximal number of recipients per message delivery.
 
-       <b>transport_destination_recipient_limit     ($<a href="postconf.5.html#default_destination_recipient_limit">default_destination_recipi</a>-</b>
+       <b><a href="postconf.5.html#transport_destination_recipient_limit">transport_destination_recipient_limit</a>     ($<a href="postconf.5.html#default_destination_recipient_limit">default_destination_recipi</a>-</b>
        <b><a href="postconf.5.html#default_destination_recipient_limit">ent_limit</a>)</b>
               A transport-specific override for the <a href="postconf.5.html#default_destination_recipient_limit">default_destination_recip</a>-
               <a href="postconf.5.html#default_destination_recipient_limit">ient_limit</a>  parameter  value,  where  <i>transport</i> is the <a href="master.5.html">master.cf</a>
@@ -314,7 +315,7 @@ QMGR(8)                                                                QMGR(8)
               How often the Postfix queue manager's scheduler  is  allowed  to
               preempt delivery of one message with another.
 
-       <b>transport_delivery_slot_cost ($<a href="postconf.5.html#default_delivery_slot_cost">default_delivery_slot_cost</a>)</b>
+       <b><a href="postconf.5.html#transport_delivery_slot_cost">transport_delivery_slot_cost</a> ($<a href="postconf.5.html#default_delivery_slot_cost">default_delivery_slot_cost</a>)</b>
               A transport-specific override for the <a href="postconf.5.html#default_delivery_slot_cost">default_delivery_slot_cost</a>
               parameter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a>  name  of  the
               message delivery transport.
@@ -323,7 +324,7 @@ QMGR(8)                                                                QMGR(8)
               How  many  recipients a message must have in order to invoke the
               Postfix queue manager's scheduling algorithm at all.
 
-       <b>transport_minimum_delivery_slots ($<a href="postconf.5.html#default_minimum_delivery_slots">default_minimum_delivery_slots</a>)</b>
+       <b><a href="postconf.5.html#transport_minimum_delivery_slots">transport_minimum_delivery_slots</a> ($<a href="postconf.5.html#default_minimum_delivery_slots">default_minimum_delivery_slots</a>)</b>
               A transport-specific  override  for  the  <a href="postconf.5.html#default_minimum_delivery_slots">default_minimum_deliv</a>-
               <a href="postconf.5.html#default_minimum_delivery_slots">ery_slots</a> parameter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a> name
               of the message delivery transport.
@@ -332,16 +333,16 @@ QMGR(8)                                                                QMGR(8)
               The default value for transport-specific _delivery_slot_discount
               settings.
 
-       <b>transport_delivery_slot_discount ($<a href="postconf.5.html#default_delivery_slot_discount">default_delivery_slot_discount</a>)</b>
-              A transport-specific override for the default_delivery_slot_dis-
-              count parameter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a> name  of
+       <b><a href="postconf.5.html#transport_delivery_slot_discount">transport_delivery_slot_discount</a> ($<a href="postconf.5.html#default_delivery_slot_discount">default_delivery_slot_discount</a>)</b>
+              A transport-specific override for the <a href="postconf.5.html#default_delivery_slot_discount">default_delivery_slot_dis</a>-
+              <a href="postconf.5.html#default_delivery_slot_discount">count</a> parameter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a> name  of
               the message delivery transport.
 
        <b><a href="postconf.5.html#default_delivery_slot_loan">default_delivery_slot_loan</a> (3)</b>
               The  default  value  for  transport-specific _delivery_slot_loan
               settings.
 
-       <b>transport_delivery_slot_loan ($<a href="postconf.5.html#default_delivery_slot_loan">default_delivery_slot_loan</a>)</b>
+       <b><a href="postconf.5.html#transport_delivery_slot_loan">transport_delivery_slot_loan</a> ($<a href="postconf.5.html#default_delivery_slot_loan">default_delivery_slot_loan</a>)</b>
               A transport-specific override for the <a href="postconf.5.html#default_delivery_slot_loan">default_delivery_slot_loan</a>
               parameter  value,  where  <i>transport</i> is the <a href="master.5.html">master.cf</a> name of the
               message delivery transport.
@@ -381,7 +382,7 @@ QMGR(8)                                                                QMGR(8)
               message  deliveries  to  the  same destination and over the same
               message delivery transport.
 
-       <b>transport_destination_rate_delay ($<a href="postconf.5.html#default_destination_rate_delay">default_destination_rate_delay</a>)</b>
+       <b><a href="postconf.5.html#transport_destination_rate_delay">transport_destination_rate_delay</a> ($<a href="postconf.5.html#default_destination_rate_delay">default_destination_rate_delay</a>)</b>
               A   transport-specific   override   for   the   <a href="postconf.5.html#default_destination_rate_delay">default_destina</a>-
               <a href="postconf.5.html#default_destination_rate_delay">tion_rate_delay</a>  parameter  value,  where  <i>transport</i> is the <a href="master.5.html">mas-
               ter.cf</a> name of the message delivery transport.
@@ -393,7 +394,7 @@ QMGR(8)                                                                QMGR(8)
               message  deliveries  over  the  same message delivery transport,
               regardless of destination.
 
-       <b>transport_transport_rate_delay ($<a href="postconf.5.html#default_transport_rate_delay">default_transport_rate_delay</a>)</b>
+       <b><a href="postconf.5.html#transport_transport_rate_delay">transport_transport_rate_delay</a> ($<a href="postconf.5.html#default_transport_rate_delay">default_transport_rate_delay</a>)</b>
               A   transport-specific   override   for    the    <a href="postconf.5.html#default_transport_rate_delay">default_trans</a>-
               <a href="postconf.5.html#default_transport_rate_delay">port_rate_delay</a>  parameter value, where the initial <i>transport</i> in
               the parameter name is the <a href="master.5.html">master.cf</a> name of the message delivery

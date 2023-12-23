@@ -35,8 +35,8 @@ DHAS_MYSQL and -I for the directory containing the mysql headers, and the
 mysqlclient library (and libm) to AUXLIBS_MYSQL, for example:
 
     make -f Makefile.init makefiles \
-        'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
-        'AUXLIBS_MYSQL=-L/usr/local/mysql/lib -lmysqlclient -lz -lm'
+        "CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include" \
+        "AUXLIBS_MYSQL=-L/usr/local/mysql/lib -lmysqlclient -lz -lm"
 
 If your MySQL shared library is in a directory that the RUN-TIME linker does
 not know about, add a "-Wl,-R,/path/to/directory" option after "-lmysqlclient".
@@ -54,9 +54,9 @@ building a dynamically-loaded or statically-loaded MySQL database client.
 On Solaris, use this instead:
 
     make -f Makefile.init makefiles \
-        'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
-        'AUXLIBS_MYSQL=-L/usr/local/mysql/lib -R/usr/local/mysql/lib \
-            -lmysqlclient -lz -lm'
+        "CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include" \
+        "AUXLIBS_MYSQL=-L/usr/local/mysql/lib -R/usr/local/mysql/lib \
+            -lmysqlclient -lz -lm"
 
 Then, just run 'make'. This requires libz, the compression library. Older mysql
 implementations build without libz.

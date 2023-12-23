@@ -4,7 +4,7 @@ PPoossttffiixx llooggggiinngg ttoo ffiillee oorr ssttdd
 
 OOvveerrvviieeww
 
-Postfix supports it own logging system as an alternative to syslog (which
+Postfix supports its own logging system as an alternative to syslog (which
 remains the default). This is available with Postfix version 3.4 or later.
 
 Topics covered in this document:
@@ -108,6 +108,6 @@ Limitations:
     $maillog_file (also, logging to stdout would interfere with the operation
     of some of these programs). These programs can log to postlogd(8) if they
     are run by the super-user, or if their executable file has set-gid
-    permission. Do not set this permission on programs other than postdrop(1)
-    and postqueue(1).
+    permission. Do not set this permission on programs other than postdrop(1),
+    postqueue(1), and (Postfix >= 3.7) postlog(1).
 

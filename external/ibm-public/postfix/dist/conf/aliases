@@ -108,16 +108,20 @@ decode:		root
 #               with the RFC 822 standard.
 # 
 #        /file/name
-#               Mail  is  appended  to /file/name. See local(8) for
-#               details of delivery to file.  Delivery is not  lim-
-#               ited  to regular files.  For example, to dispose of
-#               unwanted mail, deflect it to /dev/null.
+#               Mail  is appended to /file/name. For details on how
+#               a file is written see the sections  "EXTERNAL  FILE
+#               DELIVERY"  and  "DELIVERY  RIGHTS"  in the local(8)
+#               documentation.  Delivery is not limited to  regular
+#               files.   For  example, to dispose of unwanted mail,
+#               deflect it to /dev/null.
 # 
 #        |command
 #               Mail is piped into command. Commands  that  contain
 #               special  characters,  such as whitespace, should be
-#               enclosed between double quotes.  See  local(8)  for
-#               details of delivery to command.
+#               enclosed between double quotes. For details on  how
+#               a  command is executed see "EXTERNAL COMMAND DELIV-
+#               ERY" and "DELIVERY RIGHTS" in the local(8) documen-
+#               tation.
 # 
 #               When the command fails, a limited amount of command
 #               output is mailed back  to  the  sender.   The  file
@@ -218,18 +222,17 @@ decode:		root
 #               the recipient_delimiter is set to "-".
 # 
 #        recipient_delimiter (empty)
-#               The set of characters that can separate a user name
-#               from its extension (example: user+foo), or a  .for-
-#               ward  file  name from its extension (example: .for-
-#               ward+foo).
+#               The  set  of  characters that can separate an email
+#               address localpart, user name, or  a  .forward  file
+#               name from its extension.
 # 
 #        Available in Postfix version 2.3 and later:
 # 
 #        frozen_delivered_to (yes)
-#               Update the local(8) delivery agent's  idea  of  the
-#               Delivered-To:     address    (see    prepend_deliv-
-#               ered_header) only once, at the start of a  delivery
-#               attempt;  do  not  update the Delivered-To: address
+#               Update  the  local(8)  delivery agent's idea of the
+#               Delivered-To:    address    (see     prepend_deliv-
+#               ered_header)  only once, at the start of a delivery
+#               attempt; do not update  the  Delivered-To:  address
 #               while expanding aliases or .forward files.
 # 
 # STANDARDS
@@ -242,12 +245,12 @@ decode:		root
 #        postconf(5), configuration parameters
 # 
 # README FILES
-#        Use "postconf readme_directory" or  "postconf  html_direc-
+#        Use  "postconf  readme_directory" or "postconf html_direc-
 #        tory" to locate this information.
 #        DATABASE_README, Postfix lookup table overview
 # 
 # LICENSE
-#        The  Secure  Mailer  license must be distributed with this
+#        The Secure Mailer license must be  distributed  with  this
 #        software.
 # 
 # AUTHOR(S)
