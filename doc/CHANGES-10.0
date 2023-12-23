@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.175 2023/12/22 13:51:13 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.176 2023/12/23 13:09:53 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14433,4 +14433,15 @@ sys/arch/xen/xen/xennetback_xenbus.c		1.124 (patch)
 
 	xennet(4) backend: sanity check the fragments we get from the guest.
 	[bouyer, ticket #514]
+
+sys/arch/vax/vax/pmap.c				1.200
+
+	vax: fix a crash under heavy memory pressure when PT pages are
+	heavily recycled.
+	[thorpej, ticket #515]
+
+sys/arch/vax/vax/pmap.c				1.199
+
+	vax: fix locking botches.
+	[mrg, ticket #516]
 
