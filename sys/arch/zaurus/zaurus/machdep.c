@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2023/10/12 11:33:39 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 2023/12/23 18:59:27 andvar Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2023/10/12 11:33:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2023/12/23 18:59:27 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -674,9 +674,6 @@ initarm(void *arg)
 		boothowto = RB_AUTOBOOT;
 	}
 	*magicaddr = 0xdeadbeef;
-#ifdef RAMDISK_HOOKS
-        boothowto |= RB_DFLTROOT;
-#endif /* RAMDISK_HOOKS */
 	if (boothowto & RB_MD1) {
 		/* serial console */
 		console = "ffuart";
