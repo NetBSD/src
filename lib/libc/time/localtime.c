@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.138 2023/09/16 18:40:26 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.139 2023/12/23 20:48:38 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.138 2023/09/16 18:40:26 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.139 2023/12/23 20:48:38 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -122,6 +122,11 @@ enum { CHARS_EXTRA = max(sizeof UNSPEC, 2) - 1 };
 #endif
 
 #define state __state
+/* A representation of the contents of a TZif file.  Ideally this
+   would have no size limits; the following sizes should suffice for
+   practical use.  This struct should not be too large, as instances
+   are put on the stack and stacks are relatively small on some platforms.
+   See tzfile.h for more about the sizes.  */
 struct state {
 	int		leapcnt;
 	int		timecnt;
@@ -164,8 +169,7 @@ static int_fast32_t leapcorr(struct state const *, time_t);
 static bool normalize_overflow32(int_fast32_t *, int *, int);
 static struct tm *timesub(time_t const *, int_fast32_t, struct state const *,
 			  struct tm *);
-static bool typesequiv(struct state const *, int, int);
-static bool tzparse(char const *, struct state *, struct state *);
+static bool tzparse(char const *, struct state *, struct state const *);
 
 static timezone_t gmtptr;
 
@@ -429,7 +433,8 @@ union input_buffer {
   /* The first part of the buffer, interpreted as a header.  */
   struct tzhead tzhead;
 
-  /* The entire buffer.  */
+  /* The entire buffer.  Ideally this would have no size limits;
+     the following should suffice for practical use.  */
   char buf[2 * sizeof(struct tzhead) + 2 * sizeof(struct state)
 	   + 4 * TZ_MAX_TIMES];
 };
@@ -448,7 +453,12 @@ union local_storage {
     struct state st;
   } u;
 
-  /* The file name to be opened.  */
+  /* The name of the file to be opened.  Ideally this would have no
+     size limits, to support arbitrarily long Zone names.
+     Limiting Zone names to 1024 bytes should suffice for practical use.
+     However, there is no need for this to be smaller than struct
+     file_analysis as that struct is allocated anyway, as the other
+     union member.  */
   char fullname[max(sizeof(struct file_analysis), sizeof tzdirslash + 1024)];
 };
 
@@ -734,14 +744,18 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 				       == sp->types[sp->timecnt - 2]))
 			      sp->timecnt--;
 
-			    for (i = 0;
-				 i < ts->timecnt && sp->timecnt < TZ_MAX_TIMES;
-				 i++) {
+			    sp->goahead = ts->goahead;
+
+			    for (i = 0; i < ts->timecnt; i++) {
 			      __time_t t = ts->ats[i];
 			      if (increment_overflow_time(&t, leapcorr(sp, t))
 				  || (0 < sp->timecnt
 				      && t <= sp->ats[sp->timecnt - 1]))
 				continue;
+			      if (TZ_MAX_TIMES <= sp->timecnt) {
+				sp->goahead = false;
+				break;
+			      }
 			      sp->ats[sp->timecnt] = t;
 			      sp->types[sp->timecnt] = (sp->typecnt
 							+ ts->types[i]);
@@ -754,29 +768,6 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 	}
 	if (sp->typecnt == 0)
 	  return EINVAL;
-	if (sp->timecnt > 1) {
-	    if (sp->ats[0] <= (time_t)(TIME_T_MAX - SECSPERREPEAT)) {
-		time_t repeatat = (time_t)(sp->ats[0] + SECSPERREPEAT);
-		int repeattype = sp->types[0];
-		for (i = 1; i < sp->timecnt; ++i)
-		  if (sp->ats[i] == repeatat
-		      && typesequiv(sp, sp->types[i], repeattype)) {
-					sp->goback = true;
-					break;
-		  }
-	    }
-	    if ((time_t)(TIME_T_MIN + SECSPERREPEAT) <= sp->ats[sp->timecnt - 1]) {
-		time_t repeatat =
-		    (time_t)(sp->ats[sp->timecnt - 1] - SECSPERREPEAT);
-		int repeattype = sp->types[sp->timecnt - 1];
-		for (i = sp->timecnt - 2; i >= 0; --i)
-		  if (sp->ats[i] == repeatat
-		      && typesequiv(sp, sp->types[i], repeattype)) {
-					sp->goahead = true;
-					break;
-		  }
-	    }
-	}
 
 	/* Infer sp->defaulttype from the data.  Although this default
 	   type is always zero for data from recent tzdb releases,
@@ -846,31 +837,6 @@ tzload(char const *name, struct state *sp, bool doextend)
     free(lsp);
     return err;
   }
-}
-
-static bool
-typesequiv(const struct state *sp, int a, int b)
-{
-	register bool result;
-
-	if (sp == NULL ||
-		a < 0 || a >= sp->typecnt ||
-		b < 0 || b >= sp->typecnt)
-			result = false;
-	else {
-		/* Compare the relevant members of *AP and *BP.
-		   Ignore tt_ttisstd and tt_ttisut, as they are
-		   irrelevant now and counting them could cause
-		   sp->goahead to mistakenly remain false.  */
-		register const struct ttinfo *	ap = &sp->ttis[a];
-		register const struct ttinfo *	bp = &sp->ttis[b];
-		result = (ap->tt_utoff == bp->tt_utoff
-			  && ap->tt_isdst == bp->tt_isdst
-			  && (strcmp(&sp->chars[ap->tt_desigidx],
-				     &sp->chars[bp->tt_desigidx])
-			      == 0));
-	}
-	return result;
 }
 
 static const int	mon_lengths[2][MONSPERYEAR] = {
@@ -975,8 +941,8 @@ getsecs(register const char *strp, int_fast32_t *const secsp)
 	int_fast32_t secsperhour = SECSPERHOUR;
 
 	/*
-	** 'HOURSPERDAY * DAYSPERWEEK - 1' allows quasi-Posix rules like
-	** "M10.4.6/26", which does not conform to Posix,
+	** 'HOURSPERDAY * DAYSPERWEEK - 1' allows quasi-POSIX rules like
+	** "M10.4.6/26", which does not conform to POSIX,
 	** but which specifies the equivalent of
 	** "02:00 on the first Sunday on or after 23 Oct".
 	*/
@@ -1178,7 +1144,7 @@ transtime(const int year, register const struct rule *const rulep,
 */
 
 static bool
-tzparse(const char *name, struct state *sp, struct state *basep)
+tzparse(const char *name, struct state *sp, struct state const *basep)
 {
 	const char *			stdname;
 	const char *			dstname;
@@ -1222,6 +1188,7 @@ tzparse(const char *name, struct state *sp, struct state *basep)
 	}
 	if (0 < sp->leapcnt)
 	  leaplo = sp->lsis[sp->leapcnt - 1].ls_trans;
+	sp->goback = sp->goahead = false;
 	if (*name != '\0') {
 		if (*name == '<') {
 			dstname = ++name;
@@ -1270,7 +1237,6 @@ tzparse(const char *name, struct state *sp, struct state *basep)
 			init_ttinfo(&sp->ttis[0], -stdoffset, false, 0);
 			init_ttinfo(&sp->ttis[1], -dstoffset, true,
 			    (int)(stdlen + 1));
-			sp->defaulttype = 0;
 			timecnt = 0;
 			janfirst = 0;
 			yearbeg = EPOCH_YEAR;
@@ -1431,7 +1397,6 @@ tzparse(const char *name, struct state *sp, struct state *basep)
 			init_ttinfo(&sp->ttis[1], -dstoffset, true,
 			    (int)(stdlen + 1));
 			sp->typecnt = 2;
-			sp->defaulttype = 0;
 		}
 	} else {
 		dstlen = 0;
@@ -1439,8 +1404,8 @@ tzparse(const char *name, struct state *sp, struct state *basep)
 		sp->timecnt = 0;
 		init_ttinfo(&sp->ttis[0], -stdoffset, false, 0);
 		init_ttinfo(&sp->ttis[1], 0, false, 0);
-		sp->defaulttype = 0;
 	}
+	sp->defaulttype = 0;
 	sp->charcnt = (int)charcnt;
 	cp = sp->chars;
 	memcpy(cp, stdname, stdlen);
@@ -1780,6 +1745,9 @@ gmtime(const time_t *timep)
 }
 
 #if STD_INSPIRED
+
+/* This function is obsolescent and may disappear in future releases.
+   Callers can instead use localtime_rz with a fixed-offset zone.  */
 
 struct tm *
 offtime(const time_t *timep, long offset)
@@ -2479,6 +2447,8 @@ mktime(struct tm *tmp)
 }
 
 #if STD_INSPIRED
+/* This function is obsolescent and may disapper in future releases.
+   Callers can instead use mktime.  */
 time_t
 timelocal_z(const timezone_t sp, struct tm *const tmp)
 {
@@ -2495,8 +2465,13 @@ timelocal(struct tm *tmp)
 	return mktime(tmp);
 }
 #else
+# ifndef timeoff
+#  define timeoff my_timeoff /* Don't collide with OpenBSD 7.4 <time.h>.  */
+# endif
 static
 #endif
+/* This function is obsolescent and may disapper in future releases.
+   Callers can instead use mktime_z with a fixed-offset zone.  */
 time_t
 timeoff(struct tm *tmp, long offset)
 {
