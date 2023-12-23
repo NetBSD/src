@@ -4,10 +4,11 @@
  *	written by ITOH Yasufumi
  *	public domain
  *
- *	loadbsd [-hvV] [-abDs] [-r root_device] netbsd
+ *	loadbsd [-hvV] [-abDNqs] [-r root_device] netbsd
  *
  *	loadbsd options:
  *		-h	help
+ *		-N	do not actually execute kernel
  *		-V	print version and exit
  *
  *	kernel options:
@@ -19,13 +20,13 @@
  *		-q	quiet boot
  *		-v	verbose boot (also turn on verbosity of loadbsd)
  *
- *	$NetBSD: loadbsd.c,v 1.14 2011/02/21 02:31:59 itohy Exp $
+ *	$NetBSD: loadbsd.c,v 1.15 2023/12/23 20:57:16 andvar Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.14 2011/02/21 02:31:59 itohy Exp $");
-#define VERSION	"$Revision: 1.14 $ $Date: 2011/02/21 02:31:59 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.15 2023/12/23 20:57:16 andvar Exp $");
+#define VERSION	"$Revision: 1.15 $ $Date: 2023/12/23 20:57:16 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -416,10 +417,11 @@ usage(int status, const char *msg)
 		xwarnx("%s", msg);
 
 	xerrprintf("\
-%s [-hvV] [-abDs] [-r root_device] netbsd\n\
+%s [-hvV] [-abDNqs] [-r root_device] netbsd\n\
 \n\
 loadbsd options:\n\
 \t-h	help\n\
+\t-N	do not execute kernel\n\
 \t-v	verbose\n\
 \t-V	print version and exit\n\
 \n\
@@ -427,6 +429,7 @@ kernel options:\n\
 \t-a	auto boot, opposite of -s\n\
 \t-s	single user boot (default)\n\
 \t-D	enter kernel debugger\n\
+\t-q	quiet boot\n\
 \t-b	ask root device\n\
 \t-r	specify root device (default %s)\n\
 \t	format:  [/interface/]device@unit[,lun][:partition]\n\
