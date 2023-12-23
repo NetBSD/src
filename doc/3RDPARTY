@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1973 2023/12/23 20:32:30 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1974 2023/12/23 20:49:22 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1429,14 +1429,14 @@ Location:	external/bsd/tradcpp
 Notes:
 
 Package:	tz
-Version:	tzcode2023c / tzdata2023dgtz
+Version:	tzcode2023d / tzdata2023dgtz
 Current Vers:	tzcode2023d / tzdata2023d
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
 Old Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:	http://www.iana.org/time-zones
-Date:		2023-09-16
+Date:		2023-12-23
 Mailing List:	tz@iana.org
 Responsible:	kleink, christos, kre
 License:	Public domain
