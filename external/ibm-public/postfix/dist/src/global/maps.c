@@ -1,4 +1,4 @@
-/*	$NetBSD: maps.c,v 1.1.1.5 2020/03/18 18:59:33 christos Exp $	*/
+/*	$NetBSD: maps.c,v 1.1.1.6 2023/12/23 20:24:54 christos Exp $	*/
 
 /*++
 /* NAME
@@ -97,6 +97,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */

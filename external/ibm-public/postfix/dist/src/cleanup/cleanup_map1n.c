@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_map1n.c,v 1.1.1.7 2020/03/18 18:59:32 christos Exp $	*/
+/*	$NetBSD: cleanup_map1n.c,v 1.1.1.8 2023/12/23 20:24:53 christos Exp $	*/
 
 /*++
 /* NAME
@@ -103,7 +103,7 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, const char *addr,
      * pointer.
      */
 #define UPDATE(ptr,new)	do { \
-	if (ptr) myfree(ptr); ptr = mystrdup(new); \
+	if (ptr) { myfree(ptr); } ptr = mystrdup(new); \
     } while (0)
 #define STR	vstring_str
 #define RETURN(x) do { \

@@ -8,6 +8,7 @@
 <title>Postfix PostgreSQL Howto</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -52,8 +53,8 @@ the location of the libpq library file. </p>
 <pre>
 % make tidy
 % make -f Makefile.init makefiles \
-        'CCARGS=-DHAS_PGSQL -I/usr/local/include/pgsql' \
-        '<a href="PGSQL_README.html">AUXLIBS_PGSQL</a>=-L/usr/local/lib -lpq'
+        "CCARGS=-DHAS_PGSQL -I/usr/local/include/pgsql" \
+        "<a href="PGSQL_README.html">AUXLIBS_PGSQL</a>=-L/usr/local/lib -lpq"
 </pre>
 </blockquote>
 

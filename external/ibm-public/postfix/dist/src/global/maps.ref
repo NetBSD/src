@@ -1,3 +1,4 @@
+unknown: dict_open_lookup: fail
 unknown: dict_open: fail:1maps
 unknown: dict_register: fail:1maps(0,lock) 1
 "": not found

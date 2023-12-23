@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cidr.c,v 1.1.1.6 2022/10/08 16:09:11 christos Exp $	*/
+/*	$NetBSD: dict_cidr.c,v 1.1.1.7 2023/12/23 20:24:58 christos Exp $	*/
 
 /*++
 /* NAME
@@ -18,6 +18,7 @@
 /*	"naked" IP address or a netblock in CIDR notation.
 /* SEE ALSO
 /*	dict(3) generic dictionary manager
+/*	cidr_table(5) CIDR table configuration
 /* AUTHOR(S)
 /*	Jozsef Kadlecsik
 /*	kadlec@blackhole.kfki.hu

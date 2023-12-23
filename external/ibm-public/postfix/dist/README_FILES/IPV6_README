@@ -43,7 +43,8 @@ Postfix version 2.2 supports IPv4 and IPv6 on the following platforms:
 
 On other platforms Postfix will simply use IPv4 as it has always done.
 
-See below for tips how to port Postfix IPv6 support to other environments.
+See "IPv6 Support for unsupported platforms" for tips to port Postfix IPv6
+support to other environments.
 
 CCoonnffiigguurraattiioonn
 
@@ -82,6 +83,9 @@ configuration work with Postfix.
 
     Note 2: on older Linux and Solaris systems, the setting "inet_protocols =
     ipv6" will not prevent Postfix from accepting IPv4 connections.
+
+    For an unsupported test option to build Postfix without IPv6 support, see
+    the NO_IPV6 option in the INSTALL document.
 
   * The other new parameter is smtp_bind_address6. This sets the local
     interface address for outgoing IPv6 SMTP connections, just like the

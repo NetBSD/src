@@ -47,7 +47,7 @@ open(ALL_PARAM_NAMES, "$command|")
          || die "can't execute $command: !$\n";  
 while ($param_name = <ALL_PARAM_NAMES>) { 
     chomp($param_name);
-    next unless ($param_name =~ /_maps$/);
+    next unless ($param_name =~ /_(checks|delivery_status_filter|reply_filter|command_filter|maps)$/);
     next if ($param_name =~ /^(proxy_read|proxy_write)_maps$/);
     next if defined($proxy_read_maps{$param_name});
     die "unknown parameter: $param_name\n"

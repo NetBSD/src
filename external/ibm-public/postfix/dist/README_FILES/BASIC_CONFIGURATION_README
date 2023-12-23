@@ -369,7 +369,7 @@ Hopefully, the number of problems will be small, but it is a good idea to run
 every night before the syslog files are rotated:
 
     # postfix check
-    # egrep '(reject|warning|error|fatal|panic):' /some/log/file
+    # grep -E '(reject|warning|error|fatal|panic):' /some/log/file
 
   * The first line (postfix check) causes Postfix to report file permission/
     ownership discrepancies.

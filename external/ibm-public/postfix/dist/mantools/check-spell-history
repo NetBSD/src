@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Spellchecks text in the HISTORY file, starting with 2022.
+
+LANG=C; export LANG
+
+sed '1,/^2022/d' HISTORY | spell | grep -F -vxf proto/stop | \
+	grep -F -vxf proto/stop.spell-cc | \
+	grep -F -vxf proto/stop.spell-history

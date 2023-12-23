@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.h,v 1.1.1.5 2020/03/18 18:59:35 christos Exp $	*/
+/*	$NetBSD: postconf.h,v 1.1.1.6 2023/12/23 20:24:56 christos Exp $	*/
 
 /*++
 /* NAME
@@ -173,6 +173,8 @@ extern int pcf_cmd_mode;
   * postconf_misc.c.
   */
 extern void pcf_set_config_dir(void);
+extern const char *pcf_get_main_path(void);
+extern const char *pcf_get_master_path(void);
 
  /*
   * postconf_main.c

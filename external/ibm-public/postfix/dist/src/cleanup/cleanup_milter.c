@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.12 2022/10/08 16:09:06 christos Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.13 2023/12/23 20:24:53 christos Exp $	*/
 
 /*++
 /* NAME
@@ -246,7 +246,7 @@ static void cleanup_milter_hbc_log(void *context, const char *action,
     const CLEANUP_STATE *state = (CLEANUP_STATE *) context;
     const char *attr;
 
-    vstring_sprintf(state->temp1, "%s: milter-%s-%s: %s %.60s from %s[%s];",
+    vstring_sprintf(state->temp1, "%s: milter-%s-%s: %s %.200s from %s[%s];",
 		    state->queue_id, where, action, where, line,
 		    state->client_name, state->client_addr);
     if (state->sender)

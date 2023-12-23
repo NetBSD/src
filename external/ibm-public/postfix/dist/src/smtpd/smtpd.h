@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.h,v 1.1.1.8 2022/10/08 16:09:10 christos Exp $	*/
+/*	$NetBSD: smtpd.h,v 1.1.1.9 2023/12/23 20:24:57 christos Exp $	*/
 
 /*++
 /* NAME
@@ -79,6 +79,7 @@ typedef struct {
     char   *addr;			/* client host address string */
     char   *port;			/* port for logging */
     char   *namaddr;			/* name[address]:port */
+    char   *anvil_range;		/* client address or network/length */
     char   *rfc_addr;			/* address for RFC 2821 */
     int     addr_family;		/* address family */
     char   *dest_addr;			/* Dovecot AUTH, Milter {daemon_addr} */

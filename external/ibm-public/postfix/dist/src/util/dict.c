@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.c,v 1.1.1.9 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: dict.c,v 1.1.1.10 2023/12/23 20:24:58 christos Exp $	*/
 
 /*++
 /* NAME
@@ -242,6 +242,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System libraries. */
@@ -465,6 +470,7 @@ int     dict_load_file_xt(const char *dict_name, const char *path)
 	if (msg_verbose > 1)
 	    msg_info("pausing to let %s cool down", path);
 	doze(300000);
+	dict_unregister(dict_name);
     }
     return (1);
 }

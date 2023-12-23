@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.1.1.15 2022/10/08 16:09:12 christos Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.1.1.16 2023/12/23 20:24:59 christos Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -751,9 +751,21 @@ extern int initgroups(const char *, int);
 #endif
 
  /*
+  * GLIBC, mainly, but not exclusively Linux
+  */
+#ifdef __GLIBC_PREREQ
+#define HAVE_GLIBC_API_VERSION_SUPPORT(maj, min) __GLIBC_PREREQ(maj, min)
+#else
+#define HAVE_GLIBC_API_VERSION_SUPPORT(maj, min) \
+    (defined(__GLIBC__) && \
+	((__GLIBC__ << 16) + __GLIBC_MINOR__ >= ((maj) << 16) + (min)))
+#endif
+
+ /*
   * LINUX.
   */
-#if defined(LINUX2) || defined(LINUX3) || defined(LINUX4) || defined(LINUX5)
+#if defined(LINUX2) || defined(LINUX3) || defined(LINUX4) || defined(LINUX5) \
+	|| defined(LINUX6)
 #define SUPPORTED
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
@@ -783,13 +795,6 @@ extern int initgroups(const char *, int);
 #define NATIVE_NEWALIAS_PATH "/usr/bin/newaliases"
 #define NATIVE_COMMAND_DIR "/usr/sbin"
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
-#ifdef __GLIBC_PREREQ
-#define HAVE_GLIBC_API_VERSION_SUPPORT(maj, min) __GLIBC_PREREQ(maj, min)
-#else
-#define HAVE_GLIBC_API_VERSION_SUPPORT(maj, min) \
-    (defined(__GLIBC__) && \
-	((__GLIBC__ << 16) + __GLIBC_MINOR__ >= ((maj) << 16) + (min)))
-#endif
 #if HAVE_GLIBC_API_VERSION_SUPPORT(2, 1)
 #define SOCKADDR_SIZE	socklen_t
 #define SOCKOPT_SIZE	socklen_t

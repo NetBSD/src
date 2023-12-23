@@ -1,0 +1,10 @@
+BODY {
+    font-family: Verdana, Arial, Helvetica, Geneva, sans-serif;
+    font-size: medium;
+    line-height: normal;
+    margin-left: 10px;
+    margin-right: 10px;
+    }
+PRE, TT, CODE {
+    font-family: Courier, monospace;
+    }

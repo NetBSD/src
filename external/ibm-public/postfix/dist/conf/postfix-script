@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-script,v 1.1.1.5 2020/03/18 18:59:27 christos Exp $
+#	$NetBSD: postfix-script,v 1.1.1.6 2023/12/23 20:24:48 christos Exp $
 #
 
 #++
@@ -330,7 +330,7 @@ check-warn)
 	# Check Postfix mail_owner-owned directory tree owner.
 
 	find `ls -d $queue_directory/* | \
-	    egrep '/(saved|incoming|active|defer|deferred|bounce|hold|trace|corrupt|public|private|flush)$'` \
+	    grep -E '/(saved|incoming|active|defer|deferred|bounce|hold|trace|corrupt|public|private|flush)$'` \
 	    ! \( -type p -o -type s \) ! -user $mail_owner \
 		-exec $WARN not owned by $mail_owner: {} \;
 

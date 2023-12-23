@@ -2,6 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - aliases(5) </title>
 </head> <body> <pre>
 ALIASES(5)                                                          ALIASES(5)
@@ -67,38 +68,41 @@ ALIASES(5)                                                          ALIASES(5)
               <a href="https://tools.ietf.org/html/rfc822">822</a> standard.
 
        <i>/file/name</i>
-              Mail  is  appended  to  <i>/file/name</i>.  See <a href="local.8.html"><b>local</b>(8)</a> for details of
-              delivery to file.  Delivery is not  limited  to  regular  files.
-              For  example,  to  dispose  of  unwanted  mail,  deflect  it  to
-              <b>/dev/null</b>.
+              Mail  is  appended  to  <i>/file/name</i>. For details on how a file is
+              written see the sections "EXTERNAL FILE DELIVERY" and  "DELIVERY
+              RIGHTS"  in the <a href="local.8.html"><b>local</b>(8)</a> documentation.  Delivery is not limited
+              to regular files.  For example, to  dispose  of  unwanted  mail,
+              deflect it to <b>/dev/null</b>.
 
        |<i>command</i>
-              Mail is piped into <i>command</i>. Commands that contain special  char-
-              acters,  such  as  whitespace, should be enclosed between double
-              quotes. See <a href="local.8.html"><b>local</b>(8)</a> for details of delivery to command.
+              Mail  is piped into <i>command</i>. Commands that contain special char-
+              acters, such as whitespace, should be  enclosed  between  double
+              quotes.  For  details on how a command is executed see "EXTERNAL
+              COMMAND DELIVERY" and "DELIVERY RIGHTS" in the <a href="local.8.html"><b>local</b>(8)</a> documen-
+              tation.
 
-              When the command fails, a limited amount of  command  output  is
-              mailed  back  to  the  sender.  The file <b>/usr/include/sysexits.h</b>
-              defines the expected exit status codes. For example, use  <b>"|exit</b>
-              <b>67"</b>  to simulate a "user unknown" error, and <b>"|exit 0"</b> to imple-
+              When  the  command  fails, a limited amount of command output is
+              mailed back to the  sender.   The  file  <b>/usr/include/sysexits.h</b>
+              defines  the expected exit status codes. For example, use <b>"|exit</b>
+              <b>67"</b> to simulate a "user unknown" error, and <b>"|exit 0"</b> to  imple-
               ment an expensive black hole.
 
        <b>:include:</b><i>/file/name</i>
-              Mail is sent to the  destinations  listed  in  the  named  file.
-              Lines  in <b>:include:</b> files have the same syntax as the right-hand
+              Mail  is  sent  to  the  destinations  listed in the named file.
+              Lines in <b>:include:</b> files have the same syntax as the  right-hand
               side of alias entries.
 
-              A destination can be any destination that is described  in  this
-              manual  page.  However, delivery to "|<i>command</i>" and <i>/file/name</i> is
-              disallowed by default. To enable,  edit  the  <b><a href="postconf.5.html#allow_mail_to_commands">allow_mail_to_com</a>-</b>
+              A  destination  can be any destination that is described in this
+              manual page. However, delivery to "|<i>command</i>" and  <i>/file/name</i>  is
+              disallowed  by  default.  To enable, edit the <b><a href="postconf.5.html#allow_mail_to_commands">allow_mail_to_com</a>-</b>
               <b><a href="postconf.5.html#allow_mail_to_commands">mands</a></b> and <b><a href="postconf.5.html#allow_mail_to_files">allow_mail_to_files</a></b> configuration parameters.
 
 <b>ADDRESS EXTENSION</b>
-       When  alias database search fails, and the recipient localpart contains
-       the optional  recipient  delimiter  (e.g.,  <i>user+foo</i>),  the  search  is
+       When alias database search fails, and the recipient localpart  contains
+       the  optional  recipient  delimiter  (e.g.,  <i>user+foo</i>),  the  search is
        repeated for the unextended address (e.g., <i>user</i>).
 
-       The   <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>   parameter  controls  whether  an
+       The  <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>  parameter  controls   whether   an
        unmatched address extension (<i>+foo</i>) is propagated to the result of table
        lookup.
 
@@ -107,9 +111,9 @@ ALIASES(5)                                                          ALIASES(5)
        before database lookup.
 
 <b>REGULAR EXPRESSION TABLES</b>
-       This section describes how the table lookups change when the  table  is
-       given  in the form of regular expressions. For a description of regular
-       expression lookup table syntax, see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a>  or  <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
+       This  section  describes how the table lookups change when the table is
+       given in the form of regular expressions. For a description of  regular
+       expression  lookup  table syntax, see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
        NOTE: these formats do not use ":" at the end of a pattern.
 
        Each regular expression is applied to the entire search string. Thus, a
@@ -122,21 +126,21 @@ ALIASES(5)                                                          ALIASES(5)
        reasons there is no support for <b>$1</b>, <b>$2</b> etc. substring interpolation.
 
 <b>SECURITY</b>
-       The <a href="local.8.html"><b>local</b>(8)</a> delivery agent disallows regular  expression  substitution
+       The  <a href="local.8.html"><b>local</b>(8)</a>  delivery agent disallows regular expression substitution
        of $1 etc. in <b><a href="postconf.5.html#alias_maps">alias_maps</a></b>, because that would open a security hole.
 
-       The  <a href="local.8.html"><b>local</b>(8)</a>  delivery  agent will silently ignore requests to use the
-       <a href="proxymap.8.html"><b>proxymap</b>(8)</a> server within <b><a href="postconf.5.html#alias_maps">alias_maps</a></b>. Instead it will  open  the  table
+       The <a href="local.8.html"><b>local</b>(8)</a> delivery agent will silently ignore requests  to  use  the
+       <a href="proxymap.8.html"><b>proxymap</b>(8)</a>  server  within  <b><a href="postconf.5.html#alias_maps">alias_maps</a></b>. Instead it will open the table
        directly.  Before Postfix version 2.2, the <a href="local.8.html"><b>local</b>(8)</a> delivery agent will
        terminate with a fatal error.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are  especially  relevant.   The  text
-       below  provides  only  a  parameter  summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a>  parameters  are especially relevant.  The text
+       below provides only a  parameter  summary.  See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for  more
        details including examples.
 
        <b><a href="postconf.5.html#alias_database">alias_database</a> (see 'postconf -d' output)</b>
-              The alias databases for <a href="local.8.html"><b>local</b>(8)</a> delivery that are updated  with
+              The  alias databases for <a href="local.8.html"><b>local</b>(8)</a> delivery that are updated with
               "<b>newaliases</b>" or with "<b>sendmail -bi</b>".
 
        <b><a href="postconf.5.html#alias_maps">alias_maps</a> (see 'postconf -d' output)</b>
@@ -149,30 +153,30 @@ ALIASES(5)                                                          ALIASES(5)
               Restrict <a href="local.8.html"><b>local</b>(8)</a> mail delivery to external files.
 
        <b><a href="postconf.5.html#expand_owner_alias">expand_owner_alias</a> (no)</b>
-              When   delivering   to   an   alias   "<i>aliasname</i>"  that  has  an
+              When  delivering  to  an   alias   "<i>aliasname</i>"   that   has   an
               "owner-<i>aliasname</i>"  companion  alias,  set  the  envelope  sender
               address to the expansion of the "owner-<i>aliasname</i>" alias.
 
        <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a> (canonical, virtual)</b>
-              What  address  lookup  tables copy an address extension from the
+              What address lookup tables copy an address  extension  from  the
               lookup key to the lookup result.
 
        <b><a href="postconf.5.html#owner_request_special">owner_request_special</a> (yes)</b>
-              Enable special  treatment  for  owner-<i>listname</i>  entries  in  the
+              Enable  special  treatment  for  owner-<i>listname</i>  entries  in the
               <a href="aliases.5.html"><b>aliases</b>(5)</a>  file,  and  don't  split  owner-<i>listname</i>  and  <i>list-</i>
-              <i>name</i>-request address localparts when the <a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a>  is
+              <i>name</i>-request  address localparts when the <a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> is
               set to "-".
 
        <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> (empty)</b>
-              The  set of characters that can separate an email address local-
+              The set of characters that can separate an email address  local-
               part, user name, or a .forward file name from its extension.
 
        Available in Postfix version 2.3 and later:
 
        <b><a href="postconf.5.html#frozen_delivered_to">frozen_delivered_to</a> (yes)</b>
-              Update the <a href="local.8.html"><b>local</b>(8)</a> delivery agent's idea of  the  Delivered-To:
-              address  (see  <a href="postconf.5.html#prepend_delivered_header">prepend_delivered_header</a>) only once, at the start
-              of a delivery attempt; do not update the  Delivered-To:  address
+              Update  the  <a href="local.8.html"><b>local</b>(8)</a> delivery agent's idea of the Delivered-To:
+              address (see <a href="postconf.5.html#prepend_delivered_header">prepend_delivered_header</a>) only once, at  the  start
+              of  a  delivery attempt; do not update the Delivered-To: address
               while expanding aliases or .forward files.
 
 <b>STANDARDS</b>
