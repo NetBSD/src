@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.53 2023/10/12 11:33:37 skrll Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.54 2023/12/23 23:00:09 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.53 2023/10/12 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.54 2023/12/23 23:00:09 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -407,7 +407,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: %ld pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 #endif
 
