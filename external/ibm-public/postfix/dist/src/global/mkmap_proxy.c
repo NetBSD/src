@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap_proxy.c,v 1.1.1.2 2023/12/23 20:24:55 christos Exp $	*/
+/*	$NetBSD: mkmap_proxy.c,v 1.2 2023/12/23 20:30:43 christos Exp $	*/
 
 /*++
 /* NAME

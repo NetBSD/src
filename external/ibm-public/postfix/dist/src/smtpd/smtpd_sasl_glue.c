@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_glue.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
+/*	$NetBSD: smtpd_sasl_glue.c,v 1.5 2023/12/23 20:30:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -342,9 +342,11 @@ int     smtpd_sasl_authenticate(SMTPD_STATE *state,
 	}
     }
     if (status != XSASL_AUTH_DONE) {
-	msg_warn("%s: SASL %s authentication failed: %s",
-		 state->namaddr, sasl_method,
-		 STR(state->sasl_reply));
+	sasl_username = xsasl_server_get_username(state->sasl_server);
+	msg_warn("%s: SASL %.100s authentication failed: %s, sasl_username=%.100s",
+		 state->namaddr, sasl_method, *STR(state->sasl_reply) ?
+		 STR(state->sasl_reply) : "(reason unavailable)",
+		 sasl_username ? sasl_username : "(unavailable)");
 	/* RFC 4954 Section 6. */
 	if (status == XSASL_AUTH_TEMP)
 	    smtpd_chat_reply(state, "454 4.7.0 Temporary authentication failure: %s",

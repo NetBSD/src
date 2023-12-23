@@ -1,4 +1,4 @@
-/*	$NetBSD: sock_addr.h,v 1.1.1.2 2023/12/23 20:24:59 christos Exp $	*/
+/*	$NetBSD: sock_addr.h,v 1.2 2023/12/23 20:30:46 christos Exp $	*/
 
 #ifndef _SOCK_ADDR_EQ_H_INCLUDED_
 #define _SOCK_ADDR_EQ_H_INCLUDED_

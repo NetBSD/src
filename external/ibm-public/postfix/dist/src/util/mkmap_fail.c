@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap_fail.c,v 1.1.1.1 2023/12/23 20:24:59 christos Exp $	*/
+/*	$NetBSD: mkmap_fail.c,v 1.2 2023/12/23 20:30:46 christos Exp $	*/
 
 /*++
 /* NAME

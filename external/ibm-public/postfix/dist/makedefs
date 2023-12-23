@@ -206,6 +206,10 @@ do
     esac
 done || exit 1
 
+# Suggest a fix for systems without grep -E or -F flags.
+(echo foo | grep -E foo 2>/dev/null | grep -F foo >/dev/null 2>/dev/null) || 
+    error "No grep -[EF] support. See auxiliary/fix-grep for a conversion tool."
+
 # Emit system-dependent Makefile macro definitions to standard output.
 
 echo "#----------------------------------------------------------------"
@@ -627,7 +631,8 @@ EOF
 		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
 		: ${PLUGIN_LD="${CC-gcc} -shared"}
 		;;
- Linux.[345].*)	SYSTYPE=LINUX$RELEASE_MAJOR
+    Linux.[3456].*)
+		SYSTYPE=LINUX$RELEASE_MAJOR
 		case "$CCARGS" in
 		 *-DNO_DB*) ;;
 		 *-DHAS_DB*) ;;
@@ -769,6 +774,12 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
 		?.*|10.*) ;;
 		       *) SYSLIBS="$SYSLIBS -lresolv";;
 		esac
+		# Darwin 21 linker without additional coaxing complains about
+		# -Wl,-undefined,dynamic_lookup
+		case $RELEASE in
+		2[1-9].*|[3-9]?.*) NOFIXUP="-Wl,-no_fixup_chains ";;
+				*) NOFIXUP="";;
+		esac
 		# kqueue and/or poll are broken in MacOS X 10.5 (Darwin 9).
 		# kqueue works in Mac OS X 10.8 (Darwin 12).
 		case $RELEASE in
@@ -776,12 +787,12 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
 		esac
 		: ${SHLIB_CFLAGS=-fPIC}
 		: ${SHLIB_SUFFIX=.dylib}
-		: ${SHLIB_LD='cc -shared -Wl,-flat_namespace -Wl,-undefined,dynamic_lookup -Wl,-install_name,@rpath/${LIB}'}
+		: ${SHLIB_LD="cc -shared -Wl,-flat_namespace ${NOFIXUP}-Wl,-undefined,dynamic_lookup "'-Wl,-install_name,@rpath/${LIB}'}
 		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
                 # In MacOS/X 10.11.x /bin/sh unsets DYLD_LIBRARY_PATH, so we
                 # have export it into postfix-install indirectly!
 		: ${SHLIB_ENV="DYLD_LIBRARY_PATH=`pwd`/lib SHLIB_ENV_VAR=DYLD_LIBRARY_PATH SHLIB_ENV_VAL=`pwd`/lib"}
-		: ${PLUGIN_LD='cc -shared -Wl,-flat_namespace -Wl,-undefined,dynamic_lookup'}
+		: ${PLUGIN_LD="cc -shared -Wl,-flat_namespace ${NOFIXUP}-Wl,-undefined,dynamic_lookup"}
 		;;
     dcosx.1*)	SYSTYPE=DCOSX1
 		RANLIB=echo

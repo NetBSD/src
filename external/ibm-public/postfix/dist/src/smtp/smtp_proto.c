@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_proto.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
+/*	$NetBSD: smtp_proto.c,v 1.5 2023/12/23 20:30:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -1148,10 +1148,10 @@ static void smtp_hbc_logger(void *context, const char *action,
     const SMTP_STATE *state = (SMTP_STATE *) context;
 
     if (*text) {
-	msg_info("%s: %s: %s %.60s: %s",
+	msg_info("%s: %s: %s %.200s: %s",
 		 state->request->queue_id, action, where, content, text);
     } else {
-	msg_info("%s: %s: %s %.60s",
+	msg_info("%s: %s: %s %.200s",
 		 state->request->queue_id, action, where, content);
     }
 }

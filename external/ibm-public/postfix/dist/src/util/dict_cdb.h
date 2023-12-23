@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cdb.h,v 1.1.1.2 2023/12/23 20:24:58 christos Exp $	*/
+/*	$NetBSD: dict_cdb.h,v 1.2 2023/12/23 20:30:46 christos Exp $	*/
 
 #ifndef _DICT_CDB_H_INCLUDED_
 #define _DICT_CDB_H_INCLUDED_

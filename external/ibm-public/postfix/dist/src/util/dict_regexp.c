@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_regexp.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: dict_regexp.c,v 1.5 2023/12/23 20:30:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -18,7 +18,7 @@
 /*	against the table.
 /* SEE ALSO
 /*	dict(3) generic dictionary manager
-/*	regexp_table(5) format of Postfix regular expression tables
+/*	regexp_table(5) regular expression table configuration
 /* AUTHOR(S)
 /*	LaMont Jones
 /*	lamont@hp.com

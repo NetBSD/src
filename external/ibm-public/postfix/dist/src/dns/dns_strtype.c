@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_strtype.c,v 1.1.1.3 2023/12/23 20:24:54 christos Exp $	*/
+/*	$NetBSD: dns_strtype.c,v 1.2 2023/12/23 20:30:43 christos Exp $	*/
 
 /*++
 /* NAME
