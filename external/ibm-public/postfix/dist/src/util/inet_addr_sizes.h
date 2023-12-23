@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_sizes.h,v 1.1.1.1 2023/12/23 20:24:59 christos Exp $	*/
+/*	$NetBSD: inet_addr_sizes.h,v 1.2 2023/12/23 20:30:46 christos Exp $	*/
 
 #ifndef _INET_ADDR_SIZES_H_INCLUDED_
 #define _INET_ADDR_SIZES_H_INCLUDED_

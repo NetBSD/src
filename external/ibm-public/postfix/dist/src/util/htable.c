@@ -1,4 +1,4 @@
-/*	$NetBSD: htable.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: htable.c,v 1.4 2023/12/23 20:30:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -139,7 +139,7 @@
 #ifndef NO_HASH_FNV
 #include "hash_fnv.h"
 
-#define htable_hash(s, size) (hash_fnv((s), strlen(s)) % (size))
+#define htable_hash(s, size) (hash_fnvz(s) % (size))
 
 #else
 
