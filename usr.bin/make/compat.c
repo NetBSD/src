@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.248 2023/12/19 19:33:39 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.249 2023/12/24 16:48:30 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.248 2023/12/19 19:33:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.249 2023/12/24 16:48:30 sjg Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -275,11 +275,9 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 			silent = !DEBUG(LOUD);
 		else if (*cmd == '-')
 			errCheck = false;
-		else if (*cmd == '+') {
+		else if (*cmd == '+')
 			doIt = true;
-			if (shellName == NULL)	/* we came here from jobs */
-				Shell_Init();
-		} else if (!ch_isspace(*cmd))
+		else if (!ch_isspace(*cmd))
 			/* Ignore whitespace for compatibility with gnu make */
 			break;
 		cmd++;
@@ -301,6 +299,9 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 		return true;
 
 	DEBUG1(JOB, "Execute: '%s'\n", cmd);
+
+	if (useShell && shellPath == NULL)
+		Shell_Init();		/* we need shellPath */
 
 	if (useShell) {
 		static const char *shargv[5];
