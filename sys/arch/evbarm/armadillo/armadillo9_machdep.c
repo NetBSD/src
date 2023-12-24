@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.38 2022/07/03 19:58:42 andvar Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.39 2023/12/24 11:42:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.38 2022/07/03 19:58:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.39 2023/12/24 11:42:35 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -544,7 +544,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: %ld pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 #endif
 
@@ -903,7 +903,7 @@ consinit(void)
 #if KGDB
 #if NEPCOM > 0
 	if (strcmp(kgdb_devname, "epcom") == 0) {
-		com_kgdb_attach(&ep93xx_bs_tag, kgdb_devaddr, kgdb_devrate,
+		epcom_kgdb_attach(&ep93xx_bs_tag, kgdb_devaddr, kgdb_devrate,
 			kgdb_devmode);
 	}
 #endif	/* NEPCOM > 0 */
