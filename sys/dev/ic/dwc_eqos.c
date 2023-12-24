@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.34 2023/11/13 15:07:19 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.35 2023/12/24 16:12:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -35,10 +35,8 @@
  *	Add detach function.
  */
 
-#include "opt_net_mpsafe.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.34 2023/11/13 15:07:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.35 2023/12/24 16:12:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,12 +82,7 @@ unsigned int eqos_debug;	/* Default value */
 #define	DPRINTF(FLAG, FORMAT, ...)	((void)0)
 #endif
 
-#ifdef NET_MPSAFE
-#define	EQOS_MPSAFE		1
 #define	CALLOUT_FLAGS		CALLOUT_MPSAFE
-#else
-#define	CALLOUT_FLAGS		0
-#endif
 
 #define	DESC_BOUNDARY		((sizeof(bus_size_t) > 4) ? (1ULL << 32) : 0)
 #define	DESC_ALIGN		sizeof(struct eqos_dma_desc)
@@ -462,19 +455,12 @@ eqos_tick(void *softc)
 {
 	struct eqos_softc * const sc = softc;
 	struct mii_data * const mii = &sc->sc_mii;
-#ifndef EQOS_MPSAFE
-	int s = splnet();
-#endif
 
 	EQOS_LOCK(sc);
 	mii_tick(mii);
 	if (sc->sc_running)
 		callout_schedule(&sc->sc_stat_ch, hz);
 	EQOS_UNLOCK(sc);
-
-#ifndef EQOS_MPSAFE
-	splx(s);
-#endif
 }
 
 static uint32_t
@@ -493,7 +479,7 @@ static void
 eqos_setup_rxfilter(struct eqos_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ec;
-	struct ifnet *ifp = &ec->ec_if;
+	struct ifnet * const ifp = &ec->ec_if;
 	uint32_t pfil, crc, hashreg, hashbit, hash[2];
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -1144,6 +1130,8 @@ eqos_intr(void *arg)
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	uint32_t mac_status, mtl_status, dma_status, rx_tx_status;
 
+	EQOS_LOCK(sc);
+
 	sc->sc_ev_intr.ev_count++;
 
 	mac_status = RD4(sc, GMAC_MAC_INTERRUPT_STATUS);
@@ -1164,7 +1152,6 @@ eqos_intr(void *arg)
 		WR4(sc, GMAC_DMA_CHAN0_STATUS, dma_status);
 	}
 
-	EQOS_LOCK(sc);
 	if ((dma_status & GMAC_DMA_CHAN0_STATUS_RI) != 0) {
 		eqos_rxintr(sc, 0);
 		sc->sc_ev_rxintr.ev_count++;
@@ -1177,13 +1164,14 @@ eqos_intr(void *arg)
 		if_schedule_deferred_start(ifp);
 		sc->sc_ev_txintr.ev_count++;
 	}
+	rx_tx_status = RD4(sc, GMAC_MAC_RX_TX_STATUS);
+
 	EQOS_UNLOCK(sc);
 
 	if ((mac_status | mtl_status | dma_status) == 0) {
 		DPRINTF(EDEB_NOTE, "spurious interrupt?!\n");
 	}
 
-	rx_tx_status = RD4(sc, GMAC_MAC_RX_TX_STATUS);
 	if (rx_tx_status) {
 		sc->sc_ev_status.ev_count++;
 		if ((rx_tx_status & GMAC_MAC_RX_TX_STATUS_RWT) != 0)
@@ -1212,15 +1200,19 @@ static int
 eqos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct eqos_softc * const sc = ifp->if_softc;
-	struct ifreq * const ifr = (struct ifreq *)data;
-	int error, s;
-
-#ifndef EQOS_MPSAFE
-	s = splnet();
-#endif
+	int error;
 
 	switch (cmd) {
-	case SIOCSIFMTU:
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+	default:
+		KASSERT(IFNET_LOCKED(ifp));
+	}
+
+	switch (cmd) {
+	case SIOCSIFMTU: {
+		struct ifreq * const ifr = (struct ifreq *)data;
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > EQOS_MAX_MTU) {
 			error = EINVAL;
 		} else {
@@ -1228,14 +1220,12 @@ eqos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;	/* no need ENETRESET */
 		}
 		break;
-	default:
-#ifdef EQOS_MPSAFE
-		s = splnet();
-#endif
+	    }
+	default: {
+		const int s = splnet();
 		error = ether_ioctl(ifp, cmd, data);
-#ifdef EQOS_MPSAFE
 		splx(s);
-#endif
+
 		if (error != ENETRESET)
 			break;
 
@@ -1243,20 +1233,15 @@ eqos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 		if (cmd == SIOCSIFCAP)
 			error = (*ifp->if_init)(ifp);
-		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
-			;
-		else {
+		else if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
 			EQOS_LOCK(sc);
 			if (sc->sc_running)
 				eqos_setup_rxfilter(sc);
 			EQOS_UNLOCK(sc);
 		}
 		break;
+	    }
 	}
-
-#ifndef EQOS_MPSAFE
-	splx(s);
-#endif
 
 	return error;
 }
@@ -1538,7 +1523,7 @@ eqos_attach(struct eqos_softc *sc)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&sc->sc_txlock, MUTEX_DEFAULT, IPL_NET);
-	callout_init(&sc->sc_stat_ch, CALLOUT_FLAGS);
+	callout_init(&sc->sc_stat_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_stat_ch, eqos_tick, sc);
 
 	eqos_get_eaddr(sc, eaddr);
@@ -1568,9 +1553,7 @@ eqos_attach(struct eqos_softc *sc)
 	ifp->if_softc = sc;
 	snprintf(ifp->if_xname, IFNAMSIZ, "%s", device_xname(sc->sc_dev));
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-#ifdef EQOS_MPSAFE
 	ifp->if_extflags = IFEF_MPSAFE;
-#endif
 	ifp->if_start = eqos_start;
 	ifp->if_ioctl = eqos_ioctl;
 	ifp->if_init = eqos_init;
