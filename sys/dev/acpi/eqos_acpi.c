@@ -1,4 +1,4 @@
-/* $NetBSD: eqos_acpi.c,v 1.1 2022/01/03 17:19:41 jmcneill Exp $ */
+/* $NetBSD: eqos_acpi.c,v 1.2 2023/12/24 16:12:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_net_mpsafe.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eqos_acpi.c,v 1.1 2022/01/03 17:19:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eqos_acpi.c,v 1.2 2023/12/24 16:12:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,12 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: eqos_acpi.c,v 1.1 2022/01/03 17:19:41 jmcneill Exp $
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
-
-#ifdef NET_MPSAFE
-#define	EQOS_INTR_MPSAFE	true
-#else
-#define	EQOS_INTR_MPSAFE	false
-#endif
 
 #define	CSR_RATE_RGMII		125000000
 
@@ -132,7 +124,7 @@ eqos_acpi_attach(device_t parent, device_t self, void *aux)
 		goto done;
 
         ih = acpi_intr_establish(self, (uint64_t)(uintptr_t)handle, IPL_NET,
-	    EQOS_INTR_MPSAFE, eqos_intr, sc, device_xname(self));
+	    true, eqos_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		goto done;
