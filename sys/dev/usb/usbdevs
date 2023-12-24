@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.810 2023/12/11 13:33:35 mlelstv Exp $
+$NetBSD: usbdevs,v 1.811 2023/12/24 02:42:51 gutteridge Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2922,6 +2922,7 @@ product REALTEK RTL8712		0x8712	RTL8712
 product REALTEK RTL8713		0x8713	RTL8713
 product REALTEK RTL8188CU_COMBO	0x8754	RTL8188CU
 product REALTEK RTL8192SU	0xc512	RTL8192SU
+product REALTEK RTL8188FU	0xf179	RTL8188FU
 
 /* Research In Motion */
 product RIM BLACKBERRY			0x0001	BlackBerry
