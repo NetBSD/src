@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.142 2023/03/06 05:54:34 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.143 2023/12/25 02:28:47 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.142 2023/03/06 05:54:34 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.143 2023/12/25 02:28:47 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,7 +465,8 @@ exptilde(const char *p, int flag)
 	if (home == NULL) {
 		CTRACE(DBG_EXPAND, (": returning unused \"%s\"\n", startp));
 		return startp;
-	} while ((c = *home++) != '\0') {
+	}
+	while ((c = *home++) != '\0') {
 		if ((quotes && NEEDESC(c)) || ISCTL(c))
 			STPUTC(CTLESC, expdest);
 		STPUTC(c, expdest);
