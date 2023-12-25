@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.5 2022/10/08 16:12:49 christos Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.5.2.1 2023/12/25 12:43:35 martin Exp $	*/
 
 /*++
 /* NAME
@@ -255,6 +255,7 @@
 #include <attr_override.h>
 #include <map_search.h>
 #include <info_log_addr_form.h>
+#include <mail_version.h>
 
 /* Application-specific. */
 
@@ -3066,8 +3067,8 @@ static int check_server_access(SMTPD_STATE *state, const char *table,
 	|| type == T_AAAA
 #endif
 	) {
-	server_list = dns_rr_create(domain, domain, T_MX, C_IN, 0, 0,
-				    domain, strlen(domain) + 1);
+	server_list = dns_rr_create_nopref(domain, domain, T_MX, C_IN, 0,
+					   domain, strlen(domain) + 1);
     } else {
 	dns_status = dns_lookup(domain, type, 0, &server_list,
 				(VSTRING *) 0, (VSTRING *) 0);
@@ -3075,8 +3076,8 @@ static int check_server_access(SMTPD_STATE *state, const char *table,
 	    return (SMTPD_CHECK_DUNNO);
 	if (dns_status == DNS_NOTFOUND /* Not: h_errno == NO_DATA */ ) {
 	    if (type == T_MX) {
-		server_list = dns_rr_create(domain, domain, type, C_IN, 0, 0,
-					    domain, strlen(domain) + 1);
+		server_list = dns_rr_create_nopref(domain, domain, type, C_IN,
+					     0, domain, strlen(domain) + 1);
 		dns_status = DNS_OK;
 	    } else if (type == T_NS /* && h_errno == NO_DATA */ ) {
 		while ((domain = strchr(domain, '.')) != 0 && domain[1]) {
@@ -4101,6 +4102,10 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
 #endif
 			  SEND_ATTR_STR(MAIL_ATTR_POL_CONTEXT,
 					policy_clnt->policy_context),
+			  SEND_ATTR_STR(MAIL_ATTR_COMPAT_LEVEL,
+					var_compatibility_level),
+			  SEND_ATTR_STR(MAIL_ATTR_MAIL_VERSION,
+					var_mail_version),
 			  ATTR_TYPE_END,
 			  ATTR_FLAG_MISSING,	/* Reply attributes. */
 			  RECV_ATTR_STR(MAIL_ATTR_ACTION, action),
@@ -5807,6 +5812,8 @@ bool    var_smtpd_peername_lookup;
 bool    var_smtpd_client_port_log;
 char   *var_smtpd_dns_re_filter;
 bool    var_smtpd_tls_ask_ccert;
+int     var_smtpd_cipv4_prefix;
+int     var_smtpd_cipv6_prefix;
 
 #define int_table test_int_table
 
@@ -5842,6 +5849,8 @@ static const INT_TABLE int_table[] = {
     VAR_SMTPD_PEERNAME_LOOKUP, DEF_SMTPD_PEERNAME_LOOKUP, &var_smtpd_peername_lookup,
     VAR_SMTPD_CLIENT_PORT_LOG, DEF_SMTPD_CLIENT_PORT_LOG, &var_smtpd_client_port_log,
     VAR_SMTPD_TLS_ACERT, DEF_SMTPD_TLS_ACERT, &var_smtpd_tls_ask_ccert,
+    VAR_SMTPD_CIPV4_PREFIX, DEF_SMTPD_CIPV4_PREFIX, &var_smtpd_cipv4_prefix,
+    VAR_SMTPD_CIPV6_PREFIX, DEF_SMTPD_CIPV6_PREFIX, &var_smtpd_cipv6_prefix,
     0,
 };
 

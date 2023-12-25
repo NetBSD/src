@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2022/10/08 16:12:51 christos Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2023/12/25 12:43:39 martin Exp $
 
 LIBISPRIVATE=	yes
 
@@ -112,14 +112,7 @@ mbox_open.c \
 memcache_proto.c \
 midna_adomain.c \
 mime_state.c \
-mkmap_cdb.c \
-mkmap_db.c \
-mkmap_dbm.c \
-mkmap_fail.c \
-mkmap_lmdb.c \
-mkmap_open.c \
 mkmap_proxy.c \
-mkmap_sdbm.c \
 msg_stats_print.c \
 msg_stats_scan.c \
 mynetworks.c \

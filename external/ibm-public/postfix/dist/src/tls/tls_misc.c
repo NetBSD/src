@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.4.2.1 2023/12/25 12:43:36 martin Exp $	*/
 
 /*++
 /* NAME
@@ -31,14 +31,15 @@
 /*	#define TLS_INTERNAL
 /*	#include <tls.h>
 /*
+/*	char	*var_tls_cnf_file;
+/*	char	*var_tls_cnf_name;
 /*	char	*var_tls_high_clist;
 /*	char	*var_tls_medium_clist;
-/*	char	*var_tls_low_clist;
-/*	char	*var_tls_export_clist;
 /*	char	*var_tls_null_clist;
 /*	char	*var_tls_eecdh_auto;
 /*	char	*var_tls_eecdh_strong;
 /*	char	*var_tls_eecdh_ultra;
+/*	char	*var_tls_ffdhe_auto;
 /*	char	*var_tls_dane_digests;
 /*	int	var_tls_daemon_rand_bytes;
 /*	bool	var_tls_append_def_CA;
@@ -70,6 +71,8 @@
 /*	long	tls_bug_bits()
 /*
 /*	void	tls_param_init()
+/*
+/*	int     tls_library_init(void)
 /*
 /*	int	tls_proto_mask_lims(plist, floor, ceiling)
 /*	const char *plist;
@@ -159,6 +162,9 @@
 /*	tls_param_init() loads main.cf parameters used internally in
 /*	TLS library. Any errors are fatal.
 /*
+/*	tls_library_init() initializes the OpenSSL library, optionally
+/*	loading an OpenSSL configuration file.
+/*
 /*	tls_pre_jail_init() opens any tables that need to be opened before
 /*	entering a chroot jail. The "role" parameter must be TLS_ROLE_CLIENT
 /*	for clients and TLS_ROLE_SERVER for servers. Any errors are fatal.
@@ -170,11 +176,10 @@
 /*	contains invalid protocol names, TLS_PROTOCOL_INVALID is returned and
 /*	no warning is logged.
 /*
-/*	tls_cipher_grade() converts a case-insensitive cipher grade
-/*	name (high, medium, low, export, null) to the corresponding
-/*	TLS_CIPHER_ constant.  When the input specifies an unrecognized
-/*	grade, tls_cipher_grade() logs no warning, and returns
-/*	TLS_CIPHER_NONE.
+/*	tls_cipher_grade() converts a case-insensitive cipher grade name (high,
+/*	medium, null) to the corresponding TLS_CIPHER_ constant.  When the
+/*	input specifies an unrecognized grade, tls_cipher_grade() logs no
+/*	warning, and returns TLS_CIPHER_NONE.
 /*
 /*	str_tls_cipher_grade() converts a cipher grade to a name.
 /*	When the input specifies an undefined grade, str_tls_cipher_grade()
@@ -278,15 +283,18 @@
  /*
   * Tunable parameters.
   */
+char   *var_tls_cnf_file;
+char   *var_tls_cnf_name;
 char   *var_tls_high_clist;
 char   *var_tls_medium_clist;
-char   *var_tls_low_clist;
-char   *var_tls_export_clist;
+char   *var_tls_low_ignored;
+char   *var_tls_export_ignored;
 char   *var_tls_null_clist;
 int     var_tls_daemon_rand_bytes;
 char   *var_tls_eecdh_auto;
 char   *var_tls_eecdh_strong;
 char   *var_tls_eecdh_ultra;
+char   *var_tls_ffdhe_auto;
 char   *var_tls_dane_digests;
 bool    var_tls_append_def_CA;
 char   *var_tls_bug_tweaks;
@@ -498,8 +506,8 @@ static const LONG_NAME_MASK ssl_op_tweaks[] = {
 const NAME_CODE tls_cipher_grade_table[] = {
     "high", TLS_CIPHER_HIGH,
     "medium", TLS_CIPHER_MEDIUM,
-    "low", TLS_CIPHER_LOW,
-    "export", TLS_CIPHER_EXPORT,
+    "low", TLS_CIPHER_MEDIUM,
+    "export", TLS_CIPHER_MEDIUM,
     "null", TLS_CIPHER_NULL,
     "invalid", TLS_CIPHER_NONE,
     0, TLS_CIPHER_NONE,
@@ -646,14 +654,17 @@ void    tls_param_init(void)
 {
     /* If this changes, update TLS_CLIENT_PARAMS in tls_proxy.h. */
     static const CONFIG_STR_TABLE str_table[] = {
+	VAR_TLS_CNF_FILE, DEF_TLS_CNF_FILE, &var_tls_cnf_file, 0, 0,
+	VAR_TLS_CNF_NAME, DEF_TLS_CNF_NAME, &var_tls_cnf_name, 0, 0,
 	VAR_TLS_HIGH_CLIST, DEF_TLS_HIGH_CLIST, &var_tls_high_clist, 1, 0,
 	VAR_TLS_MEDIUM_CLIST, DEF_TLS_MEDIUM_CLIST, &var_tls_medium_clist, 1, 0,
-	VAR_TLS_LOW_CLIST, DEF_TLS_LOW_CLIST, &var_tls_low_clist, 1, 0,
-	VAR_TLS_EXPORT_CLIST, DEF_TLS_EXPORT_CLIST, &var_tls_export_clist, 1, 0,
+	VAR_TLS_LOW_CLIST, DEF_TLS_LOW_CLIST, &var_tls_low_ignored, 0, 0,
+	VAR_TLS_EXPORT_CLIST, DEF_TLS_EXPORT_CLIST, &var_tls_export_ignored, 0, 0,
 	VAR_TLS_NULL_CLIST, DEF_TLS_NULL_CLIST, &var_tls_null_clist, 1, 0,
-	VAR_TLS_EECDH_AUTO, DEF_TLS_EECDH_AUTO, &var_tls_eecdh_auto, 1, 0,
+	VAR_TLS_EECDH_AUTO, DEF_TLS_EECDH_AUTO, &var_tls_eecdh_auto, 0, 0,
 	VAR_TLS_EECDH_STRONG, DEF_TLS_EECDH_STRONG, &var_tls_eecdh_strong, 1, 0,
 	VAR_TLS_EECDH_ULTRA, DEF_TLS_EECDH_ULTRA, &var_tls_eecdh_ultra, 1, 0,
+	VAR_TLS_FFDHE_AUTO, DEF_TLS_FFDHE_AUTO, &var_tls_ffdhe_auto, 0, 0,
 	VAR_TLS_BUG_TWEAKS, DEF_TLS_BUG_TWEAKS, &var_tls_bug_tweaks, 0, 0,
 	VAR_TLS_SSL_OPTIONS, DEF_TLS_SSL_OPTIONS, &var_tls_ssl_options, 0, 0,
 	VAR_TLS_DANE_DIGESTS, DEF_TLS_DANE_DIGESTS, &var_tls_dane_digests, 1, 0,
@@ -687,6 +698,118 @@ void    tls_param_init(void)
     get_mail_conf_str_table(str_table);
     get_mail_conf_int_table(int_table);
     get_mail_conf_bool_table(bool_table);
+}
+
+/* tls_library_init - perform OpenSSL library initialization */
+
+int     tls_library_init(void)
+{
+    OPENSSL_INIT_SETTINGS *init_settings;
+    char   *conf_name = *var_tls_cnf_name ? var_tls_cnf_name : 0;
+    char   *conf_file = 0;
+    unsigned long init_opts = 0;
+
+#define TLS_LIB_INIT_TODO	(-1)
+#define TLS_LIB_INIT_ERR	(0)
+#define TLS_LIB_INIT_OK		(1)
+
+    static int init_res = TLS_LIB_INIT_TODO;
+
+    if (init_res != TLS_LIB_INIT_TODO)
+	return (init_res);
+
+    /*
+     * Backwards compatibility: skip this function unless the Postfix
+     * configuration actually has non-default tls_config_xxx settings.
+     */
+    if (strcmp(var_tls_cnf_file, DEF_TLS_CNF_FILE) == 0
+	&& strcmp(var_tls_cnf_name, DEF_TLS_CNF_NAME) == 0) {
+	if (msg_verbose)
+	    msg_info("tls_library_init: using backwards-compatible defaults");
+	return (init_res = TLS_LIB_INIT_OK);
+    }
+    if ((init_settings = OPENSSL_INIT_new()) == 0) {
+	msg_warn("error allocating OpenSSL init settings, "
+		 "disabling TLS support");
+	return (init_res = TLS_LIB_INIT_ERR);
+    }
+#define TLS_LIB_INIT_RETURN(x) \
+    do { OPENSSL_INIT_free(init_settings); return (init_res = (x)); } while(0)
+
+#if OPENSSL_VERSION_NUMBER < 0x1010102fL
+
+    /*
+     * OpenSSL 1.1.0 through 1.1.1a, no support for custom configuration
+     * files, disabling loading of the file, or getting strict error
+     * handling.  Thus, the only supported configuration file is "default".
+     */
+    if (strcmp(var_tls_cnf_file, "default") != 0) {
+	msg_warn("non-default %s = %s requires OpenSSL 1.1.1b or later, "
+	       "disabling TLS support", VAR_TLS_CNF_FILE, var_tls_cnf_file);
+	TLS_LIB_INIT_RETURN(TLS_LIB_INIT_ERR);
+    }
+#else
+    {
+	unsigned long file_flags = 0;
+
+	/*-
+	 * OpenSSL 1.1.1b or later:
+	 * We can now use a non-default configuration file, or
+	 * use none at all.  We can also request strict error
+	 * reporting.
+	 */
+	if (strcmp(var_tls_cnf_file, "none") == 0) {
+	    init_opts |= OPENSSL_INIT_NO_LOAD_CONFIG;
+	} else if (strcmp(var_tls_cnf_file, "default") == 0) {
+
+	    /*
+	     * The default global config file is optional.  With "default"
+	     * initialisation we don't insist on a match for the requested
+	     * application name, allowing fallback to the default application
+	     * name, even when a non-default application name is specified.
+	     * Errors in loading the default configuration are ignored.
+	     */
+	    conf_file = 0;
+	    file_flags |= CONF_MFLAGS_IGNORE_MISSING_FILE;
+	    file_flags |= CONF_MFLAGS_DEFAULT_SECTION;
+	    file_flags |= CONF_MFLAGS_IGNORE_RETURN_CODES | CONF_MFLAGS_SILENT;
+	} else if (*var_tls_cnf_file == '/') {
+
+	    /*
+	     * A custom config file must be present, error reporting is
+	     * strict and the configuration section for the requested
+	     * application name does not fall back to "openssl_conf" when
+	     * missing.
+	     */
+	    conf_file = var_tls_cnf_file;
+	} else {
+	    msg_warn("non-default %s = %s is not an absolute pathname, "
+	       "disabling TLS support", VAR_TLS_CNF_FILE, var_tls_cnf_file);
+	    TLS_LIB_INIT_RETURN(TLS_LIB_INIT_ERR);
+	}
+
+	OPENSSL_INIT_set_config_file_flags(init_settings, file_flags);
+    }
+#endif
+
+    if (conf_file)
+	OPENSSL_INIT_set_config_filename(init_settings, conf_file);
+    if (conf_name)
+	OPENSSL_INIT_set_config_appname(init_settings, conf_name);
+
+    if (OPENSSL_init_ssl(init_opts, init_settings) <= 0) {
+	if ((init_opts & OPENSSL_INIT_NO_LOAD_CONFIG) == 0)
+	    msg_warn("error loading the '%s' settings from the %s OpenSSL "
+		     "configuration file, disabling TLS support",
+		     conf_name ? conf_name : "global",
+		     conf_file ? conf_file : "default");
+	else
+	    msg_warn("error initializing the OpenSSL library, "
+		     "disabling TLS support");
+	tls_print_errors();
+	TLS_LIB_INIT_RETURN(TLS_LIB_INIT_ERR);
+    }
+    TLS_LIB_INIT_RETURN(TLS_LIB_INIT_OK);
 }
 
 /* tls_pre_jail_init - Load TLS related pre-jail tables */
@@ -814,12 +937,6 @@ const char *tls_set_ciphers(TLS_SESS_STATE *TLScontext, const char *grade,
 	break;
     case TLS_CIPHER_MEDIUM:
 	vstring_strcpy(buf, var_tls_medium_clist);
-	break;
-    case TLS_CIPHER_LOW:
-	vstring_strcpy(buf, var_tls_low_clist);
-	break;
-    case TLS_CIPHER_EXPORT:
-	vstring_strcpy(buf, var_tls_export_clist);
 	break;
     case TLS_CIPHER_NULL:
 	vstring_strcpy(buf, var_tls_null_clist);
@@ -1371,6 +1488,12 @@ long    tls_bug_bits(void)
      * options just in case.
      */
     bits |= SSL_OP_SINGLE_ECDH_USE | SSL_OP_SINGLE_DH_USE;
+
+    /*
+     * Unconditionally disable a CPU resource attack. There's no good reason
+     * to enable TLS renegotiation in the middle of an SMTP connection.
+     */
+    bits |= SSL_OP_NO_RENEGOTIATION;
     return (bits);
 }
 
@@ -1571,25 +1694,13 @@ long    tls_bio_dump_cb(BIO *bio, int cmd, const char *argp, size_t len,
 const EVP_MD *tls_validate_digest(const char *dgst)
 {
     const EVP_MD *md_alg;
-    unsigned int md_len;
 
     /*
      * If the administrator specifies an unsupported digest algorithm, fail
      * now, rather than in the middle of a TLS handshake.
      */
-    if ((md_alg = EVP_get_digestbyname(dgst)) == 0) {
+    if ((md_alg = tls_digest_byname(dgst, NULL)) == 0)
 	msg_warn("Digest algorithm \"%s\" not found", dgst);
-	return (0);
-    }
-
-    /*
-     * Sanity check: Newer shared libraries may use larger digests.
-     */
-    if ((md_len = EVP_MD_size(md_alg)) > EVP_MAX_MD_SIZE) {
-	msg_warn("Digest algorithm \"%s\" output size %u too large",
-		 dgst, md_len);
-	return (0);
-    }
     return md_alg;
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1905.2.8 2023/12/25 12:22:54 martin Exp $
+#	$NetBSD: 3RDPARTY,v 1.1905.2.9 2023/12/25 12:43:20 martin Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1224,12 +1224,12 @@ and more. Vern's ping is gone. We are too different from everyone else
 now to do a new import.
 
 Package:	Postfix
-Version:	3.7.3
-Current Vers:	3.7.3
+Version:	3.8.4
+Current Vers:	3.8.4
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:
 Home Page:	http://www.postfix.org/
-Date: 		2022-10-08
+Date: 		2023-12-23
 Mailing List:	postfix-users@postfix.org
 Responsible:	christos
 License:	IBM Public License. See also src/external/ibm-public/postfix/dist.

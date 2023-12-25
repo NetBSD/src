@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap_proxy.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mkmap_proxy.c,v 1.1.1.1.60.1 2023/12/25 12:43:32 martin Exp $	*/
 
 /*++
 /* NAME
@@ -6,7 +6,7 @@
 /* SUMMARY
 /*	create or proxied database
 /* SYNOPSIS
-/*	#include <mkmap.h>
+/*	#include <dict_proxy.h>
 /*
 /*	MKMAP	*mkmap_proxy_open(path)
 /*	const char *path;
@@ -28,6 +28,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -38,10 +43,6 @@
 
 #include <mymalloc.h>
 #include <dict_proxy.h>
-
-/* Application-specific. */
-
-#include "mkmap.h"
 
 /* mkmap_proxy_open - create or open database */
 

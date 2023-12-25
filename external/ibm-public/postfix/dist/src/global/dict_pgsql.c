@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pgsql.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: dict_pgsql.c,v 1.3.6.1 2023/12/25 12:43:31 martin Exp $	*/
 
 /*++
 /* NAME
@@ -47,80 +47,9 @@
 /*	Must be O_RDONLY.
 /* .IP dict_flags
 /*	See dict_open(3).
-/*
-/* .PP
-/*	Configuration parameters:
-/* .IP user
-/*	Username for connecting to the database.
-/* .IP password
-/*	Password for the above.
-/* .IP dbname
-/*	Name of the database.
-/* .IP query
-/*	Query template. If not defined a default query template is constructed
-/*	from the legacy \fIselect_function\fR or failing that the \fItable\fR,
-/*	\fIselect_field\fR, \fIwhere_field\fR, and \fIadditional_conditions\fR
-/*	parameters. Before the query is issues, variable substitutions are
-/*	performed. See pgsql_table(5).
-/* .IP domain
-/*	List of domains the queries should be restricted to.  If
-/*	specified, only FQDN addresses whose domain parts matching this
-/*	list will be queried against the SQL database.  Lookups for
-/*	partial addresses are also suppressed.  This can significantly
-/*	reduce the query load on the server.
-/* .IP result_format
-/*	The format used to expand results from queries.  Substitutions
-/*	are performed as described in pgsql_table(5). Defaults to returning
-/*	the lookup result unchanged.
-/* .IP expansion_limit
-/*	Limit (if any) on the total number of lookup result values. Lookups which
-/*	exceed the limit fail with dict->error=DICT_ERR_RETRY. Note that each
-/*	non-empty (and non-NULL) column of a multi-column result row counts as
-/*	one result.
-/* .IP select_function
-/*	When \fIquery\fR is not defined, the function to be used instead of
-/*	the default query based on the legacy \fItable\fR, \fIselect_field\fR,
-/*	\fIwhere_field\fR, and \fIadditional_conditions\fR parameters.
-/* .IP table
-/*	When \fIquery\fR and \fIselect_function\fR are not defined, the name of the
-/*	FROM table used to construct the default query template, see pgsql_table(5).
-/* .IP select_field
-/*	When \fIquery\fR and \fIselect_function\fR are not defined, the name of the
-/*	SELECT field used to construct the default query template, see pgsql_table(5).
-/* .IP where_field
-/*	When \fIquery\fR and \fIselect_function\fR are not defined, the name of the
-/*	WHERE field used to construct the default query template, see pgsql_table(5).
-/* .IP additional_conditions
-/*	When \fIquery\fR and \fIselect_function\fR are not defined, the name of the
-/*	additional text to add to the WHERE field in the default query template (this
-/*	usually begins with "and") see pgsql_table(5).
-/* .IP hosts
-/*	List of hosts to connect to.
-/* .PP
-/*	For example, if you want the map to reference databases of
-/*	the name "your_db" and execute a query like this: select
-/*	forw_addr from aliases where alias like '<some username>'
-/*	against any database called "postfix_info" located on hosts
-/*	host1.some.domain and host2.some.domain, logging in as user
-/*	"postfix" and password "passwd" then the configuration file
-/*	should read:
-/* .PP
-/*	user = postfix
-/* .br
-/*	password = passwd
-/* .br
-/*	dbname = postfix_info
-/* .br
-/*	table = aliases
-/* .br
-/*	select_field = forw_addr
-/* .br
-/*	where_field = alias
-/* .br
-/*	hosts = host1.some.domain host2.some.domain
-/* .PP
 /* SEE ALSO
 /*	dict(3) generic dictionary manager
+/*	pgsql_table(5) PostgreSQL client configuration
 /* AUTHOR(S)
 /*	Aaron Sethman
 /*	androsyn@ratbox.org
@@ -212,6 +141,7 @@ typedef struct {
     char   *username;
     char   *password;
     char   *dbname;
+    char   *encoding;
     char   *table;
     ARGV   *hosts;
     PLPGSQL *pldb;
@@ -225,11 +155,11 @@ typedef struct {
 /* internal function declarations */
 static PLPGSQL *plpgsql_init(ARGV *);
 static PGSQL_RES *plpgsql_query(DICT_PGSQL *, const char *, VSTRING *, char *,
-				        char *, char *);
+				        char *, char *, char *);
 static void plpgsql_dealloc(PLPGSQL *);
 static void plpgsql_close_host(HOST *);
 static void plpgsql_down_host(HOST *);
-static void plpgsql_connect_single(HOST *, char *, char *, char *);
+static void plpgsql_connect_single(HOST *, char *, char *, char *, char *);
 static const char *dict_pgsql_lookup(DICT *, const char *);
 DICT   *dict_pgsql_open(const char *, int, int);
 static void dict_pgsql_close(DICT *);
@@ -398,6 +328,7 @@ static const char *dict_pgsql_lookup(DICT *dict, const char *name)
     /* do the query - set dict->error & cleanup if there's an error */
     if ((query_res = plpgsql_query(dict_pgsql, name, query,
 				   dict_pgsql->dbname,
+				   dict_pgsql->encoding,
 				   dict_pgsql->username,
 				   dict_pgsql->password)) == 0) {
 	dict->error = DICT_ERR_RETRY;
@@ -475,7 +406,7 @@ static HOST *dict_pgsql_find_host(PLPGSQL *PLDB, unsigned stat, unsigned type)
 
 /* dict_pgsql_get_active - get an active connection */
 
-static HOST *dict_pgsql_get_active(PLPGSQL *PLDB, char *dbname,
+static HOST *dict_pgsql_get_active(PLPGSQL *PLDB, char *dbname, char *encoding,
 				           char *username, char *password)
 {
     const char *myname = "dict_pgsql_get_active";
@@ -507,7 +438,7 @@ static HOST *dict_pgsql_get_active(PLPGSQL *PLDB, char *dbname,
 	if (msg_verbose)
 	    msg_info("%s: attempting to connect to host %s", myname,
 		     host->hostname);
-	plpgsql_connect_single(host, dbname, username, password);
+	plpgsql_connect_single(host, dbname, encoding, username, password);
 	if (host->stat == STATACTIVE)
 	    return host;
     }
@@ -537,6 +468,7 @@ static PGSQL_RES *plpgsql_query(DICT_PGSQL *dict_pgsql,
 				        const char *name,
 				        VSTRING *query,
 				        char *dbname,
+				        char *encoding,
 				        char *username,
 				        char *password)
 {
@@ -545,7 +477,7 @@ static PGSQL_RES *plpgsql_query(DICT_PGSQL *dict_pgsql,
     PGSQL_RES *res = 0;
     ExecStatusType status;
 
-    while ((host = dict_pgsql_get_active(PLDB, dbname, username, password)) != NULL) {
+    while ((host = dict_pgsql_get_active(PLDB, dbname, encoding, username, password)) != NULL) {
 
 	/*
 	 * The active host is used to escape strings in the context of the
@@ -640,7 +572,7 @@ static PGSQL_RES *plpgsql_query(DICT_PGSQL *dict_pgsql,
  * used to reconnect to a single database when one is down or none is
  * connected yet. Log all errors and set the stat field of host accordingly
  */
-static void plpgsql_connect_single(HOST *host, char *dbname, char *username, char *password)
+static void plpgsql_connect_single(HOST *host, char *dbname, char *encoding, char *username, char *password)
 {
     if (host->type == TYPECONNSTRING) {
 	host->db = PQconnectdb(host->name);
@@ -654,34 +586,15 @@ static void plpgsql_connect_single(HOST *host, char *dbname, char *username, cha
 	plpgsql_down_host(host);
 	return;
     }
+    if (PQsetClientEncoding(host->db, encoding) != 0) {
+	msg_warn("dict_pgsql: cannot set the encoding to %s, skipping %s",
+		 encoding, host->hostname);
+	plpgsql_down_host(host);
+	return;
+    }
     if (msg_verbose)
 	msg_info("dict_pgsql: successful connection to host %s",
 		 host->hostname);
-
-    /*
-     * The only legitimate encodings for Internet mail are ASCII and UTF-8.
-     */
-#ifdef SNAPSHOT
-    if (PQsetClientEncoding(host->db, "UTF8") != 0) {
-	msg_warn("dict_pgsql: cannot set the encoding to UTF8, skipping %s",
-		 host->hostname);
-	plpgsql_down_host(host);
-	return;
-    }
-#else
-
-    /*
-     * XXX Postfix does not send multi-byte characters. The following piece
-     * of code is an explicit statement of this fact, and the database server
-     * should not accept multi-byte information after this point.
-     */
-    if (PQsetClientEncoding(host->db, "LATIN1") != 0) {
-	msg_warn("dict_pgsql: cannot set the encoding to LATIN1, skipping %s",
-		 host->hostname);
-	plpgsql_down_host(host);
-	return;
-    }
-#endif
     /* Success. */
     host->stat = STATACTIVE;
 }
@@ -723,6 +636,7 @@ static void pgsql_parse_config(DICT_PGSQL *dict_pgsql, const char *pgsqlcf)
     dict_pgsql->username = cfg_get_str(p, "user", "", 0, 0);
     dict_pgsql->password = cfg_get_str(p, "password", "", 0, 0);
     dict_pgsql->dbname = cfg_get_str(p, "dbname", "", 1, 0);
+    dict_pgsql->encoding = cfg_get_str(p, "encoding", "UTF8", 1, 0);
     dict_pgsql->result_format = cfg_get_str(p, "result_format", "%s", 1, 0);
 
     /*
@@ -894,6 +808,7 @@ static void dict_pgsql_close(DICT *dict)
     myfree(dict_pgsql->username);
     myfree(dict_pgsql->password);
     myfree(dict_pgsql->dbname);
+    myfree(dict_pgsql->encoding);
     myfree(dict_pgsql->query);
     myfree(dict_pgsql->result_format);
     if (dict_pgsql->hosts)

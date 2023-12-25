@@ -8,6 +8,7 @@
 <title>Postfix logging to file or stdout</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -20,7 +21,7 @@ logging to file or stdout</h1>
 
 <h2>Overview </h2>
 
-<p> Postfix supports it own logging system as an alternative to
+<p> Postfix supports its own logging system as an alternative to
 syslog (which remains the default). This is available with Postfix
 version 3.4 or later. </p>
 
@@ -174,7 +175,8 @@ to $<a href="postconf.5.html#maillog_file">maillog_file</a> (also, logging to st
 operation of some of these programs). These programs can log to
 <a href="postlogd.8.html">postlogd(8)</a> if they are run by the super-user, or if their executable
 file has set-gid permission. Do not set this permission on programs
-other than <a href="postdrop.1.html">postdrop(1)</a> and <a href="postqueue.1.html">postqueue(1)</a>.
+other than <a href="postdrop.1.html">postdrop(1)</a>, <a href="postqueue.1.html">postqueue(1)</a>, and (Postfix &ge; 3.7)
+<a href="postlog.1.html">postlog(1)</a>.
 
 </ul>
 

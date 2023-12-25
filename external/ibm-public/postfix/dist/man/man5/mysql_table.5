@@ -1,4 +1,4 @@
-.\"	$NetBSD: mysql_table.5,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: mysql_table.5,v 1.4.2.1 2023/12/25 12:43:27 martin Exp $
 .\"
 .TH MYSQL_TABLE 5 
 .ad
@@ -78,7 +78,8 @@ localhost over TCP you have to specify
 .nf
     hosts = 127.0.0.1
 .fi
-.IP "\fBuser, password\fR"
+.IP "\fBuser\fR"
+.IP "\fBpassword\fR"
 The user name and password to log into the mysql server.
 Example:
 .nf
@@ -271,6 +272,10 @@ This parameter is available with Postfix 2.11 and later.
 .IP "\fBtls_CApath\fR"
 Directory containing X509 Certification Authority certificates
 in separate individual files.
+.sp
+This parameter is available with Postfix 2.11 and later.
+.IP "\fBtls_ciphers\fR"
+The list of permissible ciphers for SSL encryption.
 .sp
 This parameter is available with Postfix 2.11 and later.
 .IP "\fBtls_verify_cert (default: no)\fR"

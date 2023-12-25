@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_server.c,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: xsasl_cyrus_server.c,v 1.3.6.1 2023/12/25 12:43:39 martin Exp $	*/
 
 /*++
 /* NAME
@@ -627,16 +627,15 @@ static const char *xsasl_cyrus_server_get_username(XSASL_SERVER *xp)
     /*
      * XXX Do not free(serverout).
      */
-    sasl_status = sasl_getprop(server->sasl_conn, SASL_USERNAME, &serverout);
-    if (sasl_status != SASL_OK || serverout == 0) {
-	msg_warn("%s: sasl_getprop SASL_USERNAME botch: %s",
-		 myname, xsasl_cyrus_strerror(sasl_status));
-	return (0);
-    }
     if (server->username)
 	myfree(server->username);
-    server->username = mystrdup(serverout);
-    printable(server->username, '?');
+    sasl_status = sasl_getprop(server->sasl_conn, SASL_USERNAME, &serverout);
+    if (sasl_status != SASL_OK || serverout == 0) {
+	server->username = 0;
+    } else {
+	server->username = mystrdup(serverout);
+	printable(server->username, '?');
+    }
     return (server->username);
 }
 

@@ -8,6 +8,7 @@
 <title>Postfix IPv6 Support</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -78,8 +79,8 @@ platforms:  </p>
 <p> On other platforms Postfix will simply use IPv4 as it has always
 done. </p>
 
-<p> See <a href="#porting">below</a> for tips how to port Postfix
-IPv6 support to other environments.  </p>
+<p> See "<a href="#porting">IPv6 Support for unsupported platforms</a>"
+for tips to port Postfix IPv6 support to other environments.  </p>
 
 <h2><a name="configuration">Configuration</a></h2>
 
@@ -127,6 +128,9 @@ inet_protocols configuration parameter. </p>
 <p> Note 2: on older Linux and Solaris systems, the setting
 "inet_protocols = ipv6" will not prevent Postfix from
 accepting IPv4 connections. </p>
+
+<p> For an unsupported test option to build Postfix without IPv6
+support, see the NO_IPV6 option in the INSTALL document. </p>
 
 <li> <p> The other new parameter is smtp_bind_address6.
 This sets the local interface address for outgoing IPv6 SMTP

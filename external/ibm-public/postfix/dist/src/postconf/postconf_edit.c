@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_edit.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: postconf_edit.c,v 1.2.22.1 2023/12/25 12:43:33 martin Exp $	*/
 
 /*++
 /* NAME
@@ -149,7 +149,7 @@ static void pcf_gobble_cf_line(VSTRING *full_entry_buf, VSTRING *line_buf,
 
 void    pcf_edit_main(int mode, int argc, char **argv)
 {
-    char   *path;
+    const char *path;
     EDIT_FILE *ep;
     VSTREAM *src;
     VSTREAM *dst;
@@ -194,6 +194,11 @@ void    pcf_edit_main(int mode, int argc, char **argv)
 	} else {
 	    msg_panic("pcf_edit_main: unknown mode %d", mode);
 	}
+	if ((cvalue = htable_find(table, pattern)) != 0) {
+	    msg_warn("ignoring earlier request: '%s = %s'",
+		     pattern, cvalue->value);
+	    htable_delete(table, pattern, myfree);
+	}
 	cvalue = (struct cvalue *) mymalloc(sizeof(*cvalue));
 	cvalue->value = edit_value;
 	cvalue->found = 0;
@@ -204,8 +209,7 @@ void    pcf_edit_main(int mode, int argc, char **argv)
      * Open a temp file for the result. This uses a deterministic name so we
      * don't leave behind thrash with random names.
      */
-    pcf_set_config_dir();
-    path = concatenate(var_config_dir, "/", MAIN_CONF_FILE, (char *) 0);
+    path = pcf_get_main_path();
     if ((ep = edit_file_open(path, O_CREAT | O_WRONLY, 0644)) == 0)
 	msg_fatal("open %s%s: %m", path, EDIT_FILE_SUFFIX);
     dst = ep->tmp_fp;
@@ -274,7 +278,6 @@ void    pcf_edit_main(int mode, int argc, char **argv)
     /*
      * Cleanup.
      */
-    myfree(path);
     vstring_free(buf);
     vstring_free(key);
     htable_free(table, myfree);
@@ -298,7 +301,7 @@ typedef struct {
 void    pcf_edit_master(int mode, int argc, char **argv)
 {
     const char *myname = "pcf_edit_master";
-    char   *path;
+    const char *path;
     EDIT_FILE *ep;
     VSTREAM *src;
     VSTREAM *dst;
@@ -402,8 +405,7 @@ void    pcf_edit_master(int mode, int argc, char **argv)
      * Open a temp file for the result. This uses a deterministic name so we
      * don't leave behind thrash with random names.
      */
-    pcf_set_config_dir();
-    path = concatenate(var_config_dir, "/", MASTER_CONF_FILE, (char *) 0);
+    path = pcf_get_master_path();
     if ((ep = edit_file_open(path, O_CREAT | O_WRONLY, 0644)) == 0)
 	msg_fatal("open %s%s: %m", path, EDIT_FILE_SUFFIX);
     dst = ep->tmp_fp;
@@ -461,8 +463,38 @@ void    pcf_edit_master(int mode, int argc, char **argv)
 
 	    /*
 	     * Match each service pattern.
+	     * 
+	     * Additional care is needed when a request adds or replaces an
+	     * entire service definition, instead of a specific field or
+	     * parameter. Given a command "postconf -M name1/type1='name2
+	     * type2 ...'", where name1 and name2 may differ, and likewise
+	     * for type1 and type2:
+	     * 
+	     * - First, if an existing service definition a) matches the service
+	     * pattern 'name1/type1', or b) matches the name and type in the
+	     * new service definition 'name2 type2 ...', remove the service
+	     * definition.
+	     * 
+	     * - Then, after an a) or b) type match, add a new service
+	     * definition for 'name2 type2 ...', but only after the first
+	     * match.
+	     * 
+	     * - Finally, if a request had no a) or b) type match for any
+	     * master.cf service definition, add a new service definition for
+	     * 'name2 type2 ...'.
 	     */
 	    for (req = edit_reqs; req < edit_reqs + num_reqs; req++) {
+		PCF_MASTER_ENT *tentative_entry = 0;
+		int     use_tentative_entry = 0;
+
+		/* Additional care for whole service definition requests. */
+		if ((mode & PCF_MASTER_ENTRY) && (mode & PCF_EDIT_CONF)) {
+		    tentative_entry = (PCF_MASTER_ENT *)
+			mymalloc(sizeof(*tentative_entry));
+		    if ((err = pcf_parse_master_entry(tentative_entry,
+						      req->edit_value)) != 0)
+			msg_fatal("%s: \"%s\"", err, req->raw_text);
+		}
 		if (PCF_MATCH_SERVICE_PATTERN(req->service_pattern,
 					      service_name,
 					      service_type)) {
@@ -508,17 +540,29 @@ void    pcf_edit_master(int mode, int argc, char **argv)
 			     * Replace entire master.cf entry.
 			     */
 			case PCF_MASTER_ENTRY:
-			    if (new_entry != 0)
-				pcf_free_master_entry(new_entry);
-			    new_entry = (PCF_MASTER_ENT *)
-				mymalloc(sizeof(*new_entry));
-			    if ((err = pcf_parse_master_entry(new_entry,
-						     req->edit_value)) != 0)
-				msg_fatal("%s: \"%s\"", err, req->raw_text);
+			    if (req->match_count == 1)
+				use_tentative_entry = 1;
 			    break;
 			default:
 			    msg_panic("%s: unknown edit mode %d", myname, mode);
 			}
+		    }
+		} else if (tentative_entry != 0
+			 && PCF_MATCH_SERVICE_PATTERN(tentative_entry->argv,
+						      service_name,
+						      service_type)) {
+		    service_name_type_matched = 1;	/* Sticky flag */
+		    req->match_count += 1;
+		    if (req->match_count == 1)
+			use_tentative_entry = 1;
+		}
+		if (tentative_entry != 0) {
+		    if (use_tentative_entry) {
+			if (new_entry != 0)
+			    pcf_free_master_entry(new_entry);
+			new_entry = tentative_entry;
+		    } else {
+			pcf_free_master_entry(tentative_entry);
 		    }
 		}
 	    }
@@ -568,7 +612,6 @@ void    pcf_edit_master(int mode, int argc, char **argv)
     /*
      * Cleanup.
      */
-    myfree(path);
     vstring_free(line_buf);
     vstring_free(parse_buf);
     vstring_free(full_entry_buf);

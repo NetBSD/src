@@ -61,7 +61,8 @@
 #	The hosts are tried in random order. The connections are
 #	automatically closed after being idle for about 1 minute,
 #	and are re-opened as necessary.
-# .IP "\fBuser, password\fR"
+# .IP "\fBuser\fR"
+# .IP "\fBpassword\fR"
 #	The user name and password to log into the pgsql server.
 #	Example:
 # .nf
@@ -73,6 +74,16 @@
 # .nf
 #	    dbname = customer_database
 # .fi
+# .IP "\fBencoding\fR"
+#	The encoding used by the database client. The default setting
+#	is:
+# .nf
+#	    encoding = UTF8
+# .fi
+#	Historically, the database client was hard coded to use
+#	LATIN1 in an attempt to disable multibyte character support.
+#
+#	This feature is available in Postfix 3.8 and later.
 # .IP "\fBquery\fR"
 #	The SQL query template used to search the database, where \fB%s\fR
 #	is a substitute for the address Postfix is trying to resolve,

@@ -100,62 +100,62 @@ dns_rr_eq_sa: $(LIB) $(LIBS)
 	mv junk $@.o
 
 dns_rr_to_pa_test: dns_rr_to_pa dns_rr_to_pa.in dns_rr_to_pa.ref
-	$(SHLIB_ENV) ./dns_rr_to_pa `cat dns_rr_to_pa.in` >dns_rr_to_pa.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./dns_rr_to_pa `cat dns_rr_to_pa.in` >dns_rr_to_pa.tmp
 	diff dns_rr_to_pa.ref dns_rr_to_pa.tmp
 	rm -f dns_rr_to_pa.tmp
 
 dns_rr_to_sa_test: dns_rr_to_sa dns_rr_to_sa.in dns_rr_to_sa.ref
-	$(SHLIB_ENV) ./dns_rr_to_sa `cat dns_rr_to_sa.in` >dns_rr_to_sa.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./dns_rr_to_sa `cat dns_rr_to_sa.in` >dns_rr_to_sa.tmp
 	diff dns_rr_to_sa.ref dns_rr_to_sa.tmp
 	rm -f dns_rr_to_sa.tmp
 
 dns_sa_to_rr_test: dns_sa_to_rr dns_sa_to_rr.in dns_sa_to_rr.ref
-	$(SHLIB_ENV) ./dns_sa_to_rr `cat dns_sa_to_rr.in` >dns_sa_to_rr.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./dns_sa_to_rr `cat dns_sa_to_rr.in` >dns_sa_to_rr.tmp
 	diff dns_sa_to_rr.ref dns_sa_to_rr.tmp
 	rm -f dns_sa_to_rr.tmp
 
 dns_rr_eq_sa_test: dns_rr_eq_sa dns_rr_eq_sa.in dns_rr_eq_sa.ref
-	$(SHLIB_ENV) ./dns_rr_eq_sa `cat dns_rr_eq_sa.in` >dns_rr_eq_sa.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./dns_rr_eq_sa `cat dns_rr_eq_sa.in` >dns_rr_eq_sa.tmp
 	diff dns_rr_eq_sa.ref dns_rr_eq_sa.tmp
 	rm -f dns_rr_eq_sa.tmp
 
 no-a-test: no-a.reg test_dns_lookup no-a.ref
-	$(SHLIB_ENV) ./test_dns_lookup -f regexp:no-a.reg a,aaaa spike.porcupine.org >test_dns_lookup.tmp 2>&1
+	$(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -f regexp:no-a.reg a,aaaa spike.porcupine.org >test_dns_lookup.tmp 2>&1
 	diff no-a.ref test_dns_lookup.tmp
 	rm -f test_dns_lookup.tmp
 
 no-aaaa-test: no-aaaa.reg test_dns_lookup no-aaaa.ref
-	$(SHLIB_ENV) ./test_dns_lookup -f regexp:no-aaaa.reg a,aaaa spike.porcupine.org >test_dns_lookup.tmp 2>&1
+	$(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -f regexp:no-aaaa.reg a,aaaa spike.porcupine.org >test_dns_lookup.tmp 2>&1
 	diff no-aaaa.ref test_dns_lookup.tmp
 	rm -f test_dns_lookup.tmp
 
 no-mx-test: no-mx.reg test_dns_lookup no-mx.ref
-	set -e; $(SHLIB_ENV) ./test_dns_lookup -f regexp:no-mx.reg mx porcupine.org 2>&1 | sort >test_dns_lookup.tmp || true
+	set -e; $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -f regexp:no-mx.reg mx porcupine.org 2>&1 | sort >test_dns_lookup.tmp || true
 	diff no-mx.ref test_dns_lookup.tmp
 	rm -f test_dns_lookup.tmp
 
 error-filter-test: error.reg test_dns_lookup error.ref
-	set -e; $(SHLIB_ENV) ./test_dns_lookup -f regexp:error.reg a,aaaa spike.porcupine.org >test_dns_lookup.tmp 2>&1 || true
+	set -e; $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -f regexp:error.reg a,aaaa spike.porcupine.org >test_dns_lookup.tmp 2>&1 || true
 	diff error.ref test_dns_lookup.tmp
 	rm -f test_dns_lookup.tmp
 
 nullmx_test: test_dns_lookup nullmx_test.ref
 	(set -e; \
-	$(SHLIB_ENV) ./test_dns_lookup mx,a nullmx.porcupine.org; \
+	$(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup mx,a nullmx.porcupine.org; \
 	) >nullmx_test.tmp 2>&1 || exit 0
 	diff nullmx_test.ref nullmx_test.tmp
 	rm -f nullmx_test.tmp
 
 nxdomain_test: test_dns_lookup nxdomain_test.ref
 	(set -e; \
-	$(SHLIB_ENV) ./test_dns_lookup mx,a nxdomain.porcupine.org; \
+	$(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup mx,a nxdomain.porcupine.org; \
 	) >nxdomain_test.tmp 2>&1 || exit 0
 	diff nxdomain_test.ref nxdomain_test.tmp
 	rm -f nxdomain_test.tmp
 
 mxonly_test: test_dns_lookup mxonly_test.ref
 	(set -e; \
-	$(SHLIB_ENV) ./test_dns_lookup mx,a porcupine.org | sort; \
+	$(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup mx,a porcupine.org | sort; \
 	) >mxonly_test.tmp 2>&1 || exit 0
 	diff mxonly_test.ref mxonly_test.tmp
 	rm -f mxonly_test.tmp
@@ -164,8 +164,8 @@ mxonly_test: test_dns_lookup mxonly_test.ref
 
 dnsbl_ttl_127.0.0.1_bind_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_plain.ref
 	(set -e; \
-        $(SHLIB_ENV) ./test_dns_lookup a 1.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup a 1.0.0.127.bl.spamcop.net; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup a 1.0.0.127.zen.spamhaus.org; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup a 1.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_NEXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.1_bind_plain.tmp
 	diff dnsbl_ttl_127.0.0.1_bind_plain.ref dnsbl_ttl_127.0.0.1_bind_plain.tmp
 	rm -f dnsbl_ttl_127.0.0.1_bind_plain.tmp
@@ -174,8 +174,8 @@ dnsbl_ttl_127.0.0.1_bind_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_pl
 
 dnsbl_ttl_127.0.0.1_priv_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_plain.ref
 	(set -e; \
-        $(SHLIB_ENV) ./test_dns_lookup -p a 1.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -p a 1.0.0.127.bl.spamcop.net; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -p a 1.0.0.127.zen.spamhaus.org; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -p a 1.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_NEXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.1_priv_plain.tmp
 	diff dnsbl_ttl_127.0.0.1_bind_plain.ref dnsbl_ttl_127.0.0.1_priv_plain.tmp
 	rm -f dnsbl_ttl_127.0.0.1_priv_plain.tmp
@@ -184,8 +184,8 @@ dnsbl_ttl_127.0.0.1_priv_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_pl
 
 dnsbl_ttl_127.0.0.1_bind_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_ncache.ref
 	(set -e; \
-        $(SHLIB_ENV) ./test_dns_lookup -n a 1.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -n a 1.0.0.127.bl.spamcop.net; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -n a 1.0.0.127.zen.spamhaus.org; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -n a 1.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_NEXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.1_bind_ncache.tmp
 	diff dnsbl_ttl_127.0.0.1_bind_ncache.ref dnsbl_ttl_127.0.0.1_bind_ncache.tmp
 	rm -f dnsbl_ttl_127.0.0.1_bind_ncache.tmp
@@ -194,8 +194,8 @@ dnsbl_ttl_127.0.0.1_bind_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_n
 
 dnsbl_ttl_127.0.0.1_priv_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_ncache.ref
 	(set -e; \
-        $(SHLIB_ENV) ./test_dns_lookup -n -p a 1.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -n -p a 1.0.0.127.bl.spamcop.net; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -n -p a 1.0.0.127.zen.spamhaus.org; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -n -p a 1.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_NEXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.1_priv_ncache.tmp
 	diff dnsbl_ttl_127.0.0.1_bind_ncache.ref dnsbl_ttl_127.0.0.1_priv_ncache.tmp
 	rm -f dnsbl_ttl_127.0.0.1_priv_ncache.tmp
@@ -204,8 +204,8 @@ dnsbl_ttl_127.0.0.1_priv_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_n
 
 dnsbl_ttl_127.0.0.2_bind_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_plain.ref
 	(set -e; \
-        $(SHLIB_ENV) ./test_dns_lookup a 2.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup a 2.0.0.127.bl.spamcop.net; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup a 2.0.0.127.zen.spamhaus.org; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup a 2.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_EXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.2_bind_plain.tmp
 	diff dnsbl_ttl_127.0.0.2_bind_plain.ref dnsbl_ttl_127.0.0.2_bind_plain.tmp
 	rm -f dnsbl_ttl_127.0.0.2_bind_plain.tmp
@@ -214,8 +214,8 @@ dnsbl_ttl_127.0.0.2_bind_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_pl
 
 dnsbl_ttl_127.0.0.2_priv_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_plain.ref
 	(set -e; \
-        $(SHLIB_ENV) ./test_dns_lookup -p a 2.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -p a 2.0.0.127.bl.spamcop.net; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -p a 2.0.0.127.zen.spamhaus.org; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -p a 2.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_EXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.2_priv_plain.tmp
 	diff dnsbl_ttl_127.0.0.2_bind_plain.ref dnsbl_ttl_127.0.0.2_priv_plain.tmp
 	rm -f dnsbl_ttl_127.0.0.2_priv_plain.tmp
@@ -224,8 +224,8 @@ dnsbl_ttl_127.0.0.2_priv_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_pl
 
 dnsbl_ttl_127.0.0.2_bind_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_plain.ref
 	(set -e; \
-        $(SHLIB_ENV) ./test_dns_lookup -n a 2.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -n a 2.0.0.127.bl.spamcop.net; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -n a 2.0.0.127.zen.spamhaus.org; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -n a 2.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_EXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.2_bind_ncache.tmp
 	diff dnsbl_ttl_127.0.0.2_bind_plain.ref dnsbl_ttl_127.0.0.2_bind_ncache.tmp
 	rm -f dnsbl_ttl_127.0.0.2_bind_ncache.tmp
@@ -234,8 +234,8 @@ dnsbl_ttl_127.0.0.2_bind_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_p
 
 dnsbl_ttl_127.0.0.2_priv_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_plain.ref
 	(set -e; \
-        $(SHLIB_ENV) ./test_dns_lookup -n -p a 2.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -n -p a 2.0.0.127.bl.spamcop.net; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -n -p a 2.0.0.127.zen.spamhaus.org; \
+        $(SHLIB_ENV) $(VALGRIND) ./test_dns_lookup -n -p a 2.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_EXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.2_priv_ncache.tmp
 	diff dnsbl_ttl_127.0.0.2_bind_plain.ref dnsbl_ttl_127.0.0.2_priv_ncache.tmp
 	rm -f dnsbl_ttl_127.0.0.2_priv_ncache.tmp

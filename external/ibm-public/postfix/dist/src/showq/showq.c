@@ -1,4 +1,4 @@
-/*	$NetBSD: showq.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
+/*	$NetBSD: showq.c,v 1.4.2.1 2023/12/25 12:43:34 martin Exp $	*/
 
 /*++
 /* NAME
@@ -230,6 +230,7 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	    if (*start == 0)
 		start = var_empty_addr;
 	    quote_822_local(printable_quoted_addr, start);
+	    /* For consistency with REC_TYPE_RCPT below. */
 	    printable(STR(printable_quoted_addr), '?');
 	    if (sender_seen++ > 0) {
 		msg_warn("%s: duplicate sender address: %s "
@@ -259,6 +260,7 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	    if (*start == 0)			/* can't happen? */
 		start = var_empty_addr;
 	    quote_822_local(printable_quoted_addr, start);
+	    /* For consistency with recipients in bounce logfile. */
 	    printable(STR(printable_quoted_addr), '?');
 	    if (dup_filter == 0
 	      || htable_locate(dup_filter, STR(printable_quoted_addr)) == 0)

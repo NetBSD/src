@@ -133,6 +133,7 @@ postmap.o: ../../include/argv.h
 postmap.o: ../../include/check_arg.h
 postmap.o: ../../include/clean_env.h
 postmap.o: ../../include/dict.h
+postmap.o: ../../include/dict_db.h
 postmap.o: ../../include/dict_proxy.h
 postmap.o: ../../include/header_opts.h
 postmap.o: ../../include/mail_conf.h

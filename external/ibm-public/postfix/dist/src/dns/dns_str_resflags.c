@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_str_resflags.c,v 1.2 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: dns_str_resflags.c,v 1.2.8.1 2023/12/25 12:43:31 martin Exp $	*/
 
 /*++
 /* NAME
@@ -23,6 +23,8 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Viktor Dukhovni
 /*--*/
 
  /*
@@ -54,11 +56,11 @@
 static const LONG_NAME_MASK resflag_table[] = {
     "RES_INIT", RES_INIT,
     "RES_DEBUG", RES_DEBUG,
-#ifdef RES_AAONLY
+#if defined(RES_AAONLY) && !HAVE_GLIBC_API_VERSION_SUPPORT(2, 24)
     "RES_AAONLY", RES_AAONLY,
 #endif
     "RES_USEVC", RES_USEVC,
-#ifdef RES_PRIMARY
+#if defined(RES_PRIMARY) && !HAVE_GLIBC_API_VERSION_SUPPORT(2, 24)
     "RES_PRIMARY", RES_PRIMARY,
 #endif
     "RES_IGNTC", RES_IGNTC,
@@ -79,15 +81,15 @@ static const LONG_NAME_MASK resflag_table[] = {
 #ifdef RES_ROTATE
     "RES_ROTATE", RES_ROTATE,
 #endif
-#ifdef RES_NOCHECKNAME
+#if defined(RES_NOCHECKNAME) && !HAVE_GLIBC_API_VERSION_SUPPORT(2, 24)
     "RES_NOCHECKNAME", RES_NOCHECKNAME,
 #endif
     "RES_USE_EDNS0", RES_USE_EDNS0,
     "RES_USE_DNSSEC", RES_USE_DNSSEC,
-#ifdef RES_KEEPTSIG
+#if defined(RES_KEEPTSIG) && !HAVE_GLIBC_API_VERSION_SUPPORT(2, 24)
     "RES_KEEPTSIG", RES_KEEPTSIG,
 #endif
-#ifdef RES_BLAST
+#if defined(RES_BLAST) && !HAVE_GLIBC_API_VERSION_SUPPORT(2, 24)
     "RES_BLAST", RES_BLAST,
 #endif
 #ifdef RES_USEBSTRING

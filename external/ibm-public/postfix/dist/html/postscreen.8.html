@@ -2,6 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - postscreen(8) </title>
 </head> <body> <pre>
 POSTSCREEN(8)                                                    POSTSCREEN(8)
@@ -176,8 +177,10 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
        the <a href="postscreen.8.html"><b>postscreen</b>(8)</a> cache between primary and backup  MTAs,  which  would
        introduce a common point of failure.
 
-       <b><a href="postconf.5.html#postscreen_whitelist_interfaces">postscreen_whitelist_interfaces</a> (<a href="DATABASE_README.html#types">static</a>:all)</b>
-              Renamed to <a href="postconf.5.html#postscreen_allowlist_interfaces">postscreen_allowlist_interfaces</a> in Postfix 3.6.
+       <b><a href="postconf.5.html#postscreen_allowlist_interfaces">postscreen_allowlist_interfaces</a> (<a href="DATABASE_README.html#types">static</a>:all)</b>
+              A  list  of  local  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  server  IP  addresses where a
+              non-allowlisted remote SMTP client  can  obtain  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>'s
+              temporary allowlist status.
 
 <b>BEFORE 220 GREETING TESTS</b>
        These  tests  are  executed  before the remote SMTP client receives the
@@ -195,13 +198,13 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
               <a href="postconf.5.html#postscreen_dnsbl_threshold">postscreen_dnsbl_threshold</a> parameters).
 
        <b><a href="postconf.5.html#postscreen_dnsbl_reply_map">postscreen_dnsbl_reply_map</a> (empty)</b>
-              A  mapping from actual DNSBL domain name which includes a secret
-              password, to the DNSBL domain name that  postscreen  will  reply
-              with when it rejects mail.
+              A  mapping  from  an  actual  DNSBL domain name which includes a
+              secret password, to the DNSBL domain name that  postscreen  will
+              reply with when it rejects mail.
 
        <b><a href="postconf.5.html#postscreen_dnsbl_sites">postscreen_dnsbl_sites</a> (empty)</b>
-              Optional  list of DNS allow/denylist domains, filters and weight
-              factors.
+              Optional  list of patterns with DNS allow/denylist domains, fil-
+              ters and weight factors.
 
        <b><a href="postconf.5.html#postscreen_dnsbl_threshold">postscreen_dnsbl_threshold</a> (1)</b>
               The inclusive lower bound for blocking  a  remote  SMTP  client,

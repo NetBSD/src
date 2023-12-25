@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.12 2022/10/08 16:12:49 christos Exp $	*/
+/*	$NetBSD: smtp.c,v 1.12.2.1 2023/12/25 12:43:35 martin Exp $	*/
 
 /*++
 /* NAME
@@ -148,6 +148,7 @@
 /*	RFC 2046 (MIME: Media Types)
 /*	RFC 2554 (AUTH command)
 /*	RFC 2821 (SMTP protocol)
+/*	RFC 2782 (SRV resource records)
 /*	RFC 2920 (SMTP Pipelining)
 /*	RFC 3207 (STARTTLS command)
 /*	RFC 3461 (SMTP DSN Extension)
@@ -354,6 +355,17 @@
 /*	DATA requests, when deadlines are enabled with smtp_per_request_deadline.
 /* .IP "\fBheader_from_format (standard)\fR"
 /*	The format of the Postfix-generated \fBFrom:\fR header.
+/* .PP
+/*	Available in Postfix version 3.8 and later:
+/* .IP "\fBuse_srv_lookup (empty)\fR"
+/*	Enables discovery for the specified service(s) using DNS SRV
+/*	records.
+/* .IP "\fBignore_srv_lookup_error (no)\fR"
+/*	When SRV record lookup fails, fall back to MX or IP address
+/*	lookup as if SRV record lookup was not enabled.
+/* .IP "\fBallow_srv_lookup_fallback (no)\fR"
+/*	When SRV record lookup fails or no SRV record exists, fall back
+/*	to MX or IP address lookup as if SRV record lookup was not enabled.
 /* MIME PROCESSING CONTROLS
 /* .ad
 /* .fi
@@ -428,9 +440,7 @@
 /*	Detailed information about STARTTLS configuration may be found
 /*	in the TLS_README document.
 /* .IP "\fBsmtp_tls_security_level (empty)\fR"
-/*	The default SMTP TLS security level for the Postfix SMTP client;
-/*	when a non-empty value is specified, this overrides the obsolete
-/*	parameters smtp_use_tls, smtp_enforce_tls, and smtp_tls_enforce_peername.
+/*	The default SMTP TLS security level for the Postfix SMTP client.
 /* .IP "\fBsmtp_sasl_tls_security_options ($smtp_sasl_security_options)\fR"
 /*	The SASL authentication security options that the Postfix SMTP
 /*	client uses for TLS encrypted SMTP sessions.
@@ -498,13 +508,15 @@
 /*	The OpenSSL cipherlist for "high" grade ciphers.
 /* .IP "\fBtls_medium_cipherlist (see 'postconf -d' output)\fR"
 /*	The OpenSSL cipherlist for "medium" or higher grade ciphers.
+/* .IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
+/*	The OpenSSL cipherlist for "NULL" grade ciphers that provide
+/*	authentication without encryption.
+/* .PP
+/*	Available in in Postfix version 2.3..3.7:
 /* .IP "\fBtls_low_cipherlist (see 'postconf -d' output)\fR"
 /*	The OpenSSL cipherlist for "low" or higher grade ciphers.
 /* .IP "\fBtls_export_cipherlist (see 'postconf -d' output)\fR"
 /*	The OpenSSL cipherlist for "export" or higher grade ciphers.
-/* .IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
-/*	The OpenSSL cipherlist for "NULL" grade ciphers that provide
-/*	authentication without encryption.
 /* .PP
 /*	Available in Postfix version 2.4 and later:
 /* .IP "\fBsmtp_sasl_tls_verified_security_options ($smtp_sasl_tls_security_options)\fR"
@@ -563,13 +575,18 @@
 /*	Available in Postfix version 3.0 and later:
 /* .IP "\fBsmtp_tls_wrappermode (no)\fR"
 /*	Request that the Postfix SMTP client connects using the
-/*	legacy SMTPS protocol instead of using the STARTTLS command.
+/*	SUBMISSIONS/SMTPS protocol instead of using the STARTTLS command.
 /* .PP
 /*	Available in Postfix version 3.1 and later:
 /* .IP "\fBsmtp_tls_dane_insecure_mx_policy (see 'postconf -d' output)\fR"
 /*	The TLS policy for MX hosts with "secure" TLSA records when the
 /*	nexthop destination security level is \fBdane\fR, but the MX
 /*	record was found via an "insecure" MX lookup.
+/* .PP
+/*	Available in Postfix version 3.2 and later:
+/* .IP "\fBtls_eecdh_auto_curves (see 'postconf -d' output)\fR"
+/*	The prioritized list of elliptic curves supported by the Postfix
+/*	SMTP client and server.
 /* .PP
 /*	Available in Postfix version 3.4 and later:
 /* .IP "\fBsmtp_tls_connection_reuse (no)\fR"
@@ -585,6 +602,19 @@
 /* .IP "\fBtls_fast_shutdown_enable (yes)\fR"
 /*	A workaround for implementations that hang Postfix while shutting
 /*	down a TLS session, until Postfix times out.
+/* .PP
+/*	Available in Postfix version 3.8 and later:
+/* .IP "\fBtls_ffdhe_auto_groups (see 'postconf -d' output)\fR"
+/*	The prioritized list of finite-field Diffie-Hellman ephemeral
+/*	(FFDHE) key exchange groups supported by the Postfix SMTP client and
+/*	server.
+/* .PP
+/*	Available in Postfix 3.9, 3.8.1, 3.7.6, 3.6.10, 3.5.20 and later:
+/* .IP "\fBtls_config_file (default)\fR"
+/*	Optional configuration file with baseline OpenSSL settings.
+/* .IP "\fBtls_config_name (empty)\fR"
+/*	The application name passed by Postfix to OpenSSL library
+/*	initialization functions.
 /* OBSOLETE STARTTLS CONTROLS
 /* .ad
 /* .fi
@@ -722,7 +752,7 @@
 /*	Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
 /* .IP "\fBsmtputf8_enable (yes)\fR"
 /*	Enable preliminary SMTPUTF8 support for the protocols described
-/*	in RFC 6531..6533.
+/*	in RFC 6531, RFC 6532, and RFC 6533.
 /* .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
 /*	Detect that a message requires SMTPUTF8 support for the specified
 /*	mail origin classes.
@@ -771,7 +801,7 @@
 /* .IP "\fBdisable_dns_lookups (no)\fR"
 /*	Disable DNS lookups in the Postfix SMTP and LMTP clients.
 /* .IP "\fBinet_interfaces (all)\fR"
-/*	The network interface addresses that this mail system receives
+/*	The local network interface addresses that this mail system receives
 /*	mail on.
 /* .IP "\fBinet_protocols (see 'postconf -d output')\fR"
 /*	The Internet protocols Postfix will attempt to use when making
@@ -797,7 +827,7 @@
 /* .IP "\fBprocess_name (read-only)\fR"
 /*	The process name of a Postfix command or daemon process.
 /* .IP "\fBproxy_interfaces (empty)\fR"
-/*	The network interface addresses that this mail system receives mail
+/*	The remote network interface addresses that this mail system receives mail
 /*	on by way of a proxy or network address translation unit.
 /* .IP "\fBsmtp_address_preference (any)\fR"
 /*	The address type ("ipv6", "ipv4" or "any") that the Postfix
@@ -831,8 +861,9 @@
 /* .PP
 /*	Available with Postfix 2.3 and later:
 /* .IP "\fBsmtp_fallback_relay ($fallback_relay)\fR"
-/*	Optional list of relay hosts for SMTP destinations that can't be
-/*	found or that are unreachable.
+/*	Optional list of relay destinations that will be used when an
+/*	SMTP destination is not found, or when delivery fails due to a
+/*	non-permanent error.
 /* .PP
 /*	Available with Postfix 3.0 and later:
 /* .IP "\fBsmtp_address_verify_target (rcpt)\fR"
@@ -1087,6 +1118,9 @@ char   *var_smtp_dns_re_filter;
 bool    var_smtp_balance_inet_proto;
 bool    var_smtp_req_deadline;
 int     var_smtp_min_data_rate;
+char   *var_use_srv_lookup;
+bool	var_ign_srv_lookup_err;
+bool	var_allow_srv_fallback;
 
  /* Special handling of 535 AUTH errors. */
 char   *var_smtp_sasl_auth_cache_name;
@@ -1113,6 +1147,7 @@ HBC_CHECKS *smtp_header_checks;		/* limited header checks */
 HBC_CHECKS *smtp_body_checks;		/* limited body checks */
 SMTP_CLI_ATTR smtp_cli_attr;		/* parsed command-line */
 int     smtp_hfrom_format;		/* postmaster notifications */
+STRING_LIST *smtp_use_srv_lookup;
 
 #ifdef USE_TLS
 
@@ -1403,6 +1438,14 @@ static void post_init(char *unused_name, char **argv)
      * header_from format, for postmaster notifications.
      */
     smtp_hfrom_format = hfrom_format_parse(VAR_HFROM_FORMAT, var_hfrom_format);
+
+    /*
+     * Service discovery with SRV record lookup.
+     */
+    if (*var_use_srv_lookup)
+	smtp_use_srv_lookup = string_list_init(VAR_USE_SRV_LOOKUP,
+					       MATCH_FLAG_RETURN,
+					       var_use_srv_lookup);
 }
 
 /* pre_init - pre-jail initialization */

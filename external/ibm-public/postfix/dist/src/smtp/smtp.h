@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.h,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
+/*	$NetBSD: smtp.h,v 1.4.2.1 2023/12/25 12:43:35 martin Exp $	*/
 
 /*++
 /* NAME
@@ -84,6 +84,14 @@ typedef struct SMTP_ITERATOR {
 
 #define SMTP_ITER_RESTORE_DEST(iter) do { \
 	vstring_strcpy((iter)->dest, STR((iter)->saved_dest)); \
+    } while (0)
+
+#define SMTP_ITER_UPDATE_HOST(iter, _host, _addr, _rr) do { \
+	vstring_strcpy((iter)->host, (_host)); \
+	vstring_strcpy((iter)->addr, (_addr)); \
+	(iter)->rr = (_rr); \
+	if ((_rr)->port) \
+	    (iter)->port = htons((_rr)->port); /* SRV port override */ \
     } while (0)
 
  /*
@@ -198,7 +206,7 @@ typedef struct SMTP_STATE {
      * One-bit counters to avoid logging the same warning multiple times per
      * delivery request.
      */
-    int     logged_line_length_limit:1;
+    unsigned logged_line_length_limit:1;
 } SMTP_STATE;
 
  /*
@@ -275,6 +283,7 @@ typedef struct SMTP_STATE {
 #define SMTP_MISC_FLAG_COMPLETE_SESSION	(1<<7)
 #define SMTP_MISC_FLAG_PREF_IPV6	(1<<8)
 #define SMTP_MISC_FLAG_PREF_IPV4	(1<<9)
+#define SMTP_MISC_FLAG_FALLBACK_SRV_TO_MX (1<<10)
 
 #define SMTP_MISC_FLAG_CONN_CACHE_MASK \
 	(SMTP_MISC_FLAG_CONN_LOAD | SMTP_MISC_FLAG_CONN_STORE)
@@ -313,6 +322,8 @@ extern MAPS *smtp_pix_bug_maps;		/* PIX workarounds */
 extern MAPS *smtp_generic_maps;		/* make internal address valid */
 extern int smtp_ext_prop_mask;		/* address extension propagation */
 extern unsigned smtp_dns_res_opt;	/* DNS query flags */
+
+extern STRING_LIST *smtp_use_srv_lookup;/* services with SRV record lookup */
 
 #ifdef USE_TLS
 
@@ -495,17 +506,19 @@ extern HBC_CALL_BACKS smtp_hbc_callbacks[];
 	(session->state->request->msg_stats.active_arrival.tv_sec - \
 	 session->state->request->msg_stats.incoming_arrival.tv_sec)
 
+#define TRACE_REQ_ONLY	(DEL_REQ_TRACE_ONLY(state->request->flags))
+
 #define PLAINTEXT_FALLBACK_OK_AFTER_STARTTLS_FAILURE \
 	(session->tls_context == 0 \
 	    && state->tls->level == TLS_LEV_MAY \
-	    && PREACTIVE_DELAY >= var_min_backoff_time \
+	    && (TRACE_REQ_ONLY || PREACTIVE_DELAY >= var_min_backoff_time) \
 	    && !HAVE_SASL_CREDENTIALS)
 
 #define PLAINTEXT_FALLBACK_OK_AFTER_TLS_SESSION_FAILURE \
 	(session->tls_context != 0 \
 	    && SMTP_RCPT_LEFT(state) > SMTP_RCPT_MARK_COUNT(state) \
 	    && state->tls->level == TLS_LEV_MAY \
-	    && PREACTIVE_DELAY >= var_min_backoff_time \
+	    && (TRACE_REQ_ONLY || PREACTIVE_DELAY >= var_min_backoff_time) \
 	    && !HAVE_SASL_CREDENTIALS)
 
  /*

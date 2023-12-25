@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtual.5,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: virtual.5,v 1.4.2.1 2023/12/25 12:43:27 martin Exp $
 .\"
 .TH VIRTUAL 5 
 .ad
@@ -22,9 +22,11 @@ The optional \fBvirtual\fR(5) alias table rewrites recipient
 addresses for all local, all virtual, and all remote mail
 destinations.
 This is unlike the \fBaliases\fR(5) table which is used
-only for \fBlocal\fR(8) delivery.  Virtual aliasing is
-recursive, and is implemented by the Postfix \fBcleanup\fR(8)
-daemon before mail is queued.
+only for \fBlocal\fR(8) delivery. This feature is implemented
+in the Postfix \fBcleanup\fR(8) daemon before mail is queued.
+
+Virtual aliasing is recursive; to terminate recursion for
+a specific address, alias that address to itself.
 
 The main applications of virtual aliasing are:
 .IP \(bu

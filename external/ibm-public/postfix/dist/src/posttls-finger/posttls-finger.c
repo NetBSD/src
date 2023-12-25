@@ -1,4 +1,4 @@
-/*	$NetBSD: posttls-finger.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
+/*	$NetBSD: posttls-finger.c,v 1.4.2.1 2023/12/25 12:43:34 martin Exp $	*/
 
 /*++
 /* NAME
@@ -239,6 +239,8 @@
 /*	is encountered, up to 5 times or as specified with the \fB-m\fR option.
 /*	By default reconnection is disabled, specify a positive delay to
 /*	enable this behavior.
+/* .IP "\fB-R\fR"
+/*	Use SRV lookup instead of MX.
 /* .IP "\fB-s \fIservername\fR"
 /*	The server name to send with the TLS Server Name Indication (SNI)
 /*	extension.  When the server has DANE TLSA records, this parameter
@@ -336,6 +338,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
@@ -470,6 +473,7 @@ typedef struct STATE {
     DNS_RR *mx;				/* MX RRset qname, rname, valid */
     int     pass;			/* Pass number, 2 for reconnect */
     int     nochat;			/* disable chat logging */
+    int     dosrv;			/* look up SRV records instead of MX */
     char   *helo;			/* Server name from EHLO reply */
     DSN_BUF *why;			/* SMTP-style error message */
     VSTRING *buffer;			/* Response buffer */
@@ -943,9 +947,9 @@ static int starttls(STATE *state)
 		print_trust_info(state);
 	    state->log_mask &= ~(TLS_LOG_CERTMATCH | TLS_LOG_PEERCERT |
 				 TLS_LOG_VERBOSE | TLS_LOG_UNTRUSTED);
-	    state->log_mask |= TLS_LOG_CACHE | TLS_LOG_SUMMARY;
-	    tls_update_app_logmask(state->tls_ctx, state->log_mask);
 	}
+	state->log_mask |= TLS_LOG_CACHE | TLS_LOG_SUMMARY;
+	tls_update_app_logmask(state->tls_ctx, state->log_mask);
     }
     return (0);
 }
@@ -1160,7 +1164,7 @@ static VSTREAM *connect_addr(STATE *state, DNS_RR *addr)
 /* addr_one - address lookup for one host name */
 
 static DNS_RR *addr_one(STATE *state, DNS_RR *addr_list, const char *host,
-			        int res_opt, unsigned pref)
+			        int res_opt, unsigned pref, unsigned port)
 {
     static const char *myname = "addr_one";
     DSN_BUF *why = state->why;
@@ -1183,6 +1187,8 @@ static DNS_RR *addr_one(STATE *state, DNS_RR *addr_list, const char *host,
 	if ((addr = dns_sa_to_rr(host, pref, res0->ai_addr)) == 0)
 	    msg_fatal("host %s: conversion error for address family %d: %m",
 		    host, ((struct sockaddr *) (res0->ai_addr))->sa_family);
+	addr->pref = pref;
+	addr->port = port;
 	addr_list = dns_rr_append(addr_list, addr);
 	freeaddrinfo(res0);
 	return (addr_list);
@@ -1199,8 +1205,10 @@ static DNS_RR *addr_one(STATE *state, DNS_RR *addr_list, const char *host,
 			     why->reason, DNS_REQ_FLAG_NONE,
 			     proto_info->dns_atype_list)) {
 	case DNS_OK:
-	    for (rr = addr; rr; rr = rr->next)
+	    for (rr = addr; rr; rr = rr->next) {
 		rr->pref = pref;
+		rr->port = port;
+	    }
 	    addr_list = dns_rr_append(addr_list, addr);
 	    return (addr_list);
 	default:
@@ -1287,15 +1295,15 @@ static DNS_RR *mx_addr_list(STATE *state, DNS_RR *mx_names)
 #endif
 
     for (rr = mx_names; rr; rr = rr->next) {
-	if (rr->type != T_MX)
+	if (rr->type != T_MX && rr->type != T_SRV)
 	    msg_panic("%s: bad resource type: %d", myname, rr->type);
 	addr_list = addr_one(state, addr_list, (char *) rr->data, res_opt,
-			     rr->pref);
+			     rr->pref, rr->port);
     }
     return (addr_list);
 }
 
-/* smtp_domain_addr - mail exchanger address lookup */
+/* domain_addr - mail exchanger address lookup */
 
 static DNS_RR *domain_addr(STATE *state, char *domain)
 {
@@ -1360,6 +1368,74 @@ static DNS_RR *domain_addr(STATE *state, char *domain)
     return (addr_list);
 }
 
+/* service_addr - mail exchanger address lookup */
+
+static DNS_RR *service_addr(STATE *state, const char *domain,
+			            const char *service)
+{
+    VSTRING *srv_qname = vstring_alloc(100);
+    char   *str_srv_qname;
+    DNS_RR *srv_names;
+    DNS_RR *addr_list = 0;
+    int     r = 0;			/* Resolver flags */
+    const char *aname;
+
+    dsb_reset(state->why);
+
+#if (RES_USE_DNSSEC != 0) && (RES_USE_EDNS0 != 0)
+    r |= RES_USE_DNSSEC;
+#endif
+
+    vstring_sprintf(srv_qname, "_%s._tcp.%s", service, domain);
+    str_srv_qname = STR(srv_qname);
+
+    /*
+     * IDNA support.
+     */
+#ifndef NO_EAI
+    if (!allascii(str_srv_qname)
+	&& (aname = midna_domain_to_ascii(str_srv_qname)) != 0) {
+	msg_info("%s asciified to %s", str_srv_qname, aname);
+    } else
+#endif
+	aname = str_srv_qname;
+
+    switch (dns_lookup(aname, T_SRV, r, &srv_names, (VSTRING *) 0,
+		       state->why->reason)) {
+    default:
+	dsb_status(state->why, "4.4.3");
+	break;
+    case DNS_INVAL:
+	dsb_status(state->why, "5.4.4");
+	break;
+    case DNS_NULLMX:
+	dsb_status(state->why, "5.1.0");
+	break;
+    case DNS_FAIL:
+	dsb_status(state->why, "5.4.3");
+	break;
+    case DNS_OK:
+	/* Shuffle then sort the SRV rr records by priority and weight. */
+	srv_names = dns_srv_rr_sort(srv_names);
+	addr_list = mx_addr_list(state, srv_names);
+	state->mx = dns_rr_copy(srv_names);
+	dns_rr_free(srv_names);
+	if (addr_list == 0) {
+	    msg_warn("no SRV host for %s has a valid address record",
+		     str_srv_qname);
+	    break;
+	}
+	/* TODO: sort by priority, weight, and address family preference. */
+	break;
+    case DNS_NOTFOUND:
+	dsb_status(state->why, "5.4.4");
+	break;
+    }
+
+    vstring_free(srv_qname);
+    return (addr_list);
+}
+
 /* host_addr - direct host lookup */
 
 static DNS_RR *host_addr(STATE *state, const char *host)
@@ -1386,7 +1462,8 @@ static DNS_RR *host_addr(STATE *state, const char *host)
 	ahost = host;
 
 #define PREF0	0
-    addr_list = addr_one(state, (DNS_RR *) 0, ahost, res_opt, PREF0);
+#define NOPORT	0
+    addr_list = addr_one(state, (DNS_RR *) 0, ahost, res_opt, PREF0, NOPORT);
     if (addr_list && addr_list->next) {
 	addr_list = dns_rr_shuffle(addr_list);
 	if (inet_proto_info()->ai_family_list[1] != 0)
@@ -1470,7 +1547,8 @@ static int dane_host_level(STATE *state, DNS_RR *addr)
 /* parse_destination - parse host/port destination */
 
 static char *parse_destination(char *destination, char *def_service,
-			               char **hostp, unsigned *portp)
+			               char **hostp, char **servicep,
+			               unsigned *portp)
 {
     char   *buf = mystrdup(destination);
     char   *service;
@@ -1486,13 +1564,13 @@ static char *parse_destination(char *destination, char *def_service,
      * Parse the host/port information. We're working with a copy of the
      * destination argument so the parsing can be destructive.
      */
-    if ((err = host_port(buf, hostp, (char *) 0, &service, def_service)) != 0)
+    if ((err = host_port(buf, hostp, (char *) 0, servicep, def_service)) != 0)
 	msg_fatal("%s in server description: %s", err, destination);
 
     /*
      * Convert service to port number, network byte order.
      */
-    service = (char *) filter_known_tcp_port(service);
+    service = (char *) filter_known_tcp_port(*servicep);
     if (alldig(service)) {
 	if ((port = atoi(service)) >= 65536 || port == 0)
 	    msg_fatal("bad network port: %s for destination: %s",
@@ -1514,17 +1592,21 @@ static char *parse_destination(char *destination, char *def_service,
 static void connect_remote(STATE *state, char *dest)
 {
     DNS_RR *addr;
-    char   *buf;
-    char   *domain;
 
     /* When reconnecting use IP address of previous session */
     if (state->addr == 0) {
+	char   *buf;
+	char   *domain;
+	char   *service;
+
 	buf = parse_destination(dest, state->smtp ? "smtp" : "24",
-				&domain, &state->port);
+				&domain, &service, &state->port);
 	if (!state->nexthop)
 	    state->nexthop = mystrdup(domain);
 	if (state->smtp == 0 || *dest == '[')
 	    state->addr = host_addr(state, domain);
+	else if (state->dosrv)
+	    state->addr = service_addr(state, domain, service);
 	else
 	    state->addr = domain_addr(state, domain);
 	myfree(buf);
@@ -1538,10 +1620,14 @@ static void connect_remote(STATE *state, char *dest)
     for (addr = state->addr; addr; addr = addr->next) {
 	int     level = dane_host_level(state, addr);
 
+	if (addr->port)				/* SRV port override */
+	    state->port = htons(addr->port);
+
 	if (level == TLS_LEV_INVALID
 	    || (state->stream = connect_addr(state, addr)) == 0) {
-	    msg_info("Failed to establish session to %s via %s: %s",
-		     dest, HNAME(addr), vstring_str(state->why->reason));
+	    msg_info("Failed to establish session to %s via %s:%u: %s",
+		     dest, HNAME(addr), addr->port,
+		     vstring_str(state->why->reason));
 	    continue;
 	}
 	/* We have a connection */
@@ -1809,6 +1895,7 @@ static void parse_options(STATE *state, int argc, char *argv[])
 
     state->smtp = 1;
     state->pass = 1;
+    state->dosrv = 0;
     state->reconnect = -1;
     state->max_reconnect = 5;
     state->wrapper_mode = 0;
@@ -1819,7 +1906,7 @@ static void parse_options(STATE *state, int argc, char *argv[])
     memset((void *) &state->options, 0, sizeof(state->options));
     state->options.host_lookup = mystrdup("dns");
 
-#define OPTS "a:ch:o:St:T:v"
+#define OPTS "a:ch:o:RSt:T:v"
 #ifdef USE_TLS
 #define TLSOPTS "A:Cd:fF:g:H:k:K:l:L:m:M:p:P:r:s:wX"
 
@@ -1857,6 +1944,9 @@ static void parse_options(STATE *state, int argc, char *argv[])
 	    break;
 	case 'o':
 	    override(optarg);
+	    break;
+	case 'R':
+	    state->dosrv = 1;
 	    break;
 	case 'S':
 	    state->smtp = 0;
@@ -2030,14 +2120,14 @@ static void parse_match(STATE *state, int argc, char *argv[])
     case TLS_LEV_SECURE:
 	state->match = argv_alloc(2);
 	while (*argv)
-	    argv_split_append(state->match, *argv++, "");
+	    argv_add(state->match, *argv++, ARGV_END);
 	if (state->match->argc == 0)
 	    argv_add(state->match, "nexthop", "dot-nexthop", ARGV_END);
 	break;
     case TLS_LEV_VERIFY:
 	state->match = argv_alloc(1);
 	while (*argv)
-	    argv_split_append(state->match, *argv++, "");
+	    argv_add(state->match, *argv++, ARGV_END);
 	if (state->match->argc == 0)
 	    argv_add(state->match, "hostname", ARGV_END);
 	break;

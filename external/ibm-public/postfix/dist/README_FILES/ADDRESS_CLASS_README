@@ -25,13 +25,13 @@ important for the operation of Postfix.
 
 An address class is defined by three items.
 
-  * The list of domains that are a member of the class: for example, all local
-    domains, or all relay domains.
+  * The list of domains that are a member of that address class: for example,
+    all local domains, or all relay domains.
 
-  * The default delivery transport. For example, the local, virtual or relay
-    delivery transport (delivery transports are defined in master.cf). This
-    helps to keep Postfix configurations simple, by avoiding the need for
-    explicit routing information in transport maps.
+  * The default delivery transport for that address class. For example, the
+    local, virtual or relay delivery transport (delivery transports are defined
+    in master.cf). This helps to keep Postfix configurations simple, by
+    avoiding the need for explicit routing information in transport maps.
 
   * The list of valid recipient addresses for that address class. The Postfix
     SMTP server rejects invalid recipients with "User unknown in <name of
@@ -48,9 +48,9 @@ The local domain class.
 
   * Purpose: final delivery for traditional UNIX system accounts and
     traditional Sendmail-style aliases. This is typically used for the
-    canonical domains of the machine. For a discussion of the difference
-    between canonical domains, hosted domains and other domains, see the
-    VIRTUAL_README file.
+    canonical domains of the machine (for example, $myhostname, $mydomain). For
+    a discussion of the difference between canonical domains, hosted domains
+    and other domains, see the VIRTUAL_README file.
 
   * Domain names are listed with the mydestination parameter. This domain class
     also includes mail for user@[ipaddress] when the IP address is listed with
@@ -68,9 +68,10 @@ The local domain class.
 
 The virtual alias domain class.
 
-  * Purpose: hosted domains where each recipient address is aliased to a local
-    UNIX system account or to a remote address. A virtual alias example is
-    given in the VIRTUAL_README file.
+  * Purpose: hosted domains where each recipient address is aliased to an
+    address in a different domain, for example, a local UNIX system account or
+    a remote address. A virtual alias example is given in the VIRTUAL_README
+    file.
 
   * Domain names are listed in virtual_alias_domains. The default value is
     $virtual_alias_maps for Postfix 1.1 compatibility.
@@ -81,7 +82,7 @@ The virtual alias domain class.
     compatibility.
 
   * There is no mail delivery transport parameter. Every address must be
-    aliased to some other address.
+    aliased to an address in some other domain.
 
 The virtual mailbox domain class.
 
@@ -158,8 +159,8 @@ earlier Postfix versions:
     mail (and bounced undeliverable mail) out of the mail queue. This is
     controlled by the smtpd_reject_unlisted_recipient configuration parameter.
 
-  * As of Postfix version 2.1, the SMTP server also rejects unknown sender
-    addresses (i.e. addresses that it would reject as unknown recipient
+  * As of Postfix version 2.1, the SMTP server can also reject unknown sender
+    addresses (i.e. addresses that it would reject as an unknown recipient
     addresses). Sender "egress filtering" can help to slow down an email worm
     explosion. This is controlled by the smtpd_reject_unlisted_sender
     configuration parameter.

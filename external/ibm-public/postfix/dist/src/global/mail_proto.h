@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.4.2.1 2023/12/25 12:43:32 martin Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -143,7 +143,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_PROTO_VERIFY	"address_verification_prrotocol"
 
  /*
-  * Attribute names.
+  * Attribute names in internal and policy delegation protocols.
   */
 #define MAIL_ATTR_REQ		"request"
 #define MAIL_ATTR_NREQ		"nrequest"
@@ -202,6 +202,8 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_CRYPTO_PROTOCOL "encryption_protocol"
 #define MAIL_ATTR_CRYPTO_CIPHER	"encryption_cipher"
 #define MAIL_ATTR_CRYPTO_KEYSIZE "encryption_keysize"
+#define MAIL_ATTR_COMPAT_LEVEL	"compatibility_level"
+#define MAIL_ATTR_MAIL_VERSION	"mail_version"
 
  /*
   * Suffixes for sender_name, sender_domain etc.

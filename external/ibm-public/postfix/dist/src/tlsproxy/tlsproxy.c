@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy.c,v 1.5 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: tlsproxy.c,v 1.5.2.1 2023/12/25 12:43:36 martin Exp $	*/
 
 /*++
 /* NAME
@@ -76,10 +76,6 @@
 /*	The OpenSSL cipherlist for "high" grade ciphers.
 /* .IP "\fBtls_medium_cipherlist (see 'postconf -d' output)\fR"
 /*	The OpenSSL cipherlist for "medium" or higher grade ciphers.
-/* .IP "\fBtls_low_cipherlist (see 'postconf -d' output)\fR"
-/*	The OpenSSL cipherlist for "low" or higher grade ciphers.
-/* .IP "\fBtls_export_cipherlist (see 'postconf -d' output)\fR"
-/*	The OpenSSL cipherlist for "export" or higher grade ciphers.
 /* .IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
 /*	The OpenSSL cipherlist for "NULL" grade ciphers that provide
 /*	authentication without encryption.
@@ -97,6 +93,12 @@
 /*	With SSLv3 and later, use the Postfix SMTP server's cipher
 /*	preference order instead of the remote client's cipher preference
 /*	order.
+/* .PP
+/*	Available in Postfix version 2.8..3.7:
+/* .IP "\fBtls_low_cipherlist (see 'postconf -d' output)\fR"
+/*	The OpenSSL cipherlist for "low" or higher grade ciphers.
+/* .IP "\fBtls_export_cipherlist (see 'postconf -d' output)\fR"
+/*	The OpenSSL cipherlist for "export" or higher grade ciphers.
 /* .PP
 /*	Available in Postfix version 2.9 and later:
 /* .IP "\fBtls_legacy_public_key_fingerprints (no)\fR"
@@ -136,6 +138,19 @@
 /* .IP "\fBtls_fast_shutdown_enable (yes)\fR"
 /*	A workaround for implementations that hang Postfix while shutting
 /*	down a TLS session, until Postfix times out.
+/* .PP
+/*	Available in Postfix version 3.8 and later:
+/* .IP "\fBtls_ffdhe_auto_groups (see 'postconf -d' output)\fR"
+/*	The prioritized list of finite-field Diffie-Hellman ephemeral
+/*	(FFDHE) key exchange groups supported by the Postfix SMTP client and
+/*	server.
+/* .PP
+/*	Available in Postfix 3.9, 3.8.1, 3.7.6, 3.6.10, 3.5.20 and later:
+/* .IP "\fBtls_config_file (default)\fR"
+/*	Optional configuration file with baseline OpenSSL settings.
+/* .IP "\fBtls_config_name (empty)\fR"
+/*	The application name passed by Postfix to OpenSSL library
+/*	initialization functions.
 /* STARTTLS SERVER CONTROLS
 /* .ad
 /* .fi

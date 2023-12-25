@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.4.2.1 2023/12/25 12:43:31 martin Exp $	*/
 
 /*++
 /* NAME
@@ -33,119 +33,9 @@
 /* .IP dummy
 /*	Not used; this argument exists only for compatibility with
 /*	the dict_open(3) interface.
-/* .PP
-/*	Configuration parameters:
-/* .IP server_host
-/*	List of hosts at which all LDAP queries are directed.
-/*	The host names can also be LDAP URLs if the LDAP client library used
-/*	is OpenLDAP.
-/* .IP server_port
-/*	The port the LDAP server listens on.
-/* .IP search_base
-/*	The LDAP search base, for example: \fIO=organization name, C=country\fR.
-/* .IP domain
-/*	If specified, only lookups ending in this value will be queried.
-/*	This can significantly reduce the query load on the LDAP server.
-/* .IP timeout
-/*	Deadline for LDAP open() and LDAP search() .
-/* .IP query_filter
-/*	The search filter template used to search for directory entries,
-/*	for example \fI(mailacceptinggeneralid=%s)\fR. See ldap_table(5)
-/*	for details.
-/* .IP result_format
-/*	The result template used to expand results from queries. Default
-/*	is \fI%s\fR. See ldap_table(5) for details. Also supported under
-/*	the name \fIresult_filter\fR for compatibility with older releases.
-/* .IP result_attribute
-/*	The attribute(s) returned by the search, in which to find
-/*	RFC822 addresses, for example \fImaildrop\fR.
-/* .IP special_result_attribute
-/*	The attribute(s) of directory entries that can contain DNs or URLs.
-/*	If found, a recursive subsequent search is done using their values.
-/* .IP leaf_result_attribute
-/*	These are only returned for "leaf" LDAP entries, i.e. those that are
-/*	not "terminal" and have no values for any of the "special" result
-/*	attributes.
-/* .IP terminal_result_attribute
-/*	If found, the LDAP entry is considered a terminal LDAP object, not
-/*	subject to further direct or recursive expansion. Only the terminal
-/*	result attributes are returned.
-/* .IP scope
-/*	LDAP search scope: sub, base, or one.
-/* .IP bind
-/*	Whether or not to bind to the server -- LDAP v3 implementations don't
-/*	require it, which saves some overhead.
-/* .IP bind_dn
-/*	If you must bind to the server, do it with this distinguished name ...
-/* .IP bind_pw
-/*	\&... and this password.
-/* .IP cache (no longer supported)
-/*	Whether or not to turn on client-side caching.
-/* .IP cache_expiry (no longer supported)
-/*	If you do cache results, expire them after this many seconds.
-/* .IP cache_size (no longer supported)
-/*	The cache size in bytes. Does nothing if the cache is off, of course.
-/* .IP recursion_limit
-/*	Maximum recursion depth when expanding DN or URL references.
-/*	Queries which exceed the recursion limit fail with
-/*	dict->error = DICT_ERR_RETRY.
-/* .IP expansion_limit
-/*	Limit (if any) on the total number of lookup result values. Lookups which
-/*	exceed the limit fail with dict->error=DICT_ERR_RETRY. Note that
-/*	each value of a multivalued result attribute counts as one result.
-/* .IP size_limit
-/*	Limit on the number of entries returned by individual LDAP queries.
-/*	Queries which exceed the limit fail with dict->error=DICT_ERR_RETRY.
-/*	This is an *entry* count, for any single query performed during the
-/*	possibly recursive lookup.
-/* .IP chase_referrals
-/*	Controls whether LDAP referrals are obeyed.
-/* .IP dereference
-/*	How to handle LDAP aliases. See ldap.h or ldap_open(3) man page.
-/* .IP version
-/*	Specifies the LDAP protocol version to use.  Default is version
-/*	\fI2\fR.
-/* .IP "\fBsasl_mechs (empty)\fR"
-/*	Specifies a space-separated list of LDAP SASL Mechanisms.
-/* .IP "\fBsasl_realm (empty)\fR"
-/*	The realm to use for SASL binds.
-/* .IP "\fBsasl_authz_id (empty)\fR"
-/*	The SASL Authorization Identity to assert.
-/* .IP "\fBsasl_minssf (0)\fR"
-/*	The minimum SASL SSF to allow.
-/* .IP start_tls
-/*	Whether or not to issue STARTTLS upon connection to the server.
-/*	At this time, STARTTLS and LDAP SSL are only available if the
-/*	LDAP client library used is OpenLDAP.  Default is \fIno\fR.
-/* .IP tls_ca_cert_file
-/*	File containing certificates for all of the X509 Certification
-/*	Authorities the client will recognize.  Takes precedence over
-/*	tls_ca_cert_dir.
-/* .IP tls_ca_cert_dir
-/*	Directory containing X509 Certification Authority certificates
-/*	in separate individual files.
-/* .IP tls_cert
-/*	File containing client's X509 certificate.
-/* .IP tls_key
-/*	File containing the private key corresponding to
-/*	tls_cert.
-/* .IP tls_require_cert
-/*	Whether or not to request server's X509 certificate and check its
-/*	validity. The value "no" means don't check the cert trust chain
-/*	and (OpenLDAP 2.1+) don't check the peername. The value "yes" means
-/*	check both the trust chain and the peername (with OpenLDAP <= 2.0.11,
-/*	the peername checks use the reverse hostname from the LDAP servers's
-/*	IP address, not the user supplied servername).
-/* .IP tls_random_file
-/*	Path of a file to obtain random bits from when /dev/[u]random is
-/*	not available. Generally set to the name of the EGD/PRNGD socket.
-/* .IP tls_cipher_suite
-/*	Cipher suite to use in SSL/TLS negotiations.
-/* .IP debuglevel
-/*	Debug level.  See 'loglevel' option in slapd.conf(5) man page.
-/*	Currently only in openldap libraries (and derivatives).
 /* SEE ALSO
 /*	dict(3) generic dictionary manager
+/*	ldap_table(5) LDAP client configuration
 /* AUTHOR(S)
 /*	Prabhat K Singh
 /*	VSNL, Bombay, India.
@@ -163,8 +53,6 @@
 /*
 /*	John Hensley
 /*	john@sunislelodge.com
-/*
-/*	Current maintainers:
 /*
 /*	LaMont Jones
 /*	lamont@debian.org

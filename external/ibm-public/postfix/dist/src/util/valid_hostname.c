@@ -1,4 +1,4 @@
-/*	$NetBSD: valid_hostname.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: valid_hostname.c,v 1.2.22.1 2023/12/25 12:43:38 martin Exp $	*/
 
 /*++
 /* NAME
@@ -85,7 +85,7 @@
 
 /* valid_hostname - screen out bad hostnames */
 
-int     valid_hostname(const char *name, int gripe)
+int     valid_hostname(const char *name, int flags)
 {
     const char *myname = "valid_hostname";
     const char *cp;
@@ -93,6 +93,7 @@ int     valid_hostname(const char *name, int gripe)
     int     label_count = 0;
     int     non_numeric = 0;
     int     ch;
+    int     gripe = flags & DO_GRIPE;
 
     /*
      * Trivial cases first.
@@ -118,6 +119,15 @@ int     valid_hostname(const char *name, int gripe)
 	    }
 	    if (!ISDIGIT(ch))
 		non_numeric = 1;
+	} else if ((flags & DO_WILDCARD) && ch == '*') {
+	    if (label_length || label_count || (cp[1] && cp[1] != '.')) {
+		if (gripe)
+		    msg_warn("%s: '*' can be the first label only: %.100s", myname, name);
+		return (0);
+	    }
+	    label_count++;
+	    label_length++;
+	    non_numeric = 1;
 	} else if (ch == '.') {
 	    if (label_length == 0 || cp[1] == 0) {
 		if (gripe)

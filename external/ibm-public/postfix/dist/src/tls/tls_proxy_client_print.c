@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_client_print.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: tls_proxy_client_print.c,v 1.3.2.1 2023/12/25 12:43:36 martin Exp $	*/
 
 /*++
 /* NAME
@@ -97,18 +97,18 @@ int     tls_proxy_client_param_print(ATTR_PRINT_COMMON_FN print_fn, VSTREAM *fp,
 	msg_info("begin tls_proxy_client_param_print");
 
     ret = print_fn(fp, flags | ATTR_FLAG_MORE,
+		   SEND_ATTR_STR(TLS_ATTR_CNF_FILE, params->tls_cnf_file),
+		   SEND_ATTR_STR(TLS_ATTR_CNF_NAME,  params->tls_cnf_name),
 		   SEND_ATTR_STR(VAR_TLS_HIGH_CLIST, params->tls_high_clist),
 		   SEND_ATTR_STR(VAR_TLS_MEDIUM_CLIST,
 				 params->tls_medium_clist),
-		   SEND_ATTR_STR(VAR_TLS_LOW_CLIST, params->tls_low_clist),
-		   SEND_ATTR_STR(VAR_TLS_EXPORT_CLIST,
-				 params->tls_export_clist),
 		   SEND_ATTR_STR(VAR_TLS_NULL_CLIST, params->tls_null_clist),
 		   SEND_ATTR_STR(VAR_TLS_EECDH_AUTO, params->tls_eecdh_auto),
 		   SEND_ATTR_STR(VAR_TLS_EECDH_STRONG,
 				 params->tls_eecdh_strong),
 		   SEND_ATTR_STR(VAR_TLS_EECDH_ULTRA,
 				 params->tls_eecdh_ultra),
+		   SEND_ATTR_STR(VAR_TLS_FFDHE_AUTO, params->tls_ffdhe_auto),
 		   SEND_ATTR_STR(VAR_TLS_BUG_TWEAKS, params->tls_bug_tweaks),
 		   SEND_ATTR_STR(VAR_TLS_SSL_OPTIONS,
 				 params->tls_ssl_options),

@@ -71,7 +71,7 @@ tls_certkey_tests: test
 	done; \
 	for pem in bad-*.pem; do \
 	    $(SHLIB_ENV) $(VALGRIND) ./tls_certkey $$pem > $$pem.out 2>&1 && exit 1 || : ok; \
-	    egrep -v 'TLS library problem' $$pem.out | diff $$pem.ref - || \
+	    grep -E -v 'TLS library problem' $$pem.out | diff $$pem.ref - || \
 	    exit 1; \
 	    echo "  $$pem: OK"; \
 	done

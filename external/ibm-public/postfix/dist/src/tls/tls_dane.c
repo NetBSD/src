@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_dane.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: tls_dane.c,v 1.4.2.1 2023/12/25 12:43:36 martin Exp $	*/
 
 /*++
 /* NAME
@@ -825,7 +825,7 @@ int     tls_dane_enable(TLS_SESS_STATE *TLScontext)
 
 /* tls_dane_digest_init - configure supported DANE digests */
 
-void    tls_dane_digest_init(SSL_CTX *ctx, const EVP_MD * fpt_alg)
+void    tls_dane_digest_init(SSL_CTX *ctx, const EVP_MD *fpt_alg)
 {
     dane_mtype mtypes[256];
     char   *cp;
@@ -932,7 +932,7 @@ void    tls_dane_digest_init(SSL_CTX *ctx, const EVP_MD * fpt_alg)
 	}
 	mtypes[codepoint].ord = ++ord;
 
-	if ((mtypes[codepoint].alg = EVP_get_digestbyname(algname)) == 0) {
+	if ((mtypes[codepoint].alg = tls_digest_byname(algname, NULL)) == 0) {
 	    msg_warn("%s: digest algorithm \"%s\"(%d) unknown",
 		     VAR_TLS_DANE_DIGESTS, algname, codepoint);
 	    continue;
@@ -1134,11 +1134,11 @@ static void load_tlsa_args(SSL *ssl, char *argv[])
     case 0:
 	break;
     case 1:
-	if ((md = EVP_get_digestbyname(LN_sha256)) == 0)
+	if ((md = tls_digest_byname(LN_sha256, NULL)) == 0)
 	    msg_fatal("Digest %s not found", LN_sha256);
 	break;
     case 2:
-	if ((md = EVP_get_digestbyname(LN_sha512)) == 0)
+	if ((md = tls_digest_byname(LN_sha512, NULL)) == 0)
 	    msg_fatal("Digest %s not found", LN_sha512);
 	break;
     default:

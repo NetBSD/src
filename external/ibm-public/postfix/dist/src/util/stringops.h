@@ -1,4 +1,4 @@
-/*	$NetBSD: stringops.h,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: stringops.h,v 1.4.2.1 2023/12/25 12:43:38 martin Exp $	*/
 
 #ifndef _STRINGOPS_H_INCLUDED_
 #define _STRINGOPS_H_INCLUDED_
@@ -33,7 +33,14 @@ extern char *concatenate(const char *,...);
 extern char *mystrtok(char **, const char *);
 extern char *mystrtokq(char **, const char *, const char *);
 extern char *mystrtokdq(char **, const char *);
+extern char *mystrtok_cw(char **, const char *, const char *);
+extern char *mystrtokq_cw(char **, const char *, const char *, const char *);
+extern char *mystrtokdq_cw(char **, const char *, const char *);
 extern char *translit(char *, const char *, const char *);
+
+#define mystrtok(cp, sp) mystrtok_cw((cp), (sp), (char *) 0)
+#define mystrtokq(cp, sp, pp) mystrtokq_cw((cp), (sp), (pp), (char *) 0)
+#define mystrtokdq(cp, sp) mystrtokdq_cw((cp), (sp), (char *) 0)
 
 #define printable(string, replacement) \
 	printable_except((string), (replacement), (char *) 0)

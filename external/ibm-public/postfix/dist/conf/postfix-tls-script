@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-tls-script,v 1.4 2022/10/08 16:12:43 christos Exp $
+#	$NetBSD: postfix-tls-script,v 1.4.2.1 2023/12/25 12:43:21 martin Exp $
 #
 
 #++
@@ -180,9 +180,7 @@
 # .IP "\fBsmtp_tls_loglevel (0)\fR"
 #	Enable additional Postfix SMTP client logging of TLS activity.
 # .IP "\fBsmtp_tls_security_level (empty)\fR"
-#	The default SMTP TLS security level for the Postfix SMTP client;
-#	when a non-empty value is specified, this overrides the obsolete
-#	parameters smtp_use_tls, smtp_enforce_tls, and smtp_tls_enforce_peername.
+#	The default SMTP TLS security level for the Postfix SMTP client.
 # .IP "\fBsmtp_tls_session_cache_database (empty)\fR"
 #	Name of the file containing the optional Postfix SMTP client
 #	TLS session cache.
@@ -335,7 +333,7 @@ $postconf -T compile-version | grep . >/dev/null || {
 }
 rsa=
 ecdsa=
-for _algo in `$postconf -T public-key-algorithms | egrep '^(rsa|ecdsa)$'`
+for _algo in `$postconf -T public-key-algorithms | grep -E '^(rsa|ecdsa)$'`
 do
     eval $_algo=$_algo
 done
@@ -417,7 +415,7 @@ pubkey_dgst() {
     for cmd in ec rsa; do
 	$openssl $cmd -passin "pass:umask 077" -in "$1" -pubout |
 	$openssl $cmd -pubin -outform DER |
-	hex_sha256 | egrep -v "${null256}" && return 0
+	hex_sha256 | grep -E -v "${null256}" && return 0
     done 2>/dev/null
     return 1
 }
@@ -431,7 +429,7 @@ cert_pubkey_dgst() {
     for cmd in ec rsa; do
 	$openssl x509 -pubkey -noout -in "$1" |
 	$openssl $cmd -pubin -outform DER |
-	hex_sha256 | egrep -v "${null256}" && return 0
+	hex_sha256 | grep -E -v "${null256}" && return 0
     done 2>/dev/null
     return 1
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: attr.h,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: attr.h,v 1.4.2.1 2023/12/25 12:43:36 martin Exp $	*/
 
 #ifndef _ATTR_H_INCLUDED_
 #define _ATTR_H_INCLUDED_
@@ -64,6 +64,7 @@ typedef int (*ATTR_PRINT_CUSTOM_FN) (ATTR_PRINT_COMMON_FN, VSTREAM *, int, const
   * for documentation.
   */
 #define SEND_ATTR_INT(name, val)	ATTR_TYPE_INT, CHECK_CPTR(ATTR, char, (name)), CHECK_VAL(ATTR, int, (val))
+#define SEND_ATTR_UINT(name, val)	ATTR_TYPE_INT, CHECK_CPTR(ATTR, char, (name)), CHECK_VAL(ATTR, unsigned, (val))
 #define SEND_ATTR_STR(name, val)	ATTR_TYPE_STR, CHECK_CPTR(ATTR, char, (name)), CHECK_CPTR(ATTR, char, (val))
 #define SEND_ATTR_HASH(val)		ATTR_TYPE_HASH, CHECK_CPTR(ATTR, HTABLE, (val))
 #define SEND_ATTR_NV(val)		ATTR_TYPE_NV, CHECK_CPTR(ATTR, NVTABLE, (val))
@@ -72,6 +73,7 @@ typedef int (*ATTR_PRINT_CUSTOM_FN) (ATTR_PRINT_COMMON_FN, VSTREAM *, int, const
 #define SEND_ATTR_FUNC(func, val)	ATTR_TYPE_FUNC, CHECK_VAL(ATTR, ATTR_PRINT_CUSTOM_FN, (func)), CHECK_CPTR(ATTR, void, (val))
 
 #define RECV_ATTR_INT(name, val)	ATTR_TYPE_INT, CHECK_CPTR(ATTR, char, (name)), CHECK_PTR(ATTR, int, (val))
+#define RECV_ATTR_UINT(name, val)	ATTR_TYPE_INT, CHECK_CPTR(ATTR, char, (name)), CHECK_PTR(ATTR, unsigned, (val))
 #define RECV_ATTR_STR(name, val)	ATTR_TYPE_STR, CHECK_CPTR(ATTR, char, (name)), CHECK_PTR(ATTR, VSTRING, (val))
 #define RECV_ATTR_STREQ(name, val)	ATTR_TYPE_STREQ, CHECK_CPTR(ATTR, char, (name)), CHECK_CPTR(ATTR, char, (val))
 #define RECV_ATTR_HASH(val)		ATTR_TYPE_HASH, CHECK_PTR(ATTR, HTABLE, (val))
@@ -83,9 +85,11 @@ typedef int (*ATTR_PRINT_CUSTOM_FN) (ATTR_PRINT_COMMON_FN, VSTREAM *, int, const
 CHECK_VAL_HELPER_DCL(ATTR, ssize_t);
 CHECK_VAL_HELPER_DCL(ATTR, long);
 CHECK_VAL_HELPER_DCL(ATTR, int);
+CHECK_VAL_HELPER_DCL(ATTR, unsigned);
 CHECK_PTR_HELPER_DCL(ATTR, void);
 CHECK_PTR_HELPER_DCL(ATTR, long);
 CHECK_PTR_HELPER_DCL(ATTR, int);
+CHECK_PTR_HELPER_DCL(ATTR, unsigned);
 CHECK_PTR_HELPER_DCL(ATTR, VSTRING);
 CHECK_PTR_HELPER_DCL(ATTR, NVTABLE);
 CHECK_PTR_HELPER_DCL(ATTR, HTABLE);

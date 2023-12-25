@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_strrecord.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: dns_strrecord.c,v 1.2.26.1 2023/12/25 12:43:31 martin Exp $	*/
 
 /*++
 /* NAME
@@ -81,6 +81,10 @@ char   *dns_strrecord(VSTRING *buf, DNS_RR *rr)
 	break;
     case T_MX:
 	vstring_sprintf_append(buf, "%u %s.", rr->pref, rr->data);
+	break;
+    case T_SRV:
+	vstring_sprintf_append(buf, "%u %u %u %s.", rr->pref, rr->weight,
+			       rr->port, rr->data);
 	break;
     case T_TLSA:
 	if (rr->data_len >= 3) {

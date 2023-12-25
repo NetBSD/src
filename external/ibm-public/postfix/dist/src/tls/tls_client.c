@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.12 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.12.2.1 2023/12/25 12:43:35 martin Exp $	*/
 
 /*++
 /* NAME
@@ -326,6 +326,7 @@ static void verify_extract_name(TLS_SESS_STATE *TLScontext, X509 *peercert,
      * checks are now performed internally in OpenSSL.
      */
     if (SSL_get_verify_result(TLScontext->con) == X509_V_OK) {
+	TLScontext->peer_status |= TLS_CERT_FLAG_TRUSTED;
 	if (TLScontext->must_fail) {
 	    msg_panic("%s: cert valid despite trust init failure",
 		      TLScontext->namaddr);
@@ -354,8 +355,7 @@ static void verify_extract_name(TLS_SESS_STATE *TLScontext, X509 *peercert,
 			     TLScontext->namaddr, peername);
 		tls_dane_log(TLScontext);
 	    }
-	} else
-	    TLScontext->peer_status |= TLS_CERT_FLAG_TRUSTED;
+	}
     }
 
     /*
@@ -643,6 +643,13 @@ TLS_APPL_STATE *tls_client_init(const TLS_CLIENT_INIT_PROPS *props)
     tls_check_version();
 
     /*
+     * Initialize the OpenSSL library, possibly loading its configuration
+     * file.
+     */
+    if (tls_library_init() == 0)
+	return (0);
+
+    /*
      * Create an application data index for SSL objects, so that we can
      * attach TLScontext information; this information is needed inside
      * tls_verify_certificate_callback().
@@ -716,6 +723,15 @@ TLS_APPL_STATE *tls_client_init(const TLS_CLIENT_INIT_PROPS *props)
     tls_dane_digest_init(client_ctx, fpt_alg);
 
     /*
+     * Presently we use TLS only with SMTP where truncation attacks are not
+     * possible as a result of application framing.  If we ever use TLS in
+     * some other application protocol where truncation could be relevant,
+     * we'd need to disable truncation detection conditionally, or explicitly
+     * clear the option in that code path.
+     */
+    off |= SSL_OP_IGNORE_UNEXPECTED_EOF;
+
+    /*
      * Protocol selection is destination dependent, so we delay the protocol
      * selection options to the per-session SSL object.
      */
@@ -781,9 +797,10 @@ TLS_APPL_STATE *tls_client_init(const TLS_CLIENT_INIT_PROPS *props)
     /*
      * With OpenSSL 1.0.2 and later the client EECDH curve list becomes
      * configurable with the preferred curve negotiated via the supported
-     * curves extension.
+     * curves extension.  With OpenSSL 3.0 and TLS 1.3, the same applies
+     * to the FFDHE groups which become part of a unified "groups" list.
      */
-    tls_auto_eecdh_curves(client_ctx, var_tls_eecdh_auto);
+    tls_auto_groups(client_ctx, var_tls_eecdh_auto, var_tls_ffdhe_auto);
 
     /*
      * Finally, the setup for the server certificate checking, done "by the

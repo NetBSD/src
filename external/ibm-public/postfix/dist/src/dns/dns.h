@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.h,v 1.5 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: dns.h,v 1.5.2.1 2023/12/25 12:43:31 martin Exp $	*/
 
 #ifndef _DNS_H_INCLUDED_
 #define _DNS_H_INCLUDED_
@@ -160,10 +160,13 @@ typedef struct DNS_RR {
     unsigned short class;		/* C_IN, etc. */
     unsigned int ttl;			/* always */
     unsigned int dnssec_valid;		/* DNSSEC validated */
-    unsigned short pref;		/* T_MX only */
+    unsigned short pref;		/* T_MX and T_SRV record related */
+    unsigned short weight;		/* T_SRV related, defined in rfc2782 */
+    unsigned short port;		/* T_SRV related, defined in rfc2782 */
     struct DNS_RR *next;		/* linkage */
     size_t  data_len;			/* actual data size */
-    char    data[1];			/* actually a bunch of data */
+    char    *data;			/* a bunch of data */
+     /* Add new fields at the end, for ABI forward compatibility. */
 } DNS_RR;
 
  /*
@@ -185,14 +188,29 @@ extern char *dns_strrecord(VSTRING *, DNS_RR *);
  /*
   * dns_rr.c
   */
+#define DNS_RR_NOPREF	(0)
+#define DNS_RR_NOWEIGHT	(0)
+#define DNS_RR_NOPORT	(0)
+
+#define dns_rr_create_noport(qname, rname, type, class, ttl, pref, data, \
+				data_len) \
+	dns_rr_create((qname), (rname), (type), (class), (ttl), \
+	(pref), DNS_RR_NOWEIGHT, DNS_RR_NOPORT, (data), (data_len))
+
+#define dns_rr_create_nopref(qname, rname, type, class, ttl, data, data_len) \
+	dns_rr_create_noport((qname), (rname), (type), (class), (ttl), \
+	DNS_RR_NOPREF, (data), (data_len))
+
 extern DNS_RR *dns_rr_create(const char *, const char *,
 			             ushort, ushort,
+			             unsigned, unsigned,
 			             unsigned, unsigned,
 			             const char *, size_t);
 extern void dns_rr_free(DNS_RR *);
 extern DNS_RR *dns_rr_copy(DNS_RR *);
 extern DNS_RR *dns_rr_append(DNS_RR *, DNS_RR *);
 extern DNS_RR *dns_rr_sort(DNS_RR *, int (*) (DNS_RR *, DNS_RR *));
+extern DNS_RR *dns_srv_rr_sort(DNS_RR *);
 extern int dns_rr_compare_pref_ipv6(DNS_RR *, DNS_RR *);
 extern int dns_rr_compare_pref_ipv4(DNS_RR *, DNS_RR *);
 extern int dns_rr_compare_pref_any(DNS_RR *, DNS_RR *);
@@ -297,8 +315,9 @@ extern int dns_get_h_errno(void);
   * Below is the precedence order. The order between DNS_RETRY and DNS_NOTFOUND
   * is arbitrary.
   */
-#define DNS_RECURSE	(-7)		/* internal only: recursion needed */
-#define DNS_NOTFOUND	(-6)		/* query ok, data not found */
+#define DNS_RECURSE	(-8)		/* internal only: recursion needed */
+#define DNS_NOTFOUND	(-7)		/* query ok, data not found */
+#define DNS_NULLSRV	(-6)		/* query ok, service unavailable */
 #define DNS_NULLMX	(-5)		/* query ok, service unavailable */
 #define DNS_FAIL	(-4)		/* query failed, don't retry */
 #define DNS_INVAL	(-3)		/* query ok, malformed reply */

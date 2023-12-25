@@ -1,4 +1,4 @@
-#	$NetBSD: master.cf,v 1.10 2022/10/08 16:12:43 christos Exp $
+#	$NetBSD: master.cf,v 1.10.2.1 2023/12/25 12:43:21 martin Exp $
 #
 #
 # Postfix master process configuration file.  For details on the format
@@ -23,6 +23,7 @@
 #  -o smtpd_tls_security_level=encrypt
 #  -o smtpd_sasl_auth_enable=yes
 #  -o smtpd_tls_auth_only=yes
+#  -o local_header_rewrite_clients=static:all
 #  -o smtpd_reject_unlisted_recipient=no
 #     Instead of specifying complex smtpd_<xxx>_restrictions here,
 #     specify "smtpd_<xxx>_restrictions=$mua_<xxx>_restrictions"
@@ -40,6 +41,7 @@
 #  -o syslog_name=postfix/submissions
 #  -o smtpd_tls_wrappermode=yes
 #  -o smtpd_sasl_auth_enable=yes
+#  -o local_header_rewrite_clients=static:all
 #  -o smtpd_reject_unlisted_recipient=no
 #     Instead of specifying complex smtpd_<xxx>_restrictions here,
 #     specify "smtpd_<xxx>_restrictions=$mua_<xxx>_restrictions"

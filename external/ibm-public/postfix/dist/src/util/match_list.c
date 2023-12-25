@@ -1,4 +1,4 @@
-/*	$NetBSD: match_list.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: match_list.c,v 1.2.22.1 2023/12/25 12:43:37 martin Exp $	*/
 
 /*++
 /* NAME
@@ -103,7 +103,7 @@
 #include <mymalloc.h>
 #include <vstring.h>
 #include <vstream.h>
-#include <vstring_vstream.h>
+#include <readlline.h>
 #include <stringops.h>
 #include <argv.h>
 #include <dict.h>
@@ -147,12 +147,8 @@ static ARGV *match_list_parse(MATCH_LIST *match_list, ARGV *pat_list,
      * If there is an error, implement graceful degradation by inserting a
      * pseudo table whose lookups fail with a warning message.
      */
-    while ((start = mystrtokq(&bp, delim, CHARS_BRACE)) != 0) {
-	if (*start == '#') {
-	    msg_warn("%s: comment at end of line is not supported: %s %s",
-		     match_list->pname, start, bp);
-	    break;
-	}
+    while ((start = mystrtokq_cw(&bp, delim, CHARS_BRACE,
+				 match_list->pname)) != 0) {
 	for (match = init_match, item = start; *item == '!'; item++)
 	    match = !match;
 	if (*item == 0)
@@ -169,10 +165,9 @@ static ARGV *match_list_parse(MATCH_LIST *match_list, ARGV *pat_list,
 						 "open file %s: %m", item));
 		argv_add(pat_list, STR(buf), (char *) 0);
 	    } else {
-		while (vstring_fgets(buf, fp))
-		    if (vstring_str(buf)[0] != '#')
-			pat_list = match_list_parse(match_list, pat_list,
-						    vstring_str(buf), match);
+		while (readlline(buf, fp, (int *) 0))
+		    pat_list = match_list_parse(match_list, pat_list,
+						vstring_str(buf), match);
 		if (vstream_fclose(fp))
 		    msg_fatal("%s: read file %s: %m", myname, item);
 	    }

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_session.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
+/*	$NetBSD: smtp_session.c,v 1.4.2.1 2023/12/25 12:43:35 martin Exp $	*/
 
 /*++
 /* NAME
@@ -131,6 +131,7 @@
 #define SESS_ATTR_DEST		"destination"
 #define SESS_ATTR_HOST		"host_name"
 #define SESS_ATTR_ADDR		"host_addr"
+#define SESS_ATTR_PORT		"host_port"
 #define SESS_ATTR_DEST_FEATURES	"destination_features"
 
 #define SESS_ATTR_TLS_LEVEL	"tls_level"
@@ -261,6 +262,7 @@ int     smtp_session_passivate(SMTP_SESSION *session, VSTRING *dest_prop,
 			    SEND_ATTR_STR(SESS_ATTR_DEST, STR(iter->dest)),
 			    SEND_ATTR_STR(SESS_ATTR_HOST, STR(iter->host)),
 			    SEND_ATTR_STR(SESS_ATTR_ADDR, STR(iter->addr)),
+			    SEND_ATTR_UINT(SESS_ATTR_PORT, iter->port),
 			    SEND_ATTR_INT(SESS_ATTR_DEST_FEATURES,
 			 session->features & SMTP_FEATURE_DESTINATION_MASK),
 			    ATTR_TYPE_END) != 0
@@ -400,9 +402,10 @@ SMTP_SESSION *smtp_session_activate(int fd, SMTP_ITERATOR *iter,
 			       RECV_ATTR_STR(SESS_ATTR_DEST, iter->dest),
 			       RECV_ATTR_STR(SESS_ATTR_HOST, iter->host),
 			       RECV_ATTR_STR(SESS_ATTR_ADDR, iter->addr),
+			       RECV_ATTR_UINT(SESS_ATTR_PORT, &iter->port),
 			       RECV_ATTR_INT(SESS_ATTR_DEST_FEATURES,
 					     &dest_features),
-			       ATTR_TYPE_END) != 4
+			       ATTR_TYPE_END) != 5
 	    || vstream_fclose(mp) != 0) {
 	    msg_warn("smtp_session_passivate: bad cached dest properties");
 	    SMTP_SESSION_ACTIVATE_ERR_RETURN();

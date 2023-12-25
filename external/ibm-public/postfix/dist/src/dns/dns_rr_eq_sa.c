@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rr_eq_sa.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: dns_rr_eq_sa.c,v 1.2.22.1 2023/12/25 12:43:31 martin Exp $	*/
 
 /*++
 /* NAME
@@ -124,7 +124,7 @@ int     main(int argc, char **argv)
 
 	if ((aierr = hostaddr_to_sockaddr(argv[1], (char *) 0, 0, &res1)) != 0)
 	    msg_fatal("host address %s: %s", argv[1], MAI_STRERROR(aierr));
-	if ((rr = dns_sa_to_rr(argv[1], 0, res1->ai_addr)) == 0)
+	if ((rr = dns_sa_to_rr(argv[1], DNS_RR_NOPREF, res1->ai_addr)) == 0)
 	    msg_fatal("dns_sa_to_rr: %m");
 	freeaddrinfo(res1);
 

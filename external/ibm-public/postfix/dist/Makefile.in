@@ -116,7 +116,8 @@ manpages:
 
 # Some checks require a bin/postconf executable.
 pre-release-checks: typo-check missing-proxy-read-maps-check \
-	postlink-check postfix-files-check
+	postlink-check postfix-files-check check-spell-history \
+	check-double-history check-table-proto
 
 postfix-files-check:
 	mantools/check-postfix-files | diff /dev/null -
@@ -147,6 +148,15 @@ double-install-proto-text:
 
 double-proto-html:
 	mantools/check-double-proto-html | diff /dev/null -
+
+check-spell-history:
+	mantools/check-spell-history | diff /dev/null -
+
+check-double-history:
+	mantools/check-double-history | diff /dev/null -
+
+check-table-proto:
+	mantools/check-table-proto | diff /dev/null -
 
 # The build-time shlib_directory setting must take precedence over
 # the installed main.cf settings, otherwise we can't update an

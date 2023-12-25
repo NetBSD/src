@@ -28,3 +28,21 @@ unknown: RUN test case 13 mystrtokdq >  foo \" bar<
 unknown: PASS test 13
 unknown: RUN test case 14 mystrtokdq >  foo " bar baz"  <
 unknown: PASS test 14
+unknown: RUN test case 15 mystrtok_cw >#after text<
+unknown: warning: test: #comment after other text is not allowed: #after text...
+unknown: PASS test 15
+unknown: RUN test case 16 mystrtok_cw >before-text #after text<
+unknown: warning: test: #comment after other text is not allowed: #after text...
+unknown: PASS test 16
+unknown: RUN test case 17 mystrtokq_cw >#after text<
+unknown: warning: test: #comment after other text is not allowed: #after text...
+unknown: PASS test 17
+unknown: RUN test case 18 mystrtokq_cw >{ before text } #after text<
+unknown: warning: test: #comment after other text is not allowed: #after text...
+unknown: PASS test 18
+unknown: RUN test case 19 mystrtokdq_cw >#after text<
+unknown: warning: test: #comment after other text is not allowed: #after text...
+unknown: PASS test 19
+unknown: RUN test case 20 mystrtokdq_cw >"before text" #after text<
+unknown: warning: test: #comment after other text is not allowed: #after text...
+unknown: PASS test 20

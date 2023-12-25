@@ -270,7 +270,7 @@ purpose of the firewall email function.
     17      . . .
     18
     19 /etc/postfix/transport:
-    20     example.com   smtp:[inside-gateway.example.com]
+    20     example.com   relay:[inside-gateway.example.com]
 
 Translation:
 
@@ -286,7 +286,12 @@ Translation:
     "@example.com x" wild-card in the relay_recipients table.
 
   * Lines 12, 19-20: Route mail for "example.com" to the inside gateway
-    machine. The [] forces Postfix to do no MX lookup.
+    machine. The [] forces Postfix to do no MX lookup. This uses the "relay"
+    delivery transport (a copy of the default "smtp" delivery transport) to
+    forward inbound mail. This can improve performance of deliveries to
+    internal domains because they will compete for SMTP clients from the
+    "relay" delivery transport, instead of competing with other SMTP deliveries
+    for SMTP clients from the default "smtp" delivery transport.
 
 Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb files.
 To find out what lookup tables Postfix supports, use the command "ppoossttccoonnff --mm".

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_stream.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: smtp_stream.c,v 1.4.2.1 2023/12/25 12:43:32 martin Exp $	*/
 
 /*++
 /* NAME
@@ -54,6 +54,8 @@
 /*	VSTREAM *stream;
 /*	char	*format;
 /*	va_list	ap;
+/*
+/*	int	smtp_forbid_bare_lf;
 /* AUXILIARY API
 /*	int	smtp_get_noexcept(vp, stream, maxlen, flags)
 /*	VSTRING	*vp;
@@ -133,11 +135,16 @@
 /*	smtp_vprintf() is the machine underneath smtp_printf().
 /*
 /*	smtp_get_noexcept() implements the subset of smtp_get()
-/*	without timeouts and without making long jumps. Instead,
+/*	without long jumps for timeout or EOF errors. Instead,
 /*	query the stream status with vstream_feof() etc.
+/*	This function will make a VSTREAM long jump (error code
+/*	SMTP_ERR_LF) when rejecting input with a bare newline byte.
 /*
 /*	smtp_timeout_setup() is a backwards-compatibility interface
 /*	for programs that don't require deadline or data-rate support.
+/*
+/*	smtp_forbid_bare_lf controls whether smtp_get_noexcept()
+/*	will reject input with a bare newline byte.
 /* DIAGNOSTICS
 /* .fi
 /* .ad
@@ -216,6 +223,7 @@
   * the buffer. Such system calls would really hurt when receiving or sending
   * body content one line at a time.
   */
+int     smtp_forbid_bare_lf;
 
 /* smtp_timeout_reset - reset per-stream error flags */
 
@@ -420,6 +428,9 @@ int     smtp_get_noexcept(VSTRING *vp, VSTREAM *stream, ssize_t bound, int flags
 	 */
     case '\n':
 	vstring_truncate(vp, VSTRING_LEN(vp) - 1);
+	if (smtp_forbid_bare_lf
+	    && (VSTRING_LEN(vp) == 0 || vstring_end(vp)[-1] != '\r'))
+	    vstream_longjmp(stream, SMTP_ERR_LF);
 	while (VSTRING_LEN(vp) > 0 && vstring_end(vp)[-1] == '\r')
 	    vstring_truncate(vp, VSTRING_LEN(vp) - 1);
 	VSTRING_TERMINATE(vp);

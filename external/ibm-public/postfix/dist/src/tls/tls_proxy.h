@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy.h,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: tls_proxy.h,v 1.3.2.1 2023/12/25 12:43:36 martin Exp $	*/
 
 #ifndef _TLS_PROXY_H_INCLUDED_
 #define _TLS_PROXY_H_INCLUDED_
@@ -46,14 +46,15 @@
   * VAR_TLS_SERVER_SNI_MAPS.
   */
 typedef struct TLS_CLIENT_PARAMS {
+    char   *tls_cnf_file;
+    char   *tls_cnf_name;
     char   *tls_high_clist;
     char   *tls_medium_clist;
-    char   *tls_low_clist;
-    char   *tls_export_clist;
     char   *tls_null_clist;
     char   *tls_eecdh_auto;
     char   *tls_eecdh_strong;
     char   *tls_eecdh_ultra;
+    char   *tls_ffdhe_auto;
     char   *tls_bug_tweaks;
     char   *tls_ssl_options;
     char   *tls_dane_digests;
@@ -67,12 +68,12 @@ typedef struct TLS_CLIENT_PARAMS {
 } TLS_CLIENT_PARAMS;
 
 #define TLS_PROXY_PARAMS(params, a1, a2, a3, a4, a5, a6, a7, a8, \
-    a9, a10, a11, a12, a13, a14, a15, a16, a17, a18) \
+    a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19) \
     (((params)->a1), ((params)->a2), ((params)->a3), \
     ((params)->a4), ((params)->a5), ((params)->a6), ((params)->a7), \
     ((params)->a8), ((params)->a9), ((params)->a10), ((params)->a11), \
     ((params)->a12), ((params)->a13), ((params)->a14), ((params)->a15), \
-    ((params)->a16), ((params)->a17), ((params)->a18))
+    ((params)->a16), ((params)->a17), ((params)->a18), ((params)->a19))
 
  /*
   * tls_proxy_client_param_misc.c, tls_proxy_client_param_print.c, and
@@ -217,6 +218,8 @@ extern void tls_proxy_server_start_free(TLS_SERVER_START_PROPS *);
  /*
   * TLS_CLIENT_INIT_PROPS attributes.
   */
+#define TLS_ATTR_CNF_FILE	"config_file"
+#define TLS_ATTR_CNF_NAME	"config_name"
 #define TLS_ATTR_LOG_PARAM	"log_param"
 #define TLS_ATTR_LOG_LEVEL	"log_level"
 #define TLS_ATTR_VERIFYDEPTH	"verifydepth"

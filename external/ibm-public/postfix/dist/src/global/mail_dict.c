@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_dict.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: mail_dict.c,v 1.2.22.1 2023/12/25 12:43:32 martin Exp $	*/
 
 /*++
 /* NAME
@@ -27,6 +27,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -53,28 +58,23 @@
 #include <mail_params.h>
 #include <mail_dict.h>
 
-typedef struct {
-    char   *type;
-    struct DICT *(*open) (const char *, int, int);
-} DICT_OPEN_INFO;
-
 static const DICT_OPEN_INFO dict_open_info[] = {
-    DICT_TYPE_PROXY, dict_proxy_open,
+    DICT_TYPE_PROXY, dict_proxy_open, mkmap_proxy_open,
 #ifndef USE_DYNAMIC_MAPS
 #ifdef HAS_LDAP
-    DICT_TYPE_LDAP, dict_ldap_open,
+    DICT_TYPE_LDAP, dict_ldap_open, 0,
 #endif
 #ifdef HAS_MYSQL
-    DICT_TYPE_MYSQL, dict_mysql_open,
+    DICT_TYPE_MYSQL, dict_mysql_open, 0,
 #endif
 #ifdef HAS_PGSQL
-    DICT_TYPE_PGSQL, dict_pgsql_open,
+    DICT_TYPE_PGSQL, dict_pgsql_open, 0,
 #endif
 #ifdef HAS_SQLITE
-    DICT_TYPE_SQLITE, dict_sqlite_open,
+    DICT_TYPE_SQLITE, dict_sqlite_open, 0,
 #endif
 #endif					/* !USE_DYNAMIC_MAPS */
-    DICT_TYPE_MEMCACHE, dict_memcache_open,
+    DICT_TYPE_MEMCACHE, dict_memcache_open, 0,
     0,
 };
 
@@ -97,7 +97,7 @@ void    mail_dict_init(void)
 #endif
 
     for (dp = dict_open_info; dp->type; dp++)
-	dict_open_register(dp->type, dp->open);
+	dict_open_register(dp);
 }
 
 #ifdef TEST

@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_main.c,v 1.3 2022/10/08 16:12:47 christos Exp $	*/
+/*	$NetBSD: postconf_main.c,v 1.3.2.1 2023/12/25 12:43:33 martin Exp $	*/
 
 /*++
 /* NAME
@@ -106,17 +106,15 @@
 
 void    pcf_read_parameters(void)
 {
-    char   *path;
+    const char *path;
 
     /*
      * A direct rip-off of mail_conf_read(). XXX Avoid code duplication by
      * better code decomposition.
      */
-    pcf_set_config_dir();
-    path = concatenate(var_config_dir, "/", MAIN_CONF_FILE, (char *) 0);
+    path = pcf_get_main_path();
     if (dict_load_file_xt(CONFIG_DICT, path) == 0)
 	msg_fatal("open %s: %m", path);
-    myfree(path);
 }
 
 /* pcf_set_parameters - add or override name=value pairs */

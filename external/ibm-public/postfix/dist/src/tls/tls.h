@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: tls.h,v 1.4.2.1 2023/12/25 12:43:35 martin Exp $	*/
 
 #ifndef _TLS_H_INCLUDED_
 #define _TLS_H_INCLUDED_
@@ -79,6 +79,7 @@ extern const char *str_tls_level(int);
 #include <openssl/evp.h>		/* New OpenSSL 3.0 EVP_PKEY APIs */
 #include <openssl/opensslv.h>		/* OPENSSL_VERSION_NUMBER */
 #include <openssl/ssl.h>
+#include <openssl/conf.h>
 
  /* Appease indent(1) */
 #define x509_stack_t STACK_OF(X509)
@@ -324,6 +325,7 @@ extern void tls_free_app_context(TLS_APPL_STATE *);
   * tls_misc.c
   */
 extern void tls_param_init(void);
+extern int tls_library_init(void);
 
  /*
   * Protocol selection.
@@ -389,6 +391,13 @@ extern void tls_param_init(void);
 #define SSL_OP_NO_TLSv1_3	0L	/* Noop */
 #endif
 
+/*
+ * Always used when defined, SMTP has no truncation attacks.
+ */
+#ifndef SSL_OP_IGNORE_UNEXPECTED_EOF
+#define SSL_OP_IGNORE_UNEXPECTED_EOF    0L
+#endif
+
 #define TLS_KNOWN_PROTOCOLS \
 	( TLS_PROTOCOL_SSLv2 | TLS_PROTOCOL_SSLv3 | TLS_PROTOCOL_TLSv1 \
 	   | TLS_PROTOCOL_TLSv1_1 | TLS_PROTOCOL_TLSv1_2 | TLS_PROTOCOL_TLSv1_3 )
@@ -405,7 +414,8 @@ extern void tls_param_init(void);
  * just exposed via hex codes or named elements of tls_ssl_options.
  */
 #define TLS_SSL_OP_MANAGED_BITS \
-	(SSL_OP_CIPHER_SERVER_PREFERENCE | TLS_SSL_OP_PROTOMASK(~0))
+	(SSL_OP_CIPHER_SERVER_PREFERENCE | SSL_OP_IGNORE_UNEXPECTED_EOF | \
+	 TLS_SSL_OP_PROTOMASK(~0))
 
 extern int tls_proto_mask_lims(const char *, int *, int *);
 
@@ -627,7 +637,7 @@ extern int tls_bio(int, int, TLS_SESS_STATE *,
   */
 extern void tls_set_dh_from_file(const char *);
 extern void tls_tmp_dh(SSL_CTX *, int);
-extern void tls_auto_eecdh_curves(SSL_CTX *, const char *);
+extern void tls_auto_groups(SSL_CTX *, const char *, const char *);
 
  /*
   * tls_verify.c
@@ -649,6 +659,7 @@ extern TLS_TLSA *tlsa_prepend(TLS_TLSA *, uint8_t, uint8_t, uint8_t,
  /*
   * tls_fprint.c
   */
+extern const EVP_MD *tls_digest_byname(const char *, EVP_MD_CTX **);
 extern char *tls_digest_encode(const unsigned char *, int);
 extern char *tls_cert_fprint(X509 *, const char *);
 extern char *tls_pkey_fprint(X509 *, const char *);

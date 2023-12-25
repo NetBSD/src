@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_master.c,v 1.7 2022/10/08 16:12:47 christos Exp $	*/
+/*	$NetBSD: postconf_master.c,v 1.7.2.1 2023/12/25 12:43:33 martin Exp $	*/
 
 /*++
 /* NAME
@@ -158,6 +158,7 @@
 #include <readlline.h>
 #include <stringops.h>
 #include <split_at.h>
+#include <dict_ht.h>
 
 /* Global library. */
 
@@ -397,12 +398,12 @@ const char *pcf_parse_master_entry(PCF_MASTER_ENT *masterp, const char *buf)
 	concatenate("ro", PCF_NAMESP_SEP_STR, masterp->name_space, (char *) 0);
     masterp->argv = argv;
     masterp->valid_names = 0;
+    masterp->ro_params = dict_ht_open(ro_name_space, O_CREAT | O_RDWR, 0);
     process_name = basename(argv->argv[PCF_MASTER_FLD_CMD]);
-    dict_update(ro_name_space, VAR_PROCNAME, process_name);
-    dict_update(ro_name_space, VAR_SERVNAME,
-		strcmp(process_name, argv->argv[0]) != 0 ?
-		argv->argv[0] : process_name);
-    masterp->ro_params = dict_handle(ro_name_space);
+    dict_put(masterp->ro_params, VAR_PROCNAME, process_name);
+    dict_put(masterp->ro_params, VAR_SERVNAME,
+	     strcmp(process_name, argv->argv[0]) != 0 ?
+	     argv->argv[0] : process_name);
     myfree(ro_name_space);
     masterp->all_params = 0;
     return (0);
@@ -413,7 +414,7 @@ const char *pcf_parse_master_entry(PCF_MASTER_ENT *masterp, const char *buf)
 void    pcf_read_master(int fail_on_open_error)
 {
     const char *myname = "pcf_read_master";
-    char   *path;
+    const char *path;
     VSTRING *buf;
     VSTREAM *fp;
     const char *err;
@@ -430,9 +431,7 @@ void    pcf_read_master(int fail_on_open_error)
     /*
      * Get the location of master.cf.
      */
-    if (var_config_dir == 0)
-	pcf_set_config_dir();
-    path = concatenate(var_config_dir, "/", MASTER_CONF_FILE, (char *) 0);
+    path = pcf_get_master_path();
 
     /*
      * Initialize the in-memory master table.
@@ -465,7 +464,6 @@ void    pcf_read_master(int fail_on_open_error)
      * Null-terminate the master table and clean up.
      */
     pcf_master_table[entry_count].argv = 0;
-    myfree(path);
 }
 
 /* pcf_print_master_entry - print one master line */

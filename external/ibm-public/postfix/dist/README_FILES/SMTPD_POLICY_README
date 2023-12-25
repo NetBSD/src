@@ -85,6 +85,9 @@ a delegated SMTPD access policy request:
     PPoossttffiixx vveerrssiioonn 33..22 aanndd llaatteerr::
     server_address=10.3.2.1
     server_port=54321
+    PPoossttffiixx vveerrssiioonn 33..88 aanndd llaatteerr::
+    compatibility_level=major.minor.patch
+    mail_version=3.8.0
     [empty line]
 
 Notes:
@@ -163,6 +166,14 @@ Notes:
 
   * The "policy_context" attribute provides a way to pass information that is
     not available via other attributes (Postfix version 3.1 and later).
+
+  * The "compatibility_level" attribute corresponds to the compatibility_level
+    parameter value. It has the form major.minor.patch where minor and patch
+    may be absent.
+
+  * The "mail_version" attribute corresponds to the mail_version parameter
+    value. It has the form major.minor.patch for stable releases, and
+    major.minor-yyyymmdd for unstable releases.
 
 The following is specific to SMTPD delegated policy requests:
 
