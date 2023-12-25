@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: bounce.c,v 1.2.14.1 2023/12/25 12:54:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -188,6 +188,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -312,11 +317,12 @@ int     bounce_append_intern(int flags, const char *id, MSG_STATS *stats,
 
 	if (mail_command_client(MAIL_CLASS_PRIVATE, var_soft_bounce ?
 				var_defer_service : var_bounce_service,
+				MAIL_ATTR_PROTO_BOUNCE,
 			   SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_APPEND),
 				SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
 				SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
-				SEND_ATTR_FUNC(rcpt_print, (void *) rcpt),
-				SEND_ATTR_FUNC(dsn_print, (void *) &my_dsn),
+			    SEND_ATTR_FUNC(rcpt_print, (const void *) rcpt),
+			  SEND_ATTR_FUNC(dsn_print, (const void *) &my_dsn),
 				ATTR_TYPE_END) == 0
 	    && ((flags & DEL_REQ_FLAG_RECORD) == 0
 		|| trace_append(flags, id, stats, rcpt, relay,
@@ -355,6 +361,7 @@ int     bounce_flush(int flags, const char *queue, const char *id,
     if (var_soft_bounce)
 	return (-1);
     if (mail_command_client(MAIL_CLASS_PRIVATE, var_bounce_service,
+			    MAIL_ATTR_PROTO_BOUNCE,
 			    SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_FLUSH),
 			    SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
 			    SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
@@ -389,6 +396,7 @@ int     bounce_flush_verp(int flags, const char *queue, const char *id,
     if (var_soft_bounce)
 	return (-1);
     if (mail_command_client(MAIL_CLASS_PRIVATE, var_bounce_service,
+			    MAIL_ATTR_PROTO_BOUNCE,
 			    SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_VERP),
 			    SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
 			    SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
@@ -496,6 +504,7 @@ int     bounce_one_intern(int flags, const char *queue, const char *id,
 	my_dsn.action = "failed";
 
 	if (mail_command_client(MAIL_CLASS_PRIVATE, var_bounce_service,
+				MAIL_ATTR_PROTO_BOUNCE,
 			      SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_ONE),
 				SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
 				SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
@@ -505,8 +514,8 @@ int     bounce_one_intern(int flags, const char *queue, const char *id,
 				SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
 			      SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, dsn_envid),
 				SEND_ATTR_INT(MAIL_ATTR_DSN_RET, dsn_ret),
-				SEND_ATTR_FUNC(rcpt_print, (void *) rcpt),
-				SEND_ATTR_FUNC(dsn_print, (void *) &my_dsn),
+			    SEND_ATTR_FUNC(rcpt_print, (const void *) rcpt),
+			  SEND_ATTR_FUNC(dsn_print, (const void *) &my_dsn),
 				ATTR_TYPE_END) == 0
 	    && ((flags & DEL_REQ_FLAG_RECORD) == 0
 		|| trace_append(flags, id, stats, rcpt, relay,

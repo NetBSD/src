@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - sendmail(1) </title>
 </head> <body> <pre>
 SENDMAIL(1)                                                        SENDMAIL(1)
@@ -45,24 +46,27 @@ SENDMAIL(1)                                                        SENDMAIL(1)
                      ery attempt will be made until  the  mail  is  taken  off
                      hold.
 
-              This   mode   of  operation  is  implemented  by  executing  the
+              <b>#</b>      The  message  is  forced  to expire. See the <a href="postsuper.1.html"><b>postsuper</b>(1)</a>
+                     options <b>-e</b> or <b>-f</b>.
+
+              This  mode  of  operation  is  implemented  by   executing   the
               <a href="postqueue.1.html"><b>postqueue</b>(1)</a> command.
 
        <b>newaliases</b>
-              Initialize the alias database.  If no input  file  is  specified
-              (with  the  <b>-oA</b>  option,  see  below), the program processes the
-              file(s) specified with the <b><a href="postconf.5.html#alias_database">alias_database</a></b> configuration  parame-
-              ter.   If  no alias database type is specified, the program uses
-              the type specified with the <b><a href="postconf.5.html#default_database_type">default_database_type</a></b>  configuration
+              Initialize  the  alias  database.  If no input file is specified
+              (with the <b>-oA</b> option, see  below),  the  program  processes  the
+              file(s)  specified with the <b><a href="postconf.5.html#alias_database">alias_database</a></b> configuration parame-
+              ter.  If no alias database type is specified, the  program  uses
+              the  type specified with the <b><a href="postconf.5.html#default_database_type">default_database_type</a></b> configuration
               parameter.  This mode of operation is implemented by running the
               <a href="postalias.1.html"><b>postalias</b>(1)</a> command.
 
               Note: it may take a minute or so before an alias database update
-              becomes  visible.  Use the "<b>postfix reload</b>" command to eliminate
+              becomes visible. Use the "<b>postfix reload</b>" command  to  eliminate
               this delay.
 
-       These and other features can be selected by specifying the  appropriate
-       combination  of  command-line  options. Some features are controlled by
+       These  and other features can be selected by specifying the appropriate
+       combination of command-line options. Some features  are  controlled  by
        parameters in the <a href="postconf.5.html"><b>main.cf</b></a> configuration file.
 
        The following options are recognized:
@@ -70,13 +74,13 @@ SENDMAIL(1)                                                        SENDMAIL(1)
        <b>-Am</b> (ignored)
 
        <b>-Ac</b> (ignored)
-              Postfix sendmail uses the same configuration file regardless  of
+              Postfix  sendmail uses the same configuration file regardless of
               whether or not a message is an initial submission.
 
        <b>-B</b> <i>body</i><b>_</b><i>type</i>
               The message body MIME type: <b>7BIT</b> or <b>8BITMIME</b>.
 
-       <b>-bd</b>    Go  into  daemon  mode. This mode of operation is implemented by
+       <b>-bd</b>    Go into daemon mode. This mode of operation  is  implemented  by
               executing the "<b>postfix start</b>" command.
 
        <b>-bh</b> (ignored)
@@ -86,8 +90,8 @@ SENDMAIL(1)                                                        SENDMAIL(1)
 
        <b>-bi</b>    Initialize alias database. See the <b>newaliases</b> command above.
 
-       <b>-bl</b>    Go into daemon mode. To accept only local  connections  as  with
-              Sendmail's  <b>-bl</b>  option, specify "<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = loopback</b>" in
+       <b>-bl</b>    Go  into  daemon  mode. To accept only local connections as with
+              Sendmail's <b>-bl</b> option, specify "<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> =  loopback</b>"  in
               the Postfix <a href="postconf.5.html"><b>main.cf</b></a> configuration file.
 
        <b>-bm</b>    Read mail from standard input and arrange for delivery.  This is
@@ -95,17 +99,17 @@ SENDMAIL(1)                                                        SENDMAIL(1)
 
        <b>-bp</b>    List the mail queue. See the <b>mailq</b> command above.
 
-       <b>-bs</b>    Stand-alone  SMTP  server mode. Read SMTP commands from standard
-              input, and write responses to standard output.   In  stand-alone
-              SMTP  server  mode,  mail relaying and other access controls are
-              disabled by default. To enable them,  run  the  process  as  the
+       <b>-bs</b>    Stand-alone SMTP server mode. Read SMTP commands  from  standard
+              input,  and  write responses to standard output.  In stand-alone
+              SMTP server mode, mail relaying and other  access  controls  are
+              disabled  by  default.  To  enable  them, run the process as the
               <b><a href="postconf.5.html#mail_owner">mail_owner</a></b> user.
 
-              This  mode  of  operation is implemented by running the <a href="smtpd.8.html"><b>smtpd</b>(8)</a>
+              This mode of operation is implemented by  running  the  <a href="smtpd.8.html"><b>smtpd</b>(8)</a>
               daemon.
 
-       <b>-bv</b>    Do not collect or deliver a  message.  Instead,  send  an  email
-              report  after  verifying each recipient address.  This is useful
+       <b>-bv</b>    Do  not  collect  or  deliver  a message. Instead, send an email
+              report after verifying each recipient address.  This  is  useful
               for testing address rewriting and routing configurations.
 
               This feature is available in Postfix version 2.1 and later.
@@ -113,9 +117,14 @@ SENDMAIL(1)                                                        SENDMAIL(1)
        <b>-C</b> <i>config</i><b>_</b><i>file</i>
 
        <b>-C</b> <i>config</i><b>_</b><i>dir</i>
-              The path name of the Postfix <a href="postconf.5.html"><b>main.cf</b></a>  file,  or  of  its  parent
-              directory.  This  information  is  ignored with Postfix versions
+              The  path  name  of  the  Postfix <a href="postconf.5.html"><b>main.cf</b></a> file, or of its parent
+              directory. This information is  ignored  with  Postfix  versions
               before 2.3.
+
+              With Postfix version 3.2 and later, a non-default directory must
+              be authorized in the default <a href="postconf.5.html"><b>main.cf</b></a> file,  through  the  alter-
+              nate_config_directories  or  <a href="postconf.5.html#multi_instance_directories">multi_instance_directories</a>  parame-
+              ters.
 
               With all Postfix versions, you can specify a directory  pathname
               with  the MAIL_CONFIG environment variable to override the loca-
@@ -275,12 +284,43 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               configuration parameters instead.
 
 <b>SECURITY</b>
-       By design, this program is not set-user (or group) id. However, it must
-       handle  data  from  untrusted, possibly remote, users.  Thus, the usual
-       precautions need to be taken against malicious inputs.
+       By design, this program is not set-user (or group) id.  It is  prepared
+       to handle message content from untrusted, possibly remote, users.
+
+       However,  like  most  Postfix programs, this program does not enforce a
+       security policy on its command-line arguments.  Instead, it  relies  on
+       the  UNIX system to enforce access policies based on the effective user
+       and group IDs of the process. Concretely, this means that running Post-
+       fix  commands as root (from sudo or equivalent) on behalf of a non-root
+       user is likely to create privilege escalation opportunities.
+
+       If an application runs any Postfix programs on behalf of users that  do
+       not have normal shell access to Postfix commands, then that application
+       MUST restrict user-specified command-line arguments to avoid  privilege
+       escalation.
+
+       <b>o</b>      Filter  all  command-line  arguments, for example arguments that
+              contain a pathname or that specify  a  database  access  method.
+              These  pathname  checks  must reject user-controlled symlinks or
+              hardlinks to sensitive files, and must not be vulnerable to TOC-
+              TOU race attacks.
+
+       <b>o</b>      Disable  command  options  processing  for all command arguments
+              that contain user-specified data. For example, the Postfix <a href="sendmail.1.html"><b>send-</b></a>
+              <a href="sendmail.1.html"><b>mail</b>(1)</a> command line MUST be structured as follows:
+
+                  <b>/path/to/sendmail</b> <i>system-arguments</i> <b>--</b> <i>user-arguments</i>
+
+              Here,  the  "<b>--</b>"  disables  command  option  processing  for all
+              <i>user-arguments</i> that follow.
+
+              Without the "<b>--</b>", a malicious user could  enable  Postfix  <a href="sendmail.1.html"><b>send-</b></a>
+              <a href="sendmail.1.html"><b>mail</b>(1)</a>  command  options,  by  specifying an email address that
+              starts with "<b>-</b>".
 
 <b>DIAGNOSTICS</b>
-       Problems are logged to <b>syslogd</b>(8) and to the standard error stream.
+       Problems are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>, and to  the  standard
+       error stream.
 
 <b>ENVIRONMENT</b>
        <b>MAIL_CONFIG</b>
@@ -293,12 +333,12 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               Enable debugging with an external command, as specified with the
               <b><a href="postconf.5.html#debugger_command">debugger_command</a></b> configuration parameter.
 
-       <b>NAME</b>   The  sender full name. This is used only with messages that have
+       <b>NAME</b>   The sender full name. This is used only with messages that  have
               no <b>From:</b> message header. See also the <b>-F</b> option above.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to  this  pro-
-       gram.   The  text  below  provides  only a parameter summary. See <a href="postconf.5.html"><b>post-</b></a>
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to this pro-
+       gram.  The text below provides only  a  parameter  summary.  See  <a href="postconf.5.html"><b>post-</b></a>
        <a href="postconf.5.html"><b>conf</b>(5)</a> for more details including examples.
 
 <b>COMPATIBILITY CONTROLS</b>
@@ -309,7 +349,7 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               line endings from &lt;CR&gt;&lt;LF&gt; into UNIX format (&lt;LF&gt;).
 
 <b>TROUBLE SHOOTING CONTROLS</b>
-       The  <a href="DEBUG_README.html">DEBUG_README</a> file gives examples of how to trouble shoot a Postfix
+       The <a href="DEBUG_README.html">DEBUG_README</a> file gives examples of how to troubleshoot  a  Postfix
        system.
 
        <b><a href="postconf.5.html#debugger_command">debugger_command</a> (empty)</b>
@@ -317,13 +357,15 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               invoked with the -D option.
 
        <b><a href="postconf.5.html#debug_peer_level">debug_peer_level</a> (2)</b>
-              The  increment  in verbose logging level when a remote client or
-              server matches a pattern in the <a href="postconf.5.html#debug_peer_list">debug_peer_list</a> parameter.
+              The increment in verbose logging level when a  nexthop  destina-
+              tion,  remote client or server name or network address matches a
+              pattern given with the <a href="postconf.5.html#debug_peer_list">debug_peer_list</a> parameter.
 
        <b><a href="postconf.5.html#debug_peer_list">debug_peer_list</a> (empty)</b>
-              Optional list of remote client or  server  hostname  or  network
-              address  patterns  that  cause  the  verbose  logging  level  to
-              increase by the amount specified in $<a href="postconf.5.html#debug_peer_level">debug_peer_level</a>.
+              Optional list of nexthop destination, remote  client  or  server
+              name  or  network  address  patterns that, if matched, cause the
+              verbose logging level to increase by  the  amount  specified  in
+              $<a href="postconf.5.html#debug_peer_level">debug_peer_level</a>.
 
 <b>ACCESS CONTROLS</b>
        Available in Postfix version 2.2 and later:
@@ -335,13 +377,13 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               List of users who are authorized to view the queue.
 
        <b><a href="postconf.5.html#authorized_submit_users">authorized_submit_users</a> (<a href="DATABASE_README.html#types">static</a>:anyone)</b>
-              List of users who are authorized to submit mail with  the  <a href="sendmail.1.html"><b>send-</b></a>
+              List  of  users who are authorized to submit mail with the <a href="sendmail.1.html"><b>send-</b></a>
               <a href="sendmail.1.html"><b>mail</b>(1)</a> command (and with the privileged <a href="postdrop.1.html"><b>postdrop</b>(1)</a> helper com-
               mand).
 
 <b>RESOURCE AND RATE CONTROLS</b>
        <b><a href="postconf.5.html#bounce_size_limit">bounce_size_limit</a> (50000)</b>
-              The maximal amount of original message text that is  sent  in  a
+              The  maximal  amount  of original message text that is sent in a
               non-delivery notification.
 
        <b><a href="postconf.5.html#fork_attempts">fork_attempts</a> (5)</b>
@@ -355,11 +397,11 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               in the primary message headers.
 
        <b><a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (300s)</b>
-              The time between <a href="QSHAPE_README.html#deferred_queue">deferred queue</a>  scans  by  the  queue  manager;
+              The  time  between  <a href="QSHAPE_README.html#deferred_queue">deferred  queue</a>  scans by the queue manager;
               prior to Postfix 2.4 the default value was 1000s.
 
 <b>FAST FLUSH CONTROLS</b>
-       The  <a href="ETRN_README.html">ETRN_README</a> file describes configuration and operation details for
+       The <a href="ETRN_README.html">ETRN_README</a> file describes configuration and operation details  for
        the Postfix "fast flush" service.
 
        <b><a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a> ($<a href="postconf.5.html#relay_domains">relay_domains</a>)</b>
@@ -367,26 +409,26 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               tion logfiles with mail that is queued to those destinations.
 
 <b>VERP CONTROLS</b>
-       The  <a href="VERP_README.html">VERP_README</a>  file describes configuration and operation details of
+       The <a href="VERP_README.html">VERP_README</a> file describes configuration and operation  details  of
        Postfix support for variable envelope return path addresses.
 
        <b><a href="postconf.5.html#default_verp_delimiters">default_verp_delimiters</a> (+=)</b>
               The two default VERP delimiter characters.
 
        <b><a href="postconf.5.html#verp_delimiter_filter">verp_delimiter_filter</a> (-=+)</b>
-              The characters Postfix accepts as VERP delimiter  characters  on
+              The  characters  Postfix accepts as VERP delimiter characters on
               the Postfix <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command line and in SMTP commands.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#alias_database">alias_database</a> (see 'postconf -d' output)</b>
-              The  alias databases for <a href="local.8.html"><b>local</b>(8)</a> delivery that are updated with
+              The alias databases for <a href="local.8.html"><b>local</b>(8)</a> delivery that are updated  with
               "<b>newaliases</b>" or with "<b>sendmail -bi</b>".
 
        <b><a href="postconf.5.html#command_directory">command_directory</a> (see 'postconf -d' output)</b>
               The location of all postfix administrative commands.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
 
        <b><a href="postconf.5.html#daemon_directory">daemon_directory</a> (see 'postconf -d' output)</b>
@@ -397,28 +439,47 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               and <a href="postmap.1.html"><b>postmap</b>(1)</a> commands.
 
        <b><a href="postconf.5.html#delay_warning_time">delay_warning_time</a> (0h)</b>
-              The  time  after which the sender receives a copy of the message
+              The time after which the sender receives a copy of  the  message
               headers of mail that is still queued.
 
+       <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
+              The  list  of  environment  variables  that a privileged Postfix
+              process will  import  from  a  non-Postfix  parent  process,  or
+              name=value environment overrides.
+
        <b><a href="postconf.5.html#mail_owner">mail_owner</a> (postfix)</b>
-              The UNIX system account that owns the  Postfix  queue  and  most
+              The  UNIX  system  account  that owns the Postfix queue and most
               Postfix daemon processes.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
               The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> (empty)</b>
-              Don't  rewrite  message  headers from remote clients at all when
-              this parameter is empty; otherwise, rewrite message headers  and
+              Don't rewrite message headers from remote clients  at  all  when
+              this  parameter is empty; otherwise, rewrite message headers and
               append the specified domain name to incomplete addresses.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name that is prepended to the process name in
-              syslog records, so that "smtpd"  becomes,  for  example,  "post-
-              fix/smtpd".
+              A prefix that  is  prepended  to  the  process  name  in  syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
+
+       Postfix 3.2 and later:
+
+       <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a> (empty)</b>
+              A list of non-default Postfix configuration directories that may
+              be specified with "-c <a href="postconf.5.html#config_directory">config_directory</a>" on the command line  (in
+              the  case  of  <a href="sendmail.1.html"><b>sendmail</b>(1)</a>,  with  the  "-C" option), or via the
+              MAIL_CONFIG environment parameter.
+
+       <b><a href="postconf.5.html#multi_instance_directories">multi_instance_directories</a> (empty)</b>
+              An optional list of non-default Postfix  configuration  directo-
+              ries;  these  directories belong to additional Postfix instances
+              that share the Postfix executable files and  documentation  with
+              the  default  Postfix  instance,  and that are started, stopped,
+              etc., together with the default Postfix instance.
 
 <b>FILES</b>
        /var/spool/postfix, mail queue
@@ -434,10 +495,11 @@ SENDMAIL(1)                                                        SENDMAIL(1)
        <a href="postdrop.1.html">postdrop(1)</a>, mail posting utility
        <a href="postfix.1.html">postfix(1)</a>, mail system control
        <a href="postqueue.1.html">postqueue(1)</a>, mail queue control
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>README_FILES</b>
-       Use  "<b>postconf <a href="postconf.5.html#readme_directory">readme_directory</a></b>" or "<b>postconf <a href="postconf.5.html#html_directory">html_directory</a></b>" to locate
+       Use "<b>postconf <a href="postconf.5.html#readme_directory">readme_directory</a></b>" or "<b>postconf <a href="postconf.5.html#html_directory">html_directory</a></b>" to  locate
        this information.
        <a href="DEBUG_README.html">DEBUG_README</a>, Postfix debugging howto
        <a href="ETRN_README.html">ETRN_README</a>, Postfix ETRN howto

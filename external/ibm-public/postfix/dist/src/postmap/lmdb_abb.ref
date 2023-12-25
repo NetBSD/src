@@ -1,0 +1,3 @@
+postmap: warning: lmdb:lmdb_abb: duplicate entry: "b"
+a	1
+b	2

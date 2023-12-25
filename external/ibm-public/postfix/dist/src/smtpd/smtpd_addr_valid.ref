@@ -1,0 +1,57 @@
+>>> #
+>>> # Initialize
+>>> #
+>>> smtpd_delay_reject 0
+OK
+>>> mynetworks 127.0.0.0/8,168.100.3.0/28
+OK
+>>> local_recipient_maps inline:{foo_canon=whatever,bar_canon=whatever}
+OK
+>>> mydestination example.com
+OK
+>>> myorigin example.com
+OK
+>>> 
+>>> sender_canonical_maps inline:{foo@example.com=foo_canon@example.com}
+OK
+>>> recipient_canonical_maps inline:{bar@example.com=bar_canon@example.com}
+OK
+>>> 
+>>> sender_restrictions reject_unlisted_sender
+OK
+>>> # Expect accept
+>>> mail bar_canon@example.com
+OK
+>>> # Expect accept
+>>> mail bar@example.com
+OK
+>>> # Expect accept
+>>> mail foo_canon@example.com
+OK
+>>> # Expect accept
+>>> mail foo@example.com
+OK
+>>> # Expect reject
+>>> mail baz@example.com
+./smtpd_check: <queue id>: reject: MAIL from localhost[127.0.0.1]: 550 5.1.0 <baz@example.com>: Sender address rejected: User unknown in local recipient table; from=<baz@example.com> proto=SMTP
+550 5.1.0 <baz@example.com>: Sender address rejected: User unknown in local recipient table
+>>> 
+>>> recipient_restrictions reject_unlisted_recipient
+OK
+>>> # Expect accept
+>>> rcpt bar_canon@example.com
+OK
+>>> # Expect accept
+>>> rcpt bar@example.com
+OK
+>>> # Expect accept
+>>> rcpt foo_canon@example.com
+OK
+>>> # Expect reject
+>>> rcpt foo@example.com
+./smtpd_check: <queue id>: reject: RCPT from localhost[127.0.0.1]: 550 5.1.1 <foo@example.com>: Recipient address rejected: User unknown in local recipient table; from=<baz@example.com> to=<foo@example.com> proto=SMTP
+550 5.1.1 <foo@example.com>: Recipient address rejected: User unknown in local recipient table
+>>> # Expect reject
+>>> mail baz@example.com
+./smtpd_check: <queue id>: reject: MAIL from localhost[127.0.0.1]: 550 5.1.0 <baz@example.com>: Sender address rejected: User unknown in local recipient table; from=<baz@example.com> proto=SMTP
+550 5.1.0 <baz@example.com>: Sender address rejected: User unknown in local recipient table

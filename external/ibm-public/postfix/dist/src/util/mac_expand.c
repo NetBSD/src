@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_expand.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: mac_expand.c,v 1.2.14.1 2023/12/25 12:55:31 martin Exp $	*/
 
 /*++
 /* NAME
@@ -15,10 +15,22 @@
 /*	const char *filter;
 /*	const char *lookup(const char *key, int mode, void *context)
 /*	void *context;
+/* AUXILIARY FUNCTIONS
+/*	typedef	MAC_EXP_OP_RES (*MAC_EXPAND_RELOP_FN) (
+/*	const char *left,
+/*	int	tok_val,
+/*	const char *rite)
+/*
+/*	void	mac_expand_add_relop(
+/*	int	*tok_list,
+/*	const char *suffix,
+/*	MAC_EXPAND_RELOP_FN relop_eval)
+/*
+/*	MAC_EXP_OP_RES mac_exp_op_res_bool[2];
 /* DESCRIPTION
 /*	This module implements parameter-less named attribute
 /*	expansions, both conditional and unconditional. As of Postfix
-/*	3.0 this code supports logical expression evaluation.
+/*	3.0 this code supports relational expression evaluation.
 /*
 /*	In this text, an attribute is considered "undefined" when its value
 /*	is a null pointer.  Otherwise, the attribute is considered "defined"
@@ -26,38 +38,40 @@
 /*
 /*	In the text below, the legacy form $(...) is equivalent to
 /*	${...}. The legacy form $(...) may eventually disappear
-/*	from documentation.
+/*	from documentation. In the text below, the name in $name
+/*	and ${name...} must contain only characters from the set
+/*	[a-zA-Z0-9_].
 /*
 /*	The following substitutions are supported:
 /* .IP "$name, ${name}"
-/*	Unconditional attribute-based substition. The result is the
+/*	Unconditional attribute-based substitution. The result is the
 /*	named attribute value (empty if the attribute is not defined)
 /*	after optional further named attribute substitution.
 /* .IP "${name?text}, ${name?{text}}"
-/*	Conditional attribute-based substition. If the named attribute
+/*	Conditional attribute-based substitution. If the named attribute
 /*	value is non-empty, the result is the given text, after
-/*	named attribute expansion and logical expression evaluation.
+/*	named attribute expansion and relational expression evaluation.
 /*	Otherwise, the result is empty.  Whitespace before or after
 /*	{text} is ignored.
 /* .IP "${name:text}, ${name:{text}}"
-/*	Conditional attribute-based substition. If the attribute
+/*	Conditional attribute-based substitution. If the attribute
 /*	value is empty or undefined, the expansion is the given
-/*	text, after named attribute expansion and logical expression
+/*	text, after named attribute expansion and relational expression
 /*	evaluation.  Otherwise, the result is empty.  Whitespace
 /*	before or after {text} is ignored.
 /* .IP "${name?{text1}:{text2}}, ${name?{text1}:text2}"
-/*	Conditional attribute-based substition. If the named attribute
+/*	Conditional attribute-based substitution. If the named attribute
 /*	value is non-empty, the result is text1.  Otherwise, the
 /*	result is text2. In both cases the result is subject to
-/*	named attribute expansion and logical expression evaluation.
+/*	named attribute expansion and relational expression evaluation.
 /*	Whitespace before or after {text1} or {text2} is ignored.
 /* .IP "${{text1} == ${text2} ? {text3} : {text4}}"
-/*	Logical expression-based substition.  First, the content
+/*	Relational expression-based substitution.  First, the content
 /*	of {text1} and ${text2} is subjected to named attribute and
-/*	logical expression-based substitution.  Next, the logical
+/*	relational expression-based substitution.  Next, the relational
 /*	expression is evaluated. If it evaluates to "true", the
 /*	result is the content of {text3}, otherwise it is the content
-/*	of {text4}, after named attribute and logical expression-based
+/*	of {text4}, after named attribute and relational expression-based
 /*	substitution. In addition to ==, this supports !=, <, <=,
 /*	>=, and >. Comparisons are numerical when both operands are
 /*	all digits, otherwise the comparisons are lexicographical.
@@ -98,6 +112,29 @@
 /*	result value means that the requested attribute was not defined.
 /* .IP context
 /*	Caller context that is passed on to the attribute lookup routine.
+/* .PP
+/*	mac_expand_add_relop() registers a function that implements
+/*	support for custom relational operators. Custom operator names
+/*	such as "==xxx" have two parts: a prefix that is identical to
+/*	a built-in operator such as "==", and an application-specified
+/*	suffix such as "xxx".
+/*
+/*	Arguments:
+/* .IP tok_list
+/*	A null-terminated list of MAC_EXP_OP_TOK_* values that support
+/*	the custom operator suffix.
+/* .IP suffix
+/*	A null-terminated alphanumeric string that specifies the custom
+/*	operator suffix.
+/* .IP relop_eval
+/*	A function that compares two strings according to the
+/*	MAC_EXP_OP_TOK_* value specified with the tok_val argument,
+/*	and that returns non-zero if the custom operator evaluates to
+/*	true, zero otherwise.
+/*
+/*	mac_exp_op_res_bool provides an array that converts a boolean
+/*	value (0 or 1) to the corresponding MAX_EXP_OP_RES_TRUE or
+/*	MAX_EXP_OP_RES_FALSE value.
 /* DIAGNOSTICS
 /*	Fatal errors: out of memory.  Warnings: syntax errors, unreasonable
 /*	recursion depth.
@@ -119,24 +156,40 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
 
 #include <sys_defs.h>
 #include <ctype.h>
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 
 /* Utility library. */
 
 #include <msg.h>
+#include <htable.h>
 #include <vstring.h>
 #include <mymalloc.h>
 #include <stringops.h>
 #include <name_code.h>
+#include <sane_strtol.h>
 #include <mac_parse.h>
 #include <mac_expand.h>
+
+ /*
+  * Simplifies the return of common relational operator results.
+  */
+MAC_EXP_OP_RES mac_exp_op_res_bool[2] = {
+    MAC_EXP_OP_RES_FALSE,
+    MAC_EXP_OP_RES_TRUE
+};
 
  /*
   * Little helper structure.
@@ -152,28 +205,30 @@ typedef struct {
 } MAC_EXP_CONTEXT;
 
  /*
-  * Support for logical expressions.
+  * Support for relational expressions.
   * 
   * As of Postfix 2.2, ${attr-name?result} or ${attr-name:result} return the
   * result respectively when the parameter value is non-empty, or when the
   * parameter value is undefined or empty; support for the ternary ?:
   * operator was anticipated, but not implemented for 10 years.
   * 
-  * To make ${logical-expr?result} and ${logical-expr:result} work as expected
-  * without breaking the way that ? and : work, logical expressions evaluate
-  * to a non-empty or empty value. It does not matter what non-empty value we
-  * use for TRUE. However we must not use the undefined (null pointer) value
-  * for FALSE - that would raise the MAC_PARSE_UNDEF flag.
+  * To make ${relational-expr?result} and ${relational-expr:result} work as
+  * expected without breaking the way that ? and : work, relational
+  * expressions evaluate to a non-empty or empty value. It does not matter
+  * what non-empty value we use for TRUE. However we must not use the
+  * undefined (null pointer) value for FALSE - that would raise the
+  * MAC_PARSE_UNDEF flag.
   * 
-  * The value of a logical expression can be exposed with ${logical-expr}, i.e.
-  * a logical expression that is not followed by ? or : conditional
+  * The value of a relational expression can be exposed with ${relational-expr},
+  * i.e. a relational expression that is not followed by ? or : conditional
   * expansion.
   */
 #define MAC_EXP_BVAL_TRUE	"true"
 #define MAC_EXP_BVAL_FALSE	""
 
  /*
-  * Relational operators.
+  * Relational operators. The MAC_EXP_OP_TOK_* are defined in the header
+  * file.
   */
 #define MAC_EXP_OP_STR_EQ	"=="
 #define MAC_EXP_OP_STR_NE	"!="
@@ -187,14 +242,6 @@ typedef struct {
 				"\" or \"" MAC_EXP_OP_STR_LE "\"" \
 				"\" or \"" MAC_EXP_OP_STR_GE "\"" \
 				"\" or \"" MAC_EXP_OP_STR_GT "\""
-
-#define MAC_EXP_OP_TOK_NONE	0
-#define MAC_EXP_OP_TOK_EQ	1
-#define MAC_EXP_OP_TOK_NE	2
-#define MAC_EXP_OP_TOK_LT	3
-#define MAC_EXP_OP_TOK_LE	4
-#define MAC_EXP_OP_TOK_GE	5
-#define MAC_EXP_OP_TOK_GT	6
 
 static const NAME_CODE mac_exp_op_table[] =
 {
@@ -212,10 +259,34 @@ static const NAME_CODE mac_exp_op_table[] =
   */
 #define MAC_EXP_WHITESPACE	CHARS_SPACE
 
+ /*
+  * Support for operator extensions.
+  */
+static HTABLE *mac_exp_ext_table;
+static VSTRING *mac_exp_ext_key;
+
+ /*
+  * SLMs.
+  */
+#define STR(x)	vstring_str(x)
+
+/* atol_or_die - convert or die */
+
+static long atol_or_die(const char *strval)
+{
+    long    result;
+    char   *remainder;
+
+    result = sane_strtol(strval, &remainder, 10);
+    if (*strval == 0 /* can't happen */ || *remainder != 0 || errno == ERANGE)
+	msg_fatal("mac_exp_eval: bad conversion: %s", strval);
+    return (result);
+}
+
 /* mac_exp_eval - evaluate binary expression */
 
-static int mac_exp_eval(const char *left, int tok_val,
-			        const char *rite)
+static MAC_EXP_OP_RES mac_exp_eval(const char *left, int tok_val,
+				           const char *rite)
 {
     static const char myname[] = "mac_exp_eval";
     long    delta;
@@ -224,23 +295,23 @@ static int mac_exp_eval(const char *left, int tok_val,
      * Numerical or string comparison.
      */
     if (alldig(left) && alldig(rite)) {
-	delta = atol(left) - atol(rite);
+	delta = atol_or_die(left) - atol_or_die(rite);
     } else {
 	delta = strcmp(left, rite);
     }
     switch (tok_val) {
     case MAC_EXP_OP_TOK_EQ:
-	return (delta == 0);
+	return (mac_exp_op_res_bool[delta == 0]);
     case MAC_EXP_OP_TOK_NE:
-	return (delta != 0);
+	return (mac_exp_op_res_bool[delta != 0]);
     case MAC_EXP_OP_TOK_LT:
-	return (delta < 0);
+	return (mac_exp_op_res_bool[delta < 0]);
     case MAC_EXP_OP_TOK_LE:
-	return (delta <= 0);
+	return (mac_exp_op_res_bool[delta <= 0]);
     case MAC_EXP_OP_TOK_GE:
-	return (delta >= 0);
+	return (mac_exp_op_res_bool[delta >= 0]);
     case MAC_EXP_OP_TOK_GT:
-	return (delta > 0);
+	return (mac_exp_op_res_bool[delta > 0]);
     default:
 	msg_panic("%s: unknown operator: %d",
 		  myname, tok_val);
@@ -267,14 +338,14 @@ static int PRINTFLIKE(2, 3) mac_exp_parse_error(MAC_EXP_CONTEXT *mc,
     } while (0)
 
  /*
-  * Postfix 3.0 introduces support for {text} operands. Only with these do
-  * we support the ternary ?: operator and logical operators.
+  * Postfix 3.0 introduces support for {text} operands. Only with these do we
+  * support the ternary ?: operator and relational operators.
   * 
   * We cannot support operators in random text, because that would break Postfix
   * 2.11 compatibility. For example, with the expression "${name?value}", the
   * value is random text that may contain ':', '?', '{' and '}' characters.
   * In particular, with Postfix 2.2 .. 2.11, "${name??foo:{b}ar}" evaluates
-  * to "??foo:{b}ar" or empty. There are explicit tests in this directory and
+  * to "?foo:{b}ar" or empty. There are explicit tests in this directory and
   * the postconf directory to ensure that Postfix 2.11 compatibility is
   * maintained.
   * 
@@ -324,10 +395,10 @@ static char *mac_exp_extract_curly_payload(MAC_EXP_CONTEXT *mc, char **bp)
     return (payload);
 }
 
-/* mac_exp_parse_logical - parse logical expression, advance read ptr */
+/* mac_exp_parse_relational - parse relational expression, advance read ptr */
 
-static int mac_exp_parse_logical(MAC_EXP_CONTEXT *mc, const char **lookup,
-				         char **bp)
+static int mac_exp_parse_relational(MAC_EXP_CONTEXT *mc, const char **lookup,
+				            char **bp)
 {
     char   *cp = *bp;
     VSTRING *left_op_buf;
@@ -340,6 +411,9 @@ static int mac_exp_parse_logical(MAC_EXP_CONTEXT *mc, const char **lookup,
     int     op_tokval;
     int     op_result;
     size_t  tmp_len;
+    char   *type_pos;
+    size_t  type_len;
+    MAC_EXPAND_RELOP_FN relop_eval;
 
     /*
      * Left operand. The caller is expected to skip leading whitespace before
@@ -362,6 +436,24 @@ static int mac_exp_parse_logical(MAC_EXP_CONTEXT *mc, const char **lookup,
     cp += op_len;
 
     /*
+     * Custom operator suffix.
+     */
+    if (mac_exp_ext_table && ISALNUM(*cp)) {
+	type_pos = cp;
+	for (type_len = 1; ISALNUM(cp[type_len]); type_len++)
+	     /* void */ ;
+	cp += type_len;
+	vstring_sprintf(mac_exp_ext_key, "%.*s",
+			(int) (op_len + type_len), op_pos);
+	if ((relop_eval = (MAC_EXPAND_RELOP_FN) htable_find(mac_exp_ext_table,
+						STR(mac_exp_ext_key))) == 0)
+	    MAC_EXP_ERR_RETURN(mc, "bad operator suffix at: \"...%.*s>>>%.*s\"",
+			    (int) op_len, op_pos, (int) type_len, type_pos);
+    } else {
+	relop_eval = mac_exp_eval;
+    }
+
+    /*
      * Right operand. Todo: syntax may depend on operator.
      */
     if (MAC_EXP_FIND_LEFT_CURLY(tmp_len, cp) == 0)
@@ -372,7 +464,7 @@ static int mac_exp_parse_logical(MAC_EXP_CONTEXT *mc, const char **lookup,
 	return (mc->status);
 
     /*
-     * Evaluate the logical expression. Todo: regexp support.
+     * Evaluate the relational expression. Todo: regexp support.
      */
     mc->status |=
 	mac_expand(left_op_buf = vstring_alloc(100), left_op_strval,
@@ -380,8 +472,10 @@ static int mac_exp_parse_logical(MAC_EXP_CONTEXT *mc, const char **lookup,
     mc->status |=
 	mac_expand(rite_op_buf = vstring_alloc(100), rite_op_strval,
 		   mc->flags, mc->filter, mc->lookup, mc->context);
-    op_result = mac_exp_eval(vstring_str(left_op_buf), op_tokval,
-			     vstring_str(rite_op_buf));
+    if ((mc->flags & MAC_EXP_FLAG_SCAN) == 0
+	&& (op_result = relop_eval(vstring_str(left_op_buf), op_tokval,
+			 vstring_str(rite_op_buf))) == MAC_EXP_OP_RES_ERROR)
+	mc->status |= MAC_PARSE_ERROR;
     vstring_free(left_op_buf);
     vstring_free(rite_op_buf);
     if (mc->status & MAC_PARSE_ERROR)
@@ -392,9 +486,55 @@ static int mac_exp_parse_logical(MAC_EXP_CONTEXT *mc, const char **lookup,
      * for compatibility with the historical code that looks named parameter
      * values.
      */
-    *lookup = (op_result ? MAC_EXP_BVAL_TRUE : MAC_EXP_BVAL_FALSE);
+    if (mc->flags & MAC_EXP_FLAG_SCAN) {
+	*lookup = 0;
+    } else {
+	switch (op_result) {
+	case MAC_EXP_OP_RES_TRUE:
+	    *lookup = MAC_EXP_BVAL_TRUE;
+	    break;
+	case MAC_EXP_OP_RES_FALSE:
+	    *lookup = MAC_EXP_BVAL_FALSE;
+	    break;
+	default:
+	    msg_panic("mac_expand: unexpected operator result: %d", op_result);
+	}
+    }
     *bp = cp;
     return (0);
+}
+
+/* mac_expand_add_relop - register operator extensions */
+
+void    mac_expand_add_relop(int *tok_list, const char *suffix,
+			             MAC_EXPAND_RELOP_FN relop_eval)
+{
+    const char myname[] = "mac_expand_add_relop";
+    const char *tok_name;
+    int    *tp;
+
+    /*
+     * Sanity checks.
+     */
+    if (!allalnum(suffix))
+	msg_panic("%s: bad operator suffix: %s", myname, suffix);
+
+    /*
+     * One-time initialization.
+     */
+    if (mac_exp_ext_table == 0) {
+	mac_exp_ext_table = htable_create(10);
+	mac_exp_ext_key = vstring_alloc(10);
+    }
+    for (tp = tok_list; *tp; tp++) {
+	if ((tok_name = str_name_code(mac_exp_op_table, *tp)) == 0)
+	    msg_panic("%s: unknown token code: %d", myname, *tp);
+	vstring_sprintf(mac_exp_ext_key, "%s%s", tok_name, suffix);
+	if (htable_locate(mac_exp_ext_table, STR(mac_exp_ext_key)) != 0)
+	    msg_panic("%s: duplicate key: %s", myname, STR(mac_exp_ext_key));
+	(void) htable_enter(mac_exp_ext_table,
+			    STR(mac_exp_ext_key), (void *) relop_eval);
+    }
 }
 
 /* mac_expand_callback - callback for mac_parse */
@@ -422,7 +562,7 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	return (mc->status);
 
     /*
-     * Named parameter or logical expression. In case of a syntax error,
+     * Named parameter or relational expression. In case of a syntax error,
      * return without doing damage, and issue a warning instead.
      */
     if (type == MAC_PARSE_EXPR) {
@@ -430,11 +570,11 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	cp = vstring_str(buf);
 
 	/*
-	 * Logical expression. If recursion is disabled, perform only one
+	 * Relational expression. If recursion is disabled, perform only one
 	 * level of $name expansion.
 	 */
 	if (MAC_EXP_FIND_LEFT_CURLY(tmp_len, cp)) {
-	    if (mac_exp_parse_logical(mc, &lookup, &cp) != 0)
+	    if (mac_exp_parse_relational(mc, &lookup, &cp) != 0)
 		return (mc->status);
 
 	    /*
@@ -452,21 +592,26 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	 * Named parameter.
 	 */
 	else {
+	    char   *start;
 
 	    /*
 	     * Look for the ? or : operator. In case of a syntax error,
 	     * return without doing damage, and issue a warning instead.
 	     */
+	    start = (cp += strspn(cp, MAC_EXP_WHITESPACE));
 	    for ( /* void */ ; /* void */ ; cp++) {
-		if ((ch = *cp) == 0) {
+		if ((ch = cp[tmp_len = strspn(cp, MAC_EXP_WHITESPACE)]) == 0) {
+		    *cp = 0;
 		    lookup_mode = MAC_EXP_MODE_USE;
 		    break;
 		}
 		if (ch == '?' || ch == ':') {
 		    *cp++ = 0;
+		    cp += tmp_len;
 		    lookup_mode = MAC_EXP_MODE_TEST;
 		    break;
 		}
+		ch = *cp;
 		if (!ISALNUM(ch) && ch != '_') {
 		    MAC_EXP_ERR_RETURN(mc, "attribute name syntax error at: "
 				       "\"...%.*s>>>%.20s\"",
@@ -477,9 +622,9 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 
 	    /*
 	     * Look up the named parameter. Todo: allow the lookup function
-	     * to specify if the result is safe for $name expanson.
+	     * to specify if the result is safe for $name expansion.
 	     */
-	    lookup = mc->lookup(vstring_str(buf), lookup_mode, mc->context);
+	    lookup = mc->lookup(start, lookup_mode, mc->context);
 	}
 
 	/*
@@ -596,7 +741,6 @@ int     mac_expand(VSTRING *result, const char *pattern, int flags,
  /*
   * This code certainly deserves a stand-alone test program.
   */
-#include <stdlib.h>
 #include <stringops.h>
 #include <htable.h>
 #include <vstream.h>
@@ -609,7 +753,32 @@ static const char *lookup(const char *name, int unused_mode, void *context)
     return (htable_find(table, name));
 }
 
-int     main(int unused_argc, char **unused_argv)
+static MAC_EXP_OP_RES length_relop_eval(const char *left, int relop,
+					        const char *rite)
+{
+    const char myname[] = "length_relop_eval";
+    ssize_t delta = strlen(left) - strlen(rite);
+
+    switch (relop) {
+    case MAC_EXP_OP_TOK_EQ:
+	return (mac_exp_op_res_bool[delta == 0]);
+    case MAC_EXP_OP_TOK_NE:
+	return (mac_exp_op_res_bool[delta != 0]);
+    case MAC_EXP_OP_TOK_LT:
+	return (mac_exp_op_res_bool[delta < 0]);
+    case MAC_EXP_OP_TOK_LE:
+	return (mac_exp_op_res_bool[delta <= 0]);
+    case MAC_EXP_OP_TOK_GE:
+	return (mac_exp_op_res_bool[delta >= 0]);
+    case MAC_EXP_OP_TOK_GT:
+	return (mac_exp_op_res_bool[delta > 0]);
+    default:
+	msg_panic("%s: unknown operator: %d",
+		  myname, relop);
+    }
+}
+
+int     main(int unused_argc, char **argv)
 {
     VSTRING *buf = vstring_alloc(100);
     VSTRING *result = vstring_alloc(100);
@@ -618,7 +787,21 @@ int     main(int unused_argc, char **unused_argv)
     char   *value;
     HTABLE *table;
     int     stat;
+    int     length_relops[] = {
+	MAC_EXP_OP_TOK_EQ, MAC_EXP_OP_TOK_NE,
+	MAC_EXP_OP_TOK_GT, MAC_EXP_OP_TOK_GE,
+	MAC_EXP_OP_TOK_LT, MAC_EXP_OP_TOK_LE,
+	0,
+    };
 
+    /*
+     * Add relops that compare string lengths instead of content.
+     */
+    mac_expand_add_relop(length_relops, "length", length_relop_eval);
+
+    /*
+     * Loop over the inputs.
+     */
     while (!vstream_feof(VSTREAM_IN)) {
 
 	table = htable_create(0);

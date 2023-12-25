@@ -7,7 +7,8 @@
 
 <title>Postfix Performance Tuning</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -409,9 +410,9 @@ especially if the gateway forwards to multiple MX hosts. When all
 MX hosts are up and accepting connections in a timely fashion,
 throughput will be high.  If any MX host is down and completely
 unresponsive, the average connection latency rises to at least 1/N
-* $smtp_connection_timeout, if there are N MX hosts. This limits
+* $<a href="postconf.5.html#smtp_connect_timeout">smtp_connect_timeout</a>, if there are N MX hosts. This limits
 throughput to at most the destination concurrency * N /
-$smtp_connection_timeout. </p>
+$<a href="postconf.5.html#smtp_connect_timeout">smtp_connect_timeout</a>. </p>
 
 <p> For example, with a destination concurrency of 100 and 2 MX
 hosts, each host will handle up to 50 simultaneous connections. If
@@ -422,9 +423,9 @@ multiple MX hosts need a lower connection timeout, values as low
 as 5s or even 1s can be used to prevent congestion when one or
 more, but not all MX hosts are down. </p>
 
-<p> If necessary, set a higher transport_destination_concurrency_limit
+<p> If necessary, set a higher <a href="postconf.5.html#transport_destination_concurrency_limit"><i>transport</i>_destination_concurrency_limit</a>
 (in <a href="postconf.5.html">main.cf</a> since this is a queue manager parameter) and a lower
-smtp_connection_timeout (with a "-o" override in <a href="master.5.html">master.cf</a> since
+<a href="postconf.5.html#smtp_connect_timeout">smtp_connect_timeout</a> (with a "-o" override in <a href="master.5.html">master.cf</a> since
 this parameter has no per-transport name) for the relay transport
 and any transports dedicated for specific high volume destinations.
 </p>

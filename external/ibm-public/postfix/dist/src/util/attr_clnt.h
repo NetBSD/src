@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_clnt.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: attr_clnt.h,v 1.2.14.1 2023/12/25 12:55:23 martin Exp $	*/
 
 #ifndef _ATTR_CLNT_H_INCLUDED_
 #define _ATTR_CLNT_H_INCLUDED_
@@ -29,6 +29,7 @@
 typedef struct ATTR_CLNT ATTR_CLNT;
 typedef int (*ATTR_CLNT_PRINT_FN) (VSTREAM *, int, va_list);
 typedef int (*ATTR_CLNT_SCAN_FN) (VSTREAM *, int, va_list);
+typedef int (*ATTR_CLNT_HANDSHAKE_FN) (VSTREAM *);
 
 extern ATTR_CLNT *attr_clnt_create(const char *, int, int, int);
 extern int attr_clnt_request(ATTR_CLNT *, int,...);
@@ -40,6 +41,7 @@ extern void attr_clnt_control(ATTR_CLNT *, int,...);
 #define ATTR_CLNT_CTL_REQ_LIMIT	2	/* requests per connection */
 #define ATTR_CLNT_CTL_TRY_LIMIT	3	/* attempts per request */
 #define ATTR_CLNT_CTL_TRY_DELAY	4	/* pause between requests */
+#define ATTR_CLNT_CTL_HANDSHAKE	5	/* handshake before first request */
 
 /* LICENSE
 /* .ad
@@ -50,6 +52,11 @@ extern void attr_clnt_control(ATTR_CLNT *, int,...);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

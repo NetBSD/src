@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.2.14.1 2023/12/25 12:55:12 martin Exp $	*/
 
 /*++
 /* NAME
@@ -51,11 +51,9 @@
 /*
 /*	This feature is available with Postfix version 2.4 and later.
 /* .IP "\fB-j\fR"
-/*	Produce a queue listing in JSON format, based on output
-/*	from the showq(8) daemon.  The result is a stream of zero
-/*	or more JSON objects, one per queue file.  Each object is
-/*	followed by a newline character to support simple streaming
-/*	parsers. See "\fBJSON OBJECT FORMAT\fR" below for details.
+/*	Produce a queue listing in JSON LINES format, based on
+/*	output from the showq(8) daemon. See "\fBJSON OBJECT
+/*	FORMAT\fR" below for details.
 /*
 /*	This feature is available in Postfix 3.1 and later.
 /* .IP \fB-p\fR
@@ -75,6 +73,11 @@
 /* .IP \fB!\fR
 /*	The message is in the \fBhold\fR queue, i.e. no further delivery
 /*	attempt will be made until the mail is taken off hold.
+/* .IP \fB#\fR
+/*	The message is forced to expire. See the \fBpostsuper\fR(1)
+/*	options \fB-e\fR or \fB-f\fR.
+/* .sp
+/*	This feature is available in Postfix 3.5 and later.
 /* .RE
 /* .IP "\fB-s \fIsite\fR"
 /*	Schedule immediate delivery of all mail that is queued for the named
@@ -118,6 +121,11 @@
 /*	number does not include message envelope information. It
 /*	is approximately equal to the number of bytes that would
 /*	be transmitted via SMTP including the <CR><LF> line endings.
+/* .IP \fBforced_expire\fR
+/*	The message is forced to expire (\fBtrue\fR or \fBfalse\fR).
+/*	See the \fBpostsuper\fR(1) options \fB-e\fR or \fB-f\fR.
+/* .sp
+/*	This feature is available in Postfix 3.5 and later.
 /* .IP \fBsender\fR
 /*	The envelope sender address.
 /* .IP \fBrecipients\fR
@@ -139,8 +147,8 @@
 /* STANDARDS
 /*	RFC 7159 (JSON notation)
 /* DIAGNOSTICS
-/*	Problems are logged to \fBsyslogd\fR(8) and to the standard error
-/*	stream.
+/*	Problems are logged to \fBsyslogd\fR(8) or \fBpostlogd\fR(8),
+/*	and to the standard error stream.
 /* ENVIRONMENT
 /* .ad
 /* .fi
@@ -164,8 +172,9 @@
 /*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBalternate_config_directories (empty)\fR"
 /*	A list of non-default Postfix configuration directories that may
-/*	be specified with "-c config_directory" on the command line, or
-/*	via the MAIL_CONFIG environment parameter.
+/*	be specified with "-c config_directory" on the command line (in the
+/*	case of \fBsendmail\fR(1), with the "-C" option), or via the MAIL_CONFIG
+/*	environment parameter.
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
@@ -175,15 +184,16 @@
 /*	Optional list of destinations that are eligible for per-destination
 /*	logfiles with mail that is queued to those destinations.
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a Postfix process will
-/*	import from a non-Postfix parent process.
+/*	The list of environment variables that a privileged Postfix
+/*	process will import from a non-Postfix parent process, or name=value
+/*	environment overrides.
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
 /* .IP "\fBtrigger_timeout (10s)\fR"
 /*	The time limit for sending a trigger to a Postfix daemon (for
 /*	example, the \fBpickup\fR(8) or \fBqmgr\fR(8) daemon).
@@ -201,6 +211,8 @@
 /*	flush(8), fast flush service
 /*	sendmail(1), Sendmail-compatible user interface
 /*	postsuper(1), privileged queue operations
+/*	postlogd(8), Postfix logging
+/*	syslogd(8), system logging
 /* README FILES
 /* .ad
 /* .fi
@@ -247,7 +259,6 @@
 #include <clean_env.h>
 #include <vstream.h>
 #include <msg_vstream.h>
-#include <msg_syslog.h>
 #include <argv.h>
 #include <safe.h>
 #include <connect.h>
@@ -272,6 +283,7 @@
 #include <valid_mailhost_addr.h>
 #include <mail_dict.h>
 #include <mail_parm_split.h>
+#include <maillog_client.h>
 
 /* Application-specific. */
 
@@ -329,6 +341,26 @@ static const CONFIG_STR_TABLE str_table[] = {
     0,
 };
 
+/* showq_client - run the appropriate showq protocol client */
+
+static void showq_client(int mode, VSTREAM *showq)
+{
+    if (attr_scan(showq, ATTR_FLAG_STRICT,
+		  RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_SHOWQ),
+		  ATTR_TYPE_END) != 0)
+	msg_fatal_status(EX_SOFTWARE, "malformed showq server response");
+    switch (mode) {
+    case PQ_MODE_MAILQ_LIST:
+	showq_compat(showq);
+	break;
+    case PQ_MODE_JSON_LIST:
+	showq_json(showq);
+	break;
+    default:
+	msg_panic("show_queue: unknown mode %d", mode);
+    }
+}
+
 /* show_queue - show queue status */
 
 static void show_queue(int mode)
@@ -349,16 +381,7 @@ static void show_queue(int mode)
      * Connect to the show queue service.
      */
     if ((showq = mail_connect(MAIL_CLASS_PUBLIC, var_showq_service, BLOCKING)) != 0) {
-	switch (mode) {
-	case PQ_MODE_MAILQ_LIST:
-	    showq_compat(showq);
-	    break;
-	case PQ_MODE_JSON_LIST:
-	    showq_json(showq);
-	    break;
-	default:
-	    msg_panic("show_queue: unknown mode %d", mode);
-	}
+	showq_client(mode, showq);
 	if (vstream_fclose(showq))
 	    msg_warn("close: %m");
     }
@@ -367,7 +390,7 @@ static void show_queue(int mode)
      * Don't assume that the mail system is down when the user has
      * insufficient permission to access the showq socket.
      */
-    else if (errno == EACCES) {
+    else if (errno == EACCES || errno == EPERM) {
 	msg_fatal_status(EX_SOFTWARE,
 			 "Connect to the %s %s service: %m",
 			 var_mail_name, var_showq_service);
@@ -382,7 +405,9 @@ static void show_queue(int mode)
 	ARGV   *argv;
 	int     stat;
 
-	msg_warn("Mail system is down -- accessing queue directly");
+	msg_warn("Mail system is down -- accessing queue directly"
+		 " (Connect to the %s %s service: %m)",
+		 var_mail_name, var_showq_service);
 	showq_path = concatenate(var_daemon_dir, "/", var_showq_service,
 				 (char *) 0);
 	argv = argv_alloc(6);
@@ -395,23 +420,14 @@ static void show_queue(int mode)
 				   CA_VSTREAM_POPEN_END)) == 0) {
 	    stat = -1;
 	} else {
-	    switch (mode) {
-	    case PQ_MODE_MAILQ_LIST:
-		showq_compat(showq);
-		break;
-	    case PQ_MODE_JSON_LIST:
-		showq_json(showq);
-		break;
-	    default:
-		msg_panic("show_queue: unknown mode %d", mode);
-	    }
+	    showq_client(mode, showq);
 	    stat = vstream_pclose(showq);
 	}
 	argv_free(argv);
+	myfree(showq_path);
 	if (stat != 0)
 	    msg_fatal_status(stat < 0 ? EX_OSERR : EX_SOFTWARE,
 			     "Error running %s", showq_path);
-	myfree(showq_path);
     }
 
     /*
@@ -422,7 +438,9 @@ static void show_queue(int mode)
      */
     else {
 	msg_fatal_status(EX_UNAVAILABLE,
-			 "Queue report unavailable - mail system is down");
+			 "Queue report unavailable - mail system is down"
+			 " (Connect to the %s %s service: %m)",
+			 var_mail_name, var_showq_service);
     }
 }
 
@@ -537,7 +555,6 @@ MAIL_VERSION_STAMP_DECLARE;
 int     main(int argc, char **argv)
 {
     struct stat st;
-    char   *slash;
     int     c;
     int     fd;
     int     mode = PQ_MODE_DEFAULT;
@@ -567,15 +584,14 @@ int     main(int argc, char **argv)
 	    msg_fatal_status(EX_UNAVAILABLE, "open /dev/null: %m");
 
     /*
-     * Initialize. Set up logging, read the global configuration file and
-     * extract configuration information. Set up signal handlers so that we
-     * can clean up incomplete output.
+     * Initialize. Set up logging. Read the global configuration file after
+     * parsing command-line arguments. Censor the process name: it is
+     * provided by the user.
      */
-    if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
-	argv[0] = slash + 1;
+    argv[0] = "postqueue";
     msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_cleanup(unavailable);
-    msg_syslog_init(mail_task("postqueue"), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task("postqueue"), MAILLOG_CLIENT_FLAG_NONE);
     set_mail_conf_str(VAR_PROCNAME, var_procname = mystrdup(argv[0]));
 
     /*
@@ -638,22 +654,19 @@ int     main(int argc, char **argv)
      */
     mail_conf_read();
     /* Re-evaluate mail_task() after reading main.cf. */
-    msg_syslog_init(mail_task("postqueue"), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task("postqueue"), MAILLOG_CLIENT_FLAG_NONE);
     mail_dict_init();				/* proxy, sql, ldap */
     get_mail_conf_str_table(str_table);
 
     /*
      * This program is designed to be set-gid, which makes it a potential
-     * target for attack. If not running as root, strip the environment so we
-     * don't have to trust the C library. If running as root, don't strip the
-     * environment so that showq can receive non-default configuration
-     * directory info when the mail system is down.
+     * target for attack. Strip and optionally override the process
+     * environment so that we don't have to trust the C library.
      */
-    if (geteuid() != 0) {
-	import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
-	clean_env(import_env->argv);
-	argv_free(import_env);
-    }
+    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
+    clean_env(import_env->argv);
+    argv_free(import_env);
+
     if (chdir(var_queue_dir))
 	msg_fatal_status(EX_UNAVAILABLE, "chdir %s: %m", var_queue_dir);
 

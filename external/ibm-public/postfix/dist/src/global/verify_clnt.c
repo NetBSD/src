@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_clnt.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: verify_clnt.c,v 1.2.14.1 2023/12/25 12:55:05 martin Exp $	*/
 
 /*++
 /* NAME
@@ -58,6 +58,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -82,6 +87,15 @@
 
 CLNT_STREAM *vrfy_clnt;
 
+/* verify_clnt_handshake - receive server protocol announcement */
+
+static int verify_clnt_handshake(VSTREAM *stream)
+{
+    return (attr_scan(stream, ATTR_FLAG_STRICT,
+		   RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_VERIFY),
+		      ATTR_TYPE_END));
+}
+
 /* verify_clnt_init - initialize */
 
 static void verify_clnt_init(void)
@@ -89,7 +103,8 @@ static void verify_clnt_init(void)
     if (vrfy_clnt != 0)
 	msg_panic("verify_clnt_init: multiple initialization");
     vrfy_clnt = clnt_stream_create(MAIL_CLASS_PRIVATE, var_verify_service,
-				   var_ipc_idle_limit, var_ipc_ttl_limit);
+				   var_ipc_idle_limit, var_ipc_ttl_limit,
+				   verify_clnt_handshake);
 }
 
 /* verify_clnt_query - request address verification status */
@@ -113,10 +128,11 @@ int     verify_clnt_query(const char *addr, int *addr_status, VSTRING *why)
 	stream = clnt_stream_access(vrfy_clnt);
 	errno = 0;
 	count += 1;
-	if (attr_print(stream, ATTR_FLAG_NONE,
-		       SEND_ATTR_STR(MAIL_ATTR_REQ, VRFY_REQ_QUERY),
-		       SEND_ATTR_STR(MAIL_ATTR_ADDR, addr),
-		       ATTR_TYPE_END) != 0
+	if (stream == 0
+	    || attr_print(stream, ATTR_FLAG_NONE,
+			  SEND_ATTR_STR(MAIL_ATTR_REQ, VRFY_REQ_QUERY),
+			  SEND_ATTR_STR(MAIL_ATTR_ADDR, addr),
+			  ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_MISSING,
 			 RECV_ATTR_INT(MAIL_ATTR_STATUS, &request_status),
@@ -155,12 +171,13 @@ int     verify_clnt_update(const char *addr, int addr_status, const char *why)
     for (;;) {
 	stream = clnt_stream_access(vrfy_clnt);
 	errno = 0;
-	if (attr_print(stream, ATTR_FLAG_NONE,
-		       SEND_ATTR_STR(MAIL_ATTR_REQ, VRFY_REQ_UPDATE),
-		       SEND_ATTR_STR(MAIL_ATTR_ADDR, addr),
-		       SEND_ATTR_INT(MAIL_ATTR_ADDR_STATUS, addr_status),
-		       SEND_ATTR_STR(MAIL_ATTR_WHY, why),
-		       ATTR_TYPE_END) != 0
+	if (stream == 0
+	    || attr_print(stream, ATTR_FLAG_NONE,
+			  SEND_ATTR_STR(MAIL_ATTR_REQ, VRFY_REQ_UPDATE),
+			  SEND_ATTR_STR(MAIL_ATTR_ADDR, addr),
+			  SEND_ATTR_INT(MAIL_ATTR_ADDR_STATUS, addr_status),
+			  SEND_ATTR_STR(MAIL_ATTR_WHY, why),
+			  ATTR_TYPE_END) != 0
 	    || attr_scan(stream, ATTR_FLAG_MISSING,
 			 RECV_ATTR_INT(MAIL_ATTR_STATUS, &request_status),
 			 ATTR_TYPE_END) != 1) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict.c,v 1.2.14.1 2023/12/25 12:55:25 martin Exp $	*/
 
 /*++
 /* NAME
@@ -242,6 +242,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System libraries. */
@@ -465,6 +470,7 @@ int     dict_load_file_xt(const char *dict_name, const char *path)
 	if (msg_verbose > 1)
 	    msg_info("pausing to let %s cool down", path);
 	doze(300000);
+	dict_unregister(dict_name);
     }
     return (1);
 }
@@ -641,6 +647,7 @@ static const NAME_MASK dict_mask[] = {
     "multi_writer", DICT_FLAG_MULTI_WRITER,	/* multi-writer safe */
     "utf8_request", DICT_FLAG_UTF8_REQUEST,	/* request UTF-8 activation */
     "utf8_active", DICT_FLAG_UTF8_ACTIVE,	/* UTF-8 is activated */
+    "src_rhs_is_file", DICT_FLAG_SRC_RHS_IS_FILE,	/* value from file */
     0,
 };
 

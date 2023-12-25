@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_master.c,v 1.5 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: postconf_master.c,v 1.5.14.1 2023/12/25 12:55:08 martin Exp $	*/
 
 /*++
 /* NAME
@@ -158,6 +158,7 @@
 #include <readlline.h>
 #include <stringops.h>
 #include <split_at.h>
+#include <dict_ht.h>
 
 /* Global library. */
 
@@ -192,10 +193,13 @@ static const char *pcf_valid_master_types[] = {
     MASTER_XPORT_NAME_FIFO,
     MASTER_XPORT_NAME_INET,
     MASTER_XPORT_NAME_PASS,
+    MASTER_XPORT_NAME_UXDG,
     0,
 };
 
 static const char pcf_valid_bool_types[] = "yn-";
+
+static VSTRING *pcf_exp_buf;
 
 #define STR(x) vstring_str(x)
 
@@ -355,8 +359,10 @@ void    pcf_free_master_entry(PCF_MASTER_ENT *masterp)
     argv_free(masterp->argv);
     if (masterp->valid_names)
 	htable_free(masterp->valid_names, myfree);
+    if (masterp->ro_params)
+	dict_close(masterp->ro_params);
     if (masterp->all_params)
-	dict_free(masterp->all_params);
+	dict_close(masterp->all_params);
     myfree((void *) masterp);
 }
 
@@ -365,6 +371,8 @@ void    pcf_free_master_entry(PCF_MASTER_ENT *masterp)
 const char *pcf_parse_master_entry(PCF_MASTER_ENT *masterp, const char *buf)
 {
     ARGV   *argv;
+    char   *ro_name_space;
+    char   *process_name;
 
     /*
      * We can't use the master daemon's master_ent routines in their current
@@ -386,8 +394,17 @@ const char *pcf_parse_master_entry(PCF_MASTER_ENT *masterp, const char *buf)
     pcf_normalize_daemon_args(argv);
     masterp->name_space =
 	concatenate(argv->argv[0], PCF_NAMESP_SEP_STR, argv->argv[1], (char *) 0);
+    ro_name_space =
+	concatenate("ro", PCF_NAMESP_SEP_STR, masterp->name_space, (char *) 0);
     masterp->argv = argv;
     masterp->valid_names = 0;
+    masterp->ro_params = dict_ht_open(ro_name_space, O_CREAT | O_RDWR, 0);
+    process_name = basename(argv->argv[PCF_MASTER_FLD_CMD]);
+    dict_put(masterp->ro_params, VAR_PROCNAME, process_name);
+    dict_put(masterp->ro_params, VAR_SERVNAME,
+	     strcmp(process_name, argv->argv[0]) != 0 ?
+	     argv->argv[0] : process_name);
+    myfree(ro_name_space);
     masterp->all_params = 0;
     return (0);
 }
@@ -397,7 +414,7 @@ const char *pcf_parse_master_entry(PCF_MASTER_ENT *masterp, const char *buf)
 void    pcf_read_master(int fail_on_open_error)
 {
     const char *myname = "pcf_read_master";
-    char   *path;
+    const char *path;
     VSTRING *buf;
     VSTREAM *fp;
     const char *err;
@@ -414,9 +431,7 @@ void    pcf_read_master(int fail_on_open_error)
     /*
      * Get the location of master.cf.
      */
-    if (var_config_dir == 0)
-	pcf_set_config_dir();
-    path = concatenate(var_config_dir, "/", MASTER_CONF_FILE, (char *) 0);
+    path = pcf_get_master_path();
 
     /*
      * Initialize the in-memory master table.
@@ -449,7 +464,6 @@ void    pcf_read_master(int fail_on_open_error)
      * Null-terminate the master table and clean up.
      */
     pcf_master_table[entry_count].argv = 0;
-    myfree(path);
 }
 
 /* pcf_print_master_entry - print one master line */
@@ -479,6 +493,9 @@ void    pcf_print_master_entry(VSTREAM *fp, int mode, PCF_MASTER_ENT *masterp)
         vstream_fputs(text, fp); line_len += len; } \
     while (0)
 #define ADD_SPACE ADD_TEXT(" ", 1)
+
+    if (pcf_exp_buf == 0)
+	pcf_exp_buf = vstring_alloc(100);
 
     /*
      * Show the standard fields at their preferred column position. Use at
@@ -533,7 +550,7 @@ void    pcf_print_master_entry(VSTREAM *fp, int mode, PCF_MASTER_ENT *masterp)
 		 */
 		if (strcmp(arg, "-o") == 0
 		    && (mode & PCF_SHOW_EVAL) != 0)
-		    aval = pcf_expand_parameter_value((VSTRING *) 0, mode,
+		    aval = pcf_expand_parameter_value(pcf_exp_buf, mode,
 						      aval, masterp);
 
 		/*
@@ -653,6 +670,9 @@ static void pcf_print_master_field(VSTREAM *fp, int mode,
     int     in_daemon_options;
     int     need_parens;
 
+    if (pcf_exp_buf == 0)
+	pcf_exp_buf = vstring_alloc(100);
+
     /*
      * Show the field value, or the first value in the case of a multi-column
      * field.
@@ -708,7 +728,7 @@ static void pcf_print_master_field(VSTREAM *fp, int mode,
 		     */
 		    if (strcmp(arg, "-o") == 0
 			&& (mode & PCF_SHOW_EVAL) != 0)
-			aval = pcf_expand_parameter_value((VSTRING *) 0, mode,
+			aval = pcf_expand_parameter_value(pcf_exp_buf, mode,
 							  aval, masterp);
 
 		    /*
@@ -864,13 +884,16 @@ static void pcf_print_master_param(VSTREAM *fp, int mode,
 				           const char *param_name,
 				           const char *param_value)
 {
+    if (pcf_exp_buf == 0)
+	pcf_exp_buf = vstring_alloc(100);
+
     if (mode & PCF_HIDE_VALUE) {
 	pcf_print_line(fp, mode, "%s%c%s\n",
 		       masterp->name_space, PCF_NAMESP_SEP_CH,
 		       param_name);
     } else {
 	if ((mode & PCF_SHOW_EVAL) != 0)
-	    param_value = pcf_expand_parameter_value((VSTRING *) 0, mode,
+	    param_value = pcf_expand_parameter_value(pcf_exp_buf, mode,
 						     param_value, masterp);
 	if ((mode & PCF_HIDE_NAME) == 0) {
 	    pcf_print_line(fp, mode, "%s%c%s = %s\n",
@@ -907,7 +930,7 @@ static void pcf_show_master_any_param(VSTREAM *fp, int mode,
 
     /*
      * Print parameters in sorted order. The number of parameters per
-     * master.cf entry is small, so we optmiize for code simplicity and don't
+     * master.cf entry is small, so we optimize for code simplicity and don't
      * worry about the cost of double lookup.
      */
 

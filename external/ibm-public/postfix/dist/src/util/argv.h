@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.h,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: argv.h,v 1.2.14.1 2023/12/25 12:55:23 martin Exp $	*/
 
 #ifndef _ARGV_H_INCLUDED_
 #define _ARGV_H_INCLUDED_
@@ -22,8 +22,12 @@ typedef struct ARGV {
     char  **argv;			/* string array */
 } ARGV;
 
+typedef int (*ARGV_COMPAR_FN)(const void *, const void *);
+
 extern ARGV *argv_alloc(ssize_t);
-extern ARGV *argv_sort(ARGV *);
+extern ARGV *argv_sort(ARGV *);		/* backwards compatibility */
+extern ARGV *argv_qsort(ARGV *, ARGV_COMPAR_FN);
+extern ARGV *argv_uniq(ARGV *, ARGV_COMPAR_FN);
 extern void argv_add(ARGV *,...);
 extern void argv_addn(ARGV *,...);
 extern void argv_terminate(ARGV *);
@@ -40,6 +44,10 @@ extern ARGV *argv_split_append(ARGV *, const char *, const char *);
 extern ARGV *argv_splitq(const char *, const char *, const char *);
 extern ARGV *argv_splitq_count(const char *, const char *, const char *, ssize_t);
 extern ARGV *argv_splitq_append(ARGV *, const char *, const char *, const char *);
+
+extern ARGV *argv_split_at(const char *, int);
+extern ARGV *argv_split_at_count(const char *, int, ssize_t);
+extern ARGV *argv_split_at_append(ARGV *, const char *, int);
 
 #define ARGV_FAKE_BEGIN(fake_argv, arg) { \
 	ARGV fake_argv; \
@@ -62,6 +70,11 @@ extern ARGV *argv_splitq_append(ARGV *, const char *, const char *, const char *
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

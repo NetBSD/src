@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_lmdb.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_lmdb.c,v 1.2.14.1 2023/12/25 12:55:26 martin Exp $	*/
 
 /*++
 /* NAME
@@ -32,6 +32,10 @@
 /* DIAGNOSTICS
 /*	Fatal errors: cannot open file, file write error, out of
 /*	memory.
+/*
+/*	If a jump buffer is specified with dict_setjmp(), then the LMDB
+/*	client will call dict_longjmp() to return to that execution
+/*	context after a recoverable error.
 /* BUGS
 /*	The on-the-fly map resize operations require no concurrent
 /*	activity in the same database by other threads in the same
@@ -50,6 +54,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #include <sys_defs.h>
@@ -111,10 +120,6 @@ typedef struct {
   * We do not expose these details to the Postfix user interface. The purpose of
   * Postfix is to solve problems, not punt them to the user.
   */
-#ifndef SSIZE_T_MAX			/* The maximum map size */
-#define SSIZE_T_MAX __MAXINT__(ssize_t)	/* XXX Assumes two's complement */
-#endif
-
 #define DICT_LMDB_SIZE_INCR	2	/* Increase size by 1 bit on retry */
 #define DICT_LMDB_SIZE_MAX	SSIZE_T_MAX
 

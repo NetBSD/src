@@ -1,4 +1,4 @@
-/*	$NetBSD: flush_clnt.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: flush_clnt.c,v 1.2.14.1 2023/12/25 12:54:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -73,6 +73,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -127,6 +132,7 @@ int     flush_purge(void)
 	status = FLUSH_STAT_DENY;
     else
 	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
+				     MAIL_ATTR_PROTO_FLUSH,
 			      SEND_ATTR_STR(MAIL_ATTR_REQ, FLUSH_REQ_PURGE),
 				     ATTR_TYPE_END);
 
@@ -153,6 +159,7 @@ int     flush_refresh(void)
 	status = FLUSH_STAT_DENY;
     else
 	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
+				     MAIL_ATTR_PROTO_FLUSH,
 			    SEND_ATTR_STR(MAIL_ATTR_REQ, FLUSH_REQ_REFRESH),
 				     ATTR_TYPE_END);
 
@@ -184,6 +191,7 @@ int     flush_send_site(const char *site)
 		     VAR_RELAY_DOMAINS "=$mydestination to flush "
 		     "mail for domain \"%s\"", site);
 	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
+				     MAIL_ATTR_PROTO_FLUSH,
 			  SEND_ATTR_STR(MAIL_ATTR_REQ, FLUSH_REQ_SEND_SITE),
 				     SEND_ATTR_STR(MAIL_ATTR_SITE, site),
 				     ATTR_TYPE_END);
@@ -212,6 +220,7 @@ int     flush_send_file(const char *queue_id)
      * Require that the service is turned on.
      */
     status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
+				 MAIL_ATTR_PROTO_FLUSH,
 			  SEND_ATTR_STR(MAIL_ATTR_REQ, FLUSH_REQ_SEND_FILE),
 				 SEND_ATTR_STR(MAIL_ATTR_QUEUEID, queue_id),
 				 ATTR_TYPE_END);
@@ -244,6 +253,7 @@ int     flush_add(const char *site, const char *queue_id)
 		     VAR_RELAY_DOMAINS "=$mydestination to update "
 		     "fast-flush logfile for domain \"%s\"", site);
 	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
+				     MAIL_ATTR_PROTO_FLUSH,
 				SEND_ATTR_STR(MAIL_ATTR_REQ, FLUSH_REQ_ADD),
 				     SEND_ATTR_STR(MAIL_ATTR_SITE, site),
 				 SEND_ATTR_STR(MAIL_ATTR_QUEUEID, queue_id),

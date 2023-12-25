@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_stream.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: clnt_stream.h,v 1.1.1.1.52.1 2023/12/25 12:54:57 martin Exp $	*/
 
 #ifndef _CLNT_STREAM_H_INCLUDED_
 #define _CLNT_STREAM_H_INCLUDED_
@@ -22,9 +22,12 @@
   * External interface.
   */
 typedef struct CLNT_STREAM CLNT_STREAM;
+typedef int (*CLNT_STREAM_HANDSHAKE_FN)(VSTREAM *);
 
-extern CLNT_STREAM *clnt_stream_create(const char *, const char *, int, int);
+extern CLNT_STREAM *clnt_stream_create(const char *, const char *, int, int,
+				               CLNT_STREAM_HANDSHAKE_FN);
 extern VSTREAM *clnt_stream_access(CLNT_STREAM *);
+extern const char *clnt_stream_path(CLNT_STREAM *);
 extern void clnt_stream_recover(CLNT_STREAM *);
 extern void clnt_stream_free(CLNT_STREAM *);
 
@@ -37,6 +40,11 @@ extern void clnt_stream_free(CLNT_STREAM *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

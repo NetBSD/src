@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - bounce(8) </title>
 </head> <body> <pre>
 BOUNCE(8)                                                            BOUNCE(8)
@@ -39,19 +40,19 @@ BOUNCE(8)                                                            BOUNCE(8)
        and that depend on retry logic in their own client.
 
 <b>STANDARDS</b>
-       <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
-       <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a> (Format of Internet Message Bodies)
-       <a href="http://tools.ietf.org/html/rfc2822">RFC 2822</a> (Internet Message Format)
-       <a href="http://tools.ietf.org/html/rfc3462">RFC 3462</a> (Delivery Status Notifications)
-       <a href="http://tools.ietf.org/html/rfc3464">RFC 3464</a> (Delivery Status Notifications)
-       <a href="http://tools.ietf.org/html/rfc3834">RFC 3834</a> (Auto-Submitted: message header)
-       <a href="http://tools.ietf.org/html/rfc5322">RFC 5322</a> (Internet Message Format)
-       <a href="http://tools.ietf.org/html/rfc6531">RFC 6531</a> (Internationalized SMTP)
-       <a href="http://tools.ietf.org/html/rfc6532">RFC 6532</a> (Internationalized Message Format)
-       <a href="http://tools.ietf.org/html/rfc6533">RFC 6533</a> (Internationalized Delivery Status Notifications)
+       <a href="https://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
+       <a href="https://tools.ietf.org/html/rfc2045">RFC 2045</a> (Format of Internet Message Bodies)
+       <a href="https://tools.ietf.org/html/rfc2822">RFC 2822</a> (Internet Message Format)
+       <a href="https://tools.ietf.org/html/rfc3462">RFC 3462</a> (Delivery Status Notifications)
+       <a href="https://tools.ietf.org/html/rfc3464">RFC 3464</a> (Delivery Status Notifications)
+       <a href="https://tools.ietf.org/html/rfc3834">RFC 3834</a> (Auto-Submitted: message header)
+       <a href="https://tools.ietf.org/html/rfc5322">RFC 5322</a> (Internet Message Format)
+       <a href="https://tools.ietf.org/html/rfc6531">RFC 6531</a> (Internationalized SMTP)
+       <a href="https://tools.ietf.org/html/rfc6532">RFC 6532</a> (Internationalized Message Format)
+       <a href="https://tools.ietf.org/html/rfc6533">RFC 6533</a> (Internationalized Delivery Status Notifications)
 
 <b>DIAGNOSTICS</b>
-       Problems and transactions are logged to <b>syslogd</b>(8).
+       Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
 <b>CONFIGURATION PARAMETERS</b>
        Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically, as <a href="bounce.8.html"><b>bounce</b>(8)</a>  processes
@@ -139,15 +140,31 @@ BOUNCE(8)                                                            BOUNCE(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system name that is prepended to the  process  name  in
-              syslog  records,  so  that  "smtpd" becomes, for example, "post-
-              fix/smtpd".
+              A prefix that  is  prepended  to  the  process  name  in  syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        Available in Postfix 3.0 and later:
 
        <b><a href="postconf.5.html#smtputf8_autodetect_classes">smtputf8_autodetect_classes</a> (sendmail, verify)</b>
-              Detect that a message requires SMTPUTF8 support for  the  speci-
+              Detect  that  a message requires SMTPUTF8 support for the speci-
               fied mail origin classes.
+
+       Available in Postfix 3.3 and later:
+
+       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
+              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
+
+       Available in Postfix 3.6 and later:
+
+       <b><a href="postconf.5.html#enable_threaded_bounces">enable_threaded_bounces</a> (no)</b>
+              Enable non-delivery, success, and delay notifications that  link
+              to   the   original  message  by  including  a  References:  and
+              In-Reply-To: header with the original Message-ID value.
+
+       Available in Postfix 3.7 and later:
+
+       <b><a href="postconf.5.html#header_from_format">header_from_format</a> (standard)</b>
+              The format of the Postfix-generated <b>From:</b> header.
 
 <b>FILES</b>
        /var/spool/postfix/bounce/* non-delivery records
@@ -160,6 +177,7 @@ BOUNCE(8)                                                            BOUNCE(8)
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="master.5.html">master(5)</a>, generic daemon options
        <a href="master.8.html">master(8)</a>, process manager
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>LICENSE</b>

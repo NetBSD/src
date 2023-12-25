@@ -1,4 +1,4 @@
-/*	$NetBSD: been_here.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: been_here.c,v 1.2.14.1 2023/12/25 12:54:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -28,6 +28,14 @@
 /*	BH_TABLE *dup_filter;
 /*	char	*format;
 /*
+/*	int	been_here_drop_fixed(dup_filter, string)
+/*	BH_TABLE *dup_filter;
+/*	char	*string;
+/*
+/*	int	been_here_drop(dup_filter, format, ...)
+/*	BH_TABLE *dup_filter;
+/*	char	*format;
+/*
 /*	void	been_here_free(dup_filter)
 /*	BH_TABLE *dup_filter;
 /* DESCRIPTION
@@ -48,12 +56,22 @@
 /*	been_here_check_fixed() and been_here_check() are similar
 /*	but do not update the duplicate filter.
 /*
+/*	been_here_drop_fixed() looks up a fixed string in the given
+/*	table, and deletes the entry if the string was found. The
+/*	result is non-zero (true) if the string was found, zero
+/*	(false) otherwise.
+/*
+/*	been_here_drop() formats its arguments, looks up the result
+/*	in the given table, and removes the entry if the formatted
+/*	result was found. The result is non-zero (true) if the
+/*	formatted result was found, zero (false) otherwise.
+/*
 /*	been_here_free() releases storage for a duplicate filter.
 /*
 /*	Arguments:
 /* .IP size
 /*	Upper bound on the table size; at most \fIsize\fR strings will
-/*	be remembered.  Specify a value <= 0 to disable the upper bound.
+/*	be remembered.  Specify BH_BOUND_NONE to disable the upper bound.
 /* .IP flags
 /*	Requests for special processing. Specify the bitwise OR of zero
 /*	or more flags:
@@ -78,6 +96,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -242,6 +265,67 @@ int     been_here_check_fixed(BH_TABLE *dup_filter, const char *string)
     status = (htable_locate(dup_filter->table, lookup_key) != 0);
     if (msg_verbose)
 	msg_info("been_here_check: %s: %d", string, status);
+
+    /*
+     * Cleanup.
+     */
+    if (folded_string)
+	vstring_free(folded_string);
+
+    return (status);
+}
+
+/* been_here_drop - remove filter entry with finer control */
+
+int     been_here_drop(BH_TABLE *dup_filter, const char *fmt,...)
+{
+    VSTRING *buf = vstring_alloc(100);
+    int     status;
+    va_list ap;
+
+    /*
+     * Construct the string to be dropped.
+     */
+    va_start(ap, fmt);
+    vstring_vsprintf(buf, fmt, ap);
+    va_end(ap);
+
+    /*
+     * Drop the filter entry.
+     */
+    status = been_here_drop_fixed(dup_filter, vstring_str(buf));
+
+    /*
+     * Cleanup.
+     */
+    vstring_free(buf);
+    return (status);
+}
+
+/* been_here_drop_fixed - remove filter entry */
+
+int     been_here_drop_fixed(BH_TABLE *dup_filter, const char *string)
+{
+    VSTRING *folded_string;
+    const char *lookup_key;
+    int     status;
+
+    /*
+     * Special processing: case insensitive lookup.
+     */
+    if (dup_filter->flags & BH_FLAG_FOLD) {
+	folded_string = vstring_alloc(100);
+	lookup_key = casefold(folded_string, string);
+    } else {
+	folded_string = 0;
+	lookup_key = string;
+    }
+
+    /*
+     * Drop the filter entry.
+     */
+    if ((status = been_here_check_fixed(dup_filter, lookup_key)) != 0)
+	htable_delete(dup_filter->table, lookup_key, (void (*) (void *)) 0);
 
     /*
      * Cleanup.

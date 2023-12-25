@@ -1,6 +1,6 @@
 failure_template = <<EOF
 Charset: us-ascii
-From: MAILER-DAEMON (Mail Delivery System)
+From: Mail Delivery System <MAILER-DAEMON>
 Subject: Undelivered Mail Returned to Sender
 Postmaster-Subject: Postmaster Copy: Undelivered Mail
 
@@ -19,7 +19,7 @@ EOF
 
 delay_template = <<EOF
 Charset: us-ascii
-From: MAILER-DAEMON (Mail Delivery System)
+From: Mail Delivery System <MAILER-DAEMON>
 Subject: Delayed Mail (still being retried)
 Postmaster-Subject: Postmaster Warning: Delayed Mail
 
@@ -42,7 +42,7 @@ EOF
 
 success_template = <<EOF
 Charset: us-ascii
-From: MAILER-DAEMON (Mail Delivery System)
+From: Mail Delivery System <MAILER-DAEMON>
 Subject: Successful Mail Delivery Report
 
 This is the mail system at host $myhostname.
@@ -57,7 +57,7 @@ EOF
 
 verify_template = <<EOF
 Charset: us-ascii
-From: MAILER-DAEMON (Mail Delivery System)
+From: Mail Delivery System <MAILER-DAEMON>
 Subject: Mail Delivery Status Report
 
 This is the mail system at host $myhostname.

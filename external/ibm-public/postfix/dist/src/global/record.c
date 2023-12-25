@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: record.c,v 1.2.14.1 2023/12/25 12:55:04 martin Exp $	*/
 
 /*++
 /* NAME
@@ -139,6 +139,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -284,14 +289,11 @@ int     rec_get_raw(VSTREAM *stream, VSTRING *buf, ssize_t maxsize, int flags)
 	 * Reserve buffer space for the result, and read the record data into
 	 * the buffer.
 	 */
-	VSTRING_RESET(buf);
-	VSTRING_SPACE(buf, len);
-	if (vstream_fread(stream, vstring_str(buf), len) != len) {
+	if (vstream_fread_buf(stream, buf, len) != len) {
 	    msg_warn("%s: unexpected EOF in data, record type %d length %ld",
 		     VSTREAM_PATH(stream), type, (long) len);
 	    return (REC_TYPE_ERROR);
 	}
-	VSTRING_AT_OFFSET(buf, len);
 	VSTRING_TERMINATE(buf);
 	if (msg_verbose > 2)
 	    msg_info("%s: type %c len %ld data %.10s", myname,
@@ -323,7 +325,7 @@ int     rec_get_raw(VSTREAM *stream, VSTRING *buf, ssize_t maxsize, int flags)
 int     rec_goto(VSTREAM *stream, const char *buf)
 {
     off_t   offset;
-    static const char *saved_path;
+    static char *saved_path;
     static off_t saved_offset;
     static int reverse_count;
 
@@ -336,11 +338,12 @@ int     rec_goto(VSTREAM *stream, const char *buf)
      * is likely to insert 10000 message headers, but someone might append
      * 10000 recipients.
      */
-#define STREQ(x,y) ((x) == (y) && strcmp((x), (y)) == 0)
 #define REVERSE_JUMP_LIMIT	10000
 
-    if (!STREQ(saved_path, VSTREAM_PATH(stream))) {
-	saved_path = VSTREAM_PATH(stream);
+    if (saved_path == 0 || strcmp(saved_path, VSTREAM_PATH(stream)) != 0) {
+	if (saved_path)
+	    myfree(saved_path);
+	saved_path = mystrdup(VSTREAM_PATH(stream));
 	reverse_count = 0;
 	saved_offset = 0;
     }

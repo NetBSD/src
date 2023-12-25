@@ -24,7 +24,7 @@
 # 
 #        Alternatively, the  table  can  be  provided  as  a  regu-
 #        lar-expression  map  where  patterns  are given as regular
-#        expressions, or  lookups  can  be  directed  to  TCP-based
+#        expressions, or lookups can be  directed  to  a  TCP-based
 #        server.  In those case, the lookups are done in a slightly
 #        different way as described below under "REGULAR EXPRESSION
 #        TABLES" or "TCP-BASED TABLES".
@@ -86,66 +86,68 @@
 #        description of regular expression lookup table syntax, see
 #        regexp_table(5) or pcre_table(5). For a description of the
 #        TCP client/server table lookup protocol, see tcp_table(5).
-#        This feature is not available up to and including  Postfix
-#        version 2.4.
+#        This feature is available in Postfix 2.5 and later.
 # 
-#        Each  pattern  is  a regular expression that is applied to
+#        Each pattern is a regular expression that  is  applied  to
 #        the entire address being looked up. Thus, user@domain mail
-#        addresses  are  not  broken up into their user and @domain
+#        addresses are not broken up into their  user  and  @domain
 #        constituent parts, nor is user+foo broken up into user and
 #        foo.
 # 
-#        Patterns  are applied in the order as specified in the ta-
-#        ble, until a pattern is  found  that  matches  the  search
+#        Patterns are applied in the order as specified in the  ta-
+#        ble,  until  a  pattern  is  found that matches the search
 #        string.
 # 
-#        Results  are  the  same as with indexed file lookups, with
-#        the additional feature that parenthesized substrings  from
+#        Results are the same as with indexed  file  lookups,  with
+#        the  additional feature that parenthesized substrings from
 #        the pattern can be interpolated as $1, $2 and so on.
 # 
 # TCP-BASED TABLES
-#        This  section  describes how the table lookups change when
+#        This section describes how the table lookups  change  when
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
-#        ble(5).  This feature is not available up to and including
-#        Postfix version 2.4.
+#        ble(5).   This  feature  is  available  in Postfix 2.5 and
+#        later.
 # 
 #        Each lookup operation uses the entire address once.  Thus,
-#        user@domain mail addresses are not broken  up  into  their
+#        user@domain  mail  addresses  are not broken up into their
 #        user and @domain constituent parts, nor is user+foo broken
 #        up into user and foo.
 # 
 #        Results are the same as with indexed file lookups.
 # 
 # BUGS
-#        The table format does not understand quoting  conventions.
+#        The  table format does not understand quoting conventions.
 # 
 # CONFIGURATION PARAMETERS
-#        The  following main.cf parameters are especially relevant.
-#        The text below provides  only  a  parameter  summary.  See
+#        The following main.cf parameters are especially  relevant.
+#        The  text  below  provides  only  a parameter summary. See
 #        postconf(5) for more details including examples.
 # 
-#        relocated_maps
-#               List of lookup tables for relocated users or sites.
+#        relocated_maps (empty)
+#               Optional lookup tables with new contact information
+#               for users or domains that no longer exist.
 # 
 #        Other parameters of interest:
 # 
-#        inet_interfaces
-#               The network interface addresses  that  this  system
-#               receives mail on.  You need to stop and start Post-
-#               fix when this parameter changes.
+#        inet_interfaces (all)
+#               The network interface addresses that this mail sys-
+#               tem receives mail on.
 # 
-#        mydestination
-#               List of domains that  this  mail  system  considers
-#               local.
+#        mydestination  ($myhostname,  localhost.$mydomain,  local-
+#        host)
+#               The list of domains  that  are  delivered  via  the
+#               $local_transport mail delivery transport.
 # 
-#        myorigin
-#               The domain that is appended to locally-posted mail.
+#        myorigin ($myhostname)
+#               The domain name that locally-posted mail appears to
+#               come from, and that locally posted mail  is  deliv-
+#               ered to.
 # 
-#        proxy_interfaces
-#               Other interfaces that this machine receives mail on
-#               by way of a proxy agent or network address transla-
-#               tor.
+#        proxy_interfaces (empty)
+#               The network interface addresses that this mail sys-
+#               tem receives mail on by way of a proxy  or  network
+#               address translation unit.
 # 
 # SEE ALSO
 #        trivial-rewrite(8), address resolver
@@ -153,13 +155,13 @@
 #        postconf(5), configuration parameters
 # 
 # README FILES
-#        Use "postconf readme_directory" or  "postconf  html_direc-
+#        Use  "postconf  readme_directory" or "postconf html_direc-
 #        tory" to locate this information.
 #        DATABASE_README, Postfix lookup table overview
 #        ADDRESS_REWRITING_README, address rewriting guide
 # 
 # LICENSE
-#        The  Secure  Mailer  license must be distributed with this
+#        The Secure Mailer license must be  distributed  with  this
 #        software.
 # 
 # AUTHOR(S)

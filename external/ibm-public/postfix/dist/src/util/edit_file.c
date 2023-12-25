@@ -1,4 +1,4 @@
-/*	$NetBSD: edit_file.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: edit_file.c,v 1.2.14.1 2023/12/25 12:55:29 martin Exp $	*/
 
 /*++
 /* NAME
@@ -57,7 +57,7 @@
 /*	pathname into the place of the original file. When any of
 /*	these operations fails, edit_file_close() behaves as if
 /*	edit_file_cleanup() was called. Regardless of whether these
-/*	operations suceed, edit_file_close() releases the exclusive
+/*	operations succeed, edit_file_close() releases the exclusive
 /*	lock, closes the output file, and frees up memory that was
 /*	allocated by edit_file_open().
 /*
@@ -264,7 +264,7 @@ EDIT_FILE *edit_file_open(const char *path, int flags, mode_t mode)
 	 * content and its temporary pathname (within the rules of the
 	 * cooperative protocol). But wait, there is more.
 	 * 
-	 * There are many opportunies for trouble when opening a pre-existing
+	 * There are many opportunities for trouble when opening a pre-existing
 	 * output file. Here are just a few.
 	 * 
 	 * - Victor observes that a system crash in the middle of the
@@ -317,7 +317,7 @@ void    edit_file_cleanup(EDIT_FILE *ep)
     EDIT_FILE_FREE(ep);
 }
 
-/* edit_file_close - rename the file into place and and close the file */
+/* edit_file_close - rename the file into place and close the file */
 
 int     edit_file_close(EDIT_FILE *ep)
 {

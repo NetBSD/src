@@ -1,4 +1,4 @@
-.\"	$NetBSD: cleanup.8,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: cleanup.8,v 1.2.14.1 2023/12/25 12:54:41 martin Exp $
 .\"
 .TH CLEANUP 8 
 .ad
@@ -18,38 +18,55 @@ The \fBcleanup\fR(8) daemon processes inbound mail, inserts it
 into the \fBincoming\fR mail queue, and informs the queue
 manager of its arrival.
 
-The \fBcleanup\fR(8) daemon always performs the following transformations:
+The \fBcleanup\fR(8) daemon performs the following transformations:
 .IP \(bu
 Insert missing message headers: (\fBResent\-\fR) \fBFrom:\fR,
 \fBTo:\fR, \fBMessage\-Id:\fR, and \fBDate:\fR.
+.br
+This is enabled with the \fBlocal_header_rewrite_clients\fR and
+\fBalways_add_missing_headers\fR parameter settings.
 .IP \(bu
 Transform envelope and header addresses to the standard
 \fIuser@fully\-qualified\-domain\fR form that is expected by other
 Postfix programs.
-This task is delegated to the \fBtrivial\-rewrite\fR(8) daemon.
+This task depends on the \fBtrivial\-rewrite\fR(8) daemon.
+.br
+The header transformation is enabled with the
+\fBlocal_header_rewrite_clients\fR parameter setting.
 .IP \(bu
 Eliminate duplicate envelope recipient addresses.
+.br
+This is enabled with the \fBduplicate_filter_limit\fR
+parameter setting.
 .IP \(bu
 Remove message headers: \fBBcc\fR, \fBContent\-Length\fR,
 \fBResent\-Bcc\fR, \fBReturn\-Path\fR.
-.PP
-The following address transformations are optional:
+.br
+This is enabled with the message_drop_headers parameter
+setting.
 .IP \(bu
 Optionally, rewrite all envelope and header addresses according
 to the mappings specified in the \fBcanonical\fR(5) lookup tables.
+.br
+The header transformation is enabled with the
+\fBlocal_header_rewrite_clients\fR parameter setting.
 .IP \(bu
 Optionally, masquerade envelope sender addresses and message
 header addresses (i.e. strip host or domain information below
 all domains listed in the \fBmasquerade_domains\fR parameter,
 except for user names listed in \fBmasquerade_exceptions\fR).
 By default, address masquerading does not affect envelope recipients.
+.br
+The header transformation is enabled with the
+\fBlocal_header_rewrite_clients\fR parameter setting.
 .IP \(bu
 Optionally, expand envelope recipients according to information
-found in the \fBvirtual\fR(5) lookup tables.
+found in the \fBvirtual_alias_maps\fR lookup tables.
 .PP
 The \fBcleanup\fR(8) daemon performs sanity checks on the content of
 each message. When it finds a problem, by default it returns a
-diagnostic status to the client, and leaves it up to the client
+diagnostic status to the cleanup service client, and leaves
+it up to the client
 to deal with the problem. Alternatively, the client can request
 the \fBcleanup\fR(8) daemon to bounce the message back to the sender
 in case of trouble.
@@ -66,7 +83,8 @@ RFC 5322 (Internet Message Format)
 .SH DIAGNOSTICS
 .ad
 .fi
-Problems and transactions are logged to \fBsyslogd\fR(8).
+Problems and transactions are logged to \fBsyslogd\fR(8)
+or \fBpostlogd\fR(8).
 .SH BUGS
 .ad
 .fi
@@ -114,6 +132,8 @@ Available in Postfix version 3.0 and later:
 .IP "\fBmessage_drop_headers (bcc, content\-length, resent\-bcc, return\-path)\fR"
 Names of message headers that the \fBcleanup\fR(8) daemon will remove
 after applying \fBheader_checks\fR(5) and before invoking Milter applications.
+.IP "\fBheader_from_format (standard)\fR"
+The format of the Postfix\-generated \fBFrom:\fR header.
 .SH "BUILT-IN CONTENT FILTERING CONTROLS"
 .na
 .nf
@@ -165,8 +185,9 @@ The mail filter protocol version and optional protocol extensions
 for communication with a Milter application; prior to Postfix 2.6
 the default protocol is 2.
 .IP "\fBmilter_default_action (tempfail)\fR"
-The default action when a Milter (mail filter) application is
-unavailable or mis\-configured.
+The default action when a Milter (mail filter) response is
+unavailable (for example, bad Postfix configuration or Milter
+failure).
 .IP "\fBmilter_macro_daemon_name ($myhostname)\fR"
 The {daemon_name} macro value for Milter (mail filter) applications.
 .IP "\fBmilter_macro_v ($mail_name $mail_version)\fR"
@@ -288,7 +309,7 @@ Optional list of domains whose subdomain structure will be stripped
 off in email addresses.
 .IP "\fBmasquerade_exceptions (empty)\fR"
 Optional list of user names that are not subjected to address
-masquerading, even when their address matches $masquerade_domains.
+masquerading, even when their addresses match $masquerade_domains.
 .IP "\fBpropagate_unmatched_extensions (canonical, virtual)\fR"
 What address lookup tables copy an address extension from the lookup
 key to the lookup result.
@@ -372,6 +393,12 @@ in RFC 6531..6533.
 .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
 Detect that a message requires SMTPUTF8 support for the specified
 mail origin classes.
+.PP
+Available in Postfix version 3.2 and later:
+.IP "\fBenable_idna2003_compatibility (no)\fR"
+Enable 'transitional' compatibility between IDNA2003 and IDNA2008,
+when converting UTF\-8 domain names to/from the ASCII form that is
+used for DNS lookups.
 .SH "MISCELLANEOUS CONTROLS"
 .na
 .nf
@@ -415,12 +442,23 @@ the sender.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-The mail system name that is prepended to the process name in syslog
-records, so that "smtpd" becomes, for example, "postfix/smtpd".
+A prefix that is prepended to the process name in syslog
+records, so that, for example, "smtpd" becomes "prefix/smtpd".
 .PP
 Available in Postfix version 2.1 and later:
 .IP "\fBenable_original_recipient (yes)\fR"
-Enable support for the X\-Original\-To message header.
+Enable support for the original recipient address after an
+address is rewritten to a different address (for example with
+aliasing or with canonical mapping).
+.PP
+Available in Postfix 3.3 and later:
+.IP "\fBservice_name (read\-only)\fR"
+The master.cf service name of a Postfix daemon process.
+.PP
+Available in Postfix 3.5 and later:
+.IP "\fBinfo_log_address_format (external)\fR"
+The email address form that will be used in non\-debug logging
+(info, warning, etc.).
 .SH "FILES"
 .na
 .nf
@@ -438,6 +476,7 @@ virtual(5), virtual alias lookup table format
 postconf(5), configuration parameters
 master(5), generic daemon options
 master(8), process manager
+postlogd(8), Postfix logging
 syslogd(8), system logging
 .SH "README FILES"
 .na

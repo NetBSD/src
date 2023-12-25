@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_stats_print.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: msg_stats_print.c,v 1.2.14.1 2023/12/25 12:55:02 martin Exp $	*/
 
 /*++
 /* NAME
@@ -9,7 +9,7 @@
 /*	#include <msg_stats.h>
 /*
 /*	int	msg_stats_print(print_fn, stream, flags, ptr)
-/*	ATTR_PRINT_MASTER_FN print_fn;
+/*	ATTR_PRINT_COMMON_FN print_fn;
 /*	VSTREAM *stream;
 /*	int	flags;
 /*	void	*ptr;
@@ -19,7 +19,7 @@
 /*	msg_stats_print() is meant to be passed as a call-back to
 /*	attr_print(), thusly:
 /*
-/*	... SEND_ATTR_FUNC(msg_stats_print, (void *) stats), ...
+/*	... SEND_ATTR_FUNC(msg_stats_print, (const void *) stats), ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE
@@ -31,6 +31,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -48,8 +53,8 @@
 
 /* msg_stats_print - write MSG_STATS to stream */
 
-int     msg_stats_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
-			        int flags, void *ptr)
+int     msg_stats_print(ATTR_PRINT_COMMON_FN print_fn, VSTREAM *fp,
+			        int flags, const void *ptr)
 {
     int     ret;
 

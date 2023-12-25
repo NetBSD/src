@@ -68,11 +68,11 @@ sender domain distribution for captured spam in the "hold" queue:
 When the output is a terminal intermediate results showing the top 20 domains
 (-n option) are displayed after every 1000 messages (-N option) and the final
 output also shows only the top 20 domains. This makes qshape useful even when
-the deferred queue is very large and it may otherwise take prohibitively long
-to read the entire deferred queue.
+the "deferred" queue is very large and it may otherwise take prohibitively long
+to read the entire "deferred" queue.
 
-By default, qshape shows statistics for the union of both the incoming and
-active queues which are the most relevant queues to look at when analyzing
+By default, qshape shows statistics for the union of both the "incoming" and
+"active" queues which are the most relevant queues to look at when analyzing
 performance.
 
 One can request an alternate list of queues:
@@ -80,8 +80,8 @@ One can request an alternate list of queues:
     $ qshape deferred
     $ qshape incoming active deferred
 
-this will show the age distribution of the deferred queue or the union of the
-incoming active and deferred queues.
+this will show the age distribution of the "deferred" queue or the union of the
+"incoming", "active" and "deferred" queues.
 
 Command line options control the number of display "buckets", the age limit for
 the smallest bucket, display of parent domain counts and so on. The "-h" option
@@ -96,16 +96,16 @@ recipient counts, approximately when a burst of mail started, and when it
 stopped.
 
 The problem destinations or sender domains appear near the top left corner of
-the output table. Remember that the active queue can accommodate up to 20000
+the output table. Remember that the "active" queue can accommodate up to 20000
 ($qmgr_message_active_limit) messages. To check whether this limit has been
 reached, use:
 
     $ qshape -s active       (show sender statistics)
 
-If the total sender count is below 20000 the active queue is not yet saturated,
-any high volume sender domains show near the top of the output.
+If the total sender count is below 20000 the "active" queue is not yet
+saturated, any high volume sender domains show near the top of the output.
 
-With oqmgr(8) the active queue is also limited to at most 20000 recipient
+With oqmgr(8) the "active" queue is also limited to at most 20000 recipient
 addresses ($qmgr_message_recipient_limit). To check for exhaustion of this
 limit use:
 
@@ -117,44 +117,44 @@ recent messages pertaining to the domains in question.
     # Find deliveries to example.com
     #
     $ tail -10000 /var/log/maillog |
-            egrep -i ': to=<.*@example\.com>,' |
+            grep -E -i ': to=<.*@example\.com>,' |
             less
 
     # Find messages from example.com
     #
     $ tail -10000 /var/log/maillog |
-            egrep -i ': from=<.*@example\.com>,' |
+            grep -E -i ': from=<.*@example\.com>,' |
             less
 
 You may want to drill in on some specific queue ids:
 
     # Find all messages for a specific queue id.
     #
-    $ tail -10000 /var/log/maillog | egrep ': 2B2173FF68: '
+    $ tail -10000 /var/log/maillog | grep -E ': 2B2173FF68: '
 
 Also look for queue manager warning messages in the log. These warnings can
 suggest strategies to reduce congestion.
 
-    $ egrep 'qmgr.*(panic|fatal|error|warning):' /var/log/maillog
+    $ grep -E 'qmgr.*(panic|fatal|error|warning):' /var/log/maillog
 
 When all else fails try the Postfix mailing list for help, but please don't
 forget to include the top 10 or 20 lines of qshape(1) output.
 
 EExxaammppllee 11:: HHeeaalltthhyy qquueeuuee
 
-When looking at just the incoming and active queues, under normal conditions
-(no congestion) the incoming and active queues are nearly empty. Mail leaves
-the system almost as quickly as it comes in or is deferred without congestion
-in the active queue.
+When looking at just the "incoming" and "active" queues, under normal
+conditions (no congestion) the "incoming" and "active" queues are nearly empty.
+Mail leaves the system almost as quickly as it comes in or is deferred without
+congestion in the "active" queue.
 
-    $ qshape        (show incoming and active queue status)
+    $ qshape        (show "incoming" and "active" queue status)
 
                      T  5 10 20 40 80 160 320 640 1280 1280+
               TOTAL  5  0  0  0  1  0   0   0   1    1     2
       meri.uwasa.fi  5  0  0  0  1  0   0   0   1    1     2
 
-If one looks at the two queues separately, the incoming queue is empty or
-perhaps briefly has one or two messages, while the active queue holds more
+If one looks at the two queues separately, the "incoming" queue is empty or
+perhaps briefly has one or two messages, while the "active" queue holds more
 messages and for a somewhat longer time:
 
     $ qshape incoming
@@ -173,8 +173,8 @@ EExxaammppllee 22:: DDeeffeerrrreedd qquueeuuee ffuulll
 This is from a server where recipient validation is not yet available for some
 of the hosted domains. Dictionary attacks on the unvalidated domains result in
 bounce backscatter. The bounces dominate the queue, but with proper tuning they
-do not saturate the incoming or active queues. The high volume of deferred mail
-is not a direct cause for alarm.
+do not saturate the "incoming" or "active" queues. The high volume of deferred
+mail is not a direct cause for alarm.
 
     $ qshape deferred | head
 
@@ -192,8 +192,8 @@ is not a direct cause for alarm.
 The domains shown are mostly bulk-mailers and all the volume is the tail end of
 the time distribution, showing that short term arrival rates are moderate.
 Larger numbers and lower message ages are more indicative of current trouble.
-Old mail still going nowhere is largely harmless so long as the active and
-incoming queues are short. We can also see that the groups.msn.com
+Old mail still going nowhere is largely harmless so long as the "active" and
+"incoming" queues are short. We can also see that the groups.msn.com
 undeliverables are low rate steady stream rather than a concentrated dictionary
 attack that is now over.
 
@@ -215,7 +215,7 @@ messages are bounces.
 EExxaammppllee 33:: CCoonnggeessttiioonn iinn tthhee aaccttiivvee qquueeuuee
 
 This example is taken from a Feb 2004 discussion on the Postfix Users list.
-Congestion was reported with the active and incoming queues large and not
+Congestion was reported with the "active" and "incoming" queues large and not
 shrinking despite very large delivery agent process limits. The thread is
 archived at: http://groups.google.com/
 groups?threadm=c0b7js$2r65$1@FreeBSD.csie.NCTU.edu.tw and http://
@@ -224,7 +224,7 @@ archives.neohapsis.com/archives/postfix/2004-02/thread.html#1371
 Using an older version of qshape(1) it was quickly determined that all the
 messages were for just a few destinations:
 
-    $ qshape        (show incoming and active queue status)
+    $ qshape        (show "incoming" and "active" queue status)
 
                                T   A   5  10  20  40  80 160 320 320+
                      TOTAL 11775 9996  0   0   1   1  42  94 221 1420
@@ -232,10 +232,10 @@ messages were for just a few destinations:
      lists.sourceforge.net  2313 2313  0   0   0   0   0   0   0    0
             gzd.gotdns.com   102    0  0   0   0   0   0   0   2  100
 
-The "A" column showed the count of messages in the active queue, and the
-numbered columns showed totals for the deferred queue. At 10000 messages
-(Postfix 1.x active queue size limit) the active queue is full. The incoming
-was growing rapidly.
+The "A" column showed the count of messages in the "active" queue, and the
+numbered columns showed totals for the "deferred" queue. At 10000 messages
+(Postfix 1.x "active" queue size limit) the "active" queue is full. The
+"incoming" queue was growing rapidly.
 
 With the trouble destinations clearly identified, the administrator quickly
 found and fixed the problem. It is substantially harder to glean the same
@@ -246,7 +246,7 @@ by looking at the queue one message at a time.
 EExxaammppllee 44:: HHiigghh vvoolluummee ddeessttiinnaattiioonn bbaacckklloogg
 
 When a site you send a lot of email to is down or slow, mail messages will
-rapidly build up in the deferred queue, or worse, in the active queue. The
+rapidly build up in the "deferred" queue, or worse, in the "active" queue. The
 qshape output will show large numbers for the destination domain in all age
 buckets that overlap the starting time of the problem:
 
@@ -258,14 +258,14 @@ buckets that overlap the starting time of the problem:
                  ...
 
 Here the "highvolume.com" destination is continuing to accumulate deferred
-mail. The incoming and active queues are fine, but the deferred queue started
-growing some time between 1 and 2 hours ago and continues to grow.
+mail. The "incoming" and "active" queues are fine, but the "deferred" queue
+started growing some time between 1 and 2 hours ago and continues to grow.
 
 If the high volume destination is not down, but is instead slow, one might see
-similar congestion in the active queue. Active queue congestion is a greater
-cause for alarm; one might need to take measures to ensure that the mail is
-deferred instead or even add an access(5) rule asking the sender to try again
-later.
+similar congestion in the "active" queue. "Active" queue congestion is a
+greater cause for alarm; one might need to take measures to ensure that the
+mail is deferred instead or even add an access(5) rule asking the sender to try
+again later.
 
 If a high volume destination exhibits frequent bursts of consecutive
 connections refused by all MX hosts or "421 Server busy errors", it is possible
@@ -456,7 +456,7 @@ Congestion in this queue is indicative of an excessive local message submission
 rate or perhaps excessive CPU consumption in the cleanup(8) service due to
 excessive body_checks, or (Postfix >= 2.3) high latency milters.
 
-Note, that once the active queue is full, the cleanup service will attempt to
+Note, that once the "active" queue is full, the cleanup service will attempt to
 slow down message injection by pausing $in_flow_delay for each message. In this
 case "maildrop" queue congestion may be a consequence of congestion downstream,
 rather than a problem in its own right.
@@ -504,18 +504,18 @@ and notifies the queue manager of new mail arrival. The queue manager ignores
 incomplete queue files whose mode is 0600, as these are still being written by
 cleanup.
 
-The queue manager scans the incoming queue bringing any new mail into the
-"active" queue if the active queue resource limits have not been exceeded. By
-default, the active queue accommodates at most 20000 messages. Once the active
-queue message limit is reached, the queue manager stops scanning the incoming
-(and deferred, see below) queue.
+The queue manager scans the "incoming" queue bringing any new mail into the
+"active" queue if the "active" queue resource limits have not been exceeded. By
+default, the "active" queue accommodates at most 20000 messages. Once the
+"active" queue message limit is reached, the queue manager stops scanning the
+"incoming" queue (and the "deferred" queue, see below).
 
-Under normal conditions the incoming queue is nearly empty (has only mode 0600
-files), with the queue manager able to import new messages into the active
-queue as soon as they become available.
+Under normal conditions the "incoming" queue is nearly empty (has only mode
+0600 files), with the queue manager able to import new messages into the
+"active" queue as soon as they become available.
 
-The incoming queue grows when the message input rate spikes above the rate at
-which the queue manager can import messages into the active queue. The main
+The "incoming" queue grows when the message input rate spikes above the rate at
+which the queue manager can import messages into the "active" queue. The main
 factors slowing down the queue manager are disk I/O and lookup queries to the
 trivial-rewrite service. If the queue manager is routinely not keeping up,
 consider not using "slow" lookup services (MySQL, LDAP, ...) for transport
@@ -540,8 +540,8 @@ but is not strong enough to deflect an excessive input rate from many sources
 at the same time.
 
 If a server is being hammered from multiple directions, consider raising the
-in_flow_delay to 10 seconds, but only if the incoming queue is growing even
-while the active queue is not full and the trivial-rewrite service is using a
+in_flow_delay to 10 seconds, but only if the "incoming" queue is growing even
+while the "active" queue is not full and the trivial-rewrite service is using a
 fast transport lookup mechanism.
 
 TThhee ""aaccttiivvee"" qquueeuuee
@@ -549,8 +549,8 @@ TThhee ""aaccttiivvee"" qquueeuuee
 The queue manager is a delivery agent scheduler; it works to ensure fast and
 fair delivery of mail to all destinations within designated resource limits.
 
-The active queue is somewhat analogous to an operating system's process run
-queue. Messages in the active queue are ready to be sent (runnable), but are
+The "active" queue is somewhat analogous to an operating system's process run
+queue. Messages in the "active" queue are ready to be sent (runnable), but are
 not necessarily in the process of being sent (running).
 
 While most Postfix administrators think of the "active" queue as a directory on
@@ -562,9 +562,9 @@ below) do not occupy memory; they are safely stored on disk waiting for their
 turn to be processed. The envelope information for messages in the "active"
 queue is managed in memory, allowing the queue manager to do global scheduling,
 allocating available delivery agent processes to an appropriate message in the
-active queue.
+"active" queue.
 
-Within the active queue, (multi-recipient) messages are broken up into groups
+Within the "active" queue, (multi-recipient) messages are broken up into groups
 of recipients that share the same transport/nexthop combination; the group size
 is capped by the transport's recipient concurrency limit.
 
@@ -577,14 +577,14 @@ per-recipient concurrency limits rather than per-domain concurrency limits.
 Per-recipient limits are appropriate when performing final delivery to
 mailboxes rather than when relaying to a remote server.
 
-Congestion occurs in the active queue when one or more destinations drain
+Congestion occurs in the "active" queue when one or more destinations drain
 slower than the corresponding message input rate.
 
-Input into the active queue comes both from new mail in the "incoming" queue,
+Input into the "active" queue comes both from new mail in the "incoming" queue,
 and retries of mail in the "deferred" queue. Should the "deferred" queue get
 really large, retries of old mail can dominate the arrival rate of new mail.
 Systems with more CPU, faster disks and more network bandwidth can deal with
-larger deferred queues, but as a rule of thumb the deferred queue scales to
+larger "deferred" queues, but as a rule of thumb the "deferred" queue scales to
 somewhere between 100,000 and 1,000,000 messages with good performance unlikely
 above that "limit". Systems with queues this large should typically stop
 accepting new mail, or put the backlog "on hold" until the underlying issue is
@@ -592,14 +592,14 @@ fixed (provided that there is enough capacity to handle just the new mail).
 
 When a destination is down for some time, the queue manager will mark it dead,
 and immediately defer all mail for the destination without trying to assign it
-to a delivery agent. In this case the messages will quickly leave the active
-queue and end up in the deferred queue (with Postfix < 2.4, this is done
+to a delivery agent. In this case the messages will quickly leave the "active"
+queue and end up in the "deferred" queue (with Postfix < 2.4, this is done
 directly by the queue manager, with Postfix >= 2.4 this is done via the "retry"
 delivery agent).
 
 When the destination is instead simply slow, or there is a problem causing an
-excessive arrival rate the active queue will grow and will become dominated by
-mail to the congested destination.
+excessive arrival rate the "active" queue will grow and will become dominated
+by mail to the congested destination.
 
 The only way to reduce congestion is to either reduce the input rate or
 increase the throughput. Increasing the throughput requires either increasing
@@ -635,7 +635,7 @@ per second.
 The best way to avoid bottlenecks when one or more MX hosts is non-responsive
 is to use connection caching. Connection caching was introduced with Postfix
 2.2 and is by default enabled on demand for destinations with a backlog of mail
-in the active queue. When connection caching is in effect for a particular
+in the "active" queue. When connection caching is in effect for a particular
 destination, established connections are re-used to send additional messages,
 this reduces the number of connections made per message delivery and maintains
 good throughput even in the face of partial unavailability of the destination's
@@ -664,73 +664,75 @@ a separate delivery agent pool to these destinations and allows separate tuning
 of timeouts and concurrency limits.
 
 Another common cause of congestion is unwarranted flushing of the entire
-deferred queue. The deferred queue holds messages that are likely to fail to be
-delivered and are also likely to be slow to fail delivery (time out). As a
-result the most common reaction to a large deferred queue (flush it!) is more
-than likely counter-productive, and typically makes the congestion worse. Do
-not flush the deferred queue unless you expect that most of its content has
-recently become deliverable (e.g. relayhost back up after an outage)!
+"deferred" queue. The "deferred" queue holds messages that are likely to fail
+to be delivered and are also likely to be slow to fail delivery (time out). As
+a result the most common reaction to a large "deferred" queue (flush it!) is
+more than likely counter-productive, and typically makes the congestion worse.
+Do not flush the "deferred" queue unless you expect that most of its content
+has recently become deliverable (e.g. relayhost back up after an outage)!
 
 Note that whenever the queue manager is restarted, there may already be
-messages in the active queue directory, but the "real" active queue in memory
-is empty. In order to recover the in-memory state, the queue manager moves all
-the active queue messages back into the incoming queue, and then uses its
-normal incoming queue scan to refill the active queue. The process of moving
-all the messages back and forth, redoing transport table (trivial-rewrite(8)
-resolve service) lookups, and re-importing the messages back into memory is
-expensive. At all costs, avoid frequent restarts of the queue manager (e.g. via
-frequent execution of "postfix reload").
+messages in the "active" queue directory, but the "real" "active" queue in
+memory is empty. In order to recover the in-memory state, the queue manager
+moves all the "active" queue messages back into the "incoming" queue, and then
+uses its normal "incoming" queue scan to refill the "active" queue. The process
+of moving all the messages back and forth, redoing transport table (trivial-
+rewrite(8) resolve service) lookups, and re-importing the messages back into
+memory is expensive. At all costs, avoid frequent restarts of the queue manager
+(e.g. via frequent execution of "postfix reload").
 
 TThhee ""ddeeffeerrrreedd"" qquueeuuee
 
 When all the deliverable recipients for a message are delivered, and for some
 recipients delivery failed for a transient reason (it might succeed later), the
-message is placed in the deferred queue.
+message is placed in the "deferred" queue.
 
-The queue manager scans the deferred queue periodically. The scan interval is
-controlled by the queue_run_delay parameter. While a deferred queue scan is in
-progress, if an incoming queue scan is also in progress (ideally these are
-brief since the incoming queue should be short), the queue manager alternates
+The queue manager scans the "deferred" queue periodically. The scan interval is
+controlled by the queue_run_delay parameter. While a "deferred" queue scan is
+in progress, if an "incoming" queue scan is also in progress (ideally these are
+brief since the "incoming" queue should be short), the queue manager alternates
 between looking for messages in the "incoming" queue and in the "deferred"
-queue. This "round-robin" strategy prevents starvation of either the incoming
-or the deferred queues.
+queue. This "round-robin" strategy prevents starvation of either the "incoming"
+or the "deferred" queues.
 
-Each deferred queue scan only brings a fraction of the deferred queue back into
-the active queue for a retry. This is because each message in the deferred
-queue is assigned a "cool-off" time when it is deferred. This is done by time-
-warping the modification time of the queue file into the future. The queue file
-is not eligible for a retry if its modification time is not yet reached.
+Each "deferred" queue scan only brings a fraction of the "deferred" queue back
+into the "active" queue for a retry. This is because each message in the
+"deferred" queue is assigned a "cool-off" time when it is deferred. This is
+done by time-warping the modification time of the queue file into the future.
+The queue file is not eligible for a retry if its modification time is not yet
+reached.
 
 The "cool-off" time is at least $minimal_backoff_time and at most
 $maximal_backoff_time. The next retry time is set by doubling the message's age
 in the queue, and adjusting up or down to lie within the limits. This means
 that young messages are initially retried more often than old messages.
 
-If a high volume site routinely has large deferred queues, it may be useful to
-adjust the queue_run_delay, minimal_backoff_time and maximal_backoff_time to
+If a high volume site routinely has large "deferred" queues, it may be useful
+to adjust the queue_run_delay, minimal_backoff_time and maximal_backoff_time to
 provide short enough delays on first failure (Postfix >= 2.4 has a sensibly low
 minimal backoff time by default), with perhaps longer delays after multiple
 failures, to reduce the retransmission rate of old messages and thereby reduce
-the quantity of previously deferred mail in the active queue. If you want a
+the quantity of previously deferred mail in the "active" queue. If you want a
 really low minimal_backoff_time, you may also want to lower queue_run_delay,
 but understand that more frequent scans will increase the demand for disk I/O.
 
-One common cause of large deferred queues is failure to validate recipients at
-the SMTP input stage. Since spammers routinely launch dictionary attacks from
-unrepliable sender addresses, the bounces for invalid recipient addresses clog
-the deferred queue (and at high volumes proportionally clog the active queue).
-Recipient validation is strongly recommended through use of the
+One common cause of large "deferred" queues is failure to validate recipients
+at the SMTP input stage. Since spammers routinely launch dictionary attacks
+from unrepliable sender addresses, the bounces for invalid recipient addresses
+clog the "deferred" queue (and at high volumes proportionally clog the "active"
+queue). Recipient validation is strongly recommended through use of the
 local_recipient_maps and relay_recipient_maps parameters. Even when bounces
 drain quickly they inundate innocent victims of forgery with unwanted email. To
 avoid this, do not accept mail for invalid recipients.
 
 When a host with lots of deferred mail is down for some time, it is possible
-for the entire deferred queue to reach its retry time simultaneously. This can
-lead to a very full active queue once the host comes back up. The phenomenon
-can repeat approximately every maximal_backoff_time seconds if the messages are
-again deferred after a brief burst of congestion. Perhaps, a future Postfix
-release will add a random offset to the retry time (or use a combination of
-strategies) to reduce the odds of repeated complete deferred queue flushes.
+for the entire "deferred" queue to reach its retry time simultaneously. This
+can lead to a very full "active" queue once the host comes back up. The
+phenomenon can repeat approximately every maximal_backoff_time seconds if the
+messages are again deferred after a brief burst of congestion. Perhaps, a
+future Postfix release will add a random offset to the retry time (or use a
+combination of strategies) to reduce the odds of repeated complete "deferred"
+queue flushes.
 
 CCrreeddiittss
 

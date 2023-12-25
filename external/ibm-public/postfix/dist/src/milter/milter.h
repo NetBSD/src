@@ -1,4 +1,4 @@
-/*	$NetBSD: milter.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: milter.h,v 1.2.14.1 2023/12/25 12:55:06 martin Exp $	*/
 
 #ifndef _MILTER_H_INCLUDED_
 #define _MILTER_H_INCLUDED_
@@ -37,6 +37,7 @@ typedef struct MILTER {
     struct MILTER *next;		/* linkage */
     struct MILTERS *parent;		/* parent information */
     struct MILTER_MACROS *macros;	/* private macros */
+    void    (*connect_on_demand) (struct MILTER *);
     const char *(*conn_event) (struct MILTER *, const char *, const char *, const char *, unsigned, ARGV *);
     const char *(*helo_event) (struct MILTER *, const char *, int, ARGV *);
     const char *(*mail_event) (struct MILTER *, const char **, ARGV *);
@@ -80,8 +81,8 @@ extern MILTER_MACROS *milter_macros_create(const char *, const char *,
 					        const char *, const char *);
 extern MILTER_MACROS *milter_macros_alloc(int);
 extern void milter_macros_free(MILTER_MACROS *);
-extern int milter_macros_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
-extern int milter_macros_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+extern int milter_macros_print(ATTR_PRINT_COMMON_FN, VSTREAM *, int, const void *);
+extern int milter_macros_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
 
 #define MILTER_MACROS_ALLOC_ZERO	1	/* null pointer */
 #define MILTER_MACROS_ALLOC_EMPTY	2	/* mystrdup(""); */
@@ -101,7 +102,7 @@ typedef const char *(*MILTER_DEL_HEADER_FN) (void *, ssize_t, const char *);
 typedef const char *(*MILTER_EDIT_FROM_FN) (void *, const char *, const char *);
 typedef const char *(*MILTER_EDIT_RCPT_FN) (void *, const char *);
 typedef const char *(*MILTER_EDIT_RCPT_PAR_FN) (void *, const char *, const char *);
-typedef const char *(*MILTER_EDIT_BODY_FN) (void *, int, VSTRING *);
+typedef const char *(*MILTER_EDIT_BODY_FN) (void *, int, int, VSTRING *);
 
 typedef struct MILTERS {
     MILTER *milter_list;		/* linked list of Milters */
@@ -166,7 +167,7 @@ extern void milter_free(MILTERS *);
  /*
   * Sendmail 8 macro names. We support forms with and without the {}.
   */
-#define S8_MAC__		"{_}"	/* sender resolve */
+#define S8_MAC__		"{_}"	/* sender host, see client_resolve */
 #define S8_MAC_J		"{j}"	/* myhostname */
 #define S8_MAC_V		"{v}"	/* mail_name + mail_version */
 
@@ -180,6 +181,9 @@ extern void milter_free(MILTERS *);
 #define S8_MAC_CLIENT_PORT	"{client_port}"
 #define S8_MAC_CLIENT_PTR	"{client_ptr}"
 #define S8_MAC_CLIENT_RES	"{client_resolve}"
+
+#define S8_MAC_DAEMON_ADDR	"{daemon_addr}"
+#define S8_MAC_DAEMON_PORT	"{daemon_port}"
 
 #define S8_MAC_TLS_VERSION	"{tls_version}"
 #define S8_MAC_CIPHER		"{cipher}"

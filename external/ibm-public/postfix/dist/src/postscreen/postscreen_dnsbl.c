@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_dnsbl.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: postscreen_dnsbl.c,v 1.2.14.1 2023/12/25 12:55:12 martin Exp $	*/
 
 /*++
 /* NAME
@@ -152,7 +152,7 @@ typedef struct {
 typedef struct {
     const char *dnsbl_name;		/* DNSBL with largest contribution */
     int     dnsbl_weight;		/* weight of largest contribution */
-    int     total;			/* combined white+blocklist score */
+    int     total;			/* combined allow+denylist score */
     int     fail_ttl;			/* combined reply TTL */
     int     pass_ttl;			/* combined reply TTL */
     int     refcount;			/* score reference count */
@@ -216,7 +216,7 @@ typedef struct {
   */
 static VSTRING *reply_client;		/* client address in DNSBLOG reply */
 static VSTRING *reply_dnsbl;		/* domain in DNSBLOG reply */
-static VSTRING *reply_addr;		/* adress list in DNSBLOG reply */
+static VSTRING *reply_addr;		/* address list in DNSBLOG reply */
 
 /* psc_dnsbl_add_site - add DNSBL site information */
 
@@ -233,6 +233,7 @@ static void psc_dnsbl_add_site(const char *site)
     int     weight;
     HTABLE_INFO *ht;
     char   *parse_err;
+    const char  *safe_dnsbl;
 
     /*
      * Parse the required DNSBL domain name, the optional reply filter and
@@ -240,7 +241,7 @@ static void psc_dnsbl_add_site(const char *site)
      */
 #define DO_GRIPE	1
 
-    /* Negative weight means whitelist. */
+    /* Negative weight means allowlist. */
     if ((weight_text = split_at(saved_site, '*')) != 0) {
 	if (sscanf(weight_text, "%d%c", &weight, &junk) != 1)
 	    msg_fatal("bad DNSBL weight factor \"%s\" in \"%s\"",
@@ -273,8 +274,9 @@ static void psc_dnsbl_add_site(const char *site)
 	ht = htable_enter(dnsbl_site_cache, saved_site, (void *) head);
 	/* Translate the DNSBL name into a safe name if available. */
 	if (psc_dnsbl_reply == 0
-	 || (head->safe_dnsbl = dict_get(psc_dnsbl_reply, saved_site)) == 0)
-	    head->safe_dnsbl = ht->key;
+	    || (safe_dnsbl = dict_get(psc_dnsbl_reply, saved_site)) == 0)
+	    safe_dnsbl = ht->key;
+	head->safe_dnsbl = mystrdup(safe_dnsbl);
 	if (psc_dnsbl_reply && psc_dnsbl_reply->error)
 	    msg_fatal("%s:%s lookup error", psc_dnsbl_reply->type,
 		      psc_dnsbl_reply->name);

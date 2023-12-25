@@ -1,0 +1,11 @@
+#verbose on
+open test-queue-file13g.tmp
+
+# Change the sender.
+
+sender_bcc_maps static:a@porcupine.org
+chg_from m@porcupine.org esmtpstuff
+chg_from n@porcupine.org esmtpstuff
+chg_from o@porcupine.org esmtpstuff
+
+close

@@ -1,4 +1,4 @@
-.\"	$NetBSD: regexp_table.5,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: regexp_table.5,v 1.2.14.1 2023/12/25 12:54:41 martin Exp $
 .\"
 .TH REGEXP_TABLE 5 
 .ad
@@ -135,6 +135,39 @@ ${n} or $(n) if they aren't followed by whitespace.
 Note: since negated patterns (those preceded by \fB!\fR) return a
 result when the expression does not match, substitutions are not
 available for negated patterns.
+.SH "INLINE SPECIFICATION"
+.na
+.nf
+.ad
+.fi
+The contents of a table may be specified in the table name
+(Postfix 3.7 and later).
+The basic syntax is:
+
+.nf
+main.cf:
+    \fIparameter\fR \fB= .. regexp:{ { \fIrule\-1\fB }, { \fIrule\-2\fB } .. } ..\fR
+
+master.cf:
+    \fB.. \-o { \fIparameter\fR \fB= .. regexp:{ { \fIrule\-1\fB }, { \fIrule\-2\fB } .. } .. } ..\fR
+.fi
+
+Postfix ignores whitespace after '{' and before '}', and
+writes each \fIrule\fR as one text line to an in\-memory
+file:
+
+.nf
+in\-memory file:
+    rule\-1
+    rule\-2
+    ..
+.fi
+
+Postfix parses the result as if it is a file in /etc/postfix.
+
+Note: if a rule contains \fB$\fR, specify \fB$$\fR to keep
+Postfix from trying to do \fI$name\fR expansion as it
+evaluates a parameter value.
 .SH "EXAMPLE SMTPD ACCESS MAP"
 .na
 .nf

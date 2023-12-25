@@ -1,0 +1,66 @@
+/*	$NetBSD: test_main.h,v 1.2.4.2 2023/12/25 12:55:05 martin Exp $	*/
+
+/*++
+/* NAME
+/*	test_main	3h
+/* SUMMARY
+/*	test	main program
+/* SYNOPSIS
+/*	#include <test_main.h>
+/* DESCRIPTION
+/* .nf
+
+ /*
+  * Global library.
+  */
+#include <mail_conf.h>
+
+ /*
+  * External interface. Copied from master/mail_server.h, but without
+  * introducing libmaster dependencies.
+  */
+#define TEST_MAIN_INT_TABLE	1
+#define TEST_MAIN_STR_TABLE	2
+#define TEST_MAIN_BOOL_TABLE	3
+#define TEST_MAIN_TIME_TABLE	4
+#define TEST_MAIN_RAW_TABLE	5
+#define TEST_MAIN_NINT_TABLE	6
+#define TEST_MAIN_NBOOL_TABLE	7
+#define TEST_MAIN_LONG_TABLE	8
+
+#define CA_TEST_MAIN_INT_TABLE(v)     TEST_MAIN_INT_TABLE, CHECK_CPTR(TEST_MAIN, CONFIG_INT_TABLE, (v))
+#define CA_TEST_MAIN_STR_TABLE(v)     TEST_MAIN_STR_TABLE, CHECK_CPTR(TEST_MAIN, CONFIG_STR_TABLE, (v))
+#define CA_TEST_MAIN_BOOL_TABLE(v)    TEST_MAIN_BOOL_TABLE, CHECK_CPTR(TEST_MAIN, CONFIG_BOOL_TABLE, (v))
+#define CA_TEST_MAIN_TIME_TABLE(v)    TEST_MAIN_TIME_TABLE, CHECK_CPTR(TEST_MAIN, CONFIG_TIME_TABLE, (v))
+#define CA_TEST_MAIN_RAW_TABLE(v)     TEST_MAIN_RAW_TABLE, CHECK_CPTR(TEST_MAIN, CONFIG_RAW_TABLE, (v))
+#define CA_TEST_MAIN_NINT_TABLE(v)    TEST_MAIN_NINT_TABLE, CHECK_CPTR(TEST_MAIN, CONFIG_NINT_TABLE, (v))
+#define CA_TEST_MAIN_NBOOL_TABLE(v)   TEST_MAIN_NBOOL_TABLE, CHECK_CPTR(TEST_MAIN, CONFIG_NBOOL_TABLE, (v))
+#define CA_TEST_MAIN_LONG_TABLE(v)    TEST_MAIN_LONG_TABLE, CHECK_CPTR(TEST_MAIN, CONFIG_LONG_TABLE, (v))
+
+CHECK_CPTR_HELPER_DCL(TEST_MAIN, CONFIG_INT_TABLE);
+CHECK_CPTR_HELPER_DCL(TEST_MAIN, CONFIG_STR_TABLE);
+CHECK_CPTR_HELPER_DCL(TEST_MAIN, CONFIG_BOOL_TABLE);
+CHECK_CPTR_HELPER_DCL(TEST_MAIN, CONFIG_TIME_TABLE);
+CHECK_CPTR_HELPER_DCL(TEST_MAIN, CONFIG_RAW_TABLE);
+CHECK_CPTR_HELPER_DCL(TEST_MAIN, CONFIG_NINT_TABLE);
+CHECK_CPTR_HELPER_DCL(TEST_MAIN, CONFIG_NBOOL_TABLE);
+CHECK_CPTR_HELPER_DCL(TEST_MAIN, CONFIG_LONG_TABLE);
+
+typedef void (*TEST_DRIVER_FN) (int, char **);
+extern NORETURN test_main(int, char **, TEST_DRIVER_FN,...);
+
+/* LICENSE
+/* .ad
+/* .fi
+/*	The Secure Mailer license must be distributed with this software.
+/* AUTHOR(S)
+/*	Wietse Venema
+/*	IBM T.J. Watson Research
+/*	P.O. Box 704
+/*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
+/*--*/

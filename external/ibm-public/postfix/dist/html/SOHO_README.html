@@ -7,7 +7,8 @@
 
 <title>Postfix Small/Home Office Hints and Tips</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -117,7 +118,7 @@ send mail between users on the same machine. </p>
 
 <p> The following example presents additional configuration. You
 need to combine this with basic configuration information as
-discussed the first half of this document. </p>
+discussed in the first half of this document. </p>
 
 <blockquote>
 <pre>
@@ -165,7 +166,7 @@ address of their own.</p>
 
 <p> The following example presents additional configuration. You
 need to combine this with basic configuration information as
-discussed the first half of this document. </p>
+discussed in the first half of this document. </p>
 
 <blockquote>
 <pre>
@@ -191,7 +192,7 @@ discussed the first half of this document. </p>
 
 <li> <p> Lines 2-3: Substitute your fantasy hostname here. Do not
 use a domain name that is already in use by real organizations
-on the Internet. See <a href="http://tools.ietf.org/html/rfc2606">RFC 2606</a> for examples of domain
+on the Internet. See <a href="https://tools.ietf.org/html/rfc2606">RFC 2606</a> for examples of domain
 names that are guaranteed not to be owned by anyone. </p>
 
 <li> <p> Lines 5, 9, 10: This provides the mapping from
@@ -288,10 +289,9 @@ that use the non-standard "<code>AUTH=<em>method.</em>...</code>"
 syntax in response to the EHLO command; this requires no additional
 Postfix client configuration. </p> </li>
 
-<li> <p> The Postfix SMTP client does not support the obsolete
-"wrappermode" protocol, which uses TCP port <code>465</code> on the
-SMTP server.  See <a href="TLS_README.html">TLS_README</a> for a solution that uses the
-<code>stunnel</code> command.  </p> </li>
+<li> <p> With the setting "<a href="postconf.5.html#smtp_tls_wrappermode">smtp_tls_wrappermode</a> = yes", the Postfix
+SMTP client supports the "wrappermode" protocol, which uses TCP
+port 465 on the SMTP server (Postfix 3.0 and later). </p> </li>
 
 <li> <p> With the <code><a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a></code> parameter,
 we configure the Postfix SMTP client to send username and password
@@ -401,14 +401,14 @@ resort.  </p>
 tables into one single MySQL database, and configure different
 Postfix queries to extract the appropriate information. </p>
 
-<li> <p> Specify dbm instead of hash if your system uses dbm files
-instead of db files. To find out what lookup tables Postfix supports,
-use the command "postconf -m". </p>
+<li> <p> Specify <b>dbm</b> instead of <b>hash</b> if your system uses
+<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
+tables Postfix supports, use the command "<b>postconf -m</b>". </p>
 
-<li> <p> Execute the command "postmap /etc/postfix/sasl_passwd"
+<li> <p> Execute the command "<b>postmap /etc/postfix/sasl_passwd</b>"
 whenever you change the sasl_passwd table. </p>
 
-<li> <p> Execute the command "postmap /etc/postfix/sender_relay"
+<li> <p> Execute the command "<b>postmap /etc/postfix/sender_relay</b>"
 whenever you change the sender_relay table. </p>
 
 </ul>

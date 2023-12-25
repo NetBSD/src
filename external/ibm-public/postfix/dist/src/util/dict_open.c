@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_open.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_open.c,v 1.2.14.1 2023/12/25 12:55:26 martin Exp $	*/
 
 /*++
 /* NAME
@@ -41,13 +41,23 @@
 /*	void	dict_close(dict)
 /*	DICT	*dict;
 /*
+/*	typedef struct {
+/* .in +4
+/*	    char   *type;
+/*	    DICT_OPEN_FN dict_fn;
+/*	    MKMAP_OPEN_FN mkmap_fn;	/* See <mkmap.h> */
+/* .in -4
+/*	} DICT_OPEN_INFO;
+/*
 /*	typedef DICT *(*DICT_OPEN_FN) (const char *, int, int);
 /*
-/*	dict_open_register(type, open)
-/*	const char *type;
-/*	DICT_OPEN_FN open;
+/*	void	dict_open_register(open_info)
+/*	DICT_OPEN_INFO *open_info;
 /*
-/*	typedef DICT_OPEN_FN (*DICT_OPEN_EXTEND_FN)(const char *type);
+/*	const DICT_OPEN_INFO *dict_open_lookup(dict_type)
+/*	const char *dict_type;
+/*
+/*	typedef DICT_OPEN_INFO (*DICT_OPEN_EXTEND_FN)(char *);
 /*
 /*	DICT_OPEN_EXTEND_FN dict_open_extend(call_back)
 /*	DICT_OPEN_EXTEND_FN call_back;
@@ -164,6 +174,26 @@
 /*	request with a non-UTF-8 key, skip an update request with
 /*	a non-UTF-8 value, and fail a lookup request with a non-UTF-8
 /*	value.
+/* .IP DICT_FLAG_SRC_RHS_IS_FILE
+/*	With dictionaries that are created from source text, each
+/*	value in the source of a dictionary specifies a list of
+/*	file names separated by comma and/or whitespace. The file
+/*	contents are concatenated with a newline inserted between
+/*	files, and the base64-encoded result is stored under the
+/*	key.
+/* .sp
+/*	NOTE 1: it is up to the application to decode lookup results
+/*	with dict_file_lookup() or equivalent (this requires that
+/*	the dictionary is opened with DICT_FLAG_SRC_RHS_IS_FILE).
+/*	Decoding is not built into the normal dictionary lookup
+/*	method, because that would complicate dictionary nesting,
+/*	pipelining, and proxying.
+/* .sp
+/*	NOTE 2: it is up to the application to convert file names
+/*	into base64-encoded file content before calling the dictionary
+/*	update method (see dict_file(3) for support). Automatic
+/*	file content encoding is available only when a dictionary
+/*	is created from source text.
 /* .PP
 /*	Specify DICT_FLAG_NONE for no special processing.
 /*
@@ -220,6 +250,11 @@
 /*	associated data structures.
 /*
 /*	dict_open_register() adds support for a new dictionary type.
+/*	NOTE: this function does not copy its argument.
+/*
+/*	dict_open_lookup() returns a pointer to the DICT_OPEN_INFO
+/*	for the specified dictionary type, or a null pointer if the
+/*	requested information is not found.
 /*
 /*	dict_open_extend() registers a call-back function that looks
 /*	up the dictionary open() function for a type that is not
@@ -284,6 +319,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -325,60 +365,56 @@
 #include <split_at.h>
 #include <htable.h>
 #include <myflock.h>
+#include <mkmap.h>
 
  /*
   * lookup table for available map types.
   */
-typedef struct {
-    char   *type;
-    DICT_OPEN_FN open;
-} DICT_OPEN_INFO;
-
 static const DICT_OPEN_INFO dict_open_info[] = {
-    DICT_TYPE_ENVIRON, dict_env_open,
-    DICT_TYPE_HT, dict_ht_open,
-    DICT_TYPE_UNIX, dict_unix_open,
-    DICT_TYPE_TCP, dict_tcp_open,
+    DICT_TYPE_ENVIRON, dict_env_open, 0,
+    DICT_TYPE_HT, dict_ht_open, 0,
+    DICT_TYPE_UNIX, dict_unix_open, 0,
+    DICT_TYPE_TCP, dict_tcp_open, 0,
 #ifdef HAS_DBM
-    DICT_TYPE_DBM, dict_dbm_open,
+    DICT_TYPE_DBM, dict_dbm_open, mkmap_dbm_open,
 #endif
 #ifdef HAS_DB
-    DICT_TYPE_HASH, dict_hash_open,
-    DICT_TYPE_BTREE, dict_btree_open,
+    DICT_TYPE_HASH, dict_hash_open, mkmap_hash_open,
+    DICT_TYPE_BTREE, dict_btree_open, mkmap_btree_open,
 #endif
 #ifdef HAS_NIS
-    DICT_TYPE_NIS, dict_nis_open,
+    DICT_TYPE_NIS, dict_nis_open, 0,
 #endif
 #ifdef HAS_NISPLUS
-    DICT_TYPE_NISPLUS, dict_nisplus_open,
+    DICT_TYPE_NISPLUS, dict_nisplus_open, 0,
 #endif
 #ifdef HAS_NETINFO
-    DICT_TYPE_NETINFO, dict_ni_open,
+    DICT_TYPE_NETINFO, dict_ni_open, 0,
 #endif
 #ifdef HAS_POSIX_REGEXP
-    DICT_TYPE_REGEXP, dict_regexp_open,
+    DICT_TYPE_REGEXP, dict_regexp_open, 0,
 #endif
-    DICT_TYPE_STATIC, dict_static_open,
-    DICT_TYPE_CIDR, dict_cidr_open,
-    DICT_TYPE_THASH, dict_thash_open,
-    DICT_TYPE_SOCKMAP, dict_sockmap_open,
-    DICT_TYPE_FAIL, dict_fail_open,
-    DICT_TYPE_PIPE, dict_pipe_open,
-    DICT_TYPE_RANDOM, dict_random_open,
-    DICT_TYPE_UNION, dict_union_open,
-    DICT_TYPE_INLINE, dict_inline_open,
+    DICT_TYPE_STATIC, dict_static_open, 0,
+    DICT_TYPE_CIDR, dict_cidr_open, 0,
+    DICT_TYPE_THASH, dict_thash_open, 0,
+    DICT_TYPE_SOCKMAP, dict_sockmap_open, 0,
+    DICT_TYPE_FAIL, dict_fail_open, mkmap_fail_open,
+    DICT_TYPE_PIPE, dict_pipe_open, 0,
+    DICT_TYPE_RANDOM, dict_random_open, 0,
+    DICT_TYPE_UNION, dict_union_open, 0,
+    DICT_TYPE_INLINE, dict_inline_open, 0,
 #ifndef USE_DYNAMIC_MAPS
 #ifdef HAS_PCRE
-    DICT_TYPE_PCRE, dict_pcre_open,
+    DICT_TYPE_PCRE, dict_pcre_open, 0,
 #endif
 #ifdef HAS_CDB
-    DICT_TYPE_CDB, dict_cdb_open,
+    DICT_TYPE_CDB, dict_cdb_open, mkmap_cdb_open,
 #endif
 #ifdef HAS_SDBM
-    DICT_TYPE_SDBM, dict_sdbm_open,
+    DICT_TYPE_SDBM, dict_sdbm_open, mkmap_sdbm_open,
 #endif
 #ifdef HAS_LMDB
-    DICT_TYPE_LMDB, dict_lmdb_open,
+    DICT_TYPE_LMDB, dict_lmdb_open, mkmap_lmdb_open,
 #endif
 #endif					/* !USE_DYNAMIC_MAPS */
     0,
@@ -393,10 +429,18 @@ static DICT_OPEN_EXTEND_FN dict_open_extend_hook;
 static DICT_MAPNAMES_EXTEND_FN dict_mapnames_extend_hook;
 
  /*
-  * Workaround.
+  * Workaround: define global variables here to control database cache sizes.
+  * When a database driver is dynamically loaded, global control variables
+  * cannot simply be owned by the loadable objects because that would result
+  * in build-time linker errors.
   */
 DEFINE_DICT_LMDB_MAP_SIZE;
 DEFINE_DICT_DB_CACHE_SIZE;
+
+ /*
+  * Replace obscure code with a more readable expression.
+  */
+#define NEED_DICT_OPEN_INIT()	(dict_open_hash == 0)
 
 /* dict_open_init - one-off initialization */
 
@@ -405,7 +449,7 @@ static void dict_open_init(void)
     const char *myname = "dict_open_init";
     const DICT_OPEN_INFO *dp;
 
-    if (dict_open_hash != 0)
+    if (!NEED_DICT_OPEN_INIT())
 	msg_panic("%s: multiple initialization", myname);
     dict_open_hash = htable_create(10);
 
@@ -430,33 +474,24 @@ DICT   *dict_open(const char *dict_spec, int open_flags, int dict_flags)
     return (dict);
 }
 
-
 /* dict_open3 - open dictionary */
 
 DICT   *dict_open3(const char *dict_type, const char *dict_name,
 		           int open_flags, int dict_flags)
 {
     const char *myname = "dict_open";
-    DICT_OPEN_INFO *dp;
-    DICT_OPEN_FN open_fn;
+    const DICT_OPEN_INFO *dp;
     DICT   *dict;
 
     if (*dict_type == 0 || *dict_name == 0)
 	msg_fatal("open dictionary: expecting \"type:name\" form instead of \"%s:%s\"",
 		  dict_type, dict_name);
-    if (dict_open_hash == 0)
+    if (NEED_DICT_OPEN_INIT())
 	dict_open_init();
-    if ((dp = (DICT_OPEN_INFO *) htable_find(dict_open_hash, dict_type)) == 0) {
-	if (dict_open_extend_hook != 0
-	    && (open_fn = dict_open_extend_hook(dict_type)) != 0) {
-	    dict_open_register(dict_type, open_fn);
-	    dp = (DICT_OPEN_INFO *) htable_find(dict_open_hash, dict_type);
-	}
-	if (dp == 0)
-	    return (dict_surrogate(dict_type, dict_name, open_flags, dict_flags,
+    if ((dp = dict_open_lookup(dict_type)) == 0)
+	return (dict_surrogate(dict_type, dict_name, open_flags, dict_flags,
 			     "unsupported dictionary type: %s", dict_type));
-    }
-    if ((dict = dp->open(dict_name, open_flags, dict_flags)) == 0)
+    if ((dict = dp->dict_fn(dict_name, open_flags, dict_flags)) == 0)
 	return (dict_surrogate(dict_type, dict_name, open_flags, dict_flags,
 			    "cannot open %s:%s: %m", dict_type, dict_name));
     if (msg_verbose)
@@ -485,20 +520,33 @@ DICT   *dict_open3(const char *dict_type, const char *dict_name,
 
 /* dict_open_register - register dictionary type */
 
-void    dict_open_register(const char *type, DICT_OPEN_FN open)
+void    dict_open_register(const DICT_OPEN_INFO *dp)
 {
     const char *myname = "dict_open_register";
-    DICT_OPEN_INFO *dp;
-    HTABLE_INFO *ht;
 
-    if (dict_open_hash == 0)
+    if (msg_verbose > 1)
+	msg_info("%s: %s", myname, dp->type);
+    if (NEED_DICT_OPEN_INIT())
 	dict_open_init();
-    if (htable_find(dict_open_hash, type))
-	msg_panic("%s: dictionary type exists: %s", myname, type);
-    dp = (DICT_OPEN_INFO *) mymalloc(sizeof(*dp));
-    dp->open = open;
-    ht = htable_enter(dict_open_hash, type, (void *) dp);
-    dp->type = ht->key;
+    if (htable_find(dict_open_hash, dp->type))
+	msg_panic("%s: dictionary type exists: %s", myname, dp->type);
+    (void) htable_enter(dict_open_hash, dp->type, (void *) dp);
+}
+
+/* dict_open_lookup - look up DICT_OPEN_INFO for dictionary type */
+
+const DICT_OPEN_INFO *dict_open_lookup(const char *dict_type)
+{
+    const char myname[] = "dict_open_lookup";
+    const DICT_OPEN_INFO *dp;
+
+    if (msg_verbose > 1)
+	msg_info("%s: %s", myname, dict_type);
+    if ((dp = (DICT_OPEN_INFO *) htable_find(dict_open_hash, dict_type)) == 0
+	&& dict_open_extend_hook != 0
+	&& (dp = dict_open_extend_hook(dict_type)) != 0)
+	dict_open_register(dp);
+    return (dp);
 }
 
 /* dict_open_extend - register alternate dictionary search routine */
@@ -512,13 +560,6 @@ DICT_OPEN_EXTEND_FN dict_open_extend(DICT_OPEN_EXTEND_FN new_cb)
     return (old_cb);
 }
 
-/* dict_sort_alpha_cpp - qsort() callback */
-
-static int dict_sort_alpha_cpp(const void *a, const void *b)
-{
-    return (strcmp(((char **) a)[0], ((char **) b)[0]));
-}
-
 /* dict_mapnames - return an ARGV of available map_names */
 
 ARGV   *dict_mapnames()
@@ -528,7 +569,7 @@ ARGV   *dict_mapnames()
     DICT_OPEN_INFO *dp;
     ARGV   *mapnames;
 
-    if (dict_open_hash == 0)
+    if (NEED_DICT_OPEN_INIT())
 	dict_open_init();
     mapnames = argv_alloc(dict_open_hash->used + 1);
     for (ht_info = ht = htable_list(dict_open_hash); *ht; ht++) {
@@ -537,8 +578,9 @@ ARGV   *dict_mapnames()
     }
     if (dict_mapnames_extend_hook != 0)
 	(void) dict_mapnames_extend_hook(mapnames);
-    qsort((void *) mapnames->argv, mapnames->argc, sizeof(mapnames->argv[0]),
-	  dict_sort_alpha_cpp);
+    argv_qsort(mapnames, (ARGV_COMPAR_FN) 0);
+    /* In case some drivers have been loaded dynamically. */
+    argv_uniq(mapnames, (ARGV_COMPAR_FN) 0);
     myfree((void *) ht_info);
     argv_terminate(mapnames);
     return mapnames;

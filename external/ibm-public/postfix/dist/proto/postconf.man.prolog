@@ -33,30 +33,34 @@ A parameter value may refer to other parameters.
 .RS
 .IP \(bu 
 The expressions "$name" and "${name}" are recursively replaced with
-the value of the named parameter. An undefined parameter value is
-replaced with the empty value.
+the value of the named parameter. The parameter name must contain
+only characters from the set [a-zA-Z0-9_]. An undefined parameter
+value is replaced with the empty value.
 .IP \(bu
 The expressions "${name?value}" and "${name?{value}}" are replaced
-with "value" when "$name" is non-empty. These forms are supported
-with Postfix versions >= 2.2 and >= 3.0, respectively.
+with "value" when "$name" is non-empty. The parameter name must
+contain only characters from the set [a-zA-Z0-9_]. These forms are
+supported with Postfix versions >= 2.2 and >= 3.0, respectively.
 .IP \(bu
 The expressions "${name:value}" and "${name:{value}}" are replaced
-with "value" when "$name" is empty. These forms are supported with
-Postfix versions >= 2.2 and >= 3.0, respectively.
+with "value" when "$name" is empty. The parameter name must contain
+only characters from the set [a-zA-Z0-9_]. These forms are supported
+with Postfix versions >= 2.2 and >= 3.0, respectively.
 .IP \(bu
 The expression "${name?{value1}:{value2}}" is replaced with "value1"
 when "$name" is non-empty, and with "value2" when "$name" is empty.
-The "{}" is required for "value1", optional for "value2". This form
-is supported with Postfix versions >= 3.0.
+The "{}" is required for "value1", optional for "value2". The
+parameter name must contain only characters from the set [a-zA-Z0-9_].
+This form is supported with Postfix versions >= 3.0.
 .IP \(bu
-The first item inside "${...}" may be a logical expression of the
+The first item inside "${...}" may be a relational expression of the
 form: "{value3} == {value4}". Besides the "==" (equality) operator
 Postfix supports "!=" (inequality), "<", "<=", ">=", and ">". The
 comparison is numerical when both operands are all digits, otherwise
 the comparison is lexicographical. These forms are supported with
 Postfix versions >= 3.0.
 .IP \(bu
-Each "value" is subject to recursive named parameter and logical
+Each "value" is subject to recursive named parameter and relational
 expression evaluation, except where noted.
 .IP \(bu
 Whitespace before or after each "{value}" is ignored.

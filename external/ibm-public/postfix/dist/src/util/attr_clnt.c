@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_clnt.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: attr_clnt.c,v 1.2.14.1 2023/12/25 12:55:23 martin Exp $	*/
 
 /*++
 /* NAME
@@ -10,6 +10,7 @@
 /*
 /*	typedef int (*ATTR_CLNT_PRINT_FN) (VSTREAM *, int, va_list);
 /*	typedef int (*ATTR_CLNT_SCAN_FN) (VSTREAM *, int, va_list);
+/*	typedef int (*ATTR_CLNT_HANDSHAKE_FN) (VSTREAM *);
 /*
 /*	ATTR_CLNT *attr_clnt_create(server, timeout, max_idle, max_ttl)
 /*	const char *server;
@@ -67,6 +68,9 @@
 /* .IP "ATTR_CLNT_CTL_TRY_DELAY(int)"
 /*	The time in seconds between attempts to send a request
 /*	(default: 1).  Specify a value greater than zero.
+/* .IP "ATTR_CLNT_CTL_HANDSHAKE(VSTREAM *)"
+/*      A pointer to function that will be called at the start of a
+/*      new connection, and that returns 0 in case of success.
 /* DIAGNOSTICS
 /*	Warnings: communication failure.
 /* SEE ALSO
@@ -82,6 +86,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -255,6 +264,12 @@ void    attr_clnt_control(ATTR_CLNT *client, int name,...)
 	case ATTR_CLNT_CTL_PROTO:
 	    client->print = va_arg(ap, ATTR_CLNT_PRINT_FN);
 	    client->scan = va_arg(ap, ATTR_CLNT_SCAN_FN);
+	    break;
+	case ATTR_CLNT_CTL_HANDSHAKE:
+	    auto_clnt_control(client->auto_clnt,
+			      AUTO_CLNT_CTL_HANDSHAKE,
+			      va_arg(ap, ATTR_CLNT_HANDSHAKE_FN),
+			      AUTO_CLNT_CTL_END);
 	    break;
 	case ATTR_CLNT_CTL_REQ_LIMIT:
 	    client->req_limit = va_arg(ap, int);

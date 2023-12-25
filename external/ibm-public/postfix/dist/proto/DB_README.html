@@ -7,7 +7,8 @@
 
 <title>Postfix Berkeley DB Howto</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -99,6 +100,10 @@ source code, use something like: </p>
 % make
 </pre>
 </blockquote>
+
+<p> If your Berkeley DB shared library is in a directory that the RUN-TIME
+linker does not know about, add a "-Wl,-R,/path/to/directory" option after
+"-ldb". </p>
 
 <p> Solaris needs this: </p>
 

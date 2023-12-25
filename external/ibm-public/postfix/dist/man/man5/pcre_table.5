@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcre_table.5,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: pcre_table.5,v 1.2.14.1 2023/12/25 12:54:40 martin Exp $
 .\"
 .TH PCRE_TABLE 5 
 .ad
@@ -37,6 +37,10 @@ as described in the SYNOPSIS above. Use "\fBpostmap \-hmq
 \-\fR <\fIfile\fR" for header_checks(5) patterns, and
 "\fBpostmap \-bmq \-\fR <\fIfile\fR" for body_checks(5)
 (Postfix 2.6 and later).
+
+This driver can be built with the pcre2 library (Postfix
+3.7 and later), or with the legacy pcre library (all Postfix
+versions).
 .SH "COMPATIBILITY"
 .na
 .nf
@@ -85,7 +89,7 @@ A logical line starts with non\-whitespace text. A line that
 starts with whitespace continues a logical line.
 .PP
 Each pattern is a perl\-like regular expression. The expression
-delimiter can be any non\-alphanumerical character, except
+delimiter can be any non\-alphanumeric character, except
 whitespace or characters
 that have special meaning (traditionally the forward slash is used).
 The regular expression can contain whitespace.
@@ -98,12 +102,12 @@ characters after the pattern:
 Toggles the case sensitivity flag. By default, matching is case
 insensitive.
 .IP "\fBm\fR (default: off)"
-Toggles the PCRE_MULTILINE flag. When this flag is on, the \fB^\fR
+Toggles the pcre MULTILINE flag. When this flag is on, the \fB^\fR
 and \fB$\fR metacharacters match immediately after and immediately
 before a newline character, respectively, in addition to
 matching at the start and end of the subject string.
 .IP "\fBs\fR (default: on)"
-Toggles the PCRE_DOTALL flag. When this flag is on, the \fB.\fR
+Toggles the pcre DOTALL flag. When this flag is on, the \fB.\fR
 metacharacter matches the newline character. With
 Postfix versions prior to 2.0, the flag is off by
 default, which is inconvenient for multi\-line message header
@@ -116,31 +120,33 @@ the pattern, escape it with backslash.
 .sp
 Note: do not use \fB#\fIcomment\fR after patterns.
 .IP "\fBA\fR (default: off)"
-Toggles the PCRE_ANCHORED flag.  When this flag is on,
+Toggles the pcre ANCHORED flag.  When this flag is on,
 the pattern is forced to be "anchored", that is, it is
 constrained to match only at the start of the string which
 is being searched (the "subject string"). This effect can
 also be achieved by appropriate constructs in the pattern
 itself.
 .IP "\fBE\fR (default: off)"
-Toggles the PCRE_DOLLAR_ENDONLY flag. When this flag is on,
+Toggles the pcre DOLLAR_ENDONLY flag. When this flag is on,
 a \fB$\fR metacharacter in the pattern matches only at the
 end of the subject string. Without this flag, a dollar also
 matches immediately before the final character if it is a
 newline character (but not before any other newline
-characters). This flag is ignored if PCRE_MULTILINE
+characters). This flag is ignored if the pcre MULTILINE
 flag is set.
 .IP "\fBU\fR (default: off)"
-Toggles the ungreedy matching flag.  When this flag is on,
+Toggles the pcre UNGREEDY flag.  When this flag is on,
 the pattern matching engine inverts the "greediness" of
 the quantifiers so that they are not greedy by default,
 but become greedy if followed by "?".  This flag can also
 set by a (?U) modifier within the pattern.
 .IP "\fBX\fR (default: off)"
-Toggles the PCRE_EXTRA flag.
+Toggles the pcre EXTRA flag.
 When this flag is on, any backslash in a pattern that is
 followed by a letter that has no special meaning causes an
 error, thus reserving these combinations for future expansion.
+
+This feature is not supported with PCRE2.
 .SH "SEARCH ORDER"
 .na
 .nf
@@ -167,10 +173,44 @@ string is requested with $1, $2, etc.; specify $$ to produce
 a $ character as output.
 The macros in the result string may need to be written as
 ${n} or $(n) if they aren't followed by whitespace.
+This feature does not support pcre2 substring names.
 
 Note: since negated patterns (those preceded by \fB!\fR) return a
 result when the expression does not match, substitutions are not
 available for negated patterns.
+.SH "INLINE SPECIFICATION"
+.na
+.nf
+.ad
+.fi
+The contents of a table may be specified in the table name
+(Postfix 3.7 and later).
+The basic syntax is:
+
+.nf
+main.cf:
+    \fIparameter\fR \fB= .. pcre:{ { \fIrule\-1\fB }, { \fIrule\-2\fB } .. } ..\fR
+
+master.cf:
+    \fB.. \-o { \fIparameter\fR \fB= .. pcre:{ { \fIrule\-1\fB }, { \fIrule\-2\fB } .. } .. } ..\fR
+.fi
+
+Postfix ignores whitespace after '{' and before '}', and
+writes each \fIrule\fR as one text line to an in\-memory
+file:
+
+.nf
+in\-memory file:
+    rule\-1
+    rule\-2
+    ..
+.fi
+
+Postfix parses the result as if it is a file in /etc/postfix.
+
+Note: if a rule contains \fB$\fR, specify \fB$$\fR to keep
+Postfix from trying to do \fI$name\fR expansion as it
+evaluates a parameter value.
 .SH "EXAMPLE SMTPD ACCESS MAP"
 .na
 .nf

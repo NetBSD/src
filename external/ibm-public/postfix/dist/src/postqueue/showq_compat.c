@@ -1,10 +1,10 @@
-/*	$NetBSD: showq_compat.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: showq_compat.c,v 1.2.18.1 2023/12/25 12:55:12 martin Exp $	*/
 
 /*++
 /* NAME
 /*	showq_compat 8
 /* SUMMARY
-/*	Sendmail mailq compatibitily adapter
+/*	Sendmail mailq compatibility adapter
 /* SYNOPSIS
 /*	void	showq_compat(
 /*	VSTREAM	*showq)
@@ -38,6 +38,7 @@
 #include <time.h>
 #include <string.h>
 #include <sysexits.h>
+#include <errno.h>
 
 /* Utility library. */
 
@@ -89,12 +90,12 @@ static unsigned long showq_message(VSTREAM *showq_stream)
     static VSTRING *why = 0;
     long    arrival_time;
     long    message_size;
-    int     message_status;
     char   *saved_reason = mystrdup("");
     const char *show_reason;
     int     padding;
     int     showq_status;
     time_t  time_t_arrival_time;
+    int     forced_expire;
 
     /*
      * One-time initialization.
@@ -110,13 +111,15 @@ static unsigned long showq_message(VSTREAM *showq_stream)
     /*
      * Read the message properties and sender address.
      */
-    if (attr_scan(showq_stream, ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
+    if (attr_scan(showq_stream, ATTR_FLAG_MORE | ATTR_FLAG_STRICT
+		  | ATTR_FLAG_PRINTABLE,
 		  RECV_ATTR_STR(MAIL_ATTR_QUEUE, queue_name),
 		  RECV_ATTR_STR(MAIL_ATTR_QUEUEID, queue_id),
 		  RECV_ATTR_LONG(MAIL_ATTR_TIME, &arrival_time),
 		  RECV_ATTR_LONG(MAIL_ATTR_SIZE, &message_size),
+		  RECV_ATTR_INT(MAIL_ATTR_FORCED_EXPIRE, &forced_expire),
 		  RECV_ATTR_STR(MAIL_ATTR_SENDER, addr),
-		  ATTR_TYPE_END) != 5)
+		  ATTR_TYPE_END) != 6)
 	msg_fatal_status(EX_SOFTWARE, "malformed showq server response");
 
     /*
@@ -124,9 +127,13 @@ static unsigned long showq_message(VSTREAM *showq_stream)
      * left-aligned, followed by other status info and the sender address
      * which is already in externalized RFC 5321 form.
      */
-    message_status = (strcmp(STR(queue_name), MAIL_QUEUE_ACTIVE) == 0 ? '*' :
-		 strcmp(STR(queue_name), MAIL_QUEUE_HOLD) == 0 ? '!' : ' ');
-    vstring_sprintf(id_status, "%s%c", STR(queue_id), message_status);
+    vstring_strcpy(id_status, STR(queue_id));
+    if (strcmp(STR(queue_name), MAIL_QUEUE_ACTIVE) == 0)
+	vstring_strcat(id_status, "*");
+    else if (strcmp(STR(queue_name), MAIL_QUEUE_HOLD) == 0)
+	vstring_strcat(id_status, "!");
+    if (forced_expire)
+	vstring_strcat(id_status, "#");
     time_t_arrival_time = arrival_time;
     vstream_printf(var_long_queue_ids ?
 		   L_SENDER_FORMAT : S_SENDER_FORMAT, STR(id_status),
@@ -139,7 +146,8 @@ static unsigned long showq_message(VSTREAM *showq_stream)
      * resynchronize.
      */
     while ((showq_status = attr_scan_more(showq_stream)) > 0) {
-	if (attr_scan(showq_stream, ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
+	if (attr_scan(showq_stream, ATTR_FLAG_MORE | ATTR_FLAG_STRICT
+		      | ATTR_FLAG_PRINTABLE,
 		      RECV_ATTR_STR(MAIL_ATTR_RECIP, addr),
 		      RECV_ATTR_STR(MAIL_ATTR_WHY, why),
 		      ATTR_TYPE_END) != 2)
@@ -156,7 +164,7 @@ static unsigned long showq_message(VSTREAM *showq_stream)
 	    myfree(saved_reason);
 	    saved_reason = mystrdup(STR(why));
 	    show_reason = *saved_reason ? saved_reason : "reason unavailable";
-	    if ((padding = 76 - strlen(show_reason)) < 0)
+	    if ((padding = 76 - (int) strlen(show_reason)) < 0)
 		padding = 0;
 	    vstream_printf("%*s(%s)\n", padding, "", show_reason);
 	}
@@ -192,7 +200,11 @@ void    showq_compat(VSTREAM *showq_stream)
 	}
 	queue_size += showq_message(showq_stream);
 	file_count++;
-	vstream_fflush(VSTREAM_OUT);
+	if (vstream_fflush(VSTREAM_OUT)) {
+	    if (errno != EPIPE)
+		msg_fatal_status(EX_IOERR, "output write error: %m");
+	    return;
+	}
     }
     if (showq_status < 0)
 	msg_fatal_status(EX_SOFTWARE, "malformed showq server response");
@@ -207,5 +219,6 @@ void    showq_compat(VSTREAM *showq_stream)
 		       queue_size / 1024, file_count,
 		       file_count == 1 ? "" : "s");
     }
-    vstream_fflush(VSTREAM_OUT);
+    if (vstream_fflush(VSTREAM_OUT) && errno != EPIPE)
+	msg_fatal_status(EX_IOERR, "output write error: %m");
 }

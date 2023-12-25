@@ -27,17 +27,35 @@ compatible settings need to be made permanent in main.cf or master.cf, before
 turning off the backwards-compatibility safety net as described at the end of
 this document.
 
-The following messages may be logged:
+Logged with compatibility_level < 1:
 
   * Using backwards-compatible default setting append_dot_mydomain=yes
 
   * Using backwards-compatible default setting chroot=y
+
+Logged with compatibility_level < 2:
+
+  * Using backwards-compatible default setting "smtpd_relay_restrictions =
+    (empty)"
 
   * Using backwards-compatible default setting mynetworks_style=subnet
 
   * Using backwards-compatible default setting relay_domains=$mydestination
 
   * Using backwards-compatible default setting smtputf8_enable=no
+
+Logged with compatibility_level < 3.6:
+
+  * Using backwards-compatible default setting smtpd_tls_fingerprint_digest=md5
+
+  * Using backwards-compatible default setting smtp_tls_fingerprint_digest=md5
+
+  * Using backwards-compatible default setting lmtp_tls_fingerprint_digest=md5
+
+  * Using backwards-compatible default setting
+    smtpd_relay_before_recipient_restrictions=no
+
+  * Using backwards-compatible default setting respectful_logging=no
 
 If such a message is logged in the context of a legitimate request, the system
 administrator should make the backwards-compatible setting permanent in main.cf
@@ -49,10 +67,14 @@ described at the end of this document.
 
 UUssiinngg bbaacckkwwaarrddss--ccoommppaattiibbllee ddeeffaauulltt sseettttiinngg aappppeenndd__ddoott__mmyyddoommaaiinn==yyeess
 
-The append_dot_mydomain default value has changed from "yes" to "no". As long
-as the append_dot_mydomain parameter is left at its implicit default value, and
-the backwards-compatible default setting is turned on, Postfix may log one of
-the following messages:
+The append_dot_mydomain default value has changed from "yes" to "no". This
+could result in unexpected non-delivery of email after Postfix is updated from
+an older version. The backwards-compatibility safety net is designed to prevent
+such surprises.
+
+As long as the append_dot_mydomain parameter is left at its implicit default
+value, and the compatibility_level setting is less than 1, Postfix may log one
+of the following messages:
 
   * Messages about missing "localhost" in mydestination or other address class:
 
@@ -81,10 +103,16 @@ the following messages:
 
 UUssiinngg bbaacckkwwaarrddss--ccoommppaattiibbllee ddeeffaauulltt sseettttiinngg cchhrroooott==yy
 
-The master.cf chroot default value has changed from "y" (yes) to "n" (no). As
-long as a master.cf chroot field is left at its implicit default value, and the
-backwards-compatible default setting is turned on, Postfix may log the
-following message while it reads the master.cf file:
+The master.cf chroot default value has changed from "y" (yes) to "n" (no). The
+new default avoids the need for copies of system files under the Postfix queue
+directory. However, sites with strict security requirements may want to keep
+the chroot feature enabled after updating Postfix from an older version. The
+backwards-compatibility safety net is designed allow the administrator to
+choose if they want to keep the old behavior.
+
+As long as a master.cf chroot field is left at its implicit default value, and
+the compatibility_level setting is less than 1, Postfix may log the following
+message while it reads the master.cf file:
 
     postfix/master[27664]: /etc/postfix/master.cf: line 72: using
         backwards-compatible default setting chroot=y
@@ -96,13 +124,45 @@ example, to update the chroot setting for the "smtp inet" service:
     # ppoossttccoonnff --FF ssmmttpp//iinneett//cchhrroooott==yy
     # ppoossttffiixx rreellooaadd
 
+UUssiinngg bbaacckkwwaarrddss--ccoommppaattiibbllee ddeeffaauulltt sseettttiinngg ssmmttppdd__rreellaayy__rreessttrriiccttiioonnss == ((eemmppttyy))
+
+The smtpd_relay_restrictions feature was introduced with Postfix version 2.10,
+as a safety mechanism for configuration errors in smtpd_recipient_restrictions
+that could make Postfix an open relay.
+
+The smtpd_relay_restrictions implicit default setting forbids mail to remote
+destinations from clients that don't match permit_mynetworks or
+permit_sasl_authenticated. This could result in unexpected 'Relay access
+denied' errors after Postfix is updated from an older Postfix version. The
+backwards-compatibility safety net is designed to prevent such surprises.
+
+When the compatibility_level less than 1, and the smtpd_relay_restrictions
+parameter is left at its implicit default setting, Postfix may log the
+following message:
+
+    postfix/smtpd[38463]: using backwards-compatible default setting
+        "smtpd_relay_restrictions = (empty)" to avoid "Relay access
+        denied" error for recipient "user@example.com" from client
+        "host.example.net[10.0.0.2]"
+
+If this request should not be blocked, then the system administrator should
+make the backwards-compatible setting "smtpd_relay_restrictions=" (i.e. empty)
+permanent in main.cf:
+
+    # ppoossttccoonnff ssmmttppdd__rreellaayy__rreessttrriiccttiioonnss==
+    # ppoossttffiixx rreellooaadd
+
 UUssiinngg bbaacckkwwaarrddss--ccoommppaattiibbllee ddeeffaauulltt sseettttiinngg mmyynneettwwoorrkkss__ssttyyllee==ssuubbnneett
 
 The mynetworks_style default value has changed from "subnet" to "host". This
-parameter is used to implement the "permit_mynetworks" feature. As long as the
-mynetworks and mynetworks_style parameters are left at their implicit default
-values, and the backwards-compatible default setting is turned on, the Postfix
-SMTP server may log one of the following messages:
+parameter is used to implement the "permit_mynetworks" feature. The change
+could cause unexpected 'access denied' errors after Postfix is updated from an
+older version. The backwards-compatibility safety net is designed to prevent
+such surprises.
+
+As long as the mynetworks and mynetworks_style parameters are left at their
+implicit default values, and the compatibility_level setting is less than 2,
+the Postfix SMTP server may log one of the following messages:
 
     postfix/smtpd[17375]: using backwards-compatible default setting
         mynetworks_style=subnet to permit request from client
@@ -122,9 +182,13 @@ permanent in main.cf:
 UUssiinngg bbaacckkwwaarrddss--ccoommppaattiibbllee ddeeffaauulltt sseettttiinngg rreellaayy__ddoommaaiinnss==$$mmyyddeessttiinnaattiioonn
 
 The relay_domains default value has changed from "$mydestination" to the empty
-value. As long as the relay_domains parameter is left at its implicit default
-value, and the backwards-compatible default setting is turned on, Postfix may
-log one of the following messages.
+value. This could result in unexpected 'Relay access denied' errors or ETRN
+errors after Postfix is updated from an older version. The backwards-
+compatibility safety net is designed to prevent such surprises.
+
+As long as the relay_domains parameter is left at its implicit default value,
+and the compatibility_level setting is less than 2, Postfix may log one of the
+following messages.
 
   * Messages about accepting mail for a remote domain:
 
@@ -161,16 +225,16 @@ domain names.
 
 UUssiinngg bbaacckkwwaarrddss--ccoommppaattiibbllee ddeeffaauulltt sseettttiinngg ssmmttppuuttff88__eennaabbllee==nnoo
 
-The smtputf8_enable default value has changed from "no" to "yes. With the new
+The smtputf8_enable default value has changed from "no" to "yes". With the new
 "yes" setting, the Postfix SMTP server rejects non-ASCII addresses from clients
-that don't request SMTPUTF8 support. With the old "no" setting, Postfix will
-accept such addresses, even if such addresses are not permitted by traditional
-SMTP standards.
+that don't request SMTPUTF8 support, after Postfix is updated from an older
+version. The backwards-compatibility safety net is designed to prevent such
+surprises.
 
 As long as the smtputf8_enable parameter is left at its implicit default value,
-and the backwards-compatible default setting is turned on, Postfix logs a
-warning each time an SMTP command uses a non-ASCII address localpart without
-requesting SMTPUTF8 support:
+and the compatibility_level setting is less than 1, Postfix logs a warning each
+time an SMTP command uses a non-ASCII address localpart without requesting
+SMTPUTF8 support:
 
     postfix/smtpd[27560]: using backwards-compatible default setting
         smtputf8_enable=no to accept non-ASCII sender address
@@ -185,6 +249,126 @@ SMTPUTF8, then the system administrator should make the backwards-compatible
 setting "smtputf8_enable = no" permanent in main.cf:
 
     # ppoossttccoonnff ssmmttppuuttff88__eennaabbllee==nnoo
+    # ppoossttffiixx rreellooaadd
+
+UUssiinngg bbaacckkwwaarrddss--ccoommppaattiibbllee ddeeffaauulltt sseettttiinngg ssmmttppdd__ttllss__ffiinnggeerrpprriinntt__ddiiggeesstt==mmdd55
+
+The smtpd_tls_fingerprint_digest default value has changed from "md5" to
+"sha256". With the new "sha256" setting, the Postfix SMTP server avoids using
+the deprecated "md5" algorithm and computes a more secure digest of the client
+certificate.
+
+If you're using the default "md5" setting, or even an explicit "sha1" (also
+deprecated) setting, you should consider switching to "sha256". This will
+require updating any associated lookup table keys with the "sha256" digests of
+the expected client certificate or public key.
+
+As long as the smtpd_tls_fingerprint_digest parameter is left at its implicit
+default value, and the compatibility_level setting is less than 3.6, Postfix
+logs a warning each time a client certificate or public key fingerprint is
+(potentially) used for access control:
+
+    postfix/smtpd[27560]: using backwards-compatible default setting
+        smtpd_tls_fingerprint_digest=md5 to compute certificate fingerprints
+
+Since any client certificate fingerprints are passed in policy service lookups,
+and Postfix doesn't know whether the fingerprint will be used, the warning may
+also be logged when policy lookups are performed for connections that used a
+client certificate, even if the policy service does not in fact examine the
+client certificate. To reduce the noise somewhat, such warnings are issued at
+most once per smtpd(8) process instance.
+
+If you prefer to stick with "md5", you can suppress the warnings by making that
+setting explicit. After addressing any other compatibility warnings, you can
+update your compatibility level.
+
+    # ppoossttccoonnff ssmmttppdd__ttllss__ffiinnggeerrpprriinntt__ddiiggeesstt==mmdd55
+    # ppoossttffiixx rreellooaadd
+
+UUssiinngg bbaacckkwwaarrddss--ccoommppaattiibbllee ddeeffaauulltt sseettttiinngg ssmmttpp__ttllss__ffiinnggeerrpprriinntt__ddiiggeesstt==mmdd55
+
+The smtp_tls_fingerprint_digest and lmtp_tls_fingerprint_digest default values
+have changed from "md5" to "sha256". With the new "sha256" setting, the Postfix
+SMTP and LMTP client avoids using the deprecated "md5" algorithm and computes a
+more secure digest of the server certificate.
+
+If you're using the default "md5" setting, or even an explicit "sha1" (also
+deprecated) setting, you should consider switching to "sha256". This will
+require updating any "fingerprint" security level policies in the TLS policy
+table to specify matching "sha256" digests of the expected server certificates
+or public keys.
+
+As long as the smtp_tls_fingerprint_digest (or LMTP equivalent) parameter is
+left at its implicit default value, and the compatibility_level setting is less
+than 3.6, Postfix logs a warning each time the "fingerprint" security level is
+used to specify matching "md5" digests of trusted server certificates or public
+keys:
+
+    postfix/smtp[27560]: using backwards-compatible default setting
+        smtp_tls_fingerprint_digest=md5 to compute certificate fingerprints
+
+If you prefer to stick with "md5", you can suppress the warnings by making that
+setting explicit. After addressing any other compatibility warnings, you can
+update your compatibility level.
+
+    # ppoossttccoonnff ''ssmmttpp__ttllss__ffiinnggeerrpprriinntt__ddiiggeesstt == mmdd55'' \\
+        ''llmmttpp__ttllss__ffiinnggeerrpprriinntt__ddiiggeesstt == mmdd55''
+    # ppoossttffiixx rreellooaadd
+
+UUssiinngg bbaacckkwwaarrddss--ccoommppaattiibbllee ddeeffaauulltt sseettttiinngg
+ssmmttppdd__rreellaayy__bbeeffoorree__rreecciippiieenntt__rreessttrriiccttiioonnss==nnoo
+
+The smtpd_relay_before_recipient_restrictions feature was introduced in Postfix
+version 3.6, to evaluate smtpd_relay_restrictions before
+smtpd_recipient_restrictions. Historically, smtpd_relay_restrictions was
+evaluated after smtpd_recipient_restrictions, contradicting documented
+behavior.
+
+    Background: smtpd_relay_restrictions is primarily designed to enforce a
+    mail relaying policy, while smtpd_recipient_restrictions is primarily
+    designed to enforce spam blocking policy. Both are evaluated while replying
+    to the RCPT TO command, and both support the same features.
+
+To maintain compatibility with earlier versions, Postfix will keep evaluating
+smtpd_recipient_restrictions before smtpd_relay_restrictions, as long as the
+compatibility_level is less than 3.6, and the
+smtpd_relay_before_recipient_restrictions parameter is left at its implicit
+default setting. As a reminder, Postfix may log the following message:
+
+    postfix/smtpd[54696]: using backwards-compatible default setting
+        smtpd_relay_before_recipient_restrictions=no to reject recipient
+        "user@example.com" from client "host.example.net[10.0.0.2]"
+
+If Postfix should keep evaluating smtpd_recipient_restrictions before
+smtpd_relay_restrictions, then the system administrator should make the
+backwards-compatible setting "smtpd_relay_before_recipient_restrictions=no"
+permanent in main.cf:
+
+    #  ppoossttccoonnff ssmmttppdd__rreellaayy__bbeeffoorree__rreecciippiieenntt__rreessttrriiccttiioonnss==nnoo
+    #  ppoossttffiixx rreellooaadd
+
+UUssiinngg bbaacckkwwaarrddss--ccoommppaattiibbllee ddeeffaauulltt sseettttiinngg rreessppeeccttffuull__llooggggiinngg==nnoo
+
+Postfix version 3.6 deprecates configuration parameter names and logging that
+suggest white is better than black. Instead it prefers 'allowlist, 'denylist',
+and variations of those words. While the renamed configuration parameters have
+backwards-compatible default values, the changes in logging could affect
+logfile analysis tools.
+
+To avoid breaking existing logfile analysis tools, Postfix will keep logging
+the deprecated form, as long as the respectful_logging parameter is left at its
+implicit default value, and the compatibility_level setting is less than 3.6.
+As a reminder, Postfix may log the following when a remote SMTP client is
+allowlisted or denylisted:
+
+    postfix/postscreen[22642]: Using backwards-compatible default setting
+        respectful_logging=no for client [address]:port
+
+If Postfix should keep logging the deprecated form, then the system
+administrator should make the backwards-compatible setting "respectful_logging
+= no" permanent in main.cf.
+
+    # ppoossttccoonnff ""rreessppeeccttffuull__llooggggiinngg == nnoo""
     # ppoossttffiixx rreellooaadd
 
 TTuurrnniinngg ooffff tthhee bbaacckkwwaarrddss--ccoommppaattiibbiilliittyy ssaaffeettyy nneett
@@ -202,4 +386,14 @@ For N specify the number that is logged in your postfix(1) warning message:
 
 Sites that don't care about backwards compatibility may set
 "compatibility_level = 9999" at their own risk.
+
+Starting with Postfix version 3.6, the compatibility level in the above warning
+message is the Postfix version that introduced the last incompatible change.
+The level is formatted as major.minor.patch, where patch is usually omitted and
+defaults to zero. Earlier compatibility levels are 0, 1 and 2.
+
+NOTE: Postfix 3.6 also introduces support for the "<level", "<=level", and
+other operators to compare compatibility levels. With the standard operators
+"<", "<=", etc., compatibility level "3.10" would be smaller than "3.9" which
+is undesirable.
 

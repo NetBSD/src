@@ -1,4 +1,4 @@
-/*	$NetBSD: local.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: local.c,v 1.2.14.1 2023/12/25 12:55:05 martin Exp $	*/
 
 /*++
 /* NAME
@@ -53,12 +53,18 @@
 /*	(complete recipient address), \fB$extension\fR (recipient address
 /*	extension), \fB$domain\fR (recipient domain), \fB$local\fR
 /*	(entire recipient address localpart) and
-/*	\fB$recipient_delimiter.\fR The forms \fI${name?value}\fR and
-/*	\fI${name:value}\fR expand conditionally to \fIvalue\fR when
-/*	\fI$name\fR is (is not) defined.
-/*	Characters that may have special meaning to the shell or file system
-/*	are replaced by underscores.  The list of acceptable characters
-/*	is specified with the \fBforward_expansion_filter\fR configuration
+/*	\fB$recipient_delimiter.\fR The forms \fI${name?value}\fR
+/*	and \fI${name?{value}}\fR (Postfix 3.0 and later) expand
+/*	conditionally to \fIvalue\fR when \fI$name\fR is defined,
+/*	and the forms \fI${name:value}\fR \fI${name:{value}}\fR
+/*	(Postfix 3.0 and later) expand conditionally to \fIvalue\fR
+/*	when \fI$name\fR is not defined.  The form
+/*	\fI${name?{value1}:{value2}}\fR (Postfix 3.0 and later)
+/*	expands conditionally to \fIvalue1\fR when \fI$name\fR is
+/*	defined, or \fIvalue2\fR otherwise. Characters that may
+/*	have special meaning to the shell or file system are replaced
+/*	with underscores. The list of acceptable characters is
+/*	specified with the \fBforward_expansion_filter\fR configuration
 /*	parameter.
 /*
 /*	An alias or ~/.\fBforward\fR file may list any combination of external
@@ -166,13 +172,18 @@
 /*	address), \fB$extension\fR (recipient address extension),
 /*	\fB$domain\fR (recipient domain), \fB$local\fR (entire
 /*	recipient address localpart) and \fB$recipient_delimiter.\fR
-/*	The forms \fI${name?value}\fR and \fI${name:value}\fR expand
-/*	conditionally to \fIvalue\fR when \fI$name\fR is (is not)
-/*	defined.  Characters that may have special meaning to the
-/*	shell or file system are replaced by underscores.  The list
-/*	of acceptable characters is specified with the
-/*	\fBexecution_directory_expansion_filter\fR configuration
-/*	parameter.
+/*	The forms \fI${name?value}\fR and \fI${name?{value}}\fR
+/*	(Postfix 3.0 and later) expand conditionally to \fIvalue\fR
+/*	when \fI$name\fR is defined, and the forms \fI${name:value}\fR
+/*	and \fI${name:{value}}\fR (Postfix 3.0 and later) expand
+/*	conditionally to \fIvalue\fR when \fI$name\fR is not defined.
+/*	The form \fI${name?{value1}:{value2}}\fR (Postfix 3.0 and
+/*	later) expands conditionally to \fIvalue1\fR when \fI$name\fR
+/*	is defined, or \fIvalue2\fR otherwise. Characters that may
+/*	have special meaning to the shell or file system are replaced
+/*	with underscores. The list of acceptable characters
+/*	is specified with the \fBexecution_directory_expansion_filter\fR
+/*	configuration parameter.
 /*
 /*	The command is executed directly where possible. Assistance by the
 /*	shell (\fB/bin/sh\fR on UNIX systems) is used only when the command
@@ -194,7 +205,7 @@
 /*
 /*	A limited amount of message context is exported via environment
 /*	variables. Characters that may have special meaning to the shell
-/*	are replaced by underscores.  The list of acceptable characters
+/*	are replaced with underscores.  The list of acceptable characters
 /*	is specified with the \fBcommand_expansion_filter\fR configuration
 /*	parameter.
 /* .IP \fBSHELL\fR
@@ -316,7 +327,8 @@
 /*	RFC 822 (ARPA Internet Text Messages)
 /*	RFC 3463 (Enhanced status codes)
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /*	Corrupted message files are marked so that the queue
 /*	manager can move them to the \fBcorrupt\fR queue afterwards.
 /*
@@ -363,13 +375,14 @@
 /* .IP "\fBbiff (yes)\fR"
 /*	Whether or not to use the local biff service.
 /* .IP "\fBexpand_owner_alias (no)\fR"
-/*	When delivering to an alias "aliasname" that has an "owner-aliasname"
-/*	companion alias, set the envelope sender address to the expansion
-/*	of the "owner-aliasname" alias.
+/*	When delivering to an alias "\fIaliasname\fR" that has an
+/*	"owner-\fIaliasname\fR" companion alias, set the envelope sender
+/*	address to the expansion of the "owner-\fIaliasname\fR" alias.
 /* .IP "\fBowner_request_special (yes)\fR"
-/*	Give special treatment to owner-listname and listname-request
-/*	address localparts: don't split such addresses when the
-/*	recipient_delimiter is set to "-".
+/*	Enable special treatment for owner-\fIlistname\fR entries in the
+/*	\fBaliases\fR(5) file, and don't split owner-\fIlistname\fR and
+/*	\fIlistname\fR-request address localparts when the recipient_delimiter
+/*	is set to "-".
 /* .IP "\fBsun_mailtool_compatibility (no)\fR"
 /*	Obsolete SUN mailtool compatibility feature.
 /* .PP
@@ -439,7 +452,7 @@
 /*	Available in Postfix version 2.2 and later:
 /* .IP "\fBcommand_execution_directory (empty)\fR"
 /*	The \fBlocal\fR(8) delivery agent working directory for delivery to
-/*	external command.
+/*	external commands.
 /* MAILBOX LOCKING CONTROLS
 /* .ad
 /* .fi
@@ -462,6 +475,11 @@
 /*	The maximal number of addresses remembered by the address
 /*	duplicate filter for \fBaliases\fR(5) or \fBvirtual\fR(5) alias expansion, or
 /*	for \fBshowq\fR(8) queue displays.
+/* .IP "\fBmailbox_size_limit (51200000)\fR"
+/*	The maximal size of any \fBlocal\fR(8) individual mailbox or maildir
+/*	file, or zero (no limit).
+/* .PP
+/*	Implemented in the qmgr(8) daemon:
 /* .IP "\fBlocal_destination_concurrency_limit (2)\fR"
 /*	The maximal number of parallel deliveries via the local mail
 /*	delivery transport to the same recipient (when
@@ -471,9 +489,6 @@
 /* .IP "\fBlocal_destination_recipient_limit (1)\fR"
 /*	The maximal number of recipients per message delivery via the
 /*	local mail delivery transport.
-/* .IP "\fBmailbox_size_limit (51200000)\fR"
-/*	The maximal size of any \fBlocal\fR(8) individual mailbox or maildir
-/*	file, or zero (no limit).
 /* SECURITY CONTROLS
 /* .ad
 /* .fi
@@ -486,7 +501,7 @@
 /*	$name expansions of $mailbox_command and $command_execution_directory.
 /* .IP "\fBdefault_privs (nobody)\fR"
 /*	The default rights used by the \fBlocal\fR(8) delivery agent for delivery
-/*	to external file or command.
+/*	to an external file or command.
 /* .IP "\fBforward_expansion_filter (see 'postconf -d' output)\fR"
 /*	Restrict the characters that the \fBlocal\fR(8) delivery agent allows in
 /*	$name expansions of $forward_path.
@@ -518,7 +533,7 @@
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.
 /* .IP "\fBlocal_command_shell (empty)\fR"
-/*	Optional shell program for \fBlocal\fR(8) delivery to non-Postfix command.
+/*	Optional shell program for \fBlocal\fR(8) delivery to non-Postfix commands.
 /* .IP "\fBmax_idle (100s)\fR"
 /*	The maximum amount of time that an idle Postfix daemon process waits
 /*	for an incoming connection before terminating voluntarily.
@@ -539,17 +554,29 @@
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* .IP "\fBrecipient_delimiter (empty)\fR"
-/*	The set of characters that can separate a user name from its
-/*	extension (example: user+foo), or a .forward file name from its
-/*	extension (example: .forward+foo).
+/*	The set of characters that can separate an email address
+/*	localpart, user name, or a .forward file name from its extension.
 /* .IP "\fBrequire_home_directory (no)\fR"
 /*	Require that a \fBlocal\fR(8) recipient's home directory exists
 /*	before mail delivery is attempted.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Available in Postfix version 3.3 and later:
+/* .IP "\fBenable_original_recipient (yes)\fR"
+/*	Enable support for the original recipient address after an
+/*	address is rewritten to a different address (for example with
+/*	aliasing or with canonical mapping).
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
+/* .PP
+/*	Available in Postfix 3.5 and later:
+/* .IP "\fBinfo_log_address_format (external)\fR"
+/*	The email address form that will be used in non-debug logging
+/*	(info, warning, etc.).
 /* FILES
 /*	The following are examples; details differ between systems.
 /*	$HOME/.forward, per-user aliasing
@@ -563,6 +590,7 @@
 /*	aliases(5), format of alias database
 /*	postconf(5), configuration parameters
 /*	master(5), generic daemon options
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* LICENSE
 /* .ad
@@ -864,9 +892,12 @@ static void pre_init(char *unused_name, char **unused_argv)
      * because that prohibits the delivery agent from updating the queue
      * file.
      */
-    if (var_mailbox_limit) {
-	if (var_mailbox_limit < var_message_limit || var_message_limit == 0)
-	    msg_fatal("main.cf configuration error: %s is smaller than %s",
+    if (ENFORCING_SIZE_LIMIT(var_mailbox_limit)) {
+	if (!ENFORCING_SIZE_LIMIT(var_message_limit))
+	    msg_fatal("configuration error: %s is limited but %s is "
+		      "unlimited", VAR_MAILBOX_LIMIT, VAR_MESSAGE_LIMIT);
+	if (var_mailbox_limit < var_message_limit)
+	    msg_fatal("configuration error: %s is smaller than %s",
 		      VAR_MAILBOX_LIMIT, VAR_MESSAGE_LIMIT);
 	set_file_limit(var_mailbox_limit);
     }

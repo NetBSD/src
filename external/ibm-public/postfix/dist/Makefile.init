@@ -1,7 +1,7 @@
 # Usage: 
 #	make makefiles [name=value]...
 #
-# See makedefs for a descripton of available options.
+# See makedefs for a description of available options.
 # Examples:
 #
 #	make makefiles

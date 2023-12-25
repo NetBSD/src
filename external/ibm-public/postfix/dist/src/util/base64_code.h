@@ -1,4 +1,4 @@
-/*	$NetBSD: base64_code.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: base64_code.h,v 1.2.14.1 2023/12/25 12:55:24 martin Exp $	*/
 
 #ifndef _BASE64_CODE_H_INCLUDED_
 #define _BASE64_CODE_H_INCLUDED_
@@ -41,6 +41,11 @@ extern VSTRING *WARN_UNUSED_RESULT base64_decode_opt(VSTRING *, const char *, ss
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

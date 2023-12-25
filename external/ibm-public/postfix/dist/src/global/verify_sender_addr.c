@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_sender_addr.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: verify_sender_addr.c,v 1.2.14.1 2023/12/25 12:55:05 martin Exp $	*/
 
 /*++
 /* NAME
@@ -86,7 +86,7 @@
 #define VERIFY_BASE		31
 
  /*
-  * We append the time-dependent portion to the localpart of the the address
+  * We append the time-dependent portion to the localpart of the address
   * verification probe sender address, so that the result has the form
   * ``fixed1variable@fixed2''. There is no delimiter between ``fixed1'' and
   * ``variable'', because that could make "old" time stamps valid depending
@@ -297,7 +297,7 @@ int     main(int argc, char **argv)
     verify_time = time((time_t *) 0);
 
     /*
-     * Compute the current probe sender addres.
+     * Compute the current probe sender address.
      */
     verify_sender = make_verify_sender_addr();
 

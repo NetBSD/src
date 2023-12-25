@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_builtin.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: postconf_builtin.c,v 1.2.14.1 2023/12/25 12:55:08 martin Exp $	*/
 
 /*++
 /* NAME
@@ -144,6 +144,14 @@ static const CONFIG_STR_TABLE pcf_legacy_str_table[] = {
     {"authorized_verp_clients", ""},
     {"smtpd_client_connection_limit_exceptions", ""},
     {"postscreen_dnsbl_ttl", ""},
+    {"postscreen_blacklist_action", ""},
+    {"postscreen_dnsbl_whitelist_threshold", ""},
+    {"postscreen_whitelist_interfaces", ""},
+    {"lmtp_per_record_deadline", ""},
+    {"smtp_per_record_deadline", ""},
+    {"smtpd_per_record_deadline", ""},
+    {"tlsproxy_client_level", ""},
+    {"tlsproxy_client_policy", ""},
     0,
 };
 
@@ -175,6 +183,7 @@ static const CONFIG_STR_FN_TABLE pcf_str_fn_table[] = {
   * effects, then those side effects must happen only once.
   */
 static CONFIG_STR_TABLE pcf_adhoc_procname = {VAR_PROCNAME};
+static CONFIG_STR_TABLE pcf_adhoc_servname = {VAR_SERVNAME};
 static CONFIG_INT_TABLE pcf_adhoc_pid = {VAR_PID};
 
 #define STR(x) vstring_str(x)
@@ -245,6 +254,7 @@ static const char *pcf_check_mydomainname(void)
 static const char *pcf_mynetworks(void)
 {
     static const char *networks;
+    VSTRING *exp_buf;
     const char *junk;
 
     /*
@@ -253,10 +263,12 @@ static const char *pcf_mynetworks(void)
     if (networks)
 	return (networks);
 
+    exp_buf = vstring_alloc(100);
+
     if (var_inet_interfaces == 0) {
 	if ((pcf_cmd_mode & PCF_SHOW_DEFS)
 	    || (junk = mail_conf_lookup_eval(VAR_INET_INTERFACES)) == 0)
-	    junk = pcf_expand_parameter_value((VSTRING *) 0, pcf_cmd_mode,
+	    junk = pcf_expand_parameter_value(exp_buf, pcf_cmd_mode,
 					      DEF_INET_INTERFACES,
 					      (PCF_MASTER_ENT *) 0);
 	var_inet_interfaces = mystrdup(junk);
@@ -264,7 +276,7 @@ static const char *pcf_mynetworks(void)
     if (var_mynetworks_style == 0) {
 	if ((pcf_cmd_mode & PCF_SHOW_DEFS)
 	    || (junk = mail_conf_lookup_eval(VAR_MYNETWORKS_STYLE)) == 0)
-	    junk = pcf_expand_parameter_value((VSTRING *) 0, pcf_cmd_mode,
+	    junk = pcf_expand_parameter_value(exp_buf, pcf_cmd_mode,
 					      DEF_MYNETWORKS_STYLE,
 					      (PCF_MASTER_ENT *) 0);
 	var_mynetworks_style = mystrdup(junk);
@@ -272,12 +284,13 @@ static const char *pcf_mynetworks(void)
     if (var_inet_protocols == 0) {
 	if ((pcf_cmd_mode & PCF_SHOW_DEFS)
 	    || (junk = mail_conf_lookup_eval(VAR_INET_PROTOCOLS)) == 0)
-	    junk = pcf_expand_parameter_value((VSTRING *) 0, pcf_cmd_mode,
+	    junk = pcf_expand_parameter_value(exp_buf, pcf_cmd_mode,
 					      DEF_INET_PROTOCOLS,
 					      (PCF_MASTER_ENT *) 0);
 	var_inet_protocols = mystrdup(junk);
 	(void) inet_proto_init(VAR_INET_PROTOCOLS, var_inet_protocols);
     }
+    vstring_free(exp_buf);
     return (networks = mystrdup(mynetworks()));
 }
 
@@ -447,6 +460,10 @@ void    pcf_register_builtin_parameters(const char *procname, pid_t pid)
     PCF_PARAM_TABLE_ENTER(pcf_param_table, pcf_adhoc_procname.name,
 			  PCF_PARAM_FLAG_BUILTIN | PCF_PARAM_FLAG_READONLY,
 		      (void *) &pcf_adhoc_procname, pcf_conv_str_parameter);
+    pcf_adhoc_servname.defval = mystrdup("");
+    PCF_PARAM_TABLE_ENTER(pcf_param_table, pcf_adhoc_servname.name,
+			  PCF_PARAM_FLAG_BUILTIN | PCF_PARAM_FLAG_READONLY,
+		      (void *) &pcf_adhoc_servname, pcf_conv_str_parameter);
     pcf_adhoc_pid.defval = pid;
     PCF_PARAM_TABLE_ENTER(pcf_param_table, pcf_adhoc_pid.name,
 			  PCF_PARAM_FLAG_BUILTIN | PCF_PARAM_FLAG_READONLY,

@@ -1,0 +1,22 @@
+==== no wildcard
+rcpt1@example1.com:example1.com -> channel1:nexthop1 
+rcpt1+ext1@example1.com:example1.com -> channel1:nexthop1 
+rcpt2@example2:example2 -> channel2:example2 
+rcpt@example3:example3 -> channel3:example3 
+==== with wildcard channel and nexthop
+rcpt1@example1.com:example1.com -> channel1:nexthop1 
+rcpt2@example2:example2 -> channel0:nexthop0 
+==== with wildcard channel only
+rcpt1@example1.com:example1.com -> channel1:nexthop1 
+rcpt2@example2:example2 -> channel0:example2 
+==== with wildcard nexthop only
+rcpt1@example1.com:example1.com -> channel1:nexthop1 
+rcpt2@example2:example2 -> DEFAULT:nexthop0 
+==== with wildcard empty fields.
+rcpt1@example1.com:example1.com -> channel1:nexthop1 
+rcpt2@example2:example2 -> DEFAULT:example2 
+=== subdomain test
+plain1+ext@other-example:other-example -> (not found)
+foo@example:example -> DEFAULT:example-result 
+foo@sub.example:sub.example -> DEFAULT:dot-example-result 
+foo@sub.sub.example:sub.sub.example -> DEFAULT:dot-example-result 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_parse.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: mac_parse.h,v 1.2.14.1 2023/12/25 12:55:31 martin Exp $	*/
 
 #ifndef _MAC_PARSE_H_INCLUDED_
 #define _MAC_PARSE_H_INCLUDED_
@@ -43,6 +43,11 @@ extern int WARN_UNUSED_RESULT mac_parse(const char *, MAC_PARSE_FN, void *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

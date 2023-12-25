@@ -7,7 +7,8 @@
 
 <title>Postfix Built-in Content Inspection</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -222,9 +223,9 @@ header/body checks for mail to some domains only</a>".  </p>
 
 <li> <p> Header/body checks do not decode message headers or message
 body content. For example, if text in the message body is BASE64
-encoded (<a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a>) then your regular expressions will have to match
+encoded (<a href="https://tools.ietf.org/html/rfc2045">RFC 2045</a>) then your regular expressions will have to match
 the BASE64 encoded form. Likewise, message headers with encoded
-non-ASCII characters (<a href="http://tools.ietf.org/html/rfc2047">RFC 2047</a>) need to be matched in their encoded
+non-ASCII characters (<a href="https://tools.ietf.org/html/rfc2047">RFC 2047</a>) need to be matched in their encoded
 form. </p>
 
 <li> <p> Header/body checks cannot filter on a combination of
@@ -458,8 +459,8 @@ of duplication. </p>
 Postfix versions do not support the <a href="postconf.5.html#receive_override_options">receive_override_options</a> feature.
 </p>
 
-<p> If you are MX service provider and want to apply disable
-head/body checks for some domains, you can configure ONE Postfix
+<p> If you are an MX service provider and want to enable header/body
+checks only for some domains, you can configure ONE Postfix
 instance with multiple SMTP server IP addresses in <a href="master.5.html">master.cf</a>. Each
 address provides a different service. </p>
 

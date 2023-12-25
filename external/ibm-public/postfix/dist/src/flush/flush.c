@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: flush.c,v 1.2.14.1 2023/12/25 12:54:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -55,7 +55,8 @@
 /*	talk to the network, and it does not talk to local users.
 /*	The fast flush server can run chrooted at fixed low privilege.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* BUGS
 /*	Fast flush logfiles are truncated only after a "send"
 /*	request, not when mail is actually delivered, and therefore can
@@ -116,8 +117,12 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
 /* FILES
 /*	/var/spool/postfix/flush, "fast flush" logfiles.
 /* SEE ALSO
@@ -126,6 +131,7 @@
 /*	postconf(5), configuration parameters
 /*	master(5), generic daemon options
 /*	master(8), process manager
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README FILES
 /* .ad
@@ -225,7 +231,7 @@ static DOMAIN_LIST *flush_domains;
   * Silly little macros.
   */
 #define STR(x)			vstring_str(x)
-#define STREQ(x,y)		((x) == (y) || strcmp(x,y) == 0)
+#define STREQ(x,y)		(STRREF(x) == STRREF(y) || strcmp(x,y) == 0)
 
  /*
   * Forward declarations resulting from breaking up routines according to
@@ -475,7 +481,7 @@ static int flush_one_file(const char *queue_id, VSTRING *queue_file,
 		 path, queue_name, MAIL_QUEUE_INCOMING);
 
     /*
-     * If we got here, we achieved something, so let's claim succes.
+     * If we got here, we achieved something, so let's claim success.
      */
     return (1);
 }
@@ -694,6 +700,14 @@ static int flush_refresh_service(int max_age)
 static int flush_request_receive(VSTREAM *client_stream, VSTRING *request)
 {
     int     count;
+
+    /*
+     * Announce the protocol.
+     */
+    attr_print(client_stream, ATTR_FLAG_NONE,
+	       SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_FLUSH),
+	       ATTR_TYPE_END);
+    (void) vstream_fflush(client_stream);
 
     /*
      * Kluge: choose the protocol depending on the request size.

@@ -65,6 +65,9 @@ something like:
         AUXLIBS="-L/usr/local/BerkeleyDB/lib -ldb"
     % make
 
+If your Berkeley DB shared library is in a directory that the RUN-TIME linker
+does not know about, add a "-Wl,-R,/path/to/directory" option after "-ldb".
+
 Solaris needs this:
 
     % make makefiles CCARGS="-DHAS_DB -I/usr/local/BerkeleyDB/include" \

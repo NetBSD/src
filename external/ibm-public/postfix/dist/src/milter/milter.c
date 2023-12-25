@@ -1,4 +1,4 @@
-/*	$NetBSD: milter.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: milter.c,v 1.2.14.1 2023/12/25 12:55:06 martin Exp $	*/
 
 /*++
 /* NAME
@@ -335,18 +335,21 @@ static ARGV *milter_macro_lookup(MILTERS *milters, const char *macro_names)
     VSTRING *canon_buf = vstring_alloc(20);
     const char *value;
     const char *name;
+    const char *cname;
 
     while ((name = mystrtok(&cp, CHARS_COMMA_SP)) != 0) {
 	if (msg_verbose)
 	    msg_info("%s: \"%s\"", myname, name);
 	if (*name != '{')			/* } */
-	    name = STR(vstring_sprintf(canon_buf, "{%s}", name));
-	if ((value = milters->mac_lookup(name, milters->mac_context)) != 0) {
+	    cname = STR(vstring_sprintf(canon_buf, "{%s}", name));
+	else
+	    cname = name;
+	if ((value = milters->mac_lookup(cname, milters->mac_context)) != 0) {
 	    if (msg_verbose)
 		msg_info("%s: result \"%s\"", myname, value);
 	    argv_add(argv, name, value, (char *) 0);
 	} else if (milters->macro_defaults != 0
-	     && (value = htable_find(milters->macro_defaults, name)) != 0) {
+	    && (value = htable_find(milters->macro_defaults, cname)) != 0) {
 	    if (msg_verbose)
 		msg_info("%s: using default \"%s\"", myname, value);
 	    argv_add(argv, name, value, (char *) 0);
@@ -416,6 +419,8 @@ const char *milter_conn_event(MILTERS *milters,
     if (msg_verbose)
 	msg_info("report connect to all milters");
     for (resp = 0, m = milters->milter_list; resp == 0 && m != 0; m = m->next) {
+	if (m->connect_on_demand != 0)
+	    m->connect_on_demand(m);
 	any_macros = MILTER_MACRO_EVAL(global_macros, m, milters, conn_macros);
 	resp = m->conn_event(m, client_name, client_addr, client_port,
 			     addr_family, any_macros);
@@ -617,14 +622,14 @@ void    milter_disc_event(MILTERS *milters)
   * names by skipping the redundant "milter_" prefix.
   */
 static ATTR_OVER_TIME time_table[] = {
-    7 + VAR_MILT_CONN_TIME, DEF_MILT_CONN_TIME, 0, 1, 0,
-    7 + VAR_MILT_CMD_TIME, DEF_MILT_CMD_TIME, 0, 1, 0,
-    7 + VAR_MILT_MSG_TIME, DEF_MILT_MSG_TIME, 0, 1, 0,
+    7 + (const char *) VAR_MILT_CONN_TIME, DEF_MILT_CONN_TIME, 0, 1, 0,
+    7 + (const char *) VAR_MILT_CMD_TIME, DEF_MILT_CMD_TIME, 0, 1, 0,
+    7 + (const char *) VAR_MILT_MSG_TIME, DEF_MILT_MSG_TIME, 0, 1, 0,
     0,
 };
 static ATTR_OVER_STR str_table[] = {
-    7 + VAR_MILT_PROTOCOL, 0, 1, 0,
-    7 + VAR_MILT_DEF_ACTION, 0, 1, 0,
+    7 + (const char *) VAR_MILT_PROTOCOL, 0, 1, 0,
+    7 + (const char *) VAR_MILT_DEF_ACTION, 0, 1, 0,
     0,
 };
 
@@ -795,7 +800,7 @@ int     milter_send(MILTERS *milters, VSTREAM *stream)
      */
     (void) attr_print(stream, ATTR_FLAG_MORE,
 		      SEND_ATTR_FUNC(milter_macros_print,
-				     (void *) milters->macros),
+				     (const void *) milters->macros),
 		      ATTR_TYPE_END);
 
     /*

@@ -1,0 +1,17 @@
+echo -n this-is-file1 > postmap-file-1
+echo -n this-is-file2 > postmap-file-2
+echo 'file-1 postmap-file-1' | ${VALGRIND} ./postmap -iF file_test_map || exit 1
+echo 'file-2 postmap-file-2' | ${VALGRIND} ./postmap -iF file_test_map || exit 1
+echo 'file-3 postmap-file-3' | ${VALGRIND} ./postmap -iF file_test_map || exit 1
+echo 'entry-4 postmap-entry-4' | ${VALGRIND} ./postmap -i file_test_map || exit 1
+${VALGRIND} ./postmap -s file_test_map | LC_ALL=C sort
+${VALGRIND} ./postmap -q file-1 file_test_map
+${VALGRIND} ./postmap -q file-2 file_test_map
+${VALGRIND} ./postmap -q file-3 file_test_map
+${VALGRIND} ./postmap -q entry-4 file_test_map
+${VALGRIND} ./postmap -Fs file_test_map | LC_ALL=C sort
+${VALGRIND} ./postmap -Fq file-1 file_test_map
+${VALGRIND} ./postmap -Fq file-2 file_test_map
+${VALGRIND} ./postmap -Fq file-3 file_test_map
+${VALGRIND} ./postmap -Fq entry-4 file_test_map
+exit 0

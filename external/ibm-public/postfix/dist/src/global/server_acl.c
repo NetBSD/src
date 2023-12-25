@@ -1,4 +1,4 @@
-/*	$NetBSD: server_acl.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: server_acl.c,v 1.2.14.1 2023/12/25 12:55:04 martin Exp $	*/
 
 /*++
 /* NAME
@@ -21,7 +21,7 @@
 /*	SERVER_ACL *intern_acl;
 /*	const char *param_name;
 /* DESCRIPTION
-/*	This module implements a permanent black/whitelist that
+/*	This module implements a permanent allow/denylist that
 /*	is meant to be evaluated immediately after a client connects
 /*	to a server.
 /*
@@ -61,6 +61,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -237,9 +242,7 @@ int     server_acl_eval(const char *client_addr, SERVER_ACL * intern_acl,
 #include <vstring_vstream.h>
 #include <name_code.h>
 #include <split_at.h>
-
-char   *var_par_dom_match = DEF_PAR_DOM_MATCH;
-char   *var_mynetworks = "";
+    
 char   *var_server_acl = "";
 
 #define UPDATE_VAR(s,v) do { if (*(s)) myfree(s); (s) = mystrdup(v); } while (0)
@@ -260,6 +263,12 @@ int     main(void)
 	SERVER_ACL_NAME_DUNNO, SERVER_ACL_ACT_DUNNO,
 	0,
     };
+
+    /*
+     * No static initializer because these are owned by a library.
+     */
+    var_par_dom_match = DEF_PAR_DOM_MATCH;
+    var_mynetworks = "";
 
 #define VAR_SERVER_ACL "server_acl"
 

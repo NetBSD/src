@@ -1,0 +1,23 @@
+#verbose on
+open test-queue-file17g.tmp
+#
+# Delete a recipient. This leaves a deleted recipient in the queue
+# file. Then add the recipient back.
+#
+enable_original_recipient 0
+enable_original_recipient
+
+del_rcpt user@example.com
+add_rcpt user@example.com
+
+# Adding the recipient another time should be a NOOP.
+add_rcpt user@example.com
+
+# Deleting the recipient should remove it from the duplicate filter.
+# This leaves a deleted recipient in the queue file.
+# Therefore adding the recipient will not be a NOOP.
+
+del_rcpt user@example.com
+add_rcpt user@example.com
+
+close

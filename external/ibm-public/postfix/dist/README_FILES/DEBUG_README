@@ -33,14 +33,20 @@ follows:
 
 LLooookk ffoorr oobbvviioouuss ssiiggnnss ooff ttrroouubbllee
 
-Postfix logs all failed and successful deliveries to a logfile. The file is
-usually called /var/log/maillog or /var/log/mail; the exact pathname is defined
-in the /etc/syslog.conf file.
+Postfix logs all failed and successful deliveries to a logfile.
+
+  * When Postfix uses syslog logging (the default), the file is usually called
+    /var/log/maillog, /var/log/mail, or something similar; the exact pathname
+    is configured in a file called /etc/syslog.conf, /etc/rsyslog.conf, or
+    something similar.
+
+  * When Postfix uses its own logging system (see MAILLOG_README), the location
+    of the logfile is configured with the Postfix maillog_file parameter.
 
 When Postfix does not receive or deliver mail, the first order of business is
 to look for errors that prevent Postfix from working properly:
 
-    % eeggrreepp ''((wwaarrnniinngg||eerrrroorr||ffaattaall||ppaanniicc))::'' //ssoommee//lloogg//ffiillee || mmoorree
+    % ggrreepp --EE ''((wwaarrnniinngg||eerrrroorr||ffaattaall||ppaanniicc))::'' //ssoommee//lloogg//ffiillee || mmoorree
 
 Note: the most important message is near the BEGINNING of the output. Error
 messages that come later are less useful.
@@ -380,12 +386,12 @@ When reporting a problem, be sure to include the following information.
 
       o "ppoossttccoonnff --MMff" (Postfix 2.9 or later).
 
-  * Better, provide output from the ppoossttffiinnggeerr tool. This can be found at http:
-    //ftp.wl0.org/SOURCES/postfinger.
+  * Better, provide output from the ppoossttffiinnggeerr tool. This can be found at
+    https://github.com/ford--prefect/postfinger.
 
   * If the problem is SASL related, consider including the output from the
-    ssaassllffiinnggeerr tool. This can be found at http://postfix.state-of-mind.de/
-    patrick.koetter/saslfinger/.
+    ssaassllffiinnggeerr tool. This can be found at https://packages.debian.org/
+    search?keywords=sasl2-bin.
 
   * If the problem is about too much mail in the queue, consider including
     output from the qqsshhaappee tool, as described in the QSHAPE_README file.

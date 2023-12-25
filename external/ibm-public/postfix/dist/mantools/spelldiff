@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Usage: spelldiff baseline files...
+
+case $# in
+0|1) echo Usage: $0 baseline files... 1>&2; exit 1;;
+esac
+
+baseline="$1"; shift
+
+for f
+do
+    if [ -f "${baseline}/${f}" ]
+    then
+	diff -U0 "${baseline}/${f}" "${f}" | sed -n '
+	    /^+/{
+		s/.//
+		p
+	    }'
+    else
+	cat "${f}"
+    fi
+done

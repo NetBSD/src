@@ -1,0 +1,6 @@
+quote a@b@c@d
+quote_with_flags 8bitclean|bare_localpart a@b@c@d
+unquote "a@b@c"@d
+unquote "a@b@c"
+unquote "a@b@c"@d@e
+quote <>

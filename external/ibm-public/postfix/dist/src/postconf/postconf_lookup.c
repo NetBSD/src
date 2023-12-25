@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_lookup.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: postconf_lookup.c,v 1.2.14.1 2023/12/25 12:55:08 martin Exp $	*/
 
 /*++
 /* NAME
@@ -43,7 +43,7 @@
 /*
 /*	Arguments:
 /* .IP buf
-/*	Null buffer pointer, or pointer to user-supplied buffer.
+/*	Pointer to user-supplied buffer; must not be null.
 /* .IP mode
 /*	Bit-wise OR of zero or one of the following (other flags
 /*	are ignored):
@@ -75,6 +75,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -109,14 +114,17 @@ const char *pcf_lookup_parameter_value(int mode, const char *name,
 {
     const char *value = 0;
 
+#define LOOKUP(dict, name) ((dict) ? dict_get((dict), (name)) : 0)
+
     /*
      * Local name=value entries in master.cf take precedence over global
      * name=value entries in main.cf. Built-in defaults have the lowest
      * precedence.
      */
     if ((mode & PCF_SHOW_DEFS) != 0
-	|| ((local_scope == 0 || local_scope->all_params == 0
-	     || (value = dict_get(local_scope->all_params, name)) == 0)
+	|| ((local_scope == 0
+	     || ((value = LOOKUP(local_scope->ro_params, name)) == 0
+		 && (value = LOOKUP(local_scope->all_params, name)) == 0))
 	    && (value = dict_lookup(CONFIG_DICT, name)) == 0
 	    && (mode & PCF_SHOW_NONDEF) == 0)) {
 	if (node != 0 || (node = PCF_PARAM_TABLE_FIND(pcf_param_table, name)) != 0)
@@ -152,18 +160,14 @@ char   *pcf_expand_parameter_value(VSTRING *buf, int mode, const char *value,
 				           PCF_MASTER_ENT *local_scope)
 {
     const char *myname = "pcf_expand_parameter_value";
-    static VSTRING *local_buf;
     int     status;
     PCF_EVAL_CTX eval_ctx;
 
     /*
-     * Initialize.
+     * Sanity check.
      */
-    if (buf == 0) {
-	if (local_buf == 0)
-	    local_buf = vstring_alloc(10);
-	buf = local_buf;
-    }
+    if (buf == 0)
+	msg_panic("%s: null buffer pointer", myname);
 
     /*
      * Expand macros recursively.

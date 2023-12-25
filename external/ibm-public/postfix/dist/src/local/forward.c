@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.2.14.1 2023/12/25 12:55:05 martin Exp $	*/
 
 /*++
 /* NAME
@@ -50,6 +50,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -143,6 +148,7 @@ static FORWARD_INFO *forward_open(DELIVER_REQUEST *request, const char *sender)
     }
     close_on_exec(vstream_fileno(cleanup), CLOSE_ON_EXEC);
     if (attr_scan(cleanup, ATTR_FLAG_STRICT,
+		  RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_CLEANUP),
 		  RECV_ATTR_STR(MAIL_ATTR_QUEUEID, buffer),
 		  ATTR_TYPE_END) != 1) {
 	vstream_fclose(cleanup);

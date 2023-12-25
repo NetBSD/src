@@ -1,0 +1,2 @@
+./cleanup_milter: enable_original_recipient: 0
+./cleanup_milter: flags = enable_header_body_filter enable_milters

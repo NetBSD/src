@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - smtp-sink(1) </title>
 </head> <body> <pre>
 SMTP-SINK(1)                                                      SMTP-SINK(1)
@@ -213,8 +214,8 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
               Listen on the UNIX-domain socket at <i>pathname</i>.
 
        <i>backlog</i>
-              The  maximum length the queue of pending connections, as defined
-              by the <b>listen</b>(2) system call.
+              The  maximum  length  of  the  queue  of pending connections, as
+              defined by the <b>listen</b>(2) system call.
 
 <b>DUMP FILE FORMAT</b>
        Each dumped message contains a sequence of text lines, terminated  with
@@ -269,7 +270,7 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
                      dom portion of the per-message capture file name.
 
               <i>time-stamp</i>
-                     A time stamp as defined in <a href="http://tools.ietf.org/html/rfc2822">RFC 2822</a>.
+                     A time stamp as defined in <a href="https://tools.ietf.org/html/rfc2822">RFC 2822</a>.
 
 <b>SEE ALSO</b>
        <a href="smtp-source.1.html">smtp-source(1)</a>, SMTP/LMTP message generator

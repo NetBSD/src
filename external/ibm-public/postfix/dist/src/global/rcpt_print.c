@@ -1,4 +1,4 @@
-/*	$NetBSD: rcpt_print.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: rcpt_print.c,v 1.2.14.1 2023/12/25 12:55:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -9,7 +9,7 @@
 /*	#include <rcpt_print.h>
 /*
 /*	int     rcpt_print(print_fn, stream, flags, ptr)
-/*	ATTR_PRINT_MASTER_FN print_fn;
+/*	ATTR_PRINT_COMMON_FN print_fn;
 /*	VSTREAM *stream;
 /*	int	flags;
 /*	void	*ptr;
@@ -19,7 +19,7 @@
 /*	routine. rcpt_print() is meant to be passed as a call-back
 /*	to attr_print(), thusly:
 /*
-/*	... SEND_ATTR_FUNC(rcpt_print, (void *) recipient), ...
+/*	... SEND_ATTR_FUNC(rcpt_print, (const void *) recipient), ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE
@@ -32,6 +32,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -50,8 +55,8 @@
 
 /* rcpt_print - write recipient to stream */
 
-int     rcpt_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
-		           int flags, void *ptr)
+int     rcpt_print(ATTR_PRINT_COMMON_FN print_fn, VSTREAM *fp,
+		           int flags, const void *ptr)
 {
     RECIPIENT *rcpt = (RECIPIENT *) ptr;
     int     ret;

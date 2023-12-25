@@ -23,8 +23,11 @@ sqlite3 library, plus the name of the standard POSIX thread library (pthread).
 For example:
 
     make -f Makefile.init makefiles \
-         'CCARGS=-DHAS_SQLITE -I/usr/local/include' \
-         'AUXLIBS_SQLITE=-L/usr/local/lib -lsqlite3 -lpthread'
+         "CCARGS=-DHAS_SQLITE -I/usr/local/include" \
+         "AUXLIBS_SQLITE=-L/usr/local/lib -lsqlite3 -lpthread"
+
+If your SQLite shared library is in a directory that the RUN-TIME linker does
+not know about, add a "-Wl,-R,/path/to/directory" option after "-lsqlite3".
 
 Postfix versions before 3.0 use AUXLIBS instead of AUXLIBS_SQLITE. With Postfix
 3.0 and later, the old AUXLIBS variable still supports building a statically-
@@ -61,12 +64,6 @@ dbpath = /some/path/to/sqlite_database
 
 # See sqlite_table(5) for details.
 query = SELECT forw_addr FROM mxaliases WHERE alias='%s' AND status='paid'
-
-AAddddiittiioonnaall nnootteess
-
-The SQLite configuration interface setup allows for multiple sqlite databases:
-you can use one for a virtual table, one for an access table, and one for an
-aliases table if you want.
 
 CCrreeddiittss
 

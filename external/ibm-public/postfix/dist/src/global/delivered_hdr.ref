@@ -1,0 +1,3 @@
+./delivered_hdr: test case: L >Delivered-To: one<: PASS (expected: MATCH)
+./delivered_hdr: test case: N >Delivered-To: two<: PASS (expected: NO MATCH)
+./delivered_hdr: test case: N >Delivered-To: three<: PASS (expected: MATCH)

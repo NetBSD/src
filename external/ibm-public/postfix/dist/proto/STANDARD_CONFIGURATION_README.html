@@ -7,7 +7,8 @@
 
 <title>Postfix Standard Configuration Examples</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -168,7 +169,7 @@ at their default settings. </p>
 
 <p> First we present the non-mailhost configuration, because it is
 the simpler one. This machine sends mail as "user@example.com" and
-is final destination for "user@hostname.example.com". </p>
+is the final destination for "user@hostname.example.com". </p>
 
 <blockquote>
 <pre>
@@ -198,7 +199,7 @@ a firewall</a>". </p>
 </ul>
 
 <p> Next we present the mailhost configuration.  This machine sends
-mail as "user@example.com" and is final destination for
+mail as "user@example.com" and is the final destination for
 "user@hostname.example.com" as well as "user@example.com". </p>
 
 <blockquote>
@@ -341,7 +342,7 @@ All the mail to these two accounts is forwarded to an inside address.
 only address literals matching $inet_interfaces or $proxy_interfaces
 are deemed local.  So "localpart@[a.d.d.r]" can be matched as simply
 "localpart" in canonical(5) and virtual(5). This avoids the need to
-specify firewall IP addresses into Postfix configuration files. </p>
+specify firewall IP addresses in Postfix configuration files. </p>
 
 </ul>
 
@@ -377,7 +378,7 @@ is the real purpose of the firewall email function. </p>
 17      . . .
 18 
 19 /etc/postfix/transport:
-20     example.com   smtp:[inside-gateway.example.com]
+20     example.com   relay:[inside-gateway.example.com]
 </pre>
 </blockquote>
 
@@ -399,7 +400,12 @@ wild-card in the relay_recipients table. </p>
 
 <li> <p> Lines 12, 19-20: Route mail for "example.com" to the inside
 gateway machine. The <tt>[]</tt> forces Postfix to do no MX lookup.
-</p>
+This uses the "relay" delivery transport (a copy of the default
+"smtp" delivery transport) to forward inbound mail. This can improve
+performance of deliveries to internal domains because they will
+compete for SMTP clients from the "relay" delivery transport, instead
+of competing with other SMTP deliveries for SMTP clients from the
+default "smtp" delivery transport. </p>
 
 </ul>
 
@@ -478,7 +484,7 @@ mail_version</b>". </p>
 
 <p> The following example presents additional configuration. You
 need to combine this with basic configuration information as
-discussed the first half of this document. </p>
+discussed in the first half of this document. </p>
 
 <blockquote>
 <pre>
@@ -526,7 +532,7 @@ you edit the transport table. </p>
 <h2><a name="backup">Configuring Postfix as primary or backup MX host for a remote site</a></h2>
 
 <p> This section presents additional configuration. You need to
-combine this with basic configuration information as discussed the
+combine this with basic configuration information as discussed in the
 first half of this document. </p>
 
 <p> When your system is SECONDARY MX host for a remote site this
@@ -642,7 +648,7 @@ of the time. For dialup connections that are up 24x7, see the <a
 href="#local_network">local area network</a> section above.  </p>
 
 <p> This section presents additional configuration. You need to
-combine this with basic configuration information as discussed the
+combine this with basic configuration information as discussed in the
 first half of this document. </p>
 
 <p> If you do not have your own hostname and IP address (usually
@@ -749,7 +755,7 @@ send mail between users on the same machine. </p>
 
 <p> The following example presents additional configuration. You
 need to combine this with basic configuration information as
-discussed the first half of this document. </p>
+discussed in the first half of this document. </p>
 
 <blockquote>
 <pre>
@@ -797,7 +803,7 @@ address of their own.</p>
 
 <p> The following example presents additional configuration. You
 need to combine this with basic configuration information as
-discussed the first half of this document. </p>
+discussed in the first half of this document. </p>
 
 <blockquote>
 <pre>

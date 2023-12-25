@@ -1,4 +1,4 @@
-/*	$NetBSD: base32_code.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: base32_code.h,v 1.2.14.1 2023/12/25 12:55:24 martin Exp $	*/
 
 #ifndef _BASE32_CODE_H_INCLUDED_
 #define _BASE32_CODE_H_INCLUDED_
@@ -33,6 +33,11 @@ extern VSTRING *WARN_UNUSED_RESULT base32_decode(VSTRING *, const char *, ssize_
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

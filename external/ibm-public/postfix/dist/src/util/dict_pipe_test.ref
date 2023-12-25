@@ -1,0 +1,14 @@
++ ./dict_open pipemap:{inline:{k1=v1,k2=v2},inline:{v2=v3}} read
+owner=trusted (uid=2147483647)
+> get k0
+k0: not found
+> get k1
+k1: not found
+> get k2
+k2=v3
++ ./dict_open pipemap:{inline:{k1=v1},fail:fail} read
+owner=trusted (uid=2147483647)
+> get k0
+k0: not found
+> get k1
+k1: error

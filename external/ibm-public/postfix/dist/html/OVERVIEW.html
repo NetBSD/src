@@ -7,7 +7,8 @@
 
 <title>Postfix Architecture Overview </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -561,21 +562,59 @@ about this feature is in the <a href="CONNECTION_CACHE_README.html">CONNECTION_C
 
 <tr> <td> </td> <td> <tt> /-- </tt> </td> <td align="center"
 colspan="3" bgcolor="#f0f0ff"> <a href="smtp.8.html">smtp(8)</a> </td> <td colspan="2"> <tt>
---&gt; </tt> Internet </td> </tr>
- 
+--&gt; </tt> </td> <td> Internet </td> </tr>
+
 <tr> <td align="center" bgcolor="#f0f0ff"> <a href="qmgr.8.html">qmgr(8)</a> </td> <td> </td>
-<td align="center" rowspan="3"> &nbsp; </td> <td align="center"
-rowspan="3"><tt>|<br>|<br>|<br>|<br>v</tt></td> <td> &nbsp; </td>
+<td align="center" rowspan="3"><tt>|<br>|<br>|<br>|<br>v</tt></td>
 </tr>
  
-<tr> <td> </td> <td> <tt> \-- </tt> </td> <td align="center"
-colspan="2" bgcolor="#f0f0ff"> <a href="smtp.8.html">smtp(8)</a> </td> <td align="left"> <tt>
---&gt; </tt> Internet </td> </tr>
+<tr> <td> &nbsp; </td> <td> <tt> \-- </tt> </td> <td align="center"
+colspan="4" bgcolor="#f0f0ff"> <a href="smtp.8.html">smtp(8)</a> </td> <td align="left">
+&nbsp; </td> </tr>
+
+<tr> <td colspan="2"> &nbsp; </td> <td> </td> <td
+align="center"><tt>^<br>|</tt></td> </tr>
+
+<tr> <td colspan="2"> </td> <td align="center" colspan="3"
+bgcolor="#f0f0ff"> <a href="scache.8.html">scache(8)</a> </td> </tr>
+
+</table>
+
+<p> A Postfix <a href="smtp.8.html">smtp(8)</a> client can reuse a TLS-encrypted connection
+(with "<a href="postconf.5.html#smtp_tls_connection_reuse">smtp_tls_connection_reuse</a> = yes"). This can greatly reduce
+the overhead of connection setup and improves message delivery
+rates. After a Postfix <a href="smtp.8.html">smtp(8)</a> client connects to a remote SMTP
+server and sends plaintext EHLO and STARTTLS commands, the <a href="smtp.8.html">smtp(8)</a>
+client inserts a <a href="tlsproxy.8.html">tlsproxy(8)</a> process into the connection as shown
+below. </p>
+
+<p> After the mail transaction completes, the Postfix <a href="smtp.8.html">smtp(8)</a> client
+gives the <a href="smtp.8.html">smtp(8)</a>-to-<a href="tlsproxy.8.html">tlsproxy(8)</a> connection to the <a href="scache.8.html">scache(8)</a>
+server, which keeps the connection open for a limited amount of
+time. The <a href="smtp.8.html">smtp(8)</a> client continues with some other mail delivery
+request. Meanwhile, any Postfix <a href="smtp.8.html">smtp(8)</a> client can ask the <a href="scache.8.html">scache(8)</a>
+server for that cached connection and reuse it for mail delivery.
+</p>
+
+<table>
+
+<tr> <td> </td> <td> <tt> /-- </tt> </td> <td align="center"
+colspan="3" bgcolor="#f0f0ff"> <a href="smtp.8.html">smtp(8)</a> </td> <td colspan="2"> <tt>
+--&gt; </tt> </td> <td align="center"bgcolor="#f0f0ff"> <a href="tlsproxy.8.html">tlsproxy(8)</a>
+</td> <td> <tt> --&gt; </tt> </td> <td> Internet </td> </tr>
+
+<tr> <td align="center" bgcolor="#f0f0ff"> <a href="qmgr.8.html">qmgr(8)</a> </td> <td> </td>
+<td align="center" rowspan="3"><tt>|<br>|<br>|<br>|<br>v</tt></td>
+</tr>
  
-<tr> <td colspan="3"> </td> <td align="center"><tt>^<br>|</tt></td>
-<td> &nbsp; </td> </tr>
- 
-<tr> <td colspan="3"> </td> <td align="center" colspan="3"
+<tr> <td> &nbsp; </td> <td> <tt> \-- </tt> </td> <td align="center"
+colspan="4" bgcolor="#f0f0ff"> <a href="smtp.8.html">smtp(8)</a> </td> <td align="left">
+&nbsp; </td> </tr>
+
+<tr> <td colspan="2"> &nbsp; </td> <td> </td> <td
+align="center"><tt>^<br>|</tt></td> </tr>
+
+<tr> <td colspan="2"> </td> <td align="center" colspan="3"
 bgcolor="#f0f0ff"> <a href="scache.8.html">scache(8)</a> </td> </tr>
 
 </table>
@@ -737,49 +776,93 @@ those numbers were 92% and 95%, respectively.  While <a href="postscreen.8.html"
 keeps the zombies away, more <a href="smtpd.8.html">smtpd(8)</a> processes remain available
 for legitimate clients.  </p>
 
-<p> <a href="postscreen.8.html">postscreen(8)</a> maintains a temporary whitelist for clients that
-pass its tests; by allowing whitelisted clients to skip tests,
+<p> <a href="postscreen.8.html">postscreen(8)</a> maintains a temporary allowlist for clients that
+pass its tests; by allowing allowlisted clients to skip tests,
 <a href="postscreen.8.html">postscreen(8)</a> minimizes its impact on legitimate email traffic.
 </p>
 
 <p> The <a href="postscreen.8.html">postscreen(8)</a> server is available with Postfix 2.8 and
 later. To keep the implementation simple, <a href="postscreen.8.html">postscreen(8)</a> delegates
-DNS white/blacklist lookups to <a href="dnsblog.8.html">dnsblog(8)</a> server processes, and
+DNS allow/denylist lookups to <a href="dnsblog.8.html">dnsblog(8)</a> server processes, and
 delegates TLS encryption/decryption to <a href="tlsproxy.8.html">tlsproxy(8)</a> server processes.
-This delegation is invisible to the remote SMTP client, and is not
-shown in the diagram below.  </p>
+This delegation is invisible to the remote SMTP client. </p>
 
 <table>
 
-<tr> <td> zombie </td> </tr>
+<tr> <td colspan="2"> </td> <td align="center"> zombie </td> </tr>
 
-<tr> <td>  </td> <td align="left"> <tt> \ </tt> </td> </tr>
+<tr> <td colspan="3">  </td> <td align="left"> <tt> \ </tt> </td> </tr>
 
-<tr> <td> zombie </td> <td align="left"> <tt> - </tt> </td> <td>
+<tr> <td> zombie </td> <td> <tt> - </tt> </td> <td bgcolor="#f0f0ff" align="center"> <a href="tlsproxy.8.html">tlsproxy(8)</a> </td> <td align="left"> <tt> - </tt> </td> <td>
 </td> <td>  </td> <td>  </td> <td align="right"> <tt> - </tt> </td>
 <td bgcolor="#f0f0ff" align="center"> <a href="smtpd.8.html">smtpd(8)</a> </td> </tr>
 
-<tr> <td>  </td> <td align="right"> <tt> \ </tt> </td> <td> </td>
+<tr> <td colspan="3">  </td> <td align="right"> <tt> \ </tt> </td> <td> </td>
 <td align="left"> <tt> / </tt> </td> </tr>
 
-<tr> <td bgcolor="#f0f0ff" align="center"> other </td> <td> <tt>
+<tr> <td colspan="2"> </td> <td bgcolor="#f0f0ff" align="center"> other </td> <td> <tt>
 --- </tt> </td> <td bgcolor="#f0f0ff" align="center" valign="middle">
 <a href="postscreen.8.html">postscreen(8)</a> </td> </tr>
 
-<tr> <td>  </td> <td align="right"> <tt> / </tt> </td> <td> </td>
+<tr> <td colspan="3">  </td> <td align="right"> <tt> / </tt> </td> <td> </td>
 <td align="right"> <tt> \ </tt> </td> </tr>
 
-<tr> <td bgcolor="#f0f0ff" align="center"> other </td> <td align="left">
+<tr> <td colspan="2"> </td> <td bgcolor="#f0f0ff" align="center"> other </td> <td align="left">
 <tt> - </tt> </td> <td> </td> <td>  </td> <td>  </td> <td align="right">
 <tt> - </tt> </td> <td bgcolor="#f0f0ff" align="center"> <a href="smtpd.8.html">smtpd(8)</a>
 </td> </tr>
 
-<tr> <td>  </td> <td align="left"> <tt> / </tt> </td> </tr>
+<tr> <td colspan="3">  </td> <td align="left"> <tt> / </tt> </td> </tr>
 
-<tr> <td> zombie </td> </tr>
-
+<tr> <td colspan="2"> </td> <td align="center"> zombie </td> </tr>
 
 </table>
+
+<li> <p>The <a href="postlogd.8.html">postlogd(8)</a> server provides an alternative to syslog
+logging, which remains the default. This feature is available with
+Postfix version 3.4 or later, and supports the following modes:
+</p>
+
+
+<ul>
+
+<li> <p>Logging to file, which addresses a usability problem with
+MacOS, and eliminates information loss caused by systemd rate limits.
+</p>
+
+<table>
+
+<tr> <td bgcolor="#f0f0ff" rowspan="3" valign="middle" align="center">
+commands<br>or daemons</td> <td colspan="4"> &nbsp; </td> </tr>
+
+<tr> <td colspan="2"> <td> <tt> -&gt; </tt> </td> <td bgcolor="#f0f0ff">
+<a href="postlogd.8.html">postlogd(8)</a> </td> <td> <tt> -&gt; </tt> </td> <td> /path/to/file
+</td> </tr>
+
+<tr> <td colspan=6> &nbsp; </td> </tr>
+
+</table>
+
+<li> <p>Logging to stdout, which eliminates a syslog dependency
+when Postfix runs inside a container. </p>
+
+<table>
+
+<tr> <td bgcolor="#f0f0ff" rowspan="3" valign="middle" align="center">
+commands<br>or daemons</td> <td colspan="4"> &nbsp; </td> <td
+rowspan="3" align="center"> stdout inherited<br>from "postfix
+start-fg" </td> </tr>
+
+<tr> <td colspan="2"> <tt> -&gt; </tt> </td> <td bgcolor="#f0f0ff">
+<a href="postlogd.8.html">postlogd(8)</a> </td> <td> <tt> -&gt; </tt> </td> </tr>
+
+<tr> <td colspan=5> &nbsp; </td> </tr>
+
+</table>
+
+</ul>
+
+<p> See <a href="MAILLOG_README.html">MAILLOG_README</a> for details and limitations. </p>
 
 </ul>
 

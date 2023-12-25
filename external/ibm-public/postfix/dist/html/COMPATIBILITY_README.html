@@ -7,7 +7,8 @@
 
 <title>Postfix Backwards-Compatibility Safety Net</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -48,9 +49,9 @@ continuity of service.  Based on this logging the system administrator
 can decide if any backwards-compatible settings need to be made
 permanent in main.cf or master.cf, before <a href="#turnoff">turning
 off the backwards-compatibility safety net</a> as described at the
-end of this document.  </p>
+end of this document. </p>
 
-<p> The following messages may be logged: </p>
+<p> Logged with <a href="postconf.5.html#compatibility_level">compatibility_level</a> &lt; 1: </p>
 
 <ul>
 
@@ -59,6 +60,15 @@ default setting append_dot_mydomain=yes </a> </p>
 
 <li> <p> <a href="#chroot"> Using backwards-compatible default setting
 chroot=y</a> </p>
+
+</ul>
+
+<p> Logged with <a href="postconf.5.html#compatibility_level">compatibility_level</a> &lt; 2: </p>
+
+<ul>
+
+<li><p> <a href="#relay_restrictions"> Using backwards-compatible
+default setting "smtpd_relay_restrictions = (empty)"</a> </p>
 
 <li> <p> <a href="#mynetworks_style"> Using backwards-compatible
 default setting mynetworks_style=subnet </a> </p>
@@ -71,6 +81,27 @@ default setting smtputf8_enable=no</a> </p>
 
 </ul>
 
+<p> Logged with <a href="postconf.5.html#compatibility_level">compatibility_level</a> &lt; 3.6: </p>
+
+<ul>
+
+<li> <p> <a href="#smtpd_digest"> Using backwards-compatible
+default setting smtpd_tls_fingerprint_digest=md5</a> </p>
+
+<li> <p> <a href="#smtp_digest"> Using backwards-compatible
+default setting smtp_tls_fingerprint_digest=md5</a> </p>
+
+<li> <p> <a href="#smtp_digest"> Using backwards-compatible
+default setting lmtp_tls_fingerprint_digest=md5</a> </p>
+
+<li> <p> <a href="#relay_before_rcpt"> Using backwards-compatible
+default setting smtpd_relay_before_recipient_restrictions=no</a> </p>
+
+<li> <p> <a href="#respectful_logging"> Using backwards-compatible
+default setting respectful_logging=no</a> </p>
+
+</ul>
+
 <p> If such a message is logged in the context of a legitimate
 request, the system administrator should make the backwards-compatible
 setting permanent in <a href="postconf.5.html">main.cf</a> or <a href="master.5.html">master.cf</a>, as detailed in the
@@ -79,15 +110,19 @@ sections that follow. </p>
 <p> When no more backwards-compatible settings need to be made
 permanent, the system administrator should <a href="#turnoff">turn
 off the backwards-compatibility safety net</a> as described at the
-end of this document.  </p>
+end of this document. </p>
 
 <h2> <a name="append_dot_mydomain"> Using backwards-compatible default
 setting append_dot_mydomain=yes</a> </h2>
 
 <p> The <a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a> default value has changed from "yes"
-to "no". As long as the <a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a> parameter is left at
-its implicit default value, and the backwards-compatible default
-setting is turned on, Postfix may log one of the following messages:</p>
+to "no". This could result in unexpected non-delivery of email after
+Postfix is updated from an older version. The backwards-compatibility
+safety net is designed to prevent such surprises. </p>
+
+<p> As long as the <a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a> parameter is left at
+its implicit default value, and the <a href="postconf.5.html#compatibility_level">compatibility_level</a> setting is
+less than 1, Postfix may log one of the following messages:</p>
 
 <ul>
 
@@ -136,9 +171,16 @@ in <a href="postconf.5.html">main.cf</a>: </p>
 setting chroot=y</a> </h2>
 
 <p> The <a href="master.5.html">master.cf</a> chroot default value has changed from "y" (yes)
-to "n" (no). As long as a <a href="master.5.html">master.cf</a> chroot field is left at its
-implicit default value, and the backwards-compatible default setting
-is turned on, Postfix may log the following message while it
+to "n" (no). The new default avoids the need for copies of system
+files under the Postfix queue directory. However, sites with strict
+security requirements may want to keep the chroot feature enabled
+after updating Postfix from an older version. The backwards-compatibility
+safety net is designed allow the administrator to choose if they
+want to keep the old behavior. </p>
+
+<p> As long as a <a href="master.5.html">master.cf</a> chroot field is left at its
+implicit default value, and the <a href="postconf.5.html#compatibility_level">compatibility_level</a> setting
+is less than 1, Postfix may log the following message while it
 reads the <a href="master.5.html">master.cf</a> file: </p>
 
 <blockquote>
@@ -160,15 +202,58 @@ setting for the "smtp inet" service: </p>
 </pre>
 </blockquote>
 
+<h2> <a name="relay_restrictions"> Using backwards-compatible default
+setting smtpd_relay_restrictions = (empty)</a> </h2>
+
+<p> The <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> feature was introduced with Postfix
+version 2.10, as a safety mechanism for configuration errors in
+<a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> that could make Postfix an open relay.
+</p>
+
+<p> The <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> implicit default setting forbids
+mail to remote destinations from clients that don't match
+<a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a> or <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>. This could result
+in unexpected 'Relay access denied' errors after Postfix is updated
+from an older Postfix version. The backwards-compatibility safety
+net is designed to prevent such surprises. </p>
+
+<p> When the <a href="postconf.5.html#compatibility_level">compatibility_level</a> less than 1, and the
+<a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> parameter is left at its implicit default
+setting, Postfix may log the following message: </p>
+
+<blockquote>
+<pre>
+postfix/smtpd[38463]: using backwards-compatible default setting
+    "<a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> = (empty)" to avoid "Relay access
+    denied" error for recipient "user@example.com" from client
+    "host.example.net[10.0.0.2]"
+</pre>
+</blockquote>
+
+<p> If this request should not be blocked, then the system
+administrator should make the backwards-compatible setting
+"<a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>=" (i.e. empty) permanent in <a href="postconf.5.html">main.cf</a>:
+
+<blockquote>
+<pre>
+# <b>postconf <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>=</b>
+# <b>postfix reload</b>
+</pre>
+</blockquote>
+
 <h2> <a name="mynetworks_style"> Using backwards-compatible default
 setting mynetworks_style=subnet</a> </h2>
 
 <p> The <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> default value has changed from "subnet"
 to "host". This parameter is used to implement the "<a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>"
-feature. As long as the <a href="postconf.5.html#mynetworks">mynetworks</a> and <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> parameters
-are left at their implicit default values, and the backwards-compatible
-default setting is turned on, the Postfix SMTP server may log one
-of the following messages: </p>
+feature. The change could cause unexpected 'access denied' errors after
+Postfix is updated from an older version. The backwards-compatibility
+safety net is designed to prevent such surprises. </p>
+
+<p> As long as the <a href="postconf.5.html#mynetworks">mynetworks</a> and <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> parameters are
+left at their implicit default values, and the <a href="postconf.5.html#compatibility_level">compatibility_level</a>
+setting is less than 2, the Postfix SMTP server may log one of the
+following messages: </p>
 
 <blockquote>
 <pre>
@@ -201,10 +286,14 @@ administrator should make the backwards-compatible setting
 setting relay_domains=$mydestination </a> </h2>
 
 <p> The <a href="postconf.5.html#relay_domains">relay_domains</a> default value has changed from "$<a href="postconf.5.html#mydestination">mydestination</a>"
-to the empty value. As long as the <a href="postconf.5.html#relay_domains">relay_domains</a> parameter is left
-at its implicit default value, and the backwards-compatible default
-setting is turned on, Postfix may log one of the following messages.
-</p>
+to the empty value. This could result in unexpected 'Relay access
+denied' errors or ETRN errors after Postfix is updated from an older
+version. The backwards-compatibility safety net is designed to
+prevent such surprises. </p>
+
+<p> As long as the <a href="postconf.5.html#relay_domains">relay_domains</a> parameter is left at its implicit
+default value, and the <a href="postconf.5.html#compatibility_level">compatibility_level</a> setting is less than 2,
+Postfix may log one of the following messages.  </p>
 
 <ul>
 
@@ -266,15 +355,15 @@ explicit list of domain names. </p>
 <h2> <a name="smtputf8_enable"> Using backwards-compatible default
 setting smtputf8_enable=no</a> </h2>
 
-<p> The <a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> default value has changed from "no" to "yes.
+<p> The <a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> default value has changed from "no" to "yes".
 With the new "yes" setting, the Postfix SMTP server rejects non-ASCII
-addresses from clients that don't request SMTPUTF8 support. With
-the old "no" setting, Postfix will accept such addresses, even if
-such addresses are not permitted by traditional SMTP standards. </p>
+addresses from clients that don't request SMTPUTF8 support, after
+Postfix is updated from an older version. The backwards-compatibility
+safety net is designed to prevent such surprises. </p>
 
 <p> As long as the <a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> parameter is left at its implicit
-default value, and the backwards-compatible default setting is
-turned on, Postfix logs a warning each time an SMTP command uses a
+default value, and the <a href="postconf.5.html#compatibility_level">compatibility_level</a> setting is
+less than 1, Postfix logs a warning each time an SMTP command uses a
 non-ASCII address localpart without requesting SMTPUTF8 support: </p>
 
 <blockquote>
@@ -305,6 +394,167 @@ in <a href="postconf.5.html">main.cf</a>:
 </pre>
 </blockquote>
 
+<h2> <a name="smtpd_digest"> Using backwards-compatible
+default setting smtpd_tls_fingerprint_digest=md5</a> </h2>
+
+<p> The <a href="postconf.5.html#smtpd_tls_fingerprint_digest">smtpd_tls_fingerprint_digest</a> default value has changed from
+"md5" to "sha256".  With the new "sha256" setting, the Postfix SMTP
+server avoids using the deprecated "md5" algorithm and computes a more
+secure digest of the client certificate.  </p>
+
+<p> If you're using the default "md5" setting, or even an explicit
+"sha1" (also deprecated) setting, you should consider switching to
+"sha256".  This will require updating any associated lookup table keys
+with the "sha256" digests of the expected client certificate or public
+key.  </p>
+
+<p> As long as the <a href="postconf.5.html#smtpd_tls_fingerprint_digest">smtpd_tls_fingerprint_digest</a> parameter is left at its
+implicit default value, and the <a href="postconf.5.html#compatibility_level">compatibility_level</a> setting is less than
+3.6, Postfix logs a warning each time a client certificate or public key
+fingerprint is (potentially) used for access control: </p>
+
+<blockquote>
+<pre>
+postfix/smtpd[27560]: using backwards-compatible default setting
+    <a href="postconf.5.html#smtpd_tls_fingerprint_digest">smtpd_tls_fingerprint_digest</a>=md5 to compute certificate fingerprints
+</pre>
+</blockquote>
+
+<p> Since any client certificate fingerprints are passed in policy service
+lookups, and Postfix doesn't know whether the fingerprint will be used, the
+warning may also be logged when policy lookups are performed for connections
+that used a client certificate, even if the policy service does not in fact
+examine the client certificate.  To reduce the noise somewhat, such warnings
+are issued at most once per <a href="smtpd.8.html">smtpd(8)</a> process instance.  </p>
+
+<p> If you prefer to stick with "md5", you can suppress the warnings by
+making that setting explicit.  After addressing any other compatibility
+warnings, you can <a href="#turnoff">update</a> your compatibility level.
+</p>
+
+<blockquote>
+<pre>
+# <b>postconf <a href="postconf.5.html#smtpd_tls_fingerprint_digest">smtpd_tls_fingerprint_digest</a>=md5</b>
+# <b>postfix reload</b>
+</pre>
+</blockquote>
+
+<h2> <a name="smtp_digest"> Using backwards-compatible
+default setting smtp_tls_fingerprint_digest=md5</a> </h2>
+
+<p> The <a href="postconf.5.html#smtp_tls_fingerprint_digest">smtp_tls_fingerprint_digest</a> and <a href="postconf.5.html#lmtp_tls_fingerprint_digest">lmtp_tls_fingerprint_digest</a>
+default values have changed from "md5" to "sha256".  With the new
+"sha256" setting, the Postfix SMTP and LMTP client avoids using the
+deprecated "md5" algorithm and computes a more secure digest of the
+server certificate.  </p>
+
+<p> If you're using the default "md5" setting, or even an explicit
+"sha1" (also deprecated) setting, you should consider switching to
+"sha256".  This will require updating any "fingerprint" security level
+policies in the TLS policy table to specify matching "sha256" digests of
+the expected server certificates or public keys.  </p>
+
+<p> As long as the <a href="postconf.5.html#smtp_tls_fingerprint_digest">smtp_tls_fingerprint_digest</a> (or LMTP equivalent)
+parameter is left at its implicit default value, and the
+<a href="postconf.5.html#compatibility_level">compatibility_level</a> setting is less than 3.6, Postfix logs a warning each
+time the "fingerprint" security level is used to specify matching "md5"
+digests of trusted server certificates or public keys: </p>
+
+<blockquote>
+<pre>
+postfix/smtp[27560]: using backwards-compatible default setting
+    <a href="postconf.5.html#smtp_tls_fingerprint_digest">smtp_tls_fingerprint_digest</a>=md5 to compute certificate fingerprints
+</pre>
+</blockquote>
+
+<p> If you prefer to stick with "md5", you can suppress the warnings by
+making that setting explicit.  After addressing any other compatibility
+warnings, you can <a href="#turnoff">update</a> your compatibility level.
+</p>
+
+<blockquote>
+<pre>
+# <b>postconf '<a href="postconf.5.html#smtp_tls_fingerprint_digest">smtp_tls_fingerprint_digest</a> = md5' \
+    '<a href="postconf.5.html#lmtp_tls_fingerprint_digest">lmtp_tls_fingerprint_digest</a> = md5' </b>
+# <b>postfix reload</b>
+</pre>
+</blockquote>
+
+<h2> <a name="relay_before_rcpt"> Using backwards-compatible
+default setting smtpd_relay_before_recipient_restrictions=no</a> </h2>
+
+<p> The <a href="postconf.5.html#smtpd_relay_before_recipient_restrictions">smtpd_relay_before_recipient_restrictions</a> feature was
+introduced in Postfix version 3.6, to evaluate <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>
+before <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>. Historically, <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>
+was evaluated after <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>, contradicting
+documented behavior. </p>
+
+<blockquote> <p> Background: <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> is
+primarily designed to enforce a mail relaying policy, while
+<a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> is primarily designed to enforce spam
+blocking policy. Both are evaluated while replying to the RCPT TO
+command, and both support the same features. </p> </blockquote>
+
+<p> To maintain compatibility with earlier versions, Postfix will
+keep evaluating <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> before
+<a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>, as long as the <a href="postconf.5.html#compatibility_level">compatibility_level</a> is
+less than 3.6, and the <a href="postconf.5.html#smtpd_relay_before_recipient_restrictions">smtpd_relay_before_recipient_restrictions</a>
+parameter is left at its implicit default setting. As a reminder,
+Postfix may log the following message: </p>
+
+<blockquote>
+<pre>
+postfix/smtpd[54696]: using backwards-compatible default setting
+    <a href="postconf.5.html#smtpd_relay_before_recipient_restrictions">smtpd_relay_before_recipient_restrictions</a>=no to reject recipient
+    "user@example.com" from client "host.example.net[10.0.0.2]"
+</pre>
+</blockquote>
+
+<p> If Postfix should keep evaluating <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>
+before <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>, then the system
+administrator should make the backwards-compatible setting
+"<a href="postconf.5.html#smtpd_relay_before_recipient_restrictions">smtpd_relay_before_recipient_restrictions</a>=no" permanent in <a href="postconf.5.html">main.cf</a>: </p>
+
+<blockquote>
+<pre>
+# <b> postconf <a href="postconf.5.html#smtpd_relay_before_recipient_restrictions">smtpd_relay_before_recipient_restrictions</a>=no </b>
+# <b> postfix reload </b>
+</pre>
+</blockquote>
+
+<h2> <a name="respectful_logging"> Using backwards-compatible
+default setting respectful_logging=no</a> </h2>
+
+<p> Postfix version 3.6 deprecates configuration parameter names and
+logging that suggest white is better than black. Instead it prefers
+'allowlist, 'denylist', and variations of those words. While the renamed
+configuration parameters have backwards-compatible default values,
+the changes in logging could affect logfile analysis tools. </p>
+
+<p> To avoid breaking existing logfile analysis tools, Postfix will keep
+logging the deprecated form, as long as the <a href="postconf.5.html#respectful_logging">respectful_logging</a> parameter
+is left at its implicit default value, and the <a href="postconf.5.html#compatibility_level">compatibility_level</a>
+setting is less than 3.6. As a reminder, Postfix may log the following
+when a remote SMTP client is allowlisted or denylisted: </p>
+
+<blockquote>
+<pre>
+postfix/postscreen[22642]: Using backwards-compatible default setting
+    <a href="postconf.5.html#respectful_logging">respectful_logging</a>=no for client [<i>address</i>]:<i>port</i>
+</pre>
+</blockquote>
+
+<p> If Postfix should keep logging the deprecated form, then the
+system administrator should make the backwards-compatible setting
+"<a href="postconf.5.html#respectful_logging">respectful_logging</a> = no" permanent in <a href="postconf.5.html">main.cf</a>.
+
+<blockquote>
+<pre>
+# <b>postconf "<a href="postconf.5.html#respectful_logging">respectful_logging</a> = no"</b>
+# <b>postfix reload</b>
+</pre>
+</blockquote>
+
 <h2> <a name="turnoff">Turning off the backwards-compatibility safety net</a> </h2>
 
 <p> Backwards compatibility is turned off by updating the
@@ -328,6 +578,17 @@ warning: To disable backwards compatibility use "postconf <a href="postconf.5.ht
 
 <p> Sites that don't care about backwards compatibility may set
 "<a href="postconf.5.html#compatibility_level">compatibility_level</a> = 9999" at their own risk. </p>
+
+<p> Starting with Postfix version 3.6, the compatibility level in
+the above warning message is the Postfix version that introduced
+the last incompatible change. The level is formatted as
+<i>major.minor.patch</i>, where <i>patch</i> is usually omitted and
+defaults to zero. Earlier compatibility levels are 0, 1 and 2. </p>
+
+<p> NOTE: Postfix 3.6 also introduces support for the "&lt;level",
+"&lt;=level", and other operators to compare compatibility levels.
+With the standard operators "&lt;", "&lt;=", etc., compatibility
+level "3.10" would be smaller than "3.9" which is undesirable. </p>
 
 </body>
 

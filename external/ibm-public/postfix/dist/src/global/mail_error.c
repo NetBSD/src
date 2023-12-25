@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_error.c,v 1.1.1.2 2013/01/02 18:58:58 tron Exp $	*/
+/*	$NetBSD: mail_error.c,v 1.1.1.2.32.1 2023/12/25 12:55:01 martin Exp $	*/
 
 /*++
 /* NAME
@@ -23,7 +23,7 @@
 /*	does not exist, and so on.
 /* .IP "2bounce (MAIL_ERROR_2BOUNCE)"
 /*	A bounce message could not be delivered.
-/* .IP "dat (MAIL_ERROR_DATA)"
+/* .IP "data (MAIL_ERROR_DATA)"
 /*	A message could not be delivered because a critical data
 /*	file was unavailable.
 /* .IP "policy (MAIL_ERROR_POLICY)"

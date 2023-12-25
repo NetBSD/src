@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: trivial-rewrite.c,v 1.2.14.1 2023/12/25 12:55:22 martin Exp $	*/
 
 /*++
 /* NAME
@@ -50,7 +50,7 @@
 /* .ad
 /* .fi
 /*	The \fBtrivial-rewrite\fR(8) servers run under control by
-/*	the Postfix master
+/*	the Postfix master(8)
 /*	server.  Each server can handle multiple simultaneous connections.
 /*	When all servers are busy while a client connects, the master
 /*	creates a new server process, provided that the trivial-rewrite
@@ -69,7 +69,8 @@
 /*	By default, this daemon does not talk to remote or local users.
 /*	It can run at a fixed low privilege in a chrooted environment.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
@@ -116,9 +117,8 @@
 /*	With locally submitted mail, append the string ".$mydomain" to
 /*	addresses that have no ".domain" information.
 /* .IP "\fBrecipient_delimiter (empty)\fR"
-/*	The set of characters that can separate a user name from its
-/*	extension (example: user+foo), or a .forward file name from its
-/*	extension (example: .forward+foo).
+/*	The set of characters that can separate an email address
+/*	localpart, user name, or a .forward file name from its extension.
 /* .IP "\fBswap_bangpath (yes)\fR"
 /*	Enable the rewriting of "site!user" into "user@site".
 /* .PP
@@ -154,7 +154,7 @@
 /*	matches subdomains of example.com,
 /*	instead of requiring an explicit ".example.com" pattern.
 /* .IP "\fBrelayhost (empty)\fR"
-/*	The next-hop destination of non-local mail; overrides non-local
+/*	The next-hop destination(s) for non-local mail; overrides non-local
 /*	domains in recipient addresses.
 /* .IP "\fBtransport_maps (empty)\fR"
 /*	Optional lookup tables with mappings from recipient address to
@@ -250,18 +250,23 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
 /* .PP
 /*	Available in Postfix version 2.0 and later:
 /* .IP "\fBhelpful_warnings (yes)\fR"
 /*	Log warnings about problematic configuration settings, and provide
 /*	helpful suggestions.
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
 /* SEE ALSO
 /*	postconf(5), configuration parameters
 /*	transport(5), transport table format
 /*	relocated(5), format of the "user has moved" table
 /*	master(8), process manager
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README FILES
 /* .ad
@@ -518,6 +523,21 @@ static void pre_accept(char *unused_name, char **unused_argv)
 
 #endif
 
+/* post_accept - announce our protocol name */
+
+static void post_accept(VSTREAM *stream, char *unused_name, char **unused_argv,
+			        HTABLE *unused_attr)
+{
+
+    /*
+     * Announce the protocol.
+     */
+    attr_print(stream, ATTR_FLAG_NONE,
+	       SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_TRIVIAL),
+	       ATTR_TYPE_END);
+    (void) vstream_fflush(stream);
+}
+
 static void check_table_stats(int unused_event, void *unused_context)
 {
     const char *table;
@@ -644,5 +664,6 @@ int     main(int argc, char **argv)
 #ifdef CHECK_TABLE_STATS_BEFORE_ACCEPT
 		      CA_MAIL_SERVER_PRE_ACCEPT(pre_accept),
 #endif
+		      CA_MAIL_SERVER_POST_ACCEPT(post_accept),
 		      0);
 }

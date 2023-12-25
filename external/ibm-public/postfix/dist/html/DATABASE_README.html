@@ -7,7 +7,8 @@
 
 <title>Postfix Lookup Table Overview</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -98,7 +99,7 @@ lookup key exists.  Any non-empty lookup result value may be used
 here: the lookup result is not used. Examples
 are the <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> that determine what local recipients
 Postfix accepts in mail from the network, the <a href="postconf.5.html#mydestination">mydestination</a> parameter
-that specifies what domains Postfix delivers locally, or the
+that specifies what domains Postfix delivers locally for, or the
 <a href="postconf.5.html#mynetworks">mynetworks</a> parameter that specifies the IP addresses of trusted
 clients or client networks.  Technically, these are lists, not
 tables. Despite the difference, Postfix lists are described here
@@ -317,14 +318,16 @@ name as used in "<a href="DATABASE_README.html#types">hash</a>:table" is the dat
 
 <dd> A non-shared, in-memory lookup table. Example: "<a href="DATABASE_README.html#types">inline</a>:{
 <i>key=value</i>, { <i>key = text with whitespace or comma</i> }}".
-Key-value pairs are separated by whitespace or comma; whitespace
-after "{" and before "}" is ignored. Inline tables eliminate the
+Key-value pairs are separated by whitespace or comma; with a key-value
+pair inside "{}", whitespace is ignored after the opening "{",
+around the "=" between key and value, and before the closing "}".
+Inline tables eliminate the
 need to create a database file for just a few fixed elements. See
 also the <a href="DATABASE_README.html#types">static</a>: map type. </dd>
 
 <dt> <b>internal</b> </dt>
 
-<dd> A non-shared, in-memory hash table. Its content are lost when
+<dd> A non-shared, in-memory hash table. Its contents are lost when
 a process terminates. </dd>
 
 <dt> <b>lmdb</b> </dt>
@@ -401,7 +404,8 @@ databases. The lookup table name syntax is "<a href="proxymap.8.html">proxy</a>:
 Each table query returns a random choice from the specified results.
 The first and last characters of the "<a href="DATABASE_README.html#types">randmap</a>:" table name must be
 "{" and "}".  Within these, individual maps are separated with comma
-or whitespace.  </dd>
+or whitespace. To give a specific result more weight, specify it
+multiple times. </dd>
 
 <dt> <b>regexp</b> (read-only) </dt>
 
@@ -436,7 +440,8 @@ server. See <a href="socketmap_table.5.html">socketmap_table(5)</a> for details.
 For example, "<a href="DATABASE_README.html#types">static</a>:foobar" always returns the string "foobar" as
 lookup result. Specify "<a href="DATABASE_README.html#types">static</a>:{ <i>text with whitespace</i> }"
 when the result contains whitespace; this form ignores whitespace
-after "{" and before "}". See also the <a href="DATABASE_README.html#types">inline</a>: map type.  </dd>
+after the opening "{" and before the closing "}". See also the
+<a href="DATABASE_README.html#types">inline</a>: map type. </dd>
 
 <dt> <b>tcp</b> </dt>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: been_here.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: been_here.h,v 1.1.1.1.52.1 2023/12/25 12:54:57 martin Exp $	*/
 
 #ifndef _BEEN_HERE_H_INCLUDED_
 #define _BEEN_HERE_H_INCLUDED_
@@ -27,6 +27,7 @@ typedef struct {
     struct HTABLE *table;
 } BH_TABLE;
 
+#define BH_BOUND_NONE	0		/* no upper bound */
 #define BH_FLAG_NONE	0		/* no special processing */
 #define BH_FLAG_FOLD	(1<<0)		/* fold case */
 
@@ -36,6 +37,8 @@ extern int been_here_fixed(BH_TABLE *, const char *);
 extern int PRINTFLIKE(2, 3) been_here(BH_TABLE *, const char *,...);
 extern int been_here_check_fixed(BH_TABLE *, const char *);
 extern int PRINTFLIKE(2, 3) been_here_check(BH_TABLE *, const char *,...);
+extern int been_here_drop_fixed(BH_TABLE *, const char *);
+extern int PRINTFLIKE(2, 3) been_here_drop(BH_TABLE *, const char *,...);
 
 /* LICENSE
 /* .ad
@@ -46,6 +49,11 @@ extern int PRINTFLIKE(2, 3) been_here_check(BH_TABLE *, const char *,...);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

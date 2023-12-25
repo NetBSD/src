@@ -4,7 +4,7 @@
 #! ../bin/postmap smtpd_check_access
 #msg_verbose 1
 smtpd_delay_reject 0
-mynetworks 127.0.0.0/8,168.100.189.0/28
+mynetworks 127.0.0.0/8,168.100.3.0/28
 relay_domains porcupine.org
 maps_rbl_domains dnsbltest.porcupine.org
 #
@@ -12,7 +12,7 @@ maps_rbl_domains dnsbltest.porcupine.org
 #
 client_restrictions permit_mynetworks,reject_unknown_client,hash:./smtpd_check_access
 client unknown 131.155.210.17
-client unknown 168.100.189.13
+client unknown 168.100.3.13
 client random.bad.domain 123.123.123.123
 client friend.bad.domain 123.123.123.123
 client bad.domain 123.123.123.123
@@ -46,7 +46,7 @@ helo 123.123.123.123
 sender_restrictions permit_mynetworks,reject_unknown_client
 client unknown 131.155.210.17
 mail foo@ibm.com
-client unknown 168.100.189.13
+client unknown 168.100.3.13
 mail foo@ibm.com
 client foo 123.123.123.123
 mail foo@ibm.com
@@ -68,13 +68,13 @@ mail foo@friend.bad.domain
 recipient_restrictions permit_mynetworks,reject_unknown_client,check_relay_domains
 client unknown 131.155.210.17
 rcpt foo@ibm.com
-client unknown 168.100.189.13
+client unknown 168.100.3.13
 rcpt foo@ibm.com
 client foo 123.123.123.123
 rcpt foo@ibm.com
 rcpt foo@porcupine.org
 recipient_restrictions check_relay_domains
-client foo.porcupine.org 168.100.189.13
+client foo.porcupine.org 168.100.3.13
 rcpt foo@ibm.com
 rcpt foo@porcupine.org
 client foo 123.123.123.123
@@ -91,7 +91,7 @@ mail foo@friend.bad.domain
 # RBL
 #
 client_restrictions reject_maps_rbl
-client spike.porcupine.org 168.100.189.2
+client spike.porcupine.org 168.100.3.2
 client foo 127.0.0.2
 #
 # Hybrids
@@ -117,7 +117,7 @@ rcpt foo@porcupine.org
 # MX backup
 #
 #mydestination spike.porcupine.org,localhost.porcupine.org
-#inet_interfaces 168.100.189.2,127.0.0.1
+#inet_interfaces 168.100.3.2,127.0.0.1
 #recipient_restrictions permit_mx_backup,reject
 #rcpt wietse@wzv.win.tue.nl
 #rcpt wietse@trouble.org

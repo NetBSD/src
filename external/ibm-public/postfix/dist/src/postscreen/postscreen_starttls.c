@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_starttls.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: postscreen_starttls.c,v 1.2.14.1 2023/12/25 12:55:12 martin Exp $	*/
 
 /*++
 /* NAME
@@ -39,6 +39,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -73,7 +78,7 @@
   */
 
  /*
-  * Transient state for the portscreen(8)-to-tlsproxy(8) hand-off protocol.
+  * Transient state for the postscreen(8)-to-tlsproxy(8) hand-off protocol.
   */
 typedef struct {
     VSTREAM *tlsproxy_stream;		/* hand-off negotiation */
@@ -84,6 +89,22 @@ typedef struct {
 #define TLSPROXY_INIT_TIMEOUT		10
 
 static char *psc_tlsp_service = 0;
+
+/* Resume the dummy SMTP engine after an event handling error */
+
+#define PSC_STARTTLS_EVENT_ERR_RESUME_RETURN() do { \
+	event_disable_readwrite(vstream_fileno(tlsproxy_stream)); \
+	PSC_STARTTLS_EVENT_RESUME_RETURN(starttls_state); \
+    } while (0);
+
+/* Resume the dummy SMTP engine, possibly after swapping streams */
+
+#define PSC_STARTTLS_EVENT_RESUME_RETURN(starttls_state) do { \
+	vstream_fclose(tlsproxy_stream); \
+	starttls_state->resume_event(event, (void *) smtp_state); \
+	myfree((void *) starttls_state); \
+	return; \
+    } while (0)
 
 /* psc_starttls_finish - complete negotiation with TLS proxy */
 
@@ -127,10 +148,11 @@ static void psc_starttls_finish(int event, void *context)
 	 * The TLS proxy reports that the TLS engine is not available (due to
 	 * configuration error, or other causes).
 	 */
-	event_disable_readwrite(vstream_fileno(tlsproxy_stream));
-	vstream_fclose(tlsproxy_stream);
+	msg_warn("%s receiving status from %s service",
+	     event == EVENT_TIME ? "timeout" : "problem", psc_tlsp_service);
 	PSC_SEND_REPLY(smtp_state,
 		    "454 4.7.0 TLS not available due to local problem\r\n");
+	PSC_STARTTLS_EVENT_ERR_RESUME_RETURN();
     }
 
     /*
@@ -142,13 +164,10 @@ static void psc_starttls_finish(int event, void *context)
 	/*
 	 * Some error: drop the TLS proxy stream.
 	 */
-	msg_warn("%s sending file handle to %s service",
-		 event == EVENT_TIME ? "timeout" : "problem",
-		 psc_tlsp_service);
-	event_disable_readwrite(vstream_fileno(tlsproxy_stream));
-	vstream_fclose(tlsproxy_stream);
+	msg_warn("problem sending file handle to %s service", psc_tlsp_service);
 	PSC_SEND_REPLY(smtp_state,
 		    "454 4.7.0 TLS not available due to local problem\r\n");
+	PSC_STARTTLS_EVENT_ERR_RESUME_RETURN();
     }
 
     /*
@@ -160,9 +179,10 @@ static void psc_starttls_finish(int event, void *context)
 	PSC_SEND_REPLY(smtp_state, "220 2.0.0 Ready to start TLS\r\n");
 
 	/*
-	 * Replace our SMTP client stream by the TLS proxy stream.  Once the
-	 * TLS handshake is done, the TLS proxy will deliver plaintext SMTP
-	 * commands to postscreen(8).
+	 * Swap the SMTP client stream and the TLS proxy stream, and close
+	 * the direct connection to the SMTP client. The TLS proxy will talk
+	 * directly to the SMTP client, and once the TLS handshake is
+	 * completed, the TLS proxy will talk plaintext to postscreen(8).
 	 * 
 	 * Swap the file descriptors from under the VSTREAM so that we don't
 	 * have to worry about loss of user-configurable VSTREAM attributes.
@@ -171,15 +191,83 @@ static void psc_starttls_finish(int event, void *context)
 	vstream_control(smtp_state->smtp_client_stream,
 			CA_VSTREAM_CTL_SWAP_FD(tlsproxy_stream),
 			CA_VSTREAM_CTL_END);
-	vstream_fclose(tlsproxy_stream);	/* direct-to-client stream! */
 	smtp_state->flags |= PSC_STATE_FLAG_USING_TLS;
+	PSC_STARTTLS_EVENT_RESUME_RETURN(starttls_state);
+    }
+}
+
+/* psc_starttls_first - start negotiation with TLS proxy */
+
+static void psc_starttls_first(int event, void *context)
+{
+    const char *myname = "psc_starttls_first";
+    PSC_STARTTLS *starttls_state = (PSC_STARTTLS *) context;
+    PSC_STATE *smtp_state = starttls_state->smtp_state;
+    VSTREAM *tlsproxy_stream = starttls_state->tlsproxy_stream;
+    static VSTRING *remote_endpt = 0;
+
+    if (msg_verbose)
+	msg_info("%s: receive server protocol on proxy socket %d"
+		 " for smtp socket %d from [%s]:%s flags=%s",
+		 myname, vstream_fileno(tlsproxy_stream),
+		 vstream_fileno(smtp_state->smtp_client_stream),
+		 smtp_state->smtp_client_addr, smtp_state->smtp_client_port,
+		 psc_print_state_flags(smtp_state->flags, myname));
+
+    /*
+     * We leave read-event notification enabled on the postscreen to TLS
+     * proxy stream, to avoid two kqueue/epoll/etc. system calls: one here,
+     * and one when resuming the dummy SMTP engine.
+     */
+    if (event != EVENT_TIME)
+	event_cancel_timer(psc_starttls_first, (void *) starttls_state);
+
+    /*
+     * Receive and verify the server protocol.
+     */
+    if (event != EVENT_READ
+	|| attr_scan(tlsproxy_stream, ATTR_FLAG_STRICT,
+		 RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_TLSPROXY),
+		     ATTR_TYPE_END) != 0) {
+	msg_warn("%s receiving %s attribute from %s service: %m",
+		 event == EVENT_TIME ? "timeout" : "problem",
+		 MAIL_ATTR_PROTO, psc_tlsp_service);
+	PSC_SEND_REPLY(smtp_state,
+		    "454 4.7.0 TLS not available due to local problem\r\n");
+	PSC_STARTTLS_EVENT_ERR_RESUME_RETURN();
     }
 
     /*
-     * Resume the postscreen(8) dummy SMTP engine and clean up.
+     * Send the data attributes now, and send the client file descriptor in a
+     * later transaction. We report all errors asynchronously, to avoid
+     * having to maintain multiple error delivery paths.
+     * 
+     * XXX The formatted endpoint should be a state member. Then, we can
+     * simplify all the format strings throughout the program.
      */
-    starttls_state->resume_event(event, (void *) smtp_state);
-    myfree((void *) starttls_state);
+    if (remote_endpt == 0)
+	remote_endpt = vstring_alloc(20);
+    vstring_sprintf(remote_endpt, "[%s]:%s", smtp_state->smtp_client_addr,
+		    smtp_state->smtp_client_port);
+    attr_print(tlsproxy_stream, ATTR_FLAG_NONE,
+	       SEND_ATTR_STR(TLS_ATTR_REMOTE_ENDPT, STR(remote_endpt)),
+	       SEND_ATTR_INT(TLS_ATTR_FLAGS, TLS_PROXY_FLAG_ROLE_SERVER),
+	       SEND_ATTR_INT(TLS_ATTR_TIMEOUT, psc_normal_cmd_time_limit),
+	       SEND_ATTR_INT(TLS_ATTR_TIMEOUT, psc_normal_cmd_time_limit),
+	       SEND_ATTR_STR(TLS_ATTR_SERVERID, MAIL_SERVICE_SMTPD),	/* XXX */
+	       ATTR_TYPE_END);
+    if (vstream_fflush(tlsproxy_stream) != 0) {
+	msg_warn("error sending request to %s service: %m", psc_tlsp_service);
+	PSC_SEND_REPLY(smtp_state,
+		    "454 4.7.0 TLS not available due to local problem\r\n");
+	PSC_STARTTLS_EVENT_ERR_RESUME_RETURN();
+    }
+
+    /*
+     * Set up a read event for the next phase of the TLS proxy handshake.
+     */
+    PSC_READ_EVENT_REQUEST(vstream_fileno(tlsproxy_stream), psc_starttls_finish,
+			   (void *) starttls_state, TLSPROXY_INIT_TIMEOUT);
 }
 
 /* psc_starttls_open - open negotiations with TLS proxy */
@@ -190,12 +278,10 @@ void    psc_starttls_open(PSC_STATE *smtp_state, EVENT_NOTIFY_FN resume_event)
     PSC_STARTTLS *starttls_state;
     VSTREAM *tlsproxy_stream;
     int     fd;
-    static VSTRING *remote_endpt = 0;
 
     if (psc_tlsp_service == 0) {
 	psc_tlsp_service = concatenate(MAIL_CLASS_PRIVATE "/",
 				       var_tlsproxy_service, (char *) 0);
-	remote_endpt = vstring_alloc(20);
     }
 
     /*
@@ -210,37 +296,16 @@ void    psc_starttls_open(PSC_STATE *smtp_state, EVENT_NOTIFY_FN resume_event)
 	return;
     }
     if (msg_verbose)
-	msg_info("%s: send client name/address on proxy socket %d"
+	msg_info("%s: connecting to proxy socket %d"
 		 " for smtp socket %d from [%s]:%s flags=%s",
 		 myname, fd, vstream_fileno(smtp_state->smtp_client_stream),
 		 smtp_state->smtp_client_addr, smtp_state->smtp_client_port,
 		 psc_print_state_flags(smtp_state->flags, myname));
 
-    /*
-     * Initial handshake. Send the data attributes now, and send the client
-     * file descriptor in a later transaction. We report all errors
-     * asynchronously, to avoid having to maintain multiple delivery paths.
-     * 
-     * XXX The formatted endpoint should be a state member. Then, we can
-     * simplify all the format strings throughout the program.
-     */
     tlsproxy_stream = vstream_fdopen(fd, O_RDWR);
-    vstring_sprintf(remote_endpt, "[%s]:%s", smtp_state->smtp_client_addr,
-		    smtp_state->smtp_client_port);
-    attr_print(tlsproxy_stream, ATTR_FLAG_NONE,
-	       SEND_ATTR_STR(MAIL_ATTR_REMOTE_ENDPT, STR(remote_endpt)),
-	       SEND_ATTR_INT(MAIL_ATTR_FLAGS, TLS_PROXY_FLAG_ROLE_SERVER),
-	       SEND_ATTR_INT(MAIL_ATTR_TIMEOUT, psc_normal_cmd_time_limit),
-	       SEND_ATTR_STR(MAIL_ATTR_SERVER_ID, MAIL_SERVICE_SMTPD),	/* XXX */
-	       ATTR_TYPE_END);
-    if (vstream_fflush(tlsproxy_stream) != 0) {
-	msg_warn("error sending request to %s service: %m", psc_tlsp_service);
-	vstream_fclose(tlsproxy_stream);
-	PSC_SEND_REPLY(smtp_state,
-		    "454 4.7.0 TLS not available due to local problem\r\n");
-	event_request_timer(resume_event, (void *) smtp_state, 0);
-	return;
-    }
+    vstream_control(tlsproxy_stream,
+		    VSTREAM_CTL_PATH, psc_tlsp_service,
+		    VSTREAM_CTL_END);
 
     /*
      * Set up a read event for the next phase of the TLS proxy handshake.
@@ -249,6 +314,6 @@ void    psc_starttls_open(PSC_STATE *smtp_state, EVENT_NOTIFY_FN resume_event)
     starttls_state->tlsproxy_stream = tlsproxy_stream;
     starttls_state->resume_event = resume_event;
     starttls_state->smtp_state = smtp_state;
-    PSC_READ_EVENT_REQUEST(vstream_fileno(tlsproxy_stream), psc_starttls_finish,
+    PSC_READ_EVENT_REQUEST(vstream_fileno(tlsproxy_stream), psc_starttls_first,
 			   (void *) starttls_state, TLSPROXY_INIT_TIMEOUT);
 }

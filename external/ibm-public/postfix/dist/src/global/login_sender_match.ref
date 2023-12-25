@@ -1,0 +1,35 @@
+unknown: RUN test case 0 wildcard works
+unknown: PASS test 0
+unknown: RUN test case 1 unknown user
+unknown: PASS test 1
+unknown: RUN test case 2 bare user
+unknown: PASS test 2
+unknown: RUN test case 3 user@domain
+unknown: PASS test 3
+unknown: RUN test case 4 user+ext@domain
+unknown: PASS test 4
+unknown: RUN test case 5 wrong sender
+unknown: PASS test 5
+unknown: RUN test case 6 @domain
+unknown: PASS test 6
+unknown: RUN test case 7 wrong @domain
+unknown: PASS test 7
+unknown: RUN test case 8 null sender
+unknown: PASS test 8
+unknown: RUN test case 9 wrong null sender
+unknown: PASS test 9
+unknown: RUN test case 10 error
+unknown: warning: fail:sorry lookup error for "baz"
+unknown: PASS test 10
+unknown: RUN test case 11 no error
+unknown: PASS test 11
+unknown: RUN test case 12 unknown uid:number
+unknown: PASS test 12
+unknown: RUN test case 13 known uid:number
+unknown: PASS test 13
+unknown: RUN test case 14 unknown "other last"
+unknown: PASS test 14
+unknown: RUN test case 15 bare "first last"
+unknown: PASS test 15
+unknown: RUN test case 16 "first last"@domain
+unknown: PASS test 16

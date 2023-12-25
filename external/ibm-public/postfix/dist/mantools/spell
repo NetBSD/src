@@ -6,5 +6,5 @@ export LC_ALL
 for i in $*
 do
 	echo === $i ===
-	mantools/html2readme $i | col -b | spell | fgrep -vxf proto/stop
+	mantools/html2readme $i | col -b | spell | grep -F -vxf proto/stop
 done

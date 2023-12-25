@@ -1,4 +1,4 @@
-/*	$NetBSD: showq.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: showq.c,v 1.2.14.1 2023/12/25 12:55:14 martin Exp $	*/
 
 /*++
 /* NAME
@@ -28,7 +28,8 @@
 /*	None. The \fBshowq\fR(8) daemon does not interact with the
 /*	outside world.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
@@ -68,12 +69,16 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
 /* .PP
 /*	Available in Postfix version 2.9 and later:
 /* .IP "\fBenable_long_queue_ids (no)\fR"
 /*	Enable long, non-repeating, queue IDs (queue file names).
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
 /* FILES
 /*	/var/spool/postfix, queue directories
 /* SEE ALSO
@@ -82,6 +87,7 @@
 /*	qmgr(8), queue manager
 /*	postconf(5), configuration parameters
 /*	master(8), process manager
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* LICENSE
 /* .ad
@@ -156,7 +162,8 @@ static void showq_reasons(VSTREAM *, BOUNCE_LOG *, RCPT_BUF *, DSN_BUF *,
 /* showq_report - report status of sender and recipients */
 
 static void showq_report(VSTREAM *client, char *queue, char *id,
-			         VSTREAM *qfile, long size, time_t mtime)
+			         VSTREAM *qfile, long size, time_t mtime,
+			         mode_t mode)
 {
     VSTRING *buf = vstring_alloc(100);
     VSTRING *printable_quoted_addr = vstring_alloc(100);
@@ -223,6 +230,7 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	    if (*start == 0)
 		start = var_empty_addr;
 	    quote_822_local(printable_quoted_addr, start);
+	    /* For consistency with REC_TYPE_RCPT below. */
 	    printable(STR(printable_quoted_addr), '?');
 	    if (sender_seen++ > 0) {
 		msg_warn("%s: duplicate sender address: %s "
@@ -236,6 +244,8 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 		       SEND_ATTR_LONG(MAIL_ATTR_TIME, arrival_time > 0 ?
 				      arrival_time : mtime),
 		       SEND_ATTR_LONG(MAIL_ATTR_SIZE, msg_size),
+		       SEND_ATTR_INT(MAIL_ATTR_FORCED_EXPIRE,
+				     (mode & MAIL_QUEUE_STAT_EXPIRE) != 0),
 		       SEND_ATTR_STR(MAIL_ATTR_SENDER,
 				     STR(printable_quoted_addr)),
 		       ATTR_TYPE_END);
@@ -250,6 +260,7 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	    if (*start == 0)			/* can't happen? */
 		start = var_empty_addr;
 	    quote_822_local(printable_quoted_addr, start);
+	    /* For consistency with recipients in bounce logfile. */
 	    printable(STR(printable_quoted_addr), '?');
 	    if (dup_filter == 0
 	      || htable_locate(dup_filter, STR(printable_quoted_addr)) == 0)
@@ -354,6 +365,13 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
 	msg_fatal("unexpected command-line argument: %s", argv[0]);
 
     /*
+     * Protocol identification.
+     */
+    (void) attr_print(client, ATTR_FLAG_NONE,
+		      SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_SHOWQ),
+		      ATTR_TYPE_END);
+
+    /*
      * Skip any files that have the wrong permissions. If we can't open an
      * existing file, assume the system is out of resources or that it is
      * mis-configured, and force backoff by raising a fatal error.
@@ -381,7 +399,7 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
 	    if (status == MAIL_OPEN_YES) {
 		if ((qfile = mail_queue_open(qp->name, id, O_RDONLY, 0)) != 0) {
 		    showq_report(client, qp->name, id, qfile, (long) st.st_size,
-				 st.st_mtime);
+				 st.st_mtime, st.st_mode);
 		    if (vstream_fclose(qfile))
 			msg_warn("close file %s %s: %m", qp->name, id);
 		} else if (errno != ENOENT) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_out_recipient.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: cleanup_out_recipient.c,v 1.2.14.1 2023/12/25 12:54:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -55,6 +55,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -135,8 +140,6 @@ void    cleanup_out_recipient(CLEANUP_STATE *state,
     /*
      * XXX Not elegant, but eliminates complexity in the record reading loop.
      */
-    if (!var_enable_orcpt)
-	orcpt = "";
     if (dsn_orcpt == 0)
 	dsn_orcpt = "";
 
@@ -154,6 +157,7 @@ void    cleanup_out_recipient(CLEANUP_STATE *state,
 
     if ((state->flags & CLEANUP_FLAG_MAP_OK) == 0
 	|| cleanup_virt_alias_maps == 0) {
+	/* Matches been_here_drop{,_fixed}() calls cleanup_del_rcpt(). */
 	if ((var_enable_orcpt ?
 	     been_here(state->dups, "%s\n%d\n%s\n%s",
 		       dsn_orcpt, dsn_notify, orcpt, recip) :

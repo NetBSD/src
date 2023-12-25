@@ -1,0 +1,8 @@
+#verbose on
+open test-queue-file13h.tmp
+
+# Change the sender.
+
+chg_from m@porcupine.org { ret=hdrs envid=env-for-m }
+
+close

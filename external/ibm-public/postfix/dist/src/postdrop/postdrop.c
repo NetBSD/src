@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.2.14.1 2023/12/25 12:55:10 martin Exp $	*/
 
 /*++
 /* NAME
@@ -32,7 +32,8 @@
 /*	it can connect to Postfix daemon processes.
 /* DIAGNOSTICS
 /*	Fatal errors: malformed input, I/O error, out of memory. Problems
-/*	are logged to \fBsyslogd\fR(8) and to the standard error stream.
+/*	are logged to \fBsyslogd\fR(8) or \fBpostlogd\fR(8) and to
+/*	the standard error stream.
 /*	When the input is incomplete, or when the process receives a HUP,
 /*	INT, QUIT or TERM signal, the queue file is deleted.
 /* ENVIRONMENT
@@ -58,21 +59,23 @@
 /*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBalternate_config_directories (empty)\fR"
 /*	A list of non-default Postfix configuration directories that may
-/*	be specified with "-c config_directory" on the command line, or
-/*	via the MAIL_CONFIG environment parameter.
+/*	be specified with "-c config_directory" on the command line (in the
+/*	case of \fBsendmail\fR(1), with the "-C" option), or via the MAIL_CONFIG
+/*	environment parameter.
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a Postfix process will
-/*	import from a non-Postfix parent process.
+/*	The list of environment parameters that a privileged Postfix
+/*	process will import from a non-Postfix parent process, or name=value
+/*	environment overrides.
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
 /* .IP "\fBtrigger_timeout (10s)\fR"
 /*	The time limit for sending a trigger to a Postfix daemon (for
 /*	example, the \fBpickup\fR(8) or \fBqmgr\fR(8) daemon).
@@ -81,11 +84,24 @@
 /* .IP "\fBauthorized_submit_users (static:anyone)\fR"
 /*	List of users who are authorized to submit mail with the \fBsendmail\fR(1)
 /*	command (and with the privileged \fBpostdrop\fR(1) helper command).
+/* .PP
+/*	Available in Postfix version 3.6 and later:
+/* .IP "\fBlocal_login_sender_maps (static:*)\fR"
+/*	A list of lookup tables that are searched by the UNIX login name,
+/*	and that return a list of allowed envelope sender patterns separated
+/*	by space or comma.
+/* .IP "\fBempty_address_local_login_sender_maps_lookup_key (<>)\fR"
+/*	The lookup key to be used in local_login_sender_maps tables, instead
+/*	of the null sender address.
+/* .IP "\fBrecipient_delimiter (empty)\fR"
+/*	The set of characters that can separate an email address
+/*	localpart, user name, or a .forward file name from its extension.
 /* FILES
 /*	/var/spool/postfix/maildrop, maildrop queue
 /* SEE ALSO
 /*	sendmail(1), compatibility interface
 /*	postconf(5), configuration parameters
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* LICENSE
 /* .ad
@@ -113,7 +129,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <syslog.h>
 #include <errno.h>
 #include <warn_stat.h>
 
@@ -124,10 +139,10 @@
 #include <vstream.h>
 #include <vstring.h>
 #include <msg_vstream.h>
-#include <msg_syslog.h>
 #include <argv.h>
 #include <iostuff.h>
 #include <stringops.h>
+#include <mypwd.h>
 
 /* Global library. */
 
@@ -146,6 +161,8 @@
 #include <user_acl.h>
 #include <rec_attr_map.h>
 #include <mail_parm_split.h>
+#include <maillog_client.h>
+#include <login_sender_match.h>
 
 /* Application-specific. */
 
@@ -166,9 +183,13 @@
   * Local mail submission access list.
   */
 char   *var_submit_acl;
+char   *var_local_login_snd_maps;
+char   *var_null_local_login_snd_maps_key;
 
 static const CONFIG_STR_TABLE str_table[] = {
     VAR_SUBMIT_ACL, DEF_SUBMIT_ACL, &var_submit_acl, 0, 0,
+    VAR_LOCAL_LOGIN_SND_MAPS, DEF_LOCAL_LOGIN_SND_MAPS, &var_local_login_snd_maps, 0, 0,
+    VAR_NULL_LOCAL_LOGIN_SND_MAPS_KEY, DEF_NULL_LOCAL_LOGIN_SND_MAPS_KEY, &var_null_local_login_snd_maps_key, 0, 0,
     0,
 };
 
@@ -186,9 +207,11 @@ static void postdrop_sig(int sig)
     /*
      * This is the fatal error handler. Don't try to do anything fancy.
      * 
-     * msg_vstream does not allocate memory, but msg_syslog may indirectly in
-     * syslog(), so it should not be called from a user-triggered signal
-     * handler.
+     * To avoid privilege escalation in a set-gid program, Postfix logging
+     * functions must not be called from a user-triggered signal handler,
+     * because Postfix logging functions may allocate memory on the fly (as
+     * does the syslog() library function), and the memory allocator is not
+     * reentrant.
      * 
      * Assume atomic signal() updates, even when emulated with sigaction(). We
      * use the in-kernel SIGINT handler address as an atomic variable to
@@ -217,6 +240,74 @@ static void postdrop_cleanup(void)
     postdrop_sig(0);
 }
 
+/* check_login_sender_acl - check if a user is authorized to use this sender */
+
+static int check_login_sender_acl(uid_t uid, VSTRING *sender_buf,
+				          VSTRING *reason)
+{
+    const char myname[] = "check_login_sender_acl";
+    struct mypasswd *user_info;
+    char   *user_name;
+    VSTRING *user_name_buf = 0;
+    LOGIN_SENDER_MATCH *lsm;
+    int     res;
+
+    /*
+     * Sanity checks.
+     */
+    if (vstring_memchr(sender_buf, '\0') != 0) {
+	vstring_sprintf(reason, "NUL in FROM record");
+	return (CLEANUP_STAT_BAD);
+    }
+
+    /*
+     * Optimization.
+     */
+#ifndef SNAPSHOT
+    if (strcmp(var_local_login_snd_maps, DEF_LOCAL_LOGIN_SND_MAPS) == 0)
+	return (CLEANUP_STAT_OK);
+#endif
+
+    /*
+     * Get the username.
+     */
+    if ((user_info = mypwuid(uid)) != 0) {
+	user_name = user_info->pw_name;
+    } else {
+	user_name_buf = vstring_alloc(10);
+	vstring_sprintf(user_name_buf, "uid:%ld", (long) uid);
+	user_name = vstring_str(user_name_buf);
+    }
+
+
+    /*
+     * Apply the a login-sender matcher. TODO: add DICT flags.
+     */
+    lsm = login_sender_create(VAR_LOCAL_LOGIN_SND_MAPS,
+			      var_local_login_snd_maps,
+			      var_rcpt_delim,
+			      var_null_local_login_snd_maps_key, "*");
+    res = login_sender_match(lsm, user_name, vstring_str(sender_buf));
+    login_sender_free(lsm);
+    if (user_name_buf)
+	vstring_free(user_name_buf);
+    switch (res) {
+    case LSM_STAT_FOUND:
+	return (CLEANUP_STAT_OK);
+    case LSM_STAT_NOTFOUND:
+	vstring_sprintf(reason, "not authorized to use sender='%s'",
+			vstring_str(sender_buf));
+	return (CLEANUP_STAT_NOPERM);
+    case LSM_STAT_RETRY:
+    case LSM_STAT_CONFIG:
+	vstring_sprintf(reason, "%s table lookup error for '%s'",
+			VAR_LOCAL_LOGIN_SND_MAPS, var_local_login_snd_maps);
+	return (CLEANUP_STAT_WRITE);
+    default:
+	msg_panic("%s: bad login_sender_match() result: %d", myname, res);
+    }
+}
+
 MAIL_VERSION_STAMP_DECLARE;
 
 /* main - the main program */
@@ -227,7 +318,8 @@ int     main(int argc, char **argv)
     int     fd;
     int     c;
     VSTRING *buf;
-    int     status;
+    int     status = CLEANUP_STAT_OK;
+    VSTRING *reason = vstring_alloc(100);
     MAIL_STREAM *dst;
     int     rec_type;
     static char *segment_info[] = {
@@ -272,7 +364,7 @@ int     main(int argc, char **argv)
      */
     argv[0] = "postdrop";
     msg_vstream_init(argv[0], VSTREAM_ERR);
-    msg_syslog_init(mail_task("postdrop"), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task("postdrop"), MAILLOG_CLIENT_FLAG_NONE);
     set_mail_conf_str(VAR_PROCNAME, var_procname = mystrdup(argv[0]));
 
     /*
@@ -305,33 +397,19 @@ int     main(int argc, char **argv)
 
     /*
      * Read the global configuration file and extract configuration
-     * information. Some claim that the user should supply the working
-     * directory instead. That might be OK, given that this command needs
-     * write permission in a subdirectory called "maildrop". However we still
-     * need to reliably detect incomplete input, and so we must perform
-     * record-level I/O. With that, we should also take the opportunity to
-     * perform some sanity checks on the input.
+     * information.
      */
     mail_conf_read();
     /* Re-evaluate mail_task() after reading main.cf. */
-    msg_syslog_init(mail_task("postdrop"), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task("postdrop"), MAILLOG_CLIENT_FLAG_NONE);
     get_mail_conf_str_table(str_table);
-
-    /*
-     * Mail submission access control. Should this be in the user-land gate,
-     * or in the daemon process?
-     */
-    mail_dict_init();
-    if ((errstr = check_user_acl_byuid(VAR_SUBMIT_ACL, var_submit_acl,
-				       uid)) != 0)
-	msg_fatal("User %s(%ld) is not allowed to submit mail",
-		  errstr, (long) uid);
 
     /*
      * Stop run-away process accidents by limiting the queue file size. This
      * is not a defense against DOS attack.
      */
-    if (var_message_limit > 0 && get_file_limit() > var_message_limit)
+    if (ENFORCING_SIZE_LIMIT(var_message_limit)
+	&& get_file_limit() > var_message_limit)
 	set_file_limit((off_t) var_message_limit);
 
     /*
@@ -370,6 +448,16 @@ int     main(int argc, char **argv)
     /* End of initializations. */
 
     /*
+     * Mail submission access control. Should this be in the user-land gate,
+     * or in the daemon process?
+     */
+    mail_dict_init();
+    if ((errstr = check_user_acl_byuid(VAR_SUBMIT_ACL, var_submit_acl,
+				       uid)) != 0)
+	msg_fatal("User %s(%ld) is not allowed to submit mail",
+		  errstr, (long) uid);
+
+    /*
      * Don't trust the caller's time information.
      */
     GETTIMEOFDAY(&start);
@@ -382,6 +470,7 @@ int     main(int argc, char **argv)
     dst = mail_stream_file(MAIL_QUEUE_MAILDROP, MAIL_CLASS_PUBLIC,
 			   var_pickup_service, 0444);
     attr_print(VSTREAM_OUT, ATTR_FLAG_NONE,
+	       SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_POSTDROP),
 	       SEND_ATTR_STR(MAIL_ATTR_QUEUEID, dst->id),
 	       ATTR_TYPE_END);
     vstream_fflush(VSTREAM_OUT);
@@ -410,7 +499,7 @@ int     main(int argc, char **argv)
     for (;;) {
 	/* Don't allow PTR records. */
 	rec_type = rec_get_raw(VSTREAM_IN, buf, var_line_limit, REC_FLAG_NONE);
-	if (rec_type == REC_TYPE_EOF) {		/* request cancelled */
+	if (rec_type == REC_TYPE_EOF) {		/* request canceled */
 	    mail_stream_cleanup(dst);
 	    if (remove(postdrop_path))
 		msg_warn("uid=%ld: remove %s: %m", (long) uid, postdrop_path);
@@ -430,8 +519,10 @@ int     main(int argc, char **argv)
 	if (rec_type == REC_TYPE_TIME)
 	    continue;
 	/* Check these at submission time instead of pickup time. */
-	if (rec_type == REC_TYPE_FROM)
+	if (rec_type == REC_TYPE_FROM) {
+	    status |= check_login_sender_acl(uid, buf, reason);
 	    from_count++;
+	}
 	if (rec_type == REC_TYPE_RCPT)
 	    rcpt_count++;
 	/* Limit the attribute types that users may specify. */
@@ -463,7 +554,8 @@ int     main(int argc, char **argv)
 	    }
 	    continue;
 	}
-	if (REC_PUT_BUF(dst->stream, rec_type, buf) < 0) {
+	if (status != CLEANUP_STAT_OK
+	    || REC_PUT_BUF(dst->stream, rec_type, buf) < 0) {
 	    /* rec_get() errors must not clobber errno. */
 	    saved_errno = errno;
 	    while ((rec_type = rec_get_raw(VSTREAM_IN, buf, var_line_limit,
@@ -496,16 +588,20 @@ int     main(int argc, char **argv)
      * reporting (report at submission time instead of pickup time). Besides
      * the segment terminator records, there aren't any other mandatory
      * records in a Postfix submission queue file.
+     * 
+     * TODO: return an informative reason for missing sender, too many senders,
+     * or missing recipient.
      */
-    if (validate_input && (from_count == 0 || rcpt_count == 0)) {
-	status = CLEANUP_STAT_BAD;
+    if (validate_input && (from_count == 0 || rcpt_count == 0))
+	status |= CLEANUP_STAT_BAD;
+    if (status != CLEANUP_STAT_OK) {
 	mail_stream_cleanup(dst);
     }
 
     /*
      * Finish the file.
      */
-    else if ((status = mail_stream_finish(dst, (VSTRING *) 0)) != 0) {
+    else if ((status = mail_stream_finish(dst, reason)) != 0) {
 	msg_warn("uid=%ld: %m", (long) uid);
 	postdrop_cleanup();
     }
@@ -525,7 +621,9 @@ int     main(int argc, char **argv)
      */
     attr_print(VSTREAM_OUT, ATTR_FLAG_NONE,
 	       SEND_ATTR_INT(MAIL_ATTR_STATUS, status),
-	       SEND_ATTR_STR(MAIL_ATTR_WHY, ""),
+	       SEND_ATTR_STR(MAIL_ATTR_WHY, status != CLEANUP_STAT_OK
+			     && VSTRING_LEN(reason) > 0 ?
+			     vstring_str(reason) : ""),
 	       ATTR_TYPE_END);
     vstream_fflush(VSTREAM_OUT);
     exit(status);

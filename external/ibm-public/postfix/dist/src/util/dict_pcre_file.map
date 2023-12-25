@@ -1,0 +1,6 @@
+/file1/ dict_pcre_file1
+/file2/ dict_pcre_file2
+/file3/ dict_pcre_file3
+/files12/ dict_pcre_file1, dict_pcre_file2
+/files13/ dict_pcre_file1, dict_pcre_file3
+/file-comma/ ,

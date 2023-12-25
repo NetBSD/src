@@ -7,7 +7,8 @@
 
 <title>Postfix LDAP Howto</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -95,6 +96,10 @@ your Postfix source tree should work: </p>
     <a href="LDAP_README.html">AUXLIBS_LDAP</a>="-L/usr/local/lib -lldap -L/usr/local/lib -llber"
 </pre>
 </blockquote>
+
+<p> If your LDAP shared library is in a directory that the RUN-TIME
+linker does not know about, add a "-Wl,-R,/path/to/directory" option after
+"-lldap". </p>
 
 <p> Postfix versions before 3.0 use AUXLIBS instead of <a href="LDAP_README.html">AUXLIBS_LDAP</a>.
 With Postfix 3.0 and later, the old AUXLIBS variable still supports
@@ -195,7 +200,7 @@ server listening at port 389 on ldap.example.com. It will bind anonymously,
 search for any directory entries whose mailacceptinggeneralid
 attribute is "ldapuser", read the "maildrop" attributes of those
 found, and build a list of their maildrops, which will be treated
-as <a href="http://tools.ietf.org/html/rfc822">RFC822</a> addresses to which the message will be delivered. </p>
+as <a href="https://tools.ietf.org/html/rfc822">RFC822</a> addresses to which the message will be delivered. </p>
 
 <h2><a name="example_virtual">Example: virtual domains/addresses</a></h2>
 
@@ -529,7 +534,7 @@ query_filter = (&amp;(mailacceptinggeneralid=%s)(!(|(maildrop="*|*")(maildrop="*
 </pre>
 </blockquote>
 
-<li> <p> And for that matter, even for aliases, you may not want users able to
+<li> <p> And for that matter, even for aliases, you may not want users to be able to
   specify their maildrops as programs, includes, etc. This might be
   particularly pertinent on a "sealed" server where they don't have
   local UNIX accounts, but exist only in LDAP and Cyrus. You might allow
@@ -588,10 +593,10 @@ contents, please include the applicable bits of some directory entries. </p>
 
 <li>Prabhat K Singh: Wrote the initial Postfix LDAP lookups and connection caching.
 
-<li>Keith Stevenson: <a href="http://tools.ietf.org/html/rfc2254">RFC 2254</a> escaping in queries.
+<li>Keith Stevenson: <a href="https://tools.ietf.org/html/rfc2254">RFC 2254</a> escaping in queries.
 
 <li>Samuel Tardieu: Noticed that searches could include wildcards, prompting
-                the work on <a href="http://tools.ietf.org/html/rfc2254">RFC 2254</a> escaping in queries. Spotted a bug
+                the work on <a href="https://tools.ietf.org/html/rfc2254">RFC 2254</a> escaping in queries. Spotted a bug
                 in binding.
 
 <li>Sami Haahtinen: Referral chasing and v3 support.

@@ -7,7 +7,8 @@
 
 <title> Postfix Debugging Howto </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -71,9 +72,20 @@ debugger</a>
 
 <h2><a name="logging">Look for obvious signs of trouble</a></h2>
 
-<p> Postfix logs all failed and successful deliveries to a logfile.
-The file is usually called /var/log/maillog or /var/log/mail; the
-exact pathname is defined in the /etc/syslog.conf file. </p>
+<p> Postfix logs all failed and successful deliveries to a logfile. </p>
+
+<ul>
+
+<li> <p> When Postfix uses syslog logging (the default), the file
+is usually called /var/log/maillog, /var/log/mail, or something
+similar; the exact pathname is configured in a file called
+/etc/syslog.conf, /etc/rsyslog.conf, or something similar. </p>
+
+<li> <p> When Postfix uses its own logging system (see <a href="MAILLOG_README.html">MAILLOG_README</a>),
+the location of the logfile is configured with the Postfix <a href="postconf.5.html#maillog_file">maillog_file</a>
+parameter. </p>
+
+</ul>
 
 <p> When Postfix does not receive or deliver mail, the first order
 of business is to look for errors that prevent Postfix from working
@@ -81,7 +93,7 @@ properly:  </p>
 
 <blockquote>
 <pre>
-% <b>egrep '(warning|error|fatal|panic):' /some/log/file | more</b>
+% <b>grep -E '(warning|error|fatal|panic):' /some/log/file | more</b>
 </pre>
 </blockquote>
 
@@ -566,11 +578,11 @@ or 1000+ lines of <b>postconf</b> command output. </p>
 </ul>
 
 <li> <p> Better, provide output from the <b>postfinger</b> tool.
-This can be found at <a href="http://ftp.wl0.org/SOURCES/postfinger">http://ftp.wl0.org/SOURCES/postfinger</a>.  </p>
+This can be found at <a href="https://github.com/ford--prefect/postfinger">https://github.com/ford--prefect/postfinger</a>.  </p>
 
 <li> <p> If the problem is SASL related, consider including the
 output from the <b>saslfinger</b> tool. This can be found at
-<a href="http://postfix.state-of-mind.de/patrick.koetter/saslfinger/">http://postfix.state-of-mind.de/patrick.koetter/saslfinger/</a>. </p>
+<a href="https://packages.debian.org/search?keywords=sasl2-bin">https://packages.debian.org/search?keywords=sasl2-bin</a>. </p>
 
 <li> <p> If the problem is about too much mail in the queue, consider
 including output from the <b>qshape</b> tool, as described in the

@@ -1,4 +1,4 @@
-/*	$NetBSD: extpar.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: extpar.c,v 1.2.18.1 2023/12/25 12:55:29 martin Exp $	*/
 
 /*++
 /* NAME
@@ -27,22 +27,21 @@
 /*	EXTPAR_FLAG_NONE, or the bitwise OR of one or more flags:
 /* .RS
 /* .IP EXTPAR_FLAG_EXTRACT
-/*	This flag is intended to instruct expar() callers that
-/*	expar() should be invoked. It has no effect on expar()
+/*	This flag is intended to instruct extpar() callers that
+/*	extpar() should be invoked. It has no effect on expar()
 /*	itself.
 /* .IP EXTPAR_FLAG_STRIP
 /*	Skip whitespace after the opening parenthesis, and trim
 /*	whitespace before the closing parenthesis.
 /* .RE
 /* DIAGNOSTICS
-/*	panic: the input string does not start with the opening
-/*	parenthesis.
-/*
 /*	In case of error the result value is a dynamically-allocated
 /*	string with a description of the problem that includes a
 /*	copy of the offending input.  A non-null result value should
-/*	be destroyed with myfree(). The following decribes the errors
+/*	be destroyed with myfree(). The following describes the errors
 /*	and the state of the buffer and buffer pointer.
+/* .IP "no opening parenthesis at start of text"
+/*	The buffer pointer points to the input text.
 /* .IP "missing closing parenthesis"
 /*	The buffer pointer points to text as if a closing parenthesis
 /*	were present at the end of the input.
@@ -60,6 +59,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
  /*
@@ -71,7 +75,7 @@
  /*
   * Utility library.
   */
-#include <msg.h>
+#include <vstring.h>
 #include <stringops.h>
 
 /* extpar - extract text from parentheses */
@@ -82,9 +86,11 @@ char   *extpar(char **bp, const char *parens, int flags)
     char   *err = 0;
     size_t  len;
 
-    if (cp[0] != parens[0])
-	msg_panic("extpar: no '%c' at start of text: \"%s\"", parens[0], cp);
-    if ((len = balpar(cp, parens)) == 0) {
+    if (cp[0] != parens[0]) {
+	err = vstring_export(vstring_sprintf(vstring_alloc(100),
+		      "no '%c' at start of text in \"%s\"", parens[0], cp));
+	len = 0;
+    } else if ((len = balpar(cp, parens)) == 0) {
 	err = concatenate("missing '", parens + 1, "' in \"",
 			  cp, "\"", (char *) 0);
 	cp += 1;

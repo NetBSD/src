@@ -1,7 +1,7 @@
-/*	$NetBSD: gccw.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: gccw.c,v 1.1.1.1.52.1 2023/12/25 12:55:29 martin Exp $	*/
 
  /*
-  * This is is a regression test for all the things that gcc is meant to warn
+  * This is a regression test for all the things that gcc is meant to warn
   * about.
   * 
   * gcc version 3 breaks several tests:

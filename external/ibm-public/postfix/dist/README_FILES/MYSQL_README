@@ -29,15 +29,17 @@ The Postfix MySQL client utilizes the mysql client library, which can be
 obtained from:
 
     http://www.mysql.com/downloads/
-    http://sourceforge.net/projects/mysql/
 
 In order to build Postfix with mysql map support, you will need to add -
 DHAS_MYSQL and -I for the directory containing the mysql headers, and the
 mysqlclient library (and libm) to AUXLIBS_MYSQL, for example:
 
     make -f Makefile.init makefiles \
-        'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
-        'AUXLIBS_MYSQL=-L/usr/local/mysql/lib -lmysqlclient -lz -lm'
+        "CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include" \
+        "AUXLIBS_MYSQL=-L/usr/local/mysql/lib -lmysqlclient -lz -lm"
+
+If your MySQL shared library is in a directory that the RUN-TIME linker does
+not know about, add a "-Wl,-R,/path/to/directory" option after "-lmysqlclient".
 
 Postfix versions before 3.0 use AUXLIBS instead of AUXLIBS_MYSQL. With Postfix
 3.0 and later, the old AUXLIBS variable still supports building a statically-
@@ -52,9 +54,9 @@ building a dynamically-loaded or statically-loaded MySQL database client.
 On Solaris, use this instead:
 
     make -f Makefile.init makefiles \
-        'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
-        'AUXLIBS_MYSQL=-L/usr/local/mysql/lib -R/usr/local/mysql/lib \
-            -lmysqlclient -lz -lm'
+        "CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include" \
+        "AUXLIBS_MYSQL=-L/usr/local/mysql/lib -R/usr/local/mysql/lib \
+            -lmysqlclient -lz -lm"
 
 Then, just run 'make'. This requires libz, the compression library. Older mysql
 implementations build without libz.
@@ -95,7 +97,7 @@ where_field = alias
 additional_conditions = AND status = 'paid'
 
 # This is necessary to make UTF8 queries work for Postfix 2.11 .. 3.1,
-# and is the default setting as of Postfix 3.2,
+# and is the default setting as of Postfix 3.2.
 option_group = client
 
 AAddddiittiioonnaall nnootteess
@@ -129,5 +131,5 @@ CCrreeddiittss
     configuration feature.
   * Liviu Daia with further refinements from Jose Luis Tallon and Victor
     Duchovni developed the common query, result_format, domain and
-    expansion_limit interface for LDAP, MySQL and PosgreSQL.
+    expansion_limit interface for LDAP, MySQL and PostgreSQL.
 

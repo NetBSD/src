@@ -1,4 +1,4 @@
-/*	$NetBSD: defer.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: defer.c,v 1.2.14.1 2023/12/25 12:54:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -155,6 +155,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -259,11 +264,12 @@ int     defer_append_intern(int flags, const char *id, MSG_STATS *stats,
 	my_dsn.action = "delayed";
 
 	if (mail_command_client(MAIL_CLASS_PRIVATE, var_defer_service,
+				MAIL_ATTR_PROTO_BOUNCE,
 			   SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_APPEND),
 				SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
 				SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
-				SEND_ATTR_FUNC(rcpt_print, (void *) rcpt),
-				SEND_ATTR_FUNC(dsn_print, (void *) &my_dsn),
+			    SEND_ATTR_FUNC(rcpt_print, (const void *) rcpt),
+			  SEND_ATTR_FUNC(dsn_print, (const void *) &my_dsn),
 				ATTR_TYPE_END) != 0)
 	    msg_warn("%s: %s service failure", id, var_defer_service);
 	log_adhoc(id, stats, rcpt, relay, &my_dsn, "deferred");
@@ -303,6 +309,7 @@ int     defer_flush(int flags, const char *queue, const char *id,
     flags |= BOUNCE_FLAG_DELRCPT;
 
     if (mail_command_client(MAIL_CLASS_PRIVATE, var_defer_service,
+			    MAIL_ATTR_PROTO_BOUNCE,
 			    SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_FLUSH),
 			    SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
 			    SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
@@ -327,6 +334,7 @@ int     defer_warn(int flags, const char *queue, const char *id,
 		         const char *sender, const char *envid, int dsn_ret)
 {
     if (mail_command_client(MAIL_CLASS_PRIVATE, var_defer_service,
+			    MAIL_ATTR_PROTO_BOUNCE,
 			    SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_WARN),
 			    SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
 			    SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),

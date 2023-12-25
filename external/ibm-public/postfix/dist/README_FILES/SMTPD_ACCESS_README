@@ -23,7 +23,7 @@ RReellaayy ccoonnttrrooll,, jjuunnkk mmaaiill ccoonnttr
 In a distant past, the Internet was a friendly environment. Mail servers
 happily forwarded mail on behalf of anyone towards any destination. On today's
 Internet, spammers abuse servers that forward mail from arbitrary systems, and
-abused systems end up on anti-spammer blacklists. See, for example, the
+abused systems end up on anti-spammer denylists. See, for example, the
 information on http://www.mail-abuse.org/ and other websites.
 
 By default, Postfix has a moderately restrictive approach to mail relaying.
@@ -50,11 +50,11 @@ email.
     Protocol-oriented access controls become less useful over time as spammers
     and worm writers learn to read RFC documents.
 
-  * Blacklist oriented: some SMTP server access controls query blacklists with
+  * Denylist oriented: some SMTP server access controls query denylists with
     known to be bad sites such as open mail relays, open web proxies, and home
     computers that have been compromised and that are under remote control by
-    criminals. The effectiveness of these blacklists depends on how complete
-    and how up to date they are.
+    criminals. The effectiveness of these denylists depends on how complete and
+    how up to date they are.
 
   * Threshold oriented: some SMTP server access controls attempt to raise the
     bar by either making the client do more work (greylisting) or by asking for
@@ -131,12 +131,6 @@ Examples of simple restriction lists are:
     # Don't accept mail from domains that don't exist.
     smtpd_sender_restrictions = reject_unknown_sender_domain
 
-    # Relay control (Postfix 2.10 and later): local clients and
-    # authenticated clients may specify any destination domain.
-    smtpd_relay_restrictions = permit_mynetworks,
-        permit_sasl_authenticated,
-        reject_unauth_destination
-
     # Spam control: exclude local clients and authenticated clients
     # from DNSBL lookups.
     smtpd_recipient_restrictions = permit_mynetworks,
@@ -150,6 +144,12 @@ Examples of simple restriction lists are:
         reject_rhsbl_helo dbl.spamhaus.org,
         reject_rhsbl_sender dbl.spamhaus.org
 
+    # Relay control (Postfix 2.10 and later): local clients and
+    # authenticated clients may specify any destination domain.
+    smtpd_relay_restrictions = permit_mynetworks,
+        permit_sasl_authenticated,
+        reject_unauth_destination
+
     # Block clients that speak too early.
     smtpd_data_restrictions = reject_unauth_pipelining
 
@@ -160,8 +160,9 @@ Each restriction list is evaluated from left to right until some restriction
 produces a result of PERMIT, REJECT or DEFER (try again later). The end of each
 list is equivalent to a PERMIT result. By placing a PERMIT restriction before a
 REJECT restriction you can make exceptions for specific clients or users. This
-is called whitelisting; the fourth example above allows mail from local
-networks but otherwise rejects mail to arbitrary destinations.
+is called allowlisting; the smtpd_relay_restrictions example above allows mail
+from local networks, and from SASL authenticated clients, but otherwise rejects
+mail to arbitrary destinations.
 
 The table below summarizes the purpose of each SMTP access restriction list.
 All lists use the exact same syntax; they differ only in the time of evaluation
@@ -186,21 +187,21 @@ and in the effect of a REJECT or DEFER result.
     |                              |       |                            |information|
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
     |                              |       |Required if                 |           |
-    |                              |>= 2.10|smtpd_recipient_restrictions|           |
-    |                              |       |does not enforce relay      |Reject RCPT|
-    |smtpd_relay_restrictions      |       |policy                      |TO         |
-    |                              |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |information|
-    |                              |       |                            |           |
-    |                              |< 2.10 |Not available               |           |
-    |                              |       |                            |           |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
-    |                              |       |Required if                 |           |
     |                              |>= 2.10|smtpd_relay_restrictions    |           |
     |                              |       |does not enforce relay      |Reject RCPT|
     |smtpd_recipient_restrictions  |       |policy                      |TO         |
     |                              |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |information|
     |                              |       |                            |           |
     |                              |< 2.10 |Required                    |           |
+    |                              |       |                            |           |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
+    |                              |       |Required if                 |           |
+    |                              |>= 2.10|smtpd_recipient_restrictions|           |
+    |                              |       |does not enforce relay      |Reject RCPT|
+    |smtpd_relay_restrictions      |       |policy                      |TO         |
+    |                              |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |information|
+    |                              |       |                            |           |
+    |                              |< 2.10 |Not available               |           |
     |                              |       |                            |           |
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
     |smtpd_data_restrictions       |>= 2.0 |Optional                    |Reject DATA|
@@ -248,7 +249,7 @@ Benefits of delayed restriction evaluation, and of restriction mixing:
     logging only the client hostname and IP address and not knowing whose mail
     was being blocked.
 
-  * Mixing is needed for complex whitelisting policies. For example, in order
+  * Mixing is needed for complex allowlisting policies. For example, in order
     to reject local sender addresses in mail from non-local clients, you need
     to be able to mix restrictions on client information with restrictions on
     sender information in the same restriction list. Without this ability, many

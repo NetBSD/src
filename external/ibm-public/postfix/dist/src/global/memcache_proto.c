@@ -1,4 +1,4 @@
-/*	$NetBSD: memcache_proto.c,v 1.1.1.2 2014/07/06 19:27:51 tron Exp $	*/
+/*	$NetBSD: memcache_proto.c,v 1.1.1.2.26.1 2023/12/25 12:55:02 martin Exp $	*/
 
 /*++
 /* NAME
@@ -33,7 +33,7 @@
 /*	ssize_t	len;
 /* DESCRIPTION
 /*	This module implements the low-level memcache protocol.
-/*	All functions return -1 on error and 0 on succcess.
+/*	All functions return -1 on error and 0 on success.
 /* SEE ALSO
 /*	smtp_proto(3) SMTP low-level protocol.
 /* AUTHOR(S)
@@ -41,6 +41,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #include <sys_defs.h>
@@ -145,16 +150,13 @@ int     memcache_fread(VSTREAM *stream, VSTRING *buf, ssize_t todo)
     /*
      * Do the I/O.
      */
-    VSTRING_SPACE(buf, todo);
-    VSTRING_AT_OFFSET(buf, todo);
-    if (vstream_fread(stream, STR(buf), todo) != todo
+    if (vstream_fread_buf(stream, buf, todo) != todo
 	|| VSTREAM_GETC(stream) != '\r'
 	|| VSTREAM_GETC(stream) != '\n') {
 	if (msg_verbose)
 	    msg_info("%s read: error", VSTREAM_PATH(stream));
 	return (-1);
     } else {
-	vstring_truncate(buf, todo);
 	VSTRING_TERMINATE(buf);
 	if (msg_verbose)
 	    msg_info("%s read: %s", VSTREAM_PATH(stream), STR(buf));

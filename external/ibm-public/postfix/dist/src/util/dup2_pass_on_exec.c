@@ -1,10 +1,10 @@
-/*	$NetBSD: dup2_pass_on_exec.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: dup2_pass_on_exec.c,v 1.1.1.1.52.1 2023/12/25 12:55:29 martin Exp $	*/
 
 /*++
 /* NAME
 /*	dup2_pass_on_exec 1
 /* SUMMARY
-/*	dup2 close-on-exec behaviour test program
+/*	dup2 close-on-exec behavior test program
 /* SYNOPSIS
 /*	dup2_pass_on_exec
 /* DESCRIPTION

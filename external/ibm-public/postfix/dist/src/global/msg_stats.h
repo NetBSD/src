@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_stats.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: msg_stats.h,v 1.1.1.1.52.1 2023/12/25 12:55:02 martin Exp $	*/
 
 #ifndef _MSG_STATS_H_INCLUDED_
 #define _MSG_STATS_H_INCLUDED_
@@ -84,8 +84,8 @@ typedef struct {
 	(st) \
     )
 
-extern int msg_stats_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
-extern int msg_stats_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
+extern int msg_stats_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
+extern int msg_stats_print(ATTR_PRINT_COMMON_FN, VSTREAM *, int, const void *);
 
 /* LICENSE
 /* .ad
@@ -96,6 +96,11 @@ extern int msg_stats_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

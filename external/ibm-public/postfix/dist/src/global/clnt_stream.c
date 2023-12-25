@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_stream.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: clnt_stream.c,v 1.2.14.1 2023/12/25 12:54:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -8,11 +8,15 @@
 /* SYNOPSIS
 /*	#include <clnt_stream.h>
 /*
-/*	CLNT_STREAM *clnt_stream_create(class, service, timeout, ttl)
+/*	typedef void (*CLNT_STREAM_HANDSHAKE_FN)(VSTREAM *)
+/*
+/*	CLNT_STREAM *clnt_stream_create(class, service, timeout, ttl,
+/*						handshake)
 /*	const char *class;
 /*	const char *service;
 /*	int	timeout;
 /*	int	ttl;
+/*	CLNT_STREAM_HANDSHAKE_FN *handshake;
 /*
 /*	VSTREAM	*clnt_stream_access(clnt_stream)
 /*	CLNT_STREAM *clnt_stream;
@@ -35,6 +39,8 @@
 /*
 /*	clnt_stream_access() returns an open stream to the service specified
 /*	to clnt_stream_create(). The stream instance may change between calls.
+/*	This function returns null when the handshake function returned an
+/*	error.
 /*
 /*	clnt_stream_recover() recovers from a server-initiated disconnect
 /*	that happened in the middle of an I/O operation.
@@ -51,6 +57,10 @@
 /*	Idle time after which the client disconnects.
 /* .IP ttl
 /*	Upper bound on the time that a connection is allowed to persist.
+/* .IP handshake
+/*	Null pointer, or pointer to function that will be called
+/*	at the start of a new connection and that returns 0 in case
+/*	of success.
 /* DIAGNOSTICS
 /*	Warnings: communication failure. Fatal error: mail system is down,
 /*	out of memory.
@@ -65,6 +75,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -95,6 +110,7 @@ struct CLNT_STREAM {
     VSTREAM *vstream;			/* buffered I/O */
     int     timeout;			/* time before client disconnect */
     int     ttl;			/* time before client disconnect */
+    CLNT_STREAM_HANDSHAKE_FN handshake;
     char   *class;			/* server class */
     char   *service;			/* server name */
 };
@@ -129,7 +145,7 @@ static void clnt_stream_ttl_event(int event, void *context)
      * with the call-back routine, but there is too much code that would have
      * to be changed.
      * 
-     * XXX Should we be concerned that an overly agressive optimizer will
+     * XXX Should we be concerned that an overly aggressive optimizer will
      * eliminate this function and replace calls to clnt_stream_ttl_event()
      * by direct calls to clnt_stream_event()? It should not, because there
      * exists code that takes the address of both functions.
@@ -207,6 +223,7 @@ void    clnt_stream_recover(CLNT_STREAM *clnt_stream)
 
 VSTREAM *clnt_stream_access(CLNT_STREAM *clnt_stream)
 {
+    CLNT_STREAM_HANDSHAKE_FN handshake;
 
     /*
      * Open a stream or restart the idle timer.
@@ -215,20 +232,26 @@ VSTREAM *clnt_stream_access(CLNT_STREAM *clnt_stream)
      */
     if (clnt_stream->vstream == 0) {
 	clnt_stream_open(clnt_stream);
+	handshake = clnt_stream->handshake;
     } else if (readable(vstream_fileno(clnt_stream->vstream))) {
 	clnt_stream_close(clnt_stream);
 	clnt_stream_open(clnt_stream);
+	handshake = clnt_stream->handshake;
     } else {
 	event_request_timer(clnt_stream_event, (void *) clnt_stream,
 			    clnt_stream->timeout);
+	handshake = 0;
     }
+    if (handshake != 0 && handshake(clnt_stream->vstream) != 0)
+	return (0);
     return (clnt_stream->vstream);
 }
 
 /* clnt_stream_create - create client stream connection */
 
 CLNT_STREAM *clnt_stream_create(const char *class, const char *service,
-				        int timeout, int ttl)
+				        int timeout, int ttl,
+				        CLNT_STREAM_HANDSHAKE_FN handshake)
 {
     CLNT_STREAM *clnt_stream;
 
@@ -239,6 +262,7 @@ CLNT_STREAM *clnt_stream_create(const char *class, const char *service,
     clnt_stream->vstream = 0;
     clnt_stream->timeout = timeout;
     clnt_stream->ttl = ttl;
+    clnt_stream->handshake = handshake;
     clnt_stream->class = mystrdup(class);
     clnt_stream->service = mystrdup(service);
     return (clnt_stream);

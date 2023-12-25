@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - relocated(5) </title>
 </head> <body> <pre>
 RELOCATED(5)                                                      RELOCATED(5)
@@ -27,8 +28,8 @@ RELOCATED(5)                                                      RELOCATED(5)
 
        Alternatively,  the  table  can be provided as a regular-expression map
        where patterns are given as regular  expressions,  or  lookups  can  be
-       directed  to TCP-based server. In those case, the lookups are done in a
-       slightly different way as described  below  under  "REGULAR  EXPRESSION
+       directed  to a TCP-based server. In those case, the lookups are done in
+       a slightly different way as described below under  "REGULAR  EXPRESSION
        TABLES" or "TCP-BASED TABLES".
 
        Table lookups are case insensitive.
@@ -83,7 +84,7 @@ RELOCATED(5)                                                      RELOCATED(5)
        to a TCP-based server. For a description of regular  expression  lookup
        table  syntax,  see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>. For a description
        of the TCP client/server table lookup protocol, see <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.  This
-       feature is not available up to and including Postfix version 2.4.
+       feature is available in Postfix 2.5 and later.
 
        Each  pattern  is  a  regular  expression that is applied to the entire
        address being looked up. Thus, <i>user@domain</i> mail addresses are not  bro-
@@ -100,8 +101,8 @@ RELOCATED(5)                                                      RELOCATED(5)
 <b>TCP-BASED TABLES</b>
        This  section  describes  how the table lookups change when lookups are
        directed  to  a  TCP-based  server.  For  a  description  of  the   TCP
-       client/server  lookup  protocol, see <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.  This feature is not
-       available up to and including Postfix version 2.4.
+       client/server  lookup  protocol,  see  <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.   This  feature is
+       available in Postfix 2.5 and later.
 
        Each lookup operation uses the entire address once.  Thus,  <i>user@domain</i>
        mail  addresses  are  not  broken  up  into their <i>user</i> and <i>@domain</i> con-
@@ -117,25 +118,27 @@ RELOCATED(5)                                                      RELOCATED(5)
        below  provides  only  a  parameter  summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more
        details including examples.
 
-       <b><a href="postconf.5.html#relocated_maps">relocated_maps</a></b>
-              List of lookup tables for relocated users or sites.
+       <b><a href="postconf.5.html#relocated_maps">relocated_maps</a> (empty)</b>
+              Optional lookup tables with new contact information for users or
+              domains that no longer exist.
 
        Other parameters of interest:
 
-       <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b>
-              The network interface addresses that this system  receives  mail
-              on.   You  need  to  stop  and start Postfix when this parameter
-              changes.
+       <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> (all)</b>
+              The  network  interface addresses that this mail system receives
+              mail on.
 
-       <b><a href="postconf.5.html#mydestination">mydestination</a></b>
-              List of domains that this mail system considers local.
+       <b><a href="postconf.5.html#mydestination">mydestination</a> ($<a href="postconf.5.html#myhostname">myhostname</a>, localhost.$<a href="postconf.5.html#mydomain">mydomain</a>, localhost)</b>
+              The list of domains that are delivered via the  $<a href="postconf.5.html#local_transport">local_transport</a>
+              mail delivery transport.
 
-       <b><a href="postconf.5.html#myorigin">myorigin</a></b>
-              The domain that is appended to locally-posted mail.
+       <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
+              The  domain  name that locally-posted mail appears to come from,
+              and that locally posted mail is delivered to.
 
-       <b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>
-              Other interfaces that this machine receives mail on by way of  a
-              proxy agent or network address translator.
+       <b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> (empty)</b>
+              The network interface addresses that this mail  system  receives
+              mail on by way of a proxy or network address translation unit.
 
 <b>SEE ALSO</b>
        <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a>, address resolver

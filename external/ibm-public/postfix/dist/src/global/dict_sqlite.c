@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sqlite.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: dict_sqlite.c,v 1.2.14.1 2023/12/25 12:54:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -36,26 +36,9 @@
 /*	Must be O_RDONLY.
 /* .IP dict_flags
 /*	See dict_open(3).
-/* .PP
-/*	Configuration parameters:
-/* .IP dbpath
-/*	Path to SQLite database
-/* .IP query
-/*	Query template. Before the query is actually issued, variable
-/*	substitutions are performed. See sqlite_table(5) for details.
-/* .IP result_format
-/*	The format used to expand results from queries.  Substitutions
-/*	are performed as described in sqlite_table(5). Defaults to
-/*	returning the lookup result unchanged.
-/* .IP expansion_limit
-/*	Limit (if any) on the total number of lookup result values.
-/*	Lookups which exceed the limit fail with dict->error=DICT_ERR_RETRY.
-/*	Note that each non-empty (and non-NULL) column of a
-/*	multi-column result row counts as one result.
-/* .IP "select_field, where_field, additional_conditions"
-/*	Legacy query interface.
 /* SEE ALSO
 /*	dict(3) generic dictionary manager
+/*	sqlite_table(5) sqlite client configuration
 /* AUTHOR(S)
 /*	Axel Steiner
 /*	ast@treibsand.com
@@ -176,7 +159,7 @@ static const char *dict_sqlite_lookup(DICT *dict, const char *name)
     }
 
     /*
-     * Optionally fold the key. Folding may be enabled on on-the-fly.
+     * Optionally fold the key. Folding may be enabled on-the-fly.
      */
     if (dict->flags & DICT_FLAG_FOLD_FIX) {
 	if (dict->fold_buf == 0)

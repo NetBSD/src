@@ -1,0 +1,5 @@
+find_inet: good-symbolic: PASS
+find_inet: good-numeric: PASS
+find_inet: bad-symbolic: PASS
+find_inet: bad-numeric: PASS
+find_inet: PASS=4 FAIL=0

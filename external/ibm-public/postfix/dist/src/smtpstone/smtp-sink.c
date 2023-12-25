@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp-sink.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtp-sink.c,v 1.2.14.1 2023/12/25 12:55:17 martin Exp $	*/
 
 /*++
 /* NAME
@@ -193,7 +193,7 @@
 /* .IP \fBunix:\fR\fIpathname\fR
 /*	Listen on the UNIX-domain socket at \fIpathname\fR.
 /* .IP \fIbacklog\fR
-/*	The maximum length the queue of pending connections,
+/*	The maximum length of the queue of pending connections,
 /*	as defined by the \fBlisten\fR(2) system call.
 /* DUMP FILE FORMAT
 /* .ad
@@ -394,7 +394,7 @@ static char *single_template;		/* individual template */
 static char *shared_template;		/* shared template */
 static VSTRING *start_string;		/* dump content prefix */
 
-static INET_PROTO_INFO *proto_info;
+static const INET_PROTO_INFO *proto_info;
 
 #define STR(x)	vstring_str(x)
 
@@ -1356,7 +1356,7 @@ static void connect_event(int unused_event, void *unused_context)
 	    SOCKADDR_TO_HOSTADDR(sa, len, &state->client_addr,
 				 (MAI_SERVPORT_STR *) 0, sa->sa_family);
 	else
-	    strncpy(state->client_addr.buf, "local", sizeof("local"));
+	    strncpy(state->client_addr.buf, "local", sizeof("local") + 0);
 	if (msg_verbose)
 	    msg_info("connect (%s %s)",
 #ifdef AF_LOCAL

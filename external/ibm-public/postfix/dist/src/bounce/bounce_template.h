@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_template.h,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: bounce_template.h,v 1.2.14.1 2023/12/25 12:54:48 martin Exp $	*/
 
 #ifndef _BOUNCE_TEMPLATE_H_INCLUDED_
 #define _BOUNCE_TEMPLATE_H_INCLUDED_
@@ -29,7 +29,8 @@ typedef struct BOUNCE_TEMPLATE {
     const char *origin;			/* built-in or pathname */
     const char *mime_charset;		/* character set (configurable) */
     const char *mime_encoding;		/* 7bit or 8bit (derived) */
-    const char *from;			/* originator (configurable) */
+    const char *obs_from;		/* originator (configurable) */
+    const char *std_from;		/* originator (configurable) */
     const char *subject;		/* general subject (configurable) */
     const char *postmaster_subject;	/* postmaster subject (configurable) */
     const char **message_text;		/* message text (configurable) */
@@ -47,7 +48,6 @@ typedef struct BOUNCE_TEMPLATE {
 #define IS_FAILURE_TEMPLATE(t)	((t)->class[0] == BOUNCE_TMPL_CLASS_FAILURE[0])
 #define IS_DELAY_TEMPLATE(t)	((t)->class[0] == BOUNCE_TMPL_CLASS_DELAY[0])
 #define IS_SUCCESS_TEMPLATE(t)	((t)->class[0] == BOUNCE_TMPL_CLASS_SUCCESS[0])
-#define IS_VERIFY_TEMPLATE(t)	((t)->class[0] == BOUNCE_TMPL_CLASS_verify[0])
 
 #define bounce_template_encoding(t)	((t)->mime_encoding)
 #define bounce_template_charset(t)	((t)->mime_charset)
@@ -91,6 +91,11 @@ void    bounce_templates_dump(VSTREAM *, BOUNCE_TEMPLATES *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

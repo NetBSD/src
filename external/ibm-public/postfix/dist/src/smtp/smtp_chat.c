@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_chat.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtp_chat.c,v 1.2.14.1 2023/12/25 12:55:14 martin Exp $	*/
 
 /*++
 /* NAME
@@ -104,6 +104,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -137,6 +142,7 @@
 #include <post_mail.h>
 #include <mail_error.h>
 #include <dsn_util.h>
+#include <hfrom_format.h>
 
 /* Application-specific. */
 
@@ -356,8 +362,13 @@ SMTP_RESP *smtp_chat_resp(SMTP_SESSION *session)
 	 * loss of mail is not acceptable then they can turn off pipelining
 	 * for specific sites, or they can turn off pipelining globally when
 	 * they find that there are just too many broken sites.
+	 * 
+	 * Fix 20190621: don't cache an SMTP session after an SMTP protocol
+	 * error. The protocol may be in a bad state. Disable caching here so
+	 * that the protocol engine will send QUIT.
 	 */
 	session->error_mask |= MAIL_ERROR_PROTOCOL;
+	DONT_CACHE_THIS_SESSION;
 	if (session->features & SMTP_FEATURE_PIPELINING) {
 	    msg_warn("%s: non-%s response from %s: %.100s",
 		     session->state->request->queue_id,
@@ -466,9 +477,15 @@ void    smtp_chat_notify(SMTP_SESSION *session)
 	msg_warn("postmaster notify: %m");
 	return;
     }
-    post_mail_fprintf(notice, "From: %s (Mail Delivery System)",
-		      mail_addr_mail_daemon());
-    post_mail_fprintf(notice, "To: %s (Postmaster)", var_error_rcpt);
+    if (smtp_hfrom_format == HFROM_FORMAT_CODE_STD) {
+	post_mail_fprintf(notice, "From: Mail Delivery System <%s>",
+			  mail_addr_mail_daemon());
+	post_mail_fprintf(notice, "To: Postmaster <%s>", var_error_rcpt);
+    } else {
+	post_mail_fprintf(notice, "From: %s (Mail Delivery System)",
+			  mail_addr_mail_daemon());
+	post_mail_fprintf(notice, "To: %s (Postmaster)", var_error_rcpt);
+    }
     post_mail_fprintf(notice, "Subject: %s %s client: errors from %s",
 		      var_mail_name, smtp_mode ? "SMTP" : "LMTP",
 		      session->namaddrport);

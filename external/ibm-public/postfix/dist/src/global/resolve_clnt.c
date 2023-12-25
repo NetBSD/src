@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_clnt.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: resolve_clnt.c,v 1.2.14.1 2023/12/25 12:55:04 martin Exp $	*/
 
 /*++
 /* NAME
@@ -20,16 +20,8 @@
 /*	void	resolve_clnt_init(reply)
 /*	RESOLVE_REPLY *reply;
 /*
-/*	void	resolve_clnt_query(address, reply)
-/*	const char *address;
-/*	RESOLVE_REPLY *reply;
-/*
 /*	void	resolve_clnt_query_from(sender, address, reply)
 /*	const char *sender;
-/*	const char *address;
-/*	RESOLVE_REPLY *reply;
-/*
-/*	void	resolve_clnt_verify(address, reply)
 /*	const char *address;
 /*	RESOLVE_REPLY *reply;
 /*
@@ -47,18 +39,16 @@
 /*	by resolve_clnt_query(). The structure is destroyed by passing
 /*	it to resolve_clnt_free().
 /*
-/*	resolve_clnt_query() sends an internal-form recipient address
+/*	resolve_clnt_query_from() sends an internal-form recipient address
 /*	(user@domain) to the resolver daemon and returns the resulting
 /*	transport name, next_hop host name, and internal-form recipient
 /*	address. In case of communication failure the program keeps trying
-/*	until the mail system goes down.
+/*	until the mail system goes down. The internal-form sender
+/*	information is used for sender-dependent relayhost lookup.
+/*	Specify RESOLVE_NULL_FROM when the sender is unavailable.
 /*
-/*	resolve_clnt_verify() implements an alternative version that can
+/*	resolve_clnt_verify_from() implements an alternative version that can
 /*	be used for address verification.
-/*
-/*	resolve_clnt_query_from() and resolve_clnt_verify_from()
-/*	allow the caller to supply sender context that will be used
-/*	for sender-dependent relayhost lookup.
 /*
 /*	In the resolver reply, the flags member is the bit-wise OR of
 /*	zero or more of the following:
@@ -111,6 +101,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -157,6 +152,15 @@ void    resolve_clnt_init(RESOLVE_REPLY *reply)
     reply->nexthop = vstring_alloc(100);
     reply->recipient = vstring_alloc(100);
     reply->flags = 0;
+}
+
+/* resolve_clnt_handshake - receive server protocol announcement */
+
+static int resolve_clnt_handshake(VSTREAM *stream)
+{
+    return (attr_scan(stream, ATTR_FLAG_STRICT,
+		  RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_TRIVIAL),
+		      ATTR_TYPE_END));
 }
 
 /* resolve_clnt - resolve address to (transport, next hop, recipient) */
@@ -226,17 +230,19 @@ void    resolve_clnt(const char *class, const char *sender,
 	rewrite_clnt_stream = clnt_stream_create(MAIL_CLASS_PRIVATE,
 						 var_rewrite_service,
 						 var_ipc_idle_limit,
-						 var_ipc_ttl_limit);
+						 var_ipc_ttl_limit,
+						 resolve_clnt_handshake);
 
     for (;;) {
 	stream = clnt_stream_access(rewrite_clnt_stream);
 	errno = 0;
 	count += 1;
-	if (attr_print(stream, ATTR_FLAG_NONE,
-		       SEND_ATTR_STR(MAIL_ATTR_REQ, class),
-		       SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
-		       SEND_ATTR_STR(MAIL_ATTR_ADDR, addr),
-		       ATTR_TYPE_END) != 0
+	if (stream == 0
+	    || attr_print(stream, ATTR_FLAG_NONE,
+			  SEND_ATTR_STR(MAIL_ATTR_REQ, class),
+			  SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
+			  SEND_ATTR_STR(MAIL_ATTR_ADDR, addr),
+			  ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_STRICT,
 			 RECV_ATTR_INT(MAIL_ATTR_FLAGS, &server_flags),

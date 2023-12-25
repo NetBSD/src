@@ -1,4 +1,4 @@
-/*	$NetBSD: rcpt_buf.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: rcpt_buf.h,v 1.1.1.1.52.1 2023/12/25 12:55:03 martin Exp $	*/
 
 #ifndef _RCPT_BUF_H_INCLUDED_
 #define _RCPT_BUF_H_INCLUDED_
@@ -40,7 +40,7 @@ typedef struct {
 extern RCPT_BUF *rcpb_create(void);
 extern void rcpb_reset(RCPT_BUF *);
 extern void rcpb_free(RCPT_BUF *);
-extern int rcpb_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+extern int rcpb_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
 
 #define RECIPIENT_FROM_RCPT_BUF(buf) \
     ((buf)->rcpt.address = vstring_str((buf)->address), \
@@ -59,6 +59,11 @@ extern int rcpb_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

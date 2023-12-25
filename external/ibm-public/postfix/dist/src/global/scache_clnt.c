@@ -1,4 +1,4 @@
-/*	$NetBSD: scache_clnt.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: scache_clnt.c,v 1.2.14.1 2023/12/25 12:55:04 martin Exp $	*/
 
 /*++
 /* NAME
@@ -43,6 +43,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -81,6 +86,15 @@ typedef struct {
 #define STR(x) vstring_str(x)
 
 #define SCACHE_MAX_TRIES	2
+
+/* scache_clnt_handshake - receive server protocol announcement */
+
+static int scache_clnt_handshake(VSTREAM *stream)
+{
+    return (attr_scan(stream, ATTR_FLAG_STRICT,
+		   RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_SCACHE),
+		      ATTR_TYPE_END));
+}
 
 /* scache_clnt_save_endp - save endpoint */
 
@@ -416,8 +430,11 @@ SCACHE *scache_clnt_create(const char *server, int timeout,
     sp->scache->size = scache_clnt_size;
     sp->scache->free = scache_clnt_free;
 
-    service = concatenate("local:private/", server, (char *) 0);
+    service = concatenate("local:" MAIL_CLASS_PRIVATE "/", server, (char *) 0);
     sp->auto_clnt = auto_clnt_create(service, timeout, idle_limit, ttl_limit);
+    auto_clnt_control(sp->auto_clnt,
+		      AUTO_CLNT_CTL_HANDSHAKE, scache_clnt_handshake,
+		      AUTO_CLNT_CTL_END);
     myfree(service);
 
 #ifdef CANT_WRITE_BEFORE_SENDING_FD

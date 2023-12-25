@@ -1,0 +1,4 @@
+config_directory = .
+smtpd_client_restrictions = check_sender_access { pipemap:{ldap:used} { search_order = foo, bar } }
+used_server_host = 127.0.0.1
+./postconf: warning: ./main.cf: unused parameter: unused_server_host=127.0.0.1

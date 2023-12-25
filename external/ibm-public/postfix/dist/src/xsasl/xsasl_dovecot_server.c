@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_dovecot_server.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: xsasl_dovecot_server.c,v 1.2.14.1 2023/12/25 12:55:36 martin Exp $	*/
 
 /*++
 /* NAME
@@ -91,7 +91,7 @@
 #define AUTH_PROTOCOL_MINOR_VERSION 0
 
  /*
-  * Encorce read/write time limits, so that we can produce accurate
+  * Enforce read/write time limits, so that we can produce accurate
   * diagnostics instead of getting killed by the watchdog timer.
   */
 #define AUTH_TIMEOUT	10
@@ -280,7 +280,8 @@ static int xsasl_dovecot_server_connect(XSASL_DOVECOT_SERVER_IMPL *xp)
 	fd = unix_connect(path, BLOCKING, AUTH_TIMEOUT);
     }
     if (fd < 0) {
-	msg_warn("SASL: Connect to %s failed: %m", xp->socket_path);
+	msg_warn("SASL: Connect to Dovecot auth socket '%s' failed: %m",
+		 xp->socket_path);
 	return (-1);
     }
     sasl_stream = vstream_fdopen(fd, O_RDWR);
@@ -586,10 +587,20 @@ static int xsasl_dovecot_handle_reply(XSASL_DOVECOT_SERVER *server,
 	    if (xsasl_dovecot_parse_reply(server, &line) == 0) {
 		/* authentication successful */
 		xsasl_dovecot_parse_reply_args(server, line, reply, 1);
+		if (server->username == 0) {
+		    msg_warn("missing Dovecot server %s username field", cmd);
+		    vstring_strcpy(reply, "Authentication backend error");
+		    return XSASL_AUTH_FAIL;
+		}
 		return XSASL_AUTH_DONE;
 	    }
 	} else if (strcmp(cmd, "CONT") == 0) {
 	    if (xsasl_dovecot_parse_reply(server, &line) == 0) {
+		if (line == 0) {
+		    msg_warn("missing Dovecot server %s reply field", cmd);
+		    vstring_strcpy(reply, "Authentication backend error");
+		    return XSASL_AUTH_FAIL;
+		}
 		vstring_strcpy(reply, line);
 		return XSASL_AUTH_MORE;
 	    }

@@ -1,4 +1,4 @@
-/*	$NetBSD: anvil.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: anvil.c,v 1.2.14.1 2023/12/25 12:54:48 martin Exp $	*/
 
 /*++
 /* NAME
@@ -167,7 +167,8 @@
 /*	from many remote clients.  To reduce memory usage, reduce
 /*	the time unit over which state is kept.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /*
 /*	Upon exit, and every \fBanvil_status_update_time\fR
 /*	seconds, the server logs the maximal count and rate values measured,
@@ -231,8 +232,12 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
 /* SEE ALSO
 /*	smtpd(8), Postfix SMTP server
 /*	postconf(5), configuration parameters
@@ -1003,6 +1008,21 @@ static void post_jail_init(char *unused_name, char **unused_argv)
 
 MAIL_VERSION_STAMP_DECLARE;
 
+/* post_accept - announce our protocol */
+
+static void post_accept(VSTREAM *stream, char *unused_name,
+			        char **unused_argv, HTABLE *unused_table)
+{
+
+    /*
+     * Announce the protocol.
+     */
+    attr_print_plain(stream, ATTR_FLAG_NONE,
+		     SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_ANVIL),
+		     ATTR_TYPE_END);
+    (void) vstream_fflush(stream);
+}
+
 /* main - pass control to the multi-threaded skeleton */
 
 int     main(int argc, char **argv)
@@ -1021,6 +1041,7 @@ int     main(int argc, char **argv)
     multi_server_main(argc, argv, anvil_service,
 		      CA_MAIL_SERVER_TIME_TABLE(time_table),
 		      CA_MAIL_SERVER_POST_INIT(post_jail_init),
+		      CA_MAIL_SERVER_POST_ACCEPT(post_accept),
 		      CA_MAIL_SERVER_SOLITARY,
 		      CA_MAIL_SERVER_PRE_DISCONN(anvil_service_done),
 		      CA_MAIL_SERVER_EXIT(anvil_status_dump),
