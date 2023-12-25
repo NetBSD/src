@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-krb5.c,v 1.14 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: auth-krb5.c,v 1.23 2018/07/09 21:35:50 markus Exp $ */
+/*	$NetBSD: auth-krb5.c,v 1.14.2.1 2023/12/25 12:31:02 martin Exp $	*/
+/* $OpenBSD: auth-krb5.c,v 1.24 2021/04/03 06:18:40 djm Exp $ */
 
 /*
  *    Kerberos v5 authentication and ticket-passing routines.
@@ -31,8 +31,9 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-krb5.c,v 1.14 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: auth-krb5.c,v 1.14.2.1 2023/12/25 12:31:02 martin Exp $");
 #include <sys/types.h>
+#include <stdio.h>
 #include <pwd.h>
 #include <stdarg.h>
 #include <string.h>
@@ -245,7 +246,7 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
 		goto out;
 
 	problem = krb5_cc_new_unique(authctxt->krb5_ctx,
-	     krb5_mcc_ops.prefix, NULL, &ccache);
+	    krb5_mcc_ops.prefix, NULL, &ccache);
 	if (problem)
 		goto out;
 
@@ -265,7 +266,7 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
 		goto out;
 
 	problem = krb5_cc_new_unique(authctxt->krb5_ctx,
-	     krb5_fcc_ops.prefix, NULL, &authctxt->krb5_fwd_ccache);
+	    krb5_fcc_ops.prefix, NULL, &authctxt->krb5_fwd_ccache);
 	if (problem)
 		goto out;
 

@@ -1,5 +1,6 @@
-/*	$NetBSD: session.c,v 1.28 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.315 2019/02/22 03:37:11 djm Exp $ */
+/*	$NetBSD: session.c,v 1.28.2.1 2023/12/25 12:31:06 martin Exp $	*/
+/* $OpenBSD: session.c,v 1.336 2023/08/10 23:05:48 djm Exp $ */
+
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.28 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.28.2.1 2023/12/25 12:31:06 martin Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -55,6 +56,7 @@ __RCSID("$NetBSD: session.c,v 1.28 2019/04/20 17:16:40 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <limits.h>
 
@@ -67,7 +69,6 @@ __RCSID("$NetBSD: session.c,v 1.28 2019/04/20 17:16:40 christos Exp $");
 #include "ssherr.h"
 #include "match.h"
 #include "uidswap.h"
-#include "compat.h"
 #include "channels.h"
 #include "sshkey.h"
 #include "cipher.h"
@@ -213,8 +214,7 @@ auth_input_request_forwarding(struct ssh *ssh, struct passwd * pw)
 		goto authsock_err;
 
 	/* Allocate a channel for the authentication agent socket. */
-	/* this shouldn't matter if its hpn or not - cjr */
-	nc = channel_new(ssh, "auth socket",
+	nc = channel_new(ssh, "auth-listener",
 	    SSH_CHANNEL_AUTH_SOCKET, sock, sock, -1,
 	    CHAN_X11_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT,
 	    0, "auth socket", 1);
@@ -244,7 +244,7 @@ display_loginmsg(void)
 	if (sshbuf_len(loginmsg) == 0)
 		return;
 	if ((r = sshbuf_put_u8(loginmsg, 0)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "sshbuf_put_u8");
 	printf("%s", (const char *)sshbuf_ptr(loginmsg));
 	sshbuf_reset(loginmsg);
 }
@@ -260,16 +260,16 @@ prepare_auth_info_file(struct passwd *pw, struct sshbuf *info)
 	temporarily_use_uid(pw);
 	auth_info_file = xstrdup("/tmp/sshauth.XXXXXXXXXXXXXXX");
 	if ((fd = mkstemp(auth_info_file)) == -1) {
-		error("%s: mkstemp: %s", __func__, strerror(errno));
+		error_f("mkstemp: %s", strerror(errno));
 		goto out;
 	}
 	if (atomicio(vwrite, fd, sshbuf_mutable_ptr(info),
 	    sshbuf_len(info)) != sshbuf_len(info)) {
-		error("%s: write: %s", __func__, strerror(errno));
+		error_f("write: %s", strerror(errno));
 		goto out;
 	}
 	if (close(fd) != 0) {
-		error("%s: close: %s", __func__, strerror(errno));
+		error_f("close: %s", strerror(errno));
 		goto out;
 	}
 	success = 1;
@@ -295,12 +295,11 @@ set_fwdpermit_from_authopts(struct ssh *ssh, const struct sshauthopt *opts)
 		for (i = 0; i < auth_opts->npermitopen; i++) {
 			tmp = cp = xstrdup(auth_opts->permitopen[i]);
 			/* This shouldn't fail as it has already been checked */
-			if ((host = hpdelim(&cp)) == NULL)
-				fatal("%s: internal error: hpdelim", __func__);
+			if ((host = hpdelim2(&cp, NULL)) == NULL)
+				fatal_f("internal error: hpdelim");
 			host = cleanhostname(host);
 			if (cp == NULL || (port = permitopen_port(cp)) < 0)
-				fatal("%s: internal error: permitopen port",
-				    __func__);
+				fatal_f("internal error: permitopen port");
 			channel_add_permission(ssh,
 			    FORWARD_USER, FORWARD_LOCAL, host, port);
 			free(tmp);
@@ -312,11 +311,10 @@ set_fwdpermit_from_authopts(struct ssh *ssh, const struct sshauthopt *opts)
 			tmp = cp = xstrdup(auth_opts->permitlisten[i]);
 			/* This shouldn't fail as it has already been checked */
 			if ((host = hpdelim(&cp)) == NULL)
-				fatal("%s: internal error: hpdelim", __func__);
+				fatal_f("internal error: hpdelim");
 			host = cleanhostname(host);
 			if (cp == NULL || (port = permitopen_port(cp)) < 0)
-				fatal("%s: internal error: permitlisten port",
-				    __func__);
+				fatal_f("internal error: permitlisten port");
 			channel_add_permission(ssh,
 			    FORWARD_USER, FORWARD_REMOTE, host, port);
 			free(tmp);
@@ -390,19 +388,18 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
 		fatal("do_exec_no_pty: no session");
 
 	/* Allocate pipes for communicating with the program. */
-	if (pipe(pin) < 0) {
-		error("%s: pipe in: %.100s", __func__, strerror(errno));
+	if (pipe(pin) == -1) {
+		error_f("pipe in: %.100s", strerror(errno));
 		return -1;
 	}
-	if (pipe(pout) < 0) {
-		error("%s: pipe out: %.100s", __func__, strerror(errno));
+	if (pipe(pout) == -1) {
+		error_f("pipe out: %.100s", strerror(errno));
 		close(pin[0]);
 		close(pin[1]);
 		return -1;
 	}
-	if (pipe(perr) < 0) {
-		error("%s: pipe err: %.100s", __func__,
-		    strerror(errno));
+	if (pipe(perr) == -1) {
+		error_f("pipe err: %.100s", strerror(errno));
 		close(pin[0]);
 		close(pin[1]);
 		close(pout[0]);
@@ -416,13 +413,12 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
 		fatal("do_exec_no_pty: no session");
 
 	/* Uses socket pairs to communicate with the program. */
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, inout) < 0) {
-		error("%s: socketpair #1: %.100s", __func__, strerror(errno));
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, inout) == -1) {
+		error_f("socketpair #1: %.100s", strerror(errno));
 		return -1;
 	}
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, err) < 0) {
-		error("%s: socketpair #2: %.100s", __func__,
-		    strerror(errno));
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, err) == -1) {
+		error_f("socketpair #2: %.100s", strerror(errno));
 		close(inout[0]);
 		close(inout[1]);
 		return -1;
@@ -441,7 +437,7 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
 	/* Fork the child. */
 	switch ((pid = fork())) {
 	case -1:
-		error("%s: fork: %.100s", __func__, strerror(errno));
+		error_f("fork: %.100s", strerror(errno));
 #ifdef USE_PIPES
 		close(pin[0]);
 		close(pin[1]);
@@ -463,7 +459,7 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
 		 * Create a new session and process group since the 4.4BSD
 		 * setlogin() affects the entire process group.
 		 */
-		if (setsid() < 0)
+		if (setsid() == -1)
 			error("setsid failed: %.100s", strerror(errno));
 
 #ifdef USE_PIPES
@@ -472,19 +468,19 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
 		 * pair, and make the child side the standard input.
 		 */
 		close(pin[1]);
-		if (dup2(pin[0], 0) < 0)
+		if (dup2(pin[0], 0) == -1)
 			perror("dup2 stdin");
 		close(pin[0]);
 
 		/* Redirect stdout. */
 		close(pout[0]);
-		if (dup2(pout[1], 1) < 0)
+		if (dup2(pout[1], 1) == -1)
 			perror("dup2 stdout");
 		close(pout[1]);
 
 		/* Redirect stderr. */
 		close(perr[0]);
-		if (dup2(perr[1], 2) < 0)
+		if (dup2(perr[1], 2) == -1)
 			perror("dup2 stderr");
 		close(perr[1]);
 #else
@@ -495,12 +491,12 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
 		 */
 		close(inout[1]);
 		close(err[1]);
-		if (dup2(inout[0], 0) < 0)	/* stdin */
+		if (dup2(inout[0], 0) == -1)	/* stdin */
 			perror("dup2 stdin");
-		if (dup2(inout[0], 1) < 0)	/* stdout (same as stdin) */
+		if (dup2(inout[0], 1) == -1)	/* stdout (same as stdin) */
 			perror("dup2 stdout");
 		close(inout[0]);
-		if (dup2(err[0], 2) < 0)	/* stderr */
+		if (dup2(err[0], 2) == -1)	/* stderr */
 			perror("dup2 stderr");
 		close(err[0]);
 #endif
@@ -571,15 +567,15 @@ do_exec_pty(struct ssh *ssh, Session *s, const char *command)
 	 * Do this before forking (and cleanup in the child) so as to
 	 * detect and gracefully fail out-of-fd conditions.
 	 */
-	if ((fdout = dup(ptyfd)) < 0) {
-		error("%s: dup #1: %s", __func__, strerror(errno));
+	if ((fdout = dup(ptyfd)) == -1) {
+		error_f("dup #1: %s", strerror(errno));
 		close(ttyfd);
 		close(ptyfd);
 		return -1;
 	}
 	/* we keep a reference to the pty master */
-	if ((ptymaster = dup(ptyfd)) < 0) {
-		error("%s: dup #2: %s", __func__, strerror(errno));
+	if ((ptymaster = dup(ptyfd)) == -1) {
+		error_f("dup #2: %s", strerror(errno));
 		close(ttyfd);
 		close(ptyfd);
 		close(fdout);
@@ -589,7 +585,7 @@ do_exec_pty(struct ssh *ssh, Session *s, const char *command)
 	/* Fork the child. */
 	switch ((pid = fork())) {
 	case -1:
-		error("%s: fork: %.100s", __func__, strerror(errno));
+		error_f("fork: %.100s", strerror(errno));
 		close(fdout);
 		close(ptymaster);
 		close(ttyfd);
@@ -608,11 +604,11 @@ do_exec_pty(struct ssh *ssh, Session *s, const char *command)
 		pty_make_controlling_tty(&ttyfd, s->tty);
 
 		/* Redirect stdin/stdout/stderr from the pseudo tty. */
-		if (dup2(ttyfd, 0) < 0)
+		if (dup2(ttyfd, 0) == -1)
 			error("dup2 stdin: %s", strerror(errno));
-		if (dup2(ttyfd, 1) < 0)
+		if (dup2(ttyfd, 1) == -1)
 			error("dup2 stdout: %s", strerror(errno));
-		if (dup2(ttyfd, 2) < 0)
+		if (dup2(ttyfd, 2) == -1)
 			error("dup2 stderr: %s", strerror(errno));
 
 		/* Close the extra descriptor for the pseudo tty. */
@@ -740,7 +736,7 @@ do_login(struct ssh *ssh, Session *s, const char *command)
 	fromlen = sizeof(from);
 	if (ssh_packet_connection_is_on_socket(ssh)) {
 		if (getpeername(ssh_packet_get_connection_in(ssh),
-		    (struct sockaddr *)&from, &fromlen) < 0) {
+		    (struct sockaddr *)&from, &fromlen) == -1) {
 			debug("getpeername: %.100s", strerror(errno));
 			cleanup_exit(254);
 		}
@@ -828,12 +824,12 @@ check_quietlogin(Session *s, const char *command)
  * into the environment.  If the file does not exist, this does nothing.
  * Otherwise, it must consist of empty lines, comments (line starts with '#')
  * and assignments of the form name=value.  No other forms are allowed.
- * If whitelist is not NULL, then it is interpreted as a pattern list and
+ * If allowlist is not NULL, then it is interpreted as a pattern list and
  * only variable names that match it will be accepted.
  */
 static void
 read_environment_file(char ***env, u_int *envsize,
-	const char *filename, const char *whitelist)
+	const char *filename, const char *allowlist)
 {
 	FILE *f;
 	char *line = NULL, *cp, *value;
@@ -866,8 +862,8 @@ read_environment_file(char ***env, u_int *envsize,
 		 */
 		*value = '\0';
 		value++;
-		if (whitelist != NULL &&
-		    match_pattern_list(cp, whitelist, 0) != 1)
+		if (allowlist != NULL &&
+		    match_pattern_list(cp, allowlist, 0) != 1)
 			continue;
 		child_set_env(env, envsize, cp, value);
 	}
@@ -917,7 +913,7 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 
 #ifdef GSSAPI
 	/* Allow any GSSAPI methods that we've used to alter
-	 * the childs environment as they see fit
+	 * the child's environment as they see fit
 	 */
 	ssh_gssapi_do_child(&env, &envsize);
 #endif
@@ -961,12 +957,12 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 		for (n = 0 ; n < auth_opts->nenv; n++) {
 			ocp = xstrdup(auth_opts->env[n]);
 			cp = strchr(ocp, '=');
-			if (*cp == '=') {
+			if (cp != NULL) {
 				*cp = '\0';
-				/* Apply PermitUserEnvironment whitelist */
-				if (options.permit_user_env_whitelist == NULL ||
+				/* Apply PermitUserEnvironment allowlist */
+				if (options.permit_user_env_allowlist == NULL ||
 				    match_pattern_list(ocp,
-				    options.permit_user_env_whitelist, 0) == 1)
+				    options.permit_user_env_allowlist, 0) == 1)
 					child_set_env(&env, &envsize,
 					    ocp, cp + 1);
 			}
@@ -976,10 +972,10 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 
 	/* read $HOME/.ssh/environment. */
 	if (options.permit_user_env) {
-		snprintf(buf, sizeof buf, "%.200s/.ssh/environment",
-		    pw->pw_dir);
+		snprintf(buf, sizeof buf, "%.200s/%s/environment",
+		    pw->pw_dir, _PATH_SSH_USER_DIR);
 		read_environment_file(&env, &envsize, buf,
-		    options.permit_user_env_whitelist);
+		    options.permit_user_env_allowlist);
 	}
 
 	/* Environment specified by admin */
@@ -991,6 +987,7 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 		}
 		*value++ = '\0';
 		child_set_env(&env, &envsize, cp, value);
+		free(cp);
 	}
 
 	/* SSH_CLIENT deprecated */
@@ -1060,19 +1057,21 @@ static void
 do_rc_files(struct ssh *ssh, Session *s, const char *shell)
 {
 	FILE *f = NULL;
-	char cmd[1024];
+	char *cmd = NULL, *user_rc = NULL;
 	int do_xauth;
 	struct stat st;
 
 	do_xauth =
 	    s->display != NULL && s->auth_proto != NULL && s->auth_data != NULL;
+	xasprintf(&user_rc, "%s/%s", s->pw->pw_dir, _PATH_SSH_USER_RC);
 
 	/* ignore _PATH_SSH_USER_RC for subsystems and admin forced commands */
 	if (!s->is_subsystem && options.adm_forced_command == NULL &&
 	    auth_opts->permit_user_rc && options.permit_user_rc &&
-	    stat(_PATH_SSH_USER_RC, &st) >= 0) {
-		snprintf(cmd, sizeof cmd, "%s -c '%s %s'",
-		    shell, _PATH_BSHELL, _PATH_SSH_USER_RC);
+	    stat(user_rc, &st) >= 0) {
+		if (xasprintf(&cmd, "%s -c '%s %s'", shell, _PATH_BSHELL,
+		    user_rc) == -1)
+			fatal_f("xasprintf: %s", strerror(errno));
 		if (debug_flag)
 			fprintf(stderr, "Running %s\n", cmd);
 		f = popen(cmd, "w");
@@ -1083,7 +1082,7 @@ do_rc_files(struct ssh *ssh, Session *s, const char *shell)
 			pclose(f);
 		} else
 			fprintf(stderr, "Could not run %s\n",
-			    _PATH_SSH_USER_RC);
+			    user_rc);
 	} else if (stat(_PATH_SSH_SYSTEM_RC, &st) >= 0) {
 		if (debug_flag)
 			fprintf(stderr, "Running %s %s\n", _PATH_BSHELL,
@@ -1108,8 +1107,8 @@ do_rc_files(struct ssh *ssh, Session *s, const char *shell)
 			    options.xauth_location, s->auth_display,
 			    s->auth_proto, s->auth_data);
 		}
-		snprintf(cmd, sizeof cmd, "%s -q -",
-		    options.xauth_location);
+		if (xasprintf(&cmd, "%s -q -", options.xauth_location) == -1)
+			fatal_f("xasprintf: %s", strerror(errno));
 		f = popen(cmd, "w");
 		if (f) {
 			fprintf(f, "remove %s\n",
@@ -1123,6 +1122,8 @@ do_rc_files(struct ssh *ssh, Session *s, const char *shell)
 			    cmd);
 		}
 	}
+	free(cmd);
+	free(user_rc);
 }
 
 static void
@@ -1186,10 +1187,10 @@ safely_chroot(const char *path, uid_t uid)
 			component[cp - path] = '\0';
 		}
 	
-		debug3("%s: checking '%s'", __func__, component);
+		debug3_f("checking '%s'", component);
 
 		if (stat(component, &st) != 0)
-			fatal("%s: stat(\"%s\"): %s", __func__,
+			fatal_f("stat(\"%s\"): %s",
 			    component, strerror(errno));
 		if (st.st_uid != 0 || (st.st_mode & 022) != 0)
 			fatal("bad ownership or modes for chroot "
@@ -1207,8 +1208,7 @@ safely_chroot(const char *path, uid_t uid)
 	if (chroot(path) == -1)
 		fatal("chroot(\"%s\"): %s", path, strerror(errno));
 	if (chdir("/") == -1)
-		fatal("%s: chdir(/) after chroot: %s",
-		    __func__, strerror(errno));
+		fatal_f("chdir(/) after chroot: %s", strerror(errno));
 	verbose("Changed root directory to \"%s\"", path);
 }
 
@@ -1258,7 +1258,7 @@ do_setusercontext(struct passwd *pw)
 #endif
 		if (!in_chroot && options.chroot_directory != NULL &&
 		    strcasecmp(options.chroot_directory, "none") != 0) {
-                        tmp = tilde_expand_filename(options.chroot_directory,
+			tmp = tilde_expand_filename(options.chroot_directory,
 			    pw->pw_uid);
 			snprintf(uidstr, sizeof(uidstr), "%llu",
 			    (unsigned long long)pw->pw_uid);
@@ -1338,6 +1338,9 @@ child_close_fds(struct ssh *ssh)
 	 * descriptors left by system functions.  They will be closed later.
 	 */
 	endpwent();
+
+	/* Stop directing logs to a high-numbered fd before we close it */
+	log_redirect_stderr_to(NULL);
 
 	/*
 	 * Close any extra open file descriptors so that we don't have them
@@ -1449,7 +1452,7 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 #endif
 
 	/* Change current directory to the user's home directory. */
-	if (chdir(pw->pw_dir) < 0) {
+	if (chdir(pw->pw_dir) == -1) {
 		/* Suppress missing homedir warning for chroot case */
 		r = login_getcapbool(lc, "requirehome", 0);
 		if (r || !in_chroot) {
@@ -1466,7 +1469,7 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 	do_rc_files(ssh, s, shell);
 
 	/* restore SIGPIPE for child */
-	signal(SIGPIPE, SIG_DFL);
+	ssh_signal(SIGPIPE, SIG_DFL);
 
 	if (s->is_subsystem == SUBSYSTEM_INT_SFTP_ERROR) {
 		error("Connection from %s: refusing non-sftp session",
@@ -1541,11 +1544,11 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 void
 session_unused(int id)
 {
-	debug3("%s: session id %d unused", __func__, id);
+	debug3_f("session id %d unused", id);
 	if (id >= options.max_sessions ||
 	    id >= sessions_nalloc) {
-		fatal("%s: insane session id %d (max %d nalloc %d)",
-		    __func__, id, options.max_sessions, sessions_nalloc);
+		fatal_f("insane session id %d (max %d nalloc %d)",
+		    id, options.max_sessions, sessions_nalloc);
 	}
 	memset(&sessions[id], 0, sizeof(*sessions));
 	sessions[id].self = id;
@@ -1567,13 +1570,13 @@ session_new(void)
 	if (sessions_first_unused == -1) {
 		if (sessions_nalloc >= options.max_sessions)
 			return NULL;
-		debug2("%s: allocate (allocated %d max %d)",
-		    __func__, sessions_nalloc, options.max_sessions);
+		debug2_f("allocate (allocated %d max %d)",
+		    sessions_nalloc, options.max_sessions);
 		tmp = xrecallocarray(sessions, sessions_nalloc,
 		    sessions_nalloc + 1, sizeof(*sessions));
 		if (tmp == NULL) {
-			error("%s: cannot allocate %d sessions",
-			    __func__, sessions_nalloc + 1);
+			error_f("cannot allocate %d sessions",
+			    sessions_nalloc + 1);
 			return NULL;
 		}
 		sessions = tmp;
@@ -1582,16 +1585,14 @@ session_new(void)
 
 	if (sessions_first_unused >= sessions_nalloc ||
 	    sessions_first_unused < 0) {
-		fatal("%s: insane first_unused %d max %d nalloc %d",
-		    __func__, sessions_first_unused, options.max_sessions,
+		fatal_f("insane first_unused %d max %d nalloc %d",
+		    sessions_first_unused, options.max_sessions,
 		    sessions_nalloc);
 	}
 
 	s = &sessions[sessions_first_unused];
-	if (s->used) {
-		fatal("%s: session %d already used",
-		    __func__, sessions_first_unused);
-	}
+	if (s->used)
+		fatal_f("session %d already used", sessions_first_unused);
 	sessions_first_unused = s->next_unused;
 	s->used = 1;
 	s->next_unused = -1;
@@ -1607,12 +1608,11 @@ session_dump(void)
 	for (i = 0; i < sessions_nalloc; i++) {
 		Session *s = &sessions[i];
 
-		debug("dump: used %d next_unused %d session %d %p "
+		debug("dump: used %d next_unused %d session %d "
 		    "channel %d pid %ld",
 		    s->used,
 		    s->next_unused,
 		    s->self,
-		    s,
 		    s->chanid,
 		    (long)s->pid);
 	}
@@ -1781,7 +1781,7 @@ session_subsystem_req(struct ssh *ssh, Session *s)
 {
 	struct stat st;
 	int r, success = 0;
-	char *prog, *cmd;
+	char *prog, *cmd, *type;
 	u_int i;
 
 	if ((r = sshpkt_get_cstring(ssh, &s->subsys, NULL)) != 0 ||
@@ -1798,12 +1798,16 @@ session_subsystem_req(struct ssh *ssh, Session *s)
 				s->is_subsystem = SUBSYSTEM_INT_SFTP;
 				debug("subsystem: %s", prog);
 			} else {
-				if (stat(prog, &st) < 0)
+				if (stat(prog, &st) == -1)
 					debug("subsystem: cannot stat %s: %s",
 					    prog, strerror(errno));
 				s->is_subsystem = SUBSYSTEM_EXT;
 				debug("subsystem: exec() %s", cmd);
 			}
+			xasprintf(&type, "session:subsystem:%s",
+			    options.subsystem_name[i]);
+			channel_set_xtype(ssh, s->chanid, type);
+			free(type);
 			success = do_exec(ssh, s, cmd) == 0;
 			break;
 		}
@@ -1859,6 +1863,9 @@ session_shell_req(struct ssh *ssh, Session *s)
 
 	if ((r = sshpkt_get_end(ssh)) != 0)
 		sshpkt_fatal(ssh, r, "%s: parse packet", __func__);
+
+	channel_set_xtype(ssh, s->chanid, "session:shell");
+
 	return do_exec(ssh, s, NULL) == 0;
 }
 
@@ -1872,6 +1879,8 @@ session_exec_req(struct ssh *ssh, Session *s)
 	if ((r = sshpkt_get_cstring(ssh, &command, NULL)) != 0 ||
 	    (r = sshpkt_get_end(ssh)) != 0)
 		sshpkt_fatal(ssh, r, "%s: parse packet", __func__);
+
+	channel_set_xtype(ssh, s->chanid, "session:command");
 
 	success = do_exec(ssh, s, command) == 0;
 	free(command);
@@ -1887,7 +1896,7 @@ session_break_req(struct ssh *ssh, Session *s)
 	    (r = sshpkt_get_end(ssh)) != 0)
 		sshpkt_fatal(ssh, r, "%s: parse packet", __func__);
 
-	if (s->ptymaster == -1 || tcsendbreak(s->ptymaster, 0) < 0)
+	if (s->ptymaster == -1 || tcsendbreak(s->ptymaster, 0) == -1)
 		return 0;
 	return 1;
 }
@@ -1959,35 +1968,33 @@ session_signal_req(struct ssh *ssh, Session *s)
 
 	if ((r = sshpkt_get_cstring(ssh, &signame, NULL)) != 0 ||
 	    (r = sshpkt_get_end(ssh)) != 0) {
-		error("%s: parse packet: %s", __func__, ssh_err(r));
+		error_fr(r, "parse");
 		goto out;
 	}
 	if ((sig = name2sig(signame)) == -1) {
-		error("%s: unsupported signal \"%s\"", __func__, signame);
+		error_f("unsupported signal \"%s\"", signame);
 		goto out;
 	}
 	if (s->pid <= 0) {
-		error("%s: no pid for session %d", __func__, s->self);
+		error_f("no pid for session %d", s->self);
 		goto out;
 	}
 	if (s->forced || s->is_subsystem) {
-		error("%s: refusing to send signal %s to %s session", __func__,
+		error_f("refusing to send signal %s to %s session",
 		    signame, s->forced ? "forced-command" : "subsystem");
 		goto out;
 	}
 	if (!use_privsep || mm_is_monitor()) {
-		error("%s: session signalling requires privilege separation",
-		    __func__);
+		error_f("session signalling requires privilege separation");
 		goto out;
 	}
 
-	debug("%s: signal %s, killpg(%ld, %d)", __func__, signame,
-	    (long)s->pid, sig);
+	debug_f("signal %s, killpg(%ld, %d)", signame, (long)s->pid, sig);
 	temporarily_use_uid(s->pw);
 	r = killpg(s->pid, sig);
 	restore_uid();
 	if (r != 0) {
-		error("%s: killpg(%ld, %d): %s", __func__, (long)s->pid,
+		error_f("killpg(%ld, %d): %s", (long)s->pid,
 		    sig, strerror(errno));
 		goto out;
 	}
@@ -2009,7 +2016,7 @@ session_auth_agent_req(struct ssh *ssh, Session *s)
 		sshpkt_fatal(ssh, r, "%s: parse packet", __func__);
 	if (!auth_opts->permit_agent_forwarding_flag ||
 	    !options.allow_agent_forwarding) {
-		debug("%s: agent forwarding disabled", __func__);
+		debug_f("agent forwarding disabled");
 		return 0;
 	}
 	if (called) {
@@ -2027,10 +2034,10 @@ session_input_channel_req(struct ssh *ssh, Channel *c, const char *rtype)
 	Session *s;
 
 	if ((s = session_by_channel(c->self)) == NULL) {
-		logit("%s: no session %d req %.100s", __func__, c->self, rtype);
+		logit_f("no session %d req %.100s", c->self, rtype);
 		return 0;
 	}
-	debug("%s: session %d req %s", __func__, s->self, rtype);
+	debug_f("session %d req %s", s->self, rtype);
 
 	/*
 	 * a session is in LARVAL state until a shell, a command
@@ -2094,13 +2101,13 @@ void
 session_pty_cleanup2(Session *s)
 {
 	if (s == NULL) {
-		error("%s: no session", __func__);
+		error_f("no session");
 		return;
 	}
 	if (s->ttyfd == -1)
 		return;
 
-	debug("%s: session %d release %s", __func__, s->self, s->tty);
+	debug_f("session %d release %s", s->self, s->tty);
 
 	/* Record that the user has logged out. */
 	if (s->pid != 0)
@@ -2115,7 +2122,7 @@ session_pty_cleanup2(Session *s)
 	 * the pty cleanup, so that another process doesn't get this pty
 	 * while we're still cleaning up.
 	 */
-	if (s->ptymaster != -1 && close(s->ptymaster) < 0)
+	if (s->ptymaster != -1 && close(s->ptymaster) == -1)
 		error("close(s->ptymaster/%d): %s",
 		    s->ptymaster, strerror(errno));
 
@@ -2156,10 +2163,10 @@ session_close_x11(struct ssh *ssh, int id)
 	Channel *c;
 
 	if ((c = channel_by_id(ssh, id)) == NULL) {
-		debug("%s: x11 channel %d missing", __func__, id);
+		debug_f("x11 channel %d missing", id);
 	} else {
 		/* Detach X11 listener */
-		debug("%s: detach x11 channel %d", __func__, id);
+		debug_f("detach x11 channel %d", id);
 		channel_cancel_cleanup(ssh, id);
 		if (c->ostate != CHAN_OUTPUT_CLOSED)
 			chan_mark_dead(ssh, c);
@@ -2167,18 +2174,18 @@ session_close_x11(struct ssh *ssh, int id)
 }
 
 static void
-session_close_single_x11(struct ssh *ssh, int id, void *arg)
+session_close_single_x11(struct ssh *ssh, int id, int force, void *arg)
 {
 	Session *s;
 	u_int i;
 
-	debug3("%s: channel %d", __func__, id);
+	debug3_f("channel %d", id);
 	channel_cancel_cleanup(ssh, id);
 	if ((s = session_by_x11_channel(id)) == NULL)
-		fatal("%s: no x11 channel %d", __func__, id);
+		fatal_f("no x11 channel %d", id);
 	for (i = 0; s->x11_chanids[i] != -1; i++) {
-		debug("%s: session %d: closing channel %d",
-		    __func__, s->self, s->x11_chanids[i]);
+		debug_f("session %d: closing channel %d",
+		    s->self, s->x11_chanids[i]);
 		/*
 		 * The channel "id" is already closing, but make sure we
 		 * close all of its siblings.
@@ -2203,18 +2210,17 @@ session_exit_message(struct ssh *ssh, Session *s, int status)
 {
 	Channel *c;
 	int r;
+	char *note = NULL;
 
 	if ((c = channel_lookup(ssh, s->chanid)) == NULL)
-		fatal("%s: session %d: no channel %d",
-		    __func__, s->self, s->chanid);
-	debug("%s: session %d channel %d pid %ld",
-	    __func__, s->self, s->chanid, (long)s->pid);
+		fatal_f("session %d: no channel %d", s->self, s->chanid);
 
 	if (WIFEXITED(status)) {
 		channel_request_start(ssh, s->chanid, "exit-status", 0);
 		if ((r = sshpkt_put_u32(ssh, WEXITSTATUS(status))) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0)
 			sshpkt_fatal(ssh, r, "%s: exit reply", __func__);
+		xasprintf(&note, "exit %d", WEXITSTATUS(status));
 	} else if (WIFSIGNALED(status)) {
 		channel_request_start(ssh, s->chanid, "exit-signal", 0);
 		if ((r = sshpkt_put_cstring(ssh, sig2name(WTERMSIG(status)))) != 0 ||
@@ -2223,18 +2229,25 @@ session_exit_message(struct ssh *ssh, Session *s, int status)
 		    (r = sshpkt_put_cstring(ssh, "")) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0)
 			sshpkt_fatal(ssh, r, "%s: exit reply", __func__);
+		xasprintf(&note, "signal %d%s", WTERMSIG(status),
+		    WCOREDUMP(status) ? " core dumped" : "");
 	} else {
 		/* Some weird exit cause.  Just exit. */
-		ssh_packet_disconnect(ssh, "wait returned status %04x.", status);
+		ssh_packet_disconnect(ssh, "wait returned status %04x.",
+		    status);
 	}
 
+	debug_f("session %d channel %d pid %ld %s", s->self, s->chanid,
+	    (long)s->pid, note == NULL ? "UNKNOWN" : note);
+	free(note);
+
 	/* disconnect channel */
-	debug("%s: release channel %d", __func__, s->chanid);
+	debug_f("release channel %d", s->chanid);
 
 	/*
 	 * Adjust cleanup callback attachment to send close messages when
 	 * the channel gets EOF. The session will be then be closed
-	 * by session_close_by_channel when the childs close their fds.
+	 * by session_close_by_channel when the child sessions close their fds.
 	 */
 	channel_register_cleanup(ssh, c->self, session_close_by_channel, 1);
 
@@ -2284,7 +2297,7 @@ session_close_by_pid(struct ssh *ssh, pid_t pid, int status)
 {
 	Session *s = session_by_pid(pid);
 	if (s == NULL) {
-		debug("%s: no session for pid %ld", __func__, (long)pid);
+		debug_f("no session for pid %ld", (long)pid);
 		return;
 	}
 	if (s->chanid != -1)
@@ -2299,26 +2312,27 @@ session_close_by_pid(struct ssh *ssh, pid_t pid, int status)
  * the session 'child' itself dies
  */
 void
-session_close_by_channel(struct ssh *ssh, int id, void *arg)
+session_close_by_channel(struct ssh *ssh, int id, int force, void *arg)
 {
 	Session *s = session_by_channel(id);
 	u_int i;
 
 	if (s == NULL) {
-		debug("%s: no session for id %d", __func__, id);
+		debug_f("no session for id %d", id);
 		return;
 	}
-	debug("%s: channel %d child %ld", __func__, id, (long)s->pid);
+	debug_f("channel %d child %ld", id, (long)s->pid);
 	if (s->pid != 0) {
-		debug("%s: channel %d: has child, ttyfd %d",
-		    __func__, id, s->ttyfd);
+		debug_f("channel %d: has child, ttyfd %d", id, s->ttyfd);
 		/*
-		 * delay detach of session, but release pty, since
-		 * the fd's to the child are already closed
+		 * delay detach of session (unless this is a forced close),
+		 * but release pty, since the fd's to the child are already
+		 * closed
 		 */
 		if (s->ttyfd != -1)
 			session_pty_cleanup(s);
-		return;
+		if (!force)
+			return;
 	}
 	/* detach by removing callback */
 	channel_cancel_cleanup(ssh, s->chanid);
@@ -2424,7 +2438,7 @@ session_setup_x11fwd(struct ssh *ssh, Session *s)
 	}
 
 	/* Set up a suitable value for the DISPLAY variable. */
-	if (gethostname(hostname, sizeof(hostname)) < 0)
+	if (gethostname(hostname, sizeof(hostname)) == -1)
 		fatal("gethostname: %.100s", strerror(errno));
 	/*
 	 * auth_display must be used as the displayname when the

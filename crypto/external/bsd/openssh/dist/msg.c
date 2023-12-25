@@ -1,5 +1,5 @@
-/*	$NetBSD: msg.c,v 1.8 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: msg.c,v 1.17 2018/07/09 21:59:10 markus Exp $ */
+/*	$NetBSD: msg.c,v 1.8.2.1 2023/12/25 12:31:05 martin Exp $	*/
+/* $OpenBSD: msg.c,v 1.20 2020/10/18 11:32:01 djm Exp $ */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: msg.c,v 1.8 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: msg.c,v 1.8.2.1 2023/12/25 12:31:05 martin Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -50,16 +50,16 @@ ssh_msg_send(int fd, u_char type, struct sshbuf *m)
 	u_char buf[5];
 	u_int mlen = sshbuf_len(m);
 
-	debug3("ssh_msg_send: type %u", (unsigned int)type & 0xff);
+	debug3_f("type %u", (unsigned int)type & 0xff);
 
 	put_u32(buf, mlen + 1);
 	buf[4] = type;		/* 1st byte of payload is mesg-type */
 	if (atomicio(vwrite, fd, buf, sizeof(buf)) != sizeof(buf)) {
-		error("ssh_msg_send: write");
+		error_f("write: %s", strerror(errno));
 		return (-1);
 	}
 	if (atomicio(vwrite, fd, sshbuf_mutable_ptr(m), mlen) != mlen) {
-		error("ssh_msg_send: write");
+		error_f("write: %s", strerror(errno));
 		return (-1);
 	}
 	return (0);
@@ -76,21 +76,21 @@ ssh_msg_recv(int fd, struct sshbuf *m)
 
 	if (atomicio(read, fd, buf, sizeof(buf)) != sizeof(buf)) {
 		if (errno != EPIPE)
-			error("ssh_msg_recv: read: header");
+			error_f("read header: %s", strerror(errno));
 		return (-1);
 	}
 	msg_len = get_u32(buf);
-	if (msg_len > 256 * 1024) {
-		error("ssh_msg_recv: read: bad msg_len %u", msg_len);
+	if (msg_len > sshbuf_max_size(m)) {
+		error_f("read: bad msg_len %u", msg_len);
 		return (-1);
 	}
 	sshbuf_reset(m);
 	if ((r = sshbuf_reserve(m, msg_len, &p)) != 0) {
-		error("%s: buffer error: %s", __func__, ssh_err(r));
+		error_fr(r, "reserve");
 		return -1;
 	}
 	if (atomicio(read, fd, p, msg_len) != msg_len) {
-		error("ssh_msg_recv: read: %s", strerror(errno));
+		error_f("read: %s", strerror(errno));
 		return (-1);
 	}
 	return (0);

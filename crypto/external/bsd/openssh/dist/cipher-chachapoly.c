@@ -1,3 +1,6 @@
+/*	$NetBSD: cipher-chachapoly.c,v 1.5.20.1 2023/12/25 12:31:03 martin Exp $	*/
+/* $OpenBSD: cipher-chachapoly.c,v 1.10 2023/07/17 05:26:38 djm Exp $ */
+
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>
  *
@@ -14,9 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: cipher-chachapoly.c,v 1.8 2016/08/03 05:41:57 djm Exp $ */
 #include "includes.h"
-__RCSID("$NetBSD: cipher-chachapoly.c,v 1.5 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: cipher-chachapoly.c,v 1.5.20.1 2023/12/25 12:31:03 martin Exp $");
 
 #include <sys/types.h>
 #include <stdarg.h> /* needed for log.h */
@@ -28,15 +30,28 @@ __RCSID("$NetBSD: cipher-chachapoly.c,v 1.5 2017/04/18 18:41:46 christos Exp $")
 #include "ssherr.h"
 #include "cipher-chachapoly.h"
 
-int
-chachapoly_init(struct chachapoly_ctx *ctx,
-    const u_char *key, u_int keylen)
+struct chachapoly_ctx {
+	struct chacha_ctx main_ctx, header_ctx;
+};
+
+struct chachapoly_ctx *
+chachapoly_new(const u_char *key, u_int keylen)
 {
+	struct chachapoly_ctx *ctx;
+
 	if (keylen != (32 + 32)) /* 2 x 256 bit keys */
-		return SSH_ERR_INVALID_ARGUMENT;
+		return NULL;
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
+		return NULL;
 	chacha_keysetup(&ctx->main_ctx, key, 256);
 	chacha_keysetup(&ctx->header_ctx, key + 32, 256);
-	return 0;
+	return ctx;
+}
+
+void
+chachapoly_free(struct chachapoly_ctx *cpctx)
+{
+	freezero(cpctx, sizeof(*cpctx));
 }
 
 /*

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-passwd.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: auth-passwd.c,v 1.47 2018/07/09 21:26:02 markus Exp $ */
+/*	$NetBSD: auth-passwd.c,v 1.11.2.1 2023/12/25 12:31:02 martin Exp $	*/
+/* $OpenBSD: auth-passwd.c,v 1.48 2020/10/18 11:32:01 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-passwd.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.11.2.1 2023/12/25 12:31:02 martin Exp $");
 #include <sys/types.h>
 
 #include <login_cap.h>
@@ -94,9 +94,9 @@ auth_password(struct ssh *ssh, const char *password)
 #ifdef KRB5
 	if (options.kerberos_authentication == 1) {
 		int ret = auth_krb5_password(authctxt, password);
- 		if (ret == 1 || ret == 0)
- 			return ret && ok;
- 		/* Fall back to ordinary passwd authentication. */
+		if (ret == 1 || ret == 0)
+			return ret && ok;
+		/* Fall back to ordinary passwd authentication. */
 	}
 #endif
 
@@ -131,14 +131,14 @@ warn_expiry(Authctxt *authctxt, auth_session_t *as)
 		if ((r = sshbuf_putf(loginmsg,
 		    "Your password will expire in %lld day%s.\n",
 		    daysleft, daysleft == 1 ? "" : "s")) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "buffer error");
 	}
 	if (actimeleft != 0 && actimeleft < acwarntime) {
 		daysleft = actimeleft / DAY + 1;
 		if ((r = sshbuf_putf(loginmsg,
 		    "Your account will expire in %lld day%s.\n",
 		    daysleft, daysleft == 1 ? "" : "s")) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "buffer error");
 	}
 }
 

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2019/02/04 04:05:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2023/12/25 12:31:00 martin Exp $
 
 BINDIR=	/usr/bin
 
 PROG=	sftp
-SRCS=	sftp.c sftp-client.c sftp-common.c sftp-glob.c
+SRCS=	sftp.c sftp-client.c sftp-common.c sftp-glob.c sftp-usergroup.c
 MAN=	sftp.1
 
 LDADD+=	-ledit -lterminfo
@@ -14,8 +14,6 @@ COPTS.sftp-client.c+=	-Wno-pointer-sign
 
 .include <bsd.own.mk>
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
-COPTS.sftp.c+=		-Wno-error=implicit-fallthrough
-.endif
+COPTS.sftp.c+=		${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 .include <bsd.prog.mk>

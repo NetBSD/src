@@ -1,5 +1,5 @@
-/*	$NetBSD: rijndael.h,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
-/*	$OpenBSD: rijndael.h,v 1.14 2014/04/29 15:42:07 markus Exp $ */
+/*	$NetBSD: rijndael.h,v 1.2.4.1 2023/12/25 12:31:05 martin Exp $	*/
+/*	$OpenBSD: rijndael.h,v 1.15 2021/09/28 11:14:50 dtucker Exp $ */
 
 /**
  * rijndael-alg-fst.h
@@ -39,7 +39,6 @@ typedef unsigned short	u16;
 typedef unsigned int	u32;
 
 int	rijndaelKeySetupEnc(unsigned int [], const unsigned char [], int);
-void	rijndaelEncrypt(const unsigned int [], int, const unsigned char [],
-	    unsigned char []);
+void	rijndaelEncrypt(const unsigned int [], int, const u8 [16], u8 [16]);
 
 #endif /* _PRIVATE_RIJNDAEL_H */

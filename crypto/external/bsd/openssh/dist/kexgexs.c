@@ -1,5 +1,6 @@
-/*	$NetBSD: kexgexs.c,v 1.19 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: kexgexs.c,v 1.42 2019/01/23 00:30:41 djm Exp $ */
+/*	$NetBSD: kexgexs.c,v 1.19.2.1 2023/12/25 12:31:04 martin Exp $	*/
+/* $OpenBSD: kexgexs.c,v 1.46 2023/03/29 01:07:48 dtucker Exp $ */
+
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexs.c,v 1.19 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: kexgexs.c,v 1.19.2.1 2023/12/25 12:31:04 martin Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <stdio.h>
@@ -43,7 +44,6 @@ __RCSID("$NetBSD: kexgexs.c,v 1.19 2019/04/20 17:16:40 christos Exp $");
 #include "packet.h"
 #include "dh.h"
 #include "ssh2.h"
-#include "compat.h"
 #ifdef GSSAPI
 #include "ssh-gss.h"
 #endif
@@ -74,6 +74,8 @@ input_kex_dh_gex_request(int type, u_int32_t seq, struct ssh *ssh)
 	const BIGNUM *dh_p, *dh_g;
 
 	debug("SSH2_MSG_KEX_DH_GEX_REQUEST received");
+	ssh_dispatch_set(ssh, SSH2_MSG_KEX_DH_GEX_REQUEST, &kex_protocol_error);
+
 	if ((r = sshpkt_get_u32(ssh, &min)) != 0 ||
 	    (r = sshpkt_get_u32(ssh, &nbits)) != 0 ||
 	    (r = sshpkt_get_u32(ssh, &max)) != 0 ||
@@ -96,7 +98,7 @@ input_kex_dh_gex_request(int type, u_int32_t seq, struct ssh *ssh)
 	/* Contact privileged parent */
 	kex->dh = PRIVSEP(choose_dh(min, nbits, max));
 	if (kex->dh == NULL) {
-		sshpkt_disconnect(ssh, "no matching DH grp found");
+		(void)sshpkt_disconnect(ssh, "no matching DH grp found");
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
@@ -132,6 +134,9 @@ input_kex_dh_gex_init(int type, u_int32_t seq, struct ssh *ssh)
 	u_char hash[SSH_DIGEST_MAX_LENGTH];
 	size_t slen, hashlen;
 	int r;
+
+	debug("SSH2_MSG_KEX_DH_GEX_INIT received");
+	ssh_dispatch_set(ssh, SSH2_MSG_KEX_DH_GEX_INIT, &kex_protocol_error);
 
 	if ((r = kex_load_hostkey(ssh, &server_host_private,
 	    &server_host_public)) != 0)
@@ -186,8 +191,16 @@ input_kex_dh_gex_init(int type, u_int32_t seq, struct ssh *ssh)
 	    (r = sshpkt_send(ssh)) != 0)
 		goto out;
 
-	if ((r = kex_derive_keys(ssh, hash, hashlen, shared_secret)) == 0)
-		r = kex_send_newkeys(ssh);
+	if ((r = kex_derive_keys(ssh, hash, hashlen, shared_secret)) != 0 ||
+	    (r = kex_send_newkeys(ssh)) != 0)
+		goto out;
+
+	/* retain copy of hostkey used at initial KEX */
+	if (kex->initial_hostkey == NULL &&
+	    (r = sshkey_from_private(server_host_public,
+	    &kex->initial_hostkey)) != 0)
+		goto out;
+	/* success */
  out:
 	explicit_bzero(hash, sizeof(hash));
 	DH_free(kex->dh);

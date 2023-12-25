@@ -1,5 +1,5 @@
-/*	$NetBSD: xmss_hash.c,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: xmss_hash.c,v 1.2 2018/02/26 03:56:44 dtucker Exp $ */
+/*	$NetBSD: xmss_hash.c,v 1.2.6.1 2023/12/25 12:31:10 martin Exp $	*/
+/* $OpenBSD: xmss_hash.c,v 1.3 2022/04/20 16:00:25 millert Exp $ */
 /*
 hash.c version 20160722
 Andreas Hülsing
@@ -7,7 +7,7 @@ Joost Rijneveld
 Public domain.
 */
 #include "includes.h"
-__RCSID("$NetBSD: xmss_hash.c,v 1.2 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: xmss_hash.c,v 1.2.6.1 2023/12/25 12:31:10 martin Exp $");
 
 #include "xmss_hash_address.h"
 #include "xmss_commons.h"
@@ -18,8 +18,6 @@ __RCSID("$NetBSD: xmss_hash.c,v 1.2 2018/04/06 18:59:00 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <openssl/sha.h>
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
 
 int core_hash_SHA2(unsigned char *, const unsigned int, const unsigned char *,
     unsigned int, const unsigned char *, unsigned long long, unsigned int);
