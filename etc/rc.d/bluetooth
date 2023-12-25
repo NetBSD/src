@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: bluetooth,v 1.2 2021/11/26 12:51:24 sborrill Exp $
+# $NetBSD: bluetooth,v 1.3 2023/12/25 08:23:35 kre Exp $
 #
 
 # PROVIDE: bluetooth
@@ -85,13 +85,13 @@ bluetooth_start()
 			;;
 		esac
 
-		if [ -z ${dev} -o ${junk} ]; then
+		if [ -z "${dev}" ] || [ -n "${junk}" ]; then
 			echo "${name}: invalid entry"
 			return 1
 		fi
 
 		echo "attaching Bluetooth ${service} service from \"${addr}\""
-		${btdevctl_cmd} -A -a ${addr} -d ${dev} -s ${service}
+		${btdevctl_cmd} -A -a "${addr}" -d "${dev}" -s "${service}"
 	done < ${btdevctl_conf}
 
 	#
@@ -111,7 +111,7 @@ bluetooth_stop()
 	echo -n "disabling Bluetooth controllers:"
 	for dev in ${btconfig_devices:-$(${btconfig_cmd} -l)}; do
 		echo -n " ${dev}"
-		${btconfig_cmd} ${dev} disable
+		${btconfig_cmd} "${dev}" disable
 	done
 	echo "."
 
