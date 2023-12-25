@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: certctl_init,v 1.2 2023/12/25 07:43:03 kre Exp $
+# $NetBSD: certctl_init,v 1.3 2023/12/25 07:46:12 kre Exp $
 #
 # PROVIDE: certctl_init
 # REQUIRE: mountcritremote
@@ -39,7 +39,7 @@ certctl_init()
 	    { [ -e "$certsdir" ] && ! [ -d "$certsdir" ] ; } ||
 	    ( [ -d "$certsdir" ] &&
 		find -f "$certsdir" -- -maxdepth 0 -type d -empty -exit 1 )
-        then
+	then
 		return
 	fi
 
