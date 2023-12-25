@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.20 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: log.c,v 1.51 2018/07/27 12:03:17 markus Exp $ */
+/*	$NetBSD: log.c,v 1.20.2.1 2023/12/25 12:31:05 martin Exp $	*/
+/* $OpenBSD: log.c,v 1.61 2023/12/06 21:06:48 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.20 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: log.c,v 1.20.2.1 2023/12/25 12:31:05 martin Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: log.c,v 1.20 2019/01/27 02:08:33 pgoyette Exp $");
 #include <vis.h>
 
 #include "log.h"
+#include "match.h"
 
 static LogLevel log_level = SYSLOG_LEVEL_INFO;
 static int log_on_stderr = 1;
@@ -60,7 +61,8 @@ static int log_facility = LOG_AUTH;
 static const char *argv0;
 static log_handler_fn *log_handler;
 static void *log_handler_ctx;
-
+static char **log_verbose;
+static size_t nlog_verbose;
 extern char *__progname;
 
 /* textual representation of log-facilities/levels */
@@ -152,94 +154,30 @@ log_level_name(LogLevel level)
 	return NULL;
 }
 
-/* Error messages that should be logged. */
-
 void
-error(const char *fmt,...)
+log_verbose_add(const char *s)
 {
-	va_list args;
+	char **tmp;
 
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_ERROR, fmt, args);
-	va_end(args);
+	/* Ignore failures here */
+	if ((tmp = recallocarray(log_verbose, nlog_verbose, nlog_verbose + 1,
+	    sizeof(*log_verbose))) != NULL) {
+		log_verbose = tmp;
+		if ((log_verbose[nlog_verbose] = strdup(s)) != NULL)
+			nlog_verbose++;
+	}
 }
 
 void
-sigdie(const char *fmt,...)
+log_verbose_reset(void)
 {
-	va_list args;
+	size_t i;
 
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
-	va_end(args);
-	_exit(1);
-}
-
-void
-logdie(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_INFO, fmt, args);
-	va_end(args);
-	cleanup_exit(254);
-}
-
-/* Log this message (information that usually should go to the log). */
-
-void
-logit(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_INFO, fmt, args);
-	va_end(args);
-}
-
-/* More detailed messages (information that does not need to go to the log). */
-
-void
-verbose(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_VERBOSE, fmt, args);
-	va_end(args);
-}
-
-/* Debugging messages that should not be logged during normal operation. */
-
-void
-debug(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_DEBUG1, fmt, args);
-	va_end(args);
-}
-
-void
-debug2(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_DEBUG2, fmt, args);
-	va_end(args);
-}
-
-void
-debug3(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_DEBUG3, fmt, args);
-	va_end(args);
+	for (i = 0; i < nlog_verbose; i++)
+		free(log_verbose[i]);
+	free(log_verbose);
+	log_verbose = NULL;
+	nlog_verbose = 0;
 }
 
 /*
@@ -342,9 +280,17 @@ log_redirect_stderr_to(const char *logfile)
 {
 	int fd;
 
+	if (logfile == NULL) {
+		if (log_stderr_fd != STDERR_FILENO) {
+			close(log_stderr_fd);
+			log_stderr_fd = STDERR_FILENO;
+		}
+		return;
+	}
+
 	if ((fd = open(logfile, O_WRONLY|O_CREAT|O_APPEND, 0600)) == -1) {
 		fprintf(stderr, "Couldn't open logfile %s: %s\n", logfile,
-		     strerror(errno));
+		    strerror(errno));
 		exit(1);
 	}
 	log_stderr_fd = fd;
@@ -359,18 +305,9 @@ set_log_handler(log_handler_fn *handler, void *ctx)
 	log_handler_ctx = ctx;
 }
 
-void
-do_log2(LogLevel level, const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(level, fmt, args);
-	va_end(args);
-}
-
-void
-do_log(LogLevel level, const char *fmt, va_list args)
+static void
+do_log(LogLevel level, int force, const char *suffix, const char *fmt,
+    va_list args)
 {
 #ifdef SYSLOG_DATA_INIT
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
@@ -382,8 +319,9 @@ do_log(LogLevel level, const char *fmt, va_list args)
 	int pri = LOG_INFO;
 	int saved_errno = errno;
 	log_handler_fn *tmp_handler;
+	const char *progname = argv0 != NULL ? argv0 : __progname;
 
-	if (level > log_level)
+	if (!force && level > log_level)
 		return;
 
 	switch (level) {
@@ -433,27 +371,113 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		len -= len2 + 2;
 	}
 	vsnprintf(msgbufp, len, fmt, args);
+	if (suffix != NULL) {
+		snprintf(visbuf, sizeof(visbuf), "%s: %s", msgbuf, suffix);
+		strlcpy(msgbuf, visbuf, sizeof(msgbuf));
+	}
 	strnvis(visbuf, sizeof(visbuf), msgbuf, VIS_SAFE|VIS_OCTAL);
 	if (log_handler != NULL) {
 		/* Avoid recursion */
 		tmp_handler = log_handler;
 		log_handler = NULL;
-		tmp_handler(level, visbuf, log_handler_ctx);
+		tmp_handler(level, force, visbuf, log_handler_ctx);
 		log_handler = tmp_handler;
 	} else if (log_on_stderr) {
-		snprintf(msgbuf, sizeof msgbuf, "%.*s\r\n",
-		    (int)sizeof msgbuf - 3, visbuf);
+		snprintf(msgbuf, sizeof msgbuf, "%s%s%.*s\r\n",
+		    (log_on_stderr > 1) ? progname : "",
+		    (log_on_stderr > 1) ? ": " : "",
+		    (int)sizeof msgbuf - 10, visbuf);
 		(void)write(log_stderr_fd, msgbuf, strlen(msgbuf));
 	} else {
 #ifdef SYSLOG_DATA_INIT
-		openlog_r(argv0 ? argv0 : __progname, LOG_PID, log_facility, &sdata);
+		openlog_r(progname, LOG_PID, log_facility, &sdata);
 		syslog_r(pri, &sdata, "%.500s", visbuf);
 		closelog_r(&sdata);
 #else
-		openlog(argv0 ? argv0 : __progname, LOG_PID, log_facility);
+		openlog(progname, LOG_PID, log_facility);
 		syslog(pri, "%.500s", visbuf);
 		closelog();
 #endif
 	}
 	errno = saved_errno;
+}
+
+void
+sshlog(const char *file, const char *func, int line, int showfunc,
+    LogLevel level, const char *suffix, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sshlogv(file, func, line, showfunc, level, suffix, fmt, args);
+	va_end(args);
+}
+
+void
+sshlogdie(const char *file, const char *func, int line, int showfunc,
+    LogLevel level, const char *suffix, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sshlogv(file, func, line, showfunc, SYSLOG_LEVEL_INFO,
+	    suffix, fmt, args);
+	va_end(args);
+	cleanup_exit(254);
+}
+
+void
+sshsigdie(const char *file, const char *func, int line, int showfunc,
+    LogLevel level, const char *suffix, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sshlogv(file, func, line, showfunc, SYSLOG_LEVEL_FATAL,
+	    suffix, fmt, args);
+	va_end(args);
+	_exit(1);
+}
+
+void
+sshlogv(const char *file, const char *func, int line, int showfunc,
+    LogLevel level, const char *suffix, const char *fmt, va_list args)
+{
+	char tag[128], fmt2[MSGBUFSIZ + 128];
+	int forced = 0;
+	const char *cp;
+	size_t i;
+
+	/* short circuit processing early if we're not going to log anything */
+	if (nlog_verbose == 0 && level > log_level)
+		return;
+
+	snprintf(tag, sizeof(tag), "%.48s:%.48s():%d (pid=%ld)",
+	    (cp = strrchr(file, '/')) == NULL ? file : cp + 1, func, line,
+	    (long)getpid());
+	for (i = 0; i < nlog_verbose; i++) {
+		if (match_pattern_list(tag, log_verbose[i], 0) == 1) {
+			forced = 1;
+			break;
+		}
+	}
+
+	if (forced)
+		snprintf(fmt2, sizeof(fmt2), "%s: %s", tag, fmt);
+	else if (showfunc)
+		snprintf(fmt2, sizeof(fmt2), "%s: %s", func, fmt);
+	else
+		strlcpy(fmt2, fmt, sizeof(fmt2));
+
+	do_log(level, forced, suffix, fmt2, args);
+}
+
+void
+sshlogdirect(LogLevel level, int forced, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	do_log(level, forced, NULL, fmt, args);
+	va_end(args);
 }

@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.h,v 1.18 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: kex.h,v 1.107 2019/01/23 00:30:41 djm Exp $ */
+/*	$NetBSD: kex.h,v 1.18.2.1 2023/12/25 12:31:04 martin Exp $	*/
+/* $OpenBSD: kex.h,v 1.121 2023/12/18 14:45:49 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -30,9 +30,17 @@
 #include "mac.h"
 #include "crypto_api.h"
 
-#ifdef WITH_LEAKMALLOC
-#include "leakmalloc.h"
-#endif
+#ifdef WITH_OPENSSL
+#include <openssl/bn.h>
+#include <openssl/dh.h>
+#include <openssl/ec.h>
+#include <openssl/ecdsa.h>
+#else /* OPENSSL */
+#define BIGNUM		void
+#define DH		void
+#define EC_KEY		void
+#define EC_GROUP	void
+#endif /* WITH_OPENSSL */
 
 #define KEX_COOKIE_LEN	16
 
@@ -48,7 +56,7 @@
 #define	KEX_ECDH_SHA2_NISTP521		"ecdh-sha2-nistp521"
 #define	KEX_CURVE25519_SHA256		"curve25519-sha256"
 #define	KEX_CURVE25519_SHA256_OLD	"curve25519-sha256@libssh.org"
-#define	KEX_SNTRUP4591761X25519_SHA512	"sntrup4591761x25519-sha512@tinyssh.org"
+#define	KEX_SNTRUP761X25519_SHA512	"sntrup761x25519-sha512@openssh.com"
 
 #define COMP_NONE	0
 /* pre-auth compression (COMP_ZLIB) is only supported in the client */
@@ -87,12 +95,18 @@ enum kex_exchange {
 	KEX_DH_GEX_SHA256,
 	KEX_ECDH_SHA2,
 	KEX_C25519_SHA256,
-	KEX_KEM_SNTRUP4591761X25519_SHA512,
+	KEX_KEM_SNTRUP761X25519_SHA512,
 	KEX_MAX
 };
 
-#define KEX_INIT_SENT	0x0001
-#define KEX_INITIAL	0x0002
+/* kex->flags */
+#define KEX_INIT_SENT			0x0001
+#define KEX_INITIAL			0x0002
+#define KEX_HAS_PUBKEY_HOSTBOUND	0x0004
+#define KEX_RSA_SHA2_256_SUPPORTED 	0x0008 /* only set in server for now */
+#define KEX_RSA_SHA2_512_SUPPORTED 	0x0010 /* only set in server for now */
+#define KEX_HAS_PING		 	0x0020
+#define KEX_HAS_EXT_INFO_IN_AUTH 	0x0040
 
 struct sshenc {
 	char	*name;
@@ -116,10 +130,9 @@ struct newkeys {
 };
 
 struct ssh;
+struct sshbuf;
 
 struct kex {
-	u_char	*session_id;
-	size_t	session_id_len;
 	struct newkeys	*newkeys[MODE_MAX];
 	u_int	we_need;
 	u_int	dh_need;
@@ -131,10 +144,16 @@ struct kex {
 	u_int	kex_type;
 	char	*server_sig_algs;
 	int	ext_info_c;
+	int	ext_info_s;
+	int	kex_strict;
+	int	ext_info_received;
 	struct sshbuf *my;
 	struct sshbuf *peer;
 	struct sshbuf *client_version;
 	struct sshbuf *server_version;
+	struct sshbuf *session_id;
+	struct sshbuf *initial_sig;
+	struct sshkey *initial_hostkey;
 	sig_atomic_t done;
 	u_int	flags;
 	int	hash_alg;
@@ -154,7 +173,7 @@ struct kex {
 	const EC_GROUP *ec_group;	/* ECDH */
 	u_char c25519_client_key[CURVE25519_SIZE]; /* 25519 + KEM */
 	u_char c25519_client_pubkey[CURVE25519_SIZE]; /* 25519 */
-	u_char sntrup4591761_client_key[crypto_kem_sntrup4591761_SECRETKEYBYTES]; /* KEM */
+	u_char sntrup761_client_key[crypto_kem_sntrup761_SECRETKEYBYTES]; /* KEM */
 	struct sshbuf *client_pub;
 };
 
@@ -162,17 +181,20 @@ int	 kex_names_valid(const char *);
 char	*kex_alg_list(char);
 char	*kex_names_cat(const char *, const char *);
 int	 kex_assemble_names(char **, const char *, const char *);
+void	 kex_proposal_populate_entries(struct ssh *, char *prop[PROPOSAL_MAX],
+    const char *, const char *, const char *, const char *, const char *);
+void	 kex_proposal_free_entries(char *prop[PROPOSAL_MAX]);
 
 int	 kex_exchange_identification(struct ssh *, int, const char *);
 
 struct kex *kex_new(void);
-int	 kex_ready(struct ssh *, const char *[PROPOSAL_MAX]);
-int	 kex_setup(struct ssh *, const char *[PROPOSAL_MAX]);
+int	 kex_ready(struct ssh *, char *[PROPOSAL_MAX]);
+int	 kex_setup(struct ssh *, char *[PROPOSAL_MAX]);
 void	 kex_free_newkeys(struct newkeys *);
 void	 kex_free(struct kex *);
 
 int	 kex_buf2prop(struct sshbuf *, int *, char ***);
-int	 kex_prop2buf(struct sshbuf *, const char *proposal[PROPOSAL_MAX]);
+int	 kex_prop2buf(struct sshbuf *, char *proposal[PROPOSAL_MAX]);
 void	 kex_prop_free(char **);
 int	 kex_load_hostkey(struct ssh *, struct sshkey **, struct sshkey **);
 int	 kex_verify_host_key(struct ssh *, struct sshkey *);
@@ -180,9 +202,12 @@ int	 kex_verify_host_key(struct ssh *, struct sshkey *);
 int	 kex_send_kexinit(struct ssh *);
 int	 kex_input_kexinit(int, u_int32_t, struct ssh *);
 int	 kex_input_ext_info(int, u_int32_t, struct ssh *);
+int	 kex_protocol_error(int, u_int32_t, struct ssh *);
 int	 kex_derive_keys(struct ssh *, u_char *, u_int, const struct sshbuf *);
 int	 kex_send_newkeys(struct ssh *);
 int	 kex_start_rekex(struct ssh *);
+int	 kex_server_update_ext_info(struct ssh *);
+void	 kex_set_server_sig_algs(struct ssh *, const char *);
 
 int	 kexgex_client(struct ssh *);
 int	 kexgex_server(struct ssh *);
@@ -204,10 +229,10 @@ int	 kex_c25519_enc(struct kex *, const struct sshbuf *, struct sshbuf **,
     struct sshbuf **);
 int	 kex_c25519_dec(struct kex *, const struct sshbuf *, struct sshbuf **);
 
-int	 kex_kem_sntrup4591761x25519_keypair(struct kex *);
-int	 kex_kem_sntrup4591761x25519_enc(struct kex *, const struct sshbuf *,
+int	 kex_kem_sntrup761x25519_keypair(struct kex *);
+int	 kex_kem_sntrup761x25519_enc(struct kex *, const struct sshbuf *,
     struct sshbuf **, struct sshbuf **);
-int	 kex_kem_sntrup4591761x25519_dec(struct kex *, const struct sshbuf *,
+int	 kex_kem_sntrup761x25519_dec(struct kex *, const struct sshbuf *,
     struct sshbuf **);
 
 int	 kex_dh_keygen(struct kex *);

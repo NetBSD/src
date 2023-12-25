@@ -1,6 +1,5 @@
-/*	$NetBSD: umac.c,v 1.17 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: umac.c,v 1.17 2018/04/10 00:10:49 djm Exp $ */
-
+/*	$NetBSD: umac.c,v 1.17.2.1 2023/12/25 12:31:10 martin Exp $	*/
+/* $OpenBSD: umac.c,v 1.23 2023/03/07 01:30:52 djm Exp $ */
 /* -----------------------------------------------------------------------
  *
  * umac.c -- C Implementation UMAC Message Authentication
@@ -41,7 +40,7 @@
   * at http://www.esat.kuleuven.ac.be/~rijmen/rijndael/ (search for
   * "Barreto"). The only two files needed are rijndael-alg-fst.c and
   * rijndael-alg-fst.h. Brian Gladman's version is distributed with the GNU
-  * Public lisence at http://fp.gladman.plus.com/AES/index.htm. It
+  * Public license at http://fp.gladman.plus.com/AES/index.htm. It
   * includes a fast IA-32 assembly version. The OpenSSL crypo library is
   * the third.
   *
@@ -68,10 +67,11 @@
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
-__RCSID("$NetBSD: umac.c,v 1.17 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: umac.c,v 1.17.2.1 2023/12/25 12:31:10 martin Exp $");
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -253,7 +253,8 @@ xor32(uint8_t *dp, int di, uint8_t *sp, int si)
     memcpy(dp + sizeof(dst) * di, &dst, sizeof(dst));
 }
 
-static void pdf_gen_xor(pdf_ctx *pc, const UINT8 nonce[8], UINT8 buf[8])
+static void pdf_gen_xor(pdf_ctx *pc, const UINT8 nonce[8],
+    UINT8 buf[UMAC_OUTPUT_LEN])
 {
     /* 'ndx' indicates that we'll be using the 0th or 1st eight bytes
      * of the AES output. If last time around we returned the ndx-1st
@@ -310,7 +311,7 @@ static void pdf_gen_xor(pdf_ctx *pc, const UINT8 nonce[8], UINT8 buf[8])
  * versions, one expects the entire message being hashed to be passed
  * in a single buffer and returns the hash result immediately. The second
  * allows the message to be passed in a sequence of buffers. In the
- * muliple-buffer interface, the client calls the routine nh_update() as
+ * multiple-buffer interface, the client calls the routine nh_update() as
  * many times as necessary. When there is no more data to be fed to the
  * hash, the client calls nh_final() which calculates the hash output.
  * Before beginning another hash calculation the nh_reset() routine
@@ -1197,7 +1198,7 @@ static int uhash(uhash_ctx_t ahc, u_char *msg, long len, u_char *res)
 /* The UMAC interface has two interfaces, an all-at-once interface where
  * the entire message to be authenticated is passed to UMAC in one buffer,
  * and a sequential interface where the message is presented a little at a
- * time. The all-at-once is more optimaized than the sequential version and
+ * time. The all-at-once is more optimized than the sequential version and
  * should be preferred when the sequential interface is not required.
  */
 struct umac_ctx {
@@ -1225,8 +1226,7 @@ int umac_delete(struct umac_ctx *ctx)
     if (ctx) {
         if (ALLOC_BOUNDARY)
             ctx = (struct umac_ctx *)ctx->free_ptr;
-        explicit_bzero(ctx, sizeof(*ctx) + ALLOC_BOUNDARY);
-        free(ctx);
+        freezero(ctx, sizeof(*ctx) + ALLOC_BOUNDARY);
     }
     return (1);
 }

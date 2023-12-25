@@ -183,5 +183,4 @@ OpenSSH contains no GPL code.
 
 ------
 $OpenBSD: LICENCE,v 1.20 2017/04/30 23:26:16 djm Exp $
-$OpenBSD: LICENCE,v 1.19 2004/08/30 09:18:08 markus Exp $
-$NetBSD: LICENCE,v 1.6 2017/10/07 19:39:19 christos Exp $
+$NetBSD: LICENCE,v 1.6.6.1 2023/12/25 12:31:02 martin Exp $

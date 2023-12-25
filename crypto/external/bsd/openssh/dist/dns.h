@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.h,v 1.11 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: dns.h,v 1.18 2018/02/23 15:58:37 markus Exp $ */
+/*	$NetBSD: dns.h,v 1.11.4.1 2023/12/25 12:31:04 martin Exp $	*/
+/* $OpenBSD: dns.h,v 1.20 2023/02/10 04:56:30 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -51,9 +51,10 @@ enum sshfp_hashes {
 #define DNS_VERIFY_FOUND	0x00000001
 #define DNS_VERIFY_MATCH	0x00000002
 #define DNS_VERIFY_SECURE	0x00000004
+#define DNS_VERIFY_FAILED	0x00000008
 
 int	verify_host_key_dns(const char *, struct sockaddr *,
     struct sshkey *, int *);
-int	export_dns_rr(const char *, struct sshkey *, FILE *, int);
+int	export_dns_rr(const char *, struct sshkey *, FILE *, int, int);
 
 #endif /* DNS_H */

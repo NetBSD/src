@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.20 2019/04/26 01:51:55 christos Exp $	*/
-/* $OpenBSD: packet.h,v 1.90 2019/01/21 10:35:09 djm Exp $ */
+/*	$NetBSD: packet.h,v 1.20.2.1 2023/12/25 12:31:05 martin Exp $	*/
+/* $OpenBSD: packet.h,v 1.96 2023/12/18 14:45:17 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -19,10 +19,18 @@
 
 #include <termios.h>
 
-#include <openssl/bn.h>
-#include <openssl/ec.h>
 #include <sys/signal.h>
 #include <sys/queue.h>
+
+#ifdef WITH_OPENSSL
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/ecdsa.h>
+#else /* OPENSSL */
+#define BIGNUM		void
+#define EC_GROUP	void
+#define EC_POINT	void
+#endif /* WITH_OPENSSL */
 
 struct kex;
 struct sshkey;
@@ -92,6 +100,7 @@ void	 ssh_packet_clear_keys(struct ssh *);
 void	 ssh_clear_newkeys(struct ssh *, int);
 
 int	 ssh_packet_is_rekeying(struct ssh *);
+int	 ssh_packet_check_rekey(struct ssh *);
 void     ssh_packet_set_protocol_flags(struct ssh *, u_int);
 u_int	 ssh_packet_get_protocol_flags(struct ssh *);
 void	 ssh_packet_set_tos(struct ssh *, int);
@@ -112,10 +121,10 @@ int	 ssh_packet_authentication_state(struct ssh *);
 void	 ssh_packet_request_rekeying(void);
 
 int      ssh_packet_read(struct ssh *);
-int	 ssh_packet_read_expect(struct ssh *, u_int type);
 int      ssh_packet_read_poll(struct ssh *);
 int ssh_packet_read_poll2(struct ssh *, u_char *, u_int32_t *seqnr_p);
 int	 ssh_packet_process_incoming(struct ssh *, const char *buf, u_int len);
+int	 ssh_packet_process_read(struct ssh *, int);
 int      ssh_packet_read_seqnr(struct ssh *, u_char *, u_int32_t *seqnr_p);
 int      ssh_packet_read_poll_seqnr(struct ssh *, u_char *, u_int32_t *seqnr_p);
 
@@ -132,6 +141,7 @@ int	 ssh_packet_write_poll(struct ssh *);
 int	 ssh_packet_write_wait(struct ssh *);
 int      ssh_packet_have_data_to_write(struct ssh *);
 int      ssh_packet_not_very_much_data_to_write(struct ssh *);
+int	 ssh_packet_interactive_data_to_write(struct ssh *);
 
 int	 ssh_packet_connection_is_on_socket(struct ssh *);
 int	 ssh_packet_remaining(struct ssh *);
@@ -167,7 +177,8 @@ int     sshpkt_disconnect(struct ssh *, const char *fmt, ...)
 	    __attribute__((format(printf, 2, 3)));
 int	sshpkt_add_padding(struct ssh *, u_char);
 void	sshpkt_fatal(struct ssh *ssh, int r, const char *fmt, ...)
-	    __attribute__((format(printf, 3, 4))) __attribute__((__noreturn__));
+	    __attribute__((format(printf, 3, 4)))
+	    __attribute__((noreturn));
 int	sshpkt_msg_ignore(struct ssh *, u_int);
 
 int	sshpkt_put(struct ssh *ssh, const void *v, size_t len);

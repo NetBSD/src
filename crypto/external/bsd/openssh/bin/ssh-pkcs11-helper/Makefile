@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2010/11/21 19:19:22 adam Exp $
+#	$NetBSD: Makefile,v 1.1.50.1 2023/12/25 12:31:01 martin Exp $
 
 BINOWN= root
 BINMODE=555
 BINDIR= /usr/libexec
 
 PROG=	ssh-pkcs11-helper
-SRCS=	ssh-pkcs11-helper.c
 MAN=	ssh-pkcs11-helper.8
+
+COPTS.ssh-pkcs11-helper.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.prog.mk>

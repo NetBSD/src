@@ -1,7 +1,9 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.23 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: auth2-pubkey.c,v 1.87 2019/01/22 11:26:16 djm Exp $ */
+/*	$NetBSD: auth2-pubkey.c,v 1.23.2.1 2023/12/25 12:31:03 martin Exp $	*/
+/* $OpenBSD: auth2-pubkey.c,v 1.119 2023/07/27 22:25:17 djm Exp $ */
+
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2010 Damien Miller.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,12 +27,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.23 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.23.2.1 2023/12/25 12:31:03 martin Exp $");
 #include <sys/types.h>
-#include <sys/stat.h>
 
+#include <stdlib.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
@@ -45,6 +46,7 @@ __RCSID("$NetBSD: auth2-pubkey.c,v 1.23 2019/04/20 17:16:40 christos Exp $");
 #include "ssh.h"
 #include "ssh2.h"
 #include "packet.h"
+#include "kex.h"
 #include "sshbuf.h"
 #include "log.h"
 #include "misc.h"
@@ -72,11 +74,10 @@ __RCSID("$NetBSD: auth2-pubkey.c,v 1.23 2019/04/20 17:16:40 christos Exp $");
 #include "ssherr.h"
 #include "channels.h" /* XXX for session.h */
 #include "session.h" /* XXX for child_set_env(); refactor? */
+#include "sk-api.h"
 
 /* import */
 extern ServerOptions options;
-extern u_char *session_id2;
-extern u_int session_id2_len;
 
 static char *
 format_key(const struct sshkey *key)
@@ -90,33 +91,49 @@ format_key(const struct sshkey *key)
 }
 
 static int
-userauth_pubkey(struct ssh *ssh)
+userauth_pubkey(struct ssh *ssh, const char *method)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	struct passwd *pw = authctxt->pw;
 	struct sshbuf *b = NULL;
-	struct sshkey *key = NULL;
+	struct sshkey *key = NULL, *hostkey = NULL;
 	char *pkalg = NULL, *userstyle = NULL, *key_s = NULL, *ca_s = NULL;
 	u_char *pkblob = NULL, *sig = NULL, have_sig;
 	size_t blen, slen;
-	int r, pktype;
-	int authenticated = 0;
+	int hostbound, r, pktype;
+	int req_presence = 0, req_verify = 0, authenticated = 0;
 	struct sshauthopt *authopts = NULL;
+	struct sshkey_sig_details *sig_details = NULL;
+
+	hostbound = strcmp(method, "publickey-hostbound-v00@openssh.com") == 0;
 
 	if ((r = sshpkt_get_u8(ssh, &have_sig)) != 0 ||
 	    (r = sshpkt_get_cstring(ssh, &pkalg, NULL)) != 0 ||
 	    (r = sshpkt_get_string(ssh, &pkblob, &blen)) != 0)
-		fatal("%s: parse request failed: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse %s packet", method);
+
+	/* hostbound auth includes the hostkey offered at initial KEX */
+	if (hostbound) {
+		if ((r = sshpkt_getb_froms(ssh, &b)) != 0 ||
+		    (r = sshkey_fromb(b, &hostkey)) != 0)
+			fatal_fr(r, "parse %s hostkey", method);
+		if (ssh->kex->initial_hostkey == NULL)
+			fatal_f("internal error: initial hostkey not recorded");
+		if (!sshkey_equal(hostkey, ssh->kex->initial_hostkey))
+			fatal_f("%s packet contained wrong host key", method);
+		sshbuf_free(b);
+		b = NULL;
+	}
 
 	if (log_level_get() >= SYSLOG_LEVEL_DEBUG2) {
 		char *keystring;
 		struct sshbuf *pkbuf;
 
 		if ((pkbuf = sshbuf_from(pkblob, blen)) == NULL)
-			fatal("%s: sshbuf_from failed", __func__);
-		if ((keystring = sshbuf_dtob64(pkbuf)) == NULL)
-			fatal("%s: sshbuf_dtob64 failed", __func__);
-		debug2("%s: %s user %s %s public key %s %s", __func__,
+			fatal_f("sshbuf_from failed");
+		if ((keystring = sshbuf_dtob64_string(pkbuf, 0)) == NULL)
+			fatal_f("sshbuf_dtob64 failed");
+		debug2_f("%s user %s %s public key %s %s",
 		    authctxt->valid ? "valid" : "invalid", authctxt->user,
 		    have_sig ? "attempting" : "querying", pkalg, keystring);
 		sshbuf_free(pkbuf);
@@ -126,43 +143,41 @@ userauth_pubkey(struct ssh *ssh)
 	pktype = sshkey_type_from_name(pkalg);
 	if (pktype == KEY_UNSPEC) {
 		/* this is perfectly legal */
-		verbose("%s: unsupported public key algorithm: %s",
-		    __func__, pkalg);
+		verbose_f("unsupported public key algorithm: %s", pkalg);
 		goto done;
 	}
 	if ((r = sshkey_from_blob(pkblob, blen, &key)) != 0) {
-		error("%s: could not parse key: %s", __func__, ssh_err(r));
+		error_fr(r, "parse key");
 		goto done;
 	}
 	if (key == NULL) {
-		error("%s: cannot decode key: %s", __func__, pkalg);
+		error_f("cannot decode key: %s", pkalg);
 		goto done;
 	}
 	if (key->type != pktype) {
-		error("%s: type mismatch for decoded key "
-		    "(received %d, expected %d)", __func__, key->type, pktype);
-		goto done;
-	}
-	if (sshkey_type_plain(key->type) == KEY_RSA &&
-	    (ssh->compat & SSH_BUG_RSASIGMD5) != 0) {
-		logit("Refusing RSA key because client uses unsafe "
-		    "signature scheme");
+		error_f("type mismatch for decoded key "
+		    "(received %d, expected %d)", key->type, pktype);
 		goto done;
 	}
 	if (auth2_key_already_used(authctxt, key)) {
 		logit("refusing previously-used %s key", sshkey_type(key));
 		goto done;
 	}
-	if (match_pattern_list(pkalg, options.pubkey_key_types, 0) != 1) {
-		logit("%s: key type %s not in PubkeyAcceptedKeyTypes",
-		    __func__, sshkey_ssh_name(key));
+	if (match_pattern_list(pkalg, options.pubkey_accepted_algos, 0) != 1) {
+		logit_f("signature algorithm %s not in "
+		    "PubkeyAcceptedAlgorithms", pkalg);
 		goto done;
 	}
 	if ((r = sshkey_check_cert_sigtype(key,
 	    options.ca_sign_algorithms)) != 0) {
-		logit("%s: certificate signature algorithm %s: %s", __func__,
+		logit_fr(r, "certificate signature algorithm %s",
 		    (key->cert == NULL || key->cert->signature_type == NULL) ?
-		    "(null)" : key->cert->signature_type, ssh_err(r));
+		    "(null)" : key->cert->signature_type);
+		goto done;
+	}
+	if ((r = sshkey_check_rsa_length(key,
+	    options.required_rsa_size)) != 0) {
+		logit_r(r, "refusing %s key", sshkey_type(key));
 		goto done;
 	}
 	key_s = format_key(key);
@@ -170,29 +185,24 @@ userauth_pubkey(struct ssh *ssh)
 		ca_s = format_key(key->cert->signature_key);
 
 	if (have_sig) {
-		debug3("%s: have %s signature for %s%s%s",
-		    __func__, pkalg, key_s,
-		    ca_s == NULL ? "" : " CA ",
-		    ca_s == NULL ? "" : ca_s);
+		debug3_f("%s have %s signature for %s%s%s",
+		    method, pkalg, key_s,
+		    ca_s == NULL ? "" : " CA ", ca_s == NULL ? "" : ca_s);
 		if ((r = sshpkt_get_string(ssh, &sig, &slen)) != 0 ||
 		    (r = sshpkt_get_end(ssh)) != 0)
-			fatal("%s: %s", __func__, ssh_err(r));
+			fatal_fr(r, "parse signature packet");
 		if ((b = sshbuf_new()) == NULL)
-			fatal("%s: sshbuf_new failed", __func__);
+			fatal_f("sshbuf_new failed");
 		if (ssh->compat & SSH_OLD_SESSIONID) {
-			if ((r = sshbuf_put(b, session_id2,
-			    session_id2_len)) != 0)
-				fatal("%s: sshbuf_put session id: %s",
-				    __func__, ssh_err(r));
+			if ((r = sshbuf_putb(b, ssh->kex->session_id)) != 0)
+				fatal_fr(r, "put old session id");
 		} else {
-			if ((r = sshbuf_put_string(b, session_id2,
-			    session_id2_len)) != 0)
-				fatal("%s: sshbuf_put_string session id: %s",
-				    __func__, ssh_err(r));
+			if ((r = sshbuf_put_stringb(b,
+			    ssh->kex->session_id)) != 0)
+				fatal_fr(r, "put session id");
 		}
 		if (!authctxt->valid || authctxt->user == NULL) {
-			debug2("%s: disabled because of invalid user",
-			    __func__);
+			debug2_f("disabled because of invalid user");
 			goto done;
 		}
 		/* reconstruct packet */
@@ -202,12 +212,14 @@ userauth_pubkey(struct ssh *ssh)
 		if ((r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
 		    (r = sshbuf_put_cstring(b, userstyle)) != 0 ||
 		    (r = sshbuf_put_cstring(b, authctxt->service)) != 0 ||
-		    (r = sshbuf_put_cstring(b, "publickey")) != 0 ||
+		    (r = sshbuf_put_cstring(b, method)) != 0 ||
 		    (r = sshbuf_put_u8(b, have_sig)) != 0 ||
 		    (r = sshbuf_put_cstring(b, pkalg)) != 0 ||
 		    (r = sshbuf_put_string(b, pkblob, blen)) != 0)
-			fatal("%s: build packet failed: %s",
-			    __func__, ssh_err(r));
+			fatal_fr(r, "reconstruct %s packet", method);
+		if (hostbound &&
+		    (r = sshkey_puts(ssh->kex->initial_hostkey, b)) != 0)
+			fatal_fr(r, "reconstruct %s packet", method);
 #ifdef DEBUG_PK
 		sshbuf_dump(b, stderr);
 #endif
@@ -217,22 +229,54 @@ userauth_pubkey(struct ssh *ssh)
 		    PRIVSEP(sshkey_verify(key, sig, slen,
 		    sshbuf_ptr(b), sshbuf_len(b),
 		    (ssh->compat & SSH_BUG_SIGTYPE) == 0 ? pkalg : NULL,
-		    ssh->compat)) == 0) {
+		    ssh->compat, &sig_details)) == 0) {
 			authenticated = 1;
+		}
+		if (authenticated == 1 && sig_details != NULL) {
+			auth2_record_info(authctxt, "signature count = %u",
+			    sig_details->sk_counter);
+			debug_f("sk_counter = %u, sk_flags = 0x%02x",
+			    sig_details->sk_counter, sig_details->sk_flags);
+			req_presence = (options.pubkey_auth_options &
+			    PUBKEYAUTH_TOUCH_REQUIRED) ||
+			    !authopts->no_require_user_presence;
+			if (req_presence && (sig_details->sk_flags &
+			    SSH_SK_USER_PRESENCE_REQD) == 0) {
+				error("public key %s signature for %s%s from "
+				    "%.128s port %d rejected: user presence "
+				    "(authenticator touch) requirement "
+				    "not met ", key_s,
+				    authctxt->valid ? "" : "invalid user ",
+				    authctxt->user, ssh_remote_ipaddr(ssh),
+				    ssh_remote_port(ssh));
+				authenticated = 0;
+				goto done;
+			}
+			req_verify = (options.pubkey_auth_options &
+			    PUBKEYAUTH_VERIFY_REQUIRED) ||
+			    authopts->require_verify;
+			if (req_verify && (sig_details->sk_flags &
+			    SSH_SK_USER_VERIFICATION_REQD) == 0) {
+				error("public key %s signature for %s%s from "
+				    "%.128s port %d rejected: user "
+				    "verification requirement not met ", key_s,
+				    authctxt->valid ? "" : "invalid user ",
+				    authctxt->user, ssh_remote_ipaddr(ssh),
+				    ssh_remote_port(ssh));
+				authenticated = 0;
+				goto done;
+			}
 		}
 		auth2_record_key(authctxt, authenticated, key);
 	} else {
-		debug("%s: test pkalg %s pkblob %s%s%s",
-		    __func__, pkalg, key_s,
-		    ca_s == NULL ? "" : " CA ",
-		    ca_s == NULL ? "" : ca_s);
+		debug_f("%s test pkalg %s pkblob %s%s%s", method, pkalg, key_s,
+		    ca_s == NULL ? "" : " CA ", ca_s == NULL ? "" : ca_s);
 
 		if ((r = sshpkt_get_end(ssh)) != 0)
-			fatal("%s: %s", __func__, ssh_err(r));
+			fatal_fr(r, "parse packet");
 
 		if (!authctxt->valid || authctxt->user == NULL) {
-			debug2("%s: disabled because of invalid user",
-			    __func__);
+			debug2_f("disabled because of invalid user");
 			goto done;
 		}
 		/* XXX fake reply and always send PK_OK ? */
@@ -250,143 +294,33 @@ userauth_pubkey(struct ssh *ssh)
 			    (r = sshpkt_put_string(ssh, pkblob, blen)) != 0 ||
 			    (r = sshpkt_send(ssh)) != 0 ||
 			    (r = ssh_packet_write_wait(ssh)) < 0)
-				fatal("%s: %s", __func__, ssh_err(r));
+				fatal_fr(r, "send packet");
 			authctxt->postponed = 1;
 		}
 	}
 done:
 	if (authenticated == 1 && auth_activate_options(ssh, authopts) != 0) {
-		debug("%s: key options inconsistent with existing", __func__);
+		debug_f("key options inconsistent with existing");
 		authenticated = 0;
 	}
-	debug2("%s: authenticated %d pkalg %s", __func__, authenticated, pkalg);
+	debug2_f("authenticated %d pkalg %s", authenticated, pkalg);
 
 	sshbuf_free(b);
 	sshauthopt_free(authopts);
 	sshkey_free(key);
+	sshkey_free(hostkey);
 	free(userstyle);
 	free(pkalg);
 	free(pkblob);
 	free(key_s);
 	free(ca_s);
 	free(sig);
+	sshkey_sig_details_free(sig_details);
 	return authenticated;
 }
 
 static int
-match_principals_option(const char *principal_list, struct sshkey_cert *cert)
-{
-	char *result;
-	u_int i;
-
-	/* XXX percent_expand() sequences for authorized_principals? */
-
-	for (i = 0; i < cert->nprincipals; i++) {
-		if ((result = match_list(cert->principals[i],
-		    principal_list, NULL)) != NULL) {
-			debug3("matched principal from key options \"%.100s\"",
-			    result);
-			free(result);
-			return 1;
-		}
-	}
-	return 0;
-}
-
-/*
- * Process a single authorized_principals format line. Returns 0 and sets
- * authoptsp is principal is authorised, -1 otherwise. "loc" is used as a
- * log preamble for file/line information.
- */
-static int
-check_principals_line(struct ssh *ssh, char *cp, const struct sshkey_cert *cert,
-    const char *loc, struct sshauthopt **authoptsp)
-{
-	u_int i, found = 0;
-	char *ep, *line_opts;
-	const char *reason = NULL;
-	struct sshauthopt *opts = NULL;
-
-	if (authoptsp != NULL)
-		*authoptsp = NULL;
-
-	/* Trim trailing whitespace. */
-	ep = cp + strlen(cp) - 1;
-	while (ep > cp && (*ep == '\n' || *ep == ' ' || *ep == '\t'))
-		*ep-- = '\0';
-
-	/*
-	 * If the line has internal whitespace then assume it has
-	 * key options.
-	 */
-	line_opts = NULL;
-	if ((ep = strrchr(cp, ' ')) != NULL ||
-	    (ep = strrchr(cp, '\t')) != NULL) {
-		for (; *ep == ' ' || *ep == '\t'; ep++)
-			;
-		line_opts = cp;
-		cp = ep;
-	}
-	if ((opts = sshauthopt_parse(line_opts, &reason)) == NULL) {
-		debug("%s: bad principals options: %s", loc, reason);
-		auth_debug_add("%s: bad principals options: %s", loc, reason);
-		return -1;
-	}
-	/* Check principals in cert against those on line */
-	for (i = 0; i < cert->nprincipals; i++) {
-		if (strcmp(cp, cert->principals[i]) != 0)
-			continue;
-		debug3("%s: matched principal \"%.100s\"",
-		    loc, cert->principals[i]);
-		found = 1;
-	}
-	if (found && authoptsp != NULL) {
-		*authoptsp = opts;
-		opts = NULL;
-	}
-	sshauthopt_free(opts);
-	return found ? 0 : -1;
-}
-
-static int
-process_principals(struct ssh *ssh, FILE *f, const char *file,
-    const struct sshkey_cert *cert, struct sshauthopt **authoptsp)
-{
-	char loc[256], *line = NULL, *cp, *ep;
-	size_t linesize = 0;
-	u_long linenum = 0;
-	u_int found_principal = 0;
-
-	if (authoptsp != NULL)
-		*authoptsp = NULL;
-
-	while (getline(&line, &linesize, f) != -1) {
-		linenum++;
-		/* Always consume entire input */
-		if (found_principal)
-			continue;
-
-		/* Skip leading whitespace. */
-		for (cp = line; *cp == ' ' || *cp == '\t'; cp++)
-			;
-		/* Skip blank and comment lines. */
-		if ((ep = strchr(cp, '#')) != NULL)
-			*ep = '\0';
-		if (!*cp || *cp == '\n')
-			continue;
-
-		snprintf(loc, sizeof(loc), "%.200s:%lu", file, linenum);
-		if (check_principals_line(ssh, cp, cert, loc, authoptsp) == 0)
-			found_principal = 1;
-	}
-	free(line);
-	return found_principal;
-}
-
-/* XXX remove pw args here and elsewhere once ssh->authctxt is guaranteed */
-
-static int
-match_principals_file(struct ssh *ssh, struct passwd *pw, char *file,
+match_principals_file(struct passwd *pw, char *file,
     struct sshkey_cert *cert, struct sshauthopt **authoptsp)
 {
 	FILE *f;
@@ -401,7 +335,7 @@ match_principals_file(struct ssh *ssh, struct passwd *pw, char *file,
 		restore_uid();
 		return 0;
 	}
-	success = process_principals(ssh, f, file, cert, authoptsp);
+	success = auth_process_principals(f, file, cert, authoptsp);
 	fclose(f);
 	restore_uid();
 	return success;
@@ -412,8 +346,8 @@ match_principals_file(struct ssh *ssh, struct passwd *pw, char *file,
  * returns 1 if the principal is allowed or 0 otherwise.
  */
 static int
-match_principals_command(struct ssh *ssh, struct passwd *user_pw,
-    const struct sshkey *key, struct sshauthopt **authoptsp)
+match_principals_command(struct passwd *user_pw, const struct sshkey *key,
+    const char *conn_id, const char *rdomain, struct sshauthopt **authoptsp)
 {
 	struct passwd *runas_pw = NULL;
 	const struct sshkey_cert *cert = key->cert;
@@ -423,7 +357,7 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
 	pid_t pid;
 	char *tmp, *username = NULL, *command = NULL, **av = NULL;
 	char *ca_fp = NULL, *key_fp = NULL, *catext = NULL, *keytext = NULL;
-	char serial_s[16], uidstr[32];
+	char serial_s[32], uidstr[32];
 	void (*osigchld)(int);
 
 	if (authoptsp != NULL)
@@ -440,7 +374,7 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
 	 * NB. all returns later this function should go via "out" to
 	 * ensure the original SIGCHLD handler is restored properly.
 	 */
-	osigchld = signal(SIGCHLD, SIG_DFL);
+	osigchld = ssh_signal(SIGCHLD, SIG_DFL);
 
 	/* Prepare and verify the user for the command */
 	username = percent_expand(options.authorized_principals_command_user,
@@ -453,32 +387,33 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
 	}
 
 	/* Turn the command into an argument vector */
-	if (argv_split(options.authorized_principals_command, &ac, &av) != 0) {
+	if (argv_split(options.authorized_principals_command,
+	    &ac, &av, 0) != 0) {
 		error("AuthorizedPrincipalsCommand \"%s\" contains "
-		    "invalid quotes", command);
+		    "invalid quotes", options.authorized_principals_command);
 		goto out;
 	}
 	if (ac == 0) {
 		error("AuthorizedPrincipalsCommand \"%s\" yielded no arguments",
-		    command);
+		    options.authorized_principals_command);
 		goto out;
 	}
 	if ((ca_fp = sshkey_fingerprint(cert->signature_key,
 	    options.fingerprint_hash, SSH_FP_DEFAULT)) == NULL) {
-		error("%s: sshkey_fingerprint failed", __func__);
+		error_f("sshkey_fingerprint failed");
 		goto out;
 	}
 	if ((key_fp = sshkey_fingerprint(key,
 	    options.fingerprint_hash, SSH_FP_DEFAULT)) == NULL) {
-		error("%s: sshkey_fingerprint failed", __func__);
+		error_f("sshkey_fingerprint failed");
 		goto out;
 	}
 	if ((r = sshkey_to_base64(cert->signature_key, &catext)) != 0) {
-		error("%s: sshkey_to_base64 failed: %s", __func__, ssh_err(r));
+		error_fr(r, "sshkey_to_base64 failed");
 		goto out;
 	}
 	if ((r = sshkey_to_base64(key, &keytext)) != 0) {
-		error("%s: sshkey_to_base64 failed: %s", __func__, ssh_err(r));
+		error_fr(r, "sshkey_to_base64 failed");
 		goto out;
 	}
 	snprintf(serial_s, sizeof(serial_s), "%llu",
@@ -487,6 +422,8 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
 	    (unsigned long long)user_pw->pw_uid);
 	for (i = 1; i < ac; i++) {
 		tmp = percent_expand(av[i],
+		    "C", conn_id,
+		    "D", rdomain,
 		    "U", uidstr,
 		    "u", user_pw->pw_name,
 		    "h", user_pw->pw_dir,
@@ -500,22 +437,23 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
 		    "s", serial_s,
 		    (char *)NULL);
 		if (tmp == NULL)
-			fatal("%s: percent_expand failed", __func__);
+			fatal_f("percent_expand failed");
 		free(av[i]);
 		av[i] = tmp;
 	}
 	/* Prepare a printable command for logs, etc. */
 	command = argv_assemble(ac, av);
 
-	if ((pid = subprocess("AuthorizedPrincipalsCommand", runas_pw, command,
+	if ((pid = subprocess("AuthorizedPrincipalsCommand", command,
 	    ac, av, &f,
-	    SSH_SUBPROCESS_STDOUT_CAPTURE|SSH_SUBPROCESS_STDERR_DISCARD)) == 0)
+	    SSH_SUBPROCESS_STDOUT_CAPTURE|SSH_SUBPROCESS_STDERR_DISCARD,
+	    runas_pw, temporarily_use_uid, restore_uid)) == 0)
 		goto out;
 
 	uid_swapped = 1;
 	temporarily_use_uid(runas_pw);
 
-	ok = process_principals(ssh, f, "(command)", cert, authoptsp);
+	ok = auth_process_principals(f, "(command)", cert, authoptsp);
 
 	fclose(f);
 	f = NULL;
@@ -528,7 +466,7 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
  out:
 	if (f != NULL)
 		fclose(f);
-	signal(SIGCHLD, osigchld);
+	ssh_signal(SIGCHLD, osigchld);
 	for (i = 0; i < ac; i++)
 		free(av[i]);
 	free(av);
@@ -543,295 +481,11 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
 	return found_principal;
 }
 
-static void
-skip_space(char **cpp)
-{
-	char *cp;
-
-	for (cp = *cpp; *cp == ' ' || *cp == '\t'; cp++)
-		;
-	*cpp = cp;
-}
-
-/*
- * Advanced *cpp past the end of key options, defined as the first unquoted
- * whitespace character. Returns 0 on success or -1 on failure (e.g.
- * unterminated quotes).
- */
-static int
-advance_past_options(char **cpp)
-{
-	char *cp = *cpp;
-	int quoted = 0;
-
-	for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
-		if (*cp == '\\' && cp[1] == '"')
-			cp++;	/* Skip both */
-		else if (*cp == '"')
-			quoted = !quoted;
-	}
-	*cpp = cp;
-	/* return failure for unterminated quotes */
-	return (*cp == '\0' && quoted) ? -1 : 0;
-}
-
-/*
- * Check a single line of an authorized_keys-format file. Returns 0 if key
- * matches, -1 otherwise. Will return key/cert options via *authoptsp
- * on success. "loc" is used as file/line location in log messages.
- */
-static int
-check_authkey_line(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
-    char *cp, const char *loc, struct sshauthopt **authoptsp)
-{
-	int want_keytype = sshkey_is_cert(key) ? KEY_UNSPEC : key->type;
-	struct sshkey *found = NULL;
-	struct sshauthopt *keyopts = NULL, *certopts = NULL, *finalopts = NULL;
-	char *key_options = NULL, *fp = NULL;
-	const char *reason = NULL;
-	int ret = -1;
-
-	if (authoptsp != NULL)
-		*authoptsp = NULL;
-
-	if ((found = sshkey_new(want_keytype)) == NULL) {
-		debug3("%s: keytype %d failed", __func__, want_keytype);
-		goto out;
-	}
-
-	/* XXX djm: peek at key type in line and skip if unwanted */
-
-	if (sshkey_read(found, &cp) != 0) {
-		/* no key?  check for options */
-		debug2("%s: check options: '%s'", loc, cp);
-		key_options = cp;
-		if (advance_past_options(&cp) != 0) {
-			reason = "invalid key option string";
-			goto fail_reason;
-		}
-		skip_space(&cp);
-		if (sshkey_read(found, &cp) != 0) {
-			/* still no key?  advance to next line*/
-			debug2("%s: advance: '%s'", loc, cp);
-			goto out;
-		}
-	}
-	/* Parse key options now; we need to know if this is a CA key */
-	if ((keyopts = sshauthopt_parse(key_options, &reason)) == NULL) {
-		debug("%s: bad key options: %s", loc, reason);
-		auth_debug_add("%s: bad key options: %s", loc, reason);
-		goto out;
-	}
-	/* Ignore keys that don't match or incorrectly marked as CAs */
-	if (sshkey_is_cert(key)) {
-		/* Certificate; check signature key against CA */
-		if (!sshkey_equal(found, key->cert->signature_key) ||
-		    !keyopts->cert_authority)
-			goto out;
-	} else {
-		/* Plain key: check it against key found in file */
-		if (!sshkey_equal(found, key) || keyopts->cert_authority)
-			goto out;
-	}
-
-	/* We have a candidate key, perform authorisation checks */
-	if ((fp = sshkey_fingerprint(found,
-	    options.fingerprint_hash, SSH_FP_DEFAULT)) == NULL)
-		fatal("%s: fingerprint failed", __func__);
-
-	debug("%s: matching %s found: %s %s", loc,
-	    sshkey_is_cert(key) ? "CA" : "key", sshkey_type(found), fp);
-
-	if (auth_authorise_keyopts(ssh, pw, keyopts,
-	    sshkey_is_cert(key), loc) != 0) {
-		reason = "Refused by key options";
-		goto fail_reason;
-	}
-	/* That's all we need for plain keys. */
-	if (!sshkey_is_cert(key)) {
-		verbose("Accepted key %s %s found at %s",
-		    sshkey_type(found), fp, loc);
-		finalopts = keyopts;
-		keyopts = NULL;
-		goto success;
-	}
-
-	/*
-	 * Additional authorisation for certificates.
-	 */
-
-	/* Parse and check options present in certificate */
-	if ((certopts = sshauthopt_from_cert(key)) == NULL) {
-		reason = "Invalid certificate options";
-		goto fail_reason;
-	}
-	if (auth_authorise_keyopts(ssh, pw, certopts, 0, loc) != 0) {
-		reason = "Refused by certificate options";
-		goto fail_reason;
-	}
-	if ((finalopts = sshauthopt_merge(keyopts, certopts, &reason)) == NULL)
-		goto fail_reason;
-
-	/*
-	 * If the user has specified a list of principals as
-	 * a key option, then prefer that list to matching
-	 * their username in the certificate principals list.
-	 */
-	if (keyopts->cert_principals != NULL &&
-	    !match_principals_option(keyopts->cert_principals, key->cert)) {
-		reason = "Certificate does not contain an authorized principal";
-		goto fail_reason;
-	}
-	if (sshkey_cert_check_authority(key, 0, 0,
-	   keyopts->cert_principals == NULL ? pw->pw_name : NULL, &reason) != 0)
-		goto fail_reason;
-
-	verbose("Accepted certificate ID \"%s\" (serial %llu) "
-	    "signed by CA %s %s found at %s",
-	    key->cert->key_id,
-	    (unsigned long long)key->cert->serial,
-	    sshkey_type(found), fp, loc);
-
- success:
-	if (finalopts == NULL)
-		fatal("%s: internal error: missing options", __func__);
-	if (authoptsp != NULL) {
-		*authoptsp = finalopts;
-		finalopts = NULL;
-	}
-	/* success */
-	ret = 0;
-	goto out;
-
- fail_reason:
-	error("%s", reason);
-	auth_debug_add("%s", reason);
- out:
-	free(fp);
-	sshauthopt_free(keyopts);
-	sshauthopt_free(certopts);
-	sshauthopt_free(finalopts);
-	sshkey_free(found);
-	return ret;
-}
-
-/*
- * Checks whether key is allowed in authorized_keys-format file,
- * returns 1 if the key is allowed or 0 otherwise.
- */
-static int
-check_authkeys_file(struct ssh *ssh, struct passwd *pw, FILE *f,
-    char *file, struct sshkey *key, struct sshauthopt **authoptsp)
-{
-	char *cp, *line = NULL, loc[256];
-	size_t linesize = 0;
-	int found_key = 0;
-	u_long linenum = 0;
-	struct sshauthopt *opts = NULL;
-#ifdef WITH_LDAP_PUBKEY
-	struct sshkey *found = NULL;
-	ldap_key_t * k;
-	unsigned int i = 0;
-	const char *reason;
-#endif
-
-#ifdef WITH_LDAP_PUBKEY
-	found_key = 0;
-	/* allocate a new key type */
-	found = sshkey_new(key->type);
- 
-	/* first check if the options is enabled, then try.. */
-	if (options.lpk.on) {
-	    debug("[LDAP] trying LDAP first uid=%s",pw->pw_name);
-	    if (ldap_ismember(&options.lpk, pw->pw_name) > 0) {
-		if ((k = ldap_getuserkey(&options.lpk, pw->pw_name)) != NULL) {
-		    /* Skip leading whitespace, empty and comment lines. */
-		    for (i = 0 ; i < k->num ; i++) {
-			/* dont forget if multiple keys to reset options */
-			char *xoptions = NULL;
-
-			for (cp = (char *)k->keys[i]->bv_val; *cp == ' ' || *cp == '\t'; cp++)
-			    ;
-			if (!*cp || *cp == '\n' || *cp == '#')
-			    continue;
-
-			if (sshkey_read(found, &cp) != 0) {
-			    /* no key?  check if there are options for this key */
-			    int quoted = 0;
-			    debug2("[LDAP] user_key_allowed: check options: '%s'", cp);
-			    xoptions = cp;
-			    for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
-				if (*cp == '\\' && cp[1] == '"')
-				    cp++;	/* Skip both */
-				else if (*cp == '"')
-				    quoted = !quoted;
-			    }
-			    /* Skip remaining whitespace. */
-			    for (; *cp == ' ' || *cp == '\t'; cp++)
-				;
-			    if (sshkey_read(found, &cp) != 0) {
-				debug2("[LDAP] user_key_allowed: advance: '%s'", cp);
-				/* still no key?  advance to next line*/
-				continue;
-			    }
-			}
-			if ((opts = sshauthopt_parse(xoptions, &reason)) == NULL) {  
-			    debug("[LDAP] %s: bad principals options: %s", xoptions, reason);
-			    auth_debug_add("[LDAP] %s: bad principals options: %s", xoptions, reason);
-			    continue;
-												        }
-
-
-			if (sshkey_equal(found, key)) {
-			    found_key = 1;
-			    debug("[LDAP] matching key found");
-			    char *fp = sshkey_fingerprint(found, SSH_FP_HASH_DEFAULT, SSH_FP_HEX);
-			    verbose("[LDAP] Found matching %s key: %s", sshkey_type(found), fp);
-
-			    /* restoring memory */
-			    ldap_keys_free(k);
-			    free(fp);
-			    restore_uid();
-			    sshkey_free(found);
-			    return found_key;
-			    break;
-			}
-		    }/* end of LDAP for() */
-		} else {
-		    logit("[LDAP] no keys found for '%s'!", pw->pw_name);
-		}
-	    } else {
-		logit("[LDAP] '%s' is not in '%s'", pw->pw_name, options.lpk.sgroup);
-	    }
-	}
-#endif
-
-	if (authoptsp != NULL)
-		*authoptsp = opts;
-
-	while (getline(&line, &linesize, f) != -1) {
-		linenum++;
-		/* Always consume entire file */
-		if (found_key)
-			continue;
-
-		/* Skip leading whitespace, empty and comment lines. */
-		cp = line;
-		skip_space(&cp);
-		if (!*cp || *cp == '\n' || *cp == '#')
-			continue;
-		snprintf(loc, sizeof(loc), "%.200s:%lu", file, linenum);
-		if (check_authkey_line(ssh, pw, key, cp, loc, authoptsp) == 0)
-			found_key = 1;
-	}
-	free(line);
-	return found_key;
-}
-
 /* Authenticate a certificate key against TrustedUserCAKeys */
 static int
-user_cert_trusted_ca(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
-    struct sshauthopt **authoptsp)
+user_cert_trusted_ca(struct passwd *pw, struct sshkey *key,
+    const char *remote_ip, const char *remote_host,
+    const char *conn_id, const char *rdomain, struct sshauthopt **authoptsp)
 {
 	char *ca_fp, *principals_file = NULL;
 	const char *reason;
@@ -851,9 +505,9 @@ user_cert_trusted_ca(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 
 	if ((r = sshkey_in_file(key->cert->signature_key,
 	    options.trusted_user_ca_keys, 1, 0)) != 0) {
-		debug2("%s: CA %s %s is not listed in %s: %s", __func__,
+		debug2_fr(r, "CA %s %s is not listed in %s",
 		    sshkey_type(key->cert->signature_key), ca_fp,
-		    options.trusted_user_ca_keys, ssh_err(r));
+		    options.trusted_user_ca_keys);
 		goto out;
 	}
 	/*
@@ -862,24 +516,24 @@ user_cert_trusted_ca(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 	 * against the username.
 	 */
 	if ((principals_file = authorized_principals_file(pw)) != NULL) {
-		if (match_principals_file(ssh, pw, principals_file,
+		if (match_principals_file(pw, principals_file,
 		    key->cert, &principals_opts))
 			found_principal = 1;
 	}
 	/* Try querying command if specified */
-	if (!found_principal && match_principals_command(ssh, pw, key,
-	    &principals_opts))
+	if (!found_principal && match_principals_command(pw, key,
+	    conn_id, rdomain, &principals_opts))
 		found_principal = 1;
 	/* If principals file or command is specified, then require a match */
 	use_authorized_principals = principals_file != NULL ||
-            options.authorized_principals_command != NULL;
+	    options.authorized_principals_command != NULL;
 	if (!found_principal && use_authorized_principals) {
 		reason = "Certificate does not contain an authorized principal";
 		goto fail_reason;
 	}
 	if (use_authorized_principals && principals_opts == NULL)
-		fatal("%s: internal error: missing principals_opts", __func__);
-	if (sshkey_cert_check_authority(key, 0, 1,
+		fatal_f("internal error: missing principals_opts");
+	if (sshkey_cert_check_authority_now(key, 0, 1, 0,
 	    use_authorized_principals ? NULL : pw->pw_name, &reason) != 0)
 		goto fail_reason;
 
@@ -888,7 +542,8 @@ user_cert_trusted_ca(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 		reason = "Invalid certificate options";
 		goto fail_reason;
 	}
-	if (auth_authorise_keyopts(ssh, pw, cert_opts, 0, "cert") != 0) {
+	if (auth_authorise_keyopts(pw, cert_opts, 0,
+	    remote_ip, remote_host, "cert") != 0) {
 		reason = "Refused by certificate options";
 		goto fail_reason;
 	}
@@ -896,8 +551,8 @@ user_cert_trusted_ca(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 		final_opts = cert_opts;
 		cert_opts = NULL;
 	} else {
-		if (auth_authorise_keyopts(ssh, pw, principals_opts, 0,
-		    "principals") != 0) {
+		if (auth_authorise_keyopts(pw, principals_opts, 0,
+		    remote_ip, remote_host, "principals") != 0) {
 			reason = "Refused by certificate principals options";
 			goto fail_reason;
 		}
@@ -935,8 +590,9 @@ user_cert_trusted_ca(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
  * returns 1 if the key is allowed or 0 otherwise.
  */
 static int
-user_key_allowed2(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
-    char *file, struct sshauthopt **authoptsp)
+user_key_allowed2(struct passwd *pw, struct sshkey *key,
+    char *file, const char *remote_ip, const char *remote_host,
+    struct sshauthopt **authoptsp)
 {
 	FILE *f;
 	int found_key = 0;
@@ -949,8 +605,8 @@ user_key_allowed2(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 
 	debug("trying public key file %s", file);
 	if ((f = auth_openkeyfile(file, pw, options.strict_modes)) != NULL) {
-		found_key = check_authkeys_file(ssh, pw, f, file,
-		    key, authoptsp);
+		found_key = auth_check_authkeys_file(pw, f, file,
+		    key, remote_ip, remote_host, authoptsp);
 		fclose(f);
 	}
 
@@ -963,8 +619,9 @@ user_key_allowed2(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
  * returns 1 if the key is allowed or 0 otherwise.
  */
 static int
-user_key_command_allowed2(struct ssh *ssh, struct passwd *user_pw,
-    struct sshkey *key, struct sshauthopt **authoptsp)
+user_key_command_allowed2(struct passwd *user_pw, struct sshkey *key,
+    const char *remote_ip, const char *remote_host,
+    const char *conn_id, const char *rdomain, struct sshauthopt **authoptsp)
 {
 	struct passwd *runas_pw = NULL;
 	FILE *f = NULL;
@@ -988,7 +645,7 @@ user_key_command_allowed2(struct ssh *ssh, struct passwd *user_pw,
 	 * NB. all returns later this function should go via "out" to
 	 * ensure the original SIGCHLD handler is restored properly.
 	 */
-	osigchld = signal(SIGCHLD, SIG_DFL);
+	osigchld = ssh_signal(SIGCHLD, SIG_DFL);
 
 	/* Prepare and verify the user for the command */
 	username = percent_expand(options.authorized_keys_command_user,
@@ -1003,29 +660,31 @@ user_key_command_allowed2(struct ssh *ssh, struct passwd *user_pw,
 	/* Prepare AuthorizedKeysCommand */
 	if ((key_fp = sshkey_fingerprint(key, options.fingerprint_hash,
 	    SSH_FP_DEFAULT)) == NULL) {
-		error("%s: sshkey_fingerprint failed", __func__);
+		error_f("sshkey_fingerprint failed");
 		goto out;
 	}
 	if ((r = sshkey_to_base64(key, &keytext)) != 0) {
-		error("%s: sshkey_to_base64 failed: %s", __func__, ssh_err(r));
+		error_fr(r, "sshkey_to_base64 failed");
 		goto out;
 	}
 
 	/* Turn the command into an argument vector */
-	if (argv_split(options.authorized_keys_command, &ac, &av) != 0) {
+	if (argv_split(options.authorized_keys_command, &ac, &av, 0) != 0) {
 		error("AuthorizedKeysCommand \"%s\" contains invalid quotes",
-		    command);
+		    options.authorized_keys_command);
 		goto out;
 	}
 	if (ac == 0) {
 		error("AuthorizedKeysCommand \"%s\" yielded no arguments",
-		    command);
+		    options.authorized_keys_command);
 		goto out;
 	}
 	snprintf(uidstr, sizeof(uidstr), "%llu",
 	    (unsigned long long)user_pw->pw_uid);
 	for (i = 1; i < ac; i++) {
 		tmp = percent_expand(av[i],
+		    "C", conn_id,
+		    "D", rdomain,
 		    "U", uidstr,
 		    "u", user_pw->pw_name,
 		    "h", user_pw->pw_dir,
@@ -1034,7 +693,7 @@ user_key_command_allowed2(struct ssh *ssh, struct passwd *user_pw,
 		    "k", keytext,
 		    (char *)NULL);
 		if (tmp == NULL)
-			fatal("%s: percent_expand failed", __func__);
+			fatal_f("percent_expand failed");
 		free(av[i]);
 		av[i] = tmp;
 	}
@@ -1055,16 +714,18 @@ user_key_command_allowed2(struct ssh *ssh, struct passwd *user_pw,
 		xasprintf(&command, "%s %s", av[0], av[1]);
 	}
 
-	if ((pid = subprocess("AuthorizedKeysCommand", runas_pw, command,
+	if ((pid = subprocess("AuthorizedKeysCommand", command,
 	    ac, av, &f,
-	    SSH_SUBPROCESS_STDOUT_CAPTURE|SSH_SUBPROCESS_STDERR_DISCARD)) == 0)
+	    SSH_SUBPROCESS_STDOUT_CAPTURE|SSH_SUBPROCESS_STDERR_DISCARD,
+	    runas_pw, temporarily_use_uid, restore_uid)) == 0)
 		goto out;
 
 	uid_swapped = 1;
 	temporarily_use_uid(runas_pw);
 
-	ok = check_authkeys_file(ssh, user_pw, f,
-	    options.authorized_keys_command, key, authoptsp);
+	ok = auth_check_authkeys_file(user_pw, f,
+	    options.authorized_keys_command, key, remote_ip,
+	    remote_host, authoptsp);
 
 	fclose(f);
 	f = NULL;
@@ -1077,7 +738,7 @@ user_key_command_allowed2(struct ssh *ssh, struct passwd *user_pw,
  out:
 	if (f != NULL)
 		fclose(f);
-	signal(SIGCHLD, osigchld);
+	ssh_signal(SIGCHLD, osigchld);
 	for (i = 0; i < ac; i++)
 		free(av[i]);
 	free(av);
@@ -1097,9 +758,11 @@ int
 user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
     int auth_attempt, struct sshauthopt **authoptsp)
 {
-	u_int success, i;
-	char *file;
+	u_int success = 0, i;
+	char *file, *conn_id;
 	struct sshauthopt *opts = NULL;
+	const char *rdomain, *remote_ip, *remote_host;
+
 	if (authoptsp != NULL)
 		*authoptsp = NULL;
 
@@ -1109,26 +772,44 @@ user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 	    auth_key_is_revoked(key->cert->signature_key))
 		return 0;
 
-	if ((success = user_cert_trusted_ca(ssh, pw, key, &opts)) != 0)
-		goto out;
-	sshauthopt_free(opts);
-	opts = NULL;
-
-	if ((success = user_key_command_allowed2(ssh, pw, key, &opts)) != 0)
-		goto out;
-	sshauthopt_free(opts);
-	opts = NULL;
+	if ((rdomain = ssh_packet_rdomain_in(ssh)) == NULL)
+		rdomain = "";
+	remote_ip = ssh_remote_ipaddr(ssh);
+	remote_host = auth_get_canonical_hostname(ssh, options.use_dns);
+	xasprintf(&conn_id, "%s %d %s %d",
+	    ssh_local_ipaddr(ssh), ssh_local_port(ssh),
+	    remote_ip, ssh_remote_port(ssh));
 
 	for (i = 0; !success && i < options.num_authkeys_files; i++) {
 		if (strcasecmp(options.authorized_keys_files[i], "none") == 0)
 			continue;
 		file = expand_authorized_keys(
 		    options.authorized_keys_files[i], pw);
-		success = user_key_allowed2(ssh, pw, key, file, &opts);
+		success = user_key_allowed2(pw, key, file,
+		    remote_ip, remote_host, &opts);
 		free(file);
+		if (!success) {
+			sshauthopt_free(opts);
+			opts = NULL;
+		}
 	}
+	if (success)
+		goto out;
+
+	if ((success = user_cert_trusted_ca(pw, key, remote_ip, remote_host,
+	    conn_id, rdomain, &opts)) != 0)
+		goto out;
+	sshauthopt_free(opts);
+	opts = NULL;
+
+	if ((success = user_key_command_allowed2(pw, key, remote_ip,
+	    remote_host, conn_id, rdomain, &opts)) != 0)
+		goto out;
+	sshauthopt_free(opts);
+	opts = NULL;
 
  out:
+	free(conn_id);
 	if (success && authoptsp != NULL) {
 		*authoptsp = opts;
 		opts = NULL;
@@ -1139,6 +820,7 @@ user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 
 Authmethod method_pubkey = {
 	"publickey",
+	"publickey-hostbound-v00@openssh.com",
 	userauth_pubkey,
 	&options.pubkey_authentication
 };

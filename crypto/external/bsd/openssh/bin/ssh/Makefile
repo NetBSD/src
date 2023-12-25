@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.14 2018/04/06 18:58:59 christos Exp $
+#	$NetBSD: Makefile,v 1.14.4.1 2023/12/25 12:31:01 martin Exp $
 
 .include <bsd.own.mk>
 
 BINDIR = /usr/bin
 
 PROG=	ssh
-SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
-	sshconnect.c sshconnect2.c mux.c auth.c
+SRCS=	channels.c ssh.c readconf.c clientloop.c sshtty.c \
+	sshconnect.c sshconnect2.c mux.c auth.c auth-options.c
 
 COPTS.auth.c=		-DHOST_ONLY
 COPTS.mux.c=		-Wno-pointer-sign
@@ -22,5 +22,7 @@ SRCS +=	gss-genr.c
 LDADD+=	-lgssapi -lheimntlm ${LIBKRB5_LDADD}
 DPADD+=	${LIBGSSAPI} ${LIBHEIMNTLM} ${LIBKRB5_DPADD}
 .endif
+
+COPTS.sshconnect.c+=	${CC_WNO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

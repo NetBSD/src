@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-pkcs11.h,v 1.7 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11.h,v 1.5 2019/01/20 22:51:37 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11.h,v 1.7.2.1 2023/12/25 12:31:08 martin Exp $	*/
+/* $OpenBSD: ssh-pkcs11.h,v 1.7 2023/12/18 14:46:56 djm Exp $ */
+
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
 
 int	pkcs11_init(int);
 void	pkcs11_terminate(void);
-int	pkcs11_add_provider(char *, char *, struct sshkey ***);
+int	pkcs11_add_provider(char *, char *, struct sshkey ***, char ***);
 int	pkcs11_del_provider(char *);
 #ifdef WITH_PKCS11_KEYGEN
 struct sshkey *
@@ -36,6 +37,9 @@ struct sshkey *
 	    u_int32_t *);
 #endif
 
+/* Only available in ssh-pkcs11-client.c so far */
+int pkcs11_make_cert(const struct sshkey *,
+    const struct sshkey *, struct sshkey **);
 #if !defined(WITH_OPENSSL) && defined(ENABLE_PKCS11)
 #undef ENABLE_PKCS11
 #endif

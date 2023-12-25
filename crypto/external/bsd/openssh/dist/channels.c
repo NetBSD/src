@@ -1,5 +1,6 @@
-/*	$NetBSD: channels.c,v 1.24 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: channels.c,v 1.389 2019/01/19 21:37:13 djm Exp $ */
+/*	$NetBSD: channels.c,v 1.24.2.1 2023/12/25 12:31:03 martin Exp $	*/
+/* $OpenBSD: channels.c,v 1.435 2023/12/18 14:47:20 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.24 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: channels.c,v 1.24.2.1 2023/12/25 12:31:03 martin Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -58,6 +59,7 @@ __RCSID("$NetBSD: channels.c,v 1.24 2019/04/20 17:16:40 christos Exp $");
 #include <fcntl.h>
 #include <limits.h>
 #include <netdb.h>
+#include <poll.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -86,6 +88,9 @@ __RCSID("$NetBSD: channels.c,v 1.24 2019/04/20 17:16:40 christos Exp $");
 static int hpn_disabled = 0;
 static int hpn_buffer_size = 2 * 1024 * 1024;
 
+/* XXX remove once we're satisfied there's no lurking bugs */
+/* #define DEBUG_CHANNEL_POLL 1 */
+
 /* -- agent forwarding */
 #define	NUM_SOCKS	10
 
@@ -100,9 +105,8 @@ static int hpn_buffer_size = 2 * 1024 * 1024;
 /* Maximum number of fake X11 displays to try. */
 #define MAX_DISPLAYS  1000
 
-/* Per-channel callback for pre/post select() actions */
-typedef void chan_fn(struct ssh *, Channel *c,
-    fd_set *readset, fd_set *writeset);
+/* Per-channel callback for pre/post IO actions */
+typedef void chan_fn(struct ssh *, Channel *c);
 
 /*
  * Data structure for storing which hosts are permitted for forward requests.
@@ -148,6 +152,12 @@ struct permission_set {
 	int all_permitted;
 };
 
+/* Used to record timeouts per channel type */
+struct ssh_channel_timeout {
+	char *type_pattern;
+	int timeout_secs;
+};
+
 /* Master structure for channels state */
 struct ssh_channels {
 	/*
@@ -163,17 +173,11 @@ struct ssh_channels {
 	u_int channels_alloc;
 
 	/*
-	 * Maximum file descriptor value used in any of the channels.  This is
-	 * updated in channel_new.
-	 */
-	int channel_max_fd;
-
-	/*
-	 * 'channel_pre*' are called just before select() to add any bits
-	 * relevant to channels in the select bitmasks.
+	 * 'channel_pre*' are called just before IO to add any bits
+	 * relevant to channels in the c->io_want bitmasks.
 	 *
 	 * 'channel_post*': perform any appropriate operations for
-	 * channels which have events pending.
+	 * channels which have c->io_ready events pending.
 	 */
 	chan_fn **channel_pre;
 	chan_fn **channel_post;
@@ -195,7 +199,7 @@ struct ssh_channels {
 	u_int x11_saved_data_len;
 
 	/* Deadline after which all X11 connections are refused */
-	u_int x11_refuse_time;
+	time_t x11_refuse_time;
 
 	/*
 	 * Fake X11 authentication data.  This is what the server will be
@@ -207,6 +211,10 @@ struct ssh_channels {
 
 	/* AF_UNSPEC or AF_INET or AF_INET6 */
 	int IPv4or6;
+
+	/* Channel timeouts by type */
+	struct ssh_channel_timeout *timeouts;
+	size_t ntimeouts;
 };
 
 /* helper */
@@ -231,7 +239,7 @@ channel_init_channels(struct ssh *ssh)
 	struct ssh_channels *sc;
 
 	if ((sc = calloc(1, sizeof(*sc))) == NULL)
-		fatal("%s: allocation failed", __func__);
+		fatal_f("allocation failed");
 	sc->channels_alloc = 10;
 	sc->channels = xcalloc(sc->channels_alloc, sizeof(*sc->channels));
 	sc->IPv4or6 = AF_UNSPEC;
@@ -246,12 +254,12 @@ channel_by_id(struct ssh *ssh, int id)
 	Channel *c;
 
 	if (id < 0 || (u_int)id >= ssh->chanctxt->channels_alloc) {
-		logit("%s: %d: bad id", __func__, id);
+		logit_f("%d: bad id", id);
 		return NULL;
 	}
 	c = ssh->chanctxt->channels[id];
 	if (c == NULL) {
-		logit("%s: %d: bad id: channel free", __func__, id);
+		logit_f("%d: bad id: channel free", id);
 		return NULL;
 	}
 	return c;
@@ -301,6 +309,76 @@ channel_lookup(struct ssh *ssh, int id)
 }
 
 /*
+ * Add a timeout for open channels whose c->ctype (or c->xctype if it is set)
+ * match type_pattern.
+ */
+void
+channel_add_timeout(struct ssh *ssh, const char *type_pattern,
+    int timeout_secs)
+{
+	struct ssh_channels *sc = ssh->chanctxt;
+
+	debug2_f("channel type \"%s\" timeout %d seconds",
+	    type_pattern, timeout_secs);
+	sc->timeouts = xrecallocarray(sc->timeouts, sc->ntimeouts,
+	    sc->ntimeouts + 1, sizeof(*sc->timeouts));
+	sc->timeouts[sc->ntimeouts].type_pattern = xstrdup(type_pattern);
+	sc->timeouts[sc->ntimeouts].timeout_secs = timeout_secs;
+	sc->ntimeouts++;
+}
+
+/* Clears all previously-added channel timeouts */
+void
+channel_clear_timeouts(struct ssh *ssh)
+{
+	struct ssh_channels *sc = ssh->chanctxt;
+	size_t i;
+
+	debug3_f("clearing");
+	for (i = 0; i < sc->ntimeouts; i++)
+		free(sc->timeouts[i].type_pattern);
+	free(sc->timeouts);
+	sc->timeouts = NULL;
+	sc->ntimeouts = 0;
+}
+
+static int
+lookup_timeout(struct ssh *ssh, const char *type)
+{
+	struct ssh_channels *sc = ssh->chanctxt;
+	size_t i;
+
+	for (i = 0; i < sc->ntimeouts; i++) {
+		if (match_pattern(type, sc->timeouts[i].type_pattern))
+			return sc->timeouts[i].timeout_secs;
+	}
+
+	return 0;
+}
+
+/*
+ * Sets "extended type" of a channel; used by session layer to add additional
+ * information about channel types (e.g. shell, login, subsystem) that can then
+ * be used to select timeouts.
+ * Will reset c->inactive_deadline as a side-effect.
+ */
+void
+channel_set_xtype(struct ssh *ssh, int id, const char *xctype)
+{
+	Channel *c;
+
+	if ((c = channel_by_id(ssh, id)) == NULL)
+		fatal_f("missing channel %d", id);
+	if (c->xctype != NULL)
+		free(c->xctype);
+	c->xctype = xstrdup(xctype);
+	/* Type has changed, so look up inactivity deadline again */
+	c->inactive_deadline = lookup_timeout(ssh, c->xctype);
+	debug2_f("labeled channel %d as %s (inactive timeout %u)", id, xctype,
+	    c->inactive_deadline);
+}
+
+/*
  * Register filedescriptors for a channel, used when allocating a channel or
  * when the channel consumer/producer is ready, e.g. shell exec'd
  */
@@ -308,19 +386,14 @@ static void
 channel_register_fds(struct ssh *ssh, Channel *c, int rfd, int wfd, int efd,
     int extusage, int nonblock, int is_tty)
 {
-	struct ssh_channels *sc = ssh->chanctxt;
-
-	/* Update the maximum file descriptor value. */
-	sc->channel_max_fd = MAXIMUM(sc->channel_max_fd, rfd);
-	sc->channel_max_fd = MAXIMUM(sc->channel_max_fd, wfd);
-	sc->channel_max_fd = MAXIMUM(sc->channel_max_fd, efd);
+	int val;
 
 	if (rfd != -1)
-		fcntl(rfd, F_SETFD, FD_CLOEXEC);
+		(void)fcntl(rfd, F_SETFD, FD_CLOEXEC);
 	if (wfd != -1 && wfd != rfd)
-		fcntl(wfd, F_SETFD, FD_CLOEXEC);
+		(void)fcntl(wfd, F_SETFD, FD_CLOEXEC);
 	if (efd != -1 && efd != rfd && efd != wfd)
-		fcntl(efd, F_SETFD, FD_CLOEXEC);
+		(void)fcntl(efd, F_SETFD, FD_CLOEXEC);
 
 	c->rfd = rfd;
 	c->wfd = wfd;
@@ -332,7 +405,33 @@ channel_register_fds(struct ssh *ssh, Channel *c, int rfd, int wfd, int efd,
 		debug2("channel %d: rfd %d isatty", c->self, c->rfd);
 
 	/* enable nonblocking mode */
-	if (nonblock) {
+	c->restore_block = 0;
+	if (nonblock == CHANNEL_NONBLOCK_STDIO) {
+		/*
+		 * Special handling for stdio file descriptors: do not set
+		 * non-blocking mode if they are TTYs. Otherwise prepare to
+		 * restore their blocking state on exit to avoid interfering
+		 * with other programs that follow.
+		 */
+		if (rfd != -1 && !isatty(rfd) &&
+		    (val = fcntl(rfd, F_GETFL)) != -1 && !(val & O_NONBLOCK)) {
+			c->restore_flags[0] = val;
+			c->restore_block |= CHANNEL_RESTORE_RFD;
+			set_nonblock(rfd);
+		}
+		if (wfd != -1 && !isatty(wfd) &&
+		    (val = fcntl(wfd, F_GETFL)) != -1 && !(val & O_NONBLOCK)) {
+			c->restore_flags[1] = val;
+			c->restore_block |= CHANNEL_RESTORE_WFD;
+			set_nonblock(wfd);
+		}
+		if (efd != -1 && !isatty(efd) &&
+		    (val = fcntl(efd, F_GETFL)) != -1 && !(val & O_NONBLOCK)) {
+			c->restore_flags[2] = val;
+			c->restore_block |= CHANNEL_RESTORE_EFD;
+			set_nonblock(efd);
+		}
+	} else if (nonblock) {
 		if (rfd != -1)
 			set_nonblock(rfd);
 		if (wfd != -1)
@@ -343,8 +442,7 @@ channel_register_fds(struct ssh *ssh, Channel *c, int rfd, int wfd, int efd,
 }
 
 /*
- * Allocate a new channel object and set its type and socket. This will cause
- * remote_name to be freed.
+ * Allocate a new channel object and set its type and socket.
  */
 Channel *
 channel_new(struct ssh *ssh, const char *ctype, int type, int rfd, int wfd,
@@ -352,8 +450,9 @@ channel_new(struct ssh *ssh, const char *ctype, int type, int rfd, int wfd,
     int nonblock)
 {
 	struct ssh_channels *sc = ssh->chanctxt;
-	u_int i, found;
+	u_int i, found = 0 /* XXXGCC12 */;
 	Channel *c;
+	int r;
 
 	/* Try to find a free slot where to put the new channel. */
 	for (i = 0; i < sc->channels_alloc; i++) {
@@ -370,8 +469,8 @@ channel_new(struct ssh *ssh, const char *ctype, int type, int rfd, int wfd,
 		 */
 		found = sc->channels_alloc;
 		if (sc->channels_alloc > CHANNELS_MAX_CHANNELS)
-			fatal("%s: internal error: channels_alloc %d too big",
-			    __func__, sc->channels_alloc);
+			fatal_f("internal error: channels_alloc %d too big",
+			    sc->channels_alloc);
 		sc->channels = xrecallocarray(sc->channels, sc->channels_alloc,
 		    sc->channels_alloc + 10, sizeof(*sc->channels));
 		sc->channels_alloc += 10;
@@ -382,7 +481,9 @@ channel_new(struct ssh *ssh, const char *ctype, int type, int rfd, int wfd,
 	if ((c->input = sshbuf_new()) == NULL ||
 	    (c->output = sshbuf_new()) == NULL ||
 	    (c->extended = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
+	if ((r = sshbuf_set_max_size(c->input, CHAN_INPUT_MAX)) != 0)
+		fatal_fr(r, "sshbuf_set_max_size");
 	c->ostate = CHAN_OUTPUT_OPEN;
 	c->istate = CHAN_INPUT_OPEN;
 	channel_register_fds(ssh, c, rfd, wfd, efd, extusage, nonblock, 0);
@@ -397,41 +498,59 @@ channel_new(struct ssh *ssh, const char *ctype, int type, int rfd, int wfd,
 	c->remote_name = xstrdup(remote_name);
 	c->ctl_chan = -1;
 	c->delayed = 1;		/* prevent call to channel_post handler */
+	c->inactive_deadline = lookup_timeout(ssh, c->ctype);
 	TAILQ_INIT(&c->status_confirms);
-	debug("channel %d: new [%s]", found, remote_name);
+	debug("channel %d: new %s [%s] (inactive timeout: %u)",
+	    found, c->ctype, remote_name, c->inactive_deadline);
 	return c;
 }
 
-static void
-channel_find_maxfd(struct ssh_channels *sc)
-{
-	u_int i;
-	int max = 0;
-	Channel *c;
-
-	for (i = 0; i < sc->channels_alloc; i++) {
-		c = sc->channels[i];
-		if (c != NULL) {
-			max = MAXIMUM(max, c->rfd);
-			max = MAXIMUM(max, c->wfd);
-			max = MAXIMUM(max, c->efd);
-		}
-	}
-	sc->channel_max_fd = max;
-}
-
 int
-channel_close_fd(struct ssh *ssh, int *fdp)
+channel_close_fd(struct ssh *ssh, Channel *c, int *fdp)
 {
-	struct ssh_channels *sc = ssh->chanctxt;
-	int ret = 0, fd = *fdp;
+	int ret, fd = *fdp;
 
-	if (fd != -1) {
-		ret = close(fd);
-		*fdp = -1;
-		if (fd == sc->channel_max_fd)
-			channel_find_maxfd(sc);
+	if (fd == -1)
+		return 0;
+
+	/* restore blocking */
+	if (*fdp == c->rfd &&
+	    (c->restore_block & CHANNEL_RESTORE_RFD) != 0)
+		(void)fcntl(*fdp, F_SETFL, c->restore_flags[0]);
+	else if (*fdp == c->wfd &&
+	    (c->restore_block & CHANNEL_RESTORE_WFD) != 0)
+		(void)fcntl(*fdp, F_SETFL, c->restore_flags[1]);
+	else if (*fdp == c->efd &&
+	    (c->restore_block & CHANNEL_RESTORE_EFD) != 0)
+		(void)fcntl(*fdp, F_SETFL, c->restore_flags[2]);
+
+	if (*fdp == c->rfd) {
+		c->io_want &= ~SSH_CHAN_IO_RFD;
+		c->io_ready &= ~SSH_CHAN_IO_RFD;
+		c->rfd = -1;
+		c->pfds[0] = -1;
 	}
+	if (*fdp == c->wfd) {
+		c->io_want &= ~SSH_CHAN_IO_WFD;
+		c->io_ready &= ~SSH_CHAN_IO_WFD;
+		c->wfd = -1;
+		c->pfds[1] = -1;
+	}
+	if (*fdp == c->efd) {
+		c->io_want &= ~SSH_CHAN_IO_EFD;
+		c->io_ready &= ~SSH_CHAN_IO_EFD;
+		c->efd = -1;
+		c->pfds[2] = -1;
+	}
+	if (*fdp == c->sock) {
+		c->io_want &= ~SSH_CHAN_IO_SOCK;
+		c->io_ready &= ~SSH_CHAN_IO_SOCK;
+		c->sock = -1;
+		c->pfds[3] = -1;
+	}
+
+	ret = close(fd);
+	*fdp = -1; /* probably redundant */
 	return ret;
 }
 
@@ -441,13 +560,13 @@ channel_close_fds(struct ssh *ssh, Channel *c)
 {
 	int sock = c->sock, rfd = c->rfd, wfd = c->wfd, efd = c->efd;
 
-	channel_close_fd(ssh, &c->sock);
+	channel_close_fd(ssh, c, &c->sock);
 	if (rfd != sock)
-		channel_close_fd(ssh, &c->rfd);
+		channel_close_fd(ssh, c, &c->rfd);
 	if (wfd != sock && wfd != rfd)
-		channel_close_fd(ssh, &c->wfd);
+		channel_close_fd(ssh, c, &c->wfd);
 	if (efd != sock && efd != rfd && efd != wfd)
-		channel_close_fd(ssh, &c->efd);
+		channel_close_fd(ssh, c, &c->efd);
 }
 
 static void
@@ -456,7 +575,7 @@ fwd_perm_clear(struct permission *perm)
 	free(perm->host_to_connect);
 	free(perm->listen_host);
 	free(perm->listen_path);
-	bzero(perm, sizeof(*perm));
+	memset(perm, 0, sizeof(*perm));
 }
 
 /* Returns an printable name for the specified forwarding permission list */
@@ -491,11 +610,11 @@ permission_set_get(struct ssh *ssh, int where)
 		return &sc->remote_perms;
 		break;
 	default:
-		fatal("%s: invalid forwarding direction %d", __func__, where);
+		fatal_f("invalid forwarding direction %d", where);
 	}
 }
 
-/* Reutrns pointers to the specified forwarding list and its element count */
+/* Returns pointers to the specified forwarding list and its element count */
 static void
 permission_set_get_array(struct ssh *ssh, int who, int where,
     struct permission ***permpp, u_int **npermpp)
@@ -512,11 +631,11 @@ permission_set_get_array(struct ssh *ssh, int who, int where,
 		*npermpp = &pset->num_permitted_admin;
 		break;
 	default:
-		fatal("%s: invalid forwarding client %d", __func__, who);
+		fatal_f("invalid forwarding client %d", who);
 	}
 }
 
-/* Adds an entry to the spcified forwarding list */
+/* Adds an entry to the specified forwarding list */
 static int
 permission_set_add(struct ssh *ssh, int who, int where,
     const char *host_to_connect, int port_to_connect,
@@ -529,7 +648,7 @@ permission_set_add(struct ssh *ssh, int who, int where,
 	permission_set_get_array(ssh, who, where, &permp, &npermp);
 
 	if (*npermp >= INT_MAX)
-		fatal("%s: %s overflow", __func__, fwd_ident(who, where));
+		fatal_f("%s overflow", fwd_ident(who, where));
 
 	*permp = xrecallocarray(*permp, *npermp, *npermp + 1, sizeof(**permp));
 	n = (*npermp)++;
@@ -569,8 +688,7 @@ mux_remove_remote_forwardings(struct ssh *ssh, Channel *c)
 		    channel_rfwd_bind_host(perm->listen_host))) != 0 ||
 		    (r = sshpkt_put_u32(ssh, perm->listen_port)) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0) {
-			fatal("%s: channel %i: %s", __func__,
-			    c->self, ssh_err(r));
+			fatal_fr(r, "channel %i", c->self);
 		}
 		fwd_perm_clear(perm); /* unregister */
 	}
@@ -603,8 +721,14 @@ channel_free(struct ssh *ssh, Channel *c)
 	debug("channel %d: free: %s, nchannels %u", c->self,
 	    c->remote_name ? c->remote_name : "???", n);
 
-	if (c->type == SSH_CHANNEL_MUX_CLIENT)
+	if (c->type == SSH_CHANNEL_MUX_CLIENT) {
 		mux_remove_remote_forwardings(ssh, c);
+		free(c->mux_ctx);
+		c->mux_ctx = NULL;
+	} else if (c->type == SSH_CHANNEL_MUX_LISTENER) {
+		free(c->mux_ctx);
+		c->mux_ctx = NULL;
+	}
 
 	if (log_level_get() >= SYSLOG_LEVEL_DEBUG3) {
 		s = channel_open_message(ssh);
@@ -623,28 +747,47 @@ channel_free(struct ssh *ssh, Channel *c)
 	c->path = NULL;
 	free(c->listening_addr);
 	c->listening_addr = NULL;
+	free(c->xctype);
+	c->xctype = NULL;
 	while ((cc = TAILQ_FIRST(&c->status_confirms)) != NULL) {
 		if (cc->abandon_cb != NULL)
 			cc->abandon_cb(ssh, c, cc->ctx);
 		TAILQ_REMOVE(&c->status_confirms, cc, entry);
-		explicit_bzero(cc, sizeof(*cc));
-		free(cc);
+		freezero(cc, sizeof(*cc));
 	}
 	if (c->filter_cleanup != NULL && c->filter_ctx != NULL)
 		c->filter_cleanup(ssh, c->self, c->filter_ctx);
 	sc->channels[c->self] = NULL;
-	explicit_bzero(c, sizeof(*c));
-	free(c);
+	freezero(c, sizeof(*c));
 }
 
 void
 channel_free_all(struct ssh *ssh)
 {
 	u_int i;
+	struct ssh_channels *sc = ssh->chanctxt;
 
-	for (i = 0; i < ssh->chanctxt->channels_alloc; i++)
-		if (ssh->chanctxt->channels[i] != NULL)
-			channel_free(ssh, ssh->chanctxt->channels[i]);
+	for (i = 0; i < sc->channels_alloc; i++)
+		if (sc->channels[i] != NULL)
+			channel_free(ssh, sc->channels[i]);
+
+	free(sc->channels);
+	sc->channels = NULL;
+	sc->channels_alloc = 0;
+
+	free(sc->x11_saved_display);
+	sc->x11_saved_display = NULL;
+
+	free(sc->x11_saved_proto);
+	sc->x11_saved_proto = NULL;
+
+	free(sc->x11_saved_data);
+	sc->x11_saved_data = NULL;
+	sc->x11_saved_data_len = 0;
+
+	free(sc->x11_fake_data);
+	sc->x11_fake_data = NULL;
+	sc->x11_fake_data_len = 0;
 }
 
 /*
@@ -680,7 +823,7 @@ channel_stop_listening(struct ssh *ssh)
 			case SSH_CHANNEL_X11_LISTENER:
 			case SSH_CHANNEL_UNIX_LISTENER:
 			case SSH_CHANNEL_RUNIX_LISTENER:
-				channel_close_fd(ssh, &c->sock);
+				channel_close_fd(ssh, c, &c->sock);
 				channel_free(ssh, c);
 				break;
 			}
@@ -748,9 +891,26 @@ channel_still_open(struct ssh *ssh)
 		case SSH_CHANNEL_MUX_PROXY:
 			return 1;
 		default:
-			fatal("%s: bad channel type %d", __func__, c->type);
+			fatal_f("bad channel type %d", c->type);
 			/* NOTREACHED */
 		}
+	}
+	return 0;
+}
+
+/* Returns true if a channel with a TTY is open. */
+int
+channel_tty_open(struct ssh *ssh)
+{
+	u_int i;
+	Channel *c;
+
+	for (i = 0; i < ssh->chanctxt->channels_alloc; i++) {
+		c = ssh->chanctxt->channels[i];
+		if (c == NULL || c->type != SSH_CHANNEL_OPEN)
+			continue;
+		if (c->client_tty)
+			return 1;
 	}
 	return 0;
 }
@@ -790,7 +950,7 @@ channel_find_open(struct ssh *ssh)
 		case SSH_CHANNEL_X11_OPEN:
 			return i;
 		default:
-			fatal("%s: bad channel type %d", __func__, c->type);
+			fatal_f("bad channel type %d", c->type);
 			/* NOTREACHED */
 		}
 	}
@@ -821,14 +981,15 @@ channel_format_status(const Channel *c)
 {
 	char *ret = NULL;
 
-	xasprintf(&ret, "t%d %s%u i%u/%zu o%u/%zu e[%s]/%zu "
-	    "fd %d/%d/%d sock %d cc %d",
-	    c->type,
+	xasprintf(&ret, "t%d [%s] %s%u i%u/%zu o%u/%zu e[%s]/%zu "
+	    "fd %d/%d/%d sock %d cc %d io 0x%02x/0x%02x",
+	    c->type, c->xctype != NULL ? c->xctype : c->ctype,
 	    c->have_remote_id ? "r" : "nr", c->remote_id,
 	    c->istate, sshbuf_len(c->input),
 	    c->ostate, sshbuf_len(c->output),
 	    channel_format_extended_usage(c), sshbuf_len(c->extended),
-	    c->rfd, c->wfd, c->efd, c->sock, c->ctl_chan);
+	    c->rfd, c->wfd, c->efd, c->sock, c->ctl_chan,
+	    c->io_want, c->io_ready);
 	return ret;
 }
 
@@ -847,10 +1008,10 @@ channel_open_message(struct ssh *ssh)
 	char *cp, *ret;
 
 	if ((buf = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new", __func__);
+		fatal_f("sshbuf_new");
 	if ((r = sshbuf_putf(buf,
 	    "The following connections are open:\r\n")) != 0)
-		fatal("%s: sshbuf_putf: %s", __func__, ssh_err(r));
+		fatal_fr(r, "sshbuf_putf");
 	for (i = 0; i < ssh->chanctxt->channels_alloc; i++) {
 		c = ssh->chanctxt->channels[i];
 		if (c == NULL)
@@ -881,18 +1042,17 @@ channel_open_message(struct ssh *ssh)
 			if ((r = sshbuf_putf(buf, "  #%d %.300s (%s)\r\n",
 			    c->self, c->remote_name, cp)) != 0) {
 				free(cp);
-				fatal("%s: sshbuf_putf: %s",
-				    __func__, ssh_err(r));
+				fatal_fr(r, "sshbuf_putf");
 			}
 			free(cp);
 			continue;
 		default:
-			fatal("%s: bad channel type %d", __func__, c->type);
+			fatal_f("bad channel type %d", c->type);
 			/* NOTREACHED */
 		}
 	}
 	if ((ret = sshbuf_dup_string(buf)) == NULL)
-		fatal("%s: sshbuf_dup_string", __func__);
+		fatal_f("sshbuf_dup_string");
 	sshbuf_free(buf);
 	return ret;
 }
@@ -907,7 +1067,7 @@ open_preamble(struct ssh *ssh, const char *where, Channel *c, const char *type)
 	    (r = sshpkt_put_u32(ssh, c->self)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, c->local_window)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, c->local_maxpacket)) != 0) {
-		fatal("%s: channel %i: open: %s", where, c->self, ssh_err(r));
+		fatal_r(r, "%s: channel %i: open", where, c->self);
 	}
 }
 
@@ -924,7 +1084,7 @@ channel_send_open(struct ssh *ssh, int id)
 	debug2("channel %d: send open", id);
 	open_preamble(ssh, __func__, c, c->ctype);
 	if ((r = sshpkt_send(ssh)) != 0)
-		fatal("%s: channel %i: %s", __func__, c->self, ssh_err(r));
+		fatal_fr(r, "channel %i", c->self);
 }
 
 void
@@ -935,18 +1095,18 @@ channel_request_start(struct ssh *ssh, int id, const char *service,
 	int r;
 
 	if (c == NULL) {
-		logit("%s: %d: unknown channel id", __func__, id);
+		logit_f("%d: unknown channel id", id);
 		return;
 	}
 	if (!c->have_remote_id)
-		fatal(":%s: channel %d: no remote id", __func__, c->self);
+		fatal_f("channel %d: no remote id", c->self);
 
 	debug2("channel %d: request %s confirm %d", id, service, wantconfirm);
 	if ((r = sshpkt_start(ssh, SSH2_MSG_CHANNEL_REQUEST)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, service)) != 0 ||
 	    (r = sshpkt_put_u8(ssh, wantconfirm)) != 0) {
-		fatal("%s: channel %i: %s", __func__, c->self, ssh_err(r));
+		fatal_fr(r, "channel %i", c->self);
 	}
 }
 
@@ -958,7 +1118,7 @@ channel_register_status_confirm(struct ssh *ssh, int id,
 	Channel *c;
 
 	if ((c = channel_lookup(ssh, id)) == NULL)
-		fatal("%s: %d: bad id", __func__, id);
+		fatal_f("%d: bad id", id);
 
 	cc = xcalloc(1, sizeof(*cc));
 	cc->cb = cb;
@@ -974,7 +1134,7 @@ channel_register_open_confirm(struct ssh *ssh, int id,
 	Channel *c = channel_lookup(ssh, id);
 
 	if (c == NULL) {
-		logit("%s: %d: bad id", __func__, id);
+		logit_f("%d: bad id", id);
 		return;
 	}
 	c->open_confirm = fn;
@@ -988,7 +1148,7 @@ channel_register_cleanup(struct ssh *ssh, int id,
 	Channel *c = channel_by_id(ssh, id);
 
 	if (c == NULL) {
-		logit("%s: %d: bad id", __func__, id);
+		logit_f("%d: bad id", id);
 		return;
 	}
 	c->detach_user = fn;
@@ -1001,7 +1161,7 @@ channel_cancel_cleanup(struct ssh *ssh, int id)
 	Channel *c = channel_by_id(ssh, id);
 
 	if (c == NULL) {
-		logit("%s: %d: bad id", __func__, id);
+		logit_f("%d: bad id", id);
 		return;
 	}
 	c->detach_user = NULL;
@@ -1015,7 +1175,7 @@ channel_register_filter(struct ssh *ssh, int id, channel_infilter_fn *ifn,
 	Channel *c = channel_lookup(ssh, id);
 
 	if (c == NULL) {
-		logit("%s: %d: bad id", __func__, id);
+		logit_f("%d: bad id", id);
 		return;
 	}
 	c->input_filter = ifn;
@@ -1034,32 +1194,31 @@ channel_set_fds(struct ssh *ssh, int id, int rfd, int wfd, int efd,
 	if (c == NULL || c->type != SSH_CHANNEL_LARVAL)
 		fatal("channel_activate for non-larval channel %d.", id);
 	if (!c->have_remote_id)
-		fatal(":%s: channel %d: no remote id", __func__, c->self);
+		fatal_f("channel %d: no remote id", c->self);
 
 	channel_register_fds(ssh, c, rfd, wfd, efd, extusage, nonblock, is_tty);
 	c->type = SSH_CHANNEL_OPEN;
+	c->lastused = monotime();
 	c->local_window = c->local_window_max = window_max;
 
 	if ((r = sshpkt_start(ssh, SSH2_MSG_CHANNEL_WINDOW_ADJUST)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, c->local_window)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0)
-		fatal("%s: channel %i: %s", __func__, c->self, ssh_err(r));
+		fatal_fr(r, "channel %i", c->self);
 }
 
 static void
-channel_pre_listener(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_pre_listener(struct ssh *ssh, Channel *c)
 {
-	FD_SET(c->sock, readset);
+	c->io_want = SSH_CHAN_IO_SOCK_R;
 }
 
 static void
-channel_pre_connecting(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_pre_connecting(struct ssh *ssh, Channel *c)
 {
 	debug3("channel %d: waiting for connection", c->self);
-	FD_SET(c->sock, writeset);
+	c->io_want = SSH_CHAN_IO_SOCK_W;
 }
 
 static int
@@ -1074,35 +1233,27 @@ channel_tcpwinsz(struct ssh *ssh)
 	    return(128*1024);
 	ret = getsockopt(ssh_packet_get_connection_in(ssh),
 			 SOL_SOCKET, SO_RCVBUF, &tcpwinsz, &optsz);
-	/* return no more than 64MB */
-	if ((ret == 0) && tcpwinsz > BUFFER_MAX_LEN_HPN)
-	    tcpwinsz = BUFFER_MAX_LEN_HPN;
+	/* return no more than SSHBUF_SIZE_MAX (currently 256MB) */
+	if ((ret == 0) && tcpwinsz > SSHBUF_SIZE_MAX)
+	    tcpwinsz = SSHBUF_SIZE_MAX;
 	debug2("tcpwinsz: %d for connection: %d", tcpwinsz, 
 	       ssh_packet_get_connection_in(ssh));
 	return(tcpwinsz);
 }
 
 static void
-channel_pre_open(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_pre_open(struct ssh *ssh, Channel *c)
 {
-	u_int limit = ssh_packet_get_maxsize(ssh);
-
-        /* check buffer limits */
-	if ((!c->tcpwinsz) || (c->dynamic_window > 0))
-    	    c->tcpwinsz = channel_tcpwinsz(ssh);
-	
-	limit = MIN(limit, 2 * c->tcpwinsz);
-	
+	c->io_want = 0;
 	if (c->istate == CHAN_INPUT_OPEN &&
 	    c->remote_window > 0 &&
 	    sshbuf_len(c->input) < c->remote_window &&
 	    sshbuf_check_reserve(c->input, CHAN_RBUF) == 0)
-		FD_SET(c->rfd, readset);
+		c->io_want |= SSH_CHAN_IO_RFD;
 	if (c->ostate == CHAN_OUTPUT_OPEN ||
 	    c->ostate == CHAN_OUTPUT_WAIT_DRAIN) {
 		if (sshbuf_len(c->output) > 0) {
-			FD_SET(c->wfd, writeset);
+			c->io_want |= SSH_CHAN_IO_WFD;
 		} else if (c->ostate == CHAN_OUTPUT_WAIT_DRAIN) {
 			if (CHANNEL_EFD_OUTPUT_ACTIVE(c))
 				debug2("channel %d: "
@@ -1117,12 +1268,12 @@ channel_pre_open(struct ssh *ssh, Channel *c,
 	    c->ostate == CHAN_OUTPUT_CLOSED)) {
 		if (c->extended_usage == CHAN_EXTENDED_WRITE &&
 		    sshbuf_len(c->extended) > 0)
-			FD_SET(c->efd, writeset);
+			c->io_want |= SSH_CHAN_IO_EFD_W;
 		else if (c->efd != -1 && !(c->flags & CHAN_EOF_SENT) &&
 		    (c->extended_usage == CHAN_EXTENDED_READ ||
 		    c->extended_usage == CHAN_EXTENDED_IGNORE) &&
 		    sshbuf_len(c->extended) < c->remote_window)
-			FD_SET(c->efd, readset);
+			c->io_want |= SSH_CHAN_IO_EFD_R;
 	}
 	/* XXX: What about efd? races? */
 }
@@ -1145,7 +1296,7 @@ x11_open_helper(struct ssh *ssh, struct sshbuf *b)
 
 	/* Is this being called after the refusal deadline? */
 	if (sc->x11_refuse_time != 0 &&
-	    (u_int)monotime() >= sc->x11_refuse_time) {
+	    monotime() >= sc->x11_refuse_time) {
 		verbose("Rejected X11 connection after ForwardX11Timeout "
 		    "expired");
 		return -1;
@@ -1203,9 +1354,34 @@ x11_open_helper(struct ssh *ssh, struct sshbuf *b)
 	return 1;
 }
 
+void
+channel_force_close(struct ssh *ssh, Channel *c, int abandon)
+{
+	debug3_f("channel %d: forcibly closing", c->self);
+	if (c->istate == CHAN_INPUT_OPEN)
+		chan_read_failed(ssh, c);
+	if (c->istate == CHAN_INPUT_WAIT_DRAIN) {
+		sshbuf_reset(c->input);
+		chan_ibuf_empty(ssh, c);
+	}
+	if (c->ostate == CHAN_OUTPUT_OPEN ||
+	    c->ostate == CHAN_OUTPUT_WAIT_DRAIN) {
+		sshbuf_reset(c->output);
+		chan_write_failed(ssh, c);
+	}
+	if (c->detach_user)
+		c->detach_user(ssh, c->self, 1, NULL);
+	if (c->efd != -1)
+		channel_close_fd(ssh, c, &c->efd);
+	if (abandon)
+		c->type = SSH_CHANNEL_ABANDONED;
+	/* exempt from inactivity timeouts */
+	c->inactive_deadline = 0;
+	c->lastused = 0;
+}
+
 static void
-channel_pre_x11_open(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_pre_x11_open(struct ssh *ssh, Channel *c)
 {
 	int ret = x11_open_helper(ssh, c->output);
 
@@ -1213,27 +1389,24 @@ channel_pre_x11_open(struct ssh *ssh, Channel *c,
 
 	if (ret == 1) {
 		c->type = SSH_CHANNEL_OPEN;
-		channel_pre_open(ssh, c, readset, writeset);
+		c->lastused = monotime();
+		channel_pre_open(ssh, c);
 	} else if (ret == -1) {
-		logit("X11 connection rejected because of wrong authentication.");
+		logit("X11 connection rejected because of wrong "
+		    "authentication.");
 		debug2("X11 rejected %d i%d/o%d",
 		    c->self, c->istate, c->ostate);
-		chan_read_failed(ssh, c);
-		sshbuf_reset(c->input);
-		chan_ibuf_empty(ssh, c);
-		sshbuf_reset(c->output);
-		chan_write_failed(ssh, c);
-		debug2("X11 closed %d i%d/o%d", c->self, c->istate, c->ostate);
+		channel_force_close(ssh, c, 0);
 	}
 }
 
 static void
-channel_pre_mux_client(struct ssh *ssh,
-    Channel *c, fd_set *readset, fd_set *writeset)
+channel_pre_mux_client(struct ssh *ssh, Channel *c)
 {
+	c->io_want = 0;
 	if (c->istate == CHAN_INPUT_OPEN && !c->mux_pause &&
 	    sshbuf_check_reserve(c->input, CHAN_RBUF) == 0)
-		FD_SET(c->rfd, readset);
+		c->io_want |= SSH_CHAN_IO_RFD;
 	if (c->istate == CHAN_INPUT_WAIT_DRAIN) {
 		/* clear buffer immediately (discard any partial packet) */
 		sshbuf_reset(c->input);
@@ -1244,7 +1417,7 @@ channel_pre_mux_client(struct ssh *ssh,
 	if (c->ostate == CHAN_OUTPUT_OPEN ||
 	    c->ostate == CHAN_OUTPUT_WAIT_DRAIN) {
 		if (sshbuf_len(c->output) > 0)
-			FD_SET(c->wfd, writeset);
+			c->io_want |= SSH_CHAN_IO_WFD;
 		else if (c->ostate == CHAN_OUTPUT_WAIT_DRAIN)
 			chan_obuf_empty(ssh, c);
 	}
@@ -1254,7 +1427,7 @@ channel_pre_mux_client(struct ssh *ssh,
 static int
 channel_decode_socks4(Channel *c, struct sshbuf *input, struct sshbuf *output)
 {
-	const u_char *p;
+	const char *p;
 	char *host;
 	u_int len, have, i, found, need;
 	char username[256];
@@ -1272,7 +1445,7 @@ channel_decode_socks4(Channel *c, struct sshbuf *input, struct sshbuf *output)
 	len = sizeof(s4_req);
 	if (have < len)
 		return 0;
-	p = sshbuf_ptr(input);
+	p = (const char *)sshbuf_ptr(input);
 
 	need = 1;
 	/* SOCKS4A uses an invalid IP address 0.0.0.x */
@@ -1301,24 +1474,21 @@ channel_decode_socks4(Channel *c, struct sshbuf *input, struct sshbuf *output)
 	    (r = sshbuf_get(input, &s4_req.command, 1)) != 0 ||
 	    (r = sshbuf_get(input, &s4_req.dest_port, 2)) != 0 ||
 	    (r = sshbuf_get(input, &s4_req.dest_addr, 4)) != 0) {
-		debug("channels %d: decode socks4: %s", c->self, ssh_err(r));
+		debug_r(r, "channels %d: decode socks4", c->self);
 		return -1;
 	}
 	have = sshbuf_len(input);
-	p = sshbuf_ptr(input);
+	p = (const char *)sshbuf_ptr(input);
 	if (memchr(p, '\0', have) == NULL) {
-		error("channel %d: decode socks4: user not nul terminated",
-		    c->self);
+		error("channel %d: decode socks4: unterminated user", c->self);
 		return -1;
 	}
 	len = strlen(p);
 	debug2("channel %d: decode socks4: user %s/%d", c->self, p, len);
 	len++; /* trailing '\0' */
 	strlcpy(username, p, sizeof(username));
-	if ((r = sshbuf_consume(input, len)) != 0) {
-		fatal("%s: channel %d: consume: %s", __func__,
-		    c->self, ssh_err(r));
-	}
+	if ((r = sshbuf_consume(input, len)) != 0)
+		fatal_fr(r, "channel %d: consume", c->self);
 	free(c->path);
 	c->path = NULL;
 	if (need == 1) {			/* SOCKS4: one string */
@@ -1326,7 +1496,7 @@ channel_decode_socks4(Channel *c, struct sshbuf *input, struct sshbuf *output)
 		c->path = xstrdup(host);
 	} else {				/* SOCKS4A: two strings */
 		have = sshbuf_len(input);
-		p = sshbuf_ptr(input);
+		p = (const char *)sshbuf_ptr(input);
 		if (memchr(p, '\0', have) == NULL) {
 			error("channel %d: decode socks4a: host not nul "
 			    "terminated", c->self);
@@ -1342,10 +1512,8 @@ channel_decode_socks4(Channel *c, struct sshbuf *input, struct sshbuf *output)
 			return -1;
 		}
 		c->path = xstrdup(p);
-		if ((r = sshbuf_consume(input, len)) != 0) {
-			fatal("%s: channel %d: consume: %s", __func__,
-			    c->self, ssh_err(r));
-		}
+		if ((r = sshbuf_consume(input, len)) != 0)
+			fatal_fr(r, "channel %d: consume", c->self);
 	}
 	c->host_port = ntohs(s4_req.dest_port);
 
@@ -1361,10 +1529,8 @@ channel_decode_socks4(Channel *c, struct sshbuf *input, struct sshbuf *output)
 	s4_rsp.command = 90;			/* cd: req granted */
 	s4_rsp.dest_port = 0;			/* ignored */
 	s4_rsp.dest_addr.s_addr = INADDR_ANY;	/* ignored */
-	if ((r = sshbuf_put(output, &s4_rsp, sizeof(s4_rsp))) != 0) {
-		fatal("%s: channel %d: append reply: %s", __func__,
-		    c->self, ssh_err(r));
-	}
+	if ((r = sshbuf_put(output, &s4_rsp, sizeof(s4_rsp))) != 0)
+		fatal_fr(r, "channel %d: append reply", c->self);
 	return 1;
 }
 
@@ -1417,16 +1583,12 @@ channel_decode_socks5(Channel *c, struct sshbuf *input, struct sshbuf *output)
 			    c->self);
 			return -1;
 		}
-		if ((r = sshbuf_consume(input, nmethods + 2)) != 0) {
-			fatal("%s: channel %d: consume: %s", __func__,
-			    c->self, ssh_err(r));
-		}
+		if ((r = sshbuf_consume(input, nmethods + 2)) != 0)
+			fatal_fr(r, "channel %d: consume", c->self);
 		/* version, method */
 		if ((r = sshbuf_put_u8(output, 0x05)) != 0 ||
-		    (r = sshbuf_put_u8(output, SSH_SOCKS5_NOAUTH)) != 0) {
-			fatal("%s: channel %d: append reply: %s", __func__,
-			    c->self, ssh_err(r));
-		}
+		    (r = sshbuf_put_u8(output, SSH_SOCKS5_NOAUTH)) != 0)
+			fatal_fr(r, "channel %d: append reply", c->self);
 		c->flags |= SSH_SOCKS5_AUTHDONE;
 		debug2("channel %d: socks5 auth done", c->self);
 		return 0;				/* need more */
@@ -1463,20 +1625,16 @@ channel_decode_socks5(Channel *c, struct sshbuf *input, struct sshbuf *output)
 		need++;
 	if (have < need)
 		return 0;
-	if ((r = sshbuf_consume(input, sizeof(s5_req))) != 0) {
-		fatal("%s: channel %d: consume: %s", __func__,
-		    c->self, ssh_err(r));
-	}
+	if ((r = sshbuf_consume(input, sizeof(s5_req))) != 0)
+		fatal_fr(r, "channel %d: consume", c->self);
 	if (s5_req.atyp == SSH_SOCKS5_DOMAIN) {
 		/* host string length */
-		if ((r = sshbuf_consume(input, 1)) != 0) {
-			fatal("%s: channel %d: consume: %s", __func__,
-			    c->self, ssh_err(r));
-		}
+		if ((r = sshbuf_consume(input, 1)) != 0)
+			fatal_fr(r, "channel %d: consume", c->self);
 	}
 	if ((r = sshbuf_get(input, &dest_addr, addrlen)) != 0 ||
 	    (r = sshbuf_get(input, &dest_port, 2)) != 0) {
-		debug("channel %d: parse addr/port: %s", c->self, ssh_err(r));
+		debug_r(r, "channel %d: parse addr/port", c->self);
 		return -1;
 	}
 	dest_addr[addrlen] = '\0';
@@ -1508,22 +1666,22 @@ channel_decode_socks5(Channel *c, struct sshbuf *input, struct sshbuf *output)
 	if ((r = sshbuf_put(output, &s5_rsp, sizeof(s5_rsp))) != 0 ||
 	    (r = sshbuf_put_u32(output, ntohl(INADDR_ANY))) != 0 ||
 	    (r = sshbuf_put(output, &dest_port, sizeof(dest_port))) != 0)
-		fatal("%s: channel %d: append reply: %s", __func__,
-		    c->self, ssh_err(r));
+		fatal_fr(r, "channel %d: append reply", c->self);
 	return 1;
 }
 
 Channel *
 channel_connect_stdio_fwd(struct ssh *ssh,
-    const char *host_to_connect, u_short port_to_connect, int in, int out)
+    const char *host_to_connect, int port_to_connect,
+    int in, int out, int nonblock)
 {
 	Channel *c;
 
-	debug("%s %s:%d", __func__, host_to_connect, port_to_connect);
+	debug_f("%s:%d", host_to_connect, port_to_connect);
 
 	c = channel_new(ssh, "stdio-forward", SSH_CHANNEL_OPENING, in, out,
 	    -1, CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT,
-	    0, "stdio-forward", /*nonblock*/0);
+	    0, "stdio-forward", nonblock);
 
 	c->path = xstrdup(host_to_connect);
 	c->host_port = port_to_connect;
@@ -1531,27 +1689,28 @@ channel_connect_stdio_fwd(struct ssh *ssh,
 	c->force_drain = 1;
 
 	channel_register_fds(ssh, c, in, out, -1, 0, 1, 0);
-	port_open_helper(ssh, c, "direct-tcpip");
+	port_open_helper(ssh, c, port_to_connect == PORT_STREAMLOCAL ?
+	    "direct-streamlocal@openssh.com" : "direct-tcpip");
 
 	return c;
 }
 
 /* dynamic port forwarding */
 static void
-channel_pre_dynamic(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_pre_dynamic(struct ssh *ssh, Channel *c)
 {
 	const u_char *p;
 	u_int have;
 	int ret;
 
+	c->io_want = 0;
 	have = sshbuf_len(c->input);
 	debug2("channel %d: pre_dynamic: have %d", c->self, have);
 	/* sshbuf_dump(c->input, stderr); */
 	/* check if the fixed size part of the packet is in buffer. */
 	if (have < 3) {
 		/* need more */
-		FD_SET(c->sock, readset);
+		c->io_want |= SSH_CHAN_IO_RFD;
 		return;
 	}
 	/* try to guess the protocol */
@@ -1573,9 +1732,9 @@ channel_pre_dynamic(struct ssh *ssh, Channel *c,
 	} else if (ret == 0) {
 		debug2("channel %d: pre_dynamic: need more", c->self);
 		/* need more */
-		FD_SET(c->sock, readset);
+		c->io_want |= SSH_CHAN_IO_RFD;
 		if (sshbuf_len(c->output))
-			FD_SET(c->sock, writeset);
+			c->io_want |= SSH_CHAN_IO_WFD;
 	} else {
 		/* switch to the next state */
 		c->type = SSH_CHANNEL_OPENING;
@@ -1588,16 +1747,12 @@ static void
 rdynamic_close(struct ssh *ssh, Channel *c)
 {
 	c->type = SSH_CHANNEL_OPEN;
-	chan_read_failed(ssh, c);
-	sshbuf_reset(c->input);
-	chan_ibuf_empty(ssh, c);
-	sshbuf_reset(c->output);
-	chan_write_failed(ssh, c);
+	channel_force_close(ssh, c, 0);
 }
 
 /* reverse dynamic port forwarding */
 static void
-channel_before_prepare_select_rdynamic(struct ssh *ssh, Channel *c)
+channel_before_prepare_io_rdynamic(struct ssh *ssh, Channel *c)
 {
 	const u_char *p;
 	u_int have, len;
@@ -1608,10 +1763,8 @@ channel_before_prepare_select_rdynamic(struct ssh *ssh, Channel *c)
 	/* sshbuf_dump(c->output, stderr); */
 	/* EOF received */
 	if (c->flags & CHAN_EOF_RCVD) {
-		if ((r = sshbuf_consume(c->output, have)) != 0) {
-			fatal("%s: channel %d: consume: %s",
-			    __func__, c->self, ssh_err(r));
-		}
+		if ((r = sshbuf_consume(c->output, have)) != 0)
+			fatal_fr(r, "channel %d: consume", c->self);
 		rdynamic_close(ssh, c);
 		return;
 	}
@@ -1643,13 +1796,10 @@ channel_before_prepare_select_rdynamic(struct ssh *ssh, Channel *c)
 			    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
 			    (r = sshpkt_put_stringb(ssh, c->input)) != 0 ||
 			    (r = sshpkt_send(ssh)) != 0) {
-				fatal("%s: channel %i: rdynamic: %s", __func__,
-				    c->self, ssh_err(r));
+				fatal_fr(r, "channel %i: rdynamic", c->self);
 			}
-			if ((r = sshbuf_consume(c->input, len)) != 0) {
-				fatal("%s: channel %d: consume: %s",
-				    __func__, c->self, ssh_err(r));
-			}
+			if ((r = sshbuf_consume(c->input, len)) != 0)
+				fatal_fr(r, "channel %d: consume", c->self);
 			c->remote_window -= len;
 		}
 	} else if (rdynamic_connect_finish(ssh, c) < 0) {
@@ -1660,8 +1810,7 @@ channel_before_prepare_select_rdynamic(struct ssh *ssh, Channel *c)
 
 /* This is our fake X11 server socket. */
 static void
-channel_post_x11_listener(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_post_x11_listener(struct ssh *ssh, Channel *c)
 {
 	Channel *nc;
 	struct sockaddr_storage addr;
@@ -1669,7 +1818,7 @@ channel_post_x11_listener(struct ssh *ssh, Channel *c,
 	socklen_t addrlen;
 	char buf[16384], *remote_ipaddr;
 
-	if (!FD_ISSET(c->sock, readset))
+	if ((c->io_ready & SSH_CHAN_IO_SOCK_R) == 0)
 		return;
 
 	debug("X11 connection requested.");
@@ -1678,11 +1827,11 @@ channel_post_x11_listener(struct ssh *ssh, Channel *c,
 	if (c->single_connection) {
 		oerrno = errno;
 		debug2("single_connection: closing X11 listener.");
-		channel_close_fd(ssh, &c->sock);
+		channel_close_fd(ssh, c, &c->sock);
 		chan_mark_dead(ssh, c);
 		errno = oerrno;
 	}
-	if (newsock < 0) {
+	if (newsock == -1) {
 		if (errno != EINTR && errno != EWOULDBLOCK &&
 		    errno != ECONNABORTED)
 			error("accept: %.100s", strerror(errno));
@@ -1696,17 +1845,16 @@ channel_post_x11_listener(struct ssh *ssh, Channel *c,
 	snprintf(buf, sizeof buf, "X11 connection from %.200s port %d",
 	    remote_ipaddr, remote_port);
 
-	nc = channel_new(ssh, "accepted x11 socket",
+	nc = channel_new(ssh, "x11-connection",
 	    SSH_CHANNEL_OPENING, newsock, newsock, -1,
 	    c->local_window_max, c->local_maxpacket, 0, buf, 1);
 	open_preamble(ssh, __func__, nc, "x11");
 	if ((r = sshpkt_put_cstring(ssh, remote_ipaddr)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, remote_port)) != 0) {
-		fatal("%s: channel %i: reply %s", __func__,
-		    c->self, ssh_err(r));
+		fatal_fr(r, "channel %i: reply", c->self);
 	}
 	if ((r = sshpkt_send(ssh)) != 0)
-		fatal("%s: channel %i: send %s", __func__, c->self, ssh_err(r));
+		fatal_fr(r, "channel %i: send", c->self);
 	free(remote_ipaddr);
 }
 
@@ -1737,52 +1885,40 @@ port_open_helper(struct ssh *ssh, Channel *c, const char *rtype)
 	if (strcmp(rtype, "direct-tcpip") == 0) {
 		/* target host, port */
 		if ((r = sshpkt_put_cstring(ssh, c->path)) != 0 ||
-		    (r = sshpkt_put_u32(ssh, c->host_port)) != 0) {
-			fatal("%s: channel %i: reply %s", __func__,
-			    c->self, ssh_err(r));
-		}
+		    (r = sshpkt_put_u32(ssh, c->host_port)) != 0)
+			fatal_fr(r, "channel %i: reply", c->self);
 	} else if (strcmp(rtype, "direct-streamlocal@openssh.com") == 0) {
 		/* target path */
-		if ((r = sshpkt_put_cstring(ssh, c->path)) != 0) {
-			fatal("%s: channel %i: reply %s", __func__,
-			    c->self, ssh_err(r));
-		}
+		if ((r = sshpkt_put_cstring(ssh, c->path)) != 0)
+			fatal_fr(r, "channel %i: reply", c->self);
 	} else if (strcmp(rtype, "forwarded-streamlocal@openssh.com") == 0) {
 		/* listen path */
-		if ((r = sshpkt_put_cstring(ssh, c->path)) != 0) {
-			fatal("%s: channel %i: reply %s", __func__,
-			    c->self, ssh_err(r));
-		}
+		if ((r = sshpkt_put_cstring(ssh, c->path)) != 0)
+			fatal_fr(r, "channel %i: reply", c->self);
 	} else {
 		/* listen address, port */
 		if ((r = sshpkt_put_cstring(ssh, c->path)) != 0 ||
-		    (r = sshpkt_put_u32(ssh, local_port)) != 0) {
-			fatal("%s: channel %i: reply %s", __func__,
-			    c->self, ssh_err(r));
-		}
+		    (r = sshpkt_put_u32(ssh, local_port)) != 0)
+			fatal_fr(r, "channel %i: reply", c->self);
 	}
 	if (strcmp(rtype, "forwarded-streamlocal@openssh.com") == 0) {
 		/* reserved for future owner/mode info */
-		if ((r = sshpkt_put_cstring(ssh, "")) != 0) {
-			fatal("%s: channel %i: reply %s", __func__,
-			    c->self, ssh_err(r));
-		}
+		if ((r = sshpkt_put_cstring(ssh, "")) != 0)
+			fatal_fr(r, "channel %i: reply", c->self);
 	} else {
 		/* originator host and port */
 		if ((r = sshpkt_put_cstring(ssh, remote_ipaddr)) != 0 ||
-		    (r = sshpkt_put_u32(ssh, (u_int)remote_port)) != 0) {
-			fatal("%s: channel %i: reply %s", __func__,
-			    c->self, ssh_err(r));
-		}
+		    (r = sshpkt_put_u32(ssh, (u_int)remote_port)) != 0)
+			fatal_fr(r, "channel %i: reply", c->self);
 	}
 	if ((r = sshpkt_send(ssh)) != 0)
-		fatal("%s: channel %i: send %s", __func__, c->self, ssh_err(r));
+		fatal_fr(r, "channel %i: send", c->self);
 	free(remote_ipaddr);
 	free(local_ipaddr);
 }
 
 void
-channel_set_x11_refuse_time(struct ssh *ssh, u_int refuse_time)
+channel_set_x11_refuse_time(struct ssh *ssh, time_t refuse_time)
 {
 	ssh->chanctxt->x11_refuse_time = refuse_time;
 }
@@ -1791,8 +1927,7 @@ channel_set_x11_refuse_time(struct ssh *ssh, u_int refuse_time)
  * This socket is listening for connections to a forwarded TCP/IP port.
  */
 static void
-channel_post_port_listener(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_post_port_listener(struct ssh *ssh, Channel *c)
 {
 	Channel *nc;
 	struct sockaddr_storage addr;
@@ -1800,7 +1935,7 @@ channel_post_port_listener(struct ssh *ssh, Channel *c,
 	socklen_t addrlen;
 	const char *rtype;
 
-	if (!FD_ISSET(c->sock, readset))
+	if ((c->io_ready & SSH_CHAN_IO_SOCK_R) == 0)
 		return;
 
 	debug("Connection to port %d forwarding to %.100s port %d requested.",
@@ -1825,7 +1960,7 @@ channel_post_port_listener(struct ssh *ssh, Channel *c,
 
 	addrlen = sizeof(addr);
 	newsock = accept(c->sock, (struct sockaddr *)&addr, &addrlen);
-	if (newsock < 0) {
+	if (newsock == -1) {
 		if (errno != EINTR && errno != EWOULDBLOCK &&
 		    errno != ECONNABORTED)
 			error("accept: %.100s", strerror(errno));
@@ -1851,56 +1986,58 @@ channel_post_port_listener(struct ssh *ssh, Channel *c,
  * clients.
  */
 static void
-channel_post_auth_listener(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_post_auth_listener(struct ssh *ssh, Channel *c)
 {
 	Channel *nc;
 	int r, newsock;
 	struct sockaddr_storage addr;
 	socklen_t addrlen;
 
-	if (!FD_ISSET(c->sock, readset))
+	if ((c->io_ready & SSH_CHAN_IO_SOCK_R) == 0)
 		return;
 
 	addrlen = sizeof(addr);
 	newsock = accept(c->sock, (struct sockaddr *)&addr, &addrlen);
-	if (newsock < 0) {
+	if (newsock == -1) {
 		error("accept from auth socket: %.100s", strerror(errno));
 		if (errno == EMFILE || errno == ENFILE)
 			c->notbefore = monotime() + 1;
 		return;
 	}
-	nc = channel_new(ssh, "accepted auth socket",
+	nc = channel_new(ssh, "agent-connection",
 	    SSH_CHANNEL_OPENING, newsock, newsock, -1,
 	    c->local_window_max, c->local_maxpacket,
 	    0, "accepted auth socket", 1);
 	open_preamble(ssh, __func__, nc, "auth-agent@openssh.com");
 	if ((r = sshpkt_send(ssh)) != 0)
-		fatal("%s: channel %i: %s", __func__, c->self, ssh_err(r));
+		fatal_fr(r, "channel %i", c->self);
 }
 
 static void
-channel_post_connecting(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_post_connecting(struct ssh *ssh, Channel *c)
 {
 	int err = 0, sock, isopen, r;
 	socklen_t sz = sizeof(err);
 
-	if (!FD_ISSET(c->sock, writeset))
+	if ((c->io_ready & SSH_CHAN_IO_SOCK_W) == 0)
 		return;
 	if (!c->have_remote_id)
-		fatal(":%s: channel %d: no remote id", __func__, c->self);
+		fatal_f("channel %d: no remote id", c->self);
 	/* for rdynamic the OPEN_CONFIRMATION has been sent already */
 	isopen = (c->type == SSH_CHANNEL_RDYNAMIC_FINISH);
-	if (getsockopt(c->sock, SOL_SOCKET, SO_ERROR, &err, &sz) < 0) {
+
+	if (getsockopt(c->sock, SOL_SOCKET, SO_ERROR, &err, &sz) == -1) {
 		err = errno;
 		error("getsockopt SO_ERROR failed");
 	}
+
 	if (err == 0) {
+		/* Non-blocking connection completed */
 		debug("channel %d: connected to %s port %d",
 		    c->self, c->connect_ctx.host, c->connect_ctx.port);
 		channel_connect_ctx_free(&c->connect_ctx);
 		c->type = SSH_CHANNEL_OPEN;
+		c->lastused = monotime();
 		if (isopen) {
 			/* no message necessary */
 		} else {
@@ -1909,25 +2046,21 @@ channel_post_connecting(struct ssh *ssh, Channel *c,
 			    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
 			    (r = sshpkt_put_u32(ssh, c->self)) != 0 ||
 			    (r = sshpkt_put_u32(ssh, c->local_window)) != 0 ||
-			    (r = sshpkt_put_u32(ssh, c->local_maxpacket))
-			    != 0)
-				fatal("%s: channel %i: confirm: %s", __func__,
-				    c->self, ssh_err(r));
-			if ((r = sshpkt_send(ssh)) != 0)
-				fatal("%s: channel %i: %s", __func__, c->self,
-				    ssh_err(r));
+			    (r = sshpkt_put_u32(ssh, c->local_maxpacket)) != 0 ||
+			    (r = sshpkt_send(ssh)) != 0)
+				fatal_fr(r, "channel %i open confirm", c->self);
 		}
-	} else {
-		debug("channel %d: connection failed: %s",
-		    c->self, strerror(err));
-		/* Try next address, if any */
-		if ((sock = connect_next(&c->connect_ctx)) > 0) {
-			close(c->sock);
-			c->sock = c->rfd = c->wfd = sock;
-			channel_find_maxfd(ssh->chanctxt);
-			return;
-		}
-		/* Exhausted all addresses */
+		return;
+	}
+	if (err == EINTR || err == EAGAIN || err == EINPROGRESS)
+		return;
+
+	/* Non-blocking connection failed */
+	debug("channel %d: connection failed: %s", c->self, strerror(err));
+
+	/* Try next address, if any */
+	if ((sock = connect_next(&c->connect_ctx)) == -1) {
+		/* Exhausted all addresses for this destination */
 		error("connect_to %.100s port %d: failed.",
 		    c->connect_ctx.host, c->connect_ctx.port);
 		channel_connect_ctx_free(&c->connect_ctx);
@@ -1940,35 +2073,65 @@ channel_post_connecting(struct ssh *ssh, Channel *c,
 			    (r = sshpkt_put_u32(ssh,
 			    SSH2_OPEN_CONNECT_FAILED)) != 0 ||
 			    (r = sshpkt_put_cstring(ssh, strerror(err))) != 0 ||
-			    (r = sshpkt_put_cstring(ssh, "")) != 0) {
-				fatal("%s: channel %i: failure: %s", __func__,
-				    c->self, ssh_err(r));
-			}
-			if ((r = sshpkt_send(ssh)) != 0)
-				fatal("%s: channel %i: %s", __func__, c->self,
-				    ssh_err(r));
+			    (r = sshpkt_put_cstring(ssh, "")) != 0 ||
+			    (r = sshpkt_send(ssh)) != 0)
+				fatal_fr(r, "channel %i: failure", c->self);
 			chan_mark_dead(ssh, c);
 		}
 	}
+
+	/* New non-blocking connection in progress */
+	close(c->sock);
+	c->sock = c->rfd = c->wfd = sock;
 }
 
 static int
-channel_handle_rfd(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_handle_rfd(struct ssh *ssh, Channel *c)
 {
 	char buf[CHAN_RBUF];
 	ssize_t len;
 	int r;
+	size_t nr = 0, have, avail, maxlen = CHANNEL_MAX_READ;
 
-	if (c->rfd == -1 || !FD_ISSET(c->rfd, readset))
+	if ((c->io_ready & SSH_CHAN_IO_RFD) == 0)
+		return 1; /* Shouldn't happen */
+	if ((avail = sshbuf_avail(c->input)) == 0)
+		return 1; /* Shouldn't happen */
+
+	/*
+	 * For "simple" channels (i.e. not datagram or filtered), we can
+	 * read directly to the channel buffer.
+	 */
+	if (c->input_filter == NULL && !c->datagram) {
+		/* Only OPEN channels have valid rwin */
+		if (c->type == SSH_CHANNEL_OPEN) {
+			if ((have = sshbuf_len(c->input)) >= c->remote_window)
+				return 1; /* shouldn't happen */
+			if (maxlen > c->remote_window - have)
+				maxlen = c->remote_window - have;
+		}
+		if (maxlen > avail)
+			maxlen = avail;
+		if ((r = sshbuf_read(c->rfd, c->input, maxlen, &nr)) != 0) {
+			if (errno == EINTR || errno == EAGAIN)
+				return 1;
+			debug2("channel %d: read failed rfd %d maxlen %zu: %s",
+			    c->self, c->rfd, maxlen, ssh_err(r));
+			goto rfail;
+		}
+		if (nr != 0)
+			c->lastused = monotime();
 		return 1;
+	}
 
 	len = read(c->rfd, buf, sizeof(buf));
-	if (len < 0 && (errno == EINTR || errno == EAGAIN))
+	if (len == -1 && (errno == EINTR || errno == EAGAIN))
 		return 1;
 	if (len <= 0) {
-		debug2("channel %d: read<=0 rfd %d len %zd",
-		    c->self, c->rfd, len);
+		debug2("channel %d: read<=0 rfd %d len %zd: %s",
+		    c->self, c->rfd, len,
+		    len == 0 ? "closed" : strerror(errno));
+ rfail:
 		if (c->type != SSH_CHANNEL_OPEN) {
 			debug2("channel %d: not open", c->self);
 			chan_mark_dead(ssh, c);
@@ -1978,6 +2141,7 @@ channel_handle_rfd(struct ssh *ssh, Channel *c,
 		}
 		return -1;
 	}
+	c->lastused = monotime();
 	if (c->input_filter != NULL) {
 		if (c->input_filter(ssh, c, buf, len) == -1) {
 			debug2("channel %d: filter stops", c->self);
@@ -1985,26 +2149,22 @@ channel_handle_rfd(struct ssh *ssh, Channel *c,
 		}
 	} else if (c->datagram) {
 		if ((r = sshbuf_put_string(c->input, buf, len)) != 0)
-			fatal("%s: channel %d: put datagram: %s", __func__,
-			    c->self, ssh_err(r));
-	} else if ((r = sshbuf_put(c->input, buf, len)) != 0) {
-		fatal("%s: channel %d: put data: %s", __func__,
-		    c->self, ssh_err(r));
+			fatal_fr(r, "channel %i: put datagram", c->self);
 	}
 	return 1;
 }
 
 static int
-channel_handle_wfd(struct ssh *ssh, Channel *c,
-   fd_set *readset, fd_set *writeset)
+channel_handle_wfd(struct ssh *ssh, Channel *c)
 {
 	struct termios tio;
 	u_char *data = NULL, *buf; /* XXX const; need filter API change */
 	size_t dlen, olen = 0;
 	int r, len;
 
-	if (c->wfd == -1 || !FD_ISSET(c->wfd, writeset) ||
-	    sshbuf_len(c->output) == 0)
+	if ((c->io_ready & SSH_CHAN_IO_WFD) == 0)
+		return 1;
+	if (sshbuf_len(c->output) == 0)
 		return 1;
 
 	/* Send buffered output data to the socket. */
@@ -2020,8 +2180,7 @@ channel_handle_wfd(struct ssh *ssh, Channel *c,
 		}
 	} else if (c->datagram) {
 		if ((r = sshbuf_get_string(c->output, &data, &dlen)) != 0)
-			fatal("%s: channel %d: get datagram: %s", __func__,
-			    c->self, ssh_err(r));
+			fatal_fr(r, "channel %i: get datagram", c->self);
 		buf = data;
 	} else {
 		buf = data = sshbuf_mutable_ptr(c->output);
@@ -2032,7 +2191,7 @@ channel_handle_wfd(struct ssh *ssh, Channel *c,
 		/* ignore truncated writes, datagrams might get lost */
 		len = write(c->wfd, buf, dlen);
 		free(data);
-		if (len < 0 && (errno == EINTR || errno == EAGAIN))
+		if (len == -1 && (errno == EINTR || errno == EAGAIN))
 			return 1;
 		if (len <= 0)
 			goto write_fail;
@@ -2040,7 +2199,7 @@ channel_handle_wfd(struct ssh *ssh, Channel *c,
 	}
 
 	len = write(c->wfd, buf, dlen);
-	if (len < 0 && (errno == EINTR || errno == EAGAIN))
+	if (len == -1 && (errno == EINTR || errno == EAGAIN))
 		return 1;
 	if (len <= 0) {
  write_fail:
@@ -2053,6 +2212,7 @@ channel_handle_wfd(struct ssh *ssh, Channel *c,
 		}
 		return -1;
 	}
+	c->lastused = monotime();
 	if (c->isatty && dlen >= 1 && buf[0] != '\r') {
 		if (tcgetattr(c->wfd, &tio) == 0 &&
 		    !(tio.c_lflag & ECHO) && (tio.c_lflag & ICANON)) {
@@ -2064,14 +2224,11 @@ channel_handle_wfd(struct ssh *ssh, Channel *c,
 			 */
 			if ((r = sshpkt_msg_ignore(ssh, 4+len)) != 0 ||
 			    (r = sshpkt_send(ssh)) != 0)
-				fatal("%s: channel %d: ignore: %s",
-				    __func__, c->self, ssh_err(r));
+				fatal_fr(r, "channel %i: ignore", c->self);
 		}
 	}
-	if ((r = sshbuf_consume(c->output, len)) != 0) {
-		fatal("%s: channel %d: consume: %s",
-		    __func__, c->self, ssh_err(r));
-	}
+	if ((r = sshbuf_consume(c->output, len)) != 0)
+		fatal_fr(r, "channel %i: consume", c->self);
  out:
 	c->local_consumed += olen - sshbuf_len(c->output);
 
@@ -2079,67 +2236,62 @@ channel_handle_wfd(struct ssh *ssh, Channel *c,
 }
 
 static int
-channel_handle_efd_write(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_handle_efd_write(struct ssh *ssh, Channel *c)
 {
 	int r;
 	ssize_t len;
 
-	if (!FD_ISSET(c->efd, writeset) || sshbuf_len(c->extended) == 0)
+	if ((c->io_ready & SSH_CHAN_IO_EFD_W) == 0)
+		return 1;
+	if (sshbuf_len(c->extended) == 0)
 		return 1;
 
 	len = write(c->efd, sshbuf_ptr(c->extended),
 	    sshbuf_len(c->extended));
 	debug2("channel %d: written %zd to efd %d", c->self, len, c->efd);
-	if (len < 0 && (errno == EINTR || errno == EAGAIN))
+	if (len == -1 && (errno == EINTR || errno == EAGAIN))
 		return 1;
 	if (len <= 0) {
 		debug2("channel %d: closing write-efd %d", c->self, c->efd);
-		channel_close_fd(ssh, &c->efd);
+		channel_close_fd(ssh, c, &c->efd);
 	} else {
-		if ((r = sshbuf_consume(c->extended, len)) != 0) {
-			fatal("%s: channel %d: consume: %s",
-			    __func__, c->self, ssh_err(r));
-		}
+		if ((r = sshbuf_consume(c->extended, len)) != 0)
+			fatal_fr(r, "channel %i: consume", c->self);
 		c->local_consumed += len;
+		c->lastused = monotime();
 	}
 	return 1;
 }
 
 static int
-channel_handle_efd_read(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_handle_efd_read(struct ssh *ssh, Channel *c)
 {
 	char buf[CHAN_RBUF];
 	int r;
 	ssize_t len;
 
-	if (!FD_ISSET(c->efd, readset))
+	if ((c->io_ready & SSH_CHAN_IO_EFD_R) == 0)
 		return 1;
 
 	len = read(c->efd, buf, sizeof(buf));
 	debug2("channel %d: read %zd from efd %d", c->self, len, c->efd);
-	if (len < 0 && (errno == EINTR || errno == EAGAIN))
+	if (len == -1 && (errno == EINTR || errno == EAGAIN))
 		return 1;
 	if (len <= 0) {
-		debug2("channel %d: closing read-efd %d",
-		    c->self, c->efd);
-		channel_close_fd(ssh, &c->efd);
-	} else {
-		if (c->extended_usage == CHAN_EXTENDED_IGNORE) {
-			debug3("channel %d: discard efd",
-			    c->self);
-		} else if ((r = sshbuf_put(c->extended, buf, len)) != 0) {
-			fatal("%s: channel %d: append: %s",
-			    __func__, c->self, ssh_err(r));
-		}
+		debug2("channel %d: closing read-efd %d", c->self, c->efd);
+		channel_close_fd(ssh, c, &c->efd);
+		return 1;
 	}
+	c->lastused = monotime();
+	if (c->extended_usage == CHAN_EXTENDED_IGNORE)
+		debug3("channel %d: discard efd", c->self);
+	else if ((r = sshbuf_put(c->extended, buf, len)) != 0)
+		fatal_fr(r, "channel %i: append", c->self);
 	return 1;
 }
 
 static int
-channel_handle_efd(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_handle_efd(struct ssh *ssh, Channel *c)
 {
 	if (c->efd == -1)
 		return 1;
@@ -2147,10 +2299,10 @@ channel_handle_efd(struct ssh *ssh, Channel *c,
 	/** XXX handle drain efd, too */
 
 	if (c->extended_usage == CHAN_EXTENDED_WRITE)
-		return channel_handle_efd_write(ssh, c, readset, writeset);
+		return channel_handle_efd_write(ssh, c);
 	else if (c->extended_usage == CHAN_EXTENDED_READ ||
 	    c->extended_usage == CHAN_EXTENDED_IGNORE)
-		return channel_handle_efd_read(ssh, c, readset, writeset);
+		return channel_handle_efd_read(ssh, c);
 
 	return 1;
 }
@@ -2167,29 +2319,27 @@ channel_check_window(struct ssh *ssh, Channel *c)
 	    c->local_window < c->local_window_max/2) &&
 	    c->local_consumed > 0) {
 		u_int addition = 0;
-
-		if (!c->have_remote_id)
-			fatal(":%s: channel %d: no remote id",
-			    __func__, c->self);
-
+		u_int32_t tcpwinsz = channel_tcpwinsz(ssh);
 		/* adjust max window size if we are in a dynamic environment */
-		if (c->dynamic_window && (c->tcpwinsz > c->local_window_max)) {
+		if (c->dynamic_window && (tcpwinsz > c->local_window_max)) {
 			/* grow the window somewhat aggressively to maintain 
 			 * pressure */
-			addition = 1.5*(c->tcpwinsz - c->local_window_max);
+			addition = 1.5*(tcpwinsz - c->local_window_max);
 			c->local_window_max += addition;
+			debug("Channel: Window growth to %d by %d bytes", c->local_window_max, addition);
 		}
+		if (!c->have_remote_id)
+			fatal_f("channel %d: no remote id", c->self);
 		if ((r = sshpkt_start(ssh,
 		    SSH2_MSG_CHANNEL_WINDOW_ADJUST)) != 0 ||
 		    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
 		    (r = sshpkt_put_u32(ssh, c->local_consumed + addition)) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0) {
-			fatal("%s: channel %i: %s", __func__,
-			    c->self, ssh_err(r));
+			fatal_fr(r, "channel %i", c->self);
 		}
-		debug2("channel %d: window %d sent adjust %d",
-		    c->self, c->local_window,
-		    c->local_consumed);
+		debug2("channel %d: window %d sent adjust %d", c->self,
+		    c->local_window,
+		    c->local_consumed + addition);
 		c->local_window += c->local_consumed + addition;
 		c->local_consumed = 0;
 	}
@@ -2197,12 +2347,11 @@ channel_check_window(struct ssh *ssh, Channel *c)
 }
 
 static void
-channel_post_open(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_post_open(struct ssh *ssh, Channel *c)
 {
-	channel_handle_rfd(ssh, c, readset, writeset);
-	channel_handle_wfd(ssh, c, readset, writeset);
-	channel_handle_efd(ssh, c, readset, writeset);
+	channel_handle_rfd(ssh, c);
+	channel_handle_wfd(ssh, c);
+	channel_handle_efd(ssh, c);
 	channel_check_window(ssh, c);
 }
 
@@ -2217,28 +2366,25 @@ read_mux(struct ssh *ssh, Channel *c, u_int need)
 	if (sshbuf_len(c->input) < need) {
 		rlen = need - sshbuf_len(c->input);
 		len = read(c->rfd, buf, MINIMUM(rlen, CHAN_RBUF));
-		if (len < 0 && (errno == EINTR || errno == EAGAIN))
+		if (len == -1 && (errno == EINTR || errno == EAGAIN))
 			return sshbuf_len(c->input);
 		if (len <= 0) {
 			debug2("channel %d: ctl read<=0 rfd %d len %zd",
 			    c->self, c->rfd, len);
 			chan_read_failed(ssh, c);
 			return 0;
-		} else if ((r = sshbuf_put(c->input, buf, len)) != 0) {
-			fatal("%s: channel %d: append: %s",
-			    __func__, c->self, ssh_err(r));
-		}
+		} else if ((r = sshbuf_put(c->input, buf, len)) != 0)
+			fatal_fr(r, "channel %i: append", c->self);
 	}
 	return sshbuf_len(c->input);
 }
 
 static void
-channel_post_mux_client_read(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_post_mux_client_read(struct ssh *ssh, Channel *c)
 {
 	u_int need;
 
-	if (c->rfd == -1 || !FD_ISSET(c->rfd, readset))
+	if ((c->io_ready & SSH_CHAN_IO_RFD) == 0)
 		return;
 	if (c->istate != CHAN_INPUT_OPEN && c->istate != CHAN_INPUT_WAIT_DRAIN)
 		return;
@@ -2270,39 +2416,36 @@ channel_post_mux_client_read(struct ssh *ssh, Channel *c,
 }
 
 static void
-channel_post_mux_client_write(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_post_mux_client_write(struct ssh *ssh, Channel *c)
 {
 	ssize_t len;
 	int r;
 
-	if (c->wfd == -1 || !FD_ISSET(c->wfd, writeset) ||
-	    sshbuf_len(c->output) == 0)
+	if ((c->io_ready & SSH_CHAN_IO_WFD) == 0)
+		return;
+	if (sshbuf_len(c->output) == 0)
 		return;
 
 	len = write(c->wfd, sshbuf_ptr(c->output), sshbuf_len(c->output));
-	if (len < 0 && (errno == EINTR || errno == EAGAIN))
+	if (len == -1 && (errno == EINTR || errno == EAGAIN))
 		return;
 	if (len <= 0) {
 		chan_mark_dead(ssh, c);
 		return;
 	}
 	if ((r = sshbuf_consume(c->output, len)) != 0)
-		fatal("%s: channel %d: consume: %s", __func__,
-		    c->self, ssh_err(r));
+		fatal_fr(r, "channel %i: consume", c->self);
 }
 
 static void
-channel_post_mux_client(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_post_mux_client(struct ssh *ssh, Channel *c)
 {
-	channel_post_mux_client_read(ssh, c, readset, writeset);
-	channel_post_mux_client_write(ssh, c, readset, writeset);
+	channel_post_mux_client_read(ssh, c);
+	channel_post_mux_client_write(ssh, c);
 }
 
 static void
-channel_post_mux_listener(struct ssh *ssh, Channel *c,
-    fd_set *readset, fd_set *writeset)
+channel_post_mux_listener(struct ssh *ssh, Channel *c)
 {
 	Channel *nc;
 	struct sockaddr_storage addr;
@@ -2311,7 +2454,7 @@ channel_post_mux_listener(struct ssh *ssh, Channel *c,
 	uid_t euid;
 	gid_t egid;
 
-	if (!FD_ISSET(c->sock, readset))
+	if ((c->io_ready & SSH_CHAN_IO_SOCK_R) == 0)
 		return;
 
 	debug("multiplexing control connection");
@@ -2323,15 +2466,14 @@ channel_post_mux_listener(struct ssh *ssh, Channel *c,
 	addrlen = sizeof(addr);
 	if ((newsock = accept(c->sock, (struct sockaddr*)&addr,
 	    &addrlen)) == -1) {
-		error("%s accept: %s", __func__, strerror(errno));
+		error_f("accept: %s", strerror(errno));
 		if (errno == EMFILE || errno == ENFILE)
 			c->notbefore = monotime() + 1;
 		return;
 	}
 
-	if (getpeereid(newsock, &euid, &egid) < 0) {
-		error("%s getpeereid failed: %s", __func__,
-		    strerror(errno));
+	if (getpeereid(newsock, &euid, &egid) == -1) {
+		error_f("getpeereid failed: %s", strerror(errno));
 		close(newsock);
 		return;
 	}
@@ -2341,11 +2483,11 @@ channel_post_mux_listener(struct ssh *ssh, Channel *c,
 		close(newsock);
 		return;
 	}
-	nc = channel_new(ssh, "multiplex client", SSH_CHANNEL_MUX_CLIENT,
+	nc = channel_new(ssh, "mux-control", SSH_CHANNEL_MUX_CLIENT,
 	    newsock, newsock, -1, c->local_window_max,
 	    c->local_maxpacket, 0, "mux-control", 1);
 	nc->mux_rcb = c->mux_rcb;
-	debug3("%s: new mux channel %d fd %d", __func__, nc->self, nc->sock);
+	debug3_f("new mux channel %d fd %d", nc->self, nc->sock);
 	/* establish state */
 	nc->mux_rcb(ssh, nc);
 	/* mux state transitions must not elicit protocol messages */
@@ -2358,8 +2500,8 @@ channel_handler_init(struct ssh_channels *sc)
 	chan_fn **pre, **post;
 
 	if ((pre = calloc(SSH_CHANNEL_MAX_TYPE, sizeof(*pre))) == NULL ||
-	   (post = calloc(SSH_CHANNEL_MAX_TYPE, sizeof(*post))) == NULL)
-		fatal("%s: allocation failed", __func__);
+	    (post = calloc(SSH_CHANNEL_MAX_TYPE, sizeof(*post))) == NULL)
+		fatal_f("allocation failed");
 
 	pre[SSH_CHANNEL_OPEN] =			&channel_pre_open;
 	pre[SSH_CHANNEL_X11_OPEN] =		&channel_pre_x11_open;
@@ -2403,7 +2545,7 @@ channel_garbage_collect(struct ssh *ssh, Channel *c)
 			return;
 
 		debug2("channel %d: gc: notify user", c->self);
-		c->detach_user(ssh, c->self, NULL);
+		c->detach_user(ssh, c->self, 0, NULL);
 		/* if we still have a callback */
 		if (c->detach_user != NULL)
 			return;
@@ -2418,8 +2560,7 @@ channel_garbage_collect(struct ssh *ssh, Channel *c)
 enum channel_table { CHAN_PRE, CHAN_POST };
 
 static void
-channel_handler(struct ssh *ssh, int table,
-    fd_set *readset, fd_set *writeset, time_t *unpause_secs)
+channel_handler(struct ssh *ssh, int table, struct timespec *timeout)
 {
 	struct ssh_channels *sc = ssh->chanctxt;
 	chan_fn **ftab = table == CHAN_PRE ? sc->channel_pre : sc->channel_post;
@@ -2428,11 +2569,12 @@ channel_handler(struct ssh *ssh, int table,
 	time_t now;
 
 	now = monotime();
-	if (unpause_secs != NULL)
-		*unpause_secs = 0;
 	for (i = 0, oalloc = sc->channels_alloc; i < oalloc; i++) {
 		c = sc->channels[i];
 		if (c == NULL)
+			continue;
+		/* Try to keep IO going while rekeying */
+		if (ssh_packet_is_rekeying(ssh) && c->type != SSH_CHANNEL_OPEN)
 			continue;
 		if (c->delayed) {
 			if (table == CHAN_PRE)
@@ -2441,38 +2583,47 @@ channel_handler(struct ssh *ssh, int table,
 				continue;
 		}
 		if (ftab[c->type] != NULL) {
-			/*
-			 * Run handlers that are not paused.
-			 */
-			if (c->notbefore <= now)
-				(*ftab[c->type])(ssh, c, readset, writeset);
-			else if (unpause_secs != NULL) {
+			if (table == CHAN_PRE &&
+			    c->type == SSH_CHANNEL_OPEN &&
+			    c->inactive_deadline != 0 && c->lastused != 0 &&
+			    now >= c->lastused + c->inactive_deadline) {
+				/* channel closed for inactivity */
+				verbose("channel %d: closing after %u seconds "
+				    "of inactivity", c->self,
+				    c->inactive_deadline);
+				channel_force_close(ssh, c, 1);
+			} else if (c->notbefore <= now) {
+				/* Run handlers that are not paused. */
+				(*ftab[c->type])(ssh, c);
+				/* inactivity timeouts must interrupt poll() */
+				if (timeout != NULL &&
+				    c->type == SSH_CHANNEL_OPEN &&
+				    c->lastused != 0 &&
+				    c->inactive_deadline != 0) {
+					ptimeout_deadline_monotime(timeout,
+					    c->lastused + c->inactive_deadline);
+				}
+			} else if (timeout != NULL) {
 				/*
-				 * Collect the time that the earliest
-				 * channel comes off pause.
+				 * Arrange for poll() wakeup when channel pause
+				 * timer expires.
 				 */
-				debug3("%s: chan %d: skip for %d more seconds",
-				    __func__, c->self,
-				    (int)(c->notbefore - now));
-				if (*unpause_secs == 0 ||
-				    (c->notbefore - now) < *unpause_secs)
-					*unpause_secs = c->notbefore - now;
+				ptimeout_deadline_monotime(timeout,
+				    c->notbefore);
 			}
 		}
 		channel_garbage_collect(ssh, c);
 	}
-	if (unpause_secs != NULL && *unpause_secs != 0)
-		debug3("%s: first channel unpauses in %d seconds",
-		    __func__, (int)*unpause_secs);
 }
 
 /*
- * Create sockets before allocating the select bitmasks.
+ * Create sockets before preparing IO.
  * This is necessary for things that need to happen after reading
- * the network-input but before channel_prepare_select().
+ * the network-input but need to be completed before IO event setup, e.g.
+ * because they may create new channels.
  */
 static void
-channel_before_prepare_select(struct ssh *ssh)
+channel_before_prepare_io(struct ssh *ssh)
 {
 	struct ssh_channels *sc = ssh->chanctxt;
 	Channel *c;
@@ -2483,59 +2634,284 @@ channel_before_prepare_select(struct ssh *ssh)
 		if (c == NULL)
 			continue;
 		if (c->type == SSH_CHANNEL_RDYNAMIC_OPEN)
-			channel_before_prepare_select_rdynamic(ssh, c);
+			channel_before_prepare_io_rdynamic(ssh, c);
 	}
 }
 
-/*
- * Allocate/update select bitmasks and add any bits relevant to channels in
- * select bitmasks.
- */
-void
-channel_prepare_select(struct ssh *ssh, fd_set **readsetp, fd_set **writesetp,
-    int *maxfdp, u_int *nallocp, time_t *minwait_secs)
+static void
+dump_channel_poll(const char *func, const char *what, Channel *c,
+    u_int pollfd_offset, struct pollfd *pfd)
 {
-	u_int n, sz, nfdset;
+#ifdef DEBUG_CHANNEL_POLL
+	debug3("%s: channel %d: %s r%d w%d e%d s%d c->pfds [ %d %d %d %d ] "
+	    "io_want 0x%02x io_ready 0x%02x pfd[%u].fd=%d "
+	    "pfd.ev 0x%02x pfd.rev 0x%02x", func, c->self, what,
+	    c->rfd, c->wfd, c->efd, c->sock,
+	    c->pfds[0], c->pfds[1], c->pfds[2], c->pfds[3],
+	    c->io_want, c->io_ready,
+	    pollfd_offset, pfd->fd, pfd->events, pfd->revents);
+#endif
+}
 
-	channel_before_prepare_select(ssh); /* might update channel_max_fd */
+/* Prepare pollfd entries for a single channel */
+static void
+channel_prepare_pollfd(Channel *c, u_int *next_pollfd,
+    struct pollfd *pfd, u_int npfd)
+{
+	u_int ev, p = *next_pollfd;
 
-	n = MAXIMUM(*maxfdp, ssh->chanctxt->channel_max_fd);
-
-	nfdset = howmany(n+1, NFDBITS);
-	/* Explicitly test here, because xrealloc isn't always called */
-	if (nfdset && SIZE_MAX / nfdset < sizeof(fd_mask))
-		fatal("channel_prepare_select: max_fd (%d) is too large", n);
-	sz = nfdset * sizeof(fd_mask);
-
-	/* perhaps check sz < nalloc/2 and shrink? */
-	if (*readsetp == NULL || sz > *nallocp) {
-		*readsetp = xreallocarray(*readsetp, nfdset, sizeof(fd_mask));
-		*writesetp = xreallocarray(*writesetp, nfdset, sizeof(fd_mask));
-		*nallocp = sz;
+	if (c == NULL)
+		return;
+	if (p + 4 > npfd) {
+		/* Shouldn't happen */
+		fatal_f("channel %d: bad pfd offset %u (max %u)",
+		    c->self, p, npfd);
 	}
-	*maxfdp = n;
-	memset(*readsetp, 0, sz);
-	memset(*writesetp, 0, sz);
+	c->pfds[0] = c->pfds[1] = c->pfds[2] = c->pfds[3] = -1;
+	/*
+	 * prepare c->rfd
+	 *
+	 * This is a special case, since c->rfd might be the same as
+	 * c->wfd, c->efd and/or c->sock. Handle those here if they want
+	 * IO too.
+	 */
+	if (c->rfd != -1) {
+		ev = 0;
+		if ((c->io_want & SSH_CHAN_IO_RFD) != 0)
+			ev |= POLLIN;
+		/* rfd == wfd */
+		if (c->wfd == c->rfd) {
+			if ((c->io_want & SSH_CHAN_IO_WFD) != 0)
+				ev |= POLLOUT;
+		}
+		/* rfd == efd */
+		if (c->efd == c->rfd) {
+			if ((c->io_want & SSH_CHAN_IO_EFD_R) != 0)
+				ev |= POLLIN;
+			if ((c->io_want & SSH_CHAN_IO_EFD_W) != 0)
+				ev |= POLLOUT;
+		}
+		/* rfd == sock */
+		if (c->sock == c->rfd) {
+			if ((c->io_want & SSH_CHAN_IO_SOCK_R) != 0)
+				ev |= POLLIN;
+			if ((c->io_want & SSH_CHAN_IO_SOCK_W) != 0)
+				ev |= POLLOUT;
+		}
+		/* Pack a pfd entry if any event armed for this fd */
+		if (ev != 0) {
+			c->pfds[0] = p;
+			pfd[p].fd = c->rfd;
+			pfd[p].events = ev;
+			dump_channel_poll(__func__, "rfd", c, p, &pfd[p]);
+			p++;
+		}
+	}
+	/* prepare c->wfd if wanting IO and not already handled above */
+	if (c->wfd != -1 && c->rfd != c->wfd) {
+		ev = 0;
+		if ((c->io_want & SSH_CHAN_IO_WFD))
+			ev |= POLLOUT;
+		/* Pack a pfd entry if any event armed for this fd */
+		if (ev != 0) {
+			c->pfds[1] = p;
+			pfd[p].fd = c->wfd;
+			pfd[p].events = ev;
+			dump_channel_poll(__func__, "wfd", c, p, &pfd[p]);
+			p++;
+		}
+	}
+	/* prepare c->efd if wanting IO and not already handled above */
+	if (c->efd != -1 && c->rfd != c->efd) {
+		ev = 0;
+		if ((c->io_want & SSH_CHAN_IO_EFD_R) != 0)
+			ev |= POLLIN;
+		if ((c->io_want & SSH_CHAN_IO_EFD_W) != 0)
+			ev |= POLLOUT;
+		/* Pack a pfd entry if any event armed for this fd */
+		if (ev != 0) {
+			c->pfds[2] = p;
+			pfd[p].fd = c->efd;
+			pfd[p].events = ev;
+			dump_channel_poll(__func__, "efd", c, p, &pfd[p]);
+			p++;
+		}
+	}
+	/* prepare c->sock if wanting IO and not already handled above */
+	if (c->sock != -1 && c->rfd != c->sock) {
+		ev = 0;
+		if ((c->io_want & SSH_CHAN_IO_SOCK_R) != 0)
+			ev |= POLLIN;
+		if ((c->io_want & SSH_CHAN_IO_SOCK_W) != 0)
+			ev |= POLLOUT;
+		/* Pack a pfd entry if any event armed for this fd */
+		if (ev != 0) {
+			c->pfds[3] = p;
+			pfd[p].fd = c->sock;
+			pfd[p].events = 0;
+			dump_channel_poll(__func__, "sock", c, p, &pfd[p]);
+			p++;
+		}
+	}
+	*next_pollfd = p;
+}
 
-	if (!ssh_packet_is_rekeying(ssh))
-		channel_handler(ssh, CHAN_PRE, *readsetp, *writesetp,
-		    minwait_secs);
+/* * Allocate/prepare poll structure */
+void
+channel_prepare_poll(struct ssh *ssh, struct pollfd **pfdp, u_int *npfd_allocp,
+    u_int *npfd_activep, u_int npfd_reserved, struct timespec *timeout)
+{
+	struct ssh_channels *sc = ssh->chanctxt;
+	u_int i, oalloc, p, npfd = npfd_reserved;
+
+	channel_before_prepare_io(ssh); /* might create a new channel */
+	/* clear out I/O flags from last poll */
+	for (i = 0; i < sc->channels_alloc; i++) {
+		if (sc->channels[i] == NULL)
+			continue;
+		sc->channels[i]->io_want = sc->channels[i]->io_ready = 0;
+	}
+	/* Allocate 4x pollfd for each channel (rfd, wfd, efd, sock) */
+	if (sc->channels_alloc >= (INT_MAX / 4) - npfd_reserved)
+		fatal_f("too many channels"); /* shouldn't happen */
+	npfd += sc->channels_alloc * 4;
+	if (npfd > *npfd_allocp) {
+		*pfdp = xrecallocarray(*pfdp, *npfd_allocp,
+		    npfd, sizeof(**pfdp));
+		*npfd_allocp = npfd;
+	}
+	*npfd_activep = npfd_reserved;
+	oalloc = sc->channels_alloc;
+
+	channel_handler(ssh, CHAN_PRE, timeout);
+
+	if (oalloc != sc->channels_alloc) {
+		/* shouldn't happen */
+		fatal_f("channels_alloc changed during CHAN_PRE "
+		    "(was %u, now %u)", oalloc, sc->channels_alloc);
+	}
+
+	/* Prepare pollfd */
+	p = npfd_reserved;
+	for (i = 0; i < sc->channels_alloc; i++)
+		channel_prepare_pollfd(sc->channels[i], &p, *pfdp, npfd);
+	*npfd_activep = p;
+}
+
+static void
+fd_ready(Channel *c, int p, struct pollfd *pfds, u_int npfd, int fd,
+    const char *what, u_int revents_mask, u_int ready)
+{
+	struct pollfd *pfd = &pfds[p];
+
+	if (fd == -1)
+		return;
+	if (p == -1 || (u_int)p >= npfd)
+		fatal_f("channel %d: bad pfd %d (max %u)", c->self, p, npfd);
+	dump_channel_poll(__func__, what, c, p, pfd);
+	if (pfd->fd != fd) {
+		fatal("channel %d: inconsistent %s fd=%d pollfd[%u].fd %d "
+		    "r%d w%d e%d s%d", c->self, what, fd, p, pfd->fd,
+		    c->rfd, c->wfd, c->efd, c->sock);
+	}
+	if ((pfd->revents & POLLNVAL) != 0) {
+		fatal("channel %d: invalid %s pollfd[%u].fd %d r%d w%d e%d s%d",
+		    c->self, what, p, pfd->fd, c->rfd, c->wfd, c->efd, c->sock);
+	}
+	if ((pfd->revents & (revents_mask|POLLHUP|POLLERR)) != 0)
+		c->io_ready |= ready & c->io_want;
 }
 
 /*
- * After select, perform any appropriate operations for channels which have
+ * After poll, perform any appropriate operations for channels which have
  * events pending.
  */
 void
-channel_after_select(struct ssh *ssh, fd_set *readset, fd_set *writeset)
+channel_after_poll(struct ssh *ssh, struct pollfd *pfd, u_int npfd)
 {
-	channel_handler(ssh, CHAN_POST, readset, writeset, NULL);
+	struct ssh_channels *sc = ssh->chanctxt;
+	u_int i;
+	int p;
+	Channel *c;
+
+#ifdef DEBUG_CHANNEL_POLL
+	for (p = 0; p < (int)npfd; p++) {
+		if (pfd[p].revents == 0)
+			continue;
+		debug_f("pfd[%u].fd %d rev 0x%04x",
+		    p, pfd[p].fd, pfd[p].revents);
+	}
+#endif
+
+	/* Convert pollfd into c->io_ready */
+	for (i = 0; i < sc->channels_alloc; i++) {
+		c = sc->channels[i];
+		if (c == NULL)
+			continue;
+		/* if rfd is shared with efd/sock then wfd should be too */
+		if (c->rfd != -1 && c->wfd != -1 && c->rfd != c->wfd &&
+		    (c->rfd == c->efd || c->rfd == c->sock)) {
+			/* Shouldn't happen */
+			fatal_f("channel %d: unexpected fds r%d w%d e%d s%d",
+			    c->self, c->rfd, c->wfd, c->efd, c->sock);
+		}
+		c->io_ready = 0;
+		/* rfd, potentially shared with wfd, efd and sock */
+		if (c->rfd != -1 && (p = c->pfds[0]) != -1) {
+			fd_ready(c, p, pfd, npfd, c->rfd,
+			    "rfd", POLLIN, SSH_CHAN_IO_RFD);
+			if (c->rfd == c->wfd) {
+				fd_ready(c, p, pfd, npfd, c->wfd,
+				    "wfd/r", POLLOUT, SSH_CHAN_IO_WFD);
+			}
+			if (c->rfd == c->efd) {
+				fd_ready(c, p, pfd, npfd, c->efd,
+				    "efdr/r", POLLIN, SSH_CHAN_IO_EFD_R);
+				fd_ready(c, p, pfd, npfd, c->efd,
+				    "efdw/r", POLLOUT, SSH_CHAN_IO_EFD_W);
+			}
+			if (c->rfd == c->sock) {
+				fd_ready(c, p, pfd, npfd, c->sock,
+				    "sockr/r", POLLIN, SSH_CHAN_IO_SOCK_R);
+				fd_ready(c, p, pfd, npfd, c->sock,
+				    "sockw/r", POLLOUT, SSH_CHAN_IO_SOCK_W);
+			}
+			dump_channel_poll(__func__, "rfd", c, p, pfd);
+		}
+		/* wfd */
+		if (c->wfd != -1 && c->wfd != c->rfd &&
+		    (p = c->pfds[1]) != -1) {
+			fd_ready(c, p, pfd, npfd, c->wfd,
+			    "wfd", POLLOUT, SSH_CHAN_IO_WFD);
+			dump_channel_poll(__func__, "wfd", c, p, pfd);
+		}
+		/* efd */
+		if (c->efd != -1 && c->efd != c->rfd &&
+		    (p = c->pfds[2]) != -1) {
+			fd_ready(c, p, pfd, npfd, c->efd,
+			    "efdr", POLLIN, SSH_CHAN_IO_EFD_R);
+			fd_ready(c, p, pfd, npfd, c->efd,
+			    "efdw", POLLOUT, SSH_CHAN_IO_EFD_W);
+			dump_channel_poll(__func__, "efd", c, p, pfd);
+		}
+		/* sock */
+		if (c->sock != -1 && c->sock != c->rfd &&
+		    (p = c->pfds[3]) != -1) {
+			fd_ready(c, p, pfd, npfd, c->sock,
+			    "sockr", POLLIN, SSH_CHAN_IO_SOCK_R);
+			fd_ready(c, p, pfd, npfd, c->sock,
+			    "sockw", POLLOUT, SSH_CHAN_IO_SOCK_W);
+			dump_channel_poll(__func__, "sock", c, p, pfd);
+		}
+	}
+	channel_handler(ssh, CHAN_POST, NULL);
 }
 
 /*
  * Enqueue data for channels with open or draining c->input.
+ * Returns non-zero if a packet was enqueued.
  */
-static void
+static int
 channel_output_poll_input_open(struct ssh *ssh, Channel *c)
 {
 	size_t len, plen;
@@ -2558,17 +2934,16 @@ channel_output_poll_input_open(struct ssh *ssh, Channel *c)
 			else
 				chan_ibuf_empty(ssh, c);
 		}
-		return;
+		return 0;
 	}
 
 	if (!c->have_remote_id)
-		fatal(":%s: channel %d: no remote id", __func__, c->self);
+		fatal_f("channel %d: no remote id", c->self);
 
 	if (c->datagram) {
 		/* Check datagram will fit; drop if not */
 		if ((r = sshbuf_get_string_direct(c->input, &pkt, &plen)) != 0)
-			fatal("%s: channel %d: get datagram: %s", __func__,
-			    c->self, ssh_err(r));
+			fatal_fr(r, "channel %i: get datagram", c->self);
 		/*
 		 * XXX this does tail-drop on the datagram queue which is
 		 * usually suboptimal compared to head-drop. Better to have
@@ -2576,18 +2951,16 @@ channel_output_poll_input_open(struct ssh *ssh, Channel *c)
 		 */
 		if (plen > c->remote_window || plen > c->remote_maxpacket) {
 			debug("channel %d: datagram too big", c->self);
-			return;
+			return 0;
 		}
 		/* Enqueue it */
 		if ((r = sshpkt_start(ssh, SSH2_MSG_CHANNEL_DATA)) != 0 ||
 		    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
 		    (r = sshpkt_put_string(ssh, pkt, plen)) != 0 ||
-		    (r = sshpkt_send(ssh)) != 0) {
-			fatal("%s: channel %i: datagram: %s", __func__,
-			    c->self, ssh_err(r));
-		}
+		    (r = sshpkt_send(ssh)) != 0)
+			fatal_fr(r, "channel %i: send datagram", c->self);
 		c->remote_window -= plen;
-		return;
+		return 1;
 	}
 
 	/* Enqueue packet for buffered data. */
@@ -2596,31 +2969,30 @@ channel_output_poll_input_open(struct ssh *ssh, Channel *c)
 	if (len > c->remote_maxpacket)
 		len = c->remote_maxpacket;
 	if (len == 0)
-		return;
+		return 0;
 	if ((r = sshpkt_start(ssh, SSH2_MSG_CHANNEL_DATA)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
 	    (r = sshpkt_put_string(ssh, sshbuf_ptr(c->input), len)) != 0 ||
-	    (r = sshpkt_send(ssh)) != 0) {
-		fatal("%s: channel %i: data: %s", __func__,
-		    c->self, ssh_err(r));
-	}
+	    (r = sshpkt_send(ssh)) != 0)
+		fatal_fr(r, "channel %i: send data", c->self);
 	if ((r = sshbuf_consume(c->input, len)) != 0)
-		fatal("%s: channel %i: consume: %s", __func__,
-		    c->self, ssh_err(r));
+		fatal_fr(r, "channel %i: consume", c->self);
 	c->remote_window -= len;
+	return 1;
 }
 
 /*
  * Enqueue data for channels with open c->extended in read mode.
+ * Returns non-zero if a packet was enqueued.
  */
-static void
+static int
 channel_output_poll_extended_read(struct ssh *ssh, Channel *c)
 {
 	size_t len;
 	int r;
 
 	if ((len = sshbuf_len(c->extended)) == 0)
-		return;
+		return 0;
 
 	debug2("channel %d: rwin %u elen %zu euse %d", c->self,
 	    c->remote_window, sshbuf_len(c->extended), c->extended_usage);
@@ -2629,31 +3001,33 @@ channel_output_poll_extended_read(struct ssh *ssh, Channel *c)
 	if (len > c->remote_maxpacket)
 		len = c->remote_maxpacket;
 	if (len == 0)
-		return;
+		return 0;
 	if (!c->have_remote_id)
-		fatal(":%s: channel %d: no remote id", __func__, c->self);
+		fatal_f("channel %d: no remote id", c->self);
 	if ((r = sshpkt_start(ssh, SSH2_MSG_CHANNEL_EXTENDED_DATA)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, SSH2_EXTENDED_DATA_STDERR)) != 0 ||
 	    (r = sshpkt_put_string(ssh, sshbuf_ptr(c->extended), len)) != 0 ||
-	    (r = sshpkt_send(ssh)) != 0) {
-		fatal("%s: channel %i: data: %s", __func__,
-		    c->self, ssh_err(r));
-	}
+	    (r = sshpkt_send(ssh)) != 0)
+		fatal_fr(r, "channel %i: data", c->self);
 	if ((r = sshbuf_consume(c->extended, len)) != 0)
-		fatal("%s: channel %i: consume: %s", __func__,
-		    c->self, ssh_err(r));
+		fatal_fr(r, "channel %i: consume", c->self);
 	c->remote_window -= len;
 	debug2("channel %d: sent ext data %zu", c->self, len);
+	return 1;
 }
 
-/* If there is data to send to the connection, enqueue some of it now. */
-void
+/*
+ * If there is data to send to the connection, enqueue some of it now.
+ * Returns non-zero if data was enqueued.
+ */
+int
 channel_output_poll(struct ssh *ssh)
 {
 	struct ssh_channels *sc = ssh->chanctxt;
 	Channel *c;
 	u_int i;
+	int ret = 0;
 
 	for (i = 0; i < sc->channels_alloc; i++) {
 		c = sc->channels[i];
@@ -2676,12 +3050,13 @@ channel_output_poll(struct ssh *ssh)
 		/* Get the amount of buffered data for this channel. */
 		if (c->istate == CHAN_INPUT_OPEN ||
 		    c->istate == CHAN_INPUT_WAIT_DRAIN)
-			channel_output_poll_input_open(ssh, c);
+			ret |= channel_output_poll_input_open(ssh, c);
 		/* Send extended data, i.e. stderr */
 		if (!(c->flags & CHAN_EOF_SENT) &&
 		    c->extended_usage == CHAN_EXTENDED_READ)
-			channel_output_poll_extended_read(ssh, c);
+			ret |= channel_output_poll_extended_read(ssh, c);
 	}
+	return ret;
 }
 
 /* -- mux proxy support  */
@@ -2739,11 +3114,11 @@ channel_proxy_downstream(struct ssh *ssh, Channel *downstream)
 	/* sshbuf_dump(downstream->input, stderr); */
 	if ((r = sshbuf_get_string_direct(downstream->input, &cp, &have))
 	    != 0) {
-		error("%s: malformed message: %s", __func__, ssh_err(r));
+		error_fr(r, "parse");
 		return -1;
 	}
 	if (have < 2) {
-		error("%s: short message", __func__);
+		error_f("short message");
 		return -1;
 	}
 	type = cp[1];
@@ -2751,29 +3126,29 @@ channel_proxy_downstream(struct ssh *ssh, Channel *downstream)
 	cp += 2;
 	have -= 2;
 	if (ssh_packet_log_type(type))
-		debug3("%s: channel %u: down->up: type %u", __func__,
+		debug3_f("channel %u: down->up: type %u",
 		    downstream->self, type);
 
 	switch (type) {
 	case SSH2_MSG_CHANNEL_OPEN:
 		if ((original = sshbuf_from(cp, have)) == NULL ||
 		    (modified = sshbuf_new()) == NULL) {
-			error("%s: alloc", __func__);
+			error_f("alloc");
 			goto out;
 		}
 		if ((r = sshbuf_get_cstring(original, &ctype, NULL)) != 0 ||
 		    (r = sshbuf_get_u32(original, &id)) != 0) {
-			error("%s: parse error %s", __func__, ssh_err(r));
+			error_fr(r, "parse");
 			goto out;
 		}
-		c = channel_new(ssh, "mux proxy", SSH_CHANNEL_MUX_PROXY,
-		   -1, -1, -1, 0, 0, 0, ctype, 1);
+		c = channel_new(ssh, "mux-proxy", SSH_CHANNEL_MUX_PROXY,
+		    -1, -1, -1, 0, 0, 0, ctype, 1);
 		c->mux_ctx = downstream;	/* point to mux client */
 		c->mux_downstream_id = id;	/* original downstream id */
 		if ((r = sshbuf_put_cstring(modified, ctype)) != 0 ||
 		    (r = sshbuf_put_u32(modified, c->self)) != 0 ||
 		    (r = sshbuf_putb(modified, original)) != 0) {
-			error("%s: compose error %s", __func__, ssh_err(r));
+			error_fr(r, "compose");
 			channel_free(ssh, c);
 			goto out;
 		}
@@ -2785,16 +3160,16 @@ channel_proxy_downstream(struct ssh *ssh, Channel *downstream)
 		 */
 		if ((original = sshbuf_from(cp, have)) == NULL ||
 		    (modified = sshbuf_new()) == NULL) {
-			error("%s: alloc", __func__);
+			error_f("alloc");
 			goto out;
 		}
 		if ((r = sshbuf_get_u32(original, &remote_id)) != 0 ||
 		    (r = sshbuf_get_u32(original, &id)) != 0) {
-			error("%s: parse error %s", __func__, ssh_err(r));
+			error_fr(r, "parse");
 			goto out;
 		}
-		c = channel_new(ssh, "mux proxy", SSH_CHANNEL_MUX_PROXY,
-		   -1, -1, -1, 0, 0, 0, "mux-down-connect", 1);
+		c = channel_new(ssh, "mux-proxy", SSH_CHANNEL_MUX_PROXY,
+		    -1, -1, -1, 0, 0, 0, "mux-down-connect", 1);
 		c->mux_ctx = downstream;	/* point to mux client */
 		c->mux_downstream_id = id;
 		c->remote_id = remote_id;
@@ -2802,33 +3177,33 @@ channel_proxy_downstream(struct ssh *ssh, Channel *downstream)
 		if ((r = sshbuf_put_u32(modified, remote_id)) != 0 ||
 		    (r = sshbuf_put_u32(modified, c->self)) != 0 ||
 		    (r = sshbuf_putb(modified, original)) != 0) {
-			error("%s: compose error %s", __func__, ssh_err(r));
+			error_fr(r, "compose");
 			channel_free(ssh, c);
 			goto out;
 		}
 		break;
 	case SSH2_MSG_GLOBAL_REQUEST:
 		if ((original = sshbuf_from(cp, have)) == NULL) {
-			error("%s: alloc", __func__);
+			error_f("alloc");
 			goto out;
 		}
 		if ((r = sshbuf_get_cstring(original, &ctype, NULL)) != 0) {
-			error("%s: parse error %s", __func__, ssh_err(r));
+			error_fr(r, "parse");
 			goto out;
 		}
 		if (strcmp(ctype, "tcpip-forward") != 0) {
-			error("%s: unsupported request %s", __func__, ctype);
+			error_f("unsupported request %s", ctype);
 			goto out;
 		}
 		if ((r = sshbuf_get_u8(original, NULL)) != 0 ||
 		    (r = sshbuf_get_cstring(original, &listen_host, NULL)) != 0 ||
 		    (r = sshbuf_get_u32(original, &listen_port)) != 0) {
-			error("%s: parse error %s", __func__, ssh_err(r));
+			error_fr(r, "parse");
 			goto out;
 		}
 		if (listen_port > 65535) {
-			error("%s: tcpip-forward for %s: bad port %u",
-			    __func__, listen_host, listen_port);
+			error_f("tcpip-forward for %s: bad port %u",
+			    listen_host, listen_port);
 			goto out;
 		}
 		/* Record that connection to this host/port is permitted. */
@@ -2852,14 +3227,14 @@ channel_proxy_downstream(struct ssh *ssh, Channel *downstream)
 		if ((r = sshpkt_start(ssh, type)) != 0 ||
 		    (r = sshpkt_putb(ssh, modified)) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0) {
-			error("%s: send %s", __func__, ssh_err(r));
+			error_fr(r, "send");
 			goto out;
 		}
 	} else {
 		if ((r = sshpkt_start(ssh, type)) != 0 ||
 		    (r = sshpkt_put(ssh, cp, have)) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0) {
-			error("%s: send %s", __func__, ssh_err(r));
+			error_fr(r, "send");
 			goto out;
 		}
 	}
@@ -2910,18 +3285,17 @@ channel_proxy_upstream(Channel *c, int type, u_int32_t seq, struct ssh *ssh)
 	case SSH2_MSG_CHANNEL_REQUEST:
 		break;
 	default:
-		debug2("%s: channel %u: unsupported type %u", __func__,
-		    c->self, type);
+		debug2_f("channel %u: unsupported type %u", c->self, type);
 		return 0;
 	}
 	if ((b = sshbuf_new()) == NULL) {
-		error("%s: alloc reply", __func__);
+		error_f("alloc reply");
 		goto out;
 	}
 	/* get remaining payload (after id) */
 	cp = sshpkt_ptr(ssh, &len);
 	if (cp == NULL) {
-		error("%s: no packet", __func__);
+		error_f("no packet");
 		goto out;
 	}
 	/* translate id and send to muxclient */
@@ -2930,13 +3304,12 @@ channel_proxy_upstream(Channel *c, int type, u_int32_t seq, struct ssh *ssh)
 	    (r = sshbuf_put_u32(b, c->mux_downstream_id)) != 0 ||
 	    (r = sshbuf_put(b, cp, len)) != 0 ||
 	    (r = sshbuf_put_stringb(downstream->output, b)) != 0) {
-		error("%s: compose for muxclient %s", __func__, ssh_err(r));
+		error_fr(r, "compose muxclient");
 		goto out;
 	}
 	/* sshbuf_dump(b, stderr); */
 	if (ssh_packet_log_type(type))
-		debug3("%s: channel %u: up->down: type %u", __func__, c->self,
-		    type);
+		debug3_f("channel %u: up->down: type %u", c->self, type);
  out:
 	/* update state */
 	switch (type) {
@@ -2968,11 +3341,11 @@ channel_parse_id(struct ssh *ssh, const char *where, const char *what)
 	int r;
 
 	if ((r = sshpkt_get_u32(ssh, &id)) != 0) {
-		error("%s: parse id: %s", where, ssh_err(r));
+		error_r(r, "%s: parse id", where);
 		ssh_packet_disconnect(ssh, "Invalid %s message", what);
 	}
 	if (id > INT_MAX) {
-		error("%s: bad channel id %u: %s", where, id, ssh_err(r));
+		error_r(r, "%s: bad channel id %u", where, id);
 		ssh_packet_disconnect(ssh, "Invalid %s channel id", what);
 	}
 	return (int)id;
@@ -3013,8 +3386,7 @@ channel_input_data(int type, u_int32_t seq, struct ssh *ssh)
 	/* Get the data. */
 	if ((r = sshpkt_get_string_direct(ssh, &data, &data_len)) != 0 ||
             (r = sshpkt_get_end(ssh)) != 0)
-		fatal("%s: channel %d: get data: %s", __func__,
-		    c->self, ssh_err(r));
+		fatal_fr(r, "channel %i: get data", c->self);
 
 	win_len = data_len;
 	if (c->datagram)
@@ -3037,19 +3409,26 @@ channel_input_data(int type, u_int32_t seq, struct ssh *ssh)
 		return 0;
 	}
 	if (win_len > c->local_window) {
-		logit("channel %d: rcvd too much data %zu, win %u",
-		    c->self, win_len, c->local_window);
-		return 0;
+		c->local_window_exceeded += win_len - c->local_window;
+		logit("channel %d: rcvd too much data %zu, win %u/%u "
+		    "(excess %u)", c->self, win_len, c->local_window,
+		    c->local_window_max, c->local_window_exceeded);
+		c->local_window = 0;
+		/* Allow 10% grace before bringing the hammer down */
+		if (c->local_window_exceeded > (c->local_window_max / 10)) {
+			ssh_packet_disconnect(ssh, "channel %d: peer ignored "
+			    "channel window", c->self);
+		}
+	} else {
+		c->local_window -= win_len;
+		c->local_window_exceeded = 0;
 	}
-	c->local_window -= win_len;
 
 	if (c->datagram) {
 		if ((r = sshbuf_put_string(c->output, data, data_len)) != 0)
-			fatal("%s: channel %d: append datagram: %s",
-			    __func__, c->self, ssh_err(r));
+			fatal_fr(r, "channel %i: append datagram", c->self);
 	} else if ((r = sshbuf_put(c->output, data, data_len)) != 0)
-		fatal("%s: channel %d: append data: %s",
-		    __func__, c->self, ssh_err(r));
+		fatal_fr(r, "channel %i: append data", c->self);
 
 	return 0;
 }
@@ -3070,7 +3449,7 @@ channel_input_extended_data(int type, u_int32_t seq, struct ssh *ssh)
 		return 0;
 	}
 	if (c->flags & CHAN_EOF_RCVD) {
-		if (datafellows & SSH_BUG_EXTEOF)
+		if (ssh->compat & SSH_BUG_EXTEOF)
 			debug("channel %d: accepting ext data after eof",
 			    c->self);
 		else
@@ -3079,7 +3458,7 @@ channel_input_extended_data(int type, u_int32_t seq, struct ssh *ssh)
 	}
 
 	if ((r = sshpkt_get_u32(ssh, &tcode)) != 0) {
-		error("%s: parse tcode: %s", __func__, ssh_err(r));
+		error_fr(r, "parse tcode");
 		ssh_packet_disconnect(ssh, "Invalid extended_data message");
 	}
 	if (c->efd == -1 ||
@@ -3090,7 +3469,7 @@ channel_input_extended_data(int type, u_int32_t seq, struct ssh *ssh)
 	}
 	if ((r = sshpkt_get_string_direct(ssh, &data, &data_len)) != 0 ||
             (r = sshpkt_get_end(ssh)) != 0) {
-		error("%s: parse data: %s", __func__, ssh_err(r));
+		error_fr(r, "parse data");
 		ssh_packet_disconnect(ssh, "Invalid extended_data message");
 	}
 
@@ -3102,7 +3481,7 @@ channel_input_extended_data(int type, u_int32_t seq, struct ssh *ssh)
 	debug2("channel %d: rcvd ext data %zu", c->self, data_len);
 	/* XXX sshpkt_getb? */
 	if ((r = sshbuf_put(c->extended, data, data_len)) != 0)
-		error("%s: append: %s", __func__, ssh_err(r));
+		error_fr(r, "append");
 	c->local_window -= data_len;
 	return 0;
 }
@@ -3114,7 +3493,7 @@ channel_input_ieof(int type, u_int32_t seq, struct ssh *ssh)
 	int r;
 
         if ((r = sshpkt_get_end(ssh)) != 0) {
-		error("%s: parse data: %s", __func__, ssh_err(r));
+		error_fr(r, "parse data");
 		ssh_packet_disconnect(ssh, "Invalid ieof message");
 	}
 
@@ -3141,7 +3520,7 @@ channel_input_oclose(int type, u_int32_t seq, struct ssh *ssh)
 	if (channel_proxy_upstream(c, type, seq, ssh))
 		return 0;
         if ((r = sshpkt_get_end(ssh)) != 0) {
-		error("%s: parse data: %s", __func__, ssh_err(r));
+		error_fr(r, "parse data");
 		ssh_packet_disconnect(ssh, "Invalid oclose message");
 	}
 	chan_rcvd_oclose(ssh, c);
@@ -3168,7 +3547,7 @@ channel_input_open_confirmation(int type, u_int32_t seq, struct ssh *ssh)
 	    (r = sshpkt_get_u32(ssh, &remote_window)) != 0 ||
 	    (r = sshpkt_get_u32(ssh, &remote_maxpacket)) != 0 ||
             (r = sshpkt_get_end(ssh)) != 0) {
-		error("%s: window/maxpacket: %s", __func__, ssh_err(r));
+		error_fr(r, "window/maxpacket");
 		ssh_packet_disconnect(ssh, "Invalid open confirmation message");
 	}
 
@@ -3177,10 +3556,11 @@ channel_input_open_confirmation(int type, u_int32_t seq, struct ssh *ssh)
 	c->remote_maxpacket = remote_maxpacket;
 	c->type = SSH_CHANNEL_OPEN;
 	if (c->open_confirm) {
-		debug2("%s: channel %d: callback start", __func__, c->self);
+		debug2_f("channel %d: callback start", c->self);
 		c->open_confirm(ssh, c->self, 1, c->open_confirm_ctx);
-		debug2("%s: channel %d: callback done", __func__, c->self);
+		debug2_f("channel %d: callback done", c->self);
 	}
+	c->lastused = monotime();
 	debug2("channel %d: open confirm rwindow %u rmax %u", c->self,
 	    c->remote_window, c->remote_maxpacket);
 	return 0;
@@ -3216,23 +3596,23 @@ channel_input_open_failure(int type, u_int32_t seq, struct ssh *ssh)
 		ssh_packet_disconnect(ssh, "Received open failure for "
 		    "non-opening channel %d.", c->self);
 	if ((r = sshpkt_get_u32(ssh, &reason)) != 0) {
-		error("%s: reason: %s", __func__, ssh_err(r));
+		error_fr(r, "parse reason");
 		ssh_packet_disconnect(ssh, "Invalid open failure message");
 	}
 	/* skip language */
 	if ((r = sshpkt_get_cstring(ssh, &msg, NULL)) != 0 ||
 	    (r = sshpkt_get_string_direct(ssh, NULL, NULL)) != 0 ||
             (r = sshpkt_get_end(ssh)) != 0) {
-		error("%s: message/lang: %s", __func__, ssh_err(r));
+		error_fr(r, "parse msg/lang");
 		ssh_packet_disconnect(ssh, "Invalid open failure message");
 	}
 	logit("channel %d: open failed: %s%s%s", c->self,
 	    reason2txt(reason), msg ? ": ": "", msg ? msg : "");
 	free(msg);
 	if (c->open_confirm) {
-		debug2("%s: channel %d: callback start", __func__, c->self);
+		debug2_f("channel %d: callback start", c->self);
 		c->open_confirm(ssh, c->self, 0, c->open_confirm_ctx);
-		debug2("%s: channel %d: callback done", __func__, c->self);
+		debug2_f("channel %d: callback done", c->self);
 	}
 	/* Schedule the channel for cleanup/deletion. */
 	chan_mark_dead(ssh, c);
@@ -3257,7 +3637,7 @@ channel_input_window_adjust(int type, u_int32_t seq, struct ssh *ssh)
 		return 0;
 	if ((r = sshpkt_get_u32(ssh, &adjust)) != 0 ||
             (r = sshpkt_get_end(ssh)) != 0) {
-		error("%s: adjust: %s", __func__, ssh_err(r));
+		error_fr(r, "parse adjust");
 		ssh_packet_disconnect(ssh, "Invalid window adjust message");
 	}
 	debug2("channel %d: rcvd adjust %u", c->self, adjust);
@@ -3275,27 +3655,25 @@ channel_input_status_confirm(int type, u_int32_t seq, struct ssh *ssh)
 	int id = channel_parse_id(ssh, __func__, "status confirm");
 	Channel *c;
 	struct channel_confirm *cc;
-	int r;
 
 	/* Reset keepalive timeout */
 	ssh_packet_set_alive_timeouts(ssh, 0);
 
-	debug2("%s: type %d id %d", __func__, type, id);
+	debug2_f("type %d id %d", type, id);
 
 	if ((c = channel_lookup(ssh, id)) == NULL) {
-		logit("%s: %d: unknown", __func__, id);
+		logit_f("%d: unknown", id);
 		return 0;
 	}
 	if (channel_proxy_upstream(c, type, seq, ssh))
 		return 0;
-        if ((r = sshpkt_get_end(ssh)) != 0)
+        if (sshpkt_get_end(ssh) != 0)
 		ssh_packet_disconnect(ssh, "Invalid status confirm message");
 	if ((cc = TAILQ_FIRST(&c->status_confirms)) == NULL)
 		return 0;
 	cc->cb(ssh, type, c, cc->ctx);
 	TAILQ_REMOVE(&c->status_confirms, cc, entry);
-	explicit_bzero(cc, sizeof(*cc));
-	free(cc);
+	freezero(cc, sizeof(*cc));
 	return 0;
 }
 
@@ -3342,7 +3720,7 @@ channel_fwd_bind_addr(struct ssh *ssh, const char *listen_addr, int *wildcardp,
 		if (fwd_opts->gateway_ports)
 			wildcard = 1;
 	} else if (fwd_opts->gateway_ports || is_client) {
-		if (((datafellows & SSH_OLD_FORWARD_ADDR) &&
+		if (((ssh->compat & SSH_OLD_FORWARD_ADDR) &&
 		    strcmp(listen_addr, "0.0.0.0") == 0 && is_client == 0) ||
 		    *listen_addr == '\0' || strcmp(listen_addr, "*") == 0 ||
 		    (!is_client && fwd_opts->gateway_ports == 1)) {
@@ -3362,7 +3740,12 @@ channel_fwd_bind_addr(struct ssh *ssh, const char *listen_addr, int *wildcardp,
 		} else if (strcmp(listen_addr, "localhost") != 0 ||
 		    strcmp(listen_addr, "127.0.0.1") == 0 ||
 		    strcmp(listen_addr, "::1") == 0) {
-			/* Accept localhost address when GatewayPorts=yes */
+			/*
+			 * Accept explicit localhost address when
+			 * GatewayPorts=yes. The "localhost" hostname is
+			 * deliberately skipped here so it will listen on all
+			 * available local address families.
+			 */
 			addr = listen_addr;
 		}
 	} else if (strcmp(listen_addr, "127.0.0.1") == 0 ||
@@ -3411,8 +3794,8 @@ channel_setup_fwd_listener_tcpip(struct ssh *ssh, int type,
 	/* Determine the bind address, cf. channel_fwd_bind_addr() comment */
 	addr = channel_fwd_bind_addr(ssh, fwd->listen_host, &wildcard,
 	    is_client, fwd_opts);
-	debug3("%s: type %d wildcard %d addr %s", __func__,
-	    type, wildcard, (addr == NULL) ? "NULL" : addr);
+	debug3_f("type %d wildcard %d addr %s", type, wildcard,
+	    (addr == NULL) ? "NULL" : addr);
 
 	/*
 	 * getaddrinfo returns a loopback address if the hostname is
@@ -3429,7 +3812,7 @@ channel_setup_fwd_listener_tcpip(struct ssh *ssh, int type,
 			ssh_packet_disconnect(ssh, "getaddrinfo: fatal error: %s",
 			    ssh_gai_strerror(r));
 		} else {
-			error("%s: getaddrinfo(%.64s): %s", __func__, addr,
+			error_f("getaddrinfo(%.64s): %s", addr,
 			    ssh_gai_strerror(r));
 		}
 		return 0;
@@ -3461,12 +3844,12 @@ channel_setup_fwd_listener_tcpip(struct ssh *ssh, int type,
 		if (getnameinfo(ai->ai_addr, ai->ai_addrlen, ntop, sizeof(ntop),
 		    strport, sizeof(strport),
 		    NI_NUMERICHOST|NI_NUMERICSERV) != 0) {
-			error("%s: getnameinfo failed", __func__);
+			error_f("getnameinfo failed");
 			continue;
 		}
 		/* Create a port to listen for the host. */
 		sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		if (sock < 0) {
+		if (sock == -1) {
 			/* this is no error since kernel may not support ipv6 */
 			verbose("socket [%s]:%s: %.100s", ntop, strport,
 			    strerror(errno));
@@ -3479,7 +3862,7 @@ channel_setup_fwd_listener_tcpip(struct ssh *ssh, int type,
 		    ntop, strport);
 
 		/* Bind the socket to the address. */
-		if (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
+		if (bind(sock, ai->ai_addr, ai->ai_addrlen) == -1) {
 			/*
 			 * address can be in if use ipv6 address is
 			 * already bound
@@ -3490,7 +3873,7 @@ channel_setup_fwd_listener_tcpip(struct ssh *ssh, int type,
 			continue;
 		}
 		/* Start listening for connections on the socket. */
-		if (listen(sock, SSH_LISTEN_BACKLOG) < 0) {
+		if (listen(sock, SSH_LISTEN_BACKLOG) == -1) {
 			error("listen [%s]:%s: %.100s", ntop, strport,
 			    strerror(errno));
 			close(sock);
@@ -3513,7 +3896,7 @@ channel_setup_fwd_listener_tcpip(struct ssh *ssh, int type,
 		/* Allocate a channel number for the socket. */
 		/* explicitly test for hpn disabled option. if true use smaller window size */
 		if (hpn_disabled)
-		c = channel_new(ssh, "port listener", type, sock, sock, -1,
+		c = channel_new(ssh, "port-listener", type, sock, sock, -1,
 		    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT,
 		    0, "port listener", 1);
 		else
@@ -3524,15 +3907,14 @@ channel_setup_fwd_listener_tcpip(struct ssh *ssh, int type,
 		c->host_port = fwd->connect_port;
 		c->listening_addr = addr == NULL ? NULL : xstrdup(addr);
 		if (fwd->listen_port == 0 && allocated_listen_port != NULL &&
-		    !(datafellows & SSH_BUG_DYNAMIC_RPORT))
+		    !(ssh->compat & SSH_BUG_DYNAMIC_RPORT))
 			c->listening_port = *allocated_listen_port;
 		else
 			c->listening_port = fwd->listen_port;
 		success = 1;
 	}
 	if (success == 0)
-		error("%s: cannot listen to port: %d", __func__,
-		    fwd->listen_port);
+		error_f("cannot listen to port: %d", fwd->listen_port);
 	freeaddrinfo(aitop);
 	return success;
 }
@@ -3575,7 +3957,7 @@ channel_setup_fwd_listener_streamlocal(struct ssh *ssh, int type,
 		port = PORT_STREAMLOCAL;
 		break;
 	default:
-		error("%s: unexpected channel type %d", __func__, type);
+		error_f("unexpected channel type %d", type);
 		return 0;
 	}
 
@@ -3588,7 +3970,7 @@ channel_setup_fwd_listener_streamlocal(struct ssh *ssh, int type,
 		return 0;
 	}
 
-	debug3("%s: type %d path %s", __func__, type, fwd->listen_path);
+	debug3_f("type %d path %s", type, fwd->listen_path);
 
 	/* Start a Unix domain listener. */
 	omask = umask(fwd_opts->streamlocal_bind_mask);
@@ -3601,7 +3983,7 @@ channel_setup_fwd_listener_streamlocal(struct ssh *ssh, int type,
 	debug("Local forwarding listening on path %s.", fwd->listen_path);
 
 	/* Allocate a channel number for the socket. */
-	c = channel_new(ssh, "unix listener", type, sock, sock, -1,
+	c = channel_new(ssh, "unix-listener", type, sock, sock, -1,
 	    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT,
 	    0, "unix listener", 1);
 	c->path = xstrdup(path);
@@ -3623,7 +4005,7 @@ channel_cancel_rport_listener_tcpip(struct ssh *ssh,
 		if (c == NULL || c->type != SSH_CHANNEL_RPORT_LISTENER)
 			continue;
 		if (strcmp(c->path, host) == 0 && c->listening_port == port) {
-			debug2("%s: close channel %d", __func__, i);
+			debug2_f("close channel %d", i);
 			channel_free(ssh, c);
 			found = 1;
 		}
@@ -3645,7 +4027,7 @@ channel_cancel_rport_listener_streamlocal(struct ssh *ssh, const char *path)
 		if (c->path == NULL)
 			continue;
 		if (strcmp(c->path, path) == 0) {
-			debug2("%s: close channel %d", __func__, i);
+			debug2_f("close channel %d", i);
 			channel_free(ssh, c);
 			found = 1;
 		}
@@ -3693,7 +4075,7 @@ channel_cancel_lport_listener_tcpip(struct ssh *ssh,
 		    (c->listening_addr != NULL && addr == NULL))
 			continue;
 		if (addr == NULL || strcmp(c->listening_addr, addr) == 0) {
-			debug2("%s: close channel %d", __func__, i);
+			debug2_f("close channel %d", i);
 			channel_free(ssh, c);
 			found = 1;
 		}
@@ -3709,7 +4091,7 @@ channel_cancel_lport_listener_streamlocal(struct ssh *ssh, const char *path)
 	int found = 0;
 
 	if (path == NULL) {
-		error("%s: no path specified.", __func__);
+		error_f("no path specified.");
 		return 0;
 	}
 
@@ -3720,7 +4102,7 @@ channel_cancel_lport_listener_streamlocal(struct ssh *ssh, const char *path)
 		if (c->listening_addr == NULL)
 			continue;
 		if (strcmp(c->listening_addr, path) == 0) {
-			debug2("%s: close channel %d", __func__, i);
+			debug2_f("close channel %d", i);
 			channel_free(ssh, c);
 			found = 1;
 		}
@@ -3826,6 +4208,23 @@ channel_setup_remote_fwd_listener(struct ssh *ssh, struct Forward *fwd,
 {
 	if (!check_rfwd_permission(ssh, fwd)) {
 		ssh_packet_send_debug(ssh, "port forwarding refused");
+		if (fwd->listen_path != NULL)
+			/* XXX always allowed, see remote_open_match() */
+			logit("Received request from %.100s port %d to "
+			    "remote forward to path \"%.100s\", "
+			    "but the request was denied.",
+			    ssh_remote_ipaddr(ssh), ssh_remote_port(ssh),
+			    fwd->listen_path);
+		else if(fwd->listen_host != NULL)
+			logit("Received request from %.100s port %d to "
+			    "remote forward to host %.100s port %d, "
+			    "but the request was denied.",
+			    ssh_remote_ipaddr(ssh), ssh_remote_port(ssh),
+			    fwd->listen_host, fwd->listen_port );
+		else
+			logit("Received request from %.100s port %d to remote "
+			    "forward, but the request was denied.",
+			    ssh_remote_ipaddr(ssh), ssh_remote_port(ssh));
 		return 0;
 	}
 	if (fwd->listen_path != NULL) {
@@ -3863,7 +4262,7 @@ int
 channel_request_remote_forwarding(struct ssh *ssh, struct Forward *fwd)
 {
 	int r, success = 0, idx = -1;
-	char *host_to_connect, *listen_host, *listen_path;
+	const char *host_to_connect, *listen_host, *listen_path;
 	int port_to_connect, listen_port;
 
 	/* Send the forward request to the remote side. */
@@ -3875,8 +4274,7 @@ channel_request_remote_forwarding(struct ssh *ssh, struct Forward *fwd)
 		    (r = sshpkt_put_cstring(ssh, fwd->listen_path)) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0 ||
 		    (r = ssh_packet_write_wait(ssh)) < 0)
-			fatal("%s: request streamlocal: %s",
-			    __func__, ssh_err(r));
+			fatal_fr(r, "request streamlocal");
 	} else {
 		if ((r = sshpkt_start(ssh, SSH2_MSG_GLOBAL_REQUEST)) != 0 ||
 		    (r = sshpkt_put_cstring(ssh, "tcpip-forward")) != 0 ||
@@ -3886,8 +4284,7 @@ channel_request_remote_forwarding(struct ssh *ssh, struct Forward *fwd)
 		    (r = sshpkt_put_u32(ssh, fwd->listen_port)) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0 ||
 		    (r = ssh_packet_write_wait(ssh)) < 0)
-			fatal("%s: request tcpip-forward: %s",
-			    __func__, ssh_err(r));
+			fatal_fr(r, "request tcpip-forward");
 	}
 	/* Assume that server accepts the request */
 	success = 1;
@@ -3896,18 +4293,17 @@ channel_request_remote_forwarding(struct ssh *ssh, struct Forward *fwd)
 		host_to_connect = listen_host = listen_path = NULL;
 		port_to_connect = listen_port = 0;
 		if (fwd->connect_path != NULL) {
-			host_to_connect = xstrdup(fwd->connect_path);
+			host_to_connect = fwd->connect_path;
 			port_to_connect = PORT_STREAMLOCAL;
 		} else {
-			host_to_connect = xstrdup(fwd->connect_host);
+			host_to_connect = fwd->connect_host;
 			port_to_connect = fwd->connect_port;
 		}
 		if (fwd->listen_path != NULL) {
-			listen_path = xstrdup(fwd->listen_path);
+			listen_path = fwd->listen_path;
 			listen_port = PORT_STREAMLOCAL;
 		} else {
-			if (fwd->listen_host != NULL)
-				listen_host = xstrdup(fwd->listen_host);
+			listen_host = fwd->listen_host;
 			listen_port = fwd->listen_port;
 		}
 		idx = permission_set_add(ssh, FORWARD_USER, FORWARD_LOCAL,
@@ -3986,7 +4382,7 @@ channel_request_rforward_cancel_tcpip(struct ssh *ssh,
 	struct permission_set *pset = &sc->local_perms;
 	int r;
 	u_int i;
-	struct permission *perm;
+	struct permission *perm = NULL;
 
 	for (i = 0; i < pset->num_permitted_user; i++) {
 		perm = &pset->permitted_user[i];
@@ -3995,7 +4391,7 @@ channel_request_rforward_cancel_tcpip(struct ssh *ssh,
 		perm = NULL;
 	}
 	if (perm == NULL) {
-		debug("%s: requested forward not found", __func__);
+		debug_f("requested forward not found");
 		return -1;
 	}
 	if ((r = sshpkt_start(ssh, SSH2_MSG_GLOBAL_REQUEST)) != 0 ||
@@ -4004,7 +4400,7 @@ channel_request_rforward_cancel_tcpip(struct ssh *ssh,
 	    (r = sshpkt_put_cstring(ssh, channel_rfwd_bind_host(host))) != 0 ||
 	    (r = sshpkt_put_u32(ssh, port)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0)
-		fatal("%s: send cancel: %s", __func__, ssh_err(r));
+		fatal_fr(r, "send cancel");
 
 	fwd_perm_clear(perm); /* unregister */
 
@@ -4022,7 +4418,7 @@ channel_request_rforward_cancel_streamlocal(struct ssh *ssh, const char *path)
 	struct permission_set *pset = &sc->local_perms;
 	int r;
 	u_int i;
-	struct permission *perm;
+	struct permission *perm = NULL;
 
 	for (i = 0; i < pset->num_permitted_user; i++) {
 		perm = &pset->permitted_user[i];
@@ -4031,7 +4427,7 @@ channel_request_rforward_cancel_streamlocal(struct ssh *ssh, const char *path)
 		perm = NULL;
 	}
 	if (perm == NULL) {
-		debug("%s: requested forward not found", __func__);
+		debug_f("requested forward not found");
 		return -1;
 	}
 	if ((r = sshpkt_start(ssh, SSH2_MSG_GLOBAL_REQUEST)) != 0 ||
@@ -4040,7 +4436,7 @@ channel_request_rforward_cancel_streamlocal(struct ssh *ssh, const char *path)
 	    (r = sshpkt_put_u8(ssh, 0)) != 0 || /* want reply */
 	    (r = sshpkt_put_cstring(ssh, path)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0)
-		fatal("%s: send cancel: %s", __func__, ssh_err(r));
+		fatal_fr(r, "send cancel");
 
 	fwd_perm_clear(perm); /* unregister */
 
@@ -4135,8 +4531,8 @@ channel_update_permission(struct ssh *ssh, int idx, int newport)
 	struct permission_set *pset = &ssh->chanctxt->local_perms;
 
 	if (idx < 0 || (u_int)idx >= pset->num_permitted_user) {
-		debug("%s: index out of range: %d num_permitted_user %d",
-		    __func__, idx, pset->num_permitted_user);
+		debug_f("index out of range: %d num_permitted_user %d",
+		    idx, pset->num_permitted_user);
 		return;
 	}
 	debug("%s allowed port %d for forwarding to host %s port %d",
@@ -4148,7 +4544,7 @@ channel_update_permission(struct ssh *ssh, int idx, int newport)
 		fwd_perm_clear(&pset->permitted_user[idx]);
 	else {
 		pset->permitted_user[idx].listen_port =
-		    (datafellows & SSH_BUG_DYNAMIC_RPORT) ? 0 : newport;
+		    (ssh->compat & SSH_BUG_DYNAMIC_RPORT) ? 0 : newport;
 	}
 }
 
@@ -4187,13 +4583,15 @@ connect_next(struct channel_connect *cctx)
 			if (getnameinfo(cctx->ai->ai_addr, cctx->ai->ai_addrlen,
 			    ntop, sizeof(ntop), strport, sizeof(strport),
 			    NI_NUMERICHOST|NI_NUMERICSERV) != 0) {
-				error("connect_next: getnameinfo failed");
+				error_f("getnameinfo failed");
 				continue;
 			}
 			break;
 		default:
 			continue;
 		}
+		debug_f("start for host %.100s ([%.100s]:%s)",
+		    cctx->host, ntop, strport);
 		if ((sock = socket(cctx->ai->ai_family, cctx->ai->ai_socktype,
 		    cctx->ai->ai_protocol)) == -1) {
 			if (cctx->ai->ai_next == NULL)
@@ -4203,12 +4601,11 @@ connect_next(struct channel_connect *cctx)
 			continue;
 		}
 		if (set_nonblock(sock) == -1)
-			fatal("%s: set_nonblock(%d)", __func__, sock);
+			fatal_f("set_nonblock(%d)", sock);
 		if (connect(sock, cctx->ai->ai_addr,
 		    cctx->ai->ai_addrlen) == -1 && errno != EINPROGRESS) {
-			debug("connect_next: host %.100s ([%.100s]:%s): "
-			    "%.100s", cctx->host, ntop, strport,
-			    strerror(errno));
+			debug_f("host %.100s ([%.100s]:%s): %.100s",
+			    cctx->host, ntop, strport, strerror(errno));
 			saved_errno = errno;
 			close(sock);
 			errno = saved_errno;
@@ -4216,8 +4613,8 @@ connect_next(struct channel_connect *cctx)
 		}
 		if (cctx->ai->ai_family != AF_UNIX)
 			set_nodelay(sock);
-		debug("connect_next: host %.100s ([%.100s]:%s) "
-		    "in progress, fd=%d", cctx->host, ntop, strport, sock);
+		debug_f("connect host %.100s ([%.100s]:%s) in progress, fd=%d",
+		    cctx->host, ntop, strport, sock);
 		cctx->ai = cctx->ai->ai_next;
 		return sock;
 	}
@@ -4421,8 +4818,9 @@ channel_connect_to_port(struct ssh *ssh, const char *host, u_short port,
 	}
 
 	if (!permit || !permit_adm) {
-		logit("Received request to connect to host %.100s port %d, "
-		    "but the request was denied.", host, port);
+		logit("Received request from %.100s port %d to connect to "
+		    "host %.100s port %d, but the request was denied.",
+		    ssh_remote_ipaddr(ssh), ssh_remote_port(ssh), host, port);
 		if (reason != NULL)
 			*reason = SSH2_OPEN_ADMINISTRATIVELY_PROHIBITED;
 		return NULL;
@@ -4497,7 +4895,7 @@ channel_send_window_changes(struct ssh *ssh)
 		if (sc->channels[i] == NULL || !sc->channels[i]->client_tty ||
 		    sc->channels[i]->type != SSH_CHANNEL_OPEN)
 			continue;
-		if (ioctl(sc->channels[i]->rfd, TIOCGWINSZ, &ws) < 0)
+		if (ioctl(sc->channels[i]->rfd, TIOCGWINSZ, &ws) == -1)
 			continue;
 		channel_request_start(ssh, i, "window-change", 0);
 		if ((r = sshpkt_put_u32(ssh, (u_int)ws.ws_col)) != 0 ||
@@ -4505,8 +4903,7 @@ channel_send_window_changes(struct ssh *ssh)
 		    (r = sshpkt_put_u32(ssh, (u_int)ws.ws_xpixel)) != 0 ||
 		    (r = sshpkt_put_u32(ssh, (u_int)ws.ws_ypixel)) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0)
-			fatal("%s: channel %u: send window-change: %s",
-			    __func__, i, ssh_err(r));
+			fatal_fr(r, "channel %u; send window-change", i);
 	}
 }
 
@@ -4530,10 +4927,8 @@ rdynamic_connect_prepare(struct ssh *ssh, const char *ctype, const char *rname)
 	    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, c->self)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, c->local_window)) != 0 ||
-	    (r = sshpkt_put_u32(ssh, c->local_maxpacket)) != 0) {
-		fatal("%s: channel %i: confirm: %s", __func__,
-		    c->self, ssh_err(r));
-	}
+	    (r = sshpkt_put_u32(ssh, c->local_maxpacket)) != 0)
+		fatal_fr(r, "channel %i; confirm", c->self);
 	return c;
 }
 
@@ -4541,8 +4936,27 @@ rdynamic_connect_prepare(struct ssh *ssh, const char *ctype, const char *rname)
 static int
 rdynamic_connect_finish(struct ssh *ssh, Channel *c)
 {
+	struct ssh_channels *sc = ssh->chanctxt;
+	struct permission_set *pset = &sc->local_perms;
+	struct permission *perm;
 	struct channel_connect cctx;
+	u_int i, permit_adm = 1;
 	int sock;
+
+	if (pset->num_permitted_admin > 0) {
+		permit_adm = 0;
+		for (i = 0; i < pset->num_permitted_admin; i++) {
+			perm = &pset->permitted_admin[i];
+			if (open_match(perm, c->path, c->host_port)) {
+				permit_adm = 1;
+				break;
+			}
+		}
+	}
+	if (!permit_adm) {
+		debug_f("requested forward not permitted");
+		return -1;
+	}
 
 	memset(&cctx, 0, sizeof(cctx));
 	sock = connect_to_helper(ssh, c->path, c->host_port, SOCK_STREAM, NULL,
@@ -4600,15 +5014,15 @@ x11_create_display_inet(struct ssh *ssh, int x11_display_offset,
 				continue;
 			sock = socket(ai->ai_family, ai->ai_socktype,
 			    ai->ai_protocol);
-			if (sock < 0) {
+			if (sock == -1) {
 				error("socket: %.100s", strerror(errno));
 				freeaddrinfo(aitop);
 				return -1;
 			}
 			set_reuseaddr(sock);
-			if (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
-				debug2("%s: bind port %d: %.100s", __func__,
-				    port, strerror(errno));
+			if (bind(sock, ai->ai_addr, ai->ai_addrlen) == -1) {
+				debug2_f("bind port %d: %.100s", port,
+				    strerror(errno));
 				close(sock);
 				for (n = 0; n < num_socks; n++)
 					close(socks[n]);
@@ -4630,7 +5044,7 @@ x11_create_display_inet(struct ssh *ssh, int x11_display_offset,
 	/* Start listening for connections on the socket. */
 	for (n = 0; n < num_socks; n++) {
 		sock = socks[n];
-		if (listen(sock, SSH_LISTEN_BACKLOG) < 0) {
+		if (listen(sock, SSH_LISTEN_BACKLOG) == -1) {
 			error("listen: %.100s", strerror(errno));
 			close(sock);
 			return -1;
@@ -4643,7 +5057,7 @@ x11_create_display_inet(struct ssh *ssh, int x11_display_offset,
 		sock = socks[n];
 		/* Is this really necassary? */
 		if (hpn_disabled) 
-		nc = channel_new(ssh, "x11 listener",
+		nc = channel_new(ssh, "x11-listener",
 		    SSH_CHANNEL_X11_LISTENER, sock, sock, -1,
 		    CHAN_X11_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT,
 		    0, "X11 inet listener", 1);
@@ -4669,7 +5083,7 @@ connect_local_xsocket(u_int dnr)
 	struct sockaddr_un addr;
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sock < 0)
+	if (sock == -1)
 		error("socket: %.100s", strerror(errno));
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
@@ -4757,12 +5171,12 @@ x11_connect_display(struct ssh *ssh)
 	for (ai = aitop; ai; ai = ai->ai_next) {
 		/* Create a socket. */
 		sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		if (sock < 0) {
+		if (sock == -1) {
 			debug2("socket: %.100s", strerror(errno));
 			continue;
 		}
 		/* Connect it to the display. */
-		if (connect(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
+		if (connect(sock, ai->ai_addr, ai->ai_addrlen) == -1) {
 			debug2("connect %.100s port %u: %.100s", buf,
 			    6000 + display_number, strerror(errno));
 			close(sock);
@@ -4820,9 +5234,10 @@ x11_request_forwarding_with_spoofing(struct ssh *ssh, int client_session_id,
 		/* Extract real authentication data. */
 		sc->x11_saved_data = xmalloc(data_len);
 		for (i = 0; i < data_len; i++) {
-			if (sscanf(data + 2 * i, "%2x", &value) != 1)
+			if (sscanf(data + 2 * i, "%2x", &value) != 1) {
 				fatal("x11_request_forwarding: bad "
 				    "authentication data: %.100s", data);
+			}
 			sc->x11_saved_data[i] = value;
 		}
 		sc->x11_saved_data_len = data_len;
@@ -4844,7 +5259,6 @@ x11_request_forwarding_with_spoofing(struct ssh *ssh, int client_session_id,
 	    (r = sshpkt_put_u32(ssh, screen_number)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0 ||
 	    (r = ssh_packet_write_wait(ssh)) < 0)
-		fatal("%s: send x11-req: %s", __func__, ssh_err(r));
-
+		fatal_fr(r, "send x11-req");
 	free(new_data);
 }

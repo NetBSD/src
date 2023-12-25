@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2019/04/20 17:16:40 christos Exp $
+#	$NetBSD: Makefile,v 1.17.2.1 2023/12/25 12:30:59 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -7,15 +7,15 @@ MAN=	sshd.8 sshd_config.5 moduli.5
 
 BINDIR=	/usr/sbin
 
-SRCS=	sshd.c auth-rhosts.c auth-passwd.c \
+SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth2-pubkeyfile.c \
 	sshpty.c sshlogin.c servconf.c serverloop.c \
 	auth.c auth2.c auth-options.c session.c \
 	auth-krb5.c auth2-chall.c groupaccess.c \
 	auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
-	monitor.c monitor_wrap.c \
+	monitor.c monitor_wrap.c srclimit.c \
 	kexgexs.c sftp-server.c sftp-common.c \
-	sandbox-rlimit.c pfilter.c
+	sftp-realpath.c sandbox-rlimit.c pfilter.c
 
 COPTS.auth-options.c+=	-Wno-pointer-sign
 COPTS.ldapauth.c+=	-Wno-format-nonliteral	# XXX: should fix
@@ -58,8 +58,6 @@ LDADD+=	-lldap -lssl -llber
 DPADD+=	${LIBLDAP} ${LIBSSL} ${LIBLBER}
 .endif
 
-.include <bsd.prog.mk>
-
 LDADD+=	-lcrypt -lutil
 DPADD+=	${LIBCRYPT} ${LIBUTIL}
 
@@ -72,3 +70,10 @@ CPPFLAGS+=-DSMALL
 LDADD+=	-lblacklist
 DPADD+=	${LIBBLACKLIST}
 .endif
+
+COPTS.sshlogin.c+=	${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.ldapauth.c+=	${CC_WNO_STRINGOP_TRUNCATION} ${CC_WNO_STRINGOP_OVERFLOW}
+COPTS.monitor.c+= -Wno-error=deprecated-declarations
+COPTS.kexgexs.c+= -Wno-error=deprecated-declarations
+
+.include <bsd.prog.mk>
