@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.29 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.30 2023/12/25 13:31:00 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -229,9 +229,6 @@ RISCVREG_READ_SET_CLEAR_INLINE(sie)		// supervisor interrupt enable
 			/* Bit 4-2 is WIRI */
 #define	SIE_SSIE	__BIT(1)	// S-mode software interrupt enable
 			/* Bit 0 is WIRI */
-
-/* Mask for all interrupts */
-#define	SIE_IM		(SIE_SEI | SIE_STIE | SIE_SSIE)	/* XXX unused? */
 
 // U-mode sstatus values
 #ifdef _LP64
