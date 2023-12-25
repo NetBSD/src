@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.73 2023/06/16 20:01:20 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.74 2023/12/25 21:32:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -891,8 +891,6 @@ ENTRY(loadustp)
 	tstl	_C_LABEL(mmutype)	| HP MMU?
 	jeq	Lhpmmu9			| yes, skip
 	movl	%sp@(4),%d0		| new USTP
-	moveq	#PGSHIFT,%d1
-	lsll	%d1,%d0			| convert to addr
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	LmotommuC		| no, skip

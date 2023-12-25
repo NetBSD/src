@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.174 2023/10/14 15:31:36 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.175 2023/12/25 21:32:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1087,8 +1087,6 @@ ENTRY(loadustp)
 	tstl	_C_LABEL(mmutype)	| HP MMU?
 	jeq	Lhpmmu9			| yes, skip
 	movl	%sp@(4),%d0		| new USTP
-	moveq	#PGSHIFT,%d1
-	lsll	%d1,%d0			| convert to addr
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	LmotommuC		| no, skip
@@ -1116,7 +1114,10 @@ Lhpmmu9:
 	andl	#~MMU_CEN,%a0@(MMUCMD)	| toggle cache enable
 	orl	#MMU_CEN,%a0@(MMUCMD)	| to clear data cache
 1:
-	movl	%sp@(4),%a0@(MMUUSTP)	| load a new USTP
+	movl	%sp@(4),%d0
+	moveq	#PGSHIFT,%d1
+	lsrl	%d1,%d0			| convert to page frame
+	movl	%d0,%a0@(MMUUSTP)	| load a new USTP
 #endif
 	rts
 
