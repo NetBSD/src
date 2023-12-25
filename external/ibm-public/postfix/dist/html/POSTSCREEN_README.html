@@ -5,7 +5,8 @@
 
 <title>Postfix Postscreen Howto</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -18,7 +19,8 @@
 <h2> <a name="intro">Introduction</a> </h2>
 
 <p> This document describes features that are available in Postfix
-2.8 and later. </p>
+3.6 and later. See <a href="POSTSCREEN_3_5_README.html">
+POSTSCREEN_3_5_README.html</a> for Postfix versions 2.8 - 3.5. </p>
 
 <p> The Postfix <a href="postscreen.8.html">postscreen(8)</a> daemon provides additional protection
 against mail server overload. One <a href="postscreen.8.html">postscreen(8)</a> process handles
@@ -36,8 +38,8 @@ requires client authentication. Alternatively, a site could set up
 a dedicated, non-postscreen, "port 25" server that provides submission
 service and client authentication, but no MX service.  </p>
 
-<p> <a href="postscreen.8.html">postscreen(8)</a> maintains a temporary whitelist for clients that
-pass its tests; by allowing whitelisted clients to skip tests,
+<p> <a href="postscreen.8.html">postscreen(8)</a> maintains a temporary allowlist for clients that
+pass its tests; by allowing allowlisted clients to skip tests,
 <a href="postscreen.8.html">postscreen(8)</a> minimizes its impact on legitimate email traffic.
 </p>
 
@@ -106,15 +108,15 @@ problem will get worse before things improve, if ever. Without a
 tool like <a href="postscreen.8.html">postscreen(8)</a> that keeps the zombies away, Postfix would be
 spending most of its resources not receiving email. </p>
 
-<p> The main challenge for <a href="postscreen.8.html">postscreen(8)</a> is to make an is-it-a-zombie
+<p> The main challenge for <a href="postscreen.8.html">postscreen(8)</a> is to make an is-a-zombie
 decision based on a single measurement. This is necessary because
 many zombies try to fly under the radar and avoid spamming the same
 site repeatedly.  Once <a href="postscreen.8.html">postscreen(8)</a> decides that a client is
-not-a-zombie, it whitelists the client temporarily to avoid further
+not-a-zombie, it allowlists the client temporarily to avoid further
 delays for legitimate mail. </p>
 
 <p> Zombies have challenges too: they have only a limited amount
-of time to deliver spam before their IP address becomes blacklisted.
+of time to deliver spam before their IP address becomes denylisted.
 To speed up spam deliveries, zombies make compromises in their SMTP
 protocol implementation.  For example, they speak before their turn,
 or they ignore responses from SMTP servers and continue sending
@@ -122,15 +124,15 @@ mail even when the server tells them to go away. </p>
 
 <p> <a href="postscreen.8.html">postscreen(8)</a> uses a variety of measurements to recognize
 zombies.  First, <a href="postscreen.8.html">postscreen(8)</a> determines if the remote SMTP client
-IP address is blacklisted.  Second, <a href="postscreen.8.html">postscreen(8)</a> looks for protocol
+IP address is denylisted.  Second, <a href="postscreen.8.html">postscreen(8)</a> looks for protocol
 compromises that are made to speed up delivery.  These are good
-indicators for making is-it-a-zombie decisions based on single
+indicators for making is-a-zombie decisions based on single
 measurements.  </p>
 
 <p> <a href="postscreen.8.html">postscreen(8)</a> does not inspect message content. Message content
 can vary from one delivery to the next, especially with clients
 that (also) send legitimate email.  Content is not a good indicator
-for making is-it-a-zombie decisions based on single measurements,
+for making is-a-zombie decisions based on single measurements,
 and that is the problem that <a href="postscreen.8.html">postscreen(8)</a> is focused on.  </p>
 
 <h2> <a name="general"> General operation </a> </h2>
@@ -138,8 +140,8 @@ and that is the problem that <a href="postscreen.8.html">postscreen(8)</a> is fo
 <p> For each connection from an SMTP client, <a href="postscreen.8.html">postscreen(8)</a> performs
 a number of tests
 in the order as described below.  Some tests introduce a delay of
-a few seconds.  <a href="postscreen.8.html">postscreen(8)</a> maintains a temporary whitelist for
-clients that pass its tests; by allowing whitelisted clients to
+a few seconds.  <a href="postscreen.8.html">postscreen(8)</a> maintains a temporary allowlist for
+clients that pass its tests; by allowing allowlisted clients to
 skip tests, <a href="postscreen.8.html">postscreen(8)</a> minimizes its impact on legitimate email
 traffic.  </p>
 
@@ -158,25 +160,25 @@ overhead for legitimate clients. </p>
 <h2> <a name="quick">Quick tests before everything else</a> </h2>
 
 <p> Before engaging in SMTP-level tests. <a href="postscreen.8.html">postscreen(8)</a> queries a
-number of local black and whitelists. These tests speed up the
+number of local deny and allowlists. These tests speed up the
 handling of known clients. </p>
 
 <ul>
 
-<li> <a href="#perm_white_black"> Permanent white/blacklist test </a>
+<li> <a href="#perm_allow_deny"> Permanent allow/denylist test </a>
 
-<li> <a href="#temp_white"> Temporary whitelist test </a>
+<li> <a href="#temp_allow"> Temporary allowlist test </a>
 
-<li> <a href="#white_veto"> MX Policy test </a>
+<li> <a href="#allow_veto"> MX Policy test </a>
 
 </ul>
 
-<h3> <a name="perm_white_black"> Permanent white/blacklist test </a> </h3>
+<h3> <a name="perm_allow_deny"> Permanent allow/denylist test </a> </h3>
 
 <p> The <a href="postconf.5.html#postscreen_access_list">postscreen_access_list</a> parameter (default: <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>)
 specifies a permanent access list for SMTP client IP addresses. Typically
-one would specify something that whitelists local networks, followed
-by a CIDR table for selective white- and blacklisting. </p>
+one would specify something that allowlists local networks, followed
+by a CIDR table for selective allow- and denylisting. </p>
 
 <p> Example: </p>
 
@@ -187,7 +189,7 @@ by a CIDR table for selective white- and blacklisting. </p>
 
 /etc/postfix/postscreen_access.<a href="cidr_table.5.html">cidr</a>:
    # Rules are evaluated in the order as specified.
-   # Blacklist 192.168.* except 192.168.0.1.
+   # Denylist 192.168.* except 192.168.0.1.
    192.168.0.1          permit
    192.168.0.0/16       reject
 </pre>
@@ -199,40 +201,51 @@ details.  </p>
 <a href="postscreen.8.html">postscreen(8)</a> logs this with the client address and port number as:
 </p>
 
+<blockquote> 
 <pre>
-    <b>WHITELISTED</b> <i>[address]:port</i>
+<b>ALLOWLISTED</b> <i>[address]:port</i>
 </pre>
+</blockquote>
 
-<p> The whitelist action is not configurable: immediately hand off the
+<blockquote> <p> Use the <a href="postconf.5.html#respectful_logging">respectful_logging</a> configuration parameter to
+select a deprecated form of this logging. </p> </blockquote>
+
+<p> The allowlist action is not configurable: immediately hand off the
 connection to a Postfix SMTP server process. </p>
 
 <p> When the SMTP client address matches a "reject" action,
 <a href="postscreen.8.html">postscreen(8)</a> logs this with the client address and port number as:
 </p>
 
+<blockquote> 
 <pre>
-    <b>BLACKLISTED</b> <i>[address]:port</i>
+<b>DENYLISTED</b> <i>[address]:port</i>
 </pre>
+</blockquote>
 
-<p> The <a href="postconf.5.html#postscreen_blacklist_action">postscreen_blacklist_action</a> parameter specifies the action
+<blockquote> <p> Use the <a href="postconf.5.html#respectful_logging">respectful_logging</a> configuration parameter to
+select a deprecated form of this logging. </p> </blockquote>
+
+<p> The <a href="postconf.5.html#postscreen_denylist_action">postscreen_denylist_action</a> parameter specifies the action
 that is taken next.  See "<a href="#fail_before_220">When tests
 fail before the 220 SMTP server greeting</a>" below. </p>
 
-<h3> <a name="temp_white"> Temporary whitelist test </a> </h3>
+<h3> <a name="temp_allow"> Temporary allowlist test </a> </h3>
 
 <p> The <a href="postscreen.8.html">postscreen(8)</a> daemon maintains a <i>temporary</i>
-whitelist for SMTP client IP addresses that have passed all
+allowlist for SMTP client IP addresses that have passed all
 the tests described below. The <a href="postconf.5.html#postscreen_cache_map">postscreen_cache_map</a> parameter
-specifies the location of the temporary whitelist.  The
-temporary whitelist is not used for SMTP client addresses
+specifies the location of the temporary allowlist.  The
+temporary allowlist is not used for SMTP client addresses
 that appear on the <i>permanent</i> access list. </p>
 
-<p> By default the temporary whitelist is not shared with other
-postscreen(8) daemons. See <a href="#temp_white_sharing"> Sharing
-the temporary whitelist </a> below for alternatives. </p>
+<p> By default the temporary allowlist is not shared with other
+<a href="postscreen.8.html">postscreen(8)</a> daemons. See
+<a href="#temp_allow_sharing"> Sharing
+the temporary allowlist </a> below for alternatives. </p>
 
 <p> When the SMTP client address appears on the temporary
-whitelist, <a href="postscreen.8.html">postscreen(8)</a> logs this with the client address and port
+allowlist, <a href="postscreen.8.html">postscreen(8)</a> logs this with the client address and port
 number as: </p>
 
 <pre>
@@ -241,19 +254,19 @@ number as: </p>
 
 <p> The action is not configurable: immediately hand off the
 connection to a Postfix SMTP server process.  The client is
-excluded from further tests until its temporary whitelist
+excluded from further tests until its temporary allowlist
 entry expires, as controlled with the postscreen_*_ttl
 parameters.  Expired entries are silently renewed if possible. </p>
 
-<h3> <a name="white_veto"> MX Policy test </a> </h3>
+<h3> <a name="allow_veto"> MX Policy test </a> </h3>
 
 <p> When the remote SMTP client is not on the static access list
-or temporary whitelist, <a href="postscreen.8.html">postscreen(8)</a> can implement a number of
-whitelist tests, before it grants the client a temporary whitelist
+or temporary allowlist, <a href="postscreen.8.html">postscreen(8)</a> can implement a number of
+allowlist tests, before it grants the client a temporary allowlist
 status that allows it to talk to a Postfix SMTP server process. </p>
 
 <p> When <a href="postscreen.8.html">postscreen(8)</a> is configured to monitor all primary and
-backup MX addresses, it can refuse to whitelist clients that connect
+backup MX addresses, it can refuse to allowlist clients that connect
 to a backup MX address only (an old spammer trick to take advantage
 of backup MX hosts with weaker anti-spam policies than primary MX
 hosts). </p>
@@ -266,42 +279,45 @@ failure.  </p> </blockquote>
 <ul>
 
 <li> <p> First, configure the host to listen on both primary and
-backup MX addresses. Use the appropriate <tt>ifconfig</tt> command
-for the local operating system, or update the appropriate configuration
-files and "refresh" the network protocol stack. </p>
+backup MX addresses. Use the appropriate <tt>ifconfig</tt> or <tt>ip</tt>
+command for the local operating system, or update the appropriate
+configuration files and "refresh" the network protocol stack. </p>
 
 <p> <p> Second, configure Postfix to listen on the new IP address
 (this step is needed when you have specified <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> in
 <a href="postconf.5.html">main.cf</a>). </p>
 
-<li> <p> Then, configure <a href="postscreen.8.html">postscreen(8)</a> to deny the temporary whitelist
+<li> <p> Then, configure <a href="postscreen.8.html">postscreen(8)</a> to deny the temporary allowlist
 status on the backup MX address(es).  An example for Wietse's
 server is: </p>
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#postscreen_whitelist_interfaces">postscreen_whitelist_interfaces</a> = !168.100.189.8 <a href="DATABASE_README.html#types">static</a>:all
+    <a href="postconf.5.html#postscreen_allowlist_interfaces">postscreen_allowlist_interfaces</a> = !168.100.189.8 <a href="DATABASE_README.html#types">static</a>:all
 </pre>
 
-<p> Translation: allow clients to obtain the temporary whitelist
+<p> Translation: allow clients to obtain the temporary allowlist
 status on all server IP addresses except 168.100.189.8, which is a
 backup MX address.  </p>
 
 </ul>
 
-<p> When a non-whitelisted client connects the backup MX address,
+<p> When a non-allowlisted client connects the backup MX address,
 <a href="postscreen.8.html">postscreen(8)</a> logs this with the client address and port number as:
 </p>
 
-<pre>
-    <b>CONNECT from</b> <i>[address]:port</i> <b>to [168.100.189.8]:25</b>
-    <b>WHITELIST VETO</b> <i>[address]:port</i>
-</pre>
+<blockquote> <pre>
+<b>CONNECT from</b> <i>[address]:port</i> <b>to [168.100.189.8]:25</b>
+<b>ALLOWLIST VETO</b> <i>[address]:port</i>
+</pre> </blockquote>
+
+<blockquote> <p> Use the <a href="postconf.5.html#respectful_logging">respectful_logging</a> configuration parameter to
+select a deprecated form of this logging. </p> </blockquote>
 
 <p> Translation: the client at <i>[address]:port</i> connected to
-the backup MX address 168.100.189.8 while it was not whitelisted.
-The client will not be granted the temporary whitelist status, even
-if passes all the whitelist tests described below. </p>
+the backup MX address 168.100.189.8 while it was not allowlisted.
+The client will not be granted the temporary allowlist status, even
+if passes all the allowlist tests described below. </p>
 
 <h2> <a name="before_220"> Tests before the 220 SMTP server greeting </a> </h2>
 
@@ -310,8 +326,9 @@ interval before the "220 <i>text</i>..." server greeting, where
 <a href="postscreen.8.html">postscreen(8)</a> can run a number of tests in parallel. </p>
 
 <p> When a good client passes these tests, and no "<a
-href="#after_220">deep protocol tests</a>" are configured, postscreen(8)
-adds the client to the temporary whitelist and hands off the "live"
+href="#after_220">deep protocol tests</a>"
+are configured, <a href="postscreen.8.html">postscreen(8)</a>
+adds the client to the temporary allowlist and hands off the "live"
 connection to a Postfix SMTP server process.  The client can then
 continue as if <a href="postscreen.8.html">postscreen(8)</a> never even existed (except of course
 for the short <a href="postconf.5.html#postscreen_greet_wait">postscreen_greet_wait</a> delay).  </p>
@@ -320,7 +337,7 @@ for the short <a href="postconf.5.html#postscreen_greet_wait">postscreen_greet_w
 
 <li> <a href="#pregreet"> Pregreet test </a>
 
-<li> <a href="#dnsbl"> DNS White/blacklist test </a>
+<li> <a href="#dnsbl"> DNS Allow/denylist test </a>
 
 <li> <a href="#fail_before_220">When tests fail before the 220 SMTP server greeting</a>
 
@@ -348,8 +365,8 @@ an empty teaser banner: </p>
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    # Exclude broken clients by whitelisting. Clients in <a href="postconf.5.html#mynetworks">mynetworks</a>
-    # should always be whitelisted.
+    # Exclude broken clients by allowlisting. Clients in <a href="postconf.5.html#mynetworks">mynetworks</a>
+    # should always be allowlisted.
     <a href="postconf.5.html#postscreen_access_list">postscreen_access_list</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, 
         <a href="cidr_table.5.html">cidr</a>:/etc/postfix/postscreen_access.cidr
 
@@ -359,7 +376,7 @@ an empty teaser banner: </p>
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    # Disable the teaser banner (try whitelisting first if you can).
+    # Disable the teaser banner (try allowlisting first if you can).
     <a href="postconf.5.html#postscreen_greet_banner">postscreen_greet_banner</a> =
 </pre>
 
@@ -382,11 +399,11 @@ and \n for newline). </p>
 is taken next.  See "<a href="#fail_before_220">When tests fail
 before the 220 SMTP server greeting</a>" below. </p>
 
-<h3> <a name="dnsbl"> DNS White/blacklist test </a> </h3>
+<h3> <a name="dnsbl"> DNS Allow/denylist test </a> </h3>
 
 <p> The <a href="postconf.5.html#postscreen_dnsbl_sites">postscreen_dnsbl_sites</a> parameter (default: empty) specifies
 a list of DNS blocklist servers with optional filters and weight
-factors (positive weights for blacklisting, negative for whitelisting).
+factors (positive weights for denylisting, negative for allowlisting).
 These servers will be queried in parallel with the reverse client
 IP address.  This test is disabled by default. </p>
 
@@ -416,9 +433,9 @@ before the 220 SMTP server greeting</a>" below. </p>
 
 <h3> <a name="fail_before_220">When tests fail before the 220 SMTP server greeting</a> </h3>
 
-<p> When the client address matches the permanent blacklist, or
+<p> When the client address matches the permanent denylist, or
 when the client fails the pregreet or DNSBL tests, the action is
-specified with <a href="postconf.5.html#postscreen_blacklist_action">postscreen_blacklist_action</a>, <a href="postconf.5.html#postscreen_greet_action">postscreen_greet_action</a>,
+specified with <a href="postconf.5.html#postscreen_denylist_action">postscreen_denylist_action</a>, <a href="postconf.5.html#postscreen_greet_action">postscreen_greet_action</a>,
 or <a href="postconf.5.html#postscreen_dnsbl_action">postscreen_dnsbl_action</a>, respectively. </p>
 
 <dl>
@@ -464,9 +481,9 @@ measures may help to avoid email delays: </p>
 <ul>
 
 <li> <p> Allow "good" clients to skip tests with the
-<a href="postconf.5.html#postscreen_dnsbl_whitelist_threshold">postscreen_dnsbl_whitelist_threshold</a> feature (Postfix 2.11 and
-later). This is especially effective for sites such as Google that
-never retry immediately from the same IP address. </p>
+<a href="postconf.5.html#postscreen_dnsbl_allowlist_threshold">postscreen_dnsbl_allowlist_threshold</a> feature. This is especially effective
+for large providers that usually don't retry from the same IP
+address. </p>
 
 <li> <p> Small sites: Configure <a href="postscreen.8.html">postscreen(8)</a> to listen on multiple
 IP addresses, published in DNS as different IP addresses for the
@@ -512,7 +529,8 @@ service, so that they never have to deal with <a href="postscreen.8.html">postsc
 receiver send one command and one response at a time.  Unlike the
 Postfix SMTP server, <a href="postscreen.8.html">postscreen(8)</a> does not announce support
 for ESMTP command pipelining.  Therefore, clients are not allowed
-to send multiple commands. postscreen(8)'s <a href="#after_220">deep
+to send multiple commands. <a href="postscreen.8.html">postscreen(8)</a>'s
+<a href="#after_220">deep
 protocol test</a> for this is disabled by default. </p>
 
 <p> With "<a href="postconf.5.html#postscreen_pipelining_enable">postscreen_pipelining_enable</a> = yes", <a href="postscreen.8.html">postscreen(8)</a> detects
@@ -546,7 +564,8 @@ after the 220 SMTP server greeting</a>" below. </p>
 of this is the usage of commands such as CONNECT and other non-SMTP
 commands. Just like the Postfix SMTP server's <a href="postconf.5.html#smtpd_forbidden_commands">smtpd_forbidden_commands</a>
 feature, <a href="postscreen.8.html">postscreen(8)</a> has an equivalent <a href="postconf.5.html#postscreen_forbidden_commands">postscreen_forbidden_commands</a>
-feature to block these clients. postscreen(8)'s <a href="#after_220">deep
+feature to block these clients. <a href="postscreen.8.html">postscreen(8)</a>'s
+<a href="#after_220">deep
 protocol test</a> for this is disabled by default.  </p>
 
 <p> With "<a href="postconf.5.html#postscreen_non_smtp_command_enable">postscreen_non_smtp_command_enable</a> = yes", <a href="postscreen.8.html">postscreen(8)</a>
@@ -583,7 +602,8 @@ tests fail after the 220 SMTP server greeting</a>" below. </p>
 <p> SMTP is a line-oriented protocol: lines have a limited length,
 and are terminated with &lt;CR&gt;&lt;LF&gt;. Lines ending in a
 "bare" &lt;LF&gt;, that is newline not preceded by carriage return,
-are not allowed in SMTP.  postscreen(8)'s <a href="#after_220">deep
+are not allowed in SMTP.  <a href="postscreen.8.html">postscreen(8)</a>'s
+<a href="#after_220">deep
 protocol test</a> for this is disabled by default.  </p>
 
 <p> With "<a href="postconf.5.html#postscreen_bare_newline_enable">postscreen_bare_newline_enable</a> = yes", <a href="postscreen.8.html">postscreen(8)</a>
@@ -714,20 +734,29 @@ The "<tt><b>after</b> <i>command</i></tt>" portion is logged with
 Postfix 2.10 and later. </p>
 
 <p> When an SMTP client makes too many connections at the same time,
-or when all <a href="postscreen.8.html">postscreen(8)</a> ports are busy, <a href="postscreen.8.html">postscreen(8)</a> rejects the
-connection with a 421 status code and logs: </p>
+<a href="postscreen.8.html">postscreen(8)</a> rejects the connection with a 421 status code and logs: </p>
 
 <pre>
     <b>NOQUEUE: reject: CONNECT from</b> <i>[address]:port</i><b>: too many connections</b>
+</pre>
+
+<p> The <a href="postconf.5.html#postscreen_client_connection_count_limit">postscreen_client_connection_count_limit</a> parameter controls this limit. </p>
+
+<p> When an SMTP client connects after <a href="postscreen.8.html">postscreen(8)</a> has reached a
+connection count limit, <a href="postscreen.8.html">postscreen(8)</a> rejects the connection with
+a 421 status code and logs: </p>
+
+<pre>
+    <b>NOQUEUE: reject: CONNECT from</b> <i>[address]:port</i><b>: all screening ports busy</b>
     <b>NOQUEUE: reject: CONNECT from</b> <i>[address]:port</i><b>: all server ports busy</b>
 </pre>
 
-<p> The <a href="postconf.5.html#postscreen_client_connection_count_limit">postscreen_client_connection_count_limit</a> and
-<a href="postconf.5.html#postscreen_pre_queue_limit">postscreen_pre_queue_limit</a> parameters control these limits.  </p>
+<p> The <a href="postconf.5.html#postscreen_pre_queue_limit">postscreen_pre_queue_limit</a> and <a href="postconf.5.html#postscreen_post_queue_limit">postscreen_post_queue_limit</a>
+parameters control these limits.  </p>
 
 <h2> <a name="victory">When all tests succeed</a> </h2>
 
-<p> When a new SMTP client passes all tests (i.e. it is not whitelisted
+<p> When a new SMTP client passes all tests (i.e. it is not allowlisted
 via some mechanism), <a href="postscreen.8.html">postscreen(8)</a> logs this as: </p>
 
 <pre>
@@ -736,8 +765,8 @@ via some mechanism), <a href="postscreen.8.html">postscreen(8)</a> logs this as:
 
 <p> Where <i>[address]:port</i> are the client IP address and port.
 Then, <a href="postscreen.8.html">postscreen(8)</a>
-creates a temporary whitelist entry that excludes the client IP
-address from further tests until the temporary whitelist entry
+creates a temporary allowlist entry that excludes the client IP
+address from further tests until the temporary allowlist entry
 expires, as controlled with the postscreen_*_ttl parameters. </p>
 
 <p> When no "<a href="#after_220">deep protocol tests</a>" are
@@ -774,7 +803,7 @@ mail</a>
 
 <li> <a href="#turnoff"> Turning off postscreen(8) </a>
 
-<li> <a href="#temp_white_sharing"> Sharing the temporary whitelist
+<li> <a href="#temp_allow_sharing"> Sharing the temporary allowlist
 </a>
 
 </ul>
@@ -794,8 +823,8 @@ tend to have broken SMTP implementations): </p>
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    # Exclude broken clients by whitelisting. Clients in <a href="postconf.5.html#mynetworks">mynetworks</a>
-    # should always be whitelisted.
+    # Exclude broken clients by allowlisting. Clients in <a href="postconf.5.html#mynetworks">mynetworks</a>
+    # should always be allowlisted.
     <a href="postconf.5.html#postscreen_access_list">postscreen_access_list</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, 
         <a href="cidr_table.5.html">cidr</a>:/etc/postfix/postscreen_access.cidr
 
@@ -893,14 +922,15 @@ Postfix version 2.8. </p>
 <li> <p> Some <a href="postscreen.8.html">postscreen(8)</a> configuration parameters implement
 stress-dependent behavior. This is supported only when the default
 value is stress-dependent (that is, "postconf -d <i>parametername</i>"
-output shows "<i>parametername</i> =
-${stress?<i>something</i>}${stress:<i>something</i>}").
+output shows
+"<i>parametername</i>&nbsp;=&nbsp;${stress?<i>something</i>}${stress:<i>something</i>}" or
+"<i>parametername</i>&nbsp;=&nbsp;${stress?{<i>something</i>}:{<i>something</i>}}").
 Other parameters always evaluate as if the stress value is the empty
 string. </p>
 
 <li> <p> See "<a href="#before_220">Tests before the 220 SMTP server
-greeting</a>" for details about the logging from these postscreen(8)
-tests. </p>
+greeting</a>" for details about the logging from these
+<a href="postscreen.8.html">postscreen(8)</a> tests. </p>
 
 <li> <p> If you run Postfix 2.6 or earlier you must stop and start
 the master daemon ("<tt>postfix stop; postfix start</tt>").  This
@@ -912,8 +942,8 @@ work reliably on all systems. </p>
 <h3> <a name="starttls"> postscreen(8) TLS configuration </a> </h3>
 
 <p> <a href="postscreen.8.html">postscreen(8)</a> TLS support is available for remote SMTP clients
-that aren't whitelisted, including clients that need to renew their
-temporary whitelist status.  When a remote SMTP client requests TLS
+that aren't allowlisted, including clients that need to renew their
+temporary allowlist status.  When a remote SMTP client requests TLS
 service, <a href="postscreen.8.html">postscreen(8)</a> invisibly hands off the connection to a
 <a href="tlsproxy.8.html">tlsproxy(8)</a> process. Then, <a href="tlsproxy.8.html">tlsproxy(8)</a> encrypts and decrypts the
 traffic between <a href="postscreen.8.html">postscreen(8)</a> and the remote SMTP client. One
@@ -967,15 +997,16 @@ Postfix SMTP servers dramatically.  </p>
 clients that talk before their turn, and to log the helo/sender/recipient
 information. This stops over half of all known-to-be illegitimate
 connections to Wietse's mail server. It is backup protection for
-zombies that haven't yet been blacklisted. </p>
+zombies that haven't yet been denylisted. </p>
 
 <li> <p> You can also enable "<a href="#after_220">deep protocol
 tests</a>", but these are more intrusive than the pregreet or DNSBL
 tests. </p>
 
 <p> When a good client passes the "<a href="#after_220">deep
-protocol tests</a>", postscreen(8) adds the client to the temporary
-whitelist but it cannot hand off the "live" connection to a Postfix
+protocol tests</a>",
+<a href="postscreen.8.html">postscreen(8)</a> adds the client to the temporary
+allowlist but it cannot hand off the "live" connection to a Postfix
 SMTP server process in the middle of the session. Instead, <a href="postscreen.8.html">postscreen(8)</a>
 defers mail delivery attempts with a 4XX status, logs the
 helo/sender/recipient information, and waits for the client to
@@ -991,12 +1022,12 @@ tests</a>" is that some "good" clients don't return after the 4XX
 reply; these clients were not so good after all. </p>
 
 <p> Unfortunately, some senders will retry requests from different
-IP addresses, and may never get whitelisted.  For this reason,
+IP addresses, and may never get allowlisted.  For this reason,
 Wietse stopped using "<a href="#after_220">deep protocol tests</a>"
 on his own internet-facing mail server.  </p>
 
-<li> <p> There is also support for permanent blacklisting and
-whitelisting; see the description of the <a href="postconf.5.html#postscreen_access_list">postscreen_access_list</a>
+<li> <p> There is also support for permanent denylisting and
+allowlisting; see the description of the <a href="postconf.5.html#postscreen_access_list">postscreen_access_list</a>
 parameter for details. </p>
 
 </ul>
@@ -1061,23 +1092,23 @@ may follow.  </p>
 
 </ol>
 
-<h3> <a name="temp_white_sharing"> Sharing the temporary whitelist </a> </h3>
+<h3> <a name="temp_allow_sharing"> Sharing the temporary allowlist </a> </h3>
 
-<p> By default, the temporary whitelist is not shared between
+<p> By default, the temporary allowlist is not shared between
 multiple <a href="postscreen.8.html">postscreen(8)</a> daemons.  To enable sharing, choose one
 of the following options: </p>
 
 <ul>
 
-<li> <p> A non-persistent <a href="memcache_table.5.html">memcache</a>: temporary whitelist can be shared
+<li> <p> A non-persistent <a href="memcache_table.5.html">memcache</a>: temporary allowlist can be shared
     between <a href="postscreen.8.html">postscreen(8)</a> daemons on the same host or different
     hosts.  Disable cache cleanup (<a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a>
-    = 0) in all <a href="postscreen.8.html">postscreen(8)</a> daemons because <a href="memcache_table.5.html">memcache</a>: does not
-    implement this (but see example 4 below for <a href="memcache_table.5.html">memcache</a>: with
+    = 0) in all <a href="postscreen.8.html">postscreen(8)</a> daemons because <a href="memcache_table.5.html">memcache</a>: has no
+    first-next API (but see example 4 below for <a href="memcache_table.5.html">memcache</a>: with
     persistent backup). This requires Postfix 2.9 or later. </p>
 
     <pre>
-    # Example 1: non-persistent <a href="memcache_table.5.html">memcache</a>: whitelist.
+    # Example 1: non-persistent <a href="memcache_table.5.html">memcache</a>: allowlist.
     /etc/postfix/<a href="postconf.5.html">main.cf</a>:
         <a href="postconf.5.html#postscreen_cache_map">postscreen_cache_map</a> = <a href="memcache_table.5.html">memcache</a>:/etc/postfix/postscreen_cache
         <a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a> = 0
@@ -1088,7 +1119,7 @@ of the following options: </p>
     </pre>
 
 <li> <p>
-    A persistent <a href="lmdb_table.5.html">lmdb</a>: temporary whitelist can be shared between
+    A persistent <a href="lmdb_table.5.html">lmdb</a>: temporary allowlist can be shared between
     <a href="postscreen.8.html">postscreen(8)</a> daemons that run under the same <a href="master.8.html">master(8)</a> daemon,
     or under different <a href="master.8.html">master(8)</a> daemons on the same host.  Disable
     cache cleanup (<a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a> = 0) in all
@@ -1096,28 +1127,28 @@ of the following options: </p>
     cleanup. This requires Postfix 2.11 or later. </p>
 
     <pre>
-    # Example 2: persistent <a href="lmdb_table.5.html">lmdb</a>: whitelist.
+    # Example 2: persistent <a href="lmdb_table.5.html">lmdb</a>: allowlist.
     /etc/postfix/<a href="postconf.5.html">main.cf</a>:
         <a href="postconf.5.html#postscreen_cache_map">postscreen_cache_map</a> = <a href="lmdb_table.5.html">lmdb</a>:$<a href="postconf.5.html#data_directory">data_directory</a>/postscreen_cache
         # See note 1 below.
         # <a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a> = 0
     </pre>
 
-<li> <p> Other kinds of persistent temporary whitelist can be shared
+<li> <p> Other kinds of persistent temporary allowlist can be shared
     only between <a href="postscreen.8.html">postscreen(8)</a> daemons that run under the same
-    <a href="master.8.html">master(8)</a> daemon. In this case, temporary whitelist access must
+    <a href="master.8.html">master(8)</a> daemon. In this case, temporary allowlist access must
     be shared through the <a href="proxymap.8.html">proxymap(8)</a> daemon. This requires Postfix
     2.9 or later. </p>
 
     <pre> 
-    # Example 3: proxied <a href="DATABASE_README.html#types">btree</a>: whitelist.
+    # Example 3: proxied <a href="DATABASE_README.html#types">btree</a>: allowlist.
     /etc/postfix/<a href="postconf.5.html">main.cf</a>:
         <a href="postconf.5.html#postscreen_cache_map">postscreen_cache_map</a> = 
             <a href="proxymap.8.html">proxy</a>:<a href="DATABASE_README.html#types">btree</a>:/var/lib/postfix/postscreen_cache
         # See note 1 below.
         # <a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a> = 0
 
-    # Example 4: proxied <a href="DATABASE_README.html#types">btree</a>: whitelist with <a href="memcache_table.5.html">memcache</a>: accelerator.
+    # Example 4: proxied <a href="DATABASE_README.html#types">btree</a>: allowlist with <a href="memcache_table.5.html">memcache</a>: accelerator.
     /etc/postfix/<a href="postconf.5.html">main.cf</a>:
         <a href="postconf.5.html#postscreen_cache_map">postscreen_cache_map</a> = <a href="memcache_table.5.html">memcache</a>:/etc/postfix/postscreen_cache
         <a href="postconf.5.html#proxy_write_maps">proxy_write_maps</a> = 
@@ -1177,7 +1208,8 @@ POP, IMAP, NNTP, and FTP over TLS. </p>
 <p> <a href="postscreen.8.html">postscreen(8)</a> was officially released as part of the Postfix
 2.8 stable release in January 2011.</p>
 
+<p> Noel Jones helped with the Postfix 3.6 transition towards respectful
+documentation. </p>
+
 </body>
-
 </html>
-

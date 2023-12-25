@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - pipe(8) </title>
 </head> <body> <pre>
 PIPE(8)                                                                PIPE(8)
@@ -121,7 +122,7 @@ PIPE(8)                                                                PIPE(8)
                      command-line <b>$sender</b>, <b>$original_recipient</b> and  <b>$recipient</b>
                      address  localparts (text to the left of the right-most <b>@</b>
                      character), according to an 8-bit transparent version  of
-                     <a href="http://tools.ietf.org/html/rfc822">RFC  822</a>.   This  is recommended for delivery via <b>UUCP</b> or
+                     <a href="https://tools.ietf.org/html/rfc822">RFC  822</a>.   This  is recommended for delivery via <b>UUCP</b> or
                      <b>BSMTP</b>.
 
                      The result is compatible with the address parsing of com-
@@ -169,47 +170,49 @@ PIPE(8)                                                                PIPE(8)
               as an argument by itself:
 
                   <i>Right</i>: command -f $sender -- $recipient
+              NOTE: DO NOT put quotes around the command, $sender, or $recipi-
+              ent.
 
               This feature is available as of Postfix 2.3.
 
        <b>size</b>=<i>size</i><b>_</b><i>limit</i> (optional)
-              Don't  deliver  messages that exceed this size limit (in bytes);
+              Don't deliver messages that exceed this size limit  (in  bytes);
               return them to the sender instead.
 
        <b>user</b>=<i>username</i> (required)
 
        <b>user</b>=<i>username</i>:<i>groupname</i>
-              Execute the external command with the user ID and  group  ID  of
-              the  specified  <i>username</i>.   The software refuses to execute com-
-              mands with root privileges, or with the privileges of  the  mail
+              Execute  the  external  command with the user ID and group ID of
+              the specified <i>username</i>.  The software refuses  to  execute  com-
+              mands  with  root privileges, or with the privileges of the mail
               system owner. If <i>groupname</i> is specified, the corresponding group
               ID is used instead of the group ID of <i>username</i>.
 
        <b>argv</b>=<i>command</i>... (required)
-              The command to be executed. This must be specified as  the  last
+              The  command  to be executed. This must be specified as the last
               command attribute.  The command is executed directly, i.e. with-
-              out interpretation of shell meta characters by a  shell  command
+              out  interpretation  of shell meta characters by a shell command
               interpreter.
 
               Specify "{" and "}" around command arguments that contain white-
-              space (Postfix 3.0 and later). Whitespace after "{"  and  before
-              "}" is ignored.
+              space  (Postfix 3.0 and later). Whitespace after the opening "{"
+              and before the closing "}" is ignored.
 
-              In  the command argument vector, the following macros are recog-
+              In the command argument vector, the following macros are  recog-
               nized and replaced with corresponding information from the Post-
               fix queue manager delivery request.
 
-              In  addition to the form ${<i>name</i>}, the forms $<i>name</i> and the depre-
+              In addition to the form ${<i>name</i>}, the forms $<i>name</i> and the  depre-
               cated form $(<i>name</i>) are also recognized.  Specify <b>$$</b> where a sin-
               gle <b>$</b> is wanted.
 
               <b>${client_address}</b>
-                     This  macro expands to the remote client network address.
+                     This macro expands to the remote client network  address.
 
                      This feature is available as of Postfix 2.2.
 
               <b>${client_helo}</b>
-                     This macro expands to  the  remote  client  HELO  command
+                     This  macro  expands  to  the  remote client HELO command
                      parameter.
 
                      This feature is available as of Postfix 2.2.
@@ -220,7 +223,7 @@ PIPE(8)                                                                PIPE(8)
                      This feature is available as of Postfix 2.2.
 
               <b>${client_port}</b>
-                     This  macro expands to the remote client TCP port number.
+                     This macro expands to the remote client TCP port  number.
 
                      This feature is available as of Postfix 2.5.
 
@@ -231,7 +234,7 @@ PIPE(8)                                                                PIPE(8)
 
               <b>${domain}</b>
                      This macro expands to the domain portion of the recipient
-                     address.   For  example,  with an address <i>user+foo@domain</i>
+                     address.  For example, with  an  address  <i>user+foo@domain</i>
                      the domain is <i>domain</i>.
 
                      This information is modified by the <b>h</b> flag for case fold-
@@ -240,12 +243,12 @@ PIPE(8)                                                                PIPE(8)
                      This feature is available as of Postfix 2.5.
 
               <b>${extension}</b>
-                     This  macro  expands to the extension part of a recipient
-                     address.  For example, with  an  address  <i>user+foo@domain</i>
+                     This macro expands to the extension part of  a  recipient
+                     address.   For  example,  with an address <i>user+foo@domain</i>
                      the extension is <i>foo</i>.
 
-                     A   command-line   argument  that  contains  <b>${extension}</b>
-                     expands into as many command-line arguments as there  are
+                     A  command-line  argument  that   contains   <b>${extension}</b>
+                     expands  into as many command-line arguments as there are
                      recipients.
 
                      This information is modified by the <b>u</b> flag for case fold-
@@ -253,11 +256,11 @@ PIPE(8)                                                                PIPE(8)
 
               <b>${mailbox}</b>
                      This macro expands to the complete local part of a recip-
-                     ient    address.     For   example,   with   an   address
+                     ient   address.    For   example,   with    an    address
                      <i>user+foo@domain</i> the mailbox is <i>user+foo</i>.
 
-                     A command-line argument that contains <b>${mailbox}</b>  expands
-                     to  as  many  command-line arguments as there are recipi-
+                     A  command-line argument that contains <b>${mailbox}</b> expands
+                     to as many command-line arguments as  there  are  recipi-
                      ents.
 
                      This information is modified by the <b>u</b> flag for case fold-
@@ -270,11 +273,11 @@ PIPE(8)                                                                PIPE(8)
                      ing.
 
               <b>${original_recipient}</b>
-                     This macro expands  to  the  complete  recipient  address
+                     This  macro  expands  to  the  complete recipient address
                      before any address rewriting or aliasing.
 
-                     A  command-line argument that contains <b>${original_recipi-</b>
-                     <b>ent}</b> expands to as many command-line arguments  as  there
+                     A command-line argument that contains  <b>${original_recipi-</b>
+                     <b>ent}</b>  expands  to as many command-line arguments as there
                      are recipients.
 
                      This information is modified by the <b>hqu</b> flags for quoting
@@ -290,8 +293,8 @@ PIPE(8)                                                                PIPE(8)
               <b>${recipient}</b>
                      This macro expands to the complete recipient address.
 
-                     A  command-line  argument  that   contains   <b>${recipient}</b>
-                     expands  to  as  many command-line arguments as there are
+                     A   command-line   argument  that  contains  <b>${recipient}</b>
+                     expands to as many command-line arguments  as  there  are
                      recipients.
 
                      This information is modified by the <b>hqu</b> flags for quoting
@@ -299,14 +302,14 @@ PIPE(8)                                                                PIPE(8)
 
               <b>${sasl_method}</b>
                      This macro expands to the name of the SASL authentication
-                     mechanism in the  AUTH  command  when  the  Postfix  SMTP
+                     mechanism  in  the  AUTH  command  when  the Postfix SMTP
                      server received the message.
 
                      This feature is available as of Postfix 2.2.
 
               <b>${sasl_sender}</b>
-                     This  macro  expands  to  the  SASL sender name (i.e. the
-                     original submitter as per <a href="http://tools.ietf.org/html/rfc4954">RFC 4954</a>) in the MAIL FROM com-
+                     This macro expands to the  SASL  sender  name  (i.e.  the
+                     original submitter as per <a href="https://tools.ietf.org/html/rfc4954">RFC 4954</a>) in the MAIL FROM com-
                      mand when the Postfix SMTP server received the message.
 
                      This feature is available as of Postfix 2.2.
@@ -318,117 +321,115 @@ PIPE(8)                                                                PIPE(8)
                      This feature is available as of Postfix 2.2.
 
               <b>${sender}</b>
-                     This macro expands to the  envelope  sender  address.  By
-                     default,  the  null sender address expands to MAILER-DAE-
-                     MON; this can be changed with the <b>null_sender</b>  attribute,
+                     This  macro  expands  to  the envelope sender address. By
+                     default, the null sender address expands  to  MAILER-DAE-
+                     MON;  this can be changed with the <b>null_sender</b> attribute,
                      as described above.
 
                      This information is modified by the <b>q</b> flag for quoting.
 
               <b>${size}</b>
                      This macro expands to Postfix's idea of the message size,
-                     which is an approximation of the size of the  message  as
+                     which  is  an approximation of the size of the message as
                      delivered.
 
               <b>${user}</b>
-                     This  macro  expands  to the username part of a recipient
-                     address.  For example, with  an  address  <i>user+foo@domain</i>
+                     This macro expands to the username part  of  a  recipient
+                     address.   For  example,  with an address <i>user+foo@domain</i>
                      the username part is <i>user</i>.
 
-                     A  command-line  argument  that  contains <b>${user}</b> expands
-                     into as many command-line arguments as there are  recipi-
+                     A command-line argument  that  contains  <b>${user}</b>  expands
+                     into  as many command-line arguments as there are recipi-
                      ents.
 
                      This information is modified by the <b>u</b> flag for case fold-
                      ing.
 
 <b>STANDARDS</b>
-       <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced status codes)
+       <a href="https://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced status codes)
 
 <b>DIAGNOSTICS</b>
-       Command exit status  codes  are  expected  to  follow  the  conventions
+       Command  exit  status  codes  are  expected  to  follow the conventions
        defined in &lt;<b>sysexits.h</b>&gt;.  Exit status 0 means normal successful comple-
        tion.
 
        In the case of a non-zero exit status, a limited amount of command out-
-       put  is  logged,  and reported in a delivery status notification.  When
-       the output begins with a 4.X.X or 5.X.X enhanced status code, the  sta-
-       tus  code  takes precedence over the non-zero exit status (Postfix ver-
+       put is logged, and reported in a delivery  status  notification.   When
+       the  output begins with a 4.X.X or 5.X.X enhanced status code, the sta-
+       tus code takes precedence over the non-zero exit status  (Postfix  ver-
        sion 2.3 and later).
 
-       After successful delivery (zero exit status) a limited amount  of  com-
-       mand  output is logged, and reported in "success" delivery status noti-
+       After  successful  delivery (zero exit status) a limited amount of com-
+       mand output is logged, and reported in "success" delivery status  noti-
        fications (Postfix 3.0 and later).  This command output is not examined
        for the presence of an enhanced status code.
 
-       Problems  and transactions are logged to <b>syslogd</b>(8).  Corrupted message
-       files are marked so that the queue manager can move them to the <b>corrupt</b>
-       queue for further inspection.
+       Problems and transactions are  logged  to  <b>syslogd</b>(8)  or  <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
+       Corrupted  message  files are marked so that the queue manager can move
+       them to the <b>corrupt</b> queue for further inspection.
 
 <b>SECURITY</b>
-       This  program needs a dual personality 1) to access the private Postfix
-       queue and IPC mechanisms, and 2) to execute external  commands  as  the
+       This program needs a dual personality 1) to access the private  Postfix
+       queue  and  IPC  mechanisms, and 2) to execute external commands as the
        specified user. It is therefore security sensitive.
 
 <b>CONFIGURATION PARAMETERS</b>
        Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically as <a href="pipe.8.html"><b>pipe</b>(8)</a> processes run
-       for only a limited amount of time. Use the command "<b>postfix reload</b>"  to
+       for  only a limited amount of time. Use the command "<b>postfix reload</b>" to
        speed up a change.
 
-       The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
+       The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
        more details including examples.
 
 <b>RESOURCE AND RATE CONTROLS</b>
        In the text below, <i>transport</i> is the first field in a <a href="master.5.html"><b>master.cf</b></a> entry.
 
-       <b><a href="postconf.5.html#transport_destination_concurrency_limit"><i>transport</i>_destination_concurrency_limit</a>   ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destination_concur</a>-</b>
+       <b><a href="postconf.5.html#transport_time_limit">transport_time_limit</a> ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
+              A transport-specific override for the <a href="postconf.5.html#command_time_limit">command_time_limit</a> parame-
+              ter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a> name of the  message
+              delivery transport.
+
+       Implemented in the <a href="qmgr.8.html">qmgr(8)</a> daemon:
+
+       <b><a href="postconf.5.html#transport_destination_concurrency_limit">transport_destination_concurrency_limit</a>   ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destination_concur</a>-</b>
        <b><a href="postconf.5.html#default_destination_concurrency_limit">rency_limit</a>)</b>
-              Limit the number of parallel deliveries to the same destination,
-              for  delivery via the named <i>transport</i>.  The limit is enforced by
-              the Postfix queue manager.
+              A  transport-specific  override for the <a href="postconf.5.html#default_destination_concurrency_limit">default_destination_con</a>-
+              <a href="postconf.5.html#default_destination_concurrency_limit">currency_limit</a> parameter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a>
+              name of the message delivery transport.
 
-       <b><a href="postconf.5.html#transport_destination_recipient_limit"><i>transport</i>_destination_recipient_limit</a>     ($<a href="postconf.5.html#default_destination_recipient_limit">default_destination_recipi</a>-</b>
+       <b><a href="postconf.5.html#transport_destination_recipient_limit">transport_destination_recipient_limit</a>     ($<a href="postconf.5.html#default_destination_recipient_limit">default_destination_recipi</a>-</b>
        <b><a href="postconf.5.html#default_destination_recipient_limit">ent_limit</a>)</b>
-              Limit the number of recipients per message delivery, for  deliv-
-              ery via the named <i>transport</i>.  The limit is enforced by the Post-
-              fix queue manager.
-
-       <b><a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a> ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
-              Limit the time for delivery to external  command,  for  delivery
-              via  the  named  <i>transport</i>.   The  limit is enforced by the pipe
-              delivery agent.
-
-              Postfix 2.4 and later support a suffix that specifies  the  time
-              unit:  s (seconds), m (minutes), h (hours), d (days), w (weeks).
-              The default time unit is seconds.
+              A transport-specific override for the <a href="postconf.5.html#default_destination_recipient_limit">default_destination_recip</a>-
+              <a href="postconf.5.html#default_destination_recipient_limit">ient_limit</a> parameter value, where  <i>transport</i>  is  the  <a href="master.5.html">master.cf</a>
+              name of the message delivery transport.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much  time  a  Postfix  daemon process may take to handle a
+              How much time a Postfix daemon process  may  take  to  handle  a
               request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#delay_logging_resolution_limit">delay_logging_resolution_limit</a> (2)</b>
-              The maximal number of digits after the decimal point  when  log-
+              The  maximal  number of digits after the decimal point when log-
               ging sub-second delay values.
 
        <b><a href="postconf.5.html#export_environment">export_environment</a> (see 'postconf -d' output)</b>
-              The  list  of  environment variables that a Postfix process will
+              The list of environment variables that a  Postfix  process  will
               export to non-Postfix processes.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The time limit for sending  or  receiving  information  over  an
+              The  time  limit  for  sending  or receiving information over an
               internal communication channel.
 
        <b><a href="postconf.5.html#mail_owner">mail_owner</a> (postfix)</b>
-              The  UNIX  system  account  that owns the Postfix queue and most
+              The UNIX system account that owns the  Postfix  queue  and  most
               Postfix daemon processes.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time that an idle Postfix  daemon  process
+              The  maximum  amount of time that an idle Postfix daemon process
               waits for an incoming connection before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
@@ -445,24 +446,38 @@ PIPE(8)                                                                PIPE(8)
               The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> (empty)</b>
-              The  set  of  characters  that can separate a user name from its
-              extension (example: user+foo), or a .forward file name from  its
-              extension (example: .forward+foo).
+              The set of characters that can separate an email address  local-
+              part, user name, or a .forward file name from its extension.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name that is prepended to the process name in
-              syslog records, so that "smtpd"  becomes,  for  example,  "post-
-              fix/smtpd".
+              A  prefix  that  is  prepended  to  the  process  name in syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        Available in Postfix version 3.0 and later:
 
        <b><a href="postconf.5.html#pipe_delivery_status_filter">pipe_delivery_status_filter</a> ($<a href="postconf.5.html#default_delivery_status_filter">default_delivery_status_filter</a>)</b>
-              Optional  filter  for  the  <a href="pipe.8.html"><b>pipe</b>(8)</a> delivery agent to change the
+              Optional filter for the <a href="pipe.8.html"><b>pipe</b>(8)</a> delivery  agent  to  change  the
               delivery status code or explanatory text of successful or unsuc-
               cessful deliveries.
+
+       Available in Postfix version 3.3 and later:
+
+       <b><a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a> (yes)</b>
+              Enable support for  the  original  recipient  address  after  an
+              address  is  rewritten  to a different address (for example with
+              aliasing or with canonical mapping).
+
+       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
+              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
+
+       Available in Postfix 3.5 and later:
+
+       <b><a href="postconf.5.html#info_log_address_format">info_log_address_format</a> (external)</b>
+              The email address form that will be used  in  non-debug  logging
+              (info, warning, etc.).
 
 <b>SEE ALSO</b>
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
@@ -470,6 +485,7 @@ PIPE(8)                                                                PIPE(8)
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="master.5.html">master(5)</a>, generic daemon options
        <a href="master.8.html">master(8)</a>, process manager
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>LICENSE</b>

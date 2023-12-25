@@ -113,7 +113,7 @@ As usual, the examples show only parameters that are not left at their default
 settings.
 
 First we present the non-mailhost configuration, because it is the simpler one.
-This machine sends mail as "user@example.com" and is final destination for
+This machine sends mail as "user@example.com" and is the final destination for
 "user@hostname.example.com".
 
     1 /etc/postfix/main.cf:
@@ -135,8 +135,8 @@ Translation:
     below, "Postfix behind a firewall".
 
 Next we present the mailhost configuration. This machine sends mail as
-"user@example.com" and is final destination for "user@hostname.example.com" as
-well as "user@example.com".
+"user@example.com" and is the final destination for "user@hostname.example.com"
+as well as "user@example.com".
 
      1 DNS:
      2     example.com    IN    MX  10 mailhost.example.com.
@@ -238,7 +238,7 @@ Translation:
     literals matching $inet_interfaces or $proxy_interfaces are deemed local.
     So "localpart@[a.d.d.r]" can be matched as simply "localpart" in canonical
     (5) and virtual(5). This avoids the need to specify firewall IP addresses
-    into Postfix configuration files.
+    in Postfix configuration files.
 
 The last part of the solution does the email forwarding, which is the real
 purpose of the firewall email function.
@@ -270,7 +270,7 @@ purpose of the firewall email function.
     17      . . .
     18
     19 /etc/postfix/transport:
-    20     example.com   smtp:[inside-gateway.example.com]
+    20     example.com   relay:[inside-gateway.example.com]
 
 Translation:
 
@@ -286,7 +286,12 @@ Translation:
     "@example.com x" wild-card in the relay_recipients table.
 
   * Lines 12, 19-20: Route mail for "example.com" to the inside gateway
-    machine. The [] forces Postfix to do no MX lookup.
+    machine. The [] forces Postfix to do no MX lookup. This uses the "relay"
+    delivery transport (a copy of the default "smtp" delivery transport) to
+    forward inbound mail. This can improve performance of deliveries to
+    internal domains because they will compete for SMTP clients from the
+    "relay" delivery transport, instead of competing with other SMTP deliveries
+    for SMTP clients from the default "smtp" delivery transport.
 
 Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb files.
 To find out what lookup tables Postfix supports, use the command "ppoossttccoonnff --mm".
@@ -348,8 +353,8 @@ Note: this example requires Postfix version 2.0 and later. To find out what
 Postfix version you have, execute the command "ppoossttccoonnff mmaaiill__vveerrssiioonn".
 
 The following example presents additional configuration. You need to combine
-this with basic configuration information as discussed the first half of this
-document.
+this with basic configuration information as discussed in the first half of
+this document.
 
      1 /etc/postfix/main.cf:
      2     transport_maps = hash:/etc/postfix/transport
@@ -386,7 +391,8 @@ transport table.
 CCoonnffiigguurriinngg PPoossttffiixx aass pprriimmaarryy oorr bbaacckkuupp MMXX hhoosstt ffoorr aa rreemmoottee ssiittee
 
 This section presents additional configuration. You need to combine this with
-basic configuration information as discussed the first half of this document.
+basic configuration information as discussed in the first half of this
+document.
 
 When your system is SECONDARY MX host for a remote site this is all you need:
 
@@ -472,7 +478,8 @@ This section applies to dialup connections that are down most of the time. For
 dialup connections that are up 24x7, see the local area network section above.
 
 This section presents additional configuration. You need to combine this with
-basic configuration information as discussed the first half of this document.
+basic configuration information as discussed in the first half of this
+document.
 
 If you do not have your own hostname and IP address (usually with dialup, cable
 TV or DSL connections) then you should also study the section on "Postfix on
@@ -553,8 +560,8 @@ addresses by valid Internet addresses. This mapping happens ONLY when mail
 leaves the machine; not when you send mail between users on the same machine.
 
 The following example presents additional configuration. You need to combine
-this with basic configuration information as discussed the first half of this
-document.
+this with basic configuration information as discussed in the first half of
+this document.
 
     1 /etc/postfix/main.cf:
     2     smtp_generic_maps = hash:/etc/postfix/generic
@@ -589,8 +596,8 @@ fantasy addresses, including mail to local fantasy addresses that don't have a
 valid Internet address of their own.
 
 The following example presents additional configuration. You need to combine
-this with basic configuration information as discussed the first half of this
-document.
+this with basic configuration information as discussed in the first half of
+this document.
 
      1 /etc/postfix/main.cf:
      2     myhostname = hostname.localdomain

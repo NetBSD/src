@@ -1,0 +1,8 @@
+hfrom_format: hfrom_format_parse good-standard: PASS
+hfrom_format: hfrom_format_parse good-obsolete: PASS
+hfrom_format: hfrom_format_parse bad: PASS
+hfrom_format: hfrom_format_parse empty: PASS
+hfrom_format: str_hfrom_format_code good-standard: PASS
+hfrom_format: str_hfrom_format_code good-obsolete: PASS
+hfrom_format: str_hfrom_format_code bad: PASS
+hfrom_format: PASS=7 FAIL=0

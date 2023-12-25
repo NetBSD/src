@@ -6,7 +6,7 @@ WWAARRNNIINNGG
 
 Recipient address verification may cause an increased load on down-stream
 servers in the case of a dictionary attack or a flood of backscatter bounces.
-Sender address verification may cause your site to be blacklisted by some
+Sender address verification may cause your site to be denylisted by some
 providers. See also the "Limitations" section below for more.
 
 WWhhaatt PPoossttffiixx aaddddrreessss vveerriiffiiccaattiioonn ccaann ddoo ffoorr yyoouu
@@ -47,11 +47,9 @@ could include the Postfix MTA itself, or some remote MTAs (SMTP interruptus).
 Probe messages are like normal mail, except that they are never delivered,
 deferred or bounced; probe messages are always discarded.
 
-                               
                                              probe     Postfix
                                             message ->   mail
-                                                        queue
-                Postfix        Postfix   ->
+                Postfix        Postfix   ->             queue
     Internet ->  SMTP   <->     verify
                 server          server                      |
                                                             v
@@ -62,7 +60,6 @@ deferred or bounced; probe messages are always discarded.
                                     ^
                                     |
                                     v
-                                          
 
                               Address
                             verification
@@ -92,11 +89,11 @@ LLiimmiittaattiioonnss ooff aaddddrreessss vveerriiffi
     mail for a remote address can bounce AFTER a preferred MTA accepts the
     recipient address, or AFTER a preferred MTA accepts the message content.
 
-  * Some sites may blacklist you when you are probing them too often (a probe
-    is an SMTP session that does not deliver mail), or when you are probing
-    them too often for a non-existent address. This is one reason why you
-    should use sender address verification sparingly, if at all, when your site
-    receives lots of email.
+  * Some sites may denylist you when you are probing them too often (a probe is
+    an SMTP session that does not deliver mail), or when you are probing them
+    too often for a non-existent address. This is one reason why you should use
+    sender address verification sparingly, if at all, when your site receives
+    lots of email.
 
   * Normally, address verification probe messages follow the same path as
     regular mail. However, some sites send mail to the Internet via an
@@ -128,7 +125,7 @@ LLiimmiittaattiioonnss ooff aaddddrreessss vveerriiffi
     "double-bounce@$myorigin" would succeed.
 
   * The downside of using a non-empty sender address is that the address may
-    end op on spammer mailing lists. Although Postfix always discards mail to
+    end up on spammer mailing lists. Although Postfix always discards mail to
     the double-bounce address, this still results in wasted network bandwidth
     and server capacity. To defeat address harvesting, Postfix 2.9 and later
     support time-dependent sender addresses when you specify a non-zero
@@ -166,6 +163,12 @@ same address repeatedly.
             ...
         # Postfix 2.6 and later privacy feature.
         # unverified_recipient_reject_reason = Address lookup failed
+
+        # Postfix 3.2 and earlier workaround.
+        # Do not set enable_original_recipient=no. This prevents Postfix
+        # from saving the recipient address verification result under
+        # the original address, when the address verification probe
+        # message goes through address aliasing or canonical mapping.
 
 The "reject_unknown_recipient_domain" restriction blocks mail for non-existent
 domains. Putting this before "reject_unverified_recipient" avoids the overhead
@@ -207,6 +210,12 @@ verification for specific domains that often appear in forged email.
         # Note 2: Avoid hash files here. Use btree or lmdb instead.
         address_verify_map = btree:/var/lib/postfix/verify
 
+        # Postfix 3.2 and earlier workaround.
+        # Do not set enable_original_recipient=no. This prevents Postfix
+        # from saving the sender address verification result under the
+        # original address, when the address verification probe message
+        # goes through address aliasing or canonical mapping.
+
     /etc/postfix/sender_access:
         # Don't do this when you handle lots of email.
         aol.com     reject_unverified_sender
@@ -225,7 +234,7 @@ SSeennddeerr aaddddrreessss vveerriiffiiccaattiioonn f
 
 Unfortunately, sender address verification cannot simply be turned on for all
 email - you are likely to lose legitimate mail from mis-configured systems. You
-almost certainly will have to set up white lists for specific addresses, or
+almost certainly will have to set up allow lists for specific addresses, or
 even for entire domains.
 
 To find out how sender address verification would affect your mail, specify
@@ -251,11 +260,11 @@ be blocked:
 This is also a good way to populate your cache with address verification
 results before you start to actually reject mail.
 
-The sender_access restriction is needed to whitelist domains or addresses that
+The sender_access restriction is needed to allowlist domains or addresses that
 are known to be OK. Although Postfix will not mark a known-to-be-good address
 as bad after a probe fails, it is better to be safe than sorry.
 
-NOTE: You will have to whitelist sites such as securityfocus.com and other
+NOTE: You will have to allowlist sites such as securityfocus.com and other
 sites that operate mailing lists that use a different sender address for each
 posting (VERP). Such addresses pollute the address verification cache quickly,
 and generate unnecessary sender verification probes.

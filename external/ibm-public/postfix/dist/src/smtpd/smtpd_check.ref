@@ -5,7 +5,7 @@
 >>> #msg_verbose 1
 >>> smtpd_delay_reject 0
 OK
->>> mynetworks 127.0.0.0/8,168.100.189.0/28
+>>> mynetworks 127.0.0.0/8,168.100.3.0/28
 OK
 >>> relay_domains porcupine.org
 OK
@@ -19,7 +19,7 @@ OK
 >>> client unknown 131.155.210.17
 ./smtpd_check: <queue id>: reject: CONNECT from unknown[131.155.210.17]: 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]; proto=SMTP
 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]
->>> client unknown 168.100.189.13
+>>> client unknown 168.100.3.13
 OK
 >>> client random.bad.domain 123.123.123.123
 ./smtpd_check: <queue id>: reject: CONNECT from random.bad.domain[123.123.123.123]: 554 5.7.1 <random.bad.domain[123.123.123.123]>: Client host rejected: match bad.domain; proto=SMTP
@@ -94,7 +94,7 @@ OK
 >>> mail foo@ibm.com
 ./smtpd_check: <queue id>: reject: MAIL from unknown[131.155.210.17]: 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]; from=<foo@ibm.com> proto=SMTP helo=<123.123.123.123>
 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]
->>> client unknown 168.100.189.13
+>>> client unknown 168.100.3.13
 OK
 >>> mail foo@ibm.com
 OK
@@ -143,7 +143,7 @@ OK
 >>> rcpt foo@ibm.com
 ./smtpd_check: <queue id>: reject: RCPT from unknown[131.155.210.17]: 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]; from=<foo@friend.bad.domain> to=<foo@ibm.com> proto=SMTP helo=<123.123.123.123>
 450 4.7.1 Client host rejected: cannot find your hostname, [131.155.210.17]
->>> client unknown 168.100.189.13
+>>> client unknown 168.100.3.13
 OK
 >>> rcpt foo@ibm.com
 OK
@@ -157,7 +157,7 @@ OK
 OK
 >>> recipient_restrictions check_relay_domains
 OK
->>> client foo.porcupine.org 168.100.189.13
+>>> client foo.porcupine.org 168.100.3.13
 OK
 >>> rcpt foo@ibm.com
 OK
@@ -193,7 +193,7 @@ OK
 >>> #
 >>> client_restrictions reject_maps_rbl
 OK
->>> client spike.porcupine.org 168.100.189.2
+>>> client spike.porcupine.org 168.100.3.2
 ./smtpd_check: warning: support for restriction "reject_maps_rbl" will be removed from Postfix; use "reject_rbl_client domain-name" instead
 OK
 >>> client foo 127.0.0.2
@@ -245,7 +245,7 @@ OK
 >>> # MX backup
 >>> #
 >>> #mydestination spike.porcupine.org,localhost.porcupine.org
->>> #inet_interfaces 168.100.189.2,127.0.0.1
+>>> #inet_interfaces 168.100.3.2,127.0.0.1
 >>> #recipient_restrictions permit_mx_backup,reject
 >>> #rcpt wietse@wzv.win.tue.nl
 >>> #rcpt wietse@trouble.org

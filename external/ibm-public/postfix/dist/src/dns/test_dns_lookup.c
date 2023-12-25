@@ -1,4 +1,4 @@
-/*	$NetBSD: test_dns_lookup.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: test_dns_lookup.c,v 1.2.14.1 2023/12/25 12:54:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -79,8 +79,10 @@ int     main(int argc, char **argv)
     int     ch;
     int     lflags = DNS_REQ_FLAG_NONE;
 
+    var_dnssec_probe = "";
+
     msg_vstream_init(argv[0], VSTREAM_ERR);
-    while ((ch = GETOPT(argc, argv, "f:npv")) > 0) {
+    while ((ch = GETOPT(argc, argv, "f:npvs")) > 0) {
 	switch (ch) {
 	case 'v':
 	    msg_verbose++;
@@ -93,6 +95,9 @@ int     main(int argc, char **argv)
 	    break;
 	case 'p':
 	    var_dns_ncache_ttl_fix = 1;
+	    break;
+	case 's':
+	    var_dnssec_probe = DEF_DNSSEC_PROBE;
 	    break;
 	default:
 	    usage(argv);

@@ -1,31 +1,33 @@
-/*	$NetBSD: dnsblog.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: dnsblog.c,v 1.2.14.1 2023/12/25 12:54:56 martin Exp $	*/
 
 /*++
 /* NAME
 /*	dnsblog 8
 /* SUMMARY
-/*	Postfix DNS white/blacklist logger
+/*	Postfix DNS allow/denylist logger
 /* SYNOPSIS
 /*	\fBdnsblog\fR [generic Postfix daemon options]
 /* DESCRIPTION
 /*	The \fBdnsblog\fR(8) server implements an ad-hoc DNS
-/*	white/blacklist lookup service. This may eventually be
+/*	allow/denylist lookup service. This may eventually be
 /*	replaced by an UDP client that is built directly into the
 /*	\fBpostscreen\fR(8) server.
 /* PROTOCOL
 /* .ad
 /* .fi
 /*	With each connection, the \fBdnsblog\fR(8) server receives
-/*	a DNS white/blacklist domain name, an IP address, and an ID.
-/*	If the IP address is listed under the DNS white/blacklist, the
+/*	a DNS allow/denylist domain name, an IP address, and an ID.
+/*	If the IP address is listed under the DNS allow/denylist, the
 /*	\fBdnsblog\fR(8) server logs the match and replies with the
 /*	query arguments plus an address list with the resulting IP
 /*	addresses, separated by whitespace, and the reply TTL.
 /*	Otherwise it replies with the query arguments plus an empty
-/*	address list and the reply TTL (-1 if unavailable).  Finally,
-/*	The \fBdnsblog\fR(8) server closes the connection.
+/*	address list and the reply TTL; the reply TTL is -1 if there
+/*	is no reply, or a negative reply that contains no SOA record.
+/*	Finally, the \fBdnsblog\fR(8) server closes the connection.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
@@ -43,7 +45,7 @@
 /*	How much time a Postfix daemon process may take to handle a
 /*	request before it is terminated by a built-in watchdog timer.
 /* .IP "\fBpostscreen_dnsbl_sites (empty)\fR"
-/*	Optional list of DNS white/blacklist domains, filters and weight
+/*	Optional list of DNS allow/denylist domains, filters and weight
 /*	factors.
 /* .IP "\fBipc_timeout (3600s)\fR"
 /*	The time limit for sending or receiving information over an internal
@@ -57,12 +59,17 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
 /* SEE ALSO
 /*	smtpd(8), Postfix SMTP server
 /*	postconf(5), configuration parameters
-/*	syslogd(5), system logging
+/*	postlogd(8), Postfix logging
+/*	syslogd(8), system logging
 /* LICENSE
 /* .ad
 /* .fi
@@ -309,5 +316,6 @@ int     main(int argc, char **argv)
 		       CA_MAIL_SERVER_TIME_TABLE(time_table),
 		       CA_MAIL_SERVER_POST_INIT(post_jail_init),
 		       CA_MAIL_SERVER_UNLIMITED,
+		       CA_MAIL_SERVER_RETIRE_ME,
 		       0);
 }

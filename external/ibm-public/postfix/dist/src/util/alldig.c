@@ -1,4 +1,4 @@
-/*	$NetBSD: alldig.c,v 1.1.1.1 2009/06/23 10:08:58 tron Exp $	*/
+/*	$NetBSD: alldig.c,v 1.1.1.1.52.1 2023/12/25 12:55:23 martin Exp $	*/
 
 /*++
 /* NAME
@@ -10,8 +10,14 @@
 /*
 /*	int	alldig(string)
 /*	const char *string;
+/*
+/*	int	allalnum(string)
+/*	const char *string;
 /* DESCRIPTION
 /*	alldig() determines if its argument is an all-numerical string.
+/*
+/*	allalnum() determines if its argument is an all-alphanumerical
+/*	string.
 /* SEE ALSO
 /*	An alldig() routine appears in Brian W. Kernighan, P.J. Plauger:
 /*	"Software Tools", Addison-Wesley 1976.
@@ -24,6 +30,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -46,5 +57,19 @@ int     alldig(const char *string)
     for (cp = string; *cp != 0; cp++)
 	if (!ISDIGIT(*cp))
 	    return (0);
+    return (1);
+}
+
+/* allalnum - return true if string is all alphanum */
+
+int allalnum(const char *string)
+{
+    const char *cp;
+
+    if (*string == 0)
+        return (0);
+    for (cp = string; *cp != 0; cp++)
+        if (!ISALNUM(*cp))
+            return (0);
     return (1);
 }

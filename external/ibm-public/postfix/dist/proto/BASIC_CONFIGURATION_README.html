@@ -7,7 +7,8 @@
 
 <title> Postfix Basic Configuration </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -264,17 +265,18 @@ clients that send mail from outside an authorized network block.
 This is explained in the SASL_README and TLS_README documents. </p>
 
 <p> IMPORTANT: If your machine is connected to a wide area network
-then your default mynetworks setting may be too friendly. </p>
+then the "mynetworks_style = subnet" setting may be too friendly. </p>
 
 <p> Examples (specify only one of the following): </p>
 
 <blockquote>
 <pre>
 /etc/postfix/main.cf:
-    mynetworks_style = subnet  (default: authorize subnetworks)
-    mynetworks_style = host    (safe: authorize local machine only)
-    mynetworks = 127.0.0.0/8   (safe: authorize local machine only)
+    mynetworks_style = subnet  (not safe on a wide area network)
+    mynetworks_style = host    (authorize local machine only)
+    mynetworks = 127.0.0.0/8   (authorize local machine only)
     mynetworks = 127.0.0.0/8 168.100.189.2/32 (authorize local machine) 
+    mynetworks = 127.0.0.0/8 168.100.189.2/28 (authorize local networks) 
 </pre>
 </blockquote>
 
@@ -285,13 +287,15 @@ parameter value.
 
 <ul>
 
-<li> <p> Specify "mynetworks_style = host" when Postfix should
-forward mail from only the local machine. </p>
+<li> <p> Specify "mynetworks_style = host" (the default when
+compatibility_level &ge; 2) when Postfix should forward mail from
+only the local machine. </p>
 
-<li> <p> Specify "mynetworks_style = subnet" (the default) when
-Postfix should forward mail from SMTP clients in the same IP
-subnetworks as the local machine.  On Linux, this works correctly
-only with interfaces specified with the "ifconfig" command. </p>
+<li> <p> Specify "mynetworks_style = subnet" (the default when
+compatibility_level &lt; 2) when Postfix should forward mail from
+SMTP clients in the same IP subnetworks as the local machine.
+On Linux, this works correctly only with interfaces specified
+with the "ifconfig" or "ip" command. </p>
 
 <li> <p> Specify "mynetworks_style = class" when Postfix should
 forward mail from SMTP clients in the same IP class A/B/C networks
@@ -520,7 +524,7 @@ idea to run every night before the syslog files are rotated: </p>
 <blockquote>
 <pre>
 # postfix check
-# egrep '(reject|warning|error|fatal|panic):' /some/log/file
+# grep -E '(reject|warning|error|fatal|panic):' /some/log/file
 </pre>
 </blockquote>
 

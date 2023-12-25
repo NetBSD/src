@@ -1,4 +1,4 @@
-/*	$NetBSD: post_mail.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: post_mail.c,v 1.2.14.1 2023/12/25 12:55:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -82,7 +82,7 @@
 /*	open stream and the caller-specified context when the
 /*	service responds, or with a null stream and the caller-specified
 /*	context when the request could not be completed. It is the
-/*	responsability of the application to close an open stream.
+/*	responsibility of the application to close an open stream.
 /*
 /*	post_mail_fprintf() formats message content (header or body)
 /*	and sends it to the cleanup service.
@@ -156,6 +156,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -228,8 +233,18 @@ static void post_mail_init(VSTREAM *stream, const char *sender,
     date = mail_date(now.tv_sec);
 
     /*
-     * XXX Don't flush buffers while sending the initial message records.
-     * That would cause deadlock between verify(8) and cleanup(8) servers.
+     * The comment in the next paragraph is likely obsolete. Fix 20030610
+     * changed the verify server to use asynchronous submission of mail
+     * probes, to avoid blocking the post_mail client for in_flow_delay
+     * seconds when the cleanup service receives email messages faster than
+     * they are delivered. Instead, the post_mail client waits until the
+     * cleanup server announces its availability to receive input. A similar
+     * change was made at the end of submission, to avoid blocking the
+     * post_mail client for up to trigger_timeout seconds when the cleanup
+     * server attempts to notify a queue manager that is overwhelmed.
+     * 
+     * XXX Don't flush buffers while sending the initial message records. That
+     * would cause deadlock between verify(8) and cleanup(8) servers.
      */
     vstream_control(stream, VSTREAM_CTL_BUFSIZE, 2 * VSTREAM_BUFSIZE,
 		    VSTREAM_CTL_END);
@@ -238,6 +253,7 @@ static void post_mail_init(VSTREAM *stream, const char *sender,
      * Negotiate with the cleanup service. Give up if we can't agree.
      */
     if (attr_scan(stream, ATTR_FLAG_STRICT,
+		  RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_CLEANUP),
 		  RECV_ATTR_STR(MAIL_ATTR_QUEUEID, id),
 		  ATTR_TYPE_END) != 1
 	|| attr_print(stream, ATTR_FLAG_NONE,

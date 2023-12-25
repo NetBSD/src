@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_glue.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtpd_sasl_glue.c,v 1.2.14.1 2023/12/25 12:55:17 martin Exp $	*/
 
 /*++
 /* NAME
@@ -139,6 +139,8 @@
 /* Global library. */
 
 #include <mail_params.h>
+#include <sasl_mech_filter.h>
+#include <string_list.h>
 
 /* XSASL library. */
 
@@ -151,6 +153,11 @@
 #include "smtpd_chat.h"
 
 #ifdef USE_SASL_AUTH
+
+ /*
+  * SASL mechanism filter.
+  */
+static STRING_LIST *smtpd_sasl_mech_filter;
 
 /*
  * Silly little macros.
@@ -180,6 +187,12 @@ void    smtpd_sasl_initialize(void)
 					     var_smtpd_sasl_path)) == 0)
 	msg_fatal("SASL per-process initialization failed");
 
+    /*
+     * Initialize the SASL mechanism filter.
+     */
+    smtpd_sasl_mech_filter = string_list_init(VAR_SMTPD_SASL_MECH_FILTER,
+					      MATCH_FLAG_NONE,
+					      var_smtpd_sasl_mech_filter);
 }
 
 /* smtpd_sasl_activate - per-connection initialization */
@@ -188,6 +201,7 @@ void    smtpd_sasl_activate(SMTPD_STATE *state, const char *sasl_opts_name,
 			            const char *sasl_opts_val)
 {
     const char *mechanism_list;
+    const char *filtered_mechanism_list;
     XSASL_SERVER_CREATE_ARGS create_args;
     int     tls_flag;
 
@@ -220,10 +234,15 @@ void    smtpd_sasl_activate(SMTPD_STATE *state, const char *sasl_opts_name,
     if ((state->sasl_server =
 	 XSASL_SERVER_CREATE(smtpd_sasl_impl, &create_args,
 			     stream = state->client,
-			     server_addr = (state->dest_addr ?
-					    state->dest_addr : ""),
+			     addr_family = state->addr_family,
+			     server_addr = ADDR_OR_EMPTY(state->dest_addr,
+						       SERVER_ADDR_UNKNOWN),
+			     server_port = ADDR_OR_EMPTY(state->dest_port,
+						       SERVER_PORT_UNKNOWN),
 			     client_addr = ADDR_OR_EMPTY(state->addr,
 						       CLIENT_ADDR_UNKNOWN),
+			     client_port = ADDR_OR_EMPTY(state->port,
+						       CLIENT_PORT_UNKNOWN),
 			     service = var_smtpd_sasl_service,
 			   user_realm = REALM_OR_NULL(var_smtpd_sasl_realm),
 			     security_options = sasl_opts_val,
@@ -236,7 +255,12 @@ void    smtpd_sasl_activate(SMTPD_STATE *state, const char *sasl_opts_name,
     if ((mechanism_list =
 	 xsasl_server_get_mechanism_list(state->sasl_server)) == 0)
 	msg_fatal("no SASL authentication mechanisms");
-    state->sasl_mechanism_list = mystrdup(mechanism_list);
+    filtered_mechanism_list =
+	sasl_mech_filter(smtpd_sasl_mech_filter, mechanism_list);
+    if (*filtered_mechanism_list == 0)
+	msg_fatal("%s discards all mechanisms in '%s'",
+		  VAR_SMTPD_SASL_MECH_FILTER, mechanism_list);
+    state->sasl_mechanism_list = mystrdup(filtered_mechanism_list);
 }
 
 /* smtpd_sasl_state_init - initialize state to allow extern authentication. */
@@ -305,12 +329,11 @@ int     smtpd_sasl_authenticate(SMTPD_STATE *state,
 
 	/*
 	 * Receive the client response. "*" means that the client gives up.
-	 * XXX For now we ignore the fact that an excessively long response
-	 * will be chopped into multiple reponses. To handle such responses,
-	 * we need to change smtpd_chat_query() so that it returns an error
-	 * indication.
 	 */
-	smtpd_chat_query(state);
+	if (!smtpd_chat_query_limit(state, var_smtpd_sasl_resp_limit)) {
+	    smtpd_chat_reply(state, "500 5.5.6 SASL response limit exceeded");
+	    return (-1);
+	}
 	if (strcmp(STR(state->buffer), "*") == 0) {
 	    msg_warn("%s: SASL %s authentication aborted",
 		     state->namaddr, sasl_method);
@@ -319,9 +342,11 @@ int     smtpd_sasl_authenticate(SMTPD_STATE *state,
 	}
     }
     if (status != XSASL_AUTH_DONE) {
-	msg_warn("%s: SASL %s authentication failed: %s",
-		 state->namaddr, sasl_method,
-		 STR(state->sasl_reply));
+	sasl_username = xsasl_server_get_username(state->sasl_server);
+	msg_warn("%s: SASL %.100s authentication failed: %s, sasl_username=%.100s",
+		 state->namaddr, sasl_method, *STR(state->sasl_reply) ?
+		 STR(state->sasl_reply) : "(reason unavailable)",
+		 sasl_username ? sasl_username : "(unavailable)");
 	/* RFC 4954 Section 6. */
 	if (status == XSASL_AUTH_TEMP)
 	    smtpd_chat_reply(state, "454 4.7.0 Temporary authentication failure: %s",

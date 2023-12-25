@@ -1940,7 +1940,7 @@
   - Updated configuration information:
     * As of OpenSSL 0.9.4, certificate chain verification is not sufficient,
       since the certificate purpose is not checked, so I recommend to add
-      all intermediate CAs the the list of CAs and stay with a verification
+      all intermediate CAs the list of CAs and stay with a verification
       depth of 1.
       Work is in progress for 0.9.5.
   - Stepped up to the just released new patchlevel postfix-19990906-pl09.
@@ -2070,7 +2070,7 @@
 
 1999/10/09
   - Set an absolut maximum length of 32 for the IDs used for session caching.
-    This matches the default in OpenSSL, but I don´t want to see surprises
+    This matches the default in OpenSSL, but I don't want to see surprises
     when somebody sometimes will run into a longer session id.
 
 1999/10/05	== Released 0.4.0 ==
@@ -2107,11 +2107,11 @@
     to computer sience students.
 
 1999/09/28
-  - I cannot use the mod_ssl way for session caching and I don´t want to
-    spend an extra "gcache" daemon as ApacheSSL does. So I follow Wietse´s
+  - I cannot use the mod_ssl way for session caching and I don't want to
+    spend an extra "gcache" daemon as ApacheSSL does. So I follow Wietse's
     idea realized for his mail queues and create hash level based subdirectory
     structures. The good thing: I can cannibalize the mail_queue code.
-    The bad thing: there is a path length of 100 chars fix coded in Wietse´s
+    The bad thing: there is a path length of 100 chars fix coded in Wietse's
     routines. It does hold for 32byte session ideas.
     Status: can save sessions to disk and recall them (server side).
 
@@ -2119,8 +2119,8 @@
   - Created new call backs for external session caching for the server side.
     In a first step, they can print out the session ids for the newly created
     session and when recalling a session.
-    As the OpenSSL documentation on this is pretty sparse, Ben Laurie´s
-    ApacheSSL code is very helpful, Ralph Engelschall´s Mod_SSL code for
+    As the OpenSSL documentation on this is pretty sparse, Ben Laurie's
+    ApacheSSL code is very helpful, Ralph Engelschall's Mod_SSL code for
     session caching is far more complicated.
 
 1999/09/23	== Released 0.3.10 ==
@@ -2146,7 +2146,7 @@
     SSL_CTX_set_session_id_context() call was missing. To find this, I
     had to trace through the OpenSSL library and when I finally found it
     in ssl/ssl_sess.c, there was an appropriate comment about this. I however
-    have to find out why I didn´t receive the appropriate error message...
+    have to find out why I didn't receive the appropriate error message...
   - This bug was hidden during the first developing stages, as the shutdown
     sequence was not working correct, so the session was not cached.
 
@@ -2181,7 +2181,7 @@
 1999/09/09	== Released 0.3.6 ==
 
 1999/09/09
-  - Added a missing ´#ifdef HAS_SSL #endif´ in smtp_connect.c.
+  - Added a missing '#ifdef HAS_SSL #endif' in smtp_connect.c.
     Noted by Jeff Johnson <jeff@websitefactory.net>.
   - HINT:
     On 1999/09/06 a new "stable" version of postfix was released.
@@ -2357,7 +2357,7 @@
 1999/04/14
   - Ported from OpenSSL the BIO_callback functions to dump out the negotiation
     and transmission for debugging purposes. The functions are triggered
-    by the the new loglevels 3 and 4.
+    by the new loglevels 3 and 4.
   - Call SSL_free() to get rid of the SSL connection structure not used
     anymore.
 

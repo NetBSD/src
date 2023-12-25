@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - postcat(1) </title>
 </head> <body> <pre>
 POSTCAT(1)                                                          POSTCAT(1)
@@ -53,6 +54,15 @@ POSTCAT(1)                                                          POSTCAT(1)
 
               This feature is available in Postfix 2.0 and later.
 
+       <b>-r</b>     Print records in file order, don't follow pointer records.
+
+              This feature is available in Postfix 3.7 and later.
+
+       <b>-s</b> <i>offset</i>
+              Skip to the specified queue file offset.
+
+              This feature is available in Postfix 3.7 and later.
+
        <b>-v</b>     Enable verbose  logging  for  debugging  purposes.  Multiple  <b>-v</b>
               options make the software increasingly verbose.
 
@@ -73,6 +83,11 @@ POSTCAT(1)                                                          POSTCAT(1)
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
               The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
+
+       <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
+              The list of environment parameters  that  a  privileged  Postfix
+              process  will  import  from  a  non-Postfix  parent  process, or
+              name=value environment overrides.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
               The location of the Postfix top-level queue directory.

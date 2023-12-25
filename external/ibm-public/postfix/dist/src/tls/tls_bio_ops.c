@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_bio_ops.c,v 1.1.1.5 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: tls_bio_ops.c,v 1.1.1.5.26.1 2023/12/25 12:55:20 martin Exp $	*/
 
 /*++
 /* NAME
@@ -196,6 +196,13 @@ int     tls_bio(int fd, int timeout, TLS_SESS_STATE *TLScontext,
      * handling any pending network I/O.
      */
     for (;;) {
+
+	/*
+	 * Flush the per-thread SSL error queue. Otherwise, errors from other
+	 * code that also uses TLS may confuse SSL_get_error(3).
+	 */
+	ERR_clear_error();
+
 	if (hsfunc)
 	    status = hsfunc(TLScontext->con);
 	else if (rfunc)

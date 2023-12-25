@@ -7,7 +7,8 @@
 
 <title>Postfix Stress-Dependent Configuration</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -147,8 +148,8 @@ value):  </p>
 </pre>
 </blockquote>
 
-<p> Services that have local access only never have "-o stress"
-parameters on the command line. This includes services internal to
+<p> You won't see "-o stress" command-line parameters with services
+that have local clients only. These include services internal to
 Postfix such as the queue manager, and services that listen on a
 loopback interface only, such as after-filter SMTP services.  </p>
 
@@ -171,6 +172,10 @@ default with Postfix 2.6 and later. </p>
 <p> Postfix versions before 3.0 use the older form ${stress?x}${stress:y}
 instead of the newer form ${stress?{x}:{y}}. </p>
 
+<p> The syntax of ${name?{value}:{value}}, ${name?value} and
+${name:value} is explained at the beginning of the postconf(5)
+manual page. </p>
+
 <p> Translation: <p>
 
 <ul>
@@ -187,7 +192,7 @@ from some clients. No mail should be lost, as long as this measure
 is used only temporarily. </p>
 
 <li> <p> Line 2: under conditions of stress, use an smtpd_hard_error_limit
-of 1 instead of the default 20. This helps by disconnecting clients
+of 1 instead of the default 20. This disconnects clients
 after a single error, giving other clients a chance to connect.
 However, this may cause significant delays with legitimate mail,
 such as a mailing list that contains a few no-longer-active user
@@ -218,10 +223,6 @@ $unverified_sender_tempfail_action. No mail should be lost, as long
 as this measure is used only temporarily.  </p>
 
 </ul>
-
-<p> The syntax of ${name?{value}:{value}}, ${name?value} and
-${name:value} is explained at the beginning of the postconf(5)
-manual page. </p>
 
 <p> NOTE: Please keep in mind that the stress-adaptive feature is
 a fairly desperate measure to keep <b>some</b> legitimate mail
@@ -354,7 +355,7 @@ such as SMTP access maps.  The Postfix SMTP server will reject mail
 and disconnect without waiting for the remote SMTP client to send
 a QUIT command.  </p>
 
-<li> <p> To hang up connections from blacklisted zombies, you can
+<li> <p> To hang up connections from denylisted zombies, you can
 set specific Postfix SMTP server reject codes for specific RBLs,
 and for individual responses from specific RBLs. We'll use
 zen.spamhaus.org as an example; by the time you read this document,
@@ -415,8 +416,8 @@ in section "<a href="#adapt">Automatic stress-adaptive behavior</a>".
 
 <h2><a name="legacy"> Temporary measures for older Postfix releases </a></h2>
 
-<p> See the next section, "<a href="#adapt">Automatic stress-adaptive
-behavior</a>", if you are running Postfix version 2.5 or later, or
+<p> See the section "<a href="#adapt">Automatic stress-adaptive
+behavior</a>" if you are running Postfix version 2.5 or later, or
 if you have applied the source code patch for stress-adaptive
 behavior from the mirrors listed at http://www.postfix.org/download.html.
 </p>
@@ -543,7 +544,7 @@ services that accept remote connections. </p>
 <p> The postscreen(8) daemon, introduced with Postfix 2.8, provides
 additional protection against mail server overload. One postscreen(8)
 process handles multiple inbound SMTP connections, and decides which
-clients may to talk to a Postfix SMTP server process.  By keeping
+clients may talk to a Postfix SMTP server process.  By keeping
 spambots away, postscreen(8) leaves more SMTP server processes
 available for legitimate clients, and delays the onset of server
 overload conditions. </p>

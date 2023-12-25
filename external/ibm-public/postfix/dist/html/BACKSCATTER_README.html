@@ -7,7 +7,8 @@
 
 <title>Postfix Backscatter Howto</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -302,7 +303,7 @@ many users configure their email addresses as <i>username@example.com</i>,
 messages with DSN turned on will trigger the REJECT action in the
 previous section. </p>
 
-<p> If you have such clients then you can to exclude their Message-ID
+<p> If you have such clients then you can exclude their Message-ID
 strings with the two "<tt>Message-ID:.* &lt;!&amp;!</tt>" patterns
 that are shown in the previous section.  Otherwise you will not be
 able to use the two backscatter rules to stop forged Message ID
@@ -382,7 +383,8 @@ above techniques to recognize forgeries.  </p>
 because there is a lot of variation in report formats.  The following
 is only a small example of message header patterns.  For a large
 collection of header and body patterns that recognize virus
-notification email, see <a href="http://www.dkuug.dk/keld/virus/">http://www.dkuug.dk/keld/virus/</a>
+notification email, see
+<a href="https://web.archive.org/web/20100317123907/http://std.dkuug.dk/keld/virus/">https://web.archive.org/web/20100317123907/http://std.dkuug.dk/keld/virus/</a>
 or <a href="http://www.t29.dk/antiantivirus.txt">http://www.t29.dk/antiantivirus.txt</a>.  </p>
 
 <blockquote>

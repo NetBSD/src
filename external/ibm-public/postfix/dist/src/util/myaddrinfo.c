@@ -1,4 +1,4 @@
-/*	$NetBSD: myaddrinfo.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: myaddrinfo.c,v 1.2.14.1 2023/12/25 12:55:33 martin Exp $	*/
 
 /*++
 /* NAME
@@ -181,6 +181,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -206,6 +211,7 @@
 #include <inet_proto.h>
 #include <myaddrinfo.h>
 #include <split_at.h>
+#include <known_tcp_ports.h>
 
 /* Application-specific. */
 
@@ -272,6 +278,7 @@ static int find_service(const char *service, int socktype)
     const char *proto;
     unsigned port;
 
+    service = filter_known_tcp_port(service);
     if (alldig(service)) {
 	port = atoi(service);
 	return (port < 65536 ? htons(port) : -1);
@@ -446,6 +453,11 @@ int     hostname_to_sockaddr_pf(const char *hostname, int pf,
 	}
 #endif
     }
+    if (service) {
+	service = filter_known_tcp_port(service);
+	if (alldig(service))
+	    hints.ai_flags |= AI_NUMERICSERV;
+    }
     err = getaddrinfo(hostname, service, &hints, res);
 #if defined(BROKEN_AI_NULL_SERVICE)
     if (service == 0 && err == 0) {
@@ -561,6 +573,11 @@ int     hostaddr_to_sockaddr(const char *hostaddr, const char *service,
 #endif
 	}
 #endif
+    }
+    if (service) {
+	service = filter_known_tcp_port(service);
+	if (alldig(service))
+	    hints.ai_flags |= AI_NUMERICSERV;
     }
     err = getaddrinfo(hostaddr, service, &hints, res);
 #if defined(BROKEN_AI_NULL_SERVICE)
@@ -747,7 +764,7 @@ void    freeaddrinfo(struct addrinfo * ai)
     struct addrinfo *next;
 
     /*
-     * Artefact of implementation: tolerate a null pointer argument.
+     * Artifact of implementation: tolerate a null pointer argument.
      */
     for (ap = ai; ap != 0; ap = next) {
 	next = ap->ai_next;

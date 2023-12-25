@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: tls.h,v 1.2.14.1 2023/12/25 12:55:20 martin Exp $	*/
 
 #ifndef _TLS_H_INCLUDED_
 #define _TLS_H_INCLUDED_
@@ -54,7 +54,6 @@
 
 #define TLS_REQUIRED(l)		((l) > TLS_LEV_MAY)
 #define TLS_MUST_MATCH(l)	((l) > TLS_LEV_ENCRYPT)
-#define TLS_MUST_TRUST(l)	((l) >= TLS_LEV_HALF_DANE)
 #define TLS_MUST_PKIX(l)	((l) >= TLS_LEV_VERIFY)
 #define TLS_OPPORTUNISTIC(l)	((l) == TLS_LEV_MAY || (l) == TLS_LEV_DANE)
 #define TLS_DANE_BASED(l)	\
@@ -77,8 +76,10 @@ extern const char *str_tls_level(int);
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
 #include <openssl/crypto.h>		/* Legacy SSLEAY_VERSION_NUMBER */
+#include <openssl/evp.h>		/* New OpenSSL 3.0 EVP_PKEY APIs */
 #include <openssl/opensslv.h>		/* OPENSSL_VERSION_NUMBER */
 #include <openssl/ssl.h>
+#include <openssl/conf.h>
 
  /* Appease indent(1) */
 #define x509_stack_t STACK_OF(X509)
@@ -86,40 +87,43 @@ extern const char *str_tls_level(int);
 #define ssl_cipher_stack_t STACK_OF(SSL_CIPHER)
 #define ssl_comp_stack_t STACK_OF(SSL_COMP)
 
-#if (OPENSSL_VERSION_NUMBER < 0x00090700f)
-#error "need OpenSSL version 0.9.7 or later"
+/*-
+ * Official way to check minimum OpenSSL API version from 3.0 onward.
+ * We simply define it false for all prior versions, where we typically also
+ * need the patch level to determine API compatibility.
+ */
+#ifndef OPENSSL_VERSION_PREREQ
+#define OPENSSL_VERSION_PREREQ(m,n) 0
 #endif
 
- /* Backwards compatibility with OpenSSL < 1.1.0 */
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define OpenSSL_version_num SSLeay
-#define OpenSSL_version SSLeay_version
-#define OPENSSL_VERSION SSLEAY_VERSION
-#define X509_up_ref(x) \
-	CRYPTO_add(&((x)->references), 1, CRYPTO_LOCK_X509)
-#define EVP_PKEY_up_ref(k) \
-	CRYPTO_add(&((k)->references), 1, CRYPTO_LOCK_EVP_PKEY)
-#define X509_STORE_CTX_get0_cert(ctx) ((ctx)->cert)
-#define X509_STORE_CTX_get0_untrusted(ctx) ((ctx)->untrusted)
-#define X509_STORE_CTX_set0_untrusted X509_STORE_CTX_set_chain
-#define X509_STORE_CTX_set0_trusted_stack X509_STORE_CTX_trusted_stack
-#define ASN1_STRING_get0_data ASN1_STRING_data
-#define X509_getm_notBefore X509_get_notBefore
-#define X509_getm_notAfter X509_get_notAfter
+#if (OPENSSL_VERSION_NUMBER < 0x1010100fUL)
+#error "OpenSSL releases prior to 1.1.1 are no longer supported"
 #endif
 
-/* SSL_CIPHER_get_name() got constified in 0.9.7g */
-#if OPENSSL_VERSION_NUMBER >= 0x0090707fL	/* constification */
-#define SSL_CIPHER_const const
+ /*-
+  * Backwards compatibility with OpenSSL < 1.1.1a.
+  *
+  * In OpenSSL 1.1.1a the client-only interface SSL_get_server_tmp_key() was
+  * updated to work on both the client and the server, and was renamed to
+  * SSL_get_peer_tmp_key(), with the original name left behind as an alias.  We
+  * use the new name when available.
+  */
+#if OPENSSL_VERSION_NUMBER < 0x1010101fUL
+#undef SSL_get_signature_nid
+#define SSL_get_signature_nid(ssl, pnid) (NID_undef)
+#define tls_get_peer_dh_pubkey SSL_get_server_tmp_key
 #else
-#define SSL_CIPHER_const
+#define tls_get_peer_dh_pubkey SSL_get_peer_tmp_key
 #endif
 
-/* d2i_X509() got constified in 0.9.8a */
-#if OPENSSL_VERSION_NUMBER >= 0x0090801fL
-#define D2I_const const
+#if OPENSSL_VERSION_PREREQ(3,0)
+#define TLS_PEEK_PEER_CERT(ssl) SSL_get0_peer_certificate(ssl)
+#define TLS_FREE_PEER_CERT(x)   ((void) 0)
+#define tls_set_bio_callback    BIO_set_callback_ex
 #else
-#define D2I_const
+#define TLS_PEEK_PEER_CERT(ssl) SSL_get_peer_certificate(ssl)
+#define TLS_FREE_PEER_CERT(x)   X509_free(x)
+#define tls_set_bio_callback    BIO_set_callback
 #endif
 
  /*
@@ -135,6 +139,17 @@ extern const char *str_tls_level(int);
 #include <dns.h>
 
  /*
+  * TLS role, presently for logging.
+  */
+typedef enum {
+    TLS_ROLE_CLIENT, TLS_ROLE_SERVER,
+} TLS_ROLE;
+
+typedef enum {
+    TLS_USAGE_NEW, TLS_USAGE_USED,
+} TLS_USAGE;
+
+ /*
   * Names of valid tlsmgr(8) session caches.
   */
 #define TLS_MGR_SCACHE_SMTPD	"smtpd"
@@ -142,7 +157,7 @@ extern const char *str_tls_level(int);
 #define TLS_MGR_SCACHE_LMTP	"lmtp"
 
  /*
-  * RFC 6698 DANE
+  * RFC 6698, 7671, 7672 DANE
   */
 #define TLS_DANE_TA	0		/* Match trust-anchor digests */
 #define TLS_DANE_EE	1		/* Match end-entity digests */
@@ -165,52 +180,33 @@ extern const char *str_tls_level(int);
   * algorithm.
   */
 typedef struct TLS_TLSA {
-    char   *mdalg;			/* Algorithm for this digest list */
-    ARGV   *certs;			/* Complete certificate digests */
-    ARGV   *pkeys;			/* SubjectPublicKeyInfo digests */
+    uint8_t usage;			/* DANE certificate usage */
+    uint8_t selector;			/* DANE selector */
+    uint8_t mtype;			/* Algorithm for this digest list */
+    uint16_t length;			/* Length of associated data */
+    unsigned char *data;		/* Associated data */
     struct TLS_TLSA *next;		/* Chain to next algorithm */
 } TLS_TLSA;
 
- /*
-  * Linked list of full X509 trust-anchor certs.
-  */
-typedef struct TLS_CERTS {
-    X509   *cert;
-    struct TLS_CERTS *next;
-} TLS_CERTS;
-
- /*
-  * Linked list of full EVP_PKEY trust-anchor public keys.
-  */
-typedef struct TLS_PKEYS {
-    EVP_PKEY *pkey;
-    struct TLS_PKEYS *next;
-} TLS_PKEYS;
-
 typedef struct TLS_DANE {
-    TLS_TLSA *ta;			/* Trust-anchor cert/pubkey digests */
-    TLS_TLSA *ee;			/* End-entity cert/pubkey digests */
-    TLS_CERTS *certs;			/* Full trust-anchor certificates */
-    TLS_PKEYS *pkeys;			/* Full trust-anchor public keys */
+    TLS_TLSA *tlsa;			/* TLSA records */
     char   *base_domain;		/* Base domain of TLSA RRset */
     int     flags;			/* Lookup status */
     time_t  expires;			/* Expiration time of this record */
     int     refs;			/* Reference count */
 } TLS_DANE;
 
-#define TLS_DANE_HASTA(d)	((d) ? (d)->ta : 0)
-#define TLS_DANE_HASEE(d)	((d) ? (d)->ee : 0)
-
  /*
   * tls_dane.c
   */
 extern int tls_dane_avail(void);
+extern void tls_dane_loglevel(const char *, const char *);
 extern void tls_dane_flush(void);
-extern void tls_dane_verbose(int);
 extern TLS_DANE *tls_dane_alloc(void);
-extern void tls_dane_add_ee_digests(TLS_DANE *, const char *, const char *,
-				            const char *);
+extern void tls_tlsa_free(TLS_TLSA *);
 extern void tls_dane_free(TLS_DANE *);
+extern void tls_dane_add_fpt_digests(TLS_DANE *, const char *, const char *,
+				             int);
 extern TLS_DANE *tls_dane_resolve(unsigned, const char *, DNS_RR *, int);
 extern int tls_dane_load_trustfile(TLS_DANE *, const char *);
 
@@ -226,13 +222,26 @@ typedef struct {
     /* Public, read-only. */
     char   *peer_CN;			/* Peer Common Name */
     char   *issuer_CN;			/* Issuer Common Name */
+    char   *peer_sni;			/* SNI sent to or by the peer */
     char   *peer_cert_fprint;		/* ASCII certificate fingerprint */
     char   *peer_pkey_fprint;		/* ASCII public key fingerprint */
+    int     level;			/* Effective security level */
     int     peer_status;		/* Certificate and match status */
     const char *protocol;
     const char *cipher_name;
     int     cipher_usebits;
     int     cipher_algbits;
+    const char *kex_name;		/* shared key-exchange algorithm */
+    const char *kex_curve;		/* shared key-exchange ECDHE curve */
+    int     kex_bits;			/* shared FFDHE key exchange bits */
+    const char *clnt_sig_name;		/* client's signature key algorithm */
+    const char *clnt_sig_curve;		/* client's ECDSA curve name */
+    int     clnt_sig_bits;		/* client's RSA signature key bits */
+    const char *clnt_sig_dgst;		/* client's signature digest */
+    const char *srvr_sig_name;		/* server's signature key algorithm */
+    const char *srvr_sig_curve;		/* server's ECDSA curve name */
+    int     srvr_sig_bits;		/* server's RSA signature key bits */
+    const char *srvr_sig_dgst;		/* server's signature digest */
     /* Private. */
     SSL    *con;
     char   *cache_type;			/* tlsmgr(8) cache type if enabled */
@@ -245,14 +254,12 @@ typedef struct {
     const char *mdalg;			/* default message digest algorithm */
     /* Built-in vs external SSL_accept/read/write/shutdown support. */
     VSTREAM *stream;			/* Blocking-mode SMTP session */
-    /* RFC 6698 DANE trust input and verification state */
+    /* DANE TLSA trust input and verification state */
     const TLS_DANE *dane;		/* DANE TLSA digests */
-    int     errordepth;			/* Chain depth of error cert */
-    int     tadepth;			/* Chain depth of trust anchor */
-    int     errorcode;			/* First error at error depth */
     X509   *errorcert;			/* Error certificate closest to leaf */
-    x509_stack_t *untrusted;		/* Certificate chain fodder */
-    x509_stack_t *trusted;		/* Internal root CA list */
+    int     errordepth;			/* Chain depth of error cert */
+    int     errorcode;			/* First error at error depth */
+    int     must_fail;			/* Failed to load trust settings */
 } TLS_SESS_STATE;
 
  /*
@@ -296,18 +303,16 @@ extern int tls_log_mask(const char *, const char *);
 #define TLS_LOG_DEBUG			(1<<7)
 #define TLS_LOG_TLSPKTS			(1<<8)
 #define TLS_LOG_ALLPKTS			(1<<9)
+#define TLS_LOG_DANE			(1<<10)
 
  /*
   * Client and Server application contexts
   */
 struct TLS_APPL_STATE {
     SSL_CTX *ssl_ctx;
+    SSL_CTX *sni_ctx;
     int     log_mask;
     char   *cache_type;
-    char   *cipher_exclusions;		/* Last cipher selection state */
-    char   *cipher_list;		/* Last cipher selection state */
-    int     cipher_grade;		/* Last cipher selection state */
-    VSTRING *why;
 };
 
  /*
@@ -320,6 +325,7 @@ extern void tls_free_app_context(TLS_APPL_STATE *);
   * tls_misc.c
   */
 extern void tls_param_init(void);
+extern int tls_library_init(void);
 
  /*
   * Protocol selection.
@@ -371,18 +377,30 @@ extern void tls_param_init(void);
 #define SSL_OP_NO_TLSv1_2	0L	/* Noop */
 #endif
 
-#ifdef SSL_TXT_TLSV1_3
+ /*
+  * OpenSSL 1.1.1 does not define a TXT macro for TLS 1.3, so we roll our
+  * own.
+  */
+#define TLS_PROTOCOL_TXT_TLSV1_3	"TLSv1.3"
+
+#if defined(TLS1_3_VERSION) && defined(SSL_OP_NO_TLSv1_3)
 #define TLS_PROTOCOL_TLSv1_3	(1<<5)	/* TLSv1_3 */
 #else
-#define SSL_TXT_TLSV1_3		"TLSv1.3"
 #define TLS_PROTOCOL_TLSv1_3	0	/* Unknown */
 #undef  SSL_OP_NO_TLSv1_3
 #define SSL_OP_NO_TLSv1_3	0L	/* Noop */
 #endif
 
+/*
+ * Always used when defined, SMTP has no truncation attacks.
+ */
+#ifndef SSL_OP_IGNORE_UNEXPECTED_EOF
+#define SSL_OP_IGNORE_UNEXPECTED_EOF    0L
+#endif
+
 #define TLS_KNOWN_PROTOCOLS \
 	( TLS_PROTOCOL_SSLv2 | TLS_PROTOCOL_SSLv3 | TLS_PROTOCOL_TLSv1 \
-	   | TLS_PROTOCOL_TLSv1_1 | TLS_PROTOCOL_TLSv1_2 )
+	   | TLS_PROTOCOL_TLSv1_1 | TLS_PROTOCOL_TLSv1_2 | TLS_PROTOCOL_TLSv1_3 )
 #define TLS_SSL_OP_PROTOMASK(m) \
 	    ((((m) & TLS_PROTOCOL_SSLv2) ? SSL_OP_NO_SSLv2 : 0L) \
 	     | (((m) & TLS_PROTOCOL_SSLv3) ? SSL_OP_NO_SSLv3 : 0L) \
@@ -396,9 +414,10 @@ extern void tls_param_init(void);
  * just exposed via hex codes or named elements of tls_ssl_options.
  */
 #define TLS_SSL_OP_MANAGED_BITS \
-	(SSL_OP_CIPHER_SERVER_PREFERENCE | TLS_SSL_OP_PROTOMASK(~0))
+	(SSL_OP_CIPHER_SERVER_PREFERENCE | SSL_OP_IGNORE_UNEXPECTED_EOF | \
+	 TLS_SSL_OP_PROTOMASK(~0))
 
-extern int tls_protocol_mask(const char *);
+extern int tls_proto_mask_lims(const char *, int *, int *);
 
  /*
   * Cipher grade selection.
@@ -420,10 +439,15 @@ extern const NAME_CODE tls_cipher_grade_table[];
  /*
   * Cipher lists with exclusions.
   */
-extern const char *tls_set_ciphers(TLS_APPL_STATE *, const char *,
-				           const char *, const char *);
+extern const char *tls_set_ciphers(TLS_SESS_STATE *, const char *,
+				           const char *);
 
-#endif
+ /*
+  * Populate TLS context with TLS 1.3-related signature parameters.
+  */
+extern void tls_get_signature_params(TLS_SESS_STATE *);
+
+#endif					/* TLS_INTERNAL */
 
  /*
   * tls_client.c
@@ -433,6 +457,7 @@ typedef struct {
     const char *log_level;
     int     verifydepth;
     const char *cache_type;
+    const char *chain_files;
     const char *cert_file;
     const char *key_file;
     const char *dcert_file;
@@ -447,11 +472,13 @@ typedef struct {
 typedef struct {
     TLS_APPL_STATE *ctx;
     VSTREAM *stream;
+    int     fd;				/* Event-driven file descriptor */
     int     timeout;
     int     tls_level;			/* Security level */
     const char *nexthop;		/* destination domain */
     const char *host;			/* MX hostname */
     const char *namaddr;		/* nam[addr] for logging */
+    const char *sni;			/* optional SNI name when not DANE */
     const char *serverid;		/* Session cache key */
     const char *helo;			/* Server name from EHLO response */
     const char *protocols;		/* Enabled protocols */
@@ -459,28 +486,36 @@ typedef struct {
     const char *cipher_exclusions;	/* Ciphers to exclude */
     const ARGV *matchargv;		/* Cert match patterns */
     const char *mdalg;			/* default message digest algorithm */
-    const TLS_DANE *dane;		/* RFC 6698 verification */
+    const TLS_DANE *dane;		/* DANE TLSA verification */
 } TLS_CLIENT_START_PROPS;
 
 extern TLS_APPL_STATE *tls_client_init(const TLS_CLIENT_INIT_PROPS *);
 extern TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *);
+extern TLS_SESS_STATE *tls_client_post_connect(TLS_SESS_STATE *,
+				            const TLS_CLIENT_START_PROPS *);
 
 #define tls_client_stop(ctx, stream, timeout, failure, TLScontext) \
 	tls_session_stop(ctx, (stream), (timeout), (failure), (TLScontext))
 
-#define TLS_CLIENT_INIT(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, \
-    a10, a11, a12, a13) \
-    tls_client_init((((props)->a1), ((props)->a2), ((props)->a3), \
+#define TLS_CLIENT_INIT_ARGS(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, \
+    a10, a11, a12, a13, a14) \
+    (((props)->a1), ((props)->a2), ((props)->a3), \
     ((props)->a4), ((props)->a5), ((props)->a6), ((props)->a7), \
     ((props)->a8), ((props)->a9), ((props)->a10), ((props)->a11), \
-    ((props)->a12), ((props)->a13), (props)))
+    ((props)->a12), ((props)->a13), ((props)->a14), (props))
+
+#define TLS_CLIENT_INIT(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, \
+    a10, a11, a12, a13, a14) \
+    tls_client_init(TLS_CLIENT_INIT_ARGS(props, a1, a2, a3, a4, a5, \
+    a6, a7, a8, a9, a10, a11, a12, a13, a14))
 
 #define TLS_CLIENT_START(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, \
-    a10, a11, a12, a13, a14, a15) \
+    a10, a11, a12, a13, a14, a15, a16, a17) \
     tls_client_start((((props)->a1), ((props)->a2), ((props)->a3), \
     ((props)->a4), ((props)->a5), ((props)->a6), ((props)->a7), \
     ((props)->a8), ((props)->a9), ((props)->a10), ((props)->a11), \
-    ((props)->a12), ((props)->a13), ((props)->a14), ((props)->a15), (props)))
+    ((props)->a12), ((props)->a13), ((props)->a14), ((props)->a15), \
+    ((props)->a16), ((props)->a17), (props)))
 
  /*
   * tls_server.c
@@ -491,6 +526,7 @@ typedef struct {
     int     verifydepth;
     const char *cache_type;
     int     set_sessid;
+    const char *chain_files;
     const char *cert_file;
     const char *key_file;
     const char *dcert_file;
@@ -528,12 +564,13 @@ extern TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *);
 	tls_session_stop(ctx, (stream), (timeout), (failure), (TLScontext))
 
 #define TLS_SERVER_INIT(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, \
-    a10, a11, a12, a13, a14, a15, a16, a17, a18, a19) \
+    a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20) \
     tls_server_init((((props)->a1), ((props)->a2), ((props)->a3), \
     ((props)->a4), ((props)->a5), ((props)->a6), ((props)->a7), \
     ((props)->a8), ((props)->a9), ((props)->a10), ((props)->a11), \
     ((props)->a12), ((props)->a13), ((props)->a14), ((props)->a15), \
-    ((props)->a16), ((props)->a17), ((props)->a18), ((props)->a19), (props)))
+    ((props)->a16), ((props)->a17), ((props)->a18), ((props)->a19), \
+    ((props)->a20), (props)))
 
 #define TLS_SERVER_START(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) \
     tls_server_start((((props)->a1), ((props)->a2), ((props)->a3), \
@@ -551,6 +588,8 @@ extern void tls_session_stop(TLS_APPL_STATE *, VSTREAM *, int, int, TLS_SESS_STA
 extern const char *tls_compile_version(void);
 extern const char *tls_run_version(void);
 extern const char **tls_pkey_algorithms(void);
+extern void tls_log_summary(TLS_ROLE, TLS_USAGE, TLS_SESS_STATE *);
+extern void tls_pre_jail_init(TLS_ROLE);
 
 #ifdef TLS_INTERNAL
 
@@ -596,45 +635,43 @@ extern int tls_bio(int, int, TLS_SESS_STATE *,
  /*
   * tls_dh.c
   */
-extern void tls_set_dh_from_file(const char *, int);
-extern DH *tls_tmp_dh_cb(SSL *, int, int);
-extern int tls_set_eecdh_curve(SSL_CTX *, const char *);
-
- /*
-  * tls_rsa.c
-  */
-extern RSA *tls_tmp_rsa_cb(SSL *, int, int);
+extern void tls_set_dh_from_file(const char *);
+extern void tls_tmp_dh(SSL_CTX *, int);
+extern void tls_auto_groups(SSL_CTX *, const char *, const char *);
 
  /*
   * tls_verify.c
   */
 extern char *tls_peer_CN(X509 *, const TLS_SESS_STATE *);
 extern char *tls_issuer_CN(X509 *, const TLS_SESS_STATE *);
-extern const char *tls_dns_name(const GENERAL_NAME *, const TLS_SESS_STATE *);
 extern int tls_verify_certificate_callback(int, X509_STORE_CTX *);
 extern void tls_log_verify_error(TLS_SESS_STATE *);
 
  /*
   * tls_dane.c
   */
-extern int tls_dane_match(TLS_SESS_STATE *, int, X509 *, int);
-extern void tls_dane_set_callback(SSL_CTX *, TLS_SESS_STATE *);
+extern void tls_dane_log(TLS_SESS_STATE *);
+extern void tls_dane_digest_init(SSL_CTX *, const EVP_MD *);
+extern int tls_dane_enable(TLS_SESS_STATE *);
+extern TLS_TLSA *tlsa_prepend(TLS_TLSA *, uint8_t, uint8_t, uint8_t,
+			              const unsigned char *, uint16_t);
 
  /*
   * tls_fprint.c
   */
+extern const EVP_MD *tls_digest_byname(const char *, EVP_MD_CTX **);
 extern char *tls_digest_encode(const unsigned char *, int);
-extern char *tls_data_fprint(const char *, int, const char *);
 extern char *tls_cert_fprint(X509 *, const char *);
 extern char *tls_pkey_fprint(X509 *, const char *);
-extern char *tls_serverid_digest(const TLS_CLIENT_START_PROPS *, long,
-				         const char *);
+extern char *tls_serverid_digest(TLS_SESS_STATE *,
+		              const TLS_CLIENT_START_PROPS *, const char *);
 
  /*
   * tls_certkey.c
   */
 extern int tls_set_ca_certificate_info(SSL_CTX *, const char *, const char *);
-extern int tls_set_my_certificate_key_info(SSL_CTX *,
+extern int tls_load_pem_chain(SSL *, const char *, const char *);
+extern int tls_set_my_certificate_key_info(SSL_CTX *, /* All */ const char *,
 				       /* RSA */ const char *, const char *,
 				       /* DSA */ const char *, const char *,
 				    /* ECDSA */ const char *, const char *);
@@ -644,15 +681,23 @@ extern int tls_set_my_certificate_key_info(SSL_CTX *,
   */
 extern int TLScontext_index;
 
-extern TLS_APPL_STATE *tls_alloc_app_context(SSL_CTX *, int);
+extern TLS_APPL_STATE *tls_alloc_app_context(SSL_CTX *, SSL_CTX *, int);
 extern TLS_SESS_STATE *tls_alloc_sess_context(int, const char *);
 extern void tls_free_context(TLS_SESS_STATE *);
 extern void tls_check_version(void);
 extern long tls_bug_bits(void);
 extern void tls_print_errors(void);
 extern void tls_info_callback(const SSL *, int, int);
+
+#if OPENSSL_VERSION_PREREQ(3,0)
+extern long tls_bio_dump_cb(BIO *, int, const char *, size_t, int, long,
+			            int, size_t *);
+
+#else
 extern long tls_bio_dump_cb(BIO *, int, const char *, int, long, long);
-extern int tls_validate_digest(const char *);
+
+#endif
+extern const EVP_MD *tls_validate_digest(const char *);
 
  /*
   * tls_seed.c
@@ -671,6 +716,11 @@ extern int tls_ext_seed(int);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*
 /*	Victor Duchovni
 /*	Morgan Stanley

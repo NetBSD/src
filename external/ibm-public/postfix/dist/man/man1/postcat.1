@@ -1,4 +1,4 @@
-.\"	$NetBSD: postcat.1,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: postcat.1,v 1.2.14.1 2023/12/25 12:54:39 martin Exp $
 .\"
 .TH POSTCAT 1 
 .ad
@@ -54,6 +54,14 @@ Search the Postfix queue for the named \fIfiles\fR instead
 of taking the names literally.
 
 This feature is available in Postfix 2.0 and later.
+.IP \fB\-r\fR
+Print records in file order, don't follow pointer records.
+
+This feature is available in Postfix 3.7 and later.
+.IP "\fB\-s \fIoffset\fR"
+Skip to the specified queue file offset.
+
+This feature is available in Postfix 3.7 and later.
 .IP \fB\-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB\-v\fR
 options make the software increasingly verbose.
@@ -81,6 +89,10 @@ The text below provides only a parameter summary. See
 .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 The default location of the Postfix main.cf and master.cf
 configuration files.
+.IP "\fBimport_environment (see 'postconf -d' output)\fR"
+The list of environment parameters that a privileged Postfix
+process will import from a non\-Postfix parent process, or name=value
+environment overrides.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 The location of the Postfix top\-level queue directory.
 .SH "FILES"

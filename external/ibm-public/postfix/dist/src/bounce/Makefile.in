@@ -11,7 +11,7 @@ HDRS	=
 TESTSRC	= 
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
-TESTPROG=
+TESTPROG= bounce_notify_util_tester
 PROG	= bounce
 SAMPLES	= ../../conf/bounce.cf.default
 INC_DIR	= ../../include
@@ -31,10 +31,6 @@ $(PROG):	$(OBJS) $(LIBS)
 	rm -f $@
 	./annotate.sh <template_test.ref >$@
 
-main.cf:
-	echo queue_directory=. >main.cf
-	echo myhostname=example.com >>main.cf
-
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
@@ -42,7 +38,13 @@ Makefile: Makefile.in
 
 test:	$(TESTPROG)
 
-tests:	update template_test 2template_test
+tests:	update template_test obs_template_test 2template_test \
+	with-msgid-with-long-line_test \
+	with-msgid-with-eoh-event_test \
+	with-msgid-no-eoh-event_test \
+	no-msgid-with-eoh-event_test \
+	no-msgid-no-eoh-event_test \
+	with-msgid-with-filter_test
 
 root_tests:
 
@@ -68,21 +70,254 @@ clean:
 
 tidy:	clean
 
+BOUNCE_NOTIFY_UTIL_TESTER_OBJS = bounce_notify_util_tester.o \
+	bounce_notify_util.o bounce_template.o bounce_templates.o
+
+bounce_notify_util_tester: $(BOUNCE_NOTIFY_UTIL_TESTER_OBJS) $(LIBS)
+	$(CC) -DTEST $(CFLAGS) -o $@ $(BOUNCE_NOTIFY_UTIL_TESTER_OBJS) \
+	$(LIBS) $(SYSLIBS)
+
 # Avoid dependency on installed Postfix.
 # XXX This still requires that default_privs, mail_owner etc. accounts exist.
-template_test: $(PROG) main.cf template_test.ref
+template_test: $(PROG) template_test.ref
+	echo queue_directory=. >main.cf
+	echo myhostname=example.com >>main.cf
+	echo header_from_format=standard >>main.cf
+	touch -t 197101010000 main.cf
 	MAIL_CONFIG=. ./$(PROG) -SVzndump_templates >template_test.tmp
 	diff template_test.ref template_test.tmp
 	MAIL_CONFIG=. ./$(PROG) -SVzndump_templates \
 	    -o bounce_template_file=template_test.ref > template_test.tmp
 	diff template_test.ref template_test.tmp
-	rm -f template_test.tmp
+	rm -f template_test.tmp main.cf
 
-2template_test: $(PROG) main.cf template_test.ref 2template_test.in
+obs_template_test: $(PROG) obs_template_test.ref
+	echo queue_directory=. >main.cf
+	echo myhostname=example.com >>main.cf
+	echo header_from_format=obsolete >>main.cf
+	touch -t 197101010000 main.cf
+	MAIL_CONFIG=. ./$(PROG) -SVzndump_templates >template_test.tmp
+	diff obs_template_test.ref template_test.tmp
+	rm -f template_test.tmp main.cf
+
+2template_test: $(PROG) template_test.ref 2template_test.in
+	echo queue_directory=. >main.cf
+	echo myhostname=example.com >>main.cf
+	touch -t 197101010000 main.cf
 	MAIL_CONFIG=. ./$(PROG) -SVzndump_templates \
 	    -o bounce_template_file=2template_test.in > template_test.tmp
 	diff template_test.ref template_test.tmp
-	rm -f template_test.tmp
+	rm -f template_test.tmp main.cf
+
+with-msgid-with-long-line_test: bounce_notify_util_tester \
+	msgfile-with-msgid-with-long-line logfile-with-msgid-with-long-line \
+	with-msgid-with-long-line-no-thread.ref \
+	with-msgid-with-long-line-with-thread.ref
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = no' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-with-msgid-with-long-line queue/bounce/msgid
+	cp msgfile-with-msgid-with-long-line queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > with-msgid-with-long-line-no-thread.tmp
+	diff with-msgid-with-long-line-no-thread.ref with-msgid-with-long-line-no-thread.tmp
+	rm -f with-msgid-with-long-line-no-thread.tmp
+	:
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = yes' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-with-msgid-with-long-line queue/bounce/msgid
+	cp msgfile-with-msgid-with-long-line queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > with-msgid-with-long-line-with-thread.tmp
+	diff with-msgid-with-long-line-with-thread.ref with-msgid-with-long-line-with-thread.tmp
+	rm -f with-msgid-with-long-line-with-thread.tmp
+	rm -rf queue main.cf
+
+with-msgid-with-eoh-event_test: bounce_notify_util_tester \
+	msgfile-with-msgid-with-eoh-event logfile-with-msgid-with-eoh-event \
+	with-msgid-with-eoh-event-no-thread.ref \
+	with-msgid-with-eoh-event-with-thread.ref
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = no' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-with-msgid-with-eoh-event queue/bounce/msgid
+	cp msgfile-with-msgid-with-eoh-event queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > with-msgid-with-eoh-event-no-thread.tmp
+	diff with-msgid-with-eoh-event-no-thread.ref with-msgid-with-eoh-event-no-thread.tmp
+	rm -f with-msgid-with-eoh-event-no-thread.tmp
+	:
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = yes' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-with-msgid-with-eoh-event queue/bounce/msgid
+	cp msgfile-with-msgid-with-eoh-event queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > with-msgid-with-eoh-event-with-thread.tmp
+	diff with-msgid-with-eoh-event-with-thread.ref with-msgid-with-eoh-event-with-thread.tmp
+	rm -f with-msgid-with-eoh-event-with-thread.tmp
+	rm -rf queue main.cf
+
+with-msgid-no-eoh-event_test: bounce_notify_util_tester \
+	msgfile-with-msgid-no-eoh-event logfile-with-msgid-no-eoh-event \
+	with-msgid-no-eoh-event-no-thread.ref \
+	with-msgid-no-eoh-event-with-thread.ref
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = no' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-with-msgid-no-eoh-event queue/bounce/msgid
+	cp msgfile-with-msgid-no-eoh-event queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > with-msgid-no-eoh-event-no-thread.tmp
+	diff with-msgid-no-eoh-event-no-thread.ref with-msgid-no-eoh-event-no-thread.tmp
+	rm -f with-msgid-no-eoh-event-no-thread.tmp
+	:
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = yes' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-with-msgid-no-eoh-event queue/bounce/msgid
+	cp msgfile-with-msgid-no-eoh-event queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > with-msgid-no-eoh-event-with-thread.tmp
+	diff with-msgid-no-eoh-event-with-thread.ref with-msgid-no-eoh-event-with-thread.tmp
+	rm -f with-msgid-no-eoh-event-with-thread.tmp
+	rm -rf queue main.cf
+
+no-msgid-with-eoh-event_test: bounce_notify_util_tester \
+	msgfile-no-msgid-with-eoh-event logfile-no-msgid-with-eoh-event \
+	no-msgid-with-eoh-event-no-thread.ref \
+	no-msgid-with-eoh-event-with-thread.ref
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = no' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-no-msgid-with-eoh-event queue/bounce/msgid
+	cp msgfile-no-msgid-with-eoh-event queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > no-msgid-with-eoh-event-no-thread.tmp
+	diff no-msgid-with-eoh-event-no-thread.ref no-msgid-with-eoh-event-no-thread.tmp
+	rm -f no-msgid-with-eoh-event-no-thread.tmp
+	:
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = yes' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-no-msgid-with-eoh-event queue/bounce/msgid
+	cp msgfile-no-msgid-with-eoh-event queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > no-msgid-with-eoh-event-with-thread.tmp
+	diff no-msgid-with-eoh-event-with-thread.ref no-msgid-with-eoh-event-with-thread.tmp
+	rm -f no-msgid-with-eoh-event-with-thread.tmp
+	rm -rf queue main.cf
+
+no-msgid-no-eoh-event_test: bounce_notify_util_tester \
+	msgfile-no-msgid-no-eoh-event logfile-no-msgid-no-eoh-event \
+	no-msgid-no-eoh-event-no-thread.ref \
+	no-msgid-no-eoh-event-with-thread.ref
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = no' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-no-msgid-no-eoh-event queue/bounce/msgid
+	cp msgfile-no-msgid-no-eoh-event queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > no-msgid-no-eoh-event-no-thread.tmp
+	diff no-msgid-no-eoh-event-no-thread.ref no-msgid-no-eoh-event-no-thread.tmp
+	rm -f no-msgid-no-eoh-event-no-thread.tmp
+	:
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = yes' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-no-msgid-no-eoh-event queue/bounce/msgid
+	cp msgfile-no-msgid-no-eoh-event queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > no-msgid-no-eoh-event-with-thread.tmp
+	diff no-msgid-no-eoh-event-with-thread.ref no-msgid-no-eoh-event-with-thread.tmp
+	rm -f no-msgid-no-eoh-event-with-thread.tmp
+	rm -rf queue main.cf
+
+with-msgid-with-filter_test: bounce_notify_util_tester \
+	msgfile-with-msgid-with-filter logfile-with-msgid-with-filter \
+	with-msgid-with-filter-no-thread.ref \
+	with-msgid-with-filter-with-thread.ref
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = no' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-with-msgid-with-filter queue/bounce/msgid
+	cp msgfile-with-msgid-with-filter queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > with-msgid-with-filter-no-thread.tmp
+	diff with-msgid-with-filter-no-thread.ref with-msgid-with-filter-no-thread.tmp
+	rm -f with-msgid-with-filter-no-thread.tmp
+	:
+	rm -rf queue main.cf
+	echo 'enable_threaded_bounces = yes' >main.cf 
+	echo 'queue_directory = queue' >>main.cf 
+	echo 'myhostname = mail.example' >>main.cf 
+	touch -t 197101010000 main.cf
+	mkdir -p queue/active queue/bounce
+	cp logfile-with-msgid-with-filter queue/bounce/msgid
+	cp msgfile-with-msgid-with-filter queue/active/msgid
+	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
+	    -c. bounce active msgid 2>&1 | \
+	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
+	    > with-msgid-with-filter-with-thread.tmp
+	diff with-msgid-with-filter-with-thread.ref with-msgid-with-filter-with-thread.tmp
+	rm -f with-msgid-with-filter-with-thread.tmp
+	rm -rf queue main.cf
 
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
@@ -90,7 +325,7 @@ depend: $(MAKES)
 	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' \
 	    -e 's/o: \.\//o: /' -e p -e '}' ; \
-	done | sort -u) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
+	done | LANG=C sort -u) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
 
 # do not edit below this line - it is generated by 'make depend'
@@ -102,6 +337,7 @@ bounce.o: ../../include/deliver_request.h
 bounce.o: ../../include/dsb_scan.h
 bounce.o: ../../include/dsn.h
 bounce.o: ../../include/dsn_buf.h
+bounce.o: ../../include/hfrom_format.h
 bounce.o: ../../include/htable.h
 bounce.o: ../../include/iostuff.h
 bounce.o: ../../include/load_file.h
@@ -216,6 +452,7 @@ bounce_notify_util.o: ../../include/dsn.h
 bounce_notify_util.o: ../../include/dsn_buf.h
 bounce_notify_util.o: ../../include/dsn_mask.h
 bounce_notify_util.o: ../../include/events.h
+bounce_notify_util.o: ../../include/header_opts.h
 bounce_notify_util.o: ../../include/htable.h
 bounce_notify_util.o: ../../include/int_filt.h
 bounce_notify_util.o: ../../include/iostuff.h
@@ -249,6 +486,31 @@ bounce_notify_util.o: ../../include/vstring.h
 bounce_notify_util.o: bounce_notify_util.c
 bounce_notify_util.o: bounce_service.h
 bounce_notify_util.o: bounce_template.h
+bounce_notify_util_tester.o: ../../include/attr.h
+bounce_notify_util_tester.o: ../../include/bounce_log.h
+bounce_notify_util_tester.o: ../../include/check_arg.h
+bounce_notify_util_tester.o: ../../include/dsn.h
+bounce_notify_util_tester.o: ../../include/dsn_buf.h
+bounce_notify_util_tester.o: ../../include/dsn_mask.h
+bounce_notify_util_tester.o: ../../include/hfrom_format.h
+bounce_notify_util_tester.o: ../../include/htable.h
+bounce_notify_util_tester.o: ../../include/mail_conf.h
+bounce_notify_util_tester.o: ../../include/mail_params.h
+bounce_notify_util_tester.o: ../../include/msg.h
+bounce_notify_util_tester.o: ../../include/mymalloc.h
+bounce_notify_util_tester.o: ../../include/nvtable.h
+bounce_notify_util_tester.o: ../../include/rcpt_buf.h
+bounce_notify_util_tester.o: ../../include/rec_type.h
+bounce_notify_util_tester.o: ../../include/recipient_list.h
+bounce_notify_util_tester.o: ../../include/record.h
+bounce_notify_util_tester.o: ../../include/sys_defs.h
+bounce_notify_util_tester.o: ../../include/test_main.h
+bounce_notify_util_tester.o: ../../include/vbuf.h
+bounce_notify_util_tester.o: ../../include/vstream.h
+bounce_notify_util_tester.o: ../../include/vstring.h
+bounce_notify_util_tester.o: bounce_notify_util_tester.c
+bounce_notify_util_tester.o: bounce_service.h
+bounce_notify_util_tester.o: bounce_template.h
 bounce_notify_verp.o: ../../include/attr.h
 bounce_notify_verp.o: ../../include/bounce.h
 bounce_notify_verp.o: ../../include/bounce_log.h
@@ -320,7 +582,11 @@ bounce_one_service.o: bounce_one_service.c
 bounce_one_service.o: bounce_service.h
 bounce_one_service.o: bounce_template.h
 bounce_template.o: ../../include/attr.h
+bounce_template.o: ../../include/bounce_log.h
 bounce_template.o: ../../include/check_arg.h
+bounce_template.o: ../../include/dsn.h
+bounce_template.o: ../../include/dsn_buf.h
+bounce_template.o: ../../include/hfrom_format.h
 bounce_template.o: ../../include/htable.h
 bounce_template.o: ../../include/iostuff.h
 bounce_template.o: ../../include/is_header.h
@@ -333,12 +599,15 @@ bounce_template.o: ../../include/midna_domain.h
 bounce_template.o: ../../include/msg.h
 bounce_template.o: ../../include/mymalloc.h
 bounce_template.o: ../../include/nvtable.h
+bounce_template.o: ../../include/rcpt_buf.h
+bounce_template.o: ../../include/recipient_list.h
 bounce_template.o: ../../include/split_at.h
 bounce_template.o: ../../include/stringops.h
 bounce_template.o: ../../include/sys_defs.h
 bounce_template.o: ../../include/vbuf.h
 bounce_template.o: ../../include/vstream.h
 bounce_template.o: ../../include/vstring.h
+bounce_template.o: bounce_service.h
 bounce_template.o: bounce_template.c
 bounce_template.o: bounce_template.h
 bounce_templates.o: ../../include/attr.h

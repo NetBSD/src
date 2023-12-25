@@ -1,0 +1,6 @@
+'a@b@c@d' quoted '"a@b@c"@d'
+'a@b@c@d' quoted flags=8bitclean|bare_localpart '"a@b@c@d"'
+'"a@b@c"@d' unquoted 'a@b@c@d'
+'"a@b@c"' unquoted 'a@b@c'
+'"a@b@c"@d@e' unquoted 'a@b@c@d@e'
+'' quoted '""'

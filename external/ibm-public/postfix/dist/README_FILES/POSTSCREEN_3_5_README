@@ -1,0 +1,863 @@
+PPoossttffiixx PPoossttssccrreeeenn HHoowwttoo ((PPoossttffiixx 22..88 -- 33..55))
+
+-------------------------------------------------------------------------------
+
+IInnttrroodduuccttiioonn
+
+This document describes features that are available in Postfix 2.8 - 3.5.
+
+The Postfix postscreen(8) daemon provides additional protection against mail
+server overload. One postscreen(8) process handles multiple inbound SMTP
+connections, and decides which clients may talk to a Postfix SMTP server
+process. By keeping spambots away, postscreen(8) leaves more SMTP server
+processes available for legitimate clients, and delays the onset of server
+overload conditions.
+
+postscreen(8) should not be used on SMTP ports that receive mail from end-user
+clients (MUAs). In a typical deployment, postscreen(8) handles the MX service
+on TCP port 25, while MUA clients submit mail via the submission service on TCP
+port 587 which requires client authentication. Alternatively, a site could set
+up a dedicated, non-postscreen, "port 25" server that provides submission
+service and client authentication, but no MX service.
+
+postscreen(8) maintains a temporary allowlist for clients that pass its tests;
+by allowing allowlisted clients to skip tests, postscreen(8) minimizes its
+impact on legitimate email traffic.
+
+postscreen(8) is part of a multi-layer defense.
+
+  * As the first layer, postscreen(8) blocks connections from zombies and other
+    spambots that are responsible for about 90% of all spam. It is implemented
+    as a single process to make this defense as inexpensive as possible.
+
+  * The second layer implements more complex SMTP-level access checks with
+    Postfix SMTP servers, policy daemons, and Milter applications.
+
+  * The third layer performs light-weight content inspection with the Postfix
+    built-in header_checks and body_checks. This can block unacceptable
+    attachments such as executable programs, and worms or viruses with easy-to-
+    recognize signatures.
+
+  * The fourth layer provides heavy-weight content inspection with external
+    content filters. Typical examples are Amavisd-new, SpamAssassin, and Milter
+    applications.
+
+Each layer reduces the spam volume. The general strategy is to use the less
+expensive defenses first, and to use the more expensive defenses only for the
+spam that remains.
+
+Topics in this document:
+
+  * Introduction
+  * The basic idea behind postscreen(8)
+  * General operation
+  * Quick tests before everything else
+  * Tests before the 220 SMTP server greeting
+  * Tests after the 220 SMTP server greeting
+  * Other errors
+  * When all tests succeed
+  * Configuring the postscreen(8) service
+  * Historical notes and credits
+
+TThhee bbaassiicc iiddeeaa bbeehhiinndd ppoossttssccrreeeenn((88))
+
+Most email is spam, and most spam is sent out by zombies (malware on
+compromised end-user computers). Wietse expects that the zombie problem will
+get worse before things improve, if ever. Without a tool like postscreen(8)
+that keeps the zombies away, Postfix would be spending most of its resources
+not receiving email.
+
+The main challenge for postscreen(8) is to make an is-a-zombie decision based
+on a single measurement. This is necessary because many zombies try to fly
+under the radar and avoid spamming the same site repeatedly. Once postscreen(8)
+decides that a client is not-a-zombie, it allowlists the client temporarily to
+avoid further delays for legitimate mail.
+
+Zombies have challenges too: they have only a limited amount of time to deliver
+spam before their IP address becomes denylisted. To speed up spam deliveries,
+zombies make compromises in their SMTP protocol implementation. For example,
+they speak before their turn, or they ignore responses from SMTP servers and
+continue sending mail even when the server tells them to go away.
+
+postscreen(8) uses a variety of measurements to recognize zombies. First,
+postscreen(8) determines if the remote SMTP client IP address is denylisted.
+Second, postscreen(8) looks for protocol compromises that are made to speed up
+delivery. These are good indicators for making is-a-zombie decisions based on
+single measurements.
+
+postscreen(8) does not inspect message content. Message content can vary from
+one delivery to the next, especially with clients that (also) send legitimate
+email. Content is not a good indicator for making is-a-zombie decisions based
+on single measurements, and that is the problem that postscreen(8) is focused
+on.
+
+GGeenneerraall ooppeerraattiioonn
+
+For each connection from an SMTP client, postscreen(8) performs a number of
+tests in the order as described below. Some tests introduce a delay of a few
+seconds. postscreen(8) maintains a temporary allowlist for clients that pass
+its tests; by allowing allowlisted clients to skip tests, postscreen(8)
+minimizes its impact on legitimate email traffic.
+
+By default, postscreen(8) hands off all connections to a Postfix SMTP server
+process after logging its findings. This mode is useful for non-destructive
+testing.
+
+In a typical production setting, postscreen(8) is configured to reject mail
+from clients that fail one or more tests, after logging the helo, sender and
+recipient information.
+
+Note: postscreen(8) is not an SMTP proxy; this is intentional. The purpose is
+to keep zombies away from Postfix, with minimal overhead for legitimate
+clients.
+
+QQuuiicckk tteessttss bbeeffoorree eevveerryytthhiinngg eellssee
+
+Before engaging in SMTP-level tests. postscreen(8) queries a number of local
+deny and allowlists. These tests speed up the handling of known clients.
+
+  * Permanent allow/denylist test
+  * Temporary allowlist test
+  * MX Policy test
+
+PPeerrmmaanneenntt aallllooww//ddeennyylliisstt tteesstt
+
+The postscreen_access_list parameter (default: permit_mynetworks) specifies a
+permanent access list for SMTP client IP addresses. Typically one would specify
+something that allowlists local networks, followed by a CIDR table for
+selective allow- and denylisting.
+
+Example:
+
+/etc/postfix/main.cf:
+    postscreen_access_list = permit_mynetworks,
+        cidr:/etc/postfix/postscreen_access.cidr
+
+/etc/postfix/postscreen_access.cidr:
+   # Rules are evaluated in the order as specified.
+   # Denylist 192.168.* except 192.168.0.1.
+   192.168.0.1          permit
+   192.168.0.0/16       reject
+
+See the postscreen_access_list manpage documentation for more details.
+
+When the SMTP client address matches a "permit" action, postscreen(8) logs this
+with the client address and port number as:
+
+    WWHHIITTEELLIISSTTEEDD [address]:port
+
+The allowlist action is not configurable: immediately hand off the connection
+to a Postfix SMTP server process.
+
+When the SMTP client address matches a "reject" action, postscreen(8) logs this
+with the client address and port number as:
+
+    BBLLAACCKKLLIISSTTEEDD [address]:port
+
+The postscreen_blacklist_action parameter specifies the action that is taken
+next. See "When tests fail before the 220 SMTP server greeting" below.
+
+TTeemmppoorraarryy aalllloowwlliisstt tteesstt
+
+The postscreen(8) daemon maintains a temporary allowlist for SMTP client IP
+addresses that have passed all the tests described below. The
+postscreen_cache_map parameter specifies the location of the temporary
+allowlist. The temporary allowlist is not used for SMTP client addresses that
+appear on the permanent access list.
+
+By default the temporary allowlist is not shared with other postscreen(8)
+daemons. See Sharing the temporary allowlist below for alternatives.
+
+When the SMTP client address appears on the temporary allowlist, postscreen(8)
+logs this with the client address and port number as:
+
+    PPAASSSS OOLLDD [address]:port
+
+The action is not configurable: immediately hand off the connection to a
+Postfix SMTP server process. The client is excluded from further tests until
+its temporary allowlist entry expires, as controlled with the postscreen_*_ttl
+parameters. Expired entries are silently renewed if possible.
+
+MMXX PPoolliiccyy tteesstt
+
+When the remote SMTP client is not on the static access list or temporary
+allowlist, postscreen(8) can implement a number of allowlist tests, before it
+grants the client a temporary allowlist status that allows it to talk to a
+Postfix SMTP server process.
+
+When postscreen(8) is configured to monitor all primary and backup MX
+addresses, it can refuse to allowlist clients that connect to a backup MX
+address only (an old spammer trick to take advantage of backup MX hosts with
+weaker anti-spam policies than primary MX hosts).
+
+    NOTE: The following solution is for small sites. Larger sites would have to
+    share the postscreen(8) cache between primary and backup MTAs, which would
+    introduce a common point of failure.
+
+  * First, configure the host to listen on both primary and backup MX
+    addresses. Use the appropriate ifconfig or ip command for the local
+    operating system, or update the appropriate configuration files and
+    "refresh" the network protocol stack.
+
+    Second, configure Postfix to listen on the new IP address (this step is
+    needed when you have specified inet_interfaces in main.cf).
+
+  * Then, configure postscreen(8) to deny the temporary allowlist status on the
+    backup MX address(es). An example for Wietse's server is:
+
+    /etc/postfix/main.cf:
+        postscreen_whitelist_interfaces = !168.100.189.8 static:all
+
+    Translation: allow clients to obtain the temporary allowlist status on all
+    server IP addresses except 168.100.189.8, which is a backup MX address.
+
+When a non-allowlisted client connects the backup MX address, postscreen(8)
+logs this with the client address and port number as:
+
+    CCOONNNNEECCTT ffrroomm [address]:port ttoo [[116688..110000..118899..88]]::2255
+    WWHHIITTEELLIISSTT VVEETTOO [address]:port
+
+Translation: the client at [address]:port connected to the backup MX address
+168.100.189.8 while it was not allowlisted. The client will not be granted the
+temporary allowlist status, even if passes all the allowlist tests described
+below.
+
+TTeessttss bbeeffoorree tthhee 222200 SSMMTTPP sseerrvveerr ggrreeeettiinngg
+
+The postscreen_greet_wait parameter specifies a short time interval before the
+"220 text..." server greeting, where postscreen(8) can run a number of tests in
+parallel.
+
+When a good client passes these tests, and no "deep protocol tests" are
+configured, postscreen(8) adds the client to the temporary allowlist and hands
+off the "live" connection to a Postfix SMTP server process. The client can then
+continue as if postscreen(8) never even existed (except of course for the short
+postscreen_greet_wait delay).
+
+  * Pregreet test
+  * DNS Allow/denylist test
+  * When tests fail before the 220 SMTP server greeting
+
+PPrreeggrreeeett tteesstt
+
+The SMTP protocol is a classic example of a protocol where the server speaks
+before the client. postscreen(8) detects zombies that are in a hurry and that
+speak before their turn. This test is enabled by default.
+
+The postscreen_greet_banner parameter specifies the text portion of a "220-
+text..." teaser banner (default: $smtpd_banner). Note that this becomes the
+first part of a multi-line server greeting. The postscreen(8) daemon sends this
+before the postscreen_greet_wait timer is started. The purpose of the teaser
+banner is to confuse zombies so that they speak before their turn. It has no
+effect on SMTP clients that correctly implement the protocol.
+
+To avoid problems with poorly-implemented SMTP engines in network appliances or
+network testing tools, either exclude them from all tests with the
+postscreen_access_list feature or else specify an empty teaser banner:
+
+/etc/postfix/main.cf:
+    # Exclude broken clients by allowlisting. Clients in mynetworks
+    # should always be allowlisted.
+    postscreen_access_list = permit_mynetworks,
+        cidr:/etc/postfix/postscreen_access.cidr
+
+/etc/postfix/postscreen_access.cidr:
+    192.168.254.0/24 permit
+
+/etc/postfix/main.cf:
+    # Disable the teaser banner (try allowlisting first if you can).
+    postscreen_greet_banner =
+
+When an SMTP client sends a command before the postscreen_greet_wait time has
+elapsed, postscreen(8) logs this as:
+
+    PPRREEGGRREEEETT count aafftteerr time ffrroomm [address]:port text...
+
+Translation: the client at [address]:port sent count bytes before its turn to
+speak. This happened time seconds after the postscreen_greet_wait timer was
+started. The text is what the client sent (truncated to 100 bytes, and with
+non-printable characters replaced with C-style escapes such as \r for carriage-
+return and \n for newline).
+
+The postscreen_greet_action parameter specifies the action that is taken next.
+See "When tests fail before the 220 SMTP server greeting" below.
+
+DDNNSS AAllllooww//ddeennyylliisstt tteesstt
+
+The postscreen_dnsbl_sites parameter (default: empty) specifies a list of DNS
+blocklist servers with optional filters and weight factors (positive weights
+for denylisting, negative for allowlisting). These servers will be queried in
+parallel with the reverse client IP address. This test is disabled by default.
+
+    CAUTION: when postscreen rejects mail, its SMTP reply contains the DNSBL
+    domain name. Use the postscreen_dnsbl_reply_map feature to hide "password"
+    information in DNSBL domain names.
+
+When the postscreen_greet_wait time has elapsed, and the combined DNSBL score
+is equal to or greater than the postscreen_dnsbl_threshold parameter value,
+postscreen(8) logs this as:
+
+    DDNNSSBBLL rraannkk count ffoorr [address]:port
+
+Translation: the SMTP client at [address]:port has a combined DNSBL score of
+count.
+
+The postscreen_dnsbl_action parameter specifies the action that is taken when
+the combined DNSBL score is equal to or greater than the threshold. See "When
+tests fail before the 220 SMTP server greeting" below.
+
+WWhheenn tteessttss ffaaiill bbeeffoorree tthhee 222200 SSMMTTPP sseerrvveerr ggrreeeettiinngg
+
+When the client address matches the permanent denylist, or when the client
+fails the pregreet or DNSBL tests, the action is specified with
+postscreen_blacklist_action, postscreen_greet_action, or
+postscreen_dnsbl_action, respectively.
+
+iiggnnoorree (default)
+    Ignore the failure of this test. Allow other tests to complete. Repeat this
+    test the next time the client connects. This option is useful for testing
+    and collecting statistics without blocking mail.
+eennffoorrccee
+    Allow other tests to complete. Reject attempts to deliver mail with a 550
+    SMTP reply, and log the helo/sender/recipient information. Repeat this test
+    the next time the client connects.
+ddrroopp
+    Drop the connection immediately with a 521 SMTP reply. Repeat this test the
+    next time the client connects.
+
+TTeessttss aafftteerr tthhee 222200 SSMMTTPP sseerrvveerr ggrreeeettiinngg
+
+In this phase of the protocol, postscreen(8) implements a number of "deep
+protocol" tests. These tests use an SMTP protocol engine that is built into the
+postscreen(8) server.
+
+Important note: these protocol tests are disabled by default. They are more
+intrusive than the pregreet and DNSBL tests, and they have limitations as
+discussed next.
+
+  * The main limitation of "after 220 greeting" tests is that a new client must
+    disconnect after passing these tests (reason: postscreen is not a proxy).
+    Then the client must reconnect from the same IP address before it can
+    deliver mail. The following measures may help to avoid email delays:
+
+      o Allow "good" clients to skip tests with the
+        postscreen_dnsbl_whitelist_threshold feature (Postfix 2.11 and later).
+        This is especially effective for sites such as Google that never retry
+        immediately from the same IP address.
+
+      o Small sites: Configure postscreen(8) to listen on multiple IP
+        addresses, published in DNS as different IP addresses for the same MX
+        hostname or for different MX hostnames. This avoids mail delivery
+        delays with clients that reconnect immediately from the same IP
+        address.
+
+      o Large sites: Share the postscreen(8) cache between different Postfix
+        MTAs with a large-enough memcache_table(5). Again, this avoids mail
+        delivery delays with clients that reconnect immediately from the same
+        IP address.
+
+  * postscreen(8)'s built-in SMTP engine does not implement the AUTH, XCLIENT,
+    and XFORWARD features. If you need to make these services available on port
+    25, then do not enable the tests after the 220 server greeting.
+
+  * End-user clients should connect directly to the submission service, so that
+    they never have to deal with postscreen(8)'s tests.
+
+The following "after 220 greeting" tests are available:
+
+  * Command pipelining test
+  * Non-SMTP command test
+  * Bare newline test
+  * When tests fail after the 220 SMTP server greeting
+
+CCoommmmaanndd ppiippeelliinniinngg tteesstt
+
+By default, SMTP is a half-duplex protocol: the sender and receiver send one
+command and one response at a time. Unlike the Postfix SMTP server, postscreen
+(8) does not announce support for ESMTP command pipelining. Therefore, clients
+are not allowed to send multiple commands. postscreen(8)'s deep protocol test
+for this is disabled by default.
+
+With "postscreen_pipelining_enable = yes", postscreen(8) detects zombies that
+send multiple commands, instead of sending one command and waiting for the
+server to reply.
+
+This test is opportunistically enabled when postscreen(8) has to use the built-
+in SMTP engine anyway. This is to make postscreen(8) logging more informative.
+
+When a client sends multiple commands, postscreen(8) logs this as:
+
+    CCOOMMMMAANNDD PPIIPPEELLIINNIINNGG ffrroomm [address]:port aafftteerr command: text
+
+Translation: the SMTP client at [address]:port sent multiple SMTP commands,
+instead of sending one command and then waiting for the server to reply. This
+happened after the client sent command. The text shows part of the input that
+was sent too early; it is not logged with Postfix 2.8.
+
+The postscreen_pipelining_action parameter specifies the action that is taken
+next. See "When tests fail after the 220 SMTP server greeting" below.
+
+NNoonn--SSMMTTPP ccoommmmaanndd tteesstt
+
+Some spambots send their mail through open proxies. A symptom of this is the
+usage of commands such as CONNECT and other non-SMTP commands. Just like the
+Postfix SMTP server's smtpd_forbidden_commands feature, postscreen(8) has an
+equivalent postscreen_forbidden_commands feature to block these clients.
+postscreen(8)'s deep protocol test for this is disabled by default.
+
+With "postscreen_non_smtp_command_enable = yes", postscreen(8) detects zombies
+that send commands specified with the postscreen_forbidden_commands parameter.
+This also detects commands with the syntax of a message header label. The
+latter is a symptom that the client is sending message content after ignoring
+all the responses from postscreen(8) that reject mail.
+
+This test is opportunistically enabled when postscreen(8) has to use the built-
+in SMTP engine anyway. This is to make postscreen(8) logging more informative.
+
+When a client sends non-SMTP commands, postscreen(8) logs this as:
+
+    NNOONN--SSMMTTPP CCOOMMMMAANNDD ffrroomm [address]:port aafftteerr command: text
+
+Translation: the SMTP client at [address]:port sent a command that matches the
+postscreen_forbidden_commands parameter, or that has the syntax of a message
+header label (text followed by optional space and ":"). The "aafftteerr command"
+portion is logged with Postfix 2.10 and later.
+
+The postscreen_non_smtp_command_action parameter specifies the action that is
+taken next. See "When tests fail after the 220 SMTP server greeting" below.
+
+BBaarree nneewwlliinnee tteesstt
+
+SMTP is a line-oriented protocol: lines have a limited length, and are
+terminated with <CR><LF>. Lines ending in a "bare" <LF>, that is newline not
+preceded by carriage return, are not allowed in SMTP. postscreen(8)'s deep
+protocol test for this is disabled by default.
+
+With "postscreen_bare_newline_enable = yes", postscreen(8) detects clients that
+send lines ending in bare newline characters.
+
+This test is opportunistically enabled when postscreen(8) has to use the built-
+in SMTP engine anyway. This is to make postscreen(8) logging more informative.
+
+When a client sends bare newline characters, postscreen(8) logs this as:
+
+    BBAARREE NNEEWWLLIINNEE ffrroomm [address]:port aafftteerr command
+
+Translation: the SMTP client at [address]:port sent a bare newline character,
+that is newline not preceded by carriage return. The "aafftteerr command" portion is
+logged with Postfix 2.10 and later.
+
+The postscreen_bare_newline_action parameter specifies the action that is taken
+next. See "When tests fail after the 220 SMTP server greeting" below.
+
+WWhheenn tteessttss ffaaiill aafftteerr tthhee 222200 SSMMTTPP sseerrvveerr ggrreeeettiinngg
+
+When the client fails the pipelining, non-SMTP command or bare newline tests,
+the action is specified with postscreen_pipelining_action,
+postscreen_non_smtp_command_action or postscreen_bare_newline_action,
+respectively.
+
+iiggnnoorree (default for bare newline)
+    Ignore the failure of this test. Allow other tests to complete. Do NOT
+    repeat this test before the result from some other test expires. This
+    option is useful for testing and collecting statistics without blocking
+    mail permanently.
+eennffoorrccee (default for pipelining)
+    Allow other tests to complete. Reject attempts to deliver mail with a 550
+    SMTP reply, and log the helo/sender/recipient information. Repeat this test
+    the next time the client connects.
+ddrroopp (default for non-SMTP commands)
+    Drop the connection immediately with a 521 SMTP reply. Repeat this test the
+    next time the client connects. This action is compatible with the Postfix
+    SMTP server's smtpd_forbidden_commands feature.
+
+OOtthheerr eerrrroorrss
+
+When an SMTP client hangs up unexpectedly, postscreen(8) logs this as:
+
+    HHAANNGGUUPP aafftteerr time ffrroomm [address]:port iinn test name
+
+Translation: the SMTP client at [address]:port disconnected unexpectedly, time
+seconds after the start of the test named test name.
+
+There is no punishment for hanging up. A client that hangs up without sending
+the QUIT command can still pass all postscreen(8) tests.
+
+The following errors are reported by the built-in SMTP engine. This engine
+never accepts mail, therefore it has per-session limits on the number of
+commands and on the session length.
+
+    CCOOMMMMAANNDD TTIIMMEE LLIIMMIITT ffrroomm [address]:port aafftteerr command
+
+Translation: the SMTP client at [address]:port reached the per-command time
+limit as specified with the postscreen_command_time_limit parameter. The
+session is terminated immediately. The "aafftteerr command" portion is logged with
+Postfix 2.10 and later.
+
+    CCOOMMMMAANNDD CCOOUUNNTT LLIIMMIITT ffrroomm [address]:port aafftteerr command
+
+Translation: the SMTP client at [address]:port reached the per-session command
+count limit as specified with the postscreen_command_count_limit parameter. The
+session is terminated immediately. The "aafftteerr command" portion is logged with
+Postfix 2.10 and later.
+
+    CCOOMMMMAANNDD LLEENNGGTTHH LLIIMMIITT ffrroomm [address]:port aafftteerr command
+
+Translation: the SMTP client at [address]:port reached the per-command length
+limit, as specified with the line_length_limit parameter. The session is
+terminated immediately. The "aafftteerr command" portion is logged with Postfix 2.10
+and later.
+
+When an SMTP client makes too many connections at the same time, postscreen(8)
+rejects the connection with a 421 status code and logs:
+
+    NNOOQQUUEEUUEE:: rreejjeecctt:: CCOONNNNEECCTT ffrroomm [address]:port:: ttoooo mmaannyy ccoonnnneeccttiioonnss
+
+The postscreen_client_connection_count_limit parameter controls this limit.
+
+When an SMTP client connects after postscreen(8) has reached a connection count
+limit, postscreen(8) rejects the connection with a 421 status code and logs:
+
+    NNOOQQUUEEUUEE:: rreejjeecctt:: CCOONNNNEECCTT ffrroomm [address]:port:: aallll ssccrreeeenniinngg ppoorrttss bbuussyy
+    NNOOQQUUEEUUEE:: rreejjeecctt:: CCOONNNNEECCTT ffrroomm [address]:port:: aallll sseerrvveerr ppoorrttss bbuussyy
+
+The postscreen_pre_queue_limit and postscreen_post_queue_limit parameters
+control these limits.
+
+WWhheenn aallll tteessttss ssuucccceeeedd
+
+When a new SMTP client passes all tests (i.e. it is not allowlisted via some
+mechanism), postscreen(8) logs this as:
+
+    PPAASSSS NNEEWW [address]:port
+
+Where [address]:port are the client IP address and port. Then, postscreen(8)
+creates a temporary allowlist entry that excludes the client IP address from
+further tests until the temporary allowlist entry expires, as controlled with
+the postscreen_*_ttl parameters.
+
+When no "deep protocol tests" are configured, postscreen(8) hands off the
+"live" connection to a Postfix SMTP server process. The client can then
+continue as if postscreen(8) never even existed (except for the short
+postscreen_greet_wait delay).
+
+When any "deep protocol tests" are configured, postscreen(8) cannot hand off
+the "live" connection to a Postfix SMTP server process in the middle of the
+session. Instead, postscreen(8) defers mail delivery attempts with a 4XX
+status, logs the helo/sender/recipient information, and waits for the client to
+disconnect. The next time the client connects it will be allowed to talk to a
+Postfix SMTP server process to deliver its mail. postscreen(8) mitigates the
+impact of this limitation by giving deep protocol tests a long expiration time.
+
+CCoonnffiigguurriinngg tthhee ppoossttssccrreeeenn((88)) sseerrvviiccee
+
+postscreen(8) has been tested on FreeBSD [4-8], Linux 2.[4-6] and Solaris 9
+systems.
+
+  * Turning on postscreen(8) without blocking mail
+  * postscreen(8) TLS configuration
+  * Blocking mail with postscreen(8)
+  * Turning off postscreen(8)
+  * Sharing the temporary allowlist
+
+TTuurrnniinngg oonn ppoossttssccrreeeenn((88)) wwiitthhoouutt bblloocckkiinngg mmaaiill
+
+To enable the postscreen(8) service and log client information without blocking
+mail:
+
+ 1. Make sure that local clients and systems with non-standard SMTP
+    implementations are excluded from any postscreen(8) tests. The default is
+    to exclude all clients in mynetworks. To exclude additional clients, for
+    example, third-party performance monitoring tools (these tend to have
+    broken SMTP implementations):
+
+    /etc/postfix/main.cf:
+        # Exclude broken clients by allowlisting. Clients in mynetworks
+        # should always be allowlisted.
+        postscreen_access_list = permit_mynetworks,
+            cidr:/etc/postfix/postscreen_access.cidr
+
+    /etc/postfix/postscreen_access.cidr:
+        192.168.254.0/24 permit
+
+ 2. Comment out the "smtp inet ... smtpd" service in master.cf, including any
+    "-o parameter=value" entries that follow.
+
+    /etc/postfix/master.cf:
+        #smtp      inet  n       -       n       -       -       smtpd
+        #    -o parameter=value ...
+
+ 3. Uncomment the new "smtpd pass ... smtpd" service in master.cf, and
+    duplicate any "-o parameter=value" entries from the smtpd service that was
+    commented out in the previous step.
+
+    /etc/postfix/master.cf:
+        smtpd     pass  -       -       n       -       -       smtpd
+            -o parameter=value ...
+
+ 4. Uncomment the new "smtp inet ... postscreen" service in master.cf.
+
+    /etc/postfix/master.cf:
+        smtp      inet  n       -       n       -       1       postscreen
+
+ 5. Uncomment the new "tlsproxy unix ... tlsproxy" service in master.cf. This
+    service implements STARTTLS support for postscreen(8).
+
+    /etc/postfix/master.cf:
+        tlsproxy  unix  -       -       n       -       0       tlsproxy
+
+ 6. Uncomment the new "dnsblog unix ... dnsblog" service in master.cf. This
+    service does DNSBL lookups for postscreen(8) and logs results.
+
+    /etc/postfix/master.cf:
+        dnsblog   unix  -       -       n       -       0       dnsblog
+
+ 7. To enable DNSBL lookups, list some DNS blocklist sites in main.cf,
+    separated by whitespace. Different sites can have different weights. For
+    example:
+
+    /etc/postfix/main.cf:
+        postscreen_dnsbl_threshold = 2
+        postscreen_dnsbl_sites = zen.spamhaus.org*2
+            bl.spamcop.net*1 b.barracudacentral.org*1
+
+    Note: if your DNSBL queries have a "secret" in the domain name, you must
+    censor this information from the postscreen(8) SMTP replies. For example:
+
+    /etc/postfix/main.cf:
+        postscreen_dnsbl_reply_map = texthash:/etc/postfix/dnsbl_reply
+
+    /etc/postfix/dnsbl_reply:
+        # Secret DNSBL name           Name in postscreen(8) replies
+        secret.zen.dq.spamhaus.net    zen.spamhaus.org
+
+    The texthash: format is similar to hash: except that there is no need to
+    run postmap(1) before the file can be used, and that it does not detect
+    changes after the file is read. It is new with Postfix version 2.8.
+
+ 8. Read the new configuration with "postfix reload".
+
+Notes:
+
+  * Some postscreen(8) configuration parameters implement stress-dependent
+    behavior. This is supported only when the default value is stress-dependent
+    (that is, "postconf -d parametername" output shows "parametername = $
+    {stress?something}${stress:something}" or "parametername = ${stress?
+    {something}:{something}}"). Other parameters always evaluate as if the
+    stress value is the empty string.
+
+  * See "Tests before the 220 SMTP server greeting" for details about the
+    logging from these postscreen(8) tests.
+
+  * If you run Postfix 2.6 or earlier you must stop and start the master daemon
+    ("postfix stop; postfix start"). This is needed because the Postfix "pass"
+    master service type did not work reliably on all systems.
+
+ppoossttssccrreeeenn((88)) TTLLSS ccoonnffiigguurraattiioonn
+
+postscreen(8) TLS support is available for remote SMTP clients that aren't
+allowlisted, including clients that need to renew their temporary allowlist
+status. When a remote SMTP client requests TLS service, postscreen(8) invisibly
+hands off the connection to a tlsproxy(8) process. Then, tlsproxy(8) encrypts
+and decrypts the traffic between postscreen(8) and the remote SMTP client. One
+tlsproxy(8) process can handle multiple SMTP sessions. The number of tlsproxy
+(8) processes slowly increases with server load, but it should always be much
+smaller than the number of postscreen(8) TLS sessions.
+
+TLS support for postscreen(8) and tlsproxy(8) uses the same parameters as with
+smtpd(8). We recommend that you keep the relevant configuration parameters in
+main.cf. If you must specify "-o smtpd_mumble=value" parameter overrides in
+master.cf for a postscreen-protected smtpd(8) service, then you should specify
+those same parameter overrides for the postscreen(8) and tlsproxy(8) services.
+
+BBlloocckkiinngg mmaaiill wwiitthh ppoossttssccrreeeenn((88))
+
+For compatibility with smtpd(8), postscreen(8) implements the soft_bounce
+safety feature. This causes Postfix to reject mail with a "try again" reply
+code.
+
+  * To turn this on for all of Postfix, specify "soft_bounce = yes" in main.cf.
+
+  * To turn this on for postscreen(8) only, append "-o soft_bounce=yes" (note:
+    NO SPACES around '=') to the postscreen entry in master.cf.
+
+Execute "postfix reload" to make the change effective.
+
+After testing, do not forget to remove the soft_bounce feature, otherwise
+senders won't receive their non-delivery notification until many days later.
+
+To use the postscreen(8) service to block mail, edit main.cf and specify one or
+more of:
+
+  * "postscreen_dnsbl_action = enforce", to reject clients that are on DNS
+    blocklists, and to log the helo/sender/recipient information. With good
+    DNSBLs this reduces the amount of load on Postfix SMTP servers
+    dramatically.
+
+  * "postscreen_greet_action = enforce", to reject clients that talk before
+    their turn, and to log the helo/sender/recipient information. This stops
+    over half of all known-to-be illegitimate connections to Wietse's mail
+    server. It is backup protection for zombies that haven't yet been
+    denylisted.
+
+  * You can also enable "deep protocol tests", but these are more intrusive
+    than the pregreet or DNSBL tests.
+
+    When a good client passes the "deep protocol tests", postscreen(8) adds the
+    client to the temporary allowlist but it cannot hand off the "live"
+    connection to a Postfix SMTP server process in the middle of the session.
+    Instead, postscreen(8) defers mail delivery attempts with a 4XX status,
+    logs the helo/sender/recipient information, and waits for the client to
+    disconnect.
+
+    When the good client comes back in a later session, it is allowed to talk
+    directly to a Postfix SMTP server. See "Tests after the 220 SMTP server
+    greeting" above for limitations with AUTH and other features that clients
+    may need.
+
+    An unexpected benefit from "deep protocol tests" is that some "good"
+    clients don't return after the 4XX reply; these clients were not so good
+    after all.
+
+    Unfortunately, some senders will retry requests from different IP
+    addresses, and may never get allowlisted. For this reason, Wietse stopped
+    using "deep protocol tests" on his own internet-facing mail server.
+
+  * There is also support for permanent denylisting and allowlisting; see the
+    description of the postscreen_access_list parameter for details.
+
+TTuurrnniinngg ooffff ppoossttssccrreeeenn((88))
+
+To turn off postscreen(8) and handle mail directly with Postfix SMTP server
+processes:
+
+ 1. Comment out the "smtp inet ... postscreen" service in master.cf, including
+    any "-o parameter=value" entries that follow.
+
+    /etc/postfix/master.cf:
+        #smtp      inet  n       -       n       -       1       postscreen
+        #    -o parameter=value ...
+
+ 2. Comment out the "dnsblog unix ... dnsblog" service in master.cf.
+
+    /etc/postfix/master.cf:
+        #dnsblog   unix  -       -       n       -       0       dnsblog
+
+ 3. Comment out the "smtpd pass ... smtpd" service in master.cf, including any
+    "-o parameter=value" entries that follow.
+
+    /etc/postfix/master.cf:
+        #smtpd     pass  -       -       n       -       -       smtpd
+        #    -o parameter=value ...
+
+ 4. Comment out the "tlsproxy unix ... tlsproxy" service in master.cf,
+    including any "-o parameter=value" entries that follow.
+
+    /etc/postfix/master.cf:
+        #tlsproxy  unix  -       -       n       -       0       tlsproxy
+        #    -o parameter=value ...
+
+ 5. Uncomment the "smtp inet ... smtpd" service in master.cf, including any "-
+    o parameter=value" entries that may follow.
+
+    /etc/postfix/master.cf:
+        smtp       inet  n       -       n       -       -       smtpd
+            -o parameter=value ...
+
+ 6. Read the new configuration with "postfix reload".
+
+SShhaarriinngg tthhee tteemmppoorraarryy aalllloowwlliisstt
+
+By default, the temporary allowlist is not shared between multiple postscreen
+(8) daemons. To enable sharing, choose one of the following options:
+
+  * A non-persistent memcache: temporary allowlist can be shared between
+    postscreen(8) daemons on the same host or different hosts. Disable cache
+    cleanup (postscreen_cache_cleanup_interval = 0) in all postscreen(8)
+    daemons because memcache: has no first-next API (but see example 4 below
+    for memcache: with persistent backup). This requires Postfix 2.9 or later.
+
+        # Example 1: non-persistent memcache: allowlist.
+        /etc/postfix/main.cf:
+            postscreen_cache_map = memcache:/etc/postfix/postscreen_cache
+            postscreen_cache_cleanup_interval = 0
+
+        /etc/postfix/postscreen_cache:
+            memcache = inet:127.0.0.1:11211
+            key_format = postscreen:%s
+
+  * A persistent lmdb: temporary allowlist can be shared between postscreen(8)
+    daemons that run under the same master(8) daemon, or under different master
+    (8) daemons on the same host. Disable cache cleanup
+    (postscreen_cache_cleanup_interval = 0) in all postscreen(8) daemons except
+    one that is responsible for cache cleanup. This requires Postfix 2.11 or
+    later.
+
+        # Example 2: persistent lmdb: allowlist.
+        /etc/postfix/main.cf:
+            postscreen_cache_map = lmdb:$data_directory/postscreen_cache
+            # See note 1 below.
+            # postscreen_cache_cleanup_interval = 0
+
+  * Other kinds of persistent temporary allowlist can be shared only between
+    postscreen(8) daemons that run under the same master(8) daemon. In this
+    case, temporary allowlist access must be shared through the proxymap(8)
+    daemon. This requires Postfix 2.9 or later.
+
+        # Example 3: proxied btree: allowlist.
+        /etc/postfix/main.cf:
+            postscreen_cache_map =
+                proxy:btree:/var/lib/postfix/postscreen_cache
+            # See note 1 below.
+            # postscreen_cache_cleanup_interval = 0
+
+        # Example 4: proxied btree: allowlist with memcache: accelerator.
+        /etc/postfix/main.cf:
+            postscreen_cache_map = memcache:/etc/postfix/postscreen_cache
+            proxy_write_maps =
+                proxy:btree:/var/lib/postfix/postscreen_cache
+                ... other proxied tables ...
+            # See note 1 below.
+            # postscreen_cache_cleanup_interval = 0
+
+        /etc/postfix/postscreen_cache:
+            # Note: the $data_directory macro is not defined in this context.
+            memcache = inet:127.0.0.1:11211
+            backup = proxy:btree:/var/lib/postfix/postscreen_cache
+            key_format = postscreen:%s
+
+    Note 1: disable cache cleanup (postscreen_cache_cleanup_interval = 0) in
+    all postscreen(8) daemons except one that is responsible for cache cleanup.
+
+    Note 2: postscreen(8) cache sharing via proxymap(8) requires Postfix 2.9 or
+    later; earlier proxymap(8) implementations don't support cache cleanup.
+
+HHiissttoorriiccaall nnootteess aanndd ccrreeddiittss
+
+Many ideas in postscreen(8) were explored in earlier work by Michael Tokarev,
+in OpenBSD spamd, and in MailChannels Traffic Control.
+
+Wietse threw together a crude prototype with pregreet and dnsbl support in June
+2009, because he needed something new for a Mailserver conference presentation
+in July. Ralf Hildebrandt ran this code on several servers to collect real-
+world statistics. This version used the dnsblog(8) ad-hoc DNS client program.
+
+Wietse needed new material for a LISA conference presentation in November 2010,
+so he added support for DNSBL weights and filters in August, followed by a
+major code rewrite, deep protocol tests, helo/sender/recipient logging, and
+stress-adaptive behavior in September. Ralf Hildebrandt ran this code on
+several servers to collect real-world statistics. This version still used the
+embarrassing dnsblog(8) ad-hoc DNS client program.
+
+Wietse added STARTTLS support in December 2010. This makes postscreen(8) usable
+for sites that require TLS support. The implementation introduces the tlsproxy
+(8) event-driven TLS proxy that decrypts/encrypts the sessions for multiple
+SMTP clients.
+
+The tlsproxy(8) implementation led to the discovery of a "new" class of
+vulnerability (CVE-2011-0411) that affected multiple implementations of SMTP,
+POP, IMAP, NNTP, and FTP over TLS.
+
+postscreen(8) was officially released as part of the Postfix 2.8 stable release
+in January 2011.
+

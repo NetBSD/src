@@ -7,7 +7,8 @@
 
 <title>Postfix Connection Cache </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -45,8 +46,8 @@ you</a></h2>
 
 <p> With SMTP connection caching, Postfix can deliver multiple
 messages over the same SMTP connection. By default, Postfix 2.2
-reuses an SMTP connection automatically when a destination has
-high volume of mail in the active queue.  </p>
+reuses a plaintext SMTP connection automatically when a destination has
+high volume of mail in the active queue. </p>
 
 <p> SMTP Connection caching is a performance feature. Whether or not
 it actually improves performance depends on the conditions: </p>
@@ -58,10 +59,15 @@ when delivering mail to a destination with multiple mail servers,
 because it can help Postfix to skip over a non-responding server.
 </p>
 
+<li> <p> SMTP Connection caching can also help with receivers that
+impose rate limits on new connections. </p>
+
 <li> <p> Otherwise, the benefits of SMTP connection caching are
 minor: it eliminates the latency of the TCP handshake (SYN, SYN+ACK,
 ACK), plus the latency of the SMTP initial handshake (220 greeting,
-EHLO command, EHLO response).
+EHLO command, EHLO response). With TLS-encrypted connections, this
+can save an additional two roundtrips that would otherwise be needed
+to send STARTTLS and to resume a TLS session. </p>
 
 <li> <p> SMTP Connection caching gives no gains with respect to
 SMTP session tear-down.  The Postfix smtp(8) client normally does
@@ -86,7 +92,7 @@ architecture OVERVIEW document. </p>
 
 <p> The Postfix connection cache is shared among Postfix mail
 delivering processes.  This maximizes the opportunity to reuse an
-open connection.  Other MTAs such as Sendmail or exim have a
+open connection.  Some MTAs such as Sendmail have a
 non-shared connection cache. Here, a connection can be reused only
 by the mail delivering process that creates the connection.  To get
 the same performance improvement as with a shared connection cache,
@@ -95,33 +101,6 @@ non-shared connections need to be kept open for a longer time. </p>
 <p> The scache(8) server, introduced with Postfix version 2.2,
 maintains the shared connection cache.  With Postfix version 2.2,
 only the smtp(8) client has support to access this cache.  </p>
-
-<blockquote>
-
-<table>
-
-<tr> <td> </td> <td> <tt> /-- </tt> </td> <td align="center"
-colspan="3" bgcolor="#f0f0ff"> smtp(8) </td> <td colspan="2"> <tt>
---&gt; </tt> Internet </td> </tr>
-
-<tr> <td align="center" bgcolor="#f0f0ff"> qmgr(8) </td> <td> </td>
-<td align="center" rowspan="3"> &nbsp; </td> <td align="center"
-rowspan="3"><tt>|<br>|<br>|<br>|<br>v</tt></td> <td> &nbsp; </td>
-</tr>
-
-<tr> <td> </td> <td> <tt> \-- </tt> </td> <td align="center"
-colspan="2" bgcolor="#f0f0ff"> smtp(8) </td> <td align="left"> <tt>
---&gt; </tt> Internet </td> </tr>
-
-<tr> <td colspan="3"> </td> <td align="center"><tt>^<br>|</tt></td>
-<td> &nbsp; </td> </tr>
-
-<tr> <td colspan="3"> </td> <td align="center" colspan="3"
-bgcolor="#f0f0ff"> scache(8) </td> </tr>
-
-</table>
-
-</blockquote>
 
 <p> When SMTP connection caching is enabled (see next section), the
 smtp(8) client does not disconnect after a mail transaction, but
@@ -133,10 +112,74 @@ the smtp(8) client continues with some other mail delivery request.
 Meanwhile, any smtp(8) client process can ask the scache(8) server
 for that cached connection and reuse it for mail delivery.  </p>
 
+<blockquote>
+
+<table>
+
+<tr> <td> </td> <td> <tt> /-- </tt> </td> <td align="center"
+colspan="3" bgcolor="#f0f0ff"> smtp(8) </td> <td colspan="2"> <tt>
+--&gt; </tt> </td> <td> Internet </td> </tr>
+
+<tr> <td align="center" bgcolor="#f0f0ff"> qmgr(8) </td> <td> </td>
+<td align="center" rowspan="3"><tt>|<br>|<br>|<br>|<br>v</tt></td>
+</tr>
+ 
+<tr> <td> &nbsp; </td> <td> <tt> \-- </tt> </td> <td align="center"
+colspan="4" bgcolor="#f0f0ff"> smtp(8) </td> <td align="left">
+&nbsp; </td> </tr>
+
+<tr> <td colspan="2"> &nbsp; </td> <td> </td> <td
+align="center"><tt>^<br>|</tt></td> </tr>
+
+<tr> <td colspan="2"> </td> <td align="center" colspan="3"
+bgcolor="#f0f0ff"> scache(8) </td> </tr>
+
+</table>
+
+</blockquote>
+
+<p> With TLS connection reuse (Postfix 3.4 and later), the Postfix
+smtp(8) client connects to a remote SMTP server and sends plaintext
+EHLO and STARTTLS commands, then inserts a tlsproxy(8) process into
+the connection as shown below. </p>
+
+<p> After delivering mail, the smtp(8) client hands over the open
+smtp(8)-to-tlsproxy(8) connection to the scache(8) server, and
+continues with some other mail delivery request. Meanwhile, any
+smtp(8) client process can ask the scache(8) server for that cached
+connection and reuse it for mail delivery. </p>
+
+<blockquote>
+
+<table>
+
+<tr> <td> </td> <td> <tt> /-- </tt> </td> <td align="center"
+colspan="3" bgcolor="#f0f0ff"> smtp(8) </td> <td colspan="2"> <tt>
+--&gt; </tt> </td> <td align="center"bgcolor="#f0f0ff"> tlsproxy(8)
+</td> <td> <tt> --&gt; </tt> </td> <td> Internet </td> </tr>
+
+<tr> <td align="center" bgcolor="#f0f0ff"> qmgr(8) </td> <td> </td>
+<td align="center" rowspan="3"><tt>|<br>|<br>|<br>|<br>v</tt></td>
+</tr>
+ 
+<tr> <td> &nbsp; </td> <td> <tt> \-- </tt> </td> <td align="center"
+colspan="4" bgcolor="#f0f0ff"> smtp(8) </td> <td align="left">
+&nbsp; </td> </tr>
+
+<tr> <td colspan="2"> &nbsp; </td> <td> </td> <td
+align="center"><tt>^<br>|</tt></td> </tr>
+
+<tr> <td colspan="2"> </td> <td align="center" colspan="3"
+bgcolor="#f0f0ff"> scache(8) </td> </tr>
+
+</table>
+
+</blockquote>
+
 <p> The connection cache can be searched by destination domain name
 (the right-hand side of the recipient address) and by the IP address
 of the host at the other end of the connection. This allows Postfix
-to reuse a connection even when the remote host is mail server for
+to reuse a connection even when the remote host is a mail server for
 domains with different names.  </p>
 
 <h2><a name="configuration">Connection cache configuration </a></h2>
@@ -205,6 +248,10 @@ lookups is ignored.  </p>
 
 </blockquote>
 
+<p> See <a href="TLS_README.html#client_tls_reuse">Client-side TLS
+connection reuse</a> to enable multiple deliveries over a TLS-encrypted
+connection (Postfix version 3.4 and later). </p>
+
 </ul>
 
 <h2><a name="safety">Connection cache safety mechanisms </a></h2>
@@ -232,7 +279,7 @@ the smtp_connection_reuse_time_limit parameter. In addition, Postfix
 times a connection may be reused, but this feature is unsafe as it
 introduces a "fatal attractor" failure mode (when a destination has
 multiple inbound MTAs, the slowest inbound MTA will attract most
-connections from Postfix to that destination).  </p>.
+connections from Postfix to that destination). </p>
 
 <p> Postfix 2.3 logs the use count of multiply-used connections,
 as shown in the following example: </p>
@@ -260,13 +307,11 @@ This prevents mis-delivery of mail. </p>
 
 <ul>
 
-<li> <p> The Postfix shared connection cache cannot be used with
-TLS, because saved TLS session information can be used only when a
-new connection is created (this limitation does not exist in
-connection caching implementations that reuse a connection only in
-the process that creates it).  For this reason, the Postfix smtp(8)
-client always closes the connection after completing an attempt to
-deliver mail over TLS.  </p>
+<li> <p> With Postfix versions &lt; 3.4, the Postfix shared connection
+cache cannot be used with TLS, because an open TLS connection can
+be reused only in the process that creates it.  For this reason,
+the Postfix smtp(8) client historically always closed the connection
+after completing an attempt to deliver mail over TLS.</p>
 
 <li> <p> Postfix connection caching currently does not support
 multiple SASL accounts per mail server.  Specifically, Postfix

@@ -1,0 +1,8 @@
+./dict_open: warning: cidr map dict_cidr_file.map, line 3: open dict_cidr_file3: No such file or directory: skipping this rule
+owner=untrusted (uid=USER)
+> get 1.1.1.1
+1.1.1.1=dGhpcy1pcy1maWxlMQo=
+> get 2.2.2.2
+2.2.2.2=dGhpcy1pcy1maWxlMgo=
+> get 3.3.3.3
+3.3.3.3: not found

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldap_table.5,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: ldap_table.5,v 1.2.14.1 2023/12/25 12:54:40 martin Exp $
 .\"
 .TH LDAP_TABLE 5 
 .ad
@@ -34,35 +34,11 @@ the Postfix main.cf file, and can specify the parameters
 described below. An example is given at the end of this manual.
 
 This configuration method is available with Postfix version
-2.1 and later.  See the section "BACKWARDS COMPATIBILITY"
+2.1 and later.  See the section "OBSOLETE MAIN.CF PARAMETERS"
 below for older Postfix versions.
 
 For details about LDAP SSL and STARTTLS, see the section
 on SSL and STARTTLS below.
-.SH "BACKWARDS COMPATIBILITY"
-.na
-.nf
-.ad
-.fi
-For backwards compatibility with Postfix version 2.0 and earlier,
-LDAP parameters can also be defined in main.cf.  Specify
-as LDAP source a name that doesn't begin with a slash or
-a dot.  The LDAP parameters will then be accessible as the
-name you've given the source in its definition, an underscore,
-and the name of the parameter.  For example, if the map is
-specified as "ldap:\fIldapsource\fR", the "server_host"
-parameter below would be defined in main.cf as
-"\fIldapsource\fR_server_host".
-
-Note: with this form, the passwords for the LDAP sources are
-written in main.cf, which is normally world\-readable.  Support
-for this form will be removed in a future Postfix version.
-
-For backwards compatibility with the pre
-2.2 LDAP clients, \fBresult_filter\fR can for now be used instead
-of \fBresult_format\fR, when the latter parameter is not also set.
-The new name better reflects the function of the parameter. This
-compatibility interface may be removed in a future release.
 .SH "LIST MEMBERSHIP"
 .na
 .nf
@@ -182,9 +158,9 @@ Otherwise, the search is suppressed and returns no results.
 For the \fBsearch_base\fR parameter, the upper\-case equivalents
 of the above expansions behave identically to their lower\-case
 counter\-parts. With the \fBresult_format\fR parameter (previously
-called \fBresult_filter\fR see the COMPATIBILITY section and below),
-they expand to the corresponding components of input key rather
-than the result value.
+called \fBresult_filter\fR see the OTHER OBSOLETE FEATURES section
+and below), they expand to the corresponding components of input
+key rather than the result value.
 .IP "\fB%[1\-9]\fR"
 The patterns %1, %2, ... %9 are replaced by the corresponding
 most significant component of the input key's domain. If the
@@ -225,9 +201,9 @@ Otherwise, the search is suppressed and returns no results.
 The upper\-case equivalents of the above expansions behave in the
 \fBquery_filter\fR parameter identically to their lower\-case
 counter\-parts. With the \fBresult_format\fR parameter (previously
-called \fBresult_filter\fR see the COMPATIBILITY section and below),
-they expand to the corresponding components of input key rather
-than the result value.
+called \fBresult_filter\fR see the OTHER OBSOLETE FEATURES section
+and below), they expand to the corresponding components of input
+key rather than the result value.
 .IP
 The above %S, %U and %D expansions are available with Postfix 2.2
 and later.
@@ -304,7 +280,7 @@ with old configuration files.
 NOTE: DO NOT put quotes around the result format!
 .IP "\fBdomain (default: no domain list)\fR"
 This is a list of domain names, paths to files, or
-dictionaries. When specified, only fully qualified search
+"type:table" databases. When specified, only fully qualified search
 keys with a *non\-empty* localpart and a matching domain
 are eligible for lookup: 'user' lookups, bare domain lookups
 and "@domain" lookups are not performed. This can significantly
@@ -704,6 +680,35 @@ whose mailacceptinggeneralid attribute is "ldapuser", read
 the "maildrop" attributes of those found, and build a list
 of their maildrops, which will be treated as RFC822 addresses
 to which the message will be delivered.
+.SH "OBSOLETE MAIN.CF PARAMETERS"
+.na
+.nf
+.ad
+.fi
+For backwards compatibility with Postfix version 2.0 and earlier,
+LDAP parameters can also be defined in main.cf.  Specify
+as LDAP source a name that doesn't begin with a slash or
+a dot.  The LDAP parameters will then be accessible as the
+name you've given the source in its definition, an underscore,
+and the name of the parameter.  For example, if the map is
+specified as "ldap:\fIldapsource\fR", the "server_host"
+parameter below would be defined in main.cf as
+"\fIldapsource\fR_server_host".
+
+Note: with this form, the passwords for the LDAP sources are
+written in main.cf, which is normally world\-readable.  Support
+for this form will be removed in a future Postfix version.
+.SH "OTHER OBSOLETE FEATURES"
+.na
+.nf
+.ad
+.fi
+.IP "\fBresult_filter (No default)\fR"
+For backwards compatibility with the pre
+2.2 LDAP clients, \fBresult_filter\fR can for now be used instead
+of \fBresult_format\fR, when the latter parameter is not also set.
+The new name better reflects the function of the parameter. This
+compatibility interface may be removed in a future release.
 .SH "SEE ALSO"
 .na
 .nf

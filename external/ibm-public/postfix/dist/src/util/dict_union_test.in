@@ -1,0 +1,7 @@
+${VALGRIND} ./dict_open 'unionmap:{static:one,static:two,inline:{foo=three}}' read <<EOF
+get foo
+get bar
+EOF
+${VALGRIND} ./dict_open 'unionmap:{static:one,fail:fail}' read <<EOF
+get foo
+EOF

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+sed 's/[^A-Z0-9a-z_][^A-Z0-9a-z_]*/ /g' "$@" | awk '
+	{ for (i = 1; i <= NF; i++) {
+		if (length($i) > 1 && $(i) == last) {
+			if (i == 1)
+			    printf("%s ", last)
+			print
+		}
+		last = $(i)
+	   }
+	}
+'

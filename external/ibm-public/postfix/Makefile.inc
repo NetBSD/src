@@ -1,13 +1,21 @@
-#	$NetBSD: Makefile.inc,v 1.20 2017/05/21 15:28:39 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.20.12.1 2023/12/25 12:54:29 martin Exp $
 
 .include <bsd.own.mk>
 
-USE_FORT?= yes	# network client and server
-CWARNFLAGS.clang+=	-Wno-empty-body -Wno-format-extra-args
+# dist/src/util/attr.h(90)
+# dist/src/util/vstream.h(181)
+# dist/src/util/vstring.h(63)
+LINTFLAGS+=	-X 0		# empty declaration
 
+USE_FORT?= yes	# network client and server
+CWARNFLAGS.clang+=	-Wno-empty-body -Wno-format-extra-args \
+			-Wno-string-plus-int -Wno-string-compare
 WARNS?=	0
 
 PFIX_DISTDIR=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist
+
+# Many issues need to be resolved.
+COPTS+=	-fcommon
 
 CPPFLAGS+= -DNETBSD7 -DUSE_SASL_AUTH -DNO_EAI \
 	-I${DIST} \
@@ -15,7 +23,7 @@ CPPFLAGS+= -DNETBSD7 -DUSE_SASL_AUTH -DNO_EAI \
 	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \
 	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
 	-I${PFIX_DISTDIR}/src/xsasl \
-	${${ACTIVE_CC} == "clang":?-Wno-comment:}
+	-Wno-comment
 
 CPPFLAGS+= -DUSE_SASL_AUTH
 CPPFLAGS+= -DDEF_SERVER_SASL_TYPE=\"dovecot\"
@@ -25,8 +33,8 @@ CPPFLAGS+= -DDEF_CLIENT_SASL_TYPE=\"saslc\"
 DPADD+= ${LIBSASCL} ${LIBSSL}
 LDADD+= -lsaslc -lssl
 .if (${MKKERBEROS} != "no")
-DPADD+= ${LIBGSSAPI}
-LDADD+= -lgssapi
+DPADD+= ${LIBGSSAPI} ${LIBCRYPTO}
+LDADD+= -lgssapi -lcrypto
 .endif
 
 .if defined(HAVE_PCC)
@@ -45,8 +53,8 @@ CPPFLAGS+=	-DNO_IPV6
 # SQLite support.
 CPPFLAGS+=	-DHAS_SQLITE
 . if defined(PROG)
-DPADD+=		${LIBSQLITE3}
-LDADD+=		-lsqlite3
+DPADD+=		${LIBSQLITE3} ${LIBM}
+LDADD+=		-lsqlite3 -lm
 .endif
 
 # LDAP support.

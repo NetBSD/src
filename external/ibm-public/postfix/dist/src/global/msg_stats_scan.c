@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_stats_scan.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: msg_stats_scan.c,v 1.2.14.1 2023/12/25 12:55:02 martin Exp $	*/
 
 /*++
 /* NAME
@@ -9,7 +9,7 @@
 /*	#include <msg_stats.h>
 /*
 /*	int	msg_stats_scan(scan_fn, stream, flags, ptr)
-/*	ATTR_SCAN_MASTER_FN scan_fn;
+/*	ATTR_SCAN_COMMON_FN scan_fn;
 /*	VSTREAM *stream;
 /*	int	flags;
 /*	void	*ptr;
@@ -30,6 +30,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -55,7 +60,7 @@
 
 /* msg_stats_scan - read MSG_STATS from stream */
 
-int     msg_stats_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
+int     msg_stats_scan(ATTR_SCAN_COMMON_FN scan_fn, VSTREAM *fp,
 		               int flags, void *ptr)
 {
     MSG_STATS *stats = (MSG_STATS *) ptr;

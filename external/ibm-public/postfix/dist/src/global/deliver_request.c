@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_request.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: deliver_request.c,v 1.2.14.1 2023/12/25 12:54:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -73,7 +73,7 @@
 /*
 /*	The \fIhop_status\fR member must be updated by the caller
 /*	when all delivery to the destination in \fInexthop\fR should
-/*	be deferred. This member is passed to to dsn_free().
+/*	be deferred. This member is passed to dsn_free().
 /*
 /*	deliver_request_done() reports the delivery status back to the
 /*	client, including the optional \fIhop_status\fR etc. information,
@@ -94,6 +94,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -137,13 +142,13 @@ static int deliver_request_initial(VSTREAM *stream)
      * delivery request; otherwise the queue manager could block in write().
      */
     if (msg_verbose)
-	msg_info("deliver_request_initial: send initial status");
+	msg_info("deliver_request_initial: send initial response");
     attr_print(stream, ATTR_FLAG_NONE,
-	       SEND_ATTR_INT(MAIL_ATTR_STATUS, 0),
+	       SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_DELIVER),
 	       ATTR_TYPE_END);
     if ((err = vstream_fflush(stream)) != 0)
 	if (msg_verbose)
-	    msg_warn("send initial status: %m");
+	    msg_warn("send initial response: %m");
     return (err);
 }
 
@@ -167,7 +172,7 @@ static int deliver_request_final(VSTREAM *stream, DELIVER_REQUEST *request,
 	msg_info("deliver_request_final: send: \"%s\" %d",
 		 hop_status->reason, status);
     attr_print(stream, ATTR_FLAG_NONE,
-	       SEND_ATTR_FUNC(dsn_print, (void *) hop_status),
+	       SEND_ATTR_FUNC(dsn_print, (const void *) hop_status),
 	       SEND_ATTR_INT(MAIL_ATTR_STATUS, status),
 	       ATTR_TYPE_END);
     if ((err = vstream_fflush(stream)) != 0)

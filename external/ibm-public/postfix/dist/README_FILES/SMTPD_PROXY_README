@@ -71,6 +71,25 @@ PPrrooss aanndd ccoonnss ooff bbeeffoorree--qquueeuuee 
     sender (which is usually forged anyway). Mail that is not accepted remains
     the responsibility of the remote SMTP client.
 
+  * Con: The smtpd(8) service before the smtpd_proxy_filter cannot support
+    features that involve header or body access, or that involve queue file
+    manipulation (i.e., anything that involves processing by the cleanup(8)
+    service).
+
+      o No support for HOLD actions in Postfix smtpd access(5) restrictions.
+
+      o No support for smtpd_milters features that involve message header or
+        body content.
+
+      o No support for receive_override_options.
+
+    Instead, specify those features with the smtpd(8) service behind the
+    smtpd_proxy_filter. In some cases, it may be possible to combine a before-
+    filter PREPEND action that emits a unique pattern (for example containing
+    the MTA domain name), with an after-filter header_checks action that does
+    what you want, and with an smtp_header_checks IGNORE action that deletes
+    the prepended header from transit mail.
+
   * Con: The remote SMTP client expects an SMTP reply within a deadline. As the
     system load increases, fewer and fewer CPU cycles remain available to
     answer within the deadline, and eventually you either have to stop
@@ -102,8 +121,9 @@ From then on mail is processed as usual.
 
 The content filter itself is not described here. You can use any filter that is
 SMTP enabled. For non-SMTP capable content filtering software, Bennett Todd's
-SMTP proxy implements a nice Perl-based framework. See: http://
-bent.latency.net/smtpprox/ or https://github.com/jnorell/smtpprox.
+SMTP proxy implements a nice Perl-based framework. See: https://
+web.archive.org/web/20151022025756/http://bent.latency.net/smtpprox/ or https:/
+/github.com/jnorell/smtpprox/
 
                                                Postfix
                   Postfix      filter on     SMTP server    Postfix    Postfix
@@ -197,9 +217,9 @@ The after-filter SMTP server is a new master.cf entry:
 
 By default, the filter has 100 seconds to do its work. If it takes longer then
 Postfix gives up and reports an error to the remote SMTP client. You can
-increase this time limit (see configuration parameter section below) but doing
-so is pointless because you can't control when the remote SMTP client times
-out.
+increase this time limit (see the "Configuration parameters" section below) but
+doing so is pointless because you can't control when the remote SMTP client
+times out.
 
 CCoonnffiigguurraattiioonn ppaarraammeetteerrss
 

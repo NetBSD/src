@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_body_edit.c,v 1.1.1.1 2009/06/23 10:08:42 tron Exp $	*/
+/*	$NetBSD: cleanup_body_edit.c,v 1.1.1.1.52.1 2023/12/25 12:54:51 martin Exp $	*/
 
 /*++
 /* NAME
@@ -60,6 +60,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -112,7 +117,7 @@ int     cleanup_body_edit_start(CLEANUP_STATE *state)
     cleanup_region_return(state, state->body_regions);
 
     /*
-     * Select the first region. XXX This will usally be the original body
+     * Select the first region. XXX This will usually be the original body
      * segment, but we must not count on that. Region assignments may change
      * when header editing also uses queue file regions. XXX We don't really
      * know if the first region will be large enough to hold the first body
@@ -204,8 +209,15 @@ int     cleanup_body_edit_write(CLEANUP_STATE *state, int rec_type,
     /*
      * Finally, output the queue file record.
      */
-    CLEANUP_OUT_BUF(state, REC_TYPE_NORM, buf);
+    CLEANUP_OUT_BUF(state, rec_type, buf);
     curr_rp->write_offs = vstream_ftell(state->dst);
+
+    /*
+     * Sanity check.
+     */
+    if (curr_rp->len > 0
+	&& curr_rp->write_offs > curr_rp->start + curr_rp->len)
+	msg_panic("%s: write past end of body segment", myname);
 
     return (0);
 }

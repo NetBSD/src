@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.2.14.1 2023/12/25 12:55:02 martin Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -34,7 +34,7 @@
 #define MAIL_PROTO_QMQP		"QMQP"
 
  /*
-  * Names of services: these are the names of the UNIX-domain socket or or
+  * Names of services: these are the names of the UNIX-domain socket or
   * FIFO that a service listens on.
   */
 #define MAIL_SERVICE_BOUNCE	"bounce"
@@ -62,6 +62,7 @@
 #define MAIL_SERVICE_SCACHE	"scache"
 #define MAIL_SERVICE_DNSBLOG	"dnsblog"
 #define MAIL_SERVICE_TLSPROXY	"tlsproxy"
+#define MAIL_SERVICE_POSTLOG	"postlog"
 
  /*
   * Mail source classes. Used to specify policy decisions for content
@@ -115,13 +116,34 @@
   */
 extern VSTREAM *mail_connect(const char *, const char *, int);
 extern VSTREAM *mail_connect_wait(const char *, const char *);
-extern int mail_command_client(const char *, const char *,...);
+extern int mail_command_client(const char *, const char *, const char *,...);
 extern int mail_command_server(VSTREAM *,...);
 extern int mail_trigger(const char *, const char *, const char *, ssize_t);
 extern char *mail_pathname(const char *, const char *);
 
  /*
-  * Attribute names.
+  * Each Postfix internal service identifies the protocol that it intends to
+  * use. On the receiver end, this information does not contribute to the
+  * reported number of received attributes (it is a constant).
+  */
+#define MAIL_ATTR_PROTO		"protocol"
+
+#define MAIL_ATTR_PROTO_ANVIL	"anvil_protocol"
+#define MAIL_ATTR_PROTO_BOUNCE	"delivery_status_protocol"
+#define MAIL_ATTR_PROTO_CLEANUP	"cleanup_protocol"
+#define MAIL_ATTR_PROTO_DELIVER	"delivery_request_protocol"
+#define MAIL_ATTR_PROTO_FLUSH	"queue_flush_protocol"
+#define MAIL_ATTR_PROTO_POSTDROP "postdrop_protocol"
+#define MAIL_ATTR_PROTO_PROXYMAP "proxymap_protocol"
+#define MAIL_ATTR_PROTO_SCACHE	"connection_cache_protocol"
+#define MAIL_ATTR_PROTO_SHOWQ	"mail_queue_list_protocol"
+#define MAIL_ATTR_PROTO_TLSMGR	"tlsmgr_protocol"
+#define MAIL_ATTR_PROTO_TLSPROXY "tlsproxy_protocol"
+#define MAIL_ATTR_PROTO_TRIVIAL	"trivial_rewrite_protocol"
+#define MAIL_ATTR_PROTO_VERIFY	"address_verification_prrotocol"
+
+ /*
+  * Attribute names in internal and policy delegation protocols.
   */
 #define MAIL_ATTR_REQ		"request"
 #define MAIL_ATTR_NREQ		"nrequest"
@@ -164,6 +186,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_LOG_IDENT	"log_ident"
 #define MAIL_ATTR_RWR_CONTEXT	"rewrite_context"
 #define MAIL_ATTR_POL_CONTEXT	"policy_context"
+#define MAIL_ATTR_FORCED_EXPIRE	"forced_expire"
 
 #define MAIL_ATTR_RWR_LOCAL	"local"
 #define MAIL_ATTR_RWR_REMOTE	"remote"
@@ -179,6 +202,8 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_CRYPTO_PROTOCOL "encryption_protocol"
 #define MAIL_ATTR_CRYPTO_CIPHER	"encryption_cipher"
 #define MAIL_ATTR_CRYPTO_KEYSIZE "encryption_keysize"
+#define MAIL_ATTR_COMPAT_LEVEL	"compatibility_level"
+#define MAIL_ATTR_MAIL_VERSION	"mail_version"
 
  /*
   * Suffixes for sender_name, sender_domain etc.
@@ -244,6 +269,8 @@ extern char *mail_pathname(const char *, const char *);
 #define XCLIENT_PROTO		"PROTO"	/* client protocol */
 #define XCLIENT_HELO		"HELO"	/* client helo */
 #define XCLIENT_LOGIN		"LOGIN"	/* SASL login name */
+#define XCLIENT_DESTADDR	"DESTADDR"	/* server address */
+#define XCLIENT_DESTPORT	"DESTPORT"	/* server port */
 
 #define XCLIENT_UNAVAILABLE	"[UNAVAILABLE]"	/* permanently unavailable */
 #define XCLIENT_TEMPORARY	"[TEMPUNAVAIL]"	/* temporarily unavailable */
@@ -277,25 +304,6 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_SMTPUTF8	"smtputf8"	/* RFC6531 support */
 
  /*
-  * TLSPROXY support.
-  */
-#define MAIL_ATTR_REMOTE_ENDPT	"remote_endpoint"	/* name[addr]:port */
-#define MAIL_ATTR_ROLE		"role"	/* requested role */
-#define MAIL_ATTR_ROLE_SERVER	"server"
-#define MAIL_ATTR_ROLE_CLIENT	"client"
-#define MAIL_ATTR_TIMEOUT	"timeout"
-#define MAIL_ATTR_PEER_CN	"peer_CN"
-#define MAIL_ATTR_ISSUER_CN	"issuer_CN"
-#define MAIL_ATTR_PEER_CERT_FPT	"peer_fingerprint"
-#define MAIL_ATTR_PEER_PKEY_FPT	"peer_pubkey_fingerprint"
-#define MAIL_ATTR_PEER_STATUS	"peer_status"
-#define MAIL_ATTR_CIPHER_PROTOCOL "cipher_protocol"
-#define MAIL_ATTR_CIPHER_NAME	"cipher_name"
-#define MAIL_ATTR_CIPHER_USEBITS "cipher_usebits"
-#define MAIL_ATTR_CIPHER_ALGBITS "cipher_algbits"
-#define MAIL_ATTR_SERVER_ID	"server_id"
-
- /*
   * SMTP reply footer support.
   */
 #define MAIL_ATTR_SERVER_NAME	"server_name"
@@ -309,6 +317,11 @@ extern char *mail_pathname(const char *, const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

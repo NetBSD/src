@@ -7,7 +7,8 @@
 
 <title>Postfix Before-Queue Content Filter </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -158,6 +159,31 @@ mail back to the sender (which is usually forged anyway).  Mail
 that is not accepted remains the responsibility of the remote SMTP
 client. </p>
 
+<li> <p> Con: The <a href="smtpd.8.html">smtpd(8)</a> service before the <a href="postconf.5.html#smtpd_proxy_filter">smtpd_proxy_filter</a>
+cannot support features that involve header or body access, or that
+involve queue file manipulation (i.e., anything that involves
+processing by the <a href="cleanup.8.html">cleanup(8)</a> service). </p>
+
+<ul>
+
+<li> <p> No support for HOLD actions in Postfix smtpd <a href="access.5.html">access(5)</a>
+restrictions. </p>
+
+<li> <p> No support for <a href="postconf.5.html#smtpd_milters">smtpd_milters</a> features that involve message
+header or body content. </p>
+
+<li> <p> No support for <a href="postconf.5.html#receive_override_options">receive_override_options</a>.
+
+</ul>
+
+<p> Instead, specify those features with the <a href="smtpd.8.html">smtpd(8)</a> service behind
+the <a href="postconf.5.html#smtpd_proxy_filter">smtpd_proxy_filter</a>. In some cases, it may be possible to combine
+a before-filter PREPEND action that emits a unique pattern (for
+example containing the MTA domain name), with an after-filter
+<a href="postconf.5.html#header_checks">header_checks</a> action that does what you want, and with an
+<a href="postconf.5.html#smtp_header_checks">smtp_header_checks</a> IGNORE action that deletes the prepended header
+from transit mail. </p>
+
 <li> <p> Con: The remote SMTP client expects an SMTP reply within
 a deadline.  As the system load increases, fewer and fewer CPU
 cycles remain available to answer within the deadline, and eventually
@@ -199,8 +225,9 @@ usual. </p>
 <p> The content filter itself is not described here. You can use
 any filter that is SMTP enabled. For non-SMTP capable content
 filtering software, Bennett Todd's SMTP proxy implements a nice
-Perl-based framework. See: <a href="http://bent.latency.net/smtpprox/">http://bent.latency.net/smtpprox/</a> or
-https://github.com/jnorell/smtpprox.</p>
+Perl-based framework. See:
+<a href="https://web.archive.org/web/20151022025756/http://bent.latency.net/smtpprox/">https://web.archive.org/web/20151022025756/http://bent.latency.net/smtpprox/</a>
+or <a href="https://github.com/jnorell/smtpprox/">https://github.com/jnorell/smtpprox/</a> </p>
 
 <blockquote>
 
@@ -351,8 +378,8 @@ the top of the <a href="master.5.html">master.cf</a> file: </p>
 
 <p> By default, the filter has 100 seconds to do its work. If it
 takes longer then Postfix gives up and reports an error to the
-remote SMTP client. You can increase this time limit (see configuration
-parameter section below) but doing so is pointless because you
+remote SMTP client. You can increase this time limit (see the <a href="#parameters">"Configuration
+parameters"</a> section below) but doing so is pointless because you
 can't control when the remote SMTP client times out. </p>
 
 <h2><a name="parameters">Configuration parameters</a></h2>

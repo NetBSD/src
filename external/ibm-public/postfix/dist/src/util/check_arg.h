@@ -1,4 +1,4 @@
-/*	$NetBSD: check_arg.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: check_arg.h,v 1.2.18.1 2023/12/25 12:55:24 martin Exp $	*/
 
 #ifndef _CHECK_ARG_INCLUDED_
 #define _CHECK_ARG_INCLUDED_
@@ -127,7 +127,7 @@
   * assignment is made in unreachable code, the compiler "should" not emit
   * any references to those assignment targets. We use the "extern" class so
   * that gcc will not complain about unused variables. Using "extern" breaks
-  * when a compiler does emit references unreachable assignment targets.
+  * when a compiler does emit references to unreachable assignment targets.
   * Hopefully, those cases will be rare.
   */
 #define CHECK_VAL_HELPER_DCL(tag, type) extern type CHECK_VAL_DUMMY(type)

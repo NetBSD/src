@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen.h,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: postscreen.h,v 1.2.14.1 2023/12/25 12:55:12 martin Exp $	*/
 
 /*++
 /* NAME
@@ -102,19 +102,6 @@ typedef struct {
 } PSC_STATE;
 
  /*
-  * Emulate legacy ad-hoc variables on top of indexable time stamps. This
-  * avoids massive scar tissue during initial feature development.
-  */
-#define pregr_stamp	client_info->expire_time[PSC_TINDX_PREGR]
-#define dnsbl_stamp	client_info->expire_time[PSC_TINDX_DNSBL]
-#define pipel_stamp	client_info->expire_time[PSC_TINDX_PIPEL]
-#define nsmtp_stamp	client_info->expire_time[PSC_TINDX_NSMTP]
-#define barlf_stamp	client_info->expire_time[PSC_TINDX_BARLF]
-
- /* Minize the patch size for stable releases. */
-#define client_concurrency client_info->concurrency
-
- /*
   * Special expiration time values.
   */
 #define PSC_TIME_STAMP_NEW		(0)	/* test was never passed */
@@ -128,10 +115,10 @@ typedef struct {
 #define PSC_STATE_FLAG_USING_TLS	(1<<1)	/* using the TLS proxy */
 #define PSC_STATE_FLAG_UNUSED2		(1<<2)	/* use me! */
 #define PSC_STATE_FLAG_NEW		(1<<3)	/* some test was never passed */
-#define PSC_STATE_FLAG_BLIST_FAIL	(1<<4)	/* blacklisted */
+#define PSC_STATE_FLAG_DNLIST_FAIL	(1<<4)	/* denylisted */
 #define PSC_STATE_FLAG_HANGUP		(1<<5)	/* NOT a test failure */
 #define PSC_STATE_FLAG_SMTPD_X21	(1<<6)	/* hang up after command */
-#define PSC_STATE_FLAG_WLIST_FAIL	(1<<7)	/* do not whitelist */
+#define PSC_STATE_FLAG_ALLIST_FAIL	(1<<7)	/* do not allowlist */
 #define PSC_STATE_FLAG_TEST_BASE	(8)	/* start of indexable flags */
 
  /*
@@ -171,7 +158,7 @@ typedef struct {
 #define PSC_STATE_FLAG_SHIFT_BYFNAME(fname) (PSC_STATE_FLAG_SHIFT_ ## fname)
 
  /*
-  * Indexable per-test flags. These are used for DNS whitelisting multiple
+  * Indexable per-test flags. These are used for DNS allowlisting multiple
   * tests, without needing per-test ad-hoc code.
   */
 #define PSC_STATE_FLAG_BYTINDX_FNAME(tindx, fname) \
@@ -282,9 +269,9 @@ typedef struct {
   * Super-aggregates for all tests combined.
   */
 #define PSC_STATE_MASK_ANY_FAIL \
-	(PSC_STATE_FLAG_BLIST_FAIL | \
+	(PSC_STATE_FLAG_DNLIST_FAIL | \
 	PSC_STATE_MASK_EARLY_FAIL | PSC_STATE_MASK_SMTPD_FAIL | \
-	PSC_STATE_FLAG_WLIST_FAIL)
+	PSC_STATE_FLAG_ALLIST_FAIL)
 
 #define PSC_STATE_MASK_ANY_PASS \
 	(PSC_STATE_MASK_EARLY_PASS | PSC_STATE_MASK_SMTPD_PASS)
@@ -471,6 +458,11 @@ extern HTABLE *psc_client_concurrency;	/* per-client concurrency */
 	(state)->smtp_server_fd = (fd); \
 	psc_post_queue_length++; \
     } while (0)
+#define PSC_DEL_SERVER_STATE(state) do { \
+	close((state)->smtp_server_fd); \
+	(state)->smtp_server_fd = (-1); \
+	psc_post_queue_length--; \
+    } while (0)
 #define PSC_DEL_CLIENT_STATE(state) do { \
 	event_server_disconnect((state)->smtp_client_stream); \
 	(state)->smtp_client_stream = 0; \
@@ -555,6 +547,7 @@ extern void psc_hangup_event(PSC_STATE *);
   * postscreen_send.c
   */
 #define PSC_SEND_REPLY psc_send_reply	/* legacy macro */
+extern void pcs_send_pre_jail_init(void);
 extern int psc_send_reply(PSC_STATE *, const char *);
 extern void psc_send_socket(PSC_STATE *);
 
@@ -577,13 +570,14 @@ typedef void (*PSC_ENDPT_LOOKUP_FN) (int, VSTREAM *,
 			             MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *,
 			            MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *);
 extern void psc_endpt_lookup(VSTREAM *, PSC_ENDPT_LOOKUP_FN);
+extern void psc_endpt_local_lookup(VSTREAM *, PSC_ENDPT_LOOKUP_FN);
 
  /*
   * postscreen_access emulation.
   */
-#define PSC_ACL_ACT_WHITELIST	SERVER_ACL_ACT_PERMIT
+#define PSC_ACL_ACT_ALLOWLIST	SERVER_ACL_ACT_PERMIT
 #define PSC_ACL_ACT_DUNNO	SERVER_ACL_ACT_DUNNO
-#define PSC_ACL_ACT_BLACKLIST	SERVER_ACL_ACT_REJECT
+#define PSC_ACL_ACT_DENYLIST	SERVER_ACL_ACT_REJECT
 #define PSC_ACL_ACT_ERROR	SERVER_ACL_ACT_ERROR
 
 #define psc_acl_pre_jail_init	server_acl_pre_jail_init

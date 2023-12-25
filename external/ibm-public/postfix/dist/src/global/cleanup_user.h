@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_user.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: cleanup_user.h,v 1.2.14.1 2023/12/25 12:54:57 martin Exp $	*/
 
 #ifndef _CLEANUP_USER_H_INCLUDED_
 #define _CLEANUP_USER_H_INCLUDED_
@@ -64,6 +64,7 @@
 #define CLEANUP_STAT_RCPT	(1<<6)	/* No recipients found */
 #define CLEANUP_STAT_PROXY	(1<<7)	/* Proxy reject */
 #define CLEANUP_STAT_DEFER	(1<<8)	/* Temporary reject */
+#define CLEANUP_STAT_NOPERM	(1<<9)	/* Denied by non-content policy */
 
  /*
   * These are set when we can't bounce even if we were asked to.
@@ -102,6 +103,11 @@ extern const char *cleanup_strflags(unsigned);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

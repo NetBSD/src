@@ -73,8 +73,8 @@ addresses by valid Internet addresses. This mapping happens ONLY when mail
 leaves the machine; not when you send mail between users on the same machine.
 
 The following example presents additional configuration. You need to combine
-this with basic configuration information as discussed the first half of this
-document.
+this with basic configuration information as discussed in the first half of
+this document.
 
     1 /etc/postfix/main.cf:
     2     smtp_generic_maps = hash:/etc/postfix/generic
@@ -109,8 +109,8 @@ fantasy addresses, including mail to local fantasy addresses that don't have a
 valid Internet address of their own.
 
 The following example presents additional configuration. You need to combine
-this with basic configuration information as discussed the first half of this
-document.
+this with basic configuration information as discussed in the first half of
+this document.
 
      1 /etc/postfix/main.cf:
      2     myhostname = hostname.localdomain
@@ -200,9 +200,9 @@ username/password information.
     standard "AUTH=mmeetthhoodd....." syntax in response to the EHLO command; this
     requires no additional Postfix client configuration.
 
-  * The Postfix SMTP client does not support the obsolete "wrappermode"
-    protocol, which uses TCP port 465 on the SMTP server. See TLS_README for a
-    solution that uses the stunnel command.
+  * With the setting "smtp_tls_wrappermode = yes", the Postfix SMTP client
+    supports the "wrappermode" protocol, which uses TCP port 465 on the SMTP
+    server (Postfix 3.0 and later).
 
   * With the smtp_sasl_password_maps parameter, we configure the Postfix SMTP
     client to send username and password information to the mail gateway
@@ -276,13 +276,13 @@ final resort.
     single MySQL database, and configure different Postfix queries to extract
     the appropriate information.
 
-  * Specify dbm instead of hash if your system uses dbm files instead of db
+  * Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb
     files. To find out what lookup tables Postfix supports, use the command
-    "postconf -m".
+    "ppoossttccoonnff --mm".
 
-  * Execute the command "postmap /etc/postfix/sasl_passwd" whenever you change
+  * Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ssaassll__ppaasssswwdd" whenever you change
     the sasl_passwd table.
 
-  * Execute the command "postmap /etc/postfix/sender_relay" whenever you change
+  * Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//sseennddeerr__rreellaayy" whenever you change
     the sender_relay table.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict.h,v 1.2.14.1 2023/12/25 12:55:25 martin Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -16,6 +16,7 @@
  /*
   * System library.
   */
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <setjmp.h>
 
@@ -96,6 +97,8 @@ typedef struct DICT {
     int     error;			/* last operation only */
     DICT_JMP_BUF *jbuf;			/* exception handling */
     struct DICT_UTF8_BACKUP *utf8_backup;	/* see below */
+    struct VSTRING *file_buf;		/* dict_file_to_buf() */
+    struct VSTRING *file_b64;		/* dict_file_to_b64() */
 } DICT;
 
 extern DICT *dict_alloc(const char *, const char *, ssize_t);
@@ -131,6 +134,8 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_MULTI_WRITER	(1<<18)	/* multi-writer safe map */
 #define DICT_FLAG_UTF8_REQUEST	(1<<19)	/* activate UTF-8 if possible */
 #define DICT_FLAG_UTF8_ACTIVE	(1<<20)	/* UTF-8 proxy layer is present */
+#define DICT_FLAG_SRC_RHS_IS_FILE \
+				(1<<21)	/* Map source RHS is a file */
 
 #define DICT_FLAG_UTF8_MASK	(DICT_FLAG_UTF8_REQUEST)
 
@@ -155,7 +160,7 @@ extern DICT *dict_debug(DICT *);
   * changes to its copy of some of these flags). The proxymap server opens
   * only one map instance for all client requests with the same values of
   * these flags, and the proxymap client uses its own saved copy of these
-  * flags.
+  * flags. DICT_FLAG_SRC_RHS_IS_FILE is an example of such a flag.
   */
 #define DICT_FLAG_PARANOID \
 	(DICT_FLAG_NO_REGSUB | DICT_FLAG_NO_PROXY | DICT_FLAG_NO_UNAUTH)
@@ -229,10 +234,16 @@ extern int dict_error(const char *);
   * Low-level interface, with physical dictionary handles.
   */
 typedef DICT *(*DICT_OPEN_FN) (const char *, int, int);
-typedef DICT_OPEN_FN (*DICT_OPEN_EXTEND_FN) (const char *);
+typedef struct {
+    const char *type;
+    DICT_OPEN_FN dict_fn;
+    struct MKMAP *(*mkmap_fn) (const char *);
+} DICT_OPEN_INFO;
+typedef const DICT_OPEN_INFO *(*DICT_OPEN_EXTEND_FN) (const char *);
 extern DICT *dict_open(const char *, int, int);
 extern DICT *dict_open3(const char *, const char *, int, int);
-extern void dict_open_register(const char *, DICT_OPEN_FN);
+extern void dict_open_register(const DICT_OPEN_INFO *);
+extern const DICT_OPEN_INFO *dict_open_lookup(const char *);
 extern DICT_OPEN_EXTEND_FN dict_open_extend(DICT_OPEN_EXTEND_FN);
 
 #define dict_get(dp, key)	((const char *) (dp)->lookup((dp), (key)))
@@ -302,6 +313,22 @@ extern DICT *PRINTFLIKE(5, 6) dict_surrogate(const char *, const char *, int, in
   */
 extern void dict_jmp_alloc(DICT *);
 
+ /*
+  * dict_file(3).
+  */
+extern struct VSTRING *dict_file_to_buf(DICT *, const char *);
+extern struct VSTRING *dict_file_to_b64(DICT *, const char *);
+extern struct VSTRING *dict_file_from_b64(DICT *, const char *);
+extern char *dict_file_get_error(DICT *);
+extern void dict_file_purge_buffers(DICT *);
+extern const char *dict_file_lookup(DICT *dict, const char *);
+
+ /*
+  * dict_stream(3)
+  */
+extern VSTREAM *dict_stream_open(const char *dict_type, const char *mapname,
+            int open_flags, int dict_flags, struct stat * st, VSTRING **why);
+
 /* LICENSE
 /* .ad
 /* .fi
@@ -311,6 +338,11 @@ extern void dict_jmp_alloc(DICT *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

@@ -11,7 +11,7 @@ echo '<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
 
 <title>Title Here</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 </head>
 

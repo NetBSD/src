@@ -7,7 +7,8 @@
 
 <title>Postfix Queue Scheduler</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -720,7 +721,7 @@ nqmgr </a> </h3>
 <p>
 
 Let's start by recapitulating the structures and terms used when
-referring to queue manager and how it operates. Many of these are
+referring to the queue manager and how it operates. Many of these are
 partially described elsewhere, but it is nice to have a coherent
 overview in one place:
 
@@ -745,7 +746,7 @@ it shall talk to) and jobs (referencing the messages it shall
 deliver). </p>
 
 <li> <p> Each transport queue (not to be confused with the on-disk
-active queue or incoming queue) groups everything what is going be
+"active" queue or "incoming" queue) groups everything what is going be
 delivered to given destination (aka nexthop) by its transport.  Each
 queue belongs to one transport, so each destination may be referred
 to by several queues, one for each transport.  Each queue maintains
@@ -795,7 +796,7 @@ up the message </a> </h3>
 
 <p>
 
-Whenever <tt>nqmgr</tt> moves a queue file into the active queue,
+Whenever <tt>nqmgr</tt> moves a queue file into the "active" queue,
 the following happens: It reads all necessary information from the
 queue file as <tt>oqmgr</tt> does, and also reads as many recipients
 as possible - more on that later, for now let's just pretend it
@@ -809,7 +810,7 @@ Then it resolves the recipients as <tt>oqmgr</tt> does, which
 means obtaining (address, nexthop, transport) triple for each
 recipient. For each triple, it finds the transport; if it does not
 exist yet, it instantiates it (unless it's dead). Within the
-transport, it finds the destination queue for given nexthop; if it
+transport, it finds the destination queue for the given nexthop; if it
 does not exist yet, it instantiates it (unless it's dead). The
 triple is then bound to given destination queue. This happens in
 qmgr_resolve() and is basically the same as in <tt>oqmgr</tt>.
@@ -826,9 +827,10 @@ the bound destination queue within this jobs context; if it does
 not exist yet, it instantiates it.  Finally, it stores the address
 from the resolved triple to the recipient entry which is appended
 to both the queue entry list and the peer entry list. The addresses
-for same nexthop are batched in the entries up to recipient_concurrency
-limit for that transport. This happens in qmgr_assign() and apart
-from that it operates with job and peer structures it is basically the
+for the same nexthop are batched in the entries up to the
+<i>transport</i>_destination_recipient_limit for that transport.
+This happens in qmgr_message_assign(), and apart
+from that it operates with job and peer structures, it is basically the
 same as in <tt>oqmgr</tt>.
 
 </p>
@@ -845,9 +847,9 @@ time is important as we will see shortly.
 
 <p>
 
-[Now you should have pretty good idea what is the state of the
-<tt>nqmgr</tt> after couple of messages was picked up, what is the
-relation between all those job, peer, queue and entry structures.]
+[Now you should have a pretty good idea what the state of the
+<tt>nqmgr</tt> is after a couple of messages were picked up, and what the
+relation is between all those job, peer, queue and entry structures.]
 
 </p>
 
@@ -894,7 +896,8 @@ was picked up by the <tt>nqmgr</tt>. So by default we get the
 top-level round-robin transport, and within each transport we get
 the FIFO message delivery. The round-robin of the peers by the
 destination is perhaps of little importance in most real-life cases
-(unless the recipient_concurrency limit is reached, in one job there
+(unless the <i>transport</i>_destination_recipient_limit is reached,
+in one job there
 is only one peer structure for each destination), but theoretically
 it makes sure that even within single jobs, destinations are treated
 fairly.
@@ -986,11 +989,11 @@ mail followed by two two-recipient mails?
 
 The simple answer would be to use delivery sequence <tt>12121313</tt>.
 But the problem is that this does not scale well. Imagine you have
-mail with thousand recipients followed by mail with hundred recipients.
+mail with a thousand recipients followed by mail with a hundred recipients.
 It is tempting to suggest the  delivery sequence like <tt>121212....</tt>,
 but alas! Imagine there arrives another mail with say ten recipients.
 But there are no free slots anymore, so it can't slip by, not even
-if it had just only one recipients.  It will be stuck until the
+if it had only one recipient.  It will be stuck until the
 hundred-recipient mail is delivered, which really sucks.
 
 </p>
@@ -998,7 +1001,7 @@ hundred-recipient mail is delivered, which really sucks.
 <p>
 
 So, it becomes obvious that while inflating the message to get
-free slots is great idea, one has to be really careful of how the
+free slots is a great idea, one has to be really careful of how the
 free slots are assigned, otherwise one might corner himself. So,
 how does <tt>nqmgr</tt> really use the free slots?
 
@@ -1032,7 +1035,7 @@ thousand recipient mail?
 
 <p>
 
-Well, despite it looks so at the first glance, another trick will
+Well, despite the fact that it looks so at the first glance, another trick will
 allow us to answer "no, we are not!". If we had said that we will
 inflate the delivery time twice at maximum, and then we consider
 every other slot as a free slot, then we would overinflate in case
@@ -1056,7 +1059,7 @@ transport has a <i>transport</i>_delivery_slot_cost parameter, which
 defaults to default_delivery_slot_cost parameter which is set to 5
 by default. This is the k from the paragraph above. Each time k
 entries of the job are selected for delivery, this counter is
-incremented by one. Once there are some slots accumulated, job which
+incremented by one. Once there are some slots accumulated, a job which
 requires no more than that number of slots to be fully delivered
 can preempt this job.
 
@@ -1066,7 +1069,7 @@ can preempt this job.
 
 [Well, the truth is, the counter is incremented every time an entry
 is selected and it is divided by k when it is used.
-But for the understanding it's good enough to use
+But to understand, it's good enough to use
 the above approximation of the truth.]
 
 </p>
@@ -1083,7 +1086,7 @@ and when does all this exactly happen?
 <p>
 
 The answer for the first part is simple. The job whose entry was
-selected the last time is so called current job. Normally, it is
+selected the last time is the so called current job. Normally, it is
 the first job on the scheduler's job list, but destination concurrency
 limits may change this as we will see later. It is always only the
 current job which may get preempted.
@@ -1092,7 +1095,7 @@ current job which may get preempted.
 
 <p>
 
-Now for the second part. The current job has certain amount of
+Now for the second part. The current job has a certain amount of
 recipient entries, and as such may accumulate at maximum some amount
 of available delivery slots. It might have already accumulated some,
 and perhaps even already used some when it was preempted before
@@ -1111,8 +1114,8 @@ That is, the older the job is, the more we should try to deliver
 it in order to get best message delivery rates. These rates are of
 course subject to how many recipients the message has, therefore
 the division by the recipient (entry) count. No one shall be surprised
-that message with n recipients takes n times longer to deliver than
-message with one recipient.
+that a message with n recipients takes n times longer to deliver than
+a message with one recipient.
 
 </p>
 
@@ -1124,9 +1127,9 @@ delivered within the number of slots the current job already
 accumulated? Why do we need to estimate how much it has yet to
 accumulate? If you found out the answer, congratulate yourself. If
 we did it this simple way, we would always choose the candidate
-with least recipient entries. If there were enough single recipient
+with the fewest recipient entries. If there were enough single recipient
 mails coming in, they would always slip by the bulk mail as soon
-as possible, and the two and more recipients mail would never get
+as possible, and the two or more recipients mail would never get
 a chance, no matter how long they have been sitting around in the
 job list.
 
@@ -1134,7 +1137,7 @@ job list.
 
 <p>
 
-This candidate selection has interesting implication - that when
+This candidate selection has an interesting implication - that when
 we choose the best candidate for preemption (this is done in
 qmgr_choose_candidate()), it may happen that we may not use it for
 preemption immediately. This leads to an answer to the last part
@@ -1148,12 +1151,12 @@ The preemption attempt happens every time next transport's recipient
 entry is to be chosen for delivery. To avoid needless overhead, the
 preemption is not attempted if the current job could never accumulate
 more than <i>transport</i>_minimum_delivery_slots (defaults to
-default_minimum_delivery_slots which defaults to 3). If there is
+default_minimum_delivery_slots which defaults to 3). If there are
 already enough accumulated slots to preempt the current job by the
 chosen best candidate, it is done immediately. This basically means
 that the candidate is moved in front of the current job on the
 scheduler's job list and decreasing the accumulated slot counter
-by the amount used by the candidate. If there is not enough slots...
+by the amount used by the candidate. If there are not enough slots...
 well, I could say that nothing happens and the another preemption
 is attempted the next time. But that's not the complete truth.
 
@@ -1164,13 +1167,13 @@ is attempted the next time. But that's not the complete truth.
 The truth is that it turns out that it is not really necessary to
 wait until the jobs counter accumulates all the delivery slots in
 advance. Say we have ten-recipient mail followed by two two-recipient
-mails. If the preemption happened when enough delivery slot accumulate
+mails. If the preemption happened when enough delivery slots accumulate
 (assuming slot cost 2), the delivery sequence becomes
 <tt>11112211113311</tt>. Now what would we get if we would wait
 only for 50% of the necessary slots to accumulate and we promise
 we would wait for the remaining 50% later, after we get back
-to the preempted job? If we use such slot loan, the delivery sequence
-becomes <tt>11221111331111</tt>. As we can see, it makes it no
+to the preempted job? If we use such a slot loan, the delivery sequence
+becomes <tt>11221111331111</tt>. As we can see, it makes it not
 considerably worse for the delivery of the ten-recipient mail, but
 it allows the small messages to be delivered sooner.
 
@@ -1192,15 +1195,15 @@ accumulated so far.
 
 <p>
 
-And it pretty much concludes this chapter.
+And that pretty much concludes this chapter.
 
 </p>
 
 <p>
 
 [Now you should have a feeling that you pretty much understand the
-scheduler and the preemption, or at least that you will have it
-after you read the last chapter couple more times. You shall clearly
+scheduler and the preemption, or at least that you will have
+after you read the last chapter a couple more times. You shall clearly
 see the job list and the preemption happening at its head, in ideal
 delivery conditions. The feeling of understanding shall last until
 you start wondering what happens if some of the jobs are blocked,
@@ -1226,17 +1229,17 @@ selected by the scheduler?
 
 <p>
 
-From user's point of view it is all simple. If some of the peers
+From the user's point of view it is all simple. If some of the peers
 of a job can't be selected, those peers are simply skipped by the
 entry selection algorithm (the pseudo-code described before) and
 only the selectable ones are used. If none of the peers may be
 selected, the job is declared a "blocker job". Blocker jobs are
 skipped by the entry selection algorithm and they are also excluded
-from the candidates for preemption of current job. Thus the scheduler
+from the candidates for preemption of the current job. Thus the scheduler
 effectively behaves as if the blocker jobs didn't exist on the job
 list at all. As soon as at least one of the peers of a blocker job
 becomes unblocked (that is, the delivery agent handling the delivery
-of the recipient entry for given destination successfully finishes),
+of the recipient entry for the given destination successfully finishes),
 the job's blocker status is removed and the job again participates
 in all further scheduler actions normally.
 
@@ -1298,8 +1301,8 @@ this change because of blockers?
 
 <p>
 
-The answer is: a lot. Any job may become blocker job at any time,
-and also become normal job again at any time. This has several
+The answer is: a lot. Any job may become a blocker job at any time,
+and also become a normal job again at any time. This has several
 important implications:
 
 </p>
@@ -1320,7 +1323,7 @@ unblocked and is completed... You get the idea.
 <p>
 
 [Interesting side note: even when jobs are delivered out of order,
-from single destination's point of view the jobs are still delivered
+from a single destination's point of view the jobs are still delivered
 in the expected order (that is, FIFO unless there was some preemption
 involved). This is because whenever a destination queue becomes
 unblocked (the destination limit allows selection of more recipient
@@ -1371,7 +1374,7 @@ huh?
 <p>
 
 If I illustrate the relations after the above mentioned examples
-(but those in point 1)), the situation would look like this:
+(but those in point 1), the situation would look like this:
 
 </p>
 
@@ -1398,8 +1401,8 @@ Now how does <tt>nqmgr</tt> deal with all these complicated relations?
 <p>
 
 Well, it maintains them all as described, but fortunately, all these
-relations are necessary only for purposes of proper counting of
-available delivery slots. For purposes of ordering the jobs for
+relations are necessary only for the purpose of proper counting of
+available delivery slots. For the purpose of ordering the jobs for
 entry selection, the original rule still applies: "the job preempting
 the current job is moved in front of the current job on the job
 list". So for entry selection purposes, the job relations remain
@@ -1428,8 +1431,8 @@ are simply ignored.
 
 <p>
 
-[By now, you should have a feeling that there is more things going
-under the hood than you ever wanted to know. You decide that
+[By now, you should have a feeling that there are more things going
+on under the hood than you ever wanted to know. You decide that
 forgetting about this chapter is the best you can do for the sake
 of your mind's health and you basically stick with the idea how the
 scheduler works in ideal conditions, when there are no blockers,
@@ -1443,11 +1446,11 @@ limits </a> </h3>
 <p>
 
 When discussing the <tt>nqmgr</tt> scheduler, we have so far assumed
-that all recipients of all messages in the active queue are completely
-read into the memory. This is simply not true. There is an upper
+that all recipients of all messages in the "active" queue are completely
+read into memory. This is simply not true. There is an upper
 bound on the amount of memory the <tt>nqmgr</tt> may use, and
 therefore it must impose some limits on the information it may store
-in the memory at any given time.
+in memory at any given time.
 
 </p>
 
@@ -1456,11 +1459,11 @@ in the memory at any given time.
 First of all, not all messages may be read in-core at once. At any
 time, only qmgr_message_active_limit messages may be read in-core
 at maximum. When read into memory, the messages are picked from the
-incoming and deferred message queues and moved to the active queue
-(incoming having priority), so if there is more than
-qmgr_message_active_limit messages queued in the active queue, the
-rest will have to wait until (some of) the messages in the active
-queue are completely delivered (or deferred).
+"incoming" and "deferred" queues and moved to the "active" queue
+(incoming having priority), so if there are more than
+qmgr_message_active_limit messages queued in the "active" queue, the
+rest will have to wait until (some of) the messages in the "active" queue
+are completely delivered (or deferred).
 
 </p>
 
@@ -1468,11 +1471,11 @@ queue are completely delivered (or deferred).
 
 Even with the limited amount of in-core messages, there is another
 limit which must be imposed in order to avoid memory exhaustion.
-Each message may contain huge amount of recipients (tens or hundreds
+Each message may contain a huge number of recipients (tens or hundreds
 of thousands are not uncommon), so if <tt>nqmgr</tt> read all
-recipients of all messages in the active queue, it may easily run
+recipients of all messages in the "active" queue, it may easily run
 out of memory. Therefore there must be some upper bound on the
-amount of message recipients which are read into the memory at the
+amount of message recipients which are read into memory at the
 same time.
 
 </p>
@@ -1490,8 +1493,8 @@ affects the <tt>nqmgr</tt> and its scheduler.
 The message limit is straightforward - it just limits the size of
 the
 lookahead the <tt>nqmgr</tt>'s scheduler has when choosing which
-message can preempt the current one. Messages not in the active
-queue simply are not considered at all.
+message can preempt the current one. Messages not in the "active" queue
+are simply not considered at all.
 
 </p>
 
@@ -1517,12 +1520,12 @@ of recipient entries. With unread recipients, it is not clear how
 many recipient entries there will be, as they are subject to
 per-destination grouping. It is not even clear to what transports
 (and thus jobs) the recipients will be assigned. And with messages
-coming from the deferred queue, it is not even clear how many unread
+coming from the "deferred" queue, it is not even clear how many unread
 recipients are still to be delivered. This all means that the
 scheduler must use only estimates of how many recipients entries
 there will be.  Fortunately, it is possible to estimate the minimum
 and maximum correctly, so the scheduler can always err on the safe
-side.  Obviously, the better the estimates, the better results, so
+side.  Obviously, the better the estimates, the better the results, so
 it is best when we are able to read all recipients in-core and turn
 the estimates into exact counts, or at least try to read as many
 as possible to make the estimates as accurate as possible.
@@ -1552,9 +1555,9 @@ it achieve it?
 <p>
 
 Perhaps the easiest solution would be to say that each message may
-have at maximum X recipients stored in-core, but such solution would
+have at maximum X recipients stored in-core, but such a solution would
 be poor for several reasons. With reasonable qmgr_message_active_limit
-values, the X would have to be quite low to maintain reasonable
+values, the X would have to be quite low to maintain a reasonable
 memory footprint. And with low X lots of things would not work well.
 The <tt>nqmgr</tt> would have problems to use the
 <i>transport</i>_destination_recipient_limit efficiently. The
@@ -1568,11 +1571,11 @@ again.
 <p>
 
 Therefore it seems reasonable to have a solution which does not use
-a limit imposed on per-message basis, but which maintains a pool
+a limit imposed on a per-message basis, but which maintains a pool
 of available recipient slots, which can be shared among all messages
 in the most efficient manner. And as we do not want separate
 transports to compete for resources whenever possible, it seems
-appropriate to maintain such recipient pool for each transport
+appropriate to maintain such a recipient pool for each transport
 separately. This is the general idea, now how does it work in
 practice?
 
@@ -1580,13 +1583,13 @@ practice?
 
 <p>
 
-First we have to solve little chicken-and-egg problem. If we want
+First we have to solve a little chicken-and-egg problem. If we want
 to use the per-transport recipient pools, we first need to know to
-what transport(s) is the message assigned. But we will find that
-out only after we read in the recipients first. So it is obvious
+what transport(s) the message is assigned. But we will find that
+out only after we first read in the recipients. So it is obvious
 that we first have to read in some recipients, use them to find out
-to what transports is the message to be assigned, and only after
-that we can use the per-transport recipient pools.
+to what transports the message is to be assigned, and only after
+that can we use the per-transport recipient pools.
 
 </p>
 
@@ -1595,12 +1598,12 @@ that we can use the per-transport recipient pools.
 Now how many recipients shall we read for the first time? This is
 what qmgr_message_recipient_minimum and qmgr_message_recipient_limit
 values control. The qmgr_message_recipient_minimum value specifies
-how many recipients of each message we will read for the first time,
+how many recipients of each message we will read the first time,
 no matter what.  It is necessary to read at least one recipient
 before we can assign the message to a transport and create the first
 job. However, reading only qmgr_message_recipient_minimum recipients
 even if there are only few messages with few recipients in-core would
-be wasteful. Therefore if there is less than qmgr_message_recipient_limit
+be wasteful. Therefore if there are fewer than qmgr_message_recipient_limit
 recipients in-core so far, the first batch of recipients may be
 larger than qmgr_message_recipient_minimum - as large as is required
 to reach the qmgr_message_recipient_limit limit.
@@ -1624,10 +1627,10 @@ qmgr_message_recipient_minimum amount which always applies).
 
 <p>
 
-For example, if a message has three jobs, first with 1 recipient
-still in-core and 4 recipient slots, second with 5 recipient in-core
-and 5 recipient slots, and third with 2 recipients in-core and 0
-recipient slots, it has 1+5+2=7 recipients in-core and 4+5+0=9 jobs'
+For example, if a message has three jobs, the first with 1 recipient
+still in-core and 4 recipient slots, the second with 5 recipients in-core
+and 5 recipient slots, and the third with 2 recipients in-core and 0
+recipient slots, it has 1+5+2=8 recipients in-core and 4+5+0=9 jobs'
 recipients slots in total. This means that we could immediately
 read 2+qmgr_message_recipient_minimum more recipients of that message
 in core.
@@ -1675,9 +1678,9 @@ More specifically, each time a job is created and appended to the
 job list, it gets all unused recipient slots from its transport's
 pool. It keeps them until all recipients of its message are read.
 When this happens, all unused recipient slots are transferred to
-the next job (which is now in fact now first such job) on the job
+the next job (which is now in fact the first such job) on the job
 list which still has some recipients unread, or eventually back to
-the transport pool if there is no such job. Such transfer then also
+the transport pool if there is no such job. Such a transfer then also
 happens whenever a recipient entry of that job is delivered.
 
 </p>
@@ -1685,10 +1688,10 @@ happens whenever a recipient entry of that job is delivered.
 <p>
 
 There is also a scenario when a job is not appended to the end of
-the job list (for example it was created as a result of second or
+the job list (for example it was created as a result of a second or
 later recipient batch). Then it works exactly as above, except that
 if it was put in front of the first unread job (that is, the job
-of a message which still has some unread recipients in queue file),
+of a message which still has some unread recipients in the queue file),
 that job is first forced to return all of its unused recipient slots
 to the transport pool.
 
@@ -1705,21 +1708,21 @@ as they still have recipients in-core (the maximum is there because
 of the sponsoring mentioned before) and the jobs after this job get
 nothing from the transport recipient pool (unless they got something
 before and then the first unread job was created and enqueued in
-front of them later - in such case the also get at maximum as many
+front of them later - in such a case, they also get at maximum as many
 slots as they have recipients in-core).
 
 </p>
 
 <p>
 
-Things work fine in such state for most of the time, because the
-current job is either completely read in-core or has as much recipient
+Things work fine in such a state for most of the time, because the
+current job is either completely read in-core or has as many recipient
 slots as there are, but there is one situation which we still have
 to take care of specially.  Imagine if the current job is preempted
 by some unread job from the job list and there are no more recipient
 slots available, so this new current job could read only batches
 of qmgr_message_recipient_minimum recipients at a time. This would
-really degrade performance. For this reason, each transport has
+really degrade performance. For this reason, each transport has an
 extra pool of <i>transport</i>_extra_recipient_limit recipient
 slots, dedicated exactly for this situation. Each time an unread
 job preempts the current job, it gets half of the remaining recipient
@@ -1730,7 +1733,7 @@ slots from the normal pool and this extra pool.
 <p>
 
 And that's it. It sure does sound pretty complicated, but fortunately
-most people don't really have to care how exactly it works as long
+most people don't really have to care exactly how it works as long
 as it works.  Perhaps the only important things to know for most
 people are the following upper bound formulas:
 
@@ -1783,7 +1786,7 @@ where the sum is over all used transports.
 <p>
 
 And this terribly complicated chapter concludes the documentation
-of <tt>nqmgr</tt> scheduler.
+of the <tt>nqmgr</tt> scheduler.
 
 </p>
 
@@ -1793,7 +1796,7 @@ of <tt>nqmgr</tt> scheduler.
 inside out. In practice, you still hope that you will never have
 to really understand the last or last two chapters completely, and
 fortunately most people really won't. Understanding how the scheduler
-works in ideal conditions is more than good enough for vast majority
+works in ideal conditions is more than good enough for the vast majority
 of users.]
 
 </p>

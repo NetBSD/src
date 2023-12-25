@@ -2,14 +2,6 @@ PPoossttffiixx SSAASSLL HHoowwttoo
 
 -------------------------------------------------------------------------------
 
-WWaarrnniinngg
-
-People who go to the trouble of installing Postfix may have the expectation
-that Postfix is more secure than some other mailers. The Cyrus SASL library
-contains a lot of code. With this, Postfix becomes as secure as other mail
-systems that use the Cyrus SASL library. Dovecot provides an alternative that
-may be worth considering.
-
 HHooww PPoossttffiixx uusseess SSAASSLL aauutthheennttiiccaattiioonn
 
 SMTP servers need to decide whether an SMTP client is authorized to send mail
@@ -29,6 +21,12 @@ implementations as building blocks. This means that some SASL-related
 configuration files will belong to Postfix, while other configuration files
 belong to the specific SASL implementation that Postfix will use. This document
 covers both the Postfix and non-Postfix configuration.
+
+NOTE: People who go to the trouble of installing Postfix may have the
+expectation that Postfix is more secure than some other mailers. The Cyrus SASL
+library contains a lot of code. With this, Postfix becomes as secure as other
+mail systems that use the Cyrus SASL library. Dovecot provides an alternative
+that may be worth considering.
 
 You can read more about the following topics:
 
@@ -176,9 +174,23 @@ You can read more about the following topics:
 
   * Cyrus SASL version 2.1.22 and newer additionally search in /etc/sasl2/.
 
-  * Some Postfix distributions are modified and look for the Cyrus SASL
-    configuration file in /etc/postfix/sasl/, /var/lib/sasl2/ etc. See the
-    distribution-specific documentation to determine the expected location.
+  * With Postfix 2.5 and later you can explicitly configure the search path via
+    the cyrus_sasl_config_path configuration parameter. Specify zero or more
+    colon-separated directories. If set empty (the default value) the search
+    path is the one compiled into the Cyrus SASL library.
+
+  * Some Postfix distributions employ a non-empty default value for
+    cyrus_sasl_config_path to look for the Cyrus SASL configuration file in /
+    etc/postfix/sasl/, /var/lib/sasl2/ etc. See the output of postconf
+    cyrus_sasl_config_path and/or the distribution-specific documentation to
+    determine the expected location.
+
+  * Some Debian-based Postfix distributions patch Postfix to hardcode a non-
+    default search path, making it impossible to set an alternate search path
+    via the "cyrus_sasl_config_path" parameter. This is likely to be the case
+    when the distribution documents a Postfix-specific path (e.g. /etc/postfix/
+    sasl/) that is different from the default value of "cyrus_sasl_config_path"
+    (which then is likely to be empty).
 
     NNoottee
 
@@ -560,8 +572,8 @@ The following is a summary of applicable smtpd.conf file entries:
         Specify ldapdb to enable the plugin.
 
     ldapdb_uri
-        Specify either ldapi:// for to connect over a UNIX-domain socket, ldap:
-        // for an unencrypted TCP connection or ldaps:// for an encrypted TCP
+        Specify either ldapi:// to connect over a UNIX-domain socket, ldap:/
+        / for an unencrypted TCP connection, or ldaps:// for an encrypted TCP
         connection.
 
     ldapdb_id
@@ -1060,9 +1072,9 @@ username/password information.
     standard "AUTH=mmeetthhoodd....." syntax in response to the EHLO command; this
     requires no additional Postfix client configuration.
 
-  * The Postfix SMTP client does not support the obsolete "wrappermode"
-    protocol, which uses TCP port 465 on the SMTP server. See TLS_README for a
-    solution that uses the stunnel command.
+  * With the setting "smtp_tls_wrappermode = yes", the Postfix SMTP client
+    supports the "wrappermode" protocol, which uses TCP port 465 on the SMTP
+    server (Postfix 3.0 and later).
 
   * With the smtp_sasl_password_maps parameter, we configure the Postfix SMTP
     client to send username and password information to the mail gateway
@@ -1136,14 +1148,14 @@ final resort.
     single MySQL database, and configure different Postfix queries to extract
     the appropriate information.
 
-  * Specify dbm instead of hash if your system uses dbm files instead of db
+  * Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb
     files. To find out what lookup tables Postfix supports, use the command
-    "postconf -m".
+    "ppoossttccoonnff --mm".
 
-  * Execute the command "postmap /etc/postfix/sasl_passwd" whenever you change
+  * Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ssaassll__ppaasssswwdd" whenever you change
     the sasl_passwd table.
 
-  * Execute the command "postmap /etc/postfix/sender_relay" whenever you change
+  * Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//sseennddeerr__rreellaayy" whenever you change
     the sender_relay table.
 
 PPoossttffiixx SSMMTTPP//LLMMTTPP cclliieenntt ppoolliiccyy -- SSAASSLL mmeecchhaanniissmm pprrooppeerrttiieess
@@ -1287,35 +1299,35 @@ To generate the necessary Makefiles, execute the following in the Postfix top-
 level directory:
 
     % mmaakkee ttiiddyy # if you have left-over files from a previous build
-    % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==''--DDUUSSEE__SSAASSLL__AAUUTTHH \\
-        --DDDDEEFF__SSEERRVVEERR__SSAASSLL__TTYYPPEE==\\""ddoovveeccoott\\""''
+    % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==""--DDUUSSEE__SSAASSLL__AAUUTTHH \\
+        --DDDDEEFF__SSEERRVVEERR__SSAASSLL__TTYYPPEE==\\\\\\""ddoovveeccoott\\\\\\""""
 
 After this, proceed with "make" as described in the INSTALL document.
 
 NNoottee
 
-  * The -DDEF_SERVER_SASL_TYPE=\"dovecot\" is not necessary; it just makes
+  * The -DDEF_SERVER_SASL_TYPE=\\\"dovecot\\\" is not necessary; it just makes
     Postfix configuration a little more convenient because you don't have to
     specify the SASL plug-in type in the Postfix main.cf file (but this may
     cause surprises when you switch to a later Postfix version that is built
-    with the default SASL type of sasl).
+    with the default SASL type of cyrus).
 
   * If you also want support for LDAP or TLS (or for Cyrus SASL), you need to
     merge their CCARGS and AUXLIBS options into the above command line; see the
     LDAP_README and TLS_README for details.
 
         % mmaakkee ttiiddyy # if you have left-over files from a previous build
-        % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==''--DDUUSSEE__SSAASSLL__AAUUTTHH \\
-            --DDDDEEFF__SSEERRVVEERR__SSAASSLL__TTYYPPEE==\\""ddoovveeccoott\\"" \\
-            ......CCCCAARRGGSS ooppttiioonnss ffoorr LLDDAAPP oorr TTLLSS eettcc........'' \\
-           AAUUXXLLIIBBSS==''......AAUUXXLLIIBBSS ooppttiioonnss ffoorr LLDDAAPP oorr TTLLSS eettcc........''
+        % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==""--DDUUSSEE__SSAASSLL__AAUUTTHH \\
+            --DDDDEEFF__SSEERRVVEERR__SSAASSLL__TTYYPPEE==\\\\\\""ddoovveeccoott\\\\\\"" \\
+            ......CCCCAARRGGSS ooppttiioonnss ffoorr LLDDAAPP oorr TTLLSS eettcc........"" \\
+           AAUUXXLLIIBBSS==""......AAUUXXLLIIBBSS ooppttiioonnss ffoorr LLDDAAPP oorr TTLLSS eettcc........""
 
 BBuuiillddiinngg CCyyrruuss SSAASSLL ssuuppppoorrtt
 
 BBuuiillddiinngg tthhee CCyyrruuss SSAASSLL lliibbrraarryy
 
 Postfix works with cyrus-sasl-1.5.x or cyrus-sasl-2.1.x, which are available
-from ftp://ftp.andrew.cmu.edu/pub/cyrus-mail/.
+from https://github.com/cyrusimap/cyrus-sasl/releases.
 
     IImmppoorrttaanntt
 
@@ -1345,6 +1357,10 @@ Cyrus SASL version 2.1.x
     % mmaakkee ttiiddyy # if you have left-over files from a previous build
     % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==""--DDUUSSEE__SSAASSLL__AAUUTTHH --DDUUSSEE__CCYYRRUUSS__SSAASSLL \\
         --II//uussrr//llooccaall//iinncclluuddee//ssaassll"" AAUUXXLLIIBBSS==""--LL//uussrr//llooccaall//lliibb --llssaassll22""
+
+    If your Cyrus SASL shared library is in a directory that the RUN-TIME
+    linker does not know about, add a "-Wl,-R,/path/to/directory" option after
+    "-lsasl2".
 
 Cyrus SASL version 1.5.x
 

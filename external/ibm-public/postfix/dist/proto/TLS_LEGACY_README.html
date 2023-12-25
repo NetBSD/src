@@ -7,7 +7,8 @@
 
 <title>Postfix legacy TLS Support </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -35,7 +36,7 @@ SMTP mail or with SASL authentication.
 <p> Postfix version 2.2 introduces support for TLS as described in
 RFC 3207.  TLS Support for older Postfix versions was available as
 an add-on patch.  The section "<a href="#compat">Compatibility with
-Postfix < 2.2 TLS support</a>" below discusses the differences
+Postfix &lt; 2.2 TLS support</a>" below discusses the differences
 between these implementations.  </p>
 
 <p> Topics covered in this document: </p>
@@ -54,7 +55,7 @@ between these implementations.  </p>
 
 <li><a href="#problems"> Reporting problems </a>
 
-<li><a href="#compat">Compatibility with Postfix < 2.2 TLS support</a>
+<li><a href="#compat">Compatibility with Postfix &lt; 2.2 TLS support</a>
 
 <li><a href="#credits"> Credits </a>
 
@@ -225,7 +226,7 @@ key configuration </a> </h3>
 <p> In order to use TLS, the Postfix SMTP server needs a certificate
 and a private key. Both must be in "pem" format. The private key
 must not be encrypted, meaning:  the key must be accessible without
-password.  Both certificate and private key may be in the same
+a password.  Both certificate and private key may be in the same
 file.  </p>
 
 <p> Both RSA and DSA certificates are supported. Typically you will
@@ -253,7 +254,7 @@ CA".  Create the server.pem file with: </p>
 </blockquote>
 
 <p> A Postfix SMTP server certificate supplied here must be usable
-as SSL server certificate and hence pass the "openssl verify -purpose
+as an SSL server certificate and hence pass the "openssl verify -purpose
 sslserver ..." test. </p>
 
 <p> A client that trusts the root CA has a local copy of the root
@@ -616,7 +617,7 @@ as a key for the specified access(5) table. </p> </dd>
 <p> The permit_tls_all_clientcerts feature must be used with caution,
 because it can result in too many access permissions.  Use this
 feature only if a special CA issues the client certificates, and
-only if this CA is listed as trusted CA. If other CAs are trusted,
+only if this CA is listed as a trusted CA. If other CAs are trusted,
 any owner of a valid client certificate would be authorized.
 The permit_tls_all_clientcerts feature can be practical for a
 specially created email relay server.  </p>
@@ -663,7 +664,7 @@ the user or host.</p>
 
 <p> To influence the Postfix SMTP server cipher selection scheme,
 you can give cipherlist string.  A detailed description would go
-to far here; please refer to the OpenSSL documentation.  If you
+too far here; please refer to the OpenSSL documentation.  If you
 don't know what to do with it, simply don't touch it and leave the
 (openssl-)compiled in default! </p>
 
@@ -778,7 +779,7 @@ certificate is presented.  </p>
 key/certificate pair as the Postfix SMTP server.  If a certificate
 is to be presented, it must be in "pem" format. The private key
 must not be encrypted, meaning: it must be accessible without
-password. Both parts (certificate and private key) may be in the
+a password. Both parts (certificate and private key) may be in the
 same file. </p>
 
 <p> In order for remote SMTP servers to verify the Postfix SMTP
@@ -798,7 +799,7 @@ Create the client.pem file with: </p>
 </blockquote>
 
 <p> A Postfix SMTP client certificate supplied here must be usable
-as SSL client certificate and hence pass the "openssl verify -purpose
+as an SSL client certificate and hence pass the "openssl verify -purpose
 sslclient ..." test. </p>
 
 <p> A server that trusts the root CA has a local copy of the root
@@ -1156,9 +1157,9 @@ smtp_tls_enforce_peername. Note: "smtp_enforce_tls = yes" and
 "smtp_tls_enforce_peername = yes" imply "smtp_use_tls = yes". </p>
 
 <li> <p> When both hostname and next-hop destination lookups produce
-a result, the more specific per-site policy (NONE, MUST, etc)
+a result, the more specific per-site policy (NONE, MUST, etc.)
 overrides the less specific one (MAY), and the more secure per-site
-policy (MUST, etc) overrides the less secure one (NONE).  </p>
+policy (MUST, etc.) overrides the less secure one (NONE).  </p>
 
 <li> <p> After the per-site policy lookups are combined, the result
 generally overrides the global policy. The exception is the less
@@ -1215,7 +1216,7 @@ verification. This feature requires Postfix 2.2.9 or later.  </p>
     example.org                 NONE
 
     # TLS should not be used with the host <i>smtp.example.com</i>.
-    smtp.example.com             NONE
+    [smtp.example.com]          NONE
 </pre>
 </blockquote>
 
@@ -1266,7 +1267,7 @@ special CA which then issues the actual certificate...) </p>
 
 <p> To influence the Postfix SMTP client cipher selection scheme,
 you can give cipherlist string.  A detailed description would go
-to far here; please refer to the OpenSSL documentation.  If you
+too far here; please refer to the OpenSSL documentation.  If you
 don't know what to do with it, simply don't touch it and leave the
 (openssl-)compiled in default! </p>
 
@@ -1539,7 +1540,7 @@ Patches, when possible, are greatly appreciated too. </p>
 
 </ul>
 
-<h2><a name="compat">Compatibility with Postfix <2.2 TLS support</a></h2>
+<h2><a name="compat">Compatibility with Postfix &lt; 2.2 TLS support</a></h2>
 
 <p> Postfix version 2.2 TLS support is based on the Postfix/TLS
 patch by Lutz J&auml;nicke, but differs in a few minor ways. </p>

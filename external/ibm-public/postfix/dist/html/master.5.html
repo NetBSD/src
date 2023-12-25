@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - master(5) </title>
 </head> <body> <pre>
 MASTER(5)                                                            MASTER(5)
@@ -15,41 +16,41 @@ MASTER(5)                                                            MASTER(5)
        services that run in the background.
 
        Postfix  services are implemented by daemon processes. These run in the
-       background under control of the <a href="master.8.html"><b>master</b>(8)</a> process.  The <a href="master.5.html">master.cf</a>  con-
-       figuration file defines how a client program connects to a service, and
-       what daemon program runs when a service is requested.  Most daemon pro-
-       cesses  are short-lived and terminate voluntarily after serving <b><a href="postconf.5.html#max_use">max_use</a></b>
-       clients, or after inactivity for <b><a href="postconf.5.html#max_idle">max_idle</a></b> or more units of time.
+       background, started on-demand by the <a href="master.8.html"><b>master</b>(8)</a> process.  The  <a href="master.5.html">master.cf</a>
+       configuration  file defines how a client program connects to a service,
+       and what daemon program runs when a service is requested.  Most  daemon
+       processes  are  short-lived  and  terminate  voluntarily  after serving
+       <b><a href="postconf.5.html#max_use">max_use</a></b> clients, or after inactivity for  <b><a href="postconf.5.html#max_idle">max_idle</a></b>  or  more  units  of
+       time.
 
-       All daemons specified here must speak a Postfix-internal  protocol.  In
-       order  to  execute  non-Postfix  software  use the <a href="local.8.html"><b>local</b>(8)</a>, <a href="pipe.8.html"><b>pipe</b>(8)</a> or
-       <a href="spawn.8.html"><b>spawn</b>(8)</a> services, or run the  server  under  control  by  <b>inetd</b>(8)  or
-       equivalent.
+       All  daemons  specified here must speak a Postfix-internal protocol. In
+       order to execute non-Postfix software  use  the  <a href="local.8.html"><b>local</b>(8)</a>,  <a href="pipe.8.html"><b>pipe</b>(8)</a>  or
+       <a href="spawn.8.html"><b>spawn</b>(8)</a> services, or execute the software with <b>inetd</b>(8) or equivalent.
 
-       After  changing  <a href="master.5.html">master.cf</a>  you must execute "<b>postfix reload</b>" to reload
+       After changing <a href="master.5.html">master.cf</a> you must execute "<b>postfix  reload</b>"  to  reload
        the configuration.
 
 <b>SYNTAX</b>
        The general format of the <a href="master.5.html">master.cf</a> file is as follows:
 
-       <b>o</b>      Empty lines and whitespace-only lines are ignored, as are  lines
+       <b>o</b>      Empty  lines and whitespace-only lines are ignored, as are lines
               whose first non-whitespace character is a `#'.
 
-       <b>o</b>      A  logical  line  starts  with  non-whitespace text. A line that
+       <b>o</b>      A logical line starts with  non-whitespace  text.  A  line  that
               starts with whitespace continues a logical line.
 
-       <b>o</b>      Each logical line defines a single Postfix service.   Each  ser-
-              vice  is  identified  by  its  name and type as described below.
+       <b>o</b>      Each  logical  line defines a single Postfix service.  Each ser-
+              vice is identified by its name  and  type  as  described  below.
               When multiple lines specify the same service name and type, only
-              the  last  one is remembered.  Otherwise, the order of <a href="master.5.html">master.cf</a>
+              the last one is remembered.  Otherwise, the order  of  <a href="master.5.html">master.cf</a>
               service definitions does not matter.
 
-       Each logical line consists of eight  fields  separated  by  whitespace.
-       These  are described below in the order as they appear in the <a href="master.5.html">master.cf</a>
+       Each  logical  line  consists  of eight fields separated by whitespace.
+       These are described below in the order as they appear in the  <a href="master.5.html">master.cf</a>
        file.
 
-       Where applicable a field of "-"  requests  that  the  built-in  default
-       value  be  used.  For boolean fields specify "y" or "n" to override the
+       Where  applicable  a  field  of  "-" requests that the built-in default
+       value be used. For boolean fields specify "y" or "n"  to  override  the
        default value.
 
        <b>Service name</b>
@@ -59,47 +60,56 @@ MASTER(5)                                                            MASTER(5)
        <b>Service type</b>
               Specify one of the following service types:
 
-              <b>inet</b>   The  service listens on a TCP/IP socket and is accessible
+              <b>inet</b>   The service listens on a TCP/IP socket and is  accessible
                      via the network.
 
-                     The service name is specified as <i>host:port</i>, denoting  the
-                     host   and  port  on  which  new  connections  should  be
-                     accepted. The host  part  (and  colon)  may  be  omitted.
-                     Either  host  or port may be given in symbolic form (host
-                     or service name) or in numeric form (IP address  or  port
-                     number).   Host  information may be enclosed inside "[]";
-                     this form is necessary only with IPv6 addresses.
+                     The  service name is specified as <i>host:port</i>, denoting the
+                     host  and  port  on  which  new  connections  should   be
+                     accepted.  The  host  part  (and  colon)  may be omitted.
+                     Either host or port may be given in  symbolic  form  (see
+                     <b>hosts</b>(5)  or  <b>services</b>(5)) or in numeric form (IP address
+                     or port number).  Host information may be enclosed inside
+                     "[]"; this form is necessary only with IPv6 addresses.
 
-                     Examples: a  service  named  <b>127.0.0.1:smtp</b>  or  <b>::1:smtp</b>
+                     Examples:  a  service  named  <b>127.0.0.1:smtp</b>  or <b>::1:smtp</b>
                      receives mail via the loopback interface only; and a ser-
-                     vice named <b>10025</b> accepts connections on  TCP  port  10025
-                     via  all  interfaces  configured with the <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b>
+                     vice  named  <b>10025</b>  accepts connections on TCP port 10025
+                     via all interfaces configured  with  the  <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b>
                      parameter.
 
-                     Note:  with  Postfix  version  2.2  and   later   specify
-                     "<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a>  = loopback-only</b>" in <a href="postconf.5.html">main.cf</a>, instead of
-                     hard-coding loopback IP address information in  <a href="master.5.html">master.cf</a>
+                     Note:   with   Postfix  version  2.2  and  later  specify
+                     "<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = loopback-only</b>" in <a href="postconf.5.html">main.cf</a>, instead  of
+                     hard-coding  loopback IP address information in <a href="master.5.html">master.cf</a>
                      or in <a href="postconf.5.html">main.cf</a>.
 
-              <b>unix</b>   The service listens on a UNIX-domain socket and is acces-
-                     sible for local clients only.
+              <b>unix</b>   The service listens on a UNIX-domain stream socket and is
+                     accessible for local clients only.
 
-                     The service name is a pathname relative  to  the  Postfix
-                     queue    directory    (pathname   controlled   with   the
+                     The  service  name  is a pathname relative to the Postfix
+                     queue   directory   (pathname   controlled    with    the
                      <b><a href="postconf.5.html#queue_directory">queue_directory</a></b> configuration parameter in <a href="postconf.5.html">main.cf</a>).
 
-                     On Solaris 8 and earlier systems the <b>unix</b> type is  imple-
+                     On  Solaris 8 and earlier systems the <b>unix</b> type is imple-
                      mented with streams sockets.
 
-              <b>fifo</b>   The  service listens on a FIFO (named pipe) and is acces-
+              <b>unix-dgram</b>
+                     The service listens on a UNIX-domain datagram socket  and
+                     is accessible for local clients only.
+
+                     The  service  name  is a pathname relative to the Postfix
+                     queue   directory   (pathname   controlled    with    the
+                     <b><a href="postconf.5.html#queue_directory">queue_directory</a></b> configuration parameter in <a href="postconf.5.html">main.cf</a>).
+
+              <b>fifo</b> (obsolete)
+                     The  service listens on a FIFO (named pipe) and is acces-
                      sible for local clients only.
 
                      The service name is a pathname relative  to  the  Postfix
                      queue    directory    (pathname   controlled   with   the
                      <b><a href="postconf.5.html#queue_directory">queue_directory</a></b> configuration parameter in <a href="postconf.5.html">main.cf</a>).
 
-              <b>pass</b>   The service listens  on  a  UNIX-domain  socket,  and  is
-                     accessible  to  local  clients only. It receives one open
+              <b>pass</b>   The service listens on a UNIX-domain stream  socket,  and
+                     is accessible to local clients only. It receives one open
                      connection  (file  descriptor  passing)  per   connection
                      request.
 
@@ -113,8 +123,10 @@ MASTER(5)                                                            MASTER(5)
                      This feature is available as of Postfix version 2.5.
 
        <b>Private (default: y)</b>
-              Whether or not access is restricted to the mail system.   Inter-
-              net (type <b>inet</b>) services can't be private.
+              Whether a service is internal to Postfix (pathname  starts  with
+              <b>private/</b>),  or exposed through Postfix command-line tools (path-
+              name starts with <b>public/</b>).  Internet (type <b>inet</b>) services  can't
+              be private.
 
        <b>Unprivileged (default: y)</b>
               Whether the service runs with root privileges or as the owner of
@@ -124,7 +136,7 @@ MASTER(5)                                                            MASTER(5)
               The  <a href="local.8.html"><b>local</b>(8)</a>, <a href="pipe.8.html"><b>pipe</b>(8)</a>, <a href="spawn.8.html"><b>spawn</b>(8)</a>, and <a href="virtual.8.html"><b>virtual</b>(8)</a> daemons require
               privileges.
 
-       <b>Chroot (default: Postfix</b> &gt;<b>= 3.0: n, Postfix</b> &lt;<b>3.0: y)</b>
+       <b>Chroot (default: Postfix</b> &gt;<b>= 3.0: n, Postfix</b> &lt; <b>3.0: y)</b>
               Whether or not the service  runs  chrooted  to  the  mail  queue
               directory (pathname is controlled by the <b><a href="postconf.5.html#queue_directory">queue_directory</a></b> config-
               uration variable in the <a href="postconf.5.html">main.cf</a> file).
@@ -135,7 +147,7 @@ MASTER(5)                                                            MASTER(5)
               service in the first place.
 
               The files in the examples/chroot-setup subdirectory of the Post-
-              fix source archive show set up a Postfix chroot environment on a
+              fix source show how to set up a Postfix chroot environment on  a
               variety  of  systems.  See  also  <a href="BASIC_CONFIGURATION_README.html">BASIC_CONFIGURATION_README</a> for
               issues related to running daemons chrooted.
 

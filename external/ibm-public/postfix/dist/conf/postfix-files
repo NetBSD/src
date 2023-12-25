@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.6 2017/02/14 01:16:43 christos Exp $
+#	$NetBSD: postfix-files,v 1.6.14.1 2023/12/25 12:54:33 martin Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #
@@ -112,6 +112,7 @@ $daemon_directory/postfix-script:f:root:-:755
 $daemon_directory/postfix-tls-script:f:root:-:755
 $daemon_directory/postfix-wrapper:f:root:-:755
 $daemon_directory/postmulti-script:f:root:-:755
+$daemon_directory/postlogd:f:root:-:755
 $daemon_directory/postscreen:f:root:-:755
 $daemon_directory/proxymap:f:root:-:755
 $daemon_directory/qmgr:f:root:-:755
@@ -134,7 +135,7 @@ $command_directory/postconf:f:root:-:755
 $command_directory/postfix:f:root:-:755
 $command_directory/postkick:f:root:-:755
 $command_directory/postlock:f:root:-:755
-$command_directory/postlog:f:root:-:755
+$command_directory/postlog:f:root:$setgid_group:2755:u
 $command_directory/postmap:f:root:-:755
 $command_directory/postmulti:f:root:-:755
 $command_directory/postsuper:f:root:-:755
@@ -173,8 +174,8 @@ $manpage_directory/man1/postalias.1:f:root:-:644
 $manpage_directory/man1/postcat.1:f:root:-:644
 $manpage_directory/man1/postconf.1:f:root:-:644
 $manpage_directory/man1/postdrop.1:f:root:-:644
-$manpage_directory/man1/postfix.1:f:root:-:644
 $manpage_directory/man1/postfix-tls.1:f:root:-:644
+$manpage_directory/man1/postfix.1:f:root:-:644
 $manpage_directory/man1/postkick.1:f:root:-:644
 $manpage_directory/man1/postlock.1:f:root:-:644
 $manpage_directory/man1/postlog.1:f:root:-:644
@@ -224,6 +225,7 @@ $manpage_directory/man8/nqmgr.8:f:root:-:644:o
 $manpage_directory/man8/oqmgr.8:f:root:-:644:
 $manpage_directory/man8/pickup.8:f:root:-:644
 $manpage_directory/man8/pipe.8:f:root:-:644
+$manpage_directory/man8/postlogd.8:f:root:-:644
 $manpage_directory/man8/postscreen.8:f:root:-:644
 $manpage_directory/man8/proxymap.8:f:root:-:644
 $manpage_directory/man8/qmgr.8:f:root:-:644
@@ -277,6 +279,7 @@ $readme_directory/ADDRESS_REWRITING_README:f:root:-:644
 $readme_directory/ADDRESS_VERIFICATION_README:f:root:-:644
 $readme_directory/BACKSCATTER_README:f:root:-:644
 $readme_directory/BASIC_CONFIGURATION_README:f:root:-:644
+$readme_directory/BDAT_README:f:root:-:644
 $readme_directory/BUILTIN_FILTER_README:f:root:-:644
 #$readme_directory/CDB_README:f:root:-:644
 $readme_directory/COMPATIBILITY_README:f:root:-:644
@@ -298,16 +301,19 @@ $readme_directory/LDAP_README:f:root:-:644
 $readme_directory/LOCAL_RECIPIENT_README:f:root:-:644
 $readme_directory/MACOSX_README:f:root:-:644:o
 $readme_directory/MAILDROP_README:f:root:-:644
+$readme_directory/MAILLOG_README:f:root:-:644
 $readme_directory/MEMCACHE_README:f:root:-:644
 $readme_directory/MILTER_README:f:root:-:644
 $readme_directory/MULTI_INSTANCE_README:f:root:-:644
 $readme_directory/MYSQL_README:f:root:-:644
+$readme_directory/SMTPUTF8_README:f:root:-:644
 $readme_directory/SQLITE_README:f:root:-:644
 $readme_directory/NFS_README:f:root:-:644
 $readme_directory/OVERVIEW:f:root:-:644
 #$readme_directory/PACKAGE_README:f:root:-:644
 $readme_directory/PCRE_README:f:root:-:644
 $readme_directory/PGSQL_README:f:root:-:644
+$readme_directory/POSTSCREEN_3_5_README:f:root:-:644
 $readme_directory/POSTSCREEN_README:f:root:-:644
 $readme_directory/QMQP_README:f:root:-:644:o
 $readme_directory/QSHAPE_README:f:root:-:644
@@ -335,6 +341,7 @@ $html_directory/ADDRESS_REWRITING_README.html:f:root:-:644
 $html_directory/ADDRESS_VERIFICATION_README.html:f:root:-:644
 $html_directory/BACKSCATTER_README.html:f:root:-:644
 $html_directory/BASIC_CONFIGURATION_README.html:f:root:-:644
+$html_directory/BDAT_README.html:f:root:-:644
 $html_directory/BUILTIN_FILTER_README.html:f:root:-:644
 #$html_directory/CDB_README.html:f:root:-:644
 $html_directory/COMPATIBILITY_README.html:f:root:-:644
@@ -355,15 +362,19 @@ $html_directory/LDAP_README.html:f:root:-:644
 #$html_directory/LMDB_README.html:f:root:-:644
 $html_directory/LOCAL_RECIPIENT_README.html:f:root:-:644
 $html_directory/MAILDROP_README.html:f:root:-:644
+$html_directory/MAILLOG_README.html:f:root:-:644
+$html_directory/MEMCACHE_README.html:f:root:-:644
 $html_directory/MILTER_README.html:f:root:-:644
 $html_directory/MULTI_INSTANCE_README.html:f:root:-:644
 $html_directory/MYSQL_README.html:f:root:-:644
+$html_directory/SMTPUTF8_README.html:f:root:-:644
 $html_directory/SQLITE_README.html:f:root:-:644
 $html_directory/NFS_README.html:f:root:-:644
 $html_directory/OVERVIEW.html:f:root:-:644
 $html_directory/PACKAGE_README.html:f:root:-:644
 $html_directory/PCRE_README.html:f:root:-:644
 $html_directory/PGSQL_README.html:f:root:-:644
+$html_directory/POSTSCREEN_3_5_README.html:f:root:-:644
 $html_directory/POSTSCREEN_README.html:f:root:-:644
 $html_directory/QMQP_README.html:f:root:-:644:o
 $html_directory/QSHAPE_README.html:f:root:-:644
@@ -388,6 +399,7 @@ $html_directory/XFORWARD_README.html:f:root:-:644
 $html_directory/access.5.html:f:root:-:644
 $html_directory/aliases.5.html:f:root:-:644
 $html_directory/anvil.8.html:f:root:-:644
+$html_directory/bounce.5.html:f:root:-:644
 $html_directory/bounce.8.html:f:root:-:644
 $html_directory/canonical.5.html:f:root:-:644
 $html_directory/cidr_table.5.html:f:root:-:644
@@ -402,6 +414,7 @@ $html_directory/generic.5.html:f:root:-:644
 $html_directory/header_checks.5.html:f:root:-:644
 $html_directory/index.html:f:root:-:644
 $html_directory/ldap_table.5.html:f:root:-:644
+$html_directory/lmdb_table.5.html:f:root:-:644
 $html_directory/lmtp.8.html:f:root:-:644
 $html_directory/local.8.html:f:root:-:644
 $html_directory/mailq.1.html:f:root:-:644
@@ -424,13 +437,16 @@ $html_directory/postconf.5.html:f:root:-:644
 $html_directory/postdrop.1.html:f:root:-:644
 $html_directory/postfix-logo.jpg:f:root:-:644
 $html_directory/postfix-manuals.html:f:root:-:644
+$html_directory/postfix-tls.1.html:f:root:-:644
 $html_directory/postfix-wrapper.5.html:f:root:-:644
 $html_directory/postfix.1.html:f:root:-:644
+$html_directory/postfix-doc.css:f:root:-:644
 $html_directory/postkick.1.html:f:root:-:644
 $html_directory/postlock.1.html:f:root:-:644
 $html_directory/postlog.1.html:f:root:-:644
 $html_directory/postmap.1.html:f:root:-:644
 $html_directory/postmulti.1.html:f:root:-:644
+$html_directory/postlogd.8.html:f:root:-:644
 $html_directory/postqueue.1.html:f:root:-:644
 $html_directory/postscreen.8.html:f:root:-:644
 $html_directory/postsuper.1.html:f:root:-:644
@@ -442,13 +458,16 @@ $html_directory/qmgr.8.html:f:root:-:644
 #$html_directory/qmqpd.8.html:f:root:-:644
 $html_directory/regexp_table.5.html:f:root:-:644
 $html_directory/relocated.5.html:f:root:-:644
+$html_directory/scache.8.html:f:root:-:644
 $html_directory/sendmail.1.html:h:$html_directory/mailq.1.html:-:644
 $html_directory/showq.8.html:f:root:-:644
 $html_directory/smtp-sink.1.html:f:root:-:644
 $html_directory/smtp-source.1.html:f:root:-:644
 $html_directory/smtp.8.html:h:$html_directory/lmtp.8.html:-:644
 $html_directory/smtpd.8.html:f:root:-:644
+$html_directory/socketmap_table.5.html:f:root:-:644
 $html_directory/spawn.8.html:f:root:-:644
+$html_directory/tlsmgr.8.html:f:root:-:644
 $html_directory/tlsproxy.8.html:f:root:-:644
 #$html_directory/tcp_table.5.html:f:root:-:644
 $html_directory/trace.8.html:h:$html_directory/bounce.8.html:-:644

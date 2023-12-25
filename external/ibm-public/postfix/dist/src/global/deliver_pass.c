@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_pass.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: deliver_pass.c,v 1.2.14.1 2023/12/25 12:54:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -51,6 +51,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -72,6 +77,7 @@
 #include <dsb_scan.h>
 #include <defer.h>
 #include <rcpt_print.h>
+#include <info_log_addr_form.h>
 
 #define DELIVER_PASS_DEFER	1
 #define DELIVER_PASS_UNKNOWN	2
@@ -80,15 +86,13 @@
 
 static int deliver_pass_initial_reply(VSTREAM *stream)
 {
-    int     stat;
-
     if (attr_scan(stream, ATTR_FLAG_STRICT,
-		  RECV_ATTR_INT(MAIL_ATTR_STATUS, &stat),
-		  ATTR_TYPE_END) != 1) {
+		  RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_DELIVER),
+		  ATTR_TYPE_END) != 0) {
 	msg_warn("%s: malformed response", VSTREAM_PATH(stream));
-	stat = -1;
+	return (-1);
     }
-    return (stat);
+    return (0);
 }
 
 /* deliver_pass_send_request - send delivery request to delivery process */
@@ -111,7 +115,7 @@ static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
 	       SEND_ATTR_STR(MAIL_ATTR_SENDER, request->sender),
 	       SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, request->dsn_envid),
 	       SEND_ATTR_INT(MAIL_ATTR_DSN_RET, request->dsn_ret),
-	       SEND_ATTR_FUNC(msg_stats_print, (void *) &request->msg_stats),
+	SEND_ATTR_FUNC(msg_stats_print, (const void *) &request->msg_stats),
     /* XXX Should be encapsulated with ATTR_TYPE_FUNC. */
 	     SEND_ATTR_STR(MAIL_ATTR_LOG_CLIENT_NAME, request->client_name),
 	     SEND_ATTR_STR(MAIL_ATTR_LOG_CLIENT_ADDR, request->client_addr),
@@ -128,7 +132,7 @@ static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
 	       SEND_ATTR_INT(MAIL_ATTR_RCPT_COUNT, 1),
 	       ATTR_TYPE_END);
     attr_print(stream, ATTR_FLAG_NONE,
-	       SEND_ATTR_FUNC(rcpt_print, (void *) rcpt),
+	       SEND_ATTR_FUNC(rcpt_print, (const void *) rcpt),
 	       ATTR_TYPE_END);
 
     if (vstream_fflush(stream)) {
@@ -184,6 +188,9 @@ int     deliver_pass(const char *class, const char *service,
     /*
      * Initialize.
      */
+    msg_info("%s: passing <%s> to transport=%s",
+	     request->queue_id, info_log_addr_form_recipient(rcpt->address),
+	     transport);
     stream = mail_connect_wait(class, transport);
     dsb = dsb_create();
 

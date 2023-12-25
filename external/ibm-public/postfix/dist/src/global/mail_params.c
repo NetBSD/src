@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: mail_params.c,v 1.2.14.1 2023/12/25 12:55:01 martin Exp $	*/
 
 /*++
 /* NAME
@@ -38,6 +38,7 @@
 /*	int	var_event_drain;
 /*	int	var_bundle_rcpt;
 /*	char	*var_procname;
+/*	char	*var_servname;
 /*	int	var_pid;
 /*	int	var_ipc_timeout;
 /*	char	*var_pid_dir;
@@ -129,20 +130,43 @@
 /*	int	var_smtputf8_enable
 /*	int	var_strict_smtputf8;
 /*	char	*var_smtputf8_autoclass;
-/*	int     var_compat_level;
+/*	int     var_idna2003_compat;
+/*	char	*var_compatibility_level;
 /*	char	*var_drop_hdrs;
+/*	char	*var_info_log_addr_form;
+/*	bool	var_enable_orcpt;
 /*
 /*	void	mail_params_init()
 /*
 /*	const	char null_format_string[1];
 /*
+/*	long	compatibility_level;
+/*
 /*	int	warn_compat_break_app_dot_mydomain;
 /*	int	warn_compat_break_smtputf8_enable;
 /*	int	warn_compat_break_chroot;
+/*	int	warn_compat_break_relay_restrictions;
 /*
 /*	int	warn_compat_break_relay_domains;
 /*	int	warn_compat_break_flush_domains;
 /*	int	warn_compat_break_mynetworks_style;
+/*
+/*	int	warn_compat_break_smtpd_tls_fpt_dgst;
+/*	int	warn_compat_break_smtp_tls_fpt_dgst;
+/*	int	warn_compat_break_lmtp_tls_fpt_dgst;
+/*	int	warn_compat_relay_before_rcpt_checks;
+/*	int	warn_compat_respectful_logging;
+/*
+/*	char	*var_maillog_file;
+/*	char	*var_maillog_file_pfxs;
+/*	char	*var_maillog_file_comp;
+/*	char	*var_maillog_file_stamp;
+/*	char	*var_postlog_service;
+/*
+/*	char	*var_dnssec_probe;
+/*	bool	var_relay_before_rcpt_checks;
+/*	bool	var_respectful_logging;
+/*	char	*var_known_tcp_ports;
 /* DESCRIPTION
 /*	This module (actually the associated include file) defines
 /*	the names and defaults of all mail configuration parameters.
@@ -169,6 +193,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -198,6 +227,7 @@
 #include <inet_proto.h>
 #include <vstring_vstream.h>
 #include <iostuff.h>
+#include <midna_domain.h>
 
 /* Global library. */
 
@@ -208,6 +238,8 @@
 #include <verp_sender.h>
 #include <own_inet_addr.h>
 #include <mail_params.h>
+#include <compat_level.h>
+#include <config_known_tcp_ports.h>
 
  /*
   * Special configuration variables.
@@ -242,6 +274,7 @@ int     var_event_drain;
 int     var_idle_limit;
 int     var_bundle_rcpt;
 char   *var_procname;
+char   *var_servname;
 int     var_pid;
 int     var_ipc_timeout;
 char   *var_pid_dir;
@@ -334,10 +367,32 @@ char   *var_dsn_filter;
 int     var_smtputf8_enable;
 int     var_strict_smtputf8;
 char   *var_smtputf8_autoclass;
-int     var_compat_level;
+int     var_idna2003_compat;
+char   *var_compatibility_level;
 char   *var_drop_hdrs;
+char   *var_info_log_addr_form;
+bool    var_enable_orcpt;
+
+char   *var_maillog_file;
+char   *var_maillog_file_pfxs;
+char   *var_maillog_file_comp;
+char   *var_maillog_file_stamp;
+char   *var_postlog_service;
+
+char   *var_dnssec_probe;
+bool    var_respectful_logging;
+char   *var_known_tcp_ports;
 
 const char null_format_string[1] = "";
+
+ /*
+  * Compatibility level 3.6.
+  */
+int     warn_compat_break_smtpd_tls_fpt_dgst;
+int     warn_compat_break_smtp_tls_fpt_dgst;
+int     warn_compat_break_lmtp_tls_fpt_dgst;
+int     warn_compat_relay_before_rcpt_checks;
+int     warn_compat_respectful_logging;
 
  /*
   * Compatibility level 2.
@@ -352,6 +407,12 @@ int     warn_compat_break_mynetworks_style;
 int     warn_compat_break_app_dot_mydomain;
 int     warn_compat_break_smtputf8_enable;
 int     warn_compat_break_chroot;
+int     warn_compat_break_relay_restrictions;
+
+ /*
+  * Parsed from var_compatibility_level;
+  */
+long    compat_level;
 
 /* check_myhostname - lookup hostname and validate */
 
@@ -594,9 +655,26 @@ static void check_legacy_defaults(void)
 
     /*
      * Look for specific parameters whose default changed when the
+     * compatibility level changed to 3.6.
+     */
+    if (compat_level < compat_level_from_string(COMPAT_LEVEL_3_6, msg_panic)) {
+	if (mail_conf_lookup(VAR_SMTPD_TLS_FPT_DGST) == 0)
+	    warn_compat_break_smtpd_tls_fpt_dgst = 1;
+	if (mail_conf_lookup(VAR_SMTP_TLS_FPT_DGST) == 0)
+	    warn_compat_break_smtp_tls_fpt_dgst = 1;
+	if (mail_conf_lookup(VAR_LMTP_TLS_FPT_DGST) == 0)
+	    warn_compat_break_lmtp_tls_fpt_dgst = 1;
+	if (mail_conf_lookup(VAR_RELAY_BEFORE_RCPT_CHECKS) == 0)
+	    warn_compat_relay_before_rcpt_checks = 1;
+	if (mail_conf_lookup(VAR_RESPECTFUL_LOGGING) == 0)
+	    warn_compat_respectful_logging = 1;
+    }
+
+    /*
+     * Look for specific parameters whose default changed when the
      * compatibility level changed to 2.
      */
-    if (var_compat_level < 2) {
+    if (compat_level < compat_level_from_string(COMPAT_LEVEL_2, msg_panic)) {
 	if (mail_conf_lookup(VAR_RELAY_DOMAINS) == 0) {
 	    warn_compat_break_relay_domains = 1;
 	    if (mail_conf_lookup(VAR_FFLUSH_DOMAINS) == 0)
@@ -611,7 +689,7 @@ static void check_legacy_defaults(void)
      * Look for specific parameters whose default changed when the
      * compatibility level changed from 0 to 1.
      */
-    if (var_compat_level < 1) {
+    if (compat_level < compat_level_from_string(COMPAT_LEVEL_1, msg_panic)) {
 	if (mail_conf_lookup(VAR_APP_DOT_MYDOMAIN) == 0)
 	    warn_compat_break_app_dot_mydomain = 1;
 
@@ -623,6 +701,12 @@ static void check_legacy_defaults(void)
 	if (mail_conf_lookup(VAR_SMTPUTF8_ENABLE) == 0)
 	    warn_compat_break_smtputf8_enable = 1;
 	warn_compat_break_chroot = 1;
+
+	/*
+	 * Grandfathered in to help sites migrating from Postfix <2.10.
+	 */
+	if (mail_conf_lookup(VAR_RELAY_CHECKS) == 0)
+	    warn_compat_break_relay_restrictions = 1;
     }
 }
 
@@ -630,8 +714,8 @@ static void check_legacy_defaults(void)
 
 void    mail_params_init()
 {
-    static const CONFIG_INT_TABLE first_int_defaults[] = {
-	VAR_COMPAT_LEVEL, DEF_COMPAT_LEVEL, &var_compat_level, 0, 0,
+    static const CONFIG_STR_TABLE compat_level_defaults[] = {
+	VAR_COMPAT_LEVEL, DEF_COMPAT_LEVEL, &var_compatibility_level, 0, 0,
 	0,
     };
     static const CONFIG_STR_TABLE first_str_defaults[] = {
@@ -643,6 +727,13 @@ void    mail_params_init()
 	/* multi_instance_wrapper may have dependencies but not dependents. */
 	VAR_MULTI_GROUP, DEF_MULTI_GROUP, &var_multi_group, 0, 0,
 	VAR_MULTI_NAME, DEF_MULTI_NAME, &var_multi_name, 0, 0,
+	VAR_MAILLOG_FILE, DEF_MAILLOG_FILE, &var_maillog_file, 0, 0,
+	VAR_MAILLOG_FILE_PFXS, DEF_MAILLOG_FILE_PFXS, &var_maillog_file_pfxs, 1, 0,
+	VAR_MAILLOG_FILE_COMP, DEF_MAILLOG_FILE_COMP, &var_maillog_file_comp, 1, 0,
+	VAR_MAILLOG_FILE_STAMP, DEF_MAILLOG_FILE_STAMP, &var_maillog_file_stamp, 1, 0,
+	VAR_POSTLOG_SERVICE, DEF_POSTLOG_SERVICE, &var_postlog_service, 1, 0,
+	VAR_DNSSEC_PROBE, DEF_DNSSEC_PROBE, &var_dnssec_probe, 0, 0,
+	VAR_KNOWN_TCP_PORTS, DEF_KNOWN_TCP_PORTS, &var_known_tcp_ports, 0, 0,
 	0,
     };
     static const CONFIG_BOOL_TABLE first_bool_defaults[] = {
@@ -654,6 +745,8 @@ void    mail_params_init()
     static const CONFIG_NBOOL_TABLE first_nbool_defaults[] = {
 	/* read and process the following before opening tables. */
 	VAR_SMTPUTF8_ENABLE, DEF_SMTPUTF8_ENABLE, &var_smtputf8_enable,
+	VAR_IDNA2003_COMPAT, DEF_IDNA2003_COMPAT, &var_idna2003_compat,
+	VAR_RESPECTFUL_LOGGING, DEF_RESPECTFUL_LOGGING, &var_respectful_logging,
 	0,
     };
     static const CONFIG_STR_FN_TABLE function_str_defaults[] = {
@@ -714,6 +807,7 @@ void    mail_params_init()
 	VAR_DSN_FILTER, DEF_DSN_FILTER, &var_dsn_filter, 0, 0,
 	VAR_SMTPUTF8_AUTOCLASS, DEF_SMTPUTF8_AUTOCLASS, &var_smtputf8_autoclass, 1, 0,
 	VAR_DROP_HDRS, DEF_DROP_HDRS, &var_drop_hdrs, 0, 0,
+	VAR_INFO_LOG_ADDR_FORM, DEF_INFO_LOG_ADDR_FORM, &var_info_log_addr_form, 1, 0,
 	0,
     };
     static const CONFIG_STR_FN_TABLE function_str_defaults_2[] = {
@@ -776,6 +870,7 @@ void    mail_params_init()
 	VAR_MULTI_ENABLE, DEF_MULTI_ENABLE, &var_multi_enable,
 	VAR_LONG_QUEUE_IDS, DEF_LONG_QUEUE_IDS, &var_long_queue_ids,
 	VAR_STRICT_SMTPUTF8, DEF_STRICT_SMTPUTF8, &var_strict_smtputf8,
+	VAR_ENABLE_ORCPT, DEF_ENABLE_ORCPT, &var_enable_orcpt,
 	0,
     };
     const char *cp;
@@ -784,7 +879,10 @@ void    mail_params_init()
      * Extract compatibility level first, so that we can determine what
      * parameters of interest are left at their legacy defaults.
      */
-    get_mail_conf_int_table(first_int_defaults);
+    if (var_compatibility_level == 0)
+	compat_level_relop_register();
+    get_mail_conf_str_table(compat_level_defaults);
+    compat_level = compat_level_from_string(var_compatibility_level, msg_fatal);
     check_legacy_defaults();
 
     /*
@@ -793,7 +891,7 @@ void    mail_params_init()
      */
     get_mail_conf_str_table(first_str_defaults);
 
-    if (!msg_syslog_facility(var_syslog_facility))
+    if (!msg_syslog_set_facility(var_syslog_facility))
 	msg_fatal("file %s/%s: parameter %s: unrecognized value: %s",
 		  var_config_dir, MAIN_CONF_FILE,
 		  VAR_SYSLOG_FACILITY, var_syslog_facility);
@@ -820,8 +918,17 @@ void    mail_params_init()
 	msg_warn("%s is true, but EAI support is not compiled in",
 		 VAR_SMTPUTF8_ENABLE);
     var_smtputf8_enable = 0;
+#else
+    midna_domain_transitional = var_idna2003_compat;
+    if (var_smtputf8_enable)
+	midna_domain_pre_chroot();
 #endif
     util_utf8_enable = var_smtputf8_enable;
+
+    /*
+     * Configure the known TCP port mappings.
+     */
+    config_known_tcp_ports(VAR_KNOWN_TCP_PORTS, var_known_tcp_ports);
 
     /*
      * What protocols should we attempt to support? The result is stored in
@@ -922,10 +1029,6 @@ void    mail_params_init()
     if (var_myorigin[strcspn(var_myorigin, CHARS_COMMA_SP)])
 	msg_fatal("%s parameter setting must not contain multiple values: %s",
 		  VAR_MYORIGIN, var_myorigin);
-
-    if (var_relayhost[strcspn(var_relayhost, CHARS_COMMA_SP)])
-	msg_fatal("%s parameter setting must not contain multiple values: %s",
-		  VAR_RELAYHOST, var_relayhost);
 
     /*
      * One more sanity check.

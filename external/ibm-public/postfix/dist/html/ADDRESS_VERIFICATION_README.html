@@ -7,7 +7,8 @@
 
 <title>Postfix Address Verification </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -22,7 +23,7 @@
 <p> Recipient address verification may cause an increased load on
 down-stream servers in the case of a dictionary attack or a flood
 of backscatter bounces. Sender address verification may cause your
-site to be blacklisted by some providers.  See also the "<a
+site to be denylisted by some providers.  See also the "<a
 href="#limitations">Limitations</a>" section below for more.  </p>
 
 <h2><a name="summary">What Postfix address verification can do for you</a></h2>
@@ -211,7 +212,7 @@ address is deliverable. In reality, mail for a remote address can
 bounce AFTER a preferred MTA accepts the recipient address, or AFTER
 a preferred MTA accepts the message content. </p>
 
-<li> <p> Some sites may blacklist you when you are probing them
+<li> <p> Some sites may denylist you when you are probing them
 too often (a probe is an SMTP session that does not deliver mail),
 or when you are probing them too often for a non-existent address.
 This is one reason why you should use sender address verification
@@ -252,7 +253,7 @@ mis-configured sites that reject MAIL FROM:  &lt;&gt;, while
 probes from "double-bounce@$<a href="postconf.5.html#myorigin">myorigin</a>" would succeed. </p>
 
 <li> <p> The downside of using a non-empty sender address is that
-the address may end op on spammer mailing lists. Although Postfix
+the address may end up on spammer mailing lists. Although Postfix
 always discards mail to the double-bounce address, this still results
 in wasted network bandwidth and server capacity.  To defeat
 address harvesting, Postfix 2.9 and later support time-dependent
@@ -298,6 +299,12 @@ the same address repeatedly.  </p>
         ...
     # Postfix 2.6 and later privacy feature.
     # <a href="postconf.5.html#unverified_recipient_reject_reason">unverified_recipient_reject_reason</a> = Address lookup failed
+
+    # Postfix 3.2 and earlier workaround.
+    # Do not set <a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a>=no. This prevents Postfix
+    # from saving the recipient address verification result under
+    # the original address, when the address verification probe
+    # message goes through address aliasing or canonical mapping.
 </pre>
 </blockquote>
 
@@ -348,6 +355,12 @@ in forged email.  </p>
     # Note 1: Be sure to read the "<a href="#caching">Caching</a>" section below!
     # Note 2: Avoid hash files here. Use btree or lmdb instead.
     <a href="postconf.5.html#address_verify_map">address_verify_map</a> = <a href="DATABASE_README.html#types">btree</a>:/var/lib/postfix/verify
+
+    # Postfix 3.2 and earlier workaround.
+    # Do not set <a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a>=no. This prevents Postfix
+    # from saving the sender address verification result under the
+    # original address, when the address verification probe message
+    # goes through address aliasing or canonical mapping.
  
 /etc/postfix/sender_access:
     # Don't do this when you handle lots of email.
@@ -371,7 +384,7 @@ email</a></h2>
 <p> Unfortunately, sender address verification cannot simply be
 turned on for all email - you are likely to lose legitimate mail
 from mis-configured systems. You almost certainly will have to set
-up white lists for specific addresses, or even for entire domains.
+up allow lists for specific addresses, or even for entire domains.
 </p>
 
 <p> To find out how sender address verification would affect your
@@ -401,12 +414,12 @@ you can see what mail would be blocked: </p>
 <p> This is also a good way to populate your cache with address
 verification results before you start to actually reject mail. </p>
 
-<p> The sender_access restriction is needed to whitelist domains
+<p> The sender_access restriction is needed to allowlist domains
 or addresses that are known to be OK.  Although Postfix will not
 mark a known-to-be-good address as bad after a probe fails, it is
 better to be safe than sorry. </p>
 
-<p> NOTE: You will have to whitelist sites such as securityfocus.com
+<p> NOTE: You will have to allowlist sites such as securityfocus.com
 and other sites that operate mailing lists that use a different
 sender address for each posting (VERP).  Such addresses pollute
 the address verification cache quickly, and generate unnecessary

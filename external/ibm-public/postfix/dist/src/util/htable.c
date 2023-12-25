@@ -1,4 +1,4 @@
-/*	$NetBSD: htable.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: htable.c,v 1.2.14.1 2023/12/25 12:55:29 martin Exp $	*/
 
 /*++
 /* NAME
@@ -106,6 +106,7 @@
 /*	to delete a non-existent entry.
 /* SEE ALSO
 /*	mymalloc(3) memory management wrapper
+/*	hash_fnv(3) Fowler/Noll/Vo hash function
 /* LICENSE
 /* .ad
 /* .fi
@@ -115,6 +116,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* C library */
@@ -129,6 +135,13 @@
 #include "htable.h"
 
 /* htable_hash - hash a string */
+
+#ifndef NO_HASH_FNV
+#include "hash_fnv.h"
+
+#define htable_hash(s, size) (hash_fnvz(s) % (size))
+
+#else
 
 static size_t htable_hash(const char *s, size_t size)
 {
@@ -148,6 +161,8 @@ static size_t htable_hash(const char *s, size_t size)
     }
     return (h % size);
 }
+
+#endif
 
 /* htable_link - insert element into table */
 
@@ -397,6 +412,9 @@ int     main(int unused_argc, char **unused_argv)
     hash = htable_create(10);
     while (vstring_get(buf, VSTREAM_IN) != VSTREAM_EOF)
 	htable_enter(hash, vstring_str(buf), CAST_INT_TO_VOID_PTR(count++));
+    if (count != hash->used)
+	msg_panic("%ld entries stored, but %lu entries exist",
+		  (long) count, (unsigned long) hash->used);
     for (i = 0, op = HTABLE_SEQ_FIRST; htable_sequence(hash, op) != 0;
 	 i++, op = HTABLE_SEQ_NEXT)
 	 /* void */ ;

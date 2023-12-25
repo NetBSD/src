@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - ldap_table(5) </title>
 </head> <body> <pre>
 LDAP_TABLE(5)                                                    LDAP_TABLE(5)
@@ -30,30 +31,11 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
        example is given at the end of this manual.
 
        This  configuration  method  is  available with Postfix version 2.1 and
-       later.  See the section "BACKWARDS COMPATIBILITY" below for older Post-
-       fix versions.
+       later.  See the section "OBSOLETE MAIN.CF PARAMETERS" below  for  older
+       Postfix versions.
 
        For  details  about  LDAP  SSL and STARTTLS, see the section on SSL and
        STARTTLS below.
-
-<b>BACKWARDS COMPATIBILITY</b>
-       For backwards compatibility with Postfix version 2.0 and earlier,  LDAP
-       parameters  can  also  be defined in <a href="postconf.5.html">main.cf</a>.  Specify as LDAP source a
-       name that doesn't begin with a slash or a  dot.   The  LDAP  parameters
-       will then be accessible as the name you've given the source in its def-
-       inition, an underscore, and the name of the parameter.  For example, if
-       the  map is specified as "<a href="ldap_table.5.html">ldap</a>:<i>ldapsource</i>", the "server_host" parameter
-       below would be defined in <a href="postconf.5.html">main.cf</a> as "<i>ldapsource</i>_server_host".
-
-       Note: with this form, the passwords for the LDAP sources are written in
-       <a href="postconf.5.html">main.cf</a>,  which is normally world-readable.  Support for this form will
-       be removed in a future Postfix version.
-
-       For backwards compatibility with the pre 2.2 LDAP clients,  <b>result_fil-</b>
-       <b>ter</b>  can  for  now  be  used  instead of <b>result_format</b>, when the latter
-       parameter is not also set.  The new name better reflects  the  function
-       of  the  parameter.  This  compatibility  interface may be removed in a
-       future release.
 
 <b>LIST MEMBERSHIP</b>
        When using LDAP to store lists  such  as  $<a href="postconf.5.html#mynetworks">mynetworks</a>,  $<a href="postconf.5.html#mydestination">mydestination</a>,
@@ -107,8 +89,8 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               (the last one provided that OpenLDAP was compiled  with  support
               for SSL):
 
-                  server_host = ldapi://%2Fsome%2Fpath
-                              ldaps://ldap.example.com:636
+                  server_host = <a href="ldap_table.5.html">ldapi</a>://%2Fsome%2Fpath
+                              <a href="ldap_table.5.html">ldaps</a>://ldap.example.com:636
 
        <b>server_port (default: 389)</b>
               The port the LDAP server listens on, e.g.
@@ -121,7 +103,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
                   timeout = 5
 
        <b>search_base (No default; you must configure this)</b>
-              The <a href="http://tools.ietf.org/html/rfc2253">RFC2253</a> base DN at which to conduct the search, e.g.
+              The <a href="https://tools.ietf.org/html/rfc2253">RFC2253</a> base DN at which to conduct the search, e.g.
 
                   search_base = dc=your, dc=com
 
@@ -130,38 +112,39 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
 
               <b>%%</b>     This is replaced by a literal '%' character.
 
-              <b>%s</b>     This  is  replaced by the input key.  <a href="http://tools.ietf.org/html/rfc2253">RFC 2253</a> quoting is
+              <b>%s</b>     This  is  replaced by the input key.  <a href="https://tools.ietf.org/html/rfc2253">RFC 2253</a> quoting is
                      used to make sure that the input key does not  add  unex-
                      pected metacharacters.
 
               <b>%u</b>     When the input key is an address of the form user@domain,
-                     <b>%u</b> is replaced by the (<a href="http://tools.ietf.org/html/rfc2253">RFC 2253</a>) quoted local part of the
+                     <b>%u</b> is replaced by the (<a href="https://tools.ietf.org/html/rfc2253">RFC 2253</a>) quoted local part of the
                      address.   Otherwise, <b>%u</b> is replaced by the entire search
                      string.  If the localpart is empty, the  search  is  sup-
                      pressed and returns no results.
 
               <b>%d</b>     When the input key is an address of the form user@domain,
-                     <b>%d</b> is replaced by the (<a href="http://tools.ietf.org/html/rfc2253">RFC 2253</a>) quoted  domain  part  of
+                     <b>%d</b> is replaced by the (<a href="https://tools.ietf.org/html/rfc2253">RFC 2253</a>) quoted  domain  part  of
                      the  address.   Otherwise,  the  search is suppressed and
                      returns no results.
 
               <b>%[SUD]</b> For the <b>search_base</b> parameter, the upper-case equivalents
                      of  the  above  expansions  behave  identically  to their
                      lower-case counter-parts. With the <b>result_format</b>  parame-
-                     ter  (previously called <b>result_filter</b> see the COMPATIBIL-
-                     ITY section and below), they expand to the  corresponding
-                     components of input key rather than the result value.
+                     ter  (previously called <b>result_filter</b> see the OTHER OBSO-
+                     LETE FEATURES section and below), they expand to the cor-
+                     responding components of input key rather than the result
+                     value.
 
-              <b>%[1-9]</b> The  patterns  %1,  %2, ... %9 are replaced by the corre-
-                     sponding most significant component of  the  input  key's
-                     domain.  If  the input key is <i>user@mail.example.com</i>, then
+              <b>%[1-9]</b> The patterns %1, %2, ... %9 are replaced  by  the  corre-
+                     sponding  most  significant  component of the input key's
+                     domain. If the input key is  <i>user@mail.example.com</i>,  then
                      %1 is <b>com</b>, %2 is <b>example</b> and %3 is <b>mail</b>. If the input key
-                     is  unqualified or does not have enough domain components
+                     is unqualified or does not have enough domain  components
                      to satisfy all the specified patterns, the search is sup-
                      pressed and returns no results.
 
        <b>query_filter (default: mailacceptinggeneralid=%s)</b>
-              The  <a href="http://tools.ietf.org/html/rfc2254">RFC2254</a>  filter used to search the directory, where <b>%s</b> is a
+              The <a href="https://tools.ietf.org/html/rfc2254">RFC2254</a> filter used to search the directory, where <b>%s</b>  is  a
               substitute for the address Postfix is trying to resolve, e.g.
 
                   query_filter = (&amp;(mail=%s)(paid_up=true))
@@ -171,27 +154,28 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               <b>%%</b>     This is replaced by a literal '%' character. (Postfix 2.2
                      and later).
 
-              <b>%s</b>     This  is  replaced by the input key.  <a href="http://tools.ietf.org/html/rfc2254">RFC 2254</a> quoting is
-                     used to make sure that the input key does not  add  unex-
+              <b>%s</b>     This is replaced by the input key.  <a href="https://tools.ietf.org/html/rfc2254">RFC 2254</a>  quoting  is
+                     used  to  make sure that the input key does not add unex-
                      pected metacharacters.
 
               <b>%u</b>     When the input key is an address of the form user@domain,
-                     <b>%u</b> is replaced by the (<a href="http://tools.ietf.org/html/rfc2254">RFC 2254</a>) quoted local part of the
-                     address.   Otherwise, <b>%u</b> is replaced by the entire search
-                     string.  If the localpart is empty, the  search  is  sup-
+                     <b>%u</b> is replaced by the (<a href="https://tools.ietf.org/html/rfc2254">RFC 2254</a>) quoted local part of the
+                     address.  Otherwise, <b>%u</b> is replaced by the entire  search
+                     string.   If  the  localpart is empty, the search is sup-
                      pressed and returns no results.
 
               <b>%d</b>     When the input key is an address of the form user@domain,
-                     <b>%d</b> is replaced by the (<a href="http://tools.ietf.org/html/rfc2254">RFC 2254</a>) quoted  domain  part  of
-                     the  address.   Otherwise,  the  search is suppressed and
+                     <b>%d</b>  is  replaced  by the (<a href="https://tools.ietf.org/html/rfc2254">RFC 2254</a>) quoted domain part of
+                     the address.  Otherwise, the  search  is  suppressed  and
                      returns no results.
 
               <b>%[SUD]</b> The upper-case equivalents of the above expansions behave
-                     in   the  <b>query_filter</b>  parameter  identically  to  their
-                     lower-case counter-parts. With the <b>result_format</b>  parame-
-                     ter  (previously called <b>result_filter</b> see the COMPATIBIL-
-                     ITY section and below), they expand to the  corresponding
-                     components of input key rather than the result value.
+                     in  the  <b>query_filter</b>  parameter  identically  to   their
+                     lower-case  counter-parts. With the <b>result_format</b> parame-
+                     ter (previously called <b>result_filter</b> see the OTHER  OBSO-
+                     LETE FEATURES section and below), they expand to the cor-
+                     responding components of input key rather than the result
+                     value.
 
                      The  above  %S,  %U  and %D expansions are available with
                      Postfix 2.2 and later.
@@ -268,9 +252,9 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               NOTE: DO NOT put quotes around the result format!
 
        <b>domain (default: no domain list)</b>
-              This is a list of domain names, paths to files, or dictionaries.
-              When  specified,  only  fully  qualified  search  keys  with   a
-              *non-empty*  localpart  and  a  matching domain are eligible for
+              This  is a list of domain names, paths to files, or "<a href="DATABASE_README.html">type:table</a>"
+              databases. When specified, only fully qualified search keys with
+              a  *non-empty*  localpart and a matching domain are eligible for
               lookup:  'user'  lookups,  bare  domain  lookups  and  "@domain"
               lookups  are  not  performed.  This can significantly reduce the
               query load on the LDAP server.
@@ -300,7 +284,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
 
        <b>special_result_attribute (default: empty)</b>
               The attribute(s) of directory entries that can  contain  DNs  or
-              <a href="http://tools.ietf.org/html/rfc2255">RFC 2255</a> LDAP URLs. If found, a recursive search is performed to
+              <a href="https://tools.ietf.org/html/rfc2255">RFC 2255</a> LDAP URLs. If found, a recursive search is performed to
               retrieve the entry referenced by the DN, or the entries  matched
               by the URL query.
 
@@ -314,13 +298,13 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               special, leaf or terminal) in the Postfix table definition.   If
               the  URL  lists  any  of  the table's special result attributes,
               these are retrieved and used recursively. A URL  that  does  not
-              specify  any  attribute selection, is equivalent (<a href="http://tools.ietf.org/html/rfc2255">RFC 2255</a>) to a
+              specify  any  attribute selection, is equivalent (<a href="https://tools.ietf.org/html/rfc2255">RFC 2255</a>) to a
               URL that selects all attributes,  in  which  case  the  selected
               attributes  will  be  the  full  set of result attributes in the
               Postfix table.
 
               If an LDAP URL attribute-descriptor or the corresponding Postfix
-              LDAP  table  result  attribute  (but  not  both)  uses  <a href="http://tools.ietf.org/html/rfc2255">RFC 2255</a>
+              LDAP  table  result  attribute  (but  not  both)  uses  <a href="https://tools.ietf.org/html/rfc2255">RFC 2255</a>
               sub-type options ("attr;option"), the attribute  requested  from
               the  LDAP  server will include the sub-type option. In all other
               cases, the URL attribute and  the  table  attribute  must  match
@@ -541,7 +525,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
        LDAP  SSL  service  can  be  requested  by  using a LDAP SSL URL in the
        server_host parameter:
 
-           server_host = ldaps://ldap.example.com:636
+           server_host = <a href="ldap_table.5.html">ldaps</a>://ldap.example.com:636
 
        STARTTLS can be turned on with the start_tls parameter:
 
@@ -648,8 +632,29 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
        ing at port 389 on ldap.example.com.  It will bind anonymously,  search
        for  any  directory  entries  whose mailacceptinggeneralid attribute is
        "ldapuser", read the "maildrop" attributes of those found, and build  a
-       list  of  their maildrops, which will be treated as <a href="http://tools.ietf.org/html/rfc822">RFC822</a> addresses to
+       list  of  their maildrops, which will be treated as <a href="https://tools.ietf.org/html/rfc822">RFC822</a> addresses to
        which the message will be delivered.
+
+<b>OBSOLETE MAIN.CF PARAMETERS</b>
+       For backwards compatibility with Postfix version 2.0 and earlier,  LDAP
+       parameters  can  also  be defined in <a href="postconf.5.html">main.cf</a>.  Specify as LDAP source a
+       name that doesn't begin with a slash or a  dot.   The  LDAP  parameters
+       will then be accessible as the name you've given the source in its def-
+       inition, an underscore, and the name of the parameter.  For example, if
+       the  map is specified as "<a href="ldap_table.5.html">ldap</a>:<i>ldapsource</i>", the "server_host" parameter
+       below would be defined in <a href="postconf.5.html">main.cf</a> as "<i>ldapsource</i>_server_host".
+
+       Note: with this form, the passwords for the LDAP sources are written in
+       <a href="postconf.5.html">main.cf</a>,  which is normally world-readable.  Support for this form will
+       be removed in a future Postfix version.
+
+<b>OTHER OBSOLETE FEATURES</b>
+       <b>result_filter (No default)</b>
+              For backwards compatibility  with  the  pre  2.2  LDAP  clients,
+              <b>result_filter</b> can for now be used instead of <b>result_format</b>, when
+              the latter parameter is not  also  set.   The  new  name  better
+              reflects  the  function  of  the  parameter.  This compatibility
+              interface may be removed in a future release.
 
 <b>SEE ALSO</b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager

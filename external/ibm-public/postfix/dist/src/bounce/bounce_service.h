@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_service.h,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: bounce_service.h,v 1.2.14.1 2023/12/25 12:54:48 martin Exp $	*/
 
 /*++
 /* NAME
@@ -24,6 +24,11 @@
   * Application-specific.
   */
 #include <bounce_template.h>
+
+ /*
+  * bounce_service.c
+  */
+extern int bounce_hfrom_format;
 
  /*
   * bounce_append_service.c
@@ -82,6 +87,7 @@ typedef struct {
     long    orig_offs;			/* start of content */
     time_t  arrival_time;		/* time of arrival */
     long    message_size;		/* size of content */
+    VSTRING *orig_msgid;		/* original message-id */
     RCPT_BUF *rcpt_buf;			/* recipient info */
     DSN_BUF *dsn_buf;			/* delivery status info */
     BOUNCE_LOG *log_handle;		/* open logfile */

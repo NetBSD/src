@@ -7,7 +7,8 @@
 
 <title>Postfix and Linux</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -20,10 +21,10 @@
 <h2> Host lookup issues </h2>
 
 <p> By default Linux /etc/hosts lookups do not support multiple IP
-address per hostname. This causes warnings from the Postfix SMTP
+addresses per hostname. This causes warnings from the Postfix SMTP
 server that "hostname XXX does not resolve to address YYY", and is
 especially a problem with hosts that have both IPv4 and IPv6
-addresses.  To fix, turn on support for multiple IP addresses: </p>
+addresses.  To fix this, turn on support for multiple IP addresses: </p>
 
 <blockquote>
 <pre>
@@ -73,13 +74,20 @@ library routines.  See the <a href="DB_README.html">DB_README</a> file for furth
 
 <p> On RedHat Linux 7.1 and later <b>procmail</b> no longer has
 permission
-to write the mail spool directory. Workaround: </p>
+to write to the mail spool directory. Workaround: </p>
 
 <blockquote>
 <pre>
 # chmod 1777 /var/spool/mail
 </pre>
 </blockquote>
+
+<h2>Logging in a container</h2>
+
+<p> When running Postfix inside a container, you can use stdout
+logging as described in <a href="MAILLOG_README.html">MAILLOG_README</a>. Alternatives: run syslogd
+inside the container, or mount the host's syslog socket inside the
+container. </p>
 
 <h2>Syslogd performance</h2>
 
@@ -98,6 +106,14 @@ logfile name:  </p>
 
 <p> Send a "<b>kill -HUP</b>" to the <b>syslogd</b> to make the
 change effective.  </p>
+
+<h2>Other logging performance issues</h2>
+
+<p> LINUX <b>systemd</b> intercepts all logging and enforces its
+own rate limits before handing off requests to a backend such as
+<b>rsyslogd</b> or <b>syslog-ng</b>. On a busy mail server this can
+result in information loss. As a workaround, you can use Postfix's
+built-in logging as described in <a href="MAILLOG_README.html">MAILLOG_README</a>. </p>
 
 </body>
 

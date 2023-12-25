@@ -1,4 +1,4 @@
-.\"	$NetBSD: postlog.1,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: postlog.1,v 1.2.14.1 2023/12/25 12:54:40 martin Exp $
 .\"
 .TH POSTLOG 1 
 .ad
@@ -25,15 +25,18 @@ line as one record. If no \fItext\fR is specified on the command
 line, \fBpostlog\fR(1) reads from standard input and logs each input
 line as one record.
 
-Logging is sent to \fBsyslogd\fR(8); when the standard error stream
-is connected to a terminal, logging is sent there as well.
+By default, logging is sent to \fBsyslogd\fR(8) or
+\fBpostlogd\fR(8); when the
+standard error stream is connected to a terminal, logging
+is sent there as well.
 
 The following options are implemented:
 .IP "\fB\-c \fIconfig_dir\fR"
 Read the \fBmain.cf\fR configuration file in the named directory
 instead of the default configuration directory.
-.IP \fB\-i\fR
-Include the process ID in the logging tag.
+.IP "\fB\-i\fR (obsolete)"
+Include the process ID in the logging tag. This flag is ignored as
+of Postfix 3.4, where the PID is always included.
 .IP "\fB\-p \fIpriority\fR (default: \fBinfo\fR)"
 Specifies the logging severity: \fBinfo\fR, \fBwarn\fR,
 \fBerror\fR, \fBfatal\fR, or \fBpanic\fR. With Postfix 3.1
@@ -47,6 +50,16 @@ is used when none is specified.
 .IP \fB\-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB\-v\fR
 options make the software increasingly verbose.
+.SH "SECURITY"
+.na
+.nf
+.ad
+.fi
+The \fBpostlog\fR(1) command is designed to run with
+set\-groupid privileges, so that it can connect to the
+\fBpostlogd\fR(8) daemon process (Postfix 3.7 and later;
+earlier implementations of this command must not have
+set\-groupid or set\-userid permissions).
 .SH "ENVIRONMENT"
 .na
 .nf
@@ -67,22 +80,39 @@ The text below provides only a parameter summary. See
 .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 The default location of the Postfix main.cf and master.cf
 configuration files.
+.IP "\fBimport_environment (see 'postconf -d' output)\fR"
+The list of environment variables that a privileged Postfix
+process will import from a non\-Postfix parent process, or name=value
+environment overrides.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-The mail system name that is prepended to the process name in syslog
-records, so that "smtpd" becomes, for example, "postfix/smtpd".
+A prefix that is prepended to the process name in syslog
+records, so that, for example, "smtpd" becomes "prefix/smtpd".
+.PP
+Available in Postfix 3.4 and later:
+.IP "\fBmaillog_file (empty)\fR"
+The name of an optional logfile that is written by the Postfix
+\fBpostlogd\fR(8) service.
+.IP "\fBpostlog_service_name (postlog)\fR"
+The name of the \fBpostlogd\fR(8) service entry in master.cf.
 .SH "SEE ALSO"
 .na
 .nf
 postconf(5), configuration parameters
-syslogd(8), syslog daemon
+postlogd(8), Postfix logging
+syslogd(8), system logging
 .SH "LICENSE"
 .na
 .nf
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
+.SH HISTORY
+.ad
+.fi
+The \fBpostlog\fR(1) command was introduced with Postfix
+version 3.4.
 .SH "AUTHOR(S)"
 .na
 .nf

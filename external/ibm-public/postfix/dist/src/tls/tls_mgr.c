@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_mgr.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: tls_mgr.c,v 1.2.14.1 2023/12/25 12:55:20 martin Exp $	*/
 
 /*++
 /* NAME
@@ -109,6 +109,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -146,6 +151,15 @@
 
 static ATTR_CLNT *tls_mgr;
 
+/* tls_mgr_handshake - receive server protocol announcement */
+
+static int tls_mgr_handshake(VSTREAM *stream)
+{
+    return (attr_scan(stream, ATTR_FLAG_STRICT,
+		   RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_TLSMGR),
+		      ATTR_TYPE_END));
+}
+
 /* tls_mgr_open - create client handle */
 
 static void tls_mgr_open(void)
@@ -170,6 +184,7 @@ static void tls_mgr_open(void)
 
     attr_clnt_control(tls_mgr,
 		      ATTR_CLNT_CTL_PROTO, attr_vprint, attr_vscan,
+		      ATTR_CLNT_CTL_HANDSHAKE, tls_mgr_handshake,
 		      ATTR_CLNT_CTL_END);
 }
 
@@ -443,7 +458,7 @@ int     main(int unused_ac, char **av)
 
 	    status = tls_mgr_lookup(argv->argv[1], argv->argv[2], buf);
 	    vstream_printf("status=%d session=%.*s\n",
-			   status, LEN(buf), STR(buf));
+			   status, (int) LEN(buf), STR(buf));
 	    vstring_free(buf);
 	} else if (COMMAND(argv, "update", 4)) {
 	    status = tls_mgr_update(argv->argv[1], argv->argv[2],

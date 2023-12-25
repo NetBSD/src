@@ -280,8 +280,8 @@ address manipulations:
 
     Rewrite "user@host" to "user@host.$mydomain"
         This feature is controlled by the boolean append_dot_mydomain parameter
-        (default: yes). The purpose is to get consistent treatment of different
-        forms of the same hostname.
+        (default: Postfix ≥ 3.0: no, Postfix < 3.0: yes). The purpose is to
+        get consistent treatment of different forms of the same hostname.
 
         NOTE: Postfix versions 2.2 and later rewrite message headers from
         remote SMTP clients only if the client matches the
@@ -698,7 +698,7 @@ is used for deliveries to commands or files in "root"-owned aliases.
 
 LLooccaall ppeerr--uusseerr ..ffoorrwwaarrdd ffiilleess
 
-With delivery via the local(8) deliver agent, users can control their own mail
+With delivery via the local(8) delivery agent, users can control their own mail
 delivery by specifying destinations in a file called .forward in their home
 directories. The syntax of these files is the same as with the local aliases(5)
 file, except that the left-hand side of the alias (lookup key and colon) are

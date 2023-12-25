@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - cleanup(8) </title>
 </head> <body> <pre>
 CLEANUP(8)                                                          CLEANUP(8)
@@ -16,55 +17,65 @@ CLEANUP(8)                                                          CLEANUP(8)
        The  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon  processes  inbound  mail,  inserts it into the
        <b>incoming</b> mail queue, and informs the queue manager of its arrival.
 
-       The <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon always performs the following transformations:
+       The <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon performs the following transformations:
 
        <b>o</b>      Insert missing  message  headers:  (<b>Resent-</b>)  <b>From:</b>,  <b>To:</b>,  <b>Mes-</b>
               <b>sage-Id:</b>, and <b>Date:</b>.
+              This   is  enabled  with  the  <b><a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a></b>  and
+              <b><a href="postconf.5.html#always_add_missing_headers">always_add_missing_headers</a></b> parameter settings.
 
-       <b>o</b>      Transform   envelope   and  header  addresses  to  the  standard
+       <b>o</b>      Transform  envelope  and  header  addresses  to   the   standard
               <i>user@fully-qualified-domain</i> form that is expected by other Post-
-              fix  programs.  This task is delegated to the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a>
-              daemon.
+              fix programs.  This task depends on the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a>  dae-
+              mon.
+              The  header  transformation is enabled with the <b><a href="postconf.5.html#local_header_rewrite_clients">local_header_re</a>-</b>
+              <b><a href="postconf.5.html#local_header_rewrite_clients">write_clients</a></b> parameter setting.
 
        <b>o</b>      Eliminate duplicate envelope recipient addresses.
+              This is enabled with the <b><a href="postconf.5.html#duplicate_filter_limit">duplicate_filter_limit</a></b>  parameter  set-
+              ting.
 
-       <b>o</b>      Remove  message  headers:   <b>Bcc</b>,   <b>Content-Length</b>,   <b>Resent-Bcc</b>,
+       <b>o</b>      Remove   message   headers:   <b>Bcc</b>,  <b>Content-Length</b>,  <b>Resent-Bcc</b>,
               <b>Return-Path</b>.
-
-       The following address transformations are optional:
+              This is enabled with the <a href="postconf.5.html#message_drop_headers">message_drop_headers</a> parameter setting.
 
        <b>o</b>      Optionally,  rewrite all envelope and header addresses according
               to the mappings specified in the <a href="canonical.5.html"><b>canonical</b>(5)</a> lookup tables.
+              The header transformation is enabled with  the  <b><a href="postconf.5.html#local_header_rewrite_clients">local_header_re</a>-</b>
+              <b><a href="postconf.5.html#local_header_rewrite_clients">write_clients</a></b> parameter setting.
 
-       <b>o</b>      Optionally, masquerade envelope  sender  addresses  and  message
-              header  addresses  (i.e.  strip host or domain information below
-              all domains listed in the <b><a href="postconf.5.html#masquerade_domains">masquerade_domains</a></b>  parameter,  except
-              for  user  names  listed in <b><a href="postconf.5.html#masquerade_exceptions">masquerade_exceptions</a></b>).  By default,
+       <b>o</b>      Optionally,  masquerade  envelope  sender  addresses and message
+              header addresses (i.e. strip host or  domain  information  below
+              all  domains  listed in the <b><a href="postconf.5.html#masquerade_domains">masquerade_domains</a></b> parameter, except
+              for user names listed in  <b><a href="postconf.5.html#masquerade_exceptions">masquerade_exceptions</a></b>).   By  default,
               address masquerading does not affect envelope recipients.
+              The  header  transformation is enabled with the <b><a href="postconf.5.html#local_header_rewrite_clients">local_header_re</a>-</b>
+              <b><a href="postconf.5.html#local_header_rewrite_clients">write_clients</a></b> parameter setting.
 
        <b>o</b>      Optionally, expand envelope recipients according to  information
-              found in the <a href="virtual.5.html"><b>virtual</b>(5)</a> lookup tables.
+              found in the <b><a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a></b> lookup tables.
 
        The  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon  performs  sanity checks on the content of each
        message. When it finds a problem, by default it  returns  a  diagnostic
-       status  to  the client, and leaves it up to the client to deal with the
-       problem. Alternatively, the client can request the <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon to
-       bounce the message back to the sender in case of trouble.
+       status to the cleanup service client, and leaves it up to the client to
+       deal with the  problem.  Alternatively,  the  client  can  request  the
+       <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon  to bounce the message back to the sender in case of
+       trouble.
 
 <b>STANDARDS</b>
-       <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
-       <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a> (MIME: Format of Internet Message Bodies)
-       <a href="http://tools.ietf.org/html/rfc2046">RFC 2046</a> (MIME: Media Types)
-       <a href="http://tools.ietf.org/html/rfc2822">RFC 2822</a> (Internet Message Format)
-       <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced Status Codes)
-       <a href="http://tools.ietf.org/html/rfc3464">RFC 3464</a> (Delivery status notifications)
-       <a href="http://tools.ietf.org/html/rfc5322">RFC 5322</a> (Internet Message Format)
+       <a href="https://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
+       <a href="https://tools.ietf.org/html/rfc2045">RFC 2045</a> (MIME: Format of Internet Message Bodies)
+       <a href="https://tools.ietf.org/html/rfc2046">RFC 2046</a> (MIME: Media Types)
+       <a href="https://tools.ietf.org/html/rfc2822">RFC 2822</a> (Internet Message Format)
+       <a href="https://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced Status Codes)
+       <a href="https://tools.ietf.org/html/rfc3464">RFC 3464</a> (Delivery status notifications)
+       <a href="https://tools.ietf.org/html/rfc5322">RFC 5322</a> (Internet Message Format)
 
 <b>DIAGNOSTICS</b>
-       Problems and transactions are logged to <b>syslogd</b>(8).
+       Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
 <b>BUGS</b>
-       Table-driven  rewriting  rules make it hard to express <b>if then else</b> and
+       Table-driven rewriting rules make it hard to express <b>if then  else</b>  and
        other logical relationships.
 
 <b>CONFIGURATION PARAMETERS</b>
@@ -72,7 +83,7 @@ CLEANUP(8)                                                          CLEANUP(8)
        run for only a limited amount of time. Use the command "<b>postfix reload</b>"
        to speed up a change.
 
-       The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
+       The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
        more details including examples.
 
 <b>COMPATIBILITY CONTROLS</b>
@@ -83,16 +94,16 @@ CLEANUP(8)                                                          CLEANUP(8)
        Available in Postfix version 2.1 only:
 
        <b><a href="postconf.5.html#enable_errors_to">enable_errors_to</a> (no)</b>
-              Report mail delivery errors to the address  specified  with  the
-              non-standard  Errors-To: message header, instead of the envelope
-              sender address (this feature is  removed  with  Postfix  version
-              2.2,  is  turned off by default with Postfix version 2.1, and is
+              Report  mail  delivery  errors to the address specified with the
+              non-standard Errors-To: message header, instead of the  envelope
+              sender  address  (this  feature  is removed with Postfix version
+              2.2, is turned off by default with Postfix version 2.1,  and  is
               always turned on with older Postfix versions).
 
        Available in Postfix version 2.6 and later:
 
        <b><a href="postconf.5.html#always_add_missing_headers">always_add_missing_headers</a> (no)</b>
-              Always add (Resent-) From:, To:, Date:  or  Message-ID:  headers
+              Always  add  (Resent-)  From:, To:, Date: or Message-ID: headers
               when not present.
 
        Available in Postfix version 2.9 and later:
@@ -103,43 +114,46 @@ CLEANUP(8)                                                          CLEANUP(8)
        Available in Postfix version 3.0 and later:
 
        <b><a href="postconf.5.html#message_drop_headers">message_drop_headers</a> (bcc, content-length, resent-bcc, return-path)</b>
-              Names  of message headers that the <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon will remove
+              Names of message headers that the <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon will  remove
               after  applying  <a href="header_checks.5.html"><b>header_checks</b>(5)</a>  and  before  invoking  Milter
               applications.
+
+       <b><a href="postconf.5.html#header_from_format">header_from_format</a> (standard)</b>
+              The format of the Postfix-generated <b>From:</b> header.
 
 <b>BUILT-IN CONTENT FILTERING CONTROLS</b>
        Postfix built-in content filtering is meant to stop a flood of worms or
        viruses. It is not a general content filter.
 
        <b><a href="postconf.5.html#body_checks">body_checks</a> (empty)</b>
-              Optional lookup tables for content inspection  as  specified  in
+              Optional  lookup  tables  for content inspection as specified in
               the <a href="header_checks.5.html"><b>body_checks</b>(5)</a> manual page.
 
        <b><a href="postconf.5.html#header_checks">header_checks</a> (empty)</b>
-              Optional   lookup  tables  for  content  inspection  of  primary
-              non-MIME message headers, as specified in  the  <a href="header_checks.5.html"><b>header_checks</b>(5)</a>
+              Optional  lookup  tables  for  content  inspection  of   primary
+              non-MIME  message  headers, as specified in the <a href="header_checks.5.html"><b>header_checks</b>(5)</a>
               manual page.
 
        Available in Postfix version 2.0 and later:
 
        <b><a href="postconf.5.html#body_checks_size_limit">body_checks_size_limit</a> (51200)</b>
-              How  much  text in a message body segment (or attachment, if you
+              How much text in a message body segment (or attachment,  if  you
               prefer to use that term) is subjected to <a href="postconf.5.html#body_checks">body_checks</a> inspection.
 
        <b><a href="postconf.5.html#mime_header_checks">mime_header_checks</a> ($<a href="postconf.5.html#header_checks">header_checks</a>)</b>
-              Optional  lookup  tables  for content inspection of MIME related
-              message headers, as described  in  the  <a href="header_checks.5.html"><b>header_checks</b>(5)</a>  manual
+              Optional lookup tables for content inspection  of  MIME  related
+              message  headers,  as  described  in the <a href="header_checks.5.html"><b>header_checks</b>(5)</a> manual
               page.
 
        <b><a href="postconf.5.html#nested_header_checks">nested_header_checks</a> ($<a href="postconf.5.html#header_checks">header_checks</a>)</b>
-              Optional  lookup  tables for content inspection of non-MIME mes-
-              sage  headers  in  attached  messages,  as  described   in   the
+              Optional lookup tables for content inspection of  non-MIME  mes-
+              sage   headers   in  attached  messages,  as  described  in  the
               <a href="header_checks.5.html"><b>header_checks</b>(5)</a> manual page.
 
        Available in Postfix version 2.3 and later:
 
        <b><a href="postconf.5.html#message_reject_characters">message_reject_characters</a> (empty)</b>
-              The  set  of characters that Postfix will reject in message con-
+              The set of characters that Postfix will reject in  message  con-
               tent.
 
        <b><a href="postconf.5.html#message_strip_characters">message_strip_characters</a> (empty)</b>
@@ -148,22 +162,23 @@ CLEANUP(8)                                                          CLEANUP(8)
 
 <b>BEFORE QUEUE MILTER CONTROLS</b>
        As of version 2.3, Postfix supports the Sendmail version 8 Milter (mail
-       filter) protocol. When mail is not received via  the  <a href="smtpd.8.html">smtpd(8)</a>  server,
+       filter)  protocol.  When  mail is not received via the <a href="smtpd.8.html">smtpd(8)</a> server,
        the <a href="cleanup.8.html">cleanup(8)</a> server will simulate SMTP events to the extent that this
        is possible. For details see the <a href="MILTER_README.html">MILTER_README</a> document.
 
        <b><a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a> (empty)</b>
-              A list of Milter (mail filter) applications for  new  mail  that
+              A  list  of  Milter (mail filter) applications for new mail that
               does not arrive via the Postfix <a href="smtpd.8.html"><b>smtpd</b>(8)</a> server.
 
        <b><a href="postconf.5.html#milter_protocol">milter_protocol</a> (6)</b>
-              The  mail  filter  protocol version and optional protocol exten-
-              sions for communication with  a  Milter  application;  prior  to
+              The mail filter protocol version and  optional  protocol  exten-
+              sions  for  communication  with  a  Milter application; prior to
               Postfix 2.6 the default protocol is 2.
 
        <b><a href="postconf.5.html#milter_default_action">milter_default_action</a> (tempfail)</b>
-              The  default  action  when a Milter (mail filter) application is
-              unavailable or mis-configured.
+              The default action when  a  Milter  (mail  filter)  response  is
+              unavailable  (for  example,  bad Postfix configuration or Milter
+              failure).
 
        <b><a href="postconf.5.html#milter_macro_daemon_name">milter_macro_daemon_name</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
               The {daemon_name} macro value for Milter (mail filter)  applica-
@@ -310,7 +325,7 @@ CLEANUP(8)                                                          CLEANUP(8)
 
        <b><a href="postconf.5.html#masquerade_exceptions">masquerade_exceptions</a> (empty)</b>
               Optional  list  of  user names that are not subjected to address
-              masquerading,  even  when  their   address   matches   $<a href="postconf.5.html#masquerade_domains">masquer</a>-
+              masquerading,  even  when  their   addresses   match   $<a href="postconf.5.html#masquerade_domains">masquer</a>-
               <a href="postconf.5.html#masquerade_domains">ade_domains</a>.
 
        <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a> (canonical, virtual)</b>
@@ -408,11 +423,18 @@ CLEANUP(8)                                                          CLEANUP(8)
 
        <b><a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> (yes)</b>
               Enable  preliminary SMTPUTF8 support for the protocols described
-              in <a href="http://tools.ietf.org/html/rfc6531">RFC 6531</a>..6533.
+              in <a href="https://tools.ietf.org/html/rfc6531">RFC 6531</a>..6533.
 
        <b><a href="postconf.5.html#smtputf8_autodetect_classes">smtputf8_autodetect_classes</a> (sendmail, verify)</b>
               Detect that a message requires SMTPUTF8 support for  the  speci-
               fied mail origin classes.
+
+       Available in Postfix version 3.2 and later:
+
+       <b><a href="postconf.5.html#enable_idna2003_compatibility">enable_idna2003_compatibility</a> (no)</b>
+              Enable   'transitional'   compatibility   between  IDNA2003  and
+              IDNA2008, when converting UTF-8 domain names to/from  the  ASCII
+              form that is used for DNS lookups.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
@@ -467,14 +489,26 @@ CLEANUP(8)                                                          CLEANUP(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name that is prepended to the process name in
-              syslog records, so that "smtpd"  becomes,  for  example,  "post-
-              fix/smtpd".
+              A  prefix  that  is  prepended  to  the  process  name in syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        Available in Postfix version 2.1 and later:
 
        <b><a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a> (yes)</b>
-              Enable support for the X-Original-To message header.
+              Enable support for  the  original  recipient  address  after  an
+              address  is  rewritten  to a different address (for example with
+              aliasing or with canonical mapping).
+
+       Available in Postfix 3.3 and later:
+
+       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
+              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
+
+       Available in Postfix 3.5 and later:
+
+       <b><a href="postconf.5.html#info_log_address_format">info_log_address_format</a> (external)</b>
+              The email address form that will be used  in  non-debug  logging
+              (info, warning, etc.).
 
 <b>FILES</b>
        /etc/postfix/canonical*, canonical mapping table
@@ -490,6 +524,7 @@ CLEANUP(8)                                                          CLEANUP(8)
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="master.5.html">master(5)</a>, generic daemon options
        <a href="master.8.html">master(8)</a>, process manager
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>README FILES</b>

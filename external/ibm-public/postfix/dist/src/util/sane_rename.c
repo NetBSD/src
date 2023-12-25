@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_rename.c,v 1.1.1.2 2013/01/02 18:59:14 tron Exp $	*/
+/*	$NetBSD: sane_rename.c,v 1.1.1.2.32.1 2023/12/25 12:55:33 martin Exp $	*/
 
 /*++
 /* NAME
@@ -53,7 +53,7 @@ int     sane_rename(const char *from, const char *to)
 	return (0);
 
     /*
-     * Woops. Save errno, and see if the error is an NFS artefact. If it is,
+     * Woops. Save errno, and see if the error is an NFS artifact. If it is,
      * pretend the error never happened.
      */
     saved_errno = errno;

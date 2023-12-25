@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.2.14.1 2023/12/25 12:55:14 martin Exp $	*/
 
 /*++
 /* NAME
@@ -30,7 +30,8 @@
 /*	destinations may be specified as "unix:pathname", "inet:host"
 /*	or "inet:host:port".
 /*
-/*	With SMTP, the Internet domain name service is queried for mail
+/*	With SMTP, or with SRV record lookup enabled, the Internet
+/*	domain name service is queried for mail
 /*	exchanger hosts. Quote the domain name with `[' and `]' to
 /*	suppress mail exchanger lookups.
 /*
@@ -48,6 +49,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*
 /*	Connection caching in cooperation with:
 /*	Victor Duchovni
@@ -90,6 +96,7 @@
 #include <myaddrinfo.h>
 #include <sock_addr.h>
 #include <inet_proto.h>
+#include <known_tcp_ports.h>
 
 /* Global library. */
 
@@ -180,6 +187,8 @@ static SMTP_SESSION *smtp_connect_addr(SMTP_ITERATOR *iter, DSN_BUF *why,
     int     sock;
     char   *bind_addr;
     char   *bind_var;
+    char   *saved_bind_addr = 0;
+    char   *tail;
 
     dsb_reset(why);				/* Paranoia */
 
@@ -198,6 +207,13 @@ static SMTP_SESSION *smtp_connect_addr(SMTP_ITERATOR *iter, DSN_BUF *why,
      */
     if ((sock = socket(sa->sa_family, SOCK_STREAM, 0)) < 0)
 	msg_fatal("%s: socket: %m", myname);
+
+#define RETURN_EARLY() do { \
+	if (saved_bind_addr) \
+	    myfree(saved_bind_addr); \
+	(void) close(sock); \
+	return (0); \
+    } while (0)
 
     if (inet_windowsize > 0)
 	set_inet_windowsize(sock, inet_windowsize);
@@ -221,13 +237,27 @@ static SMTP_SESSION *smtp_connect_addr(SMTP_ITERATOR *iter, DSN_BUF *why,
 	int     aierr;
 	struct addrinfo *res0;
 
+	if (*bind_addr == '[') {
+	    saved_bind_addr = mystrdup(bind_addr + 1);
+	    if ((tail = split_at(saved_bind_addr, ']')) == 0 || *tail)
+		msg_fatal("%s: malformed %s parameter: %s",
+			  myname, bind_var, bind_addr);
+	    bind_addr = saved_bind_addr;
+	}
 	if ((aierr = hostaddr_to_sockaddr(bind_addr, (char *) 0, 0, &res0)) != 0)
 	    msg_fatal("%s: bad %s parameter: %s: %s",
 		      myname, bind_var, bind_addr, MAI_STRERROR(aierr));
-	if (bind(sock, res0->ai_addr, res0->ai_addrlen) < 0)
+	if (bind(sock, res0->ai_addr, res0->ai_addrlen) < 0) {
 	    msg_warn("%s: bind %s: %m", myname, bind_addr);
-	else if (msg_verbose)
+	    if (var_smtp_bind_addr_enforce) {
+		freeaddrinfo(res0);
+		dsb_simple(why, "4.4.0", "server configuration error");
+		RETURN_EARLY();
+	    }
+	} else if (msg_verbose)
 	    msg_info("%s: bind %s", myname, bind_addr);
+	if (saved_bind_addr)
+	    myfree(saved_bind_addr);
 	freeaddrinfo(res0);
     }
 
@@ -330,7 +360,8 @@ static SMTP_SESSION *smtp_connect_sock(int sock, struct sockaddr *sa,
 /* smtp_parse_destination - parse host/port destination */
 
 static char *smtp_parse_destination(char *destination, char *def_service,
-				            char **hostp, unsigned *portp)
+				            char **hostp, char **servicep,
+				            unsigned *portp)
 {
     char   *buf = mystrdup(destination);
     char   *service;
@@ -346,15 +377,17 @@ static char *smtp_parse_destination(char *destination, char *def_service,
      * Parse the host/port information. We're working with a copy of the
      * destination argument so the parsing can be destructive.
      */
-    if ((err = host_port(buf, hostp, (char *) 0, &service, def_service)) != 0)
+    if ((err = host_port(buf, hostp, (char *) 0, servicep, def_service)) != 0)
 	msg_fatal("%s in server description: %s", err, destination);
 
     /*
      * Convert service to port number, network byte order.
      */
+    service = (char *) filter_known_tcp_port(*servicep);
     if (alldig(service)) {
 	if ((port = atoi(service)) >= 65536 || port == 0)
-	    msg_fatal("bad network port in destination: %s", destination);
+	    msg_fatal("bad network port: %s for destination: %s",
+		      service, destination);
 	*portp = htons(port);
     } else {
 	if ((sp = getservbyname(service, protocol)) == 0)
@@ -414,13 +447,13 @@ static void smtp_cleanup_session(SMTP_STATE *state)
     state->session = 0;
 
     /*
-     * If this session was good, reset the logical next-hop state, so that we
-     * won't cache connections to alternate servers under the logical
-     * next-hop destination. Otherwise we could end up skipping over the
-     * available and more preferred servers.
+     * If this session was good, reset the scache next-hop destination, so
+     * that we won't cache connections to less-preferred servers under the
+     * same next-hop destination. Otherwise we could end up skipping over the
+     * available and more-preferred servers.
      */
-    if (HAVE_NEXTHOP_STATE(state) && !throttled)
-	FREE_NEXTHOP_STATE(state);
+    if (HAVE_SCACHE_REQUEST_NEXTHOP(state) && !throttled)
+	CLEAR_SCACHE_REQUEST_NEXTHOP(state);
 
     /*
      * Clean up the lists with todo and dropped recipients.
@@ -489,6 +522,8 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
      * the "unix:" prefix.
      */
     smtp_cache_policy(state, path);
+    if (state->misc_flags & SMTP_MISC_FLAG_CONN_CACHE_MASK)
+	SET_SCACHE_REQUEST_NEXTHOP(state, path);
 
     /*
      * Here we ensure that the iter->addr member refers to a copy of the
@@ -564,6 +599,12 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
 	    msg_panic("%s: unix-domain destination not final!", myname);
 	smtp_cleanup_session(state);
     }
+
+    /*
+     * Cleanup.
+     */
+    if (HAVE_SCACHE_REQUEST_NEXTHOP(state))
+	CLEAR_SCACHE_REQUEST_NEXTHOP(state);
 }
 
 /* smtp_scrub_address_list - delete all cached addresses from list */
@@ -624,6 +665,9 @@ static void smtp_update_addr_list(DNS_RR **addr_list, const char *server_addr,
      * XXX Extend the SMTP_SESSION structure with sockaddr information so that
      * we can avoid repeated string->binary transformations for the same
      * address.
+     * 
+     * XXX SRV support: this should match the port, too, otherwise we may
+     * eliminate too many list entries.
      */
     if ((aierr = hostaddr_to_sockaddr(server_addr, (char *) 0, 0, &res0)) != 0) {
 	msg_warn("hostaddr_to_sockaddr %s: %s",
@@ -654,27 +698,42 @@ static int smtp_reuse_session(SMTP_STATE *state, DNS_RR **addr_list,
     DSN_BUF *why = state->why;
 
     /*
-     * First, search the cache by request nexthop. We truncate the server
-     * address list when all the sessions for this destination are used up,
-     * to reduce the number of variables that need to be checked later.
+     * This code is called after server address/port lookup, before
+     * iter->host, iter->addr, iter->rr and iter->mx are assigned concrete
+     * values, and while iter->port still corresponds to the nexthop service,
+     * or the default service configured with smtp_tcp_port or lmtp_tcp_port.
      * 
-     * Note: lookup by logical destination restores the "best MX" bit.
+     * When a connection is reused by nexthop/service or by server address/port,
+     * iter->host, iter->addr and iter->port are updated with actual values
+     * from the cached session. Additionally, when a connection is searched
+     * by nexthop/service, iter->rr remains null, and when a connection is
+     * searched by server address/port, iter->rr is updated with an actual
+     * server address/port before the search is made.
+     * 
+     * First, search the cache by delivery request nexthop. We truncate the
+     * server address list when all the sessions for this destination are
+     * used up, to reduce the number of variables that need to be checked
+     * later.
+     * 
+     * Note: connection reuse by delivery request nexthop restores the "best MX"
+     * bit.
      * 
      * smtp_reuse_nexthop() clobbers the iterators's "dest" attribute. We save
      * and restore it here, so that subsequent connections will use the
      * proper nexthop information.
      * 
-     * We request a dummy "TLS disabled" policy for connection-cache lookup by
-     * request nexthop only. If we find a saved connection, then we know that
-     * plaintext was permitted, because we never save a connection after
-     * turning on TLS.
+     * We don't use TLS level info for nexthop-based connection cache storage
+     * keys. The combination of (service, nexthop, etc.) should be stable
+     * over the time range of interest, and the policy is still enforced on
+     * an individual connection to an MX host, before that connection is
+     * stored under a nexthop- or host-based storage key.
      */
 #ifdef USE_TLS
     smtp_tls_policy_dummy(state->tls);
 #endif
     SMTP_ITER_SAVE_DEST(state->iterator);
     if (*addr_list && SMTP_RCPT_LEFT(state) > 0
-	&& HAVE_NEXTHOP_STATE(state)
+	&& HAVE_SCACHE_REQUEST_NEXTHOP(state)
 	&& (session = smtp_reuse_nexthop(state, SMTP_KEY_MASK_SCACHE_DEST_LABEL)) != 0) {
 	session_count = 1;
 	smtp_update_addr_list(addr_list, STR(iter->addr), session_count);
@@ -717,9 +776,7 @@ static int smtp_reuse_session(SMTP_STATE *state, DNS_RR **addr_list,
 	    /* XXX Assume there is no code at the end of this loop. */
 	    continue;
 	}
-	vstring_strcpy(iter->addr, hostaddr.buf);
-	vstring_strcpy(iter->host, SMTP_HNAME(addr));
-	iter->rr = addr;
+	SMTP_ITER_UPDATE_HOST(iter, SMTP_HNAME(addr), hostaddr.buf, addr);
 #ifdef USE_TLS
 	if (!smtp_tls_policy_cache_query(why, state->tls, iter)) {
 	    msg_warn("TLS policy lookup error for %s/%s: %s",
@@ -770,11 +827,10 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
     }
 
     /*
-     * Future proofing: do a null destination sanity check in case we allow
-     * the primary destination to be a list (it could be just separators).
+     * Do a null destination sanity check in case the primary destination is
+     * a list that consists of only separators.
      */
-    sites = argv_alloc(1);
-    argv_add(sites, nexthop, (char *) 0);
+    sites = argv_split(nexthop, CHARS_COMMA_SP);
     if (sites->argc == 0)
 	msg_panic("null destination: \"%s\"", nexthop);
     non_fallback_sites = sites->argc;
@@ -805,6 +861,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	char   *dest_buf;
 	char   *domain;
 	unsigned port;
+	char   *service;
 	DNS_RR *addr_list;
 	DNS_RR *addr;
 	DNS_RR *next;
@@ -812,6 +869,8 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	int     sess_count;
 	SMTP_SESSION *session;
 	int     lookup_mx;
+	int     non_dns_or_literal;
+	int     i_am_mx;
 	unsigned domain_best_pref;
 	MAI_HOSTADDR_STR hostaddr;
 
@@ -821,8 +880,28 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	/*
 	 * Parse the destination. If no TCP port is specified, use the port
 	 * that is reserved for the protocol (SMTP or LMTP).
+	 * 
+	 * The 'service' variable corresponds to the remote service specified
+	 * with the nexthop, or the default service configured with
+	 * smtp_tcp_port or lmtp_tcp_port. The 'port' variable and
+	 * SMTP_ITERATOR.port initially correspond to that service. This
+	 * determines what loop prevention will be in effect.
+	 * 
+	 * The SMTP_ITERATOR.port will be overwritten after SRV record lookup.
+	 * This guarantees that the connection cache key contains the correct
+	 * port value when caching and retrieving a connection by its server
+	 * address (and port).
+	 * 
+	 * By design, the connection cache key contains NO port information when
+	 * caching or retrieving a connection by its nexthop destination.
+	 * Instead, the cache key contains the master.cf service name (a
+	 * proxy for all the parameter settings including the default service
+	 * from smtp_tcp_port or lmtp_tcp_port), together with the nexthop
+	 * destination and sender-dependent info. This should be sufficient
+	 * to avoid cross talk between mail streams that should be separated.
 	 */
-	dest_buf = smtp_parse_destination(dest, def_service, &domain, &port);
+	dest_buf = smtp_parse_destination(dest, def_service, &domain,
+					  &service, &port);
 	if (var_helpful_warnings && var_smtp_tls_wrappermode == 0
 	    && ntohs(port) == 465) {
 	    msg_info("SMTPS wrappermode (TCP port 465) requires setting "
@@ -835,32 +914,48 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	SMTP_ITER_INIT(iter, dest, NO_HOST, NO_ADDR, port, state);
 
 	/*
-	 * Resolve an SMTP or LMTP server. In the case of SMTP, skip mail
-	 * exchanger lookups when a quoted host is specified or when DNS
-	 * lookups are disabled.
+	 * Resolve an SMTP or LMTP server. Skip MX or SRV lookups when a
+	 * quoted domain is specified or when DNS lookups are disabled.
 	 */
 	if (msg_verbose)
-	    msg_info("connecting to %s port %d", domain, ntohs(port));
+	    msg_info("connecting to %s service %s", domain, service);
+	non_dns_or_literal = (smtp_dns_support == SMTP_DNS_DISABLED
+			      || *dest == '[');
 	if (smtp_mode) {
 	    if (ntohs(port) == IPPORT_SMTP)
 		state->misc_flags |= SMTP_MISC_FLAG_LOOP_DETECT;
 	    else
 		state->misc_flags &= ~SMTP_MISC_FLAG_LOOP_DETECT;
-	    lookup_mx = (smtp_dns_support != SMTP_DNS_DISABLED && *dest != '[');
+	    lookup_mx = !non_dns_or_literal;
 	} else
 	    lookup_mx = 0;
-	if (!lookup_mx) {
+
+	/*
+	 * Look up SRV and address records and fall back to non-SRV lookups
+	 * if permitted by configuration settings, or look up MX and address
+	 * records, or look up address records only.
+	 */
+	i_am_mx = 0;
+	addr_list = 0;
+	if (!non_dns_or_literal && smtp_use_srv_lookup
+	    && string_list_match(smtp_use_srv_lookup, service)) {
+	    if (lookup_mx)
+		state->misc_flags |= SMTP_MISC_FLAG_FALLBACK_SRV_TO_MX;
+	    else
+		state->misc_flags &= ~SMTP_MISC_FLAG_FALLBACK_SRV_TO_MX;
+	    addr_list = smtp_service_addr(domain, service, &iter->mx,
+					  state->misc_flags, why, &i_am_mx);
+	} else if (!lookup_mx) {
+	    /* Non-DNS, literal, or non-SMTP service */
 	    addr_list = smtp_host_addr(domain, state->misc_flags, why);
 	    /* XXX We could be an MX host for this destination... */
 	} else {
-	    int     i_am_mx = 0;
-
 	    addr_list = smtp_domain_addr(domain, &iter->mx, state->misc_flags,
 					 why, &i_am_mx);
-	    /* If we're MX host, don't connect to non-MX backups. */
-	    if (i_am_mx)
-		state->misc_flags |= SMTP_MISC_FLAG_FINAL_NEXTHOP;
 	}
+	/* If we're MX host, don't connect to non-MX backups. */
+	if (i_am_mx)
+	    state->misc_flags |= SMTP_MISC_FLAG_FINAL_NEXTHOP;
 
 	/*
 	 * Don't try fall-back hosts if mail loops to myself. That would just
@@ -876,10 +971,10 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	    domain_best_pref = addr_list->pref;
 
 	/*
-	 * When session caching is enabled, store the first good session for
-	 * this delivery request under the next-hop destination name. All
-	 * good sessions will be stored under their specific server IP
-	 * address.
+	 * When connection caching is enabled, store the first good
+	 * connection for this delivery request under the delivery request
+	 * next-hop name. Good connections will also be stored under their
+	 * specific server IP address.
 	 * 
 	 * XXX smtp_session_cache_destinations specifies domain names without
 	 * :port, because : is already used for maptype:mapname. Because of
@@ -895,7 +990,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	if (addr_list && (state->misc_flags & SMTP_MISC_FLAG_FIRST_NEXTHOP)) {
 	    smtp_cache_policy(state, domain);
 	    if (state->misc_flags & SMTP_MISC_FLAG_CONN_CACHE_MASK)
-		SET_NEXTHOP_STATE(state, dest);
+		SET_SCACHE_REQUEST_NEXTHOP(state, dest);
 	}
 
 	/*
@@ -953,9 +1048,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 		/* XXX Assume there is no code at the end of this loop. */
 		continue;
 	    }
-	    vstring_strcpy(iter->addr, hostaddr.buf);
-	    vstring_strcpy(iter->host, SMTP_HNAME(addr));
-	    iter->rr = addr;
+	    SMTP_ITER_UPDATE_HOST(iter, SMTP_HNAME(addr), hostaddr.buf, addr);
 #ifdef USE_TLS
 	    if (!smtp_tls_policy_cache_query(why, state->tls, iter)) {
 		msg_warn("TLS policy lookup for %s/%s: %s",
@@ -1120,8 +1213,8 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
     /*
      * Cleanup.
      */
-    if (HAVE_NEXTHOP_STATE(state))
-	FREE_NEXTHOP_STATE(state);
+    if (HAVE_SCACHE_REQUEST_NEXTHOP(state))
+	CLEAR_SCACHE_REQUEST_NEXTHOP(state);
     argv_free(sites);
 }
 
@@ -1142,8 +1235,6 @@ int     smtp_connect(SMTP_STATE *state)
      * destination to address list, and whether to stop before we reach the
      * end of that list.
      */
-#define DEF_LMTP_SERVICE	var_lmtp_tcp_port
-#define DEF_SMTP_SERVICE	"smtp"
 
     /*
      * With LMTP we have direct-to-host delivery only. The destination may
@@ -1155,7 +1246,7 @@ int     smtp_connect(SMTP_STATE *state)
 	} else {
 	    if (strncmp(destination, "inet:", 5) == 0)
 		destination += 5;
-	    smtp_connect_inet(state, destination, DEF_LMTP_SERVICE);
+	    smtp_connect_inet(state, destination, var_smtp_tcp_port);
 	}
     }
 
@@ -1165,7 +1256,7 @@ int     smtp_connect(SMTP_STATE *state)
      * Postfix configurations that have a host with such a name.
      */
     else {
-	smtp_connect_inet(state, destination, DEF_SMTP_SERVICE);
+	smtp_connect_inet(state, destination, var_smtp_tcp_port);
     }
 
     /*

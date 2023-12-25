@@ -1,0 +1,180 @@
+This is the Postfix 3.2 (stable) release.
+
+The stable Postfix release is called postfix-3.2.x where 3=major
+release number, 2=minor release number, x=patchlevel.  The stable
+release never changes except for patches that address bugs or
+emergencies. Patches change the patchlevel and the release date.
+
+New features are developed in snapshot releases. These are called
+postfix-3.3-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+mm=month, dd=day).  Patches are never issued for snapshot releases;
+instead, a new snapshot is released.
+
+The mail_release_date configuration parameter (format: yyyymmdd)
+specifies the release date of a stable release or snapshot release.
+
+If you upgrade from Postfix 3.0 or earlier, read RELEASE_NOTES-3.1
+before proceeding.
+
+Invisible changes
+-----------------
+
+In addition to the visible changes described below, there is an
+ongoing overhaul of low-level code. With each change come updated
+tests to ensure that future changes will not 'break' compatibility
+with past behavior.
+
+Major changes - address mapping
+-------------------------------
+
+[Feature 20170128] Postfix 3.2 fixes the handling of address
+extensions with email addresses that contain spaces. For example,
+the virtual_alias_maps, canonical_maps, and smtp_generic_maps
+features now correctly propagate an address extension from "aa
+bb+ext"@example.com to "cc dd+ext"@other.example, instead of
+producing broken output.
+
+Major changes - header/body_checks
+----------------------------------
+
+[Feature 20161008] "PASS" and "STRIP" actions in header/body_checks.
+"STRIP" is similar to "IGNORE" but also logs the action, and "PASS"
+disables header, body, and Milter inspection for the remainder of
+the message content.  Contributed by Hobbit.
+
+Major changes - log analysis
+----------------------------
+
+[Feature 20160330] The collate.pl script by Viktor Dukhovni for
+grouping Postfix logfile records into "sessions" based on queue ID
+and process ID information. It's in the auxiliary/collate directory
+of the Postfix source tree.
+
+Major changes - maps support
+----------------------------
+
+[Feature 20160527] Postfix 3.2 cidr tables support if/endif and
+negation (by prepending ! to a pattern), just like regexp and pcre
+tables.  The primarily purpose is to improve readability of complex
+tables. See the cidr_table(5) manpage for syntax details.
+
+[Incompat 20160925] In the Postfix MySQL database client, the default
+option_group value has changed to "client", to enable reading of
+"client" option group settings in the MySQL options file. This fixes
+a "not found" problem with Postfix queries that contain UTF8-encoded
+non-ASCII text.  Specify an empty option_group value (option_group
+=) to get backwards-compatible behavior.
+
+[Feature 20161217] Stored-procedure support for MySQL databases.
+Contributed by John Fawcett. See mysql_table(5) for instructions.
+
+[Feature 20170128] The postmap command, and the inline: and texthash:
+maps now support spaces in left-hand field of the lookup table
+"source text". Use double quotes (") around a left-hand field that
+contains spaces, and use backslash (\) to protect embedded quotes
+in a left-hand field. There is no change in the processing of the
+right-hand field.
+
+Major changes - milter support
+------------------------------
+
+[Feature 20160611] The Postfix SMTP server local IP address and
+port are available in the policy delegation protocol (attribute
+names: server_address, server_port), in the Milter protocol (macro
+names: {daemon_addr}, {daemon_port}), and in the XCLIENT protocol
+(attribute names: DESTADDR, DESTPORT).
+
+[Feature 20161024] smtpd_milter_maps support for per-client Milter
+configuration that overrides smtpd_milters, and that has the same
+syntax. A lookup result of "DISABLE" turns off Milter support. See
+MILTER_README.html for details.
+
+Major changes - policy delegation
+---------------------------------
+
+[Feature 20160611] The Postfix SMTP server local IP address and
+port are available in the policy delegation protocol (attribute
+names: server_address, server_port), in the Milter protocol (macro
+names: {daemon_addr}, {daemon_port}), and in the XCLIENT protocol
+(attribute names: DESTADDR, DESTPORT).
+
+Major changes - postqueue
+-------------------------
+
+[Incompat 20170129] The postqueue command no longer forces all
+message arrival times to be reported in UTC. To get the old behavior,
+set TZ=UTC in main.cf:import_environment (this override is not
+recommended, as it affects all Postfix utities and daemons).
+
+Major changes - safety
+----------------------
+
+[Incompat 20161227] For safety reasons, the sendmail -C option must
+specify an authorized directory: the default configuration directory,
+a directory that is listed in the default main.cf file with
+alternate_config_directories or multi_instance_directories, or the
+command must be invoked with root privileges (UID 0 and EUID 0).
+This mitigates a recurring problem with the PHP mail() function.
+
+Major changes - sasl
+--------------------
+
+[Feature 20160625] The Postfix SMTP server now passes remote client
+and local server network address and port information to the Cyrus
+SASL library. Build with ``make makefiles "CCARGS=$CCARGS
+-DNO_IP_CYRUS_SASL_AUTH"'' for backwards compatibility.
+
+Major changes - smtputf8
+------------------------
+
+[Feature 20161103] Postfix 3.2 disables the 'transitional' compatibility
+between the IDNA2003 and IDNA2008 standards for internationalized
+domain names (domain names beyond the limits of US-ASCII).
+
+This change makes Postfix behavior consistent with contemporary web
+browsers. It affects the handling of some corner cases such as
+German sz and Greek zeta. See http://unicode.org/cldr/utility/idna.jsp
+for more examples.
+
+Specify "enable_idna2003_compatibility = yes" to restore historical
+behavior (but keep in mind that the rest of the world may not make
+that same choice).
+
+Major changes - tls
+-------------------
+
+[Feature 20160828] Fixes for deprecated OpenSSL 1.1.0 API features,
+so that Postfix will build without depending on backwards-compatibility
+support.
+
+[Incompat 20161204] Postfix 3.2 removes tentative features that
+were implemented before the DANE spec was finalized:
+
+- Support for certificate usage PKIX-EE(1),
+
+- The ability to disable digest agility (Postfix now behaves as if
+  "tls_dane_digest_agility = on"), and
+
+- The ability to disable support for "TLSA 2 [01] [12]" records
+  that specify the digest of a trust anchor (Postfix now behaves
+  as if "tls_dane_trust_anchor_digest_enable = yes).
+
+[Feature 20161217] Postfix 3.2 enables elliptic curve negotiation
+with OpenSSL >= 1.0.2.  This changes the default smtpd_tls_eecdh_grade
+setting to "auto", and introduces a new parameter tls_eecdh_auto_curves
+with the names of curves that may be negotiated.
+
+The default tls_eecdh_auto_curves setting is determined at compile
+time, and depends on the Postfix and OpenSSL versions.  At runtime,
+Postfix will skip curve names that aren't supported by the OpenSSL
+library.
+
+Major changes - xclient
+-----------------------
+
+[Feature 20160611] The Postfix SMTP server local IP address and
+port are available in the policy delegation protocol (attribute
+names: server_address, server_port), in the Milter protocol (macro
+names: {daemon_addr}, {daemon_port}), and in the XCLIENT protocol
+(attribute names: DESTADDR, DESTPORT).
+

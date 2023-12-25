@@ -7,7 +7,8 @@
 
 <title>Postfix legacy TLS Support </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -33,9 +34,9 @@ encrypted session protects the information that is transmitted with
 SMTP mail or with SASL authentication.
 
 <p> Postfix version 2.2 introduces support for TLS as described in
-<a href="http://tools.ietf.org/html/rfc3207">RFC 3207</a>.  TLS Support for older Postfix versions was available as
+<a href="https://tools.ietf.org/html/rfc3207">RFC 3207</a>.  TLS Support for older Postfix versions was available as
 an add-on patch.  The section "<a href="#compat">Compatibility with
-Postfix < 2.2 TLS support</a>" below discusses the differences
+Postfix &lt; 2.2 TLS support</a>" below discusses the differences
 between these implementations.  </p>
 
 <p> Topics covered in this document: </p>
@@ -54,7 +55,7 @@ between these implementations.  </p>
 
 <li><a href="#problems"> Reporting problems </a>
 
-<li><a href="#compat">Compatibility with Postfix < 2.2 TLS support</a>
+<li><a href="#compat">Compatibility with Postfix &lt; 2.2 TLS support</a>
 
 <li><a href="#credits"> Credits </a>
 
@@ -225,7 +226,7 @@ key configuration </a> </h3>
 <p> In order to use TLS, the Postfix SMTP server needs a certificate
 and a private key. Both must be in "pem" format. The private key
 must not be encrypted, meaning:  the key must be accessible without
-password.  Both certificate and private key may be in the same
+a password.  Both certificate and private key may be in the same
 file.  </p>
 
 <p> Both RSA and DSA certificates are supported. Typically you will
@@ -253,7 +254,7 @@ CA".  Create the server.pem file with: </p>
 </blockquote>
 
 <p> A Postfix SMTP server certificate supplied here must be usable
-as SSL server certificate and hence pass the "openssl verify -purpose
+as an SSL server certificate and hence pass the "openssl verify -purpose
 sslserver ..." test. </p>
 
 <p> A client that trusts the root CA has a local copy of the root
@@ -425,7 +426,7 @@ private key. This is intended behavior. </p>
 
 <p> You can ENFORCE the use of TLS, so that the Postfix SMTP server
 announces STARTTLS and accepts no mail without TLS encryption, by
-setting "<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = yes". According to <a href="http://tools.ietf.org/html/rfc2487">RFC 2487</a> this MUST
+setting "<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = yes". According to <a href="https://tools.ietf.org/html/rfc2487">RFC 2487</a> this MUST
 NOT be applied in case of a publicly-referenced Postfix SMTP server.
 This option is off by default and should only seldom be used. </p>
 
@@ -575,7 +576,7 @@ $<a href="postconf.5.html#data_directory">data_directory</a>, and a warning is l
 
 <p> Cached Postfix SMTP server session information expires after
 a certain amount of time.  Postfix/TLS does not use the OpenSSL
-default of 300s, but a longer time of 3600sec (=1 hour). <a href="http://tools.ietf.org/html/rfc2246">RFC 2246</a>
+default of 300s, but a longer time of 3600sec (=1 hour). <a href="https://tools.ietf.org/html/rfc2246">RFC 2246</a>
 recommends a maximum of 24 hours.  </p>
 
 <p> Example: </p>
@@ -616,7 +617,7 @@ as a key for the specified <a href="access.5.html">access(5)</a> table. </p> </d
 <p> The <a href="postconf.5.html#permit_tls_all_clientcerts">permit_tls_all_clientcerts</a> feature must be used with caution,
 because it can result in too many access permissions.  Use this
 feature only if a special CA issues the client certificates, and
-only if this CA is listed as trusted CA. If other CAs are trusted,
+only if this CA is listed as a trusted CA. If other CAs are trusted,
 any owner of a valid client certificate would be authorized.
 The <a href="postconf.5.html#permit_tls_all_clientcerts">permit_tls_all_clientcerts</a> feature can be practical for a
 specially created email relay server.  </p>
@@ -663,7 +664,7 @@ the user or host.</p>
 
 <p> To influence the Postfix SMTP server cipher selection scheme,
 you can give cipherlist string.  A detailed description would go
-to far here; please refer to the OpenSSL documentation.  If you
+too far here; please refer to the OpenSSL documentation.  If you
 don't know what to do with it, simply don't touch it and leave the
 (openssl-)compiled in default! </p>
 
@@ -778,7 +779,7 @@ certificate is presented.  </p>
 key/certificate pair as the Postfix SMTP server.  If a certificate
 is to be presented, it must be in "pem" format. The private key
 must not be encrypted, meaning: it must be accessible without
-password. Both parts (certificate and private key) may be in the
+a password. Both parts (certificate and private key) may be in the
 same file. </p>
 
 <p> In order for remote SMTP servers to verify the Postfix SMTP
@@ -798,7 +799,7 @@ Create the client.pem file with: </p>
 </blockquote>
 
 <p> A Postfix SMTP client certificate supplied here must be usable
-as SSL client certificate and hence pass the "openssl verify -purpose
+as an SSL client certificate and hence pass the "openssl verify -purpose
 sslclient ..." test. </p>
 
 <p> A server that trusts the root CA has a local copy of the root
@@ -949,7 +950,7 @@ $<a href="postconf.5.html#data_directory">data_directory</a>, and a warning is l
 
 <p> Cached Postfix SMTP client session information expires after
 a certain amount of time.  Postfix/TLS does not use the OpenSSL
-default of 300s, but a longer time of 3600s (=1 hour). <a href="http://tools.ietf.org/html/rfc2246">RFC 2246</a>
+default of 300s, but a longer time of 3600s (=1 hour). <a href="https://tools.ietf.org/html/rfc2246">RFC 2246</a>
 recommends a maximum of 24 hours.  </p>
 
 <p> Example: </p>
@@ -1004,7 +1005,7 @@ CommonName is checked.  Verification may be turned off with the
 
 <p> Enforcing the use of TLS is useful if you know that you will
 only
-connect to servers that support <a href="http://tools.ietf.org/html/rfc2487">RFC 2487</a> _and_ that present server
+connect to servers that support <a href="https://tools.ietf.org/html/rfc2487">RFC 2487</a> _and_ that present server
 certificates that meet the above requirements.  An example would
 be a client only sends email to one specific mailhub that offers
 the necessary STARTTLS support.  </p>
@@ -1021,7 +1022,7 @@ the necessary STARTTLS support.  </p>
 <h3> <a name="client_tls_nopeer"> Disabling server certificate
 verification </a> </h3>
 
-<p> As of <a href="http://tools.ietf.org/html/rfc2487">RFC 2487</a> the requirements for hostname checking for MTA
+<p> As of <a href="https://tools.ietf.org/html/rfc2487">RFC 2487</a> the requirements for hostname checking for MTA
 clients are not set. When TLS is required (<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes),
 the option <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> can be set to "no" to disable
 strict remote SMTP server hostname checking. In this case, the mail
@@ -1156,9 +1157,9 @@ policy is based on <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a>, <a h
 "<a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> = yes" imply "<a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a> = yes". </p>
 
 <li> <p> When both hostname and next-hop destination lookups produce
-a result, the more specific per-site policy (NONE, MUST, etc)
+a result, the more specific per-site policy (NONE, MUST, etc.)
 overrides the less specific one (MAY), and the more secure per-site
-policy (MUST, etc) overrides the less secure one (NONE).  </p>
+policy (MUST, etc.) overrides the less secure one (NONE).  </p>
 
 <li> <p> After the per-site policy lookups are combined, the result
 generally overrides the global policy. The exception is the less
@@ -1215,7 +1216,7 @@ verification. This feature requires Postfix 2.2.9 or later.  </p>
     example.org                 NONE
 
     # TLS should not be used with the host <i>smtp.example.com</i>.
-    smtp.example.com             NONE
+    [smtp.example.com]          NONE
 </pre>
 </blockquote>
 
@@ -1266,7 +1267,7 @@ special CA which then issues the actual certificate...) </p>
 
 <p> To influence the Postfix SMTP client cipher selection scheme,
 you can give cipherlist string.  A detailed description would go
-to far here; please refer to the OpenSSL documentation.  If you
+too far here; please refer to the OpenSSL documentation.  If you
 don't know what to do with it, simply don't touch it and leave the
 (openssl-)compiled in default! </p>
 
@@ -1539,7 +1540,7 @@ Patches, when possible, are greatly appreciated too. </p>
 
 </ul>
 
-<h2><a name="compat">Compatibility with Postfix <2.2 TLS support</a></h2>
+<h2><a name="compat">Compatibility with Postfix &lt; 2.2 TLS support</a></h2>
 
 <p> Postfix version 2.2 TLS support is based on the Postfix/TLS
 patch by Lutz J&auml;nicke, but differs in a few minor ways. </p>

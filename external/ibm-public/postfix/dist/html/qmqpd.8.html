@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - qmqpd(8) </title>
 </head> <body> <pre>
 QMQPD(8)                                                              QMQPD(8)
@@ -27,7 +28,7 @@ QMQPD(8)                                                              QMQPD(8)
        chrooted at fixed low privilege.
 
 <b>DIAGNOSTICS</b>
-       Problems and transactions are logged to <b>syslogd</b>(8).
+       Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
 <b>BUGS</b>
        The  QMQP protocol provides only one server reply per message delivery.
@@ -60,11 +61,18 @@ QMQPD(8)                                                              QMQPD(8)
 
        <b><a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> (yes)</b>
               Enable preliminary SMTPUTF8 support for the protocols  described
-              in <a href="http://tools.ietf.org/html/rfc6531">RFC 6531</a>..6533.
+              in <a href="https://tools.ietf.org/html/rfc6531">RFC 6531</a>..6533.
 
        <b><a href="postconf.5.html#smtputf8_autodetect_classes">smtputf8_autodetect_classes</a> (sendmail, verify)</b>
               Detect  that  a message requires SMTPUTF8 support for the speci-
               fied mail origin classes.
+
+       Available in Postfix version 3.2 and later:
+
+       <b><a href="postconf.5.html#enable_idna2003_compatibility">enable_idna2003_compatibility</a> (no)</b>
+              Enable  'transitional'  compatibility   between   IDNA2003   and
+              IDNA2008,  when  converting UTF-8 domain names to/from the ASCII
+              form that is used for DNS lookups.
 
 <b>RESOURCE AND RATE CONTROLS</b>
        <b><a href="postconf.5.html#line_length_limit">line_length_limit</a> (2048)</b>
@@ -85,13 +93,15 @@ QMQPD(8)                                                              QMQPD(8)
 
 <b>TROUBLE SHOOTING CONTROLS</b>
        <b><a href="postconf.5.html#debug_peer_level">debug_peer_level</a> (2)</b>
-              The increment in verbose logging level when a remote  client  or
-              server matches a pattern in the <a href="postconf.5.html#debug_peer_list">debug_peer_list</a> parameter.
+              The increment in verbose logging level when a  nexthop  destina-
+              tion,  remote client or server name or network address matches a
+              pattern given with the <a href="postconf.5.html#debug_peer_list">debug_peer_list</a> parameter.
 
        <b><a href="postconf.5.html#debug_peer_list">debug_peer_list</a> (empty)</b>
-              Optional  list  of  remote  client or server hostname or network
-              address  patterns  that  cause  the  verbose  logging  level  to
-              increase by the amount specified in $<a href="postconf.5.html#debug_peer_level">debug_peer_level</a>.
+              Optional list of nexthop destination, remote  client  or  server
+              name  or  network  address  patterns that, if matched, cause the
+              verbose logging level to increase by  the  amount  specified  in
+              $<a href="postconf.5.html#debug_peer_level">debug_peer_level</a>.
 
        <b><a href="postconf.5.html#soft_bounce">soft_bounce</a> (no)</b>
               Safety  net to keep mail queued that would otherwise be returned
@@ -140,12 +150,11 @@ QMQPD(8)                                                              QMQPD(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system name that is prepended to the  process  name  in
-              syslog  records,  so  that  "smtpd" becomes, for example, "post-
-              fix/smtpd".
+              A prefix that  is  prepended  to  the  process  name  in  syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        <b><a href="postconf.5.html#verp_delimiter_filter">verp_delimiter_filter</a> (-=+)</b>
-              The characters Postfix accepts as VERP delimiter  characters  on
+              The  characters  Postfix accepts as VERP delimiter characters on
               the Postfix <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command line and in SMTP commands.
 
        Available in Postfix version 2.5 and later:
@@ -154,10 +163,16 @@ QMQPD(8)                                                              QMQPD(8)
               Enable logging of the remote QMQP client port in addition to the
               hostname and IP address.
 
+       Available in Postfix 3.3 and later:
+
+       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
+              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
+
 <b>SEE ALSO</b>
        <a href="http://cr.yp.to/proto/qmqp.html">http://cr.yp.to/proto/qmqp.html</a>, QMQP protocol
        <a href="cleanup.8.html">cleanup(8)</a>, message canonicalization
        <a href="master.8.html">master(8)</a>, process manager
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>README FILES</b>

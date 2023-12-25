@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_strerror.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: cleanup_strerror.c,v 1.1.1.1.52.1 2023/12/25 12:54:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -40,6 +40,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -69,6 +74,7 @@ static const CLEANUP_STAT_DETAIL cleanup_stat_map[] = {
     CLEANUP_STAT_SIZE, 552, "5.3.4", "message file too big",
     CLEANUP_STAT_CONT, 550, "5.7.1", "message content rejected",
     CLEANUP_STAT_WRITE, 451, "4.3.0", "queue file write error",
+    CLEANUP_STAT_NOPERM, 550, "5.7.1", "service denied",
 };
 
 static CLEANUP_STAT_DETAIL cleanup_stat_success = {

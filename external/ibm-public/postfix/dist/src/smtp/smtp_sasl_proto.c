@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_proto.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtp_sasl_proto.c,v 1.2.14.1 2023/12/25 12:55:15 martin Exp $	*/
 
 /*++
 /* NAME
@@ -49,6 +49,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -68,6 +73,7 @@
 /* Global library. */
 
 #include <mail_params.h>
+#include <sasl_mech_filter.h>
 
 /* Application-specific. */
 
@@ -76,46 +82,11 @@
 
 #ifdef USE_SASL_AUTH
 
-/* smtp_sasl_compat_mechs - Trim server's mechanism list */
-
-static const char *smtp_sasl_compat_mechs(const char *words)
-{
-    static VSTRING *buf;
-    char   *mech_list;
-    char   *save_mech;
-    char   *mech;
-
-    /*
-     * Use server's mechanisms if no filter specified
-     */
-    if (smtp_sasl_mechs == 0 || *words == 0)
-	return (words);
-
-    if (buf == 0)
-	buf = vstring_alloc(10);
-
-    VSTRING_RESET(buf);
-    VSTRING_TERMINATE(buf);
-
-    save_mech = mech_list = mystrdup(words);
-
-    while ((mech = mystrtok(&mech_list, " \t")) != 0) {
-	if (string_list_match(smtp_sasl_mechs, mech)) {
-	    if (VSTRING_LEN(buf) > 0)
-		VSTRING_ADDCH(buf, ' ');
-	    vstring_strcat(buf, mech);
-	}
-    }
-    myfree(save_mech);
-
-    return (vstring_str(buf));
-}
-
 /* smtp_sasl_helo_auth - handle AUTH option in EHLO reply */
 
 void    smtp_sasl_helo_auth(SMTP_SESSION *session, const char *words)
 {
-    const char *mech_list = smtp_sasl_compat_mechs(words);
+    const char *mech_list = sasl_mech_filter(smtp_sasl_mechs, words);
     char   *junk;
 
     /*

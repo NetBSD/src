@@ -7,7 +7,8 @@
 
 <title>Managing multiple Postfix instances on a single host</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -259,7 +260,7 @@ EOF
 </pre>
 </blockquote>
 
-<p> The test message should be delivered the members of the "mtaadmin"
+<p> The test message should be delivered to the members of the "mtaadmin"
 address group (or whatever address group you choose) with the
 following headers: </p>
 
@@ -378,7 +379,7 @@ post-filter re-injection SMTP service. Typical additions include: </p>
     <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> =
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, reject
 
-    # Tolerate occasional high latency in the  content filter.
+    # Tolerate occasional high latency in the content filter.
     #
     <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> = 1200s
 
@@ -637,7 +638,7 @@ of any users, including the $<a href="postconf.5.html#mail_owner">mail_owner</a>
 <li><p> The <a href="postconf.5.html">main.cf</a>, <a href="master.5.html">master.cf</a> (and other optional) configuration
 files in $<a href="postconf.5.html#config_directory">config_directory</a>. </p>
 
-<li> <p> The <a href="QSHAPE_README.html#maildrop_queue">maildrop</a>, incoming, active, deferred and <a href="QSHAPE_README.html#hold_queue">hold queues</a>
+<li> <p> The <a href="QSHAPE_README.html#maildrop_queue">maildrop</a>, <a href="QSHAPE_README.html#incoming_queue">incoming</a>, active, deferred and <a href="QSHAPE_README.html#hold_queue">hold queues</a>
 in $<a href="postconf.5.html#queue_directory">queue_directory</a> (which contains additional directories needed
 by Postfix, and which optionally doubles as a chroot jail for Postfix
 daemon processes). </p>

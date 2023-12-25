@@ -1,0 +1,18 @@
+#verbose on
+open test-queue-file17d.tmp
+#
+# Delete a recipient. Then add the recipient back, with a DSN NOTIFY
+# record instead of a DSN original recipient. Then add the same again.
+# The second command should be ignored as a duplicate.
+
+del_rcpt user@example.com
+add_rcpt_par user@example.com NOTIFY=never
+add_rcpt_par user@example.com NOTIFY=never
+
+# The above has confirmed that recipient is in the duplicate filter.
+# Now verify that del_rcpt will delete it, and that a subsequent
+# add_rcpt_par will NOT be ignored.
+del_rcpt user@example.com
+add_rcpt_par user@example.com NOTIFY=never
+
+close

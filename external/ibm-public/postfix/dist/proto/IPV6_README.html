@@ -7,7 +7,8 @@
 
 <title>Postfix IPv6 Support</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -78,8 +79,8 @@ platforms:  </p>
 <p> On other platforms Postfix will simply use IPv4 as it has always
 done. </p>
 
-<p> See <a href="#porting">below</a> for tips how to port Postfix
-IPv6 support to other environments.  </p>
+<p> See "<a href="#porting">IPv6 Support for unsupported platforms</a>"
+for tips to port Postfix IPv6 support to other environments.  </p>
 
 <h2><a name="configuration">Configuration</a></h2>
 
@@ -111,49 +112,25 @@ will use when it makes network connections.  </p>
 <pre>
 /etc/postfix/main.cf:
     # You must stop/start Postfix after changing this parameter.
-    inet_protocols = ipv4       (DEFAULT: enable IPv4 only)
     inet_protocols = all        (enable IPv4, and IPv6 if supported)
+    inet_protocols = ipv4       (enable IPv4 only)
     inet_protocols = ipv4, ipv6 (enable both IPv4 and IPv6)
     inet_protocols = ipv6       (enable IPv6 only)
 </pre>
 </blockquote>
 
-<p> By default, Postfix uses IPv4 only, because most systems aren't
-attached to an IPv6 network. </p>
-
-<ul>
-
-<li> <p> On systems with combined IPv4/IPv6 stacks, attempts to
-deliver mail via IPv6 would always fail with "network unreachable",
-and those attempts would only slow down Postfix. </p>
-
-<li> <p> Linux kernels don't even load IPv6 protocol support by
-default. Any attempt to use it would fail immediately. </p>
-
-</ul>
+<p> The default is compile-time dependent: "all" when Postfix is built
+on a software distribution with IPv6 support, "ipv4" otherwise. </p>
 
 <p> Note 1: you must stop and start Postfix after changing the
 inet_protocols configuration parameter. </p>
 
-<p> Note 2: if you see error messages like the following, then
-you're running Linux and need to turn on IPv6 in the kernel: see
-http://www.ipv6.org/ for hints and tips. Unlike other systems,
-Linux does not have a combined stack for IPv4 and IPv6, and IPv6
-protocol support is not loaded by default.  </p>
-
-<blockquote>
-<pre>
-postconf: warning: inet_protocols: IPv6 support is disabled: Address family not supported by protocol
-postconf: warning: inet_protocols: configuring for IPv4 support only
-</pre>
-</blockquote>
-
-<p> Note 3: on older Linux and Solaris systems, the setting
+<p> Note 2: on older Linux and Solaris systems, the setting
 "inet_protocols = ipv6" will not prevent Postfix from
-accepting IPv4 connections.  Postfix will present the client IP
-addresses in IPv6 format, though. In all other cases, Postfix always
-presents IPv4 client IP addresses in the traditional dotted quad
-IPv4 format.  </p>
+accepting IPv4 connections. </p>
+
+<p> For an unsupported test option to build Postfix without IPv6
+support, see the NO_IPV6 option in the INSTALL document. </p>
 
 <li> <p> The other new parameter is smtp_bind_address6.
 This sets the local interface address for outgoing IPv6 SMTP
@@ -180,7 +157,7 @@ mynetworks = 127.0.0.0/8 168.100.189.0/28 [::1]/128 [fe80::]/10 [2001:240:587::]
 </blockquote>
 
 <p> If you did specify the mynetworks parameter value in
-main.cf, you need update the mynetworks value to include
+main.cf, you need to update the mynetworks value to include
 the IPv6 networks the system is in. Be sure to specify IPv6 address
 information inside "<tt>[]</tt>", like this: </p>
 
@@ -209,8 +186,8 @@ over IPv6 before trying IPv4.  With more recent Postfix versions,
 the order of IPv6 versus IPv4 outgoing connection attempts is
 configurable with the smtp_address_preference parameter.  </p>
 
-<li> <p> Postfix versions before 2.6 do not support DNSBL (real-time
-blackhole list) lookups for IPv6 client IP addresses. </p>
+<li> <p> Postfix versions before 2.6 do not support DNSBL (DNS
+blocklist) lookups for IPv6 client IP addresses. </p>
 
 <li> <p> IPv6 does not have class A, B, C, etc. networks. With IPv6
 networks, the setting "mynetworks_style = class" has the
@@ -249,8 +226,8 @@ receiving mail. </p>
 to listen on loopback network interfaces only. </p>
 
 <li> <p> The lmtp_bind_address and lmtp_bind_address6
-features were omitted. The Postfix LMTP client will be absorbed
-into the SMTP client, so there is no reason to keep adding features
+features were omitted. Postfix version 2.3 merged the LMTP client
+into the SMTP client, so there was no reason to keep adding features
 to the LMTP client. </p>
 
 <li> <p> The SMTP server now requires that IPv6 addresses in SMTP

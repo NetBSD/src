@@ -7,7 +7,8 @@
 
 <title>Postfix OpenLDAP LMDB Howto</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -54,6 +55,10 @@ build Postfix with LMDB support, use something like: </p>
 % make
 </pre>
 </blockquote>
+
+<p> If your LMDB shared library is in a directory that the RUN-TIME
+linker does not know about, add a "-Wl,-R,/path/to/directory" option after
+"-llmdb". </p>
 
 <p> Postfix versions before 3.0 use AUXLIBS instead of AUXLIBS_LMDB.
 With Postfix 3.0 and later, the old AUXLIBS variable still supports

@@ -1,0 +1,29 @@
+unknown: 3.2.1 -> 0x300801
+unknown: 0x300801->3.2.1
+unknown: warning: malformed compatibility level syntax: "3.2.1.0"
+unknown: warning: malformed compatibility level syntax: "3a.2.1"
+unknown: warning: malformed compatibility level syntax: "a3.2.1"
+unknown: warning: malformed compatibility level syntax: "3.a2.1"
+unknown: warning: malformed compatibility level syntax: "3.2a.1"
+unknown: warning: malformed compatibility level syntax: "3.2a.a1"
+unknown: warning: malformed compatibility level syntax: "3.2a.1a"
+unknown: 3 -> 0x300000
+unknown: 0x300000->3.0
+unknown: warning: malformed compatibility level syntax: "3."
+unknown: warning: malformed compatibility level syntax: "3.2."
+unknown: warning: malformed compatibility level syntax: "3.1.1."
+unknown: 2 -> 0x200000
+unknown: 0x200000->2
+unknown: 1 -> 0x100000
+unknown: 0x100000->1
+unknown: 0 -> 0x0
+unknown: 0x0->0
+unknown: 3.1023 -> 0x3ffc00
+unknown: 0x3ffc00->3.1023
+unknown: warning: malformed compatibility level syntax: "3.1024"
+unknown: 3.2.1023 -> 0x300bff
+unknown: 0x300bff->3.2.1023
+unknown: warning: malformed compatibility level syntax: "3.2.1024"
+unknown: warning: malformed compatibility level syntax: "-3"
+unknown: warning: malformed compatibility level syntax: "3.-2.1"
+unknown: warning: malformed compatibility level syntax: "3.2.-1"

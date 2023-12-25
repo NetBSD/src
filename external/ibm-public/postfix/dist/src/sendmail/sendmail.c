@@ -1,4 +1,4 @@
-/*	$NetBSD: sendmail.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: sendmail.c,v 1.2.14.1 2023/12/25 12:55:14 martin Exp $	*/
 
 /*++
 /* NAME
@@ -41,6 +41,9 @@
 /* .IP \fB!\fR
 /*	The message is in the \fBhold\fR queue, i.e. no further delivery
 /*	attempt will be made until the mail is taken off hold.
+/* .IP \fB#\fR
+/*	The message is forced to expire. See the \fBpostsuper\fR(1)
+/*	options \fB-e\fR or \fB-f\fR.
 /* .RE
 /* .IP
 /*	This mode of operation is implemented by executing the
@@ -80,7 +83,7 @@
 /*	command above.
 /* .IP \fB-bl\fR
 /*	Go into daemon mode. To accept only local connections as
-/*	with Sendmail\'s \fB-bl\fR option, specify "\fBinet_interfaces
+/*	with Sendmail's \fB-bl\fR option, specify "\fBinet_interfaces
 /*	= loopback\fR" in the Postfix \fBmain.cf\fR configuration
 /*	file.
 /* .IP \fB-bm\fR
@@ -109,6 +112,11 @@
 /*	parent directory. This information is ignored with Postfix
 /*	versions before 2.3.
 /*
+/*	With Postfix version 3.2 and later, a non-default directory
+/*	must be authorized in the default \fBmain.cf\fR file, through
+/*	the alternate_config_directories or multi_instance_directories
+/*	parameters.
+/*
 /*	With all Postfix versions, you can specify a directory pathname
 /*	with the MAIL_CONFIG environment variable to override the
 /*	location of configuration files.
@@ -134,7 +142,7 @@
 /*	Initialize alias database. See the \fBnewaliases\fR
 /*	command above.
 /* .IP "\fB-i\fR"
-/*	When reading a message from standard input, don\'t treat a line
+/*	When reading a message from standard input, don't treat a line
 /*	with only a \fB.\fR character as the end of input.
 /* .IP "\fB-L \fIlabel\fR (ignored)"
 /*	The logging label. Use the \fBsyslog_name\fR configuration
@@ -164,7 +172,7 @@
 /*	To send 8-bit or binary content, use an appropriate MIME encapsulation
 /*	and specify the appropriate \fB-B\fR command-line option.
 /* .IP "\fB-oi\fR"
-/*	When reading a message from standard input, don\'t treat a line
+/*	When reading a message from standard input, don't treat a line
 /*	with only a \fB.\fR character as the end of input.
 /* .IP "\fB-om\fR (ignored)"
 /*	The sender is never eliminated from alias etc. expansions.
@@ -247,13 +255,46 @@
 /* SECURITY
 /* .ad
 /* .fi
-/*	By design, this program is not set-user (or group) id. However,
-/*	it must handle data from untrusted, possibly remote, users.
-/*	Thus, the usual precautions need to be taken against malicious
-/*	inputs.
+/*	By design, this program is not set-user (or group) id.
+/*	It is prepared to handle message content from untrusted,
+/*	possibly remote, users.
+/*
+/*	However, like most Postfix programs, this program does not
+/*	enforce a security policy on its command-line arguments.
+/*	Instead, it relies on the UNIX system to enforce access
+/*	policies based on the effective user and group IDs of the
+/*	process. Concretely, this means that running Postfix commands
+/*	as root (from sudo or equivalent) on behalf of a non-root
+/*	user is likely to create privilege escalation opportunities.
+/*
+/*	If an application runs any Postfix programs on behalf of
+/*	users that do not have normal shell access to Postfix
+/*	commands, then that application MUST restrict user-specified
+/*	command-line arguments to avoid privilege escalation.
+/* .IP \(bu
+/*	Filter all command-line arguments, for example arguments
+/*	that contain a pathname or that specify a database access
+/*	method. These pathname checks must reject user-controlled
+/*	symlinks or hardlinks to sensitive files, and must not be
+/*	vulnerable to TOCTOU race attacks.
+/* .IP \(bu
+/*	Disable command options processing for all command arguments
+/*	that contain user-specified data. For example, the Postfix
+/*	\fBsendmail\fR(1) command line MUST be structured as follows:
+/*
+/* .nf
+/*	    \fB/path/to/sendmail\fR \fIsystem-arguments\fR \fB--\fR \fIuser-arguments\fR
+/* .fi
+/*
+/*	Here, the "\fB--\fR" disables command option processing for
+/*	all \fIuser-arguments\fR that follow.
+/* .IP
+/*	Without the "\fB--\fR", a malicious user could enable Postfix
+/*	\fBsendmail\fR(1) command options, by specifying an email
+/*	address that starts with "\fB-\fR".
 /* DIAGNOSTICS
-/*	Problems are logged to \fBsyslogd\fR(8) and to the standard error
-/*	stream.
+/*	Problems are logged to \fBsyslogd\fR(8) or \fBpostlogd\fR(8),
+/*	and to the standard error stream.
 /* ENVIRONMENT
 /* .ad
 /* .fi
@@ -285,18 +326,19 @@
 /* TROUBLE SHOOTING CONTROLS
 /* .ad
 /* .fi
-/*	The DEBUG_README file gives examples of how to trouble shoot a
+/*	The DEBUG_README file gives examples of how to troubleshoot a
 /*	Postfix system.
 /* .IP "\fBdebugger_command (empty)\fR"
 /*	The external command to execute when a Postfix daemon program is
 /*	invoked with the -D option.
 /* .IP "\fBdebug_peer_level (2)\fR"
-/*	The increment in verbose logging level when a remote client or
-/*	server matches a pattern in the debug_peer_list parameter.
+/*	The increment in verbose logging level when a nexthop destination,
+/*	remote client or server name or network address matches a pattern
+/*	given with the debug_peer_list parameter.
 /* .IP "\fBdebug_peer_list (empty)\fR"
-/*	Optional list of remote client or server hostname or network
-/*	address patterns that cause the verbose logging level to increase
-/*	by the amount specified in $debug_peer_level.
+/*	Optional list of nexthop destination, remote client or server
+/*	name or network address patterns that, if matched, cause the verbose
+/*	logging level to increase by the amount specified in $debug_peer_level.
 /* ACCESS CONTROLS
 /* .ad
 /* .fi
@@ -362,6 +404,10 @@
 /* .IP "\fBdelay_warning_time (0h)\fR"
 /*	The time after which the sender receives a copy of the message
 /*	headers of mail that is still queued.
+/* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
+/*	The list of environment variables that a privileged Postfix
+/*	process will import from a non-Postfix parent process, or name=value
+/*	environment overrides.
 /* .IP "\fBmail_owner (postfix)\fR"
 /*	The UNIX system account that owns the Postfix queue and most Postfix
 /*	daemon processes.
@@ -374,8 +420,21 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Postfix 3.2 and later:
+/* .IP "\fBalternate_config_directories (empty)\fR"
+/*	A list of non-default Postfix configuration directories that may
+/*	be specified with "-c config_directory" on the command line (in the
+/*	case of \fBsendmail\fR(1), with the "-C" option), or via the MAIL_CONFIG
+/*	environment parameter.
+/* .IP "\fBmulti_instance_directories (empty)\fR"
+/*	An optional list of non-default Postfix configuration directories;
+/*	these directories belong to additional Postfix instances that share
+/*	the Postfix executable files and documentation with the default
+/*	Postfix instance, and that are started, stopped, etc., together
+/*	with the default Postfix instance.
 /* FILES
 /*	/var/spool/postfix, mail queue
 /*	/etc/postfix, configuration files
@@ -389,6 +448,7 @@
 /*	postdrop(1), mail posting utility
 /*	postfix(1), mail system control
 /*	postqueue(1), mail queue control
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README_FILES
 /* .ad
@@ -426,7 +486,6 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <fcntl.h>
-#include <syslog.h>
 #include <time.h>
 #include <errno.h>
 #include <ctype.h>
@@ -439,7 +498,6 @@
 #include <mymalloc.h>
 #include <vstream.h>
 #include <msg_vstream.h>
-#include <msg_syslog.h>
 #include <vstring_vstream.h>
 #include <username.h>
 #include <fullname.h>
@@ -452,6 +510,8 @@
 #include <split_at.h>
 #include <name_code.h>
 #include <warn_stat.h>
+#include <clean_env.h>
+#include <maillog_client.h>
 
 /* Global library. */
 
@@ -474,8 +534,10 @@
 #include <deliver_request.h>
 #include <mime_state.h>
 #include <header_opts.h>
+#include <mail_dict.h>
 #include <user_acl.h>
 #include <dsn_mask.h>
+#include <mail_parm_split.h>
 
 /* Application-specific. */
 
@@ -634,6 +696,7 @@ static void enqueue(const int flags, const char *encoding,
     VSTRING *postdrop_command;
     uid_t   uid = getuid();
     int     status;
+    VSTRING *why;			/* postdrop status message */
     int     naddr;
     int     prev_type;
     MIME_STATE *mime_state = 0;
@@ -667,7 +730,8 @@ static void enqueue(const int flags, const char *encoding,
      * Stop run-away process accidents by limiting the queue file size. This
      * is not a defense against DOS attack.
      */
-    if (var_message_limit > 0 && get_file_limit() > var_message_limit)
+    if (ENFORCING_SIZE_LIMIT(var_message_limit)
+	&& get_file_limit() > var_message_limit)
 	set_file_limit((off_t) var_message_limit);
 
     /*
@@ -926,11 +990,15 @@ static void enqueue(const int flags, const char *encoding,
     if (vstream_ferror(VSTREAM_IN))
 	msg_fatal_status(EX_DATAERR, "%s(%ld): error reading input: %m",
 			 saved_sender, (long) uid);
-    if ((status = mail_stream_finish(handle, (VSTRING *) 0)) != 0)
+    why = vstring_alloc(100);
+    if ((status = mail_stream_finish(handle, why)) != CLEANUP_STAT_OK)
 	msg_fatal_status((status & CLEANUP_STAT_BAD) ? EX_SOFTWARE :
 			 (status & CLEANUP_STAT_WRITE) ? EX_TEMPFAIL :
+			 (status & CLEANUP_STAT_NOPERM) ? EX_NOPERM :
 			 EX_UNAVAILABLE, "%s(%ld): %s", saved_sender,
-			 (long) uid, cleanup_strerror(status));
+			 (long) uid, VSTRING_LEN(why) ?
+			 STR(why) : cleanup_strerror(status));
+    vstring_free(why);
 
     /*
      * Don't leave them in the dark.
@@ -985,6 +1053,8 @@ int     main(int argc, char **argv)
     int     dsn_ret = 0;
     const char *dsn_envid = 0;
     int     saved_optind;
+    ARGV   *import_env;
+    char   *alias_map_from_args = 0;
 
     /*
      * Fingerprint executables and core dumps.
@@ -1025,15 +1095,15 @@ int     main(int argc, char **argv)
 	debug_me = 1;
 
     /*
-     * Initialize. Set up logging, read the global configuration file and
-     * extract configuration information. Set up signal handlers so that we
-     * can clean up incomplete output.
+     * Initialize. Set up logging. Read the global configuration file after
+     * command-line processing. Set up signal handlers so that we can clean
+     * up incomplete output.
      */
     if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
 	argv[0] = slash + 1;
     msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_cleanup(tempfail);
-    msg_syslog_init(mail_task("sendmail"), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task("sendmail"), MAILLOG_CLIENT_FLAG_NONE);
     set_mail_conf_str(VAR_PROCNAME, var_procname = mystrdup(argv[0]));
 
     /*
@@ -1070,19 +1140,28 @@ int     main(int argc, char **argv)
 	    break;
 	if (c == 'C') {
 	    VSTRING *buf = vstring_alloc(1);
+	    char   *dir;
 
-	    if (setenv(CONF_ENV_PATH,
-		   strcmp(sane_basename(buf, optarg), MAIN_CONF_FILE) == 0 ?
-		       sane_dirname(buf, optarg) : optarg, 1) < 0)
+	    dir = strcmp(sane_basename(buf, optarg), MAIN_CONF_FILE) == 0 ?
+		sane_dirname(buf, optarg) : optarg;
+	    if (strcmp(dir, DEF_CONFIG_DIR) != 0 && geteuid() != 0)
+		mail_conf_checkdir(dir);
+	    if (setenv(CONF_ENV_PATH, dir, 1) < 0)
 		msg_fatal_status(EX_UNAVAILABLE, "out of memory");
 	    vstring_free(buf);
 	}
     }
     optind = saved_optind;
     mail_conf_read();
+    /* Enforce consistent operation of different Postfix parts.	 */
+    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
+    update_env(import_env->argv);
+    argv_free(import_env);
     /* Re-evaluate mail_task() after reading main.cf. */
-    msg_syslog_init(mail_task("sendmail"), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task("sendmail"), MAILLOG_CLIENT_FLAG_NONE);
     get_mail_conf_str_table(str_table);
+
+    mail_dict_init();
 
     if (chdir(var_queue_dir))
 	msg_fatal_status(EX_UNAVAILABLE, "chdir %s: %m", var_queue_dir);
@@ -1245,9 +1324,7 @@ int     main(int argc, char **argv)
 	    case 'A':
 		if (optarg[1] == 0)
 		    msg_fatal_status(EX_USAGE, "-oA requires pathname");
-		myfree(var_alias_db_map);
-		var_alias_db_map = mystrdup(optarg + 1);
-		set_mail_conf_str(VAR_ALIAS_DB_MAP, var_alias_db_map);
+		alias_map_from_args = optarg + 1;
 		break;
 	    case '7':
 	    case '8':
@@ -1397,13 +1474,17 @@ int     main(int argc, char **argv)
 	if (argv[OPTIND])
 	    msg_fatal_status(EX_USAGE,
 			 "alias initialization mode requires no recipient");
-	if (*var_alias_db_map == 0)
+	if (alias_map_from_args == 0 && *var_alias_db_map == 0)
 	    return (0);
-	ext_argv = argv_alloc(2);
+	ext_argv = argv_alloc(3);
 	argv_add(ext_argv, "postalias", (char *) 0);
 	for (n = 0; n < msg_verbose; n++)
 	    argv_add(ext_argv, "-v", (char *) 0);
-	argv_split_append(ext_argv, var_alias_db_map, CHARS_COMMA_SP);
+	argv_add(ext_argv, "--", (char *) 0);
+	if (alias_map_from_args != 0)
+	    argv_add(ext_argv, alias_map_from_args, (char *) 0);
+	else
+	    argv_split_append(ext_argv, var_alias_db_map, CHARS_COMMA_SP);
 	argv_terminate(ext_argv);
 	mail_run_replace(var_command_dir, ext_argv->argv);
 	/* NOTREACHED */

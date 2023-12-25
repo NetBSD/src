@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - postalias(1) </title>
 </head> <body> <pre>
 POSTALIAS(1)                                                      POSTALIAS(1)
@@ -17,7 +18,7 @@ POSTALIAS(1)                                                      POSTALIAS(1)
        The  <a href="postalias.1.html"><b>postalias</b>(1)</a>  command creates or queries one or more Postfix alias
        databases, or updates an existing one. The input and output  file  for-
        mats  are  expected  to  be compatible with Sendmail version 8, and are
-       expected to be suitable for the use as NIS alias maps.
+       expected to be suitable for use as NIS alias maps.
 
        If the result files do not exist they will be  created  with  the  same
        group and other read permissions as their source file.
@@ -81,6 +82,10 @@ POSTALIAS(1)                                                      POSTALIAS(1)
               found to the standard output stream. The  exit  status  is  zero
               when the requested information was found.
 
+              Note:  this  performs  a single query with the key as specified,
+              and does not make iterative queries with substrings of  the  key
+              as described in the <a href="aliases.5.html">aliases(5)</a> manual page.
+
               If  a  key value of <b>-</b> is specified, the program reads key values
               from the standard input stream and writes one line of <i>key: value</i>
               output for each key that was found. The exit status is zero when
@@ -124,12 +129,18 @@ POSTALIAS(1)                                                      POSTALIAS(1)
                      <i>file</i><b>_</b><i>name</i><b>.dir</b>.  This is available on systems with support
                      for <b>dbm</b> databases.
 
+              <b>fail</b>   A  table that reliably fails all requests. The lookup ta-
+                     ble name is used for logging only. This table  exists  to
+                     simplify Postfix error tests.
+
               <b>hash</b>   The output is a hashed file, named <i>file</i><b>_</b><i>name</i><b>.db</b>.  This is
                      available on systems with support for <b>db</b> databases.
 
-              <b>fail</b>   A table that reliably fails all requests. The lookup  ta-
-                     ble  name  is used for logging only. This table exists to
-                     simplify Postfix error tests.
+              <b>lmdb</b>   The output is a btree-based file,  named  <i>file</i><b>_</b><i>name</i><b>.lmdb</b>.
+                     <b>lmdb</b>  supports concurrent writes and reads from different
+                     processes,  unlike  other  supported  file-based  tables.
+                     This  is available on systems with support for <b>lmdb</b> data-
+                     bases.
 
               <b>sdbm</b>   The output consists of two files, named <i>file</i><b>_</b><i>name</i><b>.pag</b> and
                      <i>file</i><b>_</b><i>name</i><b>.dir</b>.  This is available on systems with support
@@ -145,9 +156,9 @@ POSTALIAS(1)                                                      POSTALIAS(1)
               base.
 
 <b>DIAGNOSTICS</b>
-       Problems are logged to the standard error stream and to <b>syslogd</b>(8).  No
-       output  means  that  no  problems  were detected. Duplicate entries are
-       skipped and are flagged with a warning.
+       Problems are logged to the standard error stream and to  <b>syslogd</b>(8)  or
+       <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.  No output means that no problems were detected. Duplicate
+       entries are skipped and are flagged with a warning.
 
        <a href="postalias.1.html"><b>postalias</b>(1)</a> terminates with  zero  exit  status  in  case  of  success
        (including  successful  "<b>postalias  -q</b>"  lookup)  and  terminates  with
@@ -187,20 +198,29 @@ POSTALIAS(1)                                                      POSTALIAS(1)
               The default database type for use in <a href="newaliases.1.html"><b>newaliases</b>(1)</a>, <a href="postalias.1.html"><b>postalias</b>(1)</a>
               and <a href="postmap.1.html"><b>postmap</b>(1)</a> commands.
 
+       <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
+              The  list  of  environment  variables  that a privileged Postfix
+              process will  import  from  a  non-Postfix  parent  process,  or
+              name=value environment overrides.
+
        <b><a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> (yes)</b>
               Enable  preliminary SMTPUTF8 support for the protocols described
-              in <a href="http://tools.ietf.org/html/rfc6531">RFC 6531</a>..6533.
+              in <a href="https://tools.ietf.org/html/rfc6531">RFC 6531</a>, <a href="https://tools.ietf.org/html/rfc6532">RFC 6532</a>, and <a href="https://tools.ietf.org/html/rfc6533">RFC 6533</a>.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system name that is prepended to the  process  name  in
-              syslog  records,  so  that  "smtpd" becomes, for example, "post-
-              fix/smtpd".
+              A prefix that  is  prepended  to  the  process  name  in  syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
+
+       Available in Postfix 2.11 and later:
+
+       <b><a href="postconf.5.html#lmdb_map_size">lmdb_map_size</a> (16777216)</b>
+              The initial OpenLDAP LMDB database size limit in bytes.
 
 <b>STANDARDS</b>
-       <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
+       <a href="https://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
 
 <b>SEE ALSO</b>
        <a href="aliases.5.html">aliases(5)</a>, format of alias database input file.
@@ -209,6 +229,7 @@ POSTALIAS(1)                                                      POSTALIAS(1)
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="postmap.1.html">postmap(1)</a>, create/update/query lookup tables
        <a href="newaliases.1.html">newaliases(1)</a>, Sendmail compatibility interface.
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>README FILES</b>

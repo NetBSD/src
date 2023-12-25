@@ -7,7 +7,8 @@
 
 <title>Postfix Address Rewriting </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -493,8 +494,8 @@ document. </p> </dd>
 Rewrite "user@host" to "user@host.$<a href="postconf.5.html#mydomain">mydomain</a>" </dt>
 
 <dd> <p> This feature is controlled by the boolean <a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a>
-parameter (default: yes).  The purpose is to get consistent treatment
-of different forms of the same hostname. </p>
+parameter (default: Postfix ≥ 3.0: no, Postfix < 3.0: yes).  The purpose
+is to get consistent treatment of different forms of the same hostname. </p>
 
 <p> NOTE: Postfix versions 2.2 and later rewrite message headers
 from remote SMTP clients only if the client matches the
@@ -1052,7 +1053,7 @@ deliveries to commands or files in "root"-owned aliases. </p>
 
 <h3> <a name="forward"> Local per-user .forward files </a> </h3>
 
-<p> With delivery via the <a href="local.8.html">local(8)</a> deliver agent, users can control
+<p> With delivery via the <a href="local.8.html">local(8)</a> delivery agent, users can control
 their own mail delivery by specifying destinations in a file called
 .forward in their home directories. The syntax of these files is
 the same as with the local <a href="aliases.5.html">aliases(5)</a> file, except that the left-hand

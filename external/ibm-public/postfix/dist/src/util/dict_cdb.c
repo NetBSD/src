@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cdb.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_cdb.c,v 1.2.14.1 2023/12/25 12:55:25 martin Exp $	*/
 
 /*++
 /* NAME
@@ -389,7 +389,7 @@ static DICT *dict_cdbm_open(const char *path, int dict_flags)
 	if (st0.st_ino == st1.st_ino && st0.st_dev == st1.st_dev
 	    && st0.st_rdev == st1.st_rdev && st0.st_nlink == st1.st_nlink
 	    && st0.st_nlink > 0)
-	    break;				/* successefully opened */
+	    break;				/* successfully opened */
 
 	close(fd);
 

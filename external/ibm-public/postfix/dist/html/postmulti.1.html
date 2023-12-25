@@ -1,7 +1,8 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - postmulti(1) </title>
 </head> <body> <pre>
 POSTMULTI(1)                                                      POSTMULTI(1)
@@ -18,9 +19,9 @@ POSTMULTI(1)                                                      POSTMULTI(1)
 
        <b>postmulti -l</b> [<b>-aRv</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>]
 
-       <b>postmulti -p</b> [<b>-av</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>] <i>command...</i>
+       <b>postmulti -p</b> [<b>-av</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>] <i>postfix-command...</i>
 
-       <b>postmulti -x</b> [<b>-aRv</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>] <i>command...</i>
+       <b>postmulti -x</b> [<b>-aRv</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>] <i>unix-command...</i>
 
    <b>Life-cycle management:</b>
 
@@ -100,7 +101,8 @@ POSTMULTI(1)                                                      POSTMULTI(1)
               name, enable/disable status and configuration directory.
 
 <b>Postfix-wrapper mode</b>
-       <b>-p</b>     Invoke <a href="postfix.1.html"><b>postfix(1)</a></b> to execute the specified <i>command</i>.  This option
+       <b>-p</b> <i>postfix-command</i>
+              Invoke  <a href="postfix.1.html"><b>postfix(1)</a></b>  to  execute  <i>postfix-command</i>.   This  option
               implements the <a href="postfix-wrapper.5.html"><b>postfix-wrapper</b>(5)</a> interface.
 
               <b>o</b>      With "start"-like commands, "postfix check"  is  executed
@@ -130,10 +132,11 @@ POSTMULTI(1)                                                      POSTMULTI(1)
                      # postmulti -g msa -p start
 
 <b>Command mode</b>
-       <b>-x</b>     Execute the specified <i>command</i> for all  Postfix  instances.   The
-              command runs with appropriate environment settings for MAIL_CON-
-              FIG,  <a href="postconf.5.html#command_directory">command_directory</a>,   <a href="postconf.5.html#daemon_directory">daemon_directory</a>,   <a href="postconf.5.html#config_directory">config_directory</a>,
-              <a href="postconf.5.html#queue_directory">queue_directory</a>,       <a href="postconf.5.html#data_directory">data_directory</a>,      <a href="postconf.5.html#multi_instance_name">multi_instance_name</a>,
+       <b>-x</b> <i>unix-command</i>
+              Execute the specified <i>unix-command</i> for  all  Postfix  instances.
+              The  command  runs  with  appropriate  environment  settings for
+              MAIL_CONFIG, <a href="postconf.5.html#command_directory">command_directory</a>, <a href="postconf.5.html#daemon_directory">daemon_directory</a>,  <a href="postconf.5.html#config_directory">config_direc</a>-
+              <a href="postconf.5.html#config_directory">tory</a>,   <a href="postconf.5.html#queue_directory">queue_directory</a>,   <a href="postconf.5.html#data_directory">data_directory</a>,  <a href="postconf.5.html#multi_instance_name">multi_instance_name</a>,
               <a href="postconf.5.html#multi_instance_group">multi_instance_group</a> and <a href="postconf.5.html#multi_instance_enable">multi_instance_enable</a>.
 
 <b>Other options</b>
@@ -198,7 +201,7 @@ POSTMULTI(1)                                                      POSTMULTI(1)
                      default  values  for  the  private directories of the new
                      instance. The "<b>-G</b>  <i>group</i>"  option  may  be  specified  to
                      assign  the  instance  to  a  group,  otherwise,  the new
-                     instance is not a member of any groups.
+                     instance is not a member of any group.
 
                      The new instance <a href="postconf.5.html">main.cf</a> is the stock  <a href="postconf.5.html">main.cf</a>  with  the
                      parameters  that  specify  the  locations of shared files
@@ -220,66 +223,67 @@ POSTMULTI(1)                                                      POSTMULTI(1)
                                     <a href="postconf.5.html#data_directory">data_directory</a>=/my/data/dir
 
                      If  any  of  these pathnames is not supplied, the program
-                     attempts to generate the pathname by  taking  the  corre-
-                     sponding  primary instance pathname, and by replacing the
-                     last pathname component by the value of the <b>-I</b> option.
+                     attempts to generate the missing  pathname(s)  by  taking
+                     the  corresponding primary instance pathname, and replac-
+                     ing the last pathname component by the value  of  the  <b>-I</b>
+                     option.
 
-                     If the instance configuration directory  already  exists,
-                     and  contains  both  a <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> file, <b>create</b>
+                     If  the  instance configuration directory already exists,
+                     and contains both a <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  file,  <b>create</b>
                      will "import" the instance as-is. For existing instances,
                      <b>create</b> and <b>import</b> are identical.
 
-              <b>import</b> Import  an  existing  instance into the list of instances
+              <b>import</b> Import an existing instance into the  list  of  instances
                      managed by the <a href="postmulti.1.html"><b>postmulti</b>(1)</a> multi-instance manager.  This
-                     adds  the instance to the <a href="postconf.5.html#multi_instance_directories">multi_instance_directories</a> list
+                     adds the instance to the <a href="postconf.5.html#multi_instance_directories">multi_instance_directories</a>  list
                      of the primary instance.  If the "<b>-I</b> <i>name</i>" option is pro-
-                     vided  it  specifies the new name for the instance and is
-                     used to define a default location for the  instance  con-
-                     figuration  directory  (as  with  <b>create</b> above).  The "<b>-G</b>
-                     <i>group</i>" option may be used to assign  the  instance  to  a
-                     group.  Add  a "<b><a href="postconf.5.html#config_directory">config_directory</a>=</b><i>/path</i>" argument to over-
+                     vided it specifies the new name for the instance  and  is
+                     used  to  define a default location for the instance con-
+                     figuration directory (as with  <b>create</b>  above).   The  "<b>-G</b>
+                     <i>group</i>"  option  may  be  used to assign the instance to a
+                     group. Add a "<b><a href="postconf.5.html#config_directory">config_directory</a>=</b><i>/path</i>" argument  to  over-
                      ride a default pathname based on "<b>-I</b> <i>name</i>".
 
               <b>destroy</b>
-                     Destroy a secondary Postfix instance. To be  a  candidate
+                     Destroy  a  secondary Postfix instance. To be a candidate
                      for destruction an instance must be disabled, stopped and
-                     its queue must not  contain  any  messages.  Attempts  to
-                     destroy  the  primary  Postfix  instance  trigger a fatal
+                     its  queue  must  not  contain  any messages. Attempts to
+                     destroy the primary  Postfix  instance  trigger  a  fatal
                      error, without destroying the instance.
 
                      The instance is removed from the primary instance <a href="postconf.5.html">main.cf</a>
                      file's  <a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a>  parameter  and  its
-                     data, queue and configuration directories are cleaned  of
-                     files  and directories created by the Postfix system. The
+                     data,  queue and configuration directories are cleaned of
+                     files and directories created by the Postfix system.  The
                      <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> files are removed from the configu-
-                     ration  directory  even  if they have been modified since
-                     initial creation. Finally,  the  instance  is  "deported"
+                     ration directory even if they have  been  modified  since
+                     initial  creation.  Finally,  the  instance is "deported"
                      from the list of managed instances.
 
-                     If  other  files are present in instance private directo-
+                     If other files are present in instance  private  directo-
                      ries, the directories may not be fully removed, a warning
                      is logged to alert the administrator. It is expected that
-                     an instance built using "fresh" directories via the  <b>cre-</b>
-                     <b>ate</b>  action  will  be fully removed by the <b>destroy</b> action
-                     (if first disabled). If the  instance  configuration  and
-                     queue  directories  are  populated  with additional files
-                     (access and rewriting tables, chroot jail content,  etc.)
+                     an  instance built using "fresh" directories via the <b>cre-</b>
+                     <b>ate</b> action will be fully removed by  the  <b>destroy</b>  action
+                     (if  first  disabled).  If the instance configuration and
+                     queue directories are  populated  with  additional  files
+                     (access  and rewriting tables, chroot jail content, etc.)
                      the instance directories will not be fully removed.
 
-                     The  <b>destroy</b>  action  triggers potentially dangerous file
-                     removal operations. Make sure the instance's data,  queue
-                     and  configuration  directories  are set correctly and do
+                     The <b>destroy</b> action triggers  potentially  dangerous  file
+                     removal  operations. Make sure the instance's data, queue
+                     and configuration directories are set  correctly  and  do
                      not contain any valuable files.
 
-              <b>deport</b> Deport a secondary instance  from  the  list  of  managed
+              <b>deport</b> Deport  a  secondary  instance  from  the list of managed
                      instances. This deletes the instance configuration direc-
-                     tory from the primary instance's  <a href="postconf.5.html#multi_instance_directories">multi_instance_directo</a>-
-                     <a href="postconf.5.html#multi_instance_directories">ries</a>  list, but does not remove any files or directories.
+                     tory  from the primary instance's <a href="postconf.5.html#multi_instance_directories">multi_instance_directo</a>-
+                     <a href="postconf.5.html#multi_instance_directories">ries</a> list, but does not remove any files or  directories.
 
-              <b>assign</b> Assign a new instance name or a new  group  name  to  the
-                     selected  instance.  Use "<b>-G -</b>" to specify "no group" and
-                     "<b>-I -</b>" to specify "no name".  If you choose  to  make  an
-                     instance  "nameless",  set  a suitable <a href="postconf.5.html#syslog_name">syslog_name</a> in the
+              <b>assign</b> Assign  a  new  instance  name or a new group name to the
+                     selected instance.  Use "<b>-G -</b>" to specify "no group"  and
+                     "<b>-I  -</b>"  to  specify "no name".  If you choose to make an
+                     instance "nameless", set a suitable  <a href="postconf.5.html#syslog_name">syslog_name</a>  in  the
                      corresponding <a href="postconf.5.html">main.cf</a> file.
 
               <b>enable</b> Mark the selected instance as enabled. This just sets the
@@ -287,18 +291,18 @@ POSTMULTI(1)                                                      POSTMULTI(1)
                      instance's <a href="postconf.5.html">main.cf</a> file.
 
               <b>disable</b>
-                     Mark the selected instance as disabled. This  means  that
-                     the  instance  will  not  be  started  etc. with "postfix
-                     start", "postmulti -p start" and so on. The instance  can
-                     still  be  started etc. with "postfix -c config-directory
+                     Mark  the  selected instance as disabled. This means that
+                     the instance will  not  be  started  etc.  with  "postfix
+                     start",  "postmulti -p start" and so on. The instance can
+                     still be started etc. with "postfix  -c  config-directory
                      start".
 
 <b>Other options</b>
-       <b>-v</b>     Enable verbose  logging  for  debugging  purposes.  Multiple  <b>-v</b>
+       <b>-v</b>     Enable  verbose  logging  for  debugging  purposes.  Multiple <b>-v</b>
               options make the software increasingly verbose.
 
 <b>ENVIRONMENT</b>
-       The  <a href="postmulti.1.html"><b>postmulti</b>(1)</a>  command  exports the following environment variables
+       The <a href="postmulti.1.html"><b>postmulti</b>(1)</a> command exports the  following  environment  variables
        before executing the requested <i>command</i> for a given instance:
 
        <b>MAIL_VERBOSE</b>
@@ -309,15 +313,16 @@ POSTMULTI(1)                                                      POSTMULTI(1)
 
 <b>CONFIGURATION PARAMETERS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
 
        <b><a href="postconf.5.html#daemon_directory">daemon_directory</a> (see 'postconf -d' output)</b>
               The directory with Postfix support programs and daemon programs.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The list of environment parameters that a Postfix  process  will
-              import from a non-Postfix parent process.
+              The  list  of  environment  variables  that a privileged Postfix
+              process will  import  from  a  non-Postfix  parent  process,  or
+              name=value environment overrides.
 
        <b><a href="postconf.5.html#multi_instance_directories">multi_instance_directories</a> (empty)</b>
               An  optional  list of non-default Postfix configuration directo-
@@ -352,22 +357,21 @@ POSTMULTI(1)                                                      POSTMULTI(1)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system name that is prepended to the  process  name  in
-              syslog  records,  so  that  "smtpd" becomes, for example, "post-
-              fix/smtpd".
+              A prefix that  is  prepended  to  the  process  name  in  syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        Available in Postfix 3.0 and later:
 
        <b><a href="postconf.5.html#meta_directory">meta_directory</a> (see 'postconf -d' output)</b>
-              The location of non-executable files that are shared among  mul-
-              tiple  Postfix instances, such as postfix-files, dynamicmaps.cf,
-              and the multi-instance template  files  <a href="postconf.5.html">main.cf</a>.proto  and  <a href="master.5.html">mas-
+              The  location of non-executable files that are shared among mul-
+              tiple Postfix instances, such as postfix-files,  dynamicmaps.cf,
+              and  the  multi-instance  template  files <a href="postconf.5.html">main.cf</a>.proto and <a href="master.5.html">mas-
               ter.cf</a>.proto.
 
        <b><a href="postconf.5.html#shlib_directory">shlib_directory</a> (see 'postconf -d' output)</b>
-              The  location  of Postfix dynamically-linked libraries (libpost-
-              fix-*.so), and the default location of Postfix database  plugins
-              (postfix-*.so)  that  have  a  relative  pathname  in the dynam-
+              The location of Postfix dynamically-linked  libraries  (libpost-
+              fix-*.so),  and the default location of Postfix database plugins
+              (postfix-*.so) that have  a  relative  pathname  in  the  dynam-
               icmaps.cf file.
 
 <b>FILES</b>
@@ -396,6 +400,11 @@ POSTMULTI(1)                                                      POSTMULTI(1)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                   POSTMULTI(1)
 </pre> </body> </html>

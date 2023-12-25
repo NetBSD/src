@@ -7,7 +7,8 @@
 
 <title>Postfix MySQL Howto</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -46,8 +47,7 @@ There is no need to recompile Postfix. </p>
 which can be obtained from: </p>
 
 <blockquote>
-    <p> <a href="http://www.mysql.com/downloads/">http://www.mysql.com/downloads/</a> <br>
-    <a href="http://sourceforge.net/projects/mysql/">http://sourceforge.net/projects/mysql/</a> </p>
+    <p> <a href="http://www.mysql.com/downloads/">http://www.mysql.com/downloads/</a> </p>
 </blockquote>
 
 <p> In order to build Postfix with mysql map support, you will need to add
@@ -57,10 +57,14 @@ the mysqlclient library (and libm) to <a href="MYSQL_README.html">AUXLIBS_MYSQL<
 <blockquote>
 <pre>
 make -f Makefile.init makefiles \
-    'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
-    '<a href="MYSQL_README.html">AUXLIBS_MYSQL</a>=-L/usr/local/mysql/lib -lmysqlclient -lz -lm'
+    "CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include" \
+    "<a href="MYSQL_README.html">AUXLIBS_MYSQL</a>=-L/usr/local/mysql/lib -lmysqlclient -lz -lm"
 </pre>
 </blockquote>
+
+<p> If your MySQL shared library is in a directory that the RUN-TIME
+linker does not know about, add a "-Wl,-R,/path/to/directory" option after
+"-lmysqlclient". </p>
 
 <p> Postfix versions before 3.0 use AUXLIBS instead of <a href="MYSQL_README.html">AUXLIBS_MYSQL</a>.
 With Postfix 3.0 and later, the old AUXLIBS variable still supports
@@ -82,9 +86,9 @@ what dynamic database client loading was meant to avoid. </p>
 <blockquote>
 <pre>
 make -f Makefile.init makefiles \
-    'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
-    '<a href="MYSQL_README.html">AUXLIBS_MYSQL</a>=-L/usr/local/mysql/lib -R/usr/local/mysql/lib \
-        -lmysqlclient -lz -lm'
+    "CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include" \
+    "<a href="MYSQL_README.html">AUXLIBS_MYSQL</a>=-L/usr/local/mysql/lib -R/usr/local/mysql/lib \
+        -lmysqlclient -lz -lm"
 </pre>
 </blockquote>
 
@@ -132,7 +136,7 @@ where_field = alias
 additional_conditions = AND status = 'paid'
 
 # This is necessary to make UTF8 queries work for Postfix 2.11 .. 3.1,
-# and is the default setting as of Postfix 3.2,
+# and is the default setting as of Postfix 3.2.
 option_group = client
 </pre>
 
@@ -174,7 +178,7 @@ Marcus, IC Group, Inc.</li>
 
 <li> Liviu Daia with further refinements from Jose Luis Tallon and
 Victor Duchovni developed the common query, result_format, domain and
-expansion_limit interface for LDAP, MySQL and PosgreSQL.</li>
+expansion_limit interface for LDAP, MySQL and PostgreSQL.</li>
 
 </ul>
 

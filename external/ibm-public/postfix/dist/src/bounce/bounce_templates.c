@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_templates.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: bounce_templates.c,v 1.2.14.1 2023/12/25 12:54:48 martin Exp $	*/
 
 /*++
 /* NAME
@@ -65,6 +65,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -116,6 +121,7 @@ static const BOUNCE_TEMPLATE def_bounce_failure_template = {
     "us-ascii",
     MAIL_ATTR_ENC_7BIT,
     MAIL_ADDR_MAIL_DAEMON " (Mail Delivery System)",
+    "Mail Delivery System <" MAIL_ADDR_MAIL_DAEMON ">",
     "Undelivered Mail Returned to Sender",
     "Postmaster Copy: Undelivered Mail",
     def_bounce_failure_body,
@@ -132,8 +138,7 @@ static const char *def_bounce_delay_body[] = {
     "# THIS IS A WARNING ONLY.  YOU DO NOT NEED TO RESEND YOUR MESSAGE. #",
     "####################################################################",
     "",
-    "Your message could not be delivered for more than $delay_warning_time_hours hour(s)."
-    ,
+    "Your message could not be delivered for more than $delay_warning_time_hours hour(s).",
     "It will be retried until it is $maximal_queue_lifetime_days day(s) old.",
     "",
     "For further assistance, please send mail to " MAIL_ADDR_POSTMASTER ".",
@@ -152,6 +157,7 @@ static const BOUNCE_TEMPLATE def_bounce_delay_template = {
     "us-ascii",
     MAIL_ATTR_ENC_7BIT,
     MAIL_ADDR_MAIL_DAEMON " (Mail Delivery System)",
+    "Mail Delivery System <" MAIL_ADDR_MAIL_DAEMON ">",
     "Delayed Mail (still being retried)",
     "Postmaster Warning: Delayed Mail",
     def_bounce_delay_body,
@@ -181,6 +187,7 @@ static const BOUNCE_TEMPLATE def_bounce_success_template = {
     "us-ascii",
     MAIL_ATTR_ENC_7BIT,
     MAIL_ADDR_MAIL_DAEMON " (Mail Delivery System)",
+    "Mail Delivery System <" MAIL_ADDR_MAIL_DAEMON ">",
     "Successful Mail Delivery Report",
     0,
     def_bounce_success_body,
@@ -207,6 +214,7 @@ static const BOUNCE_TEMPLATE def_bounce_verify_template = {
     "us-ascii",
     MAIL_ATTR_ENC_7BIT,
     MAIL_ADDR_MAIL_DAEMON " (Mail Delivery System)",
+    "Mail Delivery System <" MAIL_ADDR_MAIL_DAEMON ">",
     "Mail Delivery Status Report",
     0,
     def_bounce_verify_body,

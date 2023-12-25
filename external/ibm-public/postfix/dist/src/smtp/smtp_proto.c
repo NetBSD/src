@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_proto.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtp_proto.c,v 1.2.14.1 2023/12/25 12:55:15 martin Exp $	*/
 
 /*++
 /* NAME
@@ -75,6 +75,11 @@
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
+/*
 /*	Pipelining code in cooperation with:
 /*	Jon Ribbens
 /*	Oaktree Internet Solutions Ltd.,
@@ -137,7 +142,6 @@
 #include <rec_type.h>
 #include <off_cvt.h>
 #include <mark_corrupt.h>
-#include <quote_821_local.h>
 #include <quote_822_local.h>
 #include <mail_proto.h>
 #include <mime_state.h>
@@ -334,6 +338,8 @@ int     smtp_helo(SMTP_STATE *state)
 	&& (state->misc_flags & SMTP_MISC_FLAG_IN_STARTTLS) == 0) {
 	/* XXX Mix-up of per-session and per-request flags. */
 	state->misc_flags |= SMTP_MISC_FLAG_IN_STARTTLS;
+	smtp_stream_setup(state->session->stream, var_smtp_starttls_tmout,
+			  var_smtp_req_deadline, 0);
 	tls_helo_status = smtp_start_tls(state);
 	state->misc_flags &= ~SMTP_MISC_FLAG_IN_STARTTLS;
 	return (tls_helo_status);
@@ -344,7 +350,7 @@ int     smtp_helo(SMTP_STATE *state)
      * Prepare for disaster.
      */
     smtp_stream_setup(state->session->stream, var_smtp_helo_tmout,
-		      var_smtp_rec_deadline);
+		      var_smtp_req_deadline, 0);
     if ((except = vstream_setjmp(state->session->stream)) != 0)
 	return (smtp_stream_except(state, except, where));
 
@@ -405,6 +411,10 @@ int     smtp_helo(SMTP_STATE *state)
 		pix_bug_mask = name_mask_opt(pix_bug_source, pix_bug_table,
 					     pix_bug_words,
 				     NAME_MASK_ANY_CASE | NAME_MASK_IGNORE);
+		if ((pix_bug_mask & SMTP_FEATURE_PIX_DELAY_DOTCRLF)
+		    && request->msg_stats.incoming_arrival.tv_sec
+		    > vstream_ftime(state->session->stream) - var_smtp_pix_thresh)
+		    pix_bug_mask &= ~SMTP_FEATURE_PIX_DELAY_DOTCRLF;
 		msg_info("%s: enabling PIX workarounds: %s for %s",
 			 request->queue_id,
 			 str_name_mask("pix workaround bitmask",
@@ -756,7 +766,7 @@ int     smtp_helo(SMTP_STATE *state)
 	     * Prepare for disaster.
 	     */
 	    smtp_stream_setup(state->session->stream, var_smtp_starttls_tmout,
-			      var_smtp_rec_deadline);
+			      var_smtp_req_deadline, 0);
 	    if ((except = vstream_setjmp(state->session->stream)) != 0)
 		return (smtp_stream_except(state, except,
 					"receiving the STARTTLS response"));
@@ -841,20 +851,29 @@ static int smtp_start_tls(SMTP_STATE *state)
 {
     SMTP_SESSION *session = state->session;
     SMTP_ITERATOR *iter = state->iterator;
-    TLS_CLIENT_START_PROPS tls_props;
+    TLS_CLIENT_START_PROPS start_props;
     VSTRING *serverid;
     SMTP_RESP fake;
+    TLS_CLIENT_INIT_PROPS init_props;
+    VSTREAM *tlsproxy;
+    VSTRING *port_buf;
 
     /*
-     * Turn off SMTP connection caching. When the TLS handshake succeeds, we
-     * can't reuse the SMTP connection. Reason: we can't turn off TLS in one
-     * process, save the connection to the cache which is shared with all
-     * SMTP clients, migrate the connection to another SMTP client, and
-     * resume TLS there. When the TLS handshake fails, we can't reuse the
-     * SMTP connection either, because the conversation is in an unknown
-     * state.
+     * When the TLS handshake succeeds, we can reuse a connection only if TLS
+     * remains turned on for the lifetime of that connection. This requires
+     * that the TLS library state is maintained in some proxy process, for
+     * example, in tlsproxy(8). We then store the proxy file handle in the
+     * connection cache, and reuse that file handle.
+     * 
+     * Otherwise, we must turn off connection caching. We can't turn off TLS in
+     * one SMTP client process, save the open connection to a cache which is
+     * shared with all SMTP clients, migrate the connection to another SMTP
+     * client, and resume TLS there. When the TLS handshake fails, we can't
+     * reuse the SMTP connection either, because the conversation is in an
+     * unknown state.
      */
-    DONT_CACHE_THIS_SESSION;
+    if (state->tls->conn_reuse == 0)
+	DONT_CACHE_THIS_SESSION;
 
     /*
      * The following assumes sites that use TLS in a perverse configuration:
@@ -871,7 +890,7 @@ static int smtp_start_tls(SMTP_STATE *state)
      * either the transport name or the values of CAfile and CApath. We use
      * the transport name.
      * 
-     * XXX: We store only one session per lookup key. Ideally the the key maps
+     * XXX: We store only one session per lookup key. Ideally the key maps
      * 1-to-1 to a server TLS session cache. We use the IP address, port and
      * ehlo response name to build a lookup key that works for split caches
      * (that announce distinct names) behind a load balancer.
@@ -883,41 +902,178 @@ static int smtp_start_tls(SMTP_STATE *state)
      */
     serverid = vstring_alloc(10);
     smtp_key_prefix(serverid, "&", state->iterator, SMTP_KEY_FLAG_SERVICE
-		    | SMTP_KEY_FLAG_NEXTHOP	/* With port */
+		    | SMTP_KEY_FLAG_CUR_NEXTHOP	/* With port */
 		    | SMTP_KEY_FLAG_HOSTNAME
 		    | SMTP_KEY_FLAG_ADDR);
 
-    /*
-     * As of Postfix 2.5, tls_client_start() tries hard to always complete
-     * the TLS handshake. It records the verification and match status in the
-     * resulting TLScontext. It is now up to the application to abort the TLS
-     * connection if it chooses.
-     * 
-     * XXX When tls_client_start() fails then we don't know what state the SMTP
-     * connection is in, so we give up on this connection even if we are not
-     * required to use TLS.
-     * 
-     * Large parameter lists are error-prone, so we emulate a language feature
-     * that C does not have natively: named parameter lists.
-     */
-    session->tls_context =
-	TLS_CLIENT_START(&tls_props,
-			 ctx = smtp_tls_ctx,
-			 stream = session->stream,
-			 timeout = var_smtp_starttls_tmout,
-			 tls_level = state->tls->level,
-			 nexthop = session->tls_nexthop,
-			 host = STR(iter->host),
-			 namaddr = session->namaddrport,
-			 serverid = vstring_str(serverid),
-			 helo = session->helo,
-			 protocols = state->tls->protocols,
-			 cipher_grade = state->tls->grade,
-			 cipher_exclusions
-			 = vstring_str(state->tls->exclusions),
-			 matchargv = state->tls->matchargv,
-			 mdalg = var_smtp_tls_fpt_dgst,
-			 dane = state->tls->dane);
+    if (state->tls->conn_reuse) {
+	TLS_CLIENT_PARAMS tls_params;
+
+	/*
+	 * Send all our wishes in one big request.
+	 */
+	TLS_PROXY_CLIENT_INIT_PROPS(&init_props,
+				    log_param = VAR_LMTP_SMTP(TLS_LOGLEVEL),
+				    log_level = var_smtp_tls_loglevel,
+				    verifydepth = var_smtp_tls_scert_vd,
+				    cache_type
+				    = LMTP_SMTP_SUFFIX(TLS_MGR_SCACHE),
+				    chain_files = var_smtp_tls_chain_files,
+				    cert_file = var_smtp_tls_cert_file,
+				    key_file = var_smtp_tls_key_file,
+				    dcert_file = var_smtp_tls_dcert_file,
+				    dkey_file = var_smtp_tls_dkey_file,
+				    eccert_file = var_smtp_tls_eccert_file,
+				    eckey_file = var_smtp_tls_eckey_file,
+				    CAfile = var_smtp_tls_CAfile,
+				    CApath = var_smtp_tls_CApath,
+				    mdalg = var_smtp_tls_fpt_dgst);
+	TLS_PROXY_CLIENT_START_PROPS(&start_props,
+				     timeout = var_smtp_starttls_tmout,
+				     tls_level = state->tls->level,
+				     nexthop = session->tls_nexthop,
+				     host = STR(iter->host),
+				     namaddr = session->namaddrport,
+				     sni = state->tls->sni,
+				     serverid = vstring_str(serverid),
+				     helo = session->helo,
+				     protocols = state->tls->protocols,
+				     cipher_grade = state->tls->grade,
+				     cipher_exclusions
+				     = vstring_str(state->tls->exclusions),
+				     matchargv = state->tls->matchargv,
+				     mdalg = var_smtp_tls_fpt_dgst,
+				     dane = state->tls->dane);
+
+	/*
+	 * The tlsproxy(8) server enforces timeouts that are larger than
+	 * those specified by the tlsproxy(8) client. These timeouts are a
+	 * safety net for the case that the tlsproxy(8) client fails to
+	 * enforce time limits. Normally, the tlsproxy(8) client would time
+	 * out and trigger a plaintext event in the tlsproxy(8) server, and
+	 * cause it to tear down the session.
+	 * 
+	 * However, the tlsproxy(8) server has no insight into the SMTP
+	 * protocol, and therefore it cannot by itself support different
+	 * timeouts at different SMTP protocol stages. Instead, we specify
+	 * the largest timeout (end-of-data) and rely on the SMTP client to
+	 * time out first, which normally results in a plaintext event in the
+	 * tlsproxy(8) server. Unfortunately, we cannot permit plaintext
+	 * events during the TLS handshake, so we specify a separate timeout
+	 * for that stage (the end-of-data timeout would be unreasonably
+	 * large anyway).
+	 */
+#define PROXY_OPEN_FLAGS \
+        (TLS_PROXY_FLAG_ROLE_CLIENT | TLS_PROXY_FLAG_SEND_CONTEXT)
+
+	port_buf = vstring_alloc(100);		/* minimize fragmentation */
+	vstring_sprintf(port_buf, "%d", ntohs(iter->port));
+	tlsproxy =
+	    tls_proxy_open(var_tlsproxy_service, PROXY_OPEN_FLAGS,
+			   session->stream, STR(iter->addr),
+			   STR(port_buf), var_smtp_starttls_tmout,
+			   var_smtp_data2_tmout, state->service,
+			   tls_proxy_client_param_from_config(&tls_params),
+			   &init_props, &start_props);
+	vstring_free(port_buf);
+
+	/*
+	 * To insert tlsproxy(8) between this process and the remote SMTP
+	 * server, we swap the file descriptors between the tlsproxy and
+	 * session->stream VSTREAMS, so that we don't lose all the
+	 * user-configurable session->stream attributes (such as longjump
+	 * buffers or timeouts).
+	 * 
+	 * TODO: the tlsproxy RPCs should return more error detail than a "NO"
+	 * result. OTOH, the in-process TLS engine does not return such info
+	 * either.
+	 * 
+	 * If the tlsproxy request fails we do not fall back to the in-process
+	 * TLS stack. Reason: the admin enabled connection reuse to respect
+	 * receiver policy; silently violating such policy would not be
+	 * useful.
+	 * 
+	 * We also don't fall back to the in-process TLS stack under low-traffic
+	 * conditions, to avoid frustrating attempts to debug a problem with
+	 * using the tlsproxy(8) service.
+	 */
+	if (tlsproxy == 0) {
+	    session->tls_context = 0;
+	} else {
+	    vstream_control(tlsproxy,
+			    CA_VSTREAM_CTL_DOUBLE,
+			    CA_VSTREAM_CTL_END);
+	    vstream_control(session->stream,
+			    CA_VSTREAM_CTL_SWAP_FD(tlsproxy),
+			    CA_VSTREAM_CTL_END);
+	    (void) vstream_fclose(tlsproxy);	/* direct-to-server stream! */
+
+	    /*
+	     * There must not be any pending data in the stream buffers
+	     * before we read the TLS context attributes.
+	     */
+	    vstream_fpurge(session->stream, VSTREAM_PURGE_BOTH);
+
+	    /*
+	     * After plumbing the plaintext stream, receive the TLS context
+	     * object. For this we use the same VSTREAM buffer that we also
+	     * use to receive subsequent SMTP commands, therefore we must be
+	     * prepared for the possibility that the remote SMTP server
+	     * starts talking immediately. The tlsproxy implementation sends
+	     * the TLS context before remote content. The attribute protocol
+	     * is robust enough that an adversary cannot insert their own TLS
+	     * context attributes.
+	     */
+	    session->tls_context = tls_proxy_context_receive(session->stream);
+	    if (session->tls_context) {
+		session->features |= SMTP_FEATURE_FROM_PROXY;
+		tls_log_summary(TLS_ROLE_CLIENT, TLS_USAGE_NEW,
+				session->tls_context);
+	    }
+	}
+    } else {					/* state->tls->conn_reuse */
+
+	/*
+	 * As of Postfix 2.5, tls_client_start() tries hard to always
+	 * complete the TLS handshake. It records the verification and match
+	 * status in the resulting TLScontext. It is now up to the
+	 * application to abort the TLS connection if it chooses.
+	 * 
+	 * XXX When tls_client_start() fails then we don't know what state the
+	 * SMTP connection is in, so we give up on this connection even if we
+	 * are not required to use TLS.
+	 * 
+	 * Large parameter lists are error-prone, so we emulate a language
+	 * feature that C does not have natively: named parameter lists.
+	 */
+	session->tls_context =
+	    TLS_CLIENT_START(&start_props,
+			     ctx = smtp_tls_ctx,
+			     stream = session->stream,
+			     fd = -1,
+			     timeout = var_smtp_starttls_tmout,
+			     tls_level = state->tls->level,
+			     nexthop = session->tls_nexthop,
+			     host = STR(iter->host),
+			     namaddr = session->namaddrport,
+			     sni = state->tls->sni,
+			     serverid = vstring_str(serverid),
+			     helo = session->helo,
+			     protocols = state->tls->protocols,
+			     cipher_grade = state->tls->grade,
+			     cipher_exclusions
+			     = vstring_str(state->tls->exclusions),
+			     matchargv = state->tls->matchargv,
+			     mdalg = var_smtp_tls_fpt_dgst,
+			     dane = state->tls->dane);
+
+	/*
+	 * At this point there must not be any pending data in the stream
+	 * buffers.
+	 */
+	vstream_fpurge(session->stream, VSTREAM_PURGE_BOTH);
+    }						/* state->tls->conn_reuse */
+
     vstring_free(serverid);
 
     if (session->tls_context == 0) {
@@ -925,7 +1081,6 @@ static int smtp_start_tls(SMTP_STATE *state)
 	/*
 	 * We must avoid further I/O, the peer is in an undefined state.
 	 */
-	(void) vstream_fpurge(session->stream, VSTREAM_PURGE_BOTH);
 	DONT_USE_FORBIDDEN_SESSION;
 
 	/*
@@ -959,25 +1114,21 @@ static int smtp_start_tls(SMTP_STATE *state)
      * "QUIT".
      * 
      * See src/tls/tls_level.c and src/tls/tls.h. Levels above "encrypt" require
-     * matching.  Levels >= "dane" require CA or DNSSEC trust.
+     * matching.
      * 
-     * When DANE TLSA records specify an end-entity certificate, the trust and
-     * match bits always coincide, but it is fine to report the wrong
-     * end-entity certificate as untrusted rather than unmatched.
+     * NOTE: We use "IS_MATCHED" to satisfy policy, but "IS_SECURED" to log
+     * effective security.  Thus "half-dane" is never "Verified" only
+     * "Trusted", but matching is enforced here.
+     * 
+     * NOTE: When none of the TLSA records were usable, "dane" and "half-dane"
+     * fall back to "encrypt", updating the tls_context level accordingly, so
+     * we must check that here, and not state->tls->level.
      */
-    if (TLS_MUST_TRUST(state->tls->level))
-	if (!TLS_CERT_IS_TRUSTED(session->tls_context))
-	    return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
-				   SMTP_RESP_FAKE(&fake, "4.7.5"),
-				   "Server certificate not trusted"));
-    if (TLS_MUST_MATCH(state->tls->level))
+    if (TLS_MUST_MATCH(session->tls_context->level))
 	if (!TLS_CERT_IS_MATCHED(session->tls_context))
 	    return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
 				   SMTP_RESP_FAKE(&fake, "4.7.5"),
 				   "Server certificate not verified"));
-
-    /* At this point there must not be any pending plaintext. */
-    vstream_fpurge(session->stream, VSTREAM_PURGE_BOTH);
 
     /*
      * At this point we have to re-negotiate the "EHLO" to reget the
@@ -997,10 +1148,10 @@ static void smtp_hbc_logger(void *context, const char *action,
     const SMTP_STATE *state = (SMTP_STATE *) context;
 
     if (*text) {
-	msg_info("%s: %s: %s %.60s: %s",
+	msg_info("%s: %s: %s %.200s: %s",
 		 state->request->queue_id, action, where, content, text);
     } else {
-	msg_info("%s: %s: %s %.60s",
+	msg_info("%s: %s: %s %.200s",
 		 state->request->queue_id, action, where, content);
     }
 }
@@ -1029,7 +1180,8 @@ static void smtp_text_out(void *context, int rec_type,
 	if (state->space_left == var_smtp_line_limit
 	    && data_left > 0 && *data_start == '.')
 	    smtp_fputc('.', session->stream);
-	if (var_smtp_line_limit > 0 && data_left >= state->space_left) {
+	if (ENFORCING_SIZE_LIMIT(var_smtp_line_limit)
+	    && data_left >= state->space_left) {
 	    smtp_fputs(data_start, state->space_left, session->stream);
 	    data_start += state->space_left;
 	    data_left -= state->space_left;
@@ -1037,6 +1189,18 @@ static void smtp_text_out(void *context, int rec_type,
 	    if (data_left > 0 || rec_type == REC_TYPE_CONT) {
 		smtp_fputc(' ', session->stream);
 		state->space_left -= 1;
+
+		/*
+		 * XXX This can insert a line break into the middle of a
+		 * multi-byte character (not necessarily UTF-8). Note that
+		 * multibyte characters can span queue file records, for
+		 * example if line_length_limit == smtp_line_length_limit.
+		 */
+		if (state->logged_line_length_limit == 0) {
+		    msg_info("%s: breaking line > %d bytes with <CR><LF>SPACE",
+			     state->request->queue_id, var_smtp_line_limit);
+		    state->logged_line_length_limit = 1;
+		}
 	    }
 	} else {
 	    if (rec_type == REC_TYPE_CONT) {
@@ -1237,6 +1401,65 @@ static void smtp_mime_fail(SMTP_STATE *state, int mime_errs)
 		   "%s", detail->text);
 }
 
+/* smtp_out_raw_or_mime - output buffer, raw output or MIME-aware */
+
+static int smtp_out_raw_or_mime(SMTP_STATE *state, int rec_type, VSTRING *buf)
+{
+    SMTP_SESSION *session = state->session;
+    int     mime_errs;
+
+    if (session->mime_state == 0) {
+	smtp_text_out((void *) state, rec_type, vstring_str(buf),
+		      VSTRING_LEN(buf), (off_t) 0);
+    } else {
+	mime_errs =
+	    mime_state_update(session->mime_state, rec_type,
+			      vstring_str(buf), VSTRING_LEN(buf));
+	if (mime_errs) {
+	    smtp_mime_fail(state, mime_errs);
+	    return (-1);
+	}
+    }
+    return (0);
+}
+
+/* smtp_out_add_header - format address header, uses session->scratch* */
+
+static int smtp_out_add_header(SMTP_STATE *state, const char *label,
+			               const char *lt, const char *addr,
+			               const char *gt)
+{
+    SMTP_SESSION *session = state->session;
+
+    smtp_rewrite_generic_internal(session->scratch2, addr);
+    vstring_sprintf(session->scratch, "%s: %s", label, lt);
+    smtp_quote_822_address_flags(session->scratch,
+				 vstring_str(session->scratch2),
+				 QUOTE_FLAG_DEFAULT | QUOTE_FLAG_APPEND);
+    vstring_strcat(session->scratch, gt);
+    return (smtp_out_raw_or_mime(state, REC_TYPE_NORM, session->scratch));
+}
+
+/* smtp_out_add_headers - output additional headers, uses session->scratch* */
+
+static int smtp_out_add_headers(SMTP_STATE *state)
+{
+    /* Prepend headers in the same order as mail_copy.c. */
+    if (smtp_cli_attr.flags & SMTP_CLI_FLAG_RETURN_PATH)
+	if (smtp_out_add_header(state, "Return-Path", "<",
+				state->request->sender, ">") < 0)
+	    return (-1);
+    if (smtp_cli_attr.flags & SMTP_CLI_FLAG_ORIG_RCPT)
+	if (smtp_out_add_header(state, "X-Original-To", "",
+			 state->request->rcpt_list.info->orig_addr, "") < 0)
+	    return (-1);
+    if (smtp_cli_attr.flags & SMTP_CLI_FLAG_DELIVERED_TO)
+	if (smtp_out_add_header(state, "Delivered-To", "",
+			   state->request->rcpt_list.info->address, "") < 0)
+	    return (-1);
+    return (0);
+}
+
 /* smtp_loop - exercise the SMTP protocol engine */
 
 static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
@@ -1264,24 +1487,6 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
     int     mime_errs;
     SMTP_RESP fake;
     int     fail_status;
-
-    /*
-     * Macros for readability.
-     */
-#define REWRITE_ADDRESS(dst, src) do { \
-	vstring_strcpy(dst, src); \
-	if (*(src) && smtp_generic_maps) \
-	    smtp_map11_internal(dst, smtp_generic_maps, \
-		smtp_ext_prop_mask & EXT_PROP_GENERIC); \
-    } while (0)
-
-#define QUOTE_ADDRESS(dst, src) do { \
-	if (*(src) && var_smtp_quote_821_env) { \
-	    quote_821_local(dst, src); \
-	} else { \
-	    vstring_strcpy(dst, src); \
-	} \
-    } while (0)
 
     /* Caution: changes to RETURN() also affect code outside the main loop. */
 
@@ -1353,7 +1558,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	msg_panic("%s: bad sender state %d (receiver state %d)",
 		  myname, send_state, recv_state);
     smtp_stream_setup(session->stream, *xfer_timeouts[send_state],
-		      var_smtp_rec_deadline);
+		      var_smtp_req_deadline, 0);
     if ((except = vstream_setjmp(session->stream)) != 0) {
 	msg_warn("smtp_proto: spurious flush before read in send state %d",
 		 send_state);
@@ -1457,8 +1662,9 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	case SMTP_STATE_MAIL:
 	    request->msg_stats.reuse_count = session->reuse_count;
 	    GETTIMEOFDAY(&request->msg_stats.conn_setup_done);
-	    REWRITE_ADDRESS(session->scratch2, request->sender);
-	    QUOTE_ADDRESS(session->scratch, vstring_str(session->scratch2));
+	    smtp_rewrite_generic_internal(session->scratch2, request->sender);
+	    smtp_quote_821_address(session->scratch,
+				   vstring_str(session->scratch2));
 	    vstring_sprintf(next_command, "MAIL FROM:<%s>",
 			    vstring_str(session->scratch));
 	    /* XXX Don't announce SIZE if we're going to MIME downgrade. */
@@ -1546,8 +1752,9 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	     */
 	case SMTP_STATE_RCPT:
 	    rcpt = request->rcpt_list.info + send_rcpt;
-	    REWRITE_ADDRESS(session->scratch2, rcpt->address);
-	    QUOTE_ADDRESS(session->scratch, vstring_str(session->scratch2));
+	    smtp_rewrite_generic_internal(session->scratch2, rcpt->address);
+	    smtp_quote_821_address(session->scratch,
+				   vstring_str(session->scratch2));
 	    vstring_sprintf(next_command, "RCPT TO:<%s>",
 			    vstring_str(session->scratch));
 	    if (session->features & SMTP_FEATURE_DSN) {
@@ -1733,12 +1940,12 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		 * not clobber this non-zero value once it is set. The
 		 * variable need not survive longjmp() calls, since the only
 		 * setjmp() which does not return early is the one sets this
-		 * condition, subquent failures always return early.
+		 * condition, subsequent failures always return early.
 		 */
 #define LOST_CONNECTION_INSIDE_DATA (except == SMTP_ERR_EOF)
 
 		smtp_stream_setup(session->stream, *xfer_timeouts[recv_state],
-				  var_smtp_rec_deadline);
+				  var_smtp_req_deadline, 0);
 		if (LOST_CONNECTION_INSIDE_DATA) {
 		    if (vstream_setjmp(session->stream) != 0)
 			RETURN(smtp_stream_except(state, SMTP_ERR_EOF,
@@ -2073,7 +2280,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	if (send_state == SMTP_STATE_DOT && nrcpt > 0) {
 
 	    smtp_stream_setup(session->stream, var_smtp_data1_tmout,
-			      var_smtp_rec_deadline);
+			      var_smtp_req_deadline, var_smtp_min_data_rate);
 
 	    if ((except = vstream_setjmp(session->stream)) == 0) {
 
@@ -2108,24 +2315,16 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 							   (void *) state);
 		state->space_left = var_smtp_line_limit;
 
+		if ((smtp_cli_attr.flags & SMTP_CLI_MASK_ADD_HEADERS) != 0
+		    && smtp_out_add_headers(state) < 0)
+		    RETURN(0);
+
 		while ((rec_type = rec_get(state->src, session->scratch, 0)) > 0) {
 		    if (rec_type != REC_TYPE_NORM && rec_type != REC_TYPE_CONT)
 			break;
-		    if (session->mime_state == 0) {
-			smtp_text_out((void *) state, rec_type,
-				      vstring_str(session->scratch),
-				      VSTRING_LEN(session->scratch),
-				      (off_t) 0);
-		    } else {
-			mime_errs =
-			    mime_state_update(session->mime_state, rec_type,
-					      vstring_str(session->scratch),
-					      VSTRING_LEN(session->scratch));
-			if (mime_errs) {
-			    smtp_mime_fail(state, mime_errs);
-			    RETURN(0);
-			}
-		    }
+		    if (smtp_out_raw_or_mime(state, rec_type,
+					     session->scratch) < 0)
+			RETURN(0);
 		    prev_type = rec_type;
 		}
 
@@ -2149,9 +2348,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		    }
 		} else if (prev_type == REC_TYPE_CONT)	/* missing newline */
 		    smtp_fputs("", 0, session->stream);
-		if ((session->features & SMTP_FEATURE_PIX_DELAY_DOTCRLF) != 0
-		    && request->msg_stats.incoming_arrival.tv_sec
-		  <= vstream_ftime(session->stream) - var_smtp_pix_thresh) {
+		if (session->features & SMTP_FEATURE_PIX_DELAY_DOTCRLF) {
 		    smtp_flush(session->stream);/* hurts performance */
 		    sleep(var_smtp_pix_delay);	/* not to mention this */
 		}

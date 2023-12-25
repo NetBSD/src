@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: milter8.c,v 1.2.14.1 2023/12/25 12:55:06 martin Exp $	*/
 
 /*++
 /* NAME
@@ -53,6 +53,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -125,6 +130,7 @@
 #define SMFIC_OPTNEG		'O'	/* Option negotiation */
 #define SMFIC_QUIT		'Q'	/* QUIT */
 #define SMFIC_RCPT		'R'	/* RCPT to */
+ /* Introduced with Sendmail 8.13. */
 #define SMFIC_DATA		'T'	/* DATA */
 #define SMFIC_UNKNOWN		'U'	/* Any unknown command */
  /* Introduced with Sendmail 8.14. */
@@ -143,6 +149,7 @@ static const NAME_CODE smfic_table[] = {
     "SMFIC_OPTNEG", SMFIC_OPTNEG,
     "SMFIC_QUIT", SMFIC_QUIT,
     "SMFIC_RCPT", SMFIC_RCPT,
+    /* Introduced with Sendmail 8.13. */
     "SMFIC_DATA", SMFIC_DATA,
     "SMFIC_UNKNOWN", SMFIC_UNKNOWN,
     /* Introduced with Sendmail 8.14. */
@@ -211,11 +218,12 @@ static const NAME_CODE smfir_table[] = {
 #define SMFIP_NOBODY		(1L<<4)	/* filter does not want body */
 #define SMFIP_NOHDRS		(1L<<5)	/* filter does not want headers */
 #define SMFIP_NOEOH		(1L<<6)	/* filter does not want EOH */
-#define SMFIP_NR_HDR		(1L<<7)	/* filter won't reply for header */
+ /* Introduced with Sendmail 8.13. */
 #define SMFIP_NOHREPL		SMFIP_NR_HDR
+ /* Introduced with Sendmail 8.14. */
+#define SMFIP_NR_HDR		(1L<<7)	/* filter won't reply for header */
 #define SMFIP_NOUNKNOWN 	(1L<<8)	/* filter does not want unknown cmd */
 #define SMFIP_NODATA		(1L<<9)	/* filter does not want DATA */
- /* Introduced with Sendmail 8.14. */
 #define SMFIP_SKIP		(1L<<10)/* MTA supports SMFIR_SKIP */
 #define SMFIP_RCPT_REJ		(1L<<11)/* filter wants rejected RCPTs */
 #define SMFIP_NR_CONN		(1L<<12)/* filter won't reply for connect */
@@ -246,10 +254,10 @@ static const NAME_MASK smfip_table[] = {
     "SMFIP_NOBODY", SMFIP_NOBODY,
     "SMFIP_NOHDRS", SMFIP_NOHDRS,
     "SMFIP_NOEOH", SMFIP_NOEOH,
+    /* Introduced with Sendmail 8.14. */
     "SMFIP_NR_HDR", SMFIP_NR_HDR,
     "SMFIP_NOUNKNOWN", SMFIP_NOUNKNOWN,
     "SMFIP_NODATA", SMFIP_NODATA,
-    /* Introduced with Sendmail 8.14. */
     "SMFIP_SKIP", SMFIP_SKIP,
     "SMFIP_RCPT_REJ", SMFIP_RCPT_REJ,
     "SMFIP_NR_CONN", SMFIP_NR_CONN,
@@ -273,6 +281,7 @@ static const NAME_MASK smfip_table[] = {
 #define SMFIF_ADDRCPT		(1L<<2)	/* filter may add recipients */
 #define SMFIF_DELRCPT		(1L<<3)	/* filter may delete recipients */
 #define SMFIF_CHGHDRS		(1L<<4)	/* filter may change/delete headers */
+ /* Introduced with Sendmail 8.13. */
 #define SMFIF_QUARANTINE 	(1L<<5)	/* filter may quarantine envelope */
  /* Introduced with Sendmail 8.14. */
 #define SMFIF_CHGFROM		(1L<<6)	/* filter may replace sender */
@@ -285,6 +294,7 @@ static const NAME_MASK smfif_table[] = {
     "SMFIF_ADDRCPT", SMFIF_ADDRCPT,
     "SMFIF_DELRCPT", SMFIF_DELRCPT,
     "SMFIF_CHGHDRS", SMFIF_CHGHDRS,
+    /* Introduced with Sendmail 8.13. */
     "SMFIF_QUARANTINE", SMFIF_QUARANTINE,
     /* Introduced with Sendmail 8.14. */
     "SMFIF_CHGFROM", SMFIF_CHGFROM,
@@ -665,14 +675,11 @@ static int vmilter8_read_data(MILTER8 *milter, ssize_t *data_len, va_list ap)
 		return (milter8_comm_error(milter));
 	    }
 	    buf = va_arg(ap, VSTRING *);
-	    VSTRING_RESET(buf);
-	    VSTRING_SPACE(buf, *data_len);
-	    if (vstream_fread(milter->fp, (void *) STR(buf), *data_len)
+	    if (vstream_fread_buf(milter->fp, buf, *data_len)
 		!= *data_len) {
 		msg_warn("milter %s: EOF while reading data: %m", milter->m.name);
 		return (milter8_comm_error(milter));
 	    }
-	    VSTRING_AT_OFFSET(buf, *data_len);
 	    *data_len = 0;
 	    break;
 
@@ -1147,10 +1154,12 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	    if (edit_resp == 0 && LEN(body_line_buf) > 0)
 		edit_resp = parent->repl_body(parent->chg_context,
 					      MILTER_BODY_LINE,
+					      REC_TYPE_NORM,
 					      body_line_buf);
 	    if (edit_resp == 0)
 		edit_resp = parent->repl_body(parent->chg_context,
 					      MILTER_BODY_END,
+					      /* unused*/ 0,
 					      (VSTRING *) 0);
 	    body_edit_lockout = 1;
 	    vstring_free(body_line_buf);
@@ -1546,6 +1555,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 			body_line_buf = vstring_alloc(var_line_limit);
 			edit_resp = parent->repl_body(parent->chg_context,
 						      MILTER_BODY_START,
+						      /* unused */ 0,
 						      (VSTRING *) 0);
 		    }
 		    /* Extract lines from the on-the-wire CRLF format. */
@@ -1559,9 +1569,18 @@ static const char *milter8_event(MILTER8 *milter, int event,
 						 LEN(body_line_buf) - 1);
 			    edit_resp = parent->repl_body(parent->chg_context,
 							  MILTER_BODY_LINE,
+							  REC_TYPE_NORM,
 							  body_line_buf);
 			    VSTRING_RESET(body_line_buf);
 			} else {
+			    /* Preserves \r if not followed by \n. */
+			    if (LEN(body_line_buf) == var_line_limit) {
+				edit_resp = parent->repl_body(parent->chg_context,
+							   MILTER_BODY_LINE,
+							      REC_TYPE_CONT,
+							      body_line_buf);
+				VSTRING_RESET(body_line_buf);
+			    }
 			    VSTRING_ADDCH(body_line_buf, ch);
 			}
 		    }
@@ -1916,15 +1935,6 @@ static const char *milter8_conn_event(MILTER *m,
 #define XXX_UNKNOWN	"unknown"
 #define STR_EQ(x,y)	(strcmp((x), (y)) == 0)
 #define STR_NE(x,y)	(strcmp((x), (y)) != 0)
-
-    /*
-     * XXX Sendmail 8 libmilter closes the MTA-to-filter socket when it finds
-     * out that the SMTP client has disconnected. Because of this, Postfix
-     * has to open a new MTA-to-filter socket for each SMTP client.
-     */
-#ifdef LIBMILTER_AUTO_DISCONNECT
-    milter8_connect(milter);
-#endif
 
     /*
      * Report the event.
@@ -2681,7 +2691,7 @@ static int milter8_send(MILTER *m, VSTREAM *stream)
 	|| (milter->m.macros != 0
 	    && attr_print(stream, ATTR_FLAG_NONE,
 			  SEND_ATTR_FUNC(milter_macros_print,
-					 (void *) milter->m.macros),
+					 (const void *) milter->m.macros),
 			  ATTR_TYPE_END) != 0)
 	|| (milter->m.macros == 0
 	    && attr_print(stream, ATTR_FLAG_NONE,
@@ -2835,6 +2845,10 @@ static MILTER8 *milter8_alloc(const char *name, int conn_timeout,
 
     /*
      * Fill in the structure. Note: all strings must be copied.
+     * 
+     * XXX Sendmail 8 libmilter closes the MTA-to-filter socket when it finds
+     * out that the SMTP client has disconnected. Because of this, Postfix
+     * has to open a new MTA-to-filter socket for each SMTP client.
      */
     milter = (MILTER8 *) mymalloc(sizeof(*milter));
     milter->m.name = mystrdup(name);
@@ -2842,6 +2856,11 @@ static MILTER8 *milter8_alloc(const char *name, int conn_timeout,
     milter->m.next = 0;
     milter->m.parent = parent;
     milter->m.macros = 0;
+#ifdef LIBMILTER_AUTO_DISCONNECT
+    milter->m.connect_on_demand = (void (*) (struct MILTER *)) milter8_connect;
+#else
+    milter->m.connect_on_demand = 0;
+#endif
     milter->m.conn_event = milter8_conn_event;
     milter->m.helo_event = milter8_helo_event;
     milter->m.mail_event = milter8_mail_event;

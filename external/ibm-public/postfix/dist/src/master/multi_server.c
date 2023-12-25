@@ -1,4 +1,4 @@
-/*	$NetBSD: multi_server.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: multi_server.c,v 1.2.14.1 2023/12/25 12:55:06 martin Exp $	*/
 
 /*++
 /* NAME
@@ -37,9 +37,6 @@
 /*	function is run after the program has optionally dropped its
 /*	privileges. This function should not attempt to preserve state
 /*	across calls. The stream initial state is non-blocking mode.
-/*	Optional connection attributes are provided as a hash that
-/*	is attached as stream context. NOTE: the attributes are
-/*	destroyed after this function is called.
 /*	The service name argument corresponds to the service name in the
 /*	master.cf file.
 /*	The argv argument specifies command-line arguments left over
@@ -116,6 +113,14 @@
 /*	Function to be executed prior to accepting a new connection.
 /* .sp
 /*	Only the last instance of this parameter type is remembered.
+/* .IP "CA_MAIL_SERVER_POST_ACCEPT(void *(VSTREAM *stream, char *service_name, char **argv, HTABLE *attr))"
+/*	Function to be executed after accepting a new connection.
+/*	The stream, service_name and argv arguments are the same
+/*	as with the "service" argument. The attr argument is null
+/*	or a pointer to a table with 'pass' connection attributes.
+/*	The table is destroyed after the function returns.
+/* .sp
+/*	Only the last instance of this parameter type is remembered.
 /* .IP "CA_MAIL_SERVER_PRE_DISCONN(VSTREAM *, char *service_name, char **argv)"
 /*	A pointer to a function that is called
 /*	by the multi_server_disconnect() function (see below).
@@ -153,10 +158,12 @@
 /*	This value is taken from the global \fBmain.cf\fR configuration
 /*	file. Setting \fBvar_idle_limit\fR to zero disables the idle limit.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* SEE ALSO
 /*	master(8), master process
-/*	syslogd(8) system logging
+/*	postlogd(8), Postfix logging
+/*	syslogd(8), system logging
 /* LICENSE
 /* .ad
 /* .fi
@@ -166,6 +173,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -175,7 +187,6 @@
 #include <sys/time.h>			/* select() */
 #include <unistd.h>
 #include <signal.h>
-#include <syslog.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
@@ -194,7 +205,6 @@
 /* Utility library. */
 
 #include <msg.h>
-#include <msg_syslog.h>
 #include <msg_vstream.h>
 #include <chroot_uid.h>
 #include <listen.h>
@@ -224,6 +234,7 @@
 #include <mail_flow.h>
 #include <mail_version.h>
 #include <bounce.h>
+#include <maillog_client.h>
 
 /* Process manager. */
 
@@ -246,11 +257,11 @@ static char **multi_server_argv;
 static void (*multi_server_accept) (int, void *);
 static void (*multi_server_onexit) (char *, char **);
 static void (*multi_server_pre_accept) (char *, char **);
+static void (*multi_server_post_accept) (VSTREAM *, char *, char **, HTABLE *);
 static VSTREAM *multi_server_lock;
 static int multi_server_in_flow_delay;
 static unsigned multi_server_generation;
 static void (*multi_server_pre_disconn) (VSTREAM *, char *, char **);
-static int multi_server_saved_flags;
 
 /* multi_server_exit - normal termination */
 
@@ -332,8 +343,6 @@ void    multi_server_disconnect(VSTREAM *stream)
 static void multi_server_execute(int unused_event, void *context)
 {
     VSTREAM *stream = (VSTREAM *) context;
-    HTABLE *attr = (vstream_flags(stream) == multi_server_saved_flags ?
-		    (HTABLE *) vstream_context(stream) : 0);
 
     if (multi_server_lock != 0
 	&& myflock(vstream_fileno(multi_server_lock), INTERNAL_LOCK,
@@ -354,8 +363,6 @@ static void multi_server_execute(int unused_event, void *context)
     } else {
 	multi_server_disconnect(stream);
     }
-    if (attr)
-	htable_free(attr, myfree);
 }
 
 /* multi_server_enable_read - enable read events */
@@ -400,16 +407,20 @@ static void multi_server_wakeup(int fd, HTABLE *attr)
     tmp = concatenate(multi_server_name, " socket", (char *) 0);
     vstream_control(stream,
 		    CA_VSTREAM_CTL_PATH(tmp),
-		    CA_VSTREAM_CTL_CONTEXT((void *) attr),
 		    CA_VSTREAM_CTL_END);
     myfree(tmp);
     timed_ipc_setup(stream);
-    multi_server_saved_flags = vstream_flags(stream);
     if (multi_server_in_flow_delay && mail_flow_get(1) < 0)
 	event_request_timer(multi_server_enable_read, (void *) stream,
 			    var_in_flow_delay);
     else
 	multi_server_enable_read(0, (void *) stream);
+    if (multi_server_post_accept)
+	multi_server_post_accept(stream, multi_server_name, multi_server_argv, attr);
+    else if (attr)
+	msg_warn("service ignores 'pass' connection attributes");
+    if (attr)
+	htable_free(attr, myfree);
 }
 
 /* multi_server_accept_local - accept client connection request */
@@ -557,7 +568,6 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     const char *err;
     char   *generation;
     int     msg_vstream_needed = 0;
-    int     redo_syslog_init = 0;
     const char *dsn_filter_title;
     const char **dsn_filter_maps;
 
@@ -591,7 +601,7 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
      * Initialize logging and exit handler. Do the syslog first, so that its
      * initialization completes before we enter the optional chroot jail.
      */
-    msg_syslog_init(mail_task(var_procname), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task(var_procname), MAILLOG_CLIENT_FLAG_NONE);
     if (msg_verbose)
 	msg_info("daemon started");
 
@@ -645,8 +655,6 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    if ((err = split_nameval(oname_val, &oname, &oval)) != 0)
 		msg_fatal("invalid \"-o %s\" option value: %s", optarg, err);
 	    mail_conf_update(oname, oval);
-	    if (strcmp(oname, VAR_SYSLOG_NAME) == 0)
-		redo_syslog_init = 1;
 	    myfree(oname_val);
 	    break;
 	case 's':
@@ -673,21 +681,22 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    zerolimit = 1;
 	    break;
 	default:
-	    msg_fatal("invalid option: %c", c);
+	    msg_fatal("invalid option: %c", optopt);
 	    break;
 	}
     }
+    set_mail_conf_str(VAR_SERVNAME, service_name);
 
     /*
-     * Initialize generic parameters.
+     * Initialize generic parameters and re-initialize logging in case of a
+     * non-default program name or logging destination.
      */
     mail_params_init();
-    if (redo_syslog_init)
-	msg_syslog_init(mail_task(var_procname), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task(var_procname), MAILLOG_CLIENT_FLAG_NONE);
 
     /*
      * Register higher-level dictionaries and initialize the support for
-     * dynamically-loaded dictionarles.
+     * dynamically-loaded dictionaries.
      */
     mail_dict_init();
 
@@ -743,6 +752,9 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    break;
 	case MAIL_SERVER_PRE_ACCEPT:
 	    multi_server_pre_accept = va_arg(ap, MAIL_SERVER_ACCEPT_FN);
+	    break;
+	case MAIL_SERVER_POST_ACCEPT:
+	    multi_server_post_accept = va_arg(ap, MAIL_SERVER_POST_ACCEPT_FN);
 	    break;
 	case MAIL_SERVER_PRE_DISCONN:
 	    multi_server_pre_disconn = va_arg(ap, MAIL_SERVER_DISCONN_FN);

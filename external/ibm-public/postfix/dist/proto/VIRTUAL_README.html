@@ -7,7 +7,8 @@
 
 <title>Postfix Virtual Domain Hosting Howto</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -62,7 +63,7 @@ domains, non-UNIX accounts</a>
 <h2><a name="canonical">Canonical versus hosted versus 
 other domains</a></h2>
 
-<p>Most Postfix systems are <b>final destination</b> for only a
+<p>Most Postfix systems are the <b>final destination</b> for only a
 few domain names.  These include the hostnames and [the IP addresses]
 of the machine that Postfix runs on, and sometimes also include
 the parent domain of the hostname.  The remainder of this document
@@ -71,7 +72,7 @@ usually implemented with the Postfix local domain address class,
 as defined in the ADDRESS_CLASS_README file.</p>
 
 <p> Besides the canonical domains, Postfix can be configured to be
-<b>final destination</b> for any number of additional domains.
+the <b>final destination</b> for any number of additional domains.
 These domains are called hosted, because they are not directly
 associated with the name of the machine itself. Hosted domains are
 usually implemented with the virtual alias domain address class
@@ -87,7 +88,7 @@ relay domain address class, as defined in the ADDRESS_CLASS_README
 file.  </p>
 
 <p> Finally, Postfix can be configured as a transit host for sending
-mail across the internet. Obviously, Postfix is not final destination
+mail across the internet. Obviously, Postfix is not the final destination
 for such mail. This function is available only for authorized
 clients and/or users, and is implemented by the default domain
 address class, as defined in the ADDRESS_CLASS_README file. </p>

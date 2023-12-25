@@ -7,7 +7,8 @@
 
 <title>Postfix LDAP Howto</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -95,6 +96,10 @@ your Postfix source tree should work: </p>
     AUXLIBS_LDAP="-L/usr/local/lib -lldap -L/usr/local/lib -llber"
 </pre>
 </blockquote>
+
+<p> If your LDAP shared library is in a directory that the RUN-TIME
+linker does not know about, add a "-Wl,-R,/path/to/directory" option after
+"-lldap". </p>
 
 <p> Postfix versions before 3.0 use AUXLIBS instead of AUXLIBS_LDAP.
 With Postfix 3.0 and later, the old AUXLIBS variable still supports
@@ -529,7 +534,7 @@ query_filter = (&amp;(mailacceptinggeneralid=%s)(!(|(maildrop="*|*")(maildrop="*
 </pre>
 </blockquote>
 
-<li> <p> And for that matter, even for aliases, you may not want users able to
+<li> <p> And for that matter, even for aliases, you may not want users to be able to
   specify their maildrops as programs, includes, etc. This might be
   particularly pertinent on a "sealed" server where they don't have
   local UNIX accounts, but exist only in LDAP and Cyrus. You might allow

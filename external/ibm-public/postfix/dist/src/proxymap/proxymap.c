@@ -1,4 +1,4 @@
-/*	$NetBSD: proxymap.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: proxymap.c,v 1.2.14.1 2023/12/25 12:55:13 martin Exp $	*/
 
 /*++
 /* NAME
@@ -126,7 +126,8 @@
 /*	type of security hole where ownership of a file or directory
 /*	does not match the provider of its content.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* BUGS
 /*	The \fBproxymap\fR(8) server provides service to multiple clients,
 /*	and must therefore not be used for tables that have high-latency
@@ -183,6 +184,10 @@
 /* .IP "\fBproxy_write_maps (see 'postconf -d' output)\fR"
 /*	The lookup tables that the \fBproxymap\fR(8) server is allowed to
 /*	access for the read-write service.
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
 /* SEE ALSO
 /*	postconf(5), configuration parameters
 /*	master(5), generic daemon options
@@ -229,6 +234,8 @@
 #include <htable.h>
 #include <stringops.h>
 #include <dict.h>
+#include <dict_pipe.h>
+#include <dict_union.h>
 
 /* Global library. */
 
@@ -256,7 +263,6 @@ char   *var_virt_alias_doms;
 char   *var_virt_mailbox_maps;
 char   *var_virt_mailbox_doms;
 char   *var_relay_rcpt_maps;
-char   *var_relay_domains;
 char   *var_canonical_maps;
 char   *var_send_canon_maps;
 char   *var_rcpt_canon_maps;
@@ -293,6 +299,27 @@ static int proxy_writer;
 #define STR(x)			vstring_str(x)
 #define VSTREQ(x,y)		(strcmp(STR(x),y) == 0)
 
+/* get_nested_dict_name - return nested dictionary name pointer, or null */
+
+static char *get_nested_dict_name(char *type_name)
+{
+    const struct {
+	const char *type_col;
+	ssize_t type_col_len;
+    }      *prefix, prefixes[] = {
+	DICT_TYPE_UNION ":", (sizeof(DICT_TYPE_UNION ":") - 1),
+	DICT_TYPE_PIPE ":", (sizeof(DICT_TYPE_PIPE ":") - 1),
+    };
+
+#define COUNT_OF(x) (sizeof(x)/sizeof((x)[0]))
+
+    for (prefix = prefixes; prefix < prefixes + COUNT_OF(prefixes); prefix++) {
+	if (strncmp(type_name, prefix->type_col, prefix->type_col_len) == 0)
+	    return (type_name + prefix->type_col_len);
+    }
+    return (0);
+}
+
 /* proxy_map_find - look up or open table */
 
 static DICT *proxy_map_find(const char *map_type_name, int request_flags,
@@ -310,6 +337,8 @@ static DICT *proxy_map_find(const char *map_type_name, int request_flags,
      * deny the request.
      */
 #define PROXY_MAP_FIND_ERROR_RETURN(x)  { *statp = (x); return (0); }
+#define PROXY_MAP_PARAM_NAME(proxy_writer)  \
+	((proxy_writer) == 0 ? VAR_PROXY_READ_MAPS : VAR_PROXY_WRITE_MAPS)
 
     while (strncmp(map_type_name, PROXY_COLON, PROXY_COLON_LEN) == 0)
 	map_type_name += PROXY_COLON_LEN;
@@ -321,8 +350,7 @@ static DICT *proxy_map_find(const char *map_type_name, int request_flags,
 	msg_warn("to approve this table for %s access, list %s:%s in %s:%s",
 		 proxy_writer == 0 ? "read-only" : "read-write",
 		 DICT_TYPE_PROXY, map_type_name, MAIN_CONF_FILE,
-		 proxy_writer == 0 ? VAR_PROXY_READ_MAPS :
-		 VAR_PROXY_WRITE_MAPS);
+		 PROXY_MAP_PARAM_NAME(proxy_writer));
 	PROXY_MAP_FIND_ERROR_RETURN(PROXY_STAT_DENY);
     }
 
@@ -657,15 +685,68 @@ DICT   *dict_proxy_open(const char *map, int open_flags, int dict_flags)
     return (dict_open(map, open_flags, dict_flags));
 }
 
+/* authorize_proxied_maps - recursively authorize maps */
+
+static void authorize_proxied_maps(char *bp)
+{
+    const char *sep = CHARS_COMMA_SP;
+    const char *parens = CHARS_BRACE;
+    char   *type_name;
+
+    while ((type_name = mystrtokq(&bp, sep, parens)) != 0) {
+	char   *nested_info;
+
+	/* Maybe { maptype:mapname attr=value... } */
+	if (*type_name == parens[0]) {
+	    char   *err;
+
+	    /* Warn about blatant syntax error. */
+	    if ((err = extpar(&type_name, parens, EXTPAR_FLAG_NONE)) != 0) {
+		msg_warn("bad %s parameter value: %s",
+			 PROXY_MAP_PARAM_NAME(proxy_writer), err);
+		myfree(err);
+		continue;
+	    }
+	    /* Don't try to second-guess the semantics of { }. */
+	    if ((type_name = mystrtokq(&type_name, sep, parens)) == 0)
+		continue;
+	}
+	/* Recurse into nested map (pipemap, unionmap). */
+	if ((nested_info = get_nested_dict_name(type_name)) != 0) {
+	    char   *err;
+
+	    if (*nested_info != parens[0])
+		continue;
+	    /* Warn about blatant syntax error. */
+	    if ((err = extpar(&nested_info, parens, EXTPAR_FLAG_NONE)) != 0) {
+		msg_warn("bad %s parameter value: %s",
+			 PROXY_MAP_PARAM_NAME(proxy_writer), err);
+		myfree(err);
+		continue;
+	    }
+	    authorize_proxied_maps(nested_info);
+	    continue;
+	}
+	if (strncmp(type_name, PROXY_COLON, PROXY_COLON_LEN))
+	    continue;
+	do {
+	    type_name += PROXY_COLON_LEN;
+	} while (!strncmp(type_name, PROXY_COLON, PROXY_COLON_LEN));
+	if (strchr(type_name, ':') != 0
+	    && htable_locate(proxy_auth_maps, type_name) == 0) {
+	    (void) htable_enter(proxy_auth_maps, type_name, (void *) 0);
+	    if (msg_verbose)
+		msg_info("allowlisting %s from %s", type_name,
+			 PROXY_MAP_PARAM_NAME(proxy_writer));
+	}
+    }
+}
+
 /* post_jail_init - initialization after privilege drop */
 
 static void post_jail_init(char *service_name, char **unused_argv)
 {
-    const char *sep = CHARS_COMMA_SP;
-    const char *parens = CHARS_BRACE;
     char   *saved_filter;
-    char   *bp;
-    char   *type_name;
 
     /*
      * Are we proxy writer?
@@ -688,19 +769,10 @@ static void post_jail_init(char *service_name, char **unused_argv)
     /*
      * Prepare the pre-approved list of proxied tables.
      */
-    saved_filter = bp = mystrdup(proxy_writer ? var_proxy_write_maps :
-				 var_proxy_read_maps);
+    saved_filter = mystrdup(proxy_writer ? var_proxy_write_maps :
+			    var_proxy_read_maps);
     proxy_auth_maps = htable_create(13);
-    while ((type_name = mystrtokq(&bp, sep, parens)) != 0) {
-	if (strncmp(type_name, PROXY_COLON, PROXY_COLON_LEN))
-	    continue;
-	do {
-	    type_name += PROXY_COLON_LEN;
-	} while (!strncmp(type_name, PROXY_COLON, PROXY_COLON_LEN));
-	if (strchr(type_name, ':') != 0
-	    && htable_locate(proxy_auth_maps, type_name) == 0)
-	    (void) htable_enter(proxy_auth_maps, type_name, (void *) 0);
-    }
+    authorize_proxied_maps(saved_filter);
     myfree(saved_filter);
 
     /*
@@ -723,6 +795,21 @@ static void pre_accept(char *unused_name, char **unused_argv)
     }
 }
 
+/* post_accept - announce our protocol name */
+
+static void post_accept(VSTREAM *stream, char *unused_name, char **unused_argv,
+			        HTABLE *unused_attr)
+{
+
+    /*
+     * Announce the protocol.
+     */
+    attr_print(stream, ATTR_FLAG_NONE,
+	       SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_PROXYMAP),
+	       ATTR_TYPE_END);
+    (void) vstream_fflush(stream);
+}
+
 MAIL_VERSION_STAMP_DECLARE;
 
 /* main - pass control to the multi-threaded skeleton */
@@ -737,7 +824,6 @@ int     main(int argc, char **argv)
 	VAR_VIRT_MAILBOX_MAPS, DEF_VIRT_MAILBOX_MAPS, &var_virt_mailbox_maps, 0, 0,
 	VAR_VIRT_MAILBOX_DOMS, DEF_VIRT_MAILBOX_DOMS, &var_virt_mailbox_doms, 0, 0,
 	VAR_RELAY_RCPT_MAPS, DEF_RELAY_RCPT_MAPS, &var_relay_rcpt_maps, 0, 0,
-	VAR_RELAY_DOMAINS, DEF_RELAY_DOMAINS, &var_relay_domains, 0, 0,
 	VAR_CANONICAL_MAPS, DEF_CANONICAL_MAPS, &var_canonical_maps, 0, 0,
 	VAR_SEND_CANON_MAPS, DEF_SEND_CANON_MAPS, &var_send_canon_maps, 0, 0,
 	VAR_RCPT_CANON_MAPS, DEF_RCPT_CANON_MAPS, &var_rcpt_canon_maps, 0, 0,
@@ -761,6 +847,7 @@ int     main(int argc, char **argv)
 		      CA_MAIL_SERVER_STR_TABLE(str_table),
 		      CA_MAIL_SERVER_POST_INIT(post_jail_init),
 		      CA_MAIL_SERVER_PRE_ACCEPT(pre_accept),
+		      CA_MAIL_SERVER_POST_ACCEPT(post_accept),
     /* XXX CA_MAIL_SERVER_SOLITARY if proxywrite */
 		      0);
 }

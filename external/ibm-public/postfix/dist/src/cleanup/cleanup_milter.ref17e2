@@ -1,0 +1,30 @@
+*** ENVELOPE RECORDS test-queue-file17e.tmp ***
+        0 message_size:             343             215               1               0             343               0
+       97 message_arrival_time: Tue Nov 18 16:43:29 2014
+      116 create_time: Tue Nov 18 16:43:29 2014
+      140 named_attribute: rewrite_context=local
+      163 sender_fullname: Wietse Venema
+      178 sender: user@example.com
+      196 pointer_record:             654
+      654 original_recipient: user@example.com
+      672 recipient: user@example.com
+      690 pointer_record:             213
+      213 *** MESSAGE CONTENTS test-queue-file17e.tmp ***
+      215 regular_text: Received: by host.example.com (Postfix, from userid 1001)
+      274 regular_text: 	id 663E22172797; Tue, 18 Nov 2014 16:43:29 -0500 (EST)
+      331 regular_text: To: user@example.com
+      353 regular_text: Subject: test
+      368 padding: 0
+      371 regular_text: Message-Id: <20141118214329.663E22172797@host.example.com>
+      431 regular_text: Date: Tue, 18 Nov 2014 16:43:29 -0500 (EST)
+      476 regular_text: From: user@example.com (Wietse Venema)
+      516 pointer_record:               0
+      533 regular_text: 
+      535 regular_text: test
+      541 pointer_record:               0
+      558 *** HEADER EXTRACTED test-queue-file17e.tmp ***
+      560 pointer_record:               0
+      577 named_attribute: dsn_orig_rcpt=rfc822;user@example.com
+      616 original_recipient: user@example.com
+      634 canceled_recipient: user@example.com
+      652 *** MESSAGE FILE END test-queue-file17e.tmp ***

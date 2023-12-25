@@ -3,7 +3,7 @@
 #
 #msg_verbose 1
 smtpd_delay_reject 0
-mynetworks 127.0.0.0/8,168.100.189.0/28
+mynetworks 127.0.0.0/8,168.100.3.0/28
 mydestination porcupine.org
 relay_domains porcupine.org
 helo foobar
@@ -12,15 +12,15 @@ helo foobar
 # DNSWL (by IP address)
 #
 
-# Whitelist overrides reject.
+# Allowlist overrides reject.
 client_restrictions permit_dnswl_client,wild.porcupine.org,reject
-client spike.porcupine.org 168.100.189.2
+client spike.porcupine.org 168.100.3.2
 
-# Whitelist does not fire - reject.
+# Allowlist does not fire - reject.
 client_restrictions permit_dnswl_client,porcupine.org,reject
-client spike.porcupine.org 168.100.189.2
+client spike.porcupine.org 168.100.3.2
 
-# Whitelist does not override reject_unauth_destination.
+# Allowlist does not override reject_unauth_destination.
 client_restrictions permit
 recipient_restrictions permit_dnswl_client,wild.porcupine.org,reject_unauth_destination
 # Unauthorized destination - reject.
@@ -32,24 +32,24 @@ rcpt wietse@porcupine.org
 # RHSWL (by domain name)
 #
 
-# Whitelist overrides reject.
+# Allowlist overrides reject.
 client_restrictions permit_rhswl_client,dnswl.porcupine.org,reject
-# Non-whitelisted client name - reject.
-client spike.porcupine.org 168.100.189.2
-# Whitelisted client name - accept.
-client example.tld 168.100.189.2
+# Non-allowlisted client name - reject.
+client spike.porcupine.org 168.100.3.2
+# Allowlisted client name - accept.
+client example.tld 168.100.3.2
 
-# Whitelist does not override reject_unauth_destination.
+# Allowlist does not override reject_unauth_destination.
 client_restrictions permit
 recipient_restrictions permit_rhswl_client,dnswl.porcupine.org,reject_unauth_destination
-# Non-whitelisted client name.
-client spike.porcupine.org 168.100.189.2
+# Non-allowlisted client name.
+client spike.porcupine.org 168.100.3.2
 # Unauthorized destination - reject.
 rcpt rname@rdomain
 # Authorized destination - accept.
 rcpt wietse@porcupine.org
-# Whitelisted client name.
-client example.tld 168.100.189.2
+# Allowlisted client name.
+client example.tld 168.100.3.2
 # Unauthorized destination - reject.
 rcpt rname@rdomain
 # Authorized destination - accept.

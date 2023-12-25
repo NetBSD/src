@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_connect.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: inet_connect.c,v 1.1.1.1.52.1 2023/12/25 12:55:30 martin Exp $	*/
 
 /*++
 /* NAME
@@ -47,6 +47,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System interfaces. */
@@ -87,7 +92,7 @@ int     inet_connect(const char *addr, int block_mode, int timeout)
     int     aierr;
     int     sock;
     MAI_HOSTADDR_STR hostaddr;
-    INET_PROTO_INFO *proto_info;
+    const INET_PROTO_INFO *proto_info;
     int     found;
 
     /*
@@ -98,9 +103,13 @@ int     inet_connect(const char *addr, int block_mode, int timeout)
     if ((parse_err = host_port(buf, &host, "localhost", &port, (char *) 0)) != 0)
 	msg_fatal("%s: %s", addr, parse_err);
     if ((aierr = hostname_to_sockaddr(host, port, SOCK_STREAM, &res0)) != 0)
-	msg_fatal("host/service %s/%s not found: %s",
-		  host, port, MAI_STRERROR(aierr));
+	msg_warn("host or service %s not found: %s",
+		 addr, MAI_STRERROR(aierr));
     myfree(buf);
+    if (aierr) {
+	errno = EADDRNOTAVAIL;			/* for up-stream "%m" */
+	return (-1);
+    }
 
     proto_info = inet_proto_info();
     for (sock = -1, found = 0, res = res0; res != 0; res = res->ai_next) {

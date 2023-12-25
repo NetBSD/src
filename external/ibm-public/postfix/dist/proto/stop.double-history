@@ -1,0 +1,42 @@
+ message from the postqueue command File postqueue postqueue c 
+ or kernel bug emits a weird error File postqueue postqueue c 
+ Dukhovni File auxiliary collate collate pl 
+ sanitization File showq showq c 
+ with setgid permissions File postlogd postlogd c 
+ cleanup server enters the chroot jail Files cleanup cleanup h 
+ global maps c global maps h smtp smtp c 
+ cleanup cleanup h cleanup cleanup_init c 
+ src global mail_dict c src postalias postalias c 
+ src postmap postmap c 
+ manpage File postqueue postqueue c 
+ Fix by Viktor Dukhovni Files tls tls h tls tls_dane c 
+ Discovered by Benny Pedersen File postscreen postscreen c 
+ proto postconf proto src tlsproxy tlsproxy c src smtpd smtpd c 
+ proto postconf proto src tlsproxy tlsproxy c src smtpd smtpd c 
+ src tls tls h src tls tls_proxy_client_misc c src tls tls_misc c 
+ src global mail_params h src smtp smtp c 
+ attacks Fix by Viktor Dukhovni Files tls tls h tls_client c 
+ proto stop spell proto html dns dns h dns dns_lookup c 
+ smtp smtp_addr h smtp smtp c smtp smtp_connect c 
+ smtp smtp h smtp smtp_params c smtp smtp_session c 
+ File smtpd smtpd c 
+ smtp smtp_addr c smtp smtp_addr h smtp smtp c 
+ smtp smtp_connect c smtp smtp h smtp smtp_params c 
+ arguments Files src dns dns h src dns dns_rr_eq_sa c 
+ only a subset of all arguments Files src dns dns h 
+ global mail_params h smtp smtp c smtpd smtpd c tls tls_misc c 
+ global mail_params h smtp smtp c smtpd smtpd c tls tls_misc c 
+ tls tls_proxy_client_scan c tls tls_proxy h tlsproxy tlsproxy c 
+ smtp smtp c smtpd smtpd c tls tls_misc c 
+ smtp smtp c smtpd smtpd c tls tls_misc c 
+proto  proto SASL_README html proto SQLITE_README html 
+ proto postconf proto global mail_params h smtp smtp c 
+ smtpd smtpd c tls tls_misc c tls tls_proxy_client_misc c 
+ tls tls_proxy h tlsproxy tlsproxy c 
+ postfix postfix c postlog postlog c 
+ postfix postfix c postlog postlog c 
+ util net_mask_top hc smtpd smtpd c smtpd smtpd_peer c 
+ util inet_prefix_top hc smtpd smtpd c smtpd smtpd_peer c 
+ File smtp smtp h 
+ manpage File postscreen postscreen c 
+ Files postconf postconf h postconf postconf_dbms c 

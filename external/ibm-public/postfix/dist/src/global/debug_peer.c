@@ -1,4 +1,4 @@
-/*	$NetBSD: debug_peer.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: debug_peer.c,v 1.2.14.1 2023/12/25 12:54:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -10,7 +10,7 @@
 /*
 /*	void	debug_peer_init(void)
 /*
-/*	int	peer_debug_check(peer_name, peer_addr)
+/*	int	debug_peer_check(peer_name, peer_addr)
 /*	const char *peer_name;
 /*	const char *peer_addr;
 /*

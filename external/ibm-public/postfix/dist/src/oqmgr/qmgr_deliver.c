@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_deliver.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: qmgr_deliver.c,v 1.2.14.1 2023/12/25 12:55:07 martin Exp $	*/
 
 /*++
 /* NAME
@@ -105,18 +105,16 @@ int     qmgr_deliver_concurrency;
 
 static int qmgr_deliver_initial_reply(VSTREAM *stream)
 {
-    int     stat;
-
     if (peekfd(vstream_fileno(stream)) < 0) {
 	msg_warn("%s: premature disconnect", VSTREAM_PATH(stream));
 	return (DELIVER_STAT_CRASH);
     } else if (attr_scan(stream, ATTR_FLAG_STRICT,
-			 RECV_ATTR_INT(MAIL_ATTR_STATUS, &stat),
-			 ATTR_TYPE_END) != 1) {
+		  RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_DELIVER),
+			 ATTR_TYPE_END) != 0) {
 	msg_warn("%s: malformed response", VSTREAM_PATH(stream));
-	return (DELIVER_STAT_CRASH);
+	return (DELIVER_STAT_DEFER);
     } else {
-	return (stat ? DELIVER_STAT_DEFER : 0);
+	return (0);
     }
 }
 
@@ -195,7 +193,7 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
 	       SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
 	       SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, message->dsn_envid),
 	       SEND_ATTR_INT(MAIL_ATTR_DSN_RET, message->dsn_ret),
-	       SEND_ATTR_FUNC(msg_stats_print, (void *) &stats),
+	       SEND_ATTR_FUNC(msg_stats_print, (const void *) &stats),
     /* XXX Should be encapsulated with ATTR_TYPE_FUNC. */
 	     SEND_ATTR_STR(MAIL_ATTR_LOG_CLIENT_NAME, message->client_name),
 	     SEND_ATTR_STR(MAIL_ATTR_LOG_CLIENT_ADDR, message->client_addr),
@@ -215,7 +213,7 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
 	vstring_free(sender_buf);
     for (recipient = list.info; recipient < list.info + list.len; recipient++)
 	attr_print(stream, ATTR_FLAG_NONE,
-		   SEND_ATTR_FUNC(rcpt_print, (void *) recipient),
+		   SEND_ATTR_FUNC(rcpt_print, (const void *) recipient),
 		   ATTR_TYPE_END);
     if (vstream_fflush(stream) != 0) {
 	msg_warn("write to process (%s): %m", entry->queue->transport->name);

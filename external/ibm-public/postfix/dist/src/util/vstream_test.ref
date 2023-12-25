@@ -1,0 +1,41 @@
+buffer size test: copy text with 1 buffer size, ignore requests to shrink
+abcdef
+actual read/write buffer sizes: 1/1
+
+buffer size test: copy text with 2 buffer size, ignore requests to shrink
+ghijkl
+actual read/write buffer sizes: 2/2
+
+buffer size test: copy text with 1 buffer size, ignore requests to shrink
+mnopqr
+actual read/write buffer sizes: 2/2
+
+formatting test: print a number
+1234567890
+
+memory stream test prep: prefill the VSTRING
+VSTRING content length: 8/8, content: 01234567
+
+memory stream test: open the VSTRING for writing, overwrite, close
+initial memory VSTREAM write offset: 0/8
+final memory VSTREAM write offset: 5/8
+VSTRING content length: 5/8, content: hallo
+
+memory stream test: open the VSTRING for append, write multiple, then overwrite 1
+initial memory VSTREAM write offset: 5/8
+final memory VSTREAM write offset: 11/16
+VSTRING content length: 11/16, content: hallo world
+
+replace second character and close
+VSTRING content length: 11/16, content: hello world
+
+memory stream test: open VSTRING for reading, then read
+initial memory VSTREAM read offset: 0/11
+reading memory VSTREAM: hello world
+final memory VSTREAM read offset: 11/11
+seeking to offset 12 should work: PASS
+VSTREAM_GETC should return VSTREAM_EOF
+PASS
+final memory VSTREAM read offset: 12/11
+VSTRING content length: 11/16, content: hello world
+

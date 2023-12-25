@@ -1,4 +1,4 @@
-.\"	$NetBSD: generic.5,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: generic.5,v 1.2.14.1 2023/12/25 12:54:40 martin Exp $
 .\"
 .TH GENERIC 5 
 .ad
@@ -49,7 +49,7 @@ or SQL, the same lookups are done as for ordinary indexed files.
 
 Alternatively, the table can be provided as a regular\-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP\-based server. In those case, the lookups
+can be directed to a TCP\-based server. In those cases, the lookups
 are done in a slightly different way as described below under
 "REGULAR EXPRESSION TABLES" or "TCP\-BASED TABLES".
 .SH "CASE FOLDING"
@@ -82,8 +82,12 @@ starts with whitespace continues a logical line.
 .ad
 .fi
 With lookups from indexed files such as DB or DBM, or from networked
-tables such as NIS, LDAP or SQL, patterns are tried in the order as
-listed below:
+tables such as NIS, LDAP or SQL, each \fIuser\fR@\fIdomain\fR
+query produces a sequence of query patterns as described below.
+
+Each query pattern is sent to each specified lookup table
+before trying the next query pattern, until a match is
+found.
 .IP "\fIuser\fR@\fIdomain address\fR"
 Replace \fIuser\fR@\fIdomain\fR by \fIaddress\fR. This form
 has the highest precedence.
@@ -152,7 +156,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP\-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available up to and including Postfix version 2.4.
+This feature is available in Postfix 2.5 and later.
 
 Each lookup operation uses the entire address once.  Thus,
 \fIuser@domain\fR mail addresses are not broken up into their
@@ -202,29 +206,32 @@ The table format does not understand quoting conventions.
 The following \fBmain.cf\fR parameters are especially relevant.
 The text below provides only a parameter summary. See
 \fBpostconf\fR(5) for more details including examples.
-.IP \fBsmtp_generic_maps\fR
-Address mapping lookup table for envelope and header sender
-and recipient addresses while delivering mail via SMTP.
-.IP \fBpropagate_unmatched_extensions\fR
-A list of address rewriting or forwarding mechanisms that propagate
-an address extension from the original address to the result.
-Specify zero or more of \fBcanonical\fR, \fBvirtual\fR, \fBalias\fR,
-\fBforward\fR, \fBinclude\fR, or \fBgeneric\fR.
+.IP "\fBsmtp_generic_maps (empty)\fR"
+Optional lookup tables that perform address rewriting in the
+Postfix SMTP client, typically to transform a locally valid address into
+a globally valid address when sending mail across the Internet.
+.IP "\fBpropagate_unmatched_extensions (canonical, virtual)\fR"
+What address lookup tables copy an address extension from the lookup
+key to the lookup result.
 .PP
 Other parameters of interest:
-.IP \fBinet_interfaces\fR
-The network interface addresses that this system receives mail on.
-You need to stop and start Postfix when this parameter changes.
-.IP \fBproxy_interfaces\fR
-Other interfaces that this machine receives mail on by way of a
-proxy agent or network address translator.
-.IP \fBmydestination\fR
-List of domains that this mail system considers local.
-.IP \fBmyorigin\fR
-The domain that is appended to locally\-posted mail.
-.IP \fBowner_request_special\fR
-Give special treatment to \fBowner\-\fIxxx\fR and \fIxxx\fB\-request\fR
-addresses.
+.IP "\fBinet_interfaces (all)\fR"
+The network interface addresses that this mail system receives
+mail on.
+.IP "\fBproxy_interfaces (empty)\fR"
+The network interface addresses that this mail system receives mail
+on by way of a proxy or network address translation unit.
+.IP "\fBmydestination ($myhostname, localhost.$mydomain, localhost)\fR"
+The list of domains that are delivered via the $local_transport
+mail delivery transport.
+.IP "\fBmyorigin ($myhostname)\fR"
+The domain name that locally\-posted mail appears to come
+from, and that locally posted mail is delivered to.
+.IP "\fBowner_request_special (yes)\fR"
+Enable special treatment for owner\-\fIlistname\fR entries in the
+\fBaliases\fR(5) file, and don't split owner\-\fIlistname\fR and
+\fIlistname\fR\-request address localparts when the recipient_delimiter
+is set to "\-".
 .SH "SEE ALSO"
 .na
 .nf

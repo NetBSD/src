@@ -1,0 +1,13 @@
+unknown: RUN test case 0 normal
+unknown: PASS test 0
+unknown: RUN test case 1 trims leading/trailing wsp around rule-text
+unknown: PASS test 1
+unknown: RUN test case 2 trims leading/trailing comma-wsp around rule-spec
+unknown: PASS test 2
+unknown: RUN test case 3 empty inline-file
+unknown: PASS test 3
+unknown: RUN test case 4 propagates extpar error for inline-file
+unknown: PASS test 4
+unknown: RUN test case 5 propagates extpar error for rule-spec
+unknown: PASS test 5
+unknown: PASS=6 FAIL=0

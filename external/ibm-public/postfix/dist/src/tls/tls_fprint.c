@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_fprint.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: tls_fprint.c,v 1.2.14.1 2023/12/25 12:55:20 martin Exp $	*/
 
 /*++
 /* NAME
@@ -8,19 +8,18 @@
 /* SYNOPSIS
 /*	#include <tls.h>
 /*
-/*	char	*tls_serverid_digest(props, protomask, ciphers)
+/*	EVP_MD *tls_digest_byname(const char *mdalg, EVP_MD_CTX **mdctxPtr)
+/*	const char *mdalg;
+/*	EVP_MD_CTX **mdctxPtr;
+/*
+/*	char	*tls_serverid_digest(TLScontext, props, ciphers)
+/*	TLS_SESS_STATE *TLScontext;
 /*	const TLS_CLIENT_START_PROPS *props;
-/*	long	protomask;
 /*	const char *ciphers;
 /*
 /*	char	*tls_digest_encode(md_buf, md_len)
 /*	const unsigned char *md_buf;
 /*	const char *md_len;
-/*
-/*	char	*tls_data_fprint(buf, len, mdalg)
-/*	const char *buf;
-/*	int	len;
-/*	const char *mdalg;
 /*
 /*	char	*tls_cert_fprint(peercert, mdalg)
 /*	X509	*peercert;
@@ -30,17 +29,19 @@
 /*	X509	*peercert;
 /*	const char *mdalg;
 /* DESCRIPTION
+/*	tls_digest_byname() constructs, and optionally returns, an EVP_MD_CTX
+/*	handle for performing digest operations with the algorithm named by the
+/*	mdalg parameter.  The return value is non-null on success, and holds a
+/*	digest algorithm handle.  If the mdctxPtr argument is non-null the
+/*	created context is returned to the caller, who is then responsible for
+/*	deleting it by calling EVP_MD_ctx_free() once it is no longer needed.
+/*
 /*	tls_digest_encode() converts a binary message digest to a hex ASCII
 /*	format with ':' separators between each pair of hex digits.
 /*	The return value is dynamically allocated with mymalloc(),
 /*	and the caller must eventually free it with myfree().
 /*
-/*	tls_data_fprint() digests unstructured data, and encodes the digested
-/*	result via tls_digest_encode().  The return value is dynamically
-/*	allocated with mymalloc(), and the caller must eventually free it
-/*	with myfree().
-/*
-/*	tls_cert_fprint() returns a fingerprint of the the given
+/*	tls_cert_fprint() returns a fingerprint of the given
 /*	certificate using the requested message digest, formatted
 /*	with tls_digest_encode(). Panics if the
 /*	(previously verified) digest algorithm is not found. The return
@@ -55,14 +56,15 @@
 /*	and the caller must eventually free it with myfree().
 /*
 /*	tls_serverid_digest() suffixes props->serverid computed by the SMTP
-/*	client with "&" plus a digest of additional parameters
-/*	needed to ensure that re-used sessions are more likely to
-/*	be reused and that they will satisfy all protocol and
-/*	security requirements.
-/*	The return value is dynamically allocated with mymalloc(),
-/*	and the caller must eventually free it with myfree().
+/*	client with "&" plus a digest of additional parameters needed to ensure
+/*	that re-used sessions are more likely to be reused and that they will
+/*	satisfy all protocol and security requirements.  The return value is
+/*	dynamically allocated with mymalloc(), and the caller must eventually
+/*	free it with myfree().
 /*
 /*	Arguments:
+/* .IP mdalg
+/*	A digest algorithm name, such as "sha256".
 /* .IP peercert
 /*	Server or client X.509 certificate.
 /* .IP md_buf
@@ -73,6 +75,9 @@
 /*	Name of a message digest algorithm suitable for computing secure
 /*	(1st pre-image resistant) message digests of certificates. For now,
 /*	md5, sha1, or member of SHA-2 family if supported by OpenSSL.
+/* .IP mdctxPtr
+/*	Pointer to an (EVP_MD_CTX *) handle, or NULL if only probing for
+/*	algorithm support without immediate use in mind.
 /* .IP buf
 /*	Input data for the message digest algorithm mdalg.
 /* .IP len
@@ -127,47 +132,119 @@
 
 static const char hexcodes[] = "0123456789ABCDEF";
 
-#define checkok(ret)	(ok &= ((ret) ? 1 : 0))
-#define digest_data(p, l) checkok(EVP_DigestUpdate(mdctx, (char *)(p), (l)))
-#define digest_object(p) digest_data((p), sizeof(*(p)))
-#define digest_string(s) digest_data((s), strlen(s)+1)
+#define CHECK_OK_AND(stillok) (ok = ok && (stillok))
+#define CHECK_OK_AND_DIGEST_OBJECT(m, p) \
+	CHECK_OK_AND_DIGEST_DATA((m), (unsigned char *)(p), sizeof(*(p)))
+#define CHECK_OK_AND_DIGEST_DATA(m, p, l) CHECK_OK_AND(digest_bytes((m), (p), (l)))
+#define CHECK_OK_AND_DIGEST_CHARS(m, s) CHECK_OK_AND(digest_chars((m), (s)))
 
-#define digest_dane(dane, memb) do { \
-	if ((dane)->memb != 0) \
-	    checkok(digest_tlsa_usage(mdctx, (dane)->memb, #memb)); \
-    } while (0)
+/* digest_bytes - hash octet string of given length */
 
-#define digest_tlsa_argv(tlsa, memb) do { \
-	if ((tlsa)->memb) { \
-	    digest_string(#memb); \
-	    for (dgst = (tlsa)->memb->argv; *dgst; ++dgst) \
-		digest_string(*dgst); \
-	} \
-    } while (0)
-
-/* digest_tlsa_usage - digest TA or EE match list sorted by alg and value */
-
-static int digest_tlsa_usage(EVP_MD_CTX * mdctx, TLS_TLSA *tlsa,
-			             const char *usage)
+static int digest_bytes(EVP_MD_CTX *ctx, const unsigned char *buf, size_t len)
 {
-    char  **dgst;
+    return (EVP_DigestUpdate(ctx, buf, len));
+}
+
+/* digest_chars - hash string including trailing NUL */
+
+static int digest_chars(EVP_MD_CTX *ctx, const char *s)
+{
+    return (EVP_DigestUpdate(ctx, s, strlen(s) + 1));
+}
+
+/* tlsa_cmp - compare TLSA RRs for sorting to canonical order */
+
+static int tlsa_cmp(const void *a, const void *b)
+{
+    TLS_TLSA *p = *(TLS_TLSA **) a;
+    TLS_TLSA *q = *(TLS_TLSA **) b;
+    int     d;
+
+    if ((d = (int) p->usage - (int) q->usage) != 0)
+	return d;
+    if ((d = (int) p->selector - (int) q->selector) != 0)
+	return d;
+    if ((d = (int) p->mtype - (int) q->mtype) != 0)
+	return d;
+    if ((d = (int) p->length - (int) q->length) != 0)
+	return d;
+    return (memcmp(p->data, q->data, p->length));
+}
+
+/* tls_digest_tlsa - fold in digest of TLSA records */
+
+static int tls_digest_tlsa(EVP_MD_CTX *mdctx, TLS_TLSA *tlsa)
+{
+    TLS_TLSA *p;
+    TLS_TLSA **arr;
+    int     ok = 1;
+    int     n;
+    int     i;
+
+    for (n = 0, p = tlsa; p != 0; p = p->next)
+	++n;
+    arr = (TLS_TLSA **) mymalloc(n * sizeof(*arr));
+    for (i = 0, p = tlsa; p; p = p->next)
+	arr[i++] = (void *) p;
+    qsort(arr, n, sizeof(arr[0]), tlsa_cmp);
+
+    CHECK_OK_AND_DIGEST_OBJECT(mdctx, &n);
+    for (i = 0; i < n; ++i) {
+	CHECK_OK_AND_DIGEST_OBJECT(mdctx, &arr[i]->usage);
+	CHECK_OK_AND_DIGEST_OBJECT(mdctx, &arr[i]->selector);
+	CHECK_OK_AND_DIGEST_OBJECT(mdctx, &arr[i]->mtype);
+	CHECK_OK_AND_DIGEST_OBJECT(mdctx, &arr[i]->length);
+	CHECK_OK_AND_DIGEST_DATA(mdctx, arr[i]->data, arr[i]->length);
+    }
+    myfree((void *) arr);
+    return (ok);
+}
+
+/* tls_digest_byname - test availability or prepare to use digest */
+
+const EVP_MD *tls_digest_byname(const char *mdalg, EVP_MD_CTX **mdctxPtr)
+{
+    const EVP_MD *md;
+    EVP_MD_CTX *mdctx = NULL;
     int     ok = 1;
 
-    for (digest_string(usage); tlsa; tlsa = tlsa->next) {
-	digest_string(tlsa->mdalg);
-	digest_tlsa_argv(tlsa, pkeys);
-	digest_tlsa_argv(tlsa, certs);
-    }
-    return (ok);
+    /*
+     * In OpenSSL 3.0, because of dynamically variable algorithm providers,
+     * there is a time-of-check/time-of-use issue that means that abstract
+     * algorithm handles returned by EVP_get_digestbyname() can (and not
+     * infrequently do) return ultimately unusable algorithms, to check for
+     * actual availability, one needs to use the new EVP_MD_fetch() API, or
+     * indirectly check usability by creating a concrete context. We take the
+     * latter approach here (works for 1.1.1 without #ifdef).
+     * 
+     * Note that EVP_MD_CTX_{create,destroy} were renamed to, respectively,
+     * EVP_MD_CTX_{new,free} in OpenSSL 1.1.0.
+     */
+    CHECK_OK_AND(md = EVP_get_digestbyname(mdalg));
+
+    /*
+     * Sanity check: Newer shared libraries could (hypothetical ABI break)
+     * allow larger digests, we avoid such poison algorithms.
+     */
+    CHECK_OK_AND(EVP_MD_size(md) <= EVP_MAX_MD_SIZE);
+    CHECK_OK_AND(mdctx = EVP_MD_CTX_new());
+    CHECK_OK_AND(EVP_DigestInit_ex(mdctx, md, NULL));
+
+
+    if (ok && mdctxPtr != 0)
+	*mdctxPtr = mdctx;
+    else
+	EVP_MD_CTX_free(mdctx);
+    return (ok ? md : 0);
 }
 
 /* tls_serverid_digest - suffix props->serverid with parameter digest */
 
-char   *tls_serverid_digest(const TLS_CLIENT_START_PROPS *props, long protomask,
+char   *tls_serverid_digest(TLS_SESS_STATE *TLScontext,
+			            const TLS_CLIENT_START_PROPS *props,
 			            const char *ciphers)
 {
     EVP_MD_CTX *mdctx;
-    const EVP_MD *md;
     const char *mdalg;
     unsigned char md_buf[EVP_MAX_MD_SIZE];
     unsigned int md_len;
@@ -183,55 +260,53 @@ char   *tls_serverid_digest(const TLS_CLIENT_START_PROPS *props, long protomask,
      * default digest, but DANE requires sha256 and sha512, so if we must
      * fall back to our default digest, DANE support won't be available.  We
      * panic if the fallback algorithm is not available, as it was verified
-     * available in tls_client_init() and must not simply vanish.
+     * available in tls_client_init() and must not simply vanish.  Our
+     * provider set is not expected to change once the OpenSSL library is
+     * initialized.
      */
-    if ((md = EVP_get_digestbyname(mdalg = "sha256")) == 0
-	&& (md = EVP_get_digestbyname(mdalg = props->mdalg)) == 0)
-	msg_panic("digest algorithm \"%s\" not found", mdalg);
+    if (tls_digest_byname(mdalg = LN_sha256, &mdctx) == 0
+	&& tls_digest_byname(mdalg = props->mdalg, &mdctx) == 0)
+	msg_panic("digest algorithm \"%s\" not found", props->mdalg);
 
     /* Salt the session lookup key with the OpenSSL runtime version. */
     sslversion = OpenSSL_version_num();
 
-    mdctx = EVP_MD_CTX_create();
-    checkok(EVP_DigestInit_ex(mdctx, md, NULL));
-    digest_string(props->helo ? props->helo : "");
-    digest_object(&sslversion);
-    digest_object(&protomask);
-    digest_string(ciphers);
+    CHECK_OK_AND_DIGEST_CHARS(mdctx, props->helo ? props->helo : "");
+    CHECK_OK_AND_DIGEST_OBJECT(mdctx, &sslversion);
+    CHECK_OK_AND_DIGEST_CHARS(mdctx, props->protocols);
+    CHECK_OK_AND_DIGEST_CHARS(mdctx, ciphers);
 
     /*
-     * All we get from the session cache is a single bit telling us whether
-     * the certificate is trusted or not, but we need to know whether the
-     * trust is CA-based (in that case we must do name checks) or whether it
-     * is a direct end-point match.  We mustn't confuse the two, so it is
-     * best to process only TA trust in the verify callback and check the EE
-     * trust after. This works since re-used sessions always have access to
-     * the leaf certificate, while only the original session has the leaf and
-     * the full trust chain.
-     * 
-     * Only the trust anchor matchlist is hashed into the session key. The end
-     * entity certs are not used to determine whether a certificate is
-     * trusted or not, rather these are rechecked against the leaf cert
-     * outside the verification callback, each time a session is created or
-     * reused.
-     * 
-     * Therefore, the security context of the session does not depend on the EE
-     * matching data, which is checked separately each time.  So we exclude
-     * the EE part of the DANE structure from the serverid digest.
-     * 
-     * If the security level is "dane", we send SNI information to the peer.
-     * This may cause it to respond with a non-default certificate.  Since
-     * certificates for sessions with no or different SNI data may not match,
-     * we must include the SNI name in the session id.
+     * Ensure separation of caches for sessions where DANE trust
+     * configuration succeeded from those where it did not.  The latter
+     * should always see a certificate validation failure, both on initial
+     * handshake and on resumption.
      */
-    if (props->dane) {
-	digest_dane(props->dane, ta);
-#if 0
-	digest_dane(props->dane, ee);		/* See above */
-#endif
-	digest_string(TLS_DANE_BASED(props->tls_level) ? props->host : "");
+    CHECK_OK_AND_DIGEST_OBJECT(mdctx, &TLScontext->must_fail);
+
+    /*
+     * DNS-based or synthetic DANE trust settings are potentially used at all
+     * levels above "encrypt".
+     */
+    if (TLScontext->level > TLS_LEV_ENCRYPT
+	&& props->dane && props->dane->tlsa) {
+	CHECK_OK_AND(tls_digest_tlsa(mdctx, props->dane->tlsa));
+    } else {
+	int     none = 0;		/* Record a TLSA RR count of zero */
+
+	CHECK_OK_AND_DIGEST_OBJECT(mdctx, &none);
     }
-    checkok(EVP_DigestFinal_ex(mdctx, md_buf, &md_len));
+
+    /*
+     * Include the chosen SNI name, which can affect server certificate
+     * selection.
+     */
+    if (TLScontext->level > TLS_LEV_ENCRYPT && TLScontext->peer_sni)
+	CHECK_OK_AND_DIGEST_CHARS(mdctx, TLScontext->peer_sni);
+    else
+	CHECK_OK_AND_DIGEST_CHARS(mdctx, "");
+
+    CHECK_OK_AND(EVP_DigestFinal_ex(mdctx, md_buf, &md_len));
     EVP_MD_CTX_destroy(mdctx);
     if (!ok)
 	msg_fatal("error computing %s message digest", mdalg);
@@ -273,7 +348,7 @@ char   *tls_digest_encode(const unsigned char *md_buf, int md_len)
     if (md_len > EVP_MAX_MD_SIZE || md_len >= INT_MAX / 3)
 	msg_panic("unexpectedly large message digest size: %u", md_len);
 
-    /* No risk of overrunes, len is bounded by OpenSSL digest length */
+    /* No risk of overruns, len is bounded by OpenSSL digest length */
     for (i = 0; i < md_len; i++) {
 	result[i * 3] = hexcodes[(md_buf[i] & 0xf0) >> 4U];
 	result[(i * 3) + 1] = hexcodes[(md_buf[i] & 0x0f)];
@@ -284,22 +359,19 @@ char   *tls_digest_encode(const unsigned char *md_buf, int md_len)
 
 /* tls_data_fprint - compute and encode digest of binary object */
 
-char   *tls_data_fprint(const char *buf, int len, const char *mdalg)
+static char *tls_data_fprint(const unsigned char *buf, int len, const char *mdalg)
 {
-    EVP_MD_CTX *mdctx;
-    const EVP_MD *md;
+    EVP_MD_CTX *mdctx = NULL;
     unsigned char md_buf[EVP_MAX_MD_SIZE];
     unsigned int md_len;
     int     ok = 1;
 
     /* Previously available in "init" routine. */
-    if ((md = EVP_get_digestbyname(mdalg)) == 0)
+    if (tls_digest_byname(mdalg, &mdctx) == 0)
 	msg_panic("digest algorithm \"%s\" not found", mdalg);
 
-    mdctx = EVP_MD_CTX_create();
-    checkok(EVP_DigestInit_ex(mdctx, md, NULL));
-    digest_data(buf, len);
-    checkok(EVP_DigestFinal_ex(mdctx, md_buf, &md_len));
+    CHECK_OK_AND_DIGEST_DATA(mdctx, buf, len);
+    CHECK_OK_AND(EVP_DigestFinal_ex(mdctx, md_buf, &md_len));
     EVP_MD_CTX_destroy(mdctx);
     if (!ok)
 	msg_fatal("error computing %s message digest", mdalg);
@@ -312,13 +384,13 @@ char   *tls_data_fprint(const char *buf, int len, const char *mdalg)
 char   *tls_cert_fprint(X509 *peercert, const char *mdalg)
 {
     int     len;
-    char   *buf;
-    char   *buf2;
+    unsigned char *buf;
+    unsigned char *buf2;
     char   *result;
 
     len = i2d_X509(peercert, NULL);
     buf2 = buf = mymalloc(len);
-    i2d_X509(peercert, (unsigned char **) &buf2);
+    i2d_X509(peercert, &buf2);
     if (buf2 - buf != len)
 	msg_panic("i2d_X509 invalid result length");
 
@@ -342,17 +414,17 @@ char   *tls_pkey_fprint(X509 *peercert, const char *mdalg)
 	    msg_fatal("%s: error extracting legacy public-key fingerprint: %m",
 		      myname);
 
-	result = tls_data_fprint((char *) key->data, key->length, mdalg);
+	result = tls_data_fprint(key->data, key->length, mdalg);
 	return (result);
     } else {
 	int     len;
-	char   *buf;
-	char   *buf2;
+	unsigned char *buf;
+	unsigned char *buf2;
 	char   *result;
 
 	len = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(peercert), NULL);
 	buf2 = buf = mymalloc(len);
-	i2d_X509_PUBKEY(X509_get_X509_PUBKEY(peercert), (unsigned char **) &buf2);
+	i2d_X509_PUBKEY(X509_get_X509_PUBKEY(peercert), &buf2);
 	if (buf2 - buf != len)
 	    msg_panic("i2d_X509_PUBKEY invalid result length");
 

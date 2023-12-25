@@ -1,0 +1,35 @@
+#
+# Initialize
+#
+smtpd_delay_reject 0
+mynetworks 127.0.0.0/8,168.100.3.0/28
+local_recipient_maps inline:{foo_canon=whatever,bar_canon=whatever}
+mydestination example.com
+myorigin example.com
+
+sender_canonical_maps inline:{foo@example.com=foo_canon@example.com}
+recipient_canonical_maps inline:{bar@example.com=bar_canon@example.com}
+
+sender_restrictions reject_unlisted_sender
+# Expect accept
+mail bar_canon@example.com
+# Expect accept
+mail bar@example.com
+# Expect accept
+mail foo_canon@example.com
+# Expect accept
+mail foo@example.com
+# Expect reject
+mail baz@example.com
+
+recipient_restrictions reject_unlisted_recipient
+# Expect accept
+rcpt bar_canon@example.com
+# Expect accept
+rcpt bar@example.com
+# Expect accept
+rcpt foo_canon@example.com
+# Expect reject
+rcpt foo@example.com
+# Expect reject
+mail baz@example.com

@@ -1,8 +1,12 @@
-#	$NetBSD: main.cf,v 1.7 2017/02/21 01:13:21 pgoyette Exp $
+#	$NetBSD: main.cf,v 1.7.14.1 2023/12/25 12:54:33 martin Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
 # list, see the postconf(5) manual page (command: "man 5 postconf").
+#
+# TIP: use the command "postconf -n" to view main.cf parameter
+# settings, "postconf parametername" to view a specific parameter,
+# and "postconf 'parametername=value'" to set a specific parameter.
 #
 # For common configuration examples, see BASIC_CONFIGURATION_README
 # and STANDARD_CONFIGURATION_README. To find these documents, use
@@ -29,7 +33,7 @@
 #
 # The level below is what should be used with new (not upgrade) installs.
 #
-compatibility_level = 2
+compatibility_level = 3.8
 
 # On NetBSD we are built without EAI support, so we must disable utf8
 smtputf8_enable=no
@@ -260,11 +264,14 @@ unknown_local_recipient_reject_code = 550
 # You can specify the list of "trusted" network addresses by hand
 # or you can let Postfix do it for you (which is the default).
 #
-# By default (mynetworks_style = subnet), Postfix "trusts" SMTP
-# clients in the same IP subnetworks as the local machine.
-# On Linux, this does works correctly only with interfaces specified
-# with the "ifconfig" command.
+# By default (mynetworks_style = host), Postfix "trusts" only
+# the local machine.
 # 
+# Specify "mynetworks_style = subnet" when Postfix should "trust"
+# SMTP clients in the same IP subnetworks as the local machine.
+# On Linux, this works correctly only with interfaces specified
+# with the "ifconfig" or "ip" command.
+#
 # Specify "mynetworks_style = class" when Postfix should "trust" SMTP
 # clients in the same IP class A/B/C networks as the local machine.
 # Don't do this with a dialup site - it would cause Postfix to "trust"
@@ -289,19 +296,21 @@ unknown_local_recipient_reject_code = 550
 # of listing the patterns here. Specify type:table for table-based lookups
 # (the value on the table right-hand side is not used).
 #
-#mynetworks = 168.100.189.0/28, 127.0.0.0/8
+#mynetworks = 168.100.3.0/28, 127.0.0.0/8
 #mynetworks = $config_directory/mynetworks
 #mynetworks = hash:/etc/postfix/network_table
 
 # The relay_domains parameter restricts what destinations this system will
-# relay mail to.  See the smtpd_recipient_restrictions description in
-# postconf(5) for detailed information.
+# relay mail to.  See the smtpd_relay_restrictions and
+# smtpd_recipient_restrictions descriptions in  postconf(5) for detailed
+# information.
 #
 # By default, Postfix relays mail
-# - from "trusted" clients (IP address matches $mynetworks) to any destination,
+# - from "trusted" clients (IP address matches $mynetworks, or is
+#   SASL authenticated) to any destination,
 # - from "untrusted" clients to destinations that match $relay_domains or
 #   subdomains thereof, except addresses with sender-specified routing.
-# The default relay_domains value is $mydestination.
+# The default relay_domains value is empty.
 # 
 # In addition to the above, the Postfix SMTP server by default accepts mail
 # that Postfix is final destination for:
@@ -321,7 +330,7 @@ unknown_local_recipient_reject_code = 550
 # list this system as their primary or backup MX host. See the
 # permit_mx_backup restriction description in postconf(5).
 #
-#relay_domains = $mydestination
+#relay_domains = 
 
 # INTERNET OR INTRANET
 
@@ -636,7 +645,7 @@ debugger_command =
 #	>$config_directory/$process_name.$process_id.log & sleep 5
 #
 # Another possibility is to run gdb under a detached screen session.
-# To attach to the screen sesssion, su root and run "screen -r
+# To attach to the screen session, su root and run "screen -r
 # <id_string>" where <id_string> uniquely matches one of the detached
 # sessions (from "screen -list").
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: anvil_clnt.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: anvil_clnt.c,v 1.2.14.1 2023/12/25 12:54:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -143,6 +143,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -167,6 +172,15 @@
 #define ANVIL_IDENT(service, addr) \
     printable(concatenate(service, ":", addr, (char *) 0), '?')
 
+/* anvil_clnt_handshake - receive server protocol announcement */
+
+static int anvil_clnt_handshake(VSTREAM *stream)
+{
+    return (attr_scan_plain(stream, ATTR_FLAG_STRICT,
+		    RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_ANVIL),
+			    ATTR_TYPE_END));
+}
+
 /* anvil_clnt_create - instantiate connection rate service client */
 
 ANVIL_CLNT *anvil_clnt_create(void)
@@ -183,6 +197,9 @@ ANVIL_CLNT *anvil_clnt_create(void)
 #else
     anvil_clnt = attr_clnt_create(var_anvil_service, var_ipc_timeout, 0, 0);
 #endif
+    attr_clnt_control(anvil_clnt,
+		      ATTR_CLNT_CTL_HANDSHAKE, anvil_clnt_handshake,
+		      ATTR_CLNT_CTL_END);
     return ((ANVIL_CLNT *) anvil_clnt);
 }
 

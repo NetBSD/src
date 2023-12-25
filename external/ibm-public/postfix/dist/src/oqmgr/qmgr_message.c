@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.2.14.1 2023/12/25 12:55:07 martin Exp $	*/
 
 /*++
 /* NAME
@@ -91,6 +91,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -321,6 +326,9 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
     char   *dsn_orcpt = 0;
     int     n;
     int     have_log_client_attr = 0;
+    static const char env_rec_types[] = REC_TYPE_ENVELOPE REC_TYPE_EXTRACT;
+    static const char extra_rec_type[] = {REC_TYPE_XTRA, 0};
+    const char *expected_rec_types;
 
     /*
      * Initialize. No early returns or we have a memory leak.
@@ -368,12 +376,14 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
      * mailing lists.
      */
     for (;;) {
+	expected_rec_types = env_rec_types;
 	if ((curr_offset = vstream_ftell(message->fp)) < 0)
 	    msg_fatal("vstream_ftell %s: %m", VSTREAM_PATH(message->fp));
 	if (curr_offset == message->data_offset && curr_offset > 0) {
 	    if (vstream_fseek(message->fp, message->data_size, SEEK_CUR) < 0)
 		msg_fatal("seek file %s: %m", VSTREAM_PATH(message->fp));
 	    curr_offset += message->data_size;
+	    expected_rec_types = extra_rec_type;
 	}
 	rec_type = rec_get_raw(message->fp, buf, 0, REC_FLAG_NONE);
 	start = vstring_str(buf);
@@ -390,6 +400,12 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 		     message->queue_id);
 	    break;
 	}
+	if (strchr(expected_rec_types, rec_type) == 0) {
+	    msg_warn("Unexpected record type '%c' at offset %ld",
+		     rec_type, (long) curr_offset);
+	    rec_type = REC_TYPE_ERROR;
+	    break;
+	}
 	if (rec_type == REC_TYPE_END) {
 	    message->rflags |= QMGR_READ_FLAG_SEEN_ALL_NON_RCPT;
 	    break;
@@ -403,7 +419,7 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	 */
 	if (rec_type == REC_TYPE_ATTR) {
 	    if ((error_text = split_nameval(start, &name, &value)) != 0) {
-		msg_warn("%s: ignoring bad attribute: %s: %.200s",
+		msg_warn("%s: bad attribute record: %s: %.200s",
 			 message->queue_id, error_text, start);
 		rec_type = REC_TYPE_ERROR;
 		break;
@@ -451,9 +467,15 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 			message->rflags |= QMGR_READ_FLAG_SEEN_ALL_NON_RCPT;
 			break;
 		    }
-		    /* Examine non-recipient records in extracted segment. */
-		    if (vstream_fseek(message->fp, message->data_offset
-				      + message->data_size, SEEK_SET) < 0)
+
+		    /*
+		     * Examine non-recipient records in the extracted
+		     * segment. Note that this skips to the message start
+		     * record, because the handler for that record changes
+		     * the expectations for allowed record types.
+		     */
+		    if (vstream_fseek(message->fp, message->data_offset,
+				      SEEK_SET) < 0)
 			msg_fatal("seek file %s: %m", VSTREAM_PATH(message->fp));
 		    continue;
 		}
@@ -602,17 +624,18 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	    continue;
 	}
 	if (rec_type == REC_TYPE_DSN_ENVID) {
-	    if (message->dsn_envid == 0)
-		message->dsn_envid = mystrdup(start);
+	    /* Allow Milter override. */
+	    if (message->dsn_envid != 0)
+		myfree(message->dsn_envid);
+	    message->dsn_envid = mystrdup(start);
 	}
 	if (rec_type == REC_TYPE_DSN_RET) {
-	    if (message->dsn_ret == 0) {
-		if (!alldig(start) || (n = atoi(start)) == 0 || !DSN_RET_OK(n))
-		    msg_warn("%s: ignoring malformed DSN RET flags in queue file record:%.100s",
-			     message->queue_id, start);
-		else
-		    message->dsn_ret = n;
-	    }
+	    /* Allow Milter override. */
+	    if (!alldig(start) || (n = atoi(start)) == 0 || !DSN_RET_OK(n))
+		msg_warn("%s: ignoring malformed DSN RET flags in queue file record:%.100s",
+			 message->queue_id, start);
+	    else
+		message->dsn_ret = n;
 	}
 	if (rec_type == REC_TYPE_ATTR) {
 	    /* Allow extra segment to override envelope segment info. */
@@ -1074,6 +1097,21 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	}
 
 	/*
+	 * Redirect a forced-to-expire message without defer log to the retry
+	 * service, so that its defer log will contain an appropriate reason.
+	 * Do not redirect such a message to the error service, because if
+	 * that request fails, a defer log would be created with reason
+	 * "bounce or trace service failure" which would make no sense. Note
+	 * that if the bounce service fails to create a defer log, the
+	 * message will be returned as undeliverable anyway, because it is
+	 * expired.
+	 */
+	if ((message->qflags & QMGR_FORCE_EXPIRE) != 0) {
+	    QMGR_REDIRECT(&reply, MAIL_SERVICE_RETRY,
+			  "4.7.0 message is administratively expired");
+	}
+
+	/*
 	 * Discard mail to the local double bounce address here, so this
 	 * system can run without a local delivery agent. They'd still have
 	 * to configure something for mail directed to the local postmaster,
@@ -1345,6 +1383,7 @@ QMGR_MESSAGE *qmgr_message_alloc(const char *queue_name, const char *queue_id,
 {
     const char *myname = "qmgr_message_alloc";
     QMGR_MESSAGE *message;
+    struct stat st;
 
     if (msg_verbose)
 	msg_info("%s: %s %s", myname, queue_name, queue_id);
@@ -1382,6 +1421,25 @@ QMGR_MESSAGE *qmgr_message_alloc(const char *queue_name, const char *queue_id,
 	 */
 	if (mode != 0 && fchmod(vstream_fileno(message->fp), mode) < 0)
 	    msg_fatal("fchmod %s: %m", VSTREAM_PATH(message->fp));
+
+	/*
+	 * If this message is forced to expire, use the existing defer
+	 * logfile records and do not assign any deliveries, leaving the
+	 * refcount at zero. If this message is forced to expire, but no
+	 * defer logfile records are available, assign deliveries to the
+	 * retry transport so that the sender will still find out what
+	 * recipients are affected and why. Either way, do not assign normal
+	 * deliveries because that would be undesirable especially with mail
+	 * that was expired in the 'hold' queue.
+	 */
+	if ((message->qflags & QMGR_FORCE_EXPIRE) != 0
+	    && stat(mail_queue_path((VSTRING *) 0, MAIL_QUEUE_DEFER,
+				    queue_id), &st) == 0 && st.st_size > 0) {
+	    /* Use this defer log; don't assign deliveries (refcount == 0). */
+	    message->flags = 1;			/* simplify downstream code */
+	    qmgr_message_close(message);
+	    return (message);
+	}
 
 	/*
 	 * Reset the defer log. This code should not be here, but we must

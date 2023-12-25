@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.8 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.8.14.1 2023/12/25 12:54:51 martin Exp $	*/
 
 /*++
 /* NAME
@@ -114,11 +114,12 @@ typedef struct CLEANUP_STATE {
     const char *client_addr;		/* real or ersatz client */
     int     client_af;			/* real or ersatz client */
     const char *client_port;		/* real or ersatz client */
+    const char *server_addr;		/* real or ersatz server */
+    const char *server_port;		/* real or ersatz server */
     VSTRING *milter_ext_from;		/* externalized sender */
     VSTRING *milter_ext_rcpt;		/* externalized recipient */
     VSTRING *milter_err_text;		/* milter call-back reply */
-    HBC_CHECKS *milter_hbc_checks;	/* Milter header checks */
-    VSTRING *milter_hbc_reply;		/* Milter header checks reply */
+    VSTRING *milter_dsn_buf;		/* Milter DSN parsing buffer */
 
     /*
      * Support for Milter body replacement requests.
@@ -317,6 +318,7 @@ extern int cleanup_bounce(CLEANUP_STATE *);
  /*
   * cleanup_milter.c.
   */
+extern void cleanup_milter_header_checks_init(void);
 extern void cleanup_milter_receive(CLEANUP_STATE *, int);
 extern void cleanup_milter_inspect(CLEANUP_STATE *, MILTERS *);
 extern void cleanup_milter_emul_mail(CLEANUP_STATE *, MILTERS *, const char *);
@@ -348,6 +350,11 @@ extern int cleanup_body_edit_write(CLEANUP_STATE *, int, VSTRING *);
 extern int cleanup_body_edit_finish(CLEANUP_STATE *);
 extern void cleanup_body_edit_free(CLEANUP_STATE *);
 
+ /*
+  * From: header formatting.
+  */
+extern int cleanup_hfrom_format;
+
 /* LICENSE
 /* .ad
 /* .fi
@@ -357,4 +364,9 @@ extern void cleanup_body_edit_free(CLEANUP_STATE *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/

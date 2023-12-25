@@ -18,9 +18,12 @@
 # have a more modern implementation that is XPG4-compatible, but it
 # is too much bother to find out where each system keeps these.
 
+{ owned_by_library = (FILENAME ~ /\/(global|tls)\//) }
+
 /^(static| )*(const +)?CONFIG_INT_TABLE .*\{/,/\};/ { 
     if ($1 ~ /VAR/) {
-	int_vars["int " substr($3,2,length($3)-2) ";"] = 1
+	if (!owned_by_library)
+	    int_vars["int " substr($3,2,length($3)-2) ";"] = 1
 	if (++itab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    int_table[$0] = 1
 	}
@@ -28,7 +31,8 @@
 }
 /^(static| )*(const +)?CONFIG_STR_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
-	str_vars["char *" substr($3,2,length($3)-2) ";"] = 1
+	if (!owned_by_library)
+	    str_vars["char *" substr($3,2,length($3)-2) ";"] = 1
 	if (++stab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    str_table[$0] = 1
 	}
@@ -36,7 +40,8 @@
 }
 /^(static| )*(const +)?CONFIG_STR_FN_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
-	str_fn_vars["char *" substr($3,2,length($3)-2) ";"] = 1
+	if (!owned_by_library)
+	    str_fn_vars["char *" substr($3,2,length($3)-2) ";"] = 1
 	$2 = "pcf_" $2
 	if (++stab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    str_fn_table[$0] = 1
@@ -45,7 +50,8 @@
 }
 /^(static| )*(const +)?CONFIG_RAW_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
-	raw_vars["char *" substr($3,2,length($3)-2) ";"] = 1
+	if (!owned_by_library)
+	    raw_vars["char *" substr($3,2,length($3)-2) ";"] = 1
 	if (++rtab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    raw_table[$0] = 1
 	}
@@ -53,7 +59,8 @@
 }
 /^(static| )*(const +)?CONFIG_BOOL_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
-	bool_vars["int " substr($3,2,length($3)-2) ";"] = 1
+	if (!owned_by_library)
+	    bool_vars["int " substr($3,2,length($3)-2) ";"] = 1
 	if (++btab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    bool_table[$0] = 1
 	}
@@ -61,7 +68,8 @@
 }
 /^(static| )*(const +)?CONFIG_TIME_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
-	time_vars["int " substr($3,2,length($3)-2) ";"] = 1
+	if (!owned_by_library)
+	    time_vars["int " substr($3,2,length($3)-2) ";"] = 1
 	if (++ttab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    time_table[$0] = 1
 	}
@@ -69,7 +77,8 @@
 }
 /^(static| )*(const +)?CONFIG_NINT_TABLE .*\{/,/\};/ { 
     if ($1 ~ /VAR/) {
-	nint_vars["int " substr($3,2,length($3)-2) ";"] = 1
+	if (!owned_by_library)
+	    nint_vars["int " substr($3,2,length($3)-2) ";"] = 1
 	if (++itab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    nint_table[$0] = 1
 	}
@@ -77,7 +86,8 @@
 }
 /^(static| )*(const +)?CONFIG_NBOOL_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
-	nbool_vars["int " substr($3,2,length($3)-2) ";"] = 1
+	if (!owned_by_library)
+	    nbool_vars["int " substr($3,2,length($3)-2) ";"] = 1
 	if (++btab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    nbool_table[$0] = 1
 	}
@@ -85,7 +95,8 @@
 }
 /^(static| )*(const +)?CONFIG_LONG_TABLE .*\{/,/\};/ { 
     if ($1 ~ /VAR/) {
-	long_vars["long " substr($3,2,length($3)-2) ";"] = 1
+	if (!owned_by_library)
+	    long_vars["long " substr($3,2,length($3)-2) ";"] = 1
 	if (++itab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    long_table[$0] = 1
 	}

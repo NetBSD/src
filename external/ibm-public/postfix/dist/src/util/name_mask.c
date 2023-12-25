@@ -1,4 +1,4 @@
-/*	$NetBSD: name_mask.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: name_mask.c,v 1.2.14.1 2023/12/25 12:55:33 martin Exp $	*/
 
 /*++
 /* NAME
@@ -74,7 +74,7 @@
 /*	comma and/or whitespace characters. The "long_" version returns
 /*	a "long int" bitmask, rather than an "int" bitmask.
 /*
-/*	str_name_mask() translates a mask into its equlvalent names.
+/*	str_name_mask() translates a mask into its equivalent names.
 /*	The result is written to a static buffer that is overwritten
 /*	upon each call. The "long_" version converts a "long int"
 /*	bitmask, rather than an "int" bitmask.

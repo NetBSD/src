@@ -1,4 +1,4 @@
-/*	$NetBSD: mymalloc.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: mymalloc.h,v 1.2.14.1 2023/12/25 12:55:33 martin Exp $	*/
 
 #ifndef _MALLOC_H_INCLUDED_
 #define _MALLOC_H_INCLUDED_
@@ -10,8 +10,8 @@
 /*	memory management wrappers
 /* SYNOPSIS
 /*	#include "mymalloc.h"
- DESCRIPTION
- .nf
+/* DESCRIPTION
+/* .nf
 
  /*
   * External interface.
@@ -21,7 +21,7 @@ extern void *myrealloc(void *, ssize_t);
 extern void myfree(void *);
 extern char *mystrdup(const char *);
 extern char *mystrndup(const char *, ssize_t);
-extern char *mymemdup(const void *, ssize_t);
+extern void *mymemdup(const void *, ssize_t);
 
 /* LICENSE
 /* .ad
@@ -32,6 +32,11 @@ extern char *mymemdup(const void *, ssize_t);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp.8,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: smtp.8,v 1.2.14.1 2023/12/25 12:54:42 martin Exp $
 .\"
 .TH SMTP 8 
 .ad
@@ -10,7 +10,7 @@ Postfix SMTP+LMTP client
 .SH "SYNOPSIS"
 .na
 .nf
-\fBsmtp\fR [generic Postfix daemon options]
+\fBsmtp\fR [generic Postfix daemon options] [flags=DORX]
 .SH DESCRIPTION
 .ad
 .fi
@@ -48,6 +48,8 @@ specific destinations.
 .nf
 .ad
 .fi
+The Postfix SMTP+LMTP client supports multiple destinations
+separated by comma or whitespace (Postfix 3.5 and later).
 SMTP destinations have the following form:
 .IP \fIdomainname\fR
 .IP \fIdomainname\fR:\fIport\fR
@@ -67,6 +69,8 @@ must be formatted as [\fBipv6\fR:\fIaddress\fR].
 .nf
 .ad
 .fi
+The Postfix SMTP+LMTP client supports multiple destinations
+separated by comma or whitespace (Postfix 3.5 and later).
 LMTP destinations have the following form:
 .IP \fBunix\fR:\fIpathname\fR
 Connect to the local UNIX\-domain server that is bound to the specified
@@ -82,12 +86,68 @@ remote host. If no port is specified, connect to the port defined as
 If no such service is found, the \fBlmtp_tcp_port\fR configuration
 parameter (default value of 24) will be used.
 An IPv6 address must be formatted as [\fBipv6\fR:\fIaddress\fR].
-.PP
-.SH "SECURITY"
+.SH "SINGLE-RECIPIENT DELIVERY"
 .na
 .nf
 .ad
 .fi
+By default, the Postfix SMTP+LMTP client delivers mail to
+multiple recipients per delivery request. This is undesirable
+when prepending a \fBDelivered\-to:\fR or \fBX\-Original\-To:\fR
+message header. To prevent Postfix from sending multiple
+recipients per delivery request, specify
+.sp
+.nf
+    \fItransport\fB_destination_recipient_limit = 1\fR
+.fi
+
+in the Postfix \fBmain.cf\fR file, where \fItransport\fR
+is the name in the first column of the Postfix \fBmaster.cf\fR
+entry for this mail delivery service.
+.SH "COMMAND ATTRIBUTE SYNTAX"
+.na
+.nf
+.ad
+.fi
+.IP "\fBflags=DORX\fR (optional)"
+Optional message processing flags.
+.RS
+.IP \fBD\fR
+Prepend a "\fBDelivered\-To: \fIrecipient\fR" message header
+with the envelope recipient address. Note: for this to work,
+the \fItransport\fB_destination_recipient_limit\fR must be
+1 (see SINGLE\-RECIPIENT DELIVERY above for details).
+.sp
+The \fBD\fR flag also enforces loop detection: if a message
+already contains a \fBDelivered\-To:\fR header with the same
+recipient address, then the message is returned as
+undeliverable. The address comparison is case insensitive.
+.sp
+This feature is available as of Postfix 3.5.
+.IP \fBO\fR
+Prepend an "\fBX\-Original\-To: \fIrecipient\fR" message
+header with the recipient address as given to Postfix. Note:
+for this to work, the
+\fItransport\fB_destination_recipient_limit\fR must be 1
+(see SINGLE\-RECIPIENT DELIVERY above for details).
+.sp
+This feature is available as of Postfix 3.5.
+.IP \fBR\fR
+Prepend a "\fBReturn\-Path: <\fIsender\fB>\fR" message header
+with the envelope sender address.
+.sp
+This feature is available as of Postfix 3.5.
+.IP \fBX\fR
+Indicates that the delivery is final. This flag affects
+the status reported in "success" DSN (delivery status
+notification) messages, and changes it from "relayed" into
+"delivered".
+.sp
+This feature is available as of Postfix 3.5.
+.RE
+.SH "SECURITY"
+.na
+.nf
 The SMTP+LMTP client is moderately security\-sensitive. It
 talks to SMTP or LMTP servers and to DNS servers on the
 network. The SMTP+LMTP client can be run chrooted at fixed
@@ -106,6 +166,7 @@ RFC 2045 (MIME: Format of Internet Message Bodies)
 RFC 2046 (MIME: Media Types)
 RFC 2554 (AUTH command)
 RFC 2821 (SMTP protocol)
+RFC 2782 (SRV resource records)
 RFC 2920 (SMTP Pipelining)
 RFC 3207 (STARTTLS command)
 RFC 3461 (SMTP DSN Extension)
@@ -118,7 +179,8 @@ RFC 7672 (SMTP security via opportunistic DANE TLS)
 .SH DIAGNOSTICS
 .ad
 .fi
-Problems and transactions are logged to \fBsyslogd\fR(8).
+Problems and transactions are logged to \fBsyslogd\fR(8)
+or \fBpostlogd\fR(8).
 Corrupted message files are marked so that the queue manager can
 move them to the \fBcorrupt\fR queue for further inspection.
 
@@ -128,11 +190,10 @@ other trouble.
 .SH BUGS
 .ad
 .fi
-SMTP and LMTP connection caching does not work with TLS. The necessary
-support for TLS object passivation and re\-activation does not
-exist without closing the session, which defeats the purpose.
+SMTP and LMTP connection reuse for TLS (without closing the
+SMTP or LMTP connection) is not supported before Postfix 3.4.
 
-SMTP and LMTP connection caching assumes that SASL credentials
+SMTP and LMTP connection reuse assumes that SASL credentials
 are valid for all destinations that map onto the same IP
 address and TCP port.
 .SH "CONFIGURATION PARAMETERS"
@@ -266,12 +327,14 @@ Available in Postfix version 2.8 and later:
 .IP "\fBsmtp_dns_resolver_options (empty)\fR"
 DNS Resolver options for the Postfix SMTP client.
 .PP
-Available in Postfix version 2.9 and later:
+Available in Postfix version 2.9 \- 3.6:
 .IP "\fBsmtp_per_record_deadline (no)\fR"
 Change the behavior of the smtp_*_timeout time limits, from a
 time limit per read or write system call, to a time limit to send
 or receive a complete record (an SMTP command line, SMTP response
 line, SMTP message content line, or TLS protocol message).
+.PP
+Available in Postfix version 2.9 and later:
 .IP "\fBsmtp_send_dummy_mail_auth (no)\fR"
 Whether or not to append the "AUTH=<>" option to the MAIL
 FROM command in SASL\-authenticated SMTP sessions.
@@ -287,6 +350,48 @@ delivery status code or explanatory text of successful or unsuccessful
 deliveries.
 .IP "\fBsmtp_dns_reply_filter (empty)\fR"
 Optional filter for Postfix SMTP client DNS lookup results.
+.PP
+Available in Postfix version 3.3 and later:
+.IP "\fBsmtp_balance_inet_protocols (yes)\fR"
+When a remote destination resolves to a combination of IPv4 and
+IPv6 addresses, ensure that the Postfix SMTP client can try both
+address types before it runs into the smtp_mx_address_limit.
+.PP
+Available in Postfix 3.5 and later:
+.IP "\fBinfo_log_address_format (external)\fR"
+The email address form that will be used in non\-debug logging
+(info, warning, etc.).
+.PP
+Available in Postfix 3.6 and later:
+.IP "\fBdnssec_probe (ns:.)\fR"
+The DNS query type (default: "ns") and DNS query name (default:
+".") that Postfix may use to determine whether DNSSEC validation
+is available.
+.IP "\fBknown_tcp_ports (lmtp=24, smtp=25, smtps=submissions=465, submission=587)\fR"
+Optional setting that avoids lookups in the \fBservices\fR(5) database.
+.PP
+Available in Postfix version 3.7 and later:
+.IP "\fBsmtp_per_request_deadline (no)\fR"
+Change the behavior of the smtp_*_timeout time limits, from a
+time limit per plaintext or TLS read or write call, to a combined
+time limit for sending a complete SMTP request and for receiving a
+complete SMTP response.
+.IP "\fBsmtp_min_data_rate (500)\fR"
+The minimum plaintext data transfer rate in bytes/second for
+DATA requests, when deadlines are enabled with smtp_per_request_deadline.
+.IP "\fBheader_from_format (standard)\fR"
+The format of the Postfix\-generated \fBFrom:\fR header.
+.PP
+Available in Postfix version 3.8 and later:
+.IP "\fBuse_srv_lookup (empty)\fR"
+Enables discovery for the specified service(s) using DNS SRV
+records.
+.IP "\fBignore_srv_lookup_error (no)\fR"
+When SRV record lookup fails, fall back to MX or IP address
+lookup as if SRV record lookup was not enabled.
+.IP "\fBallow_srv_lookup_fallback (no)\fR"
+When SRV record lookup fails or no SRV record exists, fall back
+to MX or IP address lookup as if SRV record lookup was not enabled.
 .SH "MIME PROCESSING CONTROLS"
 .na
 .nf
@@ -369,9 +474,7 @@ FROM command in SASL\-authenticated SMTP sessions.
 Detailed information about STARTTLS configuration may be found
 in the TLS_README document.
 .IP "\fBsmtp_tls_security_level (empty)\fR"
-The default SMTP TLS security level for the Postfix SMTP client;
-when a non\-empty value is specified, this overrides the obsolete
-parameters smtp_use_tls, smtp_enforce_tls, and smtp_tls_enforce_peername.
+The default SMTP TLS security level for the Postfix SMTP client.
 .IP "\fBsmtp_sasl_tls_security_options ($smtp_sasl_security_options)\fR"
 The SASL authentication security options that the Postfix SMTP
 client uses for TLS encrypted SMTP sessions.
@@ -413,9 +516,9 @@ when TLS is not already enabled for that server.
 Optional lookup tables with the Postfix SMTP client TLS security
 policy by next\-hop destination; when a non\-empty value is specified,
 this overrides the obsolete smtp_tls_per_site parameter.
-.IP "\fBsmtp_tls_mandatory_protocols (!SSLv2, !SSLv3)\fR"
-List of SSL/TLS protocols that the Postfix SMTP client will use with
-mandatory TLS encryption.
+.IP "\fBsmtp_tls_mandatory_protocols (see 'postconf -d' output)\fR"
+TLS protocols that the Postfix SMTP client will use with mandatory
+TLS encryption.
 .IP "\fBsmtp_tls_scert_verifydepth (9)\fR"
 The verification depth for remote SMTP server certificates.
 .IP "\fBsmtp_tls_secure_cert_match (nexthop, dot\-nexthop)\fR"
@@ -439,13 +542,15 @@ internal pseudo random number generator (PRNG).
 The OpenSSL cipherlist for "high" grade ciphers.
 .IP "\fBtls_medium_cipherlist (see 'postconf -d' output)\fR"
 The OpenSSL cipherlist for "medium" or higher grade ciphers.
+.IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
+The OpenSSL cipherlist for "NULL" grade ciphers that provide
+authentication without encryption.
+.PP
+Available in in Postfix version 2.3..3.7:
 .IP "\fBtls_low_cipherlist (see 'postconf -d' output)\fR"
 The OpenSSL cipherlist for "low" or higher grade ciphers.
 .IP "\fBtls_export_cipherlist (see 'postconf -d' output)\fR"
 The OpenSSL cipherlist for "export" or higher grade ciphers.
-.IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
-The OpenSSL cipherlist for "NULL" grade ciphers that provide
-authentication without encryption.
 .PP
 Available in Postfix version 2.4 and later:
 .IP "\fBsmtp_sasl_tls_verified_security_options ($smtp_sasl_tls_security_options)\fR"
@@ -458,14 +563,14 @@ Available in Postfix version 2.5 and later:
 List of acceptable remote SMTP server certificate fingerprints for
 the "fingerprint" TLS security level (\fBsmtp_tls_security_level\fR =
 fingerprint).
-.IP "\fBsmtp_tls_fingerprint_digest (md5)\fR"
+.IP "\fBsmtp_tls_fingerprint_digest (see 'postconf -d' output)\fR"
 The message digest algorithm used to construct remote SMTP server
 certificate fingerprints.
 .PP
 Available in Postfix version 2.6 and later:
-.IP "\fBsmtp_tls_protocols (!SSLv2, !SSLv3)\fR"
-List of TLS protocols that the Postfix SMTP client will exclude or
-include with opportunistic TLS encryption.
+.IP "\fBsmtp_tls_protocols (see postconf -d output)\fR"
+TLS protocols that the Postfix SMTP client will use with
+opportunistic TLS encryption.
 .IP "\fBsmtp_tls_ciphers (medium)\fR"
 The minimum TLS cipher grade that the Postfix SMTP client
 will use with opportunistic TLS encryption.
@@ -484,6 +589,13 @@ Available in Postfix version 2.8 and later:
 .IP "\fBtls_disable_workarounds (see 'postconf -d' output)\fR"
 List or bit\-mask of OpenSSL bug work\-arounds to disable.
 .PP
+Available in Postfix version 2.11\-3.1:
+.IP "\fBtls_dane_digest_agility (on)\fR"
+Configure RFC7671 DANE TLSA digest algorithm agility.
+.IP "\fBtls_dane_trust_anchor_digest_enable (yes)\fR"
+Enable support for RFC 6698 (DANE TLSA) DNS records that contain
+digests of trust\-anchors with certificate usage "2".
+.PP
 Available in Postfix version 2.11 and later:
 .IP "\fBsmtp_tls_trust_anchor_file (empty)\fR"
 Zero or more PEM\-format files with trust\-anchor certificates
@@ -491,21 +603,52 @@ and/or public keys.
 .IP "\fBsmtp_tls_force_insecure_host_tlsa_lookup (no)\fR"
 Lookup the associated DANE TLSA RRset even when a hostname is
 not an alias and its address records lie in an unsigned zone.
-.IP "\fBtls_dane_trust_anchor_digest_enable (yes)\fR"
-RFC 6698 trust\-anchor digest support in the Postfix TLS library.
 .IP "\fBtlsmgr_service_name (tlsmgr)\fR"
 The name of the \fBtlsmgr\fR(8) service entry in master.cf.
 .PP
 Available in Postfix version 3.0 and later:
 .IP "\fBsmtp_tls_wrappermode (no)\fR"
 Request that the Postfix SMTP client connects using the
-legacy SMTPS protocol instead of using the STARTTLS command.
+SUBMISSIONS/SMTPS protocol instead of using the STARTTLS command.
 .PP
 Available in Postfix version 3.1 and later:
-.IP "\fBsmtp_tls_dane_insecure_mx_policy (dane)\fR"
+.IP "\fBsmtp_tls_dane_insecure_mx_policy (see 'postconf -d' output)\fR"
 The TLS policy for MX hosts with "secure" TLSA records when the
 nexthop destination security level is \fBdane\fR, but the MX
 record was found via an "insecure" MX lookup.
+.PP
+Available in Postfix version 3.2 and later:
+.IP "\fBtls_eecdh_auto_curves (see 'postconf -d' output)\fR"
+The prioritized list of elliptic curves supported by the Postfix
+SMTP client and server.
+.PP
+Available in Postfix version 3.4 and later:
+.IP "\fBsmtp_tls_connection_reuse (no)\fR"
+Try to make multiple deliveries per TLS\-encrypted connection.
+.IP "\fBsmtp_tls_chain_files (empty)\fR"
+List of one or more PEM files, each holding one or more private keys
+directly followed by a corresponding certificate chain.
+.IP "\fBsmtp_tls_servername (empty)\fR"
+Optional name to send to the remote SMTP server in the TLS Server
+Name Indication (SNI) extension.
+.PP
+Available in Postfix 3.5, 3.4.6, 3.3.5, 3.2.10, 3.1.13 and later:
+.IP "\fBtls_fast_shutdown_enable (yes)\fR"
+A workaround for implementations that hang Postfix while shutting
+down a TLS session, until Postfix times out.
+.PP
+Available in Postfix version 3.8 and later:
+.IP "\fBtls_ffdhe_auto_groups (see 'postconf -d' output)\fR"
+The prioritized list of finite\-field Diffie\-Hellman ephemeral
+(FFDHE) key exchange groups supported by the Postfix SMTP client and
+server.
+.PP
+Available in Postfix 3.9, 3.8.1, 3.7.6, 3.6.10, 3.5.20 and later:
+.IP "\fBtls_config_file (default)\fR"
+Optional configuration file with baseline OpenSSL settings.
+.IP "\fBtls_config_name (empty)\fR"
+The application name passed by Postfix to OpenSSL library
+initialization functions.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -535,12 +678,6 @@ cipher list.
 .nf
 .ad
 .fi
-.IP "\fBsmtp_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
-The maximal number of parallel deliveries to the same destination
-via the smtp message delivery transport.
-.IP "\fBsmtp_destination_recipient_limit ($default_destination_recipient_limit)\fR"
-The maximal number of recipients per message for the smtp
-message delivery transport.
 .IP "\fBsmtp_connect_timeout (30s)\fR"
 The Postfix SMTP client time limit for completing a TCP connection, or
 zero (use the operating system built\-in time limit).
@@ -609,7 +746,7 @@ Available in Postfix version 2.3 and later:
 Time limit for connection cache connect, send or receive
 operations.
 .PP
-Available in Postfix version 2.9 and later:
+Available in Postfix version 2.9 \- 3.6:
 .IP "\fBsmtp_per_record_deadline (no)\fR"
 Change the behavior of the smtp_*_timeout time limits, from a
 time limit per read or write system call, to a time limit to send
@@ -621,6 +758,32 @@ Available in Postfix version 2.11 and later:
 When SMTP connection caching is enabled, the number of times
 that an SMTP session may be reused before it is closed, or zero (no
 limit).
+.PP
+Available in Postfix version 3.4 and later:
+.IP "\fBsmtp_tls_connection_reuse (no)\fR"
+Try to make multiple deliveries per TLS\-encrypted connection.
+.PP
+Available in Postfix version 3.7 and later:
+.IP "\fBsmtp_per_request_deadline (no)\fR"
+Change the behavior of the smtp_*_timeout time limits, from a
+time limit per plaintext or TLS read or write call, to a combined
+time limit for sending a complete SMTP request and for receiving a
+complete SMTP response.
+.IP "\fBsmtp_min_data_rate (500)\fR"
+The minimum plaintext data transfer rate in bytes/second for
+DATA requests, when deadlines are enabled with smtp_per_request_deadline.
+.PP
+Implemented in the qmgr(8) daemon:
+.IP "\fBtransport_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
+A transport\-specific override for the
+default_destination_concurrency_limit parameter value, where
+\fItransport\fR is the master.cf name of the message delivery
+transport.
+.IP "\fBtransport_destination_recipient_limit ($default_destination_recipient_limit)\fR"
+A transport\-specific override for the
+default_destination_recipient_limit parameter value, where
+\fItransport\fR is the master.cf name of the message delivery
+transport.
 .SH "SMTPUTF8 CONTROLS"
 .na
 .nf
@@ -629,22 +792,29 @@ limit).
 Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
 .IP "\fBsmtputf8_enable (yes)\fR"
 Enable preliminary SMTPUTF8 support for the protocols described
-in RFC 6531..6533.
+in RFC 6531, RFC 6532, and RFC 6533.
 .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
 Detect that a message requires SMTPUTF8 support for the specified
 mail origin classes.
+.PP
+Available in Postfix version 3.2 and later:
+.IP "\fBenable_idna2003_compatibility (no)\fR"
+Enable 'transitional' compatibility between IDNA2003 and IDNA2008,
+when converting UTF\-8 domain names to/from the ASCII form that is
+used for DNS lookups.
 .SH "TROUBLE SHOOTING CONTROLS"
 .na
 .nf
 .ad
 .fi
 .IP "\fBdebug_peer_level (2)\fR"
-The increment in verbose logging level when a remote client or
-server matches a pattern in the debug_peer_list parameter.
+The increment in verbose logging level when a nexthop destination,
+remote client or server name or network address matches a pattern
+given with the debug_peer_list parameter.
 .IP "\fBdebug_peer_list (empty)\fR"
-Optional list of remote client or server hostname or network
-address patterns that cause the verbose logging level to increase
-by the amount specified in $debug_peer_level.
+Optional list of nexthop destination, remote client or server
+name or network address patterns that, if matched, cause the verbose
+logging level to increase by the amount specified in $debug_peer_level.
 .IP "\fBerror_notice_recipient (postmaster)\fR"
 The recipient of postmaster notifications about mail delivery
 problems that are caused by policy, resource, software or protocol
@@ -675,9 +845,9 @@ sub\-second delay values.
 .IP "\fBdisable_dns_lookups (no)\fR"
 Disable DNS lookups in the Postfix SMTP and LMTP clients.
 .IP "\fBinet_interfaces (all)\fR"
-The network interface addresses that this mail system receives
+The local network interface addresses that this mail system receives
 mail on.
-.IP "\fBinet_protocols (all)\fR"
+.IP "\fBinet_protocols (see 'postconf -d output')\fR"
 The Internet protocols Postfix will attempt to use when making
 or accepting connections.
 .IP "\fBipc_timeout (3600s)\fR"
@@ -701,7 +871,7 @@ The process ID of a Postfix command or daemon process.
 .IP "\fBprocess_name (read\-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBproxy_interfaces (empty)\fR"
-The network interface addresses that this mail system receives mail
+The remote network interface addresses that this mail system receives mail
 on by way of a proxy or network address translation unit.
 .IP "\fBsmtp_address_preference (any)\fR"
 The address type ("ipv6", "ipv4" or "any") that the Postfix
@@ -725,8 +895,8 @@ Randomize the order of equal\-preference MX host addresses.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-The mail system name that is prepended to the process name in syslog
-records, so that "smtpd" becomes, for example, "postfix/smtpd".
+A prefix that is prepended to the process name in syslog
+records, so that, for example, "smtpd" becomes "prefix/smtpd".
 .PP
 Available with Postfix 2.2 and earlier:
 .IP "\fBfallback_relay (empty)\fR"
@@ -735,8 +905,9 @@ found or that are unreachable.
 .PP
 Available with Postfix 2.3 and later:
 .IP "\fBsmtp_fallback_relay ($fallback_relay)\fR"
-Optional list of relay hosts for SMTP destinations that can't be
-found or that are unreachable.
+Optional list of relay destinations that will be used when an
+SMTP destination is not found, or when delivery fails due to a
+non\-permanent error.
 .PP
 Available with Postfix 3.0 and later:
 .IP "\fBsmtp_address_verify_target (rcpt)\fR"
@@ -747,6 +918,19 @@ Available with Postfix 3.1 and later:
 .IP "\fBlmtp_fallback_relay (empty)\fR"
 Optional list of relay hosts for LMTP destinations that can't be
 found or that are unreachable.
+.PP
+Available with Postfix 3.2 and later:
+.IP "\fBsmtp_tcp_port (smtp)\fR"
+The default TCP port that the Postfix SMTP client connects to.
+.PP
+Available in Postfix 3.3 and later:
+.IP "\fBservice_name (read\-only)\fR"
+The master.cf service name of a Postfix daemon process.
+.PP
+Available in Postfix 3.7 and later:
+.IP "\fBsmtp_bind_address_enforce (no)\fR"
+Defer delivery when the Postfix SMTP client cannot apply the
+smtp_bind_address or smtp_bind_address6 setting.
 .SH "SEE ALSO"
 .na
 .nf
@@ -760,6 +944,7 @@ postconf(5), configuration parameters
 master(5), generic daemon options
 master(8), process manager
 tlsmgr(8), TLS session and PRNG management
+postlogd(8), Postfix logging
 syslogd(8), system logging
 .SH "README FILES"
 .na

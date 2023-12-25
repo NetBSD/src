@@ -7,7 +7,8 @@
 
 <title>Postfix SMTP Access Policy Delegation </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -24,14 +25,14 @@ block or accept mail at specific SMTP protocol stages. In addition,
 the Postfix SMTP server can delegate decisions to an external policy
 server (Postfix 2.1 and later). </p>
 
-<p> With this policy delegation mechanism, a simple <a href="#greylist">
-greylist </a> policy can be implemented with only a dozen lines of
+<p> With this policy delegation mechanism, a simple
+<a href="#greylist">greylist</a> policy can be implemented with only a dozen lines of
 Perl, as is shown at the end of this document. A complete example
 can be found in the Postfix source code, in the directory
 examples/smtpd-policy. </p>
 
 <p> Another example of policy delegation is the SPF policy server
-at <a href="http://www.openspf.org/Software">http://www.openspf.org/Software</a>.  </p>
+at <a href="https://web.archive.org/web/20190221142057/http://www.openspf.org/Software">https://web.archive.org/web/20190221142057/http://www.openspf.org/Software</a>.  </p>
 
 <p> Policy delegation is now the preferred method for adding policies
 to Postfix. It's much easier to develop a new feature in few lines
@@ -65,11 +66,14 @@ multiple times, for up to $<a href="postconf.5.html#max_use">max_use</a> incomin
 
 <h2><a name="protocol">Protocol description</a></h2>
 
-<p> The Postfix policy delegation protocol is really simple. The
-client request is a sequence of name=value attributes separated by
-newline, and is terminated by an empty line. The server reply is
-one name=value attribute and it, too, is terminated by an empty
-line. </p>
+<p> The Postfix policy delegation protocol is really simple. The client
+sends a request and the server sends a response. Unless there was an
+error, the server must not close the connection, so that the same
+connection can be used multiple times. </p>
+
+<p> The client request is a sequence of name=value attributes separated
+by newline, and is terminated by an empty line. The server reply is one
+name=value attribute and it, too, is terminated by an empty line. </p>
 
 <p> Here is an example of all the attributes that the Postfix SMTP
 server sends in a delegated SMTPD access policy request: </p>
@@ -110,6 +114,12 @@ ccert_pubkey_fingerprint=68:B3:29:DA:98:93:E3:40:99:C7:D8:AD:5C:B9:C9:40
 client_port=1234
 <b>Postfix version 3.1 and later:</b>
 policy_context=submission
+<b>Postfix version 3.2 and later:</b>
+server_address=10.3.2.1
+server_port=54321
+<b>Postfix version 3.8 and later:</b>
+<a href="postconf.5.html#compatibility_level">compatibility_level</a>=<i>major</i>.<i>minor</i>.<i>patch</i>
+<a href="postconf.5.html#mail_version">mail_version</a>=3.8.0
 [empty line]
 </pre>
 </blockquote>
@@ -137,16 +147,23 @@ policy_context=submission
     <li> <p> The "recipient" attribute is available in the "RCPT
     TO" stage. It is also available in the "DATA" and "END-OF-MESSAGE"
     stages if Postfix accepted only one recipient for the current
-    message.  </p>
+    message.
+    The DATA protocol state also applies to email that is received
+    with BDAT commands (Postfix 3.4 and later). </p>
 
     <li> <p> The "recipient_count" attribute (Postfix 2.3 and later)
     is non-zero only in the "DATA" and "END-OF-MESSAGE" stages. It
     specifies the number of recipients that Postfix accepted for
-    the current message.  </p>
+    the current message.
+    The DATA protocol state also applies to email that is received
+    with BDAT commands (Postfix 3.4 and later). </p>
 
-    <li> <p> The client address is an IPv4 dotted quad in the form
-    1.2.3.4 or it is an IPv6 address in the form 1:2:3::4:5:6.
-    </p>
+    <li> <p> The remote client or local server IP address is an
+    IPv4 dotted quad in the form 1.2.3.4 or it is an IPv6 address
+    in the form 1:2:3::4:5:6.  </p>
+
+    <li> <p> The remote client or local server port is a decimal
+    number in the range 0-65535.  </p>
 
     <li> <p> For a discussion of the differences between reverse
     and verified client_name information, see the
@@ -167,8 +184,7 @@ policy_context=submission
     <li> <p> The "size" attribute value specifies the message size
     that the client specified in the MAIL FROM command (zero if
     none was specified). With Postfix 2.2 and later, it specifies
-    the actual message size when the client sends the END-OF-DATA
-    command.
+    the actual message size after the client sends the END-OF-MESSAGE.
     </p>
 
     <li> <p> The "sasl_*" attributes (Postfix 2.2 and later) specify
@@ -201,6 +217,17 @@ policy_context=submission
     information that is not available via other attributes (Postfix
     version 3.1 and later). </p>
 
+   <li> <p> The "<a href="postconf.5.html#compatibility_level">compatibility_level</a>" attribute corresponds to the
+   <a href="postconf.5.html#compatibility_level">compatibility_level</a> parameter value. It has the form
+   <i>major</i>.<i>minor</i>.<i>patch</i> where <i>minor</i> and
+   <i>patch</i> may be absent. </p>
+
+   <li> <p> The "<a href="postconf.5.html#mail_version">mail_version</a>" attribute corresponds to the
+   <a href="postconf.5.html#mail_version">mail_version</a> parameter value. It has the form
+   <i>major</i>.<i>minor</i>.<i>patch</i> for stable releases, and
+   <i>major</i>.<i>minor</i>-<i>yyyymmdd</i> for unstable releases.
+   </p>
+
 </ul>
 
 <p> The following is specific to SMTPD delegated policy requests:
@@ -214,6 +241,8 @@ policy_context=submission
     DATA, END-OF-MESSAGE, VRFY or ETRN; these are the SMTP protocol
     states where
     the Postfix SMTP server makes an OK/REJECT/HOLD/etc. decision.
+    The DATA protocol state also applies to email that is received
+    with BDAT commands (Postfix 3.4 and later).
     </p>
 
 </ul>
@@ -255,7 +284,7 @@ a TCP socket at 127.0.0.1 port 9998. The second example specifies
 an absolute pathname of a UNIX-domain socket. The third example
 specifies a pathname relative to the Postfix queue directory; use
 this for policy servers that are spawned by the Postfix master
-daemon. </p>
+daemon. On many systems, "local" is a synonym for "unix".</p>
 
 <p> To create a policy service that listens on a UNIX-domain socket
 called "policy", and that runs under control of the Postfix <a href="spawn.8.html">spawn(8)</a>
@@ -302,7 +331,7 @@ open relay. </p>
 
 <li> <p> Line 11: this increases the time that a policy server
 process may run to 3600 seconds.  The default time limit of 1000
-seconds is too short; the policy daemon needs to run long as the
+seconds is too short; the policy daemon needs to run as long as the
 SMTP server process that talks to it.
 See the <a href="spawn.8.html">spawn(8)</a> manpage for more information about the
 <a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a> parameter.  </p>
@@ -410,11 +439,12 @@ the result. </p>
 <blockquote>
 <pre>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-2     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
+2     mua_recipient_restrictions = 
 3         ...
 4         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
 5         <a href="postconf.5.html#check_policy_service">check_policy_service</a> { inet:host:port, 
-6             timeout=10s, default_action=DUNNO }
+6             timeout=10s, default_action=DUNNO
+7             policy_context=submission }
 8         ...
 </pre>
 </blockquote>
@@ -427,7 +457,7 @@ the result. </p>
 This supports the exact same "inet" and "unix" syntax as described
 earlier. </p>
 
-<li> <p> Line 6: The remainder of the list contains per-client
+<li> <p> Line 6-7: The remainder of the list contains per-client
 settings. These settings override global <a href="postconf.5.html">main.cf</a> parameters,
 and have the same name as those parameters, without the
 "smtpd_policy_service_" prefix.  </p>
@@ -550,7 +580,7 @@ each request and reply. </p>
 
 <li> <p> Line 6: this increases the time that a greylist server
 process may run to 3600 seconds.  The default time limit of 1000
-seconds is too short; the greylist daemon needs to run long as the
+seconds is too short; the greylist daemon needs to run as long as the
 SMTP server process that talks to it.
 See the <a href="spawn.8.html">spawn(8)</a> manpage for more information about the
 <a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a> parameter.  </p>
@@ -600,7 +630,7 @@ client/server configuration</a>" section above.  </p>
 domains that often appear in forged email.  At some point
 in cyberspace/time a list of frequently
 forged MAIL FROM domains could be found at
-<a href="http://www.monkeys.com/anti-spam/filtering/sender-domain-validate.in">http://www.monkeys.com/anti-spam/filtering/sender-domain-validate.in</a>.
+<a href="https://web.archive.org/web/20080526153208/http://www.monkeys.com/anti-spam/filtering/sender-domain-validate.in">https://web.archive.org/web/20080526153208/http://www.monkeys.com/anti-spam/filtering/sender-domain-validate.in</a>.
 
 <blockquote>
 <pre>
@@ -657,7 +687,7 @@ exceptions for mailing lists that use one-time sender addresses,
 because each message will be delayed due to greylisting, and the
 one-time sender addresses can pollute your greylist database
 relatively quickly. Instead of making exceptions, you can automatically
-whitelist clients that survive greylisting repeatedly; this avoids
+allowlist clients that survive greylisting repeatedly; this avoids
 most of the delays and most of the database pollution problem. </p>
 
 <blockquote>
@@ -731,11 +761,11 @@ $database_name="/var/mta/greylist.db";
 $greylist_delay=60;
 
 #
-# Auto-whitelist threshold. Specify 0 to disable, or the number of
+# Auto-allowlist threshold. Specify 0 to disable, or the number of
 # successful "come backs" after which a client is no longer subject
 # to greylisting.
 #
-$auto_whitelist_threshold = 10;
+$auto_allowlist_threshold = 10;
 
 #
 # Demo SMTPD access policy routine. The result is an action just like
@@ -748,10 +778,10 @@ sub smtpd_access_policy {
     # Open the database on the fly.
     open_database() unless $database_obj;
 
-    # Search the auto-whitelist.
-    if ($auto_whitelist_threshold &gt; 0) {
+    # Search the auto-allowlist.
+    if ($auto_allowlist_threshold &gt; 0) {
         $count = read_database($attr{"client_address"});
-        if ($count &gt; $auto_whitelist_threshold) {
+        if ($count &gt; $auto_allowlist_threshold) {
             return "dunno";
         }
     }
@@ -780,8 +810,8 @@ sub smtpd_access_policy {
     #
     syslog $syslog_priority, "request age %d", $now - $time_stamp if $verbose;
     if ($now - $time_stamp &gt; $greylist_delay) {
-        # Update the auto-whitelist.
-        if ($auto_whitelist_threshold &gt; 0) {
+        # Update the auto-allowlist.
+        if ($auto_allowlist_threshold &gt; 0) {
             update_database($attr{"client_address"}, $count + 1);
         }
         return "dunno";

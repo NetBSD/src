@@ -1,0 +1,41 @@
+bind  bind no
+bind  bind sasl
+bind  bind yes
+ command_directory command_directory 
+ Content Disposition Type name es es e 2E 
+ daemon_directory daemon_directory 
+ data_directory data_directory 
+done done
+ echo 0 Error unknown type type for path in meta postfix files 1 2
+ echo echo 0 Error name should be an absolute path name 1 2 
+esac  esac
+ eval echo n name name c 
+ eval group group 
+ eval owner owner 
+example  example com uucp example
+file contains only a small subset of all parameters parameters
+group  group 
+ html_directory html_directory 
+ IP domain address address 
+ IP pattern address address 
+ IP user address address 
+ IP user domain address address 
+ mail_owner mail_owner 
+ mailq_path mailq_path 
+ manpage_directory manpage_directory 
+ meta_directory meta_directory 
+ newaliases_path newaliases_path 
+ nisplus name s name name name column
+ postmap q nisplus name s name name inputfile
+ postmap q string nisplus name s name name 
+postmaster postmaster root
+ queue_directory queue_directory 
+ readme_directory readme_directory 
+root  root you
+ sample_directory sample_directory 
+ sendmail_path sendmail_path 
+ server_host ldap ldap example com 1444
+ setgid_group setgid_group 
+ shlib_directory shlib_directory 
+ user foo domain user domain domain 
+virtual  virtual alias domain anything right hand content does not matter 
