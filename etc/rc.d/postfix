@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.19 2019/08/09 10:05:44 rin Exp $
+# $NetBSD: postfix,v 1.20 2023/12/25 08:37:08 kre Exp $
 #
 
 # PROVIDE: mail
@@ -53,7 +53,7 @@ postfix_precmd()
 		case "$1" in
 		hash)
 			if [ -f "$2.db" ]; then
-				if [ ! "$2" -ot "$2.db" ]; then
+				if ! [ "$2" -ot "$2.db" ]; then
 					_rebuild "$2" "out of date"
 				fi
 			else
@@ -85,8 +85,8 @@ check_use_postfix()
 	    echo YES
 	else
 	    echo "WARNING: default postfix not used as not selected in mailer.conf" >&2
-	    if [ "${_mta_path}" = "${_sendmail_path}" -a \
-		! -x "${_mta_path}" ]; then
+	    if [ "${_mta_path}" = "${_sendmail_path}" ] &&
+	     ! [ -x "${_mta_path}" ]; then
 		echo "WARNING: mailer.conf points to the removed sendmail" >&2
 		echo "update /etc/mailer.conf to get a working mailer configuration" >&2
 	    fi
